@@ -33,6 +33,7 @@ sub _init {
     print O $seq;
     close O;
     `restrict -enzymes all -sitelen 4 -seq $filename.in -outfile $filename.out`;
+    unlink "$filename.in";
     open I, "$filename.out";
     while(<I>) {
         if( my( $st, $en, $score, $name, $seq, $s_3p, $s_5p, $s_3pr, $s_5pr ) =
@@ -63,6 +64,7 @@ sub _init {
         }
     }
     close I;
+    unlink "$filename.out";
     foreach my $f ( @features ) {
         my $start = $f->{'start'} < 1 ? 1 : $f->{'start'};
         my $end   = $f->{'end'} > $length ? $length : $f->{'end'};
