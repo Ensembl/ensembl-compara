@@ -118,8 +118,8 @@ sub run
 {
   my $self = shift;
 
-  $self->{'comparaDBA'}->disconnect_when_inactive(0);
-  $self->{'coreDBA'}->disconnect_when_inactive(0);  
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);  
   
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, useing the SliceAdaptor
@@ -127,8 +127,8 @@ sub run
   # and convert them into members to be stored into compara
   $self->loadMembersFromCoreSlices();
   
-  $self->{'comparaDBA'}->disconnect_when_inactive(1);
-  $self->{'coreDBA'}->disconnect_when_inactive(1);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->{'coreDBA'}->dbc->disconnect_when_inactive(1);
                                           
   return 1;
 }

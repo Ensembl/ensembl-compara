@@ -96,8 +96,8 @@ sub fetch_input {
 
   #get the Compara::GenomeDB object for the genome_db_id
   $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-  $self->db->disconnect_when_inactive(0);
-  $self->{'comparaDBA'}->disconnect_when_inactive(0);
+  $self->db->dbc->disconnect_when_inactive(0);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   unless($subset_id) {
     # get the subset of 'longest transcripts' for this genome_db_id
     $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);

@@ -125,11 +125,11 @@ sub run
 {
   my $self = shift;
 
-  $self->{'comparaDBA'}->disconnect_when_inactive(0);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   
   $self->calc_intergenic_stats();
   
-  $self->{'comparaDBA'}->disconnect_when_inactive(1);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
                                           
   return 1;
 }
