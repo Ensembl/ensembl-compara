@@ -6,7 +6,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return "All SNPs"; }
+sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
