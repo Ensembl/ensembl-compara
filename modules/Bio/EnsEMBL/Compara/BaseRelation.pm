@@ -38,7 +38,7 @@ sub new {
 
 sub new_fast {
   my ($class, $hashref) = @_;
-  
+
   return bless $hashref, $class;
 }
 
@@ -144,37 +144,39 @@ sub adaptor {
 }
 
 sub add_Relation {
-  my ($self, $relation) = @_;
+  my ($self, $relation_attribute) = @_;
+
+  my ($relation, $attribute) = @{$relation_attribute};
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
 
-    $self->isa('Bio::EnsEMBL::Compara::Member') ||
+    $self->isa('Bio::EnsEMBL::Compara::Member') &&
       $self->throw("You can't add a Member to a Member");
-    push @{$self->{'_member_array'}}, $relation;
-    push @{$self->{'_members_by_source'}{$relation->source_name}}, $relation;
-    push @{$self->{'_members_by_source_taxon'}{$relation->source_name."_".$relation->taxon_id}}, $relation;
+    push @{$self->{'_member_array'}}, $relation_attribute ;
+    push @{$self->{'_members_by_source'}{$relation->source_name}}, $relation_attribute;
+    push @{$self->{'_members_by_source_taxon'}{$relation->source_name."_".$relation->taxon_id}}, $relation_attribute;
 
   } elsif ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
 
-    $self->isa('Bio::EnsEMBL::Compara::Family') ||
+    $self->isa('Bio::EnsEMBL::Compara::Family') &&
       $self->throw("You can't add a Family to a Family");
-    push @{$self->{'_family_array'}}, $relation;;
-    push @{$self->{'_family_by_source'}{$relation->source_name}}, $relation;
+    push @{$self->{'_family_array'}}, $relation_attribute;
+    push @{$self->{'_family_by_source'}{$relation->source_name}}, $relation_attribute;
 
   } elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
 
-    $self->isa('Bio::EnsEMBL::Compara::Domain') ||
+    $self->isa('Bio::EnsEMBL::Compara::Domain') &&
       $self->throw("You can't add a Domain to a Domain");
-    push @{$self->{'_domain_array'}}, $relation;
-    push @{$self->{'_domain_by_source'}{$relation->source_name}}, $relation;
+    push @{$self->{'_domain_array'}}, $relation_attribute;
+    push @{$self->{'_domain_by_source'}{$relation->source_name}}, $relation_attribute;
 
   } elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
    
-    $self->isa('Bio::EnsEMBL::Compara::Homology') ||
+    $self->isa('Bio::EnsEMBL::Compara::Homology') &&
       $self->throw("You can't add a Homology to a Homology");
 
-    push @{$self->{'_homology_array'}}, $relation;
-    push @{$self->{'_homology_by_source'}{$relation->source_name}}, $relation;
+    push @{$self->{'_homology_array'}}, $relation_attribute;
+    push @{$self->{'_homology_by_source'}{$relation->source_name}}, $relation_attribute;
   }
 }
 
@@ -193,16 +195,15 @@ sub get_all_Member {
   my ($self) = @_;
   
   unless (defined $self->{'_member_array'}) {
-    my $members;
+
     my $MemberAdaptor = $self->adaptor->db->get_MemberAdaptor();
     my $members = $MemberAdaptor->fetch_by_relation($self);
 
     $self->{'_member_array'} = [];
-#    $self->{'_member_attributes'} = [];
     $self->{'_members_by_source'} = {};
     $self->{'_members_by_source_taxon'} = {};
-    foreach my $member (@{$members}) {
-      $self->add_Relation($member);
+    foreach my $member_attribute (@{$members}) {
+      $self->add_Relation($member_attribute);
     }
   }
   return $self->{'_member_array'}; #should return also attributes
