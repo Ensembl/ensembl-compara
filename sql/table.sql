@@ -56,7 +56,7 @@ CREATE TABLE genome_db (
 
 CREATE TABLE genomic_align_block (
   align_block_id int(10) NOT NULL AUTO_INCREMENT,
-  consensus_dnafrag_id int(10) DEFAULT '0' NOT NULL,
+  consensus_dnafrag_id int(10) DEFAULT NULL,
   consensus_start int(10) DEFAULT '0' NOT NULL,
   consensus_end int(10) DEFAULT '0' NOT NULL,
   query_dnafrag_id int(10) DEFAULT '0' NOT NULL,

@@ -165,8 +165,7 @@ sub store_malign {
   
   for my $ga ( @$genomic_aligns ) {
     # check if everything has dbIDs
-    if( ! defined $ga->consensus_dnafrag()->dbID() ||
-	! defined $ga->query_dnafrag()->dbID() ) {
+    if( ! defined $ga->query_dnafrag()->dbID() ) {
       $self->throw( "dna_fragment in GenomicAlign is not in DB" );
      }
   }
@@ -178,12 +177,16 @@ sub store_malign {
     }
     
     push( @$values, [
-			$ga->consensus_dnafrag()->dbID(),
-			$ga->consensus_start(), $ga->consensus_end(),
+			undef(),
+			$ga->consensus_start(),
+			$ga->consensus_end(),
 			$ga->query_dnafrag()->dbID(),
-			$ga->query_start, $ga->query_end(), 
-			$ga->query_strand(),$method_link_id, 
-			$ga->score(), $ga->perc_id(),
+			$ga->query_start,
+			$ga->query_end(), 
+			$ga->query_strand(),
+			$method_link_id, 
+			$ga->score(),
+			$ga->perc_id(),
 			"\"".$ga->cigar_line()."\"",
 			$ga->group_id,
 			$ga->level_id,

@@ -159,10 +159,6 @@ my $dnafrag_adaptor = $db->get_DnaFragAdaptor();
 my $genomic_align_adaptor = $db->get_GenomicAlignAdaptor();
 my $slice_adaptor;
 
-my $fake_genome_db = $genome_db_adaptor->fetch_by_name_assembly('fake', 'null');
-my $fake_dnafrag = get_this_dnafrag($fake_genome_db, 'chromosome', 'universal');
-die "DnaFrag for fake consensus dna is not in the database" if (!$fake_dnafrag);
-
 my $print_multiple_alignment = ""; # used for warnings
 my $score = 0;
 my @multiple_alignment; # array of Bio::EnsEMBL::Compara::GenomicAlign objects to store as a single multiple alignment
@@ -268,7 +264,7 @@ while (<MULTIZ>) {
   }
   
   my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-		-consensus_dnafrag => $fake_dnafrag,
+		-consensus_dnafrag => undef(),
 		-consensus_start => 1,
 		-consensus_end => length($alignment),
 		-query_dnafrag => $dnafrag,
