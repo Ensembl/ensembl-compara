@@ -19,7 +19,8 @@ sub features {
   &eprof_end( 'get_all_vf' );
   &eprof_start( 'sort_vf' );  
   my @vari_features = 
-     map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ $ct{$_->consequence_type} *
+     map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ 
+							 #$ct{$_->consequence_type} *
        1e9 + $_->start, $_ ] } grep { $_->map_weight < 4 } @$vf_ref;
   &eprof_end( 'sort_vf' );
 
