@@ -71,11 +71,11 @@ public class BuildSynteny {
 	
 	FeaturePair prev = null;
 	
-	long minStart  = 1000000000;
-	long minHStart = 1000000000;
+	int minStart  = 1000000000;
+	int minHStart = 1000000000;
 	
-	long maxStart  = -1;
-	long maxHStart = -1;
+	int maxStart  = -1;
+	int maxHStart = -1;
 	
 	long forwardCount = 0;
 	long reverseCount = 0;
