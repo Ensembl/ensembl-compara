@@ -84,7 +84,7 @@ sub _getHref {
     ######### zmenus will override existing href, alt, onmouseover & onmouseout attributes
     my $zmenu = $glyph->zmenu();
     if(defined $zmenu) {
-		$href        = qq( href="javascript:void(0);");
+		$href        = qq( href="javascript:void(0);") unless( defined $href );
 		$alt         = qq();
 		$onmouseover = qq( onmouseover=") . &JSTools::js_menu($zmenu) . qq(");
     }
