@@ -33,7 +33,7 @@ sub init_label {
             my $text = new Sanger::Graphics::Glyph::Text({
                 'text'      => $label,
                 'font'      => 'Small',
-                'colour'    => $Config->get('_colours', $colour),
+                'colour'    => $Config->get('_colours', $colour)->[0],
                 'absolutey' => 1,
                 });
             my $func = 'label' . $i;
@@ -92,7 +92,7 @@ sub _init {
                 'y'      => 0,
                 'width'  => $_->end-$_->start,
                 'height' => $_->scaledvalue,
-		'colour' => $Config->get('_colours', $colours[1]),
+		'colour' => $Config->get('_colours', $colours[1])->[0],
                 'absolutey' => 1,
             }));
         }
@@ -105,7 +105,7 @@ sub _init {
             'y'      => 0,
             'width'  => $_->end-$_->start,
             'height' => $_->scaledvalue,
-	    'bordercolour' => $Config->get('_colours', $colours[0]),
+	    'bordercolour' => $Config->get('_colours', $colours[0])->[0],
             'absolutey' => 1,
             'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
             }));
