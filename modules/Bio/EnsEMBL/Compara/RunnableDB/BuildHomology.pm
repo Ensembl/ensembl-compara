@@ -118,6 +118,9 @@ sub fetch_input
     print("   ".$analysis->logic_name."\n");
   }
 
+  #make sure method_link table is properly loaded
+  $self->{'comparaDBA'}->dbc->do("insert ignore into method_link set method_link_id=201, type='ENSEMBL_ORTHOLOGUES'"); 
+
   return 1;
 }
 
