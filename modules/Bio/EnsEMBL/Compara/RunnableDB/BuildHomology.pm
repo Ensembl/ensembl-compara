@@ -45,8 +45,6 @@ Internal methods are usually preceded with a _
 
 =cut
 
-my $_build_homology_idx = 1; #global index counter
-
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHomology;
 
 use strict;
@@ -90,6 +88,8 @@ sub fetch_input
 
   $self->{'blast_analyses'} = ();
 
+  print("input_id = " . $self->input_id . "\n");
+  
   if($self->input_id =~ ',') {
     $self->load_blasts_from_input();
   }
@@ -120,7 +120,19 @@ sub run
     foreach my $blast2 (@blast_list) {
       print("   check pair ".$blast1->logic_name." <=> ".$blast2->logic_name."\n");
 
+      $self->{'member_BRH_PAF_hash'} = {};
+      $self->{'membersToBeProcessed'} = {};
+
+      $self->set_member_list($blast1);
+      $self->set_member_list($blast2);
+
       $self->get_BRH_for_species_pair($blast1, $blast2);
+
+      my @mkeys = keys %{$self->{'membersToBeProcessed'}};
+      print($#mkeys . " members to be processed for RHS\n");
+
+      $self->find_RHS_for_species_pair($blast1, $blast2);
+
     }
   }
 
@@ -139,6 +151,26 @@ sub write_output
 # Specific analysis code below
 #
 ####################################
+
+
+sub set_member_list
+{
+  # using trick of specifying table twice so can join to self
+  my $self      = shift;
+  my $analysis = shift;
+
+  print(STDERR "set_member_list from analysis ".$analysis->logic_name()."\n");
+
+  my %params = $analysis->parameter_hash();
+  my $subset_id = $params{subset_id};
+
+  my $subset = $self->{'comparaDBA'}->get_SubsetAdaptor->fetch_by_dbID($subset_id);
+  foreach my $member_id (@{$subset->member_id_list}) {
+    $self->{'membersToBeProcessed'}->{$member_id} = $member_id;  #like an STL set
+  }
+  my @mkeys = keys %{$self->{'membersToBeProcessed'}};
+  print("  count ". $#mkeys . "\n");
+}
 
 
 sub get_BRH_for_species_pair
@@ -162,8 +194,10 @@ sub get_BRH_for_species_pair
             " AND paf2.analysis_id = ".$analysis2->dbID;
 
   print("$sql\n");
+  my $startTime = time();
   my $sth = $self->{'comparaDBA'}->prepare($sql);
   $sth->execute();
+  print(time()-$startTime . " sec to query\n");
 
   my ($paf1_id, $paf2_id, $qmember_id, $hmember_id);
   $sth->bind_columns(\$paf1_id, \$paf2_id, \$qmember_id, \$hmember_id);
@@ -173,6 +207,8 @@ sub get_BRH_for_species_pair
     push @paf_id_list, $paf1_id;
   }
   $sth->finish;
+  print(time()-$startTime . " sec to query and fetch\n");
+  
   print("  found ".($#paf_id_list + 1).
         " BRH for reciprocal blasts for pair ".
         $analysis1->logic_name." and ".
@@ -182,106 +218,20 @@ sub get_BRH_for_species_pair
   my $pafDBA      = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor();
   my $homologyDBA = $self->{'comparaDBA'}->get_HomologyAdaptor();
 
+  $startTime = time();
   foreach $paf1_id (@paf_id_list) {
     my $paf = $pafDBA->fetch_by_dbID($paf1_id);
 
-    my $homology = $self->PAF2Homology($paf);
+    my $homology = $paf->return_as_homology();
     $homology->description('BRH');
-    $homologyDBA->store($homology);
+    eval { $homologyDBA->store($homology); };
+
+    $self->{'member_BRH_PAF_hash'}->{$paf->query_member->dbID} = $paf;
+    $self->{'member_BRH_PAF_hash'}->{$paf->hit_member->dbID} = $paf;
+    delete $self->{'membersToBeProcessed'}->{$paf->query_member->dbID};
+    delete $self->{'membersToBeProcessed'}->{$paf->hit_member->dbID};
   }
-}
-
-
-sub PAF2Homology
-{
-  my $self = shift;
-  my $paf  = shift;
-
-  # create an Homology object
-  my $homology = new Bio::EnsEMBL::Compara::Homology;
-  my $stable_id = $paf->query_member->taxon_id() . "_" . $paf->hit_member->taxon_id . "_";
-  $stable_id .= sprintf ("%011.0d",$_build_homology_idx++);
-  $homology->stable_id($stable_id);
-  $homology->source_name("ENSEMBL_HOMOLOGS");
-
-  # NEED TO BUILD THE Attributes (ie homology_members)
-  #
-  # QUERY member
-  #
-  my $attribute;
-  $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->member_id($paf->query_member->dbID); 
-  $attribute->cigar_start($paf->qstart);
-  $attribute->cigar_end($paf->qend);
-  my $qlen = ($paf->qend - $paf->qstart + 1);
-  $attribute->perc_cov(int($qlen*100/$paf->query_member->seq_length));
-  $attribute->perc_id(int($paf->identical_matches*100.0/$qlen));
-  $attribute->perc_pos(int($paf->positive_matches*100/$qlen));
-
-  my $cigar_line = $paf->cigar_line;
-  #print("original cigar_line '$cigar_line'\n");
-  $cigar_line =~ s/I/M/g;
-  $cigar_line = compact_cigar_line($cigar_line);
-  $attribute->cigar_line($cigar_line);
-  #print("   '$cigar_line'\n");
-
-  $homology->add_Member_Attribute([$paf->query_member, $attribute]);
-
-  # HIT member 
-  #
-  $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->member_id($paf->hit_member->dbID);
-  $attribute->cigar_start($paf->hstart);
-  $attribute->cigar_end($paf->hend);
-  my $hlen = ($paf->hend - $paf->hstart + 1);
-  $attribute->perc_cov(int($hlen*100/$paf->hit_member->seq_length));
-  $attribute->perc_id(int($paf->identical_matches*100.0/$hlen));
-  $attribute->perc_pos(int($paf->positive_matches*100/$hlen));
-
-  $cigar_line = $paf->cigar_line;
-  #print("original cigar_line\n    '$cigar_line'\n");
-  $cigar_line =~ s/D/M/g;
-  $cigar_line =~ s/I/D/g;
-  $cigar_line = compact_cigar_line($cigar_line);
-  $attribute->cigar_line($cigar_line);
-  #print("   '$cigar_line'\n");
-
-  $homology->add_Member_Attribute([$paf->hit_member, $attribute]);
-
-  return $homology;
-}
-
-  
-sub compact_cigar_line
-{
-  my $cigar_line = shift;
-  
-  #print("cigar_line '$cigar_line' => ");
-  my @pieces = ( $cigar_line =~ /(\d*[MDI])/g );
-  my @new_pieces = ();
-  foreach my $piece (@pieces) {
-    $piece =~ s/I/M/;
-    if (! scalar @new_pieces || $piece =~ /D/) {
-      push @new_pieces, $piece;
-      next;
-    }
-    if ($piece =~ /\d*M/ && $new_pieces[-1] =~ /\d*M/) {
-      my ($matches1) = ($piece =~ /(\d*)M/);
-      my ($matches2) = ($new_pieces[-1] =~ /(\d*)M/);
-      if (! defined $matches1 || $matches1 eq "") {
-        $matches1 = 1;
-      }
-      if (! defined $matches2 || $matches2 eq "") {
-        $matches2 = 1;
-      }
-      $new_pieces[-1] = $matches1 + $matches2 . "M";
-    } else {
-      push @new_pieces, $piece;
-    }
-  }
-  my $new_cigar_line = join("", @new_pieces);
-  #print(" '$new_cigar_line'\n");
-  return $new_cigar_line;
+  print(time()-$startTime . " sec to convert PAF to Homology\n");
 }
 
 
@@ -304,7 +254,8 @@ sub load_all_blasts
 sub load_blasts_from_input
 {
   my $self = shift;
-  
+
+  print("load_blasts_from_input\n");
   my $input = $self->input_id;
   $input =~ s/\s//g;
   my @logic_names = split(/,/ , $input);
@@ -316,5 +267,134 @@ sub load_blasts_from_input
   }
 }
 
+
+##################################
+#
+# Synteny section
+#
+##################################
+
+sub find_RHS_for_species_pair
+{
+  # using trick of specifying table twice so can join to self
+  my $self      = shift;
+  my $analysis1 = shift;  # query species (get subset_id)
+  my $analysis2 = shift;  # db species (analysis_id, ie blast)
+
+  print(STDERR "select RHS\n");
+  print(STDERR "  analysis1 ".$analysis1->logic_name()."\n");
+  print(STDERR "  analysis2 ".$analysis2->logic_name()."\n");
+
+  my %params = $analysis1->parameter_hash();
+  my $subset_id = $params{subset_id};
+
+  print("about to fetch members\n");
+  my $startTime = time();
+  my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor();
+  $memberDBA->_final_clause("ORDER BY m.chr_name, m.chr_start");
+  my $sortedMembers = $memberDBA->fetch_by_subset_id($subset_id);
+  print(time()-$startTime . " sec memberDBA->fetch_by_subset_id\n");
+  print(scalar(@{$sortedMembers}) . " members to process\n");
+
+  my $syntenySegment = $self->get_next_syneny_segment($sortedMembers);
+  while($syntenySegment) {
+
+    # do my processing of synteny
+    $self->print_synteny_segement($syntenySegment);
+
+    #get next segment
+    $syntenySegment = $self->get_next_syneny_segment($sortedMembers);
+  }
+
+}
+
+
+sub get_next_syneny_segment
+{
+  my $self            = shift;
+  my $sortedMembers   = shift;  #list reference
+
+  #
+  # now loop through the members creating synteny segments
+  # a synteny segment is store as a list of Member objects
+  # possbilities
+  #  1) list of members bounded on both ends by BRH that are syntenous
+  #  2) list of members where bounded on one end by a BRH
+  # Breaks occur when, BRH breaks synteny, or members switch chromosomes
+
+  return undef
+    unless($sortedMembers and @{$sortedMembers}); #undefined or list empty
+  
+  my @syntenySegment = ();
+
+  #print("get_next_syneny_segment\n");
+  
+  my $firstMember = shift @{$sortedMembers};
+  return undef
+    unless($firstMember); #undefined or list empty
+  
+  push @syntenySegment, $firstMember;
+  #$self->print_member($firstMember, "FIRST_MEMBER\n");
+
+  #print("Extend synteny\n");
+  while($sortedMembers and @{$sortedMembers}) { 
+    my $member = $sortedMembers->[0];
+    #$self->print_member($member, " PEEK\n");
+    if($member->chr_name ne $firstMember->chr_name) {
+      #print("  END: changed chromosome\n");
+      last;
+    }
+
+    if($self->{'member_BRH_PAF_hash'}->{$member->dbID}) {
+      #print("  END: hit BRH, stop growing segment\n");
+      push @syntenySegment, $member;
+      last;
+    }
+    
+    push @syntenySegment, $member;
+    shift @{$sortedMembers};
+  }
+  
+  if(@syntenySegment) { return \@syntenySegment; }
+
+  #print("syntenySegment empty\n");
+  return undef;
+}
+
+
+sub print_synteny_segement
+{
+  my $self = shift;
+  my $syntenySegment = shift;
+
+  return unless($syntenySegment and @{$syntenySegment});
+
+  print("synteny_segment\n");
+  if(scalar(@{$syntenySegment}) > 10) {
+    $self->print_member($syntenySegment->[0]);
+    $self->print_member($syntenySegment->[scalar(@{$syntenySegment})-1]);
+  }
+  else {
+    foreach my $member (@{$syntenySegment}) {
+      $self->print_member($member);
+    }
+  }
+}
+
+
+sub print_member
+{
+  my $self = shift;
+  my $member = shift;
+  my $postfix = shift;
+  
+  print("   ".$member->stable_id.
+        "(".$member->dbID.")".
+        "\t".$member->chr_name ." : ".
+        $member->chr_start ."- ". $member->chr_end);
+  if($self->{'member_BRH_PAF_hash'}->{$member->dbID}) { print(" BRH "); }
+  if($postfix) { print(" $postfix"); } 
+  else { print("\n"); }
+}
 
 1;
