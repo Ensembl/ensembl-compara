@@ -17,8 +17,14 @@ sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
 
+  my $helplink = (defined($self->{'extras'}->{'helplink'})) ? 
+    $self->{'extras'}->{'helplink'} : 
+      qq(/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das);
+
+
   my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ?
-qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) : qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
+     qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) : 
+     qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
 
   $self->label( new Sanger::Graphics::Glyph::Text({
     'text'      => $self->{'extras'}->{'caption'},
@@ -39,6 +45,7 @@ sub _init {
   my $Config = $self->{'config'};
   my $strand = $Config->get($das_config_key, 'str');
   my $Extra  = $self->{'extras'};
+
 # If strand is 'r' or 'f' then we display everything on one strand (either
 # at the top or at the bottom!
   return if( $strand eq 'r' && $self->strand() != -1 || $strand eq 'f' && $self->strand() != 1 );
@@ -84,6 +91,9 @@ sub _init {
   }
   $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
   $self->{'ext_url'}      = ExtURL->new( $Extra->{'name'} =~ /^managed_extdas/ ? ($Extra->{'linkURL'} => $Extra->{'linkURL'}) : () );
+
+
+  $self->{helplink} = $Config->get($das_config_key, 'helplink');
   my $renderer = $Config->get($das_config_key, 'renderer');
   $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
   warn "RENDERER... $renderer";
