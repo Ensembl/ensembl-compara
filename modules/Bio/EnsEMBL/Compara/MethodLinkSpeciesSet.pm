@@ -1,5 +1,5 @@
 #
-# Ensembl module for Bio::EnsEMBL::Compara::MethodLinkSpecies
+# Ensembl module for Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
 #
 # Cared for by Javier Herrero <jherrero@ebi.ac.uk>
 #
@@ -11,30 +11,31 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::MethodLinkSpecies - Relates every method_link with the species_set for which it has been used
+Bio::EnsEMBL::Compara::MethodLinkSpeciesSet -
+Relates every method_link with the species_set for which it has been used
 
 =head1 SYNOPSIS
 
-  use Bio::EnsEMBL::Compara::MethodLinkSpecies;
-  my $method_link_species = new Bio::EnsEMBL::Compara::MethodLinkSpecies({
-                       -adaptor => $method_link_species_adaptor,
+  use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet({
+                       -adaptor => $method_link_species_set_adaptor,
                        -method_link_type => "MULTIZ",
                        -species_set => [$gdb1, $gdb2, $gdb3]
                    });
 
 SET VALUES
-  $method_link_species->dbID(12);
-  $method_link_species->adaptor($meth_lnk_spcs_adaptor);
-  $method_link_species->method_link_id(23);
-  $method_link_species->method_link_type("MULTIZ");
-  $method_link_species->species_set([$gdb1, $gdb2, $gdb3]);
+  $method_link_species_set->dbID(12);
+  $method_link_species_set->adaptor($meth_lnk_spcs_adaptor);
+  $method_link_species_set->method_link_id(23);
+  $method_link_species_set->method_link_type("MULTIZ");
+  $method_link_species_set->species_set([$gdb1, $gdb2, $gdb3]);
 
 GET VALUES
-  my $dbID = $method_link_species->dbID();
-  my $meth_lnk_spcs_adaptor = $method_link_species->adaptor();
-  my $meth_lnk_id = $method_link_species->method_link_id();
-  my $meth_lnk_type = $method_link_species->method_link_type();
-  my $meth_lnk_species_set = $method_link_species->species_set();
+  my $dbID = $method_link_species_set->dbID();
+  my $meth_lnk_spcs_adaptor = $method_link_species_set->adaptor();
+  my $meth_lnk_id = $method_link_species_set->method_link_id();
+  my $meth_lnk_type = $method_link_species_set->method_link_type();
+  my $meth_lnk_species_set = $method_link_species_set->species_set();
 
 
 =head1 OBJECT MEMBERS
@@ -47,7 +48,7 @@ corresponds to method_link_species.method_link_species_set
 
 =item adaptor
 
-Bio::EnsEMBL::Compara::MethodLinkSpeciesAdaptor object to access DB
+Bio::EnsEMBL::Compara::MethodLinkSpeciesSetAdaptor object to access DB
 
 =item method_link_id
 
@@ -81,7 +82,7 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 
-package Bio::EnsEMBL::Compara::MethodLinkSpecies;
+package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use vars qw(@ISA);
 use strict;
 
@@ -101,14 +102,14 @@ use Bio::EnsEMBL::Root;
                  -method_link_type
                  -species_set (ref. to an array of
                        Bio::EnsEMBL::Compara::GenomeDB objects)
-  Example    : my $genomic_align_block =
-                   new Bio::EnsEMBL::Compara::MethodLinkSpecies({
-                       -adaptor => $method_link_species_adaptor,
+  Example    : my $method_link_species_set =
+                   new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet({
+                       -adaptor => $method_link_species_set_adaptor,
                        -method_link_type => "MULTIZ",
                        -species_set => [$gdb1, $gdb2, $gdb3]
                    });
-  Description: Creates a new GenomicAlignBlock object
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlock
+  Description: Creates a new MethodLinkSpeciesSet object
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : none
   Caller     : general
 
@@ -121,27 +122,27 @@ sub new {
   bless $self,$class;
     
   my (
+		$dbID,
 		$adaptor,
 		$method_link_id,
 		$method_link_type,
-		$species_set,
-		$dbID
+		$species_set
 	
 	) = $self->_rearrange([qw(
 			
+			DBID
 			ADAPTOR
 			METHOD_LINK_ID
 			METHOD_LINK_TYPE
 			SPECIES_SET
-			DBID
 
 		)], @args);
 
-  $self->{'adaptor'} = $adaptor if (defined ($adaptor));
-  $self->{'method_link_id'} = $method_link_id if (defined ($method_link_id));
-  $self->{'method_link_type'} = $method_link_type if (defined ($method_link_type));
+  $self->dbID($dbID) if (defined ($dbID));
+  $self->adaptor($adaptor) if (defined ($adaptor));
+  $self->method_link_id($method_link_id) if (defined ($method_link_id));
+  $self->method_link_type($method_link_type) if (defined ($method_link_type));
   $self->species_set($species_set) if (defined ($species_set));
-  $self->{'dbID'} = $dbID if (defined ($dbID));
 
   return $self;
 }
@@ -158,8 +159,8 @@ sub new_fast {
 =head2 dbID
 
   Arg [1]    : (opt.) integer dbID
-  Example    : my $dbID = $method_link_species->dbID();
-  Example    : $method_link_species->dbID(12);
+  Example    : my $dbID = $method_link_species_set->dbID();
+  Example    : $method_link_species_set->dbID(12);
   Description: Getter/Setter for the dbID of this object in the database
   Returntype : integer dbID
   Exceptions : none
@@ -180,12 +181,12 @@ sub dbID {
 
 =head2 adaptor
 
-  Arg [1]    : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesAdaptor
-  Example    : my $meth_lnk_spcs_adaptor = $method_link_species->adaptor();
-  Example    : $method_link_species->adaptor($meth_lnk_spcs_adaptor);
+  Arg [1]    : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
+  Example    : my $meth_lnk_spcs_adaptor = $method_link_species_set->adaptor();
+  Example    : $method_link_species_set->adaptor($meth_lnk_spcs_adaptor);
   Description: Getter/Setter for the adaptor this object uses for database
                interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesAdaptor
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
   Exceptions : none
   Caller     : general
 
@@ -205,8 +206,8 @@ sub adaptor {
 =head2 method_link_id
  
   Arg [1]    : (opt.) integer method_link_id
-  Example    : my $meth_lnk_id = $method_link_species->method_link_id();
-  Example    : $method_link_species->method_link_id(23);
+  Example    : my $meth_lnk_id = $method_link_species_set->method_link_id();
+  Example    : $method_link_species_set->method_link_id(23);
   Description: get/set for attribute method_link_id
   Returntype : integer
   Exceptions : none
@@ -234,8 +235,8 @@ sub method_link_id {
 =head2 method_link_type
  
   Arg [1]    : (opt.) string method_link_type
-  Example    : my $meth_lnk_type = $method_link_species->method_link_type();
-  Example    : $method_link_species->method_link_type("BLASTZ_NET");
+  Example    : my $meth_lnk_type = $method_link_species_set->method_link_type();
+  Example    : $method_link_species_set->method_link_type("BLASTZ_NET");
   Description: get/set for attribute method_link_type
   Returntype : string
   Exceptions : none
@@ -263,8 +264,8 @@ sub method_link_type {
 =head2 species_set
  
   Arg [1]    : (opt.) listref of Bio::EnsEMBL::Compara::GenomeDB objects
-  Example    : my $meth_lnk_species_set = $method_link_species->species_set();
-  Example    : $method_link_species->species_set([$gdb1, $gdb2, $gdb3]);
+  Example    : my $meth_lnk_species_set = $method_link_species_set->species_set();
+  Example    : $method_link_species_set->species_set([$gdb1, $gdb2, $gdb3]);
   Description: get/set for attribute species_set
   Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB objects
   Exceptions : Thrown if any argument is not a Bio::EnsEMBL::Compara::GenomeDB
@@ -284,7 +285,7 @@ sub species_set {
       $self->throw("$genome_db must be a Bio::EnsEMBL::Compara::GenomeDB\n")
         unless $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB");
       $self->throw("GenomeDB (".$genome_db->name."; dbID=".$genome_db->dbID.
-          ") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpecies\n")
+          ") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
         if $genome->{$genome_db->dbID};
 
       $genome->{$genome_db->dbID} = 1;
