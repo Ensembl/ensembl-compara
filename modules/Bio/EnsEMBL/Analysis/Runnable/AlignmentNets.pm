@@ -204,13 +204,7 @@ sub write_chains {
 
         if ($gf->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
           my $qga = $gf->reference_genomic_align;
-          my $tga;
-          foreach my $al (@{$gf->get_all_GenomicAligns}) {
-            if ($al != $qga) {
-              $tga = $al;
-              last;
-            }
-          }
+          my ($tga) = @{$gf->get_all_non_reference_genomic_aligns};
 
           $query_name = $qga->dnafrag->name,
           $target_name = $tga->dnafrag->name,
@@ -241,13 +235,7 @@ sub write_chains {
       if ($gf->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
         foreach my $uf (@{$gf->get_all_ungapped_GenomicAlignBlocks}) {
           my $qga = $uf->reference_genomic_align;
-          my $tga;
-          foreach my $al (@{$uf->get_all_GenomicAligns}) {
-            if ($al != $qga) {
-              $tga = $al;
-              last;
-            }
-          }
+          my ($tga) = @{$uf->get_all_non_reference_genomic_aligns};
 
           my $sens_f = {
             q_start  => $qga->dnafrag_start,
@@ -371,13 +359,24 @@ sub parse_Net_file {
           
           my ($insert_start, $insert_end) = ($last_gap[$indent - 1]->[0],
                                              $last_gap[$indent - 1]->[1]);
+          my ($left_start, $right_end);
+          if ($parent_chain->[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+            $left_start = $parent_chain->[0]->reference_genomic_align->dnafrag_start;
+          } else {
+            $left_start = $parent_chain->[0]->start;
+          }
+          if ($parent_chain->[-1]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+            $right_end = $parent_chain->[-1]->reference_genomic_align->dnafrag_end;
+          } else {
+            $right_end = $parent_chain->[-1]->end;
+          }
 
           my $chain1 = $self->restrict_between_positions($parent_chain, 
-                                                         $parent_chain->[0]->start,
+                                                         $left_start,
                                                          $insert_start - 1);
           my $chain2 = $self->restrict_between_positions($parent_chain, 
                                                          $insert_end + 1,
-                                                         $parent_chain->[-1]->end);
+                                                         $right_end);
           
           $new_chains{$last_parent_chain[$indent - 2]} = [@$chain1, @$chain2];
         }
