@@ -198,10 +198,11 @@ sub store{
     $self->throw("Must have genomedb arg [$gdb]");
   }
 
-  my $name = $gdb->name;
-  my $assembly = $gdb->assembly;
-  my $taxon_id = $gdb->taxon_id;
-  my $genebuild = $gdb->genebuild;
+  my $name=''; my $assembly=''; my $taxon_id=''; my $genebuild='';
+  $name = $gdb->name;
+  $assembly = $gdb->assembly;
+  $taxon_id = $gdb->taxon_id;
+  $genebuild = $gdb->genebuild if($gdb->genebuild);
 
   unless($name && $assembly && $taxon_id) {
     $self->throw("genome db must have a name, assembly, and taxon_id");
@@ -227,11 +228,10 @@ sub store{
 
   if(!$dbID) {
     #if the genome db has not been stored before, store it now
-    my $sth = $self->prepare("
-        INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild)
-        VALUES ('$name','$assembly', $taxon_id, $assembly_default, $genebuild)
-      ");
-
+    my $sql = "INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild) ". 
+              " VALUES ('$name','$assembly', $taxon_id, $assembly_default, '$genebuild')";
+    print("$sql\n");
+    my $sth = $self->prepare($sql);
     $sth->execute();
     $dbID = $sth->{'mysql_insertid'};
   }
