@@ -257,6 +257,8 @@ nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname ab
 12- Run muscle or clustalw over all the families
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Step 14 should be run also at the same time. It is not dependant on multiple alignments.
+
 cd ../clustalw
  
  Just create the number of directory needed by 10000 families and only for those with 2 or more members.
