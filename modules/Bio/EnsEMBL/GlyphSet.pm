@@ -78,43 +78,31 @@ sub glyphs {
 # push either a Glyph or a GlyphSet on to our list
 #
 sub push {
-    my ($self, $Glyph) = @_;
-    my ($gx, $gw, $gy, $gh);
-
+    my $self = shift;
+    my ($gx, $gx1, $gy, $gy1);
+    
+    foreach my $Glyph (@_) {
 	#########
 	# if we've got a single glyph:
 	#
-	push @{$self->{'glyphs'}}, $Glyph;
+    	push @{$self->{'glyphs'}}, $Glyph;
 
-	$gx = $Glyph->x();
-	$gw = $Glyph->width();
-	$gy = $Glyph->y();
-	$gh = $Glyph->height();
+    	$gx  = $Glyph->x();
+    	$gx1 = $gx + $Glyph->width();
+	    $gy  = $Glyph->y();
+    	$gy1 = $gy + $Glyph->height();
 
-    $self->minx($gx) if(!defined $self->minx());
-    $self->maxx($gx) if(!defined $self->maxx());
-    $self->miny($gy) if(!defined $self->miny());
-    $self->maxy($gy) if(!defined $self->maxy());
+        $self->minx($gx)  unless defined $self->minx();
+        $self->maxx($gx1) unless defined $self->maxx();
+        $self->miny($gy)  unless defined $self->miny();
+        $self->maxy($gy1) unless defined $self->maxy();
 
     #########
     # track max and min dimensions
-    #
-    # x
-    #
-    if($gx < $self->minx()) {
-		$self->minx($gx);
-    };
-	if(($gx + $gw) > $self->maxx()) {
-		$self->maxx($gx + $gw);
-    }
-
-    # y
-    # 
-    if($gy < $self->miny()) {
-		$self->miny($gy);
-    };
-	if(($gy + $gh) > $self->maxy()) {
-		$self->maxy($gy + $gh);
+        $self->minx($gx)  if $gx  < $self->minx();
+	    $self->maxx($gx1) if $gx1 > $self->maxx();
+        $self->miny($gy)  if $gy  < $self->miny();
+        $self->maxy($gy1) if $gy1 > $self->maxy();
     }
 }
 
@@ -122,48 +110,34 @@ sub push {
 # unshift a Glyph or GlyphSet onto our list
 #
 sub unshift {
-    my ($self, $Glyph) = @_;
+    my $self = shift;
 
-    my ($gx, $gw, $gy, $gh);
-
-    if($Glyph->isa('Bio::EnsEMBL::Glyph')) {
+    my ($gx, $gx1, $gy, $gy1);
+    
+    foreach my $Glyph (reverse @_) {
 	#########
 	# if we've got a single glyph:
 	#
-	unshift @{$self->{'glyphs'}}, $Glyph;
+    	if($Glyph->isa('Bio::EnsEMBL::Glyph')) {
+            unshift @{$self->{'glyphs'}}, $Glyph;
 
-	$gx = $Glyph->x();
-	$gw = $Glyph->width();
-	$gy = $Glyph->y();
-	$gh = $Glyph->height();
-
-    }
-
-    $self->minx($gx) if(!defined $self->minx());
-    $self->maxx($gx) if(!defined $self->maxx());
-    $self->miny($gy) if(!defined $self->miny());
-    $self->maxy($gy) if(!defined $self->maxy());
+        	$gx  = $Glyph->x();
+        	$gx1 = $gx + $Glyph->width();
+    	    $gy  = $Glyph->y();
+        	$gy1 = $gy + $Glyph->height();
+    
+            $self->minx($gx)  unless defined $self->minx();
+            $self->maxx($gx1) unless defined $self->maxx();
+            $self->miny($gy)  unless defined $self->miny();
+            $self->maxy($gy1) unless defined $self->maxy();
 
     #########
     # track max and min dimensions
-    #
-    # x
-    #
-    if($gx < $self->minx()) {
-		$self->minx($gx);
-    } 
-	if(($gx + $gw) > $self->maxx()) {
-		$self->maxx($gx + $gw);
-    }
-
-    # y
-    # 
-
-    if($gy < $self->miny()) {
-		$self->miny($gx);
-    }
-	if(($gy + $gh) > $self->maxy()) {
-		$self->maxy($gy + $gh);
+            $self->minx($gx)  if $gx  < $self->minx();
+    	    $self->maxx($gx1) if $gx1 > $self->maxx();
+            $self->miny($gy)  if $gy  < $self->miny();
+            $self->maxy($gy1) if $gy1 > $self->maxy();
+        }
     }
 }
 

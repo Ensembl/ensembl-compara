@@ -10,7 +10,9 @@ sub my_label { return "SpTrEMBL"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_by_strand("sptr",80,$self->glob_bp,$self->strand());
+    return $self->{'container'}->get_all_SimilarityFeatures_above_score(
+        "sptr", 80, $self->glob_bp
+    );
 }
 
 sub zmenu {

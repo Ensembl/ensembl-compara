@@ -98,8 +98,11 @@ TRANSCRIPT:
         ########## set colour for transcripts and test if we're highlighted or not
             my @dblinks = ();
             my $tid = $transcript->stable_id();
-            my $pid = $tid;
-                my $id = $tid;
+            my $p   = $transcript->translation;
+            print STDERR "TRANSLATION: $p\n";
+            print STDERR ":",$transcript->_translation_id(),"\n";
+            my $pid = $p ? $p->stable_id() : $tid;
+            my $id = $tid;
             my $highlight = $highlight_gene;
             my $superhighlight = exists $highlights{$tid} ? 1 : 0;
             eval {

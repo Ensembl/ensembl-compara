@@ -2,11 +2,12 @@ package Bio::EnsEMBL::GlyphSet_feature;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
+
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
     my ($self) = @_;
@@ -39,13 +40,22 @@ sub zmenu {
     };
 }
 
+sub href {
+    my ($self, $id ) = @_;
+
+    return undef;
+}
+
 sub _init {
     my ($self) = @_;
-
     my ($type)         = reverse split '::', ref($self) ;
     my $VirtualContig  = $self->{'container'};
     my $Config         = $self->{'config'};
     my $strand         = $self->strand();
+    my $strand_flag    = $Config->get($type, 'str');
+    return if( $strand_flag eq 'r' && $strand != -1 ||
+               $strand_flag eq 'f' && $strand != 1 );
+
     my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
@@ -58,25 +68,27 @@ sub _init {
     my $small_contig   = 0;
     my $dep            = $Config->get($type, 'dep');
 
-    my @glyphs;
-
-    foreach my $f ($self->features){
+    foreach my $f ( $self->features ){
+        next if( $strand_flag eq 'b' && $strand != $f->strand );
         $id{$f->id()} = [] unless $id{$f->id()};
-        push(@{$id{$f->id()}}, $f );
+        push @{$id{$f->id()}}, $f;
     }
 
-    my @glyphs;
+## No features show "empty track line" if option set....
+    $self->errorTrack( "No $type features in this region" )
+        unless( $Config->get('_settings','opt_empty_tracks')==0 || %id );
 
+## Now go through each feature in turn, drawing them
+    my @glyphs;
     foreach my $i (keys %id){
-        @{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
-        my $j = 1;
-    
         my $has_origin = undef;
     
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-            'zmenu'     => $self->zmenu( $i )
+            'zmenu'     => $self->zmenu( $i ),
+            'href'     => $self->href( $i )
         });
-        foreach my $f (@{$id{$i}}){
+
+        foreach my $f (sort { $a->start() <=> $b->start() } @{$id{$i}}){
             unless (defined $has_origin){
                 $Composite->x($f->start());
                 $Composite->y(0);
@@ -88,48 +100,40 @@ sub _init {
                 'width'      => $f->length(),
                 'height'     => $h,
                 'colour'     => $feature_colour,
-                'absolutey' => 1,
-                '_feature'     => $f, 
+                'absolutey'  => 1,
+                '_feature'   => $f, 
             });
             $Composite->push($glyph);
-            $j++;
         }
     
         if ($dep > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
-            $bump_start = 0 if ($bump_start < 0);
+            $bump_start    = 0 if $bump_start < 0;
             
             my $bump_end = $bump_start + ($Composite->width() * $pix_per_bp);
-            $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
+            $bump_end    = $bitmap_length if $bump_end > $bitmap_length;
             my $row = &Bump::bump_row(
-                $bump_start,
-                $bump_end,
-                $bitmap_length,
-                \@bitmap
+                $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
             );
 
-            next if ($row > $dep);
-            $Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
+            next if $row > $dep;
+            $Composite->y( $Composite->y() - 1.5 * $row * $h * $strand );
         
             # if we are bumped && on a large contig then draw frames around features....
             $Composite->bordercolour($feature_colour) unless ($small_contig);
         }
-        push @glyphs ,$Composite;
+        $self->push( $Composite );
         if(exists $highlights{$i}) {
             my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-                'x'        => $Composite->x() - 1/$pix_per_bp,
-                'y'        => $Composite->y()-1,
-                'width'        => $Composite->width() + 2/$pix_per_bp,
+                'x'         => $Composite->x() - 1/$pix_per_bp,
+                'y'         => $Composite->y() - 1,
+                'width'     => $Composite->width() + 2/$pix_per_bp,
                 'height'    => $h + 2,
                 'colour'    => $hi_colour,
                 'absolutey' => 1,
             });
-            $self->push($glyph);
+            $self->unshift( $glyph );
         }
-    }
-
-    foreach ( @glyphs ) {
-        $self->push($_);
     }
 }
 

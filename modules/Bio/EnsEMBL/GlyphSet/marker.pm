@@ -1,55 +1,21 @@
 package Bio::EnsEMBL::GlyphSet::marker;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bump;
+use Bio::EnsEMBL::GlyphSet_simple;
+@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub init_label {
+sub my_label { return "Markers"; }
+
+sub features {
     my ($self) = @_;
-
-    my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'Markers',
-	'font'      => 'Small',
-	'absolutey' => 1,
-    });
-    $self->label($label);
+    return $self->{'container'}->get_landmark_MarkerFeatures();
 }
 
-sub _init {
-    my ($self) = @_;
-
-    return unless ($self->strand() == -1);
-
-    my $VirtualContig  = $self->{'container'};
-    my $Config         = $self->{'config'};
-    my $h              = 8;
-    if ($Config->script() eq "contigviewtop"){ $h =4;}
-
-    my $highlights     = $self->highlights();
-    my $feature_colour = $Config->get('marker','col');
-
-    foreach my $f ($VirtualContig->get_landmark_MarkerFeatures()){
-	my $fid = $f->id();
-	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'      	=> $f->start(),
-	    'y'      	=> 0,
-	    'width'  	=> $f->length(),
-	    'height' 	=> $h,
-	    'colour' 	=> $feature_colour,
-	    'absolutey' => 1,
-	    'zmenu'     => { 
-    		'caption' => $fid,
-	    	'Marker info' => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
-	    },
-        'href'      => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
-	});
-	$self->push($glyph);
-    }
+sub zmenu {
+    my ($self, $id ) = @_;
+    return { 
+        'caption' => $id,
+	    'Marker info' => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$id",
+    };
 }
-
 1;
