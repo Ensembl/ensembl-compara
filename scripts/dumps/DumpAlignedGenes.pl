@@ -437,8 +437,7 @@ my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
     );
 
 # Get all the genes from the source species and map them on the query genome
-my $mapped_genes = $align_slice->get_all_Genes_by_genome_db_id(
-        $source_genome_db->dbID,
+my $mapped_genes = $align_slice->{slices}->{$source_genome_db->name}->get_all_Genes(
         -MAX_REPETITION_LENGTH => 100,
         -MAX_GAP_LENGTH => 100,
         -MAX_INTRON_LENGTH => 100000,
@@ -455,6 +454,13 @@ my $mapped_genes = $align_slice->get_all_Genes_by_genome_db_id(
 ## Print the aligned genes on the genomic sequence they are aligned to
 ##
 
+$meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+    $species, 'core', 'MetaContainer');
+throw("Registry configuration file has no data for connecting to <$species>")
+    if (!$meta_container_adaptor);
+my $query_binomial_id = $meta_container_adaptor->get_Species->binomial;
+my $query_genome_db = $genome_db_adaptor->fetch_by_name_assembly($query_binomial_id);
+
 foreach my $gene (sort {$a->stable_id cmp $b->stable_id} @$mapped_genes) {
   print "GENE: ", $gene->stable_id,
       " (", ($seq_region_start + $gene->start), "-", ($seq_region_start + $gene->end), ")\n";
@@ -465,19 +471,27 @@ foreach my $gene (sort {$a->stable_id cmp $b->stable_id} @$mapped_genes) {
     print " + TRANSLATION: (",
         ($seq_region_start + $transcript->coding_region_start), "-",
         ($seq_region_start + $transcript->coding_region_end), ")\n" if ($transcript->translation);
-    foreach my $exon (sort {$a->stable_id cmp $b->stable_id} @{$transcript->get_all_Exons}) {
-      print "   + EXON: ", $exon->stable_id,
-          " (", ($seq_region_start + $exon->start), "-", ($seq_region_start + $exon->end), ") [",
-          $exon->strand, "] -- (", $exon->get_aligned_start, "-", $exon->get_aligned_end, ")  ",
-          $exon->cigar_line, "\n";
-        
+    foreach my $exon (@{$transcript->get_all_Exons}) {
+      if (defined($exon->start)) {
+        print "   + EXON: ", $exon->stable_id, " (", ($exon->start or "***"), "-", ($exon->end or "***"), ") [",
+            $exon->strand, "] -- (", $exon->get_aligned_start, "-", $exon->get_aligned_end, ")  ",
+            " -- (", $exon->exon->start, " - ", $exon->exon->end, " ", $exon->exon->strand, ")   -- ",
+            ($exon->original_rank or "*"), " ",
+            $exon->cigar_line, "\n";
+      } else {
+        print "   + EXON: ", $exon->stable_id, "    -- ",
+            "(", $exon->exon->start, " - ", $exon->exon->end, " ", $exon->exon->strand, ")   -- ",
+            $exon->original_rank, "\n";
+        next;
+      }
+
       my $seq;
       if ($exon->strand == 1) {
         $seq = ("." x 50).$exon->seq->seq.("." x 50);
       } else {
         $seq = ("." x 50).$exon->seq->revcom->seq.("." x 50);
       }
-      my $aseq = $align_slice->reference_Slice->subseq($exon->start-50, $exon->end+50);
+      my $aseq = $align_slice->{slices}->{$query_genome_db->name}->subseq($exon->start-50, $exon->end+50);
       $seq =~ s/(.{80})/$1\n/g;
       $aseq =~ s/(.{80})/$1\n/g;
       $seq =~ s/(.{20})/$1 /g;
