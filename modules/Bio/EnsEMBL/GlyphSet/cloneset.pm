@@ -40,6 +40,8 @@ sub _init {
     my $col2                    = $Config->get('cloneset', 'col2');
     my $lab1                    = $Config->get('cloneset', 'lab1');
     my $lab2                    = $Config->get('cloneset', 'lab2');
+	my $blue = $Config->colourmap->id_by_name('contigblue1');
+	my $green = $Config->colourmap->id_by_name('black');
 
 	my $cloneset = $self->{'container'}->dbobj->_db_handle->selectall_arrayref(
 		"select cs_c.cloneid, cs_c.name
@@ -50,15 +52,17 @@ sub _init {
 	my %hash;
 	%hash = map { @$_ } @$cloneset;
 
-    my @asm_clones = $vc->get_all_FPCClones();
+    my @asm_clones = $vc->get_all_FPCClones( 'FISH' );
 
 	my @cloneset_clones = map { exists $hash{$_->embl_acc} ? ([$_, $hash{$_->embl_acc}]) : () }
 		@asm_clones;
 
 	my $vc_start = $vc->_global_start;
+    my @fish_clones;
     if (@cloneset_clones){
 
 	foreach my $clone_ref ( @cloneset_clones	 ) {
+        my $fish_clone;
 		my $clone   = $clone_ref->[0];
 		my $synonym = $clone_ref->[1];
 	    my $id    	= $clone->name();		
@@ -75,18 +79,21 @@ sub _init {
 			$lab  = $lab2;
 	    }
 			
+        my $fish = $clone->FISHmap(); $fish = "$fish";
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 		'y'            => 0,
 		'x'            => $start,
 		'absolutey'    => 1,
 		'zmenu'     => {
-			'caption' 				 => '$id',
+			'caption' 				 => "$id",
 			"EMBL ID: ".$clone->embl_acc() => '',
 			"synonym: $synonym" 	 => '',
 			'Jump to Contigview' =>
 			"/$ENV{'ENSEMBL_SPECIES'}/contigview?cloneid=".$clone->embl_acc,
 			"loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
-			"length: ".($clone->length())
+			"length: ".($clone->length())=> '',
+            "FISH: $fish" => ''
+
 		}
 	    });
 
@@ -99,6 +106,18 @@ sub _init {
 		'absolutey' => 1
 	    });
 	    $Composite->push($glyph);
+        if($fish ne '') {
+            my $triangle_end =  $start + 3/$pix_per_bp;
+            $triangle_end = $end if( $triangle_end > $end);
+    	    $fish_clone = new Bio::EnsEMBL::Glyph::Poly({
+                'points'    => [ $start, $ystart+2,
+                                 $start, $ystart+5,
+                                 $triangle_end, $ystart+2  ],
+    		    'colour'    => $fish=~/^\*/ ? $green : $blue,
+        		'absolutey' => 1,
+
+    	    });
+        }
 
 	    my $bp_textwidth = $w * length($synonym) * 1.1; # add 10% for scaling text
 	    unless ($bp_textwidth > ($end - $start)){
@@ -129,11 +148,16 @@ sub _init {
 					  );
 		next if ($row > $dep);
             	$Composite->y($Composite->y() + (1.4 * $row * $h));
+                if($fish_clone) {
+                    $fish_clone->transform( {'translatey' => (1.4 * $row * $h)} );
+                }
 	    }
-
+        push @fish_clones, $fish_clone if($fish_clone);
+    
 	    $self->push($Composite); 			
 	    $i++;
     	}
+        foreach( @fish_clones ) { $self->push($_); }		
 		
     }
 }
