@@ -6,7 +6,9 @@ use Bio::EnsEMBL::GlyphSet::vega_transcript_lite;
 
 my %legend_map = (
     'Known'                 => 'Known gene',
+    'Known_in_progress'     => 'Known gene (in progress)',
     'Novel_CDS'             => 'Novel CDS',
+    'Novel_CDS_in_progress' => 'Novel CDS (in progress)',
     'Putative'              => 'Putative',
     'Novel_Transcript'      => 'Novel transcript',
     'Pseudogene'            => 'Pseudogene',
@@ -23,7 +25,6 @@ sub features {
     my ($self) = @_;
     my $author = $self->my_config('author');
 
-    my $r;
     if ($author) {
         # if author is defined in UserConfig, fetch only transcripts by this
         # author

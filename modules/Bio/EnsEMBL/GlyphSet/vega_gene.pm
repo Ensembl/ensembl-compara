@@ -26,7 +26,9 @@ sub my_label {
 sub legend_captions {
   return {
      'Known'                 => 'Known gene',
+     'Known_in_progress'     => 'Known gene (in progress)',
      'Novel_CDS'             => 'Novel CDS',
+     'Novel_CDS_in_progress' => 'Novel CDS (in progress)',
      'Putative'              => 'Putative',
      'Novel_Transcript'      => 'Novel transcript',
      'Pseudogene'            => 'Pseudogene',
