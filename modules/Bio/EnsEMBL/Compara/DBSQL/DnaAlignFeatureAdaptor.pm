@@ -224,8 +224,8 @@ sub fetch_all_by_Slice {
     my $qy_gdb = 
       $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($qy_species);
     $qy_assembly = $qy_gdb->assembly;
-    warning("qy_assembly was undef. Queried the default " .
-            "one for $qy_species = $qy_assembly\n");
+#    warning("qy_assembly was undef. Queried the default " .
+#            "one for $qy_species = $qy_assembly\n");
   }
 
   my $slice_adaptor = $orig_slice->adaptor();
