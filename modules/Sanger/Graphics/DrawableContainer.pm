@@ -223,7 +223,8 @@ sub new {
         $glyphset->__init();
       };
       ## don't waste any more time on this row if there's nothing in it
-      if($@ || scalar @{$glyphset->{'glyphs'}} ==0) {
+      if( $@ || scalar @{$glyphset->{'glyphs'} } ==0 ) {
+	if( $@ ){ warn( $@ ) }
         $glyphset->_dump('rendered' => 'no');
         next;
       };
