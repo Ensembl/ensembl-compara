@@ -92,7 +92,7 @@ my $coord_system_id = $array_ref->[0];
 # populate assembly and assembly_exception tables
 foreach my $seq_region (@seq_regions) {
   my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
-  $dbh->do("insert into assembly select a.* from $srcDB.seq_region s,$srcDB.assembly a where s.coord_system_id=$coord_system_id and s.name=$seq_region_name and s.seq_region_id=a.asm_seq_region_id and a.asm_start<$seq_region_end and a.asm_end>$seq_region_start");
+  $dbh->do("insert into assembly select a.* from $srcDB.seq_region s,$srcDB.assembly a where s.coord_system_id=$coord_system_id and s.name='$seq_region_name' and s.seq_region_id=a.asm_seq_region_id and a.asm_start<$seq_region_end and a.asm_end>$seq_region_start");
 }
 $dbh->do("insert ignore into assembly_exception select ax.* from $srcDB.assembly_exception ax,assembly a where ax.seq_region_id=a.asm_seq_region_id");
 
@@ -116,7 +116,7 @@ $dbh->do("insert ignore into repeat_consensus select rc.* from repeat_feature rf
 # transcripts are stored at top_level
 foreach my $seq_region (@seq_regions) {
   my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
-  $dbh->do("insert into transcript select t.* from seq_region s, $srcDB.transcript t where s.seq_region_id=t.seq_region_id and s.coord_system_id=$coord_system_id and s.name=$seq_region_name and t.seq_region_end<$seq_region_end and t.seq_region_end>$seq_region_start;");
+  $dbh->do("insert into transcript select t.* from seq_region s, $srcDB.transcript t where s.seq_region_id=t.seq_region_id and s.coord_system_id=$coord_system_id and s.name='$seq_region_name' and t.seq_region_end<$seq_region_end and t.seq_region_end>$seq_region_start;");
 }
 $dbh->do("insert into transcript_attrib select ta.* from transcript t, $srcDB.transcript_attrib ta where t.transcript_id=ta.transcript_id");
 $dbh->do ("insert into transcript_stable_id select ts.* from transcript t, $srcDB.transcript_stable_id ts where t.transcript_id=ts.transcript_id");
