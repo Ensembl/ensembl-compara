@@ -22,12 +22,19 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-    #return unless ($self->strand() == -1);
-	
+
     my $Config         	= $self->{'config'};
+    my $das_name        = $self->das_name();
+	my $strand          = $Config->get($das_name, 'str');
+
+# If strand is 'r' or 'f' then we display everything on one strand (either
+# at the top or at the bottom!
+
+    return if( $strand eq 'r' && $self->strand() != -1 || $strand eq 'f' && $self->strand() != 1 );
+	
     my $cmap            = $Config->colourmap();
-    my $feature_colour 	= $Config->get($self->das_name(), 'col') || $Config->colourmap()->id_by_name('contigblue1');
-	my $dep             = $Config->get($self->das_name(), 'dep');
+    my $feature_colour 	= $Config->get($das_name, 'col') || $Config->colourmap()->id_by_name('contigblue1');
+	my $dep             = $Config->get($das_name, 'dep');
     my $vc 		        = $self->{'container'};
     my $border          = $Config->colourmap()->id_by_name('black');
     my $red             = $Config->colourmap()->id_by_name('red');
@@ -40,9 +47,12 @@ sub _init {
     $w *= $length/($length-1);
     
     my @features;
-    eval{ @features = $vc->get_all_DASFeatures(); };
+    eval{
+        @features = $vc->get_all_DASFeatures();
+    };
     if($@) {
         print STDERR "----------\n",$@,"---------\n";
+        return;
     }
     my $link_text = $self->{'extras'}->{'linktext'} || 'Additional info';
 	my $ext_url;
@@ -58,26 +68,30 @@ sub _init {
 	
     my $text = '';
     my $empty_flag =1;
+
+
 	foreach my $f(@features){
-    	next unless ( $f->strand() == $self->strand() );
+## Display if not stranded OR
     	next unless ( $f->das_dsn() eq $self->{'extras'}->{'dsn'} );
-        
-        ### A general list of features we don't want to draw via DAS ###
+        if($f->id eq '__ERROR__') {
+            $text = 'Error retrieving '.$self->{'extras'}->{'caption'}." features (".$f->id.")";
+            next;
+        }
         next if ($f->das_type_id() =~ /contig/i);       # raw_contigs
         next if ($f->das_type_id() =~ /karyotype/i);    # karyotype bands
+        $empty_flag =0; # We have a feature (its on one of the strands!)
+    	next if ( $strand eq 'b' && $f->strand() != $self->strand() );
+        
+        ### A general list of features we don't want to draw via DAS ###
        
 		my $id      = "ID: " .  $f->das_id();
-        $empty_flag = 0;
         
  
 		#print STDERR "Drawing feature: ",$f->das_id(),' - ',$f->das_start(), " - ", $f->das_end(), " - ", $feature_colour,"\n";
         ### if there is an error in the retrieval of the DAS source then
         ### a feature with ->id "__ERROR__" is added to the feature list
         ### this forces an error text to be displayed below [ error message is in ->das_id() ]
-        if($f->id eq '__ERROR__') {
-            $text = 'Error retrieving '.$self->{'extras'}->{'caption'}." features ($id)";
-            next;
-        }
+        $empty_flag = 0;
 
 		my $zmenu = {
                 	'caption'                       => $self->{'extras'}->{'label'},
@@ -115,40 +129,38 @@ sub _init {
 		});
 		$Composite->push($glyph);
         #$glyph->bordercolour($border);
-        
-        $text = 'No '.$self->{'extras'}->{'caption'}.' features in this region' if($empty_flag);
-        unless($text eq '') {
-            my $bp_textwidth = $w * length($text);
-            my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-                'x'         => int(($length - $bp_textwidth)/2),
-                'y'         => 0,
-    	    	'height' 	=> 8,
-                'font'      => 'Tiny',
-                'colour'    => $red,
-                'text'      => $text,
-                'absolutey' => 1,
-        });
-		$Composite->push($tglyph);
-    }
-
 	    if ($dep > 0) { # we bump
-            	my $bump_start = int($Composite->x() * $pix_per_bp);
-            	$bump_start = 0 if ($bump_start < 0);
+            my $bump_start = int($Composite->x() * $pix_per_bp);
+            $bump_start = 0 if ($bump_start < 0);
 
-            	my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
-            	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            	my $row = &Bump::bump_row(
-					  $bump_start,
-					  $bump_end,
-					  $bitmap_length,
-					  \@bitmap
-					  );
-		next if ($row > $dep);
-            	$Composite->y($Composite->y() + (1.4 * $row * $h));
+            my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
+            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
+            my $row = &Bump::bump_row(
+			    $bump_start,
+				$bump_end,
+				$bitmap_length,
+				\@bitmap
+            );
+    		next if ($row > $dep);
+            $Composite->y($Composite->y() + (1.4 * $row * $h));
 	    }
 	    $self->push($Composite);     
     }
-        
+    
+    $text = 'No '.$self->{'extras'}->{'caption'}.' features in this region' if($empty_flag);
+    unless($text eq '') {
+        my $bp_textwidth = $w * length($text);
+        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+            'x'         => int(($length - $bp_textwidth)/2),
+            'y'         => 0,
+    	    'height' 	=> 8,
+            'font'      => 'Tiny',
+            'colour'    => $red,
+            'text'      => $text,
+            'absolutey' => 1,
+        });
+    	$self->push($tglyph);
+    }
 }
 
 sub das_name {
