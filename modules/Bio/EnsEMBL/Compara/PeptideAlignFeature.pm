@@ -43,8 +43,14 @@ sub init_from_feature {
     throw("arg must be a [Bio::EnsEMBL::BaseAlignFeature] not a [$feature]");
   }
 
-  $self->query_member->stable_id($feature->seqname);
-  $self->hit_member->stable_id($feature->hseqname);
+  my ($source_name, $stable_id) = split(/:/, $feature->seqname);
+  $self->query_member->source_name($source_name);
+  $self->query_member->stable_id($stable_id);
+
+  ($source_name, $stable_id) = split(/:/, $feature->hseqname);
+  $self->hit_member->source_name($source_name);
+  $self->hit_member->stable_id($stable_id);
+
   $self->analysis($feature->analysis);
 
   $self->qstart($feature->start);

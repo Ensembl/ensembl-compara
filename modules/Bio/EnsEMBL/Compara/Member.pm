@@ -496,9 +496,10 @@ sub bioseq {
   throw("Member stable_id undefined") unless defined($self->stable_id());
   throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
 
+  my $seqname = $self->source_name . ":" . $self->stable_id;
   my $seq = Bio::Seq->new(-seq        => $self->sequence(),
-                          -id         => $self->stable_id(),
-                          -primary_id => $self->stable_id(),
+                          -id         => $seqname,
+                          -primary_id => $seqname,
                           -desc       => $self->description(),
                          );
   return $seq;

@@ -243,13 +243,13 @@ sub _store_PAFS {
     if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
 
       unless($paf->query_member->dbID) {
-        my $qy_member  = $memberDBA->fetch_by_source_stable_id('ENSEMBLPEP', $paf->query_member->stable_id);
+        my $qy_member  = $memberDBA->fetch_by_source_stable_id($paf->query_member->source_name, $paf->query_member->stable_id);
         if($qy_member) {
           $paf->query_member($qy_member);
         }
       }
       unless($paf->hit_member->dbID) {
-        my $hit_member = $memberDBA->fetch_by_source_stable_id('ENSEMBLPEP', $paf->hit_member->stable_id);
+        my $hit_member = $memberDBA->fetch_by_source_stable_id($paf->hit_member->source_name, $paf->hit_member->stable_id);
         if($hit_member) {
           $paf->hit_member($hit_member);
         }

@@ -356,7 +356,7 @@ sub dumpFastaForSubset {
     $self->throw("subset must be in database and dbID defined");
   }
   
-  my $sql = "SELECT member.stable_id, member.description, sequence.sequence " .
+  my $sql = "SELECT member.source_name, member.stable_id, member.description, sequence.sequence " .
             " FROM member, sequence, subset_member " .
             " WHERE subset_member.subset_id = " . $subset->dbID .
             " AND member.member_id=subset_member.member_id ".
@@ -370,12 +370,12 @@ sub dumpFastaForSubset {
   my $sth = $self->prepare( $sql );
   $sth->execute();
 
-  my ($stable_id, $description, $sequence);
-  $sth->bind_columns( undef, \$stable_id, \$description, \$sequence );
+  my ($source_name, $stable_id, $description, $sequence);
+  $sth->bind_columns( undef, \$source_name, \$stable_id, \$description, \$sequence );
 
   while( $sth->fetch() ) {
     $sequence =~ s/(.{72})/$1\n/g;
-    print FASTAFILE ">$stable_id $description\n$sequence\n";
+    print FASTAFILE ">$source_name:$stable_id $description\n$sequence\n";
   }
   close(FASTAFILE);
 
