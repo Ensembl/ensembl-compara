@@ -110,7 +110,6 @@ sub dbID {
    return $self->{'dbID'};
 
 }
-
 =head2 peptide_sequence_id
 
  Title   : peptide_sequence_id
@@ -130,6 +129,7 @@ sub peptide_sequence_id{
    return $self->{'peptide_sequence_id'};
 
 }
+
 
 =head2 external_dbname
 
@@ -211,7 +211,7 @@ sub seq {
      $self->{'seq'} = $value;
    }
    if (! exists ($self->{'seq'})){
-     $self->throw("No ProteinAdaptor attached to this Protein object. Can't fetch peptide sequence");
+     $self->throw("No ProteinAdaptor attached to this Protein object. Can't fetch peptide sequence") unless defined($self->adaptor);
      $self->{'seq'} = $self->adaptor->fetch_peptide_seq($self->peptide_sequence_id);
    }
    return $self->{'seq'};
@@ -278,25 +278,6 @@ sub strand{
 
 }
 
-=head2 seq
- 
- Title   : seq
- Usage   : $seq = $obj->seq()
- Function: Returns the sequence as a Bio::PrimarySeq obj.
- Returns : Bio::PrimarySeq
- Args    : none
- 
-=cut
- 
-sub seq {
-   my ($self) = @_;
-
-   if (!defined $self->{'seq'}){
-        $self->{'seq'} = $self->proteinDB->fetch_peptide_seq($self->external_id);
-  }
-   return $self->{'seq'};
- 
-}
 
 =head2 dnafrag
  Title   : dnafrag
