@@ -9,8 +9,13 @@ sub my_label { return "tRNA"; }
 sub features {
     my ($self) = @_;
     return $self->{'container'}->get_all_SimilarityFeatures_above_score(
-        "tRNA",25,$self->glob_bp()
+        "tRNA", 25, $self->glob_bp()
     );
+}
+
+sub href {
+    my ($self, $id ) = @_;
+    return undef;
 }
 
 sub zmenu {

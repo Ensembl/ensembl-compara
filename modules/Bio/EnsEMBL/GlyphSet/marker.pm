@@ -11,11 +11,15 @@ sub features {
     return $self->{'container'}->get_landmark_MarkerFeatures();
 }
 
+sub href {
+    my ($self, $f ) = @_;
+    return "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=".$f->id;
+}
 sub zmenu {
-    my ($self, $id ) = @_;
+    my ($self, $f ) = @_;
     return { 
-        'caption' => $id,
-	    'Marker info' => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$id",
+        'caption' => $f->id,
+	    'Marker info' => $self->href($f)
     };
 }
 1;
