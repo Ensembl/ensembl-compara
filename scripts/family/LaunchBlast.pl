@@ -35,7 +35,7 @@ my $qy_file = "/tmp/qy.$rand";
 my $blast_file = "/tmp/blast.$rand";
 my $raw_file = "/tmp/raw.$rand";
 
-unless(system("$fastafetch_executable $fastadb $fastaindex $idqy > $qy_file") == 0) {
+unless(system("$fastafetch_executable $fastadb $fastaindex $idqy |grep -v \"^Message\" > $qy_file") == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in $fastafetch_executable, $!\n";
 } 
