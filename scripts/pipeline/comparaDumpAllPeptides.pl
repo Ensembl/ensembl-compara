@@ -141,7 +141,7 @@ sub dump_fasta {
     or die "Could open $descfile for output\n";
   print("writing fasta to loc '$fastafile'\n");
 
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  my $sth = $self->{'comparaDBA'}->dbc->prepare( $sql );
   $sth->execute();
 
   my ($stable_id, $description, $sequence, $taxon_id);
@@ -172,7 +172,7 @@ sub get_taxon_descriptions {
   my ($taxon_id, $genus, $species, $sub_species, $common_name, $classification);
   my $sql = "SELECT taxon_id, genus, species, sub_species, common_name, classification ".
             " FROM taxon";
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  my $sth = $self->{'comparaDBA'}->dbc->prepare( $sql );
   $sth->execute();
   $sth->bind_columns(\$taxon_id, \$genus, \$species, \$sub_species, \$common_name, \$classification );
   while($sth->fetch()) {
@@ -185,7 +185,7 @@ sub get_taxon_descriptions {
                     "taxon_common_name=$common_name;".
                     "taxon_classification=$classification;";
     $self->{'taxon_hash'}->{$taxon_id} = $taxonDesc;
-    print("$taxonDesc\n");
+#    print("$taxonDesc\n");
   }
   $sth->finish;
 }
