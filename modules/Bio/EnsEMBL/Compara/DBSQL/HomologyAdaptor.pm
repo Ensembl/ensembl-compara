@@ -8,35 +8,80 @@ use Bio::EnsEMBL::Compara::Homology;
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
+=head2 fetch_homologues_of_gene_in_species
 
-
-
-=head2 get_homologues_by_species_gene
-
- Title   : get_homologues_by_species_gene
- Usage   : $db->get_homologues_by_species_gene('Homo_sapiens','ENSG00000218116','Mus_musculus')
- Function: finds homologues of a given transcript
+ Title   : fetch_homologues_of_gene_in_species
+ Usage   : $db->fetch_homologues_of_gene_in_species('Homo_sapiens','ENSG00000218116','Mus_musculus')
+ Function: finds homologues, in a certain species, of a given gene
  Example :
- Returns : array of transcript stable ids
- Args    : species, transcript stable name, homologous species
+ Returns : array of homology objects (Bio::EnsEMBL::Compara::Homology)
+ Args    : species gene is from, gene stable name, species to find homology in
 
 =cut
 
-sub get_homologues_by_species_gene  {
+sub fetch_homologues_of_gene_in_species{
 
     my ($self,$species,$gene,$hspecies)=@_;
 
     my $q = "select grm.gene_relationship_id 
-             from gene_relationship_member grm, gene_relationship gr, genome_db gd 
-             where gd.genome_db_id=grm.genome_db_id and gr.gene_relationship_id=grm.gene_relationship_id 
-             and gd.name='$species' and grm.member_stable_id='$gene' group by grm.gene_relationship_id";
-
+             from   gene_relationship_member grm, 
+		    genome_db gd 
+             where  gd.genome_db_id = grm.genome_db_id 
+             and    gd.name = '$species' 
+	     and    grm.member_stable_id = '$gene' 
+	     group by grm.gene_relationship_id";
 
     my @relationshipids = $self->_get_relationships($q);
 
     my @genes;
     foreach my $rel (@relationshipids) {
-      push @genes, $self->_get_homologues_by_relationship_internal_ids($hspecies,$rel);
+      push @genes, $self->_fetch_homologues_by_species_relationship_id($hspecies,$rel);
+    }
+
+    return @genes;
+
+}                               
+
+
+=head2 fetch_homologues_of_gene
+
+ Title   : fetch_homologues_of_gene
+ Usage   : $db->fetch_homologues_of_gene('Homo_sapiens','ENSG00000218116')
+ Function: finds homologues of a given gene
+ Example :
+ Returns : a hash of species names against arrays of homology objects
+ Args    : species gene is from, gene stable name
+
+=cut
+
+sub fetch_homologues_of_gene {
+
+    my ($self,$species,$gene)=@_;
+
+    my $q = "select grm.gene_relationship_id 
+             from   gene_relationship_member grm, 
+		    genome_db gd 
+             where  gd.genome_db_id = grm.genome_db_id 
+             and    gd.name = '$species' 
+	     and    grm.member_stable_id = '$gene' 
+	     group by grm.gene_relationship_id";
+
+    my @relationshipids = $self->_get_relationships($q);
+
+    my @genes;
+    foreach my $rel (@relationshipids) {
+	my $q ="select  grm.member_stable_id,
+			grm.chrom_start,
+			grm.chrom_end,
+			grm.chromosome,  
+			gd.name
+		from    gene_relationship_member grm,
+			genome_db gd
+		where   grm.gene_relationship_id = $rel 
+		and	grm.genome_db_id = gd.genome_db_id 
+		and NOT	(grm.member_stable_id = '$gene')";
+
+	push @genes,$self->_get_homologues($q); 
     }
 
     return @genes;
@@ -60,11 +105,12 @@ sub list_stable_ids_from_species  {
 
     my ($self,$species)=@_;
 
-    my $q ="select grm.member_stable_id 
-            from gene_relationship_member grm,genome_db gd 
-            where gd.genome_db_id=grm.genome_db_id and gd.name='$species'";
+    my $q ="select  grm.member_stable_id 
+            from    gene_relationship_member grm,
+		    genome_db gd 
+            where   gd.genome_db_id = grm.genome_db_id 
+	    and	    gd.name = '$species'";
 
-    
     my @genes;
 
     my $sth = $self->prepare($q);
@@ -79,13 +125,19 @@ sub list_stable_ids_from_species  {
 }                               
 
 
-sub _get_homologues_by_relationship_internal_ids{
+sub _fetch_homologues_by_species_relationship_id{
     my ($self,$hspecies,$internal_id)=@_;
 
-    my $q ="select grm.member_stable_id,grm.chrom_start,grm.chrom_end,grm.chromosome  
-            from gene_relationship_member grm,genome_db gd 
-            where gd.genome_db_id=grm.genome_db_id and gd.name='$hspecies' 
-            and grm.gene_relationship_id=$internal_id";
+    my $q ="select  grm.member_stable_id,
+		    grm.chrom_start,
+		    grm.chrom_end,
+		    grm.chromosome,  
+		    gd.name
+            from    gene_relationship_member grm,
+		    genome_db gd 
+            where   gd.genome_db_id = grm.genome_db_id 
+	    and	    gd.name = '$hspecies' 
+            and	    grm.gene_relationship_id = $internal_id";
 
 
     my @genes=$self->_get_homologues($q);
@@ -102,6 +154,7 @@ sub _get_homologues {
     my $id;
     while (my $ref = $q->fetchrow_hashref) {
 	my $homol= Bio::EnsEMBL::Compara::Homology->new();
+	$homol->species($ref->{'name'});
 	$homol->stable_id($ref->{'member_stable_id'});
 	$homol->chrom_start($ref->{'chrom_start'});
         $homol->chrom_end($ref->{'chrom_end'});
