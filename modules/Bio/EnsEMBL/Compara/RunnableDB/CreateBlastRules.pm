@@ -91,6 +91,10 @@ sub fetch_input {
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
+  $self->{'buildHomology'} = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('BuildHomology');
+  throw("BuildHomology analysis is missing, can't proceed\n")
+    unless(defined($self->{'buildHomology'}));
+
   return 1;
 }
 
@@ -143,6 +147,7 @@ sub createAllBlastRules
   foreach my $submitAnalysis (@{$analysisList}) {
     next unless($submitAnalysis->logic_name =~ /SubmitPep_(.*)/);
     my $blast_name = "blast_".$1;
+    printf("found submit %s\n", $submitAnalysis->logic_name);
     push @submitList, $submitAnalysis;
     $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($submitAnalysis, $self->{'buildHomology'});
   
