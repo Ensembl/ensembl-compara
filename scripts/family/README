@@ -96,8 +96,10 @@ That will dump a FASTA file with this kind of header
 6- concatenate all fasta and desc files
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-cat *.desc | gzip -c > metazoa_20_1.desc.gz
-cat *.pep > /data/blastdb/Ensembl/family/metazoa_20_1.pep
+gzip *.desc
+gunzip -c *.desc.gz | gzip -c > metazoa_20_1.desc.gz
+gzip *.pep
+gunzip -c *.pep.gz > /data/blastdb/Ensembl/family/metazoa_20_1.pep
 fastaindex /data/blastdb/Ensembl/family/metazoa_20_1.pep /data/blastdb/Ensembl/family/metazoa_20_1.index
 
 6A- removing redundancy in the fasta file
@@ -105,7 +107,7 @@ fastaindex /data/blastdb/Ensembl/family/metazoa_20_1.pep /data/blastdb/Ensembl/f
 
 Remove redundant entries before running the blastp
 
-ensembl-compara/scripts/family/GenerateNonRedundantSet.pl /data/blastdb/Ensembl/family/metazoa_20_1.pep \
+~/src/ensembl_main/ensembl-compara/scripts/family/GenerateNonRedudantSet.pl /data/blastdb/Ensembl/family/metazoa_20_1.pep \
 /data/blastdb/Ensembl/family/metazoa_20_1.index /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep \
 metazoa_20_1.RedundantIds
 
@@ -134,12 +136,12 @@ fastaindex metazoa_20_1_nr.pep metazoa_20_1_nr.index
 7- Prepare files to run blastp
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-cd ../blast_in
+cd -;cd ../blast_in
 
  Distribute peptide ids in several files. Each of them will contain 100 ids,
  and would correspond to one blastp job.
 
-~/src/ensembl/ensembl-compara/scripts/family/SplitPeptides.pl /data/blastdb/Ensembl/family/metazoa_20_1_nr.index
+~/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl /data/blastdb/Ensembl/family/metazoa_20_1_nr.index
 
   The created files are named: PeptideSet.1, PeptideSet.2, ..., PeptideSet.n
   so that they are suitable for LSF job array creation. 
@@ -165,7 +167,7 @@ my $blast_parser_executable
 
 
 ls|wc -l
-      3806
+      7286
 
  will tell you how many jobs have to be run. Just have a try with one to make sure everything is ok.
 
@@ -174,7 +176,7 @@ ls|wc -l
 
 echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
 
- In the kind of construction the full path of each file/script is needed.
+ In this kind of construction the full path of each file/script is needed.
  The -Rncbi in the bsub, is there to select machine where the NCBI blast database is accessble locally, basically the ecs and rlx nodes.
 
  When it is complete, you should get 2 new files
@@ -195,9 +197,9 @@ ls |while read i;do echo -n $i" ";awk '/^Subject/ && $NF=="Done" {print $NF;exit
  Then run the whole lot of jobs
 
 cd ../blast_in
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -JFamilyBlastp"[2-3806]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -JFamilyBlastp"[2-7286]" -o ../blast_out/PeptideSet.%I.out
 
- Rerun the failed jobs. Do not forget to delete the output files .out .err and .blast_tribe.gz
+ Rerun the failed jobs in ../blast_out.
 
 9- Build the matrix needed by mcl and check it for symmetry
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,17 +222,15 @@ dimensions 467417x467417
 
 ln -s ../srs/metazoa_20_1_nr.tab family_20_1.tab
 
- Use the Tim's command, with lsrcp, <<EOF, etc...
-
-bsub -q bigmem -Ralpha /nfs/acari/abel/bin/mcxassemble -b family_20_1 -r max
+~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_20_1
 
  That will generate a family_20_1.sym matrix file. Check the matrix for symmetry
 
-bsub -q bigmem -Ralpha /nfs/acari/abel/bin/mcx /family_20_1.sym lm tp -1 mul add /family_20_1.sym.check wm
+~/src/ensembl_main/ensembl-compara/scripts/family/mcx.sh family_20_1
 
- The family_20_1.check should look something like that. Nothing has to appear after the begin,
- but the closin parenthesis, ). If not, That means the matrix is not symmetric, that is not good 
- for mcl to run from
+ The generated family_20_1.sym.check file should look something like that. Nothing 
+has to appear after the begin, but the closin parenthesis, ). If not, That means the 
+matrix is not symmetric, that is not good for mcl to run from
 
 (mclheader
 mcltype matrix
@@ -240,7 +240,7 @@ dimensions 467417x467417
 begin
 )
 
-We don't need the raw file anymore. Delete it.
+We don't need the raw file anymore and as it takes quite a lot of space, delete it.
 
 rm family_20.raw
 
@@ -250,6 +250,11 @@ rm family_20.raw
 This step will use parciluar machine, aristotle that have 187Gb of memory :))) and 32 CPUs. As mcl can be multi-threaded, it is very useful.
 
 bsub -C0 -R 'select[ncpus>=16 && mem>5000] rusage[mem=5000]' -q aristotle -n 16 -f "family_20_1.sym > /tmp/family_20_1.sym" -f "family_20_1.mcl < /tmp/family_20_1.mcl" -o mcl.out /nfs/acari/abel/bin/mcl /tmp/family_20_1.sym -I 3.0 -t 16 -P 10000 -S 1000 -R 1200 -pct 90 -do log -o /tmp/family_20_1.mcl
+
+NB: when ever you ahve finished running mcl (maybe with different parameters), don't forget 
+to delete /tmp/family_20_1.* from aristotle /tmp (a shell script having the flavour of 
+mcxassemble.sh or mcx.sh could do it automatically...not very useful though if several mcl run 
+have to be tested)
 
 To save space,
 
@@ -262,9 +267,19 @@ The following step needs to run with an older version of BioPerl (0.7) or with a
 The Taxon object in more recent versions of bioperl does some excessive validation of species/genus
 information that will cause the following to fail.
 
-NB: This step will load the sequence for ENSEMBLPEP only, not for SWISSPROT or SPTREMBL entries. Those will be loaded in the clustalw step...
+You'll need a compara dababase set up, with genome_db, taxon, and method_link tables prefilled. See in
+ensembl-compara/sql
 
-nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl -host ecs2b -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 -conf_file Compara.conf family_20_1.mcl.gz family_20_1.tab ../srs/metazoa_20_1.desc.gz > family_20_1.description 2> family_20_1.description.err &
+NB: This step will load the sequence for ENSEMBLPEP only, not for SWISSPROT or SPTREMBL entries. Those will be loaded in the clustalw step...Should change things here to load them all at once...
+
+This can take a while, several hours, and you can not do anything else before the loading is completed.
+
+nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl -host ecs2b -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 -conf_file Compara.conf family_20_1.mcl.gz family_20_1.tab ../srs/metazoa_20_1.desc.gz ../srs/metazoa_20_1.RedundantIds > family_20_1.description 2> family_20_1.description.err &
+
+Then make sure to load the sequences for SWISSPROT/SPTREMBL loaded in compara.
+
+
+nohup ~/src/ensembl_main/ensembl-compara/scripts/family/LoadSeqInFamily.pl -host ecs2b -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 ../srs/metazoa_20_1.desc.gz /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep > family_20_1.seqload 2>&1 &
 
 12- Generates the family descriptions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
