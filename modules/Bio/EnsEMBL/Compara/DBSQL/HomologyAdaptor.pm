@@ -278,4 +278,103 @@ sub _get_relationship {
 
 }
 
+#
+# internal methods
+#
+###################
+
+# internal methods used in multiple calls above to build homology objects from table data  
+
+sub _tables {
+  my $self = shift;
+
+  return (['homology', 'h'], ['source', 's']);
+}
+
+sub _columns {
+  my $self = shift;
+
+  return qw (h.homology_id
+             h.stable_id
+             h.description
+             s.source_id
+             s.source_name);
+}
+
+sub _objs_from_sth {
+  my ($self, $sth) = @_;
+  
+  my ($homology_id, $stable_id, $description, $source_id, $source_name);
+
+  $sth->bind_columns(\$homology_id, \$stable_id, \$description,
+                     \$source_id, \$source_name);
+
+  my @homologies = ();
+  
+  while ($sth->fetch()) {
+    push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast
+      ({'_dbID' => $homology_id,
+       '_stable_id' => $stable_id,
+       '_description' => $description,
+       '_source_id' => $source_id,
+       '_source_name' => $source_name,
+       '_adaptor' => $self});
+  }
+  
+  return \@homologies;  
+}
+
+sub _default_where_clause {
+  my $self = shift;
+
+  return 'h.source_id = s.source_id';
+}
+
+#
+# STORE METHODS
+#
+################
+
+=head2 store
+
+ Arg [1]    : Bio::EnsEMBL::Compara::Homology $homology
+ Example    : $HomologyAdaptor->store($homology)
+ Description: Stores a homology object into a compara database
+ Returntype : int 
+              been the database homology identifier, if homology stored correctly
+ Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Homology
+ Caller     : general
+
+=cut
+
+sub store {
+  my ($self,$hom) = @_;
+
+  $hom->isa('Bio::EnsEMBL::Compara::Homology') ||
+    $self->throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom");
+
+  my $sql = "SELECT homology_id from homology where stable_id = ?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($hom->stable_id);
+  my $rowhash = $sth->fetchrow_hashref;
+
+  $hom->source_id($self->store_source($hom->source_name));
+
+  if ($rowhash->{homology_id}) {
+    $hom->dbID($rowhash->{homology_id});
+  } else {
+  
+    $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?)";
+    $sth = $self->prepare($sql);
+    $sth->execute($hom->stable_id,$hom->source_id,$hom->description);
+    $hom->dbID($sth->{'mysql_insertid'});
+  }
+
+  foreach my $member_attribute (@{$hom->get_all_Member}) {   
+    $self->store_relation($member_attribute, $hom);
+  }
+
+  return $hom->dbID;
+}
+
 1;
