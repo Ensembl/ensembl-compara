@@ -365,11 +365,11 @@ sub fetch_BRH_by_member_genomedb
 {
   # using trick of specifying table twice so can join to self
   my $self             = shift;
-  my $qmember_id        = shift;
+  my $qmember_id       = shift;
   my $hit_genome_db_id = shift;
 
   #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
-
+  return unless($qmember_id and $hit_genome_db_id);
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
                        'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
