@@ -148,7 +148,7 @@ sub _generic_fetch {
   my $sth = $self->prepare($sql);
   $sth->execute;  
 
-#  print STDERR $sql,"\n";
+  print STDOUT $sql,"\n";
 
   return $self->_objs_from_sth($sth);
 }
@@ -239,6 +239,30 @@ sub update_status {
   $sql .= " ,completed=now(), result=1" if($job->status eq 'DONE');
   $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
   
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+}
+
+=head2 store_out_files
+  Arg [1]    : Bio::EnsEMBL::Compar::Hive::AnalysisJob $job
+  Example    :
+  Description: if files are non-zero size, will update DB
+  Returntype : 
+  Exceptions :
+  Caller     :
+=cut
+
+sub store_out_files {
+  my ($self,$job) = @_;
+
+  return unless($job and ($job->stdout_file or $job->stderr_file));
+
+  my $sql = "INSERT INTO analysis_job_files ".
+            " SET analysis_job_id='".$job->dbID."' ";
+  $sql .= " ,stdout_file='".$job->stdout_file."' "  if($job->stdout_file);
+  $sql .= " ,stderr_file='".$job->stderr_file."' "  if($job->stderr_file);
+
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;

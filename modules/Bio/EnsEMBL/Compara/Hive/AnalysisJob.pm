@@ -135,6 +135,18 @@ sub result {
   return $self->{'_result'};
 }
 
+sub stdout_file {
+  my( $self, $value ) = @_;
+  $self->{'_stdout_file'} = $value if(defined($value));
+  return $self->{'_stdout_file'};
+}
+
+sub stderr_file {
+  my( $self, $value ) = @_;
+  $self->{'_stderr_file'} = $value if(defined($value));
+  return $self->{'_stderr_file'};
+}
+
 sub print_job {
   my $self = shift;
   print("WORKER: hive_id=",$self->hive_id,

@@ -180,6 +180,33 @@ sub last_check_in {
   return $self->{'_last_check_in'};
 }
 
+=head2 output_dir
+  Arg [1] : (optional) string directory path
+  Title   :   output_dir
+  Usage   :   $value = $self->output_dir;
+              $self->output_dir($new_value);
+  Description: sets the directory where STDOUT and STRERR will be
+	       redirected to. Each worker will create a subdirectory
+	       where each analysis_job will get a .out and .err file
+  Returntype : string
+=cut
+
+sub output_dir {
+  my( $self, $outdir ) = @_;
+  if($outdir and (-d $outdir)) {
+    $outdir .= "/worker_" . $self->hive_id ."/";
+    mkdir($outdir);
+    $self->{'_output_dir'} = $outdir 
+  }
+  return $self->{'_output_dir'};
+}
+
+sub job_limit {
+  my $self=shift;
+  $self->{'_job_limit'}=shift if(@_);
+  return $self->{'_job_limit'};
+}
+
 sub print_worker {
   my $self = shift;
   print("WORKER: hive_id=",$self->hive_id,
@@ -194,38 +221,77 @@ sub print_worker {
 # WORK section
 #
 ###############################
+=head2 batch_size
+  Arg [1] : (optional) string $value
+  Title   :   batch_size
+  Usage   :   $value = $self->batch_size;
+              $self->batch_size($new_value);
+  Description: Defines the number of jobs that should run in batch
+               before querying the database for the next job batch.  Used by the
+               Hive system to manage the number of workers needed to complete a
+               particular job type.
+  DefaultValue : batch_size of runnableDB in analysis
+  Returntype : integer scalar
+=cut
+
 sub batch_size {
   my $self = shift;
-  my $runObj = $self->analysis->runnableDB;
-  return $runObj->batch_size if($runObj);
-  return 1;
+  if(@_) { $self->{'_batch_size'} = shift; }
+  do {
+    my $runObj = $self->analysis->runnableDB;
+    $self->{'_batch_size'} = $runObj->batch_size if($runObj);
+  } unless($self->{'_batch_size'});
 }
+
 
 sub run
 {
   my $self = shift;
 
+  if($self->output_dir()) {
+    open OLDOUT, ">&STDOUT";
+    open OLDERR, ">&STDERR";
+    open WORKER_STDOUT, ">".$self->output_dir()."worker.out";
+    open WORKER_STDERR, ">".$self->output_dir()."worker.err";
+    close STDOUT;
+    close STDERR;
+    open STDOUT, ">&WORKER_STDOUT";
+    open STDERR, ">&WORKER_STDERR";
+  }
+
+
+  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
   my $alive=1;  
   while($alive) {
-    my $jobDBA = $self->db->get_AnalysisJobAdaptor;
     my $claim = $jobDBA->claim_jobs_for_worker($self);
     my $jobs = $jobDBA->fetch_by_job_claim($claim);
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 
-    print("processing ",scalar(@{$jobs}), "jobs \n");
+    print(STDOUT "processing ",scalar(@{$jobs}), "jobs \n");
     foreach my $job (@{$jobs}) {
+      $self->redirect_job_output($job);
       $self->run_module_with_job($job);
       $self->create_next_jobs($job);
       $job->status('DONE');
+      $self->close_and_update_job_output($job);
       $self->{'_work_done'}++;
+
     }
-    $alive=undef if($self->cause_of_death);
+    if($self->job_limit and ($self->{'_work_done'} > $self->job_limit)) { 
+      $self->cause_of_death('NATURAL'); 
+    }
+    if($self->cause_of_death) { $alive=undef; }
   }
 
-  $self->cause_of_death('NATURAL') if($self->{'_work_done'}>1000);
-
   $self->adaptor->register_worker_death($self);
+
+  close STDOUT;
+  close STDERR;
+  close WORKER_STDOUT;
+  close WORKER_STDERR;
+  open STDOUT, ">&OLDOUT";
+  open STDERR, ">&OLDERR";
 }
 
 
@@ -282,5 +348,53 @@ sub create_next_jobs
   }
   $sth->finish();
 }
+
+
+sub redirect_job_output
+{
+  my $self = shift;
+  my $job  = shift;
+
+  my $outdir = $self->output_dir();
+  return unless($outdir);
+  return unless($job);
+
+  $job->stdout_file($outdir . "job_".$job->dbID.".out");
+  $job->stderr_file($outdir . "job_".$job->dbID.".err");
+
+  close STDOUT;
+  open STDOUT, ">".$job->stdout_file;
+
+  close STDERR;
+  open STDERR, ">".$job->stderr_file;
+}
+
+
+sub close_and_update_job_output
+{
+  my $self = shift;
+  my $job  = shift;
+
+  return unless($job);
+
+  close STDOUT;
+  close STDERR;
+  open STDOUT, ">&WORKER_STDOUT";
+  open STDERR, ">&WORKER_STDERR";
+
+  if(-z $job->stdout_file) {
+    print("unlink zero size ", $job->stdout_file, "\n");
+    unlink $job->stdout_file;
+    $job->stdout_file('');
+  }
+  if(-z $job->stderr_file) {
+    print("unlink zero size ", $job->stderr_file, "\n");
+    unlink $job->stderr_file;
+    $job->stderr_file('');
+  }
+
+  $job->adaptor->store_out_files($job) if($job->adaptor);
+}
+
 
 1;

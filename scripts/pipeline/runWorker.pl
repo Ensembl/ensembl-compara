@@ -32,6 +32,8 @@ GetOptions('help'           => \$help,
            'analysis_id=i'  => \$self->{'analysis_id'},
           );
 
+$self->{'analysis_id'} = shift;
+
 if ($help) { usage(); }
 
 parse_conf($self, $conf_file);
@@ -62,9 +64,13 @@ $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'
 my $worker = $self->{'comparaDBA'}->get_HiveAdaptor->create_new_worker($self->{'analysis_id'});
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
 
+$worker->output_dir("/ecs4/work2/ensembl/jessica/data/hive-output");
+# $worker->job_limit(1);
+
 $worker->print_worker();
 $worker->run();
 
+print("total jobs completes : ", $worker->work_done, "\n");
 
 exit(0);
 

@@ -73,7 +73,7 @@ use vars qw(@ISA);
                particular job type.
   Returntype : integer scalar
 =cut
-sub batch_size { return 100; }
+sub batch_size { return 4; }
 
 =head2 carrying_capacity
   Title   :   carrying_capacity
