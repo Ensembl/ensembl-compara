@@ -174,6 +174,8 @@ sub filter_duplicates {
   $self->{'truncate_count'} = 0;
   $self->{'not_truncate_count'} = 0;
 
+  $self->{'delete_hash'} = {}; #all the genomic_align_blocks that need to be deleted
+  
   $self->{'dups_hash'} = {};
   $self->{'overlap_hash'} = {};
     
@@ -187,17 +189,32 @@ sub filter_duplicates {
   my $dnafrag_list = $self->{'comparaDBA'}->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($gdb2);
   foreach my $dnafrag (@$dnafrag_list) {
     my $region_start = 0;
-    printf("dnafrag (%d)%s:%s len=%d\n", $dnafrag->dbID, $dnafrag->coord_system_name, $dnafrag->name, $dnafrag->length);
+    #printf("dnafrag (%d)%s:%s len=%d\n", $dnafrag->dbID, $dnafrag->coord_system_name, $dnafrag->name, $dnafrag->length);
     while($region_start <= $dnafrag->length) {
       my $region_end = $region_start + 100000;
       #my $region_end = $region_start + $segment_length;
       my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
                            $mlss, $dnafrag, $region_start, $region_end);
-
+                           
       printf("dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
              $region_start, $region_end, scalar(@$genomic_align_block_list));
              
-      $self->process_genomic_align_block_list($genomic_align_block_list, $region_start, $region_end);          
+      foreach my $gab (@{$genomic_align_block_list}) {
+        $self->assign_jobID_to_genomic_align_block($gab);
+      }
+      
+      #first sort the list for processing
+      my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
+      #print(scalar(@sorted_GABs), " sorted GABs\n");
+      $self->{'gab_count'} += scalar(@sorted_GABs);
+      
+      #remove all the equal duplicates from the list
+      $self->removed_dups_from_genomic_align_block_list(\@sorted_GABs);
+      #printf("  %d after equal test\n", scalar(@sorted_GABs));
+      
+      #now process remaining list (still sorted) for overlaps
+      $self->process_genomic_align_block_list(\@sorted_GABs, $region_start, $region_end);
+      #printf("  %d after edge test\n", scalar(@sorted_GABs));
 
       $region_start += 1000000;
       #$region_start += $segment_length;
@@ -231,6 +248,58 @@ sub sort_alignments{
 }
 
 
+sub assign_jobID_to_genomic_align_block {
+  my $self = shift;
+  my $gab = shift;
+
+  my $sql = "SELECT analysis_job_id FROM genomic_align_block_job_track ".
+                  "WHERE genomic_align_block_id=?";
+  my $sth = $self->{'comparaDBA'}->prepare($sql);
+  $sth->execute($gab->dbID);
+  my ($job_id) = $sth->fetchrow_array();
+  $sth->finish;
+  $gab->{'analysis_job_id'} = $job_id;
+}
+
+
+sub removed_dups_from_genomic_align_block_list {
+  my $self = shift;
+  my $genomic_align_block_list = shift;
+  my $region_start = shift;
+  my $region_end = shift;
+  
+  return unless(scalar(@$genomic_align_block_list));
+  
+  #for(my $index=0; $index<scalar(@$genomic_align_block_list); $index++) {
+  #  print("  "); print_gab($genomic_align_block_list->[$index]);
+  #}
+
+  for(my $index=0; $index<(scalar(@$genomic_align_block_list)-1); $index++) {
+    my $gab1 = $genomic_align_block_list->[$index];
+    my $gab2 = $genomic_align_block_list->[$index+1];
+    
+    if(genomic_align_blocks_identical($gab1, $gab2)) {
+      $self->{'delete_hash'}->{$gab1} = 1;
+      if($self->debug > 1) {
+        printf("delete duplicate gab_id %d\n", $gab1->dbID); 
+        print("  "); print_gab($gab1);
+        print("  "); print_gab($gab2);
+      }
+      $self->{'identical_count'}++;
+    }
+  }
+
+  my @new_list;  
+  foreach my $gab (@$genomic_align_block_list) {
+    push @new_list, $gab unless($self->{'delete_hash'}->{$gab});
+  }
+  @$genomic_align_block_list = @new_list;
+
+  return 1 if(scalar(keys(%{$self->{'delete_hash'}})));
+  return 0;
+}
+
+
 sub process_genomic_align_block_list {
   my $self = shift;
   my $genomic_align_block_list = shift;
@@ -239,21 +308,23 @@ sub process_genomic_align_block_list {
   
   return unless(scalar(@$genomic_align_block_list));
   
-  my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
-  #print(scalar(@sorted_GABs), " sorted GABs\n");
-  $self->{'gab_count'} += scalar(@sorted_GABs);
-
-  while(scalar(@sorted_GABs)) {
-    my $gab = shift @sorted_GABs;
+  my @gab_list = @$genomic_align_block_list;
+   
+  while(scalar(@gab_list)) {
+    my $gab = shift @gab_list;
     #if($self->debug) { print("ref: "); print_gab($gab);}
-    foreach my $next_gab (@sorted_GABs) {
+    foreach my $next_gab (@gab_list) {
       last if($next_gab->reference_genomic_align->dnafrag_start > 
               $gab->reference_genomic_align->dnafrag_end);
 
       #if($self->debug) { print("next: "); print_gab($next_gab); }
     
       if(genomic_align_blocks_identical($gab, $next_gab)) {
-        #printf("identical GABs %d %d\n", $next_gab->dbID, $gab->dbID);# if($self->debug);
+        if($next_gab->{'analysis_job_id'} == $gab->{'analysis_job_id'},) {
+          printf("WARNING WARNING!!!!!! identical GABs dbID:%d,%d  jobs:%d,%d\n", 
+               $next_gab->dbID, $gab->dbID, 
+               $next_gab->{'analysis_job_id'},$gab->{'analysis_job_id'},);
+        }
         if($gab->dbID < $next_gab->dbID) {
            my $key = $gab->dbID . $next_gab->dbID;
            $self->{'dups_hash'}->{$key} = $key;
@@ -264,8 +335,6 @@ sub process_genomic_align_block_list {
         $self->{'identical_count'}++;
       }
       elsif(genomic_align_blocks_overlap($gab, $next_gab)) {
-        $self->process_overlap_for_chunk_edge_truncation($gab, $next_gab, $region_start, $region_end);
-
         $self->{'overlap_count'}++;
         if($gab->dbID < $next_gab->dbID) {
            my $key = $gab->dbID . $next_gab->dbID;
@@ -273,6 +342,17 @@ sub process_genomic_align_block_list {
         } else {
            my $key = $next_gab->dbID. $gab->dbID;
            $self->{'overlap_hash'}->{$key} = $key;
+        }
+
+        unless($self->process_overlap_for_chunk_edge_truncation($gab, $next_gab, $region_start, $region_end)) {
+          if($gab->{'analysis_job_id'} == $next_gab->{'analysis_job_id'}) {
+            printf("SAME JOB overlaping GABs %d %d\n", $gab->dbID, $next_gab->dbID);
+          }
+          else {
+            printf("DIFFERENT JOB overlaping GABs %d %d\n", $gab->dbID, $next_gab->dbID);
+          }
+          print("  "); print_gab($gab);
+          print("  "); print_gab($next_gab);
         }
       } 
     }
@@ -336,7 +416,7 @@ sub genomic_align_blocks_overlap {
 sub process_overlap_for_chunk_edge_truncation {
   my ($self, $gab1, $gab2, $region_start, $region_end) = @_;
  
-  my $keeper = undef;
+  my $print=1 if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'});
   
   my $aligns_1_1 = $gab1->reference_genomic_align;
   my $aligns_1_2 = $gab1->get_all_non_reference_genomic_aligns->[0];
@@ -387,30 +467,33 @@ sub process_overlap_for_chunk_edge_truncation {
       ) 
     )   
   {
-    printf("TRUNCATE GABs %d %d\n", $gab2->dbID, $gab1->dbID);
+    printf("TRUNCATE GABs %d %d\n", $gab2->dbID, $gab1->dbID) if($print);
     if($gab1->score > $gab2->score) {
-      $keeper = $gab1;
-      print("      "); print_gab($gab1);
-      print("  DEL "); print_gab($gab2);
+      $self->{'delete_hash'}->{$gab2} = 1;
+      if($print) {
+        print("      "); print_gab($gab1);
+        print("  DEL "); print_gab($gab2);
+      }
     } else {
-      $keeper = $gab2;
-      print("  DEL "); print_gab($gab1);
-      print("      "); print_gab($gab2);
+      $self->{'delete_hash'}->{$gab1} = 1;
+      if($print) {
+        print("  DEL "); print_gab($gab1);
+        print("      "); print_gab($gab2);
+      }
     }
     
     $self->{'truncate_count'}++;  
   }
   else {
-    printf("overlaping GABs %d %d - not truncate\n", $gab2->dbID, $gab1->dbID);
-    print("      "); print_gab($gab1);
-    print("      "); print_gab($gab2);
+    if($print) {
+      printf("overlaping GABs %d %d - not truncate\n", $gab2->dbID, $gab1->dbID);
+      print("      "); print_gab($gab1);
+      print("      "); print_gab($gab2);
+    }
     $self->{'not_truncate_count'}++;
   }
-  
+
 }
-
-
-
 
 
 1;
