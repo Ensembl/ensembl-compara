@@ -20,8 +20,17 @@ Bio::EnsEMBL::Compara::AlignSlice - An AlignSlice can be used to map genes from 
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $align_slice_adaptor,
           -reference_Slice => $reference_Slice,
-          -genomicAlignBlocks => $all_genomicAlignBlocks,
+          -genomicAlignBlocks => $all_genomic_align_blocks,
       );
+
+  my $mapped_genes =
+      $align_slice->get_all_Genes_by_genome_db_id($mouse_genome_db->dbID,
+              -MAX_REPETITION_LENGTH => 100,
+              -MAX_GAP_LENGTH => 100,
+              -MAX_INTRON_LENGTH => 100000,
+              -STRICT_ORDER_OF_EXON_PIECES => 1,
+              -STRICT_ORDER_OF_EXONS => 0);
+          )
 
 SET VALUES
   $align_slice->adaptor($align_slice_adaptor);
@@ -34,6 +43,7 @@ GET VALUES
   my $align_slice_adaptor = $align_slice->adaptor();
   my $reference_slice = $align_slice->reference_Slice();
   my $all_genomic_align_blocks = $align_slice->get_all_GenomicAlignBlock();
+  my $mapped_genes = $align_slice->get_all_Genes_by_genome_db_id(3)
 
 =head1 OBJECT ATTRIBUTES
 
@@ -47,7 +57,7 @@ Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor object to access DB
 
 Bio::EnsEMBL::Slice object used to create this Bio::EnsEBML::Compara::AlignSlice object
 
-=item all_GenomicAlignBlocks
+=item all_genomic_align_blocks
 
 a listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects found using the reference_Slice
 
@@ -98,7 +108,7 @@ use Bio::EnsEMBL::Compara::AlignSlice::Exon;
                    new Bio::EnsEMBL::Compara::AlignSlice(
                        -adaptor => $align_slice_adaptor,
                        -reference_slice => $reference_slice,
-                       -genomic_align_blocks => [$gab1, $gab2],
+                       -genomic_align_blocks => [$gab1, $gab2]
                    );
   Description: Creates a new Bio::EnsEMBL::Compara::AlignSlice object
   Returntype : Bio::EnsEMBL::Compara::AlignSlice object
@@ -209,7 +219,7 @@ sub add_GenomicAlignBlock {
 =head2 get_all_GenomicAlignBlocks
 
   Arg[1]     : none
-  Example    : my $all_GenomicAlignBlocks = $align_slice->get_all_GenomicAlignBlocks
+  Example    : my $all_genomic_align_blocks = $align_slice->get_all_GenomicAlignBlocks
   Description: getter for the attribute all_genomic_align_blocks
   Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
   Exceptions : none
@@ -227,7 +237,13 @@ sub get_all_GenomicAlignBlocks {
 =head2 get_all_Genes_by_genome_db_id
 
   Arg[1]     : integer $genome_db_id
-  Example    : my $mouse_genes = $align_slice->get_all_Genes_by_genome_db_id($mouse_genome_db->dbID)
+  Arg[...]   : list of optional parameters
+  Example    : my $mouse_genes = $align_slice->get_all_Genes_by_genome_db_id($mouse_genome_db->dbID,
+                    -MAX_REPETITION_LENGTH => 100,
+                    -MAX_GAP_LENGTH => 100,
+                    -MAX_INTRON_LENGTH => 100000,
+                    -STRICT_ORDER_OF_EXON_PIECES => 1,
+                    -STRICT_ORDER_OF_EXONS => 0);
   Description: get all the Bio::EnsEMBL::Gene objects corresponding to the
                Bio::EnsEMBL::Compara::GenomeDB object defined by the genome_db_id
                which are associated with this Bio::EnsEMBL::Compara::AlignSlice object.
@@ -241,6 +257,28 @@ sub get_all_GenomicAlignBlocks {
                time of writting) returns a list of Introns build with the pieces of sequence
                which do not belong to an Exon. You may find several Intron fused during the
                mapping as some Exons could not be mapped.
+  Optional Parameters:
+               MAX_REPETITION_LENGTH. In principle you want to merge or link together
+                   pieces of an exon which do not overlap (the beginning and the end of the
+                   exon). With this flag you can to set up what amount of the original
+                   exon is allowed on two aligned exons to be merged or linked.
+                   (default is 100)
+               MAX_GAP_LENGTH. If the distance between two pieces of exons in the
+                   aligned slice is larger than this parameter, they will not be
+                   merged. (default is 1000 bp). Setting this parameter to -1 will
+                   avoid any merging event.
+               STRICT_ORDER_OF_EXON_PIECES. This flag allows you to decide whether two
+                   pieces of an exon should be merged or not if they are not in the
+                   right order, for instance if the end of the original exon will
+                   appear before the start on the merged exon. (default is 1, exons are
+                   merged only if they are in the right order)
+               MAX_INTRON_LENGTH. If the distance between two exons in the aligned slice
+                   is larger than this parameter, they will not be linked. (default is
+                   100000 bp). Setting this parameter to -1 will avoid any linking event.
+               STRICT_ORDER_OF_EXONS. This flag allows you to decide whether two
+                   exons should be linked or not if they are not in the
+                   original order. (default is 0, exons are linked even if they are not
+                   in the right order)
   Returntype : listref of Bio::EnsEMBL::Gene objects. It is possible to get several
                times the same gene if it overlaps several
                Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
@@ -250,9 +288,34 @@ sub get_all_GenomicAlignBlocks {
 =cut
 
 sub get_all_Genes_by_genome_db_id {
-  my ($self, $genome_db_id, @flags) = @_;
+  my ($self, $genome_db_id, @parameters) = @_;
 
-  if (!defined($self->{'all_genes_from_'.$genome_db_id})) {
+  my ($max_repetition_length,
+      $max_gap_length,
+      $max_intron_length,
+      $strict_order_of_exon_pieces,
+      $strict_order_of_exons) = rearrange([qw(
+          MAX_REPETITION_LENGTH
+          MAX_GAP_LENGTH
+          MAX_INTRON_LENGTH
+          STRICT_ORDER_OF_EXON_PIECES
+          STRICT_ORDER_OF_EXONS
+      )], @parameters);
+  $max_repetition_length = 100 if (!defined($max_repetition_length));
+  $max_gap_length = 1000 if (!defined($max_gap_length));
+  $max_intron_length = 100000 if (!defined($max_intron_length));
+  $strict_order_of_exon_pieces = 1 if (!defined($strict_order_of_exon_pieces));
+  $strict_order_of_exons = 0 if (!defined($strict_order_of_exons));
+
+  my $key = 'all_genes_from_'.
+      $genome_db_id.":".
+      $max_repetition_length.":".
+      $max_gap_length.":".
+      $max_intron_length.":".
+      $strict_order_of_exon_pieces.":".
+      $strict_order_of_exons;
+
+  if (!defined($self->{$key})) {
     my $all_genes = [];
 
     my $these_genomic_aligns = [];
@@ -267,7 +330,7 @@ sub get_all_Genes_by_genome_db_id {
       }
     }
     if (!@$these_genomic_aligns) {
-      $self->{'all_genes_from_'.$genome_db_id} = [];
+      $self->{$key} = [];
       return [];
     }
 
@@ -325,12 +388,19 @@ sub get_all_Genes_by_genome_db_id {
       }
     }
 
-    $all_genes = _compile_mapped_Genes($all_genes, @flags);
+    $all_genes = _compile_mapped_Genes(
+            $all_genes,
+            $max_repetition_length,
+            $max_gap_length,
+            $max_intron_length,
+            $strict_order_of_exon_pieces,
+            $strict_order_of_exons
+        );
 
-    $self->{'all_genes_from_'.$genome_db_id} = $all_genes;
+    $self->{$key} = $all_genes;
   }
 
-  return $self->{'all_genes_from_'.$genome_db_id};
+  return $self->{$key};
 }
 
 
@@ -346,7 +416,10 @@ sub get_all_Genes_by_genome_db_id {
                transcripts. Since mapped objects are not stored in the DB, they have no dbID
                and no adaptor.
   Returntype : Bio::EnsEMBL::Gene object. (new object)
-  Exceptions : none
+  Exceptions : returns undef if no part of $original_gene can be mapped using this
+               $genomic_align. This method assumes that the slices of all the exons got
+               from that gene have the same coordinates as the gene slice. It will throw
+               if this is not true.
   Caller     : $object->methodname
 
 =cut
@@ -374,7 +447,8 @@ sub _get_mapped_Gene {
         $this_exon->{original_end} = $this_exon->end;
       }
       $this_exon->{this_slice} = $this_exon->slice;
-throw if ($this_exon->slice->start != $gene->slice->start);
+      throw("Oops, this method assumes that all the exons are defined on the same slice as the".
+          " gene they belong to") if ($this_exon->slice->start != $gene->slice->start);
 #       $range_start = $genomic_align->{dnafrag_start} - $this_exon->slice->start + 1;
 #       $range_end = $genomic_align->{dnafrag_end} - $this_exon->slice->start + 1;
       if ($this_exon->start < $range_end and $this_exon->end > $range_start) {
@@ -432,9 +506,34 @@ throw if ($this_exon->slice->start != $gene->slice->start);
 }
 
 
+=head2 _compile_mapped_Genes
+
+  Arg[1]     : listref of Bio::EnsEMBL::Gene $mapped_genes
+  Arg[2]     : int $max_repetition_length
+  Arg[3]     : int $max_gap_length
+  Arg[4]     : int $max_intron_length
+  Arg[5]     : int $strict_order_of_exon_pieces
+  Arg[6]     : int $strict_order_of_exons
+  Example    : my $compiled_genes = $align_slice->compile_mapped_Genes($mapped_genes,
+                       100, 1000, 100000, 1, 0);
+  Description: This method compiles all the pieces of gene mapped before into a list
+               of Bio::EnsEMBL::Gene objects. It tries to merge pieces of the same
+               exon, link them according to their original transcript and finally
+               group the transcripts in Bio::EnsEMBL::Gene objects. Merging and
+               linking of Exons is done according to some rules that can be changed
+               with the parameters.
+  Parameters:  They are sent as is to _separate_in_incompatible_sets_of_Exons() and
+               _merge_Exons() methods. Please refer to them elsewhere in this
+               document.
+  Returntype : listref of Bio::EnsEMBL::Gene objects. (overrides $mapped_genes)
+  Exceptions : none
+  Caller     : $object->methodname
+
+=cut
 
 sub _compile_mapped_Genes {
-  my ($mapped_genes, @flags) = @_;
+  my ($mapped_genes, $max_repetition_length, $max_gap_length, $max_intron_length, 
+      $strict_order_of_exon_pieces, $strict_order_of_exons) = @_;
 
   my $verbose = verbose();
   verbose(0); # Avoid warnings when mapped transcripts are not in the same strand
@@ -467,13 +566,22 @@ sub _compile_mapped_Genes {
 
     ## Try to merge splitted exons whenever possible
     while (my ($transcript_stable_id, $set_of_exons) = each %$exons_by_transcript_stable_id) {
-      $exons_by_transcript_stable_id->{$transcript_stable_id} =
-          _merge_Exons($set_of_exons, @flags);
+      $exons_by_transcript_stable_id->{$transcript_stable_id} = _merge_Exons(
+              $set_of_exons,
+              $max_repetition_length,
+              $max_gap_length, 
+              $strict_order_of_exon_pieces
+          );
     }
     my $all_transcripts;
     while (my ($transcript_stable_id, $set_of_exons) = each %$exons_by_transcript_stable_id) {
 #       my $sets_of_compatible_exons = [$set_of_exons];
-      my $sets_of_compatible_exons = _separate_in_incompatible_sets_of_Exons($set_of_exons, @flags);
+      my $sets_of_compatible_exons = _separate_in_incompatible_sets_of_Exons(
+              $set_of_exons,
+              $max_repetition_length,
+              $max_intron_length,
+              $strict_order_of_exons
+          );
 
         my $old_transcript = $transcript_by_transcript_stable_id->{$transcript_stable_id};
 #       # Save first set of exons in the 
@@ -513,24 +621,26 @@ sub _compile_mapped_Genes {
 =head2 _merge_Exons
 
   Arg[1]     : listref of Bio::EnsEMBL::Compara::AlignSlice::Exon $set_of_exons
-  Arg[2...]  : %flags
-  Example    : my $merged_exons = _merge_Exons($exons_to_be_merged, -CHECK_ORDER=>0);
-  Description: Takes a list of Bio::EnsEMBL::Compara::AlignSlice::Exon and tries to
-               merge them according to exon stable_id and some rules that can be
-               tunned using flags. This method can overwrite some of the exon in the
-               $set_of_exons
-  Flags      : MAX_REPETITION_LENGTH. In principle you want to merge together pieces
+  Arg[2]     : int $max_repetition_length
+  Arg[3]     : int $max_gap_length
+  Arg[4]     : int $strict_order_of_exon_pieces
+  Example    : my $merged_exons = _merge_Exons($exons_to_be_merged, 100, 1000, 1);
+  Description: Takes a list of Bio::EnsEMBL::Compara::AlignSlice::Exon objects and
+               tries to merge them according to exon stable_id and some rules that can
+               be tunned using some optional parameters. This method can overwrite some
+               of the exon in the $set_of_exons.
+  Parameters:  MAX_REPETITION_LENGTH. In principle you want to merge together pieces
                    of an exon which do not overlap (the beginning and the end of the
                    exon). With this flag you can to set up what amount of the original
-                   exon is allowed on two aligned exons to be merged. (default is 100)
+                   exon is allowed on two aligned exons to be merged.
                MAX_GAP_LENGTH. If the distance between two pieces of exons in the
                    aligned slice is larger than this parameter, they will not be
-                   merged. (default is 1000 bp)
-               STRICT_EXON_PIECES_ORDER. This flag allows you to decide whether two
+                   merged. Setting this parameter to -1 will
+                   avoid any merging event.
+               STRICT_ORDER_OF_EXON_PIECES. This flag allows you to decide whether two
                    pieces of an exon should be merged or not if they are not in the
                    right order, for instance if the end of the original exon will
-                   appear before the start on the merged exon. (default is 1, exons are
-                   merged only if they are in the right order)
+                   appear before the start on the merged exon.
   Returntype : lisref of Bio::EnsEMBL::Compara::AlignSlice::Exon objects.
   Exceptions : none
   Caller     : methodname
@@ -538,19 +648,8 @@ sub _compile_mapped_Genes {
 =cut
 
 sub _merge_Exons {
-  my ($set_of_exons, @flags) = @_;
+  my ($set_of_exons, $max_repetition_length, $max_gap_length, $strict_order_of_exon_pieces) = @_;
   my $merged_exons = []; # returned value
-
-  my ($max_repetition_length,
-      $max_gap_length,
-      $strict_exon_pieces_order) = rearrange([qw(
-          MAX_REPETITION_LENGTH
-          MAX_GAP_LENGTH
-          STRICT_EXON_PIECES_ORDER
-      )], @flags);
-  $max_repetition_length = 100 if (!defined($max_repetition_length));
-  $max_gap_length = 1000 if (!defined($max_gap_length));
-  $strict_exon_pieces_order = 1 if (!defined($strict_exon_pieces_order));
 
   my $exon_by_stable_id;
   # Group exons by stable_id
@@ -577,33 +676,33 @@ sub _merge_Exons {
         next if ($gap_between_pieces_of_exon > $max_gap_length);
 
         # Check whether both mapped parts are in the right order
-        if ($strict_exon_pieces_order) {
+        if ($strict_order_of_exon_pieces) {
           if ($first_exon->strand == 1) {
             next if ($first_exon->get_aligned_start > $second_exon->get_aligned_start);
           } else {
-            next if ($first_exon->get_aligned_end > $second_exon->get_aligned_end);
+            next if ($first_exon->get_aligned_end < $second_exon->get_aligned_end);
           }
         }
 
         # Check maximum overlapping within original exon, i.e. how much of the
         # same exon can be mapped twice
-        my $repetition_length = $first_exon->get_aligned_end - $second_exon->get_aligned_start + 1;
+        my $repetition_length;
+        if ($first_exon->strand == 1) {
+          $repetition_length = $first_exon->get_aligned_end - $second_exon->get_aligned_start + 1;
+        } else {
+          $repetition_length = $second_exon->get_aligned_end - $first_exon->get_aligned_start + 1;
+        }
         next if ($repetition_length > $max_repetition_length);
   
         ## Merge exons!!
         $second_exon = splice(@$these_exons, $count, 1); # remove exon from the list
+        $count-- if (@$these_exons);
         $first_exon->end($second_exon->end);
         if ($first_exon->strand == 1) {
-          $first_exon->seq(new Bio::Seq(-seq =>
-                  $first_exon->seq->seq.("-"x$gap_between_pieces_of_exon).$second_exon->seq->seq));
+          $first_exon->append_Exon($second_exon, $gap_between_pieces_of_exon);
         } else {
-          $first_exon->seq(new Bio::Seq(-seq =>
-                  $second_exon->seq->seq.("-"x$gap_between_pieces_of_exon).$first_exon->seq->seq));
+          $first_exon->prepend_Exon($second_exon, $gap_between_pieces_of_exon);
         }
-        $first_exon->cigar_line(
-            $first_exon->cigar_line.
-            $gap_between_pieces_of_exon."D".
-            $second_exon->cigar_line);
       }
       push(@$merged_exons, $first_exon);
     }
@@ -616,9 +715,11 @@ sub _merge_Exons {
 =head2 _separate_in_incompatible_sets_of_Exons
 
   Arg[1]     : listref of Bio::EnsEMBL::Compara::AlignSlice::Exon $set_of_exons
-  Arg[2...]  : %flags
+  Arg[2]     : int $max_repetition_length
+  Arg[3]     : int $max_intron_length
+  Arg[4]     : int $strict_order_of_exons
   Example    : my $sets_of_exons = _separate_in_incompatible_sets_of_Exons(
-                   $set_of_exons, -MAX_INTRON_LENGTH=>100000);
+                   $set_of_exons, 100, 100000, 0);
   Description: Takes a list of Bio::EnsEMBL::Compara::AlignSlice::Exon and separate
                them in sets of comaptible exons. Compatibility is defined taking into
                account 5 parameters:
@@ -627,20 +728,18 @@ sub _merge_Exons {
                  - distance between exons cannot be larger than MAX_INTRON_LENGTH
                  - two exons with the same stable_id can belong to the same transcript
                    only if they represent diferent parts of the original exon. Some
-                   overlapping is allowed (see MAX_REPETITION_LENGTH flag).
+                   overlapping is allowed (see MAX_REPETITION_LENGTH parameter).
                  - exons must be in the same order as in the original transcript
-                   if the STRICT_EXON_ORDER flag is on.
-  Flags      : MAX_REPETITION_LENGTH. In principle you want to link together pieces
+                   if the STRICT_ORDER_OF_EXONS parameter is true.
+  Parameters:  MAX_REPETITION_LENGTH. In principle you want to link together pieces
                    of an exon which do not overlap (the beginning and the end of the
                    exon). With this flag you can to set up what amount of the original
-                   exon is allowed on two aligned exons to be linked. (default is 100)
+                   exon is allowed on two aligned exons to be linked.
                MAX_INTRON_LENGTH. If the distance between two exons in the aligned slice
-                   is larger than this parameter, they will not be linked. (default is
-                   100000 bp)
-               STRICT_EXON_ORDER. This flag allows you to decide whether two
+                   is larger than this parameter, they will not be linked.
+               STRICT_ORDER_OF_EXONS. This flag allows you to decide whether two
                    exons should be linked or not if they are not in the
-                   original order. (default is 0, exons are linked even if they are not
-                   in the right order)
+                   original order.
   Returntype : listref of lisrefs of Bio::EnsEMBL::Compara::AlignSlice::Exon objects.
   Exceptions : none
   Caller     : methodname
@@ -648,49 +747,42 @@ sub _merge_Exons {
 =cut
 
 sub _separate_in_incompatible_sets_of_Exons {
-  my ($set_of_exons, @flags) = @_;
+  my ($set_of_exons, $max_repetition_length, $max_intron_length, $strinct_order_of_exons) = @_;
   my $sets_of_exons = [];
 
-  my ($max_repetition_length,
-      $max_intron_length,
-      $strict_exon_order) = rearrange([qw(
-          MAX_REPETITION_LENGTH
-          MAX_INTRON_LENGTH
-          STRICT_EXON_ORDER
-      )], @flags);
-  $max_repetition_length = 100 if (!defined($max_repetition_length));
-  $max_intron_length = 100000 if (!defined($max_intron_length));
-  $strict_exon_order = 0 if (!defined($strict_exon_order));
-  
   my $last_exon;
   my $this_set_of_exons = [];
   foreach my $this_exon (sort {$a->start <=> $b->start} @$set_of_exons) {
     if ($last_exon) {
-        # Calculate intron length
-        my $intron_length = $this_exon->start - $last_exon->end - 1;
-        # Calculate whether both mapped parts are in the right order
-        my $order_is_ok = 1;
-        if ($strict_exon_order) {
-          if ($this_exon->strand == 1) {
-            $order_is_ok = 0 if ($this_exon->exon->start < $last_exon->exon->start);
-          } else {
-            $order_is_ok = 0 if ($this_exon->exon->start > $last_exon->exon->start);
-          }
+      # Calculate intron length
+      my $intron_length = $this_exon->start - $last_exon->end - 1;
+      # Calculate whether both mapped parts are in the right order
+      my $order_is_ok = 1;
+      if ($strinct_order_of_exons) {
+        if ($this_exon->strand == 1) {
+          $order_is_ok = 0 if ($this_exon->exon->start < $last_exon->exon->start);
+        } else {
+          $order_is_ok = 0 if ($this_exon->exon->start > $last_exon->exon->start);
         }
-        my $repetition_length = 0;
-        if ($last_exon->stable_id eq $this_exon->stable_id) {
+      }
+      my $repetition_length = 0;
+      if ($last_exon->stable_id eq $this_exon->stable_id) {
+        if ($this_exon->strand == 1) {
           $repetition_length = $last_exon->get_aligned_end - $this_exon->get_aligned_start + 1;
+        } else {
+          $repetition_length = $this_exon->get_aligned_end - $last_exon->get_aligned_start + 1;
         }
+      }
 
-        if (($last_exon->strand != $this_exon->strand) or
-            ($intron_length < 0) or
-            ($intron_length > $max_intron_length) or
-            (!$order_is_ok) or
-            ($repetition_length > $max_repetition_length)) {
-          # this_exon and last_exon should be in separate sets. Save current
-          # set_of_exons and start a new set_of_exons
-          push(@$sets_of_exons, $this_set_of_exons);
-          $this_set_of_exons = [];
+      if (($last_exon->strand != $this_exon->strand) or
+          ($intron_length < 0) or
+          ($intron_length > $max_intron_length) or
+          (!$order_is_ok) or
+          ($repetition_length > $max_repetition_length)) {
+        # this_exon and last_exon should be in separate sets. Save current
+        # set_of_exons and start a new set_of_exons
+        push(@$sets_of_exons, $this_set_of_exons);
+        $this_set_of_exons = [];
       }
     }
     push(@$this_set_of_exons, $this_exon);
@@ -701,6 +793,19 @@ sub _separate_in_incompatible_sets_of_Exons {
   return $sets_of_exons;
 }
 
+
+=head2 get_GenomicAlign_by_dbID
+
+  Arg[1]     : int $genomic_align_id
+  Example    : $genomic_align = get_GenomicAlign_by_dbID(13)
+  Description: This method looks for a Bio::EnsEMBL::Compara::GenomicAlign
+               corresponding to the dbID given as argument within all the
+               Bio::EnsEMBL::Compara::GenomicAlignBlocks in this object
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions : returns undef if none matches
+  Caller     : $self->methodname
+
+=cut
 
 sub get_GenomicAlign_by_dbID {
   my ($self, $genomic_align_id) = @_;
