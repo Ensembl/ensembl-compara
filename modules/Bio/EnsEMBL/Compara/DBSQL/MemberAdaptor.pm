@@ -502,7 +502,7 @@ sub _final_clause {
 
 sub store {
   my ($self,$member) = @_;
-  
+
   unless($member->isa('Bio::EnsEMBL::Compara::Member')) {
     $self->throw(
       "member arg must be a [Bio::EnsEMBL::Compara::Member]"
@@ -513,6 +513,9 @@ sub store {
   if (defined $already_stored_member) {
     $member->adaptor($already_stored_member->adaptor);
     $member->dbID($already_stored_member->dbID);
+    if (defined $member->taxon) {
+      $self->db->get_TaxonAdaptor->store_if_needed($member->taxon);
+    }
     return $member->dbID;
   }
 
