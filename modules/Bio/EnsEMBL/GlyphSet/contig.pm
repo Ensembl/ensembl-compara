@@ -57,6 +57,7 @@ sub _init {
     my $start      = $segment->from_start;
     my $end        = $segment->from_end;
     my $ctg_slice  = $segment->to_Slice;
+    my $ORI        = $ctg_slice->strand;
     my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
     $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
     foreach( @{$vc->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
@@ -66,6 +67,7 @@ sub _init {
       $path = $path->[0]->to_Slice;
       $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
     }
+    $feature->{'ori'} = $ORI;
     push @features, $feature;
   }
   if( @features) {
@@ -117,10 +119,11 @@ sub _init_non_assembled_contig {
     my $rend   = $tile->{'end'};
     my $rstart = $tile->{'start'};
     my $rid    = $tile->{'name'};
-    my $strand = $tile->{'locations'}->{'chromosome'}->[3];
+    my $strand = $tile->{'ori'};
        $rstart = 1 if $rstart < 1;
        $rend   = $length if $rend > $length;
                 
+   warn Data::Dumper::Dumper( $tile->{'locations'}," " );
     my $glyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $rstart - 1,
       'y'         => $ystart+2,
