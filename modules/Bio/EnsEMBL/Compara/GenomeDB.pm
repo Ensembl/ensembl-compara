@@ -51,16 +51,17 @@ use Bio::EnsEMBL::Root;
 
 
 sub new {
-  my($caller, $dba, $name, $assembly, $taxon_id, $dbID) = @_;
+  my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
 
   my $class = ref($caller) || $caller;
   my $self = bless({}, $class);
 
-  $dba      && $self->db_adaptor($dba);
-  $name     && $self->name($name);
-  $assembly && $self->assembly($assembly);
-  $taxon_id && $self->taxon_id($taxon_id);
-  $dbID     && $self->dbID($dbID);
+  $dba       && $self->db_adaptor($dba);
+  $name      && $self->name($name);
+  $assembly  && $self->assembly($assembly);
+  $taxon_id  && $self->taxon_id($taxon_id);
+  $dbID      && $self->dbID($dbID);
+  $genebuild && $self->genebuild($genebuild);
 
   return $self;
 }
@@ -218,6 +219,27 @@ sub assembly_default {
   return $self->{'assembly_default'};
 }
 
+=head2 genebuild
+
+  Arg [1]    : (optional) string
+  Example    : $gdb->genebuild('1');
+  Description: Getter/Setter for the genebuild type of this genome db.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub genebuild {
+  my $self = shift;
+  my $genebuild = shift;
+
+  if($genebuild) {
+    $self->{'genebuild'} = $genebuild;
+  }
+
+  return $self->{'genebuild'};
+}
 
 
 =head2 taxon_id

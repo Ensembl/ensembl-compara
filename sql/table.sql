@@ -42,6 +42,7 @@ CREATE TABLE genome_db (
   name varchar(40) DEFAULT '' NOT NULL,
   assembly varchar(255) DEFAULT '' NOT NULL,
   assembly_default tinyint(1) DEFAULT 1,
+  genebuild varchar(255) DEFAULT '' NOT NULL,
   PRIMARY KEY (genome_db_id),
   UNIQUE name (name,assembly)
 );
