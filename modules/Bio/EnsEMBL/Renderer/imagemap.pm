@@ -5,6 +5,15 @@ use Bio::EnsEMBL::Renderer;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer);
 
+#########
+# imagemaps are basically strings, so initialise the canvas with ""
+# imagemaps also aren't too fussed about width & height boundaries
+#
+sub init_canvas {
+    my ($this, $config, $im_width, $im_height) = @_;
+    $this->canvas("");
+}
+
 sub render_Rect {
     my ($this, $glyph) = @_;
 
@@ -20,7 +29,7 @@ sub render_Rect {
     $href = qq( href="$href") if(defined $href);
 
     my $alt = $glyph->id();
-    $alt = (defined $alt)?qq( alt="$alt"):qq( alt="");
+    $alt = (defined $alt)?qq( alt="$alt"):"";
 
     #########
     # zmenus will override existing href, alt, onmouseover & onmouseout attributes
@@ -33,12 +42,38 @@ sub render_Rect {
 	$onmouseover = qq( onmouseover=") . &JSTools::js_menu($zmenu) . qq(");
     }
 
+#    if($glyph->pixelwidth() == 0 || $glyph->pixelheight() == 0) {
+#print STDERR qq(imagemap optimised out [width|height == 0]\n);
+#	return;
+#    }
+
     my $x1 = $glyph->pixelx();
     my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
     my $y1 = $glyph->pixely();
-    my $y2 = $glyph->pixely() + $glyph->pixelheight();
+    my $y2 = $glyph->pixely() + $glyph->pixelheight() + 1;
+#print STDERR qq(imagemap got glyph $glyph pixelheight = ), $glyph->pixelheight(), qq(\n);
+
+    $x1 = 0 if($x1<0);
+    $x2 = 0 if($x2<0);
+    $y1 = 0 if($y1<0);
+    $y2 = 0 if($y2<0);
+
+    $this->{'im_width'} ||= $this->{'config'}->image_width();
+    my $imw = $this->{'im_width'};
+
+    $x1 = $imw if($x1 > $imw);
+    $x2 = $imw if($x1 > $imw);
+
+    #########
+    # do range checking here for thresholding out very small regions
+    #
+#    if($x1 == $x2 || $y1 == $y2) {
+#print STDERR qq(imagemap optimised out [start == end]\n);
+#	return;
+#    }
 
     $this->{'canvas'} .= qq(<area coords="$x1 $y1 $x2 $y2"$href$onmouseover$onmouseout$alt>\n) if(defined $href);
+#print STDERR qq(imagemap $glyph: $x1, $y1, $x2, $y2\n) if(ref($glyph) eq "Bio::EnsEMBL::Glyph::Composite");
 }
 
 sub render_Text {

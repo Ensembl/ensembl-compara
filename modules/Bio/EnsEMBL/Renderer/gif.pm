@@ -6,6 +6,13 @@ use GD;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer);
 
+sub init_canvas {
+    my ($this, $config, $im_width, $im_height) = @_;
+    my $canvas = new GD::Image($im_width, $im_height);
+    $canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
+    $this->canvas($canvas);
+}
+
 sub canvas {
     my ($self, $canvas) = @_;
     if(defined $canvas) {
@@ -30,15 +37,14 @@ sub colour {
 
 sub render_Rect {
     my ($self, $glyph) = @_;
-#print STDERR qq(drawing rect $glyph\n);
 
     my $canvas = $self->{'canvas'};
 
-    my $gcolour      = $glyph->colour();
-    my $gbordercolor = $glyph->colour();
+    my $gcolour       = $glyph->colour();
+    my $gbordercolour = $glyph->bordercolour();
 
-    my $bordercolour = $self->colour($gcolour || $gbordercolor);
-    my $colour       = $self->colour($gcolour);
+    my $bordercolour  = $self->colour($gbordercolour);
+    my $colour        = $self->colour($gcolour);
 
     $glyph->transform($self->{'transform'});
 
@@ -47,23 +53,13 @@ sub render_Rect {
     my $y1 = $glyph->pixely();
     my $y2 = $glyph->pixely() + $glyph->pixelheight();
 
-    $canvas->filledRectangle($x1,   $y1, $x2, $y2, $bordercolour) if(defined $bordercolour);
-    $canvas->filledRectangle($x1+1, $y1+1, $x2-1, $y2-1, $colour) if(defined $bordercolour && defined $colour && $bordercolour != $colour);
-#print STDERR qq(render_Rect: ), $glyph->x(), ", ", $glyph->y(), ", ", $glyph->width(), ", ", $glyph->height(), qq(\n);
-#print STDERR qq(render_Rect: ), $glyph->pixelx(), ", ", $glyph->pixely(), ", ", $glyph->pixelwidth(), ", ", $glyph->pixelheight(), qq(\n);
+    $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
+    $canvas->rectangle($x1, $y1, $x2, $y2, $bordercolour) if(defined $gbordercolour);
+#print STDERR qq(gif $glyph: $x1, $y1, $x2, $y2\n) if(ref($glyph) eq "Bio::EnsEMBL::Glyph::Composite");
 }
 
 sub render_Text {
     my ($this, $glyph) = @_;
-
-#    my $font = $glyph->font() || "gdTinyFont";
-#    $font =~ s/^gd(.*)Font$/$1/g;
-#    my $fontname = qq(GD::Font::$font);
-
-#    no strict 'refs';
-#    no strict 'subs';
-#    my $f = eval {&{$fontname(packname="GD::Font")};};
-#print STDERR qq(fontname is ), &{$fontname(packname="GD::Font")}, qq(\n);
 
     my $colour = $this->colour($glyph->colour());
     $glyph->transform($this->{'transform'});
@@ -123,16 +119,21 @@ sub render_Intron {
     $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
 }
 
-sub render_Clip {
+sub render_Line {
     my ($this, $glyph) = @_;
+    $glyph->transform($this->{'transform'});
+
     my $colour = $this->colour($glyph->colour());
-    my $x1     = $glyph->pixelx();
-    my $y1     = $glyph->pixely();
+    my $x1     = $glyph->pixelx() + 0;
+    my $y1     = $glyph->pixely() + 0;
     my $x2     = $x1 + $glyph->pixelwidth();
     my $y2     = $y1 + $glyph->pixelheight();
-    $this->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
 
-#print STDERR qq(rendering clip\n);
+    if(defined $glyph->dotted()) {
+	$this->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
+    } else {
+	$this->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
+    }
 }
 
 sub render_Poly {
@@ -166,6 +167,11 @@ sub render_Composite {
     my ($this, $glyph) = @_;
 
     #########
+    # now loop through $glyph's children
+    #
+    $this->SUPER::render_Composite($glyph);
+
+    #########
     # draw & colour the bounding area if specified
     #
     if(defined $glyph->colour() || defined $glyph->bordercolour()) {
@@ -173,11 +179,6 @@ sub render_Composite {
 	$rect->transform($this->{'transform'});
 	$this->render_Rect($rect);
     }
-
-    #########
-    # now loop through $glyph's children
-    #
-    $this->SUPER::render_Composite($glyph);
 }
 
 1;
