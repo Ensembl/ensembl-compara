@@ -324,6 +324,14 @@ CREATE TABLE analysis (
 
 );
 
+CREATE TABLE analysis_description (
+  analysis_id                int(10) unsigned NOT NULL,
+  description                text,
+  display_label              varchar(255),
+
+  KEY analysis_idx( analysis_id )
+);
+
 
 ------------------------------------------------------------------------------------
 --
