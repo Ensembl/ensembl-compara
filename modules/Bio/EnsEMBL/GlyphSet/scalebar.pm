@@ -148,7 +148,7 @@ sub set_scale_division {
 
 
 
-sub bp_to_nearest_unit {
+sub bp_to_nearest_unit_by_range {
     my ($bp,$range,$divs) = @_;
     $divs = 1 unless $divs;
     
@@ -166,6 +166,29 @@ sub bp_to_nearest_unit {
 	$unit_str = $value. $unit;
     }
     print STDERR "Num: $bp Unit: $value Range: $range Divs:".int($range/$divs)."\n";
+    return $unit_str;
+}
+
+
+
+sub bp_to_nearest_unit {
+    my ($bp,$dp) = @_;
+    $dp = 1 unless defined $dp;
+    
+    my @units = qw( bp Kb Mb Gb Tb );
+    
+    my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
+    my $unit = $units[$power_ranger];
+    my $unit_str;
+
+    my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
+      
+    if ( $unit ne "bp" ){
+	$unit_str = sprintf( "%.${dp}f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), $unit );
+    }else{
+	$unit_str = $value. $unit;
+    }
+    #print STDERR "Num: $bp Unit: $value Range: $range Divs:".int($range/$divs)."\n";
     return $unit_str;
 }
 

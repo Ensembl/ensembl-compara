@@ -46,12 +46,12 @@ sub _init {
     push (@allgenes, $vg->gene());
     }
 
-    if ($type eq 'all'){
-	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
-	    $vg->{'_is_external'} = 1;
-	    push (@allgenes, $vg);
-	}
-    }
+    #if ($type eq 'all'){
+	#foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+	#    $vg->{'_is_external'} = 1;
+	#    push (@allgenes, $vg);
+	#}
+    #}
 
     GENE: for my $eg (@allgenes) {
     	my $vgid = $eg->id();
