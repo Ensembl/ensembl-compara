@@ -420,6 +420,7 @@ sub _columns {
 
   return qw (m.member_id
              m.stable_id
+             m.version
              m.taxon_id
              m.genome_db_id
              m.description
@@ -444,6 +445,7 @@ sub _objs_from_sth {
     $member = Bio::EnsEMBL::Compara::Member->new_fast
       ({'_dbID' => $column{'member_id'},
         '_stable_id' => $column{'stable_id'},
+        '_version' => $column{'version'},
         '_taxon_id' => $column{'taxon_id'},
         '_genome_db_id' => $column{'genome_db_id'},
         '_description' => $column{'description'},
@@ -556,12 +558,13 @@ sub store {
   }
 
   
-  my $sth = $self->prepare("INSERT INTO member (stable_id,source_id,
+  my $sth = $self->prepare("INSERT INTO member (stable_id,version, source_id,
                               taxon_id, genome_db_id, sequence_id, description,
                               chr_name, chr_start, chr_end)
                             VALUES (?,?,?,?,?,?,?,?,?)");
 
   $sth->execute($member->stable_id,
+                $member->version,
                 $member->source_id,
                 $member->taxon_id,
                 $member->genome_db_id,
