@@ -48,14 +48,21 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
   usage(); 
 }
 
-my $comparaDBA  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
-my $pipelineDBA = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $comparaDBA);
+# ok this is a hack, but I'm going to pretend I've got an object here
+# by creating a blessed hash ref and passing it around like an object
+# this is to avoid using global variables in functions, and to consolidate
+# the globals into a nice '$self' package
+my $self = bless {};
 
-my $analysis = prepareAnalysis($pipelineDBA);
+$self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
 
+my $analysis = $self->prepareGenomeAnalysis();
 
 foreach my $speciesPtr (@speciesList) {
-  submitGenome($speciesPtr, $analysis);
+  $self->submitGenome($speciesPtr, $analysis);
+
+  $self->prepareMemberPepAnalyses($speciesPtr);
 }
 
 
@@ -106,9 +113,69 @@ sub parse_conf {
 }
 
 
+#
+# need to make sure analysis 'SubmitGenome' is in database
+# this is a generic analysis of type 'genome_db_id'
+# the input_id for this analysis will be a genome_db_id
+# the full information to access the genome will be in the compara database
+# also creates 'GenomeLoadMembers' analysis and
+# 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
+sub prepareGenomeAnalysis
+{
+  my $self = shift;
+
+  my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'SubmitGenome',
+      -input_id_type   => 'genome_db_id'
+    );
+  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
+
+
+  my $load_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'GenomeLoadMembers',
+      -input_id_type   => 'genome_db_id',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers'
+    );
+  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($load_analysis);
+
+  my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$load_analysis);
+  $rule->add_condition($submit_analysis->logic_name());
+  $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+
+
+  my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'GenomeDumpFasta',
+      -input_id_type   => 'genome_db_id',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
+      -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
+    );
+  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($dumpfasta_analysis);
+
+  $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
+  $rule->add_condition($load_analysis->logic_name());
+  $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+
+
+  # create an unlinked analysis called blast_template
+  # it will not have rule goal/conditions so it will never execute
+=head4
+  my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
+  $blast_template->logic_name("blast_template");
+  $blast_template->input_id_type('MemberPep');
+  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($blast_template);
+=cut
+
+  return $submit_analysis;
+}
+
+
 sub submitGenome
 {
-  my $species = shift; #hash reference
+  my $self     = shift;
+  my $species  = shift;  #hash reference
   my $analysis = shift;  #reference to Analysis object
 
   print("SubmitGenome for ".$species->{abrev}."\n");
@@ -151,7 +218,8 @@ sub submitGenome
   print("  name = '".$genome->name."'\n");
   print("  assembly = '".$genome->assembly."'\n");
 
-  $comparaDBA->get_GenomeDBAdaptor->store($genome);
+  $self->{'comparaDBA'}->get_GenomeDBAdaptor->store($genome);
+  $species->{'genome_db'} = $genome;
 
   print("inserted genome_db id=".$genome->dbID."\n");
 
@@ -163,70 +231,55 @@ sub submitGenome
             ",phylum='" . $species->{phylum}."'".
             ",locator='".$locator."';";
 
-  my $sth = $comparaDBA->prepare( $sql );
+  my $sth = $self->{'comparaDBA'}->prepare( $sql );
   $sth->execute();
   $sth->finish();
 
 
   #
-  # now configure the input_id_analysis table
+  # now configure the input_id_analysis table with the genome_db_id
   #
   eval {
-    $pipelineDBA->get_StateInfoContainer->store_input_id_analysis(
-      $genome->dbID, #input_id
-      $analysis,     #SubmitGenome analysis
-      'gaia',        #execution_host
-      0              #save runtime NO (ie do insert)
-    );
-  }
+    $self->{'pipelineDBA'}->get_StateInfoContainer->store_input_id_analysis(
+        $genome->dbID, #input_id
+        $analysis,     #SubmitGenome analysis
+        'gaia',        #execution_host
+        0              #save runtime NO (ie do insert)
+      );
+  };
+
 }
 
 
-sub prepareAnalysis
+
+# Creates the SubmitPep_<genome_db_id>_<assembly> and
+# blast__<genome_db_id>_<assembly> analyses for this species/genomeDB
+# These analyses exist in the 'MemberPep' chain (input_id_type)
+sub prepareMemberPepAnalyses
 {
-  my $pipelineDBA = shift;
+  my $self = shift;
+  my $species  = shift;  #hash reference
 
-  #
-  # need to make sure analysis 'SubmitGenome' is in database
-  # this is a generic analysis of type 'GENOME'
-  # the input_id for this analysis will be a genome_db_id
-  # the full information to access the genome will be in the compara database
-  #
-  my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'SubmitGenome',
-      -input_id_type   => 'genome_db_id'
+  my $submitpep_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -logic_name      => "SubmitPep_".$species->{'genome_db'}->dbID()."_".$species->{'genome_db'}->assembly(),
+     #-db              => $blastdb->dbname(),
+     #-db_file         => $subset->dump_loc(),
+     #-db_version      => '1',
+      -parameters      => "genome_db_id=>".$species->{'genome_db'}->dbID(), #"subset_id=>".$subset->dbID().
+      -input_id_type   => 'MemberPep'
     );
-  $pipelineDBA->get_AnalysisAdaptor()->store($submit_analysis);
+  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
 
+
+
+  my $blast_analysis = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
+  $blast_analysis->logic_name("blast_" . $species->{'genome_db'}->dbID(). "_". $species->{'genome_db'}->assembly());
+  $blast_analysis->input_id_type('MemberPep');
   
-  my $load_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'GenomeLoadMembers',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers'
-    );
-  $pipelineDBA->get_AnalysisAdaptor()->store($load_analysis);
+  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($blast_analysis);
 
-  my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$load_analysis);
-  $rule->add_condition($submit_analysis->logic_name());
-  $pipelineDBA->get_RuleAdaptor->store($rule);
-
-
-  my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'GenomeDumpFasta',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta'
-    );
-  $pipelineDBA->get_AnalysisAdaptor()->store($dumpfasta_analysis);
-
-  my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
-  $rule->add_condition($load_analysis->logic_name());
-  $pipelineDBA->get_RuleAdaptor->store($rule);
-
-  return $submit_analysis;
 }
+
 
 
 =head3
@@ -243,6 +296,8 @@ if(defined($genome_db_id)) {
 }
 =cut
 
+
+=head4
 sub getSubsetIdForGenomeDBId {
   my ($dbh, $genome_db_id) = @_;
 
@@ -408,7 +463,7 @@ sub dumpFastaForSubset {
   system("setdb $fastafile");
 }
 
-=head4
+
 sub taxonIDForSubsetID {
   my ($dbh, $subset_id) = @_;
 
