@@ -47,14 +47,23 @@ sub features {
 		);
 
   my $res   = [];
-  @features = sort { $a->orientation() cmp $b->orientation() || $a->group() cmp $b->group() } @features;
+  @features = sort {
+    $a->orientation() cmp $b->orientation() ||
+    $a->group() cmp $b->group()
+  } @features;
 
-  while(@features) {
-    my @parts  = $features[0..1];
-    my ($hard) = grep { $_->{'type'} !~ /fuzzy/ } @features;
-    my ($soft) = grep { $_->{'type'} =~ /fuzzy/ } @features;
-    shift @features;
-    shift @features;
+  my @novelfeatures = grep { $_->{'type'} =~ /novel/ } @features;
+  my @knownfeatures = grep { $_->{'type'} =~ /known/ } @features;
+
+  print STDERR qq(DECIPHER: Saw @{[scalar @novelfeatures]} novel features\n);
+  print STDERR qq(DECIPHER: Saw @{[scalar @knownfeatures]} known features\n);
+
+  while(@novelfeatures) {
+    my @parts  = @novelfeatures[0..1];
+    my ($hard) = grep { $_->{'type'} !~ /fuzzy/ } @parts;
+    my ($soft) = grep { $_->{'type'} =~ /fuzzy/ } @parts;
+    shift @novelfeatures;
+    shift @novelfeatures;
 
     my $s = Bio::EnsEMBL::SeqFeature->new(
 					  -start   => $hard->start()+$offset,
@@ -70,6 +79,21 @@ sub features {
 
     push @{$res}, $s;
   }
+
+  for my $known (@knownfeatures) {
+    my $s = Bio::EnsEMBL::SeqFeature->new(
+					  -start   => $known->start()+$offset,
+					  -end     => $known->end()+$offset,
+					  -strand  => -1,
+					  -seqname => $known->label(),
+					 );
+    $s->{'decipher_type'}   = $known->type();
+    $s->{'decipher_note'}   = $known->note();
+    $s->{'decipher_link'}   = $known->link();
+    $s->{'decipher_strand'} = ($known->orientation() eq "-")?-1:1;
+
+    push @{$res}, $s;
+  }
   return $res;
 }
 
@@ -79,10 +103,11 @@ sub colour {
 }
 
 sub href  { return undef; }
+
 sub zmenu {
   my ($self, $f) = @_;
   return {
-	  'caption' => "DECIPHER:" . $f->seqname(),
+	  'caption'   => "DECIPHER:" . $f->seqname(),
 	  '01:<b>Phenotype:</b>' . $f->{'decipher_note'} => undef,
 	  '02:Report' => $f->{'decipher_link'},
 	 };
@@ -95,6 +120,7 @@ sub image_label {
 
 sub tag {
   my ($self, $f) = @_;
+  return if($f->{'decipher_type'} =~ /known/); # no tagging for known syndromes/polymorphisms
   return ({
 	   'start'  => $f->{'decipher_softstart'},
 	   'end'    => $f->start(),
