@@ -15,6 +15,17 @@ use Bump;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
+sub init_label {
+    my ($this) = @_;
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+        'text'      => 'Genes',
+        'font'      => 'Small',
+        'absolutey' => 1,
+    });
+    $this->label($label);
+}
+
 sub _init {
     my $self = shift;
 
