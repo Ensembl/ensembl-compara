@@ -29,11 +29,12 @@ sub _init {
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
     my $navigation     = $Config->get('scalebar', 'navigation');
     my $abbrev         = $Config->get('scalebar', 'abbrev');
-
-    my $chr            = $Container->_chr_name();
+    my $clone_based    = $Config->get('_settings','clone_based') eq 'yes';
+    my $clone          = $Config->get('_settings','clone');
+    my $param_string   = $clone_based ? "seqentry=1&clone=$clone" : ("chr=".$Container->_chr_name());
     my $len            = $Container->length();
-    my $global_start   = $Container->_global_start();
-    my $global_end     = $Container->_global_end();
+    my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->_global_start();
+    my $global_end     = $global_start + $len - 1;
     my $global_offset  = int(($global_end - $global_start)/2);
 
     #print STDERR "VC half length = $global_offset\n";
@@ -66,7 +67,7 @@ sub _init {
 
         if ($navigation eq 'on'){
             $self->interval(
-                $chr,
+                $param_string,
                 $last_end,
                 $i * $divs,
                 $global_start,
@@ -80,7 +81,7 @@ sub _init {
     # Add the last recentering imagemap-only glyphs
     if ($navigation eq 'on'){
         $self->interval(
-            $chr,
+            $param_string,
             $last_end,
             $global_end-$global_start,
             $global_start,
@@ -214,17 +215,16 @@ sub bp_to_nearest_unit {
 }
 
 sub zoom_URL {
-    my( $chr, $interval_middle, $width, $factor, $highlights ) = @_;
+    my( $PART, $interval_middle, $width, $factor, $highlights ) = @_;
     my $start = int( $interval_middle - $width / 2 / $factor);
     my $end   = int( $interval_middle + $width / 2 / $factor);        
-    return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?chr=$chr&vc_start=$start&vc_end=$end&$highlights);
+    return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights);
 }
 
 sub interval {
     # Add the recentering imagemap-only glyphs
     my ($self, $chr, $start, $end, $global_offset, $width, $highlights ) = @_;
     my $interval_middle = $global_offset + ($start + $end)/2;
-
     my $interval = new Bio::EnsEMBL::Glyph::Rect({
         'x'         => $start,
         'y'         => 4,
