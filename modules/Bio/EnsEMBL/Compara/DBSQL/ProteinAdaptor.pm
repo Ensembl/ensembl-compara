@@ -209,7 +209,7 @@ sub store{
 
    # Should we flag if the protein has no dnafrag attached?
 
-   $sth->execute($protein->external_id,$protein->external_dbname,$protein->peptide_sequence_id,$protein->seq_start,$protein->seq_end,$protein->strand,$dnafrag_id);
+   $sth->execute($protein->external_id,$protein->external_dbname,$protein->peptide_sequence_id,$protein->seq_start,$protein->seq_end,$protein->strand,$protein->dnafrag_id);
 
    $protein->dbID($sth->{'mysql_insertid'});
    $protein->adaptor($self);
