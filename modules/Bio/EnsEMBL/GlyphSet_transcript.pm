@@ -68,6 +68,7 @@ sub _init {
     next if $target_gene && ($gene->stable_id() ne $target_gene);
  
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
+      next if $transcript->start > $length || $transcript->end < 1;
       my @exons = sort {$a->start <=> $b->start} grep { $_ } @{$transcript->get_all_Exons()};#sort exons on their start coordinate 
       # Skip if no exons for this transcript
       next if (@exons == 0);

@@ -98,7 +98,7 @@ sub _init {
         foreach my $features (@features) {
           foreach my $f ( @$features ){
             next if $strand_flag eq 'b' && $strand != ($f->strand||-1) || $f->end < 1 || $f->start > $length ;
-            push @{$id{$f->id()}}, [$f->start,$f->end,$f];
+            push @{$id{$f->hseqname()}}, [$f->start,$f->end,$f];
           }
         }
 ## No features show "empty track line" if option set....
@@ -136,7 +136,7 @@ sub _init {
             });
 
             my $X = -1000000;
-            my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->id );
+            my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->display_id );
             foreach my $f ( @F ){
                 next if int($f->[1] * $pix_per_bp) == int( $X * $pix_per_bp );
                 $C++;
@@ -185,7 +185,7 @@ sub _init {
             $START      = 1 if $START < 1;
             $END        = $length if $END > $length;
             $T++; $C1++;
-            my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f->[2]->id() );
+            my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f->[2]->display_id() );
             next if( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
             $X = $START;
             $C++;

@@ -80,8 +80,8 @@ sub _init {
     my $small_contig   = 0;
     my $dep            = $Config->get($type, 'dep');
     my $h  = ($Config->get('_settings','opt_halfheight') && $dep>0) ? 4 : 8;
-    my $chr_name       = $self->{'container'}->chr_name;
-    my $offset         = $self->{'container'}->chr_start - 1;
+    my $chr_name       = $self->{'container'}->name;
+    my $offset         = $self->{'container'}->start - 1;
 
     my ($T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
 
