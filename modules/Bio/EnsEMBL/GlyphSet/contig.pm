@@ -404,6 +404,8 @@ sub _init_non_assembled_contig {
         my $rstart = $tile->{'start'};
         my $rid    = $tile->{'contig'}->name();
         my $clone  = $tile->{'contig'}->clone->embl_id();
+           $clone  = '' if $clone eq 'NULL';
+
         my $strand = $tile->{'strand'};
         $rstart     = 1 if $rstart < 1;
         $rend       = $length if $rend > $length;
@@ -425,12 +427,12 @@ sub _init_non_assembled_contig {
         if($show_navigation) {
             $glyph->{'zmenu'} = {
     		       'caption' => $rid,
-    		       "01:Clone: $clone"    => '',
     		       '02:Centre on contig' => $glyph->{'href'},
     		       "03:EMBL source file" => 
     		       $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $clone)
     		};
         }
+        $glyph->{'zmenu'}{"01:Clone: $clone"} if $clone && $clone ne '';
     
         $self->push($glyph);
         $clone = $strand > 0 ? "$clone >" : "< $clone";
