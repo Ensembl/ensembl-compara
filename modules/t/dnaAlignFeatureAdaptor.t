@@ -13,7 +13,7 @@ BEGIN {
 
 
 #set to 1 to turn on debug prints
-our $verbose = 1;
+our $verbose = 0;
 
 
 my $CHR   = 'X';
@@ -57,8 +57,8 @@ my $mouse_matches = $dafa->fetch_all_by_Slice($slice, 'mus_musculus');
 
 
 my $num = scalar(@$mouse_matches);
-ok($num);
-debug("got $num human-mouse matches\n");
+ok($num == 2);
+debug("\ngot $num human-mouse matches\n");
 
 $verbose && &print_matches($mouse_matches);
 
@@ -71,9 +71,9 @@ $slice = $mm_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR, $START, $END);
 my $human_matches = $dafa->fetch_all_by_Slice($slice, 'homo_sapiens');
 
 $num = scalar(@$human_matches);
-ok($num);
+ok($num == 2);
 
-debug("got $num mouse-human matches\n");
+debug("\ngot $num mouse-human matches\n");
 $verbose && &print_matches($human_matches);
 
 
@@ -83,9 +83,9 @@ $verbose && &print_matches($human_matches);
 
 my $rat_matches = $dafa->fetch_all_by_Slice($slice, 'rattus_norvegicus');
 $num = scalar(@$rat_matches);
-ok($num);
+ok($num == 3);
 
-debug("got $num mouse-rat matches\n");
+debug("\ngot $num mouse-rat matches\n");
 $verbose && &print_matches($rat_matches);
 
 #######
@@ -96,7 +96,8 @@ $slice = $rn_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR, $START, $END);
 $mouse_matches = $dafa->fetch_all_by_Slice($slice, 'mus_musculus');
 $num = scalar(@$mouse_matches);
 
-debug("got $num rat-mouse matches\n");
+ok($num == 3);
+debug("\ngot $num rat-mouse matches\n");
 $verbose && &print_matches($mouse_matches);
 
 
@@ -111,7 +112,8 @@ $slice = $hs_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR,$START,$END);
 $rat_matches = $dafa->fetch_all_by_Slice($slice, 'rattus_norvegicus');
 $num = scalar(@$rat_matches);
 
-debug("got $num human-rat matches\n");
+ok($num == 5);
+debug("\ngot $num human-rat matches\n");
 $verbose && &print_matches($rat_matches);
 
 #######
@@ -126,6 +128,7 @@ $slice = $rn_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR, $START, $END);
 $human_matches = $dafa->fetch_all_by_Slice($slice, 'homo_sapiens');
 $num = scalar(@$human_matches);
 
+ok($num == 5);
 debug("got $num rat-human matches\n");
 $verbose && &print_matches($human_matches);
 
