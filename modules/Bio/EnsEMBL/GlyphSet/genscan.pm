@@ -11,7 +11,7 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
-
+	return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Genscan',
 	'font'      => 'Small',
@@ -31,16 +31,15 @@ sub _init {
     my @bitmap         = undef;
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
-    my $feature_colour = $Config->get('genscan','col');
+    my $feature_colour = $Config->get('genscan', 'col');
     my %id             = ();
     my $small_contig   = 0;
     my @allfeatures    = ();
+    my $dep            = $Config->get('genscan', 'dep');
+    my $k              = 1;
 
-    my $k = 1;
     foreach my $seq_feat ($VirtualContig->get_all_PredictionFeatures()){
 	if ($seq_feat->strand() == $strand){
-	    #print STDERR "GENSCAN: Strand: $strand == ", $seq_feat->strand(), " for genscan\n";
-	    #print STDERR "GENSCAN: ID: ", $seq_feat->id(), " for genscan\n";
 	    my @tmp = $seq_feat->sub_SeqFeature();
 	    $id{$seq_feat->id()} = \@tmp;
 	    $k++;
@@ -60,21 +59,20 @@ sub _init {
 		$Composite->x($f->start());
 		$Composite->y(0);
 		$has_origin = 1;
-		my $id = $f->id();
-		$Composite->{'zmenu'}     = { 
+		my $id      = $f->id();
+		$Composite->{'zmenu'} = { 
 		    caption => "Genscan $id",
 		    'View peptide' => "/perl/dumpview?type=genscan&id=$id",		
 		},
 	    }
 	    
-	    #print STDERR "GENSCAN: Feature [$f ($i)] start: ", $f->start(), " ID:", $f->id(),  " (strand: $strand)\n";
 	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 		'x'      	=> $f->start(),
 		'y'      	=> 0,
 		'width'  	=> $f->length(),
 		'height' 	=> $h,
 		'colour' 	=> $feature_colour,
-		'absolutey' => 1,
+		'absolutey'     => 1,
 		'_fstart' 	=> $f->start(), 
 		'_flength' 	=> $f->length(), 
 	    });
@@ -100,7 +98,7 @@ sub _init {
 	    $Composite->push($intglyph);
 	}
 	
-	if ($Config->get('genscan', 'dep') > 0){ # we bump
+	if ($dep > 0){ # we bump
 	    my $bump_start = int($Composite->x() * $pix_per_bp);
 	    $bump_start = 0 if ($bump_start < 0);
 	    
@@ -113,7 +111,7 @@ sub _init {
 				      \@bitmap
 				      );
 	    
-	    next if $row > $Config->get('genscan', 'dep');
+	    next if ($row > $dep);
 	    $Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
 	    
 	}

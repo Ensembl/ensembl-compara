@@ -25,6 +25,8 @@ sub _init {
     my $black          = $Config->colourmap->id_by_name('black');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
+    my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
+	print STDERR "MAX NO DIVS: $max_num_divs\n";
     my $abbrev         = $Config->get('scalebar', 'abbrev');
 
     my $chr            = $Container->_chr_name();
@@ -37,7 +39,7 @@ sub _init {
     #print STDERR "VC start = $global_start\n";
     #print STDERR "VC end = $global_end\n";
 
-    my $divs = set_scale_division($len) || 0;
+    my $divs = set_scale_division($len, $max_num_divs) || 0;
     
     my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 	'x'         => 0,
@@ -230,7 +232,9 @@ sub _init {
 
 
 sub set_scale_division {
-    my ($full_length) = @_;
+    my ($full_length, $max_num_divs) = @_;
+
+	$max_num_divs = $max_num_divs <1 ? 1 : $max_num_divs;
 
     my $num_of_digits = length( int( $full_length / 10 ) );
     $num_of_digits--;
@@ -240,11 +244,10 @@ sub set_scale_division {
 
     my $num_of_divs = int( $full_length / $division );
     my $i=2;
-
-    until ( $num_of_divs < 12 ) {
-	$division = $first_division * $i;
-	$num_of_divs = int( $full_length / $division );
-	$i += 2;
+    until ( $num_of_divs < $max_num_divs ) {
+	   $division = $first_division * $i;
+	   $num_of_divs = int( $full_length / $division );
+	   $i += 2;
     }
 
     return $division;

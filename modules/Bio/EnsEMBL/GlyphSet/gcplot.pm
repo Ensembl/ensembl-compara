@@ -12,7 +12,7 @@ use Bump;
 
 sub init_label {
     my ($this) = @_;
-
+	return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => '%GC',
 	'font'      => 'Small',

@@ -9,7 +9,7 @@ use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
-
+	return if( defined $self->{'config'}->{'_no_label'} );
     my $chr = $self->{'container'}->_chr_name();
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => "$chr band",

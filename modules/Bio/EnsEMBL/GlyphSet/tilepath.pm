@@ -9,7 +9,7 @@ use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
-    
+    return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Tile Path',
 	'font'      => 'Small',
@@ -23,8 +23,6 @@ sub _init {
 
     return unless ($self->strand() == -1);
     
-    # This sucks hard. We already have a map DB connection, can anyone find it?
-
     my $length   		= $self->{'container'}->length();
     my $Config 			= $self->{'config'};
     my @bitmap         		= undef;
@@ -32,10 +30,15 @@ sub _init {
     my $bitmap_length 		= int($length * $pix_per_bp);
 
     my $ystart   		= 0;
-    my $im_width 		= $self->{'config'}->image_width();
-    my ($w,$h)   		= $self->{'config'}->texthelper()->px2bp('Tiny');
+    my $im_width 		= $Config->image_width();
+    my ($w,$h)   		= $Config->texthelper()->px2bp('Tiny');
     my ($col, $lab) 	        = ();
     my $i 			= 1;
+    my $dep                     = $Config->get('tilepath', 'dep');
+    my $col1                    = $Config->get('tilepath', 'col1');
+    my $col2                    = $Config->get('tilepath', 'col2');
+    my $lab1                    = $Config->get('tilepath', 'lab1');
+    my $lab2                    = $Config->get('tilepath', 'lab2');
 	
     my @asm_clones = $self->{'container'}->get_all_FPCClones();
     if (@asm_clones){
@@ -49,11 +52,11 @@ sub _init {
 	    $end        = $length if ($end > $length);
 
 	    if ($i%2 == 0){
-		$col  = $Config->get('tilepath','col1'),
-		$lab  = $Config->get('tilepath','lab1'),
+		$col  = $col1;
+		$lab  = $lab1;
 	    } else {
-		$col  = $Config->get('tilepath','col2'),		
-		$lab  = $Config->get('tilepath','lab2'),
+		$col  = $col2;
+		$lab  = $lab2;
 	    }
 			
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
@@ -87,7 +90,7 @@ sub _init {
 	    	$Composite->push($tglyph);
 	    }
 			
-	    if ($Config->get('tilepath', 'dep') > 0){ # we bump
+	    if ($dep > 0) { # we bump
             	my $bump_start = int($Composite->x() * $pix_per_bp);
             	$bump_start = 0 if ($bump_start < 0);
 
@@ -99,7 +102,7 @@ sub _init {
 					  $bitmap_length,
 					  \@bitmap
 					  );
-		next if ($row > $Config->get('tilepath', 'dep'));
+		next if ($row > $dep);
             	$Composite->y($Composite->y() + (1.4 * $row * $h));
 	    }
 

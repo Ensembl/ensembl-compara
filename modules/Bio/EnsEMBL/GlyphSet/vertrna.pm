@@ -11,7 +11,7 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
-
+	return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'mRNA',
 	'font'      => 'Small',
@@ -34,7 +34,7 @@ sub _init {
     my $pix_per_bp  	= $Config->transform()->{'scalex'};
     my $bitmap_length 	= int($VirtualContig->length * $pix_per_bp);
     my $small_contig    = 0;
-
+    my $dep             = $Config->get('vertrna', 'dep');
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("embl_vertrna",80,$self->glob_bp());  
 	
     my %id = ();
@@ -128,7 +128,7 @@ sub _init {
 	    }
 	}
 	
-	if ($Config->get('vertrna', 'dep') > 0){ # we bump
+	if ($dep > 0){ # we bump
 	    my $bump_start = int($Composite->x() * $pix_per_bp);
 	    $bump_start = 0 if ($bump_start < 0);
 	    
@@ -141,7 +141,7 @@ sub _init {
 				      \@bitmap
 				      );
 	    
-	    next if $row > $Config->get('vertrna', 'dep');
+	    next if ($row > $dep);
 	    $Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
 	    
 	    # if we are bumped && on a large contig then draw frames around features....

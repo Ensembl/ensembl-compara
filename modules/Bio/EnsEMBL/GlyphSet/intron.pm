@@ -11,6 +11,8 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
+	return if( defined $self->{'config'}->{'_no_label'} );
+    print STDERR "HERE\n";
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Intron',
@@ -21,6 +23,7 @@ sub init_label {
 }
 
 sub _init {
+    print STDERR "HERE2\n";
     my ($self) = @_;
     my %hash;
     my $caption       = "Intron";

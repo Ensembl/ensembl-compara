@@ -13,7 +13,7 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
-
+	return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
     'text'      => 'SpTrEMBL',
     'font'      => 'Small',
@@ -33,10 +33,10 @@ sub _init {
     my @bitmap         = undef;
     my $pix_per_bp     = $Config->transform->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
-    my $feature_colour = $Config->get('sptr','col');
+    my $feature_colour = $Config->get('sptr', 'col');
     my %id             = ();
     my $small_contig   = 0;
-    
+    my $dep            = $Config->get('sptr', 'dep');
 	
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("sptr",80,$self->glob_bp());  
     @allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
@@ -126,7 +126,7 @@ sub _init {
             }
         }
         
-        if ($Config->get('sptr', 'dep') > 0){ # we bump
+        if ($dep > 0) { # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 
@@ -139,7 +139,7 @@ sub _init {
                           \@bitmap
             );
 
-            next if $row > $Config->get($Config->script(), 'sptr', 'dep');
+            next if ($row > $dep);
             $Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
 
             # if we are bumped && on a large contig then draw frames around features....

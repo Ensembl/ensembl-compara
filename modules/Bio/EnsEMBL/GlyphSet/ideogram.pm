@@ -11,7 +11,7 @@ use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
-
+	return if( defined $self->{'config'}->{'_no_label'} );
     my $chr = $self->{'container'}->_chr_name();
     $chr ||= "Chrom. Band";
     $chr .= " " x (12 - length($chr));

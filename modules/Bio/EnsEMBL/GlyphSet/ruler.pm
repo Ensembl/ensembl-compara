@@ -5,10 +5,12 @@ use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
+use Bio::EnsEMBL::Glyph::Poly;
 
 sub init_label {
     my ($this) = @_;
-
+	
+    return if defined($this->{'config'}->{'_no_label'});
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Length',
 	'font'      => 'Small',
@@ -27,7 +29,7 @@ sub _init {
     my $global_end     = $self->{'container'}->_global_end();
     my $highlights     = $self->highlights();
     my $im_width       = $Config->image_width();
-    my $feature_colour = $Config->get($Config->script(),'ruler','col');
+    my $feature_colour = $Config->get('ruler','col');
     my $fontname       = "Tiny";
     my $fontheight     = $Config->texthelper->height($fontname),
     my $fontwidth      = $Config->texthelper->width($fontname),
@@ -44,13 +46,13 @@ sub _init {
     my $im_width_bp  = $Config->image_width();
     
     my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	'x'      	=> int($im_width_bp/2) - int($bp_textwidth/2),
-	'y'      	=> 2,
-	'height'	=> $fontheight,
-	'font'   	=> $fontname,
-	'colour' 	=> $feature_colour,
-	'text'   	=> $text,
-	'absolutex'  => 1,
+	'x'         => int($im_width_bp/2) - int($bp_textwidth/2),
+	'y'         => 2,
+	'height'    => $fontheight,
+	'font'      => $fontname,
+	'colour'    => $feature_colour,
+	'text'      => $text,
+	'absolutex' => 1,
 	'absolutey' => 1,
     });
     $self->push($tglyph);
@@ -58,24 +60,24 @@ sub _init {
     
     
     my $lglyph = new Bio::EnsEMBL::Glyph::Rect({
-	'x'      => 0,
-	'y'      => 6,
-	'width'  => int($im_width_bp/2) - int($bp_textwidth/2),
-	'height' => 0,
-	'colour' => $feature_colour,
-	'absolutex'  => 1,
-	'absolutey'  => 1,
+	'x'         => 0,
+	'y'         => 6,
+	'width'     => int($im_width_bp/2) - int($bp_textwidth/2),
+	'height'    => 0,
+	'colour'    => $feature_colour,
+	'absolutex' => 1,
+	'absolutey' => 1,
     });
     $self->push($lglyph);
     
     my $rglyph = new Bio::EnsEMBL::Glyph::Rect({
-	'x'      => int($im_width_bp/2) + int($bp_textwidth/2),
-	'y'      => 6,
-	'width'  => $im_width_bp - (int($im_width_bp/2) + int($bp_textwidth/2)),
-	'height' => 0,
-	'colour' => $feature_colour,
-	'absolutex'  => 1,
-	'absolutey'  => 1,
+	'x'         => int($im_width_bp/2) + int($bp_textwidth/2),
+	'y'         => 6,
+	'width'     => $im_width_bp - (int($im_width_bp/2) + int($bp_textwidth/2)),
+	'height'    => 0,
+	'colour'    => $feature_colour,
+	'absolutex' => 1,
+	'absolutey' => 1,
     });
     $self->push($rglyph);
     
@@ -83,19 +85,19 @@ sub _init {
     # exactly 2 text chars long
     # add the left arrow head....
     my $gtriagl = new Bio::EnsEMBL::Glyph::Poly({
-	'points'       => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
-	'colour'       => $feature_colour,
-	'absolutex'  => 1,
-	'absolutey'    => 1,
+	'points'    => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
+	'colour'    => $feature_colour,
+	'absolutex' => 1,
+	'absolutey' => 1,
     });    
     $self->push($gtriagl);
     
     # add the right arrow head....
     my $gtriagr = new Bio::EnsEMBL::Glyph::Poly({
-	'points'       => [$im_width_bp,6, ($im_width_bp-$fontwidth*2),3, ($im_width_bp-$fontwidth*2),9],
-	'colour'       => $feature_colour,
-	'absolutex'  => 1,
-	'absolutey'    => 1,
+	'points'    => [$im_width_bp,6, ($im_width_bp-$fontwidth*2),3, ($im_width_bp-$fontwidth*2),9],
+	'colour'    => $feature_colour,
+	'absolutex' => 1,
+	'absolutey' => 1,
     });
     $self->push($gtriagr);
 }

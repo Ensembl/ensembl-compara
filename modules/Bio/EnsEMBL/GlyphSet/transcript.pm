@@ -12,10 +12,12 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
-
+	return if( defined $self->{'config'}->{'_no_label'} );
     my $id = "Transcript";
     my $Config      = $self->{'config'};
     
+    return if defined($Config->{'_draw_single_Transcript'});
+
     if(defined($Config->{'_draw_single_Transcript'})){
 	$id = $Config->{'_draw_single_Transcript'};
     }
@@ -25,6 +27,7 @@ sub init_label {
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
+
     $self->label($label);
 }
 
