@@ -92,15 +92,16 @@ sub fetch_by_dbID{
    # this could have been added after the cache was created which is why
    # it is re-added every request
    my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
-   if(!$dba) {
-     $self->warn("Could not obtain DBAdaptor for dbID [$dbid].\n" .
-		  "Genome DBAdaptor for name=[".$gdb->name."], ".
-		  "assembly=[" . $gdb->assembly."] must be loaded using " .
-		  "config file or\n" .
-		  "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
+#   if(!$dba) {
+#     $self->warn("Could not obtain DBAdaptor for dbID [$dbid].\n" .
+#		  "Genome DBAdaptor for name=[".$gdb->name."], ".
+#		  "assembly=[" . $gdb->assembly."] must be loaded using " .
+#		  "config file or\n" .
+#		  "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
+#   }
+   if (defined $dba) {
+     $gdb->db_adaptor($dba);
    }
-
-   $gdb->db_adaptor($dba);
 
    return $gdb;
 }
