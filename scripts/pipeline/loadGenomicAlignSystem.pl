@@ -266,7 +266,10 @@ sub prepBlastzPair
   $blastz_template->logic_name($logic_name);
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($blastz_template);
   my $stats = $blastz_template->stats;
-  $stats->hive_capacity(800);
+  $stats->hive_capacity(350);
+  if($genomic_align_conf->{'max_parallel_workers'}) {
+    $stats->hive_capacity($genomic_align_conf->{'max_parallel_workers'});
+  }
   $stats->update();
 
 
