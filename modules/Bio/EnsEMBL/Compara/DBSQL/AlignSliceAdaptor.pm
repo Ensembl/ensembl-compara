@@ -114,7 +114,7 @@ sub new {
 =cut
 
 sub fetch_by_Slice_MethodLinkSpeciesSet {
-  my ($self, $reference_slice, $method_link_species_set) = @_;
+  my ($self, $reference_slice, $method_link_species_set, $expanded) = @_;
 
   throw("[$reference_slice] is not a Bio::EnsEMBL::Slice")
       unless ($reference_slice and ref($reference_slice) and
@@ -137,6 +137,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
           -adaptor => $self,
           -reference_Slice => $reference_slice,
           -Genomic_Align_Blocks => $genomic_align_blocks,
+          -expanded => $expanded,
       );
   $self->{'_cache'}->{$key} = $align_slice;
 
