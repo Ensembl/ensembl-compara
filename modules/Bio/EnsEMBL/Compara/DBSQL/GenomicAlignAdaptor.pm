@@ -427,7 +427,6 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
   my $key = join( ':', $sb_species, $qy_species, $chr_name, 
 		  $chr_start, $chr_end, $dnafrag_type);
   if(exists $self->{'_cache'}->{$key}) {
-    print "using cache key = $key\n";
     return $self->{'_cache'}->{$key};
   }
 
