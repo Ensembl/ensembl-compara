@@ -28,7 +28,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 sub ncbi_taxid {
   my ($self,$value) = @_;
-  return $self->nestedset_id($value);
+  return $self->node_id($value);
 }
 
 sub rank {
@@ -42,7 +42,7 @@ sub print_node {
   my $indent = shift;
 
   $indent = '' unless(defined($indent));
-  printf("%s-%s(%d %s)\n", $indent, $self->name, $self->nestedset_id, $self->rank);
+  printf("%s-%s(%d %s)\n", $indent, $self->name, $self->node_id, $self->rank);
 }
 
 1;

@@ -31,11 +31,11 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 # FETCH methods
 ###########################
 
-sub fetch_node_by_nestedset_id {
+sub fetch_node_by_node_id {
   my ($self, $node_id) = @_;
 
   my $table= $self->tables->[0]->[1];
-  my $constraint = "WHERE $table.nestedset_id = $node_id";
+  my $constraint = "WHERE $table.node_id = $node_id";
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
@@ -49,7 +49,7 @@ sub fetch_parent_for_node {
   }
 
   my $table= $self->tables->[0]->[1];
-  my $constraint = "WHERE $table.nestedset_id = " . $node->_parent_id;
+  my $constraint = "WHERE $table.node_id = " . $node->_parent_id;
   my ($parent) = @{$self->_generic_fetch($constraint)};
   return $parent;
 }
@@ -62,7 +62,7 @@ sub fetch_all_children_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $constraint = "WHERE parent_id = " . $node->nestedset_id;
+  my $constraint = "WHERE parent_id = " . $node->node_id;
   my $kids = $self->_generic_fetch($constraint);
   foreach my $child (@{$kids}) { $node->add_child($child); }
 
@@ -82,7 +82,7 @@ sub fetch_subtree_under_node {
 
   my $constraint = "INNER JOIN $table AS root_node ON ( $table.left_index 
                          BETWEEN root_node.left_index AND root_node.right_index)
-                    WHERE root_node.nestedset_id=". $node->nestedset_id;
+                    WHERE root_node.node_id=". $node->node_id;
 
   my $all_nodes = $self->_generic_fetch($constraint);
   my $root = $self->_build_tree_from_nodes($all_nodes);
@@ -112,8 +112,8 @@ sub update {
   my $parent_id = 0;
   my $root_id = 0;
   if($node->parent) {
-    $parent_id = $node->parent->nestedset_id ;
-    $root_id = $node->root->nestedset_id;
+    $parent_id = $node->parent->node_id ;
+    $root_id = $node->root->node_id;
   }
 
   my $table= $self->tables->[0]->[0];
@@ -123,7 +123,7 @@ sub update {
                ",left_index=" . $node->left_index .
                ",right_index=" . $node->right_index .
                ",distance_to_parent=" . $node->distance_to_parent.
-             "WHERE $table.nestedset_id=". $node->nestedset_id;
+             "WHERE $table.node_id=". $node->node_id;
 
   $self->dbc->do($sql);
 }
@@ -218,7 +218,7 @@ sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
 
-  #my $node = $self->cache_fetch_by_id($rowhash->{'nestedset_id'});
+  #my $node = $self->cache_fetch_by_id($rowhash->{'node_id'});
   #return $node if($node);
   
   my $node = new Bio::EnsEMBL::Compara::NestedSet;
@@ -236,7 +236,7 @@ sub init_instance_from_rowhash {
   my $rowhash = shift;
 
   $node->adaptor($self);
-  $node->nestedset_id          ($rowhash->{'nestedset_id'});
+  $node->node_id               ($rowhash->{'node_id'});
   $node->_parent_id            ($rowhash->{'parent_id'});
   $node->_root_id              ($rowhash->{'root_id'});
   $node->left_index            ($rowhash->{'left_index'});
@@ -270,11 +270,11 @@ sub DESTROY {
 
 sub cache_fetch_by_id {
   my $self = shift;
-  my $nestedset_id = shift;
+  my $node_id = shift;
   
   for(my $index=0; $index<scalar(@{$self->{'_node_cache'}}); $index++) {
     my $node = $self->{'_node_cache'}->[$index];
-    if($node->nestedset_id == $nestedset_id) {
+    if($node->node_id == $node_id) {
       splice(@{$self->{'_node_cache'}}, $index, 1); #removes from list
       unshift @{$self->{'_node_cache'}}, $node; #put at front of list 
       return $node;
@@ -312,7 +312,7 @@ sub _build_tree_from_nodes {
   my %node_hash;
   my $root = undef;
   foreach my $node (@{$node_list}) {
-    $node_hash{$node->nestedset_id} = $node;
+    $node_hash{$node->node_id} = $node;
     if($node->root->equals($node)) {
       throw("found more than one root!!") if(defined($root));
       print("found ROOT\n");

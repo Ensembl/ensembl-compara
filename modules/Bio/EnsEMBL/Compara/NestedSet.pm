@@ -40,7 +40,7 @@ sub new {
 
   bless $self,$class;
   $self->init;
-  #printf("%s   CREATE refcount:%d\n", $self->nestedset_id, $self->refcount);
+  #printf("%s   CREATE refcount:%d\n", $self->node_id, $self->refcount);
   
   return $self;
 }
@@ -50,7 +50,7 @@ sub init {
 
   #internal variables minimal allocation
  # $self->{'_children_id_hash'} = {};
-  $self->{'_nestedset_id'} = undef;
+  $self->{'_node_id'} = undef;
   $self->{'_adaptor'} = undef;
   $self->{'_refcount'} = 0;
 
@@ -67,7 +67,7 @@ sub dealloc {
 sub DESTROY {
   my $self = shift;
   if(defined($self->{'_refcount'}) and $self->{'_refcount'}>0) {
-    printf("WARNING DESTROY refcount:%d  (%d)%s %s\n", $self->refcount, $self->nestedset_id, $self->name, $self);
+    printf("WARNING DESTROY refcount:%d  (%d)%s %s\n", $self->refcount, $self->node_id, $self->name, $self);
   }    
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
@@ -108,25 +108,25 @@ sub refcount {
 #
 #################################################
 
-=head2 nestedset_id
+=head2 node_id
 
-  Arg [1]    : (opt.) integer nestedset_id
-  Example    : my $nsetID = $object->nestedset_id();
-  Example    : $object->nestedset_id(12);
-  Description: Getter/Setter for the nestedset_id of this object in the database
-  Returntype : integer nestedset_id
+  Arg [1]    : (opt.) integer node_id
+  Example    : my $nsetID = $object->node_id();
+  Example    : $object->node_id(12);
+  Description: Getter/Setter for the node_id of this object in the database
+  Returntype : integer node_id
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub nestedset_id {
+sub node_id {
   my $self = shift;
-  $self->{'_nestedset_id'} = shift if(@_);
-  unless(defined($self->{'_nestedset_id'})) {
-    $self->{'_nestedset_id'} = Data::UUID->new->create_str();
+  $self->{'_node_id'} = shift if(@_);
+  unless(defined($self->{'_node_id'})) {
+    $self->{'_node_id'} = Data::UUID->new->create_str();
   }
-  return $self->{'_nestedset_id'};
+  return $self->{'_node_id'};
 }
 
 
@@ -191,7 +191,7 @@ sub add_child {
   $child->_set_parent($self);
 
   $self->{'_children_id_hash'} = {} unless($self->{'_children_id_hash'});
-  $self->{'_children_id_hash'}->{$child->nestedset_id} = $child;
+  $self->{'_children_id_hash'}->{$child->node_id} = $child;
 }
 
 sub store_child {
@@ -226,9 +226,9 @@ sub remove_child {
      unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
   throw("not my child")
     unless($self->{'_children_id_hash'} and 
-           $self->{'_children_id_hash'}->{$child->nestedset_id});
+           $self->{'_children_id_hash'}->{$child->node_id});
   
-  delete $self->{'_children_id_hash'}->{$child->nestedset_id};
+  delete $self->{'_children_id_hash'}->{$child->node_id};
   $child->_set_parent(undef);
   $child->release;
   return undef;
@@ -277,7 +277,7 @@ sub release_children {
 
   my @kids = values(%{$self->{'_children_id_hash'}});
   foreach my $child (@kids) {
-    #printf("  parent %d releasing child %d\n", $self->nestedset_id, $child->nestedset_id);
+    #printf("  parent %d releasing child %d\n", $self->node_id, $child->node_id);
     if($child) {
       $child->release_children;
       $child->release;
@@ -373,13 +373,14 @@ sub load_children_if_needed {
   return $self;
 }
 
+
 =head2 distance_to_parent
 
   Arg [1]    : (opt.) <int or double> distance
   Example    : my $dist = $object->distance_to_parent();
   Example    : $object->distance_to_parent(1.618);
   Description: Getter/Setter for the distance between this child and its parent
-  Returntype : integer nestedset_id
+  Returntype : integer node_id
   Exceptions : none
   Caller     : general
 
@@ -438,7 +439,7 @@ sub print_node {
   my $indent = shift;
 
   $indent = '' unless(defined($indent));
-  printf("%s-%s(%s)NS\n", $indent, $self->name, $self->nestedset_id);
+  printf("%s-%s(%s)NS\n", $indent, $self->name, $self->node_id);
 }
 
 
@@ -453,7 +454,7 @@ sub equals {
   my $other = shift;
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$other]")
         unless($other->isa('Bio::EnsEMBL::Compara::NestedSet'));
-  return 1 if($self->nestedset_id eq $other->nestedset_id);
+  return 1 if($self->node_id eq $other->node_id);
   return 0;
 }
 
@@ -466,7 +467,7 @@ sub has_child {
   return 0;
 }
 
-sub has_child_with_nestedset_id {
+sub has_child_with_node_id {
   my $self = shift;
   my $node_id = shift;
   $self->load_children_if_needed;
@@ -515,14 +516,14 @@ sub merge_node_via_shared_ancestor {
   my $self = shift;
   my $node = shift;
 
-  my $node_dup = $self->find_node_by_nestedset_id($node->nestedset_id);
+  my $node_dup = $self->find_node_by_node_id($node->node_id);
   if($node_dup) {
     warn("trying to merge in a node with already exists\n");
     return $node_dup;
   }
   return undef unless($node->parent);
   
-  my $ancestor = $self->find_node_by_nestedset_id($node->parent->nestedset_id);
+  my $ancestor = $self->find_node_by_node_id($node->parent->node_id);
   if($ancestor) {
     $ancestor->add_child($node);
     print("common ancestor at : "); $ancestor->print_node;
@@ -533,7 +534,7 @@ sub merge_node_via_shared_ancestor {
 
 ##################################
 #
-# nested_set manipulations and seaches
+# nested_set manipulations
 #
 ##################################
 
@@ -570,15 +571,15 @@ sub find_node_by_name {
   return undef;
 }
 
-sub find_node_by_nestedset_id {
+sub find_node_by_node_id {
   my $self = shift;
   my $node_id = shift;
   
-  return $self if($node_id eq $self->nestedset_id);
+  return $self if($node_id eq $self->node_id);
   
   my $children = $self->children;
   foreach my $child_node (@$children) {
-    my $found = $child_node->find_node_by_nestedset_id($node_id);
+    my $found = $child_node->find_node_by_node_id($node_id);
     return $found if(defined($found));
   }
   
@@ -611,7 +612,7 @@ sub _recursive_get_all_leaves {
   my $self = shift;
   my $leaves = shift;
     
-  $leaves->{$self->nestedset_id} = $self if($self->is_leaf);
+  $leaves->{$self->node_id} = $self if($self->is_leaf);
 
   foreach my $child (@{$self->children}) {
     $child->_recursive_get_all_leaves($leaves);
@@ -663,7 +664,7 @@ sub _set_parent {
   my ($self, $parent) = @_;
   $self->{'_parent_id'} = 0;
   $self->{'_parent_node'} = $parent;
-  $self->{'_parent_id'} = $parent->nestedset_id if($parent);
+  $self->{'_parent_id'} = $parent->node_id if($parent);
   return $self;
 }
 

@@ -65,7 +65,7 @@ sub tables {
 
 sub columns {
   my $self = shift;
-  return ['t.taxon_id as nestedset_id',
+  return ['t.taxon_id as node_id',
           't.parent_id',
           't.left_index',
           't.right_index',
@@ -85,7 +85,7 @@ sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
   
-  my $node = $self->cache_fetch_by_id($rowhash->{'nestedset_id'});
+  my $node = $self->cache_fetch_by_id($rowhash->{'node_id'});
   return $node if($node);
   
   $node = new Bio::EnsEMBL::Compara::NCBITaxon;
