@@ -48,8 +48,6 @@ use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::DBLoader;
 
-@Bio::EnsEMBL::Compara::GenomeDB::ISA = qw(Bio::EnsEMBL::Root);
-
 sub new {
   my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
 
@@ -88,7 +86,7 @@ sub db_adaptor {
 
   if($dba) {
     unless($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
-      $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
+      throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
     }
     $self->{'_db_adaptor'} = $dba;
   }
@@ -307,11 +305,11 @@ sub has_consensus {
 
   # sanity check on the GenomeDB passed in
   if( !defined $con_gdb || !$con_gdb->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
-    $self->throw("No query genome specified or query is not a GenomeDB obj");
+    throw("No query genome specified or query is not a GenomeDB obj");
   }
   # and check that you are not trying to compare the same GenomeDB
   if ( $con_gdb eq $self ) {
-    $self->throw("Trying to return consensus / query information from the same db");
+    throw("Trying to return consensus / query information from the same db");
   }
 
   my $consensus = $self->adaptor->check_for_consensus_db( $self, $con_gdb,$method_link_id);
@@ -339,13 +337,11 @@ sub has_query {
   # sanity check on the GenomeDB passed in
   if( !defined $query_gdb || 
       !$query_gdb->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
-    $self->throw("No consensus genome specified or query is not a " .
-		 "GenomeDB object");
+    throw("No consensus genome specified or query is not a GenomeDB object");
   }
   # and check that you are not trying to compare the same GenomeDB
   if ( $query_gdb eq $self ) {
-    $self->throw("Trying to return consensus / query information " .
-		 "from the same db");
+    throw("Trying to return consensus / query information from the same db");
   }
 
   my $query = $self->adaptor->check_for_query_db( $self, $query_gdb ,$method_link_id);
