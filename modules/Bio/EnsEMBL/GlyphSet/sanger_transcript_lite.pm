@@ -55,7 +55,7 @@ sub zmenu {
         "02:Gene: $vt->{'gene'}"   => $self->href( $vt ),
 		"04:Sanger curated ($T)"   => ''
     };
-    $zmenu->{"03:Transcript"} =
+    $zmenu->{"03:Protien"} =
         qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=sanger&peptide=$vt->{'translation'}) if defined $vt->{'translation'};
 
 	return $zmenu;
