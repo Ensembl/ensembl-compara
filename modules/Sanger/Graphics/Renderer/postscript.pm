@@ -66,7 +66,7 @@ sub init_canvas {
     #########
     # define colours which match our internal ids (I rule!)
     #
-    for my $id ($self->{'colourmap'}->ids()) {
+    for my $id (keys %{$self->{'colourmap'}} ) {
 	my ($psr, $psg, $psb) = $self->ps_rgb_by_id($id);
 	$canvas .= qq(/_$id { $psr $psg $psb setrgbcolor } def\n);
     }
@@ -82,7 +82,7 @@ sub add_canvas_frame {
 
 sub ps_rgb_by_id {
     my ($self, $id) = @_;
-    my ($psr, $psg, $psb) = $self->{'colourmap'}->rgb_by_id($id);
+    my ($psr, $psg, $psb) = $self->{'colourmap'}->rgb_by_name($id);
     $psr /= 255;
     $psg /= 255;
     $psb /= 255;

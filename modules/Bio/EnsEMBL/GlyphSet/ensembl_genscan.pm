@@ -13,7 +13,7 @@ sub features {
 
 sub href {
     my ($self, $id ) = @_;
-    $id =~ s/(.*)\.\d+/$1/o;
+#    $id =~ s/(.*)\.\d+/$1/o;
     return $self->{'config'}->{'ext_url'}->get_url( 'ENS_GENSCAN', $id );
 }
 sub zmenu {

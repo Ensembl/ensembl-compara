@@ -16,7 +16,7 @@ sub init_canvas {
     $im_height = int($im_height);
     $im_width  = int($im_width);
 
-    my @colours = $self->{'colourmap'}->ids();
+    my @colours = keys %{$self->{'colourmap'}};
 
     $self->{'image_width'} = $im_width;
     $self->{'image_height'} = $im_height;
@@ -36,7 +36,7 @@ sub svg_rgb_by_name {
 sub svg_rgb_by_id {
     my ($self, $id) = @_;
     return 'none' if($id eq 'transparent');
-    return 'rgb('. (join ',',$self->{'colourmap'}->rgb_by_id($id)).')';
+    return 'rgb('. (join ',',$self->{'colourmap'}->rgb_by_name($id)).')';
 }
 
 sub canvas {

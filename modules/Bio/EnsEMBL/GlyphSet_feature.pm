@@ -97,7 +97,7 @@ sub _init {
 
 ## Now go through each feature in turn, drawing them
         my $y_pos;
-        foreach my $i (keys %id){
+        foreach my $i (sort(keys %id)){
             my $has_origin = undef;
     
             $T+=@{$id{$i}}; ## Diagnostic report....

@@ -117,11 +117,11 @@ sub _init {
       $Config->{'legend_features'}->{'sanger_genes'} = {
        'priority' => 1000,
        'legend'  => [
-	 'Vega curated known genes'=> $sanger_colours->{'Known'},
-         'Vega curated novel CDS'  => $sanger_colours->{'Novel_CDS'},
-         'Vega curated putative'   => $sanger_colours->{'Putative'},
-         'Vega curated novel Trans'=> $sanger_colours->{'Novel_Transcript'},
-         'Vega curated pseudogenes'=> $sanger_colours->{'Pseudogene'} ] };
+	 'Sanger curated known genes'=> $sanger_colours->{'Known'},
+         'Sanger curated novel CDS'  => $sanger_colours->{'Novel_CDS'},
+         'Sanger curated putative'   => $sanger_colours->{'Putative'},
+         'Sanger curated novel Trans'=> $sanger_colours->{'Novel_Transcript'},
+         'Sanger curated pseudogenes'=> $sanger_colours->{'Pseudogene'} ] };
     } 
 
 

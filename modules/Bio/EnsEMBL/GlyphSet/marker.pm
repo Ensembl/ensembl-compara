@@ -13,12 +13,12 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    return "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=".$f->id;
+    return "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=".$f->display_label;
 }
 sub zmenu {
     my ($self, $f ) = @_;
     return { 
-        'caption' => $f->id,
+        'caption' => $f->display_label,
 	    'Marker info' => $self->href($f)
     };
 }

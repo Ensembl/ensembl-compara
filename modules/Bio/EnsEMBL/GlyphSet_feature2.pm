@@ -58,6 +58,7 @@ sub _init {
     my $type = $self->check();
     return unless defined $type;
 
+    my $WIDTH          = 1e5;
     my $container      = $self->{'container'};
     my $Config         = $self->{'config'};
     my $strand         = $self->strand();
@@ -129,9 +130,10 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
         }
     
         my $ZZ;
-        if($end-$start<100000) {
-	    my $X =int(( $start + $end) /2);
-            $ZZ = "chr=$i&vc_start=$X&vc_end=$X&fpos_context=50000";
+        if($end-$start<$WIDTH) {
+	    my $X =int(( $start + $end - $WIDTH) /2);
+	    my $Y = $X + $WIDTH ;
+            $ZZ = "chr=$i&vc_start=$X&vc_end=$Y";
 	} else {
             $ZZ = "chr=$i&vc_start=$start&vc_end=$end";
         }
@@ -168,6 +170,5 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
         }
     }
 }
-
 
 1;

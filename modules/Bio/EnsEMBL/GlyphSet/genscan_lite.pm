@@ -50,7 +50,7 @@ sub href {
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->stable_id();
-    return { 'cation' => $id } unless my $gft = EnsWeb::species_defs->GENSCAN_FASTA_TABLE;
+    return { 'caption' => $id } unless my $gft = EnsWeb::species_defs->GENSCAN_FASTA_TABLE;
     return {
 	'caption' => $id,
         '01:Peptide sequence' => $self->href( $gene, $transcript ),

@@ -6,7 +6,7 @@ use Bio::EnsEMBL::GlyphSet_transcript;
 
 sub my_label {
     my $self = shift;
-    return $self->{'config'}->{'_draw_single_Transcript'} || 'Vega trans.';
+    return $self->{'config'}->{'_draw_single_Transcript'} || 'Sanger trans.';
 }
 
 sub colours {
@@ -65,10 +65,10 @@ sub zmenu {
 
     $type =~ s/HUMACE-//g;
     my $zmenu = {
-        'caption'                   => "Vega Gene",
+        'caption'                   => "Sanger Gene",
 	"01:$tid"                   => '',
         "02:Gene: $gid"             => $self->href( $gene, $transcript ),
-        "04:Vega curated ($type)" => ''
+        "04:Sanger curated ($type)" => ''
     };
 
     my $translation_id = $transcript->translation()->stable_id();
@@ -97,15 +97,15 @@ sub legend {
     my ($self, $colours) = @_;
     return ('sanger_genes', 1000,
             [
-                'Vega curated known genes'    => $colours->{'HUMACE-Known'},
-                'Vega curated novel CDS'      => $colours->{'HUMACE-Novel_CDS'},
-                'Vega curated putative'       => $colours->{'HUMACE-Putative'},
-                'Vega curated novel Trans'    => $colours->{'HUMACE-Novel_Transcript'},
-                'Vega curated pseudogenes'    => $colours->{'HUMACE-Pseudogene'}
+                'Sanger curated known genes'    => $colours->{'HUMACE-Known'},
+                'Sanger curated novel CDS'      => $colours->{'HUMACE-Novel_CDS'},
+                'Sanger curated putative'       => $colours->{'HUMACE-Putative'},
+                'Sanger curated novel Trans'    => $colours->{'HUMACE-Novel_Transcript'},
+                'Sanger curated pseudogenes'    => $colours->{'HUMACE-Pseudogene'}
             ]
     );
 }
 
-sub error_track_name { return 'Vega transcripts'; }
+sub error_track_name { return 'Sanger transcripts'; }
 
 1;
