@@ -127,7 +127,9 @@ sub js_init{
   return qq(
 <script language="javascript">
 <!-- Hide script
+FLAG = 0;
 function init()  {  
+  FLAG = 1;
   if(document.feederform) {
     document.feederform.q.focus();
     document.feederform.q.select();

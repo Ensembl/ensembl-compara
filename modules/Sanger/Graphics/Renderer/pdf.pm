@@ -201,4 +201,26 @@ sub render_Composite {
     $self->SUPER::render_Composite($glyph);
 }
 
+sub render_Sprite {
+  my ($self, $glyph) = @_;
+  my $spritename     = $glyph->{'sprite'} || "unknown";
+  my $config         = $self->config();
+
+  unless(exists $config->{'_spritecache'}->{$spritename}) {
+    my $libref = $config->get("_settings", "spritelib");
+    my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
+    my $fn     = "$lib/$spritename.png";
+    eval {
+      $config->{'_spritecache'}->{$spritename} = $self->{'canvas'}{'page'}->image_png($fn);
+    };
+    if( $@ || !$config->{'_spritecache'}->{$spritename} ) {
+      eval {
+        $config->{'_spritecache'}->{$spritename} = $self->{'canvas'}{'page'}->image_png("$lib/missing.png");
+      };
+    }
+  }
+
+  return $self->SUPER::render_Sprite($glyph);
+}
+
 1;
