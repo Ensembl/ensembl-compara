@@ -42,9 +42,9 @@ sub _init {
     my %COL = ();
     $COL{'gpos100'} = $cmap->id_by_name('black'); #add_rgb([200,200,200]);
     $COL{'tip'}     = $cmap->id_by_name('slategrey');
-    $COL{'gpos75'}  = $cmap->id_by_name('grey3'); #add_rgb([210,210,210]);
-    $COL{'gpos50'}  = $cmap->id_by_name('grey2'); #add_rgb([230,230,230]);
-    $COL{'gpos25'}  = $cmap->id_by_name('grey1'); #add_rgb([240,240,240]);
+    $COL{'gpos75'}  = $cmap->id_by_name('grey40'); #add_rgb([210,210,210]);
+    $COL{'gpos50'}  = $cmap->id_by_name('grey60'); #add_rgb([230,230,230]);
+    $COL{'gpos25'}  = $cmap->id_by_name('grey85'); #add_rgb([240,240,240]);
     $COL{'gpos'}    = $black; #add_rgb([240,240,240]);
     $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
     $COL{'gneg'}    = $white;
