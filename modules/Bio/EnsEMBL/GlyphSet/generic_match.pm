@@ -79,6 +79,12 @@ sub zmenu {
   }
   $id =~ s/'/\'/g;
   my @T = $T ? @$T : ();
-  return {( 'caption', map { s/###(\w+)###/my $M="SUB_$1";$self->$M($id)/eg; $_ } @T )} if $T && @T;
+  my $zmenu = {( 'caption', map { s/###(\w+)###/my $M="SUB_$1";$self->$M($id)/eg; $_ } @T )} if $T && @T;
+  my $extra_URL  = "/@{[$self->{container}{_config_file_name_}]}/featureview?type=";
+     $extra_URL .= ( $self->my_config('CALL') eq 'get_all_ProteinAlignFeatures' ? 'ProteinAlignFeature' : 'DnaAlignFeature' );
+     $extra_URL .= "&id=$id";
+     $extra_URL .= "&db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
+  $zmenu->{ 'View all hits' } = $extra_URL;
+  return $zmenu;
 }
 1;
