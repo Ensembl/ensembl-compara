@@ -33,7 +33,7 @@ sub _init {
   }
   my( $highlights, $strandedness, $Storage) = @_;
 
-
+  warn "DC: $highlights";
   my $self = {
     'glyphsets'     => [],
     'config'        => $Contents->[0][1],
@@ -166,8 +166,7 @@ sub new {
   if($show_buttons eq 'yes') {
   for my $glyphset (@glyphsets) {
     next unless defined $glyphset->bumped();
-    my $NAME = ref($glyphset);
-      $NAME =~ s/^.*:://;
+    my $NAME = $glyphset->check();
       my $box_glyph = new Sanger::Graphics::Glyph::Rect({
         'x' => -$panel_start + $margin,
         'y'             => 0,

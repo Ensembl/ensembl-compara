@@ -58,9 +58,6 @@ sub _init {
 ##############################################################################
 
   my $database = $Config->get($type,'database');
-  warn $type;
-  warn $Config->get($type,'logic_name');
-  warn $database; 
   foreach my $logic_name ( split /\s+/, $Config->get($type,'logic_name') ) { 
   foreach my $g (@{$vc->get_all_Genes( $logic_name, $database )}) {
     my $gene_label = $self->gene_label( $g );

@@ -54,11 +54,11 @@ sub _init {
   
   my @features = ();
   foreach my $segment (@{$vc->project('seqlevel')||[]}) {
-    my $start = $segment->from_start;
-    my $end = $segment->from_end;
-    my $ctg_slice = $segment->to_Slice;
+    my $start      = $segment->from_start;
+    my $end        = $segment->from_end;
+    my $ctg_slice  = $segment->to_Slice;
     my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
-    $feature->{'locations'}{'contig'} = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
+    $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
     foreach( @{$vc->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
       my $path;
       eval { $path = $ctg_slice->project($_->name); };
@@ -131,34 +131,33 @@ sub _init_non_assembled_contig {
     push @colours, shift @colours;
     
     if($navigation eq 'on') {
-      foreach( qw(contig clone supercontig) ) {
+      foreach( qw(chunk contig clone supercontig) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
-          $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?$_=$Q->[0]);
+          $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?region=$Q->[0]);
         }
       }
     }
-    my $label = $tile->{'locations'}->{'clone'} ? $tile->{'locations'}->{'clone'}->[0] : $tile->{'locations'}->{'contig'}->[0];
+    my $label = '';
     if($show_navigation) {
       $glyph->{'zmenu'} = {
         'caption' => $rid,
       };
       my $POS = 10;
-      foreach( qw(contig clone supercontig) ) {
+      foreach( qw(chunk contig clone supercontig) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
           my $name =$Q->[0];
              $name =~ s/\.\d+$// if $_ eq 'clone';
+          $label ||= $tile->{'locations'}->{$_}->[0];
           (my $T=$_)=~tr/cs/CS/;
           $glyph->{'zmenu'}{"$POS:$T $name"} ='' unless $_ eq 'contig';
           $POS++;
           $glyph->{'zmenu'}{"$POS:EMBL source file"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
           $POS++;
-          $glyph->{'zmenu'}{"$POS:Centre on $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?$_=$name);
+          $glyph->{'zmenu'}{"$POS:Centre on $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?region=$name);
           $POS++;
           $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=$_&id=$name);
           $POS++;
         }
-      }
-      if( $tile->{'locations'}->{'clone'} ) {
       }
     }
     $self->push($glyph);

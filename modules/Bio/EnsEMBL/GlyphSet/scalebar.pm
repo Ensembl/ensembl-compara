@@ -28,6 +28,7 @@ sub _init {
     my $Container      = $self->{'container'};
     my $h              = 0;
     my $highlights     = $self->highlights();
+    warn "BEGSH ",$highlights;
 
     my $fontname       = "Tiny";
     my $fontwidth_bp   = $Config->texthelper->width($fontname),

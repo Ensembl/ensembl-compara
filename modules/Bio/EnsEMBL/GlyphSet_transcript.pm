@@ -65,7 +65,6 @@ sub _init {
   my $transcript_drawn = 0;
     
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
-    warn "$gene @{[$gene->stable_id]} $target_gene";
     next if $target_gene && ($gene->stable_id() ne $target_gene);
  
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
@@ -168,7 +167,6 @@ sub _init {
       if($self->can('join')) {
         my @tags = $self->join( $gene->stable_id );
         foreach (@tags) {
-          warn( $gene->stable_id." -> $_" );
           $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
           $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
         }

@@ -49,7 +49,6 @@ sub _init {
 
   my $colours        = $Config->get($type,'colours');
 
-  warn Data::Dumper::Dumper( $colours );
   my $max_length     = $Config->get($type,'threshold') || 1e6;
   my $max_length_nav = $Config->get($type,'navigation_threshold') || 50e3;
   my $navigation     = $Config->get($type,'navigation') || 'off';
@@ -137,9 +136,7 @@ sub _init {
     $FLAG=1;
    }
   } 
-  warn "ADDING FEATURES....";
   if($FLAG) {
-    warn "TYPE $type ", $Config->get( $type, 'pos' );
     $Config->{'legend_features'}->{$type} = {
       'priority' => $Config->get( $type, 'pos' ),
       'legend'  => $self->legend( $used_colours )
@@ -152,7 +149,6 @@ sub legend {
   my @legend = ();
   my $lcap = $self->legend_captions();
   foreach my $key ( %{$lcap} ) {
-    warn "$key $lcap->{$key} $colours->{$key}";
     push @legend, $lcap->{$key} => $colours->{$key} if exists $colours->{$key};
   } 
   return \@legend;
