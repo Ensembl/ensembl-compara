@@ -58,7 +58,7 @@ use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
@@ -228,6 +228,11 @@ sub createSubmitPepAnalysis {
         -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
       );
     $self->db->get_AnalysisAdaptor()->store($analysis);
+
+    my $stats = $self->{'comparaDBA'}->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
+    $stats->batch_size(7000);
+    $stats->hive_capacity(1);
+    $stats->update();   
   }
 
   #my $host = hostname();
