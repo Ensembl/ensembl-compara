@@ -29,7 +29,10 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
   use Bio::EnsEMBL::Registry; 
   Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
 
-  my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->load_all;
+  Bio::EnsEMBL::Registry->load_all();
+
+  my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+      $compara_db_name, "compara", "GenomicAlignBlock");
 
 =head2 Store/Delete data from the database
   
@@ -60,6 +63,7 @@ This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::Bas
 
 =head1 SEE ALSO
 
+ - Bio::EnsEMBL::Registry
  - Bio::EnsEMBL::DBSQL::BaseAdaptor
  - Bio::EnsEMBL::BaseAdaptor
  - Bio::EnsEMBL::Compara::GenomicAlignBlock

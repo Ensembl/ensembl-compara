@@ -7,9 +7,12 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor
+Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor - Object to access data in the method_link_species_set
+and method_link tables
 
 =head1 SYNOPSIS
+
+=head2 Connecting to the database using the old way:
 
   use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor; 
   my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
@@ -19,10 +22,27 @@ Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor
       -port => $port,
       -dbname => $dbname,
       -conf_file => $conf_file);
-  
+
   my $mlssa = $db->get_MethodLinkSpeciesSetAdaptor();
 
+=head2 Connecting to the database using the new way (recommended):
+  
+  use Bio::EnsEMBL::Registry; 
+  Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
+
+  use Bio::EnsEMBL::Registry; 
+  Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
+
+  Bio::EnsEMBL::Registry->load_all();
+
+  my $mlssa = Bio::EnsEMBL::Registry->get_adaptor(
+      $compara_db_name, "compara", "MethodLinkSpeciesSet");
+
+=head2 Store/Delete data from the database
+  
   $mlssa->store($method_link_species_set);
+
+=head2 Retrieve data from the database
 
   my $method_link_species_sets = $mlssa->fetch_all;
   
@@ -65,11 +85,35 @@ Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor
 
 This object is intended for accessing data in the method_link and method_link_species_set tables.
 
+=head1 INHERITANCE
+
+This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::BaseAdaptor
+
+=head1 SEE ALSO
+
+ - Bio::EnsEMBL::Registry
+ - Bio::EnsEMBL::DBSQL::BaseAdaptor
+ - Bio::EnsEMBL::BaseAdaptor
+ - Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+ - Bio::EnsEMBL::Compara::GenomeDB
+ - Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+
 =head1 AUTHOR
 
 Javier Herrero (jherrero@ebi.ac.uk)
 
 This modules is part of the Ensembl project http://www.ensembl.org
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004. EnsEMBL Team
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org). You may distribute
+it under the same terms as EnsEMBL itself.
+
+=head1 CONTACT
+
+Questions can be posted to the ensembl-dev mailing list: ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
