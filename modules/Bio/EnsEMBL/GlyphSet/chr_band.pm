@@ -13,11 +13,8 @@ use ColourMap;
 sub init_label {
     my ($self) = @_;
 
-	my $chr = $self->{'container'}->_chr_name();
-	$chr ||= "Chrom. Band";
-	
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => $chr,
+	'text'      => "Band",
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
@@ -76,7 +73,7 @@ sub _init {
     		'width'  => $vc_band_end - $vc_band_start,
     		'height' => 10,
     		'colour' => $COL{$stain},
-    		'bordercolour' => $black,
+#    		'bordercolour' => $black,
 			'absolutey' => 1,
    		});
     	$self->push($gband);
@@ -102,6 +99,16 @@ sub _init {
 			$self->push($tglyph);
 		}
 	
+    	my $gband = new Bio::EnsEMBL::Glyph::Rect({
+    		'x'      => 0,
+    		'y'      => 0,
+    		'width'  => $self->{'container'}->length(),
+    		'height' => 10,
+    		'bordercolour' => $black,
+			'absolutey' => 1,
+   		});
+    	$self->push($gband);
+		
 		#print STDERR "VCSTART: $vc_band_start, VCEND: $vc_band_end, WIDTH: ",$vc_band_end - $vc_band_start, "\n";
 		#print STDERR "VC length: ", $self->{'container'}->length(), "\n";
 		#print STDERR "Stain: $stain = ", $COL{$stain}, "\n";

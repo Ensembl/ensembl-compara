@@ -19,6 +19,7 @@ sub _init {
 
     my $fontname = "Tiny";
     my $fontheight = $Config->texthelper->height($fontname),
+    my $fontwidth_bp = $Config->texthelper->width($fontname),
     my ($fontwidth,$dontcare) = $Config->texthelper->px2bp($fontname),
 
     my $feature_colour 	= $Config->get($Config->script(),'scalebar','col');
@@ -55,7 +56,7 @@ sub _init {
 	$self->push($tick);
     }
 	
-    if ($subdivs){
+    if ($subdivs  && $len > 1000){
 	# label each division
 	for (my $i=0;$i<int($len/$divs); $i++){
 	    my $text = int($i * $divs + $global_start);		
@@ -78,7 +79,9 @@ sub _init {
     else {
 	# label first and last
 	my $text = $global_start;
-	$text = bp_to_nearest_unit($global_start,2) if $abbrev;
+	if ($abbrev && $len >1000){
+	    $text = bp_to_nearest_unit($global_start,2);
+	}
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 	    'x'      	=> 0,
 	    'y'      	=> 8,
@@ -92,15 +95,18 @@ sub _init {
 	
 	my $im_width = $Config->image_width();
 	$text = $global_end;
-	$text = bp_to_nearest_unit($global_end,2) if $abbrev;
+	if ($abbrev && $len >1000){
+	    $text = bp_to_nearest_unit($global_end,2);
+	}
 
 	my $endglyph = new Bio::EnsEMBL::Glyph::Text({
-	    'x'      	=> $len - (length("$text ")*$fontwidth),
+	    'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
 	    'y'      	=> 8,
 	    'height'	=> $fontheight,
 	    'font'   	=> $fontname,
 	    'colour' 	=> $feature_colour,
 	    'text'   	=> $text,
+	    'absolutex'  => 1,
 	    'absolutey' => 1,
 	});
 	    $self->push($endglyph);

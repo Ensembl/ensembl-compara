@@ -17,7 +17,6 @@ sub _init {
     my $Config = $self->{'config'};
 
     my $y             = 0;
-    my $h             = 8;
     my $highlights    = $self->highlights();
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
@@ -38,6 +37,9 @@ sub _init {
     my $unknown_col = $Config->get($Config->script(),'gene','unknown');
     my $pix_per_bp  = $Config->transform->{'scalex'};
     my $bitmap_length = int($VirtualContig->length * $pix_per_bp);
+    my $fontname = "Tiny";
+    my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
+    my $w = $Config->texthelper->width($fontname);
 
     foreach my $vg (@allgenes) {
 
@@ -82,8 +84,8 @@ sub _init {
 		$label	= "UNKNOWN";
 	    }
 	} else {
-		# ignore pesky external genes for the moment
-		next;
+	    # ignore pesky external genes for the moment
+	    next;
 	    $colour = $ext_col;
 	    $start  = ($vg->each_Transcript())[0]->start_exon->start();
 	    $end    = ($vg->each_Transcript())[-1]->end_exon->end();
@@ -91,11 +93,11 @@ sub _init {
 	    $label  =~ s/gene\.//;
 	
 	}
-    
-	my $fontname = "Tiny";
-	my ($w,$h) = $Config->texthelper->px2bp($fontname);
-	$w = $Config->texthelper->width($fontname);
-	my $bp_textwidth = $w * length("$label ");
+	
+	######################
+	# Make and bump label
+	######################
+	$label = " $label";
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 		'x'	    => $start,
 		'y'	    => $y,
@@ -104,13 +106,15 @@ sub _init {
 		'colour'    => $colour,
 		'text'	    => $label,
 		'absolutey' => 1,
-	});
+		});
+
+	my $bp_textwidth = $w * length("$label ");
 
 	#########
 	# bump it baby, yeah!
     	# bump-nology!
 	#
-    	my $bump_start = int($tglyph->x() * $pix_per_bp);
+    	my $bump_start = int($start * $pix_per_bp);
 	$bump_start    = 0 if ($bump_start < 0);
 
     	my $bump_end = $bump_start + $bp_textwidth;
@@ -122,8 +126,32 @@ sub _init {
 	    \@bitmap
     	);
 
-    	$tglyph->y($tglyph->y() + (1.2 * $row * $h));
+    	$tglyph->y($tglyph->y() + (1.2 * $row * $h) + 1);
     	$self->push($tglyph);
+	
+	##################################################
+	# Draw little taggy bit to indicate start of gene
+	##################################################
+	my $taggy = new Bio::EnsEMBL::Glyph::Rect({
+		'x'	    => $start,
+		'y'	    => $tglyph->y - 1,
+		'width'     => 1,
+		'height'    => 4,
+		'bordercolour'    => $colour,
+		'absolutey' => 1,
+		});
+	
+    	$self->push($taggy);
+	$taggy = new Bio::EnsEMBL::Glyph::Rect({
+		'x'	    => $start,
+		'y'	    => $tglyph->y - 1 + 4,
+		'width'     => $font_w_bp * 0.5,
+		'height'    => 0,
+		'bordercolour'    => $colour,
+		'absolutey' => 1,
+		});
+	
+    	$self->push($taggy);
     }
 }
 

@@ -35,42 +35,50 @@ sub _init {
 
     my $fontname = "Tiny";
     my $fontheight = $Config->texthelper->height($fontname),
-    my ($w,$h) = $Config->texthelper->px2bp($fontname),
+    my $fontwidth  = $Config->texthelper->width($fontname),
 
+    #####################################################################
+    # The ruler has to be drawn in absolute x, because when the length is
+    # too small the rounding errors screw everything
+    #####################################################################
 
 	my $text = int($global_end - $global_start);		
 	$text = bp_to_nearest_unit($text);		
-	my $bp_textwidth = $w * length($text);
+	my $bp_textwidth = $fontwidth * length($text);
+	my $im_width_bp = $Config->image_width();
 	    
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	'x'      	=> int($len/2) - int($bp_textwidth/2),
-	'y'      	=> 2,
-	'height'	=> $fontheight,
-	'font'   	=> $fontname,
-	'colour' 	=> $feature_colour,
-	'text'   	=> $text,
-	'absolutey' => 1,
-	});
+	    'x'      	=> int($im_width_bp/2) - int($bp_textwidth/2),
+	    'y'      	=> 2,
+	    'height'	=> $fontheight,
+	    'font'   	=> $fontname,
+	    'colour' 	=> $feature_colour,
+	    'text'   	=> $text,
+	    'absolutex'  => 1,
+	    'absolutey' => 1,
+	    });
 	$self->push($tglyph);
+	$bp_textwidth = $fontwidth * (length($text)+3);
 
-	my $bp_textwidth = $w * (length($text)+3);
+
 	my $lglyph = new Bio::EnsEMBL::Glyph::Rect({
-		'x'      => 0,
+	    'x'      => 0,
 	    'y'      => 6,
-	    'width'  => int($len/2) - int($bp_textwidth/2),
+	    'width'  => int($im_width_bp/2) - int($bp_textwidth/2),
 	    'height' => 0,
 	    'colour' => $feature_colour,
+	    'absolutex'  => 1,
 	    'absolutey'  => 1,
 	});
 	$self->push($lglyph);
 
-	my $bp_textwidth = $w * (length($text)+3);
 	my $rglyph = new Bio::EnsEMBL::Glyph::Rect({
-		'x'      => int($len/2) + int($bp_textwidth/2),
+	    'x'      => int($im_width_bp/2) + int($bp_textwidth/2),
 	    'y'      => 6,
-	    'width'  => int($len) - (int($len/2) + int($bp_textwidth/2)),
+	    'width'  => $im_width_bp - (int($im_width_bp/2) + int($bp_textwidth/2)),
 	    'height' => 0,
 	    'colour' => $feature_colour,
+	    'absolutex'  => 1,
 	    'absolutey'  => 1,
 	});
 	$self->push($rglyph);
@@ -78,20 +86,22 @@ sub _init {
 	# to get aroung px->postion problems we make each arrow head
 	# exactly 2 text chars long
 	# add the left arrow head....
-    my $gtriagl = new Bio::EnsEMBL::Glyph::Poly({
-        'points'       => [0,6, ($w*2),3, ($w*2),9],
-        'colour'       => $feature_colour,
-        'absolutey'    => 1,
-    });    
-    $self->push($gtriagl);
-	
-	# add the right arrow head....
-    my $gtriagr = new Bio::EnsEMBL::Glyph::Poly({
-        'points'       => [$len,6, ($len-$w*2),3, ($len-$w*2),9],
-        'colour'       => $feature_colour,
-        'absolutey'    => 1,
-    });
-    $self->push($gtriagr);
+	my $gtriagl = new Bio::EnsEMBL::Glyph::Poly({
+	    'points'       => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
+	    'colour'       => $feature_colour,
+	    'absolutex'  => 1,
+	    'absolutey'    => 1,
+	});    
+	$self->push($gtriagl);
+	    
+	    # add the right arrow head....
+	my $gtriagr = new Bio::EnsEMBL::Glyph::Poly({
+	    'points'       => [$im_width_bp,6, ($im_width_bp-$fontwidth*2),3, ($im_width_bp-$fontwidth*2),9],
+	    'colour'       => $feature_colour,
+	    'absolutex'  => 1,
+	    'absolutey'    => 1,
+	});
+	$self->push($gtriagr);
     
 }
 

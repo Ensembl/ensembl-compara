@@ -42,9 +42,12 @@ sub _init {
     my $pix_per_bp  = $Config->transform->{'scalex'};
     my $bitmap_length = int($VirtualContig->length * $pix_per_bp);
     
-    foreach my $vg ($VirtualContig->get_all_VirtualGenes()){
-    push (@allgenes, $vg->gene());
-    }
+    #foreach my $vg ($VirtualContig->get_all_VirtualGenes()){
+    #push (@allgenes, $vg->gene());
+    #}
+
+    @allgenes = $VirtualContig->get_all_Genes_exononly();
+	
 
     #if ($type eq 'all'){
 	#foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
@@ -140,6 +143,7 @@ sub _init {
             @exons = reverse @exons;
         }
 
+	
         my $start_exon = $exons[0];
         my $end_exon   = $exons[-1];
 
