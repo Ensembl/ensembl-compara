@@ -1,4 +1,5 @@
 package Bio::EnsEMBL::GlyphSetManager::das;
+
 use strict;
 use Bio::EnsEMBL::GlyphSetManager;
 use Bio::EnsEMBL::GlyphSet::das;
