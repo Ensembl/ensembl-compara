@@ -206,7 +206,10 @@ sub _objs_from_sth {
 
   my @rules = ();
 
-  my $analysisDBA = $self->db->get_adaptor("Analysis");
+  #$self->add_CanonicalAdaptor('Analysis'  , 'Bio::EnsEMBL::Pipeline::DBSQL::AnalysisAdaptor');
+  #my $analysisDBA = $self->db->get_adaptor("Analysis");
+  my $analysisDBA = $self->db->get_AnalysisAdaptor;
+  #print("!!!!USING get_AnalysisAdaptor\n");
 
   my ($simple_rule_id, $condition_analysis_id, $goal_analysis_id);
   $sth->bind_columns(\$simple_rule_id, \$condition_analysis_id, \$goal_analysis_id);
