@@ -57,7 +57,7 @@ sub height {
     shift @pts;
     while(my $pt = shift @pts) {
 	shift @pts; # dispose of spare 'x' coord
-	$maxy = $pt if(!defined $maxy || $pt > $maxy);
+    	$maxy = $pt if(!defined $maxy || $pt > $maxy);
     }
     my $miny = $this->y();
 
