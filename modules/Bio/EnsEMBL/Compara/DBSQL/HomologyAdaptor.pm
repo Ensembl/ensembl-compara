@@ -71,6 +71,8 @@ sub fetch_homologues_of_gene {
     my @genes;
     foreach my $rel (@relationshipids) {
 	my $q ="select  grm.member_stable_id,
+			grm.description,
+			grm.display_id,
 			grm.chrom_start,
 			grm.chrom_end,
 			grm.chromosome,  
@@ -129,6 +131,8 @@ sub _fetch_homologues_by_species_relationship_id{
     my ($self,$hspecies,$internal_id)=@_;
 
     my $q ="select  grm.member_stable_id,
+		    grm.description,
+		    grm.display_id,
 		    grm.chrom_start,
 		    grm.chrom_end,
 		    grm.chromosome,  
@@ -155,6 +159,8 @@ sub _get_homologues {
     while (my $ref = $q->fetchrow_hashref) {
 	my $homol= Bio::EnsEMBL::Compara::Homology->new();
 	$homol->species($ref->{'name'});
+	$homol->description($ref->{'description'});
+	$homol->display_id($ref->{'display_id'});
 	$homol->stable_id($ref->{'member_stable_id'});
 	$homol->chrom_start($ref->{'chrom_start'});
         $homol->chrom_end($ref->{'chrom_end'});

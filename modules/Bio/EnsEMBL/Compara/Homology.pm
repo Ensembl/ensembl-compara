@@ -74,6 +74,50 @@ sub stable_id {
 
 
 
+=head2 display_id
+
+ Title   : display_id
+ Usage   : $obj->display_id($newval)
+ Function: 
+ Example : 
+ Returns : value  of display_id
+ Args    : newvalue (optional)
+
+=cut
+
+sub display_id {
+   my ($obj,$value) = @_;
+   if( defined $value) {
+      $obj->{'_display_id'} = $value;
+    }
+    return $obj->{'_display_id'};
+
+}
+
+
+
+=head2 description
+
+ Title   : description
+ Usage   : $obj->description($newval)
+ Function: 
+ Example : 
+ Returns : value  of description
+ Args    : newvalue (optional)
+
+=cut
+
+sub description {
+   my ($obj,$value) = @_;
+   if( defined $value) {
+      $obj->{'_description'} = $value;
+    }
+    return $obj->{'_description'};
+
+}
+
+
+
 =head2 chrom_start
 
  Title   : chrom_start
