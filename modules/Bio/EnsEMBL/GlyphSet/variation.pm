@@ -16,6 +16,12 @@ sub features {
   &eprof_start('function-a');
   &eprof_start( 'get_all_vf' );
   my $vf_ref = $self->{'container'}->get_all_VariationFeatures();
+
+  # Check for duplicate snps in DB
+  #my %snps;
+  #map { $snps{ $_->variation_name }++} @$vf_ref;
+  #foreach (keys  %snps) {    warn "Name: $_, $snps{$_}\n";  }
+
   &eprof_end( 'get_all_vf' );
   &eprof_start( 'sort_vf' );  
   my @vari_features = 
@@ -25,7 +31,8 @@ sub features {
      grep { $_->map_weight < 4 } @$vf_ref;
   &eprof_end( 'sort_vf' );
 
-#  warn "@{[ map { $_->get_consequence_type } @vari_features ]}";
+
+  #  warn "@{[ map { $_->get_consequence_type } @vari_features ]}";
   if(@vari_features) {
     $self->{'config'}->{'variation_legend_features'}->{'variations'} 
         = { 'priority' => 1000, 'legend' => [] };
