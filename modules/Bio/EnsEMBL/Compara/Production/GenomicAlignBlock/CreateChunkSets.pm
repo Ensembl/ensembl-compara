@@ -96,6 +96,8 @@ sub fetch_input {
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
+
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
@@ -108,7 +110,6 @@ sub run
   my $self = shift;
 
   $self->create_chunk_sets;
-  
   return 1;
 }
 
@@ -153,6 +154,7 @@ sub get_params {
   $self->{'genome_db_id'} = $params->{'genome_db_id'} if(defined($params->{'genome_db_id'}));
 
   $self->{'chunkset_id'} = $params->{'chunkset_id'} if(defined($params->{'chunkset_id'}));
+  $self->{'max_set_bps'} = $params->{'group_set_size'} if(defined($params->{'group_set_size'}));
 
   $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
 
@@ -195,6 +197,7 @@ sub create_chunk_sets
     if(($set_size + $chunk->length) > $self->{'max_set_bps'}) {
       #set has hit max, so save it
       $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
+      $self->submit_job($chunkSet);
       printf("created chunkSet(%d) %d chunks, %1.3f mbase\n",
              $chunkSet->dbID, $chunkSet->count, $set_size/1000000.0);
       $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
@@ -212,12 +215,14 @@ sub create_chunk_sets
 
 
 sub submit_job {
-  my $self  = shift;
-  my $chunk = shift;
+  my $self     = shift;
+  my $chunkSet = shift;
 
+  return unless($self->{'analysis_job'});
+  
   unless($self->{'submit_analysis'}) {
     #print("\ncreate Submit Analysis\n");
-    my $gdb = $chunk->dnafrag->genome_db;
+    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($self->{'genome_db_id'});
     my $logic_name = $self->{'analysis_job'} ."_". $gdb->dbID ."_". $gdb->assembly;
 
     #print("  see if analysis '$logic_name' is in database\n");
@@ -245,7 +250,7 @@ sub submit_job {
     $self->{'submit_analysis'} = $analysis;
   }
 
-  my $input_id = "{'qyChunk'=>" . $chunk->dbID . "}";
+  my $input_id = "{'qyChunkSetID'=>" . $chunkSet->dbID . "}";
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $self->{'submit_analysis'},
