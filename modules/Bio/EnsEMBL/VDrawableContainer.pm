@@ -93,7 +93,6 @@ sub new {
     my $yoffset = 0;
 
     my $glyphsets = @{$self->{'glyphsets'}};
-
 ##
 ## Firstly lets work how many entries to draw per row!
 ## Then work out the minimum start for each of these rows
@@ -124,6 +123,7 @@ sub new {
     my $xoffset = -$translateX * $scalex;
 
     for my $glyphset (@{$self->{'glyphsets'}}) {
+        print STDERR "GLYPHSET\n";
         $Config->{'_max_width'} = $xoffset + $Config->image_width();
         ########## set up the label for this strip 
 	########## first we get the max width of label in characters
@@ -189,7 +189,11 @@ sub render {
     }
     $renderer_type->import();
     ########## big, shiny, rendering 'GO' button
-    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'});
+    my $renderer = $renderer_type->new(
+        $self->{'config'},
+        $self->{'vc'},
+        $self->{'glyphsets'}
+    );
     return $renderer->canvas();
 }
 
