@@ -6,8 +6,15 @@ use File::Basename;
 
 my ($input,$subject_tag,$subject_fasta,$subject_index,$query_tag,$query_fasta,$query_index,$dir);
 
-my $fastafetch_executable = "/nfs/acari/abel/bin/fastafetch";
-my $FilterBlast_executable = "/nfs/acari/cara/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
+my $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
+
+if (-e "/proc/version") {
+  # it is a linux machine
+  $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
+}
+
+my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
+
 my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 
 my $min_score = 300;
@@ -93,7 +100,7 @@ foreach my $qy_seq (@query_seq) {
   } 
   
   my $status = system("$blast_executable $sb_file $qy_file > $blast_file");
-  unless ($status == 0 || $status == 4096 || $status == 5888) {
+  unless ($status == 0 || $status == 4096 || $status == 4352 || $status == 5888) {
 
 # 4096
 # because wublastn produce a EXIT CODE 16 (16*256 = 4096). The reason is that the query
