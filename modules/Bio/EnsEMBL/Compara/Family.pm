@@ -86,8 +86,14 @@ sub read_clustalw {
   $FH->close;
 
   #place all member attributes in a hash on their member name
+  my @members_attributes;
+
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('ENSEMBLPEP')};
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('SWISSPROT')};
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('SPTREMBL')};
+  
   my %attribute_hash;
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
+  foreach my $member_attribute (@members_attributes) {
     my ($member, $attribute) = @{$member_attribute};
     $attribute_hash{$member->stable_id} = $attribute;
   }
@@ -133,7 +139,13 @@ sub get_SimpleAlign {
     $bio07 = 1;
   }
 
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
+  my @members_attributes;
+
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('ENSEMBLPEP')};
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('SWISSPROT')};
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('SPTREMBL')};
+
+  foreach my $member_attribute (@members_attributes) {
     my ($member, $attribute) = @{$member_attribute};
     my $seqstr = $attribute->alignment_string($member);
     next if(!$seqstr);
