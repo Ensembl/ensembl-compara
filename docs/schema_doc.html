@@ -13,8 +13,8 @@
 
 <h1>EnsEMBL Compara DB Schema Documentation</h1>
 
-<p>This document refers to the schema of the EnsEMBL Compara version <strong>25.1</strong>.
-This is the revision <strong>0.2</strong> of this document.</p>
+<p>This document refers to the schema of the EnsEMBL Compara version <strong>26.1</strong>.
+This is the revision <strong>0.3</strong> of this document.</p>
 
 <hr>
 <hr>
@@ -118,7 +118,7 @@ database are also taken into account in order to annotate the clusters.</p>
   <tbody>
     <tr>
       <td>meta_id</td>
-      <td>int(11)</td>
+      <td>int unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -182,7 +182,7 @@ mysql> SELECT * FROM meta;
   <tbody>
     <tr>
       <td>taxon_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>0</td>
@@ -289,7 +289,7 @@ mysql> SELECT * FROM taxon WHERE taxon_id IN (9031, 9606);
   <tbody>
     <tr>
       <td>genome_db_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -298,7 +298,7 @@ mysql> SELECT * FROM taxon WHERE taxon_id IN (9031, 9606);
     </tr>
     <tr>
       <td>taxon_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -400,7 +400,7 @@ mysql> SELECT * FROM genome_db WHERE genome_db_id IN (1, 11);
   <tbody>
     <tr>
       <td>method_link_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -470,7 +470,7 @@ method_link_species_set_id exist for each comparison made and relates a
   <tbody>
     <tr>
       <td>method_link_species_set_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>NULL</td>
@@ -479,7 +479,7 @@ method_link_species_set_id exist for each comparison made and relates a
     </tr>
     <tr>
       <td>method_link_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td>YES</td>
       <td>MUL</td>
       <td>NULL</td>
@@ -488,7 +488,7 @@ method_link_species_set_id exist for each comparison made and relates a
     </tr>
     <tr>
       <td>genome_db_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -550,7 +550,7 @@ of this set: Human (<A href="#genome_db">genome_db_id</A> = 1) and Chicken
   <tbody>
     <tr>
       <td>dnafrag_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -576,7 +576,7 @@ of this set: Human (<A href="#genome_db">genome_db_id</A> = 1) and Chicken
     </tr>
     <tr>
       <td>genome_db_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -643,7 +643,7 @@ table.</p>
   <tbody>
     <tr>
       <td>genomic_align_block_id</td>
-      <td>int(10)</td>
+      <td>bigint(20) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -652,7 +652,7 @@ table.</p>
     </tr>
     <tr>
       <td>method_link_species_set_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -670,7 +670,7 @@ table.</p>
     </tr>
     <tr>
       <td>perc_id</td>
-      <td>int(10)</td>
+      <td>tinyint(3) unsigned</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -779,7 +779,7 @@ matches/mismatches, 1 deletion (number 1 is omitted in order to save some space)
   <tbody>
     <tr>
       <td>genomic_align_id</td>
-      <td>int(10)</td>
+      <td>bigint(20) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -788,7 +788,7 @@ matches/mismatches, 1 deletion (number 1 is omitted in order to save some space)
     </tr>
     <tr>
       <td>genomic_align_block_id</td>
-      <td>int(10)</td>
+      <td>bigint(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -797,7 +797,7 @@ matches/mismatches, 1 deletion (number 1 is omitted in order to save some space)
     </tr>
     <tr>
       <td>method_link_species_set_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -809,7 +809,7 @@ matches/mismatches, 1 deletion (number 1 is omitted in order to save some space)
     </tr>
     <tr>
       <td>dnafrag_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -854,7 +854,7 @@ matches/mismatches, 1 deletion (number 1 is omitted in order to save some space)
     </tr>
     <tr>
       <td>level_id</td>
-      <td>int(10)</td>
+      <td>tinyint(2)</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -918,7 +918,7 @@ databases and the cigar lines as explained before.</p>
   <tbody>
     <tr>
       <td>group_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>NULL</td>
@@ -936,7 +936,7 @@ databases and the cigar lines as explained before.</p>
     </tr>
     <tr>
       <td>genomic_align_id</td>
-      <td>int(10)</td>
+      <td>bigint(20) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -1015,12 +1015,22 @@ mysql> SELECT * FROM genomic_align_group WHERE group_id = 64065;
   <tbody>
     <tr>
       <td>synteny_region_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
+    </tr>
+    <tr>
+      <td>method_link_species_set_id</td>
+      <td>int(10) unsigned</td>
+      <td></td>
+      <td></td>
+      <td>0</td>
+      <td></td>
+      <td>external reference to
+      <a href="#method_link_species_set">method_link_species_set.method_link_species_set_id</a>.</td>
     </tr>
     <tr>
       <td>rel_orientation</td>
@@ -1072,7 +1082,7 @@ for every syntenic relationship.</p>
   <tbody>
     <tr>
       <td>synteny_region_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>0</td>
@@ -1081,7 +1091,7 @@ for every syntenic relationship.</p>
     </tr>
     <tr>
       <td>dnafrag_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>0</td>
@@ -1089,7 +1099,7 @@ for every syntenic relationship.</p>
       <td>external reference to <A href="#dnafrag">dnafrag.dnafrag_id</A></td>
     </tr>
     <tr>
-      <td>seq_start</td>
+      <td>dnafrag_start</td>
       <td>int(10) unsigned</td>
       <td></td>
       <td></td>
@@ -1098,7 +1108,7 @@ for every syntenic relationship.</p>
       <td>first nucleotide from this dnafrag which is in synteny</td>
     </tr>
     <tr>
-      <td>seq_end</td>
+      <td>dnafrag_end</td>
       <td>int(10) unsigned</td>
       <td></td>
       <td></td>
@@ -1111,12 +1121,12 @@ for every syntenic relationship.</p>
 <p>E.g. the rows</p>
 <PRE>
 mysql> SELECT * FROM dnafrag_region WHERE synteny_region_id = 1849;
-+-------------------+------------+-----------+----------+
-| synteny_region_id | dnafrag_id | seq_start | seq_end  |
-+-------------------+------------+-----------+----------+
-|              1849 |         19 |  23939018 | 37861860 |
-|              1849 |      23227 |  29431279 | 34526887 |
-+-------------------+------------+-----------+----------+
++-------------------+------------+---------------+--------------+
+| synteny_region_id | dnafrag_id | dnafrag_start | dnafrag_end  |
++-------------------+------------+---------------+--------------+
+|              1849 |         19 |      23939018 |     37861860 |
+|              1849 |      23227 |      29431279 |     34526887 |
++-------------------+------------+---------------+--------------+
 </PRE>
 <p>correspond to both genomic regions of the syntenic region 1849. In this case, the first genomic region corresponds
 to the sequence from 23939018 to 37861860 of the chromosome 14 of the Human genome
@@ -1165,7 +1175,7 @@ from 29431279 to 34526887 of the chromosome 5 of the Chicken genome
   <tbody>
     <tr>
       <td>member_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -1201,7 +1211,7 @@ from 29431279 to 34526887 of the chromosome 5 of the Chicken genome
     </tr>
     <tr>
       <td>taxon_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -1210,7 +1220,7 @@ from 29431279 to 34526887 of the chromosome 5 of the Chicken genome
     </tr>
     <tr>
       <td>genome_db_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -1219,7 +1229,7 @@ from 29431279 to 34526887 of the chromosome 5 of the Chicken genome
     </tr>
     <tr>
       <td>sequence_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>NULL</td>
@@ -1227,6 +1237,15 @@ from 29431279 to 34526887 of the chromosome 5 of the Chicken genome
       <td>external reference to <A href="#sequence">sequence.sequence_id</A>.<br>
       May be 0 when the sequence is not available in the <A href="#sequence">sequence</A> table, e.g. for a gene
       instance.</td>
+    </tr>
+    <tr>
+      <td>gene_member_id</td>
+      <td>int(10) unsigned</td>
+      <td></td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>external reference to <A href="#member">member.memebr_id</A> to allow linkage from peptides to genes.</td>
     </tr>
     <tr>
       <td>description</td>
@@ -1284,6 +1303,12 @@ mysql> SELECT * FROM member WHERE member_id = 1945;
 |      1945 | ENSGALP00000012979 |       1 | ENSEMBLPEP  |     9031 |           11 |        1121 | 
 +-----------+--------------------+---------+-------------+----------+--------------+-------------+-···
 
+ ···-+----------------+-···
+     | gene_member_id | 
+ ···-+----------------+-···
+     |           1932 | 
+ ···-+----------------+-···
+     
  ···-+---------------------------------------------------------------------------------------+-···
      | description                                                                           | 
  ···-+---------------------------------------------------------------------------------------+-···
@@ -1331,7 +1356,7 @@ EnsEMBL Compara DB.</p>
   <tbody>
     <tr>
       <td>sequence_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -1340,7 +1365,7 @@ EnsEMBL Compara DB.</p>
     </tr>
     <tr>
       <td>sequence</td>
-      <td>mediumtext</td>
+      <td>longtext</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -1557,7 +1582,7 @@ BLAST run it is translated from a FeaturePair object.</p>
     </tr>
     <tr>
       <td>qmember_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -1566,7 +1591,7 @@ BLAST run it is translated from a FeaturePair object.</p>
     </tr>
     <tr>
       <td>hmember_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -1575,7 +1600,7 @@ BLAST run it is translated from a FeaturePair object.</p>
     </tr>
     <tr>
       <td>qgenome_db_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -1584,7 +1609,7 @@ BLAST run it is translated from a FeaturePair object.</p>
     </tr>
     <tr>
       <td>hgenome_db_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -1593,7 +1618,7 @@ BLAST run it is translated from a FeaturePair object.</p>
     </tr>
     <tr>
       <td>analysis_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -1805,7 +1830,7 @@ for each homology entry for now, but both the schema and the API can handle more
   <tbody>
     <tr>
       <td>homology_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -1823,7 +1848,7 @@ for each homology entry for now, but both the schema and the API can handle more
     </tr>
     <tr>
       <td>method_link_species_set_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -2099,7 +2124,7 @@ original sequences. The cigar line defines the sequence of matches or mismatches
   <tbody>
     <tr>
       <td>homology_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>0</td>
@@ -2108,7 +2133,7 @@ original sequences. The cigar line defines the sequence of matches or mismatches
     </tr>
     <tr>
       <td>member_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>0</td>
@@ -2118,7 +2143,7 @@ original sequences. The cigar line defines the sequence of matches or mismatches
     </tr>
     <tr>
       <td>peptide_member_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -2128,7 +2153,7 @@ original sequences. The cigar line defines the sequence of matches or mismatches
     </tr>
     <tr>
       <td>peptide_align_feature_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -2242,7 +2267,7 @@ for each family entry.</p>
   <tbody>
     <tr>
       <td>family_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -2260,7 +2285,7 @@ for each family entry.</p>
     </tr>
     <tr>
       <td>method_link_species_set_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -2334,7 +2359,7 @@ There are several family_member entries for each <A href="#family">family</A> en
   <tbody>
     <tr>
       <td>family_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>0</td>
@@ -2343,7 +2368,7 @@ There are several family_member entries for each <A href="#family">family</A> en
     </tr>
     <tr>
       <td>member_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>0</td>
@@ -2405,7 +2430,7 @@ mysql> SELECT * FROM family_member WHERE family_id = 13252;
   <tbody>
     <tr>
       <td>domain_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>PRI</td>
       <td>NULL</td>
@@ -2423,7 +2448,7 @@ mysql> SELECT * FROM family_member WHERE family_id = 13252;
     </tr>
     <tr>
       <td>method_link_species_set</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td></td>
       <td>0</td>
@@ -2469,7 +2494,7 @@ mysql> SELECT * FROM family_member WHERE family_id = 13252;
   <tbody>
     <tr>
       <td>domain_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
@@ -2478,7 +2503,7 @@ mysql> SELECT * FROM family_member WHERE family_id = 13252;
     </tr>
     <tr>
       <td>member_id</td>
-      <td>int(10)</td>
+      <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
       <td>0</td>
