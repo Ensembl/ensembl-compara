@@ -139,7 +139,7 @@ CREATE TABLE genomic_align_block (
   length                      int(10),
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY genomic_align_block_id (genomic_align_block_id),
   KEY method_link_species_set_id (method_link_species_set_id)
@@ -168,7 +168,7 @@ CREATE TABLE genomic_align (
 
   FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set_id(method_link_species_set_id),
+  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   
   PRIMARY KEY genomic_align_id (genomic_align_id),
@@ -210,7 +210,7 @@ CREATE TABLE synteny_region (
   rel_orientation             tinyint(1) DEFAULT '1' NOT NULL,
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (synteny_region_id),
   KEY (method_link_species_set_id)
@@ -406,7 +406,7 @@ CREATE TABLE homology (
   threshold_on_ds             float(10,5),
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (homology_id),
   KEY (method_link_species_set_id)
@@ -451,7 +451,7 @@ CREATE TABLE family (
   description_score           double,
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (family_id), 
   UNIQUE (stable_id),
@@ -489,7 +489,7 @@ CREATE TABLE domain (
   description                 varchar(255),
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (domain_id),
   UNIQUE (stable_id, method_link_species_set_id)
