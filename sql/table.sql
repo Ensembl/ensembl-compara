@@ -13,7 +13,7 @@ CREATE TABLE dnafrag (
   end int(11) DEFAULT '0' NOT NULL,
   name varchar(40) DEFAULT '' NOT NULL,
   genome_db_id int(10) DEFAULT '0' NOT NULL,
-  dnafrag_type enum('chromosome','scaffold'),
+  dnafrag_type enum('chromosome','scaffold', 'supercontig'),
   PRIMARY KEY (dnafrag_id),
   KEY dnafrag_id (dnafrag_id,name),
   UNIQUE name (name,genome_db_id,dnafrag_type)
@@ -165,7 +165,7 @@ CREATE TABLE taxon (
 CREATE TABLE member (
  member_id	int(10) NOT NULL auto_increment,
  stable_id	varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
- version        int(10) DEFAULT '0' NOT NULL, # 
+ version        int(10) DEFAULT '0'  # 
  source_id	int(10) NOT NULL, # foreign key from source table
  taxon_id	int(10) NOT NULL, # foreign key from taxon table
  genome_db_id	int(10), # foreign key from genome_db table
