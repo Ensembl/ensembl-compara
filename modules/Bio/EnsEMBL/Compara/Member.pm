@@ -557,10 +557,10 @@ sub print_member
 }
 
 
-=head2 gene
+=head2 get_Gene
 
   Args       : none
-  Example    : $gene = $member->gene
+  Example    : $gene = $member->get_Gene
   Description: if member is an 'ENSEMBLGENE' returns Bio::EnsEMBL::Gene object
                by connecting to ensembl genome core database
                REQUIRES properly setup Registry conf file or
@@ -571,7 +571,7 @@ sub print_member
 
 =cut
 
-sub gene {
+sub get_Gene {
   my $self = shift;
   
   unless($self->{'core_gene'}) {
@@ -586,10 +586,10 @@ sub gene {
   return $self->{'core_gene'};
 }
 
-=head2 transcript
+=head2 get_Transcript
 
   Args       : none
-  Example    : $transcript = $member->transcript
+  Example    : $transcript = $member->get_Transcript
   Description: if member is an 'ENSEMBLPEP returns Bio::EnsEMBL::Transcript object
                by connecting to ensembl genome core database
                REQUIRES properly setup Registry conf file or
@@ -600,7 +600,7 @@ sub gene {
 
 =cut
 
-sub transcript {
+sub get_Transcript {
   my $self = shift;
   
   return undef unless($self->source_name eq 'ENSEMBLPEP');
@@ -612,10 +612,10 @@ sub transcript {
 }
 
 
-=head2 translation
+=head2 get_Translation
 
   Args       : none
-  Example    : $translation = $member->translation
+  Example    : $translation = $member->get_Translation
   Description: if member is an 'ENSEMBLPEP' returns Bio::EnsEMBL::Translation object
                by connecting to ensembl genome core database
                REQUIRES properly setup Registry conf file or
@@ -626,10 +626,39 @@ sub transcript {
 
 =cut
 
-sub translation {
+sub get_Translation {
   my $self = shift;
-  return $self->transcript->translation if($self->transcript);
+  return $self->get_Transcript->translation if($self->get_Transcript);
   return undef;
+}
+
+=head2 get_longest_peptide_Member
+
+  Args       : none
+  Example    : $longestPepMember = $member->get_longest_peptide_Member
+  Description: if member is an "ENSEMBLGENE" it will return the longest peptide member
+               if member is an 'ENSEMBLPEP' it will get it's gene member and have it
+               return the longest peptide (which could be the same as the starting member)
+  Returntype : Bio::EnsEMBL::Compara::Member or undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_longest_peptide_Member {
+  my $self = shift;
+
+  return undef unless($self->adaptor);
+  my $longestPep = undef;
+  if($self->source_name eq 'ENSEMBLGENE') {
+    $longestPep = $self->adaptor->fetch_longest_peptide_member_for_gene_member_id($self->dbID);
+  }
+  if($self->source_name eq 'ENSEMBLPEP') {
+    my $geneMember = $self->gene_member;
+    return undef unless($geneMember);
+    $longestPep = $self->adaptor->fetch_longest_peptide_member_for_gene_member_id($geneMember->dbID);
+  }
+  return $longestPep;
 }
 
 # DEPRECATED METHODS
