@@ -49,7 +49,7 @@ sub _init {
 		});
 		$self->push($tick);
 
-		my $text = $i * $divs + $VirtualContig->_global_start();
+		my $text = int($i * $divs + $VirtualContig->_global_start());
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 		    'x'      	=> $i * $divs,
 		    'y'      	=> 8,
