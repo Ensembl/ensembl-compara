@@ -6,9 +6,7 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Taxon;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Analysis;
-use Bio::EnsEMBL::Pipeline::Rule;
+use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::DBLoader;
@@ -64,7 +62,6 @@ my $self = bless {};
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
-#$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
@@ -234,27 +231,27 @@ sub submitGenome
   #
   my $input_id = "{gdb=>".$genome->dbID."}";
 
-  my $submitAnalysis = $self->{'comparaDBA'}->get_AnalysisAdaptor->
-                       fetch_by_logic_name('SubmitGenome');
+  my $analysisDBA = $self->{'comparaDBA'}->get_AnalysisAdaptor;
+  my $submitGenome = $analysisDBA->fetch_by_logic_name('SubmitGenome');
 
-  if($submitAnalysis) {                                              
-    eval {
-      print("about to store_input_id_analysis\n") if($verbose);
-      $self->{'pipelineDBA'}->get_StateInfoContainer->store_input_id_analysis(
-          $input_id,
-          $submitAnalysis,     #SubmitGenome analysis
-          'gaia',        #execution_host
-          0              #save runtime NO (ie do insert)
-        );
-        print("  stored genome_db_id in input_id_analysis\n") if($verbose);
-    } if(defined($self->{'pipelineDBA'}));
+  unless($submitGenome) {
+    $submitGenome = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'SubmitGenome',
+        -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
+      );
+    $analysisDBA->store($submitGenome);
+    my $stats = $submitGenome->stats;
+    $stats->batch_size(100);
+    $stats->hive_capacity(-1);
+    $stats->update();
+  }
 
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
-        -analysis       => $submitAnalysis,
+        -analysis       => $submitGenome,
         -input_job_id   => 0
         );
-  }
 }
 
 
