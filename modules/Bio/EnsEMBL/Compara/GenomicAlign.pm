@@ -365,7 +365,8 @@ sub genomic_align_block_id {
     if (defined($self->{'genomic_align_block'})) {
       warning("Defining both genomic_align_block_id and genomic_align_block");
       throw("genomic_align_block_id does not match previously defined genomic_align_block object")
-          if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
+          if ($self->{'genomic_align_block'} and
+              $self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
     }
   } elsif (!defined($self->{'genomic_align_block_id'}) and defined($self->{'genomic_align_block'})) {
     $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
@@ -445,7 +446,8 @@ sub method_link_species_set_id {
     if (defined($self->{'method_link_species_set'})) {
       warning("Defining both method_link_species_set_id and method_link_species_set");
       throw("method_link_species_set_id does not match previously defined method_link_species_set object")
-          if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+          if ($self->{'method_link_species_set'} and
+              $self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
     }
   } elsif (!defined($self->{'method_link_species_set_id'}) and defined($self->{'method_link_species_set'})) {
     $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
@@ -518,7 +520,7 @@ sub dnafrag_id {
         if (defined($self->{'dnafrag'}));
     $self->{'dnafrag_id'} = $dnafrag_id;
     throw("dnafrag_id does not match previously defined dnafrag object")
-        if ($self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
+        if ($self->{'dnafrag'} and $self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
   } elsif (!defined($self->{'dnafrag_id'}) and defined($self->{'dnafrag'})) {
     $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
   }
