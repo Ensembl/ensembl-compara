@@ -138,7 +138,7 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
                     'font'       => 'Tiny',
                     'colour'     => 'Black',
            	    'text'       => ($w * length($desc_text)) > ($CONT_LENGTH - ($TEXT_WIDTH + 30)) ? substr($desc_text,
-				0, (($CONT_LENGTH - 100) / $w))."..." : $desc_text,
+				0, (($CONT_LENGTH - 150) / $w))."..." : $desc_text,
           	    'absolutey'  => 1,
 		    'absolutex'  => 1,
             	});
@@ -174,12 +174,13 @@ $self->push($desc);
        'colour'    => $exon_colour,
        'absolutey' => 1,
        'absolutex' => 1 ,
+       'href'      => "$alignment_href",
        'zmenu'	   => {
        	    'caption'                  	 => "Supporting Evidence",
             "00:Data Source: ".$datalib	 => '',
 	    "01:Score: $score"		 => '',
 	    "02:Accession: $hit"         => $Container->{'hits'}{$hit}{'link'},
-            "03:View Exon Alignment"    	 => "$alignment_href",
+            "03:View Exon Alignment"     => "$alignment_href",
 			}, 
     });
    $self->push($rect); 
