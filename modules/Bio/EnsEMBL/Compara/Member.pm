@@ -158,7 +158,7 @@ sub new_from_transcript {
     #$seq_string = $transcript->translation->seq;
 
     if ($seq_string =~ /^X+$/) {
-      warning("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
+      warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
     }
     else {
       #$seq_string =~ s/(.{72})/$1\n/g;
