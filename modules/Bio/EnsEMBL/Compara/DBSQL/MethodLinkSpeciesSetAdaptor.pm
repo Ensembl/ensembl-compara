@@ -85,8 +85,9 @@ package Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor;
 use vars qw(@ISA);
 use strict;
 
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
+use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -962,6 +963,47 @@ sub fetch_by_method_link_type_genome_db_ids {
   return $self->fetch_by_method_link_id_genome_db_ids($method_link_id, $genome_db_ids)
 }
 
+=head2 fetch_by_method_link_type_registry_aliases
+
+  Arg  1     : string $method_link_type
+  Arg 2      : listref of core database aliases [$human, $mouse, $rat]
+  Example    : my $method_link_species_set =
+                   $mlssa->fetch_by_method_link_type_genome_db_id("MULTIZ",
+                       ["human","mouse","rat"])
+  Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+               corresponding to the given method_link and the given set of
+               core database aliases defined in the Bio::EnsEMBL::Registry
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+               object is found
+  Caller     : 
+
+=cut
+
+sub fetch_by_method_link_type_registry_aliases {
+  my ($self,$method_link_type, $registry_aliases) = @_;
+
+  my $gdba = $self->db->get_GenomeDBAdaptor;
+  my @genome_dbs;
+  
+  foreach my $alias (@{$registry_aliases}) { 
+    if (Bio::EnsEMBL::Registry->alias_exists($alias)) {
+      my ($binomial, $gdb);
+      try {
+        $binomial = Bio::EnsEMBL::Registry->get_alias($alias);
+        $gdb = $gdba->fetch_by_name_assembly($binomial);
+      } catch {
+        $binomial = Bio::EnsEMBL::Registry->get_adaptor($alias,'core','MetaContainer')->get_Species->binomial;
+        $gdb = $gdba->fetch_by_name_assembly($binomial);
+      };
+      push @genome_dbs, $gdb;
+    } else {
+      throw("Database alias $alias is not known\n");
+    }
+  }
+  
+  return $self->fetch_by_method_link_type_GenomeDBs($method_link_type,\@genome_dbs);
+}
 
 =head2 _get_method_link_type_from_id
 
