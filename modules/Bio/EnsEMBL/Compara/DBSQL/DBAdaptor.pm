@@ -127,7 +127,7 @@ sub new {
       #	$db = $db->_obj;
       #      }
 
-      $self->{'genomes'}->{"$species:$assembly"} = $db;
+      $self->{'genomes'}->{"$species:".uc($assembly)} = $db;
     }
   }
 
@@ -175,7 +175,8 @@ sub add_db_adaptor {
   my ($cs) = @{$csa->fetch_all};
   my $assembly = $cs ? $cs->version : '';
 
-  $self->{'genomes'}->{"$species:$assembly"} = $dba;
+  warn "ADDING GENOME DB $species $assembly $dba";
+  $self->{'genomes'}->{"$species:".uc($assembly) } = $dba;
 }
 
 
@@ -205,7 +206,7 @@ sub get_db_adaptor {
     $self->throw("species and assembly arguments are required\n");
   }
 
-  return $self->{'genomes'}->{"$species:$assembly"};
+  return $self->{'genomes'}->{"$species:".uc($assembly)};
 }
 
 
