@@ -11,8 +11,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::AlignSlice - Container of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
-corresponding to a given Bio::EnsEMBL::Slice object
+Bio::EnsEMBL::Compara::AlignSlice - An AlignSlice can be used to map genes from one species onto another one
 
 =head1 SYNOPSIS
   
