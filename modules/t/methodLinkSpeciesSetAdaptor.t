@@ -1,5 +1,57 @@
+#!/usr/local/ensembl/bin/perl -w
+
+#
+# Test script for Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor module
+#
+# Written by Javier Herrero (jherrero@ebi.ac.uk)
+#
+# Copyright (c) 2004. EnsEMBL Team
+#
+# You may distribute this module under the same terms as perl itself
+
+=head1 NAME
+
+methodLinkSpeciesSetAdaptor.t
+
+=head1 SYNOPSIS
+
+For running this test only:
+perl -w ../../../ensembl-test/scripts/runtests.pl methodLinkSpeciesSetAdaptor.t
+
+For running all the test scripts:
+perl -w ../../../ensembl-test/scripts/runtests.pl
+
+=head1 DESCRIPTION
+
+This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
+
+This script (as far as possible) tests all the methods defined in the
+Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor module.
+
+This script includes 31 tests.
+
+=head1 AUTHOR
+
+Javier Herrero (jherrero@ebi.ac.uk)
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004. EnsEMBL Team
+
+You may distribute this module under the same terms as perl itself
+
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
+
+=cut
+
+
+
 use strict;
-use warnings;
 
 BEGIN { $| = 1;  
 	use Test;
