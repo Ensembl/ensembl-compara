@@ -127,6 +127,9 @@ sub prepareGenomeAnalysis
 {
   my $self = shift;
 
+  if($self->{'pipelineDBA'}->get_AnalysisAdaptor()->fetch_by_logic_name('SubmitGenome')) { return; }
+
+  
   my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
