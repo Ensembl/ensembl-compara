@@ -1,12 +1,25 @@
+=head1 NAME
+
+Bio::EnsEMBL::GlyphSet::gene_label_lite -
+Glyphset for gene labels in contigviewtop
+
+=head1 USED BY
+
+    Bio::EnsEMBL::GlyphSet::vega_gene_label_lite_havana
+    Bio::EnsEMBL::GlyphSet::vega_gene_label_lite_genoscope
+    Bio::EnsEMBL::GlyphSet::vega_gene_label_lite_sanger
+    Bio::EnsEMBL::GlyphSet::vega_gene_label_lite_zfish
+
+=cut
+
 package Bio::EnsEMBL::GlyphSet::gene_label_lite;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
-use  Sanger::Graphics::Bump;
-
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use Sanger::Graphics::Bump;
 
 sub checkDB {
     my $db = EnsWeb::species_defs->databases   || {};
@@ -31,7 +44,7 @@ sub _init {
 ##############################################################################
 # Stage 1a: Firstly the configuration hash!                                  #
 ##############################################################################
-   my $authority = EnsWeb::species_defs->AUTHORITY;
+    my $authority = EnsWeb::species_defs->AUTHORITY;
     my $Config         = $self->{'config'};
     my $im_width       = $Config->image_width();
     my $type           = $Config->get( 'gene_label_lite' , 'src' );
@@ -82,7 +95,7 @@ sub _init {
       push @{$gene_objs{$source}}, $g;
     }
     
-    ## hack to make it work for vega
+    ## get vega logic names from child
     my $logic_name;
     if ($self->can('logic_name')) {
         $logic_name = $self->logic_name;

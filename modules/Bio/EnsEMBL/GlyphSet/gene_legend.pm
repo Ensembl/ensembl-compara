@@ -1,3 +1,17 @@
+=name1 NAME
+
+Bio::EnsEMBL::GlyphSet::gene_legend -
+Glyphset for gene legend in contigviewtop and contigviewbottom
+
+=name1 DESCRIPTION
+
+NOTE:
+    depends on Bio::EnsEMBL::GlyphSet::gene_lite or
+    Bio::EnsEMBL::GlyphSet_transcript to set which legend_features should be
+    displayed
+
+=cut
+
 package Bio::EnsEMBL::GlyphSet::gene_legend;
 use strict;
 use vars qw(@ISA);
