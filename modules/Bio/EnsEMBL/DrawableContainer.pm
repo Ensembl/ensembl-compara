@@ -7,8 +7,6 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Bio::EnsEMBL::Glyph::Rect;
 
-use constant DRAW_PATH => '/mysql/ensembl/www/server/ensembl-draw/modules';
-
 @ISA = qw(Bio::Root::RootI);
 
 sub new {
@@ -83,14 +81,12 @@ sub new {
 	# create a new glyphset for this row
 	#
 	my $classname = qq(Bio::EnsEMBL::GlyphSet::$row);
-	my $classpath = &DRAW_PATH . qq(/Bio/EnsEMBL/GlyphSet/${row}.pm);
 
 	#########
 	# require & import the package
 	#
-	eval {
-	    require($classpath);
-	};
+	eval "require $classname";
+
 	if($@) {
 	    print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
 	    next;
@@ -118,8 +114,6 @@ sub new {
 
     for my $glyphset (@{$self->{'glyphsets'}}) {
 	next if(!defined $glyphset->label());
-
-	$glyphset->label->text($glyphset->label->text());
 
 	my $chars  = length($glyphset->label->text());
 	my $pixels = $chars * $Config->texthelper->width($glyphset->label->font());
@@ -249,16 +243,14 @@ sub render {
     # build the name/type of render object we want
     #
     my $renderer_type = qq(Bio::EnsEMBL::Renderer::$type);
-    my $renderer_path = &DRAW_PATH . qq(/Bio/EnsEMBL/Renderer/${type}.pm);
 
     #########
     # dynamic require of the right type of renderer
     #
-    eval {
-	require($renderer_path);
-    };
+    eval "require $renderer_type";
+
     if($@) {
-	print STDERR qq(DrawableContainer::new failed to require $renderer_path\n);
+	print STDERR qq(DrawableContainer::new failed to require $renderer_type\n);
 	return;
     }
     $renderer_type->import();
