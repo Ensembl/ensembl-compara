@@ -70,7 +70,6 @@ sub HASH_URL {
 
 sub ID_URL {
   my($self,$db,$id) = @_;
-  warn "ID_URL called";
   return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&ID=$id";
 }
 
