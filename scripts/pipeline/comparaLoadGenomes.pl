@@ -128,9 +128,6 @@ sub prepareGenomeAnalysis
 
   return  unless($analysis_template{fasta_dir});
   
-  if($self->{'pipelineDBA'}->get_AnalysisAdaptor()->fetch_by_logic_name('SubmitGenome')) { return; }
-
-  
   my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
@@ -164,7 +161,6 @@ sub prepareGenomeAnalysis
   $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
   $rule->add_condition($load_analysis->logic_name());
   $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-
 
   # create an unlinked analysis called blast_template
   # it will not have rule goal/conditions so it will never execute
@@ -259,18 +255,20 @@ sub submitGenome
   $sth = $self->{'comparaDBA'}->prepare( $sql );
   $sth->execute();
   $sth->finish();
-
+  print("done SQL\n");
 
   #
   # now configure the input_id_analysis table with the genome_db_id
   #
   eval {
+    print("about to PIC\n");
     $self->{'pipelineDBA'}->get_StateInfoContainer->store_input_id_analysis(
         $genome->dbID, #input_id
         $analysis,     #SubmitGenome analysis
         'gaia',        #execution_host
         0              #save runtime NO (ie do insert)
       );
+      print("  stored genome_db_id in input_id_analysis\n");
   };
 
 }
