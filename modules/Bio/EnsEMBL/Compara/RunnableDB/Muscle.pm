@@ -89,7 +89,6 @@ sub workdir {
 sub fetch_input {
   my( $self) = @_;
 
-  $self->debug(1);
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "-maxiters 2";
 
@@ -102,7 +101,7 @@ sub fetch_input {
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
-  $self->print_params;
+  $self->print_params if($self->debug);
 
   throw("undefined family as input\n") unless($self->{'family'});
 
@@ -120,7 +119,7 @@ sub fetch_input {
 
     Title   :   run
     Usage   :   $self->run
-    Function:   runs MUSCLE 
+    Function:   runs MUSCLE and parses output into family
     Returns :   none
     Args    :   none
     
@@ -147,18 +146,15 @@ sub run
 sub write_output {
   my $self = shift;
 
-  return 0 unless($self->{'family'});
-  return 0 unless($self->{'muscle_output'} and (-e $self->{'muscle_output'}));
-  
-  $self->{'family'}->read_clustalw($self->{"muscle_output"});
-
   my $familyDBA = $self->{'comparaDBA'}->get_FamilyAdaptor;
   my $familyMemberList = $self->{'family'}->get_all_Member_Attribute();
   
   foreach my $familyMember (@{$familyMemberList}) {
     my ($member,$attribute) = @{$familyMember};
     next if($member->source_name eq 'ENSEMBLGENE');
-    printf("update family_member %s : %s\n",$member->stable_id, $attribute->cigar_line);
+    next unless($member->sequence_id);
+    
+    printf("update family_member %s : %s\n",$member->stable_id, $attribute->cigar_line) if($self->debug);
     $familyDBA->update_relation([$member, $attribute]);
   }
   
@@ -185,15 +181,17 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
+  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
   
   my $params = eval($param_string);
   return unless($params);
 
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
+  if($self->debug) {
+    foreach my $key (keys %$params) {
+      print("  $key : ", $params->{$key}, "\n");
+    }
   }
-  
+    
   if(defined($params->{'family_id'})) {
     $self->{'family'} =  $self->{'comparaDBA'}->get_FamilyAdaptor->fetch_by_dbID($params->{'family_id'});
   }
@@ -220,7 +218,7 @@ sub dumpFamilyPeptidesToWorkdir
   my $fastafile = workdir(). "family_". $family->dbID. ".fasta";
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
-  print("fastafile = '$fastafile'\n");
+  print("fastafile = '$fastafile'\n") if($self->debug);
 
   #
   # get only peptide members 
@@ -272,7 +270,7 @@ sub update_single_peptide_family
     next unless($member->sequence);
     next if($member->source_name eq 'ENSEMBLGENE');
 
-    $attribute->cigar_line(length($member->sequence)."M");      
+    $attribute->cigar_line(length($member->sequence)."M");
   }
 }
 
@@ -284,8 +282,6 @@ sub run_muscle
   my $muscle_output = workdir(). "family_". $self->{'family'}->dbID. ".msc";
   $muscle_output =~ s/\/\//\//g;  # converts any // in path to /
 
-  $self->{'muscle_output'} = $muscle_output;
-
   my $muscle_executable = $self->analysis->program_file;
   unless (-e $muscle_executable) {
     $muscle_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/muscle";
@@ -296,19 +292,39 @@ sub run_muscle
   }
   throw("can't find a muscle executable to run\n") unless(-e $muscle_executable);
 
-  my $cmd = $muscle_executable;
-  $cmd .= " -clw -nocore -verbose -quiet ";
+  my $cmd = $muscle_executable . " -clw -nocore -verbose -quiet ";
   $cmd .= " ". $self->{'options'};
   $cmd .= " -in " . $self->{'input_fasta'};
   $cmd .= " -out $muscle_output -log $muscle_output.log";
   
-  print("$cmd\n");
+  print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
     throw("error running muscle, $!\n");
   }
+  
+  $self->{'family'}->read_clustalw($muscle_output);
 
+  # 
+  # post process and copy cigar_line between duplicate sequences
+  #  
+  my $cigar_hash = {};
+  my $familyMemberList = $self->{'family'}->get_all_Member_Attribute();
+  foreach my $familyMember (@{$familyMemberList}) {
+    my ($member,$attribute) = @{$familyMember};
+    next unless($member->sequence_id);
+    next unless(defined($attribute->cigar_line) and $attribute->cigar_line ne '');
+    $cigar_hash->{$member->sequence_id} = $attribute->cigar_line;
+  }
+  foreach my $familyMember (@{$familyMemberList}) {
+    my ($member,$attribute) = @{$familyMember};
+    next unless($member->sequence_id);
+    next if(defined($attribute->cigar_line) and $attribute->cigar_line ne '');
+    my $cigar_line = $cigar_hash->{$member->sequence_id};
+    next unless($cigar_line);
+    $attribute->cigar_line($cigar_line);
+  }
+  
 }
-
 
 
 1;
