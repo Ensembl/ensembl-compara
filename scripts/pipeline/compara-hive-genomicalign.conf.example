@@ -58,8 +58,11 @@
       'name_assembly'   => 'Homo sapiens:NCBI35',
       'genome_db_id'    => 1,
 # if you want to run on a specific region of the genome give coord_system_name:dnafrag_name
-# and uncomment line below
+# and uncomment one of the 'region' line below
+# for the whole chromosome 22
 #      'region'          => 'chromosome:22',
+# for chromosome 22 between 10Mb position to 11Mb position
+#      'region'          => 'chromosome:22:10000000:11000000',
       'chunk_size'      => 30000000,
       'overlap'         => 0,
       'masking_options' => do('./human35.spec'),
