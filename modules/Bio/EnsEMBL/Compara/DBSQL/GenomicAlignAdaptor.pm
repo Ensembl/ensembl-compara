@@ -177,7 +177,7 @@ sub fetch_by_genomedb_dnafrag_list{
    my ($self,$genomedb,$dnafrag_list) = @_;
    # dnafrags have genomedb, so it should be redundant here
    
-   $self->warn( "use fetch_all_by_dnafrags( $dnafrags, \"query\""); 
+   $self->warn( "use fetch_all_by_dnafrags( \$dnafrag, \"query\""); 
    $self->fetch_all_by_dnafrags( $dnafrag_list );
 
    my $str;
@@ -341,10 +341,9 @@ sub store {
 
   Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
                All genomic aligns that align to this frag
-  Arg [2]    : int $consensus_or_query
-               restrict the result to dnafrags 
-               on consensus side (1) or
-               on query side (2)
+  Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $target_genome
+               optionally restrict resutls to matches with this
+               genome. Has to have a dbID().
   Arg [3]    : int $start
   Arg [4]    : int $end
   Example    : none
@@ -359,7 +358,7 @@ sub store {
 
 
 sub fetch_all_by_dnafrag {
-   my ($self,$dnafrag,$restrict_c_or_q, $start,$end) = @_;
+   my ($self,$dnafrag, $target_genome, $start,$end) = @_;
 
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
     unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
@@ -369,40 +368,205 @@ sub fetch_all_by_dnafrag {
    my $dnafrag_id = $dnafrag->dbID;
    
    my $genome_db = $dnafrag->genomeDB();
-   my $select = "SELECT ".join( ",", $self->_columns() ).
-     "FROM genomic_align_block ";
+   my $select = "SELECT ".join( ",", map { "gab.".$_ } $self->_columns() ).
+     "FROM genomic_align_block gab ";
+   if( defined $target_genome ) {
+     $select .= ", dnafrag d"
+   }
+
    my $sql;
    my $sth;
    my $result = [];
 
-   if( $genome_db->is_consensus() ) {
-     if( $restrict_c_or_q != 2 ) {
-       $sql = $select . "WHERE consensus_dnafrag_id = $dnafrag_id";
-       if (defined $start && defined $end) {
-	 $sql .= " AND consensus_start<= $end
-                   AND consensus_end >= $start";
-       }
+   if( !defined($target_genome) ||
+       $genome_db->has_query( $target_genome ) ) {
+     $sql = $select . "WHERE gab.consensus_dnafrag_id = $dnafrag_id";
+     if (defined $start && defined $end) {
+       $sql .= " AND gab.consensus_start<= $end
+                 AND gab.consensus_end >= $start";
+     }
+     if( defined $target_genome ) {
+       $sql .= " AND gab.query_dnafrag_id = d.dnafrag_id
+                 AND d.genome_db =".$target_genome->dbID();
      }
      $sth = $self->prepare( $sql );
      $sth->execute();
      $result = $self->_objs_from_sth( $sth );
-   }
+   } 
 
-   if( $genome_db->is_query() ) {
-     if( $restrict_c_or_q != 1 ) {
-       $sql = $select . "WHERE query_dnafrag_id = $dnafrag_id";
-       if (defined $start && defined $end) {
-	 $sql .= " AND query_start<= $end
-                   AND query_end >= $start";
-       }
+   if( !defined($target_genome) ||
+       $genome_db->has_consensus( $target_genome ) ) {
+     
+     $sql = $select . "WHERE gab.query_dnafrag_id = $dnafrag_id";
+     if (defined $start && defined $end) {
+       $sql .= " AND gab.query_start<= $end
+                 AND gab.query_end >= $start";
+     }
+     if( defined $target_genome ) {
+       $sql .= " AND gab.consensus_dnafrag_id = d.dnafrag_id
+                 AND d.genome_db =".$target_genome->dbID();
      }
      $sth = $self->prepare( $sql );
      $sth->execute();
-     push( @$result, @{$self->_objs_from_sth( $sth )});
+     push( @$result, @{$self->_objs_from_sth( $sth, 1 )});
    }
 
    return $result;
 }
+
+
+
+=head2 fetch_all_by_dnafrag_species
+
+  Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Arg  2     : string $query_species
+               The species where the caller wants alignments to
+               his dnafrag.
+  Arg [3]    : int $start
+  Arg [4]    : int $end
+  Example    :  ( optional )
+  Description: testable description
+  Returntype : none, txt, int, float, Bio::EnsEMBL::Example
+  Exceptions : none
+  Caller     : object::methodname or just methodname
+
+=cut
+
+
+sub fetch_all_by_dnafrag_species {
+  my ( $self, $dnafrag, $species, $start, $end ) = @_;
+
+  my $genome_cons = $dnafrag->genomeDB();
+  my $genome_query = $self->db()->get_GenomeDBAdaptor()->
+    fetch_by_species_tag( $species );
+  
+  # direct or indirect ??
+  if( $genome_cons->has_consensus( $genome_query )) {
+    # direct with a flip
+  } elsif( $genome_cons->has_query( $genome_query )) {
+    # direct 
+  } else {
+    # indirect checks
+    my $linked_cons = $genome_cons->linked_genomes();
+    my $linked_query = $genome_query->linked_genomes();
+    
+    # there are not many genomes, square effort is cheap
+    my $linked = [];
+    for my $g1 ( @$linked_cons ) {
+      for my $g2 ( @$linked_query ) {
+	if( $g1 == $g2 ) {
+	  push( @$linked, $g1 );
+	}
+      }
+    }
+    #collect GenomicAligns from all linked genomes
+    my $set1 = [];
+    for my $g ( @$linked ) {
+      my $g_res = $self->fetch_all_by_dnafrag( $dnafrag, $g, $start, $end );
+      push( @$set1, @$g_res );
+    }
+
+    # go from each dnafrag in the result set to target_genome
+    my %frags = map { $_->query_dnafrag() => 1 } @$set1;
+    
+    my $set2 = [];
+    for my $frag ( keys %frags ) {
+      my $d_res = $self->fetch_all_by_dnafrag( $frag, $genome_query );
+      push( @$set2, @$d_res );
+    }
+    # now set1 and set2 have to merge...
+  }
+}
+
+
+=head2 _merge_fragsets
+
+  Arg  1     : listref Bio::EnsEMBL::Compara::GenomicAlign $set1
+               from consensus to query
+  Arg  2     : listref Bio::EnsEMBL::Compara::GenomicAlign $set2
+               and over consensus to next species query             
+  Example    : none
+  Description: set1 contains GAs with consensus species belonging to
+               the input dnafragment. Query fragments are the actual reference
+               species. In set 2 consensus species is the reference and
+               query is the actual target genome. There may be more than
+               one reference genome involved.
+  Returntype : listref Bio::EnsEMBL::Compara::GenomicAlign
+  Exceptions : none
+  Caller     : internal
+
+=cut
+
+
+sub _merge_alignsets {
+  my ( $self, $alignset1, $alignset2 ) = @_;
+
+  # sorting of both sets
+  # walking through and finding overlapping GAs
+  # create GA from overlapping GA
+  # return list of those
+
+  # efficiently generating all Aligns that overlap
+  # [ key, object, set1 or 2 ]
+  # Alignments are twice in big list. They are added to the overlapping
+  # set the first time they appear and they are removed the
+  # second time they appear. Scanline algorithm
+
+  my @biglist = ();
+  for my $align ( @$alignset1 ) {
+    push( @biglist, 
+          [ $align->query_dnafrag()->dbID(), 
+            $align->query_start(), $align, 0 ] );
+    push( @biglist, 
+          [ $align->query_dnafrag()->dbID(), 
+            $align->query_end()+.5, $align, 0 ] );
+  }
+
+  for my $align ( @$alignset2 ) {
+    push( @biglist, 
+          [ $align->consensus_dnafrag()->dbID(), 
+            $align->consensus_start(), $align, 1 ] );
+    push( @biglist, 
+          [ $align->consensus_dnafrag()->dbID(), 
+            $align->consensus_end()+.5, $align, 1 ] );
+  }
+  
+  my @sortlist = sort { $a->[0] <=> $b->[0] ||
+                        $a->[1] <=> $b->[1] } @biglist;
+
+  # walking from start to end through sortlist and keep track of the 
+  # currently overlapping set of Alignments
+ 
+  my @overlapping_sets = ( {}, {} ); 
+  my ($align, $setno);
+  my $merged_aligns = [];
+
+  for my $aligninfo ( @sortlist ) {
+    $align = $aligninfo->[2];
+    $setno = $aligninfo->[3];
+
+    if( exists $overlapping_sets[ $setno ]->{ $align } ) {
+      # remove from current overlapping set
+      delete $overlapping_sets[ $setno ]->{ $align };
+    } else {
+      # insert into the set and do all the overlap business
+      $overlapping_sets[ $setno ]->{ $align } = 1;
+      # the other set contains everything this align overlaps with
+      for my $align2 ( keys %{$overlapping_sets[ 1 - $setno ]} ) {
+        if( $setno == 0 ) {
+          $self->_add_derived_alignments( $merged_aligns, $align, $align2 );
+        } else {
+          $self->_add_derived_alignments( $merged_aligns, $align2, $align );
+        }
+      }
+    }
+  }
+}
+
+
+sub _add_derived_alignments {
+}
+
 
 
 =head2 fetch_DnaDnaAlignFeature_by_species_chr_start_end
@@ -482,13 +646,13 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
 	  }
 
 	  my $DnaDnaAlignFeature = new Bio::EnsEMBL::DnaDnaAlignFeature('-cigar_string' => $alignblock1->cigar_string);
-	  my $feature1 = new Bio::EnsEMBL::SeqFeature;
+	  my $feature1 = Bio::EnsEMBL::SeqFeature->new();
 	  $feature1->seqname($chr_name1);
 	  $feature1->start($alignblock1->start);
 	  $feature1->end($alignblock1->end);
 	  $feature1->strand($alignblock1->strand);
 
-	  my $feature2 = new Bio::EnsEMBL::SeqFeature;
+	  my $feature2 = Bio::EnsEMBL::SeqFeature->new();
 	  $feature2->seqname($chr_name2);
 	  $feature2->start($alignblock2->start);
 	  $feature2->end($alignblock2->end);
@@ -624,17 +788,17 @@ sub _objs_from_sth {
   my $result = [];
 
   my ( $consensus_dnafrag_id, $consensus_start, $consensus_end, $query_dnafrag_id,
-       $query_start, $query_end, $query_strand, $score, $perc_id, $cigar_line );
+       $query_start, $query_end, $query_strand, $score, $perc_id, $cigar_string );
   if( $reverse ) {
     $sth->bind_columns
       ( \$query_dnafrag_id, \$query_start, \$query_end,  
 	\$consensus_dnafrag_id, \$consensus_start, \$consensus_end, \$query_strand,
-	\$score, \$perc_id, \$cigar_line );
+	\$score, \$perc_id, \$cigar_string );
   } else {
     $sth->bind_columns
       ( \$consensus_dnafrag_id, \$consensus_start, \$consensus_end, 
 	\$query_dnafrag_id, \$query_start, \$query_end, \$query_strand, 
-	\$score, \$perc_id, \$cigar_line );
+	\$score, \$perc_id, \$cigar_string );
   }
 
   my $da = $self->db()->get_DnaFragAdaptor();
@@ -647,7 +811,7 @@ sub _objs_from_sth {
 
       $cigar_string =~ tr/DI/ID/;
       my @pieces = ( $cigar_string =~ /(\d*[MDI])/g );
-      $cigar_string = join( "", reverse( @pieces ));
+      $cigar_string= join( "", reverse( @pieces ));
     }
     
     $genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new
@@ -662,7 +826,7 @@ sub _objs_from_sth {
        -query_strand => $query_strand,
        -score => $score,
        -perc_id => $perc_id,
-       -cigar_line => $cigar_line
+       -cigar_line => $cigar_string
       );
 
 
