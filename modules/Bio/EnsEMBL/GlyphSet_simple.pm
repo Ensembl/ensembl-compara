@@ -134,12 +134,11 @@ sub _init {
     next if $end<1;            ## Skip if totally outside VC
     $end   = $vc_length if $end>$vc_length;
     $T++;
-    # next if $optimizable && int($end*$pix_per_bp) == int($previous_end*$pix_per_bp);
     next if $optimizable && ( $VirtualContig->strand() < 0 ?
-                  $previous_start-$start < 0.5/$pix_per_bp : 
-                  $end-$previous_end < 0.5/$pix_per_bp );
+                                $previous_start-$start < 0.5/$pix_per_bp : 
+                                $end-$previous_end     < 0.5/$pix_per_bp );
     $C ++;
-    $previous_end = $end;
+    $previous_end   = $end;
     $previous_start = $end;
     $flag = 0;
     my $img_start = $start;
@@ -154,9 +153,9 @@ sub _init {
       $tag_end   = $tag_start + $bp_textwidth;
     }
     $img_start = $tag_start if $tag_start < $img_start; 
-        $img_end   = $tag_end   if $tag_end   > $img_end; 
-        my @tags = $self->tag($f);
-        foreach my $tag (@tags) {
+    $img_end   = $tag_end   if $tag_end   > $img_end; 
+    my @tags = $self->tag($f);
+    foreach my $tag (@tags) {
       $tag_start = $start;
       $tag_end = $end;
       if($tag->{'style'} eq 'snp' ) {
@@ -174,7 +173,7 @@ sub _init {
       }
       $img_start = $tag_start if $tag_start < $img_start; 
       $img_end   = $tag_end   if $tag_end   > $img_end; 
-        } 
+    } 
     ## This is the bit we compute the width.... 
         
     my $row = 0;
@@ -183,9 +182,7 @@ sub _init {
       $img_start = 0 if $img_start < 0;
       $img_end   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
       $img_end   = $bitmap_length if $img_end > $bitmap_length;
-      $row = &Sanger::Graphics::Bump::bump_row(
-                           $img_start, $img_end, $bitmap_length, \@bitmap, $dep
-                          );
+      $row = &Sanger::Graphics::Bump::bump_row( $img_start, $img_end, $bitmap_length, \@bitmap, $dep );
       next if $row > $dep;
     }
     my @tag_glyphs = ();
@@ -196,38 +193,38 @@ sub _init {
     if($part_to_colour eq 'line') {
       #    print STDERR "PUSHING LINE\n"; 
       $composite->push( new Sanger::Graphics::Glyph::Space({
-                'x'          => $start-1,
-                'y'          => 0,
-                'width'      => $end - $start + 1,
-                'height'     => $h,
-                "colour"     => $feature_colour,
-                'absolutey'  => 1
+        'x'          => $start-1,
+        'y'          => 0,
+        'width'      => $end - $start + 1,
+        'height'     => $h,
+        "colour"     => $feature_colour,
+        'absolutey'  => 1
                                }));
       $composite->push( new Sanger::Graphics::Glyph::Rect({
-                'x'          => $start-1,
-                'y'          => $h/2+1,
-                'width'      => $end - $start + 1,
-                'height'     => 0,
-                "colour"     => $feature_colour,
-                'absolutey'  => 1
-            }));
+        'x'          => $start-1,
+        'y'          => $h/2+1,
+        'width'      => $end - $start + 1,
+        'height'     => 0,
+        "colour"     => $feature_colour,
+        'absolutey'  => 1
+      }));
     } elsif( $part_to_colour eq 'invisible' ) {
       $composite->push( new Sanger::Graphics::Glyph::Space({
-                'x'          => $start-1,
-                'y'          => 0,
-                'width'      => $end - $start + 1,
-                'height'     => $h,
-                'absolutey'  => 1
-            }) );
+        'x'          => $start-1,
+        'y'          => 0,
+        'width'      => $end - $start + 1,
+        'height'     => $h,
+        'absolutey'  => 1
+      }) );
     } else {
       $composite->push( new Sanger::Graphics::Glyph::Rect({
-                'x'          => $start-1,
-                'y'          => 0,
-                'width'      => $end - $start + 1,
-                'height'     => $h,
-                $part_to_colour."colour" => $feature_colour,
-                'absolutey'  => 1
-            }) );
+        'x'          => $start-1,
+        'y'          => 0,
+        'width'      => $end - $start + 1,
+        'height'     => $h,
+        $part_to_colour."colour" => $feature_colour,
+        'absolutey'  => 1
+      }) );
     }
     my $rowheight = int($h * 1.5);
 
