@@ -121,7 +121,7 @@ sub _store_PAFS {
     }
   }
   #print("$query\n");
-  my $sth = $self->db->prepare($query);
+  my $sth = $self->prepare($query);
   $sth->execute();
   $sth->finish();
 }

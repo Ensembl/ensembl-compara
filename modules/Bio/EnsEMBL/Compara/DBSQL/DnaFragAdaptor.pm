@@ -156,7 +156,7 @@ sub fetch_all_by_GenomeDB_region {
     push @bind_values, $end;
   }
 
-  my $sth = $self->db->prepare($sql);
+  my $sth = $self->prepare($sql);
   $sth->execute(@bind_values);
 
   return $self->_objs_from_sth($sth);
