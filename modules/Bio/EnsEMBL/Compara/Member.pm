@@ -498,9 +498,9 @@ sub bioseq {
 
   my $seqname = $self->source_name . ":" . $self->stable_id;
   my $seq = Bio::Seq->new(-seq        => $self->sequence(),
-                          -id         => $seqname,
-                          -primary_id => $seqname,
-                          -desc       => $self->description(),
+                          -primary_id => "member_id_".$self->dbID,
+                          -display_id => "member_id_".$self->dbID,
+                          -desc       => $seqname ."|". $self->description(),
                          );
   return $seq;
 }
