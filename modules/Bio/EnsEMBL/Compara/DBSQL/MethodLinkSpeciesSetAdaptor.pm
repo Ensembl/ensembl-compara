@@ -151,12 +151,25 @@ sub store {
   my ($dbID) = $sth->fetchrow_array();
   
   if (!$dbID) {
-    $sth = $self->prepare($method_link_species_set_sql);
-    $dbID = $method_link_species_set->dbID();
-    foreach my $genome_db_id (@genome_db_ids) {
-      $sth->execute(($dbID or "NULL"), $method_link_id, $genome_db_id);
-      $dbID = $sth->{'mysql_insertid'};
+    ## Lock the table in order to avoid a concurrent process to store the same object with a different dbID
+    $self->dbc->do("LOCK TABLES method_link WRITE, method_link_species_set WRITE");
+
+    # Now, check if the object has not been stored before (tables are locked)
+    $sth->execute();
+    $dbID = $sth->fetchrow_array();
+
+    # If the object still does not exist in the DB, store it
+    if (!$dbID) {
+      $sth = $self->prepare($method_link_species_set_sql);
+      $dbID = $method_link_species_set->dbID();
+      foreach my $genome_db_id (@genome_db_ids) {
+        $sth->execute(($dbID or "NULL"), $method_link_id, $genome_db_id);
+        $dbID = $sth->{'mysql_insertid'};
+      }
     }
+
+    ## Unlock tables
+    $self->dbc->do("UNLOCK TABLES");
   }
   $method_link_species_set->dbID($dbID);
   
