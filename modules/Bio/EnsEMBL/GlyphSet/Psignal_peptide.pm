@@ -38,10 +38,7 @@ sub _init {
 	my @row = @{$hash{$key}};
 	my $desc = $row[0]->idesc();
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
-	    'zmenu' => {
-		'caption' => $key,
-		$desc     => '',
-	    },
+	    
 	});
 	
 	my $colour = $Config->get('Psignal_peptide','col');
@@ -58,10 +55,7 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $caption,
-		},
-	    });
+		});
 	    $Composite->push($rect);
 	}
 	
