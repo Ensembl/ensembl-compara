@@ -77,8 +77,6 @@ sub fetch_input {
   #
   $self->debug(0);
 
-  $self->print_params;
-
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
@@ -119,6 +117,10 @@ sub update_meta_table {
 
   my $dba = $self->{'comparaDBA'};
   my $mc = $dba->get_MetaContainer;
+
+  $dba->dbc->do("analyze table genomic_align_block");
+  $dba->dbc->do("analyze table genomic_align");
+  $dba->dbc->do("analyze table genomic_align_group");
 
   my $sth = $dba->dbc->prepare("SELECT max(dnafrag_end - dnafrag_start + 1) FROM genomic_align");
   $sth->execute();
