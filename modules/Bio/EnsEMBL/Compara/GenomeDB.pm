@@ -171,14 +171,18 @@ sub get_Contig{
 
    my $contig;
    if ($type eq 'RawContig'){
-      $contig = $self->db_adaptor->get_Contig($name); 
-   }elsif ($type eq 'Chromosome'){
-      #do we really want to be doing this.............
-	  $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_name($name);
-   }else {
-      $self->throw ("Can't fetch contig of dnafrag with type $type");
+     $contig = $self->db_adaptor->get_Contig($name); 
+   } elsif ($type eq 'Chromosome'){
+     #do we really want to be doing this.............
+     $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_name($name);
+   } elsif ($type eq 'VirtualContig'){
+     #do we really want to be doing this.............
+     my ($chr,$start,$end) = split /\./, $name;
+     $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end($chr,$start,$end);
+   } else {
+     $self->throw ("Can't fetch contig of dnafrag with type $type");
    }
-
+   return $contig;
 }
 
 =head2 get_VC_by_start_end
@@ -208,7 +212,7 @@ sub get_VC_by_start_end{
    my $contig;
 
    if ($type eq 'RawContig'){
-      $self->db_adaptor->static_golden_path_type('UCSC');
+#      $self->db_adaptor->static_golden_path_type('UCSC');
       my ($chr_name,$t_start,$t_end) = $self->db_adaptor->get_StaticGoldenPathAdaptor->get_chr_start_end_of_contig($name);
 
       my ($chr_start,$chr_end);
