@@ -17,7 +17,7 @@ sub render_Rect {
     $onmouseout = (defined $onmouseout)?qq( onmouseout="$onmouseout"):"";
 
     my $href = $glyph->href();
-    $href = (defined $href)?qq( href="$href"):"";
+    $href = qq( href="$href") if(defined $href);
 
     my $alt = $glyph->id();
     $alt = (defined $alt)?qq( alt="$alt"):qq( alt="");
@@ -38,7 +38,7 @@ sub render_Rect {
     my $y1 = $glyph->pixely();
     my $y2 = $glyph->pixely() + $glyph->pixelheight();
 
-    $this->{'canvas'} .= qq(<area coords="$x1 $y1 $x2 $y2"$href$onmouseover$onmouseout$alt>\n);
+    $this->{'canvas'} .= qq(<area coords="$x1 $y1 $x2 $y2"$href$onmouseover$onmouseout$alt>\n) if(defined $href);
 }
 
 sub render_Text {
@@ -51,6 +51,9 @@ sub render_Ellipse {
 }
 
 sub render_Intron {
+}
+
+sub render_Poly {
 }
 
 sub render_Composite {
