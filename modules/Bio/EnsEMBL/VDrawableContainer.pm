@@ -31,6 +31,7 @@ sub new {
     ########## loop over all the glyphsets the user wants:
     my $tmp = {};
     for my $row ($Config->subsections()) {
+	    next unless ($Config->get($row, 'on') eq "on");
     	if( $row eq 'Videogram' && $Config->{'_all_chromomosomes'} eq 'yes') {
             my $pos = $tmp->{$Config->get($row, 'pos')};
     	    foreach my $chr ( @{EnsWeb::species_defs->ENSEMBL_CHROMOSOMES} ) {
