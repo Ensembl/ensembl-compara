@@ -134,16 +134,15 @@ sub fetch_all_by_GenomeDB_region {
 		 "[$genome_db]");
   }
   
-  return 
-    $self->fetch_all_by_species_region($self, $genome_db->species, 
-				       $dna_frag_type, $name, $start, $end);
+  return $self->fetch_all_by_species_region($genome_db->species,$dna_frag_type,
+					    $name, $start, $end);
 }
 
 
 
-=head2 fetch_all_by_GenomeDB_region
+=head2 fetch_all_by_species_region
 
-  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg [1]    : string species
   Arg [2]    : (optional) string $dna_frag_type
   Arg [3]    : (optional) string $name
   Arg [4]    : (optional) int $start
@@ -166,15 +165,14 @@ sub fetch_all_by_species_region {
   $dnafrag_type = 'Chromosome' unless $dnafrag_type;
 
   unless($self->_dna_frag_types()->{$dnafrag_type}) {
-    $self->throw("[$dnafrag_type] is not a valid dna_frag_type." .
-		 "Valid types are:["
-		 .join(', ', keys(%{$self->_dna_frag_types}))."]\n");
+    $self->throw("[$dnafrag_type] is not a valid dna_frag_type.Valid types " .
+	       "are:[".join(', ', keys(%{$self->_dna_frag_types}))."]\n");
   }
  
   my $sql = 'SELECT d.genome_db_id, d.dnafrag_type, d.dnafrag_id, 
                     d.name, d.start, d.end
              FROM  dnafrag d, genome_db g
-             WHERE d.type = ?
+             WHERE d.dnafrag_type = ?
              AND   g.name = ?
              AND   d.genome_db_id = g.genome_db_id';
 
@@ -187,7 +185,7 @@ sub fetch_all_by_species_region {
 
   if(defined $start) {
     $sql .= ' AND d.end >= ?';
-    push @bind_values, $end;
+    push @bind_values, $start;
   }
   
   if(defined $end) {
@@ -294,7 +292,7 @@ sub store{
        $self->throw("genomedb must be stored (no dbID). Store genomedb first");
    }
 
-   if( !defined $dnafrag->name ) {
+  if( !defined $dnafrag->name ) {
        $self->throw("dnafrag must have a name");
    }
 

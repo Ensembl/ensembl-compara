@@ -55,35 +55,35 @@ use Bio::EnsEMBL::DBLoader;
 # new() is written here 
 
 sub new {
-    my($class,@args) = @_;
+  my($class,@args) = @_;
     
-    my $self = {};
-    bless $self,$class;
-
-    # the read in DBAdaptor is assumed to be a core db_adaptor 
-    my ( $dba ) = $args[1];
+  my $self = {};
+  bless $self,$class;
+  
+  # the read in DBAdaptor is assumed to be a core db_adaptor 
+  my ( $dba ) = $args[1];
     
-    if ( defined $dba ) {
-
-      if ( !$dba->isa('Bio::EnsEMBL::DBQSL::DBAdaptor')) {
-	$self->throw("The DBAdaptor passed to GenomeDB must be from the core code.\n");
-      }
-
-      my $species = $dba->get_MetaContainer->get_Species->binomial;
-      $species =~ s/\s/_/;
-      
-      $self->species($species);
-      
-      my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=".$dba->dbname.";user=".
-	$dba->username.";pass=".$dba->password;
-
-      $self->locator($locator);
-      
-      # store the DBAdaptor
-      $self->db_adaptor($dba);
+  if ( defined $dba ) {
+    if ( !$dba->isa('Bio::EnsEMBL::DBQSL::DBAdaptor')) {
+      $self->throw("The DBAdaptor passed to GenomeDB must be from the core code.\n");
     }
 
-    return $self;
+    my $species = $dba->get_MetaContainer->get_Species->binomial;
+    $species =~ s/\s/_/;
+      
+    $self->species($species);
+      
+    my $locator = 
+      ref($dba)."/host=".$dba->host.";port=;dbname=".$dba->dbname.";user=".
+	$dba->username.";pass=".$dba->password;
+
+    $self->locator($locator);
+      
+    # store the DBAdaptor
+    $self->db_adaptor($dba);
+  }
+
+  return $self;
 }
 
 
@@ -216,10 +216,17 @@ sub adaptor{
  
 sub species{
    my ($self,$value) = @_;
+
    if( defined $value) {
       $self->{'species'} = $value;
+    } elsif(!defined $self->{'species'} && $self->locator) {
+      #determine the species if it hasn't been set
+      my $species = $self->db_adaptor->get_MetaContainer->get_Species->binomial;
+      $species =~ s/\s/_/;
+      $self->species($species);
     }
-    return $self->{'species'};
+
+   return $self->{'species'};
 }
 
 

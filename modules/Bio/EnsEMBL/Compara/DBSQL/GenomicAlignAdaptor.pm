@@ -49,37 +49,10 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 
 # do we need these ??
 use Bio::EnsEMBL::Compara::AlignBlockSet; 
-use Bio::EnsEMBL::Utils::Cache; #CPAN LRU cache
 
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-my $CACHE_SIZE = 4;
-
-
-=head2 new
-
-  Arg [1]    : list of argument to super class constructor @args
-  Example    : $gaa = new Bio::EnsEMBL::Compara::GenomicAlignAdaptor($db);
-  Description: Creates a new GenomicAlignAdaptor.  The superclass constructor
-               is extended to initialise an internal cache.
-  Returntype : none
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::DBSQL::DBConnection
-
-=cut
-
-sub new {
-  my ($class, @args) = @_;
-
-  my $self = $class->SUPER::new(@args);
-
-  #initialize internal LRU cache
-  tie(%{$self->{'_cache'}}, 'Bio::EnsEMBL::Utils::Cache', $CACHE_SIZE);
-  
-  return $self;
-}
-     
 
 =head2 store
 
@@ -231,6 +204,12 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
 
 sub fetch_all_by_dnafrag_genomedb {
   my ( $self, $dnafrag, $target_genome, $start, $end ) = @_;
+
+  unless($dnafrag && ref $dnafrag && 
+	 $dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag')) {
+    $self->throw("dnafrag argument must be a Bio::EnsEMBL::Compara::DnaFrag" .
+		 " not a [$dnafrag]");
+  }
 
   my $genome_cons = $dnafrag->genomedb();
   my $genome_query = $target_genome;
@@ -632,171 +611,7 @@ sub _next_cig {
   } until ( $type eq 'M' || ! ( @$ciglist ));
 }
 
-  
 
-=head2 fetch_DnaDnaAlignFeature_by_species_chr_start_end
-
- Arg [1]    : string subject_species
-              e.g. "Homo_sapiens"
- Arg [2]    : string query_species
-              e.g. "Mus_musculus"
- Arg [3]    : string chr_name
- Arg [4]    : int chr_start
- Arg [5]    : int chr_end
- Arg [6]    : string dnafrag_type (optional)
-              type of dnafrag from which data as to be queried, default is 
-              "Chromosome"
- Example    : $gaa->fetch_DnaDnaAlignFeature_by_species_chr_start_end(
-                                                              "Homo_sapiens",
-                                                              "Mus_musculus",
-                                                              "X",
-                                                               250_000,
-                                                               750_000,
-                                                              "Chromosome");
- Description: find matches of query_species on subject_species between 
-              chromosome coordinates on subject_species
- Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
- Exceptions : none
- Caller     : general
-
-=cut
-
-#
-# (mcvicker) IThis should be renamed.  It doesn't have to be by
-#  chr_start_end it can be by any type of dna frag....
-#
-
-sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
-  my ($self, $sb_species, $qy_species, $chr_name, 
-      $chr_start, $chr_end, $dnafrag_type) = @_;
-
-  unless (defined $dnafrag_type) {
-    $dnafrag_type = "Chromosome";
-  }
-  
-  #get the genome database for each species
-  my $gdba = $self->db->get_GenomeDBAdaptor;  
-  my $sb_gdb = $gdba->fetch_by_species_tag($sb_species);
-  my $qy_gdb = $gdba->fetch_by_species_tag($qy_species);
-
-
-  #retrieve dna fragments from the subjects species region of interest
-  my $dfa = $self->db->get_DnaFragAdaptor;
-  my $dnafrags = $dfa->fetch_by_species_range($sb_species,
-					      $dnafrag_type, 
-					      $chr_name,
-					      $chr_start, 
-					      $chr_end);
-  
-  my @out = ();
-
-  foreach my $df (@$dnafrags) {
-    #retreive subject/query alignments for each dna fragment
-    my $genomic_aligns = $self->fetch_all_by_dnafrag_genome_db($df, $qy_gdb);
-
-    foreach my $ga (@$genomic_aligns) {
-      my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new(
-				       '-cigar_string' => $ga->cigar_string);
-      my $cdf = $ga->consensus_dnafrag;
-      my $qdf = $ga->query_dnafrag;
-
-      $f->contig($cdf->contig);
-      $f->start($cdf->start + $ga->consensus_start - 1);
-      $f->end($cdf->start + $ga->consensus_end - 1);
-      $f->strand(1);
-      $f->species($sb_species);
-      $f->score($ga->score);
-      $f->percent_id($ga->percent_id);
-
-      $f->hstart($qdf->start + $ga->query_start - 1);
-      $f->hend($qdf->start + $ga->query_end -1);
-      $f->hstrand($ga->query_strand);
-      $f->hseqname($qdf->contig->name);
-      $f->hspecies($qy_species);
-
-      push @out, $f;
-    }
-  }
-
-  return \@out;
-}
-
-
-
-
-=head2 fetch_DnaDnaAlignFeature_by_Slice
-
- Arg [1]    : Bio::EnsEMBL::Slice
- Arg [2]    : string query_species
-              e.g. "Mus_musculus"
- Example    : $gaa->fetch_DnaDnaAlignFeature_by_Slice($slice, "Mus_musculus");
- Description: find matches of query_species in the region of a slice of a 
-              subject species
- Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
- Exceptions : none
- Caller     : general
-
-=cut
-
-sub fetch_DnaDnaAlignFeatures_by_Slice {
-  my ($self, $slice, $qy_species) = @_;
-
-  unless($slice && ref $slice && $slice->isa('Bio::EnsEMBL::Slice')) {
-    $self->throw("Invalid slice argument [$slice]\n");
-  }
-
-  unless($qy_species) {
-    $self->throw("Query species argument is required");
-  }
-
-  #we will probably use a taxon object instead of a string eventually
-  my $species = $slice->adaptor->db->get_MetaContainer->get_Species;
-  my $sb_species = $species->binomial;
-  $sb_species =~ s/ /_/; #replace spaces with underscores
-
-  my $key = join(':', "SLICE", $slice->name, $sb_species, $qy_species);
-
-  if(exists $self->{'_cache'}->{$key}) {
-    return $self->{'_cache'}->{$key};
-  } 
-
-  my $slice_start = $slice->chr_start;
-  my $slice_end   = $slice->chr_end;
-  my $slice_strand = $slice->strand;
-
-  my $features = $self->fetch_DnaDnaAlignFeature_by_species_chr_start_end(
-						$sb_species,
-						$qy_species,
-						$slice->chr_name,
-						$slice_start,
-					        $slice_end, 
-						'Chromosome');
-
-  if($slice_strand == 1) {
-    foreach my $f (@$features) {
-      my $start  = $f->start - $slice_start + 1;
-      my $end    = $f->end   - $slice_start + 1;
-      $f->start($start);
-      $f->end($end);
-      $f->contig($slice);
-    }
-  } else {
-    foreach my $f (@$features) {
-      my $start  = $slice_end - $f->start + 1;
-      my $end    = $slice_end - $f->end   + 1;
-      my $strand = $f->strand * -1;
-      $f->start($start);
-      $f->end($end);
-      $f->strand($strand);
-      $f->contig($slice);
-    }
-  }
-
-  #update the cache
-  $self->{'_cache'}->{$key} = $features;
-
-  return $features;
-}
 
 # produse a list of columns in the order expected from 
 # _objs_from_sth
@@ -883,27 +698,24 @@ sub _objs_from_sth {
 
 
 
-=head2 deleteObj
 
-  Arg [1]    : none
-  Example    : none
-  Description: Clears the internal cache prior so correct garbage collection 
-               can occur.
-  Returntype : none
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::DBSQL::DBConnection::deleteObj
 
-=cut
 
-sub deleteObj {
-  my $self = shift;
 
-  #perform superclass cleanup
-  $self->SUPER::deleteObj;
 
-  #flush internal cache
-  %{$self->{'_cache'}} = ();
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ###################################################################

@@ -163,4 +163,24 @@ sub get_SyntenyRegionAdaptor{
      $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor");
 }
 
+
+
+=head2 get_DnaAlignFeatureAdaptor
+
+  Arg [1]    : none
+  Example    : $dafa = $dba->get_DnaAlignFeatureAdaptor;
+  Description: Retrieves a DnaAlignFeatureAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_DnaAlignFeatureAdaptor {
+  my $self = shift;
+
+  return 
+   $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor");
+}
+
 1;
