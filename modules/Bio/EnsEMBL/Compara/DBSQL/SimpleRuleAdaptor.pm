@@ -132,7 +132,7 @@ sub store {
   #print("\nSimpleRuleAdaptor->store()\n");
   my $simple_rule_id;
   
-  my $sth = $self->prepare( q{INSERT INTO simple_rule
+  my $sth = $self->prepare( q{INSERT ignore INTO simple_rule
        SET condition_analysis_id = ?, goal_analysis_id = ? } );
   if($sth->execute($rule->conditionAnalysis->dbID, $rule->goalAnalysis->dbID)) {
     $simple_rule_id = $sth->{'mysql_insertid'};
