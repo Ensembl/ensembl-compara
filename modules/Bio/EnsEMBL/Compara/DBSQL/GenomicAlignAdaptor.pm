@@ -101,11 +101,36 @@ got to fix this
 =cut
 
 sub fetch_GenomicAlign_by_dbID{
-   my ($self,$dbid) = @_;
-   #my ($self,$dbid, $align_name) = @_;
+  my ($self,$dbid) = @_;
+  #my ($self,$dbid, $align_name) = @_;
 
-   return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self);
-   #return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self, -align_name =>$align_name);
+  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self);
+  #return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self, -align_name =>$align_name);
+}
+
+=head2 fetch_align_id_by_align_name
+
+ Title   : fetch_align_id_by_align_name
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_align_id_by_align_name {
+  my ($self,$align_name) = @_;
+  
+  unless (defined $align_name) {
+    $self->throw("align_name must be defined as argument");
+  }
+
+  my $sth = $self->prepare("select align_id from align where align_name=\"$align_name\"");
+  $sth->execute();
+  my ($align_id) = $sth->fetchrow_array;
+  return $align_id;
 }
 
 
@@ -230,10 +255,14 @@ sub get_AlignBlockSet{
 =cut
 
 sub store {
-   my ($self,$aln) = @_;
+   my ($self,$aln,$align_id) = @_;
 
    if( !defined $aln || !ref $aln || !$aln->isa('Bio::EnsEMBL::Compara::GenomicAlign') ) {
        $self->throw("Must store with a GenomicAlign, not a $aln");
+   }
+
+   unless (defined $align_id) {
+     $self->throw("An align_id must be specified and defined");
    }
 
    my $dnafragadp = $self->db->get_DnaFragAdaptor();
@@ -251,14 +280,14 @@ sub store {
 
    # store the alignment first
 
-   my $sth = $self->prepare("insert into align (score) values ('0.0')");
-   $sth->execute;
-   $aln->dbID($sth->{'mysql_insertid'});
-   my $align_id = $aln->dbID;
+#   my $sth = $self->prepare("insert into align (score) values ('0.0')");
+#   $sth->execute;
+#   $aln->dbID($sth->{'mysql_insertid'});
+#   my $align_id = $aln->dbID;
 
    # for each alignblockset, store the row and then the alignblocks themselves
    
-   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand,score,perc_id) values (?,?,?,?,?,?,?,?,?,?)");
+   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand,score,perc_id,cigar_line) values (?,?,?,?,?,?,?,?,?,?,?)");
 
    foreach my $ab ( $aln->each_AlignBlockSet ) {
        my $sth2 = $self->prepare("insert into align_row (align_id) values ($align_id)");
@@ -275,7 +304,8 @@ sub store {
 			  $a->end,
 			  $a->strand,
                           $a->score,
-                          $a->perc_id
+                          $a->perc_id,
+			  $a->cigar_string
 			  );
 
        }
