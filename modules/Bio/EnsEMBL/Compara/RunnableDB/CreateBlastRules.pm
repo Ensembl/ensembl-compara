@@ -122,6 +122,8 @@ sub write_output
 {
   my $self = shift;
 
+  $self->configureHomologyAnalysis();
+  
   my $input_hash = eval($self->input_id);
   if($input_hash and $input_hash->{'peps'} and $input_hash->{'blast'}) {
     my $conditionLogicName = $input_hash->{'peps'};
@@ -161,9 +163,10 @@ sub createBlastRules
     my $blastLogicName = "blast_" . $genomeDB1->dbID. "_". $genomeDB1->assembly;
     my $blastAnalysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($blastLogicName);
     if($blastAnalysis) {
+      $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blastAnalysis, $self->{'submitHomology'});
+
       my $blastPhylum = $self->phylumForGenomeDBID($genomeDB1->dbID);
       #rint("\nANALYSIS ".$blastAnalysis->logic_name()." is a ".$blastPhylum."\n");
-
       foreach my $analysis (@{$analysisList}) {
         if($analysis->logic_name =~ /SubmitPep_/) {
           my $genome_db_id = eval($analysis->parameters)->{'genome_db_id'};
@@ -243,6 +246,62 @@ sub addRule
 }
 
 
+sub configureHomologyAnalysis
+{
+  my $self = shift;
+
+  return if($self->{'submitHomology'});
+  
+  my $isHive = $self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
+
+  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
+  $self->{'submitHomology'} = $self->db->get_AnalysisAdaptor()->
+                              fetch_by_logic_name('SubmitHomologyPair');
+  return if($self->{'submitHomology'});
+  
+
+  my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'SubmitHomologyPair',
+      -input_id_type   => 'homology',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
+    );
+  $self->db->get_AnalysisAdaptor()->store($submitHomology);
+  $self->{'submitHomology'} = $submitHomology;
+  if($isHive) {
+    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($submitHomology->dbID);
+    $stats->batch_size(7000);
+    $stats->hive_capacity(1);
+    $stats->status('BLOCKED');
+    $stats->update();
+  }
+
+
+  my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'BuildHomology',
+      -input_id_type   => 'homology',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
+    );
+  $self->db->get_AnalysisAdaptor->store($buildHomology);
+  $self->{'buildHomology'} = $buildHomology;
+  if($isHive) {
+    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($buildHomology->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(3);
+    $stats->update();
+  }
+
+  if($isHive) {
+    $self->db->get_DataflowRuleAdaptor->create_rule($submitHomology,$buildHomology);
+  } else {
+    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$buildHomology);
+    $rule->add_condition($submitHomology->logic_name());
+    $self->db->get_RuleAdaptor->store($rule);
+  }
+}
+
+
 sub addBuildHomologyInput
 {
   my $self = shift;
@@ -259,54 +318,12 @@ sub addBuildHomologyInput
   my $genome_db_id2 = eval($analysis2->parameters)->{'genome_db_id'};
   return unless ($genome_db_id1 and $genome_db_id2);
 
+  return unless($self->{'submitHomology'});
   
   my $input_id;
 
   my $isHive = $self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
-
   #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
-
-  unless($self->{'submitHomology'}) {
-    my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
-        -db_version      => '1',
-        -logic_name      => 'SubmitHomologyPair',
-        -input_id_type   => 'homology',
-        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
-      );
-    $self->db->get_AnalysisAdaptor()->store($submitHomology);
-    $self->{'submitHomology'} = $submitHomology;
-    if($isHive) {
-      my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($submitHomology->dbID);
-      $stats->batch_size(7000);
-      $stats->hive_capacity(1);
-      $stats->status('BLOCKED');
-      $stats->update();
-    }
-
-
-    my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
-        -db_version      => '1',
-        -logic_name      => 'BuildHomology',
-        -input_id_type   => 'homology',
-        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
-      );
-    $self->db->get_AnalysisAdaptor->store($buildHomology);
-    $self->{'buildHomology'} = $buildHomology;
-    if($isHive) {
-      my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($buildHomology->dbID);
-      $stats->batch_size(1);
-      $stats->hive_capacity(3);
-      $stats->update();
-    }
-
-    if($isHive) {
-      $self->db->get_DataflowRuleAdaptor->create_rule($submitHomology,$buildHomology);
-    } else {
-      my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$buildHomology);
-      $rule->add_condition($submitHomology->logic_name());
-      $self->db->get_RuleAdaptor->store($rule);
-    }
-  }
 
 
   if($genome_db_id1 < $genome_db_id2) {
