@@ -147,7 +147,7 @@ sub print_params {
   my $self = shift;
 
   printf(" params:\n");
-  printf("   logic_name : %d\n", $self->{'logic_name'});
+  printf("   logic_name : %s\n", $self->{'logic_name'});
   printf("   collection           : (%d) %s\n", 
          $self->{'collection'}->dbID, $self->{'collection'}->description);
   if (defined $self->{'region'}) {
