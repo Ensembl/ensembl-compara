@@ -42,6 +42,7 @@ my $species1 = 'Homo sapiens';
 my $species1_assembly = 'NCBI30';
 my $species2 = 'Mus musculus';
 my $species2_assembly = 'MGSC3';
+my $assembly_type = "WGA";
 
 my $chr_names = "all";
 my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf";
@@ -111,7 +112,7 @@ foreach my $chr (@chromosomes) {
 						       $start,
 						       $end);
 
-    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_species_region($species1,$species1_assembly,$species2,$species2_assembly,$chr->chr_name,$start,$end);
+    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_species_region($species1,$species1_assembly,$species2,$species2_assembly,$chr->chr_name,$start,$end,$assembly_type);
 
     print STDERR "Got features " . scalar(@{$synteny}) . "\n";
     
