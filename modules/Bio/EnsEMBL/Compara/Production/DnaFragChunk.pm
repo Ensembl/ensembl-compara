@@ -194,10 +194,6 @@ sub bioseq {
     my $fetch_time = time()-$starttime;
 
     $self->sequence($seq->seq);
-    #if($bioseq->length <= 5000000) {
-    #  #print "  writing sequence back to compara for chunk\n";
-    #  $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
-    #}
   }
                          
   return $seq;
