@@ -66,8 +66,8 @@ sub _init {
       my $hi_colour_gene = $Config->get('transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
       $type = $eg->type();
       
-    TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
-    next if ($target && ($transcript->id() ne $target) );
+    	TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
+    	next if ($target && ($transcript->id() ne $target) );
         my $hi_colour = $hi_colour_gene;
         ########## test transcript strand
 
@@ -80,93 +80,99 @@ sub _init {
         my $gene_name;
         my ($hugo, $swisslink, $sptrembllink);
         eval {
-        @dblinks = $transcript->each_DBLink();
-        unless( $target ) { #Skip this next chunk if single transcript mode
-        foreach my $DB_link ( @dblinks ){
-            if( $DB_link->database() eq 'HUGO') {
-            $hugo = $DB_link;
-            last;
-            }
-            if( $DB_link->database() =~ /SWISS/o ) {
-            $swisslink = $DB_link;
-            }
-            if( $DB_link->database() eq 'SPTREMBL') {
-            $sptrembllink = $DB_link;
-            }
-        }
-        
-        if( $hugo ) {
-            $id = $hugo->display_id();
-        } elsif ( $swisslink ) {
-            $id = $swisslink->display_id();
-        } elsif ( $sptrembllink ) {
-            $id = $sptrembllink->display_id();
-        }  
-        } #end of Skip this next chunk if single transcript mode
+        	@dblinks = $transcript->each_DBLink();
+
+			#Skip this next chunk if single transcript mode
+        	unless( $target ) { 
+        		foreach my $DB_link ( @dblinks ){
+            		if( $DB_link->database() eq 'HUGO') {
+            		$hugo = $DB_link;
+            		last;
+            		}
+            		if( $DB_link->database() =~ /SWISS/o ) {
+            		$swisslink = $DB_link;
+            		}
+            		if( $DB_link->database() eq 'SPTREMBL') {
+            		$sptrembllink = $DB_link;
+            		}
+        		}
+
+        		if( $hugo ) {
+            		$id = $hugo->display_id();
+        		} elsif ( $swisslink ) {
+            		$id = $swisslink->display_id();
+        		} elsif ( $sptrembllink ) {
+            		$id = $sptrembllink->display_id();
+        		}  
+        	} #end of Skip this next chunk if single transcript mode
         };
     
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
-    if (@dblinks){
+    	if (@dblinks){
             $colour = $Config->get('transcript','known');
         } else {
             $colour = $Config->get('transcript','unknown');
         }
     
         unless( $target ) { #Skip this next chunk if single transcript mode
-        if ($eg->{'_is_external'}){
-        $colour = $Config->get('transcript','ext');
-        }
-        if ($type eq "pseudo"){
-        $colour = $Config->get('transcript','pseudo');
-        }
-        
-        my $tid = $transcript->id();
-        my $pid = $tid;
-        $hi_colour = $Config->get('transcript','hi') if(defined $highlights && $highlights =~ /\|$tid\|/);
-        
-        if ($tid !~ /ENST/o){
-            # if we have an EMBL external transcript we need different links...
-            if($tid !~ /dJ/o){
-                $Composite->{'zmenu'}  = {
-                'caption'           => "EMBL: $tid",
-                'More information'  => "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[EMBL-ALLTEXT:$tid]",
-                #'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
-                'EMBL curated transcript'  => "",
-                };
-            } else {
-                my $URL = ExtURL->new();
-                my $url = $URL->get_url('EMBLGENE', $tid);
+        	if ($eg->{'_is_external'}){
+        		$colour = $Config->get('transcript','ext');
+        	}
+        	if ($type eq "pseudo"){
+        		$colour = $Config->get('transcript','pseudo');
+        	}
 
-                $Composite->{'zmenu'}  = {
-                'caption'       => "EMBL: $tid",
-                'EMBL curated transcript'  => "",
-                "$tid"          => $url
-                };
-            }
-            if($type eq "pseudo"){
-                #$tid =~ s/(.*?)\.\d+/$1/;
-                $Composite->{'zmenu'}  = {
-                'caption'           => "EMBL: $tid",
-                #'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
-                'More information'  => "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[EMBL-ALLTEXT:$tid]",
-                'EMBL curated pseudogene'  => "",
-                };
-            }
-        } else {
-        # we have a normal Ensembl transcript...
-        $Composite->{'zmenu'}  = {
-                'caption'		    => $id,
-                "00:Transcr:$tid"	    => "",
-                "01:(Gene:$vgid)"	    => "",
-                '02:Transcript information' => "/perl/geneview?gene=$vgid",
-                '03:Protein information'    => "/perl/protview?peptide=$pid",
-                '04:Supporting evidence'    => "/perl/transview?transcript=$tid",
-                '05:Expression information' => "/perl/sageview?alias=$vgid",
-                '06:Protein sequence (FASTA)' => "/perl/dumpview?type=peptide&id=$tid",
-                '07:cDNA sequence'          => "/perl/dumpview?type=cdna&id=$tid",
-        };
-        }
-    } #end of Skip this next chunk if single transcript mode
+        	my $tid = $transcript->id();
+        	my $pid = $tid;
+        	$hi_colour = $Config->get('transcript','hi') if(defined $highlights && $highlights =~ /\|$tid\|/);
+
+        	if ($tid !~ /ENST/o){
+ 				print STDERR "EXT: ", join(" === ", @dblinks), "\n";
+    			@dblinks = $transcript->each_DBLink();
+				if (@dblinks){
+        			foreach my $DB_link ( @dblinks ){
+ 						print STDERR "EXT GENE: $id, ", $DB_link->database(), " ", $DB_link->display_id(), "\n";
+					}
+				}
+            	# if we have an EMBL external transcript we need different links...
+            	if($tid !~ /dJ/o){
+                	$Composite->{'zmenu'}  = {
+                	'caption'           => "EMBL: $tid",
+                	'More information'  => "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[EMBL-ALLTEXT:$tid]",
+                	'EMBL curated transcript'  => "",
+                	};
+            	} else {
+                	my $URL = ExtURL->new();
+                	my $url = $URL->get_url('EMBLGENE', $tid);
+
+                	$Composite->{'zmenu'}  = {
+                	'caption'       => "EMBL: $tid",
+                	'EMBL curated transcript'  => "",
+                	"$tid"          => $url
+                	};
+            	}
+            	if($type eq "pseudo"){
+                	$Composite->{'zmenu'}  = {
+                	'caption'           => "EMBL: $tid",
+                	'More information'  => "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[EMBL-ALLTEXT:$tid]",
+                	'EMBL curated pseudogene'  => "",
+                	};
+            	}
+        	} else {
+        		# we have a normal Ensembl transcript...
+        		$Composite->{'zmenu'}  = {
+                		'caption'		    => $id,
+                		"00:Transcr:$tid"	    => "",
+                		"01:(Gene:$vgid)"	    => "",
+                		'02:Transcript information' => "/perl/geneview?gene=$vgid",
+                		'03:Protein information'    => "/perl/protview?peptide=$pid",
+                		'04:Supporting evidence'    => "/perl/transview?transcript=$tid",
+                		'05:Expression information' => "/perl/sageview?alias=$vgid",
+                		'06:Protein sequence (FASTA)' => "/perl/exportview?type=feature&ftype=peptide&id=$tid",
+                		'07:cDNA sequence'          => "/perl/exportview?type=feature&ftype=cdna&id=$tid",
+        		};
+        	}
+    	} #end of Skip this next chunk if single transcript mode
         my @exons = $transcript->each_Exon_in_context($vcid);
     
         my ($start_screwed, $end_screwed);
@@ -255,14 +261,15 @@ sub _init {
         $Composite->push($clip2);
         }
 
-    my $bump_height; 
+    my $bump_height;
     if( $Config->{'_add_labels'} ) {
         my ($font_w_bp, $font_h_bp)   = $Config->texthelper->px2bp($fontname);
         my $tid = $transcript->id();
         my $width_of_label  = $font_w_bp * (length($tid) + 1);
         my $start_of_label  = int( ($start_exon->start() + $end_exon->end() - $width_of_label )/2 );
         $start_of_label  = $start_exon->start();
-        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+
+           my $tglyph = new Bio::EnsEMBL::Glyph::Text({
             'x'         => $start_of_label,
             'y'         => $y+$h+2,
             'height'    => $font_h_bp,
@@ -272,7 +279,6 @@ sub _init {
             'text'      => $tid,
             'absolutey' => 1,
         });
-        
         $Composite->push($tglyph);
         $bump_height = 1.7 * $h + $font_h_bp;
     } else {
