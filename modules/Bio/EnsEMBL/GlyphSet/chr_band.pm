@@ -60,7 +60,8 @@ sub _init {
     foreach my $band (reverse @$bands){
 	my $chr = $band->chr_name();
 	my $bandname = $band->name();
-	
+	   $bandname =~ /(\d+)\w?/;
+	my $band_no = $1;
 	my $start = $band->start();
 	my $end = $band->end();
 	my $stain = $band->stain();
@@ -116,15 +117,12 @@ sub _init {
 		'zmenu' => {
 			'caption' => "Band $bandname",
 			"00:Zoom to width"  => "/$ENV{'ENSEMBL_SPECIES'}/cytoview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
-			"01:Display in contigview"   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",}
+			"01:Display in contigview"   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
+			"02:View band diagram"   => "/$ENV{'ENSEMBL_SPECIES'}/BACmap?chr=$chr&band=$band_no",}
 #		'href'      => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
 	});
     	$self->push($gband);
-	
-	#print STDERR "VCSTART: $vc_band_start, VCEND: $vc_band_end, WIDTH: ",$vc_band_end - $vc_band_start, "\n";
-	#print STDERR "VC length: ", $self->{'container'}->length(), "\n";
-	#print STDERR "Stain: $stain = ", $COL{$stain}, "\n";
-	
+		
 	$i++;
     }
 }
