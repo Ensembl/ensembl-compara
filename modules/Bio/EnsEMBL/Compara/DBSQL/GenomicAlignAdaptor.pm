@@ -53,9 +53,9 @@ use Bio::EnsEMBL::Compara::AlignBlockSet;
 # we inheriet new
 
 sub fetch_by_dbID {
-    my ($self,$id) = @_;
-
-    return $self->fetch_GenomicAlign_by_dbID($id);
+    my ($self,$id,$row_id) = @_;
+#    print STDERR "ai3,ari3: $id,$row_id\n";
+    return $self->fetch_GenomicAlign_by_dbID($id,$row_id);
 }
 
 
@@ -101,11 +101,11 @@ got to fix this
 =cut
 
 sub fetch_GenomicAlign_by_dbID{
-  my ($self,$dbid) = @_;
-  #my ($self,$dbid, $align_name) = @_;
+  my ($self,$align_id,$align_row_id) = @_;
 
-  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self);
-  #return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self, -align_name =>$align_name);
+  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $align_id,
+						   -adaptor => $self,
+						   -align_row_id => $align_row_id);
 }
 
 =head2 fetch_align_id_by_align_name
@@ -190,7 +190,7 @@ sub fetch_by_genomedb_dnafrag_list{
        $self->throw("Your genome db is not database aware");
    }
 
-   my $sql = "select distinct(gab.align_id) from genomic_align_block gab,dnafrag d where d.name in $str and d.genome_db_id = $gid and d.dnafrag_id = gab.dnafrag_id";
+   my $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.name in $str and d.genome_db_id = $gid and d.dnafrag_id = gab.dnafrag_id group by gab.align_id,gab.align_row_id";
    
    my $sth = $self->prepare($sql);
 
@@ -198,8 +198,8 @@ sub fetch_by_genomedb_dnafrag_list{
 
    my @out;
 
-   while( my ($gaid) = $sth->fetchrow_array ) {
-       push(@out,$self->fetch_by_dbID($gaid));
+   while( my ($gaid,$row_id) = $sth->fetchrow_array ) {
+       push(@out,$self->fetch_by_dbID($gaid,$row_id));
    }
 	    
 
@@ -233,8 +233,7 @@ sub get_AlignBlockSet{
    $sth->execute;
 
    my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
-#   my $core_db;
- 
+
    while( my $ref = $sth->fetchrow_arrayref ) {
        my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand,$perc_id,$score,$cigar_string) = @$ref;
        my $alignblock = Bio::EnsEMBL::Compara::AlignBlock->new();
@@ -250,18 +249,11 @@ sub get_AlignBlockSet{
        
        if( ! defined $dnafraghash{$raw_id} ) {
 	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
-           #print "raw_di: $raw_id\n\n";
-           #print "in GAdaptor:", $dnafragadp->fetch_by_dbID($raw_id);
-	   #$alignset->core_adaptor($dnafraghash{$raw_id}->genomedb->ensembl_db);
        }
 
        $alignblock->dnafrag($dnafraghash{$raw_id});
        $alignset->add_AlignBlock($alignblock);
-#       $core_db = $dnafraghash{$raw_id}->genomedb->ensembl_db; 
    }
-
-   #$alignset->core_adaptor($core_db);
-
    return $alignset;
 }
 
@@ -302,13 +294,6 @@ sub store {
 	   }
        }
    }
-
-   # store the alignment first
-
-#   my $sth = $self->prepare("insert into align (score) values ('0.0')");
-#   $sth->execute;
-#   $aln->dbID($sth->{'mysql_insertid'});
-#   my $align_id = $aln->dbID;
 
    # for each alignblockset, store the row and then the alignblocks themselves
    
@@ -359,26 +344,23 @@ sub store {
 sub fetch_by_dnafrag{
    my ($self,$dnafrag) = @_;
 
-
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
     unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
 
    #formating the $dnafrag
 	
-   my $dname = $dnafrag->name;
-		
-	  $dname = "('$dname')";
-
-  my $sql = "select distinct(gab.align_id) from genomic_align_block gab,dnafrag d where d.name in $dname and d.dnafrag_id = gab.dnafrag_id";
+   my $dnafrag_id = $dnafrag->dbID;
+	
+   my $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.dnafrag_id=$dnafrag_id and d.dnafrag_id = gab.dnafrag_id group by gab.align_id,gab.align_row_id";
    
-	  my $sth = $self->prepare($sql);
+   my $sth = $self->prepare($sql);
 
    $sth->execute();
 
    my @out;
 
-   while( my ($gaid) = $sth->fetchrow_array ) {
-       push(@out,$self->fetch_by_dbID($gaid));
+   while( my ($gaid,$row_id) = $sth->fetchrow_array ) {
+       push(@out,$self->fetch_by_dbID($gaid,$row_id));
    }
       	
 
@@ -404,9 +386,8 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
 
   my $dfad = $self->db->get_DnaFragAdaptor;
   my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,"VirtualContig");
-
-  foreach my $df (@list_dnafrag) {
   
+  foreach my $df (@list_dnafrag) {
     my @genomicaligns = $self->fetch_by_dnafrag($df);
 
     foreach my $genomicalign (@genomicaligns) {
