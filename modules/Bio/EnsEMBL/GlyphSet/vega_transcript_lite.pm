@@ -52,7 +52,8 @@ sub href {
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $tid = $transcript->stable_id();
-    my $pid = $transcript->translation->stable_id(),
+    my $translation = $transcript->translation;
+	my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
     my $type = $transcript->type();
