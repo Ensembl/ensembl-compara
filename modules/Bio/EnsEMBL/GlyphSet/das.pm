@@ -141,9 +141,9 @@ sub RENDER_simple {
     my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
     if( $configuration->{'depth'}>0 ) {
       $row = $self->bump( $START, $END, $label_length, $configuration->{'depth'} );
-      if( $row < 0 ) { ## SKIP IF BUMPED...
-         $more_features = 1;
-         next;
+      if( $row <= 0 ) { ## SKIP IF BUMPED...
+	  $more_features = 1;
+	  next;
       }
     } else {
       next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
@@ -311,10 +311,9 @@ sub RENDER_grouped {
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
 
-#        warn("$ID:$label:$label_length:$row");
-    if( $row < 0 ) { ## SKIP IF BUMPED...
-       $more_features = 1;
-       next;
+    if( $row <= 0 ) { ## SKIP IF BUMPED...
+	$more_features = 1;
+	next;
     }
     my( $href, $zmenu ) = $self->zmenu( $f );
     my $Composite = new Sanger::Graphics::Glyph::Composite({
