@@ -307,8 +307,6 @@ sub fetch_all_by_Slice {
 
 =cut
 
-
-
 sub interpolate_best_location {
   my ($self,$slice,$species,$alignment_type) = @_;
   
@@ -331,19 +329,11 @@ sub interpolate_best_location {
 
     my @best_blocks = sort {$a->hstart <=> $b->hend} @{$name_strand_clusters{$ordered_name_strands[0]}||[]};
 
-    if( !@best_blocks ) {
-      return undef;
-    } elsif ($slice->strand > 0) {
-      return ($best_blocks[0]->hseqname,
-              $best_blocks[0]->hstart 
-              + int(($best_blocks[-1]->hend - $best_blocks[0]->hstart)/2),
-              $best_blocks[0]->hstrand);
-    } else {
-      return ($best_blocks[0]->hseqname,
-              $best_blocks[0]->hstart 
-              + int(($best_blocks[-1]->hend - $best_blocks[0]->hstart)/2),
-              $best_blocks[0]->hstrand * -1);
-    }
+    return undef if( !@best_blocks );
+    return ($best_blocks[0]->hseqname,
+            $best_blocks[0]->hstart 
+            + int(($best_blocks[-1]->hend - $best_blocks[0]->hstart)/2),
+            $best_blocks[0]->hstrand * $slice->strand);
 
   } else {
     
@@ -392,19 +382,12 @@ sub interpolate_best_location {
     # sort by the max number of blocks desc
     @refined_clusters = sort {$b->[-1] <=> $a->[-1]} @refined_clusters;
 
-    if(!@refined_clusters) {
-      return undef;
-    } elsif ($slice->strand > 0) {
-      return ($refined_clusters[0]->[0], #hseqname,
-              $refined_clusters[0]->[2]
-              + int(($refined_clusters[0]->[3] - $refined_clusters[0]->[2])/2),
-              $refined_clusters[0]->[1]);
-    } else {
-      return ($refined_clusters[0]->[0], #hseqname
-              $refined_clusters[0]->[2]
-              + int(($refined_clusters[0]->[3] - $refined_clusters[0]->[2])/2),
-              $refined_clusters[0]->[1] * -1);
-    }
+    return undef if(!@refined_clusters);
+    return ($refined_clusters[0]->[0], #hseqname,
+            $refined_clusters[0]->[2]
+            + int(($refined_clusters[0]->[3] - $refined_clusters[0]->[2])/2),
+            $refined_clusters[0]->[1] * $slice->strand);
+
   }
 }
 
