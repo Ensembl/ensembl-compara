@@ -10,13 +10,6 @@ use Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 #use Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor;
 
-my $usage = "
-
-$0 -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_13_1 \
--conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
--genome_db_id1 7 -genome_db_id2 8 -prefix1 ENSCELP input_file
-
-";
 
 my $help = 0;
 my ($host,$port,$dbname,$dbuser,$dbpass,$conf_file,$fastafile);
@@ -25,39 +18,32 @@ my ($prefix);
 my $method_link_type = "HOMOLOGOUS_GENE";
 my $mp_store_gene = 1;
 
-=head1
-$host = "127.0.0.1";
-$port = "3313";
-$dbuser = "ensadmin";
-$dbpass = "ensembl";
-$dbname = "jess_compara_dev1";
-$genome_db_id = 2;  #mouse
-$prefix = "";
-=cut 
-
-$host = "khan.ebi.ac.uk";
-$port = "3306";
-$dbuser = "root";
-$dbpass = "nofun2";
-$dbname = "jess_compara_dev1";
-$genome_db_id = 2;  #mouse
-$prefix = "";
 
 GetOptions('help' => \$help,
            'host=s' => \$host,
-           'dbuser=s' => \$dbuser,
-           'dbpass=s' => \$dbpass,
-           'dbname=s' => \$dbname,
 	   'port=i' => \$port,
-           'conf_file=s' => \$conf_file,
+           'user=s' => \$dbuser,
+           'pass=s' => \$dbpass,
+           'dbname=s' => \$dbname,
+           'conf=s' => \$conf_file,
            'genome_db_id=i' => \$genome_db_id,
 	   'prefix=s' => \$prefix,
 	   'fasta=s' => \$fastafile
 	  );
 
-if ($help) {
-  print $usage;
-  exit 0;
+if ($help) { usage(); }
+
+unless(defined($host) and defined($dbuser) and defined($dbname)) {
+  print "\nERROR : must specify host, user, and database to connect to compara\n\n";
+  usage(); 
+}
+unless(defined($genome_db_id)) { 
+  print "\nERROR : must specify genome_db_id to connect to compara\n\n";
+  usage(); 
+}
+unless(defined($conf_file)) { 
+  print "\nERROR : must specify -conf <config_file> of external core genomes\n\n";
+  usage(); 
 }
 
 
@@ -129,6 +115,31 @@ print("       $longestCount longest transscripts\n");
 my $count = $pepSubset->count;
 print("       $count in Subset\n");
 exit(0);
+
+######################################
+#
+# subroutines
+#
+#####################################
+
+sub usage {
+  print "comparaLoadMembers.pl -pass {-compara | -host -user -dbname} -genome_db_id [options]\n";
+  print "  -help             : print this help\n";
+  print "  -compara <path>   : read compara DB connection info from config file <path>\n";
+  print "                      which is perl hash file with keys 'host' 'port' 'user' 'dbname'\n";
+  print "  -conf <path>      : config file describing the multiple external core databases for the different genomes\n";
+  print "  -host <machine>   : set <machine> as location of compara DB\n";
+  print "  -port <port#>     : use <port#> for mysql connection\n";
+  print "  -user <name>      : use user <name> to connect to compara DB\n";
+  print "  -pass <pass>      : use password to connect to compara DB\n";
+  print "  -dbname <name>    : use database <name> to connect to compara DB\n";
+  print "  -genome_db_id <#> : dump member associated with genome_db_id\n";
+  print "  -fasta <path>     : dump fasta to file location\n";
+  print "  -prefix <string>  : use <string> as prefix for sequence names in fasta file\n";
+  print "comparaLoadMembers.pl v1.0\n";
+  
+  exit(1);  
+}
 
 
 sub store_gene_and_all_transcripts
@@ -415,7 +426,6 @@ sub processHomologies
     print STDERR "Loaded ",$homology->stable_id," homology_id ",$homology->dbID,"\n";
   }
 }
-=cut
 
 sub better_homology {
   my ($current_homology,$new_homology) = @_;
@@ -511,3 +521,5 @@ sub return_attribute {
 
   return $attribute;
 }
+=cut
+

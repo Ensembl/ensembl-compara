@@ -32,13 +32,15 @@ if(-e $conf_file) {
   $adaptor = $conf{'adaptor'};
 }
 
+if ($help) { usage(); }
+
 unless(defined($host) and defined($user) and defined($dbname)) {
-  print "\nERROR : must specify host user and database to connect to compara\n\n";
-  help(); 
+  print "\nERROR : must specify host, user, and database to connect to compara\n\n";
+  usage(); 
 }
 unless(defined($fastafile) and ($fastafile =~ /^\//)) { 
   print "\nERROR : must specify an full output path for the fasta file\n\n";
-  help(); 
+  usage(); 
 }
 unless(defined($genome_db_id) or defined($subset_id)) { help(); }
 
@@ -71,10 +73,10 @@ exit(0);
 
 
 
-sub help {
-  print "comparaDumpGenes.pl -pass {-conf | -host -user -dbname} {-genome_db_id | -subset_id } [options]\n";
+sub usage {
+  print "comparaDumpGenes.pl -pass {-compara | -host -user -dbname} {-genome_db_id | -subset_id } [options]\n";
   print "  -help             : print this help\n";
-  print "  -conf <path>      : read compara DB connection info from config file\n";
+  print "  -compara <path>   : read compara DB connection info from config file <path>\n";
   print "                      which is perl hash file with keys 'host' 'port' 'user' 'dbname'\n";
   print "  -host <machine>   : set <machine> as location of compara DB\n";
   print "  -port <port#>     : use <port#> for mysql connection\n";
@@ -84,7 +86,7 @@ sub help {
   print "  -genome_db_id <#> : dump member associated with genome_db_id\n";
   print "  -subset_id <#>    : dump member associated with subset_id\n";
   print "  -fasta <path>     : dump fasta to file location\n";
-  print "  -prefix <string>  : use <string> as prefix for sequence names\n";
+  print "  -prefix <string>  : use <string> as prefix for sequence names in fasta file\n";
   print "comparaDumpGenes.pl v1.0\n";
   
   exit(1);  
