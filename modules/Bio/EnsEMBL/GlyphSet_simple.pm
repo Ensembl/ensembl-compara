@@ -153,12 +153,15 @@ sub _init {
         foreach my $tag (@tags) {
 	    $tag_start = $start;
             $tag_end = $end;
-            if($tag->{'style'} eq 'snp' || $tag->{'style'} eq 'left-snp') {
-                $tag_start = $start - 3/$bp_textwidth;
-                $tag_end   = $start - 3/$bp_textwidth;
+            if($tag->{'style'} eq 'snp' ) {
+                $tag_start = $start - 1/2 - 3/$bp_textwidth;
+                $tag_end   = $start - 1/2 + 3/$bp_textwidth;
+            } elsif( $tag->{'style'} eq 'left-snp') {
+                $tag_start = $start - 1 - 3/$bp_textwidth;
+                $tag_end   = $start - 1 + 3/$bp_textwidth;
             } elsif($tag->{'style'} eq 'right-snp') {
                 $tag_start = $end - 3/$bp_textwidth;
-                $tag_end   = $end - 3/$bp_textwidth;
+                $tag_end   = $end + 3/$bp_textwidth;
             } elsif($tag->{'style'} eq 'underline') {
                 $tag_start = $tag->{'start'} if defined $tag->{'start'};
                 $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
@@ -202,6 +205,14 @@ sub _init {
                 "colour"     => $feature_colour,
                 'absolutey'  => 1
             }));
+        } elsif( $part_to_colour eq 'invisible' ) {
+            $composite->push( new Sanger::Graphics::Glyph::Space({
+                'x'          => $start-1,
+                'y'          => 0,
+                'width'      => $end - $start + 1,
+                'height'     => $h,
+                'absolutey'  => 1
+            }) );
         } else {
             $composite->push( new Sanger::Graphics::Glyph::Rect({
                 'x'          => $start-1,
@@ -234,6 +245,26 @@ sub _init {
                     'absolutey'  => 1
                 });
                 $composite->push($line);
+            } elsif($tag->{'style'} eq 'insertion') {
+                my $triangle_end   =  $start - 2/$pix_per_bp;
+                my $triangle_start =  $start + 2/$pix_per_bp;
+    	        my $line = new Sanger::Graphics::Glyph::Rect({
+                    'x'          => $start,
+                    'y'          => 0,
+                    'width'      => 0,
+                    'height'     => $h,
+                    "colour"     => $tag->{'colour'},
+                    'absolutey'  => 1
+        	    });
+                push @tag_glyphs, $line;
+    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                    'points'    => [ $triangle_start, -2,
+                                     $start, 1,
+                                     $triangle_end, -2  ],
+         	    'colour'    => $tag->{'colour'},
+                    'absolutey' => 1,
+        	    });
+                push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'left-triangle') {
                 my $triangle_end =  $start -1 + 3/$pix_per_bp;
                 $triangle_end = $end if( $triangle_end > $end);

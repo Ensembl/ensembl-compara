@@ -41,15 +41,15 @@ sub _init {
  
     my %COL = ();
     $COL{'gpos100'} = $cmap->id_by_name('black'); #add_rgb([200,200,200]);
-    $COL{'gpos75'}  = $cmap->id_by_name('grey75'); #add_rgb([210,210,210]);
-    $COL{'gpos50'}  = $cmap->id_by_name('grey50'); #add_rgb([230,230,230]);
-    $COL{'gpos25'}  = $cmap->id_by_name('grey25'); #add_rgb([240,240,240]);
-    $COL{'gvar'}    = $cmap->id_by_name('grey66');
-    $COL{'gneg'}    = $white;
+    $COL{'tip'}     = $cmap->id_by_name('slategrey');
+    $COL{'gpos75'}  = $cmap->id_by_name('grey40'); #add_rgb([210,210,210]);
+    $COL{'gpos50'}  = $cmap->id_by_name('grey60'); #add_rgb([230,230,230]);
+    $COL{'gpos25'}  = $cmap->id_by_name('grey85'); #add_rgb([240,240,240]);
     $COL{'gpos'}    = $black; #add_rgb([240,240,240]);
-    $COL{'acen'}    = $cmap->id_by_name('grey33');
-    $COL{'tip'}     = $cmap->id_by_name('grey33');
-    $COL{'stalk'}   = $cmap->id_by_name('grey33');
+    $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
+    $COL{'gneg'}    = $white;
+    $COL{'acen'}    = $cmap->id_by_name('slategrey');
+    $COL{'stalk'}   = $cmap->id_by_name('slategrey');
 
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper->px2bp('Tiny');

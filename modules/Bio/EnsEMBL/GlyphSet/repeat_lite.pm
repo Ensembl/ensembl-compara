@@ -9,7 +9,7 @@ sub my_label { return "Repeats"; }
 
 sub features {
   my $self = shift;
-  return $self->{'container'}->get_all_RepeatFeatures('RepeatMask');
+  return $self->{'container'}->get_all_RepeatFeatures(); # 'RepeatMask');
 }
 
 sub zmenu {

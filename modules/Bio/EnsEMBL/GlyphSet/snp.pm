@@ -8,6 +8,9 @@ sub my_label { return "SNPs"; }
 
 sub features {
     my ($self) = @_;
+    foreach(@{$self->{'container'}->get_all_SNPFeatures( $self->glob_bp() )}) {
+        warn( ref($_), ' - ', $_ );
+    }
     return grep { $_->isa("Bio::EnsEMBL::ExternalData::Variation") }
         $self->{'container'}->get_all_SNPFeatures( $self->glob_bp() );
 }
@@ -22,11 +25,13 @@ sub zmenu {
     my $ext_url = $self->{'config'}->{'ext_url'};
     
     my %zmenu = ( 
-        'caption'           => "SNP: ".$f->id,
+        'caption'              => "SNP: ".$f->id,
         '01:SNP properties'    => $self->href( $f),
         '02:dbSNP data'        => $ext_url->get_url('SNP',$f->id),
     );
     foreach ($f->each_DBLink()){
+        warn( ref($_)."|".$_."|" );
+        next unless $_;
         next if $_->database() =~ /JCM/;
         my $db  = $_->database() . " data";
         my $pid = $_->primary_id();

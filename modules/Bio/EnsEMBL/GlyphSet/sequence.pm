@@ -13,6 +13,7 @@ sub features {
     my $seq = $self->{'container'}->seq;
     my $strand = $self->strand;
     if($strand == -1 ) { $seq=~tr/ACGT/TGCA/; }
+    $self->{'mapfrags'} = $self->{'container'}->get_all_MapFrags( 'assembly' );
     my @features = map { 
        Bio::EnsEMBL::SeqFeature->new(
 	   -start => ++$start,
@@ -29,6 +30,15 @@ sub colour {
     return $self->{'colours'}{$f->seqname} || $self->{'feature_colour'},
            $self->{'label_colour'};
 
+}
+sub href {
+    my( $self,$f) = @_;
+    if(@{$self->{'mapfrags'}}) { 
+        foreach(@{$self->{'mapfrags'}}) {
+	  warn("MF: ".$_->start);
+        }
+        warn( "SQ: ". $f->start );
+    }
 }
 sub zmenu {
     my ($self, $f ) = @_;

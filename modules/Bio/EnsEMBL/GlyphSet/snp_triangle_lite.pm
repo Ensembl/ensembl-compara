@@ -26,7 +26,7 @@ sub colour {
         push @{ $self->{'config'}->{'snp_legend_features'}->{'snps'}->{'legend'} }, $labels{"_$T"} => $self->{'colours'}{"_$T"};
         $self->{'config'}->{'snp_types'}{$T}=1;
     }
-    return $self->{'colours'}{"_$T"}, $self->{'colours'}{"_$T"}, 'line';
+    return $self->{'colours'}{"_$T"}, $self->{'colours'}{"_$T"}, 'invisible';
 }
 
 1;

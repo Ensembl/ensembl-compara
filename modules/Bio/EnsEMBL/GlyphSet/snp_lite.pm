@@ -13,7 +13,7 @@ sub features {
   
   my @snps = 
              map { $_->[1] } 
-             sort { $a->[0] <=> $b->[1] }
+             sort { $a->[0] <=> $b->[0] }
              map { [ substr($_->type,0,2) * 1e9 + $_->start, $_ ] }
              grep { $_->score < 4 } @{$self->{'container'}->get_all_SNPs()};
 
@@ -35,6 +35,22 @@ sub href {
     return "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=$snp_id&chr=$chr_name&vc_start=$chr_start";
 }
 
+sub image_label {
+  my ($self, $f) = @_;
+  warn( $f->{'_ambiguity_code'} );
+  return $f->{'_ambiguity_code'} eq '-' ? undef : ($f->{'_ambiguity_code'},'overlaid');
+}
+
+sub tag {
+  my ($self, $f) = @_;
+   if($f->{'_range_type'} eq 'between' ) {
+      my $type = substr($f->type(),3,6);
+      return ( { 'style' => 'insertion', 'colour' => $self->{'colours'}{"_$type"} } );
+   } else {
+      return undef;
+   }
+}
+
 sub colour {
   my ($self, $f) = @_;
 
@@ -51,7 +67,7 @@ sub colour {
     $self->{'config'}->{'snp_types'}{$type} = 1;
   }
 
-  return $self->{'colours'}{"_$type"};
+  return $self->{'colours'}{"_$type"},$self->{'colours'}{"label_$type"}, $f->{'_range_type'} eq 'between' ? 'invisible' : '';
 }
 
 
@@ -60,37 +76,29 @@ sub zmenu {
     my $ext_url = $self->{'config'}->{'ext_url'};
     
     my $chr_start = $f->start() + $self->{'container'}->chr_start() - 1;
+    my $chr_end   = $f->end() + $self->{'container'}->chr_start() - 1;
 
+    my $allele = $f->alleles;
     my %zmenu = ( 
         'caption'           => "SNP: ".$f->id(),
         '01:SNP properties' => $self->href( $f ),
-        "02:bp: $chr_start" => '',
-        '08:score: '.$f->score => '',
-     
+        "02:bp: $chr_start-$chr_end" => '',
+        "03:class: ".$f->snpclass => '',
+        "04:mapweight: ".$f->{'_mapweight'} => '',
+        "06:ambiguity code: ".$f->{'_ambiguity_code'} => '',
+        "06:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
    );
-
-    if($f->id() > 0) {
-      $zmenu{'03:dbSNP data'} = $ext_url->get_url('SNP', $f->id());
-    }
 
     my %links;
     
     foreach my $link ($f->each_DBLink()) {
-      $links{$link->database()} = $link->primary_id();
+      my $DB = $link->database;
+      if( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || $DB eq 'dbSNP' || $DB eq 'WI' ) {
+        $zmenu{"16:$DB:".$link->primary_id } = $ext_url->get_url( $DB, $link->primary_id );
+      }
     }
-
-    if(defined $links{'TSC-CSHL'}) {
-      $zmenu{"04:TSC-CSHL data"} 
-         = $ext_url->get_url( 'TSC-CSHL', $links{'TSC-CSHL'} );      
-    }
-
-    if(defined $links{'HGBASE'}) {
-      $zmenu{"05:HGBASE data"}  
-         = $ext_url->get_url( 'HGBASE', $links{'HGBASE'});
-    }
-    
     my $type = substr($f->type(),3);
-    $zmenu{"06:Type: $type"} = "" unless $type eq '';  
+    $zmenu{"57:Type: $type"} = "" unless $type eq '';  
     return \%zmenu;
 }
 1;
