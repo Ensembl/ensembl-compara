@@ -487,7 +487,7 @@ sub end {
 
 sub genomedb {
   my ($self, @args) = @_;
-  deprecate("Use Bio::EnsEMBL::Compara::DnaFrag->genome_db() method instead");
+  deprecate("Calling Bio::EnsEMBL::Compara::DnaFrag::genome_db method instead");
   return $self->genome_db(@args);
 }
 
