@@ -39,12 +39,12 @@ sub _init {
     push @allgenes, $VirtualContig->get_all_VirtualGenes_startend();
     #&eprof_end("gene-virtualgene_start-get");
 
-    #&eprof_start("gene-externalgene_start-get");
+#    #&eprof_start("gene-externalgene_start-get");
 #    if ($type eq 'all'){
-	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
-	    $vg->{'_is_external'} = 1;
-	    push (@allgenes, $vg);
-	}
+#	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+#	    $vg->{'_is_external'} = 1;
+#	    push (@allgenes, $vg);
+#	}
 #    }
     #&eprof_end("gene-externalgene_start-get");
 

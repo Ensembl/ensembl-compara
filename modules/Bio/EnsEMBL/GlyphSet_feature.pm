@@ -71,8 +71,6 @@ sub _init {
         my $j = 1;
     
         my $has_origin = undef;
-        my $estid = $i;
-        $estid =~ s/(.*?)\.\d+/$1/;
     
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({
             'zmenu'     => $self->zmenu( $i )

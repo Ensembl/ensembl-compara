@@ -25,12 +25,12 @@ sub _init {
     
     push @allgenes, $vc->get_all_VirtualGenes_startend();
 
-    if ($type eq 'all'){
-        foreach my $vg ($vc->get_all_ExternalGenes()){
-            $vg->{'_is_external'} = 1;
-            push (@allgenes, $vg);
-        }
-    }
+    #if ($type eq 'all'){
+    #    foreach my $vg ($vc->get_all_ExternalGenes()){
+    #        $vg->{'_is_external'} = 1;
+    #        push (@allgenes, $vg);
+    #    }
+    #}
 
     my $ext_col        = $Config->get( 'gene_label' , 'ext' );
     my $known_col      = $Config->get( 'gene_label' , 'known' );

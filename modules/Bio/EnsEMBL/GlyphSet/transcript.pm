@@ -61,21 +61,21 @@ sub _init {
     @allgenes = $container->get_all_Genes_exononly();
     #&eprof_end('transcript - get_all_Genes_exononly()');
     #&eprof_start('transcript - get_all_ExternalGenes()');
-    unless($target) { # Skip in single transcript mode
-        if ($type eq 'all'){
-            foreach my $vg ($container->get_all_ExternalGenes()) {
-                $vg->{'_is_external'} = 1;
-                push (@allgenes, $vg);
-            }
-        } 
-    }                 # end of Skip in single transcript mode
+   # unless($target) { # Skip in single transcript mode
+   #     if ($type eq 'all'){
+   #         foreach my $vg ($container->get_all_ExternalGenes()) {
+   #             $vg->{'_is_external'} = 1;
+   #             push (@allgenes, $vg);
+   #         }
+   #     } 
+   # }                 # end of Skip in single transcript mode
     #&eprof_end('transcript - get_all_ExternalGenes()');
     $type = undef;
     
 GENE:
     my $count = 0;
     for my $eg (@allgenes) {
-        my $vgid = $eg->id();
+        my $vgid = $eg->stable_id();
         next if ($target_gene && ($vgid ne $target_gene));
         my $highlight_gene = exists $highlights{$vgid} ? 1 : 0;
         my $gene_label;
@@ -90,7 +90,7 @@ GENE:
 #        print STDERR sprintf( "%-10s %-20s %-20s %-20s\n",'GENE:',$vgid,$type, $gene_label );
 TRANSCRIPT:
         for my $transcript ($eg->each_Transcript()) {
-            next if ($target && ($transcript->id() ne $target) );
+            next if ($target && ($transcript->stable_id() ne $target) );
         ########## test transcript strand
 
             my $tstrand = $transcript->strand_in_context($vcid);
@@ -98,19 +98,18 @@ TRANSCRIPT:
     
         ########## set colour for transcripts and test if we're highlighted or not
             my @dblinks = ();
-            my $tid = $transcript->id();
+            my $tid = $transcript->stable_id();
             my $pid = $tid;
                 my $id = $tid;
             my $highlight = $highlight_gene;
             my $superhighlight = exists $highlights{$tid} ? 1 : 0;
             eval {
                 @dblinks = $transcript->each_DBLink();
+		print STDERR "DBLINKS: @dblinks\n";
                 unless( $target ) { #Skip in single transcript mode
                     ($id, $highlight) = $self->_label_highlight($tid, $highlight, \%highlights, \@dblinks)
                 }                   #end of Skip in single transcript mode
             };
-#        print STDERR sprintf( "%-10s %-20s %-20s %-20s\n",'TRANS:',$tid, '--' , $id );
-#        foreach(@dblinks) { print STDERR "-----> $_\n"; }
       
             my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
             $colour = @dblinks ? $known_colour : $unknown_colour;
@@ -218,7 +217,7 @@ EXON:
                     'y'         => $y,
                     'width'     => ($x - $previous_endx),
                     'height'    => $h,
-                    #'id'        => $exon->id(),
+                    #'id'        => $exon->stable_id(),
                     'colour'    => $colour,
                     'absolutey' => 1,
                     'strand'    => $tstrand,
@@ -247,7 +246,7 @@ EXON:
             my $bump_height;
             if( $Config->{'_add_labels'} ) {
                 my ($font_w_bp, $font_h_bp)   = $Config->texthelper->px2bp($fontname);
-                my $tid = $transcript->id();
+                my $tid = $transcript->stable_id();
                 my $width_of_label  = $font_w_bp * (length($tid) + 1);
                 my $start_of_label  = int( ($start_exon->start() + $end_exon->end() - $width_of_label )/2 );
                 $start_of_label  = $start_exon->start();
