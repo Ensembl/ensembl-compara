@@ -164,8 +164,10 @@ sub loadMembersFromCoreSlices
   my $self = shift;
 
   #create subsets for the gene members, and the longest peptide members
-  $self->{'pepSubset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>$self->{'genome_db'}->name . ' longest translations');
-  $self->{'geneSubset'} = Bio::EnsEMBL::Compara::Subset->new(-name=>$self->{'genome_db'}->name . ' genes');
+  $self->{'pepSubset'}  = Bio::EnsEMBL::Compara::Subset->new(
+      -name=>"gdb:".$self->{'genome_db'}->dbID ." ". $self->{'genome_db'}->name . ' longest translations');
+  $self->{'geneSubset'} = Bio::EnsEMBL::Compara::Subset->new(
+      -name=>"gdb:".$self->{'genome_db'}->dbID ." ". $self->{'genome_db'}->name . ' genes');
 
   $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'pepSubset'});
   $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'geneSubset'});
