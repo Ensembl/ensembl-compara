@@ -212,6 +212,7 @@ dimensions 588097x588097
 ~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_26_1
 
  This takes about an hour and will generate a family_26_1.sym matrix file. Check the matrix for symmetry
+(this step can be skipped)
 
 ~/src/ensembl_main/ensembl-compara/scripts/family/mcx.sh family_26_1
 
@@ -232,9 +233,9 @@ rm family_26.raw
 10- Run mcl
    ~~~~~~~
 
-This step uses aristotle which has 187Gb of memory :))) and 32 CPUs. As mcl can be multi-threaded, it is very useful.
+This step uses turing which has 192Gb of memory :))) and 16 CPUs. As mcl can be multi-threaded, it is very useful.
 
-bsub -C0 -R 'select[ncpus>=16 && mem>5000] rusage[mem=5000]' -q aristotle -n 16 -f "family_26_1.sym > /tmp/family_26_1.sym" -f "family_26_1.mcl < /tmp/family_26_1.mcl" -o mcl.out /nfs/acari/abel/bin/mcl /tmp/family_26_1.sym -I 2.3 -t 16 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_26_1.mcl
+bsub -C0 -R 'select[ncpus>=8 && mem>10000 && type==any] rusage[mem=10000]' -q hugemem -n 8 -f "family_26_1.sym > /tmp/family_26_1.sym" -f "family_26_1.mcl < /tmp/family_26_1.mcl" -o mcl.out /nfs/acari/abel/bin/arch-ia64/mcl /tmp/family_26_1.sym -I 2.3 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_26_1.mcl
 
 NB: when ever you have finished running mcl (maybe with different parameters), don't forget 
 to delete /tmp/family_26_1.* from aristotle /tmp (a shell script having the flavour of 
