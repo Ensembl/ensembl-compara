@@ -221,6 +221,10 @@ sub create_new_worker {
       print("Analysis is BLOCKED, can't create workers\n");
       return undef;    
     }
+    if($status eq 'DONE') {
+      print("Analysis is DONE, don't need to create workers\n");
+      return undef;
+    }
   }
   
   my $host = hostname;
@@ -239,6 +243,9 @@ sub create_new_worker {
   my $worker = $self->fetch_by_dbID($hive_id);
   $worker=undef unless($worker and $worker->analysis);
   
+  if($worker) {
+    $worker->analysis->status('WORKING');
+  }
   return $worker;
 }
 
