@@ -81,7 +81,7 @@ sub fetch_input {
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+  #with $self->db (Hive DBAdaptor)
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
@@ -103,16 +103,28 @@ sub fetch_input {
 
   my $qySeq = $qyChunk->bioseq;
   unless($qySeq) {
-    printf("fetching chunk %s on-the-fly\n", $qyChunk->display_id);
+    printf("fetching qy chunk %s on-the-fly\n", $qyChunk->display_id);
     $qySeq = $qyChunk->fetch_masked_sequence(2);  #soft masked
     print STDERR (time()-$starttime), " secs to fetch qyChunk seq\n";
+
+    if($qySeq->length <= 5000000) {
+      print "  writing sequence back to compara for chunk\n";
+      $qyChunk->sequence($qySeq->seq);
+      $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($qyChunk);
+    }
   }
 
   my $dbSeq = $dbChunk->bioseq;
   unless($dbSeq) {
-    printf("fetching chunk %s on-the-fly\n", $dbChunk->display_id);
+    printf("fetching db chunk %s on-the-fly\n", $dbChunk->display_id);
     $dbSeq = $dbChunk->fetch_masked_sequence(2);  #soft masked
     print STDERR (time()-$starttime), " secs to fetch dbChunk seq\n";
+
+    if($dbSeq->length <= 5000000) {
+      print "  writing sequence back to compara for chunk\n";
+      $dbChunk->sequence($dbSeq->seq);
+      $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($dbChunk);
+    }
   }
 
   #print("running with analysis '".$self->analysis->logic_name."'\n");
