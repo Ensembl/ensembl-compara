@@ -114,7 +114,7 @@ sub new {
           $classname = qq($self->{'prefix'}::GlyphSet::$row);
           next unless $self->dynamic_use( $classname );
       ## generate a set for both strands
-          $GlyphSet;
+
           eval {
             $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, $strand );
           };
