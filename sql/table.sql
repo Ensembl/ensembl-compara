@@ -184,13 +184,13 @@ CREATE TABLE meta (
     KEY meta_value_index ( meta_value )
 );
 
-CREATE TABLE source (
- source_id	int(10) NOT NULL auto_increment,
- source_name	varchar(40) NOT NULL,
-
- PRIMARY KEY (source_id),
- UNIQUE KEY (source_name)
-);
+#CREATE TABLE source (
+# source_id	int(10) NOT NULL auto_increment,
+# source_name	varchar(40) NOT NULL,
+#
+# PRIMARY KEY (source_id),
+# UNIQUE KEY (source_name)
+#);
 
 CREATE TABLE taxon (
  taxon_id         int(10) NOT NULL,
@@ -209,7 +209,8 @@ CREATE TABLE member (
  member_id      int(10) NOT NULL auto_increment,
  stable_id      varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
  version        int(10) DEFAULT '0', 
- source_id      int(10) NOT NULL, # foreign key from source table
+# source_id      int(10) NOT NULL, # foreign key from source table
+ source_name	varchar(40) NOT NULL,
  taxon_id       int(10) NOT NULL, # foreign key from taxon table
  genome_db_id   int(10), # foreign key from genome_db table
  sequence_id    int(10), # foreign key from sequence table
@@ -220,7 +221,7 @@ CREATE TABLE member (
  chr_strand     tinyint(1) NOT NULL,
 
  PRIMARY KEY (member_id),
- UNIQUE KEY (source_id,stable_id),
+ UNIQUE KEY (stable_id, source_name),
  KEY (sequence_id)
 );
 
@@ -236,12 +237,14 @@ CREATE TABLE sequence (
 CREATE TABLE family (
  family_id		int(10) NOT NULL auto_increment,
  stable_id		varchar(40) NOT NULL, # e.g. ENSF0000012345
- source_id              int(10) NOT NULL, # foreign key from source table
+# source_id              int(10) NOT NULL, # foreign key from source table
+ method_link_species_set_id int(10) NOT NULL,
  description		varchar(255),
  description_score	double,
 
  PRIMARY KEY (family_id), 
  UNIQUE KEY (stable_id),
+ KEY (method_link_species_set_id),
  KEY (description)
 );
 
@@ -251,34 +254,36 @@ CREATE TABLE family_member (
  cigar_line	mediumtext,
  
  UNIQUE KEY (family_id,member_id),
- UNIQUE KEY (member_id,family_id)
+ UNIQUE KEY (member_id,family_id),
 );
 
 
-CREATE TABLE domain (
- domain_id	int(10) NOT NULL auto_increment,
- stable_id      varchar(40) NOT NULL,
- source_id	int(10) NOT NULL,
- description	varchar(255),
+#CREATE TABLE domain (
+# domain_id	int(10) NOT NULL auto_increment,
+# stable_id      varchar(40) NOT NULL,
+## source_id	int(10) NOT NULL,
+# method_link_species_set_id int(10) NOT NULL,
+# description	varchar(255),
+#
+# PRIMARY KEY (domain_id),
+# UNIQUE KEY (source_id,stable_id)
+#);
 
- PRIMARY KEY (domain_id),
- UNIQUE KEY (source_id,stable_id)
-);
-
-CREATE TABLE domain_member (
- domain_id	int(10) NOT NULL,
- member_id	int(10) NOT NULL,
- member_start	int(10),
- member_end	int(10),
-
- UNIQUE KEY (domain_id,member_id,member_start,member_end),
- UNIQUE KEY (member_id,domain_id,member_start,member_end)
-);
+#CREATE TABLE domain_member (
+# domain_id	int(10) NOT NULL,
+# member_id	int(10) NOT NULL,
+# member_start	int(10),
+# member_end	int(10),
+#
+# UNIQUE KEY (domain_id,member_id,member_start,member_end),
+# UNIQUE KEY (member_id,domain_id,member_start,member_end)
+#);
 
 CREATE TABLE homology (
  homology_id	int(10) NOT NULL auto_increment,
  stable_id      varchar(40),
- source_id      int(10) NOT NULL, # foreign key from source table
+# source_id      int(10) NOT NULL, # foreign key from source table
+ method_link_species_set_id int(10) NOT NULL,
  description    varchar(40), # UBRH, MBRH, RHS
  subtype        varchar(40) NOT NULL DEFAULT '',
  dn             float(10,5),
@@ -288,7 +293,8 @@ CREATE TABLE homology (
  lnl            float(10,3),
  threshold_on_ds float(10,5),
 
- PRIMARY KEY (homology_id)
+ PRIMARY KEY (homology_id),
+ KEY (method_link_species_set_id)
 );
 
 CREATE TABLE homology_member (
