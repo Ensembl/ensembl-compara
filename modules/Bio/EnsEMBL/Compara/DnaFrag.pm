@@ -130,14 +130,14 @@ sub contig{
    if( !defined $self->{'_contig'} ) {
      my $core_dbadaptor = $self->genomedb->db_adaptor;
      if ($self->type eq "RawContig") {
-       $self->{'_contig'} = $core_dbadaptor->get_RawContigAdaptor->fetch_by_name($self->name);
+       $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_region('seqlevel', $self->name);
      }
      elsif ($self->type eq "VirtualContig") {
        my ($chr,$start,$end) = split /\./, $self->name;
-       $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_chr_start_end($chr,$start,$end);
+       $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_region('toplevel',$start,$end);
      } 
      elsif ($self->type eq "Chromosome") {
-       $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_chr_name($self->name);
+       $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_region('toplevel',$self->name);
      } 
      else {
        $self->throw ("Can't fetch contig of ".$self->name." with type ".$self->type);
