@@ -105,6 +105,11 @@ my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} 
 my $index = 0;
 
 foreach my $ddaf (@DnaDnaAlignFeatures) {
+  
+  if ($ddaf->cigar_string eq "") {
+    warn $ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$ddaf->hstrand," ",$ddaf->score," has no cigar line";
+    next;
+  }
 
   my $hstrand;
   $hstrand = "+" if ($ddaf->hstrand > 0);
