@@ -272,7 +272,7 @@ sub new_fast {
   Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
   Exceptions : thrown if $adaptor is not a
                Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object
-  Caller     : object::methodname
+  Caller     : object->methodname
 
 =cut
 
@@ -297,7 +297,7 @@ sub adaptor {
   Description: Getter/Setter for the attribute dbID
   Returntype : integer
   Exceptions : none
-  Caller     : object::methodname
+  Caller     : object->methodname
 
 =cut
 
@@ -322,11 +322,12 @@ sub dbID {
                argument is given, the genomic_align_block is not defined but
                both the genomic_align_block_id and the adaptor are, it tries
                to fetch the data using the genomic_align_block_id.
-  Exceptions : thrown if $genomic_align_block is not a
+  Exception  : throws if $genomic_align_block is not a
                Bio::EnsEMBL::Compara::GenomicAlignBlock object or if 
                $genomic_align_block does not match a previously defined
                genomic_align_block_id
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -337,27 +338,40 @@ sub genomic_align_block {
     throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
         if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
     weaken($self->{'genomic_align_block'} = $genomic_align_block);
+
+    ## Add adaptor to genomic_align_block object if possible and needed
+    if (!defined($genomic_align_block->adaptor) and defined($self->adaptor)) {
+      $genomic_align_block->adaptor($self->adaptor->db->get_GenomicAlignBlockAdaptor);
+    }
+
     if ($self->{'genomic_align_block_id'}) {
       if (!$self->{'genomic_align_block'}->dbID) {
         $self->{'genomic_align_block'}->dbID($self->{'genomic_align_block_id'});
       }
 #       warning("Defining both genomic_align_block_id and genomic_align_block");
-      throw("dbID of genomic_align_block object does not match previously defined genomic_align_block_id.".
-              " If you want to override a Bio::EnsEMBL::Compara::GenomicAlign object, you can reset the ".
-              "genomic_align_block_id using \$genomic_align->genomic_align_block_id(0)")
+      throw("dbID of genomic_align_block object does not match previously defined".
+            " genomic_align_block_id. If you want to override a".
+            " Bio::EnsEMBL::Compara::GenomicAlign object, you can reset the ".
+            "genomic_align_block_id using \$genomic_align->genomic_align_block_id(0)")
           if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
     } else {
       $self->{'genomic_align_block_id'} = $genomic_align_block->dbID;
     }
 
-  } elsif (!defined($self->{'genomic_align_block'}) and defined($self->genomic_align_block_id) and
-          defined($self->{'adaptor'})) {
-    # Try to fetch the data using the genomic_align_block_id. Uses genomic_align_block_id function and not
-    # the attribute in the <if> clause because the attribute can be retrieved from other sources if it has
-    # not been already defined.
-    my $genomic_align_block_adaptor = $self->{'adaptor'}->db->get_GenomicAlignBlockAdaptor;
-    $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
-            $self->{'genomic_align_block_id'});
+  } elsif (!defined($self->{'genomic_align_block'})) {
+    # Try to get the genomic_align_block from other sources...
+    if (defined($self->genomic_align_block_id) and defined($self->{'adaptor'})) {
+      # ...from the genomic_align_block_id. Uses genomic_align_block_id function
+      # and not the attribute in the <if> clause because the attribute can be retrieved from other
+      # sources if it has not been set before.
+      my $genomic_align_block_adaptor = $self->{'adaptor'}->db->get_GenomicAlignBlockAdaptor;
+      $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
+              $self->{'genomic_align_block_id'});
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+    }
   }
 
   return $self->{'genomic_align_block'};
@@ -378,7 +392,8 @@ sub genomic_align_block {
   Returntype : integer
   Exceptions : thrown if $genomic_align_block_id does not match a previously defined
                genomic_align_block
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -386,7 +401,7 @@ sub genomic_align_block_id {
   my ($self, $genomic_align_block_id) = @_;
 
   if (defined($genomic_align_block_id)) {
-    $self->{'genomic_align_block_id'} = $genomic_align_block_id;
+    $self->{'genomic_align_block_id'} = ($genomic_align_block_id or undef);
     if (defined($self->{'genomic_align_block'}) and $self->{'genomic_align_block_id'}) {
 #       warning("Defining both genomic_align_block_id and genomic_align_block");
       throw("genomic_align_block_id does not match previously defined genomic_align_block object")
@@ -402,6 +417,10 @@ sub genomic_align_block_id {
     } elsif (defined($self->{'adaptor'}) and defined($self->{'dbID'})) {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block_id".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -424,7 +443,8 @@ sub genomic_align_block_id {
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object or if 
                $method_link_species_set does not match a previously defined
                method_link_species_set_id
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -460,6 +480,10 @@ sub method_link_species_set {
       my $method_link_species_set_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
       $self->{'method_link_species_set'} = $method_link_species_set_adaptor->fetch_by_dbID(
               $self->{'method_link_species_set_id'});
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->method_link_species_set".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -481,7 +505,8 @@ sub method_link_species_set {
   Returntype : integer
   Exceptions : thrown if $method_link_species_set_id does not match a previously defined
                method_link_species_set
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -504,6 +529,10 @@ sub method_link_species_set_id {
     } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->method_link_species_set_id".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -524,7 +553,8 @@ sub method_link_species_set_id {
   Exceptions : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
                object or if $dnafrag does not match a previously defined
                dnafrag_id
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -546,11 +576,17 @@ sub dnafrag {
       $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
     }
   
-  } elsif (!defined($self->{'dnafrag'}) and defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
-    # Try to get the object from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
-    # clause because the attribute can be retrieved from other sources if it has not been already defined.
-    my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
-    $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
+  } elsif (!defined($self->{'dnafrag'})) {
+    # Try to get data from other sources...
+    if (defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
+      # ...from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
+      # clause because the attribute can be retrieved from other sources if it has not been already defined.
+      my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
+      $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
   }
 
   return $self->{'dnafrag'};
@@ -571,7 +607,8 @@ sub dnafrag {
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -594,6 +631,10 @@ sub dnafrag_id {
     } elsif (defined($self->{'adaptor'}) and defined($self->{'dbID'})) {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_id".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -612,7 +653,8 @@ sub dnafrag_id {
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -622,9 +664,15 @@ sub dnafrag_start {
   if (defined($dnafrag_start)) {
      $self->{'dnafrag_start'} = $dnafrag_start;
 
-  } elsif (!defined($self->{'dnafrag_start'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    $self->adaptor->retrieve_all_direct_attributes($self);
+  } elsif (!defined($self->{'dnafrag_start'}))
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_start".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+    }
   }
 
   return $self->{'dnafrag_start'};
@@ -642,7 +690,8 @@ sub dnafrag_start {
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -652,9 +701,15 @@ sub dnafrag_end {
   if (defined($dnafrag_end)) {
      $self->{'dnafrag_end'} = $dnafrag_end;
 
-  } elsif (!defined($self->{'dnafrag_end'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    $self->adaptor->retrieve_all_direct_attributes($self);
+  } elsif (!defined($self->{'dnafrag_end'})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_end".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+    }
   }
 
   return $self->{'dnafrag_end'};
@@ -672,7 +727,8 @@ sub dnafrag_end {
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -682,9 +738,15 @@ sub dnafrag_strand {
   if (defined($dnafrag_strand)) {
      $self->{'dnafrag_strand'} = $dnafrag_strand;
 
-  } elsif (!defined($self->{'dnafrag_strand'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    $self->adaptor->retrieve_all_direct_attributes($self);
+  } elsif (!defined($self->{'dnafrag_strand'})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_strand".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+    }
   }
 
   return $self->{'dnafrag_strand'};
@@ -700,7 +762,8 @@ sub dnafrag_strand {
                using the cigar_line information and the original sequence if needed.
   Returntype : string $aligned_sequence
   Exceptions : thrown if sequence contains unknown symbols
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
 
 =cut
 
@@ -727,6 +790,10 @@ sub aligned_sequence {
       $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
           $original_sequence, $self->{'cigar_line'});
       $self->{'aligned_sequence'} = $aligned_sequence;
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->aligned_sequence".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -749,7 +816,8 @@ sub aligned_sequence {
                Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : string
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
  
 =cut
 
@@ -769,6 +837,10 @@ sub cigar_line {
     } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->cigar_line".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -787,7 +859,8 @@ sub cigar_line {
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : int
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
  
 =cut
 
@@ -797,9 +870,15 @@ sub level_id {
   if (defined($level_id)) {
     $self->{'level_id'} = $level_id;
 
-  } elsif (!defined($self->{'level_id'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    $self->adaptor->retrieve_all_direct_attributes($self);
+  } elsif (!defined($self->{'level_id'})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->level_id".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+    }
   }
 
   return $self->{'level_id'};
@@ -817,7 +896,8 @@ sub level_id {
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : int
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
  
 =cut
 
@@ -830,13 +910,19 @@ sub genomic_align_groups {
       $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
     }
 
-  } elsif (!defined($self->{'genomic_align_group'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    $genomic_align_groups = $self->adaptor->db->get_GenomicAlignGroupAdaptor->fetch_all_by_GenomicAlign($self);
-    foreach my $this_genomic_align_group (@$genomic_align_groups) {
-      my $type = $this_genomic_align_group->type;
-      $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
-      $self->{'genomic_align_group_id'}->{$type} = $this_genomic_align_group->dbID;
+  } elsif (!defined($self->{'genomic_align_group'})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $genomic_align_groups = $self->adaptor->db->get_GenomicAlignGroupAdaptor->fetch_all_by_GenomicAlign($self);
+      foreach my $this_genomic_align_group (@$genomic_align_groups) {
+        my $type = $this_genomic_align_group->type;
+        $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
+        $self->{'genomic_align_group_id'}->{$type} = $this_genomic_align_group->dbID;
+      }
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -856,7 +942,8 @@ sub genomic_align_groups {
                given type.
   Returntype : int
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
  
 =cut
 
@@ -868,13 +955,19 @@ sub genomic_align_group_by_type {
   if (defined($genomic_align_group)) {
     $self->{'genomic_align_group'}->{$type} = $genomic_align_group;
 
-  } elsif (!defined($self->{'genomic_align_group'}->{$type}) and defined($self->{'dbID'})
-          and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    my $genomic_align_groups = $self->adaptor->db->get_GenomicAlignGroupAdaptor->fetch_all_by_GenomicAlign($self);
-    foreach my $this_genomic_align_group (@$genomic_align_groups) {
-      $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
-      $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
+  } elsif (!defined($self->{'genomic_align_group'}->{$type})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
+      my $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_GenomicAlign($self);
+      foreach my $this_genomic_align_group (@$genomic_align_groups) {
+        $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
+        $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
+      }
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomi_align_group_by_type".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -892,7 +985,8 @@ sub genomic_align_group_by_type {
                Bio::EnsEMBL::Compara::GenomicAlign object and the given type.
   Returntype : int
   Exceptions : none
-  Caller     : object::methodname
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
  
 =cut
 
@@ -904,14 +998,19 @@ sub genomic_align_group_id_by_type {
   if (defined($genomic_align_group_id)) {
     $self->{'genomic_align_group_id'}->{$type} = $genomic_align_group_id;
 
-  } elsif (!defined($self->{'genomic_align_group_id'}->{$type}) and defined($self->{'dbID'})
-          and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
-    my $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_GenomicAlign($self);
-    foreach my $this_genomic_align_group (@$genomic_align_groups) {
-      $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
-      $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
+  } elsif (!defined($self->{'genomic_align_group_id'}->{$type})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
+      my $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_GenomicAlign($self);
+      foreach my $this_genomic_align_group (@$genomic_align_groups) {
+        $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
+        $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
+      }
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_group_id_by_type".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -928,7 +1027,7 @@ sub genomic_align_group_id_by_type {
                aligned sequence or the the Bio::EnsEMBL::Compara:DnaFrag object.
   Returntype : string $original_sequence
   Exceptions : 
-  Caller     : object::methodname
+  Caller     : object->methodname
 
 =cut
 
@@ -957,6 +1056,10 @@ sub original_sequence {
       # in the <if> clause because the attributes can be retrieved from other sources if they have not been
       # already defined.
       $self->{'original_sequence'} = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
+    } else {
+      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -1045,7 +1148,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
                Used for debuging purposes.
   Returntype : none
   Exceptions : 
-  Caller     : object::methodname
+  Caller     : object->methodname
 
 =cut
 
