@@ -3,6 +3,7 @@ package Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor;
 use strict;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
+use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -190,8 +191,6 @@ sub _objs_from_sth {
     $name = $column{'description'};
     $member_id = $column{'member_id'};
 
-    print("subset_id = $subset_id  description=$name  member_id=$member_id\n");
-    
     if(defined($setMemberIds{$subset_id})) {
       push @{$setMemberIds{$subset_id}}, $member_id;
     }
