@@ -108,11 +108,10 @@ sub fetch_by_Family_Member_source {
   my ($self, $family, $source_name) = @_;
  
   my $sql = "SELECT distinct(t.taxon_id)
-             FROM family_member fm,member m, source s,taxon t
+             FROM family_member fm,member m,taxon t
              WHERE fm.family_id= ? AND
-                   s.source_name= ? AND
+                   m.source_name= ? AND
                    fm.member_id=m.member_id AND
-                   m.source_id=s.source_id AND
                    m.taxon_id=t.taxon_id";
 
   my $sth = $self->prepare($sql);
