@@ -57,7 +57,7 @@ CREATE TABLE genome_db (
 #
 
 CREATE TABLE genomic_align_block (
-  align_block_id int(10) NOT NULL AUTO_INCREMENT,
+  genomic_align_block_id int(10) NOT NULL AUTO_INCREMENT,
   method_link_id int(10) DEFAULT '0' NOT NULL,
   score double,
   length int(10),
@@ -73,7 +73,7 @@ CREATE TABLE genomic_align_block (
 #
 
 CREATE TABLE genomic_align (
-  align_block_id int(10) NOT NULL,
+  genomic_align_block_id int(10) NOT NULL,
   method_link_id int(10) DEFAULT '0' NOT NULL,
   dnafrag_id int(10) DEFAULT '0' NOT NULL,
   dnafrag_start int(10) DEFAULT '0' NOT NULL,
