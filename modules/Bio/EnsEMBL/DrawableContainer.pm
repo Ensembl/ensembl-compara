@@ -222,6 +222,7 @@ sub new {
             my $background = new Sanger::Graphics::Glyph::Rect({
                 'x'         => 0,
                 'y'         => $gminy,
+                'z'         => -100,
                 'width'     => $Config->image_width(),
                 'height'    => $glyphset->maxy() - $gminy,
                 'colour'    => $bgcolours->[$iteration % 2],
