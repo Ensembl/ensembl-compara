@@ -1,0 +1,590 @@
+<html><head><title>Eh?: geneview</title>
+    
+    <link rel="stylesheet" type="text/css" href="geneview_help%20Files/cssfixerupper.css"></head>
+
+  <body topmargin="2" leftmargin="2" onload="this.focus();" bgcolor="#ffffff" link="#000070" marginheight="2" marginwidth="2" text="#000000" vlink="#a00000">
+  
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tbody><tr valign="center">
+      <td><img src="geneview_help%20Files/eh-header.gif" alt="Help" height="40" width="200"></td>
+      <td align="center">
+        <a href="javascript:self.close();"><img src="geneview_help%20Files/close.gif" alt="Close" border="0" height="25" hspace="2" vspace="2" width="70"></a>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td align="center" nowrap="nowrap"><form action="/Homo_sapiens/helpview" method="get">
+  <input name="action" value="search" type="hidden">
+  <input size="14" name="kw" value="geneview" type="text">
+  <input src="geneview_help%20Files/lookup.gif" alt="Lookup" align="center" border="0" height="25" hspace="2" type="image" vspace="2" width="70">
+  </form></td>
+      <td align="center"><a href="http://www.ensembl.org/perl/helpview"><img src="geneview_help%20Files/index.gif" alt="Index" border="0" height="25" hspace="2" vspace="2" width="70"></a></td>
+    </tr>
+    <tr valign="center">
+      <td colspan="2" align="center">
+        <a href="javascript:history.back();"><img src="geneview_help%20Files/prev.gif" alt="Back" align="middle" border="0" height="25" hspace="2" vspace="2" width="70"></a>
+        <a href="javascript:history.forward();"><img src="geneview_help%20Files/next.gif" alt="Forward" align="middle" border="0" height="25" hspace="2" vspace="2" width="70"></a>
+        <small>(help history)</small>
+      </td>
+    </tr>
+    <tr><td colspan="3"><hr width="100%"></td></tr>
+  </tbody></table>
+  <table border="0" width="100%">
+    <tbody><tr valign="top">
+      <td><img src="geneview_help%20Files/blank.gif" alt="" height="350" width="1"></td>
+      <td width="100%">
+   <small> Found 1 entry:</small><br>
+ 
+  <h3 align="center">Ensembl GeneView</h3><p>
+Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=geneview">GeneView</a>' provides detailed information about automatically annotated 
+<a href="#EnsemblGeneReport">Ensembl</a>, manually curated 
+<a href="#VegaGeneReport">Vega</a> or transient 
+<a href="#ESTGeneReport">EST</a> gene model predictions. 
+<i>Ab initio</i> predicted 
+<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=transview#GENSCANTranscriptReport">GENSCAN</a> and 
+<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=transview#SNAPTranscriptReport">SNAP</a> transcripts are not clustered into genes and have therefore no corresponding 'Gene Reports'. 
+</p>
+
+
+<h3 id="EnsemblGeneReport">Ensembl Gene Report</h3>
+
+<p>
+The 'Ensembl Gene Report' at the top of the page provides the following data about the gene. 
+Note: For manually curated <b>Vega genes</b> or for <b>EST genes</b>, not all of this information is displayed. 
+</p>
+
+<ul>
+
+<li id="Gene">
+<p>
+<b>Gene</b> - the name of the gene, obtained by comparing the gene's transcripts to entries in 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a>, NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/RefSeq/" target="external">RefSeq</a> and 
+<a href="http://www.ebi.ac.uk/trembl/" target="external">UniProt/TrEMBL</a>. 
+For further details see the 
+'<a href="#SimilarityMatches">Similarity Matches</a>' section of the 
+'<a href="#TranscriptTranslationSummary">Transcript/Translation Summary</a>' below. 
+A single name is selected for display, and the source is shown. 
+Preferentially, a gene symbol approved by the species-specific nomenclature committee is chosen 
+(e.g. the appropriate 
+<a href="http://www.gene.ucl.ac.uk/hugo/" target="external">HUGO</a> 
+<a href="http://www.gene.ucl.ac.uk/nomenclature/" target="external">HGNC</a> symbol for human). 
+Failing that, a 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a> identifier, a NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/RefSeq/" target="external">RefSeq</a> accession number or a 
+<a href="http://www.ebi.ac.uk/trembl/" target="external">UniProt/TrEMBL</a> accession number is assigned. 
+</p>
+</li>
+
+<li id="EnsemblGeneID">
+<p>
+<b>Ensembl Gene ID</b> - the Ensembl stable gene identifier. 
+</p>
+</li>
+
+<li id="GenomicLocation">
+<p>
+<b>Genomic Location</b> 
+</p>
+
+<ul>
+
+<li>
+<p>
+'<i>View gene in genomic location</i>' indicates the chromosomal location of this gene and links to 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=contigview">ContigView</a>', which will only display the region corresponding to the gene.
+</p>
+</li>
+
+<li>
+<p>
+'<i>This gene is located in sequence</i>' will display the gene in 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=contigview">ContigView</a>' including its surrounding region. 
+</p>
+</li>
+
+</ul>
+
+<p>
+In either case a green background in the 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=contigview#DetailedView">Detailed View</a>' panel will highlight the gene. 
+</p>
+</li>
+
+<li id="Description">
+<p>
+<b>Description</b> - a short description of the gene. 
+This is taken from the 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a> 
+entry the predicted gene is mapped to, or, if none available, from a NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/RefSeq/" target="external">RefSeq</a> or 
+<a href="http://www.ebi.ac.uk/trembl/" target="external">UniProt/TrEMBL</a>
+entry. If a predicted gene has not been mapped to any such entries, no
+description will be given. If its translation is however part of an
+Ensembl protein family cluster, the consensus annotation of that family
+may be informative. See the links to Ensembl '<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=familyview">FamilyView</a>' in the 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=protview#ProteinFamily">Protein Family</a>' section on Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=protview">ProteinView</a>' pages. 
+</p>
+</li>
+
+<li id="PredictionMethod">
+<p>
+<b>Prediction Method</b> - 
+A brief summary of the method used for the prediction of the gene set (Ensembl genes, EST genes). 
+</p>
+</li>
+
+<li id="SequenceMarkup">
+<p>
+<b>Sequence Markup</b> - 
+This section allows you to view the underlying genomic sequence for this gene. 
+While exons are highlighted by default, SNPs and flanking sequences can be optionally annotated. 
+</p><p>
+
+
+</p></li><li id="ExportData">
+<p>
+<b>Export Data</b> - a link to Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=exportview">ExportView</a>'. 
+The 'ExportView' page will be automatically filled in with the gene information and provides a quick way to obtain the <b>genomic sequence of the gene</b> in plain FASTA format or annotated in EMBL or GenBank flat file format. 
+Note that genomic sequence obtained from 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=exportview">ExportView</a>'
+is always from the 'forward' strand of the genome sequence assembly.
+Additional options for sequence export, including genome sequence
+export in the orientation of the annotated gene, can be found in '<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=martview">EnsMart</a>'. 
+</p>
+</li>
+
+<li id="SNPInformation">
+<p>
+<b>SNP Information</b> 
+The '<i>View information about variations on this gene</i>' links to Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=genesnpview">GeneSNPView</a>' pages annotating single nucleotide polymorphisms (SNPs) and 
+<a href="http://www.sanger.ac.uk/Software/Pfam/" target="external">Pfam</a> domains along the genomic sequence underlying the particular gene model. 
+</p>
+</li>
+
+<li id="TranscriptStructureGene">
+<p>
+<b>Transcript Structure</b> - This section lists transcript predictions
+for this gene, with gene symbols and 'Ensembl Transcript IDs'.
+[Transcript information], [Exon information] and [Protein information]
+links provide more specialised information for each transcript on
+Ensembl '<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=transview">TransView</a>', 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=exonview">ExonView</a>', and 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=protview">ProteinView</a>' pages, respectively. 
+A summary of transcript and protein information for each transcript also appears lower down on the 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=geneview">GeneView</a>' page and can be reached by clicking on the transcript name. 
+</p>
+
+<p>
+A diagram illustrates exon and intron structures for all Ensembl transcript models. 
+This illustration can be further customised choosing manually curated '<b>Vega Transcripts</b>', '<b>RNA Transcripts</b>', '<b>GENSCAN predictions</b>' and '<b>SNPs</b>' from the '<b>Features</b>' option in the golden menu bar. 
+</p>
+
+<p>
+Any untranslated regions of the transcript (5' and 3' UTRs) are
+displayed as coloured outlines, while the predicted coding regions
+(CDS) are shown in solid colour. The black arrows indicate the size of
+the genomic region spanned by the transcript model. </p>
+</li>
+
+<li id="OrthologuePrediction">
+<p>
+<b>Orthologue Prediction</b> - a link to the closest putative orthologue genes in other species. 
+Links are given between human, mouse and rat with all other species including chimp, chicken, zebrafish, 
+<i>Takifugu rubripes</i>, 
+<i>Anopheles gambiae</i>,
+<i>Drosophila melanogaster</i>, 
+<i>Caenorhabditis elegans</i> and 
+<i>Caenorhabditis briggsae</i>). 
+A link at the bottom of this section leads to a corresponding Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=multicontigview">MultiContigView</a>' page, which allows display of both genome sequence and annotation information for several species simultaneously. 
+By default, all species with orthologues defined in this section are selected. 
+Further species could be added or others dropped directly from 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=multicontigview">MultiContigView</a>' pages. 
+</p>
+
+<p>
+The homologous genes represent the best reciprocal BLAST hits for the
+two species (Best Reciprocal Hit: BRH), with additional pairs obtained
+by a combination of BLAST and location information (Reciprocal Hit
+based on Synteny: RHS) for more closely related species. These
+homologues may therefore potentially represent orthologues. </p>
+
+<p>
+The chimp/human homologues are obtained from whole genome BLASTz
+alignments between human and chimp rather than by reciprocal BLASTP
+analysis and are designated DWGA (Derived from Whole Genome
+Alignments). This was also the method used to predict the chimp genes,
+by mapping the human genes onto the chimp chromosomes. See Description
+on the relevant Ensembl Gene Report. </p>
+
+<p>
+Clicking on the putative orthologue gene will take you to a 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=geneview">GeneView</a>' display of that gene within the web site for the other species. 
+See also the 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=syntenyview">SyntenyView</a>' help page. 
+Where no homology matches are shown, you may wish to explore the Ensembl protein family (see below). 
+</p>
+
+<p>
+dN (number of non-synonymous substitutions / number of non-synonymous sites) and 
+dS (number of synonymous substitutions / number of synonymous sites) values were generated using the <b>codeml</b> program included in the 
+<a href="http://abacus.gene.ucl.ac.uk/software/paml.html" target="external">PAML</a> package 
+(<a href="#nb1" name="nh1">1</a>). 
+With the parameters we have used, <b>codeml</b> performs pair wise Maximum Likelihood calculations of dN and dS for each set of orthologues. 
+We have used the F3x4 codon evolution model 
+(<a href="#nb2" name="nh2">2</a>).
+This takes into account both the bias deriving from the different
+probabilities of transition (T&lt;-&gt;C and A&lt;-&gt;G) versus
+transversion (T/C&lt;-&gt;A/G) mutations, and the bias due to different
+nucleotide frequencies at the three codon positions. </p>
+
+<p>
+dN and dS values are only provided for orthologues from some species
+pairs, i.e. human/mouse, human/rat, and mouse/rat. Orthologues for
+other species pairs are too divergent for dS to be an accurate measure.
+Most synonymous sites will have be subjected to more than one mutation
+and ancestral changes cannot be reliably inferred from extant
+sequences, (i.e. dS is saturated). </p><p>
+
+</p><p>
+Orthologue predictions for human/mouse, human/rat and mouse/rat may not
+be perfect. Incorrect assignments will manifest anomalously high dS
+values. We have, therefore, applied a cut-off of twice the median value
+of all dS for each species pair as the criterion for displaying the
+dN/dS ratio. Predicted orthology relationships with dS above this
+threshold are likely to be errors. </p>
+
+<p>
+The following dS threshold values have been used: 
+</p>
+
+<pre>                   dS threshold
+
+   human/mouse        1.26978
+   human/rat          1.28408
+   mouse/rat          0.40745
+</pre>
+
+<p>
+Therefore, dN/dS ratios for human/mouse orthologues are only displayed when dS &lt;= 1.26978, otherwise "--". 
+</p>
+
+<p>
+NB: The dN, dS values for elegans/briggsae were calculated but dS
+values were considered as saturated (median = 2.26584, &gt;&gt; 1).
+After applying the dS threshold (4.53168), the median and average on
+the remaining set were 1.93962 and 2.062 respectively, and comparable
+with the data that was published in the <i>Caenorhabditis briggsae</i> genome paper 
+(<a href="#nb3" name="nh3">3</a>), average 1.78 (no median was provided in the paper). 
+</p>
+
+
+<h5 id="References">References</h5>
+
+<p>
+<a href="#nh1" name="nb1"><b>1</b></a>. 
+Yang, Z. (1997)<br>
+"PAML: a program package for phylogenetic analysis by maximum likehood."<br>
+Comput. Appl. Biosci. 1997 13: 555-556.<br>
+</p>
+
+<p>
+<a href="#nh2" name="nb2"><b>2</b></a>. 
+Goldman, N. &amp; Zang, Y. (1994)<br>
+"A codon-based model of nucleotide substitution for protein-coding DNA sequences."<br>
+Mol. Biol. Evol. 11, 725-736.<br>
+</p>
+
+<p>
+<a href="#nh3" name="nb3"><b>3</b></a>. 
+Stein, LD et al. (2003)<br>
+"The Genome Sequence of <i>Caenorhabditis briggsae</i>: A Platform for Comparative Genomics."
+PLoS Biol. 1, 166-192.
+</p>
+</li>
+
+<li id="ParaloguePrediction">
+<p>
+<b>Paralogue Prediction</b> - a link to putative paralogues. 
+<br>
+The identification of paralogues (recently duplicated human genes) has
+been conducted using a simple approach and it is only available for
+human at the moment. <br>
+A raw set of gene homologies was derived from an all-<i>versus</i>-all
+BLAST approach against a dataset of Ensembl predicted genes including
+mouse and rat genes for out-groups. The resulting pairs were then
+filtered and ranked according to genetic distance and gene coverage.
+Groups of duplicated human genes were determined by clustering genes
+that shared common reciprocal matches. Hence, groups of recently
+duplicated genes identified in this manner have phylogenetic meaning
+and can be formally defined as being paralogous human genes that have
+arisen since the human-rodent divergence. </p>
+</li>
+
+<li id="DiseaseMatches">
+<p>
+<b>Disease Matches</b> - genetic diseases associated with the gene. Identifiers link to 
+<a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=OMIM" target="external">OMIM</a> 
+gene locus entries, while 
+[View disease information] links lead to more specialised information on Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=diseaseview">DiseaseView</a>' pages. 
+Note that OMIM entries in this section are those on the 
+<a href="http://www.ncbi.nlm.nih.gov/Omim/getmorbid.cgi" target="external">OMIM Morbid Map</a>. 
+Links to OMIM entries for many additional genes can be found in the 
+'<a href="#SimilarityMatches">Similarity Matches</a>' sections of the 
+'<a href="#TranscriptTranslationSummary">Transcript/Translation Summary</a>' tables. 
+</p>
+</li>
+
+<li id="GeneDASSources">
+<p>
+<b>GeneDAS Sources</b> - 
+'GeneDAS' is a semantic extension to the DAS protocol that allows the exchange of annotations via gene or protein identifiers. 
+Ensembl '<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=geneview">GeneView</a>' acts as a client for this server, using the data as additional annotation for Ensembl predicted genes. 
+Further 'GeneDAS' developments will allow users to display their own gene annotations. 
+</p>
+
+<p>
+This implementation currently includes: 
+</p>
+
+<ul>
+
+<li>
+<p>
+<a href="http://www.ebi.ac.uk/swissprot/" target="external"><b>UniProt/Swiss-Prot</b></a> literature references, which link to the NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=PubMed" target="external">PubMed</a> literature database. 
+</p>
+</li>
+
+<li>
+<p>
+<a href="http://www.gene.ucl.ac.uk/hugo/" target="external"><b>HUGO</b></a> 
+<a href="http://www.gene.ucl.ac.uk/nomenclature/" target="external"><b>HGNC</b></a> literature references. 
+This set was kindly provided by the 
+<a href="http://www.ebi.ac.uk/" target="external">EBI</a> 
+<a href="http://www.ebi.ac.uk/Rebholz/" target="external">text-mining</a> group and provides an association of human 
+<a href="http://www.gene.ucl.ac.uk/hugo/" target="external">HUGO</a> 
+<a href="http://www.gene.ucl.ac.uk/nomenclature/" target="external">HGNC</a> gene symbols with NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=PubMed" target="external">PubMed</a> literature references. 
+</p>
+</li>
+
+<li>
+<p>
+<a href="http://geneticassociationdb.nih.gov/cgi-bin/index.cgi" target="external"><b>Genetic Association Database</b></a>, which is an archive of human genetic association studies of complex diseases and disorders. 
+</p>
+</li>
+
+<li>
+<p>
+<a href="http://www.reactome.org/" target="external"><b>Reactome</b></a> - a knowledgebase of biological processes 
+</p><p>
+
+
+</p></li></ul>
+
+</li>
+
+</ul>
+
+
+<h5 id="TranscriptTranslationSummary">Transcript/Translation Summary</h5>
+
+<p>
+Below the 
+'<a href="#EnsemblGeneReport">Ensembl Gene Report</a>' is a series of tables summarising each transcript and translation product predicted for this gene. 
+</p>
+
+<p>
+Each transcript table displays the following information. 
+</p>
+
+<ul>
+
+<li id="TranscriptName">
+<p>
+<b>Transcript Name</b> A name is assigned to the transcript, matching entries in external databases. 
+A more detailed description of the algorithm is in the <a href="#Gene">Gene</a> section above. 
+</p>
+
+<p>
+Basic information such as the 'Ensembl Transcript ID', the number of
+exons, the transcript length, as well as the translation length are
+also provided in this section. [Transcript information], [Exon
+information] and [Protein information] links provide more specialised
+information for each transcript on Ensembl '<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=transview">TransView</a>', 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=exonview">ExonView</a>', and 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=protview">ProteinView</a>' pages, respectively. 
+</p>
+</li>
+
+<li id="SimilarityMatches">
+<p>
+<b>Similarity Matches</b> - a list of links to external databases. 
+Links to 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a>, NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/RefSeq/" target="external">RefSeq</a> and 
+<a href="http://www.ebi.ac.uk/trembl/" target="external">UniProt/TrEMBL</a> are made on the basis of sequence similarity and also display identity percentages, calculated on the protein level. 
+</p>
+
+<p>
+<b>Target %id</b> indicates the percentage of the external database sequence matching the Ensembl predicted sequence. 
+</p>
+
+<p>
+<b>Query %id</b> indicates the percentage of the Ensembl predicted sequence matching the external database sequence. 
+</p>
+
+<p>
+Other links are inferred from these mappings (e.g. NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/LocusLink/" target="external">LocusLink</a> via 
+<a href="http://www.ncbi.nlm.nih.gov/RefSeq/" target="external">RefSeq</a>; 
+<a href="http://www.reactome.org/" target="external">Reactome</a> (formerly
+<a href="http://www.genomeknowledge.org/" target="external">Genome Knowledge Base</a>, GKB), 
+<a href="http://www.ebi.ac.uk/embl/" target="external">EMBL</a> and Protein IDs via 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a>). 
+</p>
+
+<p>
+The [align] links lead to Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=alignview">AlignView</a>' pages, which display an alignment of the Ensembl transcript prediction to the external database sequence. 
+</p>
+
+<p>
+Ensembl establishes mappings to microarray probe set identifiers by
+matching probe set sequences to Ensembl transcripts. Mapping is
+successful if the probe set sequences match the transcript or an
+additional 2 kb down stream sequence window immediately adjacent the
+most 3' exon. For more detailed information see <a href="http://www.ensembl.org/EnsMart/info/" target="external">Datasets in EnsMart</a> or 
+<a href="http://www.ensembl.org/EnsMart/info/Affy_mapping.html" target="external">Affymetrix probe to Ensembl transcript mapping</a>. 
+</p>
+</li>
+
+<li id="GO">
+<p>
+<b>GO</b> - 
+<a href="http://www.geneontology.org/" target="external">Gene Ontology</a> terms represent a controlled vocabulary developed by the 
+<a href="http://www.geneontology.org/" target="external">Gene Ontology Consortium</a>. 
+Ensembl associates GO terms via 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a> mappings as outlined in the 
+'<a href="#SimilarityMatches">Similarity Matches</a>' section above. 
+<a href="http://www.geneontology.org/doc/GO.evidence.html" target="external">Evidence codes</a> are also shown and refer to the evidence used for the initial assignment of GO terms to UniProt/Swiss-Prot records. 
+More than one evidence code may be shown where an Ensembl protein has been mapped to more than one UniProt/Swiss-Prot entry. 
+Clicking on a particular identifier takes you to an Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=goview">GOView</a>' page displaying the context of the term in the ontology, as well as a list of other Ensembl genes mapped to the term. 
+Clicking on the term itself will take you to a Gene Ontology search form. 
+For more details on Ensembl Gene Ontology mapping, see the 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=goview">GOView</a>' help page. 
+</p>
+</li>
+
+<li id="InterPro">
+<p>
+<b>InterPro</b> - a list of links to 
+<a href="http://www.ebi.ac.uk/interpro/" target="external">InterPro</a> domains predicted for the translation product of this particular transcript. 
+There is also an option [View other Ensembl genes with this domain] leading to Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=domainview">DomainView</a>' pages. 
+</p>
+</li>
+
+<li id="ProteinFamily">
+<p>
+<b>Protein Family</b> - a link to
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=familyview">FamilyView</a>', listing protein family members and annotating their chromosomal positions on a karyotype ideogram. 
+</p>
+</li>
+
+<li id="TranscriptStructure">
+<p>
+<b>Transcript Structure</b> - A diagram displaying exon and intron
+structures of the Ensembl transcript model. Any untranslated regions of
+the transcript (5' and 3' UTRs) are displayed as coloured outlines,
+while the predicted coding regions (CDS) are shown in solid colour. The
+black arrows indicate the size of the genomic region spanned by the
+transcript model. The small red arrow indicates the orientation of the
+transcript relative to the genome sequence in standard notation. </p>
+</li>
+
+<li id="ProteinFeatures">
+<p>
+<b>Protein Features</b> shows a scale bar corresponding to the number of amino acids in the protein, together with bars representing the location of 
+<a href="http://www.ebi.ac.uk/interpro/" target="external">InterPro</a> protein domain predictions. 
+For more details see Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=protview">ProteinView</a>'. 
+</p>
+</li>
+
+</ul>
+
+
+<h3 id="VegaGeneReport">Vega Gene Report</h3>
+
+<p>
+<a href="http://vega.sanger.ac.uk/" target="external">Vega</a> genes
+represent a set of manually annotated genes. Finished genomic sequence
+is analysed on a clone-by-clone basis using a combination of similarity
+searches against DNA and protein databases, as well as a series of <i>ab initio</i>
+gene predictions (GENSCAN, GENEWISE). Gene structures are annotated on
+the basis of human interpretation of the combined supportive evidence
+generated during sequence analysis. In parallel, experimental methods
+are being applied to extend incomplete gene structures and discover new
+genes. The latter is initiated by comparative analysis of the finished
+sequence with vertebrate datasets such as the Riken mouse cDNAs, mouse
+whole-genome shotgun data and <a href="http://www.genoscope.cns.fr/" target="external">Genoscope</a> 
+<a href="http://www.ensembl.org/Tetraodon_nigroviridis/" target="external"><i>Tetraodon nigrovirides</i></a> evolutionarily conserved regions (ecores). 
+</p>
+
+
+<h3 id="ESTGeneReport">EST Gene Report</h3>
+
+<p>
+Generally, Ensembl gene builds are based on experimental evidence from 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a>, NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/RefSeq/" target="external">RefSeq</a> and 
+<a href="http://www.ebi.ac.uk/trembl/" target="external">UniProt/TrEMBL</a> sequence records 
+(<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=publications#GenomeRes_14_942">Curwen et al., 2004</a>).
+For all well-established species with sufficient amounts of supporting
+evidence Ensembl provides an additional EST gene gene-build solely
+based on a purified Expressed Sequence Tag set (<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=publications#GenomeRes_14_976">Eyras et al., 2004</a>).
+In keeping both gene-builds separate Ensembl accounts for the fact that
+the quality of EST information is quite heterogeneous. But on the other
+hand, ESTs can provide useful hints for the existence of further
+transcripts, especially alternatively spliced ones. Gene-builds for
+less characterised species are still based on supporting evidence from
+the public sequence databases. Since the amount of species-specific
+evidence for these species is generally too small to support a full
+gene-build, these builds are mainly based on information from closely
+related species. Ensembl may also directly exploit EST evidence for its
+gene-predictions in these cases. A separate EST gene set is in those
+cases not available. </p>
+
+<p>
+More detailed information on Ensembl gene-builds and EST gene-builds is available from the 
+<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=publications">publications</a> section. 
+</p>
+
+<p>
+The search box at the top of the page allows you to search for any identifier present in Ensembl. 
+For detailed instructions see the Ensembl 
+'<a href="http://www.ensembl.org/Homo_sapiens/helpview?se=1&amp;kw=textview">TextView</a>' page. 
+</p>
+<br><br>
+  
+</td></tr></tbody></table>
+<!-- begin footer -->
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody><tr bgcolor="#f5f5ff" valign="center">
+    <td nowrap="nowrap"> <i>Date : 2004-10-27 13:39:01</i></td>
+    <td><img src="geneview_help%20Files/blank.gif" alt="" height="22"></td>
+    <td align="right" nowrap="nowrap">
+        <i><a target="_new" href="http://www.ensembl.org/helpdesk/index.html">Help Desk / Suggestions</a></i> 
+    </td>
+  </tr>
+</tbody></table>
+</body></html>

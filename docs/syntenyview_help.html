@@ -1,0 +1,161 @@
+
+<html>
+  <head>
+    <title>Eh?: syntenyview</title>
+    <link rel="stylesheet" type="text/css" href="/Homo_sapiens/cssfixerupper">
+  </head>
+  <body bgcolor="#ffffff" text="#000000" link="#000070" vlink="#a00000" topmargin="2" marginheight="2" leftmargin="2" marginwidth="2" onload="this.focus();">
+  
+  <table border="0" width="100%" cellspacing="0" cellpadding="0">
+    <tr valign="center">
+      <td><img src="/gfx/eh-header.gif" alt="Help" width="200" height="40"></td>
+      <td align="center">
+        <a href="javascript:self.close();"><img src="/gfx/buttons/close.gif" border="0" alt="Close" width="70" height="25" hspace="2" vspace="2"></a>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td align="center" nowrap><form action="/Homo_sapiens/helpview" method="GET">
+  <input type="hidden" name="action" value="search" />
+  <input type="text" size="14" name="kw" value="syntenyview" />
+  <input type="image" src="/gfx/buttons/lookup.gif" border="0" width="70" height="25" alt="Lookup" hspace="2" vspace="2" align="absmiddle" />
+  </form></td>
+      <td align="center"><a href="/perl/helpview"><img src="/gfx/buttons/index.gif" alt="Index" hspace="2" vspace="2" width="70" height="25" border="0"></a></td>
+    </tr>
+    <tr valign="center">
+      <td colspan="2" align="center">
+        <a href="javascript:history.back();"><img src="/gfx/buttons/prev.gif" border="0" width="70" height="25" alt="Back" hspace="2" vspace="2" align="absmiddle"></a>
+        <a href="javascript:history.forward();"><img src="/gfx/buttons/next.gif" border="0" width="70" height="25" alt="Forward" hspace="2" vspace="2" align="absmiddle"></a>
+        <small>(help history)</small>
+      </td>
+    </tr>
+    <tr><td colspan="3"><hr width="100%"></td></tr>
+  </table>
+  <table border="0" width="100%">
+    <tr valign="top">
+      <td><img src="/gfx/blank.gif" width="1" height="350" alt=""></td>
+      <td width="100%">
+   <small>&nbsp;Found 1 entry:</small><br>
+ 
+  <h3 align="center">Ensembl SyntenyView</h3><p>
+Ensembl '<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>' shows conservation of large-scale gene order between two species. 
+At present, this is only available for conservation between human, mouse and rat. 
+Ensembl has also calculated blocks of conserved gene order between <i>Caenorhabditis elegans</i> and <i>Caenorhabditis briggsae</i>, but these are not displayed in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>' because the <i>C. briggsae</i> scaffolds have not yet been assembled into chromosomes. 
+The blocks of conserved synteny for the nematodes are displayed in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=cytoview#synteny">CytoView</a>'. 
+The human-mouse-rat blocks can also be seen in '<a href="/Homo_sapiens/helpview?se=1&kw=cytoview#synteny">CytoView</a>'. 
+<br>
+A brief summary of the method appears at the bottom of this help page. 
+</p>
+
+<p>
+The left of a '<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>' page has a diagram showing chromosomal blocks of conserved synteny. 
+The right of a page shows homology matches between individual genes within the blocks (see 
+<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview#matches">below</a> for more details). 
+</p>
+
+<p>
+On the diagram, chromosome blocks where synteny is preserved between the two species are coloured similarly. 
+The link between them is indicated by a line - black if the two regions have the same orientation, brown if the regions have opposite orientation. 
+</p>
+
+<p>
+If you are in the human Ensembl web pages, the central chromosome will be a <i>Homo sapiens</i> chromosome. 
+It will be flanked by the mouse or rat chromosomes that have regions of conserved synteny with this human chromosome. 
+If you are in the mouse Ensembl pages, the central chromosome will be from <i>Mus musculus</i> and the outer chromosomes will be human or rat chromosomes with regions of conserved synteny. 
+</p>
+
+<p>
+Clicking on a coloured block of the central chromosome will display this region in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>'. 
+Pointing to a block will display the approximate chromosomal co-ordinates of the syntenic regions and also provides an option to center the display of homology matches on that block ('Centre gene list'). 
+</p>
+
+<p>
+Clicking on one of the regions in the outer chromosomes will redraw the 
+'<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>' display with that chromosome displayed centrally. 
+Note that the central chromosome will now be from the other species, and you will now be within the web pages for the other species. 
+</p>
+
+<p>
+If you jump to a '<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>' display from 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>', the <b>red</b> line on the central chromosome indicates the location from which you jumped. 
+The small red box on an outer chromosome indicates the equivalent syntenous region in the other species. 
+Navigate down the chromosome using the controls at the bottom of the right-hand panel, or return to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' to select a new region. 
+</p>
+
+<p>
+You can move to the center of a different synteny block by pointing to the block and selecting 'Centre gene list' from the pop-up menu. 
+</p>
+
+<a name="matches"> </a>
+
+<p>
+The panel on the right of a '<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>' page shows <b>homology matches between genes within the synteny blocks</b>. 
+On the left are genes from the current species (the one represented by the central chromosome on the diagram). 
+The genes are listed in order along the chromosome, together with their chromosomal locations, and the chromosomal range is shown at the bottom of the panel. 
+</p>
+
+<p>
+Move the display of genes along a chromosome by clicking on 'Upstream' or 'Downstream'. 
+If you reached 
+'<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>' by jumping from a region displayed in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>', the genes displayed will be from that region. 
+If you moved to a synteny block by pointing and selecting 'Centre gene list', the genes displayed will be from the centre of that block. 
+Otherwise, the default display will be from the start of the chromosome (p arm telomere). 
+</p>
+
+<p>
+For each gene displayed in the first column, the second column shows homologues identified by reciprocal BLAST searches. 
+The homologous genes represent the reciprocal best BLAST hits for the two species, and the location of genes within appropriate synteny blocks is also taken into account. 
+Matches therefore represent potential orthologues. 
+More than one homology match may be displayed if both BLAST and location criteria are met. 
+</p>
+
+<p>
+Clicking on a gene in either column takes you to a 
+'<a href="/Homo_sapiens/helpview?se=1&kw=geneview">GeneView</a>' display within the website of the appropriate species. 
+Clicking on a gene location takes you to a 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' display centred on the start of the gene. 
+The gene's transcript(s) will be highlighted in the display. 
+</p>
+
+<p>
+To download a list of genes with their homologues in the other species, use the 
+<a href="/Homo_sapiens/helpview?se=1&kw=martview">EnsMart</a> data mining system, and check options in the 'homology group' section at the 'OUTPUT' stage. 
+</p>
+
+<p>
+Use the "Jump to chromosome..." box at the top of the right-hand panel to see another chromosome in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>'. 
+</p>
+
+<p>Click on "Jump to MapView ..." to see statistics about the central chromosome you are viewing, and to use other 
+'<a href="/Homo_sapiens/helpview?se=1&kw=mapview">MapView</a>' functions. 
+</p>
+
+<p>
+<b>Method used to make 'synteny blocks'</b>
+<br>
+DNA-DNA matches between species are generated (for a summary of this process see 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview#match">ContigView</a>' help). 
+Matches are grouped using the criteria that matches must represent the same relative orientation of chromosome sequences and must be separated by less than 100 kb (this parameter may be varied for some species). 
+Groups that make up a block of less than 100 kb are discarded. 
+The remainder constitute the 'synteny blocks'. 
+</p>
+<br /><br />
+  
+</td></tr></table>
+<!-- begin footer -->
+
+<TABLE BORDER="0" WIDTH="100%" cellpadding="0" cellspacing="0">
+  <TR bgcolor="#f5f5ff" valign="center">
+    <TD nowrap="nowrap">&nbsp;<I>Date : 2004-10-27 13:51:20</I></TD>
+    <td><img src="/gfx/blank.gif" height="22" alt=""></td>
+    <TD ALIGN="RIGHT" nowrap="nowrap">
+        <I><A target="_new" HREF="/helpdesk/index.html">Help Desk / Suggestions</A></I>&nbsp;
+    </TD>
+  </TR>
+</TABLE>
+
