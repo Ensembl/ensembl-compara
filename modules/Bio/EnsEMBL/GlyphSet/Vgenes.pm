@@ -28,13 +28,13 @@ sub init_label {
 sub _init {
     my ($self) = @_;
     my $Config = $self->{'config'};
-    my $chr      = $self->{'container'}->{'chr'};
+    my $chr    = $self->{'extras'}->{'chr'} || $self->{'container'}->{'chr'};
    	my $genes_col = $Config->get( 'Vgenes','col_genes' );
    	my $known_col = $Config->get( 'Vgenes','col_known' );
 	
-	
     my $known_genes = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'kngene');
     my $genes = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'gene');
+    my $v_offset    = $Config->container_width() - ($self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1);
 
     return unless $known_genes->size() && $genes->size();
 
@@ -52,7 +52,7 @@ sub _init {
     foreach (@genes){
        my $known_gene = shift @known_genes;	
        my $g_x = new Sanger::Graphics::Glyph::Rect({
-			'x'      => $known_gene->{'chromosomestart'},
+			'x'      => $v_offset + $known_gene->{'chromosomestart'},
 			'y'      => 0,
 			'width'  => $known_gene->{'chromosomeend'}-$_->{'chromosomestart'},
 			'height' => $known_gene->{'scaledvalue'},
@@ -61,7 +61,7 @@ sub _init {
 		});
 	    $self->push($g_x);
 		$g_x = new Sanger::Graphics::Glyph::Rect({
-			'x'      => $_->{'chromosomestart'},
+			'x'      => $v_offset + $_->{'chromosomestart'},
 			'y'      => 0,
 			'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},
 			'height' => $_->{'scaledvalue'},

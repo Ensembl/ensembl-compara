@@ -59,8 +59,7 @@ sub _init {
     my $kba         = $self->{'container'}->{'ka'};
     my $bands       = $kba->fetch_all_by_chr_name($chr);
     
-    my $chr_length = 
-      $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
+    my $chr_length = $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
     # bottom align each chromosome!
     my $v_offset    = $Config->container_width() - $chr_length; 
     my $bpperpx     = $Config->container_width()/$Config->{'_image_height'};
@@ -154,10 +153,12 @@ sub _init {
             push @decorations, $gband;
         } else {
             $stain = 'gneg' if($self->{'config'}->{'_hide_bands'} eq 'yes' );
+            my $R = $vc_band_start;
+            my $T = $bpperpx * ( int($vc_band_end/$bpperpx) - int($vc_band_start/$bpperpx) );
             my $gband = new Sanger::Graphics::Glyph::Rect({
-                'x'                => $vc_band_start,
+                'x'                => $R,
                 'y'                => $h_offset,
-                'width'            => $vc_band_end - $vc_band_start,
+                'width'            => $T,
                 'height'           => $wid,
                 'colour'           => $COL{$stain},
                 'absolutey'        => 1,
@@ -165,18 +166,18 @@ sub _init {
             });
             $self->push($gband);
             $gband = new Sanger::Graphics::Glyph::Line({
-                'x'                => $vc_band_start,
+                'x'                => $R,
                 'y'                => $h_offset,
-                'width'            => $vc_band_end - $vc_band_start,
+                'width'            => $T,
                 'height'           => 0,
                 'colour'           => $black,
                 'absolutey'        => 1,
             });
             $self->push($gband);
             $gband = new Sanger::Graphics::Glyph::Line({
-                'x'                => $vc_band_start,
+                'x'                => $R,
                 'y'                => $h_offset+$wid,
-                'width'            => $vc_band_end - $vc_band_start,
+                'width'            => $T,
                 'height'           => 0,
                 'colour'           => $black,
                 'absolutey'        => 1,
@@ -237,7 +238,7 @@ sub _init {
         my $direction = $end ? -1 : 1;
         foreach my $I ( 0..$#lines ) {
             my ( $bg_x, $black_x ) = @{$lines[$I]};
-            my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx +(1-$end)*10;
+            my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx + ($end ? $bpperpx : 10);
             my $glyph = new Sanger::Graphics::Glyph::Line({
                 'x'         => $xx,
                 'y'         => $h_offset,
