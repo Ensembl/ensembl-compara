@@ -1,9 +1,8 @@
-# $Id$
 # 
 # BioPerl module for Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
 # 
-# Initially cared for by Philip Lijnzaad <lijnzaad@ebi.ac.uk>
-# Now cared by Elia Stupka <elia@fugu-sg.org> and Abel Ureta-Vidal <abel@ebi.ac.uk>
+# Initially cared for by Philip Lijnzaad <lijnzaad@ebi.ac.uk> and Elia Stupka <elia@tll.org.sg>
+# Now cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
 #
 # Copyright EnsEMBL
 #
@@ -21,30 +20,19 @@ FamilyAdaptor - DESCRIPTION of Object
 
   use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-  my $famdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-user   => 'myusername',
-								       -dbname => 'myfamily_db',
-								       -host   => 'myhost');
+  my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-user   => 'myusername',
+						       -dbname => 'myfamily_db',
+						       -host   => 'myhost');
 
-  my $fam_adtor = $famdb->get_FamilyAdaptor;
+  my $fa = $db->get_FamilyAdaptor;
+  my $fam = $fa->fetch_by_stable_id('ENSF000013034');
 
-  my $fam = $fam_adtor->fetch_by_stable_id('ENSF000013034');
-  my @fam = @{$fam_adtor->fetch_by_dbname_id('SPTR', 'P000123')};
-  @fam = @{$fam_adtor->fetch_by_description_with_wildcards('interleukin',1)};
-  @fam = @{$fam_adtor->fetch_all()};
+  my $ma = $db->get_MemberAdaptor;
+  my $member = $ma->fetch_by_source_stable_id('SWISSPROT', 'YSV4_CAEEL')};
+  my @fam = @{$fa->fetch_by_Member($member)};
 
-  ### You can add the FamilyAdaptor as an 'external adaptor' to the 'main'
-  ### Ensembl database object, then use it as:
-
-  $ensdb = new Bio::EnsEMBL::DBSQL::DBAdaptor->(-user....);
-
-  $ensdb->add_db_adaptor('MyfamilyAdaptor', $fam_adtor);
-
-  # then later on, elsewhere: 
-  $fam_adtor = $ensdb->get_db_adaptor('MyfamilyAdaptor');
-
-  # also available:
-  $ensdb->get_all_db_adaptors;
-  $ensdb->remove_db_adaptor('MyfamilyAdaptor');
+  @fam = @{$fa->fetch_by_description_with_wildcards('interleukin',1)};
+  @fam = @{$fa->fetch_all};
 
 =head1 DESCRIPTION
 
@@ -59,10 +47,7 @@ For more info, see ensembl-doc/family.txt
 
 =head1 CONTACT
 
- Philip Lijnzaad <Lijnzaad@ebi.ac.uk> [original perl modules]
- Anton Enright <enright@ebi.ac.uk> [TRIBE algorithm]
- Elia Stupka <elia@fugu-sg.org> [refactoring]
- Able Ureta-Vidal <abel@ebi.ac.uk> [multispecies migration]
+ Able Ureta-Vidal <abel@ebi.ac.uk>
 
 =head1 APPENDIX
 
@@ -77,14 +62,9 @@ use strict;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
-# needed by convert_store_family
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::FamilyConf;
-use Bio::EnsEMBL::Compara::Taxon;
-
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
-=head2 fetch_by_relation
+=head2 fetch_by_Member
 
  Arg [1]    : string $dbname
  Arg [2]    : string $member_stable_id
@@ -97,61 +77,33 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =cut
 
-sub fetch_by_relation {
-  my ($self, $relation) = @_;
+sub fetch_by_Member {
+  my ($self, $member) = @_;
 
-  my $join;
-  my $constraint;
+  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+  }
 
-  $self->throw() 
-    unless (defined $relation && ref $relation);
-  
-  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
-    $join = [['family_member', 'fm'], 'f.family_id = fm.family_id'];
-    my $member_id = $relation->dbID;
-    $constraint = "fm.member_id = $member_id";
-  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
-#    my $domain_id = $relation->dbID;
-#    $constraint = "df.domain_id = $domain_id";
-#  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-#  }
-  else {
-    $self->throw();
-  }
+  my $join = [['family_member', 'fm'], 'f.family_id = fm.family_id'];
+  my $constraint = "fm.member_id = ". $member->dbID;
 
   return $self->generic_fetch($constraint, $join);
 }
 
-sub fetch_by_relation_source {
-  my ($self, $relation, $source_name) = @_;
+# maybe a useful method in case more than one kind of family data is stored in the db.
+sub fetch_by_Member_source {
+  my ($self, $member, $source_name) = @_;
 
-  my $join;
-  my $constraint = "s.source_name = $source_name";
+  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+  }
 
-  $self->throw() 
-    unless (defined $relation && ref $relation);
-  
   $self->throw("source_name arg is required\n")
     unless ($source_name);
 
-  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
-    $join = [['family_member', 'fm'], 'f.family_id = fm.family_id'];
-    my $member_id = $relation->dbID;
-    $constraint .= " AND fm.member_id = $member_id";
-  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
-#    my $domain_id = $relation->dbID;
-#    $constraint = " AND df.domain_id = $domain_id";
-#  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-#  }
-  else {
-    $self->throw();
-  }
+  my $join = [['family_member', 'fm'], 'f.family_id = fm.family_id'];
+  my $constraint = "s.source_name = '$source_name'";
+  $constraint .= " AND fm.member_id = " . $member->dbID;
 
   return $self->generic_fetch($constraint, $join);
 }
@@ -282,7 +234,7 @@ sub _columns {
   return qw (f.family_id
              f.stable_id
              f.description
-             f.descritpion_score
+             f.description_score
              s.source_id
              s.source_name);
 }
@@ -342,110 +294,24 @@ sub store {
   my $sth = $self->prepare($sql);
   $sth->execute($fam->stable_id);
   my $rowhash = $sth->fetchrow_hashref;
-  if ($rowhash->{family_id}) {
-    return $rowhash->{family_id};
-  }
-  
+
   $fam->source_id($self->store_source($fam->source_name));
+
+  if ($rowhash->{family_id}) {
+    $fam->dbID($rowhash->{family_id});
+  } else {
   
-  $sql = "INSERT INTO family (stable_id, source_id, description, description_score) VALUES (?,?,?,?)";
-  $sth = $self->prepare($sql);
-  $sth->execute($fam->stable_id,$fam->source_id,$fam->description,$fam->description_score);
-  $fam->dbID($sth->{'mysql_insertid'});
+    $sql = "INSERT INTO family (stable_id, source_id, description, description_score) VALUES (?,?,?,?)";
+    $sth = $self->prepare($sql);
+    $sth->execute($fam->stable_id,$fam->source_id,$fam->description,$fam->description_score);
+    $fam->dbID($sth->{'mysql_insertid'});
+  }
 
   foreach my $member_attribue (@{$fam->get_all_Member}) {   
     $self->store_relation($member_attribue, $fam);
   }
 
   return $fam->dbID;
-}
-
-=head2 convert_store_family
-
- Arg [1]    : -family => \@Bio::Cluster::SequenceFamily
- Example    : $FamilyAdaptor->convert_store_family(-family=>\@family)
- Description: converts  Bio::Cluster::SequenceFamily objects into a Bio::EnsEMBL::Compara objects
-              and store.
- Returntype : array of dbIDs 
-              been the database family identifier, if family stored correctly
- Exceptions : 
- Caller     : general
-
-=cut
-
-sub convert_store_family {
-    my($self,@args) = @_;
-    my ($family) = $self->_rearrange([qw(FAMILY)],@args);
-
-    my %conf = %Bio::EnsEMBL::Compara::FamilyConf::FamilyConf;
-    my @ens_species = split(',',$conf{'ENSEMBL_SPECIES'});
-    my $family_prefix = $conf{"FAMILY_PREFIX"};
-    my $release       = $conf{'RELEASE'};
-    my $ext_db_name   = $conf{'EXTERNAL_DBNAME'};
-    my %taxon_species;
-    my @id;
-
-    my @taxon_str;
-    foreach my $sp(@ens_species){
-      $sp = uc $sp;
-      push @taxon_str, $conf{"$sp"."_TAXON"};
-    }
-    my  %ens_taxon_info = $self->_setup_ens_taxon(@taxon_str);
-
-
-    my @ens_fam;
-    my $family_count = $conf{"FAMILY_START"} || 1;
-    foreach my $fam (@{$family}){
-      my @members = $fam->get_members;
-      my @ens_mem;
-      foreach my $mem (@members){
-        my $taxon = $mem->species;
-        if(!$taxon->ncbi_taxid){
-            foreach my $key (keys %ens_taxon_info){
-              if($mem->display_id =~/$key/){
-                my %taxon_hash = %{$ens_taxon_info{$key}};
-                my @class = split(':',$taxon_hash{'taxon_classification'});
-                $taxon = Bio::EnsEMBL::Compara::Taxon->new(-classification=>\@class);
-                $taxon->common_name($taxon_hash{'taxon_common_name'});
-                $taxon->sub_species($taxon_hash{'taxon_sub_species'});
-                $taxon->ncbi_taxid($taxon_hash{'taxon_id'});
-                last;
-              }
-            }
-        }
-
-        bless $taxon,"Bio::EnsEMBL::Compara::Taxon";
-
-        my $member = Bio::EnsEMBL::Compara::FamilyMember->new();
-        $member->family_id($fam->family_id);
-        my ($annot) = $mem->annotation->get_Annotations('dblink');
-        $member->database(uc $annot->database);
-        $member->stable_id($mem->display_name);
-        $taxon->ncbi_taxid || $self->throw($mem->id." has no taxon id!");
-        $self->db->get_TaxonAdaptor->store_if_needed($taxon);
-	$member->taxon_id($taxon->ncbi_taxid);
-
-        $member->adaptor($self);
-
-        $member->database(uc $ext_db_name) if (! defined $member->database || $member->database eq "");
-        push @ens_mem, $member;
-      }
-      my $stable_id = sprintf ("$family_prefix%011.0d",$family_count);
-      $family_count++;
-      my $ens_fam= new Bio::EnsEMBL::Compara::Family(-stable_id=>$stable_id,
-                                                                  -members=>\@ens_mem,
-                                                                  -description=>$fam->description,
-                                                                  -score=>$fam->annotation_score,
-                                                                  -adpator=>$self);
-
-      $ens_fam->release($release);
-      #$ens_fam->annotation_confidence_score($fam->annotation_score);
-
-      push @id,$self->store($ens_fam);
-  }
-
- return @id;
-
 }
 
 #process ensembl taxon information for FamilyConf.pm
