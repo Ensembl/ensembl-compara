@@ -68,7 +68,7 @@ sub new {
 
   $self->query_length_hash($query_lengths);
   $self->target_length_hash($target_lengths);
-  $self->chains($chains);
+  $self->chains([sort {$b->[0]->score <=> $a->[0]->score} @{$chains}]);
   $self->chainNet($chain_net) if defined $chain_net;
 
   return $self;
@@ -162,10 +162,9 @@ sub write_chains {
 
   # in the absence of a chain score, we will take the score of the 
   # first block in the chain to be the score
-  my @chains = sort {$b->[0]->score <=> $a->[0]->score} @{$self->chains};
 
-  for(my $chain_id=0; $chain_id < @chains; $chain_id++) {
-    my $chain = $chains[$chain_id];
+  for(my $chain_id=0; $chain_id < @{$self->chains}; $chain_id++) {
+    my $chain = $self->chains->[$chain_id];
 
     my (@ungapped_features, 
         $chain_score,
@@ -203,8 +202,8 @@ sub write_chains {
           $sens_f->{q_end}   = $self->query_length_hash->{$uf->seqname} - $uf->start + 1;
         }
         if ($target_strand == -1) {
-          $sens_f->{t_start} = $self->target_lengths->{$uf->seqname} - $uf->hend + 1;
-          $sens_f->{t_end}   =  $self->target_lengths->{$uf->seqname} - $uf->hstart + 1;        
+          $sens_f->{t_start} = $self->target_length_hash->{$uf->hseqname} - $uf->hend + 1;
+          $sens_f->{t_end}   = $self->target_length_hash->{$uf->hseqname} - $uf->hstart + 1;        
         }
         
         push @ungapped_features, $sens_f;    
@@ -257,7 +256,7 @@ sub parse_Net_file {
   while(<$fh>) {
 
     /(\s+)fill\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\d+\s+\d+\s+(.+)$/ and do {
-      my $level_id = int( (length($1) - 1) / 2 );
+      my $level_id = int( (length($1) - 1) / 2 ) + 1;
       my $q_start  = $2 + 1;
       my $q_end    = $q_start + $3 - 1;
       my $rest = $4;
@@ -269,7 +268,10 @@ sub parse_Net_file {
           $self->restrict_between_positions($self->chains->[$chain_id],
                                             $q_start,
                                             $q_end);
+
+
       foreach my $fp (@$restricted_fps) {
+
         $fp->score($score);
         $fp->level_id($level_id);
       }
