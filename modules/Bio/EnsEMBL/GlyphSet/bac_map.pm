@@ -19,7 +19,7 @@ sub features {
         sort { $a->[0] <=> $b->[0] }
           map { [$_->seq_region_start - 
                  1e9 * (
-                   $_->get_scalar_attribute('state') - $_->get_scalar_attribute('BACend_flag')/4
+                   $_->get_scalar_attribute('state') + $_->get_scalar_attribute('BACend_flag')/4
                  ), $_] }
             @{$self->{'container'}->get_all_MiscFeatures(
               $container_length > $max_full_length*1001 ? 'acc_bac_map' : 'bac_map'
@@ -36,8 +36,7 @@ sub colour {
     (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"},
-           $f->length > $self->{'config'}->get( "bac_map", 'outline_threshold' ) ? 'border' : ''
-           ;
+           'border' ;
 }
 
 ## Return the image label and the position of the label
@@ -60,6 +59,14 @@ sub tag {
     my ($self, $f) = @_; 
     my @result = (); 
     my $bef = $f->get_scalar_attribute('BACend_flag');
+    (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
+    my ($s,$e) = $self->sr2slice( $f->get_scalar_attribute('inner_start'), $f->get_scalar_attribute('inner_end') );
+    push @result, {
+      'style'  => 'rect',
+      'colour' => $f->{'_colour_flag'} || $self->{'colours'}{"col_$state"},
+      'start'  => $s,
+      'end'    => $e
+    };
     push @result, {
         'style'  => 'right-end',
         'colour' => $self->{'colours'}{"bacend"}

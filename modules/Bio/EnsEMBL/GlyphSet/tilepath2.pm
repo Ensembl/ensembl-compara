@@ -21,11 +21,11 @@ sub features {
 sub colour {
     my ($self, $f ) = @_;
     $self->{'_colour_flag'} = $self->{'_colour_flag'}==1 ? 2 : 1;
+    $f->{'_colour_flag'} = $self->{'colours'}{"col$self->{'_colour_flag'}"};
     return 
-        $self->{'colours'}{"col$self->{'_colour_flag'}"},
+        $f->{'_colour_flag'},
         $self->{'colours'}{"lab$self->{'_colour_flag'}"},
-        $f->length > $self->{'config'}->get( "tilepath2", 'outline_threshold' ) ? 'border' : ''
-        ;
+        'border';
 }
 
 1;

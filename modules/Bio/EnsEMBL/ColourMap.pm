@@ -117,14 +117,14 @@ sub new {
   $self->colourSet( 'est',
     'default'    => 'purple1',
     'genoscope'  => 'purple3',
-    'WZ' => 'purple1',
-    'IMCB_HOME' => 'purple3'
+    'WZ'         => 'purple1',
+    'IMCB_HOME'  => 'purple3'
   );
   $self->colourSet( 'glovar_sts',
-    'col'    => 'grey',
+    'col'        => 'grey',
     'unknown'    => 'grey',
-    'pass' => 'green',
-    'fail'  => 'red',
+    'pass'       => 'green',
+    'fail'       => 'red',
   );
   $self->colourSet( 'snp',
     '_coding'      => 'red',

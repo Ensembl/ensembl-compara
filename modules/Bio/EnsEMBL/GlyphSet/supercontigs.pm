@@ -27,7 +27,7 @@ sub colour {
 
 sub image_label {
   my ($self, $f ) = @_;
-  return (@{[$f-get_scalar_attribute('name')]},'overlaid');
+  return (@{[$f->get_scalar_attribute('name')]},'overlaid');
 }
 
 sub zmenu {
