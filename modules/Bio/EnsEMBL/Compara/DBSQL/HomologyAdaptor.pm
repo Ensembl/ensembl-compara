@@ -136,24 +136,6 @@ sub fetch_all_by_genome_pair {
   return $self->generic_fetch($constraint, $join);
 }
 
-sub fetch_all_by_method_link_type {
-  my ($self,$method_link_type) = @_;
-
-  $self->throw("method_link_type arg is required\n")
-    unless ($method_link_type);
-
-  my $mlss_arrayref = $self->db->get_MethodLinkSpeciesAdaptor->fetch_all_by_method_link_type($method_link_type);
-
-  unless (scalar @{$mlss_arrayref}) {
-    warning("There is no $method_link_type data stored in the database\n");
-    return [];
-  }
-  
-  my $constraint =  " h.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-  
-  return $self->generic_fetch($constraint);
-}
-
 #
 # internal methods
 #

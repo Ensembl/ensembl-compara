@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use strict;
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -213,12 +214,36 @@ sub fetch_by_stable_id {
 
 sub fetch_by_source {
   my ($self,$source_name) = @_;
-  deprecate("deprecated method\n");
-  #call fetch_by_method_link instead
-  $self->throw("source_name arg is required\n")
-    unless ($source_name);
+  deprecate("Calling $self->fetch_all_by_method_link_type instead\n");
 
-  my $constraint = "s.source_name = '$source_name'";
+  return $self->fetch_all_by_method_link_type($source_name);
+}
+
+sub fetch_all_by_method_link_type {
+  my ($self,$method_link_type) = @_;
+
+  $self->throw("method_link_type arg is required\n")
+    unless ($method_link_type);
+
+  my $mlss_arrayref = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method_link_type);
+
+  unless (scalar @{$mlss_arrayref}) {
+    warning("There is no $method_link_type data stored in the database\n");
+    return [];
+  }
+  
+  my $constraint = "";
+
+  if ($self->isa('Bio::EnsEMBL::Compara::Homology')) {
+    $constraint .=  " h.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
+
+  } elsif ($self->isa('Bio::EnsEMBL::Compara::Family')) {
+    $constraint .=  " f.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
+
+  } elsif ($self->isa('Bio::EnsEMBL::Compara::Domain')) {
+    $constraint .=  " d.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
+
+  }
 
   return $self->generic_fetch($constraint);
 }
@@ -412,18 +437,10 @@ sub _known_sources {
   deprecate("_know_sources method is deprecated.\n");
 }
 
-=head2 get_source_id_by_source_name
-
-=cut
-
 sub get_source_id_by_source_name {
   my ($self, $source_name) = @_;
   throw("get_source_id_by_source_name method is deprecated\n");
 }
-
-=head2 get_source_name_by_source_id
-
-=cut
 
 sub get_source_name_by_source_id {
   my ($self, $source_id) = @_;
