@@ -108,12 +108,13 @@ sub eachSeq{
    my @out;
 
    $self->_ensure_loaded;
-
+   my $count = 1;
    foreach my $abs ( values %{$self->{'_align_block'}} ) {
        my @alb = $abs->get_AlignBlocks;
        my $first = $alb[0];
        my $seq = Bio::LocatableSeq->new();
-       $seq->display_id($first->dnafrag->name);
+       $seq->display_id("ensembl".$count);
+       $count++;
        $seq->start($first->start);
        $seq->end($alb[$#alb]->end);
 
@@ -186,6 +187,35 @@ sub get_displayname{
    my ($self,$nse) = @_;
 
    return $nse;
+}
+
+sub maxnse_length {
+    return 50;
+}
+
+sub maxdisplayname_length {
+    return 50;
+}
+
+sub length_aln {
+   my $self = shift;
+
+   my $abs = $self->get_AlignBlockSet(1);
+
+   # assumme that first alignblockset is the reference
+   my ($ab) = $abs->get_AlignBlocks();
+
+   return $ab->align_end;
+}
+
+sub id {
+  return "ensembl";
+}
+
+sub no_sequences {
+  my $self = shift;
+
+ return scalar($self->each_AlignBlockSet);
 }
 
 
