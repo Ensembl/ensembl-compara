@@ -83,6 +83,8 @@ sub _init {
         
        foreach(@$styles) {
           $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
+          warn Dumper( $_ );
+          $h = $_->{'attrs'}{'height'} if exists $_->{'attrs'} && exists $_->{'attrs'}{'height'};
        } 
     }
     # warn map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
@@ -181,7 +183,7 @@ sub _init {
                     'x'          => $START-1,
                     'y'          => 0,
                     'width'      => $END-$START+1,
-                    'height'     => 8,
+                    'height'     => $h,
                     'colour'     => $colour,
                     'absolutey'  => 1,
                     'zmenu'      => $zmenu
@@ -200,7 +202,7 @@ sub _init {
                         'x'         => $old_end,
                         'y'         => 0,
                         'width'     => $f_start-$old_end,
-                        'height'    => 8,
+                        'height'    => $h,
                         'colour'    => $colour,
                         'absolutey' => 1,
                         'strand'    => $STRAND,
@@ -209,7 +211,7 @@ sub _init {
                         'x'          => $f_start-1,
                         'y'          => 0,
                         'width'      => $END-$f_start+1,
-                        'height'     => 8,
+                        'height'     => $h,
                         'colour'     => $colour,
                         'absolutey' => 1,
                     }) );
@@ -236,7 +238,7 @@ sub _init {
                         'x'          => $START-1,
                         'y'          => 0,
                         'width'      => $END-$START+1,
-                        'height'     => 8,
+                        'height'     => $h,
                         'colour'     => $colour,
                         'absolutey' => 1,
                         'zmenu'     => $zmenu
@@ -246,8 +248,8 @@ sub _init {
                 $Composite->push($Composite2);
             }
             my $H =$self->feature_label( $Composite, $label , $colour, $start < 1 ? 1 : $start , $end > $length ? $length : $end );
-#            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*(1.4*$h+$H) * $row } = '';
-            $Composite->y($Composite->y() - $tstrand*(1.4*$h+$H) * $row) if $row;
+#            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*($h+2+$H) * $row } = '';
+            $Composite->y($Composite->y() - $tstrand*($h+2+$H) * $row) if $row;
             $self->push($Composite);
         }
     } else {
@@ -301,23 +303,23 @@ sub _init {
                 }
                 $display_type = 'draw_box' unless $self->can( $display_type );
                 if( $display_type eq 'draw_box') {
-                  $Composite->push( $self->$display_type( $START, $END , $colour, $self->{'pix_per_bp'} ) );
+                  $Composite->push( $self->$display_type( $h, $START, $END , $colour, $self->{'pix_per_bp'} ) );
                 } else {
                   $Composite->push(
                      new Sanger::Graphics::Glyph::Space({
     'x'          => $START-1,
     'y'          => 0,
     'width'      => $END-$START+1,
-    'height'     => 8,
+    'height'     => $h,
     'absolutey' => 1
                 }) );
                 }
             #$glyph->{'href'} = $href if $href;
             # DONT DISPLAY IF BUMPING AND BUMP HEIGHT TOO GREAT
             my $H =$self->feature_label( $Composite, $label, $colour, $START, $END );
-#            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*(1.4*$h+$H) * $row } = '';
-            $Composite->y($Composite->y() - $tstrand*(1.4*$h+$H) * $row) if $row;
-            $self->push(  $self->$display_type( $START, $END , $colour, $self->{'pix_per_bp'}, - $tstrand*(1.4*$h+$H) * $row) ) unless $display_type eq 'draw_box';
+#            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*($h+2+$H) * $row } = '';
+            $Composite->y($Composite->y() - $tstrand*($h+2+$H) * $row) if $row;
+            $self->push(  $self->$display_type( $h, $START, $END , $colour, $self->{'pix_per_bp'}, - $tstrand*($h+2+$H) * $row) ) unless $display_type eq 'draw_box';
             $self->push($Composite);
         }
     
@@ -327,25 +329,25 @@ sub _init {
 }
 
 sub draw_box {
-  my( $self, $START, $END, $colour, $pix_per_bp ) =@_;
+  my( $self, $h, $START, $END, $colour, $pix_per_bp ) =@_;
   return new Sanger::Graphics::Glyph::Rect({
     'x'          => $START-1,
     'y'          => 0,
     'width'      => $END-$START+1,
-    'height'     => 8,
+    'height'     => $h,
     'colour'     => $colour,
     'absolutey' => 1
   });
 }
 
 sub draw_farrow {
-  my( $self, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
+  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
 
   my $points;
-  if( ($END - $START+1) > 4 / $pix_per_bp ) {
-     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+8, $END - 4/$pix_per_bp, $OFFSET+8, $END, $OFFSET+4, $END - 4/$pix_per_bp, $OFFSET ];
+  if( ($END - $START+1) > $h/2 / $pix_per_bp ) {
+     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+$h, $END - $h/2/$pix_per_bp, $OFFSET+$h, $END, $OFFSET+$h/2, $END - $h/2/$pix_per_bp, $OFFSET ];
   } else {
-     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+8, $END, $OFFSET+4 ];
+     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+$h, $END, $OFFSET+$h/2 ];
   }
   return new Sanger::Graphics::Glyph::Poly({
     'points' => $points,
@@ -355,12 +357,12 @@ sub draw_farrow {
 }
 
 sub draw_rarrow {
-  my( $self, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
+  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
   my $points;
-  if( ($END - $START+1) > 4 / $pix_per_bp ) {
-     $points = [ $END, $OFFSET, $END, $OFFSET+8, $START -1 + 4/$pix_per_bp, $OFFSET+8, $START - 1, $OFFSET + 4, $START - 1 + 4/$pix_per_bp, $OFFSET ];
+  if( ($END - $START+1) > $h/2 / $pix_per_bp ) {
+     $points = [ $END, $OFFSET, $END, $OFFSET+$h, $START -1 + $h/2/$pix_per_bp, $OFFSET+$h, $START - 1, $OFFSET + $h/2, $START - 1 + $h/2/$pix_per_bp, $OFFSET ];
   } else {
-     $points = [ $END, $OFFSET, $END, $OFFSET + 8, $START-1, $OFFSET+4 ];
+     $points = [ $END, $OFFSET, $END, $OFFSET + $h, $START-1, $OFFSET+$h/2 ];
   }
   return new Sanger::Graphics::Glyph::Poly({
     'points' => $points,
@@ -400,6 +402,7 @@ sub zmenu {
   $zmenu->{"06:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
   $zmenu->{"07:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
   $zmenu->{"08:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
+
   my $href = undef;
   if($self->{'extras'}->{'fasta'}) {
     foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
