@@ -214,9 +214,8 @@ sub annotation_score{
 
 sub size {
  my ($self, $name) = @_; 
- 	#don't worry about caching...this is done in get_members_of_db
 	if (defined $name){
-		my $size = scalar($self->_members_of_db($name));
+		my $size = scalar($self->adaptor->nbr_members_of_db($self->dbID,$name));
 		return defined($size) ? $size:0;
 	}
  	else { 
@@ -285,9 +284,12 @@ sub exist {
 
 sub get_members_of_db {
 	my ($self,$dbname)=@_;
+	
 	if (!$self->_proteins_loaded){
-		#load all members anyway
-		$self->get_all_members;
+		if ($self->adaptor){
+			return $self->adaptor->fetch_members_by_dbname($self->dbID,$dbname);
+		}
+		return ();
 	}
 	$self->warn("No member of family dbID ".$self->dbID. " from $dbname") unless (scalar($self->_members_of_db($dbname) > 0));
 	return $self->_members_of_db($dbname);
@@ -313,12 +315,16 @@ sub _members {
 		
 			if (ref($proteins) eq "Bio::EnsEMBL::Compara::Protein"){
 				$self->_proteins_loaded(1);
-				push @{$self->{'_members'}{$proteins->external_dbname}},$proteins;
+				if (!exist($proteins->external_id)){
+					push @{$self->{'_members'}{$proteins->external_dbname}},$proteins;
+				}
 				$self->exist($proteins->external_id);
 			}
 			else {
 				$self->_proteins_loaded(0);
-				push @{$self->{'_members'}{'unloaded'}}, $proteins;	
+				if (!exist($proteins)){
+					push @{$self->{'_members'}{'unloaded'}}, $proteins;	
+				}
 				$self->exist($proteins);
 			}
 		}
@@ -332,7 +338,7 @@ sub _members {
 						#set the hash that this protein exists to avoid looping through all the members to check existence 
 						$self->exist($prot->external_id);
 				}			
-				$self->{'_members'}{'unloaded'}={};
+				$self->{'_members'}{'unloaded'}=();
 			}
 			else {
 				$self->_proteins_loaded(0);
@@ -357,7 +363,7 @@ sub _members {
    		 	return @{$self->{'_members'}{"unloaded"}}; 
 		}
 		else {
-			return undef;
+			return ();
 		}
 
 	}
@@ -369,7 +375,7 @@ sub _members_of_db {
 		return @{$self->{'_members'}{$dbname}};
 	}
 	else {
-		return undef;
+		return ();
 	}
 	
 }
@@ -397,7 +403,7 @@ sub get_all_members {
 	}
 	else {
 		$self->warn("No members for this family ".$self->dbID);
-		return undef;
+		return ();
 	}
 }	
 
@@ -420,16 +426,55 @@ sub create_alignment{
 	require Bio::Tools::Run::Alignment::Clustalw;
 	my $factory = Bio::Tools::Run::Alignment::Clustalw->new(@params);	
 	my @proteins = $self->get_all_members;
-	my @bioseq;
-	foreach my $prot (@proteins){
-		push @bioseq, $prot->seq();
-	}
-	my $aln = $factory->align(\@bioseq);
+	my $aln = $factory->align(\@proteins);
 	$self->alignment($type,$aln);
 	return $aln;
 	
 }
+sub create_alignment_by_member_type {
+	my ($self,@args) = @_;
+	my ($type,$dbname,$params) = $self->_rearrange([qw(
+													TYPE
+													DBNAME
+													PARAMS
+													)],@args);
+    if (!defined ($params)){
+	     @{$params} = ('matrix' => 'BLOSUM');
+    }
 
+	my @prots;
+
+	if (ref($dbname) eq "ARRAY"){
+		foreach my $db (@{$dbname}){
+			my @mems = $self->get_members_of_db($db);
+			if ($#mems >  -1){
+				push @prots, @mems;
+			}
+			else {
+				$self->warn("No members found for $db");
+			}
+		}
+		if (scalar(@prots) < 2){
+			$self->warn("No enough members to do a alignment");
+			return;
+		}
+	}
+	else{	
+		my @mems = $self->get_members_of_db($dbname);
+		if (@mems){
+			push @prots, @mems;
+		}
+		else {
+			$self->throw("No members found for $dbname. Cannot do alignment");
+		}
+	}
+	require Bio::Tools::Run::Alignment::Clustalw;
+    my $factory = Bio::Tools::Run::Alignment::Clustalw->new(@{$params});
+    my $aln = $factory->align(\@prots);
+    $self->alignment($type,$aln);
+    return $aln;
+}
+												
 =head2 alignment 
 
  Title	 : alignment 
