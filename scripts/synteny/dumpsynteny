@@ -99,7 +99,7 @@ foreach my $chr (@chromosomes) {
   my $chunk = 5000000;
   
   my $chr_name = $chr->chr_name;
-  open SYN,">$chr_name.syten.gff";
+  open SYN,"|sort -u > $chr_name.syten.gff";
   
   while ($start <= $length) {
     
@@ -111,16 +111,36 @@ foreach my $chr (@chromosomes) {
 						       $start,
 						       $end);
 
-    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_Slice($Slice,$species2,$species2_assembly);
+    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_species_region($species1,$species1_assembly,$species2,$species2_assembly,$chr->chr_name,$start,$end);
 
     print STDERR "Got features " . scalar(@{$synteny}) . "\n";
     
     foreach my $f (@{$synteny}) {
-      my $analysis = new Bio::EnsEMBL::Analysis(-gff_feature => 'similarity',
-						-gff_source => 'synteny');
-      $f->analysis($analysis);
+
+      my ($strand,$hstrand) = qw(+ +);
+
+      if ($f->strand < 0) {
+	$strand = "-";
+      }
+      if ($f->hstrand < 0) {
+	$hstrand = "-";
+      }
       
-      print SYN $f->gffstring . "\n";
+      # print out a in gff format
+      print SYN  
+	$f->seqname . "\t" .
+	"synteny\t" .
+	"similarity\t" .
+	$f->start . "\t" .
+	$f->end . "\t" .
+	$f->score . "\t" .
+	$strand . "\t" .
+	".\t" .
+	$f->hseqname . "\t" .
+	$f->hstart . "\t" .
+	$f->hend . "\t" .
+	$hstrand . "\t" .
+	".\n" 
     }
     
     $start += $chunk;
