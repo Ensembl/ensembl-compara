@@ -218,7 +218,8 @@ sub taxon_id {
 
 =head2 has_consensus
 
-  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Arg[2]     : int $method_link_id
   Example    : none
   Description: none
   Returntype : int
@@ -228,7 +229,7 @@ sub taxon_id {
 =cut
 
 sub has_consensus {
-  my ($self,$con_gdb) = @_;
+  my ($self,$con_gdb,$method_link_id) = @_;
 
   # sanity check on the GenomeDB passed in
   if( !defined $con_gdb || !$con_gdb->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
@@ -240,7 +241,7 @@ sub has_consensus {
 		 "query information from the same db");
   }
 
-  my $consensus = $self->adaptor->check_for_consensus_db( $self, $con_gdb);
+  my $consensus = $self->adaptor->check_for_consensus_db( $self, $con_gdb,$method_link_id);
 
   return $consensus;
 }
@@ -249,7 +250,8 @@ sub has_consensus {
 
 =head2 has_query
 
-  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Arg[2]     : int $method_link_id
   Example    : none
   Description: none
   Returntype : int
@@ -259,7 +261,7 @@ sub has_consensus {
 =cut
 
 sub has_query {
-  my ($self,$query_gdb) = @_;
+  my ($self,$query_gdb,$method_link_id) = @_;
 
   # sanity check on the GenomeDB passed in
   if( !defined $query_gdb || 
@@ -273,16 +275,16 @@ sub has_query {
 		 "from the same db");
   }
 
-  my $query = $self->adaptor->check_for_query_db( $self, $query_gdb );
+  my $query = $self->adaptor->check_for_query_db( $self, $query_gdb ,$method_link_id);
 
   return $query;
 }
 
 
 
-=head2 linked
+=head2 linked_genomes_by_method_link_id
 
-  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Arg[1]     : int $method_link_id
   Example    : none
   Description: none
   Returntype : int
@@ -291,10 +293,10 @@ sub has_query {
 
 =cut
 
-sub linked_genomes {
-  my ( $self ) = @_;
+sub linked_genomes_by_method_link_id {
+  my ( $self,$method_link_id ) = @_;
 
-  my $links = $self->adaptor->get_all_db_links( $self );
+  my $links = $self->adaptor->get_all_db_links( $self , $method_link_id);
 
   return $links;
 }

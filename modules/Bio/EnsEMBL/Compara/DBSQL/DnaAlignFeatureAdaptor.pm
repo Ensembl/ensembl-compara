@@ -78,9 +78,12 @@ sub new {
               the name of the chromosome to retrieve alignments from (e.g. 'X')
  Arg [6]    : int start
  Arg [7]    : int end
+ Arg [8]    : string $alignment_type
+              The type of alignments to be retrieved
+              e.g. WGA or WGA_HCR
  Example    : $gaa->fetch_all_by_species_region("Homo sapiens", "NCBI_31",
 						"Mus musculus", "MGSC_3",
-                                                "X", 250_000, 750_000);
+                                                "X", 250_000, 750_000,"WGA");
  Description: Retrieves alignments between the consensus and query species
               from a specified region of the consensus genome.
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
@@ -92,7 +95,7 @@ sub new {
 sub fetch_all_by_species_region {
   my ($self, $cs_species, $cs_assembly, 
       $qy_species, $qy_assembly,
-      $chr_name, $start, $end) = @_;
+      $chr_name, $start, $end,$alignment_type) = @_;
 
   my $dnafrag_type = 'Chromosome';
 
@@ -127,7 +130,8 @@ sub fetch_all_by_species_region {
     my $genomic_aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB($df,
 							     $qy_gdb,
 							     $df_start,
-							     $df_end);
+							     $df_end,
+							     $alignment_type);
 
     #convert genomic aligns to dna align features
     foreach my $ga (@$genomic_aligns) {
@@ -172,8 +176,10 @@ sub fetch_all_by_species_region {
  Arg [2]    : string $qy_species
               The query species to retrieve alignments against
  Arg [3]    : string $qy_assembly
-              e.g. 
- Example    : $gaa->fetch_all_by_Slice($slice, "Mus musculus");
+ Arg [4]    : string $$alignment_type
+              The type of alignments to be retrieved
+              e.g. WGA or WGA_HCR
+ Example    : $gaa->fetch_all_by_Slice($slice, "Mus musculus","WGA");
  Description: find matches of query_species in the region of a slice of a 
               subject species
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
@@ -183,7 +189,7 @@ sub fetch_all_by_species_region {
 =cut
 
 sub fetch_all_by_Slice {
-  my ($self, $slice, $qy_species, $qy_assembly) = @_;
+  my ($self, $slice, $qy_species, $qy_assembly, $assembly_type) = @_;
 
   unless($slice && ref $slice && $slice->isa('Bio::EnsEMBL::Slice')) {
     $self->throw("Invalid slice argument [$slice]\n");
@@ -199,7 +205,7 @@ sub fetch_all_by_Slice {
 
   my $key = uc(join(':', "SLICE", $slice->name,
 		 $cs_species,$cs_assembly,
-		 $qy_species, $qy_assembly));
+		 $qy_species, $qy_assembly,$assembly_type));
 
   if(exists $self->{'_cache'}->{$key}) {
     return $self->{'_cache'}->{$key};
@@ -212,7 +218,7 @@ sub fetch_all_by_Slice {
   my $features = $self->fetch_all_by_species_region($cs_species,$cs_assembly,
 						    $qy_species,$qy_assembly,
 						    $slice->chr_name,
-						    $slice_start, $slice_end);
+						    $slice_start, $slice_end,$assembly_type);
 
   if($slice_strand == 1) {
     foreach my $f (@$features) {

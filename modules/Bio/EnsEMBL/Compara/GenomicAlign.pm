@@ -58,11 +58,11 @@ sub new {
     bless $self,$class;
 
     my ( $consensus_dnafrag, $consensus_start, $consensus_end,
-	 $query_dnafrag, $query_start, $query_end, $query_strand,
+	 $query_dnafrag, $query_start, $query_end, $query_strand,$alignment_type,
 	 $score, $perc_id, $cigar_line, $adaptor ) = 
       $self->_rearrange([qw(CONSENSUS_DNAFRAG CONSENSUS_START CONSENSUS_END
                             QUERY_DNAFRAG QUERY_START QUERY_END
-			    QUERY_STRAND SCORE PERC_ID CIGAR_LINE
+			    QUERY_STRAND ALIGNMENT_TYPE SCORE PERC_ID CIGAR_LINE
 			    ADAPTOR )],@args);
 
     $self->adaptor( $adaptor ) if defined $adaptor;
@@ -73,6 +73,7 @@ sub new {
     $self->query_start( $query_start ) if defined $query_start;
     $self->query_end( $query_end ) if defined $query_end;
     $self->query_strand( $query_strand ) if defined $query_strand;
+    $self->alignment_type( $alignment_type ) if defined $alignment_type;
     $self->score( $score ) if defined $score;
     $self->perc_id( $perc_id ) if defined $perc_id;
     $self->cigar_line( $cigar_line ) if defined $cigar_line;
@@ -255,6 +256,25 @@ sub query_strand {
 }
 
 
+=head2 alignment_type
+ 
+  Arg [1]    : string $alignment_type
+  Example    : 'WGA' or 'WGA_HCR'
+  Description: get/set for attribute alignment_type
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+
+sub alignment_type {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'alignment_type'} = $arg ;
+   }
+   return $self->{'alignment_type'};
+}
 
 =head2 score
  

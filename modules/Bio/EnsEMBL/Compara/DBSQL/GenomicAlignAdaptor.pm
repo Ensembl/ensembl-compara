@@ -50,7 +50,7 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-my $DEFAULT_MAX_ALIGNMENT = 20_000;
+my $DEFAULT_MAX_ALIGNMENT = 20000;
 
 sub new {
   my $class = shift;
@@ -90,7 +90,7 @@ sub store {
 
   my $sql = "INSERT INTO genomic_align_block
              ( consensus_dnafrag_id, consensus_start, consensus_end,
-               query_dnafrag_id, query_start, query_end, query_strand,
+               query_dnafrag_id, query_start, query_end, query_strand, method_link_id,
                score, perc_id, cigar_line ) VALUES ";
   
   my @values;
@@ -105,11 +105,18 @@ sub store {
 
   # all clear for storing
   for my $ga ( @$genomic_aligns ) {
+    
+    my $method_link_id = $self->_method_link_id_by_alignment_type($ga->alignment_type);
+
+    unless (defined $method_link_id) {
+      $self->throw("There is no method_link with this type [".$ga->alignment_type."] in the DB.");
+    }
+    
     push( @values, "(".join( "," , $ga->consensus_dnafrag()->dbID(),
 			     $ga->consensus_start(), $ga->consensus_end(),
 			     $ga->query_dnafrag()->dbID(),
 			     $ga->query_start, $ga->query_end(), 
-			     $ga->query_strand(), 
+			     $ga->query_strand(),$method_link_id, 
 			     $ga->score(), $ga->perc_id(),
 			     "\"".$ga->cigar_line()."\"" ).
 	  ")" );
@@ -133,6 +140,7 @@ sub store {
                genome. Has to have a dbID().
   Arg [3]    : int $start
   Arg [4]    : int $end
+  Arg [5]    : int $method_link_id
   Example    : none
   Description: Find all GenomicAligns that overlap this dnafrag.
                Return them in a way that this frags are on the
@@ -145,7 +153,7 @@ sub store {
 
 
 sub _fetch_all_by_DnaFrag_GenomeDB_direct {
-   my ($self,$dnafrag, $target_genome, $start,$end) = @_;
+   my ($self,$dnafrag, $target_genome, $start,$end, $method_link_id) = @_;
 
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
     unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
@@ -159,14 +167,15 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
    if( defined $target_genome ) {
      $select .= ", dnafrag d"
    }
+   $select .= " WHERE gab.method_link_id = $method_link_id";
 
    my $sql;
    my $sth;
    my $result = [];
 
    if( !defined($target_genome) ||
-       $genome_db->has_query( $target_genome ) ) {
-     $sql = $select . " WHERE gab.consensus_dnafrag_id = $dnafrag_id";
+       $genome_db->has_query( $target_genome, $method_link_id) ) {
+     $sql = $select . " AND gab.consensus_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
        my $lower_bound = $start - $self->{'max_alignment_length'};
        $sql .= ( " AND gab.consensus_start <= $end
@@ -183,9 +192,9 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
    }
 
    if( !defined($target_genome) ||
-       $genome_db->has_consensus( $target_genome ) ) {
+       $genome_db->has_consensus( $target_genome, $method_link_id ) ) {
 
-     $sql = $select . " WHERE gab.query_dnafrag_id = $dnafrag_id";
+     $sql = $select . " AND gab.query_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
        my $lower_bound = $start - $self->{'max_alignment_length'};
        $sql .= ( " AND gab.query_start <= $end
@@ -214,6 +223,9 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
                his dnafrag.
   Arg [3]    : int $start
   Arg [4]    : int $end
+  Arg [5]    : string $alignment_type
+               The type of alignments to be retrieved
+               i.e. WGA or WGA_HCR
   Example    :  ( optional )
   Description: testable description
   Returntype : none, txt, int, float, Bio::EnsEMBL::Example
@@ -222,9 +234,8 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
 
 =cut
 
-
 sub fetch_all_by_DnaFrag_GenomeDB {
-  my ( $self, $dnafrag, $target_genome, $start, $end ) = @_;
+  my ( $self, $dnafrag, $target_genome, $start, $end, $alignment_type ) = @_;
 
   unless($dnafrag && ref $dnafrag && 
 	 $dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag')) {
@@ -232,20 +243,30 @@ sub fetch_all_by_DnaFrag_GenomeDB {
 		 " not a [$dnafrag]");
   }
 
+#  my $sth = $self->prepare("
+#     SELECT method_link_id
+#     FROM method_link
+#     WHERE type = ?
+#  ");
+
+#  $sth->execute($alignment_type);
+#  my ($method_link_id) = $sth->fetchrow_array();
+
+  my $method_link_id = $self->_method_link_id_by_alignment_type($alignment_type);
+
   my $genome_cons = $dnafrag->genomedb();
   my $genome_query = $target_genome;
   
   # direct or indirect ??
-  if( $genome_cons->has_consensus( $genome_query ) ||
-      $genome_cons->has_query( $genome_query )) {
-
+  if( $genome_cons->has_consensus( $genome_query ,$method_link_id) ||
+      $genome_cons->has_query( $genome_query ,$method_link_id)) {
     return $self->_fetch_all_by_DnaFrag_GenomeDB_direct
-      ( $dnafrag, $target_genome, $start, $end );
+      ( $dnafrag, $target_genome, $start, $end,$method_link_id );
     
   } else {
     # indirect checks
-    my $linked_cons = $genome_cons->linked_genomes();
-    my $linked_query = $genome_query->linked_genomes();
+    my $linked_cons = $genome_cons->linked_genomes_by_method_link_id($method_link_id);
+    my $linked_query = $genome_query->linked_genomes_by_method_link_id($method_link_id);
     
     # there are not many genomes, square effort is cheap
     my $linked = [];
@@ -260,7 +281,7 @@ sub fetch_all_by_DnaFrag_GenomeDB {
     my $set1 = [];
     for my $g ( @$linked ) {
       my $g_res = $self->_fetch_all_by_DnaFrag_GenomeDB_direct
-	( $dnafrag, $g, $start, $end );
+	( $dnafrag, $g, $start, $end,$method_link_id );
       push( @$set1, @$g_res );
     }
 
@@ -277,7 +298,7 @@ sub fetch_all_by_DnaFrag_GenomeDB {
       $end = $alignA->query_end();
 
       my $d_res = $self->_fetch_all_by_DnaFrag_GenomeDB_direct
-	( $frag, $genome_query, $start, $end );
+	( $frag, $genome_query, $start, $end ,$method_link_id);
 
       for my $alignB ( @$d_res ) {
 	$self->_add_derived_alignments( $merged_aligns, $alignA, $alignB );
@@ -650,7 +671,7 @@ sub _next_cig {
 
 sub _columns {
   return ( "consensus_dnafrag_id", "consensus_start", "consensus_end",
-	   "query_dnafrag_id", "query_start", "query_end", "query_strand",
+	   "query_dnafrag_id", "query_start", "query_end", "query_strand","method_link_id",
 	   "score", "perc_id", "cigar_line" );
 }
 
@@ -678,16 +699,16 @@ sub _objs_from_sth {
   my $result = [];
 
   my ( $consensus_dnafrag_id, $consensus_start, $consensus_end, $query_dnafrag_id,
-       $query_start, $query_end, $query_strand, $score, $perc_id, $cigar_string );
+       $query_start, $query_end, $query_strand, $method_link_id, $score, $perc_id, $cigar_string );
   if( $reverse ) {
     $sth->bind_columns
       ( \$query_dnafrag_id, \$query_start, \$query_end,  
-	\$consensus_dnafrag_id, \$consensus_start, \$consensus_end, \$query_strand,
+	\$consensus_dnafrag_id, \$consensus_start, \$consensus_end, \$query_strand, \$method_link_id,
 	\$score, \$perc_id, \$cigar_string );
   } else {
     $sth->bind_columns
       ( \$consensus_dnafrag_id, \$consensus_start, \$consensus_end, 
-	\$query_dnafrag_id, \$query_start, \$query_end, \$query_strand, 
+	\$query_dnafrag_id, \$query_start, \$query_end, \$query_strand, \$method_link_id,
 	\$score, \$perc_id, \$cigar_string );
   }
 
@@ -706,6 +727,8 @@ sub _objs_from_sth {
       }
     }
     
+    my $alignment_type = $self->_alignment_type_by_method_link_id($method_link_id);
+    
     $genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new
       (
        -adaptor => $self,
@@ -716,6 +739,7 @@ sub _objs_from_sth {
        -query_start => $query_start,
        -query_end => $query_end,
        -query_strand => $query_strand,
+       -alignment_type => $alignment_type,
        -score => $score,
        -perc_id => $perc_id,
        -cigar_line => $cigar_string
@@ -729,5 +753,43 @@ sub _objs_from_sth {
   return $result;
 }
 
+
+sub _alignment_type_by_method_link_id {
+  my ($self,$method_link_id) = @_;
+
+  unless (defined $method_link_id) {
+    self->throw("method_link_id has to be defined");
+  } 
+
+  my $sth = $self->prepare("
+     SELECT type
+     FROM method_link
+     WHERE method_link_id = ?
+  ");
+
+  $sth->execute($method_link_id);
+  my ($alignment_type) = $sth->fetchrow_array();
+
+  return $alignment_type;
+}
+
+sub _method_link_id_by_alignment_type {
+  my ($self,$alignment_type) = @_;
+
+  unless (defined $alignment_type) {
+    self->throw("alignment_type has to be defined");
+  }
+  
+  my $sth = $self->prepare("
+     SELECT method_link_id
+     FROM method_link
+     WHERE type = ?
+  ");
+
+  $sth->execute($alignment_type);
+  my ($method_link_id) = $sth->fetchrow_array();
+
+  return $method_link_id;
+}
 
 1;

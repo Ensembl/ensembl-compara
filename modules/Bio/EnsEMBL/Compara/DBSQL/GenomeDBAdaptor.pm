@@ -255,20 +255,20 @@ sub create_GenomeDBs {
   # and query dbs
 
   my $sth = $self->prepare("
-     SELECT consensus_genome_db_id, query_genome_db_id
+     SELECT consensus_genome_db_id, query_genome_db_id, method_link_id
      FROM genomic_align_genome
   ");
 
   $sth->execute;
 
   while ( my @db_row = $sth->fetchrow_array() ) {
-    my ( $con, $query ) = @db_row;
+    my ( $con, $query, $method_link_id ) = @db_row;
 
-    $genome_consensus_xreflist{$con} ||= [];
-    $genome_query_xreflist{$query} ||= [];
+    $genome_consensus_xreflist{$con .":" .$method_link_id} ||= [];
+    $genome_query_xreflist{$query .":" .$method_link_id} ||= [];
 
-    push @{ $genome_consensus_xreflist{$con}}, $query;
-    push @{ $genome_query_xreflist{$query}}, $con;
+    push @{ $genome_consensus_xreflist{$con .":" .$method_link_id}}, $query;
+    push @{ $genome_query_xreflist{$query .":" .$method_link_id}}, $con;
   }
 
   # grab all the possible species databases in the genome db table
@@ -300,6 +300,7 @@ sub create_GenomeDBs {
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
+  Arg[3]     : int $method_link_id
   Example    :
   Description: Checks to see whether a consensus genome database has been
                analysed against the specific query genome database.
@@ -313,15 +314,15 @@ sub create_GenomeDBs {
 
 
 sub check_for_consensus_db {
-  my ( $self, $query_gdb, $con_gdb ) = @_;
+  my ( $self, $query_gdb, $con_gdb, $method_link_id) = @_;
 
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
-
-  if ( exists $genome_consensus_xreflist{$cid} ) {
-    for my $i ( 0 .. $#{$genome_consensus_xreflist{$cid}} ) {
-      if ( $qid == $genome_consensus_xreflist{$cid}[$i] ) {
+  
+  if ( exists $genome_consensus_xreflist{$cid .":" .$method_link_id} ) {
+    for my $i ( 0 .. $#{$genome_consensus_xreflist{$cid .":" .$method_link_id}} ) {
+      if ( $qid == $genome_consensus_xreflist{$cid .":" .$method_link_id}[$i] ) {
 	return 1;
       }
     }
@@ -334,6 +335,7 @@ sub check_for_consensus_db {
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
+  Arg[3]     : int $method_link_id
   Example    : none
   Description: Checks to see whether a query genome database has been
                analysed against the specific consensus genome database.
@@ -347,15 +349,15 @@ sub check_for_consensus_db {
 =cut
 
 sub check_for_query_db {
-  my ( $self, $con_gdb, $query_gdb ) = @_;
+  my ( $self, $con_gdb, $query_gdb,$method_link_id ) = @_;
 
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
 
-  if ( exists $genome_query_xreflist{$qid} ) {
-    for my $i ( 0 .. $#{$genome_query_xreflist{$qid}} ) {
-      if ( $cid == $genome_query_xreflist{$qid}[$i] ) {
+  if ( exists $genome_query_xreflist{$qid .":" .$method_link_id} ) {
+    for my $i ( 0 .. $#{$genome_query_xreflist{$qid .":" .$method_link_id}} ) {
+      if ( $cid == $genome_query_xreflist{$qid .":" .$method_link_id}[$i] ) {
 	return 1;
       }
     }
@@ -367,7 +369,8 @@ sub check_for_query_db {
 
 =head2 get_all_db_links
 
-  Arg        : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
+  Arg[2]     : int $method_link_id
   Example    : 
   Description: For the GenomeDB object passed in, check is run to
                verify which other genomes it has been analysed against
@@ -381,24 +384,24 @@ sub check_for_query_db {
 =cut
 
 sub get_all_db_links {
-  my ( $self, $ref_gdb ) = @_;
+  my ( $self, $ref_gdb,$method_link_id ) = @_;
   
   my $id = $ref_gdb->dbID;
   my @gdb_list;
 
   # check for occurences of the db we are interested in
   # in the consensus list of dbs
-  if ( exists $genome_consensus_xreflist{$id} ) {
-    for my $i ( 0 .. $#{ $genome_consensus_xreflist{$id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_consensus_xreflist{$id}[$i]};
+  if ( exists $genome_consensus_xreflist{$id . ":" .$method_link_id} ) {
+    for my $i ( 0 .. $#{ $genome_consensus_xreflist{$id . ":" .$method_link_id} } ) {
+      push @gdb_list, $self->{'_cache'}->{$genome_consensus_xreflist{$id . ":" .$method_link_id}[$i]};
     }
   }
 
   # and check for occurences of the db we are interested in
   # in the query list of dbs
-  if ( exists $genome_query_xreflist{$id} ) {
-    for my $i ( 0 .. $#{ $genome_query_xreflist{$id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_query_xreflist{$id}[$i]};
+  if ( exists $genome_query_xreflist{$id . ":" .$method_link_id} ) {
+    for my $i ( 0 .. $#{ $genome_query_xreflist{$id . ":" .$method_link_id} } ) {
+      push @gdb_list, $self->{'_cache'}->{$genome_query_xreflist{$id . ":" .$method_link_id}[$i]};
     }
   }
 

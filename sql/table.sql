@@ -85,12 +85,14 @@ CREATE TABLE genomic_align_block (
   query_start int(10) DEFAULT '0' NOT NULL,
   query_end int(10) DEFAULT '0' NOT NULL,
   query_strand tinyint(4) DEFAULT '0' NOT NULL,
+  method_link_id int(10) DEFAULT '0' NOT NULL,
   score double,
   perc_id int(10),
   cigar_line mediumtext,
-  KEY consensus_idx( consensus_dnafrag_id,consensus_start,consensus_end,query_dnafrag_id),
-  KEY query_dnafrag_id (query_dnafrag_id,query_start,query_end),
-  KEY query_dnafrag_id_2 (query_dnafrag_id,query_end)
+
+  KEY consensus_idx (consensus_dnafrag_id,method_link_id,consensus_start,consensus_end,query_dnafrag_id),
+  KEY query_dnafrag_id (query_dnafrag_id,method_link_id,query_start,query_end),
+  KEY query_dnafrag_id_2 (query_dnafrag_id,method_link_id,query_end)
 );
 
 #
@@ -99,7 +101,8 @@ CREATE TABLE genomic_align_block (
 
 CREATE TABLE genomic_align_genome (
   consensus_genome_db_id int(11) DEFAULT '0' NOT NULL,
-  query_genome_db_id int(11) DEFAULT '0' NOT NULL
+  query_genome_db_id int(11) DEFAULT '0' NOT NULL,
+  method_link_id int(10) DEFAULT '0' NOT NULL
 );
 
 # method_link table specifies which kind of link can exist between species
@@ -111,10 +114,10 @@ CREATE TABLE genomic_align_genome (
 
 CREATE TABLE method_link (
   method_link_id int(10) NOT NULL auto_increment,
-  method_link_type varchar(10) DEFAULT '' NOT NULL,
-  PRIMARY KEY (method_link_id)
+  type varchar(50) DEFAULT '' NOT NULL,
+  PRIMARY KEY (method_link_id),
+  KEY type (type)
 );
-
 
 # method_link_species table specifying which species are part of a 
 # method_link_id
@@ -125,8 +128,9 @@ CREATE TABLE method_link (
 
 CREATE TABLE method_link_species (
   method_link_id int(10),
+  species_set int(10),
   genome_db_id int(10),
-  UNIQUE method_link_id (method_link_id,genome_db_id)
+  UNIQUE method_link_id (method_link_id,species_set,genome_db_id)
 );
 
 #
