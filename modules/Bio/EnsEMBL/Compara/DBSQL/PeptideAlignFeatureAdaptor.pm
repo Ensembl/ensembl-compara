@@ -92,7 +92,7 @@ sub fetch_all_by_hmember_id{
                the database id for a peptide member
   Example    : $pafs = $adaptor->fetch_all_by_qmember_id_hmember_id($qmember_id, $hmember_id);
   Description: Returns all PeptideAlignFeatures for a given query member and
-               hit member.  If pair didn't align array will be empty.
+               hit member.  If pair did not align, array will be empty.
   Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : thrown if either member_id is not defined
   Caller     : general
@@ -272,7 +272,7 @@ sub _store_PAFS {
                 ",".$paf->hstart.
                 ",".$paf->hend.
                 ",".$paf->score.
-                ",'".$paf->evalue."'".
+                ",".$paf->evalue.
                 ",".$paf->alignment_length.
                 ",".$paf->identical_matches.
                 ",".$paf->perc_ident.
@@ -730,21 +730,6 @@ sub _recursive_find_brh_pafs_for_member_genome_db
   $sth->finish;
 }
 
-
-=head2 _generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-
-=cut
 
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;

@@ -364,7 +364,7 @@ CREATE TABLE peptide_align_feature (
   hstart                      int(11) DEFAULT '0' NOT NULL,
   hend                        int(11) DEFAULT '0' NOT NULL,
   score                       double(16,4) DEFAULT '0.0000' NOT NULL,
-  evalue                      varchar(20),
+  evalue                      double,
   align_length                int(10),
   identical_matches           int(10),
   perc_ident                  int(10),
