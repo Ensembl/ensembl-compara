@@ -10,8 +10,8 @@ sub my_label { return "EST cluster"; }
 sub features {
     my ($self) = @_;
     return (
-      $self->{'container'}->get_all_SimilarityFeatures( "EST_cluster_WashU", 80, $self->glob_bp),
-      $self->{'container'}->get_all_SimilarityFeatures( "EST_cluster_IMCB", 80, $self->glob_bp)
+      $self->{'container'}->get_all_SimilarityFeatures( "EST_cluster_WashU", 80),
+      $self->{'container'}->get_all_SimilarityFeatures( "EST_cluster_IMCB", 80)
     );
 }
 

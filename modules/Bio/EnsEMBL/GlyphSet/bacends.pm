@@ -9,7 +9,7 @@ sub my_label { return "BAC ends"; }
 
 sub features {
   my ($self) = @_;
-  my $T = $self->{'container'}->get_all_SimilarityFeatures( "BACends", 0, $self->glob_bp);
+  my $T = $self->{'container'}->get_all_SimilarityFeatures( "BACends", 0);
   foreach( @$T ) { 
     ( my $X = $_->{'true_id'} = $_->id() ) =~ s/(\.[xyz][abc]|T7|SP6)$//;
     $_->id( $X );

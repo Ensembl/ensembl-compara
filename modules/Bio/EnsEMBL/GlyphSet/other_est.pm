@@ -9,7 +9,7 @@ sub my_label { return "Other ESTs"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures( "other_est", 80, $self->glob_bp);
+    return $self->{'container'}->get_all_SimilarityFeatures( "other_est", 80);
 }
 
 sub href {

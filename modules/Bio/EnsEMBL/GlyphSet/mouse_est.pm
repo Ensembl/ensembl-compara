@@ -9,7 +9,7 @@ sub my_label { return "Mouse ESTs"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures( "mouse_est", 80, $self->glob_bp);
+    return $self->{'container'}->get_all_SimilarityFeatures( "mouse_est", 80);
 }
 
 sub href {

@@ -10,7 +10,7 @@ sub my_label { return "Other proteins"; }
 sub features {
     my ($self) = @_;
     return $self->{'container'}->get_all_SimilarityFeatures(
-        "other_protein", 80, $self->glob_bp
+        "other_protein", 80
     );
 }
 

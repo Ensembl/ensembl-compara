@@ -10,7 +10,7 @@ sub my_label { return "Riken prots"; }
 sub features {
     my ($self) = @_;
     return $self->{'container'}->get_all_SimilarityFeatures(
-        "riken_prot", 80, $self->glob_bp
+        "riken_prot", 80
     );
 }
 
