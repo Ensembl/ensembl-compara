@@ -23,7 +23,7 @@ my $dest_dbpass;
 my $species1 = "Homo sapiens";
 my $assembly1 = "NCBI34";
 my $species2 = "Pan troglodytes";
-my $assembly2 = "BROAD1";
+my $assembly2 = "CHIMP1";
 my $alignment_type = "BLASTZ_RECIP_NET";
 
 GetOptions('host=s' => \$host,
