@@ -525,6 +525,9 @@ sub _objs_from_sth {
     } else {
       push @members, $member;
     }
+    my $gene = $self->fetch_gene_for_peptide_member_id($member->dbID);
+    $member->gene_member($gene);
+    
   }
   return \@members
 }

@@ -485,15 +485,15 @@ sub bioseq {
   Description: returns sequence this member as a Bio::Seq object
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions : if arg[0] isn't a Bio::EnsEMBL::Compara::Member object
-  Caller     : PeptideAlignFeatureAdaptor (set), general
+  Caller     : MemberAdaptor(set), general
 
 =cut
 
 sub gene_member {
   my $self = shift;
+  my $gene_member = shift;
 
-  if (@_) {
-    my $gene_member = shift;
+  if ($gene_member) {
     $self->throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$gene_member]")
       unless ($gene_member->isa('Bio::EnsEMBL::Compara::Member'));
     $self->{'_gene_member'} = $gene_member;
