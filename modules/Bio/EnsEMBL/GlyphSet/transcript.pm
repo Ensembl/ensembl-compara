@@ -54,7 +54,7 @@ sub _init {
     }
 
     GENE: for my $eg (@allgenes) {
-    my $vgid = $eg->id();
+    	my $vgid = $eg->id();
         my $hi_colour = $Config->get($scriptname,'transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 
     TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
@@ -107,16 +107,24 @@ sub _init {
         }
         
         my $tid = $transcript->id();
-        my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-        'zmenu'  => {
-            'caption'			=> $id,
-            'More information'          => "/perl/geneview?transcript=$id",
-            'Peptide sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
-            'Supporting evidence'       => "/perl/transview?transcript=$tid",
-            'cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
-	    },
-        });
-
+        my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
+		
+		if ($tid =~ /(.*)\.trans\.(\d+)/o){
+			# if we have an EMBL external transcript we need different links...
+        	$Composite->{'zmenu'}  = {
+            	'caption'					=> "EMBL: $1.$2",
+            	'More information'          => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$1",
+	    	};
+		} else {
+			# we have a normal Ensembl transcript...
+        	$Composite->{'zmenu'}  = {
+            	'caption'					=> $id,
+            	'More information'          => "/perl/geneview?gene=$vgid",
+            	'Peptide sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
+            	'Supporting evidence'       => "/perl/transview?gene=$tid",
+            	'cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
+	    	};
+		}
         my @exons = $transcript->each_Exon_in_context($vcid);
 
         my ($start_screwed, $end_screwed);

@@ -86,6 +86,8 @@ sub _init {
 	    $start  = ($vg->each_Transcript())[0]->start_exon->start();
 	    $end    = ($vg->each_Transcript())[-1]->end_exon->end();
 	    $label  = $vg->id;
+	    $label  =~ s/gene\.//;
+	
 	}
     
 	my $fontname = "Tiny";

@@ -31,25 +31,22 @@ sub _init {
 
     my $VirtualContig = $self->{'container'};
     my $Config = $self->{'config'};
+	my $vclen	= $VirtualContig->length();
+	return if ($vclen < 10000);	# don't want a GC plot for very short sequences
+
 
     my $h               = 0;
     my $highlights      = $self->highlights();
     my $feature_colour 	= $Config->get($Config->script(),'gcplot','hi');
     my $alt_colour 	    = $Config->get($Config->script(),'gcplot','low');
 	my $cmap 			= $Config->colourmap();
-	#my $black 			= $cmap->add_rgb([0,0,0]);
-	#my $red 			= $cmap->add_rgb([255,0,0]);
 	my $black 			= $cmap->id_by_name('black');
 	my $red 			= $cmap->id_by_name('red');
 	my $rust 			= $cmap->id_by_name('rust');
 	
-	#my $divlen = 20000;
 	my $im_width = $Config->image_width();
-	#if ($divlen > 400) { $divlen = 400;}
-		
-	#my $divs = int(($VirtualContig->length())/$divlen);
 	my $divs = int($im_width/5);
-	my $divlen = int($VirtualContig->length()/$divs);
+	my $divlen = int($vclen/$divs);
 	
 	#print STDERR "Divs = $divs\n";
 	my $seq = $VirtualContig->seq();
@@ -63,6 +60,7 @@ sub _init {
 		#$subseq =~ s/N//igo;
 		my $G = $subseq =~ tr/G/G/;
 		my $C = $subseq =~ tr/C/C/;
+		next if (length($subseq) <= 0); # catch divide by zero....
 		my $percent = int((($G+$C)/length($subseq))*100);
 		#print STDERR "$percent\n";
 		if ($percent > 20){
@@ -118,7 +116,7 @@ sub _init {
 	my $line = new Bio::EnsEMBL::Glyph::Line({
 	    'x'      	=> 0,
 	    'y'      	=> $median, # 50% point for line
-	    'width'  	=> $VirtualContig->length(),
+	    'width'  	=> $vclen,
 	    'height' 	=> 0,
 	    'colour' 	=> $rust,
 		'absolutey' => 1,
@@ -132,7 +130,7 @@ sub _init {
 	my ($w,$h) = $Config->texthelper->px2bp($fontname);
 	my $bp_textwidth = $w * length($text) * 1.1; # add 10% for scaling text
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-		'x'      	=> $VirtualContig->length()/2 - $bp_textwidth/2,
+		'x'      	=> $vclen/2 - $bp_textwidth/2,
 		'y'      	=> 22,
 		'height'    => $Config->texthelper->height($fontname),
 		'font'   	=> $fontname,

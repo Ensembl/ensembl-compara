@@ -66,11 +66,21 @@ sub _init {
 	    $start    = $vg->start();
 	    $end      = $vg->end();
 	} else {
+	    # EXTERNAL ANNOYING GENES
 	    $colour   = $ext_col;
-	    $start    = ($vg->each_Transcript())[0]->start_exon->start();
-	    $end      = ($vg->each_Transcript())[-1]->end_exon->end();
+	    my @exons;
+	    foreach my $trans ($vg->each_Transcript){
+		push @exons,(	$trans->start_exon->start,
+				$trans->start_exon->end,
+				$trans->end_exon->start,
+				$trans->end_exon->end,
+			    );
+	    } 		
+	    @exons = sort {$a <=> $b} @exons;
+	    $start    = $exons[0];
+	    $end      = $exons[-1];   
 	}
-
+	 
 	my $rect = new Bio::EnsEMBL::Glyph::Rect({
 	    'x'         => $start,
 	    'y'         => $y,
@@ -82,23 +92,25 @@ sub _init {
 
 	#########
 	# bump it baby, yeah!
-    	# bump-nology!
+    # bump-nology!
 	#
-    	my $bump_start = int($rect->x() * $pix_per_bp);
+    my $bump_start = int($rect->x() * $pix_per_bp);
 	$bump_start    = 0 if ($bump_start < 0);
 
-    	my $bump_end = $bump_start + int($rect->width()*$pix_per_bp);
-    	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-    	my $row = &Bump::bump_row(      
-	    $bump_start,
-	    $bump_end,
-	    $bitmap_length,
-	    \@bitmap
-    	);
+    my $bump_end = $bump_start + int($rect->width()*$pix_per_bp);
+    if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
+    my $row = &Bump::bump_row(      
+	$bump_start,
+	$bump_end,
+	$bitmap_length,
+	\@bitmap
+    );
 
-	    next if $row > $Config->get($Config->script(), 'gene', 'dep');
-    	$rect->y($rect->y() + (1.5 * $row * $h));
-    	$self->push($rect);
+	# we don't bump genes...(as opposed to transcripts)
+	#next if $row > $Config->get($Config->script(), 'gene', 'dep');
+    #$rect->y($rect->y() + (1.5 * $row * $h));
+    $self->push($rect);
+	
     }
     &eprof_end("gene-render-code");
     

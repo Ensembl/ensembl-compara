@@ -16,17 +16,20 @@ sub _init {
     #return unless ($self->strand() == -1);
     my $h          = 0;
     my $highlights = $self->highlights();
+  	my @units = qw( bp Kb Mb Gb );
 
     my $fontname = "Tiny";
 
     my $feature_colour 	= $self->{'config'}->get($self->{'config'}->script(),'scalebar','col');
 
 	my $len = $self->{'container'}->length();
+	my $global_start = $self->{'container'}->_global_start();
 	my $divs = 0;
 	$divs = set_scale_division($len);
 	#print "Div size: $divs\n";
 	#print "Number divs: ", int($len/$divs), "($len)<BR>\n";
 
+	
 	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 		'x'         => 0,
 		'y'         => 4,
@@ -49,7 +52,7 @@ sub _init {
 		});
 		$self->push($tick);
 
-		my $text = int($i * $divs + $self->{'container'}->_global_start());
+		my $text = int($i * $divs + $global_start);		
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 		    'x'      	=> $i * $divs,
 		    'y'      	=> 8,

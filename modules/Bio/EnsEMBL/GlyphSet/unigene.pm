@@ -60,7 +60,7 @@ sub _init {
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 			'zmenu'     => { 
 				'caption' => "$i",
-				'NCBI UniGene' => "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=$unigeneid",		
+				"UniGene cluster $i" => "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=$unigeneid",		
 			},
 	    });
 		foreach my $f (@{$id{$i}}){
