@@ -11,16 +11,23 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::DBLoader;
 
 
+# ok this is a hack, but I'm going to pretend I've got an object here
+# by creating a blessed hash ref and passing it around like an object
+# this is to avoid using global variables in functions, and to consolidate
+# the globals into a nice '$self' package
+my $self = bless {};
+
+$self->{'compara_conf'} = {};
+$self->{'compara_conf'}->{'-user'} = 'ensro';
+$self->{'compara_conf'}->{'-port'} = 3306;
+
+$self->{'speciesList'} = ();
+$self->{'removeXedSeqs'} = undef;
+$self->{'outputFasta'} = undef;
+$self->{'noSplitSeqLines'} = undef;
+
 my $conf_file;
-my %analysis_template;
-my @speciesList = ();
-
-my %compara_conf = ();
-#$compara_conf{'-user'} = 'ensadmin';
-$compara_conf{'-port'} = 3306;
-
-my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
-my ($subset_id, $genome_db_id, $prefix, $fastaFile);
+my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
@@ -29,41 +36,39 @@ GetOptions('help'     => \$help,
            'dbuser=s' => \$user,
            'dbpass=s' => \$pass,
            'dbname=s' => \$dbname,
-           'file=s'   => \$fastaFile,
+           'fasta=s'  => \$self->{'outputFasta'},
+           'noX=i'    => \$self->{'removeXedSeqs'},
+           'nosplit'  => \$self->{'noSplitSeqLines'},
           );
 
 if ($help) { usage(); }
 
-parse_conf($conf_file);
+parse_conf($self, $conf_file);
 
-if($host)   { $compara_conf{'-host'}   = $host; }
-if($port)   { $compara_conf{'-port'}   = $port; }
-if($dbname) { $compara_conf{'-dbname'} = $dbname; }
-if($user)   { $compara_conf{'-user'}   = $user; }
-if($pass)   { $compara_conf{'-pass'}   = $pass; }
+if($host)   { $self->{'compara_conf'}->{'-host'}   = $host; }
+if($port)   { $self->{'compara_conf'}->{'-port'}   = $port; }
+if($dbname) { $self->{'compara_conf'}->{'-dbname'} = $dbname; }
+if($user)   { $self->{'compara_conf'}->{'-user'}   = $user; }
+if($pass)   { $self->{'compara_conf'}->{'-pass'}   = $pass; }
 
 
-unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and defined($compara_conf{'-dbname'})) {
+unless(defined($self->{'compara_conf'}->{'-host'})
+       and defined($self->{'compara_conf'}->{'-user'})
+       and defined($self->{'compara_conf'}->{'-dbname'}))
+{
   print "\nERROR : must specify host, user, and database to connect to compara\n\n";
   usage(); 
 }
 
-unless(defined($fastaFile)) {
+unless(defined($self->{'outputFasta'})) {
   print "\nERROR : must specify file into which to dump fasta sequences\n\n";
   usage();
 }
 
-
-# ok this is a hack, but I'm going to pretend I've got an object here
-# by creating a blessed hash ref and passing it around like an object
-# this is to avoid using global variables in functions, and to consolidate
-# the globals into a nice '$self' package
-my $self = bless {};
-
-$self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
 $self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
 
-dump_fasta($self, $fastaFile);
+dump_fasta($self);
 
 exit(0);
 
@@ -83,7 +88,9 @@ sub usage {
   print "  -dbname <name>         : compara mysql database <name>\n";
   print "  -dbuser <name>         : compara mysql connection user <name>\n";
   print "  -dbpass <pass>         : compara mysql connection password\n";
-  print "  -file <path>           : file where fasta dump happens\n";
+  print "  -fasta <path>          : file where fasta dump happens\n";
+  print "  -noX <num>             : don't dump if <num> 'X's in a row in sequence\n";
+  print "  -nosplit               : don't split sequence lines into readable format\n";
   print "comparaDumpAllPeptides.pl v1.1\n";
   
   exit(1);  
@@ -91,7 +98,8 @@ sub usage {
 
 
 sub parse_conf {
-  my($conf_file) = shift;
+  my $self      = shift;
+  my $conf_file = shift;
 
   if($conf_file and (-e $conf_file)) {
     #read configuration file from disk
@@ -100,13 +108,13 @@ sub parse_conf {
     foreach my $confPtr (@conf_list) {
       #print("HANDLE type " . $confPtr->{TYPE} . "\n");
       if($confPtr->{TYPE} eq 'COMPARA') {
-        %compara_conf = %{$confPtr};
+        $self->{'compara_conf'} = $confPtr;
       }
       if($confPtr->{TYPE} eq 'BLAST_TEMPLATE') {
-        %analysis_template = %{$confPtr};
+        $self->{'analysis_template'} = $confPtr;
       }
       if($confPtr->{TYPE} eq 'SPECIES') {
-        push @speciesList, $confPtr;
+        push @{$self->{'speciesList'}}, $confPtr;
       }
     }
   }
@@ -114,7 +122,7 @@ sub parse_conf {
 
 
 sub dump_fasta {
-  my($self, $fastafile) = @_;
+  my $self = shift;
 
   my $sql = "SELECT member.stable_id, member.description, sequence.sequence " .
             " FROM member, sequence, source " .
@@ -123,6 +131,7 @@ sub dump_fasta {
             " AND member.sequence_id=sequence.sequence_id " .
             " GROUP BY member.member_id ORDER BY member.stable_id;";
 
+  my $fastafile = $self->{'outputFasta'};
   open FASTAFILE, ">$fastafile"
     or die "Could open $fastafile for output\n";
   print("writing fasta to loc '$fastafile'\n");
@@ -134,8 +143,15 @@ sub dump_fasta {
   $sth->bind_columns( undef, \$stable_id, \$description, \$sequence );
 
   while( $sth->fetch() ) {
-    $sequence =~ s/(.{72})/$1\n/g;
-    print FASTAFILE ">$stable_id $description\n$sequence\n";
+    $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
+
+    #if removedXedSeqs defined then it contains the minimum num of
+    # Xs in a row that is not acceptable, the regex X{#,}? says
+    # if X occurs # or more times (not exhaustive search)
+    unless($self->{'removeXedSeqs'} and
+          ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
+      print FASTAFILE ">$stable_id $description\n$sequence\n";
+    }
   }
   close(FASTAFILE);
 
