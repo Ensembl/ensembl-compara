@@ -83,6 +83,7 @@ sub fetch_homologues_of_gene {
 
 	push @genes,$self->_get_homologues($q); 
     }
+
     return @genes;
 }                               
 
@@ -188,8 +189,6 @@ sub _fetch_homologues_by_species_relationship_id{
             where   gd.genome_db_id = grm.genome_db_id 
 	    and	    gd.name = '$hspecies' 
             and	    grm.gene_relationship_id = $internal_id";
-
-    warn $q;
 
     my @genes=$self->_get_homologues($q);
 
