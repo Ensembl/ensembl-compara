@@ -40,108 +40,55 @@ sub init_label {
   }) );
 }
 
-sub _initOLD {
-  my ($self) = @_;
-  ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
-  $das_config_key =~ s/^managed_das/das/;
-  my $Config = $self->{'config'};
-  my $strand = $Config->get($das_config_key, 'str');
-  my $Extra  = $self->{'extras'};
 
-# If strand is 'r' or 'f' then we display everything on one strand (either
-# at the top or at the bottom!
-  return if( $strand eq 'r' && $self->strand() != -1 || $strand eq 'f' && $self->strand() != 1 );
-  my $h;
-  $self->{'bitmap'} = [];    
-  my $configuration = {
-    'strand'   => $strand,
-    'tstrand'  => $self->strand,
-    'STRAND'   => $self->strand(),
-    'cmap'     => $Config->colourmap(),
-    'colour'   => $Config->get($das_config_key, 'col') || 'contigblue1',
-    'depth'    => $Config->get($das_config_key, 'dep'),
-    'use_style'=> $Config->get($das_config_key, 'stylesheet') eq 'Y',
-    'length'   => $self->{'container'}->length() +1,
-    'labelling'=> $Extra->{'labelflag'} =~ /^[ou]$/i ? 1 : 0,
-
-  };
-  $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
-  $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
-  ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
-  $self->{'textwidth'}     *= (1 + 1/($configuration->{'length'}||1) );
-  $configuration->{'h'} = $self->{'textheight'};
-
-  my $dsn = $Extra->{'dsn'};
-  
-  my( $features, $styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
-  my @features = 
-  sort { $a->das_start <=> $b->das_start }
-  grep {
-    $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
-    $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
-    $_->das_start <= $configuration->{'length'} &&
-    $_->das_end > 0
-  } @{ $features || [] };
-
-  foreach (@features) {
-    warn printf( "%12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
-  }
-  $configuration->{'features'} = \@features;
-  my %styles;
-  if( $styles && @$styles && $configuration->{'use_style'} ) {
-    foreach(@$styles) {
-      $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
-      $configuration->{'h'} = $_->{'attrs'}{'height'} if exists $_->{'attrs'} && exists $_->{'attrs'}{'height'};
-    } 
-    $configuration->{'styles'} = \%styles;
-  } else {
-    $configuration->{'use_style'} = 0;
-  }
-  $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
-  $self->{'ext_url'}      = ExtURL->new( $Extra->{'name'} =~ /^managed_extdas/ ? ($Extra->{'linkURL'} => $Extra->{'linkURL'}) : () );
-
-
-  $self->{helplink} = $Config->get($das_config_key, 'helplink');
-  my $renderer = $Config->get($das_config_key, 'renderer');
-  $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
-
-
-  return $self->$renderer( $configuration );
-}
-
+# Render ungrouped features
 
 sub RENDER_simple {
   my( $self, $configuration ) = @_;
   my $old_end = -1e9;
   my $empty_flag = 1;
 
-# flag to indicate if not all features have been displayed 
+  # flag to indicate if not all features have been displayed 
   my $more_features = 0;
 
   foreach my $f( sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'}} ){
+
+    # Handle DAS errors first
     if($f->das_type_id() eq '__ERROR__') {
       $self->errorTrack(
         'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')'
       );
-      return -1 ;
+      return -1 ;   # indicates no features drawn because of DAS error
     }
-    $empty_flag = 0; # We have a feature (its on one of the strands!)
+    
+    $empty_flag &&= 0; # We have a feature (its on one of the strands!)
+
+    # Skip features that aren't on the current strand, if we're doing both
+    # strands
     next if $configuration->{'strand'} eq 'b' && ( $f->strand() !=1 && $configuration->{'STRAND'}==1 || $f->strand() ==1 && $configuration->{'STRAND'}==-1);
+
     my $ID    = $f->das_id;
     my $label = $f->das_group_label || $f->das_feature_label || $ID;
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
-    my $row = 0;
-    my $START = $f->das_start() <  1       ? 1       : $f->das_start();
+    my $row = 0; # bumping row
+
+    # keep within the window we're drawing
+    my $START = $f->das_start() < 1 ? 1 : $f->das_start();
     my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+
+    # bump if required
     if( $configuration->{'depth'} > 0 ) {
       $row = $self->bump( $START, $END, $label_length, $configuration->{'depth'} );
       if( $row < 0 ) { ## SKIP IF BUMPED...
 	  $more_features = 1;
 	  next;
       }
-    } else {
-      next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
+    } 
+    else {
+	## Skip the intron/exon if they will not be drawn...
+	next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; 
     }
+
     my ($href, $zmenu ) = $self->zmenu( $f );
     $old_end = $START;
     my $Composite = new Sanger::Graphics::Glyph::Composite({
@@ -154,18 +101,30 @@ sub RENDER_simple {
     my $display_type;
     my $style;
     my $colour;
+    my $glyph_height;
+    my $row_height = $configuration->{'h'};
 
+    # Configure style for this feature
     if($configuration->{'use_style'}) {
-      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id} || $configuration->{'styles'}{$f->das_type_category}{'default'} || $configuration->{'styles'}{'default'}{'default'};
+      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
+      $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
+      $style ||= $configuration->{'styles'}{'default'}{'default'};
+
       $colour = $style->{'attrs'}{'fgcolor'}||$configuration->{'colour'};
       $display_type = "draw_".$style->{'glyph'} || 'draw_box';
-    } else {
+      if (exists $style->{'attrs'} && exists $style->{'attrs'}{'height'}){
+        $glyph_height = $style->{'attrs'}{'height'};
+      }
+    } 
+    else {
+      $glyph_height = $configuration->{'h'};
       $colour = $configuration->{'colour'};
       $display_type = 'draw_box';
     }
 
 
-# if it is a summary of non-positional features then just display a gene-wide line with a link to geneview where all annotations can be viewed
+    # if it is a summary of non-positional features then just display a 
+    # gene-wide line with a link to geneview where all annotations can be viewed
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
       my $f     = shift @{$configuration->{'features'}};
       my $START = $f->das_start() < 1        ? 1       : $f->das_start();
@@ -179,7 +138,7 @@ sub RENDER_simple {
         'x'          => $START-1,
         'y'          => 0,
         'width'      => 0,
-        'height'     => $configuration->{'h'},
+        'height'     => $glyph_height,
         'colour'     => $colour,
         'absolutey'  => 1
       });
@@ -190,7 +149,7 @@ sub RENDER_simple {
         'x'          => $START,
         'y'          => 0,
         'width'      => 0,
-        'height'     => $configuration->{'h'},
+        'height'     => $glyph_height,
         'colour'     => $colour,
         'absolutey'  => 1,
         'absolutex'  => 1
@@ -198,7 +157,7 @@ sub RENDER_simple {
 
       $Composite->push($glyph);
 
-      my $md = $configuration->{'h'} / 2; 
+      my $md = $glyph_height / 2; 
 
       $glyph = new Sanger::Graphics::Glyph::Rect({
         'x'          => $START-1,
@@ -215,43 +174,77 @@ sub RENDER_simple {
         'x'          => $END-1,
         'y'          => 0,
         'width'      => 1,
-        'height'     => $configuration->{'h'},
+        'height'     => $glyph_height,
         'colour'     => $colour,
         'absolutey'  => 1
       });
 
       $Composite->push($glyph);
 
-  } else {
+  } 
+  else {
     $display_type = 'draw_box' unless $self->can( $display_type );
     if( $display_type eq 'draw_box') {
-      $Composite->push( $self->$display_type( $configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'} ) );
-    } else {
+      $Composite->push( $self->draw_box($glyph_height, 
+					$START, 
+					$END , 
+					$colour, 
+					$self->{'pix_per_bp'} 
+					)
+				    );
+    } 
+    else {
+      # clickable box
       $Composite->push( new Sanger::Graphics::Glyph::Space({
         'x'         => $START-1,
         'y'         => 0,
         'width'     => $END-$START+1,
-        'height'    => $configuration->{'h'},
+        'height'    => $glyph_height,
         'absolutey' => 1
       }) );
     }
-}
-    my $H =$self->feature_label( $Composite, $label, $colour, $START, $END );
-    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) if $row;
-    $self->push(  $self->$display_type( $configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'}, - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) ) unless $display_type eq 'draw_box';
-    $self->push( $Composite );
   }
+
+    # Draw label
+    my $label_height =$self->feature_label( $Composite, 
+					    $label, 
+					    $colour, 
+					    $glyph_height,
+					    $START, 
+					    $END );
+
+
+    # Draw non-box features
+    unless ($display_type eq 'draw_box'){
+	$self->push( $self->$display_type( $glyph_height, 
+					    $START, 
+					    $END , 
+					    $colour, 
+					    $self->{'pix_per_bp'}, 
+	- $configuration->{'tstrand'}*($row_height+2+$label_height) * $row
+					)
+		    );  
+    }	
+
+    # Offset y coords by which row we're on
+    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row) if $row;
+
+    $self->push( $Composite );
+  } # END loop over features
+
   $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
 
   if($more_features) {
-# There are more features to display : show the note
+    # There are more features to display : show the note
       my $yx = $configuration->{'depth'};
       my $ID = 'There are more '.$self->{'extras'}->{'label'}.' features in this region. Increase source depth to view them all ';
       $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
   }    
 
   return $empty_flag ? 0 : 1 ;
-}
+
+}   # END RENDER_simple
+
 
 sub RENDER_grouped {
   my( $self, $configuration ) = @_; 
@@ -260,45 +253,65 @@ sub RENDER_grouped {
 
   ## GROUP THE FEATURES....
   foreach my $f(@{$configuration->{'features'}}){
+
+    # Handle DAS errors first
     if($f->das_type_id() eq '__ERROR__') {
       $self->errorTrack( 'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')' );
-      return -1; ## A "-1" return indicates no features drawn because DAS returned an error....
+      return -1; # indicates no features drawn because of DAS error
     }
+
+    # Skip features that aren't on the current strand, if we're doing both
+    # strands
     next if $configuration->{'strand'} eq 'b' && ( $f->strand() !=1 && $configuration->{'STRAND'}==1 || $f->strand() ==1 && $configuration->{'STRAND'}==-1);
+
+    # build a hash of features, keyed by id if ungrouped, or G:group_id if
+    # grouped
     my $fid = $f->das_id;
     next unless $fid;
     $fid  = "G:".$f->das_group_id if $f->das_group_id;
     push @{$grouped{$fid}}, $f;
-    $empty_flag = 0; # We have a feature (its on one of the strands!)
+
+    $empty_flag &&= 0; # We have at least one feature
   }
+
   if($empty_flag) {
     $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
-    return 0; ## A " 0 " return indicates no features drawn....
-  }    
+    return 0;	# indicates no features drawn, because no features there
+  }
 
 
-# Flag to indicate if not all features got displayed due to the small depth setting
+  # Flag to indicate if not all features got displayed due to bumping
   my $more_features = 0;
 
+  # Loop over groups
   foreach my $value (values %grouped) {
     my $f = $value->[0];
-    ## Display if not stranded OR
-    my @t_features = sort { $a->das_start <=> $b->das_start } @$value;
-    my @features = (shift @t_features);
-    $_ = $features[0];
-    warn sprintf( ">> %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
-    foreach( @t_features ) { # Nasty hacky bit that ensures we don't have duplicate das features....
-      warn sprintf( "   %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
-      if($_->das_start <= $features[-1]->das_end ) {
-        $features[-1]->das_end( $_->das_end ) if $_->das_end > $features[-1]->das_end;
+
+    # Sort features in a group, and hack overlaps
+    my @temp_features = sort { $a->das_start <=> $b->das_start } @$value;
+    my @feature_group = (shift @temp_features);
+    $_ = $feature_group[0];
+    # warn sprintf( ">> %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
+
+    # Nasty hacky bit that ensures we don't have duplicate/overlapping 
+    # das features....
+    foreach( @temp_features ) { 
+      # warn sprintf( "   %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
+      if($_->das_start <= $feature_group[-1]->das_end ) {
+        $feature_group[-1]->das_end( $_->das_end ) if $_->das_end > $feature_group[-1]->das_end;
       } else {
-        push @features, $_;
+        push @feature_group, $_;
       } 
     }
-    my $start = $features[0]->das_start;    # GET START AND END OF FEATURE....
+
+    # Get start and end of group
+    my $start = $feature_group[0]->das_start;
+    my $end   = $feature_group[-1]->das_end;
+    
+    # constrain to image window
     my $START = $start < 1 ? 1 : $start;
-    my $end   = $features[-1]->das_end;
-    ### A general list of features we don't want to draw via DAS ###
+    my $END   = $end > $configuration->{'length'} ? $configuration->{'length'} : $end;
+
     # Compute the length of the label...
     my $ID    = $f->das_group_id || $f->das_id;
     my $label = $f->das_group_label || $f->das_feature_label || $ID;
@@ -309,7 +322,9 @@ sub RENDER_grouped {
 	$more_features = 1;
 	next;
     }
+
     my( $href, $zmenu ) = $self->zmenu( $f );
+
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'            => 0,
       'x'            => $START-1,
@@ -317,19 +332,34 @@ sub RENDER_grouped {
       'zmenu'        => $zmenu,
     });
     $Composite->{'href'} = $href if $href;
-    ## if we are dealing with a transcript (CDS/transcript/exon) then join with introns...
+   
     my $style;
     my $colour;
+    my $group_height;
+    my $row_height = $configuration->{'h'};
+    
+    # Configure style for this feature
     if($configuration->{'use_style'}) {
-      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id} || $configuration->{'styles'}{$f->das_type_category}{'default'} || $configuration->{'styles'}{'default'}{'default'};
+      # NEED TO ADD GROUP STYLING
+      # Currently takes style from first feature in group.
+      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
+      $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
+      $style ||= $configuration->{'styles'}{'default'}{'default'};
+
       $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'};
-    } else {
+      if (exists $style->{'attrs'} && exists $style->{'attrs'}{'height'}){
+        $group_height = $style->{'attrs'}{'height'};
+      }
+    } 
+    else {
       $colour = $configuration->{'colour'};
+      $group_height = $configuration->{'h'};
     }
 
-# if it is a summary of non-positional features then just display a gene-wide line with a link to geneview where all annotations can be viewed
+    # if it is a summary of non-positional features then just display a 
+    # gene-wide line with a link to geneview where all annotations can be viewed
     if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
-      my $f     = shift @features;
+      my $f     = shift @feature_group;
       my $START = $f->das_start() < 1        ? 1       : $f->das_start();
       my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
 
@@ -341,7 +371,7 @@ sub RENDER_grouped {
         'x'          => $START-1,
         'y'          => 0,
         'width'      => 0,
-        'height'     => $configuration->{'h'},
+        'height'     => $group_height,
         'colour'     => $colour,
         'absolutey'  => 1
       });
@@ -352,7 +382,7 @@ sub RENDER_grouped {
         'x'          => $START,
         'y'          => 0,
         'width'      => 0,
-        'height'     => $configuration->{'h'},
+        'height'     => $group_height,
         'colour'     => $colour,
         'absolutey'  => 1,
         'absolutex'  => 1
@@ -360,7 +390,7 @@ sub RENDER_grouped {
 
       $Composite->push($glyph);
 
-      my $md = $configuration->{'h'} / 2; 
+      my $md = $group_height / 2; 
 
       $glyph = new Sanger::Graphics::Glyph::Rect({
         'x'          => $START-1,
@@ -377,7 +407,7 @@ sub RENDER_grouped {
         'x'          => $END-1,
         'y'          => 0,
         'width'      => 1,
-        'height'     => $configuration->{'h'},
+        'height'     => $group_height,
         'colour'     => $colour,
         'absolutey'  => 1
       });
@@ -386,23 +416,32 @@ sub RENDER_grouped {
 
 
 
-    }elsif( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
-      my $f     = shift @features;
+    }
+    elsif ( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { 
+
+      ## TRANSCRIPT!
+
+      my $f     = shift @feature_group;
       my $START = $f->das_start() < 1        ? 1       : $f->das_start();
       my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
       my $old_end   = $END;
+
+      # Draw first exon
       my $glyph = new Sanger::Graphics::Glyph::Rect({
         'x'          => $START-1,
         'y'          => 0,
         'width'      => $END-$START+1,
-        'height'     => $configuration->{'h'},
+        'height'     => $group_height,
         'colour'     => $colour,
         'absolutey'  => 1,
         'zmenu'      => $zmenu
       });
+
       $end = $old_end if $end <= $old_end;
       $Composite->push($glyph);
-      foreach(@features) {
+
+      # Draw intron/exon pairs
+      foreach(@feature_group) {
         my $END   = $_->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $_->das_end();
         next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
         my $f_start = $_->das_start;
@@ -410,7 +449,7 @@ sub RENDER_grouped {
           'x'         => $old_end,
           'y'         => 0,
           'width'     => $f_start-$old_end,
-          'height'    => $configuration->{'h'},
+          'height'    => $group_height,
           'colour'    => $colour,
           'absolutey' => 1,
           'strand'    => $configuration->{'STRAND'},
@@ -419,13 +458,14 @@ sub RENDER_grouped {
           'x'         => $f_start-1,
           'y'         => 0,
           'width'     => $END-$f_start+1,
-          'height'    => $configuration->{'h'},
+          'height'    => $group_height,
           'colour'    => $colour,
           'absolutey' => 1,
         }) );
         $old_end = $END;
       }
-    } else { ## GENERAL GROUPED FEATURE!
+    } 
+    else { ## GENERAL GROUPED FEATURE!
       my $Composite2 = new Sanger::Graphics::Glyph::Composite({
         'y'         => 0,
         'x'         => $START-1,
@@ -434,16 +474,18 @@ sub RENDER_grouped {
       });
       $Composite2->bordercolour($colour);
       my $old_end = -1e9;
-      foreach(@features) {
+      foreach(@feature_group) {
         my $START = $_->das_start() <  1       ? 1 : $_->das_start();
         my $END   = $_->das_end()   > $configuration->{'length'} ? $configuration->{'length'} : $_->das_end();
         next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn... # only if NOT BUMPED!
         $old_end = $END;
+
+	# Just draw a box
         $Composite2->push( new Sanger::Graphics::Glyph::Rect({
           'x'         => $START-1,
           'y'         => 0,
           'width'     => $END-$START+1,
-          'height'    => $configuration->{'h'},
+          'height'    => $group_height,
           'colour'    => $colour,
           'absolutey' => 1,
           'zmenu'     => $zmenu
@@ -452,21 +494,30 @@ sub RENDER_grouped {
       #$Composite2->{'href'} = $href if $href;
       $Composite->push($Composite2);
     }
-    ## Now place the label....
-    my $H =$self->feature_label( $Composite, $label , $colour, $start < 1 ? 1 : $start , $end > $configuration->{'length'} ? $configuration->{'length'} : $end );
-    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) if $row;
-    $self->push($Composite);
-}
 
-#  if we have displayed the specified number of rows and there are still some features left then display a note saying that.
-      if($more_features) {
+    # Draw label
+    my $label_height =$self->feature_label( $Composite, 
+					    $label, 
+					    $colour, 
+					    $group_height,
+					    $START, 
+					    $END 
+					   );
+
+    # Offset y coords by which row we're on
+    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$label_height) * $row) if $row;
+    $self->push($Composite);
+  }
+
+    if($more_features) {
+    # There are more features to display : show the note
          my $yx = $configuration->{'depth'};
          my $ID = 'There are more '.$self->{'extras'}->{'caption'}.' features in this region. Increase source depth to view them all ';
          $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
       }    
 
   return 1; ## We have rendered at least one feature....
-}
+}   # END RENDER_grouped
 
 sub to_bin {
   my( $self, $BP, $bin_length, $no_of_bins ) = @_;
@@ -612,9 +663,10 @@ sub zmenu {
 ## creates and pushes the label 
 ## and returns the height of the label created
 sub feature_label {
-  my( $self, $composite, $ID, $feature_colour, $start, $end ) = @_;
-  if( uc($self->{'extras'}->{'labelflag'}) eq 'O' ) {
-    my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
+  my( $self, $composite, $text, $feature_colour, $glyph_height, $start, $end ) = @_;
+
+  if( uc($self->{'extras'}->{'labelflag'}) eq 'O' ) { # draw On feature
+    my $bp_textwidth = $self->{'textwidth'} * length($text) * 1.2; # add 10% for scaling text
     return unless $bp_textwidth < ($end - $start);
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
@@ -623,26 +675,28 @@ sub feature_label {
       'height'     => $self->{'textheight'},
       'font'       => 'Tiny',
       'colour'     => $self->{'config'}->colourmap->contrast($feature_colour),
-      'text'       => $ID,
+      'text'       => $text,
       'absolutey'  => 1,
     });
     $composite->push($tglyph);
     return 0;
-  } elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {
-    my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
+  } 
+  elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {	# draw Under feature
+    my $bp_textwidth = $self->{'textwidth'} * length($text) * 1.2; # add 10% for scaling text
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => $start -1,
-      'y'          => $self->{'textheight'} + 2,
+      'y'          => $glyph_height + 2,
       'width'      => $bp_textwidth,
       'height'     => $self->{'textheight'},
       'font'       => 'Tiny',
       'colour'     => $feature_colour,
-      'text'       => $ID,
+      'text'       => $text,
       'absolutey'  => 1,
     });
     $composite->push($tglyph);
     return $self->{'textheight'} + 4;
-  } else {
+  } 
+  else {
     return 0;
   }
 }
@@ -827,10 +881,14 @@ sub _init {
   $configuration->{'features'} = \@das_features;
   my %styles;
   if( $styles && @$styles && $configuration->{'use_style'} ) {
+    my $styleheight = 0;
     foreach(@$styles) {
       $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
-      $configuration->{'h'} = $_->{'attrs'}{'height'} if exists $_->{'attrs'} && exists $_->{'attrs'}{'height'};
+      if (exists $_->{'attrs'} && exists $_->{'attrs'}{'height'}){
+	$styleheight = $_->{'attrs'}{'height'} if $_->{'attrs'}{'height'} > $styleheight;
+      }
     } 
+    $configuration->{'h'} = $styleheight if $styleheight;
     $configuration->{'styles'} = \%styles;
   } else {
     $configuration->{'use_style'} = 0;
@@ -847,11 +905,9 @@ sub _init {
   my $group = uc($Config->get($das_config_key, 'group') || 'N');
   $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
 
-#  $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
-
   $renderer =~ s/RENDER_RENDER/RENDER/;
 
-#  warn("RENDER:[$das_config_key: $group] $renderer");
+  #warn("RENDER:[$das_config_key: $group] $renderer");
   return $self->$renderer( $configuration );
 }
 
