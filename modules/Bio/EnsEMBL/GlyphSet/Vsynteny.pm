@@ -87,10 +87,10 @@ sub _init {
     my $secondary_width     = $Config->get('Vsynteny','_secondary_width');
     my $spacing             = $Config->get('Vsynteny','_spacing');
 ## LET us derive the next set of values....        
-    my $h_offset            = $im_width - $top_margin - $length;
+    my $h_offset            = $im_width - $top_margin * 2 - $length;
 #    my $bpperpx             = $Config->container_width()/$length;
 #    my ($w,$h)              = $Config->texthelper->Vpx2bp('Tiny');
-    my $v_offset            = $Config->container_width(); # bottom align each chromosome!
+    my $v_offset            = $Config->container_width() ; # * ( $top_margin + $length ) /$length; # bottom align each chromosome!
 
 ## Finally some parameters for the drawing code...
     my $done_1_acen         = 0;        # flag for tracking place in chromsome
@@ -304,7 +304,7 @@ sub _init {
     my $w = $self->{'config'}->texthelper->width('Tiny');
     my $h = $self->{'config'}->texthelper->height('Tiny');
     $self->unshift(new Sanger::Graphics::Glyph::Text({
-            'x'          => $im_width - $h - 1,
+            'x'          => $im_width - $h - 2 - $top_margin,
             'y'          => $outer_padding + $secondary_width/2 - $w * length($OTHER_T)/2,
             'font'       => 'Tiny',
             'colour'     => $black,
@@ -312,7 +312,7 @@ sub _init {
             'absolutey'  => 1, 'absolutex' => 1,'absolutewidth'=>1,
     }));
     $self->unshift(new Sanger::Graphics::Glyph::Text({
-            'x'          => $im_width - $h - 1  ,
+            'x'          => $im_width - $h - 2 - $top_margin ,
             'y'          => $outer_padding + $inner_padding*2 + $main_width + 3*$secondary_width/2 - $w * length($OTHER_T)/2,
             'font'       => 'Tiny',
             'colour'     => $black,

@@ -87,9 +87,10 @@ sub zmenu {
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $pos" => '',
         "03:class: ".$f->snpclass => '',
-        "04:mapweight: ".$f->{'_mapweight'} => '',
-        "06:ambiguity code: ".$f->{'_ambiguity_code'} => '',
-        "06:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
+        "03:status: ".$f->status => '',
+        "06:mapweight: ".$f->{'_mapweight'} => '',
+        "07:ambiguity code: ".$f->{'_ambiguity_code'} => '',
+        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
    );
 
     my %links;

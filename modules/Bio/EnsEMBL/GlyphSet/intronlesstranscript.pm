@@ -21,6 +21,7 @@ sub _init {
   my $type = $self->check();
   return unless defined $type;
 
+  return unless $self->strand() == -1;
   my $offset = $self->{'container'}->chr_start - 1;
   my $Config        = $self->{'config'};
   my $chr_name = $self->{'container'}->chr_name();
@@ -38,20 +39,21 @@ sub _init {
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
-  my $strand  = $self->strand();
   my $length  = $Config->container_width();
   my $transcript_drawn = 0;
     
   my $voffset = 0;
   my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-  foreach my $trans_ref (@{$Config->{'transcripts'} } ) {
+  my @TRANS = @{$Config->{'transcripts'}};
+  my $strand = $TRANS[0]{'exons'}[0][2]->strand;
+  if( $strand == 1 ) { @TRANS = reverse @TRANS; }
+  foreach my $trans_ref (@TRANS) {
     my $gene = $trans_ref->{'gene'};
     my $transcript = $trans_ref->{'transcript'};
     my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
     # Skip if no exons for this transcript
     next if (@exons == 0);
     # If stranded diagram skip if on wrong strand
-    next if ( $exons[0][2]->strand() != $strand && $self->{'do_not_strand'}!=1 );
     # For exon_structure diagram only given transcript
     my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>0,'height'=>$h});
       # $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
@@ -224,8 +226,8 @@ sub _init {
          $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
       my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
       $max_row = $row if $row > $max_row;
-      $tglyph->y( -$strand * $voffset + $tglyph->{'y'} + ( $row * (2+$h) ) + 1 );
-      $bglyph->y( -$strand * $voffset + $bglyph->{'y'} + ( $row * (2+$h) ) + 1 );
+      $tglyph->y( $voffset + $tglyph->{'y'} + ( $row * (2+$h) ) + 1 );
+      $bglyph->y( $voffset + $bglyph->{'y'} + ( $row * (2+$h) ) + 1 );
       $self->push( $bglyph, $tglyph );
     }
 
@@ -289,7 +291,7 @@ sub _init {
       my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
       $max_row_2 = $row if $row > $max_row_2;
 
-      $Composite3->y( - $strand * $voffset + $Composite3->{'y'} + $t_bump_height + $row * ($h+$font_h_bp*2+5) );
+      $Composite3->y( $voffset + $Composite3->{'y'} + $t_bump_height + $row * ($h+$font_h_bp*2+5) );
       $self->push( $Composite3 );
     }
 
@@ -299,7 +301,7 @@ sub _init {
     ########## bump it baby, yeah! bump-nology!
     ########## shift the composite container by however much we're bumped
     ## Now we draw the amino acid changes for all coding SNPs...
-    $Composite->y($Composite->y() - $strand * $voffset );
+    $Composite->y($Composite->y() + $voffset );
     $voffset += $bump_height ;
     $Composite->colour($hilight) if(defined $hilight);
     $self->push($Composite);

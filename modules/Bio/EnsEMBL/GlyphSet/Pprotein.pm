@@ -28,8 +28,9 @@ sub _init {
     my $protein = $self->{'container'};	
     my $Config  = $self->{'config'};
     my $pep_splice = $protein->{'image_splice'};
-    my $type = lc($protein->gene->type);
+	my $type = lc($protein->gene->analysis->logic_name);
     my $authority = lc($SPECIES_DEFS->AUTHORITY);   
+
     ## hack to fix flybase db type definition
     if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')) { 
         $db = 'core';

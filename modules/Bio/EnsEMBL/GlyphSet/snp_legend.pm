@@ -51,6 +51,7 @@ sub _init {
     
     foreach (sort { $features{$b}->{'priority'} <=> $features{$a}->{'priority'} } keys %features) {
         @colours = @{$features{$_}->{'legend'}};
+
         $y++ unless $x==0;
         $x=0;
         while( my ($legend, $colour) = splice @colours, 0, 2 ) {
