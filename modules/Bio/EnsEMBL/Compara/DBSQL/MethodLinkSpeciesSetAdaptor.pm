@@ -347,6 +347,9 @@ sub fetch_by_dbID {
           -method_link_type => $this_method_link_species_set->{'METHOD_LINK_TYPE'},
           -species_set => $this_method_link_species_set->{'SPECIES_SET'}
       );
+  if (!$method_link_species_set) {
+    warning("No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet with id = $dbID found");
+  }
 
   return $method_link_species_set;
 }
@@ -805,14 +808,14 @@ sub fetch_by_method_link_and_genome_db_ids {
   my ($self, $method_link, $genome_db_ids) = @_;
 
   deprecate("Use fetch_by_method_link_type_genome_db_ids method instead");
-  my $method_link_type;
+  my $method_link_id;
   if ($method_link =~ /^\d+$/) {
-    $method_link_type = ($self->_get_method_link_type_from_id($method_link) || "");
+    $method_link_id = $method_link;
   } else {
-    $method_link_type = $method_link;
+    $method_link_id = ($self->_get_method_link_id_from_type($method_link) || 0);
   }
 
-  return $self->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids);
+  return $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
 }
 
 
@@ -847,7 +850,16 @@ sub fetch_by_method_link_id_GenomeDBs {
     push (@$genome_db_ids, $genome_db_id);
   }
   
-  return $self->fetch_by_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
+  $method_link_species_set = $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
+  
+  if (!$method_link_species_set) {
+    my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
+        "  method_link_id = $method_link_id and ".
+        join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
+    warning($warning);
+  }
+  
+  return $method_link_species_set;
 }
 
 
@@ -873,25 +885,13 @@ sub fetch_by_method_link_id_GenomeDBs {
 sub fetch_by_method_link_id_genome_db_ids {
   my ($self, $method_link_id, $genome_db_ids) = @_;
   my $method_link_species_set;
-   
-  my $sql = qq{
-          SELECT
-            method_link_species_set_id,
-            COUNT(*) as count
-          FROM
-            method_link_species_set
-          WHERE
-            genome_db_id in (}.join(",", @$genome_db_ids).qq{)
-            AND method_link_id = \"$method_link_id\"
-          GROUP BY method_link_species_set_id
-          HAVING count = }.scalar(@$genome_db_ids);
-  my $sth = $self->prepare($sql);
-  $sth->execute();
 
-  my ($dbID) = $sth->fetchrow_array();
-  
-  if ($dbID) {
-    $method_link_species_set = $self->fetch_by_dbID($dbID);
+  $method_link_species_set = $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
+  if (!$method_link_species_set) {
+    my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
+        "  method_link_id = $method_link_id and genome_db_ids = ".
+        join(", ", @$genome_db_ids);
+    warning($warning);
   }
 
   return $method_link_species_set;
@@ -929,8 +929,16 @@ sub fetch_by_method_link_type_GenomeDBs {
     throw "[$genome_db] must have a dbID" if (!$genome_db_id);
     push (@$genome_db_ids, $genome_db_id);
   }
+  my $method_link_id = ($self->_get_method_link_id_from_type($method_link_type) || 0);
   
-  return $self->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids);
+  $method_link_species_set = $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
+  if (!$method_link_species_set) {
+    my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
+        "  <$method_link_type> and ".
+        join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
+    warning($warning);
+  }
+  return $method_link_species_set;
 }
 
 
@@ -960,7 +968,7 @@ sub fetch_by_method_link_type_genome_db_ids {
    
   my $method_link_id = ($self->_get_method_link_id_from_type($method_link_type) || 0);
   
-  return $self->fetch_by_method_link_id_genome_db_ids($method_link_id, $genome_db_ids)
+  return $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids)
 }
 
 =head2 fetch_by_method_link_type_registry_aliases
@@ -1001,9 +1009,57 @@ sub fetch_by_method_link_type_registry_aliases {
       throw("Database alias $alias is not known\n");
     }
   }
-  
+
   return $self->fetch_by_method_link_type_GenomeDBs($method_link_type,\@genome_dbs);
 }
+
+
+=head2 _run_query_from_method_link_id_genome_db_ids
+
+  Arg  1     : int $method_link_id
+  Arg 2      : listref of int [$gdbid1, $gdbid2, $gdbid3]
+  Example    : my $method_link_species_set =
+                   $mlssa->_run_query_from_method_link_id_genome_db_ids(1,
+                       [$human_genome_db->dbID,
+                       $mouse_genome_db->dbID])
+  Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+               corresponding to the given method_link_id and the given set of
+               Bio::EnsEMBL::Compara::GenomeDB objects defined by the set of
+               $genome_db_ids
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+               object is found
+  Caller     : 
+
+=cut
+
+sub _run_query_from_method_link_id_genome_db_ids {
+  my ($self, $method_link_id, $genome_db_ids) = @_;
+  my $method_link_species_set;
+   
+  my $sql = qq{
+          SELECT
+            method_link_species_set_id,
+            COUNT(*) as count
+          FROM
+            method_link_species_set
+          WHERE
+            genome_db_id in (}.join(",", @$genome_db_ids).qq{)
+            AND method_link_id = \"$method_link_id\"
+          GROUP BY method_link_species_set_id
+          HAVING count = }.scalar(@$genome_db_ids);
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+
+  my ($dbID) = $sth->fetchrow_array();
+  
+  if ($dbID) {
+    $method_link_species_set = $self->fetch_by_dbID($dbID);
+  }
+
+  return $method_link_species_set;
+}
+
 
 =head2 _get_method_link_type_from_id
 
@@ -1037,11 +1093,11 @@ sub _get_method_link_type_from_id {
 
 =head2 _get_method_link_id_from_type
 
-  Arg  1     : none
-  Example    : my $method_link_id = $mlssa->_get_method_link_id_from_type()
+  Arg  1     : string $method_link_type
+  Example    : my $method_link_id = $mlssa->_get_method_link_id_from_type("BLASTZ_NET")
   Description: Retrieve method_link_id corresponding to the method_link_type
   Returntype : integer $method_link_id
-  Exceptions : none
+  Exceptions : warns when no method_link matches the $method_link_type
   Caller     : 
 
 =cut
@@ -1061,6 +1117,10 @@ sub _get_method_link_id_from_type {
   
   $dbID = $sth->fetchrow_array();
   $sth->finish;
+
+  if (!$dbID) {
+    warning("No method_link matches <$method_link_type>");
+  }
 
   return $dbID;
 }
