@@ -101,7 +101,6 @@ sub render_Composite {
 
     for my $subglyph (@{$glyph->{'composite'}}) {
     	my $method = $self->method($subglyph);
-        print STDERR "Rendering subglyph ",$subglyph->href,"\n";
 	    if($self->can($method)) {
     	    $self->$method($subglyph);
     	} else {
