@@ -27,7 +27,7 @@ sub generic_fetch {
   my $columns = join(', ', $self->_columns());
   
   if ($join) {
-    my ($tablename, $condition) = $join;
+    my ($tablename, $condition) = @{$join};
     if ($tablename && $condition) {
       push @tables, $tablename;
       
@@ -64,6 +64,7 @@ sub generic_fetch {
   $sql .= " $final_clause";
 
   my $sth = $self->prepare($sql);
+#print STDERR $sql,"\n";
   $sth->execute;  
 
   return $self->_objs_from_sth($sth);
@@ -162,44 +163,6 @@ sub fetch_by_stable_id {
   return $obj;
 }
 
-=head2 fetch_by_source_stable_id
-
-  Arg [1]    : string $source_name
-               the source name of database
-  Arg [2]    : string $stable_id
-               the database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
-               the id $id.
-  Returntype : Bio::EnsEMBL::SeqFeature
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_by_source_stable_id {
-  my ($self,$source_name, $stable_id) = @_;
-
-  unless(defined $source_name) {
-    $self->throw("fetch_by_source_stable_id must have an source_name");
-  }
-  unless(defined $stable_id) {
-    $self->throw("fetch_by_source_stable_id must have an stable_id");
-  }
-
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-  my ($source_table, $source_syn) = @{$tabs[1]};
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${source_syn}.source_name = '$source_name' AND ${syn}.stable_id = '$stable_id'";
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->generic_fetch($constraint)};
-  return $obj;
-}
-
 =head2 fetch_by_source
 
 =cut
@@ -214,6 +177,8 @@ sub fetch_by_source {
 
   return $self->generic_fetch($constraint);
 }
+
+
 
 sub store_source {
   my ($self,$source_name) = @_;
@@ -257,10 +222,29 @@ sub store_relation {
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
     $sql = "INSERT INTO homology_member (homology_id, member_id, cigar_line, perc_cov, perc_id, perc_pos, flag) VALUES (?,?,?,?,?,?,?)";
+    $sth = $self->prepare($sql);
+    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->cigar_line, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos, $attribute->flag);
   }
 }
 
-sub known_sources {
+sub update_relation {
+  my ($self, $member_attribute, $relation) = @_;
+
+  my ($member, $attribute) = @{$member_attribute};
+  my $sql;
+  my $sth;
+  
+  if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
+    $attribute->family_id($relation->dbID);
+    $sql = "UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?";
+    $sth = $self->prepare($sql);
+    $sth->execute($attribute->cigar_line, $attribute->family_id, $attribute->member_id);
+  } else {
+    $self->throw("update_relation only implemented for Bio::EnsEMBL::Compara::Family relation, but you have $relation\n");
+  }
+}
+
+sub _known_sources {
   my ($self) = @_;
   
   my $q;
@@ -370,6 +354,46 @@ sub _columns {
                " subclass of BaseFeatureAdaptor");
 }
 
+=head2 _objs_from_sth
+
+  Arg [1]    : DBI::row_hashref $hashref containing key-value pairs
+               for each of the columns specified by the _columns method
+  Example    : my @feats = $self->_obj_from_hashref
+  Description: ABSTRACT PROTECTED The subclass is responsible for implementing
+               this method.  It should take in a DBI row hash reference and
+               return a list of created features in contig coordinates.
+  Returntype : list of Bio::EnsEMBL::*Features in contig coordinates
+  Exceptions : thrown if not implemented by subclass
+  Caller     : BaseFeatureAdaptor::generic_fetch
+
+=cut
+
+sub _objs_from_sth {
+  my $self = shift;
+
+  $self->throw("abstract method _obj_from_sth not defined by implementing"
+             . " subclass of BaseFeatureAdaptor");
+}
+
+=head2 _join
+
+  Arg [1]    : none
+  Example    : none
+  Description: Can be overridden by a subclass to specify any left joins
+               which should occur. The table name specigfied in the join
+               must still be present in the return values of
+  Returntype : a {'tablename' => 'join condition'} pair
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub _join {
+  my $self = shift;
+
+  return '';
+}
+
 =head2 _default_where_clause
 
   Arg [1]    : none
@@ -385,24 +409,6 @@ sub _columns {
 =cut
 
 sub _default_where_clause {
-  my $self = shift;
-
-  return '';
-}
-=head2 _join
-
-  Arg [1]    : none
-  Example    : none
-  Description: Can be overridden by a subclass to specify any left joins
-               which should occur. The table name specigfied in the join
-               must still be present in the return values of
-  Returntype : a {'tablename' => 'join condition'} pair
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub _join {
   my $self = shift;
 
   return '';
@@ -428,23 +434,3 @@ sub _final_clause {
   return '';
 }
 
-=head2 _objs_from_sth
-
-  Arg [1]    : DBI::row_hashref $hashref containing key-value pairs
-               for each of the columns specified by the _columns method
-  Example    : my @feats = $self->_obj_from_hashref
-  Description: ABSTRACT PROTECTED The subclass is responsible for implementing
-               this method.  It should take in a DBI row hash reference and
-               return a list of created features in contig coordinates.
-  Returntype : list of Bio::EnsEMBL::*Features in contig coordinates
-  Exceptions : thrown if not implemented by subclass
-  Caller     : BaseFeatureAdaptor::generic_fetch
-
-=cut
-
-sub _objs_from_sth {
-  my $self = shift;
-
-  $self->throw("abstract method _obj_from_sth not defined by implementing"
-             . " subclass of BaseFeatureAdaptor");
-}
