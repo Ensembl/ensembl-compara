@@ -27,7 +27,7 @@ sub init_label {
     $chr = uc($chr) unless ($self->{'config'}->{'_uppercase_label'} eq 'no');
     
     # two-line label for long chromosome names
-    if (length($chr) > 4) {
+    if (length($chr) > 4 && $self->{'config'}->{'_label'} eq 'above' ) {
         my $label = new Sanger::Graphics::Glyph::Text({
             'text'      => 'Chromosome',
             'font'      => 'Small',
@@ -337,10 +337,12 @@ sub _init {
             $self->push($glyph);
 	} else {
         # round ends for full chromosomes
+            my $max_rows = ( $chr_length / $bpperpx /2 ); ## MAXIMUMROWS.....
             my @lines = $wid < 16 ?
                 ( [8,6],[4,4],[2,2] ) :
                 ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
             foreach my $I ( 0..$#lines ) {
+               next if $I > $max_rows;
                 my ( $bg_x, $black_x ) = @{$lines[$I]};
                 my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx + ($end ? $bpperpx : 10);
                 my $glyph = new Sanger::Graphics::Glyph::Line({
