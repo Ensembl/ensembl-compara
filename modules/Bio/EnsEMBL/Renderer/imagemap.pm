@@ -72,7 +72,7 @@ sub render_Space {
 sub render_Composite {
     my ($self, $glyph) = @_;
     $self->render_Rect($glyph);
-    $self->SUPER::render_Composite($glyph);
+#    $self->SUPER::render_Composite($glyph);
 }
 
 sub render_Line {
