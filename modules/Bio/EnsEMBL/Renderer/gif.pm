@@ -46,7 +46,7 @@ sub render_Rect {
     my $bordercolour  = $self->colour($gbordercolour);
     my $colour        = $self->colour($gcolour);
 
-    $glyph->transform($self->{'transform'});
+    $glyph->transform($self->{'config'}->{'transform'});
 
     my $x1 = $glyph->pixelx();
     my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
@@ -62,7 +62,7 @@ sub render_Text {
     my ($this, $glyph) = @_;
 
     my $colour = $this->colour($glyph->colour());
-    $glyph->transform($this->{'transform'});
+    $glyph->transform($this->{'config'}->{'transform'});
 
     #########
     # BAH! HORRIBLE STINKY STUFF!
@@ -97,7 +97,7 @@ sub render_Intron {
 
     my $colour = $self->colour($glyph->colour());
 
-    $glyph->transform($self->{'transform'});
+    $glyph->transform($self->{'config'}->{'transform'});
 
     my ($xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand);
 
@@ -121,7 +121,7 @@ sub render_Intron {
 
 sub render_Line {
     my ($this, $glyph) = @_;
-    $glyph->transform($this->{'transform'});
+    $glyph->transform($this->{'config'}->{'transform'});
 
     my $colour = $this->colour($glyph->colour());
     my $x1     = $glyph->pixelx() + 0;
@@ -144,7 +144,7 @@ sub render_Poly {
 
     my $poly = new GD::Polygon;
 
-    $glyph->transform($this->{'transform'});
+    $glyph->transform($this->{'config'}->{'transform'});
 
     my @points = @{$glyph->pixelpoints()};
     my $pairs_of_points = (scalar @points)/ 2;
@@ -176,7 +176,7 @@ sub render_Composite {
     #
     if(defined $glyph->colour() || defined $glyph->bordercolour()) {
 	my $rect = $glyph;
-	$rect->transform($this->{'transform'});
+	$rect->transform($this->{'config'}->{'transform'});
 	$this->render_Rect($rect);
     }
 }

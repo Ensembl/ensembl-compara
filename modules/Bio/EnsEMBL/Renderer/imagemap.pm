@@ -17,7 +17,7 @@ sub init_canvas {
 sub render_Rect {
     my ($this, $glyph) = @_;
 
-    $glyph->transform($this->{'transform'});
+    $glyph->transform($this->{'config'}->{'transform'});
 
     my $onmouseover = $glyph->onmouseover();
     $onmouseover = (defined $onmouseover)?qq( onmouseover="$onmouseover"):"";
@@ -58,12 +58,6 @@ sub render_Rect {
     $y1 = 0 if($y1<0);
     $y2 = 0 if($y2<0);
 
-    $this->{'im_width'} ||= $this->{'config'}->image_width();
-    my $imw = $this->{'im_width'};
-
-    $x1 = $imw if($x1 > $imw);
-    $x2 = $imw if($x1 > $imw);
-
     #########
     # do range checking here for thresholding out very small regions
     #
@@ -94,6 +88,9 @@ sub render_Poly {
 sub render_Composite {
     my ($this, $glyph) = @_;
     return $this->render_Rect($glyph);
+}
+
+sub render_Line {
 }
 
 1;
