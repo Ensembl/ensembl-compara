@@ -114,7 +114,7 @@ sub _init {
 			});
     	    $composite->{'zmenu'} = {
                     "caption" => $_,
-                    "Export this contig" => ""
+                    "Export this contig" => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=contig&id=$_",
 	        } if $show_navigation;
             my $col = $colours2{$i};
             my $glyph = new Bio::EnsEMBL::Glyph::Rect({
