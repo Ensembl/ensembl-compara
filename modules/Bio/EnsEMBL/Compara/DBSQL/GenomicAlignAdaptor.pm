@@ -61,7 +61,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Utils::Exception qw(throw deprecate warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw deprecate warning info);
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -143,6 +143,18 @@ sub store {
     if (!$ga->dbID) {
       $ga->dbID($genomic_align_sth->{'mysql_insertid'});
     }
+    
+    info("Stored Bio::EnsEMBL::Compara::GenomicAlign ".
+          ($ga->dbID or "NULL").
+          ", gab=".$ga->genomic_align_block->dbID.
+          ", mlss=".$ga->method_link_species_set->dbID.
+          ", dnaf=".$ga->dnafrag->dbID.
+          " [".$ga->dnafrag_start.
+          "-".$ga->dnafrag_end."]".
+          " (".$ga->dnafrag_strand.")".
+          ", cgr=".($ga->cigar_line or "NULL").
+          ", lvl=".($ga->level_id or 1));
+
   }
 }
      
