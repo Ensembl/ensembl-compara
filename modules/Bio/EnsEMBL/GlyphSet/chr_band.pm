@@ -6,14 +6,25 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 
+my %SHORT = qw(
+  chromosome Chr.
+  supercontig S'ctg
+);
+
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $chr;
-    eval {
-        $chr = $self->{'container'}->_chr_name();
-    };
-    $chr = $@ ? "Chromosome" : "Chr $chr";
+    my $type = $self->{'container'}->coord_system->name();
+
+    $type = $SHORT{lc($type)} || ucfirst( $type );
+
+    my $species = '';
+    if( $self->{'config'}->{'multi'} ) {
+       $species = join '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.',' ';
+    }
+    my $chr = $self->{'container'}->seq_region_name();
+    $chr = "$species$type $chr";
+
     my $label = new Sanger::Graphics::Glyph::Text({
     	'text'      => "$chr band",
     	'font'      => 'Small',
