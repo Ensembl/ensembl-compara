@@ -290,14 +290,13 @@ sub has_query {
 
 =cut
  
-sub linked {
+sub linked_genomes {
   my ( $self ) = @_;
 
   my $links = $self->adaptor->get_db_links( $self );
 
   return $links;
 }
-
 
 
 1;
