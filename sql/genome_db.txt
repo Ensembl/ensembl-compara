@@ -1,11 +1,11 @@
 genome_db_id	taxon_id	name	assembly	assembly_default	
-1	9606	Homo sapiens	NCBI31	1
-2	10090	Mus musculus	NCBIM30	1
-3	10116	Rattus norvegicus	RGSC2	1
+1	9606	Homo sapiens	NCBI34	1
+2	10090	Mus musculus	NCBIM32	1
+3	10116	Rattus norvegicus	RGSC3.1	1
 4	31033	Fugu rubripes	FUGU2	1
 5	7165	Anopheles gambiae	MOZ2A	1
 6	7227	Drosophila melanogaster	DROM3A	1
-7	6239	Caenorhabditis elegans	CEL102	1
+7	6239	Caenorhabditis elegans	CEL116	1
 8	6238	Caenorhabditis briggsae	CBR25	1
-9	7955	Danio rerio	ZFISH2	1
-
+9	7955	Danio rerio	ZFISH3	1
+10	9598	Pan troglodytes	BROAD1	1
