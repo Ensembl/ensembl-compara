@@ -258,7 +258,9 @@ sub store_relation {
 
   my ($member, $attribute) = @{$member_attribute};
   my $member_adaptor = $self->db->get_MemberAdaptor;
-  $member_adaptor->store($member);
+  unless (defined $member->dbID) {
+    $member_adaptor->store($member);
+  }
   $attribute->member_id($member->dbID);
 
   my $sql;
