@@ -125,7 +125,6 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
-  warn "FEATURES EST TRANSCRIPT";
   my $track = 'est_transcript';
   my $db_alias = $self->{'config'}->get($track,'db_alias');
   if( ! $db_alias and ! $self->{'config'}->{'fakecore'} ){
