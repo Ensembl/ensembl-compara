@@ -16,6 +16,7 @@ sub init_label {
         'font'      => 'Small',
         'absolutey' => 1,
     });
+    $self->bumped('yes');
     $self->label($label);
 }
 
