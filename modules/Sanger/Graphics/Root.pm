@@ -42,12 +42,18 @@ use Data::Dumper;
 
 sub dynamic_use {
   my( $self, $classname ) = @_;
+  if( $self->{'failed_tracks'}{$classname} ) {
+    warn "Sanger Graphics Root: tried to use $classname again - this has already failed";
+    return 0;
+  }
   my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);
   no strict 'refs';
   return 1 if $parent_namespace->{$module.'::'}; # return if already used
   eval "require $classname";
   if($@) {
     warn "Sanger Graphics Root: failed to use $classname\nSanger Graphics Root: $@";
+    delete( $parent_namespace->{$module.'::'} );
+    $self->{'failed_tracks'}{$classname} = 1;
     return 0;
   }
   $classname->import();
