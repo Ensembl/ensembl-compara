@@ -17,11 +17,16 @@ sub init_label {
     return if( defined $self->{'config'}->{'_no_label'} );
     my $label = $self->{'extras'} && $self->{'extras'}->{'name'};
     $label ||= 'ProteinDAS';
-
+    my $print_label = ( length($label) > 16 ? 
+			substr( $label, 0, 14 )."..": 
+			$label );
+    
     my $label = new Sanger::Graphics::Glyph::Text
-      ( { 'text'      => $label,
+      ( { 'text'      => $print_label,
 	  'font'      => 'Small',
-	  'absolutey' => 1 });
+	  'absolutey' => 1,
+	  'zmenu'     => {caption=>$label}
+	});
 
     $self->label($label);
 
