@@ -280,7 +280,7 @@ sub store{
        $self->throw("Must have dnafrag arg [$dnafrag]");
    }
 
-   if( $dnafrag->adaptor() == $self ) {
+   if (defined $dnafrag->adaptor() && $dnafrag->adaptor() == $self) {
      return $dnafrag->dbID();
    }
 
@@ -308,7 +308,7 @@ sub store{
                            name, start, end )
      VALUES (?,?,?,?,?)");
 
-   $sth->execute($gid, $type. $name, $dnafrag->start(), $dnafrag->end() );
+   $sth->execute($gid, $type, $name, $dnafrag->start(), $dnafrag->end() );
 
    $dnafrag->dbID( $sth->{'mysql_insertid'} );
    $dnafrag->adaptor($self);
@@ -341,7 +341,7 @@ sub store_if_needed {
        $self->throw("Must have dnafrag arg [$dnafrag]");
    }
 
-   if( $dnafrag->adaptor() == $self ) {
+   if (defined $dnafrag->adaptor() && $dnafrag->adaptor() == $self) {
      return $dnafrag->dbID();
    }
    
