@@ -65,13 +65,10 @@ unless (defined $file &&
   print "
 !!! IMPORTANT : All following parameters should be defined !!!
   file (whole genome)
-  host
   dbname
-  dbuser
-  pass
   cs_genome_db_id 
   qy_genome_db_id
-  conf_file
+  Registry.conf_file
   
 ";
   print $usage;
@@ -210,7 +207,7 @@ else{
 $GAB_id=$species_set_id*10000000000;
 $qy_GA_id=$GAB_id;
 $cs_GA_id=$qy_GA_id+1;
-print "$species_set_id\n$GAB_id\n$qy_GA_id\n$cs_GA_id\n";
+#print "$species_set_id\n$GAB_id\n$qy_GA_id\n$cs_GA_id\n";
 open (FILE, $file) or die "can't open $file: $!\n";
 
 my $level =0;
@@ -246,12 +243,13 @@ LINE:while (my $line =<FILE>) {
       
       my $qy_length = $qy_end - $qy_start+1;
       my $cs_length = $cs_end - $cs_start+1;
-     if ($alignment_type =~/BLAT/){#no gaps
-      	unless ($qy_length== $cs_length){
+     if ($alignment_type =~/TRANSLATED_BLAT/){#no gaps
+      		$qy_cigar=$qy_length."M";
+		$cs_cigar=$qy_cigar;
+		$length=$qy_length;
+	unless ($qy_length== $cs_length){
       		print STDERR "lengths not equal $qy_length != $cs_length\n";
 		print STDERR "$line\n";
-		$qy_cigar=$qy_length."M";
-		$cs_cigar=$qy_cigar;
       		}
 	}else{
 	($cs_cigar, $qy_cigar, $length)=parse_old_cigar_line($cigar);
