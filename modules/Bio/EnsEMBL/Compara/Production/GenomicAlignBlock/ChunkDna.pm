@@ -181,8 +181,8 @@ sub get_params {
     if(defined($params->{'masking_analysis_data_id'}));
     
   $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
-  $self->{'create_analysis_prefix'} = $params->{'create_analysis_prefix'}
-    if(defined($params->{'create_analysis_prefix'}));
+  $self->{'create_analysis_prefix'} = $params->{'analysis_template'}
+    if(defined($params->{'analysis_template'}));
 
   return;
 
@@ -321,7 +321,7 @@ sub submit_job {
       $self->db->get_AnalysisAdaptor()->store($analysis);
 
       my $stats = $analysis->stats;
-      $stats->batch_size(7000);
+      $stats->batch_size(3);
       $stats->hive_capacity(11);
       $stats->status('BLOCKED');
       $stats->update();
@@ -345,26 +345,44 @@ sub create_chunk_analysis {
   my $self  = shift;
   my $chunk = shift;
 
+  my $analysisDBA = $self->db->get_AnalysisAdaptor();
   my $gdb = $chunk->dnafrag->genome_db;
   my $logic_name = $self->{'create_analysis_prefix'}
-                   ."_". $gdb->dbID
-                   ."_". $gdb->assembly
-                   ."_". $chunk->dbID;
+                  ."_". $gdb->dbID
+                  ."_". $gdb->assembly
+                  ."_". $chunk->dbID;
 
-  my $parameters = "{'dbChunk'=>" . $chunk->dbID . "}";
-
-  my $analysis = Bio::EnsEMBL::Analysis->new(
+  #print("look for analysis ", $self->{'create_analysis_prefix'}, "\n");
+  my $analysis = $analysisDBA->fetch_by_logic_name($self->{'create_analysis_prefix'});
+  unless($analysis) {  
+    $analysis = Bio::EnsEMBL::Analysis->new(
       -db              => '',
       -db_file         => '',
       -db_version      => '1',
-      -parameters      => $parameters,
       -logic_name      => $logic_name,
+      -program         => 'blastz',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
     );
-  $self->db->get_AnalysisAdaptor()->store($analysis);
+  }
+  return unless($analysis);
+
+  $analysis->adaptor(0);
+  $analysis->dbID(0);
+  $analysis->logic_name($logic_name);
+  #print("new logic_name : ", $analysis->logic_name, "\n");
+  
+  my $param_hash = {};                        
+  if($analysis->parameters and ($analysis->parameters =~ /^{/)) {
+    #print("parsing parameters : ", $analysis->parameters, "\n");
+    $param_hash = eval($analysis->parameters);
+  }
+  $param_hash->{'dbChunk'} = $chunk->dbID;
+  $analysis->parameters(main::encode_hash($param_hash));
+  #print("new parameters : ", $analysis->parameters, "\n");
+  $analysisDBA->store($analysis);
 
   my $stats = $analysis->stats;
-  $stats->batch_size(10);
+  $stats->batch_size(3);
   $stats->hive_capacity(500);
   $stats->update();
   
