@@ -313,7 +313,7 @@ sub update_genetic_distance {
     unless ($hom->dbID);
   # We use here internal hash key for _dn and _ds because the dn and ds method call
   # do some filtering based on the threshold_on_ds.
-  unless($hom->{'_dn'} and $hom->{'_ds'} and $hom->n and $hom->lnl and $hom->s) {
+  unless(defined $hom->{'_dn'} and defined $hom->{'_ds'} and defined $hom->n and defined $hom->lnl and defined $hom->s) {
     warn("homology needs valid dn, ds, n, s, and lnl values to store");
     return $self;
   }
