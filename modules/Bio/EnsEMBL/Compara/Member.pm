@@ -70,7 +70,7 @@ sub new_from_gene {
 
   if (scalar @args) {
 
-    my ($gene, $genome_db) = $self->_rearrange([qw(GENE GENOME_DB)], @args);
+    my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);
 
     unless(defined($gene) and $gene->isa('Bio::EnsEMBL::Gene')) {
       throw(
@@ -122,7 +122,7 @@ sub new_from_transcript {
   my $peptideBioSeq;
   my $seq_string;
 
-  my ($transcript, $genome_db, $translate, $description) = $self->_rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
+  my ($transcript, $genome_db, $translate, $description) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
   #my ($transcript, $genome_db, $translate) = @args;
 
   unless(defined($transcript) and $transcript->isa('Bio::EnsEMBL::Transcript')) {
