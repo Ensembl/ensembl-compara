@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::prints;
+package Bio::EnsEMBL::GlyphSet::prosite;
 use strict;
 use vars qw(@ISA);
 use lib "..";
@@ -34,6 +34,7 @@ sub _init {
 			},
 			});
 
+#To be changed
 	my $colour = $Config->get('transview','transcript','col');
 	$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 	
@@ -57,16 +58,13 @@ sub _init {
 		$Composite->push($rect) if(defined $rect);
 		
 	    }
-	    #########
-	    # replace this with bumping!
-	    #
 	    push @{$this->{'glyphs'}}, $Composite;
-	    $y+=$h;
 	}
 	
     }
 }
 1;
+
 
 
 

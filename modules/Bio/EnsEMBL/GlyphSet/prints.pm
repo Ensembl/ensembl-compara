@@ -24,6 +24,7 @@ sub _init {
     }
 	
     if (@prints) {
+#Not really sure about it...
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $feat->hdbname(),
 	    'zmenu' => {
@@ -34,6 +35,7 @@ sub _init {
 			},
 			});
 
+#To be changed
 	my $colour = $Config->get('transview','transcript','col');
 	$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 	
@@ -57,11 +59,8 @@ sub _init {
 		$Composite->push($rect) if(defined $rect);
 		
 	    }
-	    #########
-	    # replace this with bumping!
-	    #
+	   
 	    push @{$this->{'glyphs'}}, $Composite;
-	    $y+=$h;
 	}
 	
     }

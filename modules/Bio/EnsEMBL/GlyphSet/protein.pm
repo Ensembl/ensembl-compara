@@ -33,7 +33,7 @@ sub _init {
 			},
 		    });
     
-    push @{$this->{'glyphs'}}, $Composite;
+    push @{$this->{'glyphs'}}, $rect;
     
 }
 1;
