@@ -131,22 +131,24 @@ sub compact_init {
     # only draw the coding region if there is such a region
     if($self->can('join')) {
       my @tags;
-         @tags = $self->join( $gene->stable_id ) if $gene->can( 'stable_id' );
+         @tags = $self->join( $gene->stable_id ) if $gene && $gene->can( 'stable_id' );
       foreach (@tags) {
         $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
         $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
       }
     }
     if( $link && ( $compara eq 'primary' || $compara eq 'secondary' )) {
-      if( $Config->{'previous_species'} ) {
-        foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
-          $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
-        } 
-      }
-      if( $Config->{'next_species'} ) {
-        foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'next_species'} ) ) {
-          $self->join_tag( $Composite2, ($Config->{'slice_id'}+1)."#$msid#$gene_stable_id", 0.5, 0.5 , $join_col, 'line', $join_z ) 
-        } 
+      if( $gene_stable_id ) {
+        if( $Config->{'previous_species'} ) {
+          foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
+            $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
+          } 
+        }
+        if( $Config->{'next_species'} ) {
+          foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'next_species'} ) ) {
+            $self->join_tag( $Composite2, ($Config->{'slice_id'}+1)."#$msid#$gene_stable_id", 0.5, 0.5 , $join_col, 'line', $join_z ) 
+          } 
+        }
       }
     }
 
@@ -306,13 +308,15 @@ sub expanded_init {
     next if $target_gene && $gene_stable_id ne $target_gene;
     my %TAGS = ();
     if( $link && ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
-      if( $Config->{'previous_species'} ) {
-        my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'previous_species'} );
-        push @{$TAGS{$psid}}, map { $Config->{'slice_id'}. "#$_#$pid" } @{$href};
-      }
-      if( $Config->{'next_species'} ) {
-        my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'next_species'} );
-        push @{$TAGS{$psid}}, map { ($Config->{'slice_id'}+1). "#$pid#$_" } @{$href};
+      if( $gene_stable_id ) {
+        if( $Config->{'previous_species'} ) {
+          my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'previous_species'} );
+          push @{$TAGS{$psid}}, map { $Config->{'slice_id'}. "#$_#$pid" } @{$href};
+        }
+        if( $Config->{'next_species'} ) {
+          my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'next_species'} );
+          push @{$TAGS{$psid}}, map { ($Config->{'slice_id'}+1). "#$pid#$_" } @{$href};
+        }
       }
     }
     my $join_col = 'blue';
@@ -423,7 +427,7 @@ sub expanded_init {
       }
       if($self->can('join')) {
         my @tags;
-           @tags = $self->join( $gene->stable_id ) if $gene->can('stable_id');
+           @tags = $self->join( $gene->stable_id ) if $gene && $gene->can('stable_id');
         foreach (@tags) {
           $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
           $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
