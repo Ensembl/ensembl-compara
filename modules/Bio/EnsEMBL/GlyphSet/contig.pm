@@ -429,11 +429,11 @@ sub _init_non_assembled_contig {
     		       '02:Centre on contig' => $glyph->{'href'},
 		       "04:Export this contig" => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=contig&id=$rid"
     		};
-        }
-	if ($clone){
-	    $glyph->{'zmenu'}{"01:Clone: $clone"};
-	    $glyph->{'zmenu'}{"03:EMBL source file"} = 
-    	      $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $clone);	
+	    if ($clone){
+		$glyph->{'zmenu'}{"01:Clone: $clone"};
+		$glyph->{'zmenu'}{"03:EMBL source file"} = 
+		$self->{'config'}->{'ext_url'}->get_url( 'EMBL', $clone);	
+	    }
 	}
     
         $self->push($glyph);
