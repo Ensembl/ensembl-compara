@@ -105,8 +105,6 @@ sub _init {
 
         foreach my $transcript (@{$gene->get_all_Transcripts()}) {
 	    #sort exons on their start coordinate
-            warn( $transcript );
-            warn( $transcript->get_all_Exons() );
             my @exons = sort {$a->start <=> $b->start} grep { $_ } @{$transcript->get_all_Exons()};
             # Skip if no exons for this transcript
 	    next if (@exons == 0);
@@ -129,7 +127,6 @@ sub _init {
 
             for(my $i = 0; $i < @exons; $i++) {
 	         my $exon = @exons[$i];
-	         warn( $exon->start.' - '.$exon->end );
 	         next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 
 	         my $next_exon = ($i < $#exons) ? @exons[$i+1] : undef;
 	         #First draw the exon

@@ -25,7 +25,7 @@ sub _init {
     my ($w,$h)         = $Config->texthelper->px2bp($fontname);
     $w = $Config->texthelper->width($fontname);
 
-    foreach my $f (@{$VirtualContig->get_landmark_MarkerFeatures()}){
+    foreach my $f (@{$VirtualContig->get_all_landmark_MarkerFeatures()}){
 	my $fid = $f->display_label();
 	my $bp_textwidth = $w * length("$fid ");
 	my $glyph = new Sanger::Graphics::Glyph::Text({
