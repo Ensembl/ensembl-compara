@@ -6,6 +6,7 @@ use Bio::EnsEMBL::Renderer::imagemap;
 use Bio::EnsEMBL::Renderer::gif;
 use Bio::EnsEMBL::Renderer::wmf;
 use vars qw(@ISA);
+
 use constant GLYPHSET_PATH => '/mysql/ensembl/www/server/ensembl-draw/modules';
 
 @ISA = qw(Bio::Root::RootI);
@@ -19,30 +20,6 @@ Bio::EnsEMBL::DrawableContainer - top level container for ensembl-draw drawing c
 Bio::EnsEMBL::DrawableContainer is a container class for any number of GlyphSets.
 
 =cut
-
-#########
-# modules for GlyphSet types.
-# These need to be autoloaded or dynamically required or something
-#
-#########
-# contigviewtop
-#
-#use Bio::EnsEMBL::GlyphSet::gene;			# contigviewtop transview
-#use Bio::EnsEMBL::GlyphSet::contig;			# contigviewtop
-#use Bio::EnsEMBL::GlyphSet::marker;			# contigviewtop
-
-#########
-# transview
-#
-#use Bio::EnsEMBL::GlyphSet::transcript;		# transview
-#use Bio::EnsEMBL::GlyphSet::contig;			# contigviews
-#use Bio::EnsEMBL::GlyphSet::sptr;			# transview
-#use Bio::EnsEMBL::GlyphSet::genscan;			# contigviewbottom
-
-#########
-# generic
-#
-#use Bio::EnsEMBL::GlyphSet::decoration;
 
 @ISA = qw(Exporter);
 
@@ -85,6 +62,7 @@ sub new {
 	'vc'         => $Container,
 	'display'    => $display,
 	'glyphsets'  => [],
+	'config'     => $Config,
     };
 
     #########
@@ -156,8 +134,7 @@ sub render {
     # DO GLOBBING & BUMPING!!!
     #
 
-    my $width     = 600;
-    my $height    = 300;
+    my ($width, $height) = $this->config()->dimensions();
 
     my ($minx, $maxx, $miny, $maxy);
 
@@ -170,13 +147,9 @@ sub render {
     }
 
     my $scalex = $width / ($maxx - $minx);
-    #########
-    # don't scale y just yet
-    #
-#    my $scaley = $height / ($maxy - $miny);
-    my $scaley = 1;
+    my $scaley = $height / ($maxy - $miny);
 
-#print STDERR qq(Using y scaling factor $scaley and x scaling factor $scalex\n);
+print STDERR qq(Using y scaling factor $scaley and x scaling factor $scalex\n);
 
     my $transform_ref = {
 	'translatex' => 0,
@@ -211,6 +184,12 @@ sub render {
     my $renderer = $renderer_type->new($this->{'glyphsets'}, $transform_ref, $canvas);
 
     return $renderer->canvas();
+}
+
+sub config {
+    my ($this, $Config) = @_;
+    $this->{'config'} = $Config if(defined $Config);
+    return $this->{'config'};
 }
 
 sub glyphsets {

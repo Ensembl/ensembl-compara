@@ -15,16 +15,16 @@ sub new {
     my $self = {
 	'background' => 'transparent',
 	'composite'  => undef,           # arrayref for Glyph::Composite to store other glyphs in
+	'points'     => [],		 # listref for Glyph::Poly to store x,y paired points
     };
+    bless($self, $class);
 
     #########
     # initialise all fields except type
     #
-    for my $field (qw(x y width height text colour bordercolour font onmouseover onmouseout zmenu href pen brush background id)) {
+    for my $field (qw(x y width height text colour bordercolour font onmouseover onmouseout zmenu href pen brush background id points absolutex absolutey)) {
 	$self->{$field} = $$params_ref{$field} if(defined $$params_ref{$field});
     }
-
-    bless($self, $class);
 
     return $self;
 }
@@ -56,11 +56,24 @@ sub transform {
     my $scaley     = $$transform_ref{'scaley'}     || 1;
     my $translatex = $$transform_ref{'translatex'} || 0;
     my $translatey = $$transform_ref{'translatey'} || 0;
+    my $rotation   = $$transform_ref{'rotation'}   || 0;
     my $clipx      = $$transform_ref{'clipx'}      || 0;
     my $clipy      = $$transform_ref{'clipy'}      || 0;
     my $clipwidth  = $$transform_ref{'clipwidth'}  || 0;
     my $clipheight = $$transform_ref{'clipheight'} || 0;
-    my $rotation      = $$transform_ref{'rotation'}   || 0;
+
+    #########
+    # override transformation if we've set x/y to be absolute (pixel) coords
+    #
+    if(defined $this->absolutex()) {
+	$scalex     = 1;
+	$translatex = 0;
+    }
+
+    if(defined $this->absolutey()) {
+	$scaley     = 1;
+	$translatey = 0;
+    }
 
     #########
     # apply scale
@@ -69,7 +82,6 @@ sub transform {
     $this->pixely      (int($this->y()      * $scaley));
     $this->pixelwidth  (int($this->width()  * $scalex));
     $this->pixelheight (int($this->height() * $scaley));
-
 
     #########
     # apply translation

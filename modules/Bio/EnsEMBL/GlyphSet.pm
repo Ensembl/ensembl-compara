@@ -55,17 +55,52 @@ sub glyphs {
 sub push {
     my ($this, $Glyph) = @_;
 
+    my ($gx, $gw, $gy, $gh);
+
     if($Glyph->isa('Bio::EnsEMBL::Glyph')) {
 	#########
 	# if we've got a single glyph:
 	#
 	push @{$this->{'glyphs'}}, $Glyph;
 
+	$gx = $Glyph->x();
+	$gw = $Glyph->width();
+	$gy = $Glyph->y();
+	$gh = $Glyph->height();
     } elsif($Glyph->isa('Bio::EnsEMBL::GlyphSet')) {
 	#########
-	# if we've got a glyphs 
+	# if we've got a glyphset
 	#
 	push @{$this->{'glyphs'}}, @{$Glyph->glyphs()};
+
+	$gx = $Glyph->minx();
+	$gw = $Glyph->maxx() - $Glyph->minx();
+	$gy = $Glyph->miny();
+	$gh = $Glyph->maxy() - $Glyph->miny();
+    }
+
+    $this->minx($gx) if(!defined $this->minx());
+    $this->maxx($gx) if(!defined $this->maxx());
+    $this->miny($gy) if(!defined $this->miny());
+    $this->maxy($gy) if(!defined $this->maxy());
+
+    #########
+    # track max and min dimensions
+    #
+    # x
+    #
+    if($gx < $this->minx()) {
+	$this->minx($gx);
+    } elsif(($gx + $gw) > $this->maxx()) {
+	$this->maxx($gx + $gw);
+    }
+
+    # y
+    # 
+    if($gy < $this->miny()) {
+	$this->miny($gy);
+    } elsif(($gy + $gh) > $this->maxy()) {
+	$this->maxy($gy + $gh);
     }
 }
 
@@ -74,23 +109,60 @@ sub push {
 #
 sub unshift {
     my ($this, $Glyph) = @_;
-    
+
+    my ($gx, $gw, $gy, $gh);
+
     if($Glyph->isa('Bio::EnsEMBL::Glyph')) {
 	#########
 	# if we've got a single glyph:
 	#
 	unshift @{$this->{'glyphs'}}, $Glyph;
-	
+
+	$gx = $Glyph->x();
+	$gw = $Glyph->width();
+	$gy = $Glyph->y();
+	$gh = $Glyph->height();
+
     } elsif($Glyph->isa('Bio::EnsEMBL::GlyphSet')) {
 	#########
 	# if we've got a glyphs 
 	#
 	unshift @{$this->{'glyphs'}}, @{$Glyph->glyphs()};
+	$gx = $Glyph->minx();
+	$gw = $Glyph->maxx() - $Glyph->minx();
+	$gy = $Glyph->miny();
+	$gh = $Glyph->maxy() - $Glyph->miny();
+    }
+
+    $this->minx($gx) if(!defined $this->minx());
+    $this->maxx($gx) if(!defined $this->maxx());
+    $this->miny($gy) if(!defined $this->miny());
+    $this->maxy($gy) if(!defined $this->maxy());
+
+    #########
+    # track max and min dimensions
+    #
+    # x
+    #
+    if($gx < $this->minx()) {
+	$this->minx($gx);
+    } elsif(($gx + $gw) > $this->maxx()) {
+	$this->maxx($gx + $gw);
+    }
+
+    # y
+    # 
+
+    if($gy < $this->miny()) {
+	$this->miny($gx);
+    } elsif(($gy + $gh) > $this->maxy()) {
+	$this->maxy($gy + $gh);
     }
 }
 
 #########
 # pop a Glyph off our list
+# needs to shrink glyphset dimensions if the glyph/glyphset we pop off 
 #
 sub pop {
     my ($this) = @_;
@@ -156,31 +228,31 @@ sub highlights {
 sub minx {
     my ($this, $minx) = @_;
     $this->{'minx'} = $minx if(defined $minx);
-    return $this->{'minx'}
+    return $this->{'minx'}+0;
 }
 
 sub miny {
     my ($this, $miny) = @_;
     $this->{'miny'} = $miny if(defined $miny);
-    return $this->{'miny'}
+    return $this->{'miny'}+0;
 }
 
 sub maxx {
     my ($this, $maxx) = @_;
     $this->{'maxx'} = $maxx if(defined $maxx);
-    return $this->{'maxx'}
+    return $this->{'maxx'}+0;
 }
 
 sub maxy {
     my ($this, $maxy) = @_;
     $this->{'maxy'} = $maxy if(defined $maxy);
-    return $this->{'maxy'}
-}
+    return $this->{'maxy'}+0;
+};
 
 sub strand {
     my ($this, $strand) = @_;
     $this->{'strand'} = $strand if(defined $strand);
-    return $this->{'strand'}
+    return $this->{'strand'}+0;
 }
 
 1;
