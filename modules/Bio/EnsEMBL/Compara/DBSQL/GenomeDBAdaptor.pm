@@ -127,32 +127,32 @@ sub fetch_all {
 =cut
 
 sub fetch_by_name_assembly {
-   my ($self, $name, $assembly) = @_;
+  my ($self, $name, $assembly) = @_;
 
-   unless($name) {
-     $self->throw('name arguments are required');
-   }
-   
-   my $sth;
-   
-   unless (defined $assembly) {
-     my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly_default = 1";
-     $sth = $self->prepare($sql);
-     $sth->execute($name);
-   } else {
-     my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly = ?";
-     $sth = $self->prepare($sql);
-     $sth->execute($name, $assembly);
-   }
+  unless($name) {
+    $self->throw('name arguments are required');
+  }
 
-   my ($id) = $sth->fetchrow_array();
+  my $sth;
 
-   if( !defined $id ) {
-       $self->throw("No GenomeDB with this name [$name] and " .
-		    "assembly [$assembly]");
-   }
+  unless (defined $assembly) {
+    my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly_default = 1";
+    $sth = $self->prepare($sql);
+    $sth->execute($name);
+  } else {
+    my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly = ?";
+    $sth = $self->prepare($sql);
+    $sth->execute($name, $assembly);
+  }
 
-   return $self->fetch_by_dbID($id);
+  my ($id) = $sth->fetchrow_array();
+
+  if (!defined $id) {
+    throw("No GenomeDB with this name [$name] and assembly [".
+        ($assembly or "--undef--")."]");
+  }
+
+  return $self->fetch_by_dbID($id);
 }
 
 =head2 fetch_by_registry_name
