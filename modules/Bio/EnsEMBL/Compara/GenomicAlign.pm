@@ -155,10 +155,11 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::GenomicAlign;
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 # Object preamble
 
@@ -362,7 +363,7 @@ sub genomic_align_block {
       $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
               $self->{'genomic_align_block_id'});
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -412,7 +413,7 @@ sub genomic_align_block_id {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block_id".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block_id".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -475,7 +476,7 @@ sub method_link_species_set {
       $self->{'method_link_species_set'} = $method_link_species_set_adaptor->fetch_by_dbID(
               $self->{'method_link_species_set_id'});
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->method_link_species_set".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->method_link_species_set".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -524,7 +525,7 @@ sub method_link_species_set_id {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->method_link_species_set_id".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->method_link_species_set_id".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -578,7 +579,7 @@ sub dnafrag {
       my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
       $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -626,7 +627,7 @@ sub dnafrag_id {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_id".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_id".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -663,7 +664,7 @@ sub dnafrag_start {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_start".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_start".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -700,7 +701,7 @@ sub dnafrag_end {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_end".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_end".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -737,7 +738,7 @@ sub dnafrag_strand {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_strand".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag_strand".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -796,7 +797,7 @@ sub aligned_sequence {
       $self->{'aligned_sequence'} = $aligned_sequence;
 
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->aligned_sequence".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->aligned_sequence".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -805,7 +806,7 @@ sub aligned_sequence {
   $aligned_sequence = $self->{'aligned_sequence'};
   if ($aligned_sequence and $fix_seq) {
     $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
-        $aligned_sequence, $self->genomic_align_block->reference_genomic_align->cigar_line, 1);
+        $aligned_sequence, $self->genomic_align_block->reference_genomic_align->cigar_line, $fix_seq);
   } 
 
   return $aligned_sequence;
@@ -854,7 +855,7 @@ sub cigar_line {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->cigar_line".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->cigar_line".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -891,7 +892,7 @@ sub level_id {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->level_id".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->level_id".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -936,7 +937,7 @@ sub genomic_align_groups {
         $self->{'genomic_align_group_id'}->{$type} = $this_genomic_align_group->dbID;
       }
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -981,7 +982,7 @@ sub genomic_align_group_by_type {
         $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
       }
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomi_align_group_by_type".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomi_align_group_by_type".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -1024,7 +1025,7 @@ sub genomic_align_group_id_by_type {
         $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
       }
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_group_id_by_type".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_group_id_by_type".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -1078,7 +1079,7 @@ sub original_sequence {
               $self->dnafrag_strand
           );
     } else {
-      warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
@@ -1180,6 +1181,9 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 sub _print {
   my ($self, $FILEH) = @_;
 
+  my $verbose = verbose;
+  verbose(0);
+  
   $FILEH ||= \*STDOUT;
 
   print $FILEH
@@ -1201,6 +1205,7 @@ sub _print {
   aligned_sequence = ".($self->aligned_sequence or "-undef-")."
   
 ";
+  verbose($verbose);
 
 }
 
@@ -1772,7 +1777,7 @@ sub _select_genomic_aligns_index {
   my $index;
 
   throw "ayayay" if (!$genomic_align_block);
-  my $genomic_aligns = $genomic_align_block->genomic_align_array;
+  my $genomic_aligns = $genomic_align_block->get_all_GenomicAligns;
   throw "Using old API (query_danfrag method) for multiple alignments" if (scalar(@{$genomic_aligns}) != 2);
 
   if ($genomic_aligns->[0]->dnafrag->genomedb->dbID > $genomic_aligns->[1]->dnafrag->genomedb->dbID) {
