@@ -53,10 +53,20 @@ sub setSpecies {
 }
 
 sub get_synteny_for_chromosome {
-    my( $self, $chr ) = @_; # if chr = undef return all synteny pairs
+    my( $self, $chr, $start, $end ) = @_; # if chr = undef return all synteny pairs
 
     my @data = ();
     my $SYNTENY_DB = $self->{'_synteny_db'};
+    my @parameters = ();
+    my $extra_sql  = '';
+    if(defined $chr ) {
+      push @parameters, "$chr";
+      $extra_sql .= " and df.name = ?";
+      if(defined $start ) {
+        push @parameters, $end, $start;
+        $extra_sql .= " and dfr.seq_start <= ? and dfr.seq_end >= ?";
+      }
+    }
     my $sth =$self->prepare(
         "select sr.synteny_region_id,
                 df.dnafrag_type as core_type,  df.name as core_name,
@@ -73,16 +83,16 @@ sub get_synteny_for_chromosome {
                 df.dnafrag_id   = dfr.dnafrag_id and
                 df_h.dnafrag_id = dfr_h.dnafrag_id and
                 dfr.synteny_region_id   = sr.synteny_region_id and
-                dfr_h.synteny_region_id = sr.synteny_region_id".
-          ( defined $chr ? " and df.name = ? " : '' ).
-          "order by df.name, dfr.seq_start          "
+                dfr_h.synteny_region_id = sr.synteny_region_id $extra_sql
+          order by df.name, dfr.seq_start          "
     );
-    $sth->execute($self->{'_species_main'}, $self->{'_species_secondary'}, "$chr" );
+    $sth->execute($self->{'_species_main'}, $self->{'_species_secondary'}, @parameters );
     while(my $Q = $sth->fetchrow_arrayref()) {
         push @data, {
             'synteny_id'    => $Q->[0],
             'seq_type'      => $Q->[1],     'chr_name'      => $Q->[2],
             'chr_start'     => $Q->[3],     'chr_end'       => $Q->[4],
+            'start'         => $Q->[3]-$start+1,     'end'           => $Q->[4]-$start+1,
             'hit_seq_type'  => $Q->[5],     'hit_chr_name'  => $Q->[6],
             'hit_chr_start' => $Q->[7],     'hit_chr_end'   => $Q->[8],
             'rel_ori'       => $Q->[9]
