@@ -146,7 +146,7 @@ sub adaptor {
 sub add_condition {
   my $self = shift;
   my $logic_name = shift;
-  $self->throw("Can't add_condition unless SimpleRule is presistent") unless($self->adaptor)
+  $self->throw("Can't add_condition unless SimpleRule is presistent") unless($self->adaptor);
   my $condition = $self->adaptor->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
   $self->conditionAnalysis($condition);
 }
