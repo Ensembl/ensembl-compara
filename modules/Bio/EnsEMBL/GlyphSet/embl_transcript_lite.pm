@@ -43,7 +43,7 @@ sub colour {
 sub href {
   my ($self, $gene, $transcript) = @_;
   my $ID = $transcript->external_name();
-  $ID = ~s/\.\d+$//;
+  $ID =~ s/\.\d+$//;
   
   if($transcript->external_db() ne '') {
     return $self->{'config'}->{'ext_url'}->get_url( $transcript->external_db(),
@@ -63,7 +63,7 @@ sub zmenu {
 
   my $zmenu = {
       'caption'  => "EMBL: $tid",
-      '01:EMBL curated $type' => ''
+      "01:EMBL curated $type" => ''
     };
 
   if($transcript->external_db() ne '') {
