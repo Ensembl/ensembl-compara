@@ -10,7 +10,6 @@ sub my_label { return "Rat cDNAs"; }
 sub features {
     my ($self) = @_;
     return $self->{'container'}->get_all_DnaAlignFeatures('rat_cdna', 80);
-    return $T;
 }
 
 sub colour {

@@ -16,7 +16,7 @@ sub features {
 
 sub colour {
   my( $self, $id ) = @_; 
-  return /^NP_/ ? $self->{'colours'}{'refseq'} / $self->{'colours'}{'swall'};
+  return /^NP_/ ? $self->{'colours'}{'refseq'} : $self->{'colours'}{'swall'};
 }
 
 sub href {

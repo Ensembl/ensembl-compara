@@ -8,24 +8,21 @@ sub my_label { return "ESTs"; }
 
 sub features {
     my ($self) = @_;
-    #return grep { $_->source_tag() eq 'est' }
-    #    $self->{'container'}->get_all_ExternalFeatures($self->glob_bp);
 
     return 
-      $self->{'container'}->get_all_DnaAlignFeatures('ex_e2g_feat',
-								 0);
+      $self->{'container'}->get_all_DnaAlignFeatures('ex_e2g_feat', 0);
 }
 
 sub colour {
   my ($self, $id) = @_;
-  return $id =~ /^BX/ ? $self->{'colours'}{'genoscope'} : $self->{'colours'}{'col'}';
+  return $id =~ /^BX/ ? $self->{'colours'}{'genoscope'} : $self->{'colours'}{'col'};
 }
 
 
 sub href {
     my ($self, $id ) = @_;
     my( $estid = $id ) =~ s/(.*?)\.\d+/$1/ ;
-    return $self->{'config'}->{'ext_url'}->get_url( 'EST', $estid );
+    return $self->{'config'}{'ext_url'}->get_url( 'EST', $estid );
 }
 
 sub zmenu {
