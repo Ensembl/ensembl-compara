@@ -483,7 +483,7 @@ sub _init {
         $self->push($composite);
         $self->push(@tag_glyphs);
 ## Are we going to highlight this item...
-        if($f->can('display_id') && exists $highlights{$f->display_id()}) {
+        if($f->can('display_name') && exists $highlights{$f->display_name()}) {
             my $high = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $composite->x() - 1/$pix_per_bp,
                 'y'         => $composite->y() - 1,
