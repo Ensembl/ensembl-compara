@@ -245,7 +245,7 @@ CREATE TABLE sequence (
   sequence                    longtext NOT NULL,
 
   PRIMARY KEY (sequence_id),
-  KEY sequence (sequence(7))
+  KEY sequence (sequence(18))
 ) MAX_ROWS = 1000000 AVG_ROW_LENGTH = 19000;
 
 
@@ -392,7 +392,7 @@ CREATE TABLE peptide_align_feature (
   KEY hmember_id  (hmember_id),
   KEY hmember_qgenome  (hmember_id, qgenome_db_id),
   KEY qmember_hgenome  (qmember_id, hgenome_db_id)
-);
+) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133;
 
 
 #
