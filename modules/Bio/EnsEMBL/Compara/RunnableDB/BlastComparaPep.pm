@@ -175,7 +175,6 @@ sub run
 {
   my $self = shift;
   #call superclasses run method
-  print("ABOUT TO RUN\n");
   return $self->SUPER::run();
 }
 
