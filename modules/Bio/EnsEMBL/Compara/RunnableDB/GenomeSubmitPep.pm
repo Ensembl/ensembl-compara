@@ -219,14 +219,13 @@ sub createSubmitPepAnalysis {
         -db_version      => '1',
         -parameters      => "{subset_id=>" . $subset->dbID()."}",
         -logic_name      => $logic_name,
-        -input_id_type   => 'MemberPep',
         -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
       );
     $self->db->get_AnalysisAdaptor()->store($analysis);
 
     my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($analysis->dbID);
-    $stats->batch_size(7000);
-    $stats->hive_capacity(11);
+    $stats->batch_size(500);
+    $stats->hive_capacity(3);
     $stats->status('BLOCKED');
     $stats->update();   
   }
