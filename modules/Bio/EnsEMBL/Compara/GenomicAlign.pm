@@ -1,5 +1,5 @@
 #
-# Ensembl module for Bio::EnsEMBL::DBSQL::GenomicAlign
+# Ensembl module for Bio::EnsEMBL::Compara::GenomicAlign
 #
 # Cared for by Ewan Birney <birney@ebi.ac.uk>
 #
@@ -84,13 +84,13 @@ sub new {
 
 =head2 adaptor
 
- Title   : adaptor
- Usage   : $obj->adaptor($newval)
- Function: 
- Example : 
- Returns : value of adaptor
- Args    : newvalue (optional)
-
+  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
+  Example    : $adaptor = $genomic_align->adaptor;
+  Description: Getter/Setter for the adaptor this object uses for database
+               interaction.
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -100,11 +100,7 @@ sub adaptor{
       $obj->{'adaptor'} = $value;
     }
     return $obj->{'adaptor'};
-
 }
-
-
-### getters and setters ###
 
 
 =head2 consensus_dnafrag
@@ -117,7 +113,6 @@ sub adaptor{
   Caller     : general
  
 =cut
-
 
 sub consensus_dnafrag {
    my ($self, $arg) = @_;
@@ -141,7 +136,6 @@ sub consensus_dnafrag {
  
 =cut
 
-
 sub consensus_start {
    my ($self, $arg) = @_;
  
@@ -164,7 +158,6 @@ sub consensus_start {
  
 =cut
 
-
 sub consensus_end {
    my ($self, $arg) = @_;
  
@@ -186,7 +179,6 @@ sub consensus_end {
   Caller     : general
  
 =cut
-
 
 sub query_dnafrag {
    my ($self, $arg) = @_;
@@ -329,356 +321,6 @@ sub cigar_line {
 }
 
 
-
-
-
-
-
-
-
-###############################################################################
-
-###########################################
-#  
-#  Methods which are probably cruft
-#
-#
-
-
-=head1 SimpleAlignOutputI compliant methods
-
-=cut
-
-
-sub each_seq {
-    my $self = shift;
-
-    return $self->eachSeq;
-}
-
-
-=head2 eachSeq
-
- Title   : eachSeq
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub eachSeq{
-   my ($self,@args) = @_;
-
-   my @out;
-
-   $self->_ensure_loaded;
-   my $count = 1;
-   foreach my $abs ( values %{$self->{'_align_block'}} ) {
-       my @alb = $abs->get_AlignBlocks;
-       my $first = $alb[0];
-       my $seq = Bio::LocatableSeq->new();
-       $seq->display_id("ensembl".$count);
-       $count++;
-       $seq->start($first->start);
-       $seq->end($alb[$#alb]->end);
-
-       # loop over each block, getting out the sequence. Between blocks,
-       # figure out how many '---' to assign using the align_start/end
-       my $prev;
-       my $str = "";
-       foreach my $alb ( @alb ) {
-	   if( defined $prev && $prev->align_end+1 != $alb->align_start ) {
-	       if( $prev->align_end+1 > $alb->align_start ) {
-		   $self->throw("Badly formatted align start/end...");
-	       }
-	       $str .= '-' x ($alb->align_start - $prev->align_end - 1);
-	   }
-	   $str .= $alb->seq->seq();
-	   $prev = $alb;
-       }
-
-       $seq->seq($str);
-       push(@out,$seq);
-
-   }
-   
-   return @out;
-}
-
-
-
-=head2 each_AlignBlockSet
-
- Title   : each_AlignBlockSet
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub each_AlignBlockSet{
-   my ($self,@args) = @_;
-
-   $self->_ensure_loaded;
-
-   return values %{$self->{'_align_block'}};
-
-}
-
-
-sub displayname {
-    my ($self,@args) = @_;
-
-    return $self->get_displayname(@args);
-}
-
-=head2 get_displayname
-
- Title   : get_displayname
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub get_displayname{
-   my ($self,$nse) = @_;
-
-   return $nse;
-}
-
-sub maxnse_length {
-    return 50;
-}
-
-sub maxdisplayname_length {
-    return 50;
-}
-
-sub length_aln {
-   my $self = shift;
-
-   my $abs = $self->get_AlignBlockSet(1);
-
-   # assumme that first alignblockset is the reference
-   my ($ab) = $abs->get_AlignBlocks();
-
-   return $ab->align_end;
-}
-
-sub id {
-  return "ensembl";
-}
-
-sub no_sequences {
-  my $self = shift;
-
- return scalar($self->each_AlignBlockSet);
-}
-
-
-=head2 get_AlignBlockSet
-
- Title   : get_AlignBlockSet
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub get_AlignBlockSet{
-   my ($self,$row) = @_;
-
-   return $self->adaptor->get_AlignBlockSet($self->align_id,$row);
-}
-
-
-=head2 add_AlignBlockSet
-
- Title   : add_AlignBlockSet
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub add_AlignBlockSet{
-   my ($self,$row_id,$abs) = @_;
-
-   if( !defined $abs) {
-       $self->throw("Cannot add AlignBlockSet without row_id,abs");
-   }
-
-   if( !ref $abs || !$abs->isa('Bio::EnsEMBL::Compara::AlignBlockSet') ) {
-       $self->throw("Must have an AlignBlockSet, not a $abs");
-   }
-
-   $self->{'_align_block'}->{$row_id} = $abs;
-
-}
-
-
-=head2 _ensure_loaded
-
- Title   : _ensure_loaded
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub _ensure_loaded{
-   my ($self,@args) = @_;
-
-   if( $self->_loaded_align_block == 1) {
-       return;
-   }
-   if( scalar( keys%{$self->{'_align_block'}}) > 0 ) {
-       return;
-   }
-
-   $self->_load_all_blocks;
-   $self->_loaded_align_block(1);
-}
-
-
-
-=head2 _load_all_blocks
-
- Title   : _load_all_blocks
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub _load_all_blocks{
-   my ($self,@args) = @_;
-   my $align_row_id = $self->align_row_id;
-   my $abs = $self->get_AlignBlockSet($align_row_id);
-   $self->add_AlignBlockSet($align_row_id,$abs);
-}
-
-=head2 _loaded_align_block
-
- Title   : _loaded_align_block
- Usage   : $obj->_loaded_align_block($newval)
- Function: 
- Example : 
- Returns : value of _loaded_align_block
- Args    : newvalue (optional)
-
-
-=cut
-
-sub _loaded_align_block{
-   my ($obj,$value) = @_;
-   if( defined $value) {
-      $obj->{'_loaded_align_block'} = $value;
-    }
-    return $obj->{'_loaded_align_block'};
-
-}
-
-
-
-
-
-
-sub dbID {
-    my ($self,$arg) = @_;
-
-    return $self->align_id($arg);
-}
-
-
-=head2 align_id
-
- Title   : align_id
- Usage   : $obj->align_id($newval)
- Function: 
- Example : 
- Returns : value of align_id
- Args    : newvalue (optional)
-
-
-=cut
-
-sub align_id{
-   my ($obj,$value) = @_;
-   if( defined $value) {
-      $obj->{'align_id'} = $value;
-    }
-    return $obj->{'align_id'};
-
-}
-
-=head2 align_row_id
-
- Title   : align_row_id
- Usage   : $obj->align_row_id($newval)
- Function: 
- Example : 
- Returns : value of align_row_id
- Args    : newvalue (optional)
-
-
-=cut
-
-sub align_row_id{
-   my ($obj,$value) = @_;
-   if( defined $value) {
-      $obj->{'align_row_id'} = $value;
-    }
-    return $obj->{'align_row_id'};
-
-}
-
-=head2 align_name
-
- Title	 : align_name
- Usage	 : $obj->align_name($newval)
- Function: 
- Example : 
- Returns : value of align_name
- Args 	 : newvalue (optional)
-
-
-=cut
-
-sub align_name{
-  my ($self,$value) = @_;
-  if (defined $value) {
-    $self->{'align_name'} = $value;
-  }
-  if (! defined $self->{'align_name'} &&
-      defined $self->adaptor &&
-      defined $self->align_id) {
-    $self->{'align_name'} = $self->adaptor->fetch_align_name_by_align_id($self->align_id);
-  }
-  return $self->{'align_name'};
-}
 
 
 1;

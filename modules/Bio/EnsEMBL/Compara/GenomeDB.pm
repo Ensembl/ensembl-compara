@@ -155,15 +155,16 @@ sub name{
 
 
 
+
 =head2 dbID
 
- Title   : dbID
- Usage   : $obj->dbID($newval)
- Function: 
- Example : 
- Returns : value of dbID
- Args    : newvalue (optional)
-
+  Arg [1]    : (optional) int $value the new value of this objects database 
+               identifier
+  Example    : $dbID = $genome_db->dbID;
+  Description: Getter/Setter for the internal identifier of this GenomeDB
+  Returntype : int
+  Exceptions : none
+  Caller     : general
 
 =cut
 
