@@ -249,19 +249,6 @@ sub description {
   return $self->{'_description'};
 }
 
-=head2 source_id
-
-=cut
-
-sub source_id {
-  my $self = shift;
-
-  throw("Method deprecated. You can now get the source_name by directly calling source_name method\n");
-
-  $self->{'_source_id'} = shift if (@_);
-  return $self->{'_source_id'};
-}
-
 =head2 source_name
 
 =cut
@@ -532,7 +519,6 @@ sub gene_member {
   return $self->{'_gene_member'};
 }
 
-
 =head2 print_member
 
   Arg[1]     : string $postfix
@@ -544,7 +530,9 @@ sub gene_member {
   Caller     : general
 
 =cut
+
 sub print_member
+
 {
   my $self = shift;
   my $postfix = shift;
@@ -554,5 +542,14 @@ sub print_member
   if($postfix) { print(" $postfix"); }
   else { print("\n"); }
 }
+
+# DEPRECATED METHODS
+####################
+
+sub source_id {
+  my $self = shift;
+  throw("Method deprecated. You can now get the source_name by directly calling source_name method\n");
+}
+
 
 1;
