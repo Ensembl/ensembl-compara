@@ -587,8 +587,8 @@ sub dnafrag {
       warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->dnafrag".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+    }
   }
-
   return $self->{'dnafrag'};
 }
 
@@ -664,7 +664,7 @@ sub dnafrag_start {
   if (defined($dnafrag_start)) {
      $self->{'dnafrag_start'} = $dnafrag_start;
 
-  } elsif (!defined($self->{'dnafrag_start'}))
+   } elsif (!defined($self->{'dnafrag_start'})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
@@ -1730,6 +1730,5 @@ sub _select_genomic_aligns_index {
 
   return $index;  
 }
-
 
 1;
