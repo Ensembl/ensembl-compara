@@ -113,9 +113,11 @@ sub js_init{
 <script language="javascript">
 <!-- Hide script
 function init()  {  
+  if(document.feederform) {
     document.feederform.q.focus();
     document.feederform.q.select();
-    return (false);
+  }
+  return (false);
 }
   preloaders = new Array;
   preloaders[0] = new Image(1,1);

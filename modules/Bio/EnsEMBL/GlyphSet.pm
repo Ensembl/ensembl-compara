@@ -13,7 +13,6 @@ use vars qw(@ISA $AUTOLOAD);
 sub new {
     my $class = shift;
     my $self = $class->SUPER::new( @_ );
-       $self->{'label2'}     = undef;
        $self->{'bumpbutton'} = undef;
     return $self;
 }
@@ -45,6 +44,15 @@ sub zoom_URL {
     return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights);
 }
 
+sub zoom_zoom_zmenu {
+    my ($self, $chr, $interval_middle, $width, $highlights, $zoom_width) = @_;
+    return { 
+            'caption'                          => "Navigation",
+            '03:Zoom in (x2)'                  => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights)."&zoom_width=".int($zoom_width/2),
+            '04:Centre on this scale interval' => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights), 
+            '05:Zoom out (x0.5)'               => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights)."&zoom_width=".($zoom_width*2) 
+    };
+}
 sub zoom_zmenu {
     my ($self, $chr, $interval_middle, $width, $highlights) = @_;
     return { 

@@ -95,7 +95,7 @@ sub _getHref {
         if(defined $zmenu) {
     		$href        = qq( href="javascript:void(0);") unless( defined $href );
     		$alt         = qq();
-    		$onmouseover = qq( onmouseover=") . &JSTools::js_menu($zmenu) . qq(");
+    		$onmouseover = qq( onmouseover=") . &Sanger::Graphics::JSTools::js_menu($zmenu) . qq(");
         }
     }
 	return "$href$onmouseover$onmouseout$alt" if(defined $href);

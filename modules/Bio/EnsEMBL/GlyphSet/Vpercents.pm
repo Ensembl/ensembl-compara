@@ -25,8 +25,8 @@ sub init_label {
 		'absolutey' => 1,
     });
 		
-    $self->label($label);
-	$self->label2($label2);
+    $self->label(  $label  );
+    $self->label2( $label2 );
 }
 
 sub _init {

@@ -34,6 +34,8 @@ sub _init {
     #my $param_string   = $clone_based ? $Config->get('_settings','clone') : ("chr=".$Container->_chr_name());
     my $param_string   = $clone_based ? $Config->get('_settings', 'clone') : ("chr=" . $Container->chr_name());
 
+    my $main_width     = $Config->get('_settings', 'main_vc_width');
+    warn( "MW: $main_width" );
     my $len            = $Container->length();
     my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->chr_start();
     my $global_end     = $global_start + $len - 1;
@@ -44,48 +46,71 @@ sub _init {
 
     my $divs = set_scale_division($len, $max_num_divs) || 0;
     
-    my $glyph = new Sanger::Graphics::Glyph::Rect({
+    $self->push(new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
-        'y'         => 4,
+        'y'         => 0,
         'width'     => $len,
-        'height'    => $h,
+        'height'    => 0,
         'colour'    => $feature_colour,
         'absolutey' => 1,
-    });
-    $self->push($glyph);
+    }));
+    $self->push(new Sanger::Graphics::Glyph::Rect({
+        'x'         => 0,
+        'y'         => 3,
+        'width'     => $len,
+        'height'    => 0,
+        'colour'    => $feature_colour,
+        'absolutey' => 1,
+    }));
 
-    my $last_end = 0;
     for (my $i=0;$i<int($len/$divs); $i++){
         my $tick = new Sanger::Graphics::Glyph::Rect({
             'x'         => $i * $divs,
-            'y'         => 4,
+            'y'         => 0,
             'width'     => 0,
-            'height'    => 2,
+            'height'    => 5,
             'colour'    => $feature_colour,
             'absolutey' => 1,
         });
         $self->push($tick);
         $self->join_tag( $tick, "ruler_$i", $self->strand()==-1 ? 1 : 0, 0.5, 'grey80'  ) if($REGISTER_LINE); 
+        if ($navigation eq 'on'){
+            $self->interval( $param_string, $i * $divs, ($i+.2) * $divs, $global_start, $global_end-$global_start, $highlights);
+        } elsif( $navigation eq 'zoom' ) {
+            $self->zoom_interval( $param_string, $i * $divs, ($i+.2) * $divs, $global_start, $main_width, $highlights, $global_end-$global_start);
+        }
 
         for( my $j = 1 ; $j < 5; $j ++ ) {
-          my $t = new Sanger::Graphics::Glyph::Space({
-            'x'         => ($i + $j/5) * $divs,
-            'y'         => 4,
-            'width'     => $divs / 5,
-            'height'    => 2,
-            'absolutey' => 1,
-          });
-          $self->push($t);
+          my $t;
+          if($j%2) {
+              $t = new Sanger::Graphics::Glyph::Rect({
+                 'x'         => ($i + $j/5) * $divs,
+                 'y'         => 0,
+                 'width'     => $divs / 5,
+                 'height'    => 3,
+                 'colour'    => 'black',
+                 'absolutey' => 1,
+              });
+          } else {
+              $t = new Sanger::Graphics::Glyph::Space({
+                 'x'         => ($i + $j/5) * $divs,
+                 'y'         => 0,
+                 'width'     => $divs / 5,
+                 'height'    => 3,
+                 'absolutey' => 1,
+              });
+          }
+           $self->push($t);
           $self->join_tag( $t, "ruler_$i"."_$j", 0, 0 , 'grey90'  ) if($REGISTER_LINE);  
-        }
-        if ($navigation eq 'on'){
-            $self->interval(
-                $param_string, $last_end, $i * $divs, $global_start, $global_end-$global_start, $highlights
-            );
-            $last_end = $i * $divs;
+          if ($navigation eq 'on'){
+            $self->interval( $param_string,($i+$j/5)*$divs, ($i+$j/5+.2) * $divs, $global_start, $global_end-$global_start, $highlights);
+          } elsif( $navigation eq 'zoom' ) {
+            $self->zoom_interval( $param_string, ($i+$j/5) * $divs, ($i+$j/5+.2) * $divs, $global_start, $main_width, $highlights, $global_end-$global_start);
+          }
         }
     }
         
+    my $last_end = (int($len/$divs)+1) * $divs;
     # Add the last recentering imagemap-only glyphs
     if ($navigation eq 'on'){
         $self->interval(
@@ -157,31 +182,50 @@ sub _init {
     # last tick
 
     my $im_width = $Config->image_width();
-    my $j = ( int($len/$divs) + 1 )* 5;
     my $X = 0;
-    foreach( $j = int($len/$divs) * 5 ; $j < $len/$divs * 5 ; $j++ ) {
+    my $j0 = int($len/$divs);
+    foreach( my $j = int($len/$divs) * 5 ; $j < $len/$divs * 5 ; $j++ ) {
           last if ($j > 200 );
-          my $t = new Sanger::Graphics::Glyph::Space({
-            'x'         => $j * $divs / 5,
-            'y'         => 4,
-            'width'     => 0,
-            'height'    => 2,
-            'absolutey' => 1,
-          });
+          my $t;
+          my $w = $len < ($j+1)/5*$divs ? $len - $j/5*$divs : $divs/5;
+          if(($j-$j0)%2) {
+              $t = new Sanger::Graphics::Glyph::Space({
+                 'x'         => $j/5 * $divs,
+                 'y'         => 0,
+                 'width'     => $w,
+                 'height'    => 3,
+                 'colour'    => 'black',
+                 'absolutey' => 1,
+              });
+          } else {
+              $t = new Sanger::Graphics::Glyph::Rect({
+                 'x'         => $j/5 * $divs,
+                 'y'         => 0,
+                 'width'     => $w,
+                 'height'    => 3,
+                 'colour'    => 'black',
+                 'absolutey' => 1,
+              });
+          }
           $self->push($t);
-          $self->join_tag( $t, "ruler_99_$j", $self->strand()==-1 ? 1 : 0, 0.5, 'grey90'  ) if($REGISTER_LINE);
+          $self->join_tag( $t, "ruler_99_$j", 0, 0.5, 'grey90'  ) if($REGISTER_LINE);
+          if ($navigation eq 'on'){
+            $self->interval( $param_string,$j/5*$divs, ($j/5+.2) * $divs, $global_start, $global_end-$global_start, $highlights);
+          } elsif( $navigation eq 'zoom' ) {
+            $self->zoom_interval( $param_string, $j/5 * $divs, ($j/5+.2) * $divs, $global_start, $main_width, $highlights, $global_end-$global_start);
+          }
     }
 
     my $tick = new Sanger::Graphics::Glyph::Rect({
         'x'          => $im_width - 1,
-        'y'          => 4,
+        'y'          => 0,
         'width'      => 0,
-        'height'     => 2,
+        'height'     => 5,
         'colour'     => $feature_colour,
         'absolutex'  => 1,
         'absolutey'  => 1,
     });
-    $self->join_tag( $tick, "ruler_99" , $self->strand()==-1 ? 1 : 0, 0.5, 'grey80' ) if($REGISTER_LINE); 
+    $self->join_tag( $tick, "ruler_99" , 0, 0.5, 'grey80' ) if($REGISTER_LINE); 
     $self->push($tick);
 }
 
@@ -216,12 +260,28 @@ sub interval {
     my $interval_middle = $global_offset + ($start + $end)/2;
     my $interval = new Sanger::Graphics::Glyph::Space({
         'x'         => $start,
-        'y'         => 4,
-        'width'     => $width,
-        'height'    => 15,
+        'y'         => 0,
+        'width'     => $end - $start+1,
+        'height'    => 18,
         'absolutey' => 1,
-		'href'		=> $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
+        'href'      => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
         'zmenu'     => $self->zoom_zmenu( $chr, $interval_middle, $width, $highlights ),
+    });
+    $self->push($interval);
+}
+
+sub zoom_interval {
+    # Add the recentering imagemap-only glyphs
+    my ( $self, $chr, $start, $end, $global_offset, $width, $highlights, $zoom_width ) = @_;
+    my $interval_middle = $global_offset + ($start + $end)/2;
+    my $interval = new Sanger::Graphics::Glyph::Space({
+        'x'         => $start,
+        'y'         => 0,
+        'width'     => $end - $start+1,
+        'height'    => 18,
+        'absolutey' => 1,
+        'href'      => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
+        'zmenu'     => $self->zoom_zoom_zmenu( $chr, $interval_middle, $width, $highlights, $zoom_width )
     });
     $self->push($interval);
 }
