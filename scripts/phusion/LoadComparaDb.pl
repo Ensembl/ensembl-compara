@@ -196,8 +196,8 @@ $line\n";
   $galn_adaptor->store([$genomic_align]);
 }
 
-if (! defined $stored_max_alignment_length ||
-    (defined $stored_max_alignment_length && 
-     $stored_max_alignment_length < $max_alignment_length)) {
-      $db->get_MetaContainer->store_key_value("max_alignment_length",$max_alignment_length + 1);
+if (! defined $stored_max_alignment_length) {
+  $db->get_MetaContainer->store_key_value("max_alignment_length",$max_alignment_length + 1);
+} elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
+  $db->get_MetaContainer->update_key_value("max_alignment_length",$max_alignment_length + 1);
 }
