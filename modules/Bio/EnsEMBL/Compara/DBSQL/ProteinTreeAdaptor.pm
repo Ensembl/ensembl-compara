@@ -257,26 +257,19 @@ sub parse_newick_into_tree
   my $newick = shift;
   my $tree = shift;
   
-  $newick = "(Mouse:0.76985,
-              ((((Human:0.11449,Chimp:0.15471):0.03695,
-                 Gorilla:0.15680):0.02121,
-                   Orang:0.29209)Hominidae:0.04986,
-                   Gibbon:0.35537)Hominoidea:0.41983,
-                   Bovine:0.91675);";
-
   my $count=1;
   my $root = new Bio::EnsEMBL::Compara::NestedSet;
   $root->node_id($count++);
   
   my $state=1;
   $newick =~ s/\s//g;
-  print("$newick\n");
+  #print("$newick\n");
   my $token = next_token(\$newick, "(");
   my $lastset = $root;
   my $node = $root;
 
   while($token) {
-    printf("state %d : '%s'\n", $state, $token);
+    #printf("state %d : '%s'\n", $state, $token);
     switch ($state) {
       case 1 { #new node
         $node = new Bio::EnsEMBL::Compara::NestedSet;
@@ -294,7 +287,7 @@ sub parse_newick_into_tree
       case 2 { #naming a node
         if(!($token =~ /[:,);]/)) { 
           $node->name($token);
-          print("    naming leaf"); $node->print_node;
+          #print("    naming leaf"); $node->print_node;
           $token = next_token(\$newick, ":,)");
         }
         $state = 3;
@@ -303,14 +296,14 @@ sub parse_newick_into_tree
         if($token eq ':') {
           $token = next_token(\$newick, ",)");
           $node->distance_to_parent($token);
-          print("set distance: $token"); $node->print_node;
+          #print("set distance: $token"); $node->print_node;
           $token = next_token(\$newick, ",)"); #move to , or )
         }
         $state = 4;
       }
       case 4 { # end node
         if($token eq ')') {
-          print("end set : "); $lastset->print_node;
+          #print("end set : "); $lastset->print_node;
           $node = $lastset;        
           $lastset = $lastset->parent;
           $token = next_token(\$newick, ":,);");
@@ -323,7 +316,7 @@ sub parse_newick_into_tree
           $state=1;
           $token = next_token(\$newick, "(");
         } else {
-          throw("parse error: expected ')' or ','\n");
+          throw("parse error: expected ; or ) or ,\n");
         }
       }
 
