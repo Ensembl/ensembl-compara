@@ -184,6 +184,8 @@ sub get_params {
   $self->{'chunk_size'} = $params->{'chunk_size'} if(defined($params->{'chunk_size'}));
   $self->{'overlap'} = $params->{'overlap'} if(defined($params->{'overlap'}));
 
+  $self->{'dump_loc'} = $params->{'dump_loc'} if(defined($params->{'dump_loc'}));
+
   $self->{'genome_db_id'} = $params->{'gdb'} if(defined($params->{'gdb'}));
   $self->{'genome_db_id'} = $params->{'genome_db_id'} if(defined($params->{'genome_db_id'}));
 
@@ -234,6 +236,7 @@ sub create_chunks
   } else {
     $self->{'dna_collection'} = new Bio::EnsEMBL::Compara::Production::DnaCollection;
     $self->{'dna_collection'}->description($self->{'collection_name'});
+    $self->{'dna_collection'}->dump_loc($self->{'dump_loc'}) if(defined($self->{'dump_loc'}));
     $collectionDBA->store($self->{'dna_collection'});
   }
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->{'dna_collection'});
