@@ -38,7 +38,7 @@ sub _init {
     $COL{'gpos75'}  = $cmap->id_by_name('grey3'); #add_rgb([210,210,210]);
     $COL{'gpos50'}  = $cmap->id_by_name('grey2'); #add_rgb([230,230,230]);
     $COL{'gpos25'}  = $cmap->id_by_name('grey1'); #add_rgb([240,240,240]);
-    $COL{'gvar'}    = $cmap->id_by_name('offwhite'); #add_rgb([222,220,220]);
+    $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
     $COL{'gneg'}    = $white;
     $COL{'acen'}    = $cmap->id_by_name('slategrey');
     $COL{'stalk'}   = $cmap->id_by_name('slategrey');
@@ -50,6 +50,8 @@ sub _init {
     my $i = 0;
     # fetch the chromosome bands that cover this VC.
     my @bands = $self->{'container'}->fetch_karyotype_band_start_end();
+    my $min_start;
+    my $max_end; 
     foreach my $band (reverse @bands){
 	my $chr = $band->chromosome();
 	my $bandname = $band->name();
@@ -66,6 +68,8 @@ sub _init {
 	my $vc_band_end   = $end - $self->{'container'}->_global_start();
 	$vc_band_end      =  $self->{'container'}->length() if ($vc_band_end > $self->{'container'}->length());
 	
+        my $min_start = $vc_band_start if(!defined $min_start || $min_start > $vc_band_start); 
+        my $max_end   = $vc_band_end   if(!defined $max_end   || $max_end   < $vc_band_end); 
     	my $gband = new Bio::EnsEMBL::Glyph::Rect({
 	    'x'      => $vc_band_start,
 	    'y'      => 0,
@@ -99,9 +103,9 @@ sub _init {
 	}
 	
     	my $gband = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'      => 0,
+	    'x'      => $min_start,
 	    'y'      => 0,
-	    'width'  => $self->{'container'}->length(),
+	    'width'  => $max_end - $min_start,
 	    'height' => 10,
 	    'bordercolour' => $black,
 	    'absolutey' => 1,
