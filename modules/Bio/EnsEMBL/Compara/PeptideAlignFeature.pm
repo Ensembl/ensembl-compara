@@ -112,7 +112,13 @@ sub create_homology
   $attribute->cigar_line($cigar_line);
   #print("   '$cigar_line'\n");
 
-  $homology->add_Member_Attribute([$self->query_member->gene_member, $attribute]);
+  if($self->query_member->gene_member) {
+    #print("add query member gene : ", $self->query_member->gene_member->stable_id, "\n");
+    $homology->add_Member_Attribute([$self->query_member->gene_member, $attribute]);
+  } else {
+    #print("add query member : ", $self->query_member->stable_id, "\n");
+    $homology->add_Member_Attribute([$self->query_member, $attribute]);
+  }
 
   # HIT member
   #
@@ -134,7 +140,13 @@ sub create_homology
   $attribute->cigar_line($cigar_line);
   #print("   '$cigar_line'\n");
 
-  $homology->add_Member_Attribute([$self->hit_member->gene_member, $attribute]);
+  if($self->hit_member->gene_member) {
+    #print("add hit member gene : ", $self->hit_member->gene_member->stable_id, "\n");
+    $homology->add_Member_Attribute([$self->hit_member->gene_member, $attribute]);
+  } else {
+    #print("add hit member : ", $self->hit_member->stable_id, "\n");
+    $homology->add_Member_Attribute([$self->hit_member, $attribute]);
+  }
 
   return $homology;
 }
@@ -426,7 +438,8 @@ sub hash_key
   return $key unless($self->hit_member);
   my $gene1 = $self->query_member->gene_member;
   my $gene2 = $self->hit_member->gene_member;
-  return $key unless($gene1 and $gene2);
+  $gene1 = $self->query_member unless($gene1);
+  $gene2 = $self->hit_member unless($gene2);
   if($gene1->genome_db_id > $gene2->genome_db_id) {
     my $temp = $gene1;
     $gene1 = $gene2;
