@@ -322,7 +322,7 @@ sub bump{
     my $bump_end = int( $end * $self->{'pix_per_bp'} );
        $bump_end = $self->{'bitmap_length'} if ($bump_end > $self->{'bitmap_length'});
     my $row = &Sanger::Graphics::Bump::bump_row(
-        $bump_start,    $bump_end,   $self->{'bitmap_length'}, $self->{'bitmap'}
+        $bump_start,    $bump_end,   $self->{'bitmap_length'}, $self->{'bitmap'}, $dep 
     );
     return $row > $dep ? -1 : $row;
 }
