@@ -70,7 +70,7 @@ sub _init {
                 $last_end,
                 $i * $divs,
                 $global_start,
-            $global_end-$global_start,
+                $global_end-$global_start,
                 $highlights
             );
             $last_end = $i * $divs;
@@ -163,7 +163,7 @@ sub _init {
 sub set_scale_division {
     my ($full_length, $max_num_divs) = @_;
 
-        $max_num_divs = $max_num_divs <1 ? 1 : $max_num_divs;
+    $max_num_divs = $max_num_divs <1 ? 1 : $max_num_divs;
 
     my $num_of_digits = length( int( $full_length / 10 ) );
     $num_of_digits--;
@@ -187,18 +187,12 @@ sub set_scale_division {
 sub bp_to_nearest_unit_by_divs {
     my ($bp,$divs) = @_;
 
-    if (!defined $divs){
-        return bp_to_nearest_unit ($bp,0);
-    }
+    return bp_to_nearest_unit ($bp,0) if (!defined $divs);
 
     my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
     my $value = $divs / ( 10 ** ( $power_ranger * 3 ) ) ;
 
-    my $dp = 0;
-    if ($value < 1){
-        $dp = length ($value) - 2;                # 2 for leading "0."
-    }
-      
+    my $dp = $value < 1 ? length ($value) - 2 : 0; # 2 for leading "0."
     return bp_to_nearest_unit ($bp,$dp);
 }
 
@@ -209,62 +203,47 @@ sub bp_to_nearest_unit {
     $dp = 1 unless defined $dp;
     
     my @units = qw( bp Kb Mb Gb Tb );
-    
     my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
     my $unit = $units[$power_ranger];
-    my $unit_str;
 
     my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
       
-    if ( $unit ne "bp" ){
-        $unit_str = sprintf( "%.${dp}f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), " $unit" );
-    } else {
-        $unit_str = "$value $unit";
-    }
-    return $unit_str;
+    $value = sprintf( "%.${dp}f", $bp / ( 10 ** ( $power_ranger * 3 ) ) ) if ($unit ne 'bp');      
+
+    return "$value $unit";
 }
 
 sub zoom_URL {
-        my( $chr, $interval_middle, $width, $factor, $highlights ) = @_;
-        my $start = int( $interval_middle - $width / 2 / $factor);
-        my $end   = int( $interval_middle + $width / 2 / $factor);        
-        return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?chr=$chr&vc_start=$start&vc_end=$end&$highlights);
+    my( $chr, $interval_middle, $width, $factor, $highlights ) = @_;
+    my $start = int( $interval_middle - $width / 2 / $factor);
+    my $end   = int( $interval_middle + $width / 2 / $factor);        
+    return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?chr=$chr&vc_start=$start&vc_end=$end&$highlights);
 }
 
 sub interval {
-            # Add the recentering imagemap-only glyphs
-            my ($self,
-                $chr,
-                $start,
-                $end,
-                $global_offset,
-                $width,
-                $highlights
-            ) = @_;
+    # Add the recentering imagemap-only glyphs
+    my ($self, $chr, $start, $end, $global_offset, $width, $highlights ) = @_;
+    my $interval_middle = $global_offset + ($start + $end)/2;
 
-            my $interval_middle = $global_offset + ($start + $end)/2;
-
-            #print STDERR "URL: $url\n";
-            
-            my $interval = new Bio::EnsEMBL::Glyph::Rect({
-                'x'         => $start,
-                'y'         => 4,
-                'width'     => $width,
-                'height'    => 15,
-                'colour'    => 'transparent',
-                'absolutey' => 1,
+    my $interval = new Bio::EnsEMBL::Glyph::Rect({
+        'x'         => $start,
+        'y'         => 4,
+        'width'     => $width,
+        'height'    => 15,
+        'colour'    => 'transparent',
+        'absolutey' => 1,
         'zmenu'     => { 
-                    'caption'                          => "Navigation",
-                    '01:Zoom in (x10)'                 => &zoom_URL($chr, $interval_middle, $width, 10  , $highlights),
-                    '02:Zoom in (x5)'                  => &zoom_URL($chr, $interval_middle, $width,  5  , $highlights),
-                    '03:Zoom in (x2)'                  => &zoom_URL($chr, $interval_middle, $width,  2  , $highlights),
-                    '04:Centre on this scale interval' => &zoom_URL($chr, $interval_middle, $width,  1  , $highlights), 
-                    '05:Zoom out (x0.5)'               => &zoom_URL($chr, $interval_middle, $width,  0.5, $highlights), 
-                    '06:Zoom out (x0.2)'               => &zoom_URL($chr, $interval_middle, $width,  0.2, $highlights), 
-                    '07:Zoom out (x0.1)'               => &zoom_URL($chr, $interval_middle, $width,  0.1, $highlights)                 
-                        },
-            });
-            $self->push($interval);
+            'caption'                          => "Navigation",
+            '01:Zoom in (x10)'                 => &zoom_URL($chr, $interval_middle, $width, 10  , $highlights),
+            '02:Zoom in (x5)'                  => &zoom_URL($chr, $interval_middle, $width,  5  , $highlights),
+            '03:Zoom in (x2)'                  => &zoom_URL($chr, $interval_middle, $width,  2  , $highlights),
+            '04:Centre on this scale interval' => &zoom_URL($chr, $interval_middle, $width,  1  , $highlights), 
+            '05:Zoom out (x0.5)'               => &zoom_URL($chr, $interval_middle, $width,  0.5, $highlights), 
+            '06:Zoom out (x0.2)'               => &zoom_URL($chr, $interval_middle, $width,  0.2, $highlights), 
+            '07:Zoom out (x0.1)'               => &zoom_URL($chr, $interval_middle, $width,  0.1, $highlights)                 
+        },
+    });
+    $self->push($interval);
 }
 
 1;
