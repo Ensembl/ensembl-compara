@@ -33,34 +33,6 @@ CREATE TABLE dnafrag_region (
 );
 
 #
-# Table structure for table 'gene_relationship'
-#
-
-CREATE TABLE gene_relationship (
-  gene_relationship_id int(10) NOT NULL auto_increment,
-  relationship_stable_id varchar(40),
-  relationship_type enum('homologous_pair','family','interpro'),
-  description varchar(255),
-  annotation_confidence_score double,
-  PRIMARY KEY (gene_relationship_id)
-);
-
-#
-# Table structure for table 'gene_relationship_member'
-#
-
-CREATE TABLE gene_relationship_member (
-  gene_relationship_id int(10),
-  genome_db_id int(10),
-  member_stable_id char(40),
-  chrom_start int(10),
-  chrom_end int(10),
-  chromosome char(40),
-  KEY gene_relationship_id (gene_relationship_id),
-  KEY member_stable_id (member_stable_id)
-);
-
-#
 # Table structure for table 'genome_db'
 #
 
@@ -165,3 +137,105 @@ CREATE TABLE meta (
     KEY meta_value_index ( meta_value )
 );
 
+CREATE TABLE source (
+ source_id	int(10) NOT NULL auto_increment,
+ source_name	varchar(40) NOT NULL,
+
+ PRIMARY KEY (source_id),
+ UNIQUE KEY (source_name)
+);
+
+CREATE TABLE taxon (
+ taxon_id		int(10) NOT NULL,
+ genus			varchar(50),
+ species	        varchar(50),
+ sub_species		varchar(50),
+ common_name		varchar(100),
+ classification	mediumtext,
+
+ PRIMARY KEY (taxon_id),
+ KEY (genus,species),
+ KEY (common_name)
+);
+
+CREATE TABLE member (
+ member_id	int(10) NOT NULL auto_increment,
+ stable_id	varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
+ source_id	int(10) NOT NULL, # foreign key from source table
+ taxon_id	int(10) NOT NULL, # foreign key from taxon table
+ genome_db_id	int(10), # foreign key from genome_db table
+ description    varchar(255),
+ chr_name	char(40),
+ chr_start	int(10),
+ chr_end	int(10),
+ sequence	mediumtext,
+
+ PRIMARY KEY (member_id),
+ UNIQUE KEY (source_id,stable_id)
+);
+
+CREATE TABLE family (
+ family_id		int(10) NOT NULL auto_increment,
+ stable_id		varchar(40) NOT NULL, # e.g. ENSF0000012345
+ source_id              int(10) NOT NULL, # foreign key from source table
+ description		varchar(255),
+ description_score	double,
+
+ PRIMARY KEY (family_id), 
+ UNIQUE KEY (stable_id),
+ KEY (description)
+);
+
+CREATE TABLE family_member (
+ family_id	int(10) NOT NULL, # foreign key from family table
+ member_id	varchar(40) NOT NULL, # foreign key from member table
+ cigar_line	mediumtext,
+ 
+ UNIQUE KEY (family_id,member_id),
+ UNIQUE KEY (member_id,family_id)
+);
+
+
+CREATE TABLE domain (
+ domain_id	int(10) NOT NULL auto_increment,
+ stable_id      varchar(40) NOT NULL,
+ source_id	int(10) NOT NULL,
+ description	varchar(255),
+
+ PRIMARY KEY (domain_id),
+ UNIQUE KEY (source_id,stable_id)
+);
+
+CREATE TABLE domain_member (
+ domain_id	int(10) NOT NULL,
+ member_id	int(10) NOT NULL,
+ member_start	int(10),
+ member_end	int(10),
+
+ UNIQUE KEY (domain_id,member_id,member_start,member_end),
+ UNIQUE KEY (member_id,domain_id,member_start,member_end)
+);
+
+CREATE TABLE homology (
+ homology_id	int(10) NOT NULL auto_increment,
+ stable_id      varchar(40),
+ source_id      int(10) NOT NULL, # foreign key from source table
+ description		varchar(40), # SEED, PIP, etc...
+
+ PRIMARY KEY (homology_id)
+);
+
+CREATE TABLE homology_member (
+ homology_id            int(10) NOT NULL,
+ member_id              int(10) NOT NULL,
+ peptide_member_id      int(10),
+ cigar_line	        mediumtext,
+ cigar_start            int(10),
+ cigar_end              int(10),
+ perc_cov	        int(10),
+ perc_id	        int(10),
+ perc_pos	        int(10),
+
+ UNIQUE KEY (member_id,homology_id),
+ UNIQUE KEY (homology_id,member_id)
+);

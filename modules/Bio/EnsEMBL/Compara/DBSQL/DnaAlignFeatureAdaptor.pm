@@ -95,7 +95,9 @@ sub new {
 sub fetch_all_by_species_region {
   my ($self, $cs_species, $cs_assembly, 
       $qy_species, $qy_assembly,
-      $chr_name, $start, $end,$alignment_type) = @_;
+      $chr_name, $start, $end,$alignment_type, $limit) = @_;
+
+  $limit = 0 unless (defined $limit);
 
   my $dnafrag_type = 'Chromosome';
 
@@ -131,7 +133,8 @@ sub fetch_all_by_species_region {
 							     $qy_gdb,
 							     $df_start,
 							     $df_end,
-							     $alignment_type);
+							     $alignment_type,
+                                                             $limit);
 
     #convert genomic aligns to dna align features
     foreach my $ga (@$genomic_aligns) {
@@ -189,7 +192,7 @@ sub fetch_all_by_species_region {
 =cut
 
 sub fetch_all_by_Slice {
-  my ($self, $slice, $qy_species, $qy_assembly, $assembly_type) = @_;
+  my ($self, $slice, $qy_species, $qy_assembly, $assembly_type, $limit) = @_;
 
   unless($slice && ref $slice && $slice->isa('Bio::EnsEMBL::Slice')) {
     $self->throw("Invalid slice argument [$slice]\n");
@@ -198,13 +201,15 @@ sub fetch_all_by_Slice {
   unless($qy_species) {
     $self->throw("Query species argument is required");
   }
-  
+
+  $limit = 0 unless (defined $limit);
+
   unless (defined $qy_assembly) {
     my $qy_gdb = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($qy_species);
     $qy_assembly = $qy_gdb->assembly;
     warn "qy_assembly was undef. Queried the default one for $qy_species = $qy_assembly\n";
   }
-  
+
   my $cs_species =
       $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
   my $cs_assembly = $slice->assembly_type;
@@ -224,7 +229,8 @@ sub fetch_all_by_Slice {
   my $features = $self->fetch_all_by_species_region($cs_species,$cs_assembly,
 						    $qy_species,$qy_assembly,
 						    $slice->chr_name,
-						    $slice_start, $slice_end,$assembly_type);
+						    $slice_start, $slice_end,$assembly_type,
+                                                    $limit);
 
   if($slice_strand == 1) {
     foreach my $f (@$features) {
@@ -251,8 +257,6 @@ sub fetch_all_by_Slice {
 
   return $features;
 }
-
-
 
 =head2 deleteObj
 

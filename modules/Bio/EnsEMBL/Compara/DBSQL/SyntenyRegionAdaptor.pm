@@ -94,7 +94,7 @@ sub fetch_by_cluster_id{
    my $sth = $self->prepare("select synteny_region_id,dnafrag_id,seq_start,seq_end from synteny_region where synteny_cluster_id = $cluster_id");
 
    my @out;
-   while( $ref  = $sth->fetchrow_arrayref() ) {
+   while( my $ref  = $sth->fetchrow_arrayref() ) {
        my ($dbid,$dnafrag,$start,$end) = @$ref;
        push(@out,$self->_new_region_from_array($dbid,$cluster_id,$dnafrag,$start,$end));
    }

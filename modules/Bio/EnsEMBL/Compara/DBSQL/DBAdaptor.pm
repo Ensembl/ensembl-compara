@@ -364,7 +364,90 @@ sub get_MetaContainer {
     return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::MetaContainer");
 }
 
+=head2 get_FamilyAdaptor
 
+  Arg [1]    : none
+  Example    : $fa = $dba->get_FamilyAdaptor
+  Description: Retrieves a FamilyAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_FamilyAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor" );
+}
+
+=head2 get_DomainAdaptor
+
+  Arg [1]    : none
+  Example    : $fa = $dba->get_DomainAdaptor
+  Description: Retrieves a DomainAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_DomainAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor" );
+}
+
+=head2 get_MemberAdaptor
+
+  Arg [1]    : none
+  Example    : $ma = $dba->get_MemberAdaptor
+  Description: Retrieves a MemberAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_MemberAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor" );
+}
+
+=head2 get_AttributeAdaptor
+
+  Arg [1]    : none
+  Example    : $ma = $dba->get_AttibuteAdaptor
+  Description: Retrieves a AttributeAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_AttributeAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor" );
+}
+
+=head2 get_TaxonAdaptor
+
+  Arg [1]    : none
+  Example    : $ta = $dba->get_TaxonAdaptor
+  Description: Retrieves a TaxonAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_TaxonAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor" );
+}
 
 sub deleteObj {
   my $self = shift;

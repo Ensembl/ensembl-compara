@@ -8,3 +8,4 @@ genome_db_id	taxon_id	name	assembly	assembly_default
 7	6239	Caenorhabditis elegans	CEL102	1
 8	6238	Caenorhabditis briggsae	CBR25	1
 9	7955	Danio rerio	ZFISH2	1
+
