@@ -199,10 +199,10 @@ sub loadMembersFromCoreSlices
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }
-      if($self->{'transcriptCount'} >= 1000) { last SLICE; }
-      #if($geneCount >= 1000) { last SLICE; }
+      # if($self->{'transcriptCount'} >= 1000) { last SLICE; }
+      # if($geneCount >= 1000) { last SLICE; }
     }
-    #last SLICE;
+    # last SLICE;
   }
 
   print("loaded ".$self->{'sliceCount'}." slices\n");
@@ -276,12 +276,10 @@ sub store_gene_and_all_transcripts
 
   if(@longestPeptideMember) {
     my ($transcript, $member) = @longestPeptideMember;
-    #fasta_output($gene, @longestPeptideMember);
     $self->{'pepSubset'}->add_member($member);
-    #print("     LONGEST " . $transcript->stable_id . "\n");
     $self->{'longestCount'}++;
+    # print("     LONGEST " . $transcript->stable_id . "\n");
   }
-  #if($longestCount >= 1000) { last SLICE; }
 }
 
 
