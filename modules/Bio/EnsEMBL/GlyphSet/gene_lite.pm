@@ -67,16 +67,18 @@ sub _init {
   my $gene_label;
   my $colours      = $Config->get('gene_lite', 'colours' );
   my $vega_gene_types = { 
-         'Novel_CDS'        => 'Curated novel CDS',
-         'Putative'         => 'Curated putative',
-         'Known'            => 'Curated known genes',
-         'Novel_Transcript' => 'Curated novel Trans',
-         'Pseudogene'       => 'Curated pseudogenes',
-         'Ig_Segment'       => 'Curated Ig Segment',
+         'Novel_CDS'               => 'Curated novel CDS',
+         'Putative'                => 'Curated putative',
+         'Known'                   => 'Curated known genes',
+         'Novel_Transcript'        => 'Curated novel Trans',
+         'Pseudogene'              => 'Curated pseudogenes',
+         'Processed_pseudogene'    => 'Curated processed pseudogenes',
+         'Unprocessed_pseudogene'  => 'Curated unprocessed pseudogenes',
+         'Ig_Segment'              => 'Curated Ig Segment',
          'Ig_Pseudogene_Segment'   => 'Curated Ig Pseudogene',
-         'Predicted_Gene'   => 'Curated predicted',
-         'Transposon'	      => 'Curated Transposon',
-         'Polymorphic'      => 'Curated Polymorphic',
+         'Predicted_Gene'          => 'Curated predicted',
+         'Transposon'	           => 'Curated Transposon',
+         'Polymorphic'             => 'Curated Polymorphic',
   }; 
   my $pix_per_bp   = $Config->transform->{'scalex'};
   my $vc_length    = $vc->length;
