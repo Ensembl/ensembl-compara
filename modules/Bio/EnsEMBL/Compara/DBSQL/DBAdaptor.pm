@@ -375,12 +375,12 @@ sub _db_handle{
 sub DESTROY {
    my ($obj) = @_;
 
-   $obj->deleteObj();
-
    if( $obj->{'_db_handle'} ) {
        $obj->{'_db_handle'}->disconnect;
        $obj->{'_db_handle'} = undef;
    }
+   $obj->deleteObj();
+
 }
 
 
