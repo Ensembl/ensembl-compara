@@ -85,7 +85,7 @@ sub fetch_input {
   #
   $self->{'genome_db_id'}             = 0;  # 'gdb'
   $self->{'store_seq'}                = 0;
-  $self->{'overlap'}                  = 1000;
+  $self->{'overlap'}                  = 0;
   $self->{'chunk_size'}               = 1000000;
   $self->{'region'}                   = undef;
   $self->{'masking_analysis_data_id'} = 0;
