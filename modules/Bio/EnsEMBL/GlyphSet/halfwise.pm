@@ -42,7 +42,7 @@ sub href {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->stable_id();
     return undef unless my $gft = EnsWeb::species_defs->GENSCAN_FASTA_TABLE;
-    return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => "Peptide_$gft" , 'ID' => $id } );
+    return $self->{'config'}->{'exturl'}->get_url( 'FASTAVIEW', { 'FASTADB' => "Peptide_$gft" , 'ID' => $id } );
     
 }
 
@@ -53,7 +53,7 @@ sub zmenu {
     return {
 	'caption' => $id,
         '01:Peptide sequence' => $self->href( $gene, $transcript ),
-        '02:cDNA sequence'    => $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => "cDNA_$gft", 'ID' => $id } ),
+        '02:cDNA sequence'    => $self->{'config'}->{'exturl'}->get_url( 'FASTAVIEW', { 'FASTADB' => "cDNA_$gft", 'ID' => $id } ),
     };
 
 }

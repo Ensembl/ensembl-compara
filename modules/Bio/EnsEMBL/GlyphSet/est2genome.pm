@@ -14,7 +14,7 @@ sub features {
 
 sub href {
     my ( $self, $id ) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $id );
+    return $self->{'config'}->{'exturl'}->get_url( 'EMBL', $id );
 }
 
 sub zmenu {
