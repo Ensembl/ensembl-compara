@@ -14,17 +14,30 @@ sub features {
 }
 
 sub href {
-  my($self,$f) = @_;
-  ( my $SRC = uc( $f->qtl->source_database ) ) =~s/ /_/g;
-  return  return $self->{'config'}->{'ext_url'}->get_url( $SRC, $f->qtl->source_primary_id );
+  my($self,$f, $src) = @_;
+
+  my $syns = $f->qtl->get_synonyms;
+
+  #if no source specified use first src
+  ($src) = keys %$syns if(!$src);
+
+  my $id = $syns->{$src};
+
+  ( my $SRC = uc( $src ) ) =~s/ /_/g;
+  return $self->{'config'}->{'ext_url'}->get_url( $SRC, $id);
 }
 
 sub zmenu {
     my ($self, $f ) = @_;
 
+    my $syns = $f->qtl->get_synonyms;
+
+    #create links of form SOURCE:ID => URL
+    my @links = map {$_.':'.$syns->{$_} => $self->href($f,$_)} keys %$syns;
+
     return { 
      'caption'     => $f->qtl->trait,
-     $f->qtl->source_database.':'.$f->qtl->source_primary_id => $self->href($f),
+     @links
     };
 }
 
