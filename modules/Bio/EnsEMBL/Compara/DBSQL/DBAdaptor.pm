@@ -43,8 +43,9 @@ use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
-@ISA = qw( Bio::EnsEMBL::DBSQL::DBConnection );
+@ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
 
 
 
@@ -113,13 +114,12 @@ sub new {
       };
 
       if($@) {
-	$self->throw("could not load module specified in configuration " .
-		     "file:$@");
+        $self->throw("could not load module specified in configuration file:$@");
       }
 
       unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
-	$self->throw("[$db] specified in conf file is not a " .
-		     "Bio::EnsEMBL::DBSQL::DBConnection");
+        $self->throw("[$db] specified in conf file is not a " .
+             "Bio::EnsEMBL::DBSQL::DBConnection");
       }
 
       #compara should hold onto the actual container objects
@@ -130,6 +130,12 @@ sub new {
       $self->{'genomes'}->{"$species:$assembly"} = $db;
     }
   }
+
+  $self->add_CanonicalAdaptor('Analysis'  , 'Bio::EnsEMBL::Pipeline::DBSQL::AnalysisAdaptor');
+  $self->add_CanonicalAdaptor('SimpleRule', 'Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor');
+  $self->add_CanonicalAdaptor('Domain'    , 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor');
+  $self->add_CanonicalAdaptor('Member'    , 'Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor');
+  $self->add_CanonicalAdaptor('Subset'    , 'Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor');
 
   #we want to return the container not the contained object
   return $container;
@@ -484,7 +490,6 @@ sub get_PeptideAlignFeatureAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor" );
 }
 
-
 sub deleteObj {
   my $self = shift;
 
@@ -497,6 +502,26 @@ sub deleteObj {
   $self->SUPER::deleteObj;
 }
 
+
+=head2 add_CanonicalAdaptor
+
+  Arg [1]    : string $canonical_name
+  Arg [2]    : string $module
+  Example    : $dba->add_CanonicalAdaptor('Analysis', 'Bio::EnsEMBL::Pipeline::DBSQL::AnalysisAdaptor');
+  Description: adds additional adaptor types so that called to -get_adaptor($canonical_name) will work
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub add_CanonicalAdaptor
+{
+  my ($self, $canonical_name, $module) = @_;
+
+  $self->{'default_module'}->{$canonical_name} = $module;
+  $self->{'current_module'}->{$canonical_name} = $module;
+}
 
 1;
 
