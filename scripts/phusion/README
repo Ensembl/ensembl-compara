@@ -1,0 +1,119 @@
+
+1 - dump genomic dna (check that the length in chromsome table is right!!)
+
+DumpChromosomeFragments.pl
+
+
+2- fastaindex and tagFA.pl
+
+3- run phusion (on aristotle)
+
+4- PhusionBlastExtra
+
+5- Dispatch Extra
+
+6- LaunchBlast (LSF job arrays)
+
+7- filter hits
+
+8- load in compara
+
+
+Hi Jim,
+
+Many thanks for this meeting, it was very informative. While I still have 
+clear in my mind what we discuss, I wrote below each step needed for the 
+whole process. Could you have a quick look and tell me if I missed 
+something obvious?
+
+I just had a look to the fasta file used by phusion 
+e.g. /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq
+They does not seem proper fasta file
+
+> more /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq
+@Hs1.000000001
+TATAACACAAATAAT
+[...]
++Hs1.000000001
+!IIIIIIIIIIIIIIIII
+[...]
+
+May be I am wrong, but I remember you saying that phusion could also take 
+fasta files, so probably this format fastq, is the other kind of format, 
+which is...?
+
+Many Thanks,
+
+Abel
+
+Script to build a tag file from fasta file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/nfs/team71/psg/jcm/bin/tagFA.pl
+
+
+Phusion command line in euler
+~~~~~~~~~~~~~~~~~~~~
+/nfs/team71/psg/jcm/src/phusion/phusion -kmer 17 -depth 2 -match 2 -match2 2 -set 50 -break 1 -SCG 
+/nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq mates /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq 
+/nfs/infodata8/data/jcm/ensembl.mouse.9.3/ensMm9.3.fastq > 
+phusion17-60k.ensHs9.30-ensMm9.3
+
+
+Reading Phusion output to obtain pairwise comparison in euler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~jcm/bin/PhusionBlastExtra.pl Hs 1 /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.tag /nfs/infodata8/data/jcm/ensembl.mouse.9.3/ensMm9.3.tag 
+phusion17-60k.ensHs9.30-ensMm9.3 > HsMm.Extra
+
+Hs the reference species,
+1 try to expand to neighbouring segment even if no 17-mer connection 
+exists
+
+        60Kb A         60Kb B
+Mm -------------- --------------
+       |            |
+Hs    ------------------ ---------------
+           60Kb	C		60Kb D
+  
+when 1 A, B, C and D are part on the same cluster.
+when 0, just do a strict connected "graph", so A, B and C are in the same 
+cluster.
+       
+
+wublast runs
+~~~~~~~~~~~~
+parse HsMm.Extra to know which piece of human and mouse to compare with 
+wublastn
+
+First step filter on each pairwise comparison
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+./cigar.pl Hs 400 wublastn_output > PBcigar.HsMm.400
+
+Hs the reference species (here human), 400 the blast minimum threshold
+
+Second step filter take the whole comparisons into account
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~jcm/bin/rmRedunGcomp.pl 6 PBcigar.HsMm.400 | rmRedunGcomp.pl 6 > 
+PBcigar.HsMm.300.Max4.3 &
+
+first argument should be a pair (not an impair)
+
+          *
+Mm  - - -   - - -  6 consecutive matches on the same block, 3 are 5' of another 
+                   mouse matches, and 3 are 3'. * deleted, because not 
+                   consistent with the 3 matches before and after
+
+Hs ---------------
+
+
+-------------------------------------------------------------------------------
+
+Dr. Abel Ureta-Vidal
+EnsEMBL project - Room A2-06				http://www.ensembl.org
+EMBL-European Bioinformatics Institute			Tel. 44 (0)1223 494670
+Wellcome Trust Genome Campus, Hinxton			Fax. 44 (0)1223 494468
+Cambridge CB10 1SD, UK					Email. abel@ebi.ac.uk
+
+-------------------------------------------------------------------------------
+
