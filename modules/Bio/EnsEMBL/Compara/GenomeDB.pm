@@ -296,7 +296,6 @@ sub connect_to_genome_locator
 #    $genomeDBA = $genomeDBA->_obj;
 #  }
   $genomeDBA->disconnect_when_inactive(1);
-  print "::::",$genomeDBA,"\n";
   return $genomeDBA;
 }
 
