@@ -2,6 +2,8 @@ package Bio::EnsEMBL::GlyphSet;
 use strict;
 use Bio::Root::RootI;
 use Exporter;
+use Bio::EnsEMBL::Glyph::Text;
+
 use vars qw(@ISA $AUTOLOAD);
 @ISA = qw(Exporter Bio::Root::RootI);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
@@ -319,6 +321,25 @@ sub _label_highlight {
         }
     }
     return($label, $highlight);
+}
+
+sub errorTrack {
+	my ($self, $message) = @_;
+	my $length = $self->{'container'}->length() +1;
+    my ($w,$h) = $self->{'config'}->texthelper()->real_px2bp('Tiny');
+    my $red    = $self->{'config'}->colourmap()->id_by_name('red');
+	my $bp_textwidth = $w * length($message);
+	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    	'x'         => int(($length - $bp_textwidth)/2),
+        'y'         => 0,
+    	'height' 	=> 8,
+        'font'      => 'Tiny',
+        'colour'    => $red,
+        'text'      => $message,
+        'absolutey' => 1,
+	});
+	$self->push($tglyph);
+	return;
 }
 
 sub externalGene_details {
