@@ -297,7 +297,7 @@ sub _objs_from_sth {
 
 =cut
 
-sub store{
+sub store {
    my ($self,$dnafrag) = @_;
 
    if( !defined $dnafrag ) {
@@ -328,15 +328,14 @@ sub store{
 
    my $name = $dnafrag->name;
    my $gid =  $gdb->dbID;
-   my $type = 'NULL';
-   $type = $dnafrag->type if (defined $dnafrag->type);
+   my $type = $dnafrag->coord_system_name;
 
    my $sth = $self->prepare("
-     INSERT INTO dnafrag ( genome_db_id, dnafrag_type,
-                           name, start, end )
-     VALUES (?,?,?,?,?)");
+     INSERT INTO dnafrag ( genome_db_id, coord_system_name,
+                           name, length )
+     VALUES (?,?,?,?)");
 
-   $sth->execute($gid, $type, $name, $dnafrag->start(), $dnafrag->end() );
+   $sth->execute($gid, $type, $name, $dnafrag->length);
 
    $dnafrag->dbID( $sth->{'mysql_insertid'} );
    $dnafrag->adaptor($self);
