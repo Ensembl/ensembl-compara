@@ -1,8 +1,30 @@
 #!/usr/local/bin/perl -w
 
 use strict;
+use Getopt::Long;
 
-open(MS,"/scratch4/ensembl/birney/static_mouse.txt") || die "Could not open /scratch4/ensembl/birney/static_mouse.txt; $!\n";
+$| = 1;
+
+my $help = 0;
+my $glob = 50;
+my $min_size = 30;
+my $mouse_super_contig_size = 5000000;
+
+my $static_mouse_file = "/nfs/acari/abel/work/mouse_human/mouse_1_static_raw_contigs";
+my $human_golden_contig = "/nfs/acari/abel/work/mouse_human/human_golden_contigs_28";
+my $mouse_ending_chr_name_contigs ="/nfs/acari/abel/work/mouse_human/mouse_1_ending_chr_name_contigs";
+my $mouse_static_super_contigs = "/nfs/acari/abel/work/mouse_human/mouse_1_static_super_contigs";
+
+GetOptions('help' => \$help,
+	   'glob=i' => \$glob,
+	   'min_size=i' => \$min_size,
+	   'mscs=i' => \$mouse_super_contig_size,
+	   'smf=s' => \$static_mouse_file,
+	   'hgc=s' => \$human_golden_contig,
+	   'mecnc=s' => \$mouse_ending_chr_name_contigs,
+	   'mssc:s' => \$mouse_static_super_contigs);
+
+open(MS,$static_mouse_file) || die "Could not open $static_mouse_file; $!\n";
 
 my %mouse_golden_contigs;
 
@@ -22,7 +44,7 @@ while (<MS>) {
 
 close MS;
 
-open(HS,"/nfs/acari/abel/work/mouse_human/human_golden_contigs") || die "Could not open /nfs/acari/abel/work/mouse_human/human_golden_contigs; $!\n";
+open(HS,$human_golden_contig) || die "Could not open $human_golden_contig; $!\n";
 
 my %human_golden_contigs;
 
@@ -41,7 +63,7 @@ while (<HS>) {
 
 close HS;
 
-open(ENDING,"/nfs/acari/abel/work/mouse_human/mouse_ending_chr_name_contigs") || die "Could not open /nfs/acari/abel/work/mouse_human/mouse_ending_chr_name_contigs; $!\n"; 
+open(ENDING,$mouse_ending_chr_name_contigs) || die "Could not open $mouse_ending_chr_name_contigs; $!\n"; 
 
 my %mouse_ending_contigs;
 
@@ -53,7 +75,7 @@ while (<ENDING>) {
 
 close ENDING;
 
-open(MOUSE_STATIC_SUPER_CONTIGS,"/nfs/acari/abel/work/mouse_human/mouse_static_super_contigs") || die "/nfs/acari/abel/work/mouse_human/mouse_static_super_contigs; $!\n";
+open(MOUSE_STATIC_SUPER_CONTIGS,$mouse_static_super_contigs) || die "$mouse_static_super_contigs; $!\n";
 
 my %mouse_static_super_contigs;
 
@@ -69,12 +91,6 @@ close MOUSE_STATIC_SUPER_CONTIGS;
 #}
 
 
-
-#exit ;
-
-my $glob = 50;
-my $min_size = 30;
-$| = 1;
 
 my ($current_start,$current_end,$prev_id,$prev_mouse_id,$prev_human_id,$current_m_start,$current_m_end,$current_strand);
 
@@ -230,10 +246,10 @@ unless ($current_end - $current_start < $min_size ||
 sub map_to_denormalised ($$$) {
   my ($chr,$pos,$mouse_ending_contigs) = @_;
   
-  my $block = int($pos / 5000000);
+  my $block = int($pos / $mouse_super_contig_size);
   
-  my $start = ($block * 5000000) + 1;
-  my $end = ($block + 1) * 5000000;
+  my $start = ($block * $mouse_super_contig_size) + 1;
+  my $end = ($block + 1) * $mouse_super_contig_size;
  
   if ($start >= $mouse_ending_contigs->{'start'}) {
     $end   = $mouse_ending_contigs->{'end'};
