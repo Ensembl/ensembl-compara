@@ -29,21 +29,15 @@ sub _init {
     my $Config  = $self->{'config'};
     my $pep_splice = $protein->{'image_splice'};
     my $type = lc($protein->gene->type);
-	my $authority = lc($SPECIES_DEFS->AUTHORITY);   
-	my $dbmap = {
-        "Vega" => {
-            "ensembl" => "core",
-            "other" => "ensembl",			
-        },
-        "EnsEMBL" => {
-            "ensembl" => "core",
-            "other" => "vega",
-        },
-    };
-## hack to fix flybase db type definition
-    if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')) { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'ensembl'} ;}
-    elsif ($type eq 'genomewise'){$db = 'estgene';}
-	else { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'other'}; }
+    my $authority = lc($SPECIES_DEFS->AUTHORITY);   
+    ## hack to fix flybase db type definition
+    if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')) { 
+        $db = 'core';
+    } elsif ($type eq 'genomewise') {
+        $db = 'estgene';
+    } else {
+        ($SPECIES_DEFS->SITE_TYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
+    }
 
     my $x = 0;
     my $y = 0;
