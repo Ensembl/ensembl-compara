@@ -30,26 +30,40 @@ Database changed
 mysql>  select c.name,c.length,max(a.chr_end) as alength from assembly a,chromosome c where a.chromosome_id=c.chromosome_id group by c.name having c.length!=alength;
 Empty set (0.98 sec)
 
- If not the same, that needs to be fixed.
+ If not the same, that needs to be fixed...
+ first, by sending a mail to ensembl-admin about it, giving the needed info e.g.
+
+  the chromosome 14 length in chromosome table of homo_sapiens_core_13_31 is not equal
+  to max(chr_end) in the assembly table for the corresponding chromosome.
+  Propose to fix it by an update that will fix the length of chromosome 14 in chromosome table
+  by the value of max(chr_end) in the assembly table.
+
+ Second, wait for someone to shout about your proposed fix. If nobody complains
+  just do the update. :)
+
  Do the same thing for mouse.
 
  Then dump the sequence for each chromosome, e.g.
 
-ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl
-DumpChromosomeFragments.pl \
+ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
 	-host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 \
-	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0
+	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 \
 	-phusion Hs -o output_filename
 
  To send that on the farm
 
 > echo "select name from chromosome where name not like \"%_NT_%\" and name not like \"%_DR%\";"|mysql -h ecs2d -u ensro homo_sapiens_core_12_31|awk '!/name/'|sort -u > Hs31_chr_names
 
-> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ~/src/ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
+> cat Hs31_chr_names | while read i;do bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
 
  Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
- Delete the intermediate files.
 
+> ls|grep out|while read i;do awk '/^Subject/ && $NF!="Done" {print;exit}' $i;done|wc -l
+
+ That should return the same number as wc -l Hs31_chr_names
+ If not, spot the failed job, delete every file related to it and rerun it.
+
+ Delete the intermediate files.
  Do the same for mouse.
 
  Usually the dumps of human and mouse distribute over the farm take around 6 hours.
@@ -78,9 +92,10 @@ For details on the phusion program, see
 Mullikin, JC and Ning, Z. "The Phusion Assembler", Genome Research 13, 81-90, 2003
 
  The phusion run on human/mouse needs ~32gb of memory, so you'll need to run it on aristotle.
- Here is the command line.
+ Here is the command line to send the job to aristotle
 
-/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/phusion -kmer 17 -depth 2 -match 2 -match2 2 -set 50 -break 1 -SCG /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa mates /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa > phusion17-60k.out 2> phusion17-60k.err
+bsub -q acaritest -C0 -R"select[mem>=20000] rusage[mem=20000]" -o phusion17-60k.out -e phusion17-60k.err /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/phusion -kmer 17 -depth 2 -match 2 -match2 2 -set 50 -break 1 -SCG /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa mates /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa
+
 
  Takes another ~6 hours
 
@@ -167,7 +182,7 @@ You should have there as many files as jobs you sent.
 > ensembl-compara/scripts/RemoveNonSyntenic.pl 6 rmRedun.1st > rmRedun.2nd
 
 
-first argument should be a pair (not an impair)
+first argument should be a even number (not an odd number)
 
           *
 Mm  - - -   - - -  6 consecutive matches on the same block, 3 are 5' of another 
