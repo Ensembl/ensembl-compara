@@ -98,15 +98,15 @@ $db = new Bio::EnsEMBL::DBSQL::DBAdaptor ('-host' => $feature_host,
 
 
 while (<>) {
-  my ($contig1,$start1,$end1,$strand1,$contig2,$start2,$end2,$strand2) = split;
+  my ($contig1,$start1,$end1,$strand1,$contig2,$start2,$end2,$strand2,$non_denorm_contig,$score,$perc_id) = split;
   my $internal_id = $contig_name2internal_id{"contig".$species_reference};
   my $sth;
   if ($species_reference == 1) {
     my $internal_id = $contig_name2internal_id{$contig1};
-    $sth = $db->prepare("insert into feature (contig,seq_start,seq_end,score,strand,analysis,name,hstart,hend,hid) values ($internal_id,$start1,$end1,100,$strand1,1,\"exonerate\",$start2,$end2,\"$contig2\");");
+    $sth = $db->prepare("insert into feature (contig,seq_start,seq_end,score,strand,analysis,name,hstart,hend,hid,perc_id) values ($internal_id,$start1,$end1,$score,$strand1,1,\"bl2seq\",$start2,$end2,\"$contig2\",$perc_id);");
   } elsif ($species_reference == 2) {
     my $internal_id = $contig_name2internal_id{$contig2};
-    $sth = $db->prepare("insert into feature (contig,seq_start,seq_end,score,strand,analysis,name,hstart,hend,hid) values ($internal_id,$start2,$end2,100,$strand2,1,\"exonerate\",$start1,$end1,\"$contig1\");");
+    $sth = $db->prepare("insert into feature (contig,seq_start,seq_end,score,strand,analysis,name,hstart,hend,hid,perc_id) values ($internal_id,$start2,$end2,$score,$strand2,1,\"bl2seq\",$start1,$end1,\"$contig1\",$perc_id);");
   }
   unless ($sth->execute()) {
     $db->throw("Failed execution of an insert");
