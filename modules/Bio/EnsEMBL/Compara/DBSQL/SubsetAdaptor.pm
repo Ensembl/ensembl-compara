@@ -192,11 +192,12 @@ sub _objs_from_sth {
     $member_id = $column{'member_id'};
 
     if(defined($setMemberIds{$subset_id})) {
-      push @{$setMemberIds{$subset_id}}, $member_id;
+      $setMemberIds{$subset_id}->{$member_id} = $member_id;
     }
     else {
       $setNames{$subset_id} = $name;
-      $setMemberIds{$subset_id} = [$member_id];
+      $setMemberIds{$subset_id} = {};
+      $setMemberIds{$subset_id}->{$member_id} = $member_id;
     }
   }
 
@@ -205,20 +206,23 @@ sub _objs_from_sth {
   foreach my $subset_id (@allSubsetIds) {
     my ($subset, @member_id_list, $member_id);
 
-    @member_id_list = $setMemberIds{$subset_id};
+    @member_id_list = keys(%{$setMemberIds{$subset_id}});
+    my $count = $#member_id_list + 1;
+    print("subset id = $subset_id has $count unique member_ids\n");
     
-    $subset = Bio::EnsEMBL::Compara::Subset->new_fast
-        ({'_dbID' => $subset_id,
-          '_name' => $setNames{$subset_id},
-          '_adaptor' => $self});
+    $subset = Bio::EnsEMBL::Compara::Subset->new(-dbid => $subset_id,
+                                                 -name => $setNames{$subset_id},
+                                                 -adaptor => $self);
     print("create set '" . $setNames{$subset_id} . "' id=$subset_id\n");
 
-    foreach $member_id (@{$setMemberIds{$subset_id}}) {
-      $subset->add_member_id($member_id);
+    @{$subset->{'_member_id_list'}} = @member_id_list;
+
+    #foreach $member_id (@{$setMemberIds{$subset_id}}) {
+    #  $subset->add_member_id($member_id);
       #print("  add member_id $member_id\n");
       #my $member = $MemberAdapter->fetch_by_dbID($member_id);
       #$subset->add_member($member);
-    }
+    #}
 
     push @sets, $subset;
   }
@@ -312,6 +316,52 @@ sub store_link {
   $sth->execute($subset->dbID, $member_id);
 }
 
+
+sub dumpFastaForSubset {
+  my($self, $subset, $fastafile) = @_;
+
+  unless($subset->isa('Bio::EnsEMBL::Compara::Subset')) {
+    $self->throw(
+      "set arg must be a [Bio::EnsEMBL::Compara::Subset] "
+    . "not a $subset");
+  }
+  unless($subset->dbID) {
+    $self->throw("subset must be in database and dbID defined");
+  }
+  
+  my $sql = "SELECT member.stable_id, member.description, sequence.sequence " .
+            " FROM member, sequence, subset_member " .
+            " WHERE subset_member.subset_id = " . $subset->dbID .
+            " AND member.member_id=subset_member.member_id ".
+            " AND member.sequence_id=sequence.sequence_id " .
+            " GROUP BY member.member_id ORDER BY member.stable_id;";
+
+  open FASTAFILE, ">$fastafile"
+    or die "Could open $fastafile for output\n";
+  print("writing fasta to loc '$fastafile'\n");
+
+  my $sth = $self->prepare( $sql );
+  $sth->execute();
+
+  my ($stable_id, $description, $sequence);
+  $sth->bind_columns( undef, \$stable_id, \$description, \$sequence );
+
+  while( $sth->fetch() ) {
+    $sequence =~ s/(.{72})/$1\n/g;
+    print FASTAFILE ">$stable_id $description\n$sequence\n";
+  }
+  close(FASTAFILE);
+
+  $sth->finish();
+
+  #
+  # update this subset_id's  subset.dump_loc with the full path of this dumped fasta file
+  #
+
+  $sth = $self->prepare("UPDATE subset SET dump_loc = ? WHERE subset_id = ?");
+  $sth->execute($fastafile, $subset->dbID);
+  $subset->dump_loc($fastafile);
+}
 
 1;
 

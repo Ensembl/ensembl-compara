@@ -43,8 +43,9 @@ sub new {
     #do this explicitly.
     my ($dbid, $description, $adaptor) = $self->_rearrange([qw(DBID NAME ADAPTOR)], @args);
 
-    $dbid && $self->dbID($dbid);
-    $description && $self->description($description);
+    $self->dbID($dbid)               if($dbid);
+    $self->description($description) if($description);
+    $self->adaptor($adaptor)         if($adaptor);
 
     $self->{'_member_id_list'} = [];
     $self->{'_cached_member_list'} = [];
@@ -124,8 +125,25 @@ sub dbID {
 
 sub description {
   my $self = shift;
-  $self->{'-description'} = shift if(@_);
-  return $self->{'-description'};
+  $self->{'_description'} = shift if(@_);
+  return $self->{'_description'};
+}
+
+=head2 dump_loc
+
+  Arg [1]    : string $dump_loc (optional)
+  Example    :
+  Description:
+  Returntype : string
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub dump_loc {
+  my $self = shift;
+  $self->{'_dump_loc'} = shift if(@_);
+  return $self->{'_dump_loc'};
 }
 
 =head2 add_member_id
