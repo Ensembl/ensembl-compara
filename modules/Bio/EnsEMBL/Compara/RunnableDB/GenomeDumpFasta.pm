@@ -108,12 +108,15 @@ sub run
   
   $self->createBlastRules();
   
-  #call superclasses run method
-  return $self->SUPER::run();
+  return 1;
 }
 
-# don't need to subclass write_output since there is no output
-#sub write_output { return 1;}
+sub write_output
+{
+  #need to subclass otherwise it defaults to a version that fails
+  #just return 1 so success
+  return 1;
+}
 
 
 

@@ -125,12 +125,17 @@ sub run
   # is the above mentioned analysis
   #
   # This creates the starting point for the blasts (members against database)
-  $self->submitSubsetForAnalysis();
+  #$self->submitSubsetForAnalysis();
                       
+  return 1;
 }
 
-# don't need to subclass write_output since there is no output
-#sub write_output { return 1;}
+sub write_output 
+{  
+  #need to subclass otherwise it defaults to a version that fails
+  #just return 1 so success
+  return 1;
+}
 
 
 ######################################
@@ -187,7 +192,7 @@ sub loadMembersFromCoreSlices
   my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;
-    #print(STDERR "slice " . $slice->name . "\n");
+    #print("slice " . $slice->name . "\n");
     foreach my $gene (@{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
       if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
@@ -221,23 +226,23 @@ sub store_gene_and_all_transcripts
   my $MemberAdaptor = $self->{'comparaDBA'}->get_MemberAdaptor();
 
   if($self->{'store_genes'}) {
-    print(STDERR "     gene       " . $gene->stable_id );
+    print("     gene       " . $gene->stable_id );
     $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
                    -gene=>$gene,
                    -genome_db=>$self->{'genome_db'});
-    print(STDERR " => member " . $gene_member->stable_id);
+    print(" => member " . $gene_member->stable_id);
 
     $MemberAdaptor->store($gene_member);
-    print(STDERR " : stored");
+    print(" : stored");
 
     $self->{'geneSubset'}->add_member($gene_member);
-    print(STDERR "\n");
+    print("\n");
   }
 
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
     $self->{'transcriptCount'}++;
-    #print(STDERR "gene " . $gene->stable_id . "\n");
-    print(STDERR "     transcript " . $transcript->stable_id );
+    #print("gene " . $gene->stable_id . "\n");
+    print("     transcript " . $transcript->stable_id );
 
     unless (defined $transcript->translation) {
       warn("COREDB error: No translation for transcript transcript_id" . $transcript->dbID."\n");
@@ -254,11 +259,11 @@ sub store_gene_and_all_transcripts
          -translate=>'yes',
          -description=>$description);
 
-    print(STDERR " => member " . $pep_member->stable_id);
+    print(" => member " . $pep_member->stable_id);
 
     $MemberAdaptor->store($pep_member);
     $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
-    print(STDERR " : stored");
+    print(" : stored");
 
 
     if($pep_member->seq_length > $maxLength) {
@@ -266,14 +271,14 @@ sub store_gene_and_all_transcripts
       @longestPeptideMember = ($transcript, $pep_member);
     }
 
-    print(STDERR "\n");
+    print("\n");
   }
 
   if(@longestPeptideMember) {
     my ($transcript, $member) = @longestPeptideMember;
     #fasta_output($gene, @longestPeptideMember);
     $self->{'pepSubset'}->add_member($member);
-    #print(STDERR "     LONGEST " . $transcript->stable_id . "\n");
+    #print("     LONGEST " . $transcript->stable_id . "\n");
     $self->{'longestCount'}++;
   }
   #if($longestCount >= 1000) { last SLICE; }
@@ -328,7 +333,7 @@ sub submitSubsetForAnalysis {
   }
 
   #my $host = hostname();
-  print(STDERR "store member_id into input_id_analysis table\n");
+  print("store member_id into input_id_analysis table\n");
   my $errorCount=0;
   my $tryCount=0;
   my @member_id_list = @{$subset->member_id_list()};
@@ -351,7 +356,7 @@ sub submitSubsetForAnalysis {
       } # should handle the error, but ignore for now
     }
   };
-  print(STDERR "CREATED all input_id_analysis\n");
+  print("CREATED all input_id_analysis\n");
 
   return $logic_name;
 }
