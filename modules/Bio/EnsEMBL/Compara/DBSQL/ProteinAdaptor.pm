@@ -171,6 +171,44 @@ sub fetch_Proteins_by_family_id{
 }
 
 
+=head2 fetch_Proteins_by_family_id_and_dnafrag_id
+
+ Title   : fetch_Proteins_by_family_id_and_dnafrag_id
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_Proteins_by_family_id_and_dnafrag_id{
+
+   my ($self,$family_id,$dnafrag_id) = @_;
+
+   $self->throw("Trying to fetch proteins on dnafrag and in family without supplying a family dbID") unless defined $family_id;
+   $self->throw("Trying to fetch proteins on dnafrag & in family without supplying a dnafrag dbID") unless defined $dnafrag_id;
+ 
+   my $query= "Select p.protein_id from family_protein fp, protein p  
+               where fp.family_id = $family_id
+               and fp.protein_id = p.protein_id 
+               and p.dnafrag_id = $dnafrag_id";
+   my $sth = $self->prepare($query);
+   $sth->execute;
+
+   my @proteins; 
+   my $protein_dbID;
+
+
+   while ($protein_dbID = $sth->fetchrow_array){
+      my $prot = $self->fetch_by_dbID($protein_dbID); 
+      push (@proteins,$prot);
+   }
+
+   return @proteins;
+}
+
 =head2 store
 
  Title   : store
