@@ -1,9 +1,10 @@
+$Revision$
 
 Here is an example of out procedure to align human and mouse genomes.
 The all procedure was designed by Jim Mullikin at the Sanger Institute,
 and adapted to fit in the Ensembl compara by Abel Ureta-Vidal.
 
-All the command line were run in bash shell.
+All the command lines were run in bash shell.
 
 1 - Move to your working directory. Check the disk space availible
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,7 +168,7 @@ You should have there as many files as jobs you sent.
 > ensembl-compara/scripts/phusion/RemoveNonSyntenic.pl 6 rmRedun.1st > rmRedun.2nd
 
 
-first argument should be a pair (not an impair)
+NB The first argument should be an even number (not odd)
 
           *
 Mm  - - -   - - -  6 consecutive matches on the same block, 3 are 5' of another 
@@ -181,7 +182,7 @@ Hs ---------------
 9- Load data in compara db
    ~~~~~~~~~~~~~~~~~~~~~~~
 
- Make sure you have a compaar database to populate. If not create one
+ Make sure you have a compara database to populate. If not create one
 
 > echo "create database ensembl_compara_12_2;" |mysql -h ecs1b -u ensadmin -pxxxx
 > mysql -h ecs1b -u ensadmin -pxxxx ensembl_compara_12_2 < ensembl-compara/sql/table.sql
@@ -195,7 +196,11 @@ Hs ---------------
 
  Create your Comapara.conf from ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 
- Then load the alignment in your compara dv with ensembl-compara/scripts/phusion/LoadComparaDb.pl
+ Then load the alignment in your compara db with ensembl-compara/scripts/phusion/LoadComparaDb.pl
+NB Don't forget to add the name of the rmRedun file to be taken from stdin
 
 >ensembl-compara/scripts/phusion/LoadComparaDb.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
 
+
+
+Next step: Synteny-- see ensembl-compara/scripts/synteny/README
