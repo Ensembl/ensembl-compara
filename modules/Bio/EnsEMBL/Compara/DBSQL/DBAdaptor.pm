@@ -270,6 +270,48 @@ sub get_DnaFragAdaptor{
 
 
 
+=head2 get_MethodLinkSpeciesSetAdaptor
+
+  Arg [1]    : none
+  Example    : $mlsa = $dba->get_MethodLinkSpeciesSetAdaptor
+  Description: Retrieves an adaptor for this database which can be used
+               to obtain MethodLinkSpeciesSet objects
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_MethodLinkSpeciesSetAdaptor {
+  my ($self) = @_;
+
+  return
+    $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor");
+}
+
+
+
+=head2 get_GenomicAlignBlockAdaptor
+
+  Arg [1]    : none
+  Example    : $gaba = $dba->get_GenomicAlignBlockAdaptor
+  Description: Retrieves an adaptor for this database which can be used
+               to obtain GenomicAlignBlock objects
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_GenomicAlignBlockAdaptor {
+  my ($self) = @_;
+
+  return
+    $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor");
+}
+
+
+
 =head2 get_GenomicAlignAdaptor
 
   Arg [1]    : none
@@ -282,7 +324,7 @@ sub get_DnaFragAdaptor{
 
 =cut
 
-sub get_GenomicAlignAdaptor{
+sub get_GenomicAlignAdaptor {
   my ($self) = @_;
 
   return
