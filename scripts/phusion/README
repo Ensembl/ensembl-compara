@@ -30,17 +30,7 @@ Database changed
 mysql>  select c.name,c.length,max(a.chr_end) as alength from assembly a,chromosome c where a.chromosome_id=c.chromosome_id group by c.name having c.length!=alength;
 Empty set (0.98 sec)
 
- If not the same, that needs to be fixed...
- first, by sending a mail to ensembl-admin about it, giving the needed info e.g.
-
-  the chromosome 14 length in chromosome table of homo_sapiens_core_13_31 is not equal
-  to max(chr_end) in the assembly table for the corresponding chromosome.
-  Propose to fix it by an update that will fix the length of chromosome 14 in chromosome table
-  by the value of max(chr_end) in the assembly table.
-
- Second, wait for someone to shout about your proposed fix. If nobody complains
-  just do the update. :)
-
+ If not the same, that needs to be fixed.
  Do the same thing for mouse.
 
  Then dump the sequence for each chromosome, e.g.
@@ -54,16 +44,11 @@ ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
 
 > echo "select name from chromosome where name not like \"%_NT_%\" and name not like \"%_DR%\";"|mysql -h ecs2d -u ensro homo_sapiens_core_12_31|awk '!/name/'|sort -u > Hs31_chr_names
 
-> cat Hs31_chr_names | while read i;do bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
+> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
 
  Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
-
-> ls|grep out|while read i;do awk '/^Subject/ && $NF=="Done" {print;exit}' $i;done|wc -l
-
- That should return the same number as wc -l Hs31_chr_names
- If not, spot the failed job, delete every file related to it and rerun it.
-
  Delete the intermediate files.
+
  Do the same for mouse.
 
  Usually the dumps of human and mouse distribute over the farm take around 6 hours.
@@ -149,10 +134,10 @@ Hs    ------------------ ---------------
 
      Not generic at all, I know, so you may need to modify these lines in the code of LaunchBlast.pl
      my $fastafetch_executable = "/nfs/acari/abel/bin/fastafetch";
-     my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusionFilterBlast.pl";
+     my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
      
  Check with one job, if everything goes fine
-> echo 'ensembl-compara/scripts/LaunchBlast.pl -i Extra.set${LSB_JOBINDEX} -st Hs -sf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa -si /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa.index -qt Mm -qf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa -qi /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa.index -min_score 300 -dir /ecs2/work3/abel/phusion/Hs31Mm3/Cigar' | bsub -q acari -Ralpha -JHs31Mm3"[1]" -o Extra.set%I.out -e Extra.set%I.err
+> echo 'ensembl-compara/scripts/phusion/LaunchBlast.pl -i Extra.set${LSB_JOBINDEX} -st Hs -sf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa -si /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa.index -qt Mm -qf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa -qi /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa.index -min_score 300 -dir /ecs2/work3/abel/phusion/Hs31Mm3/Cigar' | bsub -q acari -Ralpha -JHs31Mm3"[1]" -o Extra.set%I.out -e Extra.set%I.err
 
  If everything goes fine, send all the remaining jobs
 
@@ -182,7 +167,7 @@ You should have there as many files as jobs you sent.
 > ensembl-compara/scripts/RemoveNonSyntenic.pl 6 rmRedun.1st > rmRedun.2nd
 
 
-first argument should be a even number (not an odd number)
+first argument should be a pair (not an impair)
 
           *
 Mm  - - -   - - -  6 consecutive matches on the same block, 3 are 5' of another 

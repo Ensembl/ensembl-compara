@@ -7,7 +7,7 @@ use File::Basename;
 my ($input,$subject_tag,$subject_fasta,$subject_index,$query_tag,$query_fasta,$query_index,$dir);
 
 my $fastafetch_executable = "/nfs/acari/abel/bin/fastafetch";
-my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusionFilterBlast.pl";
+my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
 my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 
 my $min_score = 300;
