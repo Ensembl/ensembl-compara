@@ -1,3 +1,15 @@
+=head1 NAME
+
+Bio::EnsEMBL::GlyphSet::blast -
+Glyphset for displaying (old) blast hits in contigview
+
+=head1 DESCRIPTION
+
+Displays hits produced by blastview_old. Hits from the new blastview
+are displayed in contigview by Bio::EnsEMBL::GlyphSet::blast_new.
+
+=cut
+
 package Bio::EnsEMBL::GlyphSet::blast;
 use strict;
 use EnsWeb;
@@ -22,24 +34,19 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-#    return unless ($self->strand() == 1);
 
     # Lets see if we have a BLAST hit
-    # entry in higlights of the form BLAST:start:end
-
+    # entry in higlights of the form BLAST:ticket
     my @blast_tickets;
-    
     foreach($self->highlights) { 
         if(/BLAST:(.*)/) { push @blast_tickets, $1; } 
     }
     return unless @blast_tickets;
-
     my $vc   = $self->{'container'};
     my $vc_s = $vc->chr_start();
     my $vc_e = $vc->chr_end();
     my $vc_chr = $vc->chr_name();
     my @hits;
-
     foreach my $ticket (@blast_tickets) {
         my $filename = EnsWeb::species_defs->ENSEMBL_TMP_DIR_BLAST."/$ticket.cache";
         if( -e $filename ) {
@@ -48,9 +55,6 @@ sub _init {
                 chomp;
                 my ($h_chr, $h_s, $h_e, $h_score, $h_percent, $h_name, $h_strand,$p_n,$q_s,$q_e) = split /\|/;
                 if($h_chr eq $vc_chr) {
-		  #  print STDERR "$vc_s -> $vc_e :: $h_s -> $h_e\n"; 
-		  #  print STDERR "PUSHED:\n" unless(	($h_s > $vc_e) || ( $h_e < $vc_s));
-
                     push @hits, [$h_s,$h_e,$h_score,$h_percent,$ticket, $h_name, $h_strand, $p_n,$q_s,$q_e ] unless(
                         ($h_s > $vc_e) || ( $h_e < $vc_s)
                     );
@@ -68,7 +72,6 @@ sub _init {
     my $cmap     = $Config->colourmap();
     my $bitmap_length = int($Config->container_width() * $ppb);
     my @bitmap = undef;
-
     my @colours = (
 	[ 99, $cmap->add_hex( 'ff0000' ) ], 
 	[ 90, $cmap->add_hex( 'ff4c4c' ) ],
@@ -77,23 +80,11 @@ sub _init {
 	[ 50, $cmap->add_hex( 'ffa2a2' ) ],
 	[  0, $cmap->add_hex( 'ffcccc' ) ] 
     ); 
-    ## Lets draw a line across the glyphset
-
-    my $gline = new Sanger::Graphics::Glyph::Rect({
-        'x'         => 0,# $vc->_global_start(),
-        'y'         => 4,
-        'width'     => $vc_e - $vc_s,
-        'height'    => 0,
-        'colour'    => 'background0',
-        'absolutey' => 1,
-    });
-    $self->push($gline);
-
+    
     ## Lets draw a box foreach hit!
     foreach my $hit ( @hits ) {
-		my $strand = $hit->[6];
-	# print STDERR "HIT! $strand -", $self->strand,"\n";
-        next if $strand != $self->strand();
+	my $strand = $hit->[6];
+        next if ($strand != $self->strand());
         my $start = $hit->[0] < $vc_s ? $vc_s : $hit->[0];
         my $end   = $hit->[1] > $vc_e ? $vc_e : $hit->[1];
         $start = 0 if $start < 0;
