@@ -6,6 +6,10 @@ use Bio::EnsEMBL::GlyphSet_simple;
 
 sub my_label { return "BAC map"; }
 
+## Retrieve all BAC map clones - these are the clones in the
+## subset "bac_map" - if we are looking at a long segment then we only
+## retrieve accessioned clones ("acc_bac_map")
+
 sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
@@ -19,21 +23,37 @@ sub features {
             );
 }
 
+## If bac map clones are very long then we draw them as "outlines" as
+## we aren't convinced on their quality...
+
+
 sub colour {
     my ($self, $f) = @_;
     my $state = substr($f->state,3);
-    return ( $self->{'colours'}{"col_$state"}, $self->{'colours'}{"lab_$state"});
+    return $self->{'colours'}{"col_$state"},
+           $self->{'colours'}{"lab_$state"},
+           $f->length > $self->{'config'}->get( "bac_map", 'outline_threshold' ) ? 'border' : ''
+           ;
 }
+
+## Return the image label and the position of the label
+## (overlaid means that it is placed in the centre of the
+## feature.
+
+sub image_label {
+    my ($self, $f ) = @_;
+    return ($f->name,'overlaid');
+}
+
+## Link back to this page centred on the map fragment
 
 sub href {
     my ($self, $f ) = @_;
     return "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=".$f->name
 }
 
-sub image_label {
-    my ($self, $f ) = @_;
-    return ($f->name,'overlaid');
-}
+## Create the zmenu...
+## Include each accession id separately
 
 sub zmenu {
     my ($self, $f ) = @_;
@@ -43,13 +63,15 @@ sub zmenu {
         '02:length: '.$f->length.' bps' => '',
         '03:Centre on clone:' => $self->href($f),
     };
-    $zmenu->{'12:EMBL: '.$f->embl_acc      } = ''             if($f->embl_acc);
+    foreach($f->embl_accs) {
+        $zmenu->{"12:EMBL: $_" } = '';
+    }
     $zmenu->{'13:Organisation: '.$f->organisation} = '' if($f->organisation);
     $zmenu->{'14:State: '.substr($f->state,3)        } = ''              if($f->state);
     $zmenu->{'15:Seq length: '.$f->seq_len } = ''        if($f->seq_len);    
     $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
     $zmenu->{'17:super_ctg:  '.$f->superctg} = ''       if($f->superctg);    
-    $zmenu->{'18:BAC flags'.$f->BACend_flag.': '.$f->bacinfo } = ''    if($f->BACend_flag);    
+    $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''    if($f->BACend_flag);    
     return $zmenu;
 }
 

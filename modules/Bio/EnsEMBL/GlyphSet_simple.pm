@@ -74,10 +74,11 @@ sub _init {
     my $feature_colour    = $Config->get($type, 'col') || $self->{'colours'} && $self->{'colours'}{'col'};
     my $label_colour      = $Config->get($type, 'lab') || $self->{'colours'} && $self->{'colours'}{'lab'};
     my $hi_colour         = $Config->get($type, 'hi')  || $self->{'colours'} && $self->{'colours'}{'hi'};
-
+    my $part_to_colour    = '';
     my $dep            = $Config->get($type, 'dep');
 
     my $flag           = 1;
+    my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
     foreach my $f ( $self->features ) {
 ## Check strand for display ##
         next if( $strand_flag eq 'b' && $strand != $f->strand );
@@ -91,28 +92,89 @@ sub _init {
         $end   = $vc_length if $end>$vc_length;
 
         $flag = 0;
-        ($feature_colour, $label_colour) = $self->colour( $f ) if $self->can('colour');
+        ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f ) if $self->can('colour');
         
         my $glyph = new Bio::EnsEMBL::Glyph::Rect({
             'x'          => $start,
             'y'          => 0,
             'width'      => $end - $start + 1,
             'height'     => $h,
-            'colour'     => $feature_colour,
+            $part_to_colour."colour" => $feature_colour,
             'absolutey'  => 1
         });
 ## Lets see about placing labels on objects...        
-        my $composite;
+        my $composite = new Bio::EnsEMBL::Glyph::Composite();
+        $composite->push($glyph);
         my $rowheight = int($h * 1.5);
+
+        if( $self->can('tag')) {
+            foreach my $tag ( $self->tag($f) ) {
+                if($tag->{'style'} eq 'left-triangle') {
+                    my $triangle_end =  $start + 3/$pix_per_bp;
+                    $triangle_end = $end if( $triangle_end > $end);
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $start, $h,
+                                         $start, $h-3,
+                                         $triangle_end, $h  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    $composite->push($triangle);
+                } elsif($tag->{'style'} eq 'right-triangle') {
+                    my $triangle_start =  $end - 3/$pix_per_bp;
+                    $triangle_start = $start if( $triangle_start < $start);
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $end, $h,
+                                         $end, $h-3,
+                                         $triangle_start, $h  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    $composite->push($triangle);
+                } elsif($tag->{'style'} eq 'left-end') {
+                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'          => $start,
+                        'y'          => 0,
+                        'width'      => 1,
+                        'height'     => $h,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+                    $composite->push($line);
+                } elsif($tag->{'style'} eq 'right-end') {
+                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'          => $end,
+                        'y'          => 0,
+                        'width'      => 1,
+                        'height'     => $h,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+                    $composite->push($line);
+                } elsif($tag->{'style'} eq 'underline') {
+                    my $underline_start = $tag->{'start'} || $start ;
+                    my $underline_end   = $tag->{'end'}   || $end ;
+                    $underline_start = 1          if $underline_start < 1;
+                    $underline_end   = $vc_length if $underline_end   > $vc_length;
+                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'          => $underline_start,
+                        'y'          => 0,
+                        'width'      => $underline_end - $underline_start + 1,
+                        'height'     => 1,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+                    $composite->push($line);
+                }
+            }
+        }
+
         if( $self->can('image_label')) {
-            my ($label,$style) = $self->image_label( $f );
-            my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
+            my ($label,$style) = $self->image_label( $f, $w );
             my $bp_textwidth = $w * length($label) * 1.1; # add 10% for scaling text
             
             if( $style eq 'overlaid' ) {
-    	        if($bp_textwidth > ($end - $start)){
-                    $composite = $glyph;
-                } else {
+                if($bp_textwidth < ($end - $start)){
                     print STDERR "X: $label - $label_colour\n";
         		    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
         		        'x'          => int(( $end + $start - $bp_textwidth)/2),
@@ -124,8 +186,7 @@ sub _init {
             		    'text'       => $label,
             		    'absolutey'  => 1,
         	    	});
-                    $composite = new Bio::EnsEMBL::Glyph::Composite();
-                    $composite->push($glyph,$tglyph);
+                    $composite->push($tglyph);
                 } 
             } else {
                 $rowheight += $th;
@@ -142,9 +203,7 @@ sub _init {
                 $composite = new Bio::EnsEMBL::Glyph::Composite();
                 $composite->push($glyph,$tglyph);
             }
-	    } else {
-            $composite = $glyph;
-        }
+	    }
 ## Lets see if we can Show navigation ?...
         if($navigation) {
             $composite->{'zmenu'} = $self->zmenu( $f ) if $self->can('zmenu');
