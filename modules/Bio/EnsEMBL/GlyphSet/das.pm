@@ -15,6 +15,7 @@ sub init_label {
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => $self->{'extras'}->{'caption'},
 	'font'      => 'Small',
+    'colour'    => $self->{'config'}->colourmap()->id_by_name('contigblue2'),
 	'absolutey' => 1
     });
     $self->label($label);
