@@ -31,8 +31,8 @@ sub _init {
 	my $max_length  = $Config->get('codons','threshold') || 50; # In Kbases...
 	my $height      = 3;  # Pixels in height for glyphset
 	my $padding     = 1;  # Padding
-    my $red         = $Config->colourmap()->id_by_name('red');
-    my $green       = $Config->colourmap()->id_by_name('green');
+    my $red         = 'red';
+    my $green       = 'green';
     my ($w,$h)      = $Config->texthelper()->real_px2bp('Tiny');
 
 # This is the threshold calculation to display the start/stop codon track warning

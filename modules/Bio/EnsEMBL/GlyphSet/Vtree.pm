@@ -27,8 +27,8 @@ sub _init {
     return unless ($self->strand() == 1);
 ## FIRSTLY LETS SORT OUT THE COLOURS!!
     my $cmap   = $Config->colourmap();
-    my $white  = $cmap->id_by_name('white');
-    my $black  = $cmap->id_by_name('black');
+    my $white  = 'white';
+    my $black  = 'black';
 
 ## LETS GRAB THE DATA FROM THE CONTAINER
     my @nodes       = $self->{'container'}->nodes;

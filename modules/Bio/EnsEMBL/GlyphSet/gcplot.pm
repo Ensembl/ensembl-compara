@@ -48,9 +48,9 @@ sub _init {
     my $feature_colour  = $Config->get('gcplot','hi');
     my $alt_colour      = $Config->get('gcplot','low');
     my $cmap            = $Config->colourmap();
-    my $black           = $cmap->id_by_name('black');
-    my $red             = $cmap->id_by_name('red');
-    my $rust            = $cmap->id_by_name('rust');
+    my $black           = 'black';
+    my $red             = 'red';
+    my $rust            = 'rust';
     my $colour          = $Config->get('gcplot','col');
     my $line_colour     = $Config->get('gcplot','line');
     

@@ -34,8 +34,8 @@ sub _init {
     my $PADDING = 90;
     my $col    = undef;
     my $cmap   = $config->colourmap();
-    my $white  = $cmap->id_by_name('white');
-    my $black  = $cmap->id_by_name('black');
+    my $white  = 'white';
+    my $black  = 'black';
     my $sequence = $vc->subseq(-$PADDING+1,$length+$PADDING-1);
     my $cut_colour = 'red';
     my $blunt_colour = 'palegreen';

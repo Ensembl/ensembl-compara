@@ -49,7 +49,7 @@ sub create_multiple_haplotype_block {
     my $font                    = "Small";
     my ($fontwidth,$fontheight) = $Config->texthelper->px2bp($font);
     my $cmap                    = $Config->colourmap();
-    my $black                   = $cmap->id_by_name('black');
+    my $black                   = 'black';
     my $caption                 = "SNPlotype";
 
     my $showconsensus           = 0;
@@ -142,7 +142,7 @@ sub create_haplotype_block {
     my $font                    = "Small";
     my ($fontwidth,$fontheight) = $Config->texthelper->px2bp($font);
     my $cmap                    = $Config->colourmap();
-    my $black                   = $cmap->id_by_name('black');
+    my $black                   = 'black';
     my $caption                 = "SNPlotype";
 
     my $block_id                = $hap->id();
@@ -339,11 +339,11 @@ sub draw_labelled_snp_block {
 
     my ($cmap, $x, $y, $type, $label) = @_;
     
-    my $white    = $cmap->id_by_name('white');
-    my $black    = $cmap->id_by_name('black');
-    my $blue     = $cmap->id_by_name('blue');
-    my $yellow   = $cmap->id_by_name('yellow');
-    my $red      = $cmap->id_by_name('red');
+    my $white    = 'white';
+    my $black    = 'black';
+    my $blue     = 'blue';
+    my $yellow   = 'yellow';
+    my $red      = 'red';
 
     my $bg = $yellow;
     my $fg = $black;
@@ -394,11 +394,11 @@ sub draw_unlabelled_snp_block {
 
     my ($cmap, $x, $y, $type, $label) = @_;
     
-    my $white    = $cmap->id_by_name('white');
-    my $black    = $cmap->id_by_name('black');
-    my $blue     = $cmap->id_by_name('blue');
-    my $yellow   = $cmap->id_by_name('yellow');
-    my $red      = $cmap->id_by_name('red');
+    my $white    = 'white';
+    my $black    = 'black';
+    my $blue     = 'blue';
+    my $yellow   = 'yellow';
+    my $red      = 'red';
 
     my $bg = $yellow;
     my $fg = $black;

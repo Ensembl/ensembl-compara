@@ -33,8 +33,8 @@ sub _init {
     my $y             = 0;
     my $h             = 4;
     my $cmap          = new Sanger::Graphics::ColourMap;
-    my $black         = $cmap->id_by_name('black');
-    my $red           = $cmap->id_by_name('red');
+    my $black         = 'black';
+    my $red           = 'red';
     my $font          = "Small";
     my $colour        = $Config->get('Ppfam','col');
     my ($fontwidth,

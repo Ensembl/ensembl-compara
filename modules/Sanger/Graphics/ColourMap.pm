@@ -2,6 +2,7 @@ package Sanger::Graphics::ColourMap;
 use strict;
 use Exporter;
 use vars qw(@ISA);
+use Carp;
 @ISA = qw(Exporter);
 
 sub new {
@@ -671,6 +672,7 @@ sub new {
 	       };
 
     bless($self, $class);
+
     return $self;
 }
 
@@ -679,10 +681,14 @@ sub new {
 #
 sub id_by_name {
   my ($self, $name) = @_;
-  warn qq(id_by_name deprecated [use the quoted colour name!]);
+  confess qq(id_by_name deprecated [use the quoted colour name!] );
   return defined $self->{$name} ? $name : 'black';
 }
 
+sub is_defined {
+  my( $self, $name ) = @_;
+  return exists $self->{$name};
+}
 #########
 # deprecated. here for compatibility
 #
@@ -802,4 +808,8 @@ sub build_linear_gradient {
   return @gradient;
 }
 
+sub shout {
+  my $self = shift;
+  warn join "\n", map { sprintf "%20s %6s", $_, $self->{$_} } sort keys %$self;
+}
 1;

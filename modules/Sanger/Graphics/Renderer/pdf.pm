@@ -88,7 +88,7 @@ sub render_Text {
     my $font = $glyph->font();
 #    return;
 
-    my $gcolour = $glyph->colour() || $self->{'colourmap'}->id_by_name("black");
+    my $gcolour = $glyph->colour() || "black";
     my $text    = $glyph->text();
     my $x = $self->X($glyph);
     my $y = $self->Y($glyph);

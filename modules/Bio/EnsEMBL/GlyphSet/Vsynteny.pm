@@ -41,12 +41,12 @@ sub _init {
     
 ## FIRSTLY LETS SORT OUT THE COLOURS!!
     my $cmap   = $Config->colourmap();
-    my $white  = $cmap->id_by_name('white');
-    my $black  = $cmap->id_by_name('black');
-    my $grey   = $cmap->add_hex(999999);
-    my $red    = $cmap->id_by_name('red');
-    my $blue   = $cmap->id_by_name('blue');
-    my $brown  = $cmap->id_by_name('rust');
+    my $white  = 'white';
+    my $black  = 'black';
+    my $grey   = 'grey60';
+    my $red    = 'red';
+    my $blue   = 'blue';
+    my $brown  = 'rust';
 
     my @BORDERS = map { $cmap->add_hex($_) } qw(00cc00 ff66FF 3333ff 009999 ff9900 993399 cccc00);
     my @COLOURS = map { $cmap->add_hex($_) } qw(99ff99 ffccff 9999ff 99ffff ffcc99 cc99ff ffff99);

@@ -8,7 +8,7 @@ use vars qw(@ISA);
 sub init_canvas {
     my ($self, $config, $im_height, $im_width) = @_;
     my $canvas = new GD::Image($im_width, $im_height);
-    $canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
+    $canvas->colorAllocate($config->colourmap()->rgb_by_name($config->bgcolor()));
     $self->canvas($canvas);
 }
 
@@ -18,11 +18,11 @@ sub add_canvas_frame {
 	return if (defined $config->{'no_image_frame'});
 	
 	# default image frame colour
-	my $imageframecol = $config->colourmap()->id_by_name('black');
+	my $imageframecol = 'black';
 	
 	# custom image frame colour
 	if (defined $config->{'image_frame_colour'}){
-		$imageframecol = $config->colourmap()->id_by_name($config->{'image_frame_colour'});
+		$imageframecol = $config->{'image_frame_colour'};
 	}
     my $framecolour = $self->colour($imageframecol);
 
@@ -50,8 +50,8 @@ sub canvas {
 # 
 sub colour {
     my ($self, $id) = @_;
-    $id ||= $self->{'colourmap'}->id_by_name("black");
-    my $colour = $self->{'_GDColourCache'}->{$id} || $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_id($id));
+    $id ||= "black";
+    my $colour = $self->{'_GDColourCache'}->{$id} || $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
     $self->{'_GDColourCache'}->{$id} = $colour;
     return $colour;
 }

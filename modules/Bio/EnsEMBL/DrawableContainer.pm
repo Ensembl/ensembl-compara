@@ -38,7 +38,7 @@ sub new {
     bless($self, $class);
 
     ########## loop over all the glyphsets the user wants:
-    my $black = $Config->colourmap()->id_by_name('red');
+    my $black = 'red';
     $Config->{'ext_url'} = ExtURL->new;
 
     my $PREFIX = "Bio::EnsEMBL";
@@ -205,7 +205,7 @@ sub new {
     }
     
     ########## pull out alternating background colours for this script
-    my $white  = $Config->bgcolour() || $Config->colourmap->id_by_name('white');
+    my $white  = $Config->bgcolour() || 'white';
     my $bgcolours = [ $Config->get('_settings', 'bgcolour1') || $white,
                       $Config->get('_settings', 'bgcolour2') || $white ];
     

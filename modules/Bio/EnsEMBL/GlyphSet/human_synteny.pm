@@ -14,7 +14,7 @@ sub features {
 sub colour {
   my ($self, $f) = @_;
   unless(exists $self->{'config'}{'pool'}) {
-    $self->{'config'}{'pool'} = [qw(red3 green4 cyan4 blue3 chocolate3 brown chatreuse4 grey25 deeppink4 slateblue3 olivedrab4 gold4 blueviolet seagreen4 violetred3)  ];
+    $self->{'config'}{'pool'} = [qw(red3 green4 cyan4 blue3 chocolate3 brown chartreuse4 grey25 deeppink4 slateblue3 olivedrab4 gold4 blueviolet seagreen4 violetred3)  ];
     $self->{'config'}{'ptr'}     = 0;
   }
   my $return = $self->{'config'}{ $f->{'hit_chr_name'} };

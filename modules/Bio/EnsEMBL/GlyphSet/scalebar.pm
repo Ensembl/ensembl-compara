@@ -21,7 +21,7 @@ sub _init {
     my $fontname       = "Tiny";
     my $fontwidth_bp   = $Config->texthelper->width($fontname),
     my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
-    my $black          = $Config->colourmap->id_by_name('black');
+    my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? "&highlight=$highlights" : '';
     my $REGISTER_LINE  = $Config->get('_settings','opt_lines');

@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::VRenderer::imagemap;
 use strict;
-use Bio::EnsEMBL::Renderer;
+use Bio::EnsEMBL::VRenderer;
 use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Renderer);
+@ISA = qw(Bio::EnsEMBL::VRenderer);
 
 #########
 # imagemaps are basically strings, so initialise the canvas with ""
@@ -90,4 +90,5 @@ sub _getHref {
 	return "$href$onmouseover$onmouseout$alt" if(defined $href);
 	return undef;
 }
+
 1;

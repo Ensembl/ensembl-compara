@@ -53,7 +53,7 @@ sub _init {
         'y'         => $ystart + 7,
         'width'     => $length,
         'height'    => 0,
-        'colour'    => $self->{'config'}->colourmap()->id_by_name('grey50'),
+        'colour'    => 'grey50',
         'absolutey' => 1,
     });
 
@@ -101,8 +101,8 @@ sub _init_assembled_contig {
 ########
 # Vars used only for scale drawing
 #
-    my $black    = $cmap->id_by_name('black');
-    my $red      = $cmap->id_by_name('red');
+    my $black    = 'black';
+    my $red      = 'red';
     my $highlights = join('|', $self->highlights());
        $highlights = $highlights ? "&highlight=$highlights" : '';
     my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
@@ -119,10 +119,10 @@ sub _init_assembled_contig {
 # Draw the contig tiling path
 #
     my $i = 1;
-    my %colours  = ( $i  => $cmap->id_by_name('contigblue1'), 
-		     !$i => $cmap->id_by_name('contigblue2'));
-    my %colours2 = ( $i  => $cmap->id_by_name('grey2'), 
-		   !$i => $cmap->id_by_name('grey3'));
+    my %colours  = ( $i  => 'contigblue1', 
+		     !$i => 'contigblue2');
+    my %colours2 = ( $i  => 'grey2', 
+		   !$i => 'grey3');
     
     $w;
 
@@ -170,7 +170,7 @@ sub _init_assembled_contig {
                 'y'         => $ystart-3,
                 'width'     => 1,
                 'height'    => 21,
-                'colour'    => $cmap->id_by_name('green'),
+                'colour'    => 'green',
                 'absolutey' => 1,
             }); 
         }
@@ -370,8 +370,8 @@ sub _init_non_assembled_contig {
 ########
 # Vars used only for scale drawing
 #
-    my $black    = $cmap->id_by_name('black');
-    my $red      = $cmap->id_by_name('red');
+    my $black    = 'black';
+    my $red      = 'red';
     my $highlights = join('|', $self->highlights());
        $highlights = $highlights ? "&highlight=$highlights" : '';
     my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
@@ -389,8 +389,8 @@ sub _init_non_assembled_contig {
 #
     my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');    
     my $i = 1;
-    my %colours  = ( $i  => $cmap->id_by_name('contigblue1'), 
-	          	    !$i => $cmap->id_by_name('contigblue2'));
+    my %colours  = ( $i  => 'contigblue1', 
+	          	    !$i => 'contigblue2');
   
     my $tot_width = $contig_tiling_path->[-1]{'end'} - 
         $contig_tiling_path->[0]{'start'} + 1;
@@ -445,7 +445,7 @@ sub _init_non_assembled_contig {
                    'x'          => ($rend + $rstart - $bp_textwidth)/2,
                    'y'          => $ystart+4,
                    'font'       => 'Tiny',
-                   'colour'     => $cmap->id_by_name('white'),
+                   'colour'     => 'white',
                    'text'       => $pointer,
                    'absolutey'  => 1,
                 });
@@ -456,7 +456,7 @@ sub _init_non_assembled_contig {
                 'x'          => ($rend + $rstart - 1 - $bp_textwidth)/2,
                 'y'          => $ystart+5,
                 'font'       => 'Tiny',
-                'colour'     => $cmap->id_by_name('white'),
+                'colour'     => 'white',
                 'text'       => $clone,
                 'absolutey'  => 1,
             });

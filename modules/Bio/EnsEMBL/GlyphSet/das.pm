@@ -23,7 +23,7 @@ qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&k
     $self->label( new Sanger::Graphics::Glyph::Text({
         'text'      => $self->{'extras'}->{'caption'},
         'font'      => 'Small',
-        'colour'    => $self->{'config'}->colourmap()->id_by_name('contigblue2'),
+        'colour'    => 'contigblue2',
         'absolutey' => 1,
         'href'      => $URL,
         'zmenu'     => $self->das_name  =~/^managed_extdas/ ?

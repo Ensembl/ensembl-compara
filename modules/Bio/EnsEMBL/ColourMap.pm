@@ -11,6 +11,7 @@ sub new {
   while(my($k,$v) = each %{$EnsWeb::species_defs->ENSEMBL_COLOURS||{}} ) {
     $self->{$k} = $v;
   }
+
   $self->{'colour_sets'} = {};
   $self->colourSet( 'core_gene',
     '_KNOWN'     => 'rust',

@@ -9,7 +9,7 @@ use WMF::Polygon;
 sub init_canvas {
     my ($this, $config, $im_width, $im_height) = @_;
     my $canvas = new WMF($im_width, $im_height);
-    $canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
+    $canvas->colorAllocate($config->colourmap()->rgb_by_name($config->bgcolor()));
     $this->canvas($canvas);
 }
 

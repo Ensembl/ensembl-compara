@@ -33,20 +33,20 @@ sub _init {
     my $col    = undef;
     my $config = $self->{'config'};
     my $cmap   = $config->colourmap();
-    my $white  = $cmap->id_by_name('white');
-    my $black  = $cmap->id_by_name('black');
+    my $white  = 'white';
+    my $black  = 'black';
  
     my %COL = ();
-    $COL{'gpos100'} = $cmap->id_by_name('black'); #add_rgb([200,200,200]);
-    $COL{'tip'}     = $cmap->id_by_name('slategrey');
-    $COL{'gpos75'}  = $cmap->id_by_name('grey40'); #add_rgb([210,210,210]);
-    $COL{'gpos50'}  = $cmap->id_by_name('grey60'); #add_rgb([230,230,230]);
-    $COL{'gpos25'}  = $cmap->id_by_name('grey85'); #add_rgb([240,240,240]);
-    $COL{'gpos'}    = $black; #add_rgb([240,240,240]);
-    $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
-    $COL{'gneg'}    = $white;
-    $COL{'acen'}    = $cmap->id_by_name('slategrey');
-    $COL{'stalk'}   = $cmap->id_by_name('slategrey');
+    $COL{'gpos100'} = 'black'; #add_rgb([200,200,200]);
+    $COL{'tip'}     = 'slategrey';
+    $COL{'gpos75'}  = 'grey40'; #add_rgb([210,210,210]);
+    $COL{'gpos50'}  = 'grey60'; #add_rgb([230,230,230]);
+    $COL{'gpos25'}  = 'grey85'; #add_rgb([240,240,240]);
+    $COL{'gpos'}    = 'black'; #add_rgb([240,240,240]);
+    $COL{'gvar'}    = 'grey88'; #add_rgb([222,220,220]);
+    $COL{'gneg'}    = 'white';
+    $COL{'acen'}    = 'slategrey';
+    $COL{'stalk'}   = 'slategrey';
     
     my $im_width = $self->{'config'}->image_width();
     my ($w,$h) = $self->{'config'}->texthelper->px2bp('Tiny');
