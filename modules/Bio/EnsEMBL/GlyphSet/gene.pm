@@ -62,6 +62,8 @@ sub _init {
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
 	    $colour   = $vg->gene->is_known()?$known_col:$unknown_col;
 
+		#print STDERR "External gene type: ", $vg->gene->type(), "\n";
+
 #	    my @temp_geneDBlinks = $vg->gene->each_DBLink();
 #	    my @ids;
 #	    
