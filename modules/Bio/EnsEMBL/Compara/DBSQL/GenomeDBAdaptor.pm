@@ -97,7 +97,7 @@ sub fetch_by_dbID{
        $self->throw("No database with this dbID");
    }
 
-   my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
+   my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new(-adaptor => $self->dbadaptor);
    $gdb->name($name);
    $gdb->locator($locator);
    $gdb->dbID($dbid);
@@ -168,7 +168,10 @@ sub store{
    if ($dbID) {
       $gdb->dbID($dbID);
    }else{ 
-      my $sth = $self->prepare("insert into genome_db (name,locator) values ('$name','$locator')");
+      my $sth = $self->prepare("
+        INSERT into genome_db (name,locator) 
+        VALUES ('$name','$locator')
+      ");
 
       $sth->execute();
 
@@ -178,40 +181,5 @@ sub store{
    return $gdb->dbID;
 }
 
-=head2 store_DBAdaptor
-
- Title   : store_DBAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub store_DBAdaptor{
-   my ($self,$dba) = @_;
-
-   $self->throw("Trying to store DBAdaptor without valid arg") unless defined $dba;
-
-   my $name = $dba->dbname;
-   my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=$name;user=".$dba->username.";pass=".$dba->password;
-
-   my $query = "Select genome_db_id from genome_db where name = '$name' and locator = '$locator'";
-   my $sth = $self->prepare($query);
-   $sth->execute;
- 
-   my $dbID = $sth->fetchrow_array();
-
-   if ($dbID) {
-     return $dbID;
-   }else{
-     my $sth = $self->prepare("insert into genome_db (name,locator) values ('$name','$locator')");
-     $sth->execute();
-     return ($sth->{'mysql_insertid'});
-   }
-
-}
 
 1;
