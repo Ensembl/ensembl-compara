@@ -99,7 +99,7 @@ sub _init {
     if( $dep > 0 ) {
         foreach my $features (@features) {
           foreach my $f ( @$features ){
-            next if $strand_flag eq 'b' && $strand != ($f->strand||-1) || $f->end < 1 || $f->start > $length ;
+            next if $strand_flag eq 'b' && $strand != ( $f->hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
             push @{$id{$f->hseqname()}}, [$f->start,$f->end,$f];
           }
         }
