@@ -4,7 +4,7 @@ use strict;
 use Getopt::Long;
 use IO::File;
 use File::Basename;
-use Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $usage = "
 Usage: $0 options
@@ -66,13 +66,14 @@ if ($help) {
 
 my $rand = time().rand(1000);
 
-my $family_db = new Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor(-host   => $host,
+my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
 									 -user   => $dbuser,
 									 -pass   => $dbpass,
 									 -dbname => $dbname);
 
-my $FamilyAdaptor = $family_db->get_FamilyAdaptor;
-my $FamilyMemberAdaptor = $family_db->get_FamilyMemberAdaptor;
+my $FamilyAdaptor = $db->get_FamilyAdaptor;
+my $MemberAdaptor = $db->get_MemberAdaptor;
+my $AttributeAdaptor = $db->get_AttributeAdaptor;
 
 my $family;
 my $id;
@@ -87,9 +88,9 @@ if (defined $family_stable_id) {
 
 my @members;
 
-push @members,@{$family->get_members_by_dbname('ENSEMBLPEP')};
-push @members,@{$family->get_members_by_dbname('SWISSPROT')};
-push @members,@{$family->get_members_by_dbname('SPTREMBL')};
+push @members,@{$family->get_Member_by_source('ENSEMBLPEP')};
+push @members,@{$family->get_Member_by_source('SWISSPROT')};
+push @members,@{$family->get_Member_by_source('SPTREMBL')};
 
 my $sb_id = "/tmp/sb_id.$rand";
 
@@ -141,9 +142,26 @@ EXIT 1\n";
   $FH->close;
   
   if (defined $member_stable_id && defined $member_seq) {
-    my $member = $FamilyMemberAdaptor->fetch_by_stable_id($member_stable_id)->[0];
-    $member->alignment_string($member_seq);
-    $FamilyMemberAdaptor->update($member);
+    my $member = $MemberAdaptor->fetch_by_stable_id($member_stable_id)->[0];
+    my $attribute = $AttributeAdaptor->fetch_by_Member_Relation($member,$family);
+    my $alignment_string = $member_seq;
+    $alignment_string =~ s/\-([A-Z])/\- $1/g;
+    $alignment_string =~ s/([A-Z])\-/$1 \-/g;
+    my @cigar_segments = split " ",$alignment_string;
+    my $cigar_line = "";
+    foreach my $segment (@cigar_segments) {
+      my $seglength = length($segment);
+      $seglength = "" if ($seglength == 1);
+      if ($segment =~ /^\-+$/) {
+        $cigar_line .= $seglength . "D";
+      } else {
+        $cigar_line .= $seglength . "M";
+      }
+    }
+    $attribute->cigar_line($cigar_line);
+    
+    $FamilyAdaptor->update_relation([$member, $attribute]);
+
     undef $member_stable_id;
     undef $member_seq;
   } else {
@@ -166,8 +184,8 @@ unless ($status == 0) {
 
 if ($store) {
   $family->read_clustalw($clustal_file);
-  foreach my $member (@{$family->get_all_members}) {
-    $FamilyMemberAdaptor->update($member);
+  foreach my $member_attribute (@{$family->get_all_Member}) {
+    $AttributeAdaptor->update_relation($member_attribute);
   }
 } else {
   unless (system("cp $clustal_file $dir/$id.out") == 0) {
