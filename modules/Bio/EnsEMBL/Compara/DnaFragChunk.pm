@@ -49,15 +49,17 @@ sub slice {
   return $self->{'_slice'} if(defined($self->{'slice'}));
 
   return undef unless($self->dnafrag);
-  return undef unless($self->dnafrag->genomedb);
-  return undef unless(my $dba = $self->dnafrag->genomedb->db_adaptor);
+  return undef unless($self->dnafrag->genome_db);
+  return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
 
   my $sliceDBA = $dba->get_SliceAdaptor;
   if ($self->seq_end > $self->seq_start) {
-    $self->{'_slice'} = $sliceDBA->fetch_by_region($self->dnafrag->type, $self->dnafrag->name,
+    $self->{'_slice'} = $sliceDBA->fetch_by_region($self->dnafrag->coord_system_name,
+                                                   $self->dnafrag->name,
                                                    $self->seq_start, $self->seq_end);
   } else {
-    $self->{'_slice'} = $sliceDBA->fetch_by_region($self->dnafrag->type, $self->dnafrag->name);
+    $self->{'_slice'} = $sliceDBA->fetch_by_region($self->dnafrag->coord_system_name,
+                                                   $self->dnafrag->name);
   }
   return $self->{'_slice'};
 }
@@ -87,11 +89,14 @@ sub fetch_sequence {
 
   return undef unless(my $slice = $self->slice());
 
+  my $dcs = $slice->adaptor->db->dbc->disconnect_when_inactive();
+  $slice->adaptor->db->dbc->disconnect_when_inactive(0);
+
   my $dnafrag = $self->dnafrag;
-  my $id = $dnafrag->type.":".
+  my $id = $dnafrag->coord_system_name.":".
            $dnafrag->name.".".
-           ($dnafrag->start+$self->seq_start-1).".".
-           ($dnafrag->start+$self->seq_end-1);
+           ($self->seq_start-1).".".
+           ($self->seq_end-1);
 
   if ($masked == 1) {
 
@@ -126,6 +131,8 @@ sub fetch_sequence {
     my $oldseq = $seq;
     $seq = Bio::PrimarySeq->new( -id => $id, -seq => $oldseq->seq);
   }
+
+  $slice->adaptor->db->dbc->disconnect_when_inactive($dcs);
 
   #print STDERR "sequence length : ",$seq->length,"\n";
   return $seq;
@@ -179,7 +186,7 @@ sub seq_end {
   my $self = shift;
   my $end  = shift;
   if($end) {
-    $end=$self->dnafrag->end if($end > $self->dnafrag->end);
+    $end=$self->dnafrag->length if($self->dnafrag and ($end > $self->dnafrag->length));
     $self->{'seq_end'} = $end;
   }
   $self->{'seq_end'}=0 unless(defined($self->{'seq_end'}));
