@@ -42,12 +42,22 @@ sub new {
   foreach my $chr ( @chromosomes ) {
     for my $row (@subsections) {
       ########## create a new glyphset for this row
-      my $classname = qq(Bio::EnsEMBL::GlyphSet::).( $Config->get($row, 'manager')||$row );
-      next unless $self->dynamic_use( $classname );
+      my $classname;
       my $GlyphSet;
-      eval {
-        $GlyphSet = new $classname($Container, $Config, $highlights, 0, { 'chr' => $chr, 'row' => $row } );
-      };
+      if( my $glyphset = $Config->get($row,'glyphset') ) {
+        $classname = qq(Bio::EnsEMBL::GlyphSet::$glyphset);
+        next unless $self->dynamic_use( $classname );
+        eval { # Generic glyphsets need to have the type passed as a fifth parameter...
+          $GlyphSet = new $classname( $Container, $Config, $highlights, 0, { 'config_key' => $row, 'chr' => $chr, 'row' => $row } );
+        };
+      } else {
+        my $classname = qq(Bio::EnsEMBL::GlyphSet::).( $Config->get($row, 'manager')||$row );
+        next unless $self->dynamic_use( $classname );
+        eval {
+          $GlyphSet = new $classname($Container, $Config, $highlights, 0, { 'chr' => $chr, 'row' => $row } );
+        };
+      }
+      
       if($@ || !$GlyphSet) {
         my $reason = $@ || "No reason given just returns undef";
         warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
