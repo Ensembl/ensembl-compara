@@ -29,28 +29,28 @@ sub store {
   my $seqID;
   
   return 0 unless($sequence);
+
+  my $dcs = $self->dbc->disconnect_when_inactive();
+  $self->dbc->disconnect_when_inactive(0);
   
-  my $lock_sth = $self->prepare("LOCK TABLE sequence WRITE");
+  $self->dbc->do("LOCK TABLE sequence WRITE");
   
   my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
   $sth->execute($sequence);
   ($seqID) = $sth->fetchrow_array();
   $sth->finish;
 
-  if($seqID) {
-    # print("sequence already stored as id $seqID\n");
-    $self->prepare("UNLOCK TABLES");
-    return $seqID;
+  unless($seqID) {
+    my $length = length($sequence);
+
+    my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+    $sth2->execute($sequence, $length);
+    $seqID = $sth2->{'mysql_insertid'};
+    $sth2->finish;
   }
-
-  my $length = length($sequence);
   
-  my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
-  $sth2->execute($sequence, $length);
-  $seqID = $sth2->{'mysql_insertid'};
-  $sth2->finish;
-
-  $self->prepare("UNLOCK TABLES");
+  $self->dbc->do("UNLOCK TABLES");
+  $self->dbc->disconnect_when_inactive($dcs);
   return $seqID;
 }
 
