@@ -451,8 +451,10 @@ sub sync_with_registry {
       #fetch from genome_db which may be from a compara.conf or from
       #a locator
       $coreDBA = $genome_db->db_adaptor();
-      Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
-      Bio::EnsEMBL::Registry->add_alias($registry_name, $genome_db->name);      
+      if(defined($coreDBA)) {
+        Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
+        Bio::EnsEMBL::Registry->add_alias($registry_name, $genome_db->name);
+      }
     }
   }
 }
