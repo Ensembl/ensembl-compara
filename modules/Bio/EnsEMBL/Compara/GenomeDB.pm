@@ -248,7 +248,31 @@ sub taxon_id {
   return $self->{'taxon_id'};
 }
 
+=head2 taxon
+
+  Description: uses taxon_id to fetch the Taxon object
+  Returntype : Bio::EnsEMBL::Compara::Taxon object 
+  Exceptions : if taxon_id or adaptor not defined
+  Caller     : general
+
+=cut
+
+sub taxon {
+  my $self = shift;
+
+  return $self->{'_taxon'} if(defined $self->{'_taxon'});
+
+  unless (defined $self->taxon_id and $self->adaptor) {
+    throw("can't fetch Taxon without a taxon_id and an adaptor");
+  }
+  my $TaxonAdaptor = $self->adaptor->db->get_TaxonAdaptor;
+  $self->{'_taxon'} = $TaxonAdaptor->fetch_by_dbID($self->taxon_id);
+  return $self->{'_taxon'};
+}
+
+
 =head2 locator
+
   Arg [1]    : string
   Description: Returns a string which describes where the external genome (ensembl core)
                database base is located. Locator format is:
@@ -256,6 +280,7 @@ sub taxon_id {
   Returntype : string
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub locator {
@@ -266,13 +291,15 @@ sub locator {
 }
 
 =head2 connect_to_genome_locator
+
   Arg [1]    : string
   Description: uses the locator string to connect to the external genome database
   Returntype : DBConnection/DBAdaptor defined in locator string
               (usually a Bio::EnsEMBL::DBSQL::DBAdaptor)
               return undef if locator undefined or unable to connect
   Exceptions : none
-  Caller     : general
+  Caller     : internal private method 
+
 =cut
 
 sub connect_to_genome_locator
@@ -284,7 +311,6 @@ sub connect_to_genome_locator
   my $genomeDBA = undef;
   eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
   return undef unless($genomeDBA);
-
   return $genomeDBA;
 }
 
