@@ -104,7 +104,7 @@ sub RENDER_simple {
     my $colour;
     my $glyph_height;
     my $row_height = $configuration->{'h'};
-    my $attribs = {};  # style attributes for this feature
+    my $styledata = {};  # style attributes for this feature
 
     # Configure style for this feature
     if($configuration->{'use_style'}) {
@@ -115,9 +115,9 @@ sub RENDER_simple {
       $style ||= $configuration->{'styles'}{'default'}{'default'};
       $glyph_symbol = $style->{'glyph'};
      
-      $attribs = $style->{'attrs'} || {};
-      $colour = $attribs->{'fgcolor'} || $configuration->{'colour'};
-      $glyph_height = $attribs->{'height'};
+      $styledata = $style->{'attrs'} || {};
+      $colour = $styledata->{'fgcolor'} || $configuration->{'colour'};
+      $glyph_height = $styledata->{'height'};
     } 
     
     # Load the glyph symbol module that we need to draw this style symbol
@@ -137,12 +137,13 @@ sub RENDER_simple {
     $colour	    ||= $configuration->{'colour'};
 
     # this is the way attribute passing should be done for the symbol stuff
-    $attribs->{'height'} ||= $glyph_height;
-    $attribs->{'colour'} ||= $colour;
+    $styledata->{'height'} ||= $glyph_height;
+    $styledata->{'colour'} ||= $colour;
 
-    # Add truncation flags to the attribs
-    $attribs->{'trunc_start'} = 1 if $START ne $f->das_start();
-    $attribs->{'trunc_end'} = 1 if $END ne $f->das_end();
+    # truncation flags
+    my $trunc_start = ($START ne $f->das_start()) ? 1 : 0;
+    my $trunc_end   = ($END ne $f->das_end())	    ? 1 : 0;
+    my $orientation = $f->das_orientation;
 
     # Draw label first, so we can get the label_height to use in poly offsets
     my $label_height =$self->feature_label( $Composite, 
@@ -228,12 +229,17 @@ sub RENDER_simple {
 	  }) );
     }
     # Draw feature symbol
-    $self->push( $glyph_symbol->draw( $row_height, 
-				      $START, 
-				      $END , 
-				      $self->{'pix_per_bp'}, 
-				      $y_offset,
-				      $attribs,
+    $self->push( $glyph_symbol->draw( {
+				    'row_height'    => $row_height, 
+				    'start'	    => $START, 
+				    'end'	    => $END , 
+				    'pix_per_bp'    => $self->{'pix_per_bp'}, 
+				    'y_offset'	    => $y_offset,
+				    'trunc_start'   => $trunc_start,
+				    'trunc_end'	    => $trunc_end,
+				    'orientation'   => $orientation,
+				    },
+				      $styledata,
 				    ));  
   }
 

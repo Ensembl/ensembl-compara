@@ -13,13 +13,19 @@ use strict;
 use Sanger::Graphics::Glyph::Rect;
 
 sub draw {
-    my ($class, $rowheight, $start, $end, $pix_per_bp, $y_offset, $attribs) = @_;
+    my ($class, $featuredata, $styledata) = @_;
+
+    my $rowheight = $featuredata->{'row_height'};
+    my $start = $featuredata->{'start'};
+    my $end = $featuredata->{'end'};
+    my $pix_per_bp = $featuredata->{'pix_per_bp'};
+    my $y_offset = $featuredata->{'y_offset'};
    
-    my $linecolour = $attribs->{'fgcolor'};
-    my $fillcolour = $attribs->{'bgcolor'} || $attribs->{'colour'};
+    my $linecolour = $styledata->{'fgcolor'};
+    my $fillcolour = $styledata->{'bgcolor'} || $styledata->{'colour'};
     $linecolour ||= $fillcolour;
 
-    my $height = $attribs->{'height'};
+    my $height = $styledata->{'height'};
 
     return new Sanger::Graphics::Glyph::Rect({
     	'x'          => $start-1,
