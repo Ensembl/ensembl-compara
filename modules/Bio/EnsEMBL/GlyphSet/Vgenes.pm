@@ -33,7 +33,6 @@ sub _init {
     my ($self) = @_;
     my $Config = $self->{'config'};
     my $chr      = $self->{'container'}->{'chr'};
-    my $chr_N           = $self->{'container'}->{'chr_N'};
    	my $genes_col = $Config->get( 'Vgenes','col_genes' );
    	my $known_col = $Config->get( 'Vgenes','col_known' );
 	

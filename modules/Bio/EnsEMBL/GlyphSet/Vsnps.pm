@@ -26,7 +26,6 @@ sub _init {
     my ($self) = @_;
     my $Config = $self->{'config'};
     my $chr      = $self->{'container'}->{'chr'};
-    my $chr_N           = $self->{'container'}->{'chr_N'};
     my $snps     = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'snp');
 	my $snps_col = $Config->get( 'Vsnps','col' );
 	

@@ -33,6 +33,7 @@ sub _init {
     my $cmap   = $Config->colourmap();
     my $white  = $cmap->id_by_name('white');
     my $black  = $cmap->id_by_name('black');
+    my $bg     = $Config->get('_settings','bgcolor');
     my $red    = $cmap->id_by_name('red');
  
     my %COL = ();
@@ -46,24 +47,22 @@ sub _init {
     $COL{'stalk'}   = $cmap->id_by_name('slategrey');
 
     my $im_width    = $Config->image_width();
-
+    my $top_margin  = $Config->{'_top_margin'};
     my ($w,$h)      = $Config->texthelper->Vpx2bp('Tiny');
     my $chr         = $self->{'container'}->{'chr'} || $self->{'extras'}->{'chr'};
-    print STDERR "Videogram: $chr\n";
 
     # fetch the chromosome bands that cover this VC.
     my $kba         = $self->{'container'}->{'ka'};
-    my @bands       = $kba->fetch_all_by_chromosome("chr$chr");
-    my $chr_length  = $kba->fetch_chromosome_length("chr$chr") || 1;
+    my @bands       = $kba->fetch_all_by_chromosome($chr);
+    my $chr_length  = $kba->fetch_chromosome_length($chr) || 1;
     my $v_offset    = $Config->container_width() - $chr_length; # bottom align each chromosome!
 	my $bpperpx     = $Config->container_width()/$Config->{'_image_height'};
-	
     # over come a bottom border/margin problem....
 
     my $done_1_acen = 0;	    # flag for tracking place in chromsome
-	my $wid   		= $self->{'config'}->get('Videogram','width');
+	my $wid   		= $Config->get('Videogram','width');
 	my $h_wid 		= int($wid/2);
-	my $padding     = $self->{'config'}->get('Videogram','padding');
+	my $padding     = $Config->get('Videogram','padding');
 		
 	# max width of band label is 6 characters
 	my $h_offset    = int(
@@ -72,7 +71,7 @@ sub _init {
 			- ($self->{'config'}->{'_band_labels'} eq 'on' ? ($w * 6 + 4) : 0 )
 	)/2;
 
-
+    my @decorations;
 	if($padding) {
 	# make sure that there is a blank image behind the chromosome so that the
 	# glyhset doesn't get "horizontally" squashed.
@@ -91,7 +90,6 @@ sub _init {
 		my $vc_band_end    = $band->end() + $v_offset;
 		my $stain          = $band->stain();
 
-#	print STDERR "$chr band:$bandname stain:$stain start:$vc_band_start end:$vc_band_end\n";		
 		my $HREF;
 		if($self->{'config'}->{'_band_links'}) {
 			$HREF = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&vc_start=$vc_band_start&vc_end=$vc_band_end";
@@ -120,7 +118,7 @@ sub _init {
 				});
 				$done_1_acen = 1;
 		    }
-			$self->push($gband);
+            push @decorations, $gband;
 		} elsif ($stain eq "stalk"){
 		    my $gband = new Bio::EnsEMBL::Glyph::Poly({
 				'points'       => [ $vc_band_start,$h_offset, 
@@ -132,22 +130,18 @@ sub _init {
 				'absolutey'    => 1,
 					'href'			=> $HREF
 	    	});
-	    
-	    $self->push($gband);
-	    $gband = new Bio::EnsEMBL::Glyph::Rect({
-		'x'      => $vc_band_start,
-		'y'      => $h_offset+ int($wid/4),
-		'width'  => $vc_band_end - $vc_band_start,
-		'height' => $h_wid,
-		'colour' => $COL{$stain},
-		'absolutey' => 1,
-		'href'         => $HREF
-		});
-
-	    $self->push($gband);
-
-	}
-	else {
+            push @decorations, $gband;
+    	    $gband = new Bio::EnsEMBL::Glyph::Rect({
+        		'x'      => $vc_band_start,
+        		'y'      => $h_offset+ int($wid/4),
+        		'width'  => $vc_band_end - $vc_band_start,
+        		'height' => $h_wid,
+        		'colour' => $COL{$stain},
+        		'absolutey' => 1,
+        		'href'         => $HREF
+    		});
+            push @decorations, $gband;
+	} else {
 	    my $gband = new Bio::EnsEMBL::Glyph::Rect({
 		'x'      => $vc_band_start,
 		'y'      => $h_offset,
@@ -158,22 +152,22 @@ sub _init {
 			'href'         => $HREF
 		});
 	    $self->push($gband);
-	   $gband = new Bio::EnsEMBL::Glyph::Line({
-		'x'      => $vc_band_start,
-		'y'      => $h_offset,
-		'width'  => $vc_band_end - $vc_band_start,
-		'height' => 0,
-		'colour' => $black,
-		'absolutey' => 1,
+	    $gband = new Bio::EnsEMBL::Glyph::Line({
+		    'x'      => $vc_band_start,
+		    'y'      => $h_offset,
+		    'width'  => $vc_band_end - $vc_band_start,
+		    'height' => 0,
+		    'colour' => $black,
+		    'absolutey' => 1,
 		});
 	    $self->push($gband);
 	    $gband = new Bio::EnsEMBL::Glyph::Line({
-		'x'      => $vc_band_start,
-		'y'      => $h_offset+$wid,
-		'width'  => $vc_band_end - $vc_band_start,
-		'height' => 0,
-		'colour' => $black,
-		'absolutey' => 1,
+		    'x'      => $vc_band_start,
+		    'y'      => $h_offset+$wid,
+		    'width'  => $vc_band_end - $vc_band_start,
+		    'height' => 0,
+		    'colour' => $black,
+		    'absolutey' => 1,
 		});
 	    $self->push($gband);
 	}
@@ -203,33 +197,61 @@ sub _init {
     ##############################################
     # Draw the ends of the ideogram
     ##############################################
-    my $gband = new Bio::EnsEMBL::Glyph::Line({
-	'x'      => $v_offset,
-	'y'      => $h_offset,
-	'width'  => 0,
-	'height' => $wid,
-	'colour' => $black,
-	'absolutey' => 1,
-	});
-    $self->push($gband);
+# Top of chromosome
+    my @lines = $wid < 16 ?
+        ( [8,6],[4,4],[2,2] ) :
+        ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
     
-    $gband = new Bio::EnsEMBL::Glyph::Line({
-	'x'      => $chr_length + $v_offset,
-	'y'      => $h_offset,
-	'width'  => 0,
-	'height' => $wid,
-	'colour' => $black,
-	'absolutey' => 1,
-	});
-    $self->push($gband);
-
+    foreach my $end ( 0, 1 ) {
+      my $direction = $end ? -1 : 1;
+      foreach my $I ( 0..$#lines ) {
+        my ( $bg_x, $black_x ) = @{$lines[$I]};
+        my $xx = $v_offset + $chr_length * $end + ($I+.5) * $direction * $bpperpx - $end;
+        print STDERR "VO: $v_offset\nCL: $chr_length\nBPP: $bpperpx\tXX: $xx\n";
+        push @decorations, new Bio::EnsEMBL::Glyph::Line({
+            'x'      => $xx,
+            'y'      => $h_offset,
+            'width'  => 0,
+            'height' => $wid * $bg_x/24 -1,
+            'colour' => $bg,
+            'absolutey' => 1,
+        });
+        push @decorations, new Bio::EnsEMBL::Glyph::Line({
+            'x'      => $xx,
+            'y'      => $h_offset + 1 + $wid * (1-$bg_x/24),
+            'width'  => 0,
+            'height' => $wid * $bg_x/24 -1 ,
+            'colour' => $bg,
+            'absolutey' => 1,
+        }) ;
+        push @decorations, new Bio::EnsEMBL::Glyph::Line({
+            'x'      => $xx,
+        	'y'      => $h_offset + $wid * $bg_x/24,
+            'width'  => 0,
+            'height' => $wid * $black_x/24 -1 ,
+            'colour' => $black,
+            'absolutey' => 1,
+        });
+        push @decorations, new Bio::EnsEMBL::Glyph::Line({
+            'x'      => $xx,
+        	'y'      => $h_offset + 1 + $wid * (1-$bg_x/24-$black_x/24),
+            'width'  => 0,
+            'height' => $wid * $black_x/24 -1 ,
+            'colour' => $black,
+            'absolutey' => 1,
+        });
+      }
+    }
     #######################################
     # Do the highlighting bit at the end!!!
     #######################################
-  if($self->{'highlights'}->{"chr$chr"}) {
+    
+  foreach( @decorations) { $self->push($_); }
+  
+  if($self->{'highlights'}->{$chr}) {
 	my $high_flag = 'l';
 	
-	foreach( sort { $a->{'start'} <=> $b->{'start'} } @{$self->{'highlights'}->{"chr$chr"}} ) {
+	foreach( sort { $a->{'start'} <=> $b->{'start'} } @{$self->{'highlights'}->{$chr}} ) {
 		my $start     = $v_offset + $_->{'start'};
 		my $end       = $v_offset + $_->{'end'};
 		my $type;
@@ -241,7 +263,6 @@ sub _init {
 		}
 		my $zmenu     = $_->{'zmenu'};
 		my $col		  = $_->{'col'};
-		print STDERR "$type: $start: $end: $zmenu: $col\n";
     	########## dynamic require of the right type of renderer
 		if($self->can($type)) {
 			$self->$type( {
@@ -259,6 +280,7 @@ sub _init {
 		}
 	}
   }
+  $self->minx( $v_offset );
 }
 
 sub highlight_box {
@@ -309,7 +331,6 @@ sub highlight_outbox {
 sub highlight_bowtie {
 	my $self = shift;
 	my $details = shift;
-	foreach(keys %$details) { print STDERR "BOWTIE: $_ : $details->{$_}\n"; } print STDERR "\n";
     my $g = new Bio::EnsEMBL::Glyph::Poly({
 		'points' => [
 			$details->{'mid'}, 							$details->{'h_offset'},

@@ -33,7 +33,6 @@ sub _init {
     my ($self) 		= @_;
     my $Config 		= $self->{'config'};
     my $chr      	= $self->{'container'}->{'chr'};
-    my $chr_N    	= $self->{'container'}->{'chr_N'};
    	my $gc_col 		= $Config->get( 'Vpercents','col_gc' );
    	my $repeat_col 	= $Config->get( 'Vpercents','col_repeat' );
 	
