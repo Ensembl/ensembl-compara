@@ -6,17 +6,20 @@ use IO::File;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
-my ($desc_file,$fasta_file) = @ARGV;
 
 my $host;
+my $port = "";
 my $dbname;
 my $dbuser;
 my $dbpass;
 
 GetOptions('host=s' => \$host,
+	   'port=i' => \$port,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass);
+
+my ($desc_file,$fasta_file) = @ARGV;
 
 my %seqinfo;
 
@@ -51,6 +54,7 @@ close DESC
   || die "$desc_file: $!";
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                     -port   => $port,
                                                      -user   => $dbuser,
                                                      -pass   => $dbpass,
                                                      -dbname => $dbname);

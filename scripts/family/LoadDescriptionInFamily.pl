@@ -20,9 +20,11 @@ Options:
 
 my $help = 0;
 my ($host,$dbname,$dbuser,$dbpass);
+my $port = "";
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
+           'port=i' => \$port,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass);
@@ -34,12 +36,13 @@ if ($help || scalar @ARGV != 1) {
 
 my ($file) = @ARGV;
 
-my $family_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-									 -user   => $dbuser,
-									 -pass   => $dbpass,
-									 -dbname => $dbname);
+my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                            -port   => $port,
+                                                            -user   => $dbuser,
+                                                            -pass   => $dbpass,
+                                                            -dbname => $dbname);
 
-my $sth = $family_db->prepare("UPDATE family set description = ?, description_score =? where family_id = ?");
+my $sth = $compara_db->prepare("UPDATE family set description = ?, description_score =? where family_id = ?");
 
 my $FH = IO::File->new();
 $FH->open($file) || die "Could not open alignment file [$file], $!\n;";

@@ -34,6 +34,7 @@ my $family_source_name = "ENSEMBL_FAMILIES";
 my $family_prefix = "ENSF";
 my $family_offset = 1;
 my $host;
+my $port = "";
 my $dbname;
 my $dbuser;
 my $dbpass;
@@ -41,6 +42,7 @@ my $conf_file;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
+	   'port=i' => \$port,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
@@ -67,6 +69,7 @@ my %member_index;
 my %redun_hash;
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                     -port   => $port,
                                                      -user   => $dbuser,
                                                      -dbname => $dbname,
                                                      -pass => $dbpass,

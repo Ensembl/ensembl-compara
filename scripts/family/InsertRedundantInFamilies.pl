@@ -22,10 +22,10 @@ Options:
 
 \n";
 
-my ($redunfile, $desc_file, $fasta_file) = @ARGV;
 
 my $help = 0;
 my $host;
+my $port = "";
 my $dbname;
 my $dbuser;
 my $dbpass;
@@ -33,10 +33,13 @@ my $conf_file;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
+	   'port=i' => \$port,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
 	   'conf_file=s' => \$conf_file);
+
+my ($redunfile, $desc_file, $fasta_file) = @ARGV;
 
 if ($help) {
   print $usage;
@@ -101,6 +104,7 @@ close DESC
 
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                     -port   => $port,
                                                      -user   => $dbuser,
                                                      -pass   => $dbpass,
                                                      -dbname => $dbname,

@@ -48,6 +48,7 @@ my $clustalw_executable = "/usr/local/ensembl/bin/clustalw";
 
 my $help = 0;
 my $host;
+my $port = "";
 my $dbname;
 my $dbuser;
 my $dbpass;
@@ -55,6 +56,7 @@ my $clustal_file;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
+	   'port=i' => \$port,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
@@ -78,6 +80,7 @@ if (defined $clustal_file && $store == 0) {
 my $rand = time().rand(1000);
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                     -port   => $port,
                                                      -user   => $dbuser,
                                                      -pass   => $dbpass,
                                                      -dbname => $dbname);
