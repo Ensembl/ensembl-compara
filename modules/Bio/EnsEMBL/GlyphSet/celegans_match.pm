@@ -7,7 +7,7 @@ use Bio::EnsEMBL::GlyphSet_feature2;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature2);
 
 
-sub my_label { return "C.elegans matches"; }
+sub my_label { return "Ce cons"; }
 
 sub features {
     my ($self) = @_;
@@ -30,7 +30,7 @@ sub zmenu {
     my ($self, $id, $chr_pos ) = @_;
     return { 
 	'caption'    => $id, 
-	'Jump to Homo sapiens' => $self->href( $chr_pos )
+	'Jump to Caenorhabditis elegans' => $self->href( $chr_pos )
     };
 }
 
@@ -42,7 +42,7 @@ sub unbumped_zmenu {
     return { 
     	'caption'    => 'Dot-plot', 
     	'Dotter' => $self->unbumped_href( $ref, $target ),
-        'Jump to Homo sapiens' => $self->href( $chr_pos )
+        'Jump to Caenorhabditis elegans' => $self->href( $chr_pos )
     };
 }
 
