@@ -364,22 +364,25 @@ sub contig {
    return $self->{'_contig'};
 }
 
-=head2 slice [NOT YET IMPLEMENTED]
+=head2 slice
 
- Title   : slice
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+ Arg 1      : -none-
+ Example    : $slice = $dnafrag->slice;
+ Description: Returns the Bio::EnsEMBL::Slice object corresponding to this
+              Bio::EnsEMBL::Compara::DnaFrag object.
+ Returntype : Bio::EnsEMBL::Slice object
+ Exceptions : throws when the Bio::EnsEMBL::DBSQL::DBAdaptor cannot be retrieved
+ Caller     : $object->methodname
 
 =cut
+
 sub slice {
   my ($self) = @_;
   
   unless (defined $self->{'_slice'}) {
     my $dba = $self->genome_db->db_adaptor;
+    throw "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->genome_db."]"
+        if (!defined($dba));
     $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
   }
 
