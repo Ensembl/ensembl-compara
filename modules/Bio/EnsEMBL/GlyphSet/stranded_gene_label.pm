@@ -60,6 +60,7 @@ sub _init {
 	my ($start, $end, $colour, $label, $hi_colour);
 	
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
+        print "STR: ".$vg->strand()." -- ".$self->strand()."\n";
         next if( $vg->strand() != $self->strand() );
         $start = $vg->start();
         $start = $vg->end();        
