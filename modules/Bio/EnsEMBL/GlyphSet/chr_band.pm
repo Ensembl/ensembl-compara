@@ -42,6 +42,7 @@ sub _init {
 	$COL{'gvar'}    = $cmap->id_by_name('offwhite'); #add_rgb([222,220,220]);
 	$COL{'gneg'}    = $white;
 	$COL{'acen'}    = $cmap->id_by_name('slategrey');
+	$COL{'stalk'}    = $cmap->id_by_name('slategrey');
 
     my $im_width = $self->{'config'}->image_width();
 	my ($w,$h) = $self->{'config'}->texthelper->px2bp('Tiny');
@@ -79,7 +80,7 @@ sub _init {
 		
 		my $fontcolour;
 		# change label colour to white if the chr band is black, else use black...
-		if ($stain eq "gpos100" || $stain eq "acen"){
+		if ($stain eq "gpos100" || $stain eq "acen"|| $stain eq "stalk"){
 			$fontcolour = $white;
 		} else {
 			$fontcolour = $black;
