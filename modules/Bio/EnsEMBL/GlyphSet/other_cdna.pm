@@ -15,7 +15,7 @@ sub features {
 sub colour {
    my( $self, $id ) = @_;
    return $self->{'colours'}->{
-     $id =~/(NM_\d+)/ ? 'REFSEQ' : ( /(RO|ZX|PX|ZA|PL)\d{5}[A-Z]\d{2}/ ? 'RIKEN' : 'EMBL' ) 
+     $id =~/(NM_\d+)/ ? 'refseq' : ( /(RO|ZX|PX|ZA|PL)\d{5}[A-Z]\d{2}/ ? 'riken' : 'col' )
    }
 }
 sub href {

@@ -29,6 +29,12 @@ qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'
     $self->bumped( $self->{'config'}->get($HELP_LINK, 'dep')==0 ? 'no' : 'yes' );
 }
 
+
+sub colour {
+   my $self = shift;
+   return $self->{'feature_colour'}, $self->{'label_colour'}, $self->{'part_to_colour'};
+}
+
 sub my_label {
     my ($self) = @_;
     return 'Missing label';
@@ -75,8 +81,11 @@ sub _init {
 
     my @bitmap         = undef;
     my $bitmap_length  = int($length * $pix_per_bp);
-    my $feature_colour = $Config->get(  $type, 'col' );
-    my $hi_colour      = $Config->get(  $type, 'hi'  );
+    $self->{'colours'} = $Config->get($type, 'colours');
+    $self->{'feature_colour'} = $Config->get($type, 'col') || $self->{'colours'} && $self->{'colours'}{'col'};
+    $self->{'label_colour'}   = $Config->get($type, 'lab') || $self->{'colours'} && $self->{'colours'}{'lab'};
+    $self->{'part_to_colour'} = '';
+    my $hi_colour         = $Config->get($type, 'hi')  || $self->{'colours'} && $self->{'colours'}{'hi'};
     my %id             = ();
     my $small_contig   = 0;
     my $dep            = $Config->get(  $type, 'dep' );
@@ -127,6 +136,7 @@ sub _init {
             });
 
             my $X = -1000000;
+            my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->id );
             foreach my $f ( @F ){
                 next if int($f->[1] * $pix_per_bp) == int( $X * $pix_per_bp );
                 $C++;
@@ -174,6 +184,7 @@ sub _init {
             $START      = 1 if $START < 1;
             $END        = $length if $END > $length;
             $T++; $C1++;
+            my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f->[2]->id() );
             next if( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
             $X = $START;
             $C++;

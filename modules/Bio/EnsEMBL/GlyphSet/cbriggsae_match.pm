@@ -16,7 +16,7 @@ sub features {
       EnsWeb::species_defs->other_species('Caenorhabditis_briggsae')->{'ENSEMBL_GOLDEN_PATH'};
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
-							   'Homo sapiens',
+							   'Caenorhabditis briggsae',
 							    $assembly);
 
 }

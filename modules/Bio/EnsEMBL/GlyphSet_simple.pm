@@ -98,7 +98,7 @@ sub _init {
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
 ## And the colours
-       $self->{'colours'} = $Config->get($type, 'colours');
+    $self->{'colours'} = $Config->get($type, 'colours');
     $self->{'feature_colour'} = $Config->get($type, 'col') || $self->{'colours'} && $self->{'colours'}{'col'};
     $self->{'label_colour'}   = $Config->get($type, 'lab') || $self->{'colours'} && $self->{'colours'}{'lab'};
     $self->{'part_to_colour'} = '';
