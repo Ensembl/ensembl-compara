@@ -126,39 +126,40 @@ sub parse_conf {
 sub dump_fasta {
   my $self = shift;
 
-  my $sql = "SELECT member.stable_id, member.description, sequence.sequence, member.taxon_id " .
-            " FROM member, sequence, source " .
-            " WHERE member.source_id=source.source_id ".
-            " AND source.source_name='ENSEMBLPEP' ".
+  my $sql = "SELECT member.sequence_id, member.stable_id, member.description, sequence.sequence, member.taxon_id, member.source_name " .
+            " FROM member, sequence " .
+            " WHERE member.source_name in ('ENSEMBLPEP','SWISSPROT','SPTREMBL') ".
             " AND member.sequence_id=sequence.sequence_id " .
-            " GROUP BY member.member_id ORDER BY member.stable_id;";
+            " GROUP BY member.member_id ORDER BY member.sequence_id, member.stable_id;";
 
   my $fastafile = $self->{'outputFasta'};
   my $descfile = $fastafile . ".desc";
+
   open FASTAFILE, ">$fastafile"
     or die "Could open $fastafile for output\n";
-  open DESCFILE, ">$descfile"
-    or die "Could open $descfile for output\n";
+
   print("writing fasta to loc '$fastafile'\n");
 
   my $sth = $self->{'comparaDBA'}->dbc->prepare( $sql );
   $sth->execute();
 
-  my ($stable_id, $description, $sequence, $taxon_id);
-  $sth->bind_columns( undef, \$stable_id, \$description, \$sequence, \$taxon_id );
+  my ($sequence_id, $stable_id, $description, $sequence, $taxon_id, $source_name);
+  $sth->bind_columns( \$sequence_id, \$stable_id, \$description, \$sequence, \$taxon_id, \$source_name );
 
   while( $sth->fetch() ) {
     #if removedXedSeqs defined then it contains the minimum num of
     # Xs in a row that is not acceptable, the regex X{#,}? says
     # if X occurs # or more times (not exhaustive search)
+    if ($sequence =~ /^X+$/) {
+      print STDERR "$stable_id is all X not dumped\n";
+      next;
+    }
     unless($self->{'removeXedSeqs'} and ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
       $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
       print FASTAFILE ">$stable_id $description\n$sequence\n";
-      print DESCFILE "ensemblpep\t$stable_id\t\t", $self->{'taxon_hash'}->{$taxon_id}, "\n";
     }
   }
   close(FASTAFILE);
-  close(DESCFILE);
 
   $sth->finish();
 }
@@ -177,7 +178,8 @@ sub get_taxon_descriptions {
   $sth->bind_columns(\$taxon_id, \$genus, \$species, \$sub_species, \$common_name, \$classification );
   while($sth->fetch()) {
     $classification =~ s/\s+/:/g;
-    $sub_species='' if($sub_species eq 'NULL');
+    $sub_species = '' unless (defined $sub_species);
+    $common_name = '' unless (defined $common_name);
     my $taxonDesc = "taxon_id=$taxon_id;".
                     "taxon_genus=$genus;".
                     "taxon_species=$species;".
