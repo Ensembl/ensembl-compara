@@ -7,7 +7,6 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Bump;
-use EnsEMBL::Web::GeneTrans::support;
 
 sub init_label {
     my ($self) = @_;
