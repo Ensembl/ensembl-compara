@@ -287,7 +287,7 @@ foreach (sort { $b->{score} <=> $a->{score} } @{$MatchesIndexPerSchrSorient{$win
 }
 
 
-print STDERR "#matches after median filtering: ",scalar @RelevantMatches,"\n";
+print STDERR "#matches after median filtering: ",scalar @RelevantMatches,"\n" if ($debug);
 
 if ($noStdDevFilter) {
   print_out_matches(\@RelevantMatches,0,$#RelevantMatches);
@@ -320,7 +320,7 @@ for (my $i=0; $i < $#RelevantMatches; $i++) {
   my %n = %{$RelevantMatches[$i + 1]};
   $actLen += $r{Sen} - $r{Sst};
   my $nextGap = $n{Sst} - $r{Sen};
-  print STDERR "$actLen $nextGap $start\n" if ($debug);
+  print STDERR "actLen: $actLen nextGap: $nextGap start: $start\n" if ($debug);
   my $Scm = ($r{Sst}+$r{Sen})/2;
   if($Scm < $min or ($actLen < $minActLen and $actLen < $nextGap/$GapLengthPortion)) {
     $actLen = 0;
@@ -331,13 +331,12 @@ for (my $i=0; $i < $#RelevantMatches; $i++) {
 
 my $end = $#RelevantMatches;
 $actLen = 0;
-#for (my $i = $#RelevantMatches; --$i >= 1 + $start;) {
-for (my $i = $#RelevantMatches; $i >= $start; $i--) { 
+for (my $i = $#RelevantMatches; $i > $start; $i--) { 
   my %r = %{$RelevantMatches[$i]};
   my %p = %{$RelevantMatches[$i - 1]};
   $actLen += $r{Sen} - $r{Sst};
   my $nextGap = $r{Sst} - $p{Sen};
-  print STDERR "$actLen $nextGap $end\n" if ($debug);
+  print STDERR "actLen: $actLen nextGap: $nextGap end: $end\n" if ($debug);
   my $Scm = ($r{Sst}+$r{Sen})/2;
   if($Scm > $max or ($actLen < $minActLen and $actLen < $nextGap/$GapLengthPortion)) {
     $actLen = 0;
@@ -346,7 +345,7 @@ for (my $i = $#RelevantMatches; $i >= $start; $i--) {
   }
 }
  
-print STDERR "#matches after StdDev filtering: ",scalar @RelevantMatches,"\n";
+print STDERR "#matches after StdDev filtering: ",$end-$start+1,"\n" if ($debug);
 print_out_matches(\@RelevantMatches,$start,$end);
 
 ## END STEP 5
