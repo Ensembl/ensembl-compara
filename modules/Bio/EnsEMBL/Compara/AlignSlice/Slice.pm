@@ -79,6 +79,7 @@ our @ISA = qw(Bio::EnsEMBL::Slice);
   Description: 
   Returntype : 
   Exceptions : 
+  Caller     : Bio::EnsEMBL::Compara::AlignSlice->_create_underlying_Slices()
 
 =cut
 
@@ -88,9 +89,9 @@ sub new {
   my $self = {};
   bless $self,$class;
 
-  my ($length, $requesting_slice, $method_link_species_set, $name) =
+  my ($length, $requesting_slice, $method_link_species_set, $name, $expanded) =
       rearrange([qw(
-          LENGTH REQUESTING_SLICE METHOD_LINK_SPECIES_SET NAME
+          LENGTH REQUESTING_SLICE METHOD_LINK_SPECIES_SET NAME EXPANDED
       )], @args);
 
   my $version = "";
@@ -107,6 +108,11 @@ sub new {
     if ($species_set) {
       $species_set = [sort {$a->name cmp $b->name} @{$species_set}];
       $version .= "(\"".join("\"+\"", map {$_->name} @$species_set)."\")";
+    }
+    if ($expanded) {
+      $version .= "+expanded";
+    } else {
+      $version .= "+condensed";
     }
   }
   my $coord_system = new Bio::EnsEMBL::CoordSystem(
