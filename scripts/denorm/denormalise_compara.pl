@@ -8,12 +8,12 @@ $| = 1;
 my $help = 0;
 my $glob = 50;
 my $min_size = 30;
-my $mouse_super_contig_size = 5000000;
+my $mouse_super_contig_size = 1000000;
 
-my $static_mouse_file = "/nfs/acari/abel/work/mouse_human/mouse_1_static_raw_contigs";
+my $static_mouse_file = "/nfs/acari/abel/work/mouse_human/mouse_2_static_raw_contigs";
 my $human_golden_contig = "/nfs/acari/abel/work/mouse_human/human_golden_contigs_28";
-my $mouse_ending_chr_name_contigs ="/nfs/acari/abel/work/mouse_human/mouse_1_ending_chr_name_contigs";
-my $mouse_static_super_contigs = "/nfs/acari/abel/work/mouse_human/mouse_1_static_super_contigs";
+my $mouse_ending_chr_name_contigs ="/nfs/acari/abel/work/mouse_human/mouse_2_ending_chr_name_contigs";
+my $mouse_static_super_contigs = "/nfs/acari/abel/work/mouse_human/mouse_2_static_super_contigs";
 
 GetOptions('help' => \$help,
 	   'glob=i' => \$glob,

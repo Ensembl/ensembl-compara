@@ -9,15 +9,15 @@ print "# debut: ",time,"\n";
 my ($input_chr_name) = @ARGV;
 
 my $compara_host = 'ecs1b.sanger.ac.uk';
-my $compara_dbname = 'abel_compara_human_mouse';
+my $compara_dbname = 'compara_human_28_mouse_2';
 my $compara_dbuser = 'ensro';
 
 my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $compara_host,
 							      -user => $compara_dbuser,
 							      -dbname => $compara_dbname );
 
-my $ncbi_host = 'ecs1d.sanger.ac.uk';
-my $ncbi_dbname = 'homo_sapiens_core_130';
+my $ncbi_host = 'ecs1e.sanger.ac.uk';
+my $ncbi_dbname = 'ens_NCBI_28';
 my $ncbi_dbuser = 'ensro';
 
 my $ncbi_db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $ncbi_host,
@@ -26,8 +26,8 @@ my $ncbi_db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $ncbi_host,
 #$ncbi_db->static_golden_path_type('NCBI_26');
 #my $sncbi = $ncbi_db->get_StaticGoldenPathAdaptor;
 
-my $mouse_host = 'ecs1a.sanger.ac.uk';
-my $mouse_dbname = 'mouse_sc011015_alistair';
+my $mouse_host = 'ecs1f.sanger.ac.uk';
+my $mouse_dbname = 'alistair_mouse_si_Nov01 ';
 my $mouse_dbuser = 'ensro';
 
 my $mouse_db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $mouse_host,
@@ -100,6 +100,7 @@ my %mouse_chromosome;
 
 while (my ($chr_name) = $sth->fetchrow_array()) {
 #  next if ($chr_name ne "4" && $chr_name ne "5" && $chr_name ne "NA_unmapped");
+  next if ($chr_name =~ /^NA.*$/);
   print "# chr nb ",$chr_name,"\n";
 
   my $sth = $mouse_db->prepare("select c.id,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from contig c,static_golden_path s where c.internal_id = s.raw_id and s.chr_name=\"$chr_name\" order by s.chr_start asc");

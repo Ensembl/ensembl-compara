@@ -8,14 +8,24 @@ use Getopt::Long;
 
 $| = 1;
 
-my $qy_host = 'ecs1a.sanger.ac.uk';
-my $qy_dbname = 'mouse_sc011015_alistair';
+my $qy_host = 'ecs1f.sanger.ac.uk';
+my $qy_dbname = 'alistair_mouse_si_Nov01';
 my $qy_dbuser = 'ensro';
-my $qy_static_type = "sanger_20011015_2";
+my $qy_static_type = "SI_Nov01";
 
 my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $qy_host,
 					     -user => $qy_dbuser,
 					     -dbname => $qy_dbname);
+
+my $sth = $db->prepare("select max(chr_end - chr_start) from static_golden_path");
+
+my $max_contig_length;
+
+unless ($sth->execute()) {
+  $db->throw("Failed execution of a select query");
+} else {
+  ($max_contig_length) = $sth->fetchrow_array();  
+}
 
 while (defined (my $exonerate_output_file = shift @ARGV)) {
   my %frag_hits;
@@ -79,9 +89,10 @@ while (defined (my $exonerate_output_file = shift @ARGV)) {
 #    next;
     my ($chr_name,$chr_start,$chr_end) = split /\./, $qname;
     
-    my $sth = $db->prepare("select c.id,c.internal_id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where s.raw_id=c.internal_id and s.chr_name=\"$chr_name\" and (($chr_start>=s.chr_start && $chr_start<=s.chr_end) or ($chr_end>=s.chr_start and $chr_end<=s.chr_end) or (s.chr_start>$chr_start and s.chr_end<$chr_end))");
-    # if type condition has to be added, take this query
-    #  my $sth = $db->prepare("select c.id,c.internal_id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where s.raw_id=c.internal_id and s.chr_name=\"$chr_name\" and (($chr_start>=s.chr_start && $chr_start<=s.chr_end) or ($chr_end>=s.chr_start and $chr_end<=s.chr_end) or (s.chr_start>$chr_start and s.chr_end<$chr_end)) and type=\"$qy_static_type\"");
+#    my $sth = $db->prepare("select c.id,c.internal_id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where s.raw_id=c.internal_id and s.chr_name=\"$chr_name\" and s.chr_end>=$chr_start and s.chr_start>=$chr_start - $max_contig_length + 1 and s.chr_start<=$chr_end");
+
+    ## if type condition has to be added, take this query
+    my $sth = $db->prepare("select c.id,c.internal_id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where s.raw_id=c.internal_id and s.chr_name=\"$chr_name\" and s.chr_end>=$chr_start and s.chr_start>=$chr_start - $max_contig_length + 1 and s.chr_start<=$chr_end and type=\"$qy_static_type\"");
     
     unless ($sth->execute()) {
       $db->throw("Failed execution of a select query");
@@ -96,6 +107,7 @@ while (defined (my $exonerate_output_file = shift @ARGV)) {
 
 
 
+## Taken from CrossComparer slightly modified
 
 =head2 _greedy_filter
 
