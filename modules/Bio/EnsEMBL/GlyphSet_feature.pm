@@ -202,7 +202,7 @@ sub _init {
             }
         }
     }
-    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+    #warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
 1;
