@@ -75,18 +75,9 @@ use Bio::EnsEMBL::Utils::Exception;
 sub new {
   my ($class, @args) = @_;
 
-  #call superclass constructor; this may actually return a container
-  my $container = $class->SUPER::new(@args);
-
-  my $self;
-  if($container->isa('Bio::EnsEMBL::Container')) {
-    $self = $container->_obj;
-  } else {
-    $self = $container;
-  }
+  my $self = $class->SUPER::new(@args);
 
   my ($conf_file) = rearrange(['CONF_FILE'], @args);
-#  my ($conf_file) = $self->_rearrange(['CONF_FILE'], @args);
 
   if(defined($conf_file) and $conf_file ne "") {
     #read configuration file from disk
