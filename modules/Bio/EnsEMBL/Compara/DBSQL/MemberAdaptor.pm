@@ -602,54 +602,50 @@ sub store {
     . "not a $member");
   }
 
-  my $already_stored_member = $self->fetch_by_source_stable_id($member->source_name,$member->stable_id);
-  if (defined $already_stored_member) {
-    $member->adaptor($already_stored_member->adaptor);
-    $member->dbID($already_stored_member->dbID);
-    if (defined $member->taxon) {
-      $self->db->get_TaxonAdaptor->store_if_needed($member->taxon);
-    }
-    return $member->dbID;
-  }
-
   $member->source_id($self->store_source($member->source_name));
-
-  # first must insert in sequence table to generate new
-  # sequence_id to insert into member table;
-  if(defined($member->sequence)) {
-    my $sth = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
-    $sth->execute($member->sequence,
-                  $member->seq_length);
-
-    $member->sequence_id( $sth->{'mysql_insertid'} );
-    $sth->finish;
-  }
-
   
-  my $sth = $self->prepare("INSERT INTO member (stable_id,version, source_id,
-                              taxon_id, genome_db_id, sequence_id, description,
+  my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_id,
+                              taxon_id, genome_db_id, description,
                               chr_name, chr_start, chr_end, chr_strand)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                            VALUES (?,?,?,?,?,?,?,?,?,?)");
 
-  eval {                            
-    $sth->execute($member->stable_id,
+  my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
                   $member->source_id,
                   $member->taxon_id,
                   $member->genome_db_id,
-                  $member->sequence_id,
                   $member->description,
                   $member->chr_name,
                   $member->chr_start,
                   $member->chr_end,
                   $member->chr_strand);
-  };
-  if($@) {
-    warn("unable to store stable_id=".$member->stable_id."\n");
-    warn("$@");
+  if($insertCount>0) {
+    #sucessful insert
+    $member->dbID( $sth->{'mysql_insertid'} );
+    $sth->finish;
+
+    # insert in sequence table to generate new
+    # sequence_id to insert into member table;
+    if(defined($member->sequence)) {
+      my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+      $sth2->execute($member->sequence, $member->seq_length);
+      $member->sequence_id( $sth2->{'mysql_insertid'} );
+      $sth2->finish;
+
+      my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
+      $sth3->execute($member->sequence_id, $member->dbID);
+      $sth3->finish;
+    }
+  } else {
+    $sth->finish;
+    #UNIQUE(source_id,stable_id) prevented insert since member was already inserted
+    #so get member_id with select
+    my $sth2 = $self->prepare("SELECT member_id FROM member WHERE source_id=? and stable_id=?");
+    $sth2->execute($member->source_id, $member->stable_id);
+    my($id) = $sth2->fetchrow_array();
+    $member->dbID($id);
+    $sth2->finish;
   }
-  $member->dbID( $sth->{'mysql_insertid'} );
-  $sth->finish;
 
   $member->adaptor($self);
   if (defined $member->taxon) {
