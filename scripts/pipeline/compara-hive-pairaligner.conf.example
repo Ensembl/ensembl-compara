@@ -10,6 +10,7 @@
   },
   { TYPE => HIVE,
     'hive_output_dir'      => "/ecs4/work2/ensembl/jessica/data/hive_output/jessica_compara_blastz_HsMm_27i/workers",
+# set to "" if you don't want any STDOUT/STDERR files
   },
 
   { TYPE => SPECIES,
