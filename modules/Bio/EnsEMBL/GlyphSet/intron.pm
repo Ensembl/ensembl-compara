@@ -33,9 +33,6 @@ sub _init {
     my $x = 0;
     my $w = 0;
 
-
-    print STDERR "INTRON VERSION100\n";
-   
     my $colour = $Config->get($Config->script(), 'intron','col');
 
     my @introns = $protein->each_Intron_feature();
@@ -66,14 +63,8 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $id,
-		    $length => ''
-		},
 	    });
 	    $composite->push($rect) if(defined $rect);
-#    push @{$this->{'glyphs'}}, $rect;   
-	    
 	}
 	$this->push($composite);
     }

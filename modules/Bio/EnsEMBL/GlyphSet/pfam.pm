@@ -62,7 +62,7 @@ sub _init {
 
 	
 	
-
+	my $pfsave;
 	foreach my $pf (@row) {
 	    my $x = $pf->feature1->start();
 	    my $w = $pf->feature1->end - $x;
@@ -75,17 +75,25 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $caption,
-		},
 	    });
 	    
 	    
 	    $Composite->push($rect) if(defined $rect);
-	    
+	    $pfsave = $pf;
 	}
 
-#	push @{$this->{'glyphs'}}, $Composite;
+	my $font = "Small";
+	my $text = new Bio::EnsEMBL::Glyph::Text({
+	    'font'   => $font,
+	    'text'   => $pfsave->idesc,
+	    'x'      => $row[0]->feature1->start(),
+	    'y'      => $h,
+	    'height' => $Config->texthelper->height($font),
+	    'colour' => $colour,
+	});
+
+	$this->push($text);
+
 	$this->push($Composite);
 	$y = $y + 8;
     }

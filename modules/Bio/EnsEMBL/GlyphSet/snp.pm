@@ -43,10 +43,10 @@ sub _init {
 
     ## need to sort external features into SNPs or traces and treat them differently
     foreach my $f (@xf){
-	if ($f->isa("Bio::EnsEMBL::ExternalData::Variation")) {
-	    # A SNP
-	    push(@snp, $f);
-	} 
+		if ($f->isa("Bio::EnsEMBL::ExternalData::Variation")) {
+	    	# A SNP
+	    	push(@snp, $f);
+		}
     }
 
     my $rect;
@@ -63,12 +63,29 @@ sub _init {
 			'colour' => $snp_col,
 			'absolutey'  => 1,
             'zmenu'     => { 
-                    'caption' => "$id",
+                    'caption' => "SNP: $id",
                     'SNP properties' => "/perl/snpview?snp=$id",
                     'dbSNP data' => "http://www.ncbi.nlm.nih.gov/SNP/snp_ref.cgi?type=rs&rs=$id",
 			},
 		});
+		
+		foreach ($s->each_DBLink()){
+			next if ($_->database() =~ /JCM/);
+			my $db  = $_->database() . " data";
+			my $pid = $_->primary_id();
+			
+			if ($db =~ /TSC/){
+				$snpglyph->{'zmenu'}->{$db} = "http://snp.cshl.org/db/snp/snp?name=" . $pid;
+			} elsif ($db =~ /CGAP/){
+				$snpglyph->{'zmenu'}->{$db} = "http://lpgws.nci.nih.gov:82/perl/gettrace.pl?type=7&trace=" . $pid;			
+			} elsif ($db =~ /HGBASE/){
+				$snpglyph->{'zmenu'}->{$db} = "http://www.ebi.ac.uk/cgi-bin/mutations/hgbasefetch?" . $pid;			
+			}
+		}	
+	
+		
 		$self->push($snpglyph);
+		
 	}
 
 }

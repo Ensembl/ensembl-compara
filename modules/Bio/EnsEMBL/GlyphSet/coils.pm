@@ -8,6 +8,17 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 
+sub init_label {
+    my ($this) = @_;
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+        'text'      => 'coils',
+        'font'      => 'Small',
+        'absolutey' => 1,
+    });
+    $this->label($label);
+}
+
 sub _init {
     my ($this, $protein, $Config) = @_;
     my %hash;
@@ -19,16 +30,12 @@ sub _init {
 
     my $protein = $this->{'container'};
     my $Config = $this->{'config'}; 
-
-    print STDERR "Coils I\n";
     
 foreach my $feat ($protein->each_Protein_feature()) {
               
     print STDERR $feat->feature2->seqname, "\n";
 
        if ($feat->feature2->seqname eq "coils") {
-
-	   print STDERR "c: HERE1\n";
 	   push(@{$hash{$feat->feature2->seqname}},$feat);
        }
     }
@@ -40,7 +47,7 @@ foreach my $feat ($protein->each_Protein_feature()) {
        
      
 	my $desc = $row[0]->idesc();
-	print STDERR "DESC: $desc\n";
+
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
@@ -54,8 +61,6 @@ foreach my $feat ($protein->each_Protein_feature()) {
 	
 	#$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 
-	
-	
 
 	foreach my $pf (@row) {
 	    my $x = $pf->feature1->start();
@@ -69,9 +74,6 @@ foreach my $feat ($protein->each_Protein_feature()) {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $caption,
-		},
 	    });
 	    
 	    

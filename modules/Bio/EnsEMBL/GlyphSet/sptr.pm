@@ -25,20 +25,24 @@ sub init_label {
 sub _init {
     my ($self) = @_;
 
-    my $VirtualContig = $self->{'container'};
-    my $Config = $self->{'config'};
+    my $VirtualContig 	= $self->{'container'};
+    my $Config 			= $self->{'config'};
 
-    my $strand         = $self->strand();
-    my $h              = 8;
-    my $highlights     = $self->highlights();
-    my @bitmap         = undef;
-    my $pix_per_bp  = $Config->transform->{'scalex'};
-    my $bitmap_length = int($VirtualContig->length * $pix_per_bp);
-    my $feature_colour = $Config->get($Config->script(),'sptr','col');
+    my $strand         	= $self->strand();
+    my $h              	= 8;
+    my $highlights		= $self->highlights();
+    my @bitmap         	= undef;
+    my $pix_per_bp  	= $Config->transform->{'scalex'};
+    my $bitmap_length 	= int($VirtualContig->length * $pix_per_bp);
+    my $feature_colour 	= $Config->get($Config->script(),'sptr','col');
     my %id = ();
     my $small_contig   = 0;
     
-    my $glob_bp = 100;
+	
+    my $glob_bp = 0;
+	if ($self->{'container'}->length() > 1000){
+		$glob_bp = 100;
+	}
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("sptr",80,$glob_bp);  
     @allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
     
@@ -55,12 +59,15 @@ sub _init {
             #@{$id{$i}} =  reverse @{$id{$i}};
         }
         my $j = 1;
-
+		
+		my $did = $i;
+		$did =~ s/(.*)\.\d+$/$1/o;
+		
         my $has_origin = undef;
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 			'zmenu'     => { 
-				'caption' => "$i",
-				'Swissprot homology' => "http://www.ebi.ac.uk/cgi-bin/swissfetch?$i",		
+				'caption' => "$did",
+				'Protein homology' => "http://www.ebi.ac.uk/cgi-bin/swissfetch?$did",		
 			},
         });
         foreach my $f (@{$id{$i}}){

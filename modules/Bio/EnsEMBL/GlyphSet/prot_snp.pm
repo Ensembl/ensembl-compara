@@ -28,15 +28,10 @@ sub _init {
 
     my $xp = 0;
     my $wp = 0;
-
-    print STDERR "PROTSNP VERSION002\n";
-
    
     my $colour = $Config->get($Config->script(), 'prot_snp','col');
 
-    my  @snp_array = $protein->each_snps_feature();
-
-    print STDERR "@snp_array\n";
+    my @snp_array;
 
     if (@snp_array) {
 	my $composite = new Bio::EnsEMBL::Glyph::Composite({
@@ -64,14 +59,12 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $id,
-		    $length => ''
-		},
+		#'zmenu' => {
+		#    'caption' => $id,
+		#    $length => ''
+		#},
 	    });
 	    $composite->push($rect) if(defined $rect);
-#    push @{$this->{'glyphs'}}, $rect;   
-	    
 	}
 	$this->push($composite);
     }

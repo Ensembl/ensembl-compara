@@ -32,12 +32,7 @@ sub _init {
     my $Config = $this->{'config'};
 
     foreach my $feat ($protein->each_Protein_feature()) {
-              
-    print STDERR $feat->feature2->seqname, "\n";
-
        if ($feat->feature2->seqname eq "low_complexity") {
-
-	   print STDERR "c: HERE1\n";
 	   push(@{$hash{$feat->feature2->seqname}},$feat);
        }
     }
@@ -49,7 +44,6 @@ sub _init {
        
      
 	my $desc = $row[0]->idesc();
-	print STDERR "DESC: $desc\n";
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
@@ -59,12 +53,6 @@ sub _init {
 	});
 	   
 	my $colour = $Config->get($Config->script(), 'low_complex','col');
-#To be changed
-	
-	#$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
-
-	
-	
 
 	foreach my $pf (@row) {
 	    my $x = $pf->feature1->start();
@@ -78,9 +66,6 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $caption,
-		},
 	    });
 	    
 	    
@@ -88,7 +73,6 @@ sub _init {
 	    
 	}
 
-#	push @{$this->{'glyphs'}}, $Composite;
 	$this->push($Composite);
 	$y = $y + 8;
     }

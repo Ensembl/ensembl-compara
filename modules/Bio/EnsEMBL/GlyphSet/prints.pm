@@ -34,7 +34,6 @@ sub _init {
     
     foreach my $feat ($protein->each_Protein_feature()) {
 	if ($feat->feature2->seqname =~ /^PR\w+/) {
-	    #print STDERR "FEAT: ".$feat->feature2->seqname, "\n";
 	    push(@{$hash{$feat->feature2->seqname}},$feat);
 	    
 	   
@@ -59,14 +58,8 @@ sub _init {
 	    },
 	    'bordercolour' => $colour,
 	});
-	
 
-#To be changed
-	
-	#colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
-	
-	
-
+	my $prsave;
 	foreach my $pr (@row) {
 	    my $x = $pr->feature1->start();
 	    my $w = $pr->feature1->end() - $x;
@@ -86,10 +79,8 @@ sub _init {
 	    
 	    
 	    $Composite->push($rect) if(defined $rect);
-	    
+	    $prsave = $pr;
 	}
-	
-#	push @{$this->{'glyphs'}}, $Composite;
 
 	#########
 	# add a label
@@ -97,7 +88,7 @@ sub _init {
 	my $font = "Small";
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
-	    'text'   => $key,
+	    'text'   => $prsave->idesc,
 	    'x'      => $row[0]->feature1->start(),
 	    'y'      => $h,
 	    'height' => $Config->texthelper->height($font),

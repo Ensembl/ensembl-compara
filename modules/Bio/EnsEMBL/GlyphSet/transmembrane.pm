@@ -31,13 +31,10 @@ sub _init {
     my $protein = $this->{'container'};
     my $Config = $this->{'config'};  
 
-    print STDERR "VERSION TRANS III\n";
-
     foreach my $feat ($protein->each_Protein_feature()) {
-	print STDERR "TRANS_SEQNAME: ".$feat->feature1->seqname, "\n";
+
 	if ($feat->feature2->seqname eq "transmembrane") {
-	    
-	    print STDERR "TRANS: HERE1\n";
+
 	    push(@{$hash{$feat->feature1->seqname}},$feat);
 	}
     }
@@ -49,7 +46,6 @@ sub _init {
 	
 	
 	my $desc = $row[0]->idesc();
-	print STDERR "DESC: $desc\n";
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
@@ -59,12 +55,6 @@ sub _init {
 	});
 	   
 	my $colour = $Config->get($Config->script(), 'transmembrane','col');
-#To be changed
-	
-	#$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
-
-	
-	
 
 	foreach my $pf (@row) {
 	    my $x = $pf->feature1->start();
@@ -78,9 +68,6 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $caption,
-		},
 	    });
 	    
 	    
@@ -88,7 +75,6 @@ sub _init {
 	    
 	}
 
-#	push @{$this->{'glyphs'}}, $Composite;
 	$this->push($Composite);
 	$y = $y + 8;
     }

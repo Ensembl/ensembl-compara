@@ -79,24 +79,24 @@ sub _init {
             @dblinks = $transcript->each_DBLink();
 
             foreach my $DB_link ( @dblinks ){
-                if( $DB_link->database eq 'HUGO') {
+                if( $DB_link->database() eq 'HUGO') {
                     $hugo = $DB_link;
                     last;
                 }
-                if( $DB_link->database =~ /SWISS/o ) {
+                if( $DB_link->database() =~ /SWISS/o ) {
                     $swisslink = $DB_link;
                 }
-                if( $DB_link->database eq 'SPTREMBL') {
+                if( $DB_link->database() eq 'SPTREMBL') {
                     $sptrembllink = $DB_link;
                 }
             }
 
             if( $hugo ) {
-                $id = $hugo->primary_id;
+                $id = $hugo->display_id();
             } elsif ( $swisslink ) {
-                $id = $swisslink->primary_id;
+                $id = $swisslink->display_id();
             } elsif ( $sptrembllink ) {
-                $id = $sptrembllink->primary_id;
+                $id = $sptrembllink->display_id();
             }  
         };
 
@@ -111,7 +111,7 @@ sub _init {
         
         my $tid = $transcript->id();
         my $pid = $tid;
-		$pid =~ s/ENST/ENSP/io;
+
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 		
 		if ($tid =~ /(.*)\.trans\.(\d+)/o){
@@ -126,7 +126,7 @@ sub _init {
             	'caption'					=> $id,
             	'Transcript information'          => "/perl/geneview?gene=$vgid",
             	'Protein information'          => "/perl/protview?peptide=$pid",
-            	'Peptide sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
+            	'Protein sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
             	'Supporting evidence'       => "/perl/transview?gene=$tid",
             	'cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
 	    	};

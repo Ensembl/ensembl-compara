@@ -8,6 +8,17 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 
+sub init_label {
+    my ($this) = @_;
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'prosite',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $this->label($label);
+}
+
 sub _init {
     my ($this, $protein, $Config) = @_;
     my %hash;
@@ -24,17 +35,12 @@ sub _init {
     
    foreach my $feat ($protein->each_Protein_feature()) {
 	if ($feat->feature2->seqname =~ /^PS\w+/) {
-	    print STDERR "FEAT PROSITE: ".$feat->feature2->seqname, "\n";
 	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	    
-	   
-	    
 	}
     }
     
     foreach my $key (keys %hash) {
 	
-	print STDERR "VERSION12 PROSITE, prints: $key\n";
 
 	my @row = @{$hash{$key}};
        	my $desc = $row[0]->idesc();
@@ -46,20 +52,17 @@ sub _init {
 		    $desc => ''
 		},
 		});
-	
-#To be changed
+
 	my $colour = $Config->get($Config->script(), 'prosite','col');
-	#$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 	
 	my @row = @{$hash{$key}};
 
+	my $prsave;
 	foreach my $pr (@row) {
 	    my $x = $pr->feature1->start();
 	    my $w = $pr->feature1->end - $x;
 	    my $id = $pr->feature1->id();
 	
-	    print STDERR "Y: $y\n";
-    
 	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
 		'x'        => $x,
 		'y'        => $y,
@@ -67,17 +70,26 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $caption,
-		},
 	    });
 	    
 	    
 	    $Composite->push($rect) if(defined $rect);
 
-	    
+	    $prsave = $pr;
 	}
-#	push @{$this->{'glyphs'}}, $Composite;
+
+	my $font = "Small";
+	my $text = new Bio::EnsEMBL::Glyph::Text({
+	    'font'   => $font,
+	    'text'   => $prsave->idesc,
+	    'x'      => $row[0]->feature1->start(),
+	    'y'      => $h,
+	    'height' => $Config->texthelper->height($font),
+	    'colour' => $colour,
+	});
+
+	$this->push($text);
+	
 	$this->push($Composite);
 	$y = $y + 8;
     }

@@ -45,7 +45,7 @@ sub _init {
 	my $rust 			= $cmap->id_by_name('rust');
 	
 	my $im_width = $Config->image_width();
-	my $divs = int($im_width/5);
+	my $divs = int($im_width/10);
 	my $divlen = int($vclen/$divs);
 	
 	#print STDERR "Divs = $divs\n";
