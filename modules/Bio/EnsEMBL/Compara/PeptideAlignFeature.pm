@@ -137,7 +137,7 @@ sub return_as_homology
   #
   my $attribute;
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->member_id($self->query_member->dbID);
+  $attribute->peptide_member_id($self->query_member->dbID);
   $attribute->cigar_start($self->qstart);
   $attribute->cigar_end($self->qend);
   my $qlen = ($self->qend - $self->qstart + 1);
@@ -152,12 +152,12 @@ sub return_as_homology
   $attribute->cigar_line($cigar_line);
   #print("   '$cigar_line'\n");
 
-  $homology->add_Member_Attribute([$self->query_member, $attribute]);
+  $homology->add_Member_Attribute([$self->query_member->gene_member, $attribute]);
 
   # HIT member
   #
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->member_id($self->hit_member->dbID);
+  $attribute->peptide_member_id($self->hit_member->dbID);
   $attribute->cigar_start($self->hstart);
   $attribute->cigar_end($self->hend);
   my $hlen = ($self->hend - $self->hstart + 1);
@@ -173,7 +173,7 @@ sub return_as_homology
   $attribute->cigar_line($cigar_line);
   #print("   '$cigar_line'\n");
 
-  $homology->add_Member_Attribute([$self->hit_member, $attribute]);
+  $homology->add_Member_Attribute([$self->hit_member->gene_member, $attribute]);
 
   return $homology;
 }
