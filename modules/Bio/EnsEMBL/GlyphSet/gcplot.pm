@@ -43,10 +43,12 @@ sub _init {
     my $black 		= $cmap->id_by_name('black');
     my $red 		= $cmap->id_by_name('red');
     my $rust 		= $cmap->id_by_name('rust');
+    my $colour          = $Config->get('gcplot','col');
+    my $line_colour     = $Config->get('gcplot','line');
 	
     my $im_width        = $Config->image_width();
-    my $divs            = int($im_width/10);
-    my $divlen          = int($vclen/$divs);
+    my $divs            = int($im_width/2);
+    my $divlen          = $vclen/$divs;
 	
     #print STDERR "Divs = $divs\n";
     my $seq = $VirtualContig->seq();
@@ -55,18 +57,14 @@ sub _init {
     my $max = 0;
     
     for (my $i=0; $i<$divs; $i++){
-	#print STDERR "Div: $i\n";
-	my $subseq = substr($seq, $i*$divlen, $divlen);
+	my $subseq = substr($seq, int($i*$divlen), int($divlen));
 	#$subseq =~ s/N//igo;
 	my $G = $subseq =~ tr/G/G/;
 	my $C = $subseq =~ tr/C/C/;
 	next if (length($subseq) <= 0); # catch divide by zero....
-	my $percent = int((($G+$C)/length($subseq))*100);
-	#print STDERR "$percent\n";
-	if ($percent > 20){
-	    if ($percent < $min){ $min = $percent;}
-	    if ($percent > $max){ $max = $percent;}
-	}
+        my $percent = ($G+$C)/length($subseq);
+        $percent = $percent < .25 ? .25 : $percent >.75 ? .75 : $percent;
+	my $percent = ($percent -.25) * 40;
 	push (@gc, $percent);
     }
 		
@@ -74,51 +72,33 @@ sub _init {
     #print STDERR "Min   = $min\n";
     #print STDERR "Max   = $max\n";
     #print STDERR "Range = $range\n";
-    my $scale = 20/$range;				# height per pel of this glyphset/range
-    my $median = ($range/2) * $scale; 
+#    my $scale = 20/$range;				# height per pel of this glyphset/range
+#    my $median = ($range/2) * $scale; 
     #print STDERR "Scale = $scale\n";
     #print STDERR "Median = $median\n";
 	
-    if(1){
-	for (my $i=0; $i<$divs; $i++){	
-	    next if ($gc[$i] < 20);
-	    my $pixpos = ($gc[$i] - $min) * $scale;
-	    #print STDERR "Poxpos = $pixpos (from $gc[$i] - $min)\n";
-	    
-	    if ($pixpos <= $median){
-		# below the line
-		#print STDERR "Poxpos = $pixpos (from $gc[$i] - $min)\n";
-		my $tick = new Bio::EnsEMBL::Glyph::Rect({
-		    'x'            => $i * $divlen,
-		    'y'            => $median,
+    my $percent = shift @gc;
+    my $count = 0;
+    while(my $new = shift @gc) {
+	my $tick = new Bio::EnsEMBL::Glyph::Line({
+		    'x'            => $count * $divlen,
+		    'y'            => 20 - $percent,
 		    'width'        => $divlen,
-		    'height'       => $median - $pixpos,
-		    'bordercolour' => $alt_colour,
+		    'height'       => $percent - $new,
+		    'colour'       => $colour,
 		    'absolutey'    => 1,
-		});
-		$self->push($tick);
-
-	    } else { 
-		# above the line
-		my $tick = new Bio::EnsEMBL::Glyph::Rect({
-		    'x'            => $i * $divlen,
-		    'y'            => $median - ($pixpos - $median),
-		    'width'        => $divlen,
-		    'height'       => $pixpos - $median,
-		    'bordercolour' => $feature_colour,
-		    'absolutey'    => 1,
-		});
-		$self->push($tick);
-	    }
-	}
+	});
+	$self->push($tick);
+        $percent = $new;
+	$count++;
     }
 	
     my $line = new Bio::EnsEMBL::Glyph::Line({
 	'x'         => 0,
-	'y'         => $median, # 50% point for line
+	'y'         => 10, # 50% point for line
 	'width'     => $vclen,
 	'height'    => 0,
-	'colour'    => $rust,
+	'colour'    => $line_colour,
 	'absolutey' => 1,
 #	'dotted'    => 1,
     });
