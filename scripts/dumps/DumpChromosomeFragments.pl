@@ -19,6 +19,7 @@ DumpChromosomeFragments.pl -host ecs1b.sanger.ac.uk
             -phusion Hs
             -mask_restriction RepeatMaksingRestriction.conf
             -o output_filename
+	    -coord_system coordinate system (default=chromosome)
 
 $0 [-help]
    -host core_db_host_server
@@ -38,6 +39,7 @@ $0 [-help]
                      depending on the repeat class or name. See RepeatMaksingRestriction.conf.example,
                      and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
    -o output_filename
+   -coord_system coordinate system (default=chromosome)
 
 
 ";
@@ -58,6 +60,7 @@ my $output;
 my $port="";
 my $help = 0;
 my $mask_restriction_file;
+my $coordinate_system="chromosome";
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
@@ -72,6 +75,7 @@ GetOptions('help' => \$help,
 	   'masked=i' => \$masked,
            'mask_restriction=s' => \$mask_restriction_file,
 	   'phusion=s' => \$phusion,
+	   'coord_system=s' => \$coordinate_system,
 	   'o=s' => \$output);
 
 if ($help) {
@@ -96,7 +100,7 @@ if (defined $mask_restriction_file) {
   %not_default_masking_cases = %{do $mask_restriction_file};
 }
 
-my $ChromosomeAdaptor = $db->get_ChromosomeAdaptor;
+#my $ChromosomeAdaptor = $db->get_ChromosomeAdaptor;
 my $SliceAdaptor = $db->get_SliceAdaptor;
 
 my $chromosomes;
@@ -104,10 +108,14 @@ my $chromosomes;
 if (defined $chr_names and $chr_names ne "all") {
   my @chr_names = split /,/, $chr_names;
   foreach my $chr_name (@chr_names) {
-    push @{$chromosomes}, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
+    #push @{$chromosomes}, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
+    #push @{$chromosomes}, $ChromosomeAdaptor->fetch_by_region("chromosome", $chr_name);
+    print STDERR "chr_name=$chr_name\n";
+    push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coordinate_system , $chr_name);
   }
 } else {
-  $chromosomes = $ChromosomeAdaptor->fetch_all;
+  $chromosomes = $SliceAdaptor->fetch_all('toplevel');
+  
 }
  
 if (scalar @{$chromosomes} > 1 && 
@@ -160,12 +168,12 @@ setting chr_end=chr_length\n";
   
   my $slice;
   if ($chr_start && $chr_end) {
-    $slice = $SliceAdaptor->fetch_by_chr_start_end($chr->chr_name,$chr_start,$chr_end);
+    $slice = $SliceAdaptor->fetch_by_region($coordinate_system, $chr->seq_region_name,$chr_start,$chr_end);
   } else {
-    $slice = $SliceAdaptor->fetch_by_chr_name($chr->chr_name);
+    $slice = $SliceAdaptor->fetch_by_region($coordinate_system, $chr->seq_region_name);
   }
   
-  print STDERR "..fetched slice for chromosome ",$slice->chr_name," from position ",$slice->chr_start," to position ",$slice->chr_end,"\n";
+  print STDERR "..fetched slice for $coordinate_system ",$slice->seq_region_name," from position ",$slice->start," to position ",$slice->end,"\n";
 
   printout_by_overlapping_chunks($slice,$overlap,$chunk_size,$fh);
   
@@ -186,7 +194,7 @@ sub printout_by_overlapping_chunks {
     } else {
       $seq = $slice->get_repeatmasked_seq;
     }
-    $seq->id($slice->chr_name);
+    $seq->name($slice->seq_region_name);
     print STDERR "...got masked sequence\n";
 
   } elsif ($masked == 2) {
@@ -197,13 +205,13 @@ sub printout_by_overlapping_chunks {
     } else {
       $seq = $slice->get_repeatmasked_seq(undef,1);
     }
-    $seq->id($slice->chr_name);
+    $seq->name($slice->seq_region_name);
     print STDERR "...got soft masked sequence\n";
 
   } else {
 
     print STDERR "getting unmasked sequence...\n";
-    $seq = Bio::PrimarySeq->new( -id => $slice->chr_name, -seq => $slice->seq);
+    $seq = Bio::PrimarySeq->new( -id => $slice->seq_region_name, -seq => $slice->seq);
     print STDERR "...got unmasked sequence\n";
 
   }
@@ -216,12 +224,12 @@ sub printout_by_overlapping_chunks {
     my $chunk;
     if ($i+$chunk_size-1 > $seq->length) {
       
-      my $chr_start = $i+$slice->chr_start-1;
+      my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = join ".", ($phusion.$seq->id,$chr_start);
+	$id = join ".", ($phusion.$seq->seq_region_name,$chr_start);
       } else {
-	$id = join ".", ($seq->id,$chr_start,$slice->chr_end);
+	$id = join ".", ($seq->seq_region_name,$chr_start,$slice->end);
       }
       $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$seq->length),
 				     -id  => $id,
@@ -230,12 +238,12 @@ sub printout_by_overlapping_chunks {
       
     } else {
 
-      my $chr_start = $i+$slice->chr_start-1;
+      my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = join ".", ($phusion.$seq->id,$chr_start);
+	$id = join ".", ($phusion.$seq->seq_region_name,$chr_start);
       } else {
-	$id = join ".", ($seq->id,$chr_start,$chr_start+$chunk_size-1);
+	$id = join ".", ($seq->seq_region_name,$chr_start,$chr_start+$chunk_size-1);
       }
       $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$i+$chunk_size-1),
 				     -id  => $id,
