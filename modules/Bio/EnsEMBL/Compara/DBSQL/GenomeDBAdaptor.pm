@@ -300,7 +300,11 @@ sub create_GenomeDBs {
 }
 
 
-=head2 check_for_consensus_db
+=head2 check_for_consensus_db [DEPRECATED]
+
+  DEPRECATED : consensus and query sequences are not used anymore.
+               Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock
+               for more details.
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
@@ -320,6 +324,7 @@ sub create_GenomeDBs {
 sub check_for_consensus_db {
   my ( $self, $query_gdb, $con_gdb, $method_link_id) = @_;
 
+  deprecated();
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
@@ -335,7 +340,11 @@ sub check_for_consensus_db {
 }
 
 
-=head2 check_for_query_db
+=head2 check_for_query_db [DEPRECATED]
+
+  DEPRECATED : consensus and query sequences are not used anymore.
+               Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock
+               for more details.
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
@@ -355,6 +364,7 @@ sub check_for_consensus_db {
 sub check_for_query_db {
   my ( $self, $con_gdb, $query_gdb,$method_link_id ) = @_;
 
+  deprecated();
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
@@ -400,11 +410,12 @@ sub get_all_db_links {
 
   foreach my $this_method_link_species_set (@{$method_link_species_sets}) {
     foreach my $this_genome_db (@{$this_method_link_species_set->species_set}) {
-      $gdb_list->{$this_genome_db} = 1;
+      next if ($this_genome_db->dbID eq $ref_gdb->dbID);
+      $gdb_list->{$this_genome_db} = $this_genome_db;
     }
   }
 
-  return keys %$gdb_list;
+  return [values %$gdb_list];
 }
 
 
