@@ -46,7 +46,11 @@ sub _init {
 		'LINE',				# LINE repeats 
 		$self->glob_bp() 	# Globbing factor
 	);
-	
+
+    unless(@$repeats>0 || $Config->get('_settings','opt_empty_tracks')==0 ) {
+        $self->errorTrack("No LINE repeats in this region");
+        return;
+    }
 	foreach my $f ( @$repeats ) {
         my $start = $f->{'start'};
         $start = 1 if $start < 1;

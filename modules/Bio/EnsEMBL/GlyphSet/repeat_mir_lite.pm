@@ -43,7 +43,12 @@ sub _init {
 	my $repeats = $vc->dbobj->get_LiteAdaptor->fetch_virtualRepeatFeatures_start_end(
 		$vc->_chr_name, $vc->_global_start, $vc->_global_end, 'MIR', $self->glob_bp() 
 	);
-	
+
+    unless(@$repeats>0 || $Config->get('_settings','opt_empty_tracks')==0 ) {
+        $self->errorTrack("No MIR repeats in this region");
+        return;
+    }
+    
 	foreach my $f ( @$repeats ) {
         my $start = $f->{'start'};
         $start = 1 if $start < 1;
