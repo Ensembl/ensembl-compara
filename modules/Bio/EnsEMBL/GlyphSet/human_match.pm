@@ -27,4 +27,19 @@ sub zmenu {
 	'Jump to Homo spaiens' => $self->href( $id, $chr_pos )
     };
 }
+
+
+sub unbumped_zmenu {
+    my ($self, $ref, $target ) = @_;
+    return { 
+    	'caption'    => 'Dot-plot', 
+    	'Jump to Homo sapiens' => $self->unbumped_href( $ref, $target )
+    };
+}
+
+sub unbumped_href {
+    my ($self, $ref, $target ) = @_;
+    return "javascript:alert(\\\"$ENV{'ENSEMBL_SPECIES'}:".join('-',@$ref)."\\\",\\\"Homo_sapiens:".join('-',@$target)."\\\")";
+}
+
 1;

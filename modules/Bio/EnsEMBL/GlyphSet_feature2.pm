@@ -78,45 +78,106 @@ sub _init {
     my %id             = ();
     my $small_contig   = 0;
     my $dep            = $Config->get($type, 'dep');
-
-    foreach my $f ( @{$self->features()} ){
-        next if $strand_flag eq 'b' && $strand != $f->hstrand ;
-        next if $f->start > $f->end || $f->end < 1 || $f->start > $length;
-        $id{$f->hseqname()} = [] unless $id{$f->hseqname()};
-        push @{$id{$f->hseqname()}}, $f;
-    }
+    my $chr_name       = $self->{'container'}->chr_name;
+    my $offset         = $self->{'container'}->chr_start - 1;
+    if( $dep > 0 ) {
+        foreach my $f ( @{$self->features()} ){
+            next if $strand_flag eq 'b' && $strand != $f->hstrand ;
+            next if $f->start > $f->end || $f->end < 1 || $f->start > $length;
+            $id{$f->hseqname()} = [] unless $id{$f->hseqname()};
+            push @{$id{$f->hseqname()}}, $f;
+        }
 
 ## No features show "empty track line" if option set....
-$self->errorTrack( "No ".$self->my_label." in this region" )
-        unless( $Config->get('_settings','opt_empty_tracks')==0 || %id );
+        $self->errorTrack( "No ".$self->my_label." in this region" )
+            unless( $Config->get('_settings','opt_empty_tracks')==0 || %id );
 
 ## Now go through each feature in turn, drawing them
-    my @glyphs;
-    foreach my $i (keys %id){
-        my $has_origin = undef;
-
-        my $start;
-        my $end;
-
-        my $Composite = new Sanger::Graphics::Glyph::Composite({});
+        my @glyphs;
+        foreach my $i (keys %id){
+            my $has_origin = undef;
+    
+            my $start;
+            my $end;
+    
+            my $Composite = new Sanger::Graphics::Glyph::Composite({});
+            
+            foreach my $f (@{$id{$i}}){
+                my $START = $f->start();
+                my $END   = $f->end();
+                ($START,$END) = ($END, $START) if $END<$START;
+                $START = 1 if $START < 1;
+                $END   = $length if $END > $length;
+                unless (defined $has_origin){
+                    $Composite->x($f->start());
+                    $Composite->y(0);
+        	        $start = $f->hstart();
+        	        $end   = $f->hend();
+                    $has_origin = 1;
+                } else {
+    	            $start = $f->hstart() if $f->hstart < $start;
+    	            $end   = $f->hend()   if $f->hend   > $end;
+                }
+       #     print STDERR "F: ",$f->id," - ",$f->start()," - ",$f->end(),"\n";
+                my $glyph = new Sanger::Graphics::Glyph::Rect({
+                    'x'          => $START,
+                    'y'          => 0,
+                    'width'      => $END-$START+1,
+                    'height'     => $h,
+                    'colour'     => $feature_colour,
+                    'absolutey'  => 1,
+                    '_feature'   => $f, 
+                });
+                $Composite->push($glyph);
+            }
         
-        foreach my $f (@{$id{$i}}){
+            my $ZZ;
+            if($end-$start<$WIDTH) {
+        	    my $X =int(( $start + $end - $WIDTH) /2);
+        	    my $Y = $X + $WIDTH ;
+                $ZZ = "chr=$i&vc_start=$X&vc_end=$Y";
+        	} else {
+                $ZZ = "chr=$i&vc_start=$start&vc_end=$end";
+            }
+        	$Composite->zmenu( $self->zmenu( "Chr$i $start-$end", $ZZ ) );
+        	$Composite->href(  $self->href( $i, $ZZ ) );
+    
+            my $bump_start = int($Composite->x() * $pix_per_bp);
+            $bump_start--;
+            $bump_start    = 0 if $bump_start < 0;
+                
+            my $bump_end = $bump_start + ($Composite->width() * $pix_per_bp);
+            $bump_end    = $bitmap_length if $bump_end > $bitmap_length;
+            my $row = & Sanger::Graphics::Bump::bump_row(
+                $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
+            );
+    
+            next if $row > $dep;
+            $Composite->y( $Composite->y() - 1.5 * $row * $h * $strand );
+            
+                # if we are bumped && on a large contig then draw frames around features....
+            $Composite->bordercolour($feature_colour) unless ($small_contig);
+            $self->push( $Composite );
+            if(exists $highlights{$i}) {
+                my $glyph = new Sanger::Graphics::Glyph::Rect({
+                    'x'         => $Composite->x() - 1/$pix_per_bp,
+                    'y'         => $Composite->y() - 1,
+                    'width'     => $Composite->width() + 2/$pix_per_bp,
+                    'height'    => $h + 2,
+                    'colour'    => $hi_colour,
+                    'absolutey' => 1,
+                });
+                $self->unshift( $glyph );
+            }
+        }
+    } else { ## Unbumped....!
+        foreach my $f ( @{$self->features()} ){    
             my $START = $f->start();
             my $END   = $f->end();
             ($START,$END) = ($END, $START) if $END<$START;
             $START = 1 if $START < 1;
             $END   = $length if $END > $length;
-            unless (defined $has_origin){
-                $Composite->x($f->start());
-                $Composite->y(0);
-	        $start = $f->hstart();
-	        $end   = $f->hend();
-                $has_origin = 1;
-            } else {
-	        $start = $f->hstart() if $f->hstart < $start;
-	        $end   = $f->hend()   if $f->hend   > $end;
-            }
-       #     print STDERR "F: ",$f->id," - ",$f->start()," - ",$f->end(),"\n";
+            my @X = ( [ $chr_name, $offset+ int(($f->start()+$f->end())/2) ], [ $f->hseqname(), int(($f->hstart() + $f->hend())/2) ] );
             my $glyph = new Sanger::Graphics::Glyph::Rect({
                 'x'          => $START,
                 'y'          => 0,
@@ -125,49 +186,10 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
                 'colour'     => $feature_colour,
                 'absolutey'  => 1,
                 '_feature'   => $f, 
+                'href'       => $self->unbumped_href( @X ),
+                'zmenu'      => $self->unbumped_zmenu( @X )
             });
-            $Composite->push($glyph);
-        }
-    
-        my $ZZ;
-        if($end-$start<$WIDTH) {
-	    my $X =int(( $start + $end - $WIDTH) /2);
-	    my $Y = $X + $WIDTH ;
-            $ZZ = "chr=$i&vc_start=$X&vc_end=$Y";
-	} else {
-            $ZZ = "chr=$i&vc_start=$start&vc_end=$end";
-        }
-	$Composite->zmenu( $self->zmenu( "Chr$i $start-$end", $ZZ ) );
-	$Composite->href(  $self->href( $i, $ZZ ) );
-
-        if ($dep > 0){ # we bump
-            my $bump_start = int($Composite->x() * $pix_per_bp);
-            $bump_start--;
-            $bump_start    = 0 if $bump_start < 0;
-            
-            my $bump_end = $bump_start + ($Composite->width() * $pix_per_bp);
-            $bump_end    = $bitmap_length if $bump_end > $bitmap_length;
-            my $row = & Sanger::Graphics::Bump::bump_row(
-                $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
-            );
-
-            next if $row > $dep;
-            $Composite->y( $Composite->y() - 1.5 * $row * $h * $strand );
-        
-            # if we are bumped && on a large contig then draw frames around features....
-            $Composite->bordercolour($feature_colour) unless ($small_contig);
-        }
-        $self->push( $Composite );
-        if(exists $highlights{$i}) {
-            my $glyph = new Sanger::Graphics::Glyph::Rect({
-                'x'         => $Composite->x() - 1/$pix_per_bp,
-                'y'         => $Composite->y() - 1,
-                'width'     => $Composite->width() + 2/$pix_per_bp,
-                'height'    => $h + 2,
-                'colour'    => $hi_colour,
-                'absolutey' => 1,
-            });
-            $self->unshift( $glyph );
+            $self->push($glyph);
         }
     }
 }

@@ -27,4 +27,22 @@ sub zmenu {
 		'Jump to Mus musculus' => $self->href( $id, $chr_pos )
     };
 }
+
+
+sub unbumped_zmenu {
+    my ($self, $ref, $target ) = @_;
+    return { 
+    	'caption'    => 'Dot-plot', 
+    	'Jump to Mus musculus' => $self->unbumped_href( $ref, $target )
+    };
+}
+
+sub unbumped_href {
+    my ($self, $ref, $target ) = @_;
+    return "/$ENV{'ENSEMBL_SPECIES'}/dotterview?ref=".join(':',$ENV{'ENSEMBL_SPECIES'},@$ref).
+                        "&hom=".join(':','Mus_musculus', @$target ) ;
+}
+
+
 1;
+
