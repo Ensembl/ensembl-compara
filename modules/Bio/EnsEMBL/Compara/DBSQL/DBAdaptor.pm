@@ -187,7 +187,7 @@ sub add_db_adaptor {
   Example    : $hs_db = $db->get_db_adaptor('Homo sapiens','NCBI_30');
   Description: Obtains a DBAdaptor for the requested genome if it has been
                specified in the configuration file passed into this objects
-               constructor, or subsequently added using the add_genome
+               constructor, or subsequently added using the add_db_adaptor
                method.  If the DBAdaptor is not available (i.e. has not
                been specified by one of the abbove methods) undef is returned.
   Returntype : Bio::EnsEMBL::DBSQL::DBConnection
