@@ -7,15 +7,57 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor - DESCRIPTION of Object
+Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
 
 =head1 SYNOPSIS
 
-Give standard usage here
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor; 
+  my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
+      -host => $host,
+      -user => $dbuser,
+      -pass => $dbpass,
+      -port => $port,
+      -dbname => $dbname,
+      -conf_file => $conf_file);
+
+  my $genomic_align_block_adaptor = $db->get_GenomicAlignBlockAdaptor();
+
+  $genomic_align_block_adaptor->store($genomic_align_block);
+
+  $genomic_align_block_adaptor->delete($genomic_align_block->dbID);
+
+  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all();
+
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID(12);
+
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_id(2);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_type("BLASTZ_NET");
+
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_GenomeDB($human_genome_db);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_genome_db_id($human_genome_db->dbID);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_genome_db_id(1);
+
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_id_GenomeDB(
+      1, $human_genome_db);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_id_genome_db_id(
+      1, 1);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_type_GenomeDB(
+      "BLASTZ_NET", $human_genome_db);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_type_genome_db_id(
+      "BLASTZ_NET", 1);
+
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_id_GenomeDBs(
+      1, [$human_genome_db, $rat_genome_db]);
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_id_genome_db_ids(
+      1, [1, 3]);
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_type_GenomeDBs(
+      "BLASTZ_NET", [$human_genome_db, $rat_genome_db]);
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_type_genome_db_ids(
+      "BLASTZ_NET", [1, 3]);
 
 =head1 DESCRIPTION
 
-Describe the object here
+This object is intended for accessiong data in the genomic_align_block table.
 
 =head1 AUTHOR
 
