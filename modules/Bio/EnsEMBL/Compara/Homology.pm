@@ -143,6 +143,77 @@ sub get_SimpleAlign {
   return $sa;
 }
 
+
+=head2 n
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub n {
+  my $self = shift;
+  $self->{'_n'} = shift if(@_);
+  return $self->{'_n'};
+}
+
+
+=head2 s
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub s {
+  my $self = shift;
+  $self->{'_s'} = shift if(@_);
+  return $self->{'_s'};
+}
+
+
+=head2 lnl
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub lnl {
+  my $self = shift;
+  $self->{'_lnl'} = shift if(@_);
+  return $self->{'_lnl'};
+}
+
+=head2 threshold_on_ds
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub threshold_on_ds {
+  my $self = shift;
+  $self->{'_threshold_on_ds'} = shift if(@_);
+  return $self->{'_threshold_on_ds'};
+}
+
 =head2 dn
 
   Arg [1]    : floating $dn 
@@ -190,19 +261,14 @@ sub ds {
   
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
   
-  if (defined $apply_threshold_on_ds && $apply_threshold_on_ds == 0) {
+  if ($apply_threshold_on_ds == 0) {
     warn "Threshold on ds values is switched off. Be aware that you may obtain saturated ds values that are not to be trusted, neither the dn/ds ratio\n";
   }
   
   $self->{'_ds'} = shift if(@_);
 
-# Threshold on ds is hardcoded here. That's really bad. I'll make for the next release
-# i.e. february 2004 that the threshold is taken from the compara database
-  if ($apply_threshold_on_ds && defined $self->{'_ds'}) {
-    if (($self->stable_id =~ /^9606_10090_\d+$/ && $self->{'_ds'} > 1.26775) ||
-        ($self->stable_id =~ /^9606_10116_\d+$/ && $self->{'_ds'} > 1.27342) ||
-        ($self->stable_id =~ /^10090_10116_\d+$/ && $self->{'_ds'} > 0.41278) ||
-        ($self->stable_id =~ /^6239_6238_\d+$/ && $self->{'_ds'} > 4.53168)) {
+  if ($apply_threshold_on_ds && defined $self->{'_ds'} && defined $self->{'_threshold_on_ds'}) {
+    if ($self->{'_ds'} > $self->{'_threshold_on_ds'}) {
       return undef;
     }
   }
