@@ -67,7 +67,7 @@ sub init_from_feature {
 }
 
 
-sub return_as_homology
+sub create_homology
 {
   my $self = shift;
 
@@ -91,6 +91,7 @@ sub return_as_homology
   $attribute->perc_cov(int($qlen*100/$self->query_member->seq_length));
   $attribute->perc_id(int($self->identical_matches*100.0/$qlen));
   $attribute->perc_pos(int($self->positive_matches*100/$qlen));
+  $attribute->peptide_align_feature_id($self->dbID);
 
   my $cigar_line = $self->cigar_line;
   #print("original cigar_line '$cigar_line'\n");
@@ -111,6 +112,7 @@ sub return_as_homology
   $attribute->perc_cov(int($hlen*100/$self->hit_member->seq_length));
   $attribute->perc_id(int($self->identical_matches*100.0/$hlen));
   $attribute->perc_pos(int($self->positive_matches*100/$hlen));
+  $attribute->peptide_align_feature_id($self->rhit_dbID);
 
   $cigar_line = $self->cigar_line;
   #print("original cigar_line\n    '$cigar_line'\n");
