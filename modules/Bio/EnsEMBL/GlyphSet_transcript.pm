@@ -99,7 +99,9 @@ sub _init {
     my $length  = $container->length;
     my $transcript_drawn = 0;
     
-    foreach my $gene (@{$self->features()}) {
+    
+    foreach my $gene ( @{$self->features()} ) {
+	
       # For alternate splicing diagram only draw transcripts in gene
         next if $target_gene && ($gene->stable_id() ne $target_gene);
 
@@ -116,7 +118,7 @@ sub _init {
             $transcript_drawn=1;        
             my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
         
-            $Composite->{'href'} = $self->href( $gene, $transcript );
+            $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
 	
 	    $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
 	
