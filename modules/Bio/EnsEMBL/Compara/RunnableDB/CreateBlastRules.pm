@@ -65,28 +65,6 @@ use vars qw(@ISA);
 
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
-=head2 batch_size
-  Title   :   batch_size
-  Usage   :   $value = $self->batch_size;
-  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
-               before querying the database for the next job batch.  Used by the
-               Hive system to manage the number of workers needed to complete a
-               particular job type.
-  Returntype : integer scalar
-=cut
-sub batch_size { return 1; }
-
-=head2 carrying_capacity
-  Title   :   carrying_capacity
-  Usage   :   $value = $self->carrying_capacity;
-  Description: Defines the total number of Workers of this RunnableDB for a particular
-               analysis_id that can be created in the hive.  Used by Queen to manage
-               creation of Workers.
-  Returntype : integer scalar
-=cut
-sub carrying_capacity { return 20; }
-
-
 sub fetch_input {
   my $self = shift;
 
@@ -101,6 +79,8 @@ sub fetch_input {
     if($paramHash) {
       $self->{'phylumBlast'}=1 if($paramHash->{'phylumBlast'}==1);
       $self->{'selfBlast'}=0 if($paramHash->{'selfBlast'}==0);
+      $self->{'no_homology_genome_db_ids'} = $paramHash->{'no_homology_genome_db_ids'}
+        if($paramHash->{'no_homology_genome_db_ids'});
     }
   }
   
@@ -127,8 +107,6 @@ sub write_output
 {
   my $self = shift;
 
-  $self->configureHomologyAnalysis();
-  
   my $input_hash = eval($self->input_id);
   if($input_hash and $input_hash->{'peps'} and $input_hash->{'blast'}) {
     my $conditionLogicName = $input_hash->{'peps'};
@@ -136,12 +114,11 @@ sub write_output
     print("create rule $conditionLogicName => $goalLogicName\n");
     my $conditionAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($conditionLogicName);
     my $goalAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($goalLogicName);
-    $self->addHomologyPair($conditionAnalysis, $goalAnalysis);
+    $self->linkSubmitBlastPair($conditionAnalysis, $goalAnalysis);
   }
   else {
-    $self->createBlastRules();
+    $self->createAllBlastRules();
   } 
-  $self->createBuildHomologyInput();
   return 1;
 }
 
@@ -155,259 +132,49 @@ sub write_output
 ##################################
 
 
-# scan the analysis table for valid SubmitPep_<> analyses that
-# can get made conditions of any blast_<> analyses
-sub createBlastRules
+sub createAllBlastRules
 {
   my $self = shift;
 
-  my $genomeList   = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all();
   my $analysisList = $self->db->get_AnalysisAdaptor->fetch_all();
 
-  foreach my $genomeDB1 (@{$genomeList}) {
-    my $blastLogicName = "blast_" . $genomeDB1->dbID. "_". $genomeDB1->assembly;
-    my $blastAnalysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($blastLogicName);
+  my @submitList;
+  my @blastList;
+  foreach my $submitAnalysis (@{$analysisList}) {
+    next unless($submitAnalysis->logic_name =~ /SubmitPep_(.*)/);
+    my $blast_name = "blast_".$1;
+    push @submitList, $submitAnalysis;
+    $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($submitAnalysis, $self->{'buildHomology'});
+  
+    my $blastAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($blast_name);
     if($blastAnalysis) {
-      $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blastAnalysis, $self->{'submitHomology'});
-
-      my $blastPhylum = $self->phylumForGenomeDBID($genomeDB1->dbID);
-      #print("\nANALYSIS ".$blastAnalysis->logic_name()." is a ".$blastPhylum."\n");
-      foreach my $analysis (@{$analysisList}) {
-        next unless($analysis->logic_name =~ /SubmitPep_/);
-        $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($analysis, $self->{'submitHomology'});
-
-        my $genome_db_id = eval($analysis->parameters)->{'genome_db_id'};
-        next unless($genome_db_id);
-        next if(!$self->{'selfBlast'} and
-                ($genome_db_id == $genomeDB1->dbID));
-
-        my $submitPhylum = $self->phylumForGenomeDBID($genome_db_id);
-        next if($self->{'phylumBlast'} and ($blastPhylum ne $submitPhylum));
-          
-        $self->addHomologyPair($analysis, $blastAnalysis);
-      }
+      push @blastList, $blastAnalysis;
+      $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blastAnalysis, $self->{'buildHomology'});
+    }
+  }
+  
+  foreach my $submitAnalysis (@submitList) {
+    foreach my $blastAnalysis (@blastList) {
+      $self->linkSubmitBlastPair($submitAnalysis, $blastAnalysis);
     }
   }
 }
 
 
-sub phylumForGenomeDBID
-{
-  my $self = shift;
-  my $genome_db_id = shift;
-  my $phylum;
-
-  unless($genome_db_id) { return undef; }
-
-  my $sql = "SELECT phylum FROM genome_db_extn " .
-            "WHERE genome_db_id=$genome_db_id;";
-  my $sth = $self->db->prepare( $sql );
-  $sth->execute();
-  $sth->bind_columns( undef, \$phylum );
-  $sth->fetch();
-  $sth->finish();
-
-  return $phylum;
-}
-
-
-sub addHomologyPair
+sub linkSubmitBlastPair
 {
   my $self = shift;
   my $conditionAnalysis = shift;
   my $goalAnalysis = shift;
 
-  if($self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor')) {
-    $self->db->get_DataflowRuleAdaptor->create_rule($conditionAnalysis, $goalAnalysis);
+  printf("link %s => %s\n", $conditionAnalysis->logic_name, $goalAnalysis->logic_name);
+
+  if($self->db->get_DataflowRuleAdaptor->create_rule($conditionAnalysis, $goalAnalysis)) {
     printf("reset_all_jobs_for_analysis %s\n", $conditionAnalysis->logic_name);
     $self->db->get_AnalysisJobAdaptor->reset_all_jobs_for_analysis_id($conditionAnalysis->dbID);
-  } else {
-    $self->addRule($conditionAnalysis, $goalAnalysis);
   }
-
-  #$self->addBuildHomologyInput($conditionAnalysis, $goalAnalysis);
 
 }
 
-
-sub addRule
-{
-  my $self = shift;
-  my $conditionAnalysis = shift;
-  my $goalAnalysis = shift;
-  my $rule;
-
-  print("PIPELINE RULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
-
-  $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalanalysis' => $goalAnalysis);
-  $rule->add_condition($conditionAnalysis->logic_name());
-
-  if($self->checkRuleExists($rule)) {
-    print("  EXISTS!\n");
-  } else {
-    $self->db->get_RuleAdaptor->store($rule);
-  }
-}
-
-
-sub configureHomologyAnalysis
-{
-  my $self = shift;
-
-  return if($self->{'submitHomology'});
-  
-  my $isHive = $self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
-
-  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
-  $self->{'submitHomology'} = $self->db->get_AnalysisAdaptor()->
-                              fetch_by_logic_name('SubmitHomologyPair');
-  return if($self->{'submitHomology'});
-  
-
-  my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'SubmitHomologyPair',
-      -input_id_type   => 'homology',
-      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-    );
-  $self->db->get_AnalysisAdaptor()->store($submitHomology);
-  $self->{'submitHomology'} = $submitHomology;
-  if($isHive) {
-    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($submitHomology->dbID);
-    $stats->batch_size(7000);
-    $stats->hive_capacity(1);
-    $stats->status('BLOCKED');
-    $stats->update();
-  }
-
-
-  my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'BuildHomology',
-      -input_id_type   => 'homology',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
-    );
-  $self->db->get_AnalysisAdaptor->store($buildHomology);
-  $self->{'buildHomology'} = $buildHomology;
-  if($isHive) {
-    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($buildHomology->dbID);
-    $stats->batch_size(1);
-    $stats->hive_capacity(3);
-    $stats->update();
-  }
-
-  if($isHive) {
-    $self->db->get_DataflowRuleAdaptor->create_rule($submitHomology,$buildHomology);
-  } else {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$buildHomology);
-    $rule->add_condition($submitHomology->logic_name());
-    $self->db->get_RuleAdaptor->store($rule);
-  }
-}
-
-
-sub addBuildHomologyInput
-{
-  my $self = shift;
-  my $analysis1 = shift;
-  my $analysis2 = shift;
-  my $noRHS = shift;
-
-  return unless($analysis1 and $analysis2);
-  return unless($analysis1->parameters and $analysis2->parameters);
-  return unless($analysis1->logic_name =~ /blast_/);
-  return unless($analysis2->logic_name =~ /blast_/);
-
-  my $genome_db_id1 = eval($analysis1->parameters)->{'genome_db_id'};
-  my $genome_db_id2 = eval($analysis2->parameters)->{'genome_db_id'};
-  return unless ($genome_db_id1 and $genome_db_id2);
-
-  return unless($self->{'submitHomology'});
-  
-  my $phylum1 = $self->phylumForGenomeDBID($genome_db_id1);
-  my $phylum2 = $self->phylumForGenomeDBID($genome_db_id2);
-  $noRHS='noRHS' if(!defined($noRHS) and $phylum1 ne $phylum2);
-
-  my $input_id;
-
-  my $isHive = $self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
-  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
-
-
-  if($genome_db_id1 < $genome_db_id2) {
-    $input_id = "{blasts=>['".$analysis1->logic_name . "','". $analysis2->logic_name . "']";
-  } else {
-    $input_id = "{blasts=>['".$analysis2->logic_name . "','". $analysis1->logic_name . "']";
-  }
-  if($noRHS and ($noRHS eq 'noRHS')) { $input_id .= ",noRHS=>1"; }
-  $input_id .= "}";
-  print("HOMOLOGY '$input_id'\n");
-
-  if($isHive) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => $input_id,
-        -analysis       => $self->{'submitHomology'},
-        -input_job_id   => 0,
-        );
-  } else {
-    $self->db->get_StateInfoContainer->store_input_id_analysis(
-        $input_id,
-        $self->{'submitHomology'},
-        'gaia', #execution_host
-        0 #save runtime NO (ie do insert)
-        );
-  }
-}
-
-sub createBuildHomologyInput
-{
-  my $self = shift;
-  my ($analysis1, $analysis2);
-
-  my @analysisList = @{$self->db->get_AnalysisAdaptor->fetch_all()};
-
-  while(@analysisList) {
-    $analysis1 = shift @analysisList;
-    foreach $analysis2 (@analysisList) {
-      $self->addBuildHomologyInput($analysis1, $analysis2);
-    }
-  }
-}
-
-
-
-sub checkRuleExists
-{
-  my $self = shift;
-  my $queryRule = shift;
-
-  my @allRules = $self->db->get_RuleAdaptor->fetch_all();
-  foreach my $rule (@allRules) {
-    #print("  check goal ".$rule->goalAnalysis->logic_name."\n");
-    if($rule->goalAnalysis()->dbID eq $queryRule->goalAnalysis->dbID) {
-      #print("  found goal match\n");
-      my $allMatched=1;
-      for my $literal (@{$rule->list_conditions}) {
-        #print("    condition $literal ");
-        my $matched = undef;
-        for my $qliteral ( @{$queryRule->list_conditions} ) {
-          if($qliteral eq $literal) {
-            $matched=1;
-            #print("matched!");
-          } 
-        }
-        #print("\n");
-        $allMatched=undef unless($matched);
-      }
-      if($allMatched) {
-        # made it through all condtions and goal matched so this rule matches
-        # print("  rule matched\n");
-        return $rule;
-      }
-    }
-  }
-
-  return undef;
-}
 
 1;
