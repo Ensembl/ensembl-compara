@@ -79,26 +79,30 @@ sub render_Line {
 }
 
 sub _getHref {
-    my ($self, $glyph) = @_;
-	my $onmouseover = $glyph->onmouseover();
-       $onmouseover = (defined $onmouseover) ? qq( onmouseover="$onmouseover") : "";
-    my $onmouseout = $glyph->onmouseout();
-       $onmouseout = (defined $onmouseout) ? qq( onmouseout="$onmouseout") : "";
-    my $href = $glyph->href();
-       $href = qq( href="$href") if(defined $href);
-    my $alt = $glyph->id();
-       $alt = (defined $alt) ? qq( alt="$alt")  : "";
+  my ($self, $glyph) = @_;
 
-    ######### zmenus will override existing href, alt, onmouseover & onmouseout attributes
-    if($self->{'show_zmenus'}==1) {
-        my $zmenu = $glyph->zmenu();
-        if(defined $zmenu && keys(%$zmenu)>0 ) {
-    		$href        = qq( href="javascript:void(0);") unless( defined $href );
-    		$alt         = qq();
-    		$onmouseover = qq( onmouseover=") . &Sanger::Graphics::JSTools::js_menu($zmenu) . qq(");
-        }
+  my %actions = {}; 
+  my @X = qw( onmouseover onmouseout alt href );
+  foreach(@X) {
+    my $X = $glyph->$_;
+    $actions{$_} = $X if defined $X;
+  }
+  if($self->{'show_zmenus'}==1) {
+    my $zmenu = $glyph->zmenu();
+    if(defined $zmenu && keys(%$zmenu)>0 ) {
+      if($self->{'config'}->get('_settings','opt_zclick')) {
+        $actions{'ondoubleclick'} = $actions{'href'}        if exists $actions{'href'};
+        $actions{'onclick'}       = &Sanger::Graphics::JSTools::js_menu($zmenu).";return false;";
+        delete $actions{'onmouseover'};
+        delete $actions{'onmouseout'};
+        $actions{'alt'} = "Click for Menu";
+      } else {
+        delete $actions{'alt'};
+        $actions{'onmouseover'} = &Sanger::Graphics::JSTools::js_menu($zmenu);
+      }
+      $actions{'href'} ||= qq"javascript:void(0)";
     }
-	return "$href$onmouseover$onmouseout$alt" if(defined $href);
-	return undef;
+  }
+  return join ' ', map { qq($_="$actions{$_}") } keys %actions;
 }
 1;

@@ -88,7 +88,6 @@ sub _init {
 ## Decide whether we are going to include navigation (independent of switch) 
     $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1010);
     
-    my $h            = $Config->get( $type, 'height' ) || 9;
 ## Get highlights...
     my %highlights;
     @highlights{$self->highlights()} = ();
@@ -104,7 +103,10 @@ sub _init {
     $self->{'part_to_colour'} = '';
     my $hi_colour         = $Config->get($type, 'hi')  || $self->{'colours'} && $self->{'colours'}{'hi'};
     my $dep               = $Config->get($type, 'dep');
-
+    my $h    = $Config->get($type,'height') || 9;
+    if( $dep>0 && $Config->get( '_settings', 'squishable_features' ) eq 'yes' && $self->can('squish') )  {
+      $h = 4;
+    }
     my $flag           = 1;
     my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
     

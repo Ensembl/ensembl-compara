@@ -6,6 +6,7 @@ use Bio::EnsEMBL::GlyphSet_simple;
 
 sub my_label { return "tRNAs"; }
 
+sub squish { 1; }
 sub features {
   my ($self) = @_;
   return 

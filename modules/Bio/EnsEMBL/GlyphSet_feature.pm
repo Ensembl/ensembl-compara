@@ -75,7 +75,6 @@ sub _init {
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
 
-    my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
 
@@ -94,6 +93,7 @@ sub _init {
     unless(ref($features)eq'ARRAY') {
         return;
     }
+    my $h              = ($Config->get('_settings','opt_halfheight') && $dep>0) ? 4 : 8;
 
     my ($T,$C1,$C) = (0, 0, 0 );
     if( $dep > 0 ) {

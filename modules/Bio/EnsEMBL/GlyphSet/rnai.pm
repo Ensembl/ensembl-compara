@@ -4,13 +4,15 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
+sub squish {1;}
 sub my_label { return "RNAi"; }
 
 sub my_helplink { return "markers"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimpleFeatures('RNAi', 25);
+    return $self->{'container'}->get_all_SimpleFeatures('RNAi' );
+
 }
 
 sub zmenu {

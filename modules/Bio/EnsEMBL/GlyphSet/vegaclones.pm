@@ -56,7 +56,7 @@ sub features {
       warn("Vega Clones DASAdaptor creation error\n$@\n") 
     } 
        
-	my $dbh 	    = $adaptor->_db_handle();
+    my $dbh 	    = $adaptor->_db_handle();
     my $response    = undef;
     $types          = []; # just for now....
     

@@ -110,11 +110,12 @@ sub _init {
                 "01:Score: $hit->[2]; identity: $hit->[3]%" => '',
                 "02:Hit: $hit->[5]" => '',
                 "03:Hit probability: $hit->[7]" => '',
-                "04:Query start/end: $hit->[8]/$hit->[9]" => '',
-                "05:bp: $hit->[0]/$hit->[1]" => '',
-                '06:Show blast alignment' =>
+                "04:Query start/end: $hit->[8]-$hit->[9]" => '',
+                "05:bp: $hit->[0]-$hit->[1]" => '',
+                "06:length: ".($hit->[1]-$hit->[0]+1) => '',
+                '16:Show blast alignment' =>
 				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=hit_format&id=$hit->[4]&hit=$hit->[5]",
-                '07:Show on karyotype' =>
+                '17:Show on karyotype' =>
 				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=karyo_format&id=$hit->[4]"
             },
     	});

@@ -277,7 +277,7 @@ sub render {
     eval "require $renderer_type";
 
     if($@) {
-        print STDERR qq(DrawableContainer::new failed to require $renderer_type\n);
+        print STDERR qq(DrawableContainer::new failed to require $renderer_type - $@\n);
         return;
     }
     $renderer_type->import();

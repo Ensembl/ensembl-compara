@@ -85,7 +85,7 @@ sub render_Rect {
     $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
     $canvas->rectangle($x1, $y1, $x2, $y2, $bordercolour) if(defined $gbordercolour);
 	
-	#print STDERR qq(gif $glyph: $x1, $y1, $x2, $y2\n) if(ref($glyph) eq "Sanger::Graphics::Glyph::Composite");
+   #  print STDERR qq(gif $glyph: $x1, $y1, $x2, $y2\n);
 
 }
 

@@ -87,6 +87,19 @@ sub draw_cigar_feature {
 
   my @delete;
 
+  my $cigar;
+  eval { $cigar = $f->cigar_string; };
+  if($@ || !$cigar) {
+    my($s,$e) = ($f->start,$f->end);
+    $s = 1 if $s<1;
+    $e = $length if $e>$length; 
+    $Composite->push(new Sanger::Graphics::Glyph::Rect({
+      'x'          => $s-1,            'y'          => 0,
+      'width'      => $e-$s+1,         'height'     => $h,
+      'colour'     => $feature_colour, 'absolutey'  => 1,
+    }));
+    return;
+  }
 ## Parse the cigar string, splitting up into an array
 ## like ('10M','2I','30M','I','M','20M','2D','2020M');
 ## original string - "10M2I30MIM20M2D2020M"

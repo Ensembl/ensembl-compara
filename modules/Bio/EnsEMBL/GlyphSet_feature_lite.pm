@@ -67,7 +67,6 @@ sub _init {
     return if( $strand_flag eq 'r' && $strand != -1 ||
                $strand_flag eq 'f' && $strand != 1 );
 
-    my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
     my $LEN = $VirtualContig->length;
@@ -79,6 +78,9 @@ sub _init {
     my %id             = ();
     my $small_contig   = 0;
     my $dep            = $Config->get($type, 'dep');
+    my $h              = ($Config->get('_settings','opt_halfheight')==1 && $dep>0) ? 4 : 8;
+
+
 
     foreach my $f ( $self->features ){
         next if( $strand_flag eq 'b' && $strand != $f->strand );

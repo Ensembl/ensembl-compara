@@ -4,6 +4,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
+sub squish { return 1; }
 sub my_label { return "Eponine"; }
 
 sub my_description { return "Eponine transcription<br />&nbsp;start sites"; }

@@ -10,7 +10,7 @@ use vars qw($AUTOLOAD);
 sub new {
     my ($class, $params_ref) = @_;
     my $self = {
-	    'background' => 'transparent',
+	     'background' => 'transparent',
 	    'composite'  => undef,          # arrayref for Glyph::Composite to store other glyphs in
 	    'points'     => [],		        # listref for Glyph::Poly to store x,y paired points
             ref($params_ref) eq 'HASH' ? %$params_ref : ()
@@ -40,6 +40,7 @@ sub AUTOLOAD {
 #  - scalex
 #  - scaley
 #
+sub alt { my $self = shift; return $self->id(); }
 sub transform {
     my ($this, $transform_ref) = @_;
 

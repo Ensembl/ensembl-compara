@@ -26,8 +26,8 @@ sub href {
 sub zmenu {
     my ($self, $id, $chr_pos ) = @_;
     return { 
-		'caption'    => $id, # $f->id,
-		'Jump to Rattus norvegicus' => $self->href( $chr_pos )
+	'caption'    => $id, # $f->id,
+	'Jump to Rattus norvegicus' => $self->href( $chr_pos )
     };
 }
 

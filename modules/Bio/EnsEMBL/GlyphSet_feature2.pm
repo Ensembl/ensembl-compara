@@ -66,7 +66,6 @@ sub _init {
     return if( $strand_flag eq 'r' && $strand != -1 ||
                $strand_flag eq 'f' && $strand != 1 );
 
-    my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
     my $length         = $container->length;
@@ -79,6 +78,7 @@ sub _init {
     my %id             = ();
     my $small_contig   = 0;
     my $dep            = $Config->get($type, 'dep');
+    my $h  = ($Config->get('_settings','opt_halfheight') && $dep>0) ? 4 : 8;
     my $chr_name       = $self->{'container'}->chr_name;
     my $offset         = $self->{'container'}->chr_start - 1;
 
@@ -131,7 +131,7 @@ sub _init {
                 $end   = $f->hend()   if $f->hend   > $end;
                 next if int($_->[0] * $pix_per_bp) == int( $X * $pix_per_bp );
                 $C++;
-                if($DRAW_CIGAR &&$f->cigar_string()) {
+                if($DRAW_CIGAR) {
                   # warn( "CIGAR LINE $type" );
                   $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp );
                 } else {
@@ -192,7 +192,7 @@ sub _init {
             $X = $START;
             $C++;
             my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2) );
-            if($DRAW_CIGAR && $f->cigar_string() ) {
+            if($DRAW_CIGAR) {
                 # warn( "UNBUMPED CIGAR LINE $type" );
                 my $Composite = new Sanger::Graphics::Glyph::Composite({
                     'zmenu'    => $self->unbumped_zmenu( @X ) , 

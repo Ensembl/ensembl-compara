@@ -4,8 +4,10 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-my $PRIORITY   = 50;
-my $MAP_WEIGHT = 2;
+sub squish {1;}
+
+use constant PRIORITY   => 50;
+use constant MAP_WEIGHT => 2;
 
 sub my_label { return "Markers"; }
 
@@ -13,8 +15,8 @@ sub features {
     my ($self) = @_;
 
     return $self->{'container'}->get_all_MarkerFeatures(undef, 
-							$PRIORITY,
-							$MAP_WEIGHT);
+							PRIORITY,
+							MAP_WEIGHT);
 }
 
 sub href {
