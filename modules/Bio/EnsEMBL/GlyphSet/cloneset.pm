@@ -87,6 +87,9 @@ sub zmenu {
     $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
     $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    
     $zmenu->{'18:FISH:  '.$f->FISHmap } = ''        if($f->FISHmap);    
+    foreach( $f->bacends ) {
+      $zmenu->{"18:BACend: $_" } = '';
+    }
     $zmenu->{'30:Positioned by:'.$f->positioned_by } = ''        if($f->positioned_by);    
     return $zmenu;
 }
