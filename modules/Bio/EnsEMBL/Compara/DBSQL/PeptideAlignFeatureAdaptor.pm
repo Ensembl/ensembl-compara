@@ -261,11 +261,16 @@ sub _store_PAFS {
         $analysis_id=$paf->analysis()->dbID();
       }
 
+      my $qgenome_db_id = $paf->query_member->genome_db_id;
+      $qgenome_db_id = 0 unless($qgenome_db_id);
+      my $hgenome_db_id = $paf->hit_member->genome_db_id;
+      $hgenome_db_id = 0 unless($hgenome_db_id);
+      
       $query .= ", " if($addComma);
       $query .= "(".$paf->query_member->dbID.
                 ",".$paf->hit_member->dbID.
-                ",".$paf->query_member->genome_db_id.
-                ",".$paf->hit_member->genome_db_id.
+                ",".$qgenome_db_id.
+                ",".$hgenome_db_id.
                 ",".$analysis_id.
                 ",".$paf->qstart.
                 ",".$paf->qend.
