@@ -1299,7 +1299,8 @@ sub reverse_complement {
 
 =head2 get_Mapper
 
-  Arg[1]     : [optional] integer $cache
+  Arg[1]     : [optional] integer $cache (default = FALSE)
+  Arg[2]     : [optional] boolean $condensed (default = FALSE)
   Example    : $this_mapper = $genomic_align->get_Mapper();
   Example    : $mapper1 = $genomic_align1->get_Mapper();
                $mapper2 = $genomic_align2->get_Mapper();
@@ -1322,76 +1323,131 @@ sub reverse_complement {
 =cut
 
 sub get_Mapper {
-  my ($self, $cache) = @_;
+  my ($self, $cache, $condensed) = @_;
+  my $mapper;
   $cache = 0 if (!defined($cache));
+  my $mode = "expanded";
+  if (defined($condensed) and $condensed) {
+    $mode = "condensed";
+  }
 
-  if (!defined($self->{'mapper'})) {
-    if (!$self->cigar_line) {
-      throw("[$self] has no cigar_line and cannot be retrieved by any means");
-    }
-  
-    my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+  if (!defined($self->{$mode.'_mapper'})) {
+    if ($mode eq "condensed") {
+      $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+      my $rel_strand = $self->dnafrag_strand * $self->genomic_align_block->reference_genomic_align->dnafrag_strand;
+      my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
+      throw "1" if ($self->genomic_align_block->reference_genomic_align->dnafrag_strand != 1);
+#       throw "2: (".$self->genomic_align_block->reference_genomic_align->dnafrag_end." - ". $self->genomic_align_block->reference_genomic_align->dnafrag_start.")" if ($self->dnafrag_strand != 1);
+      my $this_aligned_seq = $self->aligned_sequence();
 
-    my @cigar_pieces = ($self->cigar_line =~ /(\d*[GMD])/g);
-    my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
-    my $rel_strand = $self->dnafrag_strand;
-    if ($rel_strand == 1) {
-      my $sequence_position = $self->dnafrag_start;
-      foreach my $cigar_piece (@cigar_pieces) {
-        my $cigar_type = substr($cigar_piece, -1, 1 );
-        my $cigar_count = substr($cigar_piece, 0 ,-1 );
-        $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
-        next if ($cigar_count < 1);
-    
-        if( $cigar_type eq "M" ) {
-        $mapper->add_map_coordinates(
-                  "sequence", #$self->dbID,
-                  $sequence_position,
-                  $sequence_position + $cigar_count - 1,
-                  $rel_strand,
-                  "alignment", #$self->genomic_align_block->dbID,
-                  $alignment_position,
-                  $alignment_position + $cigar_count - 1
-              );
-          $sequence_position += $cigar_count;
-          $alignment_position += $cigar_count;
-        } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
-          $alignment_position += $cigar_count;
+      my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $aln_seq_pos = 0;
+      my $seq_pos = 0;
+      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMD])/g) {
+        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMD])/;
+        $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
+
+        my $this_piece_of_seq = substr($this_aligned_seq, $aln_seq_pos, $cig_count);
+        if ($cig_mode eq "M") {
+          my $this_piece_of_cigar_line = _get_cigar_line_from_aligned_sequence($this_piece_of_seq);
+          my $this_mapper;
+          if ($rel_strand == 1) {
+            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
+                $seq_pos + $self->dnafrag_start, 1);
+          } else {
+            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
+                $self->dnafrag_end - $seq_pos, -1);
+          }
+          $mapper->add_Mapper($this_mapper);
+          $aln_pos += $cig_count;
         }
+        my $gaps = $this_piece_of_seq =~ tr/\-/\-/;
+        $seq_pos -= $gaps;
+        $seq_pos += $cig_count;
+        $aln_seq_pos += $cig_count;
       }
+
     } else {
-      my $sequence_position = $self->dnafrag_end;
-      foreach my $cigar_piece (@cigar_pieces) {
-        my $cigar_type = substr($cigar_piece, -1, 1 );
-        my $cigar_count = substr($cigar_piece, 0 ,-1 );
-        $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
-        next if ($cigar_count < 1);
-    
-        if( $cigar_type eq "M" ) {
-        $mapper->add_map_coordinates(
-                  "sequence", #$self->dbID,
-                  $sequence_position - $cigar_count + 1,
-                  $sequence_position,
-                  $rel_strand,
-                  "alignment", #$self->genomic_align_block->dbID,
-                  $alignment_position,
-                  $alignment_position + $cigar_count - 1
-              );
-          $sequence_position -= $cigar_count;
-          $alignment_position += $cigar_count;
-        } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
-          $alignment_position += $cigar_count;
-        }
+      my $cigar_line = $self->cigar_line;
+      if (!$cigar_line) {
+        throw("[$self] has no cigar_line and cannot be retrieved by any means");
       }
+      my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $sequence_position = $self->dnafrag_start;
+      my $rel_strand = $self->dnafrag_strand;
+      if ($rel_strand == 1) {
+        $sequence_position = $self->dnafrag_start;
+      } else {
+        $sequence_position = $self->dnafrag_end;
+      }
+      $mapper = _get_Mapper_from_cigar_line($cigar_line, $alignment_position, $sequence_position, $rel_strand);
     }
 
     return $mapper if (!$cache);
 
-    $self->{'mapper'} = $mapper;
+    $self->{$mode.'_mapper'} = $mapper;
   }
 
-  return $self->{'mapper'};
+  return $self->{$mode.'_mapper'};
 }
+
+sub _get_Mapper_from_cigar_line {
+  my ($cigar_line, $alignment_position, $sequence_position, $rel_strand) = @_;
+
+  my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+
+  my @cigar_pieces = ($cigar_line =~ /(\d*[GMD])/g);
+  if ($rel_strand == 1) {
+    foreach my $cigar_piece (@cigar_pieces) {
+      my $cigar_type = substr($cigar_piece, -1, 1 );
+      my $cigar_count = substr($cigar_piece, 0 ,-1 );
+      $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+      next if ($cigar_count < 1);
+  
+      if( $cigar_type eq "M" ) {
+      $mapper->add_map_coordinates(
+                "sequence", #$self->dbID,
+                $sequence_position,
+                $sequence_position + $cigar_count - 1,
+                $rel_strand,
+                "alignment", #$self->genomic_align_block->dbID,
+                $alignment_position,
+                $alignment_position + $cigar_count - 1
+            );
+        $sequence_position += $cigar_count;
+        $alignment_position += $cigar_count;
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+        $alignment_position += $cigar_count;
+      }
+    }
+  } else {
+    foreach my $cigar_piece (@cigar_pieces) {
+      my $cigar_type = substr($cigar_piece, -1, 1 );
+      my $cigar_count = substr($cigar_piece, 0 ,-1 );
+      $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+      next if ($cigar_count < 1);
+  
+      if( $cigar_type eq "M" ) {
+      $mapper->add_map_coordinates(
+                "sequence", #$self->dbID,
+                $sequence_position - $cigar_count + 1,
+                $sequence_position,
+                $rel_strand,
+                "alignment", #$self->genomic_align_block->dbID,
+                $alignment_position,
+                $alignment_position + $cigar_count - 1
+            );
+        $sequence_position -= $cigar_count;
+        $alignment_position += $cigar_count;
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+        $alignment_position += $cigar_count;
+      }
+    }
+  }
+
+  return $mapper;
+}
+
 
 #####################################################################
 #####################################################################
