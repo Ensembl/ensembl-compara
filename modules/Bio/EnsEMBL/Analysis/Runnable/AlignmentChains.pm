@@ -184,12 +184,14 @@ sub run {
   ##############################
   system($self->lavToAxt, $lav_file, $query_nib_dir, $target_nib_dir, $axt_file)
       and throw("Could not convert $lav_file to Axt format");
+  unlink $lav_file;
 
   ##################################
   # convert the lav file to axtChain
   ##################################
   system($self->axtChain, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
         and throw("Something went wrong with axtChain\n");
+  unlink $axt_file;
 
   ##################################
   # read the chain file
@@ -198,8 +200,7 @@ sub run {
   my $chains = $self->parse_Chain_file($fh);
 
   $self->output($chains);  
-  
-  #unlink $lav_file, $axt_file, $chain_file, @nib_files;
+  unlink $chain_file, @nib_files;
   
   rmdir $query_nib_dir if not $self->query_nib_dir;
   rmdir $target_nib_dir if not $self->target_nib_dir;
