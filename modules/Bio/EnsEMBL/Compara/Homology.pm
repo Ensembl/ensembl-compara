@@ -129,8 +129,8 @@ sub get_SimpleAlign {
     }
     next if(!$seqstr);
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
-                                     -START  => 1,
-                                     -END    => length($seqstr),
+                                     -START  => $attribute->cigar_start,
+                                     -END    => $attribute->cigar_end,
                                      -ID     => $peptide_member->stable_id,
                                      -STRAND => 0);
 
