@@ -29,12 +29,11 @@ $compara_dba->add_db_adaptor($mm_dba);
 $compara_dba->add_db_adaptor($rn_dba);
 
 my $mouse_name     = $mm_dba->get_MetaContainer->get_Species->binomial;
-my $mouse_assembly = $mm_dba->get_CoordSystemAdaptor->fetch_top_level;
+my $mouse_assembly = $mm_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
-my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_top_level;
+my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 my $rat_name       = $rn_dba->get_MetaContainer->get_Species->binomial;
-my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_top_level;
-
+my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 
 #######
 #  1  #
