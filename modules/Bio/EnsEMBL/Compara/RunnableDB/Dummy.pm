@@ -58,7 +58,7 @@ use vars qw(@ISA);
 sub init {
   my $self = shift;
   #$self->SUPER::init();
-  $self->batch_size(1000);
+  $self->batch_size(7000);
   $self->carrying_capacity(1);
 }
 
