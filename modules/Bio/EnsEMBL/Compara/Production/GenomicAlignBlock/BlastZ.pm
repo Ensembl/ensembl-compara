@@ -53,7 +53,7 @@ package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Pipeline::Runnable::Blastz;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
@@ -81,7 +81,7 @@ sub fetch_input {
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   $self->get_params($self->parameters);
@@ -94,7 +94,7 @@ sub fetch_input {
   throw("Missing qyChunk") unless($qyChunk);
   throw("Missing dbChunk") unless($dbChunk);
   
-  print("have chunks\n  ",$qyChunk->display_id,"\n  ", $dbChunk->display_id,"\n");
+  print STDERR ("have chunks\n  ",$qyChunk->display_id,"\n  ", $dbChunk->display_id,"\n");
   $self->{'qyChunk'} = $qyChunk;
   $self->{'dbChunk'} = $dbChunk;
 
@@ -114,7 +114,7 @@ sub fetch_input {
 
   my $qySeq = $qyChunk->bioseq;
   unless($qySeq) {
-    printf("fetching qy chunk %s on-the-fly\n", $qyChunk->display_id);
+    printf(STDERR "fetching qy chunk %s on-the-fly\n", $qyChunk->display_id);
     $qySeq = $qyChunk->fetch_masked_sequence(2);  #soft masked
     print STDERR (time()-$starttime), " secs to fetch qyChunk seq\n";
 
