@@ -83,7 +83,7 @@ sub fetch_input {
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   print("input_id = ", $self->input_id,"\n");
   my $input_hash = eval($self->input_id);
@@ -99,6 +99,19 @@ sub fetch_input {
   $self->{'dbChunk'} = $dbChunk;
   
   print("have chunks\n  ",$qyChunk->display_id,"\n  ", $dbChunk->display_id,"\n");
+
+  #
+  # create method_link_species_set
+  #
+  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  $mlss->method_link_type("BLASTZ_RAW");
+  $mlss->species_set([$qyChunk->dnafrag->genome_db, $dbChunk->dnafrag->genome_db]);
+  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  $self->{'method_link_species_set'} = $mlss;
+
+  #
+  # get the sequences and create the runnable
+  #
   my $starttime = time();
 
   my $qySeq = $qyChunk->bioseq;
@@ -134,15 +147,6 @@ sub fetch_input {
                   -options   => 'T=2 H=2200');
 
   $self->runnable($runnable);
-
-  #
-  # create method_link_species_set
-  #
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type("BLASTZ_RAW");
-  $mlss->species_set([$qyChunk->dnafrag->genome_db, $dbChunk->dnafrag->genome_db]);
-  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-  $self->{'method_link_species_set'} = $mlss;
   
   return 1;
 }
