@@ -208,7 +208,7 @@ sub store {
 	       $self->throw("Must have a dnafrag attached to alignblocks");
 	   }
 	   if( !defined $ab->dnafrag->dbID ) {
-	       $dnafragadp->store($ab->dnafrag);
+	       $dnafragadp->store_if_needed($ab->dnafrag);
 	   }
        }
    }
