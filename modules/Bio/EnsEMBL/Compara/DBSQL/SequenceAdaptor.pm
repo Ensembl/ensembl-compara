@@ -36,7 +36,7 @@ sub store {
   $sth->finish;
 
   if($seqID) {
-    print("sequence already stored as id $seqID\n");
+    # print("sequence already stored as id $seqID\n");
     return $seqID;
   }
 
