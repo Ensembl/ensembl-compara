@@ -257,6 +257,10 @@ sub render_Sprite {
     my $libref = $config->get("_settings", "spritelib");
     my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
     my $fn     = "$lib/$spritename.gif";
+    unless( -r $fn ){ 
+      warn( "$fn is unreadable by uid/gid" );
+      return;
+    }
     $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif($fn);
     if( !$config->{'_spritecache'}->{$spritename} ) {
       $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif("$lib/missing.gif");

@@ -27,6 +27,10 @@ sub render_Sprite {
     my $libref = $config->get("_settings", "spritelib");
     my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
     my $fn     = "$lib/$spritename.png";
+    unless( -r $fn ){ 
+      warn( "$fn is unreadable by uid/gid" );
+      return;
+    }
     eval {
       $config->{'_spritecache'}->{$spritename} = GD::Image->newFromPng($fn);
     };
