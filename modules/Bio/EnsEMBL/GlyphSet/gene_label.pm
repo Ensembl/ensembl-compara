@@ -58,7 +58,7 @@ sub _init {
 			$hugo = $DB_link;
 			last;
 		    }
-		    if( $DB_link->database() =~ /SWISS/o ) {
+		    if( $DB_link->database() =~ /SP/o ) {
 			$swisslink = $DB_link;
 		    }
 		    if( $DB_link->database() eq 'SPTREMBL' ) {
@@ -68,14 +68,11 @@ sub _init {
 
 		if( $hugo ) {
 		    $label = $hugo->display_id();
-		} 
-		elsif ( $swisslink ) {
+		} elsif ( $swisslink ) {
 		    $label = $swisslink->display_id();
-		} 
-		elsif ( $sptrembllink ) {
+		} elsif ( $sptrembllink ) {
 		    $label = $sptrembllink->display_id();
-		} 
-		else {
+		} else {
 		    $label = $vg->id();
 		}
 		push @ids, $label;
@@ -84,7 +81,7 @@ sub _init {
 		$colour = $unknown_col;
 		$label	= "UNKNOWN";
 	    }
-	    push @ids, $vg->id();
+#	    push @ids, $vg->id();
 	} else {
 	    # ignore pesky external genes for the moment
 	    next;
