@@ -73,6 +73,7 @@ sub fetch_input {
   #as the Pipeline::DBAdaptor passed in ($self->db)
   #the -DBCONN options uses the dbname,user,pass,port,host,driver from the
   #variable DBConnection to create the new connection (in essence a copy)
+
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
  
   return 1;
@@ -83,8 +84,17 @@ sub run
 {
   my $self = shift;
 
-  $self->createBlastRules();
-  
+  my($conditionLogicName, $goalLogicName) = split(/,/, $self->input_id());
+  if($conditionLogicName and $goalLogicName) {
+    print("create rule $conditionLogicName => $goalLogicName\n");
+    my $conditionAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($conditionLogicName);
+    my $goalAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($goalLogicName);
+    $self->addRule($conditionAnalysis, $goalAnalysis);
+  }
+  else {
+    $self->createBlastRules();
+  } 
+
   return 1;
 }
 
@@ -121,19 +131,23 @@ sub createBlastRules
       #rint("\nANALYSIS ".$blastAnalysis->logic_name()." is a ".$blastPhylum."\n");
 
       foreach my $analysis (@{$analysisList}) {
-        my %parameters = $self->parameter_hash($analysis->parameters());
-        if($parameters{'genome_db_id'} and
-           ($parameters{'genome_db_id'} ne $genomeDB1->dbID))
-        {
-          my $phylum = $self->phylumForGenomeDBID($parameters{'genome_db_id'});
-          #print("  check ".$analysis->logic_name().
-          #      " genome_db_id=".$parameters{'genome_db_id'}.
-          #      " phylum=".$phylum."\n");
-          if(($blastPhylum eq $phylum) and ($analysis->logic_name =~ /SubmitPep_/)) {
-            #$analysis is a SubmitPep so it's the condition
-            #$blastAnalysis is the goal
-            #$self->addSimpleRule($analysis, $blastAnalysis);
-            $self->addRule($analysis, $blastAnalysis);
+        if($analysis->logic_name =~ /SubmitPep_/) {
+          my %parameters = $self->parameter_hash($analysis->parameters());
+          if($parameters{'genome_db_id'} and
+             ($parameters{'genome_db_id'} ne $genomeDB1->dbID))
+          {
+            my $phylum = $self->phylumForGenomeDBID($parameters{'genome_db_id'});
+            #print("  check ".$analysis->logic_name().
+            #      " genome_db_id=".$parameters{'genome_db_id'}.
+            #      " phylum=".$phylum."\n");
+  
+            if(($self->input_id() eq 'all') or ($blastPhylum eq $phylum) ) {
+              #$analysis is a SubmitPep so it's the condition
+              #$blastAnalysis is the goal
+              # $self->addSimpleRule($analysis, $blastAnalysis);
+	    
+              $self->addRule($analysis, $blastAnalysis);
+            }
           }
         }
       }
@@ -197,16 +211,53 @@ sub addRule
   my $self = shift;
   my $conditionAnalysis = shift;
   my $goalAnalysis = shift;
+  my $rule;
 
   print("RULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
 
-  # really need to check if rule exists even if it's not MP-safe
-  
-  my $rule = Bio::EnsEMBL::Pipeline::Rule->new(
-      '-goalanalysis'      => $goalAnalysis);
+  $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalanalysis' => $goalAnalysis);
   $rule->add_condition($conditionAnalysis->logic_name());
 
-  $self->db->get_RuleAdaptor->store($rule);
+  if($self->checkRuleExists($rule)) {
+    print("  EXISTS!\n");
+  } else {
+    $self->db->get_RuleAdaptor->store($rule);
+  }
+}
+
+
+sub checkRuleExists
+{
+  my $self = shift;
+  my $queryRule = shift;
+
+  my @allRules = $self->db->get_RuleAdaptor->fetch_all();
+  foreach my $rule (@allRules) {
+    #print("  check goal ".$rule->goalAnalysis->logic_name."\n");
+    if($rule->goalAnalysis()->dbID eq $queryRule->goalAnalysis->dbID) {
+      #print("  found goal match\n");
+      my $allMatched=1;
+      for my $literal (@{$rule->list_conditions}) {
+	#print("    condition $literal ");
+	my $matched = undef;
+        for my $qliteral ( @{$queryRule->list_conditions} ) {
+          if($qliteral eq $literal) {
+	    $matched=1;
+	    #print("matched!");
+	  } 
+        }
+	# print("\n");
+        $allMatched=undef unless($matched);
+      }
+      if($allMatched) {
+        # made it through all condtions and goal matched so this rule matches
+        # print("  rule matched\n");
+        return $rule;
+      }
+    }
+  }
+
+  return undef;
 }
 
 
