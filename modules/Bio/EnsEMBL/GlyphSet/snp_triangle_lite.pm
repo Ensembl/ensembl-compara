@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::snp_triangle_lite;
 use strict;
 use vars qw(@ISA);
+use Data::Dumper;
 use Bio::EnsEMBL::GlyphSet::snp_lite;
 @ISA = qw(Bio::EnsEMBL::GlyphSet::snp_lite);
 
@@ -30,8 +31,9 @@ sub highlight {
   @highlights{$self->highlights()} = ();
 
   ## Are we going to highlight this item...
-  if($f->can('display_id') && exists $highlights{$f->display_id()}) {
-    # Line of white first
+  if( ($f->can('display_name') && exists $highlights{ $f->display_name() } ) or (exists $highlights{ $f->snpid() } )  ) {
+
+   # Line of white first
     my $high = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $composite->x() - 1/$pix_per_bp,
                 'y'         => $composite->y(),  ## + makes it go down

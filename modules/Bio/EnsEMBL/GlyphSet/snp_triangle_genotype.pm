@@ -1,6 +1,5 @@
 package Bio::EnsEMBL::GlyphSet::snp_triangle_genotype;
 use strict;
-use Data::Dumper;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::snp_triangle_lite;
 @ISA = qw(Bio::EnsEMBL::GlyphSet::snp_triangle_lite);
@@ -28,7 +27,7 @@ sub features {
 
   # Now need to link them up: make hash of genotyped snps, key = unique_id
   my %genotyped_snps;
-  map {  $genotyped_snps{ $_->unique_id } = $_;  } @genotyped_snps;
+  map { $genotyped_snps{ $_->unique_id } = $_;  } @genotyped_snps;
 
   foreach my $snp  (@snps) {
     my $genotyped_snp = $genotyped_snps{$snp->unique_id};
@@ -37,6 +36,8 @@ sub features {
     # Nasty nasty but need this hack to join the lite and heavy db info
     $genotyped_snp->{'_ambiguity_code'} = $snp->{'_ambiguity_code'};
     $genotyped_snp->{'_type'} = $snp->{'_type'};
+    $genotyped_snp->{'_mapweight'} = $snp->{'_mapweight'};
+    $genotyped_snp->{'status'} = $snp->status;
   }
 
   return \@genotyped_snps;
