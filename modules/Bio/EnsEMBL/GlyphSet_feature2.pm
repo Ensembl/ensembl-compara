@@ -85,11 +85,11 @@ sub _init {
     my $offset         = $self->{'container'}->start - 1;
 
     my ($T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
-
+    my $K = 0;
     if( $dep > 0 ) {
         foreach my $f ( @{$self->features()} ){
             next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length ;
-            push @{$id{$f->hseqname()}}, [$f->start,$f];
+            push @{$id{$f->hseqname().':'. ($f->group_id||("00".$K++)) }}, [$f->start,$f];
         }
 
 ## No features show "empty track line" if option set....
@@ -100,8 +100,10 @@ sub _init {
         my @glyphs;
         my $BLOCK = 0;
         foreach my $i (keys %id){
-            $T+=@{$id{$i}}; ## Diagnostic report....
             my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
+          warn "$i - @{[$F[0][1]->hstrand]} @{[$F[0][1]->strand]}";
+            $T+=@F; ## Diagnostic report....
+            my( $seqregion,$group) = split /:/, $i;
             my $START = $F[0][0] < 1 ? 1 : $F[0][0];
             my $END   = $F[-1][1]->end > $length ? $length : $F[-1][1]->end;
             my $start = $F[0][1]->hstart();
@@ -164,11 +166,11 @@ sub _init {
             if($end-$start<$WIDTH) {
         	    my $X =int(( $start + $end - $WIDTH) /2);
         	    my $Y = $X + $WIDTH ;
-                $ZZ = "chr=$i&vc_start=$X&vc_end=$Y";
+                $ZZ = "region=$seqregion&vc_start=$X&vc_end=$Y";
         	} else {
-                $ZZ = "chr=$i&vc_start=$start&vc_end=$end";
+                $ZZ = "region=$seqregion&vc_start=$start&vc_end=$end";
             }
-            $Composite->zmenu( $self->zmenu( "Chr$i $start-$end", $ZZ ) );
+            $Composite->zmenu( $self->zmenu( "$seqregion: $start-$end", $ZZ, 'Orientation: '.($F[0][1]->hstrand * $F[0][1]->strand>0?'Forward' : 'Reverse') ) );
        	    $Composite->href(  $self->href( $ZZ ) );
             $self->push( $Composite );
 
@@ -201,12 +203,12 @@ sub _init {
             next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
             $X = $START;
             $C++;
-            my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2), "Chr@{[$f->hseqname]} @{[$f->hstart]}-@{[$f->hend]}" );
+            my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2), "@{[$f->hseqname]}: @{[$f->hstart]}-@{[$f->hend]}" );
             if($DRAW_CIGAR) {
                 # warn( "UNBUMPED CIGAR LINE $type" );
                 my $Composite = new Sanger::Graphics::Glyph::Composite({
                     'zmenu'    => $self->unbumped_zmenu( @X ) , 
-                    'href'     => $self->unbumped_href( @X ) ,
+                    'href'     => $self->unbumped_href( @X , 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) ) ,
                     'x' => $START-1,
                     'width' => 0,
                     'y' => 0
@@ -224,7 +226,7 @@ sub _init {
                     'absolutey'  => 1,
                     '_feature'   => $f, 
                     'href'       => $self->unbumped_href( @X ),
-                    'zmenu'      => $self->unbumped_zmenu( @X )
+                    'zmenu'      => $self->unbumped_zmenu( @X, 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) )
                 });
                 $self->push($glyph);
             }

@@ -8,12 +8,23 @@ use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Line;
 
+my %SHORT = qw(
+  chromosome Chr.
+  supercontig S'ctg
+);
+
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
+    my $type = $self->{'container'}->coord_system->name();
+
+    $type = $SHORT{lc($type)} || ucfirst( $type );
+    my $species = '';
+    if( $self->{'config'}->{'multi'} ) {
+       $species = join '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.',' '; 
+    }
     my $chr = $self->{'container'}->seq_region_name();
-    $chr = $chr ? "Chr $chr" : "Chrom. Band";
-    $chr .= " " x (12 - length($chr));
+    $chr = "$species$type $chr";
 	
     my $label = new Sanger::Graphics::Glyph::Text({
     	'text'      => ucfirst($chr),

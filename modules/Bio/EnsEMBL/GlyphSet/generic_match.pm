@@ -36,12 +36,13 @@ sub zmenu {
   return { 
     'caption'    => $id, 
     "Jump to $species_2" => $self->href( $chr_pos ), 
+    $text => ''
   };
 }
 
 
 sub unbumped_zmenu {
-  my ($self, $ref, $target,$width, $text ) = @_;
+  my ($self, $ref, $target,$width, $text, $ori ) = @_;
   my ($chr,$pos) = @$target;
   my $domain  = $self->my_config('linkto'); 
   (my $species_2 = $self->my_config('species')) =~ s/_/ /; 
@@ -49,13 +50,14 @@ sub unbumped_zmenu {
   return { 'caption' => "$species_2 $chr_pos"} if $domain eq 'linkto'; #if linkto defined then there is no core!!
 
   return { 'caption' => $text,
-    "Jump to $species_2" => $self->href( $chr_pos ) } if $domain;
+    "Jump to $species_2" => $self->href( $chr_pos ),
+    $ori => '' } if $domain;
   
   return { 
     'caption'    => $text,
     'Dotter' => $self->unbumped_href( $ref, $target ),
     "Jump to $species_2" => $self->href( $chr_pos ), 
-  };
+    $ori => '' };
 }
 
 sub unbumped_href {
