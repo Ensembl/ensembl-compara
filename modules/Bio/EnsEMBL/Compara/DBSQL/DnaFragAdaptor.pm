@@ -113,6 +113,7 @@ sub fetch_by_dbID {
                Bio::EnsEMBL::Compara::GenomeDB and name given.
   Returntype : Bio::EnsEMBL::Compara::DnaFrag
   Exceptions : throw when genome_db_id cannot be retrieved
+  Exceptions : warns and returns undef when no DnaFrag matches the query
   Caller     : $dnafrag_adaptor->fetch_by_GenomeDB_and_name
 
 =cut
@@ -151,7 +152,12 @@ sub fetch_by_GenomeDB_and_name {
   my $sth = $self->prepare($sql);
   $sth->execute($genome_db_id, $name);
 
-  return $self->_objs_from_sth($sth)->[0];
+  $dnafrag = $self->_objs_from_sth($sth)->[0];
+  if (!$dnafrag) {
+    warning("No Bio::EnsEMBL::Compara::DnaFrag found for ".$genome_db->name."(".$genome_db->assembly."),".
+        " chromosome $name");
+  }
+  return $dnafrag;
 }
 
 
