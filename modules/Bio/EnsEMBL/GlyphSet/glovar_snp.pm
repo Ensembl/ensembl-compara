@@ -25,28 +25,16 @@ Post questions to the EnsEMBL development list ensembl-dev@ebi.ac.uk
 package Bio::EnsEMBL::GlyphSet::glovar_snp;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
-
-=head2 my_label
-
-  Arg[1]      : none
-  Example     : my $label = $self->my_label;
-  Description : returns the label for the track (displayed track name)
-  Return type : String - track label
-  Exceptions  : none
-  Caller      : $self->init_label()
-
-=cut
-
-sub my_label { return "SNPs"; }
+use Bio::EnsEMBL::GlyphSet::variation;
+use Bio::EnsEMBL::ExternalData::Glovar::GlovarSNPAdaptor;
+@ISA = qw(Bio::EnsEMBL::GlyphSet::variation);
 
 =head2 features
 
   Arg[1]      : none 
   Example     : my $f = $self->features;
   Description : this function does the data fetching from the Glovar database
-  Return type : listref of Bio::EnsEMBL::SNP objects
+  Return type : listref of Bio::EnsEMBL::Variation::VariationFeature objects
   Exceptions  : none
   Caller      : $self->_init()
 
@@ -58,111 +46,24 @@ sub features {
     ## don't display glovar SNPs on chr6 haplotypes (they broken ...)
     return if ($self->{'container'}->seq_region_name =~ /_/);
     
+    my %ct = %Bio::EnsEMBL::ExternalData::Glovar::GlovarSNPAdaptor::CONSEQUENCE_TYPES;
     my @snps = 
         map { $_->[1] } 
         sort { $a->[0] <=> $b->[0] }
-        map { [ substr($_->type,0,2) * 1e9 + $_->start, $_ ] }
-        grep { $_->score < 4 } 
+        map { [ $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
             @{$self->{'container'}->get_all_ExternalFeatures('GlovarSNP')};
 
     if(@snps) {
-        $self->{'config'}->{'snp_legend_features'}->{'snps'} 
+        $self->{'config'}->{'variation_legend_features'}->{'variations'} 
             = { 'priority' => 1000, 'legend' => [] };
     }
 
     return \@snps;
 }
 
-=head2 href
-
-  Arg[1]      : a Bio::EnsEMBL::SNP object
-  Example     : my $href = $self->href($f);
-  Description : returns a href to link to snpview
-  Return type : String
-  Exceptions  : none
-  Caller      : $self->_init()
-
-=cut
-
-sub href {
-    my ($self, $f) = @_;
-    my ($chr_start, $chr_end) = $self->slice2sr($f->start, $f->end);
-    my $snp_id = $f->display_id;
-    my $source = $f->source_tag;
-    my $chr_name = $self->{'container'}->seq_region_name();
-    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id&source=$source&chr=$chr_name&vc_start=$chr_start";
-}
-
-=head2 
-
-  Arg[1]      : a Bio::EnsEMBL::SNP object
-  Example     : my $label = $self->image_label($f);
-  Description : returns the ambiguity code for labelling the snp in the 
-                neighbourhood image
-  Return type : String
-  Exceptions  : none
-  Caller      : self->_init()
-
-=cut
-
-sub image_label {
-    my ($self, $f) = @_;
-    return $f->ambiguity_code eq '-' ? undef : ($f->ambiguity_code,'overlaid');
-}
-
-=head2 tag
-
-  Arg[1]      : a Bio::EnsEMBL::SNP object
-  Example     : my $tag = $self->tag($f);
-  Description : retrieves the SNP tag (ambiguity code) in the right colour
-  Return type : hashref
-  Exceptions  : none
-  Caller      : $self->_init()
-
-=cut
-
-sub tag {
-    my ($self, $f) = @_;
-    if (($f->snpclass eq 'SNP - indel') && ($f->start ne $f->end)) {
-        my $type = substr($f->type,3,6);
-        return ( { 'style' => 'insertion', 'colour' => $self->{'colours'}{"_$type"} } );
-    } else {
-        return undef;
-    }
-}
-
-=head2 colour
-
-  Arg[1]      : a Bio::EnsEMBL::SNP object
-  Example     : my $colour = $self->colour($f);
-  Description : sets the colour for displaying SNPs. They are coloured
-                according to their position on genes
-  Return type : list of colour settings
-  Exceptions  : none
-  Caller      : $self->_init()
-
-=cut
-
-sub colour {
-    my ($self, $f) = @_;
-    my $T = substr($f->type,3,6);
-    unless($self->{'config'}->{'snp_types'}{$T}) {
-        my %labels = (
-            '_coding' => 'Coding SNPs',
-            '_utr'    => 'UTR SNPs',
-            '_intron' => 'Intronic SNPs',
-            '_local'  => 'Flanking SNPs',
-            '_'       => 'other SNPs'
-        );
-        push @{ $self->{'config'}->{'snp_legend_features'}->{'snps'}->{'legend'} }, $labels{"_$T"} => $self->{'colours'}{"_$T"};
-        $self->{'config'}->{'snp_types'}{$T}=1;
-    }
-    return( $self->{'colours'}{"_$T"}, $self->{'colours'}{"label_$T"}, (($f->snpclass eq 'SNP - indel') && ($f->start ne $f->end)) ? 'invisible' : '' );
-}
-
 =head2 zmenu
 
-  Arg[1]      : a Bio::EnsEMBL::SNP object
+  Arg[1]      : a Bio::EnsEMBL::Variation::VariationFeature object
   Example     : my $zmenu = $self->zmenu($f);
   Description : creates the zmenu (context menu) for the glyphset. Returns a
                 hashref describing the zmenu entries and properties
@@ -173,45 +74,50 @@ sub colour {
 =cut
 
 sub zmenu {
-    my ($self, $f ) = @_;
-    my $chr_start = $f->start + $self->{'container'}->start - 1;
-    my $chr_end   = $f->end + $self->{'container'}->start - 1;
-
-    my $allele = $f->alleles;
-    my $pos;
-    my $id = $f->display_id;
-    if ($chr_start == $chr_end) {
-        $pos = "$chr_start";
-    } else {
-        $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+    my ($self, $f) = @_;
+    my ($start, $end) = $self->slice2sr( $f->start, $f->end );
+    my $allele = $f->allele_string;
+    my $pos = $start;
+    if($f->start > $f->end  ) {
+      $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
     }
+    elsif($f->start < $f->end ) {
+      $pos = "$start&nbsp;-&nbsp;$end";
+    }
+    my $status = join ", ", @{$f->get_all_validation_states};
+    my $cons = $f->get_consequence_type;
+    $cons = '-' if ($cons eq '_');
+
     my %zmenu = ( 
-        'caption'           => "SNP: $id",
+        'caption' => "SNP: " . ($f->variation_name),
         '01:SNPView' => $self->href($f),
         #'02:Sanger SNP Report' => $self->ID_URL('GLOVAR_SNP', $id),
         "03:bp: $pos" => '',
         "04:Strand: ".$f->strand => '',
-        "05:Class: ".$f->snpclass => '',
-        "06:Status: ".$f->raw_status => '',
-        "08:Alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => '',
-        "09:Position type: ".(substr($f->type,3,6)||'other') => '',
-        "10:Consequence: ".($f->consequence||'unknown') => '',
+        "06:Status: ".($status || '-') => '',
+        "05:Class: ".($f->var_class || '-') => '',
+ 	"07:Ambiguity code: ".($f->ambig_code || '-') => '',
+        "08:Alleles: ".$f->allele_string => '',
+        "09:Type: $cons" => '',
     );
-    $zmenu{"07:Ambiguity code: ".$f->{'_ambiguity_code'}} = '' if $f->{'_ambiguity_code'};
 
-    my %links;
-    
-    my $source = $f->source_tag; 
-    foreach my $link ($f->each_DBLink()) {
-      my $DB = $link->database;
-      if ($DB =~ s/(TSC)/\1/i) {
-        $zmenu{"16:$DB:".$link->primary_id } = $self->ID_URL( $DB, $link->primary_id );
-      } elsif ($DB eq 'dbSNP rs') {
-        $zmenu{"16:dbSNP:".$link->primary_id } = $self->ID_URL( 'dbSNP', $link->primary_id );
-      } elsif ($DB eq 'dbSNP ss') {
-        $zmenu{"16:dbSNP:".$link->primary_id } = $self->ID_URL( 'SNP_SS', $link->primary_id );
-      }
+    # external db links
+    my %ext_db_map = (
+        'TCS'       => 'TCS',
+        'dbSNP rs'  => 'SNP',
+        'dbSNP ss'  => 'DBSNPSS',
+    );
+    my $var = $f->variation;
+    my @sources = @{ $var->get_all_synonym_sources };
+
+    foreach my $ext_db (@sources) {
+        my $ext_url = $ext_db_map{$ext_db};
+        next unless $ext_url;
+        foreach my $ext_id (@{ $var->get_all_synonyms($ext_db) }) {
+            $zmenu{"16:$ext_db: ".$ext_id} = $self->ID_URL($ext_url, $ext_id);
+        }
     }
+
     return \%zmenu;
 }
 
