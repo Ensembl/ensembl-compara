@@ -91,8 +91,8 @@ sub read_clustalw {
   my @members_attributes;
 
   push @members_attributes,@{$self->get_Member_Attribute_by_source('ENSEMBLPEP')};
-  push @members_attributes,@{$self->get_Member_Attribute_by_source('SWISSPROT')};
-  push @members_attributes,@{$self->get_Member_Attribute_by_source('SPTREMBL')};
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
+  push @members_attributes,@{$self->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
   
   my %attribute_hash;
   foreach my $member_attribute (@members_attributes) {

@@ -28,7 +28,7 @@ FamilyAdaptor - DESCRIPTION of Object
   my $fam = $fa->fetch_by_stable_id('ENSF000013034');
 
   my $ma = $db->get_MemberAdaptor;
-  my $member = $ma->fetch_by_source_stable_id('SWISSPROT', 'YSV4_CAEEL')};
+  my $member = $ma->fetch_by_source_stable_id('Uniprot/SWISSPROT', 'YSV4_CAEEL')};
   my @fam = @{$fa->fetch_by_Member($member)};
 
   @fam = @{$fa->fetch_by_description_with_wildcards('interleukin',1)};
