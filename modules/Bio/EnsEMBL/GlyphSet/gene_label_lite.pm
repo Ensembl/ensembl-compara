@@ -37,6 +37,7 @@ sub _init {
     my $hi_col         = $Config->get( 'gene_label_lite' , 'hi' );
     my $unknown_col    = $Config->get( 'gene_label_lite' , 'unknown' );
     my $xref_col       = $Config->get( 'gene_label_lite' , 'xref' );
+    my $pred_col       = $Config->get( 'gene_label_lite' , 'pred' );
     my $ext_col        = $Config->get( 'gene_label_lite' , 'ext' );
     my $pseudo_col     = $Config->get( 'gene_label_lite' , 'pseudo' );
     my $max_length     = $Config->get( 'gene_label_lite' , 'threshold' ) || 2000000;
@@ -120,7 +121,7 @@ sub _init {
         $high = exists $highlights{$g->stable_id()} ? 1 : 0;
         my $gene_label = $g->external_name;
         if(defined $gene_label && $gene_label ne '') {
-            $gene_col = $g->external_status eq 'KNOWN' ? $known_col : $xref_col;
+            $gene_col = $g->external_status eq 'KNOWN' ? $known_col : ( $g->external_status eq 'xref' ? $xref_col : $pred_col );
             $gene_label = $g->external_name();
             $high = 1 if(exists $highlights{$gene_label});
         } else {

@@ -56,6 +56,7 @@ sub _init {
     &eprof_start("gene-virtualgene_start-get");
     my $known_col     = $Config->get('gene_lite','known');
     my $xref_col      = $Config->get('gene_lite','xref');
+    my $pred_col      = $Config->get('gene_lite','pred');
     my $hi_col        = $Config->get('gene_lite','hi');
     my $unknown_col   = $Config->get('gene_lite','unknown');
     my $ext_col       = $Config->get('gene_lite','ext');
@@ -141,7 +142,7 @@ sub _init {
       my ($gene_col, $gene_label);
       $gene_label = $g->external_name;
       if(defined $gene_label && $gene_label ne '') {
-	$gene_col = $g->external_status eq 'KNOWN' ? $known_col : $xref_col;
+	$gene_col = $g->external_status eq 'KNOWN' ? $known_col : ($g->external_status eq 'XREF' ? $xref_col : $pred_col) ;
       } else {
 	$gene_col = $unknown_col;
 	$gene_label = 'NOVEL'; 
@@ -164,7 +165,8 @@ sub _init {
 	'priority' => 900,
         'legend'  => [
             'EnsEMBL predicted genes (known)' => $known_col,
-            'EnsEMBL predicted genes (xref)'  => $xref_col,
+          #  'EnsEMBL predicted genes (xref)'  => $xref_col,
+          #  'EnsEMBL predicted genes (pred)'  => $pred_col,
             'EnsEMBL predicted genes (novel)' => $unknown_col ] };
     }
 

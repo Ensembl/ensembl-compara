@@ -15,6 +15,7 @@ sub colours {
     return {
         'unknown'   => $Config->get('transcript_lite','unknown'),
         'xref'      => $Config->get('transcript_lite','xref'),
+        'pred'      => $Config->get('transcript_lite','pred'),
         'known'     => $Config->get('transcript_lite','known'),
         'hi'        => $Config->get('transcript_lite','hi'),
         'superhi'   => $Config->get('transcript_lite','superhi')
@@ -107,6 +108,8 @@ sub legend {
     return ('genes', 900, 
         [
             'EnsEMBL predicted genes (known)' => $colours->{'known'},
+           # 'EnsEMBL predicted genes (xref)' => $colours->{'xref'},
+           # 'EnsEMBL predicted genes (pred)' => $colours->{'pred'},
             'EnsEMBL predicted genes (novel)' => $colours->{'unknown'}
         ]
     );
