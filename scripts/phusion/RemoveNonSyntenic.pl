@@ -73,7 +73,7 @@ foreach my $Schr (sort keys %simlines) {#for each ref chr
 		push @Q_chr_namelines,$simlines{$Schr}{$pos};
 		$count++;
 	}
-	print "last ones $thresh, $count, ".scalar(@Q_chr_names)."\n";	
+#	print "last ones $thresh, $count, ".scalar(@Q_chr_names)."\n";	
 	foreach  my $i (1..$mid){
 		if ($Q_chr_names[$mid+$i] eq $Q_chr_names[$mid]) {
 			print  $Q_chr_namelines[$mid+$i];
