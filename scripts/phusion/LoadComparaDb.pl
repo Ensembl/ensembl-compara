@@ -6,19 +6,30 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 
-my $usage = "
+my $usage = "\nUsage: $0 [options] File|STDIN
 
-$0 -host ecs2.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
+$0 -host ecs2d.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
--cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
+-alignment_type WGA -cs_genome_db_id 1 -qy_genome_db_id 2 -qy_tag Mm
 
-";
+Options:
+
+ -host        host for compara database
+ -dbname      compara database name
+ -dbuser      username for connection to \"compara_dbname\"
+ -pass        passwd for connection to \"compara_dbname\"
+ -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
+ -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
+ -alignment_type type of alignment stored e.g. WGA (default: WGA_HCR)
+ -qy_tag corresponds to the prefix used in the name of the query DNA dumps
+\n";
 
 my $help = 0;
 my ($host,$dbname,$dbuser,$dbpass,$conf_file);
 my $cs_genome_db_id;
 my $qy_genome_db_id;
 my $qy_tag;
+my $alignment_type = 'WGA';
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
@@ -28,6 +39,7 @@ GetOptions('help' => \$help,
 	   'conf_file=s' => \$conf_file,
 	   'cs_genome_db_id=i' => \$cs_genome_db_id,
 	   'qy_genome_db_id=i' => \$qy_genome_db_id,
+	   'alignment_type=s' => \$alignment_type,
 	   'qy_tag=s' => \$qy_tag);
 
 if ($help) {
@@ -103,6 +115,7 @@ while (defined (my $line = <>) ) {
   $genomic_align->query_start($qy_start);
   $genomic_align->query_end($qy_end);
   $genomic_align->query_strand($qy_strand);
+  $genomic_align->alignment_type($alignment_type);
   $genomic_align->score($score);
   $genomic_align->perc_id($percid);
 

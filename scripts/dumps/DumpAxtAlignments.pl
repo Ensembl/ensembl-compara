@@ -16,6 +16,7 @@ $0 [-help]
    -assembly1 (e.g. NCBI30) assembly version of species1
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
+   -alignment_type type of alignment stored e.g. WGA (default: WGA) 
    -conf_file compara_conf_file
               see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 ";
@@ -26,6 +27,7 @@ my ($chr_name,$chr_start,$chr_end);
 my ($species1,$assembly1,$species2,$assembly2);
 my $conf_file;
 my $help = 0;
+my $alignment_type = "WGA";
 
 unless (scalar @ARGV) {
   print $usage;
@@ -43,6 +45,7 @@ GetOptions('help' => \$help,
 	   'assembly1=s' => \$assembly1,
 	   'species2=s' => \$species2,
 	   'assembly2=s' => \$assembly2,
+	   'alignment_type=s' => \$alignment_type,
 	   'conf_file=s' => \$conf_file);
 
 $|=1;
@@ -100,7 +103,7 @@ my $species2_sliceadaptor = $species2_dbadaptor->get_SliceAdaptor;
 
 my $dafad = $db->get_DnaAlignFeatureAdaptor;
 
-my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$chr_name,$chr_start,$chr_end)};
+my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$chr_name,$chr_start,$chr_end,$alignment_type)};
 
 my $index = 0;
 

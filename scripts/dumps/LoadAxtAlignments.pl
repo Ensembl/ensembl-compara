@@ -13,14 +13,20 @@ my $usage = "\nUsage: $0 [options] axtFile|STDIN
 
  Insert into a compara database axt alignments
 
+$0 -host ecs2d.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
+-conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
+-alignment_type WGA -cs_genome_db_id 1 -qy_genome_db_id 2 -qy_tag Mm
+
 Options:
 
- -reference_species   Name of the reference species (e.g. Homo_sapiens)
- -query_species       Name of the query species (e.g. Mus_musculus)
  -host        host for compara database
  -dbname      compara database name
  -dbuser      username for connection to \"compara_dbname\"
  -pass        passwd for connection to \"compara_dbname\"
+ -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
+ -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
+ -alignment_type type of alignment stored e.g. WGA (default: WGA_HCR) 
+ -min_score 300
 \n";
 
 
@@ -34,6 +40,7 @@ my $cs_genome_db_id;
 my $qy_genome_db_id;
 my $min_score = 0;
 my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf";
+my $alignment_type = 'WGA_HCR';
 
 &GetOptions('h' => \$help,
 	    'host=s' => \$host,
@@ -42,6 +49,7 @@ my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/En
 	    'pass=s' => \$pass,
 	    'cs_genome_db_id=s' => \$cs_genome_db_id,
 	    'qy_genome_db_id=s' => \$qy_genome_db_id,
+	    'alignment_type=s' => \$alignment_type,
 	    'min_score=i' => \$min_score);
 
 if ($help) {
@@ -75,9 +83,7 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor ('-conf_file' => $conf_file
 						      '-pass' => $pass);
 
 my $gdb_adaptor = $db->get_GenomeDBAdaptor;
-#my $cs_genome_db_id = 7;
 my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id);
-#my $qy_genome_db_id = 8;
 my $qy_genome_db= $gdb_adaptor->fetch_by_dbID($qy_genome_db_id);
 
 my @genomicaligns;
@@ -225,6 +231,7 @@ foreach my $f (@DnaDnaAlignFeatures) {
   $genomic_align->query_start($qy_start);
   $genomic_align->query_end($qy_end);
   $genomic_align->query_strand($qy_strand);
+  $genomic_align->alignment_type($alignment_type);
   $genomic_align->score($score);
   $percid = 0 unless (defined $percid);
   $genomic_align->perc_id($percid);
