@@ -49,7 +49,7 @@ sub _init {
 	    next FEAT;
 	}
 	    
-	print STDERR "GENSCAN strand  " . $feat_strand . " " . $seq_feat->strand . " " . $strand . " " . $seq_feat->id . " " . $seq_feat->start . " " . $seq_feat->end . "\n";
+#	print STDERR "GENSCAN strand  " . $feat_strand . " " . $seq_feat->strand . " " . $strand . " " . $seq_feat->id . " " . $seq_feat->start . " " . $seq_feat->end . "\n";
 	if ($feat_strand == $strand){
 	    my @tmp = $seq_feat->sub_SeqFeature();
 	    $id{$seq_feat->id()} = \@tmp;
