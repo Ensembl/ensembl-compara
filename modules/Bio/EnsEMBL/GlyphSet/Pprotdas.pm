@@ -41,8 +41,8 @@ sub _init {
     my %hash;
     my $caption       = $self->managed_name || "GeneDAS";
     my @bitmap        = undef;
-	my $Config        = $self->{'config'};  
-	my $prot_len	  = $self->{'container'}->length;
+    my $Config        = $self->{'config'};  
+    my $prot_len      = $self->{'container'}->length;
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int( $prot_len * $pix_per_bp);
     my $y             = 0;
@@ -51,7 +51,9 @@ sub _init {
     my $black         = 'black';
     my $red           = 'red';
     my $font          = "Small";
-    my $colour        = $Config->get('Ppfam','col');
+    my $das_confkey   = $self->{'extras'}->{'confkey'};
+
+    my $colour        = $Config->get($das_confkey,'col') || 'black';
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 

@@ -17,9 +17,10 @@ sub init {
     ref( $feat_container ) ne 'HASH' and return; # Sanity check
 
     # Examine the data structure, and create glyphs accordingly
-    my %feats_by_glyph;
-    foreach my $dsn( keys( %$feat_container ) ){
-	my $sub_feat_container = $feat_container->{$dsn};
+    my %feats_by_glyphset;
+    my %confkeys_by_glyphset;
+    foreach my $das_confkey( keys( %$feat_container ) ){
+	my $sub_feat_container = $feat_container->{$das_confkey};
 	ref( $sub_feat_container ) ne 'ARRAY' and next; # Another sanity check
 	my $feat_ref = $sub_feat_container->[1];
 	if( ref( $feat_ref ) ne 'ARRAY' or ! scalar @$feat_ref ){ next }
@@ -34,17 +35,19 @@ sub init {
 #	    if( $feat->das_segment_id() =~ /^$id/ ){ next; }
 
 	    # Push feature onto appropriate glyph key (by feature type)
-	    my $type = $dsn . '_' . $feat->das_type_id() || 'UNKNOWN';
-	    $feats_by_glyph{$type} ||= [];
-	    push @{$feats_by_glyph{$type}}, $feat
+	    my $type = $das_confkey . '_' . $feat->das_type_id() || 'UNKNOWN';
+	    $confkeys_by_glyphset{$type} = 'genedas_'.$das_confkey;
+	    $feats_by_glyphset{$type} ||= [];
+	    push @{$feats_by_glyphset{$type}}, $feat
 	}
     }
 
-    foreach my $das_source_name( keys %feats_by_glyph ) {
-	my $extra_config = {};
-	$extra_config->{'name'}     = $das_source_name;
-	$extra_config->{'features'} = $feats_by_glyph{$das_source_name};
-	$self->add_glyphset( $extra_config );
+    foreach my $das_source_name( keys %feats_by_glyphset ) {
+      my $extra_config = {};
+      $extra_config->{'name'}     = $das_source_name;
+      $extra_config->{'confkey'}  = $confkeys_by_glyphset{$das_source_name};
+      $extra_config->{'features'} = $feats_by_glyphset{$das_source_name};
+      $self->add_glyphset( $extra_config );
     }
     return 1;
 }
