@@ -45,7 +45,7 @@ sub new {
 
   my $self = $class->SUPER::new(@args);
   
-  my ($chains, 
+  my ($chains,
       $query_lengths,
       $target_lengths,
       $chain_net,
@@ -201,10 +201,29 @@ sub write_chains {
         # all members of the chain must come from the same
         # query and target, and be on the same strand on those
         # sequences, otherwise all bets are off
-        $query_name = $gf->seqname;
-        $target_name = $gf->hseqname,
-        $query_strand = $gf->strand;
-        $target_strand = $gf->hstrand;
+
+        if ($gf->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+          my $qga = $gf->reference_genomic_align;
+          my $tga;
+          foreach my $al (@{$gf->get_all_GenomicAligns}) {
+            if ($al != $qga) {
+              $tga = $al;
+              last;
+            }
+          }
+
+          $query_name = $qga->dnafrag->name,
+          $target_name = $tga->dnafrag->name,
+          $query_strand = $qga->dnafrag_strand;
+          $target_strand = $tga->dnafrag_strand;
+
+        } else {
+          # assume Bio::EnsEMBL::DnaDnaAlignFeature
+          $query_name = $gf->seqname;
+          $target_name = $gf->hseqname,
+          $query_strand = $gf->strand;
+          $target_strand = $gf->hstrand;
+        }
 
         # the chain must be written with respect to the forward strand
         # of the query. Since we are dealing with the ungapped blocks below,
@@ -219,22 +238,50 @@ sub write_chains {
         $chain_score = $gf->score;
       }
       
-      foreach my $uf ($gf->ungapped_features) {        
+      if ($gf->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+        foreach my $uf (@{$gf->get_all_ungapped_GenomicAlignBlocks}) {
+          my $qga = $uf->reference_genomic_align;
+          my $tga;
+          foreach my $al (@{$uf->get_all_GenomicAligns}) {
+            if ($al != $qga) {
+              $tga = $al;
+              last;
+            }
+          }
 
-        my $sens_f = {
-          q_start  => $uf->start,
-          q_end    => $uf->end,
-          t_start  => $uf->hstart,
-          t_end    => $uf->hend,
-          len      => $uf->end - $uf->start + 1,
-        };
+          my $sens_f = {
+            q_start  => $qga->dnafrag_start,
+            q_end    => $qga->dnafrag_end,
+            t_start  => $tga->dnafrag_start,
+            t_end    => $tga->dnafrag_end,
+            len      => $qga->dnafrag_end - $qga->dnafrag_start + 1,
+          };
 
-        if ($target_strand == -1) {
-          $sens_f->{t_start} = $self->target_length_hash->{$uf->hseqname} - $uf->hend + 1;
-          $sens_f->{t_end}   = $self->target_length_hash->{$uf->hseqname} - $uf->hstart + 1;        
+          if ($target_strand == -1) {
+            $sens_f->{t_start} = $self->target_length_hash->{$tga->dnafrag->name} - $tga->dnafrag_end + 1;
+            $sens_f->{t_end}   = $self->target_length_hash->{$tga->dnafrag->name} - $tga->dnafrag_start + 1;
+          }
+
+          push @ungapped_features, $sens_f;
         }
-
-        push @ungapped_features, $sens_f;    
+      } else {
+        foreach my $uf ($gf->ungapped_features) {        
+          
+          my $sens_f = {
+            q_start  => $uf->start,
+            q_end    => $uf->end,
+            t_start  => $uf->hstart,
+            t_end    => $uf->hend,
+            len      => $uf->end - $uf->start + 1,
+          };
+          
+          if ($target_strand == -1) {
+            $sens_f->{t_start} = $self->target_length_hash->{$uf->hseqname} - $uf->hend + 1;
+            $sens_f->{t_end}   = $self->target_length_hash->{$uf->hseqname} - $uf->hstart + 1;        
+          }
+          
+          push @ungapped_features, $sens_f;
+        }
       }
     }
     
@@ -300,11 +347,16 @@ sub parse_Net_file {
           $self->restrict_between_positions($self->chains->[$chain_id],
                                             $q_start,
                                             $q_end);
-      
-      
+
       foreach my $fp (@$restricted_fps) {
         $fp->score($score);
-        $fp->level_id($level_id);
+        if ($fp->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+          foreach my $align (@{$fp->genomic_align_array}) {
+            $align->level_id($level_id);
+          }
+        } else {
+          $fp->level_id($level_id);
+        }
       }
       
       if (@$restricted_fps) {
@@ -342,8 +394,6 @@ sub parse_Net_file {
       $last_gap[$indent] = [$q_insert_start, $q_insert_end];
     };
 
-
-
   }
 
   foreach my $cid (keys %new_chains) {
@@ -362,10 +412,37 @@ sub restrict_between_positions {
 
   my @new_chain;
 
-  foreach my $block (sort {$a->start <=> $b->start} @$chain) {
-    my $new_block = $block->restrict_between_positions($q_start, $q_end, "SEQ");
-    if (defined $new_block) {
-      push @new_chain, $new_block;
+  my @blocks = @$chain;
+
+  if ($blocks[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+    foreach my $block (sort { $a->reference_genomic_align->dnafrag_start <=> 
+                                  $b->reference_genomic_align->dnafrag_start} @blocks) {
+
+
+      next if $block->reference_genomic_align->dnafrag_end < $q_start;
+      last if $block->reference_genomic_align->dnafrag_start > $q_end;
+      
+      my $ref_start = $block->reference_genomic_align->dnafrag_start;
+      my $ref_end   = $block->reference_genomic_align->dnafrag_end;
+      
+      $ref_start = $q_start if $q_start > $ref_start;
+      $ref_end   = $q_end   if $q_end  < $ref_end;
+
+      my $new_block = $block->restrict_between_reference_positions($ref_start, $ref_end);
+      if (defined $new_block) {
+        push @new_chain, $new_block;
+      }
+      
+    }
+  } else {
+    foreach my $block (sort {$a->start <=> $b->start} @blocks) {
+      next if $block->end < $q_start;
+      last if $block->start > $q_end;
+ 
+      my $new_block = $block->restrict_between_positions($q_start, $q_end, "SEQ");
+      if (defined $new_block) {
+        push @new_chain, $new_block;
+      }
     }
   }
 
