@@ -29,8 +29,8 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 #############################
 
 =head2 store
-  Arg [...]  : one or many DnaFragChunk objects
-  Example    : $adaptor->store($dfc1, $dfc2);
+  Arg[1]     : one or many DnaFragChunk objects
+  Example    : $adaptor->store($chunk);
   Description: stores DnaFragChunk objects into compara database
   Returntype : none
   Exceptions : none
@@ -38,33 +38,23 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 =cut
 
 sub store {
-  my ($self, @out)  = @_;
+  my ($self, $dfc)  = @_;
 
-  return unless(@out and scalar(@out));
+  return unless($dfc);
+  return unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
 
-  my $query = "INSERT INTO dnafrag_chunk(".
-                "dnafrag_id,sequence_id,seq_start,seq_end) VALUES ";
+  my $query = "INSERT INTO dnafrag_chunk".
+              "(dnafrag_id,sequence_id,seq_start,seq_end) VALUES (?,?,?,?)";
+
   my $seqDBA = $self->db->get_SequenceAdaptor;
-  
-  my $addComma=0;
-  foreach my $dfc (@out) {
-    if($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
+  $dfc->sequence_id($seqDBA->store($dfc->sequence));
 
-      $dfc->sequence_id($seqDBA->store($dfc->sequence));
-      
-      $query .= ", " if($addComma);
-      $query .= "(".$dfc->dnafrag_id.
-                ",".$dfc->sequence_id.
-                ",".$dfc->seq_start.
-                ",".$dfc->seq_end.")";
-      $addComma=1;
-      # $dfc->display_short();
-    }
-  }
   #print("$query\n");
   my $sth = $self->prepare($query);
-  $sth->execute();
+  $sth->execute($dfc->dnafrag_id, $dfc->sequence_id, $dfc->seq_start, $dfc->seq_end);
+  $dfc->dbID( $sth->{'mysql_insertid'} );
   $sth->finish();
+  return $dfc;
 }
 
 
