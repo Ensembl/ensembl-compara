@@ -11,6 +11,24 @@ use Sanger::Graphics::Bump;
 my $MAP_WEIGHT = 2;
 my $PRIORITY   = 50;
 
+sub init_label {
+  my ($self) = @_;
+    return if( defined $self->{'config'}->{'_no_label'} );
+      my $label = new Sanger::Graphics::Glyph::Text({
+          'text'    => "Markers",
+              'font'    => 'Small',
+                  'absolutey' => 1,
+                      'href'    => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','markers')],
+                          'zmenu'   => {
+                                'caption'           => 'HELP',
+                                      "01:Track information..."   => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_
+                                      SCRIPT'}\',\'markers\')]
+                                          }
+                                            });
+                                              $self->label($label);
+                                              }
+
+
 sub _init {
   my $self = shift;
 
