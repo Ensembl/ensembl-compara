@@ -126,15 +126,17 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
-  if( $self->{'config'}->{'fakecore'} ) {
-    my $G = $self->{'container'}->get_all_Genes('genomewise');
-       push @$G, @{$self->{'container'}->get_all_Genes('estgene')};
-    return $G;
-  } else {
-    my $G = $self->{'container'}->get_all_Genes('genomewise','estgene');
-       push @$G, @{$self->{'container'}->get_all_Genes('estgene','estgene')};
-    return $G;
+  my $track = 'est_transcript_lite';
+  my $db_alias = $self->{'config'}->get($track,'db_alias');
+  if( ! $db_alias and ! $self->{'config'}->{'fakecore'} ){
+    $db_alias = 'estgene';
   }
+  my $slice = $self->{'container'};
+  my @genes;
+  foreach my $analysis( 'genomewise', 'estgene' ){
+    push @genes, @{ $slice->get_all_Genes( $analysis, $db_alias||() ) }
+  }
+  return [@genes];
 }
 
 sub legend {

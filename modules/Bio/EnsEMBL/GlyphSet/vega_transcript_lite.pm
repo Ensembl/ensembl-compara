@@ -156,7 +156,10 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
-  if( $self->{'config'}->{'fakecore'} ) {
+  my $track = 'vega_transcript_lite';
+  if( my $alias = $self->{'config'}->get($track,'db_alias') ){
+    return $self->{'container'}->get_all_Genes('otter',$alias);
+  } elsif( $self->{'config'}->{'fakecore'} ) {
     return $self->{'container'}->get_all_Genes('otter');
   } else {
     return $self->{'container'}->get_all_Genes('otter','vega');

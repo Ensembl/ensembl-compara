@@ -20,12 +20,17 @@ sub colours {
 
 sub features {
   my ($self) = @_;
-
-  return [
-    @{$self->{'container'}->get_all_Genes(
-      lc(EnsWeb::species_defs->other_species( $self->{'_config_file_name_'}, 'AUTHORITY') )
-    )}, @{$self->{'container'}->get_all_Genes('pseudogene')}
-  ];
+  my $track = 'transcript_lite';
+  my $slice = $self->{'container'};
+  my $sp = $self->{'_config_file_name_'};
+  my @analyses = ( lc( EnsWeb::species_defs->get_config($sp,'AUTHORITY') ),
+                   'pseudogene');
+  my $db_alias = $self->{'config'}->get($track,'db_alias') || '';
+  my @genes;
+  foreach my $analysis( @analyses ){
+    push @genes, @{ $slice->get_all_Genes( $analysis, $db_alias||() ) }
+  }
+  return [@genes];
 }
 
 
