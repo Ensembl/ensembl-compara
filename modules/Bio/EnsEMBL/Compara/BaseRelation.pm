@@ -93,18 +93,6 @@ sub description {
   return $self->{'_description'};
 }
 
-=head2 description_score
-
-  Arg [1]    : int $score (optional)
-  Example    : 
-  Description: get/set the description_score of the Family. This a
-               measure of how good the cluster is (scale 0-100)
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
 =head2 source_id
 
 =cut
@@ -143,41 +131,21 @@ sub adaptor {
   return $self->{'_adaptor'};
 }
 
-sub add_Relation {
-  my ($self, $relation_attribute) = @_;
+sub add_Member_Attribute {
+  my ($self, $member_attribute) = @_;
 
-  my ($relation, $attribute) = @{$relation_attribute};
+  my ($member, $attribute) = @{$member_attribute};
 
-  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
-
-    $self->isa('Bio::EnsEMBL::Compara::Member') &&
-      $self->throw("You can't add a Member to a Member");
-    push @{$self->{'_member_array'}}, $relation_attribute ;
-    push @{$self->{'_members_by_source'}{$relation->source_name}}, $relation_attribute;
-    push @{$self->{'_members_by_source_taxon'}{$relation->source_name."_".$relation->taxon_id}}, $relation_attribute;
-
-  } elsif ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-
-    $self->isa('Bio::EnsEMBL::Compara::Family') &&
-      $self->throw("You can't add a Family to a Family");
-    push @{$self->{'_family_array'}}, $relation_attribute;
-    push @{$self->{'_family_by_source'}{$relation->source_name}}, $relation_attribute;
-
-  } elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-
-    $self->isa('Bio::EnsEMBL::Compara::Domain') &&
-      $self->throw("You can't add a Domain to a Domain");
-    push @{$self->{'_domain_array'}}, $relation_attribute;
-    push @{$self->{'_domain_by_source'}{$relation->source_name}}, $relation_attribute;
-
-  } elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-   
-    $self->isa('Bio::EnsEMBL::Compara::Homology') &&
-      $self->throw("You can't add a Homology to a Homology");
-
-    push @{$self->{'_homology_array'}}, $relation_attribute;
-    push @{$self->{'_homology_by_source'}{$relation->source_name}}, $relation_attribute;
+  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    $self->throw("Need to add a Bio::EnsEMBL::Compara::Member, not a $member\n");
   }
+  unless ($attribute->isa('Bio::EnsEMBL::Compara::Attribute')) {
+    $self->throw("Need to add a Bio::EnsEMBL::Compara::Attribute, not a $attribute\n");
+  }
+
+    push @{$self->{'_member_array'}}, $member_attribute ;
+    push @{$self->{'_members_by_source'}{$member->source_name}}, $member_attribute;
+    push @{$self->{'_members_by_source_taxon'}{$member->source_name."_".$member->taxon_id}}, $member_attribute;
 }
 
 =head2 get_all_Member
@@ -203,7 +171,7 @@ sub get_all_Member {
     $self->{'_members_by_source'} = {};
     $self->{'_members_by_source_taxon'} = {};
     foreach my $member_attribute (@{$members}) {
-      $self->add_Relation($member_attribute);
+      $self->add_Member_Attribute($member_attribute);
     }
   }
   return $self->{'_member_array'}; #should return also attributes
@@ -261,30 +229,6 @@ sub get_Member_by_source_taxon {
     push @{$self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id}}, @{$members};
   }
   return $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id};
-}
-
-=head2 Member_count
-
-  Arg [1]    : None
-  Example    : 
-  Description: 
-  Returntype : int
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub Member_count {
-  my ($self) = @_; 
-  
-  # we do not want to have a total number of gene+peptide members
-  # That is why we substracte from the total those corresponding to genes
-  # Need to be fixed as ENSEMBLGENE is here hard coded
-  # Probably by just adding a colunm type in source, which would be gene, peptide, or
-  # even transcript. Then recode Member_count as Member_count_by_type or something like that.
-  # Member_count_by_type('peptide'),...
-
-  return scalar @{$self->get_all_Member} - $self->Member_count_by_source('ENSEMBLGENE');
 }
 
 =head2 Member_count_by_source
@@ -364,43 +308,5 @@ sub known_sources {
   }
   return $self->{'_known_sources'};
 }
-
-
-=head2 get_families
-
-=cut
-
-sub get_all_families {
-  my $self = shift;
-
-  #if not cached, retrieve all of the families for this member
-  if (!defined $self->{'_family_array'} && $self->adaptor) {
-    $self->{'_family_array'} = 
-      $self->adaptor->db->get_FamilyAdaptor->fetch_by_Relation($self);
-  }
-
-  $self->{'_family_array'} ||= [];
-
-  return $self->{'_family_array'};
-}
-
-=head2 get_all_domains
-
-=cut
-
-sub get_all_domains {
-  my $self = shift;
-
-  #if not cached, retrieve all of the domains for this member
-  if (!defined $self->{'_domain_array'} && $self->adaptor) {
-    $self->{'_domain_array'} =
-      $self->adaptor->db->get_DomainAdaptor->fetch_by_relation($self);
-  }
-
-  $self->{'_domain_array'} ||= [];
-
-  return $self->{'_domain_array'};
-}
-
 
 1;
