@@ -31,16 +31,22 @@ sub _init {
     my ($self) = @_;
     my $Config = $self->{'config'};
     my $chr    = $self->{'extras'}->{'chr'} || $self->{'container'}->{'chr'};
-   	my $genes_col = $Config->get( 'Vgenes','col_genes' );
-   	my $known_col = $Config->get( 'Vgenes','col_known' );
-	my $chr_slice = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);	
-    my $known_genes = $self->{'container'}->{'da'}->fetch_Featureset_by_Slice($chr_slice,'kngene', 150, 1);
-    my $genes = $self->{'container'}->{'da'}->fetch_Featureset_by_Slice($chr_slice,'gene', 150, 1);
+    my $genes_col = $Config->get( 'Vgenes','col_genes' );
+    my $known_col = $Config->get( 'Vgenes','col_known' );
 
-	my $v_offset    = $Config->container_width() - ($chr_slice->length() || 1);
+    my $slice_adapt   = $self->{'container'}->{'sa'};
+    my $density_adapt = $self->{'container'}->{'da'};
 
-#    my $v_offset    = $Config->container_width() - ($self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1);
+    my $chr_slice = $slice_adapt->fetch_by_region('chromosome', $chr);
+    my $known_genes = $density_adapt->fetch_Featureset_by_Slice
+      ($chr_slice,'knownGeneDensity', 150, 1);
+    my $genes = $density_adapt->fetch_Featureset_by_Slice
+      ($chr_slice,'geneDensity', 150, 1);
 
+    my $v_offset = $Config->container_width() - ($chr_slice->length() || 1);
+
+    #warn Data::Dumper::Dumper( $known_genes );
+    warn( "===>X ",$known_genes->size," ", $genes->size );
     return unless $known_genes->size() && $genes->size();
 
    	$genes->scale_to_fit( $Config->get( 'Vgenes', 'width' ) );
