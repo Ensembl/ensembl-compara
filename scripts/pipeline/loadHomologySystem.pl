@@ -269,6 +269,7 @@ sub prepareGenomeAnalysis
   $stats = $analysisStatsDBA->fetch_by_analysis_id($blastrules_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(1);
+  $stats->status('BLOCKED');
   $stats->update();
 
   $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
