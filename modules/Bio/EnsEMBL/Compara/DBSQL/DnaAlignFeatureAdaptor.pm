@@ -167,6 +167,7 @@ sub fetch_all_by_species_region {
           'hseqname'     => $qdf->name,
           'hspecies'     => $qy_species,
           'hslice'       => $top_slice,
+          'alignment_type' => $alignment_type,
           'group_id'     => $ga->group_id(),
           'level_id'     => $ga->level_id(),
           'strands_reversed' => $ga->strands_reversed()});
