@@ -234,7 +234,7 @@ sub _create_underlying_Slices {
     my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $self->reference_Slice->end;
     if ($excess_at_the_start > 0) {
       ## First GAB. The slice start inside this GAB...
-      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence;
+      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
       ## Memory optimization: start looking from $excess_at_the_end from the start
       my $truncated_seq = substr($this_align_slice_seq, 0, $excess_at_the_start);
       substr($this_align_slice_seq, 0, $excess_at_the_start, "");
@@ -247,12 +247,14 @@ sub _create_underlying_Slices {
       $reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
       ## Truncate all the GenomicAligns
       foreach my $genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
-        my $aligned_sequence = $genomic_align->aligned_sequence;
+        my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
         my $this_truncated_seq = substr($aligned_sequence, 0, length($truncated_seq));
         substr($aligned_sequence, 0, length($truncated_seq), "");
         $genomic_align->aligned_sequence($aligned_sequence);
         $genomic_align->original_sequence(0); # unset original_sequence
-        $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new aligned_sequence
+        $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
+        $genomic_align->cigar_line(); # build cigar_line according to fake aligned_seq
+        $genomic_align->aligned_sequence(0); # unset the *fake* aligned sequence
         $this_truncated_seq =~ s/\-//g;
         if ($genomic_align->dnafrag_strand == 1) {
           $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
@@ -263,7 +265,7 @@ sub _create_underlying_Slices {
       }
     }
     if ($excess_at_the_end > 0) {
-      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence;
+      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
       ## Optimization: start looking from $excess_at_the_end from the end because
       ## the pattern match at the end of the string could be very slow
       my $truncated_seq = substr($this_align_slice_seq, -$excess_at_the_end);
@@ -277,12 +279,14 @@ sub _create_underlying_Slices {
       $reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
       ## Truncate all the GenomicAligns
       foreach my $genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
-        my $aligned_sequence = $genomic_align->aligned_sequence;
+        my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
         my $this_truncated_seq = substr($aligned_sequence, - length($truncated_seq));
         substr($aligned_sequence, - length($truncated_seq), length($truncated_seq), "");
         $genomic_align->aligned_sequence($aligned_sequence);
         $genomic_align->original_sequence(0); # unset original_sequence
-        $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new aligned_sequence
+        $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
+        $genomic_align->cigar_line(); # build cigar_line according to fake aligned_seq
+        $genomic_align->aligned_sequence(0); # unset the *fake* aligned sequence
         $this_truncated_seq =~ s/\-//g;
         if ($genomic_align->dnafrag_strand == 1) {
           $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
