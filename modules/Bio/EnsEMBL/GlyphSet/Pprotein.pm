@@ -20,10 +20,9 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-    my $protein = $self->{'container'};
-	my $transcript = $protein->transcript();
-	my $pep_splice = &EnsEMBL::Web::GeneTrans::support::prot_splice_site($transcript);
+    my $protein = $self->{'container'};	
     my $Config  = $self->{'config'};
+	my $pep_splice = $protein->{'bg2_splice'};
     my $x 		= 0;
 	my $y       = 0;
     my $h       = 4; 
