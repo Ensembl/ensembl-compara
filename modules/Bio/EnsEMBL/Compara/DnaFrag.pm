@@ -275,6 +275,24 @@ sub end{
     return $self->{'end'};
 }
 
+=head2 length
+ 
+  Arg [1]    : int
+  Example    : $dnafrag->length;
+  Description: Getter for the length attribute
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+sub length{
+  my ($self) = @_;
+  unless (defined $self->{'length'}) {
+    $self->{'length'} = $self->{'end'} - $self->{'start'} + 1;
+  }
+   return $self->{'length'};
+}
 
 1;
 
