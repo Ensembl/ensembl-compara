@@ -11,13 +11,13 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor) = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR)], @args);
+    my ($dbid, $stable_id, $method_link_species_set_id, $method_link_type, $description, $adaptor) = rearrange([qw(DBID STABLE_ID METHOD_LINK_SPECIES_SET_ID METHOD_LINK_TYPE DESCRIPTION  ADAPTOR)], @args);
     
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
     $description && $self->description($description);
-    $source_id && $self->source_id($source_id);
-    $source_name && $self->source_id($source_name);
+    $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
+    $method_link_type && $self->method_link_type($method_link_type);
     $adaptor && $self->adaptor($adaptor);
   }
   
@@ -93,24 +93,109 @@ sub description {
   return $self->{'_description'};
 }
 
-=head2 source_id
+=head2 set_MethodLinkSpeciesSet
+
+  Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Example    : 
+  Description: 
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions : 
+  Caller     : 
 
 =cut
 
-sub source_id {
+sub set_MethodLinkSpeciesSet {
   my $self = shift;
-  $self->{'_source_id'} = shift if (@_);
-  return $self->{'_source_id'};
+
+  $self->{'_MethodLinkSpeciesSet'} = shift if (@_);
+  return $self->{'_MethodLinkSpeciesSet'};
 }
 
-=head2 source_name
+=head2 get_MethodLinkSpeciesSet
+
+  Arg [1]    : None
+  Example    : 
+  Description: 
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions : 
+  Caller     : 
 
 =cut
 
-sub source_name {
+sub get_MethodLinkSpeciesSet {
   my $self = shift;
-  $self->{'_source_name'} = shift if (@_);
-  return $self->{'_source_name'};
+
+  if ( ! defined $self->{'MethodLinkSpeciesSet'} && defined $self->method_link_species_set_id) {
+    my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
+    my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
+    $self->{'_MethodLinkSpeciesSet'} = $mlss;
+  }
+
+  return $self->{'_MethodLinkSpeciesSet'};
+}
+
+=head2 method_link_species_set_id
+
+  Arg [1]    : integer (optional)
+  Example    : 
+  Description: 
+  Returntype : integer
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub method_link_species_set_id {
+  my $self = shift;
+
+  $self->{'_method_link_species_set_id'} = shift if (@_);
+  return $self->{'_method_link_species_set_id'};
+}
+
+=head2 method_link_type
+
+  Arg [1]    : string $method_link_type (optional)
+  Example    : 
+  Description: 
+  Returntype : string
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub method_link_type {
+  my $self = shift;
+
+  $self->{'_method_link_type'} = shift if (@_);
+  unless (defined $self->{'_method_link_type'}) {
+    my $mlss = $self->get_MethodLinkSpeciesSet;
+    $self->{'_method_link_type'} = $mlss->method_link_type;
+  }
+
+  return $self->{'_method_link_type'};
+}
+
+=head2 method_link_id
+
+  Arg [1]    : integer (optional)
+  Example    : 
+  Description: 
+  Returntype : integer
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub method_link_id {
+  my $self = shift;
+
+  $self->{'_method_link_id'} = shift if (@_);
+  unless (defined $self->{'_method_link_id'}) {
+    my $mlss = $self->get_MethodLinkSpeciesSet;
+    $self->{'_method_link_id'} = $mlss->method_link_id;
+  }
+
+  return $self->{'_method_link_id'};
 }
 
 =head2 adaptor
@@ -280,6 +365,26 @@ sub Member_count_by_source_taxon {
   return scalar @{$self->get_Member_Attribute_by_source_taxon($source_name,$taxon_id)};
 }
 
+#
+# DEPRECATED METHODS
+####################
+
+=head2 source_id
+
+=cut
+
+sub source_id {
+  my $self = shift;
+  deprecate("source method is deprecated. Calling $self->method_link_id instead\n");
+  return $self->get_MethodLinkSpeciesSet->method_link_id;
+}
+
+sub source_name {
+  my $self = shift;
+  deprecate("source_name method is now deprecated. Calling method_link_type instead.\n");
+  return  $self->method_link_type
+}
+
 =head2 known_sources
 
  Args       : none
@@ -293,7 +398,7 @@ sub Member_count_by_source_taxon {
 
 sub known_sources {
   my ($self) = @_;
-  
+  deprecate("deprecated method\n");
   unless (defined $self->{_known_sources}) {
       $self->{'_known_sources'} = $self->adaptor->_known_sources;
   }

@@ -14,12 +14,11 @@ sub new {
   
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id) = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
+    my ($dbid, $stable_id, $description, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id) = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
 
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
     $description && $self->description($description);
-    $source_id && $self->source_id($source_id);
     $source_name && $self->source_name($source_name);
     $adaptor && $self->adaptor($adaptor);
     $taxon_id && $self->taxon_id($taxon_id);
@@ -256,6 +255,9 @@ sub description {
 
 sub source_id {
   my $self = shift;
+
+  throw("Method deprecated. You can now get the source_name by directly calling source_name method\n");
+
   $self->{'_source_id'} = shift if (@_);
   return $self->{'_source_id'};
 }

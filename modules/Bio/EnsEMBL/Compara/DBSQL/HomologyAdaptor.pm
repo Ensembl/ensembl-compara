@@ -5,7 +5,7 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);                 
+our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =head2 fetch_by_Member
 
@@ -19,6 +19,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 =cut
 
 sub fetch_by_Member {
+  # to be renamed fetch_all_by_Member
   my ($self, $member) = @_;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
@@ -50,6 +51,7 @@ sub fetch_by_Member {
 =cut
 
 sub fetch_by_Member_paired_species {
+  # to be renamed fetch_all_by_Member_paired_species
   my ($self, $member, $species) = @_;
 
   $species =~ tr/_/ /;
@@ -59,12 +61,11 @@ sub fetch_by_Member_paired_species {
 
   my $sth =  $self->generic_fetch_sth($constraint, $join);
   
-  my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
-      $source_id, $source_name, $subtype);
-
-  $sth->bind_columns(\$homology_id, \$stable_id, \$description, \$subtype,
-                     \$dn ,\$ds, \$n, \$s, \$lnl, \$threshold_on_ds,
-                     \$source_id, \$source_name);
+  my ($homology_id, $stable_id, $method_link_species_set_id, $description, $dn, 
+      $ds, $n, $s, $lnl, $threshold_on_ds, $subtype);
+  
+  $sth->bind_columns(\$homology_id, \$stable_id, \$method_link_species_set_id, \$description, \$subtype,
+                     \$dn, \$ds, \$n, \$s, \$lnl, \$threshold_on_ds);
 
   my @homology_ids = ();
   
@@ -87,18 +88,34 @@ sub fetch_by_Member_paired_species {
   return $self->generic_fetch($constraint, $join);
 }
 
-sub fetch_by_Member_Homology_source {
-  my ($self, $member, $source_name) = @_;
+
+sub fetch_all_by_Member_method_link_type {
+  my ($self, $member, $method_link_type) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
     throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
   }
 
-  throw("source_name arg is required\n")
-    unless ($source_name);
+  throw("method_link_type arg is required\n")
+    unless ($method_link_type);
+
+  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
+  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_and_genome_db($method_link_type,$member->genome_db_id);
   
+  unless (scalar @{$mlss_arrayref}) {
+    warnings("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
+    return [];
+  }
+
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = "s.source_name = '$source_name'";
+
+  my $constraint = " ";
+  foreach my $mlss (@{$mlss_arrayref}) {
+    $constraint .= " AND " unless ($constraint eq " ");
+    $constraint .= "h.method_link_species_set_id = ";
+    $constraint .= $mlss->dbID;
+  }
+
   $constraint .= " AND hm.member_id = " . $member->dbID;
 
   # See in fetch_by_Member what is this internal variable for
@@ -125,6 +142,29 @@ sub fetch_all_by_genome_pair {
   return $self->generic_fetch($constraint, $join);
 }
 
+sub fetch_all_by_method_link_type {
+  my ($self,$method_link_type) = @_;
+
+  $self->throw("method_link_type arg is required\n")
+    unless ($method_link_type);
+
+  my $mlss_arrayref = $self->db->get_MethodLinkSpeciesAdaptor->fetch_all_by_method_link_type($method_link_type);
+
+  unless (scalar @{$mlss_arrayref}) {
+    warnings("There is no $method_link_type data stored in the database\n");
+    return [];
+  }
+
+  my $constraint = " ";
+  foreach my $mlss (@{$mlss_arrayref}) {
+     $constraint .= " AND " unless ($constraint eq " ");
+     $constraint .= "h.method_link_species_set_id = ";
+     $constraint .= $mlss->dbID;
+  }
+
+  return $self->generic_fetch($constraint);
+}
+
 #
 # internal methods
 #
@@ -135,7 +175,7 @@ sub fetch_all_by_genome_pair {
 sub _tables {
   my $self = shift;
 
-  return (['homology', 'h'], ['source', 's']);
+  return (['homology', 'h']);
 }
 
 sub _columns {
@@ -143,6 +183,7 @@ sub _columns {
 
   return qw (h.homology_id
              h.stable_id
+             h.method_link_species_set_id
              h.description
              h.subtype
              h.dn
@@ -150,19 +191,18 @@ sub _columns {
              h.n
              h.s
              h.lnl
-             h.threshold_on_ds
-             s.source_id
-             s.source_name);
+             h.threshold_on_ds);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
   my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
-      $source_id, $source_name, $subtype);
+      $method_link_species_set_id, $subtype);
 
-  $sth->bind_columns(\$homology_id, \$stable_id, \$description, \$subtype, \$dn, \$ds,
-                     \$n, \$s, \$lnl, \$threshold_on_ds, \$source_id, \$source_name);
+  $sth->bind_columns(\$homology_id, \$stable_id, \$method_link_species_set_id,
+                     \$description, \$subtype, \$dn, \$ds,
+                     \$n, \$s, \$lnl, \$threshold_on_ds);
 
   my @homologies = ();
   
@@ -171,6 +211,7 @@ sub _objs_from_sth {
       ({'_dbID' => $homology_id,
        '_stable_id' => $stable_id,
        '_description' => $description,
+       '_method_link_species_set_id' => $method_link_species_set_id,
        '_subtype' => $subtype,
        '_dn' => $dn,
        '_ds' => $ds,
@@ -178,8 +219,6 @@ sub _objs_from_sth {
        '_s' => $s,
        '_lnl' => $lnl,
        '_threshold_on_ds' => $threshold_on_ds,
-       '_source_id' => $source_id,
-       '_source_name' => $source_name,
        '_adaptor' => $self,
        '_this_one_first' => $self->{'_this_one_first'}});
   }
@@ -189,8 +228,7 @@ sub _objs_from_sth {
 
 sub _default_where_clause {
   my $self = shift;
-
-  return 'h.source_id = s.source_id';
+  return '';
 }
 
 #
@@ -212,16 +250,26 @@ sub _default_where_clause {
 
 sub store {
   my ($self,$hom) = @_;
-
+  
   $hom->isa('Bio::EnsEMBL::Compara::Homology') ||
     throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom");
 
-  $hom->source_id($self->store_source($hom->source_name));
-    
+  $hom->adaptor($self);
+
+  if ( !defined $hom->method_link_species_set_id && defined $hom->get_MethodLinkSpeciesSet) {
+    $self->db->get_MethodLinkSpeciesSetAdaptor->store($hom->get_MethodLinkSpeciesSet);
+  }
+
+  if (! defined $hom->get_MethodLinkSpeciesSet) {
+    throw("Homology object has no set MethodLinkSpecies object. Can not store Homology object\n");
+  } else {
+    $hom->method_link_species_set_id($hom->get_MethodLinkSpeciesSet->dbID);
+  }
+  
   unless($hom->dbID) {
-    my $sql = "INSERT INTO homology (stable_id, source_id, description, subtype) VALUES (?,?,?,?)";
+    my $sql = "INSERT INTO homology (stable_id, method_link_species_set_id, description, subtype) VALUES (?,?,?,?)";
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->stable_id,$hom->source_id,$hom->description, $hom->subtype);
+    $sth->execute($hom->stable_id,$hom->method_link_species_set_id,$hom->description, $hom->subtype);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
@@ -277,6 +325,16 @@ sub update_genetic_distance {
   $sth->finish();
 
   return $self;
+}
+
+# DEPRECATED METHODS
+####################
+
+sub fetch_by_Member_Homology_source {
+  my ($self, $member, $source_name) = @_;
+  deprecate("fetch_by_Member_Homology_source method is deprecated. Calling 
+fetch_all_by_Member_method_link_type instead");
+  return $self->fetch_by_Member_method_link_type;
 }
 
 1;

@@ -107,7 +107,7 @@ sub generic_fetch_sth {
 
 #  warn $sql;
 
-  $sth->execute;  
+  $sth->execute;
 
   return $sth;
 }
@@ -118,7 +118,8 @@ sub fetch_all {
   return $self->generic_fetch();
 }
 
-sub list_internal_ids {
+
+sub list_dbIDs {
   my $self = shift;
   
   my @tables = $self->_tables;
@@ -205,13 +206,15 @@ sub fetch_by_stable_id {
   return $obj;
 }
 
+
 =head2 fetch_by_source
 
 =cut
 
 sub fetch_by_source {
   my ($self,$source_name) = @_;
-
+  deprecate("deprecated method\n");
+  #call fetch_by_method_link instead
   $self->throw("source_name arg is required\n")
     unless ($source_name);
 
@@ -222,19 +225,7 @@ sub fetch_by_source {
 
 sub store_source {
   my ($self,$source_name) = @_;
-  
-  my $sql = "SELECT source_id FROM source WHERE source_name = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($source_name);
-  my $rowhash = $sth->fetchrow_hashref;
-  if ($rowhash->{source_id}) {
-    return $rowhash->{source_id};
-  } else {
-    $sql = "INSERT INTO source (source_name) VALUES (?)";
-    $sth = $self->prepare($sql);
-    $sth->execute($source_name);
-    return $sth->{'mysql_insertid'};
-  }
+  deprecate("store_source method is deprecated. Now this data has to be pre-stored in method_link table\n");
 }
 
 sub store_relation {
@@ -284,67 +275,6 @@ sub update_relation {
   }
 }
 
-sub _known_sources {
-  my ($self) = @_;
-  
-  my $q;
-  if ($self->isa('Bio::EnsEMBL::Compara::FamilyAdaptor')) {
-    $q = 
-    "SELECT distinct(source_name) FROM source s,member m,family_member fm where s.source_id=m.source_id and m.member_id=fm.member_id";
-  } elsif ($self->isa('Bio::EnsEMBL::Compara::DomainAdaptor')) {
-    $q = 
-    "SELECT distinct(source_name) FROM source s,member m,domain_member dm where s.source_id=m.source_id and m.member_id=dm.member_id";
-  } elsif ($self->isa('Bio::EnsEMBL::Compara::HomologyAdaptor')) {
-    $q = 
-    "SELECT distinct(source_name) FROM source s,member m,homology_member hm where s.source_id=m.source_id and m.member_id=hm.member_id";
-  }
-
-  $q = $self->prepare($q);
-  $q->execute;
-
-  my @res= ();
-  while ( my ( @row ) = $q->fetchrow_array ) {
-        push @res, $row[0];
-  }
-  $self->throw("didn't find any source") if (int(@res) == 0);
-  return \@res;
-}
-
-=head2 get_source_id_by_source_name
-
-=cut
-
-sub get_source_id_by_source_name {
-  my ($self, $source_name) = @_;
-
-  $self->throw("Should give a defined source_name as argument\n") 
-    unless (defined $source_name);
-
-  my $q = "SELECT source_id FROM source WHERE source_name = ?";
-  $q = $self->prepare($q);
-  $q->execute($source_name);
-  my $rowhash = $q->fetchrow_hashref;
-
-  return $rowhash->{source_id};
-}
-
-=head2 get_source_name_by_source_id
-
-=cut
-
-sub get_source_name_by_source_id {
-  my ($self, $source_id) = @_;
-
-  $self->throw("Should give a defined source_id as argument\n") 
-    unless (defined $source_id);
-
-  my $q = "SELECT source_name FROM source WHERE source_id = ?";
-  $q = $self->prepare($q);
-  $q->execute($source_id);
-  my $rowhash = $q->fetchrow_hashref;
-
-  return $rowhash->{source_name};
-}
 
 
 =head2 _tables
@@ -474,3 +404,37 @@ sub _final_clause {
   return '';
 }
 
+# DEPRECATED METHODS
+####################
+
+sub _known_sources {
+  my ($self) = @_;
+  deprecate("_know_sources method is deprecated.\n");
+}
+
+=head2 get_source_id_by_source_name
+
+=cut
+
+sub get_source_id_by_source_name {
+  my ($self, $source_name) = @_;
+  throw("get_source_id_by_source_name method is deprecated\n");
+}
+
+=head2 get_source_name_by_source_id
+
+=cut
+
+sub get_source_name_by_source_id {
+  my ($self, $source_id) = @_;
+  throw("get_source_name_by_source_id method is deprecated\n");
+}
+
+sub list_internal_ids {
+  my $self = shift;
+
+  deprecate("list_internal_ids is deprecated. Calling list_dbIDs instead.\n");
+  return $self->list_dbIDs;
+}
+
+1;

@@ -97,27 +97,43 @@ sub fetch_by_Member_source_stable_id {
   }
 
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'],
-              [['member', 'm'], 'fm.member_id = m.member_id'],
-              [['source', 'ms'], 'm.source_id = ms.source_id']];
-  my $constraint = "m.stable_id = '$member_stable_id' AND ms.source_name = '$source_name'";
+              [['member', 'm'], 'fm.member_id = m.member_id']];
+
+  my $constraint = "m.stable_id = '$member_stable_id' AND m.source_name = '$source_name'";
 
   return $self->generic_fetch($constraint, $join);
 }
 
 # maybe a useful method in case more than one kind of family data is stored in the db.
 
-sub fetch_by_Member_Family_source {
-  my ($self, $member, $source_name) = @_;
+
+sub fetch_all_by_Member_method_link_type {
+  my ($self, $member, $method_link_type) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
     $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
   }
 
-  $self->throw("source_name arg is required\n")
-    unless ($source_name);
-
+  $self->throw("method_link_type arg is required\n")
+    unless ($method_link_type);
+  
+  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
+  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_and_genome_db($method_link_type,$member->genome_db_id);
+  
+  unless (scalar @{$mlss_arrayref}) {
+    warnings("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
+    return [];
+  }
+  
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-  my $constraint = "s.source_name = '$source_name'";
+
+  my $constraint = " ";
+  foreach my $mlss (@{$mlss_arrayref}) {
+    $constraint .= " AND " unless ($constraint eq " ");
+    $constraint .= "f.method_link_species_set_id = ";
+    $constraint .= $mlss->dbID;
+  }
+
   $constraint .= " AND fm.member_id = " . $member->dbID;
 
   return $self->generic_fetch($constraint, $join);
@@ -164,7 +180,7 @@ sub fetch_by_description_with_wildcards{
 sub _tables {
   my $self = shift;
 
-  return (['family', 'f'], ['source', 's']);
+  return (['family', 'f']);
 }
 
 sub _columns {
@@ -172,19 +188,17 @@ sub _columns {
 
   return qw (f.family_id
              f.stable_id
+             f.method_link_species_set_id
              f.description
-             f.description_score
-             s.source_id
-             s.source_name);
+             f.description_score);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($family_id, $stable_id, $description, $description_score, $source_id, $source_name);
+  my ($family_id, $stable_id, $method_link_species_set_id, $description, $description_score);
 
-  $sth->bind_columns(\$family_id, \$stable_id, \$description, \$description_score,
-                     \$source_id, \$source_name);
+  $sth->bind_columns(\$family_id, \$stable_id, \$method_link_species_set_id, \$description, \$description_score);
 
   my @families = ();
   
@@ -194,8 +208,7 @@ sub _objs_from_sth {
        '_stable_id' => $stable_id,
        '_description' => $description,
        '_description_score' => $description_score,
-       '_source_id' => $source_id,
-       '_source_name' => $source_name,
+       '_method_link_species_set_id' => $method_link_species_set_id,
        '_adaptor' => $self});
   }
   
@@ -204,8 +217,7 @@ sub _objs_from_sth {
 
 sub _default_where_clause {
   my $self = shift;
-
-  return 'f.source_id = s.source_id';
+  return '';
 }
 
 #
@@ -231,20 +243,30 @@ sub store {
   $fam->isa('Bio::EnsEMBL::Compara::Family') ||
     $self->throw("You have to store a Bio::EnsEMBL::Compara::Family object, not a $fam");
 
+  $fam->adaptor($self);
+
+  if ( !defined $fam->method_link_species_set_id && defined $fam->get_MethodLinkSpeciesSet) {
+    $self->db->get_MethodLinkSpeciesSetAdaptor->store($fam->get_MethodLinkSpeciesSet);
+  }
+
+  if (! defined $fam->get_MethodLinkSpeciesSet) {
+    throw("Family object has no set MethodLinkSpecies object. Can not store Family object\n");
+  } else {
+    $fam->method_link_species_set_id($fam->get_MethodLinkSpeciesSet->dbID);
+  }
+
   my $sql = "SELECT family_id from family where stable_id = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($fam->stable_id);
   my $rowhash = $sth->fetchrow_hashref;
 
-  $fam->source_id($self->store_source($fam->source_name));
-
   if ($rowhash->{family_id}) {
     $fam->dbID($rowhash->{family_id});
   } else {
   
-    $sql = "INSERT INTO family (stable_id, source_id, description, description_score) VALUES (?,?,?,?)";
+    $sql = "INSERT INTO family (stable_id, method_link_species_set_id, description, description_score) VALUES (?,?,?,?)";
     $sth = $self->prepare($sql);
-    $sth->execute($fam->stable_id,$fam->source_id,$fam->description,$fam->description_score);
+    $sth->execute($fam->stable_id,$fam->method_link_species_set_id,$fam->description,$fam->description_score);
     $fam->dbID($sth->{'mysql_insertid'});
   }
 
@@ -253,6 +275,13 @@ sub store {
   }
 
   return $fam->dbID;
+}
+
+sub fetch_by_Member_Family_source {
+  my ($self, $member, $source_name) = @_;
+  deprecate("fetch_by_Member_Family_source method is deprecated. Calling 
+fetch_all_by_Member_method_link_type instead");
+  return $self->fetch_by_Member_method_link_type;
 }
 
 1;

@@ -108,10 +108,10 @@ sub fetch_by_source_stable_id {
     $self->throw("fetch_by_source_stable_id must have an stable_id");
   }
 
-  my $source_id = $self->get_source_id_from_name($source_name);
+#  my $source_id = $self->get_source_id_from_name($source_name);
   
   #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "m.source_id = '$source_id' AND m.stable_id = '$stable_id'";
+  my $constraint = "m.source_name = '$source_name' AND m.stable_id = '$stable_id'";
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
@@ -152,8 +152,8 @@ sub fetch_by_source {
   $self->throw("source_name arg is required\n")
     unless ($source_name);
 
-  my $source_id = $self->get_source_id_from_name($source_name);
-  my $constraint = "m.source_id = '$source_id'";
+#  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_name = '$source_name'";
 
   return $self->_generic_fetch($constraint);
 }
@@ -175,8 +175,8 @@ sub fetch_by_source_taxon {
   $self->throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
-  my $source_id = $self->get_source_id_from_name($source_name);    
-  my $constraint = "m.source_id = '$source_id' and m.taxon_id = $taxon_id";
+#  my $source_id = $self->get_source_id_from_name($source_name);    
+  my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id";
 
   return $self->_generic_fetch($constraint);
 }
@@ -261,8 +261,8 @@ sub fetch_by_relation_source {
     unless ($source_name);
 
   my $join;
-  my $source_id = $self->get_source_id_from_name($source_name);
-  my $constraint = "m.source_id = '$source_id'";
+#  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_name = '$source_name'";
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
     my $family_id = $relation->dbID;
@@ -323,8 +323,8 @@ sub fetch_by_relation_source_taxon {
     unless($source_name && $taxon_id);
 
   my $join;
-  my $source_id = $self->get_source_id_from_name($source_name);
-  my $constraint = "m.source_id = '$source_id' AND m.taxon_id = $taxon_id";
+#  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_name = '$source_name' AND m.taxon_id = $taxon_id";
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
     my $family_id = $relation->dbID;
@@ -489,7 +489,7 @@ sub _columns {
   my $self = shift;
 
   return qw (m.member_id
-             m.source_id
+             m.source_name
              m.stable_id
              m.version
              m.taxon_id
@@ -525,8 +525,9 @@ sub _objs_from_sth {
         '_chr_end' => $column{'chr_end'},
         '_chr_strand' => $column{'chr_strand'},
         '_sequence_id' => $column{'sequence_id'},
-        '_source_id' => $column{'source_id'},
-        '_source_name' => $self->get_source_name_from_id($column{'source_id'}),
+#        '_source_id' => $column{'source_id'},
+#        '_source_name' => $self->get_source_name_from_id($column{'source_id'}),
+        '_source_name' => $column{'source_name'},
         '_adaptor' => $self});
 
     my @_columns = $self->_columns;
@@ -590,16 +591,16 @@ sub store {
     . "not a $member");
   }
 
-  $member->source_id($self->store_source($member->source_name));
+#  $member->source_id($self->store_source($member->source_name));
   
-  my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_id,
+  my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_name,
                               taxon_id, genome_db_id, description,
                               chr_name, chr_start, chr_end, chr_strand)
                             VALUES (?,?,?,?,?,?,?,?,?,?)");
 
   my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
-                  $member->source_id,
+                  $member->source_name,
                   $member->taxon_id,
                   $member->genome_db_id,
                   $member->description,
@@ -625,8 +626,8 @@ sub store {
     $sth->finish;
     #UNIQUE(source_id,stable_id) prevented insert since member was already inserted
     #so get member_id with select
-    my $sth2 = $self->prepare("SELECT member_id FROM member WHERE source_id=? and stable_id=?");
-    $sth2->execute($member->source_id, $member->stable_id);
+    my $sth2 = $self->prepare("SELECT member_id FROM member WHERE source_name=? and stable_id=?");
+    $sth2->execute($member->source_name, $member->stable_id);
     my($id) = $sth2->fetchrow_array();
     $member->dbID($id);
     $sth2->finish;
@@ -680,6 +681,8 @@ sub update_sequence {
 sub store_source {
   my ($self,$source_name) = @_;
 
+  throw("store_source method is deprecated. source_name is now directly stored in member table\n");
+
   my $sql = "SELECT source_id FROM source WHERE source_name = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($source_name);
@@ -710,6 +713,8 @@ sub store_source {
 sub get_source_name_from_id {
   my ($self,$source_id) = @_;
 
+  throw("get_source_name_from_id method is deprecated.\n");
+
   $self->{'_source_id2name_hash'} = {} unless($self->{'_source_id2name_hash'});
   my $source_name = $self->{'_source_id2name_hash'}->{$source_id};
   return $source_name if($source_name);
@@ -732,6 +737,8 @@ sub get_source_name_from_id {
 
 sub get_source_id_from_name {
   my ($self,$source_name) = @_;
+  
+  throw("get_source_id_from_name method is deprecated.\n");
 
   $self->{'_source_name2id_hash'} = {} unless($self->{'_source_name2id_hash'});
   my $source_id = $self->{'_source_name2id_hash'}->{$source_name};
