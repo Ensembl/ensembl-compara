@@ -178,13 +178,13 @@ sub bioseq {
   my $seq = undef;
 
   if(defined($self->sequence())) {
-    printf("using cached sequence for chunk %s\n", $self->display_id);
+    #printf("using cached sequence for chunk %s\n", $self->display_id);
     $seq = Bio::Seq->new(-seq        => $self->sequence(),
                          -display_id => $self->display_id(),
                          -primary_id => $self->sequence_id(),
                         );
   } else {                        
-    printf("fetching chunk %s on-the-fly\n", $self->display_id);
+    #printf("fetching chunk %s on-the-fly\n", $self->display_id);
     my $starttime = time();
     $seq = $self->fetch_masked_sequence;
     my $fetch_time = time()-$starttime;

@@ -173,7 +173,7 @@ sub fetch_by_set_description {
 
   #construct a constraint like 't1.table1_id = 1'
   my $constraint = "s.description = '$set_description'";
-  print("fetch_by_set_name contraint:\n$constraint\n");
+  #print("fetch_by_set_name contraint:\n$constraint\n");
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
