@@ -3,13 +3,47 @@ package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use strict;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
-use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
+our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-=head2 fetch_by_stable_id
+=head2 list_internal_ids
 
-  Arg [1]    : string $stable_id
+  Arg        : None
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub list_internal_ids {
+  my $self = shift;
+  
+  my @tables = $self->_tables;
+  my ($name, $syn) = @{$tables[0]};
+  my $sql = "SELECT ${syn}.${name}_id from ${name} ${syn}";
+  
+  my $sth = $self->prepare($sql);
+  $sth->execute;  
+  
+  my $internal_id;
+  $sth->bind_columns(\$internal_id);
+
+  my @internal_ids;
+  while ($sth->fetch()) {
+    push @internal_ids, $internal_id;
+  }
+
+  $sth->finish;
+
+  return \@internal_ids;
+}
+
+=head2 fetch_by_dbID
+
+  Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
   Description: Returns the feature created from the database defined by the
@@ -20,11 +54,11 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =cut
 
-sub fetch_by_stable_id {
-  my ($self,$stable_id) = @_;
+sub fetch_by_dbID{
+  my ($self,$id) = @_;
 
-  unless(defined $stable_id) {
-    $self->throw("fetch_by_stable_id must have an stable_id");
+  unless(defined $id) {
+    $self->throw("fetch_by_dbID must have an id");
   }
 
   my @tabs = $self->_tables;
@@ -32,13 +66,95 @@ sub fetch_by_stable_id {
   my ($name, $syn) = @{$tabs[0]};
 
   #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.stable_id = '$stable_id'";
+  my $constraint = "${syn}.${name}_id = $id";
 
-  #return all elements of _generic_fetch list as stable_id is not unique for Member...
-  return $self->generic_fetch($constraint);
+  #return first element of _generic_fetch list
+  my ($obj) = @{$self->_generic_fetch($constraint)};
+  return $obj;
+}
+
+=head2 fetch_by_source_stable_id
+
+  Arg [1]    : string $source_name
+  Arg [2]    : string $stable_id
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub fetch_by_source_stable_id {
+  my ($self,$source_name, $stable_id) = @_;
+
+  unless(defined $source_name) {
+    $self->throw("fetch_by_source_stable_id must have an source_name");
+  }
+  unless(defined $stable_id) {
+    $self->throw("fetch_by_source_stable_id must have an stable_id");
+  }
+
+  my @tabs = $self->_tables;
+
+  my ($name, $syn) = @{$tabs[0]};
+  my ($source_table, $source_syn) = @{$tabs[1]};
+
+  #construct a constraint like 't1.table1_id = 1'
+  my $constraint = "${source_syn}.source_name = '$source_name' AND ${syn}.stable_id = '$stable_id'";
+
+  #return first element of _generic_fetch list
+  my ($obj) = @{$self->_generic_fetch($constraint)};
+  return $obj;
+}
+
+=head2 fetch_all
+
+  Arg        : None
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub fetch_all {
+  my $self = shift;
+
+  return $self->_generic_fetch();
+}
+
+=head2 fetch_by_source
+
+  Arg [1]    : string $source_name
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub fetch_by_source {
+  my ($self,$source_name) = @_;
+
+  $self->throw("source_name arg is required\n")
+    unless ($source_name);
+
+  my $constraint = "s.source_name = '$source_name'";
+
+  return $self->_generic_fetch($constraint);
 }
 
 =head2 fetch_by_source_taxon
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
@@ -50,8 +166,19 @@ sub fetch_by_source_taxon {
 
   my $constraint = "s.source_name = '$source_name' and m.taxon_id = $taxon_id";
 
-  return $self->generic_fetch($constraint);
+  return $self->_generic_fetch($constraint);
 }
+
+=head2 fetch_by_relation
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
 
 sub fetch_by_relation {
   my ($self, $relation) = @_;
@@ -97,8 +224,19 @@ sub fetch_by_relation {
     $self->throw();
   }
 
-  return $self->generic_fetch($constraint, $join, $extra_columns);
+  return $self->_generic_fetch($constraint, $join, $extra_columns);
 }
+
+=head2 fetch_by_relation_source
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
 
 sub fetch_by_relation_source {
   my ($self, $relation, $source_name) = @_;
@@ -146,8 +284,19 @@ sub fetch_by_relation_source {
   else {
     $self->throw();
   }
-  return $self->generic_fetch($constraint, $join, $extra_columns);
+  return $self->_generic_fetch($constraint, $join, $extra_columns);
 }
+
+=head2 fetch_by_relation_source_taxon
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
 
 sub fetch_by_relation_source_taxon {
   my ($self, $relation, $source_name, $taxon_id) = @_;
@@ -184,7 +333,76 @@ sub fetch_by_relation_source_taxon {
   else {
     $self->throw();
   }
-  return $self->generic_fetch($constraint, $join, $extra_columns);
+  return $self->_generic_fetch($constraint, $join, $extra_columns);
+}
+
+#
+# INTERNAL METHODS
+#
+###################
+
+=head2 _generic_fetch
+
+  Arg [1]    : (optional) string $constraint
+               An SQL query constraint (i.e. part of the WHERE clause)
+  Arg [2]    : (optional) string $logic_name
+               the logic_name of the analysis of the features to obtain
+  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
+  Description: Performs a database fetch and returns feature objects in
+               contig coordinates.
+  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
+  Exceptions : none
+  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
+
+=cut
+  
+sub _generic_fetch {
+  my ($self, $constraint, $join, $extra_columns) = @_;
+  
+  my @tables = $self->_tables;
+  my $columns = join(', ', $self->_columns());
+  
+  if ($join) {
+    my ($tablename, $condition) = @{$join};
+    if ($tablename && $condition) {
+      push @tables, $tablename;
+      
+      if($constraint) {
+        $constraint .= " AND $condition";
+      } else {
+        $constraint = " $condition";
+      }
+    } 
+    if ($extra_columns) {
+      $columns .= ", " . join(', ', @{$extra_columns});
+    }
+  }
+      
+  #construct a nice table string like 'table1 t1, table2 t2'
+  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
+
+  my $sql = "SELECT $columns FROM $tablenames";
+
+  my $default_where = $self->_default_where_clause;
+  my $final_clause = $self->_final_clause;
+
+  #append a where clause if it was defined
+  if($constraint) { 
+    $sql .= " WHERE $constraint ";
+    if($default_where) {
+      $sql .= " AND $default_where ";
+    }
+  } elsif($default_where) {
+    $sql .= " WHERE $default_where ";
+  }
+
+  #append additional clauses which may have been defined
+  $sql .= " $final_clause";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute;  
+
+  return $self->_objs_from_sth($sth);
 }
 
 sub _tables {
@@ -237,10 +455,9 @@ sub _objs_from_sth {
     if (scalar keys %column > scalar @_columns) {
       $attribute = new Bio::EnsEMBL::Compara::Attribute;
       $attribute->member_id($column{'member_id'});
-      foreach my $key (keys %column) {
-        next if (grep $column{$key},  $self->_columns);
-        my $autoload_method = $column{$key};
-        $attribute->$autoload_method($column{$key});
+      foreach my $autoload_method (keys %column) {
+        next if (grep /$autoload_method/,  @_columns);
+        $attribute->$autoload_method($column{$autoload_method});
       }
     }
     if (defined $attribute) {
@@ -258,7 +475,25 @@ sub _default_where_clause {
   return 'm.source_id = s.source_id';
 }
 
+sub _final_clause {
+  my $self = shift;
+
+  return '';
+}
+
+#
+# STORE METHODS
+#
+################
+
 =head2 store
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
@@ -304,53 +539,33 @@ sub store {
   return $member->dbID;
 }
 
+=head2 store_source
 
-
-=head2 update
-
-  Arg [1]    : Bio::EnsEMBL::Compara::FamilyMember
+  Arg [1]    : 
   Example    : 
-  Description: Updates the attributes of a family member that has already been
-               stored in the database.  This is useful to update attributes
-               such as a the alignment string which may have been calculated
-               after the families were alreated created.  On success this 
-               method returns the dbID of the updated member
-  Returntype : int
-  Exceptions : thrown if incorrect argument is provided
-               thrown if the member to be updated does not have a dbID
-  Caller     : general
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
-sub update {
-  my ($self, $member) = @_;
-
-  unless($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw(
-      "member arg must be a [Bio::EnsEMBL::Compara::Member".
-      "not a [$member]");
+sub store_source {
+  my ($self,$source_name) = @_;
+  
+  my $sql = "SELECT source_id FROM source WHERE source_name = ?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($source_name);
+  my $rowhash = $sth->fetchrow_hashref;
+  if ($rowhash->{source_id}) {
+    return $rowhash->{source_id};
+  } else {
+    $sql = "INSERT INTO source (source_name) VALUES (?)";
+    $sth = $self->prepare($sql);
+    $sth->execute($source_name);
+    return $sth->{'mysql_insertid'};
   }
-
-  unless($member->dbID) {
-    $self->throw("Family member does not have a dbID and cannot be updated");
-  }
-
-  my $sth = 
-    $self->prepare("UPDATE family_members 
-                    SET    family_id = ?, 
-                           external_db_id = ?, 
-                           external_member_id = ?, 
-                           taxon_id = ?, 
-                           alignment = ?
-                    WHERE  family_member_id = ?");
-
-  $sth->execute($member->family_id, $member->external_db_id, 
-                $member->stable_id, $member->taxon_id, 
-                $member->alignment_string, $member->dbID);
-
-  return $member->dbID;
 }
-
 
 1;
 
