@@ -11,15 +11,17 @@ our ($AUTOLOAD, %ok_field);
 %ok_field = ('member_id' => 1,
              'family_id' => 1,
              'cigar_line' => 1,
+             'cigar_start' => 1,
+             'cigar_end' => 1,
              'domain_id' => 1,
              'member_start' => 1,
              'member_end' => 1,
              'homology_id' => 1,
+             'peptide_member_id' => 1,
              'perc_cov' => 1,
              'perc_id' => 1,
-             'perc_pos' => 1,
-             'exon_count' => 1,
-             'flag' => 1);
+             'perc_pos' => 1);
+
 
 sub new {
   my ($class) = @_;
@@ -62,6 +64,14 @@ sub alignment_string {
   }
   unless (defined $self->{'alignment_string'}) {
     my $sequence = $member->sequence;
+    if (defined $self->cigar_start || defined $self->cigar_end) {
+      unless (defined $self->cigar_start && defined $self->cigar_end) {
+        $self->throw("both cigar_start and cigar_end should be defined");
+      }
+      my $offset = $self->cigar_start - 1;
+      my $length = $self->cigar_end - $self->cigar_start + 1;
+      $sequence = substr($sequence, $offset, $length);
+    }
     my $cigar_line = $self->cigar_line;
     $cigar_line =~ s/([MD])/$1 /g;
     my @cigar_segments = split " ",$cigar_line;
@@ -106,37 +116,51 @@ sub cdna_alignment_string {
     return undef;
   }
 
-  my $genome_db_id = $member->genome_db_id;
-
-  my $genome_db =
-    $member->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-
-  my $ta = $genome_db->db_adaptor->get_TranscriptAdaptor;
-  my $transcript = $ta->fetch_by_translation_stable_id($member->stable_id);
-
-  if(!$transcript) {
-    $self->warn("Could not retrieve transcript via peptide id [" .
-                $member->stable_id . "] from database [" .
-                $genome_db->db_adaptor->dbname . "]");
-    return undef;
-  }
-
-  my $cdna = $transcript->translateable_seq;
-  my $cdna_len = length($cdna);
-  my $start = 0;
-  my $cdna_align_string = '';
-  foreach my $pep (split(//,$self->alignment_string($member))) {
-    last if($start >= $cdna_len);
-
-    if($pep eq '-') {
-      $cdna_align_string .= '--- ';
-    } else {
-      $cdna_align_string .= substr($cdna, $start, 3) .' ';
+  unless (defined $self->{'cdna_alignment_string'}) {
+    my $genome_db_id = $member->genome_db_id;
+    
+    my $genome_db =
+      $member->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+    
+    my $ta = $genome_db->db_adaptor->get_TranscriptAdaptor;
+    my $transcript = $ta->fetch_by_translation_stable_id($member->stable_id);
+    
+    if(!$transcript) {
+      $self->warn("Could not retrieve transcript via peptide id [" .
+                  $member->stable_id . "] from database [" .
+                  $genome_db->db_adaptor->dbname . "]");
+      return undef;
     }
-    $start += 3;
-  }
+    
+    my $cdna = $transcript->translateable_seq;
 
-  return $cdna_align_string;
+    if (defined $self->cigar_start || defined $self->cigar_end) {
+      unless (defined $self->cigar_start && defined $self->cigar_end) {
+        $self->throw("both cigar_start and cigar_end should be defined");
+      }
+      my $offset = $self->cigar_start * 3 - 2;
+      my $length = ($self->cigar_end - $self->cigar_start + 1) * 3;
+      $cdna = substr($cdna, $offset, $length);
+    }
+
+    my $cdna_len = length($cdna);
+    my $start = 0;
+    my $cdna_align_string = '';
+    foreach my $pep (split(//,$self->alignment_string($member))) {
+      last if($start >= $cdna_len);
+      
+      if($pep eq '-') {
+        $cdna_align_string .= '--- ';
+      } else {
+        $cdna_align_string .= substr($cdna, $start, 3) .' ';
+      }
+      $start += 3;
+    }
+    
+    $self->{'cdna_alignment_string'} = $cdna_align_string
+  }
+  
+  return $self->{'cdna_alignment_string'};
 }
 
 sub DESTROY {}
