@@ -171,11 +171,11 @@ sub get_params {
   $self->{'store_seq'} = $params->{'store_seq'} if(defined($params->{'store_seq'}));
   $self->{'chunk_size'} = $params->{'chunk_size'} if(defined($params->{'chunk_size'}));
   $self->{'overlap'} = $params->{'overlap'} if(defined($params->{'overlap'}));
+  $self->{'masking'} = $params->{'masking'} if(defined($params->{'masking'}));
 
   $self->{'genome_db_id'} = $params->{'gdb'} if(defined($params->{'gdb'}));
   $self->{'prog'} = $params->{'prog'} if(defined($params->{'prog'}));
   $self->{'create'} = $params->{'create'} if(defined($params->{'create'}));
-  $self->{'masking'} = $params->{'masking'} if(defined($params->{'masking'}));
   #$self->{'coordinate_system'} = $params->{'coordinate_system'} if(defined($params->{'coordinate_system'});
 
   return;
