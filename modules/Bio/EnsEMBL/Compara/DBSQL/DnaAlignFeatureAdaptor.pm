@@ -197,9 +197,9 @@ sub fetch_all_by_Slice {
       $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
   my $cs_assembly = $slice->assembly_type;
 
-  my $key = join(':', "SLICE", $slice->name,
+  my $key = uc(join(':', "SLICE", $slice->name,
 		 $cs_species,$cs_assembly,
-		 $qy_species, $qy_assembly);
+		 $qy_species, $qy_assembly));
 
   if(exists $self->{'_cache'}->{$key}) {
     return $self->{'_cache'}->{$key};
