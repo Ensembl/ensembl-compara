@@ -1,66 +1,52 @@
-19th August 2002
-----------------
-
-Generating synteny blocks from raw dna-dna matches
---------------------------------------------------
-
-Need dna-dna matches stored in an ensembl compara database or a set of gff files, one per chromosome
-
-
-2. Configuration
+25th October 2004
 -----------------
 
+Generating synteny blocks from whole genome alignments
+======================================================
 
-2.1 Code needed : 
-
-core, trace and compara core modules
-
-  cvs co -r branch-ensembl-25 ensembl ensembl-compara
-
-bioperl ensembl modules
-
-  cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r ?Tag? bioperl-live
-
-works with branch-07, but should also work with branch-1-2, need a try.
-
-2.2 Set up the perl environment :
-
-  cd ensembl-compara/scripts/synteny
-  setenv BASEDIR /some/path/to modules
-  setenv PERL5LIB ${BASEDIR}/bioperl-0.7:${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-trace/modules
+Needs whole genome alignments stored in an ensembl compara database or a set of gff files, one per chromosome
 
 
-2.3 Databases needed
+Configuration
+-------------
 
-  2.3.1 Compara database
+ensembl, ensembl-compara and bioperl-live modules will be needed
+Make sure, you've update your PERL5LIB variable to point to the modules 
 
-    You will need the hostname, database name, username and password to the relevant compara database
+in tcsh
+setenv BASEDIR /some/path/to/modules
+setenv PERL5LIB ${BASEDIR}/bioperl-live:${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-compara/modules
 
-  2.3.2 Core database
-
-    You will need the above information for the core database as well as the name of the static golden path.
-    This database is used to fetch the names and the lengths of the chromosomes.
-
-    You will need to set up a Bio::EnsEMBL::Registry configuration file, that will hold all necessary information 
-    to connect any needed core or compara database. See an example in ensembl/modules/Bio/EnsEMBL/Utils/ensembl_init.example 
-    and read the Bio::EnsEMBL::Registry perldoc
-
-
-3. Dumping the raw dna-dna matches
-----------------------------------
-
-  3.1. The dumping script
+in bash
+BASEDIR=/some/path/to/modules
+export BASEDIR
+PERL5LIB=${BASEDIR}/bioperl-live:${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-compara/modules
+export PERL5LIB
 
 
-ensembl-compara/scripts/synteny/dumpsynteny
+Database needed
+---------------
 
-This dumps out dna-dna in gff format one chromosome at a time and the format of the command is
+The compara from which you will get the whole genome alignment data
+You will need to set up a Bio::EnsEMBL::Registry configuration file, that will hold all necessary information 
+to connect the compara database. See an example in ensembl/modules/Bio/EnsEMBL/Utils/ensembl_init.example 
+and read the Bio::EnsEMBL::Registry perldoc
 
-echo "select distinct(name) from dnafrag where genome_db_id=2 and coord_system_name=\"Chromosome\";"|mysql -h ecs2 -u ensro -P3362 -N ensembl_compara_25_1 |grep -v NT | sort > Mm33_chr_names
 
-cat Mm33_chr_names |while read i;do bsub -o $i.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/dumpsynteny --dbname compara25 --qy mouse --tg rat --seq_region $i;done
+Dumping whole genome alignments to build syntenies
+--------------------------------------------------
 
-In this command line, "mouse", "rat" and "compara25" are aliases to the respective core and compara databases, 
+Use the script ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl
+
+It dumps whole genome alignments in gff format for a given chromosome.
+
+cd /ecs2/work4/compara_abel_cara/ensembl_release_26/compara/synteny/Hs35Mm33
+
+echo "select distinct(name) from dnafrag where genome_db_id=1 and coord_system_name=\"Chromosome\";"|mysql -h ecs2 -u ensro -P3362 -N abel_ensembl_compara_26_1 |grep -v NT | grep -v DR | sort > Hs35_chr_names
+
+cat Hs35_chr_names |while read i;do bsub -o $i.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl --dbname compara25 --qy human --tg mouse --seq_region $i;done
+
+In this command line, "human", "mouse" and "abelcompara26" are aliases to the respective core and compara databases, 
 as defined in the registry configuration file.
 
 This will write out all the dna-dna matches for mouse chromosomes against rat into files called
@@ -69,16 +55,19 @@ This will write out all the dna-dna matches for mouse chromosomes against rat in
 	2.syten.gff
 	etc...
 
+Building the synteny regions
+----------------------------
 
-4.0 Making synteny blocks
+Make sure you have either your JAVA_HOME variable set
 
-  4.1  Setting the environment
+JAVA_HOME=/usr/opt/java141
+export JAVA_HOME
 
-  For the forseeable future this will be done using the apollo code so your path will need to be set to include a JVM.  On the alphas use the following
+or that the java executable is in your PATH
 
-  PATH=/usr/opt/java131/bin/:$PATH
+PATH=/usr/opt/java141/bin/:$PATH
 
-  4.2 Running over all chromosomes
+Now build the synteny regions for each chromosome.
 
 ls *.syten.gff|sed "s/\.syten\.gff//"|while read i;do java -classpath ~/src/ensembl_main/ensembl-compara/scripts/synteny/BuildSynteny.jar BuildSynteny $i.syten.gff 100000 100000 false > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err;done
 
@@ -86,12 +75,16 @@ NOTE: the last parameter "false" is only needed for human/mouse, human/rat and m
 elegans/briggsae (it can be ommitted). Don't ask me (Abel) what that does, Steve Searle included this 
 argument to make it work over mammals and worms.
 
-cat *.BuildSynteny.out|grep cluster > Mm33Rn3.100000.100000.BuildSynteny
+cat *.BuildSynteny.out|grep cluster > Hs35Mm33.100000.100000.BuildSynteny
 
-5- Load in compara db
+Loading the data in compara db
+------------------------------
 
-ensembl-compara/scripts/synteny/LoadComparaDb.pl --dbname compara25 --qy mouse --tg rat Mm33Rn3.100000.100000.BuildSynteny
+ensembl-compara/scripts/synteny/LoadSyntenyData.pl --dbname abelcompara26 --qy human --tg mouse Hs35Mm33.100000.100000.BuildSynteny
 
+
+Compiling BuildSynteny.java
+===========================
 
 NOTE: not important for production, it is just to know how to create the BuildSynteny.jar file from
 BuildSynteny.java

@@ -48,7 +48,7 @@ if ($help) {
 # if no reg_conf file is given.
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-print STDERR "Start time when dumping gff for synteny on chr $seq_region " . time . "\n";
+print STDERR "Start time when dumping gff for synteny on chr $seq_region : " . time . "\n";
 
 my $dafa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'DnaAlignFeature');
 my $sa = Bio::EnsEMBL::Registry->get_adaptor($qy_species, 'core', 'Slice');
