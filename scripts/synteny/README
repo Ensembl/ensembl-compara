@@ -15,12 +15,13 @@ Need dna-dna matches stored in an ensembl compara database or a set of gff files
 
 core, trace and compara core modules
 
-  cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-6 ensembl ensembl-compara ensembl-trace
+  cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-12 ensembl ensembl-compara ensembl-trace
 
 bioperl ensembl modules
 
   cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r ?Tag? bioperl-live
 
+works with branch-07, but should also work with branch-1-2, need a try.
 
 2.2 Set up the perl environment :
 
@@ -48,31 +49,20 @@ bioperl ensembl modules
 
   3.1. The dumping script (Example only - don't run anything yet).
 
-    This lives in  
 
-       ensembl-compara/scripts/synteny/dumpsynteny
+ensembl-compara/scripts/synteny/dumpsynteny
 
-		This dumps out dna-dna in gff format one chromosome at a time and the format of the command is
+This dumps out dna-dna in gff format one chromosome at a time and the format of the command is
 
-	./dumpsynteny -host ecs1b.sanger.ac.uk -user ensro -dbname ensembl_compara_10_1 \
-			-chr_names 1 -species1 "Homo sapiens" -assembly1 NCBI30 \
-			-species2 "Mus musculus" -assembly2 MGSC3 \
-			-conf_file Compara.conf
+echo "select distinct(name) from dnafrag where genome_db_id=2 and dnafrag_type=\"Chromosome\";"|mysql -h ecs1b -u ensro ensembl_compara_11_1 |awk '!/name/' |sort >Mm3_chr_names
 
-    This will write out all the dna-dna matches for human chromosome 1 against mouse into a file called
+cat Mm3_chr_names |while read i;do bsub -q acari -o $i.out -e $i.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/dumpsynteny -host ecs1b -dbname ensembl_compara_11_1 -chr_names $i -species1 "Mus musculus" -assembly1 MGSC3 -species2 "Rattus norvegicus" -assembly2 RGSC2 -conf_file ~/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf;done
 
-      1.synteny.gff
+This will write out all the dna-dna matches for human chromosomes against mouse into files called
 
-   3.2  Dumping all matches for all chromosomes 
-		
-   Use the -all option to dump gff for all chromosomes as follows
-
-	./dumpsynteny -host ecs2d -user ensro -dbname ensembl_compara_10_1 \
-			-chr_names all -species1 "Homo sapiens" -assembly1 NCBI30 \
-			-species2 "Mus musculus" -assembly2 MGSC3 \
-			-conf_file Compara.conf
-
-   This will generate a set of files n.synteny.gff where n is the chromosome name
+	1.synteny.gff
+	2.synteny.gff
+	etc...
 
 
 4.0 Making synteny blocks
@@ -81,36 +71,30 @@ bioperl ensembl modules
 
   For the forseeable future this will be done using the apollo code so your path will need to be set to include a JVM.  On the alphas use the following
 
-  setenv PATH /usr/opt/java131/bin/:${PATH}
-
-and
-
-  setenv CLASSPATH ensembl-compara/scripts/synteny/synteny.jar
-
+  PATH=/usr/opt/java131/bin/:$PATH
+  CLASSPATH=ensembl-compara/scripts/synteny/apollo.jar; export CLASSPATH
+  APOLLO_ROOT=ensembl-compara/scripts/synteny; export APOLLO_ROOT
 
   4.2 Running over all chromosomes
 
-     ./makesyntenyblocks -corehost ecs2d -corename homo_sapiens_core_8_30 -corepath NCBI_30 \ 
-                         -chr all -syntenydir  /acari/work1/michele/synteny -syntenyext syten.gff
+touch t.gff
 
-  This will generate two sets of files.  
+cat Hs31_chr_names|while read i;do bsub -q acari -Ralpha -o $i.bsub.out -e $i.bsub.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/makesyntenyblocks -host ecs1b -dbname ensembl_compara_11_1 -species "Homo sapiens" -assembly NCBI31 -chr_names $i -syntenyfile $i.syten.gff -conf_file ~/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf;done
 
-	  1) The output from the program in <chr>.100000.syn.out
-		2) The synteny block gff in <chr>.100000.gff
-
-
-
-5 In practice
+This will generate two sets of files.  
+	1) The output from the program in <chr>.100000.syn.out
+	2) The synteny block gff in <chr>.100000.gff
 
 
-cd /acari/work1/michele/baseline/ensembl-compara/scripts/synteny
+5- Load in compara db
 
-source perllib
+echo "select d.name,d.dnafrag_id from dnafrag d,genome_db g where d.genome_db_id=g.genome_db_id and g.name=\"Caenorhabditis elegans\" and d.dnafrag_type=\"Chromosome\" group by d.name;" |mysql -h ecs1b -u ensro ensembl_compara_11_1|awk '!/name/' > Ce95_chr_names
 
-./dumpsynteny -chr all -org1 Homo_spaiens -org2 Mus_musculus          \ 
-              -corehost ecs2d -corename homo_sapiens_core_8_30         \
-              -comphost ecs1b -compname compara_human_30_mouse_3_final
+echo "select d.name,d.dnafrag_id from dnafrag d,genome_db g where d.genome_db_id=g.genome_db_id and g.name=\"Caenorhabditis briggsae\" and d.dnafrag_type=\"Chromosome\" group by d.name;" |mysql -h ecs1b -u ensro ensembl_compara_11_1|awk '!/name/' > Cb25_chr_names
 
+check what in the max synteny_region_id in the compara_db
+ugly but works, that would need a proper script
 
- ./makesyntenyblocks -corehost ecs2d -corename homo_sapiens_core_8_30 -corepath NCBI_30 \ 
-                         -chr all -syntenydir ./  -syntenyext syten.gff
+cat *.100000.gff|awk '{print $1,$4,$5,$9,$10,$11,$7}'|sort|join Ce95_chr_names -|awk '{print $5,$6,$7,$2,$3,$4,$8}'|sort |join Cb25_chr_names -|awk '{print $5,$6,$7,$2,$3,$4,$8}'|awk 'BEGIN {synteny_region_id=1} {print "insert into synteny_region values ("synteny_region_id","$7");";print "insert into dnafrag_region values ("synteny_region_id","$1","$2","$3");";print "insert into dnafrag_region values ("synteny_region_id","$4","$5","$6");";synteny_region_id++}' > synteny.sql
+
+mysql -h ecs1b -u ensadmin -pensembl ensembl_compara_11_1_test < synteny.sql
