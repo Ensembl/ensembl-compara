@@ -60,10 +60,14 @@ sub new {
     my $self = {};
     bless $self,$class;
 
-#    my ( $db_adaptor ) = $self->_rearrange([qw(DBADAPTOR)],@args);
+    # the read in DBAdaptor is assumed to be a core db_adaptor 
     my ( $dba ) = $args[1];
-
+    
     if ( defined $dba ) {
+
+      if ( !$dba->isa('Bio::EnsEMBL::DBQSL::DBAdaptor')) {
+	$self->throw("The DBAdaptor passed to GenomeDB must be from the core code.\n");
+      }
 
       my $species = $dba->get_MetaContainer->get_Species->binomial;
       $species =~ s/\s/_/;
@@ -293,7 +297,7 @@ sub has_query {
 sub linked_genomes {
   my ( $self ) = @_;
 
-  my $links = $self->adaptor->get_db_links( $self );
+  my $links = $self->adaptor->get_all_db_links( $self );
 
   return $links;
 }
