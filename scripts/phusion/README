@@ -87,7 +87,7 @@ bsub -q acaritest -C0 -R"select[mem>=20000] rusage[mem=20000]" -o phusion17-60k.
 5- Reading Phusion output to obtain pairwise comparison
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ensembl-compara/scripts/GetExtra.pl Hs 1 /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.tag /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.tag phusion17-60k.out > Extra 2> Extra.err
+ensembl-compara/scripts/phusion/GetExtra.pl Hs 1 /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.tag /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.tag phusion17-60k.out > Extra 2> Extra.err
 
  Hs the reference species,
  1 try to expand to neighbouring segment even if no 17-mer connection exists
@@ -108,7 +108,7 @@ Hs    ------------------ ---------------
 
 > mkdir Extra_dir
 > cd Extra_dir
-> ensembl-compara/scripts/DispatchExtra.pl ../Extra
+> ensembl-compara/scripts/phusion/DispatchExtra.pl ../Extra
 
  That will create in the working directory, the input files needed by LaunchBlast.pl
 
@@ -127,7 +127,7 @@ Hs    ------------------ ---------------
  NB: There is a restriction to alpha machine because the LaunchBlast.pl use a c executable, fastafetch,
      only compiled on alpha machines. We have to think maybe to use dbfetch instead...need to investigate.
 
-     LaunchBlast.pl runs a filtering program, ensembl-compara/scripts/FilterBlast.pl, that parse the blast 
+     LaunchBlast.pl runs a filtering program, ensembl-compara/scripts/phusion/FilterBlast.pl, that parse the blast 
      output obtained for each mouse query and keep hits the best hitted human chromosome, and print out
      in a gff-like format with ciger lines.
      !!! Maybe a bug, few hits are pointed out with empty cigar line, need investigation !!!
@@ -162,9 +162,9 @@ jobs #1004 and #10055 failed. To resend them only
 > ls |wc -l
 You should have there as many files as jobs you sent.
 
-> ls | xargs cat | ensembl-compara/scripts/RemoveNonSyntenic.pl 6 > ../rmRedun.1st
+> ls | xargs cat | ensembl-compara/scripts/phusion/RemoveNonSyntenic.pl 6 > ../rmRedun.1st
 > cd ../
-> ensembl-compara/scripts/RemoveNonSyntenic.pl 6 rmRedun.1st > rmRedun.2nd
+> ensembl-compara/scripts/phusion/RemoveNonSyntenic.pl 6 rmRedun.1st > rmRedun.2nd
 
 
 first argument should be a pair (not an impair)
