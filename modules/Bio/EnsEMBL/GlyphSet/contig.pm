@@ -54,18 +54,23 @@ sub _init {
   
   my @features = ();
   foreach my $segment (@{$Container->project('seqlevel')||[]}) {
-    my $start      = $segment->from_start;
-    my $end        = $segment->from_end;
-    my $ctg_slice  = $segment->to_Slice;
-    my $ORI        = $ctg_slice->strand;
-    my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
-    $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
-    foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
-      my $path;
-      eval { $path = $ctg_slice->project($_->name); };
-      next unless(@$path == 1);
-      $path = $path->[0]->to_Slice;
-      $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
+      my $start      = $segment->from_start;
+      my $end        = $segment->from_end;
+      my $ctg_slice  = $segment->to_Slice;
+      my $ORI        = $ctg_slice->strand;
+      my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
+      $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
+      foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
+	  my $path;
+	  eval { $path = $ctg_slice->project($_->name); };
+	  next unless(@$path == 1);
+	  $path = $path->[0]->to_Slice;
+# get clone id out of seq_region_attrib for link to webFPC 
+	  if ($_->{'name'} eq 'clone') {
+	      my ($clone_name) = @{$path->get_all_Attributes('fpc_clone_id')};
+	      $feature->{'internal_name'} = $clone_name->{'value'} if $clone_name;;
+	  }
+	  $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
     }
     $feature->{'ori'} = $ORI;
     push @features, $feature;
@@ -181,9 +186,14 @@ sub _init_non_assembled_contig {
           (my $T=ucfirst($_))=~s/contig/Contig/g;
           $glyph->{'zmenu'}{"$POS:$T $name"} ='' unless $_ eq 'contig';
           $POS++;
+#add links to Ensembl and FPC (vega danio)
           if( /clone/) {
 	    my $ens_URL = $self->ID_URL('EGB_ENSEMBL', $name);
 	    $glyph->{'zmenu'}{"$POS:View in Ensembl"} = $ens_URL if $ens_URL;
+	    $POS++;
+	    my $internal_clone_name = $tile->{'internal_name'};
+	    my $fpc_URL = $self->ID_URL('FPC',$internal_clone_name); 
+	    $glyph->{'zmenu'}{"$POS:View in WebFPC"} = $fpc_URL if $fpc_URL && $internal_clone_name;
 	    $POS++;
 	  }
 	  $glyph->{'zmenu'}{"$POS:EMBL source file"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
