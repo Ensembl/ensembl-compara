@@ -124,7 +124,7 @@ sub store {
 
 
 
-=head2 _fetch_all_by_dnafrag_genomedb_direct
+=head2 _fetch_all_by_DnaFrag_GenomeDB_direct
 
   Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
                All genomic aligns that align to this frag
@@ -144,16 +144,15 @@ sub store {
 =cut
 
 
-sub _fetch_all_by_dnafrag_genomedb_direct {
+sub _fetch_all_by_DnaFrag_GenomeDB_direct {
    my ($self,$dnafrag, $target_genome, $start,$end) = @_;
 
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
     unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
 
    #formating the $dnafrag
-	
    my $dnafrag_id = $dnafrag->dbID;
-   
+
    my $genome_db = $dnafrag->genomedb();
    my $select = "SELECT ".join( ",", map { "gab.".$_ } $self->_columns() ).
      " FROM genomic_align_block gab ";
@@ -181,11 +180,11 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
      $sth = $self->prepare( $sql );
      $sth->execute();
      $result = $self->_objs_from_sth( $sth );
-   } 
+   }
 
    if( !defined($target_genome) ||
        $genome_db->has_consensus( $target_genome ) ) {
-     
+
      $sql = $select . " WHERE gab.query_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
        my $lower_bound = $start - $self->{'max_alignment_length'};
@@ -207,7 +206,7 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
 
 
 
-=head2 fetch_all_by_dnafrag_genomedb
+=head2 fetch_all_by_DnaFrag_GenomeDB
 
   Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Arg  2     : string $query_species
@@ -224,7 +223,7 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
 =cut
 
 
-sub fetch_all_by_dnafrag_genomedb {
+sub fetch_all_by_DnaFrag_GenomeDB {
   my ( $self, $dnafrag, $target_genome, $start, $end ) = @_;
 
   unless($dnafrag && ref $dnafrag && 
@@ -240,7 +239,7 @@ sub fetch_all_by_dnafrag_genomedb {
   if( $genome_cons->has_consensus( $genome_query ) ||
       $genome_cons->has_query( $genome_query )) {
 
-    return $self->_fetch_all_by_dnafrag_genomedb_direct
+    return $self->_fetch_all_by_DnaFrag_GenomeDB_direct
       ( $dnafrag, $target_genome, $start, $end );
     
   } else {
@@ -260,7 +259,7 @@ sub fetch_all_by_dnafrag_genomedb {
     #collect GenomicAligns from all linked genomes
     my $set1 = [];
     for my $g ( @$linked ) {
-      my $g_res = $self->_fetch_all_by_dnafrag_genomedb_direct
+      my $g_res = $self->_fetch_all_by_DnaFrag_GenomeDB_direct
 	( $dnafrag, $g, $start, $end );
       push( @$set1, @$g_res );
     }
@@ -277,7 +276,7 @@ sub fetch_all_by_dnafrag_genomedb {
       $start = $alignA->query_start();
       $end = $alignA->query_end();
 
-      my $d_res = $self->_fetch_all_by_dnafrag_genomedb_direct
+      my $d_res = $self->_fetch_all_by_DnaFrag_GenomeDB_direct
 	( $frag, $genome_query, $start, $end );
 
       for my $alignB ( @$d_res ) {

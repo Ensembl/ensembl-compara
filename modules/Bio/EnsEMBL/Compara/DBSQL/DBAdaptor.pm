@@ -48,6 +48,138 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 
 
 
+=head2 new
+
+  Arg [..]   : list of named arguments.  See Bio::EnsEMBL::DBConnection.
+               [-CONF_FILE] optional name of a file containing configuration
+               information for comparas genome databases.  If databases are
+               not added in this way, then they should be added via the
+               method add_DBAdaptor.
+  Example    :  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+						    -user   => 'root',
+						    -dbname => 'pog',
+						    -host   => 'caldy',
+						    -driver => 'mysql',
+                                                    -conf_file => 'conf.pl');
+  Description: Creates a new instance of a DBAdaptor for the compara database.
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub new {
+  my ($class, @args) = @_;
+
+  #call superclass constructor
+  my $self = $class->SUPER::new(@args);
+
+  my ($conf_file) = $self->_rearrange(['CONF_FILE'], @args);
+
+  $self->{'genomes'} = {};
+
+  if($conf_file) {
+    #read configuration file from disk
+    my @conf = do $conf_file;
+
+    foreach my $genome (@conf) {
+      my ($species, $assembly, $db) = @$genome;
+
+      unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
+	$self->throw("[$db] specified in conf file is not a " .
+		     "Bio::EnsEMBL::DBSQL::DBConnection");
+      }
+
+      #avoid possible memory leaks
+      if($db->isa('Bio::EnsEMBL::DBSQL::Container')) {
+	$db = $db->_obj;
+      }
+
+      $self->{'genomes'}->{"$species:$assembly"} = $db;
+    }
+  }
+
+  return $self;
+}
+
+
+
+=head2 add_db_adaptor
+
+  Arg [1]    : Bio::EnsEMBL::DBSQL::DBConnection
+  Example    : $compara_db->add_db_adaptor($homo_sapiens_db);
+  Description: Adds a genome-containing database to compara.  This database
+               can be used by compara to obtain sequence for a genome on
+               on which comparative analysis has been performed.  The database
+               adaptor argument must define the get_MetaContainer argument
+               so that species name and assembly type information can be
+               extracted from the database.
+  Returntype : none
+  Exceptions : Thrown if the argument is not a Bio::EnsEMBL::DBConnection
+               or if the argument does not implement a get_MetaContainer
+               method.
+  Caller     : general
+
+=cut
+
+sub add_db_adaptor {
+  my ($self, $dba) = @_;
+
+  unless($dba && ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
+    $self->throw("dba argument must be a Bio::EnsEMBL::DBSQL::DBConnection\n" .
+		 "not a [$dba]");
+  }
+
+  #avoid potential memory leaks
+  if($dba->isa('Bio::EnsEMBL::Container')) {
+    $dba = $dba->_obj;
+  }
+
+  unless($dba->can('get_MetaContainer')) {
+    $self->throw("Do not know how to obtain meta information for database" .
+		 "[$dba]. Cannot determine species or assembly");
+  }
+
+  my $mc = $dba->get_MetaContainer;
+
+  my $species = $mc->get_Species->binomial;
+  my $assembly = $mc->get_default_assembly;
+
+  $self->{'genomes'}->{"$species:$assembly"} = $dba;
+}
+
+
+
+=head2 get_db_adaptor
+
+  Arg [1]    : string $species
+               the name of the species to obtain a genome DBAdaptor for.
+  Arg [2]    : string $assembly
+               the name of the assembly to obtain a genome DBAdaptor for.
+  Example    : $hs_db = $db->get_db_adaptor('Homo sapiens','NCBI_30');
+  Description: Obtains a DBAdaptor for the requested genome if it has been
+               specified in the configuration file passed into this objects
+               constructor, or subsequently added using the add_genome
+               method.  If the DBAdaptor is not available (i.e. has not
+               been specified by one of the abbove methods) undef is returned.
+  Returntype : Bio::EnsEMBL::DBSQL::DBConnection
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::Compara::GenomeDBAdaptor
+
+=cut
+
+sub get_db_adaptor {
+  my ($self, $species, $assembly) = @_;
+
+  unless($species && $assembly) {
+    $self->throw("species and assembly arguments are required\n");
+  }
+
+  return $self->{'genomes'}->{"$species:$assembly"};
+}
+
+
+
 =head2 get_SyntenyAdaptor
 
   Arg [1]    : none
@@ -206,3 +338,4 @@ sub get_MetaContainer {
 
 
 1;
+

@@ -31,19 +31,21 @@ my $gdba = $compara_db->get_GenomeDBAdaptor();
 debug( "GenomeDBAdaptor exists" );
 ok( defined $gdba );
 
-my $hum = $gdba->fetch_by_species_tag( "Homo_sapiens" );
-my $mouse = $gdba->fetch_by_species_tag( "Mus_musculus" );
-my $rat = $gdba->fetch_by_species_tag( "Rattus_norvegicus" );
-
-
 #
 # set the locators, we have to cheat because
 # with the test dbs these are different every time
 #
 
-$hum->locator($homo_sapiens->get_DBAdaptor('core')->locator);
-$mouse->locator($mus_musculus->get_DBAdaptor('core')->locator);
-$rat->locator($rattus_norvegicus->get_DBAdaptor('core')->locator);
+$compara_db->add_db_adaptor($homo_sapiens->get_DBAdaptor('core'));
+$compara_db->add_db_adaptor($mus_musculus->get_DBAdaptor('core'));
+$compara_db->add_db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
+
+
+my $hum = $gdba->fetch_by_name_assembly( "Homo sapiens", 'NCBI_30' );
+my $mouse = $gdba->fetch_by_name_assembly( "Mus musculus", 'MGSC_3' );
+my $rat = $gdba->fetch_by_name_assembly( "Rattus norvegicus", 'RGSC_1' );
+
+
 
 #######
 #  2  #
@@ -66,7 +68,7 @@ ok( scalar( @$hfrags ) == 1 );
 my $gaa = $compara_db->get_GenomicAlignAdaptor();
 
 debug( "Human -- Mouse direct alignments" );
-my $aligns = $gaa->fetch_all_by_dnafrag_genomedb( $hfrags->[0], $mouse );
+my $aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $mouse );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
@@ -78,7 +80,7 @@ ok( scalar @$aligns == 2 );
 my $mfrags = $dfa->fetch_all_by_GenomeDB_region( $mouse, 'Chromosome', "X" );
 
 debug( "Mouse -- Human reverse direct" );
-$aligns = $gaa->fetch_all_by_dnafrag_genomedb( $mfrags->[0], $hum );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $mfrags->[0], $hum );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
@@ -88,18 +90,18 @@ debug();
 ok( grep {$_->cigar_line() eq "19MD30M"} @$aligns );
 
 debug( "Mouse -- Rat direct" );
-$aligns = $gaa->fetch_all_by_dnafrag_genomedb( $mfrags->[0], $hum );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $mfrags->[0], $hum );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
 
 debug( "Human -- Rat deduced" );
-$aligns = $gaa->fetch_all_by_dnafrag_genomedb( $hfrags->[0], $rat );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $rat );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
 debug( "Rat -- Human deduced" );
-$aligns = $gaa->fetch_all_by_dnafrag_genomedb( $rfrags->[0], $hum );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $rfrags->[0], $hum );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 

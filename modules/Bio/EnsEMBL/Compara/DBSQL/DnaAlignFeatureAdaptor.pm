@@ -57,7 +57,7 @@ sub new {
 
   #initialize internal LRU cache
   tie(%{$self->{'_cache'}}, 'Bio::EnsEMBL::Utils::Cache', $CACHE_SIZE);
-  
+
   return $self;
 }
 
@@ -66,22 +66,23 @@ sub new {
 
 =head2 fetch_all_by_species_region
 
- Arg [1]    : string subject_species
-              e.g. "Homo_sapiens"
- Arg [2]    : string query_species
-              e.g. "Mus_musculus"
- Arg [6]    : string dnafrag_type (optional)
-              type of dnafrag from which data as to be queried, default is 
-              "Chromosome"
- Arg [3]    : string name
-              the name of the dnafrag to retrieve alignments from (e.g. 'X')
- Arg [4]    : int start
- Arg [5]    : int end
- Example    : $gaa->fetch_all_by_species_region("Homo_sapiens","Mus_musculus",
-                                                "Chromosome", "X",
-						250_000, 750_000);  
- Description: find matches of query_species on subject_species between 
-              a given region on a dnafrag
+ Arg [1]    : string $cs_species
+              e.g. "Homo sapiens"
+ Arg [2]    : string $cs_assembly
+              e.g. "NCBI_31"
+ Arg [3]    : string $qy_species
+              e.g. "Mus musculus"
+ Arg [4]    : string $qy_assembly
+              e.g. "MGSC_3"
+ Arg [5]    : string $chr_name
+              the name of the chromosome to retrieve alignments from (e.g. 'X')
+ Arg [6]    : int start
+ Arg [7]    : int end
+ Example    : $gaa->fetch_all_by_species_region("Homo sapiens", "NCBI_31",
+						"Mus musculus", "MGSC_3",
+                                                "X", 250_000, 750_000);
+ Description: Retrieves alignments between the consensus and query species
+              from a specified region of the consensus genome.
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
  Exceptions : none
  Caller     : general
@@ -89,25 +90,25 @@ sub new {
 =cut
 
 sub fetch_all_by_species_region {
-  my ($self, $sb_species, $qy_species, 
-      $dnafrag_type, $name, $start, $end) = @_;
+  my ($self, $cs_species, $cs_assembly, 
+      $qy_species, $qy_assembly,
+      $chr_name, $start, $end) = @_;
 
-  $dnafrag_type ||= "Chromosome"; #default is Chromosome
-  
+  my $dnafrag_type = 'Chromosome';
+
   #get the genome database for each species
-  my $gdba = $self->db->get_GenomeDBAdaptor;  
-  my $sb_gdb = $gdba->fetch_by_species_tag($sb_species);
-  my $qy_gdb = $gdba->fetch_by_species_tag($qy_species);
-
+  my $gdba = $self->db->get_GenomeDBAdaptor;
+  my $cs_gdb = $gdba->fetch_by_name_assembly($cs_species, $cs_assembly);
+  my $qy_gdb = $gdba->fetch_by_name_assembly($qy_species, $qy_assembly);
 
   #retrieve dna fragments from the subjects species region of interest
   my $dfa = $self->db->get_DnaFragAdaptor;
-  my $dnafrags = $dfa->fetch_all_by_species_region($sb_species,
-						   $dnafrag_type, 
-						   $name,
-						   $start, 
-						   $end);
-  
+  my $dnafrags = $dfa->fetch_all_by_GenomeDB_region($cs_gdb,
+						    $dnafrag_type,
+						    $chr_name,
+						    $start,
+						    $end);
+
   my $gaa = $self->db->get_GenomicAlignAdaptor;
 
   my @out = ();
@@ -123,9 +124,9 @@ sub fetch_all_by_species_region {
     $df_end   = ($df_end > $len) ? $len : $df_end;
 
     #fetch all alignments in the region we are interested in
-    my $genomic_aligns = $gaa->fetch_all_by_dnafrag_genomedb($df, 
+    my $genomic_aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB($df,
 							     $qy_gdb,
-							     $df_start, 
+							     $df_start,
 							     $df_end);
 
     #convert genomic aligns to dna align features
@@ -133,11 +134,11 @@ sub fetch_all_by_species_region {
       my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new(
 				       '-cigar_string' => $ga->cigar_line);
       my $qdf = $ga->query_dnafrag;
-      
+
       #calculate chromosomal coords
       my $cstart = $df->start + $ga->consensus_start - 1;
       my $cend   = $df->start + $ga->consensus_end - 1;
-      
+
       #skip features which do not overlap the requested region
       #next if ($cstart > $end || $cend < $start); 
 
@@ -145,7 +146,7 @@ sub fetch_all_by_species_region {
       $f->start($cstart);
       $f->end($cend);
       $f->strand(1);
-      $f->species($sb_species);
+      $f->species($cs_species);
       $f->score($ga->score);
       $f->percent_id($ga->perc_id);
 
@@ -168,9 +169,11 @@ sub fetch_all_by_species_region {
 =head2 fetch_all_by_Slice
 
  Arg [1]    : Bio::EnsEMBL::Slice
- Arg [2]    : string query_species
-              e.g. "Mus_musculus"
- Example    : $gaa->fetch_all_by_Slice($slice, "Mus_musculus");
+ Arg [2]    : string $qy_species
+              The query species to retrieve alignments against
+ Arg [3]    : string $qy_assembly
+              e.g. 
+ Example    : $gaa->fetch_all_by_Slice($slice, "Mus musculus");
  Description: find matches of query_species in the region of a slice of a 
               subject species
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
@@ -180,37 +183,36 @@ sub fetch_all_by_species_region {
 =cut
 
 sub fetch_all_by_Slice {
-  my ($self, $slice, $qy_species) = @_;
+  my ($self, $slice, $qy_species, $qy_assembly) = @_;
 
   unless($slice && ref $slice && $slice->isa('Bio::EnsEMBL::Slice')) {
     $self->throw("Invalid slice argument [$slice]\n");
   }
 
-  unless($qy_species) {
+  unless($qy_species && $qy_assembly) {
     $self->throw("Query species argument is required");
   }
 
-  #we will probably use a taxon object instead of a string eventually
-  my $species = $slice->adaptor->db->get_MetaContainer->get_Species;
-  my $sb_species = $species->binomial;
-  $sb_species =~ s/ /_/; #replace spaces with underscores
+  my $cs_species =
+      $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
+  my $cs_assembly = $slice->assembly_type;
 
-  my $key = join(':', "SLICE", $slice->name, $sb_species, $qy_species);
+  my $key = join(':', "SLICE", $slice->name,
+		 $cs_species,$cs_assembly,
+		 $qy_species, $qy_assembly);
 
   if(exists $self->{'_cache'}->{$key}) {
     return $self->{'_cache'}->{$key};
-  } 
+  }
 
   my $slice_start = $slice->chr_start;
   my $slice_end   = $slice->chr_end;
   my $slice_strand = $slice->strand;
 
-  my $features = $self->fetch_all_by_species_region($sb_species,
-						    $qy_species,
-						    'Chromosome',
+  my $features = $self->fetch_all_by_species_region($cs_species,$cs_assembly,
+						    $qy_species,$qy_assembly,
 						    $slice->chr_name,
-						    $slice_start,
-						    $slice_end);
+						    $slice_start, $slice_end);
 
   if($slice_strand == 1) {
     foreach my $f (@$features) {

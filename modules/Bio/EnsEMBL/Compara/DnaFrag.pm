@@ -59,20 +59,16 @@ sub new {
 
   bless $self,$class;
 
-   my ($name,$contig,$genomedb,$type,$adaptor,$dbID) = $self->_rearrange([qw( NAME
-									      CONTIG 
-									      GENOMEDB
-									      TYPE
-									      ADAPTOR
-									      DBID)],@args);
-  
+  my ($name,$contig,$genomedb,$type,$adaptor,$dbID) =
+    $self->_rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);
+
    if( defined $name) {
      	 $self->name($name);
    }
    if( defined $contig) {
      $self->contig($contig);
    }
-   
+
    if (defined $genomedb){
      $self->genomedb($genomedb);
    }
@@ -80,7 +76,7 @@ sub new {
    if (defined $adaptor){
      $self->adaptor($adaptor);
    }
-     
+
    if (defined $type){
      $self->type($type);
    }

@@ -57,16 +57,16 @@ my %genome_query_xreflist;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-    
+
+
 =head2 fetch_by_dbID
 
- Title   : fetch_by_dbID
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : int $dbid
+  Example    : $genome_db = $gdba->fetch_by_dbID(1);
+  Description: Retrieves a GenomeDB object via its internal identifier
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -77,111 +77,143 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   # check to see whether all the GenomeDBs haev already been created
+   # check to see whether all the GenomeDBs have already been created
    if ( !defined $self->{'_GenomeDB_cache'}) {
      $self->create_GenomeDBs;
    }
 
-   if ( defined $self->{'_cache'}->{$dbid}) {
-     return $self->{'_cache'}->{$dbid};
+   my $gdb = $self->{'_cache'}->{$dbid};
+
+   if(!$gdb) {
+     return undef; # return undef if fed a bogus dbID
    }
-   else {  # return undef if fed a bogus dbID
-     return undef;
+
+   #set up the dbadaptor for this genome db
+   # this could have been added after the cache was created which is why
+   # it is re-added every request
+   my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
+   if(!$dba) {
+     $self->throw("Could not obtain DBAdaptor for dbID [$dbid].\n" .
+		  "Genome DBAdaptor for name=[".$gdb->name."], ".
+		  "assembly=[" . $gdb->assembly."] must be loaded using " .
+		  "config file or\n" .
+		  "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_genome");
    }
+
+   $gdb->db_adaptor($dba);
+
+   return $gdb;
 }
 
 
-=head2 fetch_by_species_tag
 
- Title   : fetch_by_species_tag
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
+=head2 fetch_by_name_assembly
 
+  Arg [1]    : string $name
+  Arg [2]    : string $assembly
+  Example    : $gdb = $gdba->fetch_by_name_assembly("Homo sapiens", 'NCBI_31');
+  Description: Retrieves a genome db using the name of the species and
+               the assembly version.
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if GenomeDB of name $name and $assembly cannot be found
+  Caller     : general
 
 =cut
 
-sub fetch_by_species_tag{
-   my ($self,$tag) = @_;
+sub fetch_by_name_assembly{
+   my ($self, $name, $assembly) = @_;
 
-   my $sth = $self->prepare("
-     SELECT genome_db_id 
-     FROM genome_db 
-     WHERE name = '$tag'
-   ");
-   $sth->execute;
+   unless($name && $assembly) {
+     $self->throw('name and assembly arguments are required');
+   }
+
+   my $sth = $self->prepare(
+	     "SELECT genome_db_id
+              FROM genome_db
+              WHERE name = ? AND assembly = ?");
+
+   $sth->execute($name, $assembly);
 
    my ($id) = $sth->fetchrow_array();
 
    if( !defined $id ) {
-       $self->throw("No species with this tag $tag");
+       $self->throw("No GenomeDB with this name [$name] and " .
+		    "assembly [$assembly]");
    }
 
    return $self->fetch_by_dbID($id);
-
 }
+
+
 
 =head2 store
 
- Title   : store
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $gdb
+  Example    : $gdba->store($gdb);
+  Description: Stores a genome database object in the compara database if
+               it has not been stored already.  The internal id of the
+               stored genomeDB is returned.
+  Returntype : int
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Caller     : general
 
 =cut
 
 sub store{
-   my ($self,$gdb) = @_;
+  my ($self,$gdb) = @_;
 
-   if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
-       $self->throw("Must have genomedb arg [$gdb]");
-   }
+  unless(defined $gdb && ref $gdb && 
+	 $gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
+    $self->throw("Must have genomedb arg [$gdb]");
+  }
 
-   if( !defined $gdb->name || !defined $gdb->locator ) {
-       $self->throw("genome db must have a name and a locator");
-   }
-   my $name = $gdb->name;
-   my $locator = $gdb->locator;
+  my $name = $gdb->name;
+  my $assembly = $gdb->assembly;
+  my $taxon_id = $gdb->taxon_id;
 
-   my $sth = $self->prepare("
-      SELECT genome_db_id 
-      FROM genome_db 
-      WHERE name = '$name' and locator = '$locator'
+  unless($name && $assembly && $taxon_id) {
+    $self->throw("genome db must have a name, assembly, and taxon_id");
+  }
+
+  my $sth = $self->prepare("
+      SELECT genome_db_id
+      FROM genome_db
+      WHERE name = '$name' and assembly = '$assembly'
    ");
-   $sth->execute;
 
-   my $dbID = $sth->fetchrow_array();
+  $sth->execute;
 
-   if ($dbID) {
-      $gdb->dbID($dbID);
-   }else{ 
-      my $sth = $self->prepare("
-        INSERT into genome_db (name,locator) 
-        VALUES ('$name','$locator')
+  my $dbID = $sth->fetchrow_array();
+
+  if(!$dbID) {
+    #if the genome db has not been stored before, store it now
+    my $sth = $self->prepare("
+        INSERT into genome_db (name,assembly,taxon_id)
+        VALUES ('$name','$assembly', $taxon_id)
       ");
 
-      $sth->execute();
+    $sth->execute();
+    $dbID = $sth->{'mysql_insertid'};
+  }
 
-      $gdb->dbID($sth->{'mysql_insertid'});
-   }
+  #update the genomeDB object so that it's dbID and adaptor are set
+  $gdb->dbID($dbID);
+  $gdb->adaptor($self);
 
-   return $gdb->dbID;
+  return $dbID;
 }
 
 
+
 =head2 create_GenomeDBs
- 
-  Args       : none
-  Example    : 
-  Description: 
-  Returntype : 
+
+  Arg [1]    : none
+  Example    : none
+  Description: Reads the genomedb table and creates an internal cache of the
+               values of the table.
+  Returntype : none
   Exceptions : none
-  Caller     : 
+  Caller     : internal
 
 =cut
 
@@ -204,28 +236,29 @@ sub create_GenomeDBs {
     push @{ %genome_consensus_xreflist->{$con}}, $query;
     push @{ %genome_query_xreflist->{$query}}, $con;
   }
-  
+
   # grab all the possible species databases in the genome db table
   $sth = $self->prepare("
-     SELECT genome_db_id, name, locator 
+     SELECT genome_db_id, name, assembly, taxon_id
      FROM genome_db 
    ");
    $sth->execute;
 
   # build a genome db for each species
   while ( my @db_row = $sth->fetchrow_array() ) {
-    my ($dbid, $name, $locator) = @db_row;
+    my ($dbid, $name, $assembly, $taxon_id) = @db_row;
 
     my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
     $gdb->name($name);
-    $gdb->locator($locator);
+    $gdb->assembly($assembly);
+    $gdb->taxon_id($taxon_id);
     $gdb->dbID($dbid);
     $gdb->adaptor( $self );
 
     $self->{'_cache'}->{$dbid} = $gdb;
   }
 
-  $self->{'_GenomeDB_cache'} = 1;  
+  $self->{'_GenomeDB_cache'} = 1;
 }
 
 
@@ -233,7 +266,7 @@ sub create_GenomeDBs {
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
-  Example    : 
+  Example    :
   Description: Checks to see whether a consensus genome database has been
                analysed against the specific query genome database.
                Returns the dbID of the database of the query genomeDB if 
@@ -251,7 +284,7 @@ sub check_for_consensus_db {
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
-  
+
   if ( exists %genome_consensus_xreflist->{$cid} ) {
     for my $i ( 0 .. $#{%genome_consensus_xreflist->{$cid}} ) {
       if ( $qid == %genome_consensus_xreflist->{$cid}[$i] ) {
@@ -263,12 +296,11 @@ sub check_for_consensus_db {
 }
 
 
-
 =head2 check_for_query_db
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
-  Example    :  
+  Example    : none
   Description: Checks to see whether a query genome database has been
                analysed against the specific consensus genome database.
                Returns the dbID of the database of the consensus 
@@ -327,7 +359,7 @@ sub get_all_db_links {
       push @gdb_list, $self->{'_cache'}->{%genome_consensus_xreflist->{$id}[$i]};
     }
   }
-    
+
   # and check for occurences of the db we are interested in
   # in the query list of dbs
   if ( exists %genome_query_xreflist->{$id} ) {
@@ -341,3 +373,4 @@ sub get_all_db_links {
 
 
 1;
+

@@ -41,132 +41,90 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::GenomeDB;
+
 use vars qw(@ISA);
 use strict;
 
-# Object preamble
-
 use Bio::EnsEMBL::Root;
-use Bio::EnsEMBL::DBLoader;
 
 @ISA = qw(Bio::EnsEMBL::Root);
 
 
-# new() is written here 
-
 sub new {
-  my($class,@args) = @_;
-    
-  my $self = {};
-  bless $self,$class;
-  
-  # the read in DBAdaptor is assumed to be a core db_adaptor 
-  my ( $dba ) = $args[1];
-    
-  if ( defined $dba ) {
-    if ( !$dba->isa('Bio::EnsEMBL::DBQSL::DBAdaptor')) {
-      $self->throw("The DBAdaptor passed to GenomeDB must be from the core code.\n");
-    }
+  my($caller, $dba, $name, $assembly, $taxon_id, $dbID) = @_;
 
-    my $species = $dba->get_MetaContainer->get_Species->binomial;
-    $species =~ s/\s/_/;
-      
-    $self->species($species);
-      
-    $self->locator($dba->locator);
-      
-    # store the DBAdaptor
-    $self->db_adaptor($dba);
-  }
+  my $class = ref($caller) || $caller;
+  my $self = bless({}, $class);
+
+  $dba      && $self->db_adaptor($dba);
+  $name     && $self->name($name);
+  $assembly && $self->assembly($assembly);
+  $taxon_id && $self->taxon_id($taxon_id);
+  $dbID     && $self->dbID($dbID);
 
   return $self;
 }
 
 
+
 =head2 db_adaptor
 
- Title   : db_adaptor
- Usage   :
- Function:
- Example : returns the db_adaptor
- Returns : 
- Args    :
-
+  Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBConnection $dba
+               The DBAdaptor containing sequence information for the genome
+               represented by this object.
+  Example    : $gdb->db_adaptor($dba);
+  Description: Getter/Setter for the DBAdaptor containing sequence 
+               information for the genome represented by this object.
+  Returntype : Bio::EnsEMBL::DBSQL::DBConnection
+  Exceptions : thrown if the argument is not a
+               Bio::EnsEMBL::DBSQL::DBConnection
+  Caller     : general
 
 =cut
 
 sub db_adaptor{
-  my ( $self, $arg ) = @_;
-  
-  if( $arg ) {
-    my $dba = $arg;
+  my ( $self, $dba ) = @_;
+
+  if( $dba ) {
+    unless(ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
+      $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBConnection" .
+		   " not a [$dba]\n");
+    }
 
     #avoid potential memory leak
     if($dba->isa('Bio::EnsEMBL::Container')) {
       $dba = $dba->_obj;
     }
+
     $self->{'_db_adaptor'} = $dba;
+  }
 
-    #update locator string
-    $self->locator($arg->locator);
-
-  } elsif( !defined $self->{'_db_adaptor'} ) {
-    # this will throw if it can't build it
-    my $dba  = Bio::EnsEMBL::DBLoader->new($self->locator);
-
-    #avoid potential memory leak
-    if($dba->isa('Bio::EnsEMBL::Container')) {
-      $dba = $dba->_obj;
-    }
-    $self->{'_db_adaptor'} = $dba;
-   }
-  
   return $self->{'_db_adaptor'};
 }
 
 
-=head2 locator
-
- Title   : locator
- Usage   : $obj->locator($newval)
- Function: 
- Example : 
- Returns : value of locator
- Args    : newvalue (optional)
-
-=cut
-
-sub locator{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'locator'} = $value;
-    }
-    return $self->{'locator'};
-
-}
 
 =head2 name
 
- Title   : name
- Usage   : $obj->name($newval)
- Function: 
- Example : 
- Returns : value of name
- Args    : newvalue (optional)
-
+  Arg [1]    : (optional) string $value
+  Example    : $gdb->name('Homo sapiens');
+  Description: Getter setter for the name of this genome database, usually
+               just the species name.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
 
 =cut
 
 sub name{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'name'} = $value;
-    }
-    return $self->{'name'};
-   
+  my ($self,$value) = @_;
+
+  if( defined $value) {
+    $self->{'name'} = $value;
+  }
+
+  return $self->{'name'};
 }
-
-
 
 
 
@@ -192,7 +150,7 @@ sub dbID{
 
 
 =head2 adaptor
- 
+
   Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomeDBAdaptor $adaptor
   Example    : $adaptor = $GenomeDB->adaptor();
   Description: Getter/Setter for the GenomeDB object adaptor used
@@ -200,9 +158,9 @@ sub dbID{
   Returntype : Bio::EnsEMBL::Compara::GenomeDBAdaptor
   Exceptions : none
   Caller     : general
- 
+
 =cut
- 
+
 sub adaptor{
    my ($self,$value) = @_;
    if( defined $value) {
@@ -212,56 +170,74 @@ sub adaptor{
 }
 
 
+=head2 assembly
 
-=head2 species
- 
-  Arg [1]    : string
-  Example    : $genomedb->species;
-  Description: Getter/Setter for the species attribute
+  Arg [1]    : (optional) string
+  Example    : $gdb->assembly('NCBI_31');
+  Description: Getter/Setter for the assembly type of this genome db.
   Returntype : string
   Exceptions : none
   Caller     : general
- 
+
 =cut
- 
-sub species{
-   my ($self,$value) = @_;
 
-   if( defined $value) {
-      $self->{'species'} = $value;
-    } elsif(!defined $self->{'species'} && $self->locator) {
-      #determine the species if it hasn't been set
-      my $species = $self->db_adaptor->get_MetaContainer->get_Species->binomial;
-      $species =~ s/\s/_/;
-      $self->species($species);
-    }
+sub assembly {
+  my $self = shift;
+  my $assembly = shift;
 
-   return $self->{'species'};
+  if($assembly) {
+    $self->{'assembly'} = $assembly;
+  }
+
+  return $self->{'assembly'};
 }
 
 
 
-=head2 has_consensus
- 
-  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
-  Example    : 
-  Description: 
+=head2 taxon_id
+
+  Arg [1]    : (optional) int
+  Example    : $gdb->taxon_id('9606');
+  Description: Getter/Setter for the taxon id of the contained genome db
   Returntype : int
   Exceptions : none
   Caller     : general
 
 =cut
- 
+
+sub taxon_id {
+  my $self = shift;
+  my $taxon_id = shift;
+
+  if($taxon_id) {
+    $self->{'taxon_id'} = $taxon_id;
+  }
+
+  return $self->{'taxon_id'};
+}
+
+=head2 has_consensus
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Example    : none
+  Description: none
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub has_consensus {
   my ($self,$con_gdb) = @_;
-   
+
   # sanity check on the GenomeDB passed in
   if( !defined $con_gdb || !$con_gdb->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
-     $self->throw("No query genome specified or query is not a GenomeDB object");
+    $self->throw("No query genome specified or query is not a GenomeDB obj");
   }
   # and check that you are not trying to compare the same GenomeDB
   if ( $con_gdb eq $self ) {
-    $self->throw("Trying to return consensus / query information from the same db"); 
+    $self->throw("Trying to return consensus / " .
+		 "query information from the same db");
   }
 
   my $consensus = $self->adaptor->check_for_consensus_db( $self, $con_gdb);
@@ -270,27 +246,31 @@ sub has_consensus {
 }
 
 
+
 =head2 has_query
- 
+
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
-  Example    : 
-  Description: 
+  Example    : none
+  Description: none
   Returntype : int
   Exceptions : none
   Caller     : general
 
 =cut
- 
+
 sub has_query {
   my ($self,$query_gdb) = @_;
 
   # sanity check on the GenomeDB passed in
-  if( !defined $query_gdb || !$query_gdb->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
-    $self->throw("No consensus genome specified or query is not a GenomeDB object");
+  if( !defined $query_gdb || 
+      !$query_gdb->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
+    $self->throw("No consensus genome specified or query is not a " .
+		 "GenomeDB object");
   }
   # and check that you are not trying to compare the same GenomeDB
   if ( $query_gdb eq $self ) {
-    $self->throw("Trying to return consensus / query information from the same db"); 
+    $self->throw("Trying to return consensus / query information " .
+		 "from the same db");
   }
 
   my $query = $self->adaptor->check_for_query_db( $self, $query_gdb );
@@ -301,16 +281,16 @@ sub has_query {
 
 
 =head2 linked
- 
+
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
-  Example    : 
-  Description: 
+  Example    : none
+  Description: none
   Returntype : int
   Exceptions : none
   Caller     : general
 
 =cut
- 
+
 sub linked_genomes {
   my ( $self ) = @_;
 
@@ -320,4 +300,14 @@ sub linked_genomes {
 }
 
 
+
 1;
+
+
+
+
+
+
+
+
+
