@@ -55,8 +55,35 @@ use Bio::Root::RootI;
 sub new {
   my($class,@args) = @_;
 
-    my $self = {};
-    bless $self,$class;
+  my $self = {};
+
+  bless $self,$class;
+
+   my ($name, $contig,$genomedb,$adaptor,$dbID) = $self->_rearrange([qw( NAME
+                                                                       	CONTIG 
+                                                                       	GENOMEDB
+						 	         	ADAPTOR
+									DBID)],@args);
+
+   if( defined $name) {
+     	 $self->name($name);
+   }
+   if( defined $contig) {
+     $self->contig($contig);
+   }
+   
+   if (defined $genomedb){
+     $self->genomedb($genomedb);
+   }
+
+   if (defined $adaptor){
+     $self->adaptor($adaptor);
+   }
+     
+   if (defined $dbID) {
+     $self->dbID($dbID);
+   }
+
 
 # set stuff in self from @args
     return $self;

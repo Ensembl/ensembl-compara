@@ -39,7 +39,8 @@ The rest of the documentation details each of the object methods. Internal metho
 
 # Let the code begin...
 
-    BEGIN { print STDERR "Looking at this...\n"; }
+    BEGIN { print STDERR "Looking at this...\n";
+            require "Bio/EnsEMBL/Pipeline/pipeConf.pl"; }
 
 package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 use vars qw(@ISA);
@@ -48,7 +49,7 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::FeatureAwareAlignBlockSet;
-
+use Bio::EnsEMBL::Compara::AlignBlockSet; 
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 # we inheriet new
@@ -65,16 +66,19 @@ sub fetch_by_dbID {
  Usage   :
  Function:
  Example :
- Returns : 
+ Reterns : #kailan: returns protein_id(can get protein_name (align_name)  from the align table)
  Args    :
 
+got to fix this
 
 =cut
 
 sub fetch_GenomicAlign_by_dbID{
    my ($self,$dbid) = @_;
+   #my ($self,$dbid, $align_name) = @_;
 
    return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self);
+   #return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self, -align_name =>$align_name);
 }
 
 
@@ -152,7 +156,7 @@ sub get_AlignBlockSet{
    my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
    $sth->execute;
 
-   my $alignset  = Bio::EnsEMBL::Compara::FeatureAwareAlignBlockSet->new();
+   my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
    my $core_db;
  
    while( my $ref = $sth->fetchrow_arrayref ) {
@@ -166,7 +170,9 @@ sub get_AlignBlockSet{
        
        if( ! defined $dnafraghash{$raw_id} ) {
 	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
-	   $alignset->core_adaptor($dnafraghash{$raw_id}->genomedb->ensembl_db);
+           print "raw_di: $raw_id\n\n";
+          print "in GAdaptor:", $dnafragadp->fetch_by_dbID($raw_id);
+	   #$alignset->core_adaptor($dnafraghash{$raw_id}->genomedb->ensembl_db);
        }
 
        $alignblock->dnafrag($dnafraghash{$raw_id});
@@ -174,7 +180,7 @@ sub get_AlignBlockSet{
        $core_db = $dnafraghash{$raw_id}->genomedb->ensembl_db; 
    }
 
-   $alignset->core_adaptor($core_db);
+   #$alignset->core_adaptor($core_db);
 
    return $alignset;
 }
@@ -250,13 +256,48 @@ sub store {
 
 
 
+
+=head2 fetch_by_dnafrag
+
+ Title	 : fetch_by_dnafrag
+ Usage	 :
+ Function:
+ Example :
+ Returns : an array of Bio::EnsEMBL::Compara::GenomicAlign objects 
+ Args 	 :
+
+
+=cut
+
+sub fetch_by_dnafrag{
+   my ($self,$dnafrag) = @_;
+
+
+   $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
+    unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
+
+   #formating the $dnafrag
+	
+   my $dname = $dnafrag->name;
+		
+	  $dname = "('$dname')";
+
+  my $sql = "select distinct(gab.align_id) from genomic_align_block gab,dnafrag d where d.name in $dname and d.dnafrag_id = gab.dnafrag_id";
+   
+	  my $sth = $self->prepare($sql);
+
+   $sth->execute();
+
+   my @out;
+
+   while( my ($gaid) = $sth->fetchrow_array ) {
+       push(@out,$self->fetch_by_dbID($gaid));
+   }
+      	
+
+   return @out;
+}
+
+
+
 1;
-
-
-
-
-
-
-
-
-
