@@ -86,8 +86,6 @@ sub fetch_homologues_of_gene {
 		and	grm.genome_db_id = gd.genome_db_id 
 		and NOT	(grm.member_stable_id = '$gene')";
 
-	print $q;
-
 	push @genes,$self->_get_homologues($q); 
     }
 
