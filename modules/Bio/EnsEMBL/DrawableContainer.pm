@@ -124,7 +124,8 @@ sub new {
 	# generate a set for both strands
 	#
 	my $GlyphSet = new $classname($Container, $Config, qq(|$highlights|), $strand);
-	push @{$self->{'glyphsets'}}, $GlyphSet;
+
+	push @{$self->{'glyphsets'}}, $GlyphSet if(scalar @{$GlyphSet->{'glyphs'}} > 0);
       }
     }
 
