@@ -1,0 +1,271 @@
+1- code API needed and executable
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-0?)
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensembl-pipeline
+
+  executables
+  ~~~~~~~~~~~
+  wublastp
+      using /usr/local/ensembl/bin/wublastp
+  setdb
+      using /usr/local/ensembl/bin/setdb
+
+1.2 Code checkout
+
+    bioperl code
+
+      cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07  bioperl-live
+
+    core ensembl code
+
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+
+    ensembl-pipeline code (for Runnables)
+
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+
+    ensembl-hive code
+
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+
+in tcsh
+    setenv BASEDIR   /some/path/to/modules
+    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+
+in bash
+    BASEDIR=/some/path/to/modules
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+
+
+2- Configure database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Pick a mysql instance and create a database
+
+mysqladmin -h ecs2 -P3361 -uensadmin -pxxxx create database ensembl_compara_jess_23_1
+
+cd ~/src/ensembl_main/ensembl-hive/sql
+mysql -h ecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 < tables.sql
+
+cd ~/src/ensembl_main/ensembl-compara/sql
+mysql -h ecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 < table.sql
+mysql -h ecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 < pipeline-tables.sql
+./UpdatePrefilledTable.pl -host ecs2 -port 3361 -user ensadmin -pass xxxx -dbname ensembl_compara_jess_23_1 -table taxon -file taxon.txt
+./UpdatePrefilledTable.pl -host ecs2 -port 3361 -user ensadmin -pass xxxx -dbname ensembl_compara_jess_23_1 -table method_link -file method_link.txt
+
+You don't need to prefill the genome_db table as this is done now with a script that connects to core databases.
+
+
+3- Choose a working directory with enough disk space
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The homology pipeline takes several GB of space for fasta databases and
+error and output from the RunnableDBs
+
+e.g.
+fasta blast database directory =
+/nfs/ecs4/work2/ensembl/jessica/data/blastDB/ensembl_compara_jess_23_1
+
+hive worker output directory =
+/nfs/ecs4/work2/ensembl/jessica/data/hive_output/ensembl_compara_jess_23_1
+
+
+4- Copy and modify the compara-hive config file
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline
+cp compara-hive.conf.example compara-23.conf
+<editor> compara-23.conf
+
+you may need to change the database names, port, dbnames, and the
+paths to the 'hive_output_dir' and 'fasta_dir'
+
+
+5- Run the configure scripts
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline
+./loadHomologySystem.pl -conf compara-23.conf
+./comparaLoadGenomes.pl -conf compara-23.conf
+
+The loadHomologySystem script creates the analysis entries for the processing
+system, and creates both the dataflow rule and the analysis control rules.
+It also initializes the analysis_stats row for each analysis.  These row hold
+information like batch_size, hive_capacity, and run-time stats that the Hive's
+Queen will update.
+
+The comparaLoadGenomes script use the information in the conf file to connect to
+the core databases, queries for things like taxon_id, assembly, gene_build, and names
+to create entries in the genome_db table.  It also sets the genome_db.locator column to
+allow the system to know where the respective core databases are located.  There is an
+additional table called genome_db_extn which will be deprecated shortly, but as of today
+(16 June, 2004) it is still used to hold a 'phylum' value for each genome to allow the
+option of building homologies only within phylums.  This script will also 'seed' the
+pipeline/hive system by creating the first jobs in the analysis_job table for
+the analysis 'SubmitGenome'.
+
+These scripts may give you warnings if the output directories are not available or if
+it's unable to connect to core databases.
+
+At this point the system is ready to run
+
+
+6- Run the beekeeper
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd ~src/ensembl_main/ensembl-hive/scripts
+./local_beekeeper.pl -url mysql://ensadmin:xxxx@ecs2:3361/ensembl_compara_jess_23_1 <options>
+
+
+Everything I'm about to describe corresponds to an interim version of the beekeeper (16 June, 2004).
+This version of the beekeeper must be run interactively.
+
+The beekeepers function is to act as mediator between each Hive's Queen and a compute resource.
+Each hive enabled database has effectively one Queen which is responsible for birthing the
+right kinds and numbers of workers to get the work done and not overload her hive (database).
+The beekeeper asks the queen what workers she needs to create, and then enables the workers
+to be born through the runWorker script without overloading it's compute resource. (TBD)
+
+The beekeeper connects to the Queen of the database pointed to by the URL.  The Queen is an object
+that maintains her state on the database, so that different instances of a hive's queen can be
+considered the same object (ie a network distributed object).  This is a way to 'fake'
+network distributed objects without using JavaBeans, CORBA, WebObjects, DCOM or other
+distributed object technologies.
+
+Each Worker created by the Queen is of a certain type (specific analysis or RunnableDB).  It lives
+on the compute resource for a limited lifetime (specified either by a job count limit, or a time
+limit).  While it's alive it grabs (pulls) jobs from the hive, runs those jobs (via it's
+RunnableDB object), and writes it's results back to the database.  Depending on the nature
+of the RunnableDB and the type of jobs a given worker may only live long enough to do one job
+or may sit on a machine long enough to process 1000's of jobs.  In this case a 'job' is refering to
+a 'hive job' which is specifically a single row from the analysis_job table which is accessed via
+the AnalysisJobAdaptor which returns AnalysisJob objects.  The details are handled internally by the
+Worker and are described here for design sake.
+
+(16 June,2004)
+At this point in time the beekeepers aren't complete enough to loop by themselves without
+overloading the hives.  I need to be a little more clever in how the queen judges database
+loads.  For the homology building system the blast stage starts to saturate the mysqld when
+there are greater than 500 workers simultaneously working.
+
+6.1- Run the beekeeper (getting status)
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./local_beekeeper.pl -url<>
+  Run like this, the beekeeper tells the queen to update itself and then outputs to STDOUT the
+  results of her current state.  Example output
+
+  STATS         SubmitGenome(  1)         DONE jobs(t=11,r=0,d=11) batch=7000 capacity=-1 clutchSize=0 (age 0 secs)
+  STATS    GenomeLoadMembers(  2)         DONE jobs(t=11,r=0,d=11) batch=1 capacity=-1 clutchSize=0 (age 0 secs)
+  STATS      GenomeSubmitPep(  3)         DONE jobs(t=11,r=0,d=11) batch=1 capacity=3 clutchSize=0 (age 0 secs)
+  STATS      GenomeDumpFasta(  4)         DONE jobs(t=11,r=0,d=11) batch=1 capacity=3 clutchSize=0 (age 0 secs)
+  STATS     CreateBlastRules(  5)         DONE jobs(t=11,r=0,d=11) batch=1 capacity=1 clutchSize=0 (age 0 secs)
+  STATS    SubmitPep_8_CBR25(  7)         DONE jobs(t=11884,r=0,d=11884) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS    SubmitPep_5_MOZ2a(  8)         DONE jobs(t=14364,r=0,d=14364) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS   SubmitPep_6_DROM3A(  9)         DONE jobs(t=13525,r=0,d=13525) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS   SubmitPep_7_CEL116( 10)         DONE jobs(t=19873,r=0,d=19873) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS  SubmitPep_2_NCBIM32( 11)         DONE jobs(t=25307,r=0,d=25307) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS  SubmitPep_3_RGSC3.1( 13)         DONE jobs(t=22159,r=0,d=22159) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS SubmitPep_11_WASHUC1( 14)         DONE jobs(t=17709,r=0,d=17709) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS        blast_8_CBR25( 15)         DONE jobs(t=19873,r=0,d=19873) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS       blast_6_DROM3A( 16)         DONE jobs(t=14364,r=0,d=14364) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS        blast_5_MOZ2a( 17)         DONE jobs(t=13525,r=0,d=13525) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS       blast_7_CEL116( 18)         DONE jobs(t=11884,r=0,d=11884) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS      blast_2_NCBIM32( 19)  ALL_CLAIMED jobs(t=126865,r=0,d=126825) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS     blast_11_WASHUC1( 20)  ALL_CLAIMED jobs(t=134463,r=0,d=134423) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS      blast_3_RGSC3.1( 21)  ALL_CLAIMED jobs(t=130013,r=0,d=129973) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS    SubmitPep_4_FUGU2( 22)         DONE jobs(t=20796,r=0,d=20796) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS  SubmitPep_10_CHIMP1( 23)         DONE jobs(t=21505,r=0,d=21505) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS        blast_4_FUGU2( 24)  ALL_CLAIMED jobs(t=131376,r=0,d=131146) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS      blast_10_CHIMP1( 25)  ALL_CLAIMED jobs(t=130667,r=0,d=130455) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS   SubmitPep_1_NCBI34( 26)         DONE jobs(t=22287,r=0,d=22287) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS       blast_1_NCBI34( 27)  ALL_CLAIMED jobs(t=129885,r=0,d=128960) batch=60 capacity=50 clutchSize=0 (age 0 secs)
+  STATS   SubmitPep_9_ZFISH3( 28)         DONE jobs(t=22409,r=0,d=22409) batch=7000 capacity=1 clutchSize=0 (age 0 secs)
+  STATS       blast_9_ZFISH3( 29)      WORKING jobs(t=129763,r=58331,d=71392) batch=60 capacity=50 clutchSize=49 (age 0 secs)
+  STATS   SubmitHomologyPair( 30)      BLOCKED jobs(t=55,r=55,d=0) batch=7000 capacity=1 clutchSize=1 (age 0 secs)
+  STATS        BuildHomology( 31)        READY jobs(t=0,r=0,d=0) batch=1 capacity=3 clutchSize=0 (age 159045 secs)
+
+  bsub -JW29[1-49] ./runWorker.pl -analysis_id 29 -url mysql://ensadmin:ensembl@127.0.0.1:3361/compara_hive_jess_23
+
+  The first part shows all the analyses currently in the system graph, and details about it's state.
+  jobs(t=100,r=50,d=20) means there are 100 total jobs, 50 are ready to run, and 20 are done
+    which implies that 30 are actively running.
+  batch=60 means that when a worker connects to the hive it 'claims' this many jobs and then goes away
+    to work on them.
+  capacity=50 means that at any moment in time I only want 50 workers of this class alive and working
+    used to restrict the load on the hive database.  This is still under development
+  clutchSize=30 means that at this moment in time the Queen could birth 30 works of this type
+    This is what the beekeeper looks at to figure out what to do
+
+  The second section (bsubs) is the recommended commands to run to create the worker that are currently
+  needed by the Queen.  Once the system is ready this will be automatic.  At this point the user
+  can simply copy the commands to run them.
+
+  Useful modifications include (for the above example)
+  a) bsub -JW29[1-49] ./runWorker.pl -lifespan 180 -analysis_id 29 -url mysql://ensadmin:ensembl@ecs:3361/compara_hive_jess_23
+    This changed the default worker lifespan to 180 minutes (3 hours).  The default is 1 hour.
+    This is useful if the LSF farm is empty and you want to leave a worker for a longer period.
+    One can get quite antisocial with this option so use prudently.
+  a) bsub -JW29[1-400] ./runWorker.pl -analysis_id 29 -url mysql://ensadmin:ensembl@ecs2:3361/compara_hive_jess_23
+    This changed the number of workers of this type (analysis_id 29 = blast_9_ZFISH3)
+    At any given moment you don't want more than 450 workers blasting away.  The capacity limit of 50
+    is crude attempt to try to get the blast distributed evenly, but if you are near the end (like in
+    the above state) you can run more workers.
+    
+  
+6.2- Run the beekeeper (run workers)
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./local_beekeeper.pl -url<> -run
+
+  Output looks similar to above, execept the recommended bsubs will be executed via a system call
+  exactly as they are shown
+
+  
+6.3- Run the beekeeper (clean up dead workers)
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./local_beekeeper.pl -url<> -dead
+
+  Run this ONLY WHEN THERE ARE NO LIVING WORKERS.
+  This is a very crude version of this function.  Any worker which hasn't checked in when
+  it finished is assumed to have died a horrible death.  So any jobs of this worker which
+  didn't finish are reset so another worker can do it.
+
+6.4- Run the beekeeper repeat
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   At this stage (16 June, 2004) the beekeeper/Queen can still overload resources so the looping
+   must be done manually.
+
+   The GenomeLoadMembers analysis typical takes 1 hour to run with 11 workers each handling one genome.
+   The other GenomeXXXXX analysis run quite quickly and are graphed to run in parallel.
+   The CreateBlastRules waits for all GenomeSubmitPep, all GenomeLoadMembers, and all GenomeDumpFasta to finish before running, but runs quickly.
+
+   After all the rules are created, there are around 500,000 blast jobs to run when doing
+   a full all species to all species analysis.  On 500 machines this can run in around 8 hours.
+   With the default lifespan of 1 hour, this means around 8 cycles on 1 hour intervals.  Or
+   if the farm is available one could try setting the lifespan to 8 hours and starting up 40 workers
+   (40 workers * 11 species = 440 total workers) for each blast and let it run.  I haven't tried this
+   yet so I don't know if LSF would complain about a program sitting on a node for 8 hours.
+
+   After all the blasts jobs are done running, if the status doesn't 'unblock' the SubmitHomologyPair
+   it means there were some unfinished jobs (ie dead workers).  Run the beekeeper with the
+   -dead option to free up those jobs, rerun without options to get stats and a final set of bsubs.
+
+   The last stage is the BuildHomology analysis.  This analysis hammers the database quite hard
+   but I've found that I can run 3 of them simultaneously without overloading ecs2:3361 (which is
+   why this analysis has a capacity of 3).  Run these final bsubs.
+
+   At this point when everything is done, getting hive stats should show all analyses DONE.
+   Congrate the homologies have been built.
+
+7 - Calculate the dn/ds values
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Currently this hasn't been turned into a runnableDB so must be run by hand.  These only
+   need to be calculated for Human-Mouse-Rat homologs.
+
+   See this README
+
+   ~src/ensembl_main/ensembl-compara/script/homology/README-dNdS
+   
+  
