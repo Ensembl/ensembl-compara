@@ -90,11 +90,18 @@ sub _init {
 	    }
 	} else {
 	    $colour = $ext_col;
-	    $start  = ($vg->each_Transcript())[0]->start_exon->start();
-	    $end    = ($vg->each_Transcript())[-1]->end_exon->end();
-	    if ($start > $end){
-	        ($start, $end) = ($end, $start);
+	    my @coords;
+	    foreach my $trans ($vg->each_Transcript){
+		foreach my $exon ( $trans->each_Exon ) {
+		    if( $exon->seqname eq $VirtualContig->id ) { 
+			push(@coords,$exon->start);
+			push(@coords,$exon->end);
+		    }
+	       }
 	    }
+	    @coords = sort {$a <=> $b} @coords;
+	    $start = $coords[0];
+	    $end   = $coords[-1];   
 	    $label  = $vg->id;
 	    $label  =~ s/gene\.//;
 	}
