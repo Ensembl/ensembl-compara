@@ -458,7 +458,6 @@ sub RENDER_grouped {
 
 #  if we have displayed the specified number of rows and there are still some features left then display a note saying that.
       if($more_features) {
-	  warn("MORE FEATURES");
 	  my $yx = $configuration->{'depth'};
 	  my $ID = 'There are more '.$self->{'extras'}->{'caption'}.' features in this region. Increase source depth to view them all ';
 	  $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
