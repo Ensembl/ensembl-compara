@@ -39,7 +39,7 @@ sub _init {
 
     my $ext_url = ExtURL->new;
 
-    my @pr_feat = $protein->get_all_PrintsFeatures();
+    my @pr_feat = @{$protein->get_all_PrintsFeatures()};
     foreach my $feat(@pr_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
     }

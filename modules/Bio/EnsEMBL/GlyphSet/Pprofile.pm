@@ -36,7 +36,7 @@ sub _init {
 
     my $ext_url = ExtURL->new;
 
-    my @ps_feat = $protein->get_all_ProfileFeatures();
+    my @ps_feat = @{$protein->get_all_ProfileFeatures()};
 
     foreach my $feat(@ps_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);

@@ -28,7 +28,7 @@ sub _init {
     my $protein = $self->{'container'};
     my $Config  = $self->{'config'};  
 
-    my @sigp_feat = $protein->get_all_SigpFeatures();
+    my @sigp_feat = @{$protein->get_all_SigpFeatures()};
     foreach my $feat(@sigp_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
     }

@@ -34,7 +34,7 @@ sub _init {
     my $font          = "Small";
     my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
-    my @ps_feat = $protein->get_all_SuperfamilyFeatures();
+    my @ps_feat = @{$protein->get_all_SuperfamilyFeatures()};
     foreach my $feat(@ps_feat) {
 	    push(@{$hash{$feat->feature2->seqname}},$feat);
     }
