@@ -1,6 +1,5 @@
 package Bio::EnsEMBL::GlyphSet;
 use strict;
-use lib "../../../../bioperl-live";
 use Bio::Root::RootI;
 use Exporter;
 use vars qw(@ISA $AUTOLOAD);

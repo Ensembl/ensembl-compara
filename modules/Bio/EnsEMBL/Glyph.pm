@@ -1,6 +1,5 @@
 package Bio::EnsEMBL::Glyph;
 use strict;
-use lib "../../../../modules";
 use ColourMap;
 use Exporter;
 use vars qw(@ISA $AUTOLOAD);

@@ -1,8 +1,6 @@
 package Bio::EnsEMBL::DrawableContainer;
-use lib "../../../../bioperl-live";
 use Bio::Root::RootI;
 use strict;
-use lib "../../../../modules";
 use vars qw(@ISA);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Bio::EnsEMBL::Glyph::Rect;
