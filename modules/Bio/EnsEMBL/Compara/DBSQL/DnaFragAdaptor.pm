@@ -1,4 +1,3 @@
-
 #
 # Ensembl module for Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
 #
@@ -65,27 +64,167 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 =cut
 
 sub fetch_by_dbID{
-   my ($self,$dbid) = @_;
+  my ($self,$dbid) = @_;
 
-   if( !defined $dbid) {
-       $self->throw("Must fetch by dbid");
+  if( !defined $dbid) {
+    $self->throw("Must fetch by dbid");
+  }
+  
+  my $sth = $self->prepare("select name,genome_db_id,dnafrag_type from dnafrag where dnafrag_id = $dbid");
+  $sth->execute;
+  
+  my ($name,$genome_db_id,$type) = $sth->fetchrow_array();
+  
+  if( !defined $name) {
+    $self->throw("No dnafrag with this dbID $dbid");
+  }
+  
+  my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
+  
+  $dnafrag->dbID($dbid);
+  $dnafrag->name($name);
+  $dnafrag->type($type);
+  $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id));
+
+  return $dnafrag;
+}
+
+=head2 fetch_by_name_genomedb_id
+
+ Title   : fetch_by_name_genome_db_id
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_by_name_genomedb_id{
+  my ($self,$name,$genomedb_id) = @_;
+  
+  if( !defined $name) {
+    $self->throw("fetch_by_name_genomedb_id requires dnafrag name");
+  }
+  
+  if( !defined $genomedb_id) {
+    $self->throw("fetch_by_name_genomedb_id requires genomedb_id");
+  }
+  
+  my $sth = $self->prepare("select dnafrag_id,dnafrag_type from dnafrag where name = ? and genome_db_id = ?");
+  $sth->execute($name,$genomedb_id);
+  
+  my ($dbID,$type) = $sth->fetchrow_array();
+  
+  if( !defined $dbID) {
+    $self->throw("No dnafrag with this name $name and genomedb $genomedb_id");
+  }
+  
+  my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
+  
+  $dnafrag->dbID($dbID);
+  $dnafrag->name($name);
+  $dnafrag->type($type);
+  $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genomedb_id));
+
+  return $dnafrag;
+}
+
+=head2 fetch_by_species_chr_start_end
+
+ Title   : fetch_by_species_chr_start_end
+ Usage   :
+ Function:
+ Example :
+ Returns : return a list of Bio::EnsEMBL::Compara::DnaFrag
+ Args    :
+
+
+=cut
+
+sub fetch_by_species_chr_start_end {
+  my ($self,$species,$chr_name,$chr_start,$chr_end,$dnafrag_type) = @_;
+ 
+   if( !defined $species) {
+       $self->throw("fetch_by_species_chr_start_end require species name");
    }
 
-   my $sth = $self->prepare("select name,genome_db_id from dnafrag where dnafrag_id = $dbid");
+   if( !defined $chr_name) {
+       $self->throw("fetch_by_species_chr_start_end requires chromosome name");
+   }
+ 
+   if( !defined $chr_start) {
+       $self->throw("fetch_by_species_chr_start_end requires chrosomosome start");
+   }
+
+   if( !defined $chr_end) {
+       $self->throw("fetch_by_species_chr_start_end requires chromosome end");
+   }
+
+   if( !defined $dnafrag_type) {
+       $self->throw("fetch_by_species_chr_start_end requires dnafrag_type");
+   }
+
+   my $sth;
+   my @list_dnafrag;
+
+   if ($dnafrag_type eq "RawContig") {
+
+# need a connection to the ensembl core database of corresponding species (get info from genome_db table)
+# to get a dnafrag list of RawContig which are between chr_start and chr_end, and in dnafrag table as well.
+
+   } elsif ($dnafrag_type eq "VirtualContig") {
+
+       $sth = $self->prepare("select d.dnafrag_id,d.name,d.genome_db_id from dnafrag d,genome_db g where d.name like ? and g.name = ? and d.genome_db_id=g.genome_db_id");
+       $sth->execute("$chr_name.%",$species);
+ 
+       while (my ($dnafrag_id,$name,$genome_db_id) = $sth->fetchrow_array()) {
+           my ($chr,$start,$end) = split /\./,$name;
+
+           if ($start<=$chr_end && $end>=$chr_start) {
+ 
+              my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
+ 
+              $dnafrag->dbID($dnafrag_id);
+              $dnafrag->name($name);
+              $dnafrag->type($dnafrag_type);
+              $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id));
+
+              push @list_dnafrag,$dnafrag;
+           }
+       }
+   }
+  return @list_dnafrag;
+}
+
+=head2 fetch_all
+
+ Title   : fetch_all
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_all{
+   my ($self) = @_;
+ 
+   my $query = "SELECT dnafrag_id FROM dnafrag";
+   my $sth = $self->prepare($query);
    $sth->execute;
 
-   my ($name,$genome_db_id) = $sth->fetchrow_array();
+   my @dnafrags;
 
-   if( !defined $name) {
-       $self->throw("No dnafrag with this dbID $dbid");
+   while (my ($id) = $sth->fetchrow_array){
+      my $dnafrag = $self->fetch_by_dbID($id);
+      push (@dnafrags,$dnafrag);   
    }
 
-   my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
-
-   $dnafrag->name($name);
-   $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id));
-
-   return $dnafrag;
+   return @dnafrags;
 
 }
 
@@ -128,10 +267,12 @@ sub store{
 
    my $name = $dnafrag->name;
    my $gid =  $gdb->dbID;
+   my $type = 'NULL';
+   $type = $dnafrag->type if (defined $dnafrag->type);
 
-   my $sth = $self->prepare("insert into dnafrag (name,genome_db_id) values ('$name',$gid)");
+   my $sth = $self->prepare("insert into dnafrag (name,genome_db_id,dnafrag_type) values (?,?,?)");
 
-   $sth->execute();
+   $sth->execute($dnafrag->name,$gdb->dbID,$dnafrag->type);
 
    $dnafrag->dbID($sth->{'mysql_insertid'});
    $dnafrag->adaptor($self);
