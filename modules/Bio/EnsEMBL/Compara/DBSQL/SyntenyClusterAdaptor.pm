@@ -43,7 +43,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::SyntenyClusterAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 
 use vars qw(@ISA);
 use strict;
