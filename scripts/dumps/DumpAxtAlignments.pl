@@ -10,10 +10,10 @@ $0 [-help]
    -user username (default = 'ensro')
    -dbname ensembl_compara_database
    -port eg 3352 (default)
-   -chr_name (e.g. 22)
-   -chr_start
-   -chr_end
-   -species1 (e.g. \"Homo sapiens\") from which alignments are queried and chr_name refer to
+   -seq_region_name (e.g. chromosome:22)
+   -seq_region_start
+   -seq_region_end
+   -species1 (e.g. \"Homo sapiens\") from which alignments are queried and seq_region refer to
    -assembly1 (e.g. NCBI30) assembly version of species1
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
@@ -24,7 +24,7 @@ $0 [-help]
 
 my ($host,$dbname);
 my $dbuser = 'ensro';
-my ($chr_name,$chr_start,$chr_end);
+my ($seq_region,$seq_region_start,$seq_region_end);
 my ($species1,$assembly1,$species2,$assembly2);
 my $conf_file;
 my $help = 0;
@@ -42,9 +42,9 @@ GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'port=i'  => \$port,
-	   'chr_name=s' => \$chr_name,
-	   'chr_start=i' => \$chr_start,
-	   'chr_end=i' => \$chr_end,
+	   'seq_region=s' => \$seq_region,
+	   'seq_region_start=i' => \$seq_region_start,
+	   'seq_region_end=i' => \$seq_region_end,
 	   'species1=s' => \$species1,
 	   'assembly1=s' => \$assembly1,
 	   'species2=s' => \$species2,
@@ -68,53 +68,49 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
 						      -dbname => $dbname,
 						      -conf_file => $conf_file);
 
-my $species1_dbadaptor = $db->get_db_adaptor($species1,$assembly1);
-my $sb_chradp = $species1_dbadaptor->get_ChromosomeAdaptor;
-my $chr = $sb_chradp->fetch_by_chr_name($chr_name);
 
-my $species2_dbadaptor = $db->get_db_adaptor($species2,$assembly2);
-my $qy_chradp = $species2_dbadaptor->get_ChromosomeAdaptor;
-my $qy_chrs = $qy_chradp->fetch_all;
-
-my %qy_chrs;
-
-foreach my $qy_chr (@{$qy_chrs}) {
-  $qy_chrs{$qy_chr->chr_name} = $qy_chr;
+unless ($seq_region =~ /^\S+:\S+$/) {
+  warn "
+seq_region should have be coordinate_system_name:seq_region_name,
+e.g. chromosome:22 or scaffold:scaffold_10
+EXIT 1\n";
+  exit 1;
 }
+my ($coordinate_system_name, $seq_region_name) = split ":", $seq_region;
+
+my $sliceadaptor = $db->get_db_adaptor($species1,$assembly1)->get_SliceAdaptor;
+my $slice = $sliceadaptor->fetch_by_region($coordinate_system_name,$seq_region_name);
 
 # futher checks on arguments
 
-unless (defined $chr_start) {
-  warn "WARNING : setting chr_start=1\n";
-  $chr_start = 1;
+unless (defined $seq_region_start) {
+  warn "WARNING : setting seq_region_start=1\n";
+  $seq_region_start = 1;
 }
 
-if ($chr_start > $chr->length) {
-  warn "chr_start $chr_start larger than chr_length ".$chr->length."
-exit 1\n";
-  exit 1;
+if ($seq_region_start > $slice->length) {
+  warn "seq_region_start $seq_region_start larger than chr_length ".$slice->length."
+exit 2\n";
+  exit 2;
 }
-unless (defined $chr_end) {
-  warn "WARNING : setting chr_end=chr_length ".$chr->length."\n";
-  $chr_end = $chr->length;
+unless (defined $seq_region_end) {
+  warn "WARNING : setting seq_region_end=seq_region->length ".$slice->length."\n";
+  $seq_region_end = $slice->length;
 }
-if ($chr_end > $chr->length) {
-  warn "WARNING : chr_end $chr_end larger than chr_length ".$chr->length."
-setting chr_end=chr_length\n";
-  $chr_end = $chr->length;
+if ($seq_region_end > $slice->length) {
+  warn "WARNING : seq_region_end $seq_region_end larger than seq_region->length ".$slice->length."
+setting seq_region_end=seq_region->length\n";
+  $seq_region_end = $slice->length;
 }
-
-my $species1_sliceadaptor = $species1_dbadaptor->get_SliceAdaptor;
-my $species2_sliceadaptor = $species2_dbadaptor->get_SliceAdaptor;
 
 my $dafad = $db->get_DnaAlignFeatureAdaptor;
 
-my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$chr_name,$chr_start,$chr_end,$alignment_type,$limit)};
+my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$seq_region_name,$seq_region_start,$seq_region_end,$alignment_type,$limit,$coordinate_system_name)};
 
 my $index = 0;
 
 foreach my $ddaf (@DnaDnaAlignFeatures) {
-  
+  print STDERR $ddaf->group_id," ",$ddaf->level_id," ",$ddaf->strands_reversed,"\n";
   if ($ddaf->cigar_string eq "") {
     warn $ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$ddaf->hstrand," ",$ddaf->score," has no cigar line";
     next;
@@ -125,16 +121,16 @@ foreach my $ddaf (@DnaDnaAlignFeatures) {
   $hstrand = "-" if ($ddaf->hstrand < 0);
 
   if ($hstrand eq "-") {
-    print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$qy_chrs{$ddaf->hseqname}->length - $ddaf->hend + 1," ",$qy_chrs{$ddaf->hseqname}->length - $ddaf->hstart + 1," ",$hstrand," ",$ddaf->score,"\n";
+    print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hslice->length - $ddaf->hend + 1," ",$ddaf->hslice->length - $ddaf->hstart + 1," ",$hstrand," ",$ddaf->score,"\n";
   } else {
     print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$hstrand," ",$ddaf->score,"\n";
   }
-  my $sb_seq = $species1_sliceadaptor->fetch_by_chr_start_end($ddaf->seqname,$ddaf->start,$ddaf->end)->seq;
+  my $sb_seq = $ddaf->slice->adaptor->fetch_by_region($ddaf->slice->coord_system->name,$ddaf->seqname,$ddaf->start,$ddaf->end)->seq;
   my $qy_seq;
   if ($ddaf->hstrand > 0) {
-    $qy_seq = $species2_sliceadaptor->fetch_by_chr_start_end($ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->seq;
+    $qy_seq = $ddaf->hslice->adaptor->fetch_by_region($ddaf->hslice->coord_system->name,$ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->seq;
   } else {
-    $qy_seq = $species2_sliceadaptor->fetch_by_chr_start_end($ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->invert->seq;
+    $qy_seq = $ddaf->hslice->adaptor->fetch_by_region($ddaf->hslice->coord_system->name,$ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->invert->seq;
   }
   ($sb_seq,$qy_seq) = make_gapped_align_from_cigar_string($sb_seq,$qy_seq,$ddaf->cigar_string);
   print lc $sb_seq,"\n";
