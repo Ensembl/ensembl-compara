@@ -1177,6 +1177,48 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 }
 
 
+=head2 _get_fake_aligned_sequence_from_cigar_line
+
+  Arg [1]    : string $cigar_line
+  Example    : $aligned_sequence = _get_fake_aligned_sequence_from_cigar_line(
+                   "3MD8M2D3M")
+  Description: get gapped sequence of N's from the cigar line
+  Returntype : string $fake_aligned_sequence
+  Exceptions : 
+  Caller     : methodname
+
+=cut
+
+sub _get_fake_aligned_sequence_from_cigar_line {
+  my ($cigar_line, $fix_seq) = @_;
+  my $fake_aligned_sequence = "";
+
+  return undef if (!$cigar_line);
+
+  my $seq_pos = 0;
+  
+  my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+  for my $cigElem ( @cig ) {
+    my $cigType = substr( $cigElem, -1, 1 );
+    my $cigCount = substr( $cigElem, 0 ,-1 );
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+
+    if( $cigType eq "M" ) {
+      $fake_aligned_sequence .= "N" x $cigCount;
+      $seq_pos += $cigCount;
+    } elsif( $cigType eq "G" || $cigType eq "D") {
+      if ($fix_seq) {
+        $seq_pos += $cigCount;
+      } else {
+        $fake_aligned_sequence .=  "-" x $cigCount;
+      }
+    }
+  }
+
+  return $fake_aligned_sequence;
+}
+
+
 =head2 _print
 
   Arg [1]    : ref to a FILEHANDLE
@@ -1338,7 +1380,12 @@ sub get_Mapper {
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
       throw "1" if ($self->genomic_align_block->reference_genomic_align->dnafrag_strand != 1);
 #       throw "2: (".$self->genomic_align_block->reference_genomic_align->dnafrag_end." - ". $self->genomic_align_block->reference_genomic_align->dnafrag_start.")" if ($self->dnafrag_strand != 1);
-      my $this_aligned_seq = $self->aligned_sequence();
+      my $this_aligned_seq;
+      if (defined($self->{'aligned_sequence'})) {
+        $this_aligned_seq = $self->{'aligned_sequence'};
+      } else {
+        $this_aligned_seq = _get_fake_aligned_sequence_from_cigar_line($self->cigar_line);
+      }
 
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
       my $aln_seq_pos = 0;
