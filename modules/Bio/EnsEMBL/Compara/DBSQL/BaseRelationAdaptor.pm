@@ -178,8 +178,6 @@ sub fetch_by_source {
   return $self->generic_fetch($constraint);
 }
 
-
-
 sub store_source {
   my ($self,$source_name) = @_;
   
@@ -221,6 +219,7 @@ sub store_relation {
     $sth->execute($attribute->domain_id, $attribute->member_id, $attribute->member_start, $attribute->member_end);
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
+    $attribute->homology_id($relation->dbID);
     $sql = "INSERT INTO homology_member (homology_id, member_id, cigar_line, perc_cov, perc_id, perc_pos, flag) VALUES (?,?,?,?,?,?,?)";
     $sth = $self->prepare($sql);
     $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->cigar_line, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos, $attribute->flag);
