@@ -15,7 +15,7 @@ sub features {
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Rattus norvegicus',
-							    $assembly);
+							    $assembly,'WGA');
 }
 
 sub href {

@@ -16,8 +16,10 @@ sub features {
       EnsWeb::species_defs->other_species('Homo_sapiens')->{'ENSEMBL_GOLDEN_PATH'};
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
-							   'Homo sapiens',
-							    $assembly);
+								  'Homo sapiens',
+								  $assembly,
+								  'WGA'
+								 );
 
 }
 
