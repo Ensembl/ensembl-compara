@@ -107,6 +107,8 @@ sub store {
     unless ($method_link_species_set &&
         $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
+  $method_link_species_set->adaptor($self);
+
   my $method_link_sql = qq{SELECT 1 FROM method_link WHERE method_link_id = ?};
   
   my $method_link_species_set_sql = qq{
