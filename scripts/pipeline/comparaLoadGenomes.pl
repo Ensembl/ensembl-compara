@@ -205,7 +205,7 @@ sub submitGenome
   };
 
   unless($genomeDBA) {
-    print("ERROR: unable to connect to genome database $locator\n");
+    print("ERROR: unable to connect to genome database $locator\n\n");
     return;
   }
 
@@ -213,7 +213,6 @@ sub submitGenome
   my $genome_name = $genomeDBA->get_MetaContainer->get_Species->binomial;
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
-  print("assembly = '$assembly'\n");
 
   if($species->{taxon_id} && ($taxon_id ne $species->{taxon_id})) {
     throw("$genome_name taxon_id=$taxon_id not as expected ". $species->{taxon_id});
@@ -224,15 +223,15 @@ sub submitGenome
   $genome->name($genome_name);
   $genome->assembly($assembly);
 
-  print("about to store genomeDB\n");
-  print("  taxon_id = '".$genome->taxon_id."'\n");
-  print("  name = '".$genome->name."'\n");
-  print("  assembly = '".$genome->assembly."'\n");
+  print("  about to store genomeDB\n");
+  print("    taxon_id = '".$genome->taxon_id."'\n");
+  print("    name = '".$genome->name."'\n");
+  print("    assembly = '".$genome->assembly."'\n");
 
   $self->{'comparaDBA'}->get_GenomeDBAdaptor->store($genome);
   $species->{'genome_db'} = $genome;
 
-  print("inserted genome_db id=".$genome->dbID."\n");
+  print("    genome_db id=".$genome->dbID."\n");
 
   #
   # now fill table genome_db_extra
@@ -246,7 +245,7 @@ sub submitGenome
 
   if($dbID) {
     $sql = "UPDATE genome_db_extn SET " .
-              ",phylum='" . $species->{phylum}."'".
+              "phylum='" . $species->{phylum}."'".
               ",locator='".$locator."'".
               " WHERE genome_db_id=". $genome->dbID;
   }
@@ -256,6 +255,7 @@ sub submitGenome
               ",phylum='" . $species->{phylum}."'".
               ",locator='".$locator."'";
   }
+  print("$sql\n");
   $sth = $self->{'comparaDBA'}->prepare( $sql );
   $sth->execute();
   $sth->finish();
