@@ -70,6 +70,7 @@ create table genomic_align_block (
        raw_strand    integer(10) NOT NULL,
        score         double   ,
        perc_id       integer(10) ,
+       cigar_line    mediumtext,
 
        PRIMARY KEY (align_id,align_start,align_end,align_row_id,dnafrag_id),
        KEY (dnafrag_id,raw_start,raw_end),
