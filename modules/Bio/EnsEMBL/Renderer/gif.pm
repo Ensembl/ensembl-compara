@@ -49,17 +49,45 @@ sub render_Rect {
 
     $canvas->filledRectangle($x1,   $y1, $x2, $y2, $bordercolour) if(defined $bordercolour);
     $canvas->filledRectangle($x1+1, $y1+1, $x2-1, $y2-1, $colour) if(defined $bordercolour && defined $colour && $bordercolour != $colour);
+#print STDERR qq(render_Rect: ), $glyph->x(), ", ", $glyph->y(), ", ", $glyph->width(), ", ", $glyph->height(), qq(\n);
+#print STDERR qq(render_Rect: ), $glyph->pixelx(), ", ", $glyph->pixely(), ", ", $glyph->pixelwidth(), ", ", $glyph->pixelheight(), qq(\n);
 }
 
 sub render_Text {
     my ($this, $glyph) = @_;
-    my $font = $glyph->font();
+
+#    my $font = $glyph->font() || "gdTinyFont";
+#    $font =~ s/^gd(.*)Font$/$1/g;
+#    my $fontname = qq(GD::Font::$font);
+
+#    no strict 'refs';
+#    no strict 'subs';
+#    my $f = eval {&{$fontname(packname="GD::Font")};};
+#print STDERR qq(fontname is ), &{$fontname(packname="GD::Font")}, qq(\n);
 
     my $colour = $this->colour($glyph->colour());
-
     $glyph->transform($this->{'transform'});
 
-    $this->{'canvas'}->string(gdTinyFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+    #########
+    # BAH! HORRIBLE STINKY STUFF!
+    # I'd take GD voodoo calls any day
+    #
+    if($glyph->font() eq "Tiny") {
+        $this->{'canvas'}->string(gdTinyFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "Small") {
+        $this->{'canvas'}->string(gdSmallFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "MediumBold") {
+        $this->{'canvas'}->string(gdMediumBoldFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "Large") {
+        $this->{'canvas'}->string(gdLargeFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "Giant") {
+        $this->{'canvas'}->string(gdGiantFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+    }
+
 }
 
 sub render_Circle {
@@ -75,28 +103,36 @@ sub render_Intron {
 
     $glyph->transform($self->{'transform'});
 
-    my ($xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend);
+    my ($xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand);
 
-    if($self->{'transform'}->{'rotation'} == 90) {
-	$xstart  = $glyph->pixelx() + int($glyph->pixelwidth()/2);
-	$xend    = $xstart;
-	$xmiddle = $glyph->pixelx() + $glyph->pixelwidth();
+    #########
+    # todo: check rotation conditions
+    #
 
-	$ystart  = $glyph->pixely();
-	$yend    = $glyph->pixely() + $glyph->pixelheight();
-	$ymiddle = $glyph->pixely() + int($glyph->pixelheight() / 2);
+    $strand  = $glyph->strand();
 
-    } else {
-	$xstart  = $glyph->pixelx();
-	$xend    = $glyph->pixelx() + $glyph->pixelwidth();
-	$xmiddle = $glyph->pixelx() + int($glyph->pixelwidth() / 2);
+    $xstart  = $glyph->pixelx();
+    $xend    = $glyph->pixelx() + $glyph->pixelwidth();
+    $xmiddle = $glyph->pixelx() + int($glyph->pixelwidth() / 2);
 
-	$ystart  = $glyph->pixely() + int($glyph->pixelheight() / 2);
-	$yend    = $ystart;
-	$ymiddle = $glyph->pixely();
-    }
+    $ystart  = $glyph->pixely() + int($glyph->pixelheight() / 2);
+    $yend    = $ystart;
+    $ymiddle = ($strand == 1)?$glyph->pixely():($glyph->pixely()+$glyph->pixelheight());
+
     $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
     $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
+}
+
+sub render_Clip {
+    my ($this, $glyph) = @_;
+    my $colour = $this->colour($glyph->colour());
+    my $x1     = $glyph->pixelx();
+    my $y1     = $glyph->pixely();
+    my $x2     = $x1 + $glyph->pixelwidth();
+    my $y2     = $y1 + $glyph->pixelheight();
+    $this->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
+
+#print STDERR qq(rendering clip\n);
 }
 
 sub render_Poly {
@@ -128,15 +164,15 @@ sub render_Poly {
 
 sub render_Composite {
     my ($this, $glyph) = @_;
-    #########
-    # apply transformation
-    #
-    $glyph->transform($this->{'transform'});
 
     #########
     # draw & colour the bounding area if specified
     #
-    $this->render_Rect($glyph) if(defined $glyph->colour() || defined $glyph->bordercolour());
+    if(defined $glyph->colour() || defined $glyph->bordercolour()) {
+	my $rect = $glyph;
+	$rect->transform($this->{'transform'});
+	$this->render_Rect($rect);
+    }
 
     #########
     # now loop through $glyph's children
