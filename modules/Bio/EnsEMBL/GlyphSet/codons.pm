@@ -54,9 +54,9 @@ sub _init {
 # Start/stop codons on the reverse strand have value 3/4
    		my %h = (
 			'ATG'=>1,					    # start codons - forward strand
-			'TAA'=>2, 'TAG'=>2, 'TGA'=>2,	# stop codons  - forward strand
+			'TAA'=>2, 'TAG'=>2, 'TGA'=>2, 'TAR'=>2, 'TRA'=>2,	# stop codons  - forward strand
 			'CAT'=>3,					    # start codons - reverse strand
-			'TTA'=>4, 'CTA'=>4, 'TCA'=>4 	# stop codons  - reverse strand
+			'TTA'=>4, 'CTA'=>4, 'TCA'=>4, 'YTA'=>4, 'TYA'=>4 	# stop codons  - reverse strand
 		);
 # The value is used as the index in the array to store the information. 
 #      [ For each "phase" this is incremented by 4 ]
