@@ -110,7 +110,6 @@ sub new {
   return $self;
 }
 
-
 =head2 store
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock
@@ -472,9 +471,10 @@ sub fetch_all_by_DnaFrag {
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Arg  2     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
-  Arg  3     : integer $start
-  Arg  4     : integer $end
-  Arg  5     : integer $limit
+  Arg  3     : integer $start [optional]
+  Arg  4     : integer $end [optional]
+  Arg  5     : integer $limit_number [optional]
+  Arg  6     : integer $limit_index_start [optional]
   Example    : my $genomic_align_blocks =
                   $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
                       2, 19, 50000000, 50250000);
@@ -490,7 +490,8 @@ sub fetch_all_by_DnaFrag {
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
-  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit) = @_;
+  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start) = @_;
+
   my $genomic_align_blocks = []; # returned object
 
   throw("[$dnafrag] is not a Bio::EnsEMBL::Compara::DnaFrag object")
@@ -504,7 +505,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
-  my $lower_bound = $start - $self->{'max_alignment_length'};
   my $sql = qq{
           SELECT
               genomic_align_id,
@@ -516,15 +516,19 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               AND dnafrag_id = $dnafrag_id
       };
   if (defined($start) and defined($end)) {
+    my $lower_bound = $start - $self->{'max_alignment_length'};
     $sql .= qq{
             AND dnafrag_start <= $end
             AND dnafrag_start >= $lower_bound
             AND dnafrag_end >= $start
         };
   }
-  if ($limit) {
-    $sql .= qq{ LIMIT $limit };
+  if ($limit_number && $limit_index_start) {
+    $sql .= qq{ LIMIT $limit_index_start , $limit_number };
+  } elsif ($limit_number) {
+    $sql .= qq{ LIMIT $limit_number };
   }
+
   my $sth = $self->prepare($sql);
   $sth->execute();
 
