@@ -167,6 +167,9 @@ sub write_output
       $self->{'membersToBeProcessed'} = {};
       $self->{'storedHomologies'} = {};
 
+      $self->determine_method_link_species_set($blast1, $blast2);
+      $self->delete_previous_homology_method_link_species_set();
+
       $self->set_member_list($blast1);
       $self->set_member_list($blast2);
       print(scalar(keys %{$self->{'membersToBeProcessed'}}) . " members to be processed for HOMOLOGY\n");
@@ -259,6 +262,52 @@ sub load_blasts_from_input
 #
 ##################################
 
+sub determine_method_link_species_set
+{
+  # using trick of specifying table twice so can join to self
+  my $self      = shift;
+  my $analysis1 = shift;  # query species (get subset_id)
+  my $analysis2 = shift;  # db species (analysis_id, ie blast)
+
+  print("determine_method_link_species_set\n");
+  print("  analysis1 ".$analysis1->logic_name()."\n");
+  print("  analysis2 ".$analysis2->logic_name()."\n");
+
+  my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
+  my $hit_genome_db_id = eval($analysis2->parameters)->{'genome_db_id'};
+  
+  #
+  # create method_link_species_set
+  #
+  my $qGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($q_genome_db_id);
+  my $hGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id);
+  
+  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
+  $mlss->species_set([$qGDB, $hGDB]);
+  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  $self->{'method_link_species_set'} = $mlss;
+  return $mlss;
+}
+
+
+sub delete_previous_homology_method_link_species_set 
+{
+  my $self = shift;
+
+  printf("delete_previous_homology_method_link_species_set\n");
+  printf("  method_link_species_set : %d\n", $self->{'method_link_species_set'}->dbID);
+
+  my $sql = "DELETE homology, homology_member from homology, homology_member ".
+	    "WHERE homology.homology_id = homology_member.homology_id ".
+	    "AND homology.method_link_species_set_id = " .
+	    $self->{'method_link_species_set'}->dbID;
+  print("$sql\n");
+  my $delcount = $self->{'comparaDBA'}->dbc->do($sql);
+  print("deleted $delcount rows\n");
+}
+
+
 sub process_species_pair
 {
   # using trick of specifying table twice so can join to self
@@ -274,19 +323,6 @@ sub process_species_pair
   my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
   my $hit_genome_db_id = eval($analysis2->parameters)->{'genome_db_id'};
   
-  #
-  # create method_link_species_set
-  #
-  my $qGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($q_genome_db_id);
-  my $hGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id);
-  
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
-  $mlss->species_set([$qGDB, $hGDB]);
-  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-  $self->{'method_link_species_set'} = $mlss;
-
-  #
   # fetch the peptide members (via subset) ordered on chromosomes
   # then convert into synenty_segments (again of peptide members)
   #
