@@ -28,7 +28,8 @@ sub tag {
 
 sub colour {
     my( $self, $f ) = @_;
-    return $self->{'config'}->get($self->check(), 'col'), $self->{'config'}->get($self->check(), 'lab'), 'line'; 
+    return 
+$self->{'config'}->get($self->check(), 'col'), $self->{'config'}->get($self->check(), 'lab'), 'line'; 
 }
 
 sub href {
