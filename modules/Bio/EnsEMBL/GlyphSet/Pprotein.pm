@@ -33,7 +33,7 @@ sub _init {
             "ensembl" => "ensembl",
             "other" => "core",
         },
-        "Ensembl" => {
+        "EnsEMBL" => {
             "ensembl" => "core",
             "other" => "vega",
         },
