@@ -12,3 +12,8 @@ taxon_id	genus	species	sub_species	common_name	classification
 9031	Gallus	gallus	NULL	Chicken	gallus Gallus Phasianinae Phasianidae Galliformes Neognathae Aves Archosauria Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
 7460	Apis	mellifera	NULL	Honey bee	mellifera Apis Apidae Apoidea Aculeata Apocrita Hymenoptera Endopterygota Neoptera Pterygota Insecta Hexapoda Arthropoda Metazoa Eukaryota
 99883	Tetraodon	nigroviridis	NULL	Green puffer	nigroviridis Tetraodon Tetraodontidae Tetradontoidea Tetraodontiformes Percomorpha Acanthopterygii Acanthomorpha Neoteleostei Euteleostei Teleostei Neopterygii Actinopterygii Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+9913	Bos	taurus	NULL	cow	taurus Bos Bovinae Bovidae Pecora Ruminantia Cetartiodactyla Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+9615	Canis	familiaris	NULL	Dog	familiaris Canis Canidae Fissipedia Carnivora Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+8364	Xenopus	tropicalis	NULL	Western clawed frog	tropicalis Xenopus Xenopodinae Pipidae Pipoidea Mesobatrachia Anura Batrachia Amphibia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+13616	Monodelphis	domestica	NULL	Short-tailed grey opossum	domestica Monodelphis Didelphidae Didelphimorphia Metatheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+ 7719	Ciona	intestinalis	NULL	NULL	intestinalis Ciona Cionidae Phlebobranchia Enterogona Ascidiacea Urochordata Chordata Metazoa Eukaryota
