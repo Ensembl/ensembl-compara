@@ -106,7 +106,7 @@ sub render_Line {
 sub _getHref {
   my( $self, $glyph ) = @_; 
   my %actions = ();
-  my @X = qw( onmouseover onmouseout alt href );
+  my @X = qw( title onmouseover onmouseout alt href );
   foreach(@X) {
     my $X = $glyph->$_;
     $actions{$_} = $X if defined $X;
