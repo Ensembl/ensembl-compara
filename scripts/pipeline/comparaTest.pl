@@ -68,6 +68,10 @@ if(defined($self->{'comparaDBA'})) {
   $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
 }
 
+test_core($self); exit(1);
+
+test_paf($self);
+
 $self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(66454);
@@ -97,7 +101,7 @@ exit(0);
 #######################
 
 sub usage {
-  print "comparaDumpAllPeptides.pl [options]\n";
+  print "comparaTest.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates, and external genome databases\n";
   print "  -dbhost <machine>      : compara mysql database host <machine>\n";
@@ -108,7 +112,7 @@ sub usage {
   print "  -fasta <path>          : file where fasta dump happens\n";
   print "  -noX <num>             : don't dump if <num> 'X's in a row in sequence\n";
   print "  -nosplit               : don't split sequence lines into readable format\n";
-  print "comparaDumpAllPeptides.pl v1.1\n";
+  print "comparaTest.pl v1.1\n";
   
   exit(1);  
 }
@@ -173,4 +177,33 @@ sub dump_fasta {
   close(FASTAFILE);
 
   $sth->finish();
+}
+
+
+sub test_paf {
+  my $self = shift;
+
+  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
+
+  my $pafs = $pafDBA->fetch_all_by_qmember_id(1245);
+  foreach my $paf (@$pafs) { $paf->display_short; };
+
+
+  exit(1);
+}
+
+sub test_core {
+  my $self = shift;
+
+  my $humanGenomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Homo sapiens", "NCBI35");
+  my $humanDBA = $humanGenomeDB->db_adaptor;
+
+  my $transcript = $humanDBA->get_TranscriptAdaptor->fetch_by_stable_id("ENST00000356199");
+  print($transcript->stable_id, " ", $transcript->translation->stable_id, "\n");
+
+  if($transcript->translate->seq) {
+    print($transcript->translate->seq,"\n");
+  } else {
+    print("NO SEQUENCE!!\n");
+  }
 }
