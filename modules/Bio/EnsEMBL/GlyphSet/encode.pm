@@ -18,7 +18,7 @@ sub colour {
 
 sub href {
   my ($self,$f ) = @_;
-  return sprintf "/%s/%s?l=%s:%d-%d", $self->{'_config_file_name_'},
+  return sprintf "/%s/%s?l=%s:%d-%d", $self->{'container'}{'_config_file_name_'},
          $ENV{'ENSEMBL_SCRIPT'}, $f->seq_region_name,
          $f->seq_region_start, $f->seq_region_end;
 }
