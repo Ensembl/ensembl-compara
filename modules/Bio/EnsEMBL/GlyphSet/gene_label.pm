@@ -65,7 +65,7 @@ sub _init {
 	     	
         # find a decent label:
             my $max_pref = 0;
-            my $label = $vg->id();
+            $label = $vg->id();
     		foreach my $DB_link ( @temp_geneDBlinks ) {
                 my $db = $DB_link->database();
                 # reset if precedence is higher!
