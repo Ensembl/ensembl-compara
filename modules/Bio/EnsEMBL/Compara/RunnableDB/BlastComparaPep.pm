@@ -9,6 +9,8 @@
 
 Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep
 
+=cut
+
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
@@ -21,17 +23,23 @@ $repmask->run();
 $repmask->output();
 $repmask->write_output(); #writes to DB
 
+=cut
+
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::RepeatMasker to add
+This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
 functionality to read and write to databases.
 The appropriate Bio::EnsEMBL::Analysis object must be passed for
 extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
 required for databse access.
 
+=cut
+
 =head1 CONTACT
 
 Describe contact details here
+
+=cut
 
 =head1 APPENDIX
 
@@ -118,15 +126,16 @@ sub fetch_input {
 =cut
 
   print("running with analysis '".$self->analysis->logic_name."'\n");
-  $self->runnable(Bio::EnsEMBL::Pipeline::Runnable::Blast->new(
+  my $runnable = Bio::EnsEMBL::Pipeline::Runnable::Blast->new(
                      -query          => $self->query,
                      -database       => $self->analysis->db_file,
                      -program        => $self->analysis->program_file,
                      -options        => $self->analysis->parameters,
                      -threshold      => $thr,
                      -threshold_type => $thr_type
-                  ));
-
+                    );
+  $runnable->add_regex($self->analysis->db_file, '^(\S+)\s*');
+  $self->runnable($runnable);
   return 1;
 }
 
@@ -137,8 +146,8 @@ sub run
   #I can disconnect now until execution is done
   #need to disconnect both adaptors since each has their own ref_count
   #to the shared db_handle
-  $self->{'comparaDBA'}->disconnect();
-  $self->db()->disconnect();
+  $self->{'comparaDBA'}->disconnect_when_inactive(1);
+  $self->db()->disconnect_when_inactive(1);
 
   #call superclasses run method
   return $self->SUPER::run();
@@ -159,6 +168,7 @@ sub write_output {
     }
   }
 
+  $self->{'comparaDBA'}->disconnect_when_inactive(0);
   $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store($self->output);
 }
 
