@@ -1,9 +1,10 @@
-#!/usr/bin/perl
+#!/usr/local/ensembl/bin/perl -w
 
 use strict;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
@@ -49,18 +50,22 @@ unless(defined($fastadir) and ($fastadir =~ /^\//)) {
 }
 
 
-my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
+my $comparaDBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
                                                              -port => $port,
 							     -user => $user,
 							     -pass => $pass,
 							     -dbname => $dbname);
+my $pipelineDBA = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor	
+                  (-DBCONN => $comparaDBA);
+		  					     
+my $sicDBA = $pipelineDBA->get_StateInfoContainer;
 
 #
 # if neither genome_db_id or subset_id specified, dump for all genomes
 #
 
 unless(defined($genome_db_id) or defined($subset_id)) { 
-  my $genomedbAdaptor = $compara_db->get_GenomeDBAdaptor();
+  my $genomedbAdaptor = $comparaDBA->get_GenomeDBAdaptor();
 
   my @genomedbArray = @{$genomedbAdaptor->fetch_all()};
   my $count = $#genomedbArray;
@@ -69,10 +74,10 @@ unless(defined($genome_db_id) or defined($subset_id)) {
   foreach my $genome_db (@genomedbArray) {
     my $genome_db_id = $genome_db->dbID();  
 
-    $subset_id = getSubsetIdForGenomeDBId($compara_db, $genome_db_id);
+    $subset_id = getSubsetIdForGenomeDBId($comparaDBA, $genome_db_id);
     if(defined($subset_id)) {
-      my $fastafile = getFastaNameForGenomeDBID($compara_db, $genome_db_id);
-      dumpFastaForSubset($compara_db, $subset_id, $fastafile);
+      my $fastafile = getFastaNameForGenomeDBID($comparaDBA, $genome_db_id);
+      dumpFastaForSubset($comparaDBA, $subset_id, $fastafile);
     }
     print("\n");
   }
@@ -86,15 +91,15 @@ unless(defined($genome_db_id) or defined($subset_id)) {
 #
 
 if(defined($genome_db_id)) {
-  $subset_id = getSubsetIdForGenomeDBId($compara_db, $genome_db_id);
+  $subset_id = getSubsetIdForGenomeDBId($comparaDBA, $genome_db_id);
 }
 
 unless(defined($subset_id)) {
   die "ERROR : must specify a compara subset to dump fasta from\n";
 }
 
-my $fastafile = getFastaNameForSubsetID($compara_db, $subset_id);
-dumpFastaForSubset($compara_db, $subset_id, $fastafile);
+my $fastafile = getFastaNameForSubsetID($comparaDBA, $subset_id);
+dumpFastaForSubset($comparaDBA, $subset_id, $fastafile);
 
 #$dbh->disconnect();
 
@@ -131,7 +136,7 @@ sub usage {
 
 =head3
 if(defined($genome_db_id)) {
-  my @subsetIds = @{ getSubsetIdsForGenomeDBId($compara_db) };
+  my @subsetIds = @{ getSubsetIdsForGenomeDBId($comparaDBA) };
 
   if($#subsetIds > 0) {
     die ("ERROR in Compara DB: more than 1 subset of longest peptides defined for genome_db_id = $genome_db_id\n");
@@ -154,7 +159,7 @@ sub getSubsetIdForGenomeDBId {
 	    "WHERE subset.subset_id=subset_member.subset_id ".
 	    "AND subset.description like '%longest%' ".
 	    "AND member.member_id=subset_member.member_id ". 
-	    "AND member.genome_db_id=$genome_db_id ";
+	    "AND member.genome_db_id=$genome_db_id;";
   my $sth = $dbh->prepare( $sql );
   $sth->execute();
 
@@ -175,6 +180,39 @@ sub getSubsetIdForGenomeDBId {
   }
 
   return $subsetIds[0];
+}
+
+
+sub getGenomeDBIdForSubsetId{
+  my ($dbh, $subset_id) = @_;
+  
+  my @genomeIds = ();
+  my $genome_db_id;
+  
+  my $sql = "SELECT distinct member.genome_db_id " .
+            "FROM member, subset_member " .
+	    "WHERE subset_member.subset_id=$subset_id  ".
+	    "AND member.member_id=subset_member.member_id;";
+  my $sth = $dbh->prepare( $sql );
+  $sth->execute();
+
+  $sth->bind_columns( undef, \$genome_db_id );
+
+  while( $sth->fetch() ) {
+    print("found genome_db_id = $genome_db_id for subset_id = $subset_id\n");
+    push @genomeIds, $genome_db_id;
+  }
+  
+  $sth->finish();
+
+  if($#genomeIds > 0) {
+    warn ("Compara DB: more than 1 subset of longest peptides defined for genome_db_id = $genome_db_id\n");
+  }
+  if($#genomeIds < 0) {
+    warn ("Compara DB: no subset of longest peptides defined for genome_db_id = $genome_db_id\n");
+  }
+
+  return $genomeIds[0];
 }
 
 
@@ -268,7 +306,8 @@ sub dumpFastaForSubset {
   $sth = $dbh->prepare("UPDATE subset SET dump_loc = ? WHERE subset_id = ?");
   $sth->execute($fastafile, $subset_id);
   
-  addAnalysisForSubset($dbh, $subset_id, $fastafile);
+  #addAnalysisForSubset($dbh, $subset_id, $fastafile);
+  SubmitSubsetForAnalysis($subset_id, $fastafile);
   
   print("Prepare fasta file as blast database\n");
   system("setdb $fastafile");
@@ -298,6 +337,46 @@ sub taxonIDForSubsetID {
 }
 
 
+sub SubmitSubsetForAnalysis {
+  my($subset_id, $fastafile) = @_;
+  
+  my $analysisAdaptor = $pipelineDBA->get_AnalysisAdaptor();
+
+  my $genome_db_id = getGenomeDBIdForSubsetId($comparaDBA, $subset_id);
+  my $genome = $comparaDBA->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id);
+  
+  
+  my $logic_name = "SubmitPep_" . $genome->assembly();
+  
+  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db              => "subset_id=$subset_id",
+      -db_file         => $fastafile,
+      -db_version      => '1',
+      -logic_name      => $logic_name,
+      -input_id_type   => 'MemberPep'
+    );
+
+  $analysisAdaptor->store($analysis);  
+  
+  #
+  # now add input_ids to input_id_analysis table
+  #
+  
+  print("Get subset\n");
+  my $subset = $comparaDBA->get_SubsetAdaptor()->fetch_by_dbID($subset_id);
+  print(" fetched subset object\n");
+  
+  #my $host = hostname();
+  foreach my $member_id ($subset->member_id_list()) {
+    $sicDBA->store_input_id_analysis($member_id, #input_id
+				  $analysis,
+				  'earth' #execution_host
+				  );
+  }
+
+} 
+
+
 sub addAnalysisForSubset {
   my($dbh, $subset_id, $fastafile) = @_;
   
@@ -311,7 +390,7 @@ sub addAnalysisForSubset {
   my $taxon_id = taxonIDForSubsetID($dbh, $subset_id);
   my $logic_name = $analconf{logic_name} . "_$taxon_id";
   
-  my $analysis = Bio::EnsEMBL::Analysis->new(
+  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db              => "subset_id=$subset_id",
       -db_file         => $fastafile,
       -db_version      => '1',
