@@ -13,6 +13,8 @@ sub features {
     my $assembly = 
       EnsWeb::species_defs->other_species('Rattus_norvegicus')->{'ENSEMBL_GOLDEN_PATH'};
 
+    return [] unless $assembly;
+
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Rattus norvegicus',
 							    $assembly,'WGA_HCR');

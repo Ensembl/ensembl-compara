@@ -14,6 +14,8 @@ sub features {
     
     my $assembly = 
       EnsWeb::species_defs->other_species('Mus_musculus')->{'ENSEMBL_GOLDEN_PATH'};
+    return [] unless $assembly;
+
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Mus musculus',

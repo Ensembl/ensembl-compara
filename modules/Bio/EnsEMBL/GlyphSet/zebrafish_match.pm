@@ -13,6 +13,8 @@ sub features {
     my $assembly = 
       EnsWeb::species_defs->other_species('Danio_rerio')->{'ENSEMBL_GOLDEN_PATH'};
 
+    return [] unless $assembly;
+
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Danio rerio',
 							    $assembly,'WGA');
