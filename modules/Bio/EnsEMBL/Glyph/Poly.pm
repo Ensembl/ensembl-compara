@@ -85,11 +85,11 @@ sub transform {
     # override transformation if we've set x/y to be absolute (pixel) coords
     #
     if(defined $this->absolutex()) {
-	$scalex     = 1;
+	$scalex     = $$transform_ref{'absolutescalex'} ||1;
     }
 
     if(defined $this->absolutey()) {
-	$scaley     = 1;
+	$scaley     = $$transform_ref{'absolutescaley'} ||1;
     }
 
     #########
