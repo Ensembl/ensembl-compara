@@ -21,12 +21,15 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
+
+    my $Config        = $self->{'config'};
+    my $protein       = $self->{'container'};
+    $protein->dbID || return; # Non-database translation
+
     my %hash;
     my $y             = 0;
     my $h             = 4;
     my @bitmap        = undef;
-    my $protein       = $self->{'container'};
-    my $Config        = $self->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($protein->length() * $pix_per_bp);
     my $colour        = $Config->get('Psuperfamily','col');

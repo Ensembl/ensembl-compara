@@ -29,6 +29,8 @@ sub _init {
     my $Config 		= $self->{'config'};
     my $caption 	= "Low complexity region";
 
+    $protein->dbID || return; # Non-database translation
+
     my @lcompl_feat = @{$protein->get_all_ProteinFeatures('Seg')};
     foreach my $feat(@lcompl_feat) {
 	push(@{$hash{$feat->hseqname}},$feat);

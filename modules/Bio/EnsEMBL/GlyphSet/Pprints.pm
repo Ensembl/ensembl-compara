@@ -36,6 +36,8 @@ sub _init {
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
+    $protein->dbID || return; # Non-database translation
+
     my @pr_feat = @{$protein->get_all_ProteinFeatures('Prints')};
     foreach my $feat(@pr_feat) {
 	push(@{$hash{$feat->hseqname}},$feat);

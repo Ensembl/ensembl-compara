@@ -28,6 +28,8 @@ sub _init {
     my $protein    = $self->{'container'};
     my $Config     = $self->{'config'};  
 
+    $protein->dbID || return; # Non-database translation
+
     my @transm_feat = @{$protein->get_all_ProteinFeatures('tmhmm')};
     foreach my $feat(@transm_feat) {
 	push(@{$hash{$feat->seqname}},$feat);

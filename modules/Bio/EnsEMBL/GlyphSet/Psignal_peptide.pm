@@ -28,6 +28,8 @@ sub _init {
     my $protein = $self->{'container'};
     my $Config  = $self->{'config'};  
 
+    $protein->dbID || return; # Non-database translation
+
     my @sigp_feat = @{$protein->get_all_ProteinFeatures('Signalp')};
     foreach my $feat(@sigp_feat) {
 	push(@{$hash{$feat->hseqname}},$feat);

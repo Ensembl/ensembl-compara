@@ -28,16 +28,26 @@ sub _init {
     my $protein = $self->{'container'};	
     my $Config  = $self->{'config'};
     my $pep_splice = $protein->{'image_splice'};
-	my $type = lc($protein->adaptor->db->get_GeneAdaptor->fetch_by_translation_stable_id($protein->stable_id)->analysis->logic_name);
+
+    my $prot_id = $protein->stable_id;
+    my $gene_adapt = $protein->adaptor->db->get_GeneAdaptor();
+    my $gene = ( $gene_adapt ? 
+                 $gene_adapt->fetch_by_translation_stable_id($prot_id) : 
+                 undef );
+    my $type = ( $gene ?
+                 $gene->analysis->logic_name :
+                 '' );
+    $type = lc( $type );
+
     my $authority = lc($SPECIES_DEFS->AUTHORITY);   
 
     ## hack to fix flybase db type definition
-    if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')) { 
-        $db = 'core';
+    if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')){
+      $db = 'core';
     } elsif ($type eq 'genomewise') {
-        $db = 'estgene';
+      $db = 'estgene';
     } else {
-        ($SPECIES_DEFS->SITE_TYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
+      ($SPECIES_DEFS->SITE_TYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
     }
 
     my $x = 0;

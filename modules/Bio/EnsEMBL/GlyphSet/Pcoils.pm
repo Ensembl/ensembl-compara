@@ -28,7 +28,9 @@ sub _init {
 
     my $protein = $self->{'container'};
     my $Config  = $self->{'config'}; 
-    
+
+    $protein->dbID || return; # Non-database translation    
+
     my @coils_feat = @{$protein->get_all_ProteinFeatures('ncoils')};
     foreach my $feat(@coils_feat) {
 	push(@{$hash{$feat->hseqname}},$feat);

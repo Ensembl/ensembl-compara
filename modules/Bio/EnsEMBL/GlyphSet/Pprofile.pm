@@ -33,6 +33,8 @@ sub _init {
     my $font          = "Small";
     my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
+    $protein->dbID || return; # Non-database translation
+
     my @ps_feat = @{$protein->get_all_ProteinFeatures('pfscan')};
 
     foreach my $feat(@ps_feat) {

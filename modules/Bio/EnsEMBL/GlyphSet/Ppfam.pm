@@ -39,6 +39,8 @@ sub _init {
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
+    $protein->dbID || return; # Non-database translation
+
     my @pf_feat = @{$protein->get_all_ProteinFeatures('Pfam')};
 
     foreach my $feat(@pf_feat) {
