@@ -195,7 +195,7 @@ while (<$FH>) {
           print STDERR "$source, $member_stable_id family attribute already loaded\n";
         } else {
           $fa->update_relation([ $member,$attribute ]);
-          print STDERR "$source, $member_stable_id family attribute already updated\n";
+          print STDERR "$source, $member_stable_id family attribute updated\n";
         }
       } else {
         $attribute = new Bio::EnsEMBL::Compara::Attribute;
