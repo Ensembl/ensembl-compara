@@ -9,8 +9,11 @@ use vars qw(@ISA);
 # imagemaps also aren't too fussed about width & height boundaries
 #
 sub init_canvas {
-    my ($self, $config, $im_width, $im_height) = @_;
-    $self->canvas("");
+  my ($self, $config, $im_width, $im_height) = @_;
+  $self->canvas("");
+  $self->{'show_zmenus'} = defined( $config->get("_settings","opt_zmenus") ) ? $config->get("_settings","opt_zmenus") : 1;
+  $self->{'zmenu_zclick'} = $config->get("_settings","opt_zclick");
+  $self->{'zmenu_behaviour'} = $config->get("_settings","zmenu_behaviour") || 'onmouseover';
 }
 
 sub add_canvas_frame {
@@ -70,25 +73,32 @@ sub render_Space {
 }
 
 sub _getHref {
-    my ($self, $glyph) = @_;
-	my $onmouseover = $glyph->onmouseover();
-       $onmouseover = (defined $onmouseover) ? qq( onmouseover="$onmouseover") : "";
-    my $onmouseout = $glyph->onmouseout();
-       $onmouseout = (defined $onmouseout) ? qq( onmouseout="$onmouseout") : "";
-    my $href = $glyph->href();
-       $href = qq( href="$href") if(defined $href);
-    my $alt = $glyph->id();
-       $alt = (defined $alt) ? qq( alt="$alt")  : "";
+  my( $self, $glyph ) = @_;
+  my %actions = ();
+  my @X = qw( title onmouseover onmouseout alt href );
+  foreach(@X) {
+    my $X = $glyph->$_;
+    $actions{$_} = $X if defined $X;
+  }
+  $actions{'title'} = $glyph->alt if defined $glyph->alt;
 
-    ######### zmenus will override existing href, alt, onmouseover & onmouseout attributes
-        my $zmenu = $glyph->zmenu();
-        if(defined $zmenu) {
-    		$href        = qq( href="javascript:void(0);") unless( defined $href );
-    		$alt         = qq();
-    		$onmouseover = qq( onmouseover=") . &Sanger::Graphics::JSTools::js_menu($zmenu) . qq(");
-        }
-	return "$href$onmouseover$onmouseout$alt" if(defined $href);
-	return undef;
+  if($self->{'show_zmenus'}==1) {
+    my $zmenu = $glyph->zmenu();
+    if(defined $zmenu && (ref($zmenu) eq '' || ref($zmenu) eq 'HASH' && keys(%$zmenu)>0) ) {
+      if($self->{'zmenu_zclick'} || ($self->{'zmenu_behaviour'} =~ /onClick/i)) {
+        #$actions{'ondoubleclick'} = $actions{'href'}        if exists $actions{'href'};
+        $actions{'onclick'}       = &Sanger::Graphics::JSTools::js_menu($zmenu).";return false;";
+        delete $actions{'onmouseover'};
+        delete $actions{'onmouseout'};
+        $actions{'alt'} = "Click for Menu";
+      } else {
+        delete $actions{'alt'};
+        $actions{'onmouseover'} = &Sanger::Graphics::JSTools::js_menu($zmenu);
+      }
+      $actions{'href'} ||= qq"javascript:void(0)";
+    }
+  }
+  return join '', map { qq( $_="$actions{$_}") } keys %actions;
 }
 
 1;
