@@ -141,17 +141,17 @@ sub generateAxt {
     my $header = "$index ";
     my $aligned_sequences = "";
 
-    if ($gab->starting_genomic_align->dnafrag_strand < 0) {
+    if ($gab->reference_genomic_align->dnafrag_strand < 0) {
       $gab->reverse_complement;
     }
 
-    my $ga = $gab->starting_genomic_align;
+    my $ga = $gab->reference_genomic_align;
     $header .= $ga->dnafrag->name . " ";
     $header .= $ga->dnafrag_start . " ";
     $header .= $ga->dnafrag_end . " ";
     $aligned_sequences .= $ga->aligned_sequence . "\n";
 
-    $ga = $gab->resulting_genomic_aligns->[0];
+    $ga = $gab->get_all_non_reference_genomic_aligns->[0];
     my ($hstrand, $hstart, $hend);
     if ($ga->dnafrag_strand < 0)  {
       $hstrand = "-";

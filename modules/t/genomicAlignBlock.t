@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlignBlock module.
 
-This script includes 36 tests.
+This script includes 46 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 40;
+    plan tests => 46;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -256,19 +256,19 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->method_link_species_set_id
 # 
 # 17
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->starting_genomic_align_id method");
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id method");
   verbose("EXCEPTION");
   $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -adaptor => $genomic_align_block_adaptor,
           -dbID => $genomic_align_block_id,
       );
-  $genomic_align_block->starting_genomic_align_id(0);
-  ok($genomic_align_block->starting_genomic_align, undef);
+  $genomic_align_block->reference_genomic_align_id(0);
+  ok($genomic_align_block->reference_genomic_align, undef);
 
 # 
 # 18
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->starting_genomic_align method");
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align method");
   my $slice = $slice_adaptor->fetch_by_region(
           $slice_coord_system_name,
           $slice_seq_region_name,
@@ -279,16 +279,17 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->starting_genomic_align met
           $method_link_species_set_id,
           $slice
       );
-  ok($genomic_align_blocks->[0]->starting_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+  ok($genomic_align_blocks->[0]->reference_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
 
 # 
 # 19
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->resulting_genomic_aligns method");
-  my $first_starting_genomic_align_id = $genomic_align_blocks->[0]->starting_genomic_align->dbID;
-  my $second_starting_genomic_align_id = $genomic_align_blocks->[0]->resulting_genomic_aligns->[0]->dbID;
-  $genomic_align_blocks->[0]->starting_genomic_align_id($second_starting_genomic_align_id);
-  ok($genomic_align_blocks->[0]->starting_genomic_align->dbID, $second_starting_genomic_align_id);
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_genomic_aligns method");
+  my $first_reference_genomic_align_id = $genomic_align_blocks->[0]->reference_genomic_align->dbID;
+  my $second_reference_genomic_align_id =
+      $genomic_align_blocks->[0]->get_all_non_reference_genomic_aligns->[0]->dbID;
+  $genomic_align_blocks->[0]->reference_genomic_align_id($second_reference_genomic_align_id);
+  ok($genomic_align_blocks->[0]->reference_genomic_align->dbID, $second_reference_genomic_align_id);
   verbose("DEPRECATE");
 
 # 
@@ -400,7 +401,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice method");
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start method");
   ok($genomic_align_blocks->[0]->requesting_slice_start,
-    $genomic_align_blocks->[0]->starting_genomic_align->dnafrag_start - $slice->start + 1);
+    $genomic_align_blocks->[0]->reference_genomic_align->dnafrag_start - $slice->start + 1);
 
 # 
 # 31
@@ -421,7 +422,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start met
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
   ok($genomic_align_blocks->[0]->requesting_slice_end,
-    $genomic_align_blocks->[0]->starting_genomic_align->dnafrag_end - $slice->start + 1);
+    $genomic_align_blocks->[0]->reference_genomic_align->dnafrag_end - $slice->start + 1);
 
 # 
 # 34
@@ -460,12 +461,78 @@ $genomic_align_block = $genomic_align_blocks->[0];
 $genomic_align_array = $genomic_align_block->genomic_align_array;
 $genomic_align_block->reverse_complement;
 
-my $st = $genomic_align_block->starting_genomic_align;
+my $st = $genomic_align_block->reference_genomic_align;
 ok( $st->dnafrag_strand == -1 );
 ok( $st->cigar_line eq "13M44D15M12D6M7D34MD63M2D86M");
 
-my $res = $genomic_align_block->resulting_genomic_aligns->[0];
+my $res = $genomic_align_block->get_all_non_reference_genomic_aligns->[0];
 ok( $res->dnafrag_strand == -1 );
 ok( $res->cigar_line eq "142M14D127M");
 
+
+#####################################################################
+## TEST DEPRECATED METHODS
+
+do {
+
+verbose("EXCEPTION");
+
+
+#
+# 17
+#
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->starting_genomic_align_id method");
+  $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -adaptor => $genomic_align_block_adaptor,
+          -dbID => $genomic_align_block_id,
+      );
+  $genomic_align_block->starting_genomic_align_id(0);
+  ok($genomic_align_block->starting_genomic_align, undef);
+
+#
+# 18
+#
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->starting_genomic_align method");
+  my $slice = $slice_adaptor->fetch_by_region(
+          $slice_coord_system_name,
+          $slice_seq_region_name,
+          $method_link_species_set_id,
+          $slice
+      );
+  ok($genomic_align_blocks->[0]->starting_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+
+#
+# 19
+#
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->resulting_genomic_aligns method");
+  my $first_starting_genomic_align_id = $genomic_align_blocks->[0]->starting_genomic_align->dbID;
+  my $second_starting_genomic_align_id = $genomic_align_blocks->[0]->resulting_genomic_aligns->[0]->dbID;
+  $genomic_align_blocks->[0]->starting_genomic_align_id($second_starting_genomic_align_id);
+  ok($genomic_align_blocks->[0]->starting_genomic_align->dbID, $second_starting_genomic_align_id);
+
+# 
+# 29
+# 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice method");
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+          $method_link_species_set,
+          $slice
+      );
+  ok($genomic_align_blocks->[0]->requesting_slice, $slice);
+
+#
+#
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start method");
+  ok($genomic_align_blocks->[0]->requesting_slice_start,
+    $genomic_align_blocks->[0]->starting_genomic_align->dnafrag_start - $slice->start + 1);
+
+#
+# 31
+#
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
+  ok($genomic_align_blocks->[0]->requesting_slice_end,
+    $genomic_align_blocks->[0]->starting_genomic_align->dnafrag_end - $slice->start + 1);
+
+
+};
 exit 0;

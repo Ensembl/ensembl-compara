@@ -391,8 +391,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
         my $feature = new Bio::EnsEMBL::Feature(
                 -slice => $top_slice,
-                -start => $this_genomic_align_block->starting_genomic_align->dnafrag_start,
-                -end => $this_genomic_align_block->starting_genomic_align->dnafrag_end
+                -start => $this_genomic_align_block->reference_genomic_align->dnafrag_start,
+                -end => $this_genomic_align_block->reference_genomic_align->dnafrag_end
             );
         $feature = $feature->transfer($reference_slice);
         $this_genomic_align_block->requesting_slice($reference_slice);
@@ -404,9 +404,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
         $this_genomic_align_block->requesting_slice($top_slice);
         $this_genomic_align_block->requesting_slice_start(
-            $this_genomic_align_block->starting_genomic_align->dnafrag_start);
+            $this_genomic_align_block->reference_genomic_align->dnafrag_start);
         $this_genomic_align_block->requesting_slice_end(
-            $this_genomic_align_block->starting_genomic_align->dnafrag_end);
+            $this_genomic_align_block->reference_genomic_align->dnafrag_end);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
       }
     }
@@ -543,7 +543,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
                         -adaptor => $self,
                         -dbID => $genomic_align_block_id,
                         -method_link_species_set_id => $method_link_species_set_id,
-                        -starting_genomic_align_id => $genomic_align_id
+                        -reference_genomic_align_id => $genomic_align_id
                 );
     push(@{$genomic_align_blocks}, $this_genomic_align_block);
   }

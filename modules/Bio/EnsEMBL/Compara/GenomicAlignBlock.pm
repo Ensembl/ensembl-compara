@@ -29,7 +29,7 @@ SET VALUES
   $genomic_align_block->adaptor($gen_ali_blk_adaptor);
   $genomic_align_block->dbID(12);
   $genomic_align_block->method_link_species_set($method_link_species_set);
-  $genomic_align_block->starting_genomic_align_id(35123);
+  $genomic_align_block->reference_genomic_align_id(35123);
   $genomic_align_block->genomic_align_array([$genomic_align1, $genomic_align2]);
   $genomic_align_block->requesting_slice($requesting_slice);
   $genomic_align_block->requesting_slice_start(1035);
@@ -42,8 +42,8 @@ GET VALUES
   my $dbID = $genomic_align_block->dbID();
   my $method_link_species_set = $genomic_align_block->method_link_species_set;
   my $genomic_aligns = $genomic_align_block->genomic_align_array();
-  my $starting_genomic_align = $genomic_align_block->starting_genomic_align();
-  my $resulting_genomic_aligns = $genomic_align_block->resulting_genomic_aligns();
+  my $reference_genomic_align = $genomic_align_block->reference_genomic_align();
+  my $non_reference_genomic_aligns = $genomic_align_block->non_reference_genomic_aligns();
   my $requesting_slice = $genomic_align_block->requesting_slice();
   my $requesting_slice_start = $genomic_align_block->requesting_slice_start();
   my $requesting_slice_end = $genomic_align_block->requesting_slice_end();
@@ -69,7 +69,7 @@ corresponds to method_link_species_set.method_link_species_set_id (external ref.
 
 =item method_link_species_set
 
-Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet object corresponding to method_link_species_set_id
+Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object corresponding to method_link_species_set_id
 
 =item score
 
@@ -83,19 +83,23 @@ corresponds to genomic_align_block.perc_id
 
 corresponds to genomic_align_block.length
 
-=item starting_genomic_align_id
+=item reference_genomic_align_id
 
 When looking for genomic alignments in a given slice or dnafrag, the
-starting_genomic_align corresponds to the Bio::EnsEMBL::Compara::GenomicAlign
-included in the starting slice or dnafrag. The starting_genomic_align_id is
-the dbID corresponding to the starting_genomic_align. All remaining
+reference_genomic_align corresponds to the Bio::EnsEMBL::Compara::GenomicAlign
+included in the starting slice or dnafrag. The reference_genomic_align_id is
+the dbID corresponding to the reference_genomic_align. All remaining
 Bio::EnsEMBL::Compara::GenomicAlign objects included in the
-Bio::EnsEMBL::Compara::GenomicAlignBlock are the resulting_genomic_aligns.
+Bio::EnsEMBL::Compara::GenomicAlignBlock are the non_reference_genomic_aligns.
+
+=item reference_genomic_align
+
+Bio::EnsEMBL::Compara::GenomicAling object corresponding to reference_genomic_align_id
 
 =item genomic_align_array
 
-listref of Bio::EnsEMBL::Compara::DBSQL::GenomicAlign objects corresponding to this
-Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlock object
+listref of Bio::EnsEMBL::Compara::GenomicAlign objects corresponding to this
+Bio::EnsEMBL::Compara::GenomicAlignBlock object
 
 =item requesting_slice
 
@@ -144,7 +148,7 @@ use strict;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate);
 
 
 =head2 new (CONSTRUCTOR)
@@ -180,20 +184,26 @@ sub new {
   bless $self,$class;
     
   my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id,
-          $score, $perc_id, $length, $starting_genomic_align_id, $genomic_align_array) = 
+          $score, $perc_id, $length, $reference_genomic_align_id, $genomic_align_array,
+          $starting_genomic_align_id) = 
     rearrange([qw(
         ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID
-        SCORE PERC_ID LENGTH STARTING_GENOMIC_ALIGN_ID GENOMIC_ALIGN_ARRAY)], @args);
+        SCORE PERC_ID LENGTH REFERENCE_GENOMIC_ALIGN_ID GENOMIC_ALIGN_ARRAY
+        STARTING_GENOMIC_ALIGN_ID)], @args);
 
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->dbID($dbID) if (defined ($dbID));
   $self->method_link_species_set($method_link_species_set) if (defined ($method_link_species_set));
-  $self->method_link_species_set_id($method_link_species_set_id) if (defined ($method_link_species_set_id));
+  $self->method_link_species_set_id($method_link_species_set_id)
+      if (defined ($method_link_species_set_id));
   $self->score($score) if (defined ($score));
   $self->perc_id($perc_id) if (defined ($perc_id));
   $self->length($length) if (defined ($length));
-  $self->starting_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
+  $self->reference_genomic_align_id($reference_genomic_align_id)
+      if (defined($reference_genomic_align_id));
   $self->genomic_align_array($genomic_align_array) if (defined($genomic_align_array));
+
+  $self->starting_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
 
   return $self;
 }
@@ -343,95 +353,190 @@ sub method_link_species_set_id {
 }
 
 
-=head2 starting_genomic_align_id
+=head2 reference_genomic_align_id
  
-  Arg [1]    : integer $starting_genomic_align_id
-  Example    : $genomic_align_block->starting_genomic_align_id(4321);
-  Description: set for attribute starting_genomic_align_id. A value of 0 will set the
-               starting_genomic_align_id attribute to undef. When looking for genomic
-               alignments in a given slice or dnafrag, the starting_genomic_align
+  Arg [1]    : integer $reference_genomic_align_id
+  Example    : $genomic_align_block->reference_genomic_align_id(4321);
+  Description: get/set for attribute reference_genomic_align_id. A value of 0 will set the
+               reference_genomic_align_id attribute to undef. When looking for genomic
+               alignments in a given slice or dnafrag, the reference_genomic_align
                corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
-               starting slice or dnafrag. The starting_genomic_align_id is the dbID
-               corresponding to the starting_genomic_align. All remaining
+               starting slice or dnafrag. The reference_genomic_align_id is the dbID
+               corresponding to the reference_genomic_align. All remaining
                Bio::EnsEMBL::Compara::GenomicAlign objects included in the
-               Bio::EnsEMBL::Compara::GenomicAlignBlock are the resulting_genomic_aligns.
+               Bio::EnsEMBL::Compara::GenomicAlignBlock are the
+               non_reference_genomic_aligns.
+               Synchronises reference_genomic_align and reference_genomic_align_id
+               attributes.
+  Returntype : integer
+  Exceptions : throw if $reference_genomic_align_id id not a postive number
+  Caller     : $genomic_align_block->reference_genomic_align_id(int)
+ 
+=cut
+
+sub reference_genomic_align_id {
+  my ($self, $reference_genomic_align_id) = @_;
+ 
+  if (defined($reference_genomic_align_id)) {
+    if ($reference_genomic_align_id !~ /^\d+$/) {
+      throw "[$reference_genomic_align_id] should be a positive number.";
+    }
+    $self->{'reference_genomic_align_id'} = ($reference_genomic_align_id or undef);
+
+    ## Synchronises reference_genomic_align and reference_genomic_align_id
+    if (defined($self->{'reference_genomic_align'}) and
+        defined($self->{'reference_genomic_align'}->dbID) and
+        ($self->{'reference_genomic_align'}->dbID != $self->{'reference_genomic_align_id'})) {
+        $self->{'reference_genomic_align'} = undef; ## Attribute will be set on request
+    }
+
+  ## Try to get data from other sources...
+  } elsif (!defined($self->{'reference_genomic_align_id'})) {
+
+    ## ...from the reference_genomic_align attribute
+    if (defined($self->{'reference_genomic_align'}) and
+        defined($self->{'reference_genomic_align'}->dbID)) {
+      $self->{'reference_genomic_align_id'} = $self->{'reference_genomic_align'}->dbID;
+    }
+  }
+  
+  return $self->{'reference_genomic_align_id'};
+}
+
+
+=head2 starting_genomic_align_id (DEPRECATED)
+
+  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id() method instead
+ 
+  Arg [1]    : integer $reference_genomic_align_id
+  Example    : $genomic_align_block->starting_genomic_align_id(4321);
+  Description: set for attribute reference_genomic_align_id. A value of 0 will set the
+               reference_genomic_align_id attribute to undef. When looking for genomic
+               alignments in a given slice or dnafrag, the reference_genomic_align
+               corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
+               starting slice or dnafrag. The reference_genomic_align_id is the dbID
+               corresponding to the reference_genomic_align. All remaining
+               Bio::EnsEMBL::Compara::GenomicAlign objects included in the
+               Bio::EnsEMBL::Compara::GenomicAlignBlock are the non_reference_genomic_aligns.
   Returntype : none
-  Exceptions : throw if $starting_genomic_align_id id not a postive number
+  Exceptions : throw if $reference_genomic_align_id id not a postive number
   Caller     : $genomic_align_block->starting_genomic_align_id(int)
  
 =cut
 
 sub starting_genomic_align_id {
-  my ($self, $starting_genomic_align_id) = @_;
- 
-  if ($starting_genomic_align_id !~ /^\d+$/) {
-    throw "[$starting_genomic_align_id] should be a positive number.";
-  }
-  $self->{'starting_genomic_align_id'} = ($starting_genomic_align_id or undef);
+  my $self = shift;
+  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id() method instead");
+  return $self->reference_genomic_align_id(@_);
 }
 
 
-=head2 starting_genomic_align
+=head2 reference_genomic_align
+ 
+  Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomicAlign $reference_genomic_align
+  Example    : $genomic_align_block->reference_genomic_align($reference_genomic_align);
+  Example    : $genomic_align = $genomic_align_block->reference_genomic_align();
+  Description: get/set the reference_genomic_align. When looking for genomic alignments in
+               a given slice or dnafrag, the reference_genomic_align corresponds to the
+               Bio::EnsEMBL::Compara::GenomicAlign included in the starting slice or
+               dnafrag. The reference_genomic_align_id is the dbID corresponding to the
+               reference_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
+               objects included in the Bio::EnsEMBL::Compara::GenomicAlignBlock are the
+               non_reference_genomic_aligns.
+               Synchronises reference_genomic_align and reference_genomic_align_id
+               attributes.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions : throw if reference_genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign
+               object
+  Exceptions : throw if reference_genomic_align_id does not match any of the
+               Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
+  Caller     : $genomic_align_block->reference_genomic_align()
+ 
+=cut
+
+sub reference_genomic_align {
+  my ($self, $reference_genomic_align) = @_;
+
+  if (defined($reference_genomic_align)) {
+    throw("[$reference_genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object")
+        unless($reference_genomic_align and  ref($reference_genomic_align) and
+            $reference_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+    $self->{'reference_genomic_align'} = $reference_genomic_align;
+
+    ## Synchronises reference_genomic_align and reference_genomic_align_id attributes
+    if (defined($self->{'reference_genomic_align'}->dbID)) {
+      $self->{'reference_genomic_align_id'} = $self->{'reference_genomic_align'}->dbID;
+    }
+
+  ## Try to get data from other sources...
+  } elsif (!defined($self->{'reference_genomic_align'})) {
+    
+    ## ...from the reference_genomic_align_id attribute
+    if (defined($self->{'reference_genomic_align_id'}) and $self->genomic_align_array) {
+      my $reference_genomic_align_id = $self->{'reference_genomic_align_id'};
+      foreach my $this_genomic_align (@{$self->genomic_align_array}) {
+        if ($this_genomic_align->dbID == $reference_genomic_align_id) {
+          $self->{'reference_genomic_align'} = $this_genomic_align;
+          return $this_genomic_align;
+        }
+      }
+      throw("[$self] Cannot found Bio::EnsEMBL::Compara::GenomicAlign::reference_genomic_align_id".
+          " ($reference_genomic_align_id) in the genomic_align_array");
+    }
+  }
+
+  return $self->{'reference_genomic_align'};
+}
+
+
+=head2 starting_genomic_align (DEPRECATED)
+
+  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align() method instead
  
   Arg [1]    : (none)
   Example    : $genomic_align = $genomic_align_block->starting_genomic_align();
-  Description: get the starting_genomic_align. When looking for genomic alignments in
-               a given slice or dnafrag, the starting_genomic_align corresponds to the
+  Description: get the reference_genomic_align. When looking for genomic alignments in
+               a given slice or dnafrag, the reference_genomic_align corresponds to the
                Bio::EnsEMBL::Compara::GenomicAlign included in the starting slice or
-               dnafrag. The starting_genomic_align_id is the dbID corresponding to the
-               starting_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
+               dnafrag. The reference_genomic_align_id is the dbID corresponding to the
+               reference_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
                objects included in the Bio::EnsEMBL::Compara::GenomicAlignBlock are the
-               resulting_genomic_aligns.
+               non_reference_genomic_aligns.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : warns if no starting_genomic_align_id has been set and returns a ref.
+  Exceptions : warns if no reference_genomic_align_id has been set and returns a ref.
                to an empty array
   Exceptions : warns if no genomic_align_array has been set and returns a ref.
                to an empty array
-  Exceptions : throw if starting_genomic_align_id does not match any of the
+  Exceptions : throw if reference_genomic_align_id does not match any of the
                Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
   Caller     : $genomic_align_block->starting_genomic_align()
  
 =cut
 
 sub starting_genomic_align {
-  my ($self) = @_;
- 
-  my $starting_genomic_align_id = $self->{'starting_genomic_align_id'};
-  if (!defined($starting_genomic_align_id)) {
-    warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::starting_genomic_align when no".
-        " starting_genomic_align_id has been set before");
-    return undef;
-  }
-  my $genomic_align_array = $self->genomic_align_array; ## Lazy loading compliant
-  if (!defined($genomic_align_array)) {
-    warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::starting_genomic_align when no".
-        " genomic_align_array can be retrieved");
-    return undef;
-  }
-
-  foreach my $this_genomic_align (@$genomic_align_array) {
-    if ($this_genomic_align->dbID == $starting_genomic_align_id) {
-      return $this_genomic_align;
-    }
-  }
-  throw("[$self] Cannot found Bio::EnsEMBL::Compara::GenomicAlign::starting_genomic_align_id".
-      " ($starting_genomic_align_id) in the genomic_align_array");
+  my $self = shift;
+  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align() method instead");
+  return $self->reference_genomic_align(@_);
 }
 
 
 =head2 resulting_genomic_aligns
  
+  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_genomic_align()
+  method instead
+ 
   Arg [1]    : (none)
   Example    : $genomic_aligns = $genomic_align_block->resulting_genomic_aligns();
-  Description: get the resulting_genomic_aligns. When looking for genomic alignments in
-               a given slice or dnafrag, the starting_genomic_align corresponds to the
-               Bio::EnsEMBL::Compara::GenomicAlign included in the starting slice or
-               dnafrag. The starting_genomic_align_id is the dbID corresponding to the
-               starting_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
-               objects included in the Bio::EnsEMBL::Compara::GenomicAlignBlock are the
-               resulting_genomic_aligns.
+  Description: get the all the non_reference_genomic_aligns. When looking for genomic
+               alignments in a given slice or dnafrag, the reference_genomic_align
+               corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
+               reference slice or dnafrag. The reference_genomic_align_id is the dbID
+               corresponding to the reference_genomic_align. All remaining
+               Bio::EnsEMBL::Compara::GenomicAlign objects included in the
+               Bio::EnsEMBL::Compara::GenomicAlignBlock are the
+               non_reference_genomic_aligns.
   Returntype : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
-  Exceptions : warns if no starting_genomic_align_id has been set and returns a ref.
+  Exceptions : warns if no reference_genomic_align_id has been set and returns a ref.
                to an empty array
   Exceptions : warns if no genomic_align_array has been set and returns a ref.
                to an empty array
@@ -441,28 +546,55 @@ sub starting_genomic_align {
 
 sub resulting_genomic_aligns {
   my ($self) = @_;
-  my $resulting_genomic_aligns = [];
+  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_genomic_aligns() method instead");
+  return $self->get_all_non_reference_genomic_aligns(@_);
+}
+
+
+=head2 get_all_non_reference_genomic_aligns
  
-  my $starting_genomic_align_id = $self->{'starting_genomic_align_id'};
-  if (!defined($starting_genomic_align_id)) {
-    warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::starting_genomic_align when no".
-        " starting_genomic_align_id has been set before");
-    return $resulting_genomic_aligns
+  Arg [1]    : (none)
+  Example    : $genomic_aligns = $genomic_align_block->get_all_non_reference_genomic_aligns();
+  Description: get the non_reference_genomic_aligns. When looking for genomic alignments in
+               a given slice or dnafrag, the reference_genomic_align corresponds to the
+               Bio::EnsEMBL::Compara::GenomicAlign included in the starting slice or
+               dnafrag. The reference_genomic_align_id is the dbID corresponding to the
+               reference_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
+               objects included in the Bio::EnsEMBL::Compara::GenomicAlignBlock are the
+               non_reference_genomic_aligns.
+  Returntype : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions : warns if no reference_genomic_align_id has been set and returns a ref.
+               to an empty array
+  Exceptions : warns if no genomic_align_array has been set and returns a ref.
+               to an empty array
+  Caller     : $genomic_align_block->non_reference_genomic_aligns()
+ 
+=cut
+
+sub get_all_non_reference_genomic_aligns {
+  my ($self) = @_;
+  my $all_non_reference_genomic_aligns = [];
+ 
+  my $reference_genomic_align_id = $self->reference_genomic_align_id;
+  if (!defined($reference_genomic_align_id)) {
+    warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::all_non_reference_genomic_aligns".
+        " when no reference_genomic_align_id has been set before");
+    return $all_non_reference_genomic_aligns;
   }
   my $genomic_align_array = $self->genomic_align_array; ## Lazy loading compliant
   if (!defined($genomic_align_array)) {
-    warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::starting_genomic_align when no".
-        " genomic_align_array can be retrieved");
-    return $resulting_genomic_aligns
+    warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::all_non_reference_genomic_aligns".
+        " when no genomic_align_array can be retrieved");
+    return $all_non_reference_genomic_aligns;
   }
 
   foreach my $this_genomic_align (@$genomic_align_array) {
-    if ($this_genomic_align->dbID != $starting_genomic_align_id) {
-      push(@$resulting_genomic_aligns, $this_genomic_align);
+    if ($this_genomic_align->dbID != $reference_genomic_align_id) {
+      push(@$all_non_reference_genomic_aligns, $this_genomic_align);
     }
   }
 
-  return $resulting_genomic_aligns;
+  return $all_non_reference_genomic_aligns;
 }
 
 
@@ -809,8 +941,8 @@ sub _print {
   method_link_species_set = ".($self->method_link_species_set or "-undef-")."
   method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
   genomic_aligns = ".($self->genomic_align_array or "-undef-")."
-  starting_genomic_align = ".($self->starting_genomic_align or "-undef-")."
-  resulting_genomic_aligns = ".($self->resulting_genomic_aligns or "-undef-")."
+  reference_genomic_align = ".($self->reference_genomic_align or "-undef-")."
+  all_non_reference_genomic_aligns = ".($self->get_all_non_reference_genomic_align or "-undef-")."
   requesting_slice = ".($self->requesting_slice or "-undef-")."
   requesting_slice_start = ".($self->requesting_slice_start or "-undef-")."
   requesting_slice_end = ".($self->requesting_slice_end or "-undef-")."
