@@ -139,12 +139,12 @@ sub _store_PAFS {
   my $memberAdaptor = $self->db->get_MemberAdaptor();
 
   my $query = "INSERT INTO peptide_align_feature(".
-                "qmember_id,hmember_id," .
+                "qmember_id,hmember_id,analysis_id," .
                 "qstart,qend,hstart,hend,".
                 "score,evalue,align_length," .
                 "identical_matches,perc_ident,".
                 "positive_matches,perc_pos,hit_rank,cigar_line) ".
-              " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+              " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
   my $sth = $self->db->prepare($query);
 
   foreach my $feature (@out) {
@@ -161,8 +161,15 @@ sub _store_PAFS {
 
       displayPAF_short($feature);
 
+      my $analysis_id = 0;
+      if($feature->analysis()) {
+        print("feature has analysis '".$feature->analysis->logic_name()."' dbID=".$feature->analysis->dbID."\n");
+        $analysis_id=$feature->analysis()->dbID();
+      }
+
       $sth->execute($feature->query_member_id,
                     $feature->hit_member_id,
+                    $analysis_id,
                     $feature->qstart,
                     $feature->qend,
                     $feature->hstart,
@@ -181,46 +188,6 @@ sub _store_PAFS {
   }
 }
 
-=head3
-sub store_BaseAlignFeatures {
-  my ($self, @out)  = @_;
-
-  my $memberAdaptor = $self->db->get_MemberAdaptor();
-  
-  my $query = "INSERT INTO peptide_align_feature(".
-                "qmember_id,qstart,qend," .
-                "hmember_id,hstart,hend,".
-                "score,evalue,align_length," .
-                "identical_matches,perc_ident,".
-                "positive_matches,perc_pos,cigar_line) ".
-              " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-  my $sth = $self->db->prepare($query);
-
-  foreach my $feature (@out) {
-    if($feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
-
-      my $qy_member  = $memberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', $feature->seqname);
-      my $hit_member = $memberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', $feature->hseqname);
-    
-      $sth->execute($qy_member->dbID,
-                    $feature->start,
-                    $feature->end,
-                    $hit_member->dbID,
-                    $feature->hstart,
-                    $feature->hend,
-                    $feature->score,
-                    $feature->p_value,
-                    $feature->alignment_length,
-                    $feature->identical_matches,
-                    int($feature->identical_matches*100/$feature->alignment_length),
-                    $feature->positive_matches,
-                    int($feature->positive_matches*100/$feature->alignment_length),
-                    $feature->cigar_string
-                   );
-    }
-  }
-}
-=cut
 
 sub sort_by_score_evalue_and_pid {
   $b->score <=> $a->score ||

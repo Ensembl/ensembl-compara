@@ -29,7 +29,7 @@ sub new {
   my $self = $class->SUPER::new(@args);
 
   if (scalar @args) {
-    my ($queryid,$hitid,
+    my ($queryid,$hitid,$analysis,
         $qstart,$hstart,$qend,$hend,
         $qlength,$hlength,$alength,
         $score,$evalue,$pid,$pos,
@@ -37,6 +37,7 @@ sub new {
        ) = $self->_rearrange([qw(
         QUERYID
         HITID
+        ANALYSIS
         QSTART
         QEND
         HSTART
@@ -56,6 +57,7 @@ sub new {
     
     $queryid && $self->queryid($queryid);
     $hitid && $self->hitid($hitid);
+    $analysis && $self->analysis($analysis);
     $qstart && $self->qstart($qstart);
     $hstart && $self->hstart($hstart);
     $qend && $self->qend($qend);
@@ -84,6 +86,7 @@ sub init_from_feature {
 
   $self->queryid($feature->seqname);
   $self->hitid($feature->hseqname);
+  $self->analysis($feature->analysis);
 
   $self->qstart($feature->start);
   $self->hstart($feature->hstart);
@@ -280,12 +283,24 @@ sub hit_rank {
   return $self->{_hit_rank};
 }
 
+sub analysis
+{
+  my ($self,$analysis) = @_;
+
+  if (defined($analysis)) {
+    $self->{_analysis} = $analysis;
+  }
+  return $self->{_analysis};
+}
+
+=head3
 sub sort_by_score_evalue_and_pid {
-  print("operator redirect YEAH!\n");
+  #print("operator redirect YEAH!\n");
   $b->score <=> $a->score ||
     $a->evalue <=> $b->evalue ||
       $b->perc_ident <=> $a->perc_ident ||
         $b->perc_pos <=> $a->perc_pos;
 }
+=cut
 
 1;

@@ -114,6 +114,7 @@ sub fetch_input {
   $self->runnable($runnable);
 =cut
 
+  print("running with analysis '".$self->analysis->logic_name."'\n");
   $self->runnable(Bio::EnsEMBL::Pipeline::Runnable::Blast->new(
                      -query          => $self->query,
                      -database       => $self->analysis->db_file,
@@ -130,9 +131,19 @@ sub fetch_input {
 sub write_output {
   my( $self) = @_;
 
-  $self->{'comparaDBA'}
-    ->get_PeptideAlignFeatureAdaptor
-    ->store($self->output);
+  #since the Blast runnable takes in analysis parameters rather than an
+  #analysis object, it creates new Analysis objects internally
+  #(a new one for EACH FeaturePair generated)
+  #which are a shadow of the real analysis object ($self->analysis)
+  #The returned FeaturePair objects thus need to be reset to the real analysis object
+
+  foreach my $feature ($self->output) {
+    if($feature->isa('Bio::EnsEMBL::FeaturePair')) {
+      $feature->analysis($self->analysis);
+    }
+  }
+
+  $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store($self->output);
 }
 
 1;
