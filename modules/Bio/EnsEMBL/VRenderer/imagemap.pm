@@ -33,7 +33,7 @@ sub render_Rect {
     $y2 = 0 if($y2<0);
     $y2 ++;
     $x2 ++;
-    $self->{'canvas'} .= qq(<area shape="rect" coords="$y1 $x1 $y2 $x2"$href>\n); 
+    $self->{'canvas'} = qq(<area shape="rect" coords="$y1 $x1 $y2 $x2"$href>\n).$self->{'canvas'}; 
 }
 
 sub render_Text {
@@ -52,7 +52,7 @@ sub render_Poly {
 	my $href = $self->_getHref( $glyph );
 	return unless(defined $href);
     my $pointslist = join ' ',reverse @{$glyph->pixelpoints()};
-    $self->{'canvas'} .= qq(<area shape="poly" coords="$pointslist"$href>\n); 
+    $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href>\n).$self->{'canvas'} ; 
 }
 
 sub render_Composite {
