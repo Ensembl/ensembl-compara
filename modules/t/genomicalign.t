@@ -52,6 +52,8 @@ $a = undef;
 ok ($alignblock->start == 11 && $alignblock->end == 16 && $alignblock->align_start == 15 
 	&& $alignblock->align_end == 20);
 
+$ens_test->pause();
+
 $alignout = Bio::AlignIO->new( -format => 'fasta',-file => '>t/test.aln' );
 $alignout->write_aln($align);
 $alignout = undef;

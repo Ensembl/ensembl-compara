@@ -186,6 +186,29 @@ sub get_GenomicAlignAdaptor{
    return $self->{'_genomicalign_adaptor'};
 }
 
+
+=head2 get_SyntenyRegionAdaptor
+
+ Title   : get_SyntenyRegionAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_SyntenyRegionAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_genomicalign_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor;
+       $self->{'_genomicalign_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor->new($self);
+   }
+   return $self->{'_genomicalign_adaptor'};
+}
+
 # only the get part of the 3 functions should be considered public
 
 sub dbname {

@@ -73,6 +73,8 @@ $id = $gadb->store($aln);
 
 ok ($id,$aln->dbID);
 
+$ens_test->pause();
+
 
 
 
