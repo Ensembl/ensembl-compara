@@ -94,23 +94,20 @@ sub fetch_masked_sequence {
   my $seq;
   my $id = $self->display_id;
 
-  my $masking_options = eval($self->masking_options);
   my $starttime = time();
-  if(defined($masking_options)) {
-    if($masking_options->{'default_soft_masking'} == 1) {
-      #print STDERR "getting SOFT masked sequence...";
+  if(defined($self->masking_options)) {
+    my $masking_options = eval($self->masking_options);
+    if($masking_options and $masking_options->{'default_soft_masking'} == 1) {
+      #print "getting SOFT masked sequence...\n";
       $seq = $slice->get_repeatmasked_seq(undef,1,$masking_options);
-      #print STDERR "...got soft masked sequence...";
     } else {
-      #print STDERR "getting HARD masked sequence...";
+      #print "getting HARD masked sequence...\n";
       $seq = $slice->get_repeatmasked_seq(undef,0,$masking_options);
-      #print STDERR "...got masked sequence...";
     }
   }
   else {  # no masking options set, so get unmasked sequence
-    #print STDERR "getting UNMASKED sequence...";
+    #print "getting UNMASKED sequence...\n";
     $seq = Bio::PrimarySeq->new( -id => $id, -seq => $slice->seq);
-    #print STDERR "...got unmasked sequence...";    
   }
 
   unless($seq->isa('Bio::PrimarySeq')) {
