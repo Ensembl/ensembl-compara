@@ -110,7 +110,7 @@ CREATE TABLE method_link_species (
   method_link_id int(10),
   species_set int(10),
   genome_db_id int(10),
-  UNIQUE method_link_id (method_link_id,species_set,genome_db_id)
+  KEY method_link_id (method_link_id,species_set,genome_db_id)
 );
 
 #
