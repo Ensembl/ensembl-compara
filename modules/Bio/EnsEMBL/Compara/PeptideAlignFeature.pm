@@ -36,54 +36,6 @@ sub new {
   return $self;
 }
 
-sub init_from_feature {
-  my($self, $feature) = @_;
-
-  unless(defined($feature) and $feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
-    throw("arg must be a [Bio::EnsEMBL::BaseAlignFeature] not a [$feature]");
-  }
-
-  if($feature->seqname =~ /member_id_(\d+)/) {
-    #printf("qseq: member_id = %d\n", $1);
-    $self->query_member->dbID($1);
-  } else {
-    my ($source_name, $stable_id) = split(/:/, $feature->seqname);
-    #printf("qseq: %s %s\n", $source_name, $stable_id);
-    $self->query_member->source_name($source_name);
-    $self->query_member->stable_id($stable_id);
-  }
-
-  if($feature->hseqname =~ /member_id_(\d+)/) {
-    #printf("hseq: member_id = %d\n", $1);
-    $self->hit_member->dbID($1);
-  } else {
-    my ($source_name, $stable_id) = split(/:/, $feature->hseqname);
-    #printf("hseq: %s %s\n", $source_name, $stable_id);
-    $self->hit_member->source_name($source_name);
-    $self->hit_member->stable_id($stable_id);
-  }
-  
-  $self->analysis($feature->analysis);
-
-  $self->qstart($feature->start);
-  $self->hstart($feature->hstart);
-  $self->qend($feature->end);
-  $self->hend($feature->hend);
-  #$self->qlength($qlength);
-  #$self->hlength($hlength);
-  $self->score($feature->score);
-  $self->evalue($feature->p_value);
-  $self->cigar_line($feature->cigar_string);
-
-  $self->alignment_length($feature->alignment_length);
-  $self->identical_matches($feature->identical_matches);
-  $self->positive_matches($feature->positive_matches);
-
-  $self->perc_ident(int($feature->identical_matches*100/$feature->alignment_length));
-  $self->perc_pos(int($feature->positive_matches*100/$feature->alignment_length));
-  return $self;
-}
-
 
 sub create_homology
 {

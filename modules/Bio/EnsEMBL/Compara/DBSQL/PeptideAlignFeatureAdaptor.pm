@@ -201,8 +201,7 @@ sub store {
   foreach my $feature (@features) {
     if($feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
       #displayHSP_short($feature);
-      my $pepFeature = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
-      $pepFeature->init_from_feature($feature);
+      my $pepFeature = $self->_create_PAF_from_BaseAlignFeature($feature);
       #$pepFeature->display_short();
       push @pafList, $pepFeature;
     }
@@ -229,8 +228,6 @@ sub _store_PAFS {
 
   return unless(@out and scalar(@out));
 
-  my $memberDBA = $self->db->get_MemberAdaptor();
-
   my $query = "INSERT INTO peptide_align_feature(".
                 "qmember_id,hmember_id,qgenome_db_id,hgenome_db_id,analysis_id," .
                 "qstart,qend,hstart,hend,".
@@ -241,19 +238,6 @@ sub _store_PAFS {
   my $addComma=0;                
   foreach my $paf (@out) {
     if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
-
-      unless($paf->query_member->dbID) {
-        my $qy_member  = $memberDBA->fetch_by_source_stable_id($paf->query_member->source_name, $paf->query_member->stable_id);
-        if($qy_member) {
-          $paf->query_member($qy_member);
-        }
-      }
-      unless($paf->hit_member->dbID) {
-        my $hit_member = $memberDBA->fetch_by_source_stable_id($paf->hit_member->source_name, $paf->hit_member->stable_id);
-        if($hit_member) {
-          $paf->hit_member($hit_member);
-        }
-      }
 
       my $analysis_id = 0;
       if($paf->analysis()) {
@@ -294,6 +278,58 @@ sub _store_PAFS {
   $sth->execute();
   $sth->finish();
 }
+
+
+sub _create_PAF_from_BaseAlignFeature {
+  my($self, $feature) = @_;
+
+  unless(defined($feature) and $feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
+    throw("arg must be a [Bio::EnsEMBL::BaseAlignFeature] not a [$feature]");
+  }
+
+  my $paf = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
+  
+  my $memberDBA = $self->db->get_MemberAdaptor();
+
+  if($feature->seqname =~ /member_id_(\d+)/) {
+    #printf("qseq: member_id = %d\n", $1);
+    $paf->query_member($memberDBA->fetch_by_dbID($1));
+  } else {
+    my ($source_name, $stable_id) = split(/:/, $feature->seqname);
+    #printf("qseq: %s %s\n", $source_name, $stable_id);
+    $paf->query_member($memberDBA->fetch_by_source_stable_id($source_name, $stable_id));
+  }
+
+  if($feature->hseqname =~ /member_id_(\d+)/) {
+    #printf("hseq: member_id = %d\n", $1);
+    $paf->hit_member($memberDBA->fetch_by_dbID($1));
+  } else {
+    my ($source_name, $stable_id) = split(/:/, $feature->hseqname);
+    #printf("hseq: %s %s\n", $source_name, $stable_id);
+    $paf->hit_member($memberDBA->fetch_by_source_stable_id($source_name, $stable_id));
+  }
+  
+  $paf->analysis($feature->analysis);
+
+  $paf->qstart($feature->start);
+  $paf->hstart($feature->hstart);
+  $paf->qend($feature->end);
+  $paf->hend($feature->hend);
+  #$paf->qlength($qlength);
+  #$paf->hlength($hlength);
+  $paf->score($feature->score);
+  $paf->evalue($feature->p_value);
+  $paf->cigar_line($feature->cigar_string);
+
+  $paf->alignment_length($feature->alignment_length);
+  $paf->identical_matches($feature->identical_matches);
+  $paf->positive_matches($feature->positive_matches);
+
+  $paf->perc_ident(int($feature->identical_matches*100/$feature->alignment_length));
+  $paf->perc_pos(int($feature->positive_matches*100/$feature->alignment_length));
+  return $paf;
+}
+
 
 
 sub sort_by_score_evalue_and_pid {
