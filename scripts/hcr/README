@@ -1,58 +1,59 @@
 
+The perl script subsetAxtFromAndToCompara.pl that is used for generating 
+the HCR alignments, uses the subsetAxt executable to filter out high 
+conserved alignments using the tight matrix and score threshold of 
+3400 (basically allows alignments of 34 bp minimum length).
+It is a C executable from UCSC. The C source code is available vi cvs 
 
-> mkdir /ecs2/work4/compara_abel_cara/hcr/Hs31Mm30
-> cd /ecs2/work4/compara_abel_cara/hcr/Hs31Mm30
+mkdir ~/src
+cd ~/src
+cvs -d :pserver:anonymous@genome-test.cse.ucsc.edu:/cbse login
 
-> echo "select name from dnafrag where genome_db_id=1;"|mysql -h ecs2d -u ensro ensembl_compara_14_1|awk '!/name/' > Hs31_chr_names
+password is 'genome'
 
-Dump alignments in axt format (definition at the end of this document)
+cvs -d :pserver:anonymous@genome-test.cse.ucsc.edu:/cbse co -d ucsc_code_i386 kent
+or
+cvs -d :pserver:anonymous@genome-test.cse.ucsc.edu:/cbse co -d ucsc_code_alpha kent
 
-> cat Hs31_chr_names | while read i;do bsub -q acari -o $i.DumpAxt.out -e $i.DumpAxt.err /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/dumps/DumpAxtAlignments.pl -host ecs2d -dbuser ensro -dbname ensembl_compara_14_1 -chr_name $i -species1 "Homo sapiens" -assembly1 NCBI31 -species2 "Mus musculus" -assembly2 NCBIM30 -alignment_type WGA -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf;done
+depending on which kind of machine you want to compile. There is a 
+ucsc_code_i386/src/README that explain how to compile, but here is a quick start
 
-Check that all the dump went fine
+cd ucsc_code_i386/src/lib
+make
+cd ../jkOwnLib/
+make
+cd ../lib/i386/
+ln -s jkOwnLib.a jkhgap.a
+cd ../../hg/mouseStuff/subsetAxt/
+make
 
-> ls|grep out|while read i;do awk '/^Subject/ && $NF=="Done" {print;exit} /^Subject/ && $NF!="Done" {exit}' $i;done|wc -l
-        24
+The executables are in 
+/nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt
+/nfs/acari/abel/bin/i386/subsetAxt
+and are the ones used in subsetAxtFromAndToCompara.pl.
+
+Here is the process to generate the HCR stored in a compara database
+
+> mkdir /ecs2/work3/abel/ensembl_release_26_1/compara/hcr/Hs35Mm33
+
+> cd /ecs2/work3/abel/ensembl_release_26_1/compara/hcr/Hs35Mm33
+
+> mysql -h ecs2 -P3362 -u ensro -N -e "select name from dnafrag where genome_db_id=1" abel_ensembl_compara_26_1 |sort -u > Hs35_chr_names
+
+cat Hs35_chr_names | while read i;do bsub -q normal -Ralpha -o $i.out ~/src/ensembl_main/ensembl-compara/scripts/hcr/subsetAxtFromAndToCompara.pl --src_dbname abelcompara26 --seq_region $i --qy human --tg mouse --src_method_link_type BLASTZ_NET --dest_method_link_type BLASTZ_NET_TIGHT ;done
+
+The HCR alignments are stored in the same compara database that was used to fetch the alignments to be rescored (given by --src_dbname). If you want to store them in another compara database use --dest_dbname.
+
+Check that all the loading have gone well
+> ls |grep out|while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /Job was executed/ {print $6;exit}' $i;done|awk '{print $2}'|sort |uniq -c
+110 Done
 
 This number should be the same as 
 
-> wc -l Hs31_chr_names
-        24 Hs31_chr_names
+> wc -l Hs35_chr_names
+        110 Hs35_chr_names
 
-Clean out the LSF headers
-
-> cat Hs31_chr_names | while read i;do /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/hcr/CleanLSFHeaders.pl $i.DumpAxt.out > $i.axt;done
-
-If that worked fine, delete the LSF out and err files, to save disk space
-
-> rm -f *.out *.err
-
-Then use the subsetAxt executable to filter out high conserved alignments using the tight matrix
-and score threshold of 3400 (basically allows alignments of 34 bp minimum length)
-This C executable is fairly quick, and we do not need to send the jobs to LSF. The source are available at
-http://www.soe.ucsc.edu/~kent/src/jksrcXXX.zip
-
-We are currently using jksrc453.zip, an unzipped version is in /nfs/acari/abel/ftp/jksrc453.
-If you want to compile yourself, look at the jksrc453/README. The subsetAxt script is in 
-jksrc453/hg/mouseStuff/subsetAxt/
-
-If you don't want to know :) use the executable in /nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt
-
-> cat Hs31_chr_names |while read i;do /nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt $i.axt $i.axt.tight /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/hcr/tight.mat 3400 ;done
-
-If that worked fine, delete the original axt files, to save disk space
-
-> rm -f *.axt
-
-Then load the data in compara db
-
-> cat Hs31_chr_names |while read i;do bsub -q acari -o $.load.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/dumps/LoadAxtAlignments.pl -host ecs2c -dbname ensembl_compara_14_1 -dbuser ensadmin -pass ensembl -cs_genome_db_id 1 -qy_genome_db_id 2 $i.axt.tight -alignment_type WGA_HCR -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf ;done
-
-Check that all the dump went fine
-
-> ls|grep out|while read i;do awk '/^Subject/ && $NF=="Done" {print;exit} /^Subject/ && $NF!="Done" {exit}' $i;done|wc -l
-        24
-
+And it is done.
 
 axt Format definition
 =====================
