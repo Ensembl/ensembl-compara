@@ -219,6 +219,8 @@ sub addHomologyPair
 
   if($self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor')) {
     $self->db->get_DataflowRuleAdaptor->create_rule($conditionAnalysis, $goalAnalysis);
+    printf("reset_all_jobs_for_analysis %s\n", $conditionAnalysis->logic_name);
+    $self->db->get_AnalysisJobAdaptor->reset_all_jobs_for_analysis_id($conditionAnalysis->dbID);
   } else {
     $self->addRule($conditionAnalysis, $goalAnalysis);
   }
