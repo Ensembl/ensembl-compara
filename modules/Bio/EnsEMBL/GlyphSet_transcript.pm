@@ -137,7 +137,7 @@ sub compact_init {
         $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
       }
     }
-    if( $link && ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
+    if( $link && ( $compara eq 'primary' || $compara eq 'secondary' )) {
       if( $Config->{'previous_species'} ) {
         foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
           $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
@@ -297,7 +297,7 @@ sub expanded_init {
   my $_h            = $Config->texthelper->height($fontname);
 
   my $compara = $Config->{'compara'};
-  my $link    = $compara ? $Config->get($type,'join') : 0;
+  my $link    = $compara ? $Config->get('_settings','opt_join_transcript') : 0;
   
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
