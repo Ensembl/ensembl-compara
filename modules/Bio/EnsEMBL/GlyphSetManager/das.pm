@@ -6,14 +6,12 @@ use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::GlyphSetManager);
 use Data::Dumper;
 use ExternalDAS;
+use EnsWeb;
 
 ##
 ## 2001/07/03	js5		Added external DAS source code
 ## 2001/07/04	js5		Added sub add_glyphset to remove duplication in code in init!
 ##
-my $species_defs = $ENV{'ENSEMBL_SPECIES'} . qq(_Defs);
-eval "require $species_defs";
-if ($@){ die "Can't use ${species_defs}.pm - $@\n"; }
 
 sub init {
     my ($self) = @_;
@@ -21,14 +19,14 @@ sub init {
     $self->label("Das Sources");
 
     my $Config = $self->{'config'};
-    my @das_source_names = keys %{$species_defs->ENSEMBL_INTERNAL_DAS_SOURCES};
+    my @das_source_names = keys %{EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES};
     #########
     # apply parallelisation here |
     #                            V
     #
     for my $das_source_name (@das_source_names) {
 		next unless( $Config->get($das_source_name,'on') eq 'on' );
-		my $extra_config = $species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$das_source_name};
+		my $extra_config = EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$das_source_name};
 		$extra_config->{'name'} = $das_source_name;
 		$self->add_glyphset( $extra_config );
 	}
@@ -48,6 +46,7 @@ sub add_glyphset {
 	my ($self,$extra_config) = @_;	
 		
 	my $das_glyphset;
+
 	eval {
 		$das_glyphset = new Bio::EnsEMBL::GlyphSet::das(
 			$self->{'container'},
