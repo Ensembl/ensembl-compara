@@ -134,10 +134,12 @@ sub fetch_by_description_with_wildcards{
     return $self->generic_fetch($constraint);
 }
 
-##################
-# internal methods
+#
+# INTERNAL METHODS
+#
+###################
 
-#internal method used in multiple calls above to build family objects from table data  
+# internal method used in multiple calls above to build domain objects from table data  
 
 sub _tables {
   my $self = shift;
@@ -184,8 +186,10 @@ sub _default_where_clause {
   return 'd.source_id = s.source_id';
 }
 
-###############
-# store methods
+#
+# STORE METHODS
+#
+################
 
 =head2 store
 
