@@ -84,19 +84,19 @@ sub fetch_input {
     unless(defined($self->{'pair_aligner'}));
 
   # get DnaCollection of query
-  throw("must specify query_dna to identify DnaCollection of query") 
-    unless(defined($self->{'query_dna'}));
+  throw("must specify 'query_collection_name' to identify DnaCollection of query") 
+    unless(defined($self->{'query_collection_name'}));
   $self->{'query_collection'} = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->
-                                fetch_by_set_description($self->{'query_dna'});
-  throw("unable to find DnaCollection with name : ". $self->{'query_dna'})
+                                fetch_by_set_description($self->{'query_collection_name'});
+  throw("unable to find DnaCollection with name : ". $self->{'query_collection_name'})
     unless(defined($self->{'query_collection'}));
 
   # get DnaCollection of target
-  throw("must specify target_dna to identify DnaCollection of query") 
-    unless(defined($self->{'query_dna'}));
+  throw("must specify 'target_collection_name' to identify DnaCollection of query") 
+    unless(defined($self->{'target_collection_name'}));
   $self->{'target_collection'} = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->
-                                fetch_by_set_description($self->{'target_dna'});
-  throw("unable to find DnaCollection with name : ". $self->{'target_dna'})
+                                fetch_by_set_description($self->{'target_collection_name'});
+  throw("unable to find DnaCollection with name : ". $self->{'target_collection_name'})
     unless(defined($self->{'target_collection'}));
 
 
@@ -145,8 +145,8 @@ sub get_params {
   }
                       
   $self->{'pair_aligner_logic_name'} = $params->{'pair_aligner'} if(defined($params->{'pair_aligner'}));
-  $self->{'query_dna'} = $params->{'query_dna'} if(defined($params->{'query_dna'}));
-  $self->{'target_dna'} = $params->{'target_dna'} if(defined($params->{'target_dna'}));
+  $self->{'query_collection_name'} = $params->{'query_collection_name'} if(defined($params->{'query_collection_name'}));
+  $self->{'target_collection_name'} = $params->{'target_collection_name'} if(defined($params->{'target_collection_name'}));
 
   $self->{'method_link_species_set_id'} = $params->{'method_link_species_set_id'} 
       if(defined($params->{'method_link_species_set_id'}));
@@ -176,6 +176,7 @@ sub createPairAlignerJobs
   my $query_dna_list  = $self->{'query_collection'}->get_all_dna_objects;
   my $target_dna_list = $self->{'target_collection'}->get_all_dna_objects;
 
+  my $count=0;
   foreach my $target_dna (@{$target_dna_list}) {
 
     my $input_hash = {};
@@ -191,15 +192,16 @@ sub createPairAlignerJobs
       }
     
       my $input_id = main::encode_hash($input_hash);
-      printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
+      #printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $self->{'pair_aligner'},
         -input_job_id   => 0,
         );
-    
+      $count++;
     }
   }
+  printf("created %d jobs for pair aligner\n", $count);
 }
 
 1;
