@@ -13,7 +13,7 @@ use Bio::EnsEMBL::Slice;
 $| = 1;
 
 my $usage = "
-Usage: $0 options mcl_file index_file desc_file > mcl.clusters
+Usage: $0 options mcl_file index_file desc_file redundancy_file
 
 i.e.
 
@@ -53,17 +53,18 @@ if ($help) {
   exit 0;
 }
 
-unless (scalar @ARGV == 3) {
-  print "Need 3 arguments\n";
+unless (scalar @ARGV == 4) {
+  print "Need 4 arguments\n";
   print $usage;
   exit 0;
 }
 
-my ($mcl_file,$index_file,$desc_file) = @ARGV;
+my ($mcl_file,$index_file,$desc_file, $redunfile) = @ARGV;
 
 my @clusters;
 my %seqinfo;
 my %member_index;
+my %redun_hash;
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
                                                      -user   => $dbuser,
@@ -145,6 +146,29 @@ EXIT 2\n";
 
 close DESC
   || die "$desc_file: $!";
+
+print STDERR "Done\n";
+
+print STDERR "Reading redundancies file...";
+if ($redunfile =~ /\.gz/) {
+  open REDUN, "gunzip -c $redunfile|" ||
+    die "$redunfile: $!";
+} else {
+  open REDUN, $redunfile ||
+    die "$redunfile: $!";
+}
+
+while (<REDUN>) {
+  chomp;
+  my @tab = split;
+  my $refid = shift @tab;
+  foreach my $id (@tab) {
+    next if ($id eq $refid);
+    $redun_hash{$refid}{$id} = 1;
+  }
+}
+
+close REDUN;
 
 print STDERR "Done\n";
 
@@ -260,17 +284,10 @@ foreach my $cluster (@clusters) {
       my $gene;
       my $transcript;
 
-      my $empty_slice = new Bio::EnsEMBL::Slice(-empty => 1,
-                                                -adaptor => $core_db->get_SliceAdaptor());
-
       if ($member->source_name eq "ENSEMBLPEP") {
         $transcript = $TranscriptAdaptor->fetch_by_translation_stable_id($member->stable_id);
-        my %ex_hash;
-        foreach my $exon (@{$transcript->get_all_Exons}) {
-          $ex_hash{$exon} = $exon->transform($empty_slice);
-        }
-        $transcript->transform(\%ex_hash);
-        $member->chr_name($transcript->get_all_Exons->[0]->contig->chr_name);
+        $transcript->transform('toplevel');
+        $member->chr_name($transcript->slice->seq_region_name);
         $member->chr_start($transcript->coding_region_start);
         $member->chr_end($transcript->coding_region_end);
         $member->sequence($transcript->translate->seq); 
@@ -282,10 +299,10 @@ foreach my $cluster (@clusters) {
           print STDERR $member->stable_id," ",$member->source_name," ",$member->taxon_id," is undef!!!\n";
           die;
         }
-        $gene->transform( $empty_slice );
-        $member->chr_name($gene->chr_name);
-        $member->chr_start($gene->start);
-        $member->chr_end($gene->end);
+        $gene->transform('toplevel');
+        $member->chr_name($gene->slice->seq_region_name);
+        $member->chr_start($gene->slice->seq_region_start);
+        $member->chr_end($gene->slice->seq_region_end);
       }
     }
     
@@ -302,6 +319,12 @@ foreach my $cluster (@clusters) {
     my ($member,$attribute) = @{$member_attribute};
     print $member->source_name,"\t$dbID\t",$member->stable_id,"\t",$seqinfo{$member->stable_id}{'description'},"\n";
     $seqinfo{$member->stable_id}{'printed'} = 1;
+    if (defined $redun_hash{$member->stable_id}) {
+      foreach my $member_stable_id (keys %{$redun_hash{$member->stable_id}}) {
+        print uc($seqinfo{$member_stable_id}{'type'}),"\t$dbID\t$member_stable_id\t",$seqinfo{$member_stable_id}{'description'},"\n";
+        $seqinfo{$member_stable_id}{'printed'} = 1;
+      }
+    } 
   }
   print STDERR "Done\n";
 }
