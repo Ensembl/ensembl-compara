@@ -291,6 +291,55 @@ sub fetch_all_by_Slice {
   return \@results;
 }
 
+sub interpolate_best_location {
+  my ($self,$slice,$species,$alignment_type) = @_;
+  
+  my $dafs = $self->fetch_all_by_Slice($slice, $species, undef, $alignment_type);
+
+  my %raw_clusters;
+  my $based_on_group_id = 1;
+  foreach my $daf (@{$dafs}) {
+    if ($daf->group_id > 0) {
+      push @{$raw_clusters{$daf->group_id}}, $daf;
+    } else {
+      $based_on_group_id = 0 if ($based_on_group_id);
+      push @{$raw_clusters{$daf->hseqname}}, $daf;
+    }
+  }
+
+  if ($based_on_group_id) {
+    my @ordered_keys = sort {scalar @{$raw_clusters{$b}} <=> scalar @{$raw_clusters{$a}}} keys %raw_clusters;
+
+    my @best_blocks = sort {$a->hseq_region_start <=> $b->hseq_region_end} @{$raw_clusters{$ordered_keys[0]}};
+
+    
+#    foreach my $block (@best_blocks) {
+#      print $block->hseq_region_name," ",$block->hseq_region_start," ",$block->hseq_region_end," ",$block->hseq_region_strand,"\n";
+#    }
+#    print "---\n";
+#    print $best_blocks[0]->hseq_region_name," ",$best_blocks[0]->hseq_region_start + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2)," ",$best_blocks[0]->hseq_region_strand,"\n";
+    
+    return ($best_blocks[0]->hseq_region_name,
+            $best_blocks[0]->hseq_region_start 
+            + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2),
+            $best_blocks[0]->hseq_region_strand);
+   
+#    my $best_key ;
+#    foreach my $key (@ordered_keys) {
+#      unless (defined $best_key) {
+#        $best_key = $key;
+#        next;
+#      }
+#      print $key," ",$raw_clusters{$key}->[0]->hseqname," ",$raw_clusters{$key}->[0]->level_id," ",scalar @{$raw_clusters{$key}},"\n";
+#    }
+  } else {
+    #need to cluster things together.
+    throw("interpolate_best_location not implemented for alignments with group_id=0, only works with BLASTZ_NET and BLASTZ_RECIP_NET\n")
+  }
+
+}
+
+
 =head2 deleteObj
 
   Arg [1]    : none
