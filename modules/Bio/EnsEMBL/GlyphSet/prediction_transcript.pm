@@ -42,6 +42,10 @@ sub features {
   return \@genes;
 }
 
+sub gene_colour {
+  my ($self, $gene, @X ) = @_;
+  $self->colour( $gene, $gene->get_all_Transcripts->[0], @X );
+}
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
@@ -82,6 +86,10 @@ sub zmenu {
   return $zmenu;
 }
 
+sub gene_text_label {
+  my ($self, $gene ) = @_;
+  $self->text_label( $gene, $gene->get_all_Transcripts->[0] );
+}
 sub text_label {
   my ($self, $gene, $transcript) = @_;
   my $id = $transcript->stable_id();
