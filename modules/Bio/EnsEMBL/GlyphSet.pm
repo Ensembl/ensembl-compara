@@ -57,7 +57,6 @@ sub push {
 
     my ($gx, $gw, $gy, $gh);
 
-    if($Glyph->isa('Bio::EnsEMBL::Glyph')) {
 	#########
 	# if we've got a single glyph:
 	#
@@ -67,18 +66,6 @@ sub push {
 	$gw = $Glyph->width();
 	$gy = $Glyph->y();
 	$gh = $Glyph->height();
-
-    } elsif($Glyph->isa('Bio::EnsEMBL::GlyphSet')) {
-	#########
-	# if we've got a glyphset
-	#
-	push @{$this->{'glyphs'}}, @{$Glyph->glyphs()};
-
-	$gx = $Glyph->minx();
-	$gw = $Glyph->maxx() - $Glyph->minx();
-	$gy = $Glyph->miny();
-	$gh = $Glyph->maxy() - $Glyph->miny();
-    }
 
     $this->minx($gx) if(!defined $this->minx());
     $this->maxx($gx) if(!defined $this->maxx());
@@ -124,15 +111,6 @@ sub unshift {
 	$gy = $Glyph->y();
 	$gh = $Glyph->height();
 
-    } elsif($Glyph->isa('Bio::EnsEMBL::GlyphSet')) {
-	#########
-	# if we've got a glyphs 
-	#
-	unshift @{$this->{'glyphs'}}, @{$Glyph->glyphs()};
-	$gx = $Glyph->minx();
-	$gw = $Glyph->maxx() - $Glyph->minx();
-	$gy = $Glyph->miny();
-	$gh = $Glyph->maxy() - $Glyph->miny();
     }
 
     $this->minx($gx) if(!defined $this->minx());

@@ -3,9 +3,8 @@ use lib "../../../../bioperl-live";
 use Bio::Root::RootI;
 use strict;
 use lib "../../../../modules";
-use WMF;
-use GD;
 use vars qw(@ISA);
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 #########
 # take out this 'use' eventually:
@@ -155,44 +154,10 @@ sub render {
 
     my ($width, $height) = $self->config()->dimensions();
 
-#    my ($minx, $maxx, $miny, $maxy);
-
-#    for my $gs ($self->glyphsets()) {
-#	next if($gs->maxx() == 0 || $gs->maxy() == 0);
-#	$minx = $gs->minx() if($gs->minx() < $minx || !defined($minx));
-#	$maxx = $gs->maxx() if($gs->maxx() > $maxx || !defined($maxx));
-#	$miny = $gs->miny() if($gs->miny() < $miny || !defined($miny));
-#	$maxy = $gs->maxy() if($gs->maxy() > $maxy || !defined($maxy));
-#    }
-
-#    my $scalex = $width / ($maxx - $minx);
-#    my $scaley = $height / ($maxy - $miny);
-
-#print STDERR qq(Using y scaling factor $scaley and x scaling factor $scalex\n);
-
     my $transform_ref = {
 	'translatex' => 0,
 	'translatey' => 0,
-#	'scalex'     => $scalex,
-#	'scaley'     => $scaley,
-#	'rotation'   => 90,
-	'scalex'     => $self->config()->scalex(),
-	'scaley'     => $self->config()->scaley(),
     };
-
-    #########
-    # initialise canvasses for specific image types
-    #
-    my $canvas;
-    if($type eq "gif") {
-	$canvas = new GD::Image($width, $height);
-	$canvas->colorAllocate($self->{'config'}->colourmap()->rgb_by_id($self->{'config'}->bgcolor()));
-
-    } elsif($type eq "wmf") {
-	$canvas = new WMF($width, $height);
-	$canvas->colorAllocate($self->{'config'}->colourmap()->rgb_by_id($self->{'config'}->bgcolor()));
-
-    }
 
     #########
     # build the name/type of render object we want
@@ -215,7 +180,7 @@ sub render {
     #########
     # big, shiny, rendering 'GO' button
     #
-    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'}, $transform_ref, $canvas);
+    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'}, $transform_ref);
 
     return $renderer->canvas();
 }

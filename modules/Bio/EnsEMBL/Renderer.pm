@@ -5,21 +5,57 @@ use vars qw(@ISA);
 use lib "../../../../modules";
 use ColourMap;
 use Bio::EnsEMBL::Glyph::Clip;
+use WMF;
+use GD;
 
 @ISA = qw(Exporter);
 
 sub new {
-    my ($class, $config, $container, $glyphsets_ref, $transform_ref, $canvas) = @_;
+    my ($class, $config, $container, $glyphsets_ref, $transform_ref) = @_;
+
+    #########
+    # set up the type to be gif|wmf|ps|whatever
+    # 
+    my $type = $class;
+    $type =~ s/.*:://;
+
+    #########
+    # calculate scaling factors and canvas dimensions
+    #
+    my $im_height = 2;
+    for my $glyphset (@{$glyphsets_ref}) {
+	$glyphset->maxy($glyphset->maxy()+2);
+	$im_height += ($glyphset->maxy() - $glyphset->miny());
+    }
+
+    my $im_width = $config->image_width();
+    %{$transform_ref}->{'scalex'} = $config->scalex();
+    %{$transform_ref}->{'translatey'} += 2;
+
+    #########
+    # create a fresh canvas
+    #
+    my $canvas;
+    if($type eq "gif") {
+	$canvas = new GD::Image($im_width, $im_height);
+	$canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
+
+    } elsif($type eq "wmf") {
+	$canvas = new WMF($im_width, $im_height);
+	$canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
+    }
 
     my $self = {
 	'glyphsets' => $glyphsets_ref,
 	'transform' => $transform_ref,
 	'canvas'    => $canvas,
-	'colourmap' => new ColourMap,
+	'colourmap' => $config->colourmap(),
 	'config'    => $config,
 	'container' => $container,
+	'type'      => undef,
     };
     bless($self, $class);
+
     $self->render();
 
     return $self;
@@ -31,17 +67,9 @@ sub render {
 
     my ($cstart, $cend);
 
-#    if(ref($this->{'container'}) eq "Bio::EnsEMBL::Protein") {
-#	$cstart = $this->{'container'}->start();
-#	$cend   = $this->{'container'}->end();
-#    } else {
-#	$cstart = $this->{'container'}->_global_start() if($this->{'container'}->can('_global_start'));
-#	$cend   = $this->{'container'}->_global_end()   if($this->{'container'}->can('_global_end'));
-	$cstart = 0;
-	$cend   = $this->{'container'}->length();
-#    }
+    $cstart = 0;
+    $cend   = $this->{'container'}->length();
 
-#print STDERR qq(Container global start $cstart, global end $cend\n);
     for my $glyphset (@{$this->{'glyphsets'}}) {
 
 	#########
@@ -51,68 +79,9 @@ sub render {
 	#
 	# NB: this is rotation-sensitive!
 	#
-	$this->{'transform'}->{'translatey'} += $previous_maxy - $glyphset->miny() + 3;
+	$this->{'transform'}->{'translatey'} += $previous_maxy - $glyphset->miny();
 
 	for my $glyph ($glyphset->glyphs()) {
-
-	    #########
-	    # check glyph edges to see if it crosses a boundary
-	    # if it does, substitute it for a Clip object (flat dotted line)
-	    #
-	    my $gx1 = $glyph->x();
-	    my $gw  = $glyph->width();
-	    my $gy1 = $glyph->y();
-	    my $gh  = $glyph->height();
-	    my $gx2 = $gx1 + $gw;
-	    my $gy2 = $gy1 + $gh;
-
-	    if(!defined $glyph->absolutex()) {
-#print STDERR qq(glyph $glyph not absolutex\n);
-		if($gx2 < $cstart) {
-		    #########
-		    # whole glyph is waaay off to the left
-		    #
-#print STDERR qq(invisible glyph $glyph waay off to the left ($gx1 to $gx2)\n);
-		    next;
-		}
-	
-		if($gx1 > $cend) {
-		    #########
-		    # whole glyph is waaay off to the right
-		    #
-#print STDERR qq(invisible glyph $glyph waay off to the right ($gx1 to $gx2)\n);
-		    next;
-		}
-
-		if($gx1 < $cstart && $gx2 > $cstart) {
-		    #########
-		    # glyph straddles left hand side boundary
-		    #
-		    my $clipglyph = new Bio::EnsEMBL::Glyph::Clip({
-			'colour' => $glyph->colour(),
-			'x'      => $cstart,
-			'y'      => $glyph->y(),
-			'width'  => $gx2 - $cstart,
-			'height' => 1,
-		    });
-#print STDERR qq(partial   glyph $glyph straddles left hand boundary ($gx1, $gx2)\n);
-		    $glyph = $clipglyph;
-
-		} elsif($gx1 < $cend && $gx2 > $cend) {
-		    #########
-		    # glyph straddles right hand side boundary
-		    #
-		    my $clipglyph = new Bio::EnsEMBL::Glyph::Clip({
-			'colour' => $glyph->colour(),
-			'x'      => $gx1,
-			'y'      => $glyph->y(),
-			'width'  => $cend - $gx1,
-			'height' => 1,
-		    });
-#print STDERR qq(partial   glyph $glyph straddles right hand boundary ($gx1, $gx2)\n);
-		    $glyph = $clipglyph;
-		}
-	    }
 
 	    my $method = $this->method($glyph);
 	    if($this->can($method)) {
@@ -148,7 +117,6 @@ sub render_Composite {
     #
     my $xoffset = $glyph->x();
     my $yoffset = $glyph->y();
-#print STDERR qq(render_Composite: offsetting children by $xoffset, $yoffset\n);
 
     for my $subglyph (@{$glyph->{'composite'}}) {
 	my $method = $this->method($subglyph);
