@@ -114,7 +114,7 @@ O = 2000, E = 50
 ";
 
 my %undefined_combinaisons;
-
+print STDERR $ucsc_dbname,"\n";
 my $ucsc_dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($ucsc_dbname, 'compara')->dbc;
 
 my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB') or die "Can't get ($dbname,'compara','GenomeDB')\n";
@@ -199,6 +199,32 @@ if ($show_matrix_to_be_used) {
 
 my $sql;
 my $sth;
+
+my $chromosome_specific_chain_tables = 1;
+
+$sql = "show tables like 'chain$qSpecies%'";
+$sth = $ucsc_dbc->prepare($sql);
+$sth->execute;
+
+my ($table_name);
+
+$sth->bind_columns(\$table_name);
+
+my $table_count = 0;
+
+while( $sth->fetch() ) {
+  if ($table_name eq "chain$qSpecies") {
+    $table_count++;
+  }
+  if ($table_name eq "chain$qSpecies"."Link") {
+    $table_count++;
+  }
+}
+
+$chromosome_specific_chain_tables = 0 if ($table_count == 2);
+
+$sth->finish;
+
 if (defined $tName) {
   $sql = "select bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score from net$qSpecies where type!=\"gap\" and  tName = ? order by tStart, chainId";
   $sth = $ucsc_dbc->prepare($sql);
@@ -251,17 +277,22 @@ while( $sth->fetch() ) {
       next;
     }
   }
-my $c_table; my $cl_table;
- if ($tName){
- 	$c_table = "chr" . $n_tName . "_chain" . $qSpecies;
-  	$cl_table = "chr" .$n_tName . "_chain" . $qSpecies . "Link";
-	}
-else
-	{
-	$c_table = "chain".$qSpecies;
-	$cl_table= "chain".$qSpecies."Link";
-	}
-  $sql = "select c.bin,c.score,c.tName,c.tSize,c.tStart,c.tEnd,c.qName,c.qSize,c.qStrand,c.qStart,c.qEnd,cl.chainId,cl.tStart,cl.tEnd,cl.qStart,cl.qStart+cl.tEnd-cl.tStart as qEnd from $c_table c, $cl_table cl where c.id=cl.chainId and cl.chainId = ?";
+
+  my ($c_table, $cl_table);
+  if ($chromosome_specific_chain_tables) {
+    $c_table = "chr" . $n_tName . "_chain" . $qSpecies;
+    $cl_table = "chr" .$n_tName . "_chain" . $qSpecies . "Link";
+
+    $sql = "select c.bin,c.score,c.tName,c.tSize,c.tStart,c.tEnd,c.qName,c.qSize,c.qStrand,c.qStart,c.qEnd,cl.chainId,cl.tStart,cl.tEnd,cl.qStart,cl.qStart+cl.tEnd-cl.tStart as qEnd from $c_table c, $cl_table cl where c.id=cl.chainId and cl.chainId = ?";    
+
+  } else {
+    $c_table = "chain" . $qSpecies;
+    $cl_table = "chain" . $qSpecies . "Link";
+    # as a chainId seems to be specific to a tName, it should be  no need to add an additional constraint on tName in the sql,
+    # but for safe keeping let's add it.
+
+    $sql = "select c.bin,c.score,c.tName,c.tSize,c.tStart,c.tEnd,c.qName,c.qSize,c.qStrand,c.qStart,c.qEnd,cl.chainId,cl.tStart,cl.tEnd,cl.qStart,cl.qStart+cl.tEnd-cl.tStart as qEnd from $c_table c, $cl_table cl where c.id=cl.chainId and cl.chainId = ? and c.tName = cl.tName and c.tName = $n_tName";
+  }
 
   my $sth2 = $ucsc_dbc->prepare($sql);
   $sth2->execute($n_chainId);
@@ -416,6 +447,8 @@ print STDERR "Here is a statistic summary of nucleotides matching not defined in
 foreach my $key (sort {$a cmp $b} keys %undefined_combinaisons) {
   print STDERR $key," ",$undefined_combinaisons{$key},"\n";
 }
+
+$sth->finish;
 
 print STDERR "\n";
 
