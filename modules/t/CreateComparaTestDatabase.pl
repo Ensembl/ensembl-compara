@@ -141,7 +141,7 @@ $dbh->do("insert into homology_member select hm.* from homology h, $srcDB.homolo
 $dbh->do("insert into family_member select fm.* from family f, $srcDB.family_member fm where f.family_id=fm.family_id");
 
 # populate member table
-$dbh->do("insert into member select m.* from family_member fm, $srcDB.member m where fm.member_id=m.member_id");
+$dbh->do("insert ignore into member select m.* from family_member fm, $srcDB.member m where fm.member_id=m.member_id");
 $dbh->do("insert ignore into member select m.* from homology_member hm, $srcDB.member m where hm.member_id=m.member_id");
 $dbh->do("insert ignore into member select m.* from homology_member hm, $srcDB.member m where hm.peptide_member_id=m.member_id");
 
