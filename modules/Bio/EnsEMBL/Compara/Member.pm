@@ -15,7 +15,7 @@ sub new {
   if (scalar @args) {
     #do this explicitly.
     my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id) = $self->_rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
-    
+
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
     $description && $self->description($description);
@@ -26,9 +26,9 @@ sub new {
     $genome_db_id && $self->genome_db_id($genome_db_id);
     $sequence_id && $self->sequence_id($sequence_id);
   }
-  
+
   return $self;
-}   
+}
 
 =head2 new_fast
 
@@ -36,9 +36,9 @@ sub new {
   Example    : none
   Description: This is an ultra fast constructor which requires knowledge of
                the objects internals to be used.
-  Returntype : 
+  Returntype :
   Exceptions : none
-  Caller     : 
+  Caller     :
 
 =cut
 
@@ -61,7 +61,7 @@ sub new_fast {
   Returntype : Bio::Ensembl::Compara::Member
   Exceptions :
   Caller     :
-  
+
 =cut
 
 sub new_from_gene {
@@ -69,7 +69,7 @@ sub new_from_gene {
   my $self = $class->SUPER::new(@args);
 
   if (scalar @args) {
-  
+
     my ($gene, $genome_db) = $self->_rearrange([qw(GENE GENOME_DB)], @args);
 
     unless(defined($gene) and $gene->isa('Bio::EnsEMBL::Gene')) {
@@ -90,6 +90,7 @@ sub new_from_gene {
     $self->chr_name($gene->seq_region_name);
     $self->chr_start($gene->seq_region_start);
     $self->chr_end($gene->seq_region_end);
+    $self->chr_strand($gene->seq_region_strand);
     $self->seq_length(0);
     $self->source_name("ENSEMBLGENE");
     $self->version($gene->version);
@@ -142,6 +143,7 @@ sub new_from_transcript {
   $self->chr_name($transcript->seq_region_name);
   $self->chr_start($transcript->coding_region_start);
   $self->chr_end($transcript->coding_region_end);
+  $self->chr_strand($transcript->seq_region_strand);
   $self->seq_length(0);
   $self->version($transcript->translation->version);
 
@@ -187,11 +189,11 @@ sub new_from_transcript {
 =head2 dbID
 
   Arg [1]    : int $dbID (optional)
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
 
 =cut
 
@@ -204,11 +206,11 @@ sub dbID {
 =head2 stable_id
 
   Arg [1]    : string $stable_id (optional)
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
 
 =cut
 
@@ -220,12 +222,12 @@ sub stable_id {
 
 =head2 version
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Arg [1]    :
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
 
 =cut
 
@@ -238,11 +240,11 @@ sub version {
 =head2 description
 
   Arg [1]    : string $description (optional)
-  Example    : 
-  Description: 
+  Example    :
+  Description:
   Returntype : string
-  Exceptions : 
-  Caller     : 
+  Exceptions :
+  Caller     :
 
 =cut
 
@@ -276,11 +278,11 @@ sub source_name {
 
   Arg [1]    : string $adaptor (optional)
                corresponding to a perl module
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
 
 =cut
 
@@ -320,6 +322,22 @@ sub chr_end {
   return $self->{'_chr_end'};
 }
 
+=head2 chr_strand
+  Arg [1]    : integer
+  Description: Returns the strand of the member.  Defined strands are 1 or -1.
+               0 is undefined strand.
+  Returntype : 1,0,-1
+  Exceptions : none
+  Caller     : general
+=cut
+
+sub chr_strand {
+  my $self = shift;
+  $self->{'_chr_strand'} = shift if (@_);
+  $self->{'_chr_strand'}='0' unless(defined($self->{'_chr_strand'}));
+  return $self->{'_chr_strand'};
+}
+
 =head taxon_id
 
 =cut
@@ -355,7 +373,7 @@ sub taxon {
       $self->{'_taxon'} = $TaxonAdaptor->fetch_by_dbID($self->taxon_id);
     }
   }
-  
+
   return $self->{'_taxon'};
 }
 
@@ -394,7 +412,7 @@ sub genome_db {
       $self->{'_genome_db'} = $GenomeDBAdaptor->fetch_by_dbID($self->genome_db_id);
     }
   }
-  
+
   return $self->{'_genome_db'};
 }
 
@@ -475,7 +493,7 @@ sub bioseq {
                           -primary_id => $self->stable_id(),
                           -desc       => $self->description(),
                          );
-  return $seq;             
+  return $seq;
 }
 
 =head2 gene_member
@@ -507,7 +525,7 @@ sub gene_member {
   Arg[1]     : string $postfix
   Example    : $member->print_member("BRH");
   Description: used for debugging, prints out key descriptive elements
-               of member 
+               of member
   Returntype : none
   Exceptions : none
   Caller     : general

@@ -412,7 +412,7 @@ sub fetch_gene_for_peptide_member_id {
   
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
-  
+
   my @tables = $self->_tables;
   my $columns = join(', ', $self->_columns());
   
@@ -460,7 +460,6 @@ sub _generic_fetch {
   $sth->execute;
 
 #  print STDERR $sql,"\n";
-
   return $self->_objs_from_sth($sth);
 }
 
@@ -482,6 +481,7 @@ sub _columns {
              m.chr_name
              m.chr_start
              m.chr_end
+             m.chr_strand
              m.sequence_id
              s.source_id
              s.source_name);
@@ -489,7 +489,7 @@ sub _columns {
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
-  
+
   my %column;
   $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
 
@@ -507,6 +507,7 @@ sub _objs_from_sth {
         '_chr_name' => $column{'chr_name'},
         '_chr_start' => $column{'chr_start'},
         '_chr_end' => $column{'chr_end'},
+        '_chr_strand' => $column{'chr_strand'},
         '_sequence_id' => $column{'sequence_id'},
         '_source_id' => $column{'source_id'},
         '_source_name' => $column{'source_name'},
@@ -528,9 +529,9 @@ sub _objs_from_sth {
       push @members, [$member, $attribute];
     } else {
       push @members, $member;
-    }
-    
+    } 
   }
+  $sth->finish;
   return \@members
 }
 
@@ -591,8 +592,8 @@ sub store {
       "member arg must be a [Bio::EnsEMBL::Compara::Member]"
     . "not a $member");
   }
-  
-  my $already_stored_member = $self->fetch_by_source_stable_id($member->source_name,$member->stable_id); 
+
+  my $already_stored_member = $self->fetch_by_source_stable_id($member->source_name,$member->stable_id);
   if (defined $already_stored_member) {
     $member->adaptor($already_stored_member->adaptor);
     $member->dbID($already_stored_member->dbID);
@@ -612,13 +613,14 @@ sub store {
                   $member->seq_length);
 
     $member->sequence_id( $sth->{'mysql_insertid'} );
+    $sth->finish;
   }
 
   
   my $sth = $self->prepare("INSERT INTO member (stable_id,version, source_id,
                               taxon_id, genome_db_id, sequence_id, description,
-                              chr_name, chr_start, chr_end)
-                            VALUES (?,?,?,?,?,?,?,?,?,?)");
+                              chr_name, chr_start, chr_end, chr_strand)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 
   eval {                            
     $sth->execute($member->stable_id,
@@ -630,14 +632,15 @@ sub store {
                   $member->description,
                   $member->chr_name,
                   $member->chr_start,
-                  $member->chr_end);
+                  $member->chr_end,
+                  $member->chr_strand);
   };
   if($@) {
     warn("unable to store stable_id=".$member->stable_id."\n");
     warn("$@");
-  }                
-
+  }
   $member->dbID( $sth->{'mysql_insertid'} );
+  $sth->finish;
 
   $member->adaptor($self);
   if (defined $member->taxon) {
@@ -656,6 +659,7 @@ sub update_sequence {
   my $sql = "UPDATE sequence SET sequence = ? WHERE sequence_id = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($member->sequence, $member->sequence_id);
+  $sth->finish;
 }
 
 
@@ -672,18 +676,22 @@ sub update_sequence {
 
 sub store_source {
   my ($self,$source_name) = @_;
-  
+
   my $sql = "SELECT source_id FROM source WHERE source_name = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($source_name);
   my $rowhash = $sth->fetchrow_hashref;
+  $sth->finish;
+  
   if ($rowhash->{source_id}) {
     return $rowhash->{source_id};
   } else {
     $sql = "INSERT INTO source (source_name) VALUES (?)";
-    $sth = $self->prepare($sql);
-    $sth->execute($source_name);
-    return $sth->{'mysql_insertid'};
+    my $sth2 = $self->prepare($sql);
+    $sth2->execute($source_name);
+    my $dbID = $sth2->{'mysql_insertid'};
+    $sth2->finish;
+    return $dbID;
   }
 }
 
@@ -707,6 +715,7 @@ sub store_gene_peptide_link {
     $self->prepare("INSERT INTO member_gene_peptide (gene_member_id, peptide_member_id)
                     VALUES (?,?)");
   $sth->execute($gene_member_id, $peptide_member_id);
+  $sth->finish;
 }
 
 1;
