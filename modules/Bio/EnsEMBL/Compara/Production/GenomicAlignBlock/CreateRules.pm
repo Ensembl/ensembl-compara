@@ -109,6 +109,7 @@ sub createBlastRules
 
   foreach my $to_analysis (@{$analysisList}) {
     next unless($to_analysis->logic_name =~ /^$self->{'to_prefix'}/);
+    next if($to_analysis->logic_name eq $self->{'to_prefix'});
     foreach my $from_analysis (@fromList) {
       print("  ",$from_analysis->logic_name," -> ", $to_analysis->logic_name, "\n");
       $dataflowRuleDBA->create_rule($from_analysis, $to_analysis);
