@@ -416,7 +416,6 @@ sub deleteObj {
   my $self = shift;
 
   if($self->{'_cache'}) {
-    warn "deleting the cache\n";
     foreach my $dbID (keys %{$self->{'_cache'}}) {
       delete $self->{'_cache'}->{$dbID};
     }
