@@ -42,10 +42,9 @@ package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::DBSQL::DBConnection;
 
-#@ISA = qw( Bio::EnsEMBL::DBSQL::DBConnection );
-@ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
+@ISA = qw( Bio::EnsEMBL::DBSQL::DBConnection );
 
 
 
