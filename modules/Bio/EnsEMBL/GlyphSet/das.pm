@@ -879,11 +879,19 @@ sub _init {
   }
 
   $configuration->{'features'} = \@das_features;
+
+
+  # hash styles by type
   my %styles;
   if( $styles && @$styles && $configuration->{'use_style'} ) {
     my $styleheight = 0;
     foreach(@$styles) {
       $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
+    
+      # Set row height ($configuration->{'h'}) from stylesheet
+      # Currently, this uses the greatest height present in the stylesheet
+      # but should really use the greatest height in the current featureset
+      
       if (exists $_->{'attrs'} && exists $_->{'attrs'}{'height'}){
 	$styleheight = $_->{'attrs'}{'height'} if $_->{'attrs'}{'height'} > $styleheight;
       }
