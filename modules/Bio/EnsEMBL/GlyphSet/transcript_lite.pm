@@ -27,10 +27,12 @@ sub features {
 
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
+    my $translation = $transcript->translation;
+    my $translation_id = $translation ? $translation->stable_id : '';
 
     my $genecol = $colours->{ "_".$transcript->external_status };
 
-    if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
+    if( $transcript->external_status eq '' and ! $translation_id ) {
        $genecol = $colours->{'_pseudogene'};
     }
     if(exists $highlights{$transcript->stable_id()}) {
@@ -59,8 +61,9 @@ sub href {
 
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
+    my $translation = $transcript->translation;
     my $tid = $transcript->stable_id();
-    my $pid = $transcript->translation->stable_id(),
+    my $pid = $translation ? $translation->stable_id() : '';
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
     my $zmenu = {
