@@ -127,13 +127,13 @@ sub _init {
         	$hi_colour = $Config->get('transcript','hi') if(defined $highlights && $highlights =~ /\|$tid\|/);
 
         	if ($tid !~ /ENST/o){
- 				print STDERR "EXT: ", join(" === ", @dblinks), "\n";
-    			@dblinks = $transcript->each_DBLink();
-				if (@dblinks){
-        			foreach my $DB_link ( @dblinks ){
- 						print STDERR "EXT GENE: $id, ", $DB_link->database(), " ", $DB_link->display_id(), "\n";
-					}
-				}
+ 				#print STDERR "EXT: ", join(" === ", @dblinks), "\n";
+    			#@dblinks = $transcript->each_DBLink();
+				#if (@dblinks){
+        			#foreach my $DB_link ( @dblinks ){
+ 						#print STDERR "EXT GENE: $id, ", $DB_link->database(), " ", $DB_link->display_id(), "\n";
+					#}
+				#}
             	# if we have an EMBL external transcript we need different links...
             	if($tid !~ /dJ/o){
                 	$Composite->{'zmenu'}  = {
