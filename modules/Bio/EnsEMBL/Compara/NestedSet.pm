@@ -164,13 +164,10 @@ sub store {
 
 =head2 add_child
 
-  Overview   : 
-  Arg [1]    : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
-  Example    : my $object_adaptor = $node->parent();
-  Example    : $object->adaptor($object_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::NestedSet or subclass
+  Overview   : attaches child nestedset node to this nested set
+  Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $child
+  Example    : $self->add_child($child);
+  Returntype : undef
   Exceptions : if child is undef or not a NestedSet subclass
   Caller     : general
 
@@ -185,6 +182,8 @@ sub add_child {
      unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
   
   #print("add_child\n");  $self->print_node; $child->print_node;
+  
+  return undef if($self->{'_children_id_hash'}->{$child->node_id});
 
   #object linkage
   $child->retain->disavow_parent;
@@ -192,7 +191,9 @@ sub add_child {
 
   $self->{'_children_id_hash'} = {} unless($self->{'_children_id_hash'});
   $self->{'_children_id_hash'}->{$child->node_id} = $child;
+  return undef;
 }
+
 
 sub store_child {
   my ($self, $child) = @_;
@@ -333,6 +334,14 @@ sub root {
 
   return $self unless(defined($self->parent));
   return $self->parent->root;
+}
+
+sub subroot {
+  my $self = shift;
+
+  return undef unless($self->parent);
+  return $self unless(defined($self->parent->parent));
+  return $self->parent->subroot;
 }
 
 
