@@ -15,9 +15,9 @@ sub colours {
     my $self = shift;
     my $Config = $self->{'config'};
     return {
-        'hi'               => $Config->get('genscan','hi'),
-        'col'              => $Config->get('genscan','col'),
-        'super'            => $Config->get('genscan','superhi'),
+        'hi'               => $Config->get('vega_genscan','hi'),
+        'col'              => $Config->get('vega_genscan','col'),
+        'super'            => $Config->get('vega_genscan','superhi'),
     };
 }
 
@@ -25,7 +25,7 @@ sub features {
   my $self = shift;
   my @genes = ();
   #obtain genscan transcripts
-  foreach my $transcript (@{$self->{'container'}->get_all_PredictionTranscripts('Genscan')}) {
+  foreach my $transcript (@{$self->{'container'}->get_all_PredictionTranscripts('Vega_Genscan')}) {
     my $gene = new Bio::EnsEMBL::Gene();
        $gene->add_Transcript($transcript);
     push @genes, $gene;
