@@ -147,17 +147,32 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
   return $self->generic_fetch($constraint, $join);
 }
 
+
+=head2 fetch_all_by_MethodLinkSpeciesSet
+
+  Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
+  Example    : $homologies = $HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+  Description: fetch all the homology relationships for the given MethodLinkSpeciesSet
+               Since each species pair Orthologue analysis is given a unique 
+	       MethodLinkSpeciesSet, this method can be used to grab all the 
+	       orthologues for a species pair.
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     : 
+
+=cut
+
 sub fetch_all_by_MethodLinkSpeciesSet {
   my ($self, $method_link_species_set) = @_;
 
   throw("method_link_species_set arg is required\n")
     unless ($method_link_species_set);
 
-  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
 
-  return $self->generic_fetch($constraint, $join);
+  return $self->generic_fetch($constraint);
 }
+
 
 sub fetch_all_by_genome_pair {
   my ($self, $genome_db_id1, $genome_db_id2) = @_;
