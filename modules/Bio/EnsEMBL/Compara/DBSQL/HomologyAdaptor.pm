@@ -22,6 +22,9 @@ sub fetch_homologues_of_gene_in_species{
 
     my ($self,$species,$gene,$hspecies)=@_;
 
+    $hspecies =~ tr/_/ /;
+    $species  =~ tr/_/ /;
+
     my $q = "select grm.gene_relationship_id 
              from   gene_relationship_member grm, 
 		    genome_db gd 
@@ -38,7 +41,6 @@ sub fetch_homologues_of_gene_in_species{
     }
 
     return @genes;
-
 }                               
 
 
@@ -56,6 +58,8 @@ sub fetch_homologues_of_gene_in_species{
 sub fetch_homologues_of_gene {
 
     my ($self,$species,$gene)=@_;
+
+    $species  =~ tr/_/ /;
 
     my $q = "select grm.gene_relationship_id 
              from   gene_relationship_member grm, 
@@ -82,6 +86,8 @@ sub fetch_homologues_of_gene {
 		and	grm.genome_db_id = gd.genome_db_id 
 		and NOT	(grm.member_stable_id = '$gene')";
 
+	print $q;
+
 	push @genes,$self->_get_homologues($q); 
     }
 
@@ -106,8 +112,10 @@ sub fetch_homologues_of_gene {
 =cut
 
 sub fetch_homologues_by_chr_start_in_species {
-
     my ($self, $species, $chr, $start, $hspecies, $num)=@_;
+
+    $hspecies =~ tr/_/ /;
+    $species =~ tr/_/ /;
 
     my $q = "select grm.gene_relationship_id 
              from   gene_relationship_member grm, 
@@ -147,8 +155,9 @@ sub fetch_homologues_by_chr_start_in_species {
 =cut
 
 sub list_stable_ids_from_species  {
-
     my ($self,$species)=@_;
+
+    $species =~ tr/_/ /;
 
     my $q ="select  grm.member_stable_id 
             from    gene_relationship_member grm,
@@ -186,6 +195,7 @@ sub _fetch_homologues_by_species_relationship_id{
 	    and	    gd.name = '$hspecies' 
             and	    grm.gene_relationship_id = $internal_id";
 
+    warn $q;
 
     my @genes=$self->_get_homologues($q);
 
