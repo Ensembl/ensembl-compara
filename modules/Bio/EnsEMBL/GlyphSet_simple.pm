@@ -497,8 +497,11 @@ sub _init {
     }
     # warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
 ## No features show "empty track line" if option set....  ##
-    $self->errorTrack( "No ".$self->my_label." in this region" )
-        if( $Config->get('_settings','opt_empty_tracks')==1 && $flag );
+    $self->error() if $flag; 
 }
 
+sub no_features { 
+  my $self = shift;
+  $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+}
 1;
