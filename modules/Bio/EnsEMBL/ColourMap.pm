@@ -34,6 +34,11 @@ sub new {
     'superhi'    => 'highlight2',
     map { $_ => [ $core{$_}[0], "EnsEMBL predicted genes (@{[$core{$_}[1]]})" ] } keys %core
   );
+  $self->colourSet( 'sgd_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    map { $_ => [ $core{$_}[0], "SGD predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+  );
   $self->colourSet( 'bee_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
