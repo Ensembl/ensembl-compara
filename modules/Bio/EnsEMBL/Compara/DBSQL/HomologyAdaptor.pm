@@ -97,7 +97,7 @@ sub fetch_by_Member_Homology_source {
     unless ($source_name);
   
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = "s.source_name = $source_name";
+  my $constraint = "s.source_name = '$source_name'";
   $constraint .= " AND hm.member_id = " . $member->dbID;
 
   # See in fetch_by_Member what is this internal variable for
