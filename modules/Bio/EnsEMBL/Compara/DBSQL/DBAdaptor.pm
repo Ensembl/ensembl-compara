@@ -415,6 +415,23 @@ sub get_MemberAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor" );
 }
 
+=head2 get_AttributeAdaptor
+
+  Arg [1]    : none
+  Example    : $ma = $dba->get_AttibuteAdaptor
+  Description: Retrieves a AttributeAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_AttributeAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor" );
+}
+
 =head2 get_TaxonAdaptor
 
   Arg [1]    : none
