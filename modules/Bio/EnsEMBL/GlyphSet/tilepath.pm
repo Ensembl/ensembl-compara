@@ -142,6 +142,8 @@ sub _init {
 				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
 				"04:length: ".($clone->length()) => '',
             };
+            $Composite->{'zmenu'}->{"05:Centre: ".$clone->organisation} = ''
+                if $clone->organisation;
             $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc
                 if $ENV{'ENSEMBL_SCRIPT'} ne 'contigview' ;
 	    } 
