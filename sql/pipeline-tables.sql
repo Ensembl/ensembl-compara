@@ -43,3 +43,53 @@ CREATE TABLE analysis (
 
 );
 
+
+################################################################################
+#
+# Table structure for table 'peptide_align_feature'
+# 
+# overview: This tables stores the raw HSP local alignment results
+#           of peptide to peptide alignments returned by a BLAST run
+#           it is translated from a FeaturePair object
+# semantics:
+# peptide_align_feature_id  - internal id
+# qmember_id                - member.member_id of query peptide
+# hmember_id                - member.member_id of hit peptide
+# qstart                    - start pos in query peptide sequence
+# qend                      - end  pos in query peptide sequence
+# hstart                    - start pos in hit peptide sequence
+# hend                      - end  pos in hit peptide sequence
+# score                     - blast score for this HSP
+# evalue                    - blast evalue for this HSP
+# align_length              - alignment length of HSP
+# identical_matches         - blast HSP match score
+# positive_matches          - blast HSP positive score
+# perc_ident                - percent identical matches in the HSP length
+# perc_pos                  - precent positive matches in the HSP length
+# cigar_line                - cigar string coding the actual alignment
+
+
+CREATE TABLE peptide_align_feature (
+
+  peptide_align_feature_id  int(10) unsigned NOT NULL auto_increment,
+  qmember_id                int(10) NOT NULL,
+  hmember_id                int(10) NOT NULL,
+  analysis_id               int(10) NOT NULL,
+  qstart                    int(10) DEFAULT '0' NOT NULL,
+  qend                      int(10) DEFAULT '0' NOT NULL,
+  hstart                    int(11) DEFAULT '0' NOT NULL,
+  hend                      int(11) DEFAULT '0' NOT NULL,
+  score                     double(16,4) DEFAULT '0.0000' NOT NULL,
+  evalue                    varchar(20),
+  align_length              int(10),
+  identical_matches         int(10),
+  perc_ident                int(10),
+  positive_matches          int(10),
+  perc_pos                  int(10),
+  cigar_line                mediumtext,
+  
+  PRIMARY KEY (id),
+  KEY qmember_id  (qmember_id),
+  KEY hmember_id  (hmember_id)
+  
+);
