@@ -356,7 +356,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   }
   my $primary_species_binomial_name = 
       $slice_adaptor->db->get_MetaContainer->get_Species->binomial;
-  my $primary_species_assembly = $reference_slice->coord_system->version;
+  my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
+  my $primary_species_assembly = $highest_cs->version();
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
   my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
           $primary_species_binomial_name,
@@ -373,6 +374,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
             $genome_db, $this_slice->seq_region_name
         );
+    next if (!$this_dnafrag);
     my $these_genomic_align_blocks = $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
             $method_link_species_set,
             $this_dnafrag,
