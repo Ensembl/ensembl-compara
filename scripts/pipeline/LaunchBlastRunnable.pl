@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/local/ensembl/bin/perl -w
 
 $| = 1;
 
@@ -8,12 +8,11 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
-
 #use Bio::EnsEMBL::GenePair::DBSQL::PairAdaptor;
 
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
-my $member_id;
-my $logic_name;
+my $member_id=8;
+my $logic_name='homology_blast_10116';
 my $verbose=1;
 
 
@@ -57,8 +56,8 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
 						     -pass => $pass,
 						     -dbname => $dbname);
 
-testBlastRunnable($db, "/scratch/jessica/FastaPeptideFiles/ENSMUSP00000027035.fasta",
-                  "/scratch/jessica/FastaPeptideFiles/Rattus_norvegicus_RGSC3.1.fasta");
+testBlastRunnable($db, "/nfs/acari/jessica/work2/FastaPeptidesFiles/ENSMUSP00000027035.fasta",
+                  "/ecs4/work2/ensembl/jessica/data/FastaPeptidesFiles/rattus_norvegicus_core_20_3b.fasta");
 
 exit(0);
 
@@ -89,25 +88,25 @@ sub usage {
 sub displayHSP {
   my($feature) = @_;
   
+  my $percent_ident = $feature->identical_matches;
   my $percent_ident = int($feature->identical_matches*100/$feature->alignment_length);
   my $pos = int($feature->positive_matches*100/$feature->alignment_length);
   
-=head3
   print("pep_align_feature :\n" . 
-    " seqname           : $feature->seqname\n" .
-    " start             : $feature->start\n" .
-    " end               : $feature->end\n" .
-    " hseqname          : $feature->hseqname\n" .
-    " hstart            : $feature->hstart\n" .
-    " hend              : $feature->hend\n" .
-    " score             : $feature->score\n" .
-    " p_value           : $feature->p_value\n" .
-    " identical_matches : $feature->identical_matches\n" .
-    " pid               : $percent_ident\n" .
-    " positive_matches  : $feature->positive_matches\n" .
-    " pos               : $pos\n" .
-    " cigar_line        : $feature->cigar_string\n");
-=cut
+    " seqname           : " . $feature->seqname . "\n" .
+    " start             : " . $feature->start . "\n" .
+    " end               : " . $feature->end . "\n" .
+    " hseqname          : " . $feature->hseqname . "\n" .
+    " hstart            : " . $feature->hstart . "\n" .
+    " hend              : " . $feature->hend . "\n" .
+    " score             : " . $feature->score . "\n" .
+    " p_value           : " . $feature->p_value . "\n" .
+    " alignment_length  : " . $feature->alignment_length . "\n" .
+    " identical_matches : " . $feature->identical_matches . "\n" .
+    " perc_ident        : " . $percent_ident . "\n" .
+    " positive_matches  : " . $feature->positive_matches . "\n" .
+    " perc_pos          : " . $pos . "\n" .
+    " cigar_line        : " . $feature->cigar_string . "\n");
 }
 
 
@@ -115,7 +114,7 @@ sub testBlastRunnableDB
 {
   my($db, $member_id) = @_;
   
-  my $analysis = $db->get_AnalysisAdaptor->fetch_by_logic_name('homology_blast_10116');
+  my $analysis = $db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
 
   my $runnabledb = Bio::EnsEMBL::Pipeline::RunnableDB::BlastComparaPep->new(
                   -db    => $db,
@@ -168,7 +167,7 @@ sub testBlastRunnable
                                                                -threshold      => 1e-10,
                                                                -options        => "-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1",
                                                                -threshold_type => "PVALUE",
-                                                               -program        => "/scratch/local/ensembl/bin/wublastp");
+                                                               -program        => "wublastp");
 
     $runnable->run;
     
@@ -176,7 +175,7 @@ sub testBlastRunnable
     print("have $#outputs outputs\n");
     foreach my $output (@outputs) {
       print("=> $output\n");
-      #displayHSP($output);
+      displayHSP($output);
     }
     
     
