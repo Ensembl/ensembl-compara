@@ -254,6 +254,8 @@ sub _init {
     # Do the highlighting bit at the end!!!
     #######################################
     
+    if(defined $self->{'highlights'}) {
+
     foreach my $highlight_set (reverse @{$self->{'highlights'}}) {
 		my $highlight_style = $highlight_set->{'style'};
         my $type ="highlight_$highlight_style";
@@ -330,6 +332,8 @@ sub _init {
                 }
             }
         }
+    }
+
     }
     $self->minx( $v_offset );
 }
