@@ -46,9 +46,9 @@ sub list_internal_ids {
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
+  Description: Returns the Member created from the database defined by the
                the id $id.
-  Returntype : Bio::EnsEMBL::SeqFeature
+  Returntype : Bio::EnsEMBL::Compara::Member
   Exceptions : thrown if $id is not defined
   Caller     : general
 
@@ -426,7 +426,7 @@ sub _columns {
              m.chr_name
              m.chr_start
              m.chr_end
-             m.sequence
+             m.sequence_id
              s.source_id
              s.source_name);
 }
@@ -450,7 +450,7 @@ sub _objs_from_sth {
         '_chr_name' => $column{'chr_name'},
         '_chr_start' => $column{'chr_start'},
         '_chr_end' => $column{'chr_end'},
-        '_sequence' => $column{'sequence'},
+        '_sequence_id' => $column{'sequence_id'},
         '_source_id' => $column{'source_id'},
         '_source_name' => $column{'source_name'},
         '_adaptor' => $self});
@@ -463,6 +463,9 @@ sub _objs_from_sth {
         next if (grep /$autoload_method/,  @_columns);
         $attribute->$autoload_method($column{$autoload_method});
       }
+    }
+    if(defined($member->sequence_id())) {
+      $self->_load_sequence($member);
     }
     if (defined $attribute) {
       push @members, [$member, $attribute];
@@ -483,6 +486,26 @@ sub _final_clause {
   my $self = shift;
 
   return '';
+}
+
+sub _load_sequence {
+  my ($self, $member) = @_;
+
+  my $sql = "SELECT sequence.sequence, sequence.length " .
+            "FROM member,sequence " .
+            "WHERE member.sequence_id=sequence.sequence_id " .
+            "AND member.member_id = ?;";
+  my $sth = $self->prepare($sql);
+  $sth->execute($member->dbID);
+
+  my ($sequence, $seq_length);
+  $sth->bind_columns(\$sequence, \$seq_length);
+
+  if ($sth->fetch()) {
+    $member->sequence($sequence);
+    $member->seq_length($seq_length);
+  }
+  $sth->finish();
 }
 
 #
@@ -522,37 +545,50 @@ sub store {
 
   $member->source_id($self->store_source($member->source_name));
 
-  my $sth = 
-    $self->prepare("INSERT INTO member (stable_id,source_id, 
-                                taxon_id, genome_db_id, description,
-                                chr_name, chr_start, chr_end, sequence) 
-                    VALUES (?,?,?,?,?,?,?,?,?)");
+  # first must insert in sequence table to generate new
+  # sequence_id to insert into member table;
+  if(defined($member->sequence)) {
+    my $sth = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+    $sth->execute($member->sequence,
+                  $member->seq_length);
+
+    $member->sequence_id( $sth->{'mysql_insertid'} );
+  }
+
+  
+  my $sth = $self->prepare("INSERT INTO member (stable_id,source_id,
+                              taxon_id, genome_db_id, sequence_id, description,
+                              chr_name, chr_start, chr_end)
+                            VALUES (?,?,?,?,?,?,?,?,?)");
 
   $sth->execute($member->stable_id,
-		$member->source_id, 
-		$member->taxon_id,
-		$member->genome_db_id,
+                $member->source_id,
+                $member->taxon_id,
+                $member->genome_db_id,
+                $member->sequence_id,
                 $member->description,
-		$member->chr_name, 
-		$member->chr_start,
-		$member->chr_end,
-		$member->sequence);
+                $member->chr_name,
+                $member->chr_start,
+                $member->chr_end);
 
   $member->dbID( $sth->{'mysql_insertid'} );
+
   $member->adaptor($self);
   if (defined $member->taxon) {
     $self->db->get_TaxonAdaptor->store_if_needed($member->taxon);
   }
+
   return $member->dbID;
 }
 
 sub update_sequence {
   my ($self, $member) = @_;
 
-  my $sql = "UPDATE member SET sequence = ? WHERE member_id = ?";
+  my $sql = "UPDATE sequence SET sequence = ? WHERE member_id = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($member->sequence, $member->dbID);
 }
+
 
 =head2 store_source
 
@@ -582,8 +618,17 @@ sub store_source {
   }
 }
 
-1;
 
+sub store_gene_peptide_link {
+  my ($self, $gene_member_id, $peptide_member_id) = @_;
+
+  my $sth =
+    $self->prepare("INSERT INTO member_gene_peptide (gene_member_id, peptide_member_id)
+                    VALUES (?,?)");
+  $sth->execute($gene_member_id, $peptide_member_id);
+}
+
+1;
 
 
 
