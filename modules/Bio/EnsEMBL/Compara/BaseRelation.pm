@@ -271,24 +271,6 @@ sub Member_count_by_source_taxon {
   return scalar @{$self->get_Member_Attribute_by_source_taxon($source_name,$taxon_id)};
 }
 
-=head2 get_Taxon_by_source
-
-  Arg [1]    : string $source_name
-  Example    : $domain->get_Taxon_by_source('ENSEMBLGENE')
-  Description: 
-  Returntype : array reference of Bio::EnsEMBL::Compara::Taxon
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub get_Taxon_by_source {
-  my ($self, $source_name) = @_;
-  $self->throw("Should give defined source_name as argument\n") unless (defined $source_name);
-  return $self->adaptor->fetch_Taxon_by_source_dbID($source_name,$self->dbID);
-}
-
-
 =head2 known_sources
 
  Args       : none
