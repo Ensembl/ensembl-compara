@@ -48,9 +48,7 @@ use strict;
 use Bio::EnsEMBL::Compara::AlignBlockSet;
 use Bio::EnsEMBL::Compara::MappedExon;
 
-# Object preamble - inherits from Bio::Root::RootI
-
-use Bio::Root::RootI;
+# Object preamble
 
 @ISA = qw(Bio::EnsEMBL::Compara::AlignBlockSet);
 

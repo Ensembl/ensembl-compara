@@ -46,11 +46,11 @@ use strict;
 
 use Bio::SeqFeatureI;
 
-# Object preamble - inherits from Bio::Root::RootI
+# Object preamble
 
-use Bio::Root::RootI;
+use Bio::EnsEMBL::Root;
 
-@ISA = qw(Bio::SeqFeatureI Bio::Root::RootI);
+@ISA = qw(Bio::SeqFeatureI Bio::EnsEMBL::Root);
 
 # new() is written here 
 
