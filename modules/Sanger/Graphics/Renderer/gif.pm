@@ -2,6 +2,7 @@
 # Author: rmp@sanger.ac.uk
 # Maintainer: webmaster@sanger.ac.uk
 # Created: 2001
+# Last Modified: rmp 2004-12-14 initial stringFT support
 #
 package Sanger::Graphics::Renderer::gif;
 use strict;
@@ -92,61 +93,39 @@ sub render_Text {
     my ($self, $glyph) = @_;
 
     my $colour = $self->colour($glyph->{'colour'});
-
+    
     #########
-    # BAH! HORRIBLE STINKY STUFF!
-    # I'd take GD voodoo calls any day
+    # Stock GD fonts
     #
-    if($glyph->font() eq "Tiny") {
+    my $font = $glyph->font();
+    if($font eq "Tiny") {
         $self->{'canvas'}->string(gdTinyFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
 
-    } elsif($glyph->font() eq "Small") {
+    } elsif($font eq "Small") {
         $self->{'canvas'}->string(gdSmallFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
 
-    } elsif($glyph->font() eq "MediumBold") {
+    } elsif($font eq "MediumBold") {
         $self->{'canvas'}->string(gdMediumBoldFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
 
-    } elsif($glyph->font() eq "Large") {
+    } elsif($font eq "Large") {
         $self->{'canvas'}->string(gdLargeFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
 
-    } elsif($glyph->font() eq "Giant") {
+    } elsif($font eq "Giant") {
         $self->{'canvas'}->string(gdGiantFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
+
+    } elsif($font) {
+	#########
+	# If we didn't recognise it already, assume it's a TrueType font
+	#
+	$self->{'canvas'}->stringFT($colour,
+				    $font,
+				    $glyph->ptsize(),
+				    $glyph->angle()||0,
+				    $glyph->{'pixelx'},
+				    $glyph->{'pixely'},
+				    $glyph->text());
     }
-
 }
-
-#      $image->arc($cx,$cy,$width,$height,$start,$end,$color)
-#      This draws arcs and ellipses.  (cx,cy) are the center of the arc, and
-#      (width,height) specify the width and height, respectively.  The portion
-#      of the ellipse covered by the arc are controlled by start and end, both
-#      of which are given in degrees from 0 to 360.  Zero is at the top of the
-#      ellipse, and angles increase clockwise.  To specify a complete ellipse,
-#      use 0 and 360 as the starting and ending angles.  To draw a circle, use
-#      the same value for width and height.
-#
-#      You can specify a normal color or one of the special colors gdBrushed,
-#      gdStyled, or gdStyledBrushed.
-#
-#      Example:
-#
-#              # draw a semicircle centered at 100,100
-#              $myImage->arc(100,100,50,50,0,180,$blue);
-#              # Draw a blue oval
-#              # $im->arc(50,50,95,75,0,360,$blue);
-#
-#      $image->fill($x,$y,$color)
-#      This method flood-fills regions with the specified color.  The color
-#      will spread through the image, starting at point (x,y), until it is
-#      stopped by a pixel of a different color from the starting pixel (this
-#      is similar to the "paintbucket" in many popular drawing toys).  You can
-#      specify a normal color, or the special color gdTiled, to flood-fill
-#      with patterns.
-#
-#      Example:
-#
-#              # Draw a rectangle, and then make its interior blue
-#              $myImage->rectangle(10,10,100,100,$black);
-#              $myImage->fill(50,50,$blue);
 
 sub render_Circle {
   my ($self, $glyph) = @_;
