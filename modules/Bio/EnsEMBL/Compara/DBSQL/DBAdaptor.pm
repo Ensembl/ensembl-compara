@@ -71,8 +71,15 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 sub new {
   my ($class, @args) = @_;
 
-  #call superclass constructor
-  my $self = $class->SUPER::new(@args);
+  #call superclass constructor; this may actually return a container
+  my $container = $class->SUPER::new(@args);
+
+  my $self;
+  if($container->isa('Bio::EnsEMBL::Container')) {
+    $self = $container->_obj;
+  } else {
+    $self = $container;
+  }
 
   my ($conf_file) = $self->_rearrange(['CONF_FILE'], @args);
 
@@ -115,7 +122,7 @@ sub new {
       }
 
       #compara should hold onto the actual container objects
-      #     if($db->isa('Bio::EnsEMBL::DBSQL::Container')) {
+      #if($db->isa('Bio::EnsEMBL::DBSQL::Container')) {
       #	$db = $db->_obj;
       #      }
 
@@ -123,7 +130,8 @@ sub new {
     }
   }
 
-  return $self;
+  #we want to return the container not the contained object
+  return $container;
 }
 
 
