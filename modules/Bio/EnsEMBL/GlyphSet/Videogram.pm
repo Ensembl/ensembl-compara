@@ -408,21 +408,18 @@ sub _init {
                     my $bin_id = int( (2 * $v_offset+ $_->{'start'}+$_->{'end'}) / 2 / $bin_length );
                     $bin_id = 0 if $bin_id<0;
                     if(my $offset = $bin_flag[$bin_id]) { # We already have a highlight in this bin - so add this one to it!
-                        my $zmenu_length = keys %{$highlights[$offset]->{'zmenu'}};
+                        my $zmenu_length = keys %{$highlights[$offset-1]->{'zmenu'}};
                         foreach my $entry (sort keys %{$_->{'zmenu'}}) { 
                             next if $entry eq 'caption';
                             my $value = $_->{'zmenu'}->{$entry};
                             $entry=~s/\d\d+://;
-                            $highlights[$offset]->{'zmenu'}->{ sprintf("%02d:%s",$zmenu_length++,$entry) }
-                                = $value;
-                            $highlights[$offset]->{'start'} = $_->{'start'} if
-                                ($highlights[$offset]->{'start'} > $_->{'start'});
-                            $highlights[$offset]->{'end'} = $_->{'end'} if
-                                ($highlights[$offset]->{'end'} < $_->{'end'});
+                            $highlights[$offset-1]->{'zmenu'}->{ sprintf("%02d:%s",$zmenu_length++,$entry) } = $value;
+                            $highlights[$offset-1]->{'start'} = $_->{'start'} if ($highlights[$offset-1]->{'start'} > $_->{'start'});
+                            $highlights[$offset-1]->{'end'} = $_->{'end'} if ($highlights[$offset-1]->{'end'} < $_->{'end'});
                         }
                     } else { # We don't
                         push @highlights, $_;
-                        $bin_flag[$bin_id] = $#highlights;
+                        $bin_flag[$bin_id] = @highlights;
                     }
                 }
                 my @highlights = @highlights;
