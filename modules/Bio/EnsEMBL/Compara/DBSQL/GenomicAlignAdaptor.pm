@@ -473,14 +473,14 @@ sub retrieve_all_direct_attributes {
   
   ## Populate the object
   $genomic_align->adaptor($self);
-  $genomic_align->genomic_align_block_id($genomic_align_block_id);
-  $genomic_align->method_link_species_set_id($method_link_species_set_id);
-  $genomic_align->dnafrag_id($dnafrag_id);
-  $genomic_align->dnafrag_start($dnafrag_start);
-  $genomic_align->dnafrag_end($dnafrag_end);
-  $genomic_align->dnafrag_strand($dnfrag_strand);
-  $genomic_align->cigar_line($cigar_line);
-  $genomic_align->level_id($level_id);
+  $genomic_align->genomic_align_block_id($genomic_align_block_id) if (defined($genomic_align_block_id));
+  $genomic_align->method_link_species_set_id($method_link_species_set_id) if (defined($method_link_species_set_id));
+  $genomic_align->dnafrag_id($dnafrag_id) if (defined($dnafrag_id));
+  $genomic_align->dnafrag_start($dnafrag_start) if (defined($dnafrag_start));
+  $genomic_align->dnafrag_end($dnafrag_end) if (defined($dnafrag_end));
+  $genomic_align->dnafrag_strand($dnfrag_strand) if (defined($dnfrag_strand));
+  $genomic_align->cigar_line($cigar_line) if (defined($cigar_line));
+  $genomic_align->level_id($level_id) if (defined($level_id));
 
   return $genomic_align;
 }
