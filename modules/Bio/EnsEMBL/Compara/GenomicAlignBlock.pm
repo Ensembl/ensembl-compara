@@ -496,16 +496,16 @@ sub get_old_consensus_genomic_align {
     throw "Bio::EnsEMBL::Compara::GenomicAlignBlock ($self) does not have any associated".
         " Bio::EnsEMBL::Compara::GenomicAlign";
   }
-  
+
   if (scalar(@{$genomic_aligns}) != 2) {
     throw "Trying to get old_consensus_genomic_align from Bio::EnsEMBL::Compara::GenomicAlignBlock".
         " ($self) holding a multiple alignment";
   }
 
-  if ($genomic_aligns->[0]->dnafrag->genomedb->dbID > $genomic_aligns->[1]->dnafrag->genomedb->dbID) {
+  if ($genomic_aligns->[0]->dnafrag->genome_db->dbID > $genomic_aligns->[1]->dnafrag->genome_db->dbID) {
     return $genomic_aligns->[1];
 
-  } elsif ($genomic_aligns->[0]->dnafrag->genomedb->dbID < $genomic_aligns->[1]->dnafrag->genomedb->dbID) {
+  } elsif ($genomic_aligns->[0]->dnafrag->genome_db->dbID < $genomic_aligns->[1]->dnafrag->genome_db->dbID) {
     return $genomic_aligns->[0];
 
   ## If they belongs to the same genome_db, use the dnafrag_id instead
@@ -569,10 +569,10 @@ sub get_old_query_genomic_align {
         " ($self) holding a multiple alignment";
   }
 
-  if ($genomic_aligns->[0]->dnafrag->genomedb->dbID > $genomic_aligns->[1]->dnafrag->genomedb->dbID) {
+  if ($genomic_aligns->[0]->dnafrag->genome_db->dbID > $genomic_aligns->[1]->dnafrag->genome_db->dbID) {
     return $genomic_aligns->[0];
 
-  } elsif ($genomic_aligns->[0]->dnafrag->genomedb->dbID < $genomic_aligns->[1]->dnafrag->genomedb->dbID) {
+  } elsif ($genomic_aligns->[0]->dnafrag->genome_db->dbID < $genomic_aligns->[1]->dnafrag->genome_db->dbID) {
     return $genomic_aligns->[1];
 
   ## If they belongs to the same genome_db, use the dnafrag_id instead
