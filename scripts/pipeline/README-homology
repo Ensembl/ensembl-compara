@@ -77,7 +77,7 @@ hive worker output directory =
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline
-cp compara-hive.conf.example compara-23.conf
+cp compara-hive-homology.conf.example compara-23.conf
 <editor> compara-23.conf
 
 you may need to change the database names, port, dbnames, and the
