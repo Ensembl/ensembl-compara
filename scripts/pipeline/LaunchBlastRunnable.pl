@@ -10,8 +10,18 @@ use Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 #use Bio::EnsEMBL::GenePair::DBSQL::PairAdaptor;
 
+# ok this is a hack, but I'm going to pretend I've got an object here
+# by creating a blessed hash ref and passing it around like an object
+# this is to avoid using global variables in functions, and to consolidate
+# the globals into a nice '$self' package
+my $self = bless {};
+
+$self->{'compara_conf'} = {};
+$self->{'compara_conf'}->{'-user'} = 'ensro';
+$self->{'compara_conf'}->{'-port'} = 3306;
+
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
-my $compara_conf="";
+my $conf_file="";
 my $member_id=8;
 my $logic_name='homology_blast_10116';
 my $verbose=1;
@@ -23,25 +33,26 @@ GetOptions('help' => \$help,
            'pass=s' => \$pass,
            'dbname=s' => \$dbname,
 	   'port=i' => \$port,
-           'compara=s' => \$compara_conf,
+           'conf=s' => \$conf_file,
 	   'member_id=s' => \$member_id,
 	   'logic_name=s' => \$logic_name,
 	   'verbose!'    => \$verbose,
 	  );
 if ($help) { usage(); }
 
-if(-e $compara_conf) {
-  my %conf = %{do $compara_conf};
+parse_conf($self, $conf_file);
 
-  $host = $conf{host} if($conf{host});
-  $port = $conf{port} if($conf{port});
-  $user = $conf{user} if($conf{user});
-  $pass = $conf{pass} if($conf{pass});
-  $dbname = $conf{dbname} if($conf{dbname});
-  $adaptor = $conf{adaptor} if($conf{adaptor});
-}
+if($host)   { $self->{'compara_conf'}->{'-host'}   = $host; }
+if($port)   { $self->{'compara_conf'}->{'-port'}   = $port; }
+if($dbname) { $self->{'compara_conf'}->{'-dbname'} = $dbname; }
+if($user)   { $self->{'compara_conf'}->{'-user'}   = $user; }
+if($pass)   { $self->{'compara_conf'}->{'-pass'}   = $pass; }
 
-unless(defined($host) and defined($user) and defined($dbname)) {
+
+unless(defined($self->{'compara_conf'}->{'-host'})
+       and defined($self->{'compara_conf'}->{'-user'})
+       and defined($self->{'compara_conf'}->{'-dbname'}))
+{
   print "\nERROR : must specify host, user, and database to connect to compara\n\n";
   usage(); 
 }
@@ -51,17 +62,13 @@ unless (defined($member_id) and defined($logic_name)) {
   usage();
 }
 
+$self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
 
-my $db = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-host => $host,
-                                                      -port => $port,
-						      -user => $user,
-						      -pass => $pass,
-						      -dbname => $dbname);
 
 #testBlastRunnable($db, "/home/jessica/data/FastaPeptidesFiles/ENSMUSP00000027035.fasta",
 #                  "/home/jessica/data/FastaPeptidesFiles/Rattus_norvegicus_RGSC3.1.fasta");
 
-testBlastRunnableDB($db, $member_id);
+testBlastRunnableDB($self->{'comparaDBA'}, $member_id);
 
 exit(0);
 
@@ -73,9 +80,9 @@ exit(0);
 #######################
 
 sub usage {
-  print "LaunchBlastRunnable.pl -pass {-compara | -host -user -dbname} -stable_id -logic_name [options]\n";
+  print "LaunchBlastRunnable.pl -pass {-conf | -host -user -dbname} -stable_id -logic_name [options]\n";
   print "  -help                  : print this help\n";
-  print "  -compara <conf file>   : read compara DB connection info from config file <path>\n";
+  print "  -conf <conf file>      : read compara DB connection info from config file <path>\n";
   print "                           which is perl hash file with keys 'host' 'port' 'user' 'dbname'\n";
   print "  -host <machine>        : set <machine> as location of compara DB\n";
   print "  -port <port#>          : use <port#> for mysql connection\n";
@@ -88,6 +95,31 @@ sub usage {
   
   exit(1);  
 }
+
+
+sub parse_conf {
+  my $self      = shift;
+  my $conf_file = shift;
+
+  if($conf_file and (-e $conf_file)) {
+    #read configuration file from disk
+    my @conf_list = @{do $conf_file};
+
+    foreach my $confPtr (@conf_list) {
+      #print("HANDLE type " . $confPtr->{TYPE} . "\n");
+      if($confPtr->{TYPE} eq 'COMPARA') {
+        $self->{'compara_conf'} = $confPtr;
+      }
+      if($confPtr->{TYPE} eq 'BLAST_TEMPLATE') {
+        $self->{'analysis_template'} = $confPtr;
+      }
+      if($confPtr->{TYPE} eq 'SPECIES') {
+        push @{$self->{'speciesList'}}, $confPtr;
+      }
+    }
+  }
+}
+
 
 sub displayHSP {
   my($feature) = @_;
