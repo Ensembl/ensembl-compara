@@ -7,6 +7,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bump;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 sub init_label {
     my ($this) = @_;
@@ -31,22 +32,29 @@ sub _init {
     my $highlights    = $self->highlights();
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
-    my $bitmap_length = $VirtualContig->length();
     my $type          = $Config->get($Config->script(),'gene','src');
     my @allgenes      = ();
 
+    &eprof_start("gene-virtualgene_start-get");
     push @allgenes, $VirtualContig->get_all_VirtualGenes_startend();
+    &eprof_end("gene-virtualgene_start-get");
 
+    &eprof_start("gene-externalgene_start-get");
+    
     if ($type eq 'all'){
 	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
 	    $vg->{'_is_external'} = 1;
 	    push (@allgenes, $vg);
 	}
     }
+    &eprof_end("gene-externalgene_start-get");
 
+    &eprof_start("gene-render-code");
     my $ext_col     = $Config->get($Config->script(),'gene','ext');
     my $known_col   = $Config->get($Config->script(),'gene','known');
     my $unknown_col = $Config->get($Config->script(),'gene','unknown');
+    my $pix_per_bp  = $Config->transform->{'scalex'};
+    my $bitmap_length = int($VirtualContig->length * $pix_per_bp);
 
     foreach my $vg (@allgenes) {
 
@@ -70,20 +78,17 @@ sub _init {
 	    'height'    => $h,
 	    'colour'    => $colour,
 	    'absolutey' => 1,
-	    'zmenu'     => {
-		'caption' => $vgid,
-	    },
 	});
 
 	#########
 	# bump it baby, yeah!
     	# bump-nology!
 	#
-    	my $bump_start = $rect->x();
-		$bump_start    = 0 if ($bump_start < 0);
+    	my $bump_start = int($rect->x() * $pix_per_bp);
+	$bump_start    = 0 if ($bump_start < 0);
 
-    	my $bump_end = $bump_start + ($rect->width());
-    	next if $bump_end > $bitmap_length;
+    	my $bump_end = $bump_start + int($rect->width()*$pix_per_bp);
+    	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
     	my $row = &Bump::bump_row(      
 	    $bump_start,
 	    $bump_end,
@@ -95,6 +100,8 @@ sub _init {
     	$rect->y($rect->y() + (1.5 * $row * $h));
     	$self->push($rect);
     }
+    &eprof_end("gene-render-code");
+    
 }
 
 1;

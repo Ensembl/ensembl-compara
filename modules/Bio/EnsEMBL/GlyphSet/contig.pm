@@ -37,71 +37,71 @@ sub _init {
     my $black = $cmap->id_by_name('black');
     my $red   = $cmap->id_by_name('red');
 
-    my @map_contigs = $self->{'container'}->_vmap->each_MapContig();
-    my $start = $map_contigs[0]->start();
-    my $end   = $map_contigs[-1]->end();
-    my $tot_width = $end - $start;
+
+    my @map_contigs = ();
+	@map_contigs = $self->{'container'}->_vmap->each_MapContig();
     my $ystart = 75;
-
     my $im_width = $self->{'config'}->image_width();
-
-    my $gline = new Bio::EnsEMBL::Glyph::Rect({
-    	'x'      => 1,
-    	'y'      => $ystart+7,
-    	'width'  => $im_width,
-    	'height' => 0,
-    	'colour' => $cmap->id_by_name('grey1'),
-		'absolutey' => 1,
-		'absolutex' => 1,
-    });
-    $self->push($gline);
-
-    my $i = 0;
 	my ($w,$h) = $self->{'config'}->texthelper->px2bp('Tiny');
-	
-    foreach my $temp_rawcontig ( @map_contigs ) {
-		if($i%2 == 0){
-	    	$col = $col2;
-		} else {
-	    	$col = $col1;
-		}
-		$i++;
+    if (@map_contigs){
+		my $start = $map_contigs[0]->start();
+    	my $end   = $map_contigs[-1]->end();
+    	my $tot_width = $end - $start;
 
 
+    	my $gline = new Bio::EnsEMBL::Glyph::Rect({
+    		'x'      => 1,
+    		'y'      => $ystart+7,
+    		'width'  => $im_width,
+    		'height' => 0,
+    		'colour' => $cmap->id_by_name('grey1'),
+			'absolutey' => 1,
+			'absolutex' => 1,
+    	});
+    	$self->push($gline);
 
-		my $rend = $temp_rawcontig->end();
-		my $rstart = $temp_rawcontig->start();
-		my $rid = $temp_rawcontig->contig->id();
-		my $text = $temp_rawcontig->contig->cloneid();
-				
-		my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-	    	'x'      => $rstart,
-	    	'y'      => $ystart+2,
-	    	'width'  => $rend - $rstart,
-	    	'height' => 10,
-	    	'colour' => $col,
-	    	'absolutey'  => 1,
-	    	'zmenu' => {
-				'caption' => $rid,
-				'Contig information'     => "/perl/seqentryview?seqentry=$text&contigid=$rid",
-	    	},
-		});
-		$self->push($glyph);
+    	my $i = 0;
 
-		my $bp_textwidth = $w * length($text) * 1.1; # add 10% for scaling text
-		unless ($bp_textwidth > ($rend - $rstart)){
-	    	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-			'x'      => $rstart + int(($rend - $rstart)/2 - ($bp_textwidth)/2),
-			'y'      => $ystart+4,
-			'font'   => 'Tiny',
-			'colour' => $white,
-			'text'   => $text,
-			'absolutey'  => 1,
-	    	});
-	    	$self->push($tglyph);
-		}
-    }				# 
-    
+    	foreach my $temp_rawcontig ( @map_contigs ) {
+			if($i%2 == 0){
+	    		$col = $col2;
+			} else {
+	    		$col = $col1;
+			}
+			$i++;
+			my $rend = $temp_rawcontig->end();
+			my $rstart = $temp_rawcontig->start();
+			my $rid = $temp_rawcontig->contig->id();
+			my $text = $temp_rawcontig->contig->cloneid();
+
+			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+	    		'x'      => $rstart,
+	    		'y'      => $ystart+2,
+	    		'width'  => $rend - $rstart,
+	    		'height' => 10,
+	    		'colour' => $col,
+	    		'absolutey'  => 1,
+	    		'zmenu' => {
+					'caption' => $rid,
+					'Contig information'     => "/perl/seqentryview?seqentry=$text&contigid=$rid",
+	    		},
+			});
+			$self->push($glyph);
+
+			my $bp_textwidth = $w * length($text) * 1.1; # add 10% for scaling text
+			unless ($bp_textwidth > ($rend - $rstart)){
+	    		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+				'x'      => $rstart + int(($rend - $rstart)/2 - ($bp_textwidth)/2),
+				'y'      => $ystart+4,
+				'font'   => 'Tiny',
+				'colour' => $white,
+				'text'   => $text,
+				'absolutey'  => 1,
+	    		});
+	    		$self->push($tglyph);
+			}
+    	}
+    }
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
 	'x'      => 0,
 	'y'      => $ystart,
