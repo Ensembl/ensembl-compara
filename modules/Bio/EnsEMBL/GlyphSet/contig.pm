@@ -269,21 +269,22 @@ sub _init_non_assembled_contig {
   my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
   # only draw a red box if we are in contigview top and there is a 
   # detailed display
+  my $rbs = $Config->get('_settings','red_box_start');
+  my $rbe = $Config->get('_settings','red_box_end');
   if ($Config->get('_settings','draw_red_box') eq 'yes') { 
     # only draw focus box on the correct display...
-    my $LEFT_HS = ($Config->get('_settings','_clone_start_at_0') eq 'yes' && $clone_based) ? 0 : $global_start -1;
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
+      'x'            => $rbs - $global_start + 1,
       'y'            => $ystart - 4 ,
-      'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
+      'width'        => $rbe-$rbs+1,
       'height'       => 23,
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
+      'x'            => $rbs - $global_start + 1,
       'y'            => $ystart - 3 ,
-      'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
+      'width'        => $rbe-$rbs+1,
       'height'       => 21,
       'bordercolour' => $red,
       'absolutey'    => 1,

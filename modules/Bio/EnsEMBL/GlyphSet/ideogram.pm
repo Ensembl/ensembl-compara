@@ -248,15 +248,27 @@ sub _init {
     #################################
     # Draw the zoom position red box
     #################################
-    $gband = new Sanger::Graphics::Glyph::Rect({
-    	'x'      => $self->{'container'}->start(),
-    	'y'      => 0,
-    	'width'  => $len,
-    	'height' => 14,
-    	'bordercolour' => $red,
-		'absolutey' => 1,
-   	});
-    $self->push($gband);
+  my $rbs = $Config->get('_settings','red_box_start');
+  my $rbe = $Config->get('_settings','red_box_end');
+  if ($Config->get('_settings','draw_red_box') eq 'yes') {
+    # only draw focus box on the correct display...
+    $self->push( new Sanger::Graphics::Glyph::Rect({
+      'x'            => $rbs,
+      'y'            => 0,
+      'width'        => $rbe-$rbs+1,
+      'height'       => 14,
+      'bordercolour' => $red,
+      'absolutey'    => 1,
+    }) );
+    $self->push( new Sanger::Graphics::Glyph::Rect({
+      'x'            => $rbs,
+      'y'            => 1,
+      'width'        => $rbe-$rbs+1,
+      'height'       => 12,
+      'bordercolour' => $red,
+      'absolutey'    => 1,
+    }) );
+  }
 }
 
 
