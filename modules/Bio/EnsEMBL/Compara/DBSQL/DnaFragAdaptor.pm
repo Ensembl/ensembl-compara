@@ -146,55 +146,74 @@ sub fetch_by_name_genomedb_id{
 sub fetch_by_species_chr_start_end {
   my ($self,$species,$chr_name,$chr_start,$chr_end,$dnafrag_type) = @_;
  
-   if( !defined $species) {
-       $self->throw("fetch_by_species_chr_start_end require species name");
-   }
+  if( !defined $species) {
+    $self->throw("fetch_by_species_chr_start_end require species name");
+  }
+  
+  if( !defined $chr_name) {
+    $self->throw("fetch_by_species_chr_start_end requires chromosome name");
+  }
+  
+  if( !defined $chr_start) {
+    $self->throw("fetch_by_species_chr_start_end requires chrosomosome start");
+  }
+  
+  if( !defined $chr_end) {
+    $self->throw("fetch_by_species_chr_start_end requires chromosome end");
+  }
+  
+  if( !defined $dnafrag_type) {
+    $self->throw("fetch_by_species_chr_start_end requires dnafrag_type");
+  }
+  
+  my $sth;
+  my @list_dnafrag;
+  
+  if ($dnafrag_type eq "RawContig") {
 
-   if( !defined $chr_name) {
-       $self->throw("fetch_by_species_chr_start_end requires chromosome name");
-   }
- 
-   if( !defined $chr_start) {
-       $self->throw("fetch_by_species_chr_start_end requires chrosomosome start");
-   }
-
-   if( !defined $chr_end) {
-       $self->throw("fetch_by_species_chr_start_end requires chromosome end");
-   }
-
-   if( !defined $dnafrag_type) {
-       $self->throw("fetch_by_species_chr_start_end requires dnafrag_type");
-   }
-
-   my $sth;
-   my @list_dnafrag;
-
-   if ($dnafrag_type eq "RawContig") {
-
+    $self->throw("Method not implemented yet for dnafrag_type $dnafrag_type");
 # need a connection to the ensembl core database of corresponding species (get info from genome_db table)
 # to get a dnafrag list of RawContig which are between chr_start and chr_end, and in dnafrag table as well.
 
-   } elsif ($dnafrag_type eq "VirtualContig") {
-
-       $sth = $self->prepare("select d.dnafrag_id,d.name,d.genome_db_id from dnafrag d,genome_db g where d.name like ? and g.name = ? and d.genome_db_id=g.genome_db_id");
-       $sth->execute("$chr_name.%",$species);
- 
-       while (my ($dnafrag_id,$name,$genome_db_id) = $sth->fetchrow_array()) {
-           my ($chr,$start,$end) = split /\./,$name;
-
-           if ($start<=$chr_end && $end>=$chr_start) {
- 
-              my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
- 
-              $dnafrag->dbID($dnafrag_id);
-              $dnafrag->name($name);
-              $dnafrag->type($dnafrag_type);
-              $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id));
-
-              push @list_dnafrag,$dnafrag;
-           }
-       }
-   }
+  } elsif ($dnafrag_type eq "VirtualContig") {
+    
+    $sth = $self->prepare("select d.dnafrag_id,d.name,d.genome_db_id from dnafrag d,genome_db g where d.name like ? and g.name = ? and d.genome_db_id=g.genome_db_id");
+    $sth->execute("$chr_name.%",$species);
+    
+    while (my ($dnafrag_id,$name,$genome_db_id) = $sth->fetchrow_array()) {
+      my ($chr,$start,$end) = split /\./,$name;
+      
+      if ($start<=$chr_end && $end>=$chr_start) {
+	
+	my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
+	
+	$dnafrag->dbID($dnafrag_id);
+	$dnafrag->name($name);
+	$dnafrag->type($dnafrag_type);
+	$dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id));
+	
+	push @list_dnafrag,$dnafrag;
+      }
+    }
+  } elsif ($dnafrag_type eq "Chromosome") {
+    
+    $sth = $self->prepare("select d.dnafrag_id,d.name,d.genome_db_id from dnafrag d,genome_db g where d.name = ? and g.name = ? and d.genome_db_id=g.genome_db_id");
+    $sth->execute($chr_name,$species);
+    
+    
+    while (my ($dnafrag_id,$name,$genome_db_id) = $sth->fetchrow_array()) {
+      
+      my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
+      
+      $dnafrag->dbID($dnafrag_id);
+      $dnafrag->name($name);
+      $dnafrag->type($dnafrag_type);
+      $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id));
+      
+      push @list_dnafrag,$dnafrag;
+      
+    }
+  }
   return @list_dnafrag;
 }
 
