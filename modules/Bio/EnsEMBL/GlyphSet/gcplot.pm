@@ -69,7 +69,6 @@ sub _init {
         } else {
 		$percent = 99;
         }
-        print STDERR "XX: $i - $percent\n";
 	push (@gc, $percent);
     }
 		
