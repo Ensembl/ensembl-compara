@@ -47,7 +47,7 @@ sub _init {
        'height'    => 0,
        'colour'    => $Config->colourmap->id_by_name('grey50'),
        'absolutey' => 1,
-       'absolutex' => 1,
+       'absolutex' => 1,'absolutewidth'=>1,
     });
     $self->push($rect);
     
@@ -63,7 +63,7 @@ sub _init {
                 'height'    => $BOX_HEIGHT,
                 'colour'    => $colour,
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
             }));
             $self->push(new Sanger::Graphics::Glyph::Text({
                 'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
@@ -73,7 +73,7 @@ sub _init {
                 'colour'    => $colour,
                 'text'      => uc(" $legend"),
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
             }));
             $x++;
             if($x==$NO_OF_COLUMNS) {

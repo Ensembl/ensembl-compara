@@ -74,7 +74,7 @@ sub _init {
                 'height'    => $BOX_HEIGHT,
                 'bordercolour'    => $colour,
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
             }));
 	    }else{
 	    $self->push(new Sanger::Graphics::Glyph::Rect({
@@ -84,7 +84,7 @@ sub _init {
                 'height'    => $BOX_HEIGHT,
                 'colour'    => $colour,
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
             }));
 	    }
             $self->push(new Sanger::Graphics::Glyph::Text({
@@ -95,7 +95,7 @@ sub _init {
                 'colour'    => 'black',
                 'text'      => uc(" $legend"),
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
             }));
             $x++;
             if($x==$NO_OF_COLUMNS) {

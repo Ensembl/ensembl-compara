@@ -43,16 +43,15 @@ sub _init {
     $text = bp_to_nearest_unit($text). " ";		
 
     my $bp_textwidth = $fontwidth * length($text);
-    my $im_width_bp  = $Config->image_width();
     
     my $tglyph = new Sanger::Graphics::Glyph::Text({
-	'x'         => int($im_width_bp/2) - int($bp_textwidth/2),
+	'x'         => int($im_width/2) - int($bp_textwidth/2),
 	'y'         => 2,
 	'height'    => $fontheight,
 	'font'      => $fontname,
 	'colour'    => $feature_colour,
 	'text'      => $text,
-	'absolutex' => 1,
+	'absolutex' => 1,'absolutewidth'=>1,
 	'absolutey' => 1,
     });
     $self->push($tglyph);
@@ -62,21 +61,21 @@ sub _init {
     my $lglyph = new Sanger::Graphics::Glyph::Rect({
 	'x'         => 0,
 	'y'         => 6,
-	'width'     => int($im_width_bp/2) - int($bp_textwidth/2),
+	'width'     => int($im_width/2) - int($bp_textwidth/2),
 	'height'    => 0,
 	'colour'    => $feature_colour,
-	'absolutex' => 1,
+	'absolutex' => 1,'absolutewidth'=>1,
 	'absolutey' => 1,
     });
     $self->push($lglyph);
     
     my $rglyph = new Sanger::Graphics::Glyph::Rect({
-	'x'         => int($im_width_bp/2) + int($bp_textwidth/2),
+	'x'         => int($im_width/2) + int($bp_textwidth/2),
 	'y'         => 6,
-	'width'     => $im_width_bp - (int($im_width_bp/2) + int($bp_textwidth/2)),
+	'width'     => $im_width - (int($im_width/2) + int($bp_textwidth/2)),
 	'height'    => 0,
 	'colour'    => $feature_colour,
-	'absolutex' => 1,
+	'absolutex' => 1,'absolutewidth'=>1,
 	'absolutey' => 1,
     });
     $self->push($rglyph);
@@ -87,16 +86,16 @@ sub _init {
     my $gtriagl = new Sanger::Graphics::Glyph::Poly({
 	'points'    => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
 	'colour'    => $feature_colour,
-	'absolutex' => 1,
+	'absolutex' => 1,'absolutewidth'=>1,
 	'absolutey' => 1,
     });    
     $self->push($gtriagl);
     
     # add the right arrow head....
     my $gtriagr = new Sanger::Graphics::Glyph::Poly({
-	'points'    => [$im_width_bp,6, ($im_width_bp-$fontwidth*2),3, ($im_width_bp-$fontwidth*2),9],
+	'points'    => [$im_width,6, ($im_width-$fontwidth*2),3, ($im_width-$fontwidth*2),9],
 	'colour'    => $feature_colour,
-	'absolutex' => 1,
+	'absolutex' => 1,'absolutewidth'=>1,
 	'absolutey' => 1,
     });
     $self->push($gtriagr);

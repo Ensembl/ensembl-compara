@@ -91,7 +91,7 @@ for (my $j=1; $j <= $NO_OF_COLUMNS; $j++){
                     'colour'     => 'darkred',
            	    'text'       => $j ,
           	    'absolutey'  => 1,
-		    'absolutex'  => 1,
+		    'absolutex'  => 1,'absolutewidth'=>1,
             	});  
 $self->push($header);
 $x = $x + $BOX_WIDTH + $INTRON_WIDTH;
@@ -140,7 +140,7 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
            	    'text'       => ($w * length($desc_text)) > ($CONT_LENGTH - ($TEXT_WIDTH + 30)) ? substr($desc_text,
 				0, (($CONT_LENGTH - 150) / $w))."..." : $desc_text,
           	    'absolutey'  => 1,
-		    'absolutex'  => 1,
+		    'absolutex'  => 1,'absolutewidth'=>1,
             	});
 $self->push($desc);
 
@@ -173,7 +173,7 @@ $self->push($desc);
        'height'    => $BOX_HEIGHT,
        'colour'    => $exon_colour,
        'absolutey' => 1,
-       'absolutex' => 1 ,
+       'absolutex' => 1 ,'absolutewidth'=>1,
        'href'      => "$alignment_href",
        'zmenu'	   => {
        	    'caption'                  	 => "Supporting Evidence",
@@ -193,7 +193,7 @@ $self->push($desc);
        'height'   	 => $BOX_HEIGHT,
        'bordercolour'    => $LOW_SCORE,
        'absolutey' 	 => 1,
-       'absolutex' 	 => 1 , 
+       'absolutex' 	 => 1 ,'absolutewidth'=>1, 
     });
   $self->push($blank);
   
@@ -211,7 +211,7 @@ $self->push($desc);
                 'height'     => $INTRON_HEIGHT,
                 "colour"     => $intron_col,
                 'absolutey'  => 1,
-		'absolutex'  => 1 ,		  					
+		'absolutex'  => 1 ,'absolutewidth'=>1,
             });
     $self->push($intron);
 }

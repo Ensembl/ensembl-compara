@@ -207,7 +207,7 @@ sub _init_assembled_contig {
         'height'    => 0,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,
+        'absolutex' => 1,'absolutewidth'=>1,
     });
     $self->unshift($gline);
     
@@ -218,7 +218,7 @@ sub _init_assembled_contig {
         'height'    => 0,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,    
+        'absolutex' => 1,    'absolutewidth'=>1,
     });
     $self->unshift($gline);
     
@@ -240,7 +240,7 @@ sub _init_assembled_contig {
             'height'    => 3,
             'colour'    => $black,
             'absolutey' => 1,
-            'absolutex' => 1,
+            'absolutex' => 1,'absolutewidth'=>1,
         });
         $self->unshift($tick);
     
@@ -252,7 +252,7 @@ sub _init_assembled_contig {
             'height'    => 3,
             'colour'    => $black,
             'absolutey' => 1,
-            'absolutex' => 1,
+            'absolutex' => 1,'absolutewidth'=>1,
         });
         $self->unshift($tick);
     }
@@ -265,7 +265,7 @@ sub _init_assembled_contig {
         'height'    => 1,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,
+        'absolutex' => 1,'absolutewidth'=>1,
     });
     $self->unshift($tick);
    
@@ -277,7 +277,7 @@ sub _init_assembled_contig {
         'height'    => 1,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,
+        'absolutex' => 1,'absolutewidth'=>1,
     });
     $self->unshift($tick);
     
@@ -318,7 +318,7 @@ sub _init_assembled_contig {
                 'width'     => $interval,
                 'height'    => 3,
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
                 'href'	    => $self->zoom_URL($param_string, 
 					    $interval_middle + $global_start, 
 					    $length,  1  , $highlights),
@@ -333,7 +333,7 @@ sub _init_assembled_contig {
                 'width'     => $interval,
                 'height'    => 3,
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
                 'href'	    => $self->zoom_URL($param_string, 
 					     $global_end-$interval_middle, 
 					     $length,  1  , $highlights),
@@ -474,7 +474,7 @@ sub _init_non_assembled_contig {
         'height'    => 0,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,
+        'absolutex' => 1,'absolutewidth'=>1,
     });
     $self->unshift($gline);
     
@@ -485,7 +485,7 @@ sub _init_non_assembled_contig {
         'height'    => 0,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,    
+        'absolutex' => 1,    'absolutewidth'=>1,
     });
     $self->unshift($gline);
     
@@ -507,7 +507,7 @@ sub _init_non_assembled_contig {
             'height'    => 3,
             'colour'    => $black,
             'absolutey' => 1,
-            'absolutex' => 1,
+            'absolutex' => 1,'absolutewidth'=>1,
         }) );
     
     # the reverse strand ticks
@@ -518,7 +518,7 @@ sub _init_non_assembled_contig {
             'height'    => 3,
             'colour'    => $black,
             'absolutey' => 1,
-            'absolutex' => 1,
+            'absolutex' => 1,'absolutewidth'=>1,
         }) );
     }
     
@@ -530,7 +530,7 @@ sub _init_non_assembled_contig {
         'height'    => 1,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,
+        'absolutex' => 1,'absolutewidth'=>1,
     }) );
    
   # the reverse strand ticks
@@ -541,7 +541,7 @@ sub _init_non_assembled_contig {
         'height'    => 1,
         'colour'    => $black,
         'absolutey' => 1,
-        'absolutex' => 1,
+        'absolutex' => 1,'absolutewidth'=>1,
     }) );
     
     my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
@@ -582,7 +582,7 @@ sub _init_non_assembled_contig {
                 'width'     => $interval,
                 'height'    => 3,
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
                 'href'	    => $self->zoom_URL($param_string, 
 					    $interval_middle + $global_start, 
 					    $length,  1  , $highlights),
@@ -598,7 +598,7 @@ sub _init_non_assembled_contig {
                 'width'     => $interval,
                 'height'    => 3,
                 'absolutey' => 1,
-                'absolutex' => 1,
+                'absolutex' => 1,'absolutewidth'=>1,
                 'href'	    => $self->zoom_URL($param_string, 
 					     $global_end+1-$interval_middle, 
 					     $length,  1  , $highlights),

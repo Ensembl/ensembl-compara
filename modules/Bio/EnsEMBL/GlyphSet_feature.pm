@@ -89,17 +89,17 @@ sub _init {
     my $small_contig   = 0;
     my $dep            = $Config->get(  $type, 'dep' );
 
-    my $features = $self->features;
-    unless(ref($features)eq'ARRAY') {
-        return;
-    }
+    my @features = grep { ref($_)eq'ARRAY'} $self->features;
+
     my $h              = ($Config->get('_settings','opt_halfheight') && $dep>0) ? 4 : 8;
 
     my ($T,$C1,$C) = (0, 0, 0 );
     if( $dep > 0 ) {
-        foreach my $f ( @$features ){
+        foreach my $features (@features) {
+          foreach my $f ( @$features ){
             next if $strand_flag eq 'b' && $strand != $f->strand || $f->end < 1 || $f->start > $length ;
             push @{$id{$f->id()}}, [$f->start,$f->end,$f];
+          }
         }
 ## No features show "empty track line" if option set....
         $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $Config->get('_settings','opt_empty_tracks')==0 || %id );
@@ -176,7 +176,8 @@ sub _init {
         foreach my $f (
             sort { $a->[0] <=> $b->[0] }
             map { [$_->start, $_->end,$_ ] }
-            grep { !($strand_flag eq 'b' && $strand != $_->strand || $_->start > $length || $_->end < 1) } @$features
+            grep { !($strand_flag eq 'b' && $strand != $_->strand || $_->start > $length || $_->end < 1) } 
+            map { @$_ } @features
         ) {
             my $START   = $f->[0];
             my $END     = $f->[1];

@@ -16,7 +16,7 @@ sub add_arrows {
     $gtriag = new Sanger::Graphics::Glyph::Poly({
     	'points'       => [$im_width-10,$ystart-4, $im_width-10,$ystart, $im_width,$ystart],
 	    'colour'       => $black,
-    	'absolutex'    => 1,
+    	'absolutex'    => 1,'absolutewidth'=>1,
     	'absolutey'    => 1,
     });
     
@@ -24,7 +24,7 @@ sub add_arrows {
     $gtriag = new Sanger::Graphics::Glyph::Poly({
 	    'points'       => [0,$ystart+14, 10,$ystart+14, 10,$ystart+18],
     	'colour'       => $black,
-    	'absolutex'    => 1,
+    	'absolutex'    => 1,'absolutewidth'=>1,
     	'absolutey'    => 1,
     });
     $self->push($gtriag);

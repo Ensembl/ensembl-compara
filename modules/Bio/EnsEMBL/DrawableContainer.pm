@@ -44,6 +44,7 @@ sub new {
     my $PREFIX = "Bio::EnsEMBL";
     my %manager_cache = ();
 
+
     for my $strand (@strands_to_show) {
 
         my $tmp_glyphset_store = {};
@@ -110,6 +111,13 @@ sub new {
     ########## calculate the maximum label width (plus margin)
     my $label_length_px = 0;
     
+    ########## set scaling factor for base-pairs -> pixels
+
+#    my $temp_scalex = ( $Config->image_width() - 15*$Config->texthelper->width('Small') - $spacing - $button_width )/
+#             $Config->container_width();
+    my $temp_scalex = $Config->image_width() / $Config->container_width();
+
+    warn( $temp_scalex  ) ;
     for my $glyphset (@{$self->{'glyphsets'}}) {
         my $composite;
         next unless defined $glyphset->label();
@@ -127,37 +135,41 @@ sub new {
         my $NAME = ref($glyphset);
         $NAME =~ s/^.*:://;
         $composite = new Sanger::Graphics::Glyph::Composite({
-                'y'            => 0,
-		'x'            => 2,
-		'absolutey'    => 1,
-                'width'        => 1,
+#                'y'            => 0,
+#		'x'            => 2,
+#		'absolutey'    => 1,
+#		'absolutewidth'    => 1,
+#                'pixperbp'     => $temp_scalex,
+       #         'width'        => 1,
                 'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
                                ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
                 'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
-                'height'       => 8
+#                'height'       => 8
         });
         
         my $box_glyph = new Sanger::Graphics::Glyph::Rect({
     	        'x'      	=> 2,
 		    	'y'      	=> 0,
-		    	'width'  	=> 10,
+		    	'width'  	=> 10/$temp_scalex,
 		    	'height' 	=> 8,
 		    	'bordercolour'	=> $black,
+       #                 'pixperbp'     => $temp_scalex,
 		    	'absolutey' => 1,
-			'absolutex' => 1,
+#			'absolutex' => 1,
+#                        'absolutewidth' =>1,
         });
         my $horiz_glyph = new Sanger::Graphics::Glyph::Text({
             'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
             'font'      => 'Small',
             'absolutey' => 1,
-            'x'         => 4,
+            'x'         => 6,
             'y'      	=> $glyphset->bumped() eq 'yes' ? -1.5 : -1,
 		    'width'  	=> 1,
 		    'height' 	=> 8,
             'colour'    => $black,
-            'absolutex' => 1
+       #     'absolutex' => 1, 'absolutewidth' => 1,
         });
-        
+#       $composite->bordercolour('green'); 
         $composite->push($box_glyph);
         $composite->push($horiz_glyph);
         $glyphset->bumpbutton($composite);
@@ -228,6 +240,7 @@ sub new {
                 'width'     => $Config->image_width(),
                 'height'    => $glyphset->maxy() - $gminy,
                 'colour'    => $bgcolours->[$iteration % 2],
+                        'absolutewidth' =>1,
                 'absolutex' => 1,
             });
             ########## this accidentally gets stuffed in twice (for gif & imagemap)
@@ -250,9 +263,9 @@ sub new {
             if( defined $glyphset->bumpbutton()) {
                 $glyphset->bumpbutton->y(int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy));
                 $glyphset->push($glyphset->bumpbutton());
-                foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
+#                foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
 #                    $_->y( $_->y + $glyphset->bumpbutton->y );
-                }
+#                }
             }
         }
     

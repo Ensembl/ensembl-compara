@@ -282,7 +282,7 @@ sub _init {
             'width'   => 0,
             'height'  => ($Y2-$Y1)/10,
             'colour'           =>  $COL,
-            'absolutey'        => 1, 'absolutex'        => 1
+            'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
         }));
         $self->push(new Sanger::Graphics::Glyph::Line({
             'x'       => $X1,
@@ -290,7 +290,7 @@ sub _init {
             'width'   => $X2-$X1,
             'height'  => 4*($Y2-$Y1)/5,
             'colour'           => $COL,
-            'absolutey'        => 1, 'absolutex'        => 1
+            'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
         }));
         $self->push(new Sanger::Graphics::Glyph::Line({
             'x'       => $X2,
@@ -298,7 +298,7 @@ sub _init {
             'width'   => 0,
             'height'  => ($Y2-$Y1)/10,
             'colour'           =>  $COL,
-            'absolutey'        => 1, 'absolutex'        => 1
+            'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
         }));
     }
     my $w = $self->{'config'}->texthelper->width('Tiny');
@@ -309,7 +309,7 @@ sub _init {
             'font'       => 'Tiny',
             'colour'     => $black,
             'text'       => $OTHER_T,
-            'absolutey'  => 1, 'absolutex' => 1
+            'absolutey'  => 1, 'absolutex' => 1,'absolutewidth'=>1,
     }));
     $self->unshift(new Sanger::Graphics::Glyph::Text({
             'x'          => $im_width - $h - 1  ,
@@ -317,7 +317,7 @@ sub _init {
             'font'       => 'Tiny',
             'colour'     => $black,
             'text'       => $OTHER_T,
-            'absolutey'  => 1, 'absolutex' => 1
+            'absolutey'  => 1, 'absolutex' => 1,'absolutewidth'=>1,
     }));
     $self->unshift(new Sanger::Graphics::Glyph::Rect({
             'x'          => 0,
@@ -325,7 +325,7 @@ sub _init {
             'width'      => $im_width,
             'height'     => ($outer_padding + $secondary_width + $inner_padding ) * 2 + $main_width,
             'absolutey'  => 1,
-            'absolutex'  => 1
+            'absolutex'  => 1,'absolutewidth'=>1,
     }));
 }
 
@@ -361,7 +361,7 @@ sub draw_chromosome {
                         $vc_band_end,   $h_offset + $wid,
                     ],
                     'colour'       => $params{'grey'},
-                    'absolutey'    => 1,    'absolutex'    => 1
+                    'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
                 }));
             } else {
                 $self->push(new Sanger::Graphics::Glyph::Poly({
@@ -371,7 +371,7 @@ sub draw_chromosome {
                         $vc_band_start, $h_offset + $wid,
                     ],
                     'colour'       => $params{'grey'},
-                    'absolutey'    => 1,    'absolutex'    => 1
+                    'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
                 }));
                 $done_1_acen = 1;
             }
@@ -384,7 +384,7 @@ sub draw_chromosome {
                     $vc_band_start, $h_offset + $wid, 
                 ],
                 'colour'           => $params{'grey'},
-                'absolutey'    => 1,    'absolutex'    => 1
+                'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
             }));
             $self->push(new Sanger::Graphics::Glyph::Rect({
                 'x'                => $vc_band_start,
@@ -392,7 +392,7 @@ sub draw_chromosome {
                 'width'            => $vc_band_end - $vc_band_start,
                 'height'           => $h_wid,
                 'colour'           => $params{'grey'},
-                'absolutey'    => 1,    'absolutex'    => 1
+                'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
             }));
         } else {
             $self->unshift(new Sanger::Graphics::Glyph::Rect({
@@ -402,7 +402,7 @@ sub draw_chromosome {
                 'height'     => $wid,
                 'colour'     => $stain eq 'tip' ? $params{'grey'} : $params{'white'},
                 'absolutey'  => 1,
-                'absolutex'  => 1
+                'absolutex'  => 1,'absolutewidth'=>1,
             }));
             $self->push(new Sanger::Graphics::Glyph::Line({
                 'x'                => $vc_band_start,
@@ -410,7 +410,7 @@ sub draw_chromosome {
                 'width'            => $vc_band_end - $vc_band_start,
                 'height'           => 0,
                 'colour'           => $params{'black'},
-                'absolutey'        => 1, 'absolutex'        => 1
+                'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
             }));
             $self->push(new Sanger::Graphics::Glyph::Line({
                 'x'                => $vc_band_start,
@@ -418,7 +418,7 @@ sub draw_chromosome {
                 'width'            => $vc_band_end - $vc_band_start,
                 'height'           => 0,
                 'colour'           => $params{'black'},
-                'absolutey'        => 1, 'absolutex'        => 1
+                'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
             }));
         }
     }
@@ -443,7 +443,7 @@ sub draw_chromosome {
                     'width'     => 0,
                     'height'    => $wid * $bg_x/$divisor -1,
                     'colour'    => $params{'bg'},
-                    'absolutey' => 1,   'absolutex' => 1
+                    'absolutey' => 1,   'absolutex' => 1,'absolutewidth'=>1,
             }));
             $self->push(new Sanger::Graphics::Glyph::Line({
                     'x'         => $xx,
@@ -451,7 +451,7 @@ sub draw_chromosome {
                     'width'     => 0,
                     'height'    => $wid * $bg_x/$divisor -1 ,
                     'colour'    => $params{'bg'},
-                    'absolutey' => 1,   'absolutex' => 1
+                    'absolutey' => 1,   'absolutex' => 1,'absolutewidth'=>1,
             }));
             $self->push(new Sanger::Graphics::Glyph::Line({
                     'x'         => $xx,
@@ -459,7 +459,7 @@ sub draw_chromosome {
                     'width'     => 0,
                     'height'    => $wid * $black_x/$divisor -1 ,
                     'colour'    => $params{'black'},
-                    'absolutey' => 1, 'absolutex' => 1
+                    'absolutey' => 1, 'absolutex' => 1,'absolutewidth'=>1,
             }));
             $self->push(new Sanger::Graphics::Glyph::Line({
                     'x'         => $xx,
@@ -467,7 +467,7 @@ sub draw_chromosome {
                     'width'     => 0,
                     'height'    => $wid * $black_x/$divisor -1 ,
                     'colour'    => $params{'black'},
-                    'absolutey' => 1, 'absolutex' => 1
+                    'absolutey' => 1, 'absolutex' => 1,'absolutewidth'=>1,
             }));
         }
     }
@@ -487,7 +487,7 @@ sub draw_chromosome {
                     'width'     => 0,
                     'height'    => 3,
                     'colour'    => $params{'black'},
-                    'absolutey' => 1, 'absolutex' => 1
+                    'absolutey' => 1, 'absolutex' => 1,'absolutewidth'=>1,
             }));
             if($params{'font'}) {
                 my $TEXT = int($X/1000000)."M";
@@ -497,7 +497,7 @@ sub draw_chromosome {
                     'font'       => $params{'font'},
                     'colour'     => $params{'black'},
                     'text'       => $TEXT,
-                    'absolutey'  => 1, 'absolutex' => 1
+                    'absolutey'  => 1, 'absolutex' => 1,'absolutewidth'=>1,
                 }));
             }
             $X+=$params{'ruler'};
@@ -510,7 +510,7 @@ sub draw_chromosome {
             'font'       => $params{'font'},
             'colour'     => $params{'black'},
             'text'       => $params{'chr_name'},
-            'absolutey'  => 1, 'absolutex' => 1
+            'absolutey'  => 1, 'absolutex' => 1,'absolutewidth'=>1,
         }));
     }
     
@@ -533,7 +533,7 @@ sub draw_chromosome {
             'colour'     => $box->{'col'},
             'bordercolour'     => $box->{'border'},
             'absolutey'  => 1,
-            'absolutex'  => 1,
+            'absolutex'  => 1,'absolutewidth'=>1,
             'href' => $box->{'href'},
             'zmenu' => $box->{'zmenu'}
         }));
@@ -545,7 +545,7 @@ sub draw_chromosome {
                 'height'     => 2,
                 'bordercolour'     => $params{'red'},
                 'absolutey'  => 1,
-                'absolutex'  => 1
+                'absolutex'  => 1,'absolutewidth'=>1,
             }));
         }
     }
@@ -557,7 +557,7 @@ sub draw_chromosome {
             'height'     => $wid + 4,
             'bordercolour' => $params{'red'},
             'absolutey'  => 1,
-            'absolutex'  => 1,
+            'absolutex'  => 1,'absolutewidth'=>1,
             'href'       => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$params{'chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5),
             'zmenu'       => {
                 'caption' => "Entry point",

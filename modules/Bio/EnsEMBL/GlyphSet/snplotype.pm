@@ -167,7 +167,7 @@ sub create_haplotype_block {
         'font'       => 'Small',
         'colour'     => $black,
         'text'       => "dbSNP ID",
-        'absolutex'  => 1,
+        'absolutex'  => 1,'absolutewidth'=>1,
         'absolutey'  => 1,
     });
     $self->push($tglyph);
@@ -178,7 +178,7 @@ sub create_haplotype_block {
             'font'       => 'Small',
             'colour'     => $black,
             'text'       => uc($s),
-            'absolutex'  => 1,
+            'absolutex'  => 1,'absolutewidth'=>1,
             'absolutey'  => 1,
         });
         $self->push($tglyph);
@@ -249,7 +249,7 @@ sub create_haplotype_block {
         'font'       => 'Small',
         'colour'     => $black,
         'text'       => $j+1,
-        'absolutex'  => 1,
+        'absolutex'  => 1,'absolutewidth'=>1,
         'absolutey'  => 1,
     });
     $self->push($tglyph);
@@ -282,7 +282,7 @@ sub create_haplotype_block {
     #    'font'       => 'Small',
     #    'colour'     => $black,
     #    'text'       => "SNP ID",
-    #    'absolutex'  => 1,
+    #    'absolutex'  => 1,'absolutewidth'=>1,
     #    'absolutey'  => 1,
     #});
     #$self->push($tglyph);
@@ -294,7 +294,7 @@ sub create_haplotype_block {
         'font'       => 'Small',
         'colour'     => $black,
         'text'       => "Poly. Pos.",
-        'absolutex'  => 1,
+        'absolutex'  => 1,'absolutewidth'=>1,
         'absolutey'  => 1,
     });
     $self->push($tglyph);
@@ -309,7 +309,7 @@ sub create_haplotype_block {
         #    'font'       => 'Small',
         #    'colour'     => $black,
         #    'text'       => uc($s),
-        #    'absolutex'  => 1,
+        #    'absolutex'  => 1,'absolutewidth'=>1,
         #    'absolutey'  => 1,
         #});
 
@@ -319,7 +319,7 @@ sub create_haplotype_block {
             'font'       => 'Small',
             'colour'     => $black,
             'text'       => "${pos} bp",
-            'absolutex'  => 1,
+            'absolutex'  => 1,'absolutewidth'=>1,
             'absolutey'  => 1,
         });
         $ystart += $vertical_space;
@@ -373,7 +373,7 @@ sub draw_labelled_snp_block {
             'colour'    => $bg,
             'bordercolour' => $black,
             'absolutey' => 1,
-            'absolutex' => 1,
+            'absolutex' => 1,'absolutewidth'=>1,
         });
 
         my $tglyph = new Sanger::Graphics::Glyph::Text({
@@ -382,7 +382,7 @@ sub draw_labelled_snp_block {
             'font'       => 'Tiny',
             'colour'     => $fg,
             'text'       => uc($label),
-            'absolutex'  => 1,
+            'absolutex'  => 1,'absolutewidth'=>1,
             'absolutey'  => 1,
         });
         return($block,$tglyph);
@@ -428,7 +428,7 @@ sub draw_unlabelled_snp_block {
             'colour'    => $bg,
             'bordercolour' => $black,
             'absolutey' => 1,
-            'absolutex' => 1,
+            'absolutex' => 1,'absolutewidth'=>1,
         });
 
     }

@@ -48,7 +48,7 @@ sub _init {
                 'height'     => 2,
                 'bordercolour'  => $black,
                 'absolutey'  => 1,
-                'absolutex'  => 1
+                'absolutex'  => 1,'absolutewidth'=>1,
             }));
         } else {
             $self->push(new Sanger::Graphics::Glyph::Text({
@@ -58,7 +58,7 @@ sub _init {
                 'colour'     => $black,
                 'text'       => $node->{'id'},
                 'absolutey'  => 1,
-                'absolutex' => 1
+                'absolutex' => 1,'absolutewidth'=>1,
             }));
         }
         $self->push(new Sanger::Graphics::Glyph::Line({
@@ -67,7 +67,7 @@ sub _init {
             'width'   => 0,
             'height'  => ($node->{'y'}-$node->{'yp'}) * 10,
             'colour'  =>  $black,
-            'absolutey'        => 1, 'absolutex'        => 1
+            'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
         }));
         $self->push(new Sanger::Graphics::Glyph::Line({
             'x'       => $node->{'xp'} * $horizontal_scale,
@@ -75,7 +75,7 @@ sub _init {
             'width'   => ($node->{'x'}-$node->{'xp'}) * $horizontal_scale,
             'height'  => 0,
             'colour'  =>  $black,
-            'absolutey'        => 1, 'absolutex'        => 1
+            'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
         }));
     }
 }
