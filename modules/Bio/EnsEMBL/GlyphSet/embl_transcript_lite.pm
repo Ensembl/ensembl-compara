@@ -40,7 +40,7 @@ sub colour {
 sub href {
     my ($self, $vt) = @_;
     my $ID = $vt->{'synonym'};
-    $ID = ~s/\.\d+$//;
+    $ID =~ s/\.\d+$//;
     return $vt->{'external_db'} ne '' ?
            $self->{'config'}->{'ext_url'}->get_url( $vt->{'external_db'}, $ID ) :
             undef;
