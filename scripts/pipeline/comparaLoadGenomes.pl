@@ -112,20 +112,22 @@ sub parse_conf {
     my @conf_list = @{do $conf_file};
 
     foreach my $confPtr (@conf_list) {
-      print("HANDLE type " . $confPtr->{TYPE} . "\n") if($verbose);
-      if($confPtr->{TYPE} eq 'COMPARA') {
+      my $type = $confPtr->{TYPE};
+      delete $confPtr->{TYPE};
+      print("HANDLE type $type\n") if($verbose);
+      if($type eq 'COMPARA') {
         %compara_conf = %{$confPtr};
       }
-      if($confPtr->{TYPE} eq 'BLAST_TEMPLATE') {
+      elsif($type eq 'BLAST_TEMPLATE') {
         %analysis_template = %{$confPtr};
       }
-      if($confPtr->{TYPE} eq 'SPECIES') {
+      elsif($type eq 'SPECIES') {
         push @speciesList, $confPtr;
       }
-      if($confPtr->{TYPE} eq 'HIVE') {
+      elsif($type eq 'HIVE') {
         %hive_params = %{$confPtr};
       }
-      if($confPtr->{TYPE} eq 'UNIPROT') {
+      elsif($type eq 'UNIPROT') {
         push @uniprotList, $confPtr;
       }
     }
