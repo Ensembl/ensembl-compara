@@ -32,6 +32,10 @@
     'accession_number' => 1
   },
 
+  { TYPE => dNdS,
+    'codeml_parameters' => do('/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/homology/codeml.ctl.hash'),
+  },
+
   { TYPE => SPECIES,
     'abrev'          => 'Hs34e',
     'genome_db_id'   => 1,
