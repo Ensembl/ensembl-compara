@@ -103,7 +103,6 @@ sub draw_cigar_feature {
     if($Q eq 'ARRAY') { warn("DRAWINGCODE_CIGAR [ ", join( "; ", @$f ), " ] ",$self->label->text," not a feature!"); }
   my $S = (my $O = $DO_NOT_FLIP ? 1 : $self->strand ) == 1 ? $f->start : $f->end;
   my $length = $self->{'container'}->length;
-
   my @delete;
 
   my $cigar;
@@ -119,6 +118,7 @@ sub draw_cigar_feature {
     }));
     return;
   }
+
 ## Parse the cigar string, splitting up into an array
 ## like ('10M','2I','30M','I','M','20M','2D','2020M');
 ## original string - "10M2I30MIM20M2D2020M"
@@ -141,6 +141,7 @@ sub draw_cigar_feature {
       next if $e < 1 || $s > $length;  ## Skip if all outside the box...
       $s = 1       if $s<1;            ## Trim to area of box...
       $e = $length if $e>$length;
+
       $Composite->push(new Sanger::Graphics::Glyph::Rect({
         'x'          => $s-1,            'y'          => 0, 
         'width'      => $e-$s+1,         'height'     => $h,

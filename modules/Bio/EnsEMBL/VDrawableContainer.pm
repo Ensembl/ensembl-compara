@@ -132,8 +132,8 @@ sub new {
     $glyphset->transform();
     ########## translate the top of the next row to the bottom of this one
     $yoffset += $glyphset->height() + $spacing;
-    $Config->{'_max_height'} = $yoffset if( $yoffset > $Config->{'_max_height'} );
-    unless(++$entry_no < $entries_per_row) {
+    $Config->{'_max_height'} = $yoffset + $spacing if( $yoffset + $spacing > $Config->{'_max_height'} );
+    unless( ++$entry_no < $entries_per_row ) {
       $entry_no = 0;
       $yoffset = 0;
       my $translateX = shift @min;

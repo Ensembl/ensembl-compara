@@ -167,8 +167,8 @@ sub _init {
         my @tags = $self->join( $gene->stable_id );
         foreach (@tags) {
           warn( $gene->stable_id." -> $_" );
-          $self->tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
-          $self->tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
+          $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
+          $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
         }
       }
       $Composite->push($Composite2);
