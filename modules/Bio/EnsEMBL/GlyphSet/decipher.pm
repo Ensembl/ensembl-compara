@@ -17,10 +17,10 @@ use Bio::Das;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 $DECIPHER_COLOURS = {
-		     'novel_deletion'  => "b70000",
-		     'novel_insertion' => "00b700",
-		     'known_deletion'  => "f59787",
-		     'known_insertion' => "87f587",
+		     'known_deletion'  => "b70000",
+		     'known_insertion' => "00b700",
+		     'novel_deletion'  => "f59787",
+		     'novel_insertion' => "87f587",
 		    };
 sub my_label { "DECIPHER"; }
 
