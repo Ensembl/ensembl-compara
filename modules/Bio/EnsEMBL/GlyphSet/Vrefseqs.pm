@@ -25,7 +25,14 @@ sub _init {
     my ($self) = @_;
     my $Config = $self->{'config'};
     my $chr      = $self->{'container'}->{'chr'};
-    my $refseqs  = $self->{'container'}->{'da'}->get_density_per_chromosome_type( $chr,'refseq' );
+
+    my $sa = $self->{'container'}->{'sa'};
+    my $da = $self->{'container'}->{'da'};
+
+    my $chr_slice = $sa->fetch_by_region('chromosome', $chr);
+    my $refseqs   = $da->fetch_Featureset_by_Slice
+      ($chr_slice, 'refseqs',150,1); 
+
     return unless $refseqs->size(); # Return nothing if their is no data
     
     my $refseqs_col = $Config->get( 'Vrefseqs','col' );
