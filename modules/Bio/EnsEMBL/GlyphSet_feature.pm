@@ -107,6 +107,7 @@ sub expanded_init {
 
 ## Now go through each feature in turn, drawing them
   my $y_pos;
+  my $n_bumped = 0;
   foreach my $i (keys %id){
     $T+=@{$id{$i}}; ## Diagnostic report....
     my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
@@ -117,7 +118,10 @@ sub expanded_init {
     my $bump_end   = int($END * $pix_per_bp);
        $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
     my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap, $dep );
-    next if $row > $dep;
+    if( $row > $dep ) {
+      $n_bumped++;
+      next;
+    }
     $y_pos = $row * int( -1.5 * $h ) * $strand;
     $C1 += @{$id{$i}}; ## Diagnostic report....
     my $Composite = new Sanger::Graphics::Glyph::Composite({
@@ -166,6 +170,15 @@ sub expanded_init {
   }
 ## No features show "empty track line" if option set....
   $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
+  if( $Config->get('_settings','opt_show_bumped') && $n_bumped ) {
+    my $ypos = 0;
+    if( $strand < 0 ) {
+      $y_pos = ($dep+1) * int( 1.5 * $h ) + 2;
+    } else {
+      $y_pos  = 2 + $self->{'config'}->texthelper()->height('Tiny');
+    }
+    $self->errorTrack( "$n_bumped ".$self->my_label." omitted", undef, $y_pos );
+  }
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
@@ -214,6 +227,8 @@ sub compact_init {
     }
   }
   $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
+  warn $Config->get('_settings','opt_show_bumped'), "---$C1==$C"; 
+
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 

@@ -197,7 +197,7 @@ sub expanded_init {
     }
   }
 ## No features show "empty track line" if option set....
-  $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
+  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
@@ -335,7 +335,7 @@ sub compact_init {
     $self->push( $TO_PUSH );
   }
 ## No features show "empty track line" if option set....
-  $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
+  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
