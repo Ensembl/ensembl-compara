@@ -39,14 +39,27 @@ sub _init {
     my @est		= ();
 
     my @allfeatures = $VirtualContig->get_all_ExternalFeatures($self->glob_bp);  
-    @allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
-		
+    #print STDERR "Got :", scalar @allfeatures, "\n";
+	my @tmp;
+
+	#@allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
+	
+	foreach (@allfeatures){
+		#print STDERR "\t$strand\t", $_->strand(), "\n";
+		push (@tmp, $_) if ($_->strand() == $strand);
+	}	
+	@allfeatures = @tmp;
+    #print STDERR "Got 2:", scalar @allfeatures, "\n";
+
     ## need to sort external features into ESTs, SNPs or traces and treat them differently
     foreach my $f (@allfeatures){
+		#print STDERR "\t", $f->source_tag(), "\n";
 		if ($f->source_tag() eq "est") {
 	    	push(@est, $f);
 		}
     }
+
+	#print STDERR "In glyphset: ",  scalar @est, "\n";
 
     foreach my $f (@est){
 		unless ( $id{$f->id()} ){
