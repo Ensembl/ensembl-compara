@@ -5,10 +5,9 @@
 #
 package Sanger::Graphics::JSTools;
 use strict;
-
 use vars qw/@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS/;
 require Exporter;
-@ISA = qw(Exporter);
+@ISA    = qw(Exporter);
 @EXPORT = qw( js_popup js_menu_header js_menu_div js_menu js_tooltip_header js_tooltip_div js_tooltip js_init);
 
 ########################################
@@ -59,17 +58,26 @@ sub js_menu_div {
 sub js_menu {
     my $items = shift;
     return "javascript:void($items);" unless ref($items) eq 'HASH';
-    my $str = "\'" . ($items->{'caption'} || "options") . "\',";
+    my $str = '\'' . ($items->{'caption'} || "options") . '\',';
 
     for my $i (sort keys %$items) {
         next if $i eq 'caption';
     	my $menu_line = $i || "";
-    	$menu_line =~ s/^\d\d://;
-	my $item = $items->{$i} || "";
-    	$str .= "\'" . $item . "\',\'" . $menu_line . "\',";
+    	$menu_line    =~ s/^\d\d://;
+	my $item      = $items->{$i} || "";
+	$menu_line    =~ s/\'/\\\'/g;
+	$item         =~ s/\'/\\\'/g;
+	$str         .= qq('$item','$menu_line',);
     }
 
     $str =~ s/(.*),/$1/;
+
+    #########
+    # escape important things here
+    #
+    $str =~ s/>/&gt;/g;
+    $str =~ s/</&lt;/g;
+    $str =~ s/\"/&quot;/g;
     return "javascript:void(zmenu($str));";
 }
 
