@@ -1,0 +1,10 @@
+taxon_id	genus	species	sub_species	common_name	classification
+9606	Homo	sapiens	NULL	Human	sapiens Homo Hominidae Catarrhini Primates Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+10090	Mus	musculus	NULL	Mouse	musculus Mus Murinae Muridae Sciurognathi Rodentia Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+10116	Rattus	norvegicus	NULL	Rat	norvegicus Rattus Murinae Muridae Sciurognathi Rodentia Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+31033	Fugu	rubripes	NULL	Japanese pufferfish	rubripes Fugu Takifugu Tetraodontidae Tetradontoidea Tetraodontiformes Percomorpha Acanthopterygii Acanthomorpha Neoteleostei Euteleostei Teleostei Neopterygii Actinopterygii Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+7165	Anopheles	gambiae	NULL	African malaria mosquito	gambiae Anopheles Culicoidea Nematocera Diptera Endopterygota Neoptera Pterygota Insecta Hexapoda Arthropoda Metazoa Eukaryota
+7227	Drosophila	melanogaster	NULL	Fruit fly	melanogaster Drosophila Drosophilidae Ephydroidea Muscomorpha Brachycera Diptera Endopterygota Neoptera Pterygota Insecta Hexapoda Arthropoda Metazoa Eukaryota
+6239	Caenorhabditis	elegans	NULL	NULL	elegans Caenorhabditis Peloderinae Rhabditidae Rhabditoidea Rhabditida Chromadorea Nematoda Metazoa Eukaryota
+6238	Caenorhabditis	briggsae	NULL	C.briggsae	briggsae Caenorhabditis Peloderinae Rhabditidae Rhabditoidea Rhabditida Chromadorea Nematoda Metazoa Eukaryota
+7955	Danio	rerio	NULL	Zebrafish	rerio Danio Cyprinidae Cypriniformes Ostariophysi Teleostei Neopterygii Actinopterygii Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
