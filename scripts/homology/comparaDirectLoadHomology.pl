@@ -9,6 +9,7 @@ use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Hive::URLFactory;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -53,7 +54,7 @@ sub usage {
   print "  -help           : print this help\n";
   print "  -url <str>      : url of compara DB \n";
   print "  -file <path>    : file containing homology pairs (as gene_stable_ids)\n";
-  print "comparaDirectLoadHomology.pl v1.2\n";
+  print "comparaDirectLoadHomology.pl v1.3\n";
   
   exit(1);  
 }
@@ -76,55 +77,64 @@ sub load_orthos {
     #print("$stable_id1 <=> $stable_id2\n");
     my $gene1 = $memberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id1);
     my $gene2 = $memberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id2);
-    warn("ERROR couldn't find member for stable_id = $stable_id1\n") unless($gene1); 
-    warn("ERROR couldn't find member for stable_id = $stable_id2\n") unless($gene2);
+    if(!defined($gene1)) {
+      warn("WARNING couldn't find member for stable_id = $stable_id1\n");
+      next;
+    }
+    if(!defined($gene2)) {
+      warn("WARNING couldn't find member for stable_id = $stable_id2\n");
+      next;
+    }
 
-  # create an Homology object
+    my $pep_member1 = $memberDBA->fetch_longest_peptide_member_for_gene_member_id($gene1->dbID);
+    my $pep_member2 = $memberDBA->fetch_longest_peptide_member_for_gene_member_id($gene2->dbID);
+    if(!defined($pep_member1)) {
+      warn("WARNING: no peptides for gene $stable_id1\n");
+      next;
+    }
+    if(!defined($pep_member2)) {
+      warn("WARNING: no peptides for gene $stable_id2\n");
+      next;
+    }
+
+    #get MethodLinkSpeciesSet
+    my $mlss = $self->{'comparaDBA'}
+                    ->get_MethodLinkSpeciesSetAdaptor
+                    ->fetch_by_method_link_type_GenomeDBs(
+                        "ENSEMBL_ORTHOLOGUES",
+                        [$gene1->genome_db,$gene2->genome_db]);
+    if(!defined($mlss)) {
+      # create method_link_species_set
+
+      $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+      $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
+      $mlss->species_set([$gene1->genome_db,$gene2->genome_db]);
+      $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+    }
+            
+    #create an Homology object
     my $homology = new Bio::EnsEMBL::Compara::Homology;
     my $stable_id = $gene1->taxon_id() . "_" . $gene2->taxon_id . "_";
     $stable_id .= sprintf ("%011.0d",$build_homology_idx++);
     $homology->stable_id($stable_id);
-    $homology->source_name("ENSEMBL_HOMOLOGS");
+    $homology->source_name("ENSEMBL_ORTHOLOGUES");
     $homology->description("DWGA");
+    $homology->method_link_species_set($mlss);
+    
+    my $attribute1 = new Bio::EnsEMBL::Compara::Attribute;
+    $attribute1->peptide_member_id($pep_member1->dbID);
+    $homology->add_Member_Attribute([$gene1, $attribute1]);
 
-    my $pep_member_id1 = $self->get_pep_member_id($gene1->dbID);
-    my $pep_member_id2 = $self->get_pep_member_id($gene2->dbID);
-    if($pep_member_id1 and $pep_member_id2) {
-      my $attribute1 = new Bio::EnsEMBL::Compara::Attribute;
-      $attribute1->peptide_member_id($pep_member_id1);
-      $homology->add_Member_Attribute([$gene1, $attribute1]);
+    my $attribute2 = new Bio::EnsEMBL::Compara::Attribute;
+    $attribute2->peptide_member_id($pep_member2->dbID);
+    $homology->add_Member_Attribute([$gene2, $attribute2]);
 
-      my $attribute2 = new Bio::EnsEMBL::Compara::Attribute;
-      $attribute2->peptide_member_id($pep_member_id2);
-      $homology->add_Member_Attribute([$gene2, $attribute2]);
-
-      #print($homology->stable_id . "\n");
-      $homologyDBA->store($homology);
-      $loadCount++;
-    }
-    else {
-      warn("CAN'T create $stable_id1 <=> $stable_id2 : missing peptide(s)\n");
-    }
+    #print($homology->stable_id . "\n");
+    $homologyDBA->store($homology);
+    $loadCount++;
   }
 
   print("$fileCount homologies in file\n");
   print("$loadCount homologies stored in db\n");
 
-}
-
-sub get_pep_member_id
-{
-  my $self = shift;
-  my $gene_member_id = shift;
-
-  my $sql = "select member_gene_peptide.peptide_member_id from member_gene_peptide,member,sequence where gene_member_id =$gene_member_id AND member_gene_peptide.peptide_member_id=member.member_id AND member.sequence_id=sequence.sequence_id ORDER by sequence.length DESC";
-
-  my $pep_member_id;
-  my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
-  $sth->execute();
-  $sth->bind_columns(\$pep_member_id);
-  $sth->fetch();
-  $sth->finish();
-  warn("NO peptide for gene_member_id = $gene_member_id\n") unless($pep_member_id);
-  return $pep_member_id;
 }
