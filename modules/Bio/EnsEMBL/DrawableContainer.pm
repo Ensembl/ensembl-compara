@@ -126,9 +126,12 @@ sub new {
         $NAME =~ s/^.*:://;
         $composite = new Sanger::Graphics::Glyph::Composite({
                 'y'            => 0,
-				'x'            => 2,
-				'absolutey'    => 1,
-                'width'        => 10,
+		'x'            => 2,
+		'absolutey'    => 1,
+                'width'        => 1,
+                'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
+                               ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
+                'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
                 'height'       => 8
         });
         
@@ -139,10 +142,7 @@ sub new {
 		    	'height' 	=> 8,
 		    	'bordercolour'	=> $black,
 		    	'absolutey' => 1,
-				'absolutex' => 1,
-                'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
-                               ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
-                'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
+			'absolutex' => 1,
         });
         my $horiz_glyph = new Sanger::Graphics::Glyph::Text({
             'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
