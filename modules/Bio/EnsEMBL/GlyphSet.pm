@@ -1,13 +1,13 @@
 package Bio::EnsEMBL::GlyphSet;
 use strict;
-use Bio::Root::RootI;
+use Bio::EnsEMBL::Root;
 use Exporter;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Space;
 use EnsWeb;
 
 use vars qw(@ISA $AUTOLOAD);
-@ISA = qw(Exporter Bio::Root::RootI);
+@ISA = qw(Exporter Bio::EnsEMBL::Root);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 #########
