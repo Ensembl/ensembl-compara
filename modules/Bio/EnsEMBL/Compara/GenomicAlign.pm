@@ -716,10 +716,16 @@ sub aligned_sequence {
 
   } elsif (!defined($self->{'aligned_sequence'})) {
     # Try to get the aligned_sequence from other sources...
-    if (defined($self->cigar_line) and defined($self->original_sequence)) {
+    if (defined($self->cigar_line) and defined($self->original_sequence) and
+        defined($self->dnafrag_strand)) {
+      my $original_sequence = $self->original_sequence;
+      if ($self->dnafrag_strand != 1) {
+        $original_sequence = reverse $original_sequence;
+        $original_sequence =~ tr/ATCGatcg/TAGCtagc/;
+      }
       # ...from the corresponding orginial_sequence and cigar_line
       $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
-          $self->original_sequence, $self->{'cigar_line'});
+          $original_sequence, $self->{'cigar_line'});
       $self->{'aligned_sequence'} = $aligned_sequence;
     }
   }
@@ -939,6 +945,10 @@ sub original_sequence {
       # ...from the aligned sequence
       $self->{'original_sequence'} = $self->{'aligned_sequence'};
       $self->{'original_sequence'} =~ s/\-//g;
+      if ($self->{'dnafrag_strand'} != 1) {
+        $self->{'original_sequence'} = reverse $self->{'original_sequence'};
+        $self->{'original_sequence'} =~ tr/ATCGatcg/TAGCtagc/;
+      }
 
     } elsif (!defined($self->{'original_sequence'}) and defined($self->dnafrag)
           and defined($self->dnafrag_start) and defined($self->dnafrag_end)) {
