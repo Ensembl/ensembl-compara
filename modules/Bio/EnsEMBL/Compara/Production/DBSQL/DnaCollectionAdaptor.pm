@@ -74,7 +74,10 @@ sub store {
   # first create/get the collection->dbID (from the subset table)
   #
   unless($collection->dbID and $collection->adaptor) {
-    if(defined($collection->description)) {
+    if(defined($collection->description) && defined($collection->dump_loc)) {
+      $sth = $self->prepare("INSERT ignore INTO subset (description,dump_loc) VALUES (?,?)");
+      $insertCount = $sth->execute($collection->description,$collection->dump_loc);
+    } elsif(defined($collection->description)) {
       $sth = $self->prepare("INSERT ignore INTO subset (description) VALUES (?)");
       $insertCount = $sth->execute($collection->description);
     } else {
@@ -351,6 +354,9 @@ sub _objs_from_sth {
       $collections_hash->{$collection->dbID} = $collection;
     }
 
+    if (defined($column{'dump_loc'})) {
+      $collection->dump_loc($column{'dump_loc'});
+    }
     if($column{'table_name'} eq 'dnafrag_chunk') {
       my $chunk = $chunkDBA->fetch_by_dbID($column{'foreign_id'});
       $collection->add_dna_object($chunk);
