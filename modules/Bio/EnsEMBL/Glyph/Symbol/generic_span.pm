@@ -7,6 +7,14 @@ Bio::EnsEMBL::Glyph::Symbol::generic_span
 Superclass for drawing spans - two-headed arrows, anchored arrows, h-bars, etc
 Inheritors should implement start_symbol, end_symbol,top_symbol, bottom_symbol
 
+=head1 ATTRIBS
+
+- bar_style : how to draw the connecting bar.  Default can be different for each
+subclass.  One of:
+    - line
+    - indent
+    - full
+
 =cut
 
 package Bio::EnsEMBL::Glyph::Symbol::generic_span;
@@ -135,6 +143,32 @@ sub draw_orthogonal{
 # Allow each subclass to override the default bar style
 sub default_bar_style{
    return 'line';
+}
+
+
+sub start_symbol {
+    my $self = shift;
+    my $style = $self->style;
+    my $feature = $self->feature;
+
+    my $start = $feature->{'start'};
+
+    my $points = [];
+    my $bar_start = $start - 1;
+    return ($points, $bar_start);
+}
+
+
+sub end_symbol {
+    my $self = shift;
+    my $style = $self->style;
+    my $feature = $self->feature;
+
+    my $end = $feature->{'end'};
+
+    my $points = [];
+    my $bar_end = $end;
+    return ($points, $bar_end);
 }
 
 1;
