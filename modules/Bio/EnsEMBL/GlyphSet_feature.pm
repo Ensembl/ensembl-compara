@@ -82,7 +82,10 @@ sub expanded_init {
   my $DRAW_CIGAR     = ( $Config->get($type,'force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
 ## Highlights...
   my %highlights = map { $_,1 } $self->highlights;
-  my $hi_colour         = $Config->get($type, 'hi')  || $self->{'colours'} && $self->{'colours'}{'hi'};
+
+  my $hi_colour = $Config->get($type, 'hi');
+  $hi_colour  ||= $self->{'colours'} ? $self->{'colours'}{'hi'} : 'black';
+
 ## Bumping bitmap...
   my @bitmap         = undef;
   my $bitmap_length  = int($length * $pix_per_bp);
