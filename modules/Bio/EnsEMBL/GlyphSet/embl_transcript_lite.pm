@@ -22,43 +22,61 @@ sub colours {
     };
 }
 
-sub features {
-    my $self = shift;
-    return $self->{'container'}->get_all_VirtualTranscripts_startend_lite_coding( 'embl' );
+sub genes {
+  my ($self) = @_;
+
+  return $self->{'container'}->get_Genes_by_source('embl');
 }
+
 
 sub colour {
-    my ($self, $vt, $colours, %highlights) = @_;
+    my ($self, $gene, $transcript, $colours, %highlights) = @_;
+    
     return ( 
-        $colours->{$vt->{'type'}}, 
-        exists $highlights{$vt->{'stable_id'}} ? $colours->{'superhi'} : (
-         exists $highlights{$vt->{'synonym'}}  ? $colours->{'superhi'} : (
-          exists $highlights{$vt->{'gene'}}    ? $colours->{'hi'} : undef ))
+      $colours->{$transcript->type()}, 
+       exists $highlights{$transcript->stable_id()} ? $colours->{'superhi'} : 
+      (exists $highlights{$transcript->external_name()} ? $colours->{'superhi'} :
+      (exists $highlights{$gene->stable_id()} ? $colours->{'hi'} : undef ))
     );
-}
+  }
 
 sub href {
-    my ($self, $vt) = @_;
-    my $ID = $vt->{'synonym'};
-    $ID =~ s/\.\d+$//;
-    return $vt->{'external_db'} ne '' ?
-           $self->{'config'}->{'ext_url'}->get_url( $vt->{'external_db'}, $ID ) :
-            undef;
+  my ($self, $gene, $transcript) = @_;
+  my $ID = $transcript->external_name();
+  $ID = ~s/\.\d+$//;
+  
+  if($transcript->external_db() ne '') {
+    return $self->{'config'}->{'ext_url'}->get_url( $transcript->external_db(),
+						    $ID );
+  }
+  
+  return undef;
 }
 
 sub zmenu {
-    my ($self, $vt) = @_;
-    my $zmenu = {
-        'caption'  => "EMBL: $vt->{'stable_id'}",
-        '01:EMBL curated '.($vt->{'type'} eq 'pseudo' ? 'pseudogene' : 'transcript') => ''
+  my ($self, $gene, $transcript) = @_;
+
+  my $type = ($gene->type() eq 'pseudo') ? 'pseudogene' : 'transcript';
+
+  my $tid = $transcript->stable_id();
+  my $tname = $transcript->external_name();
+
+  my $zmenu = {
+      'caption'  => "EMBL: $tid",
+      '01:EMBL curated $type' => ''
     };
-    $zmenu->{ "02:$vt->{'external_db'}:$vt->{'synonym'}" } = $self->href($vt) if $vt->{'external_db'} ne '';
-    return $zmenu;
+
+  if($transcript->external_db() ne '') {
+    $zmenu->{ "02:$transcript->external_db():$tname" } = 
+      $self->href($gene, $transcript); 
+  }
+
+  return $zmenu;
 }
 
 sub text_label {
-    my ($self, $vt) = @_;
-    return $vt->{'synonym'} || $vt->{'stable_id'};
+    my ($self, $gene, $transcript) = @_;
+    return $transcript->external_name() || $transcript->stable_id();
 }
 
 sub legend {

@@ -12,7 +12,7 @@ sub features {
 }
 
 sub href {
-    my ($self, $id ) = @_;
+    my( $self, $id )=@_;
     $id =~ s/(.*)\.\d+/$1/o;
     return $self->{'config'}->{'ext_url'}->get_url( 'ENS_NOVPEP', $id );
 }
@@ -22,9 +22,7 @@ sub zmenu {
     #marie - uses local bioperl db to serve up protein homology
     return {
         'caption' => "$id",
-            "Protein homology" =>  $self->href($id)
-
+        "Protein homology" => $self->href( $id ),
     };
 }
-1;
-
+;

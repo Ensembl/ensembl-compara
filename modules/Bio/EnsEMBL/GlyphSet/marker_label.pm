@@ -26,7 +26,7 @@ sub _init {
     $w = $Config->texthelper->width($fontname);
 
     foreach my $f ($VirtualContig->get_landmark_MarkerFeatures()){
-	my $fid = $f->id();
+	my $fid = $f->display_label();
 	my $bp_textwidth = $w * length("$fid ");
 	my $glyph = new Bio::EnsEMBL::Glyph::Text({
 		'x'	    => $f->start(),

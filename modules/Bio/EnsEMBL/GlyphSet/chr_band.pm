@@ -55,23 +55,20 @@ sub _init {
     my $prev_end = 0;
     my $i = 0;
     # fetch the chromosome bands that cover this VC.
-    my @bands = $self->{'container'}->fetch_karyotype_band_start_end();
+    my @bands = $self->{'container'}->get_KaryotypeBands();
     my $min_start;
     my $max_end; 
     foreach my $band (reverse @bands){
-	my $chr = $band->chromosome();
+	my $chr = $band->chr_name();
 	my $bandname = $band->name();
-	#print STDERR "BAND $i ($chr, $bandname)\n";
 	
-	my $band2 = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
-	my $start = $band2->start();
-	my $end = $band2->end();
-	my $stain = $band2->stain();
-	
-	my $vc_band_start = $start - $self->{'container'}->_global_start();
+	my $start = $band->start();
+	my $end = $band->end();
+	my $stain = $band->stain();
+
+	my $vc_band_start = $start;# - $self->{'container'}->chr_start();
 	$vc_band_start    = 0 if ($vc_band_start < 0);
-	
-	my $vc_band_end   = $end - $self->{'container'}->_global_start();
+	my $vc_band_end = $end;# - $self->{'container'}->chr_start();
 	$vc_band_end      =  $self->{'container'}->length() if ($vc_band_end > $self->{'container'}->length());
 	
         my $min_start = $vc_band_start if(!defined $min_start || $min_start > $vc_band_start); 

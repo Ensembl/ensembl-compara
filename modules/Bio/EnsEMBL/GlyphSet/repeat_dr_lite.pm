@@ -1,9 +1,9 @@
 package Bio::EnsEMBL::GlyphSet::repeat_dr_lite;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple_hash;
+use Bio::EnsEMBL::GlyphSet_simple;
 
-@ISA = qw( Bio::EnsEMBL::GlyphSet_simple_hash );
+@ISA = qw( Bio::EnsEMBL::GlyphSet_simple );
 
 sub my_label { return "Repeats (D.rerio)"; }
 

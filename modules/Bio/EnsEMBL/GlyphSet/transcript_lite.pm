@@ -22,61 +22,79 @@ sub colours {
     };
 }
 
-sub features {
-    my $self = shift;
-    return $self->{'container'}->get_all_VirtualTranscripts_startend_lite( 'core' );
+sub genes {
+  my ($self) = @_;
+
+  return $self->{'container'}->get_Genes_by_source('core');
 }
 
+
 sub colour {
-    my ($self, $vt, $colours, %highlights) = @_;
-    return ( 
-        $colours->{$vt->{'type'}}, 
-        exists $highlights{$vt->{'stable_id'}} ? $colours->{'superhi'} : (
-         exists $highlights{$vt->{'synonym'}}  ? $colours->{'superhi'} : (
-          exists $highlights{$vt->{'gene'}}    ? $colours->{'hi'} : undef ))
-    );
+    my ($self, $gene, $transcript, $colours, %highlights) = @_;
+
+    my $genecol = $colours->{$transcript->is_known() ? 'known' : 'unknown'};
+
+    if(exists $highlights{$transcript->stable_id()}) {
+      return ($genecol, $colours->{'superhi'});
+    } elsif(exists $highlights{$transcript->external_name()}) {
+      return ($genecol, $colours->{'superhi'});
+    } elsif(exists $highlights{$gene->stable_id()}) {
+      return ($genecol, $colours->{'hi'});
+    }
+      
+    return ($genecol, undef);
 }
 
 sub href {
-    my ($self, $vt) = @_;
+    my ($self, $gene, $transcript ) = @_;
+
+    my $gid = $gene->stable_id();
+    my $tid = $transcript->stable_id();
+
     return $self->{'config'}->{'_href_only'} eq '#tid' ?
-        "#$vt->{'stable_id'}" :
-        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$vt->{'gene'});
+        "#$tid" : 
+        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid);
 
 }
 
 sub zmenu {
-    my ($self, $vt) = @_;
-    my $vtid = $vt->{'stable_id'};
-    my $id   = $vt->{'synonym'} eq '' ? $vtid : $vt->{'synonym'};
+    my ($self, $gene, $transcript) = @_;
+    my $tid = $transcript->stable_id();
+    my $gid = $gene->stable_id();
+    my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
     my $zmenu = {
         'caption'                       => $id,
-        "00:Transcr:$vtid"              => "",
-        "01:(Gene:$vt->{'gene'})"       => "",
-        '03:Transcript information'     => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$vt->{'gene'}",
-        '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=".$vt->{'translation'},
-        '05:Supporting evidence'        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$vtid",
-        '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$vtid",
-        '08:cDNA sequence'              => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$vtid",
+        "00:Transcr:$tid"              => "",
+        "01:(Gene:$gid)"       => "",
+        '03:Transcript information'     => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid",
+        '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=".$transcript->translation->stable_id(),
+        '05:Supporting evidence'        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$tid",
+        '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$tid",
+        '08:cDNA sequence'              => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
     };
     my $DB = EnsWeb::species_defs->databases;
-    $zmenu->{'06:Expression information'}
-      = "/$ENV{'ENSEMBL_SPECIES'}/sageview?alias=$vt->{'gene'}" if $DB->{'ENSEMBL_EXPRESSION'};
+
+    if($DB->{'ENSEMBL_EXPRESSION'}) {
+      $zmenu->{'06:Expression information'} = 
+	"/$ENV{'ENSEMBL_SPECIES'}/sageview?alias=$gid";
+    }
+
     return $zmenu;
 }
 
 sub text_label {
-    my ($self, $vt) = @_;
-    my $vtid = $vt->{'stable_id'};
-    my $id   = $vt->{'synonym'} eq '' ? $vtid : $vt->{'synonym'};
-    if( $self->{'config'}->{'_both_names_'} ) {
-        return $vtid.($vt->{'synonym'} eq '' ? '' : " ($id)" );
+    my ($self, $gene, $transcript) = @_;
+    my $tid = $transcript->stable_id();
+    my $id  = ($transcript->external_name() eq '') ? 
+      $tid : $transcript->external_name();
+
+    if( $self->{'config'}->{'_both_names_'} eq 'yes') {
+        return $tid.(($transcript->external_name() eq '') ? '' : " ($id)" );
     }
+
     return $self->{'config'}->{'_transcript_names_'} eq 'yes' ?
-        ($vt->{'type'} eq 'unknown' ? 'NOVEL' : $id) : $vtid;    
-    return $self->{'config'}->{'_both_names_'} eq 'yes' ?
-        ($vt->{'type'} eq 'unknown' ? 'NOVEL' : $id) : $vtid;    
-}
+        ($transcript->is_known() ? $id : 'NOVEL') : $tid;    
+  }
 
 sub legend {
     my ($self, $colours) = @_;

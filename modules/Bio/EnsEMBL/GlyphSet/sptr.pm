@@ -9,9 +9,8 @@ sub my_label { return "Proteins"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_above_score(
-        "swall", 80, $self->glob_bp
-    );
+
+    my $slice = $self->{'container'}->get_all_ProteinAlignFeatures_above_score('swall',80);
 }
 
 sub href {

@@ -147,6 +147,7 @@ sub _init {
 	    '03:Centre gene list' => qq(/$ENV{'ENSEMBL_SPECIES'}/syntenyview?species=$OTHER&chr=$this_chr&loc=).int(($box->{'chr_end'}+$box->{'chr_start'})/2)
 
 	    };
+
         push @{$highlights_main->{$this_chr}}, {
             'id' => $box->{'synteny_id'},
             'start'=> $box->{'chr_start'},
@@ -155,7 +156,7 @@ sub _init {
             'border' => $BORD,
             'side' => $SIDE,
             'href' => qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),
-            'zmenu' => $ZMENU 
+            'zmenu' => 
         };
         if($SIDE) {
             my $marked =

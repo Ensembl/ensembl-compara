@@ -25,8 +25,8 @@ sub _init {
 
     return unless ($self->strand() == 1);
     my $len            = $self->{'container'}->length();
-    my $global_start   = $self->{'container'}->_global_start();
-    my $global_end     = $self->{'container'}->_global_end();
+    my $global_start   = $self->{'container'}->chr_start();
+    my $global_end     = $self->{'container'}->chr_end();
     my $highlights     = $self->highlights();
     my $im_width       = $Config->image_width();
     my $feature_colour = $Config->get('ruler','col');

@@ -9,8 +9,7 @@ sub my_label { return "Human mRNAs"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_above_score("human_mrna",80,$self->glob_bp),  
-$self->{'container'}->get_all_SimilarityFeatures_above_score("human_mRNA",80,$self->glob_bp) ;
+    return $self->{'container'}->get_all_SimilarityFeatures_above_score("human_mrna",80,$self->glob_bp);
 }
 
 sub href {

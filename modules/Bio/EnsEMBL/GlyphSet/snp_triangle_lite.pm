@@ -14,7 +14,7 @@ sub tag {
 
 sub colour {
     my ($self, $f) = @_;
-    my $T = substr($f->{'type'},3,6);
+    my $T = substr($f->type,3,6);
     unless($self->{'config'}->{'snp_types'}{$T}) {
         my %labels = (
             '_coding' => 'Coding SNPs',
@@ -28,4 +28,5 @@ sub colour {
     }
     return $self->{'colours'}{"_$T"}, $self->{'colours'}{"_$T"}, 'line';
 }
+
 1;

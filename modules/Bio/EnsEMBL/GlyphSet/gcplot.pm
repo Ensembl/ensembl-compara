@@ -33,25 +33,14 @@ sub _init {
 
     return unless ($self->strand() == -1);
 
+
+    my $slice = $self->{'container'};
+
     # check we are not in a big gap!
-    my @map_contigs;
-    
-    my $VirtualContig   = $self->{'container'};
-
-    my $useAssembly;
-    eval {
-        $useAssembly = $VirtualContig->has_AssemblyContigs;
-    };
-
-    if ($useAssembly) {
-       @map_contigs = $self->{'container'}->each_AssemblyContig;
-    } else {
-       @map_contigs = $self->{'container'}->_vmap->each_MapContig();
-    }
-    return unless (@map_contigs);
+    return unless $slice->get_tiling_path();
 
     my $Config          = $self->{'config'};
-    my $vclen           = $VirtualContig->length();
+    my $vclen           = $slice->length();
     return if ($vclen < 10000);    # don't want a GC plot for very short sequences
 
     my $h               = 0;
@@ -70,7 +59,7 @@ sub _init {
     my $divlen          = $vclen/$divs;
     
     #print STDERR "Divs = $divs\n";
-    my $seq = $VirtualContig->seq();
+    my $seq = $slice->seq();
     my @gc  = ();
     my $min = 100;
     my $max = 0;

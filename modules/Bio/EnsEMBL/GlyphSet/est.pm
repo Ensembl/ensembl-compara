@@ -8,8 +8,12 @@ sub my_label { return "ESTs"; }
 
 sub features {
     my ($self) = @_;
-    return grep { $_->source_tag() eq 'est' }
-        $self->{'container'}->get_all_ExternalFeatures($self->glob_bp);
+    #return grep { $_->source_tag() eq 'est' }
+    #    $self->{'container'}->get_all_ExternalFeatures($self->glob_bp);
+
+    return 
+      $self->{'container'}->get_all_DnaAlignFeatures_above_score('ex_e2g_feat',
+								 0);
 }
 
 sub href {

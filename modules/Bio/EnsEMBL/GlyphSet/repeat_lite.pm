@@ -8,18 +8,25 @@ use Bio::EnsEMBL::GlyphSet_simple_hash;
 sub my_label { return "Repeats"; }
 
 sub features {
-    my $self = shift;
+  my $self = shift;
     
-    my $max_length = $self->{'config'}->get( 'repeat_lite', 'threshold' ) || 2000;
-    return @{$self->{'container'}->get_all_RepeatFeatures_lite( '', $self->glob_bp() )};
+  my $max_length = $self->{'config'}->get('repeat_lite', 'threshold') || 2000;
+  return $self->{'container'}->get_all_RepeatFeatures('RepeatMask');
 }
 
 sub zmenu {
-    my( $self, $f ) = @_;
-    return {
-        'caption' 											=> $f->{'hid'},
-		"bp: $f->{'chr_start'}-$f->{'chr_end'}" 			=> '',
-		"length: ".($f->{'chr_end'}-$f->{'chr_start'}+1) 	=> ''
+  my( $self, $f ) = @_;
+
+  my $start = $f->start() + $self->{'container'}->chr_start() - 1;
+  my $end = $f->end() + $self->{'container'}->chr_end() - 1;
+  my $len = $f->length();
+  
+
+  ### Possibly should not use $f->repeat_consensus->name.... was f->{'hid'}
+  return {
+	  'caption' => $f->repeat_consensus()->name(),
+	  "bp: $start-$end" => '',
+	  "length: $len"    => ''
     }
 }
 

@@ -24,15 +24,16 @@ sub _init {
 
     return unless ($self->strand() == -1);
 
-    my $BOX_HEIGHT    = 7;
-    my $BOX_WIDTH     = 10;
+    my $BOX_HEIGHT    = 4;
+    my $BOX_WIDTH     = 20;
     my $NO_OF_COLUMNS = 5;
     my $FONTNAME      = "Tiny";
 
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
     my $im_width      = $Config->image_width();
-    my $type          = $Config->get('snp_legend', 'type');
+    my $type          = $Config->get('snp_legend', 'src');
+
     my @colours;
     return unless $Config->{'snp_legend_features'};
     my %features = %{$Config->{'snp_legend_features'}};
@@ -55,27 +56,15 @@ sub _init {
         $y++ unless $x==0;
         $x=0;
         while( my ($legend, $colour) = splice @colours, 0, 2 ) {
-            if($type eq 'square') {
-                $self->push(new Bio::EnsEMBL::Glyph::Rect({
-                    'x'         => $im_width * $x/$NO_OF_COLUMNS,
-                    'y'         => $y * $BOX_HEIGHT * 2 + 3,
-                    'width'     => 8, 
-                    'height'    => $BOX_HEIGHT,
-                    'colour'    => $colour,
-                    'absolutey' => 1,
-                    'absolutex' => 1,
-                }));
-            } else {
-            
-                $self->push(new Bio::EnsEMBL::Glyph::Poly({
-                    'points'    => [ $im_width * $x/$NO_OF_COLUMNS, 3+$BOX_HEIGHT,
-                        $im_width * $x/$NO_OF_COLUMNS + 4, 3,
-                        $im_width * $x/$NO_OF_COLUMNS + 8, 3+$BOX_HEIGHT  ],
-            	    'colour'    => $colour,
-                    'absolutey' => 1,
-                    'absolutex' => 1,
-                }));
-            }
+            $self->push(new Bio::EnsEMBL::Glyph::Rect({
+                'x'         => $im_width * $x/$NO_OF_COLUMNS,
+                'y'         => $y * $BOX_HEIGHT * 2 + 6,
+                'width'     => $BOX_WIDTH, 
+                'height'    => $BOX_HEIGHT,
+                'colour'    => $colour,
+                'absolutey' => 1,
+                'absolutex' => 1,
+            }));
             $self->push(new Bio::EnsEMBL::Glyph::Text({
                 'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
                 'y'         => $y * $BOX_HEIGHT * 2 + 4,

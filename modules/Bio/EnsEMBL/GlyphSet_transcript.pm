@@ -172,7 +172,7 @@ sub _init {
 	    # Calculate and draw the coding region of the exon
 	    #
 	            my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
-	            my $filled_end   = $filled_end > $coding_end  ? $coding_end   : $box_end;
+	            my $filled_end   = $coding_end > $coding_end  ? $coding_end   : $box_end;
 	    # only draw the coding region if there is such a region
 	            if( $filled_start <= $filled_end ) {
 	      #Draw a filled rectangle in the coding region of the exon

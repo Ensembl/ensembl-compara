@@ -16,7 +16,6 @@ sub features {
 
 ## If tile path clones are very long then we draw them as "outlines" as
 ## we aren't convinced on their quality...
-
 sub tag {
     my ($self, $f) = @_;
     my @result = ();

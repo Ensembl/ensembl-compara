@@ -12,9 +12,9 @@ sub my_helplink { return "markers"; }
 
 sub features {
     my ($self) = @_;
-    return @{$self->{'container'}->get_all_virtualfeatures_lite(
-        'eponine', .8, $self->glob_bp()
-    )};
+
+    return $self->{'container'}->get_all_SimpleFeatures_above_score('Eponine', 
+								    .8);
 }
 
 sub href {
@@ -24,10 +24,15 @@ sub href {
 
 sub zmenu {
     my ($self, $f ) = @_;
+    
+    my $score = $f->score();
+    my $start = $f->start() + $self->{'container'}->chr_start() - 1;
+    my $end = $f->end() + $self->{'container'}->chr_start() - 1;
+
     return {
         'caption'                                     => 'eponine',
-        "01:Score: $f->{'score'}"                     => '',
-        "02:bp: $f->{'chr_start'}-$f->{'chr_end'}" => ''
+        "01:Score: $score"                            => '',
+        "02:bp: $start-$end"                          => ''
     };
 }
 1;

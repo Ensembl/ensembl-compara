@@ -23,48 +23,75 @@ sub colours {
     };
 }
 
-sub features {
-    my $self = shift;
-    return $self->{'container'}->get_all_VirtualTranscripts_startend_lite_coding( 'sanger' );
+sub transcript_type {
+  my $self = shift;
+
+  return 'sanger';
 }
 
 sub colour {
-    my ($self, $vt, $colours, %highlights) = @_;
-    return ( 
-        $colours->{$vt->{'type'}}, 
-        exists $highlights{$vt->{'stable_id'}} ? $colours->{'superhi'} : (
-         exists $highlights{$vt->{'synonym'}}  ? $colours->{'superhi'} : (
-          exists $highlights{$vt->{'gene'}}    ? $colours->{'hi'} : undef ))
-    );
-}
+    my ($self, $gene, $transcript, $colours, %highlights) = @_;
+
+    my $highlight = undef;
+    my $colour = $colours->{$transcript->type()};
+
+    if(exists $highlights{$transcript->stable_id()}) {
+      $highlight = $colours->{'superhi'};
+    } elsif(exists $highlights{$transcript->external_name}) {
+      $highlight = $colours->{'superhi'};
+    } elsif(exists $highlights{$gene->stable_id()}) {
+      $highlight = $colours->{'hi'};
+    }
+
+    return ($colour, $highlight); 
+  }
 
 sub href {
-    my ($self, $vt) = @_;
+    my ($self, $gene, $transcript) = @_;
+
+    my $tid = $transcript->stable_id();
+    my $gid = $gene->stable_id();
+
     return $self->{'config'}->{'_href_only'} eq '#tid' ?
-        "#$vt->{'stable_id'}" :
-        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=sanger&gene=$vt->{'gene'});
+       "#$tid" :
+       qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=sanger&gene=$gid);
 }
 
 sub zmenu {
-    my ($self, $vt) = @_;
-    my $T = $vt->{'type'};
-    $T =~ s/HUMACE-//g;
-    my $zmenu = {
-        'caption'           => "Sanger Gene",
-		"01:$vt->{'stable_id'}"    => '',
-        "02:Gene: $vt->{'gene'}"   => $self->href( $vt ),
-		"04:Sanger curated ($T)"   => ''
-    };
-    $zmenu->{"03:Protein"} =
-        qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=sanger&peptide=$vt->{'translation'}) if $vt->{'translation'} ne '';
+    my ($self, $gene, $transcript) = @_;
+    my $type = $transcript->type();
+    my $tid = $transcript->stable_id();
+    my $gid = $gene->stable_id();
 
-	return $zmenu;
+    $type =~ s/HUMACE-//g;
+    my $zmenu = {
+        'caption'                   => "Sanger Gene",
+	"01:$tid"                   => '',
+        "02:Gene: $gid"             => $self->href( $gene, $transcript ),
+        "04:Sanger curated ($type)" => ''
+    };
+
+    my $translation_id = $transcript->translation()->stable_id();
+
+    if($translation_id ne '') {
+      $zmenu->{"03:Protien"} = 
+	qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=sanger&peptide=$translation_id);
+    }
+    
+    return $zmenu;
 }
 
 sub text_label {
-    my ($self, $vt) = @_;
-    return $vt->{'stable_id'};
+    my ($self, $gene, $transcript) = @_;
+    return $transcript->stable_id();
 }
+
+sub genes {
+  my ($self) = @_;
+
+  return $self->{'container'}->get_Genes_by_source('sanger');
+}
+
 
 sub legend {
     my ($self, $colours) = @_;

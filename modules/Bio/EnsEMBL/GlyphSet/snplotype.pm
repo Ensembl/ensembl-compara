@@ -75,7 +75,6 @@ sub create_multiple_haplotype_block {
         my $foo = $hap->patterns();
         #print STDERR ">> $foo<<\n";
         my @patterns = @{$foo};
-				
         my $pattern_length = length($patterns[0]->pattern());
         #print STDERR "Pattern length: $pattern_length\n";
 
@@ -223,10 +222,7 @@ sub create_haplotype_block {
     my $j = 0;
     foreach my $pat (@patterns){        
         # draw the consensus columns...
-
-		#print STDERR "PAT: ",$pat->id(), " count: ", $pat->count(), "\n";
-		next if ($pat->count() < 2); # ignore singletons
-			
+        next if ($pat->count()<2);
         my $type = "cons";
         if($showconsensus){
             foreach(split('',$pat->pattern())){
@@ -247,17 +243,17 @@ sub create_haplotype_block {
         foreach my $key (keys %samples){
             my $i = 0;
             my @sample = split('',$samples{$key});
-    		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-        		'x'          => $xstart + 5,
-        		'y'          => $global_ystart - 30 + 1,
-        		'font'       => 'Small',
-        		'colour'     => $black,
-        		'text'       => $j+1,
-        		'absolutex'  => 1,
-        		'absolutey'  => 1,
-    		});
-    		$self->push($tglyph);
-    		$j++;
+    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        'x'          => $xstart + 5,
+        'y'          => $global_ystart - 30 + 1,
+        'font'       => 'Small',
+        'colour'     => $black,
+        'text'       => $j+1,
+        'absolutex'  => 1,
+        'absolutey'  => 1,
+    });
+    $self->push($tglyph);
+    $j++;
             foreach my $b (@sample){
                 if ($b eq $consensus_base_for_row[$i]){
                     $type = 'wt';
@@ -352,7 +348,13 @@ sub draw_labelled_snp_block {
     my $bg = $yellow;
     my $fg = $black;
     
-    if ($type eq "wt") {
+    if($label eq '+') {
+        $bg = $red;
+        $fg = $white;
+    } elsif( $label eq '-') {
+        $bg = $white;
+        $fg = $red;
+    } elsif ($type eq "wt") {
         $bg = $blue;
         $fg = $white;        
     } elsif ($type eq "cons") {
@@ -360,16 +362,7 @@ sub draw_labelled_snp_block {
         $fg = $white;        
     } 
     
-	if ($label eq "+"){
-        $bg = $red;
-        $fg = $white;        	
-	}
-	if ($label eq "-"){
-        $bg = $white;
-        $fg = $red;        	
-	}
-	
-    if (uc($label) =~ /[N|\?]/ && $type ne "cons"){
+    if (uc($label) =~/[N|\?]/ && $type ne "cons"){
         return();
     } else {
         my $block = new Bio::EnsEMBL::Glyph::Rect({
@@ -410,7 +403,13 @@ sub draw_unlabelled_snp_block {
     my $bg = $yellow;
     my $fg = $black;
     
-    if ($type eq "wt") {
+    if($label eq '+') {
+        $bg = $red;
+        $fg = $white;
+    } elsif( $label eq '-') {
+        $bg = $white;
+        $fg = $red;
+    } elsif ($type eq "wt") {
         $bg = $blue;
         $fg = $white;        
     } elsif ($type eq "cons") {
@@ -418,16 +417,7 @@ sub draw_unlabelled_snp_block {
         $fg = $white;        
     } 
     
-	if ($label eq "+"){
-        $bg = $red;
-        $fg = $white;        	
-	}
-	if ($label eq "-"){
-        $bg = $white;
-        $fg = $red;        	
-	}
-
-    if (uc($label) =~ /[N|\?]/ && $type ne "cons"){
+    if (uc($label) =~/[N|\?]/ && $type ne "cons"){
         return();
     } else {
         my $block = new Bio::EnsEMBL::Glyph::Rect({

@@ -9,7 +9,8 @@ sub my_label { return "Unigene"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_above_score("unigene.seq",80,$self->glob_bp());
+    return $self->{'container'}->get_all_DnaAlignFeatures_above_score("Unigene"
+								      ,80);
 }
 
 sub href { 

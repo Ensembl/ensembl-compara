@@ -115,7 +115,7 @@ sub new {
                 'y'            => 0,
 				'x'            => 2,
 				'absolutey'    => 1,
-                'width'        => 10
+                'width'        => 10,
                 'height'       => 8
         });
         
@@ -171,7 +171,7 @@ sub new {
         $glyphset->label->x(-($extra_translation - $spacing) / $scalex);
         next unless defined $glyphset->bumpbutton;
         $glyphset->bumpbutton->x(-($extra_translation + $button_width - $spacing) / $scalex);
-        $glyphset->bumpbutton->width(10/$scalex)
+        $glyphset->bumpbutton->width(10/$scalex);
         foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
 #           delete $_->{'absolutex'};
         }

@@ -80,7 +80,7 @@ sub render_Line {
 
 sub _getHref {
     my ($self, $glyph) = @_;
-    my $onmouseover = $glyph->onmouseover();
+	my $onmouseover = $glyph->onmouseover();
        $onmouseover = (defined $onmouseover) ? qq( onmouseover="$onmouseover") : "";
     my $onmouseout = $glyph->onmouseout();
        $onmouseout = (defined $onmouseout) ? qq( onmouseout="$onmouseout") : "";

@@ -12,7 +12,7 @@ use SiteDefs;
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $chr = $self->{'container'}->_chr_name();
+    my $chr = $self->{'container'}->chr_name();
     $chr = $chr ? "Chr $chr" : "Chrom. Band";
     $chr .= " " x (12 - length($chr));
 	
@@ -53,13 +53,13 @@ sub _init {
 
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper->px2bp('Tiny');
-    my $chr      = $self->{'container'}->_chr_name();
+    my $chr      = $self->{'container'}->chr_name();
     my $len      = $self->{'container'}->length();
 
     # fetch the chromosome bands that cover this VC.
-    my $kba   = $self->{'container'}->fetch_karyotype_adaptor();
-    my @bands = $kba->fetch_all_by_chromosome($chr);
-    my $chr_length = $self->{'container'}->fetch_chromosome_length();
+    my $kba   = $self->{'container'}->adaptor()->db()->get_KaryotypeBandAdaptor();
+    my @bands = $kba->fetch_by_chr_name($chr);
+    my $chr_length = $self->{'container'}->get_Chromosome()->length();
     
     # get rid of div by zero...
     $chr_length |= 1;
@@ -79,10 +79,14 @@ sub _init {
 
     foreach my $band (@bands){
 	my $bandname       = $band->name();
-	my $band2          = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
-	my $vc_band_start  = $band2->start();
-	my $vc_band_end    = $band2->end();
-	my $stain          = $band2->stain();
+# 	my $band2          = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
+# 	my $vc_band_start  = $band2->start();
+# 	my $vc_band_end    = $band2->end();
+# 	my $stain          = $band2->stain();
+
+	my $vc_band_start  = $band->start();
+	my $vc_band_end    = $band->end();
+	my $stain          = $band->stain();
 
 #	print STDERR "$chr band:$bandname stain:$stain start:$vc_band_start end:$vc_band_end\n";		
 
@@ -223,7 +227,7 @@ sub _init {
     # Draw the zoom position red box
     #################################
     $gband = new Bio::EnsEMBL::Glyph::Rect({
-    	'x'      => $self->{'container'}->_global_start(),
+    	'x'      => $self->{'container'}->chr_start(),
     	'y'      => 0,
     	'width'  => $len,
     	'height' => 14,
