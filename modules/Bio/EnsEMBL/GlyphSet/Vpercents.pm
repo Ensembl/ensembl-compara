@@ -32,12 +32,15 @@ sub _init {
     my ($self) 		= @_;
     my $Config 		= $self->{'config'};
     my $chr      	= $self->{'container'}->{'chr'};
-   	my $gc_col 	= $Config->get( 'Vpercents','col_gc' );
-   	my $repeat_col 	= $Config->get( 'Vpercents','col_repeat' );
-	my $chr_slice = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);	
+    my $gc_col 	= $Config->get( 'Vpercents','col_gc' );
+    my $repeat_col 	= $Config->get( 'Vpercents','col_repeat' );
+    my $chr_slice = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);	
 	
-    my $repeats 	= $self->{'container'}->{'da'}->fetch_Featureset_by_Slice($chr_slice,'repeat',150,1); 
-    my $gc 		    = $self->{'container'}->{'da'}->fetch_Featureset_by_Slice($chr_slice,'gc', 150,1);
+    my $da = $self->{'container'}->{'da'};
+    my $repeats = $da->fetch_Featureset_by_Slice
+      ($chr_slice, 'PercentageRepeat',150,1); 
+    my $gc      = $da->fetch_Featureset_by_Slice
+      ($chr_slice, 'PercentGC', 150,1);
 
     return unless $repeats->size() && $gc->size();
 	my $max_repeats = $repeats->max_value;

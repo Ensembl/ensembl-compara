@@ -26,7 +26,8 @@ sub _init {
     my $Config = $self->{'config'};
     my $chr      = $self->{'container'}->{'chr'};
 	my $chr_slice = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);
-    my $snps     = $self->{'container'}->{'da'}->fetch_Featureset_by_Slice( $chr_slice,'snp', 150, 1 );
+    my $snps     = $self->{'container'}->{'da'}->fetch_Featureset_by_Slice
+      ( $chr_slice,'snpDensity', 150, 1 );
     return unless $snps->size(); 
     
 	my $snps_col = $Config->get( 'Vsnps','col' );
