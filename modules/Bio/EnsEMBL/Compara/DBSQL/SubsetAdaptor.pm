@@ -199,6 +199,7 @@ sub _objs_from_sth {
       $setMemberIds{$subset_id}->{$member_id} = $member_id;
     }
   }
+  $sth->finish;
 
   my @allSubsetIds = keys(%setNames);
 
@@ -273,6 +274,7 @@ sub store {
       $self->prepare("INSERT INTO subset_member (subset_id, member_id)
                       VALUES (?,?)");
     $sth->execute($subset->dbID, $member_id);
+    $sth->finish;
   }
 
   $subset->adaptor($self);
@@ -306,6 +308,7 @@ sub store_link {
     $self->prepare("INSERT INTO subset_member (subset_id, member_id)
                     VALUES (?,?)");
   $sth->execute($subset->dbID, $member_id);
+  $sth->finish;
 }
 
 
@@ -333,6 +336,7 @@ sub delete_link {
   my $sth =
     $self->prepare("DELETE FROM subset_member WHERE subset_id=? AND member_id=?");
   $sth->execute($subset->dbID, $member_id);
+  $sth->finish;
 }
 
 
@@ -379,6 +383,7 @@ sub dumpFastaForSubset {
 
   $sth = $self->prepare("UPDATE subset SET dump_loc = ? WHERE subset_id = ?");
   $sth->execute($fastafile, $subset->dbID);
+  $sth->finish;
   $subset->dump_loc($fastafile);
 }
 

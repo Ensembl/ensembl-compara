@@ -55,10 +55,10 @@ sub fetch_by_dbID {
            FROM taxon
            WHERE taxon_id= ?";
 
-  $q = $self->prepare($q);
-  $q->execute($taxon_id);
+  my $sth = $self->prepare($q);
+  $sth->execute($taxon_id);
   
-  if (defined (my $rowhash = $q->fetchrow_hashref)) {
+  if (defined (my $rowhash = $sth->fetchrow_hashref)) {
     my $taxon = new Bio::EnsEMBL::Compara::Taxon;
     
     $taxon->ncbi_taxid($taxon_id); #for bioperl-1-0-0 on
@@ -66,9 +66,10 @@ sub fetch_by_dbID {
     my @classification = split /\s+/,$rowhash->{classification};
     $taxon->classification(@classification);
     $taxon->common_name($rowhash->{common_name});
-
+    $sth->finish;
     return $taxon;
   }
+  $sth->finish;
 
   return undef;
 }
@@ -125,6 +126,7 @@ sub fetch_by_Family_Member_source {
     my $taxon = $self->fetch_by_dbID($taxon_id);
     push @taxa, $taxon;
   }
+  $sth->finish;
 
   return \@taxa;
 }
@@ -139,7 +141,7 @@ sub store {
            VALUES (?,?,?,?,?,?)";
   my $sth = $self->prepare($q);
   $sth->execute($taxon->ncbi_taxid,$taxon->genus,$taxon->species,$taxon->sub_species,$taxon->common_name,join " ",$taxon->classification);
-  
+  $sth->finish;
   $taxon->adaptor($self);
 
 
@@ -161,9 +163,11 @@ sub store_if_needed {
   my ($self,$taxon) = @_;
 
   my $q = "select taxon_id from taxon where taxon_id = ?";
-  $q = $self->prepare($q);
-  $q->execute($taxon->ncbi_taxid);
-  my $rowhash = $q->fetchrow_hashref;
+  my $sth = $self->prepare($q);
+  $sth->execute($taxon->ncbi_taxid);
+  my $rowhash = $sth->fetchrow_hashref;
+  $sth->finish;
+
   if ($rowhash->{taxon_id}) {
     return $rowhash->{taxon_id};
   } else {
