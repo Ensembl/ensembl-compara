@@ -161,6 +161,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate);
                  -score
                  -perc_id
                  -length
+                 -reference_genomic_align
+                 -reference_genomic_align_id
                  -genomic_align_array
   Example    : my $genomic_align_block =
                    new Bio::EnsEMBL::Compara::GenomicAlignBlock(
@@ -184,12 +186,12 @@ sub new {
   bless $self,$class;
     
   my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id,
-          $score, $perc_id, $length, $reference_genomic_align_id, $genomic_align_array,
-          $starting_genomic_align_id) = 
+          $score, $perc_id, $length, $reference_genomic_align, $reference_genomic_align_id,
+          $genomic_align_array, $starting_genomic_align_id) = 
     rearrange([qw(
         ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID
-        SCORE PERC_ID LENGTH REFERENCE_GENOMIC_ALIGN_ID GENOMIC_ALIGN_ARRAY
-        STARTING_GENOMIC_ALIGN_ID)], @args);
+        SCORE PERC_ID LENGTH REFERENCE_GENOMIC_ALIGN REFERENCE_GENOMIC_ALIGN_ID
+        GENOMIC_ALIGN_ARRAY STARTING_GENOMIC_ALIGN_ID)], @args);
 
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->dbID($dbID) if (defined ($dbID));
@@ -199,6 +201,8 @@ sub new {
   $self->score($score) if (defined ($score));
   $self->perc_id($perc_id) if (defined ($perc_id));
   $self->length($length) if (defined ($length));
+  $self->reference_genomic_align($reference_genomic_align)
+      if (defined($reference_genomic_align));
   $self->reference_genomic_align_id($reference_genomic_align_id)
       if (defined($reference_genomic_align_id));
   $self->genomic_align_array($genomic_align_array) if (defined($genomic_align_array));
