@@ -196,7 +196,7 @@ sub submitGenome
   #
   eval {
     my ($sth, $sql);
-    $sth = $self->{'comparaDBA'}->prepare("SELECT genome_db_id FROM genome_db_extn
+    $sth = $self->{'comparaDBA'}->dbc->prepare("SELECT genome_db_id FROM genome_db_extn
         WHERE genome_db_id = ".$genome->dbID);
     $sth->execute;
     my $dbID = $sth->fetchrow_array();
@@ -215,7 +215,7 @@ sub submitGenome
                 ",locator='".$locator."'";
     }
     print("$sql\n") if($verbose);
-    $sth = $self->{'comparaDBA'}->prepare( $sql );
+    $sth = $self->{'comparaDBA'}->dbc->prepare( $sql );
     $sth->execute();
     $sth->finish();
     print("done SQL\n") if($verbose);
