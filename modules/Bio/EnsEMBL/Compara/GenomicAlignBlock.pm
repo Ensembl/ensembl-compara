@@ -640,6 +640,52 @@ sub genomic_align_array {
 }
 
 
+=head2 add_GenomicAlign
+ 
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
+  Example    : $genomic_align_block->add_GenomicAlign($genomic_align);
+  Description: adds another Bio::EnsEMBL::Compara::GenomicAlign object to the set of
+               Bio::EnsEMBL::Compara::GenomicAlign objects in the attribute
+               genomic_align_array.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions : thrown if wrong argument
+  Caller     : general
+ 
+=cut
+
+sub add_GenomicAlign {
+  my ($self, $genomic_align) = @_;
+ 
+  throw("[$genomic_align] is not a Bio::EnsEMBL::Compara::GenomicAlign object")
+      unless ($genomic_align and ref($genomic_align) and 
+          $genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+  # Create weak circular reference to genomic_align_block from each genomic_align
+  $genomic_align->genomic_align_block($self);
+  push(@{$self->{'genomic_align_array'}}, $genomic_align);
+  
+  return $genomic_align;
+}
+
+
+=head2 get_all_GenomicAligns
+ 
+  Arg [1]    : none
+  Example    : $genomic_aligns = $genomic_align_block->get_all_GenomicAligns();
+  Description: returns the set of Bio::EnsEMBL::Compara::GenomicAlign objects in
+               the attribute genomic_align_array.
+  Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+
+sub get_all_GenomicAligns {
+  my ($self) = @_;
+ 
+  return ($self->genomic_align_array or []);
+}
+
+
 =head2 score
  
   Arg [1]    : double $score

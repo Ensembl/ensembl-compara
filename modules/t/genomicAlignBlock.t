@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlignBlock module.
 
-This script includes 50 tests.
+This script includes 53 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 50;
+    plan tests => 53;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -316,6 +316,41 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->genomic_align_array method
   do {
     my $all_fails;
     foreach my $this_genomic_align (@{$genomic_align_block->genomic_align_array}) {
+      my $fail = $this_genomic_align->dbID;
+      foreach my $that_genomic_align (@$genomic_align_array) {
+        if ($that_genomic_align->dbID == $this_genomic_align->dbID) {
+          $fail = undef;
+          last;
+        }
+      }
+      $all_fails .= " <$fail> " if ($fail);
+    }
+    ok($all_fails, undef,
+        "Trying to get method_link_species_set_id from the database (returns the unexpected genomic_align_id)");
+  };
+
+
+foreach my $this_genomic_align (@$genomic_align_array) {
+  $this_genomic_align->genomic_align_block_id(0);
+}
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->genomic_align_array method");
+  $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock();
+  foreach my $this_genomic_align (@$genomic_align_array) {
+    $genomic_align_block->add_GenomicAlign($this_genomic_align);
+  }
+  ok(@{$genomic_align_block->get_all_GenomicAligns}, @$genomic_align_array);
+
+
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->genomic_align_array method");
+  $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -adaptor => $genomic_align_block_adaptor,
+          -dbID => $genomic_align_block_id,
+      );
+  ok(scalar(@{$genomic_align_block->get_all_GenomicAligns}), scalar(@{$genomic_align_array}),
+      "Trying to get method_link_species_set_id from the database");
+  do {
+    my $all_fails;
+    foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
       my $fail = $this_genomic_align->dbID;
       foreach my $that_genomic_align (@$genomic_align_array) {
         if ($that_genomic_align->dbID == $this_genomic_align->dbID) {
