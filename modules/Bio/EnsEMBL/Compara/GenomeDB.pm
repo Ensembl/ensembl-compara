@@ -67,15 +67,15 @@ sub new {
 
 =head2 db_adaptor
 
-  Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBConnection $dba
+  Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBAdaptor $dba
                The DBAdaptor containing sequence information for the genome
                represented by this object.
   Example    : $gdb->db_adaptor($dba);
   Description: Getter/Setter for the DBAdaptor containing sequence 
                information for the genome represented by this object.
-  Returntype : Bio::EnsEMBL::DBSQL::DBConnection
+  Returntype : Bio::EnsEMBL::DBSQL::DBAdaptor
   Exceptions : thrown if the argument is not a
-               Bio::EnsEMBL::DBSQL::DBConnection
+               Bio::EnsEMBL::DBSQL::DBAdaptor
   Caller     : general
 
 =cut
@@ -92,12 +92,6 @@ sub db_adaptor{
   
   unless (defined $self->{'_db_adaptor'}) {
     $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
-  }
-
-  unless (defined $self->{'_db_adaptor'}) {
-    warning("Not able to get DBAdaptor for GenomeDB with name=[".$self->name."] and assembly=[" . $self->assembly."].\n".
-            "It must be loaded at the time of compara db connection either using a Compara.conf file or\n".
-            "setting the locator column in the genome_db table for the corresponding entry.\n");
   }
   
   return $self->{'_db_adaptor'};
@@ -286,7 +280,8 @@ sub connect_to_genome_locator
 
   return undef if($self->locator eq '');
 
-  my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
+  my $genomeDBA;
+  eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
   return undef unless($genomeDBA);
 
   # $genomeDBA->dbc->disconnect_when_inactive(1);
