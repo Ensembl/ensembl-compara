@@ -507,7 +507,7 @@ sub genomedb {
 
 sub type {
   my ($self, @args) = @_;
-  deprecate("Use Bio::EnsEMBL::Compara::DnaFrag->coord_system_name() method instead");
+  deprecate("Calling Bio::EnsEMBL::Compara::DnaFrag::coord_system_name method instead");
   return $self->coord_system_name(@args);
 }
 
@@ -521,7 +521,7 @@ sub type {
 sub contig {
   my ($self, @args) = @_;
 
-  deprecated("Use Bio::EnsEMBL::Compara::DnaFrag->slice() method instead");
+  deprecated("Calling Bio::EnsEMBL::Compara::DnaFrag::slice method instead");
    
   return $self->slice(@args);
 }
