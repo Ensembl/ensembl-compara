@@ -145,7 +145,7 @@ sub createBlastRules
               #$analysis is a SubmitPep so it's the condition
               #$blastAnalysis is the goal
               # $self->addSimpleRule($analysis, $blastAnalysis);
-	    
+
               $self->addRule($analysis, $blastAnalysis);
             }
           }
@@ -238,15 +238,15 @@ sub checkRuleExists
       #print("  found goal match\n");
       my $allMatched=1;
       for my $literal (@{$rule->list_conditions}) {
-	#print("    condition $literal ");
-	my $matched = undef;
+        #print("    condition $literal ");
+        my $matched = undef;
         for my $qliteral ( @{$queryRule->list_conditions} ) {
           if($qliteral eq $literal) {
-	    $matched=1;
-	    #print("matched!");
-	  } 
+            $matched=1;
+            #print("matched!");
+          } 
         }
-	# print("\n");
+        #print("\n");
         $allMatched=undef unless($matched);
       }
       if($allMatched) {
