@@ -128,6 +128,9 @@ sub prepareGenomeAnalysis
 {
   my $self = shift;
 
+  #
+  # SubmitGenome
+  #
   my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
@@ -139,6 +142,9 @@ sub prepareGenomeAnalysis
   return $submit_analysis  
     unless($analysis_template{fasta_dir});
 
+  #
+  # GenomeLoadMembers
+  #
   my $load_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeLoadMembers',
@@ -159,7 +165,32 @@ sub prepareGenomeAnalysis
       '-goal_analysis'      => $load_analysis);
   $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
 
-  
+  #
+  # GenomeSubmitPep
+  #
+  my $submitpep_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'GenomeSubmitPep',
+      -input_id_type   => 'genome_db_id',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep'
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_analysis);
+
+  if(defined($self->{'pipelineDBA'})) {
+    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$submitpep_analysis);
+    $rule->add_condition($load_analysis->logic_name());
+    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
+      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+    }
+  }
+  $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
+      '-condition_analysis' => $load_analysis,
+      '-goal_analysis'      => $submitpep_analysis);
+  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
+
+  #
+  # GenomeDumpFasta
+  #
   my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeDumpFasta',
@@ -171,17 +202,19 @@ sub prepareGenomeAnalysis
 
   if(defined($self->{'pipelineDBA'})) {
     my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
-    $rule->add_condition($load_analysis->logic_name());
+    $rule->add_condition($submitpep_analysis->logic_name());
     unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
       $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
     }
   }
   $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
-      '-condition_analysis' => $load_analysis,
+      '-condition_analysis' => $submitpep_analysis,
       '-goal_analysis'      => $dumpfasta_analysis);
   $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
 
-
+  #
+  # CreateBlastRules
+  #
   my $blastrules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateBlastRules',
