@@ -296,8 +296,6 @@ sub create_GenomeDBs {
   }
 
   $self->{'_GenomeDB_cache'} = 1;
-
-  $self->sync_with_registry();
 }
 
 
