@@ -19,10 +19,12 @@ my $chunk_size = 1000000;
 my $masked = 2;
 my $phusion;
 my $output;
+my $port="";
 
 GetOptions('host=s' => \$host,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
+	   'port=i' => \$port,
 	   'chr_name=s' => \$chr_name,
 	   'chr_start=i' => \$chr_start,
 	   'chr_end=i' => \$chr_end,
@@ -62,7 +64,8 @@ exit 2\n";
 
 my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $host,
 					     -user => $dbuser,
-					     -dbname => $dbname);
+					     -dbname => $dbname,
+					     -port => $port);
   
 my $chradp = $db->get_ChromosomeAdaptor;
 my $chr = $chradp->fetch_by_chr_name($chr_name);
