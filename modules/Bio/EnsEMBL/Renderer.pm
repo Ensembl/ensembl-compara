@@ -2,7 +2,6 @@ package Bio::EnsEMBL::Renderer;
 use strict;
 use Exporter;
 use vars qw(@ISA);
-use lib "../../../../modules";
 
 @ISA = qw(Exporter);
 
@@ -34,8 +33,8 @@ sub render {
     # now set all our labels up with scaled negative coords
     # and while we're looping, tot up the image height
     #
-    my $im_height = 0;
-    my $spacing = $self->{'spacing'};
+    my $spacing   = $self->{'spacing'};
+    my $im_height = $spacing * 1.5;
 
     for my $glyphset (@{$self->{'glyphsets'}}) {
 	next if (scalar @{$glyphset->{'glyphs'}} == 0);
