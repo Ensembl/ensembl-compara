@@ -129,6 +129,8 @@ sub _init {
 				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
 			$zmenu->{"CATEGORY: ". $f->das_type_category() } => ''
 				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
+			$zmenu->{"DAS LINK: ".$f->das_link_label() } = $f->das_link()
+				if $f->das_link() && uc($f->das_link()) ne 'NULL';
         
    		# JS5: If we have an ID then we can add this to the Zmenu and
 		#      also see if we can make a link to any additional information
@@ -265,6 +267,8 @@ sub _init {
 				if $f->das_method_id() && uc($f->das_method_id())!='NULL';
 			$zmenu->{"CATEGORY: ". $f->das_type_category() } => ''
 				if $f->das_type_category() && uc($f->das_type_category())!='NULL';
+			$zmenu->{"DAS LINK: ".$f->das_link_label() } = $f->das_link()
+				if $f->das_link() && uc($f->das_link()) ne 'NULL';
         
    		# JS5: If we have an ID then we can add this to the Zmenu and
 		#      also see if we can make a link to any additional information
