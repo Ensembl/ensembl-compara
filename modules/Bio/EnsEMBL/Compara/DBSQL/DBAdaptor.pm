@@ -44,6 +44,7 @@ use strict;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
 
@@ -83,11 +84,12 @@ sub new {
     $self = $container;
   }
 
-  my ($conf_file) = $self->_rearrange(['CONF_FILE'], @args);
+  my ($conf_file) = rearrange(['CONF_FILE'], @args);
+#  my ($conf_file) = $self->_rearrange(['CONF_FILE'], @args);
 
   $self->{'genomes'} = {};
 
-  if($conf_file) {
+  if(defined($conf_file) and $conf_file ne "") {
     #read configuration file from disk
     my @conf = @{do $conf_file};
 
@@ -159,8 +161,8 @@ sub new {
 sub add_db_adaptor {
   my ($self, $dba) = @_;
 
-  unless($dba && ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
-    $self->throw("dba argument must be a Bio::EnsEMBL::DBSQL::DBConnection\n" .
+  unless($dba && ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
+    $self->throw("dba argument must be a Bio::EnsEMBL::DBSQL::DBAdaptor\n" .
 		 "not a [$dba]");
   }
 
@@ -168,7 +170,7 @@ sub add_db_adaptor {
   #  if($dba->isa('Bio::EnsEMBL::Container')) {
   #    $dba = $dba->_obj;
   #  }
-  $dba->disconnect_when_inactive(0);
+  $dba->db->disconnect_when_inactive(0);
   my $mc = $dba->get_MetaContainer;
   my $csa = $dba->get_CoordSystemAdaptor;
   
@@ -212,307 +214,7 @@ sub get_db_adaptor {
 
 
 
-=head2 get_SyntenyAdaptor
 
-  Arg [1]    : none
-  Example    : $sa = $dba->get_SyntenyAdaptor
-  Description: Retrieves a synteny adaptor for this database.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_SyntenyAdaptor{
-   my ($self) = @_;
-
-   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor");
-}
-
-
-=head2 get_GenomeDBAdaptor
-
-  Arg [1]    : none
-  Example    : $gdba = $dba->get_GenomeDBAdaptor
-  Description: Retrieves an adaptor that can be used to obtain GenomeDB
-               objects from this compara database.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_GenomeDBAdaptor{
-   my ($self) = @_;
-
-   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor");
-}
-
-
-
-=head2 get_DnaFragAdaptor
-
-  Arg [1]    : none
-  Example    : $dfa = $dba->get_DnaFragAdaptor
-  Description: Retrieves an adaptor that can be used to obtain DnaFrag objects
-               from this compara database.
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_DnaFragAdaptor{
-   my ($self) = @_;
-
-   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor");
-}
-
-
-
-=head2 get_GenomicAlignAdaptor
-
-  Arg [1]    : none
-  Example    : $gaa = $dba->get_GenomicAlignAdaptor
-  Description: Retrieves an adaptor for this database which can be used
-               to obtain GenomicAlign objects
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_GenomicAlignAdaptor{
-  my ($self) = @_;
-
-  return
-    $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor");
-}
-
-
-
-=head2 get_HomologyAdaptor
-
-  Arg [1]    : none
-  Example    : $ha = $dba->get_HomologyAdaptor
-  Description: Retrieves a HomologyAdaptor for this database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor
-  Exceptions : general
-  Caller     : none
-
-=cut
-
-sub get_HomologyAdaptor{
-   my ($self) = @_;
-
-   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor");
-}
-
-
-
-=head2 get_SyntenyRegionAdaptor
-
-  Arg [1]    : none
-  Example    : $sra = $dba->get_SyntenyRegionAdaptor
-  Description: Retrieves a SyntenyRegionAdaptor for this database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_SyntenyRegionAdaptor{
-   my ($self) = @_;
-
-   return 
-     $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor");
-}
-
-
-
-=head2 get_DnaAlignFeatureAdaptor
-
-  Arg [1]    : none
-  Example    : $dafa = $dba->get_DnaAlignFeatureAdaptor;
-  Description: Retrieves a DnaAlignFeatureAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_DnaAlignFeatureAdaptor {
-  my $self = shift;
-
-  return 
-   $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor");
-}
-
-
-
-=head2 get_MetaContainer
-
-  Arg [1]    : none
-  Example    : $mc = $dba->get_MetaContainer
-  Description: Retrieves an object that can be used to obtain meta information
-               from the database.
-  Returntype : Bio::EnsEMBL::DBSQL::MetaContainer
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_MetaContainer {
-    my $self = shift;
-
-    return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::MetaContainer");
-}
-
-=head2 get_FamilyAdaptor
-
-  Arg [1]    : none
-  Example    : $fa = $dba->get_FamilyAdaptor
-  Description: Retrieves a FamilyAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_FamilyAdaptor {
-  my $self = shift;
-  
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor" );
-}
-
-=head2 get_DomainAdaptor
-
-  Arg [1]    : none
-  Example    : $fa = $dba->get_DomainAdaptor
-  Description: Retrieves a DomainAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_DomainAdaptor {
-  my $self = shift;
-  
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor" );
-}
-
-=head2 get_SubsetAdaptor
-
-  Arg [1]    : none
-  Example    : $ma = $dba->get_SubsetAdaptor
-  Description: Retrieves a MemberSetAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::SubssetAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_SubsetAdaptor {
-  my $self = shift;
-  
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor" );
-}
-
-=head2 get_MemberAdaptor
-
-  Arg [1]    : none
-  Example    : $ma = $dba->get_MemberAdaptor
-  Description: Retrieves a MemberAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_MemberAdaptor {
-  my $self = shift;
-
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor" );
-}
-
-=head2 get_AttributeAdaptor
-
-  Arg [1]    : none
-  Example    : $ma = $dba->get_AttibuteAdaptor
-  Description: Retrieves a AttributeAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_AttributeAdaptor {
-  my $self = shift;
-  
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor" );
-}
-
-=head2 get_TaxonAdaptor
-
-  Arg [1]    : none
-  Example    : $ta = $dba->get_TaxonAdaptor
-  Description: Retrieves a TaxonAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_TaxonAdaptor {
-  my $self = shift;
-  
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor" );
-}
-
-=head2 get_PeptideAlignFeatureAdaptor
-
-  Arg [1]    : none
-  Example    : $ma = $dba->get_PeptideAlignFeatureAdaptor
-  Description: Retrieves a PeptideAlignFeatureAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_PeptideAlignFeatureAdaptor {
-  my $self = shift;
-
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor" );
-}
-
-
-sub get_AnalysisAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::AnalysisAdaptor" );
-}
-
-sub get_Queen {
-  my $self = shift;
-
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::Queen" );
-}
-
-sub get_AnalysisJobAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor" );
-}
-
-sub get_AnalysisStatsAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor" );
-}
-
-sub get_DataflowRuleAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor" );
-}
 
 
 sub deleteObj {
