@@ -333,7 +333,7 @@ sub create_dnafrag_chunks {
     }
 
     if($self->{'chunk_size'} <=15000000 and $self->{'store_seq'}) {
-      my $bioseq = $chunk->fetch_masked_sequence;
+      my $bioseq = $chunk->bioseq;
       $chunk->sequence($bioseq->seq);
     }
     print "storing chunk ",$chunk->display_id;
