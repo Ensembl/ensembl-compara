@@ -245,19 +245,21 @@ sub store_gene_and_all_transcripts
 
     print(" => member " . $pep_member->stable_id);
 
-    eval {
-      $MemberAdaptor->store($pep_member);
-      $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
-      print(" : stored");
-    };
+    unless($pep_member->sequence) {
+      print("  => NO SEQUENCE!\n");
+      next;
+    }
+    print(" len=",$pep_member->seq_length );
 
+    $MemberAdaptor->store($pep_member);
+    $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
+    print(" : stored\n");
 
     if($pep_member->seq_length > $maxLength) {
       $maxLength = $pep_member->seq_length;
       @longestPeptideMember = ($transcript, $pep_member);
     }
 
-    print("\n");
   }
 
   if(@longestPeptideMember) {
