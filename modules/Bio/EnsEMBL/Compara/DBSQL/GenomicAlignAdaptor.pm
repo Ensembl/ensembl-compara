@@ -91,7 +91,7 @@ sub store {
   my $sql = "INSERT INTO genomic_align_block
              ( consensus_dnafrag_id, consensus_start, consensus_end,
                query_dnafrag_id, query_start, query_end, query_strand, method_link_id,
-               score, perc_id, cigar_line ) VALUES ";
+               score, perc_id, cigar_line, group_id, level_id, strands_reversed ) VALUES ";
   
   my @values;
   
@@ -118,7 +118,10 @@ sub store {
 			     $ga->query_start, $ga->query_end(), 
 			     $ga->query_strand(),$method_link_id, 
 			     $ga->score(), $ga->perc_id(),
-			     "\"".$ga->cigar_line()."\"" ).
+			     "\"".$ga->cigar_line()."\"",
+                             $ga->group_id,
+                             $ga->level_id,
+                             $ga->revserse_strand).
 	  ")" );
   }
   
@@ -675,9 +678,21 @@ sub _next_cig {
 # _objs_from_sth
 
 sub _columns {
-  return ( "consensus_dnafrag_id", "consensus_start", "consensus_end",
-	   "query_dnafrag_id", "query_start", "query_end", "query_strand","method_link_id",
-	   "score", "perc_id", "cigar_line" );
+
+  return qw (consensus_dnafrag_id
+             consensus_start
+             consensus_end
+             query_dnafrag_id
+             query_start
+             query_end
+             query_strand
+             method_link_id
+             score
+             perc_id
+             cigar_line
+             group_id
+             level_id
+             strands_reversed);
 }
 
 =head2 _objs_from_sth
@@ -704,17 +719,18 @@ sub _objs_from_sth {
   my $result = [];
 
   my ( $consensus_dnafrag_id, $consensus_start, $consensus_end, $query_dnafrag_id,
-       $query_start, $query_end, $query_strand, $method_link_id, $score, $perc_id, $cigar_string );
+       $query_start, $query_end, $query_strand, $method_link_id, $score, $perc_id, $cigar_string,
+       $group_id, $level_id, $strands_reversed);
   if( $reverse ) {
     $sth->bind_columns
       ( \$query_dnafrag_id, \$query_start, \$query_end,  
 	\$consensus_dnafrag_id, \$consensus_start, \$consensus_end, \$query_strand, \$method_link_id,
-	\$score, \$perc_id, \$cigar_string );
+	\$score, \$perc_id, \$cigar_string, \$group_id, \$level_id, \$strands_reversed );
   } else {
     $sth->bind_columns
       ( \$consensus_dnafrag_id, \$consensus_start, \$consensus_end, 
 	\$query_dnafrag_id, \$query_start, \$query_end, \$query_strand, \$method_link_id,
-	\$score, \$perc_id, \$cigar_string );
+	\$score, \$perc_id, \$cigar_string, \$group_id, \$level_id, \$strands_reversed );
   }
 
   my $da = $self->db()->get_DnaFragAdaptor();
@@ -749,7 +765,10 @@ sub _objs_from_sth {
        'alignment_type' => $alignment_type,
        'score' => $score,
        'perc_id' => $perc_id,
-       'cigar_line' => $cigar_string
+       'cigar_line' => $cigar_string,
+       'group_id' => $group_id,
+       'level_id' => $level_id,
+       'strands_reversed' => $strands_reversed
       });
 
 
