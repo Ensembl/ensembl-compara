@@ -188,7 +188,7 @@ CREATE TABLE family (
 
 CREATE TABLE family_member (
  family_id	int(10) NOT NULL, # foreign key from family table
- member_id	varchar(40) NOT NULL, # foreign key from member table
+ member_id	int(10) NOT NULL, # foreign key from member table
  cigar_line	mediumtext,
  
  UNIQUE KEY (family_id,member_id),
