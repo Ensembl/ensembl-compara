@@ -2,6 +2,7 @@ package Bio::EnsEMBL::Compara::Homology;
 
 use strict;
 use Bio::EnsEMBL::Compara::BaseRelation;
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::SimpleAlign;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
@@ -129,8 +130,8 @@ sub get_SimpleAlign {
     }
     next if(!$seqstr);
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
-                                     -START  => 1,
-                                     -END    => length($seqstr),
+                                     -START  => $attribute->cigar_start,
+                                     -END    => $attribute->cigar_end,
                                      -ID     => $peptide_member->stable_id,
                                      -STRAND => 0);
 
@@ -217,10 +218,12 @@ sub threshold_on_ds {
 
 =head2 dn
 
-  Arg [1]    : floating $dn 
+  Arg [1]    : floating $dn (can be undef)
   Arg [2]    : boolean $apply_threshold_on_ds (optional, default = 1)
-               Can be 0 or 1. 
-  Example    : $homology->dn
+               Can be 0 or 1.
+  Example    : $homology->dn or $homology->dn(0.1209)
+               if you want to retrieve dn without applying threshold_on_ds, the right call
+               is $homology->dn(undef,0).
   Description: set/get the non synonymous subtitution rate
   Returntype : floating
   Exceptions : 
@@ -230,24 +233,26 @@ sub threshold_on_ds {
 
 
 sub dn {
-  my $self = shift;
-  my $apply_threshold_on_ds = shift;
-  
+  my ($self, $dn, $apply_threshold_on_ds) = @_;
+
+  $self->{'_dn'} = $dn if (defined $dn);
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
 
-  $self->{'_dn'} = shift if(@_);
-  unless (defined $self->ds($apply_threshold_on_ds)) {
+  unless (defined $self->ds(undef, $apply_threshold_on_ds)) {
     return undef;
   }
+
   return $self->{'_dn'};
 }
 
 =head2 ds
 
-  Arg [1]    : floating $ds
+  Arg [1]    : floating $ds (can be undef)
   Arg [2]    : boolean $apply_threshold_on_ds (optional, default = 1)
                Can be 0 or 1. 
-  Example    : $homology->ds
+  Example    : $homology->ds or $homology->ds(0.9846)
+               if you want to retrieve ds without applying threshold_on_ds, the right call
+               is $homology->dn(undef,0).
   Description: set/get the synonymous subtitution rate
   Returntype : floating
   Exceptions : 
@@ -257,32 +262,33 @@ sub dn {
 
 
 sub ds {
-  my $self = shift;
-  my $apply_threshold_on_ds = shift;
-  
-  $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
-  
-  if ($apply_threshold_on_ds == 0) {
-    warn "Threshold on ds values is switched off. Be aware that you may obtain saturated ds values that are not to be trusted, neither the dn/ds ratio\n";
-  }
-  
-  $self->{'_ds'} = shift if(@_);
+  my ($self, $ds, $apply_threshold_on_ds) = @_;
 
-  if ($apply_threshold_on_ds && defined $self->{'_ds'} && defined $self->{'_threshold_on_ds'}) {
-    if ($self->{'_ds'} > $self->{'_threshold_on_ds'}) {
+  $self->{'_ds'} = $ds if (defined $ds);
+  $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
+
+  if (defined $self->{'_ds'} && 
+      defined $self->{'_threshold_on_ds'} &&
+      $self->{'_ds'} > $self->{'_threshold_on_ds'}) {
+    
+    if ($apply_threshold_on_ds) {
       return undef;
+    } else {
+      warning("Threshold on ds values is switched off. Be aware that you may obtain saturated ds values that are not to be trusted, neither the dn/ds ratio\n");
     }
   }
+
   return $self->{'_ds'};
 }
 
 =head2 dnds_ratio
 
-  Arg [1]    : none
-  Arg [2]    : boolean $apply_threshold_on_ds (optional, default = 1)
+  Arg [1]    : boolean $apply_threshold_on_ds (optional, default = 1)
                Can be 0 or 1. 
-  Example    : $homology->dnds_ratio
-  Description: return the ratio $homology->dn/$homology->ds
+  Example    : $homology->dnds_ratio or
+               $homology->dnds_ratio(0) if you want to obtain a result
+               even when the dS is above the threshold on dS.
+  Description: return the ratio of dN/dS
   Returntype : floating
   Exceptions : 
   Caller     : 
@@ -296,19 +302,19 @@ sub dnds_ratio {
   
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
 
-  my $ds;
-  if ($apply_threshold_on_ds) {
-    $ds = $self->ds;
-  } else {
-    $ds = $self->ds($apply_threshold_on_ds);
+  my $ds = $self->ds(undef, $apply_threshold_on_ds);
+  my $dn = $self->dn(undef, $apply_threshold_on_ds);
+
+  unless (defined $dn &&
+          defined $ds &&
+          $ds !=0) {
+    return undef;
   }
 
   unless (defined $self->{'_dnds_ratio'}) {
-    unless (defined $self->dn($apply_threshold_on_ds) &&  defined $ds && $ds != 0) {
-      return undef;
-    }
-    $self->{'_dnds_ratio'} = sprintf("%.5f",$self->dn($apply_threshold_on_ds)/$ds);
+    $self->{'_dnds_ratio'} = sprintf("%.5f",$dn/$ds);
   }
+
   return $self->{'_dnds_ratio'};
 }
 
