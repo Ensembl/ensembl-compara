@@ -10,7 +10,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 # constructor
 #
 sub new {
-    my ($class, $VirtualContig, $Config, $highlights, $strand) = @_;
+    my ($class, $VirtualContig, $Config, $highlights, $strand, $extra_config) = @_;
     my $self = {
 	'glyphs'     => [],
 	'x'          => undef,
@@ -25,6 +25,7 @@ sub new {
 	'label'      => undef,
 	'container'  => $VirtualContig,
 	'config'     => $Config,
+	'extras'     => $extra_config,
     };
 
     bless($self, $class);
@@ -44,58 +45,70 @@ sub new {
 # keep track of x,y,width,height as it goes.
 #
 sub _init {
-    my ($this) = @_;
-    print STDERR qq($this unimplemented\n);
+    my ($self) = @_;
+    print STDERR qq($self unimplemented\n);
 }
 
+# Gets the number of Base Pairs per pixel
+sub basepairs_per_pixel {
+    my ($self) = @_;
+    my $Config = $self->{'config'};
+    my $pixels = $Config->get($Config->script(), '_settings' ,'width');
+    return (defined $pixels && $pixels) ? $self->{'container'}->length() / $pixels : undef; 
+}    
+
+sub glob_bp {
+    my ($self) = @_;
+    return int($self->basepairs_per_pixel);
+}
 #########
 # return our list of glyphs
 #
 sub glyphs {
-    my ($this) = @_;
-    return @{$this->{'glyphs'}};
+    my ($self) = @_;
+    return @{$self->{'glyphs'}};
 }
 
 #########
 # push either a Glyph or a GlyphSet on to our list
 #
 sub push {
-    my ($this, $Glyph) = @_;
+    my ($self, $Glyph) = @_;
 
     my ($gx, $gw, $gy, $gh);
 
 	#########
 	# if we've got a single glyph:
 	#
-	push @{$this->{'glyphs'}}, $Glyph;
+	push @{$self->{'glyphs'}}, $Glyph;
 
 	$gx = $Glyph->x();
 	$gw = $Glyph->width();
 	$gy = $Glyph->y();
 	$gh = $Glyph->height();
 
-    $this->minx($gx) if(!defined $this->minx());
-    $this->maxx($gx) if(!defined $this->maxx());
-    $this->miny($gy) if(!defined $this->miny());
-    $this->maxy($gy) if(!defined $this->maxy());
+    $self->minx($gx) if(!defined $self->minx());
+    $self->maxx($gx) if(!defined $self->maxx());
+    $self->miny($gy) if(!defined $self->miny());
+    $self->maxy($gy) if(!defined $self->maxy());
 
     #########
     # track max and min dimensions
     #
     # x
     #
-    if($gx < $this->minx()) {
-	$this->minx($gx);
-    } elsif(($gx + $gw) > $this->maxx()) {
-	$this->maxx($gx + $gw);
+    if($gx < $self->minx()) {
+	$self->minx($gx);
+    } elsif(($gx + $gw) > $self->maxx()) {
+	$self->maxx($gx + $gw);
     }
 
     # y
     # 
-    if($gy < $this->miny()) {
-	$this->miny($gy);
-    } elsif(($gy + $gh) > $this->maxy()) {
-	$this->maxy($gy + $gh);
+    if($gy < $self->miny()) {
+	$self->miny($gy);
+    } elsif(($gy + $gh) > $self->maxy()) {
+	$self->maxy($gy + $gh);
     }
 }
 
@@ -103,7 +116,7 @@ sub push {
 # unshift a Glyph or GlyphSet onto our list
 #
 sub unshift {
-    my ($this, $Glyph) = @_;
+    my ($self, $Glyph) = @_;
 
     my ($gx, $gw, $gy, $gh);
 
@@ -111,7 +124,7 @@ sub unshift {
 	#########
 	# if we've got a single glyph:
 	#
-	unshift @{$this->{'glyphs'}}, $Glyph;
+	unshift @{$self->{'glyphs'}}, $Glyph;
 
 	$gx = $Glyph->x();
 	$gw = $Glyph->width();
@@ -120,29 +133,29 @@ sub unshift {
 
     }
 
-    $this->minx($gx) if(!defined $this->minx());
-    $this->maxx($gx) if(!defined $this->maxx());
-    $this->miny($gy) if(!defined $this->miny());
-    $this->maxy($gy) if(!defined $this->maxy());
+    $self->minx($gx) if(!defined $self->minx());
+    $self->maxx($gx) if(!defined $self->maxx());
+    $self->miny($gy) if(!defined $self->miny());
+    $self->maxy($gy) if(!defined $self->maxy());
 
     #########
     # track max and min dimensions
     #
     # x
     #
-    if($gx < $this->minx()) {
-	$this->minx($gx);
-    } elsif(($gx + $gw) > $this->maxx()) {
-	$this->maxx($gx + $gw);
+    if($gx < $self->minx()) {
+	$self->minx($gx);
+    } elsif(($gx + $gw) > $self->maxx()) {
+	$self->maxx($gx + $gw);
     }
 
     # y
     # 
 
-    if($gy < $this->miny()) {
-	$this->miny($gx);
-    } elsif(($gy + $gh) > $this->maxy()) {
-	$this->maxy($gy + $gh);
+    if($gy < $self->miny()) {
+	$self->miny($gx);
+    } elsif(($gy + $gh) > $self->maxy()) {
+	$self->maxy($gy + $gh);
     }
 }
 
@@ -151,98 +164,98 @@ sub unshift {
 # needs to shrink glyphset dimensions if the glyph/glyphset we pop off 
 #
 sub pop {
-    my ($this) = @_;
-    return pop @{$this->{'glyphs'}};
+    my ($self) = @_;
+    return pop @{$self->{'glyphs'}};
 }
 
 #########
 # shift a Glyph off our list
 #
 sub shift {
-    my ($this) = @_;
-    return shift @{$this->{'glyphs'}};
+    my ($self) = @_;
+    return shift @{$self->{'glyphs'}};
 }
 
 #########
 # return the length of our list
 #
 sub length {
-    my ($this) = @_;
-    return scalar @{$this->{'glyphs'}};
+    my ($self) = @_;
+    return scalar @{$self->{'glyphs'}};
 }
 
 #########
 # read-only start x position (should usually be 0)
 # 
 sub x {
-    my ($this) = @_;
-    return $this->{'x'};
+    my ($self) = @_;
+    return $self->{'x'};
 }
 
 #########
 # read-only start y position (should usually be 0)
 #
 sub y {
-    my ($this) = @_;
-    return $this->{'y'};
+    my ($self) = @_;
+    return $self->{'y'};
 }
 
 #########
 # read-only highlights (list)
 #
 sub highlights {
-    my ($this) = @_;
-    return @{$this->{'highlights'}};
+    my ($self) = @_;
+    return @{$self->{'highlights'}};
 }
 
 sub minx {
-    my ($this, $minx) = @_;
-    $this->{'minx'} = $minx if(defined $minx);
-    return $this->{'minx'};
+    my ($self, $minx) = @_;
+    $self->{'minx'} = $minx if(defined $minx);
+    return $self->{'minx'};
 }
 
 sub miny {
-    my ($this, $miny) = @_;
-    $this->{'miny'} = $miny if(defined $miny);
-    return $this->{'miny'};
+    my ($self, $miny) = @_;
+    $self->{'miny'} = $miny if(defined $miny);
+    return $self->{'miny'};
 }
 
 sub maxx {
-    my ($this, $maxx) = @_;
-    $this->{'maxx'} = $maxx if(defined $maxx);
-    return $this->{'maxx'};
+    my ($self, $maxx) = @_;
+    $self->{'maxx'} = $maxx if(defined $maxx);
+    return $self->{'maxx'};
 }
 
 sub maxy {
-    my ($this, $maxy) = @_;
-    $this->{'maxy'} = $maxy if(defined $maxy);
-    return $this->{'maxy'};
+    my ($self, $maxy) = @_;
+    $self->{'maxy'} = $maxy if(defined $maxy);
+    return $self->{'maxy'};
 };
 
 sub strand {
-    my ($this, $strand) = @_;
-    $this->{'strand'} = $strand if(defined $strand);
-    return $this->{'strand'};
+    my ($self, $strand) = @_;
+    $self->{'strand'} = $strand if(defined $strand);
+    return $self->{'strand'};
 }
 
 sub height {
-    my ($this) = @_;
-    my $h = $this->{'maxy'} - $this->{'miny'};
+    my ($self) = @_;
+    my $h = $self->{'maxy'} - $self->{'miny'};
     $h *=-1 if($h < 0);
     return $h;
 }
 
 sub width {
-    my ($this) = @_;
-    my $w = $this->{'maxx'} - $this->{'minx'};
+    my ($self) = @_;
+    my $w = $self->{'maxx'} - $self->{'minx'};
     $w *=-1 if($w < 0);
     return $w;
 }
 
 sub label {
-    my ($this, $val) = @_;
-    $this->{'label'} = $val if(defined $val);
-    return $this->{'label'};
+    my ($self, $val) = @_;
+    $self->{'label'} = $val if(defined $val);
+    return $self->{'label'};
 }
 
 sub transform {
