@@ -86,9 +86,10 @@ CREATE TABLE peptide_align_feature (
   perc_ident                int(10),
   positive_matches          int(10),
   perc_pos                  int(10),
+  hit_rank                  int(10),
   cigar_line                mediumtext,
   
-  PRIMARY KEY (id),
+  PRIMARY KEY (peptide_align_feature_id),
   KEY qmember_id  (qmember_id),
   KEY hmember_id  (hmember_id)
   

@@ -40,13 +40,13 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Pipeline::RunnableDB::BlastComparaPep;
+package Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 
 use strict;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::Blast;
-use Bio::EnsEMBL::Compara::DBSQL::PairAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
@@ -124,8 +124,7 @@ sub fetch_input {
 sub write_output {
   my( $self) = @_;
 
+  $self->db->get_PeptideAlignFeatureAdaptor->store($self->output);
 }
-
-
 
 1;

@@ -18,152 +18,188 @@ package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 use vars qw(@ISA);
 use strict;
+use Bio::EnsEMBL::Root;
 
-use Bio::Root::RootI;
+#se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
-@ISA = qw(Bio::Root::RootI);
+@ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
-  my($pkg, @args) = @_;
+  my ($class, @args) = @_;
+  my $self = $class->SUPER::new(@args);
 
-  my $self = bless {}, $pkg;
+  if (scalar @args) {
+    my ($queryid,$hitid,
+        $qstart,$hstart,$qend,$hend,
+        $qlength,$hlength,$alength,
+        $score,$evalue,$pid,$pos,
+        $cigar_line,$feature
+       ) = $self->_rearrange([qw(
+        QUERYID
+        HITID
+        QSTART
+        QEND
+        HSTART
+        HEND
+        QLENGTH
+        HLENGTH
+        ALENGTH
+        SCORE
+        EVALUE
+        PID
+        POS
+        CIGAR
+        FEATURE
+      )],@args);
 
-  my ($queryid,
-      $hitid,
-      $qstart,
-      $hstart,
-      $qend,
-      $hend,
-      $qlength,
-      $hlength,
-      $alength
-      $score,
-      $evalue,
-      $pid,
-    ) = $self->_rearrange([qw(
-      QUERYID
-      HITID
-      QSTART
-      QEND
-      HSTART
-      HEND
-      QLENGTH
-      HLENGTH
-      ALENGTH
-      SCORE
-      EVALUE
-      PID
-    )],@args);
-
-  $self->queryid($queryid);
-  $self->hitid($hitid);
-  $self->qstart($qstart);
-  $self->hstart($hstart);
-  $self->qend($qend);
-  $self->hend($hend);
-  $self->qlength($qlength);
-  $self->hlength($hlength);
-  $self->align_length($alength);
-  $self->score($score);
-  $self->evalue($evalue);
-  $self->perc_ident($pid);
+    $feature && $self->init_from_feature($feature);
+    
+    $queryid && $self->queryid($queryid);
+    $hitid && $self->hitid($hitid);
+    $qstart && $self->qstart($qstart);
+    $hstart && $self->hstart($hstart);
+    $qend && $self->qend($qend);
+    $hend && $self->hend($hend);
+    $qlength && $self->qlength($qlength);
+    $hlength && $self->hlength($hlength);
+    $alength && $self->alignment_length($alength);
+    $score && $self->score($score);
+    $evalue && $self->evalue($evalue);
+    $pid && $self->perc_ident($pid);
+    $pos && $self->perc_pos($pos);
+    $cigar_line && $self->cigar_line($cigar_line);
+  }
 
   return $self;
+}
 
+sub init_from_feature {
+  my($self, $feature) = @_;
+
+  unless(defined($feature) and $feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
+    $self->throw(
+    "arg must be a [Bio::EnsEMBL::BaseAlignFeature] ".
+    "not a [$feature]");
+  }
+
+=head3
+  my $memberAdaptor = $self->db->get_MemberAdaptor();
+
+  my $qy_member  = $memberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', $feature->seqname);
+  my $hit_member = $memberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', $feature->hseqname);
+
+  $self->query_member_id($qy_member->dbID);
+  $self->hit_member_id($hit_member->dbID);
+=cut
+
+  $self->queryid($feature->seqname);
+  $self->hitid($feature->hseqname);
+
+  $self->qstart($feature->start);
+  $self->hstart($feature->hstart);
+  $self->qend($feature->end);
+  $self->hend($feature->hend);
+  #$self->qlength($qlength);
+  #$self->hlength($hlength);
+  $self->score($feature->score);
+  $self->evalue($feature->p_value);
+  $self->cigar_line($feature->cigar_string);
+
+  $self->alignment_length($feature->alignment_length);
+  $self->identical_matches($feature->identical_matches);
+  $self->positive_matches($feature->positive_matches);
+
+  $self->perc_ident(int($feature->identical_matches*100/$feature->alignment_length));
+  $self->perc_pos(int($feature->positive_matches*100/$feature->alignment_length));
 }
 
 sub queryid {
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_queryid} = $arg;
   }
-
   return $self->{_queryid};
 }
-
 
 sub  hitid {
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_hitid} = $arg;
   }
-
   return $self->{_hitid};
 }
 
+sub query_member_id {
+  my ($self,$arg) = @_;
+
+  if (defined($arg)) {
+    $self->{_query_member_id} = $arg;
+  }
+  return $self->{_query_member_id};
+}
+
+sub  hit_member_id {
+  my ($self,$arg) = @_;
+
+  if (defined($arg)) {
+    $self->{_hit_member_id} = $arg;
+  }
+  return $self->{_hit_member_id};
+}
 
 sub  qstart {
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_qstart} = $arg;
   }
-
   return $self->{_qstart};
 }
-
 
 sub  hstart {
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_hstart} = $arg;
   }
-
   return $self->{_hstart};
 }
-
 
 sub  qend {
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_qend} = $arg;
   }
-
   return $self->{_qend};
 }
-
 
 sub  qlength {
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_qlength} = $arg;
   }
-
   return $self->{_qlength};
 }
-
 
 sub  hend {
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_hend} = $arg;
   }
-
   return $self->{_hend};
 }
-
 
 sub  hlength{
   my ($self,$arg) = @_;
 
-
   if (defined($arg)) {
     $self->{_hlength} = $arg;
   }
-
   return $self->{_hlength};
 }
 
@@ -208,6 +244,9 @@ sub identical_matches {
 
   if (defined($arg)) {
     $self->{_identical_matches} = $arg;
+    if(defined($self->alignment_length)) {
+      $self->perc_ident(int($arg*100/$self->alignment_length));
+    }
   }
   return $self->{_identical_matches};
 }
@@ -217,17 +256,20 @@ sub positive_matches {
 
   if (defined($arg)) {
     $self->{_positive_matches} = $arg;
+    if(defined($self->alignment_length)) {
+      $self->perc_pos(int($arg*100/$self->alignment_length));
+    }
   }
   return $self->{_positive_matches};
 }
 
-sub align_length {
+sub alignment_length {
   my ($self,$arg) = @_;
 
   if (defined($arg)) {
-    $self->{_align_length} = $arg;
+    $self->{_alignment_length} = $arg;
   }
-  return $self->{_align_length};
+  return $self->{_alignment_length};
 }
 
 sub cigar_line {
@@ -237,6 +279,23 @@ sub cigar_line {
     $self->{_cigar_line} = $arg;
   }
   return $self->{_cigar_line};
+}
+
+sub hit_rank {
+  my ($self,$arg) = @_;
+
+  if (defined($arg)) {
+    $self->{_hit_rank} = $arg;
+  }
+  return $self->{_hit_rank};
+}
+
+sub sort_by_score_evalue_and_pid {
+  print("operator redirect YEAH!\n");
+  $b->score <=> $a->score ||
+    $a->evalue <=> $b->evalue ||
+      $b->perc_ident <=> $a->perc_ident ||
+        $b->perc_pos <=> $a->perc_pos;
 }
 
 1;

@@ -468,6 +468,24 @@ sub get_TaxonAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor" );
 }
 
+=head2 get_PeptideAlignFeatureAdaptor
+
+  Arg [1]    : none
+  Example    : $ma = $dba->get_PeptideAlignFeatureAdaptor
+  Description: Retrieves a PeptideAlignFeatureAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_PeptideAlignFeatureAdaptor {
+  my $self = shift;
+
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor" );
+}
+
+
 sub deleteObj {
   my $self = shift;
 
