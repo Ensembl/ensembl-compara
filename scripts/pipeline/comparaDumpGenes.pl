@@ -6,8 +6,9 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $conf_file;
-my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor, $subset_id);
-my ($genome_db_id, $prefix, $fastadir);
+my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
+my ($subset_id, $genome_db_id, $prefix, $fastadir);
+my $analysis_conf;
 
 GetOptions('help' => \$help,
            'host=s' => \$host,
@@ -19,7 +20,8 @@ GetOptions('help' => \$help,
            'genome_db_id=i' => \$genome_db_id,
            'subset_id=i' => \$subset_id,
 	   'prefix=s' => \$prefix,
-	   'fastadir=s' => \$fastadir
+	   'fastadir=s' => \$fastadir,
+	   'analysis=s' => \$analysis_conf
 	  );
 	  
 	  
@@ -32,6 +34,7 @@ if(-e $compara_conf) {
   $dbname = $conf{'dbname'};
   $adaptor = $conf{'adaptor'};
 }
+
 
 if ($help) { usage(); }
 
@@ -106,18 +109,19 @@ exit(0);
 
 sub usage {
   print "comparaDumpGenes.pl -pass {-compara | -host -user -dbname} {-genome_db_id | -subset_id } [options]\n";
-  print "  -help             : print this help\n";
-  print "  -compara <path>   : read compara DB connection info from config file <path>\n";
-  print "                      which is perl hash file with keys 'host' 'port' 'user' 'dbname'\n";
-  print "  -host <machine>   : set <machine> as location of compara DB\n";
-  print "  -port <port#>     : use <port#> for mysql connection\n";
-  print "  -user <name>      : use user <name> to connect to compara DB\n";
-  print "  -pass <pass>      : use password to connect to compara DB\n";
-  print "  -dbname <name>    : use database <name> to connect to compara DB\n";
-  print "  -genome_db_id <#> : dump member associated with genome_db_id\n";
-  print "  -subset_id <#>    : dump member associated with subset_id\n";
-  print "  -fastadir <path>  : dump fasta into directory\n";
-  print "  -prefix <string>  : use <string> as prefix for sequence names in fasta file\n";
+  print "  -help                  : print this help\n";
+  print "  -compara <path>        : read compara DB connection info from config file <path>\n";
+  print "                           which is perl hash file with keys 'host' 'port' 'user' 'dbname'\n";
+  print "  -host <machine>        : set <machine> as location of compara DB\n";
+  print "  -port <port#>          : use <port#> for mysql connection\n";
+  print "  -user <name>           : use user <name> to connect to compara DB\n";
+  print "  -pass <pass>           : use password to connect to compara DB\n";
+  print "  -dbname <name>         : use database <name> to connect to compara DB\n";
+  print "  -genome_db_id <#>      : dump member associated with genome_db_id\n";
+  print "  -subset_id <#>         : dump member associated with subset_id\n";
+  print "  -fastadir <path>       : dump fasta into directory\n";
+  print "  -analysis <conf file>  : fill analysis table using conf file as template\n";
+  print "  -prefix <string>       : use <string> as prefix for sequence names in fasta file\n";
   print "comparaDumpGenes.pl v1.0\n";
   
   exit(1);  
@@ -261,6 +265,64 @@ sub dumpFastaForSubset {
   $sth = $dbh->prepare("UPDATE subset SET dump_loc = ? WHERE subset_id = ?");
   $sth->execute($fastafile, $subset_id);
   
+  addAnalysisForSubset($dbh, $subset_id, $fastafile);
+  
   print("Prepare fasta file as blast database\n");
   system("setdb $fastafile");
 }
+
+
+sub taxonIDForSubsetID {
+  my ($dbh, $subset_id) = @_;
+  
+  my $taxon_id = undef;
+  
+  
+  my $sql = "SELECT distinct member.taxon_id " .
+            "FROM subset_member, member " .
+	    "WHERE subset_member.subset_id='$subset_id' ".
+	    "AND member.member_id=subset_member.member_id;";
+  my $sth = $dbh->prepare( $sql );
+  $sth->execute();
+
+  $sth->bind_columns( undef, \$taxon_id );
+
+  if( $sth->fetch() ) {
+    print("taxon_id = '$taxon_id'\n");
+  }
+  $sth->finish();
+  return $taxon_id;
+}
+
+
+sub addAnalysisForSubset {
+  my($dbh, $subset_id, $fastafile) = @_;
+  
+  unless(defined($analysis_conf)) { return; }
+  print("read analysis template from '$analysis_conf'\n");
+  
+  my %analconf = %{do $analysis_conf};
+
+  my $analysisAdaptor = $dbh->get_AnalysisAdaptor();
+
+  my $taxon_id = taxonIDForSubsetID($dbh, $subset_id);
+  my $logic_name = $analconf{logic_name} . "_$taxon_id";
+  
+  my $analysis = Bio::EnsEMBL::Analysis->new(
+      -db              => "subset_id=$subset_id",
+      -db_file         => $fastafile,
+      -db_version      => '1',
+      -logic_name      => $logic_name,
+      -program         => $analconf{program},
+      -program_version => $analconf{program_version},
+      -program_file    => $analconf{program_file},
+      -gff_source      => $analconf{gff_source},
+      -gff_feature     => $analconf{gff_feature},
+      -module          => $analconf{module},
+      -module_version  => $analconf{module_version},
+      -parameters      => $analconf{parameters},
+      -created         => $analconf{created}
+    );
+
+  $analysisAdaptor->store($analysis);  
+} 
