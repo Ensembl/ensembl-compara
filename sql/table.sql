@@ -3,11 +3,6 @@
 # internal ids are integers named tablename_id
 # same name is given in foreign key relations
 
-# conventions taken from the new clean scheam of EnsEMBL
-# use lower case and underscores
-# internal ids are integers named tablename_id
-# same name is given in foreign key relations
-
 #
 # Table structure for table 'dnafrag'
 #
@@ -18,7 +13,7 @@ CREATE TABLE dnafrag (
   end int(11) DEFAULT '0' NOT NULL,
   name varchar(40) DEFAULT '' NOT NULL,
   genome_db_id int(10) DEFAULT '0' NOT NULL,
-  dnafrag_type enum('RawContig','Chromosome','VirtualContig'),
+  dnafrag_type enum('Slice','Chromosome'),
   PRIMARY KEY (dnafrag_id),
   KEY dnafrag_id (dnafrag_id,name),
   UNIQUE name (name,genome_db_id,dnafrag_type)
