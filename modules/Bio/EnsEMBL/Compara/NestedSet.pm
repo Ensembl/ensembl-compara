@@ -150,6 +150,14 @@ sub adaptor {
 }
 
 
+sub store {
+  my $self = shift;
+  throw("adaptor must be defined") unless($self->adaptor);
+  $self->adaptor->store($self);
+}
+
+
+
 #######################################
 # Set manipulation methods
 #######################################
@@ -183,12 +191,20 @@ sub add_child {
   $child->disavow_parent;
   $child->_set_parent($self);
 
-  
-  #database linkage
-  if(defined($self->adaptor) and ($child->adaptor != $self->adaptor)) {
-    $self->adaptor->store($child);
-  }
   $self->{'_children_id_hash'}->{$child->nestedset_id} = $child;
+}
+
+sub store_child {
+  my ($self, $child) = @_;
+
+  throw("child not defined") 
+     unless(defined($child));
+  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
+     unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
+  throw("adaptor must be defined") unless($self->adaptor);
+
+  $child->_set_parent($self);
+  $self->adaptor->store($child);
 }
 
 
@@ -289,17 +305,17 @@ sub root {
 }
 
 
-=head2 get_children
+=head2 children
 
   Overview   : returns a list of NestedSet nodes directly under this parent node
-  Example    : my @children = @{$object->get_children()};
+  Example    : my @children = @{$object->children()};
   Returntype : array reference of Bio::EnsEMBL::Compara::NestedSet objects (could be empty)
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub get_children {
+sub children {
   my $self = shift;
   my @kids = values(%{$self->{'_children_id_hash'}});
   return \@kids;
@@ -327,18 +343,21 @@ sub get_child_count {
 sub distance_to_parent {
   my $self = shift;
   $self->{'_distance_to_parent'} = shift if(@_);
+  $self->{'_distance_to_parent'} = 1 unless(defined($self->{'_distance_to_parent'}));
   return $self->{'_distance_to_parent'};
 }
 
 sub left_index {
   my $self = shift;
   $self->{'_left_index'} = shift if(@_);
+  $self->{'_left_index'} = 0 unless(defined($self->{'_left_index'}));
   return $self->{'_left_index'};
 }
 
 sub right_index {
   my $self = shift;
   $self->{'_right_index'} = shift if(@_);
+  $self->{'_right_index'} = 0 unless(defined($self->{'_right_index'}));
   return $self->{'_right_index'};
 }
 
@@ -358,7 +377,7 @@ sub print_tree {
   }
   $indent .= "   |";
 
-  my $children = $self->get_children;
+  my $children = $self->children;
   my $count=0;
   $lastone = 0;
   foreach my $child_node (@$children) {  
@@ -374,7 +393,7 @@ sub print_node {
   my $indent = shift;
 
   $indent = '' unless(defined($indent));
-  printf("%s-%s(%d)\n", $indent, $self->name, $self->nestedset_id);
+  printf("%s-%s(%s)\n", $indent, $self->name, $self->nestedset_id);
 }
 
 
@@ -428,11 +447,15 @@ sub is_subset_of {
   return 1; 
 }
 
-sub merge_in_set {
+sub merge_children {
   my $self = shift;
   my $nset = shift;
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$nset]")
         unless($nset->isa('Bio::EnsEMBL::Compara::NestedSet'));
+  foreach my $child_node (@{$nset->children}) {
+    $self->add_child($child_node);
+  }
+  return $self;
 }
 
 sub merge_node_via_shared_ancestor {
@@ -478,7 +501,7 @@ sub find_node_by_name {
   
   return $self if($name eq $self->name);
   
-  my $children = $self->get_children;
+  my $children = $self->children;
   foreach my $child_node (@$children) {
     my $found = $child_node->find_node_by_name($name);
     return $found if(defined($found));
@@ -493,7 +516,7 @@ sub find_node_by_nestedset_id {
   
   return $self if($node_id eq $self->nestedset_id);
   
-  my $children = $self->get_children;
+  my $children = $self->children;
   foreach my $child_node (@$children) {
     my $found = $child_node->find_node_by_nestedset_id($node_id);
     return $found if(defined($found));
@@ -530,7 +553,7 @@ sub _recursive_get_all_leaves {
     
   $leaves->{$self->nestedset_id} = $self;
 
-  foreach my $child (@{$self->get_children}) {
+  foreach my $child (@{$self->children}) {
     $child->_recursive_get_all_leaves($leaves);
   }
   return undef;
@@ -552,7 +575,7 @@ sub max_depth {
 
   my $max_depth = 0;
   
-  foreach my $child (@{$self->get_children}) {
+  foreach my $child (@{$self->children}) {
     my $depth = $child->max_depth;
     $max_depth=$depth if($depth>$max_depth);
   }
