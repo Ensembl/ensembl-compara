@@ -145,12 +145,13 @@ sub new {
   $self->{expanded} = 0;
   if ($expanded) {
     $self->{expanded} = 1;
-    $self->_create_underlying_Slices($genomic_align_blocks);
-
-  } else {
-    $self->{slice} = $reference_slice;
-
   }
+    $self->_create_underlying_Slices($genomic_align_blocks, $expanded);
+
+#   } else {
+#     $self->{slice} = $reference_slice;
+# 
+#   }
 
   return $self;
 }
@@ -185,6 +186,7 @@ sub adaptor {
 
   Arg[1]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks
                $genomic_align_blocks
+  Arg[2]     : [optional] boolean $expanded (default = FALSE)
   Example    : 
   Description: Creates a set of Bio::EnsEMBL::Compara::AlignSlice::Slices
                and attach it to this object. 
@@ -197,7 +199,7 @@ TODO: check negative strand!!
 =cut
 
 sub _create_underlying_Slices {
-  my ($self, $genomic_align_blocks) = @_;
+  my ($self, $genomic_align_blocks, $expanded) = @_;
 
   return $self if (!$genomic_align_blocks or !@$genomic_align_blocks);
 
@@ -256,7 +258,11 @@ sub _create_underlying_Slices {
         $genomic_align->original_sequence(0); # unset original_sequence
         $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new aligned_sequence
         $this_truncated_seq =~ s/\-//g;
-        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+        if ($genomic_align->dnafrag_strand == 1) {
+          $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+        } else {
+          $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+        }
         $genomic_align->dbID(0); # unset dbID
       }
     }
@@ -282,7 +288,11 @@ sub _create_underlying_Slices {
         $genomic_align->original_sequence(0); # unset original_sequence
         $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new aligned_sequence
         $this_truncated_seq =~ s/\-//g;
-        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+        if ($genomic_align->dnafrag_strand == 1) {
+          $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+        } else {
+          $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+        }
         $genomic_align->dbID(0); # unset dbID
       }
     }
@@ -305,11 +315,16 @@ sub _create_underlying_Slices {
       $align_slice_length += $this_gap_between_genomic_align_blocks;
     }
     $reference_genomic_align->genomic_align_block->reference_slice_start($align_slice_length + 1);
-    $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence);
+    if ($expanded) {
+      $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence);
+      $big_mapper->add_Mapper($reference_genomic_align->get_Mapper);
+    } else {
+      $align_slice_length += CORE::length($reference_genomic_align->original_sequence);
+      $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0,1));
+    }
     $reference_genomic_align->genomic_align_block->reference_slice_end($align_slice_length);
     $reference_genomic_align->genomic_align_block->reference_slice($self);
 # # #     $align_slice_seq .= $reference_genomic_align->aligned_sequence;
-    $big_mapper->add_Mapper($reference_genomic_align->get_Mapper);
 
     $last_start_pos = $reference_genomic_align->dnafrag_end + 1;
   }
@@ -356,6 +371,7 @@ sub _create_underlying_Slices {
           -method_link_species_set => $genomic_align_blocks->[0]->method_link_species_set,
           -name => $ref_species,
       );
+#   $self->{slices}->{$ref_species}->to_Mapper($big_mapper) if (!$expanded);
   $self->{slices}->{$ref_species}->add_Slice_Mapper_pair(
           $self->reference_Slice,
           $big_mapper,
@@ -378,6 +394,7 @@ sub _create_underlying_Slices {
                 -method_link_species_set => $this_genomic_align_block->method_link_species_set,
                 -name => $species,
             );
+#         $self->{slices}->{$species}->to_Mapper($big_mapper) if (!$expanded);
       }
       if (!defined($slice_adaptors->{$species})) {
         $slice_adaptors->{$species} =
@@ -391,13 +408,24 @@ sub _create_underlying_Slices {
               $this_genomic_align->dnafrag_strand
           );
 
-      $self->{slices}->{$species}->add_Slice_Mapper_pair(
-              $this_slice,
-              $this_genomic_align->get_Mapper,
-              $this_genomic_align->genomic_align_block->reference_slice_start,
-              $this_genomic_align->genomic_align_block->reference_slice_end,
-              $this_genomic_align->dnafrag_strand
-          );
+      if ($expanded) {
+        $self->{slices}->{$species}->add_Slice_Mapper_pair(
+                $this_slice,
+                $this_genomic_align->get_Mapper,
+                $this_genomic_align->genomic_align_block->reference_slice_start,
+                $this_genomic_align->genomic_align_block->reference_slice_end,
+                $this_genomic_align->dnafrag_strand
+            );
+      } else {
+        $self->{slices}->{$species}->add_Slice_Mapper_pair(
+                $this_slice,
+                $this_genomic_align->get_Mapper(0,1),
+                $this_genomic_align->genomic_align_block->reference_slice_start,
+                $this_genomic_align->genomic_align_block->reference_slice_end,
+                $this_genomic_align->dnafrag_strand
+            );
+      }
+      
 
     }
   }
