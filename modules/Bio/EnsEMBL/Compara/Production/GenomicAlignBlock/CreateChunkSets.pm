@@ -97,6 +97,8 @@ sub fetch_input {
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
   
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+
   return 1;
 }
 
@@ -105,12 +107,8 @@ sub run
 {
   my $self = shift;
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  
   $self->create_chunk_sets;
   
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-                                          
   return 1;
 }
 
