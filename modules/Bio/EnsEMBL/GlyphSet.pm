@@ -388,25 +388,30 @@ sub zoom_zmenu {
 sub check {
     my( $self ) = @_;
     my ($feature_name) = reverse split '::', ref($self) ;
-    my $features_ref = $self->{'config'}->get('_settings','features') || [];
-    my $options_ref  = $self->{'config'}->get('_settings','options')  || [];
-    foreach( @$features_ref, @$options_ref ) {
-        next unless $_->[0] eq $feature_name;
-        return $feature_name if $_->[2] eq  '';
-        my ($field, $string) = split /\s+/, $_->[2];
-        if($field eq 'databases') {
-            my $DB = EnsWeb::species_defs->databases;
-            return defined $DB->{$string} && $DB->{$string}->{'NAME'} ne '' ? $feature_name : undef;
-        } elsif($field eq 'traces') {
-            my $DB = EnsWeb::species_defs->ENSEMBL_SPECIES_TRACE_DATABASES;
-            return defined $DB->{$string} && $DB->{$string}->{'NAME'} ne '' ? $feature_name : undef;
-        } elsif($field eq 'features') {
-            my $FT = EnsWeb::species_defs->DB_FEATURES;
-            return defined $FT->{uc($string)} && $FT->{uc($string)}   ne '' ? $feature_name : undef;
-        }
-        return undef;
-    }
-    return $feature_name; # If not found in lists then should always be drawn?
+
+    return $self->{'config'}->is_available_artefact( $feature_name ) ? 
+      $feature_name :
+      undef()       ;
+
+#    my $features_ref = $self->{'config'}->get('_settings','features') || [];
+#    my $options_ref  = $self->{'config'}->get('_settings','options')  || [];
+#    foreach( @$features_ref, @$options_ref ) {
+#        next unless $_->[0] eq $feature_name;
+#        return $feature_name if $_->[2] eq  '';
+#        my ($field, $string) = split /\s+/, $_->[2];
+#        if($field eq 'databases') {
+#            my $DB = EnsWeb::species_defs->databases;
+#            return defined $DB->{$string} && $DB->{$string}->{'NAME'} ne '' ? $feature_name : undef;
+#        } elsif($field eq 'traces') {
+#            my $DB = EnsWeb::species_defs->ENSEMBL_SPECIES_TRACE_DATABASES;
+#            return defined $DB->{$string} && $DB->{$string}->{'NAME'} ne '' ? $feature_name : undef;
+#        } elsif($field eq 'features') {
+#            my $FT = EnsWeb::species_defs->DB_FEATURES;
+#            return defined $FT->{uc($string)} && $FT->{uc($string)}   ne '' ? $feature_name : undef;
+#        }
+#        return undef;
+#    }
+#    return $feature_name; # If not found in lists then should always be drawn?
 }
 
 1;
