@@ -490,6 +490,13 @@ sub get_PeptideAlignFeatureAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor" );
 }
 
+
+sub get_AnalysisAdaptor {
+  my $self = shift;
+  return $self->_get_adaptor("Bio::EnsEMBL::Pipeline::DBSQL::AnalysisAdaptor" );
+}
+
+
 sub deleteObj {
   my $self = shift;
 
