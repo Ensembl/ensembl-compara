@@ -42,12 +42,22 @@ if ($help) {
   exit 0;
 }
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-                                                     -port   => $port,
-                                                     -user   => $dbuser,
-                                                     -pass   => $dbpass,
-                                                     -dbname => $dbname,
-                                                     -conf_file => $conf_file);
+my $db;
+
+if (defined $conf_file) {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $port,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname,
+                                                    -conf_file => $conf_file);
+} else {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $port,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname);
+}
 
 my $aa = $db->get_AttributeAdaptor;
 my $genome_dbs = $db->get_GenomeDBAdaptor->fetch_all;

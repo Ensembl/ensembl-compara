@@ -102,13 +102,22 @@ EXIT 2\n";
 close DESC
   || die "$desc_file: $!";
 
+my $db;
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-                                                     -port   => $port,
-                                                     -user   => $dbuser,
-                                                     -pass   => $dbpass,
-                                                     -dbname => $dbname,
-                                                     -conf_file => $conf_file);
+if (defined $conf_file) {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $port,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname,
+                                                    -conf_file => $conf_file);
+} else {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $port,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname);
+}
 
 my $genome_dbs = $db->get_GenomeDBAdaptor->fetch_all;
 my %genome_db;
