@@ -1,10 +1,12 @@
-=head1 NAME Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
+=head1 NAME
+
+Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
 
 =head1 SYNOPSIS
 
 =head1 CONTACT
 
-  Michele Clamp : michele@sanger.ac.uk
+Jessica Severin : jessica@ebi.ac.uk
 
 =head1 APPENDIX
 
@@ -30,12 +32,14 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 #############################
 
 =head2 store
+
   Arg[1]     : one or many DnaFragChunk objects
   Example    : $adaptor->store($chunk);
   Description: stores DnaFragChunk objects into compara database
   Returntype : none
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub store {
@@ -114,6 +118,7 @@ sub update_sequence
 ###############################################################################
 
 =head2 fetch_by_dbID
+
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $dfc = $adaptor->fetch_by_dbID(1234);
@@ -122,6 +127,7 @@ sub update_sequence
   Returntype : Bio::EnsEMBL::Compara::Production::DnaFragChunk
   Exceptions : thrown if $id is not defined
   Caller     : general
+  
 =cut
 
 sub fetch_by_dbID{
@@ -144,6 +150,7 @@ sub fetch_by_dbID{
 }
 
 =head2 fetch_by_dbIDs
+
   Arg [1...] : int $id (multiple)
                the unique database identifier for the feature to be obtained
   Example    : $dfc = $adaptor->fetch_by_dbID(1234);
@@ -152,6 +159,7 @@ sub fetch_by_dbID{
   Returntype : listref of Bio::EnsEMBL::Compara::Production::DnaFragChunk objects
   Exceptions : thrown if $id is not defined
   Caller     : general
+
 =cut
 
 sub fetch_by_dbIDs{
@@ -170,19 +178,45 @@ sub fetch_by_dbIDs{
 
 
 =head2 fetch_all
+
   Arg        : None
   Example    :
   Description:
   Returntype :
   Exceptions :
   Caller     :
+
 =cut
+
 sub fetch_all {
   my $self = shift;
 
   return $self->_generic_fetch();
 }
 
+=head2 fetch_all_for_genome_db_id
+
+  Arg [1]    : int $genome_db_id
+  Example    : $chunks = $adaptor->fetch_all_for_genome_db_id(1);
+  Description: Returns an array with all the DnaFragChunk objects for a given genome_db_id
+  Returntype : listref of Bio::EnsEMBL::Compara::Production::DnaFragChunk objects
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_for_genome_db_id{
+  my $self = shift;
+  my $genome_db_id = shift;
+
+  $self->throw() unless (defined $genome_db_id);
+  
+  my $constraint = "df.genome_db_id='$genome_db_id'";
+
+  my $join = [[['dnafrag', 'df'], 'dfc.dnafrag_id=df.dnafrag_id']];
+  
+  return $self->_generic_fetch($constraint, $join);
+}
 
 ############################
 #
@@ -226,13 +260,12 @@ sub _final_clause {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
+  print("_objs_from_sth\n");
   my %column;
   $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
 
   my @chunks = ();
 
-  my $dataDBA = new Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor($self->dbc);
-  
   while ($sth->fetch()) {
     my $dfc;
 
@@ -240,18 +273,16 @@ sub _objs_from_sth {
 
     $dfc->adaptor($self);
     $dfc->dbID($column{'dnafrag_chunk_id'});
-    $dfc->dnafrag_id($column{'dnafrag_id'});
     $dfc->seq_start($column{'seq_start'});
     $dfc->seq_end($column{'seq_end'});
     $dfc->sequence_id($column{'sequence_id'});
+    $dfc->dnafrag_id($column{'dnafrag_id'});
+    $dfc->masking_analysis_data_id($column{'masking_analysis_data_id'});
 
-    if($column{'dnafrag_id'} and $self->db->get_DnaFragAdaptor) {
-      $dfc->dnafrag($self->db->get_DnaFragAdaptor->fetch_by_dbID($column{'dnafrag_id'}));
-    }
     if($column{'masking_analysis_data_id'}) {
-      #print("fetch masking_option from analysis_data via id ", $column{'masking_analysis_data_id'}, "\n");
-      $dfc->masking_options($dataDBA->fetch_by_dbID($column{'masking_analysis_data_id'}));
-      #set masking_analysis_data_id second because setting masking_options resets the ID
+      $dfc->masking_options($self->_fetch_MaskingOptions_by_dbID($column{'masking_analysis_data_id'}));
+
+      #reset masking_analysis_data_id second because setting masking_options internal clears ID
       $dfc->masking_analysis_data_id($column{'masking_analysis_data_id'});
     }
 
@@ -325,7 +356,7 @@ sub _generic_fetch {
   #append additional clauses which may have been defined
   $sql .= " $final_clause" if($final_clause);
 
-  # print STDERR $sql,"\n";
+  print STDERR $sql,"\n";
   my $sth = $self->prepare($sql);
   $sth->execute;
 
@@ -333,6 +364,32 @@ sub _generic_fetch {
   # print STDERR "sql execute finished. about to build objects\n";
 
   return $self->_objs_from_sth($sth);
+}
+
+
+sub _fetch_DnaFrag_by_dbID
+{
+  my $self       = shift;
+  my $dnafrag_id = shift;
+
+  return $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);  
+}
+
+sub _fetch_MaskingOptions_by_dbID
+{
+  my $self    = shift;
+  my $data_id = shift;
+
+  $self->{'_masking_cache'} = {} unless(defined($self->{'_masking_cache'}));
+
+  if(!defined($self->{'_masking_cache'}->{$data_id})) {
+    print("FETCH masking_options for data_id = $data_id\n");
+    
+    my $dataDBA = new Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor($self->dbc);
+    $self->{'_masking_cache'}->{$data_id} = $dataDBA->fetch_by_dbID($data_id);
+  }
+  
+  return $self->{'_masking_cache'}->{$data_id};
 }
 
 

@@ -6,7 +6,7 @@
 
 =head1 CONTACT
 
-Describe contact details here
+Jessica Severin <jessica@ebi.ac.uk>
 
 =head1 APPENDIX
 
@@ -34,6 +34,7 @@ sub new {
 
 
 =head2 slice
+
   Arg        : none
   Example    : $slice = $chunk->slice;
   Description: Meta method which uses the dnafrag of this chunk to get the genomeDB
@@ -43,7 +44,9 @@ sub new {
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : none
   Caller     : general, self->fetch_masked_sequence()
+
 =cut
+
 sub slice {
   my ($self) = @_;
 
@@ -67,6 +70,7 @@ sub slice {
 
 
 =head2 fetch_masked_sequence
+
   Description: Meta method which uses the slice associated with this chunk
                and from the external core database associated with the slice
                it extracts the masked DNA sequence.
@@ -80,7 +84,9 @@ sub slice {
   Returntype : Bio::Seq or undef if a problem
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub fetch_masked_sequence {
   my $self = shift;
   
@@ -126,6 +132,7 @@ sub fetch_masked_sequence {
 
 
 =head2 display_id
+
   Args       : none
   Example    : my $id = $chunk->display_id;
   Description: returns string describing this chunk which can be used
@@ -134,7 +141,9 @@ sub fetch_masked_sequence {
   Returntype : string
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub display_id {
   my $self = shift;
 
@@ -148,13 +157,16 @@ sub display_id {
 }
 
 =head2 bioseq
+
   Args       : none
   Example    : my $bioseq = $chunk->bioseq;
   Description: returns stored sequence of this chunk as a Bio::Seq object
   Returntype : Bio::Seq object
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub bioseq {
   my $self = shift;
 
@@ -194,10 +206,16 @@ sub dnafrag {
   if (defined($dnafrag)) {
     throw("arg must be a [Bio::EnsEMBL::Compara::DnaFrag] not a [$dnafrag]")
         unless($dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag'));
-    $self->{'dnafrag'} = $dnafrag;
+    $self->{'_dnafrag'} = $dnafrag;
     $self->dnafrag_id($dnafrag->dbID);
   }
-  return $self->{'dnafrag'};
+
+  #lazy load the DnaFrag
+  if(!defined($self->{'_dnafrag'}) and defined($self->dnafrag_id) and $self->adaptor) {
+    $self->{'_dnafrag'} = $self->adaptor->_fetch_DnaFrag_by_dbID($self->dnafrag_id);
+  }
+
+  return $self->{'_dnafrag'};
 }
 
 sub dnafrag_id {
@@ -224,6 +242,11 @@ sub seq_end {
   return $self->{'seq_end'};
 }
 
+sub length {
+  my $self = shift;
+  return $self->{'seq_end'} - $self->{'seq_start'} + 1;
+}
+
 sub sequence_id {
   my $self = shift;
   return $self->{'sequence_id'} = shift if(@_);
@@ -245,10 +268,10 @@ sub sequence {
 sub masking_options {
   my $self = shift;
   if(@_) {
-    $self->{'masking_options'} = shift;
+    $self->{'_masking_options'} = shift;
     $self->masking_analysis_data_id(0);
   }
-  return $self->{'masking_options'};
+  return $self->{'_masking_options'};
 }
 
 #method for passing previously known and stored analysis_data_id reference around
