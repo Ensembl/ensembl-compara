@@ -116,11 +116,6 @@ $matrix = $mp->next_matrix;
 			$chr1=~s/chromosome://;
 			$chr1=$chr1.".".$chr1_2;#just for BEE
 			}
-		elsif ($sps1 =~/Fr/){
-			($chr1, $offset1) = split /\./,$atrib[0];
-			$chr1=~s/FrChr_//;
-			$seq_type1="scaffold";
-			}
 		elsif($sps1 =~/Cb/){
 			($chr1_2, $chr1, $offset1) = split /\./,$atrib[0];
 			$chr1= "cb25.".$chr1;
@@ -130,6 +125,11 @@ $matrix = $mp->next_matrix;
 			($chr1, $offset1) = split /\./,$atrib[0];
 			$chr1=~s/Ag2b//;
 			$seq_type1="chromosome";
+			}
+		elsif($sps1 =~/Fr/){
+			($chr1, $offset1) = split /\./,$atrib[0];
+			$chr1=~s/FrChr_//;
+			$seq_type1="scaffold";
 			}
 		else{
 			$atrib[0] =~/$sps1\.(\S+):(\S+)\.(\d+)$/; #use for rest
@@ -181,6 +181,19 @@ my $Hst=$atrib[10]; if ($Hst eq '+'){$Hst= 1;}else {$Hst='-1';}
 
 #print STDERR "Qst: $Qst\n";
 #print STDERR "Hst: $Hst\n";
+
+
+##############################################################################################
+##should move the chromosome check to here to reduce the memory requirement 
+##-- only a chromosome and scaffolds worth would be need to be held in memory
+################################################################################################
+
+
+
+
+
+
+
 
 
 my $sliceQ = $sliceadaptor1->fetch_by_region('toplevel', $chr1, $Qstart, $Qend, $Qst);
@@ -308,33 +321,48 @@ if ($score<=0){
 				
 		$i++;#should start at 0 ##########Strands are the wrong way around
 		
-		}
+		}#end of while file loop
 		
 		
 		
 		
 	#need to sort array on Hstart first 
-#NB I DO CHECK THAT THE Query ALIGNMENTS ARE ON DIFFERENT SCAFFOLDS -- NOT NEEDED FOR HS AS THEY ARE ALL ON ONE CHR!!!!!!!
+#NB I DO CHECK THAT THE Query ALIGNMENTS ARE ON DIFFERENT SCAFFOLDS -- NOT NEEDED FOR HS AS THEY ARE ALL ON ONE CHR!!!!!!! -- or just do a sort
+
+##########################
+##ok lets see what happens when we ignore strand and just go for the best scoring alignments?
+
+
+
+
+
 
 #FIRST GROUP BY Query seq_region
-my @sorteds=sort{$a->{chr1} cmp $b->{chr1} || $a->{Q_start} <=> $b->{Q_start}} @all;
-my $prev_chr; my $chr=0; my @all_same;
+my @sorteds=sort{$a->{chr2} cmp $b->{chr2} || $a->{chr1} cmp $b->{chr1} || $a->{T_start}<=>$b->{T_start} || $a->{T_end} <=> $b->{T_end} || $a->{Q_start} <=> $b->{Q_start} || $a->{Q_end} <=> $b->{Q_end}} @all;
+
+
+
+###try adding in an extra or here with the target chr2 in it
+my $prev_chr1; my $chr1=0; my @all_same;#e
+my $prev_chr2; my $chr2=0; #e
+
 my $lc=0;
 CHR:foreach my $ali (@sorteds){ 
 	$lc++;
-	$chr=$ali->{chr1};
-	if (defined($prev_chr)){
+	$chr1=$ali->{chr1};#e
+	$chr2=$ali->{chr2};#e
+	if ((defined($prev_chr1)) || (defined($prev_chr2))){#e
 		#print STDERR $ali->{chr1}." $chr $prev_chr line 90 ".$ali->{T_start}." ".$ali->{Q_start}."\n";
 			
 			
 			
 		#next chr or end of file
-		if (($prev_chr ne $chr) || ($lc==scalar @sorteds)){	
+		if (($prev_chr2 ne $chr2) || ($prev_chr2 ne $chr2) ||($lc==scalar @sorteds)){	#e
 			
 		#else{#do everything and start the next array afterwards
 		#print STDERR scalar(@all_same)." GGGGG".$all_same[0]->{T_start}." ".$ali->{Q_start}."\n";
 		
-		my @sorted_hsps=sort{$a->{T_start}<=>$b->{T_start} || $a->{Q_start} <=> $b->{Q_start}} @all_same;
+		my @sorted_hsps=sort{$a->{chr2} cmp $b->{chr2} || $a->{chr1} cmp $b->{chr1} || $a->{T_start}<=>$b->{T_start} || $a->{T_end} <=> $b->{T_end} || $a->{Q_start} <=> $b->{Q_start} || $a->{Q_end} <=> $b->{Q_end} } @all_same;
 		#my @sorted_hsps=sort{$a->{T_start} <=> $b->{T_start} } @all_same;
 				
 my $A=0; my $qsdiff=0; my $qediff=0; my $ssdiff=0; my $sediff=0; my $compare;
@@ -414,7 +442,7 @@ OVERLAP:foreach my $align (@sorted_hsps){###Need to redo this as a sub
 					#next OVERLAP;
 					#}
 			
-				if ($compare->{score} > $align->{score}) {
+				if ($compare->{score} >= $align->{score}) {
 					#ditch align
 					my $sp=splice @parsed_hsps, $A, 1;
 #print STDERR "align: ".$align->{score}." (".$compare->{score} ." ) splice align ". $sp->{score}." \n";
@@ -426,10 +454,7 @@ OVERLAP:foreach my $align (@sorted_hsps){###Need to redo this as a sub
 #print STDERR "a-1: ".$compare->{score} ." (".$align->{score}." ) splice i-1 ". $sp->{score}." \n";
 					 $compare=$align; next OVERLAP;
 					}
-				else{#keep both
-					#push @kept_hsps, $compare;
-				$compare=$align; $A++; next OVERLAP; 
-					}
+				
 				}
 			}
 		else{ 
@@ -459,7 +484,7 @@ my @new_sorted_hsps=sort{$a->{Q_start}<=>$b->{Q_start} || $a->{T_start} <=> $b->
  $A=0; $qsdiff=0; $qediff=0;  $ssdiff=0;  $sediff=0; $compare='';
 my @new_parsed_hsps=@new_sorted_hsps;	
 	
-	use Getopt::Long;
+	
 
 
 OVERLAP:foreach my $align (@new_sorted_hsps){###Need to redo this as a sub
@@ -568,15 +593,15 @@ OVERLAP:foreach my $align (@new_sorted_hsps){###Need to redo this as a sub
  		@all_same=();
 		#print STDERR $ali->{chr1}." $chr $prev_chr\n";
 		push @all_same, $ali;
-		$prev_chr=$chr;
+		$prev_chr1=$chr1; $prev_chr2=$chr2;#e
  		next CHR;
  
  
 
 
 		
-			}
-		elsif($prev_chr eq $chr){
+	}
+		elsif(($prev_chr1 eq $chr1) || ($prev_chr2 eq $chr2)){#e
 			push @all_same, $ali;
 			#print scalar(@all_same)." ". ref($ali)."\n";
 			
@@ -587,7 +612,8 @@ OVERLAP:foreach my $align (@new_sorted_hsps){###Need to redo this as a sub
 		}
 	else {#first pass
 	push @all_same, $ali;
-		$prev_chr=$chr;
+		$prev_chr1=$chr1;#e
+		$prev_chr2=$chr2;#e
 		}
 
 	}
