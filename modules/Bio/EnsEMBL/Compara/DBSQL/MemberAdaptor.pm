@@ -407,8 +407,8 @@ sub fetch_gene_for_peptide_member_id {
 
 =head2 fetch_peptides_for_gene_member_id
 
-  Arg [1]    : int member_id of a peptide member
-  Example    : $geneMember = $memberAdaptor->fetch_gene_for_peptide_member_id($peptide_member_id);
+  Arg [1]    : int member_id of a gene member
+  Example    : @pepMembers = @{$memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id)};
   Description: given a member_id of a gene member,
                fetches all peptide members for this gene
   Returntype : array ref of Bio::EnsEMBL::Compara::Member objects
@@ -416,6 +416,7 @@ sub fetch_gene_for_peptide_member_id {
   Caller     : general
 
 =cut
+
 sub fetch_peptides_for_gene_member_id {
   my ($self, $gene_member_id) = @_;
 
@@ -429,6 +430,37 @@ sub fetch_peptides_for_gene_member_id {
   };
   return $peplist;
 }
+
+=head2 fetch_longest_peptide_member_for_gene_member_id
+
+  Arg [1]    : int member_id of a gene member
+  Example    : $pepMembers = $memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id);
+  Description: given a member_id of a gene member,
+               fetches all peptide members for this gene
+  Returntype : array ref of Bio::EnsEMBL::Compara::Member objects
+  Exceptions :
+  Caller     : general
+
+=cut
+
+sub fetch_longest_peptide_member_for_gene_member_id {
+  my ($self, $gene_member_id) = @_;
+
+  $self->throw() unless (defined $gene_member_id);
+
+  my $constraint = "m.gene_member_id = '$gene_member_id'";
+
+  my $join = [[['sequence', 'seq'], 'm.sequence_id = seq.sequence_id']];
+  $self->_final_clause("ORDER BY seq.length DESC");
+
+  my $obj = undef;
+  eval {
+    ($obj) = @{$self->_generic_fetch($constraint, $join)};
+  };
+  $self->_final_clause("");
+  return $obj;
+}
+
 
 #
 # INTERNAL METHODS
@@ -729,12 +761,14 @@ sub store_source {
 }
 
 =head2 get_source_name_from_id
+
   Arg [1]    :
   Example    :
   Description:
   Returntype :
   Exceptions :
   Caller     :
+
 =cut
 
 sub get_source_name_from_id {
@@ -780,6 +814,7 @@ sub get_source_id_from_name {
 }
 
 =head2 store_gene_peptide_link
+
   Arg [1]    : int member_id of gene member
   Arg [2]    : int member_id of peptide member
   Example    : $memberDBA->store_gene_peptide_link($gene->dbID, $peptide->dbID);
@@ -788,6 +823,7 @@ sub get_source_id_from_name {
   Returntype : none
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub store_gene_peptide_link {
