@@ -494,8 +494,12 @@ sub sync_with_registry {
       #a locator
       $coreDBA = $genome_db->db_adaptor();
       if(defined($coreDBA)) {
-        Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
-        Bio::EnsEMBL::Registry->add_alias($registry_name, $genome_db->name);
+        if (Bio::EnsEMBL::Registry->alias_exists($genome_db->name)) {
+          Bio::EnsEMBL::Registry->add_alias($genome_db->name, $registry_name);
+        } else {
+          Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
+          Bio::EnsEMBL::Registry->add_alias($registry_name, $genome_db->name);
+        }
       }
     }
   }
