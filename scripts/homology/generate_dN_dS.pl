@@ -13,6 +13,7 @@ my $help = 0;
 my $store = 0;
 my $host;
 my $dbname;
+my $dbport;
 my $dbuser = "ensro";
 my $dbpass;
 my $conf_file;
@@ -28,6 +29,7 @@ if (-e "/proc/version") {
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
+	   'dbport=s' => \$dbport,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
@@ -36,6 +38,7 @@ GetOptions('help' => \$help,
            'dir=s' => \$dir_output);
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+						     -port   => $dbport,
                                                      -user   => $dbuser,
                                                      -pass   => $dbpass,
                                                      -dbname => $dbname,
