@@ -136,7 +136,7 @@ sub run
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }
-      #if($transcriptCount >= 1000) { last SLICE; }
+      #if($self->{'transcriptCount'} >= 1000) { last SLICE; }
       #if($geneCount >= 1000) { last SLICE; }
     }
     #last SLICE;
@@ -148,12 +148,7 @@ sub run
   print("       ".$self->{'transcriptCount'}." transscripts\n");
   print("       ".$self->{'longestCount'}." longest transscripts\n");
   print("       ".$self->{'pepSubset'}->count()." in Subset\n");
-        
-}
 
-
-sub write_output {
-  my $self = shift;
 
   # using the genome_db and longest peptides subset, create a fasta
   # file which can be used as a blast database
@@ -167,8 +162,11 @@ sub write_output {
   #
   # This creates the starting point for the blasts (members against database)
   $self->submitSubsetForAnalysis();
-
+                        
 }
+
+# don't need to subclass write_output since there is no output
+#sub write_output { return 1;}
 
 
 ######################################
@@ -313,8 +311,10 @@ sub submitSubsetForAnalysis {
   print("store using sic\n");
   my $errorCount=0;
   my $tryCount=0;
+  my @member_id_list = @{$subset->member_id_list()};
+  print($#member_id_list+1 . " members in subset\n");
   eval {
-    foreach my $member_id (@{$subset->member_id_list()}) {
+    foreach my $member_id (@member_id_list) {
       eval {
         $tryCount++;
         $sicDBA->store_input_id_analysis($member_id, #input_id
@@ -329,7 +329,6 @@ sub submitSubsetForAnalysis {
           die("too many repeated failed insert attempts, assume will continue for durration. ACK!!\n");
         }
       } # should handle the error, but ignore for now
-      if($tryCount>=5) { last; }
     }
   };
   print("CREATED all input_id_analysis\n");
