@@ -85,30 +85,11 @@ sub fetch_by_dbID {
 }
 
 
-=head2 list_align_ids
-
- Title   : list_align_ids
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
 
 sub list_align_ids{
    my ($self) = @_;
 
-   my $sth = $self->prepare("select align_id from align");
-   $sth->execute();
-
-   my @out;
-   while( my ($gid) = $sth->fetchrow_array ) {
-       push(@out,$gid);
-   }
-
-   return @out;
+   $self->throw( "This is useless now. I think we need the dnafrags for just one species here" );
 }
 
 
@@ -129,9 +110,11 @@ got to fix this
 sub fetch_GenomicAlign_by_dbID{
   my ($self,$align_id,$align_row_id) = @_;
 
-  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $align_id,
-						   -adaptor => $self,
-						   -align_row_id => $align_row_id);
+  $self->throw( "Useless now, only alignments should come back from this adaptor" );
+
+#  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $align_id,
+#						   -adaptor => $self,
+#						   -align_row_id => $align_row_id);
 }
 
 =head2 fetch_align_id_by_align_name
@@ -148,15 +131,16 @@ sub fetch_GenomicAlign_by_dbID{
 
 sub fetch_align_id_by_align_name {
   my ($self,$align_name) = @_;
-  
-  unless (defined $align_name) {
-    $self->throw("align_name must be defined as argument");
-  }
 
-  my $sth = $self->prepare("select align_id from align where align_name=\"$align_name\"");
-  $sth->execute();
-  my ($align_id) = $sth->fetchrow_array;
-  return $align_id;
+  $self->throw( "This is the slice name in one of the species. Should be fetch_by_dnafrag" );
+#  unless (defined $align_name) {
+#    $self->throw("align_name must be defined as argument");
+#  }
+
+#  my $sth = $self->prepare("select align_id from align where align_name=\"$align_name\"");
+#  $sth->execute();
+#  my ($align_id) = $sth->fetchrow_array;
+#  return $align_id;
 }
 
 =head2 fetch_align_name_by_align_id
@@ -174,14 +158,7 @@ sub fetch_align_id_by_align_name {
 sub fetch_align_name_by_align_id {
   my ($self,$align_id) = @_;
   
-  unless (defined $align_id) {
-    $self->throw("align_id must be defined as argument");
-  }
-
-  my $sth = $self->prepare("select align_name from align where align_id=\"$align_id\"");
-  $sth->execute();
-  my ($align_name) = $sth->fetchrow_array;
-  return $align_name;
+  $self->throw( "fetch_by_dnafrag is better choice now" );
 }
 
 =head2 fetch_by_genomedb_dnafrag_list
@@ -198,6 +175,10 @@ sub fetch_align_name_by_align_id {
 
 sub fetch_by_genomedb_dnafrag_list{
    my ($self,$genomedb,$dnafrag_list) = @_;
+   # dnafrags have genomedb, so it should be redundant here
+   
+   $self->warn( "use fetch_all_by_dnafrags( $dnafrags, \"query\""); 
+   $self->fetch_all_by_dnafrags( $dnafrag_list );
 
    my $str;
 
@@ -355,20 +336,30 @@ sub store {
 
 
 
-=head2 fetch_by_dnafrag
 
- Title	 : fetch_by_dnafrag
- Usage	 :
- Function:
- Example :
- Returns : an array of Bio::EnsEMBL::Compara::GenomicAlign objects 
- Args 	 :
+=head2 fetch_all_by_dnafrag
 
+  Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+               All genomic aligns that align to this frag
+  Arg [2]    : int $consensus_or_query
+               restrict the result to dnafrags 
+               on consensus side (1) or
+               on query side (2)
+  Arg [3]    : int $start
+  Arg [4]    : int $end
+  Example    : none
+  Description: Find all GenomicAligns that overlap this dnafrag.
+               Return them in a way that this frags are on the
+               consensus side of the Alignment.
+  Returntype : listref Bio::EnsEMBL::Compara:GenomicAlign
+  Exceptions : none
+  Caller     : general
 
 =cut
 
-sub fetch_by_dnafrag{
-   my ($self,$dnafrag,$start,$end) = @_;
+
+sub fetch_all_by_dnafrag {
+   my ($self,$dnafrag,$restrict_c_or_q, $start,$end) = @_;
 
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
     unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
@@ -377,26 +368,42 @@ sub fetch_by_dnafrag{
 	
    my $dnafrag_id = $dnafrag->dbID;
    
+   my $genome_db = $dnafrag->genomeDB();
+   my $select = "SELECT ".join( ",", $self->_columns() ).
+     "FROM genomic_align_block ";
    my $sql;
-   unless (defined $start && defined $end) {
-     $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.dnafrag_id=$dnafrag_id and d.dnafrag_id = gab.dnafrag_id group by gab.align_id,gab.align_row_id";
-   } else {
-     $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.dnafrag_id=$dnafrag_id and d.dnafrag_id = gab.dnafrag_id and gab.raw_start<=$end and gab.raw_end>=$start group by gab.align_id,gab.align_row_id";
+   my $sth;
+   my $result = [];
+
+   if( $genome_db->is_consensus() ) {
+     if( $restrict_c_or_q != 2 ) {
+       $sql = $select . "WHERE consensus_dnafrag_id = $dnafrag_id";
+       if (defined $start && defined $end) {
+	 $sql .= " AND consensus_start<= $end
+                   AND consensus_end >= $start";
+       }
+     }
+     $sth = $self->prepare( $sql );
+     $sth->execute();
+     $result = $self->_objs_from_sth( $sth );
    }
 
-   my $sth = $self->prepare($sql);
-
-   $sth->execute();
-
-   my @out;
-
-   while( my ($gaid,$row_id) = $sth->fetchrow_array ) {
-       push(@out,$self->fetch_by_dbID($gaid,$row_id));
+   if( $genome_db->is_query() ) {
+     if( $restrict_c_or_q != 1 ) {
+       $sql = $select . "WHERE query_dnafrag_id = $dnafrag_id";
+       if (defined $start && defined $end) {
+	 $sql .= " AND query_start<= $end
+                   AND query_end >= $start";
+       }
+     }
+     $sth = $self->prepare( $sql );
+     $sth->execute();
+     push( @$result, @{$self->_objs_from_sth( $sth )});
    }
-      	
 
-   return @out;
+   return $result;
 }
+
 
 =head2 fetch_DnaDnaAlignFeature_by_species_chr_start_end
 
@@ -432,9 +439,9 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
   foreach my $df (@list_dnafrag) {
     my @genomicaligns;
     if ($dnafrag_type eq "VirtualContig") {
-      @genomicaligns = $self->fetch_by_dnafrag($df);
+      @genomicaligns = @{$self->fetch_all_by_dnafrag($df)};
     } elsif ($dnafrag_type eq "Chromosome") {
-      @genomicaligns = $self->fetch_by_dnafrag($df,$chr_start,$chr_end);
+      @genomicaligns = @{$self->fetch_all_by_dnafrag($df,$chr_start,$chr_end)};
     }
 
     foreach my $genomicalign (@genomicaligns) {
@@ -583,6 +590,90 @@ sub fetch_DnaDnaAlignFeatures_by_Slice {
 
   return $features;
 }
+
+# produse a list of columns in the order expected from 
+# _objs_from_sth
+
+sub _columns {
+  return ( "consensus_dnafrag_id", "consensus_start", "consensus_end",
+	   "query_dnafrag_id", "query_start", "query_end", "query_strand",
+	   "score", "perc_id", "cigar_line" );
+}
+
+=head2 _objs_from_sth
+
+  Arg [1]    : DBD::statement_handle $sth
+               an executed statement handle. The result columns
+               have to be in the correct order.
+  Arg [2]    : int $reverse ( 1 if present )
+               flip the consensus and the query before creating the
+               GenomicAlign.  
+  Example    : none
+  Description: retrieves the data from the database and creates GenomicAlign
+               objects from it.
+  Returntype : listref Bio::EnsEMBL::Compara::GenomicAlign 
+  Exceptions : none
+  Caller     : internal
+
+=cut
+
+
+sub _objs_from_sth {
+  my ( $self, $sth, $reverse ) = @_;
+
+  my $result = [];
+
+  my ( $consensus_dnafrag_id, $consensus_start, $consensus_end, $query_dnafrag_id,
+       $query_start, $query_end, $query_strand, $score, $perc_id, $cigar_line );
+  if( $reverse ) {
+    $sth->bind_columns
+      ( \$query_dnafrag_id, \$query_start, \$query_end,  
+	\$consensus_dnafrag_id, \$consensus_start, \$consensus_end, \$query_strand,
+	\$score, \$perc_id, \$cigar_line );
+  } else {
+    $sth->bind_columns
+      ( \$consensus_dnafrag_id, \$consensus_start, \$consensus_end, 
+	\$query_dnafrag_id, \$query_start, \$query_end, \$query_strand, 
+	\$score, \$perc_id, \$cigar_line );
+  }
+
+  my $da = $self->db()->get_DnaFragAdaptor();
+
+  while( $sth->fetch() ) {
+    my $genomic_align;
+    
+    if( $reverse && $query_strand == -1 ) {
+      # alignment of the opposite strand
+
+      $cigar_string =~ tr/DI/ID/;
+      my @pieces = ( $cigar_string =~ /(\d*[MDI])/g );
+      $cigar_string = join( "", reverse( @pieces ));
+    }
+    
+    $genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new
+      (
+       -adaptor => $self,
+       -consensus_dnafrag => $da->fetch_by_dbID( $consensus_dnafrag_id ),
+       -consensus_start => $consensus_start,
+       -consensus_end => $consensus_end,
+       -query_dnafrag => $da->fetch_by_dbID( $query_dnafrag_id ),
+       -query_start => $query_start,
+       -query_end => $query_end,
+       -query_strand => $query_strand,
+       -score => $score,
+       -perc_id => $perc_id,
+       -cigar_line => $cigar_line
+      );
+
+
+    push( @$result, $genomic_align );
+  }
+
+
+  return $result;
+}
+
+
 
 
 =head2 deleteObj
