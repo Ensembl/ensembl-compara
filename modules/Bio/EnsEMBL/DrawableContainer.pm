@@ -3,6 +3,7 @@ use Bio::Root::RootI;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::Glyph::Rect;
+use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bio::EnsEMBL::GlyphSetManager::das;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
@@ -117,20 +118,24 @@ sub new {
         my $NAME = ref($glyphset);
         $NAME =~ s/^.*:://;
         my $URL = $Config->get( '_settings', 'URL')."$NAME%3A";
+        my $symbol;
         if($glyphset->bumped() eq 'yes') {
             $URL .= 'off';
+            $symbol = '-';
         } else {
             $URL .= 'on';
-            my $vert_glyph = new Bio::EnsEMBL::Glyph::Rect({
-                'y'      	=> 2,
-		    	'x'      	=> 6,
-		    	'width'  	=> 1,
-		    	'height' 	=> 4,
-		    	'colour' 	=> $black,
-		    	'absolutey' => 1,
-				'absolutex' => 1
-            });
-            $composite->push($vert_glyph);
+            $symbol = '+';
+            
+#            my $vert_glyph = new Bio::EnsEMBL::Glyph::Rect({
+#                'y'      	=> 2,
+#		    	'x'      	=> 6,
+#		    	'width'  	=> 1,
+#		    	'height' 	=> 4,
+#		    	'colour' 	=> $black,
+#		    	'absolutey' => 1,
+#				'absolutex' => 1
+#            });
+#            $composite->push($vert_glyph);
         }
         my $box_glyph = new Bio::EnsEMBL::Glyph::Rect({
     	        'x'      	=> 2,
@@ -142,16 +147,27 @@ sub new {
 				'absolutex' => 1,
                 'href'      => $URL
         });
-        
-        my $horiz_glyph = new Bio::EnsEMBL::Glyph::Rect({
-    	        'x'      	=> 4,
-		    	'y'      	=> 4,
-		    	'width'  	=> 5,
-		    	'height' 	=> 0,
-		    	'colour' 	=> $black,
-		    	'absolutey' => 1,
-				'absolutex' => 1
+        my $horiz_glyph = new Bio::EnsEMBL::Glyph::Text({
+            'text'      => $symbol,
+            'font'      => 'Small',
+            'absolutey' => 1,
+            'x'         => 4,
+            'y'      	=> $symbol eq '-' ? -1.5 : -1,
+		    'width'  	=> 10,
+		    'height' 	=> 8,
+            'colour'    => $black,
+            'absolutex' => 1
         });
+        
+#        my $horiz_glyph = new Bio::EnsEMBL::Glyph::Rect({
+#    	        'x'      	=> 4,
+#		    	'y'      	=> 4,
+#		    	'width'  	=> 5,
+#		    	'height' 	=> 0,
+#		    	'colour' 	=> $black,
+#		    	'absolutey' => 1,
+#				'absolutex' => 1
+#        });
         
         $composite->push($box_glyph);
         $composite->push($horiz_glyph);
