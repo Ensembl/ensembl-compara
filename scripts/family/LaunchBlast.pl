@@ -40,7 +40,7 @@ unless(system("$fastafetch_executable $fastadb $fastaindex $idqy > $qy_file") ==
   die "error in $fastafetch_executable, $!\n";
 } 
 
-my $status = system("$blast_executable -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 1000 -b 0 > $blast_file");
+my $status = system("$blast_executable -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
 unless ($status == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in $blast_executable, $!\n";
