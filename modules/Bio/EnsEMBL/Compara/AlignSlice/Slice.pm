@@ -1161,7 +1161,7 @@ sub get_all_underlying_Slices {
             if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate") and !defined($this_subseq_strand));
       }
     }
-    next if (!defined($this_subseq_start)); # if the whole requested region correspond to a gap
+#     next if (!defined($this_subseq_start)); # if the whole requested region correspond to a gap
     my $start_position = ($start>$slice_start)?$start:$slice_start; # in AlignSlice coordinates
     my $end_position = ($end<$slice_end)?$end:$slice_end; # in AlignSlice coordinates
 #     if ($strand == 1) {
@@ -1189,14 +1189,26 @@ sub get_all_underlying_Slices {
 #       }
 #     }
     $current_position = $end_position + 1;
-    my $this_underlying_slice = new Bio::EnsEMBL::Slice(
-            -coord_system => $this_slice->coord_system,
-            -seq_region_name => $this_slice->seq_region_name,
-            -start => $this_subseq_start,
-            -end => $this_subseq_end,
-            -strand => $this_subseq_strand
-        );
-    $this_underlying_slice->{seq} = $self->subseq($start_position, $end_position, $strand);
+    my $this_underlying_slice;
+    if (!defined($this_subseq_start)) {
+      $this_underlying_slice = new Bio::EnsEMBL::Slice(
+              -coord_system => $gap_coord_system,
+              -seq_region_name => "GAP",
+              -start => $start_position,
+              -end => $end_position,
+              -strand => 0
+          );
+      $this_underlying_slice->{seq} = "-" x ($end_position - $start_position + 1);
+    } else {
+      $this_underlying_slice = new Bio::EnsEMBL::Slice(
+              -coord_system => $this_slice->coord_system,
+              -seq_region_name => $this_slice->seq_region_name,
+              -start => $this_subseq_start,
+              -end => $this_subseq_end,
+              -strand => $this_subseq_strand
+          );
+      $this_underlying_slice->{seq} = $self->subseq($start_position, $end_position, $strand);
+    }
 #     if ($strand == 1) {
       push(@$underlying_slices, $this_underlying_slice);
 #     } else {
@@ -1219,6 +1231,35 @@ sub get_all_underlying_Slices {
   }
 
   return $underlying_slices;
+}
+
+
+=head2 get_original_seq_region_position
+
+  Arg  [1]   : int $position
+               relative to start of slice, which is 1.
+  Description: This Slice is made of several Bio::EnsEMBL::Slices mapped
+               on it with gaps inside and regions with no matching
+               sequence. This method returns the original seq_region_position
+               in the original Slice of the requested position in AlignSlice
+               coordinates
+  Example    : my ($slice, $seq_region_position) = $as_slice->
+                   get_original_seq_region_position(100);
+  Returntype : ($slice, $seq_region_position), an array where the first
+               element is a Bio::EnsEMBL::Slice and the second one is the
+               requested seq_region_position.
+  Exceptions : if the position corresponds to a gap, the slice will be a fake GAP
+               slice and the position will be the requested one (in AlignSlice
+               coordinates)
+  Caller     : general
+
+=cut
+
+sub get_original_seq_region_position {
+  my ($self, $position) = @_;
+  my $underlying_slice = $self->get_all_underlying_Slices($position, $position, 1)->[0];
+
+  return ($underlying_slice, $underlying_slice->start);
 }
 
 
