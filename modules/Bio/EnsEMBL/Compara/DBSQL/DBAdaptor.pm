@@ -47,74 +47,9 @@ package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use vars qw(@ISA);
 use strict;
 
+use Bio::EnsEMBL::DBSQL::DBConnection;
 
-use Bio::EnsEMBL::Root;
-
-use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
-use DBI;
-
-@ISA = qw(Bio::EnsEMBL::Root);
-
-sub new {
-  my($pkg, @args) = @_;
-
-  my $self = bless {}, $pkg;
-  
-  my (
-      $db,
-      $host,
-      $driver,
-      $user,
-      $pass,
-      $password,
-      $port,
-      ) = $self->_rearrange([qw(
-				DBNAME
-				HOST
-				DRIVER
-				USER
-				PASS
-				PASSWORD
-				PORT
-				)],@args);
-
-  $db   || $self->throw("Database object must have a database name");
-  $user || $self->throw("Database object must have a user");
-  
-
-  if( defined $pass && ! defined $password ) {
-    $password = $pass;
-  }
-
-  if( ! $driver ) {
-        $driver = 'mysql';
-    }
-  if( ! $host ) {
-      $host = 'localhost';
-  }
-  if ( ! $port ) {
-      $port = "";
-  }
-  
-  my $dsn = "DBI:$driver:database=$db;host=$host;port=$port";
-  
-  
-  my $dbh = DBI->connect("$dsn","$user",$password, {RaiseError => 1});
-  
-  $dbh || $self->throw("Could not connect to database $db user $user using [$dsn] as a locator");
-  
-  
-  $self->_db_handle($dbh);
-  
-  $self->username( $user );
-  $self->host( $host );
-  $self->dbname( $db );
-  $self->password( $password);
-
-
-  return $self; # success - we hope!
-}
-
+@ISA = qw( Bio::EnsEMBL::DBSQL::DBConnection );
 
 =head2 get_GenomeDBAdaptor
 
@@ -138,30 +73,6 @@ sub get_GenomeDBAdaptor{
    return $self->{'_genomedb_adaptor'};
 }
 
-=head2 get_ProteinAdaptor
-
- Title   : get_ProteinAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub get_ProteinAdaptor{
-   my ($self) = @_;
-
-   if( !defined $self->{'_protein_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor;
-       $self->{'_protein_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor->new($self);
-   }
-   return $self->{'_protein_adaptor'};
-}
-
-
-
 =head2 get_DnaFragAdaptor
 
  Title   : get_DnaFragAdaptor
@@ -184,29 +95,6 @@ sub get_DnaFragAdaptor{
    return $self->{'_dnafrag_adaptor'};
 }
 
-
-=head2 get_FamilyAdaptor
-
- Title	 : get_FamilyAdaptor
- Usage	 :
- Function:
- Example :
- Returns :
- Args	 :
-
-
-=cut
-
-sub get_FamilyAdaptor{
-   my ($self) = @_;
-
-   if( !defined $self->{'_family_adaptor'} ) {
-	require Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor;
-	$self->{'_family_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor->new($self);
-   }
-   return $self->{'_family_adaptor'};
-}
-
 =head2 get_GenomicAlignAdaptor
 
  Title   : get_GenomicAlignAdaptor
@@ -227,50 +115,6 @@ sub get_GenomicAlignAdaptor{
        $self->{'_genomicalign_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor->new($self);
    }
    return $self->{'_genomicalign_adaptor'};
-}
-
-=head2 get_ConservedClusterAdaptor
-
- Title   : get_ConservedClusterAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub get_ConservedClusterAdaptor{
-   my ($self) = @_;
-
-   if( !defined $self->{'_conservedcluster_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::ConservedClusterAdaptor;
-       $self->{'_conservedcluster_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ConservedClusterAdaptor->new($self);
-   }
-   return $self->{'_conservedcluster_adaptor'};
-}
-
-=head2 get_ConservedSegmentAdaptor
-
- Title   : get_ConservedSegmentAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub get_ConservedSegmentAdaptor{
-   my ($self) = @_;
-
-   if( !defined $self->{'_conservedsegment_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::ConservedSegmentAdaptor;
-       $self->{'_conservedsegment_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ConservedSegmentAdaptor->new($self);
-   }
-   return $self->{'_conservedsegment_adaptor'};
 }
 
 
@@ -318,141 +162,5 @@ sub get_SyntenyRegionAdaptor{
    }
    return $self->{'_genomicalign_adaptor'};
 }
-
-# only the get part of the 3 functions should be considered public
-
-sub dbname {
-  my ($self, $arg ) = @_;
-  ( defined $arg ) &&
-    ( $self->{_dbname} = $arg );
-  $self->{_dbname};
-}
-
-sub username {
-  my ($self, $arg ) = @_;
-  ( defined $arg ) &&
-    ( $self->{_username} = $arg );
-  $self->{_username};
-}
-
-sub host {
-  my ($self, $arg ) = @_;
-  ( defined $arg ) &&
-    ( $self->{_host} = $arg );
-  $self->{_host};
-}
-
-sub password {
-  my ($self, $arg ) = @_;
-  ( defined $arg ) &&
-    ( $self->{_password} = $arg );
-  $self->{_password};
-}
-
-
-=head2 prepare
-
- Title   : prepare
- Usage   : $sth = $dbobj->prepare("select seq_start,seq_end from feature where analysis = \" \" ");
- Function: prepares a SQL statement on the DBI handle
-
-           If the debug level is greater than 10, provides information into the
-           DummyStatement object
- Example :
- Returns : A DBI statement handle object
- Args    : a SQL string
-
-
-=cut
-
-sub prepare {
-   my ($self,$string) = @_;
-
-   if( ! $string ) {
-       $self->throw("Attempting to prepare an empty SQL query!");
-   }
-   if( !defined $self->_db_handle ) {
-      $self->throw("Database object has lost its database handle! getting otta here!");
-   }
-
-   # should we try to verify the string?
-
-   return $self->_db_handle->prepare($string);
-}
-
-
-=head2 _db_handle
-
- Title   : _db_handle
- Usage   : $obj->_db_handle($newval)
- Function: 
- Example : 
- Returns : value of _db_handle
- Args    : newvalue (optional)
-
-
-=cut
-
-sub _db_handle{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'_db_handle'} = $value;
-    }
-    return $self->{'_db_handle'};
-
-}
-
-
-=head2 DESTROY
-
- Title   : DESTROY
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub DESTROY {
-   my ($obj) = @_;
-
-   #$obj->deleteObj(); # I think this is a bad idea.... (mcvicker)
-
-   if( $obj->{'_db_handle'} ) {
-       $obj->{'_db_handle'}->disconnect;
-       $obj->{'_db_handle'} = undef;
-   }
-}
-
-
-=head2 deleteObj
-
- Title   : deleteObj
- Usage   : $obj->deleteObj
- Function: removes memory cycles. Probably triggered by Root deleteObj
- Returns : 
- Args    : none
-
-
-=cut
-
-sub deleteObj {
-  my $self = shift;
-  my @dummy = values %{$self};
-
-  #$self->throw("Somebody has called deleteObj on DBAdaptor in compara\n");
-
-  foreach my $key ( keys %$self ) {
-    delete $self->{$key};
-  }
-  foreach my $obj ( @dummy ) {
-    eval {
-      $obj->deleteObj;
-    }
-  }
-}
-
 
 1;
