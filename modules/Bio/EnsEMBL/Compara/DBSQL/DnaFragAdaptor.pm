@@ -202,6 +202,8 @@ sub store{
 
    my $name = $dnafrag->name;
    my $gid =  $gdb->dbID;
+   my $type = 'NULL';
+   $type = $dnafrag->type if (defined $dnafrag->type);
 
    my $sth = $self->prepare("insert into dnafrag (name,genome_db_id,dnafrag_type) values (?,?,?)");
 
