@@ -112,7 +112,7 @@ sub _init {
             $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0;
             $gene_label = $g->{'synonym'};
             $high       = 1 if(exists $highlights{ $gene_label });
-            if(defined $g->{'type'} eq 'pseudo') {
+            if($g->{'type'} eq 'pseudo') {
                 $gene_col = $pseudo_col;
             } else {
                 $gene_col = $ext_col;
@@ -128,7 +128,7 @@ sub _init {
                 'colour'    => $gene_col,
                 'ext_DB'    => $g->{'db'},
                 'high'      => $high,
-                'type'      => 'external'
+                'type'      => $g->{'type'}
             };
         }
     }
@@ -147,6 +147,7 @@ sub _init {
         $end = $vc_length if $end > $vc_length;
         my $label = $g->{'label'};
 
+	next if $label eq '';
         my $tglyph = new Bio::EnsEMBL::Glyph::Text({
             'x'         => $start,	
             'y'         => $y,

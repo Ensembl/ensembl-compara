@@ -38,8 +38,9 @@ sub _init {
 	
 	
     my $repeats 	= $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'repeat'); 
-    my $gc 		= $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'gc');
+    my $gc 		    = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'gc');
 
+    return unless $repeats->size() && $gc->size();
 	my $max_repeats = $repeats->{'_biggest_value'};
 	my $max_gc      = $gc->{'_biggest_value'};
 	my $MAX 		= $max_repeats > $max_gc ? $max_repeats : $max_gc;

@@ -6,6 +6,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
+use ExtURL;
 use Bump;
 
 sub init_label {
@@ -33,6 +34,8 @@ sub _init {
     my $font          = "Small";
     my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
+    my $ext_url = ExtURL->new;
+
     my @ps_feat = $protein->get_all_PrositeFeatures();
     foreach my $feat(@ps_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
@@ -47,7 +50,7 @@ sub _init {
 	    'y' => 0,
 	    'zmenu' => {
 		'caption' => "Prosite Domain",
-		$key 	  => "http://www.expasy.ch/cgi-bin/nicesite.pl?$key"
+		$key 	  => $ext_url->get_url( 'PROSITE', $key )
 	    },
 	});
 

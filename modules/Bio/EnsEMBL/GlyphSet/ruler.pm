@@ -39,7 +39,7 @@ sub _init {
     # too small the rounding errors screw everything
     #####################################################################
 
-    my $text = int($global_end - $global_start-1);		
+    my $text = int($global_end - $global_start+1);		
     $text = bp_to_nearest_unit($text). " ";		
 
     my $bp_textwidth = $fontwidth * length($text);

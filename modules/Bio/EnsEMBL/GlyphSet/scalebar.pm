@@ -232,6 +232,8 @@ sub interval {
         'height'    => 15,
         'colour'    => 'transparent',
         'absolutey' => 1,
+		'href'		=> &zoom_URL($chr, $interval_middle, $width,  1  ,
+		$highlights),
         'zmenu'     => { 
             'caption'                          => "Navigation",
             '01:Zoom in (x10)'                 => &zoom_URL($chr, $interval_middle, $width, 10  , $highlights),

@@ -2,6 +2,8 @@ package Bio::EnsEMBL::GlyphSet::sptr;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
+use ExtURL;
+
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
 sub my_label { return "SpTrEMBL"; }
@@ -14,14 +16,11 @@ sub features {
 sub zmenu {
     my ($self, $id ) = @_;
     $id =~ s/(.*)\.\d+/$1/o;
+    my $ext_url = ExtURL->new;
     return {
         'caption' => "$id",
-	    "Protein homology" =>
-            (
-                $id=~/^NP/ ?
-                    "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[REFSEQPROTEIN-ID:$id]" :
-                    "http://www.ebi.ac.uk/cgi-bin/swissfetch?$id"
-            )
+        "Protein homology" =>
+            $ext_url->get_url( $id=~/^NP/ ? 'REFSEQPROTEIN' : 'SWISSFETCH', $id )
     };
 }
 1;

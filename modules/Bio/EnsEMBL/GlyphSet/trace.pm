@@ -8,6 +8,7 @@ use Bio::EnsEMBL::Glyph::Intron;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
+use ExtURL;
 
 sub init_label {
     my ($self) = @_;
@@ -39,6 +40,7 @@ sub _init {
     my @xf            = $VirtualContig->get_all_ExternalFeatures( $self->glob_bp() );
     my @trace;
     
+    my $ext_url = ExtURL->new;
     foreach my $f (@xf){
 		#print STDERR "$f ", $f->id(), " ", $f->source_tag(), "\n";
 		if ($f->isa("Bio::EnsEMBL::Ext::FeaturePair") || $f->isa("Bio::EnsEMBL::FeaturePair")) {
@@ -65,7 +67,7 @@ sub _init {
 	    'absolutey'=> 1,
 	    'zmenu'    => { 
 		'caption'    => "$id",
-		'View trace' => "http://trace.ensembl.org/perl/traceview?tracedb=0&traceid=$id",		
+		'View trace' => $ext_url->get_url( 'TRACE', $id )
 	    },
 	});
 	$self->push($traceglyph);

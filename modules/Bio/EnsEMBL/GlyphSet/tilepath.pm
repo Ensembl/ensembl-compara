@@ -42,11 +42,12 @@ sub _init {
     my $col2                    = $Config->get('tilepath', 'col2');
     my $lab1                    = $Config->get('tilepath', 'lab1');
     my $lab2                    = $Config->get('tilepath', 'lab2');
+    my $include_fish            = $Config->get('tilepath', 'fish' );
     my $threshold_navigation    = ($Config->get('tilepath', 'threshold_navigation') || 2e6)*1001;
 	my $show_navigation = $length < $threshold_navigation;
 	my $blue = $Config->colourmap->id_by_name('contigblue1');
 	my $green = $Config->colourmap->id_by_name('black');
-    my @asm_clones = $vc->get_all_FPCClones( 'FISH' );
+    my @asm_clones = $vc->get_all_FPCClones( $include_fish );
 	my $vc_start   = $vc->_global_start();
     if (@asm_clones){
 
@@ -68,21 +69,6 @@ sub _init {
 			'absolutey'    => 1
 		});
 		
-        my $fish = $clone->FISHmap(); $fish = "$fish";
-
-        if($show_navigation) {
-    		$Composite->{'zmenu'} = {
-				'caption' => $id,
-				'02:EMBL id: '.$clone->embl_acc => '',
-				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
-				"04:length: ".($clone->length()) => '',
-                "05:FISH: $fish" => ''
-            };
-            if($ENV{'ENSEMBL_SCRIPT'} ne 'contigview') {
-                $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc;
-            }
-	    } 
-
 	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
     		'x'         => $start,
 	    	'y'         => $ystart+2,
@@ -93,51 +79,68 @@ sub _init {
 	    });
 	    $Composite->push($glyph);
 
-        if($fish ne '') {
-            my $triangle_end =  $start + 3/$pix_per_bp;
-            $triangle_end = $end if( $triangle_end > $end);
-    	    $fish_clone = new Bio::EnsEMBL::Glyph::Poly({
-                'points'    => [ $start, $ystart+2,
-                                 $start, $ystart+5,
-                                 $triangle_end, $ystart+2  ],
-    		    'colour'    => $fish=~/^\*/ ? $green : $blue,
-        		'absolutey' => 1,
+        if($show_navigation) {
+    		$Composite->{'zmenu'} = {
+				'caption' => $id || $clone->embl_acc,
+				'02:EMBL id: '.$clone->embl_acc => '',
+				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
+				"04:length: ".($clone->length()) => '',
+            };
+            $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc
+                if $ENV{'ENSEMBL_SCRIPT'} ne 'contigview' ;
+	    } 
 
-    	    });
+        if( $include_fish eq 'FISH' ) {
+            my $fish = $clone->FISHmap();
+            if($fish ne '') {
+            	$Composite->{'zmenu'}->{"05:FISH: $fish"} = '' if( $show_navigation);
+                my $triangle_end =  $start + 3/$pix_per_bp;
+                $triangle_end = $end if( $triangle_end > $end);
+    	        $fish_clone = new Bio::EnsEMBL::Glyph::Poly({
+                    'points'    => [ $start, $ystart+2,
+                                     $start, $ystart+5,
+                                     $triangle_end, $ystart+2  ],
+    	    	    'colour'    => $fish=~/^\*/ ? $green : $blue,
+        	    	'absolutey' => 1,
+    
+        	    });
+            }
         }
 
-	    my $bp_textwidth = $w * length($id) * 1.1; # add 10% for scaling text
+
+
+	    my $bp_textwidth = $w * length($id || $clone->embl_acc) * 1.1; # add 10% for scaling text
 	    unless ($bp_textwidth > ($end - $start)){
-		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-		    'x'          => int(( $end + $start - $bp_textwidth)/2),
-		    'y'          => $ystart+2,
-		    'width'      => $bp_textwidth,
-		    'height'     => $h,
-		    'font'       => 'Tiny',
-		    'colour'     => $lab,
-		    'text'       => $id,
-		    'absolutey'  => 1,
-		});
+    		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    		    'x'          => int(( $end + $start - $bp_textwidth)/2),
+    		    'y'          => $ystart+2,
+    		    'width'      => $bp_textwidth,
+    		    'height'     => $h,
+    		    'font'       => 'Tiny',
+    		    'colour'     => $lab,
+    		    'text'       => $id || $clone->embl_acc,
+    		    'absolutey'  => 1,
+    		});
 	    	$Composite->push($tglyph);
 	    }
         
 	    if ($dep > 0) { # we bump
-            	my $bump_start = int($Composite->x() * $pix_per_bp);
-            	$bump_start = 0 if ($bump_start < 0);
+            my $bump_start = int($Composite->x() * $pix_per_bp);
+            $bump_start = 0 if ($bump_start < 0);
 
-            	my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
-            	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            	my $row = &Bump::bump_row(
-					  $bump_start,
-					  $bump_end,
-					  $bitmap_length,
-					  \@bitmap
-					  );
-		next if ($row > $dep);
-            	$Composite->y($Composite->y() + (1.4 * $row * $h));
-                if($fish_clone) {
-                    $fish_clone->transform( {'translatey' => (1.4 * $row * $h)} );
-                }
+            my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
+            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
+            my $row = &Bump::bump_row(
+			    $bump_start,
+				$bump_end,
+				$bitmap_length,
+				\@bitmap
+            );
+    		next if ($row > $dep);
+            $Composite->y($Composite->y() + (1.4 * $row * $h));
+            if($fish_clone) {
+                $fish_clone->transform( {'translatey' => (1.4 * $row * $h)} );
+            }
 	    }
 
 	    $self->push($Composite); 			

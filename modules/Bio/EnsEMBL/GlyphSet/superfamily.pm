@@ -6,6 +6,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
+use ExtURL;
 use Bump;
 
 sub init_label {
@@ -39,17 +40,15 @@ sub _init {
     }
     
     my $PID = $self->{'container'}->id;
+    my $URLS = ExtURL->new();
     foreach my $key (keys %hash) {
 	my @row = @{$hash{$key}};
        	my $desc = $row[0]->idesc();
-        my $KK = substr($key,-7);
+        my $KK = $key;
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'x' => $row[0]->feature1->start(),
 	    'y' => 0,
-	    'zmenu' => {
-		'caption' => "Super family",
-		"SCOP: $KK" => "http://scop.mrc-lmb.cam.ac.uk/scop/search.cgi?sid=$KK&tlev=sf"
-	    },
+	    'zmenu' => { "SCOP: $KK" => $URLS->get_url('SUPERFAMILY',$KK) },
 	});
 
 	my @row = @{$hash{$key}};
@@ -92,19 +91,18 @@ sub _init {
 	#########
 	# add a label
 	#
-#	my $desc = $prsave->id();
-#        print STDERR "$fontwidth\n";
-#	my $text = new Bio::EnsEMBL::Glyph::Text({
-#	    'font'   => $font,
-#	    'text'   => $desc,
-#	    'x'      => $row[0]->feature1->start(),
-#	    'y'      => $h + 1,
-#	    'height' => $fontheight,
-#	    'width'  => $fontwidth * length($desc),
-#	    'colour' => $colour,
-#            'absolutey' => 1
-#	});
-#	$Composite->push($text);
+	my $desc = "SCOP: $KK";
+	my $text = new Bio::EnsEMBL::Glyph::Text({
+	    'font'   => $font,
+	    'text'   => $desc,
+	    'x'      => $minx,
+	    'y'      => $h + 1,
+	    'height' => $fontheight,
+	    'width'  => $fontwidth * length($desc),
+	    'colour' => $colour,
+            'absolutey' => 1
+ 	});
+ 	$Composite->push($text);
 
 	if ($Config->get('superfamily', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
@@ -118,8 +116,8 @@ sub _init {
 				      $bitmap_length,
 				      \@bitmap
             );
-            #$Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
-            $Composite->y($Composite->y() + (2 * $row * ($h )));
+            $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
+            # $Composite->y($Composite->y() + (2 * $row * ($h )));
         }
 	
 	$self->push($Composite);

@@ -6,6 +6,8 @@ use Bio::EnsEMBL::GlyphSet;
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
+use ExtURL;
+
 use Bump;
 
 sub init_label {
@@ -35,6 +37,8 @@ sub _init {
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
+    my $ext_url = ExtURL->new;
+
     my @pr_feat = $protein->get_all_PrintsFeatures();
     foreach my $feat(@pr_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
@@ -49,7 +53,7 @@ sub _init {
 	    'y'     => $y,
 	    'zmenu' => {
 		'caption'  	=> "Prints Domain",
-		$key 		=> "http://methionine.sbc.man.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?prints_accn=$key&display_opts=Prints",
+		$key 		=> $ext_url->get_url( 'PRINTS', $key  )
 	    },
 	});
 

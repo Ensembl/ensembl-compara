@@ -40,6 +40,8 @@ sub _init {
     my $known_genes = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'kngene');
     my $genes = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'gene');
 
+    return unless $known_genes->size() && $genes->size();
+
 	my $Hscale_factor = $known_genes->{'_biggest_value'} / $genes->{'_biggest_value'};
 
    	$genes->scale_to_fit( $Config->get( 'Vgenes', 'width' ) );

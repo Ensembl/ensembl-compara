@@ -2,6 +2,7 @@ package Bio::EnsEMBL::GlyphSet::est;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
+use ExtURL;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
 sub my_label { return "ESTs"; }
@@ -13,9 +14,10 @@ sub features {
 }
 sub zmenu {
     my ($self, $id ) = @_;
+    my $urls = ExtURL->new;
     my $estid = $id;
     $estid =~s/(.*?)\.\d+/$1/;
     return { 'caption' => "EST $id",
-	     "$id"     => "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[DBEST-ALLTEXT:$estid]" }
+	     "$id"     => $urls->get_url('EST',$estid) }
 }
 1;

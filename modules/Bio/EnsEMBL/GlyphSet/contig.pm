@@ -102,9 +102,6 @@ sub _init {
 			$glyph->{'zmenu'} = {
                     'caption' => $rid,
                     'Contig information'     => "/$ENV{'ENSEMBL_SPECIES'}/seqentryview?seqentry=$clone&contigid=$rid",
-#            "FPC ID: $fpc_id"  => "",
-#            "Request clone (FPC ID: $fpc_id)"  =>
-#            "http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$fpc_id&query=Requested%20via%20Ensembl",
 			} if $show_navigation;
 			
             $self->push($glyph);

@@ -2,6 +2,8 @@ package Bio::EnsEMBL::GlyphSet::unigene;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
+use ExtURL;
+
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
 sub my_label { return "Unigene"; }
@@ -13,10 +15,8 @@ sub features {
 
 sub zmenu {
     my ($self, $id ) = @_;
+    my $ext_url = ExtURL->new;
     my $unigeneid = $id;
-    $unigeneid =~ s/\./&CID=/;
-    return { 'caption' => "$id",
-	     "UniGene cluster $id" => "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=$unigeneid" };
-
+    return { 'caption' => "$id", "UniGene cluster $id" => $ext_url->get_url( 'UNIGENE', $unigeneid ) };
 }
 1;

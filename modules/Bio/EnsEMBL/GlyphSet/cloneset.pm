@@ -35,7 +35,10 @@ sub _init {
     my ($w,$h)   		= $Config->texthelper()->px2bp('Tiny');
     my ($col, $lab) 	        = ();
     my $i 			= 1;
+    my $include_fish            = $Config->get('tilepath', 'fish' );
     my $dep                     = $Config->get('cloneset', 'dep');
+    my $threshold_navigation    = ($Config->get('tilepath', 'threshold_navigation') || 2e6)*1001;
+	my $show_navigation = $length < $threshold_navigation;
     my $col1                    = $Config->get('cloneset', 'col1');
     my $col2                    = $Config->get('cloneset', 'col2');
     my $lab1                    = $Config->get('cloneset', 'lab1');
@@ -43,16 +46,11 @@ sub _init {
 	my $blue = $Config->colourmap->id_by_name('contigblue1');
 	my $green = $Config->colourmap->id_by_name('black');
 
-	my $cloneset = $self->{'container'}->dbobj->_db_handle->selectall_arrayref(
-		"select cs_c.cloneid, cs_c.name
-		   from cloneset as cs, cloneset_clone as cs_c
-		  where cs_c.clonesetid = cs.clonesetid
-		    and cs.name = ?", {} , '1MB'
-	);
+	my @cloneset = $vc->get_all_clones_in_cloneset('1MB');
 	my %hash;
-	%hash = map { @$_ } @$cloneset;
+	%hash = map { @$_ } @cloneset;
 
-    my @asm_clones = $vc->get_all_FPCClones( 'FISH' );
+    my @asm_clones = $vc->get_all_FPCClones( $include_fish );
 
 	my @cloneset_clones = map { exists $hash{$_->embl_acc} ? ([$_, $hash{$_->embl_acc}]) : () }
 		@asm_clones;
@@ -86,16 +84,17 @@ sub _init {
     		'absolutey'    => 1,
 	    });
 
-        $Composite->{'zmenu'} = {
-				'caption'                     => $id,
-		    	"01:synonym: $synonym" 	      => '',
-				'02:EMBL id: '.$clone->embl_acc  => '',
-				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
-				"04:length: ".($clone->length()) => '',
-                "05:FISH: $fish"                 => ''
-        };
-        if($ENV{'ENSEMBL_SCRIPT'} ne 'contigview') {
-            $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc;
+        if($show_navigation) {
+            $Composite->{'zmenu'} = {
+    				'caption'                     => $id,
+    		    	"01:synonym: $synonym" 	      => '',
+    				'02:EMBL id: '.$clone->embl_acc  => '',
+    				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
+    				"04:length: ".($clone->length()) => '',
+            };
+            if($ENV{'ENSEMBL_SCRIPT'} ne 'contigview') {
+                $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc;
+            }
         }
 
         
@@ -108,17 +107,22 @@ sub _init {
 		'absolutey' => 1
 	    });
 	    $Composite->push($glyph);
-        if($fish ne '') {
-            my $triangle_end =  $start + 3/$pix_per_bp;
-            $triangle_end = $end if( $triangle_end > $end);
-    	    $fish_clone = new Bio::EnsEMBL::Glyph::Poly({
-                'points'    => [ $start, $ystart+2,
-                                 $start, $ystart+5,
-                                 $triangle_end, $ystart+2  ],
-    		    'colour'    => $fish=~/^\*/ ? $green : $blue,
-        		'absolutey' => 1,
 
-    	    });
+        if( $include_fish eq 'FISH' ) {
+            my $fish = $clone->FISHmap();
+            if($fish ne '') {
+      		    $Composite->{'zmenu'}->{"05:FISH: $fish"} = '' if( ($include_fish eq 'FISH') and $show_navigation);
+                my $triangle_end =  $start + 3/$pix_per_bp;
+                $triangle_end = $end if( $triangle_end > $end);
+    	        $fish_clone = new Bio::EnsEMBL::Glyph::Poly({
+                    'points'    => [ $start, $ystart+2,
+                                     $start, $ystart+5,
+                                     $triangle_end, $ystart+2  ],
+    	    	    'colour'    => $fish=~/^\*/ ? $green : $blue,
+        	    	'absolutey' => 1,
+    
+        	    });
+            }
         }
 
 	    my $bp_textwidth = $w * length($synonym) * 1.1; # add 10% for scaling text

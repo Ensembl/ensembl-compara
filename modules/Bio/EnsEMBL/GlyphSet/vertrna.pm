@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::vertrna;
 use strict;
 use vars qw(@ISA);
+use ExtURL;
 use Bio::EnsEMBL::GlyphSet_feature;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
@@ -13,7 +14,8 @@ sub features {
 
 sub zmenu {
     my ($self, $id ) = @_;
+    my $urls = ExtURL->new;
     return { 'caption' => "$id",
-	     "EMBL: $id" => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$id" };
+	     "EMBL: $id" => $urls->get_url('EMBL',$id) };
 }
 1;

@@ -7,6 +7,8 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Intron;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
+use ExtURL;
+
 use Bump;
 
 sub init_label {
@@ -37,8 +39,9 @@ sub _init {
     my $bitmap_length = $VirtualContig->length();
     my $type          = $Config->get('gene','src');
 
-    my @xf            = $VirtualContig->get_all_ExternalFeatures( $self->glob_bp() );
+    my @xf            = $VirtualContig->get_all_SNPFeatures( $self->glob_bp() );
 
+    my $ext_url = ExtURL->new;
     ## need to sort external features into SNPs or traces and treat them differently
     my @snp = grep $_->isa("Bio::EnsEMBL::ExternalData::Variation"), @xf;
 
@@ -50,7 +53,7 @@ sub _init {
         my $snpglyph = new Bio::EnsEMBL::Glyph::Rect({
             'x'         => $x,
             'y'         => 0,
-            'width'     => 2,
+            'width'     => 0,
             'height'    => $h,
             'colour'    => $snp_col,
             'absolutey' => 1,
@@ -58,7 +61,7 @@ sub _init {
             'zmenu'     => { 
                 'caption'           => "SNP: $id",
                 'SNP properties'    => "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=$id",
-                'dbSNP data'        => "http://www.ncbi.nlm.nih.gov/SNP/snp_ref.cgi?type=rs&rs=$id",
+                'dbSNP data'        => $ext_url->get_url('SNP',$id),
             },
         });
         
@@ -68,11 +71,11 @@ sub _init {
             my $pid = $_->primary_id();
             
             if ($db =~ /TSC/){
-                $snpglyph->{'zmenu'}->{$db} = "http://snp.cshl.org/db/snp/snp?name=" . $pid;
+                $snpglyph->{'zmenu'}->{$db} =$ext_url->get_url('TSC',$pid); 
             } elsif ($db =~ /CGAP/){
-                $snpglyph->{'zmenu'}->{$db} = "http://lpgws.nci.nih.gov:82/perl/gettrace.pl?type=7&trace=" . $pid;            
+                $snpglyph->{'zmenu'}->{$db} =$ext_url->get_url('CGAP-GAI',$pid); 
             } elsif ($db =~ /HGBASE/){
-                $snpglyph->{'zmenu'}->{$db} = "http://www.ebi.ac.uk/cgi-bin/mutations/hgbasefetch?" . $pid;            
+                $snpglyph->{'zmenu'}->{$db} =$ext_url->get_url('HGBASE',$pid);
             }
         }    
         $self->push($snpglyph);

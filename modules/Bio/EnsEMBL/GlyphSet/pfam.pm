@@ -8,6 +8,7 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use ColourMap;
 use Bump;
+use ExtURL;
 
 sub init_label {
     my ($self) = @_;
@@ -38,6 +39,7 @@ sub _init {
     my $colour        = $Config->get('pfam','col');
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
+    my $ext_url = ExtURL->new;
 
     #foreach my $feat ($protein->each_Protein_feature()) {
        #if ($feat->feature2->seqname =~ /^PF\w+/) {
@@ -57,7 +59,7 @@ sub _init {
 	    'y'     => $y,
 	    'zmenu' => {
 		'caption' => "Pfam domain",
-		$key      => "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?$key"
+		$key      => $ext_url->get_url( 'PFAM', $key )
 	    },
 	});
 
