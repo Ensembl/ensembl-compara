@@ -294,31 +294,25 @@ sub fetch_all_by_Slice {
 sub interpolate_best_location {
   my ($self,$slice,$species,$alignment_type) = @_;
   
+  my $max_distance_for_clustering = 10000;
   my $dafs = $self->fetch_all_by_Slice($slice, $species, undef, $alignment_type);
 
-  my %raw_clusters;
+  my %name_strand_clusters;
   my $based_on_group_id = 1;
   foreach my $daf (@{$dafs}) {
     if ($daf->group_id > 0) {
-      push @{$raw_clusters{$daf->group_id}}, $daf;
+      push @{$name_strand_clusters{$daf->group_id}}, $daf;
     } else {
       $based_on_group_id = 0 if ($based_on_group_id);
-      push @{$raw_clusters{$daf->hseqname}}, $daf;
+      push @{$name_strand_clusters{$daf->hseq_region_name. "_" .$daf->hseq_region_strand}}, $daf;
     }
   }
 
   if ($based_on_group_id) {
-    my @ordered_keys = sort {scalar @{$raw_clusters{$b}} <=> scalar @{$raw_clusters{$a}}} keys %raw_clusters;
-
-    my @best_blocks = sort {$a->hseq_region_start <=> $b->hseq_region_end} @{$raw_clusters{$ordered_keys[0]}};
-
+    my @ordered_name_strands = sort {scalar @{$name_strand_clusters{$b}} <=> scalar @{$name_strand_clusters{$a}}} keys %name_strand_clusters;
     
-#    foreach my $block (@best_blocks) {
-#      print $block->hseq_region_name," ",$block->hseq_region_start," ",$block->hseq_region_end," ",$block->hseq_region_strand,"\n";
-#    }
-#    print "---\n";
-#    print $best_blocks[0]->hseq_region_name," ",$best_blocks[0]->hseq_region_start + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2)," ",$best_blocks[0]->hseq_region_strand,"\n";
-    
+    my @best_blocks = sort {$a->hseq_region_start <=> $b->hseq_region_end} @{$name_strand_clusters{$ordered_name_strands[0]}};
+
     if ($slice->strand > 0) {
       return ($best_blocks[0]->hseq_region_name,
               $best_blocks[0]->hseq_region_start 
@@ -330,19 +324,66 @@ sub interpolate_best_location {
               + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2),
               $best_blocks[0]->hseq_region_strand * -1);
     }
-#    my $best_key ;
-#    foreach my $key (@ordered_keys) {
-#      unless (defined $best_key) {
-#        $best_key = $key;
-#        next;
-#      }
-#      print $key," ",$raw_clusters{$key}->[0]->hseqname," ",$raw_clusters{$key}->[0]->level_id," ",scalar @{$raw_clusters{$key}},"\n";
-#    }
-  } else {
-    #need to cluster things together.
-    throw("interpolate_best_location not implemented for alignments with group_id=0, only works with BLASTZ_NET and BLASTZ_RECIP_NET\n")
-  }
 
+  } else {
+    
+    my @refined_clusters;
+    foreach my $name_strand (keys %name_strand_clusters) {
+      # an array of arrayrefs
+      # name, strand, start, end, nb of blocks
+      my @sub_clusters;
+      foreach my $block (sort {$a->hseq_region_start <=> $b->hseq_region_start} @{$name_strand_clusters{$name_strand}}) {
+        unless (scalar @sub_clusters) {
+          push @sub_clusters, [$block->hseq_region_name,$block->hseq_region_strand, $block->hseq_region_start, $block->hseq_region_end, 1];
+          next;
+        }
+        my $block_clustered = 0;
+        foreach my $arrayref (@sub_clusters) {
+          my ($n,$st,$s,$e,$c) = @{$arrayref};
+          if ($block->hseq_region_start<=$e &&
+              $block->hseq_region_end>=$s) {
+            # then overlaps.
+            $arrayref->[2] = $block->hseq_region_start if ($block->hseq_region_start < $s);
+            $arrayref->[3] = $block->hseq_region_end if ($block->hseq_region_end > $e);
+            $arrayref->[4]++;
+            $block_clustered = 1;
+          } elsif ($block->hseq_region_start <= $e + $max_distance_for_clustering &&
+                   $block->hseq_region_start > $e) {
+            # then is downstream
+            $arrayref->[3] = $block->hseq_region_end;
+            $arrayref->[4]++;
+            $block_clustered = 1;
+          } elsif ($block->hseq_region_end >= $s - $max_distance_for_clustering &&
+                   $block->hseq_region_end < $s) {
+            # then is upstream
+            $arrayref->[2] = $block->hseq_region_start;
+            $arrayref->[4]++;
+            $block_clustered = 1;
+          }
+        }
+        unless ($block_clustered) {
+          # do not overlap anything already seen, so adding as new seeding cluster
+          push @sub_clusters, [$block->hseq_region_name,$block->hseq_region_strand, $block->hseq_region_start, $block->hseq_region_end, 1];
+        }
+      }
+      push @refined_clusters, @sub_clusters;
+    }
+
+    # sort by the max number of blocks desc
+    @refined_clusters = sort {$b->[-1] <=> $a->[-1]} @refined_clusters;
+
+    if ($slice->strand > 0) {
+      return ($refined_clusters[0]->[0], #hseq_region_name,
+              $refined_clusters[0]->[2]
+              + int(($refined_clusters[0]->[3] - $refined_clusters[0]->[2])/2),
+              $refined_clusters[0]->[1]);
+    } else {
+      return ($refined_clusters[0]->[0], #hseq_region_name
+              $refined_clusters[0]->[2]
+              + int(($refined_clusters[0]->[3] - $refined_clusters[0]->[2])/2),
+              $refined_clusters[0]->[1] * -1);
+    }
+  }
 }
 
 
