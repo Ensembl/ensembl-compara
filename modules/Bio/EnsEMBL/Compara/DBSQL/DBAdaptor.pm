@@ -157,6 +157,29 @@ sub get_DnaFragAdaptor{
 }
 
 
+
+=head2 get_GenomicAlignAdaptor
+
+ Title   : get_GenomicAlignAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_GenomicAlignAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_genomicalign_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
+       $self->{'_genomicalign_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor->new($self);
+   }
+   return $self->{'_genomicalign_adaptor'};
+}
+
 # only the get part of the 3 functions should be considered public
 
 sub dbname {

@@ -1,6 +1,6 @@
 
 use Test;
-BEGIN { plan tests => 6 }
+BEGIN { plan tests => 7 }
 
 
 
@@ -42,4 +42,37 @@ $dnafrag->genomedb($gdb);
 $id = $fragadb->store($dnafrag);
 
 ok($id,$dnafrag->dbID);
+
+my $abs = Bio::EnsEMBL::Compara::AlignBlockSet->new();
+my $ab = Bio::EnsEMBL::Compara::AlignBlock->new();
+$ab->align_start(1);
+$ab->align_end(10);
+$ab->start(101);
+$ab->end(110);
+$ab->strand(-1);
+$ab->dnafrag($dnafrag);
+
+$abs->add_AlignBlock($ab);
+
+$ab = Bio::EnsEMBL::Compara::AlignBlock->new();
+$ab->align_start(11);
+$ab->align_end(20);
+$ab->start(151);
+$ab->end(160);
+$ab->strand(-1);
+$ab->dnafrag($dnafrag);
+
+$abs->add_AlignBlock($ab);
+
+my $aln = Bio::EnsEMBL::Compara::GenomicAlign->new();
+$aln->add_AlignBlockSet(1,$abs);
+
+my $gadb = $db->get_GenomicAlignAdaptor();
+
+$id = $gadb->store($aln);
+
+ok ($id,$aln->dbID);
+
+
+
 

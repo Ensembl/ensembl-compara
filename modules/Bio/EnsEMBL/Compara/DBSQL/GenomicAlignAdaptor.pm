@@ -134,28 +134,55 @@ sub get_AlignBlockSet{
 =cut
 
 sub store {
-   my ($self,$abs) = @_;
+   my ($self,$aln) = @_;
 
-   if( !defined $abs ) {
-       $self->throw("Must store with a $abs");
+   if( !defined $aln || !ref $aln || !$aln->isa('Bio::EnsEMBL::Compara::GenomicAlign') ) {
+       $self->throw("Must store with a GenomicAlign, not a $aln");
    }
 
    my $dnafragadp = $self->db->get_DnaFragAdaptor();
 
-   foreach my $ab ( $abs->each_AlignBlock ) {
-       if( !defined $ab->dnafrag ) {
-	   $self->throw("Must have a dnafrag attached to alignblocks");
-       }
-       if( !defined $ab->dnafrag->dbID ) {
-	   $dnafragadp->store($ab->dnafrag);
+   foreach my $abs ( $aln->each_AlignBlockSet ) {
+       foreach my $ab ( $abs->get_AlignBlocks ) {
+	   if( !defined $ab->dnafrag ) {
+	       $self->throw("Must have a dnafrag attached to alignblocks");
+	   }
+	   if( !defined $ab->dnafrag->dbID ) {
+	       $dnafragadp->store($ab->dnafrag);
+	   }
        }
    }
 
+   # store the alignment first
+
+   my $sth = $self->prepare("insert into align (score) values ('0.0')");
+   $sth->execute;
+   $aln->dbID($sth->{'mysql_insertid'});
+   my $align_id = $aln->dbID;
+
+   # for each alignblockset, store the row and then the alignblocks themselves
    
-   
-   foreach my $ab ( $abs->each_AlignBlock ) {
+   foreach my $ab ( $aln->each_AlignBlockSet ) {
+       my $sth2 = $self->prepare("insert into align_row (align_id) values ($align_id)");
+       $sth2->execute();
+       my $row_id = $sth2->{'mysql_insertid'};
+
+       foreach my $a ( $ab->get_AlignBlocks ) {
+	   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand) values ($align_id,",
+				     $a->align_start,
+				     $a->align_end,
+				     $row_id,
+				     $a->dnafrag->dbID,
+				     $a->start,
+				     $a->end,
+				     $a->strand
+				     );
+       }
    }
     
+   $aln->dbID($align_id);
+
+   return $align_id;
 }
 
 

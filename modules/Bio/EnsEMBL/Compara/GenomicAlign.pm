@@ -63,16 +63,13 @@ sub new {
     
     my ($align_id,$adaptor) = $self->_rearrange([qw(ALIGN_ID ADAPTOR )],@args);
 
-    if( !defined $align_id) {
-	$self->throw("Must have align id for genomicalign");
+    if( defined $align_id ) {
+	$self->align_id($align_id);
+    }
+    if( defined $adaptor ) {
+	$self->adaptor($adaptor);
     }
 
-    if( !defined $adaptor) {
-	$self->throw("Must have adaptor for genomicalign");
-    }
-
-    $self->align_id($align_id);
-    $self->adaptor($adaptor);
     $self->{'_align_block'} = {};
     $self->_loaded_align_block(0);
 
@@ -143,6 +140,29 @@ sub eachSeq{
    return @out;
 }
 
+
+=head2 each_AlignBlockSet
+
+ Title   : each_AlignBlockSet
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub each_AlignBlockSet{
+   my ($self,@args) = @_;
+
+   $self->_ensure_loaded;
+
+   return values %{$self->{'_align_block'}};
+
+}
+
+
 sub displayname {
     my ($self,@args) = @_;
 
@@ -184,6 +204,12 @@ sub get_AlignBlockSet{
    my ($self,$row) = @_;
 
    return $self->adaptor->get_AlignBlockSet($self->align_id,$row);
+}
+
+sub dbID {
+    my ($self,$arg) = @_;
+
+    return $self->align_id($arg);
 }
 
 
@@ -229,6 +255,33 @@ sub adaptor{
 
 }
 
+=head2 add_AlignBlockSet
+
+ Title   : add_AlignBlockSet
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub add_AlignBlockSet{
+   my ($self,$row_id,$abs) = @_;
+
+   if( !defined $abs) {
+       $self->throw("Cannot add AlignBlockSet without row_id,abs");
+   }
+
+   if( !ref $abs || !$abs->isa('Bio::EnsEMBL::Compara::AlignBlockSet') ) {
+       $self->throw("Must have an AlignBlockSet, not a $abs");
+   }
+
+   $self->{'_align_block'}->{$row_id} = $abs;
+
+}
+
 
 =head2 _ensure_loaded
 
@@ -248,6 +301,10 @@ sub _ensure_loaded{
    if( $self->_loaded_align_block == 1) {
        return;
    }
+   if( scalar( keys%{$self->{'_align_block'}}) > 0 ) {
+       return;
+   }
+
    $self->_load_all_blocks;
    $self->_loaded_align_block(1);
 }
@@ -275,7 +332,7 @@ sub _load_all_blocks{
    my $align_row;
    while( ($align_row) = $sth->fetchrow_array ) {
        my $abs = $self->get_AlignBlockSet($align_row);
-       $self->{'_align_block'}->{$align_row} = $abs;
+       $self->add_AlignBlockSet($align_row,$abs);
    }
        
 }
