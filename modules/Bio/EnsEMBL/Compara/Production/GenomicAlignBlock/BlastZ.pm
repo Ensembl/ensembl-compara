@@ -48,7 +48,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::BlastZ;
+package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ;
 
 use strict;
 
@@ -78,27 +78,25 @@ sub fetch_input {
 
   $self->{'debug'} = 0;
   
-  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
-  print("input_id = ", $self->input_id,"\n");
-  my $input_hash = eval($self->input_id);
-  print("$input_hash\n");
-  $self->throw("No input_id") unless defined($input_hash);
-  my $qy_chunk_id = $input_hash->{'qyChunk'};
-  my $db_chunk_id = $input_hash->{'dbChunk'};
+  $self->get_params($self->parameters);
+  $self->get_params($self->input_id);
 
-  my $qyChunk = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->fetch_by_dbID($qy_chunk_id);
-  my $dbChunk = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->fetch_by_dbID($db_chunk_id);
+  my $chunkDBA = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor;
+  my $qyChunk = $chunkDBA->fetch_by_dbID($self->{'qy_chunk_id'});
+  my $dbChunk = $chunkDBA->fetch_by_dbID($self->{'db_chunk_id'});
 
-  $self->{'qyChunk'} = $qyChunk;
-  $self->{'dbChunk'} = $dbChunk;
+  throw("Missing qyChunk") unless($qyChunk);
+  throw("Missing dbChunk") unless($dbChunk);
   
   print("have chunks\n  ",$qyChunk->display_id,"\n  ", $dbChunk->display_id,"\n");
+  $self->{'qyChunk'} = $qyChunk;
+  $self->{'dbChunk'} = $dbChunk;
 
   #
   # create method_link_species_set
@@ -121,29 +119,18 @@ sub fetch_input {
     print STDERR (time()-$starttime), " secs to fetch qyChunk seq\n";
 
     if($qySeq->length <= 5000000) {
-      print "  writing sequence back to compara for chunk\n";
+      #print "  writing sequence back to compara for chunk\n";
       $qyChunk->sequence($qySeq->seq);
       $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($qyChunk);
     }
   }
 
-  my $dbSeq = $dbChunk->bioseq;
-  unless($dbSeq) {
-    printf("fetching db chunk %s on-the-fly\n", $dbChunk->display_id);
-    $dbSeq = $dbChunk->fetch_masked_sequence(2);  #soft masked
-    print STDERR (time()-$starttime), " secs to fetch dbChunk seq\n";
-
-    if($dbSeq->length <= 5000000) {
-      print "  writing sequence back to compara for chunk\n";
-      $dbChunk->sequence($dbSeq->seq);
-      $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($dbChunk);
-    }
-  }
+  my $dbChunkFile = $self->dumpChunkToWorkdir($dbChunk);
 
   #print("running with analysis '".$self->analysis->logic_name."'\n");
   my $runnable =  new Bio::EnsEMBL::Pipeline::Runnable::Blastz (
                   -query     => $qySeq,
-                  -database  => $dbSeq,
+                  -database  => $dbChunkFile,
                   -options   => 'T=2 H=2200');
 
   $self->runnable($runnable);
@@ -187,7 +174,7 @@ sub write_output {
   #$self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store($self->output);
 
   printf("%d FeaturePairs found\n", scalar($self->output));
-  print STDERR (time()-$starttime), " secs to write_output\n";
+  #print STDERR (time()-$starttime), " secs to write_output\n";
 
 }
 
@@ -206,6 +193,57 @@ sub global_cleanup {
 # internal methods
 #
 ##########################################
+
+sub get_params {
+  my $self         = shift;
+  my $param_string = shift;
+
+  return unless($param_string);
+  print("parsing parameter string : ",$param_string,"\n");
+
+  my $params = eval($param_string);
+  return unless($params);
+
+  $self->{'qy_chunk_id'} = $params->{'qyChunk'} if(defined($params->{'qyChunk'}));
+  $self->{'db_chunk_id'} = $params->{'dbChunk'} if(defined($params->{'dbChunk'}));
+  return;
+}
+
+
+sub dumpChunkToWorkdir
+{
+  my $self = shift;
+  my $chunk = shift;
+
+  unless(defined($g_compara_BlastZ_workdir) and (-e $g_compara_BlastZ_workdir)) {
+    #create temp directory to hold fasta databases
+    $g_compara_BlastZ_workdir = "/tmp/worker.$$/";
+    mkdir($g_compara_BlastZ_workdir, 0777);
+  }
+
+  my $fastafile = $g_compara_BlastZ_workdir.
+                  "chunk_" . $chunk->dbID . ".fasta";
+  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
+  return $fastafile if(-e $fastafile);
+  print("fastafile = '$fastafile'\n");
+
+  my $bioseq = $chunk->bioseq;
+  unless($bioseq) {
+    printf("fetching chunk %s on-the-fly\n", $chunk->display_id);
+    my $starttime = time();
+    $bioseq = $chunk->fetch_masked_sequence(2);  #soft masked
+    print STDERR (time()-$starttime), " secs to fetch chunk seq\n";
+    $chunk->sequence($bioseq->seq);
+  }
+ 
+  open(OUTSEQ, ">$fastafile")
+    or $self->throw("Error opening $fastafile for write");
+  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
+  $output_seq->write_seq($bioseq);
+  close OUTSEQ;
+
+  return $fastafile
+}
 
 
 sub store_featurePair_as_genomicAlignBlock
