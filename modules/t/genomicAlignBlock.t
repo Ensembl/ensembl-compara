@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 36;
+    plan tests => 40;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -447,6 +447,25 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->alignment_strings method")
       );
   ok(scalar(@{$genomic_align_block->alignment_strings}), scalar(@{$genomic_align_array}));
 
+# 
+# 37-40
+#
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->reverse_complement method");
 
+$genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice
+  ($method_link_species_set,
+   $slice);
+
+$genomic_align_block = $genomic_align_blocks->[0];
+$genomic_align_array = $genomic_align_block->genomic_align_array;
+$genomic_align_block->reverse_complement;
+
+my $st = $genomic_align_block->starting_genomic_align;
+ok( $st->dnafrag_strand == -1 );
+ok( $st->cigar_line eq "13M44D15M12D6M7D34MD63M2D86M");
+
+my $res = $genomic_align_block->resulting_genomic_aligns->[0];
+ok( $res->dnafrag_strand == -1 );
+ok( $res->cigar_line eq "142M14D127M");
 
 exit 0;
