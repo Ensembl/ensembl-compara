@@ -94,7 +94,7 @@ sub new {
       $host = 'localhost';
   }
   if ( ! $port ) {
-      $port = "";
+      $port = undef;
   }
   
   my $dsn = "DBI:$driver:database=$db;host=$host;port=$port";
@@ -251,6 +251,29 @@ sub get_GenomicAlignAdaptor{
        $self->{'_genomicalign_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor->new($self);
    }
    return $self->{'_genomicalign_adaptor'};
+}
+
+
+=head2 get_HomologyAdaptor
+
+ Title   : get_HomologyAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_HomologyAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_homology_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
+       $self->{'_homology_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor->new($self);
+   }
+   return $self->{'_homology_adaptor'};
 }
 
 

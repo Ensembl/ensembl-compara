@@ -7,7 +7,6 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::Homology;
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-
 =head2 fetch_homologues_of_gene_in_species
 
  Title   : fetch_homologues_of_gene_in_species
@@ -49,7 +48,7 @@ sub fetch_homologues_of_gene_in_species{
  Usage   : $db->fetch_homologues_of_gene('Homo_sapiens','ENSG00000218116')
  Function: finds homologues of a given gene
  Example :
- Returns : a hash of species names against arrays of homology objects
+ Returns : an array of homology objects
  Args    : species gene is from, gene stable name
 
 =cut
@@ -88,6 +87,51 @@ sub fetch_homologues_of_gene {
 
     return @genes;
 }                               
+
+
+=head2 fetch_homologues_by_chr_start_in_species
+
+ Title   : fetch_homologues_by_chr_start_in_species
+ Usage   : $db->fetch_homologues_by_chr_start_in_species(   'Homo_sapiens',
+							    'X',
+							    1000,
+							    'Mus_musculus', 
+							    10)
+	Will return 10 human genes in order from 1000bp on chrX along with 10 homologues from mouse.  If no homologue, homologue will be "no known homologue"
+ Function: finds a list of homologues with a given species
+ Example :
+ Returns : a hash of species names against arrays of homology objects
+ Args    : species from, chr, start, second spp, number of homologues to fetch
+
+=cut
+
+sub fetch_homologues_by_chr_start_in_species {
+
+    my ($self, $species, $chr, $start, $hspecies, $num)=@_;
+
+    my $q = "select grm.gene_relationship_id 
+             from   gene_relationship_member grm, 
+		    genome_db gd 
+             where  gd.genome_db_id = grm.genome_db_id 
+             and    gd.name = '$species' 
+	     and    grm.chromosome = '$chr'
+	     and    grm.chrom_start >= $start
+	     group by grm.gene_relationship_id
+	     order by grm.chrom_start
+	     limit $num";
+
+    my @relationshipids = $self->_get_relationships($q);
+
+    my %genes;
+    foreach my $rel (@relationshipids) {
+      push @{$genes{$species}}, $self->_fetch_homologues_by_species_relationship_id($species, $rel);
+      push @{$genes{$hspecies}}, $self->_fetch_homologues_by_species_relationship_id($hspecies, $rel);
+    
+    }
+
+    return %genes;
+}                               
+
 
 
 =head2 list_stable_ids_from_species
