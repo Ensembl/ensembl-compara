@@ -17,7 +17,7 @@ sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
     
     my $highlight = undef;
-    my $colour = $colours->{$transcript->type()};
+    my $colour = $colours->{$transcript->type()||$gene->type()};
 
     if(exists $highlights{$transcript->stable_id()}) {
       $highlight = $colours->{'superhi'};
@@ -88,8 +88,11 @@ sub text_label {
 
 sub features {
   my ($self) = @_;
-
-  return $self->{'container'}->get_all_Genes('genomewise');
+  if( $self->{'config'}->{'fakecore'} ) {
+    return $self->{'container'}->get_all_Genes('genomewise');
+  } else {
+    return $self->{'container'}->get_all_Genes('genomewise','estgene');
+  }
 }
 
 sub legend {

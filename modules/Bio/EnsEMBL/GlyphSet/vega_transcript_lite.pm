@@ -23,7 +23,7 @@ sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
     my $highlight = undef;
-    my $type = $transcript->type();
+    my $type = $transcript->type() || $gene->type();
     $type =~ s/HUMACE-//g;
     my $colour = $colours->{$type};
 
@@ -107,7 +107,12 @@ sub text_label {
 sub features {
   my ($self) = @_;
 
-  return $self->{'container'}->get_all_Genes('otter');
+  warn "GRABBING ALL GENES OF TYPE otter from VEGA";
+  if( $self->{'config'}->{'fakecore'} ) {
+    return $self->{'container'}->get_all_Genes('otter');
+  } else {
+    return $self->{'container'}->get_all_Genes('otter','vega');
+  }
 }
 
 sub legend {

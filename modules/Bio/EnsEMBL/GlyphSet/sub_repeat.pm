@@ -18,7 +18,8 @@ sub check { return 'sub_repeat'; }
 
 sub features {
     my $self = shift;
-    return $self->{'container'}->get_all_RepeatFeatures( $self->{'extras'}->{'name'} );
+    my @repeats = sort { $a_->seq_region_start <=> $_b->seq_region_end } @{$self->{'container'}->get_all_RepeatFeatures( $self->{'extras'}->{'name'} )};
+    return \@repeats;
 }
 
 sub managed_name {

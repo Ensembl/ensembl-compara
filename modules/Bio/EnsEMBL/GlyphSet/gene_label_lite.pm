@@ -89,18 +89,12 @@ sub _init {
 ##############################################################################
 
     my %gene_objs;
-    foreach my $g (@{$vc->get_all_Genes('', 1)}) {
-      my $source = lc($g->analysis->logic_name);
-      $gene_objs{$source} ||= [];
-      push @{$gene_objs{$source}}, $g;
-    }
-    
     ## get vega logic names from child
     my $logic_name;
     if ($self->can('logic_name')) {
         $logic_name = $self->logic_name;
     }
-    foreach my $g (@{$gene_objs{'otter'}}, @{$gene_objs{$logic_name}}) { 
+    foreach my $g (@{$vc->get_all_Genes('otter','vega')}) {
       my $gene_label = $g->external_name() || $g->stable_id();   
       my $high = exists $highlights{ $gene_label }; 
       my $type = $g->type(); 
@@ -124,7 +118,7 @@ sub _init {
 ##############################################################################
 # Stage 2b: Retrieve all core (ensembl) genes                                #
 ##############################################################################
-    foreach my $g (@{$gene_objs{lc($authority)}} ) { 
+    foreach my $g (@{$vc->get_all_Genes(lc($authority))}) {
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$g->stable_id()} ? 1 : 0;
         my $gene_col = $colours->{'_'.$g->external_status};
@@ -146,7 +140,7 @@ sub _init {
 ##############################################################################
 # Stage 2d: Retrieve all RefSeq genes                                        #
 ##############################################################################
-    foreach my $g (@{$gene_objs{'refseq'}} ) { ## Hollow genes
+    foreach my $g (@{$vc->get_all_Genes('refseq')}) {
         my $gene_label = $g->stable_id();
         my $high = (exists $highlights{ $g->stable_id() }) ||
           exists ($highlights{$gene_label});

@@ -14,8 +14,7 @@ sub my_helplink { return "markers"; }
 sub features {
     my ($self) = @_;
 
-    return $self->{'container'}->get_all_SimpleFeatures('Eponine', 
-								    .8);
+    return $self->{'container'}->get_all_SimpleFeatures('Eponine', .8);
 }
 
 sub href {

@@ -98,22 +98,10 @@ sub _init {
   my $offset = $vc_start - 1;
 
   my %gene_objs;
-  foreach my $g (@{$vc->get_all_Genes('', 1)}) {
-    my $source = lc($g->analysis->logic_name);
-    $gene_objs{$source} ||= [];
-    push @{$gene_objs{$source}}, $g;
-  }
 
-  #
-  # Draw all of the Vega Genes
-  #
   my $F = 0;
   ## get vega logic names from child
-  my $logic_name;
-  if ($self->can('logic_name')) {
-    $logic_name = $self->logic_name;
-  }
-  foreach my $g (@{$gene_objs{'otter'}}, @{$gene_objs{$logic_name}}) {
+  foreach my $g (@{$vc->get_all_Genes('otter','vega')}) {
     $F++;
     my $genelabel = $g->stable_id(); 
     my $high = exists $highlights{$genelabel};
@@ -148,7 +136,7 @@ sub _init {
 
   # Draw all of the Core (ensembl) genes
   $F=0;
-  foreach my $g (@{$gene_objs{lc($authority)}} ) {
+  foreach my $g ( @{$vc->get_all_Genes( lc($authority) )} ) {
     $F++;
     my $high = (exists $highlights{ $g->stable_id() }) || (exists $highlights{ $g->external_name() });
     my $gene_col = $colours->{'_'.$g->external_status};
@@ -183,7 +171,7 @@ sub _init {
 
   # Draw all RefSeq Genes
   $F=0;
-  foreach my $g (@{$gene_objs{'refseq'}} ) {
+  foreach my $g (@{$vc->get_all_Genes( 'refseq' ) } ) {
     $F++;
     my $gene_label = $g->external_name() || $g->stable_id();
     my $high = exists $highlights{ $g->external_name() } || exists $highlights{ $g->stable_id() };

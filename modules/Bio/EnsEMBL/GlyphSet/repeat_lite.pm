@@ -9,7 +9,8 @@ sub my_label { return "Repeats"; }
 
 sub features {
   my $self = shift;
-  return $self->{'container'}->get_all_RepeatFeatures(); # 'RepeatMask');
+  my @features = sort { $a->seq_region_start <=> $b->seq_region_start } @{$self->{'container'}->get_all_RepeatFeatures()};
+  return \@features;
 }
 
 sub zmenu {

@@ -82,8 +82,8 @@ sub _init {
          $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
          $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
       my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
-      my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  $transcript->start();
-      my $coding_end   = defined ( $transcript->coding_region_end() )   ? $transcript->coding_region_end :    $transcript->end();
+      my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
+      my $coding_end   = defined ( $transcript->coding_region_end() )   ? $transcript->coding_region_end :    -1e6;
       my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
       for(my $i = 0; $i < @exons; $i++) {
         my $exon = @exons[$i];

@@ -15,6 +15,7 @@ use EnsWeb;
 sub init {
     my ($self) = @_;
 
+ warn "INIT SUBREPEAT";
     $self->label("Repeats");
 
     my $Config = $self->{'config'};
@@ -33,6 +34,7 @@ sub add_glyphset {
 		
    my $sub_repeat_glyphset;
 
+   warn "SUB REPEAT NAME: $name";
    eval { $sub_repeat_glyphset = new Bio::EnsEMBL::GlyphSet::sub_repeat( $self->{'container'}, $self->{'config'}, $self->{'highlights'}, $self->{'strand'}, { 'name' => $name } ); };
 							   
    if($@) {
