@@ -11,9 +11,9 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Sanger::Graphics::Glyph::Text({
-	'text'      => 'Peptide',
-	'font'      => 'Small',
-	'absolutey' => 1,
+		'text'      => 'Peptide',
+		'font'      => 'Small',
+		'absolutey' => 1,
     });
     $self->label($label);
 }
@@ -29,7 +29,7 @@ sub _init {
 	my $flip = 0;
 	my @colours  = ($Config->get('Pprotein','col1'), $Config->get('Pprotein','col2'));
 	my $start_phase = 1;
-
+	
 	for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
 	   my $colour = $colours[$flip];
 	   my $exon_id = $pep_splice->{$exon_offset}{'exon'};
@@ -55,23 +55,5 @@ sub _init {
 	}
 }
 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

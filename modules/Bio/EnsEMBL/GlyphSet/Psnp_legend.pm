@@ -20,9 +20,6 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-
-#   return unless ($self->strand() == -1);
-
     my $BOX_HEIGHT    = 6;
     my $BOX_WIDTH     = 6;
     my $FONTNAME      = "Tiny";
