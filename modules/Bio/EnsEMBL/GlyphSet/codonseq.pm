@@ -2,7 +2,7 @@ package Bio::EnsEMBL::GlyphSet::codonseq;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
-use Bio::EnsEMBL::SeqFeature;
+use Bio::EnsEMBL::Feature;
 use Bio::Seq;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
@@ -24,7 +24,7 @@ sub features {
         $string = reverse $string if $strand == -1;
         my $start = $phase - 5;
         push @features, map {
-            Bio::EnsEMBL::SeqFeature->new(
+            Bio::EnsEMBL::Feature->new(
 	       -start => $start+=3,
 	       -end   => $start+2,
                -seqname => $_,

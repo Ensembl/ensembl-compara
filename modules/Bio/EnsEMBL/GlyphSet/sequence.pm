@@ -2,7 +2,7 @@ package Bio::EnsEMBL::GlyphSet::sequence;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
-use Bio::EnsEMBL::SeqFeature;
+use Bio::EnsEMBL::Feature;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
@@ -16,12 +16,11 @@ sub features {
     my $strand = $self->strand;
     if($strand == -1 ) { $seq=~tr/ACGT/TGCA/; }
     my @features = map { 
-       Bio::EnsEMBL::SeqFeature->new(
+       Bio::EnsEMBL::Feature->new(
 	   -start   => ++$start,
 	   -end     => $start,
-           -seqname => $_,
            -strand  => $strand,
-           -display_name => $_,
+           -seqname => $_,
        )
     } split //, $seq;
     return \@features;
