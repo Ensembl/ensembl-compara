@@ -151,8 +151,9 @@ sub get_AlignBlockSet{
    my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
    $sth->execute;
 
-   my $alignset = Bio::EnsEMBL::Compara::AlignBlockSet->new();
-
+   my $alignset  = Bio::EnsEMBL::Compara::FeatureAwareAlignBlockSet->new();
+   my $core_db;
+ 
    while( my $ref = $sth->fetchrow_arrayref ) {
        my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand) = @$ref;
        my $alignblock = Bio::EnsEMBL::Compara::AlignBlock->new();
@@ -168,7 +169,10 @@ sub get_AlignBlockSet{
 
        $alignblock->dnafrag($dnafraghash{$raw_id});
        $alignset->add_AlignBlock($alignblock);
+       $core_db = $dnafraghash{$raw_id}->genomedb->ensembl_db; 
    }
+
+   $alignset->core_adaptor($core_db);
 
    return $alignset;
 }
