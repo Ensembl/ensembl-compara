@@ -480,9 +480,9 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::level_id method");
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::original_sequence method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-      -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
-      -aligned_sequence => $aligned_sequence
+      -aligned_sequence => $aligned_sequence,
+      -dnafrag_strand => 1
       );
   ok($genomic_align->original_sequence, $original_sequence,
           "Trying to get original_sequence from aligned_sequence");
