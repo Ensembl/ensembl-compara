@@ -9,7 +9,6 @@ sub my_label { return "BACs"; }
 sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
-    my $max_full_length  = $self->{'config'}->get( "bacs", 'full_threshold' ) || 200000000;
     return $self->{'container'}->get_all_MapFrags( 'bacs' );
 }
 
@@ -21,9 +20,9 @@ sub zmenu {
         'caption'   => "BAC: ".$f->name,
         '01:Status: '.$f->status => ''
     };
-    $zmenu->{'02:bacend: '.$f->bac_1} = $ext_url->get_url( 'EMBL', $f->bac_1 ) if $f->bac_1;
-    $zmenu->{'03:bacend: '.$f->bac_2} = $ext_url->get_url( 'EMBL', $f->bac_2 ) if $f->bac_2;
-
+    foreach( $f->embl_accs ) {
+        $zmenu->{"02:bacend: $_"} = $ext_url->get_url( 'EMBL', $_);
+    }
     return $zmenu;
 }
 

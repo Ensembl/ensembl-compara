@@ -13,14 +13,6 @@ sub my_label { return "Nod BACs"; }
 sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
-    my @sorted =  
-A
-      map { $_->[1] }
-        sort { $a->[0] <=> $b->[0] }
-          map { [$_->seq_start-$_->state*1e9 * $_->BACend_flag/4, $_] }
-            @{$self->{'container'}->get_all_MapFrags(
-              $container_length > $max_full_length*1001 ? 'acc_bac_map' : 'bac_map'
-            )};
     return $self->{'container'}->get_all_MapFrags('nod_bacs');
 }
 
