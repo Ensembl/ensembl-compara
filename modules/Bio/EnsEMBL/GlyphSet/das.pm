@@ -96,7 +96,6 @@ sub _init {
   $self->{helplink} = $Config->get($das_config_key, 'helplink');
   my $renderer = $Config->get($das_config_key, 'renderer');
   $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
-  warn "RENDERER... $renderer";
   return $self->$renderer( $configuration );
 }
 
@@ -117,7 +116,6 @@ sub RENDER_simple {
     my $ID    = $f->das_id;
     my $label = $f->das_group_label || $f->das_feature_label || $ID;
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
-    warn "LABEL_LENGTH - $label_length....";
     my $row = 0;
     my $START = $f->das_start() <  1       ? 1       : $f->das_start();
     my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
@@ -141,18 +139,15 @@ sub RENDER_simple {
     my $colour;
     if($configuration->{'use_style'}) {
       $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id} || $configuration->{'styles'}{$f->das_type_category}{'default'} || $configuration->{'styles'}{'default'}{'default'};
-      warn "Setting colour.... (b)";
       $colour = $style->{'attrs'}{'fgcolor'}||$configuration->{'colour'};
       $display_type = "draw_".$style->{'glyph'} || 'draw_box';
     } else {
-      warn "Setting colour.... (a)";
       $colour = $configuration->{'colour'};
       $display_type = 'draw_box';
     }
     $display_type = 'draw_box' unless $self->can( $display_type );
     if( $display_type eq 'draw_box') {
       $Composite->push( $self->$display_type( $configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'} ) );
-      warn "$configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'}";
     } else {
       $Composite->push( new Sanger::Graphics::Glyph::Space({
         'x'         => $START-1,
@@ -213,7 +208,6 @@ sub RENDER_grouped {
     my $ID    = $f->das_group_id || $f->das_id;
     my $label = $f->das_group_label || $f->das_feature_label || $ID;
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
-    warn "LABEL_LENGTH - $label_length....";
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
     next if( $row < 0 ); ## SKIP IF BUMPED...
     my( $href, $zmenu ) = $self->zmenu( $f );
@@ -328,7 +322,6 @@ sub RENDER_density {
 ## First of all compute the bin values....
 ## If it is either average coverage or average count we need to compute bin totals first...
 ## It is trickier for the bases covered - which I'll look at later...
-  warn "RENDERING DAS DENSITY......";
   foreach my $f( @{$configuration->{'features'}} ){
     if($f->das_type_id() eq '__ERROR__') {
       $self->errorTrack(
@@ -395,7 +388,6 @@ sub RENDER_density {
       'zmenu'     => { 'caption' => $_ }
     }) );
     $start+=$bin_length;
-    warn "PUSHING $start - $configuration->{'h'}";
   }
   return 1;
 }

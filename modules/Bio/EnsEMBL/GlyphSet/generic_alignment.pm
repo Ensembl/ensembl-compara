@@ -13,8 +13,9 @@ sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
   my $HELP_LINK = 'compara_alignment';
+  my $code      = $self->check();
   $self->label( new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->{'config'}->get($HELP_LINK,'label')||'---',
+    'text'      => $self->{'config'}->get($code,'label')||'---',
     'font'      => 'Small',
     'absolutey' => 1,
     'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
@@ -23,7 +24,7 @@ sub init_label {
       "01:Track information..." => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$HELP_LINK\')]
     }
   }));
-  $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' ) unless $self->{'config'}{'compara'};
+  $self->bumped( $self->{'config'}->get($code, 'compact') ? 'no' : 'yes' ) unless $self->{'config'}{'compara'};
 }
 
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
@@ -286,7 +287,7 @@ sub compact_init {
     unless( $domain ) {
       $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
       $zmenu->{ 'Dotter' }    = $href;
-      $zmenu->{ 'Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature&l=$chr:$rs-$re&s1=$other_species&l1=$chr_2:$s_2-$e_2&type=$type";
+      $zmenu->{ 'Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature&l=$chr:$rs-$re&s1=$other_species&l1=$chr_2:$s_2-$e_2&type=$METHOD";
       $zmenu->{ $MULTICONTIGVIEW_TEXT_LINK } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
     }
     
@@ -328,7 +329,6 @@ sub compact_init {
         $self->join_tag( $TO_PUSH, $TAG, 0, $Z, $join_col, 'fill', $join_z );
       }
     }
-    warn $TO_PUSH;
     $self->push( $TO_PUSH );
   }
 ## No features show "empty track line" if option set....
