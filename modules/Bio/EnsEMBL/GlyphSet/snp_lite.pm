@@ -27,7 +27,6 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    
     my $chr_start = $self->{'container'}->chr_start()+$f->start;
     my $snp_id = $f->id;
     my $source = $f->source_tag;
@@ -97,9 +96,10 @@ sub zmenu {
 
     my %links;
     
+    my $source = $f->source_tag; warn($source);
     foreach my $link ($f->each_DBLink()) {
       my $DB = $link->database;
-      if( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || $DB eq 'dbSNP' || $DB eq 'WI' ) {
+      if( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || ($DB eq 'dbSNP' && $source eq 'dbSNP') || $DB eq 'WI' ) {
         $zmenu{"16:$DB:".$link->primary_id } = $ext_url->get_url( $DB, $link->primary_id );
       }
     }
