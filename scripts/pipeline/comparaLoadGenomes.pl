@@ -8,7 +8,7 @@ use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::Compara::SimpleRule;
+use Bio::EnsEMBL::Hive::SimpleRule;
 use Bio::EnsEMBL::DBLoader;
 
 
@@ -152,10 +152,10 @@ sub prepareGenomeAnalysis
   unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
     $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
   }
-  my $simplerule = Bio::EnsEMBL::Compara::SimpleRule->new(
+  my $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
       '-condition_analysis' => $submit_analysis,
       '-goal_analysis'      => $load_analysis);
-  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($simplerule);
+  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
 
   
   my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
@@ -172,10 +172,10 @@ sub prepareGenomeAnalysis
   unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
     $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
   }
-  $simplerule = Bio::EnsEMBL::Compara::SimpleRule->new(
+  $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
       '-condition_analysis' => $load_analysis,
       '-goal_analysis'      => $dumpfasta_analysis);
-  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($simplerule);
+  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
 
 
   my $blastrules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
@@ -192,10 +192,10 @@ sub prepareGenomeAnalysis
   unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
     $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
   }
-  $simplerule = Bio::EnsEMBL::Compara::SimpleRule->new(
+  $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
       '-condition_analysis' => $dumpfasta_analysis,
       '-goal_analysis'      => $blastrules_analysis);
-  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($simplerule);
+  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
   
   
   # create an unlinked analysis called blast_template
@@ -280,7 +280,7 @@ sub submitGenome
   my $genome_name = $meta->get_Species->binomial;
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
-  my $genebuild = $meta->get_genebuild;
+  my $genebuild = $meta->get_genebuild;  
 
   if($species->{taxon_id} && ($taxon_id ne $species->{taxon_id})) {
     throw("$genome_name taxon_id=$taxon_id not as expected ". $species->{taxon_id});
@@ -292,9 +292,7 @@ sub submitGenome
   $genome->assembly($assembly);
   $genome->genebuild($genebuild);
   $genome->locator($locator);
-
-  $self->{'comparaDBA'}->get_GenomeDBAdaptor->store($genome);
-  $species->{'genome_db'} = $genome;
+  $genome->dbID($species->{'genome_db_id'}) if(defined($species->{'genome_db_id'}));
 
  if($verbose) {
     print("  about to store genomeDB\n");
@@ -303,6 +301,10 @@ sub submitGenome
     print("    assembly = '".$genome->assembly."'\n");
     print("    genome_db id=".$genome->dbID."\n");
   }
+
+  $self->{'comparaDBA'}->get_GenomeDBAdaptor->store($genome);
+  $species->{'genome_db'} = $genome;
+  print("  STORED as genome_db id=".$genome->dbID."\n");
 
   #
   # now fill table genome_db_extra
@@ -351,7 +353,7 @@ sub submitGenome
       -input_id       => $input_id,
       -analysis_id    => $analysis->dbID,
       -input_job_id   => 0,
-      -block          => 'YES',
+      #-block          => 'YES',
       );
 
 }
