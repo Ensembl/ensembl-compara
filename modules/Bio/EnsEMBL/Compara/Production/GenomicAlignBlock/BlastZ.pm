@@ -76,8 +76,9 @@ my $g_compara_BlastZ_workdir;
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'debug'}   = 0;
-  $self->{'options'} = 'T=2 H=2200';
+  $self->{'debug'}       = 0;
+  $self->{'options'}     = 'T=2 H=2200';
+  $self->{'method_link'} = 'BLASTZ_RAW';
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
@@ -101,9 +102,8 @@ sub fetch_input {
   #
   # create method_link_species_set
   #  
-  $self->{'comparaDBA'}->dbc->do("insert ignore into method_link set method_link_id=1001, type='BLASTZ_RAW'");
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type("BLASTZ_RAW");
+  $mlss->method_link_type($self->{'method_link'});
   $mlss->species_set([$qyChunk->dnafrag->genome_db, $dbChunk->dnafrag->genome_db]);
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->{'method_link_species_set'} = $mlss;
@@ -209,6 +209,7 @@ sub get_params {
   $self->{'qy_chunk_id'} = $params->{'qyChunk'} if(defined($params->{'qyChunk'}));
   $self->{'db_chunk_id'} = $params->{'dbChunk'} if(defined($params->{'dbChunk'}));
   $self->{'options'}     = $params->{'options'} if(defined($params->{'options'}));
+  $self->{'method_link'} = $params->{'method_link'} if(defined($params->{'method_link'}));
   return;
 }
 
