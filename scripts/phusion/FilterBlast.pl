@@ -161,8 +161,9 @@ if($Sst != 0) {
   } else {
     $MatchHashRef->{Qst} = $Qen;
     $MatchHashRef->{Qen} = $Qst;
-		$MatchHashRef->{orient} = "-";
+    $MatchHashRef->{orient} = "-";
   }
+  push @Matches, $MatchHashRef;
 }
 
 ## END STEP 1
@@ -172,6 +173,8 @@ if($Sst != 0) {
 my @RelevantMatches = ();
 my %vote = ();
 my %MatchesIndexPerSchrSorient = ();
+
+print STDERR "#macthes for query $Q: ",scalar @Matches,"\n" if ($debug);
 
 foreach (sort { $b->{score} <=> $a->{score} } @Matches) { # sorting by highest score
   my %r = %{$_};
@@ -204,6 +207,12 @@ foreach (keys %vote) {
   }
 }
 
+unless (defined $winC) {
+  print STDERR "No winC for query $Q\n" if ($debug);
+  exit 0;
+}
+
+print STDERR "winC for query $Q: ",$winC,"\n" if ($debug);
 ## END STEP 2
 
 ## STEP 3 Defining the median position of HSP on the winning chromosome
@@ -212,6 +221,8 @@ foreach (keys %vote) {
 my $w = 0.0;
 my $wt = 0.0;
 my @median = ();
+
+
 
 foreach (sort { $b->{score} <=> $a->{score} } @{$MatchesIndexPerSchrSorient{$winC}}) {
   my %r = %{$_};
@@ -276,6 +287,8 @@ foreach (sort { $b->{score} <=> $a->{score} } @{$MatchesIndexPerSchrSorient{$win
 }
 
 
+print STDERR "#matches after median filtering: ",scalar @RelevantMatches,"\n";
+
 if ($noStdDevFilter) {
   print_out_matches(\@RelevantMatches,0,$#RelevantMatches);
   exit 0;
@@ -286,12 +299,12 @@ my $stdev = 0.0;
 foreach (@RelevantMatches) {
   my %r = %{$_};
   $stdev += ((($r{Sst}+$r{Sen})/2 - $mean)**2.0) * $r{score};
-  printf STDERR "%f %d $stdev\n",(($r{Sst}+$r{Sen})/2 - $mean),$r{score} if ($debug);
+  printf STDERR "individual stdev: %f score: %d\n",(($r{Sst}+$r{Sen})/2 - $mean),$r{score} if ($debug);
 }
 $stdev = (($stdev/$w)**0.5);
 $min = $mean - $StdDevAmplitude*$stdev;
 $max = $mean + $StdDevAmplitude*$stdev;
-printf STDERR "cm = %d %f\n",$mean,$stdev if ($debug);
+printf STDERR "Scm mean: %d stdev: %f\n",$mean,$stdev if ($debug);
 
 ## END STEP 4
 
@@ -332,7 +345,8 @@ for (my $i = $#RelevantMatches; $i >= $start; $i--) {
     next;
   }
 }
-
+ 
+print STDERR "#matches after StdDev filtering: ",scalar @RelevantMatches,"\n";
 print_out_matches(\@RelevantMatches,$start,$end);
 
 ## END STEP 5
