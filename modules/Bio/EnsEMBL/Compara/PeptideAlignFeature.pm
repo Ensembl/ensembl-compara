@@ -129,7 +129,7 @@ sub return_as_homology
   my $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
   $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
   $homology->stable_id($stable_id);
-  $homology->source_name("ENSEMBL_HOMOLOGS");
+  $homology->source_name("ENSEMBL_ORTHOLOGUES");
 
   # NEED TO BUILD THE Attributes (ie homology_members)
   #
