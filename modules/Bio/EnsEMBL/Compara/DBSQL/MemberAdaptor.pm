@@ -650,9 +650,12 @@ sub store {
 sub update_sequence {
   my ($self, $member) = @_;
 
-  my $sql = "UPDATE sequence SET sequence = ? WHERE member_id = ?";
+  return unless($member);
+  return unless($member->sequence_id);
+
+  my $sql = "UPDATE sequence SET sequence = ? WHERE sequence_id = ?";
   my $sth = $self->prepare($sql);
-  $sth->execute($member->sequence, $member->dbID);
+  $sth->execute($member->sequence, $member->sequence_id);
 }
 
 
