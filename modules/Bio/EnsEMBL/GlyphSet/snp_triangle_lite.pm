@@ -7,7 +7,7 @@ use Bio::EnsEMBL::GlyphSet::snp_lite;
 sub tag {
     my ($self, $f) = @_; 
     my ($col,$labcol) =  $self->colour($f);
-    warn( "snp - $col - $labcol" );
+    #warn( "snp - $col - $labcol" );
     if($f->snpclass eq 'snp' ) {
 	return( { 'style' => 'box', 'letter' => $f->{'_ambiguity_code'}, 'colour' => $col, 'label_colour' => $labcol } );
     }
