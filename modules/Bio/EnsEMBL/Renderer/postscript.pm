@@ -7,175 +7,237 @@ use Bio::EnsEMBL::Renderer;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer);
 
+sub init_canvas {
+    my ($self, $config, $im_width, $im_height) = @_;
+
+    # we separate out postscript commands from header so that we can
+    # do EPS at some future time.
+
+    $im_height = int($im_height);
+    $im_width  = int($im_width);
+
+    my $canvas = qq(%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 0 0 $im_width $im_height
+% Created by Bio::EnsEMBL::Renderer::postscript
+%  ensembl-draw cvs module
+%  Contact http://www.ensembl.org/
+%  Author: rmp\@sanger.ac.uk
+%%%%%%%%%
+% set default font
+%
+/pt {6} def
+/Helvetica findfont pt scalefont setfont
+
+%%%%%%%%%
+% glyph subroutines
+%
+/np {newpath} def
+/mt {moveto} def
+/lt {lineto} def
+/lr {rlineto} def
+/mr {rmoveto} def
+/st {stroke} def
+/cp {closepath} def
+/fi {fill} def
+/r  {rect} def
+
+%%%%%%%%%
+% draw rectangle "x y w h rect"
+%
+/rect {np 4 -2 roll moveto dup 0 exch lr exch dup 0 lr exch neg 0 exch lr neg 0 lr cp} def
+
+%%%%%%%%%
+% draw text "x y text"
+%
+/text { pt 0 exch moveto 3 1 roll mr 1 -1 scale show 1 -1 scale} def
+
+%%%%%%%%%
+% draw line "x y w h line"
+%
+/line { 4 -2 roll moveto lr st } def
+
+1 -1 scale
+0 -$im_height translate
+%%%%%%%%%
+% define colours
+%
+);
+
+    #########
+    # define colours which match our internal ids (I rule!)
+    #
+    for my $id ($self->{'colourmap'}->ids()) {
+	my ($psr, $psg, $psb) = $self->ps_rgb_by_id($id);
+	$canvas .= qq(/_$id { $psr $psg $psb setrgbcolor } def\n);
+    }
+
+    my $bgcolour = $config->bgcolor();
+    $canvas .= qq(_$bgcolour 0 0 $im_width $im_height r fi\n);
+
+    $self->canvas($canvas);
+}
+
+sub add_canvas_frame {
+}
+
+sub ps_rgb_by_id {
+    my ($self, $id) = @_;
+    my ($psr, $psg, $psb) = $self->{'colourmap'}->rgb_by_id($id);
+    $psr /= 255;
+    $psg /= 255;
+    $psb /= 255;
+    return (sprintf("%.2f", $psr), sprintf("%.2f", $psg), sprintf("%.2f", $psb));
+}
+
 sub canvas {
     my ($self, $canvas) = @_;
 
     if(defined $canvas) {
 	$self->{'canvas'} = $canvas;
     } else {
-	return $self->{'canvas'}->gif();
+	return $self->{'canvas'} . qq(showpage\n);
     }
 }
 
 sub add_string {
     my ($self,$string) = @_;
 
-    $self->{'_postscript_string'} .= $string;
-}
-
-
-sub postscript_string {
-    my ($self) = @_;
-
-    # we separate out postscript commands from header so that we can
-    # do EPS at some future time.
-
-    my $header = "%!PS-Adobe-2.0\n% Created by Bio::EnsEMBL::Renderer::postscript\n%  ensembl-draw cvs module\n%  Contact www.ensembl.org>\n";
-    
-    # should make this configurable somehow. Hmmmm.
-    $header .= "/Helvetica findfont $font scalefont setfont\n";
-
-    
-    return $header.$self->{'_postscript_string'};
-}
-    
-
-
-sub colour {
-    my ($this, $id) = @_;
-  
-    die "postscript currently has not implemented colour routine. Not sure how to roll it in yet";
-   
-    return $colour;
+    $self->{'canvas'} .= $string;
 }
 
 
 sub render_Rect {
     my ($self, $glyph) = @_;
-#print STDERR qq(drawing rect $glyph\n);
 
-    my $canvas = $self->{'canvas'};
+    my $gcolour       = $glyph->colour();
+    my $gbordercolour = $glyph->bordercolour();
 
-    my $gcolour      = $glyph->colour();
-    my $gbordercolor = $glyph->colour();
+    my $x = $glyph->pixelx() -1;
+    my $w = $glyph->pixelwidth() +1;
+    my $y = $glyph->pixely();
+    my $h = $glyph->pixelheight();
 
-    # we don't do colours yet!
-    #my $bordercolour = $self->colour($gcolour || $gbordercolor);
-    #my $colour       = $self->colour($gcolour);
-
-    $glyph->transform($self->{'transform'});
-
-    my $x1 = $glyph->pixelx();
-    my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
-    my $y1 = $glyph->pixely();
-    my $y2 = $glyph->pixely() + $glyph->pixelheight();
-
+    if(defined $gcolour) {
     
+	#########
+	# draw filled rect
+	#
+	$self->add_string("_$gcolour $x $y $w $h r fi\n") unless ($gcolour eq "transparent");
 
-    $self->add_string("$x1 $y1 moveto $x1 $y2 stroke $x2 $y2 stroke $x2 $y1 stroke closepath fill\n");
+    } elsif(defined $gbordercolour) {
 
+	#########
+	# draw unfilled rect
+	#
+	$self->add_string("_$gbordercolour $x $y $w $h r st\n") unless ($gcolour eq "transparent");
+    }
 }
 
 sub render_Text {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
     my $font = $glyph->font();
 
-    #my $colour = $this->colour($glyph->colour());
+    my $gcolour = $glyph->colour() || $self->{'colourmap'}->id_by_name("black");
+    my $x       = $glyph->pixelx();
+    my $y       = $glyph->pixely();
+    my $text    = $glyph->text();
 
-    $glyph->transform($this->{'transform'});
-
-    $self->add_string($glyph->pixelx()." ".$glyph->pixely." moveto (".$glyph->text.") show\n");
-
+    $self->add_string(qq(_$gcolour $x $y ($text) text\n)) unless ($gcolour eq "transparent");
 }
 
 sub render_Circle {
-    die "Not implemented in postscript yet!";
+#    die "Not implemented in postscript yet!";
 }
 
 sub render_Ellipse {
-    die "Not implemented in postscript yet!";
+#    die "Not implemented in postscript yet!";
 }
 
 sub render_Intron {
     my ($self, $glyph) = @_;
+    my $gcolour = $glyph->colour();
 
-    #my $colour = $self->colour($glyph->colour());
+    my $x1 = $glyph->pixelx();
+    my $w1 = int($glyph->pixelwidth() / 2);
+    my $y1 = $glyph->pixely() + int($glyph->pixelheight() / 2);
+    my $h1 = -int($glyph->pixelheight() / 2);
+
+    my $x2 = $x1 + $w1;
+    my $y2 = $y1 + $h1;
+    my $w2 = $w1;
+    my $h2 = -$h1;
+
+    $self->add_string("_$gcolour $x1 $y1 $w1 $h1 line\n");
+    $self->add_string("_$gcolour $x2 $y2 $w2 $h2 line\n");
+}
+
+sub render_Line {
+    my ($self, $glyph) = @_;
+
+    my $gcolour = $glyph->colour();
 
     $glyph->transform($self->{'transform'});
 
-    my ($xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend);
+    my $x = $glyph->pixelx();
+    my $w = $glyph->pixelwidth();
+    my $y = $glyph->pixely();
+    my $h = $glyph->pixelheight();
 
-    if($self->{'transform'}->{'rotation'} == 90) {
-	$xstart  = $glyph->pixelx() + int($glyph->pixelwidth()/2);
-	$xend    = $xstart;
-	$xmiddle = $glyph->pixelx() + $glyph->pixelwidth();
-
-	$ystart  = $glyph->pixely();
-	$yend    = $glyph->pixely() + $glyph->pixelheight();
-	$ymiddle = $glyph->pixely() + int($glyph->pixelheight() / 2);
-
-    } else {
-	$xstart  = $glyph->pixelx();
-	$xend    = $glyph->pixelx() + $glyph->pixelwidth();
-	$xmiddle = $glyph->pixelx() + int($glyph->pixelwidth() / 2);
-
-	$ystart  = $glyph->pixely() + int($glyph->pixelheight() / 2);
-	$yend    = $ystart;
-	$ymiddle = $glyph->pixely();
+    my $beginstyle = "";
+    my $endstyle = "";
+    if(defined $glyph->dotted()) {
+	$beginstyle = qq(gsave [3] 0 setdash);
+	$endstyle   = qq(grestore);
     }
-
-    $self->add_string("$xstart  $ystart  moveto $xmiddle $ymiddle stroke\n");
-    $self->add_string("$xmiddle $ymiddle moveto $xend $yend stroke\n");
-
-
+    $self->add_string("_$gcolour $beginstyle $x $y $w $h line $endstyle\n") unless ($gcolour eq "transparent");
 }
 
 sub render_Poly {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
+    my $gbordercolour = $glyph->bordercolour();
+    my $gcolour       = $glyph->colour();
 
-
-    die "Postscript has not implemented render_Poly yet";
-
-    my $bordercolour = $this->colour($glyph->bordercolour());
-    my $colour       = $this->colour($glyph->colour());
-
-    my $poly = new GD::Polygon;
-
-    $glyph->transform($this->{'transform'});
+    my $poly = qq(np );
 
     my @points = @{$glyph->pixelpoints()};
     my $pairs_of_points = (scalar @points)/ 2;
+
+    my ($lastx, $lasty) = ($points[-2], $points[-1]);
+
+    $poly .= qq($lastx $lasty moveto );
 
     for(my $i=0;$i<$pairs_of_points;$i++) {
 	my $x = shift @points;
 	my $y = shift @points;
 
-	$poly->addPt($x,$y);
+	$poly .= qq($x $y lt );
     }
 
-    if(defined $colour) {
-	$this->{'canvas'}->filledPolygon($poly, $colour);
-    } else {
-	$this->{'canvas'}->polygon($poly, $bordercolour);
+    $poly .= qq(cp );
+
+    if(defined $gcolour) {
+	$poly = qq(_$gcolour $poly fi\n) unless ($gcolour eq "transparent");
+
+    } elsif(defined $gbordercolour) {
+	$poly = qq(_$gbordercolour $poly st\n) unless ($gbordercolour eq "transparent");
     }
+
+    $self->add_string($poly);
+
 }
 
 sub render_Composite {
-    my ($this, $glyph) = @_;
-    #########
-    # apply transformation
-    #
-    $glyph->transform($this->{'transform'});
+    my ($self, $glyph) = @_;
 
     #########
     # draw & colour the bounding area if specified
     # 
-    $this->render_Rect($glyph) if(defined $glyph->colour() || defined $glyph->bordercolour());
+    $self->render_Rect($glyph) if(defined $glyph->colour() || defined $glyph->bordercolour());
 
     #########
     # now loop through $glyph's children
     #
-    $this->SUPER::render_Composite($glyph);
+    $self->SUPER::render_Composite($glyph);
 }
 
 1;
