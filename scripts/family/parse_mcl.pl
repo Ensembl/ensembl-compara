@@ -304,8 +304,8 @@ foreach my $cluster (@clusters) {
         }
         $gene->transform('toplevel');
         $member->chr_name($gene->slice->seq_region_name);
-        $member->chr_start($gene->slice->seq_region_start);
-        $member->chr_end($gene->slice->seq_region_end);
+        $member->chr_start($gene->seq_region_start);
+        $member->chr_end($gene->seq_region_end);
       }
     }
     
