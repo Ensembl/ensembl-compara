@@ -162,8 +162,8 @@ sub map_Exon_on_Slice {
   my $original_exon = $self->exon;
   my $slice = $self->slice;
 
-  if (!defined($slice) or !defined($original_exon) or !defined($from_mapper) or !defined($to_mapper)) {
-    warn("[$self] cannot be mapped on reference Slice");
+  if (!defined($slice) or !defined($original_exon) or !defined($from_mapper)) {
+    warn("[$self] cannot be mapped");
     return undef;
   }
 
@@ -191,6 +191,7 @@ sub map_Exon_on_Slice {
     if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
       if ($alignment_coord->strand == 1) {
         if ($last_alignment_coord_end) {
+          # Consider gap between this piece and the previous as a deletion
           my $length = $alignment_coord->start - $last_alignment_coord_end - 1;
           $aligned_cigar .= $length if ($length>1);
           $aligned_cigar .= "D";
@@ -200,6 +201,7 @@ sub map_Exon_on_Slice {
         $global_alignment_coord_end = $alignment_coord->end;
       } else {
         if ($last_alignment_coord_start) {
+          # Consider gap between this piece and the previous as a deletion
           my $length = $last_alignment_coord_start - $alignment_coord->end - 1;
           $aligned_cigar .= $length if ($length>1);
           $aligned_cigar .= "D";
@@ -209,38 +211,57 @@ sub map_Exon_on_Slice {
         $global_alignment_coord_start = $alignment_coord->start;
       }
     } else {
+      # This piece is outside of the alignment -> consider as an insertion
       my $length = $alignment_coord->length;
       $aligned_cigar .= $length if ($length>1);
       $aligned_cigar .= "I";
       next;
     }
 
-    my @mapped_coords = $to_mapper->map_coordinates(
-            "alignment", # $self->genomic_align->genomic_align_block->dbID,
-            $alignment_coord->start,
-            $alignment_coord->end,
-            $alignment_coord->strand,
-            "alignment" # $to_mapper->to
-        );
-    foreach my $mapped_coord (@mapped_coords) {
-    ## $mapped_coord refer to reference_slice
-      if ($mapped_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
-        if ($alignment_coord->strand == 1) {
-          $aligned_strand = 1;
-          $aligned_start = $mapped_coord->start if (!$aligned_start);
-          $aligned_end = $mapped_coord->end;
-        } else {
-          $aligned_strand = -1;
-          $aligned_start = $mapped_coord->start;
-          $aligned_end = $mapped_coord->end if (!$aligned_end);
-        }
-        my $num = $mapped_coord->end - $mapped_coord->start + 1;
-        $aligned_cigar .= $num if ($num > 1);
-        $aligned_cigar .= "M";
+    if (!defined($to_mapper)) {
+      ## Mapping on the alignment (expanded mode)
+      if ($alignment_coord->strand == 1) {
+        $aligned_strand = 1;
+        $aligned_start = $alignment_coord->start if (!$aligned_start);
+        $aligned_end = $alignment_coord->end;
       } else {
-        my $num = $mapped_coord->end - $mapped_coord->start + 1;
-        $aligned_cigar .= $num if ($num > 1);
-        $aligned_cigar .= "I";
+        $aligned_strand = -1;
+        $aligned_start = $alignment_coord->start;
+        $aligned_end = $alignment_coord->end if (!$aligned_end);
+      }
+      my $num = $alignment_coord->end - $alignment_coord->start + 1;
+      $aligned_cigar .= $num if ($num > 1);
+      $aligned_cigar .= "M";
+
+    } else {
+      ## Mapping on the reference_Slice (collapsed mode)
+      my @mapped_coords = $to_mapper->map_coordinates(
+              "alignment", # $self->genomic_align->genomic_align_block->dbID,
+              $alignment_coord->start,
+              $alignment_coord->end,
+              $alignment_coord->strand,
+              "alignment" # $to_mapper->to
+          );
+      foreach my $mapped_coord (@mapped_coords) {
+      ## $mapped_coord refer to reference_slice
+        if ($mapped_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+          if ($alignment_coord->strand == 1) {
+            $aligned_strand = 1;
+            $aligned_start = $mapped_coord->start if (!$aligned_start);
+            $aligned_end = $mapped_coord->end;
+          } else {
+            $aligned_strand = -1;
+            $aligned_start = $mapped_coord->start;
+            $aligned_end = $mapped_coord->end if (!$aligned_end);
+          }
+          my $num = $mapped_coord->end - $mapped_coord->start + 1;
+          $aligned_cigar .= $num if ($num > 1);
+          $aligned_cigar .= "M";
+        } else {
+          my $num = $mapped_coord->end - $mapped_coord->start + 1;
+          $aligned_cigar .= $num if ($num > 1);
+          $aligned_cigar .= "I";
+        }
       }
     }
   }
@@ -250,19 +271,26 @@ sub map_Exon_on_Slice {
     return undef;
   }
 
-  ## Set coordinates on "slice" coordinates
-  if ($slice->strand == 1) {
-    $aligned_start += 1 - $slice->start;
-    $aligned_end += 1 - $slice->start;
+  if (defined($to_mapper)) {
+    ## Set coordinates on "slice" coordinates
+    if ($slice->strand == 1) {
+      $aligned_start += 1 - $slice->start;
+      $aligned_end += 1 - $slice->start;
+      $self->start($aligned_start);
+      $self->end($aligned_end);
+      $self->strand($aligned_strand);
+    } else {
+      $self->start($slice->end - $aligned_end + 1);
+      $self->end($slice->end - $aligned_start + 1);
+      $self->strand(-$aligned_strand);
+    }
+    $self->cigar_line($aligned_cigar);
+  } else {
     $self->start($aligned_start);
     $self->end($aligned_end);
     $self->strand($aligned_strand);
-  } else {
-    $self->start($slice->end - $aligned_end + 1);
-    $self->end($slice->end - $aligned_start + 1);
-    $self->strand(-$aligned_strand);
+    $self->cigar_line($aligned_cigar);
   }
-  $self->cigar_line($aligned_cigar);
 
   return $self;
 }
