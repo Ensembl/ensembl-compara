@@ -32,7 +32,7 @@ sub colour {
 
 sub href {
     my ($self, $gene, $transcript) = @_;
-    return $self->ID_URL( 'SWALLPROTEIN', $gene->stable_id );
+    return $self->ID_URL( 'UNIPROT', $gene->stable_id );
 }
 
 sub features {
