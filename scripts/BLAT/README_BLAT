@@ -1,0 +1,135 @@
+README for running translated BLAT	
+
+At the moment the working directories are in /ecs4/work2/ensembl/cara/
+
+Summary:
+
+
+mkdir for DNA for both species
+Dump DNA for both species.
+	 At the moment the database species (eg human) and the query species (eg Fugu) are both dumped in chunks of 100000 with an overlap of 1000 in softmasked mode). The query database should be in a single fasta file whilst the db species tends to be in seperate chromosome fasta files, as this makes it easier to run on the farm. 
+
+Make indices for query
+Make ID dir and files for query
+
+mkdir for BLAT run
+mkdir for db chromosomes
+Run BLAT across farm
+	The test of running the first Id file against all db chromosomes also allows for the ooc file to be created ( holds info on db 5mers which occur too often for BLAT) If this hasn\'t finished running before the rest of the BLATs are sent off they will fall over.
+	
+check jobs and rerun any failures
+
+grep the results lines out into '.raw' files
+
+run the parser to get rid of overlapped hsps to create '.data' and '.tbf' files
+
+run stats progs to check data
+
+
+
+Details:
+
+NB lines beginning with $ are command lines
+example used will be chicken against human
+
+$ cd /ecs4/work2/ensembl/cara/DNAFA/TX/
+$ mkdir Gg1 Hs34
+
+$cd Gg1
+
+get chromosome names for chicken 
+
+$ echo " select sr.name, cs.name from coord_system cs, seq_region sr, seq_region_attrib sra, attrib_type at where sra.attrib_type_id=at.attrib_type_id and at.code='toplevel' and sr.seq_region_id=sra.seq_region_id and sr.coord_system_id=cs.coord_system_id and sr.name not like \"%_NT_%\" and sr.name not like \"%_DR_%\" and sr.name not like \"UNKN\";" | mysql -h ecs2 -u ensro -P 3364 gallus_gallus_core_20_1 | awk '!/name/' | sort -u > Gg1_chr_names
+
+(as this is rather long there is a script in /ensembl_compara/misc_scripts dir which may be used called: get_PH_chrs_20.sh)
+
+Dump chicken DNA
+
+$ cat Gg1_chr_names | while read i ; do  bsub -q normal -o $i.out   ~/src/ensembl_main/ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2 -port 3364 -dbuser ensro -dbname gallus_gallus_core_20_1 -chr_names $i -overlap 1000 -chunk_size 100000 -masked 2 -phusion Gg -o $i.fa; done
+
+Check that all has run correctly with
+
+$ cat Gg1_chr_names | while read i ; do echo "doing $i " ; ls | grep out| wc -l ; echo -n "Done: " ; ls |grep out | xargs grep Done | wc -l ; echo  "Exit: " ; ls |grep out | xargs grep Exit ; done
+
+This will count the number of out files, the number of Dones (succesfully completed, LSF can get flakey and loose jobs and so rerun them, shouldn\'t be a problem as '.fa' file should be overwritten , but should check anyway) and prints any that exited
+Repeat any which failed
+
+
+Dump for Human as above 
+
+
+For query species (if to be used as a db species later may be kept in seperate chromosomes and the scripts changed accordingly)
+
+$ cat *.fa > Gg1.fa_all
+
+$ rm -f *fa  
+$ mv Gg1.fa_all Gg1.fa
+
+Make ID files for query species in dir DNAFA/TX/Gg1
+
+$ fastaindex -f Gg1.fa -i Gg1.fa.index
+$ mkdir Gg1Ids
+$ grep ">" Gg1.fa | sed "s/>//" | cut -c-100 | awk 'BEGIN {ind=1; size=40} size>0 {print Gg1,ind; size--; next} size==0 {ind++;size=40;print Gg1, ind; size--}END{}'|while read i j; do echo $i >>Gg1Ids/Gg1Ids.$j; done
+
+
+To run BLAT
+
+$ cd ../../../BLAT/
+$ mkdir Gg1Hs34
+$ cd Gg1Hs34
+
+$ cp ../../DNAFA/TX/Hs34/Hs34_chr_names ./
+
+Find out how many jobs to run: 
+$ ls ../../DNAFA/TX/Gg1/Gg1Ids/ | wc -l
+
+
+NB At the moment the output comes from a print statement in Blat --- which isn\'t good 
+
+
+As many jobs are involved its best to run these without nfs using the Run_LaunchBLAT.sh script which is as follows:
+
+
+cat Hs34_chr_nmaes | while read i; do 
+bsub -q normal -J"Gg1Hs34_$i\[1]" -o Hs34_$i/bsout.Gg1Hs34.$i.%I <<EOF
+. /usr/local/lsf/conf/profile.lsf
+/ecs4/work2/ensembl/cara/BLAT/LaunchBLAT.pl \
+-idqy /ecs4/work2/ensembl/cara/DNAFA/TX/Gg1/Gg1Ids/Gg1Ids.\${LSB_JOBINDEX} \
+-fastaqy /ecs4/work2/ensembl/cara/DNAFA/TX/Gg1/Gg1.fa \
+-indexqy /ecs4/work2/ensembl/cara/DNAFA/TX/Gg1/Gg1.fa.index \
+-fastadb /ecs4/work2/ensembl/cara/DNAFA/TX/Hs34/$i.fa \
+-query_type dnax -target_type dnax  -makefile Hs34_$i/5.ooc \
+2> /tmp/err.Gg1Hs34.\${LSB_JOBINDEX}.$i.\$\$ 
+status=\$?
+set -e 
+lsrcp /tmp/err.Gg1Hs34.\${LSB_JOBINDEX}.$i.\$\$ ecs4b:$PWD/Hs34_$i/Gg1Hs34.\${LSB_JOBINDEX}.$i.err
+/bin/rm -f /tmp/err.Gg1Hs34.\${LSB_JOBINDEX}.$i.\$\$ 
+exit \$status
+EOF
+done
+
+#NB  the STDout isn't stored in this case include "> out " etc if need to collect it -- don't forget to remove it
+
+
+Check everything ran ok and run with the rest 2-x where x is the number of id files
+
+Check everything ran ok. Should run overnight but can take as long as 3 days depending on the load on the farm, and whether the chickens have been fed recently.
+
+
+$ cat Hs34_chr_names | while read i ; do cd Hs34_$i ; echo "doing Hs34_$i " ; echo "err: " ; ls | grep err| wc -l ; echo "errors: "; ls | grep err| xargs grep rror ; echo -n "out: " ; ls | grep out| wc -l ; echo -n "Done: " ; ls |grep out | xargs grep Done | wc -l ; echo  "Exit: " ; ls |grep out | xargs grep Exit ; cd ../ ; done
+
+Any repeats need to be deleted and rerun. 
+
+
+grep out reults lines
+
+
+$ cat Hs34_chr_names | while read i ; do cd Hs34_$i ; echo "doing Hs34_$i " ; ls | grep err | xargs grep -h Gg1 > ../Gg1Hs34_$i\.raw ; cd ../ ; done
+
+parse these files to remove overlapped hsps
+
+$ cat Hs34_chr_names | while read i ; do  ; done
+
+
+
+
