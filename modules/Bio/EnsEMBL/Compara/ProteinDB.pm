@@ -1,10 +1,10 @@
 
 #
-# Ensembl module for Bio::EnsEMBL::Compara::GenomeDB
+# Ensembl module for Bio::EnsEMBL::Compara::ProteinDB
 #
-# Cared for by Ewan Birney <birney@ebi.ac.uk>
+# Cared for by EnsEMBL <www.ensembl.org>
 #
-# Copyright Ewan Birney
+# Copyright GRL and EBI
 #
 # You may distribute this module under the same terms as perl itself
 
@@ -12,7 +12,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::GenomeDB - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::ProteinDB - DESCRIPTION of Object
 
 =head1 SYNOPSIS
 
@@ -26,9 +26,8 @@ Describe the object here
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
-Email birney@ebi.ac.uk
-
-Describe contact details here
+=head1 CONTACT
+Email ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
@@ -40,7 +39,7 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 
-package Bio::EnsEMBL::Compara::GenomeDB;
+package Bio::EnsEMBL::Compara::ProteinDB;
 use vars qw(@ISA);
 use strict;
 
@@ -151,34 +150,35 @@ sub dbID{
 
 }
 
-=head2 get_Contig
+=head2 fetch_peptide_seq
 
- Title   : get_Contig
- Usage   : $obj->get_Contig($newval)
+ Title   : fetch_peptide_seq
+ Usage   : $obj->fetch_peptide_seq($peptide)
  Function: 
  Example : 
- Returns : contig object
+ Returns : Bio::PrimarySeq Obj
  Args    : newvalue (optional)
-
 
 =cut
 
-sub get_Contig{
-   my ($self,$name,$type) = @_;
+sub fetch_peptide_seq{
 
-   $self->throw("Need contig name in order to fetch contig.") unless defined $name;
-   $self->throw("Need contig type in order to fetch contig.") unless defined $type;
+   my ($self,$value) = @_;
 
-   my $contig;
-   if ($type eq 'RawContig'){
-      $contig = $self->db_adaptor->get_Contig($name); 
-   }elsif ($type eq 'Chromosome){
-      #do we really want to be doing this.............
-	  $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_name($name);
-   }else {
-      $self->throw ("Can't fetch contig of dnafrag with type $type");
+   if (!defined $value){
+      $self->throw("You need to provide an accession id of the protein you're trying to fetch");
    }
 
+   my $seq;
+   if ($self->db_adaptor->isa('Bio::EnsEMBL::DB::ObjI')){
+      $seq = $self->db_adaptor->get_Protein_Adaptor->fetch_Protein_by_translationId($value);
+   }elsif ($self->db_adaptor->isa('Bio::DB::SQL::DBAdaptor')){
+      $seq = $self->db_adaptor->get_SeqAdaptor->fetch_by_db_and_accession($self->name,$value);
+   }else{
+      $self->warn("Don't know how to fetch protein seq using ".$self->db_adaptor.". Unable to fetch seq");
+      return 0;
+   }
+   return $seq;
 }
 
 1;

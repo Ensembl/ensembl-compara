@@ -139,6 +139,51 @@ sub get_GenomeDBAdaptor{
    return $self->{'_genomedb_adaptor'};
 }
 
+=head2 get_ProteinDBAdaptor
+
+ Title   : get_ProteinDBAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_ProteinDBAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_proteindb_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::ProteinDBAdaptor;
+       $self->{'_proteindb_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ProteinDBAdaptor->new($self);
+   }
+   return $self->{'_proteindb_adaptor'};
+}
+
+=head2 get_ProteinAdaptor
+
+ Title   : get_ProteinAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_ProteinAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_protein_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor;
+       $self->{'_protein_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor->new($self);
+   }
+   return $self->{'_protein_adaptor'};
+}
+
+
 
 =head2 get_DnaFragAdaptor
 
@@ -162,6 +207,28 @@ sub get_DnaFragAdaptor{
    return $self->{'_dnafrag_adaptor'};
 }
 
+
+=head2 get_FamilyAdaptor
+
+ Title	 : get_FamilyAdaptor
+ Usage	 :
+ Function:
+ Example :
+ Returns :
+ Args	 :
+
+
+=cut
+
+sub get_FamilyAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_family_adaptor'} ) {
+	require Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor;
+	$self->{'_family_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor->new($self);
+   }
+   return $self->{'_family_adaptor'};
+}
 
 
 =head2 get_GenomicAlignAdaptor

@@ -127,7 +127,7 @@ sub contig{
    my ($self) = @_;
 
    if( !defined $self->{'_contig'} ) {
-       $self->{'_contig'} = $self->genomedb->ensembl_db->get_Contig($self->name);
+       $self->{'_contig'} = $self->genomedb->get_Contig($self->name);
    }
 
    return $self->{'_contig'};
@@ -153,6 +153,27 @@ sub genomedb{
       $self->{'genomedb'} = $value;
     }
     return $self->{'genomedb'};
+
+}
+
+=head2 type
+
+ Title   : type
+ Usage   : $obj->type($newval)
+ Function: 
+ Example : 
+ Returns : value of type
+ Args    : newvalue (optional)
+
+
+=cut
+
+sub type{
+   my ($self,$value) = @_;
+   if( defined $value) {
+      $self->{'type'} = $value;
+    }
+    return $self->{'type'};
 
 }
 
