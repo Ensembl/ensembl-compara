@@ -758,17 +758,20 @@ sub _add_derived_alignments {
     $rqe = $qs+($ove-$ocs);
 
     # update the last positions
-    $lcs = $cs; $lce = $ce; $lqs = $qs; $lqe = $qe;
+    $lce = $rce; 
+    $lqe = $rqe;
 
     # next piece on the one that end earlier
     my $cmp = ( $oce <=> $oqe );
  
-    if( $cmp >= 0 ) {
+    if( $cmp <= 0 ) {
       # next M area in cigB
+      last unless @cigB;
       $self->_next_cig( \@cigB, \$ocs, \$oce, \$qs, \$qe ); 
     }
-    if( $cmp <= 0 ) {
+    if( $cmp >= 0 ) {
       # next M area in cigA
+      last unless @cigA;
       $self->_next_cig( \@cigA, \$cs, \$ce, \$oqs, \$oqe );
     } 
   } # end of while loop
