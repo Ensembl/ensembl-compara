@@ -59,6 +59,8 @@ sub AUTOLOAD {
 sub alignment_string {
   my ($self, $member) = @_;
 
+  
+
   unless (defined $self->cigar_line) {
     $self->throw("To get an alignment_string, the cigar_line needs to be define\n");
   }
@@ -72,8 +74,10 @@ sub alignment_string {
       my $length = $self->cigar_end - $self->cigar_start + 1;
       $sequence = substr($sequence, $offset, $length);
     }
+
     my $cigar_line = $self->cigar_line;
     $cigar_line =~ s/([MD])/$1 /g;
+
     my @cigar_segments = split " ",$cigar_line;
     my $alignment_string = "";
     my $seq_start = 0;
@@ -83,8 +87,10 @@ sub alignment_string {
         $length = 1 if ($length eq "");
         $alignment_string .= "-" x $length;
       } elsif ($segment =~ /^(\d*)M$/) {
-        $alignment_string .= substr($sequence,$seq_start,$1);
-        $seq_start = $1;
+        my $length = $1;
+        $length = 1 if ($length eq "");
+        $alignment_string .= substr($sequence,$seq_start,$length);
+        $seq_start += $length;
       }
     }
     $self->{'alignment_string'} = $alignment_string;
