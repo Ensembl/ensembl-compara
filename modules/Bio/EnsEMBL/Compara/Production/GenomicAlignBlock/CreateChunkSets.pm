@@ -208,6 +208,9 @@ sub create_chunk_sets
     #$chunkSet->add_DnaFragChunk($chunk);
     $set_size += $chunk->length;
   }
+  
+  $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
+  $self->submit_job($chunkSet);
 
   printf("create_chunk_sets : total time %d secs\n", (time()-$starttime));
 }
