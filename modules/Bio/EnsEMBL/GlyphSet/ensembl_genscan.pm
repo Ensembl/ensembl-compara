@@ -13,16 +13,22 @@ sub features {
 
 sub href {
     my ($self, $id ) = @_;
-#    $id =~ s/(.*)\.\d+/$1/o;
-    return $self->{'config'}->{'ext_url'}->get_url( 'ENS_GENSCAN', $id );
+    if($id =~ /(.*)+\.\d+\.(\d+)\.(\d+)$/) {   
+       return $self->{'config'}->{'ext_url'}->get_url( 'ENS_GENSCAN', { 'CONTIG' => $1 , 'START' => $2, 'END' => $3 } );
+    } else {
+       return undef;
+    } 
 }
 sub zmenu {
     my ($self, $id ) = @_;
     #marie - uses local bioperl db to serve up protein homology
-    return {
+    my $URL = $self->href($id);
+    return $URL ? {
         'caption' => "$id",
-            "Protein homology" =>  $self->href($id)
+            "Jump to location in Homo sapiens" =>  $URL
 
+    } : {
+        'caption' => "$id"
     };
 }
 1;
