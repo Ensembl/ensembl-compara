@@ -33,29 +33,20 @@ sub features {
 }
 
 sub href {
-  my ($self, $f ) = @_;
+  my $self = shift;
+  my $f    = shift;
+  my $view = shift || 'snpview';
+
   &eprof_start('href'); 
-  my %link_info = (
-		   start  => $self->slice2sr( $f->start, $f->end ),
-		   id     => $f->variation_name,
-		   source => $f->source,
-		   region => $self->{'container'}->seq_region_name(),
-);
+  my $start  = $self->slice2sr( $f->start, $f->end );
+  my $id     = $f->variation_name;
+  my $source = $f->source;
+  my $region = $self->{'container'}->seq_region_name();
   &eprof_end('href');
-  return \%link_info;
+  return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id&source=$source&c=$region:$start";
 }
 
-sub snpview_href {
-  my ($self, $f ) = @_;
-  my $link = $self->href($f);
-  return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$link->{id}&source=$link->{source}&c=$link->{region}:$link->{start}";
-}
 
-sub ldview_href {
-  my ($self, $f ) = @_;
-  my $link = $self->href($f);
-  return "/@{[$self->{container}{_config_file_name_}]}/ldview?snp=$link->{id}&source=$link->{source}&c=$link->{region}:$link->{start}";
-}
 
 sub image_label {
   my ($self, $f) = @_;
@@ -131,11 +122,11 @@ sub zmenu {
   my $status = join ", ", @{$f->get_all_validation_states};
   my %zmenu = ( 
  	       caption               => "SNP: " . ($f->variation_name),
- 	       '01:SNP properties'   => $self->snpview_href( $f ),
- 	       '02:View in LDView'   =>  $self->ldview_href( $f ),
+ 	       '01:SNP properties'   => $self->href( $f, 'snpview' ),
+ 	       '02:View in LDView'   => $self->href( $f, 'ldview' ),
  	       "03:bp: $pos"         => '',
  	       "04:status: ".($status || '-') => '',
- 	       "05:variation type: ".($f->var_class || '-') => '',
+ 	       "05:SNP type: ".($f->var_class || '-') => '',
  	       "07:ambiguity code: ".$f->ambig_code => '',
  	       "08:alleles: ".$f->allele_string => '',
 	      );
