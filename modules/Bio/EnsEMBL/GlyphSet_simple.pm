@@ -411,6 +411,24 @@ sub _init {
                     'absolutey'  => 1
                 });
                 $composite->push($line);
+            } elsif($tag->{'style'} eq 'line') {
+                my $underline_start = $tag->{'start'} || $start ;
+                my $underline_end   = $tag->{'end'}   || $end ;
+                   $underline_start = 1          if $underline_start < 1;
+                   $underline_end   = $vc_length if $underline_end   > $vc_length;
+                my $line = new Sanger::Graphics::Glyph::Rect({
+                    'x'          => $underline_start -1 ,
+                    'y'          => $h/2,
+                    'width'      => $underline_end - $underline_start + 1,
+                    'height'     => 0,
+                    "colour"     => $tag->{'colour'},
+                    'absolutey'  => 1
+                });
+                $composite->push($line);
+            } elsif($tag->{'style'} eq 'join') { 
+              my $A = $strand > 0 ? 1 : 0;
+              $self->join_tag( $composite, $tag->{'tag'}, $A, $A , $tag->{'colour'}, 'fill', -10 ),
+              $self->join_tag( $composite, $tag->{'tag'}, 1-$A, $A , $tag->{'colour'}, 'fill', -10 )
             }
         }
 
