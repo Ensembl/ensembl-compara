@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::transcript_lite;
+package Bio::EnsEMBL::GlyphSet::embl_transcript_lite;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -16,7 +16,7 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     
-    my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || 'Transcript';
+    my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || 'EMBL Trans.';
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $label_text,
@@ -44,12 +44,12 @@ sub _init {
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
     my %colours = (
-        'unknown'   => $Config->get('transcript_lite','unknown'),
-        'known'     => $Config->get('transcript_lite','known'),
-        'pseudo'    => $Config->get('transcript_lite','pseudo'),
-        'ext'       => $Config->get('transcript_lite','ext'),
-        'hi'        => $Config->get('transcript_lite','hi'),
-        'superhi'   => $Config->get('transcript_lite','superhi')
+        'unknown'   => $Config->get('embl_transcript_lite','unknown'),
+        'known'     => $Config->get('embl_transcript_lite','known'),
+        'pseudo'    => $Config->get('embl_transcript_lite','pseudo'),
+        'ext'       => $Config->get('embl_transcript_lite','ext'),
+        'hi'        => $Config->get('embl_transcript_lite','hi'),
+        'superhi'   => $Config->get('embl_transcript_lite','superhi')
     );
 
     my $fontname      = "Tiny";    
@@ -59,13 +59,13 @@ sub _init {
  
     my $colour;
 
-    my $vtrans_ensembl = $container->get_all_VirtualTranscripts_startend_lite( 'ensembl' );
+    my $vtrans_embl    = $container->get_all_VirtualTranscripts_startend_lite( 'embl' );
     my $strand = $self->strand();
 
     my $vc_length     = $container->length;    
     my $count = 0;
     
-    for my $vt (@$vtrans_ensembl) {
+    for my $vt (@$vtrans_embl) {
         # If stranded diagram skip if on wrong strand
         next if $vt->{'strand'}!=$strand;
         # For alternate splicing diagram only draw transcripts in gene
@@ -82,22 +82,14 @@ sub _init {
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({'y'=>$y,'height'=>$h});
         $colour = $colours{$vt->{'type'}};
         
-        if( $Config->{'_href_only'} ) {
-            $Composite->{'href'} = qq(/$ENV{'ENSMEBL_SPECIES'}/geneview?gene=$vgid);
-        } else {
-            # we have a normal Ensembl transcript...
+        if( $Config->{'_href_only'}  ) {
+            $Composite->{'href'} = undef();
+        } elsif ($vt->{'type'} ne 'unknown' && $vt->{'type'} ne 'known') {
             $Composite->{'zmenu'}  = {
-                'caption'            => $id,
-                "00:Transcr:$vtid"   => "",
-                "01:(Gene:$vgid)"    => "",
-                '03:Transcript information'     => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$vgid",
-                '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=".$vt->{'translation'},
-                '05:Supporting evidence'        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$vtid",
-                '06:Expression information'     => "/$ENV{'ENSEMBL_SPECIES'}/sageview?alias=$vgid",
-                '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$vtid",
-                '08:cDNA sequence'              => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$vtid",
+                'caption'  => "EMBL: $vtid",
+                '01:EMBL curated '.($vt->{'type'} eq 'pseudo' ? 'pseudogene' : 'transcript') => '',
+                '03:Sort out external links' => ''
             };
-            $Composite->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$vgid";
         }
 
         my $flag = 0;
@@ -151,7 +143,7 @@ sub _init {
         my $bump_height;
         if( $Config->{'_add_labels'} ) {
             my ($font_w_bp, $font_h_bp)   = $Config->texthelper->px2bp($fontname);
-            my $tid = $Config->{'_transcript_names_'} eq 'yes' ? ($vt->{'type'} eq 'unknown'?'NOVEL':$id) : $vtid;
+            my $tid = $Config->{'_transcript_names_'} eq 'yes' ? $id : $vtid;
             my $width_of_label  = $font_w_bp * (length($tid) + 1);
 
             my $tglyph = new Bio::EnsEMBL::Glyph::Text({
@@ -236,17 +228,19 @@ sub _init {
         }
     }
 
-    if(@$vtrans_ensembl) {
-        $Config->{'legend_features'}->{'genes'} = {
-            'priority' => 900,
+    if(@$vtrans_embl) {
+        $Config->{'legend_features'}->{'embl_genes'} = {
+           'priority' => 800,
             'legend'  => [
-                'EnsEMBL predicted genes (known)' => $colours{'known'},
-                'EnsEMBL predicted genes (novel)' => $colours{'unknown'}
+                'EMBL curated genes'      => $colours{'ext'},
+                'EMBL pseudogenes'        => $colours{'pseudo'},
             ]
         };
     } elsif( $Config->get('_settings','opt_empty_tracks')!=0 ) {
-        $self->errorTrack( "No EnsEMBL transcripts in this region" );
+        $self->errorTrack( "No EMBL transcripts in this region" );
     }
+
+    
 }
 
 1;

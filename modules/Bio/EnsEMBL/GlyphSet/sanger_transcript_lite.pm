@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::transcript_lite;
+package Bio::EnsEMBL::GlyphSet::sanger_transcript_lite;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -16,7 +16,7 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     
-    my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || 'Transcript';
+    my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || "Sanger Trans.";
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $label_text,
@@ -43,14 +43,17 @@ sub _init {
 
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
-    my %colours = (
-        'unknown'   => $Config->get('transcript_lite','unknown'),
-        'known'     => $Config->get('transcript_lite','known'),
-        'pseudo'    => $Config->get('transcript_lite','pseudo'),
-        'ext'       => $Config->get('transcript_lite','ext'),
-        'hi'        => $Config->get('transcript_lite','hi'),
-        'superhi'   => $Config->get('transcript_lite','superhi')
-    );
+
+    my $sanger_colours = {
+        'hi'               => $Config->get('sanger_transcript_lite','hi'),
+        'super'            => $Config->get('sanger_transcript_lite','superhi'),
+        'Novel_CDS'        => $Config->get('sanger_transcript_lite','sanger_Novel_CDS'),
+        'Putative'         => $Config->get('sanger_transcript_lite','sanger_Putative'),
+        'Known'            => $Config->get('sanger_transcript_lite','sanger_Known'),
+        'Novel_Transcript' => $Config->get('sanger_transcript_lite','sanger_Novel_Transcript'),
+        'Pseudogene'       => $Config->get('sanger_transcript_lite','sanger_Pseudogene'),
+    };
+
 
     my $fontname      = "Tiny";    
     my $pix_per_bp    = $Config->transform->{'scalex'};
@@ -59,19 +62,19 @@ sub _init {
  
     my $colour;
 
-    my $vtrans_ensembl = $container->get_all_VirtualTranscripts_startend_lite( 'ensembl' );
+    my $vtrans_sanger = $container->get_all_VirtualTranscripts_startend_lite( 'sanger' );
     my $strand = $self->strand();
 
     my $vc_length     = $container->length;    
     my $count = 0;
     
-    for my $vt (@$vtrans_ensembl) {
+    for my $vt (@$vtrans_sanger) {
         # If stranded diagram skip if on wrong strand
         next if $vt->{'strand'}!=$strand;
         # For alternate splicing diagram only draw transcripts in gene
         next if $target_gene && $vt->{'gene'}       ne $target_gene;    
         # For exon_structure diagram only given transcript
-        next if $target      && $vt->{'stable_id'} ne $target;         #
+        next if $target      && $vt->{'transcript'} ne $target;         #
         
         my $vgid = $vt->{'gene'};
         my $vtid = $vt->{'stable_id'};
@@ -80,33 +83,35 @@ sub _init {
         my $superhighlight = (exists $highlights{$vtid} || exists $highlights{$id} ) ? 1 : 0;
 
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({'y'=>$y,'height'=>$h});
-        $colour = $colours{$vt->{'type'}};
-        
-        if( $Config->{'_href_only'} ) {
-            $Composite->{'href'} = qq(/$ENV{'ENSMEBL_SPECIES'}/geneview?gene=$vgid);
-        } else {
-            # we have a normal Ensembl transcript...
-            $Composite->{'zmenu'}  = {
-                'caption'            => $id,
-                "00:Transcr:$vtid"   => "",
-                "01:(Gene:$vgid)"    => "",
-                '03:Transcript information'     => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$vgid",
-                '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=".$vt->{'translation'},
-                '05:Supporting evidence'        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$vtid",
-                '06:Expression information'     => "/$ENV{'ENSEMBL_SPECIES'}/sageview?alias=$vgid",
-                '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$vtid",
-                '08:cDNA sequence'              => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$vtid",
-            };
-            $Composite->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$vgid";
-        }
+        my $T = $vt->{'type'};
+        $T =~ s/HUMACE-//g;
+        $colour = $sanger_colours->{$T};
+    
+        unless( $target ) {     #Skip this next chunk if single transcript mode
+            if( $Config->{'_href_only'} eq '#tid' ) {
+                $Composite->{'href'} = qq(#$vtid);
+            } else {
+	            $Composite->{'href'} = qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=sanger&gene=$vgid);
+			    my %zmenu = (
+                    'caption'           => "Sanger Gene",
+				    "01:$vtid"          => '',
+				    "03:Sanger curated ($T)" => ''
+			    );
+                # if we have an EMBL external transcript we need different links...
+                $zmenu{ "02:Gene: $vgid"}=$Composite->{'href'};
+                $Composite->{'zmenu'} = \%zmenu;
+            }
+        } #end of Skip this next chunk if single transcript mode
 
         my $flag = 0;
         my @exon_lengths = @{$vt->{'exon_structure'}};
         my $end = $vt->{'start'} - 1;
         my $start = 0;
+#        print STDERR "TRANSCRIPT: $vtid, $vt->{'start'}-$vt->{'end'}\n          : ",join(' : ',@exon_lengths),"\n";
         foreach my $length (@exon_lengths) {
             $flag = 1-$flag;
             ($start,$end) = ($end+1,$end+$length);
+#            print STDERR "transcript_lite-- EXON: $start - $end\n";
             last if $start > $container->{'length'};
             next if $end< 0;
             my $box_start = $start < 1 ?       1 :       $start;
@@ -151,7 +156,7 @@ sub _init {
         my $bump_height;
         if( $Config->{'_add_labels'} ) {
             my ($font_w_bp, $font_h_bp)   = $Config->texthelper->px2bp($fontname);
-            my $tid = $Config->{'_transcript_names_'} eq 'yes' ? ($vt->{'type'} eq 'unknown'?'NOVEL':$id) : $vtid;
+            my $tid = $Config->{'_transcript_names_'} eq 'yes' ? ($vt->{'type'} eq 'novel'?'NOVEL':$id) : $vtid;
             my $width_of_label  = $font_w_bp * (length($tid) + 1);
 
             my $tglyph = new Bio::EnsEMBL::Glyph::Text({
@@ -188,65 +193,29 @@ sub _init {
         $Composite->y($Composite->y() - $strand * $bump_height * $row);
         if(!defined $target) {
             if( $superhighlight ) {
-                $Composite->colour( $colours{'superhi'} );
+                $Composite->colour( $sanger_colours->{'superhi'} );
             } elsif( $highlight_gene ) { 
-                $Composite->colour( $colours{'hi'} );
+                $Composite->colour( $sanger_colours->{'hi'} );
             }
         }
         $self->push($Composite);
-        
-        if($target) {        
-            if($vt->{'strand'} == 1) {
-                my $clip1 = new Bio::EnsEMBL::Glyph::Line({
-                   'x'         => 1,
-                   'y'         => -4,
-                   'width'     => $vc_length,
-                   'height'    => 0,
-                   'absolutey' => 1,
-                   'colour'    => $colour
-                });
-                $self->push($clip1);
-                $clip1 = new Bio::EnsEMBL::Glyph::Poly({
-                	'points'    => [$vc_length - 4/$pix_per_bp,-2,
-                                    $vc_length                ,-4,
-                                    $vc_length - 4/$pix_per_bp,-6],
-    	            'colour'    => $colour,
-                	'absolutey' => 1,
-                });
-                $self->push($clip1);
-            } else {
-                my $clip1 = new Bio::EnsEMBL::Glyph::Line({
-                   'x'         => 1,
-                   'y'         => $h+4,
-                   'width'     => $vc_length,
-                   'height'    => 0,
-                   'absolutey' => 1,
-                   'colour'    => $colour
-                });
-                $self->push($clip1);
-                $clip1 = new Bio::EnsEMBL::Glyph::Poly({
-                	'points'    => [1+4/$pix_per_bp,$h+6,
-                                    1,              $h+4,
-                                    1+4/$pix_per_bp,$h+2],
-    	            'colour'    => $colour,
-                	'absolutey' => 1,
-                });
-                $self->push($clip1);
-            }
-        }
     }
 
-    if(@$vtrans_ensembl) {
-        $Config->{'legend_features'}->{'genes'} = {
-            'priority' => 900,
+    if(@$vtrans_sanger) {
+        $Config->{'legend_features'}->{'sanger_genes'} = {
+            'priority' => 1000,
             'legend'  => [
-                'EnsEMBL predicted genes (known)' => $colours{'known'},
-                'EnsEMBL predicted genes (novel)' => $colours{'unknown'}
+                'Sanger curated known genes'    => $sanger_colours->{'Known'},
+                'Sanger curated novel CDS'      => $sanger_colours->{'Novel_CDS'},
+                'Sanger curated putative'       => $sanger_colours->{'Putative'},
+                'Sanger curated novel Trans'    => $sanger_colours->{'Novel_Transcript'},
+                'Sanger curated pseudogenes'    => $sanger_colours->{'Pseudogene'}
             ]
         };
     } elsif( $Config->get('_settings','opt_empty_tracks')!=0 ) {
-        $self->errorTrack( "No EnsEMBL transcripts in this region" );
+        $self->errorTrack( "No Sanger transcripts in this region" );
     }
+
 }
 
 1;
