@@ -47,7 +47,7 @@ sub _init {
     } elsif ($type eq 'genomewise') {
       $db = 'estgene';
     } elsif( $type ){
-      ($SPECIES_DEFS->SITE_TYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
+      ($SPECIES_DEFS->ENSEMBL_SITETYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
     } else {
       $db = 'core';
     }
