@@ -6,6 +6,7 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 
+use Data::Dumper;
 use Bio::EnsEMBL::GlyphSet::sub_repeat;
 use Bio::EnsEMBL::GlyphSet::das;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
@@ -117,7 +118,6 @@ sub new {
 #             $Config->container_width();
     my $temp_scalex = $Config->image_width() / $Config->container_width();
 
-    warn( $temp_scalex  ) ;
     for my $glyphset (@{$self->{'glyphsets'}}) {
         my $composite;
         next unless defined $glyphset->label();
@@ -162,10 +162,10 @@ sub new {
             'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
             'font'      => 'Small',
             'absolutey' => 1,
-            'x'         => 6,
+            'x'         => 2+3/$temp_scalex,
             'y'      	=> $glyphset->bumped() eq 'yes' ? -1.5 : -1,
-		    'width'  	=> 1,
-		    'height' 	=> 8,
+	    'width'  	=> 1,
+	    'height' 	=> 8,
             'colour'    => $black,
        #     'absolutex' => 1, 'absolutewidth' => 1,
         });
@@ -223,7 +223,8 @@ sub new {
         &eprof_end($ref_glyphset . "_database_work");
         &eprof_start($ref_glyphset . "_drawing_work");
         ########## don't waste any more time on this row if there's nothing in it
-        if(scalar @{$glyphset->{'glyphs'}} == 0) {
+        if(scalar @{$glyphset->{'glyphs'}} ==0) {
+            $glyphset->_dump('rendered' => 'no');
             &eprof_end($ref_glyphset . "_drawing_work");
             next;
         };
@@ -267,6 +268,9 @@ sub new {
 #                    $_->y( $_->y + $glyphset->bumpbutton->y );
 #                }
             }
+            $glyphset->_dump('rendered' => $glyphset->label()->text());
+        } else {
+            $glyphset->_dump('rendered' => 'No label' );
         }
     
         $glyphset->transform();
