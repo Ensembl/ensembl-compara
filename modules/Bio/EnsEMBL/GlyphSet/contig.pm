@@ -49,6 +49,7 @@ sub _init {
   
     my $ystart = 3;
   
+    warn( "Contig-called - $length" );
     my $gline = new Sanger::Graphics::Glyph::Rect({
 	    'x'         => 0,
         'y'         => $ystart + 7,
@@ -285,9 +286,11 @@ sub _init_assembled_contig {
     my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
     # only draw a red box if we are in contigview top and there is a 
     # detailed display
+        warn( "XXX: ",$Config->get('_settings', 'default_vc_size') );
         if ($Config->get('_settings','draw_red_box') eq 'yes') { 
           # only draw focus box on the correct display...
-            my $LEFT_HS = $clone_based ? 0 : $global_start -1;
+            my $LEFT_HS = ($Config->get('_settings','_clone_start_at_0') eq 'yes' && $clone_based) ? 0 : $global_start -1;
+            warn( "XXX: $LEFT_HS $Config->{'_wvc_start'} $Config->{'_wvc_end'}" );
             $self->unshift( new Sanger::Graphics::Glyph::Rect({
                 'x'            => $Config->{'_wvc_start'} - $LEFT_HS - 1,
                 'y'            => $ystart - 4 ,
@@ -546,9 +549,12 @@ sub _init_non_assembled_contig {
     my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
     # only draw a red box if we are in contigview top and there is a 
     # detailed display
+    warn( "XXX: ",$Config->get('_settings', 'default_vc_size') );
     if ($Config->get('_settings','draw_red_box') eq 'yes') { 
       # only draw focus box on the correct display...
-        my $LEFT_HS = $clone_based ? 0 : $global_start -1;
+        my $LEFT_HS = ($Config->get('_settings','_clone_start_at_0') eq 'yes' && $clone_based) ? 0 : $global_start -1;
+        warn( "XXX: $LEFT_HS $Config->{'_wvc_start'} $Config->{'_wvc_end'}" );
+        warn( "START = ",($Config->{'_wvc_start'}-$LEFT_HS)," length ", ($Config->{'_wvc_end'}-$Config->{'_wvc_start'}) );
         $self->unshift( new Sanger::Graphics::Glyph::Rect({
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 4 ,
