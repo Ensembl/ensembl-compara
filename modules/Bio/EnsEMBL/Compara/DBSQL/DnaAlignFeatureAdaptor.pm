@@ -96,11 +96,9 @@ sub new {
 sub fetch_all_by_species_region {
   my ($self, $cs_species, $cs_assembly, 
       $qy_species, $qy_assembly,
-      $chr_name, $start, $end, $alignment_type, $limit) = @_;
+      $chr_name, $start, $end, $alignment_type, $limit,$dnafrag_type) = @_;
 
   $limit = 0 unless (defined $limit);
-
-  my $dnafrag_type = 'Chromosome';
 
   #get the genome database for each species
   my $gdba = $self->db->get_GenomeDBAdaptor;
@@ -119,6 +117,9 @@ sub fetch_all_by_species_region {
 
   my @out = ();
 
+  my $cs_sliceadaptor = $cs_gdb->db_adaptor->get_SliceAdaptor;
+  my $qy_sliceadaptor = $qy_gdb->db_adaptor->get_SliceAdaptor;
+  
   foreach my $df (@$dnafrags) {
     #caclulate coords relative to start of dnafrag
     my $df_start = $start - $df->start + 1;
@@ -140,7 +141,8 @@ sub fetch_all_by_species_region {
     #convert genomic aligns to dna align features
     foreach my $ga (@$genomic_aligns) {
       my $qdf = $ga->query_dnafrag;
-
+      my $top_slice = $qy_sliceadaptor->fetch_by_region($qdf->type,
+                                                        $qdf->name);
       #calculate chromosomal coords
       my $cstart = $df->start + $ga->consensus_start - 1;
       my $cend   = $df->start + $ga->consensus_end - 1;
@@ -161,12 +163,22 @@ sub fetch_all_by_species_region {
           'hend'         => $qdf->start() + $ga->query_end() -1,
           'hstrand'      => $ga->query_strand(),
           'hseqname'     => $qdf->name,
-          'hspecies'     => $qy_species});
+          'hspecies'     => $qy_species,
+          'hslice'       => $top_slice,
+          'group_id'     => $ga->group_id(),
+          'level_id'     => $ga->level_id(),
+          'strands_reversed' => $ga->strands_reversed()});
 
       push @out, $f;
     }
   }
 
+  # We need to attach slices of the entire seq region to the features.
+  # The features come without any slices at all, but their coords are
+  # relative to the beginning of the seq region.
+  
+  my $top_slice = $cs_sliceadaptor->fetch_by_region($dnafrag_type, $chr_name);
+  map {$_->slice($top_slice)} @out;
   return \@out;
 }
 
@@ -192,7 +204,7 @@ sub fetch_all_by_species_region {
 =cut
 
 sub fetch_all_by_Slice {
-  my ($self, $orig_slice, $qy_species, $qy_assembly, $assembly_type, 
+  my ($self, $orig_slice, $qy_species, $qy_assembly, $alignment_type, 
       $limit) = @_;
 
   unless($orig_slice && ref $orig_slice && 
@@ -224,7 +236,7 @@ sub fetch_all_by_Slice {
     $slice_adaptor->db->get_MetaContainer->get_Species->binomial();
 
   my $key = uc(join(':', $orig_slice->name,
-                    $cs_species, $qy_species, $qy_assembly, $assembly_type));
+                    $cs_species, $qy_species, $qy_assembly, $alignment_type));
 
   if(exists $self->{'_cache'}->{$key}) {
     return $self->{'_cache'}->{$key};
@@ -236,27 +248,29 @@ sub fetch_all_by_Slice {
   my @results;
 
   foreach my $segment (@projection) {
-    my $slice = $segment->[2];
+    my $slice = $segment->to_Slice;
     my $slice_start = $slice->start;
     my $slice_end   = $slice->end;
     my $slice_strand = $slice->strand;
 
     my $cs_assembly = $slice->coord_system->version();
+    my $dnafrag_type = $slice->coord_system->name;
 
     my $features = $self->fetch_all_by_species_region($cs_species,$cs_assembly,
                                                       $qy_species,$qy_assembly,
                                                       $slice->seq_region_name,
                                                       $slice_start, $slice_end,
-                                                      $assembly_type,
-                                                      $limit);
+                                                      $alignment_type,
+                                                      $limit,$dnafrag_type);
 
     # We need to attach slices of the entire seq region to the features.
     # The features come without any slices at all, but their coords are
     # relative to the beginning of the seq region.
-
-    my $top_slice = $slice_adaptor->fetch_by_region('toplevel', 
-                                                   $slice->seq_region_name);
-    map {$_->slice($top_slice)} @$features;
+    
+    # the above is now done in the fetch_all_by_species_region call
+    
+    my $top_slice = $slice_adaptor->fetch_by_region($dnafrag_type, 
+                                                    $slice->seq_region_name);
 
     # need to convert features to requested coord system
     # if it was different then the one we used for fetching
