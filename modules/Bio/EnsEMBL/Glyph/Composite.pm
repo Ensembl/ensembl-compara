@@ -9,8 +9,6 @@ sub push {
 
     return if (!defined $glyph);
 
-    push @{$self->{'composite'}}, $glyph;
-
     my $gx = $glyph->x();
     my $gw = $glyph->width();
     my $gy = $glyph->y();
@@ -27,8 +25,18 @@ sub push {
     $self->height($gh) if(!defined($self->height()));
 
     if($gx < $self->x()) {
+	my $offset = $self->x() - $gx;
 	$self->x($gx);
 	$self->width($self->x() - $gx + $self->width());
+
+	#########
+	# if the new glyph is set outside LHS boundary, then the composite stretches
+	# and all glyphs already inside need to be offset by the difference
+	#
+	for my $offset_glyph (@{$self->{'composite'}}) {
+	    $offset_glyph->x($offset_glyph->x() + $offset);
+	}
+
     } elsif(($gx + $gw) > ($self->x() + $self->width())) {
 	# x unchanged
 	$self->width(($gx + $gw) - $self->x());
@@ -36,8 +44,18 @@ sub push {
     # y
     #
     if($gy < $self->y()) {
+	my $offset = $self->y() - $gy;
 	$self->y($gy);
 	$self->height($self->y() - $gy + $self->height());
+
+	#########
+	# if the new glyph is set outside TOP boundary, then the composite stretches
+	# and all glyphs already inside need to be offset by the difference
+	#
+	for my $offset_glyph (@{$self->{'composite'}}) {
+	    $offset_glyph->y($offset_glyph->y() + $offset);
+	}
+
     } elsif(($gy + $gh) > ($self->y() + $self->height())) {
 	# y unchanged
 	$self->height(($gy + $gh) - $self->y());
@@ -49,6 +67,8 @@ sub push {
     #
     $glyph->x($gx - $self->x()) unless(defined $glyph->absolutex());
     $glyph->y($gy - $self->y()) unless(defined $glyph->absolutey());
+
+    push @{$self->{'composite'}}, $glyph;
 }
 
 sub first {
@@ -76,10 +96,10 @@ sub transform {
     $self->SUPER::transform($transform_ref);
 
     for my $sg (@{$self->{'composite'}}) {
-	my %tmp_transform = %{$transform_ref};
-	$tmp_transform{'translatex'} = $self->pixelx();
-	$tmp_transform{'translatey'} = $self->pixely();
-	$sg->transform(\%tmp_transform);
+		my %tmp_transform = %{$transform_ref};
+		$tmp_transform{'translatex'} = $self->pixelx()+1;
+		$tmp_transform{'translatey'} = $self->pixely();
+		$sg->transform(\%tmp_transform);
     }
 }
 
