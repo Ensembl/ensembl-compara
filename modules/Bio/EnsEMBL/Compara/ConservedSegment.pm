@@ -182,13 +182,90 @@ sub conserved_cluster_id{
 sub contig {
   
   my ($self) = @_;
+
+  return $self->{'contig'} if defined ($self->{'contig'}); 
   
   my $dnafrag = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->dnafrag_id);
 
   my $contig =  $dnafrag->genomedb->get_VC_by_start_end ($dnafrag->name,$dnafrag->type,$self->seq_start,$self->seq_end);
-    
+
+  $self->{'contig'} = $contig;
+
+  return $contig;
+
 }
 
+=head2 get_all_non_coding_regions
+ 
+ Title   : get_all_non_coding_regions
+ Usage   : @ncds= $obj->get_all_non_coding_regions()
+ Function: Returns an array of seqfeatures
+ Returns : an array of seqfeatures
+ Args    : none
+ 
+=cut
+ 
+sub get_all_non_coding_regions{
+  
+  my ($self) = @_;
+
+  my $dnafrag = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->dnafrag_id);
+
+  my $vc = $dnafrag->genomedb->get_VC_by_start_end ($dnafrag->name,$dnafrag->type,($self->seq_start-5000),($self->seq_end+5000));
+  my @exons;
+
+  foreach my $gene ($vc->get_all_Genes){
+    push (@exons,$gene->get_all_Exons);
+
+  }
+  @exons = sort {$a->start <=> $b->start
+                           ||
+                 $a->end <=> $b->end  } @exons;
+
+  my @non_cds;
+
+  my $first_ncds= new Bio::EnsEMBL::SeqFeature 
+                       (-seqname => $exons[0]->seqname,
+                        -start   => 1,
+                        -end     => ($exons[0]->start -1),
+                        -strand  => 1
+                       );
+
+  $first_ncds->attach_seq($vc->primary_seq);
+  push (@non_cds,$first_ncds);
+
+  for (my $i = 0; $i <= $#exons ; $i++){
+    my $start;
+    my $end;
+    my $count; 
+    for ( my $j = $i; $j <= $#exons; $j++){
+      if ($j == $#exons){
+         $start = $exons[$j]->end + 1;
+         $end = $vc->length - 1;
+         $i = $j;
+      }
+      elsif ($exons[$j+1]->start > $exons[$i]->end + 1){
+         $start = $exons[$i]->end + 1; 
+         $end   = $exons[$j+1]->start -1 ;
+         $i= $j;
+         $j = $#exons+1;
+      }
+    }
+    my $ncds =  new Bio::EnsEMBL::SeqFeature
+                       (-seqname => $exons[$1]->seqname,
+                        -start   => $start,
+                        -end     => $end,
+                        -strand  => 1
+                       );
+
+
+    $ncds->attach_seq($vc->primary_seq);
+    push (@non_cds,$ncds);
+  }
+
+  return (@non_cds);
+
+}
 
 =head2 seq_start
  Title   : seq_start
