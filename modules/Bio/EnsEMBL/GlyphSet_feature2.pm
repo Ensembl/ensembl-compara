@@ -132,7 +132,7 @@ sub _init {
                 next if int($_->[0] * $pix_per_bp) == int( $X * $pix_per_bp );
                 $C++;
                 if($DRAW_CIGAR &&$f->cigar_string()) {
-                  warn( "CIGAR LINE $type" );
+                  # warn( "CIGAR LINE $type" );
                   $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp );
                 } else {
                   my $START = $_->[0] < 1 ? 1 : $_->[0];
@@ -193,7 +193,7 @@ sub _init {
             $C++;
             my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2) );
             if($DRAW_CIGAR && $f->cigar_string() ) {
-                warn( "UNBUMPED CIGAR LINE $type" );
+                # warn( "UNBUMPED CIGAR LINE $type" );
                 my $Composite = new Sanger::Graphics::Glyph::Composite({
                     'zmenu'    => $self->unbumped_zmenu( @X ) , 
                     'href'     => $self->unbumped_href( @X ) ,
@@ -220,7 +220,7 @@ sub _init {
             }
         }
     }
-    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+#    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
 1;
