@@ -16,6 +16,7 @@ my $conf_file;
 my %analysis_template;
 my @speciesList = ();
 my %hive_params ;
+my %dnds_params;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -111,6 +112,9 @@ sub parse_conf {
       }
       if($confPtr->{TYPE} eq 'HIVE') {
         %hive_params = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'dNdS') {
+        %dnds_params = %{$confPtr};
       }
     }
   }
@@ -347,8 +351,12 @@ sub prepareGenomeAnalysis
   my $homology_dNdS = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Homology_dNdS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS',
-    );
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
+  );
+  $self->store_codeml_parameters(\%dnds_params);
+  if (defined $dnds_params{'dNdS_analysis_data_id'}) {
+    $homology_dNdS->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
+  }
   $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
@@ -363,6 +371,26 @@ sub prepareGenomeAnalysis
   return $submit_analysis;
 }
 
+sub store_codeml_parameters
+{
+  my $self = shift;
+  my $dNdS_Conf = shift;
+
+  my $options_hash_ref = $dNdS_Conf->{'codeml_parameters'};
+  return unless($options_hash_ref);
+  
+  my @keys = keys %{$options_hash_ref};
+  my $options_string = "{\n";
+  foreach my $key (@keys) {
+    $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
+  }
+  $options_string .= "}";
+
+  $dNdS_Conf->{'dNdS_analysis_data_id'} =
+         $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
+         
+  $dNdS_Conf->{'codeml_parameters'} = undef;
+}
 
 sub checkIfRuleExists
 {
@@ -396,5 +424,4 @@ sub checkIfRuleExists
   $sth->finish;
   return undef;
 }
-
 
