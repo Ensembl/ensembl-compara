@@ -360,8 +360,8 @@ sub dumpFastaForSubset {
             " FROM member, sequence, subset_member " .
             " WHERE subset_member.subset_id = " . $subset->dbID .
             " AND member.member_id=subset_member.member_id ".
-            " AND member.sequence_id=sequence.sequence_id " .
-            " GROUP BY member.member_id ORDER BY member.stable_id;";
+            " AND member.sequence_id=sequence.sequence_id " ;
+           # " ORDER BY member.stable_id;";
 
   open FASTAFILE, ">$fastafile"
     or die "Could open $fastafile for output\n";
