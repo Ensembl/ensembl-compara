@@ -38,7 +38,7 @@ perl -w ../../../ensembl-test/scripts/runtests.pl -c
 
 This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
 
-This script includes 141 tests.
+This script includes 174 tests.
 
 =head1 AUTHOR
 
@@ -65,7 +65,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 141;
+    plan tests => 174;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -172,7 +172,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -201,7 +201,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -241,7 +241,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -284,7 +284,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -327,7 +327,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -352,7 +352,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -380,7 +380,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -405,7 +405,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -433,7 +433,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -462,7 +462,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -495,7 +495,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -535,7 +535,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -568,7 +568,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -614,7 +614,7 @@ do {
   ok($slice);
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "extended");
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
   
@@ -653,7 +653,7 @@ do {
   my $actual_verbosity = verbose();
   verbose(0);
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_chicken_blastznet_mlss, "extended");
+      $slice, $human_chicken_blastznet_mlss, "expanded");
   verbose($actual_verbosity);
 
   ok($align_slice);
@@ -679,5 +679,121 @@ do {
       "exon 7 of transcript 2 cannot be mapped");
 };
 
+do {
+  debug("condensed mode: coordinates without any excess at the end or start (no cutting any GAB)");
+
+  $slice_start = 50219800;
+  $slice_end =   50221295;
+
+  $slice = $slice_adaptor->fetch_by_region(
+        $slice_coord_system_name,
+        $slice_seq_region_name,
+        $slice_start,
+        $slice_end,
+        1
+    );
+  ok($slice);
+  
+  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+      $slice, $human_rat_blastznet_mlss);
+
+  ok($align_slice);
+
+  ok($align_slice->{slices}->{'Homo sapiens'});
+  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
+      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
+  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($seq, $slice->seq);
+ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "...........TACAAAGGATACAGAATAAATGCAGAGGTCCTGAAATTAGACTGTTTTTCTGAGGAGCCGCCACATGGCGCTCTTGATGTCCCGGTTTCTTAAGCTGTAGATAAAGGGGTTGAGCATAGGGGTGACCACAGTGTACACTATCGATGCTACTGCACCCTTCCTGGGAGACAAGGAGACAGCTGAACTGAGGTATACACCAAGGCCAGTTCCATAAAATAAGCAAACAACTGACAGGTGAGAGCCACAAGTAGAGAAGGCTTTATATTTCCCACCAGGTGATGGCATTCTAAGAATGGAGGAAACAATTTTATAGTAAGAGAAAAAAATCCCTGAAATAGGGAGAAAACCAGAGATGGCACCAACAAAATACATGACTATGTTATTGGTAAAGGTATCAGAACAGGCAAGGTTAAGAAGTTGAGATGGATCACAGAAGAAATGGGAAATGTCCACACTCTTGAAATAGGTAAGTTGTAATACCACTGAATTATGCAGCTGAGAAACCAAAAGGCTTATT-----AGAATAGATAGAAAAACCAACAAGCCACAAAGACGAGGGTTCATAATGACCTGGTAGTGCAGAGGATGGCAGATGGCCACAAACCTATCATAAGCCATGGCTGTTAGAAGCA-GACTA---TCCAAACACCCGAAAAGCATAAAAAAGGACATCTGAGTCAGGCATCCTGAATAGGAAATGGCTCTGTTGTTAGTCTGAATGTCCACTATCATTTTTGGTAGTGTGGTGGAAGTGAAACTTATGTCAGCCAAGGATAAGTTAGAGAGGAAAAAGTACATTGGACTGTGGAGGTGAGAATCAAAGCTGACTGTCAGGATGATGAGCAGGTTCCCAAGAATTGTGACCAAGTACATGAAAAGGAACAGTCCAAAGAGTATGGGCTGAAGCTGTAGATCATCTGAGATCCCATGAGGTGGAATTCTGAGATATGTGTTATATTTTGCTCTTCTATATTGCTTGGACACCTTTTGAAAACAAAAGAAGATTGAAAAAATTAAAACAAGTAA--------CCAATAGTGCCTCTGAGTTTTCAGTGAAGGCAGTTTACTGATAAAATCCACAAATTTAAGGGTTAGGCACAGATATCAGTATTTCTCAGTTTTTACAAACTTA---ATCCTAGAATAATTTTATCATTAATTTTTCTGTTATTTGC--CTCGTTCTACATGTGCACATTAGAGGATTTTAATT----AATCTT---AGGACAAAAGCAACCTAGAAAGGAAGCTTGTGATGATAGTCAAGTAGTGACCATTCTTAAGAGAAAATAGAGAATAACAGAA-------GTTCA-TTTAAGAAAAA---TATTATAGCAAAAGAAAATTAACAAGTCAAAAAATTTATTTTA-------AGAATATTATAAAATT-----AGTTTGAGGATTTGTACATATTGTATAACAATAAGAACTGCTTTGTTTAACAGT-ATATTAAAGTTGA....");
+};
+
+do {
+  debug("coordinates including a piece of mouse in the reverse strand");
+
+  $slice_start = 50199380;
+  $slice_end =   50199510;
+
+  $slice = $slice_adaptor->fetch_by_region(
+        $slice_coord_system_name,
+        $slice_seq_region_name,
+        $slice_start,
+        $slice_end,
+        1
+    );
+  ok($slice);
+
+  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+      $slice, $human_rat_blastznet_mlss, "expanded");
+
+  ok($align_slice);
+
+  ok($align_slice->{slices}->{'Homo sapiens'});
+  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
+      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
+  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  $seq =~ s/\-//g;
+  ok($seq, $slice->seq);
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "..TAATGTTAATTCTAAATAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGAGTTCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAATTA.......");
+  
+  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+      $slice, $human_rat_blastznet_mlss);
+
+  ok($align_slice);
+
+  ok($align_slice->{slices}->{'Homo sapiens'});
+  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
+      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
+  $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($seq, $slice->seq);
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "..TAATGTTAATTCTAAAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGATCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAATTA.......");
+};
+
+do {
+  debug("coordinates including a piece of mouse in the reverse strand and cutting the GAB");
+
+  $slice_start = 50199390;
+  $slice_end =   50199500;
+
+  $slice = $slice_adaptor->fetch_by_region(
+        $slice_coord_system_name,
+        $slice_seq_region_name,
+        $slice_start,
+        $slice_end,
+        1
+    );
+  ok($slice);
+
+  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+      $slice, $human_rat_blastznet_mlss, "expanded");
+
+  ok($align_slice);
+
+  ok($align_slice->{slices}->{'Homo sapiens'});
+  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
+      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
+  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  $seq =~ s/\-//g;
+  ok($seq, $slice->seq);
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "ATTCTAAATAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGAGTTCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAA");
+  
+  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+      $slice, $human_rat_blastznet_mlss);
+
+  ok($align_slice);
+
+  ok($align_slice->{slices}->{'Homo sapiens'});
+  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
+      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
+  $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($seq, $slice->seq);
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "ATTCTAAAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGATCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAA");
+};
+
 
 exit(0);
+
