@@ -16,10 +16,8 @@ sub features {
 sub zmenu {
   my( $self, $f ) = @_;
 
-  my $start = $f->start() + $self->{'container'}->start() - 1;
-  my $end   = $f->end() + $self->{'container'}->start() - 1;
+  my($start,$end) = $self->slice2sr( $f->start(), $f->end() );
   my $len   = $end - $start + 1;
-  
 
   ### Possibly should not use $f->repeat_consensus->name.... was f->{'hid'}
   return {
