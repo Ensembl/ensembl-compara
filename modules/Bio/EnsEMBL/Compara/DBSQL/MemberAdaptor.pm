@@ -224,6 +224,7 @@ sub fetch_by_relation {
     my $extra_columns = [qw(hm.homology_id
                             hm.member_id
                             hm.peptide_member_id
+                            hm.peptide_align_feature_id
                             hm.cigar_line
                             hm.cigar_start
                             hm.cigar_end
@@ -286,6 +287,7 @@ sub fetch_by_relation_source {
     my $extra_columns = [qw(hm.homology_id
                             hm.member_id
                             hm.peptide_member_id
+                            hm.peptide_align_feature_id                            
                             hm.cigar_line
                             hm.cigar_start
                             hm.cigar_end
