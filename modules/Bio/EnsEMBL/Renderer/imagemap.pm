@@ -11,7 +11,7 @@ use vars qw(@ISA);
 sub init_canvas {
     my ($self, $config, $im_width, $im_height) = @_;
     $self->canvas("");
-    $self->{'show_zmenus'} = $config->get("_settings","opt_zmenus");
+    $self->{'show_zmenus'} = $config->get("_settings","opt_zmenus") || 1;
 }
 
 sub add_canvas_frame {
