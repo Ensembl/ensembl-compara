@@ -286,7 +286,20 @@ sub addBuildHomologyInput
       );
     $self->db->get_AnalysisAdaptor()->store($submitHomology);
     $self->{'submitHomology'} = $submitHomology;
+
+
+    my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'BuildHomology',
+        -input_id_type   => 'homology',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
+      );
+    $self->db->get_AnalysisAdaptor()->store($buildHomology);
+    $self->{'buildHomology'} = $buildHomology;
+
+    $self->{'comparaDBA'}->get_adaptor('SimpleRule')->create_rule($submitHomology,$buildHomology);
   }
+
 
   my $genome_db_id1 = parse_as_hash($analysis1->parameters)->{'genome_db_id'};
   my $genome_db_id2 = parse_as_hash($analysis2->parameters)->{'genome_db_id'};
@@ -295,9 +308,9 @@ sub addBuildHomologyInput
      $genome_db_id1 and $genome_db_id2)
   {
     if($genome_db_id1 < $genome_db_id2) {
-      $input_id = "{bl1=>".$analysis1->logic_name . ",bl2=>". $analysis2->logic_name;
+      $input_id = "{blasts=>['".$analysis1->logic_name . "','". $analysis2->logic_name . "']";
     } else {
-      $input_id = "{bl1=>".$analysis2->logic_name . ",bl2=>". $analysis1->logic_name;
+      $input_id = "{blasts=>['".$analysis2->logic_name . "','". $analysis1->logic_name . "']";
     }
     if($noRHS and ($noRHS eq 'noRHS')) { $input_id .= ",noRHS=>1"; }
     $input_id .= "}";
