@@ -59,6 +59,7 @@ use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
@@ -107,7 +108,8 @@ sub fetch_input {
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
-
+  $self->{'analysisStatsDBA'} = Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor->new($self->db);
+  
   my $genome_db_id = $input_hash->{'gdb'};
   my $subset_id    = $input_hash->{'ss'};
 
@@ -206,7 +208,6 @@ sub createSubmitPepAnalysis {
   print("\ncreateSubmitPepAnalysis\n");
 
   #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
-  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
 
   my $logic_name = "SubmitPep_" .
                    $self->{'genome_db'}->dbID() .
@@ -229,9 +230,10 @@ sub createSubmitPepAnalysis {
       );
     $self->db->get_AnalysisAdaptor()->store($analysis);
 
-    my $stats = $self->{'comparaDBA'}->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
+    my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($analysis->dbID);
     $stats->batch_size(7000);
     $stats->hive_capacity(1);
+    $stats->status('BLOCKED');
     $stats->update();   
   }
 
@@ -243,11 +245,10 @@ sub createSubmitPepAnalysis {
   print($#member_id_list+1 . " members in subset\n");
 
   foreach my $member_id (@member_id_list) {
-    $jobDBA->create_new_job (
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $member_id,
-        -analysis_id    => $analysis->dbID,
+        -analysis       => $analysis,
         -input_job_id   => 0,
-        -block          => 1
         );
   }
 
