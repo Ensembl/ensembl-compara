@@ -336,14 +336,15 @@ sub externalGene_details {
             if($exon->seqname eq $vc_id) {
                 $start = $exon->start if ( $exon->start < $start || !defined $start );
                 $end   = $exon->end   if ( $exon->end   > $end   || !defined $end );
-		    }
+	    }
     	}
     }
     $label  = $vg->id;
     $highlight = 1 if exists $highlights{$label};
     $label  =~ s/gene\.//;
     $highlight = 1 if exists $highlights{$label};
-
-	return ( $genetype, $label, $highlight, $start, $end );
+    my @temp_geneDBlinks = $vg->each_DBLink();
+    ( $label, $highlight ) = $self->_label_highlight( $label, $highlight, \%highlights, \@temp_geneDBlinks );
+    return ( $genetype, $label, $highlight, $start, $end );
 }
 1;

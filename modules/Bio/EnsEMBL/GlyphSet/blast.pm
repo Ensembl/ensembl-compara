@@ -3,6 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
+use Bio::EnsEMBL::Glyph::Space;
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use ColourMap;
@@ -21,7 +22,6 @@ sub init_label {
 sub _init {
     my ($self) = @_;
 
-	print STDERR "STRAND: ".$self->strand()."\n";
 #    return unless ($self->strand() == 1);
 
     # Lets see if we have a BLAST hit
@@ -45,9 +45,9 @@ sub _init {
             open FH, "/nfs/WWW/data/blastqueue/$ticket.cache";
             while(<FH>) {
                 chomp;
-                my ($h_chr, $h_s, $h_e, $h_score, $h_percent, $h_name) = split /\|/;
+                my ($h_chr, $h_s, $h_e, $h_score, $h_percent, $h_name, $h_strand) = split /\|/;
                 if($h_chr eq $vc_chr) {
-                    push @hits, [$h_s,$h_e,$h_score,$h_percent,$ticket, $h_name] if(
+                    push @hits, [$h_s,$h_e,$h_score,$h_percent,$ticket, $h_name, $h_strand ] if(
                         ($h_s < $vc_s && $vc_e > $h_e) ||
                         ($vc_s <= $h_s && $h_s <= $vc_e) ||
                         ($vc_s <= $h_e && $h_e <= $vc_e)
@@ -62,9 +62,16 @@ sub _init {
     ## We have a hit!;
   
     my $Config   = $self->{'config'};
+    my $ppb      = $Config->transform->{'scalex'};
     my $cmap     = $Config->colourmap();
-    my $col      = $Config->get('blast','col');
-
+    my @colours = (
+	[ 99, $cmap->add_hex( 'ff0000' ) ], 
+	[ 90, $cmap->add_hex( 'ff4c4c' ) ],
+	[ 80, $cmap->add_hex( 'ff7f7f' ) ],
+	[ 70, $cmap->add_hex( 'ff9999' ) ],
+	[ 50, $cmap->add_hex( 'ffa2a2' ) ],
+	[  0, $cmap->add_hex( 'ffcccc' ) ] 
+    ); 
     ## Lets draw a line across the glyphset
 
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
@@ -84,12 +91,14 @@ sub _init {
         my $start = $hit->[0] < $vc_s ? $vc_s : $hit->[0];
         my $end   = $hit->[1] > $vc_e ? $vc_e : $hit->[1];
         $start = 0 if $start < 0;
+        my ($col)    = map { $_->[0] <= $hit->[3] ? $_->[1] : () } @colours;
         my $gbox = new Bio::EnsEMBL::Glyph::Rect({
             'x'         => $start - $vc_s,
             'y'         => 0,
             'width'     => $end - $start,
             'height'    => 8,
             'colour'    => $col,
+            'absolutey' => 1,
             'zmenu'     => {
                 'caption' => 'Blast hit',
                 "Score: $hit->[2]; identity: $hit->[3]%" => '',
@@ -98,8 +107,7 @@ sub _init {
                 '&nbsp;&nbsp;Show on karyotype' =>
 				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=karyo_format&id=$hit->[4]"
             },
-            'absolutey' => 1,
-        });
+	});
         $self->push($gbox);
     }
 }

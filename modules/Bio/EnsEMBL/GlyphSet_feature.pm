@@ -126,7 +126,6 @@ sub _init {
 	    $Composite->bordercolour($feature_colour) unless ($small_contig);
 	}
 	push @glyphs ,$Composite;
-        print STDERR "HI: $i ".(exists $highlights{$i})."\n";
 	if(exists $highlights{$i}) {
             my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 		'x'		=> $Composite->x() - 1/$pix_per_bp,

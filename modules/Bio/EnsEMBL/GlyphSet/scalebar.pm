@@ -79,13 +79,13 @@ sub _init {
 		'absolutey' => 1,
         'zmenu'     => { 
 		    'caption' 			    => "Navigation",
-		    'Zoom in (x10)' 	       	=> &zoom_URL($chr, $interval_middle, $global_offset, 10, $highlights),
-		    'Zoom in (x5)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 5, $highlights),
-			'Zoom in (x2)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 2, $highlights),
-			'Centre on this scale interval' => &zoom_URL($chr, $interval_middle, $global_offset, 1, $highlights), 
-		    'Zoom out (x0.5)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.5, $highlights), 
-		    'Zoom out (x0.2)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.2, $highlights), 
-			'Zoom out (x0.1)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.1, $highlights) 		
+		    '01:Zoom in (x10)' 	       	=> &zoom_URL($chr, $interval_middle, $global_offset, 10, $highlights),
+		    '02:Zoom in (x5)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 5, $highlights),
+			'03:Zoom in (x2)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 2, $highlights),
+			'04:Centre on this scale interval' => &zoom_URL($chr, $interval_middle, $global_offset, 1, $highlights), 
+		    '05:Zoom out (x0.5)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.5, $highlights), 
+		    '06:Zoom out (x0.2)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.2, $highlights), 
+			'07:Zoom out (x0.1)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.1, $highlights) 		
 			},
 	    });
 	    $self->push($interval);

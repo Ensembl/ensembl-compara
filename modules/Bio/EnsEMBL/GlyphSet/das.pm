@@ -25,8 +25,11 @@ sub _init {
 	
     my $Config         	= $self->{'config'};
     my $feature_colour 	= $Config->get($self->das_name(), 'col') || $Config->colourmap()->id_by_name('contigblue1');
-    my $vc 		= $self->{'container'};
-    my $length 		= $vc->length();
+    my $vc 		 = $self->{'container'};
+    my $red      = $Config->colourmap()->id_by_name('red');
+    my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');
+    my $length   = $vc->length() +1;
+    $w *= $length/($length-1);
     
     my @features = $vc->get_all_ExternalFeatures();
     my $link_text = $self->{'extras'}->{'linktext'} || 'Additional info';
@@ -41,13 +44,20 @@ sub _init {
 		}
 	}
 	
+    my $text = '';
+    my $empty_flag =1;
 	foreach my $f(@features){
 		next unless ($f->primary_tag() eq "das" && $f->source_tag() eq $self->{'extras'}->{'dsn'});
 		my $id     = $f->das_id();
-		#	my $type   = $f->das_name();
-		#	MY $dsn    = $f->das_dsn();
-		#	my $source = $f->source_tag();
-		#	my $strand = $f->strand();
+        $empty_flag =0;
+        ### if there is an error in the retrieval of the DAS source then
+        ### a feature with ->id "__ERROR__" is added to the feature list
+        ### this forces an error text to be displayed below [ error message is in ->das_id() ]
+
+        if($f->id eq '__ERROR__') {
+            $text = 'Error retrieving '.$self->{'extras'}->{'caption'}." features ($id)";
+            next;
+        }
 
 		my $zmenu = {
                 	'caption'         => $self->{'extras'}->{'label'},
@@ -73,6 +83,23 @@ sub _init {
 		});
 		$self->push($glyph);
     }
+    $text = 'No '.$self->{'extras'}->{'caption'}.' features in this region' if($empty_flag);
+    unless($text eq '') {
+        my $bp_textwidth = $w * length($text);
+        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+                'x'         => int(($length - $bp_textwidth)/2),
+                'y'         => 0,
+    	    	'height' 	=> 8,
+                'font'      => 'Tiny',
+                'colour'    => $red,
+                'text'      => $text,
+                'absolutey' => 1,
+        });
+		$self->push($tglyph);
+    }
+    
+    
+        
 }
 
 sub das_name {

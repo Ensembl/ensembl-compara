@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::prosite;
+package Bio::EnsEMBL::GlyphSet::superfamily;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -12,7 +12,7 @@ sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'Prosite',
+	'text'      => 'SCOP Superfamily',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
@@ -29,12 +29,13 @@ sub _init {
     my $Config        = $self->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($protein->length() * $pix_per_bp);
-    my $colour        = $Config->get('prosite','col');
+    my $colour        = $Config->get('superfamily','col');
     my $font          = "Small";
     my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
-    my @ps_feat = $protein->get_all_PrositeFeatures();
+    my @ps_feat = $protein->get_all_SuperfamilyFeatures();
     foreach my $feat(@ps_feat) {
+	print STDERR $feat;
 	push(@{$hash{$feat->feature2->seqname}},$feat);
     }
     
@@ -42,12 +43,13 @@ sub _init {
 	my @row = @{$hash{$key}};
        	my $desc = $row[0]->idesc();
 
+        my $KK = substr($key,-7);
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'x' => $row[0]->feature1->start(),
 	    'y' => 0,
 	    'zmenu' => {
-		'caption' => "Prosite Domain",
-		$key 	  => "http://www.expasy.ch/cgi-bin/nicesite.pl?$key"
+		'caption' => "Super family",
+		"SCOP: $KK" => "http://scop.mrc-lmb.cam.ac.uk/scop/pdb.cgi?sid=$KK"
 	    },
 	});
 
@@ -91,7 +93,7 @@ sub _init {
 	#########
 	# add a label
 	#
-	my $desc = $prsave->idesc();
+	my $desc = $prsave->id();
         print STDERR "$fontwidth\n";
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
@@ -105,7 +107,7 @@ sub _init {
 	});
 	$Composite->push($text);
 
-	if ($Config->get('prosite', 'dep') > 0){ # we bump
+	if ($Config->get('superfamily', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 
@@ -119,7 +121,8 @@ sub _init {
 				      $bitmap_length,
 				      \@bitmap
             );
-            $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
+            #$Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
+            $Composite->y($Composite->y() + (2 * $row * ($h )));
         }
 	
 	$self->push($Composite);
