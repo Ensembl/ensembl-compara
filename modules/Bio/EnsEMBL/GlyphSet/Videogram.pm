@@ -15,18 +15,40 @@ use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Bump;
 
+use SpeciesDefs;
+my $species_defs = SpeciesDefs->new();
+
+
 sub init_label {
-    my ($self) = @_;
+    my $self = shift;
     return if( $self->{'config'}->{'_label'} eq 'none'  );
+    
     my $chr = $self->{'container'}->{'chr'} || $self->{'extras'}->{'chr'};
-    $chr = uc($chr);
-    $chr = "Chromosome $chr" if( $self->{'config'}->{'_label'} eq 'above' );
-    my $label = new Sanger::Graphics::Glyph::Text({
-        'text'      => $chr,
-        'font'      => 'Small',
-        'absolutey' => 1,
-    });
-    $self->label($label);
+    $chr = uc($chr) unless ($self->{'config'}->{'_uppercase_label'} eq 'no');
+    
+    # two-line label for long chromosome names
+    if (length($chr) > 4) {
+        my $label = new Sanger::Graphics::Glyph::Text({
+            'text'      => 'Chromosome',
+            'font'      => 'Small',
+            'absolutey' => 1,
+        });
+        $self->label($label);
+        my $label2 = new Sanger::Graphics::Glyph::Text({
+            'text'      => $chr,
+            'font'      => 'Small',
+            'absolutey' => 1,
+        });
+        $self->label2($label2);
+    } else {
+        $chr = "Chromosome $chr" if( $self->{'config'}->{'_label'} eq 'above' );
+        my $label = new Sanger::Graphics::Glyph::Text({
+            'text'      => $chr,
+            'font'      => 'Small',
+            'absolutey' => 1,
+        });
+        $self->label($label);
+    }
 }
 
 sub _init {
@@ -92,7 +114,7 @@ sub _init {
 
     my @decorations;
 
-	if($padding) {
+    if($padding) {
     # make sure that there is a blank image behind the chromosome so that the
     # glyhset doesn't get "horizontally" squashed.
         my $gpadding = new Sanger::Graphics::Glyph::Space({
@@ -241,57 +263,126 @@ sub _init {
     ##############################################
     # Draw the ends of the ideogram
     ##############################################
-# Top of chromosome
-    my @lines = $wid < 16 ?
-        ( [8,6],[4,4],[2,2] ) :
-        ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
-    
     foreach my $end ( 
         ( @bands && $bands[ 0]->stain() eq 'tip' ? () : 0 ),
         ( @bands && $bands[-1]->stain() eq 'tip' ? () : 1 )
      ) {
         my $direction = $end ? -1 : 1;
-        foreach my $I ( 0..$#lines ) {
-            my ( $bg_x, $black_x ) = @{$lines[$I]};
-            my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx + ($end ? $bpperpx : 10);
+        
+        my %partials = map { uc($_) => 1 }
+        	@{ $species_defs->PARTIAL_CHROMOSOMES || [] };
+	my %artificials = map { uc($_) => 1 }
+	        @{ $species_defs->ARTIFICIAL_CHROMOSOMES || [] };
+        if ($partials{uc($chr)}) {
+        # draw jagged ends for partial chromosomes
+            # resolution dependent scaling
+            my $mod = ($wid < 16) ? 0.5 : 1;
+            foreach my $i (1..8*$mod) {
+                my $x = $v_offset + $chr_length * $end - 4 * (($i % 2) - 1) * $direction * $bpperpx * $mod;
+                my $y = $h_offset + $wid/(8*$mod) * ($i - 1);
+                my $width = 4 * (-1 + 2 * ($i % 2)) * $direction * $bpperpx * $mod;
+                my $height = $wid/(8*$mod);
+                # overwrite karyotype bands with appropriate triangles to
+                # produce jags
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
+                    'points'    => [
+                        $x, $y,
+                        $x + $width * (1 - ($i % 2)),$y + $height * ($i % 2),
+                        $x + $width, $y + $height,
+                    ],
+                    'colour'    => $bg,
+                    'absolutey' => 1,
+                    'absoluteheight' => 1,
+                });
+                $self->push($triangle);
+                # the actual jagged line
+                my $glyph = new Sanger::Graphics::Glyph::Line({
+                    'x'         => $x,
+                    'y'         => $y,
+                    'width'     => $width,
+                    'height'    => $height,
+                    'colour'    => $black,
+                    'absolutey' => 1,
+                    'absoluteheight' => 1,
+                });
+                $self->push($glyph);
+            }
+            # black delimiting lines at each side
+            foreach (0, $wid) {
+                $self->push(new Sanger::Graphics::Glyph::Line({
+                    'x'                => $v_offset,
+                    'y'                => $h_offset + $_,
+                    'width'            => 4,
+                    'height'           => 0,
+                    'colour'           => $black,
+                    'absolutey'        => 1,
+                    'absolutewidth'    => 1,
+                }));
+            }
+	} elsif ($artificials{uc($chr)}) {
+        # draw blunt ends for artificial chromosomes
+	    my $x = $v_offset + $chr_length * $end - 1;
+	    my $y = $h_offset;
+	    my $width = 0;
+            my $height = $wid;
             my $glyph = new Sanger::Graphics::Glyph::Line({
-                'x'         => $xx,
-                'y'         => $h_offset,
-                'width'     => 0,
-                'height'    => $wid * $bg_x/24 -1,
-                'colour'    => $bg,
+                'x'      => $x,
+                'y'      => $y,
+                'width'  => $width,
+                'height' => $height,
+                'colour' => $black,
                 'absolutey' => 1,
-            });
+		'absolutewidth' => 1,
+                });
             $self->push($glyph);
-            $glyph = new Sanger::Graphics::Glyph::Line({
-                'x'         => $xx,
-                'y'         => $h_offset + 1 + $wid * (1-$bg_x/24),
-                'width'     => 0,
-                'height'    => $wid * $bg_x/24 -1 ,
-                'colour'    => $bg,
-                'absolutey' => 1,
-            }) ;
-            $self->push($glyph);
-            $glyph = new Sanger::Graphics::Glyph::Line({
-                'x'         => $xx,
-                'y'         => $h_offset + $wid * $bg_x/24,
-                'width'     => 0,
-                'height'    => $wid * $black_x/24 -1 ,
-                'colour'    => $black,
-                'absolutey' => 1,
-            });
-            $self->push($glyph);
-            $glyph = new Sanger::Graphics::Glyph::Line({
-                'x'         => $xx,
-                'y'         => $h_offset + 1 + $wid * (1-$bg_x/24-$black_x/24),
-                'width'     => 0,
-                'height'    => $wid * $black_x/24 -1 ,
-                'colour'    => $black,
-                'absolutey' => 1,
-            });
-            $self->push($glyph);
+	} else {
+        # round ends for full chromosomes
+            my @lines = $wid < 16 ?
+                ( [8,6],[4,4],[2,2] ) :
+                ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
+            foreach my $I ( 0..$#lines ) {
+                my ( $bg_x, $black_x ) = @{$lines[$I]};
+                my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx + ($end ? $bpperpx : 10);
+                my $glyph = new Sanger::Graphics::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset,
+                    'width'     => 0,
+                    'height'    => $wid * $bg_x/24 -1,
+                    'colour'    => $bg,
+                    'absolutey' => 1,
+                });
+                $self->push($glyph);
+                $glyph = new Sanger::Graphics::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset + 1 + $wid * (1-$bg_x/24),
+                    'width'     => 0,
+                    'height'    => $wid * $bg_x/24 -1 ,
+                    'colour'    => $bg,
+                    'absolutey' => 1,
+                }) ;
+                $self->push($glyph);
+                $glyph = new Sanger::Graphics::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset + $wid * $bg_x/24,
+                    'width'     => 0,
+                    'height'    => $wid * $black_x/24 -1 ,
+                    'colour'    => $black,
+                    'absolutey' => 1,
+                });
+                $self->push($glyph);
+                $glyph = new Sanger::Graphics::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset + 1 + $wid * (1-$bg_x/24-$black_x/24),
+                    'width'     => 0,
+                    'height'    => $wid * $black_x/24 -1 ,
+                    'colour'    => $black,
+                    'absolutey' => 1,
+                });
+                $self->push($glyph);
+            }
         }
     }
+    
     #######################################
     # Do the highlighting bit at the end!!!
     #######################################

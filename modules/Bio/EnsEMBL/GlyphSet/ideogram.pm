@@ -236,25 +236,68 @@ sub _init {
     ##############################################
     # Draw the ends of the ideogram
     ##############################################
-    my $gband = new Sanger::Graphics::Glyph::Line({
-	'x'      => 0,
-	'y'      => 2,
-	'width'  => 0,
-	'height' => 10,
-	'colour' => $black,
-	'absolutey' => 1,
-	});
-    $self->push($gband);
-    
-    $gband = new Sanger::Graphics::Glyph::Line({
-	'x'      => $chr_length,
-	'y'      => 2,
-	'width'  => 0,
-	'height' => 10,
-	'colour' => $black,
-	'absolutey' => 1,
-	});
-    $self->push($gband);
+    foreach my $end (qw(0 1)) {
+        my $direction = $end ? 1 : -1;
+        my %partials = map { uc($_) => 1 }
+                @{ EnsWeb::species_defs->PARTIAL_CHROMOSOMES || [] };
+        if ($partials{uc($chr)}) {
+        # draw jagged ends for partial chromosomes
+            my $bpperpx = $chr_length/$im_width;
+            foreach my $i (1..4) {
+                my $x = $chr_length * $end + 4 * (($i % 2) - 1) * $direction * $bpperpx;
+                my $y = 2 + 10/4 * ($i - 1);
+                my $width = 4 * (1 - 2 * ($i % 2)) * $direction * $bpperpx;
+                my $height = 10/4;
+                # overwrite karyotype bands with appropriate triangles to
+                # produce jags
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
+                    'points'    => [
+                        $x, $y,
+                        $x + $width * (1 - ($i % 2)),$y + $height * ($i % 2),
+                        $x + $width, $y + $height,
+                    ],
+                    'colour'    => $white,
+                    'absolutey' => 1,
+                    'absoluteheight' => 1,
+                });
+                $self->push($triangle);
+                # the actual jagged line
+                my $glyph = new Sanger::Graphics::Glyph::Line({
+                    'x'         => $x,
+                    'y'         => $y,
+                    'width'     => $width,
+                    'height'    => $height,
+                    'colour'    => $black,
+                    'absolutey' => 1,
+                    'absoluteheight' => 1,
+                });
+                $self->push($glyph);
+            }
+            # black delimiting lines at each side
+            foreach (0, 10) {
+                $self->push(new Sanger::Graphics::Glyph::Line({
+                    'x'                => 0,
+                    'y'                => 2 + $_,
+                    'width'            => 4,
+                    'height'           => 0,
+                    'colour'           => $black,
+                    'absolutey'        => 1,
+                    'absolutewidth'    => 1,
+                }));
+            }
+        } else {
+        # draw blunt ends for full chromosomes
+            my $gband = new Sanger::Graphics::Glyph::Line({
+                'x'      => $chr_length * $end,
+                'y'      => 2,
+                'width'  => 0,
+                'height' => 10,
+                'colour' => $black,
+                'absolutey' => 1,
+                });
+            $self->push($gband);
+        }
+    }
 
     #################################
     # Draw the zoom position red box
