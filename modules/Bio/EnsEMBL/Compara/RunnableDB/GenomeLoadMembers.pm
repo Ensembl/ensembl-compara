@@ -125,7 +125,7 @@ sub run
   # is the above mentioned analysis
   #
   # This creates the starting point for the blasts (members against database)
-  #$self->submitSubsetForAnalysis();
+  $self->submitSubsetForAnalysis();
                       
   return 1;
 }
