@@ -139,19 +139,23 @@ sub adaptor {
 =head2
   Override these methods to maintain compatibility with Rule.pm
   to allow faster development until I can disentangle things
+  - Rule.pm stores 'conditions' as logic_names rather than objects
+    so these routines expect to input/ouput via logic_name
 =cut
 
 sub add_condition {
   my $self = shift;
-  my $condition = shift;
+  my $logic_name = shift;
+  $self->throw("Can't add_condition unless SimpleRule is presistent") unless($self->adaptor)
+  my $condition = $self->adaptor->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
   $self->conditionAnalysis($condition);
 }
 
 sub list_conditions {
   my $self = shift;
-  my @conditions;
-  push @conditions, $self->conditionAnalysis();
-  return \@conditions;
+  my @condition_logic_names;
+  push @condition_logic_names, $self->conditionAnalysis()->logic_name();
+  return \@condition_logic_names;
 }
 
 sub has_condition_of_input_id_type {
