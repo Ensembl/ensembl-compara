@@ -14,6 +14,7 @@ CREATE TABLE dnafrag (
   name varchar(40) DEFAULT '' NOT NULL,
   genome_db_id int(10) DEFAULT '0' NOT NULL,
   dnafrag_type enum('chromosome','scaffold', 'supercontig'),
+
   PRIMARY KEY (dnafrag_id),
   KEY dnafrag_id (dnafrag_id,name),
   UNIQUE name (name,genome_db_id,dnafrag_type)
@@ -37,14 +38,16 @@ CREATE TABLE dnafrag_region (
 #
 
 CREATE TABLE genome_db (
-  genome_db_id int(10) NOT NULL auto_increment,
-  taxon_id int(10) DEFAULT '0' NOT NULL,
-  name varchar(40) DEFAULT '' NOT NULL,
-  assembly varchar(255) DEFAULT '' NOT NULL,
-  assembly_default tinyint(1) DEFAULT 1,
-  genebuild varchar(255) DEFAULT '' NOT NULL,
+  genome_db_id      int(10) NOT NULL auto_increment,
+  taxon_id          int(10) DEFAULT '0' NOT NULL,
+  name              varchar(40) DEFAULT '' NOT NULL,
+  assembly          varchar(255) DEFAULT '' NOT NULL,
+  assembly_default  tinyint(1) DEFAULT 1,
+  genebuild         varchar(255) DEFAULT '' NOT NULL,
+  locator           mediumtext,
+
   PRIMARY KEY (genome_db_id),
-  UNIQUE name (name,assembly)
+  UNIQUE name (name,assembly,genebuild)
 );
 
 #
@@ -155,7 +158,7 @@ CREATE TABLE taxon (
  species	        varchar(50),
  sub_species		varchar(50),
  common_name		varchar(100),
- classification	mediumtext,
+ classification	        mediumtext,
 
  PRIMARY KEY (taxon_id),
  KEY (genus,species),
@@ -174,6 +177,7 @@ CREATE TABLE member (
  chr_name	char(40),
  chr_start	int(10),
  chr_end	int(10),
+ chr_strand     tinyint(1) NOT NULL,
 
  PRIMARY KEY (member_id),
  UNIQUE KEY (source_id,stable_id),
