@@ -38,14 +38,9 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::SyntenyRegion;
-use vars qw(@ISA);
+
 use strict;
-
-# Object preamble
-
-use Bio::EnsEMBL::Root;
-
-@ISA = qw(Bio::EnsEMBL::Root);
+use Bio::EnsEMBL::Utils::Exception;
 
 sub new {
     my( $class, $hash ) = @_;

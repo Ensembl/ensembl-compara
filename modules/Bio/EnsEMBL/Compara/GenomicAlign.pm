@@ -40,16 +40,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::GenomicAlign;
-use vars qw(@ISA);
+
 use strict;
-
-# Object preamble
-
-use Bio::EnsEMBL::Root;
-
-@ISA = qw(Bio::EnsEMBL::Root);
-
-# new() is written here 
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument;
 
 sub new {
     my($class,@args) = @_;
@@ -60,7 +54,7 @@ sub new {
     my ( $consensus_dnafrag, $consensus_start, $consensus_end,
 	 $query_dnafrag, $query_start, $query_end, $query_strand,$alignment_type,
 	 $score, $perc_id, $cigar_line, $adaptor ) = 
-      $self->_rearrange([qw(CONSENSUS_DNAFRAG CONSENSUS_START CONSENSUS_END
+           rearrange([qw(CONSENSUS_DNAFRAG CONSENSUS_START CONSENSUS_END
                             QUERY_DNAFRAG QUERY_START QUERY_END
 			    QUERY_STRAND ALIGNMENT_TYPE SCORE PERC_ID CIGAR_LINE
 			    ADAPTOR )],@args);

@@ -32,16 +32,18 @@ package Bio::EnsEMBL::Compara::Subset;
 
 use strict;
 use Bio::Species;
-
-our @ISA = qw(Bio::EnsEMBL::Root);
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument;
 
 sub new {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = {};
+
+  bless $self,$class;
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $description, $adaptor) = $self->_rearrange([qw(DBID NAME ADAPTOR)], @args);
+    my ($dbid, $description, $adaptor) = rearrange([qw(DBID NAME ADAPTOR)], @args);
 
     $self->dbID($dbid)               if($dbid);
     $self->description($description) if($description);

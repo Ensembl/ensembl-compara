@@ -18,22 +18,18 @@ my $_paf_build_homology_idx = time(); #global index counter
 
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
-use vars qw(@ISA);
 use strict;
-use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Attribute;
-
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw deprecate warning);
+use Bio::EnsEMBL::Utils::Exception;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
-@ISA = qw(Bio::EnsEMBL::Root);
-
 sub new {
-  my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my ($class) = @_;
+  my $self = {};
+
+  bless $self,$class;
 
   $self->query_member(new Bio::EnsEMBL::Compara::Member);
   $self->hit_member(new Bio::EnsEMBL::Compara::Member);

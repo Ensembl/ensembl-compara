@@ -2,9 +2,7 @@ package Bio::EnsEMBL::Compara::Attribute;
 
 use strict;
 use Carp;
-use Bio::EnsEMBL::Root;
-
-our @ISA = qw(Bio::EnsEMBL::Root);
+use Bio::EnsEMBL::Utils::Exception;
 
 our ($AUTOLOAD, %ok_field);
 
@@ -62,13 +60,13 @@ sub alignment_string {
   
 
   unless (defined $self->cigar_line) {
-    $self->throw("To get an alignment_string, the cigar_line needs to be define\n");
+    throw("To get an alignment_string, the cigar_line needs to be define\n");
   }
   unless (defined $self->{'alignment_string'}) {
     my $sequence = $member->sequence;
     if (defined $self->cigar_start || defined $self->cigar_end) {
       unless (defined $self->cigar_start && defined $self->cigar_end) {
-        $self->throw("both cigar_start and cigar_end should be defined");
+        throw("both cigar_start and cigar_end should be defined");
       }
       my $offset = $self->cigar_start - 1;
       my $length = $self->cigar_end - $self->cigar_start + 1;
@@ -118,7 +116,7 @@ sub cdna_alignment_string {
   my ($self, $member) = @_;
 
   if($member->source_name ne 'ENSEMBLPEP') {
-    $self->warn("Don't know how to retrieve cdna for database [@{[$member->source_name]}]
+    warning("Don't know how to retrieve cdna for database [@{[$member->source_name]}]
       SPECIES @{[ $member->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($member->genome_db_id)->db_adaptor->dbname ]}" );
     return undef;
   }
@@ -137,7 +135,7 @@ sub cdna_alignment_string {
       $transcript = $ta->fetch_by_translation_stable_id($member->stable_id);
     }
     if(!$transcript) {
-      $self->warn("Could not retrieve transcript via peptide id [" .
+      warning("Could not retrieve transcript via peptide id [" .
                   $member->stable_id . "] from database [" .
                   $genome_db->db_adaptor->dbname . "]");
       return undef;
@@ -147,7 +145,7 @@ sub cdna_alignment_string {
 
     if (defined $self->cigar_start || defined $self->cigar_end) {
       unless (defined $self->cigar_start && defined $self->cigar_end) {
-        $self->throw("both cigar_start and cigar_end should be defined");
+        throw("both cigar_start and cigar_end should be defined");
       }
       my $offset = $self->cigar_start * 3 - 3;
       my $length = ($self->cigar_end - $self->cigar_start + 1) * 3;
