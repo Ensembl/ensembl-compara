@@ -28,11 +28,12 @@ GetOptions('help' => \$help,
 if(-e $compara_conf) {
   my %conf = %{do $compara_conf};
 
-  $host = $conf{'host'};
-  $port = $conf{'port'};
-  $user = $conf{'user'};
-  $dbname = $conf{'dbname'};
-  $adaptor = $conf{'adaptor'};
+  $host = $conf{'host'} if $conf{host};
+  $port = $conf{'port'} if $conf{port};
+  $user = $conf{'user'} if $conf{'user'};
+  $pass = $conf{'pass'} if $conf{pass};
+  $dbname = $conf{'dbname'} if $conf{dbname};
+  $adaptor = $conf{'adaptor'} if $conf{adaptor};
 }
 
 
@@ -49,6 +50,7 @@ unless(defined($fastadir) and ($fastadir =~ /^\//)) {
 
 
 my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
+                                                             -port => $port,
 							     -user => $user,
 							     -pass => $pass,
 							     -dbname => $dbname);
