@@ -118,6 +118,46 @@ sub fetch_all_by_Member_method_link_type {
   return $self->generic_fetch($constraint, $join);
 }
 
+sub fetch_all_by_Member_MethodLinkSpeciesSet {
+  my ($self, $member, $method_link_species_set) = @_;
+
+  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+  }
+
+  throw("method_link_species_set arg is required\n")
+    unless ($method_link_species_set);
+
+#  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
+#  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_genome_db_id($method_link_type,$member->genome_db_id);
+  
+#  unless (scalar @{$mlss_arrayref}) {
+#    warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
+#    return [];
+#  }
+
+  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
+  my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
+
+  $constraint .= " AND hm.member_id = " . $member->dbID;
+
+  # See in fetch_by_Member what is this internal variable for
+  $self->{'_this_one_first'} = $member->stable_id;
+
+  return $self->generic_fetch($constraint, $join);
+}
+
+sub fetch_all_by_MethodLinkSpeciesSet {
+  my ($self, $method_link_species_set) = @_;
+
+  throw("method_link_species_set arg is required\n")
+    unless ($method_link_species_set);
+
+  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
+  my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
+
+  return $self->generic_fetch($constraint, $join);
+}
 
 sub fetch_all_by_genome_pair {
   my ($self, $genome_db_id1, $genome_db_id2) = @_;
