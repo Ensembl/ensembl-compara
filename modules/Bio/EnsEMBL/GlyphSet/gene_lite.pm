@@ -6,6 +6,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bump;
+use EnsWeb;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 sub init_label {
@@ -17,6 +18,11 @@ sub init_label {
         'absolutey' => 1,
     });
     $self->label($label);
+}
+
+sub checkDB {
+    my $db = EnsWeb::species_defs->databases   || {};
+    return $db->{$_[0]} && $db->{$_[0]}->{NAME};
 }
 
 sub _init {
@@ -70,7 +76,7 @@ sub _init {
 	my $vc_start = $vc->_global_start();
     my @genes = ();
     
-    if ($type eq 'all'){ 
+    if ($type eq 'all' && &checkDB('ENSEMBL_SANGER')){ 
            my $res = $vc->get_all_SangerGenes_startend_lite(); 
            foreach my $g (@$res){ 
                my( $gene_col, $gene_label, $high); 
@@ -142,7 +148,7 @@ sub _init {
     &eprof_end("gene-virtualgene_start-get");
 
     &eprof_start("gene-externalgene_start-get");
-    if ($type eq 'all'){
+    if ($type eq 'all' && &checkDB('ENSEMBL_EMBL')){ 
         my $res = $vc->get_all_EMBLGenes_startend_lite();
         foreach my $g (@$res){
             my( $gene_col, $gene_label, $high);

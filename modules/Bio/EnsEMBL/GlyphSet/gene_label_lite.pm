@@ -9,6 +9,11 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
+sub checkDB {
+    my $db = EnsWeb::species_defs->databases   || {};
+    return $db->{$_[0]} && $db->{$_[0]}->{NAME};
+}
+
 sub _init {
     my $self = shift;
 
@@ -81,7 +86,7 @@ sub _init {
 # Stage 2a: Retrieve all EnsEMBL genes                                       #
 ##############################################################################
     &eprof_start("gene-virtualgene_start-get");
-    if ($type eq 'all'){ 
+    if ($type eq 'all' && &checkDB('ENSEMBL_SANGER')){ 
            my $res = $vc->get_all_SangerGenes_startend_lite(); 
            foreach my $g (@$res){ 
                my( $gene_col, $gene_label, $high); 
@@ -138,7 +143,7 @@ sub _init {
 # Stage 2b: Retrieve all EMBL (external) genes                               #
 ##############################################################################
     &eprof_start("gene-externalgene_start-get");
-    if ($type eq 'all'){
+    if ($type eq 'all' && &checkDB('ENSEMBL_SANGER')){ 
         my $res = $vc->get_all_EMBLGenes_startend_lite();
         foreach my $g (@$res){
             my( $gene_col, $gene_label, $high);
