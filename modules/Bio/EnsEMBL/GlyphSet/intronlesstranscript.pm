@@ -303,6 +303,7 @@ sub _init {
     ## Now we draw the amino acid changes for all coding SNPs...
     $Composite->y($Composite->y() + $voffset );
     $voffset += $bump_height ;
+    warn $voffset;
     $Composite->colour($hilight) if(defined $hilight);
     $self->push($Composite);
   }
