@@ -199,3 +199,44 @@ Hs ---------------
 
 >ensembl-compara/scripts/phusion/LoadComparaDb.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
 
+
+10- run health check test suite
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Foreign keys db contraints
+==========================
+
+genome_db_id	PK	genome_db
+		FK	danfrag
+		FK	gene_relationship_member
+		FK	method_link_species
+		FK	genomic_align_genome	-> consensus_genome_db_id
+						-> query_genome_db_id
+
+danfrag_id	PK	dnafrag
+		FK	dnafrag_region
+		FK	genomic_align_block	-> consensus_dnafrag_id
+						-> query_danfrag_id
+
+synteny_region_id	PK	synteny_region
+			FK	dnafrag_region
+
+method_link_id	PK	method_link
+		FK	method_link_species
+		FK	genomic_align_genome **
+		FK	genomic_aling_block **
+
+gene_relationship_id	PK	gene_relationship
+			FK	gene_relationship_member
+
+meta table
+~~~~~~~~~~
+
+Make sure the 'max_alignment_length' key is there and set up **
+
+genomic_align_genome table
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+make sure that for the same method_link_id only one cs->qy combinaison is stored **
+
+** need to be added to the health check
