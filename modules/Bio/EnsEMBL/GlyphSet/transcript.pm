@@ -8,7 +8,7 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Intron;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
-use Bio::EnsEMBL::Glyph::Clip;
+use Bio::EnsEMBL::Glyph::Line;
 use Bump;
 
 sub _init {
@@ -18,7 +18,7 @@ sub _init {
     my $h          = 8;
     my $highlights = $this->highlights();
     my @bitmap     = undef;
-    my ($im_width, $im_height) = $Config->dimensions();
+    my $im_width = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
     my $colour = $Config->get($Config->script(),'transcript','unknown');
     my $type = $Config->get($Config->script(),'transcript','src');
@@ -41,17 +41,17 @@ sub _init {
 
 	TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
 
-    	    #########
-    	    # test transcript strand
-    	    #
-    	    my $tstrand = $transcript->start_exon()->strand();
-    	    next TRANSCRIPT if($tstrand != $this->strand());
+    	#########
+    	# test transcript strand
+    	#
+    	my $tstrand = $transcript->strand_in_context($VirtualContig->id());
+    	next TRANSCRIPT if($tstrand != $this->strand());
 
-    	    #########
-    	    # set colour for transcripts and test if we're highlighted or not
-    	    # 
-    	    my @dblinks = ();
-    	    my $id = undef;
+    	#########
+    	# set colour for transcripts and test if we're highlighted or not
+    	# 
+    	my @dblinks = ();
+    	my $id = undef;
 	    my $gene_name;
 	    my ($hugo, $swisslink, $sptrembllink);
 	    eval {
@@ -93,69 +93,60 @@ sub _init {
 	    }
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 		'id'     => $transcript->id(),
-		'colour' => $hi_colour,
+#		'bordercolour' => $colour,
 		'zmenu'  => {
-		    'caption'  => $transcript->id(),
+		    'caption'     => $transcript->id(),
 		    '01:kung'     => 'opt1',
 		    '02:foo'      => 'opt2',
 		    '03:fighting' => 'opt3'
 		},
 	    });
 
-	    my $previous_endx = undef;
-	    my @exons = $transcript->each_Exon();
+	    my @exons = $transcript->each_Exon_in_context($VirtualContig->id());
 
-    	    #########
-    	    # reverse exon order on reverse strand because we draw from left to right
-    	    # but reverse strand exons come out right to left
-    	    #
-	    @exons = reverse @exons if($tstrand == -1);
+	    my ($start_screwed, $end_screwed);
+	    if($tstrand == 1) {
+		$start_screwed = $transcript->is_start_exon_in_context($VirtualContig->id());
+		$end_screwed   = $transcript->is_end_exon_in_context($VirtualContig->id());
+	    } else {
+		$end_screwed   = $transcript->is_start_exon_in_context($VirtualContig->id());
+		$start_screwed = $transcript->is_end_exon_in_context($VirtualContig->id());
+		@exons = reverse @exons;
+	    }
 
-	    my $last_exon = undef;
+	    my $start_exon = $exons[0];
+	    my $end_exon   = $exons[(scalar @exons) -1];
+
+	    my $previous_endx;
+
+	    if(defined $start_screwed && $start_screwed == 0) {
+		my $clip = new Bio::EnsEMBL::Glyph::Line({
+		    'x'         => 0,
+		    'y'         => $y+int($h/2),
+		    'width'     => $start_exon->start(),
+		    'height'    => 0,
+		    'absolutey' => 1,
+		    'colour'    => $colour,
+		    'dotted'    => 1,
+		});
+		$Composite->push($clip);
+		$previous_endx = $start_exon->end();
+	    }
+
+	    if(defined $end_screwed && $end_screwed == 0) {
+		my $clip = new Bio::EnsEMBL::Glyph::Line({
+		    'x'         => $end_exon->start(),
+		    'width'     => $VirtualContig->length() - $end_exon->start(),
+		    'y'         => $y+int($h/2),
+		    'height'    => 0,
+		    'colour'    => $colour,
+		    'absolutey' => 1,
+		    'dotted'    => 1,
+		});
+		$Composite->push($clip);
+	    }
 
     	    EXON: for my $exon (@exons) {
-
-		#########
-		# clip off virtual gene exons not on this VC
-		#
-		if(defined($last_exon)) {
-		    if($exon->seqname() eq $VirtualContig->id() && $last_exon->seqname() ne $VirtualContig->id()) {
-			#########
-			# we're on the vc and the last exon drawn wasn't
-			#
-			my $clip = new Bio::EnsEMBL::Glyph::Clip({
-			    'x'         => 0,
-			    'y'         => $y+int($h/2),
-			    'width'     => $exon->start(),
-			    'height'    => 0,
-			    'absolutey' => 1,
-			    'colour'    => $colour,
-			});
-
-			$Composite->push($clip);
-
-		    } elsif($exon->seqname() ne $VirtualContig->id() && $last_exon->seqname() eq $VirtualContig->id()) {
-			#########
-			# we're off the vc and the last exon drawn was on it
-			#
-			my $clip = new Bio::EnsEMBL::Glyph::Clip({
-			    'x'         => $last_exon->start(),
-			    'width'     => $VirtualContig->length() - $last_exon->start(),
-			    'y'         => $y+int($h/2),
-			    'height'    => 0,
-			    'colour'    => $colour,
-			    'absolutey' => 1,
-			});
-			$Composite->push($clip);
-		    }
-		}
-
-		if($exon->seqname() ne $VirtualContig->id()) {
-		    $last_exon = $exon;
-		    next EXON;
-		}
-
-		$last_exon = $exon;
 
 		#########
 		# otherwise we're on the VC and everything's ok
@@ -186,7 +177,7 @@ sub _init {
 		$Composite->push($rect);
 		$Composite->push($intron);
 
-		$previous_endx = $x+$w;
+		$previous_endx = $exon->end();
 	    }
 
 	    #########
