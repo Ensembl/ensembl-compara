@@ -111,7 +111,7 @@ sub fetch_input {
   my $member_id  = $self->input_id;
   my $member     = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
   $self->throw("No member in compara for member_id=$member_id") unless defined($member);
-  $member->print_member;
+  #$member->print_member;
 
   
   my $bioseq     = $member->bioseq();
@@ -156,7 +156,7 @@ sub fetch_input {
   $self->runnable($runnable);
 =cut
 
-  print("running with analysis '".$self->analysis->logic_name."'\n");
+  #print("running with analysis '".$self->analysis->logic_name."'\n");
   my $runnable = Bio::EnsEMBL::Pipeline::Runnable::Blast->new(
                      -query          => $self->query,
                      -database       => $self->analysis->db_file,
