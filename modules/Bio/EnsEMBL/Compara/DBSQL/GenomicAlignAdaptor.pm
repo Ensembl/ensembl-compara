@@ -244,7 +244,7 @@ sub fetch_all_by_genomic_align_block {
 
   if ($genomic_align_block !~ /^\d+$/) {
     throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
-        if (!$genomic_align_block ->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+        if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
     $genomic_align_block = $genomic_align_block->dbID;
   }
   my $sql = qq{
@@ -419,6 +419,58 @@ sub store_daf {
           push @gas, $ga;
   }
   $self->store(\@gas);
+}
+
+
+=head2 retrieve_all_direct_attributes
+
+  Arg  1     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
+  Example    : $genomic_align_adaptor->retrieve_all_direct_attributes($genomic_align)
+  Description: Retrieve the all the direct attibutes corresponding to the dbID of the
+               Bio::EnsEMBL::Compara::GenomicAlign object. It is used after lazy fetching
+               of the object for populating it when required.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions : 
+  Caller     : none
+
+=cut
+
+sub retrieve_all_direct_attributes {
+  my ($self, $genomic_align) = @_;
+
+  my $sql = qq{
+                SELECT
+                    genomic_align_block_id,
+                    method_link_species_set,
+                    dnafrag_id,
+                    dnafrag_start,
+                    dnafrag_end,
+                    dnfrag_strand,
+                    cigar_line,
+                    level_id
+                FROM
+                    genomic_align
+                WHERE
+                    genomic_align_id = ?
+        };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($genomic_align->dbID);
+  my ($genomic_align_block_id, $method_link_species_set, $dnafrag_id, $dnafrag_start, $dnafrag_end,
+          $dnfrag_strand, $cigar_line, $level_id) = $sth->fetchrow_array();
+  
+  ## Populate the object
+  $genomic_align->adaptor($self);
+  $genomic_align->genomic_align_block_id($genomic_align_block_id);
+  $genomic_align->method_link_species_set($method_link_species_set);
+  $genomic_align->dnafrag_id($dnafrag_id);
+  $genomic_align->dnafrag_start($dnafrag_start);
+  $genomic_align->dnafrag_end($dnafrag_end);
+  $genomic_align->dnfrag_strand($dnfrag_strand);
+  $genomic_align->cigar_line($cigar_line);
+  $genomic_align->level_id($level_id);
+
+  return $genomic_align;
 }
 
 
