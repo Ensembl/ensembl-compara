@@ -227,12 +227,6 @@ sub seq_end {
   return $self->{'seq_end'};
 }
 
-sub masking_options {
-  my $self = shift;
-  return $self->{'masking_options'} = shift if(@_);
-  return $self->{'masking_options'};
-}
-
 sub sequence_id {
   my $self = shift;
   return $self->{'sequence_id'} = shift if(@_);
@@ -251,28 +245,23 @@ sub sequence {
   return $self->{'_sequence'};
 }
 
-
-=head3
-sub display_chunk {
+sub masking_options {
   my $self = shift;
-
-  my $dbID = $self->dbID;
-  $dbID = '' unless($dbID);
-
-  my $header = "dnafrag_chunk(".$dbID.")";
-  while(length($header)<20) { $header .= ' '; }
-  printf($header);
-  print($self->stable_id,"(".$self->seq_start,",",$self->seq_start,")",
-        "(",$qm->chr_name,":",$qm->seq_start,")\t",
-        "\t" , $hm->stable_id, "(".$self->hstart,",",$self->hend,")",
-        "(",$hm->chr_name,":",$hm->seq_start,")\t",
-        "\t" , $self->score ,
-        "\t" , $self->alignment_length ,
-        "\t" , $self->perc_ident ,
-        "\t" , $self->perc_pos ,
-        "\t" , $self->hit_rank ,
-        "\n");
+  if(@_) {
+    $self->{'masking_options'} = shift;
+    $self->masking_analysis_data_id(0);
+  }
+  return $self->{'masking_options'};
 }
-=cut
+
+#method for passing previously known and stored analysis_data_id reference around
+#so that there is no need to store it again
+sub masking_analysis_data_id {
+  my $self = shift;
+  $self->{'masking_analysis_data_id'} = shift if(@_);
+  $self->{'masking_analysis_data_id'}=0 unless(defined($self->{'masking_analysis_data_id'}));
+  return $self->{'masking_analysis_data_id'};
+}
+
 
 1;
