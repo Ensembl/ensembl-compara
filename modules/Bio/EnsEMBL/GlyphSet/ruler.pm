@@ -43,7 +43,7 @@ sub _init {
     #####################################################################
 
 	my $text = int($global_end - $global_start);		
-	$text = bp_to_nearest_unit($text);		
+	$text = bp_to_nearest_unit($text). " ";		
 	my $bp_textwidth = $fontwidth * length($text);
 	my $im_width_bp = $Config->image_width();
 	    

@@ -21,7 +21,10 @@ sub _init {
     my $fontheight = $Config->texthelper->height($fontname),
     my $fontwidth_bp = $Config->texthelper->width($fontname),
     my ($fontwidth,$dontcare) = $Config->texthelper->px2bp($fontname),
-
+    my $cmap  = new ColourMap;
+    my $black = $cmap->id_by_name('black');
+	my $chr = $self->{'container'}->_chr_name();
+	
     my $feature_colour 	= $Config->get($Config->script(),'scalebar','col');
     my $subdivs = $Config->get($Config->script(),'scalebar','subdivs');
     my $abbrev = $Config->get($Config->script(),'scalebar','abbrev');
@@ -29,9 +32,13 @@ sub _init {
     my $len = $self->{'container'}->length();
     my $global_start = $self->{'container'}->_global_start();
     my $global_end = $self->{'container'}->_global_end();
+	my $global_offset = int(($global_end - $global_start)/2);
+	#print STDERR "VC half length = $global_offset\n";
+	#print STDERR "VC start = $global_start\n";
+	#print STDERR "VC end = $global_end\n";
+
     my $divs = 0;
     $divs = set_scale_division($len);
-
     
     my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 	'x'         => 0,
@@ -43,74 +50,133 @@ sub _init {
     });
     $self->push($glyph);
 
+	my $last_end = 0;
     for (my $i=0;$i<int($len/$divs); $i++){
+		my $tick = new Bio::EnsEMBL::Glyph::Rect({
+	    	'x'         => $i * $divs,
+	    	'y'         => 4,
+	    	'width'     => 0,
+	    	'height'    => 2,
+	    	'colour'    => $feature_colour,
+	    	'absolutey' => 1,
+		});
+		$self->push($tick);
 
-	my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'         => $i * $divs,
-	    'y'         => 4,
-	    'width'     => 0,
-	    'height'    => 2,
-	    'colour'    => $feature_colour,
-	    'absolutey' => 1,
-	});
-	$self->push($tick);
+		if ($Config->script() eq "contigviewbottom"){
+
+			# Add the recentering imagemap-only glyphs
+			my $interval_middle = $global_start + ($i * $divs) + int($divs/2) - $divs;
+			my $new_start  = $interval_middle - $global_offset;
+			my $new_end    = $interval_middle + $global_offset;
+
+    		my $url = "$ENV{'SCRIPT_NAME'}?chr=$chr";
+			$url .= "&vc_start=";
+			$url .= $new_start;
+			$url .= "&vc_end=";
+			$url .= $new_end;
+			
+			#print STDERR "URL: $url\n";
+			
+			my $interval = new Bio::EnsEMBL::Glyph::Rect({
+	    		'x'         => $last_end,
+	    		'y'         => 4,
+	    		'width'     => ($i * $divs) - $last_end,
+	    		'height'    => 15,
+	    		'colour'    => 'transparent',
+	    		'absolutey' => 1,
+            	'zmenu'     => { 
+					'caption' => "Navigation",
+					'Centre on this scale interval' => $url, 
+				},
+			});
+			$self->push($interval);
+			$last_end = $i * $divs;
+		}
     }
 	
-    if ($subdivs  && $len > 1000){
-	# label each division
-	for (my $i=0;$i<int($len/$divs); $i++){
-	    my $text = int($i * $divs + $global_start);		
-	    if ($abbrev){
-		$text = bp_to_nearest_unit_by_divs(int($i * $divs + $global_start),$divs);		
-	    }
-	    
-	    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-		'x'      	=> $i * $divs,
-		'y'      	=> 8,
-		'height'	=> $fontheight,
-		'font'   	=> $fontname,
-		'colour' 	=> $feature_colour,
-		'text'   	=> $text,
-		'absolutey' => 1,
-	    });
-	    $self->push($tglyph);
+	# Add the last recentering imagemap-only glyphs
+	if ($Config->script() eq "contigviewbottom"){
+		my $interval_middle = $global_end - int($divs/2);
+		my $new_start  = $interval_middle - $global_offset;
+		my $new_end    = $interval_middle + $global_offset;
+
+    	my $url = "$ENV{'SCRIPT_NAME'}?chr=$chr";
+		$url .= "&vc_start=";
+		$url .= $new_start;
+		$url .= "&vc_end=";
+		$url .= $new_end;
+
+		#print STDERR "URL: $url\n";
+
+		my $interval = new Bio::EnsEMBL::Glyph::Rect({
+	    	'x'         => $last_end,
+	    	'y'         => 4,
+	    	'width'     => $len - $last_end,
+	    	'height'    => 15,
+	    	'colour'    => 'transparent',
+	    	'absolutey' => 1,
+            'zmenu'     => { 
+				'caption' => "Navigation",
+				'Centre on this scale interval' => $url, 
+			},
+		});
+		$self->push($interval);
 	}
+
+    if ($subdivs && $len > 1000){
+		# label each division
+		for (my $i=0;$i<int($len/$divs); $i++){
+	    	my $text = int($i * $divs + $global_start);		
+	    	if ($abbrev){
+				$text = bp_to_nearest_unit_by_divs(int($i * $divs + $global_start),$divs);		
+	    	}
+	    	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+			'x'      	=> $i * $divs,
+			'y'      	=> 8,
+			'height'	=> $fontheight,
+			'font'   	=> $fontname,
+			'colour' 	=> $feature_colour,
+			'text'   	=> $text,
+			'absolutey' => 1,
+	    	});
+	    	$self->push($tglyph);
+		}
     }
     else {
-	# label first and last
-	my $text = $global_start;
-	if ($abbrev && $len >1000){
-	    $text = bp_to_nearest_unit($global_start,2);
-	}
-	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	    'x'      	=> 0,
-	    'y'      	=> 8,
-	    'height'	=> $fontheight,
-	    'font'   	=> $fontname,
-	    'colour' 	=> $feature_colour,
-	    'text'   	=> $text,
-	    'absolutey' => 1,
-	});
+		# label first and last
+		my $text = $global_start;
+		if ($abbrev && $len >1000){
+	    	$text = bp_to_nearest_unit($global_start,2);
+		}
+		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	    	'x'      	=> 0,
+	    	'y'      	=> 8,
+	    	'height'	=> $fontheight,
+	    	'font'   	=> $fontname,
+	    	'colour' 	=> $feature_colour,
+	    	'text'   	=> $text,
+	    	'absolutey' => 1,
+		});
 	    $self->push($tglyph);
-	
-	my $im_width = $Config->image_width();
-	$text = $global_end;
-	if ($abbrev && $len >1000){
-	    $text = bp_to_nearest_unit($global_end,2);
-	}
 
-	my $endglyph = new Bio::EnsEMBL::Glyph::Text({
-	    'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
-	    'y'      	=> 8,
-	    'height'	=> $fontheight,
-	    'font'   	=> $fontname,
-	    'colour' 	=> $feature_colour,
-	    'text'   	=> $text,
-	    'absolutex'  => 1,
-	    'absolutey' => 1,
-	});
+		my $im_width = $Config->image_width();
+		$text = $global_end;
+		if ($abbrev && $len >1000){
+	    	$text = bp_to_nearest_unit($global_end,2);
+		}
+
+		my $endglyph = new Bio::EnsEMBL::Glyph::Text({
+	    	'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
+	    	'y'      	=> 8,
+	    	'height'	=> $fontheight,
+	    	'font'   	=> $fontname,
+	    	'colour' 	=> $feature_colour,
+	    	'text'   	=> $text,
+	    	'absolutex'  => 1,
+	    	'absolutey' => 1,
+		});
 	    $self->push($endglyph);
-	    
+
     }
 	
 	# last tick
