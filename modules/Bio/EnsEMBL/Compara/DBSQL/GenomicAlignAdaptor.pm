@@ -96,7 +96,7 @@ sub new {
                objects are not stored. Make sure you store them first.
   Returntype : none
   Exceptions : not stored linked dnafrag objects throw.
-  Caller     : object::methodname
+  Caller     : $object->methodname
 
 =cut
 
