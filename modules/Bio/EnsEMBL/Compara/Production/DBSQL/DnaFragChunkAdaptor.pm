@@ -1,4 +1,4 @@
-=head1 NAME Bio::EnsEMBL::Compara::DBSQL::DnaFragChunkAdaptor
+=head1 NAME Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
 
 =head1 SYNOPSIS
 
@@ -11,16 +11,15 @@
 =cut
 
 
-package Bio::EnsEMBL::Compara::DBSQL::DnaFragChunkAdaptor;
+package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::DnaFragChunk;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
+
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
-use vars '@ISA';
-
-@ISA = ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
 #############################
