@@ -10,7 +10,7 @@ my $usage = "\nUsage: $0 [options] File|STDIN
 
 $0 -host ecs2d.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
--alignment_type WGA -cs_genome_db_id 1 -qy_genome_db_id 2 -qy_tag Mm
+-alignment_type WGA -cs_genome_db_id 1 -qy_genome_db_id 2 -qy_tag Mm -alignment_type WGA
 
 Options:
 
@@ -20,7 +20,7 @@ Options:
  -pass        passwd for connection to \"compara_dbname\"
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
- -alignment_type type of alignment stored e.g. WGA (default: WGA_HCR)
+ -alignment_type type of alignment stored e.g. WGA (default: WGA)
  -qy_tag corresponds to the prefix used in the name of the query DNA dumps
 \n";
 
@@ -53,6 +53,8 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-conf_file => $conf_file,
 						     -user => $dbuser,
 						     -pass => $dbpass);
 
+my $stored_max_alignment_length = $db->get_MetaContainer->list_value_by_key("max_alignment_length");
+
 my $gdb_adaptor = $db->get_GenomeDBAdaptor;
 my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id);
 my $qy_genome_db = $gdb_adaptor->fetch_by_dbID($qy_genome_db_id);
@@ -78,6 +80,56 @@ foreach my $chr (@qy_chromosomes) {
   $qy_chromosomes{$chr->chr_name} = $chr;
 }
 
+# Updating method_link_species if needed (maybe put that in GenomicAlignAdaptor store method)
+
+my $sth_method_link = $db->prepare("SELECT method_link_id FROM method_link WHERE type = ?");
+$sth_method_link->execute($alignment_type);
+my ($method_link_id) = $sth_method_link->fetchrow_array();
+
+unless (defined $method_link_id) {
+  warn "There is no type $alignment_type in the method_link table of compara db.
+EXIT 1";
+  exit 1;
+}
+
+my $sth_method_link_species = $db->prepare("
+SELECT ml.method_link_id
+FROM method_link_species mls1, method_link_species mls2, method_link ml
+WHERE mls1.method_link_id = ml.method_link_id AND
+      mls2.method_link_id = ml.method_link_id AND
+      mls1.genome_db_id = ? AND
+      mls2.genome_db_id = ? AND
+      mls1.species_set=mls2.species_set AND
+      ml.method_link_id = ?");
+
+$sth_method_link_species->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
+my ($already_stored) = $sth_method_link_species->fetchrow_array();
+
+unless (defined $already_stored) {
+  $sth_method_link_species = $db->prepare("SELECT max(species_set) FROM method_link_species");
+  $sth_method_link_species->execute();
+  my ($max_species_set) = $sth_method_link->fetchrow_array();
+
+  $max_species_set = 0 unless (defined $max_species_set);
+
+  $sth_method_link_species = $db->prepare("INSERT INTO method_link_species (method_link_id,species_set,genome_db_id) VALUES (?,?,?)");
+  $sth_method_link_species->execute($method_link_id,$max_species_set + 1,$cs_genome_db_id);
+  $sth_method_link_species->execute($method_link_id,$max_species_set + 1,$qy_genome_db_id);
+}
+
+
+# Updating genomic_align_genome if needed (maybe put that in GenomicAlignAdaptor store method)
+my $sth_genomic_align_genome = $db->prepare("SELECT method_link_id FROM genomic_align_genome WHERE consensus_genome_db_id = ? AND query_genome_db_id = ? AND method_link_id = ?");
+$sth_genomic_align_genome->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
+($already_stored) = $sth_genomic_align_genome->fetchrow_array();
+
+unless (defined $already_stored) {
+  $sth_genomic_align_genome = $db->prepare("INSERT INTO genomic_align_genome (consensus_genome_db_id,query_genome_db_id,method_link_id) VALUES (?,?,?)");
+  $sth_method_link_species->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
+}
+
+my $max_alignment_length = 0;
+
 while (defined (my $line = <>) ) {
   chomp $line;
   my ($d1,$query_coords,$d3,$d4,$cs_chr,$cs_start,$cs_end,$qy_strand,$d9,$score,$percid,$cigar) = split /\t/,$line;
@@ -85,6 +137,12 @@ while (defined (my $line = <>) ) {
   if ($query_coords =~ /^$qy_tag(\S+)\.(\d+):(\d+)-(\d+)$/) {
     ($qy_chr,$qy_start,$qy_end) = ($1,$2+$3-1,$2+$4-1);
   }
+  
+  my $cs_max_alignment_length = $cs_end - $cs_start + 1;
+  $max_alignment_length = $cs_max_alignment_length if ($max_alignment_length < $cs_max_alignment_length);  
+  my $qy_max_alignment_length = $qy_end - $qy_start + 1;
+  $max_alignment_length = $qy_max_alignment_length if ($max_alignment_length < $qy_max_alignment_length);  
+
   if ($qy_strand eq "+") {
     $qy_strand = 1;
   } elsif ($qy_strand eq "-") {
@@ -133,5 +191,8 @@ $line\n";
   $galn_adaptor->store([$genomic_align]);
 }
 
-
-
+if (! defined $stored_max_alignment_length ||
+    (defined $stored_max_alignment_length && 
+     $stored_max_alignment_length < $max_alignment_length)) {
+      $db->store_key_value("max_alignment_length",$max_alignment_length + 1);
+}
