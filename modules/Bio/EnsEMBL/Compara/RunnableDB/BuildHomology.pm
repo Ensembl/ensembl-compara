@@ -61,7 +61,6 @@ use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Subset;
-use Bio::EnsEMBL::Compara::Functions;
 
 use vars qw(@ISA);
 
@@ -91,9 +90,10 @@ sub fetch_input
 
   $self->{'blast_analyses'} = ();
   $self->{'verbose'} = 0;
-  $self->{'store'} = 1;
+  $self->{'store'} = undef;
   $self->{'getAllRHS'} = undef;
-
+  $self->{'onlyOneHomology'} = undef;  #filter to place member in only 1 homology
+  
   print("input_id = " . $self->input_id . "\n");
   
   if($self->input_id =~ ',') {
@@ -130,7 +130,8 @@ sub run
 
       $self->{'qmember_PAF_BRH_hash'} = {};
       $self->{'membersToBeProcessed'} = {};
-   
+      $self->{'storedHomologies'} = {};
+
       $self->set_member_list($blast1);
       $self->set_member_list($blast2);
 
@@ -238,7 +239,14 @@ sub get_BRH_for_species_pair
 
     my $homology = $paf1->return_as_homology();
     $homology->description('BRH');
-    eval { $homologyDBA->store($homology) if($self->{'store'}); };
+    eval {
+      if(my $val=$self->{'storedHomologies'}->{$paf1->hash_key}) {
+        warn($paf1->hash_key." homology already stored as $val not BRH\n");
+      } else {
+        $homologyDBA->store($homology) if($self->{'store'});
+        $self->{'storedHomologies'}->{$paf1->hash_key} = 'BRH';
+      }
+    };
 
     my $paf2 = $pafDBA->fetch_by_dbID($paf2_id);
     $self->{'qmember_PAF_BRH_hash'}->{$paf1->query_member->dbID} = $paf1;
@@ -463,7 +471,8 @@ sub find_RHS
 
   return unless($refPAF and $memberPep);
 
-  return unless($self->{'membersToBeProcessed'}->{$memberPep->dbID});
+  return if($self->{'onlyOneHomology'} and
+            ($self->{'membersToBeProcessed'}->{$memberPep->dbID}));
 
   if($self->{'verbose'}) {
     print("ref BRH : "); $refPAF->display_short();
@@ -488,7 +497,7 @@ sub find_RHS
   # returns results sorted by same sort as used for 'best' analysis
   # Current code will take all results, but could limit to only
   # 'best' ie first result returned
-  my $sql = "SELECT paf1.peptide_align_feature_id".
+  my $sql = "SELECT paf1.peptide_align_feature_id, paf1.hmember_id".
             " FROM member qm, member hm,".
             " peptide_align_feature paf1, peptide_align_feature paf2,".
             " member_gene_peptide".
@@ -512,18 +521,14 @@ sub find_RHS
   my $sth = $self->{'comparaDBA'}->prepare($sql);
   $sth->execute();
 
-  my ($paf1_id);
+  my ($paf1_id, $hmember_id);
   my @paf_id_list;
-  $sth->bind_columns(\$paf1_id);
-  if($self->{'getAllRHS'}) {
-    while ($sth->fetch()) {
-      push @paf_id_list, $paf1_id;
-    }
-  }
-  else { #just get best (ie
-    if ($sth->fetch()) {
-      push @paf_id_list, $paf1_id;
-    }
+  $sth->bind_columns(\$paf1_id, $hmember_id);
+  while ($sth->fetch()) {
+    next if($self->{'onlyOneHomology'} and
+            ($self->{'membersToBeProcessed'}->{$hmember_id}));
+    push @paf_id_list, $paf1_id;
+    last unless($self->{'getAllRHS'}); #just get best (since sorted in query)
   }
   $sth->finish;
 
@@ -534,11 +539,19 @@ sub find_RHS
   #$startTime = time();
   foreach $paf1_id (@paf_id_list) {
     my $paf = $pafDBA->fetch_by_dbID($paf1_id);
+
     print("RHS : "); $paf->display_short;
 
     my $homology = $paf->return_as_homology();
     $homology->description('RHS');
-    eval { $homologyDBA->store($homology) if($self->{'store'}); };
+    eval {
+      if(my $val=$self->{'storedHomologies'}->{$paf->hash_key}) {
+        warn($paf->hash_key." homology already stored as $val not RHS\n");
+      } else {
+        $homologyDBA->store($homology) if($self->{'store'});
+        $self->{'storedHomologies'}->{$paf->hash_key} = 'RHS';
+      }
+    };
 
     delete $self->{'membersToBeProcessed'}->{$paf->query_member->dbID};
     delete $self->{'membersToBeProcessed'}->{$paf->hit_member->dbID};
@@ -546,6 +559,7 @@ sub find_RHS
   #print(time()-$startTime . " sec to convert PAF to Homology\n");
   
 }
+
 
 #################################
 #
@@ -569,6 +583,29 @@ sub print_member
   else { print("\n"); }
 }
 
+sub parse_as_hash{
+  my $hash_string = shift;
+
+  my %hash;
+
+  return \%hash unless($hash_string);
+
+  my @pairs = split (/,/, $hash_string);
+  foreach my $pair (@pairs) {
+    my ($key, $value) = split (/=>/, $pair);
+    if ($key && $value) {
+      $key   =~ s/^\s+//g;
+      $key   =~ s/\s+$//g;
+      $value =~ s/^\s+//g;
+      $value =~ s/\s+$//g;
+
+      $hash{$key} = $value;
+    } else {
+      $hash{$key} = "__NONE__";
+    }
+  }
+  return \%hash;
+}
 
 sub calc_inter_genic_distance
 {
