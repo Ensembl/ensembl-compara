@@ -47,5 +47,49 @@ sub get_SimpleAlign {
   return $sa;
 }
 
+=head2 dn
+
+  Arg [1]    : floating $dn 
+  Example    : $homology->dn
+  Description: set/get the non synonymous subtitution rate
+  Returntype : floating
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+
+sub dn {
+  my $self = shift;
+  $self->{'_dn'} = shift if(@_);
+  return $self->{'_dn'};
+}
+
+=head2 ds
+
+  Arg [1]    : floating $ds
+  Example    : $homology->ds
+  Description: set/get the synonymous subtitution rate
+  Returntype : floating
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+
+sub ds {
+  my $self = shift;
+  $self->{'_ds'} = shift if(@_);
+  return $self->{'_ds'};
+}
+
+sub dnds_ratio {
+  my $self = shift;
+  unless (defined $self->{'_dnds_ratio'}) {
+    $self->{'_dnds_ratio'} = sprintf("%.5f",$self->dn/$self->ds);
+  }
+  return $self->{'_dnds_ratio'};
+}
+
 1;
 
