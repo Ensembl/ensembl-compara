@@ -44,6 +44,8 @@ sub new {
   bless $self,$class;
 
   $self->{'_object_list'} = [];
+  $self->{'_dnafrag_id_list'} = [];
+  $self->{'_dnafrag_id_hash'} = {};
 
   if (scalar @args) {
     #do this explicitly.
@@ -138,6 +140,20 @@ sub add_dna_object {
       "arg must be a [Bio::EnsEMBL::Compara::Production::DnaFragChunk] ".
       "or [Bio::EnsEMBL::Compara::Production::DnaFragChunk] not a [$object]");
   }
+  if ($object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
+    unless ($self->{'_dnafrag_id_hash'}->{$object->dnafrag_id}) {
+      push @{$self->{'_dnafrag_id_list'}}, $object->dnafrag_id;
+      $self->{'_dnafrag_id_hash'}->{$object->dnafrag_id} = 1;
+    }
+  }
+  if ($object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+    foreach my $dc (@{$object->get_all_DnaFragChunks}) {
+      unless ($self->{'_dnafrag_id_hash'}->{$dc->dnafrag_id}) {
+        push @{$self->{'_dnafrag_id_list'}}, $dc->dnafrag_id;
+        $self->{'_dnafrag_id_hash'}->{$dc->dnafrag_id} = 1;
+      }
+    }
+  }
 
   push @{$self->{'_object_list'}}, $object;
 }
@@ -173,5 +189,19 @@ sub count {
   return scalar(@{$self->{'_object_list'}});
 }
 
+=head2 get_all_dnafrag_ids
+
+  Example    : @dnafrag_ids = @{$dnaCOllection->get_all_dnafrag_ids};
+  Description: returns array reference to all the dnafrag_ids in this set
+  Returntype : reference to array of integers
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub get_all_dnafrag_ids {
+  my $self = shift;
+  return $self->{'_dnafrag_id_list'};
+}
 
 1;
