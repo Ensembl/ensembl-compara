@@ -379,6 +379,8 @@ sub create_chunk_analysis {
   }
   return unless($analysis);
 
+  my $template_analysis_stats = $analysis->stats;
+  
   $analysis->adaptor(0);
   $analysis->dbID(0);
   $analysis->logic_name($logic_name);
@@ -395,8 +397,8 @@ sub create_chunk_analysis {
   $analysisDBA->store($analysis);
 
   my $stats = $analysis->stats;
-  $stats->batch_size(3);
-  $stats->hive_capacity(500);
+  $stats->batch_size($template_analysis_stats->batch_size);
+  $stats->hive_capacity($template_analysis_stats->hive_capacity);
   $stats->update();
   
   return;
