@@ -1,5 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::tilepath;
 use strict;
+use Bump;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
