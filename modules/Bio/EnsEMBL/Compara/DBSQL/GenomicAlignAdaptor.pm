@@ -58,6 +58,35 @@ sub fetch_by_dbID {
     return $self->fetch_GenomicAlign_by_dbID($id);
 }
 
+
+=head2 list_align_ids
+
+ Title   : list_align_ids
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub list_align_ids{
+   my ($self) = @_;
+
+   $sth = $self->prepare("select align_id from align");
+   $sth->execute();
+
+   my @out;
+   while( my ($gid) = $sth->fetchrow_array ) {
+       push(@out,$gid);
+   }
+
+   return @out;
+}
+
+
+
 =head2 fetch_GenomicAlign_by_dbID
 
  Title   : fetch_GenomicAlign_by_dbID
