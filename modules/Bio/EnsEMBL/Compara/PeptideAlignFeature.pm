@@ -76,14 +76,7 @@ sub create_homology
   my $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
   $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
   $homology->stable_id($stable_id);
-  $homology->source_name("ENSEMBL_ORTHOLOGUES");
-  # The previous line should be replaced by
-  # $homology->method_link_type("ENSEMBL_ORTHOLOGUES");
-  # unless the calling script/modules using $homology->method_link_species_set method
-  # my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  # $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
-  # $mlss->species_set([$self->query_member->genome_db_id, $self->hit_member->qgenome_db_id]);
-  # $homology->method_link_species_set($mlss);
+  $homology->method_link_type("ENSEMBL_ORTHOLOGUES");
 
   # NEED TO BUILD THE Attributes (ie homology_members)
   #
