@@ -25,9 +25,11 @@
 
   { TYPE => UNIPROT,
     'srs'    => 'SWISSPROT',
+    'accession_number' => 1
   },
   { TYPE => UNIPROT,
     'srs'    => 'SPTREMBL',
+    'accession_number' => 1
   },
 
   { TYPE => SPECIES,
