@@ -45,15 +45,14 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Bio::EnsEMBL::Compara::SyntenyHit;
 use vars qw(@ISA);
-use Bio::Root::RootI;
 
 use strict;
 
-# Object preamble - inheriets from Bio::Root::RootI
+# Object preamble
 
-use Bio::Root::RootI;
+use Bio::EnsEMBL::Root;
 
-@ISA = qw(Bio::Root::RootI);
+@ISA = qw(Bio::EnsEMBL::Root);
 
 # new() is written here
 

@@ -41,12 +41,11 @@ package Bio::EnsEMBL::Compara::SyntenyRegion;
 use vars qw(@ISA);
 use strict;
 
-# Object preamble - inheriets from Bio::Root::RootI
+# Object preamble
 
-use Bio::Root::RootI;
+use Bio::EnsEMBL::Root;
 
-
-@ISA = qw(Bio::Root::RootI);
+@ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
     my($class,@args) = @_;
