@@ -1177,7 +1177,11 @@ sub _print {
   Args       : none
   Example    : my $id = $genomic_align->display_id;
   Description: returns string describing this genomic_align which can be used
-               as display_id of a Bio::Seq object or in a fasta file.
+               as display_id of a Bio::Seq object or in a fasta file. The actual form is
+               taxon_id:genome_db_id:coord_system_name:dnafrag_name:dnafrag_start:dnafrag_end:dnafrag_strand
+               e.g.
+               9606:1:chromosome:14:50000000:51000000:-1
+
                Uses dnafrag information in addition to start and end.
   Returntype : string
   Exceptions : none
@@ -1188,12 +1192,14 @@ sub display_id {
 
   my $dnafrag = $self->dnafrag;
   return "" unless($dnafrag);
-  my $id = $dnafrag->genome_db->taxon_id. ".".
-           $dnafrag->genome_db->dbID. ":".
-           $dnafrag->coord_system_name.":".
-           $dnafrag->name.".".
-           $self->dnafrag_start.".".
-           $self->dnafrag_end;
+  my $id = join(':',
+                $dnafrag->genome_db->taxon_id,
+                $dnafrag->genome_db->dbID,
+                $dnafrag->coord_system_name,
+                $dnafrag->name,
+                $self->dnafrag_start,
+                $self->dnafrag_end,
+                $self->dnafrag_strand);
   return $id;
 }
 
