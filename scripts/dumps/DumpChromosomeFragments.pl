@@ -6,17 +6,48 @@ use Bio::SeqIO;
 use Bio::PrimarySeq;
 use Getopt::Long;
 
+my $usage = "
+DumpChromosomeFragments.pl -host ecs1b.sanger.ac.uk 
+            -user ensro
+            -dbname homo_sapiens_core_10_30
+            -chr_names \"22\"
+            -chr_start 1
+            -chr_end 1000000
+            -overlap 0
+            -chunk_size 60000
+            -masked 0
+            -phusion Hs
+            -o output_filename
+
+$0 [-help]
+   -host compara_db_host_server
+   -user username (default = 'ensro')
+   -dbname compara_database_name
+   -chr_names \"20,21,22\" (default = \"all\")
+   -chr_start position on chromosome from dump start (default = 1)
+   -chr_end position on chromosome to dump end (default = chromosome length)
+   -chunk_size bp size of the sequence fragments dumped (default = 60000)
+   -overlap overlap between chunk fragments (default = 0)
+   -masked status of the sequence 0 unmasked
+                                  1 masked
+                                  2 soft-masked
+   -phusion \"Hs\" tag put in the FASTA header >Hs22.1 
+   -o output_filename
+
+
+";
+
 $| = 1;
 
 my $host = 'localhost';
 my $dbname;
 my $dbuser = 'ensro';
-my $chr_name;
+my $chr_names = "all";
 my $chr_start;
 my $chr_end;
 my $overlap = 0;
-my $chunk_size = 1000000;
-my $masked = 2;
+my $chunk_size = 60000;
+my $masked = 0;
 my $phusion;
 my $output;
 my $port="";
@@ -25,7 +56,7 @@ GetOptions('host=s' => \$host,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'port=i' => \$port,
-	   'chr_name=s' => \$chr_name,
+	   'chr_names=s' => \$chr_names,
 	   'chr_start=i' => \$chr_start,
 	   'chr_end=i' => \$chr_end,
 	   'overlap=i' => \$overlap,
@@ -41,8 +72,29 @@ unless ($dbname) {
 exit 1\n";
   exit 1;
 }
-unless ($chr_name) {
-  warn "chr_name must be specified
+
+my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $host,
+					     -user => $dbuser,
+					     -dbname => $dbname,
+					     -port => $port);
+
+my $ChromosomeAdaptor = $db->get_ChromosomeAdaptor;
+my $SliceAdaptor = $db->get_SliceAdaptor;
+
+my @chromosomes;
+
+if (defined $chr_names and $chr_names ne "all") {
+  my @chr_names = split /,/, $chr_names;
+  foreach my $chr_name (@chr_names) {
+    push @chromosomes, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
+  }
+} else {
+  @chromosomes = @{$ChromosomeAdaptor->fetch_all}
+}
+ 
+if (scalar @chromosomes > 1 && 
+    (defined $chr_start || defined $chr_end)) {
+  warn "When more than one chr_name is specified chr_start and chr_end must not be specified
 exit 1\n";
   exit 1;
 }
@@ -61,83 +113,83 @@ if (defined $chr_end && $chr_end < $chr_start) {
 exit 2\n";
   exit 2;
 }
-
-my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $host,
-					     -user => $dbuser,
-					     -dbname => $dbname,
-					     -port => $port);
   
-my $chradp = $db->get_ChromosomeAdaptor;
-my $chr = $chradp->fetch_by_chr_name($chr_name);
-
-my $sliceadp = $db->get_SliceAdaptor;
-
-print STDERR "fetching slice...\n";
- 
-# futher checks on arguments
-
-if ($chr_start > $chr->length) {
-  warn "chr_start $chr_start larger than chr_length ".$chr->length."
-exit 3\n";
-  exit 3;
-}
-unless (defined $chr_end) {
-  warn "WARNING : setting chr_end=chr_length ".$chr->length."\n";
-  $chr_end = $chr->length;
-}
-if ($chr_end > $chr->length) {
-  warn "WARNING : chr_end $chr_end larger than chr_length ".$chr->length."
-setting chr_end=chr_length\n";
-  $chr_end = $chr->length;
-}
-
-  
-my $slice;
-if ($chr_start && $chr_end) {
-  $slice = $sliceadp->fetch_by_chr_start_end($chr->chr_name,$chr_start,$chr_end);
-} else {
-  $slice = $sliceadp->fetch_by_chr_name($chr->chr_name);
-}
-
-print STDERR "..fetched slice for chromosome ",$slice->chr_name," from position ",$slice->chr_start," to position ",$slice->chr_end,"\n";
-#print STDERR "chromosome length : ",$chr->length,"\n";
-#print STDERR "slice length : ",$slice->length,"\n";
-
 my $fh = \*STDOUT;
 if (defined $output) {
   open F, ">$output";
   $fh = \*F;
 }    
 
-printout_by_overlapping_chunks($slice,$overlap,$chunk_size);
+foreach my $chr (@chromosomes) {
+  print STDERR "fetching slice...\n";
+ 
+  # futher checks on arguments
+
+  if ($chr_start > $chr->length) {
+    warn "chr_start $chr_start larger than chr_length ".$chr->length."
+exit 3\n";
+    exit 3;
+  }
+  unless (defined $chr_end) {
+    warn "WARNING : setting chr_end=chr_length ".$chr->length."\n";
+    $chr_end = $chr->length;
+  }
+  if ($chr_end > $chr->length) {
+    warn "WARNING : chr_end $chr_end larger than chr_length ".$chr->length."
+setting chr_end=chr_length\n";
+    $chr_end = $chr->length;
+  }
+  
+  my $slice;
+  if ($chr_start && $chr_end) {
+    $slice = $SliceAdaptor->fetch_by_chr_start_end($chr->chr_name,$chr_start,$chr_end);
+  } else {
+    $slice = $SliceAdaptor->fetch_by_chr_name($chr->chr_name);
+  }
+  
+  print STDERR "..fetched slice for chromosome ",$slice->chr_name," from position ",$slice->chr_start," to position ",$slice->chr_end,"\n";
+
+  printout_by_overlapping_chunks($slice,$overlap,$chunk_size,$fh);
+  
+  $chr_end = undef;
+}
 
 close $fh;
 
 sub printout_by_overlapping_chunks {
-  my ($slice,$overlap,$chunk_size) = @_;
+  my ($slice,$overlap,$chunk_size,$fh) = @_;
   my $seq;
+
   if ($masked == 1) {
+
     print STDERR "getting masked sequence...\n";
     $seq = $slice->get_repeatmasked_seq;
     $seq->id($slice->chr_name);
     print STDERR "...got masked sequence\n";
+
   } elsif ($masked == 2) {
+
     print STDERR "getting soft masked sequence...\n";
     $seq = $slice->get_repeatmasked_seq(undef,1);
     $seq->id($slice->chr_name);
     print STDERR "...got soft masked sequence\n";
+
   } else {
+
     print STDERR "getting unmasked sequence...\n";
     $seq = Bio::PrimarySeq->new( -id => $slice->chr_name, -seq => $slice->seq);
     print STDERR "...got unmasked sequence\n";
+
   }
+
   print STDERR "sequence length : ",$seq->length,"\n";
   print STDERR "printing out the sequences chunks...";
+
   for (my $i=1;$i<=$seq->length;$i=$i+$chunk_size-$overlap) {
     
     my $chunk;
     if ($i+$chunk_size-1 > $seq->length) {
-      #      print STDERR $i," ",$seq->length,"\n";
+      
       my $chr_start = $i+$slice->chr_start-1;
       my $id;
       if (defined $phusion) {
@@ -151,7 +203,7 @@ sub printout_by_overlapping_chunks {
 				    );
       
     } else {
-      #      print STDERR $i," ",$i+$chunk_size-1,"\n";
+
       my $chr_start = $i+$slice->chr_start-1;
       my $id;
       if (defined $phusion) {
