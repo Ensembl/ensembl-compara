@@ -193,6 +193,11 @@ sub render_Composite {
     my ($self, $glyph) = @_;
 
     #########
+    # draw & colour the fill area if specified
+    #
+    $self->render_Rect($glyph) if(defined $glyph->colour());
+
+    #########
     # now loop through $glyph's children
     #
     $self->SUPER::render_Composite($glyph);
@@ -200,7 +205,8 @@ sub render_Composite {
     #########
     # draw & colour the bounding area if specified
     #
-    $self->render_Rect($glyph) if(defined $glyph->colour() || defined $glyph->bordercolour());
+    $glyph->{'colour'} = undef;
+    $self->render_Rect($glyph) if(defined $glyph->bordercolour());
 }
 
 1;
