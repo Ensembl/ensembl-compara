@@ -41,6 +41,37 @@ while (<HS>) {
 
 close HS;
 
+open(ENDING,"/nfs/acari/abel/work/mouse_human/mouse_ending_chr_name_contigs") || die "Could not open /nfs/acari/abel/work/mouse_human/mouse_ending_chr_name_contigs; $!\n"; 
+
+my %mouse_ending_contigs;
+
+while (<ENDING>) {
+  my ($chr,$ending_start,$ending_end) = split;
+  $mouse_ending_contigs{$chr}{'start'} = $ending_start;
+  $mouse_ending_contigs{$chr}{'end'} = $ending_end;
+}
+
+close ENDING;
+
+open(MOUSE_STATIC_SUPER_CONTIGS,"/nfs/acari/abel/work/mouse_human/mouse_static_super_contigs") || die "/nfs/acari/abel/work/mouse_human/mouse_static_super_contigs; $!\n";
+
+my %mouse_static_super_contigs;
+
+while (<MOUSE_STATIC_SUPER_CONTIGS>) {
+  my ($super_contig) = split;
+  $mouse_static_super_contigs{$super_contig} = 1;
+}
+
+close MOUSE_STATIC_SUPER_CONTIGS;
+
+#foreach my $contig (keys %mouse_static_super_contigs) {
+#  print $contig,"\n";
+#}
+
+
+
+#exit ;
+
 my $glob = 50;
 my $min_size = 30;
 $| = 1;
@@ -124,16 +155,20 @@ while (<>) {
     
     # now figure out where this is on denormalised coordinates
     
-    my ($de_scontig_id,$de_start) = &map_to_denormalised($h->{'chr'},$chr_start);
-    my ($de_econtig_id,$de_end)   = &map_to_denormalised($h->{'chr'},$chr_end);
+    my ($de_scontig_id,$de_start) = &map_to_denormalised($h->{'chr'},$chr_start,$mouse_ending_contigs{$h->{'chr'}});
+    my ($de_econtig_id,$de_end)   = &map_to_denormalised($h->{'chr'},$chr_end,$mouse_ending_contigs{$h->{'chr'}});
     
     #print STDERR "Got $de_scontig_id vs $de_econtig_id $chr_start $chr_end\n";
     
     # if we cross boundaries - currently skip!
     
     if( $de_scontig_id eq $de_econtig_id ) {
-      # dump it
-      print "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+      if (defined $mouse_static_super_contigs{$de_scontig_id}) {
+	# dump it
+	print "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+      } else {
+	print STDERR "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+      }
     }
     
     # initialization with the current while (<>) entry
@@ -175,27 +210,35 @@ unless ($current_end - $current_start < $min_size ||
   
   # now figure out where this is on denormalised coordinates
   
-  my ($de_scontig_id,$de_start) = &map_to_denormalised($h->{'chr'},$chr_start);
-  my ($de_econtig_id,$de_end)   = &map_to_denormalised($h->{'chr'},$chr_end);
+  my ($de_scontig_id,$de_start) = &map_to_denormalised($h->{'chr'},$chr_start,$mouse_ending_contigs{$h->{'chr'}});
+  my ($de_econtig_id,$de_end)   = &map_to_denormalised($h->{'chr'},$chr_end,$mouse_ending_contigs{$h->{'chr'}});
   
   #print STDERR "Got $de_scontig_id vs $de_econtig_id $chr_start $chr_end\n";
   
   # if we cross boundaries - currently skip!
 
   if ($de_scontig_id eq $de_econtig_id) {
-    # dump it
-    print "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+    if (defined $mouse_static_super_contigs{$de_scontig_id}) {
+      # dump it
+      print "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+    } else {
+      print STDERR "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+    }
   }
 }
 
-sub map_to_denormalised ($$) {
-  my ($chr,$pos) = @_;
+sub map_to_denormalised ($$$) {
+  my ($chr,$pos,$mouse_ending_contigs) = @_;
   
   my $block = int($pos / 5000000);
   
   my $start = ($block * 5000000) + 1;
-  my $end   = ($block + 1) * 5000000;
-  
+  my $end = ($block + 1) * 5000000;
+ 
+  if ($start >= $mouse_ending_contigs->{'start'}) {
+    $end   = $mouse_ending_contigs->{'end'};
+  }
+
   my $rem   = $pos - $start + 1; # plus 1 for 'biological' coordinates
   
   my $denorm_contig_id = $chr.".".$start."-".$end;
