@@ -118,25 +118,6 @@ sub store {
   my $genomic_align_sth = $self->prepare($genomic_align_sql);
   
   for my $ga ( @$genomic_aligns ) {
-    ## check if it is an old pairwise alignment
-    if (defined($ga->consensus_dnafrag) or defined($ga->consensus_start) or defined($ga->consensus_end)
-        or defined($ga->query_dnafrag) or defined($ga->query_start) or defined($ga->query_end)
-        or defined($ga->query_strand) or defined($ga->alignment_type) or defined($ga->score)
-        or ($ga->perc_id ne "NULL")) {
-      
-      if (defined($ga->dbID) or defined($ga->genomic_align_block_id) or defined($ga->method_link_species_set)
-          or defined($ga->dnafrag) or defined($ga->dnafrag_start) or defined($ga->dnafrag_end)
-          or defined($ga->dnafrag_strand) or defined($ga->level_id) or defined($ga->group_type)
-          or defined($ga->group_id)) {
-        throw("Mixing new and old parameters.\n");
-      }
-      deprecate("Do not use Consensus and Query dnafrag anymore.\n".
-          "Use Bio::EnsEMBL::Compara::GenomicAlignBlock and\n".
-          "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor modules instead\n");
-      $self->_store_old_pairwise_alignment($ga);
-      next;
-    }
-    
     if(!defined($ga->dnafrag) or !defined($ga->dnafrag->dbID)) {
       throw( "dna_fragment in GenomicAlign is not in DB" );
     }
@@ -333,7 +314,6 @@ sub fetch_all_by_DnaFrag_GenomeDB {
   my $all_genomic_aligns = [];
 
   deprecate("Use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor for fetching genomic alignments!");
-  warning("UNDER DEVELOPMENT!!");
 
   unless($dnafrag && ref $dnafrag && 
         $dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag')) {
@@ -366,9 +346,6 @@ sub fetch_all_by_DnaFrag_GenomeDB {
             $alignment_type, [$dnafrag->genomedb->dbID, $target_genome->dbID]);
     return [] if (!$method_link_species_set);
     $sql .= " AND method_link_species_set = ". $method_link_species_set->dbID;
-
-    print " UNDER DEVELOPMENT!! (", $dnafrag->genomedb->dbID,", ", $target_genome->dbID, ", ",
-        $method_link_species_set->dbID, ", ", $method_link_species_set->method_link_id, ")\n";
   }
 
   if (defined $start && defined $end) {
@@ -384,7 +361,7 @@ sub fetch_all_by_DnaFrag_GenomeDB {
   }
 
   my $sth = $self->prepare($sql);
-print $sql,"\n";
+# print STDERR $sql,"\n";
   $sth->execute();
 
   while (my ($gaid, $gabid, $dfst, $dfed, $dfsd, $cgln, $lvid) = $sth->fetchrow_array) {
