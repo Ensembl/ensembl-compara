@@ -56,6 +56,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::Blast;
+use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
@@ -63,6 +64,7 @@ use Bio::EnsEMBL::Compara::Member;
 use vars qw(@ISA);
 
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+my $g_BlastComparaPep_workdir;
 
 =head2 fetch_input
     Title   :   fetch_input
@@ -112,6 +114,9 @@ sub fetch_input {
     $options = '';
   }
 
+  my $dbfile = $self->analysis->db_file;
+#  $dbfile = $self->dumpPeptidesToFasta();
+  
 
 =head3
   my $stable_id  = $member->stable_id();
@@ -135,13 +140,14 @@ sub fetch_input {
   #print("running with analysis '".$self->analysis->logic_name."'\n");
   my $runnable = Bio::EnsEMBL::Pipeline::Runnable::Blast->new(
                      -query          => $self->query,
-                     -database       => $self->analysis->db_file,
+                     -database       => $dbfile,
                      -program        => $self->analysis->program_file,
                      -options        => $options,
                      -threshold      => $thr,
                      -threshold_type => $thr_type
                     );
-  $runnable->add_regex($self->analysis->db_file, '^(\S+)\s*');
+  $dbfile =~ s/\/tmp\///g if($dbfile =~/\/tmp\//);
+  $runnable->add_regex($dbfile, '^(\S+)\s*');
   $self->runnable($runnable);
   return 1;
 }
@@ -171,6 +177,63 @@ sub write_output {
   }
 
   $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store($self->output);
+}
+
+
+sub global_cleanup {
+  my $self = shift;
+  if($g_BlastComparaPep_workdir) {
+    unlink(<$g_BlastComparaPep_workdir/*>);
+    rmdir($g_BlastComparaPep_workdir);
+  }
+  return 1;
+}
+
+##########################################
+#
+# internal methods
+#
+##########################################
+
+# using the genome_db and longest peptides subset, create a fasta
+# file which can be used as a blast database
+sub dumpPeptidesToFasta
+{
+  my $self = shift;
+
+  my $startTime = time();
+  my $params = eval($self->analysis->parameters);
+  my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($params->{'genome_db_id'});
+  
+  # create logical path name for fastafile
+  my $species = $genomeDB->name();
+  $species =~ s/\s+/_/g;  # replace whitespace with '_' characters
+
+  #create temp directory to hold fasta databases
+  $g_BlastComparaPep_workdir = "/tmp/worker.$$/";
+  mkdir($g_BlastComparaPep_workdir, 0777);
+  
+  my $fastafile = $g_BlastComparaPep_workdir.
+                  $species . "_" .
+                  $genomeDB->assembly() . ".fasta";
+  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
+  return $fastafile if(-e $fastafile);
+  print("fastafile = '$fastafile'\n");
+
+  # write fasta file to local /tmp/disk
+  my $subset   = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($params->{'subset_id'});
+  $self->{'comparaDBA'}->get_SubsetAdaptor->dumpFastaForSubset($subset, $fastafile);
+
+  # configure the fasta file for use as a blast database file
+  my $blastdb     = new Bio::EnsEMBL::Pipeline::Runnable::BlastDB (
+      -dbfile     => $fastafile,
+      -type       => 'PROTEIN');
+  $blastdb->run;
+  print("registered ". $blastdb->dbname . " for ".$blastdb->dbfile . "\n");
+
+  printf("took %d secs to dump database to local disk\n", (time() - $startTime));
+
+  return $fastafile
 }
 
 1;
