@@ -15,7 +15,7 @@ sub tag {
 	      'colour' => $col, 'label_colour' => $labcol } );
   }
 
-  if($f->{'_range_type'} eq 'between' ) {
+  if($f->start > $f->end ) {
     return( { 'style' => 'left-snp', 'colour' => $col } );
   }
 

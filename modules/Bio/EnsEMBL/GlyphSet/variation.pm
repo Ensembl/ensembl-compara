@@ -43,7 +43,7 @@ sub image_label {
 
 sub tag {
   my ($self, $f) = @_;
-  if($f->{'_range_type'} eq 'between' ) {
+  if($f->start > $f->end ) {
     my $consequence_type = $f->consequence_type;
     return ( { 'style' => 'insertion', 
 	       'colour' => $self->{'colours'}{"$consequence_type"} } );
@@ -79,7 +79,7 @@ sub colour {
   }
   return $self->{'colours'}{"$consequence_type"},
     $self->{'colours'}{"label$consequence_type"}, 
-      $f->{'_range_type'} eq 'between' ? 'invisible' : '';
+      $f->start > $f->end ? 'invisible' : '';
 
 }
 
@@ -90,11 +90,10 @@ sub zmenu {
   my $allele = $f->allele_string;
   my $pos =  $chr_start;
 
-  if($f->{'range_type'} eq 'between' ) {
-    warn "uses this?, glypsetvariation.pm";
+  if($f->start > $f->end  ) {
     $pos = "between&nbsp;$chr_start&nbsp;&amp;&nbsp;$chr_end";
   }
-  elsif($f->{'range_type'} ne 'exact' ) {
+  elsif($f->start < $f->end ) {
     $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
   }
 
