@@ -345,7 +345,7 @@ sub draw_chromosome {
     my $h_wid      = $wid/2;
     my $done_1_acen = 0;
     my $highlights = $params{'highlights'} || [];
-    my @bands = sort{$a->start <=> $b->start } @{$params{'bands'}};
+    my @bands = sort{$a->start <=> $b->start } @{$params{'bands'}||[]};
     if( @bands ) {
       foreach my $band (@bands ) {
         my $bandname       = $band->name();

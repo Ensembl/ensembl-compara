@@ -47,8 +47,9 @@ sub _init {
 
   my $priority = ($self->{container}{_config_file_name_} eq 'Homo_sapiens' ? 
                   $PRIORITY : undef);
-  foreach my $f (@{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)}
-  ){
+
+  my @features = @{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)};
+  foreach my $f (@features){
     my $ms           = $f->marker->display_MarkerSynonym;
     my $fid          = $ms->name;
     my $bp_textwidth = $w * length("$fid ");
@@ -83,6 +84,12 @@ sub _init {
     $glyph->y($glyph->y() + (1.2 * $row * $h));
     $self->push($glyph);
   }    
+
+  ## No features show "empty track line" if option set....  ##
+  if ((scalar(@features) == 0) && $Config->get('_settings','opt_empty_tracks')==1){
+    $self->errorTrack( "No markers in this region" )
+  }
+
 }
 
 sub colour {

@@ -30,8 +30,11 @@ sub init_label {
 #  my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ? qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) :  qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
 
   my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ? qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/dasconfview?_das_edit=$1&conf_script=$script&conf_script_params=$params\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) :  qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
-																																	  
-  my $track_label = $self->{'extras'}->{'caption'} || $self->{'extras'}->{'label'} || $self->{'extras'}->{'name'};
+						
+
+												   
+
+  my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
   $track_label =~ s/^(managed_|managed_extdas)//;
 
   $self->label( new Sanger::Graphics::Glyph::Text({
@@ -155,7 +158,6 @@ sub RENDER_simple {
     my $display_type;
     my $style;
     my $colour;
-
 
     if($configuration->{'use_style'}) {
       $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id} || $configuration->{'styles'}{$f->das_type_category}{'default'} || $configuration->{'styles'}{'default'}{'default'};
@@ -289,7 +291,7 @@ sub RENDER_grouped {
     my @features = (shift @t_features);
     foreach( @t_features ) { # Nasty hacky bit that ensures we don't have duplicate das features....
       if($_->das_start <= $features[-1]->das_end ) {
-        $features[-1]->das_end( $_->das_end );
+        $features[-1]->das_end( $_->das_end ) if $_->das_end > $features[-1]->das_end;
       } else {
         push @features, $_;
       } 
@@ -751,10 +753,12 @@ sub _init {
   $Extra->{labelflag} = 'u';
   $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{color} || 'contigblue1';
   $configuration->{depth} =  $Config->get($das_config_key, 'dep') || $Extra->{depth}  || 4;
-  $configuration->{use_style} = $Extra->{stylesheet} ? $Extra->{stylesheet} eq 'y' : $Config->get($das_config_key, 'stylesheet') eq 'Y';
+  $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
   $configuration->{labelling} = $Extra->{labelflag} =~ /^[ou]$/i ? 1 : 0;
   $configuration->{length} = $container_length;
 
+#  warn("$das_config_key:".$Config->get($das_config_key, 'stylesheet'));
+#  warn(Dumper($Extra));
   $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
   $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
   ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
@@ -842,16 +846,20 @@ sub _init {
   } else {
     $configuration->{'use_style'} = 0;
   }
+
   $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
   $self->{'ext_url'}      = ExtURL->new( $Extra->{'name'} =~ /^managed_extdas/ ? ($Extra->{'linkURL'} => $Extra->{'linkURL'}) : () );
 
 
   $self->{helplink} = $Config->get($das_config_key, 'helplink');
   my $renderer = $Config->get($das_config_key, 'renderer');
-  my $group = $Config->get($das_config_key, 'group') || 'y';
+#  my $group = ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple';
+	       
+  my $group = uc($Config->get($das_config_key, 'group') || 'N');
+  $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
 
 #  $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
-  $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'n' ? 'RENDER_simple' : 'RENDER_grouped');
+
   $renderer =~ s/RENDER_RENDER/RENDER/;
 
 #  warn("RENDER:[$das_config_key: $group] $renderer");
