@@ -52,60 +52,66 @@ unless(defined($fastadir) and ($fastadir =~ /^\//)) {
 
 my $comparaDBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
                                                              -port => $port,
-							     -user => $user,
-							     -pass => $pass,
-							     -dbname => $dbname);
-my $pipelineDBA = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor	
-                  (-DBCONN => $comparaDBA);
-		  					     
-my $sicDBA = $pipelineDBA->get_StateInfoContainer;
+                                                             -user => $user,
+                                                             -pass => $pass,
+                                                             -dbname => $dbname);
+my $pipelineDBA = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $comparaDBA);
 
-#
-# if neither genome_db_id or subset_id specified, dump for all genomes
-#
+my @subsets;
 
-unless(defined($genome_db_id) or defined($subset_id)) { 
-  my $genomedbAdaptor = $comparaDBA->get_GenomeDBAdaptor();
+#genome_db_id specified on commandline, so figure out subset
+if(defined($genome_db_id)) {
+  my $ssid = getSubsetIdForGenomeDBId($comparaDBA, $genome_db_id);
+  my $subset = $comparaDBA->get_SubsetAdaptor()->fetch_by_dbID($ssid);
+  $subset->{genome_db_id} = $genome_db_id;
+  push @subsets, $subset;
+}
 
-  my @genomedbArray = @{$genomedbAdaptor->fetch_all()};
-  my $count = $#genomedbArray;
-  print("fetched $count different genome_db from compara\n");
+#subset specified so figure out genome_db_id
+if(defined($subset_id)) {
+  my $gdbid = getGenomeDBIdForSubsetId($comparaDBA, $subset_id );
+  my $subset = $comparaDBA->get_SubsetAdaptor()->fetch_by_dbID($subset_id);
+  $subset->{genome_db_id} = $gdbid;
+  push @subsets, $subset;
+}
+
+unless(@subsets) {
+  my @genomedbArray = @{$comparaDBA->get_GenomeDBAdaptor()->fetch_all()};
+  print("fetched " . $#genomedbArray+1 . " different genome_db from compara\n");
 
   foreach my $genome_db (@genomedbArray) {
-    my $genome_db_id = $genome_db->dbID();  
+    my $genome_db_id = $genome_db->dbID();
 
     $subset_id = getSubsetIdForGenomeDBId($comparaDBA, $genome_db_id);
     if(defined($subset_id)) {
-      my $fastafile = getFastaNameForGenomeDBID($comparaDBA, $genome_db_id);
-      dumpFastaForSubset($comparaDBA, $subset_id, $fastafile);
+      my $subset = $comparaDBA->get_SubsetAdaptor()->fetch_by_dbID($subset_id);
+      $subset->{genome_db_id} = $genome_db_id;
+      push @subsets, $subset;
     }
-    print("\n");
   }
-  exit(0);
 }
-
 
 #
-# if genome_db_id specified dump for that species, 
-# otherwise $subset_id is defined from options
+# subsets now allocated, so dump and build analysis
 #
 
-if(defined($genome_db_id)) {
-  $subset_id = getSubsetIdForGenomeDBId($comparaDBA, $genome_db_id);
+print($#subsets+1 . " subsets found for dumping\n");
+
+foreach my $subset (@subsets) {
+  my $fastafile = getFastaNameForGenomeDBID($comparaDBA, $genome_db_id);
+
+  # write fasta file
+  $comparaDBA->get_SubsetAdaptor->dumpFastaForSubset($subset, $fastafile);
+
+  # do setdb to prepare it as a blast database
+  print("Prepare fasta file as blast database\n");
+  system("setdb $fastafile");
+
+  # set up the analysis and input_id_analysis tables for the pipelinw
+  SubmitSubsetForAnalysis($comparaDBA, $pipelineDBA, $subset); #uses global DBAs
 }
-
-unless(defined($subset_id)) {
-  die "ERROR : must specify a compara subset to dump fasta from\n";
-}
-
-my $fastafile = getFastaNameForSubsetID($comparaDBA, $subset_id);
-dumpFastaForSubset($comparaDBA, $subset_id, $fastafile);
-
-#$dbh->disconnect();
-
 
 exit(0);
-
 
 
 #######################
@@ -273,15 +279,15 @@ sub getFastaNameForGenomeDBID {
 
 sub dumpFastaForSubset {
   my($dbh, $subset_id, $fastafile) = @_;
-  
+
   my $sql = "SELECT member.stable_id, member.description, sequence.sequence " .
             "FROM member, sequence, subset_member " .
 	    "WHERE subset_member.subset_id = $subset_id ".
-	    "AND member.member_id=subset_member.member_id ". 
+	    "AND member.member_id=subset_member.member_id ".
 	    "AND member.sequence_id=sequence.sequence_id " .
 	    "GROUP BY member.member_id ORDER BY member.stable_id;";
 
-  open FASTAFILE, ">$fastafile" 
+  open FASTAFILE, ">$fastafile"
     or die "Could open $fastafile for output\n";
   print("writing fasta to loc '$fastafile'\n");
 
@@ -298,17 +304,17 @@ sub dumpFastaForSubset {
   close(FASTAFILE);
 
   $sth->finish();
-  
+
   #
   # update this subset_id's  subset.dump_loc with the full path of this dumped fasta file
   #
-  
+
   $sth = $dbh->prepare("UPDATE subset SET dump_loc = ? WHERE subset_id = ?");
   $sth->execute($fastafile, $subset_id);
-  
+
   #addAnalysisForSubset($dbh, $subset_id, $fastafile);
   SubmitSubsetForAnalysis($subset_id, $fastafile);
-  
+
   print("Prepare fasta file as blast database\n");
   system("setdb $fastafile");
 }
@@ -316,10 +322,10 @@ sub dumpFastaForSubset {
 
 sub taxonIDForSubsetID {
   my ($dbh, $subset_id) = @_;
-  
+
   my $taxon_id = undef;
-  
-  
+
+
   my $sql = "SELECT distinct member.taxon_id " .
             "FROM subset_member, member " .
 	    "WHERE subset_member.subset_id='$subset_id' ".
@@ -337,52 +343,12 @@ sub taxonIDForSubsetID {
 }
 
 
-sub SubmitSubsetForAnalysis {
-  my($subset_id, $fastafile) = @_;
-  
-  my $analysisAdaptor = $pipelineDBA->get_AnalysisAdaptor();
-
-  my $genome_db_id = getGenomeDBIdForSubsetId($comparaDBA, $subset_id);
-  my $genome = $comparaDBA->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id);
-  
-  
-  my $logic_name = "SubmitPep_" . $genome->assembly();
-  
-  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db              => "subset_id=$subset_id",
-      -db_file         => $fastafile,
-      -db_version      => '1',
-      -logic_name      => $logic_name,
-      -input_id_type   => 'MemberPep'
-    );
-
-  $analysisAdaptor->store($analysis);  
-  
-  #
-  # now add input_ids to input_id_analysis table
-  #
-  
-  print("Get subset\n");
-  my $subset = $comparaDBA->get_SubsetAdaptor()->fetch_by_dbID($subset_id);
-  print(" fetched subset object\n");
-  
-  #my $host = hostname();
-  foreach my $member_id ($subset->member_id_list()) {
-    $sicDBA->store_input_id_analysis($member_id, #input_id
-				  $analysis,
-				  'earth' #execution_host
-				  );
-  }
-
-} 
-
-
 sub addAnalysisForSubset {
   my($dbh, $subset_id, $fastafile) = @_;
-  
+
   unless(defined($analysis_conf)) { return; }
   print("read analysis template from '$analysis_conf'\n");
-  
+
   my %analconf = %{do $analysis_conf};
 
   my $analysisAdaptor = $dbh->get_AnalysisAdaptor();
@@ -408,3 +374,53 @@ sub addAnalysisForSubset {
 
   $analysisAdaptor->store($analysis);  
 } 
+
+
+sub SubmitSubsetForAnalysis {
+  my($comparaDBA, $pipelineDBA, $subset) = @_;
+
+  print("\nSubmitSubsetForAnalysis\n");
+
+  my $sicDBA = $pipelineDBA->get_StateInfoContainer;
+
+  my $genome = $comparaDBA->get_GenomeDBAdaptor()->fetch_by_dbID($subset->{genome_db_id});
+  my $logic_name = "SubmitPep_" . $genome->assembly();
+
+  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db              => "subset_id=" . $subset->dbID(),
+      -db_file         => $subset->dump_loc(),
+      -db_version      => '1',
+      -logic_name      => $logic_name,
+      -input_id_type   => 'MemberPep'
+    );
+
+  $pipelineDBA->get_AnalysisAdaptor()->store($analysis);
+
+  #my $host = hostname();
+  print("store using sic\n");
+  my $errorCount=0;
+  my $tryCount=0;
+  eval {
+    foreach my $member_id (@{$subset->member_id_list()}) {
+      eval {
+        $tryCount++;
+        $sicDBA->store_input_id_analysis($member_id, #input_id
+                                         $analysis,
+                                         'earth', #execution_host
+                                         0 #save runtime NO (ie do insert)
+                                        );
+      };
+      if($@) {
+        $errorCount++;
+        if($errorCount>42 && ($errorCount/$tryCount > 0.95)) {
+          die("too many repeated failed insert attempts, assume will continue for durration. ACK!!\n");
+        }
+      } # should handle the error, but ignore for now
+      if($tryCount>=5) { last; }
+    }
+  };
+  print("CREATED all input_id_analysis\n");
+
+}
+
+
