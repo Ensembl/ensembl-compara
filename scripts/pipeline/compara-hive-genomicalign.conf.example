@@ -37,7 +37,7 @@
   },
 
 
-  { TYPE => DNA_CHUNK_GROUP_SET,
+  { TYPE => DNA_COLLECTION,
     'collection_name'       => 'mouse chr11 141F582B-75E8-11D9-8407-000D93B97580',
     'genome_db_id'          => 2,
     'genome_name_assembly'  => 'Mus musculus:NCBIM33',
@@ -48,7 +48,7 @@
     'masking_options'       => do('./masking_mouse33.spec'),
   },
 
-  { TYPE => DNA_CHUNK_GROUP_SET,
+  { TYPE => DNA_COLLECTION,
     'collection_name'       => 'human chr17 E23BC007-75E7-11D9-8334-000D93B97580',
     'genome_db_id'          => 1,
     'genome_name_assembly'  => 'Homo sapiens:NCBI35',
@@ -59,7 +59,7 @@
   },
 
 
-  { TYPE => GENOMIC_ALIGN,
+  { TYPE => PAIR_ALIGNER,
     'subtype' => 'blastz',
     'method_link' => [1001, 'BLASTZ_RAW'],
     'analysis_template' => {
@@ -67,8 +67,9 @@
         '-parameters'    => "{method_link=>'BLASTZ_RAW',options=>'T=1 T=1 L=3000 H=2200 M=40000000 O=400 E=30'}",
         '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
     },
-    'query'  => 'mouse chr11 141F582B-75E8-11D9-8407-000D93B97580',
-    'target' => 'human chr17 E23BC007-75E7-11D9-8334-000D93B97580',
+    'max_parallel_workers'    => 300,
+    'query_collection_name'   => 'mouse chr11 141F582B-75E8-11D9-8407-000D93B97580',
+    'target_collection_name'  => 'human chr17 E23BC007-75E7-11D9-8334-000D93B97580',
   },
 
   { TYPE => END }

@@ -113,10 +113,10 @@ sub parse_conf {
       elsif($type eq 'HIVE') {
         %hive_params = %{$confPtr};
       }
-      elsif($type eq 'GENOMIC_ALIGN') {
+      elsif($type eq 'PAIR_ALIGNER') {
         push @{$self->{'genomic_align_conf_list'}} , $confPtr;
       }
-      elsif($type eq 'DNA_CHUNK_GROUP_SET') {
+      elsif($type eq 'DNA_COLLECTION') {
         push @{$self->{'chunk_group_conf_list'}} , $confPtr;
       }
 
@@ -240,8 +240,9 @@ sub prepBlastzPair
     #
     my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
     $mlss->method_link_type($method_link_type); 
-    my $gdb_id1 = $self->{'chunkCollectionHash'}->{$genomic_align_conf->{'query'}}->{'genome_db_id'};
-    my $gdb_id2 = $self->{'chunkCollectionHash'}->{$genomic_align_conf->{'target'}}->{'genome_db_id'};
+    my $gdb_id1 = $self->{'chunkCollectionHash'}->{$genomic_align_conf->{'query_collection_name'}}->{'genome_db_id'};
+    my $gdb_id2 = $self->{'chunkCollectionHash'}->{$genomic_align_conf->{'target_collection_name'}}->{'genome_db_id'};
+    printf("create MethodLinkSpeciesSet for genomes %d:%d\n", $gdb_id1, $gdb_id2);
     my $gdb1 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id1);
     my $gdb2 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id2);
     $mlss->species_set([$gdb1, $gdb2]);
@@ -280,8 +281,8 @@ sub prepBlastzPair
   #$self->create_chunk_job($genomic_align_conf->{'target'});
 
   my $rule_job = "{'pair_aligner'=>'" . $blastz_template->logic_name . "'";
-  $rule_job .= ",'query_dna'=>'"  . $genomic_align_conf->{'query'}  . "'";
-  $rule_job .= ",'target_dna'=>'" . $genomic_align_conf->{'target'} . "'";
+  $rule_job .= ",'query_collection_name'=>'"  . $genomic_align_conf->{'query_collection_name'}  . "'";
+  $rule_job .= ",'target_collection_name'=>'" . $genomic_align_conf->{'target_collection_name'} . "'";
   $rule_job .= ",'method_link_species_set_id'=>".$genomic_align_conf->{'method_link_species_set_id'} 
     if(defined($genomic_align_conf->{'method_link_species_set_id'}));
   $rule_job .= "}";
@@ -324,7 +325,6 @@ sub create_chunk_job
   
   if($chunkingConf->{'collection_name'}) {
     my $collection_name = $chunkingConf->{'collection_name'};
-    
     
     $self->{'chunkCollectionHash'}->{$collection_name} = $chunkingConf;
   }
