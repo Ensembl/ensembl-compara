@@ -1,0 +1,84 @@
+
+
+> mkdir /ecs2/work4/compara_abel_cara/hcr/Hs31Mm30
+> cd /ecs2/work4/compara_abel_cara/hcr/Hs31Mm30
+
+> echo "select name from dnafrag where genome_db_id=1;"|mysql -h ecs2d -u ensro ensembl_compara_14_1|awk '!/name/' > Hs31_chr_names
+
+Dump alignments in axt format (definition at the end of this document)
+
+> cat Hs31_chr_names | while read i;do bsub -q acari -o $i.DumpAxt.out -e $i.DumpAxt.err /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/dumps/DumpAxtAlignments.pl -host ecs2d -dbuser ensro -dbname ensembl_compara_14_1 -chr_name $i -species1 "Homo sapiens" -assembly1 NCBI31 -species2 "Mus musculus" -assembly2 NCBIM30 -alignment_type WGA -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf;done
+
+Check that all the dump went fine
+
+> ls|grep out|while read i;do awk '/^Subject/ && $NF=="Done" {print;exit} /^Subject/ && $NF!="Done" {exit}' $i;done|wc -l
+        24
+
+This number should be the same as 
+
+> wc -l Hs31_chr_names
+        24 Hs31_chr_names
+
+Clean out the LSF headers
+
+> cat Hs31_chr_names | while read i;do /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/hcr/CleanLSFHeaders.pl $i.DumpAxt.out > $i.axt;done
+
+If that worked fine, delete the LSF out and err files, to save disk space
+
+> rm -f *.out *.err
+
+Then use the subsetAxt executable to filter out high conserved alignments using the tight matrix
+and score threshold of 3400 (basically allows alignments of 34 bp minimum length)
+This C executable is fairly quick, and we do not need to send the jobs to LSF. The source are available at
+http://www.soe.ucsc.edu/~kent/src/jksrcXXX.zip
+
+We are currently using jksrc453.zip, an unzipped version is in /nfs/acari/abel/ftp/jksrc453.
+If you want to compile yourself, look at the jksrc453/README. The subsetAxt script is in 
+jksrc453/hg/mouseStuff/subsetAxt/
+
+If you don't want to know :) use the executable in /nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt
+
+> cat Hs31_chr_names |while read i;do /nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt $i.axt $i.axt.tight /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/hcr/tight.mat 3400 ;done
+
+If that worked fine, delete the original axt files, to save disk space
+
+> rm -f *.axt
+
+Then load the data in compara db
+
+> cat Hs31_chr_names |while read i;do bsub -q acari -o $.load.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/dumps/LoadAxtAlignments.pl -host ecs2c -dbname ensembl_compara_14_1 -dbuser ensadmin -pass ensembl -cs_genome_db_id 1 -qy_genome_db_id 2 $i.axt.tight -alignment_type WGA_HCR -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf ;done
+
+Check that all the dump went fine
+
+> ls|grep out|while read i;do awk '/^Subject/ && $NF=="Done" {print;exit} /^Subject/ && $NF!="Done" {exit}' $i;done|wc -l
+        24
+
+
+axt Format definition
+=====================
+(taken from http://genome-test.cse.ucsc.edu/goldenPath/14nov2002/vsMm2/)
+
+All alignments are in 'axt' format.   Each alignment
+contains three lines and is separated from the next
+alignment by a space:   
+
+    Line 1 - summarizes the alignment.   
+    Line 2 - contains the human sequence with inserts.  
+    Line 3 - contains the mouse sequence with inserts.  
+
+The summary line contains 9 blank separated fields with the 
+following meanings:
+
+1 - Alignment number.  The first alignment in a file
+    is numbered 0,  the next 1, and so forth.
+2 - Human chromosome.
+3 - Start in human chromosome.  The first base is
+    numbered 1.
+4 - End in human chromosome.  The end base is included.
+5 - Mouse chromosome.
+6 - Start in mouse.
+7 - End in mouse.
+8 - Mouse strand. WARNING If this is '-' then the mouse start/
+    mouse end fields are relative to the reverse complemented
+    mouse chromosome.
+9 - Alignment score.
