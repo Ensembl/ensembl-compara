@@ -17,7 +17,7 @@ my $dba = $multi->get_DBAdaptor('compara');
 
 ok($dba);
 
-my $sth = $dba->prepare("select * from genome_db");
+my $sth = $dba->dbc->prepare("select * from genome_db");
 $sth->execute;
 
 ok(scalar($sth->rows) == 12);
@@ -42,10 +42,10 @@ ok(scalar($sth->rows) == 12);
 
 
 # delete 1 entry from the db
-$sth = $dba->prepare("delete from genome_db where genome_db_id >= 12");
+$sth = $dba->dbc->prepare("delete from genome_db where genome_db_id >= 12");
 $sth->execute;
 
-$sth = $dba->prepare("select * from genome_db");
+$sth = $dba->dbc->prepare("select * from genome_db");
 $sth->execute;
 
 ok(scalar($sth->rows) == 11);
