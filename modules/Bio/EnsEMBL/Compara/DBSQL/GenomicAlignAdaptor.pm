@@ -275,7 +275,7 @@ sub store {
 			  $a->end,
 			  $a->strand,
                           $a->score,
-                          $a->strand
+                          $a->perc_id
 			  );
 
        }
