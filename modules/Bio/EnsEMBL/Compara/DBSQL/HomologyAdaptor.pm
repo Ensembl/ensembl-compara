@@ -103,7 +103,7 @@ sub fetch_all_by_Member_method_link_type {
   my $mlss_arrayref = $mlssa->fetch_all_by_method_link_and_genome_db($method_link_type,$member->genome_db_id);
   
   unless (scalar @{$mlss_arrayref}) {
-    warnings("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
+    warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
     return [];
   }
 
@@ -145,7 +145,7 @@ sub fetch_all_by_method_link_type {
   my $mlss_arrayref = $self->db->get_MethodLinkSpeciesAdaptor->fetch_all_by_method_link_type($method_link_type);
 
   unless (scalar @{$mlss_arrayref}) {
-    warnings("There is no $method_link_type data stored in the database\n");
+    warning("There is no $method_link_type data stored in the database\n");
     return [];
   }
   
