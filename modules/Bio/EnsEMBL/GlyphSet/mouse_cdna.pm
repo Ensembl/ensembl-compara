@@ -26,6 +26,7 @@ sub href {
     if( $id =~ /(RO|ZX|PX|ZA|PL)\d{5}[A-Z]\d{2}/ ) {
       return $self->{'config'}->{'ext_url'}->get_url('RIKEN', $id);
     }
+    $id =~ s/\.\d+$//;
     return $self->{'config'}->{'ext_url'}->get_url('EMBL',$id);
 }
 sub zmenu {
