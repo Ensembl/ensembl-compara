@@ -486,8 +486,8 @@ sub genomic_align_array {
  
   if (defined($genomic_align_array)) {
     foreach my $genomic_align (@$genomic_align_array) {
-      throw("$genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object")
-          unless ($genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+      throw("[$genomic_align] is not a Bio::EnsEMBL::Compara::GenomicAlign object")
+          unless ($genomic_align and $genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
       # Create weak circular reference to genomic_align_block from each genomic_align
       $genomic_align->genomic_align_block($self); 
     }
