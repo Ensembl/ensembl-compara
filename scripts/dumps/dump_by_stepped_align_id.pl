@@ -64,9 +64,17 @@ if (! defined $output) {
 print STDERR "Opening and reading SQL file...";
 
 open SQL, "$sql_file" || die "could not open $sql_file; $!\n";
-my $sql_query = <SQL>;
+my $sql_query;
+while (defined (my $line = <SQL>)) {
+  if ($line =~ /^\#.*$/) {
+    next;
+  } else {
+    chomp $line;
+    $sql_query = $line;
+    last;
+  }
+}
 close SQL;
-chomp $sql_query;
 
 print STDERR "Done\n";
 
