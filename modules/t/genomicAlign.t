@@ -28,7 +28,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlign module.
 
-This script includes 36 tests.
+This script includes 40 tests.
 
 =head1 AUTHOR
 
@@ -55,13 +55,14 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 36;
+    plan tests => 40;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 # switch off the debug prints 
@@ -80,6 +81,7 @@ my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor();
 my $genomic_align_block_adaptor = $compara_db->get_GenomicAlignBlockAdaptor();
 my $method_link_species_set_adaptor = $compara_db->get_MethodLinkSpeciesSetAdaptor();
 my $dnafrag_adaptor = $compara_db->get_DnaFragAdaptor();
+my $genomic_align_group_adaptor = $compara_db->get_GenomicAlignGroupAdaptor();
 my $genomeDB_adaptor = $compara_db->get_GenomeDBAdaptor();
 my $fail;
 
@@ -94,6 +96,10 @@ my $dnafrag_start = 50007134;
 my $dnafrag_end = 50007289;
 my $dnafrag_strand = 1;
 my $level_id = 1;
+my $genomic_align_group_1_id = 1;
+my $genomic_align_group_1_type = "default";
+my $genomic_align_group_1 = $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_1_id);
+my $genomic_align_groups = [$genomic_align_group_1];
 my $cigar_line = "15MG78MG63M";
 my $aligned_sequence = "TCATTGGCTCATTTT-ATTGCATTCAATGAATTGTTGGAAATTAGAGCCAGCCAAAAATTGTATAAATATTGGGCTGTGTCTGCTTCTCTGACA-CTAGATGAAGATGGCATTTGTGCCTGTGTGTCTGTGGGGTCCTCAGGAAGCTCTTCTCCTTGA";
 my $original_sequence = "TCATTGGCTCATTTTATTGCATTCAATGAATTGTTGGAAATTAGAGCCAGCCAAAAATTGTATAAATATTGGGCTGTGTCTGCTTCTCTGACACTAGATGAAGATGGCATTTGTGCCTGTGTGTCTGTGGGGTCCTCAGGAAGCTCTTCTCCTTGA";
@@ -394,5 +400,70 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::original_sequence method");
       );
   ok($genomic_align->original_sequence, $original_sequence,
           "Trying to get original_sequence from the database");
+
+# 
+# 37-38
+# 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_groups method");
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      );
+  ok(scalar(@{$genomic_align->genomic_align_groups}), scalar(@{$genomic_align_groups}),
+          "Trying to get genomic_align_groups from the database");
+  do {
+    my $all_fails;
+    foreach my $this_genomic_align_group (@{$genomic_align->genomic_align_groups}) {
+      foreach my $this_genomic_align (@{$this_genomic_align_group->genomic_align_array}) {
+        my $fail = $this_genomic_align_group->dbID;
+#         my $has_original_GA_been_found = 0;
+#         if ($this_genomic_align == $genomic_align_group_1) {
+#           $has_original_GA_been_found = 1;
+#           ok($this_genomic_align, $genomic_align_1->genomic_align_group_by_type($genomic_align_group->type));
+#         }
+        foreach my $that_genomic_align_group (@$genomic_align_groups) {
+          if ($that_genomic_align_group->dbID == $this_genomic_align_group->dbID) {
+            $fail = undef;
+            last;
+          }
+        }
+        $all_fails .= " <$fail> " if ($fail);
+#         $all_fails .= " Cannot retrieve original GenomicAlign object! " if (!$has_original_GA_been_found);
+      }
+    }
+    ok($all_fails, undef);
+  };
+
+# 
+# 39-40
+# 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_group_by_type method");
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      );
+  ok($genomic_align->genomic_align_group_by_type($genomic_align_group_1_type)->dbID,
+          $genomic_align_group_1_id, "Trying to get genomic_align_group_by_type from the database");
+  do {
+    my $all_fails;
+    my $this_genomic_align_group = $genomic_align->genomic_align_group_by_type($genomic_align_group_1_type);
+      foreach my $this_genomic_align (@{$this_genomic_align_group->genomic_align_array}) {
+      my $fail = $this_genomic_align_group->dbID;
+#       my $has_original_GA_been_found = 0;
+#       if ($this_genomic_align == $genomic_align_group_1) {
+#         $has_original_GA_been_found = 1;
+#         ok($this_genomic_align, $genomic_align_1->genomic_align_group_by_type($genomic_align_group->type));
+#       }
+      foreach my $that_genomic_align_group (@$genomic_align_groups) {
+        if ($that_genomic_align_group->dbID == $this_genomic_align_group->dbID) {
+          $fail = undef;
+          last;
+        }
+      }
+      $all_fails .= " <$fail> " if ($fail);
+#       $all_fails .= " Cannot retrieve original GenomicAlign object! " if (!$has_original_GA_been_found);
+    }
+    ok($all_fails, undef);
+  };
 
 exit 0;
