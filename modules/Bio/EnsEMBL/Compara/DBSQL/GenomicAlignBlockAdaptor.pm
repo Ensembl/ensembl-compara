@@ -395,17 +395,17 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                 -end => $this_genomic_align_block->reference_genomic_align->dnafrag_end
             );
         $feature = $feature->transfer($reference_slice);
-        $this_genomic_align_block->requesting_slice($reference_slice);
-        $this_genomic_align_block->requesting_slice_start($feature->start);
-        $this_genomic_align_block->requesting_slice_end($feature->end);
+        $this_genomic_align_block->reference_slice($reference_slice);
+        $this_genomic_align_block->reference_slice_start($feature->start);
+        $this_genomic_align_block->reference_slice_end($feature->end);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
       }
     } else {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
-        $this_genomic_align_block->requesting_slice($top_slice);
-        $this_genomic_align_block->requesting_slice_start(
+        $this_genomic_align_block->reference_slice($top_slice);
+        $this_genomic_align_block->reference_slice_start(
             $this_genomic_align_block->reference_genomic_align->dnafrag_start);
-        $this_genomic_align_block->requesting_slice_end(
+        $this_genomic_align_block->reference_slice_end(
             $this_genomic_align_block->reference_genomic_align->dnafrag_end);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
       }

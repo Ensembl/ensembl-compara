@@ -31,9 +31,9 @@ SET VALUES
   $genomic_align_block->method_link_species_set($method_link_species_set);
   $genomic_align_block->reference_genomic_align_id(35123);
   $genomic_align_block->genomic_align_array([$genomic_align1, $genomic_align2]);
-  $genomic_align_block->requesting_slice($requesting_slice);
-  $genomic_align_block->requesting_slice_start(1035);
-  $genomic_align_block->requesting_slice_end(1283);
+  $genomic_align_block->reference_slice($reference_slice);
+  $genomic_align_block->reference_slice_start(1035);
+  $genomic_align_block->reference_slice_end(1283);
   $genomic_align_block->score(56.2);
   $genomic_align_block->length(562);
 
@@ -44,9 +44,9 @@ GET VALUES
   my $genomic_aligns = $genomic_align_block->genomic_align_array();
   my $reference_genomic_align = $genomic_align_block->reference_genomic_align();
   my $non_reference_genomic_aligns = $genomic_align_block->non_reference_genomic_aligns();
-  my $requesting_slice = $genomic_align_block->requesting_slice();
-  my $requesting_slice_start = $genomic_align_block->requesting_slice_start();
-  my $requesting_slice_end = $genomic_align_block->requesting_slice_end();
+  my $reference_slice = $genomic_align_block->reference_slice();
+  my $reference_slice_start = $genomic_align_block->reference_slice_start();
+  my $reference_slice_end = $genomic_align_block->reference_slice_end();
   my $score = $genomic_align_block->score();
   my $length = $genomic_align_block->length;
   my alignment_strings = $genomic_align_block->alignment_strings;
@@ -101,18 +101,18 @@ Bio::EnsEMBL::Compara::GenomicAling object corresponding to reference_genomic_al
 listref of Bio::EnsEMBL::Compara::GenomicAlign objects corresponding to this
 Bio::EnsEMBL::Compara::GenomicAlignBlock object
 
-=item requesting_slice
+=item reference_slice
 
 This is the Bio::EnsEMBL::Slice object used as argument to the
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by_Slice method.
 
-=item requesting_slice_start
+=item reference_slice_start
 
-starting position in the coordinates system defined by the requesting_slice
+starting position in the coordinates system defined by the reference_slice
 
-=item requesting_slice_end
+=item reference_slice_end
 
-ending position in the coordinates system defined by the requesting_slice
+ending position in the coordinates system defined by the reference_slice
 
 =back
 
@@ -736,37 +736,60 @@ sub length {
 }
 
 
-=head2 requesting_slice
+=head2 requesting_slice (DEPRECATED)
+
+  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice() method instead
  
-  Arg [1]    : Bio::EnsEMBL::Slice $requesting_slice
-  Example    : my $requesting_slice = $genomic_align_block->requesting_slice;
-  Example    : $genomic_align_block->requesting_slice_start($requesting_slice);
-  Description: get/set for attribute requesting_slice.
+  Arg [1]    : Bio::EnsEMBL::Slice $reference_slice
+  Example    : my $reference_slice = $genomic_align_block->requesting_slice;
+  Example    : $genomic_align_block->requesting_slice($reference_slice);
+  Description: get/set for attribute reference_slice.
   Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : throw if $requesting_slice is not a Bio::EnsEMBL::Slice
+  Exceptions : throw if $reference_slice is not a Bio::EnsEMBL::Slice
   Caller     : general
 
 =cut
 
 sub requesting_slice {
-  my ($self, $requesting_slice) = @_;
- 
-  if (defined($requesting_slice)) {
-    throw "[$requesting_slice] is not a Bio::EnsEMBL::Slice"
-        unless $requesting_slice->isa("Bio::EnsEMBL::Slice");
-    $self->{'requesting_slice'} = $requesting_slice;
-  }
-
-  return $self->{'requesting_slice'};
+  my ($self) = shift;
+  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice() method instead");
+  return $self->reference_slice(@_);
 }
 
 
-=head2 requesting_slice_start
+=head2 reference_slice
  
-  Arg [1]    : integer $requesting_slice_start
-  Example    : my $requesting_slice_start = $genomic_align_block->requesting_slice_start;
+  Arg [1]    : Bio::EnsEMBL::Slice $reference_slice
+  Example    : my $reference_slice = $genomic_align_block->reference_slice;
+  Example    : $genomic_align_block->reference_slice($reference_slice);
+  Description: get/set for attribute reference_slice.
+  Returntype : Bio::EnsEMBL::Slice object
+  Exceptions : throw if $reference_slice is not a Bio::EnsEMBL::Slice
+  Caller     : general
+
+=cut
+
+sub reference_slice {
+  my ($self, $reference_slice) = @_;
+ 
+  if (defined($reference_slice)) {
+    throw "[$reference_slice] is not a Bio::EnsEMBL::Slice"
+        unless $reference_slice->isa("Bio::EnsEMBL::Slice");
+    $self->{'reference_slice'} = $reference_slice;
+  }
+
+  return $self->{'reference_slice'};
+}
+
+
+=head2 requesting_slice_start (DEPRECATED)
+
+  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_start() method instead
+ 
+  Arg [1]    : integer $reference_slice_start
+  Example    : my $reference_slice_start = $genomic_align_block->requesting_slice_start;
   Example    : $genomic_align_block->requesting_slice_start(1035);
-  Description: get/set for attribute requesting_slice_start. A value of 0 will set
+  Description: get/set for attribute reference_slice_start. A value of 0 will set
                the attribute to undefined.
   Returntype : integer
   Exceptions : none
@@ -775,22 +798,44 @@ sub requesting_slice {
 =cut
 
 sub requesting_slice_start {
-  my ($self, $requesting_slice_start) = @_;
- 
-  if (defined($requesting_slice_start)) {
-    $self->{'requesting_slice_start'} = ($requesting_slice_start or undef);
-  }
-  
-  return $self->{'requesting_slice_start'};
+  my $self = shift;
+  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_start() method instead");
+  return $self->reference_slice_start(@_);
 }
 
 
-=head2 requesting_slice_end
+=head2 reference_slice_start
  
-  Arg [1]    : integer $requesting_slice_end
-  Example    : my $requesting_slice_end = $genomic_align_block->requesting_slice_end;
+  Arg [1]    : integer $reference_slice_start
+  Example    : my $reference_slice_start = $genomic_align_block->reference_slice_start;
+  Example    : $genomic_align_block->reference_slice_start(1035);
+  Description: get/set for attribute reference_slice_start. A value of 0 will set
+               the attribute to undefined.
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub reference_slice_start {
+  my ($self, $reference_slice_start) = @_;
+ 
+  if (defined($reference_slice_start)) {
+    $self->{'reference_slice_start'} = ($reference_slice_start or undef);
+  }
+  
+  return $self->{'reference_slice_start'};
+}
+
+
+=head2 requesting_slice_end (DEPRECATED)
+
+  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_end() method instead
+ 
+  Arg [1]    : integer $reference_slice_end
+  Example    : my $reference_slice_end = $genomic_align_block->requesting_slice_end;
   Example    : $genomic_align_block->requesting_slice_end(1283);
-  Description: get/set for attribute requesting_slice_end. A value of 0 will set
+  Description: get/set for attribute reference_slice_end. A value of 0 will set
                the attribute to undefined.
   Returntype : integer
   Exceptions : none
@@ -799,13 +844,33 @@ sub requesting_slice_start {
 =cut
 
 sub requesting_slice_end {
-  my ($self, $requesting_slice_end) = @_;
+  my $self = shift;
+  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_end() method instead");
+  return $self->reference_slice_end(@_);
+}
+
+
+=head2 reference_slice_end
  
-  if (defined($requesting_slice_end)) {
-    $self->{'requesting_slice_end'} = ($requesting_slice_end or undef);
+  Arg [1]    : integer $reference_slice_end
+  Example    : my $reference_slice_end = $genomic_align_block->reference_slice_end;
+  Example    : $genomic_align_block->reference_slice_end(1283);
+  Description: get/set for attribute reference_slice_end. A value of 0 will set
+               the attribute to undefined.
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub reference_slice_end {
+  my ($self, $reference_slice_end) = @_;
+ 
+  if (defined($reference_slice_end)) {
+    $self->{'reference_slice_end'} = ($reference_slice_end or undef);
   }
   
-  return $self->{'requesting_slice_end'};
+  return $self->{'reference_slice_end'};
 }
 
 
@@ -943,9 +1008,9 @@ sub _print {
   genomic_aligns = ".($self->genomic_align_array or "-undef-")."
   reference_genomic_align = ".($self->reference_genomic_align or "-undef-")."
   all_non_reference_genomic_aligns = ".($self->get_all_non_reference_genomic_align or "-undef-")."
-  requesting_slice = ".($self->requesting_slice or "-undef-")."
-  requesting_slice_start = ".($self->requesting_slice_start or "-undef-")."
-  requesting_slice_end = ".($self->requesting_slice_end or "-undef-")."
+  reference_slice = ".($self->reference_slice or "-undef-")."
+  reference_slice_start = ".($self->reference_slice_start or "-undef-")."
+  reference_slice_end = ".($self->reference_slice_end or "-undef-")."
   score = ".($self->score or "-undef-")."
   length = ".($self->length or "-undef-")."
   alignment_strings = ".($self->alignment_strings or "-undef-")."
