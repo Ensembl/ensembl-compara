@@ -185,45 +185,46 @@ sub fetch_by_relation {
 
   my $join;
   my $constraint;
-  my $extra_columns;
 
   $self->throw() 
     unless (defined $relation && ref $relation);
   
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    $join = [['family_member', 'fm'], 'm.member_id = fm.member_id'];
     my $family_id = $relation->dbID;
     $constraint = "fm.family_id = $family_id";
-    $extra_columns = [qw(fm.family_id
-                         fm.member_id
-                         fm.cigar_line)];
+    my $extra_columns = [qw(fm.family_id
+                            fm.member_id
+                            fm.cigar_line)];
+    $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-    $join = [['domain_member', 'dm'], 'm.member_id = dm.member_id'];
     my $domain_id = $relation->dbID;
     $constraint = "dm.domain_id = $domain_id";
-    $extra_columns = [qw(dm.domain_id
-                         dm.member_id
-                         dm.member_start
-                         dm.member_end)];
+    my $extra_columns = [qw(dm.domain_id
+                            dm.member_id
+                            dm.member_start
+                            dm.member_end)];
+    $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-    $join = [['homology_member', 'hm'], 'm.member_id = hm.member_id'];
     my $homology_id = $relation->dbID;
     $constraint .= "hm.homology_id = $homology_id";
-    $extra_columns = [qw(hm.homology_id
-                         hm.member_id
-                         hm.cigar_line
-                         hm.perc_cov
-                         hm.perc_id
-                         hm.perc_pos
-                         hm.flag)];
+    my $extra_columns = [qw(hm.homology_id
+                            hm.member_id
+                            hm.peptide_member_id
+                            hm.cigar_line
+                            hm.cigar_start
+                            hm.cigar_end
+                            hm.perc_cov
+                            hm.perc_id
+                            hm.perc_pos)];
+    $join = [[['homology_member', 'hm'], 'm.member_id = hm.member_id', $extra_columns]];
   }
   else {
     $self->throw();
   }
 
-  return $self->_generic_fetch($constraint, $join, $extra_columns);
+  return $self->_generic_fetch($constraint, $join);
 }
 
 =head2 fetch_by_relation_source
@@ -242,7 +243,6 @@ sub fetch_by_relation_source {
 
   my $join;
   my $constraint = "s.source_name = '$source_name'";
-  my $extra_columns;
 
   $self->throw() 
     unless (defined $relation && ref $relation);
@@ -251,39 +251,40 @@ sub fetch_by_relation_source {
     unless ($source_name);
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    $join = [['family_member', 'fm'], 'm.member_id = fm.member_id'];
     my $family_id = $relation->dbID;
     $constraint .= " AND fm.family_id = $family_id";
-    $extra_columns = [qw(fm.family_id
-                         fm.member_id
-                         fm.cigar_line)];
+    my $extra_columns = [qw(fm.family_id
+                            fm.member_id
+                            fm.cigar_line)];
+    $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-    $join = [['domain_member', 'dm'], 'm.member_id = dm.member_id'];
     my $domain_id = $relation->dbID;
     $constraint .= " AND dm.domain_id = $domain_id";
-    $extra_columns = [qw(dm.domain_id
-                         dm.member_id
-                         dm.member_start
-                         dm.member_end)];
+    my $extra_columns = [qw(dm.domain_id
+                            dm.member_id
+                            dm.member_start
+                            dm.member_end)];
+    $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-    $join = [['homology_member', 'hm'], 'm.member_id = hm.member_id'];
     my $homology_id = $relation->dbID;
     $constraint .= " AND hm.homology_id = $homology_id";
-    $extra_columns = [qw(hm.homology_id
-                         hm.member_id
-                         hm.cigar_line
-                         hm.perc_cov
-                         hm.perc_id
-                         hm.perc_pos
-                         hm.exon_count
-                         hm.flag)];
+    my $extra_columns = [qw(hm.homology_id
+                            hm.member_id
+                            hm.peptide_member_id
+                            hm.cigar_line
+                            hm.cigar_start
+                            hm.cigar_end
+                            hm.perc_cov
+                            hm.perc_id
+                            hm.perc_pos)];
+    $join = [[['homology_member', 'hm'], 'm.member_id = hm.member_id', $extra_columns]];
   }
   else {
     $self->throw();
   }
-  return $self->_generic_fetch($constraint, $join, $extra_columns);
+  return $self->_generic_fetch($constraint, $join);
 }
 
 =head2 fetch_by_relation_source_taxon
@@ -302,7 +303,6 @@ sub fetch_by_relation_source_taxon {
 
   my $join;
   my $constraint = "s.source_name = '$source_name' AND m.taxon_id = $taxon_id";
-  my $extra_columns;
 
   $self->throw()
     unless (defined $relation && ref $relation);
@@ -311,28 +311,28 @@ sub fetch_by_relation_source_taxon {
     unless($source_name && $taxon_id);
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    $join = [['family_member', 'fm'], 'm.member_id = fm.member_id'];
     my $family_id = $relation->dbID;
     $constraint .= " AND fm.family_id = $family_id";
-    $extra_columns = [qw(fm.family_id
+    my $extra_columns = [qw(fm.family_id
                          fm.member_id
                          fm.cigar_line)];
+    $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-    $join = [['domain_member', 'dm'], 'm.member_id = dm.member_id'];
     my $domain_id = $relation->dbID;
     $constraint .= " AND dm.domain_id = $domain_id";
-    $extra_columns = [qw(dm.domain_id
+    my $extra_columns = [qw(dm.domain_id
                          dm.member_id
                          dm.member_start
                          dm.member_end)];
+    $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
   }
 #  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
 #  }
   else {
     $self->throw();
   }
-  return $self->_generic_fetch($constraint, $join, $extra_columns);
+  return $self->_generic_fetch($constraint, $join);
 }
 
 #
@@ -356,24 +356,26 @@ sub fetch_by_relation_source_taxon {
 =cut
   
 sub _generic_fetch {
-  my ($self, $constraint, $join, $extra_columns) = @_;
+  my ($self, $constraint, $join) = @_;
   
   my @tables = $self->_tables;
   my $columns = join(', ', $self->_columns());
   
   if ($join) {
-    my ($tablename, $condition) = @{$join};
-    if ($tablename && $condition) {
-      push @tables, $tablename;
-      
-      if($constraint) {
-        $constraint .= " AND $condition";
-      } else {
-        $constraint = " $condition";
+    foreach my $single_join (@{$join}) {
+      my ($tablename, $condition, $extra_columns) = @{$single_join};
+      if ($tablename && $condition) {
+        push @tables, $tablename;
+        
+        if($constraint) {
+          $constraint .= " AND $condition";
+        } else {
+          $constraint = " $condition";
+        }
+      } 
+      if ($extra_columns) {
+        $columns .= ", " . join(', ', @{$extra_columns});
       }
-    } 
-    if ($extra_columns) {
-      $columns .= ", " . join(', ', @{$extra_columns});
     }
   }
       
@@ -400,6 +402,8 @@ sub _generic_fetch {
 
   my $sth = $self->prepare($sql);
   $sth->execute;  
+
+#  print STDERR $sql,"\n";
 
   return $self->_objs_from_sth($sth);
 }
