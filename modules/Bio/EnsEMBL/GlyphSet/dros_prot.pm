@@ -1,20 +1,21 @@
-package Bio::EnsEMBL::GlyphSet::non_hum;
+package Bio::EnsEMBL::GlyphSet::dros_prot;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
+
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "SWISSPROT"; }
+sub my_label { return "Dros. Peptides"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_ProteinAlignFeatures("BLASTX_SPROT",1);
+
+    return $self->{'container'}->get_all_ProteinAlignFeatures('peptides_bdgp',80);
 }
 
 sub href {
     my ( $self, $id ) = @_;
-    $id =~ s/(.*)\.\d+/$1/o;
-    return $self->{'config'}->{'ext_url'}->get_url( 'SG_NON_HUM', $id );
+    return $self->{'config'}->{'ext_url'}->get_url( 'SRS_PROTEIN', $id );
 }
 
 sub zmenu {
@@ -22,5 +23,4 @@ sub zmenu {
     $id =~ s/(.*)\.\d+/$1/o;
     return { 'caption' => "$id", "Protein homology" => $self->href( $id ) };
 }
-
 1;

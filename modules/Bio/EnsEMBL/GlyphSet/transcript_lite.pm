@@ -14,9 +14,8 @@ sub colours {
     my $Config = $self->{'config'};
     return {
         'unknown'   => $Config->get('transcript_lite','unknown'),
+        'xref'      => $Config->get('transcript_lite','xref'),
         'known'     => $Config->get('transcript_lite','known'),
-        'pseudo'    => $Config->get('transcript_lite','pseudo'),
-        'ext'       => $Config->get('transcript_lite','ext'),
         'hi'        => $Config->get('transcript_lite','hi'),
         'superhi'   => $Config->get('transcript_lite','superhi')
     };
@@ -32,7 +31,7 @@ sub features {
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
-    my $genecol = $colours->{$transcript->is_known() ? 'known' : 'unknown'};
+    my $genecol = $colours->{ $transcript->is_known() ? lc( $transcript->external_status ) : 'unknown'};
 
     if(exists $highlights{$transcript->stable_id()}) {
       return ($genecol, $colours->{'superhi'});
@@ -62,7 +61,7 @@ sub zmenu {
     my $tid = $transcript->stable_id();
     my $pid = $transcript->translation->stable_id(),
     my $gid = $gene->stable_id();
-    my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
+    my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
     my $zmenu = {
         'caption'                       => "Ensembl Gene",
         "00:$id"			=> "",

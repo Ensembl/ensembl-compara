@@ -4,13 +4,13 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "SpTrHuman"; }
+sub my_label { return "TrEMBL"; }
 
 sub features {
     my ($self) = @_;
 
     
-    return $self->{'container'}->get_all_ProteinAlignFeatures("BLASTX_HUM_SPTR",1);
+    return $self->{'container'}->get_all_ProteinAlignFeatures("BLASTX_TREMBL",1);
 }
 
 sub href {

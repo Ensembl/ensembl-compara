@@ -83,7 +83,6 @@ sub _init {
 
     my $features = $self->features;
     unless(ref($features)eq'ARRAY') {
-        # warn( ref($self), ' features not array ref ',ref($features) );
         return;
     }
 
@@ -99,7 +98,6 @@ sub _init {
 ## Now go through each feature in turn, drawing them
         my $y_pos;
         foreach my $i (sort(keys %id)){
-            warn( $i,' -> (',join( '), (', map {"$_->[0],$_->[1]"} @{$id{$i}} ),")" );
 
             my $has_origin = undef;
     
@@ -112,7 +110,6 @@ sub _init {
                $bump_start = 0 if $bump_start < 0;
             my $bump_end   = int($END * $pix_per_bp);
                $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
-            warn( $bump_start," - ", $bump_end );
             my $row = & Sanger::Graphics::Bump::bump_row(
                 $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
             );
@@ -134,7 +131,6 @@ sub _init {
                 next if int($f->[1] * $pix_per_bp) == int( $X * $pix_per_bp );
                 $C++;
                 if($DRAW_CIGAR) {
-                  warn( "DRAWING CIGAR" );
                   $self->draw_cigar_feature($Composite, $f->[2], $h, $feature_colour, 'black' );
                 } else {
                   my $START = $f->[0] < 1 ? 1 : $f->[0];
@@ -151,7 +147,6 @@ sub _init {
                 }
             }
             $Composite->y( $Composite->y + $y_pos );
-            warn( "WID: ",$Composite->x()," - ",$Composite->width() );
             $Composite->bordercolour($feature_colour);
             $self->push( $Composite );
             if(exists $highlights{$i}) {
@@ -196,7 +191,7 @@ sub _init {
             }
         }
     }
-    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+    # warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
 1;

@@ -1,35 +1,33 @@
-package Bio::EnsEMBL::GlyphSet::mouse_match;
+package Bio::EnsEMBL::GlyphSet::rat_match;
 use strict;
 use vars qw(@ISA);
-# use Bio::EnsEMBL::GlyphSet_simple;
-# @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
-use Bio::EnsEMBL::GlyphSet_feature2;
+use       Bio::EnsEMBL::GlyphSet_feature2;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature2);
 
 
-sub my_label { return "Mouse matches"; }
+sub my_label { return "Rat matches"; }
 
 sub features {
     my ($self) = @_;
     
     my $assembly = 
-      EnsWeb::species_defs->other_species('Mus_musculus')->{'ENSEMBL_GOLDEN_PATH'};
+      EnsWeb::species_defs->other_species('Rattus_norvegicus')->{'ENSEMBL_GOLDEN_PATH'};
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
-							   'Mus musculus',
+							   'Rattus norvegicus',
 							    $assembly);
 }
 
 sub href {
     my ($self, $id, $chr_pos ) = @_;
-    return "/Mus_musculus/$ENV{'ENSEMBL_SCRIPT'}?$chr_pos";
+    return "/Rattus_norvegicus/$ENV{'ENSEMBL_SCRIPT'}?$chr_pos";
 }
 
 sub zmenu {
     my ($self, $id, $chr_pos ) = @_;
     return { 
 		'caption'    => $id, # $f->id,
-		'Jump to Mus musculus' => $self->href( $id, $chr_pos )
+		'Jump to Rattus norvegicus' => $self->href( $id, $chr_pos )
     };
 }
 
@@ -45,7 +43,7 @@ sub unbumped_zmenu {
 sub unbumped_href {
     my ($self, $ref, $target ) = @_;
     return "/$ENV{'ENSEMBL_SPECIES'}/dotterview?ref=".join(':',$ENV{'ENSEMBL_SPECIES'},@$ref).
-                        "&hom=".join(':','Mus_musculus', @$target ) ;
+                        "&hom=".join(':','Rattus_norvegicus', @$target ) ;
 }
 
 

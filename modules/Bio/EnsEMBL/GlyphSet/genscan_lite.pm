@@ -16,8 +16,8 @@ sub colours {
     my $Config = $self->{'config'};
     return {
         'hi'               => $Config->get('genscan_lite','hi'),
+        'col'              => $Config->get('genscan_lite','col'),
         'super'            => $Config->get('genscan_lite','superhi'),
-        'col'              => $Config->get('genscan_lite','col')
     };
 }
 

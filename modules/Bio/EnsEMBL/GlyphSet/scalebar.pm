@@ -35,7 +35,6 @@ sub _init {
     my $param_string   = $clone_based ? $Config->get('_settings', 'clone') : ("chr=" . $Container->chr_name());
 
     my $main_width     = $Config->get('_settings', 'main_vc_width');
-    warn( "MW: $main_width" );
     my $len            = $Container->length();
     my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->chr_start();
     my $global_end     = $global_start + $len - 1;
