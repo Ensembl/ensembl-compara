@@ -81,7 +81,7 @@ sub fetch_input {
   $self->{'store_seq'}                = 0;
   $self->{'overlap'}                  = 1000;
   $self->{'chunk_size'}               = 1000000;
-  $self->{'chr_name'}                 = undef;
+  $self->{'region'}                   = undef;
   $self->{'masking_analysis_data_id'} = 0;
   $self->{'masking_options'}          = undef;
 
@@ -174,7 +174,8 @@ sub get_params {
   $self->{'genome_db_id'} = $params->{'gdb'} if(defined($params->{'gdb'}));
   $self->{'genome_db_id'} = $params->{'genome_db_id'} if(defined($params->{'genome_db_id'}));
 
-  $self->{'chr_name'} = $params->{'chr_name'} if(defined($params->{'chr_name'}));
+  $self->{'region'} = $params->{'region'} if(defined($params->{'region'}));
+
   $self->{'masking_options'} = $params->{'masking_options'}
     if(defined($params->{'masking_options'}));
   $self->{'masking_analysis_data_id'} = $params->{'masking_analysis_data_id'}
@@ -193,7 +194,8 @@ sub print_params {
   my $self = shift;
 
   print(" params:\n");
-  print("   genome_db_id             : ", $self->{'genome_db_id'},"\n"); 
+  print("   genome_db_id             : ", $self->{'genome_db_id'},"\n");
+  print("   region                   : ", $self->{'region'},"\n") if($self->{'region'});
   print("   store_seq                : ", $self->{'store_seq'},"\n");
   print("   chunk_size               : ", $self->{'chunk_size'},"\n");
   print("   overlap                  : ", $self->{'overlap'} ,"\n");
@@ -218,8 +220,10 @@ sub create_chunks_from_genomeDB
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
 
   my $chromosomes = [];
-  if(defined $self->{'chr_name'}) {
-    push @{$chromosomes}, $SliceAdaptor->fetch_by_region('chromosome', $self->{'chr_name'});
+  if(defined $self->{'region'}) {
+    my ($coord_system_name, $seq_region_name) = split(/:/,  $self->{'region'});
+    print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
+    push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
   } else {
     $chromosomes = $SliceAdaptor->fetch_all('toplevel');
   }
