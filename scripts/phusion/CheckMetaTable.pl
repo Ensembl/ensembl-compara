@@ -6,7 +6,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $usage = "
-$0 -dbname ensembl_compara_23_1
+$0 -dbname compara23 [-reg_conf registry.conf_file]\n
 ";
 
 my $help = 0;
