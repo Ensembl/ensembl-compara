@@ -35,10 +35,15 @@ my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069
 
 my $start = time();
 my $ortho_set = {};
-get_orthologue_cluster($gene_member, $species_set, $ortho_set);
+get_orthologue_cluster($gene_member, $species_set, $ortho_set, 0);
 
 printf("cluster has %d links\n", scalar(keys(%{$ortho_set})));
 printf("%1.3f msec\n", 1000.0*(time() - $start));
+
+foreach my $homology (values(%{$ortho_set})) {
+  $homology->print_homology;
+}
+
 
 exit(0);
 
@@ -47,26 +52,30 @@ sub get_orthologue_cluster {
   my $gene = shift;
   my $species_set = shift;
   my $ortho_set = shift;
+  my $debug = shift;
 
-  $gene->print_member("query gene\n");
+  $gene->print_member("query gene\n") if($debug);
 
   my $homologies = $comparaDBA->get_HomologyAdaptor->fetch_by_Member($gene);
-  # printf("fetched %d homologies\n", scalar(@$homologies));
+  printf("fetched %d homologies\n", scalar(@$homologies)) if($debug);
 
   foreach my $homology (@{$homologies}) {
     next if($ortho_set->{$homology->dbID});
-    next unless($homology->method_link_type eq 'ENSEMBL_ORTHOLOGUES');
+    next if($homology->method_link_type ne 'ENSEMBL_ORTHOLOGUES');
 
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @{$member_attribute};
       next if($member->dbID == $gene->dbID); #skip query gene
+      $member->print_member if($debug);
       next unless($species_set->{$member->genome_db_id});
+      print("YES in species set\n") if($debug);
 
-      # printf("adding homology_id %d to cluster\n", $homology->dbID);
+      printf("adding homology_id %d to cluster\n", $homology->dbID) if($debug);
       $ortho_set->{$homology->dbID} = $homology;
-      get_orthologue_cluster($member, $species_set, $ortho_set);
+      get_orthologue_cluster($member, $species_set, $ortho_set, $debug);
     }
   }
+  printf("done with search query %s\n", $gene->stable_id) if($debug);
 }
 
 
