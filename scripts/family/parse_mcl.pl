@@ -263,56 +263,59 @@ foreach my $cluster (@clusters) {
     $taxon->sub_species($taxon_hash->{'taxon_sub_species'});
     $taxon->ncbi_taxid($taxon_hash->{'taxon_id'});
 
-    my $member = Bio::EnsEMBL::Compara::Member->new_fast
-      ({'_stable_id' => $seqid,
-        '_version' => 0,
-        '_taxon_id' => $taxon->ncbi_taxid,
-        '_taxon' => $taxon,
-        '_description' => $seqinfo{$seqid}{'description'},
-        '_source_name' => uc $seqinfo{$seqid}{'type'},
-        '_genome_db_id' => "NULL",
-        '_chr_name' => "NULL",
-        '_chr_start' => "NULL",
-        '_chr_end' => "NULL",
-        '_sequence' => "NULL"});
-    
-    if ($member->source_name eq "ENSEMBLPEP" ||
-        $member->source_name eq "ENSEMBLGENE") {
-      #get genome_db_id
-      my $genomedb = $genomedbs{$member->taxon_id};
-      $member->genome_db_id($genomedb->dbID);
-      #get chr_name, chr_start, chr_end
-      my $core_db = $db->get_db_adaptor($genomedb->name, $genomedb->assembly);
-      my $GeneAdaptor = $core_db->get_GeneAdaptor;
-      my $TranscriptAdaptor = $core_db->get_TranscriptAdaptor;
-      my $gene;
-      my $transcript;
+    my $member_source =  uc $seqinfo{$seqid}{'type'};
+    my $member = $db->get_MemberAdaptor->fetch_by_source_stable_id($member_source, $seqid);
+    unless($member) {
+      $member = Bio::EnsEMBL::Compara::Member->new_fast
+        ({'_stable_id' => $seqid,
+          '_version' => 0,
+          '_taxon_id' => $taxon->ncbi_taxid,
+          '_taxon' => $taxon,
+          '_description' => $seqinfo{$seqid}{'description'},
+          '_source_name' => uc $seqinfo{$seqid}{'type'},
+          '_genome_db_id' => "NULL",
+          '_chr_name' => "NULL",
+          '_chr_start' => "NULL",
+          '_chr_end' => "NULL",
+          '_sequence' => "NULL"});
 
-      if ($member->source_name eq "ENSEMBLPEP") {
-        $transcript = $TranscriptAdaptor->fetch_by_translation_stable_id($member->stable_id);
-        $transcript->transform('toplevel');
-        $member->chr_name($transcript->slice->seq_region_name);
-        $member->chr_start($transcript->coding_region_start);
-        $member->chr_end($transcript->coding_region_end);
-        $member->sequence($transcript->translate->seq);
-        $member->version($transcript->translation->version);
+      if ($member->source_name eq "ENSEMBLPEP" ||
+          $member->source_name eq "ENSEMBLGENE") {
+        #get genome_db_id
+        my $genomedb = $genomedbs{$member->taxon_id};
+        $member->genome_db_id($genomedb->dbID);
+        #get chr_name, chr_start, chr_end
+        my $core_db = $genomedb->connect_to_genome_locator;
+        my $GeneAdaptor = $core_db->get_GeneAdaptor;
+        my $TranscriptAdaptor = $core_db->get_TranscriptAdaptor;
+        my $gene;
+        my $transcript;
+
+        if ($member->source_name eq "ENSEMBLPEP") {
+          $transcript = $TranscriptAdaptor->fetch_by_translation_stable_id($member->stable_id);
+          $transcript->transform('toplevel');
+          $member->chr_name($transcript->slice->seq_region_name);
+          $member->chr_start($transcript->coding_region_start);
+          $member->chr_end($transcript->coding_region_end);
+          $member->sequence($transcript->translate->seq);
+          $member->version($transcript->translation->version);
         
-      } 
-      elsif ($member->source_name eq "ENSEMBLGENE") {
-        $gene = $GeneAdaptor->fetch_by_stable_id($member->stable_id);
-        
-        unless (defined $gene) {
-          print STDERR $member->stable_id," ",$member->source_name," ",$member->taxon_id," is undef!!!\n";
-          die;
+        } 
+        elsif ($member->source_name eq "ENSEMBLGENE") {
+          $gene = $GeneAdaptor->fetch_by_stable_id($member->stable_id);
+          
+          unless (defined $gene) {
+            print STDERR $member->stable_id," ",$member->source_name," ",$member->taxon_id," is undef!!!\n";
+            die;
+          }
+          $gene->transform('toplevel');
+          $member->chr_name($gene->slice->seq_region_name);
+          $member->chr_start($gene->seq_region_start);
+          $member->chr_end($gene->seq_region_end);
+          $member->version($gene->version);
         }
-        $gene->transform('toplevel');
-        $member->chr_name($gene->slice->seq_region_name);
-        $member->chr_start($gene->seq_region_start);
-        $member->chr_end($gene->seq_region_end);
-        $member->version($gene->version);
       }
     }
-    
 
     my $attribute = new Bio::EnsEMBL::Compara::Attribute;
     $attribute->cigar_line("NULL");
