@@ -53,28 +53,39 @@ CREATE TABLE genome_db (
 #
 # Table structure for table 'genomic_align_block'
 #
+#    This table indexes the genomic alignments
+#
 
 CREATE TABLE genomic_align_block (
   align_block_id int(10) NOT NULL AUTO_INCREMENT,
-  consensus_dnafrag_id int(10) DEFAULT NULL,
-  consensus_start int(10) DEFAULT '0' NOT NULL,
-  consensus_end int(10) DEFAULT '0' NOT NULL,
-  query_dnafrag_id int(10) DEFAULT '0' NOT NULL,
-  query_start int(10) DEFAULT '0' NOT NULL,
-  query_end int(10) DEFAULT '0' NOT NULL,
-  query_strand tinyint(4) DEFAULT '0' NOT NULL,
   method_link_id int(10) DEFAULT '0' NOT NULL,
   score double,
-  perc_id int(10),
+  length int(10),
+
+  KEY align_block_id (align_block_id),
+  KEY method_link_id (align_block_id, method_link_id)
+);
+
+#
+# Table structure for table 'genomic_align'
+# 
+#   This table stores the sequences belonging to the same genomic_align_block entry
+#
+
+CREATE TABLE genomic_align (
+  align_block_id int(10) NOT NULL,
+  method_link_id int(10) DEFAULT '0' NOT NULL,
+  dnafrag_id int(10) DEFAULT '0' NOT NULL,
+  dnafrag_start int(10) DEFAULT '0' NOT NULL,
+  dnafrag_end int(10) DEFAULT '0' NOT NULL,
+  dnafrag_strand tinyint(4) DEFAULT '0' NOT NULL,
   cigar_line mediumtext,
   group_id int(10) DEFAULT '0' NOT NULL,
   level_id int(10) DEFAULT '0' NOT NULL,
-  strands_reversed tinyint(1) DEFAULT '0' NOT NULL,
 
   KEY align_block_id (align_block_id),
-  KEY consensus_idx (consensus_dnafrag_id,method_link_id,consensus_start,consensus_end,query_dnafrag_id),
-  KEY query_dnafrag_id (query_dnafrag_id,method_link_id,query_start,query_end),
-  KEY query_dnafrag_id_2 (query_dnafrag_id,method_link_id,query_end)
+  KEY query_dnafrag_id (dnafrag_id,dnafrag_start,dnafrag_start),
+  KEY query_dnafrag_id2 (dnafrag_id,method_link_id,dnafrag_end,dnafrag_end)
 );
 
 #
