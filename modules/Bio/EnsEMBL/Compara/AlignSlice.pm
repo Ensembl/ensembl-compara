@@ -99,6 +99,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Bio::EnsEMBL::Compara::AlignSlice::Exon;
+use Bio::EnsEMBL::Compara::AlignSlice::Slice;
 use Bio::SimpleAlign;
 
 
@@ -144,7 +145,11 @@ sub new {
   $self->{expanded} = 0;
   if ($expanded) {
     $self->{expanded} = 1;
-    $self->_set_AlignSlice_parameters;
+    $self->_create_underlying_Slices($genomic_align_blocks);
+
+  } else {
+    $self->{slice} = $reference_slice;
+
   }
 
   return $self;
@@ -176,115 +181,228 @@ sub adaptor {
 }
 
 
-=head2 _set_AlignSlice_parameters (experimental)
+=head2 _create_underlying_Slices (experimental)
 
-  Arg[1]     : 
+  Arg[1]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks
+               $genomic_align_blocks
   Example    : 
-  Description: This cigar_line locates the gaps on the reference_slice
-  Returntype : string
-  Exceptions : 
+  Description: Creates a set of Bio::EnsEMBL::Compara::AlignSlice::Slices
+               and attach it to this object. 
+  Returntype : 
+  Exceptions : warns about overlapping GenomicAlignBlocks
   Caller     : 
 
-perl -MBio::EnsEMBL::Registry -e '
-  Bio::EnsEMBL::Registry->load_all();
-  my $sa = Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Slice");
-  my $slice = $sa->fetch_by_region("chromosome", "14", 500000, 50006666);
-  my $asa = Bio::EnsEMBL::Registry->get_adaptor("Compara26", "compara", "AlignSlice");
-  my $mlssa = Bio::EnsEMBL::Registry->get_adaptor("Compara26", "compara", "MethodLinkSpeciesSet");
-  my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $mlssa->fetch_by_dbID(72));
-  my $fake_slice = $align_slice->fake_Slice;
-  print $fake_slice->name, "\n";
-'
+TODO: check negative strand!!
 
 =cut
 
-sub _set_AlignSlice_parameters {
-  my ($self) = @_;
+sub _create_underlying_Slices {
+  my ($self, $genomic_align_blocks) = @_;
+
+  return $self if (!$genomic_align_blocks or !@$genomic_align_blocks);
 
   ## Calculate the length of the fake_slice
   my $align_slice_length = 0;
-  my $align_slice_seq;
-  my $last_pos = $self->reference_Slice->start;
+# # #   my $align_slice_seq;
+  my $last_start_pos = $self->reference_Slice->start;
+  my $big_mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
-  my @all_reference_genomic_aligns;
-  if ($self->reference_Slice->strand == -1) {
-    @all_reference_genomic_aligns =
-            sort {$a->dnafrag_start <=> $b->dnafrag_start}
-            map {$_->reference_genomic_align}
-            @{$self->get_all_GenomicAlignBlocks};
+  my @sorted_genomic_align_blocks;
+  if ($self->reference_Slice->strand == 1) {
+    my $last_end;
+    foreach my $genomic_align_block (sort
+            {$a->reference_genomic_align->dnafrag_start <=>
+            $b->reference_genomic_align->dnafrag_start}
+            @{$self->get_all_GenomicAlignBlocks}) {
+      if (!defined($last_end) or $genomic_align_block->reference_genomic_align->dnafrag_start > $last_end) {
+        push(@sorted_genomic_align_blocks, $genomic_align_block);
+      } else {
+        warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
+                ($genomic_align_block->dbID or "-unknown")." because it overlaps".
+                " previous Bio::EnsEMBL::Compara::GenomicAlignBlock");
+      }
+      $last_end = $genomic_align_block->reference_genomic_align->dnafrag_end;
+    }
   } else {
-    @all_reference_genomic_aligns =
-            sort {$a->dnafrag_start <=> $b->dnafrag_start}
-            map {$_->reference_genomic_align}
-            @{$self->get_all_GenomicAlignBlocks};
+#     @sorted_genomic_align_blocks =
+#             sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start}
+#             @{$self->get_all_GenomicAlignBlocks};
   }
-  foreach my $reference_genomic_align (@all_reference_genomic_aligns) {
+  foreach my $this_genomic_align_block (@sorted_genomic_align_blocks) {
+    my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align;
     my $this_pos = $reference_genomic_align->dnafrag_start;
-    my $this_gap_between_genomic_align_blocks = $this_pos - $last_pos;
-    if ($this_gap_between_genomic_align_blocks < 0) {
-      warning("Bio::EnsEMBL::Compara::GenomicAlignBlock(#".
-              $reference_genomic_align->genomic_align_block->dbID.") ignored:\n".
-              "Bio::EnsEMBL::Compara::AlignSlice cannot work with overlapping".
-              " alignments at the moment");
-      next;
-    } elsif ($this_gap_between_genomic_align_blocks) {
-      ## STRAND!!!
-      $align_slice_seq .= $self->reference_Slice->subseq(
-          $last_pos - $self->reference_Slice->start + 1,
-          $this_pos - $self->reference_Slice->start, 1);
+    my $this_gap_between_genomic_align_blocks = $this_pos - $last_start_pos;
+    my $excess_at_the_start = $self->reference_Slice->start - $reference_genomic_align->dnafrag_start;
+    my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $self->reference_Slice->end;
+    if ($excess_at_the_start > 0) {
+      ## First GAB. The slice start inside this GAB...
+      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence;
+      ## Memory optimization: start looking from $excess_at_the_end from the start
+      my $truncated_seq = substr($this_align_slice_seq, 0, $excess_at_the_start);
+      substr($this_align_slice_seq, 0, $excess_at_the_start, "");
+      my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
+      $excess_at_the_start -= $num_of_nucl;
+      $this_align_slice_seq =~ s/(\-*([^\-]\-*){$excess_at_the_start})//;
+      $truncated_seq = ($1 or "").$truncated_seq;
+
+      ## Truncate GenomicAlignBlock
+      $reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
+      ## Truncate all the GenomicAligns
+      foreach my $genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
+        my $aligned_sequence = $genomic_align->aligned_sequence;
+        my $this_truncated_seq = substr($aligned_sequence, 0, length($truncated_seq));
+        substr($aligned_sequence, 0, length($truncated_seq), "");
+        $genomic_align->aligned_sequence($aligned_sequence);
+        $genomic_align->original_sequence(0); # unset original_sequence
+        $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new aligned_sequence
+        $this_truncated_seq =~ s/\-//g;
+        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+        $genomic_align->dbID(0); # unset dbID
+      }
+    }
+    if ($excess_at_the_end > 0) {
+      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence;
+      ## Optimization: start looking from $excess_at_the_end from the end because
+      ## the pattern match at the end of the string could be very slow
+      my $truncated_seq = substr($this_align_slice_seq, -$excess_at_the_end);
+      substr($this_align_slice_seq, -$excess_at_the_end, $excess_at_the_end, "");
+      my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
+      $excess_at_the_end -= $num_of_nucl;
+      $this_align_slice_seq =~ s/(\-*([^\-]\-*){$excess_at_the_end})$//;
+      $truncated_seq = $1.$truncated_seq;
+
+      ## Truncate GenomicAlignBlock
+      $reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
+      ## Truncate all the GenomicAligns
+      foreach my $genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
+        my $aligned_sequence = $genomic_align->aligned_sequence;
+        my $this_truncated_seq = substr($aligned_sequence, - length($truncated_seq));
+        substr($aligned_sequence, - length($truncated_seq), length($truncated_seq), "");
+        $genomic_align->aligned_sequence($aligned_sequence);
+        $genomic_align->original_sequence(0); # unset original_sequence
+        $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new aligned_sequence
+        $this_truncated_seq =~ s/\-//g;
+        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+        $genomic_align->dbID(0); # unset dbID
+      }
+    }
+    if ($this_gap_between_genomic_align_blocks > 0) {
+#       warning("Bio::EnsEMBL::Compara::GenomicAlignBlock(#".
+#               $reference_genomic_align->genomic_align_block->dbID.")");
+# # #       $align_slice_seq .= $self->reference_Slice->subseq(
+# # #           $last_start_pos - $self->reference_Slice->start + 1,
+# # #           $this_pos - $self->reference_Slice->start, 1);
+      ## Add mapper info for inter-genomic_align_block space
+      $big_mapper->add_map_coordinates(
+              'sequence',
+              $last_start_pos,
+              $this_pos,
+              $self->reference_Slice->strand,
+              'alignment',
+              $align_slice_length + 1,
+              $align_slice_length + 1 + $this_gap_between_genomic_align_blocks,
+          );
       $align_slice_length += $this_gap_between_genomic_align_blocks;
     }
-#     if ($self->{expanded}) {
-      $reference_genomic_align->genomic_align_block->{start} = $align_slice_length;
-      $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence);
-      $reference_genomic_align->genomic_align_block->{end} = $align_slice_length;
-      $align_slice_seq .= $reference_genomic_align->aligned_sequence;
-#     } else {
-#       $reference_genomic_align->genomic_align_block->{start} = $align_slice_length;
-#       $align_slice_length += CORE::length($reference_genomic_align->original_sequence);
-#       $reference_genomic_align->genomic_align_block->{end} = $align_slice_length;
-#       $align_slice_seq .= $reference_genomic_align->original_sequence;
-#     }
+    $reference_genomic_align->genomic_align_block->reference_slice_start($align_slice_length + 1);
+    $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence);
+    $reference_genomic_align->genomic_align_block->reference_slice_end($align_slice_length);
+    $reference_genomic_align->genomic_align_block->reference_slice($self);
+# # #     $align_slice_seq .= $reference_genomic_align->aligned_sequence;
+    $big_mapper->add_Mapper($reference_genomic_align->get_Mapper);
 
-    $last_pos = $reference_genomic_align->dnafrag_end + 1;
+    $last_start_pos = $reference_genomic_align->dnafrag_end + 1;
   }
-    my $this_pos = $self->reference_Slice->end;
-    my $this_gap_between_genomic_align_blocks = $this_pos - $last_pos;
-    if ($this_gap_between_genomic_align_blocks < 0) {
-    } elsif ($this_gap_between_genomic_align_blocks) {
-      ## STRAND!!!
-      $align_slice_seq .= $self->reference_Slice->subseq(
-          $last_pos - $self->reference_Slice->start + 1,
-          $this_pos - $self->reference_Slice->start + 1, 1);
-      $align_slice_length += $this_gap_between_genomic_align_blocks + 1;
-    }
-# #   $self->{start} = 1;
-# #   $self->{end} = $align_slice_length;
-# #   $self->{seq} = $align_slice_seq;
-# # print STDERR join(" -- ",
-# #     CORE::length($self->reference_Slice->seq),
-# #     $self->{start},
-# #     $align_slice_length,
-# #     CORE::length($align_slice_seq));
-  
-  ## Create a fake seq_region_name
-  my $seq_region_name = "AlignSlice";
-  $seq_region_name .= "(".$self->reference_Slice->name.")" if ($self->reference_Slice);
-  # Add method_link_species_set_id?
-# #   $self->seq_region_name($seq_region_name);
+  my $this_pos = $self->reference_Slice->end;
+  ## $last_start_pos is the next nucleotide position after the last mapped one.
+  my $this_gap_between_genomic_align_blocks = $this_pos - ($last_start_pos - 1);
+  if ($this_gap_between_genomic_align_blocks > 0) {
+    ## STRAND!!!
+# # #     $align_slice_seq .= $self->reference_Slice->subseq(
+# # #         $last_start_pos - $self->reference_Slice->start + 1,
+# # #         $this_pos - $self->reference_Slice->start + 1, 1);
+    $big_mapper->add_map_coordinates(
+            'sequence',
+            $last_start_pos,
+            $this_pos,
+            $self->reference_Slice->strand,
+            'alignment',
+            $align_slice_length + 1,
+            $align_slice_length + $this_gap_between_genomic_align_blocks,
+            );
+    $align_slice_length += $this_gap_between_genomic_align_blocks;
+  }
 
-  ## Create the fake_slice
-  my $fake_slice = new Bio::EnsEMBL::Slice(
-          -SEQ_REGION_NAME => $seq_region_name,
-          -SEQ => $align_slice_seq,
-          -START => 1,
-          -END => $align_slice_length,
-          -STRAND => 1,
+# # #   ## Create a fake seq_region_name
+# # #   my $seq_region_name = "AlignSlice";
+# # #   $seq_region_name .= "(".$self->reference_Slice->name.")" if ($self->reference_Slice);
+# # #   # Add method_link_species_set_id?
+# # # # #   $self->seq_region_name($seq_region_name);
+# # # 
+# # #   ## Create the fake_slice
+# # #   my $fake_slice = new Bio::EnsEMBL::Slice(
+# # #           -SEQ_REGION_NAME => $seq_region_name,
+# # #           -SEQ => $align_slice_seq,
+# # #           -START => 1,
+# # #           -END => $align_slice_length,
+# # #           -STRAND => 1,
+# # #       );
+# # #   $self->{slice} = $fake_slice;
+
+  my $ref_species = $genomic_align_blocks->[0]->reference_genomic_align->dnafrag->genome_db->name;
+  $self->{slices}->{$ref_species} = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+          -length => $align_slice_length,
+          -requesting_slice => $self->reference_Slice,
+          -method_link_species_set => $genomic_align_blocks->[0]->method_link_species_set,
+          -name => $ref_species,
       );
-  $self->{slice} = $fake_slice;
+  $self->{slices}->{$ref_species}->add_Slice_Mapper_pair(
+          $self->reference_Slice,
+          $big_mapper,
+          1,
+          $align_slice_length,
+          $self->reference_Slice->strand
+      );
 
-  return 1;
+  my $slice_adaptors;
+#   foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+  foreach my $this_genomic_align_block (@sorted_genomic_align_blocks) {
+    foreach my $this_genomic_align
+#               (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+            (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+      my $species = $this_genomic_align->dnafrag->genome_db->name;
+      if (!defined($self->{slices}->{$species})) {
+        $self->{slices}->{$species} = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+                -length => $align_slice_length,
+                -requesting_slice => $self->reference_Slice,
+                -method_link_species_set => $this_genomic_align_block->method_link_species_set,
+                -name => $species,
+            );
+      }
+      if (!defined($slice_adaptors->{$species})) {
+        $slice_adaptors->{$species} =
+            $this_genomic_align->dnafrag->genome_db->db_adaptor->get_SliceAdaptor;
+      }
+      my $this_slice = $slice_adaptors->{$species}->fetch_by_region(
+              $this_genomic_align->dnafrag->coord_system_name,
+              $this_genomic_align->dnafrag->name,
+              $this_genomic_align->dnafrag_start,
+              $this_genomic_align->dnafrag_end,
+              $this_genomic_align->dnafrag_strand
+          );
+
+      $self->{slices}->{$species}->add_Slice_Mapper_pair(
+              $this_slice,
+              $this_genomic_align->get_Mapper,
+              $this_genomic_align->genomic_align_block->reference_slice_start,
+              $this_genomic_align->genomic_align_block->reference_slice_end,
+              $this_genomic_align->dnafrag_strand
+          );
+
+    }
+  }
+
+  return $self;
 }
 
 
@@ -302,13 +420,13 @@ sub _set_AlignSlice_parameters {
 =cut
 
 sub slice {
-  my ($self) = @_;
+  my ($self, $slice) = @_;
 
-  if (!$self->{expanded}) {
-    return $self->reference_Slice;
-  } else {
-    return $self->{slice};
+  if (defined($slice)) {
+    $self->{slice} = $slice;
   }
+
+  return $self->{slice};
 }
 
 
@@ -582,10 +700,10 @@ sub _get_mapped_Gene {
   my $from_mapper = $genomic_align->get_Mapper;
   my $to_mapper;
   if (!$self->{expanded}) {
-    $to_mapper = $genomic_align->genomic_align_block->reference_genomic_align->get_Mapper
+    $to_mapper = $genomic_align->genomic_align_block->reference_genomic_align->get_Mapper;
   }
-  my $gab_start = $genomic_align->genomic_align_block->{start};
-  my $gab_end = $genomic_align->genomic_align_block->{end};
+  my $gab_start = $genomic_align->genomic_align_block->reference_slice_start;
+  my $gab_end = $genomic_align->genomic_align_block->reference_slice_end;
 
   my $these_transcripts = [];
 
@@ -603,21 +721,21 @@ sub _get_mapped_Gene {
           " gene they belong to") if ($this_exon->slice->start != $gene->slice->start);
 #       $range_start = $genomic_align->{dnafrag_start} - $this_exon->slice->start + 1;
 #       $range_end = $genomic_align->{dnafrag_end} - $this_exon->slice->start + 1;
-      if ($this_exon->start < $range_end and $this_exon->end > $range_start) {
+      if ($this_exon->start <= $range_end and $this_exon->end >= $range_start) {
         my $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
                 -EXON => $this_exon,
                 -ALIGN_SLICE => $self->reference_Slice,
                 -FROM_MAPPER => $from_mapper,
                 -TO_MAPPER => $to_mapper,
             );
-      if ($self->{expanded}) {
-        my $aligned_start = $this_align_exon->start;
-        my $aligned_end = $this_align_exon->end;
-        $aligned_start += $gab_start;
-        $aligned_end += $gab_start;
-        $this_align_exon->start($aligned_start);
-        $this_align_exon->end($aligned_end);
-      }
+#         if ($self->{expanded}) {
+#           my $aligned_start = $this_align_exon->start;
+#           my $aligned_end = $this_align_exon->end;
+#           $aligned_start += $gab_start;
+#           $aligned_end += $gab_start;
+#           $this_align_exon->start($aligned_start);
+#           $this_align_exon->end($aligned_end);
+#         }
         push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
       } else {
         info("Exon ".$this_exon->stable_id." cannot be mapped using".
