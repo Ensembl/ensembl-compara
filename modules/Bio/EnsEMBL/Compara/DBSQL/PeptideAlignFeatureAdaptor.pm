@@ -397,6 +397,7 @@ sub fetch_by_dbIDs{
   Arg [2]    : genome_db_id of hit species
   Example    : $paf = $adaptor->fetch_BRH_by_member_genomedb(31957, 3);
   Description: Returns the PeptideAlignFeature created from the database
+               This is the old algorithm for pulling BRHs (compara release 20-23)
   Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : none
   Caller     : general
@@ -429,7 +430,7 @@ sub fetch_BRH_by_member_genomedb
 
 
 =head2 fetch_all_RH_by_member_genomedb
-
+  Overview   : This an experimental method and not currently used in production
   Arg [1]    : member_id of query peptide member
   Arg [2]    : genome_db_id of hit species
   Example    : $feat = $adaptor->fetch_by_dbID($musBlastAnal, $ratBlastAnal);
@@ -469,7 +470,7 @@ sub fetch_all_RH_by_member_genomedb
 
 
 =head2 fetch_all_RH_by_member
-
+  Overview   : This an experimental method and not currently used in production
   Arg [1]    : member_id of query peptide member
   Example    : $feat = $adaptor->fetch_by_dbID($musBlastAnal, $ratBlastAnal);
   Description: Returns all the PeptideAlignFeatures that reciprocal hit all genomes
@@ -519,6 +520,8 @@ sub fetch_all {
 
 
 =head2 fetch_BRH_web_for_member_genome_db
+  Overview   : This is the new (compara_24) algorithm method for finding UBRH and MBRH
+               homologies.  
   Arg [1]    : member_id of query peptide member
   Arg [2]    : genome_db_id of hit species
   Description: Returns all the 'best' PeptideAlignFeatures starting with qmember_id
