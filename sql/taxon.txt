@@ -9,3 +9,4 @@ taxon_id	genus	species	sub_species	common_name	classification
 6238	Caenorhabditis	briggsae	NULL	C.briggsae	briggsae Caenorhabditis Peloderinae Rhabditidae Rhabditoidea Rhabditida Chromadorea Nematoda Metazoa Eukaryota
 7955	Danio	rerio	NULL	Zebrafish	rerio Danio Cyprinidae Cypriniformes Ostariophysi Teleostei Neopterygii Actinopterygii Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
 9598	Pan	troglodytes	NULL	Chimpanzee	troglodytes Pan Hominidae Catarrhini Primates Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+9031	Gallus	gallus	NULL	Chicken	gallus Gallus Phasianinae Phasianidae Galliformes Neognathae Aves Archosauria Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
