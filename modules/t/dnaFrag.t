@@ -1,13 +1,11 @@
 use strict;
 use warnings;
  
-use lib 't';
- 
 use Test::Harness;
 use Test;
-BEGIN { plan tests => 7 }
+BEGIN { plan tests => 9 }
 
-use TestUtils qw( debug test_getter_setter ); 
+use Bio::EnsEMBL::Test::TestUtils; 
 use Bio::EnsEMBL::Compara::DnaFrag;
 
 my $df = new Bio::EnsEMBL::Compara::DnaFrag;
@@ -17,5 +15,9 @@ ok( test_getter_setter( $df, "genomedb", "dummy_db" ));
 ok( test_getter_setter( $df, "type", "dummy" ));
 ok( test_getter_setter( $df, "adaptor", "dummy_adaptor" ));
 ok( test_getter_setter( $df, "dbID", 42 ));
+ok( test_getter_setter( $df, "name", "dummy_name" ));
 ok( test_getter_setter( $df, "start", 1 ));
 ok( test_getter_setter( $df, "end", 256 ));
+ok( $df->length == 256 );
+
+

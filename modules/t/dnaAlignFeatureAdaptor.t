@@ -1,9 +1,8 @@
 use strict;
 use warnings;
 
-use lib 't';
-use MultiTestDB;
-use TestUtils qw(debug test_getter_setter);
+use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::Test::TestUtils qw(debug test_getter_setter);
 
 BEGIN {
   $| = 1;
@@ -15,48 +14,48 @@ BEGIN {
 our $verbose = 0;
 
 
-my $CHR   = 'X';
-my $START = 400_000;
-my $END   = 500_000;
+my $CHR   = '19';
+my $START = 50_000_000;
+my $END   = 50_250_000;
 
-my $multi = MultiTestDB->new('multi');
-
-
-my $homo_sapiens = MultiTestDB->new("homo_sapiens");
-my $mus_musculus = MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = MultiTestDB->new("rattus_norvegicus");
+my $multi = Bio::EnsEMBL::Test::MultiTestDB->new('multi');
 
 
-my $hs_db = $homo_sapiens->get_DBAdaptor('core');
-my $mm_db = $mus_musculus->get_DBAdaptor('core');
-my $rn_db = $rattus_norvegicus->get_DBAdaptor('core');
-my $compara_db = $multi->get_DBAdaptor('compara');
+my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
+my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
+my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
-$compara_db->add_db_adaptor($hs_db);
-$compara_db->add_db_adaptor($mm_db);
-$compara_db->add_db_adaptor($rn_db);
 
-my $mouse_name     = $mm_db->get_MetaContainer->get_Species->binomial;
-my $mouse_assembly = $mm_db->assembly_type;
-my $human_name     = $hs_db->get_MetaContainer->get_Species->binomial;
-my $human_assembly = $hs_db->assembly_type;
-my $rat_name       = $rn_db->get_MetaContainer->get_Species->binomial;
-my $rat_assembly   = $rn_db->assembly_type;
+my $hs_dba = $homo_sapiens->get_DBAdaptor('core');
+my $mm_dba = $mus_musculus->get_DBAdaptor('core');
+my $rn_dba = $rattus_norvegicus->get_DBAdaptor('core');
+my $compara_dba = $multi->get_DBAdaptor('compara');
 
-my $dafa = $compara_db->get_DnaAlignFeatureAdaptor;
+$compara_dba->add_db_adaptor($hs_dba);
+$compara_dba->add_db_adaptor($mm_dba);
+$compara_dba->add_db_adaptor($rn_dba);
+
+my $mouse_name     = $mm_dba->get_MetaContainer->get_Species->binomial;
+my $mouse_assembly = $mm_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
+my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
+my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
+my $rat_name       = $rn_dba->get_MetaContainer->get_Species->binomial;
+my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
+
+my $dafa = $compara_dba->get_DnaAlignFeatureAdaptor;
 
 
 #######
 #  1  #
 #######
 
-my $slice = $hs_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR,$START,$END);
+my $slice = $hs_dba->get_SliceAdaptor->fetch_by_region('toplevel',14,50000010,50249000);
 my $mouse_matches = 
-	$dafa->fetch_all_by_Slice($slice, $mouse_name, $mouse_assembly);
+	$dafa->fetch_all_by_Slice($slice, $mouse_name, $mouse_assembly, "BLASTZ_NET");
 
 
 my $num = scalar(@$mouse_matches);
-ok($num == 2);
+ok($num == 255);
 debug("\ngot $num human-mouse matches\n");
 
 $verbose && &print_matches($mouse_matches);
@@ -66,12 +65,12 @@ $verbose && &print_matches($mouse_matches);
 #  2  #
 #######
 
-$slice = $mm_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR, $START, $END);
+$slice = $mm_dba->get_SliceAdaptor->fetch_by_region('toplevel',12,66608000,66615600);
 my $human_matches = 
-	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly);
+	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly, "BLASTZ_NET");
 
 $num = scalar(@$human_matches);
-ok($num == 2);
+ok($num == 10);
 
 debug("\ngot $num mouse-human matches\n");
 $verbose && &print_matches($human_matches);
@@ -81,9 +80,10 @@ $verbose && &print_matches($human_matches);
 #  3  #
 #######
 
-my $rat_matches = $dafa->fetch_all_by_Slice($slice, $rat_name, $rat_assembly);
+my $rat_matches = $dafa->fetch_all_by_Slice($slice, $rat_name, $rat_assembly, "BLASTZ_NET");
 $num = scalar(@$rat_matches);
-ok($num == 3);
+
+ok($num == 56);
 
 debug("\ngot $num mouse-rat matches\n");
 $verbose && &print_matches($rat_matches);
@@ -92,12 +92,12 @@ $verbose && &print_matches($rat_matches);
 #  4  #
 #######
 
-$slice = $rn_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR, $START, $END);
+$slice = $rn_dba->get_SliceAdaptor->fetch_by_region('toplevel',6,92842600, 92852150);
 $mouse_matches = 
-	$dafa->fetch_all_by_Slice($slice, $mouse_name, $mouse_assembly);
+	$dafa->fetch_all_by_Slice($slice, $mouse_name, $mouse_assembly, "BLASTZ_NET");
 $num = scalar(@$mouse_matches);
 
-ok($num == 3);
+ok($num == 54);
 debug("\ngot $num rat-mouse matches\n");
 $verbose && &print_matches($mouse_matches);
 
@@ -109,11 +109,11 @@ $verbose && &print_matches($mouse_matches);
 #
 # transitive alignment...
 #
-$slice = $hs_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR,$START,$END);
-$rat_matches = $dafa->fetch_all_by_Slice($slice, $rat_name, $rat_assembly);
+$slice = $hs_dba->get_SliceAdaptor->fetch_by_region('toplevel',14,50000010,50249000);
+$rat_matches = $dafa->fetch_all_by_Slice($slice, $rat_name, $rat_assembly,"BLASTZ_NET");
 $num = scalar(@$rat_matches);
 
-ok($num == 5);
+ok($num == 281);
 debug("\ngot $num human-rat matches\n");
 $verbose && &print_matches($rat_matches);
 
@@ -125,12 +125,12 @@ $verbose && &print_matches($rat_matches);
 # reverse-transitive alignment
 #
 
-$slice = $rn_db->get_SliceAdaptor->fetch_by_chr_start_end($CHR, $START, $END);
+$slice = $rn_dba->get_SliceAdaptor->fetch_by_region('toplevel',6,92842600, 92852150);
 $human_matches = 
-	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly);
+	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly,"BLASTZ_NET");
 $num = scalar(@$human_matches);
 
-ok($num == 5);
+ok($num == 11);
 debug("got $num rat-human matches\n");
 $verbose && &print_matches($human_matches);
 
