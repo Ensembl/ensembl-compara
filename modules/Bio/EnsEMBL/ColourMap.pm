@@ -13,6 +13,11 @@ sub new {
   }
 
   $self->{'colour_sets'} = {};
+  $self->{'colour_sets'}{'synteny'} = [qw(
+    red3 green4 cyan4 blue3 chocolate3 brown
+    chartreuse4 grey25 deeppink4 slateblue3
+    olivedrab4 gold4 blueviolet seagreen4 violetred3
+  )];
   $self->colourSet( 'core_gene',
     '_KNOWN'     => 'rust',
     '_KNOWNXREF' => 'rust',
@@ -21,6 +26,7 @@ sub new {
     '_PREDXREF'  => 'red3',
     '_PRED'      => 'red3',
     '_'          => 'black', 
+    '_PSEUDO'   => 'grey50', 
     'hi'        => 'highlight1',
     'superhi'   => 'highlight2'
   );
