@@ -400,7 +400,7 @@ sub _db_handle{
 sub DESTROY {
    my ($obj) = @_;
 
-   $obj->deleteObj();
+   #$obj->deleteObj(); # I think this is a bad idea.... (mcvicker)
 
    if( $obj->{'_db_handle'} ) {
        $obj->{'_db_handle'}->disconnect;
@@ -423,6 +423,9 @@ sub DESTROY {
 sub deleteObj {
   my $self = shift;
   my @dummy = values %{$self};
+
+  #$self->throw("Somebody has called deleteObj on DBAdaptor in compara\n");
+
   foreach my $key ( keys %$self ) {
     delete $self->{$key};
   }
