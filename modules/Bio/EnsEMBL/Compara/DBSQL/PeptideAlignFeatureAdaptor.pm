@@ -89,8 +89,6 @@ sub _store_PAFS {
         }
       }
 
-      $paf->display_short();
-
       my $analysis_id = 0;
       if($paf->analysis()) {
         #print("paf has analysis '".$paf->analysis->logic_name()."' dbID=".$paf->analysis->dbID."\n");
@@ -117,6 +115,7 @@ sub _store_PAFS {
                     $paf->cigar_line
                    );
       $paf->dbID($sth->{'mysql_insertid'});
+      $paf->display_short();
     }
   }
 }
