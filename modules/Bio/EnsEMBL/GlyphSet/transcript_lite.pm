@@ -97,12 +97,12 @@ sub text_label {
     my $id = $eid || $tid;
 
     my $Config = $self->{config};
-    my $want_extra = $Config->get('_settings','opt_extlabels');
+    my $short_labels = $Config->get('_settings','opt_shortlabels');
 
     if( $self->{'config'}->{'_both_names_'} eq 'yes') {
         $id .= $eid ? " ($eid)" : '';
     }
-    if( $want_extra ){
+    unless( $short_labels ){
 	if( $eid ){
 	    $id .= " \nEnsembl known trans "; 
 	}

@@ -96,8 +96,8 @@ sub text_label {
     my $id = $transcript->external_name() || $transcript->stable_id();
 
     my $Config = $self->{config};
-    my $want_extra = $Config->get('_settings','opt_extlabels');
-    if( $want_extra ){
+    my $short_labels = $Config->get('_settings','opt_shortlabels');
+    unless( $short_labels ){
 	my $type = $legend_map{$transcript->type} || $transcript->type;
 	$id .= " \n$type ";
     }
