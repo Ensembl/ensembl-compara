@@ -17,6 +17,8 @@ sub _init {
     my $h          = 0;
     my $highlights = $self->highlights();
 
+    my $fontname = "Tiny";
+
     my $feature_colour 	= $Config->get($Config->script(),'scalebar','col');
 
 	my $len = $VirtualContig->length();
@@ -25,83 +27,74 @@ sub _init {
 	#print "Div size: $divs\n";
 	#print "Number divs: ", int($len/$divs), "($len)<BR>\n";
 
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
-	$Composite->x(0);
-	$Composite->y(0);
-
 	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-		'x'      	=> 0,
-		'y'      	=> 4,
-		'width'  	=> $len,
-		'height' 	=> $h,
-		'colour' 	=> $feature_colour,
+		'x'         => 0,
+		'y'         => 4,
+		'width'     => $len,
+		'height'    => $h,
+		'colour'    => $feature_colour,
 		'absolutey' => 1,
 	});
-	$Composite->push($glyph);
+	$self->push($glyph);
 
 	for (my $i=0;$i<int($len/$divs); $i++){
 
 		my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    		'x'      => $i * $divs,
-	    		'y'      => 4,
-	    		'width'  => 0,
-	    		'height' => 2,
-	    		'colour' => $feature_colour,
-			'absolutey'  => 1,
+	    	    'x'         => $i * $divs,
+	    	    'y'         => 4,
+	    	    'width'     => 0,
+	    	    'height'    => 2,
+	    	    'colour'    => $feature_colour,
+		    'absolutey' => 1,
 		});
-		$Composite->push($tick);
+		$self->push($tick);
 
 		my $text = $i * $divs + $VirtualContig->_global_start();
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	    	'x'      	=> $i * $divs,
-	    	'y'      	=> 8,
-			'font'   	=> 'Tiny',
-	    	'colour' 	=> $feature_colour,
-			'text'   	=> $text,
-			'absolutey' => 1,
+		    'x'      	=> $i * $divs,
+		    'y'      	=> 8,
+		    'height'    => $Config->texthelper->height($fontname),
+		    'font'   	=> $fontname,
+		    'colour' 	=> $feature_colour,
+		    'text'   	=> $text,
+		    'absolutey' => 1,
 		});
-		$Composite->push($tglyph);
+		$self->push($tglyph);
 	}
 
-    my $im_width = $Config->image_width();
+	my $im_width = $Config->image_width();
 	my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    	'x'      => $im_width - 1,
-	    	'y'      => 4,
-	    	'width'  => 0,
-	    	'height' => 2,
-	    	'colour' => $feature_colour,
-		'absolutex'  => 1,
-		'absolutey'  => 1,
+	    'x'          => $im_width - 1,
+	    'y'          => 4,
+	    'width'      => 0,
+	    'height'     => 2,
+	    'colour'     => $feature_colour,
+	    'absolutex'  => 1,
+	    'absolutey'  => 1,
 	});
-	$Composite->push($tick);
-
-	$self->push($Composite);
-
+	$self->push($tick);
 }
 
 1;
 
 
 sub set_scale_division {
+    my ($full_length) = @_;
 
-  my ($full_length) = @_;
+    my $num_of_digits = length( int( $full_length / 10 ) );
+    $num_of_digits--;
 
-  #return;
+    my $division = 10**$num_of_digits;
+    my $first_division = $division;
 
-  my $num_of_digits = length( int( $full_length / 10 ) );
-  $num_of_digits--;
-  my $division = 10**$num_of_digits;
-  my $first_division = $division;
+    my $num_of_divs = int( $full_length / $division );
+    my $i=2;
 
-  my $num_of_divs = int( $full_length / $division );
-  my $i=2;
-  #print "NUM OF DIVISIONS: $num_of_divs<BR>\n";
-  until ( $num_of_divs < 12 ) {
-    $division = $first_division * $i;
-    $num_of_divs = int( $full_length / $division );
-    #print "NUM OF DIVISIONS: $num_of_divs<BR>\n";
-    $i += 2;
-  }
-  return $division;
+    until ( $num_of_divs < 12 ) {
+	$division = $first_division * $i;
+	$num_of_divs = int( $full_length / $division );
+	$i += 2;
+    }
 
+    return $division;
 } 
