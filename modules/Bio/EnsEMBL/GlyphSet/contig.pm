@@ -12,20 +12,19 @@ use Sanger::Graphics::ColourMap;
 
 use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
 
-
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Sanger::Graphics::Glyph::Text({
-	    'text'      => 'DNA(contigs)',
-    	'font'      => 'Small',
-	    'absolutey' => 1,
-        'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','contig')],
+            'text'      => 'DNA(contigs)',
+            'font'      => 'Small',
+            'absolutey' => 1,
+            'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','contig')],
 
-        'zmenu'     => {
+            'zmenu'     => {
             'caption'                     => 'HELP',
             "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'contig\\')]
-        }
+            }
 
     });
     $self->label($label);
@@ -37,10 +36,9 @@ sub init_label {
 sub _init {
     my ($self) = @_;
 
-  # only draw contigs once - on one strand
-  
+    # only draw contigs once - on one strand
     return unless ($self->strand() == 1);
-  
+    
     my $vc = $self->{'container'};
     $self->{'vc'} = $vc;
     my $length = $vc->length();
@@ -64,7 +62,7 @@ sub _init {
 
   # Do we have assembly_contigs?
     $useAssembly = $vc->has_MapSet( 'assembly' ); 
-    
+
     if (!@$contig_tiling_path) {
     ## Draw a warning track....
         $self->errorTrack("Golden path gap - no contigs to display!");
@@ -228,10 +226,12 @@ sub _init_assembled_contig {
 
     my $tick;
     my $interval = int($im_width/10);
+    # correct for $im_width's that are not multiples of 10
+    my $corr = int(($im_width % 10) / 2);
     for (my $i=1; $i <=9; $i++){
-        my $pos = $i * $interval;
+        my $pos = $i * $interval + $corr;
    
-    # the forward strand ticks
+        # the forward strand ticks
         $tick = new Sanger::Graphics::Glyph::Rect({
             'x'         => 0 + $pos,
             'y'         => $ystart-4,
@@ -243,9 +243,9 @@ sub _init_assembled_contig {
         });
         $self->unshift($tick);
     
-    # the reverse strand ticks
+        # the reverse strand ticks
         $tick = new Sanger::Graphics::Glyph::Rect({
-            'x'         => $im_width - $pos,
+            'x'         => 0 + $pos,
             'y'         => $ystart+16,
             'width'     => 0,
             'height'    => 3,
@@ -256,9 +256,9 @@ sub _init_assembled_contig {
         $self->unshift($tick);
     }
     
-  # The end ticks
+    # The end ticks
     $tick = new Sanger::Graphics::Glyph::Rect({
-        'x'         => 0,
+        'x'         => 0 + $corr,
         'y'         => $ystart-2,
         'width'     => 0,
         'height'    => 1,
@@ -268,9 +268,9 @@ sub _init_assembled_contig {
     });
     $self->unshift($tick);
    
-  # the reverse strand ticks
+    # the reverse strand ticks
     $tick = new Sanger::Graphics::Glyph::Rect({
-        'x'         => $im_width - 1,
+        'x'         => $im_width - 1 - $corr,
         'y'         => $ystart+16,
         'width'     => 0,
         'height'    => 1,
@@ -498,10 +498,12 @@ sub _init_non_assembled_contig {
 
     my $tick;
     my $interval = int($im_width/10);
+    # correct for $im_width's that are not multiples of 10
+    my $corr = int(($im_width % 10) / 2);
     for (my $i=1; $i <=9; $i++){
-        my $pos = $i * $interval;
+        my $pos = $i * $interval + $corr;
    
-    # the forward strand ticks
+        # the forward strand ticks
         $self->unshift( new Sanger::Graphics::Glyph::Rect({
             'x'         => 0 + $pos,
             'y'         => $ystart-4,
@@ -512,9 +514,9 @@ sub _init_non_assembled_contig {
             'absolutex' => 1,'absolutewidth'=>1,
         }) );
     
-    # the reverse strand ticks
+        # the reverse strand ticks
         $self->unshift( new Sanger::Graphics::Glyph::Rect({
-            'x'         => $im_width - $pos,
+            'x'         => 0 + $pos,
             'y'         => $ystart+16,
             'width'     => 0,
             'height'    => 3,
@@ -524,9 +526,9 @@ sub _init_non_assembled_contig {
         }) );
     }
     
-  # The end ticks
+    # The end ticks
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-        'x'         => 0,
+        'x'         => 0 + $corr,
         'y'         => $ystart-2,
         'width'     => 0,
         'height'    => 1,
@@ -535,9 +537,9 @@ sub _init_non_assembled_contig {
         'absolutex' => 1,'absolutewidth'=>1,
     }) );
    
-  # the reverse strand ticks
+    # the reverse strand ticks
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-        'x'         => $im_width - 1,
+        'x'         => $im_width - 1 - $corr,
         'y'         => $ystart+16,
         'width'     => 0,
         'height'    => 1,
