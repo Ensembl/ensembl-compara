@@ -147,6 +147,7 @@ sub get_SimpleAlign {
 
 
 =head2 subtype
+
   Arg [1]    : string $subtype (optional)
   Example    : $subtype = $homology->subtype();
                $homology->subtype($subtype);
@@ -155,7 +156,9 @@ sub get_SimpleAlign {
   Returntype : string
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub subtype {
   my $self = shift;
   $self->{'_subtype'} = shift if(@_);
@@ -443,6 +446,15 @@ sub TwoD_codon {
 
   return 0;
 }
+
+=head2 print_homology
+
+ Example    : $homology->print_homology
+ Description: This method prints a short descriptor of the homology
+	      USE ONLY FOR DEBUGGING not for data output since the
+	      format of this output may change as need dictates.
+
+=cut
 
 sub print_homology {
   my $self = shift;
