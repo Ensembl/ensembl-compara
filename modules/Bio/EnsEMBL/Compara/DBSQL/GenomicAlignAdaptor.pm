@@ -385,6 +385,88 @@ sub fetch_by_dnafrag{
    return @out;
 }
 
+=head2 fetch_DnaDnaAlignFeature_by_species_chr_start_end
 
+ Title	 : fetch_DnaDnaAlignFeature_by_species_chr_start_end
+ Usage	 :
+ Function:
+ Example :
+ Returns : an array of Bio::EnsEMBL::Compara::DnaDnaAlignFeature objects 
+ Args 	 : subject_species, query_species, chr_name, chr_start and chr_end on subject species 
+           and type of dnafrag from which data as to be queried
+
+=cut
+
+sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
+  my ($self,$sb_species,$qy_species,$chr_name,$chr_start,$chr_end,$dnafrag_type) = @_;
+
+  my @DnaDnaAlignFeatures;
+
+  my $dfad = $self->db->get_DnaFragAdaptor;
+  my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,"VirtualContig");
+
+  foreach my $df (@list_dnafrag) {
+  
+    my @genomicaligns = $self->fetch_by_dnafrag($df);
+
+    foreach my $genomicalign (@genomicaligns) {
+
+      foreach my $alignblockset ($genomicalign->each_AlignBlockSet) {
+
+        my %alignblocks;
+
+        foreach my $alignblock ($alignblockset->get_AlignBlocks) {
+	  $alignblocks{$alignblock->dnafrag->genomedb->name}{$alignblock->align_start."-".$alignblock->align_end} = $alignblock;
+	} 
+
+	foreach my $key (keys %{$alignblocks{$sb_species}}) {
+
+	  my $alignblock1 = $alignblocks{$sb_species}{$key};
+	  my $alignblock2 = $alignblocks{$qy_species}{$key};	
+	  
+	  next unless (defined $alignblock2);
+	  
+	  my ($chr_name1,$chr_start1,$chr_end1) = split /\./, $alignblock1->dnafrag->name;
+	  $alignblock1->start($alignblock1->start + $chr_start1 - 1);
+	  $alignblock1->end($alignblock1->end + $chr_start1 - 1);
+	  
+	  next unless ($alignblock1->start <= $chr_end && $alignblock1->end >= $chr_start);
+	  
+	  my ($chr_name2,$chr_start2,$chr_end2) = split /\./, $alignblock2->dnafrag->name;
+	  $alignblock2->start($alignblock2->start + $chr_start2 - 1);
+	  $alignblock2->end($alignblock2->end + $chr_start2 - 1);
+
+	  my $DnaDnaAlignFeature = new Bio::EnsEMBL::Compara::DnaDnaAlignFeature('-cigar_string' => $alignblock1->cigar_string);
+	  my $feature1 = new Bio::EnsEMBL::SeqFeature;
+	  $feature1->seqname($chr_name1);
+	  $feature1->start($alignblock1->start);
+	  $feature1->end($alignblock1->end);
+	  $feature1->strand($alignblock1->strand);
+
+	  my $feature2 = new Bio::EnsEMBL::SeqFeature;
+	  $feature2->seqname($chr_name2);
+	  $feature2->start($alignblock2->start);
+	  $feature2->end($alignblock2->end);
+	  $feature2->strand($alignblock2->strand);
+
+	  $DnaDnaAlignFeature->feature1($feature1);
+	  $DnaDnaAlignFeature->feature2($feature2);
+	  $DnaDnaAlignFeature->score($alignblock1->score);
+	  $DnaDnaAlignFeature->percent_id($alignblock1->perc_id);
+	  $DnaDnaAlignFeature->species($alignblock1->dnafrag->genomedb->name);
+	  $DnaDnaAlignFeature->hspecies($alignblock2->dnafrag->genomedb->name);
+
+	  if ($DnaDnaAlignFeature->strand == -1) {
+	    $DnaDnaAlignFeature->reverse_complement;
+	  }
+
+	  push @DnaDnaAlignFeatures,$DnaDnaAlignFeature;
+
+	}
+      }
+    }
+  }
+  return @DnaDnaAlignFeatures;
+}
 
 1;
