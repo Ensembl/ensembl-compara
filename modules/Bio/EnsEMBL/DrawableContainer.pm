@@ -6,6 +6,7 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bio::EnsEMBL::GlyphSetManager::das;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
+use ExtURL;
 
 @ISA = qw(Bio::Root::RootI);
 
@@ -36,6 +37,8 @@ sub new {
 
     ########## loop over all the glyphsets the user wants:
     my $black = $Config->colourmap()->id_by_name('red');
+    $Config->{'ext_url'} = ExtURL->new;
+
     for my $strand (@strands_to_show) {
 
         my $tmp_glyphset_store = {};
