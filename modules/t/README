@@ -3,29 +3,43 @@ This directory contains a set of tests for the EnsEMBL Compara API
 modules. The test-genome-DBs.zip file contains the set of data that is 
 used by the tests.
 
+The test system requires some modules which are in a seperate
+CVS module ensembl-test.  To use the tests you must add the
+ensembl-test modules to your PERL5LIB environment variable.
+
+Example:
+
+setenv PERL5LIB ${PERL5LIB}:${ENSHOME}/ensembl-test/modules
+
+NB: read also ensembl-test/scripts/README
+
 In order to run the tests you must update the MultiTestDB.conf
 file with the information (username, host, etc.) for a mysql
-instance where you have write permission. Running test case(s)
-which require a database will automatically create and remove 
-a temporary database during the test(s) execution.
+instance where you have write permission. 
+Running test case(s) which require a database will automatically 
+create a temporary database during the test(s) execution.
+In case you want to remove the temporary database after all tests,
+use the -c option.
+
 
 Running all tests or just a single test
 =======================================
 
-To run multiple tests at once use the runtests.pl script in
-the modules directory. To run a single test simply execute
-the .t file:
+To run tests use the runtests.pl script in ensembl-test/scripts directory.
 
 Examples:
 
 #run all tests in the t directory
-perl runtests.pl t
+ensembl-test/scripts/runtests.pl t
 
 #run 3 tests
-perl runtests.pl t/dnaFrag.t t/genomeDBAdaptor.t t/genomicAlignAdaptor.t
+ensembl-test/scripts/runtests.pl t/dnaFrag.t t/genomeDBAdaptor.t t/genomicAlignAdaptor.t
 
 #run a single test
-perl t/dnaFrag.t
+ensembl-test/scripts/runtests.pl t/dnaFrag.t
+
+#run all tests in the current directory and clean up
+ensembl-test/scripts/runtests.pl -c
 
 Creating the small test databases in test-genome-DBs.zip
 ========================================================
@@ -76,3 +90,4 @@ cd test-genome-DBs/multi/compara
 cd ../../
 
 zip -r -b /tmp test-genome-DBs test-genome-DBs
+
