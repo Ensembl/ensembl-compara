@@ -52,7 +52,7 @@ sub new {
  
     $self->{'_protein_id_array'} = [];
     
-    my ($dbID, $genome_db_id,$conserved_cluster_id,$seq_start,$seq_end,$intervening_genes,$dnafrag_id,$seq,$protein_ids,$adaptor) = 
+    my ($dbID, $genome_db_id,$conserved_cluster_id,$seq_start,$seq_end,$intervening_genes,$dnafrag_id,$protein_ids,$adaptor) = 
     $self->_rearrange([qw(	DBID
                             GENOMEDB_ID
                             CONSERVED_CLUSTER_ID
@@ -313,8 +313,8 @@ sub add_Protein_id{
  Title   : adaptor
  Usage   : $obj->adaptor($newval)
  Function: Getset for adaptor object
- Returns : Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor
- Args    : Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor
+ Returns : Bio::EnsEMBL::Compara::DBSQL::ConservedSegmentAdaptor
+ Args    : Bio::EnsEMBL::Compara::DBSQL::ConservedSegmentAdaptor
  
  
 =cut

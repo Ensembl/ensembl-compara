@@ -46,6 +46,7 @@ use strict;
 # Object preamble - inherits from Bio::Root::RootI
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Compara::ConservedSegment;
 
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -88,9 +89,10 @@ sub fetch_by_dbID{
 														-seq_start	=> $seq_start,
 														-seq_end	=> $seq_end,
 														-intervening_genes => $intervening_genes,
+														-adaptor => $self,
 														-dnafrag_id	=> $dnafrag_id);
 
-   $sth->prepare("Select protein_id from conserved_segment_protein 
+   $sth = $self->prepare("Select protein_id from conserved_segment_protein 
                   where conserved_segment_id = $dbid");
    $sth->execute();
 
