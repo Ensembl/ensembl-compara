@@ -380,7 +380,7 @@ sub fetch_by_subset_id {
   Arg [1]    : int member_id of a peptide member
   Example    : $geneMember = $memberAdaptor->fetch_gene_for_peptide_member_id($peptide_member_id);
   Description: given a member_id of a peptide member,
-               does a join to a copy of member table to extract a member for it's gene
+               does a join to a copy of member table to extract a member for its gene
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
@@ -460,7 +460,7 @@ sub fetch_longest_peptide_member_for_gene_member_id {
   #the member with the smallest member_id (of the equal length translations) is the
   #one picked as 'longest' for use in the blasting.
   #so "ORDER BY seq.length DESC, member_id LIMIT 1" picks the right one.
-  #Yeah it's a hack, but it does work.
+  #Yeah it is a hack, but it does work.
 
   my $obj = undef;
   eval {
@@ -536,7 +536,7 @@ sub _generic_fetch {
   #append additional clauses which may have been defined
   $sql .= " $final_clause" if($final_clause);
 
-  # warn $sql;
+  #print("$sql\n");
   my $sth = $self->prepare($sql);
   $sth->execute;
 
@@ -565,6 +565,7 @@ sub _columns {
              m.chr_end
              m.chr_strand
              m.sequence_id
+             m.gene_member_id
              );
 }
 
@@ -590,6 +591,7 @@ sub _objs_from_sth {
         '_chr_end' => $column{'chr_end'},
         '_chr_strand' => $column{'chr_strand'},
         '_sequence_id' => $column{'sequence_id'},
+        '_gene_member_id' => $column{'gene_member_id'},
 #        '_source_id' => $column{'source_id'},
 #        '_source_name' => $self->get_source_name_from_id($column{'source_id'}),
         '_source_name' => $column{'source_name'},

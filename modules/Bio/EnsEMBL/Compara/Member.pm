@@ -492,6 +492,13 @@ sub sequence_id {
 }
 
 
+sub gene_member_id {
+  my $self = shift;
+  $self->{'_gene_member_id'} = shift if(@_);
+  return $self->{'_gene_member_id'};
+}
+
+
 =head2 bioseq
 
   Args       : none
@@ -604,7 +611,7 @@ sub get_Gene {
 
   Args       : none
   Example    : $transcript = $member->get_Transcript
-  Description: if member is an 'ENSEMBLPEP returns Bio::EnsEMBL::Transcript object
+  Description: if member is an 'ENSEMBLPEP' returns Bio::EnsEMBL::Transcript object
                by connecting to ensembl genome core database
                REQUIRES properly setup Registry conf file or
                manually setting genome_db->db_adaptor for each genome.
@@ -651,7 +658,7 @@ sub get_Translation {
   Args       : none
   Example    : $longestPepMember = $member->get_longest_peptide_Member
   Description: if member is an "ENSEMBLGENE" it will return the longest peptide member
-               if member is an 'ENSEMBLPEP' it will get it's gene member and have it
+               if member is an 'ENSEMBLPEP' it will get its gene member and have it
                return the longest peptide (which could be the same as the starting member)
   Returntype : Bio::EnsEMBL::Compara::Member or undef
   Exceptions : none
