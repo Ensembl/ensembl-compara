@@ -8,7 +8,7 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 
 my $usage = "
 
-$0 -host ecs2.internal.sanger.ac.uk -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_13_1 \
+$0 -host ecs2.internal.sanger.ac.uk -dbuser ecs2dadmin -dbpass xxxx -port 3353 -dbname ensembl_compara_13_1 \
 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
 -genome_db_id1 1 genome_db_id2 2
 
@@ -18,11 +18,13 @@ my $help = 0;
 my ($host,$dbname,$dbuser,$dbpass,$conf_file);
 my ($genome_db_id1,$genome_db_id2);
 my $method_link_type = "SYNTENY";
+my $port ='3352';
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
+	   'port=i' => \$port,
 	   'dbname=s' => \$dbname,
 	   'conf_file=s' => \$conf_file,
 	   'genome_db_id1=i' => \$genome_db_id1,
@@ -36,6 +38,7 @@ if ($help) {
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-conf_file => $conf_file,
 						     -host => $host,
 						     -dbname => $dbname,
+						     -port => $port,
 						     -user => $dbuser,
 						     -pass => $dbpass);
 

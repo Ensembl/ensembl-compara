@@ -8,7 +8,7 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 
 my $usage = "\nUsage: $0 [options] File|STDIN
 
-$0 -host ecs2d.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
+$0 -host ecs2d.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -port 3352 -dbname ensembl_compara_12_1 \
 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
 -alignment_type WGA -cs_genome_db_id 1 -qy_genome_db_id 2 -qy_tag Mm -alignment_type WGA
 
@@ -18,6 +18,7 @@ Options:
  -dbname      compara database name
  -dbuser      username for connection to \"compara_dbname\"
  -pass        passwd for connection to \"compara_dbname\"
+ -port		port no for compara db
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
  -alignment_type type of alignment stored e.g. WGA (default: WGA)
@@ -30,6 +31,7 @@ my $cs_genome_db_id;
 my $qy_genome_db_id;
 my $qy_tag;
 my $alignment_type = 'WGA';
+my $port= 3352;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
@@ -40,6 +42,7 @@ GetOptions('help' => \$help,
 	   'cs_genome_db_id=i' => \$cs_genome_db_id,
 	   'qy_genome_db_id=i' => \$qy_genome_db_id,
 	   'alignment_type=s' => \$alignment_type,
+	   'port=i' => \$port,
 	   'qy_tag=s' => \$qy_tag);
 
 if ($help) {
@@ -50,6 +53,7 @@ if ($help) {
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-conf_file => $conf_file,
 						     -host => $host,
 						     -dbname => $dbname,
+						     -port => $port,
 						     -user => $dbuser,
 						     -pass => $dbpass);
 
