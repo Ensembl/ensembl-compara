@@ -9,7 +9,7 @@ use vars qw(@ISA);
 
 sub canvas {
     my ($self, $canvas) = @_;
-   if(defined $canvas) {
+    if(defined $canvas) {
 	$self->{'canvas'} = $canvas;
     } else {
 	return $self->{'canvas'}->wmf();

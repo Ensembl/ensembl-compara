@@ -6,29 +6,37 @@ use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer);
 
 sub canvas {
-    my ($this, $canvas) = @_;
+    my ($self, $canvas) = @_;
     if(defined $canvas) {
-	$this->{'canvas'} = $canvas;
+	$self->{'canvas'} = $canvas;
     } else {
-	return $this->{'canvas'}->gif();
+	return $self->{'canvas'}->gif();
     }
 }
 
 sub render_Rect {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
 
-    my $bordercolour = $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($glyph->bordercolour() || $glyph->colour()));
-    my $colour = $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($glyph->colour()));
+	my $canvas = $self->{'canvas'};
+	my $cmap = $self->{'colourmap'};
 
-    $glyph->transform($this->{'transform'});
+	my @col1 = $cmap->rgb_by_id($glyph->bordercolour() || $glyph->colour());
+    my $bordercolour = $canvas->colorAllocate(@col1);
+	#print STDERR "Foo: @col1\n";
+
+	my @col2 = $cmap->rgb_by_id($glyph->colour());
+    my $colour = $canvas->colorAllocate(@col2);
+	#print STDERR "Foo: @col2\n";
+
+    $glyph->transform($self->{'transform'});
 
     my $x1 = $glyph->pixelx();
     my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
     my $y1 = $glyph->pixely();
     my $y2 = $glyph->pixely() + $glyph->pixelheight();
 
-    $this->{'canvas'}->filledRectangle($x1,   $y1, $x2, $y2, $bordercolour) if(defined $bordercolour);
-    $this->{'canvas'}->filledRectangle($x1+1, $y1+1, $x2-1, $y2-1, $colour) if(defined $bordercolour && defined $colour && $bordercolour != $colour);
+    $canvas->filledRectangle($x1,   $y1, $x2, $y2, $bordercolour) if(defined $bordercolour);
+    $canvas->filledRectangle($x1+1, $y1+1, $x2-1, $y2-1, $colour) if(defined $bordercolour && defined $colour && $bordercolour != $colour);
 
 }
 
@@ -42,15 +50,15 @@ sub render_Ellipse {
 }
 
 sub render_Intron {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
 
-    my $colour = $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($glyph->colour()));
+    my $colour = $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_id($glyph->colour()));
 
-    $glyph->transform($this->{'transform'});
+    $glyph->transform($self->{'transform'});
 
     my ($xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend);
 
-    if($this->{'transform'}->{'rotation'} == 90) {
+    if($self->{'transform'}->{'rotation'} == 90) {
 	$xstart  = $glyph->pixelx() + int($glyph->pixelwidth()/2);
 	$xend    = $xstart;
 	$xmiddle = $glyph->pixelx() + $glyph->pixelwidth();
@@ -68,8 +76,40 @@ sub render_Intron {
 	$yend    = $ystart;
 	$ymiddle = $glyph->pixely();
     }
-    $this->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
-    $this->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
+    $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
+    $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
+}
+
+sub render_Poly {
+    my ($this, $glyph) = @_;
+
+    my $gbordercolour = $glyph->bordercolour();
+    my $gcolour = $glyph->colour();
+
+    my ($colour, $bordercolour);
+
+    $bordercolour = $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($gbordercolour)) if(defined $gbordercolour);
+    $colour = $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($gcolour)) if(defined $gcolour);
+
+    my $poly = new GD::Polygon;
+
+    $glyph->transform($this->{'transform'});
+
+    my @points = @{$glyph->pixelpoints()};
+    my $pairs_of_points = (scalar @points)/ 2;
+
+    for(my $i=0;$i<$pairs_of_points;$i++) {
+	my $x = shift @points;
+	my $y = shift @points;
+
+	$poly->addPt($x,$y);
+    }
+
+    if(defined $colour) {
+	$this->{'canvas'}->filledPolygon($poly, $colour);
+    } else {
+	$this->{'canvas'}->polygon($poly, $bordercolour);
+    }
 }
 
 1;
