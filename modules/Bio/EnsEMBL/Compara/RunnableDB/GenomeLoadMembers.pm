@@ -56,9 +56,6 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Runnable::Blast;
-use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
-
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Homology;
@@ -68,28 +65,6 @@ use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
-
-=head2 batch_size
-  Title   :   batch_size
-  Usage   :   $value = $self->batch_size;
-  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
-               before querying the database for the next job batch.  Used by the
-               Hive system to manage the number of workers needed to complete a
-               particular job type.
-  Returntype : integer scalar
-=cut
-sub batch_size { return 1; }
-
-=head2 carrying_capacity
-  Title   :   carrying_capacity
-  Usage   :   $value = $self->carrying_capacity;
-  Description: Defines the total number of Workers of this RunnableDB for a particular
-               analysis_id that can be created in the hive.  Used by Queen to manage
-               creation of Workers.
-  Returntype : integer scalar
-=cut
-sub carrying_capacity { return 20; }
-
 
 =head2 fetch_input
 
@@ -115,14 +90,14 @@ sub fetch_input {
   
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
   #get the Compara::GenomeDB object for the genome_db_id
   $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
   
   
   #using genome_db_id, connect to external core database
-  $self->{'coreDBA'} = $self->{'genome_db'}->connect_to_genome_locator();
+  $self->{'coreDBA'} = $self->{'genome_db'}->db_adaptor();  
   $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
   
   #global boolean control value (whether the genes are also stored as members)
@@ -143,8 +118,8 @@ sub run
 {
   my $self = shift;
 
-  $self->{'comparaDBA'}->disconnect_when_inactive(0);
-  $self->{'coreDBA'}->disconnect_when_inactive(0);  
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);  
   
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, useing the SliceAdaptor
@@ -152,8 +127,8 @@ sub run
   # and convert them into members to be stored into compara
   $self->loadMembersFromCoreSlices();
   
-  $self->{'comparaDBA'}->disconnect_when_inactive(1);
-  $self->{'coreDBA'}->disconnect_when_inactive(1);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->{'coreDBA'}->dbc->disconnect_when_inactive(1);
                                           
   return 1;
 }
@@ -197,7 +172,10 @@ sub loadMembersFromCoreSlices
     #print("slice " . $slice->name . "\n");
     foreach my $gene (@{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
-      if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
+#      if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
+      if((lc($gene->type) ne 'pseudogene') and 
+         (lc($gene->type) ne 'bacterial_contaminant') and
+         ($gene->type !~ /RNA/i)) {
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }

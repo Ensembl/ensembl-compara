@@ -65,28 +65,6 @@ use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
-=head2 batch_size
-  Title   :   batch_size
-  Usage   :   $value = $self->batch_size;
-  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
-               before querying the database for the next job batch.  Used by the
-               Hive system to manage the number of workers needed to complete a
-               particular job type.
-  Returntype : integer scalar
-=cut
-sub batch_size { return 1; }
-
-=head2 carrying_capacity
-  Title   :   carrying_capacity
-  Usage   :   $value = $self->carrying_capacity;
-  Description: Defines the total number of Workers of this RunnableDB for a particular
-               analysis_id that can be created in the hive.  Used by Queen to manage
-               creation of Workers.
-  Returntype : integer scalar
-=cut
-sub carrying_capacity { return 20; }
-
-
 =head2 fetch_input
 
     Title   :   fetch_input
@@ -107,8 +85,8 @@ sub fetch_input {
   
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
-  $self->{'analysisStatsDBA'} = Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor->new($self->db);
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
+  $self->{'analysisStatsDBA'} = $self->db->get_AnalysisStatsAdaptor;
   
   my $genome_db_id = $input_hash->{'gdb'};
   my $subset_id    = $input_hash->{'ss'};
@@ -118,7 +96,8 @@ sub fetch_input {
 
   #get the Compara::GenomeDB object for the genome_db_id
   $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-
+  $self->db->dbc->disconnect_when_inactive(0);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   unless($subset_id) {
     # get the subset of 'longest transcripts' for this genome_db_id
     $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
@@ -232,11 +211,16 @@ sub createSubmitPepAnalysis {
 
     my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($analysis->dbID);
     $stats->batch_size(7000);
-    $stats->hive_capacity(1);
+    $stats->hive_capacity(11);
     $stats->status('BLOCKED');
     $stats->update();   
   }
 
+  # create unblocking rules from CreateBlastRules to this new analysis
+  my $createRules = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('CreateBlastRules');
+  $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($createRules, $analysis);
+
+  
   #my $host = hostname();
   print("store member_id into analysis_job table\n");
   my $errorCount=0;
