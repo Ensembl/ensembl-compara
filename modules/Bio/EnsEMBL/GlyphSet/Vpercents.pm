@@ -33,7 +33,7 @@ sub _init {
     my ($self) 		= @_;
     my $Config 		= $self->{'config'};
     my $chr      	= $self->{'container'}->{'chr'};
-   	my $gc_col 		= $Config->get( 'Vpercents','col_gc' );
+   	my $gc_col 	= $Config->get( 'Vpercents','col_gc' );
    	my $repeat_col 	= $Config->get( 'Vpercents','col_repeat' );
 	
 	
@@ -43,7 +43,8 @@ sub _init {
     return unless $repeats->size() && $gc->size();
 	my $max_repeats = $repeats->{'_biggest_value'};
 	my $max_gc      = $gc->{'_biggest_value'};
-	my $MAX 		= $max_repeats > $max_gc ? $max_repeats : $max_gc;
+	my $MAX 	= $max_repeats > $max_gc ? $max_repeats : $max_gc;
+	$MAX ||= 1;
 
    	$repeats->scale_to_fit( $max_repeats / $MAX * $Config->get( 'Vpercents', 'width' ) );
 	$repeats->stretch(0);
