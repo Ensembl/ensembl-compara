@@ -132,7 +132,7 @@ sub image_label {
 sub tag {
     my ($self, $f) = @_;
     if (($f->snpclass eq 'SNP - indel') && ($f->start ne $f->end)) {
-        my $type = $f->type;
+        my $type = substr($f->type,3,6);
         return ( { 'style' => 'insertion', 'colour' => $self->{'colours'}{"_$type"} } );
     } else {
         return undef;
@@ -153,7 +153,7 @@ sub tag {
 
 sub colour {
     my ($self, $f) = @_;
-    my $T = $f->type;
+    my $T = substr($f->type,3,6);
     unless($self->{'config'}->{'snp_types'}{$T}) {
         my %labels = (
             '_coding' => 'Coding SNPs',
@@ -202,7 +202,7 @@ sub zmenu {
         "05:Class: ".$f->snpclass => '',
         "06:Status: ".$f->raw_status => '',
         "08:Alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => '',
-        "09:Position type: ".($f->type||'other') => '',
+        "09:Position type: ".(substr($f->type,3,6)||'other') => '',
         "10:Consequence: ".($f->consequence||'unknown') => '',
     );
     $zmenu{"07:Ambiguity code: ".$f->{'_ambiguity_code'}} = '' if $f->{'_ambiguity_code'};
