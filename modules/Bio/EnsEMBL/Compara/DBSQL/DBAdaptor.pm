@@ -275,8 +275,27 @@ sub get_ConservedSegmentAdaptor{
 }
 
 
-=head2 get_SyntenyRegionAdaptor
+=head2 get_HomologyAdaptor
 
+ Title   : get_HomologyAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_HomologyAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_homology_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
+       $self->{'_homology_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor->new($self);
+   }
+   return $self->{'_homology_adaptor'};
+}
 
 
 =head2 get_SyntenyRegionAdaptor
