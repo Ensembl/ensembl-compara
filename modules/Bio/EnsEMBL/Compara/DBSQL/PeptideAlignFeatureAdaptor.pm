@@ -118,7 +118,7 @@ sub store {
     if($feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
       #displayHSP_short($feature);
       my $pepFeature = new Bio::EnsEMBL::Compara::PeptideAlignFeature(-feature => $feature);
-      #displayPAF_short($pepFeature);
+      #$pepFeature->display_short();
       push @pafList, $pepFeature;
     }
     elsif($feature->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
@@ -161,7 +161,7 @@ sub _store_PAFS {
         $paf->hit_member($hit_member);
       }
 
-      displayPAF_short($paf);
+      $paf->display_short();
 
       my $analysis_id = 0;
       if($paf->analysis()) {
@@ -243,24 +243,6 @@ sub displayHSP_short {
         "\t" . $perc_pos . "\n");
 }
 
-sub displayPAF_short {
-  my($paf) = @_;
-
-  unless(defined($paf)) {
-    print("qy_stable_id\t\t\thit_stable_id\t\t\tscore\talen\t\%ident\t\%positive\thit_rank\n");
-    return;
-  }
-
-  print("PAF(".$paf->dbID.") ".
-        "\t" . $paf->query_member->stable_id."(".$paf->qstart.",".$paf->qend.")".
-        "\t" . $paf->hit_member->stable_id. "(".$paf->hstart.",".$paf->hend.")".
-        "\t" . $paf->score .
-        "\t" . $paf->alignment_length .
-        "\t" . $paf->perc_ident .
-        "\t" . $paf->perc_pos .
-        "\t" . $paf->hit_rank .
-        "\n");
-}
 
 
 ############################
@@ -352,7 +334,7 @@ sub _objs_from_sth {
       $paf->hit_member($memberDBA->fetch_by_dbID($column{'hmember_id'}));
     }
   
-    displayPAF_short($paf);
+    #$paf->display_short();
     
     push @pafs, $paf;
 

@@ -410,4 +410,23 @@ sub sort_by_score_evalue_and_pid {
 }
 =cut
 
+sub display_short {
+  my($self) = @_;
+
+  unless(defined($self)) {
+    print("qy_stable_id\t\t\thit_stable_id\t\t\tscore\talen\t\%ident\t\%positive\thit_rank\n");
+    return;
+  }
+
+  print("PAF(".$self->dbID.") ".
+        "\t" . $self->query_member->stable_id."(".$self->qstart.",".$self->qend.")".
+        "\t" . $self->hit_member->stable_id. "(".$self->hstart.",".$self->hend.")".
+        "\t" . $self->score .
+        "\t" . $self->alignment_length .
+        "\t" . $self->perc_ident .
+        "\t" . $self->perc_pos .
+        "\t" . $self->hit_rank .
+        "\n");
+}
+
 1;
