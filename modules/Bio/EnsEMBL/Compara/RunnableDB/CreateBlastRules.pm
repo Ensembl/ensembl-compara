@@ -109,7 +109,7 @@ sub fetch_input {
   #the -DBCONN options uses the dbname,user,pass,port,host,driver from the
   #variable DBConnection to create the new connection (in essence a copy)
 
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
   return 1;
 }
