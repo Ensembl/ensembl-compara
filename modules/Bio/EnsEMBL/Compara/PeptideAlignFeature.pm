@@ -400,6 +400,12 @@ sub dbID {
   return $self->{'_dbID'};
 }
 
+sub rhit_dbID {
+  my ( $self, $dbID ) = @_;
+  $self->{'_rhit_dbID'} = $dbID if defined $dbID;
+  return $self->{'_rhit_dbID'};
+}
+
 =head3
 sub sort_by_score_evalue_and_pid {
   #print("operator redirect YEAH!\n");
@@ -421,8 +427,12 @@ sub display_short {
   my $qm = $self->query_member;
   my $hm = $self->hit_member;
   my $dbID = $self->dbID;  $dbID = '' unless($dbID);
-  print("PAF(",$dbID,") ",
-        "\t" , $qm->stable_id,"(".$self->qstart,",",$self->qend,")",
+
+  my $header = "PAF(".$dbID.")";
+  $header .= "(".$self->rhit_dbID.")" if($self->rhit_dbID);
+  while(length($header)<20) { $header .= ' '; }
+  printf($header);
+  print($qm->stable_id,"(".$self->qstart,",",$self->qend,")",
         "(",$qm->chr_name,":",$qm->chr_start,")\t",
         "\t" , $hm->stable_id, "(".$self->hstart,",",$self->hend,")",
         "(",$hm->chr_name,":",$hm->chr_start,")\t",
