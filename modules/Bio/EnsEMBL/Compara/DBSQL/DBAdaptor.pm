@@ -175,7 +175,6 @@ sub add_db_adaptor {
   my ($cs) = @{$csa->fetch_all};
   my $assembly = $cs ? $cs->version : '';
 
-  warn "ADDING GENOME DB $species $assembly $dba";
   $self->{'genomes'}->{"$species:".uc($assembly) } = $dba;
 }
 
