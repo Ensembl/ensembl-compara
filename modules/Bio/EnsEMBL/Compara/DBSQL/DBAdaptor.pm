@@ -46,6 +46,7 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
 
@@ -91,27 +92,27 @@ sub new {
       my $mod = $module;
 
       eval {
-	# require needs /'s rather than colons
-	if ( $mod =~ /::/ ) {
-	  $mod =~ s/::/\//g;
-	}
-	require "${mod}.pm";
+        # require needs /'s rather than colons
+        if ( $mod =~ /::/ ) {
+          $mod =~ s/::/\//g;
+        }
+        require "${mod}.pm";
 
-	$db = $module->new(-dbname => $db_hash->{'dbname'},
-			   -host   => $db_hash->{'host'},
-			   -user   => $db_hash->{'user'},
-			   -pass   => $db_hash->{'pass'},
-			   -port   => $db_hash->{'port'},
-			   -driver => $db_hash->{'driver'});
+        $db = $module->new(-dbname => $db_hash->{'dbname'},
+                           -host   => $db_hash->{'host'},
+                           -user   => $db_hash->{'user'},
+                           -pass   => $db_hash->{'pass'},
+                           -port   => $db_hash->{'port'},
+                           -driver => $db_hash->{'driver'},
+                           -disconnect_when_inactive =>1);
       };
-      $db->disconnect_when_inactive(1);
 
       if($@) {
-        $self->throw("could not load module specified in configuration file:$@");
+        throw("could not load module specified in configuration file:$@");
       }
 
       unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
-        $self->throw("[$db] specified in conf file is not a " .
+        throw("[$db] specified in conf file is not a " .
              "Bio::EnsEMBL::DBSQL::DBConnection");
       }
 
@@ -123,6 +124,8 @@ sub new {
       }
     }
   }
+
+  $self->get_GenomeDBAdaptor->sync_with_registry();
 
   return $self;
 }
@@ -152,7 +155,7 @@ sub add_db_adaptor {
 
   unless($dba && ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
     $self->throw("dba argument must be a Bio::EnsEMBL::DBSQL::DBAdaptor\n" .
-		 "not a [$dba]");
+                 "not a [$dba]");
   }
 
   $dba->db->disconnect_when_inactive(1);
@@ -200,7 +203,7 @@ sub get_db_adaptor {
   my ($self, $species, $assembly) = @_;
 
   unless($species && $assembly) {
-    $self->throw("species and assembly arguments are required\n");
+    throw("species and assembly arguments are required\n");
   }
   
   my $gdb;

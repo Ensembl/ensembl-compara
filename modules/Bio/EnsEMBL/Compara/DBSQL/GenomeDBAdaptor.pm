@@ -296,6 +296,8 @@ sub create_GenomeDBs {
   }
 
   $self->{'_GenomeDB_cache'} = 1;
+
+  $self->sync_with_registry();
 }
 
 
@@ -409,6 +411,50 @@ sub get_all_db_links {
   }
 
   return \@gdb_list;
+}
+
+
+=head2 sync_with_registry
+  Example    :
+  Description: Synchronize all the cached genome_db objects
+               db_adaptor (connections to core databases)
+               with those set in Bio::EnsEMBL::Registry.
+               Order of presidence is Registry.conf > ComparaConf > genome_db.locator
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::DBSQL::DBAdaptor
+=cut
+sub sync_with_registry {
+  my $self = shift;
+
+  return unless(eval "require Bio::EnsEMBL::Registry");
+  
+  #print("Registry eval TRUE\n");
+  my $genomeDBs = $self->fetch_all();
+
+  foreach my $genome_db (@{$genomeDBs}) {
+    my $coreDBA;
+    my $registry_name = $genome_db->name ." ". $genome_db->assembly;
+    if(Bio::EnsEMBL::Registry->get_alias($registry_name, 1)) {
+      $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
+    }
+    if(!defined($coreDBA) and Bio::EnsEMBL::Registry->get_alias($genome_db->name, 1)) {
+      $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core');
+      Bio::EnsEMBL::Registry->add_alias($genome_db->name, $registry_name);
+    }
+
+    if($coreDBA) {
+      #defined in registry so override any previous connection
+      #and set in GenomeDB object (ie either locator or compara.conf)
+      $genome_db->db_adaptor($coreDBA);
+    } else {
+      #fetch from genome_db which may be from a compara.conf or from
+      #a locator
+      $coreDBA = $genome_db->db_adaptor();
+      Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
+      Bio::EnsEMBL::Registry->add_alias($registry_name, $genome_db->name);      
+    }
+  }
 }
 
 
