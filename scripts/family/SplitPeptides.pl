@@ -2,11 +2,15 @@
 
 use strict;
 use warnings;
+use Getopt::Long;
 
 my $postfix = 1;
 
+my $maxids = 50;
 my $copied = 0;
 my $id;
+
+GetOptions('maxids=i' => \$maxids);
 
 #
 # Read from STDIN use 2nd col as ids and split ids into 
@@ -21,7 +25,7 @@ while(<>) {
   print FH "$id\n";
   $copied++;
 
-  if($copied == 100) {
+  if($copied == $maxids) {
     close FH;
     $copied = 0;
     $postfix++;
