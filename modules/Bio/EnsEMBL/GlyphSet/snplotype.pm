@@ -159,6 +159,36 @@ sub create_haplotype_block {
     my $global_ystart           = 30;
     my $ystart                  = 30;
 
+
+    # draw the SNP ID column label
+    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        'x'          => $xstart,
+        'y'          => $global_ystart - 30 + 1,
+        'font'       => 'Small',
+        'colour'     => $black,
+        'text'       => "SNP ID",
+        'absolutex'  => 1,
+        'absolutey'  => 1,
+    });
+    $self->push($tglyph);
+    foreach my $s ( @{$hap->snps()} ){
+        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+            'x'          => $xstart,
+            'y'          => $ystart,
+            'font'       => 'Small',
+            'colour'     => $black,
+            'text'       => uc($s),
+            'absolutex'  => 1,
+            'absolutey'  => 1,
+        });
+        $self->push($tglyph);
+        $ystart += $vertical_space;
+    }
+
+    $xstart                  += 75;
+    $ystart                  = 30;
+
+
     # we need to work out the identity of the most common base at any place along
     # an individual haplotype sample and use this as the default base/colour
     # find the length of the pattern (no. of individuals types)
@@ -245,20 +275,20 @@ sub create_haplotype_block {
     }
 
     # draw the SNP ID column label
-    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-        'x'          => $xstart+7,
-        'y'          => $global_ystart - 30 + 1,
-        'font'       => 'Small',
-        'colour'     => $black,
-        'text'       => "SNP ID",
-        'absolutex'  => 1,
-        'absolutey'  => 1,
-    });
-    $self->push($tglyph);
+    #my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    #    'x'          => $xstart+7,
+    #    'y'          => $global_ystart - 30 + 1,
+    #    'font'       => 'Small',
+    #    'colour'     => $black,
+    #    'text'       => "SNP ID",
+    #    'absolutex'  => 1,
+    #    'absolutey'  => 1,
+    #});
+    #$self->push($tglyph);
     
     # draw the SNP position column label
     my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-        'x'          => $xstart+100,
+        'x'          => $xstart+10,
         'y'          => $global_ystart - 30 + 1,
         'font'       => 'Small',
         'colour'     => $black,
@@ -272,18 +302,18 @@ sub create_haplotype_block {
     foreach my $s ( @{$hap->snps()} ){
         my $snp_info = $hap->snp_info($s);
         my $pos =  $snp_info->{'position'};
-        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-            'x'          => $xstart+7,
-            'y'          => $ystart,
-            'font'       => 'Small',
-            'colour'     => $black,
-            'text'       => uc($s),
-            'absolutex'  => 1,
-            'absolutey'  => 1,
-        });
+        #my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        #    'x'          => $xstart+7,
+        #    'y'          => $ystart,
+        #    'font'       => 'Small',
+        #    'colour'     => $black,
+        #    'text'       => uc($s),
+        #    'absolutex'  => 1,
+        #    'absolutey'  => 1,
+        #});
 
         my $pglyph = new Bio::EnsEMBL::Glyph::Text({
-            'x'          => $xstart+100,
+            'x'          => $xstart+10,
             'y'          => $ystart,
             'font'       => 'Small',
             'colour'     => $black,
@@ -292,7 +322,7 @@ sub create_haplotype_block {
             'absolutey'  => 1,
         });
         $ystart += $vertical_space;
-        $self->push($tglyph);
+        #$self->push($tglyph);
         $self->push($pglyph);
     }     
 
