@@ -10,6 +10,7 @@ use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Hive::URLFactory;
+use Bio::SimpleAlign;
 
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -42,6 +43,7 @@ GetOptions('help'     => \$help,
            'fasta=s'  => \$self->{'outputFasta'},
            'noX=i'    => \$self->{'removeXedSeqs'},
            'nosplit'  => \$self->{'noSplitSeqLines'},
+           'gab_id=i' => \$self->{'print_align_GAB_id'},
           );
 
 if ($help) { usage(); }
@@ -68,28 +70,21 @@ if(defined($self->{'comparaDBA'})) {
   $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
 }
 
-test_core($self); exit(1);
-
-test_paf($self);
-
-$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
-
-my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(66454);
-$member->print_member() if($member);
-
-my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
-my $paf_list = $pafDBA->fetch_all_RH_by_member_genomedb(66454, 3);
-foreach my $paf (@{$paf_list}) {  
-  $paf->display_short() if($paf);
-  my $rpaf = $pafDBA->fetch_by_dbID($paf->rhit_dbID) if($paf->rhit_dbID);
-  $rpaf->display_short() if($rpaf);
+if($self->{'print_align_GAB_id'}) {
+  my $GAB = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->
+               fetch_by_dbID($self->{'print_align_GAB_id'});
+  print_simple_align($GAB->get_SimpleAlign, 80);
 }
 
+#compare_homologies($self); 
 
-my $coreDBA = $self->{'comparaDBA'}->get_db_adaptor("Mus musculus", "NCBIM32");
-$self->{'comparaDBA'}->add_db_adaptor($coreDBA);
+#test_longest($self); exit(0);
 
-#sleep(1000000);
+#test_core_genes($self); exit(1);
+
+#test_core($self); exit(1);
+
+#test_paf($self);
 
 exit(0);
 
@@ -142,6 +137,30 @@ sub parse_conf {
 }
 
 
+sub original_tests {
+  my $self = shift;
+
+  $self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+
+  my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(66454);
+  $member->print_member() if($member);
+
+  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
+  my $paf_list = $pafDBA->fetch_all_RH_by_member_genomedb(66454, 3);
+  foreach my $paf (@{$paf_list}) {
+    $paf->display_short() if($paf);
+    my $rpaf = $pafDBA->fetch_by_dbID($paf->rhit_dbID) if($paf->rhit_dbID);
+    $rpaf->display_short() if($rpaf);
+  }
+
+
+  my $coreDBA = $self->{'comparaDBA'}->get_db_adaptor("Mus musculus", "NCBIM32");
+  $self->{'comparaDBA'}->add_db_adaptor($coreDBA);
+
+  #sleep(1000000);
+}
+
+
 sub dump_fasta {
   my $self = shift;
 
@@ -179,7 +198,6 @@ sub dump_fasta {
   $sth->finish();
 }
 
-
 sub test_paf {
   my $self = shift;
 
@@ -205,5 +223,102 @@ sub test_core {
     print($transcript->translate->seq,"\n");
   } else {
     print("NO SEQUENCE!!\n");
+  }
+}
+
+
+sub test_core_genes {
+  my $self = shift;
+
+  my $humanGenomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Homo sapiens", "NCBI35");
+  my $humanDBA = $humanGenomeDB->db_adaptor;
+
+  my @slices;
+  push @slices, $humanDBA->get_SliceAdaptor->fetch_by_region('toplevel', 'Y');
+  my $count = 0;
+  SLICE: foreach my $slice (@slices) {
+    print("slice " . $slice->name . "\n");
+    foreach my $gene (@{$slice->get_all_Genes}) {
+      my $desc = $gene->stable_id. " " .
+                 $gene->seq_region_name . ":".
+                 $gene->seq_region_start . "-".
+                 $gene->seq_region_end;
+
+      if((lc($gene->type) ne 'pseudogene') and
+         (lc($gene->type) ne 'bacterial_contaminant') and
+         ($gene->type !~ /RNA/i))
+      {
+        $count++;
+        print("$desc\n");
+      }
+    }
+  }
+  print("pulled $count genes\n");
+}
+
+sub test_longest {
+  my $self = shift;
+
+  print("test LONGEST\n");
+
+  my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', 'ENSG00000198125');
+  $member->print_member() if($member);
+
+  my $longest = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_longest_peptide_member_for_gene_member_id($member->dbID);
+  $longest->print_member() if($longest);
+
+  my $pafs = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->fetch_all_by_qmember_id($longest->dbID);
+
+  foreach my $paf (@$pafs) {
+    $paf->display_short;
+  }  
+}
+
+
+sub compare_homologies {
+  my $self = shift;
+
+  print("pull all homologies for species 1,2 via API\n");
+  my $start_time = time();
+  my $all_homologies = $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_all_by_genome_pair(1,2);
+  print(time()-$start_time, " secs to grab ", scalar(@$all_homologies), " using API\n");
+  exit(0);
+}
+
+
+
+
+sub print_simple_align
+{
+  my $alignment = shift;
+  my $aaPerLine = shift;
+  $aaPerLine=40 unless($aaPerLine and $aaPerLine > 0);
+
+  my ($seq1, $seq2)  = $alignment->each_seq;
+  my $seqStr1 = "|".$seq1->seq().'|';
+  my $seqStr2 = "|".$seq2->seq().'|';
+
+  my $enddiff = length($seqStr1) - length($seqStr2);
+  while($enddiff>0) { $seqStr2 .= " "; $enddiff--; }
+  while($enddiff<0) { $seqStr1 .= " "; $enddiff++; }
+
+  my $label1 = sprintf("%40s : ", $seq1->id);
+  my $label2 = sprintf("%40s : ", "");
+  my $label3 = sprintf("%40s : ", $seq2->id);
+
+  my $line2 = "";
+  for(my $x=0; $x<length($seqStr1); $x++) {
+    if(substr($seqStr1,$x,1) eq substr($seqStr2, $x,1)) { $line2.='|'; } else { $line2.=' '; }
+  }
+
+  my $offset=0;
+  my $numLines = (length($seqStr1) / $aaPerLine);
+  while($numLines>0) {
+    printf("$label1 %s\n", substr($seqStr1,$offset,$aaPerLine));
+    printf("$label2 %s\n", substr($line2,$offset,$aaPerLine));
+    printf("$label3 %s\n", substr($seqStr2,$offset,$aaPerLine));
+    print("\n\n");
+    $offset+=$aaPerLine;
+    $numLines--;
   }
 }
