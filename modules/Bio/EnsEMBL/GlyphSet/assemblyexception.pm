@@ -32,7 +32,7 @@ sub features {
 
 sub tag {
   my ($self, $f) = @_;
-  return { 'style' => 'join', 'tag' => $f->{'start'}.'-'.$f->{'end'}, 'colour' => $f->type eq 'PAR' ? 'aliceblue' : 'bisque' };
+  return { 'style' => 'join', 'tag' => $f->{'start'}.'-'.$f->{'end'}, 'colour' => $f->type eq 'PAR' ? 'aliceblue' : 'bisque', 'zindex' => -20 };
 }
 
 sub href {
@@ -41,7 +41,8 @@ sub href {
   my $s2 = $f->{'alternate_slice'}->start;
   my $e2 = $f->{'alternate_slice'}->end;
   my $o2 = $f->{'alternate_slice'}->strand;
-  return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?l=$c2:$s2-$e2";
+  my $script = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? 'contigview' : $ENV{'ENSEMBL_SCRIPT'};
+  return "/@{[$self->{container}{_config_file_name_}]}/$script?l=$c2:$s2-$e2";
 }
 
 sub zmenu {
@@ -58,9 +59,10 @@ sub zmenu {
   my $o2 = $f->{'alternate_slice'}->strand;
   my $name1 = "$c1:$s1-$e1 ($o1)";
   my $name2 = "$c2:$s2-$e2 ($o2)";
+  my $HREF2 = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? "/@{[$self->{container}{_config_file_name_}]}/contigview?l=$c1:$s1-$e1": '';
   return { 
     'caption' => $MAP{$f->type},
-    $name1    => '',
+    $name1    => $HREF2,
     $name2    => $self->href($f)
   };
 }

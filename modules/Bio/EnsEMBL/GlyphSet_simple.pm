@@ -445,8 +445,8 @@ sub _init {
     $composite->push($line);
       } elsif($tag->{'style'} eq 'join') { 
     my $A = $strand > 0 ? 1 : 0;
-    $self->join_tag( $composite, $tag->{'tag'}, $A, $A , $tag->{'colour'}, 'fill', -10 ),
-      $self->join_tag( $composite, $tag->{'tag'}, 1-$A, $A , $tag->{'colour'}, 'fill', -10 )
+    $self->join_tag( $composite, $tag->{'tag'}, $A, $A , $tag->{'colour'}, 'fill', $tag->{'zindex'} || -10 ),
+      $self->join_tag( $composite, $tag->{'tag'}, 1-$A, $A , $tag->{'colour'}, 'fill', $tag->{'zindex'} || -10 )
     }
     }
 
