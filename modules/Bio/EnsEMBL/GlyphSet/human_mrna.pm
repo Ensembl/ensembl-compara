@@ -13,11 +13,15 @@ sub features {
 }
 
 sub href {
-    my ($self, $id ) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url('EMBL',$id);
+    my ($self, $db,$id ) = @_;
+    return $self->{'config'}->{'ext_url'}->get_url($db,$id);
 }
 sub zmenu {
     my ($self, $id ) = @_;
-    return { 'caption' => "$id", "EMBL: $id" => $self->href( $id ) };
+    if ($id =~ /^(NM_\d+)/){
+	return { 'caption' => "$id", "REFSEQ: $id" => $self->href('REFSEQ', $1 ) };
+    }
+
+    return { 'caption' => "$id", "EMBL: $id" => $self->href('EMBL', $id ) };
 }
 1;
