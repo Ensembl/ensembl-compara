@@ -98,7 +98,6 @@ CREATE TABLE peptide_align_feature (
   KEY hmember_id  (hmember_id),
   KEY hmember_qgenome  (hmember_id, qgenome_db_id),
   KEY qmember_hgenome  (qmember_id, hgenome_db_id),
-
 );
 
 
@@ -125,7 +124,7 @@ CREATE TABLE peptide_align_feature (
 
 CREATE TABLE analysis (
 
-  analysis_id                 int(10) unsigned DEFAULT '0' NOT NULL auto_increment,
+  analysis_id                 int(10) unsigned NOT NULL auto_increment,
   created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   logic_name                  varchar(40) not null,
   db                          varchar(120),
