@@ -99,6 +99,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Bio::EnsEMBL::Compara::AlignSlice::Exon;
+use Bio::SimpleAlign;
 
 
 =head2 new (CONSTRUCTOR)
