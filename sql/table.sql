@@ -19,43 +19,28 @@ create table dnafrag (
        UNIQUE KEY (name)
 );
 
-
 #
-# Synteny cluster is a set of (large) genomic regions
-# on different species which we believe to be related. Each
-# synteny cluster has an extent on piece of genomic dna 
-# (this is held by the synteny_region table) and
-# a set of alignments (held by the synteny_cluster_align)
+# We have now decided that Synteny is inherently pairwise
+# these tables hold the pairwise information for the synteny
+# regions. We reuse the dnafrag table as a link out for identifiers
+# (eg, '2' on mouse).
 #
-# The seq_start and seq_end is sort of semi-denormalisation of
-# the inherent information inside the alignments, but remember
-# that one is probably using quite an involved computational
-# procedure for deducing the extents and that alignments may
-# have more species than this cluster
-
-create table synteny_cluster (
-       synteny_cluster_id integer(10) NOT NULL auto_increment,
-       score double,
-       PRIMARY KEY(synteny_cluster_id)
-);
 
 create table synteny_region (
-       synteny_region_id  integer(10) NOT NULL auto_increment,
-       synteny_cluster_id integer(10) NOT NULL, # PK synteny_cluster
-       dnafrag_id         integer(10) NOT NULL, # PK dnafrag
-       seq_start          integer(10) NOT NULL,
-       seq_end            integer(10) NOT NULL,
-
-       PRIMARY KEY (synteny_region_id),       
-       KEY (dnafrag_id,seq_start)
+    synteny_region_id integer(10) NOT NULL auto_increment,
+    rel_orientation   tinyint(1)  NOT NULL DEFAULT 1,
+    PRIMARY KEY (synteny_region_id)
 );
 
-create table synteny_cluster_align (
-       synteny_cluster_id integer(10) NOT NULL, # PK synteny_cluster
-       align_id           integer(10) NOT NULL, # PK align
-
-       PRIMARY_KEY(synteny_cluster_id,align_id)
+create table dnafrag_region (
+    synteny_region_id integer(10) NOT NULL, # PK synteny_region
+    dnafrag_id        integer(10) NOT NULL, # PK dnafrag
+    seq_start         unsigned int (10) NOT NULL,
+    seq_end           unsigned int (10) NOT NULL,
+    UNIQUE KEY unique_synteny (synteny_region_id,dnafrag_id),
+    UNIQUE KEY unique_synteny_reversed (dnafrag_id,synteny_region_id)
 );
+
 
 
 
