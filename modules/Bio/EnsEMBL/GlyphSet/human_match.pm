@@ -33,13 +33,16 @@ sub unbumped_zmenu {
     my ($self, $ref, $target ) = @_;
     return { 
     	'caption'    => 'Dot-plot', 
-    	'Jump to Homo sapiens' => $self->unbumped_href( $ref, $target )
+    	'Dotter' => $self->unbumped_href( $ref, $target ),
+    	'THJ'    => "/$ENV{'ENSEMBL_SPECIES'}/thjview?width=50000&ref=".join(':',@$ref).
+                        "&target=".join(':','Homo_sapiens', @$target ),
     };
 }
 
 sub unbumped_href {
     my ($self, $ref, $target ) = @_;
-    return "javascript:alert(\\\"$ENV{'ENSEMBL_SPECIES'}:".join('-',@$ref)."\\\",\\\"Homo_sapiens:".join('-',@$target)."\\\")";
+    return "/$ENV{'ENSEMBL_SPECIES'}/dotterview?ref=".join(':',$ENV{'ENSEMBL_SPECIES'},@$ref).
+                        "&hom=".join(':','Homo_sapiens', @$target ) ;
 }
 
 1;

@@ -33,7 +33,9 @@ sub unbumped_zmenu {
     my ($self, $ref, $target ) = @_;
     return { 
     	'caption'    => 'Dot-plot', 
-    	'Jump to Mus musculus' => $self->unbumped_href( $ref, $target )
+    	'Dotter' => $self->unbumped_href( $ref, $target ),
+    	'THJ'    => "/$ENV{'ENSEMBL_SPECIES'}/thjview?width=50000&ref=".join(':',@$ref).
+                        "&target=".join(':','Mus_musculus', @$target ),
     };
 }
 
