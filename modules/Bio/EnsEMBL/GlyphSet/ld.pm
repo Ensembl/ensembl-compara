@@ -27,7 +27,7 @@ sub _init {
 
   my $Config   = $self->{'config'};
   my $only_pop = $Config->{'_ld_population'};
-  my $TAG_LENGTH = 8;
+  my $TAG_LENGTH = 10;
   my $key = $self->_key();
   my $offset = $self->{'container'}->start - 1;
   my $starttime = time();
