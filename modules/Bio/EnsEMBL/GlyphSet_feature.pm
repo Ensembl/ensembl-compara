@@ -39,6 +39,13 @@ sub features { return (); }
 sub zmenu    { return { 'caption' => $_[0]->check(), "$_[1]" => "Missing caption" }; }
 sub href     { return undef; }
 
+## Returns the 'group' that a given feature belongs to. Features in the same
+## group are linked together via an open rectangle. Can be subclassed.
+sub feature_group{
+  my( $self, $f ) = @_;
+  return $f->can('hseqname') ? $f->hseqname : $f->seqname;
+}
+
 sub _init {
   my ($self) = @_;
   my $type = $self->check();
@@ -87,9 +94,9 @@ sub expanded_init {
   foreach my $features ( grep { ref($_) eq 'ARRAY' } $self->features ) {
     foreach my $f ( @$features ){
       my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
-      my $hseqname = $f->can('hseqname') ? $f->hseqname : $f->seqname;
+      my $fgroup_name = $self->feature_group( $f );
       next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
-      push @{$id{$hseqname}}, [$f->start,$f->end,$f];
+      push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
     }
   }
 
@@ -109,7 +116,7 @@ sub expanded_init {
     $y_pos = $row * int( -1.5 * $h ) * $strand;
     $C1 += @{$id{$i}}; ## Diagnostic report....
     my $Composite = new Sanger::Graphics::Glyph::Composite({
-      'href'  => $self->href( $i ),
+      'href'  => $self->href( $i, $id{$i} ),
       'x'     => $F[0][0]> 1 ? $F[0][0]-1 : 0,
       'width' => 0,
       'y'     => 0,
@@ -117,7 +124,7 @@ sub expanded_init {
     });
     my $X = -1000000;
     #my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->display_id );
-    my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->id, $F[0][2] );
+    my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->display_id, $F[0][2] );
     foreach my $f ( @F ){
       next if int($f->[1] * $pix_per_bp) <= int( $X * $pix_per_bp );
       $C++;
