@@ -46,7 +46,7 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Argument;
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
 
@@ -153,6 +153,10 @@ sub new {
 sub add_db_adaptor {
   my ($self, $dba) = @_;
 
+  deprecate("add_db_adaptor is deprecated. Correct method is to call\n" .
+            "dba->get_GenomeDBAdaptor->fetch_by_name_assembly(<name>,<assembly>)->db_adaptor(<coreDBA>)\n".
+            "Or to use the Registry\n");
+
   unless($dba && ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
     $self->throw("dba argument must be a Bio::EnsEMBL::DBSQL::DBAdaptor\n" .
                  "not a [$dba]");
@@ -201,6 +205,10 @@ sub add_db_adaptor {
 
 sub get_db_adaptor {
   my ($self, $species, $assembly) = @_;
+
+  deprecate("get_db_adaptor is deprecated. Correct method is to call\n".
+            "dba->get_GenomeDBAdaptor->fetch_by_name_assembly(<name>,<assembly>)->db_adaptor\n".
+            "Or to use the Registry\n");
 
   unless($species && $assembly) {
     throw("species and assembly arguments are required\n");
