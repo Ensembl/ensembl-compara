@@ -194,7 +194,7 @@ sub create_db {
     my( $self ) = @_;
     
     ### FIXME: not portable between different drivers
-    my $locator = 'dbi:'. $self->driver .':host='. $self->host .';database=mysql';
+    my $locator = 'dbi:'. $self->driver .':host='. $self->host;
     my $db = DBI->connect(
         $locator, $self->user, $self->password, {RaiseError => 1}
         ) or confess "Can't connect to server";

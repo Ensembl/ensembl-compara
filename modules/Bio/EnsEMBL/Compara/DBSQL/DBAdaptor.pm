@@ -66,6 +66,7 @@ sub new {
       $host,
       $driver,
       $user,
+      $pass,
       $password,
       $port,
       ) = $self->_rearrange([qw(
@@ -74,12 +75,17 @@ sub new {
 				DRIVER
 				USER
 				PASS
+				PASSWORD
 				PORT
 				)],@args);
 
   $db   || $self->throw("Database object must have a database name");
   $user || $self->throw("Database object must have a user");
   
+
+  if( defined $pass && ! defined $password ) {
+    $password = $pass;
+  }
 
   if( ! $driver ) {
         $driver = 'mysql';
