@@ -237,9 +237,10 @@ sub _dump {
 
 sub errorTrack {
     my ($self, $message) = @_;
-    my $length   = $self->{'container'}->length() +1;
-    my ($w,$h)   = $self->{'config'}->texthelper()->real_px2bp('Tiny');
-    my ($w2,$h2) = $self->{'config'}->texthelper()->real_px2bp('Small');
+    my $length = $self->{'config'}->image_width();
+    my $w      = $self->{'config'}->texthelper()->width('Tiny');
+    my $h      = $self->{'config'}->texthelper()->height('Tiny');
+    my $h2     = $self->{'config'}->texthelper()->height('Small');
     $self->push( new Sanger::Graphics::Glyph::Text({
     	'x'         => int( ($length - $w * CORE::length($message))/2 ),
         'y'         => int( ($h2-$h)/2 ),
@@ -248,6 +249,9 @@ sub errorTrack {
         'colour'    => "red",
         'text'      => $message,
         'absolutey' => 1,
+        'absolutex' => 1,
+        'absolutewidth' => 1,
+        'pixperbp'  => $self->{'config'}->{'transform'}->{'scalex'} ,
     }) );
     
     return;

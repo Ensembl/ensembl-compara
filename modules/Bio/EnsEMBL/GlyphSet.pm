@@ -45,11 +45,11 @@ sub check {
 
 sub HASH_URL {
   my($self,$db,$hash) = @_;
-  return "/perl/r?d=$db&".join '&', map { "$_=$hash->{$_}" } keys %{$hash||{}};
+  return "/$ENV{'ENSEMBL_SPECIES'}/r?d=$db&".join '&', map { "$_=$hash->{$_}" } keys %{$hash||{}};
 }
 sub ID_URL {
   my($self,$db,$id) = @_;
-  return "/perl/r?d=$db&ID=$id";
+  return "/$ENV{'ENSEMBL_SPECIES'}/r?d=$db&ID=$id";
 }
 sub zoom_URL {
     my( $self, $PART, $interval_middle, $width, $factor, $highlights ) = @_;

@@ -61,7 +61,7 @@ sub _init {
     my $lglyph = new Sanger::Graphics::Glyph::Rect({
 	'x'         => 0,
 	'y'         => 6,
-	'width'     => int($im_width/2) - int($bp_textwidth/2),
+	'width'     => int(($im_width - $bp_textwidth)/2),
 	'height'    => 0,
 	'colour'    => $feature_colour,
 	'absolutex' => 1,'absolutewidth'=>1,
@@ -70,9 +70,9 @@ sub _init {
     $self->push($lglyph);
     
     my $rglyph = new Sanger::Graphics::Glyph::Rect({
-	'x'         => int($im_width/2) + int($bp_textwidth/2),
+	'x'         => int(($im_width + $bp_textwidth)/2),
 	'y'         => 6,
-	'width'     => $im_width - (int($im_width/2) + int($bp_textwidth/2)),
+	'width'     => $im_width - (int(($im_width + $bp_textwidth) /2)),
 	'height'    => 0,
 	'colour'    => $feature_colour,
 	'absolutex' => 1,'absolutewidth'=>1,

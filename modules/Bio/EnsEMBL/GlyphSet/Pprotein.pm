@@ -20,9 +20,16 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-    my $protein = $self->{'container'};	
+    my $db;
+	my $protein = $self->{'container'};	
     my $Config  = $self->{'config'};
 	my $pep_splice = $protein->{'image_splice'};
+	my $type = $protein->gene->type();
+	
+	if ($type eq 'ensembl'){$db = 'core'}
+	elsif ($type eq 'genomewise'){$db = 'estgene'}
+	else {$db = 'vega'}
+		
     my $x 		= 0;
 	my $y       = 0;
     my $h       = 4; 
@@ -42,12 +49,12 @@ sub _init {
 		'colour'   => $colour,
 		'zmenu' => {
 			'caption' => "Splice Information",
-			"00:Exon: $exon_id" => "",
+			"00:Exon: $exon_id" => "/$ENV{'ENSEMBL_SPECIES'}/exonview?exon=$exon_id&db=$db",
 			"01:Start Phase: $start_phase" => "",
 			'02:End Phase: '. ($pep_splice->{$exon_offset}{'phase'} +1) => "",
 			'03:Length: '.($exon_offset - $x)  => "", },
     	});
-  #/$ENV{'ENSEMBL_SPECIES'}/exonview?exon=$exon_id&db=$db
+  
     $self->push($rect);
 	$x = $exon_offset ;
 	$start_phase = ($pep_splice->{$exon_offset}{'phase'} +1) ;

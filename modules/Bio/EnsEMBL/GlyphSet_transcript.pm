@@ -58,7 +58,7 @@ sub _init {
 
   my $fontname      = "Tiny";    
   my $pix_per_bp    = $Config->transform->{'scalex'};
-  my $bitmap_length = int($Config->container_width() * $pix_per_bp);
+  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
   my $strand  = $self->strand();
   my $length  = $container->length;

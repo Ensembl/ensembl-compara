@@ -784,6 +784,13 @@ sub add_hex {
     return $hex;
 }
 
+sub add_colour {
+  my( $self, $string ) = @_;
+  return $string if exists $self->{$string};
+  return $self->add_hex( $string )    if $string =~/([\dabcdef]{6})/i;
+  return $self->add_rgb( [$1,$2,$3] ) if $string =~/(\d+),(\d+),(\d+)/;
+}
+
 sub build_linear_gradient {
   my ($self, $grades_total, $start, @colours) = @_;
 

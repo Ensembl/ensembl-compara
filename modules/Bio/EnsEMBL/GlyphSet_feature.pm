@@ -20,9 +20,12 @@ sub init_label {
         'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
         'zmenu'     => {
             'caption'                     => 'HELP',
-            "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'$HELP_LINK\\')]
+            "02:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'$HELP_LINK\\')]
         }
     });
+    if( $self->{'extras'} && $self->{'extras'}{'description'} ) {
+       $label->{'zmenu'}->{'01:'.CGI::escapeHTML($self->{'extras'}{'description'})} = ''; 
+    }
     $self->label($label);
     $self->bumped( $self->{'config'}->get($HELP_LINK, 'dep')==0 ? 'no' : 'yes' );
 }
@@ -60,8 +63,8 @@ sub href {
 
 sub _init {
     my ($self) = @_;
-
     my $type = $self->check();
+    warn ">>>> $type ", ref( $self );
     return unless defined $type;
 
     my $length = $self->{'container'}->length();
@@ -71,7 +74,7 @@ sub _init {
     return if( $strand_flag eq 'r' && $strand != -1 ||
                $strand_flag eq 'f' && $strand != 1 );
     my $pix_per_bp     = $Config->transform()->{'scalex'};
-    my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
+    my $DRAW_CIGAR     = ( $Config->get($type,'force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
 
     my %highlights;
     @highlights{$self->highlights()} = ();

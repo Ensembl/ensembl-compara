@@ -114,10 +114,12 @@ sub new {
         my $gsm = new $classname($Container, $Config, $self->{'highlights'}, $strand);
         for my $glyphset ( sort { $a->managed_name cmp $b->managed_name } $gsm->glyphsets()) {
           my $row = $glyphset->managed_name();
-          next unless ($Config->get($row, 'on') eq "on");
+          next if     $Config->get($row, 'on')     eq "off";
+          next if     $Config->get($manager, 'on') eq 'off';
           my $str_tmp = $Config->get($row, 'str');
           next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
           next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
+          warn $row;
           $tmp_glyphset_store->{$Config->get($row, 'pos') || $managed_offset++} = $glyphset;
         }
       }
