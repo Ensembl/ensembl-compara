@@ -98,7 +98,7 @@ sub update_sequence
   return 0 unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
   return 0 unless($dfc->dbID);
   return 0 unless(defined($dfc->sequence));
-  return 0 unless(length($dfc->sequence) <= 5000000);  #mysql interface can't deal with string > 5MB
+  return 0 unless(length($dfc->sequence) <= 11500000);  #limited by myslwd max_allowed_packet=12M 
 
   my $seqDBA = $self->db->get_SequenceAdaptor;
   my $newSeqID = $seqDBA->store($dfc->sequence);
