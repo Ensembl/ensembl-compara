@@ -57,8 +57,9 @@ use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Pipeline::Rule;
+use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::SimpleRuleAdaptor;
 
 use vars qw(@ISA);
 
@@ -93,8 +94,10 @@ sub fetch_input {
   print("input_id = ".$self->input_id."\n");
   $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
-  $self->{'create_all'} = 1;
-
+  if($self->analysis->parameters =~ /{/) {
+    $self->{'create_all'} = eval($self->analysis->parameters)->{'allToAll'};
+    print("create rules allToAll\n") if($self->{'create_all'});
+  }
   
   #create a new Compara::DBAdaptor which points to the same database
   #as the Pipeline::DBAdaptor passed in ($self->db)
@@ -182,18 +185,6 @@ sub createBlastRules
       }
     }
   }
-
-  my @rules = @{$self->{'comparaDBA'}->get_adaptor('SimpleRule')->fetch_all};
-  foreach my $rule (@rules){
-    print("simple_rule dbID=".$rule->dbID.
-          "  condition_id=".$rule->conditionAnalysis->dbID .
-          "  goal_id=".$rule->goalAnalysis->dbID .
-          "  goal_type=".$rule->goalAnalysis->input_id_type . "\n");
-
-    if($rule->goalAnalysis->input_id_type eq 'ACCUMULATOR') {
-      print("  IS ACCUMULATOR\n");
-    }
-  }
 }
 
 
@@ -236,13 +227,13 @@ sub addSimpleRule
   
   print("SIMPLERULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
   
-  my $rule = Bio::EnsEMBL::Compara::SimpleRule->new(
+  my $rule = Bio::EnsEMBL::Hive::SimpleRule->new(
       '-goal_analysis'      => $goalAnalysis,
       '-condition_analysis' => $conditionAnalysis);
       
-  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($rule);
+  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($rule);
 
-  my $temp_rule = $self->{'comparaDBA'}->get_adaptor('SimpleRule')->fetch_by_dbID($rule->dbID);
+  my $temp_rule = $self->{'comparaDBA'}->get_SimpleRuleAdaptor->fetch_by_dbID($rule->dbID);
 }
 
 
@@ -297,7 +288,7 @@ sub addBuildHomologyInput
     $self->db->get_AnalysisAdaptor()->store($buildHomology);
     $self->{'buildHomology'} = $buildHomology;
 
-    $self->{'comparaDBA'}->get_adaptor('SimpleRule')->create_rule($submitHomology,$buildHomology);
+    $self->{'comparaDBA'}->get_SimpleRuleAdaptor->create_rule($submitHomology,$buildHomology);
   }
 
 
@@ -342,7 +333,7 @@ sub createBuildHomologyInput
 
   while(@analysisList) {
     $analysis1 = shift @analysisList;
-    foreach my $analysis2 (@analysisList) {
+    foreach $analysis2 (@analysisList) {
       $self->addBuildHomologyInput($analysis1, $analysis2);
     }
   }
