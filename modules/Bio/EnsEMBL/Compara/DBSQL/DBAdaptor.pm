@@ -312,6 +312,27 @@ sub get_GenomicAlignBlockAdaptor {
 
 
 
+=head2 get_GenomicAlignGroupAdaptor
+
+  Arg [1]    : none
+  Example    : $gaga = $dba->get_GenomicAlignGroupAdaptor
+  Description: Retrieves an adaptor for this database which can be used
+               to obtain GenomicAlignGroup objects
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_GenomicAlignGroupAdaptor {
+  my ($self) = @_;
+
+  return
+    $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor");
+}
+
+
+
 =head2 get_GenomicAlignAdaptor
 
   Arg [1]    : none
