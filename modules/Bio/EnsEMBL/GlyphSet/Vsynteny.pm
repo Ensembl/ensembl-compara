@@ -431,10 +431,12 @@ sub draw_chromosome {
     my $divisor = $wid<30 ? 24 : 30;         
 ## This is the end of the         
 
-    foreach my $end ( 
-        ( $params{'bands'}[ 0]->stain() eq 'tip' ? () : -1 ),
-        ( $params{'bands'}[-1]->stain() eq 'tip' ? () : 1 )
-     ) {
+    my @ends;
+    if (@{$params{'bands'}}){
+	@ends = (( $params{'bands'}[ 0]->stain() eq 'tip' ? () : 1 ),
+	    ( $params{'bands'}[-1]->stain() eq 'tip' ? () : -1 ));
+    }
+    foreach my $end (@ends){
         foreach my $I ( 0..$#lines ) {
             my ( $bg_x, $black_x ) = @{$lines[$I]};
             my $xx =  ($end==1 ? $v_offset : $v_offset + $length) + $end * $I;

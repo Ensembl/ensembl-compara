@@ -70,7 +70,6 @@ sub _init {
     
     my @features;
     my ( $features, $styles ) = @{ $vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[] };
-    # warn Data::Dumper::Dumper( $features );
     $use_style = 0 unless $styles && @{$styles};
     
     #print STDERR "STYLE: $use_style\n";
@@ -84,7 +83,6 @@ sub _init {
         
        foreach(@$styles) {
           $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
-          warn Dumper( $_ );
           $h = $_->{'attrs'}{'height'} if exists $_->{'attrs'} && exists $_->{'attrs'}{'height'};
        } 
     }

@@ -27,8 +27,10 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    my $chr_start = $self->{'container'}->start()+$f->start;
-    my $snp_id = $f->id;
+
+    my $chr_start = $self->{'container'}->chr_start()+$f->start;
+    my $snp_id = $f->snpid || $f->id;
+
     my $source = $f->source_tag;
     my $chr_name = $self->{'container'}->name();
 
@@ -83,7 +85,7 @@ sub zmenu {
        $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
    }
     my %zmenu = ( 
-        'caption'           => "SNP: ".$f->id(),
+        'caption'           => "SNP: " . ($f->snpid || $f->id),
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $pos" => '',
         "03:class: ".$f->snpclass => '',

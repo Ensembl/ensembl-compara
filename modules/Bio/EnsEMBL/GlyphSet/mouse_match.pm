@@ -17,7 +17,7 @@ sub features {
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Mus musculus',
-							    $assembly,'WGA');
+							    $assembly,'BLASTZ_NET');
 }
 
 sub href {
@@ -26,22 +26,24 @@ sub href {
 }
 
 sub zmenu {
-    my ($self, $id, $chr_pos ) = @_;
+    my ($self, $id, $chr_pos, $text ) = @_;
     return { 
 		'caption'    => $id, # $f->id,
-		'Jump to Mus musculus' => $self->href( $chr_pos )
+		'Jump to Mus musculus' => $self->href( $chr_pos ), 
     };
 }
 
 
 sub unbumped_zmenu {
-    my ($self, $ref, $target,$width ) = @_;
+    my ($self, $ref, $target,$width, $text ) = @_;
     my ($chr,$pos) = @$target;
     my $chr_pos = "l=$chr:".($pos-$width)."-".($pos+$width);
     return { 
     	'caption'    => 'Dot-plot', 
     	'Dotter' => $self->unbumped_href( $ref, $target ),
-	'Jump to Mus musculus' => $self->href( $chr_pos )
+	'Jump to Mus musculus' => $self->href( $chr_pos ), 
+        $text => ''
+
     };
 }
 

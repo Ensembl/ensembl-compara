@@ -20,7 +20,7 @@ sub init_label {
         'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
         'zmenu'     => {
             'caption'                     => 'HELP',
-            "01:Track information..."     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'$HELP_LINK\\')]
+            "01:Track information..."     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'$HELP_LINK\')]
         }
     });
     $self->label($label);
@@ -41,8 +41,9 @@ sub zmenu {
     my ($self, $id ) = @_;
 
     return {
-        'caption' => "Unknown",
-        "$id"     => "You must write your own zmenu call"
+      'caption' => "Unknown",
+      "$id"     => "You must write your own zmenu call",
+       
     };
 }
 
@@ -131,7 +132,8 @@ sub _init {
                 my $f = $_->[1];
                 $start = $f->hstart() if $f->hstart < $start;
                 $end   = $f->hend()   if $f->hend   > $end;
-                next if int($_->[0] * $pix_per_bp) == int( $X * $pix_per_bp );
+
+                next if int($f->end * $pix_per_bp) <= int( $X * $pix_per_bp );
                 $C++;
                 if($DRAW_CIGAR) {
                   # warn( "CIGAR LINE $type" );
@@ -139,11 +141,11 @@ sub _init {
                 } else {
                   my $START = $_->[0] < 1 ? 1 : $_->[0];
                   my $END   = $f->end > $length ? $length : $f->end;
-                  $X = $START;
+                  $X = $END;
                   my $BOX = new Sanger::Graphics::Glyph::Rect({
-                    'x'          => $X-1,
+                    'x'          => $START-1,
                     'y'          => 0,
-                    'width'      => $END-$X+1,
+                    'width'      => $END-$START+1,
                     'height'     => $h,
                     'colour'     => $feature_colour,
                     'absolutey'  => 1,
@@ -199,7 +201,7 @@ sub _init {
             next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
             $X = $START;
             $C++;
-            my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2) );
+            my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2), "Chr@{[$f->hseqname]} @{[$f->hstart]}-@{[$f->hend]}" );
             if($DRAW_CIGAR) {
                 # warn( "UNBUMPED CIGAR LINE $type" );
                 my $Composite = new Sanger::Graphics::Glyph::Composite({

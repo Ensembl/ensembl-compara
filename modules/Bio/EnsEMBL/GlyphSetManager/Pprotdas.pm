@@ -30,7 +30,8 @@ sub init {
 	    # Skip protein-wide features (GeneDAS - tabulated elsewhere )
 	    # GeneDAS Identified by DAS segment id eq DAS feature id
 	    my $id = $feat->das_id();
-	    if( $feat->das_segment_id() =~ /^$id/ ){ next }
+		if( $feat->das_segment_id() eq $id) { next; }	
+#	    if( $feat->das_segment_id() =~ /^$id/ ){ next; }
 
 	    # Push feature onto appropriate glyph key (by feature type)
 	    my $type = $dsn . '_' . $feat->das_type_id() || 'UNKNOWN';

@@ -22,7 +22,6 @@ sub managed_name {
 sub features {
   my ($self) = @_;
   my @data = map { $_->map( $self->{'container'} ) } @{ $self->{'extras'}{'data'} };
-  warn Data::Dumper::Dumper( \@data );
   return \@data;
 }
 

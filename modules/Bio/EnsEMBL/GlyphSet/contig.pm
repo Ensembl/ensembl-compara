@@ -23,7 +23,7 @@ sub init_label {
     'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','contig')],
     'zmenu'     => {
       'caption'                     => 'HELP',
-      '01:Track information...'     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'contig\\')]
+      '01:Track information...'     => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'contig\')]
     }
   });
   $self->label($label);

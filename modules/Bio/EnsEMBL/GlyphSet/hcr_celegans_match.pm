@@ -17,7 +17,7 @@ sub features {
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Caenorhabditis elegans',
-							    $assembly,'WGA_HCR');
+							    $assembly,'PHUSION_BLASTN_TIGHT');
 
 }
 
@@ -27,22 +27,24 @@ sub href {
 }
 
 sub zmenu {
-    my ($self, $id, $chr_pos ) = @_;
+    my ($self, $id, $chr_pos, $text ) = @_;
     return { 
 	'caption'    => $id, 
-	'Jump to Caenorhabditis elegans' => $self->href( $chr_pos )
+	'Jump to Caenorhabditis elegans' => $self->href( $chr_pos ), 
     };
 }
 
 
 sub unbumped_zmenu {
-    my ($self, $ref, $target,$width ) = @_;
+    my ($self, $ref, $target,$width, $text ) = @_;
     my ($chr,$pos) = @$target;
     my $chr_pos = "l=$chr:".($pos-$width)."-".($pos+$width);
     return { 
     	'caption'    => 'Dot-plot', 
     	'Dotter' => $self->unbumped_href( $ref, $target ),
-        'Jump to Caenorhabditis elegans' => $self->href( $chr_pos )
+        'Jump to Caenorhabditis elegans' => $self->href( $chr_pos ), 
+        $text => ''
+
     };
 }
 

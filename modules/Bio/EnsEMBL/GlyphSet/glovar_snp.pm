@@ -11,7 +11,7 @@ sub features {
     my @snps = 
         map { $_->[1] } 
         sort { $a->[0] <=> $b->[0] }
-        map { [ substr($_->type,0,2) * 1e9 + $_->start, $_ ] }
+        map { [ substr($_->type->[0],0,2) * 1e9 + $_->start, $_ ] }
         grep { $_->score < 4 } 
             @{$self->{'container'}->get_all_ExternalLiteFeatures('GlovarSNP')};
 
@@ -21,6 +21,23 @@ sub features {
     }
 
     return \@snps;
+}
+
+sub colour {
+    my ($self, $f) = @_;
+    my $T = $f->type->[0];
+    unless($self->{'config'}->{'snp_types'}{$T}) {
+        my %labels = (
+            '_coding' => 'Coding SNPs',
+            '_utr'    => 'UTR SNPs',
+            '_intron' => 'Intronic SNPs',
+            '_local'  => 'Flanking SNPs',
+            '_'       => 'other SNPs'
+        );
+        push @{ $self->{'config'}->{'snp_legend_features'}->{'snps'}->{'legend'} }, $labels{"_$T"} => $self->{'colours'}{"_$T"};
+        $self->{'config'}->{'snp_types'}{$T}=1;
+    }
+    return( $self->{'colours'}{"_$T"}, $self->{'colours'}{"label_$T"}, $f->{'_range_type'} eq 'between' ? 'invisible' : '' );
 }
 
 sub zmenu {
@@ -36,13 +53,15 @@ sub zmenu {
         $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
     my %zmenu = ( 
-        'caption'           => "SNP: ".$f->id(),
+        'caption'           => "SNP: " . ($f->snpid || $f->id),
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $pos" => '',
         "03:class: ".$f->snpclass => '',
         "03:status: ".$f->raw_status => '',
         "07:ambiguity code: ".$f->{'_ambiguity_code'} => '',
-        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
+        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => '',
+        "09:type: ".($f->type->[0]||'other') => '',
+        "10:consequence: ".($f->consequence->[0]||'unknown') => '',
    );
 
     my %links;
@@ -50,7 +69,7 @@ sub zmenu {
     my $source = $f->source_tag; 
     foreach my $link ($f->each_DBLink()) {
       my $DB = $link->database;
-      if ( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || $DB eq 'WI' ) {
+      if ($DB =~ s/(TSC)/\1/i) {
         $zmenu{"16:$DB:".$link->primary_id } = $self->ID_URL( $DB, $link->primary_id );
       } elsif ($DB eq 'dbSNP rs') {
         $zmenu{"16:dbSNP:".$link->primary_id } = $self->ID_URL( 'dbSNP', $link->primary_id );
@@ -58,10 +77,7 @@ sub zmenu {
         $zmenu{"16:dbSNP:".$link->primary_id } = $self->ID_URL( 'SNP_SS', $link->primary_id );
       }
     }
-    my $type = substr($f->type(),3);
-    $zmenu{"57:Type: $type"} = "" unless $type eq '';  
     return \%zmenu;
 }
-
 
 1;

@@ -73,9 +73,10 @@ sub new {
 ## Then work out the minimum start for each of these rows
 ## We then shift up all these points up by that many base 
 ## pairs to close up any gaps
-  my $GS = $Config->{'_group_size'} || 1; 
-  warn $GS;
-  my $entries_per_row = $Config->{'_columns'} || ( int( ($glyphsets/$GS - 1) / ($Config->{'_rows'} || 1) + 1 ) * $GS ); 
+
+  my $GS = $Config->{'_group_size'} || 1;
+  my $entries_per_row = $Config->{'_columns'} || ( int( ($glyphsets/$GS - 1) / ($Config->{'_rows'} || 1) + 1 ) * $GS );
+
   my $entry_no = 0;
   $Config->{'_max_height'} =  0;
   $Config->{'_max_width'}  =  0;

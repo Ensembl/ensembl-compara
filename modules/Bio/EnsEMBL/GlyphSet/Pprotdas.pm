@@ -56,34 +56,37 @@ sub _init {
     my @das_feats = @$das_feat_ref;
 
     foreach my $feat(@das_feats) {
-	push(@{$hash{$feat->das_id}},$feat);
+	push(@{$hash{$feat->das_feature_id}},$feat);
     }
 
     foreach my $key (keys %hash) {
 	my @row  = @{$hash{$key}};
-	my $desc = $row[0]->das_id();
+	my $desc = $row[0]->das_feature_label();
 		
 	# Zmenu
+	my $zmenu = { 'caption' => $row[0]->das_type(),
+		      "01:".$key      => $row[0]->das_link() || undef };
+	if( my $m = $row[0]->das_method ){ $zmenu->{"02:Method: $m"} = undef }
+	if( my $n = $row[0]->das_note   ){ $zmenu->{"03:Note: $n"  } = undef }
+		      
+
 	my $Composite = new Sanger::Graphics::Glyph::Composite
 	  ({
-	    'x'     => $row[0]->das_start(),
+	    'x'     => $row[0]->start(),
 	    'y'     => $y,
 	    'href'  => $row[0]->das_link(),
-	    'zmenu' => {
-			'caption' => $row[0]->das_type(),
-			$key      => $row[0]->das_link() || undef,
-		       },
+	    'zmenu' => $zmenu,
 	   });
 
 	# Boxes
 	my $pfsave;
 	my ($minx, $maxx);
 	foreach my $pf (@row) {
-	    my $x  = $pf->das_start();
+	    my $x  = $pf->start();
 	    $minx  = $x if ($x < $minx || !defined($minx));
-	    my $w  = $pf->das_end() - $x;
-	    $maxx  = $pf->das_end() if ($pf->das_end() > $maxx || !defined($maxx));
-	    my $id = $pf->das_id();
+	    my $w  = $pf->end() - $x;
+	    $maxx  = $pf->end() if ($pf->das_end() > $maxx || !defined($maxx));
+	    my $id = $pf->das_feature_id();
 
 	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
@@ -108,12 +111,12 @@ sub _init {
 
 	# Label - disabled for now
 	if( 0 ){
-	    my $desc = $pfsave->das_id() || $key;
+	    my $desc = $pfsave->das_feature_label() || $key;
 	    my $text = new Sanger::Graphics::Glyph::Text
 	      ({
 		'font'   => $font,
 		'text'   => $desc,
-		'x'      => $row[0]->das_start(),
+		'x'      => $row[0]->start(),
 		'y'      => $h + 1,
 		'height' => $fontheight,
 		'width'  => $fontwidth * length($desc),
@@ -122,7 +125,7 @@ sub _init {
 	    #$Composite->push($text);
 	}
 
-	if ($Config->get('Ppfam', 'dep') > 0){ # we bump
+	#if ($Config->get('Pprotdas', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 	    
@@ -134,8 +137,8 @@ sub _init {
 				      $bitmap_length,
 				      \@bitmap
 				      );
-            $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
-        }
+            $Composite->y($Composite->y() + $row * ($h + 2) );
+        #}
 	
 	$self->push($Composite);
     }

@@ -68,6 +68,7 @@ sub tag {
     if( $f->fp_size && $f->fp_size > 0 ) {
         my $start = int( ($f->start + $f->end - $f->fp_size)/2 );
         my $end   = $start + $f->fp_size - 1 ;
+#        warn "@{[$f->start, $f->end, $f->fp_size]} $start, $end";
         push @result, {
             'style' => 'underline',
             'colour' => $self->{'colours'}{"seq_len"},

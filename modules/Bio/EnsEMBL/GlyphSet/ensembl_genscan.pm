@@ -13,8 +13,8 @@ sub features {
 
 sub href {
     my ($self, $id ) = @_;
-    if($id =~ /(.*)+\.\d+\.(\d+)\.(\d+)$/) {   
-       return $self->ID_URL( 'ENS_GENSCAN', { 'CONTIG' => $1 , 'START' => $2, 'END' => $3 } );
+    if($id =~ /^(.*)\.\d+\.(\d+)\.(\d+)$/) {   
+       return $self->HASH_URL( 'ENS_GENSCAN', { 'contig' => $1 , 'start' => $2, 'end' => $3 } );
     } else {
        return undef;
     } 

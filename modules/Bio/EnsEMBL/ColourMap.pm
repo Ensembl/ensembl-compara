@@ -58,6 +58,12 @@ sub new {
     'refseq' => 'mediumspringgreen',
     'riken'  => 'olivedrab4',
   );
+  $self->colourSet( 'glovar_sts',
+    'col'    => 'grey',
+    'unknown'    => 'grey',
+    'pass' => 'green',
+    'fail'  => 'red',
+  );
   $self->colourSet( 'snp',
     '_coding'      => 'red',
     '_utr'         => 'orange',

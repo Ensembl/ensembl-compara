@@ -30,8 +30,9 @@ sub features {
 
 sub colour {
     my ($self, $f) = @_;
-    my $type = $f->mismatch() ? 'MISMATCH' : 
-               ($f->start_pos eq $f->end_pos ? $f->start_pos : 'DIFFERENT');
+    my $type = !$f->bac_start ? 'EMBL' : 
+                (  $f->mismatch() ? 'MISMATCH' : 
+                 ( $f->start_pos eq $f->end_pos ? $f->start_pos : 'DIFFERENT') );
     return $self->{'colours'}{"col_$type"}||'grey50', $self->{'colours'}{"lab_$type"}||'black', '';
 }
 
@@ -55,13 +56,13 @@ sub tag {
     my ($self, $f) = @_; 
     my @result = (); 
     unless( $f->mismatch ) {
-      if( $f->bac_start < $f->seq_start ) {
+      if( $f->bac_start && $f->bac_start < $f->seq_start ) {
         push @result, {
           'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
           'start' => $f->bac_start - $f->seq_start + $f->start, 'end'    => $f->start
         }
       }
-      if(  $f->bac_end > $f->seq_end ) {
+      if( $f->bac_end && $f->bac_end > $f->seq_end ) {
         push @result, {
           'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
           'start' => $f->end,       'end'    => $f->bac_end - $f->seq_start + $f->start

@@ -78,7 +78,7 @@ sub zmenu {
     $zmenu->{'05:Export Peptide'}=
     	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
     }
-    $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid&db=core" if $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview';
+    $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid&db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
     return $zmenu;
 }
 
@@ -96,15 +96,9 @@ sub text_label {
         $id .= $eid ? " ($eid)" : '';
     }
     unless( $short_labels ){
-	if( $eid ){
-	    $id .= " \nEnsembl known trans "; 
-	}
-	elsif( $transcript->translation->stable_id ){
-	    $id .= " \nEnsembl novel trans ";
-	}
-	else{
-	    $id .= " \nEnsembl pseudogene ";
-	}
+      $id .= $transcript->external_status eq  'PSEUDO' ? 
+            "\nEnsembl pseudogene" :
+            ( $eid ? "\nEnsembl known trans" : "\nEnsembl novel trans" );
     }
     return $id;
     #$self->{'config'}->{'_transcript_names_'} eq 'yes' ? IGNORED
