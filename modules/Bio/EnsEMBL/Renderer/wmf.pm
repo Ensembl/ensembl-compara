@@ -7,6 +7,13 @@ use lib "../../../../../modules";
 use WMF;
 @ISA = qw(Bio::EnsEMBL::Renderer::gif);
 
+sub init_canvas {
+    my ($this, $config, $im_width, $im_height) = @_;
+    my $canvas = new WMF($im_width, $im_height);
+    $canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
+    $this->canvas($canvas);
+}
+
 sub canvas {
     my ($self, $canvas) = @_;
     if(defined $canvas) {
