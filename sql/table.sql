@@ -183,33 +183,6 @@ CREATE TABLE sequence (
  PRIMARY KEY (sequence_id)
 );
 
-CREATE TABLE subset (
- subset_id      int(10) NOT NULL auto_increment,
- description    varchar(50),
- dump_loc       varchar(255),
-
- PRIMARY KEY (subset_id)
-);
-
-CREATE TABLE subset_member (
- subset_id   int(10) NOT NULL,
- member_id   int(10) NOT NULL,
-
- KEY(subset_id),
- KEY(member_id)
-);
-
-
-# table identifies the relationship of which gene member, each 
-# peptide member is derived from
-CREATE TABLE member_gene_peptide(
- gene_member_id       int(10) NOT NULL,
- peptide_member_id    int(10) NOT NULL,
-
- KEY(gene_member_id),
- KEY(peptide_member_id)
-);
-
 
 CREATE TABLE family (
  family_id		int(10) NOT NULL auto_increment,
@@ -260,6 +233,10 @@ CREATE TABLE homology (
  description		varchar(40), # SEED, PIP, etc...
  dn             float(10,5),
  ds             float(10,5),
+ n              float(10,1),
+ s              float(10,1),
+ lnl            float(10,3),
+ threshold_on_ds float(10,5),
 
  PRIMARY KEY (homology_id)
 );
