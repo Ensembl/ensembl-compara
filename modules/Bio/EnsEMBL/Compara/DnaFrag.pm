@@ -154,7 +154,16 @@ sub contig{
    return $self->{'_contig'};
 }
 
+sub slice {
+  my ($self) = @_;
+  
+  unless (defined $self->{'_slice'}) {
+    my $dba = $self->genomedb->db_adaptor;
+    $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->type, $self->name);
+  }
 
+  return $self->{'_slice'};
+}
 
 =head2 genomedb
 
