@@ -34,7 +34,7 @@ sub _init {
     my $y              = 0;
     my @bitmap         = undef;
     my $im_width       = $Config->image_width();
-    my $type           = $Config->get('gene','src');
+    my $type           = $Config->get('stranded_gene_label','src');
     my @allgenes       = $VirtualContig->get_all_Genes_exononly();
     my %highlights;
     @highlights{$self->highlights()} = ();    # build hashkeys of highlight list
@@ -46,9 +46,9 @@ sub _init {
 	}
     }
 
-    my $ext_col        = $Config->get('gene','ext');
-    my $known_col      = $Config->get('gene','known');
-    my $unknown_col    = $Config->get('gene','unknown');
+    my $ext_col        = $Config->get('stranded_gene_label','ext');
+    my $known_col      = $Config->get('stranded_gene_label','known');
+    my $unknown_col    = $Config->get('stranded_gene_label','unknown');
     my $pix_per_bp     = $Config->transform->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
     my $fontname       = "Tiny";
@@ -87,7 +87,7 @@ sub _init {
 		    # check for highlighting
 		    #########################
 		    if (exists $highlights{$DB_link->display_id}){
-			$hi_colour = $Config->get( 'gene', 'hi');
+			$hi_colour = $Config->get( 'stranded_gene_label', 'hi');
 		    }
 		    
 		    if ( $DB_link->database() eq 'HUGO' ) {
@@ -104,7 +104,7 @@ sub _init {
 		}
 		
 		if (exists $highlights{$vg->id}){
-		    $hi_colour = $Config->get( 'gene', 'hi');
+		    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
 		}
 		
 		if( $displaylink ) {
@@ -133,13 +133,12 @@ sub _init {
 	######################
 	# Make and bump label
 	######################
-	$label = " $label";
-	my $bp_textwidth = $w * length("$label ");
+	my $bp_textwidth = $w * length(" $label");
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	    'x'	        => $start,
+	    'x'	        => $start + $font_w_bp,
 	    'y'	        => $y,
 	    'height'    => $Config->texthelper->height($fontname),
-	    'width'     => $font_w_bp * length("$label "),
+	    'width'     => $font_w_bp * length($label),
 	    'font'	=> $fontname,
 	    'colour'    => $colour,
 	    'text'	=> $label,
@@ -157,7 +156,7 @@ sub _init {
 	if($self->strand() == -1) {
 	    $taggy = new Bio::EnsEMBL::Glyph::Rect({
 		'x'            => $start,
-		'y'	       => $tglyph->y() - 1,
+		'y'	       => $tglyph->y(),
 		'width'        => 1,
 		'height'       => 4,
 		'bordercolour' => $colour,
@@ -166,7 +165,7 @@ sub _init {
 	} elsif($self->strand() == 1) {
 	    $taggy = new Bio::EnsEMBL::Glyph::Rect({
 		'x'	       => $start,
-		'y'	       => $tglyph->y() - 1 + 4,
+		'y'	       => $tglyph->y() + 3,
 		'width'        => 1,
 		'height'       => 4,
 		'bordercolour' => $colour,
