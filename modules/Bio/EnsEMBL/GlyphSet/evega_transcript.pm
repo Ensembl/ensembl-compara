@@ -136,8 +136,9 @@ sub text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-  my $type = $legend_map{$transcript->type} || $transcript->type;
-  $id .= " \n$type ";
+    my $tt = $transcript->type || $gene->type;
+    my $type = $legend_map{$tt} || $tt;
+    $id .= " \n$type ";
   }
   return $id;
 }
