@@ -7,3 +7,4 @@ genome_db_id	taxon_id	name	assembly
 6	7227	Drosophila melanogaster	DROM3
 7	6239	Caenorhabditis elegans	CEL98
 8	6238	Caenorhabditis briggsae	CBR25
+9	7955	Danio rerio	ZFISH2
