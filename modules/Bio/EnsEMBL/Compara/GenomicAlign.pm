@@ -941,7 +941,7 @@ sub original_sequence {
   } elsif (!defined($self->{'original_sequence'})) {
     # Try to get the data from other sources...
     
-    if ($self->{'aligned_sequence'}) {
+    if ($self->{'aligned_sequence'} and $self->{'dnafrag_strand'}) {
       # ...from the aligned sequence
       $self->{'original_sequence'} = $self->{'aligned_sequence'};
       $self->{'original_sequence'} =~ s/\-//g;
@@ -1039,9 +1039,10 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 
 =head2 _print
 
-  Arg [1]    : none
+  Arg [1]    : ref to a FILEHANDLE
   Example    : $genomic_align->_print
-  Description: print attributes of the object to the STDOUT. Used for debuging purposes.
+  Description: print attributes of the object to the STDOUT or to the FILEHANDLE.
+               Used for debuging purposes.
   Returntype : none
   Exceptions : 
   Caller     : object::methodname
@@ -1049,9 +1050,11 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 =cut
 
 sub _print {
-  my ($self) = @_;
+  my ($self, $FILEH) = @_;
 
-  print
+  $FILEH ||= \*STDOUT;
+
+  print $FILEH
 "Bio::EnsEMBL::Compara::GenomicAlign object ($self)
   dbID = ".($self->dbID or "-undef-")."
   adaptor = ".($self->adaptor or "-undef-")."
