@@ -322,6 +322,9 @@ sub perc_id {
    if ( defined $arg ) {
       $self->{'perc_id'} = $arg ;
    }
+
+   $self->{'perc_id'} = "NULL" unless (defined $self->{'perc_id'});
+
    return $self->{'perc_id'};
 }
 
@@ -406,6 +409,9 @@ sub strands_reversed {
    if ( defined $arg ) {
       $self->{'strands_reversed'} = $arg ;
    }
+
+   $self->{'strands_reversed'} = 0 unless (defined $self->{'strands_reversed'});
+
    return $self->{'strands_reversed'};
 }
 
