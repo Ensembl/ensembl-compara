@@ -54,7 +54,7 @@ sub px2bp {
     my ($this, $fontname) = @_;
     my $scalex = $this->{'_scalex'} || 1;
     my $scaley = $this->{'_scaley'} || 1;
-    return (int($this->{$fontname}->{'width'} / $scalex), int($this->{$fontname}->{'height'} / $scaley));
+    return (  $this->{$fontname}->{'width'} / $scalex, $this->{$fontname}->{'height'} / $scaley );
 }
 
 sub real_px2bp {
