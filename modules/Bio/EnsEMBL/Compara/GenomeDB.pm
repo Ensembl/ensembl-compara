@@ -51,6 +51,7 @@ use Bio::EnsEMBL::DBLoader;
 
 @ISA = qw(Bio::EnsEMBL::Root);
 
+
 # new() is written here 
 
 sub new {
@@ -149,8 +150,10 @@ sub name{
       $self->{'name'} = $value;
     }
     return $self->{'name'};
-
+   
 }
+
+
 
 
 =head2 dbID
@@ -168,10 +171,9 @@ sub name{
 sub dbID{
    my ($self,$value) = @_;
    if( defined $value) {
-      $self->{'dbID'} = $value;
-    }
-    return $self->{'dbID'};
-
+     $self->{'dbID'} = $value;
+   }
+   return $self->{'dbID'};
 }
 
 
@@ -191,8 +193,8 @@ sub adaptor{
    my ($self,$value) = @_;
    if( defined $value) {
       $self->{'adaptor'} = $value;
-    }
-    return $self->{'adaptor'};
+   }
+   return $self->{'adaptor'};
 }
 
 
@@ -215,6 +217,94 @@ sub species{
     }
     return $self->{'species'};
 }
+
+
+
+=head2 has_consensus
+ 
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Example    : 
+  Description: 
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+ 
+sub has_consensus {
+  my ($self,$con_gdb) = @_;
+   
+  # sanity check on the GenomeDB passed in
+  if( !defined $con_gdb || !$con_gdb->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
+     $self->throw("No query genome specified or query is not a GenomeDB object");
+  }
+
+  # and check that you are not trying to compare the same GenomeDB
+  if ( $con_gdb eq $self ) {
+    $self->throw("Trying to return consensus / query information from the same db"); 
+  }
+
+  my $consensus = $self->adaptor->get_GenomeDBAdaptor->check_for_consensus_db( $self, $con_gdb);
+
+  return $consensus;
+}
+
+
+=head2 has_query
+ 
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Example    : 
+  Description: 
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+ 
+sub has_query {
+  my ($self,$query_gdb) = @_;
+
+  # sanity check on the GenomeDB passed in
+  if( !defined $query_gdb || !$query_gdb->isa("Bio::Ensembl::Compara::GenomeDB")) {
+    $self->throw("No consensus genome specified or query is not a GenomeDB object");
+  }
+
+  # and check that you are not trying to compare the same GenomeDB
+  if ( $query_gdb eq $self ) {
+    $self->throw("Trying to return consensus / query information from the same db"); 
+  }
+
+  my $query = $self->adaptor->check_for_query_db( $self, $query_gdb );
+
+  return $query;
+}
+
+
+
+=head2 linked
+ 
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genomedb
+  Example    : 
+  Description: 
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+ 
+sub linked {
+  my ( $self, $con_gdb ) = @_;
+
+  # sanity check on the GenomeDB passed in
+  if( !defined $con_gdb || !$con_gdb->isa("Bio::Ensembl::Compara::GenomeDB")) {
+     $self->throw("No consensus genome specified or query is not a GenomeDB object");
+  }
+
+  my $links = $self->db->get_db_links( $con_gdb->dbID );
+
+  return $links;
+}
+
 
 
 1;
