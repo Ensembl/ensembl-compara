@@ -148,7 +148,8 @@ use strict;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
+use Bio::EnsEMBL::Compara::GenomicAlign;
 
 
 =head2 new (CONSTRUCTOR)
@@ -1013,6 +1014,116 @@ sub get_SimpleAlign {
   return $sa;
 }
 
+
+=head2 get_all_ungapped_GenomicAlignBlocks
+
+  Args       : none
+  Example    : 
+  Description: 
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+  
+  TEST SCRIPT:
+
+perl -MBio::EnsEMBL::Registry -MBio::AlignIO -e 'Bio::EnsEMBL::Registry->load_all();
+$mlssa = Bio::EnsEMBL::Registry->get_adaptor("compara", "compara", "MethodLinkSpeciesSet");
+$dfa = Bio::EnsEMBL::Registry->get_adaptor("compara", "compara", "DnaFrag");
+$gaba = Bio::EnsEMBL::Registry->get_adaptor("compara", "compara", "GenomicAlignBlock");
+$mlss = $mlssa->fetch_by_dbID(72);
+$df = $dfa->fetch_by_dbID(48);
+$gab = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $df, 18379925, 18380048);
+$gab->[0]->get_all_ungapped_GenomicAlignBlocks;
+'
+
+=cut
+
+sub get_all_ungapped_GenomicAlignBlocks {
+  my ($self) = @_;
+  my $ungapped_genomic_align_blocks = [];
+
+  my $genomic_aligns = $self->genomic_align_array;
+  my $aln_length = CORE::length($genomic_aligns->[0]->aligned_sequence);
+#   foreach my $this_genomic_align (@$genomic_aligns) {
+#     print STDERR join(" - ", $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
+#         $this_genomic_align->dnafrag_strand, $this_genomic_align->aligned_sequence), "\n";
+#   }
+
+  my $aln_pos = 0;
+  my $gap;
+  my $end_block_pos;
+  do {
+    $end_block_pos = undef;
+    my $these_genomic_aligns_with_no_gaps;
+
+    ## Get the (next) first gap from all the aligned sequences (sets: $gap_pos, $gap and $genomic_align_block_id)
+    foreach my $this_genomic_align (@$genomic_aligns) {
+      my $this_end_block_pos = index($this_genomic_align->aligned_sequence, "-", $aln_pos);
+      if ($this_end_block_pos == $aln_pos) {
+        ## try to find the end of the gaps
+        my $gap_string = substr($this_genomic_align->aligned_sequence, $aln_pos);
+        my ($gap) = $gap_string =~ /^(\-+)/;
+        my $gap_length = CORE::length($gap);
+        $this_end_block_pos = $aln_pos+$gap_length;
+      } else {
+        $these_genomic_aligns_with_no_gaps->{$this_genomic_align} = $this_genomic_align;
+      }
+      $this_end_block_pos = CORE::length($this_genomic_align->aligned_sequence) if ($this_end_block_pos < 0); # no more gaps have been found in this sequence
+
+      
+      if (!defined($end_block_pos) or $this_end_block_pos < $end_block_pos) {
+        $end_block_pos = $this_end_block_pos;
+      }
+    }
+
+    if (scalar(keys(%$these_genomic_aligns_with_no_gaps)) > 1) {
+      my $new_genomic_aligns;
+      my $reference_genomic_align;
+      foreach my $this_genomic_align (values %$these_genomic_aligns_with_no_gaps) {
+        my $previous_seq = substr($this_genomic_align->aligned_sequence, 0, $aln_pos );
+        $previous_seq =~ s/\-//g;
+        my $dnafrag_start;
+        my $dnafrag_end;
+        my $cigar_line;
+        if ($this_genomic_align->dnafrag_strand == 1) {
+          $dnafrag_start = $this_genomic_align->dnafrag_start + CORE::length($previous_seq);
+          $dnafrag_end = $dnafrag_start + $end_block_pos - $aln_pos - 1;
+          $cigar_line = ($end_block_pos - $aln_pos)."M";
+        } else {
+          $dnafrag_end = $this_genomic_align->dnafrag_end - CORE::length($previous_seq);
+          $dnafrag_start = $dnafrag_end - $end_block_pos + $aln_pos + 1;
+          $cigar_line = ($end_block_pos - $aln_pos)."M";
+        }
+        my $new_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+                -adaptor => $this_genomic_align->adaptor,
+                -method_link_species_set => $this_genomic_align->method_link_species_set,
+                -dnafrag => $this_genomic_align->dnafrag,
+                -dnafrag_start => $dnafrag_start,
+                -dnafrag_end => $dnafrag_end,
+                -dnafrag_strand => $this_genomic_align->dnafrag_strand,
+                -cigar_line => $cigar_line,
+            );
+        $reference_genomic_align = $new_genomic_align if ($self->reference_genomic_align == $this_genomic_align);
+        push(@$new_genomic_aligns, $new_genomic_align);
+      }
+      ## Create a new GenomicAlignBlock
+      my $new_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+              -method_link_species_set => $self->method_link_species_set,
+              -length => $end_block_pos - $aln_pos,
+              -genomic_align_array => $new_genomic_aligns,
+          );
+      $new_genomic_align_block->reference_genomic_align($reference_genomic_align) if (defined($reference_genomic_align));
+      push(@$ungapped_genomic_align_blocks, $new_genomic_align_block);
+    }
+    $aln_pos = $end_block_pos;
+
+  } while ($aln_pos < $aln_length); # exit loop if no gap has been found
+
+  return $ungapped_genomic_align_blocks;
+}
+
+
 =head2 reverse_complement
 
   Args       : none
@@ -1048,6 +1159,8 @@ sub reverse_complement {
 sub _print {
   my ($self, $FILEH) = @_;
 
+  my $verbose = verbose;
+  verbose(0);
   $FILEH ||= \*STDOUT;
   print $FILEH
 "Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
@@ -1063,9 +1176,10 @@ sub _print {
   reference_slice_end = ".($self->reference_slice_end or "-undef-")."
   score = ".($self->score or "-undef-")."
   length = ".($self->length or "-undef-")."
-  alignment_strings = ".($self->alignment_strings or "-undef-")."
+  alignment_strings = \n  ".(join("\n  ", @{$self->alignment_strings}))."
   
 ";
+  verbose($verbose);
 
 }
 
