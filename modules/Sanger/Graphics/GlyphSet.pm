@@ -67,9 +67,8 @@ sub glob_bp {
 }
 
 sub join_tag {
-    my( $self, $glyph, $tag, $x_pos, $y_pos, $col ) = @_;
-    CORE::push @{$self->{'tags'}{$tag}}, { 'glyph' => $glyph, 'x' => $x_pos, 'y' => $y_pos, 'col'
-=> $col };
+    my( $self, $glyph, $tag, $x_pos, $y_pos, $col, $style, $zindex ) = @_;
+    CORE::push @{$self->{'tags'}{$tag}}, { 'glyph' => $glyph, 'x' => $x_pos, 'y' => $y_pos, 'col' => $col, 'style' => $style, 'z' => $zindex };
 }
 
 #########

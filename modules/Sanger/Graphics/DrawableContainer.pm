@@ -84,6 +84,7 @@ sub new {
       warn ref($self).qq( No Config object defined);
       next;
     }
+    $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
     my @glyphsets = ();
     for my $strand (@strands_to_show) {
       my $tmp_gs_store = {};
