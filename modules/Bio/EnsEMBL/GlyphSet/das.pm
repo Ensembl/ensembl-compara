@@ -123,11 +123,11 @@ sub _init {
 #                "DAS source info" => $self->{'extras'}->{'url'},
         	};
 			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
-				if $f->das_type_id() && uc($f->das_type_id())!='NULL';
+				if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
 			$zmenu->{"METHOD: ". $f->das_method_id()  } = ''
-				if $f->das_method_id() && uc($f->das_method_id())!='NULL';
+				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
 			$zmenu->{"CATEGORY: ". $f->das_type_category() } => ''
-				if $f->das_type_category() && uc($f->das_type_category())!='NULL';
+				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
         
    		# JS5: If we have an ID then we can add this to the Zmenu and
 		#      also see if we can make a link to any additional information
@@ -147,19 +147,59 @@ sub _init {
             	'zmenu'     => $zmenu,
 			});
 			$Composite->{'href'} = $href if $href;
-			$Composite->bordercolour($feature_colour);
-			foreach(@features) {
-				$end = $_->das_end if $end <= $_->das_end;
-				my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-    	        	'x'      	=> $_->das_start(),
-	    			'y'      	=> 0,
-	    			'width'  	=> $_->das_end()-$_->das_start(),
-		    		'height' 	=> 8,
-		    		'colour' 	=> $feature_colour,
-	    			'absolutey' => 1,
-            		'zmenu'     => $zmenu
-				});
-				$Composite->push($glyph);
+            if( $f->das_type_id() =~ /(transcript|exon)/i ) { 
+                my $f = shift @features;
+                my $old_end = $f->das_end();
+    			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+        	        'x'      	=> $f->das_start(),
+    	    		'y'      	=> 0,
+    	    		'width'  	=> $old_end-$f->das_start(),
+    		    	'height' 	=> 8,
+    		    	'colour' 	=> $feature_colour,
+    	    		'absolutey' => 1,
+                	'zmenu'     => $zmenu
+                });
+                $end = $old_end if $end <= $old_end;
+                $Composite->push($glyph);
+    			foreach(@features) {
+    				$glyph = new Bio::EnsEMBL::Glyph::Intron({
+                        'x'         => $old_end,
+                        'y'         => 0,
+                        'width'     => $_->das_start()-$old_end,
+                        'height'    => 8,
+                        'colour'    => $feature_colour,
+                        'absolutey' => 1,
+                        'strand'    => $STRAND,
+                    });
+                    $old_end = $_->das_end();
+    				$Composite->push($glyph);
+    				$glyph = new Bio::EnsEMBL::Glyph::Rect({
+        	        	'x'      	=> $_->das_start(),
+    	    			'y'      	=> 0,
+    	    			'width'  	=> $old_end-$_->das_start(),
+    		    		'height' 	=> 8,
+    		    		'colour' 	=> $feature_colour,
+    	    			'absolutey' => 1,
+                		'zmenu'     => $zmenu
+    				});
+    				$Composite->push($glyph);
+                    $end = $old_end if $end <= $old_end;
+                }
+            } else {
+    			$Composite->bordercolour($feature_colour);
+    			foreach(@features) {
+    				$end = $_->das_end if $end <= $_->das_end;
+    				my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+        	        	'x'      	=> $_->das_start(),
+    	    			'y'      	=> 0,
+    	    			'width'  	=> $_->das_end()-$_->das_start(),
+    		    		'height' 	=> 8,
+    		    		'colour' 	=> $feature_colour,
+    	    			'absolutey' => 1,
+                		'zmenu'     => $zmenu
+    				});
+    				$Composite->push($glyph);
+                }
 			}
 		
 	    	if ($dep > 0) { # we bump
