@@ -91,6 +91,7 @@ CREATE TABLE dnafrag_chunk (
   sequence_id                int(10) NOT NULL DEFAULT '0',
 
   PRIMARY KEY (dnafrag_chunk_id),
+  UNIQUE KEY uniq_chunk (dnafrag_id, seq_start, seq_end, masking_analysis_data_id),
   KEY (sequence_id)
 );
 

@@ -44,7 +44,7 @@ sub store {
   return unless($dfc);
   return unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
 
-  my $query = "INSERT INTO dnafrag_chunk".
+  my $query = "INSERT ignore INTO dnafrag_chunk".
               "(dnafrag_id,sequence_id,seq_start,seq_end,masking_analysis_data_id) ".
               "VALUES (?,?,?,?,?)";
 
@@ -57,11 +57,30 @@ sub store {
 
   #print("$query\n");
   my $sth = $self->prepare($query);
-  $sth->execute($dfc->dnafrag_id, $dfc->sequence_id,
-                $dfc->seq_start, $dfc->seq_end,
-                $dfc->masking_analysis_data_id);
-  $dfc->dbID( $sth->{'mysql_insertid'} );
-  $sth->finish();
+  my $insertCount =
+     $sth->execute($dfc->dnafrag_id, $dfc->sequence_id,
+                   $dfc->seq_start, $dfc->seq_end,
+                   $dfc->masking_analysis_data_id);
+  if($insertCount>0) {
+    #sucessful insert
+    $dfc->dbID( $sth->{'mysql_insertid'} );
+    $sth->finish;
+  } else {
+    $sth->finish;
+    #UNIQUE(dnafrag_id,seq_start,seq_end,masking_analysis_data_id) prevented insert
+    #since dnafrag_chunk was already inserted so get dnafrag_chunk_id with select
+    my $sth2 = $self->prepare("SELECT dnafrag_chunk_id FROM dnafrag_chunk ".
+           " WHERE dnafrag_id=? and seq_start=? and seq_end=? and masking_analysis_data_id=?");
+    $sth2->execute($dfc->dnafrag_id, $dfc->seq_start, $dfc->seq_end,
+                   $dfc->masking_analysis_data_id);
+    my($id) = $sth2->fetchrow_array();
+    warn("DnaFragChunkAdaptor: insert failed, but dnafrag_chunk_id select failed too") unless($id);
+    $dfc->dbID($id);
+    $sth2->finish;
+  }
+
+  $dfc->adaptor($self);
+  
   return $dfc;
 }
 
