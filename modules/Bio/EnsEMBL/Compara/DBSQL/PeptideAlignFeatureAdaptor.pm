@@ -37,7 +37,8 @@ sub store {
   foreach my $feature (@features) {
     if($feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
       #displayHSP_short($feature);
-      my $pepFeature = new Bio::EnsEMBL::Compara::PeptideAlignFeature(-feature => $feature);
+      my $pepFeature = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
+      $pepFeature->init_from_feature($feature);
       #$pepFeature->display_short();
       push @pafList, $pepFeature;
     }
@@ -48,12 +49,16 @@ sub store {
 
   @pafList = sort sort_by_score_evalue_and_pid @pafList;
   my $rank=1;
-  foreach my $feature (@pafList) {
-    $feature->hit_rank($rank++);
+  my $prevPaf = undef;
+  foreach my $paf (@pafList) {
+    $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
+    $paf->hit_rank($rank);
+    $prevPaf = $paf;
   }
 
   $self->_store_PAFS(@pafList);
 }
+
 
 sub _store_PAFS {
   my ($self, @out)  = @_;
@@ -116,7 +121,7 @@ sub _store_PAFS {
     }
   }
   #print("$query\n");
-  my $sth = $self->db->prepare($query);
+  my $sth = $self->prepare($query);
   $sth->execute();
   $sth->finish();
 }
@@ -127,6 +132,17 @@ sub sort_by_score_evalue_and_pid {
     $a->evalue <=> $b->evalue ||
       $b->perc_ident <=> $a->perc_ident ||
         $b->perc_pos <=> $a->perc_pos;
+}
+
+
+sub pafs_equal {
+  my ($paf1, $paf2) = @_;
+  return 0 unless($paf1 and $paf2);
+  return 1 if(($paf1->score == $paf2->score) and
+              ($paf1->evalue == $paf2->evalue) and
+              ($paf1->perc_ident == $paf2->perc_ident) and
+              ($paf1->perc_pos == $paf2->perc_pos));
+  return 0;              
 }
 
 
@@ -220,7 +236,8 @@ sub _default_where_clause {
 
 sub _final_clause {
   my $self = shift;
-  return '';
+  $self->{'_final_clause'} = shift if(@_);
+  return $self->{'_final_clause'};
 }
 
 
@@ -348,13 +365,39 @@ sub fetch_by_dbID{
   return $obj;
 }
 
+=head2 fetch_by_dbIDs
+  Arg [1...] : int $id (multiple)
+               the unique database identifier for the feature to be obtained
+  Example    : $paf = $adaptor->fetch_by_dbID(1234);
+  Description: Returns the PeptideAlignFeature created from the database defined by the
+               the id $id.
+  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+=cut
+
+sub fetch_by_dbIDs{
+  my $self = shift;
+  my @ids = @_;
+
+  return undef unless(scalar(@ids));
+
+  my $id_string = join(",", @ids);
+  my $constraint = "paf.peptide_align_feature_id in ($id_string)";
+  #printf("fetch_by_dbIDs has contraint\n$constraint\n");
+
+  #return first element of _generic_fetch list
+  return $self->_generic_fetch($constraint);
+}
+
+
 =head2 fetch_BRH_by_member_genomedb
 
   Arg [1]    : member_id of query peptide member
   Arg [2]    : genome_db_id of hit species
   Example    : $paf = $adaptor->fetch_BRH_by_member_genomedb(31957, 3);
   Description: Returns the PeptideAlignFeature created from the database
-  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature object
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : none
   Caller     : general
 
@@ -371,8 +414,8 @@ sub fetch_BRH_by_member_genomedb
   return unless($qmember_id and $hit_genome_db_id);
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
-                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       ['paf2.peptide_align_feature_id AS pafid2']]
+                      'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+                      ['paf2.peptide_align_feature_id AS pafid2']]
                   ];
 
   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1".
@@ -381,8 +424,7 @@ sub fetch_BRH_by_member_genomedb
                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
 
-  my ($obj) = @{$self->_generic_fetch($constraint, $extrajoin)};
-  return $obj;
+  return $self->_generic_fetch($constraint, $extrajoin);
 }
 
 
@@ -406,12 +448,12 @@ sub fetch_all_RH_by_member_genomedb
   my $qmember_id       = shift;
   my $hit_genome_db_id = shift;
 
-  #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+  #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id and $hit_genome_db_id);
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
-                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       ['paf2.peptide_align_feature_id AS pafid2']]
+                      'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+                      ['paf2.peptide_align_feature_id AS pafid2']]
                   ];
 
   my $constraint = " paf.qmember_id='".$qmember_id."'".
@@ -419,7 +461,10 @@ sub fetch_all_RH_by_member_genomedb
                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
 
-  return $self->_generic_fetch($constraint, $extrajoin);
+  #$self->_final_clause("ORDER BY paf.hit_rank");
+  my $objs = $self->_generic_fetch($constraint, $extrajoin);
+  #$self->_final_clause("");
+  return $objs;
 }
 
 
@@ -427,7 +472,7 @@ sub fetch_all_RH_by_member_genomedb
 
   Arg [1]    : member_id of query peptide member
   Example    : $feat = $adaptor->fetch_by_dbID($musBlastAnal, $ratBlastAnal);
-  Description: Returns all the PeptideAlignFeatures that reciprocal hit the qmember_id
+  Description: Returns all the PeptideAlignFeatures that reciprocal hit all genomes
   Returntype : array of Bio::EnsEMBL::Compara::PeptideAlignFeature objects by reference
   Exceptions : thrown if $id is not defined
   Caller     : general
@@ -471,6 +516,83 @@ sub fetch_all {
 
   return $self->_generic_fetch();
 }
+
+
+=head2 fetch_BRH_web_for_member_genome_db
+  Arg [1]    : member_id of query peptide member
+  Arg [2]    : genome_db_id of hit species
+  Description: Returns all the 'best' PeptideAlignFeatures starting with qmember_id
+               hitting onto the hit_genome_db_id via recursive search
+  Returntype : array of Bio::EnsEMBL::Compara::PeptideAlignFeature objects by reference
+               or undef if nothing found
+  Exceptions : none
+  Caller     : general
+=cut
+sub fetch_BRH_web_for_member_genome_db
+{
+  # recursive search to find web of 'best' hits starting with a given
+  # qmember_id and hit_genome_db_id
+  my $self               = shift;
+  my $qmember_id         = shift;
+  my $hit_genome_db_id   = shift;
+
+  my $tested_member_ids  = {};
+  my $found_paf_ids      = {};
+
+  $self->_recursive_find_brh_pafs_for_member_genome_db(
+             $qmember_id,
+             $hit_genome_db_id,
+             $tested_member_ids,
+             $found_paf_ids);
+
+  my $pafsArray = $self->fetch_by_dbIDs(keys %$found_paf_ids);
+  return undef unless($pafsArray);
+  
+  #match up the reciprocals
+  foreach my $paf1 (@$pafsArray) {
+    foreach my $paf2 (@$pafsArray) {
+      if(($paf1->query_member->dbID == $paf2->hit_member->dbID) and
+         ($paf1->hit_member->dbID   == $paf2->query_member->dbID))
+      {
+        $paf1->rhit_dbID($paf2->dbID);
+        $paf2->rhit_dbID($paf1->dbID);
+      }
+    }
+  }
+  return $pafsArray;
+}
+
+sub _recursive_find_brh_pafs_for_member_genome_db
+{
+  # recursive search to find web of 'best' hits starting with a given
+  # member_id and genome_db_ids
+  my $self               = shift;
+  my $qmember_id         = shift;
+  my $hit_genome_db_id   = shift;
+  my $tested_member_ids  = shift;  #ref to hash
+  my $found_paf_ids      = shift;  #ref to hash
+
+  return unless($qmember_id and $hit_genome_db_id);
+  return if($tested_member_ids->{$qmember_id}); #already tested this member
+
+  $tested_member_ids->{$qmember_id} = 1;
+  #printf(" recursive_web qm=%d  hg=%d\n", $qmember_id, $hit_genome_db_id);
+  my $sql = "SELECT paf1.peptide_align_feature_id, paf1.hmember_id, paf1.qgenome_db_id ".
+            " FROM peptide_align_feature paf1, peptide_align_feature paf2".
+            " WHERE paf1.hmember_id=paf2.qmember_id".
+            " AND paf1.qmember_id=? and paf1.hgenome_db_id=? and paf1.hit_rank=1".
+            " AND paf2.hmember_id=? and paf2.qgenome_db_id=? and paf2.hit_rank=1";
+  my $sth = $self->prepare($sql);
+  $sth->execute($qmember_id, $hit_genome_db_id, $qmember_id, $hit_genome_db_id);
+
+  while (my ($pafID, $hmember_id, $qgenome_db_id) = $sth->fetchrow_array()) {
+    #printf("  found pafID $pafID in recursive search\n");
+    $found_paf_ids->{$pafID} = 1;
+    $self->_recursive_find_brh_pafs_for_member_genome_db($hmember_id, $qgenome_db_id, $tested_member_ids, $found_paf_ids);
+  }
+  $sth->finish;
+}
+
 
 =head2 _generic_fetch
 
@@ -530,7 +652,7 @@ sub _generic_fetch {
   }
 
   #append additional clauses which may have been defined
-  $sql .= " $final_clause";
+  $sql .= " $final_clause" if($final_clause);
 
   # print STDERR $sql,"\n";
   my $sth = $self->prepare($sql);

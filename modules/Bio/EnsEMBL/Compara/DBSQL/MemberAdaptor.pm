@@ -4,6 +4,8 @@ use strict;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -533,9 +535,6 @@ sub _objs_from_sth {
         $attribute->$autoload_method($column{$autoload_method});
       }
     }
-    if(defined($member->sequence_id())) {
-      $self->_load_sequence($member);
-    }
     if (defined $attribute) {
       push @members, [$member, $attribute];
     } else {
@@ -558,24 +557,16 @@ sub _final_clause {
   return $self->{'_final_clause'};
 }
 
-sub _load_sequence {
-  my ($self, $member) = @_;
+sub _fetch_sequence_by_id {
+  my ($self, $sequence_id) = @_;
 
-  my $sql = "SELECT sequence.sequence, sequence.length " .
-            "FROM member,sequence " .
-            "WHERE member.sequence_id=sequence.sequence_id " .
-            "AND member.member_id = ?;";
+  my $sql = "SELECT sequence.sequence FROM sequence WHERE sequence_id = ?";
   my $sth = $self->prepare($sql);
-  $sth->execute($member->dbID);
+  $sth->execute($sequence_id);
 
-  my ($sequence, $seq_length);
-  $sth->bind_columns(\$sequence, \$seq_length);
-
-  if ($sth->fetch()) {
-    $member->sequence($sequence);
-    $member->seq_length($seq_length);
-  }
+  my ($sequence) = $sth->fetchrow_array();
   $sth->finish();
+  return $sequence;
 }
 
 #
@@ -603,54 +594,50 @@ sub store {
     . "not a $member");
   }
 
-  my $already_stored_member = $self->fetch_by_source_stable_id($member->source_name,$member->stable_id);
-  if (defined $already_stored_member) {
-    $member->adaptor($already_stored_member->adaptor);
-    $member->dbID($already_stored_member->dbID);
-    if (defined $member->taxon) {
-      $self->db->get_TaxonAdaptor->store_if_needed($member->taxon);
-    }
-    return $member->dbID;
-  }
-
   $member->source_id($self->store_source($member->source_name));
-
-  # first must insert in sequence table to generate new
-  # sequence_id to insert into member table;
-  if(defined($member->sequence)) {
-    my $sth = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
-    $sth->execute($member->sequence,
-                  $member->seq_length);
-
-    $member->sequence_id( $sth->{'mysql_insertid'} );
-    $sth->finish;
-  }
-
   
-  my $sth = $self->prepare("INSERT INTO member (stable_id,version, source_id,
-                              taxon_id, genome_db_id, sequence_id, description,
+  my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_id,
+                              taxon_id, genome_db_id, description,
                               chr_name, chr_start, chr_end, chr_strand)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                            VALUES (?,?,?,?,?,?,?,?,?,?)");
 
-  eval {                            
-    $sth->execute($member->stable_id,
+  my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
                   $member->source_id,
                   $member->taxon_id,
                   $member->genome_db_id,
-                  $member->sequence_id,
                   $member->description,
                   $member->chr_name,
                   $member->chr_start,
                   $member->chr_end,
                   $member->chr_strand);
-  };
-  if($@) {
-    warn("unable to store stable_id=".$member->stable_id."\n");
-    warn("$@");
+  if($insertCount>0) {
+    #sucessful insert
+    $member->dbID( $sth->{'mysql_insertid'} );
+    $sth->finish;
+
+    # insert in sequence table to generate new
+    # sequence_id to insert into member table;
+    if(defined($member->sequence)) {
+      my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+      $sth2->execute($member->sequence, $member->seq_length);
+      $member->sequence_id( $sth2->{'mysql_insertid'} );
+      $sth2->finish;
+
+      my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
+      $sth3->execute($member->sequence_id, $member->dbID);
+      $sth3->finish;
+    }
+  } else {
+    $sth->finish;
+    #UNIQUE(source_id,stable_id) prevented insert since member was already inserted
+    #so get member_id with select
+    my $sth2 = $self->prepare("SELECT member_id FROM member WHERE source_id=? and stable_id=?");
+    $sth2->execute($member->source_id, $member->stable_id);
+    my($id) = $sth2->fetchrow_array();
+    $member->dbID($id);
+    $sth2->finish;
   }
-  $member->dbID( $sth->{'mysql_insertid'} );
-  $sth->finish;
 
   $member->adaptor($self);
   if (defined $member->taxon) {
@@ -663,13 +650,29 @@ sub store {
 sub update_sequence {
   my ($self, $member) = @_;
 
-  return unless($member);
-  return unless($member->sequence_id);
+  return 0 unless($member);
+  unless($member->dbID) {
+    throw("MemberAdapter::update_sequence member must have valid dbID\n");
+  }
+  unless(defined($member->sequence)) {
+    warning("MemberAdapter::update_sequence with undefined sequence\n");
+  }
 
-  my $sql = "UPDATE sequence SET sequence = ? WHERE sequence_id = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($member->sequence, $member->sequence_id);
-  $sth->finish;
+  if($member->sequence_id) {
+    my $sth = $self->prepare("UPDATE sequence SET sequence = ?, length=? WHERE sequence_id = ?");
+    $sth->execute($member->sequence, $member->seq_length, $member->sequence_id);
+    $sth->finish;
+  } else {
+    my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+    $sth2->execute($member->sequence, $member->seq_length);
+    $member->sequence_id( $sth2->{'mysql_insertid'} );
+    $sth2->finish;
+
+    my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
+    $sth3->execute($member->sequence_id, $member->dbID);
+    $sth3->finish;
+  }
+  return 1;
 }
 
 
@@ -768,7 +771,7 @@ sub store_gene_peptide_link {
   my ($self, $gene_member_id, $peptide_member_id) = @_;
 
   my $sth =
-    $self->prepare("INSERT INTO member_gene_peptide (gene_member_id, peptide_member_id)
+    $self->prepare("INSERT ignore INTO member_gene_peptide (gene_member_id, peptide_member_id)
                     VALUES (?,?)");
   $sth->execute($gene_member_id, $peptide_member_id);
   $sth->finish;
