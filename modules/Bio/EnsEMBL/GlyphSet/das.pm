@@ -13,7 +13,7 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
 
-    my $URL = $self->das_name =~ /^extdas_(.*)$/ ?
+    my $URL = $self->das_name =~ /^managed_(.*)$/ ?
 qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] : qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
 
     (my $T = $URL)=~s/\'/\\\'/g;
@@ -24,7 +24,7 @@ qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&k
         'colour'    => $self->{'config'}->colourmap()->id_by_name('contigblue2'),
         'absolutey' => 1,
         'href'      => $URL,
-        'zmenu'     => $self->das_name =~/^extdas_/ ?
+        'zmenu'     => $self->das_name =~/^managed_/ ?
             {   'caption'                       => 'Configure' ,
                 '01:Advanced configuration...'  => $T }:
             {   'caption'                       => 'HELP', 
@@ -63,8 +63,10 @@ sub _init {
     my $h = $self->{'textheight'};
     
     my @features;
+    warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
+    warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
     eval{
-        @features = grep { $_->das_type_id() !~ /(contig|component|karyotype)/i } @{$vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}};
+        @features = grep { $_->das_type_id() !~ /(contig|component|karyotype)/i } @{$vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[]};
     };
 #    print STDERR map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
     if($@) {
@@ -72,7 +74,7 @@ sub _init {
         return;
     }
     $self->{'link_text'}    = $self->{'extras'}->{'linktext'} || 'Additional info';
-    $self->{'ext_url'}      = $self->{'extras'}->{'name'} =~ /^extdas_/ ? 
+    $self->{'ext_url'}      = $self->{'extras'}->{'name'} =~ /^managed_/ ? 
         ExtURL->new( $self->{'extras'}->{'linkURL'} => $self->{'extras'}->{'linkURL'} ) :
         ExtURL->new();        
     

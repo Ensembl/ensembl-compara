@@ -20,7 +20,7 @@ sub colours {
     };
 }
 
-sub genes {
+sub features {
   my $self = shift;
   my @genes = ();
   #obtain genscan transcripts
@@ -40,14 +40,16 @@ sub colour {
 
 sub href {
     my ($self, $gene, $transcript) = @_;
-    my $id = $transcript->id();
-    return undef if $id =~ /^\d/;
-   return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'Peptide_ens_genscan830', 'ID' => $id } );
+    return undef;
+ #   my $id = $transcript->id();
+ #   return undef if $id =~ /^\d/;
+ #   return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'Peptide_ens_genscan830', 'ID' => $id } );
     
 }
 
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
+    return undef;
     my $id = $transcript->id();
     return undef if $id =~ /^\d/;
      return {

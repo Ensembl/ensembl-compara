@@ -58,7 +58,7 @@ sub _init {
 
     # fetch the chromosome bands that cover this VC.
     my $kba         = $self->{'container'}->{'ka'};
-    my @bands       = @{$kba->fetch_by_chr_name($chr)};
+    my $bands       = $kba->fetch_by_chr_name($chr);
     
     my $chr_length = 
       $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
@@ -92,7 +92,7 @@ sub _init {
         });
         $self->push($gpadding);        
     }
-    foreach my $band (@bands){
+    foreach my $band (@$bands){
         my $bandname       = $band->name();
         my $vc_band_start  = $band->start() + $v_offset;
         my $vc_band_end    = $band->end() + $v_offset;
@@ -219,8 +219,8 @@ sub _init {
         ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
     
     foreach my $end ( 
-        ( $bands[ 0]->stain() eq 'tip' ? () : 0 ),
-        ( $bands[-1]->stain() eq 'tip' ? () : 1 )
+        ( $bands->[ 0]->stain() eq 'tip' ? () : 0 ),
+        ( $bands->[-1]->stain() eq 'tip' ? () : 1 )
      ) {
         my $direction = $end ? -1 : 1;
         foreach my $I ( 0..$#lines ) {
