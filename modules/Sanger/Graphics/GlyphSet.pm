@@ -243,14 +243,14 @@ sub _dump {
 }
 
 sub errorTrack {
-    my ($self, $message) = @_;
+    my ($self, $message, $x, $y) = @_;
     my $length = $self->{'config'}->image_width();
     my $w      = $self->{'config'}->texthelper()->width('Tiny');
     my $h      = $self->{'config'}->texthelper()->height('Tiny');
     my $h2     = $self->{'config'}->texthelper()->height('Small');
     $self->push( new Sanger::Graphics::Glyph::Text({
-    	'x'         => int( ($length - $w * CORE::length($message))/2 ),
-        'y'         => int( ($h2-$h)/2 ),
+    	'x'         => $x || int( ($length - $w * CORE::length($message))/2 ),
+        'y'         => $y || int( ($h2-$h)/2 ),
     	'height'    => $h2,
         'font'      => 'Tiny',
         'colour'    => "red",
