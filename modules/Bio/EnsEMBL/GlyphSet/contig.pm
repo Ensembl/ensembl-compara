@@ -89,7 +89,7 @@ sub _init {
             my $clone  = $temp_rawcontig->contig->cloneid();
             my $strand = $temp_rawcontig->strand();
         
-            my $c      = $vc->dbobj()->get_Clone($clone);
+#            my $c      = $vc->dbobj()->get_Clone($clone);
 #        my $fpc    = $fpc_map->get_Clone_by_name($c->embl_id);
 #        my $fpc_id = "unknown";
 #        $fpc_id    = $fpc->name() if(defined $fpc);
