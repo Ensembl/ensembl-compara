@@ -46,6 +46,7 @@ use strict;
 # Object preamble - inherits from Bio::Root::RootI
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Compara::ConservedCluster;
 
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -94,7 +95,7 @@ sub fetch_by_dbID{
 
    my $conserved_cluster= Bio::EnsEMBL::Compara::ConservedCluster->new( 	-dbid 	=> $dbid,
 														-conserved_gene_families=> $conserved_gene_families,
-														-conserved_segments=> @conserved_segments
+														-conserved_segments=> \@conserved_segments
 														               );
 
    return $conserved_cluster;
