@@ -96,7 +96,7 @@ sub _init {
 	});
 	$Composite->push($rect);
 
-	my $desc = $pfsave->idesc();
+	my $desc = $pfsave->idesc() || $key;
 
 	my $text = new Sanger::Graphics::Glyph::Text({
 	    'font'   => $font,
