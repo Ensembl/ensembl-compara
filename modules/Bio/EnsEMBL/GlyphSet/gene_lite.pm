@@ -77,7 +77,7 @@ sub _init {
     my @genes = ();
     
     if ($type eq 'all' && &checkDB('ENSEMBL_SANGER')){ 
-           my $res = $vc->get_all_SangerGenes_startend_lite(); 
+           my $res = []; # $vc->get_all_SangerGenes_startend_lite(); 
            foreach my $g (@$res){ 
                my( $gene_col, $gene_label, $high); 
                $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0; 
