@@ -348,8 +348,11 @@ sub parse_Chain_file {
         
           push @ug_feats, $fp;
         }
+
+        my $dalf = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@ug_feats);
+        $dalf->level_id(1);
        
-        push @{$chain->{blocks}}, new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@ug_feats);
+        push @{$chain->{blocks}}, $dalf;
       }
 
       push @chains, $chain->{blocks};
