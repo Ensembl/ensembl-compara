@@ -54,6 +54,8 @@ use Time::HiRes qw(gettimeofday tv_interval);
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 
@@ -445,6 +447,7 @@ sub process_synteny_segement
   foreach my $peptideMember (@syntenySegment) {
     $self->find_RHS($refPAF, $peptideMember);
   }
+  $firstMember->{'BRHpaf'} = undef;  #break possible cyclical relation, memory leak
 
   #$refPAF = $self->{'qmember_PAF_BRH_hash'}->{$lastMember->dbID};
   $refPAF = $lastMember->{'BRHpaf'};
@@ -522,12 +525,14 @@ sub find_RHS
             #" AND paf1.hit_rank=1".
             # AND (paf1.evalue<1e-50 AND paf1.perc_ident>40)".
             " AND paf1.evalue<1e-10".
+            " AND paf1.qmember_id='". $memberPep->dbID ."'".
+            " AND paf2.hmember_id='". $memberPep->dbID ."'".
+            " AND paf1.hgenome_db_id='". $refPAF->hit_member->genome_db_id ."'".
+            " AND paf2.qgenome_db_id='". $refPAF->hit_member->genome_db_id ."'".
             " AND hm.genome_db_id='". $refPAF->hit_member->genome_db_id ."'".
             " AND hm.chr_name='". $refPAF->hit_member->chr_name ."'".
             " AND hm.chr_start<'". scalar($refPAF->hit_member->chr_end+1500000) ."'".
             " AND hm.chr_end>'". scalar($refPAF->hit_member->chr_start-1500000) ."'".
-            " AND paf1.qmember_id='". $memberPep->dbID ."'".
-            " AND paf2.hmember_id='". $memberPep->dbID ."'".
             " ORDER BY paf1.score DESC, paf1.evalue, paf1.perc_ident DESC, paf1.perc_pos DESC";
 
   print("$sql\n") if($self->{'verbose'}>1);
@@ -566,14 +571,15 @@ sub store_paf_as_homology
 
   my $homology = $paf->return_as_homology();
   $homology->description($type);
-  eval {
-    if(my $val=$self->{'storedHomologies'}->{$paf->hash_key}) {
-      warn($paf->hash_key." homology already stored as $val not $type\n");
-    } else {
-      $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) if($self->{'store'});
-      $self->{'storedHomologies'}->{$paf->hash_key} = $type;
-    }
-  };
+
+  my $key = $paf->hash_key;
+  my $hashtype=$self->{'storedHomologies'}->{$key};
+  if($hashtype) {
+    warn($paf->hash_key." homology already stored as $hashtype not $type\n");
+  } else {
+    $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) if($self->{'store'});
+    $self->{'storedHomologies'}->{$key} = $type;
+  }
 
   delete $self->{'membersToBeProcessed'}->{$paf->query_member->dbID};
   delete $self->{'membersToBeProcessed'}->{$paf->hit_member->dbID};  
