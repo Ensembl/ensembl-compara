@@ -31,8 +31,7 @@ sub _init {
     my $h          = 4;
     my $highlights = $this->highlights();
     
-    print STDERR "HERE PFAM 1\n";
-
+   
    foreach my $feat ($protein->each_Protein_feature()) {
               
        if ($feat->feature2->seqname =~ /^PF\w+/) {
@@ -47,7 +46,7 @@ sub _init {
        
      
 	my $desc = $row[0]->idesc();
-	print STDERR "DESC: $desc\n";
+	
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {

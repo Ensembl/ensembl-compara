@@ -88,8 +88,15 @@ sub _init {
 			my $clone = $temp_rawcontig->contig->cloneid();
 
     		my $c = $self->{'container'}->dbobj()->get_Clone($clone);
-			my $fpc_id=$fpc_map->get_Clone_by_name($c->embl_id)->name();
-			$fpc_id ||= "unknown";
+			my $fpc = $fpc_map->get_Clone_by_name($c->embl_id);
+			my $fpc_id;
+			if( defined $fpc ) {
+			   $fpc_id= $fpc->name();
+			   $fpc_id ||= "unknown";
+			} else {
+			   $fpc_id = "unknown";
+			}
+			
 
 			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 	    		'x'      => $rstart,

@@ -69,11 +69,27 @@ sub _init {
 			my $new_start  = $interval_middle - $global_offset;
 			my $new_end    = $interval_middle + $global_offset;
 
+			my $zoom_out_new_start  = $interval_middle - 2 * $global_offset;
+			my $zoom_out_new_end    = $interval_middle + 2 * $global_offset;
+
+			my $zoom_in_new_start  = $interval_middle - int($global_offset/2);
+			my $zoom_in_new_end    = $interval_middle + int($global_offset/2);
+
     		my $url = "$ENV{'SCRIPT_NAME'}?chr=$chr";
 			$url .= "&vc_start=";
 			$url .= $new_start;
 			$url .= "&vc_end=";
 			$url .= $new_end;
+    		my $url_zoom_out = "$ENV{'SCRIPT_NAME'}?chr=$chr";
+			$url_zoom_out .= "&vc_start=";
+			$url_zoom_out .= $zoom_out_new_start;
+			$url_zoom_out .= "&vc_end=";
+			$url_zoom_out .= $zoom_out_new_end;
+    		my $url_zoom_in = "$ENV{'SCRIPT_NAME'}?chr=$chr";
+			$url_zoom_in .= "&vc_start=";
+			$url_zoom_in .= $zoom_in_new_start;
+			$url_zoom_in .= "&vc_end=";
+			$url_zoom_in .= $zoom_in_new_end;
 			
 			#print STDERR "URL: $url\n";
 			
@@ -85,8 +101,10 @@ sub _init {
 	    		'colour'    => 'transparent',
 	    		'absolutey' => 1,
             	'zmenu'     => { 
-					'caption' => "Navigation",
+					'caption' 						=> "Navigation",
 					'Centre on this scale interval' => $url, 
+					'Zoom in (x2)' 					=> $url_zoom_in, 
+					'Zoom out (x0.5)' 				=> $url_zoom_out, 
 				},
 			});
 			$self->push($interval);
@@ -100,11 +118,27 @@ sub _init {
 		my $new_start  = $interval_middle - $global_offset;
 		my $new_end    = $interval_middle + $global_offset;
 
+		my $zoom_out_new_start  = $interval_middle - 2 * $global_offset;
+		my $zoom_out_new_end    = $interval_middle + 2 * $global_offset;
+
+		my $zoom_in_new_start  = $interval_middle - int($global_offset/2);
+		my $zoom_in_new_end    = $interval_middle + int($global_offset/2);
+
     	my $url = "$ENV{'SCRIPT_NAME'}?chr=$chr";
 		$url .= "&vc_start=";
 		$url .= $new_start;
 		$url .= "&vc_end=";
 		$url .= $new_end;
+    	my $url_zoom_out = "$ENV{'SCRIPT_NAME'}?chr=$chr";
+		$url_zoom_out .= "&vc_start=";
+		$url_zoom_out .= $zoom_out_new_start;
+		$url_zoom_out .= "&vc_end=";
+		$url_zoom_out .= $zoom_out_new_end;
+    	my $url_zoom_in = "$ENV{'SCRIPT_NAME'}?chr=$chr";
+		$url_zoom_in .= "&vc_start=";
+		$url_zoom_in .= $zoom_in_new_start;
+		$url_zoom_in .= "&vc_end=";
+		$url_zoom_in .= $zoom_in_new_end;
 
 		#print STDERR "URL: $url\n";
 
@@ -118,6 +152,8 @@ sub _init {
             'zmenu'     => { 
 				'caption' => "Navigation",
 				'Centre on this scale interval' => $url, 
+				'Zoom in (x2)' 					=> $url_zoom_in, 
+				'Zoom out (x0.5)' 				=> $url_zoom_out, 
 			},
 		});
 		$self->push($interval);
