@@ -51,6 +51,7 @@ sub get_available_adaptors {
 
   my $pairs = $self->SUPER::get_available_adaptors;
   $pairs->{'DnaFragChunk'} = "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor";
+  $pairs->{'DnaFragChunkSet'} = "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor";
   $pairs->{'AnalysisData'} = "Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor";
   return $pairs;
 }
