@@ -494,12 +494,12 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my $genomic_align_blocks = []; # returned object
 
   throw("[$dnafrag] is not a Bio::EnsEMBL::Compara::DnaFrag object")
-      unless ($dnafrag and $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
+      unless ($dnafrag and ref $dnafrag and $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
   my $dnafrag_id = $dnafrag->dbID;
   throw("[$dnafrag] has no dbID") if (!$dnafrag_id);
 
   throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-      unless ($method_link_species_set and
+      unless ($method_link_species_set and ref $method_link_species_set and
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
