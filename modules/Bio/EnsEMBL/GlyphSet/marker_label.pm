@@ -74,13 +74,8 @@ sub colour {
     my ($self, $f) = @_;
 
     my $type = $f->marker->type;
-
     $type = '' unless(defined($type));
-
     my $col = $self->{'colours'}->{"$type"};
-
-    warn "$type => $col"; 
-
     return ($col, $col, '' );
 }
 

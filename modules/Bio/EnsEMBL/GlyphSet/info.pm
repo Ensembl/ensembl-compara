@@ -19,7 +19,7 @@ sub _init {
         'height'    => $h2,
         'font'      => 'Tiny',
         'colour'    => 'black',
-        'text'      => sprintf( "Ensembl %s %s:%d-%d %s",
+        'text'      => sprintf( "Ensembl %s    %s:%d-%d    %s",
            $ENV{'ENSEMBL_SPECIES'}, $self->{'container'}->chr_name,
            $self->{'container'}->chr_start(), $self->{'container'}->chr_end,
            scalar( gmtime() )

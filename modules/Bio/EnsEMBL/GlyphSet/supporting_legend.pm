@@ -15,7 +15,7 @@ sub init_label {
         'font'      => 'Small',
         'absolutey' => 1,
     });
-    $self->label($label);
+#    $self->label($label);
 }
 
 sub _init {
@@ -36,7 +36,7 @@ sub _init {
 
     my @colours;
     
-    my ($x,$y) = (0,0);
+    my ($x,$y) = (1,0);
 
 
      my $labels = {  
@@ -52,9 +52,18 @@ sub _init {
             	
    };
 
+   $self->push(new Sanger::Graphics::Glyph::Text({
+                    'x'          => 1 ,
+            	    'y'          => 1,
+            	    'font'       => 'Small',
+                    'colour'     => 'black',
+           	        'text'       => 'Score: ',		            
+          	        'absolutey'  => 1,
+            	}));
+
     foreach (sort {$b <=> $a} keys %{$labels}) {
-my $legend = $_ ;
-        $legend = ($legend eq 100) || ($legend eq 'No Evidence') ? $legend : '>='.$legend;
+        my $legend = $_;
+		$legend = ($legend eq 100) || ($legend eq 'No Evidence') ? $legend : '>='.$legend;
 	$legend = '<=30' if ($legend eq '>=30');
 	my $colour = %{$labels}->{$_};
             if ($legend eq 'No Evidence'){

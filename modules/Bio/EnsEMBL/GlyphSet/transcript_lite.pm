@@ -3,6 +3,8 @@ use strict;
 use vars qw(@ISA);
 use EnsWeb;
 use Bio::EnsEMBL::GlyphSet_transcript;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
+
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
@@ -94,8 +96,7 @@ sub text_label {
         return $tid.(($transcript->external_name() eq '') ? '' : " ($id)" );
     }
 
-    return $self->{'config'}->{'_transcript_names_'} eq 'yes' ?
-        ($transcript->is_known() ? $id : 'NOVEL') : $tid;    
+    return $self->{'config'}->{'_transcript_names_'} eq 'yes' ? ($transcript->external_name || 'NOVEL') : $tid;    
   }
 
 sub legend {
