@@ -45,6 +45,7 @@ sub _init {
     my $ystart   = 0;
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');
+    my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
     $w *= $length/($length-1);
 
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
@@ -216,13 +217,13 @@ sub _init {
     $self->push($tick);
     
     my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
-
     # only draw a red box if we are in contigview top and there is a detailed display
-    if ($Config->script() eq "contigviewtop" && ($length <= $vc_size_limit+2)){
+    if ($Config->get('_settings','draw_red_box') eq 'yes') { #  eq  && ($length <= $vc_size_limit+2))
 
     # only draw focus box on the correct display...
+        my $LEFT_HS = $clone_based ? 0 : $self->{'container'}->_global_start() -1;
         my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
-            'x'            => $Config->{'_wvc_start'} - $self->{'container'}->_global_start(),
+            'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 4 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
             'height'       => 22,
@@ -232,7 +233,7 @@ sub _init {
         $self->push($boxglyph);
 
         my $boxglyph2 = new Bio::EnsEMBL::Glyph::Rect({
-            'x'            => $Config->{'_wvc_start'} - $self->{'container'}->_global_start(),
+            'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 3 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
             'height'       => 20,
