@@ -238,9 +238,6 @@ sub run_module_with_job
   return 0 unless($runObj);
   return 0 unless($job and ($job->hive_id eq $self->hive_id));
 
-  #resets object
-  $runObj->init();
-
   #pass the input_id from the job into the runnableDB object
   $runObj->input_id($job->input_id);
   

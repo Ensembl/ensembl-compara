@@ -62,7 +62,6 @@ sub Bio::EnsEMBL::Analysis::runnableDB
                                 -input_id => '1',
                                 -analysis => $self,
                                 );
-  $runobj->init();                                
   print STDERR "Instantiated ".$runnable." runnabledb\n" if($self->{'verbose'});
 
   $self->{'runnableDB'} = $runobj;

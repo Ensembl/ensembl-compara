@@ -68,57 +68,26 @@ use vars qw(@ISA);
 
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
-sub init {
-  my $self = shift;
-  #$self->SUPER::init();
-  $self->batch_size(1);
-  $self->carrying_capacity(1);
-}
-
 =head2 batch_size
-  Arg [1] : (optional) string $value
   Title   :   batch_size
   Usage   :   $value = $self->batch_size;
-              $self->batch_size($new_value);
   Description: Defines the number of jobs the RunnableDB subclasses should run in batch
                before querying the database for the next job batch.  Used by the
                Hive system to manage the number of workers needed to complete a
                particular job type.
-  DefaultValue : 1
   Returntype : integer scalar
 =cut
-
-sub batch_size {
-  my $self = shift;
-  my $value = shift;
-
-  $self->{'_batch_size'} = 1 unless($self->{'_batch_size'});
-  $self->{'_batch_size'} = $value if($value);
-
-  return $self->{'_batch_size'};
-}
+sub batch_size { return 1; }
 
 =head2 carrying_capacity
-  Arg [1] : (optional) string $value
-  Title   :   batch_size
+  Title   :   carrying_capacity
   Usage   :   $value = $self->carrying_capacity;
-              $self->carrying_capacity($new_value);
   Description: Defines the total number of Workers of this RunnableDB for a particular
                analysis_id that can be created in the hive.  Used by Queen to manage
                creation of Workers.
-  DefaultValue : 1
   Returntype : integer scalar
 =cut
-
-sub carrying_capacity {
-  my $self = shift;
-  my $value = shift;
-
-  $self->{'_carrying_capacity'} = 1 unless($self->{'_carrying_capacity'});
-  $self->{'_carrying_capacity'} = $value if($value);
-
-  return $self->{'_carrying_capacity'};
-}
+sub carrying_capacity { return 1; }
 
 
 =head2 fetch_input
