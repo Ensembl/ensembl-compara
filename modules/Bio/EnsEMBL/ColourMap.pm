@@ -41,6 +41,8 @@ sub new {
     'Ig_Segment'       => 'midnightblue',
     'Ig_Pseudogene'    => 'mediumpurple4',
     'Predicted_Gene'   => 'steelblue4',
+    'Transposon'       => 'steelblue',
+    'Polymorphic'      => 'blue4',
   );
   $self->colourSet( 'est_gene',
     'hi'         => 'highlight1',

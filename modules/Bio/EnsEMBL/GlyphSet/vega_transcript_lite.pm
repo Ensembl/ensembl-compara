@@ -101,6 +101,7 @@ sub legend {
                 'Curated predicted gene'         => $colours->{'Predicted_Gene'},
                 'Curated Immunoglobulin segment' => $colours->{'Ig_Segment'},
                 'Curated Immunoglobulin pseudogene' => $colours->{'Ig_Pseudogene'},
+                'Curated Polymorphic' => $colours->{'Polymorphic'},
             ]
     );
 }
