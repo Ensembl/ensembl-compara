@@ -111,48 +111,12 @@ sub run
 {
   my $self = shift;
 
-  my $genome_db_id = $self->input_id();
-
-  #get the Compara::GenomeDB object for the genome_db_id
-  $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-
-  #create subsets for the gene members, and the longest peptide members
-  $self->{'pepSubset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>$self->{'genome_db'}->name . ' longest translations');
-  $self->{'geneSubset'} = Bio::EnsEMBL::Compara::Subset->new(-name=>$self->{'genome_db'}->name . ' genes');
-
-  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'pepSubset'});
-  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'geneSubset'});
-
-
-  #from core database, get all slices, and then all genes in slice
-  #and then all transcripts in gene to store as members in compara
-  my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
-  SLICE: foreach my $slice (@slices) {
-    $self->{'sliceCount'}++;
-    #print(STDERR "slice " . $slice->name . "\n");
-    foreach my $gene (@{$slice->get_all_Genes}) {
-      $self->{'geneCount'}++;
-      if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
-        $self->{'realGeneCount'}++;
-        $self->store_gene_and_all_transcripts($gene);
-      }
-      #if($self->{'transcriptCount'} >= 1000) { last SLICE; }
-      #if($geneCount >= 1000) { last SLICE; }
-    }
-    #last SLICE;
-  }
-
-  print("loaded ".$self->{'sliceCount'}." slices\n");
-  print("       ".$self->{'geneCount'}." genes\n");
-  print("       ".$self->{'realGeneCount'}." real genes\n");
-  print("       ".$self->{'transcriptCount'}." transscripts\n");
-  print("       ".$self->{'longestCount'}." longest transscripts\n");
-  print("       ".$self->{'pepSubset'}->count()." in Subset\n");
-
-
-  # using the genome_db and longest peptides subset, create a fasta
-  # file which can be used as a blast database
-  #$self->dumpPeptidesToFasta();
+  # main routine which takes a genome_db_id (from input_id) and
+  # access the ensembl_core database, useing the SliceAdaptor
+  # it will load all slices, all genes, and all transscripts
+  # and convert them into members to be stored into compara
+  $self->loadMembersFromCoreSlices();
+  
 
   # working from the longest peptide subset, create an analysis of
   # with logic_name 'SubmitPep_<taxon_id>_<assembly>'
@@ -162,7 +126,7 @@ sub run
   #
   # This creates the starting point for the blasts (members against database)
   $self->submitSubsetForAnalysis();
-                        
+                      
 }
 
 # don't need to subclass write_output since there is no output
@@ -202,6 +166,49 @@ sub connectGenomeCore
 }
 
 
+sub loadMembersFromCoreSlices
+{
+  my $self = shift;
+  my $genome_db_id = $self->input_id();
+
+  #get the Compara::GenomeDB object for the genome_db_id
+  $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+
+  #create subsets for the gene members, and the longest peptide members
+  $self->{'pepSubset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>$self->{'genome_db'}->name . ' longest translations');
+  $self->{'geneSubset'} = Bio::EnsEMBL::Compara::Subset->new(-name=>$self->{'genome_db'}->name . ' genes');
+
+  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'pepSubset'});
+  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'geneSubset'});
+
+
+  #from core database, get all slices, and then all genes in slice
+  #and then all transcripts in gene to store as members in compara
+  my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
+  SLICE: foreach my $slice (@slices) {
+    $self->{'sliceCount'}++;
+    #print(STDERR "slice " . $slice->name . "\n");
+    foreach my $gene (@{$slice->get_all_Genes}) {
+      $self->{'geneCount'}++;
+      if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
+        $self->{'realGeneCount'}++;
+        $self->store_gene_and_all_transcripts($gene);
+      }
+      if($self->{'transcriptCount'} >= 1000) { last SLICE; }
+      #if($geneCount >= 1000) { last SLICE; }
+    }
+    #last SLICE;
+  }
+
+  print("loaded ".$self->{'sliceCount'}." slices\n");
+  print("       ".$self->{'geneCount'}." genes\n");
+  print("       ".$self->{'realGeneCount'}." real genes\n");
+  print("       ".$self->{'transcriptCount'}." transscripts\n");
+  print("       ".$self->{'longestCount'}." longest transscripts\n");
+  print("       ".$self->{'pepSubset'}->count()." in Subset\n");
+}
+
+
 sub store_gene_and_all_transcripts
 {
   my $self = shift;
@@ -233,11 +240,11 @@ sub store_gene_and_all_transcripts
     print(STDERR "     transcript " . $transcript->stable_id );
 
     unless (defined $transcript->translation) {
-      $self->throw("COREDB error: No translation for transcript transcript_id" . $transcript->dbID);
+      warn("COREDB error: No translation for transcript transcript_id" . $transcript->dbID."\n");
     }
 
     unless (defined $transcript->translation->stable_id) {
-      $self->throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID);
+      warn("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
     }
 
     my $description = $self->fasta_description($gene, $transcript);
@@ -285,6 +292,13 @@ sub fasta_description {
 }
 
 
+# working from the longest peptide subset, create an analysis of
+# with logic_name 'SubmitPep_<taxon_id>_<assembly>'
+# with type MemberPep and fill the input_id_analysis table where
+# input_id is the member_id of a peptide and the analysis_id
+# is the above mentioned analysis
+#
+# This creates the starting point for the blasts (members against database)
 sub submitSubsetForAnalysis {
   my $self    = shift;
   my $subset  = $self->{'pepSubset'};
@@ -301,7 +315,7 @@ sub submitSubsetForAnalysis {
       #-db              => $blastdb->dbname(),
       -db_file         => $subset->dump_loc(),
       -db_version      => '1',
-      -parameters      => "subset_id=" . $subset->dbID().";genome_db_id=".$self->{'genome_db'}->dbID(),
+      -parameters      => "subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID(),
       -logic_name      => $logic_name,
       -input_id_type   => 'MemberPep'
     );
@@ -335,62 +349,5 @@ sub submitSubsetForAnalysis {
 
   return $logic_name;
 }
-
-=head1
-sub dumpPeptidesToFasta
-{
-  my $self = shift;
-
-  # create logical path name for fastafile
-  my $species = $self->{'genome_db'}->name();
-  $species =~ s/\s+/_/g;  # replace whitespace with '_' characters
-
-  my $fastafile = $fastadir . "/" .
-                  $species . "_" .
-                  $self->{'genome_db'}->assembly() . ".fasta";
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  print("fastafile = '$fastafile'\n");
-
-  # write fasta file
-  $comparaDBA->get_SubsetAdaptor->dumpFastaForSubset($self->{'pepSubset'}, $fastafile);
-
-  # configure the fasta file for use as a blast database file
-  my $blastdb     = new Bio::EnsEMBL::Pipeline::Runnable::BlastDB (
-      -dbfile     => $fastafile,
-      -type       => 'PROTEIN');
-  $blastdb->run;
-  print("registered ". $blastdb->dbname . " for ".$blastdb->dbfile . "\n");
-
-  # create blast analysis
-}
-=cut
-
-=head3
-  #
-  # now add the 'blast' analysis
-  #
-  $logic_name = "blast_" . $genome->assembly();
-  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db              => "subset_id=" . $subset->dbID().";genome_db_id=".$genome->dbID,
-      -db_file         => $subset->dump_loc(),
-      -db_version      => '1',
-      -logic_name      => $logic_name,
-      -input_id_type   => 'MemberPep'
-    );
-
-  $pipelineDBA->get_AnalysisAdaptor()->store($analysis);
-
-
-
-  my $logic_name = "blast_" . $species1Ptr->{abrev};
-  print("build analysis $logic_name\n");
-  my %analParams = %analysis_template;
-  $analParams{'-logic_name'}    = $logic_name;
-  $analParams{'-input_id_type'} = $species1Ptr->{condition}->input_id_type();
-  $analParams{'-db'}            = $species2Ptr->{abrev};
-  $analParams{'-db_file'}       = $species2Ptr->{condition}->db_file();
-  my $analysis = new Bio::EnsEMBL::Pipeline::Analysis(%analParams);
-  $db->get_AnalysisAdaptor->store($analysis);
-=cut
 
 1;

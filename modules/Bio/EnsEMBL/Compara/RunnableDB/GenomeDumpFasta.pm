@@ -101,15 +101,9 @@ sub run
   # and configure it to be used as a blast database
   my $blastdb = $self->dumpPeptidesToFasta();
 
-  # create an analysis of type MemberPep for this fasta/blastdb
-  # that will run module BlastComparaPep
-  my $blast_analysis = $self->createBlastAnalysis($blastdb);
+  # update the blast analysis setting the blast database
+  my $blast_analysis = $self->updateBlastAnalysis($blastdb);
 
-  # create dependency rules to link submited members to
-  # this analysis
-
-
-  
   #call superclasses run method
   return $self->SUPER::run();
 }
@@ -169,7 +163,7 @@ sub dumpPeptidesToFasta
   $species =~ s/\s+/_/g;  # replace whitespace with '_' characters
 
   # fasta_dir in parameter_hash
-  my %parameters = $self->parameter_hash();
+  my %parameters = $self->parameter_hash($self->analysis->parameters());
   print("fasta_dir = " . $parameters{'fasta_dir'});
 
   my $fastafile = $parameters{'fasta_dir'} . "/" .
@@ -192,15 +186,39 @@ sub dumpPeptidesToFasta
 }
 
 
+sub updateBlastAnalysis
+{
+  my $self    = shift;
+  my $blastdb = shift;
+
+  
+  my $logic_name = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
+  print("UPDATE the blastDB for analysis $logic_name\n");
+  my $blast_analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
+
+  $self->throw("$logic_name analysis has not been created") unless($blast_analysis);
+
+  $blast_analysis->db($blastdb->dbname);
+  $blast_analysis->db_file($blastdb->dbfile);
+  $blast_analysis->db_version(1);
+  
+  $self->db->get_AnalysisAdaptor()->update($blast_analysis);
+
+  return $blast_analysis;
+}
+
+
+# create an analysis of type MemberPep for this fasta/blastdb
+# that will run module BlastComparaPep
 sub createBlastAnalysis
 {
   my $self    = shift;
   my $blastdb = shift;
 
   my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
-  
+
   my $logic_name = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
-  
+
   my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db              => $blastdb->dbname,
       -db_file         => $blastdb->dbfile,
@@ -219,7 +237,69 @@ sub createBlastAnalysis
   return $analysis;
 }
 
+sub phylumForGenomeDBID
+{
+  my $self = shift;
+  my $genome_db_id = shift;
+  my $phylum;
+
+  my $sql = "SELECT phylum FROM genome_db_extn " .
+            "WHERE genome_db_id=$genome_db_id;";
+  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  $sth->execute();
+  $sth->bind_columns( undef, \$phylum );
+  $sth->fetch();
+  $sth->finish();
+
+  return $phylum;
+}
 
 
+# scan the analysis table for SubmitPep_<> blocks that can
+# be blasted against this blastDB based on the phylum groupings
+sub createBlastRules
+{
+  my $self = shift;
+  my $blast_analysis = shift;
 
+  my $blastPhylum = $self->phylumForGenomeDBID($self->{'genome_db'}->dbID());
+  print("\nANALYSIS ".$blast_analysis->logic_name()." is a ".$blastPhylum."\n");
+  
+  my $analysisList = $self->db->get_AnalysisAdaptor->fetch_all();
+  foreach my $analysis (@{$analysisList}) {
+    my %parameters = $self->parameter_hash($analysis->parameters());
+    my $phylum = $self->phylumForGenomeDBID($parameters{'genome_db_id'});
+    print("  check ".$analysis->logic_name().
+          " genome_db_id=".$parameters{'genome_db_id'}.
+          " phylum=".$phylum."\n");
+
+  }
+}
+
+
+sub parameter_hash{
+  my $self = shift;
+  my $parameter_string = shift;
+
+  my %parameters;
+
+  if ($parameter_string) {
+
+    my @pairs = split (/,/, $parameter_string);
+    foreach my $pair (@pairs) {
+      my ($key, $value) = split (/=>/, $pair);
+      if ($key && $value) {
+        $key   =~ s/^\s+//g;
+        $key   =~ s/\s+$//g;
+        $value =~ s/^\s+//g;
+        $value =~ s/\s+$//g;
+
+        $parameters{$key} = $value;
+      } else {
+        $parameters{$key} = "__NONE__";
+      }
+    }
+  }
+  return %parameters;
+}
 1;
