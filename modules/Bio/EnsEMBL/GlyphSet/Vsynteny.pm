@@ -60,9 +60,14 @@ sub _init {
     my $kba2        = $self->{'container'}->{'ka_secondary'};
     my $synteny_data= $self->{'container'}->{'synteny'};
     my $OTHER       = $self->{'container'}->{'other_species'};
+    my $OTHER_T     = $OTHER; $OTHER_T =~s/_/ /g;
+    my $SPECIES_T   = $ENV{'ENSEMBL_SPECIES'}; $SPECIES_T =~s/_/ /g;
+    my $OTHER_SHORT = EnsWeb::species_defs->other_species($OTHER,'SPECIES_SHORT_NAME');
+    my $SPECIES_SHORT = EnsWeb::species_defs->SPECIES_SHORT_NAME;
+    $SPECIES_T =~ s/_/ /g;
 ## This is the list of chromosomes we will be drawing     
 
-    my %other_chrs = map { ($_ , 1) } @{ EnsWeb::species_defs->other_species($self->{'container'}->{'other_species'},'ENSEMBL_CHROMOSOMES') };
+    my %other_chrs = map { ($_ , 1) } @{ EnsWeb::species_defs->other_species($OTHER,'ENSEMBL_CHROMOSOMES') };
     
 ## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
 
@@ -132,9 +137,21 @@ sub _init {
             'end' => $box->{'chr_end'},
             'col' => $COL,
             'border' => $BORD,
-            'side' => $SIDE
+            'side' => $SIDE,
+            'href' => qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),
+            'zmenu' => {
+                'caption' => "$OTHER_T chr $other_chr",
+                sprintf("01:%s Chr %s:%0.1fM-%0.1fM",$SPECIES_SHORT,
+                        $this_chr,$box->{'chr_start'}/1e6,$box->{'chr_end'}/1e6) => 
+    qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
+                sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
+                        $other_chr,$box->{'hit_chr_start'}/1e6,$box->{'hit_chr_end'}/1e6) => 
+qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'})
+            }
         };
         if($SIDE) {
+            my $marked =
+                ($box->{'chr_start'} <= $self->{'container'}->{'line'} && $self->{'container'}->{'line'} <= $box->{'chr_end'}) ? $SIDE : 0;
             push @{$highlights_secondary->{$other_chr}}, {
                 'rel_ori' => $box->{'rel_ori'},
                 'id' => $box->{'synteny_id'},
@@ -142,7 +159,32 @@ sub _init {
                 'end' => $box->{'hit_chr_end'},
                 'col' => $COL,
                 'border' => $BORD,
-                'side' => 0
+                'side' => 0,
+                'href' => qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr),
+                'marked' => $marked,
+                'zmenu' => {
+                    'caption' => sprintf("Chr %s %0.1fM-%0.1fM",
+                            $other_chr,
+                            $box->{'hit_chr_start'}/1e6,
+                            $box->{'hit_chr_end'}/1e6
+                    ),
+                    qq(01:Centre display on this chr.) => qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr),
+                    ($box->{'rel_ori'}==1 ?
+                        "02:Forward orientation" :
+                        "01:Reverse orientation" ) => '',
+                    sprintf("04:%s Chr %s:%0.1fM-%0.1fM",
+                        $SPECIES_SHORT,
+                        $this_chr,
+                        $box->{'chr_start'}/1e6,
+                        $box->{'chr_end'}/1e6) => 
+    qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
+                sprintf("03:%s Chr %s:%0.1fM-%0.1fM",
+                        $OTHER_SHORT,
+                        $other_chr,
+                        $box->{'hit_chr_start'}/1e6,
+                        $box->{'hit_chr_end'}/1e6) => 
+    qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'})
+                }
             };
         }
     }
@@ -152,14 +194,17 @@ sub _init {
         'v_offset'      => $h_offset,
         'length'        => $length,
         'chr_length'    => $chr_length,
+        'chr'           => $this_chr,
         'width'         => $main_width,
         'white'         => $white,
         'black'         => $black,
         'grey'          => $grey,
+        'red'           => $red,
         'bg'            => $bg,
         'highlights'    => $highlights_main->{$chr},
         'font'          => 'Tiny',
-        'ruler'         => ( $chr_length> 10e7 ? 2e7 : 1e7 )
+        'ruler'         => ( $chr_length> 10e7 ? 2e7 : 1e7 ),
+        'line'          => $self->{'container'}->{'line'}
     );
 
     my %secondary_coords;
@@ -176,6 +221,8 @@ sub _init {
               $outer_padding) : # LHS
             ( $h_offset + ($N-$FLAG)/2 * ( $secondary_length + $spacing ),
               2 * $inner_padding + $secondary_width + $main_width + $outer_padding) ; # RHS
+        my $mb_p_p = ($chr_length_2 / $secondary_length / 1e6);
+        my $ruler = $mb_p_p > 0.75 ? 5e7 : ($mb_p_p > 0.15 ? 2e7 : 1e7);
         my %t = $self->draw_chromosome( 
             'bands'         => \@bands_2,
             'h_offset'      => $v_offset2,
@@ -186,10 +233,11 @@ sub _init {
             'white'         => $white,
             'black'         => $black,
             'grey'          => $grey,
+            'red'           => $red,
             'bg'            => $bg,
             'chr_name'      => "Chr $chr2",
             'font'          => 'Tiny',
-            'ruler'         => ( ($chr_length_2/$num_chr)> 10e7 ? 2e7*($num_chr>5 ? 5 : 1) : 1e7 *($num_chr>5 ? 5 : 1) ),
+            'ruler'         => $ruler,
             'ruler_offset'  => $flag == 0 ? 'l' : 'r',
             'highlights'    => $highlights_secondary->{$chr2}
         );      
@@ -239,7 +287,6 @@ sub _init {
     }
     my $w = $self->{'config'}->texthelper->width('Tiny');
     my $h = $self->{'config'}->texthelper->height('Tiny');
-    my $OTHER_T = $OTHER; $OTHER_T =~s/_/ /g;
     $self->unshift(new Bio::EnsEMBL::Glyph::Text({
             'x'          => $im_width - $h - 1,
             'y'          => $outer_padding + $secondary_width/2 - $w * length($OTHER_T)/2,
@@ -466,7 +513,37 @@ sub draw_chromosome {
             'colour'     => $box->{'col'},
             'bordercolour'     => $box->{'border'},
             'absolutey'  => 1,
-            'absolutex'  => 1
+            'absolutex'  => 1,
+            'href' => $box->{'href'},
+            'zmenu' => $box->{'zmenu'}
+        }));
+        if($box->{'marked'}==1 || $box->{'marked'}==-1) {
+            $self->push(new Bio::EnsEMBL::Glyph::Rect({
+                'x'          => $vc_start -2,
+                'y'          => $h_offset + ($box->{'marked'}==1 ? $wid+3 : -4 ), 
+                'width'      => $vc_end - $vc_start + 4,
+                'height'     => 2,
+                'bordercolour'     => $params{'red'},
+                'absolutey'  => 1,
+                'absolutex'  => 1
+            }));
+        }
+    }
+    if($params{'line'}) {
+        $self->push(new Bio::EnsEMBL::Glyph::Rect({
+            'x'          => $v_offset + $params{'line'} * $scale - 1,
+            'y'          => $h_offset - 2,
+            'width'      => 3,
+            'height'     => $wid + 4,
+            'bordercolour' => $params{'red'},
+            'absolutey'  => 1,
+            'absolutex'  => 1,
+            'href'       => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$params{'this_chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5),
+            'zmenu'       => {
+                'caption' => "Entry point",
+                "Jump to ContigView" =>
+                "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$params{'this_chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5)
+            }
         }));
     }
     return %coords;
