@@ -9,6 +9,7 @@ $0 [-help]
    -host mysql_host_server
    -user username (default = 'ensro')
    -dbname ensembl_compara_database
+   -port eg 3352 (default)
    -chr_name (e.g. 22)
    -chr_start
    -chr_end
@@ -29,6 +30,7 @@ my $conf_file;
 my $help = 0;
 my $alignment_type = "WGA";
 my $limit = 0;
+my $port=3352;
 
 unless (scalar @ARGV) {
   print $usage;
@@ -39,6 +41,7 @@ GetOptions('help' => \$help,
 	   'host=s' => \$host,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
+	   'port=i'  => \$port,
 	   'chr_name=s' => \$chr_name,
 	   'chr_start=i' => \$chr_start,
 	   'chr_end=i' => \$chr_end,
@@ -61,6 +64,7 @@ if ($help) {
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
 						      -user => $dbuser,
+						      -port => $port,
 						      -dbname => $dbname,
 						      -conf_file => $conf_file);
 
