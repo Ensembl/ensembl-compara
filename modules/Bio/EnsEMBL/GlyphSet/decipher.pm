@@ -81,8 +81,8 @@ sub features {
 					 );
     $s->{'decipher_softstart'} = $soft->start()+$offset;
     $s->{'decipher_softend'}   = $soft->end()+$offset;
-    $s->{'decipher_note'}      = $soft->note();
-    $s->{'decipher_link'}      = $soft->link();
+    $s->{'decipher_note'}      = $soft->note() || "";
+    $s->{'decipher_link'}      = $soft->link() || "";
     $s->{'decipher_strand'}    = ($soft->orientation() eq "-")?-1:1;
     $s->{'decipher_thang'}     = "novel";
 
@@ -97,8 +97,8 @@ sub features {
 					  -seqname => $known->label(),
 					 );
     $s->{'decipher_type'}   = $known->type();
-    $s->{'decipher_note'}   = $known->note();
-    $s->{'decipher_link'}   = $known->link();
+    $s->{'decipher_note'}   = $known->note() || "";
+    $s->{'decipher_link'}   = $known->link() || "";
     $s->{'decipher_strand'} = ($known->orientation() eq "-")?-1:1;
     $s->{'decipher_thang'}  = "known";
     push @{$res}, $s;
@@ -114,15 +114,19 @@ sub colour {
   return $DECIPHER_COLOURS->{($f->{'decipher_strand'} < 0)?'novel_deletion':'novel_insertion'};
 }
 
-sub href  { return undef; }
+sub href  {
+  my ($self, $f) = @_;
+  return $f->{'decipher_link'} || undef;
+}
 
 sub zmenu {
   my ($self, $f) = @_;
-  return {
-	  'caption'   => "DECIPHER:" . $f->seqname(),
-	  '01:<b>Phenotype:</b>' . $f->{'decipher_note'} => undef,
-	  '02:Report' => $f->{'decipher_link'},
-	 };
+  my $ref = {
+	     'caption'   => "DECIPHER:" . $f->seqname(),
+	    };
+  $ref->{'01:<b>Phenotype:</b>' . $f->{'decipher_note'}} = undef if($f->{'decipher_note'});
+  $ref->{'02:Report'} = $f->{'decipher_link'} if($f->{'decipher_link'});
+  return $ref;
 }
 
 sub image_label {
