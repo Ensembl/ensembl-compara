@@ -168,10 +168,5 @@ sub store{
    return $region_id;
 }
 
-
-
-
-
-
-
+1;
 

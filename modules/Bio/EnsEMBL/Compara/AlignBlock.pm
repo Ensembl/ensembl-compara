@@ -402,3 +402,4 @@ sub has_tag{
    return 0;
 }
 
+1;
