@@ -14,7 +14,14 @@ sub features {
 sub zmenu {
     my ($self, $id ) = @_;
     $id =~ s/(.*)\.\d+/$1/o;
-    return { 'caption' => "$id",
-	     "Protein homology" => "http://www.ebi.ac.uk/cgi-bin/swissfetch?$id" };
+    return {
+        'caption' => "$id",
+	    "Protein homology" =>
+            (
+                $id=~/^NP/ ?
+                    "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[REFSEQPROTEIN-ID:$id]" :
+                    "http://www.ebi.ac.uk/cgi-bin/swissfetch?$id"
+            )
+    };
 }
 1;
