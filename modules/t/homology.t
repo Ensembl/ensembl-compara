@@ -22,7 +22,7 @@ ok( test_getter_setter( $homology, "dbID", 202501 ));
 ok( test_getter_setter( $homology, "stable_id", "dummy stable_id" ));
 ok( test_getter_setter( $homology, "description", "my dummy description" ));
 ok( test_getter_setter( $homology, "source_id", 2 ));
-ok( test_getter_setter( $homology, "source_name", "ENSEMBLPEP" ));
+ok( test_getter_setter( $homology, "source_name", "blablablo" ));
 ok( test_getter_setter( $homology, "adaptor", "dummy_adaptor" ));
 
 
