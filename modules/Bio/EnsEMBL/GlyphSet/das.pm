@@ -9,395 +9,407 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Intron;
 use Sanger::Graphics::Bump;
 use Data::Dumper;
+use POSIX qw(floor);
 use ExtURL;
 
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
 
-    my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ?
-qq[javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] : qq[javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
+  my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ?
+qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) : qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
 
-    $self->label( new Sanger::Graphics::Glyph::Text({
-        'text'      => $self->{'extras'}->{'caption'},
-        'font'      => 'Small',
-        'colour'    => 'contigblue2',
-        'absolutey' => 1,
-        'href'      => $URL,
-        'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
-            {   'caption'                       => 'Configure' ,
-                '01:Advanced configuration...'  => $URL }:
-            {   'caption'                       => 'HELP', 
-                "01:Track information..."       => $URL }
-    }) );
+  $self->label( new Sanger::Graphics::Glyph::Text({
+    'text'      => $self->{'extras'}->{'caption'},
+    'font'      => 'Small',
+    'colour'    => 'contigblue2',
+    'absolutey' => 1,
+    'href'      => $URL,
+    'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
+      { 'caption' => 'Configure', '01:Advanced configuration...' => $URL } :
+      { 'caption' => 'HELP',      '01:Track information...'      => $URL }
+  }) );
 }
-
 
 sub _init {
-    my ($self) = @_;
-
-    my $Config          = $self->{'config'};
-    ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
-    $das_config_key =~ s/^managed_das/das/;
-
-    my $strand          = $Config->get($das_config_key, 'str');
+  my ($self) = @_;
+  ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
+  $das_config_key =~ s/^managed_das/das/;
+  my $Config = $self->{'config'};
+  my $strand = $Config->get($das_config_key, 'str');
+  my $Extra  = $self->{'extras'};
 # If strand is 'r' or 'f' then we display everything on one strand (either
 # at the top or at the bottom!
+  return if( $strand eq 'r' && $self->strand() != -1 || $strand eq 'f' && $self->strand() != 1 );
+  my $h;
+  $self->{'bitmap'} = [];    
+  my $configuration = {
+    'strand'   => $strand,
+    'tstrand'  => $self->strand,
+    'STRAND'   => $self->strand(),
+    'cmap'     => $Config->colourmap(),
+    'colour'   => $Config->get($das_config_key, 'col') || 'contigblue1',
+    'depth'    => $Config->get($das_config_key, 'dep'),
+    'use_style'=> $Config->get($das_config_key, 'stylesheet') eq 'Y',
+    'length'   => $self->{'container'}->length() +1,
+    'labelling'=> $Extra->{'labelflag'} =~ /^[ou]$/i ? 1 : 0,
 
-    return if( $strand eq 'r' && $self->strand() != -1 || $strand eq 'f' && $self->strand() != 1 );
+  };
+  $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
+  $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
+  ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
+  $self->{'textwidth'}     *= (1 + 1/$configuration->{'length'});
+  $configuration->{'h'} = $self->{'textheight'};
 
-    $self->{'bitmap'} = [];    
-    my $tstrand = $self->strand;
-    my $cmap            = $Config->colourmap();
-    my $feature_colour  = $Config->get($das_config_key, 'col') || 'contigblue1';
-    my $dep             = $Config->get($das_config_key, 'dep');
-    my $group           = $Config->get($das_config_key, 'group');
-    my $use_style       = $Config->get($das_config_key, 'stylesheet') eq 'Y';
-    my $vc              = $self->{'container'};
-    my $border          = 'black' ;
-    my $red             = 'red' ;
-    ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
-    my $length          = $vc->length() +1;
+  my $dsn = $Extra->{'dsn'};
+  my( $features, $styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
+  my @features = grep {
+    $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
+    $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
+    $_->das_start <= $configuration->{'length'} &&
+    $_->das_end > 0
+  } @{ $features || [] };
 
-    $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
-    $self->{'bitmap_length'} = int(($length+1) * $self->{'pix_per_bp'});
+  $configuration->{'features'} = \@features;
+  my %styles;
+  if( $styles && @$styles && $configuration->{'use_style'} ) {
+    foreach(@$styles) {
+      $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
+      $configuration->{'h'} = $_->{'attrs'}{'height'} if exists $_->{'attrs'} && exists $_->{'attrs'}{'height'};
+    } 
+    $configuration->{'styles'} = \%styles;
+  } else {
+    $configuration->{'use_style'} = 0;
+  }
+  $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
+  $self->{'ext_url'}      = ExtURL->new( $Extra->{'name'} =~ /^managed_extdas/ ? ($Extra->{'linkURL'} => $Extra->{'linkURL'}) : () );
+  my $renderer = $Config->get($das_config_key, 'group') ? 'expanded_init' : 'compact_init' ;
+  $renderer = 'density_init';
+  warn "RENDERER... $renderer";
+  return $self->$renderer( $configuration );
+}
 
-    $self->{'textwidth'}    *= ($length+1)/$length;
-    my $h = $self->{'textheight'};
 
-
-    my $dsn = $self->{'extras'}{'dsn'};
-    my $das_data = $vc->get_all_DASFeatures; # Evil data structure
-    my ( $features, $styles ) = @{ $das_data->{$dsn} || [] };
-
-    $use_style = 0 unless $styles && @{$styles};
-
-    #print STDERR "STYLE: $use_style\n";
-
-    my @features = grep 
-      {
-	$_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
-	$_->das_type_id() !~ /^(contig|component|karyotype):/i &&
-        $_->das_start <= $length &&
-        $_->das_end > 0
-      } @{ $features || [] };
-
-    my %styles = ();
-    if( $use_style ) {
-        #print STDERR Dumper($styles);
-        
-       foreach(@$styles) {
-          $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
-          $h = $_->{'attrs'}{'height'} if exists $_->{'attrs'} && exists $_->{'attrs'}{'height'};
-       } 
+sub compact_init {
+  my( $self, $configuration ) = @_;
+  my $old_end = -1e9;
+  my $empty_flag = 1;
+  foreach my $f( sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'}} ){
+    if($f->das_type_id() eq '__ERROR__') {
+      $self->errorTrack(
+        'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')'
+      );
+      return -1 ;
     }
-    # warn map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
-    if($@) {
-        print STDERR "----------\n",$@,"---------\n";
-        return;
-    }
-    $self->{'link_text'}    = $self->{'extras'}->{'linktext'} || 'Additional info';
-    $self->{'ext_url'}      = $self->{'extras'}->{'name'} =~ /^managed_extdas/ ? 
-        ExtURL->new( $self->{'extras'}->{'linkURL'} => $self->{'extras'}->{'linkURL'} ) :
-        ExtURL->new();        
-    
-    my $empty_flag  = 1;
-    ## Set a 1/0 flag to find out whether or not we are adding labels....
-    
-    my $labelling = uc($self->{'extras'}->{'labelflag'}) eq 'O' || uc($self->{'extras'}->{'labelflag'}) eq 'U' ? 1 : 0;
-    my $STRAND = $self->strand();
-    my $T = 0; my $C = 0; my $C1 = 0;
-    if($group==1) {
-        my %grouped;
-        foreach my $f(@features){
-            if($f->das_type_id() eq '__ERROR__') {
-                $self->errorTrack( 'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')' );
-                return;
-            }
-            next if $strand eq 'b' && ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
-            my $fid = $f->das_id;
-            next unless $fid;
-            $fid  = "G:".$f->das_group_id if $f->das_group_id;
-            push @{$grouped{$fid}}, $f;
-            $empty_flag = 0; # We have a feature (its on one of the strands!)
-        }
-
-        if($empty_flag) {
-            $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
-            return;
-        }    
-        
-        foreach my $value (values %grouped) {
-            my $f = $value->[0];
-        ## Display if not stranded OR
-            my @t_features = sort { $a->das_start <=> $b->das_start } @$value;
-            my @features = (shift @t_features);
-            foreach( @t_features ) { # Nasty hacky bit that ensures we don't have duplicate das features....
-                if($_->das_start <= $features[-1]->das_end ) {
-                    $features[-1]->das_end( $_->das_end );
-                } else {
-                    push @features, $_;
-                } 
-            }
-            my $start = $features[0]->das_start;    # GET START AND END OF FEATURE....
-            my $START = $start < 1 ? 1 : $start;
-            my $end   = $features[-1]->das_end;
-            
-            $T += @features;
-            $T += @features-1 if ( $f->das_group_type || $f->das_type_id() ) =~ /(CDS|translation|transcript|exon)/i;
-            ### A general list of features we don't want to draw via DAS ###
-            # Compute the length of the label...
-            my $ID    = $f->das_group_id || $f->das_id;
-            my $label = $f->das_group_label || $f->das_feature_label || $ID;
-            my $label_length = $labelling * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
-
-            my $row = $dep > 0 ? $self->bump( $START, $end, $label_length, $dep ) : 0;
-
-            next if( $row < 0 ); ## SKIP IF BUMPED...
-            
-            my ($href, $zmenu ) = $self->zmenu( $f );
-            my $Composite = new Sanger::Graphics::Glyph::Composite({
-                'y'            => 0,
-                'x'            => $START-1,
-                'absolutey'    => 1,
-                'zmenu'        => $zmenu,
-            });
-            $Composite->{'href'} = $href if $href;
-            
-            ## if we are dealing with a transcript (CDS/transcript/exon) then join with introns...
-            
-                my $style;
-                my $colour;
-                if($use_style) {
-                  $style = $styles{$f->das_type_category}{$f->das_type_id} || $styles{$f->das_type_category}{'default'} || $styles{'default'}{'default'};
-                  $colour = $style->{'attrs'}{'fgcolor'}||$feature_colour;
-                } else {
-                  $colour = $feature_colour;
-                }
-            #warn "@{[$f->das_id]} - @{[$f->das_group_type]} - @{[$f->das_type_id]}";
-            if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
-                my $f     = shift @features;
-                my $START = $f->das_start() < 1        ? 1       : $f->das_start();
-                my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
-                my $old_end   = $END;
-             #   print STDERR "DAS: E ",$f->das_start,"-",$f->das_end," (",$f->das_id,"-",$f->das_group_id,")\n";
-                $C1 ++; 
-                $C ++; 
-                my $glyph = new Sanger::Graphics::Glyph::Rect({
-                    'x'          => $START-1,
-                    'y'          => 0,
-                    'width'      => $END-$START+1,
-                    'height'     => $h,
-                    'colour'     => $colour,
-                    'absolutey'  => 1,
-                    'zmenu'      => $zmenu
-                });
-            #$glyph->{'href'} = $href if $href;
-                $end = $old_end if $end <= $old_end;
-                $Composite->push($glyph);
-                
-                foreach(@features) {
-                    my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
-                    $C1 +=2; 
-                    next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
-                    $C +=2; 
-                    my $f_start = $_->das_start;
-                    $Composite->push( new Sanger::Graphics::Glyph::Intron({
-                        'x'         => $old_end,
-                        'y'         => 0,
-                        'width'     => $f_start-$old_end,
-                        'height'    => $h,
-                        'colour'    => $colour,
-                        'absolutey' => 1,
-                        'strand'    => $STRAND,
-                    }) );
-                    $Composite->push( new Sanger::Graphics::Glyph::Rect({
-                        'x'          => $f_start-1,
-                        'y'          => 0,
-                        'width'      => $END-$f_start+1,
-                        'height'     => $h,
-                        'colour'     => $colour,
-                        'absolutey' => 1,
-                    }) );
-                    $old_end = $END;
-                }
-            } else { ## GENERAL GROUPED FEATURE!
-                my $Composite2 = new Sanger::Graphics::Glyph::Composite({
-                    'y'            => 0,
-                    'x'            => $START-1,
-                    'absolutey'    => 1,
-                    'zmenu'        => $zmenu,
-                });
-                $Composite2->bordercolour($colour);
-                my $old_end = -1e9;
-                foreach(@features) {
-             #       print STDERR "DAS: F ",$_->das_start,"-",$_->das_end," (",$_->das_id,"-",$_->das_group_id,")\n";
-                    my $START = $_->das_start() <  1       ? 1 : $_->das_start();
-                    my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
-                    $C1 ++; 
-                    next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn... # only if NOT BUMPED!
-                    $C ++; 
-                    $old_end = $END;
-                    $Composite2->push( new Sanger::Graphics::Glyph::Rect({
-                        'x'          => $START-1,
-                        'y'          => 0,
-                        'width'      => $END-$START+1,
-                        'height'     => $h,
-                        'colour'     => $colour,
-                        'absolutey' => 1,
-                        'zmenu'     => $zmenu
-                    }) );
-                }
-                #$Composite2->{'href'} = $href if $href;
-                $Composite->push($Composite2);
-            }
-            my $H =$self->feature_label( $Composite, $label , $colour, $start < 1 ? 1 : $start , $end > $length ? $length : $end );
-#            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*($h+2+$H) * $row } = '';
-            $Composite->y($Composite->y() - $tstrand*($h+2+$H) * $row) if $row;
-            $self->push($Composite);
-        }
+    $empty_flag = 0; # We have a feature (its on one of the strands!)
+    next if $configuration->{'strand'} eq 'b' && ( $f->strand() !=1 && $configuration->{'STRAND'}==1 || $f->strand() ==1 && $configuration->{'STRAND'}==-1);
+    my $ID    = $f->das_id;
+    my $label = $f->das_group_label || $f->das_feature_label || $ID;
+    my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
+    warn "LABEL_LENGTH - $label_length....";
+    my $row = 0;
+    my $START = $f->das_start() <  1       ? 1       : $f->das_start();
+    my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+    if( $configuration->{'depth'}>0 ) {
+      $row = $self->bump( $START, $END, $label_length, $configuration->{'depth'} );
+      next if $row < 0;
     } else {
-        my $old_end = -1e9;
-        foreach my $f( sort { $a->das_start() <=> $b->das_start() } @features){
-            if($f->das_type_id() eq '__ERROR__') {
-                $self->errorTrack(
-                    'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')'
-                );
-                return;
-            }
-            $empty_flag = 0; # We have a feature (its on one of the strands!)
-            next if $strand eq 'b' && ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
-            my $ID    = $f->das_id;
-            my $label = $f->das_group_label || $f->das_feature_label || $ID;
-            my $label_length = $labelling * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
+      next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
+    }
+    my ($href, $zmenu ) = $self->zmenu( $f );
+    $old_end = $START;
+    my $Composite = new Sanger::Graphics::Glyph::Composite({
+      'y'         => 0,
+      'x'         => $START-1,
+      'absolutey' => 1,
+      'zmenu'     => $zmenu,
+    });
+    $Composite->{'href'} = $href if $href;
+    my $display_type;
+    my $style;
+    my $colour;
+    if($configuration->{'use_style'}) {
+      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id} || $configuration->{'styles'}{$f->das_type_category}{'default'} || $configuration->{'styles'}{'default'}{'default'};
+      warn "Setting colour.... (b)";
+      $colour = $style->{'attrs'}{'fgcolor'}||$configuration->{'colour'};
+      $display_type = "draw_".$style->{'glyph'} || 'draw_box';
+    } else {
+      warn "Setting colour.... (a)";
+      $colour = $configuration->{'colour'};
+      $display_type = 'draw_box';
+    }
+    $display_type = 'draw_box' unless $self->can( $display_type );
+    if( $display_type eq 'draw_box') {
+      $Composite->push( $self->$display_type( $configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'} ) );
+      warn "$configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'}";
+    } else {
+      $Composite->push( new Sanger::Graphics::Glyph::Space({
+        'x'         => $START-1,
+        'y'         => 0,
+        'width'     => $END-$START+1,
+        'height'    => $configuration->{'h'},
+        'absolutey' => 1
+      }) );
+    }
+    my $H =$self->feature_label( $Composite, $label, $colour, $START, $END );
+    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) if $row;
+    $self->push(  $self->$display_type( $configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'}, - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) ) unless $display_type eq 'draw_box';
+    $self->push( $Composite );
+  }
+  $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
+  return $empty_flag ? 0 : 1 ;
+}
 
-            my $row = 0;
-            my $START = $f->das_start() <  1       ? 1       : $f->das_start();
-            my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
-	    $T++;
-            if($dep>0) {
-                $row = $self->bump( $START, $END, $label_length, $dep );
-                next if $row < 0;
-                $C1++;
-            } else {
-	        $C1++;
-                next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
-            }
-	    $C++;
-                
-            my ($href, $zmenu ) = $self->zmenu( $f );
-            $old_end = $START;
-            my $Composite = new Sanger::Graphics::Glyph::Composite({
-                'y'            => 0,
-                'x'            => $START-1,
-                'absolutey'    => 1,
-                'zmenu'        => $zmenu,
-            });
-            $Composite->{'href'} = $href if $href;
-                my $display_type;
-                my $style;
-                my $colour;
-                if($use_style) {
-                  $style = $styles{$f->das_type_category}{$f->das_type_id} || $styles{$f->das_type_category}{'default'} || $styles{'default'}{'default'};
-                  $colour = $style->{'attrs'}{'fgcolor'}||$feature_colour;
-                  $display_type = "draw_".$style->{'glyph'} || 'draw_box';
-                } else {
-                  $colour = $feature_colour;
-                  $display_type = 'draw_box';
-                }
-                $display_type = 'draw_box' unless $self->can( $display_type );
-                if( $display_type eq 'draw_box') {
-                  $Composite->push( $self->$display_type( $h, $START, $END , $colour, $self->{'pix_per_bp'} ) );
-                } else {
-                  $Composite->push(
-                     new Sanger::Graphics::Glyph::Space({
-    'x'          => $START-1,
-    'y'          => 0,
-    'width'      => $END-$START+1,
-    'height'     => $h,
-    'absolutey' => 1
-                }) );
-                }
-            #$glyph->{'href'} = $href if $href;
-            # DONT DISPLAY IF BUMPING AND BUMP HEIGHT TOO GREAT
-            my $H =$self->feature_label( $Composite, $label, $colour, $START, $END );
-#            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*($h+2+$H) * $row } = '';
-            $Composite->y($Composite->y() - $tstrand*($h+2+$H) * $row) if $row;
-            $self->push(  $self->$display_type( $h, $START, $END , $colour, $self->{'pix_per_bp'}, - $tstrand*($h+2+$H) * $row) ) unless $display_type eq 'draw_box';
-            $self->push($Composite);
+sub expanded_init {
+  my( $self, $configuration ) = @_; 
+  my %grouped;
+  my $empty_flag = 1;
+
+  ## GROUP THE FEATURES....
+  foreach my $f(@{$configuration->{'features'}}){
+    if($f->das_type_id() eq '__ERROR__') {
+      $self->errorTrack( 'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')' );
+      return -1; ## A "-1" return indicates no features drawn because DAS returned an error....
+    }
+    next if $configuration->{'strand'} eq 'b' && ( $f->strand() !=1 && $configuration->{'STRAND'}==1 || $f->strand() ==1 && $configuration->{'STRAND'}==-1);
+    my $fid = $f->das_id;
+    next unless $fid;
+    $fid  = "G:".$f->das_group_id if $f->das_group_id;
+    push @{$grouped{$fid}}, $f;
+    $empty_flag = 0; # We have a feature (its on one of the strands!)
+  }
+  if($empty_flag) {
+    $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
+    return 0; ## A " 0 " return indicates no features drawn....
+  }    
+  foreach my $value (values %grouped) {
+    my $f = $value->[0];
+    ## Display if not stranded OR
+    my @t_features = sort { $a->das_start <=> $b->das_start } @$value;
+    my @features = (shift @t_features);
+    foreach( @t_features ) { # Nasty hacky bit that ensures we don't have duplicate das features....
+      if($_->das_start <= $features[-1]->das_end ) {
+        $features[-1]->das_end( $_->das_end );
+      } else {
+        push @features, $_;
+      } 
+    }
+    my $start = $features[0]->das_start;    # GET START AND END OF FEATURE....
+    my $START = $start < 1 ? 1 : $start;
+    my $end   = $features[-1]->das_end;
+    ### A general list of features we don't want to draw via DAS ###
+    # Compute the length of the label...
+    my $ID    = $f->das_group_id || $f->das_id;
+    my $label = $f->das_group_label || $f->das_feature_label || $ID;
+    my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
+    warn "LABEL_LENGTH - $label_length....";
+    my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
+    next if( $row < 0 ); ## SKIP IF BUMPED...
+    my( $href, $zmenu ) = $self->zmenu( $f );
+    my $Composite = new Sanger::Graphics::Glyph::Composite({
+      'y'            => 0,
+      'x'            => $START-1,
+      'absolutey'    => 1,
+      'zmenu'        => $zmenu,
+    });
+    $Composite->{'href'} = $href if $href;
+    ## if we are dealing with a transcript (CDS/transcript/exon) then join with introns...
+    my $style;
+    my $colour;
+    if($configuration->{'use_style'}) {
+      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id} || $configuration->{'styles'}{$f->das_type_category}{'default'} || $configuration->{'styles'}{'default'}{'default'};
+      $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'};
+    } else {
+      $colour = $configuration->{'colour'};
+    }
+    if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
+      my $f     = shift @features;
+      my $START = $f->das_start() < 1        ? 1       : $f->das_start();
+      my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+      my $old_end   = $END;
+      my $glyph = new Sanger::Graphics::Glyph::Rect({
+        'x'          => $START-1,
+        'y'          => 0,
+        'width'      => $END-$START+1,
+        'height'     => $configuration->{'h'},
+        'colour'     => $colour,
+        'absolutey'  => 1,
+        'zmenu'      => $zmenu
+      });
+      $end = $old_end if $end <= $old_end;
+      $Composite->push($glyph);
+      foreach(@features) {
+        my $END   = $_->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $_->das_end();
+        next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
+        my $f_start = $_->das_start;
+        $Composite->push( new Sanger::Graphics::Glyph::Intron({
+          'x'         => $old_end,
+          'y'         => 0,
+          'width'     => $f_start-$old_end,
+          'height'    => $configuration->{'h'},
+          'colour'    => $colour,
+          'absolutey' => 1,
+          'strand'    => $configuration->{'STRAND'},
+        }) );
+        $Composite->push( new Sanger::Graphics::Glyph::Rect({
+          'x'         => $f_start-1,
+          'y'         => 0,
+          'width'     => $END-$f_start+1,
+          'height'    => $configuration->{'h'},
+          'colour'    => $colour,
+          'absolutey' => 1,
+        }) );
+        $old_end = $END;
+      }
+    } else { ## GENERAL GROUPED FEATURE!
+      my $Composite2 = new Sanger::Graphics::Glyph::Composite({
+        'y'         => 0,
+        'x'         => $START-1,
+        'absolutey' => 1,
+        'zmenu'     => $zmenu,
+      });
+      $Composite2->bordercolour($colour);
+      my $old_end = -1e9;
+      foreach(@features) {
+        my $START = $_->das_start() <  1       ? 1 : $_->das_start();
+        my $END   = $_->das_end()   > $configuration->{'length'} ? $configuration->{'length'} : $_->das_end();
+        next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn... # only if NOT BUMPED!
+        $old_end = $END;
+        $Composite2->push( new Sanger::Graphics::Glyph::Rect({
+          'x'         => $START-1,
+          'y'         => 0,
+          'width'     => $END-$START+1,
+          'height'    => $configuration->{'h'},
+          'colour'    => $colour,
+          'absolutey' => 1,
+          'zmenu'     => $zmenu
+        }) );
+      }
+      #$Composite2->{'href'} = $href if $href;
+      $Composite->push($Composite2);
+    }
+    ## Now place the label....
+    my $H =$self->feature_label( $Composite, $label , $colour, $start < 1 ? 1 : $start , $end > $configuration->{'length'} ? $configuration->{'length'} : $end );
+    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) if $row;
+    $self->push($Composite);
+  }
+  return 1; ## We have rendered at least one feature....
+}
+
+sub to_bin {
+  my( $self, $BP, $bin_length, $no_of_bins ) = @_;
+  my $bin = floor( $BP / $bin_length );
+  my $offset = $BP - $bin_length * $bin;
+  if( $bin < 0 ) {
+    ($bin,$offset) = (0,0);
+  } elsif( $bin >= $no_of_bins ) {
+    ($bin,$offset) = ($no_of_bins-1,$bin_length);
+  }
+  return ($bin,$offset);
+}
+
+sub density_init {
+  my( $self, $configuration ) = @_;
+  my $empty_flag = 1;
+  my $no_of_bins = floor( $configuration->{'length'} * $self->{'pix_per_bp'} / 2);
+  my $bin_length = $configuration->{'length'} / $no_of_bins;
+  my $bins = [ map {0} 1..$no_of_bins ];
+## First of all compute the bin values....
+## If it is either average coverage or average count we need to compute bin totals first...
+## It is trickier for the bases covered - which I'll look at later...
+  warn "RENDERING DAS DENSITY......";
+  foreach my $f( @{$configuration->{'features'}} ){
+    if($f->das_type_id() eq '__ERROR__') {
+      $self->errorTrack(
+        'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')'
+      );
+      return -1 ;
+    }
+    my( $bin_start, $offset_start ) = $self->to_bin( $f->das_start -1, $bin_length, $no_of_bins );
+    my( $bin_end,   $offset_end   ) = $self->to_bin( $f->das_end,      $bin_length, $no_of_bins );
+    if( 0 ) { ## average coverage....
+      $bins->[$bin_end]   += $offset_end;
+      $bins->[$bin_start] -= $offset_start;
+      if( $bin_end > $bin_start ) {
+        foreach ( $bin_start .. ($bin_end-1) ) {
+          $bins->[$_]     += $bin_length;
         }
-    
-        $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
-    }   
-    #warn( $self->{'extras'}->{'caption'}." $C glyphs drawn from $T ( $C1 )" );
-}
-
-sub draw_box {
-  my( $self, $h, $START, $END, $colour, $pix_per_bp ) =@_;
-  return new Sanger::Graphics::Glyph::Rect({
-    'x'          => $START-1,
-    'y'          => 0,
-    'width'      => $END-$START+1,
-    'height'     => $h,
-    'colour'     => $colour,
-    'absolutey' => 1
-  });
-}
-
-sub draw_farrow {
-  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
-
-  my $points;
-  if( ($END - $START+1) > $h/2 / $pix_per_bp ) {
-     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+$h, $END - $h/2/$pix_per_bp, $OFFSET+$h, $END, $OFFSET+$h/2, $END - $h/2/$pix_per_bp, $OFFSET ];
-  } else {
-     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+$h, $END, $OFFSET+$h/2 ];
+      }
+    } elsif( 1 ) { ## average count
+      my $flen = $f->das_end - $f->das_start + 1;
+      $bins->[$bin_end]   += $offset_end / $flen;
+      $bins->[$bin_start] -= $offset_start / $flen;
+      if( $bin_end > $bin_start ) {
+        foreach ( $bin_start .. ($bin_end-1) ) {
+          $bins->[$_]     += $bin_length / $flen;
+        }
+      }
+    }
+    $empty_flag = 0;
   }
-  return new Sanger::Graphics::Glyph::Poly({
-    'points' => $points,
-    'colour'     => $colour,
-    'absolutey' => 1
-  });
-}
-
-sub draw_rarrow {
-  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
-  my $points;
-  if( ($END - $START+1) > $h/2 / $pix_per_bp ) {
-     $points = [ $END, $OFFSET, $END, $OFFSET+$h, $START -1 + $h/2/$pix_per_bp, $OFFSET+$h, $START - 1, $OFFSET + $h/2, $START - 1 + $h/2/$pix_per_bp, $OFFSET ];
-  } else {
-     $points = [ $END, $OFFSET, $END, $OFFSET + $h, $START-1, $OFFSET+$h/2 ];
+  if($empty_flag) {
+    $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
+    return 0; ## A " 0 " return indicates no features drawn....
   }
-  return new Sanger::Graphics::Glyph::Poly({
-    'points' => $points,
-    'colour'     => $colour,
-    'absolutey' => 1
-  });
+## Now we have our bins we need to render the image...
+  my $coloursteps  = 10;
+  my $rmax  = $coloursteps;
+  my @range = ( $configuration->{'colour'} );
+
+  my $display_method = 'scale';
+  # my $display_method = 'bars';
+  if( $display_method eq 'scale' ) {
+    @range = $self->{'config'}->colourmap->build_linear_gradient($coloursteps, 'white', $configuration->{'colour'} );
+    $rmax = @range;
+  }
+  my $max = $bins->[0];
+  my $min = $bins->[0];
+  foreach( @$bins ) {
+    $max = $_ if $max < $_;
+    $min = $_ if $min > $_;
+  }
+  my $divisor = $max - $min;
+  my $start = 0;
+  foreach( @$bins ) {
+    my $F = $divisor ? ($_-$min)/$divisor : 1;
+    my $colour_number = $display_method eq 'scale' ? floor( ($rmax-1) * $F ) : 0;
+    my $height        = floor( $configuration->{'h'} * ($display_method eq 'bars' ? $F  : 1)  );
+    $self->push( new Sanger::Graphics::Glyph::Rect({
+      'x'         => $start,
+      'y'         => $configuration->{'h'}-$height,
+      'width'     => $bin_length,
+      'height'    => $height,
+      'colour'    => $range[ $colour_number ],
+      'absolutey' => 1,
+      'zmenu'     => { 'caption' => $_ }
+    }) );
+    $start+=$bin_length;
+    warn "PUSHING $start - $configuration->{'h'}";
+  }
+  return 1;
 }
 
 sub bump{
-    my ($self, $start, $end, $length, $dep ) = @_;
-    my $bump_start = int($start * $self->{'pix_per_bp'} );
-       $bump_start --;
-       $bump_start = 0 if ($bump_start < 0);
+  my ($self, $start, $end, $length, $dep ) = @_;
+  my $bump_start = int($start * $self->{'pix_per_bp'} );
+  $bump_start --;
+  $bump_start = 0 if ($bump_start < 0);
     
-    $end = $start + $length if $end < $start + $length;
-    my $bump_end = int( $end * $self->{'pix_per_bp'} );
-       $bump_end = $self->{'bitmap_length'} if ($bump_end > $self->{'bitmap_length'});
-    my $row = &Sanger::Graphics::Bump::bump_row(
-        $bump_start,    $bump_end,   $self->{'bitmap_length'}, $self->{'bitmap'}, $dep 
-    );
-    return $row > $dep ? -1 : $row;
+  $end = $start + $length if $end < $start + $length;
+  my $bump_end = int( $end * $self->{'pix_per_bp'} );
+    $bump_end = $self->{'bitmap_length'} if ($bump_end > $self->{'bitmap_length'});
+  my $row = &Sanger::Graphics::Bump::bump_row(
+    $bump_start,    $bump_end,   $self->{'bitmap_length'}, $self->{'bitmap'}, $dep 
+  );
+  return $row > $dep ? -1 : $row;
 }
 
 sub zmenu {
   my( $self, $f ) = @_;
   my $id = $f->das_feature_label() || $f->das_group_label() || $f->das_group_id() || $f->das_id();
-  #warn "@{[$f->das_group_id]} - @{[$f->das_id]}";
   my $zmenu = {
     'caption'         => $self->{'extras'}->{'label'},
-#   "DAS source info" => $self->{'extras'}->{'url'},
   };
   $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
   $zmenu->{"03:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
@@ -427,51 +439,106 @@ sub zmenu {
 }
 
 
+## feature_label 
+## creates and pushes the label 
+## and returns the height of the label created
 sub feature_label {
-    my( $self, $composite, $ID, $feature_colour, $start, $end ) = @_;
-        if( uc($self->{'extras'}->{'labelflag'}) eq 'O' ) {
-            my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
-            return unless $bp_textwidth < ($end - $start);
-            my $tglyph = new Sanger::Graphics::Glyph::Text({
-               'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
-               'y'          => 1,
-               'width'      => $bp_textwidth,
-               'height'     => $self->{'textheight'},
-               'font'       => 'Tiny',
-               'colour'     => $self->{'config'}->colourmap->contrast($feature_colour),
-               'text'       => $ID,
-               'absolutey'  => 1,
-            });
-            $composite->push($tglyph);
-        return 0;
-        } elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {
-            my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
-            # print STDERR "XXX> $ID $self->{'textheight'} XX\n";
-            my $tglyph = new Sanger::Graphics::Glyph::Text({
-               'x'          => $start -1,
-               'y'          => $self->{'textheight'} + 2,
-               'width'      => $bp_textwidth,
-               'height'     => $self->{'textheight'},
-               'font'       => 'Tiny',
-               'colour'     => $feature_colour,
-               'text'       => $ID,
-               'absolutey'  => 1,
-            });
-            $composite->push($tglyph);
-            return $self->{'textheight'} + 4
-        } else {
-            return 0;
-    }
+  my( $self, $composite, $ID, $feature_colour, $start, $end ) = @_;
+  if( uc($self->{'extras'}->{'labelflag'}) eq 'O' ) {
+    my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
+    return unless $bp_textwidth < ($end - $start);
+    my $tglyph = new Sanger::Graphics::Glyph::Text({
+      'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
+      'y'          => 1,
+      'width'      => $bp_textwidth,
+      'height'     => $self->{'textheight'},
+      'font'       => 'Tiny',
+      'colour'     => $self->{'config'}->colourmap->contrast($feature_colour),
+      'text'       => $ID,
+      'absolutey'  => 1,
+    });
+    $composite->push($tglyph);
+    return 0;
+  } elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {
+    my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
+    my $tglyph = new Sanger::Graphics::Glyph::Text({
+      'x'          => $start -1,
+      'y'          => $self->{'textheight'} + 2,
+      'width'      => $bp_textwidth,
+      'height'     => $self->{'textheight'},
+      'font'       => 'Tiny',
+      'colour'     => $feature_colour,
+      'text'       => $ID,
+      'absolutey'  => 1,
+    });
+    $composite->push($tglyph);
+    return $self->{'textheight'} + 4;
+  } else {
+    return 0;
+  }
 }
 
-sub das_name {
-    my ($self) = @_;
-    return $self->{'extras'}->{'name'};
+sub das_name     { return $_[0]->{'extras'}->{'name'}; }
+sub managed_name { return $_[0]->{'extras'}->{'name'}; }
+
+################################################################################
+## "Glyph" renderers...                                                      ###
+################################################################################
+
+sub draw_box { # Box -- ####
+  my( $self, $h, $START, $END, $colour, $pix_per_bp ) =@_;
+  return new Sanger::Graphics::Glyph::Rect({
+    'x'          => $START-1,
+    'y'          => 0,
+    'width'      => $END-$START+1,
+    'height'     => $h,
+    'colour'     => $colour,
+    'absolutey' => 1
+  });
 }
 
-sub managed_name {
-    my ($self) = @_;
-    return $self->{'extras'}->{'name'}
+sub draw_farrow { # Forward arrow -- ###>
+  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
+  my $slope = $h/2/$pix_per_bp;
+  my $points = ( $END - $START + 1 > $slope ) ?
+    [
+      $START - 1,    $OFFSET,
+      $START - 1,    $OFFSET + $h,
+      $END - $slope, $OFFSET + $h,
+      $END,          $OFFSET + $h/2,
+      $END - $slope, $OFFSET
+    ] : [
+      $START-1,      $OFFSET,
+      $START-1,      $OFFSET + $h,
+      $END,          $OFFSET + $h/2
+    ];
+  return new Sanger::Graphics::Glyph::Poly({
+    'points'    => $points,
+    'colour'    => $colour,
+    'absolutey' => 1
+  });
+}
+
+sub draw_rarrow { # Reverse arrow -- <###
+  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
+  my $slope = $h/2/$pix_per_bp;
+  my $points = ( $END - $START + 1 > $slope ) ?
+    [
+      $END,                $OFFSET,
+      $END,                $OFFSET + $h,
+      $START - 1 + $slope, $OFFSET + $h,
+      $START - 1,          $OFFSET + $h/2,
+      $START - 1 + $slope, $OFFSET
+    ] : [
+      $END,                $OFFSET,
+      $END,                $OFFSET + $h,
+      $START-1,            $OFFSET + $h/2
+    ];
+  return new Sanger::Graphics::Glyph::Poly({
+    'points'    => $points,
+    'colour'    => $colour,
+    'absolutey' => 1
+  });
 }
 
 1;
