@@ -125,6 +125,8 @@ sub prepareGenomicAlignSystem
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $stats;
 
+  $self->{'hiveDBA'}->dbc->do("insert ignore into method_link set method_link_id=1001, type='BLASTZ_RAW'");
+
   #
   # ChunkDna
   #
