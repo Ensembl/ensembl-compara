@@ -28,11 +28,12 @@ sub features {
 sub href {
     my ($self, $f ) = @_;
     
-    my $snp_id = $f->id();
+    my $snp_id = $f->id;
+    my $source = $f->source_tag;
     my $chr_start = $self->{'container'}->chr_start();
     my $chr_name = $self->{'container'}->chr_name();
 
-    return "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=$snp_id&chr=$chr_name&vc_start=$chr_start";
+    return "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=$snp_id&source=$source&chr=$chr_name&vc_start=$chr_start";
 }
 
 sub image_label {
