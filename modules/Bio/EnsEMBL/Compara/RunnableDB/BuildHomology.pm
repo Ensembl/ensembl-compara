@@ -60,6 +60,7 @@ use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Homology;
+use Bio::EnsEMBL::Compara::Subset;
 
 use vars qw(@ISA);
 
@@ -112,10 +113,13 @@ sub run
 
   my @blast_list = @{$self->{'blast_analyses'}};
 
+  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
+
   while(@blast_list) {
     my $blast1 = shift @blast_list;
     foreach my $blast2 (@blast_list) {
       print("   check pair ".$blast1->logic_name." <=> ".$blast2->logic_name."\n");
+
       $self->get_BRH_for_species_pair($blast1, $blast2);
     }
   }
