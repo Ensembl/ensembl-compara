@@ -110,8 +110,8 @@ sub fetch_input {
 
   my $member_id  = $self->input_id;
   my $member     = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
-  print("member(".$member->dbID.") = '".$member->stable_id."'\n");
   $self->throw("No member in compara for member_id=$member_id") unless defined($member);
+  $member->print_member;
 
   
   my $bioseq     = $member->bioseq();
