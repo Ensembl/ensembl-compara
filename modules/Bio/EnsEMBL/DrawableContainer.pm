@@ -2,12 +2,17 @@ package Bio::EnsEMBL::DrawableContainer;
 use lib "../../../../bioperl-live";
 use Bio::Root::RootI;
 use strict;
-use Bio::EnsEMBL::Renderer::imagemap;
-use Bio::EnsEMBL::Renderer::gif;
-use Bio::EnsEMBL::Renderer::wmf;
+use lib "../../../../modules";
+use WMF;
+use GD;
 use vars qw(@ISA);
 
-use constant GLYPHSET_PATH => '/mysql/ensembl/www/server/ensembl-draw/modules';
+#########
+# take out this 'use' eventually:
+#
+use Bio::EnsEMBL::Renderer::gif;
+
+use constant DRAW_PATH => '/mysql/ensembl/www/server/ensembl-draw/modules';
 
 @ISA = qw(Bio::Root::RootI);
 
@@ -29,7 +34,7 @@ Bio::EnsEMBL::DrawableContainer is a container class for any number of GlyphSets
 
 my $gss = new Bio::EnsEMBL::DrawableContainer($display, $Container, $ConfigObject);
 
-	$display       - contigviewtop|contigviewbottom|
+	$display       - contigviewtop|contigviewbottom|protview
 	$Container     - vc|other_container_obj on which the image will be built
 	$ConfigObject  - WebUserConfig object
 
@@ -43,13 +48,13 @@ sub new {
 	return;
     }
 
-    if($display !~ /transview|contigviewbottom/) {
+    if($display !~ /transview|contigviewbottom|protview/) {
 	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new Unknown display type $display\n);
 	return;
     }
 
     if(!defined $Container) {
-	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No vc defined\n);
+	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No container defined\n);
 	return;
     }
 
@@ -69,17 +74,32 @@ sub new {
     # loop over all the glyphsets the user wants:
     #
 
-    for my $row ($Config->subsections($self->{'display'})) {
+    my @subsections = $Config->subsections($self->{'display'});
+
+    my @order = sort { $Config->get($self->{'display'}, $a, 'dep') <=> $Config->get($self->{'display'}, $b, 'dep') } @subsections;
+
+    for my $strand (1, -1) {
+      my @tmp;
+
+      if($strand == 1) {
+	@tmp = reverse @order;
+      } else {
+        @tmp = @order;
+      }
+
+      for my $row (@tmp) {
 	#########
 	# skip this row if user has it turned off
 	#
 	next if ($Config->get($self->{'display'}, $row, 'on') eq "off");
+	next if ($Config->get($self->{'display'}, $row, 'str') eq "r" && $strand != -1);
+	next if ($Config->get($self->{'display'}, $row, 'str') eq "f" && $strand != 1);
 
 	#########
 	# create a new glyphset for this row
 	#
 	my $classname = qq(Bio::EnsEMBL::GlyphSet::$row);
-	my $classpath = &GLYPHSET_PATH . qq(/Bio/EnsEMBL/GlyphSet/${row}.pm);
+	my $classpath = &DRAW_PATH . qq(/Bio/EnsEMBL/GlyphSet/${row}.pm);
 
 	#########
 	# require & import the package
@@ -88,7 +108,7 @@ sub new {
 	    require($classpath);
 	};
 	if($@) {
-	    print STDERR qq(DrawableContainer::new failed to require $classname\n);
+	    print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
 	    next;
 	}
 
@@ -97,17 +117,9 @@ sub new {
 	#########
 	# generate a set for both strands
 	#
-	my $ustrand = $Config->get($self->{'display'}, $row, 'str');
-
-	if($ustrand eq "b" || $ustrand eq "f") {
-	    my $GlyphSet = new $classname($Container, $Config, qq(|$highlights|), 1);
-	    push @{$self->{'glyphsets'}}, $GlyphSet;
-	}
-
-	if($ustrand eq "b" || $ustrand eq "r") {
-	    my $GlyphSet = new $classname($Container, $Config, qq(|$highlights|), -1);
-	    push @{$self->{'glyphsets'}}, $GlyphSet;
-	}
+	my $GlyphSet = new $classname($Container, $Config, qq(|$highlights|), $strand);
+	push @{$self->{'glyphsets'}}, $GlyphSet;
+      }
     }
 
     bless($self, $class);
@@ -126,7 +138,7 @@ my $imagestring = $gss->render($type);
 # render does clever drawing things
 #
 sub render {
-    my ($this, $type) = @_;
+    my ($self, $type) = @_;
 
     #########
     # query boundary conditions of glyphsets?
@@ -134,29 +146,31 @@ sub render {
     # DO GLOBBING & BUMPING!!!
     #
 
-    my ($width, $height) = $this->config()->dimensions();
+    my ($width, $height) = $self->config()->dimensions();
 
-    my ($minx, $maxx, $miny, $maxy);
+#    my ($minx, $maxx, $miny, $maxy);
 
-    for my $gs ($this->glyphsets()) {
-	next if($gs->maxx() == 0 || $gs->maxy() == 0);
-	$minx = $gs->minx() if($gs->minx() < $minx || !defined($minx));
-	$maxx = $gs->maxx() if($gs->maxx() > $maxx || !defined($maxx));
-	$miny = $gs->miny() if($gs->miny() < $miny || !defined($miny));
-	$maxy = $gs->maxy() if($gs->maxy() > $maxy || !defined($maxy));
-    }
+#    for my $gs ($self->glyphsets()) {
+#	next if($gs->maxx() == 0 || $gs->maxy() == 0);
+#	$minx = $gs->minx() if($gs->minx() < $minx || !defined($minx));
+#	$maxx = $gs->maxx() if($gs->maxx() > $maxx || !defined($maxx));
+#	$miny = $gs->miny() if($gs->miny() < $miny || !defined($miny));
+#	$maxy = $gs->maxy() if($gs->maxy() > $maxy || !defined($maxy));
+#    }
 
-    my $scalex = $width / ($maxx - $minx);
-    my $scaley = $height / ($maxy - $miny);
+#    my $scalex = $width / ($maxx - $minx);
+#    my $scaley = $height / ($maxy - $miny);
 
-print STDERR qq(Using y scaling factor $scaley and x scaling factor $scalex\n);
+#print STDERR qq(Using y scaling factor $scaley and x scaling factor $scalex\n);
 
     my $transform_ref = {
 	'translatex' => 0,
 	'translatey' => 0,
-	'scalex'     => $scalex,
-	'scaley'     => $scaley,
+#	'scalex'     => $scalex,
+#	'scaley'     => $scaley,
 #	'rotation'   => 90,
+	'scalex'     => $self->config()->scalex(),
+	'scaley'     => $self->config()->scaley(),
     };
 
     #########
@@ -165,36 +179,49 @@ print STDERR qq(Using y scaling factor $scaley and x scaling factor $scalex\n);
     my $canvas;
     if($type eq "gif") {
 	$canvas = new GD::Image($width, $height);
-	$canvas->colorAllocate(255,255,255);
+	$canvas->colorAllocate($self->{'config'}->colourmap()->rgb_by_id($self->{'config'}->bgcolor()));
 
     } elsif($type eq "wmf") {
 	$canvas = new WMF($width, $height);
-	$canvas->colorAllocate(255,255,255);
+	$canvas->colorAllocate($self->{'config'}->colourmap()->rgb_by_id($self->{'config'}->bgcolor()));
 
     }
 
     #########
-    # build the type of render object we want
+    # build the name/type of render object we want
     #
     my $renderer_type = qq(Bio::EnsEMBL::Renderer::$type);
+    my $renderer_path = &DRAW_PATH . qq(/Bio/EnsEMBL/Renderer/${type}.pm);
+
+    #########
+    # dynamic require of the right type of renderer
+    #
+    eval {
+	require($renderer_path);
+    };
+    if($@) {
+	print STDERR qq(DrawableContainer::new failed to require $renderer_path\n);
+	return;
+    }
+    $renderer_type->import();
 
     #########
     # big, shiny, rendering 'GO' button
     #
-    my $renderer = $renderer_type->new($this->{'glyphsets'}, $transform_ref, $canvas);
+    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'}, $transform_ref, $canvas);
 
     return $renderer->canvas();
 }
 
 sub config {
-    my ($this, $Config) = @_;
-    $this->{'config'} = $Config if(defined $Config);
-    return $this->{'config'};
+    my ($self, $Config) = @_;
+    $self->{'config'} = $Config if(defined $Config);
+    return $self->{'config'};
 }
 
 sub glyphsets {
-    my ($this) = @_;
-    return @{$this->{'glyphsets'}};
+    my ($self) = @_;
+    return @{$self->{'glyphsets'}};
 }
 
 1;
