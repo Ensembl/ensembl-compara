@@ -27,6 +27,7 @@ sub _init {
 
   my $Config   = $self->{'config'};
   my $only_pop = $Config->{'_ld_population'};
+  warn "****[ERROR]: No population defined in config" unless $only_pop;
   my $TAG_LENGTH = 10;
   my $key = $self->_key();
   my $offset = $self->{'container'}->start - 1;
