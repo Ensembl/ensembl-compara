@@ -3,4 +3,4 @@ method_link_id	type
 2	WGA_HCR
 3	SYNTENY
 4	HOMOLOGOUS_GENE
-5       FAMILY
+5	FAMILY

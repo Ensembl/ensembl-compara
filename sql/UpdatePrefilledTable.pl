@@ -42,6 +42,7 @@ my @instances;
 my @column_names;
 
 while (<$fh>) {
+  next if (/^$/);
   chomp;
   my @values = split(/\t/);
   unless (scalar @column_names) {
