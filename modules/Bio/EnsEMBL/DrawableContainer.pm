@@ -6,8 +6,7 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 
-use Bio::EnsEMBL::GlyphSetManager::das;
-
+use Bio::EnsEMBL::GlyphSet::sub_repeat;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 use ExtURL;
@@ -47,53 +46,52 @@ sub new {
     for my $strand (@strands_to_show) {
 
         my $tmp_glyphset_store = {};
-        for my $row ($Config->subsections()) {
+        for my $row ($Config->subsections( 1 )) {
         ########## skip this row if user has it turned off
+        #    warn( "TRACK : $row\n" );
             next if ($Config->get($row, 'on') ne "on") ||
                     ($Config->get($row, 'str') eq "r" && $strand != -1) ||
                     ($Config->get($row, 'str') eq "f" && $strand != 1);
 
-            if(my $manager = $Config->get($row, 'manager')) {
-                $manager_cache{$manager} ||= 'X';
+        #    warn( "Manager: ".$Config->get($row, 'manager') );
+            next if(my $manager = $Config->get($row, 'manager'));
+
+            ########## create a new glyphset for this row
+            my $classname = $PREFIX.qq(::GlyphSet::$row);
+            ########## require & import the package
+            eval "require $classname";
+            if($@) {
+                print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
+                next;
+            }
+            $classname->import();
+            ########## generate a set for both strands
+            my $GlyphSet;
+            eval {
+                $GlyphSet = new $classname($Container, $Config, $highlights, $strand);
+            };
+            if($@) {
+                print STDERR "GLYPHSET $classname failed\n";
             } else {
-                ########## create a new glyphset for this row
-                my $classname = $PREFIX.qq(::GlyphSet::$row);
-                ########## require & import the package
-                eval "require $classname";
-                if($@) {
-                    print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
-                    next;
-                }
-                $classname->import();
-                ########## generate a set for both strands
-                my $GlyphSet;
-                eval {
-                    $GlyphSet = new $classname($Container, $Config, $highlights, $strand);
-                };
-                if($@) {
-                    print STDERR "GLYPHSET $classname failed\n";
-                } else {
-                    $tmp_glyphset_store->{$Config->get($row, 'pos')} = $GlyphSet;
-                }
+                $tmp_glyphset_store->{$Config->get($row, 'pos')} = $GlyphSet;
             }
         }
 
         my $managed_offset = $Config->{'_das_offset'} || 5500;
         ########## install the glyphset managers, we've just cached the ones we need...
-        foreach my $manager ( keys %manager_cache ) {
-            if( 1 ||  $manager_cache{$manager} eq 'X' ) {
-                my $classname = $PREFIX."::GlyphSetManager::$manager";
-                eval "require $classname";
-                if($@) {
-                    print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
-                    next;
-                }
-                $classname->import();
-                $manager_cache{$manager} = new $classname($Container, $Config, $highlights, $strand);
+        foreach my $manager ( keys %{$Config->{'_managers'}} ) {
+            my $classname = $PREFIX."::GlyphSetManager::$manager";
+            eval "require $classname";
+            if($@) {
+                print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
+                next;
             }
-            for my $glyphset ($manager_cache{$manager}->glyphsets()) {
+            $classname->import();
+            my $gsm = new $classname($Container, $Config, $highlights, $strand);
+            for my $glyphset ($gsm->glyphsets()) {
                 my $row = $glyphset->managed_name();
                      ########## skip this row if user has it turned off
+                warn( "ROW: $row\n" );
                 next if !($Config->get($row, 'on') eq "on") ||
                         ($Config->get($row, 'str') eq "r" && $strand != -1) ||
                         ($Config->get($row, 'str') eq "f" && $strand != 1);
