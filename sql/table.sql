@@ -512,3 +512,68 @@ CREATE TABLE domain_member (
   UNIQUE (member_id,domain_id,member_start,member_end)
 );
 
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'tree'
+--
+-- overview: 
+--   This tables stores the 'super root' of a tree structure.  It links to the root node
+--   of the tree and defines through the method_link_species_set how the tree was created.
+--   Because the tree_node structure is very generic the method_link_species_set also defines 
+--   how the tree_node.external_data_id is to be interpreted.
+--   This tree structure follows the 'nested-set representation' as described in
+--     "SQL for Smarties: Advanced SQL Programming" by Joe Celko 
+-- semantics:
+--   tree_id                     - internal id
+--   root_node_id                - tree_node.tree_node_id of root of this tree
+--   method_link_species_set_id  - FK to method_link_species_set
+--   description                 - human readable text description
+
+CREATE TABLE tree (
+  tree_id                     int NOT NULL auto_increment,
+  root_node_id                int NOT NULL,
+  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  description                 varchar(255),
+
+  # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
+  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+
+  PRIMARY KEY (tree_id), 
+  KEY (root_node_id),
+  KEY (method_link_species_set_id)
+);
+
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'tree_node'
+--
+-- overview: 
+--   This tables is used to store all the nodes of a 'nested-set representation' tree structure.  
+--   The node can be any node in a tree (root, branch, or leaf).  
+--   This is a completely generic tree structure so there is no hard external linking to data.
+--   The tree.method_link_species_set of this tree will be use to determine how 
+--   the tree_node.external_data_id is to be interpreted.
+--   
+--   This tree structure follows the 'nested-set representation' as described in
+--     "SQL for Smarties: Advanced SQL Programming" by Joe Celko 
+-- semantics:
+--   tree_node_id              - internal id
+--   parent_id                 - tree_node.tree_node_id of parent node in this tree
+--   left_id                   - nested-set optimization of 'left' side of set bounding
+--   right_id                  - nested-set optimization of 'right' side of set bounding
+--   external_data_id          - FK to some other compara table.
+
+CREATE TABLE tree_node (
+  tree_node_id                int(10) unsigned NOT NULL auto_increment,
+  parent_id                   int(10) unsigned NOT NULL,
+  left_id                     int NOT NULL default 0,
+  right_id                    int NOT NULL default 0,
+  
+  external_data_id            int default NULL,
+
+  PRIMARY KEY (tree_node_id),
+  KEY (parent_id)
+);
+
