@@ -152,16 +152,6 @@ sub run
   # and convert them into members to be stored into compara
   $self->loadMembersFromCoreSlices();
   
-
-  # working from the longest peptide subset, create an analysis of
-  # with logic_name 'SubmitPep_<taxon_id>_<assembly>'
-  # with type MemberPep and fill the input_id_analysis table where
-  # input_id is the member_id of a peptide and the analysis_id
-  # is the above mentioned analysis
-  #
-  # This creates the starting point for the blasts (members against database)
-  $self->submitSubsetForAnalysis();
-
   $self->{'comparaDBA'}->disconnect_when_inactive(1);
   $self->{'coreDBA'}->disconnect_when_inactive(1);
                                           
@@ -312,84 +302,5 @@ sub fasta_description {
   return $description;
 }
 
-
-# working from the longest peptide subset, create an analysis of
-# with logic_name 'SubmitPep_<taxon_id>_<assembly>'
-# with type MemberPep and fill the input_id_analysis table where
-# input_id is the member_id of a peptide and the analysis_id
-# is the above mentioned analysis
-#
-# This creates the starting point for the blasts (members against database)
-sub submitSubsetForAnalysis {
-  my $self    = shift;
-  my $subset  = $self->{'pepSubset'};
-  
-  print("\nSubmitSubsetForAnalysis\n");
-
-  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
-  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
-
-  my $logic_name = "SubmitPep_" .
-                   $self->{'genome_db'}->dbID() .
-                   "_".$self->{'genome_db'}->assembly();
-
-  print("  see if analysis '$logic_name' is in database\n");                   
-  my $analysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
-  if($analysis) { print("  YES in database with analysis_id=".$analysis->dbID()); }
-  
-  unless($analysis) {                   
-    $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-        #-db              => $blastdb->dbname(),
-        -db_file         => $subset->dump_loc(),
-        -db_version      => '1',
-        -parameters      => "subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID(),
-        -logic_name      => $logic_name,
-        -input_id_type   => 'MemberPep',
-        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
-      );
-    $self->db->get_AnalysisAdaptor()->store($analysis);
-  }
-
-  #my $host = hostname();
-  print("store member_id into input_id_analysis table\n");
-  my $errorCount=0;
-  my $tryCount=0;
-  my @member_id_list = @{$subset->member_id_list()};
-  print($#member_id_list+1 . " members in subset\n");
-
-  foreach my $member_id (@member_id_list) {
-    $jobDBA->create_new_job (
-        -input_id       => $member_id,
-        -analysis_id    => $analysis->dbID,
-        -input_job_id   => 0,
-        -block          => 1
-        );
-  }
-
-  print("CREATED all analysis_jobs\n");
-      
-
-=head3
-      eval {
-        $tryCount++;
-        $sicDBA->store_input_id_analysis($member_id, #input_id
-                                         $analysis,
-                                         'gaia', #execution_host
-                                         0 #save runtime NO (ie do insert)
-                                        );
-      };
-      if($@) {
-        $errorCount++;
-        if($errorCount>42 && ($errorCount/$tryCount > 0.95)) {
-          die("too many repeated failed insert attempts, assume will continue for durration. ACK!!\n");
-        }
-      } # should handle the error, but ignore for now
-    }
-  };
-=cut
-
-
-  return $logic_name;
-}
 
 1;
