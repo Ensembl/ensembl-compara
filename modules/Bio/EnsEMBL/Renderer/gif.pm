@@ -2,6 +2,7 @@ package Bio::EnsEMBL::Renderer::gif;
 use strict;
 use lib "..";
 use Bio::EnsEMBL::Renderer;
+use GD;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer);
 
@@ -14,19 +15,30 @@ sub canvas {
     }
 }
 
+#########
+# colour caching routine.
+# GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
+# 
+sub colour {
+    my ($this, $id) = @_;
+    $id ||= $this->{'colourmap'}->id_by_name("black");
+    my $colour = $this->{'_GDColourCache'}->{$id} || $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($id));
+    $this->{'_GDColourCache'}->{$id} = $colour;
+    return $colour;
+}
+
+
 sub render_Rect {
     my ($self, $glyph) = @_;
+#print STDERR qq(drawing rect $glyph\n);
 
-	my $canvas = $self->{'canvas'};
-	my $cmap = $self->{'colourmap'};
+    my $canvas = $self->{'canvas'};
 
-	my @col1 = $cmap->rgb_by_id($glyph->bordercolour() || $glyph->colour());
-    my $bordercolour = $canvas->colorAllocate(@col1);
-	#print STDERR "Foo: @col1\n";
+    my $gcolour      = $glyph->colour();
+    my $gbordercolor = $glyph->colour();
 
-	my @col2 = $cmap->rgb_by_id($glyph->colour());
-    my $colour = $canvas->colorAllocate(@col2);
-	#print STDERR "Foo: @col2\n";
+    my $bordercolour = $self->colour($gcolour || $gbordercolor);
+    my $colour       = $self->colour($gcolour);
 
     $glyph->transform($self->{'transform'});
 
@@ -37,10 +49,17 @@ sub render_Rect {
 
     $canvas->filledRectangle($x1,   $y1, $x2, $y2, $bordercolour) if(defined $bordercolour);
     $canvas->filledRectangle($x1+1, $y1+1, $x2-1, $y2-1, $colour) if(defined $bordercolour && defined $colour && $bordercolour != $colour);
-
 }
 
 sub render_Text {
+    my ($this, $glyph) = @_;
+    my $font = $glyph->font();
+
+    my $colour = $this->colour($glyph->colour());
+
+    $glyph->transform($this->{'transform'});
+
+    $this->{'canvas'}->string(gdTinyFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
 }
 
 sub render_Circle {
@@ -52,7 +71,7 @@ sub render_Ellipse {
 sub render_Intron {
     my ($self, $glyph) = @_;
 
-    my $colour = $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_id($glyph->colour()));
+    my $colour = $self->colour($glyph->colour());
 
     $glyph->transform($self->{'transform'});
 
@@ -83,13 +102,8 @@ sub render_Intron {
 sub render_Poly {
     my ($this, $glyph) = @_;
 
-    my $gbordercolour = $glyph->bordercolour();
-    my $gcolour = $glyph->colour();
-
-    my ($colour, $bordercolour);
-
-    $bordercolour = $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($gbordercolour)) if(defined $gbordercolour);
-    $colour = $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($gcolour)) if(defined $gcolour);
+    my $bordercolour = $this->colour($glyph->bordercolour());
+    my $colour       = $this->colour($glyph->colour());
 
     my $poly = new GD::Polygon;
 
@@ -110,6 +124,24 @@ sub render_Poly {
     } else {
 	$this->{'canvas'}->polygon($poly, $bordercolour);
     }
+}
+
+sub render_Composite {
+    my ($this, $glyph) = @_;
+    #########
+    # apply transformation
+    #
+    $glyph->transform($this->{'transform'});
+
+    #########
+    # draw & colour the bounding area if specified
+    #
+    $this->render_Rect($glyph) if(defined $glyph->colour() || defined $glyph->bordercolour());
+
+    #########
+    # now loop through $glyph's children
+    #
+    $this->SUPER::render_Composite($glyph);
 }
 
 1;
