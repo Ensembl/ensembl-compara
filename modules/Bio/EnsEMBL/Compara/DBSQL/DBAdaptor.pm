@@ -169,9 +169,10 @@ sub add_db_adaptor {
   #  }
 
   my $mc = $dba->get_MetaContainer;
-
+  my $csa = $dba->get_CoordSystemAdaptor;
+  
   my $species = $mc->get_Species->binomial;
-  my $assembly = $mc->get_default_assembly;
+  my $assembly = $csa->fetch_top_level->version;
 
   $self->{'genomes'}->{"$species:$assembly"} = $dba;
 }
