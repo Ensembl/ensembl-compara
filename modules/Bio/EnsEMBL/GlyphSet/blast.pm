@@ -21,7 +21,8 @@ sub init_label {
 sub _init {
     my ($self) = @_;
 
-    return unless ($self->strand() == 1);
+	print STDERR "STRAND: ".$self->strand()."\n";
+#    return unless ($self->strand() == 1);
 
     # Lets see if we have a BLAST hit
     # entry in higlights of the form BLAST:start:end
@@ -78,10 +79,11 @@ sub _init {
 
     ## Lets draw a box foreach hit!
     foreach my $hit ( @hits ) {
+		my $strand = $hit->[6] eq 'Plus' ? 1 : -1;
+        next if $strand != $self->strand();
         my $start = $hit->[0] < $vc_s ? $vc_s : $hit->[0];
         my $end   = $hit->[1] > $vc_e ? $vc_e : $hit->[1];
         $start = 0 if $start < 0;
-        print STDERR "BLAST: $hit->[0] $hit->[1]\n";
         my $gbox = new Bio::EnsEMBL::Glyph::Rect({
             'x'         => $start - $vc_s,
             'y'         => 0,
