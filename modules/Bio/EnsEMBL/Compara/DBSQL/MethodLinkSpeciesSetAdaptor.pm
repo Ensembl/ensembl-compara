@@ -154,6 +154,28 @@ sub store {
 }
 
 
+=head2 delete
+
+  Arg  1     : integer $method_link_species_set_id
+  Example    : $mlssa->delete(23)
+  Description: Deletes a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet entry from
+               the database.
+  Returntype : none
+  Exception  : 
+  Caller     : 
+
+=cut
+
+sub delete {
+  my ($self, $method_link_species_set_id) = @_;
+  my $sth;  
+
+  my $method_link_species_sql = qq{DELETE FROM method_link_species WHERE method_link_species_set = ?};
+  $sth = $self->prepare($method_link_species_sql);
+  $sth->execute($method_link_species_set_id);
+}
+
+
 =head2 fetch_all
 
   Arg  1     : none
@@ -451,19 +473,20 @@ sub fetch_by_method_link_and_genome_db_ids {
   if ($method_link =~ /^\d+$/) {
     $method_link_id = $method_link;
   } else {
-    $method_link_id = $self->_get_method_link_id_from_type($method_link);
+    $method_link_id = ($self->_get_method_link_id_from_type($method_link) || 0);
   }
   
-  my $sth = $self->prepare(qq{
-		SELECT
-		  method_link_species_set, COUNT(*) as count
-		FROM
-			method_link_species
-		WHERE
-			genome_db_id in (}.join(",", @$genome_db_ids).qq{)
-			AND method_link_id = $method_link_id
-		GROUP BY method_link_species_set
-		HAVING count = }.scalar(@$genome_db_ids));
+  my $sql = qq{
+                SELECT
+                  method_link_species_set, COUNT(*) as count
+                FROM
+                        method_link_species
+                WHERE
+                        genome_db_id in (}.join(",", @$genome_db_ids).qq{)
+                        AND method_link_id = $method_link_id
+                GROUP BY method_link_species_set
+                HAVING count = }.scalar(@$genome_db_ids);
+  my $sth = $self->prepare($sql);
   $sth->execute();
 
   my ($dbID) = $sth->fetchrow_array();
@@ -488,7 +511,7 @@ sub fetch_by_method_link_and_genome_db_ids {
 =cut
 
 sub _get_method_link_type_from_id {
-  my ($self) = @_;
+  my ($self, $method_link_id) = @_;
   my $type; # returned string
   
   my $sql = qq{
@@ -498,11 +521,11 @@ sub _get_method_link_type_from_id {
 	};
 
   my $sth = $self->prepare($sql);
-  $sth->execute($self->method_link_id);
+  $sth->execute($method_link_id);
   
   $type = $sth->fetchrow_array();
 
-  return $self->method_link_type($type);
+  return $type;
 }
 
 
