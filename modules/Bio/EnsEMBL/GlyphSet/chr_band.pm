@@ -14,7 +14,7 @@ sub init_label {
     my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => "Band",
+	'text'      => "Chr. band",
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
