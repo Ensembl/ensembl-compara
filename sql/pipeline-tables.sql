@@ -23,6 +23,7 @@ CREATE TABLE member_gene_peptide(
  peptide_member_id    int(10) NOT NULL,
 
  UNIQUE (gene_member_id, peptide_member_id),
+ KEY(peptide_member_id),
 );
 
 
@@ -94,7 +95,9 @@ CREATE TABLE peptide_align_feature (
 
   PRIMARY KEY (peptide_align_feature_id),
   KEY qmember_id  (qmember_id),
-  KEY hmember_id  (hmember_id)
+  KEY hmember_id  (hmember_id),
+  KEY hmember_qgenome  (hmember_id, qgenome_db_id),
+  KEY qmember_hgenome  (qmember_id, hgenome_db_id),
 
 );
 
