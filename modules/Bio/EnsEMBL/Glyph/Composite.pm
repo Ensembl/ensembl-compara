@@ -10,6 +10,9 @@ sub push {
 
     return if (!defined $glyph);
 
+    $this->x(0) if(!defined ($this->x()));
+    $this->y(0) if(!defined ($this->y()));
+
     push @{$this->{'composite'}}, $glyph;
 
     my $gx = $glyph->x();
@@ -46,6 +49,7 @@ sub push {
 
     #########
     # make the glyph coords relative to the composite container
+    # NOTE: watch out for this if you're creating glyphsets! - don't do this twice
     #
     $glyph->x($gx - $this->x());
     $glyph->y($gy - $this->y());
