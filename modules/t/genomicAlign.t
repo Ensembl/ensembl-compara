@@ -74,6 +74,15 @@ my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
 my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
 my $compara_db = $multi->get_DBAdaptor( "compara" );
+my $gdba = $compara_db->get_GenomeDBAdaptor();
+
+my $hs_gdb = $gdba->fetch_by_name_assembly( "Homo sapiens", 'NCBI34' );
+my $mm_gdb = $gdba->fetch_by_name_assembly( "Mus musculus", 'NCBIM32' );
+my $rn_gdb = $gdba->fetch_by_name_assembly( "Rattus norvegicus", 'RGSC3.1' );
+
+$hs_gdb->db_adaptor($homo_sapiens->get_DBAdaptor('core'));
+$mm_gdb->db_adaptor($mus_musculus->get_DBAdaptor('core'));
+$rn_gdb->db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
   
 my $genomic_align;
 my $all_genomic_aligns;
