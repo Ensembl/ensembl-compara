@@ -22,13 +22,22 @@ my %legend_map = (
 sub features {
     my ($self) = @_;
     my $author = $self->my_config('author');
+
+    my $r;
     if ($author) {
-        ## if author is defined in UserConfig, fetch only transcripts by this
-        ## author
-        my $db = EnsEMBL::DB::Core::get_databases('vega');
-        return $db->{'vega'}->get_GeneAdaptor->fetch_all_by_Slice_and_author($self->{'container'}, $author, 'otter');
+        # if author is defined in UserConfig, fetch only transcripts by this
+        # author
+        # check data availability first
+        my $chr = $self->{'container'}->seq_region_name;
+        my $avail = (split(/ /, $self->my_config('available')))[1]
+                    . "." . $self->{'container'}->seq_region_name;
+        return ([]) unless(EnsWeb::species_defs->get_config(
+                    EnsWeb::species_defs->name, 'DB_FEATURES')->{uc($avail)});
+        
+        my $db = $self->{'container'}->adaptor->db->get_db_adaptor('vega');
+        return $db->get_GeneAdaptor->fetch_all_by_Slice_and_author($self->{'container'}, $author, 'otter');
     } else {
-        ## else fetch all otter transcripts
+        # else fetch all otter transcripts
         return $self->{'container'}->get_all_Genes('otter');
     }
 }
