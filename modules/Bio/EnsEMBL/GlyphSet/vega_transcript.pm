@@ -24,10 +24,6 @@ my %legend_map = (
 sub features {
     my ($self) = @_;
     my $author = $self->my_config('author');
-
-    use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
-    &eprof_start($self->check);
-
     my $gene_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('vega')->get_GeneAdaptor;
     my $genes = [];
     if ($author) {
@@ -48,11 +44,8 @@ sub features {
     }
 
     # determine transcript type
-    $gene_adaptor->set_transcript_type($genes);
+    # $gene_adaptor->set_transcript_type($genes);
 
-    &eprof_end($self->check);
-    &eprof_dump(\*STDERR);
-    
     return $genes;
 }
 
