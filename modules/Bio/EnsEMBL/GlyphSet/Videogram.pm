@@ -291,6 +291,21 @@ sub highlight_widebox {
     $self->push($g);
 }
 
+sub highlight_outbox {
+	my $self = shift;
+	my $details = shift;
+    my $g = new Bio::EnsEMBL::Glyph::Rect({
+	'x'      => $details->{'start'} - $details->{'padding2'} *1.5,
+	'y'      => $details->{'h_offset'}-$details->{'padding'} *1.5,
+	'width'  => $details->{'end'}-$details->{'start'} + $details->{'padding2'} * 3,
+	'height' => $details->{'wid'}+$details->{'padding'}*3,
+	'bordercolour' => $details->{'col'},
+	'absolutey' => 1,
+	'zmenu'  => $details->{'zmenu'}
+	});
+    $self->push($g);
+}
+
 sub highlight_bowtie {
 	my $self = shift;
 	my $details = shift;
