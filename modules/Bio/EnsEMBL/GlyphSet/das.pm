@@ -130,10 +130,18 @@ sub _init {
         ### this forces an error text to be displayed below [ error message is in ->das_id() ]
         	$empty_flag = 0;
 
+                        my $href = '';
 			my $zmenu = {
             	'caption'         => $self->{'extras'}->{'label'},
 #                "DAS source info" => $self->{'extras'}->{'url'},
         	};
+			if($id && $id ne 'null') {
+				if($self->{'extras'}->{'linkURL'}){
+					$zmenu->{$link_text} = $href = $ext_url->get_url( $self->{'extras'}->{'linkURL'}, $id );
+				}
+	    			$zmenu->{$display_id} = '';
+				#print STDERR "DAS SNP ID: $id\n";
+			}
 			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
 				if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
 			$zmenu->{"SCORE: ". $f->das_score()      } = ''
@@ -142,19 +150,18 @@ sub _init {
 				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
 			$zmenu->{"CATEGORY: ". $f->das_type_category() } = ''
 				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-			$zmenu->{"DAS LINK: ".$f->das_link_label() } = $f->das_link()
-				if $f->das_link() && uc($f->das_link()) ne 'NULL';
-  
+			if( $f->das_link() && uc($f->das_link()) ne 'NULL' ) {
+			     $zmenu->{"DAS LINK: ".$f->das_link_label() } = $href = $f->das_link() ;
+                        }
    		# JS5: If we have an ID then we can add this to the Zmenu and
 		#      also see if we can make a link to any additional information
 		#      about the source.
-			my $href=undef;
 			if($id && $id ne 'null') {
 				if($self->{'extras'}->{'linkURL'}){
 					$zmenu->{$link_text} = $href = $ext_url->get_url( $self->{'extras'}->{'linkURL'}, $id );
 				}
-	    		$zmenu->{$display_id} = '';
-			#print STDERR "DAS SNP ID: $id\n";
+	    			$zmenu->{$display_id} = '';
+				#print STDERR "DAS SNP ID: $id\n";
 			}
 			my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 				'y'            => 0,
@@ -275,9 +282,17 @@ sub _init {
         ### this forces an error text to be displayed below [ error message is in ->das_id() ]
         	$empty_flag = 0;
 
+			my $href=undef;
 			my $zmenu = {
                 	'caption'                       => $self->{'extras'}->{'label'},
-    	    };
+    	    		};
+			if($id && $id ne 'null') {
+				if($self->{'extras'}->{'linkURL'}){
+					$zmenu->{$link_text} = $href = $ext_url->get_url( $self->{'extras'}->{'linkURL'}, $id );
+				}
+	    		$zmenu->{$display_id} = '';
+			#print STDERR "DAS SNP ID: $id\n";
+			}
 			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
 				if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
 			$zmenu->{"SCORE: ". $f->das_score()      } = ''
@@ -286,20 +301,12 @@ sub _init {
 				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
 			$zmenu->{"CATEGORY: ". $f->das_type_category() } = ''
 				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-			$zmenu->{"DAS LINK: ".$f->das_link_label() } = $f->das_link()
-				if $f->das_link() && uc($f->das_link()) ne 'NULL';
-            
+			if( $f->das_link() && uc($f->das_link()) ne 'NULL' ) {
+			   $zmenu->{"DAS LINK: ".$f->das_link_label() } = $href = $f->das_link()
+           		} 
    		# JS5: If we have an ID then we can add this to the Zmenu and
 		#      also see if we can make a link to any additional information
 		#      about the source.
-			my $href=undef;
-			if($id && $id ne 'null') {
-				if($self->{'extras'}->{'linkURL'}){
-					$zmenu->{$link_text} = $href = $ext_url->get_url( $self->{'extras'}->{'linkURL'}, $id );
-				}
-	    		$zmenu->{$display_id} = '';
-			#print STDERR "DAS SNP ID: $id\n";
-			}
             my $START = $f->das_start() <  1       ? 1 : $f->das_start();
             my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
 			my $Composite = new Bio::EnsEMBL::Glyph::Composite({
