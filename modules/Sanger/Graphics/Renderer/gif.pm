@@ -280,9 +280,14 @@ sub render_Sprite {
     my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
     my $fn     = "$lib/$spritename.gif";
     $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif($fn);
+    if( !$config->{'_spritecache'}->{$spritename} ) {
+      $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif("$lib/missing.gif");
+    }
   }
 
   my $sprite = $config->{'_spritecache'}->{$spritename};
+
+  return unless $sprite;
   my ($width, $height) = $sprite->getBounds();
 
   my $METHOD = $self->{'canvas'}->can('copyRescaled') ? 'copyRescaled' : 'copyResized' ;

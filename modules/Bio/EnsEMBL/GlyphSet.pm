@@ -21,15 +21,15 @@ sub slice2sr {
 }
 
 sub new {
-    my $class = shift;
-    if(!$class) {
-      warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
-      warn( "EnsEMBL::GlyphSet::failed with a call of new on an undefined value" );
-      return undef;
-    }
-    my $self = $class->SUPER::new( @_ );
-    $self->{'bumpbutton'} = undef;
-    return $self;
+  my $class = shift;
+  if(!$class) {
+    warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
+    warn( "EnsEMBL::GlyphSet::failed with a call of new on an undefined value" );
+    return undef;
+  }
+  my $self = $class->SUPER::new( @_ );
+  $self->{'bumpbutton'} = undef;
+  return $self;
 }
 
 sub __init {
@@ -82,37 +82,25 @@ sub ID_URL {
 }
 
 sub zoom_URL {
-    my( $self, $PART, $interval_middle, $width, $factor, $highlights ) = @_;
-    my $start = int( $interval_middle - $width / 2 / $factor);
-    my $end   = int( $interval_middle + $width / 2 / $factor);        
-    return qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights);
+  my( $self, $PART, $interval_middle, $width, $factor, $highlights, $config_number, $ori) = @_;
+  my $extra;
+  if( $config_number ) {
+    $extra = "o$config_number=c$config_number=$PART:$interval_middle:$ori&w$config_number=$width"; 
+  } else {
+    $extra = "c=$PART:$interval_middle&w=$width";
+  }
+  return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$extra$highlights);
 }
 
 sub zoom_zoom_zmenu {
-    my ($self, $chr, $interval_middle, $width, $highlights, $zoom_width) = @_;
-    $chr =~s/.*=//;
-    return qq(zz('/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$zoom_width', '$highlights' ));
-    return { 
-            'caption'                          => "Navigation",
-            '03:Zoom in (x2)'                  => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights)."&zoom_width=".int($zoom_width/2),
-            '04:Centre on this scale interval' => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights), 
-            '05:Zoom out (x0.5)'               => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights)."&zoom_width=".($zoom_width*2) 
-    };
+  my ($self, $chr, $interval_middle, $width, $highlights, $zoom_width, $config_number, $ori) = @_;
+  $chr =~s/.*=//;
+  return qq(zz('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$zoom_width', '$highlights','$ori','$config_number', '@{[$self->{container}{_config_file_name_}]}'));
 }
 sub zoom_zmenu {
-    my ($self, $chr, $interval_middle, $width, $highlights) = @_;
-    $chr =~s/.*=//;
-    return qq(zn('/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights' ));
-    return { 
-            'caption'                          => "Navigation",
-            '01:Zoom in (x10)'                 => $self->zoom_URL($chr, $interval_middle, $width, 10  , $highlights),
-            '02:Zoom in (x5)'                  => $self->zoom_URL($chr, $interval_middle, $width,  5  , $highlights),
-            '03:Zoom in (x2)'                  => $self->zoom_URL($chr, $interval_middle, $width,  2  , $highlights),
-            '04:Centre on this scale interval' => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights), 
-            '05:Zoom out (x0.5)'               => $self->zoom_URL($chr, $interval_middle, $width,  0.5, $highlights), 
-            '06:Zoom out (x0.2)'               => $self->zoom_URL($chr, $interval_middle, $width,  0.2, $highlights), 
-            '07:Zoom out (x0.1)'               => $self->zoom_URL($chr, $interval_middle, $width,  0.1, $highlights)                 
-    };
+  my ($self, $chr, $interval_middle, $width, $highlights, $config_number, $ori ) = @_;
+  $chr =~s/.*=//;
+  return qq(zn('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights','$ori','$config_number', '@{[$self->{container}{_config_file_name_}]}' ));
 }
 
 sub draw_cigar_feature {

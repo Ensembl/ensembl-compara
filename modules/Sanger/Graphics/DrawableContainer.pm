@@ -88,8 +88,21 @@ sub new {
       warn ref($self).qq( No Config object defined);
       next;
     }
-    $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
     my @glyphsets = ();
+    $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
+    if( $Container->{'__type__'} eq 'fake' ) {
+    warn "WE HAVE A FAKE CONTAINER";
+      my $classname = qq($self->{'prefix'}::GlyphSet::comparafake);
+      next unless $self->dynamic_use( $classname );
+      my $GlyphSet;
+      eval {
+        $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, 1 );
+      };
+      $Config->container_width(1);
+      warn $@;
+      push @glyphsets, $GlyphSet unless $@;
+     
+    } else {
     for my $strand (@strands_to_show) {
       my $tmp_gs_store = {};
       for my $row ($Config->subsections( 1 )) {
@@ -157,9 +170,8 @@ sub new {
                 keys %{ $tmp_gs_store };
       push @glyphsets, ($strand == 1 ? reverse @tmp : @tmp);
     }
-    
-    my $x_scale = $panel_width /(
-                    ($Config->container_width()||$Container->length()));
+    } 
+    my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length()));
   
   if($show_buttons eq 'yes') {
   for my $glyphset (@glyphsets) {

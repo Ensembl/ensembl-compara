@@ -30,9 +30,10 @@ sub colour {
 
 sub image_label {
   my ($self, $f ) = @_;
-  return ( $f->{'rel_ori'}<0 ? '<' : '' ).
+  my $ORI = $self->{'container'}->strand * $f->{'rel_ori'};
+  return ( $ORI < 0  ? '<' : '' ).
          $f->{'hit_chr_name'}.
-         ( $f->{'rel_ori'}<0 ? '' : '>' ) , 'under';
+         ( $ORI <0 ? '' : '>' ) , 'under';
 }
 
 ## Link back to this page centred on the map fragment

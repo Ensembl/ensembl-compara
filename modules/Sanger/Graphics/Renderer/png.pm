@@ -27,7 +27,14 @@ sub render_Sprite {
     my $libref = $config->get("_settings", "spritelib");
     my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
     my $fn     = "$lib/$spritename.png";
-    $config->{'_spritecache'}->{$spritename} = GD::Image->newFromPng($fn);
+    eval {
+      $config->{'_spritecache'}->{$spritename} = GD::Image->newFromPng($fn);
+    };
+    if( $@ || !$config->{'_spritecache'}->{$spritename} ) {
+      eval {
+        $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif("$lib/missing.png");
+      };
+    }
   }
 
   return $self->SUPER::render_Sprite($glyph);

@@ -114,8 +114,10 @@ sub compact_init {
         'height' => $h, 'colour'=>$colour, 'absolutey' => 1
       }));
     }
+    my $start = $gene->start < 1 ? 1 : $gene->start;;
+    my $end   = $gene->end   > $length ? $length : $gene->end;
     $Composite2->push(new Sanger::Graphics::Glyph::Rect({
-      'x' => $Composite2->x, 'width' => $Composite2->width,
+      'x' => $start, 'width' => $end-$start+1,
       'height' => 0, 'y' => int($y+$h/2), 'colour' => $colour, 'absolutey' =>1,
     }));
     # Calculate and draw the coding region of the exon

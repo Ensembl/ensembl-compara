@@ -35,9 +35,9 @@ sub _init {
   # only draw contigs once - on one strand
   return unless ($self->strand() == 1);
    
-  my $vc = $self->{'container'};
-  $self->{'vc'} = $vc;
-  my $length = $vc->length();
+  my $Container = $self->{'container'};
+  $self->{'vc'} = $Container;
+  my $length = $Container->length();
 
   my $ystart = 3;
 
@@ -53,14 +53,14 @@ sub _init {
   $self->push($gline);
   
   my @features = ();
-  foreach my $segment (@{$vc->project('seqlevel')||[]}) {
+  foreach my $segment (@{$Container->project('seqlevel')||[]}) {
     my $start      = $segment->from_start;
     my $end        = $segment->from_end;
     my $ctg_slice  = $segment->to_Slice;
     my $ORI        = $ctg_slice->strand;
     my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
     $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
-    foreach( @{$vc->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
+    foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
       my $path;
       eval { $path = $ctg_slice->project($_->name); };
       next unless(@$path == 1);
@@ -80,9 +80,9 @@ sub _init {
 sub _init_non_assembled_contig {
   my ($self, $ystart, $contig_tiling_path) = @_;
 
-  my $vc = $self->{'vc'};
-  my $length = $vc->length();
-  my $ch = $vc->seq_region_name;
+  my $Container = $self->{'vc'};
+  my $length = $Container->length();
+  my $ch = $Container->seq_region_name;
 
   my $Config = $self->{'config'};
 
@@ -101,9 +101,26 @@ sub _init_non_assembled_contig {
   my $red      = 'red';
   my $highlights = join('|', $self->highlights());
      $highlights = $highlights ? "&highlight=$highlights" : '';
+ if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
+    my $C = 0;
+    foreach( @{ $self->{'config'}{'other_slices'}} ) {
+      if( $C!= $self->{'config'}->{'slice_number'} ) {
+        if( $C ) {
+          $highlights .= sprintf( "&s$C=%s&c$C=%s:%s:%s&w$C=%s", $_->{'location'}->species,
+                       $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
+        } else {
+          $highlights .= sprintf( "&c=%s:%s:1&w=%s",
+                       $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint,
+                       $_->{'location'}->length );
+        }
+      }
+      $C++;
+    }
+ } ##
+
+  my $contig_strand = $Container->can('strand') ? $Container->strand : 1;
   my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
-  my $param_string   = $clone_based ? $Config->get('_settings','clone')       : ("chr=". $vc->seq_region_name());
-  my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $vc->start();
+  my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->start();
   my $global_end     = $global_start + $length - 1;
   my $im_width = $Config->image_width();
 #
@@ -270,7 +287,7 @@ sub _init_non_assembled_contig {
     'absolutex' => 1,'absolutewidth'=>1,
   }) );
     
-  my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
+  my $Container_size_limit = $Config->get('_settings', 'default_vc_size');
   # only draw a red box if we are in contigview top and there is a 
   # detailed display
   my $rbs = $Config->get('_settings','red_box_start');
@@ -309,8 +326,8 @@ sub _init_non_assembled_contig {
         'height'    => 3,
         'absolutey' => 1,
         'absolutex' => 1,'absolutewidth'=>1,
-        'href'      => $self->zoom_URL($param_string, $interval_middle + $global_start, $length,  1  , $highlights),
-        'zmenu'     => $self->zoom_zmenu($param_string, $interval_middle + $global_start, $length, $highlights ),
+        'href'      => $self->zoom_URL($Container->seq_region_name, $interval_middle + $global_start, $length,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand),
+        'zmenu'     => $self->zoom_zmenu($Container->seq_region_name, $interval_middle + $global_start, $length, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
       }));
       # the reverse strand ticks
       $self->unshift( new Sanger::Graphics::Glyph::Space({
@@ -320,8 +337,8 @@ sub _init_non_assembled_contig {
         'height'    => 3,
         'absolutey' => 1,
         'absolutex' => 1,'absolutewidth'=>1,
-        'href'      => $self->zoom_URL($param_string, $global_end+1-$interval_middle, $length,  1  , $highlights),
-        'zmenu'     => $self->zoom_zmenu($param_string, $global_end+1-$interval_middle, $length, $highlights ),
+        'href'      => $self->zoom_URL($Container->seq_region_name, $global_end+1-$interval_middle, $length,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand),
+        'zmenu'     => $self->zoom_zmenu($Container->seq_region_name, $global_end+1-$interval_middle, $length, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
       }) );
       $interval_middle += $width;
     }

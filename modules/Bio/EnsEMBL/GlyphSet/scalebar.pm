@@ -5,19 +5,54 @@ use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use EnsWeb;
 use POSIX qw(ceil floor);
+use Sanger::Graphics::Glyph::Sprite;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
+use Data::Dumper;
 
 sub init_label {
   my ($self) = @_;
   my $chr = $self->{'config'}->get('scalebar','label');
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => "$chr",	
-    'font'      => 'Small',
-    'absolutey' => 1,
-  });
-  $self->label($label);
+  if( $self->{'config'}->{'compara'} && $chr ) {
+    return if $self->strand < 0;
+    my $label = new Sanger::Graphics::Glyph::Sprite({
+      'z'             => 10,
+      'x'             => -110,
+      'y'             => 0,
+      'sprite'        => lc($chr),
+      'width'         => 100,
+      'height'        => 20,
+      'absolutex'     => 1,
+      'absolutewidth' => 1,
+      'absolutey'     => 1,
+    });
+    $self->push($label);
+    my $line = new Sanger::Graphics::Glyph::Rect({
+      'z' => 11,
+      'x' => -120,
+      'y' => 0,
+      'colour' => 'black',
+      'width' => 120,
+      'height' => 0,
+      'absolutex'     => 1,
+      'absolutewidth' => 1,
+      'absolutey'     => 1,
+    });
+    $self->join_tag( $line, "bracket", 0,0, 'black' );
+    if( $self->{'config'}->{'compara'} eq 'primary' ) {
+      $self->join_tag( $line, "bracket2", 0,0, 'rosybrown1', 'fill', -40 );
+      $self->join_tag( $line, "bracket2", 0.9,0, 'rosybrown1', 'fill', -40 );
+    }
+    $self->push($line);
+  } elsif( $chr ) {
+    my $label = new Sanger::Graphics::Glyph::Text({
+      'text'      => "$chr",	
+      'font'      => 'Small',
+      'absolutey' => 1,
+    });
+    $self->label($label);
+  }
 }
 
 
@@ -36,13 +71,32 @@ sub _init {
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? "&highlight=$highlights" : '';
+ if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
+    my $C = 0;
+    foreach( @{ $self->{'config'}{'other_slices'}} ) {
+      if( $C!= $self->{'config'}->{'slice_number'} ) {
+        if( $C ) {
+          if( $_->{'location'} ) {
+            $highlights .= sprintf( "&s$C=%s&c$C=%s:%s:%s&w$C=%s", $_->{'species'}, 
+                         $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
+          } else {
+            $highlights .= sprintf( "&s$C=%s", $_->{'species'} ); 
+          }
+        } else {
+          $highlights .= sprintf( "&c=%s:%s:1&w=%s", 
+                         $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'location'}->length );
+        }
+      }
+      $C++;
+    }
+ } ##
     my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
     my $navigation     = $Config->get('scalebar', 'navigation');
     my $abbrev         = $Config->get('scalebar', 'abbrev');
-    my $param_string   = "region=" . $Container->seq_region_name();
+    my $param_string   = $Container->seq_region_name();
 
     my $main_width     = $Config->get('_settings', 'main_vc_width');
     my $len            = $Container->length();
@@ -114,7 +168,7 @@ sub _init {
             'colour'    => 'black',
             'absolutey' => 1,
         }));
-        my $LABEL = $minor_unit < 250 ? EnsWeb::commify($box_start): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
+        my $LABEL = $minor_unit < 250 ? EnsWeb::commify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
         if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
           $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,
@@ -143,48 +197,48 @@ sub _init {
 }
 
 sub interval {
-    # Add the recentering imagemap-only glyphs
-    my ( $self, $chr, $start, $end, $contig_strand, $global_offset, $width, $highlights) = @_;
-    my $interval_middle = ($start + $end)/2 * $contig_strand;
-    return( $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
-            $self->zoom_zmenu( $chr, $interval_middle, $width, $highlights ) );
+  # Add the recentering imagemap-only glyphs
+  my ( $self, $chr, $start, $end, $contig_strand, $global_offset, $width, $highlights) = @_;
+  my $interval_middle = $contig_strand * ($start + $end)/2;
+  return( $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
+          $self->zoom_zmenu( $chr, $interval_middle, $width, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ) );
 }
 
 sub zoom_interval {
-    # Add the recentering imagemap-only glyphs
-    my ( $self, $chr, $start, $end, $contig_strand, $global_offset, $width, $highlights, $zoom_width ) = @_;
-    my $interval_middle = ($start + $end)/2 * $contig_strand;
-    return(
-      $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
-      $self->zoom_zoom_zmenu( $chr, $interval_middle, $width, $highlights, $zoom_width )
-    );
+  # Add the recentering imagemap-only glyphs
+  my ( $self, $chr, $start, $end, $contig_strand, $global_offset, $width, $highlights, $zoom_width ) = @_;
+  my $interval_middle = $contig_strand * ($start + $end)/2;
+  return(
+    $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
+    $self->zoom_zoom_zmenu( $chr, $interval_middle, $width, $highlights, $zoom_width, $self->{'config'}->{'slice_number'}, $contig_strand )
+  );
 }
 
 sub bp_to_nearest_unit_by_divs {
-    my ($self,$bp,$divs) = @_;
+  my ($self,$bp,$divs) = @_;
 
-    return $self->bp_to_nearest_unit($bp,0) if (!defined $divs);
+  return $self->bp_to_nearest_unit($bp,0) if (!defined $divs);
 
-    my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
-    my $value = $divs / ( 10 ** ( $power_ranger * 3 ) ) ;
+  my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
+  my $value = $divs / ( 10 ** ( $power_ranger * 3 ) ) ;
 
-    my $dp = $value < 1 ? length ($value) - 2 : 0; # 2 for leading "0."
-    return $self->bp_to_nearest_unit ($bp,$dp);
+  my $dp = $value < 1 ? length ($value) - 2 : 0; # 2 for leading "0."
+  return $self->bp_to_nearest_unit ($bp,$dp);
 }
 
 sub bp_to_nearest_unit {
-    my ($self,$bp,$dp) = @_;
-    $dp = 1 unless defined $dp;
+  my ($self,$bp,$dp) = @_;
+  $dp = 1 unless defined $dp;
+   
+  my @units = qw( bp Kb Mb Gb Tb );
+  my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
+  my $unit = $units[$power_ranger];
+
+  my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
     
-    my @units = qw( bp Kb Mb Gb Tb );
-    my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
-    my $unit = $units[$power_ranger];
+  $value = sprintf( "%.${dp}f", $bp / ( 10 ** ( $power_ranger * 3 ) ) ) if ($unit ne 'bp');      
 
-    my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
-      
-    $value = sprintf( "%.${dp}f", $bp / ( 10 ** ( $power_ranger * 3 ) ) ) if ($unit ne 'bp');      
-
-    return "$value $unit";
+  return "$value $unit";
 }
 
 

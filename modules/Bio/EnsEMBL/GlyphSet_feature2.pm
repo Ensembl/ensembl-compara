@@ -72,15 +72,17 @@ sub expanded_init {
   my %id             = ();
   my $small_contig   = 0;
   my $dep            = $Config->get($type, 'dep');
-  warn "DEPTH -> $dep";
   my $h              = $Config->get('_settings','opt_halfheight') ? 4 : 8;
   my $chr_name       = $self->{'container'}->seq_region_name;
   my $other_species  = $self->my_config( 'species' );
   my $self_species   = $container->{_config_file_name_};
   my $compara        = $self->{'config'}{'compara'};
+  my $link = 0;
+  
 
   my $TAG_PREFIX;
   if( $compara) {
+    $link = $Config->get($type,'join');
     $TAG_PREFIX  = uc( $compara eq 'primary' ? 
                        $self->my_config( 'method' )."_$self_species"."_$other_species" :
                        $self->my_config( 'method' )."_$other_species"."_$self_species" );
@@ -147,14 +149,14 @@ sub expanded_init {
         $Composite->push($BOX);
       }
     }
-    if( $compara eq 'primary' || $compara eq 'secondary' ) {
+    if( ($compara eq 'primary' || $compara eq 'secondary') && $link ) {
       my( $start, $end, $start2,$end2) = ( $F[0][1]->hstart, $F[0][1]->hend, $F[0][1]->start, $F[0][1]->end ); 
       foreach( @F ) {
         my $f = $_->[1];
         $start = $f->hstart() if $f->hstart() < $start;
-        $end   = $f->hend()   if $f->hend()   < $end;
+        $end   = $f->hend()   if $f->hend()   > $end;
         $start2 = $f->start() if $f->start() < $start2;
-        $end2   = $f->end()   if $f->end()   < $end2;
+        $end2   = $f->end()   if $f->end()   > $end2;
       }
       ($start2,$end2) = $self->slice2sr( $start2, $end );
       if( $compara eq 'primary' ) {
@@ -220,12 +222,13 @@ sub compact_init {
   my $other_species  = $self->my_config( 'species' );
   my $self_species   = $container->{_config_file_name_};
   my $compara        = $self->{'config'}{'compara'};
-
+  my $link = 0;
   my $TAG_PREFIX;
   if( $compara) {
     $TAG_PREFIX  = uc( $compara eq 'primary' ?
                        $self->my_config( 'method' )."_$self_species"."_$other_species" :
                        $self->my_config( 'method' )."_$other_species"."_$self_species" );
+    $link = $Config->get($type,'join');
   }
   my ($T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
 
@@ -271,17 +274,16 @@ sub compact_init {
         'zmenu'      => $self->unbumped_zmenu( @X, 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) )
       });
     }
-    if( $compara eq 'primary' || $compara eq 'secondary' ) {
+    if( ($compara eq 'primary' || $compara eq 'secondary') && $link ) {
       my( $start, $end, $start2,$end2) = ( $f->hstart, $f->hend, $f->start, $f->end );
       my( $start2, $end2 ) = $self->slice2sr( $start2, $end2 );
       my $Z = $strand == -1 ? 1 : 0;
-      my( $join_col, $join_z ) = ( $f->hstrand * $f->strand ) > 0 ? ( 'darkseagreen1',-3) : ( 'burlywood1', -2 );
       if( $compara eq 'primary' ) {
-        my $TAG = "$TAG_PREFIX.$start.$end:$start2.$end2";
+        my $TAG = "$TAG_PREFIX.$start.$end:$start2.$end2.$strand";
         $self->join_tag( $TO_PUSH, $TAG, 0, $Z, $join_col, 'fill', $join_z );
         $self->join_tag( $TO_PUSH, $TAG, 1, $Z, $join_col, 'fill', $join_z );
       } else {
-        my $TAG = "$TAG_PREFIX.$start2.$end2:$start.$end";
+        my $TAG = "$TAG_PREFIX.$start2.$end2:$start.$end.".(-$strand);
         $self->join_tag( $TO_PUSH, $TAG, 1, $Z, $join_col, 'fill', $join_z );
         $self->join_tag( $TO_PUSH, $TAG, 0, $Z, $join_col, 'fill', $join_z );
       }
