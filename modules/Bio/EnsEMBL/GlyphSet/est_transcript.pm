@@ -3,12 +3,12 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bio::EnsEMBL::Glyph::Line;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use Sanger::Graphics::Glyph::Line;
+use  Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 
@@ -18,7 +18,7 @@ sub init_label {
     
     my $label_text = 'EST Transcr.';
 
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => $label_text,
         'font'      => 'Small',
         'absolutey' => 1,
@@ -73,7 +73,7 @@ TRANSCRIPT:
 	    eval {
 		@dblinks = $transcript->each_DBLink();
 	    };
-	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
+	    my $Composite = new Sanger::Graphics::Glyph::Composite({});
 	    #$colour = $sanger_colours->{$colour};
 	    $Composite->{'href'} = qq(/$ENV{'ENSEMBL_SPECIES'}/est_transview?transcript=$tid);
 	    my %zmenu = (
@@ -99,7 +99,7 @@ TRANSCRIPT:
     
             ########## draw anything trailing off the beginning
             if(defined $start_screwed && $start_screwed == 0) {
-                my $clip1 = new Bio::EnsEMBL::Glyph::Line({
+                my $clip1 = new Sanger::Graphics::Glyph::Line({
                     'x'         => 0,
                     'y'         => $y+int($h/2),
                     'width'     => $start_exon->start(),
@@ -118,7 +118,7 @@ EXON:
             for my $exon (@exons) {
                 my $x = $exon->start();
                 my $w = $exon->end() - $x;
-                my $rect = new Bio::EnsEMBL::Glyph::Rect({
+                my $rect = new Sanger::Graphics::Glyph::Rect({
                     'x'         => $x,
                     'y'         => $y,
                     'width'     => $w,
@@ -126,7 +126,7 @@ EXON:
                     'colour'    => $colour,
                     'absolutey' => 1,
                 });
-                my $intron = new Bio::EnsEMBL::Glyph::Intron({
+                my $intron = new Sanger::Graphics::Glyph::Intron({
                     'x'         => $previous_endx,
                     'y'         => $y,
                     'width'     => ($x - $previous_endx),
@@ -144,7 +144,7 @@ EXON:
     
             ########## draw anything trailing off the end
             if(defined $end_screwed && $end_screwed == 0) {
-                my $clip2 = new Bio::EnsEMBL::Glyph::Line({
+                my $clip2 = new Sanger::Graphics::Glyph::Line({
                     'x'         => $previous_endx,
                     'width'     => $container->length() - $previous_endx,
                     'y'         => $y+int($h/2),
@@ -166,7 +166,7 @@ EXON:
             my $bump_end = $bump_start + int($Composite->width * $pix_per_bp)+1;
             if ($bump_end > $bitmap_length) { $bump_end = $bitmap_length };
     
-            my $row = &Bump::bump_row(
+            my $row = & Sanger::Graphics::Bump::bump_row(
                 $bump_start,
                 $bump_end,
                 $bitmap_length,

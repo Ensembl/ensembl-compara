@@ -1,11 +1,10 @@
 package Bio::EnsEMBL::GlyphSetManager::das;
 
 use strict;
-use Bio::EnsEMBL::GlyphSetManager;
+use Sanger::Graphics::GlyphSetManager;
 use Bio::EnsEMBL::GlyphSet::das;
 use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::GlyphSetManager);
-use Data::Dumper;
+@ISA = qw(Sanger::Graphics::GlyphSetManager);
 use ExternalDAS;
 use EnsWeb;
 

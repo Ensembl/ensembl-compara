@@ -1,11 +1,11 @@
 package Bio::EnsEMBL::VDrawableContainer;
-use Bio::Root::RootI;
+# use Bio::EnsEMBL::Root;
 use strict;
-use vars qw(@ISA);
+# use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::Videogram;
 use EnsWeb;
 
-@ISA = qw(Bio::Root::RootI);
+# @ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
     my ($class, $Container, $Config, $highlights, $strandedness, $spacing) = @_;

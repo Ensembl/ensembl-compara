@@ -4,16 +4,16 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Line;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Line;
 
 use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => "Tree diagram",
         'font'      => 'Small',
         'absolutey' => 1,
@@ -43,7 +43,7 @@ sub _init {
     my $horizontal_scale = $Config->get('_settings','width')/1.5/$x_max;
     foreach my $node (@nodes) {
         if($node->{'id'} eq '*') { # branch...
-            $self->push(new Bio::EnsEMBL::Glyph::Rect({
+            $self->push(new Sanger::Graphics::Glyph::Rect({
                 'x'          => $node->{'x'} * $horizontal_scale - 1,
                 'y'          => $node->{'y'} * 10 - 1, 
                 'width'      => 2,
@@ -53,7 +53,7 @@ sub _init {
                 'absolutex'  => 1
             }));
         } else {
-            $self->push(new Bio::EnsEMBL::Glyph::Text({
+            $self->push(new Sanger::Graphics::Glyph::Text({
                 'x'          => $node->{'x'} * $horizontal_scale + 5,
                 'y'          => $node->{'y'} * 10 - 4,
                 'font'       => 'Tiny',
@@ -63,7 +63,7 @@ sub _init {
                 'absolutex' => 1
             }));
         }
-        $self->push(new Bio::EnsEMBL::Glyph::Line({
+        $self->push(new Sanger::Graphics::Glyph::Line({
             'x'       => $node->{'xp'} * $horizontal_scale,
             'y'       => $node->{'yp'} * 10,
             'width'   => 0,
@@ -71,7 +71,7 @@ sub _init {
             'colour'  =>  $black,
             'absolutey'        => 1, 'absolutex'        => 1
         }));
-        $self->push(new Bio::EnsEMBL::Glyph::Line({
+        $self->push(new Sanger::Graphics::Glyph::Line({
             'x'       => $node->{'xp'} * $horizontal_scale,
             'y'       => $node->{'y'} * 10,
             'width'   => ($node->{'x'}-$node->{'xp'}) * $horizontal_scale,

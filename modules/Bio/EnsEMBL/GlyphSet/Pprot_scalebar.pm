@@ -3,16 +3,16 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use  Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => 'Scale (aa)',
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -34,7 +34,7 @@ sub _init {
     my $len                   = $self->{'container'}->length();
     my $divs                  = set_scale_division($len);
     
-    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+    my $glyph = new Sanger::Graphics::Glyph::Rect({
 	'x'         => 0,
 	'y'         => 4,
 	'width'     => $len,
@@ -47,7 +47,7 @@ sub _init {
     my $last_end = 0;
     for (my $i=0;$i<int($len/$divs); $i++){
 	
-	my $tick = new Bio::EnsEMBL::Glyph::Rect({
+	my $tick = new Sanger::Graphics::Glyph::Rect({
 	    'x'         => $i * $divs,
 	    'y'         => 4,
 	    'width'     => 0,
@@ -58,7 +58,7 @@ sub _init {
 	$self->push($tick);
 	
 	my $text = $i * $divs;
-	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	my $tglyph = new Sanger::Graphics::Glyph::Text({
 	    'x'      	=> $i * $divs,
 	    'y'      	=> 8,
 	    'height'	=> $fontheight,
@@ -72,7 +72,7 @@ sub _init {
     
     # label first tick
     my $text = "0";
-    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    my $tglyph = new Sanger::Graphics::Glyph::Text({
 	'x'      	=> 0,
 	'y'      	=> 8,
 	'height'	=> $fontheight,
@@ -87,7 +87,7 @@ sub _init {
     $text = $len;
     
     # label last tick
-    my $endglyph = new Bio::EnsEMBL::Glyph::Text({
+    my $endglyph = new Sanger::Graphics::Glyph::Text({
 	'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
 	'y'      	=> 8,
 	'height'	=> $fontheight,
@@ -101,7 +101,7 @@ sub _init {
     
     # add last tick
     my $im_width = $Config->image_width();
-    my $tick = new Bio::EnsEMBL::Glyph::Rect({
+    my $tick = new Sanger::Graphics::Glyph::Rect({
 	'x'          => $im_width,
 	'y'          => 4,
 	'width'      => 0,

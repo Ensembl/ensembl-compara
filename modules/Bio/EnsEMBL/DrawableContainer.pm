@@ -1,15 +1,16 @@
 package Bio::EnsEMBL::DrawableContainer;
-use Bio::Root::RootI;
-use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bio::EnsEMBL::GlyphSetManager::das;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
-use ExtURL;
 
-@ISA = qw(Bio::Root::RootI);
+use strict;
+
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+
+use Bio::EnsEMBL::GlyphSetManager::das;
+
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
+
+use ExtURL;
 
 sub new {
     my ($class, $Container, $Config, $highlights, $strandedness, $Storage) = @_;
@@ -40,18 +41,23 @@ sub new {
     my $black = $Config->colourmap()->id_by_name('red');
     $Config->{'ext_url'} = ExtURL->new;
 
+    my $PREFIX = "Bio::EnsEMBL";
+    my %manager_cache = ();
+
     for my $strand (@strands_to_show) {
 
         my $tmp_glyphset_store = {};
         for my $row ($Config->subsections()) {
         ########## skip this row if user has it turned off
-            next unless ($Config->get($row, 'on') eq "on");
-            next if ($Config->get($row, 'str') eq "r" && $strand != -1);
-            next if ($Config->get($row, 'str') eq "f" && $strand != 1);
-        
-            if(substr($row, 0, 4) ne "das_") {
+            next if ($Config->get($row, 'on') ne "on") ||
+                    ($Config->get($row, 'str') eq "r" && $strand != -1) ||
+                    ($Config->get($row, 'str') eq "f" && $strand != 1);
+
+            if(my $manager = $Config->get($row, 'manager')) {
+                $manager_cache{$manager} ||= 'X';
+            } else {
                 ########## create a new glyphset for this row
-                my $classname = qq(Bio::EnsEMBL::GlyphSet::$row);
+                my $classname = $PREFIX.qq(::GlyphSet::$row);
                 ########## require & import the package
                 eval "require $classname";
                 if($@) {
@@ -65,29 +71,41 @@ sub new {
                     $GlyphSet = new $classname($Container, $Config, $highlights, $strand);
                 };
                 if($@) {
-                    print STDERR "GLYPHSET $classname failed:\n$@\n";
+                    print STDERR "GLYPHSET $classname failed\n";
                 } else {
                     $tmp_glyphset_store->{$Config->get($row, 'pos')} = $GlyphSet;
                 }
             }
         }
 
-        ########## install the glyphset managers
-        ########## DAS first....
-        my $DasManager = new Bio::EnsEMBL::GlyphSetManager::das($Container, $Config, $highlights, $strand);
-        my $das_offset = $Config->{'_das_offset'} || 5500;
-        for my $glyphset ($DasManager->glyphsets()) {
-            my $row = $glyphset->das_name();
-            ########## skip this row if user has it turned off
-            next unless ($Config->get($row, 'on') eq "on");
-            $tmp_glyphset_store->{$Config->get($row, 'pos') || $das_offset++} = $glyphset;
+        my $managed_offset = $Config->{'_das_offset'} || 5500;
+        ########## install the glyphset managers, we've just cached the ones we need...
+        foreach my $manager ( keys %manager_cache ) {
+            if( 1 ||  $manager_cache{$manager} eq 'X' ) {
+                my $classname = $PREFIX."::GlyphSetManager::$manager";
+                eval "require $classname";
+                if($@) {
+                    print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
+                    next;
+                }
+                $classname->import();
+                $manager_cache{$manager} = new $classname($Container, $Config, $highlights, $strand);
+            }
+            for my $glyphset ($manager_cache{$manager}->glyphsets()) {
+                my $row = $glyphset->managed_name();
+                     ########## skip this row if user has it turned off
+                next if !($Config->get($row, 'on') eq "on") ||
+                        ($Config->get($row, 'str') eq "r" && $strand != -1) ||
+                        ($Config->get($row, 'str') eq "f" && $strand != 1);
+                $tmp_glyphset_store->{$Config->get($row, 'pos') || $managed_offset++} = $glyphset;
+            }
         }
-    
+
         ########## sort out the resulting mess
         my @tmp = map { $tmp_glyphset_store->{$_} } sort { $a <=> $b } keys %{ $tmp_glyphset_store };
         push @{$self->{'glyphsets'}}, ($strand == 1 ? reverse @tmp : @tmp);
     }
-    
+
     ########## calculate real scaling here
     my $spacing      = $self->{'spacing'};
     my $button_width = $self->{'button_width'};
@@ -111,7 +129,7 @@ sub new {
 
         my $NAME = ref($glyphset);
         $NAME =~ s/^.*:://;
-        $composite = new Bio::EnsEMBL::Glyph::Composite({
+        $composite = new Sanger::Graphics::Glyph::Composite({
                 'y'            => 0,
 				'x'            => 2,
 				'absolutey'    => 1,
@@ -119,7 +137,7 @@ sub new {
                 'height'       => 8
         });
         
-        my $box_glyph = new Bio::EnsEMBL::Glyph::Rect({
+        my $box_glyph = new Sanger::Graphics::Glyph::Rect({
     	        'x'      	=> 2,
 		    	'y'      	=> 0,
 		    	'width'  	=> 10,
@@ -131,7 +149,7 @@ sub new {
                                ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
                 'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
         });
-        my $horiz_glyph = new Bio::EnsEMBL::Glyph::Text({
+        my $horiz_glyph = new Sanger::Graphics::Glyph::Text({
             'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
             'font'      => 'Small',
             'absolutey' => 1,
@@ -206,7 +224,7 @@ sub new {
     
         if(defined $bgcolour_flag) {
             ########## colour the area behind this strip
-            my $background = new Bio::EnsEMBL::Glyph::Rect({
+            my $background = new Sanger::Graphics::Glyph::Rect({
                 'x'         => 0,
                 'y'         => $gminy,
                 'width'     => $Config->image_width(),
@@ -255,7 +273,7 @@ sub render {
     my ($self, $type) = @_;
     
     ########## build the name/type of render object we want
-    my $renderer_type = qq(Bio::EnsEMBL::Renderer::$type);
+    my $renderer_type = qq(Sanger::Graphics::Renderer::$type);
 
     ########## dynamic require of the right type of renderer
     eval "require $renderer_type";

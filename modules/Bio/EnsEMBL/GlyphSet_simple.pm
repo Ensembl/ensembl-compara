@@ -2,10 +2,10 @@ package Bio::EnsEMBL::GlyphSet_simple;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use  Sanger::Graphics::Bump;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
@@ -13,7 +13,7 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     my $HELP_LINK = $self->check();
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
@@ -41,7 +41,7 @@ sub my_description {
 
 sub features {
     my ($self) = @_;
-    return ();
+    return [];
 } 
 
 sub _init {
@@ -53,6 +53,8 @@ sub _init {
     my $Config          = $self->{'config'};
     my $strand          = $self->strand();
     my $strand_flag     = $Config->get($type, 'str');
+    my $BUMP_WIDTH      = $Config->get($type, 'bump_width');
+       $BUMP_WIDTH      = 1 unless defined $BUMP_WIDTH;
 
 ## If only displaying on one strand skip IF not on right strand....
     return if( $strand_flag eq 'r' && $strand != -1 ||
@@ -94,7 +96,16 @@ sub _init {
     my $flag           = 1;
     my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
     
-    foreach my $f ( $self->features ) {
+   my $previous_end;
+   my ($T,$C,$C1) = 0;
+   my $optimizable = $type =~ /repeat/ && $dep<1 ; #at the moment can only optimize repeats...
+
+    my $features = $self->features; 
+    unless(ref($features)eq'ARRAY') {
+        warn( ref($self), ' features not array ref ',ref($features) );
+	return; 
+   }
+    foreach my $f ( @{$features} ) {
 ## Check strand for display ##
         next if( $strand_flag eq 'b' && $strand != $f->strand );
 ## Check start are not outside VC.... ##
@@ -105,18 +116,22 @@ sub _init {
         my $end   = $f->end();
         next if $end<1;            ## Skip if totally outside VC
         $end   = $vc_length if $end>$vc_length;
-
+        $T++;
+       # next if $optimizable && int($end*$pix_per_bp) == int($previous_end*$pix_per_bp);
+        next if $optimizable && $end-$previous_end < 0.5/$pix_per_bp;
+        $C ++;
+        $previous_end = $end;
         $flag = 0;
         ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f ) if $self->can('colour');
         
         my @tag_glyphs = ();
 
 ## Lets see about placing labels on objects...        
-        my $composite = new Bio::EnsEMBL::Glyph::Composite();
+        my $composite = new Sanger::Graphics::Glyph::Composite();
         my $glyph;
         if($part_to_colour eq 'line') {
         #    print STDERR "PUSHING LINE\n"; 
-            $composite->push( new Bio::EnsEMBL::Glyph::Space({
+            $composite->push( new Sanger::Graphics::Glyph::Space({
                 'x'          => $start,
                 'y'          => 0,
                 'width'      => $end - $start + 1,
@@ -124,7 +139,7 @@ sub _init {
                 "colour"     => $feature_colour,
                 'absolutey'  => 1
             }));
-            $composite->push( new Bio::EnsEMBL::Glyph::Rect({
+            $composite->push( new Sanger::Graphics::Glyph::Rect({
                 'x'          => $start,
                 'y'          => $h/2+1,
                 'width'      => $end - $start + 1,
@@ -133,7 +148,7 @@ sub _init {
                 'absolutey'  => 1
             }));
         } else {
-            $composite->push( new Bio::EnsEMBL::Glyph::Rect({
+            $composite->push( new Sanger::Graphics::Glyph::Rect({
                 'x'          => $start,
                 'y'          => 0,
                 'width'      => $end - $start + 1,
@@ -148,7 +163,7 @@ sub _init {
         if( $self->can('tag')) {
             foreach my $tag ( $self->tag($f) ) {
                 if($tag->{'style'} eq 'left-end' && $start == $f->start) {
-                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                    my $line = new Sanger::Graphics::Glyph::Rect({
                         'x'          => $start,
                         'y'          => 0,
                         'width'      => 0,
@@ -158,7 +173,7 @@ sub _init {
                     });
                     $composite->push($line);
                 } elsif($tag->{'style'} eq 'right-end' && $end == $f->end) {
-                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                    my $line = new Sanger::Graphics::Glyph::Rect({
                         'x'          => $end,
                         'y'          => 0,
                         'width'      => 0,
@@ -170,7 +185,7 @@ sub _init {
                 } elsif($tag->{'style'} eq 'left-triangle') {
                     my $triangle_end =  $start + 3/$pix_per_bp;
                     $triangle_end = $end if( $triangle_end > $end);
-    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+    	            my $triangle = new Sanger::Graphics::Glyph::Poly({
                         'points'    => [ $start, 0,
                                          $start, 3,
                                          $triangle_end, 0  ],
@@ -182,7 +197,7 @@ sub _init {
                     next if($end < $f->end());
                     my $triangle_start =  $end - 4/$pix_per_bp;
                     my $triangle_end   =  $end + 4/$pix_per_bp;
-    	            my $line = new Bio::EnsEMBL::Glyph::Space({
+    	            my $line = new Sanger::Graphics::Glyph::Space({
                         'x'          => $triangle_start,
                         'y'          => $h,
                         'width'      => 8/$pix_per_bp,
@@ -190,7 +205,7 @@ sub _init {
                         "colour"     => $tag->{'colour'},
                         'absolutey'  => 1
                     });
-    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+    	            my $triangle = new Sanger::Graphics::Glyph::Poly({
                         'points'    => [ $triangle_start, $h,
                                          $end,            0,
                                          $triangle_end,   $h  ],
@@ -204,7 +219,7 @@ sub _init {
                     next if( $tag->{'start'} > $vc_length );
                     my $triangle_start =  $tag->{'start'} - 4/$pix_per_bp;
                     my $triangle_end   =  $tag->{'start'} + 4/$pix_per_bp;
-    	            my $line = new Bio::EnsEMBL::Glyph::Space({
+    	            my $line = new Sanger::Graphics::Glyph::Space({
                         'x'          => $triangle_start,
                         'y'          => $h,
                         'width'      => 8/$pix_per_bp,
@@ -212,7 +227,7 @@ sub _init {
                         "colour"     => $tag->{'colour'},
                         'absolutey'  => 1
                     });
-    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+    	            my $triangle = new Sanger::Graphics::Glyph::Poly({
                         'points'    => [ $triangle_start, $h,
                                          $tag->{'start'}, 0,
                                          $triangle_end,   $h  ],
@@ -225,7 +240,7 @@ sub _init {
                     next if($start > $f->start());
                     my $triangle_start =  $start - 4/$pix_per_bp;
                     my $triangle_end   =  $start + 4/$pix_per_bp;
-    	            my $line = new Bio::EnsEMBL::Glyph::Space({
+    	            my $line = new Sanger::Graphics::Glyph::Space({
                         'x'          => $triangle_start,
                         'y'          => $h,
                         'width'      => 8/$pix_per_bp,
@@ -233,7 +248,7 @@ sub _init {
                         "colour"     => $tag->{'colour'},
                         'absolutey'  => 1
                     });
-    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+    	            my $triangle = new Sanger::Graphics::Glyph::Poly({
                         'points'    => [ $triangle_start, $h,
                                          $start, 0,
                                          $triangle_end, $h  ],
@@ -245,7 +260,7 @@ sub _init {
                 } elsif($tag->{'style'} eq 'right-triangle') {
                     my $triangle_start =  $end - 3/$pix_per_bp;
                     $triangle_start = $start if( $triangle_start < $start);
-    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+    	            my $triangle = new Sanger::Graphics::Glyph::Poly({
                         'points'    => [ $end, 0,
                                          $end, 3,
                                          $triangle_start, 0  ],
@@ -258,7 +273,7 @@ sub _init {
                     my $underline_end   = $tag->{'end'}   || $end ;
                     $underline_start = 1          if $underline_start < 1;
                     $underline_end   = $vc_length if $underline_end   > $vc_length;
-                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                    my $line = new Sanger::Graphics::Glyph::Rect({
                         'x'          => $underline_start,
                         'y'          => $h,
                         'width'      => $underline_end - $underline_start + 1,
@@ -278,7 +293,7 @@ sub _init {
             if( $style eq 'overlaid' ) {
                 if($bp_textwidth < ($end - $start)){
                    # print STDERR "X: $label - $label_colour\n";
-        		    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        		    my $tglyph = new Sanger::Graphics::Glyph::Text({
         		        'x'          => int(( $end + $start - $bp_textwidth)/2),
             		    'y'          => 1,
             		    'width'      => $bp_textwidth,
@@ -292,7 +307,7 @@ sub _init {
                 } 
             } else {
                 $rowheight += $th;
-                my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+                my $tglyph = new Sanger::Graphics::Glyph::Text({
         		        'x'          => $start,
             		    'y'          => -2-$th,
             		    'width'      => $bp_textwidth,
@@ -302,7 +317,7 @@ sub _init {
             		    'text'       => $label,
             		    'absolutey'  => 1,
                 });
-                $composite = new Bio::EnsEMBL::Glyph::Composite();
+                $composite = new Sanger::Graphics::Glyph::Composite();
                 $composite->push($glyph,$tglyph);
             }
 	    }
@@ -317,9 +332,9 @@ sub _init {
         if ($dep > 0){ # we bump
             my $bump_start = int($composite->x() * $pix_per_bp);
             $bump_start    = 0 if $bump_start < 0;
-            my $bump_end = $bump_start + 1 + ($composite->width() * $pix_per_bp);
+            my $bump_end = $bump_start + $BUMP_WIDTH + ($composite->width() * $pix_per_bp);
             $bump_end    = $bitmap_length if $bump_end > $bitmap_length;
-            my $row = &Bump::bump_row(
+            my $row = & Sanger::Graphics::Bump::bump_row(
                 $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
             );
             next if $row > $dep;
@@ -328,11 +343,12 @@ sub _init {
                 $_->y_transform( - $row * $rowheight * $strand );
             }
         }
+        $C1++;
         $self->push($composite);
         $self->push(@tag_glyphs);
 ## Are we going to highlight this item...
         if(exists $highlights{$f->id()}) {
-            my $high = new Bio::EnsEMBL::Glyph::Rect({
+            my $high = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $composite->x() - 1/$pix_per_bp,
                 'y'         => $composite->y() - 1,
                 'width'     => $composite->width() + 2/$pix_per_bp,
@@ -343,6 +359,7 @@ sub _init {
             $self->unshift($high);
         }
     }
+    warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
 ## No features show "empty track line" if option set....  ##
     $self->errorTrack( "No ".$self->my_label." in this region" )
         if( $Config->get('_settings','opt_empty_tracks')==1 && $flag );

@@ -8,17 +8,17 @@ package Bio::EnsEMBL::GlyphSet::stranded_gene_label;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use  Sanger::Graphics::Bump;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => 'Genes',
         'font'      => 'Small',
         'absolutey' => 1,
@@ -78,12 +78,12 @@ sub _init {
         $colour   = $genetype eq 'pseudo' ? $pseudo_col : $ext_col;
     }
 
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
+	my $Composite = new Sanger::Graphics::Glyph::Composite({});
 	
 	######################
 	# Make and bump label
 	######################
-	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	my $tglyph = new Sanger::Graphics::Glyph::Text({
 	    'x'	        => $start + $font_w_bp,
 	    'y'	        => $y,
 	    'height'    => $Config->texthelper->height($fontname),
@@ -103,7 +103,7 @@ sub _init {
 	my $taggy;
 
 	if($self->strand() == -1) {
-	    $taggy = new Bio::EnsEMBL::Glyph::Rect({
+	    $taggy = new Sanger::Graphics::Glyph::Rect({
 		'x'            => $start,
 		'y'	       => $tglyph->y(),
 		'width'        => 1,
@@ -112,7 +112,7 @@ sub _init {
 		'absolutey'    => 1,
 	    });
 	} elsif($self->strand() == 1) {
-	    $taggy = new Bio::EnsEMBL::Glyph::Rect({
+	    $taggy = new Sanger::Graphics::Glyph::Rect({
 		'x'	       => $start,
 		'y'	       => $tglyph->y() + 3,
 		'width'        => 1,
@@ -123,7 +123,7 @@ sub _init {
 	}
 	
 	$Composite->push($taggy);
-	$taggy = new Bio::EnsEMBL::Glyph::Rect({
+	$taggy = new Sanger::Graphics::Glyph::Rect({
 	    'x'	           => $start,
 	    'y'	           => $tglyph->y - 1 + 4,
 	    'width'        => $font_w_bp * 0.5,
@@ -144,7 +144,7 @@ sub _init {
         my $bump_end = $bump_start + int($Composite->width * $pix_per_bp);
         if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
 
-        my $row = &Bump::bump_row(
+        my $row = & Sanger::Graphics::Bump::bump_row(
             $bump_start,
             $bump_end,
             $bitmap_length,

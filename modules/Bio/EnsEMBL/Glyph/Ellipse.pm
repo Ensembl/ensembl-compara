@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Glyph::Ellipse;
+package Sanger::Graphics::Glyph::Ellipse;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::Glyph;

@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Glyph::Poly;
+package Sanger::Graphics::Glyph::Poly;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::Glyph;

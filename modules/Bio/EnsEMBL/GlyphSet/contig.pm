@@ -3,13 +3,13 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Space;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Space;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
 use SiteDefs;
-use ColourMap;
+use Sanger::Graphics::ColourMap;
 
 use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
 
@@ -17,7 +17,7 @@ use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	    'text'      => 'DNA(contigs)',
     	'font'      => 'Small',
 	    'absolutey' => 1,
@@ -48,7 +48,7 @@ sub _init {
   
   my $ystart = 3;
   
-  my $gline = new Bio::EnsEMBL::Glyph::Rect({
+  my $gline = new Sanger::Graphics::Glyph::Rect({
 	'x'         => 0,
         'y'         => $ystart + 7,
         'width'     => $length,
@@ -148,7 +148,7 @@ sub _init_assembled_contig {
   my $FLAG = 0;
   
   foreach( sort { $big_contigs{$a}->[0] <=> $big_contigs{$b}->[0] } keys %contigs ) {
-    my $composite = new Bio::EnsEMBL::Glyph::Composite({
+    my $composite = new Sanger::Graphics::Glyph::Composite({
 				'y'            => $ystart-3,
 				'x'            => $big_contigs{$_}->[0],
 				'absolutey'    => 1
@@ -166,7 +166,7 @@ sub _init_assembled_contig {
     my $glyph;
 
     if($FLAG) {
-      $glyph = new Bio::EnsEMBL::Glyph::Rect({
+      $glyph = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $big_contigs{$_}->[0]-1,
                 'y'         => $ystart-3,
                 'width'     => 1,
@@ -181,7 +181,7 @@ sub _init_assembled_contig {
     $col = $colours{$i};
     $i      = !$i;
     foreach my $Q ( @{$contigs{$_}} ) {
-      my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+      my $glyph = new Sanger::Graphics::Glyph::Rect({
                     'x'         => $Q->[0],
                     'y'         => $ystart+2,
                     'width'     => $Q->[1]-$Q->[0],
@@ -202,7 +202,7 @@ sub _init_assembled_contig {
 ######
 # Draw the scale and ticks and red box etc..
 #
-  my $gline = new Bio::EnsEMBL::Glyph::Rect({
+  my $gline = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart,
         'width'     => $im_width,
@@ -213,7 +213,7 @@ sub _init_assembled_contig {
     });
   $self->unshift($gline);
     
-  $gline = new Bio::EnsEMBL::Glyph::Rect({
+  $gline = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart+15,
         'width'     => $im_width,
@@ -235,7 +235,7 @@ sub _init_assembled_contig {
     my $pos = $i * $interval;
    
     # the forward strand ticks
-    $tick = new Bio::EnsEMBL::Glyph::Rect({
+    $tick = new Sanger::Graphics::Glyph::Rect({
             'x'         => 0 + $pos,
             'y'         => $ystart-4,
             'width'     => 0,
@@ -247,7 +247,7 @@ sub _init_assembled_contig {
     $self->unshift($tick);
     
     # the reverse strand ticks
-    $tick = new Bio::EnsEMBL::Glyph::Rect({
+    $tick = new Sanger::Graphics::Glyph::Rect({
             'x'         => $im_width - $pos,
             'y'         => $ystart+16,
             'width'     => 0,
@@ -260,7 +260,7 @@ sub _init_assembled_contig {
   }
     
   # The end ticks
-  $tick = new Bio::EnsEMBL::Glyph::Rect({
+  $tick = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart-2,
         'width'     => 0,
@@ -272,7 +272,7 @@ sub _init_assembled_contig {
   $self->unshift($tick);
    
   # the reverse strand ticks
-  $tick = new Bio::EnsEMBL::Glyph::Rect({
+  $tick = new Sanger::Graphics::Glyph::Rect({
         'x'         => $im_width - 1,
         'y'         => $ystart+16,
         'width'     => 0,
@@ -289,7 +289,7 @@ sub _init_assembled_contig {
     if ($Config->get('_settings','draw_red_box') eq 'yes') { 
       # only draw focus box on the correct display...
       my $LEFT_HS = $clone_based ? 0 : $global_start -1;
-      my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
+      my $boxglyph = new Sanger::Graphics::Glyph::Rect({
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 4 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
@@ -300,7 +300,7 @@ sub _init_assembled_contig {
       
       $self->unshift($boxglyph);
 
-      my $boxglyph2 = new Bio::EnsEMBL::Glyph::Rect({
+      my $boxglyph2 = new Sanger::Graphics::Glyph::Rect({
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 3 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
@@ -319,7 +319,7 @@ sub _init_assembled_contig {
       my $pos = $i * $interval;
       
       # the forward strand ticks
-      $tick = new Bio::EnsEMBL::Glyph::Space({
+      $tick = new Sanger::Graphics::Glyph::Space({
                 'x'         => 0 + $pos,
                 'y'         => $ystart-4,
                 'width'     => $interval,
@@ -336,7 +336,7 @@ sub _init_assembled_contig {
       $self->unshift($tick);
             
       # the reverse strand ticks
-      $tick = new Bio::EnsEMBL::Glyph::Space({
+      $tick = new Sanger::Graphics::Glyph::Space({
                 'x'         => $im_width - $pos,
                 'y'         => $ystart+16,
                 'width'     => $interval,
@@ -419,7 +419,7 @@ sub _init_non_assembled_contig {
     $rstart     = 1 if $rstart < 1;
     $rend       = $length if $rend > $length;
             
-    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+    my $glyph = new Sanger::Graphics::Glyph::Rect({
 		'x'         => $rstart,
 		'y'         => $ystart+2,
 		'width'     => $rend - $rstart+1,
@@ -451,7 +451,7 @@ sub _init_non_assembled_contig {
       my $pointer = $strand > 0 ? ">" : "<";
       $bp_textwidth = $w * length($pointer) * 1.2; # add 20% for scaling text
       unless($bp_textwidth > ($rend - $rstart)){
-	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	my $tglyph = new Sanger::Graphics::Glyph::Text({
                      'x'          => int( ($rend + $rstart - $bp_textwidth)/2),
                      'y'          => $ystart+4,
                      'font'       => 'Tiny',
@@ -462,7 +462,7 @@ sub _init_non_assembled_contig {
 	$self->push($tglyph);
       }
     } else {
-      my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+      my $tglyph = new Sanger::Graphics::Glyph::Text({
                     'x'          => int( ($rend + $rstart - $bp_textwidth)/2),
                     'y'          => $ystart+5,
                     'font'       => 'Tiny',
@@ -477,7 +477,7 @@ sub _init_non_assembled_contig {
 ######
 # Draw the scale, ticks, red box etc
 #
-  my $gline = new Bio::EnsEMBL::Glyph::Rect({
+  my $gline = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart,
         'width'     => $im_width,
@@ -488,7 +488,7 @@ sub _init_non_assembled_contig {
     });
   $self->unshift($gline);
     
-  $gline = new Bio::EnsEMBL::Glyph::Rect({
+  $gline = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart+15,
         'width'     => $im_width,
@@ -510,7 +510,7 @@ sub _init_non_assembled_contig {
     my $pos = $i * $interval;
    
     # the forward strand ticks
-    $tick = new Bio::EnsEMBL::Glyph::Rect({
+    $tick = new Sanger::Graphics::Glyph::Rect({
             'x'         => 0 + $pos,
             'y'         => $ystart-4,
             'width'     => 0,
@@ -522,7 +522,7 @@ sub _init_non_assembled_contig {
     $self->unshift($tick);
     
     # the reverse strand ticks
-    $tick = new Bio::EnsEMBL::Glyph::Rect({
+    $tick = new Sanger::Graphics::Glyph::Rect({
             'x'         => $im_width - $pos,
             'y'         => $ystart+16,
             'width'     => 0,
@@ -535,7 +535,7 @@ sub _init_non_assembled_contig {
   }
     
   # The end ticks
-  $tick = new Bio::EnsEMBL::Glyph::Rect({
+  $tick = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart-2,
         'width'     => 0,
@@ -547,7 +547,7 @@ sub _init_non_assembled_contig {
   $self->unshift($tick);
    
   # the reverse strand ticks
-  $tick = new Bio::EnsEMBL::Glyph::Rect({
+  $tick = new Sanger::Graphics::Glyph::Rect({
         'x'         => $im_width - 1,
         'y'         => $ystart+16,
         'width'     => 0,
@@ -564,7 +564,7 @@ sub _init_non_assembled_contig {
     if ($Config->get('_settings','draw_red_box') eq 'yes') { 
       # only draw focus box on the correct display...
       my $LEFT_HS = $clone_based ? 0 : $global_start -1;
-      my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
+      my $boxglyph = new Sanger::Graphics::Glyph::Rect({
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 4 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
@@ -575,7 +575,7 @@ sub _init_non_assembled_contig {
       
       $self->unshift($boxglyph);
 
-      my $boxglyph2 = new Bio::EnsEMBL::Glyph::Rect({
+      my $boxglyph2 = new Sanger::Graphics::Glyph::Rect({
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 3 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
@@ -594,7 +594,7 @@ sub _init_non_assembled_contig {
       my $pos = $i * $interval;
       
       # the forward strand ticks
-      $tick = new Bio::EnsEMBL::Glyph::Space({
+      $tick = new Sanger::Graphics::Glyph::Space({
                 'x'         => 0 + $pos,
                 'y'         => $ystart-4,
                 'width'     => $interval,
@@ -611,7 +611,7 @@ sub _init_non_assembled_contig {
       $self->unshift($tick);
             
       # the reverse strand ticks
-      $tick = new Bio::EnsEMBL::Glyph::Space({
+      $tick = new Sanger::Graphics::Glyph::Space({
                 'x'         => $im_width - $pos,
                 'y'         => $ystart+16,
                 'width'     => $interval,

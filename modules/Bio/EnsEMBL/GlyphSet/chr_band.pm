@@ -3,8 +3,8 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
 use SiteDefs;
 
 sub init_label {
@@ -15,7 +15,7 @@ sub init_label {
         $chr = $self->{'container'}->_chr_name();
     };
     $chr = $@ ? "Chromosome" : "Chr $chr";
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
     	'text'      => "$chr band",
     	'font'      => 'Small',
     	'absolutey' => 1,
@@ -73,7 +73,7 @@ sub _init {
 	
         my $min_start = $vc_band_start if(!defined $min_start || $min_start > $vc_band_start); 
         my $max_end   = $vc_band_end   if(!defined $max_end   || $max_end   < $vc_band_end); 
-    	my $gband = new Bio::EnsEMBL::Glyph::Rect({
+    	my $gband = new Sanger::Graphics::Glyph::Rect({
 	    'x'      => $vc_band_start,
 	    'y'      => 0,
 	    'width'  => $vc_band_end - $vc_band_start,
@@ -94,7 +94,7 @@ sub _init {
 	my $bp_textwidth = $w * length($bandname);
 	# only add the lable if the box is big enough to hold it...
 	unless ($bp_textwidth > ($vc_band_end - $vc_band_start) || $stain eq "tip"|| $stain eq "acen"){
-	    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	    my $tglyph = new Sanger::Graphics::Glyph::Text({
 		'x'      => $vc_band_start + int(($vc_band_end - $vc_band_start)/2 - ($bp_textwidth)/2),
 		'y'      => 2,
 		'font'   => 'Tiny',
@@ -105,7 +105,7 @@ sub _init {
 	    $self->push($tglyph);
 	}
 	
-    	my $gband = new Bio::EnsEMBL::Glyph::Rect({
+    	my $gband = new Sanger::Graphics::Glyph::Rect({
 	    'x'      => $min_start,
 	    'y'      => 0,
 	    'width'  => $max_end - $min_start,

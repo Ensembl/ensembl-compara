@@ -3,13 +3,13 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => 'Peptide',
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -26,7 +26,7 @@ sub _init {
     my $h       = 4;
     my $colour  = $Config->get('Pprotein','col');
 
-    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+    my $rect = new Sanger::Graphics::Glyph::Rect({
 	'x'        => 0,
 	'y'        => $y,
 	'width'    => $protein->length(),

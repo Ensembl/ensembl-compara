@@ -3,16 +3,16 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use  Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => 'Genscan',
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -61,7 +61,7 @@ sub _init {
 	@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
 #	print STDERR "GENSCAN: seq_feature id: $i \n";
 	my $has_origin = undef;
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
+	my $Composite = new Sanger::Graphics::Glyph::Composite({});
 
 	foreach my $f (@{$id{$i}}){
 	    
@@ -76,7 +76,7 @@ sub _init {
 		},
 	    }
 	    
-	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+	    my $glyph = new Sanger::Graphics::Glyph::Rect({
 		'x'      	=> $f->start(),
 		'y'      	=> 0,
 		'width'  	=> $f->length(),
@@ -97,7 +97,7 @@ sub _init {
 	    my $fstart  = $g[$i-1]->{'_fstart'};
 	    my $flength = $g[$i-1]->{'_flength'};
 	    
-	    my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
+	    my $intglyph = new Sanger::Graphics::Glyph::Intron({
 		'x'      	=> $fstart + $flength,
 		'y'      	=> 0,
 		'width'  	=> $g[$i]->{'_fstart'} - ($fstart + $flength),
@@ -115,7 +115,7 @@ sub _init {
 	    
 	    my $bump_end = $bump_start + ($Composite->width() * $pix_per_bp);
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-	    my $row = &Bump::bump_row(
+	    my $row = & Sanger::Graphics::Bump::bump_row(
 				      $bump_start,
 				      $bump_end,
 				      $bitmap_length,

@@ -3,17 +3,17 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
 use ExtURL;
 
-use Bump;
+use  Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => 'Prints',
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -48,7 +48,7 @@ sub _init {
 	my @row = @{$hash{$key}};
 	my $desc = $row[0]->idesc();
 		
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x'     => $row[0]->feature1->start(),
 	    'y'     => $y,
 	    'zmenu' => {
@@ -67,7 +67,7 @@ sub _init {
 	    $maxx  = $pr->feature1->end() if ($pr->feature1->end() > $maxx || !defined($maxx));
 	    my $id = $pr->feature2->seqname();
 	    
-	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
 		'y'        => $y,
 		'width'    => $w,
@@ -81,7 +81,7 @@ sub _init {
 	#########
 	# add a domain linker
 	#
-	my $rect = new Bio::EnsEMBL::Glyph::Rect({
+	my $rect = new Sanger::Graphics::Glyph::Rect({
 	    'x'        => $minx,
 	    'y'        => $y + 2,
 	    'width'    => $maxx - $minx,
@@ -95,7 +95,7 @@ sub _init {
 	# add a label
 	#
 	my $desc = $prsave->idesc();
-	my $text = new Bio::EnsEMBL::Glyph::Text({
+	my $text = new Sanger::Graphics::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->feature1->start(),
@@ -112,7 +112,7 @@ sub _init {
 	    
             my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            my $row = &Bump::bump_row(
+            my $row = & Sanger::Graphics::Bump::bump_row(
 				      $bump_start,
 				      $bump_end,
 				      $bitmap_length,

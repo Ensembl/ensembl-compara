@@ -3,22 +3,22 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Line;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Line;
 use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
     my $Config = $self->{'config'};	
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 		'text'      => '% GC',
 		'font'      => 'Small',
 		'colour'	=> $Config->get('Vpercents','col_gc'),
 		'absolutey' => 1,
     });
-    my $label2 = new Bio::EnsEMBL::Glyph::Text({
+    my $label2 = new Sanger::Graphics::Glyph::Text({
 		'text'      => 'Repeats',
 		'font'      => 'Small',
 		'colour'	=> $Config->get('Vpercents','col_repeat'),		
@@ -58,7 +58,7 @@ sub _init {
 	my $old_x = undef;
 	my $old_y = undef;
     foreach (@repeats) {
-	    my $g_x = new Bio::EnsEMBL::Glyph::Space({
+	    my $g_x = new Sanger::Graphics::Glyph::Space({
 			'x'      => $_->{'chromosomestart'},
 			'y'      => 0,
 			'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},
@@ -66,7 +66,7 @@ sub _init {
 			'href'   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
 		});
 		$self->push($g_x);
-	    $g_x = new Bio::EnsEMBL::Glyph::Line({
+	    $g_x = new Sanger::Graphics::Glyph::Line({
 			'x'      => ($_->{'chromosomeend'}+$_->{'chromosomestart'})/2,
 			'Y'      => 0,
 			'width'  => 0,
@@ -80,7 +80,7 @@ sub _init {
 		my $new_y = $gcvalue->{'scaledvalue'};
 		if(defined $old_x) {
 
-		    my $g_x = new Bio::EnsEMBL::Glyph::Line({
+		    my $g_x = new Sanger::Graphics::Glyph::Line({
 				'x'      => $old_x,
 				'y'      => $old_y,
 				'width'  => $new_x-$old_x,

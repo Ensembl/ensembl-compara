@@ -3,22 +3,22 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Line;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Line;
 use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
     my $Config = $self->{'config'};	
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 		'text'      => 'Known Genes',
 		'font'      => 'Small',
 		'colour'	=> $Config->get('Vgenes','col_known'),
 		'absolutey' => 1,
     });
-    my $label2 = new Bio::EnsEMBL::Glyph::Text({
+    my $label2 = new Sanger::Graphics::Glyph::Text({
 		'text'      => 'Genes',
 		'font'      => 'Small',
 		'colour'	=> $Config->get('Vgenes','col_genes'),		
@@ -55,7 +55,7 @@ sub _init {
 
     foreach (@genes){
 		my $known_gene = shift @known_genes;	
-	    my $g_x = new Bio::EnsEMBL::Glyph::Rect({
+	    my $g_x = new Sanger::Graphics::Glyph::Rect({
 			'x'      => $known_gene->{'chromosomestart'},
 			'y'      => 0,
 			'width'  => $known_gene->{'chromosomeend'}-$_->{'chromosomestart'},
@@ -64,7 +64,7 @@ sub _init {
 			'absolutey' => 1,
 		});
 	    $self->push($g_x);
-		$g_x = new Bio::EnsEMBL::Glyph::Rect({
+		$g_x = new Sanger::Graphics::Glyph::Rect({
 			'x'      => $_->{'chromosomestart'},
 			'y'      => 0,
 			'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},

@@ -3,13 +3,13 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 		'text'      => "Start/Stop",
 		'font'      => 'Small',
 		'absolutey' => 1,
@@ -107,7 +107,7 @@ sub _init {
 	foreach my $phase (0..2){
 		# Glyphs are 3 basepairs wide 
 		foreach(@{$data->[ $offset + $phase * 4 ]}) { # start codon info
-			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+			my $glyph = new Sanger::Graphics::Glyph::Rect({
     	        'x'      	=> $_,
 		    	'y'      	=> $base + $phase * $fullheight * $strand,
 		    	'width'  	=> 3,
@@ -118,7 +118,7 @@ sub _init {
 			$self->push($glyph);
 		}
 		foreach(@{$data->[ $offset + $phase * 4 + 1]}) { # stop codon info
-			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+			my $glyph = new Sanger::Graphics::Glyph::Rect({
     	        'x'      	=> $_,
 		    	'y'      	=> $base + ($phase * $fullheight + $height) * $strand,
 		    	'width'  	=> 3,

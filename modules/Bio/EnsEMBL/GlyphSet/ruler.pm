@@ -3,15 +3,15 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Poly;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Poly;
 
 sub init_label {
     my ($self) = @_;
 	
     return if defined($self->{'config'}->{'_no_label'});
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => 'Length',
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -45,7 +45,7 @@ sub _init {
     my $bp_textwidth = $fontwidth * length($text);
     my $im_width_bp  = $Config->image_width();
     
-    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    my $tglyph = new Sanger::Graphics::Glyph::Text({
 	'x'         => int($im_width_bp/2) - int($bp_textwidth/2),
 	'y'         => 2,
 	'height'    => $fontheight,
@@ -59,7 +59,7 @@ sub _init {
     $bp_textwidth = $fontwidth * (length($text)+3);
     
     
-    my $lglyph = new Bio::EnsEMBL::Glyph::Rect({
+    my $lglyph = new Sanger::Graphics::Glyph::Rect({
 	'x'         => 0,
 	'y'         => 6,
 	'width'     => int($im_width_bp/2) - int($bp_textwidth/2),
@@ -70,7 +70,7 @@ sub _init {
     });
     $self->push($lglyph);
     
-    my $rglyph = new Bio::EnsEMBL::Glyph::Rect({
+    my $rglyph = new Sanger::Graphics::Glyph::Rect({
 	'x'         => int($im_width_bp/2) + int($bp_textwidth/2),
 	'y'         => 6,
 	'width'     => $im_width_bp - (int($im_width_bp/2) + int($bp_textwidth/2)),
@@ -84,7 +84,7 @@ sub _init {
     # to get aroung px->postion problems we make each arrow head
     # exactly 2 text chars long
     # add the left arrow head....
-    my $gtriagl = new Bio::EnsEMBL::Glyph::Poly({
+    my $gtriagl = new Sanger::Graphics::Glyph::Poly({
 	'points'    => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
 	'colour'    => $feature_colour,
 	'absolutex' => 1,
@@ -93,7 +93,7 @@ sub _init {
     $self->push($gtriagl);
     
     # add the right arrow head....
-    my $gtriagr = new Bio::EnsEMBL::Glyph::Poly({
+    my $gtriagr = new Sanger::Graphics::Glyph::Poly({
 	'points'    => [$im_width_bp,6, ($im_width_bp-$fontwidth*2),3, ($im_width_bp-$fontwidth*2),9],
 	'colour'    => $feature_colour,
 	'absolutex' => 1,

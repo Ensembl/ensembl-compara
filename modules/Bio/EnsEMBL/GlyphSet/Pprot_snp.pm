@@ -3,14 +3,14 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
 
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => 'snps',
         'font'      => 'Small',
         'absolutey' => 1,
@@ -34,7 +34,7 @@ sub _init {
     my @snp_array;
 
     if (@snp_array) {
-	my $composite = new Bio::EnsEMBL::Glyph::Composite({
+	my $composite = new Sanger::Graphics::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
 		'caption'  => $key,
@@ -50,7 +50,7 @@ sub _init {
 	    my $end    = $int->feature2->end();
 	    my $length = $end - $start;
 	    
-	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
 		'y'        => $y,
 		'width'    => $w,

@@ -3,17 +3,17 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
 use ExtURL;
 
-use Bump;
+use  Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => '',
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -161,7 +161,7 @@ sub create_haplotype_block {
 
 
     # draw the SNP ID column label
-    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    my $tglyph = new Sanger::Graphics::Glyph::Text({
         'x'          => $xstart,
         'y'          => $global_ystart - 30 + 1,
         'font'       => 'Small',
@@ -172,7 +172,7 @@ sub create_haplotype_block {
     });
     $self->push($tglyph);
     foreach my $s ( @{$hap->snps()} ){
-        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        my $tglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => $xstart,
             'y'          => $ystart,
             'font'       => 'Small',
@@ -243,7 +243,7 @@ sub create_haplotype_block {
         foreach my $key (keys %samples){
             my $i = 0;
             my @sample = split('',$samples{$key});
-    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    my $tglyph = new Sanger::Graphics::Glyph::Text({
         'x'          => $xstart + 5,
         'y'          => $global_ystart - 30 + 1,
         'font'       => 'Small',
@@ -276,7 +276,7 @@ sub create_haplotype_block {
     }
 
     # draw the SNP ID column label
-    #my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    #my $tglyph = new Sanger::Graphics::Glyph::Text({
     #    'x'          => $xstart+7,
     #    'y'          => $global_ystart - 30 + 1,
     #    'font'       => 'Small',
@@ -288,7 +288,7 @@ sub create_haplotype_block {
     #$self->push($tglyph);
     
     # draw the SNP position column label
-    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+    my $tglyph = new Sanger::Graphics::Glyph::Text({
         'x'          => $xstart+10,
         'y'          => $global_ystart - 30 + 1,
         'font'       => 'Small',
@@ -303,7 +303,7 @@ sub create_haplotype_block {
     foreach my $s ( @{$hap->snps()} ){
         my $snp_info = $hap->snp_info($s);
         my $pos =  $snp_info->{'position'};
-        #my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        #my $tglyph = new Sanger::Graphics::Glyph::Text({
         #    'x'          => $xstart+7,
         #    'y'          => $ystart,
         #    'font'       => 'Small',
@@ -313,7 +313,7 @@ sub create_haplotype_block {
         #    'absolutey'  => 1,
         #});
 
-        my $pglyph = new Bio::EnsEMBL::Glyph::Text({
+        my $pglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => $xstart+10,
             'y'          => $ystart,
             'font'       => 'Small',
@@ -365,7 +365,7 @@ sub draw_labelled_snp_block {
     if (uc($label) =~/[N|\?]/ && $type ne "cons"){
         return();
     } else {
-        my $block = new Bio::EnsEMBL::Glyph::Rect({
+        my $block = new Sanger::Graphics::Glyph::Rect({
             'x'         => $x,
             'y'         => $y,
             'width'     => 16,
@@ -376,7 +376,7 @@ sub draw_labelled_snp_block {
             'absolutex' => 1,
         });
 
-        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        my $tglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => $x+7,
             'y'          => $y+4,
             'font'       => 'Tiny',
@@ -420,7 +420,7 @@ sub draw_unlabelled_snp_block {
     if (uc($label) =~/[N|\?]/ && $type ne "cons"){
         return();
     } else {
-        my $block = new Bio::EnsEMBL::Glyph::Rect({
+        my $block = new Sanger::Graphics::Glyph::Rect({
             'x'         => $x,
             'y'         => $y,
             'width'     => 8,

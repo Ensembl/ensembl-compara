@@ -4,11 +4,12 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Line;
-use Bio::EnsEMBL::Glyph::Space;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use Sanger::Graphics::Glyph::Line;
+use Sanger::Graphics::Glyph::Space;
 use SiteDefs;
 
 sub init_label {
@@ -17,7 +18,7 @@ sub init_label {
     my $chr = $self->{'container'}->{'chr'} || $self->{'extras'}->{'chr'};
     $chr = uc($chr);
     $chr = "Chromosome $chr" if( $self->{'config'}->{'_label'} eq 'above' );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => $chr,
         'font'      => 'Small',
         'absolutey' => 1,
@@ -82,7 +83,7 @@ sub _init {
     if($padding) {
     # make sure that there is a blank image behind the chromosome so that the
     # glyhset doesn't get "horizontally" squashed.
-        my $gpadding = new Bio::EnsEMBL::Glyph::Space({
+        my $gpadding = new Sanger::Graphics::Glyph::Space({
             'x'         => 0,
             'y'         => $h_offset - $padding,
             'width'     => 10000,
@@ -104,7 +105,7 @@ sub _init {
         if ($stain eq "acen"){
             my $gband;
             if ($done_1_acen){
-                $gband = new Bio::EnsEMBL::Glyph::Poly({
+                $gband = new Sanger::Graphics::Glyph::Poly({
                     'points'       => [ 
                                         $vc_band_start,$h_offset + $h_wid, 
                                         $vc_band_end,$h_offset,
@@ -115,7 +116,7 @@ sub _init {
                     'href'         => $HREF
                 });
             } else {
-                $gband = new Bio::EnsEMBL::Glyph::Poly({
+                $gband = new Sanger::Graphics::Glyph::Poly({
                     'points'       => [ 
                                         $vc_band_start,$h_offset, 
                                         $vc_band_end,$h_offset + $h_wid,
@@ -129,7 +130,7 @@ sub _init {
             }
             push @decorations, $gband;
         } elsif ($stain eq "stalk"){
-            my $gband = new Bio::EnsEMBL::Glyph::Poly({
+            my $gband = new Sanger::Graphics::Glyph::Poly({
                 'points'           => [
                                         $vc_band_start,$h_offset, 
                                         $vc_band_end,$h_offset + $wid,
@@ -141,7 +142,7 @@ sub _init {
                 'href'             => $HREF
             });
             push @decorations, $gband;
-            $gband = new Bio::EnsEMBL::Glyph::Rect({
+            $gband = new Sanger::Graphics::Glyph::Rect({
                 'x'                => $vc_band_start,
                 'y'                => $h_offset+ int($wid/4),
                 'width'            => $vc_band_end - $vc_band_start,
@@ -153,7 +154,7 @@ sub _init {
             push @decorations, $gband;
         } else {
             $stain = 'gneg' if($self->{'config'}->{'_hide_bands'} eq 'yes' );
-            my $gband = new Bio::EnsEMBL::Glyph::Rect({
+            my $gband = new Sanger::Graphics::Glyph::Rect({
                 'x'                => $vc_band_start,
                 'y'                => $h_offset,
                 'width'            => $vc_band_end - $vc_band_start,
@@ -163,7 +164,7 @@ sub _init {
                 'href'             => $HREF
             });
             $self->push($gband);
-            $gband = new Bio::EnsEMBL::Glyph::Line({
+            $gband = new Sanger::Graphics::Glyph::Line({
                 'x'                => $vc_band_start,
                 'y'                => $h_offset,
                 'width'            => $vc_band_end - $vc_band_start,
@@ -172,7 +173,7 @@ sub _init {
                 'absolutey'        => 1,
             });
             $self->push($gband);
-            $gband = new Bio::EnsEMBL::Glyph::Line({
+            $gband = new Sanger::Graphics::Glyph::Line({
                 'x'                => $vc_band_start,
                 'y'                => $h_offset+$wid,
                 'width'            => $vc_band_end - $vc_band_start,
@@ -191,7 +192,7 @@ sub _init {
                     ($self->{'config'}->{'_band_labels'} ne 'on') ||
                     ($h > ($vc_band_end - $vc_band_start))
         ){
-            my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+            my $tglyph = new Sanger::Graphics::Glyph::Text({
                 'x'                => ($vc_band_end + $vc_band_start - $h)/2,
                 'y'                => $h_offset+$wid+4,
                 'width'            => $h,
@@ -225,7 +226,7 @@ sub _init {
         foreach my $I ( 0..$#lines ) {
             my ( $bg_x, $black_x ) = @{$lines[$I]};
             my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx +(1-$end)*10;
-            my $glyph = new Bio::EnsEMBL::Glyph::Line({
+            my $glyph = new Sanger::Graphics::Glyph::Line({
                 'x'         => $xx,
                 'y'         => $h_offset,
                 'width'     => 0,
@@ -234,7 +235,7 @@ sub _init {
                 'absolutey' => 1,
             });
             $self->push($glyph);
-            $glyph = new Bio::EnsEMBL::Glyph::Line({
+            $glyph = new Sanger::Graphics::Glyph::Line({
                 'x'         => $xx,
                 'y'         => $h_offset + 1 + $wid * (1-$bg_x/24),
                 'width'     => 0,
@@ -243,7 +244,7 @@ sub _init {
                 'absolutey' => 1,
             }) ;
             $self->push($glyph);
-            $glyph = new Bio::EnsEMBL::Glyph::Line({
+            $glyph = new Sanger::Graphics::Glyph::Line({
                 'x'         => $xx,
                 'y'         => $h_offset + $wid * $bg_x/24,
                 'width'     => 0,
@@ -252,7 +253,7 @@ sub _init {
                 'absolutey' => 1,
             });
             $self->push($glyph);
-            $glyph = new Bio::EnsEMBL::Glyph::Line({
+            $glyph = new Sanger::Graphics::Glyph::Line({
                 'x'         => $xx,
                 'y'         => $h_offset + 1 + $wid * (1-$bg_x/24-$black_x/24),
                 'width'     => 0,
@@ -270,13 +271,13 @@ sub _init {
     if(defined $self->{'highlights'}) {
 
     foreach my $highlight_set (reverse @{$self->{'highlights'}}) {
-		my $highlight_style = $highlight_set->{'style'};
+	my $highlight_style = $highlight_set->{'style'};
         my $type ="highlight_$highlight_style";
 		
         if($highlight_set->{$chr}) {
 # Firstly create a highlights array which contains merged entries!
             my @temp_highlights = @{$highlight_set->{$chr}};
-			my @highlights;
+            my @highlights;
     		if($highlight_set->{'merge'} eq 'no') {
 				@highlights = @temp_highlights;
 			} else {
@@ -336,6 +337,7 @@ sub _init {
                         'padding2'  => $padding * $bpperpx * sqrt(3)/2,
                         'zmenu'     => $zmenu,
                         'col'       => $col,
+                        'id'        => $_->{'id'},
                     } );
 					$self->push($g);
                 }
@@ -350,7 +352,7 @@ sub _init {
 sub highlight_box {
     my $self = shift;
     my $details = shift;
-    return new Bio::EnsEMBL::Glyph::Rect({
+    return new Sanger::Graphics::Glyph::Rect({
         'x'         => $details->{'start'},
         'y'         => $details->{'h_offset'},
         'width'     => $details->{'end'}-$details->{'start'},
@@ -364,7 +366,7 @@ sub highlight_box {
 sub highlight_widebox {
     my $self = shift;
     my $details = shift;
-    return new Bio::EnsEMBL::Glyph::Rect({
+    return new Sanger::Graphics::Glyph::Rect({
         'x'             => $details->{'start'},
         'y'             => $details->{'h_offset'}-$details->{'padding'},
         'width'         => $details->{'end'}-$details->{'start'},
@@ -378,7 +380,7 @@ sub highlight_widebox {
 sub highlight_outbox {
     my $self = shift;
     my $details = shift;
-    return new Bio::EnsEMBL::Glyph::Rect({
+    return new Sanger::Graphics::Glyph::Rect({
         'x'             => $details->{'start'} - $details->{'padding2'} *1.5,
         'y'             => $details->{'h_offset'}-$details->{'padding'} *1.5,
         'width'         => $details->{'end'}-$details->{'start'} + $details->{'padding2'} * 3,
@@ -392,7 +394,7 @@ sub highlight_outbox {
 sub highlight_bowtie {
     my $self = shift;
     my $details = shift;
-    return new Bio::EnsEMBL::Glyph::Poly({
+    return new Sanger::Graphics::Glyph::Poly({
         'points'    => [
             $details->{'mid'},                        $details->{'h_offset'},
             $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'},
@@ -409,10 +411,29 @@ sub highlight_bowtie {
     });
 }
 
+sub highlight_labelline {
+    my $self = shift;
+    my $details = shift;
+    my $composite = new Sanger::Graphics::Glyph::Composite();
+    print STDERR "LABEL LINE CALLED\n";
+    $composite->push(
+      new Sanger::Graphics::Glyph::Line({
+        'x'         => $details->{'mid'},
+        'y'         => $details->{'h_offset'}-$details->{'padding'},,
+        'width'     => 0,
+        'height'    => $details->{'wid'}+$details->{'padding'}*2,
+        'colour'    => $details->{'col'},
+        'absolutey' => 1,
+        'zmenu'     => $details->{'zmenu'}
+      })
+    );
+    return $composite;
+} 
+
 sub highlight_wideline {
     my $self = shift;
     my $details = shift;
-	return new Bio::EnsEMBL::Glyph::Line({
+	return new Sanger::Graphics::Glyph::Line({
         'x'         => $details->{'mid'},
         'y'         => $details->{'h_offset'}-$details->{'padding'},,
         'width'     => 0,
@@ -426,7 +447,7 @@ sub highlight_wideline {
 sub highlight_lharrow {
     my $self = shift;
     my $details = shift;
-    return new Bio::EnsEMBL::Glyph::Poly({
+    return new Sanger::Graphics::Glyph::Poly({
         'points' => [ $details->{'mid'}, $details->{'h_offset'},
             $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'},
             $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'}
@@ -440,7 +461,7 @@ sub highlight_lharrow {
 sub highlight_rharrow {
     my $self = shift;
     my $details = shift;
-    return new Bio::EnsEMBL::Glyph::Poly({
+    return new Sanger::Graphics::Glyph::Poly({
         'points' => [ 
             $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},
             $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},

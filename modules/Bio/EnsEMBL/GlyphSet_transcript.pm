@@ -3,19 +3,19 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bio::EnsEMBL::Glyph::Line;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use Sanger::Graphics::Glyph::Line;
+use  Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     my $HELP_LINK = $self->check();
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
@@ -116,7 +116,7 @@ sub _init {
 	    next if $target && ($transcript->stable_id() ne $target);
 
             $transcript_drawn=1;        
-            my $Composite = new Bio::EnsEMBL::Glyph::Composite({'y'=>$y,'height'=>$h});
+            my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
         
             $Composite->{'href'} = $self->href( $gene, $transcript );
 	
@@ -138,7 +138,7 @@ sub _init {
 	         my($box_start, $box_end);
 
 	         # only draw this exon if is inside the slice
-	         if($exon->end() > 0) { #calculate exon region within boundaries of slice
+	         if($exon->end() > 0 ) { #calculate exon region within boundaries of slice
 	             $box_start = $exon->start();
 	             $box_start = 1 if $box_start < 1 ;
                      $box_end = $exon->end();
@@ -149,7 +149,7 @@ sub _init {
 	      # coding regions.  Non coding portions of exons, are drawn as
 	      # non-filled rectangles
 	      #Draw a non-filled rectangle around the entire exon
-	                 $Composite->push(new Bio::EnsEMBL::Glyph::Rect({
+	                 $Composite->push(new Sanger::Graphics::Glyph::Rect({
                             'x'         => $box_start,
                             'y'         => $y,
                             'width'     => $box_end-$box_start,
@@ -164,7 +164,7 @@ sub _init {
 	    # only draw the coding region if there is such a region
 	             if( $filled_start <= $filled_end ) {
 	    #Draw a filled rectangle in the coding region of the exon
-        	        my $rect = new Bio::EnsEMBL::Glyph::Rect({
+        	        my $rect = new Sanger::Graphics::Glyph::Rect({
                         'x'         => $filled_start,
                         'y'         => $y,
                         'width'     => $filled_end - $filled_start + 1,
@@ -195,7 +195,7 @@ sub _init {
 
                 if( $box_start == $intron_start && $box_end == $intron_end ) {
 	    # draw an wholly in slice intron
-	            $Composite->push(new Bio::EnsEMBL::Glyph::Intron({
+	            $Composite->push(new Sanger::Graphics::Glyph::Intron({
                     'x'         => $box_start,
                     'y'         => $y,
                     'width'     => $box_end-$box_start,
@@ -206,7 +206,7 @@ sub _init {
                     }));
 	        } else { 
 	      # else draw a "not in slice" intron
-                $Composite->push(new Bio::EnsEMBL::Glyph::Line({
+                $Composite->push(new Sanger::Graphics::Glyph::Line({
                      'x'         => $box_start,
                      'y'         => $y+int($h/2),
                      'width'     => $box_end-$box_start,
@@ -223,7 +223,7 @@ sub _init {
 	        if(my $text_label = $self->text_label($gene, $transcript) ) {
                 my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
 	            my $width_of_label = $font_w_bp * 1.15 * (length($text_label) + 1);
-	            my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	            my $tglyph = new Sanger::Graphics::Glyph::Text({
                     'x'         => $Composite->x(),
                     'y'         => $y+$h+2,
                     'height'    => $font_h_bp,
@@ -244,7 +244,7 @@ sub _init {
     
             my $bump_end = $bump_start + int($Composite->width * $pix_per_bp)+1;
             $bump_end = $bitmap_length if $bump_end > $bitmap_length;
-            my $row = &Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap);
+            my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap);
     
         ########## shift the composite container by however much we're bumped
             $Composite->y($Composite->y() - $strand * $bump_height * $row);
@@ -255,7 +255,7 @@ sub _init {
 	  # check the strand of one of the transcript's exons
 	        my ($trans_exon) = $transcript->get_all_Exons();
 	        if($trans_exon->strand() == 1) {
-	            my $clip1 = new Bio::EnsEMBL::Glyph::Line({
+	            my $clip1 = new Sanger::Graphics::Glyph::Line({
                    'x'         => 1,
                    'y'         => -4,
                    'width'     => $length,
@@ -264,7 +264,7 @@ sub _init {
                    'colour'    => $colour
                 });
 	            $self->push($clip1);
-	            $clip1 = new Bio::EnsEMBL::Glyph::Poly({
+	            $clip1 = new Sanger::Graphics::Glyph::Poly({
                 	'points' => [$length - 4/$pix_per_bp,-2,
                         $length                ,-4,
                         $length - 4/$pix_per_bp,-6],
@@ -273,7 +273,7 @@ sub _init {
                 });
                 $self->push($clip1);
 	        } else {
-	            my $clip1 = new Bio::EnsEMBL::Glyph::Line({
+	            my $clip1 = new Sanger::Graphics::Glyph::Line({
                    'x'         => 1,
                    'y'         => $h+4,
                    'width'     => $length,
@@ -282,7 +282,7 @@ sub _init {
                    'colour'    => $colour
                 });
 	            $self->push($clip1);
-	            $clip1 = new Bio::EnsEMBL::Glyph::Poly({
+	            $clip1 = new Sanger::Graphics::Glyph::Poly({
                     'points'    => [1+4/$pix_per_bp,$h+6,
                                     1,              $h+4,
                                     1+4/$pix_per_bp,$h+2],

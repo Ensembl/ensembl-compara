@@ -1,23 +1,33 @@
 package Bio::EnsEMBL::GlyphSet::snp_lite;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple_hash;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple_hash);
+use Bio::EnsEMBL::GlyphSet_simple;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
+
+@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
   
-  my @snps = sort { $a->type() cmp $b->type() || $a->start() <=> $b->start()}  
-                  grep { $_->score < 4 } $self->{'container'}->get_all_SNPs();
+  &eprof_start('snp_1');
+  my @T = $self->{'container'}->get_all_SNPs();  
+  &eprof_end('snp_1');
+  &eprof_start('snp_2');
+  my @snps = 
+             map { $_->[1] } 
+             sort { $a->[0] <=> $b->[1] }
+             map { [ substr($_->type,0,2) * 1e9 + $_->start, $_ ] }
+             grep { $_->score < 4 } @T;
+  &eprof_end('snp_2');
 
   if(@snps) {
     $self->{'config'}->{'snp_legend_features'}->{'snps'} 
         = { 'priority' => 1000, 'legend' => [] };
   }
 
-  return @snps;
+  return \@snps;
 }
 
 sub href {

@@ -23,8 +23,8 @@ sub href {
 sub zmenu {
     my ($self, $id, $chr_pos ) = @_;
     return { 
-		'caption'    => $id, # $f->id,
-		'Jump to Homo spaiens' => $self->href( $id, $chr_pos )
+	'caption'    => $id, 
+	'Jump to Homo spaiens' => $self->href( $id, $chr_pos )
     };
 }
 1;

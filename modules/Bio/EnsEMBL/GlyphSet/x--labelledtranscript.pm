@@ -3,12 +3,12 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bio::EnsEMBL::Glyph::Line;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use Sanger::Graphics::Glyph::Line;
+use  Sanger::Graphics::Bump;
 
 # bastardised version of transcript.pm to produce a labelled transcript!
 # this should eventually be migrated back into the main transcript code
@@ -21,7 +21,7 @@ sub init_label {
     return if( defined $self->{'config'}->{'_no_label'} );
 
     my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || 'Transcript';
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => $label_text,
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -121,7 +121,7 @@ sub _init {
         my $p   = $transcript->translation;
         my $pid = $p ? $p->stable_id() : $tid;
 
-        my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
+        my $Composite = new Sanger::Graphics::Glyph::Composite({});
 		
 	if ($tid !~ /ENST/o){
 	    # if we have an EMBL external transcript we need different links...
@@ -183,7 +183,7 @@ sub _init {
         # draw anything trailing off the beginning
         #
         if(defined $start_screwed && $start_screwed == 0) {
-	    my $clip = new Bio::EnsEMBL::Glyph::Line({
+	    my $clip = new Sanger::Graphics::Glyph::Line({
 		'x'         => 0,
 		'y'         => $y+int($h/2),
 		'width'     => $start_exon->start(),
@@ -203,7 +203,7 @@ sub _init {
 	    my $x = $exon->start();
 	    my $w = $exon->end() - $x;
 	    
-	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'         => $x,
 		'y'         => $y,
 		'width'     => $w,
@@ -212,7 +212,7 @@ sub _init {
 		'absolutey' => 1,
 	    });
 	    
-	    my $intron = new Bio::EnsEMBL::Glyph::Intron({
+	    my $intron = new Sanger::Graphics::Glyph::Intron({
 		'x'         => $previous_endx,
 		'y'         => $y,
 		'width'     => ($x - $previous_endx),
@@ -234,7 +234,7 @@ sub _init {
         #
 	
 	if(defined $end_screwed && $end_screwed == 0) {
-	    my $clip = new Bio::EnsEMBL::Glyph::Line({
+	    my $clip = new Sanger::Graphics::Glyph::Line({
 		'x'         => $previous_endx,
 		'width'     => $container->length() - $previous_endx,
 		'y'         => $y+int($h/2),
@@ -251,7 +251,7 @@ sub _init {
 	my $width_of_label  = $font_w_bp * (length($tid) + 1);
 	my $start_of_label  = int( ($start_exon->start() + $end_exon->end() - $width_of_label )/2 );
 	$start_of_label  = $start_exon->start();
-	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	my $tglyph = new Sanger::Graphics::Glyph::Text({
 	        'x'         => $start_of_label,
 	        'y'         => $y+$h+2,
 	        'height'    => $font_h_bp,
@@ -275,7 +275,7 @@ sub _init {
 
         if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
 	
-        my $row = &Bump::bump_row(
+        my $row = & Sanger::Graphics::Bump::bump_row(
 				  $bump_start,
 				  $bump_end,
 				  $bitmap_length,

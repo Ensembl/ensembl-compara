@@ -2,11 +2,11 @@ package Bio::EnsEMBL::GlyphSet::marker_label;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use  Sanger::Graphics::Bump;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
@@ -28,7 +28,7 @@ sub _init {
     foreach my $f ($VirtualContig->get_landmark_MarkerFeatures()){
 	my $fid = $f->display_label();
 	my $bp_textwidth = $w * length("$fid ");
-	my $glyph = new Bio::EnsEMBL::Glyph::Text({
+	my $glyph = new Sanger::Graphics::Glyph::Text({
 		'x'	    => $f->start(),
 		'y'	    => 0,
 		'height'    => $Config->texthelper->height($fontname),
@@ -48,7 +48,7 @@ sub _init {
 
     	my $bump_end = $bump_start + $bp_textwidth;
     	next if $bump_end > $bitmap_length;
-    	my $row = &Bump::bump_row(      
+    	my $row = & Sanger::Graphics::Bump::bump_row(      
 	    $bump_start,
 	    $bump_end,
 	    $bitmap_length,

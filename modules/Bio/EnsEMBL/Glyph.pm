@@ -1,6 +1,6 @@
 package Bio::EnsEMBL::Glyph;
 use strict;
-use ColourMap;
+use Sanger::Graphics::ColourMap;
 use Exporter;
 use vars qw(@ISA $AUTOLOAD);
 @ISA = qw(Exporter);
@@ -15,7 +15,7 @@ sub new {
 	    'background' => 'transparent',
 	    'composite'  => undef,          # arrayref for Glyph::Composite to store other glyphs in
 	    'points'     => [],		        # listref for Glyph::Poly to store x,y paired points
-        ref($params_ref) eq 'HASH' ? %$params_ref : ()
+            ref($params_ref) eq 'HASH' ? %$params_ref : ()
     };
     bless($self, $class);
     ########## initialise all fields except type
@@ -45,8 +45,8 @@ sub AUTOLOAD {
 sub transform {
     my ($this, $transform_ref) = @_;
 
-    my $scalex     = $$transform_ref{'scalex'};
-    my $scaley     = $$transform_ref{'scaley'};
+    my $scalex     = $$transform_ref{'scalex'} || 1;
+    my $scaley     = $$transform_ref{'scaley'} || 1;
     my $translatex = $$transform_ref{'translatex'};
     my $translatey = $$transform_ref{'translatey'};
 

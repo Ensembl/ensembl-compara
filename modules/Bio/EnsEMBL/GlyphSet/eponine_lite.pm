@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::eponine_lite;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple_hash;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple_hash);
+use Bio::EnsEMBL::GlyphSet_simple;
+@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { return "Eponine"; }
 
@@ -27,7 +27,7 @@ sub zmenu {
     
     my $score = $f->score();
     my $start = $f->start() + $self->{'container'}->chr_start() - 1;
-    my $end = $f->end() + $self->{'container'}->chr_start() - 1;
+    my $end   = $f->end()   + $self->{'container'}->chr_start() - 1;
 
     return {
         'caption'                                     => 'eponine',

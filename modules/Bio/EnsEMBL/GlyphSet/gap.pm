@@ -3,18 +3,18 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Space;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Space;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
 use SiteDefs;
-use ColourMap;
+use Sanger::Graphics::ColourMap;
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	    'text'      => 'Gaps',
     	'font'      => 'Small',
 	    'absolutey' => 1,
@@ -76,7 +76,7 @@ sub _init {
     
     $w *= $length/($length-1);
 
-    my $gline = new Bio::EnsEMBL::Glyph::Rect({
+    my $gline = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart+7,
         'width'     => $length,
@@ -94,7 +94,7 @@ sub _init {
     if (!@map_contigs) {
 ## Draw a warning track....
         ## We will have to do a clever hack to get the previous and next contig....
-            my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+            my $glyph = new Sanger::Graphics::Glyph::Rect({
                 'x'         => 1,
                 'y'         => $ystart,
                 'width'     => $length,
@@ -118,7 +118,7 @@ sub _init {
                 $type = "inter-clone?";
                 $col = $col2;
             }            
-            my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+            my $glyph = new Sanger::Graphics::Glyph::Rect({
                 'x'         => 1,
                 'y'         => $ystart,
                 'width'     => $first_contig->start-1,
@@ -143,7 +143,7 @@ sub _init {
                 $col = $col2;
             }
             if( ($first_contig->end +1) != $temp_rawcontig->start ) {
-                my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+                my $glyph = new Sanger::Graphics::Glyph::Rect({
                     'x'         => $first_contig->end + 1,
                     'y'         => $ystart,
                     'width'     => $temp_rawcontig->start - $first_contig->end,
@@ -167,7 +167,7 @@ sub _init {
                 $type = "inter-clone?";
                 $col = $col2;
             }            
-            my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+            my $glyph = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $first_contig->end+1,
                 'y'         => $ystart,
                 'width'     => $length - $first_contig->end,

@@ -3,18 +3,18 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use ColourMap;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use Sanger::Graphics::ColourMap;
+use  Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
     print STDERR "HERE\n";
 
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 	'text'      => 'Intron',
 	'font'      => 'Small',
 	'absolutey' => 1,
@@ -34,7 +34,7 @@ sub _init {
     my $bitmap_length = int($self->{'container'}->length() * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
-    my $cmap          = new ColourMap;
+    my $cmap          = new Sanger::Graphics::ColourMap;
     my $black         = $cmap->id_by_name('black');
     my $red           = $cmap->id_by_name('red');
     my $font          = "Small";
@@ -50,7 +50,7 @@ sub _init {
     foreach my $key (keys %hash) {
 	my @row  = @{$hash{$key}};
 			
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x'     => $row[0]->feature1->start(),
 	    'y'     => $y,
 	    'zmenu' => {
@@ -68,7 +68,7 @@ sub _init {
 	    $maxx  = $pf->feature1->end() if ($pf->feature1->end() > $maxx || !defined($maxx));
 	    my $id = $pf->feature2->seqname();
 
-	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
 		'y'        => $y,
 		'width'    => $w,
@@ -82,7 +82,7 @@ sub _init {
 	#########
 	# add a domain linker
 	#
-	my $rect = new Bio::EnsEMBL::Glyph::Rect({
+	my $rect = new Sanger::Graphics::Glyph::Rect({
 	    'x'         => $minx,
 	    'y'         => $y + 2,
 	    'width'     => $maxx - $minx,
@@ -94,7 +94,7 @@ sub _init {
 
 	my $desc = $pfsave->idesc();
 
-	my $text = new Bio::EnsEMBL::Glyph::Text({
+	my $text = new Sanger::Graphics::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->feature1->start(),

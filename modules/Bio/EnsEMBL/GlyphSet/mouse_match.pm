@@ -12,7 +12,9 @@ sub my_label { return "Mouse matches"; }
 sub features {
     my ($self) = @_;
     
-    return  $self->{'container'}->get_all_DnaDnaAlignFeature( $self->{'config'}->{'_databases'}->{'compara'}, $ENV{'ENSEMBL_SPECIES'}, 'Mus_musculus' );
+    return  $self->{'container'}->get_all_DnaDnaAlignFeature(
+	$self->{'config'}->{'_databases'}->{'compara'},
+        $ENV{'ENSEMBL_SPECIES'}, 'Mus_musculus' );
 }
 
 sub href {

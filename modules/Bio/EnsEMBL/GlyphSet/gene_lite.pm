@@ -3,16 +3,16 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use  Sanger::Graphics::Bump;
 use EnsWeb;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 sub init_label {
     my ($self) = @_;
         return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => 'Genes',
         'font'      => 'Small',
         'absolutey' => 1,
@@ -88,7 +88,7 @@ sub _init {
     #
     # Draw all of the Sanger Genes
     #
-    my @res = $vc->get_Genes_by_source( "sanger" ); 
+    my @res = $vc->get_Genes_by_source( "sanger",1 ); 
     foreach my $g (@res){ 
       my $genelabel = $g->stable_id(); 
       my $high = exists $highlights{$genelabel};
@@ -126,7 +126,7 @@ sub _init {
     #
     # Draw all of the Core (ensembl) genes
     #
-    my @res = $vc->get_Genes_by_source( "core" );
+    my @res = $vc->get_Genes_by_source( "core",1 );
     for my $gene (@res) {
       my $high = (exists $highlights{ $gene->stable_id() }) 
               || (exists $highlights{ $gene->external_name() });
@@ -166,7 +166,7 @@ sub _init {
     #
     # Draw all EMBL Genes
     #
-    my @res = $vc->get_Genes_by_source('embl');
+    my @res = $vc->get_Genes_by_source('embl',1);
     foreach my $g (@res){
       my $gene_label = $g->external_name() || $g->stable_id();
       
@@ -216,7 +216,7 @@ sub _init {
         $start = 1 if $start<1;
         $end = $vc_length if $end > $vc_length;
 
-        my $rect = new Bio::EnsEMBL::Glyph::Rect({
+        my $rect = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $start,
                 'y'         => 0,
                 'width'     => $end - $start,
@@ -244,7 +244,7 @@ sub _init {
     
             my $bump_end = $bump_start + int($rect->width()*$pix_per_bp) +1;
             $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
-            my $row = &Bump::bump_row(
+            my $row = & Sanger::Graphics::Bump::bump_row(
                 $bump_start,
                         $bump_end,
                         $bitmap_length,
@@ -257,7 +257,7 @@ sub _init {
         }
         push @gene_glyphs, $rect;
         if($g->{'high'}) {
-            my $rect2 = new Bio::EnsEMBL::Glyph::Rect({
+            my $rect2 = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $start - 1/$pix_per_bp,
                 'y'         => $rect->y()-1,
                 'width'     => $end - $start  + 2/$pix_per_bp,

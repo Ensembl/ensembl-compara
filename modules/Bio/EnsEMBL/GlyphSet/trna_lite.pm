@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::trna_lite;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple_hash;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple_hash);
+use Bio::EnsEMBL::GlyphSet_simple;
+@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { return "tRNAs"; }
 

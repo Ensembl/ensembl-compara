@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Glyph::Circle;
+package Sanger::Graphics::Glyph::Circle;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::Glyph;

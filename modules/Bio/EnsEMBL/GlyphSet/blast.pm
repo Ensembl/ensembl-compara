@@ -5,15 +5,15 @@ use SiteDefs;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Space;
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use ColourMap;
+use Sanger::Graphics::Glyph::Space;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::ColourMap;
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
     'text'      => 'BLAST hits',
     'font'      => 'Small',
     'absolutey' => 1,
@@ -80,7 +80,7 @@ sub _init {
     ); 
     ## Lets draw a line across the glyphset
 
-    my $gline = new Bio::EnsEMBL::Glyph::Rect({
+    my $gline = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,# $vc->_global_start(),
         'y'         => 4,
         'width'     => $vc_e - $vc_s,
@@ -99,7 +99,7 @@ sub _init {
         my $end   = $hit->[1] > $vc_e ? $vc_e : $hit->[1];
         $start = 0 if $start < 0;
         my ($col)    = map { $_->[0] <= $hit->[3] ? $_->[1] : () } @colours;
-        my $gbox = new Bio::EnsEMBL::Glyph::Rect({
+        my $gbox = new Sanger::Graphics::Glyph::Rect({
             'x'         => $start - $vc_s,
             'y'         => 0,
             'width'     => $end - $start,
@@ -127,7 +127,7 @@ sub _init {
         my $bump_end = $bump_start + int($gbox->width * $ppb)+1;
         if ($bump_end > $bitmap_length) { $bump_end = $bitmap_length };
     
-        my $row = &Bump::bump_row(
+        my $row = & Sanger::Graphics::Bump::bump_row(
             $bump_start,
             $bump_end,
             $bitmap_length,

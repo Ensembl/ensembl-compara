@@ -3,15 +3,15 @@ package Bio::EnsEMBL::GlyphSet::repeat;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
 
 @ISA = qw( Bio::EnsEMBL::GlyphSet );
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => 'Repeats',
         'font'      => 'Small',
         'absolutey' => 1,
@@ -36,7 +36,7 @@ sub _init {
     my $feature_colour = $Config->get( 'repeat', 'col' );
 
     foreach my $f ( $vc->get_all_RepeatFeatures( $self->glob_bp() ) ) {
-        my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+        my $glyph = new Sanger::Graphics::Glyph::Rect({
             'x'         => $f->start(),
             'y'         => 0,
             'width'     => $f->length(),

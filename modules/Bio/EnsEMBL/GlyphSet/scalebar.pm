@@ -3,11 +3,11 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use  Sanger::Graphics::Bump;
 
 sub _init {
     my ($self) = @_;
@@ -43,7 +43,7 @@ sub _init {
 
     my $divs = set_scale_division($len, $max_num_divs) || 0;
     
-    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+    my $glyph = new Sanger::Graphics::Glyph::Rect({
         'x'         => 0,
         'y'         => 4,
         'width'     => $len,
@@ -55,7 +55,7 @@ sub _init {
 
     my $last_end = 0;
     for (my $i=0;$i<int($len/$divs); $i++){
-        my $tick = new Bio::EnsEMBL::Glyph::Rect({
+        my $tick = new Sanger::Graphics::Glyph::Rect({
             'x'         => $i * $divs,
             'y'         => 4,
             'width'     => 0,
@@ -97,7 +97,7 @@ sub _init {
             if ($abbrev){
                 $text = $self->bp_to_nearest_unit_by_divs(int($i * $divs + $global_start),$divs);                
             }
-            my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+            my $tglyph = new Sanger::Graphics::Glyph::Text({
                 'x'         => $i * $divs,
                 'y'         => 8,
                 'height'    => $fontheight,
@@ -115,7 +115,7 @@ sub _init {
         if ($abbrev && $len >1000){
             $text = $self->bp_to_nearest_unit($global_start,2);
         }
-        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        my $tglyph = new Sanger::Graphics::Glyph::Text({
             'x'             => 0,
             'y'             => 8,
             'height'        => $fontheight,
@@ -132,7 +132,7 @@ sub _init {
             $text = $self->bp_to_nearest_unit($global_end,2);
         }
         
-        my $endglyph = new Bio::EnsEMBL::Glyph::Text({
+        my $endglyph = new Sanger::Graphics::Glyph::Text({
             'x'             => $im_width -(length("$text ")*$fontwidth_bp),
             'y'             => 8,
             'height'        => $fontheight,
@@ -148,7 +148,7 @@ sub _init {
         
     # last tick
     my $im_width = $Config->image_width();
-    my $tick = new Bio::EnsEMBL::Glyph::Rect({
+    my $tick = new Sanger::Graphics::Glyph::Rect({
         'x'          => $im_width - 1,
         'y'          => 4,
         'width'      => 0,
@@ -189,7 +189,7 @@ sub interval {
         $highlights
     ) = @_;
     my $interval_middle = $global_offset + ($start + $end)/2;
-    my $interval = new Bio::EnsEMBL::Glyph::Space({
+    my $interval = new Sanger::Graphics::Glyph::Space({
         'x'         => $start,
         'y'         => 4,
         'width'     => $width,

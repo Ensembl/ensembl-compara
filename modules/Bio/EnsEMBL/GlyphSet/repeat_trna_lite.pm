@@ -1,26 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::repeat_trna_lite;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple_hash;
-
-@ISA = qw( Bio::EnsEMBL::GlyphSet_simple_hash );
-
+@ISA = qw( Bio::EnsEMBL::GlyphSet::repeat_lite );
 sub my_label { return "Repeats (tRNA)"; }
 
 sub features {
     my $self = shift;
-    
-    my $max_length = $self->{'config'}->get( 'repeat_trna_lite', 'threshold' ) || 2000;
-    return @{$self->{'container'}->get_all_RepeatFeatures_lite( 'tRNA', $self->glob_bp() )};
+    return $self->{'container'}->get_all_RepeatFeatures_lite( 'trna', $self->glob_bp() );
 }
-
-sub zmenu {
-    my( $self, $f ) = @_;
-    return {
-        'caption' 											=> $f->{'hid'},
-		"bp: $f->{'chr_start'}-$f->{'chr_end'}" 			=> '',
-		"length: ".($f->{'chr_end'}-$f->{'chr_start'}+1) 	=> ''
-    }
-}
-
-1;

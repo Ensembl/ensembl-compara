@@ -11,7 +11,7 @@ sub my_label { return "Tilepath"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_MapFrags( 'tilepath' );
+    return [$self->{'container'}->get_all_MapFrags( 'tilepath' )];
 }
 
 ## If tile path clones are very long then we draw them as "outlines" as

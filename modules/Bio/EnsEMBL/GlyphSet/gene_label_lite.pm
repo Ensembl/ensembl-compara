@@ -2,9 +2,9 @@ package Bio::EnsEMBL::GlyphSet::gene_label_lite;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use  Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -179,7 +179,7 @@ sub _init {
         my $label = $g->{'label'};
 
 	    next if $label eq '';
-        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        my $tglyph = new Sanger::Graphics::Glyph::Text({
             'x'         => $start,	
             'y'         => $y,
             'height'    => $Config->texthelper->height($fontname),
@@ -208,7 +208,7 @@ sub _init {
     
             my $bump_end = $bump_start + int($tglyph->width()*$pix_per_bp) +1;
             $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
-            my $row = &Bump::bump_row(
+            my $row = & Sanger::Graphics::Bump::bump_row(
                 $bump_start,
                         $bump_end,
                         $bitmap_length,
@@ -223,7 +223,7 @@ sub _init {
         ##################################################
         # Draw little taggy bit to indicate start of gene
         ##################################################
-        my $taggy = new Bio::EnsEMBL::Glyph::Rect({
+        my $taggy = new Sanger::Graphics::Glyph::Rect({
             'x'            => $start,
             'y'            => $tglyph->y - 1,
             'width'        => 1,
@@ -233,7 +233,7 @@ sub _init {
         });
     
         push @gene_glyphs, $taggy;
-        $taggy = new Bio::EnsEMBL::Glyph::Rect({
+        $taggy = new Sanger::Graphics::Glyph::Rect({
             'x'            => $start,
             'y'            => $tglyph->y - 1 + 4,
             'width'        => $font_w_bp * 0.5,
@@ -247,7 +247,7 @@ sub _init {
         # Highlight label if required.....
         ##################################################
         if($g->{'high'}) {
-            my $rect2 = new Bio::EnsEMBL::Glyph::Rect({
+            my $rect2 = new Sanger::Graphics::Glyph::Rect({
                 'x'         => $tglyph->x() + $font_w_bp,
                 'y'         => $tglyph->y(),
                 'width'     => $font_w_bp * length($label),

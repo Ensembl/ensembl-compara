@@ -3,17 +3,17 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Composite;
-use Bio::EnsEMBL::Glyph::Line;
-use Bump;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Composite;
+use Sanger::Graphics::Glyph::Line;
+use  Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => '%GC',
         'font'      => 'Small',
         'absolutey' => 1,
@@ -83,7 +83,7 @@ sub _init {
     foreach my $new (@gc) {
         unless($percent==99 || $new==99) {
             $self->push(
-                new Bio::EnsEMBL::Glyph::Line({
+                new Sanger::Graphics::Glyph::Line({
                     'x'            => $count * $divlen,
                     'y'            => 20 - $percent,
                     'width'        => $divlen,
@@ -97,7 +97,7 @@ sub _init {
         $count++;
     }
     $self->push(
-        new Bio::EnsEMBL::Glyph::Line({
+        new Sanger::Graphics::Glyph::Line({
             'x'         => 0,
             'y'         => 10, # 50% point for line
             'width'     => $vclen,
