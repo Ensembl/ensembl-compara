@@ -24,18 +24,25 @@ Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor
 
   $mlssa->store($method_link_species);
 
-  my $method_link_species = $mlssa->fetch_all;
+  my $method_link_species_sets = $mlssa->fetch_all;
   
-  my $method_link_species = $mlssa->fetch_by_dbID(1);
+  my $method_link_species_set = $mlssa->fetch_by_dbID(1);
   
-  my $method_link_species = $mlssa->fetch_all_by_method_link(3);
-  my $method_link_species = $mlssa->fetch_all_by_method_link("BLASTZ_NET");
-  my $method_link_species = $mlssa->fetch_all_by_method_link_id(3);
-  my $method_link_species = $mlssa->fetch_all_by_method_link_type("BLASTZ_NET");
+  my $method_link_species_sets = $mlssa->fetch_all_by_method_link(3);
+  my $method_link_species_sets = $mlssa->fetch_all_by_method_link("BLASTZ_NET");
+  my $method_link_species_sets = $mlssa->fetch_all_by_method_link_id(3);
+  my $method_link_species_sets = $mlssa->fetch_all_by_method_link_type("BLASTZ_NET");
   
-  my $method_link_species = $mlssa->fetch_all_by_genome_db_id(12);
+  my $method_link_species_sets = $mlssa->fetch_all_by_genome_db($genome_db);
+  my $method_link_species_sets = $mlssa->fetch_all_by_genome_db(12);
+  my $method_link_species_sets = $mlssa->fetch_all_by_genome_db_id(12);
   
-  my $method_link_species = $mlssa->fetch_by_method_link_and_genome_db_ids(
+  my $method_link_species_sets = $mlssa->fetch_by_method_link_and_genome_db(
+        "MULTIZ", $gdbid1);
+  my $method_link_species_sets = $mlssa->fetch_by_method_link_and_genome_db(
+        "MULTIZ", 3);
+  
+  my $method_link_species_set = $mlssa->fetch_by_method_link_and_genome_db_ids(
         "MULTIZ", [$gdbid1, $gdbid2, $gdbid3]);
   
 =head1 DESCRIPTION
@@ -65,7 +72,7 @@ use strict;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor Bio::EnsEMBL::Compara::DBSQL::DBAdaptor);
+@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
 sub new {
@@ -201,7 +208,7 @@ sub fetch_all {
   my $sth = $self->prepare($sql);
   $sth->execute();
   my $all_method_link_species;
-  my $gdba = $self->get_GenomeDBAdaptor;
+  my $gdba = $self->db->get_GenomeDBAdaptor;
   
   while (my ($method_link_species_set, $method_link_id, $genome_db_id, $type) = $sth->fetchrow_array()) {
     $all_method_link_species->{$method_link_species_set}->{'METHOD_LINK_ID'} = $method_link_id;
@@ -245,7 +252,7 @@ sub fetch_by_dbID {
   my ($self, $dbID) = @_;
   my $method_link_species_set; # returned object
   
-  my $gdba = $self->get_GenomeDBAdaptor;
+  my $gdba = $self->db->get_GenomeDBAdaptor;
   my $sql = qq{
 		SELECT method_link_species_set, method_link_species.method_link_id, genome_db_id, type
 		FROM method_link_species
@@ -333,7 +340,7 @@ sub fetch_all_by_method_link_id {
   my $sth = $self->prepare($sql);
   $sth->execute($method_link_id);
   my $all_method_link_species_sets;
-  my $gdba = $self->get_GenomeDBAdaptor;
+  my $gdba = $self->db->get_GenomeDBAdaptor;
   
   while (my ($method_link_species_set, $method_link_id, $genome_db_id, $type) = $sth->fetchrow_array()) {
     $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'} = $method_link_id;
@@ -344,15 +351,15 @@ sub fetch_all_by_method_link_id {
 
   foreach my $method_link_species_set (keys %$all_method_link_species_sets) {
     my $this_method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-			-adaptor => $self,
-			-dbID => $method_link_species_set,
-			-method_link_id =>
-                            $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'},
-			-method_link_type =>
-                            $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_TYPE'},
-			-species_set =>
-                            $all_method_link_species_sets->{$method_link_species_set}->{'SPECIES_SET'}
-		);
+            -adaptor => $self,
+            -dbID => $method_link_species_set,
+            -method_link_id =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'},
+            -method_link_type =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_TYPE'},
+            -species_set =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'SPECIES_SET'}
+        );
     push(@$method_link_species_sets, $this_method_link_species_set);
   }
 
@@ -378,16 +385,16 @@ sub fetch_all_by_method_link_type {
   my $method_link_species_sets = [];
   
   my $sql = qq{
-		SELECT method_link_species_set, method_link_species.method_link_id, genome_db_id, type
-		FROM method_link_species
-		LEFT JOIN method_link USING (method_link_id)
-		WHERE method_link.type = ?
-	};
+                SELECT method_link_species_set, method_link_species.method_link_id, genome_db_id, type
+                FROM method_link_species
+                LEFT JOIN method_link USING (method_link_id)
+                WHERE method_link.type = ?
+        };
 
   my $sth = $self->prepare($sql);
   $sth->execute($method_link_type);
   my $all_method_link_species_sets;
-  my $gdba = $self->get_GenomeDBAdaptor;
+  my $gdba = $self->db->get_GenomeDBAdaptor;
   
   while (my ($method_link_species_set, $method_link_id, $genome_db_id, $type) = $sth->fetchrow_array()) {
     $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'} = $method_link_id;
@@ -398,16 +405,59 @@ sub fetch_all_by_method_link_type {
   
   foreach my $method_link_species_set (keys %$all_method_link_species_sets) {
     my $this_method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-			-adaptor => $self,
-			-dbID => $method_link_species_set,
-			-method_link_id =>
-                            $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'},
-			-method_link_type =>
-                            $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_TYPE'},
-			-species_set =>
-                            $all_method_link_species_sets->{$method_link_species_set}->{'SPECIES_SET'}
-		);
+            -adaptor => $self,
+            -dbID => $method_link_species_set,
+            -method_link_id =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'},
+            -method_link_type =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_TYPE'},
+            -species_set =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'SPECIES_SET'}
+        );
     push(@$method_link_species_sets, $this_method_link_species_set);
+  }
+
+  return $method_link_species_sets;
+}
+
+
+=head2 fetch_all_by_genome_db
+
+  Arg  1     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+                      - or -
+               integer $genome_db_id
+  Example    : my $method_link_species_sets = $mlssa->fetch_all_by_genome_db($genome_db)
+  Description: Retrieve all the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+               which includes the genome defined by the Bio::EnsEMBL::Compara::GenomeDB
+               object or the genome_db_id in the species_set
+  Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+  Exceptions : wrong argument throws
+  Caller     : 
+
+=cut
+
+sub fetch_all_by_genome_db {
+  my ($self, $genome_db) = @_;
+  my $method_link_species_sets = [];
+
+  my $genome_db_id;
+  if ($genome_db =~ /^\d+$/) {
+    $genome_db_id = $genome_db;
+  } else {
+    throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID"
+        unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+    $genome_db_id = $genome_db->dbID;
+  }
+   
+  my $all_method_link_species_sets = $self->fetch_all;
+
+  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
+    foreach my $this_genome_db (@{$this_method_link_species_set->species_set}) {
+      if ($this_genome_db->dbID == $genome_db_id) {
+        push (@$method_link_species_sets, $this_method_link_species_set);
+        last;
+      }
+    }
   }
 
   return $method_link_species_sets;
@@ -440,6 +490,88 @@ sub fetch_all_by_genome_db_id {
         last;
       }
     }
+  }
+
+  return $method_link_species_sets;
+}
+
+
+=head2 fetch_all_by_method_link_and_genome_db
+
+  Arg  1     : string method_link_type
+                      - or -
+               integer $method_link_id
+  Arg  2     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+                      - or -
+               integer $genome_db_id
+  Example    : my $method_link_species_sets =
+                     $mlssa->fetch_all_by_method_link_type("BLASTZ_NET")
+  Description: Retrieve all the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+               corresponding to the given method_link_type and which include the
+               given genome_db
+  Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub fetch_all_by_method_link_and_genome_db {
+  my ($self, $method_link, $genome_db) = @_;
+  my $method_link_species_sets = [];
+  
+  my $genome_db_id;
+  if ($genome_db =~ /^\d+$/) {
+    $genome_db_id = $genome_db;
+  } else {
+    throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID"
+        unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+    $genome_db_id = $genome_db->dbID;
+  }
+  
+  my $method_link_type;
+  if ($method_link =~ /^\d+$/) {
+    $method_link_type = $self->_get_method_link_type_from_id($method_link);
+  } else {
+    $method_link_type = $method_link;
+  }
+
+  my $sql = qq{
+                SELECT
+                  mls2.method_link_species_set, mls2.method_link_id, mls2.genome_db_id, type
+                FROM
+                  method_link_species mls1
+                  LEFT JOIN method_link USING (method_link_id),
+                  method_link_species mls2
+                WHERE
+                  method_link.type = ?
+                  AND mls1.genome_db_id = ?
+                  AND mls1.method_link_species_set = mls2.method_link_species_set
+        };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($method_link_type, $genome_db_id);
+  my $all_method_link_species_sets;
+  my $gdba = $self->db->get_GenomeDBAdaptor;
+  
+  while (my ($method_link_species_set, $method_link_id, $genome_db_id, $type) = $sth->fetchrow_array()) {
+    $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'} = $method_link_id;
+    $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_TYPE'} = $type;
+    push(@{$all_method_link_species_sets->{$method_link_species_set}->{'SPECIES_SET'}},
+        $gdba->fetch_by_dbID($genome_db_id));
+  }
+  
+  foreach my $method_link_species_set (keys %$all_method_link_species_sets) {
+    my $this_method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+            -adaptor => $self,
+            -dbID => $method_link_species_set,
+            -method_link_id =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_ID'},
+            -method_link_type =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'METHOD_LINK_TYPE'},
+            -species_set =>
+                $all_method_link_species_sets->{$method_link_species_set}->{'SPECIES_SET'}
+        );
+    push(@$method_link_species_sets, $this_method_link_species_set);
   }
 
   return $method_link_species_sets;
@@ -483,7 +615,7 @@ sub fetch_by_method_link_and_genome_db_ids {
                         method_link_species
                 WHERE
                         genome_db_id in (}.join(",", @$genome_db_ids).qq{)
-                        AND method_link_id = $method_link_id
+                        AND method_link_id = \"$method_link_id\"
                 GROUP BY method_link_species_set
                 HAVING count = }.scalar(@$genome_db_ids);
   my $sth = $self->prepare($sql);
