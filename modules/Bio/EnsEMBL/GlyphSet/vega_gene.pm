@@ -23,27 +23,18 @@ sub my_label {
     return $self->my_config('label');
 }
 
-sub legend_captions {
-  return {
-     'Known'                 => 'Known gene',
-     'Known_in_progress'     => 'Known gene (in progress)',
-     'Novel_CDS'             => 'Novel CDS',
-     'Novel_CDS_in_progress' => 'Novel CDS (in progress)',
-     'Putative'              => 'Putative',
-     'Novel_Transcript'      => 'Novel transcript',
-     'Pseudogene'            => 'Pseudogene',
-     'Processed_pseudogene'  => 'Processed pseudogene',
-     'Unprocessed_pseudogene'=> 'Unprocessed pseudogene',
-     'Predicted_Gene'        => 'Predicted gene',
-     'Ig_Segment'            => 'Immunoglobulin segment',
-     'Ig_Pseudogene_Segment' => 'Immunoglobulin pseudogene',
-     'Transposon'	    => 'Transposon',
-     'Polymorphic'           => 'Polymorphic',
-  };
+sub legend {
+    my ($self, $colours) = @_;
+    my %X;
+    foreach my $colour ( values %$colours ) {
+        $colour->[1] =~ s/Curated (.*)/$1/;
+        $X{ucfirst($colour->[1])} = $colour->[0];
+    }
+    my @legend = %X;
+    return \@legend;
 }
 
 sub ens_ID {
-  my( $self, $g ) = @_;
   return '';
 }
 
