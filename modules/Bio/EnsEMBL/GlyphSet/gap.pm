@@ -33,11 +33,11 @@ sub _init {
 
 	my $vc = $self->{'container'};
     my $vc_start = $vc->_global_start();
-#    my $useAssembly;
-#    eval { ## Assembly contigs don't work - don't know enough about gaps!
-#        $useAssembly = $vc->has_AssemblyContigs;
-#        return if $useAssembly;
-#    };
+    my $useAssembly;
+    eval { ## Assembly contigs don't work - don't know enough about gaps!
+        $useAssembly = $vc->has_AssemblyContigs;
+        return if $useAssembly;
+    };
 
     print STDERR "GAP CALLED\n";
 
@@ -87,7 +87,19 @@ sub _init {
     if (!@map_contigs) {
 ## Draw a warning track....
         ## We will have to do a clever hack to get the previous and next contig....
-        $self->errorTrack("Golden path gap - no contigs to display!");
+            my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+                'x'         => 1,
+                'y'         => $ystart,
+                'width'     => $length,
+                'height'    => 11,
+                'colour'    => $col2,
+                'absolutey' => 1,
+                'zmenu'     => {
+                    'caption' => "Golden path gap",
+                    "Location: --" => '',
+                }
+			});
+            $self->push($glyph);
     } else { ## THIS IS THE REAL STUFF FOR HUMAN
         my $type = 'unknown';
         my $first_contig = shift @map_contigs;
@@ -116,7 +128,7 @@ sub _init {
         foreach my $temp_rawcontig ( @map_contigs ) {
             my $type = 'intra-clone';
             my $col = $col1;
-            if( $first_contig->contig->fpcctg_name() ne $temp_rawcontig->contig->fpcctg_name() ) {
+            if( $first_contig->fpcctg_name() ne $temp_rawcontig->fpcctg_name() ) {
                 $col = $col3;
                 $type = "inter super-contig";
             } elsif( $first_contig->is_last_contig() && $temp_rawcontig->is_first_contig() ) {
