@@ -271,10 +271,8 @@ sub _init {
 				my $bin_length = $padding * ( $highlight_style eq 'arrow' ? 1.5 : 1 ) * $bpperpx;
 				foreach(@temp_highlights) {
 					my $bin_id = int( (2 * $v_offset+ $_->{'start'}+$_->{'end'}) / 2 / $bin_length );
-					print STDERR "BIN: $bin_id";
 					if(my $offset = $bin_flag[$bin_id]) { # We already have a highlight in this bin - so add this one to it!
 						my $zmenu_length = keys %{$highlights[$offset]->{'zmenu'}};
-						print STDERR " ZML - $zmenu_length";
 						foreach my $entry (sort keys %{$_->{'zmenu'}}) { 
 							next if $entry eq 'caption';
 							my $value = $_->{'zmenu'}->{$entry};
@@ -290,7 +288,6 @@ sub _init {
 						push @highlights, $_;
 						$bin_flag[$bin_id] = $#highlights;
 					}
-					print STDERR "\n";
 				}
 				my @highlights = @highlights;
 			}
@@ -301,7 +298,6 @@ sub _init {
             my @flags = ();
             my $flag = 'l';
             foreach( @sorting_keys ) {
-				print STDERR "$_ -> $flag\n";
                 $flags[$_] = $flag = $flag eq 'l' ? 'r' : 'l';
             }
             foreach( @highlights ) { 
@@ -311,7 +307,6 @@ sub _init {
                     $high_flag = shift @flags;
                     $type      = "highlight_${high_flag}h$highlight_style";
                 }
-                print STDERR "XX: $type\n";
                 my $zmenu     = $_->{'zmenu'};
                 my $col          = $_->{'col'};
             ########## dynamic require of the right type of renderer
