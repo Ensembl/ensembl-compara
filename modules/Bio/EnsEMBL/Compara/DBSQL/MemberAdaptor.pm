@@ -367,6 +367,7 @@ sub fetch_by_subset_id {
   Example    : $geneMember = $memberAdaptor->fetch_gene_for_peptide_member_id($peptide_member_id);
   Description: given a member_id of a peptide member,
                does a join to the member_gene_peptide table returning a single object
+               FOR PRODUCTION PURPOSES ONLY
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
@@ -456,7 +457,7 @@ sub _generic_fetch {
 
   # warn $sql;
   my $sth = $self->prepare($sql);
-  $sth->execute;  
+  $sth->execute;
 
 #  print STDERR $sql,"\n";
 
@@ -528,8 +529,6 @@ sub _objs_from_sth {
     } else {
       push @members, $member;
     }
-    my $gene = $self->fetch_gene_for_peptide_member_id($member->dbID);
-    $member->gene_member($gene);
     
   }
   return \@members
@@ -685,6 +684,18 @@ sub store_source {
   }
 }
 
+
+=head2 store_gene_peptide_link
+  Arg [1]    : int member_id of gene member
+  Arg [2]    : int member_id of peptide member
+  Example    : $memberDBA->store_gene_peptide_link($gene->dbID, $peptide->dbID);
+  Description: creates link relationship between gene members and their translated
+               peptide members. Store relationship in member_gene_peptide table
+               FOR PRODUCTION PURPOSES ONLY
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+=cut
 
 sub store_gene_peptide_link {
   my ($self, $gene_member_id, $peptide_member_id) = @_;
