@@ -212,7 +212,10 @@ sub store{
 
    my $sth = $self->prepare("insert into protein (protein_external_id,protein_db_id,seq_start,seq_end,strand,dnafrag_id) values (?,?,?,?,?,?)");
 
-   $sth->execute($protein->external_id,$protein->proteinDB->dbID,$protein->seq_start,$protein->seq_end,$protein->strand,$protein->dnafrag->dbID);
+   my $dnafrag_id;
+   $dnafrag_id = (defined $protein->dnafrag) ? $protein->dnafrag->dbID : ''; 
+
+   $sth->execute($protein->external_id,$protein->proteinDB->dbID,$protein->seq_start,$protein->seq_end,$protein->strand,$dnafrag_id);
 
    $protein->dbID($sth->{'mysql_insertid'});
    $protein->adaptor($self);

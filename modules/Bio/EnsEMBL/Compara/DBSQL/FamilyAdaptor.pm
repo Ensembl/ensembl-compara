@@ -72,14 +72,15 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   my $sth = $self->prepare("select threshold,description from family where family_id = $dbid");
+   my $sth = $self->prepare("select threshold,description,annotation_confidence_score from family where family_id = $dbid");
    $sth->execute;
-   (my ($threshold,$description) = $sth->fetchrow_array()) or 
+   (my ($threshold,$description,$annot_score) = $sth->fetchrow_array()) or 
        $self->throw("No family with this dbID $dbid");
 
    my $family = Bio::EnsEMBL::Compara::Family->new( 	-dbid 	=> $dbid,
 							-threshold => $threshold,
 							-description => $description,
+							-annotationscore=>$annot_score,
 							-adaptor => $self);
 
    $sth = $self->prepare("select protein_id,rank from family_protein where family_id = $dbid");
@@ -206,15 +207,14 @@ sub store{
     
    ###store family### 
 
-   my $sth = $self->prepare("INSERT INTO family(threshold,description) VALUES (?,?)");
-   $sth->execute($family->threshold,$family->description);
+   my $sth = $self->prepare("INSERT INTO family(threshold,description,annotation_confidence_score) VALUES (?,?,?)");
+   $sth->execute($family->threshold,$family->description,$family->annotation_score);
    my $dbID = $sth->{'mysql_insertid'};
 
    $family->dbID($dbID);
    $family->adaptor($self);
   
    ###store family members###
-   my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,rank,score) VALUES(?,?,?,?)");
    my $rank = 0;
 
    my @members = sort {$b->family_score <=> $a->family_score} $family->get_all_members();
@@ -229,12 +229,34 @@ sub store{
 		$rank++;
 	}
 
-    ###store proteins into protein table if not there###
-    $self->db->get_ProteinAdaptor->store_if_needed($mem);
+    $self->db->get_ProteinAdaptor->store_if_needed($mem);#store into protein table if not already there
 #	$self->throw("Protein rank not defined!") unless defined($mem->family_rank);
     $self->throw("Protein dbID not defined!") unless defined($mem->dbID);
-	$sth->execute($dbID,$mem->dbID,$rank,$mem->family_score);
+   my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,rank,score) VALUES(?,?,?,?)");
+    $sth->execute($dbID,$mem->dbID,$rank,$mem->family_score);#store into family_protein
+
    }
+    ####store family stable_id###
+    my $sth = $self->prepare("INSERT INTO family_stable_id(family_id, stable_id) VALUES (?,?)");
+    
+    if (defined $family->stable_id){
+	$sth->execute($family->dbID, $family->stable_id);
+    }
+    else {
+	my $stable_id;
+	my $sth = $self->prepare("SELECT MAX(stable_id) from family_stable_id");
+	$sth->execute;
+	my $max= $sth->fetchrow_array;
+	if (!$max){
+		$stable_id = "ENSF00000000001";
+	}
+	else {
+		$max++;
+		$stable_id = $max; 
+	}	
+	$sth->execute($family->dbID,$stable_id);
+    }
+   
    return $family->dbID;
 }
 

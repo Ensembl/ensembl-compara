@@ -50,7 +50,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ProteinDB;
-
+use Bio::DB::SQL::DBAdaptor;
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
@@ -202,7 +202,10 @@ sub store_DBAdaptor{
    $self->throw("Trying to store DBAdaptor without valid arg") unless defined $dba;
  
    my $name = $dba->dbname;
-   my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=$name;user=".$dba->username.";pass=".$dba->password;
+   my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=$name;user=".$dba->username.";pass=";
+   if (!$dba->isa("Bio::DB::SQL::DBAdaptor")){
+	$locator.=$dba->password;
+   }   
  
     my $query = "Select protein_db_id from protein_db where name = '$name' and locator = '$locator'";
    my $sth = $self->prepare($query);
