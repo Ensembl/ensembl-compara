@@ -12,7 +12,7 @@ sub my_label { return "Sequence"; }
 sub features {
     my ($self) = @_;
     my $start = 0;
-    my $seq = $self->{'container'}->seq;
+    my $seq = uc($self->{'container'}->seq);
     my $strand = $self->strand;
     if($strand == -1 ) { $seq=~tr/ACGT/TGCA/; }
     my @features = map { 
