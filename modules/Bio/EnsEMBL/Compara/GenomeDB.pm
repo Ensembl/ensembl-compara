@@ -84,8 +84,8 @@ sub db_adaptor{
   my ( $self, $dba ) = @_;
 
   if($dba) {
-    unless(ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
-      $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBConnection not a [$dba]\n");
+    unless(ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
+      $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
     }
     $self->{'_db_adaptor'} = $dba;
   }
