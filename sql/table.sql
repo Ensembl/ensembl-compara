@@ -8,7 +8,8 @@ create table genome_db (
        genome_db_id integer(10) NOT NULL auto_increment,
        name varchar(40) NOT NULL,
        locator varchar(255) NOT NULL,
-       PRIMARY KEY(genome_db_id)
+       PRIMARY KEY(genome_db_id),
+       UNIQUE KEY (name,locator)
 );
 
 
@@ -16,10 +17,11 @@ create table dnafrag (
        dnafrag_id integer(10) NOT NULL auto_increment,
        name      varchar(40) NOT NULL,
        genome_db_id integer(10) NOT NULL,
-       dnafrag_type ENUM ( 'RawContig', 'Chromosome'),
+       dnafrag_type ENUM ('RawContig','Chromosome','VirtualContig'),
        PRIMARY KEY(dnafrag_id), 
+#       UNIQUE KEY (name,dnafrag_type)
        KEY (dnafrag_id, name),
-       UNIQUE KEY (name)
+       UNIQUE KEY (name,genome_db_id,dnafrag_type)
 );
 
 #
@@ -43,7 +45,6 @@ create table dnafrag_region (
     UNIQUE KEY unique_synteny (synteny_region_id,dnafrag_id),
     UNIQUE KEY unique_synteny_reversed (dnafrag_id,synteny_region_id)
 );
-
 
 
 
@@ -78,12 +79,18 @@ CREATE TABLE gene_relationship_member (
 
 
 
+
+
+
+
+
 create table align (
        align_id integer(10) NOT NULL auto_increment,
        score    varchar(20),
        align_name     varchar(40),
 
-       PRIMARY KEY (align_id)
+       PRIMARY KEY (align_id),
+       KEY (align_name)
 );
 
 create table align_row (
@@ -103,6 +110,7 @@ create table genomic_align_block (
        raw_strand    integer(10) NOT NULL,
        score         double   ,
        perc_id       integer(10) ,
+       cigar_line    mediumtext,
 
        PRIMARY KEY (align_id,align_start,align_end,align_row_id,dnafrag_id),
        KEY (dnafrag_id,raw_start,raw_end),
@@ -119,15 +127,17 @@ create table genomic_align_block (
 
 CREATE TABLE protein (
   protein_id int(10) unsigned DEFAULT '0' NOT NULL auto_increment,
+  protein_sequence_id int(10) NOT NULL,
   protein_external_id varchar(40) DEFAULT '0' NOT NULL,
-  protein_db_id int(10) NOT NULL,
-  seq_start int(10) unsigned DEFAULT '0' NOT NULL,
-  seq_end int(10) unsigned DEFAULT '0' NOT NULL,
-  strand int(10) unsigned DEFAULT '0' NOT NULL,
-  dnafrag_id int(10) DEFAULT '' NOT NULL,
+  protein_external_dbname varchar(40) NOT NULL,
+  dnafrag_id int(10) DEFAULT '' ,
+  seq_start int(10) unsigned DEFAULT '0' ,
+  seq_end int(10) unsigned DEFAULT '0' ,
+  strand tinyint(2) DEFAULT '0' ,
 
   PRIMARY KEY (protein_id),
   KEY (dnafrag_id),
+  KEY (protein_sequence_id),
   UNIQUE KEY (protein_external_id)
 
 );
@@ -137,25 +147,18 @@ CREATE TABLE protein (
 # protein_external_id - id of protein in another database (stable_id if external_id is an ensembl core database)
 # dnafrag_id - foreign key (dnafrag internal id from dnafrag table)
 # seq_start, seq_end - coordinates of the protein on the dnafrag
-# protein_db_id - foreign key of protein_db table
 
+CREATE TABLE protein_sequence(
+       protein_sequence_id int(10) NOT NULL auto_increment,
+       sequence mediumtext,
 
-create table protein_db (
-       protein_db_id integer(10) NOT NULL auto_increment,
-       name varchar(40) NOT NULL,
-       locator varchar(255) NOT NULL,
-
-       PRIMARY KEY(protein_db_id)
+       PRIMARY KEY(protein_sequence_id)
 );
 
 # SEMANTICS
-# protein_db_id - internal 
-# name- name of protein database
-# locator- locator string to the database
+# protein_sequence_id - internal id 
+# sequence - protein sequence
 
-#
-# Table structure for table 'score'
-#
 CREATE TABLE score (
   score_id    int(10) NOT NULL auto_increment,
   score       int(10) NOT NULL,
@@ -191,10 +194,10 @@ CREATE TABLE score_protein (
 # Table structure for table 'family_'
 #
 CREATE TABLE family (
-   family_id    int(10) unsigned NOT NULL auto_increment,
-   family_stable_id varchar(10), # ensembl family ids 
-   threshold    int(10) NOT NULL,
+   family_id    int(10) NOT NULL auto_increment,
+   threshold    int(10) ,
    description  varchar(255), 
+   annotation_confidence_score double DEFAULT 0,
 
    PRIMARY KEY(family_id),
    KEY (threshold)
@@ -204,60 +207,98 @@ CREATE TABLE family (
 # threshold - similarity threshold with which the family was built 
 
 #
-# Table structure for table 'family_protein'
+# Table structure for table 'family_'
 #
-CREATE TABLE family_protein (
-   family_id     int(10) unsigned NOT NULL,
-   protein_id    int(10) NOT NULL,
-   rank          int(10) NOT NULL,
- 
+CREATE TABLE family_stable_id (
+   family_id	int(10) NOT NULL auto_increment,
+   stable_id varchar(40), # ensembl family ids
+   version   int(10) DEFAULT '1' NOT NULL,
+   created   datetime NOT NULL,
+   modified  datetime NOT NULL,
+    
    PRIMARY KEY(family_id),
-   KEY (protein_id),
-   KEY (rank)
+   UNIQUE(stable_id,version)
 );
 # SEMANTICS
 # family_id - internal id
-# protein_id - foreign key from protein table
-# rank - the rank of this protein within the family
+# threshold - similarity threshold with which the family was built
+
+
+#
+#Table structure for table 'family_alignment'
+#
+CREATE TABLE family_alignment (
+   family_alignment_id	int(10) unsigned NOT NULL auto_increment,
+   family_id int(10) unsigned NOT NULL, # ensembl family ids
+   alignment_type varchar(40) NOT NULL,
+   alignment_cigar_line mediumtext,
+
+   PRIMARY KEY(family_alignment_id),
+   UNIQUE KEY(family_id ,alignment_type),
+   KEY(alignment_type)
+);
+
+# SEMANTICS
+# family_alignment_id - internal id
+# family - the family for which the multiple alignment was done on
+# alignment - the alignment string
+
+#
+# Table structure for table 'family_protein'
+#
+CREATE TABLE family_protein (
+   family_protein_id     int(10) unsigned NOT NULL auto_increment,
+   family_id     int(10) NOT NULL,
+   protein_id    int(10) NOT NULL,
+   score         float(10) DEFAULT 0,
+ 
+   PRIMARY KEY(family_protein_id),
+   KEY(family_id),
+   KEY (protein_id)
+);
+# SEMANTICS
+# family_protein_id - internal id
+# family_id - foreign key to family table
+# protein_id - foreign key to protein table
+# score - the score of this protein associated with this family
 # Families are simply collections of proteins, and each protein
 # has a rank in the family according to how closely similar it is to the best match in the family
 
 #
-# Table structure for table 'conserved_segment'
+# Table structure for table 'conserved_clusters'
 #
-CREATE TABLE conserved_segment (
-  conserved_segment_id    int(10) unsigned NOT NULL auto_increment,
-  conserved_genes_families         int(10) unsigned NOT NULL,
+CREATE TABLE conserved_cluster(
+  conserved_cluster_id int(10) unsigned NOT NULL auto_increment,
+  conserved_gene_families         int(10) unsigned NOT NULL,
   
-  PRIMARY KEY (conserved_segment_id),
-  KEY (conserved_genes_families)
+  PRIMARY KEY (conserved_cluster_id),
+  KEY (conserved_gene_families)
 );
 # SEMANTICS
-# csonserved_segment_id - internal id
-# conserved_genes_familes - number of conserved genes famailes in the segment
+# csonserved_cluster_id - internal id
+# conserved_gene_familes - number of conserved genes famailes in the segment
 
 #
-# Table structure for table 'conserved_segment_dnafrag'
+# Table structure for table 'conserved_segment'
 #
-CREATE TABLE conserved_segment_dnafrag(
-  conserved_segment_dnafrag_id int(10) unsigned NOT NULL auto_increment,
-  conserved_segment_id           int(10) unsigned NOT NULL,
+CREATE TABLE conserved_segment(
+  conserved_segment_id int(10) unsigned NOT NULL auto_increment,
+  conserved_cluster_id           int(10) unsigned NOT NULL,
   dnafrag_id                 int(10) unsigned NOT NULL,
   seq_start               int(10) unsigned NOT NULL,
   seq_end                 int(10) unsigned NOT NULL,
-  strand                  int(10) unsigned NOT NULL,
-  intervening_genes       int(10) unsigned NOT NULL,  
+  intervening_genes       int(10) unsigned NULL,  
 #  length                  int(10) select (seq_end-seq_start),
 
-  PRIMARY KEY (conserved_segment_dnafrag_id),
-  KEY (conserved_segment_id),
+  PRIMARY KEY (conserved_segment_id),
+  KEY (conserved_cluster_id),
   KEY (dnafrag_id),
   KEY (seq_start),
   KEY (seq_end)
 );
 # SEMANTICS
-# conserved_segment_dnafrag_id - internal id
-# conserved_segment_id - foreign key to conserved_segment table
+# conserved_segment_id- internal id
+# conserved_cluster_id - foreign key to conserved_cluster table
 # dnafrag_id - foreign key from dnafrag, indicates which dna fragment
 #               this conserved segment is found on
 # seq_start - start of the conserved segment on the dnafrag
