@@ -135,9 +135,16 @@ sub fetch_input {
   # and all GenomicAlignBlocks
   ################################################################
   print "mlss: ",$self->INPUT_METHOD_LINK_TYPE," ",$qy_gdb->dbID," ",$tg_gdb->dbID,"\n";
-  my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->INPUT_METHOD_LINK_TYPE,
-                                                         [$qy_gdb,
-                                                          $tg_gdb]);
+  my $mlss;
+  if ($qy_gdb->dbID == $tg_gdb->dbID) {
+    $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->INPUT_METHOD_LINK_TYPE,
+                                                        [$qy_gdb]);
+  } else {
+    $mlssa->fetch_by_method_link_type_GenomeDBs($self->INPUT_METHOD_LINK_TYPE,
+                                                [$qy_gdb,
+                                                 $tg_gdb]);
+  }
+
   throw("No MethodLinkSpeciesSet for :\n" .
         $self->INPUT_METHOD_LINK_TYPE . "\n" .
         $qy_gdb->dbID . "\n" .
@@ -146,7 +153,11 @@ sub fetch_input {
 
   my $out_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $out_mlss->method_link_type($self->OUTPUT_METHOD_LINK_TYPE);
-  $out_mlss->species_set([$qy_gdb, $tg_gdb]);
+  if ($qy_gdb->dbID == $tg_gdb->dbID) {
+    $out_mlss->species_set([$qy_gdb]);
+  } else {
+    $out_mlss->species_set([$qy_gdb, $tg_gdb]);
+  }
   $mlssa->store($out_mlss);
 
   ######## needed for output####################

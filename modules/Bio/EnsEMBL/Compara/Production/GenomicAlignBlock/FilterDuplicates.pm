@@ -196,10 +196,10 @@ sub filter_duplicates {
   $self->{'overlap_hash'} = {};
 
   my $mlss = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->{'method_link_species_set_id'});
-  my ($gdb1, $gdb2) = @{$mlss->species_set};
-  if($gdb1->dbID > $gdb2->dbID) {
-    my $tmp = $gdb1; $gdb1=$gdb2; $gdb2=$tmp;
-  }
+#  my ($gdb1, $gdb2) = @{$mlss->species_set};
+#  if($gdb1->dbID > $gdb2->dbID) {
+#    my $tmp = $gdb1; $gdb1=$gdb2; $gdb2=$tmp;
+#  }
 
   my $GAB_DBA = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
   # create a list of dnafrag here in case we want to make this runnable working with an input_id 

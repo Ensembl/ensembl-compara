@@ -191,8 +191,12 @@ sub fetch_input {
   #
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $mlss->method_link_type($self->method_link_type);
-  $mlss->species_set([$first_qy_chunk->dnafrag->genome_db,
-                      $self->db_DnaFragChunk->dnafrag->genome_db]);
+  if ($first_qy_chunk->dnafrag->genome_db->dbID == $self->db_DnaFragChunk->dnafrag->genome_db->dbID) {
+    $mlss->species_set([$first_qy_chunk->dnafrag->genome_db]);
+  } else {
+    $mlss->species_set([$first_qy_chunk->dnafrag->genome_db,
+                        $self->db_DnaFragChunk->dnafrag->genome_db]);
+  } 
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->{'method_link_species_set'} = $mlss;
 
