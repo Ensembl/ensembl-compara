@@ -26,6 +26,8 @@ qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'
     $self->label($label);
 }
 
+#'############
+
 sub my_label {
     my ($self) = @_;
     return 'Missing label';

@@ -11,14 +11,14 @@ sub my_label { return "Haplotypes"; }
 
 sub features {
     my ($self) = @_;
-    print STDERR "Getting adaptor!!!\n";
+    #print STDERR "Getting adaptor!!!\n";
     unless( $self->{'config'}->{'_hap_adaptor'} ) {
         my $db_details = EnsWeb::species_defs->databases;
-        print STDERR "DB: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'NAME'}."\n";
-        print STDERR "UN: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'USER'}."\n";
-        print STDERR "PW: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'PASS'}."\n";
-        print STDERR "HT: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'HOST'}."\n";
-        print STDERR "PT: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'PORT'}."\n";
+        #print STDERR "DB: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'NAME'}."\n";
+        #print STDERR "UN: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'USER'}."\n";
+        #print STDERR "PW: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'PASS'}."\n";
+        #print STDERR "HT: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'HOST'}."\n";
+        #print STDERR "PT: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'PORT'}."\n";
         my $dbad = Bio::EnsEMBL::DBSQL::DBAdaptor->new( 
             -dbname => $db_details->{'ENSEMBL_HAPLOTYPE'}{'NAME'},
             -user   => $db_details->{'ENSEMBL_HAPLOTYPE'}{'USER'},
@@ -28,7 +28,7 @@ sub features {
         );
         $self->{'config'}->{'_hap_adaptor'} = Bio::EnsEMBL::ExternalData::Haplotype::HaplotypeAdaptor->new( $dbad );
     }
-    print STDERR "Getting data!!!\n";
+    #print STDERR "Getting data!!!\n";
     return $self->{'container'}->get_Haplotypes_start_end(
         $self->{'config'}->{'_hap_adaptor'}
     );
