@@ -4,7 +4,7 @@ use warnings;
 
 BEGIN { $| = 1;  
 	use Test;
-	plan tests => 6;
+	plan tests => 7;
 }
 
 use MultiTestDB;
@@ -14,7 +14,7 @@ use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 
 # switch on the debug prints
 
-our $verbose = 0;
+our $verbose = 1;
 
 my $multi = MultiTestDB->new( "multi" );
 
@@ -87,6 +87,30 @@ map { print_hashref( $_ ) } @$aligns;
 debug();
 
 
+$multi->hide( "compara", "genomic_align_block" );
+$gaa->store( $aligns );
+
+my $sth = $gaa->prepare( "select count(*) from genomic_align_block" );
+$sth->execute();
+my ( $count ) = $sth->fetchrow_array();
+$sth->finish();
+
+
+if( $verbose ) {
+  $sth = $gaa->prepare( "select * from genomic_align_block" );
+  $sth->execute();
+  while( my $aref = $sth->fetchrow_arrayref() ) {
+    debug( join( " ", @$aref ));
+  }
+  debug();
+}
+
+#######
+#  6  #
+#######
+ok( $count == 2 );
+
+
 
 sub print_hashref {
   my $hr = shift;
@@ -98,7 +122,7 @@ sub print_hashref {
 
 
 #######
-#  6  #
+#  7  #
 #######
 ok( scalar @$aligns == 2 );
 
