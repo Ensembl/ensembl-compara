@@ -48,6 +48,10 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
   usage(); 
 }
 
+if(not(-d $analysis_template{'fasta_dir'})) {
+  die("\nERROR!!\n  ". $analysis_template{'fasta_dir'} . " fasta_dir doesn't exist, can't configure\n");
+}
+
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
 # this is to avoid using global variables in functions, and to consolidate
