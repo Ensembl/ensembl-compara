@@ -1,4 +1,4 @@
-create table hive (
+CREATE TABLE hive (
   hive_id          int(10) NOT NULL auto_increment,
   analysis_id      int(10) NOT NULL,
   host	           varchar(40) DEFAULT '' NOT NULL,
@@ -42,6 +42,34 @@ CREATE TABLE simple_rule (
 );
 
 
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'network_rule'
+--
+-- overview:
+--   Extension of simple_rule design except that goal is now in extended URL format e.g.
+--   mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
+--   (full network address of an analysis).  The only requirement is that there are rows in 
+--   the analysis_job, analysis, network_rule, and hive tables so that the following join
+--   works on the same database 
+--   WHERE analysis.analysis_id = network_rule.condition_analysis_id 
+--   AND analysis_job.analysis_id=analysis.analysis_id
+--   AND hive.analysis_id=analysis.analysis_id
+--  
+--   The analysis table will be extended so that it can specify different read and write
+--   databases, with the default being the database the analysis is on
+--
+-- semantics:
+--   condition_analysis_id    - foreign key to analysis table analysis_id
+--   goal_analysis_url        - foreign key to net distributed analysis reference
+
+CREATE TABLE network_rule (
+  condition_analysis_id    int(10) unsigned NOT NULL,
+  goal_analysis_url        varchar(255) default '' NOT NULL,
+
+  UNIQUE (condition_analysis_id, goal_analysis_url)
+);
+
 
 CREATE TABLE analysis_job (
   analysis_job_id        int(10) NOT NULL auto_increment,
@@ -58,6 +86,7 @@ CREATE TABLE analysis_job (
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
   INDEX job_claim_analysis     (job_claim, analysis_id)
+  INDEX job_status_analysis    (status, analysis_id)
 );
 
 
