@@ -63,6 +63,7 @@ use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor Bio::EnsEMBL::Compara::DBSQL::DBAdaptor);
 
@@ -95,8 +96,9 @@ sub store {
   my ($self, $method_link_species_set) = @_;
   my $sth;  
 
-  $self->throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
-    unless $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet");
+  throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
+    unless ($method_link_species_set &&
+        $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
   my $method_link_sql = qq{SELECT 1 FROM method_link WHERE method_link_id = ?};
   
@@ -115,7 +117,7 @@ sub store {
   $sth = $self->prepare($method_link_sql);
   $sth->execute($method_link_id);
   if (!$sth->fetchrow_array) {
-    $self->throw("method_link_id $method_link_id is not in the database!\n");
+    throw("method_link_id $method_link_id is not in the database!\n");
   }
 
   ## Fetch genome_db_ids from Bio::EnsEMBL::Compara::GenomeDB objects
@@ -140,8 +142,9 @@ sub store {
   
   if (!$dbID) {
     $sth = $self->prepare($method_link_species_sql);
+    $dbID = $method_link_species_set->dbID();
     foreach my $genome_db_id (@genome_db_ids) {
-      $sth->execute($dbID, $method_link_id, $genome_db_id);
+      $sth->execute(($dbID or "NULL"), $method_link_id, $genome_db_id);
       $dbID = $sth->{'mysql_insertid'};
     }
   }
