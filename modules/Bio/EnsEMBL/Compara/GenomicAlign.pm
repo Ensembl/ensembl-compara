@@ -830,6 +830,7 @@ sub genomic_align_groups {
     foreach my $this_genomic_align_group (@$genomic_align_groups) {
       my $type = $this_genomic_align_group->type;
       $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
+      $self->{'genomic_align_group_id'}->{$type} = $this_genomic_align_group->dbID;
     }
   }
 
@@ -867,10 +868,48 @@ sub genomic_align_group_by_type {
     my $genomic_align_groups = $self->adaptor->db->get_GenomicAlignGroupAdaptor->fetch_all_by_GenomicAlign($self);
     foreach my $this_genomic_align_group (@$genomic_align_groups) {
       $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
+      $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
     }
   }
 
   return $self->{'genomic_align_group'}->{$type};
+}
+
+
+=head2 genomic_align_group_id_by_type
+ 
+  Arg [1]    : [mandatory] string $type (genomic_align_group.type)
+  Arg [2]    : [optional] int $genomic_align_group_id
+  Example    : $genomic_align_group_id = $genomic_align->genomic_align_group_by_type("default");
+  Example    : $genomic_align->genomic_align_group_by_type("default", 18);
+  Description: get/set for the genomic_align_group_id corresponding to this
+               Bio::EnsEMBL::Compara::GenomicAlign object and the given type.
+  Returntype : int
+  Exceptions : none
+  Caller     : object::methodname
+ 
+=cut
+
+sub genomic_align_group_id_by_type {
+  my ($self, $type, $genomic_align_group_id) = @_;
+
+  $type = "default" if (!$type);
+
+  if (defined($genomic_align_group_id)) {
+    $self->{'genomic_align_group_id'}->{$type} = $genomic_align_group_id;
+
+  } elsif (!defined($self->{'genomic_align_group_id'}->{$type}) and defined($self->{'dbID'})
+          and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
+    my $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_GenomicAlign($self);
+    foreach my $this_genomic_align_group (@$genomic_align_groups) {
+      $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
+      $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
+    }
+  }
+
+  return $self->{'genomic_align_group_id'}->{$type};
 }
 
 
