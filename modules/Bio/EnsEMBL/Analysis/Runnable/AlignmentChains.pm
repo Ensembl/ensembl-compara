@@ -198,6 +198,7 @@ sub run {
   ##################################
   open $fh, $chain_file or throw("Could not open chainfile '$chain_file' for reading\n");
   my $chains = $self->parse_Chain_file($fh);
+  close($fh);
 
   $self->output($chains);  
   unlink $chain_file, @nib_files;
