@@ -28,15 +28,6 @@ sub _init {
     #
     return unless ($self->strand() == 1);
 
-    # This sucks hard. We already have a map DB connection, can anyone find it?
-#    my $mapdb   = new Bio::EnsEMBL::Map::DBSQL::Obj(   
-#                            -user   => $ENSEMBL_DBUSER, 
-#                            -dbname => $ENSEMBL_MAP,
-#                            -host   => $ENSEMBL_HOST,
-#                            -port   => $ENSEMBL_HOST_PORT,
-#                            -ensdb  => $ENSEMBL_DB,
-#                            );
-#    my $fpc_map = $mapdb->get_Map( 'FPC' );
 	my $vc = $self->{'container'};
     my $length   = $vc->length() +1;
     my $Config   = $self->{'config'};
