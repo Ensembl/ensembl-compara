@@ -118,8 +118,8 @@ sub new {
     'label_coding' => 'white',
     'label_utr'    => 'black',
     'label_intron' => 'white',
-    'label_local'  => 'black',
-    'label_'       => 'black',
+    'label_local'  => 'white',
+    'label_'       => 'white',
   );
   $self->colourSet( 'marker',
     ''               => 'magenta',
