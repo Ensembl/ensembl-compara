@@ -84,7 +84,10 @@ sub _init {
     		foreach my $DB_link ( @temp_geneDBlinks ) {
                 my $db = $DB_link->database();
                 # reset if precedence is higher!
-                $label = $DB_link->display_id() if( $db_names{$db} && $db_names{$db}>$max_pref);
+                if( $db_names{$db} && $db_names{$db}>$max_pref) {
+                    $label = $DB_link->display_id();
+                    $max_pref = $db_names{$db};
+                }
     		}
             # check for highlighting
 	    	if (exists $highlights{$label}){
