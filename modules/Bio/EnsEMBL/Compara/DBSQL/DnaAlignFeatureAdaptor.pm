@@ -113,8 +113,20 @@ sub fetch_all_by_species_region {
   my @out = ();
 
   foreach my $df (@$dnafrags) {
-    #retreive subject/query alignments for each dna fragment
-    my $genomic_aligns = $gaa->fetch_all_by_dnafrag_genomedb($df, $qy_gdb);
+    #caclulate coords relative to start of dnafrag
+    my $df_start = $start - $df->start + 1;
+    my $df_end   = $end   - $df->start + 1;
+
+    #constrain coordinates so they are completely within the dna frag
+    my $len = $df->end - $df->start + 1;
+    $df_start = ($df_start < 1)  ? 1 : $df_start;
+    $df_end   = ($df_end > $len) ? $len : $df_end;
+
+    #fetch all alignments in the region we are interested in
+    my $genomic_aligns = $gaa->fetch_all_by_dnafrag_genomedb($df, 
+							     $qy_gdb,
+							     $df_start, 
+							     $df_end);
 
     #convert genomic aligns to dna align features
     foreach my $ga (@$genomic_aligns) {
@@ -127,9 +139,9 @@ sub fetch_all_by_species_region {
       my $cend   = $df->start + $ga->consensus_end - 1;
       
       #skip features which do not overlap the requested region
-      next if ($cstart > $end || $cend < $start);
+      #next if ($cstart > $end || $cend < $start); 
 
-      $f->contig($df->contig);
+      $f->seqname($df->contig->chr_name);
       $f->start($cstart);
       $f->end($cend);
       $f->strand(1);
@@ -140,7 +152,7 @@ sub fetch_all_by_species_region {
       $f->hstart($qdf->start + $ga->query_start - 1);
       $f->hend($qdf->start + $ga->query_end -1);
       $f->hstrand($ga->query_strand);
-      $f->hseqname($qdf->contig->name);
+      $f->hseqname($qdf->contig->chr_name);
       $f->hspecies($qy_species);
 
       push @out, $f;
