@@ -1,4 +1,3 @@
-
 #
 # Ensembl module for Bio::EnsEMBL::DBSQL::GenomicAlign
 #
@@ -44,9 +43,6 @@ package Bio::EnsEMBL::Compara::GenomicAlign;
 use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::Compara::AlignBlock;
-use Bio::EnsEMBL::Compara::AlignBlockSet;
-
 # Object preamble
 
 use Bio::EnsEMBL::Root;
@@ -61,25 +57,26 @@ sub new {
     my $self = {};
     bless $self,$class;
     
-    my ($align_id,$align_row_id,$adaptor,$align_name) = $self->_rearrange([qw(ALIGN_ID ALIGN_ROW_ID ADAPTOR ALIGN_NAME)],@args);
+    my ( $consensus_dnafrag, $consensus_start, $consensus_end,
+	 $query_dnafrag, $query_start, $query_end, $query_strand,
+	 $score, $perc_id, $cigar_line, $adaptor ) = 
+      $self->_rearrange([qw(CONSENSUS_DNAFRAG CONSENSUS_START CONSENSUS_END
+                            QUERY_DNAFRAG QUERY_START QUERY_END
+			    QUERY_STRAND SCORE PERC_ID CIGAR_LINE
+			    ADAPTOR )],@args);
 
-    if (defined $align_id) {
-      $self->align_id($align_id);
-    }
-    if (defined $align_row_id) {
-      $self->align_row_id($align_row_id);
-    }
-    if (defined $adaptor) {
-      $self->adaptor($adaptor);
-    }
-    if (defined $align_name) {
-      $self->align_name($align_name);
-    }
-     
-    $self->{'_align_block'} = {};
-    $self->_loaded_align_block(0);
+    $self->adaptor( $adaptor ) if defined $adaptor;
+    $self->consensus_dnafrag( $consensus_dnafrag ) if defined $consensus_dnafrag;
+    $self->consensus_start( $consensus_start ) if defined $consensus_start;
+    $self->consensus_end( $consensus_end ) if defined $consensus_end;
+    $self->query_dnafrag( $query_dnafrag ) if defined $query_dnafrag;
+    $self->query_start( $query_start ) if defined $query_start;
+    $self->query_end( $query_end ) if defined $query_end;
+    $self->query_strand( $query_strand ) if defined $query_strand;
+    $self->score( $score ) if defined $score;
+    $self->perc_id( $perc_id ) if defined $perc_id;
+    $self->cigar_line( $cigar_line ) if defined $cigar_line;
 
-# set stuff in self from @args
     return $self;
 }
 
@@ -438,30 +435,9 @@ sub _loaded_align_block{
 
 ### getters and setters ###
 
-=head2 dbID
- 
-  Arg [1]    : int $dbID
-  Example    : none
-  Description: get/set for attribute dbID
-  Returntype : int
-  Exceptions : none
-  Caller     : set only by adaptor on store or retrieve
- 
-=cut
- 
- 
-sub dbID {
-   my ($self, $arg) = @_;
- 
-   if ( defined $arg ) {
-      $self->{'_dbID'} = $arg ;
-   }
-   return $self->{'_dbID'};
-}
 
 
-
-=head2 consensus_dnafrag_id
+=head2 consensus_dnafrag
  
   Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $consensus_dnafrag
   Example    : none
@@ -471,15 +447,15 @@ sub dbID {
   Caller     : general
  
 =cut
- 
- 
-sub consensus_dnafrag_id {
+
+
+sub consensus_dnafrag {
    my ($self, $arg) = @_;
  
    if ( defined $arg ) {
-      $self->{'consensus_dnafrag_id'} = $arg ;
+      $self->{'consensus_dnafrag'} = $arg ;
    }
-   return $self->{'consensus_dnafrag_id'};
+   return $self->{'consensus_dnafrag'};
 }
 
 
@@ -494,8 +470,8 @@ sub consensus_dnafrag_id {
   Caller     : general
  
 =cut
- 
- 
+
+
 sub consensus_start {
    my ($self, $arg) = @_;
  
@@ -517,8 +493,8 @@ sub consensus_start {
   Caller     : general
  
 =cut
- 
- 
+
+
 sub consensus_end {
    my ($self, $arg) = @_;
  
@@ -530,25 +506,25 @@ sub consensus_end {
 
 
 
-=head2 query_dnafrag_id
+=head2 query_dnafrag
  
   Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $query_dnafrag
   Example    : none
-  Description: get/set for attribute query_dnafrag_id
+  Description: get/set for attribute query_dnafrag
   Returntype : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Exceptions : none
   Caller     : general
  
 =cut
- 
- 
-sub query_dnafrag_id {
+
+
+sub query_dnafrag {
    my ($self, $arg) = @_;
  
    if ( defined $arg ) {
-      $self->{'query_dnafrag_id'} = $arg ;
+      $self->{'query_dnafrag'} = $arg ;
    }
-   return $self->{'query_dnafrag_id'};
+   return $self->{'query_dnafrag'};
 }
 
 
@@ -563,8 +539,7 @@ sub query_dnafrag_id {
   Caller     : general
  
 =cut
- 
- 
+
 sub query_start {
    my ($self, $arg) = @_;
  
@@ -586,8 +561,7 @@ sub query_start {
   Caller     : general
  
 =cut
- 
- 
+
 sub query_end {
    my ($self, $arg) = @_;
  
@@ -608,8 +582,7 @@ sub query_end {
   Caller     : general
  
 =cut
- 
- 
+
 sub query_strand {
    my ($self, $arg) = @_;
  
@@ -631,8 +604,7 @@ sub query_strand {
   Caller     : general
  
 =cut
- 
- 
+
 sub score {
    my ($self, $arg) = @_;
  
@@ -654,8 +626,7 @@ sub score {
   Caller     : general
  
 =cut
- 
- 
+
 sub perc_id {
    my ($self, $arg) = @_;
  
@@ -677,8 +648,7 @@ sub perc_id {
   Caller     : general
  
 =cut
- 
- 
+
 sub cigar_line {
    my ($self, $arg) = @_;
  
