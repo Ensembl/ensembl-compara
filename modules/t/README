@@ -41,6 +41,26 @@ ensembl-test/scripts/runtests.pl t/dnaFrag.t
 #run all tests in the current directory and clean up
 ensembl-test/scripts/runtests.pl -c
 
+Which data is compara and core test databases
+=============================================
+
+Homo sapiens chr 14 between 50,000,000 and 50,250,000 bp position was the primary species
+region to pull out data from.
+You can find such region definition in
+homo_sapiens.seq_region_file,
+mus_musculus.seq_region_file,
+rattus_norvegicus.seq_region_file
+files, so that you know which region are available to fetch data from
+
+in compara db, you have 
+BLASTZ_NET alignments between human/mouse and human/rat
+Orthologues between human/mouse and human/rat
+2 Families and all members for these 2 families 
+
+in core dbs, you can pull out dna sequence, repeat features, genes, transcripts,
+translation, exons, and meta info, only for the genomic regions detailed in the
+*.seq_region_file.
+
 Creating the small test databases in test-genome-DBs.zip
 ========================================================
 
