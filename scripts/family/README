@@ -88,7 +88,7 @@ homo_sapiens_core_20_34b Hs34b
 mus_musculus_core_20_32 Mm32
 rattus_norvegicus_core_20_3b Rn3b
 
-nohup cat core_dbs | awk '!/^#/' | while read i j;do /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/dumpTranslation.pl -host ecs2d -dbname $i -file $j.pep -taxon_file $j.desc > $j.dump.err 2>&1 ;done > alldumps.err 2>&1 &       
+nohup cat core_dbs | awk '!/^#/' | while read i j;do /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/dumpTranslation.pl -host ecs2d -port 3306 -dbname $i -file $j.pep -taxon_file $j.desc > $j.dump.err 2>&1 ;done > alldumps.err 2>&1 &       
 
 check the peptide numbers you get to see if they are what it is expected. Translation like X+ are not kept in the dumps. 
 
@@ -107,11 +107,10 @@ fastaindex /data/blastdb/Ensembl/family/metazoa_20_1.pep /data/blastdb/Ensembl/f
 6A- removing redundancy in the fasta file
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Do that on whatever ecs2 nodes only.
 Remove redundant entries before running the blastp
 
-~/src/ensembl_main/ensembl-compara/scripts/family/GenerateNonRedudantSet.pl /data/blastdb/Ensembl/family/metazoa_20_1.pep \
-/data/blastdb/Ensembl/family/metazoa_20_1.index /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep \
-metazoa_20_1.RedundantIds
+bsub -m ecs2_hosts -o metazoa_20_1.RedundantIds.err ~/src/ensembl_main/ensembl-compara/scripts/family/GenerateNonRedudantSet.pl /data/blastdb/Ensembl/family/metazoa_20_1.pep /data/blastdb/Ensembl/family/metazoa_20_1.index /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep metazoa_20_1.RedundantIds
 
 Generate the mcl entry index
 
@@ -274,13 +273,16 @@ ensembl-compara/sql
 
 NB: This step will load the sequence for ENSEMBLPEP only, not for SWISSPROT or SPTREMBL entries. Those will be loaded in the clustalw step...Should change things here to load them all at once...
 
+Set up a Compara.conf file following the example in 
+~/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
+
 This can take a while, several hours, and you can not do anything else before the loading is completed.
 
-nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl -host ecs2b -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 -conf_file Compara.conf family_20_1.mcl.gz family_20_1.tab ../srs/metazoa_20_1.desc.gz ../srs/metazoa_20_1.RedundantIds > family_20_1.description 2> family_20_1.description.err &
+nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl -host ecs2b -port 3306 -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 -conf_file Compara.conf family_20_1.mcl.gz family_20_1.tab ../srs/metazoa_20_1.desc.gz ../srs/metazoa_20_1.RedundantIds > family_20_1.description 2> family_20_1.description.err &
 
 Then make sure to load the sequences for SWISSPROT/SPTREMBL loaded in compara.
 
-nohup ~/src/ensembl_main/ensembl-compara/scripts/family/LoadSeqInFamily.pl -host ecs2b -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 ../srs/metazoa_20_1.desc.gz /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep > family_20_1.seqload 2>&1 &
+nohup ~/src/ensembl_main/ensembl-compara/scripts/family/LoadSeqInFamily.pl -host ecs2b -port 3306 -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 ../srs/metazoa_20_1.desc.gz /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep > family_20_1.seqload 2>&1 &
 
 12- Generates the family descriptions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,7 +302,7 @@ family_20_1.description.SPTREMBL-consensus  > family_20_1.description-consensus 
 
 update the family description in ensembl_family_20_1 with the data in family_20_1.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
 
-LoadDescriptionInFamily.pl -host ecs2d -port -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_20_1 family_20_1.description-consensus
+LoadDescriptionInFamily.pl -host ecs2d -port 3306 -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_20_1 family_20_1.description-consensus
 
 
 13- Run clustalw over all the families
@@ -317,7 +319,7 @@ cd 27152
  
 Submit jobs for family_id from 20001 to 27152
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host ecs2b -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx -family_id ${LSB_JOBINDEX} -fasta_file /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fasta_index /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -store' | bsub -q small -JFamilyClustalw"[20001-27152]" -o %I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host ecs2b -port 3306 -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx -family_id ${LSB_JOBINDEX} -fasta_file /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fasta_index /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -store' | bsub -q small -JFamilyClustalw"[20001-27152]" -o %I.out
 
 NB: For very small families or singletons, the -q small is the right queue to use, as jobs will be extremely quick. For largest families, let's say from family_id 1 to 500 however (where number of members are often > 150), jobs can be longer, and so the -q normal should be used instead of -q small
 
@@ -371,14 +373,16 @@ If everything worked fine, you should get 3 additional files, 1.out (the busb ou
 1.ids.dnd, 1.ids.pep.clw, the clustalw outputs.
 
 To Load the clustalw alignment,
-/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host ecs2b -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx -family_id 1 -clustal_file 1.ids.pep.clw -store > 1.ids.pep.clw.load 2>&1 &
+/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host ecs2b -port 3306 -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx -family_id 1 -clustal_file 1.ids.pep.clw -store > 1.ids.pep.clw.load 2>&1 &
 
 14- Insert the redundant proteins in the compara db
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd ../srs
 
-ensembl-compara/scripts/family/InsertRedundantInFamilies.pl -host ecs2b -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx metazoa_20_1.RedundantIds metazoa_20_1.desc.gz /data/blastdb/Ensembl/family/metazoa_20_1.pep > metazoa_20_1.RedundantIds.load.err 2>&1 &
+awk '{for (i=2;i<=NF;i++) print $i}' metazoa_20_dryrun.RedundantIds|fastafetch /data/blastdb/Ensembl/family/metazoa_20_dryrun.pep /data/blastdb/Ensembl/family/metazoa_20_dryrun.index stdin |grep -v "^Message" > metazoa_20_1.RedundantIds.pep
+
+~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantInFamilies.pl -host ecs2b -port 3306 -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx -conf_file ../mcl/Compara.conf metazoa_20_1.RedundantIds metazoa_20_1.desc.gz metazoa_20_1.RedundantIds.pep > metazoa_20_1.RedundantIds.load.err 2>&1 &
 
 15- Insert the gene stable ids
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -405,7 +409,7 @@ mysql> select * from genome_db;
 
 Once the genome_db is loaded, run the following script to load the gene stable ids:
 
-~/src/ensembl_main/ensembl-compara/scripts/family/InsertGenesInFamilies.pl -host ecs2d -dbname ensembl_family_20_1 -dbuser ecs2dadmin -dbpass TyhRv -conf_file ~/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf > ../geneLoading 2>&1
+~/src/ensembl_main/ensembl-compara/scripts/family/InsertGenesInFamilies.pl -host ecs2d -port 3306 -dbname ensembl_compara_20_1 -dbuser ecs2dadmin -dbpass xxxx -conf_file ../mcl/Compara.conf > geneLoading 2>&1
 
 16- Run the HealthCheck test suite on the database
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
