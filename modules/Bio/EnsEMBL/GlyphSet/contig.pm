@@ -60,7 +60,6 @@ sub _init {
 
   # Do we have assembly_contigs?
     $useAssembly = $vc->has_MapSet( 'assembly' ); 
-
     if (!@$contig_tiling_path) {
     ## Draw a warning track....
         $self->errorTrack("Golden path gap - no contigs to display!");
@@ -142,6 +141,7 @@ sub _init_assembled_contig {
     my $FLAG = 0;
   
     foreach( sort { $big_contigs{$a}->[0] <=> $big_contigs{$b}->[0] } keys %contigs ) {
+
         my $composite = new Sanger::Graphics::Glyph::Composite({
 		    'y'            => $ystart-3,
 			'x'            => $big_contigs{$_}->[0]-1,
@@ -426,7 +426,7 @@ sub _init_non_assembled_contig {
     		       '02:Centre on contig' => $glyph->{'href'},
 		       "04:Export this contig" => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=contig&id=$rid"
     		};
-	    if ($clone){
+	    if ($clone =~ /^[A-Z]{2,4}\d+$/ ){ # Check for valid EMBL ID
 		$glyph->{'zmenu'}{"01:Clone: $clone"};
 		$glyph->{'zmenu'}{"03:EMBL source file"} = 
 		$self->ID_URL( 'EMBL', $clone);	
