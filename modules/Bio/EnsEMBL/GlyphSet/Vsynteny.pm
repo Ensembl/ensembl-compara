@@ -231,7 +231,6 @@ sub _init {
     my $secondary_length = int( 2 * ( $length + $spacing ) / ($num_chr+1-$FLAG) - $spacing );
     foreach my $chr2 ( @chromosomes ) {
         my $chr_length_2  = $sa2->fetch_by_region( 'toplevel', $chr2 )->length() || 0;
-        warn ">>> $chr2 - $chr_length_2";
         my $bands_2       = $kba2->fetch_all_by_chr_name( $chr2 );
         my ($h_offset2, $v_offset2) = $flag==0 ?
             ( $h_offset + $N/2 * ( $secondary_length + $spacing ),
@@ -346,103 +345,140 @@ sub draw_chromosome {
     my $h_wid      = $wid/2;
     my $done_1_acen = 0;
     my $highlights = $params{'highlights'} || [];
-    if( @{$params{'bands'}} ) {
-    foreach my $band (@{$params{'bands'}}) {
+    my @bands = sort{$a->start <=> $b->start } @{$params{'bands'}};
+    if( @bands ) {
+      foreach my $band (@bands ) {
         my $bandname       = $band->name();
         my $vc_band_start  = $band->start() * $scale + $v_offset;
         my $vc_band_end    = $band->end()   * $scale + $v_offset;
         my $stain          = $band->stain();
-
+	
         if ($stain eq "acen"){
-            my $gband;
-            if ($done_1_acen){
-                $self->push(new Sanger::Graphics::Glyph::Poly({
-                    'points'       => [ 
-                        $vc_band_start, $h_offset + $h_wid, 
-                        $vc_band_end,   $h_offset,
-                        $vc_band_end,   $h_offset + $wid,
-                    ],
-                    'colour'       => $params{'grey'},
-                    'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
+	  my $gband;
+	  if ($done_1_acen){
+	    $self->push(new Sanger::Graphics::Glyph::Poly
+			({
+			  'points'       => [ 
+					     $vc_band_start, 
+					     $h_offset + $h_wid, 
+					     $vc_band_end,   
+					     $h_offset,
+					     $vc_band_end,   
+					     $h_offset+$wid,
+					    ],
+			  'colour'       => $params{'grey'},
+			  'absolutey'    => 1,    
+			  'absolutex'    => 1,
+			  'absolutewidth'=>1,
                 }));
             } else {
-                $self->push(new Sanger::Graphics::Glyph::Poly({
-                    'points'       => [ 
-                        $vc_band_start, $h_offset, 
-                        $vc_band_end,   $h_offset + $h_wid,
-                        $vc_band_start, $h_offset + $wid,
-                    ],
-                    'colour'       => $params{'grey'},
-                    'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
+                $self->push(new Sanger::Graphics::Glyph::Poly
+			    ({
+			      'points' => [ 
+					   $vc_band_start, 
+					   $h_offset, 
+					   $vc_band_end,
+					   $h_offset + $h_wid,
+					   $vc_band_start, 
+					   $h_offset + $wid,
+					  ],
+			      'colour'       => $params{'grey'},
+			      'absolutey'    => 1,    
+			      'absolutex'    => 1,
+			      'absolutewidth'=>1,
                 }));
                 $done_1_acen = 1;
             }
         } elsif ($stain eq "stalk"){
-            $self->push(new Sanger::Graphics::Glyph::Poly({
-                'points'           => [
-                    $vc_band_start, $h_offset, 
-                    $vc_band_end,   $h_offset + $wid,
-                    $vc_band_end,   $h_offset,
-                    $vc_band_start, $h_offset + $wid, 
-                ],
-                'colour'           => $params{'grey'},
-                'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
+            $self->push(new Sanger::Graphics::Glyph::Poly
+			({
+			  'points' => [
+				       $vc_band_start, 
+				       $h_offset, 
+				       $vc_band_end,   
+				       $h_offset + $wid,
+				       $vc_band_end,   
+				       $h_offset,
+				       $vc_band_start, 
+				       $h_offset + $wid, 
+				      ],
+			  'colour'       => $params{'grey'},
+			  'absolutey'    => 1,    
+			  'absolutex'    => 1,
+			  'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Rect({
-                'x'                => $vc_band_start,
-                'y'                => $h_offset + int($wid/4),
-                'width'            => $vc_band_end - $vc_band_start,
-                'height'           => $h_wid,
-                'colour'           => $params{'grey'},
-                'absolutey'    => 1,    'absolutex'    => 1,'absolutewidth'=>1,
+            $self->push(new Sanger::Graphics::Glyph::Rect
+			({
+			  'x'            => $vc_band_start,
+			  'y'            => $h_offset + int($wid/4),
+			  'width'        => $vc_band_end - $vc_band_start,
+			  'height'       => $h_wid,
+			  'colour'       => $params{'grey'},
+			  'absolutey'    => 1,    
+			  'absolutex'    => 1,
+			  'absolutewidth'=>1,
             }));
-        } else {
-            $self->unshift(new Sanger::Graphics::Glyph::Rect({
-                'x'          => $vc_band_start,
-                'y'          => $h_offset,
-                'width'      => $vc_band_end - $vc_band_start,
-                'height'     => $wid,
-                'colour'     => $stain eq 'tip' ? $params{'grey'} : $params{'white'},
-                'absolutey'  => 1,
-                'absolutex'  => 1,'absolutewidth'=>1,
+	  } else {
+            $self->unshift(new Sanger::Graphics::Glyph::Rect
+			   ({
+			     'x'          => $vc_band_start,
+			     'y'          => $h_offset,
+			     'width'      => $vc_band_end - $vc_band_start,
+			     'height'     => $wid,
+			     'colour'     => ( $stain eq 'tip' ? 
+					       $params{'grey'} : 
+					       $params{'white'} ),
+			     'absolutey'  => 1,
+			     'absolutex'  => 1,
+			     'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Line({
-                'x'                => $vc_band_start,
-                'y'                => $h_offset,
-                'width'            => $vc_band_end - $vc_band_start,
-                'height'           => 0,
-                'colour'           => $params{'black'},
-                'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
+            $self->push(new Sanger::Graphics::Glyph::Line
+			({
+			  'x'            => $vc_band_start,
+			  'y'            => $h_offset,
+			  'width'        => $vc_band_end - $vc_band_start,
+			  'height'       => 0,
+			  'colour'       => $params{'black'},
+			  'absolutey'    => 1, 
+			  'absolutex'    => 1,
+			  'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Line({
-                'x'                => $vc_band_start,
-                'y'                => $h_offset+$wid,
-                'width'            => $vc_band_end - $vc_band_start,
-                'height'           => 0,
-                'colour'           => $params{'black'},
-                'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
+            $self->push(new Sanger::Graphics::Glyph::Line
+			({
+			  'x'            => $vc_band_start,
+			  'y'            => $h_offset+$wid,
+			  'width'        => $vc_band_end - $vc_band_start,
+			  'height'       => 0,
+			  'colour'       => $params{'black'},
+			  'absolutey'    => 1, 
+			  'absolutex'    => 1,
+			  'absolutewidth'=>1,
             }));
-        }
+	  }
+      }
     }
-    } else {
-     $self->unshift(new Sanger::Graphics::Glyph::Rect({
-        'x'          => 0,
-        'y'          => $h_offset,
-        'width'      => $chr_length,
-        'height'     => $wid,
-        'colour'     => $params{'white'},
-        'absolutey'  => 1,
-        'absolutex'  => 1,'absolutewidth'=>1,
-     }));
-      foreach my $Y ($h_offset, $h_offset+$wid) {
-        $self->push(new Sanger::Graphics::Glyph::Line({
-          'x'                => $vc_band_start,
-          'y'                => $Y,
-          'width'            => $vc_band_end - $vc_band_start,
-          'height'           => 0,
-          'colour'           => $params{'black'},
-          'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
-        }));
+    else {
+      $self->unshift(new Sanger::Graphics::Glyph::Rect
+		     ({
+		       'x'          => 0,
+		       'y'          => $h_offset,
+		       'width'      => $chr_length,
+		       'height'     => $wid,
+		       'colour'     => $params{'white'},
+		       'absolutey'  => 1,
+		       'absolutex'  => 1,'absolutewidth'=>1,
+		      }));
+      foreach my $Y ($h_offset, $h_offset+$wid){
+	$self->push(new Sanger::Graphics::Glyph::Line
+		    ({
+		      'x'                => 1,
+		      'y'                => $Y,
+		      'width'            => $chr_length - 1,
+		      'height'           => 0,
+		      'colour'           => $params{'black'},
+		      'absolutey'        => 1, 
+		      'absolutex'        => 1,'absolutewidth'=>1,
+		     }));
       }
     } 
     my @lines = $wid < 16 ? ( [8,6],[4,4],[2,2] ) :
@@ -453,9 +489,9 @@ sub draw_chromosome {
 ## This is the end of the         
 
     my @ends;
-    if (@{$params{'bands'}}){
-	@ends = (( $params{'bands'}[ 0]->stain() eq 'tip' ? () : 1 ),
-	    ( $params{'bands'}[-1]->stain() eq 'tip' ? () : -1 ));
+    if ( @bands ){
+	@ends = (( $bands[0]->stain() eq 'tip' ? () : 1 ),
+	    ( $bands[-1]->stain() eq 'tip' ? () : -1 ));
     }
     foreach my $end (@ends){
         foreach my $I ( 0..$#lines ) {
