@@ -229,7 +229,7 @@ sub create_chunks_from_genomeDB
 
   my $chromosomes = [];
   if(defined $self->{'region'}) {
-    my ($coord_system_name, $seq_region_name) = split(/:/,  $self->{'region'});
+    my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'});
     print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
     push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
   } else {
@@ -273,19 +273,32 @@ sub create_dnafrag_chunks {
  #return if($dnafrag->display_id =~ /random/);
 
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
-        
+
+  my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'});
+
   my $length = $dnafrag->length;
+  my $i = 1;
+  if (defined $seq_region_start && defined $seq_region_end) {
+    $length = $seq_region_end;
+    $i = $seq_region_start;
+  }
+
   #print "dnafrag : ", $dnafrag->display_id, "n";
   #print "  sequence length : ",$length,"\n";
 
   my $lasttime = time();
+
   #all seq in inclusive coordinates so need to +1
-  for (my $i=1; $i<=$length; $i=$i+$self->{'chunk_size'}-$self->{'overlap'}) {
+  for ($i; $i<=$length; $i=$i+$self->{'chunk_size'}-$self->{'overlap'}) {
 
     my $chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
     $chunk->dnafrag($dnafrag);
     $chunk->seq_start($i);
-    $chunk->seq_end($i + $self->{'chunk_size'} - 1);
+    if (defined $seq_region_end && $i + $self->{'chunk_size'} - 1 > $seq_region_end) {
+      $chunk->seq_end($seq_region_end);
+    } else {
+      $chunk->seq_end($i + $self->{'chunk_size'} - 1);
+    }
     $chunk->masking_analysis_data_id($self->{'masking_analysis_data_id'});
     if($self->{'masking_options'}) {
       $chunk->masking_options($self->{'masking_options'});
