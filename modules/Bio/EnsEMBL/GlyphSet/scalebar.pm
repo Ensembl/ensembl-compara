@@ -30,8 +30,7 @@ sub _init {
     my $navigation     = $Config->get('scalebar', 'navigation');
     my $abbrev         = $Config->get('scalebar', 'abbrev');
     my $clone_based    = $Config->get('_settings','clone_based') eq 'yes';
-    my $clone          = $Config->get('_settings','clone');
-    my $param_string   = $clone_based ? "seqentry=1&clone=$clone" : ("chr=".$Container->_chr_name());
+    my $param_string   = $clone_based ? $Config->get('_settings','clone') : ("chr=".$Container->_chr_name());
     my $len            = $Container->length();
     my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->_global_start();
     my $global_end     = $global_start + $len - 1;

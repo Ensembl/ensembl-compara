@@ -29,6 +29,8 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
+    my $type = $self->check(); 
+    return unless defined $type;
     my $Config        = $self->{'config'};
     my $container     = $self->{'container'};
     my $y             = 0;

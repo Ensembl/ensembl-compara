@@ -30,6 +30,9 @@ sub _init {
     #
     print STDERR "GAP CALLED\n";
 #    return unless ($self->strand() == 1);
+    my $type = $self->check();
+    return unless defined $type;
+
 
 	my $vc = $self->{'container'};
     my $vc_start = $vc->_global_start();

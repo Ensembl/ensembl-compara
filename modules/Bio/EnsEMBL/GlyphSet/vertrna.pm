@@ -14,6 +14,7 @@ sub features {
 
 sub href {
     my ($self, $id ) = @_;
+    $id=~s/^([^\.]+)\..*/$1/;
     return $self->{'config'}->{'ext_url'}->get_url('EMBL',$id);
 }
 sub zmenu {

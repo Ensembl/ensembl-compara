@@ -17,6 +17,7 @@ sub colours {
         'super'            => $Config->get('embl_transcript_lite','superhi'),
         'pseudo'           => $Config->get('embl_transcript_lite','pseudo'),
         'ext'              => $Config->get('embl_transcript_lite','ext'),
+        'standard'         => $Config->get('embl_transcript_lite','ext'),
     };
 }
 

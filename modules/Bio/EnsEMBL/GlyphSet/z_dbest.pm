@@ -5,7 +5,7 @@ use Bio::EnsEMBL::GlyphSet_feature;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "DBEST"; }
+sub my_label { return "EST"; }
 
 sub features {
     my ($self) = @_;
@@ -16,12 +16,12 @@ sub features {
 
 sub href {
     my ( $self, $id ) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url( $id=~/^NP/ ? 'REFSEQPROTEIN' : 'SWISS', $id );
+    return $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $id );
 }
 
 sub zmenu {
     my ($self, $id ) = @_;
-    $id =~ s/(.*)\.\d+/$1/o;
-    return { 'caption' => "$id", "Protein homology" => $self->href( $id ) };
+    $id =~ s/(^[^\.]+)\..*/$1/;
+    return { 'caption' => "EST $id", "$id" => $self->href( $id ) };
 }
 1;

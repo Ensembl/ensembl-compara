@@ -112,14 +112,18 @@ sub _init {
             $bump_start = 0 if ($bump_start < 0);
 
             my $bump_end = $bump_start + int($Composite->width() / $pix_per_bp);
-            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            my $row = &Bump::bump_row(      
-				      $bump_start,
-				      $bump_end,
-				      $bitmap_length,
-				      \@bitmap
-            );
-            $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
+            if ($bump_end > $bitmap_length) {
+                $bump_end = $bitmap_length
+            };
+            if($bump_end > $bump_start) {
+                my $row = &Bump::bump_row(      
+    				      $bump_start,
+    				      $bump_end,
+    				      $bitmap_length,
+    				      \@bitmap
+                );
+                $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
+            }
         }
 	
 	$self->push($Composite);

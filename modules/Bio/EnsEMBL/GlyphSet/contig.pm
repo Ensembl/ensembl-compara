@@ -53,8 +53,7 @@ sub _init {
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');
     my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
-    my $clone       = $Config->get('_settings','clone');
-    my $param_string   = $clone_based ? "seqentry=1&clone=$clone" : ("chr=".$vc->_chr_name());
+    my $param_string   = $clone_based ? $Config->get('_settings','clone') : ("chr=".$vc->_chr_name());
     my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $vc->_global_start();
     my $global_end     = $global_start + $length - 1;
     
@@ -197,8 +196,9 @@ sub _init {
                 'absolutey' => 1,
 			});
             my $cid = $rid;
-            $cid=~s/^([^\.]+\.[^\.]+)\..*/$1/;
-            $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=$cid";
+            #$cid=~s/^([^\.]+\.[^\.]+)\..*/$1/;
+            $cid=~s/^([^\.]+)\..*/$1/;
+            $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?contig=$rid";
             $glyph->{'zmenu'} = {
                 'caption' => $rid,
 	            "01:Clone: $clone"    => '',
