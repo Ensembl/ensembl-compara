@@ -45,7 +45,7 @@ sub _init {
 		$vc->_chr_name(), $vc->_global_start(), $vc->_global_end(), undef, $self->glob_bp() 
 	);
     &eprof_end('lite_adaptor_call');
-
+    print STDERR "GLOB BP: ".$self->glob_bp() ."\n";
     &eprof_start('lite_drawing');
 	foreach my $f ( @$repeats ) {
         my $start = $f->{'start'};
