@@ -221,6 +221,8 @@ CREATE TABLE homology (
  stable_id      varchar(40),
  source_id      int(10) NOT NULL, # foreign key from source table
  description		varchar(40), # SEED, PIP, etc...
+ dn             float(10,5),
+ ds             float(10,5),
 
  PRIMARY KEY (homology_id)
 );
