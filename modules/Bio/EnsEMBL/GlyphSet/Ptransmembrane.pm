@@ -30,7 +30,7 @@ sub _init {
 
     my @transm_feat = @{$protein->get_all_ProteinFeatures('tmhmm')};
     foreach my $feat(@transm_feat) {
-	push(@{$hash{$feat->feature1->seqname}},$feat);
+	push(@{$hash{$feat->seqname}},$feat);
     }
 
     foreach my $key (keys %hash) {
@@ -40,9 +40,9 @@ sub _init {
 	my $colour    = $Config->get('Ptransmembrane', 'col');
 
 	foreach my $pf (@row) {
-	    my $x  = $pf->feature1->start();
-	    my $w  = $pf->feature1->end - $x;
-	    my $id = $pf->feature2->seqname();
+	    my $x  = $pf->start();
+	    my $w  = $pf->end - $x;
+	    my $id = $pf->hseqname();
 	    
 	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,

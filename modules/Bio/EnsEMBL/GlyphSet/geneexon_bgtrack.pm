@@ -12,6 +12,9 @@ sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
+  my $strand_flag   = $self->{'config'}->get('geneexon_bgtrack','str');
+  my $strand  = $self->strand();
+  return if ( $strand_flag eq 'f' && $strand != 1 ) || ( $strand_flag eq 'r'  && $strand == 1 );
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target_gene   = $Config->{'geneid'} || $Config->{'geneid2'};
     
@@ -24,7 +27,6 @@ sub _init {
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
-  my $strand  = $self->strand();
   my $length  = $container->length;
     
   my %exons = ();

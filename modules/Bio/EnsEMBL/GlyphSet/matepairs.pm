@@ -14,7 +14,7 @@ sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
     my $max_full_length  = $self->{'config'}->get( "matepairs", 'full_threshold' ) || 200000000;
-    return $self->{'container'}->get_all_MapFrags( 'matepairs' );
+    return $self->{'container'}->get_all_MiscFeatures( 'matepairs' );
 }
 
 ## If bac map clones are very long then we draw them as "outlines" as
@@ -35,22 +35,22 @@ sub zmenu {
     my $VCS = $self->{'container'}->start()-1;
     my $zmenu = { 
         'caption' => "Matepair",
-        '01:note: '.$f->error => '',
-        '02:length: '.$f->length.' bps' => '',
-        '03:bps: '.($VCS+$f->start).'-'.($VCS+$f->end).' bps' => '',
+        "01:note: @{[$f->error]}" => '',
+        "02:length: @{[$f->length]} bps" => '',
+        "03:bps: @{[$f->seq_region_start]}-@{[$f->seq_region_end]} bps" => '',
     };
 }
 
 sub colour {
     my ($self, $f) = @_;
-    my $state = $f->error;
+    my $state = $f->get_attribute('error');
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"} ;
 }
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->name,'overlaid');
+    return (@{[$f->get_attribute('name')]},'overlaid');
 }
 
 

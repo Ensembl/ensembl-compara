@@ -28,7 +28,7 @@ sub _init {
     my $protein = $self->{'container'};	
     my $Config  = $self->{'config'};
     my $pep_splice = $protein->{'image_splice'};
-	my $type = lc($protein->gene->analysis->logic_name);
+	my $type = lc($protein->adaptor->db->get_GeneAdaptor->fetch_by_translation_stable_id($protein->stable_id)->analysis->logic_name);
     my $authority = lc($SPECIES_DEFS->AUTHORITY);   
 
     ## hack to fix flybase db type definition
@@ -55,7 +55,6 @@ sub _init {
                     'y'        => $y,
                     'width'    => $exon_offset - $x,
                     'height'   => $h,
-                    'id'       => $protein->id(),
                     'colour'   => $colour,
                     'zmenu' => {
                     'caption' => "Splice Information",
@@ -76,7 +75,6 @@ sub _init {
                 'y'        => $y,
                 'width'    => $protein->length(),
                 'height'   => $h,
-                'id'       => $protein->id(),
                 'colour'   => $colours[0],
                 });
 

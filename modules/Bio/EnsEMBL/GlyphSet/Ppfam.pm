@@ -28,7 +28,7 @@ sub _init {
     my $protein       = $self->{'container'};
     my $Config        = $self->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $bitmap_length = int($self->{'container'}->length() * $pix_per_bp);
+    my $bitmap_length = int($Config->container_width() * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
     my $cmap          = new Sanger::Graphics::ColourMap;
@@ -42,8 +42,9 @@ sub _init {
     #foreach my $feat ($protein->each_Protein_feature()) {
        #if ($feat->feature2->seqname =~ /^PF\w+/) {
     my @pf_feat = @{$protein->get_all_ProteinFeatures('Pfam')};
+
     foreach my $feat(@pf_feat) {
-	push(@{$hash{$feat->feature2->seqname}},$feat);
+	push(@{$hash{$feat->hseqname}},$feat);
     }
        #}
    #}
@@ -53,7 +54,7 @@ sub _init {
 	my $desc = $row[0]->idesc();
 		
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
-	    'x'     => $row[0]->feature1->start(),
+	    'x'     => $row[0]->start(),
 	    'y'     => $y,
 	    'href'	   => $self->ID_URL( 'PFAM', $key ),
 		'zmenu' => {
@@ -66,11 +67,11 @@ sub _init {
 	my ($minx, $maxx);
 		
 	foreach my $pf (@row) {
-	    my $x  = $pf->feature1->start();
+	    my $x  = $pf->start();
 	    $minx  = $x if ($x < $minx || !defined($minx));
-	    my $w  = $pf->feature1->end() - $x;
-	    $maxx  = $pf->feature1->end() if ($pf->feature1->end() > $maxx || !defined($maxx));
-	    my $id = $pf->feature2->seqname();
+	    my $w  = $pf->end() - $x;
+	    $maxx  = $pf->end() if ($pf->end() > $maxx || !defined($maxx));
+	    my $id = $pf->hseqname();
 
 	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
@@ -101,7 +102,7 @@ sub _init {
 	my $text = new Sanger::Graphics::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
-	    'x'      => $row[0]->feature1->start(),
+	    'x'      => $row[0]->start(),
 	    'y'      => $h + 1,
 	    'height' => $fontheight,
 	    'width'  => $fontwidth * length($desc),
@@ -112,15 +113,15 @@ sub _init {
 	if ($Config->get('Ppfam', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
-	    
+			
             my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            my $row = & Sanger::Graphics::Bump::bump_row(
-				      $bump_start,
-				      $bump_end,
-				      $bitmap_length,
-				      \@bitmap
-				      );
+	my $row = & Sanger::Graphics::Bump::bump_row(
+		      $bump_start,
+            	      $bump_end,
+		      $bitmap_length,
+		      \@bitmap
+           );
             $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
         }
 	

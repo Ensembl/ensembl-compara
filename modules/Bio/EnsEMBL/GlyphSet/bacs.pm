@@ -9,17 +9,17 @@ sub my_label { return "BACs"; }
 sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
-    return $self->{'container'}->get_all_MapFrags( 'bacs' );
+    return $self->{'container'}->get_all_MiscFeatures( 'bacs' );
 }
 
 sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bacs', 'threshold_navigation' ) || 2e7) * 1000;
     my $zmenu = { 
-        'caption'   => "BAC: ".$f->name,
-        '01:Status: '.$f->status => ''
+        'caption'   => "BAC: @{[$f->get_attribute('name')]}",
+        '01:Status: @{[$f->get_attribute('status')]}" => ''
     };
-    foreach( $f->embl_accs ) {
+    foreach( $f->get_attribute('embl_accs') ) {
         $zmenu->{"02:bacend: $_"} = $self->ID_URL( 'EMBL', $_);
     }
     return $zmenu;
@@ -27,7 +27,7 @@ sub zmenu {
 
 sub colour {
     my ($self, $f) = @_;
-    my $state = $f->status;
+    my $state = $f->get_attribute('status');
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"},
            $f->length > $self->{'config'}->get( "bacs", 'outline_threshold' ) ? 'border' : '';
@@ -35,7 +35,7 @@ sub colour {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->name,'overlaid');
+    return ($f->get_attribute('name'),'overlaid');
 }
 
 1;

@@ -346,6 +346,7 @@ sub draw_chromosome {
     my $h_wid      = $wid/2;
     my $done_1_acen = 0;
     my $highlights = $params{'highlights'} || [];
+    if( @{$params{'bands'}} ) {
     foreach my $band (@{$params{'bands'}}) {
         my $bandname       = $band->name();
         my $vc_band_start  = $band->start() * $scale + $v_offset;
@@ -423,7 +424,27 @@ sub draw_chromosome {
             }));
         }
     }
-    
+    } else {
+     $self->unshift(new Sanger::Graphics::Glyph::Rect({
+        'x'          => 0,
+        'y'          => $h_offset,
+        'width'      => $chr_length,
+        'height'     => $wid,
+        'colour'     => $params{'white'},
+        'absolutey'  => 1,
+        'absolutex'  => 1,'absolutewidth'=>1,
+     }));
+      foreach my $Y ($h_offset, $h_offset+$wid) {
+        $self->push(new Sanger::Graphics::Glyph::Line({
+          'x'                => $vc_band_start,
+          'y'                => $Y,
+          'width'            => $vc_band_end - $vc_band_start,
+          'height'           => 0,
+          'colour'           => $params{'black'},
+          'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
+        }));
+      }
+    } 
     my @lines = $wid < 16 ? ( [8,6],[4,4],[2,2] ) :
                ( $wid < 30 ? ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) :
                 ( [8,8],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) );

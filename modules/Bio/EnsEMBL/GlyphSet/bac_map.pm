@@ -17,8 +17,8 @@ sub features {
     my @sorted =  
       map { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
-          map { [$_->seq_start-$_->state*1e9 * $_->BACend_flag/4, $_] }
-            @{$self->{'container'}->get_all_MapFrags(
+          map { [$_->seq_region_start-$_->get_attribute('state')*1e9 * $_->get_attribute('BACend_flag')/4, $_] }
+            @{$self->{'container'}->get_all_MiscFeatures(
               $container_length > $max_full_length*1001 ? 'acc_bac_map' : 'bac_map'
             )};
     return \@sorted;
@@ -30,7 +30,7 @@ sub features {
 
 sub colour {
     my ($self, $f) = @_;
-    (my $state = $f->state) =~ s/^\d\d://;
+    (my $state = $f->get_attribute('state')) =~ s/^\d\d://;
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"},
            $f->length > $self->{'config'}->get( "bac_map", 'outline_threshold' ) ? 'border' : ''
@@ -43,20 +43,20 @@ sub colour {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->name,'overlaid');
+    return ("@{[$f->get_attribute('name')]}",'overlaid');
 }
 
 ## Link back to this page centred on the map fragment
 
 sub href {
     my ($self, $f ) = @_;
-    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=".$f->name
+    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_attribute('name')]}";
 }
 
 sub tag {
     my ($self, $f) = @_; 
     my @result = (); 
-    my $bef = $f->BACend_flag;
+    my $bef = $f->get_attribute('BACend_flag');
     push @result, {
         'style'  => 'right-end',
         'colour' => $self->{'colours'}{"bacend"}
@@ -65,10 +65,13 @@ sub tag {
         'style'=>'left-end',  
         'colour' => $self->{'colours'}{"bacend"}
     } if ( $bef == 1 || $bef == 3 );
-    if( $f->fp_size && $f->fp_size > 0 ) {
-        my $start = int( ($f->start + $f->end - $f->fp_size)/2 );
-        my $end   = $start + $f->fp_size - 1 ;
-#        warn "@{[$f->start, $f->end, $f->fp_size]} $start, $end";
+
+    my $fp_size = $f->get_attribute('fp_size');
+    if( $fp_size && $fp_size > 0 ) {
+        my $start = int( ($f->start + $f->end - $fp_size)/2 );
+        my $end   = $start + $fp_size - 1 ;
+        #warn ">> @{[$f->start, $f->end, $fp_size]} $start, $end";
+
         push @result, {
             'style' => 'underline',
             'colour' => $self->{'colours'}{"seq_len"},
@@ -82,25 +85,27 @@ sub tag {
 ## Include each accession id separately
 
 sub zmenu {
-    my ($self, $f ) = @_;
-    return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
-    my $zmenu = { 
-        'caption' => "Clone: ".$f->name,
-        '01:bp: '.$f->seq_start."-".$f->seq_end => '',
-        '02:length: '.$f->length.' bps' => '',
-        '03:Centre on clone:' => $self->href($f),
+  my ($self, $f ) = @_;
+  return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
+  my $zmenu = { 
+    qq(caption)                                            => qq(Clone: @{[$f->get_attribute('name')]}),
+    qq(01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}) => '',
+    qq(02:length: @{[$f->length]} bps)                     => '',
+    qq(03:Centre on clone:)                                => $self->href($f),
     };
-    foreach($f->embl_accs) {
+    foreach($f->get_attribute('embl_accs')) {
         $zmenu->{"12:EMBL: $_" } = '';
     }
-    (my $state = $f->state)=~s/^\d\d://;
-    $zmenu->{'13:Organisation: '.$f->organisation} = '' if($f->organisation);
-    $zmenu->{"14:State: $state"        } = ''              if($f->state);
-    $zmenu->{'15:Seq length: '.$f->seq_len } = ''        if($f->seq_len);    
-    $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
-    $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    
-    $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''        if($f->BACend_flag);    
-    $zmenu->{'18:FISH:  '.$f->FISHmap } = ''        if($f->FISHmap);    
+    (my $state = $f->get_attribute('state'))=~s/^\d\d://;
+    my $bac_info = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$self->get_attribute('BACend_flag')];
+
+    $zmenu->{"13:Organisation: '.$f->organisation} = '' if($f->organisation);
+    $zmenu->{"14:State: $state"                                  } = '' if $state;
+    $zmenu->{"15:Seq length: @{[$f->get_attribute('seq_len')]}"  } = '' if $f->seq_len);    
+    $zmenu->{"16:FP length:  @{[$f->get_attribyte('fp_size')]}"  } = '' if $f->fp_size);    
+    $zmenu->{"17:super_ctg:  @{[$f->get_attribyte('superctg')]}" } = '' if $f->superctg);    
+    $zmenu->{"18:BAC flags:  $bac_info"                          } = '' if $f->BACend_flag);    
+    $zmenu->{"18:FISH:  @{[$f->get_attribute('FISHmap')]}"       } = '' if $f->FISHmap);    
     return $zmenu;
 }
 

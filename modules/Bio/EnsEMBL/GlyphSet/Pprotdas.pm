@@ -36,10 +36,10 @@ sub _init {
     my %hash;
     my $caption       = $self->managed_name || "GeneDAS";
     my @bitmap        = undef;
-    my $protein       = $self->{'container'};
-    my $Config        = $self->{'config'};
+	my $Config        = $self->{'config'};  
+	my $prot_len	  = $self->{'container'}->length;
     my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $bitmap_length = int($self->{'container'}->length() * $pix_per_bp);
+    my $bitmap_length = int( $prot_len * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
     my $cmap          = new Sanger::Graphics::ColourMap;

@@ -13,7 +13,7 @@ sub my_label { return "Nod BACs"; }
 sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
-    return $self->{'container'}->get_all_MapFrags('nod_bacs');
+    return $self->{'container'}->get_all_MiscFeatures('nod_bacs');
 }
 
 ## Return the image label and the position of the label
@@ -22,14 +22,14 @@ sub features {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->name,'overlaid');
+    return ("@{[$f->get_attribute('name')]}",'overlaid');
 }
 
 ## Link back to this page centred on the map fragment
 
 sub href {
     my ($self, $f ) = @_;
-    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=".$f->name
+    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_attribute('name')]}";
 }
 
 ## Create the zmenu...
@@ -39,9 +39,9 @@ sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
     my $zmenu = { 
-        'caption' => "Clone: ".$f->name,
-        '01:bp: '.$f->seq_start."-".$f->seq_end => '',
-        '02:length: '.$f->length.' bps' => '',
+        'caption' => "Clone: @{[$f->get_attribute('name')]}",
+        "01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}" => '',
+        '02:length: @{[$f->length]} bps' => '',
         '03:Centre on clone:' => $self->href($f),
     };
     return $zmenu;

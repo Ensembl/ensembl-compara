@@ -8,19 +8,19 @@ sub my_label { return "Gaps" };
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_MapFrags( 'gap' );
+    return $self->{'container'}->get_all_MiscFeatures( 'gap' );
 }
 
 sub colour {
   my( $self, $f ) = @_;
   my %colours = ( 'END' => 'black', 'contig' => 'grey50', 'clone' => 'grey75', 'superctg' => 'black', 'scaffold' => 'black' );
-  return $colours{ $f->name };
+  return $colours{ $f->get_attribute('name') };
 }
 
 sub zmenu {
   my( $self, $f ) = @_;
   return {
-     'caption' => $f->name." gap",
+     'caption' => $f->get_attribute('name')." gap",
      "Location: ".$f->seq_start.' - '.$f->seq_end => '',
   };
 }

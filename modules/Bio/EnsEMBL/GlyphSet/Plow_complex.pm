@@ -31,7 +31,7 @@ sub _init {
 
     my @lcompl_feat = @{$protein->get_all_ProteinFeatures('Seg')};
     foreach my $feat(@lcompl_feat) {
-	push(@{$hash{$feat->feature2->seqname}},$feat);
+	push(@{$hash{$feat->hseqname}},$feat);
     }
     
     foreach my $key (keys %hash) {
@@ -42,9 +42,9 @@ sub _init {
 	my $colour = $Config->get('Plow_complex', 'col');
 	
 	foreach my $pf (@row) {
-	    my $x = $pf->feature1->start();
-	    my $w = $pf->feature1->end - $x;
-	    my $id = $pf->feature2->seqname();
+	    my $x = $pf->start();
+	    my $w = $pf->end - $x;
+	    my $id = $pf->hseqname();
 	    
 	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
@@ -65,23 +65,4 @@ sub _init {
    
 
 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

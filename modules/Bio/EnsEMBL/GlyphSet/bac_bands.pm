@@ -8,40 +8,42 @@ sub my_label { return "Band BACs"; }
 sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();	
-	return $self->{'container'}->get_all_MapFrags( 'bacs_bands' );
+	return $self->{'container'}->get_all_MiscFeatures( 'bacs_bands' );
 }
 
-sub zmenu {
-    my ($self, $f ) = @_;
-	return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bac_bands', 'threshold_navigation' ) || 2e7) * 1000;
-	
-	my $chr = $f->{'seq'};
-	my $chr_start = $f->{'seq_start'};
-	my $chr_end = $f->{'seq_end'};
+sub href {
+  my $f = shift;
+  my $chr = $f->seq_region_name;
+  my $chr_start = $f->seq_region_start;
+  my $chr_end = $f->seq_region_end;
 
-	my $page = ($ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ? 'contigview' : 'cytoview';
-    my $page_link = qq(/@{[$self->{container}{_config_file_name_}]}/$page?chr=$chr&chr_start=$chr_start&chr_end=$chr_end) ;
+  my $page = ($ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ? 'contigview' : 'cytoview';
+
+  return qq(/@{[$self->{container}{_config_file_name_}]}/$page?chr=$chr&chr_start=$chr_start&chr_end=$chr_end) ;
+}
+sub zmenu {
+  my ($self, $f ) = @_;
+  return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bac_bands', 'threshold_navigation' ) || 2e7) * 1000;
 	
-	my $zmenu = { 
-        'caption'   => "BAC: ".$f->name,
-        '01:Status: '.$f->status => ''
-    };
-    
-	foreach( $f->synonyms ) {
-        $zmenu->{"02:BAC band: $_"} = '';
-    }
-	
-	foreach( $f->embl_accs ) {
-        $zmenu->{"03:BAC end: $_"} = $self->ID_URL( 'EMBL', $_);
-    }
-	
-	$zmenu->{"04:Jump to $page "} = $page_link;
-    return $zmenu;
+  my $page = ($ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ? 'contigview' : 'cytoview';
+
+  my $zmenu = {
+    'caption'   => "BAC: @{[$f->get_attribute('name')]}",
+    "01:Jump to $page" => $self->href($f),
+    "02:Status: @{[$f->get_attribute('status')]}"   => '',
+  };
+  foreach( $f->get_attribute('synonyms') ) {
+    $zmenu->{"04:BAC band: $_"} = '';
+  }
+  foreach( $f->get_attribute('embl_accs') ) {
+    $zmenu->{"06:BAC end: $_"} = $self->ID_URL( 'EMBL', $_);
+  }
+  return $zmenu;
 }
 
 sub colour {
     my ($self, $f) = @_;
-    my $state = $f->status;
+    my $state = $f->get_attribute('status');
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"},
            $f->length > $self->{'config'}->get( "bac_bands", 'outline_threshold' ) ? 'border' : '';
@@ -49,7 +51,7 @@ sub colour {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->name,'overlaid');
+    return ($f->get_attribute('name'),'overlaid');
 }
 
 1;

@@ -11,7 +11,7 @@ sub my_label { return "Tilepath"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_MapFrags( 'tilepath' );
+    return $self->{'container'}->get_all_MiscFeatures( 'tilepath' );
 }
 
 ## If tile path clones are very long then we draw them as "outlines" as
@@ -20,7 +20,7 @@ sub tag {
     my ($self, $f) = @_;
     my @result = ();
 
-   if( $f->FISHmap ) {
+   if( $f->get_attribyte('FISHmap') ) {
         push @result, {
             'style' => 'left-triangle',
             'colour' => $self->{'colours'}{"fish_tag"},
@@ -35,8 +35,7 @@ sub colour {
     return 
         $self->{'colours'}{"col$self->{'_colour_flag'}"},
         $self->{'colours'}{"lab$self->{'_colour_flag'}"},
-        $f->length > $self->{'config'}->get( "tilepath2", 'outline_threshold' ) ? 'border' : ''
-        ;
+        $f->length > $self->{'config'}->get( "tilepath2", 'outline_threshold' ) ? 'border' : '' ;
 }
 
 1;

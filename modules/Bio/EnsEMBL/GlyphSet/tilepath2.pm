@@ -12,7 +12,7 @@ sub my_label { return "Acc clones"; }
 sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
-    return $self->{'container'}->get_all_MapFrags( 'acc_bac_map' );
+    return $self->{'container'}->get_all_MiscFeatures( 'acc_bac_map' );
 }
 
 ## If tile path clones are very long then we draw them as "outlines" as

@@ -12,6 +12,10 @@ sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
+  my $strand_flag   = $self->{'config'}->get('snp_join','str');
+  my $strand        = $self->strand();
+  return if ( $strand_flag eq 'f' && $strand != 1 ) || ( $strand_flag eq 'r'  && $strand == 1 );
+
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target_gene   = $Config->{'geneid'};
     
@@ -22,7 +26,6 @@ sub _init {
 
   my $pix_per_bp    = $Config->transform->{'scalex'};
 
-  my $strand  = $self->strand();
   my $length  = $container->length;
     
   my %exons = ();

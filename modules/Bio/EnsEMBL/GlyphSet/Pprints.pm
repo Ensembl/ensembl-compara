@@ -38,7 +38,7 @@ sub _init {
 
     my @pr_feat = @{$protein->get_all_ProteinFeatures('Prints')};
     foreach my $feat(@pr_feat) {
-	push(@{$hash{$feat->feature2->seqname}},$feat);
+	push(@{$hash{$feat->hseqname}},$feat);
     }
     
     foreach my $key (keys %hash) {
@@ -46,7 +46,7 @@ sub _init {
 	my $desc = $row[0]->idesc();
 		
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
-	    'x'     => $row[0]->feature1->start(),
+	    'x'     => $row[0]->start(),
 	    'y'     => $y,
 	    'href'	   => $self->ID_URL( 'PRINTS', $key ),
 		'zmenu' => {
@@ -59,11 +59,11 @@ sub _init {
 	my ($minx, $maxx);
 		
 	foreach my $pr (@row) {
-	    my $x  = $pr->feature1->start();
+	    my $x  = $pr->start();
 	    $minx  = $x if ($x < $minx || !defined($minx));
-	    my $w  = $pr->feature1->end() - $x;
-	    $maxx  = $pr->feature1->end() if ($pr->feature1->end() > $maxx || !defined($maxx));
-	    my $id = $pr->feature2->seqname();
+	    my $w  = $pr->end() - $x;
+	    $maxx  = $pr->end() if ($pr->end() > $maxx || !defined($maxx));
+	    my $id = $pr->hseqname();
 	    
 	    my $rect = new Sanger::Graphics::Glyph::Rect({
 		'x'        => $x,
@@ -96,7 +96,7 @@ sub _init {
 	my $text = new Sanger::Graphics::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
-	    'x'      => $row[0]->feature1->start(),
+	    'x'      => $row[0]->start(),
 	    'y'      => $h + 1,
 	    'height' => $fontheight,
 	    'width'  => $fontwidth * length($desc),

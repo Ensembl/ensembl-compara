@@ -60,7 +60,8 @@ sub _init {
     foreach( @{$vc->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
       my $path;
 	  eval { $path = $ctg_slice->project($_->name); };
-      next if(@$path != 1);
+	
+	  next unless($path || @$path = 1);
       $path = $path->[0][2];
       $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
     }
