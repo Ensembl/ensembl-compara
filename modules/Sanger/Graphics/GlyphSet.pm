@@ -223,7 +223,7 @@ sub transform {
 }
 
 sub _dump {
-  my($self) = shift;
+  my($self) = CORE::shift;
   $self->push( new Sanger::Graphics::Glyph::Diagnostic({
     'x'      =>0 ,
     'y'      =>0 ,
