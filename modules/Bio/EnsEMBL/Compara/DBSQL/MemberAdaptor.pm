@@ -81,9 +81,7 @@ sub fetch_by_dbIDs {
 
   my $ids = join(',' , @_);
   my $constraint = "m.member_id in ($ids)";
-
-  #return first element of _generic_fetch list
-  return _generic_fetch($constraint);
+  return $self->_generic_fetch($constraint);
 }
 
 =head2 fetch_by_source_stable_id
