@@ -49,6 +49,7 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
                                                      -dbname => $dbname,
                                                      -conf_file => $conf_file);
 
+my $aa = $db->get_AttributeAdaptor;
 my $genome_dbs = $db->get_GenomeDBAdaptor->fetch_all;
 my %genome_db;
 foreach my $gdb (@{$genome_dbs}) {
@@ -91,11 +92,15 @@ foreach my $family_id (@{$fa->list_internal_ids}) {
       $gene_member->sequence("NULL");
       $gene_member->source_name("ENSEMBLGENE");
     }
-
-    my $gene_attribute = new Bio::EnsEMBL::Compara::Attribute;
-    $gene_attribute->cigar_line("NULL");
-
-    $fa->store_relation([ $gene_member,$gene_attribute ],$family);
+    my $gene_attribute = $aa->fetch_by_Member_Relation($gene_member,$family)->[0];
+    
+    if (defined $gene_attribute) {
+      print STDERR "gene family: ", $gene_member->stable_id," ",$family->stable_id," already loaded\n";
+    } else {
+      $gene_attribute = new Bio::EnsEMBL::Compara::Attribute;
+      $gene_attribute->cigar_line("NULL");
+      $fa->store_relation([ $gene_member,$gene_attribute ],$family);
+    }
     $already_stored{$gene_member->stable_id . "_" .$family->stable_id} = 1;
   }
 }

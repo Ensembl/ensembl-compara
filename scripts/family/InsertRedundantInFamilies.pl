@@ -189,13 +189,15 @@ while (<$FH>) {
           $member->sequence($transcript->translate->seq); 
         }
       } 
-      my $attribute = new Bio::EnsEMBL::Compara::Attribute;
-      $attribute->cigar_line($refid_attribute->cigar_line);
-#      print STDERR $member," ",$attribute,"\n";
-      $fa->store_relation([ $member,$attribute ],$family);
-      print STDERR "$source, $member_stable_id loaded\n";
-#      $member_stable_id = $new_id;
-#      undef $member_seq;
+      my $attribute = $aa->fetch_by_Member_Relation($member,$family)->[0];
+      if (defined $attribute) {
+        print STDERR "$source, $member_stable_id already loaded\n";
+      } else {
+        $attribute = new Bio::EnsEMBL::Compara::Attribute;
+        $attribute->cigar_line($refid_attribute->cigar_line);
+        $fa->store_relation([ $member,$attribute ],$family);
+        print STDERR "$source, $member_stable_id loaded\n";
+      }
     }
     $member_stable_id = $new_id;
     undef $member_seq;
