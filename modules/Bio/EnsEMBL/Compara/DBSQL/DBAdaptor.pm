@@ -45,6 +45,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
 
@@ -147,7 +148,7 @@ sub new {
                adaptor argument must define the get_MetaContainer argument
                so that species name and assembly type information can be
                extracted from the database.
-  Returntype : none
+  Returntype : 1 if success 0 otherwise
   Exceptions : Thrown if the argument is not a Bio::EnsEMBL::DBConnection
                or if the argument does not implement a get_MetaContainer
                method.
@@ -170,10 +171,18 @@ sub add_db_adaptor {
   my $species = $mc->get_Species->binomial;
   my ($cs) = @{$csa->fetch_all};
   my $assembly = $cs ? $cs->version : '';
-
+  
   my $gdb;
-  $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species,$assembly);
+  try {
+    $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species,$assembly);
+  } catch {
+    warning("Catched an exception, no GenomeDb defined\n$_\n");
+  };
+
+  return 0 unless (defined $gdb);
+
   $gdb->db_adaptor($dba);
+  return 1;
 }
 
 
@@ -190,7 +199,7 @@ sub add_db_adaptor {
                constructor, or subsequently added using the add_db_adaptor
                method.  If the DBAdaptor is not available (i.e. has not
                been specified by one of the abbove methods) undef is returned.
-  Returntype : Bio::EnsEMBL::DBSQL::DBConnection
+  Returntype : Bio::EnsEMBL::DBSQL::DBConnection or undef
   Exceptions : none
   Caller     : Bio::EnsEMBL::Compara::GenomeDBAdaptor
 
@@ -202,10 +211,18 @@ sub get_db_adaptor {
   unless($species && $assembly) {
     $self->throw("species and assembly arguments are required\n");
   }
-  my $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species, $assembly);
+  
+  my $gdb;
+
+  eval {
+    $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species, $assembly);
+  };
+  if ($@) {
+    warning("Catched an exception, here is the exception message\n$@\n");
+    return undef;
+  }
 
   return $gdb->db_adaptor;
-
 }
 
 
