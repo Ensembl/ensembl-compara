@@ -75,6 +75,9 @@ sub fetch_homologues_of_gene {
     foreach my $rel (@relationshipids) {
 	my $q ="select  grm.member_stable_id,
 			gd.name
+                        grm.chromosome,
+                        grm.chrom_start,
+                        grm.chrom_end
 		from    gene_relationship_member grm,
 			genome_db gd
 		where   grm.gene_relationship_id = $rel 
@@ -106,13 +109,6 @@ sub fetch_homologues_of_gene {
 
 sub fetch_homologues_by_chr_start_in_species {
     my ($self, $species, $chr, $start, $hspecies, $num)=@_;
-
-    $self->throw("fetch_homologues_by_chr_start_in_species has been deprecated.
-The chr_name, chr_start, chr_end for each is not anymore stored in compara.
-You'll need to first get the list of gene stable ids in your genome region 
-through the correspondign core db, then use the gene stable ids in 
-fetch_homologues_of_gene or fetch_homologues_of_gene_in_species methods 
-in HomologyAdaptor");
 
     $hspecies =~ tr/_/ /;
     $species =~ tr/_/ /;
@@ -183,7 +179,10 @@ sub _fetch_homologues_by_species_relationship_id{
     my ($self,$hspecies,$internal_id)=@_;
 
     my $q ="select  grm.member_stable_id,
-		    gd.name
+		    gd.name,
+                    grm.chromosome,
+                    grm.chrom_start,
+                    grm.chrom_end
             from    gene_relationship_member grm,
 		    genome_db gd 
             where   gd.genome_db_id = grm.genome_db_id 
@@ -206,6 +205,10 @@ sub _get_homologues {
 	my $homol= Bio::EnsEMBL::Compara::Homology->new();
 	$homol->species($ref->{'name'});
 	$homol->stable_id($ref->{'member_stable_id'});
+	$homol->chromosome($ref->{'chromosome'});
+	$homol->chrom_start($ref->{'chrom_start'});
+	$homol->chrom_end($ref->{'chrom_end'});
+	
 	push (@genes,$homol);
     }
     return @genes;
