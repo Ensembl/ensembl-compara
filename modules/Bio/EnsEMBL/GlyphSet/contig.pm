@@ -86,7 +86,7 @@ sub _init {
     if (!@map_contigs) {
 ## Draw a warning track....
         $self->errorTrack("Golden path gap - no contigs to display!");
-    } elsif($useAssembly) { ## THIS IS THE FAKE STUFF FOR MOUSE
+    } elsif($useAssembly && $length<5e6) { ## THIS IS THE FAKE STUFF FOR MOUSE
         my @assembly_contigs = $vc->each_AssemblyContig;
         my %contigs = ();
         my %big_contigs = ();
@@ -207,16 +207,30 @@ sub _init {
 	                $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $cid )
 	        } if $show_navigation;
             $self->push($glyph);
-            $clone = $strand > 0 ? $clone."->" : "<-$clone";
+            $clone = $strand > 0 ? "$clone >" : "< $clone";
             my $bp_textwidth = $w * length($clone) * 1.2; # add 20% for scaling text
-            unless ($bp_textwidth > ($rend - $rstart)){
+            if($bp_textwidth > ($rend - $rstart)){
+                my $pointer = $strand > 0 ? ">" : "<";
+                $bp_textwidth = $w * length($pointer) * 1.2; # add 20% for scaling text
+                unless($bp_textwidth > ($rend - $rstart)){
+                    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+                        'x'          => int( ($rend + $rstart - $bp_textwidth)/2),
+                        'y'          => $ystart+4,
+                        'font'       => 'Tiny',
+                        'colour'     => $white,
+                        'text'       => $pointer,
+                        'absolutey'  => 1,
+                    });
+                    $self->push($tglyph);
+                }
+            } else {
                 my $tglyph = new Bio::EnsEMBL::Glyph::Text({
                     'x'          => int( ($rend + $rstart - $bp_textwidth)/2),
                     'y'          => $ystart+5,
                     'font'       => 'Tiny',
                     'colour'     => $white,
                     'text'       => $clone,
-                    'absolutey'  => 1,
+                        'absolutey'  => 1,
                 });
                 $self->push($tglyph);
             }
