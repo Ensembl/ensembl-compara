@@ -5,8 +5,38 @@ use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelationAdaptor);
+our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
+=head2 fetch_by_stable_id
+
+  Arg [1]    : string $stable_id
+               the unique database identifier for the feature to be obtained
+  Example    : $feat = $adaptor->fetch_by_dbID(1234);
+  Description: Returns the feature created from the database defined by the
+               the id $id.
+  Returntype : Bio::EnsEMBL::SeqFeature
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_by_stable_id {
+  my ($self,$stable_id) = @_;
+
+  unless(defined $stable_id) {
+    $self->throw("fetch_by_stable_id must have an stable_id");
+  }
+
+  my @tabs = $self->_tables;
+
+  my ($name, $syn) = @{$tabs[0]};
+
+  #construct a constraint like 't1.table1_id = 1'
+  my $constraint = "${syn}.stable_id = '$stable_id'";
+
+  #return all elements of _generic_fetch list as stable_id is not unique for Member...
+  return $self->generic_fetch($constraint);
+}
 
 =head2 fetch_by_source_taxon
 
@@ -37,30 +67,30 @@ sub fetch_by_relation {
     $join = [['family_member', 'fm'], 'm.member_id = fm.member_id'];
     my $family_id = $relation->dbID;
     $constraint = "fm.family_id = $family_id";
-    $extra_columns = [qw(fm.family_id,
-                         fm.member_id,
+    $extra_columns = [qw(fm.family_id
+                         fm.member_id
                          fm.cigar_line)];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
     $join = [['domain_member', 'dm'], 'm.member_id = dm.member_id'];
     my $domain_id = $relation->dbID;
     $constraint = "dm.domain_id = $domain_id";
-    $extra_columns = [qw(dm.domain_id,
-                         dm.member_id,
-                         dm.member_start,
+    $extra_columns = [qw(dm.domain_id
+                         dm.member_id
+                         dm.member_start
                          dm.member_end)];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
     $join = [['homology_member', 'hm'], 'm.member_id = hm.member_id'];
     my $homology_id = $relation->dbID;
     $constraint .= "hm.homology_id = $homology_id";
-    $extra_columns = [qw(hm.homology_id,
-                         hm.member_id,
-                         hm.cigar_line,
-                         hm.perc_cov,
-                         hm.perc_id,
-                         hm.perc_pos,
-                         hm.exon_count,
+    $extra_columns = [qw(hm.homology_id
+                         hm.member_id
+                         hm.cigar_line
+                         hm.perc_cov
+                         hm.perc_id
+                         hm.perc_pos
+                         hm.exon_count
                          hm.flag)];
   }
   else {
@@ -75,6 +105,7 @@ sub fetch_by_relation_source {
 
   my $join;
   my $constraint = "s.source_name = '$source_name'";
+  my $extra_columns;
 
   $self->throw() 
     unless (defined $relation && ref $relation);
@@ -86,21 +117,36 @@ sub fetch_by_relation_source {
     $join = [['family_member', 'fm'], 'm.member_id = fm.member_id'];
     my $family_id = $relation->dbID;
     $constraint .= " AND fm.family_id = $family_id";
+    $extra_columns = [qw(fm.family_id
+                         fm.member_id
+                         fm.cigar_line)];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
     $join = [['domain_member', 'dm'], 'm.member_id = dm.member_id'];
     my $domain_id = $relation->dbID;
     $constraint .= " AND dm.domain_id = $domain_id";
+    $extra_columns = [qw(dm.domain_id
+                         dm.member_id
+                         dm.member_start
+                         dm.member_end)];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
     $join = [['homology_member', 'hm'], 'm.member_id = hm.member_id'];
     my $homology_id = $relation->dbID;
     $constraint .= " AND hm.homology_id = $homology_id";
+    $extra_columns = [qw(hm.homology_id
+                         hm.member_id
+                         hm.cigar_line
+                         hm.perc_cov
+                         hm.perc_id
+                         hm.perc_pos
+                         hm.exon_count
+                         hm.flag)];
   }
   else {
     $self->throw();
   }
-  return $self->generic_fetch($constraint, $join);
+  return $self->generic_fetch($constraint, $join, $extra_columns);
 }
 
 sub fetch_by_relation_source_taxon {
@@ -108,6 +154,7 @@ sub fetch_by_relation_source_taxon {
 
   my $join;
   my $constraint = "s.source_name = '$source_name' AND m.taxon_id = $taxon_id";
+  my $extra_columns;
 
   $self->throw()
     unless (defined $relation && ref $relation);
@@ -119,39 +166,46 @@ sub fetch_by_relation_source_taxon {
     $join = [['family_member', 'fm'], 'm.member_id = fm.member_id'];
     my $family_id = $relation->dbID;
     $constraint .= " AND fm.family_id = $family_id";
+    $extra_columns = [qw(fm.family_id
+                         fm.member_id
+                         fm.cigar_line)];
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
     $join = [['domain_member', 'dm'], 'm.member_id = dm.member_id'];
     my $domain_id = $relation->dbID;
-    $constraint .= " AND dm.domain_id = $domain_id AND s.source_name";
+    $constraint .= " AND dm.domain_id = $domain_id";
+    $extra_columns = [qw(dm.domain_id
+                         dm.member_id
+                         dm.member_start
+                         dm.member_end)];
   }
 #  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
 #  }
   else {
     $self->throw();
   }
-  return $self->generic_fetch($constraint, $join);
+  return $self->generic_fetch($constraint, $join, $extra_columns);
 }
 
 sub _tables {
   my $self = shift;
 
-  return {['member', 'm'], ['source', 's']};
+  return (['member', 'm'], ['source', 's']);
 }
 
 sub _columns {
   my $self = shift;
 
-  return qw (m.member_id,
-             m.stable_id,
-             m.taxon_id,
-             m.genome_db_id,
-             m.description,
-             m.chr_name,
-             m.chr_start,
-             m.chr_end,
-             m.sequence,
-             s.source_id,
+  return qw (m.member_id
+             m.stable_id
+             m.taxon_id
+             m.genome_db_id
+             m.description
+             m.chr_name
+             m.chr_start
+             m.chr_end
+             m.sequence
+             s.source_id
              s.source_name);
 }
 
@@ -162,25 +216,26 @@ sub _objs_from_sth {
   $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
 
   my @members = ();
-  my @relation_attributes = ();
 
   while ($sth->fetch()) {
-    push @members, Bio::EnsEMBL::Compara::Member->new_fast
-      ('_dbID' => $column{'member_id'},
-       '_stable_id' => $column{'stable_id'},
-       '_taxon_id' => $column{'taxon_id'},
-       '_genome_db_id' => $column{'genome_db_id'},
-       '_description' => $column{'description'},
-       '_chr_name' => $column{'chr_name'},
-       '_chr_start' => $column{'chr_start'},
-       '_chr_end' => $column{'chr_end'},
-       '_sequence' => $column{'sequence'},
-       '_source_id' => $column{'source_id'},
-       '_source_name' => $column{'source_name'},
-       '_adaptor' => $self);
-    
-    if (scalar keys %column > scalar $self->_columns) {
-      my $attribute = new Bio::EnsEMBL::Compara::Attribute;
+    my ($member,$attribute);
+    $member = Bio::EnsEMBL::Compara::Member->new_fast
+      ({'_dbID' => $column{'member_id'},
+        '_stable_id' => $column{'stable_id'},
+        '_taxon_id' => $column{'taxon_id'},
+        '_genome_db_id' => $column{'genome_db_id'},
+        '_description' => $column{'description'},
+        '_chr_name' => $column{'chr_name'},
+        '_chr_start' => $column{'chr_start'},
+        '_chr_end' => $column{'chr_end'},
+        '_sequence' => $column{'sequence'},
+        '_source_id' => $column{'source_id'},
+        '_source_name' => $column{'source_name'},
+        '_adaptor' => $self});
+
+    my @_columns = $self->_columns;
+    if (scalar keys %column > scalar @_columns) {
+      $attribute = new Bio::EnsEMBL::Compara::Attribute;
       $attribute->member_id($column{'member_id'});
       foreach my $key (keys %column) {
         next if (grep $column{$key},  $self->_columns);
@@ -188,8 +243,13 @@ sub _objs_from_sth {
         $attribute->$autoload_method($column{$key});
       }
     }
+    if (defined $attribute) {
+      push @members, [$member, $attribute];
+    } else {
+      push @members, $member;
+    }
   }
-  return [ \@members, \@relation_attributes ];  
+  return \@members
 }
 
 sub _default_where_clause {
@@ -209,6 +269,13 @@ sub store {
     $self->throw(
       "member arg must be a [Bio::EnsEMBL::Compara::Member]"
     . "not a $member");
+  }
+  
+  my $already_stored_member = $self->fetch_by_source_stable_id($member->source_name,$member->stable_id); 
+  if (defined $already_stored_member) {
+    $member->adaptor($already_stored_member->adaptor);
+    $member->dbID($already_stored_member->dbID);
+    return $member->dbID;
   }
 
   $member->source_id($self->store_source($member->source_name));
