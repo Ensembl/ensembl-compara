@@ -83,7 +83,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-
+ 
   my($conditionLogicName, $goalLogicName) = split(/,/, $self->input_id());
   if($conditionLogicName and $goalLogicName) {
     print("create rule $conditionLogicName => $goalLogicName\n");
@@ -94,7 +94,7 @@ sub run
   else {
     $self->createBlastRules();
   } 
-
+  $self->createBuildHomologyInput();
   return 1;
 }
 
@@ -132,11 +132,9 @@ sub createBlastRules
 
       foreach my $analysis (@{$analysisList}) {
         if($analysis->logic_name =~ /SubmitPep_/) {
-          my %parameters = $self->parameter_hash($analysis->parameters());
-          if($parameters{'genome_db_id'} and
-             ($parameters{'genome_db_id'} ne $genomeDB1->dbID))
-          {
-            my $phylum = $self->phylumForGenomeDBID($parameters{'genome_db_id'});
+          my $genome_db_id = parse_as_hash($analysis->parameters)->{'genome_db_id'};
+          if($genome_db_id and ($genome_db_id ne $genomeDB1->dbID)) {
+            my $phylum = $self->phylumForGenomeDBID($genome_db_id);
             #print("  check ".$analysis->logic_name().
             #      " genome_db_id=".$parameters{'genome_db_id'}.
             #      " phylum=".$phylum."\n");
@@ -226,6 +224,48 @@ sub addRule
 }
 
 
+sub createBuildHomologyInput
+{
+  my $self = shift;
+  my ($analysis1, $analysis2, $input_id);
+
+  my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
+  my @analysisList = @{$self->db->get_AnalysisAdaptor->fetch_all()};
+
+  my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'SubmitHomologyPair',
+      -input_id_type   => 'homology'
+    );
+  $self->db->get_AnalysisAdaptor()->store($submitHomology);
+
+  while(@analysisList) {
+    $analysis1 = shift @analysisList;
+    foreach my $analysis2 (@analysisList) {
+      my $genome_db_id1 = parse_as_hash($analysis1->parameters)->{'genome_db_id'};
+      my $genome_db_id2 = parse_as_hash($analysis2->parameters)->{'genome_db_id'};
+      if(($analysis1->logic_name =~ /blast_/) and
+         ($analysis2->logic_name =~ /blast_/) and
+         $genome_db_id1 and $genome_db_id2)
+      { 
+        if($genome_db_id1 < $genome_db_id2) {
+          $input_id = $analysis1->logic_name . ",". $analysis2->logic_name;
+        } else {
+          $input_id = $analysis2->logic_name . ",". $analysis1->logic_name;
+        }
+        print("HOMOLOGY '$input_id'\n");
+
+        $sicDBA->store_input_id_analysis($input_id,
+                                         $submitHomology,
+                                         'gaia', #execution_host
+                                         0 #save runtime NO (ie do insert)
+                                        );
+      }
+    }
+  }
+}
+
+
 sub checkRuleExists
 {
   my $self = shift;
@@ -260,30 +300,28 @@ sub checkRuleExists
   return undef;
 }
 
+sub parse_as_hash{
+  my $hash_string = shift;
 
-sub parameter_hash{
-  my $self = shift;
-  my $parameter_string = shift;
+  my %hash;
 
-  my %parameters;
+  return \%hash unless($hash_string);
 
-  if ($parameter_string) {
+  my @pairs = split (/,/, $hash_string);
+  foreach my $pair (@pairs) {
+    my ($key, $value) = split (/=>/, $pair);
+    if ($key && $value) {
+      $key   =~ s/^\s+//g;
+      $key   =~ s/\s+$//g;
+      $value =~ s/^\s+//g;
+      $value =~ s/\s+$//g;
 
-    my @pairs = split (/,/, $parameter_string);
-    foreach my $pair (@pairs) {
-      my ($key, $value) = split (/=>/, $pair);
-      if ($key && $value) {
-        $key   =~ s/^\s+//g;
-        $key   =~ s/\s+$//g;
-        $value =~ s/^\s+//g;
-        $value =~ s/\s+$//g;
-
-        $parameters{$key} = $value;
-      } else {
-        $parameters{$key} = "__NONE__";
-      }
+      $hash{$key} = $value;
+    } else {
+      $hash{$key} = "__NONE__";
     }
   }
-  return %parameters;
+  return \%hash;
 }
+
 1;
