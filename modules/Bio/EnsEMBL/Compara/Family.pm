@@ -25,7 +25,7 @@ sub new {
   
   if (scalar @args) {
      #do this explicitly.
-     my ($dbid, $stable_id, $description, $description_score, $adaptor) = $self->_rearrange([qw(DESCRIPTION_SCORE)], @args);
+     my ($description_score) = $self->_rearrange([qw(DESCRIPTION_SCORE)], @args);
       
       $description_score && $self->description_score($description_score);
   }
@@ -85,17 +85,36 @@ sub read_clustalw {
 
   $FH->close;
 
-  #place all family members in a hash on their names
-  my %member_hash;
-  foreach my $member (@{$self->get_all_members}) {
-    $member_hash{$member->stable_id} = $member;
+  #place all member attributes in a hash on their member name
+  my %attribute_hash;
+  foreach my $member_attribute (@{$self->get_all_Member}) {
+    my ($member, $attribute) = @{$member_attribute};
+    $attribute_hash{$member->stable_id} = $attribute;
   }
 
-  #assign alignment strings to each of the members
+  #assign cigar_line to each of the member attribute
   foreach my $id (keys %align_hash) {
-    my $member = $member_hash{$id};
-    if($member) {
-      $member->alignment_string($align_hash{$id});
+    my $attribute = $attribute_hash{$id};
+    if($attribute) {
+      my $alignment_string = $align_hash{$id};
+      $alignment_string =~ s/\-([A-Z])/\- $1/g;
+      $alignment_string =~ s/([A-Z])\-/$1 \-/g;
+
+      my @cigar_segments = split " ",$alignment_string;
+
+      my $cigar_line = "";
+      foreach my $segment (@cigar_segments) {
+        my $seglength = length($segment);
+        $seglength = "" if ($seglength == 1);
+        if ($segment =~ /^\-+$/) {
+          $cigar_line .= $seglength . "D";
+        } else {
+          $cigar_line .= $seglength . "M";
+        }
+      }
+
+      $attribute->cigar_line($cigar_line);
+
     } else {
       $self->warn("No member for alignment portion: [$id]");
     }
