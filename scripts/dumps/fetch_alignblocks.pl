@@ -73,9 +73,6 @@ setting chr_end=chr_length\n";
   $chr_end = $chr->length;
 }
 
-my $sb_species_sliceadaptor = $sb_species_dbadaptor->get_SliceAdaptor;
-my $qy_species_sliceadaptor = $qy_species_dbadaptor->get_SliceAdaptor;
-
 my $dafad = $db->get_DnaAlignFeatureAdaptor;
 
 my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($sb_species,$qy_species,$dnafrag_type,$chr_name,$chr_start,$chr_end)};
