@@ -48,9 +48,9 @@ use Bio::EnsEMBL::Root;
 @ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
-    my($class,@args) = @_;
+    my( $class, $hash ) = @_;
     
-    my $self = {};
+    my $self = $hash||{};
     bless $self,$class;
     
     return $self;
@@ -77,6 +77,7 @@ sub start{
 
 }
 
+sub id { my $self = shift; return "$self->{'hit_chr_name'}:$self->{'hit_chr_start'}-$self->{'hit_chr_end'}"; }
 
 =head2 end
 

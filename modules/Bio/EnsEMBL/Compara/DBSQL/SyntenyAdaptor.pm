@@ -38,6 +38,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor;
 use vars qw(@ISA);
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Compara::SyntenyRegion;
 use strict;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -55,6 +56,7 @@ sub setSpecies {
 sub get_synteny_for_chromosome {
     my( $self, $chr, $start, $end ) = @_; # if chr = undef return all synteny pairs
 
+    return [] if $self->{'_species_main'} eq $self->{'_species_secondary'};
     my @data = ();
     my $SYNTENY_DB = $self->{'_synteny_db'};
     my @parameters = ();
@@ -88,15 +90,18 @@ sub get_synteny_for_chromosome {
     );
     $sth->execute($self->{'_species_main'}, $self->{'_species_secondary'}, @parameters );
     while(my $Q = $sth->fetchrow_arrayref()) {
-        push @data, {
+       push @data, new Bio::EnsEMBL::Compara::SyntenyRegion(
+         {
             'synteny_id'    => $Q->[0],
             'seq_type'      => $Q->[1],     'chr_name'      => $Q->[2],
+            'start'         => $Q->[3],    'end'       => $Q->[4],
             'chr_start'     => $Q->[3],     'chr_end'       => $Q->[4],
             'start'         => $Q->[3]-$start+1,     'end'           => $Q->[4]-$start+1,
             'hit_seq_type'  => $Q->[5],     'hit_chr_name'  => $Q->[6],
             'hit_chr_start' => $Q->[7],     'hit_chr_end'   => $Q->[8],
             'rel_ori'       => $Q->[9]
-        }
+         } 
+       ); 
     }
     return \@data;
 }
