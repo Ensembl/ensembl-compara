@@ -13,10 +13,10 @@ mkdir src
 mv src
 
 In addition, you will need the ensembl compara code that is available by cvs from the ensembl cvs repository using the following cvs commands:
-cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster login
+cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl login
 
 When prompted the password is 'CVS'.
-cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/CVSmaster co -r branch-ensembl-26 ensembl-compara
+cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-26 ensembl-compara
 
 This will check out ensembl-compara code for stable branch 26. Make sure the ensembl core code you have already checked out is on the same branch. Note that the branch that is checked out should correspond to the database version being used. Thus ensembl_compara_26_1 and e.g. homo-sapiens_core_26_35 and mus_musculus_core_26_33b should be used with the above ensembl branch 26 code.
 Environment Variables
