@@ -150,6 +150,7 @@ sub cdna_alignment_string {
     }
 
     my $cdna_len = length($cdna);
+#    print STDERR "cdna length: ",$cdna_len,"\n";
     my $start = 0;
     my $cdna_align_string = '';
     foreach my $pep (split(//,$self->alignment_string($member))) {
@@ -158,9 +159,9 @@ sub cdna_alignment_string {
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
       } else {
-        $cdna_align_string .= substr($cdna, $start, 3) .' ';
+        $cdna_align_string .= substr($cdna, $start, 3) . ' ';
+        $start += 3;
       }
-      $start += 3;
     }
     
     $self->{'cdna_alignment_string'} = $cdna_align_string
