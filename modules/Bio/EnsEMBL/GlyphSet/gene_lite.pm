@@ -12,7 +12,7 @@ sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
   my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => 'Genes',
+    'text'      => EnsWeb::species_defs->AUTHORITY.' Genes',
     'font'      => 'Small',
     'absolutey' => 1,
     'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#gene_lite\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
@@ -35,6 +35,7 @@ sub _init {
 
   return unless ($self->strand() == -1);
 
+  my $authority = EnsWeb::species_defs->AUTHORITY;
   my $vc = $self->{'container'};
   my $Config       = $self->{'config'};
   my $y            = 0;
@@ -47,7 +48,7 @@ sub _init {
   my $type         = $Config->get('gene_lite', 'src');
   my @genes     = ();
   my $gene_label;
-  my $colours      = $Config->get('gene_lite', 'colours' );
+  my $colours      = $Config->get('gene_lite', 'colours' ),
 
   # call on ensembl lite to give us the details of all genes in the virtual contig
 
@@ -79,7 +80,7 @@ sub _init {
   # Draw all of the Vega Genes
   #
   my $F = 0;
-  foreach my $g (@{$gene_objs{'vega'}} ) {
+  foreach my $g (@{$gene_objs{'otter'}} ) {
     $F++;
     my $genelabel = $g->stable_id(); 
     my $high = exists $highlights{$genelabel};
@@ -94,7 +95,7 @@ sub _init {
       'ens_ID'    => $g->stable_id(), 
       'db'        => 'vega',
       'label'     => $genelabel, 
-      'colour'    => $colours->{ "vega_$type" },
+      'colour'    => $colours->{ "$type" },
       'ext_DB'    => $g->external_db(), 
       'high'      => $colours->{'hi'}, 
       'type'      => $g->type()
@@ -104,20 +105,24 @@ sub _init {
     $Config->{'legend_features'}->{'vega_genes'} = {
       'priority' => 1000,
       'legend'  => [ 
-      'Vega curated known genes'=> $colours->{'vega_Known'},
-      'Vega curated novel CDS'  => $colours->{'vega_Novel_CDS'},
-      'Vega curated putative'   => $colours->{'vega_Putative'},
-      'Vega curated novel Trans'=> $colours->{'vega_Novel_Transcript'},
-      'Vega curated pseudogenes'=> $colours->{'vega_Pseudogene'} ]
+                'Curated known genes'    => $colours->{'Known'},
+                'Curated novel CDS'      => $colours->{'Novel_CDS'},
+                'Curated putative'       => $colours->{'Putative'},
+                'Curated novel Trans'    => $colours->{'Novel_Transcript'},
+                'Curated pseudogenes'    => $colours->{'Pseudogene'},
+                'Curated predicted gene'         => $colours->{'Predicted_Gene'},
+                'Curated Immunoglobulin segment' => $colours->{'Ig_Segment'},
+                'Curated Immunoglobulin pseudogene' => $colours->{'Ig_Pseudogene'},
+       ]
     };
   } 
 
   # Draw all of the Core (ensembl) genes
   $F=0;
-  foreach my $g (@{$gene_objs{'ensembl'}} ) {
+  foreach my $g (@{$gene_objs{lc($authority)}} ) {
     $F++;
     my $high = (exists $highlights{ $g->stable_id() }) || (exists $highlights{ $g->external_name() });
-    my $gene_col = $colours->{'ensembl_'.$g->external_status};
+    my $gene_col = $colours->{'_'.$g->external_status};
     $gene_label = $g->external_name;
     $gene_label = 'NOVEL' unless defined $gene_label && $gene_label ne '';
     push @genes, {
@@ -127,22 +132,22 @@ sub _init {
       'strand'    => $g->strand(),
       'end'       => $g->end(),
       'ens_ID'    => $g->stable_id(),
-      'db'        => 'ensembl',
+      'db'        => 'core',
       'label'     => $gene_label,
-      'colour'    => $colours->{'ensembl_'.$g->external_status},
+      'colour'    => $colours->{'_'.$g->external_status},
       'ext_DB'    => $g->external_db(),
       'high'      => $high,
-      'type'      => 'ensembl'
+      'type'      => "$authority ".$g->external_status
     };
   }
   if($F>0) {
     $Config->{'legend_features'}->{'genes'} = {
       'priority' => 900,
       'legend'  => [
-        'EnsEMBL predicted genes (known)' => $colours->{'ensembl_KNOWN'},
-        'EnsEMBL predicted genes (pred)'  => $colours->{'ensembl_PRED'},
-        'EnsEMBL predicted genes (ortholog)'  => $colours->{'ensembl_ORTHO'},
-        'EnsEMBL predicted genes (novel)' => $colours->{'ensembl_'}
+        $authority.' predicted genes (known)' => $colours->{'_KNOWN'},
+     #   $authority.' predicted genes (pred)'  => $colours->{'_PRED'},
+     #   $authority.' predicted genes (ortholog)'  => $colours->{'_ORTHO'},
+        'EnsEMBL predicted genes (novel)' => $colours->{'_'}
     ]};
   }
 

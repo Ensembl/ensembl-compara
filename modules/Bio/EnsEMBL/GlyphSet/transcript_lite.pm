@@ -1,12 +1,14 @@
 package Bio::EnsEMBL::GlyphSet::transcript_lite;
 use strict;
 use vars qw(@ISA);
+use EnsWeb;
 use Bio::EnsEMBL::GlyphSet_transcript;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
     my $self = shift;
-    return $self->{'config'}->{'_draw_single_Transcript'} || 'Ensembl trans.';
+    return $self->{'config'}->{'_draw_single_Transcript'} || ( EnsWeb::species_defs->AUTHORITY.' trans.');
+
 }
 
 sub colours {
@@ -18,14 +20,14 @@ sub colours {
 sub features {
   my ($self) = @_;
 
-  return $self->{'container'}->get_all_Genes('ensembl');
+  return $self->{'container'}->get_all_Genes(lc(EnsWeb::species_defs->AUTHORITY));
 }
 
 
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
-    my $genecol = $colours->{ "ensembl_".$transcript->external_status };
+    my $genecol = $colours->{ "_".$transcript->external_status };
 
     if(exists $highlights{$transcript->stable_id()}) {
       return ($genecol, $colours->{'superhi'});
@@ -57,7 +59,7 @@ sub zmenu {
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
     my $zmenu = {
-        'caption'                       => "Ensembl Gene",
+        'caption'                       => EnsWeb::species_defs->AUTHORITY." Gene",
         "00:$id"			=> "",
 	"01:Gene:$gid"                  => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid&db=core",
         "02:Transcr:$tid"    	        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$tid&db=core",                	
@@ -100,14 +102,12 @@ sub legend {
     my ($self, $colours) = @_;
     return ('genes', 900, 
         [
-            'EnsEMBL predicted genes (known)' => $colours->{'known'},
-           # 'EnsEMBL predicted genes (xref)' => $colours->{'xref'},
-           # 'EnsEMBL predicted genes (pred)' => $colours->{'pred'},
-            'EnsEMBL predicted genes (novel)' => $colours->{'unknown'}
+            EnsWeb::species_defs->AUTHORITY.' predicted genes (known)' => $colours->{'_KNOWN'},
+            EnsWeb::species_defs->AUTHORITY.' predicted genes (novel)' => $colours->{'_'}
         ]
     );
 }
 
-sub error_track_name { return 'EnsEMBL transcripts'; }
+sub error_track_name { return EnsWeb::species_defs->AUTHORITY.' transcripts'; }
 
 1;

@@ -10,12 +10,7 @@ sub my_label {
 
 sub colours {
     my $self = shift;
-    my $Config = $self->{'config'};
-    return {
-        'genomewise'=> $Config->get('est_transcript_lite','genomewise'),
-        'hi'        => $Config->get('est_transcript_lite','hi'),
-        'superhi'   => $Config->get('est_transcript_lite','superhi')
-    };
+    my $Config = $self->{'config'}->get('est_transcript_lite','colours');
 }
 
 sub colour {
@@ -49,7 +44,8 @@ sub href {
 
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
-    my $id ;  
+    my $id = '';
+
     my $tid = $transcript->stable_id();
     my $pid = $transcript->translation->stable_id(),
     my $gid = $gene->stable_id();

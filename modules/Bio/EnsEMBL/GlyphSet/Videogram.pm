@@ -375,6 +375,20 @@ sub highlight_box {
     });
 }
 
+sub highlight_filledwidebox {
+    my $self = shift;
+    my $details = shift;
+    return new Sanger::Graphics::Glyph::Rect({
+        'x'             => $details->{'start'},
+        'y'             => $details->{'h_offset'}-$details->{'padding'},
+        'width'         => $details->{'end'}-$details->{'start'},
+        'height'        => $details->{'wid'}+$details->{'padding'}*2,
+        'colour'        => $details->{'col'},
+        'absolutey'     => 1,
+        'zmenu'         => $details->{'zmenu'}
+    });
+}
+
 sub highlight_widebox {
     my $self = shift;
     my $details = shift;

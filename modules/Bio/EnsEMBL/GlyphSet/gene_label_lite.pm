@@ -83,12 +83,12 @@ sub _init {
       push @{$gene_objs{$source}}, $g;
     }
       
-    foreach my $g (@{$gene_objs{'vega'}}) { 
-      my $gene_label = $g->stable_id();  
+    foreach my $g (@{$gene_objs{'otter'}}) { 
+      my $gene_label = $g->external_name() || $g->stable_id();   
       my $high = exists $highlights{ $gene_label }; 
       my $type = $g->type(); 
       $type =~ s/HUMACE-//; 
-      my $gene_col = $colours->{ "vega_$type" }; 
+      my $gene_col = $colours->{ "$type" }; 
         push @genes, { 
             'chr_start' => $g->start() + $offset, 
             'chr_end'   => $g->end() + $offset, 
@@ -110,7 +110,7 @@ sub _init {
     foreach my $g (@{$gene_objs{'ensembl'}} ) { 
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$g->stable_id()} ? 1 : 0;
-        my $gene_col = $colours->{'ensembl_'.$g->external_status};
+        my $gene_col = $colours->{'_'.$g->external_status};
         my $gene_label = $g->external_name() || 'NOVEL';
         push @genes, {
             'chr_start' => $g->start() + $offset,
