@@ -106,6 +106,34 @@ sub fetch_by_dbID{
    return $gdb;
 }
 
+=head2 fetch_by_species_tag
+
+ Title   : fetch_by_species_tag
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_by_species_tag{
+   my ($self,$tag) = @_;
+
+   my $sth = $self->prepare("select genome_db_id from genome_db where name = '$tag'");
+   $sth->execute;
+
+   my ($id) = $sth->fetchrow_array();
+
+   if( !defined $id ) {
+       $self->throw("No species with this tag $tag");
+   }
+
+   return $self->fetch_by_dbID($id);
+
+}
+
 =head2 store
 
  Title   : store

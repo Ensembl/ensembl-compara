@@ -52,6 +52,11 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 
 # we inheriet new
 
+sub fetch_by_dbID {
+    my ($self,$id) = @_;
+
+    return $self->fetch_GenomicAlign_by_dbID($id);
+}
 
 =head2 fetch_GenomicAlign_by_dbID
 
@@ -69,6 +74,55 @@ sub fetch_GenomicAlign_by_dbID{
    my ($self,$dbid) = @_;
 
    return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self);
+}
+
+
+=head2 fetch_by_genomedb_dnafrag_list
+
+ Title   : fetch_by_genomedb_dnafrag_list
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_by_genomedb_dnafrag_list{
+   my ($self,$genomedb,$dnafrag_list) = @_;
+
+   my $str;
+
+   if( !defined $dnafrag_list || !ref $genomedb || !$genomedb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
+       $self->throw("Misformed arguments");
+   }
+
+   foreach my $id ( @{$dnafrag_list} ) {
+       $str .= "'$id',";
+   }
+   $str =~ s/\,$//g;
+   $str = "($str)";
+   my $gid = $genomedb->dbID();
+
+   if( !defined  $gid ) {
+       $self->throw("Your genome db is not database aware");
+   }
+
+   my $sql = "select distinct(gab.align_id) from genomic_align_block gab,dnafrag d where d.name in $str and d.genome_db_id = $gid and d.dnafrag_id = gab.dnafrag_id";
+   
+   my $sth = $self->prepare($sql);
+
+   $sth->execute();
+
+   my @out;
+
+   while( my ($gaid) = $sth->fetchrow_array ) {
+       push(@out,$self->fetch_by_dbID($gaid));
+   }
+	    
+
+   return @out;
 }
 
 

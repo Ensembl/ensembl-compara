@@ -110,8 +110,30 @@ sub get_Ensembl_SeqFeatures_contig_list{
        $hash{$c} = 1;
    }
 
-   $self->throw("Not implemented yet!");
+   my @list = keys %hash;
 
+   my @galn = $self->adaptor->fetch_by_genomedb_dnafrag_list($self->genome_db,\@list);
+
+   my @out;
+
+   foreach my $aln ( @galn ) {
+       foreach my $abs ( $aln->each_AlignBlockSet ) {
+	   my @aln = $abs->get_AlignBlocks();
+	   foreach my $al ( @aln ) {
+	       if( $hash{$al->dnafrag->name} == 1 ) {
+		   my $ex = Bio::EnsEMBL::Compara::ExternalViewAlign->new();
+		   $ex->start($al->start);
+		   $ex->end($al->end);
+		   $ex->strand($al->strand);
+		   $ex->seqname($al->dnafrag->name);
+		   $ex->align($aln);
+		   push(@out,$ex);
+	       }
+	   }
+       }
+   }
+
+   return @out;
 }
 
 
