@@ -92,16 +92,27 @@ sub zmenu {
 sub text_label {
     my ($self, $gene, $transcript) = @_;
     my $tid = $transcript->stable_id();
+    my $eid = $transcript->external_name();
+
+    my $type;
+ 
     my $id  = ($transcript->external_name() eq '') ? 
       $tid : $transcript->external_name();
 
     if( $self->{'config'}->{'_both_names_'} eq 'yes') {
-        return $tid.(($transcript->external_name() eq '') ? '' : " ($id)" );
+        return $tid.( $eid ? "($eid)" : '' );
     }
-
-    return $self->{'config'}->{'_transcript_names_'} eq 'yes' ? ($transcript->external_name || 
-              ( $transcript->translation->stable_id ? 'NOVEL' : 'Pseudogene') ) : $tid;    
-  }
+    elsif( $eid ){
+	return "$eid\nEnsembl known trans";
+    }
+    elsif( $transcript->translation->stable_id ){
+	return "$tid\nEnsembl novel trans";
+    }
+    else{ 
+	return "$tid\nEnsembl pseudogene";
+    }
+    #$self->{'config'}->{'_transcript_names_'} eq 'yes' ? IGNORED
+}
 
 sub legend {
     my ($self, $colours) = @_;
