@@ -126,7 +126,7 @@ sub fetch_all {
 
 =cut
 
-sub fetch_by_name_assembly{
+sub fetch_by_name_assembly {
    my ($self, $name, $assembly) = @_;
 
    unless($name) {
@@ -153,6 +153,37 @@ sub fetch_by_name_assembly{
    }
 
    return $self->fetch_by_dbID($id);
+}
+
+=head2 fetch_by_registry_name
+
+  Arg [1]    : string $name
+  Example    : $gdb = $gdba->fetch_by_registry_name("human");
+  Description: Retrieves a genome db using the name of the species as
+               used in the registry configuration file. Any alias is
+               acceptable as well.
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if $name is not found in the Registry configuration
+  Caller     : general
+
+=cut
+
+sub fetch_by_registry_name {
+  my ($self, $name) = @_;
+
+  unless($name) {
+    $self->throw('name arguments are required');
+  }
+
+  my $species_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($name, "core");
+  if (!$species_db_adaptor) {
+    throw("Cannot connect to core database for $name!");
+  }
+
+  my $species_name = $species_db_adaptor->get_MetaContainer->get_Species->binomial;
+  my $species_assembly = $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version;
+   
+  return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
 =head2 store
