@@ -11,8 +11,7 @@ CREATE TABLE subset_member (
  subset_id   int(10) NOT NULL,
  member_id   int(10) NOT NULL,
 
- KEY(subset_id),
- KEY(member_id)
+ UNIQUE subset_member_id (subset_id, member_id)
 );
 
 
