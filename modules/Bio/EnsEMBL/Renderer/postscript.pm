@@ -112,8 +112,8 @@ sub render_Rect {
     my $gcolour       = $glyph->colour();
     my $gbordercolour = $glyph->bordercolour();
 
-    my $x = $glyph->pixelx() -1;
-    my $w = $glyph->pixelwidth() +1;
+    my $x = $glyph->pixelx();
+    my $w = $glyph->pixelwidth();
     my $y = $glyph->pixely();
     my $h = $glyph->pixelheight();
 
