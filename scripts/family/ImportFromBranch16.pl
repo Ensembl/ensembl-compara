@@ -30,7 +30,7 @@ foreach my $genomedb (@{$gdb->fetch_all}) {
 
 my $fa = $family_db->get_FamilyAdaptor;
 my $families = $fa->fetch_all;
-#my $families = [ $fa->fetch_by_stable_id("ENSF00000001000") ];
+#my $families = [ $fa->fetch_by_stable_id("ENSF00000001494") ];
 my $fma = $family_db->get_FamilyMemberAdaptor;
 
 foreach my $family (@{$families}) { 
@@ -112,15 +112,17 @@ foreach my $family (@{$families}) {
     # need to be modified to generate cigarline....
     if (defined $member->alignment_string) {
       my $alignment_string = $member->alignment_string;
-      $alignment_string =~ s/\-[A-Z]/\- /g;
-      $alignment_string =~ s/[A-Z]\-/ \-/g;
+      $alignment_string =~ s/\-([A-Z])/\- $1/g;
+      $alignment_string =~ s/([A-Z])\-/$1 \-/g;
       my @cigar_segments = split " ",$alignment_string;
       my $cigar_line = "";
       foreach my $segment (@cigar_segments) {
+        my $seglength = length($segment);
+        $seglength = "" if ($seglength == 1);
         if ($segment =~ /^\-+$/) {
-          $cigar_line .= length($segment) . "D";
+          $cigar_line .= $seglength . "D";
         } else {
-          $cigar_line .= length($segment) . "M";
+          $cigar_line .= $seglength . "M";
         }
       }
       $attribute->cigar_line($cigar_line);
