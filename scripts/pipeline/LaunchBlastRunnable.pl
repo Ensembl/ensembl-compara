@@ -4,7 +4,7 @@ $| = 1;
 
 use strict;
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
@@ -52,11 +52,11 @@ unless (defined($member_id) and defined($logic_name)) {
 }
 
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
-                                                     -port => $port,
-						     -user => $user,
-						     -pass => $pass,
-						     -dbname => $dbname);
+my $db = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-host => $host,
+                                                      -port => $port,
+						      -user => $user,
+						      -pass => $pass,
+						      -dbname => $dbname);
 
 #testBlastRunnable($db, "/home/jessica/data/FastaPeptidesFiles/ENSMUSP00000027035.fasta",
 #                  "/home/jessica/data/FastaPeptidesFiles/Rattus_norvegicus_RGSC3.1.fasta");
