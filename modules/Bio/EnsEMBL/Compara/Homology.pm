@@ -5,46 +5,102 @@ use Bio::EnsEMBL::Compara::BaseRelation;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
 
-my %FOURD_CODONS = ("CTT" => 1,#Leu
-                      "CTC" => 1,
-                      "CTA" => 1,
-                      "CTG" => 1,
+my %TWOD_CODONS = ("TTT" => "Phe",#Phe
+                   "TTC" => "Phe",
+                   
+                   "TTA" => "Leu",#Leu
+                   "TTG" => "Leu",
+                   
+                   "TAT" => "Tyr",#Tyr
+                   "TAC" => "Tyr",
+                   
+                   "CAT" => "His",#His
+                   "CAC" => "His",
 
-                      "GTT" => 1,#Val 
-                      "GTC" => 1,
-                      "GTA" => 1,
-                      "GTG" => 1,
-                      
-                      "TCT" => 1,#Ser
-                      "TCC" => 1,
-                      "TCA" => 1,
-                      "TCG" => 1,
+                   "CAA" => "Gln",#Gln
+                   "CAG" => "Gln",
+                   
+                   "AAT" => "Asn",#Asn
+                   "AAC" => "Asn",
+                   
+                   "AAA" => "Lys",#Lys
+                   "AAG" => "Lys",
+                   
+                   "GAT" => "Asp",#Asp
+                   "GAC" => "Asp",
 
-                      "CCT" => 1,#Pro
-                      "CCC" => 1,
-                      "CCA" => 1,
-                      "CCG" => 1,
+                   "GAA" => "Glu",#Glu
+                   "GAG" => "Glu",
+                   
+                   "TGT" => "Cys",#Cys
+                   "TGC" => "Cys",
+                   
+                   "AGT" => "Ser",#Ser
+                   "AGC" => "Ser",
+                   
+                   "AGA" => "Arg",#Arg
+                   "AGG" => "Arg",
+                   
+                   "ATT" => "Ile",#Ile
+                   "ATC" => "Ile",
+                   "ATA" => "Ile");
 
-                      "ACT" => 1,#Thr
-                      "ACC" => 1,
-                      "ACA" => 1,
-                      "ACG" => 1,
+my %FOURD_CODONS = ("CTT" => "Leu",#Leu
+                    "CTC" => "Leu",
+                    "CTA" => "Leu",
+                    "CTG" => "Leu",
+                    
+                    "GTT" => "Val",#Val 
+                    "GTC" => "Val",
+                    "GTA" => "Val",
+                    "GTG" => "Val",
+                    
+                    "TCT" => "Ser",#Ser
+                    "TCC" => "Ser",
+                    "TCA" => "Ser",
+                    "TCG" => "Ser",
+                    
+                    "CCT" => "Pro",#Pro
+                    "CCC" => "Pro",
+                    "CCA" => "Pro",
+                    "CCG" => "Pro",
+                    
+                    "ACT" => "Thr",#Thr
+                    "ACC" => "Thr",
+                    "ACA" => "Thr",
+                    "ACG" => "Thr",
+                    
+                    "GCT" => "Ala",#Ala
+                    "GCC" => "Ala",
+                    "GCA" => "Ala",
+                    "GCG" => "Ala",
+                    
+                    "CGT" => "Arg",#Arg
+                    "CGC" => "Arg",
+                    "CGA" => "Arg",
+                    "CGG" => "Arg",
+                    
+                    "GGT" => "Gly",#Gly
+                    "GGC" => "Gly",
+                    "GGA" => "Gly",
+                    "GGG" => "Gly");
+                    
+my %CODONS =   ("ATG" => "Met",
+                "TGG" => "Trp",
+                "TAA" => "TER",
+                "TAG" => "TER",
+                "TGA" => "TER",
+                "---" => "---");
 
-                      "GCT" => 1,#Ala
-                      "GCC" => 1,
-                      "GCA" => 1,
-                      "GCG" => 1,
+foreach my $codon (keys %TWOD_CODONS) {
+  $CODONS{$codon} = $TWOD_CODONS{$codon};
+}
+foreach my $codon (keys %FOURD_CODONS) {
+  $CODONS{$codon} = $FOURD_CODONS{$codon};
+}
 
-                      "CGT" => 1,#Arg
-                      "CGC" => 1,
-                      "CGA" => 1,
-                      "CGG" => 1,
+#print STDERR "Number of codons: ", scalar keys %CODONS,"\n";
 
-                      "GGT" => 1,#Gly
-                      "GGC" => 1,
-                      "GGA" => 1,
-                      "GGG" => 1);
-                      
 sub get_SimpleAlign {
   my $self = shift;
   my $alignment = shift;
@@ -142,7 +198,7 @@ sub ds {
 
 # Threshold on ds is hardcoded here. That's really bad. I'll make for the next release
 # i.e. february 2004 that the threshold is taken from the compara database
-  if ($apply_threshold_on_ds) {
+  if ($apply_threshold_on_ds && defined $self->{'_ds'}) {
     if (($self->stable_id =~ /^9606_10090_\d+$/ && $self->{'_ds'} > 1.26775) ||
         ($self->stable_id =~ /^9606_10116_\d+$/ && $self->{'_ds'} > 1.27342) ||
         ($self->stable_id =~ /^10090_10116_\d+$/ && $self->{'_ds'} > 0.41278) ||
@@ -231,10 +287,24 @@ sub get_4D_SimpleAlign {
   my %FourD_member_seqstr;
   for (my $i=0; $i < $seqstr_length; $i++) {
     my $FourD_codon = 1;
+    my $FourD_aminoacid;
     foreach my $seqid (keys %member_seqstr) {
       if (FourD_codon($member_seqstr{$seqid}->[$i])) {
+        if (defined $FourD_aminoacid && 
+            $FourD_aminoacid eq $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
+#          print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
+          next;
+        } elsif (defined $FourD_aminoacid) {
+#          print STDERR "NO ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
+          $FourD_codon = 0;
+          last;
+        } else {
+          $FourD_aminoacid = $FOURD_CODONS{$member_seqstr{$seqid}->[$i]};
+#          print STDERR $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i]," ";
+        }
         next;
       } else {
+#        print STDERR "NO ",$CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
         $FourD_codon = 0;
         last;
       }
@@ -267,6 +337,16 @@ sub FourD_codon {
   my ($codon) = @_;
   
   if (defined $FOURD_CODONS{$codon}) {
+    return 1;
+  }
+
+  return 0;
+}
+
+sub TwoD_codon {
+  my ($codon) = @_;
+  
+  if (defined $TWOD_CODONS{$codon}) {
     return 1;
   }
 
