@@ -14,15 +14,15 @@ use Bump;
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;
 
-    my $y          = 0;
-    my $h          = 8;
-    my $highlights = $this->highlights();
-    my @bitmap     = undef;
-    my $im_width = $Config->image_width();
+    my $y             = 0;
+    my $h             = 8;
+    my $highlights    = $this->highlights();
+    my @bitmap        = undef;
+    my $im_width      = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
-    my $colour = $Config->get($Config->script(),'transcript','unknown');
-    my $type = $Config->get($Config->script(),'transcript','src');
-    my @allgenes = ();
+    my $colour        = $Config->get($Config->script(),'transcript','unknown');
+    my $type          = $Config->get($Config->script(),'transcript','src');
+    my @allgenes      = ();
 	
     foreach my $vg ($VirtualContig->get_all_VirtualGenes()){
 	push (@allgenes, $vg->gene());
@@ -105,7 +105,7 @@ sub _init {
 	    my @exons = $transcript->each_Exon_in_context($VirtualContig->id());
 
 	    my ($start_screwed, $end_screwed);
-	    if($tstrand == 1) {
+	    if($tstrand != -1) {
 		$start_screwed = $transcript->is_start_exon_in_context($VirtualContig->id());
 		$end_screwed   = $transcript->is_end_exon_in_context($VirtualContig->id());
 	    } else {
@@ -119,6 +119,9 @@ sub _init {
 
 	    my $previous_endx;
 
+	    #########
+	    # draw anything trailing off the beginning
+	    #
 	    if(defined $start_screwed && $start_screwed == 0) {
 		my $clip = new Bio::EnsEMBL::Glyph::Line({
 		    'x'         => 0,
@@ -133,21 +136,7 @@ sub _init {
 		$previous_endx = $start_exon->end();
 	    }
 
-	    if(defined $end_screwed && $end_screwed == 0) {
-		my $clip = new Bio::EnsEMBL::Glyph::Line({
-		    'x'         => $end_exon->start(),
-		    'width'     => $VirtualContig->length() - $end_exon->start(),
-		    'y'         => $y+int($h/2),
-		    'height'    => 0,
-		    'colour'    => $colour,
-		    'absolutey' => 1,
-		    'dotted'    => 1,
-		});
-		$Composite->push($clip);
-	    }
-
     	    EXON: for my $exon (@exons) {
-
 		#########
 		# otherwise we're on the VC and everything's ok
 		#
@@ -181,6 +170,23 @@ sub _init {
 	    }
 
 	    #########
+	    # draw anything trailing off the end
+	    #
+	    if(defined $end_screwed && $end_screwed == 0) {
+		my $clip = new Bio::EnsEMBL::Glyph::Line({
+		    'x'         => $previous_endx,
+		    'width'     => $VirtualContig->length() - $previous_endx,
+		    'y'         => $y+int($h/2),
+		    'height'    => 0,
+		    'colour'    => $colour,
+		    'absolutey' => 1,
+		    'dotted'    => 1,
+		});
+		$Composite->push($clip);
+	    }
+
+
+	    #########
 	    # bump it baby, yeah!
 	    # bump-nology!
 	    #
@@ -196,11 +202,6 @@ sub _init {
 		$bitmap_length,
 		\@bitmap
 	    );
-
-	    #########
-	    # skip this row if it's bumped off the bottom
-	    #
-	    next if $row > $Config->get($Config->script(), 'transcript', 'dep');
 
 	    #########
 	    # shift the composite container by however much we're bumped
