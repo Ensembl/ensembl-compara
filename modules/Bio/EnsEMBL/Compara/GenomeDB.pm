@@ -85,7 +85,7 @@ sub new {
 sub db_adaptor{
   my ( $self, $dba ) = @_;
 
-  if( $dba ) {
+  if ($dba) {
     unless(ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
       $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBConnection" .
 		   " not a [$dba]\n");
@@ -95,10 +95,16 @@ sub db_adaptor{
     if($dba->isa('Bio::EnsEMBL::Container')) {
       $dba = $dba->_obj;
     }
-
+    
     $self->{'_db_adaptor'} = $dba;
   }
-
+  
+  unless (defined $self->{'_db_adaptor'}) {
+    $self->throw("Could not obtain DBAdaptor for Genome DBAdaptor with name=[".$self->name."] and\n".
+                 "assembly=[" . $self->assembly."]. It must be loaded using config file or\n" .
+                 "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
+  }
+  
   return $self->{'_db_adaptor'};
 }
 
