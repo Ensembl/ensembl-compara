@@ -79,14 +79,6 @@ sub fetch_by_dbID{
        $self->throw("No protein with this dbID $dbid");
    }
 
-   my $dnafrag;
-
-   if($dnafrag_id !=0){	# not a protein with mapped coordinates
-	   eval{
-    	 $dnafrag= $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);
-	   }; if ($@) { $self->warn ("Unable to fetch dnafrag associated with this protein.\n$@");}
-	}
-
 
    my $protein = Bio::EnsEMBL::Compara::Protein->new( 	-dbid 	=> $dbid,
 														-external_id	=> $external_id,
@@ -95,9 +87,18 @@ sub fetch_by_dbID{
 														-seq_start	=> $seq_start,
 														-seq_end	=> $seq_end,
 														-strand	=> $strand,
-														-dnafrag	=> $dnafrag);
+														-dnafrag_id	=> $dnafrag_id);
 
+   my $query = "Select sequence from peptide_sequence where peptide_sequence_id = ?";
+   $sth = $self->prepare($query);
+   $sth->execute($peptide_sequence_id);
 
+   my ($seq) = $sth->fetchrow_array;
+
+   $protein->seq($seq);
+   $protein->moltype('protein');
+   $protein->display_id($external_id);
+   $protein->primary_id($external_id);
    return $protein;
 
 }
@@ -205,8 +206,8 @@ sub store{
 
    my $sth = $self->prepare("insert into protein (protein_external_id,protein_external_dbname,peptide_sequence_id,seq_start,seq_end,strand,dnafrag_id) values (?,?,?,?,?,?,?)");
 
-   my $dnafrag_id;
-   $dnafrag_id = (defined $protein->dnafrag) ? $protein->dnafrag->dbID : ''; 
+
+   # Should we flag if the protein has no dnafrag attached?
 
    $sth->execute($protein->external_id,$protein->external_dbname,$protein->peptide_sequence_id,$protein->seq_start,$protein->seq_end,$protein->strand,$dnafrag_id);
 

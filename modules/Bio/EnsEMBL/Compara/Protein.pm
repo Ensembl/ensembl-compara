@@ -50,14 +50,14 @@ sub new {
     my $self = {};
     bless $self,$class;
 
-	my ($dbID, $external_id,,$external_dbname,$seq_start,$seq_end,$strand,$dnafrag,$adaptor) = 
+	my ($dbID, $external_id,,$external_dbname,$seq_start,$seq_end,$strand,$dnafrag_id,$adaptor) = 
 			$self->_rearrange([qw(	DBID
                                     EXTERNAL_ID
                                     EXTERNAL_DBNAME
                                     SEQ_START
                                     SEQ_END
                                     STRAND
-                                    DNAFRAG
+                                    DNAFRAG_ID
                                     ADAPTOR)],@args);
 
 
@@ -80,8 +80,8 @@ sub new {
 	if (defined $strand){
 		$self->strand($strand);
 	}
-	if (defined $dnafrag){
-		$self->dnafrag($dnafrag);
+	if (defined $dnafrag_id){
+		$self->dnafrag_id($dnafrag_id);
 	}
 	if (defined $adaptor){
 		$self->adaptor($adaptor);
@@ -278,24 +278,22 @@ sub strand{
 
 }
 
-
-=head2 dnafrag
- Title   : dnafrag
- Usage   : $obj->dnafrag($newval) 
- Function: getset for dnafrag
- Returns : Bio::EnsEMBL::Compara::dnafrag object
- Args    : Bio::EnsEMBL::Compara::dnafrag
+=head2 dnafrag_id
+ Title   : dnafrag_id
+ Usage   : $obj->dnafrag_id($newval) 
+ Function: getset for dnafrag_id
+ Returns : dnafrag_id that this protein sits on.
+ Args    : dnafrag_id that this protein sits on.
 
 =cut
 
-sub dnafrag{
+sub dnafrag_id{
    my ($self,$value) = @_;
 
    if (defined $value){ 
-     $self->throw("Trying to store $value as a Bio::EnsEMBL::Compara::DnaFrag!") unless $value->isa('Bio::EnsEMBL::Compara::DnaFrag') ;
-   $self->{'dnafrag'} = $value;
+   $self->{'dnafrag_id'} = $value;
    }
-   return $self->{'dnafrag'};
+   return $self->{'dnafrag_id'};
 
 }
 
