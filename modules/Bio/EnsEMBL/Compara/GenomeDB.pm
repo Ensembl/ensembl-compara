@@ -47,7 +47,6 @@ use strict;
 
 use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Hive::URLFactory;
 
 @ISA = qw(Bio::EnsEMBL::Root);
 
@@ -291,10 +290,7 @@ sub connect_to_genome_locator
 
   return undef if($self->locator eq '');
 
-  my $genomeDBA;
-  $genomeDBA = Bio::EnsEMBL::Hive::URLFactory->fetch($self->locator);
-  unless($genomeDBA) { $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); }
-
+  my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
   return undef unless($genomeDBA);
   $genomeDBA->disconnect_when_inactive(1);
   return $genomeDBA;
