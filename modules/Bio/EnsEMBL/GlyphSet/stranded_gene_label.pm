@@ -29,87 +29,76 @@ sub init_label {
 sub _init {
     my $self = shift;
 
-    my $VirtualContig  = $self->{'container'};
+    my $vc             = $self->{'container'};
     my $Config         = $self->{'config'};
     my $y              = 0;
     my @bitmap         = undef;
     my $im_width       = $Config->image_width();
     my $type           = $Config->get('stranded_gene_label','src');
-    my @allgenes       = $VirtualContig->get_all_VirtualGenes_startend();
+    my @allgenes       = $vc->get_all_VirtualGenes_startend();
     my %highlights;
     @highlights{$self->highlights()} = ();    # build hashkeys of highlight list
 
     if ($type eq 'all') {
-    	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+    	foreach my $vg ($vc->get_all_ExternalGenes()){
     	    $vg->{'_is_external'} = 1;
     	    push (@allgenes, $vg);
     	}
     }
 
     my $ext_col        = $Config->get('stranded_gene_label','ext');
-    my $pseudo_col   = $Config->get('gene','pseudo');
+    my $pseudo_col     = $Config->get('stranded_gene_label','pseudo');
     my $known_col      = $Config->get('stranded_gene_label','known');
     my $unknown_col    = $Config->get('stranded_gene_label','unknown');
     my $pix_per_bp     = $Config->transform->{'scalex'};
-    my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
+    my $bitmap_length  = int($vc->length * $pix_per_bp);
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
-#    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
+    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
     for my $vg (@allgenes) {
 	
-	my ($start, $end, $colour, $label, $hi_colour);
+	my ($start, $colour, $label, $hi_colour);
 	
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
-            next if( $vg->strand() != $self->strand() );
-            $start = $vg->start();
-            $end = $vg->end();        
-            ########## skip if this one isn't on the strand we're drawing
-            if($vg->gene->is_known()) {
+	    ########## skip if this one isn't on the strand we're drawing
+        next if( $vg->strand() != $self->strand() );
+        $start = $vg->start();
+	    if($vg->gene->is_known()) {
                 # this is duplicated  from gene_label.pm, so needs refactoring ...
-                $colour = $known_col;
-                my @temp_geneDBlinks = $vg->gene->each_DBLink();
-                
+	    	$colour = $known_col;
+            my @temp_geneDBlinks = $vg->gene->each_DBLink();
+	 	
                 # find a decent label:
-              DBLINK:
-                # check in order of preference:
-                foreach my $db ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
-                    foreach my $DB_link ( @temp_geneDBlinks ) {
-                        if ($db eq $DB_link->database() ) {
-                            $label = $DB_link->display_id();
-                            last DBLINK;
-                        }
-                    }
-                }
-                
-                $label = $vg->id() unless( defined $label );
-                # check for highlighting
-                if (exists $highlights{$label}){
-                    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
-                }
+	    	foreach my $DB_link ( @temp_geneDBlinks ) {
+                my $db = $DB_link->database();
+                    # check in order of preference:
+                $label = $DB_link->display_id() if ($db_names{$db} );
+                last if($db eq 'HUGO');
+	    	}
+
+		    $label = $vg->id() unless( defined $label );
+            # check for highlighting
+	    	if (exists $highlights{$label}){
+    		    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
+    		}
             } else {
-                $colour = $unknown_col;
-                $label	= "NOVEL";
+	    	$colour = $unknown_col;
+    		$label	= "NOVEL";
 	    }
 	} else {
-        next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());    
+        next if(($vg->each_Transcript())[0]->strand_in_context($vc->id()) != $self->strand());    
 	    ########## skip if it's not on the strand we're drawing
-	    $colour = $ext_col;
-		if ($vg->type() =~ /pseudo/){
-	    	$colour   = $pseudo_col;
-		}
-	    my @coords;
+		$colour   =  ($vg->type() =~ /pseudo/) ? $pseudo_col : $ext_col;
+        $start = undef;
 	    foreach my $trans ($vg->each_Transcript){
     		foreach my $exon ( $trans->each_Exon ) {
-    		    if( $exon->seqname eq $VirtualContig->id ) { 
-        			push(@coords,$exon->start);
-           			push(@coords,$exon->end);
+#                print STDERR "XX: ".join(' -- ',$exon->seqname(),$vc->id(),$exon->start,$start,"\n");
+    		    if( ($exon->seqname eq $vc->id) && ( $exon->start < $start || !defined $start) ) { 
+        			$start = $exon->start;
 		        }
 	        }
 	    }
-	    @coords = sort {$a <=> $b} @coords;
-	    $start = $coords[0];
-	    $end   = $coords[-1];   
 	    $label  = $vg->id;
 	    $label  =~ s/gene\.//;
 	}
