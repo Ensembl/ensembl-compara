@@ -48,6 +48,8 @@ use strict;
 
 use Bio::Root::RootI;
 use Bio::SeqFeatureI;
+use Bio::EnsEMBL::DnaDnaAlignFeature;
+use Bio::EnsEMBL::SeqFeature;
 
 @ISA = qw(Bio::Root::RootI Bio::SeqFeatureI);
 
@@ -254,6 +256,36 @@ sub dnafrag{
 
 }
 
+=head2 return_DnaDnaAlignFeature
+
+ Title   : return_DnaDnaAlignFeature
+ Usage   : $obj->return_DnaDnaAlignFeature
+ Function: 
+ Example : 
+ Returns : value of a Bio::EnsEMBL::DnaDnaAlignFeature object
+ Args    : none
+
+=cut
+
+sub return_DnaDnaAlignFeature {
+  my ($self,$align_name) = @_;
+  my $DnaDnaAlignFeature = new Bio::EnsEMBL::DnaDnaAlignFeature('-cigar_string' => $self->cigar_string);
+  my $feature1 = new Bio::EnsEMBL::SeqFeature;
+  $feature1->seqname($align_name);
+  $feature1->start($self->align_start);
+  $feature1->end($self->align_end);
+  $feature1->strand(1);
+  my $feature2 = new Bio::EnsEMBL::SeqFeature;
+  $feature2->seqname($self->dnafrag->name);
+  $feature2->start($self->start);
+  $feature2->end($self->end);
+  $feature2->strand($self->strand);
+  $DnaDnaAlignFeature->feature1($feature1);
+  $DnaDnaAlignFeature->feature2($feature2);
+  $DnaDnaAlignFeature->score($self->score);
+  $DnaDnaAlignFeature->percent_id($self->perc_id);
+  return $DnaDnaAlignFeature;
+}
 
 =head2 SeqFeatureI compliant methods
 
