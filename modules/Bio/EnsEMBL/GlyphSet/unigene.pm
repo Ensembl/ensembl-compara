@@ -11,26 +11,31 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
-sub _init {
-    my ($self, $VirtualContig, $Config) = @_;
-
-    my $strand = $self->strand();
+sub init_label {
+    my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'Unigene',
+	'text'      => 'UniGene',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $self->label($label);
+    $this->label($label);
+}
 
-    my $h          = 8;
-    my $highlights = $self->highlights();
+sub _init {
+    my ($self) = @_;
 
-    my @bitmap      	= undef;
-    my $bitmap_length 	= $VirtualContig->length();
-    my $feature_colour 	= $Config->get($Config->script(),'unigene','col');
+    my $VirtualContig  = $self->{'container'};
+    my $Config         = $self->{'config'};
+    my $strand         = $self->strand();
+    my $h              = 8;
+    my $highlights     = $self->highlights();
+    my @bitmap         = undef;
+    my $pix_per_bp  	= $Config->transform()->{'scalex'};
+    my $bitmap_length 	= int($VirtualContig->length * $pix_per_bp);
+    my $feature_colour = $Config->get($Config->script(),'unigene','col');
     my %id = ();
-	my $small_contig   = 0;
+    my $small_contig   = 0;
 
     my $glob_bp = 100;
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("unigene.seq",80,$glob_bp);  
@@ -49,9 +54,14 @@ sub _init {
 		my $j = 1;
 
 		my $has_origin = undef;
+		my $unigeneid = $i;
+		$unigeneid =~ s/\./&CID=/;
+
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'id'		=> $i,
-		'zmenu'     => { caption => $i },
+			'zmenu'     => { 
+				'caption' => "$i",
+				'NCBI UniGene' => "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=$unigeneid",		
+			},
 	    });
 		foreach my $f (@{$id{$i}}){
 			unless (defined $has_origin){
@@ -128,11 +138,11 @@ sub _init {
 		}
 		
 		if ($Config->get($Config->script(), 'unigene', 'dep') > 0){ # we bump
-	    	my $bump_start = $Composite->x();
+	    	my $bump_start = int($Composite->x() * $pix_per_bp);
 	    	$bump_start = 0 if ($bump_start < 0);
 
-	    	my $bump_end = $bump_start + ($Composite->width());
-	    	next if $bump_end > $bitmap_length;
+	    	my $bump_end = $bump_start + ($Composite->width() * $pix_per_bp);
+            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
 	    	my $row = &Bump::bump_row(      
 				    	  $bump_start,
 				    	  $bump_end,

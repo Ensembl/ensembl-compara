@@ -9,37 +9,41 @@ use Bio::EnsEMBL::Glyph::Poly;
 use Bio::EnsEMBL::Glyph::Text;
 use ColourMap;
 
-sub _init {
-    my ($self, $VirtualContig, $Config) = @_;
-
-    #########
-    # only draw contigs once - on one strand
-    #
-    return unless ($self->strand() == 1);
+sub init_label {
+    my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'DNA(contigs)',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $self->label($label);
+    $this->label($label);
+}
+
+sub _init {
+    my ($self) = @_;
+
+    #########
+    # only draw contigs once - on one strand
+    #
+    return unless ($self->strand() == 1);
 
     my $col   = undef;
     my $cmap  = new ColourMap;
     my $col1  = $cmap->id_by_name('contigblue1');
     my $col2  = $cmap->id_by_name('contigblue2');
     my $col3  = $cmap->id_by_name('black');
-    my $white  = $cmap->id_by_name('white');
-    my $black  = $cmap->id_by_name('black');
-    my $red    = $cmap->id_by_name('red');
+    my $white = $cmap->id_by_name('white');
+    my $black = $cmap->id_by_name('black');
+    my $red   = $cmap->id_by_name('red');
 
-    my @map_contigs = $VirtualContig->_vmap->each_MapContig();
+    my @map_contigs = $self->{'container'}->_vmap->each_MapContig();
     my $start = $map_contigs[0]->start();
     my $end   = $map_contigs[-1]->end();
     my $tot_width = $end - $start;
     my $ystart = 75;
 
-    my $im_width = $Config->image_width();
+    my $im_width = $self->{'config'}->image_width();
 
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
     	'x'      => 1,
@@ -53,43 +57,49 @@ sub _init {
     $self->push($gline);
 
     my $i = 0;
-    foreach my $temp_rawcontig ( @map_contigs ) {
-	if($i%2 == 0){
-	    $col = $col2;
-	} else {
-	    $col = $col1;
-	}
-	$i++;
-	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'      => $temp_rawcontig->start,
-	    'y'      => $ystart+2,
-	    'width'  => $temp_rawcontig->end - $temp_rawcontig->start,
-	    'height' => 10,
-	    #'id'     => $temp_rawcontig->contig->id(),
-	    'colour' => $col,
-	    'absolutey'  => 1,
-	    'zmenu' => {
-		'caption' => $temp_rawcontig->contig->id(),
-		'foo'     => 'foo2',
-	    },
-	});
-	$self->push($glyph);
-	#print STDERR "Contig!\n";
+	my ($w,$h) = $self->{'config'}->texthelper->px2bp('Tiny');
 	
-	my ($w,$h) = $Config->texthelper->px2bp('Tiny');
-	my $text = $temp_rawcontig->contig->cloneid();
-	my $bp_textwidth = $w * length($text) * 1.1; # add 10% for scaling text
-	unless ($bp_textwidth > ($temp_rawcontig->end - $temp_rawcontig->start)){
-	    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-		'x'      => $temp_rawcontig->start + int(($temp_rawcontig->end - $temp_rawcontig->start)/2) - ($bp_textwidth)/2,
-		'y'      => $ystart+4,
-		'font'   => 'Tiny',
-		'colour' => $white,
-		'text'   => $text,
-		'absolutey'  => 1,
-	    });
-	    $self->push($tglyph);
-	}
+    foreach my $temp_rawcontig ( @map_contigs ) {
+		if($i%2 == 0){
+	    	$col = $col2;
+		} else {
+	    	$col = $col1;
+		}
+		$i++;
+
+
+
+		my $rend = $temp_rawcontig->end();
+		my $rstart = $temp_rawcontig->start();
+		my $rid = $temp_rawcontig->contig->id();
+		my $text = $temp_rawcontig->contig->cloneid();
+				
+		my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+	    	'x'      => $rstart,
+	    	'y'      => $ystart+2,
+	    	'width'  => $rend - $rstart,
+	    	'height' => 10,
+	    	'colour' => $col,
+	    	'absolutey'  => 1,
+	    	'zmenu' => {
+				'caption' => $rid,
+				'Contig information'     => "/perl/seqentryview?seqentry=$text&contigid=$rid",
+	    	},
+		});
+		$self->push($glyph);
+
+		my $bp_textwidth = $w * length($text) * 1.1; # add 10% for scaling text
+		unless ($bp_textwidth > ($rend - $rstart)){
+	    	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+			'x'      => $rstart + int(($rend - $rstart)/2 - ($bp_textwidth)/2),
+			'y'      => $ystart+4,
+			'font'   => 'Tiny',
+			'colour' => $white,
+			'text'   => $text,
+			'absolutey'  => 1,
+	    	});
+	    	$self->push($tglyph);
+		}
     }				# 
     
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
@@ -114,25 +124,11 @@ sub _init {
     });
     $self->push($gline);
     
-    my $gtriag;
-    
-    $gtriag = new Bio::EnsEMBL::Glyph::Poly({
-	'points'       => [$im_width-10,$ystart-4, $im_width-10,$ystart, $im_width,$ystart],
-	'colour'       => $col3,
-	'absolutex'    => 1,
-	'absolutey'    => 1,
-    });
-    $self->push($gtriag);
-    
-    $gtriag = new Bio::EnsEMBL::Glyph::Poly({
-	'points'       => [0,$ystart+14, 10,$ystart+14, 10,$ystart+18],
-	'colour'       => $col3,
-	'absolutex'    => 1,
-	'absolutey'    => 1,
-    });
-    $self->push($gtriag);
-    
-    
+	## pull in our subclassed methods if necessary
+	if ($self->can('add_arrows')){
+		$self->add_arrows($im_width, $black, $ystart);
+	}
+
     my $tick;
     my $interval = int($im_width/10);
     for (my $i=1; $i <=9; $i++){
@@ -184,9 +180,9 @@ sub _init {
     $self->push($tick);
     
     my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
-	'x'      => $Config->{'_wvc_start'} - $VirtualContig->_global_start(),
+	'x'      => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
 	'y'      => $ystart - 4 ,
-	'width'  => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
+	'width'  => $self->{'config'}->{'_wvc_end'} - $self->{'config'}->{'_wvc_start'},
 	'height' => 22,
 	'bordercolour' => $red,
 	'absolutey'  => 1,

@@ -11,27 +11,32 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
-sub _init {
-    my ($self, $VirtualContig, $Config) = @_;
-
-    my $strand = $self->strand();
+sub init_label {
+    my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Genscan',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $self->label($label);
+    $this->label($label);
+}
 
-    my $h          = 8;
-    my $highlights = $self->highlights();
+sub _init {
+    my ($self) = @_;
 
-    my @bitmap      	= undef;
-    my $bitmap_length 	= $VirtualContig->length();
-    my $feature_colour 	= $Config->get($Config->script(),'genscan','col');
-    my %id = ();
-	my $small_contig   = 0;
-	my @allfeatures = ();
+    my $VirtualContig  = $self->{'container'};
+    my $Config         = $self->{'config'};
+    my $strand         = $self->strand();
+    my $h              = 8;
+    my $highlights     = $self->highlights();
+    my @bitmap         = undef;
+    my $pix_per_bp  	= $Config->transform()->{'scalex'};
+    my $bitmap_length 	= int($VirtualContig->length * $pix_per_bp);
+    my $feature_colour = $Config->get($Config->script(),'genscan','col');
+    my %id             = ();
+    my $small_contig   = 0;
+    my @allfeatures    = ();
 
     foreach my $seq_feat ($VirtualContig->get_all_PredictionFeatures()){
 		if ($seq_feat->strand() == $strand){
@@ -48,13 +53,12 @@ sub _init {
 	foreach my $i (keys %id){
 
 		@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
-		#@{$id{$i}} =  reverse @{$id{$i}} if ($strand == -1);
-		my $j = 1;
-
 		my $has_origin = undef;
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'id'		=> $i,
-		'zmenu'     => { caption => $i },
+		'zmenu'     => { 
+				caption => "Genscan $i",
+				'View peptide' => "/perl/dumpview?type=genscan&id=$i",		
+		 },
 	    });
 		foreach my $f (@{$id{$i}}){
 			unless (defined $has_origin){
@@ -62,9 +66,6 @@ sub _init {
 				$Composite->y(0);
 				$has_origin = 1;
 			}
-			
-			#$Composite->bordercolour($feature_colour);
-
 			#print STDERR "Feature [$j: $f] start: ", $f->start(), " ID:", $f->id(),  "(strand: $strand)\n";
 			#print STDERR "Feature length: ", $x1, " ID:", $f->id(),  "\n";
 			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
@@ -74,43 +75,37 @@ sub _init {
 				'height' 	=> $h,
 				'colour' 	=> $feature_colour,
 				'absolutey' => 1,
-				'_feature' 	=> $f, 
+				'_fstart' 	=> $f->start(), 
+				'_flength' 	=> $f->length(), 
 			});
-			#print STDERR "Adding ", $f->id(), " to composite glyph (strand: $strand)\n";
 			$Composite->push($glyph);
-			$j++;
 		}
 		
-		#if($VirtualContig->length() <= 250001){
-		if(1){
-			# loop through glyphs again adding connectors...
-			my @g = $Composite->glyphs();
-			for (my $i = 1; $i<scalar(@g); $i++){
-				my $id = $Composite->id();
-				my $prefix  =  "[ID: $id]";
-				my $fstart  = $g[$i-1]->{'_feature'}->start();
-				my $flength = $g[$i-1]->{'_feature'}->length();
+		# loop through glyphs again adding connectors...
+		my @g = $Composite->glyphs();
+		for (my $i = 1; $i<scalar(@g); $i++){
+			my $id = $Composite->id();
+			my $fstart  = $g[$i-1]->{'_fstart'};
+			my $flength = $g[$i-1]->{'_flength'};
 
-				my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
-					'x'      	=> $fstart + $flength,
-					'y'      	=> 0,
-					'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
-					'height' 	=> $h,
-					'strand' 	=> $strand,
-					'colour' 	=> $feature_colour,
-					'absolutey' => 1,
-				});
-				$Composite->{'zmenu'}->{"[$id:$i]"} = 1;
-				$Composite->push($intglyph);
-			}
+			my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
+				'x'      	=> $fstart + $flength,
+				'y'      	=> 0,
+				'width'  	=> $g[$i]->{'_fstart'} - ($fstart + $flength),
+				'height' 	=> $h,
+				'strand' 	=> $strand,
+				'colour' 	=> $feature_colour,
+				'absolutey' => 1,
+			});
+			$Composite->push($intglyph);
 		}
 		
 		if ($Config->get($Config->script(), 'genscan', 'dep') > 0){ # we bump
-	    	my $bump_start = $Composite->x();
+	    	my $bump_start = int($Composite->x() * $pix_per_bp);
 	    	$bump_start = 0 if ($bump_start < 0);
 
-	    	my $bump_end = $bump_start + ($Composite->width());
-	    	next if $bump_end > $bitmap_length;
+	    	my $bump_end = $bump_start + ($Composite->width() * $pix_per_bp);
+            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
 	    	my $row = &Bump::bump_row(      
 				    	  $bump_start,
 				    	  $bump_end,

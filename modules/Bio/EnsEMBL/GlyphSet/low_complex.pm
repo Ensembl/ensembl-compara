@@ -16,7 +16,11 @@ sub _init {
     my $y          = 0;
     my $h          = 4;
     my $highlights = $this->highlights();
-foreach my $feat ($protein->each_Protein_feature()) {
+
+    my $protein = $this->{'container'};
+    my $Config = $this->{'config'};
+
+    foreach my $feat ($protein->each_Protein_feature()) {
               
     print STDERR $feat->feature2->seqname, "\n";
 

@@ -8,21 +8,27 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bump;
 
-sub _init {
-    my ($this, $VirtualContig, $Config) = @_;
-
-    return unless ($this->strand() == -1);
+sub init_label {
+    my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'genes',
+	'text'      => 'Genes',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
     $this->label($label);
+}
 
+sub _init {
+    my ($self) = @_;
+
+    return unless ($self->strand() == -1);
+
+    my $VirtualContig = $self->{'container'};
+    my $Config        = $self->{'config'};
     my $y             = 0;
     my $h             = 8;
-    my $highlights    = $this->highlights();
+    my $highlights    = $self->highlights();
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
@@ -87,7 +93,7 @@ sub _init {
 
 	    next if $row > $Config->get($Config->script(), 'gene', 'dep');
     	$rect->y($rect->y() + (1.5 * $row * $h));
-    	$this->push($rect);
+    	$self->push($rect);
     }
 }
 

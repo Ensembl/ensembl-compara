@@ -10,17 +10,24 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
-sub _init {
-    my ($self, $VirtualContig, $Config) = @_;
-
-    return unless ($self->strand() == -1);
+sub init_label {
+    my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'markers',
+	'text'      => 'Markers',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $self->label($label);
+    $this->label($label);
+}
+
+sub _init {
+    my ($self) = @_;
+
+    return unless ($self->strand() == -1);
+
+    my $VirtualContig = $self->{'container'};
+    my $Config = $self->{'config'};
 
     my $h          = 8;
     my $highlights = $self->highlights();
@@ -28,6 +35,7 @@ sub _init {
     my $feature_colour 	= $Config->get($Config->script(),'marker','col');
 
   	foreach my $f ($VirtualContig->get_landmark_MarkerFeatures()){
+		my $fid = $f->id();
 		my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 			'x'      	=> $f->start(),
 			'y'      	=> 0,
@@ -35,7 +43,10 @@ sub _init {
 			'height' 	=> $h,
 			'colour' 	=> $feature_colour,
 			'absolutey' => 1,
-			'zmenu'     => { 'caption' => $f->id() },
+			'zmenu'     => { 
+				'caption' => $fid,
+				'Marker info' => "/perl/markerview?marker=$fid",
+			},
 		});
 		$self->push($glyph);
 	}	

@@ -11,8 +11,8 @@ use Bio::EnsEMBL::Glyph::Composite;
 use Bio::EnsEMBL::Glyph::Line;
 use Bump;
 
-sub _init {
-    my ($this, $VirtualContig, $Config) = @_;
+sub init_label {
+    my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Transcript',
@@ -20,16 +20,25 @@ sub _init {
 	'absolutey' => 1,
     });
     $this->label($label);
+}
 
-    my $y             = 0;
-    my $h             = 8;
-    my $highlights    = $this->highlights();
-    my @bitmap        = undef;
-    my $im_width      = $Config->image_width();
-    my $bitmap_length = $VirtualContig->length();
-    my $colour        = $Config->get($Config->script(),'transcript','unknown');
-    my $type          = $Config->get($Config->script(),'transcript','src');
-    my @allgenes      = ();
+sub _init {
+    my ($self) = @_;
+
+    my $VirtualContig = $self->{'container'};
+    my $Config = $self->{'config'};
+
+	my $vcid			= $VirtualContig->id();
+	my $scriptname		= $Config->script();
+    my $y             	= 0;
+    my $h             	= 8;
+    my $highlights    	= $self->highlights();
+    my @bitmap			= undef;
+    my $im_width      	= $Config->image_width();
+    my $length 			= $VirtualContig->length();
+    my $colour        	= $Config->get($scriptname,'transcript','unknown');
+    my $type          	= $Config->get($scriptname,'transcript','src');
+    my @allgenes      	= ();
 	
     foreach my $vg ($VirtualContig->get_all_VirtualGenes()){
 	push (@allgenes, $vg->gene());
@@ -44,85 +53,82 @@ sub _init {
 
     GENE: for my $eg (@allgenes) {
 	my $vgid = $eg->id();
-    	my $hi_colour = $Config->get($Config->script(),'transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
+    	my $hi_colour = $Config->get($scriptname,'transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 
 	TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
 
     	#########
     	# test transcript strand
     	#
-    	my $tstrand = $transcript->strand_in_context($VirtualContig->id());
-    	next TRANSCRIPT if($tstrand != $this->strand());
+    	my $tstrand = $transcript->strand_in_context($vcid);
+    	next TRANSCRIPT if($tstrand != $self->strand());
 
     	#########
     	# set colour for transcripts and test if we're highlighted or not
     	# 
     	my @dblinks = ();
-    	my $id = undef;
+    	my $id = $transcript->id();
 	    my $gene_name;
 	    my ($hugo, $swisslink, $sptrembllink);
 	    eval {
-		@dblinks = $transcript->each_DBLink();
+			@dblinks = $transcript->each_DBLink();
 
-		foreach my $DB_link ( @dblinks ){
-		    if( $DB_link->database eq 'HUGO') {
-			$hugo = $DB_link;
-			last;
-		    }
-		    if( $DB_link->database =~ /SWISS/o ) {
-			$swisslink = $DB_link;
-		    }
-		    if( $DB_link->database eq 'SPTREMBL') {
-			$sptrembllink = $DB_link;
-		    }
-		}
+			foreach my $DB_link ( @dblinks ){
+		    	if( $DB_link->database eq 'HUGO') {
+					$hugo = $DB_link;
+					last;
+		    	}
+		    	if( $DB_link->database =~ /SWISS/o ) {
+					$swisslink = $DB_link;
+		    	}
+		    	if( $DB_link->database eq 'SPTREMBL') {
+					$sptrembllink = $DB_link;
+		    	}
+			}
 
-		if( $hugo ) {
-		    $id = $hugo->primary_id;
-		} elsif ( $swisslink ) {
-		    $id = $swisslink->primary_id;
-		} elsif ( $sptrembllink ) {
-		    $id = $sptrembllink->primary_id;
-		}  else {
-		    $id = 'unknown';
-		}
-            };
-
-	    my $colour;
+			if( $hugo ) {
+		    	$id = $hugo->primary_id;
+			} elsif ( $swisslink ) {
+		    	$id = $swisslink->primary_id;
+			} elsif ( $sptrembllink ) {
+		    	$id = $sptrembllink->primary_id;
+			}  
+        };
 
 	    if (@dblinks){
-		$colour = $Config->get($Config->script(),'transcript','known');
+			$colour = $Config->get($scriptname,'transcript','known');
 	    } else {
-		$colour = $Config->get($Config->script(),'transcript','unknown');
+			$colour = $Config->get($scriptname,'transcript','unknown');
 	    }
 	    if ($eg->{'_is_external'}){
-		$colour = $Config->get($Config->script(),'transcript','ext');
+			$colour = $Config->get($scriptname,'transcript','ext');
 	    }
-	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'id'     => $transcript->id(),
-#		'bordercolour' => $colour,
+		
+	    my $tid = $transcript->id();
+		my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 		'zmenu'  => {
-		    'caption'     => $transcript->id(),
-		    '01:kung'     => 'opt1',
-		    '02:foo'      => 'opt2',
-		    '03:fighting' => 'opt3'
+		    'caption'     => $id,
+		    'More information'     			=> "/perl/geneview?transcript=$id",
+		    'Peptide sequence (FASTA)'		=> "/perl/dumpview?type=peptide&id=$tid",
+		    'Supporting evidence'      		=> "/perl/transview?transcript=$tid",
+		    'cDNA sequence' 				=> "/perl/dumpview?type=cdna&id=$tid",
 		},
 	    });
 
-	    my @exons = $transcript->each_Exon_in_context($VirtualContig->id());
+	    my @exons = $transcript->each_Exon_in_context($vcid);
 
 	    my ($start_screwed, $end_screwed);
 	    if($tstrand != -1) {
-		$start_screwed = $transcript->is_start_exon_in_context($VirtualContig->id());
-		$end_screwed   = $transcript->is_end_exon_in_context($VirtualContig->id());
+			$start_screwed = $transcript->is_start_exon_in_context($vcid);
+			$end_screwed   = $transcript->is_end_exon_in_context($vcid);
 	    } else {
-		$end_screwed   = $transcript->is_start_exon_in_context($VirtualContig->id());
-		$start_screwed = $transcript->is_end_exon_in_context($VirtualContig->id());
-		@exons = reverse @exons;
+			$end_screwed   = $transcript->is_start_exon_in_context($vcid);
+			$start_screwed = $transcript->is_end_exon_in_context($vcid);
+			@exons = reverse @exons;
 	    }
 
 	    my $start_exon = $exons[0];
-	    my $end_exon   = $exons[(scalar @exons) -1];
+	    my $end_exon   = $exons[-1];
 
 	    my $previous_endx;
 
@@ -143,7 +149,7 @@ sub _init {
 		$previous_endx = $start_exon->end();
 	    }
 
-    	    EXON: for my $exon (@exons) {
+    	EXON: for my $exon (@exons) {
 		#########
 		# otherwise we're on the VC and everything's ok
 		#
@@ -164,7 +170,7 @@ sub _init {
 		    'y'         => $y,
 		    'width'     => ($x - $previous_endx),
 		    'height'    => $h,
-		    'id'        => $exon->id(),
+		    #'id'        => $exon->id(),
 		    'colour'    => $colour,
 		    'absolutey' => 1,
 		    'strand'    => $tstrand,
@@ -182,7 +188,7 @@ sub _init {
 	    if(defined $end_screwed && $end_screwed == 0) {
 		my $clip = new Bio::EnsEMBL::Glyph::Line({
 		    'x'         => $previous_endx,
-		    'width'     => $VirtualContig->length() - $previous_endx,
+		    'width'     => $length - $previous_endx,
 		    'y'         => $y+int($h/2),
 		    'height'    => 0,
 		    'colour'    => $colour,
@@ -201,12 +207,12 @@ sub _init {
 	    $bump_start = 0 if ($bump_start < 0);
 
 	    my $bump_end = $bump_start + ($Composite->width());
-	    next if $bump_end > $bitmap_length;
+	    next if $bump_end > $length;
 
 	    my $row = &Bump::bump_row(      
 		$bump_start,
 		$bump_end,
-		$bitmap_length,
+		$length,
 		\@bitmap
 	    );
 
@@ -214,7 +220,7 @@ sub _init {
 	    # shift the composite container by however much we're bumped
 	    #
 	    $Composite->y($Composite->y() + (1.5 * $row * $h * -$tstrand));
-	    $this->push($Composite);
+	    $self->push($Composite);
 	}
     }
 }

@@ -8,10 +8,24 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 
+sub init_label {
+    my ($this) = @_;
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'prints',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $this->label($label);
+}
+
 sub _init {
-    my ($this, $protein, $Config) = @_;
+    my ($this) = @_;
     my %hash = undef;
     my $caption = "prints";
+
+    my $protein = $this->{'container'};
+    my $Config = $this->{'config'};
 
     my $y          = 0;
     my $h          = 4;

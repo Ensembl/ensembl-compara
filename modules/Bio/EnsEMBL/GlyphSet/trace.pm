@@ -10,22 +10,28 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
-sub _init {
-    my ($self, $VirtualContig, $Config) = @_;
-
-    return unless ($self->strand() == -1);
+sub init_label {
+    my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Mouse',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $self->label($label);
+    $this->label($label);
+}
 
-    my $y          = 0;
-    my $h          = 8;
-    my $highlights = $self->highlights();
-	my $trace_col = $Config->get($Config->script(),'trace','col');
+sub _init {
+    my ($self) = @_;
+
+    return unless ($self->strand() == -1);
+
+    my $VirtualContig = $self->{'container'};
+    my $Config        = $self->{'config'};
+    my $y             = 0;
+    my $h             = 8;
+    my $highlights    = $self->highlights();
+    my $trace_col     = $Config->get($Config->script(),'trace','col');
 
     my @bitmap      = undef;
     my $im_width = $Config->image_width();
@@ -49,6 +55,7 @@ sub _init {
     foreach my $s (@trace) {
 		my $x = $s->start();
 		my $x1 = $s->end();
+		my $id = $s->id();
 		#print STDERR "Trace start: ", $x, " ID:", $s->id(),  "\n";
 		my $traceglyph = new Bio::EnsEMBL::Glyph::Rect({
 			'x'      => $x,
@@ -57,7 +64,10 @@ sub _init {
 			'height' => $h,
 			'colour' => $trace_col,
 			'absolutey'  => 1,
-			'zmenu'     => { caption => $s->id() },
+			'zmenu'     => { 
+				'caption' => "$id",
+				'View trace' => "http://trace.ensembl.org/perl/traceview?tracedb=0&traceid=$id",		
+			},
 		});
 		$self->push($traceglyph);
 	}

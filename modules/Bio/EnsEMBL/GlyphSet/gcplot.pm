@@ -10,10 +10,24 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
+sub init_label {
+    my ($this) = @_;
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => '%GC',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $this->label($label);
+}
 sub _init {
-    my ($self, $VirtualContig, $Config) = @_;
+    my ($self) = @_;
 
     return unless ($self->strand() == -1);
+
+    my $VirtualContig = $self->{'container'};
+    my $Config = $self->{'config'};
+
     my $h               = 0;
     my $highlights      = $self->highlights();
     my $feature_colour 	= $Config->get($Config->script(),'gcplot','hi');
@@ -25,14 +39,6 @@ sub _init {
 	my $red 			= $cmap->id_by_name('red');
 	my $rust 			= $cmap->id_by_name('rust');
 	
-    my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => '%GC',
-	'font'      => 'Small',
-	'absolutey' => 1,
-    });
-    $self->label($label);
-
-
 	#my $divlen = 20000;
 	my $im_width = $Config->image_width();
 	#if ($divlen > 400) { $divlen = 400;}

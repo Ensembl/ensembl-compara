@@ -16,7 +16,9 @@ sub _init {
     my $y          = 0;
     my $h          = 4;
     my $highlights = $this->highlights();
-   
+
+    my $protein = $this->{'container'};
+    my $Config = $this->{'config'}; 
 
     print STDERR "Coils I\n";
     

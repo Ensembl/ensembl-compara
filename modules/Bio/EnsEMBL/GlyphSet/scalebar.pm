@@ -11,7 +11,7 @@ use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
 sub _init {
-    my ($self, $VirtualContig, $Config) = @_;
+    my ($self) = @_;
 
     #return unless ($self->strand() == -1);
     my $h          = 0;
@@ -19,9 +19,9 @@ sub _init {
 
     my $fontname = "Tiny";
 
-    my $feature_colour 	= $Config->get($Config->script(),'scalebar','col');
+    my $feature_colour 	= $self->{'config'}->get($self->{'config'}->script(),'scalebar','col');
 
-	my $len = $VirtualContig->length();
+	my $len = $self->{'container'}->length();
 	my $divs = 0;
 	$divs = set_scale_division($len);
 	#print "Div size: $divs\n";
@@ -49,11 +49,11 @@ sub _init {
 		});
 		$self->push($tick);
 
-		my $text = int($i * $divs + $VirtualContig->_global_start());
+		my $text = int($i * $divs + $self->{'container'}->_global_start());
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 		    'x'      	=> $i * $divs,
 		    'y'      	=> 8,
-		    'height'    => $Config->texthelper->height($fontname),
+		    'height'    => $self->{'config'}->texthelper->height($fontname),
 		    'font'   	=> $fontname,
 		    'colour' 	=> $feature_colour,
 		    'text'   	=> $text,
@@ -62,7 +62,7 @@ sub _init {
 		$self->push($tglyph);
 	}
 
-	my $im_width = $Config->image_width();
+	my $im_width = $self->{'config'}->image_width();
 	my $tick = new Bio::EnsEMBL::Glyph::Rect({
 	    'x'          => $im_width - 1,
 	    'y'          => 4,
