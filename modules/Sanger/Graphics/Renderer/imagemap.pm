@@ -90,7 +90,7 @@ sub _getHref {
   if($self->{'show_zmenus'}==1) {
     my $zmenu = $glyph->zmenu();
     if(defined $zmenu && keys(%$zmenu)>0 ) {
-      if($self->{'config'}->get('_settings','opt_zclick')) {
+      if($self->{'config'}->get('_settings','opt_zclick')==1 ) {
         $actions{'ondoubleclick'} = $actions{'href'}        if exists $actions{'href'};
         $actions{'onclick'}       = &Sanger::Graphics::JSTools::js_menu($zmenu).";return false;";
         delete $actions{'onmouseover'};

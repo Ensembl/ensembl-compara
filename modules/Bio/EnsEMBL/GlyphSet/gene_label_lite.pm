@@ -32,6 +32,7 @@ sub _init {
 ##############################################################################
 # Stage 1a: Firstly the configuration hash!                                  #
 ##############################################################################
+   my $authority = EnsWeb::species_defs->AUTHORITY;
     my $Config         = $self->{'config'};
     my $im_width       = $Config->image_width();
     my $type           = $Config->get( 'gene_label_lite' , 'src' );
@@ -107,7 +108,7 @@ sub _init {
 ##############################################################################
 # Stage 2b: Retrieve all core (ensembl) genes                                #
 ##############################################################################
-    foreach my $g (@{$gene_objs{'ensembl'}} ) { 
+    foreach my $g (@{$gene_objs{lc($authority)}} ) { 
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$g->stable_id()} ? 1 : 0;
         my $gene_col = $colours->{'_'.$g->external_status};

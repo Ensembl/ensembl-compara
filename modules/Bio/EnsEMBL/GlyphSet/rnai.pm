@@ -15,15 +15,22 @@ sub features {
 
 }
 
+sub href {
+  my ($self, $f ) = @_;
+  return $self->{'config'}->{'ext_url'}->get_url( 'WORMBASE_RNAI', $f->display_label );
+}
+
 sub zmenu {
   my ($self, $f ) = @_;
   
+  # warn( join '  ', map { "$_-$f->{$_}" } keys %$f );
   my $score = $f->score();
   my $start = $self->{'container'}->chr_start() + $f->start() - 1;
   my $end   = $self->{'container'}->chr_start() + $f->end() - 1;
 
   return {
-        'caption' => 'CPG data island',
+        'caption' => 'RNAi',
+        "00:".$f->display_label => $self->href( $f ),
         "01:Score: $score" => '',
         "02:bp: $start-$end" => ''
     };

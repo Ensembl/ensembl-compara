@@ -15,17 +15,21 @@ sub features {
     return $self->{'container'}->get_all_SimpleFeatures('operon');
 }
 
+sub href {
+  my ($self, $f ) = @_;
+  return $self->{'config'}->{'ext_url'}->get_url( 'WORMBASE_OPERON', $f->display_label );
+}
 sub zmenu {
   my ($self, $f ) = @_;
   
   my $score = $f->score();
   my $start = $self->{'container'}->chr_start() + $f->start() - 1;
   my $end   = $self->{'container'}->chr_start() + $f->end() - 1;
-
   return {
-        'caption' => 'CPG data island',
+	'caption' => 'Operon',
+        "00:".$f->display_label => $self->href( $f ),
         "01:Score: $score" => '',
-        "02:bp: $start-$end" => ''
+        "02:bp: $start-$end" => '',
     };
 }
 1;
