@@ -96,7 +96,7 @@ sub zmenu {
 
     my %links;
     
-    my $source = $f->source_tag; warn($source);
+    my $source = $f->source_tag; 
     foreach my $link ($f->each_DBLink()) {
       my $DB = $link->database;
       if( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || ($DB eq 'dbSNP' && $source eq 'dbSNP') || $DB eq 'WI' ) {
