@@ -373,7 +373,6 @@ sub get_all_Genes {
 # print STDERR "Foreach pair ($pair)...\n";
         foreach my $this_gene (@$these_genes) {
 # print STDERR "1. GENE: $this_gene->{stable_id} ($this_gene->{start} - $this_gene->{end})\n";
-          $this_gene->{original_slice} = $this_gene->slice if (!defined($this_gene->{original_slice}));
           my $mapped_gene = $self->_get_mapped_Gene($this_gene, $pair, $return_unmapped_exons);
 # print STDERR "2. GENE: $mapped_gene->{stable_id} ($mapped_gene->{start} - $mapped_gene->{end})\n";
 #           $mapped_gene = $self->_get_mapped_Gene($this_gene, $pair);
@@ -434,17 +433,10 @@ sub _get_mapped_Gene {
   my $these_transcripts = [];
 
   foreach my $this_transcript (@{$gene->get_all_Transcripts}) {
-    $this_transcript->{this_slice} = $this_transcript->slice;
     my $these_exons = [];
     my $all_exons = $this_transcript->get_all_Exons;
     for (my $i=0; $i<@$all_exons; $i++){
       my $this_exon = $all_exons->[$i];
-      if (!defined($this_exon->{original_slice})) {
-        $this_exon->{original_slice} = $this_exon->slice;
-        $this_exon->{original_start} = $this_exon->start;
-        $this_exon->{original_end} = $this_exon->end;
-      }
-      $this_exon->{this_slice} = $this_exon->slice;
       throw("Oops, this method assumes that all the exons are defined on the same slice as the".
           " gene they belong to") if ($this_exon->slice->start != $gene->slice->start);
       if ($this_exon->start <= $range_end and $this_exon->end >= $range_start) {
