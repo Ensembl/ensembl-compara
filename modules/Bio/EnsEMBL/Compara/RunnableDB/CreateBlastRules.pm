@@ -266,7 +266,7 @@ sub configureHomologyAnalysis
       -db_version      => '1',
       -logic_name      => 'SubmitHomologyPair',
       -input_id_type   => 'homology',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
+      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
     );
   $self->db->get_AnalysisAdaptor()->store($submitHomology);
   $self->{'submitHomology'} = $submitHomology;
