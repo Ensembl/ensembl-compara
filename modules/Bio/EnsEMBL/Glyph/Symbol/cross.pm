@@ -35,9 +35,6 @@ sub draw {
     my $width =  $style->{'linewidth'} || $height;
     $width /= $pix_per_bp;  # remember, x in bp, y in pixels
 
-    my $x = $start -1 -$width/2;
-    my $y = $y_offset + $height/2;
-
     return (new Sanger::Graphics::Glyph::Line({
 	    'x'          => $start -1 -$width/2,
 	    'y'          => $y_offset + $height/2,
