@@ -59,7 +59,8 @@ sub _store_PAFS {
   my ($self, @out)  = @_;
 
   return unless(defined(@out) and scalar(@out));
-  
+
+  print("_store_PAFS\n");
   my $memberDBA = $self->db->get_MemberAdaptor();
 
   my $query = "INSERT INTO peptide_align_feature(".
@@ -96,6 +97,7 @@ sub _store_PAFS {
         $analysis_id=$paf->analysis()->dbID();
       }
 
+      $query .= ", " if($addComma);
       $query .= "(".$paf->query_member->dbID.
                 ",".$paf->hit_member->dbID.
                 ",".$paf->query_member->genome_db_id.
@@ -114,7 +116,6 @@ sub _store_PAFS {
                 ",".$paf->perc_pos.
                 ",".$paf->hit_rank.
                 ",'".$paf->cigar_line."')";
-      $query .= ", " if($addComma);
       $addComma=1;
       $paf->display_short();
     }
