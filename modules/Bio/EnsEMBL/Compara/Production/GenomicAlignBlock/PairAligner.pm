@@ -56,9 +56,11 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Utils::Exception;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use vars qw(@ISA);
+use Bio::EnsEMBL::Pipeline::RunnableDB;
+use Bio::EnsEMBL::Hive::Process;
 
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+our @ISA = qw( Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Pipeline::RunnableDB );
+
 my $g_compara_PairAlign_workdir;  # a global directory location for the process using this module
 
 ##########################################
@@ -291,7 +293,6 @@ sub dumpChunkSetToWorkdir
     #rintf("  writing chunk %s\n", $chunk->display_id);
     my $bioseq = $chunk->bioseq;
     if($chunk->sequence_id==0) {
-      #rint "    cacheing sequence back to compara for chunk\n";
       $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
     }
 
@@ -439,7 +440,7 @@ sub store_featurePair_as_genomicAlignBlock
   
   my $track_sql = "INSERT IGNORE INTO genomic_align_block_job_track ".
                   "(genomic_align_block_id, analysis_job_id) ".
-                  "VALUES (".$GAB->dbID.",".$self->analysis_job_id.")";
+                  "VALUES (".$GAB->dbID.",".$self->input_job->dbID.")";
   print("$track_sql\n") if($self->debug);
   $self->{'comparaDBA'}->dbc->do($track_sql);
 
