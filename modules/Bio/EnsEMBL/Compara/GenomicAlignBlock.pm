@@ -1053,7 +1053,7 @@ sub _print {
   method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
   genomic_aligns = ".($self->genomic_align_array or "-undef-")."
   reference_genomic_align = ".($self->reference_genomic_align or "-undef-")."
-  all_non_reference_genomic_aligns = ".($self->get_all_non_reference_genomic_align or "-undef-")."
+  all_non_reference_genomic_aligns = ".($self->get_all_non_reference_genomic_aligns or "-undef-")."
   reference_slice = ".($self->reference_slice or "-undef-")."
   reference_slice_start = ".($self->reference_slice_start or "-undef-")."
   reference_slice_end = ".($self->reference_slice_end or "-undef-")."
