@@ -282,7 +282,7 @@ sub unzip_test_dbs {
   my ($self, $zipfile) = @_;
 
   if (-e $self->curr_dir . $DUMP_DIR) {
-    $self->warn("Test genome dbs already unpacked\n");
+    #$self->warn("Test genome dbs already unpacked\n");
     return;
   }
 

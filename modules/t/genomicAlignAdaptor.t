@@ -14,9 +14,14 @@ use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 
 # switch on the debug prints
 
-our $verbose = 1;
+our $verbose = 0;
 
 my $multi = MultiTestDB->new( "multi" );
+my $homo_sapiens = MultiTestDB->new("homo_sapiens");
+my $mus_musculus = MultiTestDB->new("mus_musculus");
+my $rattus_norvegicus = MultiTestDB->new("rattus_norvegicus");
+
+
 my $compara_db = $multi->get_DBAdaptor( "compara" );
 
 my $gdba = $compara_db->get_GenomeDBAdaptor();
@@ -36,11 +41,10 @@ my $rat = $gdba->fetch_by_species_tag( "Rattus_norvegicus" );
 # set the locators, we have to cheat because
 # with the test dbs these are different every time
 #
-my $homo_sapiens = MultiTestDB->new("homo_sapiens");
-my $mus_musculus = MultiTestDB->new("mus_musculus");
 
 my $hs = $homo_sapiens->get_DBAdaptor('core');
 my $mm = $mus_musculus->get_DBAdaptor('core');
+my $rn = $rattus_norvegicus->get_DBAdaptor('core');
 
 my $loc = ref($hs->_obj)."/host=".$hs->host.";port=".$hs->port.";dbname=".
   $hs->dbname.";user=".$hs->username.";pass=".$hs->password;
@@ -48,6 +52,14 @@ $hum->locator($loc);
 
 $loc = ref($mm->_obj)."/host=".$mm->host.";port=".$mm->port.";dbname=".
   $mm->dbname.";user=".$mm->username.";pass=".$mm->password;
+
+$mouse->locator($loc);
+
+$loc = ref($rn->_obj)."/host=".$rn->host.";port=".$rn->port.";dbname=".
+  $rn->dbname.";user=".$rn->username.";pass=".$rn->password;
+$rat->locator($loc);
+
+
 
 #######
 #  2  #
