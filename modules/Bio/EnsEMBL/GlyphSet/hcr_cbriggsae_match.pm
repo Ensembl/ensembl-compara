@@ -13,7 +13,7 @@ sub features {
     my ($self) = @_;
     
     my $assembly = 
-      EnsWeb::species_defs->other_species('Caenorhabditis_briggsae')->{'ENSEMBL_GOLDEN_PATH'};
+      EnsWeb::species_defs->other_species('Caenorhabditis_briggsae','ENSEMBL_GOLDEN_PATH');
     return [] unless $assembly;
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(

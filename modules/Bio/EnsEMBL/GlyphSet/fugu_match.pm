@@ -11,7 +11,7 @@ sub features {
     my ($self) = @_;
     
     my $assembly = 
-      EnsWeb::species_defs->other_species('Fugu_rubripes')->{'ENSEMBL_GOLDEN_PATH'};
+      EnsWeb::species_defs->other_species('Fugu_rubripes','ENSEMBL_GOLDEN_PATH');
     return [] unless $assembly;
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Fugu rubripes',

@@ -12,8 +12,7 @@ sub my_label { return "Hs high cons"; }
 sub features {
     my ($self) = @_;
     
-    my $assembly = 
-      EnsWeb::species_defs->other_species('Homo_sapiens')->{'ENSEMBL_GOLDEN_PATH'};
+    my $assembly = EnsWeb::species_defs->other_species('Homo_sapiens','ENSEMBL_GOLDEN_PATH');
 
     return [] unless $assembly;
 

@@ -13,7 +13,7 @@ sub features {
     my ($self) = @_;
     
     my $assembly = 
-      EnsWeb::species_defs->other_species('Caenorhabditis_elegans')->{'ENSEMBL_GOLDEN_PATH'};
+      EnsWeb::species_defs->other_species('Caenorhabditis_elegans','ENSEMBL_GOLDEN_PATH');
 
     return [] unless $assembly;
 

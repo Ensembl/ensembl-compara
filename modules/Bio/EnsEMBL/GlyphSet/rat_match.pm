@@ -11,7 +11,7 @@ sub features {
     my ($self) = @_;
     
     my $assembly = 
-      EnsWeb::species_defs->other_species('Rattus_norvegicus')->{'ENSEMBL_GOLDEN_PATH'};
+      EnsWeb::species_defs->other_species('Rattus_norvegicus','ENSEMBL_GOLDEN_PATH');
 
     return [] unless $assembly;
 
