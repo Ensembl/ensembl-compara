@@ -26,7 +26,7 @@ sub _init {
     my @bitmap        = undef;
     my $Config        = $this->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $bitmap_length = int($protein * $pix_per_bp);
+    my $bitmap_length = int($protein->length * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
     my $colour        = $Config->get($Config->script(), 'prints','col');
