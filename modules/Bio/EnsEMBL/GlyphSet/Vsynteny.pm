@@ -135,6 +135,18 @@ sub _init {
             $colour{$other_chr} = $COL;
             $border{$other_chr} = $BORD;
         }
+        my $ZMENU = {
+                'caption' => "$OTHER_T chr $other_chr",
+                sprintf("01:%s Chr %s:%0.1fM-%0.1fM",$SPECIES_SHORT,
+                        $this_chr,$box->{'chr_start'}/1e6,$box->{'chr_end'}/1e6) => 
+    qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
+                sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
+                        $other_chr,$box->{'hit_chr_start'}/1e6,$box->{'hit_chr_end'}/1e6) => 
+		( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' ),
+
+	    '03:Centre gene list' => qq(/$ENV{'ENSEMBL_SPECIES'}/syntenyview?species=$OTHER&chr=$this_chr&loc=).int(($box->{'chr_end'}+$box->{'chr_start'})/2)
+
+	    };
         push @{$highlights_main->{$this_chr}}, {
             'id' => $box->{'synteny_id'},
             'start'=> $box->{'chr_start'},
@@ -143,15 +155,7 @@ sub _init {
             'border' => $BORD,
             'side' => $SIDE,
             'href' => qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),
-            'zmenu' => {
-                'caption' => "$OTHER_T chr $other_chr",
-                sprintf("01:%s Chr %s:%0.1fM-%0.1fM",$SPECIES_SHORT,
-                        $this_chr,$box->{'chr_start'}/1e6,$box->{'chr_end'}/1e6) => 
-    qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
-                sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
-                        $other_chr,$box->{'hit_chr_start'}/1e6,$box->{'hit_chr_end'}/1e6) => 
-( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' )
-            }
+            'zmenu' => $ZMENU 
         };
         if($SIDE) {
             my $marked =
@@ -181,7 +185,7 @@ sub _init {
                 ) => 
                     ( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' )
             );
-            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr) : '' ;
+            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr&loc=).int(($box->{'hit_chr_end'}+$box->{'hit_chr_start'})/2) : '' ;
             $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;
             push @{$highlights_secondary->{$other_chr}}, {
                 'rel_ori' => $box->{'rel_ori'},
