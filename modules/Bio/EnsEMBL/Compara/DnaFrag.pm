@@ -120,8 +120,12 @@ sub new {
 #      $self->contig($contig);
 #    }
 
-  my ($dbID, $adaptor, $length, $name, $genome_db, $genome_db_id, $coord_system_name) =
-    rearrange([qw(DBID ADAPTOR LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME)],@args);
+  my ($dbID, $adaptor, $length, $name, $genome_db, $genome_db_id, $coord_system_name,
+          $start, $end, $genomedb, $type
+      ) =
+    rearrange([qw(DBID ADAPTOR LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME
+            START END GENOMEDB TYPE
+        )],@args);
 
   $self->dbID($dbID) if (defined($dbID));
   $self->adaptor($adaptor) if (defined($adaptor));
@@ -130,6 +134,15 @@ sub new {
   $self->genome_db($genome_db) if (defined($genome_db));
   $self->genome_db_id($genome_db_id) if (defined($genome_db_id));
   $self->coord_system_name($coord_system_name) if (defined($coord_system_name));
+
+  ###################################################################
+  ## Support for backwards compatibility
+  $self->start($start) if (defined($start));
+  $self->end($end) if (defined($end));
+  $self->genomedb($genomedb) if (defined($genomedb));
+  $self->type($type) if (defined($type));
+  ##
+  ###################################################################
 
   return $self;
 }
@@ -254,7 +267,7 @@ sub genome_db {
    
   if (defined($genome_db)) {
     throw("[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object")
-      unless ($genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+      unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
     $self->{'genome_db'} = $genome_db;
   
   } elsif (!defined($self->{'genome_db'})) {
@@ -371,7 +384,9 @@ sub contig {
  Description: Returns the Bio::EnsEMBL::Slice object corresponding to this
               Bio::EnsEMBL::Compara::DnaFrag object.
  Returntype : Bio::EnsEMBL::Slice object
- Exceptions : throws when the Bio::EnsEMBL::DBSQL::DBAdaptor cannot be retrieved
+ Exceptions : warns when the corresponding Bio::EnsEMBL::Compara::GenomeDB,
+              coord_system_name, name or Bio::EnsEMBL::DBSQL::DBAdaptor
+              cannot be retrieved and returns undef.
  Caller     : $object->methodname
 
 =cut
@@ -380,9 +395,23 @@ sub slice {
   my ($self) = @_;
   
   unless (defined $self->{'_slice'}) {
+    if (!defined($self->genome_db)) {
+      warn "Cannot get the Bio::EnsEMBL::Compara::GenomeDB object corresponding to [".$self."]";
+      return undef;
+    }
+    if (!defined($self->coord_system_name)) {
+      warn "Cannot get the coord_system_name corresponding to [".$self."]";
+      return undef;
+    }
+    if (!defined($self->name)) {
+      warn "Cannot get the name corresponding to [".$self."]";
+      return undef;
+    }
     my $dba = $self->genome_db->db_adaptor;
-    throw "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->genome_db."]"
-        if (!defined($dba));
+    if (!defined($dba)) {
+      warn "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->genome_db."]";
+      return undef;
+    }
     $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
   }
 
