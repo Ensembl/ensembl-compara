@@ -192,7 +192,7 @@ sub create_GenomeDBs {
   # and query dbs
 
   my $sth = $self->prepare("
-     SELECT consensus_genome_db_id query_genome_db_id
+     SELECT consensus_genome_db_id, query_genome_db_id
      FROM genomic_align_genome
   ");
 
@@ -201,7 +201,6 @@ sub create_GenomeDBs {
   while ( my @db_row = $sth->fetchrow_array() ) {
     my ( $con, $query ) = @db_row;
 
- #   print STDERR $con . " " . $query . "\n";
     push @{ %genome_consensus_xreflist->{$con}}, $query;
     push @{ %genome_query_xreflist->{$query}}, $con;
   }
@@ -222,7 +221,6 @@ sub create_GenomeDBs {
     $gdb->locator($locator);
     $gdb->dbID($dbid);
     $self->{'_cache'}->{$dbid} = $gdb;
-#    print STDERR "Building a GenomeDB: ". $name . " " . $dbid . "\n";
   }
 
   $self->{'_GenomeDB_cache'} = 1;  
@@ -230,24 +228,32 @@ sub create_GenomeDBs {
 
 
 =head2 check_for_consensus_db
- 
-  Args       : none
+
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
+  Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
   Example    : 
-  Description: 
-  Returntype : 
+  Description: Checks to see whether a consensus genome database has been
+               analysed against the specific query genome database.
+               Returns the dbID of the database of the query genomeDB if 
+               one is found.  A 0 is returned if no match is found.
+  Returntype : int
   Exceptions : none
-  Caller     : 
+  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
 
 =cut
 
 
 sub check_for_consensus_db {
-  my ( $self, $con_dbid, $query_dbid ) = @_;
+  my ( $self, $con_gdb, $query_gdb ) = @_;
+
+  # just to make things a wee bit more readable
+  my $cid = $con_gdb->dbID;
+  my $qid = $query_gdb->dbID;
   
-  if ( exists %genome_consensus_xreflist->{$con_dbid} ) {
-    foreach my $db ( %genome_consensus_xreflist->{$con_dbid} ) {
-      if ( $query_dbid == $db ) {
-	return $db;
+  if ( exists %genome_consensus_xreflist->{$cid} ) {
+    for my $i ( 0 .. $#{%genome_consensus_xreflist->{$cid}} ) {
+      if ( $qid == %genome_consensus_xreflist->{$cid}[$i] ) {
+	return (%genome_consensus_xreflist->{$cid}[$i]);
       }
     }
   }
@@ -257,23 +263,32 @@ sub check_for_consensus_db {
 
 
 =head2 check_for_query_db
- 
-  Args       : none
-  Example    : 
-  Description: 
-  Returntype : 
+
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
+  Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
+  Example    :  
+  Description: Checks to see whether a query genome database has been
+               analysed against the specific consensus genome database.
+               Returns the dbID of the database of the consensus 
+               genomeDB if one is found.  A 0 is returned if no match is
+               found.
+  Returntype : int
   Exceptions : none
-  Caller     : 
+  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
 
 =cut
 
 sub check_for_query_db {
-  my ( $self, $query_dbid, $con_dbid ) = @_;
-  
-  if ( exists %genome_query_xreflist->{$query_dbid} ) {
-    foreach my $db ( %genome_consensus_xreflist->{$query_dbid} ) {
-      if ( $con_dbid == $db ) {
-	return $db;
+  my ( $self, $query_gdb, $con_gdb ) = @_;
+
+  # just to make things a wee bit more readable
+  my $cid = $con_gdb->dbID;
+  my $qid = $query_gdb->dbID;
+
+  if ( exists %genome_query_xreflist->{$qid} ) {
+    for my $i ( 0 .. $#{%genome_query_xreflist->{$qid}} ) {
+      if ( $cid == %genome_query_xreflist->{$qid}[$i] ) {
+	return (%genome_query_xreflist->{$qid}[$i]);
       }
     }
   }
@@ -283,35 +298,36 @@ sub check_for_query_db {
 
 
 =head2 get_db_links
- 
-  Args       : none
+
+  Arg        : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
   Example    : 
-  Description: 
-  Returntype : 
+  Description: For the GenomeDB object passed in, check is run to
+               verify which other genomes it has been analysed against
+               irrespective as to whether this was as the consensus
+               or query genome. Returns a list of matching dbIDs 
+               separated by white spaces. 
+  Returntype : string 
   Exceptions : none
-  Caller     : 
+  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
 
 =cut
 
 sub get_db_links {
-  my ( $self, $ref_dbid ) = @_;
+  my ( $self, $ref_gdb ) = @_;
   
+  my $id = $ref_gdb->dbID;
   my $db_list = "";
 
   # check for occurences of the db we are interested in
   # in the consensus list of dbs
-  if ( exists %genome_consensus_xreflist->{$ref_dbid} ) {
-    foreach my $db ( %genome_consensus_xreflist->{$ref_dbid} ) {
-      $db_list .= $db .  " "; 
-    }
+  if ( exists %genome_consensus_xreflist->{$id} ) {
+    $db_list = join (" ", @{%genome_consensus_xreflist->{$id}});
   }
 
   # and check for occurences of the db we are interested in
   # in the query list of dbs
-  if ( exists %genome_query_xreflist->{$ref_dbid} ) {
-    foreach my $db ( %genome_query_xreflist->{$ref_dbid} ) {
-      $db_list .= $db .  " "; 
-    }
+  if ( exists %genome_query_xreflist->{$id} ) {
+    $db_list .= " " . join (" ", @{%genome_query_xreflist->{$id}});
   }
 
   return $db_list;
