@@ -321,3 +321,20 @@ CREATE TABLE conserved_segment_protein (
 # conserved_segment_id - internal id
 # protein_id - foreign key from protein, indicates which proteins belong to the segment
 
+
+# method_link table defining the type of link/relation that exist between species.
+# It could be dna/dna alignments, gene/gene, synteny blocks,etc...
+
+CREATE TABLE method_link (
+  method_link_id int(10) NOT NULL auto_increment,
+  method_link_type varchar(10) NOT NULL,
+  PRIMARY KEY (method_link_id)
+);
+
+# method_link_species table specifying which species are part of a method_link_id
+
+CREATE TABLE method_link_species (
+  method_link_id int(10), # PK method_link
+  genome_db_id int(10), # PK genome_db
+  UNIQUE KEY (method_link_id,genome_db_id)
+);
