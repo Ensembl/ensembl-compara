@@ -11,6 +11,8 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
 
 =head1 SYNOPSIS
 
+=head2 Connecting to the database using the old way:
+
   use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor; 
   my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
       -host => $host,
@@ -22,48 +24,68 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
 
   my $genomic_align_block_adaptor = $db->get_GenomicAlignBlockAdaptor();
 
+=head2 Connecting to the database using the new way (recommended):
+  
+  use Bio::EnsEMBL::Registry; 
+  Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
+
+  my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->load_all;
+
+=head2 Store/Delete data from the database
+  
   $genomic_align_block_adaptor->store($genomic_align_block);
 
-  $genomic_align_block_adaptor->delete($genomic_align_block->dbID);
+  $genomic_align_block_adaptor->delete_by_dbID($genomic_align_block->dbID);
 
-  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all();
-
+=head2 Retrieve data from the database
+  
   $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID(12);
 
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_id(2);
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_type("BLASTZ_NET");
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+      $method_link_species_set, $human_slice);
 
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_GenomeDB($human_genome_db);
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_genome_db_id($human_genome_db->dbID);
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_genome_db_id(1);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+      $method_link_species_set, $human_dnafrag);
 
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_id_GenomeDB(
-      1, $human_genome_db);
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_id_genome_db_id(
-      1, 1);
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_type_GenomeDB(
-      "BLASTZ_NET", $human_genome_db);
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_method_link_type_genome_db_id(
-      "BLASTZ_NET", 1);
-
-  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_id_GenomeDBs(
-      1, [$human_genome_db, $rat_genome_db]);
-  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_id_genome_db_ids(
-      1, [1, 3]);
-  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_type_GenomeDBs(
-      "BLASTZ_NET", [$human_genome_db, $rat_genome_db]);
-  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_method_link_type_genome_db_ids(
-      "BLASTZ_NET", [1, 3]);
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag(
+      $method_link_species_set, $human_dnafrag, $mouse_dnafrag);
 
 =head1 DESCRIPTION
 
 This object is intended for accessiong data in the genomic_align_block table.
 
+=head1 INHERITANCE
+
+This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::BaseAdaptor
+
+=head1 SEE ALSO
+
+ - Bio::EnsEMBL::DBSQL::BaseAdaptor
+ - Bio::EnsEMBL::BaseAdaptor
+ - Bio::EnsEMBL::Compara::GenomicAlignBlock
+ - Bio::EnsEMBL::Compara::GenomicAlign
+ - Bio::EnsEMBL::Compara::GenomicAlignGroup,
+ - Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+ - Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
+ - Bio::EnsEMBL::Slice
+ - Bio::EnsEMBL::SliceAdaptor
+ - Bio::EnsEMBL::Compara::DnaFrag
+ - Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
+
 =head1 AUTHOR
 
 Javier Herrero (jherrero@ebi.ac.uk)
 
-This modules is part of the Ensembl project http://www.ensembl.org
+=head1 COPYRIGHT
+
+Copyright (c) 2004. EnsEMBL Team
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org). You may distribute
+it under the same terms as EnsEMBL itself.
+
+=head1 CONTACT
+
+Questions can be posted to the ensembl-dev mailing list: ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
