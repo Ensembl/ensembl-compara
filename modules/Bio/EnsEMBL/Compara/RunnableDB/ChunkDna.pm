@@ -83,11 +83,11 @@ sub fetch_input {
   # $self->parameters OR
   # $self->input_id
   #
-  $self->{'genome_db_id'}      = undef;  # 'gdb'
+  $self->{'genome_db_id'}      = 0;  # 'gdb'
   $self->{'store_seq'}         = 1;
   $self->{'overlap'}           = 1000;
   $self->{'chunk_size'}        = 1000000;
-  $self->{'masked'}            = 'soft';
+  $self->{'masking'}            = 'soft';
   $self->{'mask_params'}       = undef;
 
   $self->{'prog'}              = undef;
@@ -98,7 +98,7 @@ sub fetch_input {
   $self->get_params($self->input_id);
 
   throw("No genome_db specified") unless defined($self->{'genome_db_id'});
-  print("gdb = ", $self->{'genome_db_id'}, "\n");
+  $self->print_params;
   
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
@@ -175,8 +175,25 @@ sub get_params {
   $self->{'genome_db_id'} = $params->{'gdb'} if(defined($params->{'gdb'}));
   $self->{'prog'} = $params->{'prog'} if(defined($params->{'prog'}));
   $self->{'create'} = $params->{'create'} if(defined($params->{'create'}));
+  $self->{'masking'} = $params->{'masking'} if(defined($params->{'masking'}));
   #$self->{'coordinate_system'} = $params->{'coordinate_system'} if(defined($params->{'coordinate_system'});
+
   return;
+
+}
+
+
+sub print_params {
+  my $self = shift;
+
+  print(" params:\n");
+  print("   genome_db_id : ", $self->{'genome_db_id'},"\n"); 
+  print("   store_seq    : ", $self->{'store_seq'},"\n");
+  print("   chunk_size   : ", $self->{'chunk_size'},"\n");
+  print("   overlap      : ", $self->{'overlap'} ,"\n");
+  print("   masking      : ", $self->{'masking'} ,"\n");
+ #print("   prog         : ", $self->{'prog'} ,"\n");
+ #print("   create       : ", $self->{'create'} ,"\n");
 }
 
 
@@ -229,7 +246,7 @@ sub create_dnafrag_chunks {
   my $self = shift;
   my $dnafrag = shift;
 
-  return if($dnafrag->display_id =~ /random/);
+ #return if($dnafrag->display_id =~ /random/);
 
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
         
@@ -247,7 +264,7 @@ sub create_dnafrag_chunks {
     $chunk->seq_end($i + $self->{'chunk_size'} - 1);
 
     if($self->{'chunk_size'} <=15000000 and $self->{'store_seq'}) {
-      my $bioseq = $chunk->fetch_masked_sequence($self->{'masked'}, $self->{'mask_params'});
+      my $bioseq = $chunk->fetch_masked_sequence($self->{'masking'}, $self->{'mask_params'});
       $chunk->sequence($bioseq->seq);
     }
     print "storing chunk ",$chunk->display_id,"\n";
