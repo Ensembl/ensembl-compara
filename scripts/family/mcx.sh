@@ -15,7 +15,7 @@ if [ ! -e $file_prefix.sym ]; then
  exit 2
 fi
 
-bsub -q bigmem -R 'select[mem>2000] rusage[mem=3000] alpha' -o $file_prefix.mcx.err \
+bsub -q bigmem -R 'select[alpha && mem>2000] rusage[mem=3000] alpha' -o $file_prefix.mcx.err \
 <<EOF
 #!/usr/local/bin/bash 
 . /usr/local/lsf/conf/profile.lsf
@@ -23,9 +23,12 @@ set -e
 pushd /tmp
 tmp_prefix=$file_prefix.\$\$
 lsrcp $subhost:$pwd/$file_prefix.sym \$tmp_prefix.sym
+#lsrcp $subhost:$pwd/$file_prefix.bin \$tmp_prefix.bin
 /nfs/acari/abel/bin/mcx /\$tmp_prefix.sym lm tp -1 mul add /\$tmp_prefix.sym.check wm
+#/nfs/acari/abel/bin/mcx /\$tmp_prefix.bin lm tp -1 mul add /\$tmp_prefix.bin.check wm
 status=\$?
 lsrcp \$tmp_prefix.sym.check $subhost:$pwd/$file_prefix.sym.check
+#lsrcp \$tmp_prefix.bin.check $subhost:$pwd/$file_prefix.bin.check
 /bin/rm -f \$tmp_prefix.*
 popd
 exit \$status
