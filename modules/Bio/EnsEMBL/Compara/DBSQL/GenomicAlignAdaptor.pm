@@ -40,13 +40,14 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
+
 use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
-
+use Bio::EnsEMBL::Utils::Exception qw(throw deprecate warning);
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -88,6 +89,175 @@ sub new {
 sub store {
   my ( $self, $genomic_aligns ) = @_;
 
+  my $genomic_align_sql = qq{INSERT INTO genomic_align (
+          genomic_align_id,
+          genomic_align_block_id,
+          method_link_species_set,
+          dnafrag_id,
+          dnafrag_start,
+          dnafrag_end,
+          dnafrag_strand,
+          cigar_line,
+          level_id
+      ) VALUES (?,?,?, ?,?,?, ?,?,?)};
+  
+  my $genomic_align_sth = $self->prepare($genomic_align_sql);
+  
+  for my $ga ( @$genomic_aligns ) {
+    ## check if it is an old pairwise alignment
+    if (defined($ga->consensus_dnafrag) or defined($ga->consensus_start) or defined($ga->consensus_end)
+        or defined($ga->query_dnafrag) or defined($ga->query_start) or defined($ga->query_end)
+        or defined($ga->query_strand) or defined($ga->alignment_type) or defined($ga->score)
+        or ($ga->perc_id ne "NULL")) {
+      
+      if (defined($ga->dbID) or defined($ga->genomic_align_block_id) or defined($ga->method_link_species_set)
+          or defined($ga->dnafrag) or defined($ga->dnafrag_start) or defined($ga->dnafrag_end)
+          or defined($ga->dnafrag_strand) or defined($ga->level_id) or defined($ga->group_type)
+          or defined($ga->group_id)) {
+        throw("Mixing new and old parameters.\n");
+      }
+      deprecate("Do not use Consensus and Query dnafrag anymore.\n".
+          "Use Bio::EnsEMBL::Compara::GenomicAlignBlock and\n".
+          "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor modules instead\n");
+      $self->_store_old_pairwise_alignment($ga);
+      next;
+    }
+    
+    if(!defined($ga->dnafrag) or !defined($ga->dnafrag->dbID)) {
+      throw( "dna_fragment in GenomicAlign is not in DB" );
+    }
+    if(!defined($ga->genomic_align_block) or !defined($ga->genomic_align_block->dbID)) {
+      throw( "genomic_align_block in GenomicAlign is not in DB" );
+    }
+    if(!defined($ga->method_link_species_set) or !defined($ga->method_link_species_set->dbID)) {
+      throw( "method_link_species_set in GenomicAlign is not in DB" );
+    }
+
+    $genomic_align_sth->execute(
+            ($ga->dbID or "NULL"),
+            $ga->genomic_align_block->dbID,
+            $ga->method_link_species_set->dbID,
+            $ga->dnafrag->dbID,
+            $ga->dnafrag_start,
+            $ga->dnafrag_end,
+            $ga->dnafrag_strand,
+            ($ga->cigar_line or "NULL"),
+            ($ga->level_id or 1)
+        );
+
+    if (!$ga->dbID) {
+      $ga->dbID($genomic_align_sth->{'mysql_insertid'});
+    }
+  }
+}
+     
+
+=head2 fetch_all_by_DnaFrag_GenomeDB
+
+  Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Arg  2     : string $query_species
+               The species where the caller wants alignments to
+               his dnafrag.
+  Arg [3]    : int $start
+  Arg [4]    : int $end
+  Arg [5]    : string $alignment_type
+               The type of alignments to be retrieved
+               i.e. WGA or WGA_HCR
+  Example    :  ( optional )
+  Description: testable description
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions : none
+  Caller     : object::methodname or just methodname
+
+=cut
+
+sub fetch_all_by_DnaFrag_GenomeDB {
+  my ( $self, $dnafrag, $target_genome, $start, $end, $alignment_type, $limit) = @_;
+  my $all_genomic_aligns;
+
+  deprecate("Use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor for fetching genomic alignments!");
+  warning("UNDER DEVELOPMENT!!");
+
+  unless($dnafrag && ref $dnafrag && 
+        $dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag')) {
+    throw("dnafrag argument must be a Bio::EnsEMBL::Compara::DnaFrag" .
+          " not a [$dnafrag]");
+  }
+
+  $limit = 0 unless (defined $limit);
+  
+  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
+  my $gdba = $self->db->get_GenomeDBAdaptor;
+
+  my $sql = qq{
+          SELECT
+            genomic_align_id,
+            genomic_align_block_id,
+            dnafrag_start,
+            dnafrag_end,
+            dnafrag_strand,
+            cigar_line,
+            level_id
+          FROM
+            genomic_align
+          WHERE
+            dnafrag_id = }.$dnafrag->dbID;
+
+  my $method_link_species_set;
+  if (defined($target_genome)) {
+    $method_link_species_set = $mlssa->fetch_by_method_link_and_genome_db_ids(
+            $alignment_type, [$dnafrag->genomedb->dbID, $target_genome->dbID]);
+    $sql .= " AND method_link_species_set = ". $method_link_species_set->dbID;
+
+    print " UNDER DEVELOPMENT!! (", $dnafrag->genomedb->dbID,", ", $target_genome->dbID, ", ",
+        $method_link_species_set->dbID, ", ", $method_link_species_set->method_link_id, ")\n";
+  }
+
+  if (defined $start && defined $end) {
+    my $lower_bound = $start - $self->{'max_alignment_length'};
+    $sql .= ( " AND dnafrag_start <= $end
+              AND dnafrag_start >= $lower_bound
+              AND dnafrag_end >= $start" );
+  }
+  if ($limit > 0) {
+    $sql .= " order by dnafrag_start asc limit $limit";
+  } elsif ($limit < 0) {
+    $sql .= " order by dnafrag_end desc limit " . abs($limit);
+  }
+
+  my $sth = $self->prepare($sql);
+print $sql,"\n";
+  $sth->execute();
+
+  while (my ($gaid, $gabid, $dfst, $dfed, $dfsd, $cgln, $lvid) = $sth->fetchrow_array) {
+    print join(" ", $gaid, $gabid, $dfst, $dfed, $dfsd, $cgln, $lvid), "\n";
+    my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+            -dbID => $gaid,
+            -adaptor => $self,
+            -genomic_align_block_id => $gabid,
+            -method_link_species_set_id => $method_link_species_set->dbID,
+            -method_link_species_set => $method_link_species_set,
+            -dnafrag => $dnafrag,
+            -dnafrag_start => $dfst,
+            -dnafrag_end => $dfed,
+            -dnafrag_strand => $dfsd,
+            -cigar_line => $cgln,
+            -level_id => $lvid,
+        );
+    push(@{$all_genomic_aligns}, $this_genomic_align);
+  }
+
+  return $all_genomic_aligns;
+}
+
+
+## NOT WORKING YET!!!
+## NOT WORKING YET!!!
+## NOT WORKING YET!!!
+## NOT WORKING YET!!!
+sub _store_old_pairwise_alignment {
+  my ( $self, $ga ) = @_;
+
   my $sql = "INSERT INTO genomic_align_block
              ( consensus_dnafrag_id, consensus_start, consensus_end,
                query_dnafrag_id, query_start, query_end, query_strand, method_link_id,
@@ -95,21 +265,17 @@ sub store {
   
   my @values;
   
-  for my $ga ( @$genomic_aligns ) {
-    # check if everything has dbIDs
-    if( ! defined $ga->consensus_dnafrag()->dbID() ||
-	! defined $ga->query_dnafrag()->dbID() ) {
-      $self->throw( "dna_fragment in GenomicAlign is not in DB" );
-     }
+  if( ! defined $ga->consensus_dnafrag()->dbID() || ! defined $ga->query_dnafrag()->dbID() ) {
+    $self->throw( "dna_fragment in GenomicAlign is not in DB" );
   }
+  
   # all clear for storing
-  for my $ga ( @$genomic_aligns ) {
-    my $method_link_id = $self->_method_link_id_by_alignment_type($ga->alignment_type);
-    unless (defined $method_link_id) {
-      $self->throw("There is no method_link with this type [".$ga->alignment_type."] in the DB.");
-    }
+  my $method_link_id = $self->_method_link_id_by_alignment_type($ga->alignment_type);
+  unless (defined $method_link_id) {
+    $self->throw("There is no method_link with this type [".$ga->alignment_type."] in the DB.");
+  }
     
-    push( @values, "(".join( "," , $ga->consensus_dnafrag()->dbID(),
+  push( @values, "(".join( "," , $ga->consensus_dnafrag()->dbID(),
 			     $ga->consensus_start(), $ga->consensus_end(),
 			     $ga->query_dnafrag()->dbID(),
 			     $ga->query_start, $ga->query_end(), 
@@ -120,114 +286,17 @@ sub store {
                              $ga->level_id,
                              $ga->strands_reversed).
 	  ")" );
-  }
   my $sth = $self->prepare( $sql.join( ",", @values ));
   $sth->execute();
 }
-     
- 
-=head2 store_malign (TRANSITIONAL)
 
-  Arg  1     : listref  Bio::EnsEMBL::Compara::GenomicAlign $ga 
-               The things you want to store with the same align_block_id
-  Example    : none
-  Description: It stores the given GA in the database. Attached
-               objects are not stored. Make sure you store them first. It
-               returns the number of sequneces in the multiple alignment.
-  Returntype : integer
-  Exceptions : not stored linked dnafrag objects throw.
-  Caller     : general
-
-=cut
-
-sub store_malign {
-  my ( $self, $genomic_aligns ) = @_;
-
-  my $sql = "INSERT INTO genomic_align_block (
-			align_block_id,
-			consensus_dnafrag_id,
-			consensus_start,
-			consensus_end,
-			query_dnafrag_id,
-			query_start,
-			query_end,
-			query_strand,
-			method_link_id,
-			score,
-			perc_id,
-			cigar_line,
-			group_id,
-			level_id,
-			strands_reversed
-		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-  
-  my $values;
-  
-  for my $ga ( @$genomic_aligns ) {
-    # check if everything has dbIDs
-    if( ! defined $ga->query_dnafrag()->dbID() ) {
-      $self->throw( "dna_fragment in GenomicAlign is not in DB" );
-     }
-  }
-  # all clear for storing
-  for my $ga ( @$genomic_aligns ) {
-    my $method_link_id = $self->_method_link_id_by_alignment_type($ga->alignment_type);
-    unless (defined $method_link_id) {
-      $self->throw("There is no method_link with this type [".$ga->alignment_type."] in the DB.");
-    }
-    
-    push( @$values, [
-			undef(),
-			$ga->consensus_start(),
-			$ga->consensus_end(),
-			$ga->query_dnafrag()->dbID(),
-			$ga->query_start,
-			$ga->query_end(), 
-			$ga->query_strand(),
-			$method_link_id, 
-			$ga->score(),
-			$ga->perc_id(),
-			"\"".$ga->cigar_line()."\"",
-			$ga->group_id,
-			$ga->level_id,
-			$ga->strands_reversed,
-		] );
-  }
-  
-  ## Locks table genomic_align_block to avoid troubles with concurrent stores
-  my $sth = $self->prepare(qq{LOCK TABLES genomic_align_block WRITE});
-  $sth->execute();
-  ## Checks table lock
-  die "Cannot lock genomic_align_block table\n" if (!$sth->{"Executed"});
-  
-  ## Fetch last align_block_id
-  $sth = $self->prepare(qq{SELECT MAX(align_block_id) FROM genomic_align_block});
-  $sth->execute();
-  my ($align_block_id) = $sth->fetchrow_array();
-  $align_block_id++;
-  
-  ## Stores data, all of them with the same id
-  $sth = $self->prepare($sql);
-  #print $align_block_id, "\n";
-  foreach my $value (@$values) {
-    $sth->execute($align_block_id, @$value);
-  }
-
-  ## Unlock tables
-  $sth = $self->prepare(qq{UNLOCK TABLES});
-  $sth->execute();
-
-  return scalar(@$values);
-}
-     
- 
 
 sub store_daf {
   my ($self, $dafs, $dnafrag, $hdnafrag, $alignment_type) = @_;
   my @gas;
   foreach my $daf (@{$dafs}) {
     my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new_fast
-      ({'consensus_dnafrag' => $dnafrag,
+      ('consensus_dnafrag' => $dnafrag,
         'consensus_start' => $daf->start,
         'consensus_end' => $daf->end,
         'query_dnafrag' => $hdnafrag,
@@ -240,7 +309,7 @@ sub store_daf {
         'group_id' => $daf->group_id,
         'level_id' => $daf->level_id,
         'cigar_line' => $daf->cigar_string
-       });
+       );
           push @gas, $ga;
   }
   $self->store(\@gas);
@@ -362,7 +431,7 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
 
 =cut
 
-sub fetch_all_by_DnaFrag_GenomeDB {
+sub _fetch_all_by_DnaFrag_GenomeDB {
   my ( $self, $dnafrag, $target_genome, $start, $end, $alignment_type, $limit) = @_;
 
   unless($dnafrag && ref $dnafrag && 
