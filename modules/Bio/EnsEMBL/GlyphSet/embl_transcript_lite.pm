@@ -67,7 +67,7 @@ sub zmenu {
     };
 
   if($transcript->external_db() ne '') {
-    $zmenu->{ "02:$transcript->external_db():$tname" } = 
+    $zmenu->{ "02:".$transcript->external_db().":$tname" } = 
       $self->href($gene, $transcript); 
   }
 
