@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use vars qw(@ISA);
 use strict;
 
-# Object preamble - inherits from Bio::Root::RootI
+# Object preamble
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
