@@ -144,36 +144,3 @@ CREATE TABLE analysis (
 
 );
 
-
-------------------------------------------------------------------------------------
---
--- Table structure for table 'simple_rule'
---
--- overview:
---   redesign of pipeline rule system.  Basic design is simplifed so that a
---   'rule' is simply a link from one analysis object to another
---     (ie an edge in a flowchart or object interaction diagram where
---      condition_analysis_id => goal_analysis_id)
---   Each analysis object (analysis_id) is a unique node in the
---   graph that describes the pipeline system.
---     (ie each analysis_id is an 'Instance' of the module it points to)
---   Main reason for redesign that by making a single table we can implement
---   a UNIQUE constraint so that the pipeline can modify itself as it runs
---   and avoid race conditions where the same link is created multiple times
---
--- semantics:
---   simple_rule_id           - internal ID
---   condition_analysis_id    - foreign key to analysis table analysis_id
---   goal_analysis_id         - foreign key to analysis table analysis_id
-
-CREATE TABLE simple_rule (
-  simple_rule_id           int(10) unsigned default '0' not null auto_increment,
-  condition_analysis_id    int(10) unsigned NOT NULL,
-  goal_analysis_id         int(10) unsigned NOT NULL,
-
-  PRIMARY KEY (simple_rule_id),
-  UNIQUE (condition_analysis_id, goal_analysis_id)
-);
-
-
-
