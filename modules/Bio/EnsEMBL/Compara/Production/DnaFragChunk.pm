@@ -20,6 +20,7 @@ use strict;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
+use Time::HiRes qw(time gettimeofday tv_interval);
 
 sub new {
   my ($class, $dnafrag, $start, $end) = @_;
@@ -82,45 +83,34 @@ sub slice {
 =cut
 sub fetch_masked_sequence {
   my $self = shift;
-  my $masked = shift;
-  my $not_default_masking_cases = shift;
-  my $seq;
-
-  $masked=0 unless($masked);
-
+  
   return undef unless(my $slice = $self->slice());
 
   my $dcs = $slice->adaptor->db->dbc->disconnect_when_inactive();
+  #print("fetch_masked_sequence disconnect=$dcs\n");
   $slice->adaptor->db->dbc->disconnect_when_inactive(0);
+  #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
 
+  my $seq;
   my $id = $self->display_id;
 
-  if ((lc $masked eq 'hard') or ($masked eq 1)) {
-
-    #print STDERR "getting masked sequence...";
-    if ($not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,0,$not_default_masking_cases);
+  my $masking_options = eval($self->masking_options);
+  my $starttime = time();
+  if(defined($masking_options)) {
+    if($masking_options->{'soft_masking'} == 1) {
+      #print STDERR "getting SOFT masked sequence...";
+      $seq = $slice->get_repeatmasked_seq(undef,1,$masking_options);
+      #print STDERR "...got soft masked sequence...";
     } else {
-      $seq = $slice->get_repeatmasked_seq;
+      #print STDERR "getting HARD masked sequence...";
+      $seq = $slice->get_repeatmasked_seq(undef,0,$masking_options);
+      #print STDERR "...got masked sequence...";
     }
-    #print STDERR "...got masked sequence...";
-
-  } elsif ((lc $masked eq 'soft') or ($masked eq 2)) {
-    
-    #print STDERR "getting soft masked sequence...";
-    if ($not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,1,$not_default_masking_cases);
-    } else {
-      $seq = $slice->get_repeatmasked_seq(undef,1);
-    }
-    #print STDERR "...got soft masked sequence...";
-    
-  } else {
-    
-    #print STDERR "getting unmasked sequence...";
+  }
+  else {  # no masking options set, so get unmasked sequence
+    #print STDERR "getting UNMASKED sequence...";
     $seq = Bio::PrimarySeq->new( -id => $id, -seq => $slice->seq);
-    #print STDERR "...got unmasked sequence...";
-    
+    #print STDERR "...got unmasked sequence...";    
   }
 
   unless($seq->isa('Bio::PrimarySeq')) {
@@ -128,8 +118,10 @@ sub fetch_masked_sequence {
     my $oldseq = $seq;
     $seq = Bio::PrimarySeq->new( -id => $id, -seq => $oldseq->seq);
   }
+  #print ((time()-$starttime), " secs\n");
 
   $slice->adaptor->db->dbc->disconnect_when_inactive($dcs);
+  #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
 
   #print STDERR "sequence length : ",$seq->length,"\n";
   return $seq;
@@ -233,6 +225,12 @@ sub seq_end {
   }
   $self->{'seq_end'}=0 unless(defined($self->{'seq_end'}));
   return $self->{'seq_end'};
+}
+
+sub masking_options {
+  my $self = shift;
+  return $self->{'masking_options'} = shift if(@_);
+  return $self->{'masking_options'};
 }
 
 sub sequence_id {

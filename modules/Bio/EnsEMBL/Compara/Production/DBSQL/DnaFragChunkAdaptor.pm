@@ -18,6 +18,8 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
+
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -179,7 +181,8 @@ sub _columns {
              dfc.dnafrag_id
              dfc.seq_start
              dfc.seq_end
-						 dfc.sequence_id
+             dfc.masking_analysis_data_id
+             dfc.sequence_id
             );
 }
 
@@ -203,6 +206,8 @@ sub _objs_from_sth {
 
   my @chunks = ();
 
+  my $dataDBA = new Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor($self->dbc);
+  
   while ($sth->fetch()) {
     my $dfc;
 
@@ -218,7 +223,10 @@ sub _objs_from_sth {
     if($column{'dnafrag_id'} and $self->db->get_DnaFragAdaptor) {
       $dfc->dnafrag($self->db->get_DnaFragAdaptor->fetch_by_dbID($column{'dnafrag_id'}));
     }
-  
+    if($column{'masking_analysis_data_id'}) {
+      $dfc->masking_options($dataDBA->fetch_by_dbID($column{'masking_analysis_data_id'}));
+    }
+
     #$dfc->display_short();
     
     push @chunks, $dfc;
