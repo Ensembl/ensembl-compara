@@ -36,7 +36,7 @@ sub highlight {
   # Are we going to highlight this item...
   my $id = $f->variation_name();
   $id =~ s/^rs//;
-  if(exists $highlights{$id}) {
+  if(exists $highlights{$id} or exists $highlights{"rs".$id} ) {
     # if ($f->can('display_name') && exists $highlights{ $f->display_name() } ) or (exists $highlights{$id} )  ) {
 
    # Line of white first
