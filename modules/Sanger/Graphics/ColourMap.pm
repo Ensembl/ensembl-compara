@@ -2,7 +2,6 @@ package Sanger::Graphics::ColourMap;
 use strict;
 use Exporter;
 use vars qw(@ISA);
-use Carp;
 @ISA = qw(Exporter);
 
 sub new {
@@ -672,7 +671,6 @@ sub new {
 	       };
 
     bless($self, $class);
-
     return $self;
 }
 
@@ -681,14 +679,15 @@ sub new {
 #
 sub id_by_name {
   my ($self, $name) = @_;
-  confess qq(id_by_name deprecated [use the quoted colour name!] );
+  warn qq(id_by_name deprecated [use the quoted colour name!]);
   return defined $self->{$name} ? $name : 'black';
 }
 
 sub is_defined {
-  my( $self, $name ) = @_;
+  my ($self, $name) = @_;
   return exists $self->{$name};
 }
+
 #########
 # deprecated. here for compatibility
 #
@@ -721,6 +720,10 @@ sub hex_by_rgb {
 sub rgb_by_hex {
     my ($self, $hex) = @_;
 
+    unless($hex){
+        warn "Cannot map hex colour in colourmap\n";
+        return(hex(0), hex(0), hex(0));
+    }
     my ($hred, $hgreen, $hblue) = unpack("A2A2A2", $hex);
     return (hex($hred), hex($hgreen), hex($hblue));
 }
@@ -777,16 +780,20 @@ sub add_hex {
 }
 
 sub build_linear_gradient {
-  my ($self, $ngrades, $start, @colours) = @_;
+  my ($self, $grades_total, $start, @colours) = @_;
 
-  my @gradient = ();
+  my @finished_gradient = ();
+
+  #########
+  # deal with a single arrayref argument if supplied
+  #
   if(scalar @colours == 0 && ref($start) eq "ARRAY") {
     @colours = @{$start};
     $start   = shift @colours;
   }
 
   my $tgrades  = scalar @colours || 1;
-  my $sgrades  = int($ngrades / $tgrades);
+  my $sgrades  = $grades_total / $tgrades;
 
   while(my $end = shift @colours) {
     my ($sr, $sg, $sb) = $self->rgb_by_name($start);
@@ -797,7 +804,7 @@ sub build_linear_gradient {
     my ($r, $g, $b)    = ($sr, $sg, $sb);
     
     for (my $i = 0; $i < $sgrades; $i++) {
-      push @gradient, $self->add_rgb([$r, $g, $b]);
+      push @finished_gradient, $self->add_rgb([$r, $g, $b]);
       $r += $dr;
       $g += $dg;
       $b += $db;
@@ -805,11 +812,18 @@ sub build_linear_gradient {
 
     $start = $end;
   }
-  return @gradient;
+
+  #########
+  # work around for rounding error (incorrect number of colours returned under certain conditions)
+  #
+  pop @finished_gradient if(scalar @finished_gradient > $grades_total);
+
+  return @finished_gradient;
 }
 
 sub shout {
   my $self = shift;
   warn join "\n", map { sprintf "%20s %6s", $_, $self->{$_} } sort keys %$self;
 }
+
 1;
