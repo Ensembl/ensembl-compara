@@ -26,6 +26,8 @@ sub _init {
 
     return unless ($self->strand() == -1);
     
+    # This sucks hard. We already have a map DB connection, can anyone find it?
+
     my $length   		= $self->{'container'}->length();
     my $Config 			= $self->{'config'};
     my @bitmap         	= undef;
@@ -59,6 +61,10 @@ sub _init {
 			
         	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 					'absolutey' => 1,
+					'zmenu'     => {
+		    			'caption' => "Clone $id",
+		    			"Request clone $id"  =>"http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$id&query=Requested%20via%20Ensembl",
+					},
 			});
 
 	    	my $glyph = new Bio::EnsEMBL::Glyph::Rect({

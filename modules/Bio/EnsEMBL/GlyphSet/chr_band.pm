@@ -13,8 +13,9 @@ use ColourMap;
 sub init_label {
     my ($self) = @_;
 
+    my $chr = $self->{'container'}->_chr_name();
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => "Chr. band",
+	'text'      => "$chr band",
 	'font'      => 'Small',
 	'absolutey' => 1,
     });

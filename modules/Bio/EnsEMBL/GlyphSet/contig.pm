@@ -105,9 +105,9 @@ sub _init {
 		'zmenu'     => {
 		    'caption' => $rid,
 		    'Contig information'     => "/perl/seqentryview?seqentry=$clone&contigid=$rid",
-		    "FPC clone ID: $fpc_id"  => "",
-		    "Request clone $fpc_id"  =>
-			"http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$fpc_id&query=Ensembl%20Request",
+#		    "FPC ID: $fpc_id"  => "",
+		    "Request clone (FPC ID: $fpc_id)"  =>
+			"http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$fpc_id&query=Requested%20via%20Ensembl",
 		},
 	    });
 	    $self->push($glyph);

@@ -37,9 +37,6 @@ sub _init {
 			'height'   => $h,
 			'id'       => $protein->id(),
 			'colour'   => $colour,
-			'zmenu' => {
-			    'caption' => $protein->id(),
-			},
 	});
     
     $this->push($rect);
