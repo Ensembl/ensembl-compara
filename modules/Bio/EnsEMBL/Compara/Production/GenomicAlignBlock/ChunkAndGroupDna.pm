@@ -339,9 +339,8 @@ sub create_dnafrag_chunks {
       $chunk->masking_options($self->{'masking_options'});
     }
 
-    if($self->{'chunk_size'} <=15000000 and $self->{'store_seq'}) {
-      my $bioseq = $chunk->bioseq;
-      $chunk->sequence($bioseq->seq);
+    if($self->{'store_seq'}) {
+      $chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
     }
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
 
