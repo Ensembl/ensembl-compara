@@ -48,7 +48,7 @@ sub render {
 	    $im_height += $fntheight + $spacing;
 	}
     }
-
+    $config->image_height($im_height);
     my $im_width = $config->image_width();
 
     #########
