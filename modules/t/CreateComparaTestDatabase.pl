@@ -28,7 +28,7 @@ GetOptions('help' => \$help,
            'seq_region_file=s' => \$seq_region_file);
 
 my $usage = "Usage:
-CreateCoreTestDatabase.pl -s srcDB -d destDB -h host -u user -p pass [--port port]\n";
+CreateComparaTestDatabase.pl -s srcDB -d destDB -h host -u user -p pass -seq_region_file file [--port port]\n";
 
 if ($help) {
   print $usage;
@@ -79,7 +79,7 @@ $dbh->do( "CREATE DATABASE " . $destDB )
 
 my $rc = 0xffff & system(
   "mysqldump -p$pass -u $user -h $host -P $port --no-data $srcDB | " .
-  "mysql -p$pass -u $user -h $host -P port $destDB");
+  "mysql -p$pass -u $user -h $host -P $port $destDB");
 
 if($rc != 0) {
   $rc >>= 8;
@@ -89,6 +89,7 @@ $dbh->do("use $destDB");
 
 $dbh->do("insert into source select * from $srcDB.source");
 $dbh->do("insert into method_link select * from $srcDB.method_link");
+$dbh->do("insert into method_link_species select * from $srcDB.method_link_species");
 
 $dbh->do("insert into genome_db select * from $srcDB.genome_db");
 $dbh->do("update genome_db set locator=NULL");
@@ -98,33 +99,106 @@ $array_ref = $dbh->selectcol_arrayref("select meta_value from meta where meta_ke
 my $max_alignment_length = $array_ref->[0];
 
 foreach my $genome_db_id (@other_genome_db_ids) {
-  $dbh->do("insert into genomic_align_genome select * from $srcDB.genomic_align_genome gag where gag.method_link_id=1 and (gag.consensus_genome_db_id=$ref_genome_db_id or gag.query_genome_db_id=$ref_genome_db_id) and (gag.consensus_genome_db_id=$genome_db_id or gag.query_genome_db_id=$genome_db_id)");
-  
-  my $array_ref = $dbh->selectall_arrayref("select * from genomic_align_genome gag where gag.method_link_id=$method_link_id and (gag.consensus_genome_db_id=$ref_genome_db_id or gag.query_genome_db_id=$ref_genome_db_id) and (gag.consensus_genome_db_id=$genome_db_id or gag.query_genome_db_id=$genome_db_id)");
-  
   foreach my $seq_region (@seq_regions) {
     my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
     my $lower_bound = $seq_region_start - $max_alignment_length;
-
+    my ($method_link_species_set) = $dbh->selectrow_array(qq{
+          SELECT
+            mls1.method_link_species_set
+          FROM
+            method_link_species mls1, method_link_species mls2
+          WHERE
+            mls1.genome_db_id=$ref_genome_db_id AND
+            mls2.genome_db_id=$genome_db_id AND
+            mls1.method_link_species_set=mls2.method_link_species_set AND
+            mls1.method_link_id=$method_link_id
+        });
+    
+    # Get dnafrag_id for the reference region
+    my ($dnafrag_id) = $dbh->selectrow_array(qq{
+          SELECT
+            dnafrag_id
+          FROM
+            $srcDB.dnafrag
+          WHERE
+            genome_db_id=$ref_genome_db_id AND
+            name=$seq_region_name
+        });
+    print "Dumping data for dnafrag $dnafrag_id (genome=$ref_genome_db_id; seq=$seq_region_name)\n";
+            
+    # Get the list of genomic_align_block_ids corresponding the the reference region
+    # Populate the genomic_align_block_id table
+    print " - dumping genomic_align entries\n";
+    $dbh->do(qq{
+          INSERT IGNORE INTO
+            genomic_align
+          SELECT
+            *
+          FROM
+            $srcDB.genomic_align
+          WHERE
+            method_link_species_set=$method_link_species_set AND
+            dnafrag_id=$dnafrag_id AND
+            dnafrag_start<=$seq_region_end AND
+            dnafrag_end>=$seq_region_start AND
+            dnafrag_start>=$lower_bound
+        });
+       
     # populate genomic_align_block table
-    if ($array_ref->[0]->[0] == $ref_genome_db_id) {
-      $dbh->do("insert into genomic_align_block select gab.* from $srcDB.genomic_align_block gab, $srcDB.dnafrag d1, $srcDB.dnafrag d2 where gab.method_link_id=$method_link_id and gab.consensus_dnafrag_id=d1.dnafrag_id and gab.query_dnafrag_id=d2.dnafrag_id and d1.genome_db_id=$ref_genome_db_id and d2.genome_db_id=$genome_db_id and d1.name=$seq_region_name and gab.consensus_start<=$seq_region_end and gab.consensus_end>=$seq_region_start and gab.consensus_start>=$lower_bound");
-    } elsif ($array_ref->[0]->[1] == $ref_genome_db_id) {
-      $dbh->do("insert into genomic_align_block select gab.* from $srcDB.genomic_align_block gab, $srcDB.dnafrag d1, $srcDB.dnafrag d2 where gab.method_link_id=$method_link_id and gab.query_dnafrag_id=d1.dnafrag_id and gab.consensus_dnafrag_id=d2.dnafrag_id and d1.genome_db_id=$ref_genome_db_id and d2.genome_db_id=$genome_db_id and d1.name=$seq_region_name and gab.query_start<=$seq_region_end and gab.query_end>=$seq_region_start and gab.query_start>=$lower_bound");
-    }
+    print " - dumping genomic_align_block entries\n";
+    $dbh->do(qq{
+          INSERT IGNORE INTO
+            genomic_align_block
+          SELECT
+            gab.*
+          FROM
+            $srcDB.genomic_align_block gab, genomic_align ga
+          WHERE
+            gab.genomic_align_block_id=ga.genomic_align_block_id
+        });
+        
+    # populate genomic_align table
+    print " - dumping new genomic_align entries\n";
+    $dbh->do(qq{
+          INSERT IGNORE INTO
+            genomic_align
+          SELECT
+            ga.*
+          FROM
+            genomic_align_block gab, $srcDB.genomic_align ga
+          WHERE
+            gab.genomic_align_block_id=ga.genomic_align_block_id
+        });
+        
+    # populate genomic_align_group table
+    print " - dumping genomic_align_group entries\n";
+    $dbh->do(qq{
+          INSERT IGNORE INTO
+            genomic_align_group
+          SELECT
+            gag.*
+          FROM
+            $srcDB.genomic_align_group gag, genomic_align ga
+          WHERE
+            gag.genomic_align_id=ga.genomic_align_id
+        });
 
     # populate homology table
-    $dbh->do("insert into homology select h.* from $srcDB.homology h,$srcDB.homology_member hm1, $srcDB.member m1, $srcDB.homology_member hm2, $srcDB.member m2 where h.homology_id=hm1.homology_id and h.homology_id=hm2.homology_id and hm1.member_id=m1.member_id and hm2.member_id=m2.member_id and m1.genome_db_id=$ref_genome_db_id and m2.genome_db_id=$genome_db_id and m1.chr_name=$seq_region_name and m1.chr_start<$seq_region_end and m1.chr_end>$seq_region_start");
+    print " - populating homology table\n";
+    my $srcDB2 = "ensembl_compara_22_1";
+    $dbh->do("insert into homology select h.* from $srcDB2.homology h,$srcDB2.homology_member hm1, $srcDB2.member m1, $srcDB2.homology_member hm2, $srcDB2.member m2 where h.homology_id=hm1.homology_id and h.homology_id=hm2.homology_id and hm1.member_id=m1.member_id and hm2.member_id=m2.member_id and m1.genome_db_id=$ref_genome_db_id and m2.genome_db_id=$genome_db_id and m1.chr_name=$seq_region_name and m1.chr_start<$seq_region_end and m1.chr_end>$seq_region_start");
 
     # populate family table
-    $dbh->do("insert ignore into family select f.* from $srcDB.family f, $srcDB.family_member fm, $srcDB.member m where f.family_id=fm.family_id and fm.member_id=m.member_id and m.genome_db_id=$ref_genome_db_id and m.chr_name=$seq_region_name and m.chr_start<$seq_region_end and m.chr_end>$seq_region_start");
+    print " - populating family table\n";
+    $dbh->do("insert ignore into family select f.* from $srcDB2.family f, $srcDB2.family_member fm, $srcDB2.member m where f.family_id=fm.family_id and fm.member_id=m.member_id and m.genome_db_id=$ref_genome_db_id and m.chr_name=$seq_region_name and m.chr_start<$seq_region_end and m.chr_end>$seq_region_start");
+    
+    print " - done\n";
   }
 }
 
 
 # populate dnafrag table
-$dbh->do("insert ignore into dnafrag select d.* from genomic_align_block gab, $srcDB.dnafrag d where gab.consensus_dnafrag_id=d.dnafrag_id");
-$dbh->do("insert ignore into dnafrag select d.* from genomic_align_block gab, $srcDB.dnafrag d where gab.query_dnafrag_id=d.dnafrag_id");
+$dbh->do("insert ignore into dnafrag select d.* from genomic_align ga, $srcDB.dnafrag d where ga.dnafrag_id=d.dnafrag_id");
 
 foreach my $genome_db_id (@other_genome_db_ids) {
   # populate synteny_region table
@@ -166,7 +240,7 @@ foreach my $genome_db_id (@other_genome_db_ids) {
     die "can not open $file\n";
   print F "[\n";
   
-  $array_ref = $dbh->selectall_arrayref("select d.name,g.query_start,g.query_end from dnafrag d, genomic_align_block g where d.dnafrag_id=g.query_dnafrag_id and d.genome_db_id=$genome_db_id order by d.name, g.query_start,g.query_end");
+  $array_ref = $dbh->selectall_arrayref("select d.name,g.dnafrag_start,g.dnafrag_end from dnafrag d, genomic_align g where d.dnafrag_id=g.dnafrag_id and d.genome_db_id=$genome_db_id order by d.name, g.dnafrag_start,g.dnafrag_end");
 
   my ($last_name, $last_start,$last_end);
   foreach my $row (@{$array_ref}) {
