@@ -113,13 +113,6 @@ sub get_params {
 # 
 ##########################################
 
-sub debug {
-  my $self = shift;
-  $self->{'_debug'} = shift if(@_);
-  $self->{'_debug'}=0 unless(defined($self->{'_debug'}));  
-  return $self->{'_debug'};
-}
-
 sub options {
   my $self = shift;
   $self->{'_options'} = shift if(@_);
@@ -448,6 +441,12 @@ sub store_featurePair_as_genomicAlignBlock
   $GAB->length($fp->alignment_length);
 
   $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->store($GAB);
+  
+  my $track_sql = "INSERT IGNORE INTO genomic_align_block_job_track ".
+                  "(genomic_align_block_id, analysis_job_id) ".
+                  "VALUES (".$GAB->dbID.",".$self->analysis_job_id.")";
+  print("$track_sql\n") if($self->debug);
+  $self->{'comparaDBA'}->dbc->do($track_sql);
 
   if($self->debug > 1) { print_simple_align($GAB->get_SimpleAlign, 80);}
 
