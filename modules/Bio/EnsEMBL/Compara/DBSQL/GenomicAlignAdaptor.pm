@@ -222,21 +222,24 @@ sub store {
 
    # for each alignblockset, store the row and then the alignblocks themselves
    
+   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand) values (?,?,?,?,?,?,?,?)");
+
    foreach my $ab ( $aln->each_AlignBlockSet ) {
        my $sth2 = $self->prepare("insert into align_row (align_id) values ($align_id)");
        $sth2->execute();
        my $row_id = $sth2->{'mysql_insertid'};
 
        foreach my $a ( $ab->get_AlignBlocks ) {
-	   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand) values ($align_id,",
-				     $a->align_start,
-				     $a->align_end,
-				     $row_id,
-				     $a->dnafrag->dbID,
-				     $a->start,
-				     $a->end,
-				     $a->strand
-				     );
+	   $sth3->execute($align_id,
+			  $a->align_start,
+			  $a->align_end,
+			  $row_id,
+			  $a->dnafrag->dbID,
+			  $a->start,
+			  $a->end,
+			  $a->strand
+			  );
+
        }
    }
     
