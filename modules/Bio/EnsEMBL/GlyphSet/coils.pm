@@ -8,14 +8,14 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => 'Coils',
         'font'      => 'Small',
         'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {

@@ -8,15 +8,15 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Poly;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 	
-    return if defined($this->{'config'}->{'_no_label'});
+    return if defined($self->{'config'}->{'_no_label'});
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Length',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {

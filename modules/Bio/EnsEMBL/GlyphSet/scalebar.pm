@@ -26,7 +26,6 @@ sub _init {
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
-	print STDERR "MAX NO DIVS: $max_num_divs\n";
     my $abbrev         = $Config->get('scalebar', 'abbrev');
 
     my $chr            = $Container->_chr_name();
@@ -67,31 +66,6 @@ sub _init {
 	    
 	    # Add the recentering imagemap-only glyphs
 	    my $interval_middle = $global_start + ($i * $divs) + int($divs/2) - $divs;
-	    my $new_start  = $interval_middle - $global_offset;
-	    my $new_end    = $interval_middle + $global_offset;
-	    
-	    my $zoom_out_new_start  = $interval_middle - 2 * $global_offset;
-	    my $zoom_out_new_end    = $interval_middle + 2 * $global_offset;
-	    
-	    my $zoom_in_new_start  = $interval_middle - int($global_offset/2);
-	    my $zoom_in_new_end    = $interval_middle + int($global_offset/2);
-	    
-	    my $url = "$ENV{'SCRIPT_NAME'}?chr=$chr";
-	    $url .= "&vc_start=";
-	    $url .= $new_start;
-	    $url .= "&vc_end=";
-	    $url .= $new_end;
-	    my $url_zoom_out = "$ENV{'SCRIPT_NAME'}?chr=$chr";
-	    $url_zoom_out .= "&vc_start=";
-	    $url_zoom_out .= $zoom_out_new_start;
-	    $url_zoom_out .= "&vc_end=";
-	    $url_zoom_out .= $zoom_out_new_end;
-	    my $url_zoom_in = "$ENV{'SCRIPT_NAME'}?chr=$chr";
-	    $url_zoom_in .= "&vc_start=";
-	    $url_zoom_in .= $zoom_in_new_start;
-	    $url_zoom_in .= "&vc_end=";
-	    $url_zoom_in .= $zoom_in_new_end;
-	    
 	    #print STDERR "URL: $url\n";
 	    
 	    my $interval = new Bio::EnsEMBL::Glyph::Rect({
@@ -101,12 +75,16 @@ sub _init {
 		'height'    => 15,
 		'colour'    => 'transparent',
 		'absolutey' => 1,
-            	'zmenu'     => { 
+        'zmenu'     => { 
 		    'caption' 			    => "Navigation",
-		    'Centre on this scale interval' => $url, 
-		    'Zoom in (x2)' 	       	    => $url_zoom_in, 
-		    'Zoom out (x0.5)' 		    => $url_zoom_out, 
-		},
+		    'Zoom in (x10)' 	       	=> &zoom_URL($chr, $interval_middle, $global_offset, 10),
+		    'Zoom in (x5)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 5),
+			'Zoom in (x2)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 2),
+			'Centre on this scale interval' => &zoom_URL($chr, $interval_middle, $global_offset, 1), 
+		    'Zoom out (x0.5)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.5), 
+		    'Zoom out (x0.2)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.2), 
+			'Zoom out (x0.1)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.1) 		
+			},
 	    });
 	    $self->push($interval);
 	    $last_end = $i * $divs;
@@ -115,34 +93,8 @@ sub _init {
 	
     # Add the last recentering imagemap-only glyphs
     if ($Config->script() eq "contigviewbottom"){
-	my $interval_middle = $global_end - int($divs/2);
-	my $new_start  = $interval_middle - $global_offset;
-	my $new_end    = $interval_middle + $global_offset;
-	
-	my $zoom_out_new_start  = $interval_middle - 2 * $global_offset;
-	my $zoom_out_new_end    = $interval_middle + 2 * $global_offset;
-	
-	my $zoom_in_new_start  = $interval_middle - int($global_offset/2);
-	my $zoom_in_new_end    = $interval_middle + int($global_offset/2);
-	
-    	my $url = "$ENV{'SCRIPT_NAME'}?chr=$chr";
-	$url .= "&vc_start=";
-	$url .= $new_start;
-	$url .= "&vc_end=";
-	$url .= $new_end;
-    	my $url_zoom_out = "$ENV{'SCRIPT_NAME'}?chr=$chr";
-	$url_zoom_out .= "&vc_start=";
-	$url_zoom_out .= $zoom_out_new_start;
-	$url_zoom_out .= "&vc_end=";
-	$url_zoom_out .= $zoom_out_new_end;
-    	my $url_zoom_in = "$ENV{'SCRIPT_NAME'}?chr=$chr";
-	$url_zoom_in .= "&vc_start=";
-	$url_zoom_in .= $zoom_in_new_start;
-	$url_zoom_in .= "&vc_end=";
-	$url_zoom_in .= $zoom_in_new_end;
-	
-	#print STDERR "URL: $url\n";
-	
+	    my $interval_middle = $global_end - int($divs/2);
+
 	my $interval = new Bio::EnsEMBL::Glyph::Rect({
 	    'x'         => $last_end,
 	    'y'         => 4,
@@ -150,11 +102,16 @@ sub _init {
 	    'height'    => 15,
 	    'colour'    => 'transparent',
 	    'absolutey' => 1,
-            'zmenu'     => { 
-		'caption' => "Navigation",
-		'Centre on this scale interval' => $url, 
-		'Zoom in (x2)' 					=> $url_zoom_in, 
-		'Zoom out (x0.5)' 				=> $url_zoom_out, 
+        'zmenu'     => { 
+			'caption' => "Navigation",
+		    'Zoom in (x10)' 	       	=> &zoom_URL($chr, $interval_middle, $global_offset, 10),
+		    'Zoom in (x5)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 5),
+			'Zoom in (x2)' 	       	    => &zoom_URL($chr, $interval_middle, $global_offset, 2),
+			'Centre on this scale interval' => &zoom_URL($chr, $interval_middle, $global_offset, 1), 
+		    'Zoom out (x0.5)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.5), 
+		    'Zoom out (x0.2)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.2), 
+			'Zoom out (x0.1)' 		    => &zoom_URL($chr, $interval_middle, $global_offset, 0.1) 		
+ 
 	    },
 	});
 	$self->push($interval);
@@ -295,5 +252,10 @@ sub bp_to_nearest_unit {
     return $unit_str;
 }
 
-
+sub zoom_URL {
+	my( $chr, $interval_middle, $global_offset, $factor ) = @_;
+	my $start = int( $interval_middle - $global_offset / $factor);
+	my $end   = int( $interval_middle + $global_offset / $factor);	
+	return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?chr=$chr&vc_start=$start&vc_end=$end);
+}
 1;

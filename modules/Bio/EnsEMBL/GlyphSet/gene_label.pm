@@ -23,6 +23,7 @@ sub _init {
     my $type          = $Config->get('gene', 'src');
     my @allgenes      = ();
 
+    
     push @allgenes, $VirtualContig->get_all_VirtualGenes_startend();
 
     if ($type eq 'all'){

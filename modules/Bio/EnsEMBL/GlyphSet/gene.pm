@@ -9,14 +9,14 @@ use Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Genes',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
