@@ -335,6 +335,31 @@ sub fetch_by_relation_source_taxon {
   return $self->_generic_fetch($constraint, $join);
 }
 
+
+=head2 fetch_by_subset_id
+
+  Arg [1]    :
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub fetch_by_subset_id {
+  my ($self, $subset_id) = @_;
+
+  $self->throw() unless (defined $subset_id);
+
+  my $constraint = "sm.subset_id = '$subset_id'";
+
+  my $join = [[['subset_member', 'sm'], 'm.member_id = sm.member_id']];
+
+  return $self->_generic_fetch($constraint, $join);
+}
+
+
 #
 # INTERNAL METHODS
 #
@@ -398,9 +423,9 @@ sub _generic_fetch {
   }
 
   #append additional clauses which may have been defined
-  $sql .= " $final_clause";
+  $sql .= " $final_clause" if($final_clause);
 
-  # warn $sql;
+  warn $sql;
   my $sth = $self->prepare($sql);
   $sth->execute;  
 
@@ -487,7 +512,8 @@ sub _default_where_clause {
 sub _final_clause {
   my $self = shift;
 
-  return '';
+  $self->{'_final_clause'} = shift if(@_);
+  return $self->{'_final_clause'};
 }
 
 sub _load_sequence {
