@@ -58,7 +58,7 @@ ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
 
  Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
 
-> ls|grep out|while read i;do awk '/^Subject/ && $NF!="Done" {print;exit}' $i;done|wc -l
+> ls|grep out|while read i;do awk '/^Subject/ && $NF=="Done" {print;exit}' $i;done|wc -l
 
  That should return the same number as wc -l Hs31_chr_names
  If not, spot the failed job, delete every file related to it and rerun it.
