@@ -73,6 +73,7 @@ sub render_Rect {
 		return;
 	}
 
+#    print STDERR "RECT: (",$glyph->pixelx(),",",$glyph->pixely(),",",$glyph->pixelwidth(),",",$glyph->pixelheight(),")\n      (",$glyph->x(),",",$glyph->y(),",",$glyph->width(),",",$glyph->height(),")\n";
     my $bordercolour  = $self->colour($gbordercolour);
     my $colour        = $self->colour($gcolour);
 
@@ -97,6 +98,7 @@ sub render_Text {
     # BAH! HORRIBLE STINKY STUFF!
     # I'd take GD voodoo calls any day
     #
+#    print STDERR "TEXT: (",$glyph->pixelx(),",",$glyph->pixely(),") (",$glyph->x(),",",$glyph->y(),") ",$glyph->text(),"\n";
     if($glyph->font() eq "Tiny") {
         $self->{'canvas'}->string(gdTinyFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
 

@@ -11,13 +11,14 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
+    my ($type)         = reverse split '::', ref($self) ;
     return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
     });
-    $self->bumped('yes');
+    $self->bumped( $self->{'config'}->get($type, 'dep')==0 ? 'no' : 'yes' );
     $self->label($label);
 }
 
