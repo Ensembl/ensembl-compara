@@ -87,7 +87,6 @@ sub fetch_homologues_of_gene {
     }
 
     return @genes;
-
 }                               
 
 
