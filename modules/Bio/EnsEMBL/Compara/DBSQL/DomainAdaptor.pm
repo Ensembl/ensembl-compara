@@ -81,13 +81,13 @@ sub fetch_by_Member {
     $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
   }
 
-  my $join = [['domain_member', 'dm'], 'd.domain_id = dm.domain_id'];
+  my $join = [[['domain_member', 'dm'], 'd.domain_id = dm.domain_id']];
   my $constraint = "dm.member_id = " .$member->dbID;
 
   return $self->generic_fetch($constraint, $join);
 }
 
-sub fetch_by_Member_source {
+sub fetch_by_Member_Domain_source {
   my ($self, $member, $source_name) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
@@ -97,7 +97,7 @@ sub fetch_by_Member_source {
   $self->throw("source_name arg is required\n")
     unless ($source_name);
 
-  my $join = [['domain_member', 'dm'], 'd.domain_id = dm.domain_id'];
+  my $join = [[['domain_member', 'dm'], 'd.domain_id = dm.domain_id']];
   my $constraint = "s.source_name = '$source_name'";
   $constraint .= " AND dm.member_id = " . $member->dbID;
 
