@@ -41,7 +41,7 @@ sub new {
                the this chunks start,end.
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : none
-  Caller     : general, self->get_sequence()
+  Caller     : general, self->fetch_masked_sequence()
 =cut
 sub slice {
   my ($self) = @_;
@@ -65,21 +65,22 @@ sub slice {
 }
 
 
-=head2 fetch_sequence
+=head2 fetch_masked_sequence
+  Description: Meta method which uses the slice associated with this chunk
+               and from the external core database associated with the slice
+               it extracts the masked DNA sequence.
+               Returns as Bio::Seq object.  does not cache sequence internally
   Arg [1]    : (int) masked status of the sequence [optional]
                 0 unmasked (default)
                 1 masked
                 2 soft-masked
   Arg[2]     : (ref to hash) hash of masking options [optional]
   Example    : $bioseq = $chunk->get_sequence(1);
-  Description: Meta method which uses the slice associated with this chunk
-               and from the slice to extract the DNA sequence
-               Returns as Bio::Seq object.  does not cache sequence internally
   Returntype : Bio::Seq or undef if a problem
   Exceptions : none
   Caller     : general
 =cut
-sub fetch_sequence {
+sub fetch_masked_sequence {
   my $self = shift;
   my $masked = shift;
   my $not_default_masking_cases = shift;
@@ -92,11 +93,7 @@ sub fetch_sequence {
   my $dcs = $slice->adaptor->db->dbc->disconnect_when_inactive();
   $slice->adaptor->db->dbc->disconnect_when_inactive(0);
 
-  my $dnafrag = $self->dnafrag;
-  my $id = $dnafrag->coord_system_name.":".
-           $dnafrag->name.".".
-           ($self->seq_start-1).".".
-           ($self->seq_end-1);
+  my $id = $self->display_id;
 
   if ($masked == 1) {
 
@@ -139,9 +136,56 @@ sub fetch_sequence {
 }
 
 
+=head2 display_id
+  Args       : none
+  Example    : my $id = $chunk->display_id;
+  Description: returns string describing this chunk which can be used
+               as display_id of a Bio::Seq object or in a fasta file.
+               Uses dnafrag information in addition to start and end.  
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+=cut
+sub display_id {
+  my $self = shift;
+
+  my $dnafrag = $self->dnafrag;
+  return "" unless($dnafrag);
+  my $id = $dnafrag->genome_db->taxon_id. ".".
+           $dnafrag->genome_db->dbID. ":".
+           $dnafrag->coord_system_name.":".
+           $dnafrag->name.".".
+           $self->seq_start.".".
+           $self->seq_end;
+  return $id;
+}
+
+=head2 bioseq
+  Args       : none
+  Example    : my $bioseq = $chunk->bioseq;
+  Description: returns stored sequence of this chunk as a Bio::Seq object
+  Returntype : Bio::Seq object
+  Exceptions : none
+  Caller     : general
+=cut
+sub bioseq {
+  my $self = shift;
+
+  throw("DnaFragChunk sequence_id undefined") unless defined($self->sequence_id());
+  throw("No sequence for DnaFragChunk " . $self->dbID()) unless defined($self->sequence());
+
+  my $seq = Bio::Seq->new(-seq        => $self->sequence(),
+                          -display_id => $self->display_id(),
+                          -primary_id => $self->sequence_id(),
+                         );
+  return $seq;
+}
+
+
+
 ##########################
 #
-# getter/setter methods
+# getter/setter methods of data which is stored in database
 #
 ##########################
 
@@ -204,11 +248,11 @@ sub sequence {
   return $self->{'_sequence'} = shift if(@_);
   return $self->{'_sequence'} if(defined($self->{'_sequence'}));	
 
-	#lazy load the sequence if sequence_id is set
+  #lazy load the sequence if sequence_id is set
   if(defined($self->sequence_id()) and defined($self->adaptor())) {
     $self->{'_sequence'} = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbID($self->sequence_id);
   }
-	return $self->{'_sequence'};
+  return $self->{'_sequence'};
 }
 
 
