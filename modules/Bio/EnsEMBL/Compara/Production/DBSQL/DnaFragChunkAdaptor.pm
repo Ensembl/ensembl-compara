@@ -15,6 +15,7 @@ package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
 
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
@@ -229,6 +230,7 @@ sub _objs_from_sth {
       $dfc->dnafrag($self->db->get_DnaFragAdaptor->fetch_by_dbID($column{'dnafrag_id'}));
     }
     if($column{'masking_analysis_data_id'}) {
+      print("fetch masking_option from analysis_data via id ", $column{'masking_analysis_data_id'}, "\n");
       $dfc->masking_options($dataDBA->fetch_by_dbID($column{'masking_analysis_data_id'}));
       #set masking_analysis_data_id second because setting masking_options resets the ID
       $dfc->masking_analysis_data_id($column{'masking_analysis_data_id'});
