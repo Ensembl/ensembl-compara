@@ -32,8 +32,7 @@ sub _init {
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
     my $im_width      = $Config->image_width();
-    my $type          = $Config->get('snp_legend', 'src');
-
+    my $type          = $Config->get('snp_legend', 'type');
     my @colours;
     return unless $Config->{'snp_legend_features'};
     my %features = %{$Config->{'snp_legend_features'}};
@@ -56,14 +55,27 @@ sub _init {
         $y++ unless $x==0;
         $x=0;
         while( my ($legend, $colour) = splice @colours, 0, 2 ) {
-            $self->push(new Bio::EnsEMBL::Glyph::Poly({
-                'points'    => [ $im_width * $x/$NO_OF_COLUMNS, 3+$BOX_HEIGHT,
-                    $im_width * $x/$NO_OF_COLUMNS + 4, 3,
-                    $im_width * $x/$NO_OF_COLUMNS + 8, 3+$BOX_HEIGHT  ],
-        	    'colour'    => $colour,
-                'absolutey' => 1,
-                'absolutex' => 1,
-            }));
+            if($type eq 'square') {
+                $self->push(new Bio::EnsEMBL::Glyph::Rect({
+                    'x'         => $im_width * $x/$NO_OF_COLUMNS,
+                    'y'         => $y * $BOX_HEIGHT * 2 + 3,
+                    'width'     => 8, 
+                    'height'    => $BOX_HEIGHT,
+                    'colour'    => $colour,
+                    'absolutey' => 1,
+                    'absolutex' => 1,
+                }));
+            } else {
+            
+                $self->push(new Bio::EnsEMBL::Glyph::Poly({
+                    'points'    => [ $im_width * $x/$NO_OF_COLUMNS, 3+$BOX_HEIGHT,
+                        $im_width * $x/$NO_OF_COLUMNS + 4, 3,
+                        $im_width * $x/$NO_OF_COLUMNS + 8, 3+$BOX_HEIGHT  ],
+            	    'colour'    => $colour,
+                    'absolutey' => 1,
+                    'absolutex' => 1,
+                }));
+            }
             $self->push(new Bio::EnsEMBL::Glyph::Text({
                 'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
                 'y'         => $y * $BOX_HEIGHT * 2 + 4,
