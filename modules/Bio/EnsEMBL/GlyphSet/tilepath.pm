@@ -56,12 +56,13 @@ sub _init {
 
 	    my $id    	= $clone->name();		
 	    my $start	= $clone->start();
-	    $start      = 0 if ($start < 0);
-	    my $end	= $clone->end();
-	    $end        = $length if ($end > $length);
+	    my $end	    = $clone->end();
+        my $cl_len  = $end-$start+1;
 
 		($col,$lab) = $i ? ($col1,$lab1) : ($col2,$lab2);
-
+        my $MAX_WIDTH = 300000;
+        my($box_start,$box_end);
+        
         my $fish_clone = undef;
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 			'y'            => 0,
@@ -69,17 +70,72 @@ sub _init {
 			'absolutey'    => 1
 		});
 		
-	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-    		'x'         => $start,
-	    	'y'         => $ystart+2,
-    		'width'     => $end - $start,
-    		'height'    => 7,
-    		'colour'    => $col,
-    		'absolutey' => 1,
-	    });
-	    $Composite->push($glyph);
+	    if($cl_len > $MAX_WIDTH) {
+            $box_start = $start;
+            $box_end   = $box_start + $MAX_WIDTH/2;
+            if($box_end=>1 && $box_start<=$length) { ## We can draw this
+                $box_start = 1       if $box_start < 1;
+                $box_end   = $length if $box_end   >  $length;
+        	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+            		'x'         => $box_start,
+        	    	'y'         => $ystart+2,
+            		'width'     => $box_end-$box_start+1,
+            		'height'    => 7,
+            		'colour'    => $col,
+            		'absolutey' => 1,
+        	    });
+        	    $Composite->push($glyph);
+            }
+            $box_end   = $end;
+            $box_start = $box_end - $MAX_WIDTH/2;
+            if($box_end=>1 && $box_start<=$length) { ## We can draw this
+                $box_start = 1       if $box_start < 1;
+                $box_end   = $length if $box_end   >  $length;
+        	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+            		'x'         => $box_start,
+        	    	'y'         => $ystart+2,
+            		'width'     => $box_end-$box_start+1,
+            		'height'    => 7,
+            		'colour'    => $col,
+            		'absolutey' => 1,
+        	    });
+        	    $Composite->push($glyph);
+            }
+            $box_start = $start + $MAX_WIDTH/2;
+            $box_end   = $end  - $MAX_WIDTH/2;
+            if($box_end=>1 && $box_start<=$length) { ## We can draw this
+                $box_start = 1       if $box_start < 1;
+                $box_end   = $length if $box_end   >  $length;
+                foreach (2,9) {
+            	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+                		'x'         => $box_start,
+            	    	'y'         => $ystart+$_,
+                		'width'     => $box_end-$box_start+1,
+                		'height'    => 0,
+                		'colour'    => $col,
+                		'absolutey' => 1,
+            	    });
+                    $Composite->push($glyph);
+                }
+            }
+    	    $start      = 0 if ($start < 0);
+	        $end        = $length if ($end > $length);
+        } else {
+    	    $start      = 0 if ($start < 0);
+	        $end        = $length if ($end > $length);
+    	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+        		'x'         => $start,
+    	    	'y'         => $ystart+2,
+        		'width'     => $end - $start,
+        		'height'    => 7,
+        		'colour'    => $col,
+        		'absolutey' => 1,
+    	    });
+    	    $Composite->push($glyph);
+        }
 
         if($show_navigation) {
+            
     		$Composite->{'zmenu'} = {
 				'caption' => $id || $clone->embl_acc,
 				'02:EMBL id: '.$clone->embl_acc => '',
