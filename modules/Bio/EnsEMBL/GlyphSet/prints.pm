@@ -10,61 +10,75 @@ use Bio::EnsEMBL::Glyph::Composite;
 
 sub _init {
     my ($this, $protein, $Config) = @_;
+    my %hash = undef;
+    my $caption = "prints";
 
     my $y          = 0;
-    my $h          = 8;
+    my $h          = 4;
     my $highlights = $this->highlights();
-
-    my @prints;
-
+    
+    
     foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->hdbname =~ /^PR\w+/) {
-	    push (@prints,$feat);
+	if ($feat->feature2->seqname =~ /^PR\w+/) {
+	    #print STDERR "FEAT: ".$feat->feature2->seqname, "\n";
+	    push(@{$hash{$feat->feature2->seqname}},$feat);
+	    
+	   
+	    
 	}
     }
+    
+    foreach my $key (keys %hash) {
 	
-    if (@prints) {
-#Not really sure about it...
+	print STDERR "VERSION10 PRINTS, prints: $key\n";
+
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'id'    => $feat->hdbname(),
+	    'id'    => $key,
 	    'zmenu' => {
-		'caption'  => $feat->hdbname(),
-		'01:kung'     => 'opt1',
-		'02:foo'      => 'opt2',
-		'03:fighting' => 'opt3'
-			},
-			});
+		'caption'  => $key
+		},
+		});
+	my $colour = $Config->get($Config->script(), 'prints','col');
+	
 
 #To be changed
-	my $colour = $Config->get('transview','transcript','col');
-	$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 	
-	    foreach my $pr (@prints) {
-		my $x = $pr->feature1->start();
-		my $w = $pr->feature1->end - $x;
-		
-		my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		    'x'        => $x,
-		    'y'        => $y,
-		    'width'    => $w,
-		    'height'   => $h,
-		    'id'       => $exon->id(),
-		    'colour'   => $colour,
-		    'zmenu' => {
-			'caption' => $pr->seqname->id(),
-			},
-		});
-		    
-		
-		$Composite->push($rect) if(defined $rect);
-		
-	    }
-	   
-	    push @{$this->{'glyphs'}}, $Composite;
+	#colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
+	
+	my @row = @{$hash{$key}};
+
+	foreach my $pr (@row) {
+	    my $x = $pr->feature1->start();
+	    my $w = $pr->feature1->end() - $x;
+	    my $id = $pr->feature2->seqname();
+	    
+	    print STDERR "$x\t$w\t$id\thauteur: $h\n";
+
+	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+		'x'        => $x,
+		'y'        => $y,
+		'width'    => $w,
+		'height'   => $h,
+		'id'       => $id,
+		'colour'   => $colour,
+		'zmenu' => {
+		    'caption' => $id,
+		},
+	    });
+	    
+	    
+	    $Composite->push($rect) if(defined $rect);
+	    
 	}
 	
+#	push @{$this->{'glyphs'}}, $Composite;
+	$this->push($Composite);
+
+	print STDERR "HT: $h\n";
+	$y = $y + 8;
+	print STDERR "HTPLUS: $h\n";
     }
+    
 }
+
 1;
-
-

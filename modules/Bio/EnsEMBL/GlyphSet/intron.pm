@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::protein;
+package Bio::EnsEMBL::GlyphSet::intron;
 use strict;
 use vars qw(@ISA);
 use lib "..";

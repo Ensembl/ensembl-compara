@@ -21,28 +21,51 @@ sub _init {
     my @bitmap      = undef;
     my ($im_width, $im_height) = $Config->dimensions();
     my $bitmap_length = $VirtualContig->length();
-
-	my @vg = $VirtualContig->get_all_VirtualGenes();
-
-    foreach my $vg (@vg) {
-		my $vgid = $vg->gene->id();
-		my $vgstart = $vg->start();
-		my $vgend = $vg->end();
-		my $gstrand = $vg->strand();
-		my $colour;
-		if ($vg->gene->is_known()){
-    		$colour = $Config->get($Config->script(),'gene','known');
-		} else {
-    		$colour = $Config->get($Config->script(),'gene','unknown');
+    my $type = $Config->get($Config->script(),'gene','src');
+	my @allgenes = ();
+	
+    foreach my $vg ($VirtualContig->get_all_VirtualGenes()){
+		push (@allgenes, $vg->gene());
+			#print STDERR $vg, " ++\n";
+	}
+	if ($type eq 'all'){
+	
+    	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+			$vg->{'_is_external'} = 1;
+			push (@allgenes, $vg);
+			#print STDERR $vg, " --\n";
 		}
-		my $rect = new Bio::EnsEMBL::Glyph::Rect({
-			'x'        => $vgstart,
-			'y'        => $y,
-			'width'    => $vgend - $vgstart,
-			'height'   => $h,
-			'colour'   => $colour,
-			'absolutey' => 1,
-		});
+    	#push (@allgenes, $VirtualContig->get_all_ExternalGenes());
+		
+	}
+	my $rect;
+	my $colour;
+    foreach my $vg (@allgenes) {
+		my $vgid = $vg->id();
+    	foreach my $trans ($vg->each_Transcript()) {
+
+			my $start = $trans->start_exon()->start();
+			my $end = $trans->end_exon()->end();
+			my $strand = $trans->start_exon()->strand();
+			my $id = $vg->id();
+			if ($vg->is_known()){
+    			$colour = $Config->get($Config->script(),'gene','known');
+			} else {
+    			$colour = $Config->get($Config->script(),'gene','unknown');
+			}
+        	if ($vg->{'_is_external'}){
+            	$colour = $Config->get($Config->script(),'gene','ext');
+        	}
+
+			$rect = new Bio::EnsEMBL::Glyph::Rect({
+				'x'        => $start,
+				'y'        => $y,
+				'width'    => $end - $start,
+				'height'   => $h,
+				'colour'   => $colour,
+				'absolutey' => 1,
+			});
+    	}
 
     	#bump-nology!
     	###################################################

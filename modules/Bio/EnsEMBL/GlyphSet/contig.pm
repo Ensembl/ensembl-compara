@@ -11,6 +11,12 @@ use ColourMap;
 
 sub _init {
     my ($self, $VirtualContig, $Config) = @_;
+
+    #########
+    # only draw contigs once - on one strand
+    #
+    return unless ($self->strand() == 1);
+
 	my $col   = undef;
 	my $cmap  = new ColourMap;
 	my $col1  = $cmap->id_by_name('contigblue1');

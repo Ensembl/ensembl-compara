@@ -10,60 +10,75 @@ use Bio::EnsEMBL::Glyph::Composite;
 
 sub _init {
     my ($this, $protein, $Config) = @_;
+    my %hash;
+    my $caption = "pfam";
 
     my $y          = 0;
-    my $h          = 8;
+    my $h          = 4;
     my $highlights = $this->highlights();
+    
+    print STDERR "HERE PFAM 1\n";
 
-    my @pfam;
-
-    foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->hdbname =~ /^PF\w+/) {
-	    push (@pfam,$feat);
-	}
-    }
-	
-    if (@pfam) {
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'id'    => $feat->hdbname(),
-	    'zmenu' => {
-		'caption'  => $feat->hdbname(),
-		'01:kung'     => 'opt1',
-		'02:foo'      => 'opt2',
-		'03:fighting' => 'opt3'
-			},
-			});
-
-#To be changed
-	my $colour = $Config->get('transview','transcript','col');
-	$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
-	
-	    foreach my $pf (@pfam) {
-		my $x = $pf->feature1->start();
-		my $w = $pf->feature1->end - $x;
-		
-		my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		    'x'        => $x,
-		    'y'        => $y,
-		    'width'    => $w,
-		    'height'   => $h,
-		    'id'       => $exon->id(),
-		    'colour'   => $colour,
-		    'zmenu' => {
-			'caption' => $pf->seqname->id(),
-			},
-		});
-		    
-		
-		$Composite->push($rect) if(defined $rect);
-		
-	    }
-	    push @{$this->{'glyphs'}}, $Composite;
+   foreach my $feat ($protein->each_Protein_feature()) {
+       print STDERR "PFAMTESTFEAT: ".$feat->feature2->seqname, "\n";
+       
+       if ($feat->feature2->seqname =~ /^PF\w+/) {
+	    print STDERR "FEAT: ".$feat->feature2->seqname, "\n";
+	    push(@{$hash{$feat->feature2->seqname}},$feat);
+	    
+	   
 	    
 	}
-	
     }
+    
+    foreach my $key (keys %hash) {
+	
+	print STDERR "VERSION9, prints: $key\n";
+
+	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+	    'id'    => $key,
+	    'zmenu' => {
+		'caption'  => $key
+		},
+		});
+	   
+	my $colour = $Config->get($Config->script(), 'pfam','col');
+#To be changed
+	
+	#$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
+
+	my @row = @{$hash{$key}};
+	
+
+	foreach my $pf (@row) {
+	    my $x = $pf->feature1->start();
+	    my $w = $pf->feature1->end - $x;
+	    my $id = $pf->feature2->seqname();
+	    
+	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+		'x'        => $x,
+		'y'        => $y,
+		'width'    => $w,
+		'height'   => $h,
+		'id'       => $id,
+		'colour'   => $colour,
+		'zmenu' => {
+		    'caption' => $caption,
+		},
+	    });
+	    
+	    
+	    $Composite->push($rect) if(defined $rect);
+	    
+	}
+
+#	push @{$this->{'glyphs'}}, $Composite;
+	$this->push($Composite);
+	$y = $y + 8;
+    }
+    
 }
+
 1;
 
 

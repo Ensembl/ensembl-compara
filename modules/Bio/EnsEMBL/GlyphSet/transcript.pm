@@ -17,24 +17,44 @@ sub _init {
     my $h          = 8;
     my $highlights = $this->highlights();
     my @bitmap     = undef;
+    my ($im_width, $im_height) = $Config->dimensions();
+    my $bitmap_length = $VirtualContig->length();
+    my $colour = $Config->get($Config->script(),'transcript','unknown');
+    my $type = $Config->get($Config->script(),'transcript','src');
+	my @allgenes = ();
+	
+    foreach my $vg ($VirtualContig->get_all_VirtualGenes()){
+		push (@allgenes, $vg->gene());
+			#print STDERR $vg, " ++\n";
+	}
+	if ($type eq 'all'){
+	
+    	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+			$vg->{'_is_external'} = 1;
+			push (@allgenes, $vg);
+			#print STDERR $vg, " --\n";
+		}
+    	#push (@allgenes, $VirtualContig->get_all_ExternalGenes());
+		
+	}
 
-    my @vg = $VirtualContig->get_all_VirtualGenes();
-    GENE: for my $vg (@vg) {
-	my $vgid = $vg->gene->id();
+    GENE: for my $eg (@allgenes) {
+		my $vgid = $eg->id();
+    	my $hi_colour = $Config->get($Config->script(),'transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 
-	TRANSCRIPT: for my $transcript ($vg->gene->each_Transcript()) {
+		TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
 
-	    #########
-	    # test transcript strand
-	    #
-	    my $tstrand = $transcript->start_exon()->strand();
-	    next TRANSCRIPT if($tstrand != $this->strand());
+	    	#########
+	    	# test transcript strand
+	    	#
+	    	my $tstrand = $transcript->start_exon()->strand();
+	    	next TRANSCRIPT if($tstrand != $this->strand());
 
-	    #########
-	    # set colour for transcripts and test if we're highlighted or not
-	    # 
-	    my @dblinks = ();
-	    my $id = undef;
+	    	#########
+	    	# set colour for transcripts and test if we're highlighted or not
+	    	# 
+	    	my @dblinks = ();
+	    	my $id = undef;
             my $gene_name;
             my ($hugo, $swisslink, $sptrembllink);
             eval {
@@ -62,115 +82,104 @@ sub _init {
                 }
             };
 
-	    my $colour;
+	    	my $colour;
 
             if (@dblinks){
-                $colour = $Config->get($Config->script(),'gene','known');
+                $colour = $Config->get($Config->script(),'transcript','known');
             } else {
-                $colour = $Config->get($Config->script(),'gene','unknown');
+                $colour = $Config->get($Config->script(),'transcript','unknown');
             }
+            if ($eg->{'_is_external'}){
+                $colour = $Config->get($Config->script(),'transcript','ext');
+            }
+	    	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+			'id'     => $transcript->id(),
+			'colour' => $hi_colour,
+			'zmenu'  => {
+		    	'caption'  => $transcript->id(),
+		    	'01:kung'     => 'opt1',
+		    	'02:foo'      => 'opt2',
+		    	'03:fighting' => 'opt3'
+			},
+	    	});
 
-            my $hi_colour;
-	    $hi_colour = $Config->get($Config->script(),'gene','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
+	    	my $previous_endx = undef;
+	    	my @exons = $transcript->each_Exon();
 
-	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'id'     => $transcript->id(),
-		'colour' => $hi_colour,
-		'zmenu'  => {
-		    'caption'  => $transcript->id(),
-		    '01:kung'     => 'opt1',
-		    '02:foo'      => 'opt2',
-		    '03:fighting' => 'opt3'
-		},
-	    });
+	    	#########
+	    	# it appears as though we've still got to do a sort here because there are still
+	    	# some wacky transcripts around on the reverse strand but with their exons out of order.
+	    	# (see chr9 bps 5110000 to 5130000 for example)
+	    	#
+	    	@exons = sort { $a->start() <=> $b->start() } @exons;
 
-	    my $previous_endx = undef;
+	    	#########
+	    	# as soon as the wacky transcript problem (above) is fixed, 
+	    	# just reverse @exons for the reverse strand, which is faster than a re-sort
+	    	#
+	#	    @exons = reverse @exons if($tstrand == -1);
 
-	    my @exons = $transcript->each_Exon();
+	    	EXON: for my $exon (@exons) {
 
-	    #########
-	    # it appears as though we've still got to do a sort here because there are still
-	    # some wacky transcripts around on the reverse strand but with their exons out of order.
-	    # (see chr9 bps 5110000 to 5130000 for example)
-	    #
-	    @exons = sort { $a->start() <=> $b->start() } @exons;
+			next if ($exon->seqname() ne $VirtualContig->id()); # clip off virtual gene exons not on this VC
 
-	    #########
-	    # as soon as the wacky transcript problem (above) is fixed, 
-	    # just reverse @exons for the reverse strand, which is faster than a re-sort
-	    #
-#	    @exons = reverse @exons if($tstrand == -1);
+			my $x = $exon->start();
+			my $w = $exon->end() - $x;
+			next if($x < 0);
 
-	    EXON: for my $exon (@exons) {
+			my $rect = new Bio::EnsEMBL::Glyph::Rect({
+		    	'x'        => $x,
+		    	'y'        => $y,
+		    	'width'    => $w,
+		    	'height'   => $h,
+		    	'colour'   => $colour,
+		    	'absolutey' => 1,
+			});
 
-		next if ($exon->seqname() ne $VirtualContig->id()); # clip off virtual gene exons not on this VC
+			my $intron = new Bio::EnsEMBL::Glyph::Intron({
+		    	'x'        => $previous_endx,
+		    	'y'        => $y,
+		    	'width'    => ($x - $previous_endx),
+		    	'height'   => $h,
+		    	'id'       => $exon->id(),
+		    	'colour'   => $colour,
+		    	'absolutey' => 1,
+		    	'strand'    => $tstrand,
+			}) if(defined $previous_endx);
 
-		my $x = $exon->start();
-		my $w = $exon->end() - $x;
-		next if($x < 0);
+			$Composite->push($rect);
+			$Composite->push($intron);
 
-		my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		    'x'        => $x,
-		    'y'        => $y,
-		    'width'    => $w,
-		    'height'   => $h,
-		    'colour'   => $colour,
-		    'absolutey' => 1,
-		});
+			$previous_endx = $x+$w;
+	    	}
 
-		my $intron = new Bio::EnsEMBL::Glyph::Intron({
-		    'x'        => $previous_endx,
-		    'y'        => $y,
-		    'width'    => ($x - $previous_endx),
-		    'height'   => $h,
-		    'id'       => $exon->id(),
-		    'colour'   => $colour,
-		    'absolutey' => 1,
-		    'strand'    => $tstrand,
-		}) if(defined $previous_endx);
+	    	#########
+	    	# bump it baby, yeah!
+	    	# bump-nology!
+	    	#
+	    	my $bump_start = $Composite->x();
+	    	$bump_start = 0 if ($bump_start < 0);
 
-		$Composite->push($rect);
-		$Composite->push($intron);
+	    	my $bump_end = $bump_start + ($Composite->width());
+	    	next if $bump_end > $bitmap_length;
+	    	my $row = &Bump::bump_row(      
+				    	  $bump_start,
+				    	  $bump_end,
+				    	  $bitmap_length,
+				    	  \@bitmap
+	    	);
 
-		$previous_endx = $x+$w;
-	    }
+	    	#########
+	    	# skip this row if it's bumped off the bottom
+	    	#
+	    	next if $row > $Config->get($Config->script(), 'transcript', 'dep');
 
-	    #########
-	    # bump it baby, yeah!
-	    # bump-nology!
-	    #
-	    my ($im_width, $im_height) = $Config->dimensions();
-	    my $bitmap_length = $VirtualContig->length();
-
-	    my $bump_start = $Composite->x();
-	    $bump_start = 0 if ($bump_start < 0);
-
-	    my $bump_end = $bump_start + ($Composite->width());
-	    next if $bump_end > $bitmap_length;
-	    my $row = &Bump::bump_row(      
-				      $bump_start,
-				      $bump_end,
-				      $bitmap_length,
-				      \@bitmap
-	    );
-
-#	    if ($id !~ /un/){
-#		print STDERR "Transcript $id on row: $row (strand: $tstrand)\n";
-#	    } else {
-#		print STDERR "Transcript ",$Composite->id(), " on row: $row (strand: $tstrand)\n";
-#	    }
-
-	    #########
-	    # skip this row if it's bumped off the bottom
-	    #
-	    next if $row > $Config->get($Config->script(), 'transcript', 'dep');
-
-	    #########
-	    # shift the composite container by however much we're bumped
-	    #
-	    $Composite->y($Composite->y() + (1.5 * $row * $h * -$tstrand));
-	    $this->push($Composite);
-	}
+	    	#########
+	    	# shift the composite container by however much we're bumped
+	    	#
+	    	$Composite->y($Composite->y() + (1.5 * $row * $h * -$tstrand));
+	    	$this->push($Composite);
+		}
     }
 }
 
