@@ -67,7 +67,12 @@ swissprot       1431_SCHMA      14-3-3 protein homolog 1.       taxon_id=6183;ta
 5- get the Ensembl peptide predictions -- This section has been replaced by a peptide and description dump from the member table which will have been filled already for the homology pipeline.
 The script to use is ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl (don't use -noX or nosplit, use the default setting for these)
 
-~/src/ensembl_main/ensembl-compara/scripts/comparaDumpAllPeptides.pl -conf your-compara-hive.conf -fasta ensembl.pep
+~/src/ensembl_main/ensembl-compara/scripts/comparaDumpAllPeptides.pl -conf your-compara-hive.conf -fasta ensembl.pep > ensembl.pep.err 2>&1 &
+
+or if you don;t have the hive conf file
+
+~/src/ensembl_main/ensembl-compara/scripts/comparaDumpAllPeptides.pl --dbhost ia64e --dbport 3306 --dbuser ensro --dbname jessica_ensembl_compara_24_1 --fasta ensembl.pep > ensembl.pep.err 2>&1 &
+
 
 If so go to point 6 
 
@@ -182,7 +187,25 @@ ls|wc -l
  It is better to place the output files in a different directory to reduce the burden on the filesystem.
  (The fewer files per directory the better).
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_23_1/pre_exec" -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
+
+The /acari/work7a/abel/family_23_1/pre_exec has to be updated and look like
+
+#!/usr/local/bin/bash
+
+if [ -e /data/blastdb/Ensembl/family/metazoa_23_1.pep ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1.index ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.index ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.psq ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.phr ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.pin ]; then
+ exit 0
+else
+ exit 1
+fi
+
+and is there to make sure the execution host has the right files to start the blastp.
 
  In this kind of construction the full path of each file/script is needed.
  Check that the BLASTMAT points to /usr/local/ensembl/data/blastmat
@@ -205,7 +228,7 @@ ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was exec
  Then run the whole lot of jobs
 
 cd ../blast_in
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -JFamilyBlastp"[2-7286]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_23_1/pre_exec" -JFamilyBlastp"[2-7286]" -o ../blast_out/PeptideSet.%I.out
 
  Rerun the failed jobs in ../blast_out.
 
@@ -220,22 +243,6 @@ awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;n
 grep Exited job_status |awk '{print $1}'|while read i;do del blast_out/$i;done
 
 cat job_status.ids.collapse|while read i;do echo "echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_23_1_nr.index -tab /acari/work7a/abel/family_23_1/srs/metazoa_23_1_nr.tab -dir /acari/work7a/abel/family_23_1/blast_raw/' | bsub -q normal -E \"/acari/work7a/abel/family_23_1/pre_exec\" -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
-
-The /acari/work7a/abel/family_23_1/pre_exec has to be updated and look like
-
-#!/usr/local/bin/bash
-
-if [ -e /data/blastdb/Ensembl/family/metazoa_23_1.pep ] &&
-   [ -e /data/blastdb/Ensembl/family/metazoa_23_1.index ] &&
-   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep ] &&
-   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.index ] &&
-   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.psq ] &&
-   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.phr ] &&
-   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.pin ]; then
- exit 0
-else
- exit 1
-fi
 
 Then move to blast_in and resubmit the failed jobs
 
@@ -290,7 +297,7 @@ rm family_20.raw
 
 This step uses aristotle which has 187Gb of memory :))) and 32 CPUs. As mcl can be multi-threaded, it is very useful.
 
-bsub -C0 -R 'select[ncpus>=16 && mem>5000] rusage[mem=5000]' -q aristotle -n 16 -f "family_20_1.sym > /tmp/family_20_1.sym" -f "family_20_1.mcl < /tmp/family_20_1.mcl" -o mcl.out /nfs/acari/abel/bin/mcl /tmp/family_20_1.sym -I 3.0 -t 16 -P 10000 -S 1000 -R 1200 -pct 90 -do log -o /tmp/family_20_1.mcl
+bsub -C0 -R 'select[ncpus>=16 && mem>5000] rusage[mem=5000]' -q aristotle -n 16 -f "family_20_1.sym > /tmp/family_20_1.sym" -f "family_20_1.mcl < /tmp/family_20_1.mcl" -o mcl.out /nfs/acari/abel/bin/mcl /tmp/family_20_1.sym -I 2.0 -t 16 -P 10000 -S 1000 -R 1200 -pct 90 -do log -o /tmp/family_20_1.mcl
 
 NB: when ever you have finished running mcl (maybe with different parameters), don't forget 
 to delete /tmp/family_20_1.* from aristotle /tmp (a shell script having the flavour of 
@@ -344,6 +351,8 @@ cd 27152
 Submit jobs for family_id from 20001 to 27152
 
 echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host ecs2b -port 3306 -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx -family_id ${LSB_JOBINDEX} -fasta_file /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fasta_index /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -store' | bsub -q small -JFamilyClustalw"[20001-27152]" -o %I.out
+
+The same kind of script but running MUSCLE also exists, ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl
 
 NB: For very small families or singletons, the -q small is the right queue to use, as jobs will be extremely quick. For largest families, let's say from family_id 1 to 500 however (where number of members are often > 150), jobs can be longer, and so the -q normal should be used instead of -q small
 
@@ -423,7 +432,13 @@ awk '{for (i=2;i<=NF;i++) print $i}' metazoa_20_1.RedundantIds|fastafetch /data/
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     This part really sucks and need a profound rethinking to get the description more clean and consistant.
-       
+
+Insert redundant protein description in the family_20_1.description.
+
+       ~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantInDescription.pl -host ia64e -port 3306 -dbname ensembl_compara_20_1  ../srs/metazoa_20_1.RedundantIds ../srs/metazoa_20_1.desc.gz  > family_20_1.description.Red 2> family_20_1.description.Red.err &
+
+cat family_20_1.description.Red >> family_20_1.description
+
        ensembl-compara/scritps/family/consensifier.pl 
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        consensifier.pl -d SWISSPROT family_20_1.description > family_20_1.description.SWISSPROT-consensus
@@ -494,7 +509,7 @@ mysql> select distinct(taxon_id) from family_members where external_db_id>=3;
 | taxon_id |
 +----------+
 |     7165 |
-|     6238 |
+|     6238 |g
 |     6239 |
 |     7227 |
 |    10090 |
