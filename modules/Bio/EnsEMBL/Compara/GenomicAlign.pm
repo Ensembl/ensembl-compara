@@ -43,7 +43,7 @@ SET VALUES
   $genomic_align->dnafrag_strand(-1);
   $genomic_align->aligned_sequence("TTGCAGGTAGGCCATCTGCAAGC----TGAGGAGCAAGGACTCCAGTCGGAGTC");
   $genomic_align->original_sequence("TTGCAGGTAGGCCATCTGCAAGCTGAGGAGCAAGGACTCCAGTCGGAGTC");
-  $genomic_align->cigar_line("23M4G27M");
+  $genomic_align->cigar_line("23M4D27M");
   $genomic_align->level_id(1);
 
 GET VALUES
@@ -799,7 +799,7 @@ sub aligned_sequence {
  
   Arg [1]    : string $cigar_line
   Example    : $cigar_line = $genomic_align->cigar_line;
-  Example    : $genomic_align->cigar_line("35M2G233M7G23MG100M");
+  Example    : $genomic_align->cigar_line("35M2D233M7D23MD100M");
   Description: get/set for attribute cigar_line.
                If no argument is given, the cigar line has not been
                defined yet but the aligned sequence was, it calculates
@@ -1079,7 +1079,7 @@ sub _get_cigar_line_from_aligned_sequence {
   foreach my $piece (@pieces) {
     my $mode;
     if ($piece =~ /\-/) {
-      $mode = "G"; # G for gaps
+      $mode = "D"; # D for gaps (deletions)
     } else {
       $mode = "M"; # M for matches/mismatches
     }
@@ -1099,7 +1099,7 @@ sub _get_cigar_line_from_aligned_sequence {
   Arg [1]    : string $original_sequence
   Arg [1]    : string $cigar_line
   Example    : $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
-                   "CGTAACTGATGTTA", "3MG8M2G3M")
+                   "CGTAACTGATGTTA", "3MD8M2D3M")
   Description: get gapped sequence from original one and cigar line
   Returntype : string $aligned_sequence
   Exceptions : thrown if cigar_line does not match sequence length
@@ -1115,7 +1115,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 
   my $seq_pos = 0;
   
-  my @cig = ( $cigar_line =~ /(\d*[GM])/g );
+  my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1124,7 +1124,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
     if( $cigType eq "M" ) {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
       $seq_pos += $cigCount;
-    } elsif( $cigType eq "G" ) {
+    } elsif( $cigType eq "G" || $cigType eq "D") {
       $aligned_sequence .=  "-" x $cigCount;
     }
   }
