@@ -47,9 +47,6 @@ sub _init {
 	
 	my $desc = $row[0]->idesc();
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'zmenu' => {
-		'caption'  => 'Transmembrane domain',
-	    },
 	});
 	   
 	my $colour = $Config->get($Config->script(), 'transmembrane','col');

@@ -42,9 +42,6 @@ sub _init {
 		my $desc = $row[0]->idesc();
 
 		my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    	'zmenu' => {
-			'caption'  => $caption,
-	    	},
 		});
 
 		my $colour = $Config->get($Config->script(), 'coils','col');

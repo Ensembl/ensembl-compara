@@ -9,28 +9,32 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
+sub init_label {
+    my ($this) = @_;
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'Scale (aa)',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $this->label($label);
+}
+
 sub _init {
     my ($self) = @_;
-    my $Config        = $self->{'config'};
-
-    #return unless ($self->strand() == -1);
+	
     my $h          = 0;
-
     my $fontname = "Tiny";
-    my $fontheight = $Config->texthelper->height($fontname),
-    my $fontwidth_bp = $Config->texthelper->width($fontname),
-    my ($fontwidth,$dontcare) = $Config->texthelper->px2bp($fontname),
-    my $cmap  = new ColourMap;
-    my $black = $cmap->id_by_name('black');
+
+    my $Config        			= $self->{'config'};
+    my $fontheight 				= $Config->texthelper->height($fontname),
+    my $fontwidth_bp 			= $Config->texthelper->width($fontname),
+    my ($fontwidth,$dontcare) 	= $Config->texthelper->px2bp($fontname),
 	
     my $feature_colour 	= $Config->get($Config->script(),'prot_scalebar','col');
-    my $subdivs = $Config->get($Config->script(),'prot_scalebar','subdivs');
-    my $abbrev = $Config->get($Config->script(),'prot_scalebar','abbrev');
-
     my $len = $self->{'container'}->length();
 
-    my $divs = 0;
-    $divs = set_scale_division($len);
+    my $divs = set_scale_division($len);
     
     my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 	'x'         => 0,
@@ -44,6 +48,7 @@ sub _init {
 
 	my $last_end = 0;
     for (my $i=0;$i<int($len/$divs); $i++){
+	
 		my $tick = new Bio::EnsEMBL::Glyph::Rect({
 	    	'x'         => $i * $divs,
 	    	'y'         => 4,
@@ -54,34 +59,9 @@ sub _init {
 		});
 		$self->push($tick);
 
-    }
-	
-    if ($subdivs && $len > 1000){
-		# label each division
-		for (my $i=0;$i<int($len/$divs); $i++){
-	    	my $text = int($i * $divs + $global_start);		
-	    	if ($abbrev){
-				$text = bp_to_nearest_unit_by_divs(int($i * $divs + $global_start),$divs);		
-	    	}
-	    	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-			'x'      	=> $i * $divs,
-			'y'      	=> 8,
-			'height'	=> $fontheight,
-			'font'   	=> $fontname,
-			'colour' 	=> $feature_colour,
-			'text'   	=> $text,
-			'absolutey' => 1,
-	    	});
-	    	$self->push($tglyph);
-		}
-    } else {
-		# label first and last
-		my $text = $global_start;
-		if ($abbrev && $len >1000){
-	    	$text = bp_to_nearest_unit($global_start,2);
-		}
+		my $text = $i * $divs;
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	    	'x'      	=> 0,
+	    	'x'      	=> $i * $divs,
 	    	'y'      	=> 8,
 	    	'height'	=> $fontheight,
 	    	'font'   	=> $fontname,
@@ -89,32 +69,42 @@ sub _init {
 	    	'text'   	=> $text,
 	    	'absolutey' => 1,
 		});
-	    $self->push($tglyph);
-
-		my $im_width = $Config->image_width();
-		$text = $global_end;
-		if ($abbrev && $len >1000){
-	    	$text = bp_to_nearest_unit($global_end,2);
-		}
-
-		my $endglyph = new Bio::EnsEMBL::Glyph::Text({
-	    	'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
-	    	'y'      	=> 8,
-	    	'height'	=> $fontheight,
-	    	'font'   	=> $fontname,
-	    	'colour' 	=> $feature_colour,
-	    	'text'   	=> $text,
-	    	'absolutex'  => 1,
-	    	'absolutey' => 1,
-		});
-	    $self->push($endglyph);
-
-    }
+		$self->push($tglyph);
+   }
 	
-	# last tick
+	# label first tick
+	my $text = "0";
+	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	    'x'      	=> 0,
+	    'y'      	=> 8,
+	    'height'	=> $fontheight,
+	    'font'   	=> $fontname,
+	    'colour' 	=> $feature_colour,
+	    'text'   	=> $text,
+	    'absolutey' => 1,
+	});
+	$self->push($tglyph);
+
+	my $im_width = $Config->image_width();
+	$text = $len;
+
+	# label last tick
+	my $endglyph = new Bio::EnsEMBL::Glyph::Text({
+	    'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
+	    'y'      	=> 8,
+	    'height'	=> $fontheight,
+	    'font'   	=> $fontname,
+	    'colour' 	=> $feature_colour,
+	    'text'   	=> $text,
+	    'absolutex'  => 1,
+	    'absolutey' => 1,
+	});
+	$self->push($endglyph);
+
+	# add last tick
 	my $im_width = $Config->image_width();
 	my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'          => $im_width - 1,
+	    'x'          => $im_width,
 	    'y'          => 4,
 	    'width'      => 0,
 	    'height'     => 2,
@@ -125,7 +115,7 @@ sub _init {
 	$self->push($tick);
 }
 
-
+##############################################################################
 sub set_scale_division {
     my ($full_length) = @_;
 
@@ -149,6 +139,7 @@ sub set_scale_division {
 
 
 
+##############################################################################
 sub bp_to_nearest_unit_by_divs {
     my ($bp,$divs) = @_;
 
@@ -169,6 +160,7 @@ sub bp_to_nearest_unit_by_divs {
 
 
 
+##############################################################################
 sub bp_to_nearest_unit {
     my ($bp,$dp) = @_;
     $dp = 1 unless defined $dp;

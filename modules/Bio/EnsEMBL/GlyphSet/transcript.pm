@@ -49,12 +49,12 @@ sub _init {
     @allgenes = $VirtualContig->get_all_Genes_exononly();
 	
 
-    #if ($type eq 'all'){
-	#foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
-	#    $vg->{'_is_external'} = 1;
-	#    push (@allgenes, $vg);
-	#}
-    #}
+    if ($type eq 'all'){
+	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+	    $vg->{'_is_external'} = 1;
+	    push (@allgenes, $vg);
+	}
+    }
 
     GENE: for my $eg (@allgenes) {
     	my $vgid = $eg->id();
@@ -114,18 +114,28 @@ sub _init {
 
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 		
-		if ($tid =~ /(.*)\.trans\.(\d+)/o){
+		if ($tid !~ /ENST/o){
 			# if we have an EMBL external transcript we need different links...
-        	$Composite->{'zmenu'}  = {
-            	'caption'					=> "EMBL: $1.$2",
-            	'More information'          => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$1",
-	    	};
+			if($tid !~ /dJ/o){
+        		$Composite->{'zmenu'}  = {
+            		'caption'	    	=> "EMBL: $tid",
+            		'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
+	    		};
+			} else {
+				my $URL = ExtURL->new();
+				my $url = $URL->get_url('EMBLGENE', $tid);
+				
+        		$Composite->{'zmenu'}  = {
+            		'caption'	    => "EMBL: $tid",
+					"$tid"			=> $url
+	    		};
+			}
 		} else {
 			# we have a normal Ensembl transcript...
         	$Composite->{'zmenu'}  = {
             	'caption'					=> $id,
-            	'Transcript information'          => "/perl/geneview?gene=$vgid",
-            	'Protein information'          => "/perl/protview?peptide=$pid",
+            	'Transcript information'    => "/perl/geneview?gene=$vgid",
+            	'Protein information'       => "/perl/protview?peptide=$pid",
             	'Protein sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
             	'Supporting evidence'       => "/perl/transview?gene=$tid",
             	'cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",

@@ -41,10 +41,10 @@ sub _init {
 
 #    &eprof_start("gene-externalgene_start-get");
 #    if ($type eq 'all'){
-#	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
-#	    $vg->{'_is_external'} = 1;
-#	    push (@allgenes, $vg);
-#	}
+	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+	    $vg->{'_is_external'} = 1;
+	    push (@allgenes, $vg);
+	}
 #    }
 #    &eprof_end("gene-externalgene_start-get");
 
@@ -80,21 +80,22 @@ sub _init {
 	    $end      = $vg->end();
 	} else {
 	    # for the moment we are ignoring external genes...
-	    next;
+	    #next;
 	    # EXTERNAL ANNOYING GENES
 	    $colour   = $ext_col;
-	    my @exons;
+	    my @coords;
 	    foreach my $trans ($vg->each_Transcript){
-		push @exons,(
-			     $trans->start_exon->start,
-			     $trans->start_exon->end,
-			     $trans->end_exon->start,
-			     $trans->end_exon->end,
-			     );
-	    } 		
-	    @exons = sort {$a <=> $b} @exons;
-	    $start = $exons[0];
-	    $end   = $exons[-1];   
+            foreach my $exon ( $trans->each_Exon ) {
+			    if( $exon->seqname eq $VirtualContig->id ) { 
+				   push(@coords,$exon->start);
+				   push(@coords,$exon->end);
+				}
+		    }
+        }
+
+	    @coords = sort {$a <=> $b} @coords;
+	    $start = $coords[0];
+	    $end   = $coords[-1];   
 	}
 	
 	my $rect = new Bio::EnsEMBL::Glyph::Rect({

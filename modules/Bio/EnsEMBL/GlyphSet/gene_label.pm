@@ -24,12 +24,12 @@ sub _init {
 
     push @allgenes, $VirtualContig->get_all_VirtualGenes_startend();
 
-#    if ($type eq 'all'){
-#	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
-#	    $vg->{'_is_external'} = 1;
-#	    push (@allgenes, $vg);
-#	}
-#    }
+    if ($type eq 'all'){
+	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
+	    $vg->{'_is_external'} = 1;
+	    push (@allgenes, $vg);
+	}
+    }
 
     my $ext_col        = $Config->get($Config->script(),'gene','ext');
     my $known_col      = $Config->get($Config->script(),'gene','known');
@@ -76,12 +76,10 @@ sub _init {
 
 	    } else {
 		$colour = $unknown_col;
-		$label	= "UNKNOWN";
+		$label	= "NOVEL";
 	    }
 #	    push @ids, $vg->id();
 	} else {
-	    # ignore pesky external genes for the moment
-	    next;
 	    $colour = $ext_col;
 	    $start  = ($vg->each_Transcript())[0]->start_exon->start();
 	    $end    = ($vg->each_Transcript())[-1]->end_exon->end();

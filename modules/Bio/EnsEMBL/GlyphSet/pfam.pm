@@ -60,9 +60,14 @@ sub _init {
         #$Composite->bordercolour($colour); 
 
 		my $pfsave;
+		my $minx = 100000000;
+		my $maxx = 0;
+		
 		foreach my $pf (@row) {
 	    	my $x = $pf->feature1->start();
-	    	my $w = $pf->feature1->end - $x;
+			$minx = $x if ($x < $minx);
+	    	my $w = $pf->feature1->end() - $x;
+			$maxx = $pf->feature1->end() if ($pf->feature1->end() > $maxx);
 	    	my $id = $pf->feature2->seqname();
 
 	    	my $rect = new Bio::EnsEMBL::Glyph::Rect({
@@ -70,25 +75,37 @@ sub _init {
 			'y'        => $y,
 			'width'    => $w,
 			'height'   => $h,
-			'id'       => $id,
 			'colour'   => $colour,
 	    	});
 	    	$Composite->push($rect);
 	    	$pfsave = $pf;
 		}
 
+		#########
+		# add a domain linker
+		#
+	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+		'x'        => $minx,
+		'y'        => $y + 2,
+		'width'    => $maxx - $minx,
+		'height'   => 0,
+		'colour'   => $colour,
+		'absolutey' => 1,
+	    });
+	    $Composite->push($rect);
+
+		my $fontheight = $Config->texthelper->height($font);
 		my $text = new Bio::EnsEMBL::Glyph::Text({
 	    	'font'   => $font,
 	    	'text'   => $pfsave->idesc,
 	    	'x'      => $row[0]->feature1->start(),
-	    	'y'      => $h,
-	    	'height' => $Config->texthelper->height($font),
+	    	'y'      => $h + 1,
+	    	'height' => $fontheight,
 	    	'colour' => $black,
 		});
 		$Composite->push($text);
 
 		if ($Config->get($Config->script(), 'pfam', 'dep') > 0){ # we bump
-			print STDERR "bumping\n";
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 
@@ -100,8 +117,7 @@ sub _init {
                           $bitmap_length,
                           \@bitmap
             );
-
-            $Composite->y($Composite->y() + (1.5 * $row * $h));
+            $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
         }
 		
 
