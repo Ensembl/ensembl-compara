@@ -13,9 +13,9 @@ sub init_label {
   my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
 
-  my $numchars = 20;
+  my $numchars = 16;
   my $indent   = 1;
-  my $text = $self->{container}->name;
+  my $text = ">".$self->{container}->name;
   my $print_label = ( length($text) > ( $numchars - $indent ) ? 
                       substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
                       $text );
