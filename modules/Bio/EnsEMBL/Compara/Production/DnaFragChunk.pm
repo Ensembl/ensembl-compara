@@ -1,4 +1,4 @@
-=head1 NAME - Bio::EnsEMBL::Compara::DnaFragChunk
+=head1 NAME - Bio::EnsEMBL::Compara::Production::DnaFragChunk
 
 =head1 SYNOPSIS
 
@@ -14,7 +14,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-package Bio::EnsEMBL::Compara::DnaFragChunk;
+package Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 use strict;
 use Bio::EnsEMBL::Compara::DnaFrag;
