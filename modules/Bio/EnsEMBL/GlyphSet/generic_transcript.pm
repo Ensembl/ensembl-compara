@@ -124,7 +124,7 @@ sub zmenu {
     my $tname  = $transcript->external_name || $tid;
     my $ext_db = $transcript->external_db   || '';
     $tname = $ext_db ? "$ext_db:$tname" : $tname;
-    $zmenu->{"01:$tname"}       = '';
+    $zmenu->{"00:$tname"}       = '';
     $zmenu->{"02:Transcr:$tid"} = "/$sp/transview?transcript=$tid&db=$db";
     $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?tab=fasta&".
                                   "type=feature&ftype=cdna&id=$tid";
