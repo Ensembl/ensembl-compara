@@ -53,37 +53,28 @@ sub _init {
 	    if ($vg->gene->is_known) {
 		$colour = $known_col;
                 my @temp_geneDBlinks = $vg->gene->each_DBLink();
-		my $displaylink;
 	 	
+                # find a decent label:
               DBLINK:
-		foreach my $DB_link ( @temp_geneDBlinks ){
-		    #########################
-		    # check for highlighting
-		    #########################
-		    if (exists $highlights{$DB_link->display_id}){
-			$hi_colour = $Config->get( 'gene', 'hi');
-		    }
-
+		foreach my $DB_link ( @temp_geneDBlinks ) {
                     my $db = $DB_link->database();
+                    # check in order of preference:
                     foreach my $d ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
                         if ($db eq $d ) {
-                            $displaylink = $DB_link;
+                            $label = $DB_link->display_id();
                             last DBLINK;
                         }
                     }
 		}
 
-		if( $displaylink ) {
-		    $label = $displaylink->display_id();
-		} 
-		else {
-		    $label = $vg->id();
-		}
+		if( ! defined $label ) {
+                    $label = $vg->id(); # fallback on ENSG
+                } 
 
-		if (exists $highlights{$vg->id}){
+                # check for highlighting
+		if (exists $highlights{$label}){
 		    $hi_colour = $Config->get( 'gene', 'hi');
 		}
-		
 	    } else {
 		$colour = $unknown_col;
 		$label	= "NOVEL";
@@ -104,7 +95,7 @@ sub _init {
 	    $end   = $coords[-1];   
 	    $label  = $vg->id;
 	    $label  =~ s/gene\.//;
-	}
+	}                               # isa VirtualGene
 	
 	######################
 	# Make and bump label
