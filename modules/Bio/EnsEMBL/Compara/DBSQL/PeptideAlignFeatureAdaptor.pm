@@ -389,10 +389,10 @@ sub list_internal_ids {
 
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the Member created from the database defined by the
+  Example    : $paf = $adaptor->fetch_by_dbID(1234);
+  Description: Returns the PeptideAlignFeature created from the database defined by the
                the id $id.
-  Returntype : Bio::EnsEMBL::Compara::Member
+  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature
   Exceptions : thrown if $id is not defined
   Caller     : general
 
@@ -414,6 +414,45 @@ sub fetch_by_dbID{
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
+  return $obj;
+}
+
+=head2 fetch_BRH_by_member_genomedb
+
+  Arg [1]    : member_id of query peptide member
+  Arg [2]    : genome_db_id of hit species
+  Example    : $paf = $adaptor->fetch_BRH_by_member_genomedb(31957, 3);
+  Description: Returns the PeptideAlignFeature created from the database
+  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature object
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_BRH_by_member_genomedb
+{
+  # using trick of specifying table twice so can join to self
+  my $self             = shift;
+  my $qmember_id        = shift;
+  my $hit_genome_db_id = shift;
+
+  print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+
+  my $extrajoin = [
+                    [ ['peptide_align_feature', 'paf2'],
+                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+                       undef],
+                    [ ['member', 'hm'],
+                       'paf.hmember_id=hm.member_id',
+                       undef]
+                  ];
+
+  my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1".
+                   " AND paf.qmember_id='".$qmember_id."'".
+                   " AND paf2.hmember_id='".$qmember_id."'".
+                   " AND hm.genome_db_id='".$hit_genome_db_id."'";
+
+  my ($obj) = @{$self->_generic_fetch($constraint, $extrajoin)};
   return $obj;
 }
 
