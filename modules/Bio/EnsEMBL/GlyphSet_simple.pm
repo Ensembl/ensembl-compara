@@ -35,7 +35,6 @@ sub _init {
     my $type = $self->check();
     return unless defined $type;
     
-    print STDERR "TRACK: GlyphSet_simple::$type\n";
     my $VirtualContig   = $self->{'container'};
     my $Config          = $self->{'config'};
     my $strand          = $self->strand();
@@ -178,7 +177,6 @@ sub _init {
         }
     }
 ## No features show "empty track line" if option set....  ##
-    print STDERR "TRACK: GlyphSet_simple::$type\n";
     $self->errorTrack( "No $type features in this region" )
         if( $Config->get('_settings','opt_empty_tracks')==1 && $flag );
 }
