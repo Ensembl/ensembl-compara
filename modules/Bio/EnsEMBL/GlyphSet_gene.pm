@@ -83,7 +83,7 @@ sub _init {
            'Novel_Transcript' => $Config->get('_colours','Novel_Transcript'), 
            'Pseudogene'       => $Config->get('_colours','Pseudogene'), 
 	   'Ig_Segment'       => $Config->get('_colours','Ig_Segment'), 	  
-	   'Ig_Pseudogene_Segment'   =>$Config->get('_colours','Ig_Pseudogene') , 
+	   'Ig_Pseudogene_Segment'   =>$Config->get('_colours','Ig_Pseudogene_Segment') , 
 	   'Predicted_Gene'   => $Config->get('_colours','Predicted_Gene'),
 	   'Transposon'	      => $Config->get('_colours','Transposon'),
 	   'Polymorphic'      => $Config->get('_colours','Polymorphic'),
