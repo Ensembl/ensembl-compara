@@ -27,11 +27,23 @@ $repmask->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
-functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
-required for databse access.
+This object uses the getz and pfetch command line programs to access
+the SRS database of Uniprot sequences.
+It's purpose is to load protein sequences from Uniprot into the compara database.
+Right now it has hard coded filters of a minimum sequence length of 80
+and taxon in metazoa and distinguishes SWISSPROT from SPTREMBL.
+
+The format of the input_id follows the format of a perl hash reference
+example:
+  "{srs=>'uniprot', taxon_id=>4932}" #loads all uniprot for S. cerevisiae
+keys:
+  srs => valid values 'swissprot', 'sptrembl', 'uniprot'
+  taxon_id => optional if one want to load from a specific species
+              if not specified it will load all 'metazoa' from the srs source
+more examples:                            
+  "{srs=>'swissprot'}" #loads all swissprot metazoa
+  "{srs=>'swissprot', taxon_id=>4932}"
+  "{srs=>'sptrembl', taxon_id=>4932}"
 
 =cut
 
@@ -81,19 +93,17 @@ sub fetch_input {
   #with the DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
-  #create subsets for the gene members, and the longest peptide members
-  $self->{'subset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>'uniprot');
-  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'subset'});
-
-  $self->{'source'} = undef;
+  $self->{'source'} = 'SWISSPROT';
+  $self->{'taxon_id'} = undef;  #no ncbi_taxid filter, get all metzoa
 
   if(defined($self->input_id)) {
     print("input_id = ".$self->input_id."\n");
     my $input_hash = eval($self->input_id);
-    $self->{'source'} = $input_hash->{'srs'} if(defined($input_hash));
+    if(defined($input_hash)) {
+      $self->{'source'} = $input_hash->{'srs'} if(defined($input_hash->{'srs'}));
+      $self->{'taxon_id'} = $input_hash->{'taxon_id'} if(defined($input_hash->{'taxon_id'}));
+    }
   }
-
-  my $taxon = $self->{'comparaDBA'}->get_TaxonAdaptor->fetch_by_dbID(8790);
   
   return 1;
 }
@@ -105,12 +115,23 @@ sub run
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
-  if($self->{'source'}) {
-    $self->loadMembersFromUniprot($self->{'source'});
+  return unless($self->{'source'});
+
+  my $subset_name = $self->{'source'};
+  
+  my $uniprot_ids = [];
+  if($self->{'taxon_id'}) {
+    $subset_name .= " ncbi_taxid:" . $self->{'taxon_id'};
+    $uniprot_ids = $self->fetch_all_uniprot_ids_for_taxid($self->{'source'}, $self->{'taxon_id'});
   } else {
-    $self->loadMembersFromUniprot('SWISSPROT');
-    #$self->loadMembersFromUniprot('SPTREMBL');
+    $subset_name .= " metazoa";
+    $uniprot_ids = $self->get_metazoa_uniprot_ids($self->{'source'});
   }
+  
+  $self->{'subset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>$subset_name);
+  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'subset'});
+  
+  $self->loadMembersFromUniprotIdList($self->{'source'}, $uniprot_ids);
                                             
   return 1;
 }
@@ -136,15 +157,15 @@ sub write_output
 #####################################
 
 
-sub loadMembersFromUniprot
+sub loadMembersFromUniprotIdList
 {
   my $self = shift;
   my $source = shift;
-
-  my @uniprot_ids = $self->get_uniprot_ids($source);
+  my $uniprot_ids = shift;  #array ref
+  
   my @id_chunk; 
 
-  my $count = scalar(@uniprot_ids);
+  my $count = scalar(@$uniprot_ids);
   
 # while(@uniprot_ids) {
 #   @id_chunk = splice(@uniprot_ids, 0, 30);
@@ -152,7 +173,7 @@ sub loadMembersFromUniprot
 # }
 
   my $index=1;
-  foreach my $id (@uniprot_ids) {
+  foreach my $id (@$uniprot_ids) {
     $index++;
     print("check/load $index ids\n") if($index % 100 == 0);
     my $stable_id = $id;
@@ -175,7 +196,7 @@ sub loadMembersFromUniprot
 }
 
 
-sub get_uniprot_ids
+sub get_metazoa_uniprot_ids
 {
   my $self   = shift;
   my $source = shift;  #'uniprot', 'swissprot' or 'sptrembl'
@@ -189,7 +210,25 @@ sub get_uniprot_ids
   print("$cmd\n");
   my @ids = split(/\s/, qx/$cmd/);
   printf("fetched %d ids from %s\n", scalar(@ids), $source);
-  return @ids;
+  return \@ids;
+}
+
+
+sub fetch_all_uniprot_ids_for_taxid
+{
+  my $self   = shift;
+  my $source = shift;  #'uniprot', 'swissprot' or 'sptrembl'
+  my $taxon_id = shift;
+  
+  my $cmd = "getz ".
+            "\"(([$source-txi: $taxon_id] ".
+             " ! [$source-org: */*]) ".
+             " ! [$source-org: *'\''*])\"";
+
+  print("$cmd\n");
+  my @ids = split(/\s/, qx/$cmd/);
+  printf("fetched %d ids from %s\n", scalar(@ids), $source);
+  return \@ids;
 }
 
 
