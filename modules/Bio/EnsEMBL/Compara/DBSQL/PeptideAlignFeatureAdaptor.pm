@@ -256,6 +256,7 @@ sub _objs_from_sth {
     $paf->perc_pos($column{'perc_pos'});
     $paf->hit_rank($column{'hit_rank'});
     $paf->cigar_line($column{'cigar_line'});
+    $paf->rhit_dbID($column{'pafid2'});
 
     if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
       $paf->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
@@ -380,7 +381,7 @@ sub fetch_BRH_by_member_genomedb
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
                        'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       undef]
+                       ['paf2.peptide_align_feature_id AS pafid2']]
                   ];
 
   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1".
@@ -394,37 +395,70 @@ sub fetch_BRH_by_member_genomedb
 }
 
 
-=head2 fetch_all_RH_for_pair
+=head2 fetch_all_RH_by_member_genomedb
 
-  Arg [1,2]  : Bio::EnsEMBL::Analysis objects which define a pair
+  Arg [1]    : member_id of query peptide member
+  Arg [2]    : genome_db_id of hit species
   Example    : $feat = $adaptor->fetch_by_dbID($musBlastAnal, $ratBlastAnal);
-  Description: Returns the Member created from the database defined by the
-               the id $id.
+  Description: Returns all the PeptideAlignFeatures that reciprocal hit the qmember_id
+               onto the hit_genome_db_id
   Returntype : array of Bio::EnsEMBL::Compara::PeptideAlignFeature objects by reference
   Exceptions : thrown if $id is not defined
   Caller     : general
 
 =cut
 
-sub fetch_all_RH_for_pair
+sub fetch_all_RH_by_member_genomedb
 {
   # using trick of specifying table twice so can join to self
-  my $self      = shift;
-  my $analysis1 = shift;
-  my $analysis2 = shift;
+  my $self             = shift;
+  my $qmember_id       = shift;
+  my $hit_genome_db_id = shift;
 
-  print(STDERR "fetch_all_RH_for_pair\n");
-  print(STDERR "  analysis1 ".$analysis1->logic_name()."\n");
-  print(STDERR "  analysis2 ".$analysis2->logic_name()."\n");
-
+  #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+  return unless($qmember_id and $hit_genome_db_id);
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
                        'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       undef]
+                       ['paf2.peptide_align_feature_id AS pafid2']]
                   ];
 
-  my $constraint = "paf.analysis_id = ".$analysis1->dbID .
-                   " AND paf2.analysis_id = ".$analysis2->dbID;
+  my $constraint = " paf.qmember_id='".$qmember_id."'".
+                   " AND paf2.hmember_id='".$qmember_id."'".
+                   " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
+                   " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
+
+  return $self->_generic_fetch($constraint, $extrajoin);
+}
+
+
+=head2 fetch_all_RH_by_member
+
+  Arg [1]    : member_id of query peptide member
+  Example    : $feat = $adaptor->fetch_by_dbID($musBlastAnal, $ratBlastAnal);
+  Description: Returns all the PeptideAlignFeatures that reciprocal hit the qmember_id
+  Returntype : array of Bio::EnsEMBL::Compara::PeptideAlignFeature objects by reference
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_RH_by_member
+{
+  # using trick of specifying table twice so can join to self
+  my $self             = shift;
+  my $qmember_id       = shift;
+
+  #print(STDERR "fetch_all_RH_by_member qmember_id=$qmember_id\n");
+  return unless($qmember_id);
+  my $extrajoin = [
+                    [ ['peptide_align_feature', 'paf2'],
+                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+                       ['paf2.peptide_align_feature_id AS pafid2']]
+                  ];
+
+  my $constraint = " paf.qmember_id='".$qmember_id."'".
+                   " AND paf2.hmember_id='".$qmember_id."'";
 
   return $self->_generic_fetch($constraint, $extrajoin);
 }
