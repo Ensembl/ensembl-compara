@@ -94,9 +94,14 @@ sub fetch_input {
   print("input_id = ".$self->input_id."\n");
   $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
+  $self->{'selfBlast'} = 1;
+  $self->{'phylumBlast'} = 0;
   if($self->analysis->parameters =~ /{/) {
-    $self->{'create_all'} = eval($self->analysis->parameters)->{'allToAll'};
-    print("create rules allToAll\n") if($self->{'create_all'});
+    my $paramHash = eval($self->analysis->parameters);
+    if($paramHash) {
+      $self->{'phylumBlast'}=1 if($paramHash->{'phylumBlast'}==1);
+      $self->{'selfBlast'}=0 if($paramHash->{'selfBlast'}==0);
+    }
   }
   
   #create a new Compara::DBAdaptor which points to the same database
@@ -166,23 +171,19 @@ sub createBlastRules
       $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blastAnalysis, $self->{'submitHomology'});
 
       my $blastPhylum = $self->phylumForGenomeDBID($genomeDB1->dbID);
-      #rint("\nANALYSIS ".$blastAnalysis->logic_name()." is a ".$blastPhylum."\n");
+      #print("\nANALYSIS ".$blastAnalysis->logic_name()." is a ".$blastPhylum."\n");
       foreach my $analysis (@{$analysisList}) {
-        if($analysis->logic_name =~ /SubmitPep_/) {
-          my $genome_db_id = eval($analysis->parameters)->{'genome_db_id'};
-          if($genome_db_id and ($genome_db_id ne $genomeDB1->dbID)) {
-            my $phylum = $self->phylumForGenomeDBID($genome_db_id);
-            #print("  check ".$analysis->logic_name().
-            #      " genome_db_id=".$parameters{'genome_db_id'}.
-            #      " phylum=".$phylum."\n");
-  
-            if($self->{'create_all'} or ($blastPhylum eq $phylum) ) {
-              #$analysis is a SubmitPep so it's the condition
-              #$blastAnalysis is the goal
-              $self->addHomologyPair($analysis, $blastAnalysis);
-            }
-          }
-        }
+        next unless($analysis->logic_name =~ /SubmitPep_/);
+
+        my $genome_db_id = eval($analysis->parameters)->{'genome_db_id'};
+        next unless($genome_db_id);
+        next if(!$self->{'selfBlast'} and
+                ($genome_db_id == $genomeDB1->dbID));
+
+        my $submitPhylum = $self->phylumForGenomeDBID($genome_db_id);
+        next if($self->{'phylumBlast'} and ($blastPhylum ne $submitPhylum));
+          
+        $self->addHomologyPair($analysis, $blastAnalysis);
       }
     }
   }
