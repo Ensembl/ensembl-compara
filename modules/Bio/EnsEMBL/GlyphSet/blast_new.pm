@@ -21,7 +21,8 @@ sub features {
 sub href {
     my ( $self, $id ) = @_;
     my @bits = split( ':', $id );
-    my( $ticket,$hsp_id,$use_date ) = split( '!!', $bits[1] );
+    my $meta = pop @bits;
+    my( $ticket,$hsp_id,$use_date ) = split( '!!', $meta );
     $use_date || return $id;
     my $htmpl = '/Multi/blastview?ticket=%s&hsp_id=%s!!%s&_display=ALIGN';
     return sprintf($htmpl, $ticket, $hsp_id, $use_date);
@@ -55,14 +56,8 @@ sub zmenu {
     my( $qryname, $hsptoken ) = split( ':', $feature->hseqname );
     my( $ticket, $hsp_id ) = split( "!!", $hsptoken, 2 );
     $zmenu->{caption} = $qryname." vs. ". $feature->seqname;
-    $zmenu->{"00:Details..."} = sprintf($htmpl, $ticket, $hsp_id);
+    $zmenu->{"00:Details..."} = $self->href($id);
 
-#    $zmenu->{
-#	     "00:".sprintf($ltmpl, "Qry",
-#			   $feature->hstart, $feature->hend, 
-#			   ( $feature->hstrand<1 ? '-' : '+' ) ) 
-#	    } = sprintf($htmpl, $ticket, $hsp_id);
-#
 #    $zmenu->{"01:".sprintf($ltmpl, "Hit", , 
 #			   $feature->start, $feature->end, 
 #			   ( $feature->strand<1 ? '-' : '+' ) ) } = '';
