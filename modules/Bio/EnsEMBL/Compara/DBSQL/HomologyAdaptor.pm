@@ -74,7 +74,7 @@ sub fetch_homologues_of_gene {
     my @genes;
     foreach my $rel (@relationshipids) {
 	my $q ="select  grm.member_stable_id,
-			gd.name
+			gd.name,
                         grm.chromosome,
                         grm.chrom_start,
                         grm.chrom_end
