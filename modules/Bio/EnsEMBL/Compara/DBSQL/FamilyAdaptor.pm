@@ -245,14 +245,14 @@ sub store {
 
   $fam->adaptor($self);
 
-  if ( !defined $fam->method_link_species_set_id && defined $fam->get_MethodLinkSpeciesSet) {
-    $self->db->get_MethodLinkSpeciesSetAdaptor->store($fam->get_MethodLinkSpeciesSet);
+  if ( !defined $fam->method_link_species_set_id && defined $fam->method_link_species_set) {
+    $self->db->get_MethodLinkSpeciesSetAdaptor->store($fam->method_link_species_set);
   }
 
-  if (! defined $fam->get_MethodLinkSpeciesSet) {
+  if (! defined $fam->method_link_species_set) {
     throw("Family object has no set MethodLinkSpecies object. Can not store Family object\n");
   } else {
-    $fam->method_link_species_set_id($fam->get_MethodLinkSpeciesSet->dbID);
+    $fam->method_link_species_set_id($fam->method_link_species_set->dbID);
   }
 
   my $sql = "SELECT family_id from family where stable_id = ?";

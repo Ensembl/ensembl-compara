@@ -93,25 +93,7 @@ sub description {
   return $self->{'_description'};
 }
 
-=head2 set_MethodLinkSpeciesSet
-
-  Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
-  Example    : 
-  Description: 
-  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub set_MethodLinkSpeciesSet {
-  my $self = shift;
-
-  $self->{'_MethodLinkSpeciesSet'} = shift if (@_);
-  return $self->{'_MethodLinkSpeciesSet'};
-}
-
-=head2 get_MethodLinkSpeciesSet
+=head2 method_link_species_set
 
   Arg [1]    : None
   Example    : 
@@ -122,16 +104,18 @@ sub set_MethodLinkSpeciesSet {
 
 =cut
 
-sub get_MethodLinkSpeciesSet {
+sub method_link_species_set {
   my $self = shift;
 
-  if ( ! defined $self->{'MethodLinkSpeciesSet'} && defined $self->method_link_species_set_id) {
+  $self->{'_method_link_species_set'} = shift if (@_);
+
+  if ( ! defined $self->{'_method_link_species_set'} && defined $self->method_link_species_set_id) {
     my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
-    $self->{'_MethodLinkSpeciesSet'} = $mlss;
+    $self->{'_method_link_species_set'} = $mlss;
   }
 
-  return $self->{'_MethodLinkSpeciesSet'};
+  return $self->{'_method_link_species_set'};
 }
 
 =head2 method_link_species_set_id
@@ -168,7 +152,7 @@ sub method_link_type {
 
   $self->{'_method_link_type'} = shift if (@_);
   unless (defined $self->{'_method_link_type'}) {
-    my $mlss = $self->get_MethodLinkSpeciesSet;
+    my $mlss = $self->method_link_species_set;
     $self->{'_method_link_type'} = $mlss->method_link_type;
   }
 
@@ -191,7 +175,7 @@ sub method_link_id {
 
   $self->{'_method_link_id'} = shift if (@_);
   unless (defined $self->{'_method_link_id'}) {
-    my $mlss = $self->get_MethodLinkSpeciesSet;
+    my $mlss = $self->method_link_species_set;
     $self->{'_method_link_id'} = $mlss->method_link_id;
   }
 
@@ -376,7 +360,7 @@ sub Member_count_by_source_taxon {
 sub source_id {
   my $self = shift;
   deprecate("source method is deprecated. Calling $self->method_link_id instead\n");
-  return $self->get_MethodLinkSpeciesSet->method_link_id;
+  return $self->method_link_species_set->method_link_id;
 }
 
 sub source_name {

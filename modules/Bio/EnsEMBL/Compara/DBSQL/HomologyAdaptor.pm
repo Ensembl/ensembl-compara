@@ -256,14 +256,14 @@ sub store {
 
   $hom->adaptor($self);
 
-  if ( !defined $hom->method_link_species_set_id && defined $hom->get_MethodLinkSpeciesSet) {
-    $self->db->get_MethodLinkSpeciesSetAdaptor->store($hom->get_MethodLinkSpeciesSet);
+  if ( !defined $hom->method_link_species_set_id && defined $hom->method_link_species_set) {
+    $self->db->get_MethodLinkSpeciesSetAdaptor->store($hom->method_link_species_set);
   }
 
-  if (! defined $hom->get_MethodLinkSpeciesSet) {
+  if (! defined $hom->method_link_species_set) {
     throw("Homology object has no set MethodLinkSpecies object. Can not store Homology object\n");
   } else {
-    $hom->method_link_species_set_id($hom->get_MethodLinkSpeciesSet->dbID);
+    $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   }
   
   unless($hom->dbID) {
