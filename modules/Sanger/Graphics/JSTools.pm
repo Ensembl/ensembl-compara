@@ -58,6 +58,7 @@ sub js_menu_div {
 #
 sub js_menu {
     my $items = shift;
+    return "javascript:void($items);" unless ref($items) eq 'HASH';
     my $str = "\'" . ($items->{'caption'} || "options") . "\',";
 
     for my $i (sort keys %$items) {
