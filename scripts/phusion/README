@@ -134,10 +134,10 @@ Hs    ------------------ ---------------
 
      Not generic at all, I know, so you may need to modify these lines in the code of LaunchBlast.pl
      my $fastafetch_executable = "/nfs/acari/abel/bin/fastafetch";
-     my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusionFilterBlast.pl";
+     my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
      
  Check with one job, if everything goes fine
-> echo 'ensembl-compara/scripts/LaunchBlast.pl -i Extra.set${LSB_JOBINDEX} -st Hs -sf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa -si /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa.index -qt Mm -qf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa -qi /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa.index -min_score 300 -dir /ecs2/work3/abel/phusion/Hs31Mm3/Cigar' | bsub -q acari -Ralpha -JHs31Mm3"[1]" -o Extra.set%I.out -e Extra.set%I.err
+> echo 'ensembl-compara/scripts/phusion/LaunchBlast.pl -i Extra.set${LSB_JOBINDEX} -st Hs -sf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa -si /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa.index -qt Mm -qf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa -qi /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa.index -min_score 300 -dir /ecs2/work3/abel/phusion/Hs31Mm3/Cigar' | bsub -q acari -Ralpha -JHs31Mm3"[1]" -o Extra.set%I.out -e Extra.set%I.err
 
  If everything goes fine, send all the remaining jobs
 
