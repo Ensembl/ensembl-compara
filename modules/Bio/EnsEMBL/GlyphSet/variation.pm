@@ -133,10 +133,10 @@ sub zmenu {
 
  # foreach my $db (@{  $variation->get_all_synonym_sources }) {
   #  if( $db eq 'TSC-CSHL' || $db eq 'HGVBASE' || $db eq 'dbSNP' || $db eq 'WI' ) {
-  $zmenu{"16:dbSNP: ".$f->variation_name} =
-    $self->ID_URL("dbSNP", $f->variation_name) if $f->source eq 'dbSNP';
   #  }
   #}
+  $zmenu{"16:dbSNP: ".$f->variation_name} =
+    $self->ID_URL("dbSNP", $f->variation_name) if $f->source eq 'dbSNP';
 
   my $consequence_type = $f->get_consequence_type;
   $zmenu{"57:Type: $consequence_type"} = "" unless $consequence_type eq '';  
