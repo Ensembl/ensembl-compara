@@ -127,6 +127,7 @@ sub expanded_init {
     my $X = -1000000;
     #my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->display_id );
     my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $F[0][2]->display_id, $F[0][2] );
+    $feature_colour ||= 'black';
     foreach my $f ( @F ){
       next if int($f->[1] * $pix_per_bp) <= int( $X * $pix_per_bp );
       $C++;
