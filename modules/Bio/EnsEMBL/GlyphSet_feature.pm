@@ -62,7 +62,7 @@ sub _init {
     my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
-    my $LEN = $VirtualContig->length
+    my $LEN = $VirtualContig->length;
     my @bitmap         = undef;
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $bitmap_length  = int($LEN * $pix_per_bp);
@@ -80,7 +80,7 @@ sub _init {
     }
 
 ## No features show "empty track line" if option set....
-    $self->errorTrack( "No $type features in this region" )
+    $self->errorTrack( "No ".$self->my_label." in this region" )
         unless( $Config->get('_settings','opt_empty_tracks')==0 || %id );
 
 ## Now go through each feature in turn, drawing them
