@@ -209,59 +209,55 @@ CREATE TABLE family_protein (
    family_protein_id     int(10) unsigned NOT NULL auto_increment,
    family_id     int(10) NOT NULL,
    protein_id    int(10) NOT NULL,
-   rank          int(10) NOT NULL,
    score         float(10) DEFAULT 0,
  
    PRIMARY KEY(family_protein_id),
    KEY(family_id),
-   KEY (protein_id),
-   KEY (rank)
+   KEY (protein_id)
 );
 # SEMANTICS
 # family_protein_id - internal id
 # family_id - foreign key to family table
 # protein_id - foreign key to protein table
-# rank - the rank of this protein within the family
 # score - the score of this protein associated with this family
 # Families are simply collections of proteins, and each protein
 # has a rank in the family according to how closely similar it is to the best match in the family
 
 #
-# Table structure for table 'conserved_segment'
+# Table structure for table 'conserved_clusters'
 #
-CREATE TABLE conserved_segment (
-  conserved_segment_id    int(10) unsigned NOT NULL auto_increment,
-  conserved_genes_families         int(10) unsigned NOT NULL,
+CREATE TABLE conserved_cluster(
+  conserved_cluster_id int(10) unsigned NOT NULL auto_increment,
+  conserved_gene_families         int(10) unsigned NOT NULL,
   
-  PRIMARY KEY (conserved_segment_id),
-  KEY (conserved_genes_families)
+  PRIMARY KEY (conserved_cluster_id),
+  KEY (conserved_gene_families)
 );
 # SEMANTICS
-# csonserved_segment_id - internal id
-# conserved_genes_familes - number of conserved genes famailes in the segment
+# csonserved_cluster_id - internal id
+# conserved_gene_familes - number of conserved genes famailes in the segment
 
 #
-# Table structure for table 'conserved_segment_dnafrag'
+# Table structure for table 'conserved_segment'
 #
-CREATE TABLE conserved_segment_dnafrag(
-  conserved_segment_dnafrag_id int(10) unsigned NOT NULL auto_increment,
-  conserved_segment_id           int(10) unsigned NOT NULL,
+CREATE TABLE conserved_segment(
+  conserved_segment_id int(10) unsigned NOT NULL auto_increment,
+  conserved_cluster_id           int(10) unsigned NOT NULL,
   dnafrag_id                 int(10) unsigned NOT NULL,
   seq_start               int(10) unsigned NOT NULL,
   seq_end                 int(10) unsigned NOT NULL,
-  strand                  int(10) unsigned NOT NULL,
-  intervening_genes       int(10) unsigned NOT NULL,  
+  intervening_genes       int(10) unsigned NULL,  
 #  length                  int(10) select (seq_end-seq_start),
 
-  PRIMARY KEY (conserved_segment_dnafrag_id),
-  KEY (conserved_segment_id),
+  PRIMARY KEY (conserved_segment_id),
+  KEY (conserved_cluster_id),
   KEY (dnafrag_id),
   KEY (seq_start),
   KEY (seq_end)
 );
 # SEMANTICS
-# conserved_segment_dnafrag_id - internal id
-# conserved_segment_id - foreign key to conserved_segment table
+# conserved_segment_id- internal id
+# conserved_cluster_id - foreign key to conserved_cluster table
 # dnafrag_id - foreign key from dnafrag, indicates which dna fragment
 #               this conserved segment is found on
 # seq_start - start of the conserved segment on the dnafrag
