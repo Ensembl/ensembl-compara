@@ -176,8 +176,8 @@ my ($species_set_id, $max_species_set, $GAB_id, $qy_GA_id, $cs_GA_id, $method_li
 
 
 
-print "Method_link_species_set already_stored for $cs_genome_db_id,$qy_genome_db_id,$method_link_id.\n";
 if (defined $already_stored){
+	print "Method_link_species_set already_stored for $cs_genome_db_id, $qy_genome_db_id, $method_link_id.\n";
 	#Need to get a method_link_species_set object;
   	$method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($alignment_type, [$cs_genome_db_id, $qy_genome_db_id]);
 	$species_set_id=$method_link_species_set->dbID;
@@ -216,11 +216,10 @@ my $max_alignment_length = 0;
 
 #my ($axt_number,$ref_chr,$ref_start,$ref_end,$qy_chr,$qy_start,$qy_end,$qy_strand,$score);
 #my ($ref_seq,$qy_seq);
-my @DnaDnaAlignFeatures;
+#my @DnaDnaAlignFeatures;
 
 my ($cs_chr,$cs_start,$cs_end, $cs_strand, $qy_chr, $qy_start, $qy_end, $qy_strand, $score, $percid, $group, $cigar, $qy_cigar, $cs_cigar, $length);
 my ($no, $qy_sps, $Qchr_type, $prog, $typ, $cs_sps, $Tchr_type, $posit); 
-#NB NEED TO RECREATE CIGARS FROM THE LENGTHS OF THE ALIGNMENTS --SHOULD BE ok as NO GAPS-- so ok both strands
 
 print STDERR "Reading BLAT--gff alignments in progress...\n";
 
@@ -417,7 +416,6 @@ else{
 
 
 
-  # think here to revert cigar_string if strand==-1 !!
    }
   $prev_cs_chr=$cs_chr;
   $prev_qy_chr=$qy_chr;
