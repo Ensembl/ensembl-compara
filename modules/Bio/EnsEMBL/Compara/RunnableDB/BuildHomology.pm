@@ -735,7 +735,7 @@ sub store_paf_as_homology
   if($self->{'verbose'}) { print("$type : "); $paf->display_short; }
 
   # load the genes for this PAF
-  # member_gene values must be properly set before $paf->return_as_homology
+  # member_gene values must be properly set before $paf->create_homology
   # and $paf->hash_key can return valid results
   my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor;
   my $queryGene = $memberDBA->fetch_gene_for_peptide_member_id($paf->query_member->dbID);
@@ -743,7 +743,7 @@ sub store_paf_as_homology
   my $hitGene = $memberDBA->fetch_gene_for_peptide_member_id($paf->hit_member->dbID);
   $paf->hit_member->gene_member($hitGene);
 
-  my $homology = $paf->return_as_homology();
+  my $homology = $paf->create_homology();
   $homology->description($type);
 
   my $key = $paf->hash_key;
