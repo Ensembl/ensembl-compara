@@ -6,6 +6,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
 use Data::Dumper;
@@ -13,20 +14,27 @@ use ExtURL;
 
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = $self->{'extras'} && $self->{'extras'}->{'name'};
-    $label ||= 'ProteinDAS';
-    my $print_label = ( length($label) > 16 ? 
-			substr( $label, 0, 14 )."..": 
-			$label );
-    
-    my $label = new Sanger::Graphics::Glyph::Text
-      ( { 'text'      => $print_label,
-	  'font'      => 'Small',
-	  'absolutey' => 1,
-	  'zmenu'     => {caption=>$label}
-	});
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+
+  my $numchars = 16;
+  my $indent   = 1;
+  my $Config   = $self->{'config'};
+  my $confkey  = $self->{'extras'}->{'confkey'};
+  my $text     = $self->{'extras'}->{'name'};
+  my $colour   = $Config->get($confkey,'col') || 'black';
+
+  my $print_label = ( length($text) > ( $numchars - $indent ) ? 
+		      substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
+		      $text );
+  $print_label =  ' ' x $indent . $print_label;
+  my $label = new Sanger::Graphics::Glyph::Text
+    ( { 'text'      => $print_label,
+	'font'      => 'Small',
+	'absolutey' => 1,
+	'colour'    => $colour,
+	'zmenu'     => {caption=>$text}
+      });
 
     $self->label($label);
 
@@ -65,7 +73,6 @@ sub _init {
     foreach my $feat(@das_feats) {
 	push(@{$hash{$feat->das_feature_id}},$feat);
     }
-
     foreach my $key (keys %hash) {
 	my @row  = @{$hash{$key}};
 	my $desc = $row[0]->das_feature_label();
@@ -149,13 +156,26 @@ sub _init {
 	
 	$self->push($Composite);
     }
+    if( ! scalar %hash ){ # Add a spacer glyph to force an empty track
+      my $spacer = new Sanger::Graphics::Glyph::Space
+	({
+	  'x'         => 0,
+	  'y'         => 0,
+	  'width'     => 0,
+	  'height'    => $h,
+	  'absolutey' => 1,
+	 });
+      $self->push($spacer); 
+    }
 
 }
 
 
+#----------------------------------------------------------------------
+# Returns the order corresponding to this glyphset
 sub managed_name{
-    my ($self) = @_;
-    return $self->{'extras'}->{'name'}
+  my $self = shift;
+  return $self->{'extras'}->{'order'} || 0;
 }
 
 
