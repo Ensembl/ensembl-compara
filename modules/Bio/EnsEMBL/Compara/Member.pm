@@ -308,12 +308,14 @@ sub chr_end {
 }
 
 =head2 chr_strand
+
   Arg [1]    : integer
   Description: Returns the strand of the member.  Defined strands are 1 or -1.
                0 is undefined strand.
   Returntype : 1,0,-1
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub chr_strand {
@@ -402,6 +404,7 @@ sub genome_db {
 }
 
 =head2 sequence
+
   Arg [1]    : string $sequence
   Example    : my $seq = $member->sequence;
   Description: Get/set the sequence string of this member
@@ -409,6 +412,7 @@ sub genome_db {
   Returntype : string
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub sequence {
@@ -434,11 +438,13 @@ sub sequence {
 
 
 =head2 seq_length
+
   Example    : my $seq_length = $member->seq_length;
   Description: get the sequence length of this member
   Returntype : int
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub seq_length {
@@ -455,12 +461,14 @@ sub seq_length {
 
 
 =head2 sequence_id
+
   Arg [1]    : int $sequence_id
   Example    : my $sequence_id = $member->sequence_id;
   Description: Extracts the sequence_id of this member
   Returntype : int
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub sequence_id {
@@ -555,6 +563,8 @@ sub print_member
   Example    : $gene = $member->gene
   Description: if member is an 'ENSEMBLGENE' returns Bio::EnsEMBL::Gene object
                by connecting to ensembl genome core database
+               REQUIRES properly setup Registry conf file or
+               manually setting genome_db->db_adaptor for each genome.
   Returntype : Bio::EnsEMBL::Gene or undef
   Exceptions : none
   Caller     : general
@@ -582,6 +592,8 @@ sub gene {
   Example    : $transcript = $member->transcript
   Description: if member is an 'ENSEMBLPEP returns Bio::EnsEMBL::Transcript object
                by connecting to ensembl genome core database
+               REQUIRES properly setup Registry conf file or
+               manually setting genome_db->db_adaptor for each genome.
   Returntype : Bio::EnsEMBL::Transcript or undef
   Exceptions : none
   Caller     : general
@@ -606,6 +618,8 @@ sub transcript {
   Example    : $translation = $member->translation
   Description: if member is an 'ENSEMBLPEP' returns Bio::EnsEMBL::Translation object
                by connecting to ensembl genome core database
+               REQUIRES properly setup Registry conf file or
+               manually setting genome_db->db_adaptor for each genome.
   Returntype : Bio::EnsEMBL::Gene or undef
   Exceptions : none
   Caller     : general
