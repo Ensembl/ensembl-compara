@@ -10,7 +10,7 @@ sub my_label { return "Variations"; }
 
 sub features {
   my ($self) = @_;
-  
+ #    &eprof_start('function-a');
   my @vari_features = 
              map { $_->[1] } 
              sort { $a->[0] <=> $b->[0] }
@@ -21,7 +21,8 @@ sub features {
     $self->{'config'}->{'variation_legend_features'}->{'variations'} 
         = { 'priority' => 1000, 'legend' => [] };
   }
-
+ #&eprof_start('function-a');
+#&eprof_dump(\*STDERR);
   return \@vari_features;
 }
 
