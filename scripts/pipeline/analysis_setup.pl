@@ -139,8 +139,20 @@ foreach my $speciesPtr (@speciesList) {
 @speciesList = @spList2;
 
 foreach my $species1Ptr (@speciesList) {
+
+  my $logic_name = "blast_" . $species1Ptr->{abrev};
+  print("build analysis $logic_name\n");
+  my %analParams = %analysis_template;
+  $analParams{'-logic_name'}    = $logic_name;
+  $analParams{'-input_id_type'} = $species1Ptr->{condition}->input_id_type();
+  $analParams{'-db'}            = $species2Ptr->{abrev};
+  $analParams{'-db_file'}       = $species2Ptr->{condition}->db_file();
+  my $analysis = new Bio::EnsEMBL::Pipeline::Analysis(%analParams);
+  $db->get_AnalysisAdaptor->store($analysis);
+
   foreach my $species2Ptr (@speciesList) {
     if($species1Ptr != $species2Ptr) {
+=head3
       my $logic_name = "blast_" . $species1Ptr->{abrev} . $species2Ptr->{abrev};
       print("build analysis $logic_name\n");
       my %analParams = %analysis_template;
@@ -150,7 +162,7 @@ foreach my $species1Ptr (@speciesList) {
       $analParams{'-db_file'}       = $species2Ptr->{condition}->db_file();
       my $analysis = new Bio::EnsEMBL::Pipeline::Analysis(%analParams);
       $db->get_AnalysisAdaptor->store($analysis);
-
+=cut
       my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$analysis);
       $rule->add_condition($species1Ptr->{condition}->logic_name());
       $db->get_RuleAdaptor->store($rule);
@@ -180,7 +192,7 @@ sub parse_conf {
       if($confPtr->{TYPE} eq 'DBCONNECT') {
         %db_conf = %{$confPtr};
       }
-      if($confPtr->{TYPE} eq 'ANALYSIS_TEMPLATE') {
+      if($confPtr->{TYPE} eq 'BLAST_TEMPLATE') {
         %analysis_template = %{$confPtr};
       }
       if($confPtr->{TYPE} eq 'SPECIES') {
