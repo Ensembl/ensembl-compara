@@ -44,13 +44,21 @@ sub colours {
 }
 
 sub href {
-    my ($self, $gene, $transcript, %highlights ) = @_;
+    my ($self, $gene, $transcript, %highlights) = @_;
     my $gid = $gene->stable_id();
     my $tid = $transcript->stable_id();
     my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
     return ( $self->{'config'}->get($self->check, '_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
         "#$tid" : 
         qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core);
+}
+
+sub gene_href {
+    my ($self, $gene, %highlights) = @_;
+    my $gid = $gene->stable_id();
+    return ($self->{'config'}->get($self->check,'_href_only') eq '#gid' && exists $highlights{$gene->stable_id()} ) ?
+        "#$gid" :
+        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=core&gene=$gid);
 }
 
 sub zmenu {
@@ -82,6 +90,46 @@ sub zmenu {
     }
 
     return $zmenu;
+}
+
+sub gene_zmenu {
+    my ($self, $gene) = @_;
+    my $gid = $gene->stable_id();
+    my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
+    my $type = $gene->type();
+    $type =~ s/HUMACE-//g;
+    $type = $legend_map{$type} || $type;
+    my $zmenu = {
+        'caption' 	    => $self->my_config('zmenu_caption'),
+        "00:$id"	    => "",
+        '01:Type: ' . $type => "",
+        "02:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core),
+    };
+    return $zmenu;
+}
+
+sub text_label {
+    my ($self, $gene, $transcript) = @_;
+    my $id = $transcript->external_name() || $transcript->stable_id();
+    my $Config = $self->{config};
+    my $short_labels = $Config->get('_settings','opt_shortlabels');
+    unless( $short_labels ){
+        my $type = $legend_map{$gene->type} || $gene->type;
+        $id .= " \n$type ";
+    }
+    return $id;
+}
+
+sub gene_text_label {
+    my ($self, $gene) = @_;
+    my $id = $gene->external_name() || $gene->stable_id();
+    my $Config = $self->{config};
+    my $short_labels = $Config->get('_settings','opt_shortlabels');
+    unless( $short_labels ){
+        my $type = $legend_map{$gene->type} || $gene->type;
+        $id .= " \n$type ";
+    }
+    return $id;
 }
 
 sub legend {
