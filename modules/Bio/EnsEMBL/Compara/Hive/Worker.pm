@@ -205,7 +205,7 @@ sub job_limit {
   my $self=shift;
   if(@_) {
     $self->{'_job_limit'}=shift;
-    if($self->{'_job_limit'} > $self->batch_size) {
+    if($self->{'_job_limit'} < $self->batch_size) {
       $self->batch_size($self->{'_job_limit'});
     }
   }
@@ -289,7 +289,7 @@ sub run
       $self->close_and_update_job_output($job);
       $self->{'_work_done'}++;
     }
-    if($self->job_limit and ($self->{'_work_done'} > $self->job_limit)) { 
+    if($self->job_limit and ($self->{'_work_done'} >= $self->job_limit)) { 
       $self->cause_of_death('NATURAL'); 
     }
     if($self->cause_of_death) { $alive=undef; }
