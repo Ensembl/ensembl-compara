@@ -120,7 +120,6 @@ sub _init {
                           \@bitmap
             );
 
-	    print STDERR "GENE $vgid $bump_start - $bump_end BUMPED TO $row\n";
             #next if $row > $depth;
             $rect->y($rect->y() + (6 * $row ));
             $rect->height(4);
