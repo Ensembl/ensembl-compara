@@ -149,7 +149,6 @@ sub store {
   $sth->execute();
 
   my ($dbID) = $sth->fetchrow_array();
-  $sth->finish;
   
   if (!$dbID) {
     ## Lock the table in order to avoid a concurrent process to store the same object with a different dbID
@@ -168,11 +167,12 @@ sub store {
         $dbID = $sth->{'mysql_insertid'};
       }
     }
-    $sth->finish;
 
     ## Unlock tables
     $self->dbc->do("UNLOCK TABLES");
   }
+  $sth->finish;
+  
   $method_link_species_set->dbID($dbID);
   
   return $method_link_species_set;
