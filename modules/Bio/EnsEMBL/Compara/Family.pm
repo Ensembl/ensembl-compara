@@ -43,6 +43,9 @@ use strict;
 use Bio::Root::Root;
 #to change to Root once we migrate to new ensembl
 use Bio::EnsEMBL::Compara::Protein;
+use Bio::Tools::Run::Phylo::Phylip::Neighbor;
+use Bio::Tools::Run::Phylo::Phylip::ProtPars;
+use Bio::Tools::Run::Phylo::Phylip::ProtDist;
 
 @ISA = qw(Bio::Root::Root);
 
@@ -419,7 +422,7 @@ sub get_all_members {
 =cut
 
 sub create_alignment{
-	my ($self,$type,@params) = @_;
+	my ($self,@params) = @_;
 	if (!defined(@params)){
 		@params = ('matrix' => 'BLOSUM');	
 	}
@@ -427,7 +430,7 @@ sub create_alignment{
 	my $factory = Bio::Tools::Run::Alignment::Clustalw->new(@params);	
 	my @proteins = $self->get_all_members;
 	my $aln = $factory->align(\@proteins);
-	$self->alignment($type,$aln);
+	$self->alignment($aln);
 	return $aln;
 	
 }
@@ -469,10 +472,10 @@ sub create_alignment_by_member_type {
 		}
 	}
 	require Bio::Tools::Run::Alignment::Clustalw;
-    my $factory = Bio::Tools::Run::Alignment::Clustalw->new(@{$params});
-    my $aln = $factory->align(\@prots);
-    $self->alignment($type,$aln);
-    return $aln;
+  my $factory = Bio::Tools::Run::Alignment::Clustalw->new(@{$params});
+  my $aln = $factory->align(\@prots);
+  $self->alignment($type,$aln);
+  return $aln;
 }
 												
 =head2 alignment 
@@ -486,23 +489,18 @@ sub create_alignment_by_member_type {
 =cut
 
 sub alignment {
-   my ($self,$type,$aln) = @_;
+  my ($self,$aln) = @_;
    
-   if (defined ($aln)){
-	if ($aln->isa("Bio::SimpleAlign")){
-		$self->{'_alignment'}{"$type"} = $aln;
-		return $self->{'_alignment'}{"$type"};
-	}
-	else {
-		$self->throw("Require a Bio::SimpleAlign object");
-	}
-   }
-   elsif (defined ($type)){
-	return $self->{'_alignment'}{"$type"};
-   }
-   else {
-	return $self->{'_alignment'}{"clustalw"};
-   }
+  if (defined ($aln)){
+    if ($aln->isa("Bio::SimpleAlign")){
+      $self->{'_alignment'} = $aln;
+		  return $self->{'_alignment'};
+	  }
+  	else {
+	  	$self->throw("Require a Bio::SimpleAlign object");
+	  }
+  }
+	return $self->{'_alignment'};
 }
 	
 =head2 store_alignment 
@@ -522,9 +520,8 @@ sub store_alignment {
 	
 	$self->adaptor->store_alignment($self,$aln,$type);
 }
-	
-sub create_tree {
-}
+
+
 
 =head2 get_alignment_by_type 
 
@@ -568,10 +565,108 @@ sub alignment_types {
 
   my ($self) =  @_;
   return $self->adaptor->adaptor->get_alignment_types($self);
-  
 
 }
 
+
+=head2 create_tree
+
+ Title   : create_tree
+ Usage   : $obj->create_tree('-program'=>'neighbor','params'=>\@params) 
+ Function: creates a Bio::Tree object either through neighbor or protpars programs.Defaults to protpars.
+ Returns : Bio::Tree
+ Args    :  
+
+=cut
+sub create_tree {
+  my ($self,@args) = @_;
+  my ($program,$params) = $self->_rearrange([qw(PROGRAM PARAMS)],@args);
+
+  if ($program =~/NEIGHBOR/i){
+      my $matrix = $self->protdist_matrix();
+      if (ref($matrix) eq "HASH"){
+        my $neigh_factory =  Bio::Tools::Run::Phylo::Phylip::Neighbor->new(@$params);
+        my $tree = $neigh_factory->create_tree($matrix);
+        $self->tree($tree);
+        return $tree;
+      }
+      else {
+        $self->throw('Cannot create tree using neighbor unless you have a distance matrix. Run $fam->create_distance_matrix(@params) first.');
+      }
+  }
+  else {
+      my $aln = $self->alignment();
+      if (ref($aln) eq "Bio::SimpleAlign"){
+          my $protpars_factory = Bio::Tools::Run::Phylo::Phylip::ProtPars->new(@$params);
+          my $tree = $protpars_factory->create_tree($aln);
+          $self->tree($tree);
+          return $tree;
+      }
+      else {
+          $self->throw('Cannot create tree using protpars unless you have an alignment. Run $fam->create_alignment first.');
+      }
+  }
+}
+
+=head2 tree
+
+ Title   : tree
+ Usage   : $obj->tree('params'=>\@params) 
+ Function: get/set for storing tree 
+ Returns : Bio::Tree 
+ Args    : Bio:Tree 
+
+=cut
+
+sub tree {
+    my($self,$tree) = @_;
+    if (defined($tree) && $tree->isa("Bio::Tree")){
+        $self->{'_family_tree'} = $tree;
+    }
+    return $tree;
+}
+
+
+=head2 create_distance_matrix
+
+ Title   : create_distance_matrix
+ Usage   : $obj->create_distance_matrix('params'=>\@params) 
+ Function: creates a matrix of protein distances stored in a hash of a hash.
+ Returns : a hash ref 
+ Args    :  
+
+=cut
+
+sub create_distance_matrix {
+    my ($self,@params) = @_;
+    my $protdist_factory = Bio::Tools::Run::Phylo::Phylip::ProtDist->new(@params);
+    my $aln = $self->alignment;
+    if (ref($aln) eq "Bio::SimpleAlign"){
+      my $matrix = $protdist_factory->create_distance_matrix($aln);
+      return $self->protdist_matrix($matrix);
+    }
+    else {
+      $self->throw('Need a Bio::SimpleAlign object to use protdist. Run $fam->create_alignment(@params) first.');
+    }
+}
+
+=head2 protdist_matrix 
+
+ Title   : protdist_matrix
+ Usage   : $obj->protdist_matrix($matrix) 
+ Function: getset for storing matrix 
+ Returns : a hash ref 
+ Args    :  
+
+=cut
+
+sub protdist_matrix {
+    my ($self,$matrix) = @_;
+    if (ref($matrix) eq "HASH"){
+      $self->{'distance_matrix'} = $matrix;
+    }
+    return $self->{'distance_matrix'};
+}
 
 =head2 threshold
 
