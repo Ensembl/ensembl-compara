@@ -1,0 +1,117 @@
+#!/usr/local/bin/perl
+
+use strict;
+
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::ExternalData::EXONERATESQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Getopt::Long;
+
+my $corehost = 'ecs1b';
+my $coreuser = 'ensro';
+my $corepass = '';
+my $corename;
+my $comphost = $corehost;
+my $compuser = $coreuser;
+my $comppass = $corepass;
+my $compname;
+my $corepath;
+
+my $org1 = 'Homo_sapiens';
+my $org2 = 'Mus_musculus';
+
+my $chr;
+
+
+$| = 1;
+
+&GetOptions('corehost:s' => \$corehost,
+						'coreuser:s' => \$coreuser,
+						'corename:s' => \$corename,
+						'corepass:s' => \$corepass,
+						'comphost:s' => \$comphost,
+						'compuser:s' => \$compuser,
+						'compname:s' => \$compname,
+						'comppass:s' => \$comppass,
+						'org1:s'     => \$org1,
+						'org2:s'     => \$org2,
+						'chr:s'      => \$chr,
+             );
+
+print STDERR "Time in dumpgff " . time . "\n";
+
+my $coredb = new Bio::EnsEMBL::DBSQL::DBAdaptor(-host        => $corehost,
+																								 -user        => $coreuser,
+																								 -dbname      => $corename,
+																								 -pass        => $corepass,
+																								 -perlonlyfeatures => 0);
+
+my $compdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $comphost,
+																											 -user        => $compuser,
+																											 -dbname      => $compname,
+																											 -pass        => $comppass,
+																								 );
+
+
+
+$coredb->static_golden_path_type($corepath);
+
+my $gad    = $compdb->get_GenomicAlignAdaptor;
+my $sgpa   = $coredb->get_StaticGoldenPathAdaptor();
+
+
+my @chr;
+
+if (defined($chr) && $chr eq "all") {
+  @chr = $sgpa->get_all_chromosome_name;  @chr = $sgpa->get_all_chromosome_name;
+} elsif (defined($chr)) {
+  push(@chr,$chr);
+} else {
+  print "Must either specifiy a chromosome name with -chr <chrname>  or specify all chromosomes with -chr all\n";
+  exit(0);
+}
+
+foreach my $chr (@chr) {
+  my $length = $sgpa->get_chromosome_length($chr);
+
+	print STDERR "Got chr $chr length $length\n";
+	
+	my $start = 1;
+	my $chunk = 5000000;
+	
+	open(SYN,">$chr.syten.gff");
+	
+	while ($start <= $length) {
+		
+		my $end = $start + $chunk -1;
+		
+		if ($end > $length) {$end = $length;}
+		
+		my $vc = $sgpa->fetch_VirtualContig_by_chr_start_end( $chr,
+																													$start,
+																													$end,
+																												);
+		
+		my @synteny      = $gad->fetch_DnaDnaAlignFeature_by_species_chr_start_end($org1,
+																																							 $org2,
+																																							 $chr,
+																																							 $start,
+																																							 $end,
+																																							 "VirtualContig");
+		
+		print STDERR "Got features " . scalar(@synteny) . "\n";
+		
+		my %chr;
+		
+		foreach my $f (@synteny) {
+			$f->primary_tag('similarity');
+			$f->source_tag('synteny');
+			
+			print SYN $f->gffstring . "\n";
+		}
+		
+		$start += $chunk;
+	}
+
+	close(SYN);
+}
