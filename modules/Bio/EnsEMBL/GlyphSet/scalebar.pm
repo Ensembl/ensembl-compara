@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::scalebar;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -31,8 +30,6 @@ sub _init {
     my $global_end = $self->{'container'}->_global_end();
     my $divs = 0;
     $divs = set_scale_division($len);
-    #print "Div size: $divs\n";
-    #print "Number divs: ", int($len/$divs), "($len)<BR>\n";
 
     
     my $glyph = new Bio::EnsEMBL::Glyph::Rect({
@@ -63,7 +60,7 @@ sub _init {
 	for (my $i=0;$i<int($len/$divs); $i++){
 	    my $text = int($i * $divs + $global_start);		
 	    if ($abbrev){
-		$text = bp_to_nearest_unit(int($i * $divs + $global_start),$len, $divs);		
+		$text = bp_to_nearest_unit_by_divs(int($i * $divs + $global_start),$divs);		
 	    }
 	    
 	    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
@@ -81,7 +78,7 @@ sub _init {
     else {
 	# label first and last
 	my $text = $global_start;
-	$text = bp_to_nearest_unit($global_start) if $abbrev;
+	$text = bp_to_nearest_unit($global_start,2) if $abbrev;
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 	    'x'      	=> 0,
 	    'y'      	=> 8,
@@ -95,7 +92,7 @@ sub _init {
 	
 	my $im_width = $Config->image_width();
 	$text = $global_end;
-	$text = bp_to_nearest_unit($global_end) if $abbrev;
+	$text = bp_to_nearest_unit($global_end,2) if $abbrev;
 
 	my $endglyph = new Bio::EnsEMBL::Glyph::Text({
 	    'x'      	=> $len - (length("$text ")*$fontwidth),
@@ -148,25 +145,22 @@ sub set_scale_division {
 
 
 
-sub bp_to_nearest_unit_by_range {
-    my ($bp,$range,$divs) = @_;
-    $divs = 1 unless $divs;
-    
-    my @units = qw( bp Kb Mb Gb Tb );
-    
-    my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
-    my $unit = $units[$power_ranger];
-    my $unit_str;
+sub bp_to_nearest_unit_by_divs {
+    my ($bp,$divs) = @_;
 
-    my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
-      
-    if ( $unit ne "bp" ){
-	$unit_str = sprintf( "%.1f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), $unit );
-    }else{
-	$unit_str = $value. $unit;
+    if (!defined $divs){
+	return bp_to_nearest_unit ($bp,0);
     }
-    print STDERR "Num: $bp Unit: $value Range: $range Divs:".int($range/$divs)."\n";
-    return $unit_str;
+
+    my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
+    my $value = $divs / ( 10 ** ( $power_ranger * 3 ) ) ;
+
+    my $dp = 0;
+    if ($value < 1){
+	$dp = length ($value) - 2;		# 2 for leading "0."
+    }
+      
+    return bp_to_nearest_unit ($bp,$dp);
 }
 
 
@@ -184,11 +178,10 @@ sub bp_to_nearest_unit {
     my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
       
     if ( $unit ne "bp" ){
-	$unit_str = sprintf( "%.${dp}f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), $unit );
+	$unit_str = sprintf( "%.${dp}f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), " $unit" );
     }else{
-	$unit_str = $value. $unit;
+	$unit_str = "$value $unit";
     }
-    #print STDERR "Num: $bp Unit: $value Range: $range Divs:".int($range/$divs)."\n";
     return $unit_str;
 }
 

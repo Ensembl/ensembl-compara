@@ -14,7 +14,7 @@ sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'Mouse',
+	'text'      => 'Mouse trace',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });

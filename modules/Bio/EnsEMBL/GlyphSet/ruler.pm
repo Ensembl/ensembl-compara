@@ -109,9 +109,9 @@ sub bp_to_nearest_unit {
     my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
       
     if ( $unit ne "bp"  ){
-	$unit_str = sprintf( "%.2f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), $unit );
+	$unit_str = sprintf( "%.2f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), " $unit" );
     }else{
-	$unit_str = $value. $unit;
+	$unit_str = "$value $unit";
     }
 
     return $unit_str;

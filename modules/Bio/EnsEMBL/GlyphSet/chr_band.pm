@@ -11,14 +11,17 @@ use SiteDefs;
 use ColourMap;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
+	my $chr = $self->{'container'}->_chr_name();
+	$chr ||= "Chrom. Band";
+	
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'Chrom. Band',
+	'text'      => $chr,
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
@@ -42,7 +45,7 @@ sub _init {
 	$COL{'gvar'}    = $cmap->id_by_name('offwhite'); #add_rgb([222,220,220]);
 	$COL{'gneg'}    = $white;
 	$COL{'acen'}    = $cmap->id_by_name('slategrey');
-	$COL{'stalk'}    = $cmap->id_by_name('slategrey');
+	$COL{'stalk'}   = $cmap->id_by_name('slategrey');
 
     my $im_width = $self->{'config'}->image_width();
 	my ($w,$h) = $self->{'config'}->texthelper->px2bp('Tiny');
@@ -80,7 +83,7 @@ sub _init {
 		
 		my $fontcolour;
 		# change label colour to white if the chr band is black, else use black...
-		if ($stain eq "gpos100" || $stain eq "acen"|| $stain eq "stalk"){
+		if ($stain eq "gpos100" || $stain eq "acen" || $stain eq "stalk" || $stain eq "gpos75"){
 			$fontcolour = $white;
 		} else {
 			$fontcolour = $black;

@@ -15,7 +15,7 @@ sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'CpG',
+	'text'      => 'CpG island',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
@@ -25,7 +25,7 @@ sub init_label {
 sub _init {
     my ($self) = @_;
 
-    return unless ($self->strand() == 1);
+    return unless ($self->strand() == -1);
 
     my $VirtualContig  = $self->{'container'};
     my $Config         = $self->{'config'};
