@@ -52,7 +52,6 @@ sub _init {
     close O;
     my $command = EnsWeb::species_defs->ENSEMBL_EMBOSS_PATH."/bin/restrict -enzymes all -sitelen 4 -seq $filename.in -outfile $filename.out";
     `$command`; 
-    `restrict -enzymes all -sitelen 4 -seq $filename.in -outfile $filename.out`;
     unlink "$filename.in";
     open I, "$filename.out";
     my @features;
