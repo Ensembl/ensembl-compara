@@ -23,6 +23,12 @@ sub fetch_by_Member {
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = "hm.member_id = " .$member->dbID;;
 
+  # This internal variable is used by add_Member_Attribute method 
+  # in Bio::EnsEMBL::Compara::BaseRelation to make sure that the first element
+  # of the member array is the one that has been used by the user to fetch the
+  # homology object
+  $self->{'_this_one_first'} = $member->stable_id;
+
   return $self->generic_fetch($constraint, $join);
 }
 
@@ -72,6 +78,9 @@ sub fetch_by_Member_paired_species {
   my $comma_joined_homology_ids = join(',',@homology_ids);
   $constraint = "gdb.name = '$species' AND hm.homology_id in ($comma_joined_homology_ids)";
   
+  # See in fetch_by_Member what is this internal variable for
+  $self->{'_this_one_first'} = $member->stable_id;
+
   return $self->generic_fetch($constraint, $join);
 }
 
@@ -88,6 +97,9 @@ sub fetch_by_Member_Homology_source {
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = "s.source_name = $source_name";
   $constraint .= " AND hm.member_id = " . $member->dbID;
+
+  # See in fetch_by_Member what is this internal variable for
+  $self->{'_this_one_first'} = $member->stable_id;
 
   return $self->generic_fetch($constraint, $join);
 }

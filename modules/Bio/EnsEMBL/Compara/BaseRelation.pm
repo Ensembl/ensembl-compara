@@ -143,9 +143,15 @@ sub add_Member_Attribute {
     $self->throw("Need to add a Bio::EnsEMBL::Compara::Attribute, not a $attribute\n");
   }
 
+  if (defined $self->{'_this_one_first'} && $self->{'_this_one_first'} eq $member->stable_id) {
+    unshift @{$self->{'_member_array'}}, $member_attribute ;
+    unshift @{$self->{'_members_by_source'}{$member->source_name}}, $member_attribute;
+    unshift @{$self->{'_members_by_source_taxon'}{$member->source_name."_".$member->taxon_id}}, $member_attribute;
+  } else {
     push @{$self->{'_member_array'}}, $member_attribute ;
     push @{$self->{'_members_by_source'}{$member->source_name}}, $member_attribute;
     push @{$self->{'_members_by_source_taxon'}{$member->source_name."_".$member->taxon_id}}, $member_attribute;
+  }
 }
 
 =head2 get_all_Member_Attribute
