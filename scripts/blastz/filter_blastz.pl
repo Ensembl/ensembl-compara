@@ -374,15 +374,15 @@ print scalar(@new_features)." line left after overlap step\n\n";
 	while ($group != 0){
 	
 	$no_prev_groups=$x; $x=0; $ok=0; @next =(); $group =0;
-print STDERR "while loop $x $group $y sorted features: ".scalar(@sorted_features)."next: ". scalar(@next)."\n";
+#print STDERR "while loop $x $group $y sorted features: ".scalar(@sorted_features)."next: ". scalar(@next)."\n";
 	
 	FIRST:foreach my $array (@sorted_features){
 	
-print STDERR "FIRST loop $x, $group, $y\t";
+#print STDERR "FIRST loop $x, $group, $y\t";
 		
 		 $x++;  $ok++; #start at 1 #x is just a counter now
 		unless ($ok==1){
-		print STDERR $sorted_features[$ok-2]->{chr1}." eq ".$array->{chr1}."\n";
+#		print STDERR $sorted_features[$ok-2]->{chr1}." eq ".$array->{chr1}."\n";
 			
 			if (($prev->{chr2} eq $array->{chr2}) && ($prev->{chr1} eq $array->{chr1})){ ##use when strand irrelevant for grouping 
 			
@@ -432,7 +432,7 @@ print STDERR "FIRST loop $x, $group, $y\t";
 			}
 		}
 	#end of while
-print scalar(@resorted). "    ".scalar(@next)." $y\n";
+#print scalar(@resorted). "    ".scalar(@next)." $y\n";
 	push @resorted, @next;	
 print STDERR scalar(@resorted)."lines left \n";		
 foreach my $array (@resorted) {	
