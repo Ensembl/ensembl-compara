@@ -705,15 +705,18 @@ sub alignment_strings {
 =head2 get_SimpleAlign
 
   Arg [1]    : list of string $flags
-               translated = by default, the sequence alignment will be on nucleotide. With translated flag
-                            the aligned sequences are translated.
-               uc = by default aligned sequences are given in lower cases. With uc flag, the aligned
-                    sequences are given in upper cases.
+               "translated" = by default, the sequence alignment will be on nucleotide. With "translated" flag
+                              the aligned sequences are translated.
+               "uc" = by default aligned sequences are given in lower cases. With "uc" flag, the aligned
+                      sequences are given in upper cases.
+               "display_id" = by default the name of each sequence in the alignment is $dnafrag->name. With 
+                              "dispaly_id" flag the name of each sequence is defined by the 
+                              Bio::EnsEMBL::Compara::GenomicAlign display_id method.
   Example    : $daf->get_SimpleAlign or
                $daf->get_SimpleAlign("translated") or
                $daf->get_SimpleAlign("translated","uc")
   Description: Allows to rebuild the alignment string of all the genomic_align objects within
-               this genomic_align_block using the cigar_string information
+               this genomic_align_block using the cigar_line information
                and access to the core database slice objects
   Returntype : a Bio::SimpleAlign object
   Exceptions :
@@ -727,10 +730,12 @@ sub get_SimpleAlign {
   # setting the flags
   my $uc = 0;
   my $translated = 0;
+  my $display_id = 0;
 
   for my $flag ( @flags ) {
     $uc = 1 if ($flag =~ /^uc$/i);
     $translated = 1 if ($flag =~ /^translated$/i);
+    $display_id = 1 if ($flag =~ /^display_id$/i);
   }
 
   my $sa = Bio::SimpleAlign->new();
@@ -748,7 +753,7 @@ sub get_SimpleAlign {
     my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
                                          -START  => $genomic_align->dnafrag_start,
                                          -END    => $genomic_align->dnafrag_end,
-                                         -ID     => $genomic_align->display_id,
+                                         -ID     => $display_id ? $genomic_align->display_id : $genomic_align->dnafrag->name,
                                          -STRAND => $genomic_align->dnafrag_strand);
 
     $loc_seq->seq($uc ? uc $loc_seq->translate->seq
@@ -756,11 +761,31 @@ sub get_SimpleAlign {
 
     if($bio07) { $sa->addSeq($loc_seq); }
     else       { $sa->add_seq($loc_seq); }
-                     
+
   }
   return $sa;
 }
 
+=head2 reverse_complement
+
+  Args       : none
+  Example    : none
+  Description: reverse complement the ,
+               modifying dnafrag_strand and cigar_line of each GenomicAlign in consequence
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub reverse_complement {
+  my ($self) = @_;
+
+  my $gas = $self->genomic_align_array;
+  foreach my $ga (@{$gas}) {
+    $ga->reverse_complement;
+  }
+}
 
 =head2 _print
 
