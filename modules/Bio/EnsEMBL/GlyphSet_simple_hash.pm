@@ -35,7 +35,6 @@ sub _init {
     my $type = $self->check();
     return unless defined $type;
     
-    print STDERR "TRACK: GlyphSet_simple::$type\n";
     my $VirtualContig   = $self->{'container'};
     my $Config          = $self->{'config'};
     my $strand          = $self->strand();
