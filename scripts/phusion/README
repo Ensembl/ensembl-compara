@@ -1,19 +1,19 @@
 
 Here is an example of out procedure to align human and mouse genomes.
-The all procedure was designed by Jim Mullikin at the Sanger Institute,
-and adapted to fit in the Ensembl compara by Abel Ureta-Vidal.
+The procedure was designed by Jim Mullikin at the Sanger Institute,
+and adapted to fit Ensembl compara by Abel Ureta-Vidal.
 
-All the command line were run in bash shell.
+All command lines were run in bash shell.
 
 1 - Move to your working directory. Check the disk space availible
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 > cd /ecs2/work3/abel/phusion/
 	
- Create a FastaPeptidesFiles directory if it does not exit.
+ Create a FastaFiles directory if it does not exit.
 
-> mkdir FastaPeptidesFiles
-> cd FastaPeptidesFiles
+> mkdir FastaFiles
+> cd FastaFiles
 
 2 - dump genomic dna from human and mouse genomes
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,7 +21,7 @@ All the command line were run in bash shell.
 > mkdir Hs31
 > cd Hs31
 
- NB: check that the length in chromosome table is right!! 
+( NB: check that the length in chromosome table is right!! 
      By that I mean that the length in chromosome table should equal to 
      max(chr_end) in the assembly table in core db.
 
@@ -31,20 +31,47 @@ mysql>  select c.name,c.length,max(a.chr_end) as alength from assembly a,chromos
 Empty set (0.98 sec)
 
  If not the same, that needs to be fixed.
- Do the same thing for mouse.
+ Do the same thing for mouse.) #######What should this be for schema_20???
 
- Then dump the sequence for each chromosome, e.g.
+ Then dump the sequence for each chromosome:
+ 
+ To get the list of toplevel sequences (normally chromosomes, but may be a mix of eg chromosomes and scaffolds as in C. briggsae).
+ 
+> echo "select sr.name, cs.name from coord_system cs, seq_region sr, seq_region_attrib sra, attrib_type at where sra.attrib_type_id=at.attrib_type_id and at.code='toplevel' and sr.seq_region_id=sra.seq_region_id and sr.coord_system_id=cs.coord_system_id and sr.name not like \"%_NT_%\" and sr.name not like \"%_DR_%\" and sr.name not like \"UNKN\";" | mysql -h ecs4 -u ensro -P 3351 homo_sapiens_core_20_34 | awk '!/name/' | sort -u > Hs34_chr_names
+
+This produces a file of form:
+
+1       chromosome
+10      chromosome
+11      chromosome
+12      chromosome
+13      chromosome
+14      chromosome
+15      chromosome
+16      chromosome
+17      chromosome
+18      chromosome
+19      chromosome
+2       chromosome
+20      chromosome
+21      chromosome
+22      chromosome
+etc
+ 
+ This file may be used to run the 
 
 ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
 	-host ecs2d.internal.sanger.ac.uk -dbuser ensro  -dbname homo_sapiens_core_12_31 \
 	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 \
 	-phusion Hs -o output_filename
 
- To send that on the farm
+on the farm
 
-> echo "select name from chromosome where name not like \"%_NT_%\" and name not like \"%_DR%\";"|mysql -h ecs2d -u ensro homo_sapiens_core_12_31|awk '!/name/'|sort -u > Hs31_chr_names
 
-> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
+eg To send that on the farm
+
+
+> cat Hs31_chr_names | while read i j ;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
 
  Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
  Delete the intermediate files.
