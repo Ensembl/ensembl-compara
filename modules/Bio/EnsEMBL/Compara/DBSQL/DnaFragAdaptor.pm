@@ -181,7 +181,7 @@ sub store_if_needed {
    my $gid =  $gdb->dbID;
    my $sth = $self->prepare("select dnafrag_id from dnafrag where name='$name' and genome_db_id=$gid");
 
-   if ($sth->execute()) {
+   unless ($sth->execute()) {
      $self->throw("Failed execution of a select query");
    }
 
