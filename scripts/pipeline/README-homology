@@ -1,7 +1,8 @@
 1- code API needed and executable
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  bioperl-live (bioperl-1-2-0?)
+  bioperl-live (bioperl-1-2-0)
+  bioperl-run (1.4) for the CodeML runnable/parser
   ensembl
   ensembl-compara
   ensembl-hive
@@ -13,6 +14,8 @@
       using /usr/local/ensembl/bin/wublastp
   setdb
       using /usr/local/ensembl/bin/setdb
+  codeml
+      using /usr/local/ensembl/bin/codeml
 
 1.2 Code checkout
 
@@ -47,6 +50,7 @@ in tcsh
   $ setenv PERL5LIB ${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
   $ setenv PERL5LIB ${BASEDIR}/bioperl-live:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/bioperl-run:${PERL5LIB}
 
 in bash
   $ BASEDIR=/some/path/to/modules
@@ -55,6 +59,7 @@ in bash
   $ export PERL5LIB=${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
   $ export PERL5LIB=${BASEDIR}/bioperl-live:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/bioperl-run:${PERL5LIB}
 
 
 1.4 Perl modules
@@ -171,7 +176,7 @@ At this point the system is ready to run
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are two beekepers, one which uses LSF job submission system, and
-another that uses the local machine only. If using the local machoine,
+another that uses the local machine only. If using the local machine,
 replace 'lsf_beekeper' with 'local_beekeper'.
 
  $ cd $BASEDIR/ensembl-hive/scripts
@@ -185,16 +190,5 @@ Depending on system load this will usually complete in under 24 hours
 
 for more details on controling the hive system see 
   $BASEDIR/ensemb./ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config/Blast.pm.examplel-hive/script/README-beekeeper
-
-
-7 - Calculate the dn/ds values
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Currently this hasn't been turned into a runnableDB so must be run by
-hand.  These only need to be calculated for Human-Mouse-Rat homologs.
-
-See this README
-
-  $BASEDIR/ensembl-compara/script/homology/README-dNdS
 
 
