@@ -85,6 +85,8 @@ sub legend {
         'Known'            => 'Curated known genes',
         'Novel_Transcript' => 'Curated novel Trans',
         'Pseudogene'       => 'Curated pseudogenes',
+        'Processed_pseudogene'       => 'Curated processed pseudogenes',
+        'Unprocessed_pseudogene'       => 'Curated unprocessed pseudogenes',
         'Ig_Segment'       => 'Curated Ig Segment',
         'Ig_Pseudogene_Segment'   => 'Curated Ig Pseudogene',
         'Predicted_Gene'   => 'Curated predicted',
