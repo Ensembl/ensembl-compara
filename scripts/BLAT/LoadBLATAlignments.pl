@@ -1,8 +1,8 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::GenomicAlign;
+use Bio::EnsEMBL::Compara::GenomicAlignGroup;
+use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Getopt::Long;
@@ -19,12 +19,12 @@ my $usage = "\nUsage: $0 [options] axtFile|STDIN
  Insert into a compara database BLAT alignments
 
 $0 -file BLAT_parsed_data_file -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
--conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
--alignment_type WGA_BLAT -cs_genome_db_id 1 -qy_genome_db_id 2 
+-conf_file /nfs/acari/cara/.Registry.conf
+-alignment_type WGA_BLAT -cs_genome_db_id 1 -qy_genome_db_id 2 -load tab
 
 Options:
 
- -file	BLAT_parsed_data_file
+ -file	BLAT_parsed_data_file \(for whole genome\)
  -host        host for compara database
  -dbname      compara database name
  -port 		eg3353
@@ -33,29 +33,31 @@ Options:
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
  -alignment_type type of alignment stored e.g.TRANSLATED_BLAT (default: WGA_BLAT) 
- -confi_file compara conf file
+ -conf_file registry conf file
+ -tab	0 or 1 (1)tab delimited files or (0)use DBAdaptor and load line by line (default)
 
 \n";
 
 
 my $help = 0;
 
-my ($file, $host, $dbname, $dbuser, $pass);
+my ($file, $host, $dbname, $dbuser, $pass, $tab, $DNA, $GAB, $GA, $GAG);
 my ($cs_genome_db_id, $qy_genome_db_id, $conf_file, $cs_coord, $qy_coord);
 my $port=3306;
 
 my $alignment_type = 'TRANSLATED_BLAT';
 
-GetOptions('h' => \$help,
-	   'file=s' => \$file,
-	   'host=s' => \$host,
-	   'dbname=s' => \$dbname,
-	   'dbuser=s' => \$dbuser,
-	   'pass=s' => \$pass,
-	   'port=i' => \$port,
-	   'cs_genome_db_id=s' => \$cs_genome_db_id,
-	   'qy_genome_db_id=s' => \$qy_genome_db_id,
-	   'alignment_type=s' => \$alignment_type,
+GetOptions('h' 			=> \$help,
+	   'file=s' 		=> \$file,
+	   'host=s' 		=> \$host,
+	   'dbname=s' 		=> \$dbname,
+	   'dbuser=s' 		=> \$dbuser,
+	   'pass=s' 		=> \$pass,
+	   'port=i' 		=> \$port,
+	   'cs_genome_db_id=s' 	=> \$cs_genome_db_id,
+	   'qy_genome_db_id=s' 	=> \$qy_genome_db_id,
+	   'alignment_type=s' 	=> \$alignment_type,
+	   'tab=i'		=> \$tab,
 	   'conf_file=s' => \$conf_file);
 
 if ($help) {
@@ -73,7 +75,7 @@ unless (defined $file &&
 	defined $conf_file) {
   print "
 !!! IMPORTANT : All following parameters should be defined !!!
-  file
+  file (whole genome)
   host
   dbname
   dbuser
@@ -89,35 +91,55 @@ unless (defined $file &&
 
 #########The use of the coord_
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor ('-conf_file' => $conf_file,
-						      '-host' => $host,
-						      '-user' => $dbuser,
-						      '-port' => $port,
-						      '-dbname' => $dbname,
-						      '-pass' => $pass);
+if ($tab){
+	$GAB=$file.".GAB";
+	$GAG=$file.".GAG";
+	$GA=$file.".GA";
+	open (GAB, ">$GAB") or die "can't open $GAB:$!\n";
+	open (GAG, ">$GAG") or die "can't open $GAG:$!\n";
+	open (GA, ">$GA") or die "can't open $GA:$!\n";
+	}
+
+if (defined $conf_file) {
+  Bio::EnsEMBL::Registry->load_all($conf_file);
+}
+else {
+	print " Need Registry file \n"; exit 2;
+	}
+
+my $db = "Bio::EnsEMBL::Registry";
+
+my $comparadb=$db->get_DBAdaptor($dbname, 'compara') or die "no comparadbadaptor:$dbname, 'compara' \n";
 
 my $stored_max_alignment_length;
-my $values = $db->get_MetaContainer->list_value_by_key("max_alignment_length");
+my $meta_con = $db->get_adaptor($dbname, 'compara', 'MetaContainer') or die "no metadbadaptor:$dbname, 'compara','MetaContainer' \n";
+my $values=$meta_con->list_value_by_key("max_alignment_length");
 
 if(@$values) {
   $stored_max_alignment_length = $values->[0];
 }
 
-my $gdb_adaptor = $db->get_GenomeDBAdaptor;
-my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id);
-my $qy_genome_db= $gdb_adaptor->fetch_by_dbID($qy_genome_db_id);
+my $gdb_adaptor = $db->get_adaptor($dbname, 'compara', 'GenomeDB') or die "no Genomedbadaptor:$dbname, 'compara' \n";
+my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id) or die "no dbId in :$dbname, '$cs_genome_db_id' \n";
+my $qy_genome_db= $gdb_adaptor->fetch_by_dbID($qy_genome_db_id) or die "no dbId in :$dbname, '$qy_genome_db_id' \n";
 
 my @genomicaligns;
 
 
+####adapters needed: MethodLinkSpeciesSet, GenomicAlignBlock(for 2 GA, and one GenomicAlignBlock), GenomicAlignGroup for 2, DnaFrag, SliceX2(core)
 
+my $mlss_adaptor = $db->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
+my $galnb_adaptor = $db->get_adaptor($dbname, 'compara', 'GenomicAlignBlock');
+my $galn_group_adaptor = $db->get_adaptor($dbname, 'compara', 'GenomicAlignGroup');
 
-my $dnafrag_adaptor = $db->get_DnaFragAdaptor;
-my $galn_adaptor = $db->get_GenomicAlignAdaptor;
+my $consensus_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
+my $query_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
+my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock();
+my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup ();
 
-my $cs_dbadaptor= $db->get_db_adaptor($cs_genome_db->name,$cs_genome_db->assembly);
-#my @cs_chromosomes = @{$cs_dbadaptor->get_ChromosomeAdaptor->fetch_all};
-my @cs_chromosomes = @{$cs_dbadaptor->get_SliceAdaptor->fetch_all('toplevel') };
+my $dnafrag_adaptor = $db->get_adaptor($dbname, 'compara', 'DnaFrag');
+my $cs_sliceadaptor= $db->get_adaptor($cs_genome_db->name, 'core', 'Slice');
+my @cs_chromosomes = @{$cs_sliceadaptor->fetch_all('toplevel')};
 my %cs_chromosomes;
 
 foreach my $chr (@cs_chromosomes) {
@@ -127,8 +149,8 @@ foreach my $chr (@cs_chromosomes) {
 
 
 #print STDERR $qy_genome_db->name.", ".$qy_genome_db->assembly."\n";
-my $qy_dbadaptor= $db->get_db_adaptor($qy_genome_db->name,$qy_genome_db->assembly);
-my @qy_chromosomes = @{$qy_dbadaptor->get_SliceAdaptor->fetch_all('toplevel')};
+my $qy_sliceadaptor= $db->get_adaptor($qy_genome_db->name,'core', 'Slice');
+my @qy_chromosomes = @{$qy_sliceadaptor->fetch_all('toplevel')};
 my %qy_chromosomes;
 
 foreach my $chr (@qy_chromosomes) {
@@ -136,9 +158,8 @@ foreach my $chr (@qy_chromosomes) {
   $qy_chromosomes{$chr->seq_region_name} = $chr;
 #  print STDERR $chr->seq_region_name." Query\n";
 }
-# Updating method_link_species if needed (maybe put that in GenomicAlignAdaptor store method)
-
-my $sth_method_link = $db->prepare("SELECT method_link_id FROM method_link WHERE type = ?");
+# note the use of "->dbc->prepare" for these direct sql queries
+my $sth_method_link = $comparadb->dbc->prepare("SELECT method_link_id FROM method_link WHERE type = ?");
 $sth_method_link->execute($alignment_type);
 my ($method_link_id) = $sth_method_link->fetchrow_array();
 
@@ -148,57 +169,79 @@ EXIT 1";
   exit 1;
 }
 
-my $sth_method_link_species = $db->prepare("
+#Set the group type -- ie which organism based on eg TRANSLATED_BLAT_grouped_on_genome_db_id_1_with_2
+my $group_type="on_GDBid_".$cs_genome_db_id."_with_".$qy_genome_db_id;
+
+
+my $sth_method_link_species = $comparadb->dbc->prepare("
 SELECT ml.method_link_id
-FROM method_link_species mls1, method_link_species mls2, method_link ml
+FROM method_link_species_set mls1, method_link_species_set mls2, method_link ml
 WHERE mls1.method_link_id = ml.method_link_id AND
       mls2.method_link_id = ml.method_link_id AND
       mls1.genome_db_id = ? AND
       mls2.genome_db_id = ? AND
-      mls1.species_set = mls2.species_set AND
+      mls1.method_link_species_set_id = mls2.method_link_species_set_id AND
       ml.method_link_id = ?");
 
 $sth_method_link_species->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
 my ($already_stored) = $sth_method_link_species->fetchrow_array();
 
-unless (defined $already_stored) {
-  $sth_method_link_species = $db->prepare("SELECT max(species_set) FROM method_link_species where method_link_id = ?");
-  $sth_method_link_species->execute($method_link_id);
-  my ($max_species_set) = $sth_method_link_species->fetchrow_array();
+my ($species_set_id, $max_species_set, $GAB_id, $qy_GA_id, $cs_GA_id, $method_link_species_set);
 
-  $max_species_set = 0 unless (defined $max_species_set);
 
-  $sth_method_link_species = $db->prepare("INSERT INTO method_link_species (method_link_id,species_set,genome_db_id) VALUES (?,?,?)");
-  $sth_method_link_species->execute($method_link_id,$max_species_set + 1,$cs_genome_db_id);
-  $sth_method_link_species->execute($method_link_id,$max_species_set + 1,$qy_genome_db_id);
+
+print "Method_link_species_set already_stored for $cs_genome_db_id,$qy_genome_db_id,$method_link_id.\n";
+if (defined $already_stored){
+	#Need to get a method_link_species_set object;
+  	$method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($alignment_type, [$cs_genome_db_id, $qy_genome_db_id]);
+	$species_set_id=$method_link_species_set->dbID;
+	}
+else{
+	#Make and store the method_link_species_set object
+  $sth_method_link_species = $comparadb->dbc->prepare("SELECT max(method_link_species_set_id) FROM method_link_species_set");#NB nolonger depends on the method_link_id
+  $sth_method_link_species->execute();
+   ($max_species_set) = $sth_method_link_species->fetchrow_array();
+
+  $max_species_set = 0 unless (defined $max_species_set); #ie if table empty 
+  $species_set_id = $max_species_set+1;
+  
+	$method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet();
+	#SET VALUES
+  $method_link_species_set->dbID($species_set_id);
+  $method_link_species_set->adaptor($mlss_adaptor);
+  $method_link_species_set->method_link_type($alignment_type);
+  $method_link_species_set->species_set([$cs_genome_db, $qy_genome_db]);
+  $mlss_adaptor->store($method_link_species_set);
+
+
+#NB no genomic_align_genome any more 
 }
 
-
-# Updating genomic_align_genome if needed (maybe put that in GenomicAlignAdaptor store method)
-my $sth_genomic_align_genome = $db->prepare("SELECT method_link_id FROM genomic_align_genome WHERE consensus_genome_db_id = ? AND query_genome_db_id = ? AND method_link_id = ?");
-$sth_genomic_align_genome->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
-($already_stored) = $sth_genomic_align_genome->fetchrow_array();
-
-unless (defined $already_stored) {
-  $sth_genomic_align_genome = $db->prepare("INSERT INTO genomic_align_genome (consensus_genome_db_id,query_genome_db_id,method_link_id) VALUES (?,?,?)");
-  $sth_genomic_align_genome->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
-}
-
-
-
+##set genomic_align_block_id and genomic_align_id from method_link_
+$GAB_id=$species_set_id*10000000000;
+$qy_GA_id=$GAB_id;
+$cs_GA_id=$qy_GA_id+1;
+print "$species_set_id\n$GAB_id\n$qy_GA_id\n$cs_GA_id\n";
 open (FILE, $file) or die "can't open $file: $!\n";
 
+my $level =0;
 
 my $max_alignment_length = 0;
 
 #my ($axt_number,$ref_chr,$ref_start,$ref_end,$qy_chr,$qy_start,$qy_end,$qy_strand,$score);
 #my ($ref_seq,$qy_seq);
 my @DnaDnaAlignFeatures;
-#my %repeated_alignment;
-my ($no, $Qsps, $Qchr_type, $Qchr, $prog, $typ, $Qstart, $Qend, $Qstrand, $Tsps, $Tchr_type, $Tchr, $Tstart, $Tend, $Tstrand, $score, $ident, $posit, $flip, $cigar); 
-#NB NEED TO RECREATE CIGARS FROM THE LENGTHS OF THE ALIGNMENTS --SHOULD BE ok as NO GAPS
+
+my ($cs_chr,$cs_start,$cs_end, $cs_strand, $qy_chr, $qy_start, $qy_end, $qy_strand, $score, $percid, $group, $cigar);
+my ($no, $qy_sps, $Qchr_type, $prog, $typ, $cs_sps, $Tchr_type, $posit); 
+#NB NEED TO RECREATE CIGARS FROM THE LENGTHS OF THE ALIGNMENTS --SHOULD BE ok as NO GAPS-- so ok both strands
 
 print STDERR "Reading BLAT--gff alignments in progress...\n";
+
+my $prev_cs_chr= 'a'; my $prev_qy_chr= 'a';	
+ my ($cs_dnafrag, $qy_dnafrag, $cs_dnafrag_id, $qy_dnafrag_id);
+
+
 LINE:while (my $line =<FILE>) {
 #get rid of first line (or any other title lines if they were catted together)
 	chomp $line;
@@ -206,119 +249,203 @@ LINE:while (my $line =<FILE>) {
 		next LINE;
 		}
 	else {
-		($no, $Qsps, $Qchr, $prog, $typ, $Qstart, $Qend, $Qstrand, $Tsps, $Tchr, $Tstart, $Tend, $Tstrand, $score, $ident, $posit, $cigar)=split /\t/,$line;
+		($no, $qy_sps, $qy_chr, $prog, $typ, $qy_start, $qy_end, $qy_strand, $cs_sps, $cs_chr, $cs_start, $cs_end, $cs_strand, $score, $percid, $posit, $cigar)=split /\t/,$line;
 		}
 
       $no=~/\d+\((\d+)\)/;
-      my $group =$1;
-      my $Qlength = $Qend - $Qstart+1;
-      my $Tlength = $Tend - $Tstart+1;
-      unless ($Qlength== $Tlength){
-      	print STDERR "lengths not equal $Qlength != $Tlength\n";
+      $group =$1;
+      my $qy_length = $qy_end - $qy_start+1;
+      my $cs_length = $cs_end - $cs_start+1;
+      unless ($qy_length== $cs_length){
+      	print STDERR "lengths not equal $qy_length != $cs_length\n";
 	print STDERR "$line\n";
       	}
-	 $cigar=$Qlength."M";
+	 $cigar=$qy_length."M";
 
 #Removed the monscore as the scores reported are for each member of a PSL line and therefore shouldn't be used to eliminate single hsps
 
 #make strand -1 or 1 rather than - or +
-if ($Tstrand eq '-'){ $Tstrand = '-1';}
-else { $Tstrand = '1';}
-if ($Qstrand eq '-'){ $Qstrand = '-1';}
-else { $Qstrand = '1';}
-  
-  #print STDERR "making new DnaDna\n";  
-
-    my $f = new Bio::EnsEMBL::DnaDnaAlignFeature(-cigar_string => $cigar);
+if ($cs_strand eq '-'){ $cs_strand = '-1';}
+else { $cs_strand = '1';}
+if ($qy_strand eq '-'){ $qy_strand = '-1';}
+else { $qy_strand = '1';}
+##########################################################################################################  
+##  Remove the DnaDnaAlignFeature and go straight to the DnaFrags and GenomicAlign ojects
+##########################################################################################################  
+##########################################################################################################  
+##print STDERR "making new DnaDna\n";  
+###
+   # my $f = new Bio::EnsEMBL::DnaDnaAlignFeature(-cigar_string => $cigar);
     
-    $f->seqname($Tchr);
-    $f->start($Tstart);
-    $f->end($Tend);
-    $f->strand($Tstrand);
-    $f->hseqname($Qchr);
-    $f->hstart($Qstart);
-    $f->hend($Qend);#This H stuff should really be the target as feature pairs bases itself on the query name 
-    $f->hstrand($Qstrand); #This varies as consensus(target) remains +ive
-    $f->score($score);
-    $f->percent_id($ident);
-    $f->group_id($group);
+   # $f->seqname($Tchr);
+  #  $f->start($Tstart);
+  #  $f->end($Tend);
+   # $f->strand($Tstrand);
+    #$f->hseqname($Qchr);
+    #$f->hstart($Qstart);
+    #$f->hend($Qend);#This H stuff should really be the target as feature pairs bases itself on the query name 
+    #$f->hstrand($Qstrand); #This varies as consensus(target) remains +ive
+    #$f->score($score);
+    #$f->percent_id($ident);
+    #$f->group_id($group);
     
-    push @DnaDnaAlignFeatures,$f ;
+    #push @DnaDnaAlignFeatures,$f ;
+##########################################################################################################  
 
   
-}
+#}  was the end of the while line =file but this should now go at the end. (as no further parsing -- just loading)
 
 
 
-print STDERR "Reading BLAT alignments done\n";
+#print STDERR "Reading BLAT alignments done\n";
 
-print STDERR "Preparing data for storage for ". scalar @DnaDnaAlignFeatures . " features...\n";
+#print STDERR "Preparing data for storage for ". scalar @DnaDnaAlignFeatures . " features...\n";
 
-foreach my $f (@DnaDnaAlignFeatures) {
-my $flip =0;
-if ($f->strand== "-1"){
-#	print STDERR "reversing ".$f->seqname.", ".$f->start.", ".$f->end.", ".$f->hseqname.", ".$f->hstart.", ".$f->hend.", ".$f->hstrand.", ".$f->cigar_string."\n";
-	$f->reverse_complement();
-	$flip =1; 
-#	print STDERR "reversed ".$f->seqname.", ".$f->start.", ".$f->end.", ".$f->hseqname.", ".$f->hstart.", ".$f->hend.", ".$f->hstrand.", ".$f->cigar_string."\n";
-	}
+##########################################################################################################  
+##########################################################################################################  
+
+
+
+#NB shouldn't need flip any more
+
 	
-  my ($cs_chr,$cs_start,$cs_end,$qy_chr,$qy_start,$qy_end,$qy_strand,$score,$percid,$group, $cigar) = ($f->seqname,$f->start,$f->end,$f->hseqname,$f->hstart,$f->hend,$f->hstrand,$f->score,$f->percent_id,$f->group_id, $f->cigar_string);
-
+   
+   
   my $cs_max_alignment_length = $cs_end - $cs_start + 1;
   $max_alignment_length = $cs_max_alignment_length if ($max_alignment_length < $cs_max_alignment_length);  
   my $qy_max_alignment_length = $qy_end - $qy_start + 1;
   $max_alignment_length = $qy_max_alignment_length if ($max_alignment_length < $qy_max_alignment_length);
 
+ 
+ #################################################################################################################
+ ####
+ ####CHANGE THESE TO CHECK THE DNAFRAG ARRAYS AND THEN STORE IF NEEDED IF USING TAB AND IT'S MISSING THROW AN EXCEPTION
+ ####
+ ###################################################################################################################
+unless ($cs_chr eq  $prev_cs_chr){ 
   
-  my $cs_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
+  $cs_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
   $cs_dnafrag->name($cs_chr); #ie just 22
-  $cs_dnafrag->genomedb($cs_genome_db);
-  $cs_dnafrag->type($cs_chromosomes{$cs_chr}->coord_system->name());
-  $cs_dnafrag->start(1);
-  $cs_dnafrag->end($cs_chromosomes{$cs_chr}->length);
-  $dnafrag_adaptor->store_if_needed($cs_dnafrag);
+  $cs_dnafrag->genome_db($cs_genome_db);
+  $cs_dnafrag->coord_system_name($cs_chromosomes{$cs_chr}->coord_system->name());
+  $cs_dnafrag->length($cs_chromosomes{$cs_chr}->length);
+  $cs_dnafrag_id=$dnafrag_adaptor->is_already_stored($cs_dnafrag); ###returns the dnafrag_id
   
-  #print STDERR $cs_dnafrag->type ."CS_TYPE\n";
+  unless($cs_dnafrag_id){
+  		$dnafrag_adaptor->store($cs_dnafrag);
+  	}
+}
+unless ($qy_chr eq  $prev_qy_chr){ #print STDERR $cs_dnafrag->type ."CS_TYPE\n";
 #print STDERR "cs_coord_type for $cs_chr ($qy_chr): ".$cs_dnafrag->type($cs_chromosomes{$cs_chr}->coord_system->name())."\n";
-  my $qy_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
+  $qy_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
   $qy_dnafrag->name($qy_chr);
-  $qy_dnafrag->genomedb($qy_genome_db);
-  $qy_dnafrag->type($qy_chromosomes{$qy_chr}->coord_system->name());
-  $qy_dnafrag->start(1);
-  $qy_dnafrag->end($qy_chromosomes{$qy_chr}->length);
-  $dnafrag_adaptor->store_if_needed($qy_dnafrag);
-#print STDERR "cs_coord_type for $qy_chr: ".$qy_dnafrag->type($qy_chromosomes{$qy_chr}->coord_system->name())."\n";
-  
-  my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
-  $genomic_align->consensus_dnafrag($cs_dnafrag);
-  $genomic_align->consensus_start($cs_start);
-  $genomic_align->consensus_end($cs_end);
-  $genomic_align->query_dnafrag($qy_dnafrag);
-  $genomic_align->query_start($qy_start);
-  $genomic_align->query_end($qy_end);
-  $genomic_align->query_strand($qy_strand);
-  $genomic_align->alignment_type($alignment_type);
-  $genomic_align->score($score);
-  $percid = 0 unless (defined $percid);
-  $genomic_align->perc_id($percid);
-  $genomic_align->group_id($group);
-  $genomic_align->level_id(0);
-  $genomic_align->strands_reversed($flip);
-  $genomic_align->cigar_line($cigar);
+  $qy_dnafrag->genome_db($qy_genome_db);
+  $qy_dnafrag->coord_system_name($qy_chromosomes{$qy_chr}->coord_system->name());
+  $qy_dnafrag->length($qy_chromosomes{$qy_chr}->length);
+  $qy_dnafrag_id=$dnafrag_adaptor->is_already_stored($qy_dnafrag);
+  unless($qy_dnafrag_id){
+  		$dnafrag_adaptor->store($qy_dnafrag);
+  	}
+}
+######################################################################################################################
+###
+###		print tab file OR store in DB
+###
+######################################################################################################################
+##GAB	= genomic_align_block_id, method_link_species_set_id, score, perc_id, length
+##GA	= genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id
+##	X 2
+##GAG	= group_id, type, genomic_align_id
+######################################################################################################################
+if ($tab>0){
 
-  $galn_adaptor->store([$genomic_align]);
+	print GAB "$GAB_id\t$species_set_id\t$score\t$percid\t$qy_length\n";  
+	print GA  "$qy_GA_id\t$GAB_id\t$species_set_id\t$qy_dnafrag_id\t$qy_start\t$qy_end\t$qy_strand\t$cigar\t$level\n"; #No level yet 
+	print GA  "$cs_GA_id\t$GAB_id\t$species_set_id\t$cs_dnafrag_id\t$cs_start\t$cs_end\t$cs_strand\t$cigar\t$level\n";
+	print GAG "$group\t$group_type\t$qy_GA_id\n"; #possability of two differnet groupings for the two species
+	print GAG "$group\t$group_type\t$cs_GA_id\n";
+	}
+else{
+#clear everything first
+	$query_genomic_align->dbID(0);
+  	$query_genomic_align->genomic_align_block_id(0);
+  	$query_genomic_align->method_link_species_set_id(0);
+  	$query_genomic_align->dnafrag_id(0);
+  	$consensus_genomic_align->dbID(0);
+  	$consensus_genomic_align->genomic_align_block_id(0);
+  	$consensus_genomic_align->method_link_species_set_id(0);
+  	$consensus_genomic_align->dnafrag_id(0);
+  	$genomic_align_block->dbID(0);
+  	$genomic_align_block->dbID($GAB_id);
+
+#first the query_genomic_align 
+
+	$query_genomic_align->dbID($qy_GA_id);
+  	$query_genomic_align->genomic_align_block_id($GAB_id);	
+  	$query_genomic_align->method_link_species_set($method_link_species_set);
+  	$query_genomic_align->dnafrag($qy_dnafrag);
+  	$query_genomic_align->dnafrag_start($qy_start);
+  	$query_genomic_align->dnafrag_end($qy_end);
+  	$query_genomic_align->dnafrag_strand($qy_strand);
+  	$query_genomic_align->cigar_line($cigar);
+  	$query_genomic_align->level_id($level);
+
+#2nd: consensus_genomic_align 
+  	$consensus_genomic_align->dbID($cs_GA_id);
+  	$consensus_genomic_align->genomic_align_block_id($GAB_id);	
+  	$consensus_genomic_align->method_link_species_set($method_link_species_set);
+  	$consensus_genomic_align->dnafrag($cs_dnafrag);
+  	$consensus_genomic_align->dnafrag_start($cs_start);
+  	$consensus_genomic_align->dnafrag_end($cs_end);
+  	$consensus_genomic_align->dnafrag_strand($cs_strand);
+  	$consensus_genomic_align->cigar_line($cigar);
+  	$consensus_genomic_align->level_id($level);
+
+#3rd genomic_align_block --  
+  	$genomic_align_block->method_link_species_set($method_link_species_set);
+  	$genomic_align_block->score($score);
+  	$genomic_align_block->length($qy_length);
+  	$genomic_align_block->perc_id($percid);
+  	$genomic_align_block->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
+
+#4th genomic_align_group 
+  	$genomic_align_group->dbID($group);
+  	$genomic_align_group->type($group_type);
+  	$genomic_align_group->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
+
+  ## Store genomic_align_block (this stores genomic_aligns as well)
+  	$galnb_adaptor->store($genomic_align_block);
+
+  ## Store genomic_align_group
+  	$galn_group_adaptor->store($genomic_align_group);
+
+
 
   # think here to revert cigar_string if strand==-1 !!
-
+   }
+  $prev_cs_chr=$cs_chr;
+  $prev_qy_chr=$qy_chr;
+  
+  $GAB_id=$GAB_id+2;
+  $qy_GA_id=$qy_GA_id+2;
+  $cs_GA_id=$cs_GA_id+2;
+  
 }
 
-if (! defined $stored_max_alignment_length) {
-  $db->get_MetaContainer->store_key_value("max_alignment_length",$max_alignment_length + 1);
-} elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
-  $db->get_MetaContainer->update_key_value("max_alignment_length",$max_alignment_length + 1);
+
+
+######Again only store if not creating tab file-- otherwise store in 
+if ($tab){
+	print STDERR "max alignment length = ".($max_alignment_length + 1)."\n";
+	}
+else{
+	if (! defined $stored_max_alignment_length) {
+  		$meta_con->store_key_value("max_alignment_length",$max_alignment_length + 1);
+	} elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
+ 	 $meta_con->update_key_value("max_alignment_length",$max_alignment_length + 1);
+	}
 }
-close FILE;
+close FILE; if ($tab){close GAB; close GA; close GAG;}
 print STDERR "Done\n";
 
 sub identity {

@@ -1,5 +1,8 @@
 #!/usr/local/ensembl/bin/perl -w
 
+
+
+####Nb just dumps chr fragments, including whole chromosomes, but doesn't load into compara database -- has advantage of not needing compara details
 use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::SeqIO;
@@ -7,9 +10,8 @@ use Bio::PrimarySeq;
 use Getopt::Long;
 
 my $usage = "
-DumpChromosomeFragments.pl -host ecs1b.sanger.ac.uk 
-            -dbuser ensro
-            -dbname homo_sapiens_core_10_30
+DumpChromosomeFragments.pl 
+            -dbname homo_sapiens_core_10_30 or alias
             -chr_names \"22\"
             -chr_start 1
             -chr_end 1000000
@@ -20,11 +22,10 @@ DumpChromosomeFragments.pl -host ecs1b.sanger.ac.uk
             -mask_restriction RepeatMaksingRestriction.conf
             -o output_filename
 	    -coord_system coordinate system (default=chromosome)
+	    -conf Registry.conf
 
 $0 [-help]
-   -host core_db_host_server
-   -user username (default = 'ensro')
-   -dbname core_database_name
+   -dbname core_database_name (or alias)
    -chr_names \"20,21,22\" (default = \"all\")
    -chr_start position on chromosome from dump start (default = 1)
    -chr_end position on chromosome to dump end (default = chromosome length)
@@ -39,16 +40,15 @@ $0 [-help]
                      depending on the repeat class or name. See RepeatMaksingRestriction.conf.example,
                      and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
    -o output_filename
-   -coord_system coordinate system (default=chromosome, but must be all of same type-->2 dumps for danio and can't use all for them )
+   -conf Registry.conf
+-coord_system coordinate system (default=chromosome, but must be all of same type-->2 dumps for danio and can't use all for them )
 
 
 ";
 
 $| = 1;
 
-my $host = 'localhost';
 my $dbname;
-my $dbuser = 'ensro';
 my $chr_names = "all";
 my $chr_start;
 my $chr_end;
@@ -57,16 +57,13 @@ my $chunk_size = 60000;
 my $masked = 0;
 my $phusion;
 my $output;
-my $port="";
 my $help = 0;
 my $mask_restriction_file;
 my $coordinate_system="chromosome";
+my $conf ="/nfs/acari/cara/.Registry.conf";
 
 GetOptions('help' => \$help,
-	   'host=s' => \$host,
 	   'dbname=s' => \$dbname,
-	   'dbuser=s' => \$dbuser,
-	   'port=i' => \$port,
 	   'chr_names=s' => \$chr_names,
 	   'chr_start=i' => \$chr_start,
 	   'chr_end=i' => \$chr_end,
@@ -76,6 +73,7 @@ GetOptions('help' => \$help,
            'mask_restriction=s' => \$mask_restriction_file,
 	   'phusion=s' => \$phusion,
 	   'coord_system=s' => \$coordinate_system,
+	   'conf'	=> \$conf,
 	   'o=s' => \$output);
 
 if ($help) {
@@ -86,20 +84,20 @@ if ($help) {
 # Some checks on arguments
 
 unless ($dbname) {
-  warn "dbname must be specified
+  warn "dbname or alias must be specified
 exit 1\n";
   exit 1;
 }
+my $db = "Bio::EnsEMBL::Registry";
 
-my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $host,
-					     -user => $dbuser,
-					     -dbname => $dbname,
-					     -port => $port);
+  $db->load_all($conf);
+
+
 my %not_default_masking_cases;
 if (defined $mask_restriction_file) {
   %not_default_masking_cases = %{do $mask_restriction_file};
 }
-my $SliceAdaptor = $db->get_SliceAdaptor;
+my $SliceAdaptor = $db->get_adaptor($dbname, 'core', 'Slice') ;
 
 my $chromosomes;
 
@@ -110,8 +108,12 @@ if (defined $chr_names and $chr_names ne "all") {
     push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coordinate_system , $chr_name);
   }
 } else {
+	if($coordinate_system){
+		$chromosomes=$SliceAdaptor->fetch_all($coordinate_system);
+		}
+	else{
   $chromosomes = $SliceAdaptor->fetch_all('toplevel');
-  
+  }
 }
  
 if (scalar @{$chromosomes} > 1 && 
@@ -165,7 +167,7 @@ setting chr_end=chr_length\n";
   
   my $slice;
   if ($chr_start && $chr_end) {
-    $slice = $SliceAdaptor->fetch_by_region($coordinate_system, $chr->seq_region_name,$chr_start,$chr_end);
+    $slice = $SliceAdaptor->fetch_by_region($coordinate_system, $chr->seq_region_name,$chr_start,$chr_end) or die "$coordinate_system, ".$chr->seq_region_name.",$chr_start,$chr_end\n";
   } else {
     $slice = $SliceAdaptor->fetch_by_region($coordinate_system, $chr->seq_region_name);
   }

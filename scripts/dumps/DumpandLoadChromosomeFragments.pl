@@ -3,36 +3,27 @@
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::SeqIO;
 use Bio::PrimarySeq;
 use Getopt::Long;
 
 my $usage = "
 DumpandLoadChromosomeFragments.pl 
-	    -host 	ecs1b.sanger.ac.uk 
-            -dbuser 	ensadmin
-	    -port 	3350
-	    -pass	password
-	    -species 	'Homo sapiens'
-	    -assembly 	NCBI35
+	    -assembly 	'NCBI35'
             -dbname 	ensembl_compara_22_1
             -overlap 	0
             -chunk_size 60000
             -masked 	0
             -phusion 	Hs
             -mask_restriction RepeatMaksingRestriction.conf
-            -o 		output_filename
+            -o 		output_filename ending
 	    -load 	1
 	    -dump 	1
 
 $0 [-help]
-   -host compara mysql host
-   -dbuser username (default = 'ensadmin')
-   -dbname ensembl_compara db name
-   -port 	3350
-   -pass	password
-   -species 	\"Homo sapiens\"
-   -assembly 	NCBI35
+   -dbname ensembl_compara db name or alias
+   -assembly 	\"NCBI35\"
    -chunk_size bp size of the sequence fragments dumped (default = 60000)
    -overlap overlap between chunk fragments (default = 0)
    -masked status of the sequence 0 unmasked (default)
@@ -43,10 +34,10 @@ $0 [-help]
                      Allow you to do hard and soft masking at the same time
                      depending on the repeat class or name. See RepeatMaksingRestriction.conf.example,
                      and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
-   -o output_filename
+   -o output_filename ending eg fa
    -load 0/1 if true load Dnafrags into db 
    -dump 0/1 if true dump Dnafrags into flatfiles 
-   -conf	Compara.conf file
+   -conf	Registry.conf file
 
 
 ";
@@ -55,9 +46,6 @@ $| = 1;
 
 my $host = 'localhost';
 my $dbname;
-my $dbuser = 'ensadmin';
-my $pass;
-my $species;
 my $assembly;
 my $chr_names = "all";
 my $overlap = 0;
@@ -65,21 +53,15 @@ my $chunk_size = 60000;
 my $masked = 0;
 my $phusion;
 my $output;
-my $port="";
 my $help = 0;
 my $mask_restriction_file;
 my $coordinate_system="chromosome";
 my $load=0;
 my $dump=0;
-my $conf="/nfs/acari/cara/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf";
+my $conf="/nfs/acari/cara/.Registry.conf";
 
 GetOptions('help' => \$help,
-	   'host=s' => \$host,
-	   'dbname=s' => \$dbname,
-	   'dbuser=s' => \$dbuser,
-	   'port=i' => \$port,
-	   'pass=s' =>\$pass,
-	   'species=s' => \$species,
+	   'dbname=s'  => \$dbname,
 	   'assembly=s' => \$assembly,
 	   'overlap=i' => \$overlap,
 	   'chunk_size=i' => \$chunk_size,
@@ -88,7 +70,7 @@ GetOptions('help' => \$help,
 	   'phusion=s' => \$phusion,
 	   'coord_system=s' => \$coordinate_system,
 	   'o=s' => \$output,
-	   'conf' =>\$conf,
+	   'reg_conf=s' =>\$conf,
 	   'load=i' => \$load,
 	   'dump=i' => \$dump);
 
@@ -96,40 +78,35 @@ if ($help) {
   print $usage;
   exit 0;
 }
-
-# Some checks on arguments
-
-unless ($dbname) {
-  warn "dbname must be specified
-exit 1\n";
-  exit 1;
+print "dump =$dump and load = $load \n\n";
+if (defined $conf) {
+  Bio::EnsEMBL::Registry->load_all($conf);
 }
-
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-conf_file => $conf, 
-					     -host => $host,
-					     -user => $dbuser,
-					     -dbname => $dbname,
-					     -port => $port,
-					     -pass => $pass);
+else {print " Need Registry file \n"; exit 2;}
+print "Got them \n";
+my $sliceadaptor = Bio::EnsEMBL::Registry->get_adaptor($assembly,'core','Slice');
+print "Got sliceadaptor $sliceadaptor\n";
+					     
 my %not_default_masking_cases;
 if (defined $mask_restriction_file) {
   %not_default_masking_cases = %{do $mask_restriction_file};
 }
+my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB');
+my $genome_db_all = $genome_db_adaptor->fetch_all;
+my $genome_db; 
+print scalar(@$genome_db_all)."\n";
+foreach my $gdb (@$genome_db_all){
+if ($gdb->assembly eq $assembly) { $genome_db = $gdb};
+}
 
-my $genome_adaptor=$db->get_db_adaptor($species, $assembly);
-my $sliceadaptor = $genome_adaptor->get_SliceAdaptor;
-my $genome_db_adaptor=$db->get_GenomeDBAdaptor;
-my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species, $assembly);
 
-
-
+my $dnafrag_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'DnaFrag');
 
 # include duplicate regions (such as pseudo autosomal regions)
-my @chromosomes = @{$sliceadaptor->fetch_all('toplevel', undef, 0)};
-my $dnafrag_adaptor = $db->get_DnaFragAdaptor();
- 
+my @chromosomes = @{$sliceadaptor->fetch_all('toplevel', undef, 0, 1)};
+print scalar @chromosomes ."\n"; 
 if (scalar @chromosomes < 1 ) {
-  warn "No chromosomes available for toplevel $species, $assembly
+  warn "No chromosomes available for toplevel $assembly
 exit 1\n";
   exit 1;
 }
@@ -138,8 +115,8 @@ my $fh = \*STDOUT;
 my $filename='';
 
 CHR:foreach my $chr (@chromosomes) {
-	if(($chr->seq_region_name =~/MT/)){next CHR;}
-	if (($dump) && (defined $output)) {
+	if(($chr->seq_region_name =~/[M|m][T|t]/)){next CHR;}
+	if (($dump>0) && (defined $output)) {
 	 	if ($phusion){$filename=$phusion."_".$chr->seq_region_name.".".$output;}
 	 	else{$filename=$chr->seq_region_name.".".$output;}
 		print STDERR "opening $filename\n";
@@ -147,18 +124,17 @@ CHR:foreach my $chr (@chromosomes) {
   		$fh = \*F;
 		}    
  	
-	if($dump) {
+	if($dump>0) {
 		print STDERR "printing slice ".$chr->name."...\n";
  		printout_by_overlapping_chunks($chr,$overlap,$chunk_size,$fh);
 		}
-	if($load){	
+	if($load>0){	
 		print STDERR "loading dnafrag for ".$chr->name."...\n";
 		my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
   		$dnafrag->name($chr->seq_region_name); #ie just 22
-  		$dnafrag->genomedb($genome_db);
-  		$dnafrag->type($chr->coord_system->name());
-  		$dnafrag->start(1);
-  		$dnafrag->end($chr->length);
+  		$dnafrag->genome_db($genome_db);
+  		$dnafrag->coord_system_name($chr->coord_system->name());
+  		$dnafrag->length($chr->length);
   		$dnafrag_adaptor->store_if_needed($dnafrag);
 	}
 close $fh;
@@ -175,7 +151,7 @@ sub printout_by_overlapping_chunks {
 
     print STDERR "getting masked sequence...\n";
     if (%not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,0,\%not_default_masking_cases);
+      $seq = $slice->get_repeatmasked_seq(['RepeatMask', 'trf'],0,\%not_default_masking_cases);
     } else {
       $seq = $slice->get_repeatmasked_seq;
     }
@@ -186,9 +162,9 @@ sub printout_by_overlapping_chunks {
 
     print STDERR "getting soft masked sequence...\n";
     if (%not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,1,\%not_default_masking_cases);
+      $seq = $slice->get_repeatmasked_seq(['RepeatMask', 'trf'],1,\%not_default_masking_cases);
     } else {
-      $seq = $slice->get_repeatmasked_seq(undef,1);
+      $seq = $slice->get_repeatmasked_seq(['RepeatMask', 'trf'],1);
     }
     $seq->name($slice->seq_region_name);
     print STDERR "...got soft masked sequence\n";
