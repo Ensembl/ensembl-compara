@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Renderer::SVG2;
+package Bio::EnsEMBL::Renderer::SVG;
 use strict;
 
 use Bio::EnsEMBL::Renderer;
@@ -157,6 +157,9 @@ sub render_Intron {
     my $w1 = $glyph->pixelwidth() / 2;
     my $h1 = $glyph->pixelheight() / 2;
     my $y1 = $glyph->pixely() + $h1;
+
+    $h1 = -$h1 if($glyph->strand() == -1);
+
     my $h2 = -$h1;
 
     $self->add_string(qq(<path d="M$x1,$y1 l$w1,$h2 l$w1,$h1" $style />\n));
