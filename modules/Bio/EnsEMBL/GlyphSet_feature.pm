@@ -61,6 +61,7 @@ sub _init {
     return unless defined $type;
 
     my $length = $self->{'container'}->length();
+    my $DRAW_CIGAR = $length < 1e5 ;
     my $Config = $self->{'config'};
     my $strand = $self->strand;
     my $strand_flag    = $Config->get($type, 'str');
@@ -90,7 +91,7 @@ sub _init {
     if( $dep > 0 ) {
         foreach my $f ( @$features ){
             next if $strand_flag eq 'b' && $strand != $f->strand || $f->end < 1 || $f->start > $length ;
-            push @{$id{$f->id()}}, [$f->start,$f->end];
+            push @{$id{$f->id()}}, [$f->start,$f->end,$f];
         }
 ## No features show "empty track line" if option set....
         $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $Config->get('_settings','opt_empty_tracks')==0 || %id );
@@ -98,17 +99,20 @@ sub _init {
 ## Now go through each feature in turn, drawing them
         my $y_pos;
         foreach my $i (sort(keys %id)){
+            warn( $i,' -> (',join( '), (', map {"$_->[0],$_->[1]"} @{$id{$i}} ),")" );
+
             my $has_origin = undef;
     
             $T+=@{$id{$i}}; ## Diagnostic report....
             my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
             my $START = $F[0][0] < 1 ? 1 : $F[0][0];
-            my $END   = $F[0][1] > $length ? $length : $F[0][1];
+            my $END   = $F[-1][1] > $length ? $length : $F[-1][1];
             my $bump_start = int($START * $pix_per_bp);
                $bump_start--; 
                $bump_start = 0 if $bump_start < 0;
             my $bump_end   = int($END * $pix_per_bp);
                $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
+            warn( $bump_start," - ", $bump_end );
             my $row = & Sanger::Graphics::Bump::bump_row(
                 $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
             );
@@ -121,26 +125,33 @@ sub _init {
                 'zmenu'    => $self->zmenu( $i ),
                 'href'     => $self->href( $i ),
 	            'x' => $F[0][0]> 1 ? $F[0][0]-1 : 0,
+                    'width' => 0,
 	            'y' => 0
             });
 
             my $X = -1000000;
             foreach my $f ( @F ){
                 next if int($f->[1] * $pix_per_bp) == int( $X * $pix_per_bp );
-                my $START = $f->[0] < 1 ? 1 : $f->[0];
-                my $END   = $f->[1] > $length ? $length : $f->[1];
-                $X = $START;
                 $C++;
-                $Composite->push(new Sanger::Graphics::Glyph::Rect({
+                if($DRAW_CIGAR) {
+                  warn( "DRAWING CIGAR" );
+                  $self->draw_cigar_feature($Composite, $f->[2], $h, $feature_colour, 'black' );
+                } else {
+                  my $START = $f->[0] < 1 ? 1 : $f->[0];
+                  my $END   = $f->[1] > $length ? $length : $f->[1];
+                  $X = $START;
+                  $Composite->push(new Sanger::Graphics::Glyph::Rect({
                     'x'          => $X-1,
                     'y'          => 0, # $y_pos,
                     'width'      => $END-$X+1,
                     'height'     => $h,
                     'colour'     => $feature_colour,
                     'absolutey'  => 1,
-                }));
+                  }));
+                }
             }
             $Composite->y( $Composite->y + $y_pos );
+            warn( "WID: ",$Composite->x()," - ",$Composite->width() );
             $Composite->bordercolour($feature_colour);
             $self->push( $Composite );
             if(exists $highlights{$i}) {
@@ -171,15 +182,18 @@ sub _init {
             next if( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
             $X = $START;
             $C++;
-
-            $self->push(new Sanger::Graphics::Glyph::Rect({
+            if($DRAW_CIGAR) {
+               $self->draw_cigar_feature($self, $_, $h, $feature_colour, 'black' );
+            } else {
+	      $self->push(new Sanger::Graphics::Glyph::Rect({
                 'x'          => $X-1,
                 'y'          => 0, # $y_pos,
                 'width'      => $END-$X+1,
                 'height'     => $h,
                 'colour'     => $feature_colour,
                 'absolutey'  => 1,
-            }));
+              }));
+            }
         }
     }
     warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
