@@ -66,10 +66,9 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =head2 fetch_by_Member
 
- Arg [1]    : string $dbname
- Arg [2]    : string $member_stable_id
- Example    : $fams = $FamilyAdaptor->fetch_of_dbname_id('SPTR', 'P01235');
- Description: find the family to which the given database and  member_stable_id belong
+ Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+ Example    : $families = $FamilyAdaptor->fetch_by_Member($member);
+ Description: find the families to which the given member belongs to
  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
               (could be empty or contain more than one Family in the case of ENSEMBLGENE only)
  Exceptions : when missing arguments
@@ -84,14 +83,30 @@ sub fetch_by_Member {
     $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
   }
 
-  my $join = [['family_member', 'fm'], 'f.family_id = fm.family_id'];
+  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
   my $constraint = "fm.member_id = ". $member->dbID;
 
   return $self->generic_fetch($constraint, $join);
 }
 
+sub fetch_by_Member_source_stable_id {
+  my ($self, $source_name, $member_stable_id) = @_;
+
+  unless (defined $source_name && defined $member_stable_id) {
+    $self->throw("The source_name and member_stable_id arguments must be defined");
+  }
+
+  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'],
+              [['member', 'm'], 'fm.member_id = m.member_id'],
+              [['source', 'ms'], 'm.source_id = ms.source_id']];
+  my $constraint = "m.stable_id = '$member_stable_id' AND ms.source_name = '$source_name'";
+
+  return $self->generic_fetch($constraint, $join);
+}
+
 # maybe a useful method in case more than one kind of family data is stored in the db.
-sub fetch_by_Member_source {
+
+sub fetch_by_Member_Family_source {
   my ($self, $member, $source_name) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
@@ -101,7 +116,7 @@ sub fetch_by_Member_source {
   $self->throw("source_name arg is required\n")
     unless ($source_name);
 
-  my $join = [['family_member', 'fm'], 'f.family_id = fm.family_id'];
+  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
   my $constraint = "s.source_name = '$source_name'";
   $constraint .= " AND fm.member_id = " . $member->dbID;
 
@@ -138,87 +153,11 @@ sub fetch_by_description_with_wildcards{
     return $self->generic_fetch($constraint);
 }
 
-=head2 fetch_Taxon_by_dbname_dbID
 
- Arg [1]    : string $dbname
-              Either "ENSEMBLGENE", "ENSEMBLPEP" or "SPTR" 
- Arg [2]    : int dbID
-              a family_id
- Example    : $FamilyAdaptor->fetch_Taxon_by_dbname('ENSEMBLGENE',1)
- Description: get all the taxons that belong to a particular database and family_id
- Returntype : an array reference of Bio::EnsEMBL::Compara::Taxon objects
-              (which may be empty)
- Exceptions : when missing argument
- Caller     : general
-
-=cut
-
-sub fetch_Taxon_by_dbname_dbID {
-  my ($self,$dbname,$dbID) = @_;
-  
-  $self->throw("Should give defined databasename and family_id as arguments\n") unless (defined $dbname && defined $dbID);
-
-  my $q = "SELECT distinct(taxon_id) as taxon_id
-           FROM family f, family_members fm, external_db edb
-           WHERE f.family_id = fm.family_id
-           AND fm.external_db_id = edb.external_db_id 
-           AND f.family_id = $dbID
-           AND edb.name = '$dbname'"; 
-  $q = $self->prepare($q);
-  $q->execute;
-
-  my @taxons = ();
-
-  while (defined (my $rowhash = $q->fetchrow_hashref)) {
-    my $TaxonAdaptor = $self->db->get_TaxonAdaptor;
-    my $taxon = $TaxonAdaptor->fetch_by_taxon_id($rowhash->{taxon_id});
-    push @taxons, $taxon;
-  }
-    
-  return \@taxons;
-
-}
-
-
-
-=head2 fetch_alignment
-
-  Arg [1]    : Bio::EnsEMBL::External::Family::Family $family
-  Example    : $family_adaptor->fetch_alignment($family);
-  Description: Retrieves the alignment strings for all the members of a 
-               family
-  Returntype : none
-  Exceptions : none
-  Caller     : FamilyMember::align_string
-
-=cut
-
-sub fetch_alignment {
-  my($self, $family) = @_;
-
-  my $members = $family->get_all_Member;
-  return unless(@$members);
-
-  my $sth = $self->prepare("SELECT family_member_id, alignment 
-                            FROM family_members
-                            WHERE family_id = ?");
-  $sth->execute($family->dbID);
-
-  #move results of query into hash keyed on family member id
-  my %align_hash = map {$_->[0] => $_->[1]} (@{$sth->fetchall_arrayref});
-  $sth->finish;
-
-  #set the slign strings for each of the members
-  foreach my $member (@$members) {
-    $member->alignment_string($align_hash{$member->dbID()});
-  }
-
-  return;
-}
-
-
-##################
-# internal methods
+#
+# INTERNAL METHODS
+#
+###################
 
 #internal method used in multiple calls above to build family objects from table data  
 
@@ -269,8 +208,10 @@ sub _default_where_clause {
   return 'f.source_id = s.source_id';
 }
 
-###############
-# store methods
+#
+# STORE METHODS
+#
+################
 
 =head2 store
 
@@ -312,22 +253,6 @@ sub store {
   }
 
   return $fam->dbID;
-}
-
-#process ensembl taxon information for FamilyConf.pm
-sub _setup_ens_taxon {
-    my ($self,@taxon_str) = @_;
-
-    my %hash;
-    foreach my $str(@taxon_str){
-
-      $str=~s/=;/=undef;/g;
-      my %taxon = map{split '=',$_}split';',$str;
-      my $prefix = $taxon{'PREFIX'}; 
-      delete $taxon{'PREFIX'};
-      $hash{$prefix} = \%taxon;
-    }
-    return %hash;
 }
 
 1;
