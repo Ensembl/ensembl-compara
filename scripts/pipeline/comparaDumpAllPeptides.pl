@@ -156,7 +156,7 @@ sub dump_fasta {
     unless($self->{'removeXedSeqs'} and
           ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
       print FASTAFILE ">$stable_id $description\n$sequence\n";
-      print DESCFILE "ensemblpep\t$stable_id\t", $self->{'taxon_hash'}->{$taxon_id}, "\n";
+      print DESCFILE "ensemblpep\t$stable_id\t\t", $self->{'taxon_hash'}->{$taxon_id}, "\n";
     }
   }
   close(FASTAFILE);
