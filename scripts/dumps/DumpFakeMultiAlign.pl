@@ -353,7 +353,7 @@ if ($project_on_query) {
       my $end = $reference_genomic_align->dnafrag_end;
       foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
         next if ($this_genomic_align->dnafrag->genome_db->dbID != $genome_db->{$this_species}->dbID);
-        my $aligned_sequence = $this_genomic_align->aligned_sequence(undef, "FIX_SEQ");
+        my $aligned_sequence = $this_genomic_align->aligned_sequence("+FIX_SEQ");
         my $this_start = $start - $seq_region_start;
         my $this_end = $end - $seq_region_end;
         if ($reference_genomic_align->dnafrag_start < $seq_region_start) {
