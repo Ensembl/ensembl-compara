@@ -17,7 +17,6 @@ use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 our $verbose = 1;
 
 my $multi = MultiTestDB->new( "multi" );
-
 my $compara_db = $multi->get_DBAdaptor( "compara" );
 
 my $gdba = $compara_db->get_GenomeDBAdaptor();
@@ -33,6 +32,23 @@ my $mouse = $gdba->fetch_by_species_tag( "Mus_musculus" );
 my $rat = $gdba->fetch_by_species_tag( "Rattus_norvegicus" );
 
 
+#
+# set the locators, we have to cheat because
+# with the test dbs these are different every time
+#
+my $homo_sapiens = MultiTestDB->new("homo_sapiens");
+my $mus_musculus = MultiTestDB->new("mus_musculus");
+
+my $hs = $homo_sapiens->get_DBAdaptor('core');
+my $mm = $mus_musculus->get_DBAdaptor('core');
+
+my $loc = ref($hs->_obj)."/host=".$hs->host.";port=".$hs->port.";dbname=".
+  $hs->dbname.";user=".$hs->username.";pass=".$hs->password;
+$hum->locator($loc);
+
+$loc = ref($mm->_obj)."/host=".$mm->host.";port=".$mm->port.";dbname=".
+  $mm->dbname.";user=".$mm->username.";pass=".$mm->password;
+
 #######
 #  2  #
 #######
@@ -40,7 +56,7 @@ debug( "GenomeDBs for hum, mouse, rat exist" );
 ok( defined $hum && defined $mouse && defined $rat );
 
 my $dfa = $compara_db->get_DnaFragAdaptor();
-my $hfrags = $dfa->fetch_all_by_genomedb_position( $hum, "X" );
+my $hfrags = $dfa->fetch_all_by_GenomeDB_region( $hum, 'Chromosome', "X" );
 
 
 #######
@@ -63,7 +79,7 @@ debug();
 #######
 ok( scalar @$aligns == 1 );
 
-my $mfrags = $dfa->fetch_all_by_genomedb_position( $mouse, "X" );
+my $mfrags = $dfa->fetch_all_by_GenomeDB_region( $mouse, 'Chromosome', "X" );
 
 debug( "Mouse -- Human reverse direct" );
 $aligns = $gaa->fetch_all_by_dnafrag_genomedb( $mfrags->[0], $hum );
