@@ -125,17 +125,21 @@ sub fetch_all_by_GenomeDB_region {
     $self->throw('GenomeDB does not have a dbID. Is it stored in the db?');
   }
 
-  unless($dnafrag_type) {
-    $self->throw('dnafrag_type argument must be defined');
-  }
+#  unless($dnafrag_type) {
+#    $self->throw('dnafrag_type argument must be defined');
+#  }
 
   my $sql = 'SELECT d.genome_db_id, d.dnafrag_type, d.dnafrag_id,
                     d.name, d.start, d.end
              FROM  dnafrag d
-             WHERE d.dnafrag_type = ?
-             AND   d.genome_db_id = ?';
+             WHERE d.genome_db_id = ?';
 
-  my @bind_values = ($dnafrag_type, $gdb_id);
+  my @bind_values = ($gdb_id);
+
+  if(defined $dnafrag_type) {
+    $sql .= ' AND d.dnafrag_type = ?';
+    push @bind_values, "$dnafrag_type";
+  }
 
   if(defined $name) {
     $sql .= ' AND d.name = ?';
@@ -157,8 +161,6 @@ sub fetch_all_by_GenomeDB_region {
 
   return $self->_objs_from_sth($sth);
 }
-
-
 
 =head2 fetch_all
 
