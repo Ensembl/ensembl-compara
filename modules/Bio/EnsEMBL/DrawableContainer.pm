@@ -6,6 +6,7 @@ use Bio::EnsEMBL::Renderer::imagemap;
 use Bio::EnsEMBL::Renderer::gif;
 use Bio::EnsEMBL::Renderer::wmf;
 use vars qw(@ISA);
+use constant GLYPHSET_PATH => '/mysql/ensembl/www/server/ensembl-draw/modules';
 
 @ISA = qw(Bio::Root::RootI);
 
@@ -20,33 +21,28 @@ Bio::EnsEMBL::DrawableContainer is a container class for any number of GlyphSets
 =cut
 
 #########
-# modules for image types
-#
-#use GD;
-
-#########
-# modules for GlyphSet types. These need to be autoloaded or dynamically required or something
+# modules for GlyphSet types.
+# These need to be autoloaded or dynamically required or something
 #
 #########
 # contigviewtop
 #
-#use GlyphSet::gene;				# contigviewtop transview
-#use GlyphSet::contig;				# contigviewtop
-#use GlyphSet::marker;				# contigviewtop
-
-#########
-# contigviewbottom
-#
-#use GlyphSet::genscan;				# contigviewbottom
+#use Bio::EnsEMBL::GlyphSet::gene;			# contigviewtop transview
+#use Bio::EnsEMBL::GlyphSet::contig;			# contigviewtop
+#use Bio::EnsEMBL::GlyphSet::marker;			# contigviewtop
 
 #########
 # transview
-use Bio::EnsEMBL::GlyphSet::transcript;			# transview
+#
+#use Bio::EnsEMBL::GlyphSet::transcript;		# transview
+#use Bio::EnsEMBL::GlyphSet::contig;			# contigviews
+#use Bio::EnsEMBL::GlyphSet::sptr;			# transview
+#use Bio::EnsEMBL::GlyphSet::genscan;			# contigviewbottom
 
 #########
 # generic
 #
-use Bio::EnsEMBL::GlyphSet::decoration;
+#use Bio::EnsEMBL::GlyphSet::decoration;
 
 @ISA = qw(Exporter);
 
@@ -70,7 +66,7 @@ sub new {
 	return;
     }
 
-    if($display !~ /transview/) {
+    if($display !~ /transview|contigviewbottom/) {
 	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new Unknown display type $display\n);
 	return;
     }
@@ -99,12 +95,26 @@ sub new {
 	#########
 	# skip this row if user has it turned off
 	#
-	next if ($Config->get($self->{'display'}, $row, 'on') ne "on");
+	next if ($Config->get($self->{'display'}, $row, 'on') eq "off");
 
 	#########
 	# create a new glyphset for this row
 	#
 	my $classname = qq(Bio::EnsEMBL::GlyphSet::$row);
+	my $classpath = &GLYPHSET_PATH . qq(/Bio/EnsEMBL/GlyphSet/${row}.pm);
+
+	#########
+	# require & import the package
+	#
+	eval {
+	    require($classpath);
+	};
+	if($@) {
+	    print STDERR qq(DrawableContainer::new failed to require $classname\n);
+	    next;
+	}
+
+	$classname->import();
 
 	#########
 	# generate a set for both strands
@@ -147,27 +157,57 @@ sub render {
     #
 
     my $width     = 600;
-    my $height    = 600;
+    my $height    = 300;
+
+    my ($minx, $maxx, $miny, $maxy);
+
+    for my $gs ($this->glyphsets()) {
+	next if($gs->maxx() == 0 || $gs->maxy() == 0);
+	$minx = $gs->minx() if($gs->minx() < $minx || !defined($minx));
+	$maxx = $gs->maxx() if($gs->maxx() > $maxx || !defined($maxx));
+	$miny = $gs->miny() if($gs->miny() < $miny || !defined($miny));
+	$maxy = $gs->maxy() if($gs->maxy() > $maxy || !defined($maxy));
+    }
+
+    my $scalex = $width / ($maxx - $minx);
+    #########
+    # don't scale y just yet
+    #
+#    my $scaley = $height / ($maxy - $miny);
+    my $scaley = 1;
+
+#print STDERR qq(Using y scaling factor $scaley and x scaling factor $scalex\n);
 
     my $transform_ref = {
 	'translatex' => 0,
 	'translatey' => 0,
-	'scalex'     => 0.005,
-	'scaley'     => 1,
-	'originx'    => 0,
-	'originy'    => 0,
-	'clipwidth'  => $width,
-	'clipwidth'  => $height,
+	'scalex'     => $scalex,
+	'scaley'     => $scaley,
 #	'rotation'   => 90,
     };
 
+    #########
+    # initialise canvasses for specific image types
+    #
     my $canvas;
     if($type eq "gif") {
 	$canvas = new GD::Image($width, $height);
 	$canvas->colorAllocate(255,255,255);
+
+    } elsif($type eq "wmf") {
+	$canvas = new WMF($width, $height);
+	$canvas->colorAllocate(255,255,255);
+
     }
 
+    #########
+    # build the type of render object we want
+    #
     my $renderer_type = qq(Bio::EnsEMBL::Renderer::$type);
+
+    #########
+    # big, shiny, rendering 'GO' button
+    #
     my $renderer = $renderer_type->new($this->{'glyphsets'}, $transform_ref, $canvas);
 
     return $renderer->canvas();
