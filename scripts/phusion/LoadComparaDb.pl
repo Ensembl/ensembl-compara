@@ -53,7 +53,12 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-conf_file => $conf_file,
 						     -user => $dbuser,
 						     -pass => $dbpass);
 
-my $stored_max_alignment_length = $db->get_MetaContainer->list_value_by_key("max_alignment_length");
+my $stored_max_alignment_length;
+my $values = $db->get_MetaContainer->list_value_by_key("max_alignment_length");
+
+if(@$values) {
+  $stored_max_alignment_length = $values->[0];
+}
 
 my $gdb_adaptor = $db->get_GenomeDBAdaptor;
 my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id);
@@ -108,7 +113,7 @@ my ($already_stored) = $sth_method_link_species->fetchrow_array();
 unless (defined $already_stored) {
   $sth_method_link_species = $db->prepare("SELECT max(species_set) FROM method_link_species");
   $sth_method_link_species->execute();
-  my ($max_species_set) = $sth_method_link->fetchrow_array();
+  my ($max_species_set) = $sth_method_link_species->fetchrow_array();
 
   $max_species_set = 0 unless (defined $max_species_set);
 
@@ -125,7 +130,7 @@ $sth_genomic_align_genome->execute($cs_genome_db_id,$qy_genome_db_id,$method_lin
 
 unless (defined $already_stored) {
   $sth_genomic_align_genome = $db->prepare("INSERT INTO genomic_align_genome (consensus_genome_db_id,query_genome_db_id,method_link_id) VALUES (?,?,?)");
-  $sth_method_link_species->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
+  $sth_genomic_align_genome->execute($cs_genome_db_id,$qy_genome_db_id,$method_link_id);
 }
 
 my $max_alignment_length = 0;
@@ -194,5 +199,5 @@ $line\n";
 if (! defined $stored_max_alignment_length ||
     (defined $stored_max_alignment_length && 
      $stored_max_alignment_length < $max_alignment_length)) {
-      $db->store_key_value("max_alignment_length",$max_alignment_length + 1);
+      $db->get_MetaContainer->store_key_value("max_alignment_length",$max_alignment_length + 1);
 }

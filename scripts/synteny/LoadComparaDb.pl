@@ -17,6 +17,7 @@ $0 -host ecs2.internal.sanger.ac.uk -dbuser ecs2dadmin -dbpass xxxx -dbname ense
 my $help = 0;
 my ($host,$dbname,$dbuser,$dbpass,$conf_file);
 my ($genome_db_id1,$genome_db_id2);
+my $method_link_type = "SYNTENY";
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
@@ -60,6 +61,42 @@ my %chromosomes2;
 foreach my $chr (@chromosomes2) {
   $chromosomes2{$chr->chr_name} = $chr;
 }
+
+my $sth_method_link = $db->prepare("SELECT method_link_id FROM method_link WHERE type = ?");
+$sth_method_link->execute($method_link_type);
+my ($method_link_id) = $sth_method_link->fetchrow_array();
+
+unless (defined $method_link_id) {
+  warn "There is no type $method_link_type in the method_link table of compara db.
+EXIT 1";
+  exit 1;
+}
+
+my $sth_method_link_species = $db->prepare("
+SELECT ml.method_link_id 
+FROM method_link_species mls1, method_link_species mls2, method_link ml 
+WHERE mls1.method_link_id = ml.method_link_id AND 
+      mls2.method_link_id = ml.method_link_id AND 
+      mls1.genome_db_id = ? AND
+      mls2.genome_db_id = ? AND
+      mls1.species_set=mls2.species_set AND
+      ml.method_link_id = ?");
+
+$sth_method_link_species->execute($genome_db_id1,$genome_db_id2,$method_link_id);
+my ($already_stored) = $sth_method_link_species->fetchrow_array();
+
+unless (defined $already_stored) {
+  $sth_method_link_species = $db->prepare("select max(species_set) from method_link_species");
+  $sth_method_link_species->execute();
+  my ($max_species_set) = $sth_method_link_species->fetchrow_array();
+
+  $max_species_set = 0 unless (defined $max_species_set);
+  
+  $sth_method_link_species = $db->prepare("insert into method_link_species (method_link_id,species_set,genome_db_id) values (?,?,?)");
+  $sth_method_link_species->execute($method_link_id,$max_species_set + 1,$genome_db_id1);
+  $sth_method_link_species->execute($method_link_id,$max_species_set + 1,$genome_db_id2);
+}
+
 
 my $sth_synteny_region = $db->prepare("insert into synteny_region (rel_orientation) values (?)");
 my $sth_dnafrag_region = $db->prepare("insert into dnafrag_region (synteny_region_id,dnafrag_id,seq_start,seq_end) values (?,?,?,?)");

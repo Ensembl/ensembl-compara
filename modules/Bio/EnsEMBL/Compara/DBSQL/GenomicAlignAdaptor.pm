@@ -758,7 +758,7 @@ sub _alignment_type_by_method_link_id {
   my ($self,$method_link_id) = @_;
 
   unless (defined $method_link_id) {
-    self->throw("method_link_id has to be defined");
+    $self->throw("method_link_id has to be defined");
   } 
 
   my $sth = $self->prepare("
@@ -777,7 +777,7 @@ sub _method_link_id_by_alignment_type {
   my ($self,$alignment_type) = @_;
 
   unless (defined $alignment_type) {
-    self->throw("alignment_type has to be defined");
+    $self->throw("alignment_type has to be defined");
   }
   
   my $sth = $self->prepare("
