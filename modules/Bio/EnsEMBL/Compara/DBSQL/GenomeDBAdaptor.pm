@@ -46,23 +46,23 @@ use vars qw(@ISA);
 use strict;
 
 
-use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-@ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
+@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
-sub new {
-    my ($class,@args) = @_;
+#sub new {
+#    my ($class,@args) = @_;
 
-    my $self = Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor->new(@args);
+#    my $self = Bio::EnsEMBL::DBSQL::BaseAdaptor->new(@args);
 
-    bless $self,$class;
+#    bless $self,$class;
 
-    $self->{'_cache'} = {};
+#    $self->{'_cache'} = {};
 
-    return $self;
-}
+#    return $self;
+#}
 
     
 =head2 fetch_by_dbID
