@@ -29,7 +29,7 @@ $repmask->write_output(); #writes to DB
 
 This object uses the getz and pfetch command line programs to access
 the SRS database of Uniprot sequences.
-It's purpose is to load protein sequences from Uniprot into the compara database.
+Its purpose is to load protein sequences from Uniprot into the compara database.
 Right now it has hard coded filters of a minimum sequence length of 80
 and taxon in metazoa and distinguishes SWISSPROT from SPTREMBL.
 
@@ -42,7 +42,7 @@ keys:
               if not specified it will load all 'metazoa' from the srs source
   accession_number => 1 optional if one want to load Accession Number (AC) as 
                       stable_id rather than Entry Name (ID) as it is done by default
-more examples:                            
+more examples:
   "{srs=>'swissprot'}" #loads all swissprot metazoa
   "{srs=>'swissprot', taxon_id=>4932}"
   "{srs=>'sptrembl', taxon_id=>4932}"
@@ -76,16 +76,20 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 
+use Bio::EnsEMBL::Hive;
+
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
 =head2 fetch_input
+
     Title   :   fetch_input
     Usage   :   $self->fetch_input
     Function:   prepares global variables and DB connections
     Returns :   none
     Args    :   none
+
 =cut
 
 sub fetch_input {
@@ -107,7 +111,7 @@ sub fetch_input {
       $self->{'taxon_id'} = $input_hash->{'taxon_id'} if(defined($input_hash->{'taxon_id'}));
     }
   }
-  
+    
   return 1;
 }
 
@@ -143,10 +147,12 @@ sub run
 sub write_output 
 {  
   my $self = shift;
-  #need to subclass otherwise it defaults to a version that fails
-  #just return 1 so success
 
-  my $output_id =  "{ss=>" . $self->{'subset'}->dbID . "}";
+  my $outputHash = {};
+  $outputHash = eval($self->input_id) if(defined($self->input_id));
+  $outputHash->{'ss'} = $self->{'subset'}->dbID;
+  my $output_id = main::encode_hash($outputHash);
+
   print("output_id = $output_id\n");
   $self->input_id($output_id);                    
   return 1;
@@ -181,7 +187,7 @@ sub loadMembersFromUniprotIdList
     print("check/load $index ids\n") if($index % 100 == 0);
     my $stable_id = $id;
     $stable_id = $1 if($id =~ /$source:(.*)/);
-    my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id($source, $stable_id);
+    my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('Uniprot/'.$source, $stable_id);
     if($member and $member->sequence_id) {
       #print("$source $stable_id : already loadled in compara\n");
     } else {
