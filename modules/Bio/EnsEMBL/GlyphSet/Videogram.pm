@@ -40,6 +40,7 @@ sub _init {
  
     my %COL = ();
     $COL{'gpos100'} = $cmap->id_by_name('black'); #add_rgb([200,200,200]);
+    $COL{'tip'}     = $cmap->id_by_name('slategrey');
     $COL{'gpos75'}  = $cmap->id_by_name('grey3'); #add_rgb([210,210,210]);
     $COL{'gpos50'}  = $cmap->id_by_name('grey2'); #add_rgb([230,230,230]);
     $COL{'gpos25'}  = $cmap->id_by_name('grey1'); #add_rgb([240,240,240]);
@@ -183,8 +184,10 @@ sub _init {
     #################################################################
     # only add the band label if the box is big enough to hold it...
     #################################################################
-        unless ($stain eq "acen" || $stain eq "stalk" || ($self->{'config'}->{'_band_labels'} ne 'on') ||
-                    ($h > ($vc_band_end - $vc_band_start)) ){
+        unless (    $stain eq "acen" || $stain eq "tip" || $stain eq "stalk" ||
+                    ($self->{'config'}->{'_band_labels'} ne 'on') ||
+                    ($h > ($vc_band_end - $vc_band_start))
+        ){
             my $tglyph = new Bio::EnsEMBL::Glyph::Text({
                 'x'                => ($vc_band_end + $vc_band_start - $h)/2,
                 'y'                => $h_offset+$wid+4,
@@ -211,7 +214,10 @@ sub _init {
         ( [8,6],[4,4],[2,2] ) :
         ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
     
-    foreach my $end ( 0, 1 ) {
+    foreach my $end ( 
+        ( $bands[ 0]->stain() eq 'tip' ? () : 0 ),
+        ( $bands[-1]->stain() eq 'tip' ? () : 1 )
+     ) {
         my $direction = $end ? -1 : 1;
         foreach my $I ( 0..$#lines ) {
             my ( $bg_x, $black_x ) = @{$lines[$I]};

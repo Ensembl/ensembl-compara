@@ -37,6 +37,7 @@ sub _init {
     my ($self) = @_;
 
     my $Config = $self->{'config'};
+
     return unless $Config->container_width()>0; # The container has zero width !!EXIT!!
     
 ## FIRSTLY LETS SORT OUT THE COLOURS!!
@@ -110,6 +111,9 @@ sub _init {
     my $BORD;
     my $this_chr = $synteny_data->[0]->{'chr_name'};
     my $highlights_main      = { $this_chr => [] };
+
+    my $CANSEE_OTHER = $Config->{'other_species_installed'};
+
     foreach my $box ( @$synteny_data ) {
         my $other_chr = $box->{'hit_chr_name'};
         if(!$other_chrs{$other_chr}) { ## We have a hit on another chromosome 
@@ -146,12 +150,39 @@ sub _init {
     qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
                 sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
                         $other_chr,$box->{'hit_chr_start'}/1e6,$box->{'hit_chr_end'}/1e6) => 
-qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'})
+( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' )
             }
         };
         if($SIDE) {
             my $marked =
                 ($box->{'chr_start'} <= $self->{'container'}->{'line'} && $self->{'container'}->{'line'} <= $box->{'chr_end'}) ? $SIDE : 0;
+
+            my %zmenu = {
+                'caption' => sprintf("Chr %s %0.1fM-%0.1fM",
+                    $other_chr,
+                    $box->{'hit_chr_start'}/1e6,
+                    $box->{'hit_chr_end'}/1e6
+                 ),
+                 ($box->{'rel_ori'}==1 ?
+                     "02:Forward orientation" :
+                     "02:Reverse orientation" ) => '',
+                sprintf("04:%s Chr %s:%0.1fM-%0.1fM",
+                    $SPECIES_SHORT,
+                    $this_chr,
+                    $box->{'chr_start'}/1e6,
+                    $box->{'chr_end'}/1e6
+                ) => 
+                        qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
+                sprintf("03:%s Chr %s:%0.1fM-%0.1fM",
+                    $OTHER_SHORT,
+                    $other_chr,
+                    $box->{'hit_chr_start'}/1e6,
+                    $box->{'hit_chr_end'}/1e6
+                ) => 
+                    ( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' )
+            };
+            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr) : '' ;
+            $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;
             push @{$highlights_secondary->{$other_chr}}, {
                 'rel_ori' => $box->{'rel_ori'},
                 'id' => $box->{'synteny_id'},
@@ -160,31 +191,9 @@ qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$bo
                 'col' => $COL,
                 'border' => $BORD,
                 'side' => 0,
-                'href' => qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr),
+                'href' => $href,
                 'marked' => $marked,
-                'zmenu' => {
-                    'caption' => sprintf("Chr %s %0.1fM-%0.1fM",
-                            $other_chr,
-                            $box->{'hit_chr_start'}/1e6,
-                            $box->{'hit_chr_end'}/1e6
-                    ),
-                    qq(01:Centre display on this chr.) => qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr),
-                    ($box->{'rel_ori'}==1 ?
-                        "02:Forward orientation" :
-                        "01:Reverse orientation" ) => '',
-                    sprintf("04:%s Chr %s:%0.1fM-%0.1fM",
-                        $SPECIES_SHORT,
-                        $this_chr,
-                        $box->{'chr_start'}/1e6,
-                        $box->{'chr_end'}/1e6) => 
-    qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
-                sprintf("03:%s Chr %s:%0.1fM-%0.1fM",
-                        $OTHER_SHORT,
-                        $other_chr,
-                        $box->{'hit_chr_start'}/1e6,
-                        $box->{'hit_chr_end'}/1e6) => 
-    qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'})
-                }
+                'zmenu' => \%zmenu
             };
         }
     }
@@ -212,6 +221,7 @@ qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$bo
     my $flag = 0;
     my $N=0;
     my $FLAG = $num_chr%2 == 0; ## FLAG MEANS THAT EVEN START AT 0...
+    return if $num_chr==0;
     my $secondary_length = int( 2 * ( $length + $spacing ) / ($num_chr+1-$FLAG) - $spacing );
     foreach my $chr2 ( @chromosomes ) {
         my $chr_length_2  = $kba2->fetch_chromosome_length( $chr2 ) || 0;

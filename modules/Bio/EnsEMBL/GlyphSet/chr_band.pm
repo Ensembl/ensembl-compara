@@ -46,6 +46,7 @@ sub _init {
     $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
     $COL{'gneg'}    = $white;
     $COL{'acen'}    = $cmap->id_by_name('slategrey');
+    $COL{'tip'}     = $cmap->id_by_name('slategrey');
     $COL{'stalk'}   = $cmap->id_by_name('slategrey');
     
     my $im_width = $self->{'config'}->image_width();
@@ -88,14 +89,14 @@ sub _init {
 	
 	my $fontcolour;
 	# change label colour to white if the chr band is black, else use black...
-	if ($stain eq "gpos100" || $stain eq "gpos" || $stain eq "acen" || $stain eq "stalk" || $stain eq "gpos75"){
+	if ($stain eq "gpos100" || $stain eq "gpos" || $stain eq "acen" || $stain eq "stalk" || $stain eq "gpos75" || $stain eq "tip"){
 	    $fontcolour = $white;
 	} else {
 	    $fontcolour = $black;
 	}
 	my $bp_textwidth = $w * length($bandname);
 	# only add the lable if the box is big enough to hold it...
-	unless ($bp_textwidth > ($vc_band_end - $vc_band_start)){
+	unless ($bp_textwidth > ($vc_band_end - $vc_band_start) || $stain eq "tip"|| $stain eq "acen"){
 	    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 		'x'      => $vc_band_start + int(($vc_band_end - $vc_band_start)/2 - ($bp_textwidth)/2),
 		'y'      => 2,

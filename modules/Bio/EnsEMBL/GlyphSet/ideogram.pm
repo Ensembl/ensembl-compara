@@ -48,6 +48,7 @@ sub _init {
     $COL{'gneg'}    = $white;
     $COL{'gpos'}    = $black; #add_rgb([240,240,240]);
     $COL{'acen'}    = $cmap->id_by_name('slategrey');
+    $COL{'tip'}     = $cmap->id_by_name('slategrey');
     $COL{'stalk'}   = $cmap->id_by_name('slategrey');
 
     my $im_width = $Config->image_width();
@@ -182,7 +183,7 @@ sub _init {
 	# only add the band label if the box is big enough to hold it...
 	#################################################################
 	my $bp_textwidth = $w * length($bandname);
-	unless ($stain eq "acen" || $stain eq "stalk" ||($bp_textwidth > ($vc_band_end - $vc_band_start))){
+	unless ($stain eq "acen" || $stain eq "tip" || $stain eq "stalk" ||($bp_textwidth > ($vc_band_end - $vc_band_start))){
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 		'x'      => ($vc_band_end + $vc_band_start - $bp_textwidth)/2,
 		'y'      => 4,
