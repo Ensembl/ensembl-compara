@@ -59,6 +59,8 @@ sub _init {
     my $chr         = $self->{'container'}->{'chr'} || 1;
     my $kba         = $self->{'container'}->{'ka_main'};
     my $kba2        = $self->{'container'}->{'ka_secondary'};
+    my $ca         = $self->{'container'}->{'ca_main'};
+    my $ca2        = $self->{'container'}->{'ca_secondary'};
     my $synteny_data= $self->{'container'}->{'synteny'};
     my $OTHER       = $self->{'container'}->{'other_species'};
     my $OTHER_T     = $OTHER; $OTHER_T =~s/_/ /g;
@@ -72,8 +74,8 @@ sub _init {
     
 ## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
 
-    my $chr_length  = $kba->fetch_chromosome_length( $chr );
-    my @bands       = $kba->fetch_all_by_chromosome( $chr );
+    my $chr_length  = $ca->fetch_by_chr_name( $chr )->length();
+    my $bands       = $kba->fetch_all_by_chr_name( $chr );
 
 ## NOW LETS GRAB THE IMAGE PARAMETERS
     my $im_width            = $Config->image_width();
@@ -203,7 +205,7 @@ sub _init {
         }
     }
     my %main_coords = $self->draw_chromosome( 
-        'bands'         => \@bands,
+        'bands'         => $bands,
         'h_offset'      => $outer_padding + $inner_padding + $secondary_width,
         'v_offset'      => $h_offset,
         'length'        => $length,
@@ -229,8 +231,8 @@ sub _init {
     return if $num_chr==0;
     my $secondary_length = int( 2 * ( $length + $spacing ) / ($num_chr+1-$FLAG) - $spacing );
     foreach my $chr2 ( @chromosomes ) {
-        my $chr_length_2  = $kba2->fetch_chromosome_length( $chr2 ) || 0;
-        my @bands_2       = $kba2->fetch_all_by_chromosome( $chr2 );
+        my $chr_length_2  = $ca2->fetch_by_chr_name( $chr2 )->length() || 0;
+        my $bands_2       = $kba2->fetch_all_by_chr_name( $chr2 );
         my ($h_offset2, $v_offset2) = $flag==0 ?
             ( $h_offset + $N/2 * ( $secondary_length + $spacing ),
               $outer_padding) : # LHS
@@ -239,7 +241,7 @@ sub _init {
         my $mb_p_p = ($chr_length_2 / $secondary_length / 1e6);
         my $ruler = $mb_p_p > 0.75 ? 5e7 : ($mb_p_p > 0.15 ? 2e7 : 1e7);
         my %t = $self->draw_chromosome( 
-            'bands'         => \@bands_2,
+            'bands'         => $bands_2,
             'h_offset'      => $v_offset2,
             'v_offset'      => $h_offset2,
             'length'        => $secondary_length,
