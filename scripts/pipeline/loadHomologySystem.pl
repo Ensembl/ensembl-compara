@@ -8,8 +8,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
-use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
 
 
@@ -342,7 +341,25 @@ sub prepareGenomeAnalysis
   }
 
 
-  
+  #
+  # Homology_dNdS
+  #
+  my $homology_dNdS = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'Homology_dNdS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS',
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($homology_dNdS);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
+    $stats->batch_size(10);
+    $stats->hive_capacity(-1);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $ctrlRuleDBA->create_rule($buildHomology,$homology_dNdS);
+  }
+
+
   return $submit_analysis;
 }
 
