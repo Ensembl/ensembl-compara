@@ -89,8 +89,8 @@ sub new {
  Description: Retrieves alignments between the consensus and query species
               from a specified region of the consensus genome.
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
- Exceptions : returns a ref to an empty list if no DnaFrag or no MethodLinkSpeciesSet
-              is found in the compara DB.
+ Exceptions : returns a ref to an empty list if requested DnaFrag or MethodLinkSpeciesSet
+              are not in the compara DB.
  Caller     : general
 
 =cut
