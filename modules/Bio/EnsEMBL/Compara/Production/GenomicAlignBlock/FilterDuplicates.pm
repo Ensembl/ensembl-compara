@@ -84,22 +84,22 @@ sub fetch_input {
   # $self->parameters OR
   # $self->input_id
   #
-  $self->{'max_set_bps'}              = 10000000; #10Mbase
-  $self->{'genome_db_id'}             = 0;  # 'gdb'
-  $self->{'chunkset_id'}              = 0;
-  $self->{'store_seq'}                = 0;
-  $self->{'overlap'}                  = 1000;
-  $self->{'chunk_size'}               = 1000000;
-  $self->{'region'}                   = undef;
-  $self->{'analysis_job'}             = undef;
+  $self->{'window_size'}              = 1000000; #1Mbase
+  $self->{'overlap'}                  = undef;
+  $self->{'chunk_size'}               = undef;
+  $self->{'method_link_species_set_id'} = undef;
+  $self->{'options'} = undef;
   $self->debug(0);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
-  throw("No genome_db specified") unless defined($self->{'genome_db_id'});
+  throw("No dnafrag_id specified") unless defined($self->{'dnafrag_id'});
+  if ($self->{'options'} eq "in_chunk_overlaps" && ! defined $self->{'overlap'} && ! defined $self->{'chunk_size'}) {
+    throw("If options is \'in_chunk_overlaps\', then overlap and chunk_size must be defined, and one of these is not\n");
+  }
   $self->print_params;
-  
+
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
@@ -118,13 +118,13 @@ sub run
 
 
 sub write_output 
-{  
+{
   my $self = shift;
 
   my $output_id = $self->input_id;
 
   print("output_id = $output_id\n");
-  $self->input_id($output_id);                    
+  $self->input_id($output_id);
   return 1;
 }
 
@@ -148,9 +148,23 @@ sub get_params {
   foreach my $key (keys %$params) {
     print("  $key : ", $params->{$key}, "\n");
   }
-
+  # from analysis parameters
   $self->{'method_link_species_set_id'} = $params->{'method_link_species_set_id'} 
     if(defined($params->{'method_link_species_set_id'}));
+  $self->{'chunk_size'} = $params->{'chunk_size'}
+    if(defined($params->{'chunk_size'}));
+  $self->{'overlap'} = $params->{'overlap'}
+    if(defined($params->{'overlap'}));
+  $self->{'options'} = $params->{'options'}
+    if(defined($params->{'options'}));
+
+  # from job input_id
+  $self->{'dnafrag_id'} = $params->{'dnafrag_id'}
+    if(defined($params->{'dnafrag_id'}));
+  $self->{'seq_region_start'} = $params->{'seq_region_start'}
+    if(defined($params->{'seq_region_start'}));
+  $self->{'seq_region_end'} = $params->{'seq_region_end'}
+    if(defined($params->{'seq_region_end'}));
 
   return;
 
@@ -168,7 +182,10 @@ sub print_params {
 sub filter_duplicates {
   my $self = shift;
 
-  my $segment_length = 1000000;
+  my $overlap = $self->{'overlap'};
+  my $chunk_size = $self->{'chunk_size'};
+  my $options = $self->{'options'};
+  my $window_size = $self->{'window_size'};
   $self->{'overlap_count'}   = 0;
   $self->{'identical_count'} = 0;
   $self->{'gab_count'} = 0;
@@ -176,55 +193,88 @@ sub filter_duplicates {
   $self->{'not_truncate_count'} = 0;
 
   $self->{'delete_hash'} = {}; #all the genomic_align_blocks that need to be deleted
-  
   $self->{'overlap_hash'} = {};
-    
+
   my $mlss = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->{'method_link_species_set_id'});
   my ($gdb1, $gdb2) = @{$mlss->species_set};
   if($gdb1->dbID > $gdb2->dbID) {
     my $tmp = $gdb1; $gdb1=$gdb2; $gdb2=$tmp;
   }
-  
+
   my $GAB_DBA = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
-  my $dnafrag_list = $self->{'comparaDBA'}->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($gdb2);
-  
-  foreach my $dnafrag (@$dnafrag_list) {
-    my $region_start = 0;
+  # create a list of dnafrag here in case we want to make this runnable working with an input_id 
+  # containing a list of dnafrag_ids
+  my $dnafrag_list = [$self->{'comparaDBA'}->get_DnaFragAdaptor->fetch_by_dbID($self->{'dnafrag_id'})];
+
+  foreach my $dnafrag (@{$dnafrag_list}) {
+    my $region_start = $self->{'seq_region_start'};
+    $region_start = 1 unless (defined $region_start);
     #printf("dnafrag (%d)%s:%s len=%d\n", $dnafrag->dbID, $dnafrag->coord_system_name, $dnafrag->name, $dnafrag->length);
-    
-    while($region_start <= $dnafrag->length) {
-      my $region_end = $region_start + 100000; # length_of_overlap_region
-      #my $region_end = $region_start + $segment_length;
-      
-      my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
-                           $mlss, $dnafrag, $region_start, $region_end);
-                           
+    my $seq_region_end = $self->{'seq_region_end'};
+    $seq_region_end = $dnafrag->length unless (defined $seq_region_end);
+
+    if ($options eq "in_chunk_overlaps") {
+      $region_start += $chunk_size - $overlap;
+    }
+
+    while($region_start <= $seq_region_end) {
+      my $region_end;
+      if ($options eq "in_chunk_overlaps") {
+        $region_end = $region_start + $overlap - 1;
+      } else { #$options eq "all"
+        $region_end = $region_start + $window_size;
+      }
+
+      my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+        ($mlss, $dnafrag, $region_start, $region_end);
+
       printf("dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
              $region_start, $region_end, scalar(@$genomic_align_block_list));
-             
+
       foreach my $gab (@{$genomic_align_block_list}) {
         $self->assign_jobID_to_genomic_align_block($gab);
       }
-      
+
       # first sort the list for processing
       my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
       $self->{'gab_count'} += scalar(@sorted_GABs);
-      
+
       # remove all the equal duplicates from the list
       $self->removed_equals_from_genomic_align_block_list(\@sorted_GABs);
 
       # now process remaining list (still sorted) for overlaps
       $self->remove_edge_artifacts_from_genomic_align_block_list(\@sorted_GABs, $region_start, $region_end);
 
-      $region_start += 1000000; # distance_to_next_overlap_start
-      #$region_start = $region_end;
+      if ($options eq "in_chunk_overlaps") {
+        $region_start += $chunk_size - $overlap;
+      } else { #$options eq "all"
+        $region_start = $region_end;
+      }
     }
   }
 
-  my @del_list = values(%{$self->{'delete_hash'}});  
+  my @del_list = values(%{$self->{'delete_hash'}});
+
+  my $sql_genomic_align_group = "delete from genomic_align_group where genomic_align_id = ?";
+  my $sql_genomic_align = "delete from genomic_align where genomic_align_id = ?";
+  my $sql_genomic_align_block = "delete from genomic_align_block where genomic_align_block_id = ?";
+
+  my $sth_genomic_align_group = $self->{'comparaDBA'}->prepare($sql_genomic_align_group);
+  my $sth_genomic_align = $self->{'comparaDBA'}->prepare($sql_genomic_align);
+  my $sth_genomic_align_block = $self->{'comparaDBA'}->prepare($sql_genomic_align_block);
+
   foreach my $gab (@del_list) {
     #print("DELETE "); print_gab($gab);
+    foreach my $ga (@{$gab->genomic_align_array}) {
+      $sth_genomic_align_group->execute($ga->dbID);
+      $sth_genomic_align->execute($ga->dbID);
+    }
+    $sth_genomic_align_block->execute($gab->dbID);
   }
+
+  $sth_genomic_align_group->finish;
+  $sth_genomic_align->finish;
+  $sth_genomic_align_block->finish;
 
   printf("%d gabs to delete\n", scalar(keys(%{$self->{'delete_hash'}})));
   printf("found %d equal GAB pairs\n", $self->{'identical_count'});
@@ -518,6 +568,5 @@ sub process_overlap_for_chunk_edge_truncation {
     }
   }
 }
-
 
 1;
