@@ -1,8 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::trace;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+# use Bio::EnsEMBL::GlyphSet_simple;
+# @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+use Bio::EnsEMBL::GlyphSet_feature;
+@ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
 
 sub my_label { return "Mouse trace"; }
@@ -17,13 +19,13 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url( 'TRACE', $f->id );
+    return $self->{'config'}->{'ext_url'}->get_url( 'TRACE', $f );# $f->id );
 }
 
 sub zmenu {
     my ($self, $f ) = @_;
     return { 
-		'caption'    => $f->id,
+		'caption'    => $f, # $f->id,
 		'View trace' => $self->href( $f )
     };
 }
