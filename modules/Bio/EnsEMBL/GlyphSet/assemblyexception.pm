@@ -13,11 +13,21 @@ my %MAP = (
  'PAR' => 'Pseudo-autosomal region' 
 );
 
-sub my_label { my $self = shift; return $self->{'config'}->get('_settings','simplehap') ? '' : "HAP/PAR."; }
+sub my_label { 
+    my $self = shift;
+    if ($self->{'config'}->get('lab') eq 'off') {
+	return;
+    }
+    return $self->{'config'}->get('_settings','simplehap') ? '' : "HAP/PAR.";
+}
 
 sub features {
   my ($self) = @_;
-  return $self->{'container'}->get_all_AssemblyExceptionFeatures();
+  my $r = $self->{'container'}->get_all_AssemblyExceptionFeatures();
+#  warn scalar @$r;
+#  warn Data::Dumper::Dumper($r);
+  return $r;
+
 }
 
 sub tag {
@@ -57,6 +67,7 @@ sub zmenu {
 
 sub image_label {
   my ($self, $f) = @_;
+  return undef if $self->my_config( 'label' ) eq 'off';
   if( $self->{'config'}->get('_settings','simplehap') ) {
     return $self->{'strand'} > 0 ? undef : ( $f->{'alternate_slice'}->seq_region_name, 'under' ) ;
   }
@@ -65,7 +76,7 @@ sub image_label {
   my $e2 = $f->{'alternate_slice'}->end;
   my $o2 = $f->{'alternate_slice'}->strand;
   my $name2 = "@{[$f->type]} $c2:$s2-$e2 ($o2)";
-  return( $name2, 'under' );
+  return( $name2,'under' );
 }
 
 sub colour {
