@@ -23,6 +23,7 @@ Options:
 my $help = 0;
 my $store = 0;
 my $host;
+my $port = "";
 my $dbname;
 my $dbuser;
 my $dbpass;
@@ -30,6 +31,7 @@ my $conf_file;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
+	   'port=i' => \$port,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
@@ -41,6 +43,7 @@ if ($help) {
 }
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                     -port   => $port,
                                                      -user   => $dbuser,
                                                      -pass   => $dbpass,
                                                      -dbname => $dbname,
@@ -65,7 +68,7 @@ foreach my $family_id (@{$fa->list_internal_ids}) {
     print STDERR "peptide: ", $member->stable_id,"\n";
     my $gdb = $genome_db{$member->taxon_id};
     my $ga = $gdb->db_adaptor->get_GeneAdaptor;
-    my $gene = $ga->fetch_by_Peptide_id($member->stable_id);
+    my $gene = $ga->fetch_by_translation_stable_id($member->stable_id);
 
     next if (defined $already_stored{$gene->stable_id . "_" .$family->stable_id});
 
@@ -73,17 +76,18 @@ foreach my $family_id (@{$fa->list_internal_ids}) {
     my $gene_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE',$gene->stable_id);
     
     unless (defined $gene_member) {
-      my $empty_slice = new Bio::EnsEMBL::Slice(-empty => 1,
-                                                -adaptor => $gdb->db_adaptor->get_SliceAdaptor);
-      $gene->transform( $empty_slice );
+      $gene = $gene->transform('toplevel');
+      unless (defined $gene) {
+        warn "gene->transform method failed\n";
+      }
       $gene_member = new Bio::EnsEMBL::Compara::Member;
       $gene_member->stable_id($gene->stable_id);
       $gene_member->taxon_id($member->taxon_id);
       $gene_member->description("NULL");
       $gene_member->genome_db_id($gdb->dbID);
-      $gene_member->chr_name($gene->chr_name);
-      $gene_member->chr_start($gene->start);
-      $gene_member->chr_end($gene->end);
+      $gene_member->chr_name($gene->seq_region_name);
+      $gene_member->chr_start($gene->seq_region_start);
+      $gene_member->chr_end($gene->seq_region_end);
       $gene_member->sequence("NULL");
       $gene_member->source_name("ENSEMBLGENE");
     }
