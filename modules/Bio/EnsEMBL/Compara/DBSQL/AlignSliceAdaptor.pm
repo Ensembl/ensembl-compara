@@ -155,6 +155,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
           -adaptor => $self,
           -reference_Slice => $reference_slice,
           -Genomic_Align_Blocks => $genomic_align_blocks,
+          -method_link_species_set => $method_link_species_set,
           -expanded => $expanded,
       );
   $self->{'_cache'}->{$key} = $align_slice;

@@ -129,9 +129,11 @@ sub new {
   my $self = {};
   bless $self,$class;
 
-  my ($adaptor, $reference_slice, $genomic_align_blocks, $expanded) =
+  my ($adaptor, $reference_slice, $genomic_align_blocks, $method_link_species_set,
+      $expanded) =
       rearrange([qw(
-          ADAPTOR REFERENCE_SLICE GENOMIC_ALIGN_BLOCKS EXPANDED
+          ADAPTOR REFERENCE_SLICE GENOMIC_ALIGN_BLOCKS METHOD_LINK_SPECIES_SET
+          EXPANDED 
       )], @args);
 
   $self->adaptor($adaptor) if (defined ($adaptor));
@@ -141,17 +143,13 @@ sub new {
       $self->add_GenomicAlignBlock($this_genomic_align_block);
     }
   }
+  $self->{_method_link_species_set} = $method_link_species_set if (defined($method_link_species_set));
 
   $self->{expanded} = 0;
   if ($expanded) {
     $self->{expanded} = 1;
   }
-    $self->_create_underlying_Slices($genomic_align_blocks, $expanded);
-
-#   } else {
-#     $self->{slice} = $reference_slice;
-# 
-#   }
+  $self->_create_underlying_Slices($genomic_align_blocks, $expanded);
 
   return $self;
 }
@@ -200,8 +198,6 @@ TODO: check negative strand!!
 
 sub _create_underlying_Slices {
   my ($self, $genomic_align_blocks, $expanded) = @_;
-
-  return $self if (!$genomic_align_blocks or !@$genomic_align_blocks);
 
   ## Calculate the length of the fake_slice
   my $align_slice_length = 0;
@@ -364,15 +360,17 @@ sub _create_underlying_Slices {
 # # #       );
 # # #   $self->{slice} = $fake_slice;
 
-  my $ref_species = $genomic_align_blocks->[0]->reference_genomic_align->dnafrag->genome_db->name;
-  $self->{slices}->{$ref_species} = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
-          -length => $align_slice_length,
-          -requesting_slice => $self->reference_Slice,
-          -method_link_species_set => $genomic_align_blocks->[0]->method_link_species_set,
-          -name => $ref_species,
-          -expanded => $expanded,
-      );
-#   $self->{slices}->{$ref_species}->to_Mapper($big_mapper) if (!$expanded);
+  foreach my $species (@{$self->{_method_link_species_set}->species_set}) {
+    $self->{slices}->{$species->name} = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+            -length => $align_slice_length,
+            -requesting_slice => $self->reference_Slice,
+            -method_link_species_set => $self->{_method_link_species_set},
+            -name => $species->name,
+            -expanded => $expanded,
+        );
+  }
+  my $ref_species =
+      $self->reference_Slice->adaptor->db->get_MetaContainer->get_Species->binomial;
   $self->{slices}->{$ref_species}->add_Slice_Mapper_pair(
           $self->reference_Slice,
           $big_mapper,
@@ -388,16 +386,8 @@ sub _create_underlying_Slices {
 #               (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
             (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
       my $species = $this_genomic_align->dnafrag->genome_db->name;
-      if (!defined($self->{slices}->{$species})) {
-        $self->{slices}->{$species} = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
-                -length => $align_slice_length,
-                -requesting_slice => $self->reference_Slice,
-                -method_link_species_set => $this_genomic_align_block->method_link_species_set,
-                -name => $species,
-                -expanded => $expanded,
-            );
-#         $self->{slices}->{$species}->to_Mapper($big_mapper) if (!$expanded);
-      }
+      throw ("This species [$species] is not included in the Bio::EnsEMBL::Compara::MethodLinkSpeicesSet")
+          if (!defined($self->{slices}->{$species}));
       if (!defined($slice_adaptors->{$species})) {
         $slice_adaptors->{$species} =
             $this_genomic_align->dnafrag->genome_db->db_adaptor->get_SliceAdaptor;

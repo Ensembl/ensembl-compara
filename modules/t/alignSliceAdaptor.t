@@ -38,7 +38,7 @@ perl -w ../../../ensembl-test/scripts/runtests.pl -c
 
 This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
 
-This script includes 250 tests.
+This script includes 257 tests.
 
 =head1 AUTHOR
 
@@ -65,7 +65,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 250;
+    plan tests => 257;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -884,6 +884,36 @@ do {
       "exon 1 of transcript 2 cannot be mapped");
   ok($chicken_genes->[0]->get_all_Transcripts->[1]->get_all_Exons->[6]->start, undef,
       "exon 7 of transcript 2 cannot be mapped");
+};
+
+do {
+  debug("coordinates without any alignment");
+
+  $slice_start = 50119800;
+  $slice_end =   50120295;
+  
+  $slice = $slice_adaptor->fetch_by_region(
+        $slice_coord_system_name,
+        $slice_seq_region_name,
+        $slice_start,
+        $slice_end,
+        1
+    );
+  ok($slice);
+  
+  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+      $slice, $human_rat_blastznet_mlss, "expanded");
+
+  ok($align_slice);
+  
+  ok($align_slice->{slices}->{'Homo sapiens'});
+  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
+      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
+  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($seq, $slice->seq);
+  $seq = $align_slice->{slices}->{'Rattus norvegicus'}->seq;
+  ok($seq, "/^\\.+\$/");
 };
 
 do {
