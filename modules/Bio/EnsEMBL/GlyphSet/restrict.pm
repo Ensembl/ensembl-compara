@@ -26,8 +26,8 @@ sub _init {
     my $config = $self->{'config'};
     my $length = $vc->length;
  
-    my $limit = $config->get('restrict','threshold') || 25;
-    if($length > $limit * 1000) {
+    my $limit = $config->get('restrict','threshold') || 5;
+    if($length > $limit * 1010) {
 	$self->errorTrack('Restriction enzymes not displayed for more than '.$limit.'Kb');
         return;
     }

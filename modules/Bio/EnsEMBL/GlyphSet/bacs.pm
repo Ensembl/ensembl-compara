@@ -30,7 +30,8 @@ sub colour {
     my ($self, $f) = @_;
     my $state = $f->status;
     return $self->{'colours'}{"col_$state"},
-           $self->{'colours'}{"lab_$state"} ;
+           $self->{'colours'}{"lab_$state"},
+           $f->length > $self->{'config'}->get( "bacs", 'outline_threshold' ) ? 'border' : '';
 }
 
 sub image_label {
