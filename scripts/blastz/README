@@ -1,36 +1,50 @@
 
-Example for Hs34 against Rn3
+Example for Hs35 against Mm33
 
 1- download the sql data from ucsc
 
-cd /ecs2/work3/abel/blastz/Hs34Rn3/
+cd /ecs2/work3/abel/blastz/Hs35Mm33/
 mkdir ucsc_sql;cd ucsc_sql
 
 wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database
 
+Then you have to know what is the mouse abbreviation used by UCSC, here is Mm5
 
-grep Rn3 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;do wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i;done
+
+grep Mm5 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;do wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i;done
 
 2- set up a mysql database
 
-echo "create database ucsc_chain_data_Hs34Rn3;"|mysql -h ecs4 -P3352 -u ensadmin -pensembl
+mysql -h ecs2 -P3366 -u ensadmin -pensembl -e "create database abel_ucsc_chain_data_Hs35Mm33"
 
  create the tables
 
-ls *.sql|while read i;do mysql -h ecs4 -P3352 -u ensadmin -pensembl ucsc_chain_data_Hs34Rn3 < $i;done
+ls *.sql|while read i;do mysql -h ecs2 -P3366 -u ensadmin -pensembl abel_ucsc_chain_data_Hs35Mm33 < $i;done
 
  load the data
 
-ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz;mysqlimport -h ecs4 -P3352 -u ensadmin -pensembl ucsc_chain_data_Hs34Rn3 $i;gzip $i;echo $i loaded;done
+ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz;mysqlimport -h ecs2 -P3366 -u ensadmin -pensembl abel_ucsc_chain_data_Hs35Mm33 $i;gzip $i;echo $i loaded;done
 
-# create a new index, not necessary, I created it just for conviniance for debugging :)
-# create index chainId on netRn3 (chainId); 
 
 Load in compara
 
-mysql -h ecs4 -P3352 -u ensro -N -e "show tables" ucsc_chain_data_Mm33Rn3|awk -F "_chain" '/^chr/ {print $1}'|sort -u|while read i;do bsub -o $i.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl --ucsc_dbname ucscMm33Rn3 --dbname abelcompara24test --tSpecies mouse  --tName $i --qSpecies Rn3 --method_link_type BLASTZ_NET ;done
+cd ../load
 
-WARNING: The only requirement here is that the registry alias name of the --qSpecies (in the example Rn3) has 
-to be the same as the name of the netRn3 table in the UCSC database.
+mysql -h ecs2 -P3366 -u ensro -N -e "show tables" abel_ucsc_chain_data_Hs35Mm33|awk -F "_chain" '/^chr/ {print $1}'|sort -u|while read i;do bsub -o $i.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl --ucsc_dbname ucscHs35Mm33 --dbname abelcompara26 --tSpecies human --tName $i --qSpecies Mm5 --method_link_type BLASTZ_NET ;done
+
+WARNING: The only requirement here is that the registry alias name of the --qSpecies (in the example Mm5) has 
+to be the same as the name of the netMm5 table in the UCSC database.
 For example, if the net table from UCSC is named netGalGal2, one of registry alias name of the corresponding chicken core
 database has to be GalGal2.
+And obviously you should have aliases set for -tSpecies, whatever you like. You should also have aliases set for the 
+ucsc databases e.g. here
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'ecs2',
+                                            -user => 'ensadmin',
+                                            -pass => 'ensembl',
+                                            -port => 3366,
+                                            -disconnect_when_inactive => 1,
+                                            -species => 'ucscHs35Mm33',
+                                            -dbname => 'abel_ucsc_chain_data_Hs35Mm33');
+
+the only alias is ucscHs35Mm33.
