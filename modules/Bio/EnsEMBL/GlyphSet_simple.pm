@@ -111,17 +111,38 @@ sub _init {
         
         my @tag_glyphs = ();
 
-        my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-            'x'          => $start,
-            'y'          => 0,
-            'width'      => $end - $start + 1,
-            'height'     => $h,
-            $part_to_colour."colour" => $feature_colour,
-            'absolutey'  => 1
-        });
-## Lets see about placing labels on objects...        
         my $composite = new Bio::EnsEMBL::Glyph::Composite();
-        $composite->push($glyph);
+        my $glyph;
+        if($part_to_colour eq 'line') {
+            
+            print STDERR "PUSHING LINE\n"; 
+            $composite->push( new Bio::EnsEMBL::Glyph::Space({
+                'x'          => $start,
+                'y'          => 0,
+                'width'      => $end - $start + 1,
+                'height'     => $h,
+                "colour"     => $feature_colour,
+                'absolutey'  => 1
+            }));
+            $composite->push( new Bio::EnsEMBL::Glyph::Rect({
+                'x'          => $start,
+                'y'          => $h/2+1,
+                'width'      => $end - $start + 1,
+                'height'     => 0,
+                "colour"     => $feature_colour,
+                'absolutey'  => 1
+            }));
+        } else {
+            $composite->push( new Bio::EnsEMBL::Glyph::Rect({
+                'x'          => $start,
+                'y'          => 0,
+                'width'      => $end - $start + 1,
+                'height'     => $h,
+                $part_to_colour."colour" => $feature_colour,
+                'absolutey'  => 1
+            }) );
+        }
+## Lets see about placing labels on objects...        
         my $rowheight = int($h * 1.5);
 
         if( $self->can('tag')) {
@@ -156,6 +177,48 @@ sub _init {
         	    	    'colour'    => $tag->{'colour'},
             	    	'absolutey' => 1,
         	        });
+                    push @tag_glyphs, $triangle;
+                } elsif($tag->{'style'} eq 'right-snp') {
+                    next if($end < $f->end());
+                    my $triangle_start =  $end - 4/$pix_per_bp;
+                    my $triangle_end   =  $end + 4/$pix_per_bp;
+    	            my $line = new Bio::EnsEMBL::Glyph::Space({
+                        'x'          => $triangle_start,
+                        'y'          => $h,
+                        'width'      => 8/$pix_per_bp,
+                        'height'     => 0,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $triangle_start, $h,
+                                         $end,            0,
+                                         $triangle_end,   $h  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    $composite->push($line);
+                    push @tag_glyphs, $triangle;
+                } elsif($tag->{'style'} eq 'left-snp') {
+                    next if($start > $f->start());
+                    my $triangle_start =  $start - 4/$pix_per_bp;
+                    my $triangle_end   =  $start + 4/$pix_per_bp;
+    	            my $line = new Bio::EnsEMBL::Glyph::Space({
+                        'x'          => $triangle_start,
+                        'y'          => $h,
+                        'width'      => 8/$pix_per_bp,
+                        'height'     => 0,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $triangle_start, $h,
+                                         $start, 0,
+                                         $triangle_end, $h  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    $composite->push($line);
                     push @tag_glyphs, $triangle;
                 } elsif($tag->{'style'} eq 'right-triangle') {
                     my $triangle_start =  $end - 3/$pix_per_bp;

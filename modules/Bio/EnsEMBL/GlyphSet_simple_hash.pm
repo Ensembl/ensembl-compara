@@ -82,6 +82,7 @@ sub _init {
        $self->{'colours'} = $Config->get($type, 'colours');
     my $feature_colour    = $Config->get($type, 'col') || $self->{'colours'} && $self->{'colours'}{'col'};
     my $label_colour      = $Config->get($type, 'lab') || $self->{'colours'} && $self->{'colours'}{'lab'};
+    my $part_to_colour    = '';
     my $hi_colour         = $Config->get($type, 'hi')  || $self->{'colours'} && $self->{'colours'}{'hi'};
 
     my $dep            = $Config->get($type, 'dep');
@@ -101,19 +102,39 @@ sub _init {
 
         $flag = 0;
         my @tag_glyphs;
-        ($feature_colour, $label_colour) = $self->colour( $f ) if $self->can('colour');
+        ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f ) if $self->can('colour');
         
-        my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-            'x'          => $start,
-            'y'          => 0,
-            'width'      => $end - $start + 1,
-            'height'     => $h,
-            'colour'     => $feature_colour,
-            'absolutey'  => 1
-        });
-## Lets see about placing labels on objects...        
         my $composite = new Bio::EnsEMBL::Glyph::Composite();
-        $composite->push($glyph);
+        my $glyph;
+        if($part_to_colour eq 'line') {
+            
+            print STDERR "PUSHING LINE\n"; 
+            $composite->push( new Bio::EnsEMBL::Glyph::Space({
+                'x'          => $start,
+                'y'          => 0,
+                'width'      => $end - $start + 1,
+                'height'     => $h,
+                "colour"     => $feature_colour,
+                'absolutey'  => 1
+            }));
+            $composite->push( new Bio::EnsEMBL::Glyph::Rect({
+                'x'          => $start,
+                'y'          => $h/2,
+                'width'      => $end - $start + 1,
+                'height'     => 0,
+                "colour"     => $feature_colour,
+                'absolutey'  => 1
+            }));
+        } else {
+            $composite->push( new Bio::EnsEMBL::Glyph::Rect({
+                'x'          => $start,
+                'y'          => 0,
+                'width'      => $end - $start + 1,
+                'height'     => $h,
+                $part_to_colour."colour" => $feature_colour,
+                'absolutey'  => 1
+            }) );
+        }
         my $rowheight = $h * 1.5;
         if( $self->can('tag')) {
             foreach my $tag ( $self->tag($f) ) {
@@ -151,7 +172,7 @@ sub _init {
                 } elsif($tag->{'style'} eq 'triangle') {
                     my $triangle_start =  $start - 4/$pix_per_bp;
                     my $triangle_end   =  $start + 4/$pix_per_bp;
-    	            my $line = new Bio::EnsEMBL::Glyph::Rect({
+    	            my $line = new Bio::EnsEMBL::Glyph::Space({
                         'x'          => $triangle_start,
                         'y'          => $h,
                         'width'      => 8/$pix_per_bp,

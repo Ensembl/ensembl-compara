@@ -34,6 +34,19 @@ sub features {
     );
 }
 
+sub tag {
+    my( $self, $f ) = @_;
+    my $col = $self->{'config'}->get($self->check(), 'col');
+    return { 'style'  => 'right-snp',
+             'colour' => $col },
+           { 'style'  => 'left-snp',
+             'colour' => $col };
+}
+
+sub colour {
+    my( $self, $f ) = @_;
+    return $self->{'config'}->get($self->check(), 'col'), $self->{'config'}->get($self->check(), 'lab'), 'line'; 
+}
 sub href {
     my ($self, $f ) = @_;
     return "/$ENV{'ENSEMBL_SPECIES'}/haploview?haplotype=".$f->id;
@@ -42,7 +55,7 @@ sub zmenu {
     my ($self, $f ) = @_;
     return { 
         'caption'        => $f->id,
-	'Haplotype info' => $self->href($f)
+	    'Haplotype info' => $self->href($f)
     };
 }
 
