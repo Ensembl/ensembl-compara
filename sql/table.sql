@@ -55,6 +55,7 @@ CREATE TABLE genome_db (
 #
 
 CREATE TABLE genomic_align_block (
+  align_block_id int(10) NOT NULL AUTO_INCREMENT,
   consensus_dnafrag_id int(10) DEFAULT '0' NOT NULL,
   consensus_start int(10) DEFAULT '0' NOT NULL,
   consensus_end int(10) DEFAULT '0' NOT NULL,
@@ -70,6 +71,7 @@ CREATE TABLE genomic_align_block (
   level_id int(10) DEFAULT '0' NOT NULL,
   strands_reversed tinyint(1) DEFAULT '0' NOT NULL,
 
+  KEY align_block_id (align_block_id),
   KEY consensus_idx (consensus_dnafrag_id,method_link_id,consensus_start,consensus_end,query_dnafrag_id),
   KEY query_dnafrag_id (query_dnafrag_id,method_link_id,query_start,query_end),
   KEY query_dnafrag_id_2 (query_dnafrag_id,method_link_id,query_end)
