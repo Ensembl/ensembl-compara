@@ -18,7 +18,7 @@ my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
   (-host => "ecs2e",
    -user => "ensadmin",
    -pass => "ensembl",
-   -dbname => "ensembl_compara_new_schema",
+   -dbname => "abel_new_compara_test",
    -conf_file => "/nfs/acari/abel/src/ensembl_main/compara-family-merge/modules/Bio/EnsEMBL/Compara/Compara.conf");
 
 my $gdb = $compara_db->get_GenomeDBAdaptor;
@@ -109,7 +109,7 @@ foreach my $family (@{$families}) {
 
     my $attribute = new Bio::EnsEMBL::Compara::Attribute;
     $attribute->cigar_line("NULL");
-    # need to be modified to generate cigarline....
+
     if (defined $member->alignment_string) {
       my $alignment_string = $member->alignment_string;
       $alignment_string =~ s/\-([A-Z])/\- $1/g;
@@ -126,10 +126,9 @@ foreach my $family (@{$families}) {
         }
       }
       $attribute->cigar_line($cigar_line);
-#      $attribute->cigar_line($member->alignment_string);
     }
     
-    $new_family->add_Relation([$new_member, $attribute]);
+    $new_family->add_Member_Attribute([$new_member, $attribute]);
   }
   
   my $cfa = $compara_db->get_FamilyAdaptor;

@@ -156,7 +156,7 @@ foreach my $genomedb (@{$gdb->fetch_all}) {
           'member_end' => $pf->end
          });
 
-      $domain->add_Relation( [ $member, $attribute ] );
+      $domain->add_Member_Attribute( [ $member, $attribute ] );
 
       if (defined $domain_ip) {
         unless (defined $member_added_to_domain_ip{$domain_ip->stable_id . $member->stable_id}) {
@@ -165,7 +165,7 @@ foreach my $genomedb (@{$gdb->fetch_all}) {
               'member_start' => "NULL",
               'member_end' => "NULL"
              });
-          $domain_ip->add_Relation( [ $member, $attribute_ip ] );
+          $domain_ip->add_Member_Attribute( [ $member, $attribute_ip ] );
           $member_added_to_domain_ip{$domain_ip->stable_id . $member->stable_id} = 1;
         }
       }
