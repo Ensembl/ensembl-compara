@@ -85,52 +85,58 @@ our $verbose = 0;
 ## Connect to the test database using the MultiTestDB.conf file
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
-my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
+my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
+my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
-my $compara_db = $multi->get_DBAdaptor( "compara" );
-my $gdba = $compara_db->get_GenomeDBAdaptor();
+my $species = [
+        "homo_sapiens",
+#         "mus_musculus",
+        "rattus_norvegicus",
+        "gallus_gallus",
+    ];
 
-my $hs_gdb = $gdba->fetch_by_name_assembly( "Homo sapiens", 'NCBI34' );
-my $mm_gdb = $gdba->fetch_by_name_assembly( "Mus musculus", 'NCBIM32' );
-my $rn_gdb = $gdba->fetch_by_name_assembly( "Rattus norvegicus", 'RGSC3.1' );
-
-$hs_gdb->db_adaptor($homo_sapiens->get_DBAdaptor('core'));
-$mm_gdb->db_adaptor($mus_musculus->get_DBAdaptor('core'));
-$rn_gdb->db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (@$species) {
+  my $species_db = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  my $species_db_adaptor = $species_db->get_DBAdaptor('core');
+  my $species_gdb = $genome_db_adaptor->fetch_by_name_assembly(
+          $species_db_adaptor->get_MetaContainer->get_Species->binomial,
+          $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version
+      );
+  $species_gdb->db_adaptor($species_db_adaptor);
+}
 
 ##
 #####################################################################
   
 my $genomic_align;
 my $all_genomic_aligns;
-my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor();
-my $genomic_align_block_adaptor = $compara_db->get_GenomicAlignBlockAdaptor();
-my $method_link_species_set_adaptor = $compara_db->get_MethodLinkSpeciesSetAdaptor();
-my $dnafrag_adaptor = $compara_db->get_DnaFragAdaptor();
-my $genomic_align_group_adaptor = $compara_db->get_GenomicAlignGroupAdaptor();
-my $genomeDB_adaptor = $compara_db->get_GenomeDBAdaptor();
+my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor();
+my $genomic_align_block_adaptor = $compara_db_adaptor->get_GenomicAlignBlockAdaptor();
+my $method_link_species_set_adaptor = $compara_db_adaptor->get_MethodLinkSpeciesSetAdaptor();
+my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
+my $genomic_align_group_adaptor = $compara_db_adaptor->get_GenomicAlignGroupAdaptor();
+my $genomeDB_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 my $fail;
 
-my $dbID = 7279606;
-my $genomic_align_block_id = 3639804;
+my $dbID = 11714534;
+my $genomic_align_block_id = 5857270;
 my $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
-my $method_link_species_set_id = 2;
+my $method_link_species_set_id = 72;
 my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
 my $dnafrag_id = 19;
 my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
-my $dnafrag_start = 50007134;
-my $dnafrag_end = 50007289;
+my $dnafrag_start = 49999812;
+my $dnafrag_end = 50000028;
 my $dnafrag_strand = 1;
 my $level_id = 1;
 my $genomic_align_group_1_id = 1;
 my $genomic_align_group_1_type = "default";
 my $genomic_align_group_1 = $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_1_id);
 my $genomic_align_groups = [$genomic_align_group_1];
-my $cigar_line = "15MG78MG63M";
-my $aligned_sequence = "TCATTGGCTCATTTT-ATTGCATTCAATGAATTGTTGGAAATTAGAGCCAGCCAAAAATTGTATAAATATTGGGCTGTGTCTGCTTCTCTGACA-CTAGATGAAGATGGCATTTGTGCCTGTGTGTCTGTGGGGTCCTCAGGAAGCTCTTCTCCTTGA";
-my $original_sequence = "TCATTGGCTCATTTTATTGCATTCAATGAATTGTTGGAAATTAGAGCCAGCCAAAAATTGTATAAATATTGGGCTGTGTCTGCTTCTCTGACACTAGATGAAGATGGCATTTGTGCCTGTGTGTCTGTGGGGTCCTCAGGAAGCTCTTCTCCTTGA";
+my $cigar_line = "86M2G63MG34M7G6M12G15M44G13M";
+my $aligned_sequence = "TAGTATCCTTTGATGAACAAAAGTTTTTACTTTTGACAAAGTCTAATTTATCTGTTTTTTATTGCTTGCAGAAAGGCACCCAAGTT--GATTATGATTTTTATGACCATGATTATAGCAGTAAAACAACTAATCTTGCACTGACAGTATTA-CCAAGATCCTATCTGTTGAGGATAGTATATTTCT-------GATAGC------------TAGATTTGCTTTAGG--------------------------------------------TGTATATATGTAA";
+my $original_sequence = "TAGTATCCTTTGATGAACAAAAGTTTTTACTTTTGACAAAGTCTAATTTATCTGTTTTTTATTGCTTGCAGAAAGGCACCCAAGTTGATTATGATTTTTATGACCATGATTATAGCAGTAAAACAACTAATCTTGCACTGACAGTATTACCAAGATCCTATCTGTTGAGGATAGTATATTTCTGATAGCTAGATTTGCTTTAGGTGTATATATGTAA";
 
 # 
 # 1
@@ -401,6 +407,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
       -original_sequence => $original_sequence,
       -cigar_line => $cigar_line,
       );
+      
   ok($genomic_align->aligned_sequence, $aligned_sequence,
           "Trying to get aligned_sequence from original_sequence and cigar_line");
 
