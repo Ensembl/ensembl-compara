@@ -63,6 +63,8 @@ sub new {
                 'chocolate2'      => 'ee7621',
                 'chocolate3'      => 'cd661d',
                 'chocolate4'      => '8b4513',
+                'contigblue1'     => '36e8c9',
+                'contigblue2'     => '02599c',
                 'coral'           => 'ff7f50',
                 'coral1'          => 'ff7256',
                 'coral2'          => 'ee6a50',
@@ -665,7 +667,7 @@ sub new {
                 'yellow3'         => 'cdcd00',
                 'yellow4'         => '8b8b00',
                 'yellowgreen'     => '9acd32',
-		'rust'            => 'a00000',
+		        'rust'            => 'a00000',
 	       };
 
     bless($self, $class);
@@ -677,6 +679,7 @@ sub new {
 #
 sub id_by_name {
   my ($self, $name) = @_;
+  warn qq(id_by_name deprecated [use the quoted colour name!]);
   return defined $self->{$name} ? $name : 'black';
 }
 
@@ -685,6 +688,7 @@ sub id_by_name {
 #
 sub rgb_by_id {
   my ($self, $id) = @_;
+  warn qq(rgb_by_id Deprecated!);
   return $self->rgb_by_name($id);
 }
 
@@ -765,4 +769,37 @@ sub add_hex {
     $self->{$hex} = $hex;
     return $hex;
 }
+
+sub build_linear_gradient {
+  my ($self, $ngrades, $start, @colours) = @_;
+
+  my @gradient = ();
+  if(scalar @colours == 0 && ref($start) eq "ARRAY") {
+    @colours = @{$start};
+    $start   = shift @colours;
+  }
+
+  my $tgrades  = scalar @colours || 1;
+  my $sgrades  = int($ngrades / $tgrades);
+
+  while(my $end = shift @colours) {
+    my ($sr, $sg, $sb) = $self->rgb_by_name($start);
+    my ($er, $eg, $eb) = $self->rgb_by_name($end);
+    my $dr             = ($er - $sr) / $sgrades;
+    my $dg             = ($eg - $sg) / $sgrades;
+    my $db             = ($eb - $sb) / $sgrades;
+    my ($r, $g, $b)    = ($sr, $sg, $sb);
+    
+    for (my $i = 0; $i < $sgrades; $i++) {
+      push @gradient, $self->add_rgb([$r, $g, $b]);
+      $r += $dr;
+      $g += $dg;
+      $b += $db;
+    }
+
+    $start = $end;
+  }
+  return @gradient;
+}
+
 1;

@@ -58,7 +58,7 @@ sub glob_bp {
 
 sub join_tag {
     my( $self, $glyph, $tag, $x_pos, $y_pos, $col ) = @_;
-    push @{$self->{'tags'}{$tag}}, { 'glyph' => $glyph, 'x' => $x_pos, 'y' => $y_pos, 'col'
+    CORE::push @{$self->{'tags'}{$tag}}, { 'glyph' => $glyph, 'x' => $x_pos, 'y' => $y_pos, 'col'
 => $col };
 }
 
@@ -80,10 +80,10 @@ sub push {
     foreach my $Glyph (@_) {
     	CORE::push @{$self->{'glyphs'}}, $Glyph;
 
-    	$gx  =       $Glyph->x();
-    	$gx1 = $gx + $Glyph->width();
-	$gy  =       $Glyph->y();
-    	$gy1 = $gy + $Glyph->height();
+    	$gx  =       $Glyph->x() || 0;
+    	$gx1 = $gx + ($Glyph->width() || 0);
+	$gy  =       $Glyph->y() || 0;
+    	$gy1 = $gy + ($Glyph->height() || 0);
 
     ######### track max and min dimensions
         $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
@@ -220,14 +220,13 @@ sub errorTrack {
     my ($self, $message) = @_;
     my $length   = $self->{'container'}->length() +1;
     my ($w,$h)   = $self->{'config'}->texthelper()->real_px2bp('Tiny');
-    my $red      = $self->{'config'}->colourmap()->id_by_name('red');
     my ($w2,$h2) = $self->{'config'}->texthelper()->real_px2bp('Small');
     $self->push( new Sanger::Graphics::Glyph::Text({
-    	'x'         => int( ($length - $w * length($message))/2 ),
+    	'x'         => int( ($length - $w * CORE::length($message))/2 ),
         'y'         => int( ($h2-$h)/2 ),
     	'height'    => $h2,
         'font'      => 'Tiny',
-        'colour'    => $red,
+        'colour'    => "red",
         'text'      => $message,
         'absolutey' => 1,
     }) );
