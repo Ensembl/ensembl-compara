@@ -22,34 +22,31 @@ unless ( @ARGV ) {
   exit();
 }
 
-my ( $host, $user, $pass, $port, $dbname, $chromosome, $start, $end,
-     $species, $conf_file );
-
+my ( $host, $user, $port, $dbname, $chromosome, $start, $end,$species, $conf_file );
+my $pass = "";
+my $alignment_type = "WGA";
 
 GetOptions(
-	   "host=s", \$host,
-	   "user=s", \$user,
-	   "pass=s", \$pass,
-	   "port=i", \$port,
-	   "dbname=s", \$dbname,
-	   "chromosome=s", \$chromosome,
-	   "start=i", \$start,
-	   "end=i", \$end,
-	   "species=s", \$species,
-	   "conf_file=s", \$conf_file
+	   "host=s" => \$host,
+	   "user=s" => \$user,
+	   "pass=s" => \$pass,
+	   "port=i" => \$port,
+	   "dbname=s" => \$dbname,
+	   "chromosome=s" => \$chromosome,
+	   "start=i" => \$start,
+	   "end=i" => \$end,
+	   "alignment_type=s" => \$alignment_type,
+	   "species=s" => \$species,
+	   "conf_file=s" => \$conf_file
 	  );
 
 # change this to use supplied compara database
 
-
-my $compara = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-  (
-   -host => $host,
-   -user => $user,
-   -dbname => $dbname,
-   -pass => $pass,
-   -conf_file => $conf_file
-  );
+my $compara = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
+							  -user => $user,
+							  -dbname => $dbname,
+							  -pass => $pass,
+							  -conf_file => $conf_file);
 
 # # the following you dont need if you have a  config file for the 
 # # compara database (it will attach the ensembl database automatically then)
@@ -145,7 +142,8 @@ for( my $i_species = 0; $i_species<=$#other_species; $i_species++ ) {
     my $genomic_aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB($df,
 							     $qy_gdb,
 							     $df_start,
-							     $df_end 
+							     $df_end,
+							     $alignment_type
 							    );
     
     for my $align ( @$genomic_aligns ) {
@@ -230,6 +228,7 @@ Usage: DumpMultiAlign.pl options
   -chromosome -c 
   -start -st
   -end -e 
+  -alignment_type e.g. WGA (default WGA)
   -species -sp
 
   to specify the region you want to dump with alignments to other
