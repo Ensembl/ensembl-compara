@@ -154,7 +154,11 @@ sub RENDER_simple {
 					    $END );
 
     my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
-
+    
+    # Vertically centre the feature in the row - this lets us group features
+    # by joining them with a line.  It also looks prettier.
+    $y_offset = $y_offset + ($row_height - $glyph_height)/2;
+    
     # if the feature is a summary of non-positional features (i.e. genedas
     # source viewed on contigview) 
     # then just display a gene-wide line with a link to geneview where all 
@@ -525,6 +529,11 @@ sub RENDER_grouped {
 					   );
 
     my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
+
+    # Vertically centre the feature in the row - this lets us group features
+    # by joining them with a line.  It also looks prettier.
+    $y_offset = $y_offset + ($row_height - $group_height)/2;
+
     # Offset y coords by which row we're on
     $Composite->y($Composite->y() + $y_offset);
     
