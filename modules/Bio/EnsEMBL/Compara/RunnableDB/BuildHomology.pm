@@ -65,8 +65,6 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
->>>>>>> 1.22
-
 ####################################
 #
 # Subclass methods
