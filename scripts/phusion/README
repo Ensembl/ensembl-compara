@@ -21,21 +21,9 @@ All command lines were run in bash shell.
 > mkdir Hs31
 > cd Hs31
 
-( NB: check that the length in chromosome table is right!! 
-     By that I mean that the length in chromosome table should equal to 
-     max(chr_end) in the assembly table in core db.
-
-mysql> use homo_sapiens_core_12_31
-Database changed
-mysql>  select c.name,c.length,max(a.chr_end) as alength from assembly a,chromosome c where a.chromosome_id=c.chromosome_id group by c.name having c.length!=alength;
-Empty set (0.98 sec)
-
- If not the same, that needs to be fixed.
- Do the same thing for mouse.) #######What should this be for schema_20???
-
  Then dump the sequence for each chromosome:
  
- To get the list of toplevel sequences (normally chromosomes, but may be a mix of eg chromosomes and scaffolds as in C. briggsae).
+ To get the list of toplevel sequences (normally chromosomes, but may be a mix of eg chromosomes and scaffolds).
  
 > echo "select sr.name, cs.name from coord_system cs, seq_region sr, seq_region_attrib sra, attrib_type at where sra.attrib_type_id=at.attrib_type_id and at.code='toplevel' and sr.seq_region_id=sra.seq_region_id and sr.coord_system_id=cs.coord_system_id and sr.name not like \"%_NT_%\" and sr.name not like \"%_DR_%\" and sr.name not like \"UNKN\";" | mysql -h ecs4 -u ensro -P 3351 homo_sapiens_core_20_34 | awk '!/name/' | sort -u > Hs34_chr_names
 
@@ -60,18 +48,13 @@ etc
  
  This file may be used to run the 
 
-ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
-	-host ecs2d.internal.sanger.ac.uk -dbuser ensro  -dbname homo_sapiens_core_12_31 \
-	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 \
-	-phusion Hs -o output_filename
-
-on the farm
+ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl on the farm
 
 
 eg To send that on the farm
 
 
-> cat Hs31_chr_names | while read i j ;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
+> cat Hs31_chr_names | while read i j ;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa -coord_system $j -conf /nfs/acari/cara/.Registry.conf;done
 
  Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
  Delete the intermediate files.
@@ -130,7 +113,7 @@ Hs    ------------------ ---------------
  when argument2 is 0,
   just do a strict connected "graph", so A, B and C are in the same cluster.
 
-6- Dispatch the pairwise comparison fro Extra file to run blastn
+6- Dispatch the pairwise comparison from the 'Extra' file to run blastn
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 > mkdir Extra_dir
@@ -187,14 +170,14 @@ jobs #1004 and #10055 failed. To resend them only
 
 > cd ../Cigar
 > ls |wc -l
-You should have there as many files as jobs you sent.
+There should be the same number of files as jobs you sent.
 
 > ls | xargs cat | ensembl-compara/scripts/phusion/RemoveNonSyntenic.pl 6 > ../rmRedun.1st
 > cd ../
 > ensembl-compara/scripts/phusion/RemoveNonSyntenic.pl 6 rmRedun.1st > rmRedun.2nd
 
 
-first argument should be a pair (not an impair)
+The first argument needs to be an even number
 
           *
 Mm  - - -   - - -  6 consecutive matches on the same block, 3 are 5' of another 
@@ -203,7 +186,6 @@ Mm  - - -   - - -  6 consecutive matches on the same block, 3 are 5' of another
 
 Hs ---------------
 
-!!! Need to investigate here. We are running 2 rounds of this filtering, but still not stabilized i.e. if we run a third or fourth round we will still be deleting hits...!!!
 
 9- Load data in compara db
    ~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,11 +202,10 @@ Hs ---------------
 > insert into genome_db (genome_db_id,taxon_id,name,assembly) values (1,9606,"Homo sapiens","NCBI31");
 > insert into genome_db (genome_db_id,taxon_id,name,assembly) values (1,10090,"Mus musculus","MGSC3");
 
- Create your Comapara.conf from ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 
- Then load the alignment in your compara dv with ensembl-compara/scripts/phusion/LoadComparaDb.pl
+ Then load the alignments in your compara db with ensembl-compara/scripts/phusion/LoadComparaDb.pl
 
->ensembl-compara/scripts/phusion/LoadComparaDb.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
+>ensembl-compara/scripts/phusion/LoadComparaDb.pl -dbname ensembl_compara_12_1 -conf_file /nfs/acari/cara/.Registry.conf -cs_genome_db_id 1 -qy_genome_db_id 2 -qy_tag Mm -tab 1 -file rmRedun
 
 
 10- run health check test suite
@@ -261,9 +242,3 @@ meta table
 
 Make sure the 'max_alignment_length' key is there and set up **
 
-genomic_align_genome table
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-make sure that for the same method_link_id only one cs->qy combinaison is stored **
-
-** need to be added to the health check
