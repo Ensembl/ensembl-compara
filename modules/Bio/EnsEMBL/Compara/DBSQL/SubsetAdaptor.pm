@@ -310,6 +310,33 @@ sub store_link {
 }
 
 
+=head2 delete_link
+
+  Arg [1]    :  Bio::EnsEMBL::Compara::MemberSet $subset
+  Arg [2]    :  int $member_id
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub delete_link {
+  my ($self, $subset, $member_id) = @_;
+
+  unless($subset->isa('Bio::EnsEMBL::Compara::Subset')) {
+    $self->throw(
+      "set arg must be a [Bio::EnsEMBL::Compara::Subset] "
+    . "not a $subset");
+  }
+
+  my $sth =
+    $self->prepare("DELETE FROM subset_member WHERE subset_id=? AND member_id=?");
+  $sth->execute($subset->dbID, $member_id);
+}
+
+
 sub dumpFastaForSubset {
   my($self, $subset, $fastafile) = @_;
 
