@@ -247,7 +247,7 @@ sub get_available_adaptors{
 	      "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
 	      "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor"
         );
-  return (%pairs);
+  return (\%pairs);
 }
  
 
