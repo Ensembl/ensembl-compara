@@ -44,6 +44,7 @@ use strict;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::DBLoader;
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
 
@@ -85,8 +86,6 @@ sub new {
 
   my ($conf_file) = $self->_rearrange(['CONF_FILE'], @args);
 
-  $self->{'genomes'} = {};
-
   if($conf_file) {
     #read configuration file from disk
     my @conf = @{do $conf_file};
@@ -112,7 +111,7 @@ sub new {
 			   -port   => $db_hash->{'port'},
 			   -driver => $db_hash->{'driver'});
       };
-      $db->disconnect_when_inactive(0);
+      $db->disconnect_when_inactive(1);
 
       if($@) {
         $self->throw("could not load module specified in configuration file:$@");
@@ -123,12 +122,12 @@ sub new {
              "Bio::EnsEMBL::DBSQL::DBConnection");
       }
 
-      #compara should hold onto the actual container objects
-      #if($db->isa('Bio::EnsEMBL::DBSQL::Container')) {
-      #	$db = $db->_obj;
-      #      }
-
-      $self->{'genomes'}->{"$species:".uc($assembly)} = $db;
+      if (defined $db) {
+        # The core db connection will be cached in the genomeDB object, which is itself
+        # cached in GenomeDBAdaptor.
+        my $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species,$assembly);
+        $gdb->db_adaptor($db);
+      }
     }
   }
 
@@ -164,11 +163,7 @@ sub add_db_adaptor {
 		 "not a [$dba]");
   }
 
-  #compara should hold onto the actual container objects...
-  #  if($dba->isa('Bio::EnsEMBL::Container')) {
-  #    $dba = $dba->_obj;
-  #  }
-  $dba->disconnect_when_inactive(0);
+  $dba->disconnect_when_inactive(1);
   my $mc = $dba->get_MetaContainer;
   my $csa = $dba->get_CoordSystemAdaptor;
   
@@ -176,8 +171,9 @@ sub add_db_adaptor {
   my ($cs) = @{$csa->fetch_all};
   my $assembly = $cs ? $cs->version : '';
 
-  #warn "ADDING GENOME DB $species $assembly $dba";
-  $self->{'genomes'}->{"$species:".uc($assembly) } = $dba;
+  my $gdb;
+  $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species,$assembly);
+  $gdb->db_adaptor($dba);
 }
 
 
@@ -206,8 +202,10 @@ sub get_db_adaptor {
   unless($species && $assembly) {
     $self->throw("species and assembly arguments are required\n");
   }
+  my $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species, $assembly);
 
-  return $self->{'genomes'}->{"$species:".uc($assembly)};
+  return $gdb->db_adaptor;
+
 }
 
 
@@ -493,19 +491,4 @@ sub get_AnalysisAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::AnalysisAdaptor" );
 }
 
-
-
-sub deleteObj {
-  my $self = shift;
-
-  if($self->{'genomes'}) {
-    foreach my $db (keys %{$self->{'genomes'}}) {
-      delete $self->{'genomes'}->{$db};
-    }
-  }
-
-  $self->SUPER::deleteObj;
-}
-
 1;
-
