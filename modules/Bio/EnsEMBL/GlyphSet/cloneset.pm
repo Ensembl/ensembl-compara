@@ -81,22 +81,24 @@ sub _init {
 			
         my $fish = $clone->FISHmap(); $fish = "$fish";
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'y'            => 0,
-		'x'            => $start,
-		'absolutey'    => 1,
-		'zmenu'     => {
-			'caption' 				 => "$id",
-			"EMBL ID: ".$clone->embl_acc() => '',
-			"synonym: $synonym" 	 => '',
-			'Jump to Contigview' =>
-			"/$ENV{'ENSEMBL_SPECIES'}/contigview?cloneid=".$clone->embl_acc,
-			"loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
-			"length: ".($clone->length())=> '',
-            "FISH: $fish" => ''
-
-		}
+    		'y'            => 0,
+	    	'x'            => $start,
+    		'absolutey'    => 1,
 	    });
 
+        $Composite->{'zmenu'} = {
+				'caption'                     => $id,
+		    	"01:synonym: $synonym" 	      => '',
+				'02:EMBL id: '.$clone->embl_acc  => '',
+				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
+				"04:length: ".($clone->length()) => '',
+                "05:FISH: $fish"                 => ''
+        };
+        if($ENV{'ENSEMBL_SCRIPT'} ne 'contigview') {
+            $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc;
+        }
+
+        
 	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 		'x'         => $start,
 		'y'         => $ystart+2,
@@ -159,6 +161,8 @@ sub _init {
     	}
         foreach( @fish_clones ) { $self->push($_); }		
 		
+    } else {
+        $self->errorTrack("There are no 1MB clones within this interval");
     }
 }
 

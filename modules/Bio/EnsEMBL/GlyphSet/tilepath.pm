@@ -68,14 +68,19 @@ sub _init {
 		});
 		
         my $fish = $clone->FISHmap(); $fish = "$fish";
-		$Composite->{'zmenu'} = {
+
+        if($show_navigation) {
+    		$Composite->{'zmenu'} = {
 				'caption' => $id,
-				'EMBL id: '.$clone->embl_acc => '',
-				'Jump to Contigview' => "/$ENV{'ENSEMBL_SPECIES'}/contigview?cloneid=".$clone->embl_acc,
-				"loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
-				"length: ".($clone->length()) => '',
-                "FISH: $fish" => ''
-	    } if($show_navigation);
+				'02:EMBL id: '.$clone->embl_acc => '',
+				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
+				"04:length: ".($clone->length()) => '',
+                "05:FISH: $fish" => ''
+            };
+            if($ENV{'ENSEMBL_SCRIPT'} ne 'contigview') {
+                $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc;
+            }
+	    } 
 
 	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
     		'x'         => $start,
