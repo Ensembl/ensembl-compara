@@ -641,7 +641,7 @@ sub store {
 
   $member->adaptor($self);
   if (defined $member->taxon) {
-    $self->db->get_TaxonAdaptor->store_if_needed($member->taxon);
+    $self->db->get_TaxonAdaptor->store($member->taxon);
   }
 
   return $member->dbID;
