@@ -49,7 +49,7 @@ sub init {
   my $self = shift;
 
   #internal variables minimal allocation
-  $self->{'_children_id_hash'} = {};
+ # $self->{'_children_id_hash'} = {};
   $self->{'_nestedset_id'} = undef;
   $self->{'_adaptor'} = undef;
   $self->{'_refcount'} = 0;
@@ -191,6 +191,7 @@ sub add_child {
   $child->disavow_parent;
   $child->_set_parent($self);
 
+  $self->{'_children_id_hash'} = {} unless($self->{'_children_id_hash'});
   $self->{'_children_id_hash'}->{$child->nestedset_id} = $child;
 }
 
@@ -205,6 +206,21 @@ sub store_child {
 
   $child->_set_parent($self);
   $self->adaptor->store($child);
+}
+
+sub remove_child {
+  my ($self, $child) = @_;
+
+  throw("child not defined") unless(defined($child));
+  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
+     unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
+  throw("not my child")
+    unless($self->{'_children_id_hash'} and 
+           $self->{'_children_id_hash'}->{$child->nestedset_id});
+  
+  delete $self->{'_children_id_hash'}->{$child->nestedset_id};
+  $child->release;
+  return undef;
 }
 
 
@@ -222,13 +238,12 @@ sub disavow_parent {
   my $self = shift;
 
   my $parent = $self->{'_parent_node'};
+  $self->_set_parent(undef);
   if($parent) {
-    delete $parent->{'_children_id_hash'}->{$self->nestedset_id};
+    $parent->remove_child($self);
     #print("DISAVOW parent : "); $parent->print_node;
     #print("        child  : "); $self->print_node;
-    $self->release;
   }
-  $self->_set_parent(undef);
   return undef;
 }
 
@@ -246,13 +261,15 @@ sub disavow_parent {
 
 sub release_children {
   my $self = shift;
+  
+  return $self unless($self->{'_children_id_hash'});
 
   my @kids = values(%{$self->{'_children_id_hash'}});
   foreach my $child (@kids) {
     #printf("  parent %d releasing child %d\n", $self->nestedset_id, $child->nestedset_id);
     $child->release if(defined($child));
   }  
-  $self->{'_children_id_hash'} = {};
+  $self->{'_children_id_hash'} = undef;
   return $self;
 }
 
@@ -270,7 +287,7 @@ sub release_children {
 sub parent {
   my $self = shift;
   return $self->{'_parent_node'} if(defined($self->{'_parent_node'}));
-  if($self->adaptor and $self->_parent_nestedset_id) {
+  if($self->adaptor and $self->_parent_id) {
     my $parent = $self->adaptor->fetch_parent_for_node($self);
     #print("fetched parent : "); $parent->print_node;
     $parent->add_child($self);
@@ -281,7 +298,7 @@ sub parent {
 
 sub has_parent {
   my $self = shift;
-  return 1 if($self->{'_parent_node'} or $self->{'_parent_nestedset_id'});
+  return 1 if($self->{'_parent_node'} or $self->{'_parent_id'});
   return 0;
 }
 
@@ -317,6 +334,9 @@ sub root {
 
 sub children {
   my $self = shift;
+
+  $self->load_children_if_needed;
+  return [] unless($self->{'_children_id_hash'});
   my @kids = values(%{$self->{'_children_id_hash'}});
   return \@kids;
 }
@@ -324,8 +344,19 @@ sub children {
 
 sub get_child_count {
   my $self = shift;
-  my @kids = keys(%{$self->{'_children_id_hash'}});
-  return scalar(@kids);
+  return scalar(@{$self->children});
+}
+
+sub load_children_if_needed {
+  my $self = shift;
+
+  if($self->adaptor and !defined($self->{'_children_id_hash'})) {
+    #define _children_id_hash thereby signally that I've tried to load my children
+    $self->{'_children_id_hash'} = {}; 
+    #print("fetch_all_children_for_node : "); $self->print_node;
+    $self->adaptor->fetch_all_children_for_node($self);
+  }
+  return $self;
 }
 
 =head2 distance_to_parent
@@ -424,6 +455,8 @@ sub has_child {
 sub has_child_with_nestedset_id {
   my $self = shift;
   my $node_id = shift;
+  $self->load_children_if_needed;
+  return undef unless($self->{'_children_id_hash'});
   return $self->{'_children_id_hash'}->{$node_id};
 }
 
@@ -445,6 +478,12 @@ sub is_subset_of {
   my $A = shift;
   my $B = shift;
   return 1; 
+}
+
+sub is_leaf {
+  my $self = shift;
+  return 1 unless($self->get_child_count);
+  return 0;
 }
 
 sub merge_children {
@@ -484,8 +523,11 @@ sub merge_node_via_shared_ancestor {
 #
 ##################################
 
-sub flatten_set {
+sub flatten {
   my $self = shift;
+  foreach my $child (@{$self->children}) {
+    next if($child->is_leaf);
+  }
   
 }
 
@@ -601,25 +643,25 @@ sub name {
 # by only -add_child method
 sub _set_parent {
   my ($self, $parent) = @_;
-  $self->{'_parent_nestedset_id'} = 0;
+  $self->{'_parent_id'} = 0;
   $self->{'_parent_node'} = $parent;
-  $self->{'_parent_nestedset_id'} = $parent->nestedset_id if($parent);
+  $self->{'_parent_id'} = $parent->nestedset_id if($parent);
   return $self;
 }
 
 
 # used for building tree from a DB fetch until all the objects are in memory
-sub _parent_nestedset_id {
+sub _parent_id {
   my $self = shift;
-  $self->{'_parent_nestedset_id'} = shift if(@_);
-  return $self->{'_parent_nestedset_id'};
+  $self->{'_parent_id'} = shift if(@_);
+  return $self->{'_parent_id'};
 }
 
 # used for building tree from a DB fetch until all the objects are in memory
-sub _root_nestedset_id {
+sub _root_id {
   my $self = shift;
-  $self->{'_root_nestedset_id'} = shift if(@_);
-  return $self->{'_root_nestedset_id'};
+  $self->{'_root_id'} = shift if(@_);
+  return $self->{'_root_id'};
 }
 
 
