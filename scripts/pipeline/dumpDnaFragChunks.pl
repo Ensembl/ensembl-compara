@@ -103,7 +103,7 @@ sub dumpChunkToCWD
   unless($bioseq) {
     #printf("fetching chunk %s on-the-fly\n", $chunk->display_id);
     my $starttime = time();
-    $bioseq = $chunk->fetch_masked_sequence;
+    $bioseq = $chunk->bioseq;
     #print STDERR (time()-$starttime), " secs to fetch chunk seq\n";
     $chunk->sequence($bioseq->seq);
   }
@@ -126,7 +126,7 @@ sub dumpChunkToSeqIO
   unless($bioseq) {
     #printf("fetching chunk %s on-the-fly\n", $chunk->display_id);
     my $starttime = time();
-    $bioseq = $chunk->fetch_masked_sequence(2);  #soft masked
+    $bioseq = $chunk->bioseq;
     #print STDERR (time()-$starttime), " secs to fetch chunk seq\n";
     $chunk->sequence($bioseq->seq);
   }
