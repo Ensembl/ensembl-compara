@@ -561,7 +561,7 @@ sub store {
   my $sth = $self->prepare("INSERT INTO member (stable_id,version, source_id,
                               taxon_id, genome_db_id, sequence_id, description,
                               chr_name, chr_start, chr_end)
-                            VALUES (?,?,?,?,?,?,?,?,?)");
+                            VALUES (?,?,?,?,?,?,?,?,?,?)");
 
   $sth->execute($member->stable_id,
                 $member->version,
