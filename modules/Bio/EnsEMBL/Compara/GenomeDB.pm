@@ -42,14 +42,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Bio::EnsEMBL::Compara::GenomeDB;
 
-use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::Root;
+use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::DBLoader;
-
-@ISA = qw(Bio::EnsEMBL::Root);
-
 
 sub new {
   my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
@@ -99,9 +95,9 @@ sub db_adaptor{
   }
 
   unless (defined $self->{'_db_adaptor'}) {
-    $self->throw("Could not obtain DBAdaptor for Genome DBAdaptor with name=[".$self->name."] and\n".
-                 "assembly=[" . $self->assembly."]. It must be loaded using config file or\n" .
-                 "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
+    warning("Could not obtain DBAdaptor for Genome DBAdaptor with name=[".$self->name."] and\n".
+            "assembly=[" . $self->assembly."]. It must be loaded using config file or\n" .
+            "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
   }
   
   return $self->{'_db_adaptor'};
