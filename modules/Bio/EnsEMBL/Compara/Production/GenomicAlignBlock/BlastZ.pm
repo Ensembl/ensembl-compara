@@ -153,7 +153,7 @@ sub run
     throw("Runnable module not set") unless($runnable);
     $runnable->run();
   }
-  #print STDERR (time()-$starttime), " secs to BlastZ\n";
+  printf("%1.3f secs to BlastZ\n", (time()-$starttime));
 
   #cleanup tmp files that can be deleted right away
   if($g_compara_BlastZ_workdir) {
@@ -189,7 +189,6 @@ sub write_output {
 
 sub global_cleanup {
   my $self = shift;
-  return 1;
   if($g_compara_BlastZ_workdir) {
     unlink(<$g_compara_BlastZ_workdir/*>);
     rmdir($g_compara_BlastZ_workdir);
@@ -239,6 +238,8 @@ sub dumpChunkSetToWorkdir
   my $self      = shift;
   my $chunkSet   = shift;
 
+  my $starttime = time();
+
   unless(defined($g_compara_BlastZ_workdir) and (-e $g_compara_BlastZ_workdir)) {
     #create temp directory to hold fasta databases
     $g_compara_BlastZ_workdir = "/tmp/worker.$$/";
@@ -268,6 +269,7 @@ sub dumpChunkSetToWorkdir
     $output_seq->write_seq($bioseq);
   }
   close OUTSEQ;
+  printf("  %1.3f secs to dump\n", (time()-$starttime));
 
   return $fastafile
 }
@@ -277,6 +279,8 @@ sub dumpChunkToWorkdir
 {
   my $self = shift;
   my $chunk = shift;
+
+  my $starttime = time();
 
   unless(defined($g_compara_BlastZ_workdir) and (-e $g_compara_BlastZ_workdir)) {
     #create temp directory to hold fasta databases
@@ -292,11 +296,9 @@ sub dumpChunkToWorkdir
 
   print("dumpChunkToWorkdir : $fastafile\n");
   my $bioseq = $chunk->bioseq;
-  unless($bioseq) {
-    my $starttime = time();
-    $bioseq = $chunk->fetch_masked_sequence(2);  #soft masked
-    #print STDERR (time()-$starttime), " secs to fetch chunk seq\n";
-    $chunk->sequence($bioseq->seq);
+  if($chunk->sequence_id==0 and ($bioseq->length <= 5000000)) {
+    #print "    cacheing sequence back to compara for chunk\n";
+    $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
   }
   #printf("  writing chunk %s\n", $chunk->display_id);
 
@@ -305,6 +307,7 @@ sub dumpChunkToWorkdir
   my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
   $output_seq->write_seq($bioseq);
   close OUTSEQ;
+  printf("  %1.3f secs to dump\n", (time()-$starttime));
 
   return $fastafile
 }
