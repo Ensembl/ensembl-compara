@@ -30,7 +30,9 @@ Bio::EnsEMBL::Compara::AlignSlice - An AlignSlice can be used to map genes from 
               -MAX_INTRON_LENGTH => 100000,
               -STRICT_ORDER_OF_EXON_PIECES => 1,
               -STRICT_ORDER_OF_EXONS => 0);
-          )
+          );
+
+  my $simple_align = $align_slice->get_projected_SimpleAlign();
 
 SET VALUES
   $align_slice->adaptor($align_slice_adaptor);
@@ -43,7 +45,8 @@ GET VALUES
   my $align_slice_adaptor = $align_slice->adaptor();
   my $reference_slice = $align_slice->reference_Slice();
   my $all_genomic_align_blocks = $align_slice->get_all_GenomicAlignBlock();
-  my $mapped_genes = $align_slice->get_all_Genes_by_genome_db_id(3)
+  my $mapped_genes = $align_slice->get_all_Genes_by_genome_db_id(3);
+  my $simple_align = $align_slice->get_projected_SimpleAlign();
 
 =head1 OBJECT ATTRIBUTES
 
@@ -821,6 +824,140 @@ sub get_GenomicAlign_by_dbID {
   }
 
   return undef;
+}
+
+
+=head2 get_projected_SimpleAlign
+
+  Arg[1]      : none
+  Example     : $align_io = get_projected_SimpleAlign()
+  Description : This method creates a Bio::SimpleAlign object using the
+                Bio::EnsEMBL::Compara::GenomicAlignBlocks found in this
+                Bio::EnsEMBL::Compara::AlignSlice object. The SimpleAlign
+                is a like multiple alignment where the first sequence
+                corresponds to the reference Slice and the remaining
+                correspond to on the other species each.
+                The list of species depends on the GenomicAlignBlocks found,
+                i.e. even if this object has been based on alignments
+                between human, chicken and rat and no chicken sequence appear
+                in the alignments, the chicken will not appear on the
+                SimpleAlign returned by this sequence.
+  Returntype  : Bio::SimpleAlign object
+  Exceptions  : If no alignments have been found in this aling_slice, a
+                simple_align object containing the reference sequnence only
+                is returned.
+  Caller      : $object->methodname
+
+=cut
+
+sub get_projected_SimpleAlign {
+  my ($self) = @_;
+  my $simple_align;
+
+  if (!@{$self->get_all_GenomicAlignBlocks}) {
+    ## No alignments have been found for this slice, return a SimpleAlign object
+    ## with reference Slice only...
+    $simple_align = Bio::SimpleAlign->new();
+    $simple_align->id("ProjectedMultiAlign");
+  
+    my $seq = Bio::LocatableSeq->new(
+              -SEQ    => $self->reference_Slice->seq,
+              -START  => $self->reference_Slice->start,
+              -END    => $self->reference_Slice->end,
+              -ID     => $self->reference_Slice->seq_region_name,
+              -STRAND => 1
+          );
+    $simple_align->add_seq($seq);
+
+    return $simple_align;
+  }
+
+  my $projected_sequences;
+  my $seq_region_start = $self->reference_Slice->start;
+  my $seq_region_end = $self->reference_Slice->end;
+  my $seq_region_length = $seq_region_end - $seq_region_start + 1;
+
+  my $set_of_genome_dbs;
+  foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks}) {
+    foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+      $set_of_genome_dbs->{$this_genomic_align->dnafrag->genome_db->name} = $this_genomic_align->dnafrag->genome_db;
+    }
+  }
+
+  foreach my $this_species (keys %$set_of_genome_dbs) {
+    ## Create empty seq for projecting
+    $projected_sequences->{$this_species} = "." x $seq_region_length;
+
+    ## Project sequences
+    foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks}) {
+      my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align;
+      my $start = $reference_genomic_align->dnafrag_start;
+      my $end = $reference_genomic_align->dnafrag_end;
+      foreach my $this_genomic_align
+              (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+        next if ($this_genomic_align->dnafrag->genome_db->dbID !=
+            $set_of_genome_dbs->{$this_species}->dbID);
+        my $aligned_sequence = $this_genomic_align->aligned_sequence(undef, "FIX_SEQ");
+        my $this_start = $start - $seq_region_start;
+        my $this_end = $end - $seq_region_end;
+        if ($reference_genomic_align->dnafrag_start < $seq_region_start) {
+          substr($aligned_sequence, 0, ($seq_region_start - $reference_genomic_align->dnafrag_start), "");
+          $this_start = 0;
+        }
+        if ($reference_genomic_align->dnafrag_end > $seq_region_end) {
+          substr($aligned_sequence, ($seq_region_end - $reference_genomic_align->dnafrag_end)) = "";
+          $this_end = $seq_region_length;
+        }
+        my @pieces = split(/(\-+)/, $aligned_sequence);
+        foreach my $piece (@pieces) {
+          next if ($piece eq "");
+          if ($piece !~ /^\-+$/) {
+            ## Overwrite this piece in the projected seq
+            substr($projected_sequences->{$this_species}, $this_start, length($piece), $piece);
+          } else {
+            ## Overwrite only "blanks" by gaps
+            my $substr = substr($projected_sequences->{$this_species}, $this_start, length($piece));
+            $substr =~ tr/\./\-/;
+            substr($projected_sequences->{$this_species}, $this_start, length($piece), $substr);
+          }
+          $this_start += length($piece);
+        }
+      }
+    }
+  }
+
+  ## Create a single Bio::SimpleAlign for the projection  
+  $simple_align = Bio::SimpleAlign->new();
+  $simple_align->id("ProjectedMultiAlign");
+
+  ## reference Slice seq
+  my $ref_genome_db =
+      $self->get_all_GenomicAlignBlocks()->[0]->reference_genomic_align->dnafrag->genome_db;
+
+  my $seq = Bio::LocatableSeq->new(
+            -SEQ    => $self->reference_Slice->seq,
+            -START  => $self->reference_Slice->start,
+            -END    => $self->reference_Slice->end,
+            -ID     => $ref_genome_db->name.":".$self->reference_Slice->seq_region_name,
+            -STRAND => 1
+        );
+  $simple_align->add_seq($seq);
+
+  ## Remaining seqs
+  foreach my $this_species (keys %$projected_sequences) {
+    my $seq_name = $this_species;
+    my $aligned_sequence = $projected_sequences->{$this_species};
+    my $seq = Bio::LocatableSeq->new(
+            -SEQ    => $aligned_sequence,
+            -START  => 1,
+            -END    => $seq_region_length,
+            -ID     => $seq_name,
+            -STRAND => 1
+        );
+    $simple_align->add_seq($seq);
+  }
+
+  return $simple_align;
 }
 
 
