@@ -13,7 +13,7 @@ sub features {
 
 sub colour {
   my( $self, $f ) = @_;
-  my %colours = ( 'END' => 'black', 'contig' => 'grey50', 'clone' => 'grey75', 'superctg' => 'black' );
+  my %colours = ( 'END' => 'black', 'contig' => 'grey50', 'clone' => 'grey75', 'superctg' => 'black', 'scaffold' => 'black' );
   return $colours{ $f->name };
 }
 

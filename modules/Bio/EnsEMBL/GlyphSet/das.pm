@@ -70,12 +70,13 @@ sub _init {
     
     my @features;
     my ( $features, $styles ) = @{ $vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[] };
+    # warn Data::Dumper::Dumper( $features );
     $use_style = 0 unless $styles && @{$styles};
     
     #print STDERR "STYLE: $use_style\n";
 
     eval{
-        @features = grep { $_->das_type_id() !~ /(contig|component|karyotype)/i } @{$features||[]};
+        @features = grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i && $_->das_type_id() !~ /^(contig|component|karyotype):/i} @{$features||[]};
     };
     my %styles = ();
     if( $use_style ) {

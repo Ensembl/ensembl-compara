@@ -9,8 +9,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 sub my_label {
     my $self = shift;
-    return $self->{'config'}->{'_draw_single_Transcript'} || ( EnsWeb::species_defs->AUTHORITY.' trans.');
-
+    return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "@{[EnsWeb::species_defs->AUTHORITY]} trans.";
 }
 
 sub colours {
@@ -78,14 +77,7 @@ sub zmenu {
     $zmenu->{'05:Export Peptide'}=
     	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
     }
-    
-    my $DB = EnsWeb::species_defs->databases;
-
-    if($DB->{'ENSEMBL_EXPRESSION'}) {
-      $zmenu->{'06:Expression information'} = 
-	"/@{[$self->{container}{_config_file_name_}]}/sageview?alias=$gid";
-    }
-
+    $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid&db=core" if $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview';
     return $zmenu;
 }
 
