@@ -48,7 +48,8 @@ use strict;
 
 use Bio::Root::RootI;
 use Bio::SeqFeatureI;
-use Bio::EnsEMBL::DnaDnaAlignFeature;
+#use Bio::EnsEMBL::DnaDnaAlignFeature;
+use Bio::EnsEMBL::Compara::DnaDnaAlignFeature;
 use Bio::EnsEMBL::SeqFeature;
 
 @ISA = qw(Bio::Root::RootI Bio::SeqFeatureI);
@@ -262,14 +263,14 @@ sub dnafrag{
  Usage   : $obj->return_DnaDnaAlignFeature
  Function: 
  Example : 
- Returns : value of a Bio::EnsEMBL::DnaDnaAlignFeature object
+ Returns : value of a Bio::EnsEMBL::Compara::DnaDnaAlignFeature object
  Args    : none
 
 =cut
 
 sub return_DnaDnaAlignFeature {
   my ($self,$align_name) = @_;
-  my $DnaDnaAlignFeature = new Bio::EnsEMBL::DnaDnaAlignFeature('-cigar_string' => $self->cigar_string);
+  my $DnaDnaAlignFeature = new Bio::EnsEMBL::Compara::DnaDnaAlignFeature('-cigar_string' => $self->cigar_string);
   my $feature1 = new Bio::EnsEMBL::SeqFeature;
   $feature1->seqname($align_name);
   $feature1->start($self->align_start);
