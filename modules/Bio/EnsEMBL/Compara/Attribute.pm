@@ -144,7 +144,7 @@ sub cdna_alignment_string {
       unless (defined $self->cigar_start && defined $self->cigar_end) {
         $self->throw("both cigar_start and cigar_end should be defined");
       }
-      my $offset = $self->cigar_start * 3 - 2;
+      my $offset = $self->cigar_start * 3 - 3;
       my $length = ($self->cigar_end - $self->cigar_start + 1) * 3;
       $cdna = substr($cdna, $offset, $length);
     }
