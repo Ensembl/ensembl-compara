@@ -107,7 +107,6 @@ sub new {
         ########## just for good measure:
         $glyphset->label->width($label_length_px);
         next unless defined $glyphset->bumped();
-        print STDERR "creating composite for bumped button\n";
         $composite = new Bio::EnsEMBL::Glyph::Composite({
                 'y'            => 0,
 				'x'            => 0,
@@ -117,26 +116,6 @@ sub new {
         
         my $NAME = ref($glyphset);
         $NAME =~ s/^.*:://;
-        my $URL = $Config->get( '_settings', 'URL')."$NAME%3A";
-        my $symbol;
-        if($glyphset->bumped() eq 'yes') {
-            $URL .= 'off';
-            $symbol = '-';
-        } else {
-            $URL .= 'on';
-            $symbol = '+';
-            
-#            my $vert_glyph = new Bio::EnsEMBL::Glyph::Rect({
-#                'y'      	=> 2,
-#		    	'x'      	=> 6,
-#		    	'width'  	=> 1,
-#		    	'height' 	=> 4,
-#		    	'colour' 	=> $black,
-#		    	'absolutey' => 1,
-#				'absolutex' => 1
-#            });
-#            $composite->push($vert_glyph);
-        }
         my $box_glyph = new Bio::EnsEMBL::Glyph::Rect({
     	        'x'      	=> 2,
 		    	'y'      	=> 0,
@@ -145,29 +124,21 @@ sub new {
 		    	'bordercolour'	=> $black,
 		    	'absolutey' => 1,
 				'absolutex' => 1,
-                'href'      => $URL
+                'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
+                               ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
+                'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
         });
         my $horiz_glyph = new Bio::EnsEMBL::Glyph::Text({
-            'text'      => $symbol,
+            'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
             'font'      => 'Small',
             'absolutey' => 1,
             'x'         => 4,
-            'y'      	=> $symbol eq '-' ? -1.5 : -1,
+            'y'      	=> $glyphset->bumped() eq 'yes' ? -1.5 : -1,
 		    'width'  	=> 10,
 		    'height' 	=> 8,
             'colour'    => $black,
             'absolutex' => 1
         });
-        
-#        my $horiz_glyph = new Bio::EnsEMBL::Glyph::Rect({
-#    	        'x'      	=> 4,
-#		    	'y'      	=> 4,
-#		    	'width'  	=> 5,
-#		    	'height' 	=> 0,
-#		    	'colour' 	=> $black,
-#		    	'absolutey' => 1,
-#				'absolutex' => 1
-#        });
         
         $composite->push($box_glyph);
         $composite->push($horiz_glyph);
@@ -199,7 +170,6 @@ sub new {
         $glyphset->bumpbutton->x(-($extra_translation + $button_width - $spacing) / $scalex);
         foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
 #           delete $_->{'absolutex'};
-            print STDERR join "\t", "BUTTON: ",$_->x, $scalex, $glyphset->bumpbutton->x, $_->width, 0+$_->pixelwidth, "\n";
         }
     }
     
@@ -254,16 +224,9 @@ sub new {
             if( defined $glyphset->bumpbutton()) {
                 $glyphset->bumpbutton->y(int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy));
                 $glyphset->push($glyphset->bumpbutton());
-                print STDERR "TRACK -- button -- $ref_glyphset (",
-                    $glyphset->bumpbutton->x,",",$glyphset->bumpbutton->y,
-                ")\n";
                 foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
 #                    $_->y( $_->y + $glyphset->bumpbutton->y );
-                    print STDERR "COMPOSITE(",$_->pixelx,",",$_->pixely,")\n";
                 }
-                print STDERR "TRACK -- label -- $ref_glyphset (",
-                    $glyphset->label->pixelx,",",$glyphset->label->pixely,
-                ")\n";
             }
         }
     
