@@ -38,7 +38,6 @@ required for databse access.
 =head1 CONTACT
 
 Describe contact details here
-
 =cut
 
 =head1 APPENDIX
@@ -196,6 +195,7 @@ sub dumpPeptidesToFasta
       -dbfile     => $fastafile,
       -type       => 'PROTEIN');
   $blastdb->run;
+  if( ! $blastdb->db_formatted() ){ $self->throw("BlastDB not formatted!")}
   print("registered ". $blastdb->dbname . " for ".$blastdb->dbfile . "\n");
 
   return $blastdb;
