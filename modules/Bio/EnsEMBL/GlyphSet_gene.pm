@@ -10,6 +10,13 @@ use  Sanger::Graphics::Bump;
 use EnsWeb;
 use Data::Dumper;
 
+sub features {
+    ## features are now returned by a subroutine, so that this can be 
+    ## overridden by subclasses
+    my ($self, $logic_name, $database) = @_;
+    return $self->{'container'}->get_all_Genes($logic_name, $database);
+}
+
 sub init_label {
   my ($self) = @_;
   my $type = $self->check();
@@ -71,7 +78,7 @@ sub _init {
   my $used_colours = {};
   my $FLAG = 0;
   foreach my $logic_name (split /\s+/, $Config->get($type,'logic_name') ) {
-   my $genes = $vc->get_all_Genes( $logic_name, $database );
+   my $genes = $self->features( $logic_name, $database );
    foreach my $g (@$genes) {
     my $gene_label = $self->gene_label( $g );
     my $GT         = $self->gene_col( $g );
@@ -148,7 +155,7 @@ sub legend {
   my( $self, $colours ) = @_;
   my @legend = ();
   my $lcap = $self->legend_captions();
-  foreach my $key ( %{$lcap} ) {
+  foreach my $key ( keys %{$lcap} ) {
     push @legend, $lcap->{$key} => $colours->{$key} if exists $colours->{$key};
   } 
   return \@legend;
