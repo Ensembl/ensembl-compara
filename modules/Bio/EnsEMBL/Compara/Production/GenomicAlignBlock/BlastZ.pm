@@ -60,7 +60,6 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::PairAligner)
 sub configure_defaults {
   my $self = shift;
   
-  $self->debug(0);
   $self->options('T=2 H=2200');
   $self->method_link_type('BLASTZ_RAW');
   
@@ -102,6 +101,13 @@ sub configure_runnable {
                     -options   => $self->options,
                     -program   => $program,
                   );
+  $runnable->{'_verbose_debug'} = 1 if($self->debug);
+  if($self->debug >1) {
+    $runnable->{'_results_to_tmp_file'} = 1;  # switch on whether to use pipe or /tmp file
+    $runnable->results($self->worker_temp_directory . "/results." . time);
+    $runnable->{'_delete_results'} = 0;       # switch on whether to delete /tmp/results file or not
+  }
+
   #
   #
   # BIG WARNING!!!! I FLIPPED THE DB and Query above because it looks like
