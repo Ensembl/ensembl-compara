@@ -31,6 +31,7 @@ use strict;
 #use Bio::Species;
 use Bio::EnsEMBL::Compara::Taxon;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -94,20 +95,18 @@ sub fetch_by_taxon_id {
   return $self->fetch_by_dbID($taxon_id);
 }
 
-=head2 store
-
- Title   : store
- Usage   : $memberadaptor->store($member)
- Function: Stores a taxon object into the database
- Example : $memberadaptor->store($member)
- Returns : $member->dbID
- Args    : An Bio::EnsEMBL::Compara::Taxon object
-
+=head2 fetch_by_Family_Member_source
+ Title   : fetch_by_Family_Member_source
+ Args[0] : Bio::EnsEMBL::Compara::Family object
+ Args[1] : string (member's source name)
+ Usage   : @taxonArray = @$taxonAdaptor->fetch_by_Family_Member_source($family, 'ENSEMBLGENE');
+ Function: fetches all the taxon in a family of specified member source
+ Returns : reference to array of Bio::EnsEMBL::Compara::Taxon objects
 =cut
 
 sub fetch_by_Family_Member_source {
   my ($self, $family, $source_name) = @_;
-
+ 
   my $sql = "SELECT distinct(t.taxon_id)
              FROM family_member fm,member m, source s,taxon t
              WHERE fm.family_id= ? AND
@@ -131,6 +130,16 @@ sub fetch_by_Family_Member_source {
   return \@taxa;
 }
 
+
+=head2 store
+ Title   : store
+ Usage   : $memberadaptor->store($member)
+ Function: Stores a taxon object only if it doesn't exists in the database
+ Example : $memberadaptor->store($member)
+ Returns : $member->dbID
+ Args    : An Bio::EnsEMBL::Compara::Taxon object
+=cut
+
 sub store {
   my ($self,$taxon) = @_;
 
@@ -144,35 +153,23 @@ sub store {
   $sth->finish;
   $taxon->adaptor($self);
 
-
   return $taxon->dbID;
 }
 
 =head2 store_if_needed
-
  Title   : store_if_needed_if_needed
  Usage   : $memberadaptor->store($taxon)
  Function: Stores a taxon object only if it doesn't exists in the database 
  Example : $memberadaptor->store($member)
  Returns : $member->dbID
  Args    : An Bio::EnsEMBL::Compara::Taxon object
-
 =cut
 
 sub store_if_needed {
   my ($self,$taxon) = @_;
 
-  my $q = "select taxon_id from taxon where taxon_id = ?";
-  my $sth = $self->prepare($q);
-  $sth->execute($taxon->ncbi_taxid);
-  my $rowhash = $sth->fetchrow_hashref;
-  $sth->finish;
-
-  if ($rowhash->{taxon_id}) {
-    return $rowhash->{taxon_id};
-  } else {
-    return $self->store($taxon);
-  }
+  deprecate("calling store method instead.");
+  return $self->store($taxon);
 }
 
 1;
