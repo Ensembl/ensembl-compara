@@ -150,11 +150,11 @@ sub fetch_all_by_species_region {
     $this_dnafrag_end   = ($this_dnafrag_end > $this_dnafrag_length) ? $this_dnafrag_length : $this_dnafrag_end;
 
     #fetch all alignments in the region we are interested in
-    my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_dnafrag_and_method_link_species_set(
+    my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
+            $method_link_species_set,
             $this_dnafrag,
             $this_dnafrag_start,
             $this_dnafrag_end,
-            $method_link_species_set,
             $limit
         );
 
