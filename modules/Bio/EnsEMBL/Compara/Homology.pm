@@ -146,6 +146,24 @@ sub get_SimpleAlign {
 }
 
 
+=head2 subtype
+  Arg [1]    : string $subtype (optional)
+  Example    : $subtype = $homology->subtype();
+               $homology->subtype($subtype);
+  Description: getter/setter of string description of homology subtype.
+               Examples: 'DUP 1.3', 'SYN', 'complex'
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+=cut
+sub subtype {
+  my $self = shift;
+  $self->{'_subtype'} = shift if(@_);
+  $self->{'_subtype'} = '' unless($self->{'_subtype'});
+  return $self->{'_subtype'};
+}
+
+
 =head2 n
 
   Arg [1]    : 
