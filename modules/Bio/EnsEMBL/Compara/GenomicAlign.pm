@@ -259,7 +259,7 @@ sub new_fast {
   Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
   Exceptions : thrown if $adaptor is not a
                Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -284,7 +284,7 @@ sub adaptor {
   Description: Getter/Setter for the attribute dbID
   Returntype : integer
   Exceptions : none
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -313,7 +313,7 @@ sub dbID {
                Bio::EnsEMBL::Compara::GenomicAlignBlock object or if 
                $genomic_align_block does not match a previously defined
                genomic_align_block_id
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -353,7 +353,7 @@ sub genomic_align_block {
   Returntype : integer
   Exceptions : thrown if $genomic_align_block_id does not match a previously defined
                genomic_align_block
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -389,7 +389,7 @@ sub genomic_align_block_id {
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object or if 
                $method_link_species_set does not match a previously defined
                method_link_species_set_id
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -433,7 +433,7 @@ sub method_link_species_set {
   Returntype : integer
   Exceptions : thrown if $method_link_species_set_id does not match a previously defined
                method_link_species_set
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -468,7 +468,7 @@ sub method_link_species_set_id {
   Exceptions : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
                object or if $dnafrag does not match a previously defined
                dnafrag_id
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -506,7 +506,7 @@ sub dnafrag {
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
-  Caller     : 
+  Caller     : object::methodname
 
 =cut
 
@@ -535,7 +535,7 @@ sub dnafrag_id {
   Description: Getter/Setter for the attribute dnafrag_start
   Returntype : integer
   Exceptions : none
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -558,7 +558,7 @@ sub dnafrag_start {
   Description: Getter/Setter for the attribute dnafrag_end
   Returntype : integer
   Exceptions : none
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -581,7 +581,7 @@ sub dnafrag_end {
   Description: Getter/Setter for the attribute dnafrag_strand
   Returntype : integer
   Exceptions : none
-  Caller     : general
+  Caller     : object::methodname
 
 =cut
 
@@ -605,7 +605,7 @@ sub dnafrag_strand {
                using the cigar_line information and the original sequence if needed.
   Returntype : string $aligned_sequence
   Exceptions : thrown if sequence contains unknown symbols
-  Caller     : 
+  Caller     : object::methodname
 
 =cut
 
@@ -640,7 +640,7 @@ sub aligned_sequence {
                the cigar line based on the aligned (gapped) sequence.
   Returntype : string
   Exceptions : none
-  Caller     : general
+  Caller     : object::methodname
  
 =cut
 
@@ -667,7 +667,7 @@ sub cigar_line {
   Description: get/set for attribute level_id
   Returntype : int
   Exceptions : none
-  Caller     : general
+  Caller     : object::methodname
  
 =cut
 
@@ -690,7 +690,7 @@ sub level_id {
                and dnafrag attributes
   Returntype : string $original_sequence
   Exceptions : 
-  Caller     : 
+  Caller     : object::methodname
 
 =cut
 
@@ -714,7 +714,7 @@ sub original_sequence {
   Description: get cigar line from gapped sequence
   Returntype : string $cigar_line
   Exceptions : 
-  Caller     : 
+  Caller     : methodname
 
 =cut
 
@@ -750,7 +750,7 @@ sub _get_cigar_line_from_aligned_sequence {
   Description: get gapped sequence from original one and cigar line
   Returntype : string $aligned_sequence
   Exceptions : thrown if cigar_line does not match sequence length
-  Caller     : 
+  Caller     : methodname
 
 =cut
 
@@ -788,7 +788,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   Description: print attributes of the object to the STDOUT. Used for debuging purposes.
   Returntype : none
   Exceptions : 
-  Caller     : 
+  Caller     : object::methodname
 
 =cut
 
