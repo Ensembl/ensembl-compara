@@ -46,6 +46,7 @@ use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::Compara::AlignBlockSet;
+use Bio::EnsEMBL::Compara::MappedExon;
 
 # Object preamble - inherits from Bio::Root::RootI
 
@@ -66,20 +67,73 @@ use Bio::Root::RootI;
 
 =cut
 
-sub get_all_Genes_exononly{
+sub get_all_Genes_exononly {
    my ($self) = @_;
 
-   my @genes = $self->core_adaptor->get_GeneAdaptor->fetch_Genes_by_contig_list($self->contig_list);
+   my @genes = $self->core_adaptor->get_GeneAdaptor->fetch_by_contig_list($self->contig_list);
 
+   my @out;
+   my $mapper = $self->get_Mapper;
+  
    foreach my $gene ( @genes ) {
-       foreach my $transcript ( $gene->each_Transcript() ) {
-	   foreach my $exon ( $transcript->each_Exon() ) {
-	       $self->_map_feature($exon);
+       my $new_gene = Bio::EnsEMBL::Gene->new();
+       $new_gene->dbID($gene->dbID);
+       $new_gene->adaptor($gene->adaptor);
+       push(@out,$new_gene);
+
+       foreach my $trans ( $gene->each_Transcript() ) {
+	   my $new_trans = Bio::EnsEMBL::Transcript->new();
+	   $new_trans->dbID($trans->dbID);
+	   $new_trans->adaptor($trans->adaptor);
+
+	   $new_gene->add_Transcript($new_trans);
+	   my $rank = 0;
+	   foreach my $exon ( $trans->get_all_Exons() ) {
+	       $rank++;
+	       my @coordlist = $mapper->map_coordinates($exon->start,$exon->end,$exon->strand,$exon->contig_id,"rawcontig");
+
+	       if( scalar(@coordlist) == 1 && $coordlist[0]->isa('Bio::EnsEMBL::Mapper::Gap') ) {
+		   # skip this exon
+		   next;
+	       }
+
+
+	       my $new_exon = Bio::EnsEMBL::Compara::MappedExon->new();
+	       $new_exon->dbID($new_exon->dbID);
+	       $new_exon->adaptor($new_exon->adaptor);
+	       $new_exon->rank($rank);
+	       $new_exon->warped(0);
+
+	       # remove starting and trailing gaps, setting warped if so
+	       while( $coordlist[0]->isa('Bio::EnsEMBL::Mapper::Gap') ) {
+		   unshift @coordlist;
+		   $new_exon->warped(1);
+	       } 
+
+	       while( $coordlist[$#coordlist]->isa('Bio::EnsEMBL::Mapper::Gap') ) {
+		   pop @coordlist;
+		   $new_exon->warped(1);
+	       } 
+
+	       # set start and end
+
+	       $new_exon->start($coordlist[0]->start);
+	       $new_exon->end($coordlist[$#coordlist]->end);
+
+	       # if more than 1 then must gap
+
+	       if( scalar(@coordlist) != 1 ) {
+		   $new_exon->warped(1);
+	       }
+
+	       # attach to Transcript
+
+	       $new_trans->add_Exon($new_exon);
 	   }
        }
    }
 
-   return @genes;
+   return @out;
 }
 
 

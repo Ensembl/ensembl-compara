@@ -43,6 +43,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::AlignBlockSet;
 use vars qw(@ISA);
 use strict;
+use Bio::EnsEMBL::Mapper;
 
 # Object preamble - inherits from Bio::Root::RootI
 
@@ -62,6 +63,36 @@ sub new {
 
 # set stuff in self from @args
     return $self;
+}
+
+=head2 get_Mapper
+
+ Title   : get_Mapper
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_Mapper{
+   my ($self) = @_;
+
+   if( defined $self->{'_mapper_cache'} ) {
+       return $self->{'_mapper_cache'};
+   }
+
+   my $out = Bio::EnsEMBL::Mapper->new('rawcontig','align');
+
+   foreach my $block ( $self->get_AlignBlocks ) {
+       $out->add_map_coordinates($block->start,$block->end,$block->dnafrag->name,$block->align_start,$block->align_end,"align-block-set".$self,$block->strand);
+   }
+
+   $self->{'_mapper_cache'} = $out;
+   
+   return $out;
 }
 
 =head2 get_AlignBlocks

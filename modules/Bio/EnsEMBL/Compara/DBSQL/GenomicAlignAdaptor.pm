@@ -47,6 +47,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
+use Bio::EnsEMBL::Compara::FeatureAwareAlignBlockSet;
 
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -127,7 +128,7 @@ sub fetch_by_genomedb_dnafrag_list{
 
 
 =head2 get_AlignBlockSet
-
+    
  Title   : get_AlignBlockSet
  Usage   :
  Function:
@@ -165,6 +166,7 @@ sub get_AlignBlockSet{
        
        if( ! defined $dnafraghash{$raw_id} ) {
 	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
+	   $alignset->core_adaptor($dnafraghash{$raw_id}->genomedb->ensembl_db);
        }
 
        $alignblock->dnafrag($dnafraghash{$raw_id});

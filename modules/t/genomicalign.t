@@ -1,7 +1,7 @@
 
 
 use Test;
-BEGIN { plan tests => 7 }
+BEGIN { plan tests => 8 }
 
 
 
@@ -62,4 +62,21 @@ $alignin = Bio::AlignIO->new( -format => 'fasta',-file => 't/test.aln');
 $aln = $alignin->next_aln();
 $aln = undef;
 ok 7;
+
+$alignblockset = $align->get_AlignBlockSet(1);
+
+@genes = $alignblockset->get_all_Genes_exononly();
+
+my ($trans) = $genes[0]->each_Transcript();
+
+my ($exon1,$exon2) = $trans->get_all_Exons();
+
+if( $exon1->start == 2 && $exon2->start == 15 ) {
+	print "ok 8\n";
+} else {
+	print "not ok 8\n";
+}
+
+
+
 
