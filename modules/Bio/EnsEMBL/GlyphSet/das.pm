@@ -82,6 +82,7 @@ sub _init {
 		    	return;
             }
             next if ($f->das_type_id() =~ /contig/i);       # raw_contigs
+            next if ($f->das_type_id() =~ /component/i);       # clones
             next if ($f->das_type_id() =~ /karyotype/i);    # karyotype 
     		next if $strand eq 'b' &&
                 ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
@@ -192,6 +193,7 @@ sub _init {
 		    	return;
         	}
 	        next if ($f->das_type_id() =~ /contig/i);       # raw_contigs
+            next if ($f->das_type_id() =~ /component/i);       # clones
     	    next if ($f->das_type_id() =~ /karyotype/i);    # karyotype bands
 #            print STDERR "passed type test\n";
 	        $empty_flag =0; # We have a feature (its on one of the strands!)
