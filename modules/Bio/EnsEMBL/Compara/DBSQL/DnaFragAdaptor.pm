@@ -74,10 +74,10 @@ sub fetch_by_dbID {
     SELECT genome_db_id, dnafrag_type, dnafrag_id, 
            name, start, end
       FROM dnafrag 
-     WHERE dnafrag_id = $dbid 
+     WHERE dnafrag_id = ? 
   ");
 
-  $sth->execute;
+  $sth->execute($dbid);
   my $dnafrag = $self->_objs_from_sth( $sth )->[0];
   
   if( !defined $dnafrag ) {
@@ -88,153 +88,120 @@ sub fetch_by_dbID {
 }
 
 
-sub fetch_all_by_genomedb_position {
-  my ( $self, $genome_db, $name, $start, $end ) = @_;
-  
-  my $sql = "
-   SELECT genome_db_id, dnafrag_type, dnafrag_id, 
-          name, start, end
-     FROM dnafrag 
-    WHERE name = ? 
-      AND genome_db_id = ?
-  ";
 
-  if( defined $end ) {
-    $sql .= "
-      AND end >= ?
-      AND start <= ?
-    ";
-  }
 
-  my $sth = $self->prepare( $sql );
-  if( defined $end ) {
-    $sth->execute( $name, $genome_db->dbID(), $start, $end );
-  } else {
-    $sth->execute(  $name, $genome_db->dbID() );
-  }
+=head2 _dna_frag_types
 
-  $self->_objs_from_sth( $sth );
+  Arg [1]    : none
+  Example    : if($self->_dna_frag_types->{$type}) { do something }
+  Description: returns a hashreference containing valid dna_frag types as keys
+               and true values;
+  Returntype : hasref
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub _dna_frag_types {
+  return {'RawContig'     => 1, 
+	  'VirtualContig' => 1,
+	  'Chromosome'    => 1};
 }
 
 
 
+=head2 fetch_all_by_GenomeDB_region
 
-=head2 fetch_by_name_genomedb_id
-
- Title   : fetch_by_name_genome_db_id
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg [2]    : (optional) string $dna_frag_type
+  Arg [3]    : (optional) string $name
+  Arg [4]    : (optional) int $start
+  Arg [5]    : (optional) int $end
+  Example    :
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
-sub fetch_by_name_genomedb_id{
-  my ($self,$name,$genomedb_id) = @_;
+sub fetch_all_by_GenomeDB_region {
+  my ($self, $genome_db, $dna_frag_type, $name, $start, $end) = @_;
   
-  if( !defined $name) {
-    $self->throw("fetch_by_name_genomedb_id requires dnafrag name");
+  unless($genome_db && ref $genome_db 
+	 && $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
+    $self->throw("fetch_all_by_species_region requires genome_db arg not ".
+		 "[$genome_db]");
   }
   
-  if( !defined $genomedb_id) {
-    $self->throw("fetch_by_name_genomedb_id requires genomedb_id");
-  }
-  
-  my $sth = $self->prepare("
-   SELECT genome_db_id, dnafrag_type, dnafrag_id, 
-          name, start, end
-     FROM dnafrag 
-    WHERE name = ? 
-      AND genome_db_id = ?
-  ");
-
-  $sth->execute($name,$genomedb_id);
-  my $dnafrag = $self->_objs_from_sth( $sth )->[0];
-  
-  if( !defined $dnafrag ) {
-    $self->throw("No dnafrag with this name $name and genomedb $genomedb_id");
-  }
-
-  return $dnafrag;
+  return 
+    $self->fetch_all_by_species_region($self, $genome_db->species, 
+				       $dna_frag_type, $name, $start, $end);
 }
 
-=head2 fetch_by_species_chr_start_end
 
- Title   : fetch_by_species_chr_start_end
- Usage   :
- Function:
- Example :
- Returns : return a list of Bio::EnsEMBL::Compara::DnaFrag
- Args    :
 
+=head2 fetch_all_by_GenomeDB_region
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg [2]    : (optional) string $dna_frag_type
+  Arg [3]    : (optional) string $name
+  Arg [4]    : (optional) int $start
+  Arg [5]    : (optional) int $end
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
-sub fetch_by_species_chr_start_end {
-  my ($self,$species,$chr_name,$chr_start,$chr_end,$dnafrag_type) = @_;
+sub fetch_all_by_species_region {
+  my ($self, $species, $dnafrag_type, $name, $start, $end) = @_;
  
-  if( !defined $species) {
-    $self->throw("fetch_by_species_chr_start_end require species name");
+  unless($species) {
+    $self->throw("fetch_all_by_species_region requires species name argument");
   }
-  
-  if( !defined $chr_name) {
-    $self->throw("fetch_by_species_chr_start_end requires chromosome name");
-  }
-  
-  if( !defined $chr_start) {
-    $self->throw("fetch_by_species_chr_start_end requires chrosomosome start");
-  }
-  
-  if( !defined $chr_end) {
-    $self->throw("fetch_by_species_chr_start_end requires chromosome end");
-  }
-  
-  if( !defined $dnafrag_type) {
-    $self->throw("fetch_by_species_chr_start_end requires dnafrag_type");
-  }
-  
-  my $sth;
-  my $list_dnafrag;
-  
-  if ($dnafrag_type eq "RawContig") {
 
-    $self->throw("Method not implemented yet for dnafrag_type $dnafrag_type");
-    
-  } elsif ($dnafrag_type eq "VirtualContig") {
-    
-    $sth = $self->prepare("
-      SELECT d.genome_db_id, d.dnafrag_type, d.dnafrag_id, 
-             d.name, d.start, d.end
-        FROM dnafrag d, genome_db g 
-       WHERE d.name = ?
-         AND d.end >= ?
-         AND d.start <= ?
-         AND g.name = ? 
-         AND d.genome_db_id=g.genome_db_id
-    ");
+  $dnafrag_type = 'Chromosome' unless $dnafrag_type;
 
-    $sth->execute($chr_name,$chr_start, $chr_end, $species);
-    $list_dnafrag = $self->_objs_from_sth( $sth );
-
-  } elsif ($dnafrag_type eq "Chromosome") {
-    
-    $sth = $self->prepare("
-      SELECT d.genome_db_id, d.dnafrag_type, d.dnafrag_id, 
-             d.name, d.start, d.end
-        FROM dnafrag d, genome_db g 
-       WHERE d.name = ? 
-         AND g.name = ? 
-         AND d.genome_db_id = g.genome_db_id
-    ");
-
-    $sth->execute($chr_name,$species);
-    $list_dnafrag = $self->_objs_from_sth( $sth );
-    
+  unless($self->_dna_frag_types()->{$dnafrag_type}) {
+    $self->throw("[$dnafrag_type] is not a valid dna_frag_type." .
+		 "Valid types are:["
+		 .join(', ', keys(%{$self->_dna_frag_types}))."]\n");
   }
-  return $list_dnafrag;
-}
+ 
+  my $sql = 'SELECT d.genome_db_id, d.dnafrag_type, d.dnafrag_id, 
+                    d.name, d.start, d.end
+             FROM  dnafrag d, genome_db g
+             WHERE d.type = ?
+             AND   g.name = ?
+             AND   d.genome_db_id = g.genome_db_id';
+
+  my @bind_values = ($dnafrag_type, $species);
+
+  if(defined $name) {
+    $sql .= ' AND d.name = ?';
+    push @bind_values, "$name";
+  }
+
+  if(defined $start) {
+    $sql .= ' AND d.end >= ?';
+    push @bind_values, $end;
+  }
+  
+  if(defined $end) {
+    $sql .= ' AND d.start <= ?';
+    push @bind_values, $end;
+  }
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute(@bind_values);
+
+  return $self->_objs_from_sth($sth);
+}     
+
+
 
 =head2 fetch_all
 
@@ -244,7 +211,6 @@ sub fetch_by_species_chr_start_end {
  Example :
  Returns : 
  Args    :
-
 
 =cut
 
@@ -301,7 +267,6 @@ sub _objs_from_sth {
  Returns : 
  Args    :
 
-
 =cut
 
 sub store{
@@ -350,6 +315,7 @@ sub store{
 
    return $dnafrag->dbID;
 }
+
 
 =head2 store_if_needed
 
@@ -420,5 +386,99 @@ sub store_if_needed {
      $self->store($dnafrag);
    }
 }
+
+
+
+####################################DEPRECATED#################################
+####################################DEPRECATED#################################
+
+=head2 fetch_by_species_chr_start_end
+
+  Arg [1]    : none
+  Example    : none
+  Description: DEPRECATED use fetch_all_by_species_region instead
+  Returntype : none
+  Exceptions : none
+  Caller     : none
+
+=cut
+
+sub fetch_by_species_chr_start_end {
+  my ($self, @args) = @_;
+
+  my ($f, $p, $l) = caller;
+  $self->warn("fetch_by_species_chr_start_end is replaced with " .
+              "fetch_all_by_species_region: $f,$p: $l\n");
+
+  return $self->fetch_all_by_species_region(@args);
+}
+
+
+
+
+sub fetch_by_name_genomedb_id{
+  my ($self,$name,$genomedb_id) = @_;
+  
+  if( !defined $name) {
+    $self->throw("fetch_by_name_genomedb_id requires dnafrag name");
+  }
+  
+  if( !defined $genomedb_id) {
+    $self->throw("fetch_by_name_genomedb_id requires genomedb_id");
+  }
+  
+  my $sth = $self->prepare("
+   SELECT genome_db_id, dnafrag_type, dnafrag_id, 
+          name, start, end
+     FROM dnafrag 
+    WHERE name = ? 
+      AND genome_db_id = ?
+  ");
+
+  $sth->execute($name,$genomedb_id);
+  my $dnafrag = $self->_objs_from_sth( $sth )->[0];
+  
+  if( !defined $dnafrag ) {
+    $self->throw("No dnafrag with this name $name and genomedb $genomedb_id");
+  }
+
+  return $dnafrag;
+}
+
+
+
+
+sub fetch_all_by_genomedb_position {
+  my ( $self, $genome_db, $name, $start, $end ) = @_;
+
+  my ($f, $p, $l) = caller;
+  $self->warn("fetch_all_by_genomedb_position:" . 
+       "use fetch_all_by_GenomeDB_region instead caller=$f, $p, $l\n");
+  
+  my $sql = "
+   SELECT genome_db_id, dnafrag_type, dnafrag_id, 
+          name, start, end
+     FROM dnafrag 
+    WHERE name = ? 
+      AND genome_db_id = ?
+  ";
+
+  if( defined $end ) {
+    $sql .= "
+      AND end >= ?
+      AND start <= ?
+    ";
+  }
+
+  my $sth = $self->prepare( $sql );
+  if( defined $end ) {
+    $sth->execute( $name, $genome_db->dbID(), $start, $end );
+  } else {
+    $sth->execute(  $name, $genome_db->dbID() );
+  }
+
+  $self->_objs_from_sth( $sth );
+}
+
 
 1;
