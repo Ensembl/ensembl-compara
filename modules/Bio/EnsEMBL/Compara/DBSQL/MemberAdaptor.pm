@@ -451,7 +451,18 @@ sub fetch_longest_peptide_member_for_gene_member_id {
   my $constraint = "m.gene_member_id = '$gene_member_id'";
 
   my $join = [[['sequence', 'seq'], 'm.sequence_id = seq.sequence_id']];
-  $self->_final_clause("ORDER BY seq.length DESC");
+  $self->_final_clause("ORDER BY seq.length DESC, member_id LIMIT 1");
+
+  #fixed fetch_longest_peptide_member_for_gene_member_id so that it returns
+  #the same longest peptide used in the peptide_align_feature.  There are some
+  #cases where a gene will have multiple transcripts but with the same translation
+  #sequence (and hence the same sequence length). The code that picks the longest
+  #in the production pipeline uses a > test so the first translation that hits
+  #the longest length will be the one picked.  Since the insert is done right away
+  #the member with the smallest member_id (of the equal length translations) is the
+  #one picked as 'longest' for use in the blasting.
+  #so "ORDER BY seq.length DESC, member_id LIMIT 1" picks the right one.
+  #Yeah it's a hack, but it does work.
 
   my $obj = undef;
   eval {
