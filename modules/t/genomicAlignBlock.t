@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 66;
+    plan tests => 72;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -497,8 +497,8 @@ $genomic_align_array = $genomic_align_block->genomic_align_array;
 $genomic_align_block->reverse_complement;
 
 my $st = $genomic_align_block->reference_genomic_align;
-ok( $st->dnafrag_strand == -1 );
-ok( $st->cigar_line eq "13M44D15M12D6M7D34MD63M2D86M");
+ok( $st->dnafrag_strand, -1 );
+ok( $st->cigar_line, "13M44D15M12D6M7D34MD63M2D86M");
 
 my $res = $genomic_align_block->get_all_non_reference_genomic_aligns->[0];
 ok( $res->dnafrag_strand == -1 );
@@ -564,6 +564,79 @@ do {
   ok($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence, $new_ga->aligned_sequence,
       "New from ungapped: Comparing first aligned_sequence");
 };
+
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->restrict_between_reference_positions method");
+$genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+
+do {
+  my $length = length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence);
+  my $cigar_line = $genomic_align_block->get_all_GenomicAligns->[0]->cigar_line;
+  my ($match, $gap) = $cigar_line =~ /^(\d*)M(\d*)D/; ## This test asumes the alignment starts with a match...
+  $match = 1 if (!$match);
+  $gap = 1 if (!$gap);
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+  my $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start + $match - 1,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  ok(length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence) + $match - 1, $length);
+
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+  $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start + $match,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  ok(length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence) + $match + $gap, $length);
+    
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+  $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start + $match - 1,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start + 1,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  ok(length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence) + $match + $gap, $length);
+
+  ($gap, $match) = $cigar_line =~ /(\d*)D(\d*)M$/; ## This test asumes the alignment ends with a match...
+  $match = 1 if (!$match);
+  $gap = 1 if (!$gap);
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+  $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end - $match + 1,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  ok(length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence) + $match - 1, $length);
+
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+  $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end - $match,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  ok(length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence) + $match + $gap, $length);
+    
+  $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+  $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end - $match + 1,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  $restricted_genomic_align_block = $genomic_align_block->restrict_between_reference_positions(
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_start,
+          $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_end - 1,
+          $genomic_align_block->get_all_GenomicAligns->[0]
+      );
+  ok(length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence) + $match + $gap, $length);
+    
+};
+
 
 #####################################################################
 ## TEST DEPRECATED METHODS
