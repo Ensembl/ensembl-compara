@@ -35,7 +35,7 @@ sub colour {
 
 sub href {
     my ($self, $gene, $transcript) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url( 'SWALLPROTEIN', $gene->stable_id );
+    return $self->ID_URL( 'SWALLPROTEIN', $gene->stable_id );
 }
 
 sub features {

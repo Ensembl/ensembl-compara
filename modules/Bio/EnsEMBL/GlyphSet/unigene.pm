@@ -14,7 +14,7 @@ sub features {
 
 sub href { 
     my ($self, $id ) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url( 'UNIGENE', $id );
+    return $self->ID_URL( 'UNIGENE', $id );
 }    
 sub zmenu {
     my ($self, $id ) = @_;

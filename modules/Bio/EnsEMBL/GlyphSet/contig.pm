@@ -20,12 +20,11 @@ sub init_label {
 	    'text'      => 'DNA(contigs)',
     	'font'      => 'Small',
 	    'absolutey' => 1,
-        'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#contig\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
+        'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','contig')],
 
         'zmenu'     => {
             'caption'                     => 'HELP',
-            "01:Track information..."     =>
-qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#contig\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
+            "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'contig\\')]
         }
 
     });
@@ -432,7 +431,7 @@ sub _init_non_assembled_contig {
 	    if ($clone){
 		$glyph->{'zmenu'}{"01:Clone: $clone"};
 		$glyph->{'zmenu'}{"03:EMBL source file"} = 
-		$self->{'config'}->{'ext_url'}->get_url( 'EMBL', $clone);	
+		$self->ID_URL( 'EMBL', $clone);	
 	    }
 	}
     

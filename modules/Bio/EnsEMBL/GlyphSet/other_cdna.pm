@@ -21,14 +21,14 @@ sub colour {
 sub href {
     my ($self, $id ) = @_;
     if ($id =~ /^(NM_\d+)/){
-      return $self->{'config'}->{'ext_url'}->get_url('REFSEQ', $1);
+      return $self->ID_URL('REFSEQ', $1);
     }
     if( $id =~ /(RO|ZX|PX|ZA|PL)\d{5}[A-Z]\d{2}/ ) {
-      return $self->{'config'}->{'ext_url'}->get_url('RIKEN', $id);
+      return $self->ID_URL('RIKEN', $id);
     }
 
     $id =~ s/\.\d+$//;
-    return $self->{'config'}->{'ext_url'}->get_url('EMBL',$id);
+    return $self->ID_URL('EMBL',$id);
 }
 sub zmenu {
   my ($self, $id ) = @_;

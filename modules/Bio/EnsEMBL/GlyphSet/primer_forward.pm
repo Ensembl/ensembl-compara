@@ -12,26 +12,13 @@ sub my_label { return "Forward primers"; }
 sub features {
 
 my ($self) = @_;
-my $temp_file = $self->{'config'}->{'temp_file'};
-my (@primer_all, @line, %remove_duplicates, $key);
-open (EPRIMER_RESULTS4GRAPH, "<$temp_file") or return undef;
- while (<EPRIMER_RESULTS4GRAPH>) {
-		my @primer;
-		chomp;
- 		s/^\s+//; # remove leading spaces
- 		@line = split /\s+/, $_; # split string on space and create array
-		if (/FORWARD PRIMER/) {
- 			@primer = @line[2..6];
-			push @primer, $self->{'config'}->{'startbp'};
-			$key = join('',@line[2..6]) ;
-			if (!(exists($remove_duplicates{$key}))) {
-				$remove_duplicates{$key}++;
-				push @primer_all, \@primer;
-			} 
- 		}
-	}
-close (EPRIMER_RESULTS4GRAPH);
-return \@primer_all;
+my $results = $self->{'config'}->{'result'};
+my @forward_primers = ();
+for (@{$results}){
+	push @forward_primers, $_->{'Forward'};
+}
+
+return \@forward_primers;
 }
 
 ##################################################
@@ -41,16 +28,15 @@ return \@primer_all;
 sub _init {
     my ($self) = @_;
     my $type = $self->check();
-    return unless defined $type;        
+    	return unless defined $type;        
 
- my $VirtualContig   = $self->{'container'};
- my $Config          = $self->{'config'};
- my $strand          = $self->strand();
- my $dep             = $Config->get($type, 'dep');
- my $strand_flag     = $Config->get($type, 'str');
- my $BUMP_WIDTH      = $Config->get($type, 'bump_width');
-    $BUMP_WIDTH      = 1 unless defined $BUMP_WIDTH;
-
+ 	my $VirtualContig   = $self->{'container'};
+ 	my $Config          = $self->{'config'};
+ 	my $strand          = $self->strand();
+ 	my $dep             = $Config->get($type, 'dep');
+ 	my $strand_flag     = $Config->get($type, 'str');
+ 	my $BUMP_WIDTH      = $Config->get($type, 'bump_width') || 1;
+       
 ## If only displaying on one strand skip IF not on right strand....
     return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
 
@@ -91,14 +77,13 @@ sub _init {
 
  	my $features = $self->features; 
     if(!defined($features)) {
-      $self->errorTrack("Could not open results file");
+      $self->errorTrack("Error: Could not open results file");
       return;
     }
     my @eprimer_glyphs = ();
 
-    foreach my $f ( @{$features} ) {
-    	my @eprimer = @{$f};
-		my $start = ($eprimer[0]);
+    foreach my $eprimer ( @{$features} ) {
+		my $start = ($eprimer->{'start'} );
 		next if $start > $vc_length; ## Skip if totally outside VC
       	my $end = $start + 12;
       	next if $end < 1;            ## Skip if totally outside VC
@@ -116,19 +101,18 @@ sub _init {
 			$img_s = 0 if $img_s < 0;
 			my  $img_e   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
 			$img_e   = $bitmap_length if $img_e > $bitmap_length;	 
-	 		$row = &Sanger::Graphics::Bump::bump_row($img_s,    $img_e,    $bitmap_length,    \@bitmap );
-	 	next if $row > $dep;   }
-      
-     # my $primer_type = $eprimer[4]; 
-      my $poly;
-     # if ($primer_type eq 'forward') {
-	 $poly = new Sanger::Graphics::Glyph::Poly({
+	 	$row = &Sanger::Graphics::Bump::bump_row($img_s,    $img_e,    $bitmap_length,    \@bitmap );
+	 	next if $row > $dep;   
+		}
+          
+		my  $poly = new Sanger::Graphics::Glyph::Poly({
 						   'points'    => [$img_start, 0 +($row * $h),
 								  		 $img_start, 8 +($row * $h),
 								  		 $img_end, 4 + ($row * $h)],
 						   'colour'  => 'red', });
    
-	 push @eprimer_glyphs, $poly;  
+	 $self->push($poly);
+#	 push @eprimer_glyphs, $poly;  
 
  	 my $space = new Sanger::Graphics::Glyph::Space({
                 'x'          => $img_start-1,
@@ -139,24 +123,22 @@ sub _init {
                 'absolutey'  => 1			
             });
 
-	$space->{'zmenu'} =  $self->zmenu($f) ;
-	push @eprimer_glyphs, $space;
- 	}
-    
-    foreach( @eprimer_glyphs) {  $self->push($_);} 
+	$space->{'zmenu'} =  $self->zmenu($eprimer) ;   ## add zmenu into init call
+	$self->push($space);
+#	push @eprimer_glyphs, $space;
+ 	}  
    }
 
 sub zmenu {
-    my ($self, $f) = @_;
-    my @eprimer = @{$f};
-	my $jsfunction = qq(javascript:pop_input(\\'$eprimer[4]\\', \\'forward\\'));
+    my ($self, $eprimer) = @_;
+	my $jsfunction = qq(javascript:pop_input(\\'$eprimer->{'sequence'}\\', \\'forward\\'));
     my %zmenu = ( 
         'caption'  => "Forward primer: ",
-        '01:Position: ' . ($eprimer[0] + $eprimer[5]) => '',
-        "02:Length: " . $eprimer[1] => '',
-        "03:Annealing Temperature: " . $eprimer[2] => '',
-        "04:%GC: " . $eprimer[3] => '',
-        "05:Sequence: " . $eprimer[4] => '',  
+        '01:Position: ' . ($eprimer->{'start'} +  $eprimer->{'pos'}) => '',
+        "02:Length: " . $eprimer->{'length'} => '',
+        "03:Annealing Temperature: " . $eprimer->{'temp'} => '',
+        "04:%GC: " . $eprimer->{'gc'} => '',
+        "05:Sequence: " . $eprimer->{'sequence'} => '',  
 		"06:Search for reverse primers " => $jsfunction
  	);   
     

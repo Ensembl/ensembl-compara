@@ -24,7 +24,7 @@ sub href {
   my $id = $syns->{$src};
 
   ( my $SRC = uc( $src ) ) =~s/ /_/g;
-  return $self->{'config'}->{'ext_url'}->get_url( $SRC, $id);
+  return $self->ID_URL( $SRC, $id);
 }
 
 sub zmenu {

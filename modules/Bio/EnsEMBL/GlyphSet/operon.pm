@@ -17,7 +17,7 @@ sub features {
 
 sub href {
   my ($self, $f ) = @_;
-  return $self->{'config'}->{'ext_url'}->get_url( 'WORMBASE_OPERON', $f->display_label );
+  return $self->ID_URL( 'WORMBASE_OPERON', $f->display_label );
 }
 sub zmenu {
   my ($self, $f ) = @_;

@@ -6,7 +6,6 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
-use ExtURL;
 use  Sanger::Graphics::Bump;
 
 sub init_label {
@@ -40,7 +39,6 @@ sub _init {
     }
     
     my $PID = $self->{'container'}->id;
-    my $URLS = ExtURL->new();
     foreach my $key (keys %hash) {
 	my @row = @{$hash{$key}};
        	my $desc = $row[0]->idesc();
@@ -48,8 +46,8 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x' => $row[0]->feature1->start(),
 	    'y' => 0,
-	    'href' => $URLS->get_url('SUPERFAMILY',$KK) ,
-		'zmenu' => { "SCOP: $KK" => $URLS->get_url('SUPERFAMILY',$KK) },
+	    'href' => $self->ID_URL('SUPERFAMILY',$KK) ,
+        'zmenu' => { "SCOP: $KK" => $self->ID_URL('SUPERFAMILY',$KK) },
 	});
 
 	my @row = @{$hash{$key}};

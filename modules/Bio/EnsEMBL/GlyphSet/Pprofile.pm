@@ -6,7 +6,6 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
-use ExtURL;
 use  Sanger::Graphics::Bump;
 
 sub init_label {
@@ -34,8 +33,6 @@ sub _init {
     my $font          = "Small";
     my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
-    my $ext_url = ExtURL->new;
-
     my @ps_feat = @{$protein->get_all_ProfileFeatures()};
 
     foreach my $feat(@ps_feat) {
@@ -49,10 +46,10 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x' => $row[0]->feature1->start(),
 	    'y' => 0,
-	    'href'	   => $ext_url->get_url( 'PROSITE', $key ),
+	    'href'	   => $self->ID_URL( 'PROSITE', $key ),
 		'zmenu' => {
 		'caption' => "Profile Domain",
-		$key 	  => $ext_url->get_url( 'PROSITE', $key )
+		$key 	  => $self->ID_URL( 'PROSITE', $key )
 	    },
 	});
 

@@ -14,7 +14,7 @@ sub features {
 sub href {
     my ($self, $id ) = @_;
     if($id =~ /(.*)+\.\d+\.(\d+)\.(\d+)$/) {   
-       return $self->{'config'}->{'ext_url'}->get_url( 'ENS_GENSCAN', { 'CONTIG' => $1 , 'START' => $2, 'END' => $3 } );
+       return $self->ID_URL( 'ENS_GENSCAN', { 'CONTIG' => $1 , 'START' => $2, 'END' => $3 } );
     } else {
        return undef;
     } 

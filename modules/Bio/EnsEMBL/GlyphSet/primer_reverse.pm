@@ -12,29 +12,15 @@ sub my_label { return "Reverse primers"; }
 sub features {
 
 my ($self) = @_;
-my $temp_file = $self->{'config'}->{'temp_file'};
-my (@primer_all, @line, %remove_duplicates, $key);
-open (EPRIMER_RESULTS4GRAPH, "<$temp_file") or return undef;
-while (<EPRIMER_RESULTS4GRAPH>) {
-	my @primer;
- 	chomp;
- 	s/^\s+//; # remove leading spaces
- 	@line = split /\s+/, $_; # split string on space and create array
-	if (/REVERSE PRIMER/) { 
- 		@primer = @line[2..6];
-		push @primer, $self->{'config'}->{'startbp'};
-		$key = join('',@line[2..6]) ;
-		if (!(exists($remove_duplicates{$key}))) {
-			$remove_duplicates{$key}++;
-			push @primer_all, \@primer;
-		} 
-	}
+my $results = $self->{'config'}->{'result'};
+my @reverse_primers = ();
+for (@{$results}){
+	push @reverse_primers, $_->{'Reverse'};
 }
 
-close (EPRIMER_RESULTS4GRAPH);
-return \@primer_all;
-
+return \@reverse_primers;
 }
+
 
 ##################################################
 ####### copied from GlyphSet_simple.pm ###########
@@ -51,9 +37,8 @@ sub _init {
  my $strand          = $self->strand();
  my $dep             = $Config->get($type, 'dep');
  my $strand_flag     = $Config->get($type, 'str');
- my $BUMP_WIDTH      = $Config->get($type, 'bump_width');
-    $BUMP_WIDTH      = 1 unless defined $BUMP_WIDTH;
-
+ my $BUMP_WIDTH      = $Config->get($type, 'bump_width') || 1;
+    
 ## If only displaying on one strand skip IF not on right strand....
     return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
 
@@ -64,16 +49,13 @@ sub _init {
     my $navigation     = $Config->get( $type, 'navigation' ) || 'on';
     my $max_length_nav = $Config->get( $type, 'navigation_threshold' ) || 15000000;
 
-
 ## VC to long to display featues dump an error message
     if( $vc_length > $max_length *1010 ) {
         $self->errorTrack( $self->my_label." only displayed for less than $max_length Kb.");
         return; }
 
-
 ## Decide whether we are going to include navigation (independent of switch) 
-    $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1010);
-    
+    $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1010);    
     my $h = 12;
 
 ## Get highlights...
@@ -98,11 +80,10 @@ sub _init {
       $self->errorTrack("Could not open results file");
       return;
     }
-    my @eprimer_glyphs = ();
-
-    foreach my $f ( @{$features} ) {
-      my @eprimer = @{$f};
-      my $start = ($eprimer[0]);
+    
+    foreach my $eprimer ( @{$features} ) {
+    
+      my $start = ($eprimer->{'start'});
       next if $start > $vc_length; ## Skip if totally outside VC
       my $end = $start + 12;
       next if $end < 1;            ## Skip if totally outside VC
@@ -124,15 +105,15 @@ sub _init {
 		$row = &Sanger::Graphics::Bump::bump_row( $img_s, $img_e, $bitmap_length, \@bitmap);
 	 	next if $row > $dep;
      }
-     my $poly;
-		$poly = new Sanger::Graphics::Glyph::Poly({
+     
+	 my $poly = new Sanger::Graphics::Glyph::Poly({
 						   'points'    => [$img_start, 4 + ($row * $h),
 										   $img_end, 0 + ($row * $h),
 										   $img_end , 8 + ($row * $h)],
 						   'colour'  => 'orange',
 						  });
   
-    push @eprimer_glyphs, $poly;  
+    $self->push($poly);  
 
 	my $space = new Sanger::Graphics::Glyph::Space({
                 'x'          => $img_start-1,
@@ -145,30 +126,26 @@ sub _init {
             });
 
 
-	$space->{'zmenu'} =  $self->zmenu($f) ;
-	push @eprimer_glyphs, $space;
+	$space->{'zmenu'} =  $self->zmenu($eprimer) ;
+	$self->push($space);
 
-    }   
-    foreach( @eprimer_glyphs) {   $self->push($_); }
-   
+    }      
 }
 
 sub zmenu {
-    my ($self, $f) = @_;
-    
-    my @eprimer = @{$f};
-    my $jsfunction = qq(javascript:pop_input(\\'$eprimer[4]\\', \\'reverse\\'));
+    my ($self, $eprimer) = @_;
+	my $jsfunction = qq(javascript:pop_input(\\'$eprimer->{'sequence'}\\', \\'forward\\'));
     my %zmenu = ( 
-        'caption'  => "Reverse primer: ",
-        '01:Position: ' . ($eprimer[0] + $eprimer[5]) => '',
-        "02:Length: " . $eprimer[1] => '',
-        "03:Annealing Temperature: " . $eprimer[2] => '',
-        "04:%GC: " . $eprimer[3] => '',
-        "05:Sequence: " . $eprimer[4] => '',
-	"06:Search for forward primers" => $jsfunction	 
-   );   
+        'caption'  => "Forward primer: ",
+        '01:Position: ' . ($eprimer->{'start'} +  $eprimer->{'pos'}) => '',
+        "02:Length: " . $eprimer->{'length'} => '',
+        "03:Annealing Temperature: " . $eprimer->{'temp'} => '',
+        "04:%GC: " . $eprimer->{'gc'} => '',
+        "05:Sequence: " . $eprimer->{'sequence'} => '',  
+		"06:Search for reverse primers " => $jsfunction
+ 	);   
     
-   return \%zmenu;
+    return \%zmenu;
 }
 
 1;

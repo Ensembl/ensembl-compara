@@ -19,7 +19,7 @@ sub features {
 
 sub href {
     my ($self, $id ) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url( 'RIKEN', $id );
+    return $self->ID_URL( 'RIKEN', $id );
 }
 
 sub zmenu {

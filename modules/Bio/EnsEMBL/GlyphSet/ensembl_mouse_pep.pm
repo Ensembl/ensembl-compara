@@ -14,7 +14,7 @@ sub features {
 sub href {
     my ($self, $id ) = @_;
     $id =~ s/(.*)\.\d+/$1/o;
-    return $self->{'config'}->{'ext_url'}->get_url( 'ENS_MM_PEP', $id );
+    return $self->ID_URL( 'ENS_MM_PEP', $id );
 }
 sub zmenu {
     my ($self, $id ) = @_;

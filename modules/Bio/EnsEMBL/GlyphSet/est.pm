@@ -9,8 +9,9 @@ sub my_label { return "ESTs"; }
 sub features {
     my ($self) = @_;
 
-    return 
+    my $T =  
       $self->{'container'}->get_all_DnaAlignFeatures('ex_e2g_feat', 0);
+    return $T; 
 }
 
 sub colour {
@@ -22,7 +23,7 @@ sub colour {
 sub href {
     my ($self, $id ) = @_;
     ( my $estid = $id ) =~ s/(.*?)\.\d+/$1/ ;
-    return $self->{'config'}{'ext_url'}->get_url( 'EST', $estid );
+    return $self->ID_URL( 'EST', $estid );
 }
 
 sub zmenu {

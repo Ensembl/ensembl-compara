@@ -72,8 +72,6 @@ sub colour {
 
 sub zmenu {
     my ($self, $f ) = @_;
-    my $ext_url = $self->{'config'}->{'ext_url'};
-    
     my $chr_start = $f->start() + $self->{'container'}->chr_start() - 1;
     my $chr_end   = $f->end() + $self->{'container'}->chr_start() - 1;
 
@@ -100,7 +98,7 @@ sub zmenu {
     foreach my $link ($f->each_DBLink()) {
       my $DB = $link->database;
       if( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || ($DB eq 'dbSNP' && $source eq 'dbSNP') || $DB eq 'WI' ) {
-        $zmenu{"16:$DB:".$link->primary_id } = $ext_url->get_url( $DB, $link->primary_id );
+        $zmenu{"16:$DB:".$link->primary_id } = $self->ID_URL( $DB, $link->primary_id );
       }
     }
     my $type = substr($f->type(),3);

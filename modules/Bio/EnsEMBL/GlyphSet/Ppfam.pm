@@ -8,7 +8,6 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::ColourMap;
 use  Sanger::Graphics::Bump;
-use ExtURL;
 
 sub init_label {
     my ($self) = @_;
@@ -39,7 +38,6 @@ sub _init {
     my $colour        = $Config->get('Ppfam','col');
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
-    my $ext_url = ExtURL->new;
 
     #foreach my $feat ($protein->each_Protein_feature()) {
        #if ($feat->feature2->seqname =~ /^PF\w+/) {
@@ -57,10 +55,10 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x'     => $row[0]->feature1->start(),
 	    'y'     => $y,
-	    'href'	   => $ext_url->get_url( 'PFAM', $key ),
+	    'href'	   => $self->ID_URL( 'PFAM', $key ),
 		'zmenu' => {
 		'caption' => "Pfam domain",
-		$key      => $ext_url->get_url( 'PFAM', $key )
+		$key      => $self->ID_URL( 'PFAM', $key )
 	    },
 	});
 

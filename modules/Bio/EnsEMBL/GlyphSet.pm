@@ -43,6 +43,14 @@ sub check {
 
 ## Stuff copied out of scalebar.pm so that contig.pm can use it!
 
+sub HASH_URL {
+  my($self,$db,$hash) = @_;
+  return "/perl/r?d=$db&".join '&', map { "$_=$hash->{$_}" } keys %{$hash||{}};
+}
+sub ID_URL {
+  my($self,$db,$id) = @_;
+  return "/perl/r?d=$db&ID=$id";
+}
 sub zoom_URL {
     my( $self, $PART, $interval_middle, $width, $factor, $highlights ) = @_;
     my $start = int( $interval_middle - $width / 2 / $factor);
@@ -52,6 +60,8 @@ sub zoom_URL {
 
 sub zoom_zoom_zmenu {
     my ($self, $chr, $interval_middle, $width, $highlights, $zoom_width) = @_;
+    $chr =~s/.*=//;
+    return qq(zz('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$zoom_width', '$highlights' ));
     return { 
             'caption'                          => "Navigation",
             '03:Zoom in (x2)'                  => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights)."&zoom_width=".int($zoom_width/2),
@@ -61,6 +71,8 @@ sub zoom_zoom_zmenu {
 }
 sub zoom_zmenu {
     my ($self, $chr, $interval_middle, $width, $highlights) = @_;
+    $chr =~s/.*=//;
+    return qq(zn('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights' ));
     return { 
             'caption'                          => "Navigation",
             '01:Zoom in (x10)'                 => $self->zoom_URL($chr, $interval_middle, $width, 10  , $highlights),

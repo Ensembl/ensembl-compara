@@ -14,7 +14,7 @@ sub features {
 sub href {
     my ( $self, $id ) = @_;
     $id =~ s/(.*)\.\d+/$1/o;
-    return $self->{'config'}->{'ext_url'}->get_url( 'SWISSPROT', $id );
+    return $self->ID_URL( 'SWISSPROT', $id );
 }
 
 sub zmenu {

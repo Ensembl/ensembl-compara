@@ -15,13 +15,12 @@ sub features {
 sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bacs', 'threshold_navigation' ) || 2e7) * 1000;
-    my $ext_url = $self->{'config'}->{'ext_url'};
     my $zmenu = { 
         'caption'   => "BAC: ".$f->name,
         '01:Status: '.$f->status => ''
     };
     foreach( $f->embl_accs ) {
-        $zmenu->{"02:bacend: $_"} = $ext_url->get_url( 'EMBL', $_);
+        $zmenu->{"02:bacend: $_"} = $self->ID_URL( 'EMBL', $_);
     }
     return $zmenu;
 }

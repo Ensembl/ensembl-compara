@@ -23,7 +23,7 @@ sub colour {
 
 sub href {
   my ( $self, $id ) = @_;
-  return $self->{'config'}->{'ext_url'}->get_url( 'SRS_PROTEIN', $id );
+  return $self->ID_URL( 'SRS_PROTEIN', $id );
 }
 
 sub zmenu {

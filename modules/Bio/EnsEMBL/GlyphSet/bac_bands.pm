@@ -14,7 +14,6 @@ sub features {
 sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bac_bands', 'threshold_navigation' ) || 2e7) * 1000;
-    my $ext_url = $self->{'config'}->{'ext_url'};
 	my $chr = $f->{'seq'};
 	my $chr_start = $f->{'seq_start'};
 	my $chr_end = $f->{'seq_end'};
@@ -32,7 +31,7 @@ sub zmenu {
     }
 	
 	foreach( $f->embl_accs ) {
-        $zmenu->{"03:BAC end: $_"} = $ext_url->get_url( 'EMBL', $_);
+        $zmenu->{"03:BAC end: $_"} = $self->ID_URL( 'EMBL', $_);
     }
 	
 	$zmenu->{"04:Jump to $page "} = $page_link;

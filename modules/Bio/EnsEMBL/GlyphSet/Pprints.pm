@@ -6,7 +6,6 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
-use ExtURL;
 
 use  Sanger::Graphics::Bump;
 
@@ -37,8 +36,6 @@ sub _init {
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
-    my $ext_url = ExtURL->new;
-
     my @pr_feat = @{$protein->get_all_PrintsFeatures()};
     foreach my $feat(@pr_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
@@ -51,10 +48,10 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x'     => $row[0]->feature1->start(),
 	    'y'     => $y,
-	    'href'	   => $ext_url->get_url( 'PRINTS', $key ),
+	    'href'	   => $self->ID_URL( 'PRINTS', $key ),
 		'zmenu' => {
 		'caption'  	=> "Prints Domain",
-		$key 		=> $ext_url->get_url( 'PRINTS', $key  )
+		$key 		=> $self->ID_URL( 'PRINTS', $key  )
 	    },
 	});
 
