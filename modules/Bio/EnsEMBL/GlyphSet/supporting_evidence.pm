@@ -123,6 +123,7 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
                     'font'       => 'Small',
                     'colour'     => 'blue',
            	    'text'       => $hit,
+		    'href'       => $Container->{'hits'}{$hit}{'link'},
           	    'absolutey'  => 1,
             	});
    $self->push($db_acc);
@@ -136,7 +137,7 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
             	    'height'     => $TEXT_HEIGHT,
                     'font'       => 'Tiny',
                     'colour'     => 'Black',
-           	    'text'       => ($w * length($desc_text)) > $CONT_LENGTH - 10 ? substr($desc_text, 0, ($CONT_LENGTH / $w) - 30  )."..." : $desc_text,
+           	    'text'       => ($w * length($desc_text)) > ($CONT_LENGTH - ($TEXT_WIDTH * 2)) ? substr($desc_text, 0, ($CONT_LENGTH / $w) - 40  )."..." : $desc_text,
           	    'absolutey'  => 1,
 		    'absolutex'  => 1,
             	});
@@ -147,14 +148,20 @@ $self->push($desc);
       my $score = $Container->{'hits'}{$hit}{'scores'}[$exon_count];   
       my $datalib = $Container->{'hits'}{$hit}{'datalib'};
       if ($score){
-      	my $score_group = int($score / 10) * 10;
+      	my $score_group;
+	if ($score >=100 ){$score_group = '100' ;}
+	elsif ($score >=99 ){$score_group = '99' ;}
+	elsif ($score >=97 ){$score_group = '97' ;}
+	elsif ($score >=90 ){$score_group = '90' ;}
+	elsif ($score >=75 ){$score_group = '75' ;}
+	elsif ($score >=50 ){$score_group = '50' ;}
 	
-         if  (($score < 25 && $datalib =~ /pfamfrag/i) || 
+	$exon_colour = $Config->get('supporting_evidence', $score_group );
+	
+	
+	if  (($score < 25 && $datalib =~ /pfamfrag/i) || 
    		($score < 80 && $datalib !~ /pfamfrag/i)){
-		$exon_colour = $LOW_SCORE;
-	}else{
-		$exon_colour = $Config->get('supporting_evidence', $score_group );
-	}
+		$exon_colour = $LOW_SCORE;}
 
       my $alignment_href = $self->href($hit, $exon_count);
 
@@ -171,7 +178,7 @@ $self->push($desc);
             "00:Data Source: ".$datalib	 => '',
 	    "01:Score: $score"		 => '',
 	    "02:Accession: $hit"         => $Container->{'hits'}{$hit}{'link'},
-            "03:View Alignment"    	 => "$alignment_href",
+            "03:View Exon Alignment"    	 => "$alignment_href",
 			}, 
     });
    $self->push($rect); 

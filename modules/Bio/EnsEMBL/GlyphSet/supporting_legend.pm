@@ -15,7 +15,7 @@ sub init_label {
         'font'      => 'Small',
         'absolutey' => 1,
     });
-#    $self->label($label);
+    $self->label($label);
 }
 
 sub _init {
@@ -23,15 +23,16 @@ sub _init {
 
     return unless ($self->strand() == 1);
 
-    my $BOX_HEIGHT    = 4;
-    my $BOX_WIDTH     = 20;
-    my $NO_OF_COLUMNS = 2;
-    my $FONTNAME      = "Tiny";
-
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
     my $im_width      = $Config->image_width();
     my $type          = $Config->get('supporting_legend', 'src');
+    
+    my $BOX_HEIGHT    = 4;
+    my $BOX_WIDTH     = 20;
+    my $NO_OF_COLUMNS = 10;
+    my $COL_WIDTH     = 60;
+    my $FONTNAME      = "Tiny";
 
     my @colours;
     
@@ -39,20 +40,26 @@ sub _init {
 
 
      my $labels = {  
-      'Score 100' => $Config->get('supporting_evidence','100'),
-      'Score 90' => $Config->get('supporting_evidence','90'),
-      'Low scoring evidence' => $Config->get('supporting_evidence','low_score'),
-      'No Evidence'		=> $Config->get('supporting_evidence','low_score'),	
+      '100' => $Config->get('supporting_evidence','100'),
+      '99' => $Config->get('supporting_evidence','99'),
+      '97' => $Config->get('supporting_evidence','97'),
+      '90' => $Config->get('supporting_evidence','90'),
+      '75' => $Config->get('supporting_evidence','75'),
+      '50' => $Config->get('supporting_evidence','50'),
+           
+      '30' => $Config->get('supporting_evidence','low_score'),
+      'No Evidence'		=> $Config->get('supporting_evidence','low_score'),
+            	
    };
 
-    foreach (sort keys %{$labels}) {
-        $y++ unless $x==0;
-        $x=0;
-        my $legend = $_ ;
+    foreach (sort {$b <=> $a} keys %{$labels}) {
+my $legend = $_ ;
+        $legend = ($legend eq 100) || ($legend eq 'No Evidence') ? $legend : '>='.$legend;
+	$legend = '<=30' if ($legend eq '>=30');
 	my $colour = %{$labels}->{$_};
             if ($legend eq 'No Evidence'){
 	    $self->push(new Sanger::Graphics::Glyph::Rect({
-                'x'         => $im_width * $x/$NO_OF_COLUMNS,
+                'x'         => ($x * $COL_WIDTH),
                 'y'         => $y * $BOX_HEIGHT * 2 + 6,
                 'width'     => $BOX_WIDTH, 
                 'height'    => $BOX_HEIGHT,
@@ -62,7 +69,7 @@ sub _init {
             }));
 	    }else{
 	    $self->push(new Sanger::Graphics::Glyph::Rect({
-                'x'         => $im_width * $x/$NO_OF_COLUMNS,
+                'x'         => ($x * $COL_WIDTH),
                 'y'         => $y * $BOX_HEIGHT * 2 + 6,
                 'width'     => $BOX_WIDTH, 
                 'height'    => $BOX_HEIGHT,
@@ -72,11 +79,11 @@ sub _init {
             }));
 	    }
             $self->push(new Sanger::Graphics::Glyph::Text({
-                'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
+                'x'         => ($x * $COL_WIDTH) + $BOX_WIDTH,
                 'y'         => $y * $BOX_HEIGHT * 2 + 4,
                 'height'    => $Config->texthelper->height($FONTNAME),
                 'font'      => $FONTNAME,
-                'colour'    => $colour,
+                'colour'    => 'black',
                 'text'      => uc(" $legend"),
                 'absolutey' => 1,
                 'absolutex' => 1,
