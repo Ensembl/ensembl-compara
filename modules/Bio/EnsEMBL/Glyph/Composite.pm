@@ -1,9 +1,9 @@
-package Glyph::Composite;
+package Bio::EnsEMBL::Glyph::Composite;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use Glyph::Rect;
-@ISA = qw(Glyph::Rect);
+use Bio::EnsEMBL::Glyph::Rect;
+@ISA = qw(Bio::EnsEMBL::Glyph::Rect);
 
 sub push {
     my ($this, $glyph) = @_;

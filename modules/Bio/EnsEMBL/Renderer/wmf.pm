@@ -1,10 +1,11 @@
-package Renderer::wmf;
+package Bio::EnsEMBL::Renderer::wmf;
 use strict;
+use lib "../../../../modules";
 use WMF;
 use lib "..";
-use Renderer;
+use Bio::EnsEMBL::Renderer;
 use vars qw(@ISA);
-@ISA = qw(Renderer);
+@ISA = qw(Bio::EnsEMBL::Renderer);
 
 sub canvas {
     my ($self, $canvas) = @_;

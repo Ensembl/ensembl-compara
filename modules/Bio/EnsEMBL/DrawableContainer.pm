@@ -1,18 +1,21 @@
-package DrawableContainer;
+package Bio::EnsEMBL::DrawableContainer;
+use lib "../../../../bioperl-live";
+use Bio::Root::RootI;
 use strict;
-use Renderer::imagemap;
-use Renderer::gif;
-use Renderer::wmf;
-use Exporter;
+use Bio::EnsEMBL::Renderer::imagemap;
+use Bio::EnsEMBL::Renderer::gif;
+use Bio::EnsEMBL::Renderer::wmf;
 use vars qw(@ISA);
+
+@ISA = qw(Bio::Root::RootI);
 
 =head1 NAME
 
-DrawableContainer - top level container for ensembl-draw drawing code.
+Bio::EnsEMBL::DrawableContainer - top level container for ensembl-draw drawing code.
 
 =head1 SYNOPSIS
 
-DrawableContainer is a container class for any number of GlyphSets.
+Bio::EnsEMBL::DrawableContainer is a container class for any number of GlyphSets.
 
 =cut
 
@@ -38,12 +41,12 @@ DrawableContainer is a container class for any number of GlyphSets.
 
 #########
 # transview
-use GlyphSet::transcript;			# transview
+use Bio::EnsEMBL::GlyphSet::transcript;			# transview
 
 #########
 # generic
 #
-use GlyphSet::decoration;
+use Bio::EnsEMBL::GlyphSet::decoration;
 
 @ISA = qw(Exporter);
 
@@ -51,7 +54,7 @@ use GlyphSet::decoration;
 
 =head2 new - Class constructor.
 
-my $gss = new DrawableContainer($display, $Container, $ConfigObject);
+my $gss = new Bio::EnsEMBL::DrawableContainer($display, $Container, $ConfigObject);
 
 	$display       - contigviewtop|contigviewbottom|
 	$Container     - vc|other_container_obj on which the image will be built
@@ -63,22 +66,22 @@ sub new {
     my ($class, $display, $Container, $Config, $highlights) = @_;
 
     if(!defined $display) {
-	print STDERR qq(DrawableContainer::new No display type defined\n);
+	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No display type defined\n);
 	return;
     }
 
     if($display !~ /transview/) {
-	print STDERR qq(DrawableContainer::new Unknown display type $display\n);
+	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new Unknown display type $display\n);
 	return;
     }
 
     if(!defined $Container) {
-	print STDERR qq(DrawableContainer::new No vc defined\n);
+	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No vc defined\n);
 	return;
     }
 
     if(!defined $Config) {
-	print STDERR qq(DrawableContainer::new No Config object defined\n);
+	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No Config object defined\n);
 	return;
     }
 
@@ -101,7 +104,7 @@ sub new {
 	#########
 	# create a new glyphset for this row
 	#
-	my $classname = qq(GlyphSet::$row);
+	my $classname = qq(Bio::EnsEMBL::GlyphSet::$row);
 
 	#########
 	# generate a set for both strands
@@ -164,7 +167,7 @@ sub render {
 	$canvas->colorAllocate(255,255,255);
     }
 
-    my $renderer_type = qq(Renderer::$type);
+    my $renderer_type = qq(Bio::EnsEMBL::Renderer::$type);
     my $renderer = $renderer_type->new($this->{'glyphsets'}, $transform_ref, $canvas);
 
     return $renderer->canvas();
@@ -179,7 +182,7 @@ sub glyphsets {
 
 =head1 RELATED MODULES
 
-See also: GlyphSetI GlyphI WebUserConfig
+See also: Bio::EnsEMBL::GlyphSet Bio::EnsEMBL::Glyph WebUserConfig
 
 =head1 AUTHOR - Roger Pettett
 

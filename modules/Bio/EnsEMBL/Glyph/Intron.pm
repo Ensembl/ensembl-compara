@@ -1,8 +1,8 @@
-package Glyph::Intron;
+package Bio::EnsEMBL::Glyph::Intron;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use GlyphI;
-@ISA = qw(GlyphI);
+use Bio::EnsEMBL::Glyph;
+@ISA = qw(Bio::EnsEMBL::Glyph);
 
 1;

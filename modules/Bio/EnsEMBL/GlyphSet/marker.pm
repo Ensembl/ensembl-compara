@@ -1,16 +1,16 @@
-package GlyphSet::marker;
+package Bio::EnsEMBL::GlyphSet::marker;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use GlyphSet;
-@ISA = qw(GlyphSet);
-use Glyph::Rect;
+use Bio::EnsEMBL::GlyphSet;
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use Bio::EnsEMBL::Glyph::Rect;
 
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;
 
     for(my $i = 0; $i<1000; $i+=100) {
-	my $glyph = new Glyph::Rect({
+	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 	    'x'      => $i,
 	    'y'      => 0,
 	    'width'  => 20,

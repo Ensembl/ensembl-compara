@@ -1,9 +1,9 @@
-package Glyph::Circle;
+package Bio::EnsEMBL::Glyph::Circle;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use GlyphI;
-@ISA = qw(GlyphI);
+use Bio::EnsEMBL::Glyph;
+@ISA = qw(Bio::EnsEMBL::Glyph);
 
 sub diameter {
     my ($self, $val) = @_;

@@ -1,8 +1,10 @@
-package GlyphSet;
+package Bio::EnsEMBL::GlyphSet;
 use strict;
+use lib "../../../../bioperl-live";
+use Bio::Root::RootI;
 use Exporter;
 use vars qw(@ISA $AUTOLOAD);
-@ISA = qw(Exporter);
+@ISA = qw(Exporter Bio::Root::RootI);
 
 #########
 # constructor
@@ -36,7 +38,7 @@ sub new {
 #
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;
-    print STDERR qq(GlyphSetI::_init unimplemented\n);
+    print STDERR qq(Bio::EnsEMBL::GlyphSetI::_init unimplemented\n);
 }
 
 #########
@@ -53,13 +55,13 @@ sub glyphs {
 sub push {
     my ($this, $Glyph) = @_;
 
-    if($Glyph->isa('GlyphI')) {
+    if($Glyph->isa('Bio::EnsEMBL::Glyph')) {
 	#########
 	# if we've got a single glyph:
 	#
 	push @{$this->{'glyphs'}}, $Glyph;
 
-    } elsif($Glyph->isa('GlyphSetI')) {
+    } elsif($Glyph->isa('Bio::EnsEMBL::GlyphSet')) {
 	#########
 	# if we've got a glyphs 
 	#
@@ -73,13 +75,13 @@ sub push {
 sub unshift {
     my ($this, $Glyph) = @_;
     
-    if($Glyph->isa('GlyphI')) {
+    if($Glyph->isa('Bio::EnsEMBL::Glyph')) {
 	#########
 	# if we've got a single glyph:
 	#
 	unshift @{$this->{'glyphs'}}, $Glyph;
 	
-    } elsif($Glyph->isa('GlyphSetI')) {
+    } elsif($Glyph->isa('Bio::EnsEMBL::GlyphSet')) {
 	#########
 	# if we've got a glyphs 
 	#

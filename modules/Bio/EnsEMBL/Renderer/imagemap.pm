@@ -1,9 +1,9 @@
-package Renderer::imagemap;
+package Bio::EnsEMBL::Renderer::imagemap;
 use strict;
 use lib "..";
-use Renderer;
+use Bio::EnsEMBL::Renderer;
 use vars qw(@ISA);
-@ISA = qw(Renderer);
+@ISA = qw(Bio::EnsEMBL::Renderer);
 
 sub render_Rect {
     my ($this, $glyph) = @_;

@@ -1,9 +1,9 @@
-package Renderer::gif;
+package Bio::EnsEMBL::Renderer::gif;
 use strict;
 use lib "..";
-use Renderer;
+use Bio::EnsEMBL::Renderer;
 use vars qw(@ISA);
-@ISA = qw(Renderer);
+@ISA = qw(Bio::EnsEMBL::Renderer);
 
 sub canvas {
     my ($this, $canvas) = @_;

@@ -1,15 +1,13 @@
-package GlyphSet::transcript;
+package Bio::EnsEMBL::GlyphSet::transcript;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use GlyphSet;
-@ISA = qw(GlyphSet);
-use Glyph::Rect;
-use Glyph::Intron;
-use Glyph::Text;
-use Glyph::Composite;
-use lib "../perl";
-use Bump;
+use Bio::EnsEMBL::GlyphSet;
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use Bio::EnsEMBL::Glyph::Rect;
+use Bio::EnsEMBL::Glyph::Intron;
+use Bio::EnsEMBL::Glyph::Text;
+use Bio::EnsEMBL::Glyph::Composite;
 
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;
@@ -29,7 +27,7 @@ sub _init {
 	    my $tstrand = $transcript->start_exon()->strand();
 	    next TRANSCRIPT if($tstrand != $this->strand());
 
-	    my $Composite = new Glyph::Composite({
+	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 		'id'    => $transcript->id(),
 		'zmenu' => {
 		    'caption'  => $transcript->id(),
@@ -51,7 +49,7 @@ sub _init {
 		my $x = $exon->start();
 		my $w = $exon->end - $x;
 
-		my $rect = new Glyph::Rect({
+		my $rect = new Bio::EnsEMBL::Glyph::Rect({
 		    'x'        => $x,
 		    'y'        => $y,
 		    'width'    => $w,
@@ -63,7 +61,7 @@ sub _init {
 		    },
 		});
 
-		my $intron = new Glyph::Intron({
+		my $intron = new Bio::EnsEMBL::Glyph::Intron({
 		    'x'        => $previous_endx,
 		    'y'        => $y,
 		    'width'    => ($x - $previous_endx),

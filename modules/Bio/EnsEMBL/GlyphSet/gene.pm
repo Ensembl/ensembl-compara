@@ -1,9 +1,9 @@
-package GlyphSet::gene;
+package Bio::EnsEMBL::GlyphSet::gene;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use GlyphSet;
-@ISA = qw(GlyphSet);
+use Bio::EnsEMBL::GlyphSet;
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;

@@ -1,8 +1,8 @@
-package Renderer;
+package Bio::EnsEMBL::Renderer;
 use strict;
 use Exporter;
 use vars qw(@ISA);
-use lib "../modules";
+use lib "../../../../modules";
 use ColourMap;
 @ISA = qw(Exporter);
 
@@ -14,7 +14,7 @@ sub new {
 	'transform' => $transform_ref,
 	'canvas'    => $canvas,
 	'colourmap' => new ColourMap,
-	'supported' => [qw(Glyph::Composite Glyph::Rect Glyph::Circle Glyph::Ellipse Glyph::Intron Glyph::Text)],
+	'supported' => [qw(Bio::EnsEMBL::Glyph::Composite Bio::EnsEMBL::Glyph::Rect Bio::EnsEMBL::Glyph::Circle Bio::EnsEMBL::Glyph::Ellipse Bio::EnsEMBL::Glyph::Intron Bio::EnsEMBL::Glyph::Text)],
     };
     bless($self, $class);
     $self->render();

@@ -1,8 +1,8 @@
-package Glyph::Rect;
+package Bio::EnsEMBL::Glyph::Rect;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use GlyphI;
-@ISA = qw(GlyphI);
+use Bio::EnsEMBL::Glyph;
+@ISA = qw(Bio::EnsEMBL::Glyph);
 
 1;

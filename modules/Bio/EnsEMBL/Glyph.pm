@@ -1,11 +1,9 @@
-package GlyphI;
+package Bio::EnsEMBL::Glyph;
 use strict;
+use lib "../../../../modules";
+use ColourMap;
 use Exporter;
 use vars qw(@ISA $AUTOLOAD);
-use Matrix;
-
-use lib "../modules";
-use ColourMap;
 @ISA = qw(Exporter);
 
 #########
@@ -27,28 +25,9 @@ sub new {
     }
 
     bless($self, $class);
-#    $self->_init();
 
     return $self;
 }
-
-#sub render {
-#    my ($this, $imagetype, $content_ref, $offset_ref) = @_;
-#
-#    my $fun = qq(render_$imagetype);
-#    if($this->can($fun)) {
-#	$this->$fun($content_ref, $offset_ref);
-#    } else {
-#	print STDERR qq(GlyphI::render don't know how to render $imagetype\n);
-#    }
-#}
-
-#########
-# pure virtual initialisation function
-#
-#sub _init {
-#    print STDERR qq(GlyphI::_init unimplemented\n);
-#}
 
 #########
 # read-write methods
@@ -124,43 +103,4 @@ sub transform {
 	#
 	$this->pixelx($this->pixelx() + $clipwidth);
     }
-#    #########
-#    # full matrix rotation!
-#    #
-#    my $rotation = new Matrix(2,2, [
-#				  [cos $angle, sin $angle],
-#				  [-sin $angle, cos $angle],
-#				 ]);
-#    my $newcoords = new Matrix(1,2, [[0],[0]]);
-#    my $coords = new Matrix(1,2, [
-#				  [$this->pixelx(),],
-#				  [$this->pixely(),],
-#				]);
-#    $coords->dump();
-#    $rotation->dump();
-#
-#    #########
-#    # apply rotation
-#    #
-#    my $n = 2;
-#    for (my $i = 0; $i < $n; $i++) {
-#	for (my $j = 0; $j < $n; $j++) {
-#	    for (my $k = 0; $k < $n; $k++) {
-#		$newcoords->coords($i,$j,
-#		    ($newcoords->coords($i,$j) + $rotation->coords($i,$k) * $coords->coords($k, $j))
-#		);
-#	    }
-#	}
-#    }
-#    $newcoords->coords(0,0, int($newcoords->coords(0,0)));
-#    $newcoords->coords(0,1, int($newcoords->coords(0,1)));
-#    print STDERR qq(coords before: ), $coords->coords(0,0), ", ", $coords->coords(0,1), qq(\n);
-#    print STDERR qq(coords after: ), $newcoords->coords(0,0), ", ", $newcoords->coords(0,1), qq(\n);
-#    $this->pixelx($newcoords->coords(0,0));
-#    $this->pixely($newcoords->coords(0,1));
-
-    #########
-    # apply clipping
-    #
-
 }

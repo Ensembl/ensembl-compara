@@ -1,9 +1,9 @@
-package Glyph::Ellipse;
+package Bio::EnsEMBL::Glyph::Ellipse;
 use strict;
 use vars qw(@ISA);
 use lib "..";
-use GlyphI;
-@ISA = qw(GlyphI);
+use Bio::EnsEMBL::Glyph;
+@ISA = qw(Bio::EnsEMBL::Glyph);
 
 #########
 # probably needs some clever stuff
