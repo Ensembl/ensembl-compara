@@ -172,6 +172,8 @@ sub get_params {
   $self->{'overlap'} = $params->{'overlap'} if(defined($params->{'overlap'}));
 
   $self->{'genome_db_id'} = $params->{'gdb'} if(defined($params->{'gdb'}));
+  $self->{'genome_db_id'} = $params->{'genome_db_id'} if(defined($params->{'genome_db_id'}));
+
   $self->{'chr_name'} = $params->{'chr_name'} if(defined($params->{'chr_name'}));
   $self->{'masking_options'} = $params->{'masking_options'}
     if(defined($params->{'masking_options'}));
@@ -299,7 +301,8 @@ sub submit_job {
 
   unless($self->{'submit_analysis'}) {
     #print("\ncreate Submit Analysis\n");
-    my $logic_name = $self->{'analysis_job'};
+    my $gdb = $chunk->dnafrag->genome_db;
+    my $logic_name = $self->{'analysis_job'} ."_". $gdb->dbID ."_". $gdb->assembly;
 
     #print("  see if analysis '$logic_name' is in database\n");
     my $analysis =  $self->{'comparaDBA'}->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
@@ -342,7 +345,12 @@ sub create_chunk_analysis {
   my $self  = shift;
   my $chunk = shift;
 
-  my $logic_name = $self->{'create_analysis_prefix'} . "_". $chunk->dbID;
+  my $gdb = $chunk->dnafrag->genome_db;
+  my $logic_name = $self->{'create_analysis_prefix'}
+                   ."_". $gdb->dbID
+                   ."_". $gdb->assembly
+                   ."_". $chunk->dbID;
+
   my $parameters = "{'dbChunk'=>" . $chunk->dbID . "}";
 
   my $analysis = Bio::EnsEMBL::Analysis->new(
