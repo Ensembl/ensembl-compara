@@ -49,6 +49,7 @@ sub _init {
     $COL{'gneg'}    = 'white';
     $COL{'acen'}    = 'slategrey';
     $COL{'stalk'}   = 'slategrey';
+    $COL{'mark'}    = 'blue'; # marks start/end of annotated sequence
 
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper->px2bp('Tiny');
