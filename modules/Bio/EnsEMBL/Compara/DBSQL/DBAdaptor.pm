@@ -22,7 +22,6 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
         -driver => 'mysql',
         );
 
-    
 
 =head1 DESCRIPTION
 
@@ -30,11 +29,7 @@ This object represents the handle for a comparative DNA alignment database
 
 =head1 CONTACT
 
-Describe contact details here
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+Post questions the the EnsEMBL developer list: <ensembl-dev@ebi.ac.uk>
 
 =cut
 
@@ -51,15 +46,16 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBConnection );
 
+
+
 =head2 get_SyntenyAdaptor
 
- Title   : get_SyntenyAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : none
+  Example    : $sa = $dba->get_SyntenyAdaptor
+  Description: Retrieves a synteny adaptor for this database.
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -69,15 +65,16 @@ sub get_SyntenyAdaptor{
    return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor");
 }
 
+
 =head2 get_GenomeDBAdaptor
 
- Title   : get_GenomeDBAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : none
+  Example    : $gdba = $dba->get_GenomeDBAdaptor
+  Description: Retrieves an adaptor that can be used to obtain GenomeDB
+               objects from this compara database.
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -87,15 +84,17 @@ sub get_GenomeDBAdaptor{
    return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor");
 }
 
+
+
 =head2 get_DnaFragAdaptor
 
- Title   : get_DnaFragAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : none
+  Example    : $dfa = $dba->get_DnaFragAdaptor
+  Description: Retrieves an adaptor that can be used to obtain DnaFrag objects
+               from this compara database.
+  Returntype : none
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -105,35 +104,37 @@ sub get_DnaFragAdaptor{
    return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor");
 }
 
+
+
 =head2 get_GenomicAlignAdaptor
 
- Title   : get_GenomicAlignAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : none
+  Example    : $gaa = $dba->get_GenomicAlignAdaptor
+  Description: Retrieves an adaptor for this database which can be used
+               to obtain GenomicAlign objects
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
+  Exceptions : none
+  Caller     : general
 
 =cut
 
 sub get_GenomicAlignAdaptor{
   my ($self) = @_;
-   
-  return 
+
+  return
     $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor");
 }
 
 
+
 =head2 get_HomologyAdaptor
 
- Title   : get_HomologyAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : none
+  Example    : $ha = $dba->get_HomologyAdaptor
+  Description: Retrieves a HomologyAdaptor for this database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor
+  Exceptions : general
+  Caller     : none
 
 =cut
 
@@ -144,15 +145,15 @@ sub get_HomologyAdaptor{
 }
 
 
+
 =head2 get_SyntenyRegionAdaptor
 
- Title   : get_SyntenyRegionAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg [1]    : none
+  Example    : $sra = $dba->get_SyntenyRegionAdaptor
+  Description: Retrieves a SyntenyRegionAdaptor for this database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -182,5 +183,26 @@ sub get_DnaAlignFeatureAdaptor {
   return 
    $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor");
 }
+
+
+
+=head2 get_MetaContainer
+
+  Arg [1]    : none
+  Example    : $mc = $dba->get_MetaContainer
+  Description: Retrieves an object that can be used to obtain meta information
+               from the database.
+  Returntype : Bio::EnsEMBL::DBSQL::MetaContainer
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_MetaContainer {
+    my $self = shift;
+
+    return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::MetaContainer");
+}
+
 
 1;

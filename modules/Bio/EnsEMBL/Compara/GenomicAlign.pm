@@ -53,10 +53,10 @@ use Bio::EnsEMBL::Root;
 
 sub new {
     my($class,@args) = @_;
-    
+
     my $self = {};
     bless $self,$class;
-    
+
     my ( $consensus_dnafrag, $consensus_start, $consensus_end,
 	 $query_dnafrag, $query_start, $query_end, $query_strand,
 	 $score, $perc_id, $cigar_line, $adaptor ) = 

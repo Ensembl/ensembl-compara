@@ -50,7 +50,27 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-my $MAX_ALIGNMENT = 14000;
+my $DEFAULT_MAX_ALIGNMENT = 20_000;
+
+sub new {
+  my $class = shift;
+
+  my $self = $class->SUPER::new(@_);
+
+  my $vals =
+    $self->db->get_MetaContainer->list_value_by_key('max_alignment_length');
+
+  if(@$vals) {
+    $self->{'max_alignment_length'} = $vals->[0];
+  } else {
+    $self->warn("Meta table key 'max_alignment_length' not defined\n" .
+	       "using default value [$DEFAULT_MAX_ALIGNMENT]");
+    $self->{'max_alignment_length'} = $DEFAULT_MAX_ALIGNMENT;
+  }
+
+  return $self;
+}
+
 
 =head2 store
 
@@ -149,8 +169,9 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
        $genome_db->has_query( $target_genome ) ) {
      $sql = $select . " WHERE gab.consensus_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
+       my $lower_bound = $start - $self->{'max_alignment_length'};
        $sql .= ( " AND gab.consensus_start <= $end
-                 AND gab.consensus_start >= ".( $start-$MAX_ALIGNMENT )."
+                 AND gab.consensus_start >= $lower_bound
                  AND gab.consensus_end >= $start" );
      }
      if( defined $target_genome ) {
@@ -167,8 +188,9 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
      
      $sql = $select . " WHERE gab.query_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
+       my $lower_bound = $start - $self->{'max_alignment_length'};
        $sql .= ( " AND gab.query_start <= $end
-                 AND gab.query_start >= ".( $start-$MAX_ALIGNMENT ) ."
+                 AND gab.query_start >= $lower_bound
                  AND gab.query_end >= $start" ) ;
      }
      if( defined $target_genome ) {
