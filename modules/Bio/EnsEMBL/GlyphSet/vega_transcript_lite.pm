@@ -94,8 +94,14 @@ my %legend_map =
 sub text_label {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->external_name() || $transcript->stable_id();
-    my $type = $legend_map{$transcript->type} || $transcript->type;
-    return "$id\n$type";
+
+    my $Config = $self->{config};
+    my $want_extra = $Config->get('_settings','opt_extlabels');
+    if( $want_extra ){
+	my $type = $legend_map{$transcript->type} || $transcript->type;
+	$id .= " \n$type ";
+    }
+    return $id;
 }
 
 sub features {

@@ -94,23 +94,26 @@ sub text_label {
     my $tid = $transcript->stable_id();
     my $eid = $transcript->external_name();
 
-    my $type;
- 
-    my $id  = ($transcript->external_name() eq '') ? 
-      $tid : $transcript->external_name();
+    my $id = $eid || $tid;
+
+    my $Config = $self->{config};
+    my $want_extra = $Config->get('_settings','opt_extlabels');
 
     if( $self->{'config'}->{'_both_names_'} eq 'yes') {
-        return $tid.( $eid ? "($eid)" : '' );
+        $id .= $eid ? " ($eid)" : '';
     }
-    elsif( $eid ){
-	return "$eid\nEnsembl known trans";
+    if( $want_extra ){
+	if( $eid ){
+	    $id .= " \nEnsembl known trans "; 
+	}
+	elsif( $transcript->translation->stable_id ){
+	    $id .= " \nEnsembl novel trans ";
+	}
+	else{
+	    $id .= " \nEnsembl pseudogene ";
+	}
     }
-    elsif( $transcript->translation->stable_id ){
-	return "$tid\nEnsembl novel trans";
-    }
-    else{ 
-	return "$tid\nEnsembl pseudogene";
-    }
+    return $id;
     #$self->{'config'}->{'_transcript_names_'} eq 'yes' ? IGNORED
 }
 
