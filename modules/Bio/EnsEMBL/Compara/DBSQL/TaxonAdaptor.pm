@@ -1,4 +1,3 @@
-# $Id$
 # 
 # BioPerl module for Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor
 # 
