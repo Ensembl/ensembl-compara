@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/ensembl/bin/perl -w
 
 use strict;
 use warnings;
@@ -14,7 +14,6 @@ use vars qw($opt_l $opt_h);
 #read command line options
 &usage unless getopts('lh');
 
-
 #print usage on '-h' command line option
 if($opt_h) {
   &usage;
@@ -23,7 +22,7 @@ if($opt_h) {
 
 #list test files on '-l' command line option
 if($opt_l) {
-  foreach my $file (@{&get_all_tests('.', \@ARGV )}) {
+  foreach my $file (map {s{^\./}{}; $_} @{get_all_tests('.', \@ARGV)}) {
     print "$file\n";
   }
   exit;
@@ -35,7 +34,7 @@ $ENV{'RUNTESTS_HARNESS'} = 1;
 
 #make sure proper cleanup is done if the user interrupts the tests
 $SIG{HUP} = $SIG{KILL} = $SIG{INT} = 
-  sub {warn "\n\nINTERRUPT SIGNAL RECEIEVED\n\n"; &clean;};
+  sub {warn "\n\nINTERRUPT SIGNAL RECEIVED\n\n"; &clean;};
 
 #create a multitest db, its destruction will clean up after scripts
 my @dbs = ();
