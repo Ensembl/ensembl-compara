@@ -90,6 +90,13 @@ sub new {
     return $self;
 }
 
+sub new_fast {
+  my $class = shift;
+  my $hashref = shift;
+
+  return bless $hashref, $class;
+}
+
 =head2 name
 
  Title   : name
