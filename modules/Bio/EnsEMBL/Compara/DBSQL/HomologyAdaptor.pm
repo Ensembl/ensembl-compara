@@ -58,10 +58,12 @@ sub fetch_by_Member_paired_species {
 
   my $sth =  $self->generic_fetch_sth($constraint, $join);
   
-  my ($homology_id, $stable_id, $description, $source_id, $source_name, $dn, $ds);
+  my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
+      $source_id, $source_name);
 
   $sth->bind_columns(\$homology_id, \$stable_id, \$description,
-                     \$dn ,\$ds, \$source_id, \$source_name);
+                     \$dn ,\$ds, \$n, \$s, \$lnl, \$threshold_on_ds,
+                     \$source_id, \$source_name);
 
   my @homology_ids = ();
   
@@ -125,6 +127,10 @@ sub _columns {
              h.description
              h.dn
              h.ds
+             h.n
+             h.s
+             h.lnl
+             h.threshold_on_ds
              s.source_id
              s.source_name);
 }
@@ -132,10 +138,11 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $stable_id, $description, $dn, $ds, $source_id, $source_name);
+  my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
+      $source_id, $source_name);
 
   $sth->bind_columns(\$homology_id, \$stable_id, \$description, \$dn, \$ds,
-                     \$source_id, \$source_name);
+                     \$n, \$s, \$lnl, \$threshold_on_ds, \$source_id, \$source_name);
 
   my @homologies = ();
   
@@ -146,6 +153,10 @@ sub _objs_from_sth {
        '_description' => $description,
        '_dn' => $dn,
        '_ds' => $ds,
+       '_n' => $n,
+       '_s' => $s,
+       '_lnl' => $lnl,
+       '_threshold_on_ds' => $threshold_on_ds,
        '_source_id' => $source_id,
        '_source_name' => $source_name,
        '_adaptor' => $self});
