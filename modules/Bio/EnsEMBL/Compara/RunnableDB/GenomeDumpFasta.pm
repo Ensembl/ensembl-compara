@@ -59,9 +59,31 @@ use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor;
 
+use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
-
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+
+=head2 batch_size
+  Title   :   batch_size
+  Usage   :   $value = $self->batch_size;
+  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
+               before querying the database for the next job batch.  Used by the
+               Hive system to manage the number of workers needed to complete a
+               particular job type.
+  Returntype : integer scalar
+=cut
+sub batch_size { return 1; }
+
+=head2 carrying_capacity
+  Title   :   carrying_capacity
+  Usage   :   $value = $self->carrying_capacity;
+  Description: Defines the total number of Workers of this RunnableDB for a particular
+               analysis_id that can be created in the hive.  Used by Queen to manage
+               creation of Workers.
+  Returntype : integer scalar
+=cut
+sub carrying_capacity { return 20; }
+
 
 =head2 fetch_input
 
@@ -77,24 +99,41 @@ sub fetch_input {
   my $self = shift;
 
   $self->throw("No input_id") unless defined($self->input_id);
-
+  print("input_id = ".$self->input_id."\n");
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  my $input_hash = eval($self->input_id);
+  
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
 
+  my $genome_db_id = $input_hash->{'gdb'};
+  my $subset_id    = $input_hash->{'ss'};
+
+  print("gdb = $genome_db_id\n");
+  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
+
   #get the Compara::GenomeDB object for the genome_db_id
-  my $genome_db_id = $self->input_id();
   $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 
-  # get the subset of 'longest transcripts' for this genome_db_id   
-  my $ssid = $self->getSubsetIdForGenomeDBId($genome_db_id);
-  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($ssid); 
+  unless($subset_id) {
+    # get the subset of 'longest transcripts' for this genome_db_id
+    $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
+  }
+  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id); 
   
   return 1;
 }
 
 
 sub run
+{
+  my $self = shift;
+  return 1;
+}
+
+
+sub write_output
 {
   my $self = shift;
 
@@ -105,14 +144,7 @@ sub run
   # update the blast analysis setting the blast database
   #my $blast_analysis = $self->updateBlastAnalysis($blastdb);
   my $blast_analysis = $self->createBlastAnalysis($blastdb);
-  
-  return 1;
-}
 
-sub write_output
-{
-  #need to subclass otherwise it defaults to a version that fails
-  #just return 1 so success
   return 1;
 }
 
@@ -224,11 +256,16 @@ sub createBlastAnalysis
 
   my $logic_name = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
 
-  my $params = "subset_id=>" . $self->{'pepSubset'}->dbID . "," .
-               "genome_db_id=>" . $self->{'genome_db'}->dbID;
+  my $params = "{subset_id=>" . $self->{'pepSubset'}->dbID .
+               ",genome_db_id=>" . $self->{'genome_db'}->dbID;
   if($blast_template->parameters()) {
-    $params .= "," . $blast_template->parameters();
+    my $parmhash = eval($blast_template->parameters);
+    if($parmhash->{'options'}) {
+      $params .= ",options=>'" . $parmhash->{'options'} . "'";
+    }
   }
+  $params .= '}';
+  
   print("createBlastAnalysis\n  params = $params\n");
   
   my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(

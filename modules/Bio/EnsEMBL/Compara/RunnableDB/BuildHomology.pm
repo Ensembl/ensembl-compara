@@ -68,6 +68,28 @@ use vars qw(@ISA);
 
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
+=head2 batch_size
+  Title   :   batch_size
+  Usage   :   $value = $self->batch_size;
+  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
+               before querying the database for the next job batch.  Used by the
+               Hive system to manage the number of workers needed to complete a
+               particular job type.
+  Returntype : integer scalar
+=cut
+sub batch_size { return 1; }
+
+=head2 carrying_capacity
+  Title   :   carrying_capacity
+  Usage   :   $value = $self->carrying_capacity;
+  Description: Defines the total number of Workers of this RunnableDB for a particular
+               analysis_id that can be created in the hive.  Used by Queen to manage
+               creation of Workers.
+  Returntype : integer scalar
+=cut
+sub carrying_capacity { return 1; }
+
+
 =head2 fetch_input
 
     Title   :   fetch_input
@@ -118,10 +140,18 @@ sub fetch_input
 
 sub run
 {
+  my( $self) = @_;
+  return 1;
+}
+
+
+sub write_output
+{
   my $self = shift;
 
   my @blast_list = @{$self->{'blast_analyses'}};
 
+  $self->{'comparaDBA'}->disconnect_when_inactive(0);
   my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
 
   if($self->input_id eq 'test'){ $self->test_RHS; exit(1); }
@@ -139,10 +169,10 @@ sub run
       $self->set_member_list($blast2);
       print(scalar(keys %{$self->{'membersToBeProcessed'}}) . " members to be processed for RHS\n");
 
-      #my $genome_db_id = parse_as_hash($blast1->parameters)->{'genome_db_id'};
-      #$self->calc_inter_genic_distance($genome_db_id);
+    # my $genome_db_id = eval($blast1->parameters)->{'genome_db_id'};
+    # $self->calc_inter_genic_distance($genome_db_id);
 
-      #$self->get_BRH_for_species_pair($blast1, $blast2);
+      # $self->get_BRH_for_species_pair($blast1, $blast2);
 
       print(scalar(keys %{$self->{'membersToBeProcessed'}}) . " members to be processed for RHS\n");
 
@@ -151,13 +181,6 @@ sub run
 
     }
   }
-
-  return 1;
-}
-
-sub write_output
-{
-  my( $self) = @_;
 
   return 1;
 }
@@ -177,7 +200,7 @@ sub set_member_list
 
   print(STDERR "set_member_list from analysis ".$analysis->logic_name()."\n");
 
-  my $subset_id = parse_as_hash($analysis->parameters)->{'subset_id'};
+  my $subset_id = eval($analysis->parameters)->{'subset_id'};
 
   my $subset = $self->{'comparaDBA'}->get_SubsetAdaptor->fetch_by_dbID($subset_id);
   foreach my $member_id (@{$subset->member_id_list}) {
@@ -195,9 +218,11 @@ sub get_BRH_for_species_pair
   my $analysis1 = shift;
   my $analysis2 = shift;
 
-  print(STDERR "select BRH\n");
-  print(STDERR "  analysis1 ".$analysis1->logic_name()."\n");
-  print(STDERR "  analysis2 ".$analysis2->logic_name()."\n");
+  if($self->{'verbose'}) {
+    print(STDERR "select BRH\n");
+    print(STDERR "  analysis1 ".$analysis1->logic_name()."\n");
+    print(STDERR "  analysis2 ".$analysis2->logic_name()."\n");
+  }
   
   my $sql = "SELECT paf1.peptide_align_feature_id, paf2.peptide_align_feature_id, ".
             " paf1.qmember_id, paf1.hmember_id ".
@@ -284,15 +309,17 @@ sub load_blasts_from_input
   print("load_blasts_from_input\n");
   my $input_hash = eval($self->input_id);
 
-  print("blast1 => ", $input_hash->{'bl1'}, "\n");
-  print("blast2 => ", $input_hash->{'bl2'}, "\n");
   if($input_hash->{'noRHS'}) {
     $self->{'doRHS'}=undef;
     print("TURN OFF RHS analysis\n");
   }
 
+  print("$input_hash\n");
+  print("keys: ", keys(%{$input_hash}), "\n");
   my $logic_names = $input_hash->{'blasts'};
+  print("$logic_names\n");
   foreach my $logic_name (@{$logic_names}) {
+    print("get blast $logic_name\n");
     my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
     if($analysis->logic_name =~ /blast_\d+/) {
       push @{$self->{'blast_analyses'}}, $analysis;
@@ -318,9 +345,9 @@ sub process_species_pair
   print(STDERR "  analysis1 ".$analysis1->logic_name()."\n");
   print(STDERR "  analysis2 ".$analysis2->logic_name()."\n");
 
-  my $subset_id        = parse_as_hash($analysis1->parameters)->{'subset_id'};
-  my $q_genome_db_id   = parse_as_hash($analysis1->parameters)->{'genome_db_id'};
-  my $hit_genome_db_id = parse_as_hash($analysis2->parameters)->{'genome_db_id'};
+  my $subset_id        = eval($analysis1->parameters)->{'subset_id'};
+  my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
+  my $hit_genome_db_id = eval($analysis2->parameters)->{'genome_db_id'};
 
   #
   # fetch the peptide members (via subset) ordered on chromosomes
@@ -575,8 +602,7 @@ sub store_paf_as_homology
   my $paf  = shift;
   my $type = shift;
 
-  print("$type : ");
-  $paf->display_short;
+  if($self->{'verbose'}) { print("$type : "); $paf->display_short; }
 
   my $homology = $paf->return_as_homology();
   $homology->description($type);
@@ -676,8 +702,8 @@ sub calc_inter_genic_distance
 
         if($dist < 0) {
           $overlapCount++;
-          $self->print_member($lastMember, "lastMember");
-          $self->print_member($member, "member, dist<0\n");
+          # $self->print_member($lastMember, "lastMember");
+          # $self->print_member($member, "member, dist<0\n");
         }
 
         unless($minDist and $dist>$minDist) { $minDist=$dist; }

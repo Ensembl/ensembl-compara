@@ -533,5 +533,16 @@ sub add_CanonicalAdaptor
   $self->{'current_module'}->{$canonical_name} = $module;
 }
 
+sub get_HiveAdaptor {
+  my $self = shift;
+
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::Hive::HiveAdaptor" );
+}
+
+sub get_AnalysisJobAdaptor {
+  my $self = shift;
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::Hive::AnalysisJobAdaptor" );
+}
+
 1;
 
