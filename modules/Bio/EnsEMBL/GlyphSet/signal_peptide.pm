@@ -30,9 +30,9 @@ sub _init {
     my $Config = $self->{'config'};  
 
     foreach my $feat ($protein->each_Protein_feature()) {
-		  print STDERR "desc: ",$feat->feature2->seqname ,"!\n";
+		  #print STDERR "desc: ",$feat->feature2->seqname ,"!\n";
        if ($feat->feature2->seqname eq "signal_peptide") {
-		  print STDERR "found a sig peptide!\n";
+		  #print STDERR "found a sig peptide!\n";
 	   	  push(@{$hash{$feat->feature2->seqname}},$feat);
        }
     }

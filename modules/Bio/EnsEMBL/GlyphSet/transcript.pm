@@ -55,11 +55,14 @@ sub _init {
 	    push (@allgenes, $vg);
 	}
     }
-
+	my $type = undef;
+	
     GENE: for my $eg (@allgenes) {
     	my $vgid = $eg->id();
         my $hi_colour = $Config->get($scriptname,'transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
-
+		$type = $eg->type();
+		#print STDERR "type: $type\n";
+		
     TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
 
         #########
@@ -108,6 +111,9 @@ sub _init {
         if ($eg->{'_is_external'}){
             $colour = $Config->get($scriptname,'transcript','ext');
         }
+        if ($type eq "pseudo"){
+            $colour = $Config->get($scriptname,'transcript','pseudo');
+        }
         
         my $tid = $transcript->id();
         my $pid = $tid;
@@ -120,6 +126,7 @@ sub _init {
         		$Composite->{'zmenu'}  = {
             		'caption'	    	=> "EMBL: $tid",
             		'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
+            		'EMBL curated transcript'  => "",
 	    		};
 			} else {
 				my $URL = ExtURL->new();
@@ -127,15 +134,25 @@ sub _init {
 				
         		$Composite->{'zmenu'}  = {
             		'caption'	    => "EMBL: $tid",
+            		'EMBL curated transcript'  => "",
 					"$tid"			=> $url
 	    		};
 			}
+			if($type eq "pseudo"){
+				$tid =~ s/(.*?)\.\d+/$1/;
+        		$Composite->{'zmenu'}  = {
+            		'caption'	    	=> "EMBL: $tid",
+            		'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
+            		'EMBL curated pseudogene'  => "",
+	    		};
+			}			
 		} else {
 			# we have a normal Ensembl transcript...
         	$Composite->{'zmenu'}  = {
-            	'caption'					  => $id,
-            	'01:Transcript information'    => "/perl/geneview?gene=$vgid",
-            	'02:Protein information'       => "/perl/protview?peptide=$pid",
+            	'caption'					   => $id,
+            	'00:Ensembl transcript'    	   => "",
+             	'01:Transcript information'    => "/perl/geneview?gene=$vgid",
+           		'02:Protein information'       => "/perl/protview?peptide=$pid",
             	'05:Protein sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
             	'03:Supporting evidence'       => "/perl/transview?gene=$tid",
             	'04:Expression information'    => "/perl/sageview?alias=$vgid",
