@@ -21,7 +21,7 @@ sub init_label {
     my $label2 = new Sanger::Graphics::Glyph::Text({
 		'text'      => 'Ig Pseudo Seg.',
 		'font'      => 'Small',
-		'colour'	=>  $Config->get( '_colours','Ig_Pseudogene_Segment')
+		'colour'	=>  $Config->get( '_colours','Ig_Pseudogene_Segment'),
 		'absolutey' => 1,
     });
 		
