@@ -19,13 +19,14 @@ sub features {
 }
 
 sub href {
-    my ( $self, $id ) = @_;
+    my ( $self, $id, $type ) = @_;
     my @bits = split( ':', $id );
     my $meta = pop @bits;
     my( $ticket,$hsp_id,$use_date ) = split( '!!', $meta );
     $use_date || return $id;
-    my $htmpl = '/Multi/blastview?ticket=%s&hsp_id=%s!!%s&_display=ALIGN';
-    return sprintf($htmpl, $ticket, $hsp_id, $use_date);
+    $type ||= 'ALIGN';
+    my $htmpl = '/Multi/blastview?ticket=%s&hsp_id=%s!!%s&_display=%s';
+    return sprintf($htmpl, $ticket, $hsp_id, $use_date, $type);
     #   return $self->ID_URL( 'SRS_PROTEIN', $id );
 }
 
@@ -52,20 +53,19 @@ sub zmenu {
 
     my $caption = '';
     my $ltmpl = "%s:%s-%s(%s)";
-    my $htmpl = '@/Multi/blastview?ticket=%s&hsp_id=%s&_display=ALIGN';
     my( $qryname, $hsptoken ) = split( ':', $feature->hseqname );
     my( $ticket, $hsp_id ) = split( "!!", $hsptoken, 2 );
     $zmenu->{caption} = $qryname." vs. ". $feature->seqname;
-    $zmenu->{"00:Details..."} = $self->href($id);
-
-#    $zmenu->{"01:".sprintf($ltmpl, "Hit", , 
-#			   $feature->start, $feature->end, 
-#			   ( $feature->strand<1 ? '-' : '+' ) ) } = '';
-    $zmenu->{"02:Score:     ". $feature->score} = '';
-    $zmenu->{"03:PercentID: ". $feature->percent_id} ='';
-    $zmenu->{"04:Length:    ". $feature->length } = '';
-    my $ev = $feature->p_value;
-    if( defined( $ev ) ){ $zmenu->{"05:P-value: $ev"} = '' };
+    $zmenu->{"00:Alignment..."} = "\@".$self->href($id,'ALIGN');
+    $zmenu->{"01:Query Sequence..."} = "\@".$self->href($id,'SEQUENCE');
+    $zmenu->{"02:Genomic Sequence..."} = "\@".$self->href($id,'GSEQUENCE');
+    $zmenu->{"03:Score:     ". $feature->score} = '';
+    $zmenu->{"04:PercentID: ". $feature->percent_id} ='';
+    $zmenu->{"05:Length:    ". $feature->length } = '';
+    my $pv = $feature->p_value;
+    if( defined( $pv ) ){ $zmenu->{"06:P-value: $pv"} = '' };
+#    my $ev = $feature->e_value; No e_value for Bio::EnsEMBL::BaseAlignFeature
+#    if( defined( $ev ) ){ $zmenu->{"07:E-value: $ev"} = '' };
   }
   else{
     $zmenu->{caption} = $id;
