@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/ensembl/bin/perl -w
 
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -12,8 +12,7 @@ my $usage = "\nUsage: $0 [options] axtFile|STDIN
  Insert into a compara database axt alignments
 
 $0 -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
--conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
--alignment_type WGA_HCR -cs_genome_db_id 1 -qy_genome_db_id 2
+-conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -alignment_type BLASTZ_NET -cs_genome_db_id 1 -qy_genome_db_id 2 -axt axt_file
 
 Options:
 
@@ -23,9 +22,10 @@ Options:
  -pass        passwd for connection to \"compara_dbname\"
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
- -alignment_type type of alignment stored e.g. WGA (default: WGA_HCR) 
- -confi_file compara conf file
+ -alignment_type type of alignment stored e.g. WGA (default: BLASTZ_NET) 
+ -conf_file compara conf file
  -min_score 300
+ -axt axt_file
 \n";
 
 
@@ -33,9 +33,10 @@ my $help = 0;
 
 my ($host, $dbname, $dbuser, $pass);
 my ($cs_genome_db_id, $qy_genome_db_id,$conf_file);
+my $axt_file;
 
 my $min_score = 0;
-my $alignment_type = 'WGA_HCR';
+my $alignment_type = 'BLASTZ_NET';
 
 GetOptions('h' => \$help,
 	   'host=s' => \$host,
@@ -46,12 +47,15 @@ GetOptions('h' => \$help,
 	   'qy_genome_db_id=s' => \$qy_genome_db_id,
 	   'alignment_type=s' => \$alignment_type,
 	   'min_score=i' => \$min_score,
-	   'conf_file=s' => \$conf_file);
+	   'conf_file=s' => \$conf_file,
+           'axt=s' => \$axt_file);
 
 if ($help) {
   print $usage;
   exit 0;
 }
+
+$| = 1;
 
 unless (defined $host &&
 	defined $dbname &&
@@ -59,7 +63,8 @@ unless (defined $host &&
 	defined $pass &&
 	defined $cs_genome_db_id &&
 	defined $qy_genome_db_id &&
-	defined $conf_file) {
+	defined $conf_file &&
+        defined $axt_file) {
   print "
 !!! IMPORTANT : All following parameters should be defined !!!
   host
@@ -69,7 +74,8 @@ unless (defined $host &&
   cs_genome_db_id 
   qy_genome_db_id
   conf_file
-  
+  axt
+
 ";
   print $usage;
   exit 0;
@@ -80,6 +86,11 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor ('-conf_file' => $conf_file
 						      '-user' => $dbuser,
 						      '-dbname' => $dbname,
 						      '-pass' => $pass);
+
+
+foreach my $key (keys %{$db->{'genomes'}}) {
+  print $key,"\n";
+}
 
 my $stored_max_alignment_length;
 my $values = $db->get_MetaContainer->list_value_by_key("max_alignment_length");
@@ -167,23 +178,49 @@ my ($ref_seq,$qy_seq);
 my @DnaDnaAlignFeatures;
 my %repeated_alignment;
 
+if ($axt_file =~ /\.gz/) {
+  open AXT, "gunzip -c $axt_file|" ||
+    die "Can not open $axt_file: $!";
+} else {
+  open AXT, $axt_file ||
+    die "Can not open $axt_file: $!";
+}
+
 print STDERR "Reading axt alignments in progress...\n";
-while (my $line =<>) {
-  
+while (my $line = <AXT>) {
+
   if ($line =~ /^(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+([\+\-])\s+(\-?\d+)$/) {
     ($axt_number,$ref_chr,$ref_start,$ref_end,$qy_chr,$qy_start,$qy_end,$qy_strand,$score) = ($1,$2,$3,$4,$5,$6,$7,$8,$9);
 
     if ($score < $min_score) {
-      while ($line =<>) {
-	if ($line =~ /^\d+\s+(\S+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+([\+\-])\s+(\-?\d+)$/) {
-	  ($ref_chr,$ref_start,$ref_end,$qy_chr,$qy_start,$qy_end,$qy_strand,$score) = ($1,$2,$3,$4,$5,$6,$7,$8);
-	  last;
-	}
+      print STDERR "Score $score below min score $min_score: $line";
+      while ($line =<AXT>) {
+	last if ($line =~ /^$/);
       }
+      next;
     }
+    
+    $ref_chr =~ s/chr//;
+    $qy_chr =~ s/chr//;
+
+    unless (defined $cs_chromosomes{$ref_chr}) {
+      print STDERR "ref $ref_chr chromosome not in core: $line";
+      while ($line =<AXT>) {
+	last if ($line =~ /^$/);
+      }
+      next;
+    }
+    unless (defined $qy_chromosomes{$qy_chr}) {
+      print STDERR "qy $qy_chr chromosome not in core: $line";
+      while ($line =<AXT>) {
+	last if ($line =~ /^$/);
+      }
+      next;
+    }
+    
     if (defined $repeated_alignment{$ref_chr."_".$ref_start."_".$ref_end."_".$qy_chr."_".$qy_start."_".$qy_end}) {
       print STDERR "Repeated alignment: $line";
-      while ($line =<>) {
+      while ($line =<AXT>) {
 	last if ($line =~ /^$/);
       }
       next;
@@ -240,6 +277,7 @@ while (my $line =<>) {
   }
 }
 
+close AXT;
 print STDERR "Reading axt alignments done\n";
 
 print STDERR "Preparing data for storage for ". scalar @DnaDnaAlignFeatures . " features...\n";
