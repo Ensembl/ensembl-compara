@@ -11,7 +11,7 @@ sub features {
     my ($self) = @_;
     my $glob;
     $glob = $self->glob_bp() unless $self->{'config'}->get( $self->check(), 'dep' )>1;
-    my @snps = sort { $a->{'type'} cmp $b->{'type'} || $a->{'chr_start'} <=> $b->{'chr_start'} } @{$self->{'container'}->get_all_SNPFeatures_lite( $glob ) };
+    my @snps = sort { $a->{'type'} cmp $b->{'type'} || $a->{'chr_start'} <=> $b->{'chr_start'} } grep { $_->{'mapweight'} < 4 } @{$self->{'container'}->get_all_SNPFeatures_lite( $glob ) };
     if(@snps) {
         $self->{'config'}->{'snp_legend_features'}->{'snps'} = { 'priority' => 1000, 'legend' => [] }
     }
@@ -50,6 +50,7 @@ sub zmenu {
         'caption'           => "SNP: ".$ID,
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $f->{'chr_start'}" => '',
+        "08:mapweight: $f->{'mapweight'}" => '',
     );
     $zmenu{'03:dbSNP data'} = $ext_url->get_url('SNP', $f->{'id'}) if $f->{'id'}>0;
     $zmenu{"04:TSC-CSHL data"} = $ext_url->get_url( 'TSC-CSHL', $f->{'tscid'} )  if defined( $f->{'tscid'} ) && $f->{'tscid'}!='';

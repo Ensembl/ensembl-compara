@@ -58,6 +58,12 @@ sub tag {
             'end'    => $end
         }
    }
+   if( $f->FISHmap ) {
+        push @result, {
+	    'style' => 'left-triangle',
+	    'colour' => $self->{'colours'}{"fish_tag"},
+	}
+   }
     return @result;
 }
 ## Create the zmenu...
@@ -72,6 +78,9 @@ sub zmenu {
         '02:length: '.$f->length.' bps' => '',
         '03:Centre on clone:' => $self->href($f),
     };
+    foreach($f->synonyms) {
+        $zmenu->{"11:Synonym: $_" } = '';
+    }
     foreach($f->embl_accs) {
         $zmenu->{"12:EMBL: $_" } = '';
     }
@@ -81,6 +90,7 @@ sub zmenu {
     $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
     $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    
     $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''        if($f->BACend_flag);    
+    $zmenu->{'18:FISH:  '.$f->FISHmap } = ''        if($f->FISHmap);    
     $zmenu->{'30:'.$f->note } = ''        if($f->note);    
     return $zmenu;
 }

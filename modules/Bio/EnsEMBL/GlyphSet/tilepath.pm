@@ -16,8 +16,18 @@ sub features {
 
 ## If tile path clones are very long then we draw them as "outlines" as
 ## we aren't convinced on their quality...
+
 sub tag {
-    return ();
+    my ($self, $f) = @_;
+    my @result = ();
+
+   if( $f->FISHmap ) {
+        push @result, {
+            'style' => 'left-triangle',
+            'colour' => $self->{'colours'}{"fish_tag"},
+        }
+   }
+    return @result;
 }
 
 sub colour {

@@ -15,6 +15,7 @@ sub new {
 	'background' => 'transparent',
 	'composite'  => undef,           # arrayref for Glyph::Composite to store other glyphs in
 	'points'     => [],		 # listref for Glyph::Poly to store x,y paired points
+        $params_ref ? %$params_ref : ()
     };
     bless($self, $class);
 
@@ -22,9 +23,9 @@ sub new {
     # initialise all fields except type
     #
 #    for my $field (qw(x y width height text colour bordercolour font onmouseover onmouseout zmenu href pen brush background id points absolutex absolutey)) {
-    for my $field (keys %{$params_ref}) {
-	$self->{$field} = $$params_ref{$field} if(defined $$params_ref{$field});
-    }
+#    for my $field (keys %{$params_ref}) {
+#	$self->{$field} = $$params_ref{$field} if(defined $$params_ref{$field});
+#    }
 
     return $self;
 }
@@ -34,9 +35,9 @@ sub new {
 #
 sub AUTOLOAD {
     my ($this, $val) = @_;
-    my $field = $AUTOLOAD;
-    $field =~ s/.*:://;
-
+    no strict 'refs';
+    (my $field = $AUTOLOAD) =~ s/.*:://;
+    *{$AUTOLOAD} = sub { $_[0]->{$field} = $_[1] if defined $_[1]; return $_[0]->{$field}; };
     $this->{$field} = $val if(defined $val);
     return $this->{$field};
 }

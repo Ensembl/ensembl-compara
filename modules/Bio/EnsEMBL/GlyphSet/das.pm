@@ -13,19 +13,21 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
 
+    my $URL = $self->das_name =~ /^extdas_(.*)$/ ?
+        ( qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] ) : 
+        qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
+
+    (my $T = $URL)=~s/\'/\\\'/g;
+ 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => $self->{'extras'}->{'caption'},
 	'font'      => 'Small',
     'colour'    => $self->{'config'}->colourmap()->id_by_name('contigblue2'),
 	'absolutey' => 1,
-        'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
-
-
-    'zmenu'     => {
-            'caption'                     => 'HELP',
-            "01:Track information..."     =>
-qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
-        }
+        'href'      => $URL,
+        'zmenu'     => $self->das_name =~/^extdas_/ ?
+	{ 'caption' => 'Configure' , '01:Advanced configuration...' => $T }:
+	{ 'caption' => 'HELP', "01:Track information..."     => $T }
     });
     $self->label($label);
 }
@@ -100,7 +102,15 @@ sub _init {
         foreach my $value (values %grouped) {
         	my $f = $value->[0];
         ## Display if not stranded OR
-        	my @features = sort { $a->das_start <=> $b->das_start } @$value;
+        	my @t_features = sort { $a->das_start <=> $b->das_start } @$value;
+                my @features = (shift @t_features);
+                foreach( @t_features ) {
+		    if($_->das_start <= $features[-1]->das_end ) {
+			$features[-1]->das_end( $_->das_end );
+                    } else {
+			push @features, $_;
+		    } 
+                }
         	my $start = $features[0]->das_start;
         	my $START = $start < 1 ? 1 : $start;
         	my $end   = $features[-1]->das_end;
@@ -122,6 +132,7 @@ sub _init {
                 my $START = $f->das_start() < 1        ? 1       : $f->das_start();
                 my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
                 my $old_end = $END;
+             #   print STDERR "DAS: E ",$f->das_start,"-",$f->das_end," (",$f->das_id,"-",$f->das_group_id,")\n";
             	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
         	        'x'      	=> $START,
     	            'y'      	=> 0,
@@ -149,8 +160,9 @@ sub _init {
                     $Composite->push($glyph);
                     my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
                     $old_end = $END;
+             #       print STDERR "DAS: E ",$_->das_start,"-",$_->das_end," (",$_->das_id,"-",$_->das_group_id,")\n";
                     $glyph = new Bio::EnsEMBL::Glyph::Rect({
-        	        	'x'      	=> $_->das_start(),
+        	        'x'      	=> $_->das_start(),
     	            	'y'      	=> 0,
     	            	'width'  	=> $END-$_->das_start(),
                         'height' 	=> 8,
@@ -171,6 +183,7 @@ sub _init {
         	});
             	$Composite2->bordercolour($feature_colour);
             	foreach(@features) {
+             #       print STDERR "DAS: F ",$_->das_start,"-",$_->das_end," (",$_->das_id,"-",$_->das_group_id,")\n";
                     my $START = $_->das_start() <  1       ? 1 : $_->das_start();
                     my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
                     my $glyph = new Bio::EnsEMBL::Glyph::Rect({
@@ -189,7 +202,7 @@ sub _init {
         	$Composite->push($Composite2);
         }
             # DONT DISPLAY IF BUMPING AND BUMP HEIGHT TOO GREAT
-            my $H =$self->feature_label( $Composite, $f->das_id, $feature_colour, $start < 1 ? 1 : $start , $end > $length ? $length : $end );
+            my $H =$self->feature_label( $Composite, $f->das_group_id ||$f->das_id, $feature_colour, $start < 1 ? 1 : $start , $end > $length ? $length : $end );
             $self->push($Composite) unless( $dep>0 && $self->bump($Composite, $dep, $tstrand *(1.4*$h+$H) ) );
     	}
   	} else {
@@ -253,7 +266,7 @@ sub bump{
 
 sub zmenu {
         my( $self, $f ) = @_;
-        my $id = $f->das_id;
+        my $id = $f->das_group_id() || $f->das_id();
         my $zmenu = {
             'caption'         => $self->{'extras'}->{'label'},
 #                "DAS source info" => $self->{'extras'}->{'url'},
@@ -273,6 +286,7 @@ sub zmenu {
         	$href = $zmenu->{ "20:$type sequence" } unless defined($href);
             }
         }
+        $href = $f->das_link() if $f->das_link() && !$href;
         if($id && uc($id) ne 'NULL') {
             $zmenu->{"01:ID: $id"} = '';
             if($self->{'extras'}->{'linkURL'}){
@@ -302,7 +316,7 @@ sub feature_label {
 	    return 0;
         } elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {
             my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
-            print STDERR "XXX> $ID $self->{'textheight'} XX\n";
+            # print STDERR "XXX> $ID $self->{'textheight'} XX\n";
             my $tglyph = new Bio::EnsEMBL::Glyph::Text({
                'x'          => $start,
                'y'          => $self->{'textheight'} + 2,

@@ -97,6 +97,7 @@ sub zmenu {
     $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
     $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    
     $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''        if($f->BACend_flag);    
+    $zmenu->{'19:FISH:  '.$f->FISHmap } = ''        if($f->FISHmap);    
     return $zmenu;
 }
 

@@ -9,7 +9,7 @@ sub my_label { return "SNPs"; }
 sub features {
     my ($self) = @_;
     return grep { $_->isa("Bio::EnsEMBL::ExternalData::Variation") }
-        $self->{'container'}->get_all_SNPFeatures( $self->glob_bp() );
+        grep { $_->mapweight < 4 } $self->{'container'}->get_all_SNPFeatures( $self->glob_bp() );
 }
 
 sub href {
@@ -25,6 +25,7 @@ sub zmenu {
         'caption'           => "SNP: ".$f->id,
         '01:SNP properties'    => $self->href( $f),
         '02:dbSNP data'        => $ext_url->get_url('SNP',$f->id),
+        '08:mapweight: '.$f->mapweight => '',
     );
     foreach ($f->each_DBLink()){
         next if $_->database() =~ /JCM/;

@@ -5,7 +5,7 @@ use Bio::EnsEMBL::GlyphSet_transcript;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
-    return 'Genscans';
+    return 'Genscan';
 }
 
 sub colours {
@@ -30,13 +30,18 @@ sub colour {
 
 sub href {
     my ($self, $vt) = @_;
-    return undef;
+    return undef if $id =~ /^\d/;
+    return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'Peptide_ens_genscan830', 'ID' => $id } );
 }
 
 sub zmenu {
     my ($self, $vt) = @_;
-    return undef;
-
+    return undef if $id =~ /^\d/;
+    return {
+        'caption' => $id,
+        '01:Peptide sequence' => $self->href( $vt ),
+        '02:cDNA sequence'    => $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'cDNA_ens_genscan830', 'ID' => $id } ),
+    };
 }
 
 sub text_label {

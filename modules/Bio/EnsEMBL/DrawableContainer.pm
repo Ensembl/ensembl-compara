@@ -108,15 +108,19 @@ sub new {
         $glyphset->label->width( $pixels ); ### JS5 ###
         $glyphset->label->pixelwidth( $pixels ); ### JS5 ###
         next unless defined $glyphset->bumped();
-        $composite = new Bio::EnsEMBL::Glyph::Composite({
-                'y'            => 0,
-				'x'            => 0,
-				'absolutey'    => 1,
-                'width'        => 10
-        });
-        
         my $NAME = ref($glyphset);
         $NAME =~ s/^.*:://;
+        $composite = new Bio::EnsEMBL::Glyph::Composite({
+                'y'            => 0,
+		'x'            => 2,
+		'height' => 8,
+		'absolutey'    => 1,
+                'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
+                        ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
+                'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
+                'width'        => 1
+        });
+        
         my $box_glyph = new Bio::EnsEMBL::Glyph::Rect({
     	        'x'      	=> 2,
 		    	'y'      	=> 0,
@@ -125,9 +129,6 @@ sub new {
 		    	'bordercolour'	=> $black,
 		    	'absolutey' => 1,
 				'absolutex' => 1,
-                'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
-                               ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
-                'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
         });
         my $horiz_glyph = new Bio::EnsEMBL::Glyph::Text({
             'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
@@ -135,8 +136,8 @@ sub new {
             'absolutey' => 1,
             'x'         => 4,
             'y'      	=> $glyphset->bumped() eq 'yes' ? -1.5 : -1,
-		    'width'  	=> 10,
-		    'height' 	=> 8,
+	    'width'  	=> 10,
+	    'height' 	=> 8,
             'colour'    => $black,
             'absolutex' => 1
         });
@@ -169,6 +170,7 @@ sub new {
         $glyphset->label->x(-($extra_translation - $spacing) / $scalex);
         next unless defined $glyphset->bumpbutton;
         $glyphset->bumpbutton->x(-($extra_translation + $button_width - $spacing) / $scalex);
+        $glyphset->bumpbutton->width(10 / $scalex);
         foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
 #           delete $_->{'absolutex'};
         }
