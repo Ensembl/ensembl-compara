@@ -109,7 +109,8 @@ sub _init {
     my $flag           = 1;
     my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
     
-   my $previous_end;
+   my $previous_start = $vc_length + 1e9;
+   my $previous_end   = -1e9 ;
    my ($T,$C,$C1) = 0;
    my $optimizable = $type =~ /repeat/ && $dep<1 ; #at the moment can only optimize repeats...
 
@@ -132,9 +133,12 @@ sub _init {
         $end   = $vc_length if $end>$vc_length;
         $T++;
        # next if $optimizable && int($end*$pix_per_bp) == int($previous_end*$pix_per_bp);
-        next if $optimizable && $end-$previous_end < 0.5/$pix_per_bp;
+        next if $optimizable && ( $VirtualContig->strand() < 0 ?
+           $previous_start-$start < 0.5/$pix_per_bp : 
+           $end-$previous_end < 0.5/$pix_per_bp );
         $C ++;
         $previous_end = $end;
+        $previous_start = $end;
         $flag = 0;
         my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f );
         my $img_start = $start;
