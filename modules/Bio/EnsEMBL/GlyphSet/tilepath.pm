@@ -72,7 +72,7 @@ sub _init {
 		
 	    if($cl_len > $MAX_WIDTH) {
             $box_start = $start;
-            $box_end   = $box_start + $MAX_WIDTH/2;
+            $box_end   = $box_start + 20/2;
             if($box_end=>1 && $box_start<=$length) { ## We can draw this
                 $box_start = 1       if $box_start < 1;
                 $box_end   = $length if $box_end   >  $length;
@@ -87,7 +87,7 @@ sub _init {
         	    $Composite->push($glyph);
             }
             $box_end   = $end;
-            $box_start = $box_end - $MAX_WIDTH/2;
+            $box_start = $box_end - 20/2;
             if($box_end=>1 && $box_start<=$length) { ## We can draw this
                 $box_start = 1       if $box_start < 1;
                 $box_end   = $length if $box_end   >  $length;
@@ -101,8 +101,8 @@ sub _init {
         	    });
         	    $Composite->push($glyph);
             }
-            $box_start = $start + $MAX_WIDTH/2;
-            $box_end   = $end  - $MAX_WIDTH/2;
+            $box_start = $start + 20/2;
+            $box_end   = $end  - 20/2;
             if($box_end=>1 && $box_start<=$length) { ## We can draw this
                 $box_start = 1       if $box_start < 1;
                 $box_end   = $length if $box_end   >  $length;

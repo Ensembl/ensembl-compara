@@ -7,6 +7,7 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Poly;
 use Bio::EnsEMBL::Glyph::Space;
 use Bio::EnsEMBL::Glyph::Text;
+use Bio::EnsEMBL::Glyph::Composite;
 use SiteDefs;
 use ColourMap;
 
@@ -41,11 +42,14 @@ sub _init {
     my $cmap     = $Config->colourmap();
     my $col1     = $cmap->id_by_name('contigblue1');
     my $col2     = $cmap->id_by_name('contigblue2');
+    my $col4     = $cmap->id_by_name('grey2');
+    my $col5     = $cmap->id_by_name('grey3');
     my $col3     = $cmap->id_by_name('black');
     my $white    = $cmap->id_by_name('white');
     my $black    = $cmap->id_by_name('black');
+    my $green    = $cmap->id_by_name('green');
     my $red      = $cmap->id_by_name('red');
-    my $ystart   = 0;
+    my $ystart   = 3;
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');
     my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
@@ -67,102 +71,148 @@ sub _init {
     $self->push($gline);
 
     
-    my @map_contigs = ();
+    my @map_contigs = $vc->_vmap->each_MapContig();
+
     my $useAssembly;
     eval {
         $useAssembly = $vc->has_AssemblyContigs;
     };
     print STDERR "Using assembly $useAssembly\n";
-
-    if ($useAssembly) {
-       @map_contigs = $vc->each_AssemblyContig;
-    } else {
-       @map_contigs = $vc->_vmap->each_MapContig();
-    }
-
-    if (@map_contigs) {
-        my $start;
-        my $end;
-
-        if ($useAssembly) {
-         $start     = $map_contigs[0]->chr_start - 1;
-         $end       = $map_contigs[-1]->chr_end;
-        } else {
-         $start     = $map_contigs[0]->start -1;
-         $end       = $map_contigs[-1]->end;
+    my $i = 1;
+    
+    my %colours  = ( $i  => $col1, !$i => $col2 );
+    my %colours2 = ( $i  => $col4, !$i => $col5 );
+    
+    if (!@map_contigs) {
+## Draw a warning track....
+        $self->errorTrack("Golden path gap - no contigs to display!");
+    } elsif($useAssembly) { ## THIS IS THE FAKE STUFF FOR MOUSE
+        my @assembly_contigs = $vc->each_AssemblyContig;
+        my %contigs = ();
+        my %big_contigs = ();
+        foreach my $big_contig ( @map_contigs ) {
+            my $ID = $big_contig->contig->id();            
+            $contigs{ $ID } = [];
+            $contigs{ $ID } = [];
+            $big_contigs{ $ID } = [ $big_contig->start, $big_contig->end ];
+            foreach my $little_contig (@assembly_contigs) {
+                my $start = $little_contig->chr_start - $vc->_global_start + 1;
+                my $end   = $little_contig->chr_end   - $vc->_global_start + 1;
+                if( $end   >= $big_contig->start || $start <= $big_contig->end ) {
+                    $start = $big_contig->start if $big_contig->start > $start;
+                    $end   = $big_contig->end   if $big_contig->end   < $end;
+                    push @{$contigs{$ID}}, [ $start, $end ]
+                }
+            }
         }
-        
+        my $FLAG = 0;
+        foreach( sort { $big_contigs{$a}->[0] <=> $big_contigs{$b}->[0] } keys %contigs ) {
+            my $composite = new Bio::EnsEMBL::Glyph::Composite({
+				'y'            => $ystart-3,
+				'x'            => $big_contigs{$_}->[0],
+				'absolutey'    => 1
+			});
+    	    $composite->{'zmenu'} = {
+                    "caption" => $_,
+                    "Export this contig" => ""
+	        } if $show_navigation;
+            my $col = $colours2{$i};
+            my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+                'x'         => $big_contigs{$_}->[0]-1,
+                'y'         => $ystart-3,
+                'width'     => 1,
+                'height'    => 21,
+                'colour'    => $green,
+                'absolutey' => 1,
+            }) if $FLAG;
+            $FLAG=1;
+            $composite->push($glyph);
+            $col = $colours{$i};
+            $i      = !$i;
+            foreach my $Q ( @{$contigs{$_}} ) {
+                my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+                    'x'         => $Q->[0],
+                    'y'         => $ystart+2,
+                    'width'     => $Q->[1]-$Q->[0],
+                    'height'    => 11,
+                    'colour'    => $col,
+                    'absolutey' => 1,
+    			});
+                $composite->push($glyph);
+            }
+            my $bp_textwidth = $w * length($_) * 1.2; # add 20% for scaling text
+            unless (1||$bp_textwidth > $composite->width() ) {
+                my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+                    'x'          => int( (2 * $composite->x() + $composite->width() - $bp_textwidth)/2),
+                    'y'          => $ystart+5,
+                    'font'       => 'Tiny',
+                    'colour'     => $black,
+                    'text'       => $_,
+                    'absolutey'  => 1,
+                });
+                my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+                    'x'          => int( (2 * $composite->x() + $composite->width() - $bp_textwidth)/2)-0.2/$w,
+                    'y'          => $ystart+5,
+                    'width'      => $bp_textwidth,
+                    'height'     => 7,
+                    'colour'     => $white,
+                    'text'       => $_,
+                    'absolutey'  => 1,
+                });
+                $composite->push($glyph);
+                $composite->push($tglyph);
+            }
+            $self->push($composite);
+        }
+    } else { ## THIS IS THE REAL STUFF FOR HUMAN
+        my $start     = $map_contigs[0]->start -1;
+        my $end       = $map_contigs[-1]->end;
         my $tot_width = $end - $start;
-    
-        my $i = 1;
-    
-        my %colours = (
-               $i  => $col1,
-               !$i => $col2,
-        );
-
         foreach my $temp_rawcontig ( @map_contigs ) {
             my $col = $colours{$i};
             $i      = !$i;
 
-            my $rend;
-            my $rstart;
+            my $rend;       my $rstart;
 
-            my $cstart;
-            my $cend;
+            my $cstart;     my $cend;
 
-            my $rid; 
-            my $strand;
-            my $clone;
+            my $rid;        my $strand;     my $clone;
 
-            if ($useAssembly) {       
-              $cend   = $temp_rawcontig->chr_end;
-              $cstart = $temp_rawcontig->chr_start -1;
-              $rend   = $temp_rawcontig->chr_end - $vc->_global_start + 1;
-              $rstart = $temp_rawcontig->chr_start - $vc->_global_start + 1;
-              $rid    = $temp_rawcontig->display_id;
-              $strand = $temp_rawcontig->orientation;
-              $clone  = $temp_rawcontig->display_id;
-            } else {
-              $cend   = $temp_rawcontig->end() + $vc->_global_start -1;
-              $cstart = $temp_rawcontig->start() + $vc->_global_start -1;
-              $rend   = $temp_rawcontig->end;
-              $rstart = $temp_rawcontig->start;
-              $rid    = $temp_rawcontig->contig->id();
-              $clone  = $temp_rawcontig->contig->cloneid();
-              $strand = $temp_rawcontig->strand();
-            }
-
+            my $rend   = $temp_rawcontig->end;
+            my $rstart = $temp_rawcontig->start;
+            my $cend   = $rend   + $vc->_global_start -1;
+            my $cstart = $rstart + $vc->_global_start -1;
+            my $rid    = $temp_rawcontig->contig->id();
+            my $clone  = $temp_rawcontig->contig->cloneid();
+            my $strand = $temp_rawcontig->strand();
+            $rstart     = 1 if $rstart < 1;
+            $rend       = $length if $rend > $length;
+            
             my $glyph = new Bio::EnsEMBL::Glyph::Rect({
                 'x'         => $rstart,
                 'y'         => $ystart+2,
                 'width'     => $rend - $rstart,
-                'height'    => 10,
+                'height'    => 11,
                 'colour'    => $col,
                 'absolutey' => 1,
 			});
             my $cid = $rid;
             $cid=~s/^([^\.]+\.[^\.]+)\..*/$1/;
-            $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=".
-                        $vc->_chr_name()."&vc_start=".
-                        ($cstart)."&vc_end=".
-                        ($cend);
-			$glyph->{'zmenu'} = {
-                    'caption' => $rid,
-                    "01:Clone: $clone"   => '',
-                    '02:Centre on contig' => $glyph->{'href'},
-                    "03:EMBL source file" => $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $cid )
-			} if $show_navigation;
-			
+            $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=$cid";
+            $glyph->{'zmenu'} = {
+                'caption' => $rid,
+	            "01:Clone: $clone"    => '',
+	            '02:Centre on contig' => $glyph->{'href'},
+	            "03:EMBL source file" => 
+	                $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $cid )
+	        } if $show_navigation;
             $self->push($glyph);
-
             $clone = $strand > 0 ? $clone."->" : "<-$clone";
-        
             my $bp_textwidth = $w * length($clone) * 1.2; # add 20% for scaling text
             unless ($bp_textwidth > ($rend - $rstart)){
                 my $tglyph = new Bio::EnsEMBL::Glyph::Text({
                     'x'          => int( ($rend + $rstart - $bp_textwidth)/2),
-                    'y'          => $ystart+4,
+                    'y'          => $ystart+5,
                     'font'       => 'Tiny',
                     'colour'     => $white,
                     'text'       => $clone,
@@ -171,19 +221,6 @@ sub _init {
                 $self->push($tglyph);
             }
         }
-    } else {
-    # we are in the great void of golden path gappiness..
-        my $text = "Golden path gap - no contigs to display!";
-        my $bp_textwidth = $w * length($text);
-        my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-            'x'         => int(($length - $bp_textwidth)/2),
-            'y'         => $ystart+4,
-            'font'      => 'Tiny',
-            'colour'    => $red,
-            'text'      => $text,
-            'absolutey' => 1,
-        });
-        $self->push($tglyph);
     }
 
     $gline = new Bio::EnsEMBL::Glyph::Rect({
@@ -195,18 +232,18 @@ sub _init {
         'absolutey' => 1,
         'absolutex' => 1,
     });
-    $self->push($gline);
+    $self->unshift($gline);
     
     $gline = new Bio::EnsEMBL::Glyph::Rect({
         'x'         => 0,
-        'y'         => $ystart+14,
+        'y'         => $ystart+15,
         'width'     => $im_width,
         'height'    => 0,
         'colour'    => $col3,
         'absolutey' => 1,
         'absolutex' => 1,    
     });
-    $self->push($gline);
+    $self->unshift($gline);
     
     ## pull in our subclassed methods if necessary
     if ($self->can('add_arrows')){
@@ -227,18 +264,18 @@ sub _init {
             'absolutey' => 1,
             'absolutex' => 1,
         });
-        $self->push($tick);
+        $self->unshift($tick);
         # the reverse strand ticks
         $tick = new Bio::EnsEMBL::Glyph::Rect({
             'x'         => $im_width - $pos,
-            'y'         => $ystart+15,
+            'y'         => $ystart+16,
             'width'     => 0,
             'height'    => 3,
             'colour'    => $col3,
             'absolutey' => 1,
             'absolutex' => 1,
         });
-        $self->push($tick);
+        $self->unshift($tick);
     }
     # The end ticks
     $tick = new Bio::EnsEMBL::Glyph::Rect({
@@ -250,18 +287,18 @@ sub _init {
         'absolutey' => 1,
         'absolutex' => 1,
     });
-    $self->push($tick);
+    $self->unshift($tick);
     # the reverse strand ticks
     $tick = new Bio::EnsEMBL::Glyph::Rect({
         'x'         => $im_width - 1,
-        'y'         => $ystart+15,
+        'y'         => $ystart+16,
         'width'     => 0,
         'height'    => 1,
         'colour'    => $col3,
         'absolutey' => 1,
         'absolutex' => 1,
     });
-    $self->push($tick);
+    $self->unshift($tick);
     
     my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
     # only draw a red box if we are in contigview top and there is a detailed display
@@ -273,21 +310,21 @@ sub _init {
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 4 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
-            'height'       => 22,
+            'height'       => 23,
             'bordercolour' => $red,
             'absolutey'    => 1,
         });
-        $self->push($boxglyph);
+        $self->unshift($boxglyph);
 
         my $boxglyph2 = new Bio::EnsEMBL::Glyph::Rect({
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 3 ,
             'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
-            'height'       => 20,
+            'height'       => 21,
             'bordercolour' => $red,
             'absolutey'    => 1,
         });
-        $self->push($boxglyph2);
+        $self->unshift($boxglyph2);
     }
     my $width = $interval * ($length / $im_width) ;
     my $interval_middle = $width/2;
@@ -305,11 +342,11 @@ sub _init {
             'href'		=> $self->zoom_URL($param_string, $interval_middle + $global_start, $length,  1  , $highlights),
             'zmenu'     => $self->zoom_zmenu( $param_string, $interval_middle + $global_start, $length, $highlights ),
         });
-        $self->push($tick);
+        $self->unshift($tick);
         # the reverse strand ticks
         $tick = new Bio::EnsEMBL::Glyph::Space({
             'x'         => $im_width - $pos,
-            'y'         => $ystart+15,
+            'y'         => $ystart+16,
             'width'     => $interval,
             'height'    => 3,
             'absolutey' => 1,
@@ -317,7 +354,7 @@ sub _init {
             'href'		=> $self->zoom_URL(     $param_string, $global_end-$interval_middle, $length,  1  , $highlights),
             'zmenu'     => $self->zoom_zmenu(   $param_string, $global_end-$interval_middle, $length, $highlights ),
         });
-        $self->push($tick);
+        $self->unshift($tick);
         $interval_middle += $width;
     }
 

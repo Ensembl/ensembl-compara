@@ -5,7 +5,7 @@ use Bio::EnsEMBL::GlyphSet_feature;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "Mouse swall"; }
+sub my_label { return "Mouse proteins"; }
 
 sub features {
     my ($self) = @_;

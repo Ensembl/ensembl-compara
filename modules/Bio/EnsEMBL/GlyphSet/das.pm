@@ -120,7 +120,7 @@ sub _init {
 
 			my $zmenu = {
             	'caption'         => $self->{'extras'}->{'label'},
-                "DAS source info" => $self->{'extras'}->{'url'},
+#                "DAS source info" => $self->{'extras'}->{'url'},
         	};
 			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
 				if $f->das_type_id() && uc($f->das_type_id())!='NULL';
@@ -216,7 +216,7 @@ sub _init {
 
 			my $zmenu = {
                 	'caption'                       => $self->{'extras'}->{'label'},
-                	"DAS source info"               => $self->{'extras'}->{'url'},
+#                	"DAS source info"               => $self->{'extras'}->{'url'},
     	    };
 			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
 				if $f->das_type_id() && uc($f->das_type_id())!='NULL';

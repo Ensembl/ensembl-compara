@@ -19,7 +19,11 @@ sub init {
     $self->label("Das Sources");
 
     my $Config = $self->{'config'};
-    my @das_source_names = keys %{EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES};
+    my @das_source_names = 
+         ref( EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES ) eq 'HASH' ?
+	 keys %{EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES}          :
+	 ();
+
     #########
     # apply parallelisation here |
     #                            V

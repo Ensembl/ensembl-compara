@@ -4,7 +4,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple_hash;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple_hash);
 
-sub my_label { return "tRNA"; }
+sub my_label { return "tRNAs"; }
 
 sub features {
     my ($self) = @_;

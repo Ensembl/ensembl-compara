@@ -37,9 +37,9 @@ sub _init {
     };
 
     if ($useAssembly) {
-       @map_contigs = $VirtualContig->each_AssemblyContig;
+       @map_contigs = $self->{'container'}->each_AssemblyContig;
     } else {
-       @map_contigs = $VirtualContig->_vmap->each_MapContig();
+       @map_contigs = $self->{'container'}->_vmap->each_MapContig();
     }
     return unless (@map_contigs);
 
