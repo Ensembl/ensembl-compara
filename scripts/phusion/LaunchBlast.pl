@@ -4,14 +4,15 @@ use strict;
 use Getopt::Long;
 use File::Basename;
 
-
-
 my ($input,$subject_tag,$subject_fasta,$subject_index,$query_tag,$query_fasta,$query_index,$dir);
+
+my $fastafetch_executable = "/nfs/acari/abel/bin/fastafetch";
+my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusionFilterBlast.pl";
+my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 
 my $min_score = 300;
 my $qy_input_only = 0;
 my $p = "blastn";
-my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 
 GetOptions('i=s' => \$input,
 	   'st=s' => \$subject_tag,
@@ -53,7 +54,7 @@ unless ($qy_input_only) {
   close S;
   
   $sb_file = "/tmp/sb.$rand";
-  unless (system("/nfs/acari/abel/bin/fastafetch $subject_fasta $subject_index $sb_id > $sb_file") == 0) {
+  unless (system("$fastafetch_executable $subject_fasta $subject_index $sb_id > $sb_file") == 0) {
     unlink glob("/tmp/*$rand*");
     die "error in fastafetch $sb_id, $!\n";
   }
@@ -82,7 +83,7 @@ my $cigar_file = "/tmp/cigar.$rand";
 
 foreach my $qy_seq (@query_seq) {
 
-  unless(system("/nfs/acari/abel/bin/fastafetch $query_fasta $query_index $qy_seq > $qy_file") ==0) {
+  unless(system("$fastafetch_executable $query_fasta $query_index $qy_seq > $qy_file") ==0) {
     unlink glob("/tmp/*$rand*");
     die "error in fastafetch $qy_seq, $!\n";
   } 
@@ -92,8 +93,7 @@ foreach my $qy_seq (@query_seq) {
     unlink glob("/tmp/*$rand*");
     die "error in wublast, $!\n";
   }
-  unless (system("/nfs/acari/abel/PhusionBlast/cigar.pl -p $p $subject_tag $min_score $blast_file >> $cigar_file") == 0) {
-#  unless (system("/nfs/acari/abel/PhusionBlast/cigar.pl.ori $subject_tag $min_score $blast_file >> $cigar_file") == 0) {
+  unless (system("$FilterBlast_executable -p $p $subject_tag $min_score $blast_file >> $cigar_file") == 0) {
     unlink glob("/tmp/*$rand*");
     die "error in cigar, $!\n";
   }

@@ -1,4 +1,8 @@
 #!/usr/local/ensembl/bin/perl -w
+
+# This script, originally written by Jim Mullikin, then called rmRedunGComp.pl was remaned to RemoveNonSyntenic.pl
+# with no code modification
+
 use strict;
 
 my $thresh = shift;

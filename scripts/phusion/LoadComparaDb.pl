@@ -6,20 +6,44 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 
-my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf";
+my $usage = "
+
+$0 -host ecs2.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
+-conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf
+-cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
+
+";
+
+my $help = 0;
+my ($host,$dbname,$dbuser,$dbpass,$conf_file);
+my $cs_genome_db_id;
+my $qy_genome_db_id;
+my $qy_tag;
+
+GetOptions('help' => \$help,
+	   'host=s' => \$host,
+	   'dbuser=s' => \$dbuser,
+	   'dbpass=s' => \$dbpass,
+	   'dbname=s' => \$dbname,
+	   'conf_file=s' => \$conf_file,
+	   'cs_genome_db_id=i' => \$cs_genome_db_id,
+	   'qy_genome_db_id=i' => \$qy_genome_db_id,
+	   'qy_tag=s' => \$qy_tag);
+
+if ($help) {
+  print $usage;
+  exit 0;
+}
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-conf_file => $conf_file,
-						     -host => "ecs2d.internal.sanger.ac.uk",
-						     -dbname => "ensembl_compara_11_1",
-						     -user => "ecs2dadmin",
-						     -pass => "TyhRv");
+						     -host => $host,
+						     -dbname => $dbname,
+						     -user => $dbuser,
+						     -pass => $dbpass);
 
 my $gdb_adaptor = $db->get_GenomeDBAdaptor;
-my $cs_genome_db_id = 1;
 my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id);
-my $qy_tag = "Mm";
-my $qy_genome_db_id = 2;
-my $qy_genome_db= $gdb_adaptor->fetch_by_dbID($qy_genome_db_id);
+my $qy_genome_db = $gdb_adaptor->fetch_by_dbID($qy_genome_db_id);
 
 my @genomicaligns;
 
@@ -80,7 +104,6 @@ while (defined (my $line = <>) ) {
   $genomic_align->query_end($qy_end);
   $genomic_align->query_strand($qy_strand);
   $genomic_align->score($score);
-  $percid = 0 unless (defined $percid);
   $genomic_align->perc_id($percid);
 
   if (defined $cigar) {
@@ -88,6 +111,8 @@ while (defined (my $line = <>) ) {
     $cigar =~ s/I/D/g;
     $cigar =~ s/X/I/g;
   } else {
+    warn "The following line has no cigarline:
+$line\n";
     $cigar = "";
   }
   $genomic_align->cigar_line($cigar);

@@ -1,4 +1,8 @@
 #!/usr/local/ensembl/bin/perl -w
+
+# This script, originally written by Jim Mullikin, then called tagFA.pl was remaned to fasta2tag.pl
+# with no code modification
+
 use strict;
 
 my ($i, $rp, $count, $name, $oname
