@@ -56,6 +56,8 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Pipeline::Runnable::Blastz;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::GenomicAlign;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use vars qw(@ISA);
@@ -91,17 +93,22 @@ sub fetch_input {
   my $qyChunk = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->fetch_by_dbID($qy_chunk_id);
   my $dbChunk = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->fetch_by_dbID($db_chunk_id);
 
+  $self->{'qyChunk'} = $qyChunk;
+  $self->{'dbChunk'} = $dbChunk;
+  
   print("have chunks\n  ",$qyChunk->display_id,"\n  ", $dbChunk->display_id,"\n");
   my $starttime = time();
 
   my $qySeq = $qyChunk->bioseq;
   unless($qySeq) {
+    printf("fetching chunk %s on-the-fly\n", $qyChunk->display_id);
     $qySeq = $qyChunk->fetch_masked_sequence(2);  #soft masked
     print STDERR (time()-$starttime), " secs to fetch qyChunk seq\n";
   }
 
   my $dbSeq = $dbChunk->bioseq;
   unless($dbSeq) {
+    printf("fetching chunk %s on-the-fly\n", $dbChunk->display_id);
     $dbSeq = $dbChunk->fetch_masked_sequence(2);  #soft masked
     print STDERR (time()-$starttime), " secs to fetch dbChunk seq\n";
   }
@@ -113,6 +120,16 @@ sub fetch_input {
                   -options   => 'T=2 H=2200');
 
   $self->runnable($runnable);
+
+  #
+  # create method_link_species_set
+  #
+  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  $mlss->method_link_type("BLASTZ_RAW");
+  $mlss->species_set([$qyChunk->dnafrag->genome_db, $dbChunk->dnafrag->genome_db]);
+  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  $self->{'method_link_species_set'} = $mlss;
+  
   return 1;
 }
 
@@ -134,6 +151,8 @@ sub run
 sub write_output {
   my( $self) = @_;
 
+  my $starttime = time();
+
   #since the Blast runnable takes in analysis parameters rather than an
   #analysis object, it creates new Analysis objects internally
   #(a new one for EACH FeaturePair generated)
@@ -142,11 +161,16 @@ sub write_output {
   foreach my $fp ($self->output) {
     if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
       $fp->analysis($self->analysis);
-      print STDOUT $fp->seqname."\t".$fp->start."\t".$fp->end."\t".$fp->hseqname."\t".$fp->hstart."\t".$fp->hend."\t".$fp->hstrand."\t".$fp->score."\t".$fp->percent_id."\t".$fp->cigar_string."\n";
+
+      $self->store_featurePair_as_genomicAlignBlock($fp);
     }
   }
 
   #$self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store($self->output);
+
+  printf("%d FeaturePairs found\n", scalar($self->output));
+  print STDERR (time()-$starttime), " secs to write_output\n";
+
 }
 
 
@@ -204,6 +228,149 @@ sub dumpPeptidesToFasta
   printf("took %d secs to dump database to local disk\n", (time() - $startTime));
 
   return $fastafile
+}
+
+
+sub store_featurePair_as_genomicAlignBlock
+{
+  my $self = shift;
+  my $fp   = shift;
+
+  my $qyChunk = $self->{'qyChunk'};
+  my $dbChunk = $self->{'dbChunk'};
+  
+  print("qyChunk : ",$qyChunk->display_id,"\n");
+  print("dbChunk : ",$dbChunk->display_id,"\n");
+  print STDOUT $fp->seqname."\t".
+               $fp->start."\t".
+               $fp->end."\t".
+               $fp->strand."\t".
+               $fp->hseqname."\t".
+               $fp->hstart."\t".
+               $fp->hend."\t".
+               $fp->hstrand."\t".
+               $fp->score."\t".
+               $fp->percent_id."\t".
+               $fp->cigar_string."\n";
+
+  $fp->slice($qyChunk->slice);
+  $fp->hslice($dbChunk->slice);               
+  my $simpleAlign = $fp->get_SimpleAlign;
+  print_simple_align($simpleAlign, 80);
+               
+  my $genomic_align1 = new Bio::EnsEMBL::Compara::GenomicAlign;
+  $genomic_align1->method_link_species_set($self->{'method_link_species_set'});
+  $genomic_align1->dnafrag($qyChunk->dnafrag);
+  $genomic_align1->dnafrag_start($qyChunk->seq_start + $fp->start);
+  $genomic_align1->dnafrag_end($qyChunk->seq_start + $fp->end);
+  $genomic_align1->dnafrag_strand($fp->strand);
+  $genomic_align1->level_id(1);
+  
+  my $cigar1 = $fp->cigar_string;
+  $cigar1 =~ s/I/M/g;
+  $cigar1 = compact_cigar_line($cigar1);
+  $genomic_align1->cigar_line($cigar1);
+
+
+  my $genomic_align2 = new Bio::EnsEMBL::Compara::GenomicAlign;
+  $genomic_align2->method_link_species_set($self->{'method_link_species_set'});
+  $genomic_align2->dnafrag($dbChunk->dnafrag);
+  $genomic_align2->dnafrag_start($dbChunk->seq_start + $fp->hstart);
+  $genomic_align2->dnafrag_end($dbChunk->seq_start + $fp->hend);
+  $genomic_align2->dnafrag_strand($fp->hstrand);
+  $genomic_align2->cigar_line("23M4G27M");
+  $genomic_align2->level_id(1);
+
+  my $cigar2 = $fp->cigar_string;
+  $cigar2 =~ s/D/M/g;
+  $cigar2 =~ s/I/D/g;
+  $cigar2 = compact_cigar_line($cigar2);
+  $genomic_align2->cigar_line($cigar2);
+  
+  print("original cigar_line ",$fp->cigar_string,"\n");
+  print("   $cigar1\n");
+  print("   $cigar2\n");
+
+  my $GAB = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
+  $GAB->method_link_species_set($self->{'method_link_species_set'});
+  $GAB->genomic_align_array([$genomic_align1, $genomic_align2]);
+  $GAB->score($fp->score);
+  $GAB->perc_id($fp->percent_id);
+  $GAB->length($fp->alignment_length);
+
+  $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->store($GAB);
+  exit(1);
+  return $GAB;
+}
+
+
+sub compact_cigar_line
+{
+  my $cigar_line = shift;
+
+  #print("cigar_line '$cigar_line' => ");
+  my @pieces = ( $cigar_line =~ /(\d*[MDI])/g );
+  my @new_pieces = ();
+  foreach my $piece (@pieces) {
+    $piece =~ s/I/M/;
+    if (! scalar @new_pieces || $piece =~ /D/) {
+      push @new_pieces, $piece;
+      next;
+    }
+    if ($piece =~ /\d*M/ && $new_pieces[-1] =~ /\d*M/) {
+      my ($matches1) = ($piece =~ /(\d*)M/);
+      my ($matches2) = ($new_pieces[-1] =~ /(\d*)M/);
+      if (! defined $matches1 || $matches1 eq "") {
+        $matches1 = 1;
+      }
+      if (! defined $matches2 || $matches2 eq "") {
+        $matches2 = 1;
+      }
+      $new_pieces[-1] = $matches1 + $matches2 . "M";
+    } else {
+      push @new_pieces, $piece;
+    }
+  }
+  my $new_cigar_line = join("", @new_pieces);
+  #print(" '$new_cigar_line'\n");
+  return $new_cigar_line;
+}
+
+
+sub print_simple_align
+{
+  my $alignment = shift;
+  my $aaPerLine = shift;
+  $aaPerLine=40 unless($aaPerLine and $aaPerLine > 0);
+  
+  my ($seq1, $seq2)  = $alignment->each_seq;
+  my $seqStr1 = "|".$seq1->seq().'|';
+  my $seqStr2 = "|".$seq2->seq().'|';
+
+  my $enddiff = length($seqStr1) - length($seqStr2);
+  while($enddiff>0) { $seqStr2 .= " "; $enddiff--; }
+  while($enddiff<0) { $seqStr1 .= " "; $enddiff++; }
+
+  my $label1 = sprintf("%40s : ", $seq1->id);
+  my $label2 = sprintf("%40s : ", "");
+  my $label3 = sprintf("%40s : ", $seq2->id);
+
+  my $line2 = "";
+  for(my $x=0; $x<length($seqStr1); $x++) {
+    if(substr($seqStr1,$x,1) eq substr($seqStr2, $x,1)) { $line2.='|'; } else { $line2.=' '; }
+  }
+
+  my $offset=0;
+  my $numLines = (length($seqStr1) / $aaPerLine);
+  while($numLines>0) {
+    printf("$label1 %s\n", substr($seqStr1,$offset,$aaPerLine));
+    printf("$label2 %s\n", substr($line2,$offset,$aaPerLine));
+    printf("$label3 %s\n", substr($seqStr2,$offset,$aaPerLine));
+    print("\n\n");
+    $offset+=$aaPerLine;
+    $numLines--;
+  }
+
 }
 
 1;
