@@ -113,12 +113,13 @@ sub _init {
    my ($T,$C,$C1) = 0;
    my $optimizable = $type =~ /repeat/ && $dep<1 ; #at the moment can only optimize repeats...
 
-    my $features = $self->features; 
+    my $features = $self->features(); 
     unless(ref($features)eq'ARRAY') {
         # warn( ref($self), ' features not array ref ',ref($features) );
     return; 
     }
     foreach my $f ( @{$features} ) {
+		#print STDERR "Added feature ", $f->id(), " for drawing.\n";
 ## Check strand for display ##
         next if( $strand_flag eq 'b' && $strand != $f->strand );
 ## Check start are not outside VC.... ##
