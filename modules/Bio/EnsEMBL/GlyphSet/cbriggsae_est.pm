@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::cbriggsae_ests;
+package Bio::EnsEMBL::GlyphSet::cbriggsae_est;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
@@ -9,7 +9,7 @@ sub my_label { return "C.briggsae ESTs"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures( "Briggsae_ESTs", 80, $self->glob_bp);
+    return $self->{'container'}->get_all_SimilarityFeatures( "cbriggsae_est", 80, $self->glob_bp);
 }
 
 sub href {

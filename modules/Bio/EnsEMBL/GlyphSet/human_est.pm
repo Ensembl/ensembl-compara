@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::hsapiens_ests;
+package Bio::EnsEMBL::GlyphSet::human_est;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
@@ -9,7 +9,7 @@ sub my_label { return "Human ESTs"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures( "Human_ESTs", 80, $self->glob_bp);
+    return $self->{'container'}->get_all_SimilarityFeatures( "human_est", 80, $self->glob_bp);
 }
 
 sub href {
