@@ -392,7 +392,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         my $feature = new Bio::EnsEMBL::Feature(
                 -slice => $top_slice,
                 -start => $this_genomic_align_block->reference_genomic_align->dnafrag_start,
-                -end => $this_genomic_align_block->reference_genomic_align->dnafrag_end
+                -end => $this_genomic_align_block->reference_genomic_align->dnafrag_end,
+                -strand => $this_genomic_align_block->reference_genomic_align->dnafrag_strand
             );
         $feature = $feature->transfer($reference_slice);
         $this_genomic_align_block->reference_slice($reference_slice);
