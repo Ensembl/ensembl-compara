@@ -93,7 +93,7 @@ sub get_AlignBlockSet{
        $self->throw("Must get AlignBlockSet by row number");
    }
 
-   my $sth = $self->prepare("select align_start,align_end,raw_id,raw_start,raw_end,raw_strand from genomic_align_block where align_id = $align_id and align_row = $row_number order by align_start");
+   my $sth = $self->prepare("select b.align_start,b.align_end,d.name,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b,dnafrag d where b.align_id = $align_id and b.align_row = $row_number and d.dnafrag_id = b.dnafrag_id order by align_start");
    $sth->execute;
 
    my $alignset = Bio::EnsEMBL::Compara::AlignBlockSet->new();
