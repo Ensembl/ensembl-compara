@@ -67,16 +67,22 @@ sub _init {
 
     $self->{'textwidth'}    *= ($length+1)/$length;
     my $h = $self->{'textheight'};
-    
-    my @features;
-    my ( $features, $styles ) = @{ $vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[] };
+
+
+    my $dsn = $self->{'extras'}{'dsn'};
+    my $das_data = $vc->get_all_DASFeatures; # Evil data structure
+    my ( $features, $styles ) = @{ $das_data->{$dsn} || [] };
+
     $use_style = 0 unless $styles && @{$styles};
-    
+
     #print STDERR "STYLE: $use_style\n";
 
-    eval{
-        @features = grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i && $_->das_type_id() !~ /^(contig|component|karyotype):/i} @{$features||[]};
-    };
+    my @features = grep 
+      {
+	$_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
+	$_->das_type_id() !~ /^(contig|component|karyotype):/i
+      } @{ $features || [] };
+
     my %styles = ();
     if( $use_style ) {
         #print STDERR Dumper($styles);
