@@ -23,7 +23,11 @@ This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdapto
 
   Bio::EnsEMBL::Registry->load_all();
 
-  my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($compara_dbname, 'compara', 'AlignSlice');
+  my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+          $compara_dbname,
+          'compara',
+          'AlignSlice'
+      );
 
   my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
           $query_slice,
