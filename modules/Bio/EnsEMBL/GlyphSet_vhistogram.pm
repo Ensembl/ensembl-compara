@@ -49,7 +49,7 @@ sub _init {
         $has_density2 = $density2->size();
     }
     # get max density for scaling
-    my $ignore_types = ['gc', 'gene', 'kngene', 'repeat','snp'];
+    my $ignore_types = ['gc', 'gene', 'kngene', 'repeat','snp', 'glovar_snp'];
     my $max_density = $self->{'container'}->{'da'}->get_max_density_per_chromosome($chr, $ignore_types);
     # return if there is no data to display
     return unless ($density1->size() || $has_density2);
