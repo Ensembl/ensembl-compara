@@ -1,4 +1,6 @@
 
+CHECK dbuser/user and port options!!!!!
+
 1- code API needed and executable
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -296,10 +298,9 @@ nohup ~/src/ensembl_main/ensembl-compara/scripts/family/LoadSeqInFamily.pl -host
 family_20_1.description.SPTREMBL-consensus  > family_20_1.description-consensus 2> family_20_1.description-consensus.err
 
 
-update the family description in ensembl_family_20_1 with the data in families.out using 
-ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
+update the family description in ensembl_family_20_1 with the data in family_20_1.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
 
-LoadDescriptionInFamily.pl -host ecs2d -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_family_20_1 family_20_1.description-consensus
+LoadDescriptionInFamily.pl -host ecs2d -port -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_20_1 family_20_1.description-consensus
 
 
 13- Run clustalw over all the families
@@ -324,15 +325,25 @@ then the same things
 cd ../20000 for family_id from 10001 to 20000
 cd ../10000 for family_id from 1 to 10000
 
+clustalw_mpi
+============
+
 For the ~10 biggest families (usually family_id 1 to 10), the number of sequence is so important that 
 the clustalw will never end (i.e. they take a _very_ long time). Kill those jobs that did not completed after 24h.
 You will have to run them with the parallelized version of clustalw (that is installed on bc nodes).
+As the mpi version is working is rsh command, you want to make sure that you have a ~/.rhosts that contains at least this
 
-For example, for family_id=1
++@bc_hosts
+
+and have particular read/write access 
+
+chmod go-rwx ~/.rhosts
+
+So now what to do e.g. for family_id=1
 
 cd ../clustalw_mpi
 
-echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=10000;" |mysql -h ecs4 -P3351 -N -u ensro ensembl_compara_19_2 > 1.ids
+echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1;" |mysql -h ecs4 -P3351 -N -u ensro ensembl_compara_19_2 > 1.ids
 
 fastafetch /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep /data/blastdb/Ensembl/family/metazoa_20_1_nr.index 1.ids | grep -v "^Message:" > 1.ids.pep
 
