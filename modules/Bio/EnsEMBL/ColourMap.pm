@@ -110,6 +110,8 @@ sub new {
     'riken'      => 'olivedrab4',
     'genoscope'  => 'green',
     'genoscope_ecotig'  => 'blue',
+    'WZ'         => 'chartreuse3',
+    'IMCB_HOME'  => 'olivedrab4',
   );
   $self->colourSet( 'mrna',
     'default'    => 'red',

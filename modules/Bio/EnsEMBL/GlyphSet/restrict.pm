@@ -69,7 +69,6 @@ sub _init {
      /^\s*(\d+)\s+(\d+)\s+(\w+)\s+(\w+)\s*([.\d]+)\s*([.\d]+)\s*([.\d]+)\s*([.\d]+)/ );
     ( my $regexp = "^$seq".'$' ) =~s/([SWMKYRNVHDB])/$map{$1}/eg;
     
-    printf STDERR "%10d %10d   ", $st,$en;
     my $STR = $st > $en ? substr($sequence, $en-1, $st-$en+1) : substr($sequence, $st-1, $en-$st+1);
     if( $st > $en ) {
       ($st,$en,$s_3p,$s_5p,$s_5pr,$s_3pr) = ($en,$st,$s_5p,$s_3p,$s_3pr,$s_5pr);
