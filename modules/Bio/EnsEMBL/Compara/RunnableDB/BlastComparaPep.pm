@@ -83,10 +83,12 @@ sub fetch_input {
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
                            -DBCONN => $self->db);
+  $self->{'comparaDBA'}->disconnect_when_inactive(1);
 
   
   my $member_id  = $self->input_id;
   my $member     = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
+  print("member(".$member->dbID.") = '".$member->stable_id."'\n");
   $self->throw("No member in compara for member_id=$member_id") unless defined($member);
 
   
@@ -139,19 +141,15 @@ sub fetch_input {
   return 1;
 }
 
+
 sub run
 {
   my $self = shift;
-
-  #I can disconnect now until execution is done
-  #need to disconnect both adaptors since each has their own ref_count
-  #to the shared db_handle
-  $self->{'comparaDBA'}->disconnect_when_inactive(1);
-  $self->db()->disconnect_when_inactive(1);
-
   #call superclasses run method
+  print("ABOUT TO RUN\n");
   return $self->SUPER::run();
 }
+
 
 sub write_output {
   my( $self) = @_;
