@@ -16,7 +16,7 @@ Bio::EnsEMBL::Compara::GenomicAlign - Defines one of the sequences involved in a
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::GenomicAlign; 
-  my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign({
+  my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
           -adaptor => $genomic_align_adaptor,
           -genomic_align_block => $genomic_align_block,
           -method_link_species_set => $method_link_species_set,
@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::GenomicAlign - Defines one of the sequences involved in a
           -dnafrag_strand => -1,
           -aligned_sequence => "TTGCAGGTAGGCCATCTGCAAGC----TGAGGAGCAAGGACTCCAGTCGGAGTC"
           -level_id => 1,
-        });
+        );
 
 
 SET VALUES
@@ -56,9 +56,9 @@ GET VALUES
   $level_id = $genomic_align->level_id;
 
 
-=head1 DESCRIPTION
+=head1 OBJECT ATTRIBUTES
 
-Describe the object here
+
 
 =head1 AUTHOR
 
@@ -90,7 +90,7 @@ my $warn_message = "Deprecated use of GenomicAlign object. Consensus and Query D
 # new() is written here 
 
 sub new {
-    my($class,@args) = @_;
+    my($class, @args) = @_;
 
     my $self = {};
     bless $self,$class;
