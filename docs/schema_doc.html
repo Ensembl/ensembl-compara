@@ -71,6 +71,7 @@ database are also taken into account in order to annotate the clusters.</p>
   <LI><A href="#member">member</A></LI>
   <LI><A href="#sequence">sequence</A></LI>
   <LI><A href="#analysis">analysis</A></LI>
+  <LI><A href="#analysis_description">analysis_description</A></LI>
   <LI><A href="#peptide_align_feature">peptide_align_feature</A></LI>
   <LI><A href="#homology">homology</A></LI>
   <LI><A href="#homology_member">homology_member</A></LI>
@@ -1538,6 +1539,61 @@ mysql> select * from sequence where sequence_id = 1121;
       <td>YES</td>
       <td></td>
       <td>NULL</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+</dd></dl>
+<br>
+
+<!--
+#####################################################################
+	TABLE ANALYSIS_DESCRIPTION
+#####################################################################
+ -->
+<A name="analysis_description"></A>
+<h3>analysis_description</h3>
+<dl><dd>
+<p>This table has been added to comply with core Bio::EnsEMBL::DBSQL::AnalysisAdaptor requirements.</p>
+<table border="2" cellpadding="2" bgcolor="#dcdcdc">
+  <caption>analysis_description table description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>analysis_id</td>
+      <td>int(10) unsigned</td>
+      <td></td>
+      <td>MUL</td>
+      <td>0</td>
+      <td></td>
+      <td>external reference to <a href="#analysis">analysis.analysis_id</a></td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>text</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>display_label</td>
+      <td>varchar(255)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
       <td></td>
     </tr>
   </tbody>
