@@ -76,7 +76,9 @@ sub new {
   Description: It stores the given GenomicAlginBlock in the database as well
                as the GenomicAlign objects it contains
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
-  Exceptions : - not stored linked dnafrag objects throw.
+  Exceptions : - method_link_species_set not stored in the DB
+               - no Bio::EnsEMBL::Compara::GenomicAlign object is linked
+               - not stored linked dnafrag objects throw.
                - unknown method link
                - cannot lock tables
                - cannot store GenomicAlignBlock object
@@ -103,6 +105,7 @@ sub store {
   if (!defined($genomic_align_block->method_link_species_set->dbID)) {
     throw("method_link_species_set in GenomicAlignBlock is not in DB");
   }
+  throw if (!$genomic_align_block->genomic_align_array);
   foreach my $genomic_align (@{$genomic_align_block->genomic_align_array}) {
     # check if every GenomicAlgin has a dbID
     if (!defined($genomic_align->dnafrag->dbID)) {
