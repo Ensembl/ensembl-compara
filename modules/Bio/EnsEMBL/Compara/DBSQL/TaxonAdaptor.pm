@@ -104,7 +104,7 @@ sub fetch_by_taxon_id {
 
 =cut
 
-sub fetch_by_family_Member_source {
+sub fetch_by_Family_Member_source {
   my ($self, $family, $source_name) = @_;
 
   my $sql = "SELECT distinct(t.taxon_id)
