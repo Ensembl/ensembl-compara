@@ -184,7 +184,7 @@ sub get_AlignBlockSet{
    $sth->execute;
 
    my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
-   my $core_db;
+#   my $core_db;
  
    while( my $ref = $sth->fetchrow_arrayref ) {
        my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand, $perc_id, $score) = @$ref;
@@ -207,7 +207,7 @@ sub get_AlignBlockSet{
 
        $alignblock->dnafrag($dnafraghash{$raw_id});
        $alignset->add_AlignBlock($alignblock);
-       $core_db = $dnafraghash{$raw_id}->genomedb->ensembl_db; 
+#       $core_db = $dnafraghash{$raw_id}->genomedb->ensembl_db; 
    }
 
    #$alignset->core_adaptor($core_db);
