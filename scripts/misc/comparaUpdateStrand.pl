@@ -136,12 +136,13 @@ sub update_strand {
   my $geneDBA        = $self->{'coreDBA'}->get_GeneAdaptor();
   my $transcriptDBA  = $self->{'coreDBA'}->get_TranscriptAdaptor();
 
-  my $sth = $db->prepare("SELECT member.member_id, member.stable_id, source.source_name " .
+  my $sql = "SELECT member.member_id, member.stable_id, source.source_name " .
                          " FROM member, source" .
                          " WHERE member.source_id=source.source_id".
                          " AND member.chr_strand=0".
-                         " AND member.genome_db_id=".$genome_db->dbID.
-                         " LIMIT 5 ");
+                         " AND member.genome_db_id=".$genome_db->dbID;
+  print("$sql\n");
+  my $sth = $db->prepare($sql);
   $sth->execute();
 
   my ($member_id, $stable_id, $source);
@@ -164,7 +165,7 @@ sub update_strand {
       my $sth_mem = $db->prepare("UPDATE member SET chr_strand=? WHERE member_id=?");
       $sth_mem->execute($chr_strand, $member_id);
       $sth_mem->finish;
-      print("converted chr_strand to '$chr_strand' for member_id=$member_id\n");
+      print("converted chr_strand to '$chr_strand' for $stable_id ($member_id)\n");
     }
     else {
       warn("did get valid chr_strand\n");
