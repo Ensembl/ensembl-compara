@@ -8,6 +8,7 @@ use Bio::EnsEMBL::Glyph::Intron;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bio::EnsEMBL::Glyph::Line;
+use SiteDefs;
 use Bump;
 
 sub init_label {
@@ -119,7 +120,7 @@ sub _init {
 
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 		
-		if ($tid !~ /ENST/o){
+		if ($tid !~ /${ENSEMBL_PREFIX}T/o){
 			# if we have an EMBL external transcript we need different links...
 			if($tid !~ /dJ/o){
         		$Composite->{'zmenu'}  = {
@@ -151,10 +152,10 @@ sub _init {
             	'caption'					   => $id,
             	'00:Ensembl transcript'    	   => "",
              	'01:Transcript information'    => "/perl/geneview?gene=$vgid",
-           		'02:Protein information'       => "/perl/protview?peptide=$pid",
+           	#'02:Protein information'       => "/perl/protview?peptide=$pid",
             	'05:Protein sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
             	'03:Supporting evidence'       => "/perl/transview?transcript=$tid",
-            	'04:Expression information'    => "/perl/sageview?alias=$vgid",
+            	#'04:Expression information'    => "/perl/sageview?alias=$vgid",
             	'06:cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
 	    	};
 		}
