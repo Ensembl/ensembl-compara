@@ -55,37 +55,41 @@ sub _init {
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
-    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
+#    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
     for my $vg (@allgenes) {
 	
 	my ($start, $end, $colour, $label, $hi_colour);
 	
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
-        next if( $vg->strand() != $self->strand() );
-        $start = $vg->start();
-        $start = $vg->end();        
-	    ########## skip if this one isn't on the strand we're drawing
-	    if($vg->gene->is_known()) {
+            next if( $vg->strand() != $self->strand() );
+            $start = $vg->start();
+            $end = $vg->end();        
+            ########## skip if this one isn't on the strand we're drawing
+            if($vg->gene->is_known()) {
                 # this is duplicated  from gene_label.pm, so needs refactoring ...
-	    	$colour = $known_col;
-            my @temp_geneDBlinks = $vg->gene->each_DBLink();
-	 	
+                $colour = $known_col;
+                my @temp_geneDBlinks = $vg->gene->each_DBLink();
+                
                 # find a decent label:
-	    	foreach my $DB_link ( @temp_geneDBlinks ) {
-                my $db = $DB_link->database();
-                    # check in order of preference:
-                $label = $DB_link->display_id() if ($db_names{$db} );
-                last if($db eq 'HUGO');
-	    	}
-
-		    $label = $vg->id() unless( defined $label );
-            # check for highlighting
-	    	if (exists $highlights{$label}){
-    		    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
-    		}
+              DBLINK:
+                # check in order of preference:
+                foreach my $db ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
+                    foreach my $DB_link ( @temp_geneDBlinks ) {
+                        if ($db eq $DB_link->database() ) {
+                            $label = $DB_link->display_id();
+                            last DBLINK;
+                        }
+                    }
+                }
+                
+                $label = $vg->id() unless( defined $label );
+                # check for highlighting
+                if (exists $highlights{$label}){
+                    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
+                }
             } else {
-	    	$colour = $unknown_col;
-    		$label	= "NOVEL";
+                $colour = $unknown_col;
+                $label	= "NOVEL";
 	    }
 	} else {
         next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());    
