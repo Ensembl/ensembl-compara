@@ -48,8 +48,6 @@ sub href {
   return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id&source=$source&c=$region:$start";
 }
 
-
-
 sub image_label {
   my ($self, $f) = @_;
   &eprof_start( 'il' );  
@@ -94,7 +92,10 @@ sub colour {
 		  'FRAMESHIFT_CODING'    => 'Frameshift coding SNP',
 		  '5PRIME_UTR'           => '5\' UTR',
 		  '3PRIME_UTR'           => '3\' UTR',
+                  'UTR'                  => 'UTR',
 		  'INTERGENIC'           => 'Intergenic SNPs',
+                  'STOP_GAINED'          => 'Stop gained',
+                  'STOP_LOST'            => 'Stop lost',
 		 );
     push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
      $labels{$consequence_type} => $self->{'colours'}{$consequence_type};
