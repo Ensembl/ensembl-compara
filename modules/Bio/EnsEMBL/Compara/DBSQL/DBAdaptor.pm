@@ -115,9 +115,9 @@ sub new {
         throw("could not load module specified in configuration file:$@");
       }
 
-      unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
+      unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
         throw("[$db] specified in conf file is not a " .
-             "Bio::EnsEMBL::DBSQL::DBConnection");
+             "Bio::EnsEMBL::DBSQL::DBAdaptor");
       }
 
       if (defined $db) {
