@@ -189,11 +189,11 @@ sub y {
 }
 
 #########
-# read-only highlights ('|'-separated ids to colour)
+# read-only highlights (list)
 #
 sub highlights {
     my ($this) = @_;
-    return $this->{'highlights'};
+    return @{$this->{'highlights'}};
 }
 
 sub minx {

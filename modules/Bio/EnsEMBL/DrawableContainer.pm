@@ -100,7 +100,7 @@ sub new {
 	#########
 	# generate a set for both strands
 	#
-	my $GlyphSet = new $classname($Container, $Config, qq(|$highlights|), $strand);
+	my $GlyphSet = new $classname($Container, $Config, $highlights, $strand);
 
 	push @{$self->{'glyphsets'}}, $GlyphSet;
       }
