@@ -13,7 +13,7 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildHomology
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::BuildHomology->new (
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::BuildHomology->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -65,6 +65,7 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
+>>>>>>> 1.22
 
 ####################################
 #
