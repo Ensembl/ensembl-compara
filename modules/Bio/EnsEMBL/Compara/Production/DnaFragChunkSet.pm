@@ -162,7 +162,7 @@ sub add_DnaFragChunk {
       "not a [$chunk]");
   }
 
-  my $count = $self->add_chunk_id($chunk->dbID);
+  my $count = $self->add_dnafrag_chunk_id($chunk->dbID);
 
   $self->{'_cached_chunk_list'} = []
     unless(defined($self->{'_cached_chunk_list'}));
