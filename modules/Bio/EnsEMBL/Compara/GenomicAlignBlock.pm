@@ -15,27 +15,26 @@ Bio::EnsEMBL::Compara::GenomicAlignBlock - Alignment of two or more pieces of ge
 
 =head1 SYNOPSIS
   
-  use Bio::EnsEMBL::Compara::GenomicAlign;
+  use Bio::EnsEMBL::Compara::GenomicAlignBlock;
   
-  my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock({
-          -adaptor => $gaba,
+  my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -adaptor => $genomic_align_block_adaptor,
           -method_link_species_set => $method_link_species_set,
           -score => 56.2,
           -length => 1203,
           -genomic_align_array => [$genomic_align1, $genomic_align2...]
-      });
+      );
 
 SET VALUES
   $genomic_align_block->adaptor($gen_ali_blk_adaptor);
   $genomic_align_block->dbID(12);
   $genomic_align_block->method_link_species_set($method_link_species_set);
   $genomic_align_block->genomic_align_array([$genomic_align1, $genomic_align2]);
-  $genomic_align_block->genomic_align_array([$genomic_align1, $genomic_align2]);
   $genomic_align_block->score(56.2);
   $genomic_align_block->length(562);
 
 GET VALUES
-  my $gen_ali_blk_adaptor = $genomic_align_block->adaptor();
+  my $genomic_align_block_adaptor = $genomic_align_block->adaptor();
   my $dbID = $genomic_align_block->dbID();
   my $method_link_species_set = $genomic_align_block->method_link_species_set;
   my $genomic_aligns = $genomic_align_block->genomic_align_array();
@@ -99,6 +98,7 @@ use strict;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
 =head2 new (CONSTRUCTOR)
@@ -112,13 +112,13 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
                  -length
                  -genomic_align_array
   Example    : my $genomic_align_block =
-                   new Bio::EnsEMBL::Compara::GenomicAlignBlock({
+                   new Bio::EnsEMBL::Compara::GenomicAlignBlock(
                        -adaptor => $gaba,
                        -method_link_species_set => $method_link_species_set,
                        -score => 56.2,
                        -length => 1203,
                        -genomic_align_array => [$genomic_align1, $genomic_align2...]
-                   });
+                   );
   Description: Creates a new GenomicAlignBlock object
   Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlock
   Exceptions : none
@@ -236,11 +236,11 @@ sub method_link_species_set {
 
 =head2 genomic_align_array
  
-  Arg [1]    : array reference containing Bio::EnsEMBL::Compara::DBSQL::GenomicAlign objects
+  Arg [1]    : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Example    : $genomic_aligns = $genomic_align_block->genomic_align_array();
                $genomic_align_block->genomic_align_array([$genomic_align1, $genomic_align2]);
   Description: get/set for attribute genomic_align_array
-  Returntype : array reference containing Bio::EnsEMBL::Compara::DBSQL::GenomicAlign objects
+  Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
  
@@ -251,8 +251,9 @@ sub genomic_align_array {
  
   if (defined($genomic_align_array)) {
     foreach my $genomic_align (@$genomic_align_array) {
-      thrown("$genomic_align is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlign object")
-          unless ($genomic_align->isa("Bio::EnsEMBL::Compara::DBSQL::GenomicAlign"));
+      throw("$genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object")
+          unless ($genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+      $genomic_align->genomic_align_block($self);
     }
     $self->{'genomic_align_array'} = $genomic_align_array;
   }
@@ -281,6 +282,29 @@ sub score {
   }
 
   return $self->{'score'};
+}
+
+
+=head2 perc_id
+ 
+  Arg [1]    : double $perc_id
+  Example    : my $perc_id = $genomic_align_block->perc_id;
+  Example    : $genomic_align_block->perc_id(95.4);
+  Description: get/set for attribute perc_id
+  Returntype : double
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub perc_id {
+  my ($self, $perc_id) = @_;
+ 
+  if (defined($perc_id)) {
+    $self->{'perc_id'} = $perc_id;
+  }
+  
+  return $self->{'perc_id'};
 }
 
 
