@@ -74,6 +74,7 @@ use vars qw(@ISA);
 
 sub init {
   my $self = shift;
+  $self->{'start_time'} = time();
   return $self;
 }
 
@@ -120,14 +121,15 @@ sub analysis {
   Description: Defines the maximum time a worker can live for. Workers are always
                allowed to complete the jobs they get, but whether they can
                do multiple rounds of work is limited by their life_span
-  DefaultValue : 1200 (20 minutes)
+  DefaultValue : 3600 (60 minutes)
   Returntype : integer scalar
 =cut
 
 sub life_span {
+  #default life_span = 60minutes
   my( $self, $value ) = @_;
-  $self->{'_life_span'} = 20*60 unless($self->{'_life_span'});
-  $self->{'_life_span'} = $value if($value);
+  $self->{'_life_span'} = 60*60 unless(defined($self->{'_life_span'}));
+  $self->{'_life_span'} = $value if(defined($value));
   return $self->{'_life_span'};
 }
 
@@ -219,8 +221,9 @@ sub print_worker {
      " host=",$self->host,
      " ppid=",$self->process_id,
      "\n");
-  print("  batch_size=",$self->batch_size,"\n");
-  print("  job_limit=",$self->job_limit,"\n") if($self->job_limit);
+  print("  batch_size = ", $self->batch_size,"\n");
+  print("  job_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
+  print("  life_span  = ", $self->life_span,"\n") if(defined($self->life_span));
   print("  output_dir = ", $self->output_dir, "\n") if($self->output_dir);
 }
 
@@ -280,7 +283,7 @@ sub run
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 
-    print(STDOUT "processing ",scalar(@{$jobs}), "jobs \n");
+    print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n");
     foreach my $job (@{$jobs}) {
       $self->redirect_job_output($job);
       $self->run_module_with_job($job);
@@ -290,7 +293,10 @@ sub run
       $self->{'_work_done'}++;
     }
     if($self->job_limit and ($self->{'_work_done'} >= $self->job_limit)) { 
-      $self->cause_of_death('NATURAL'); 
+      $self->cause_of_death('JOB_LIMIT'); 
+    }
+    if(($self->life_span()>0) and ((time() - $self->{'start_time'}) > $self->life_span())) {
+      $self->cause_of_death('LIFESPAN'); 
     }
     if($self->cause_of_death) { $alive=undef; }
   }
@@ -320,7 +326,7 @@ sub run_module_with_job
   #pass the input_id from the job into the runnableDB object
   $runObj->input_id($job->input_id);
   
-  $job->status('GET_INPUT');
+  #$job->status('GET_INPUT');
   $runObj->fetch_input;
 
   $job->status('RUN');

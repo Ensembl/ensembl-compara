@@ -18,7 +18,6 @@ $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
 $self->{'analysis_id'} = undef;
-$self->{'job_limit'}   = 1000;
 $self->{'outdir'}      = "/ecs4/work2/ensembl/jessica/data/hive-output";
 
 my $conf_file;
@@ -69,7 +68,10 @@ my $worker = $self->{'comparaDBA'}->get_HiveAdaptor->create_new_worker($self->{'
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
 
 if($self->{'outdir'}) { $worker->output_dir($self->{'outdir'}); }
-$worker->job_limit($self->{'job_limit'});
+if($self->{'job_limit'}) {
+  $worker->job_limit($self->{'job_limit'});
+  $worker->life_span(0);
+}
 
 $worker->print_worker();
 $worker->run();
