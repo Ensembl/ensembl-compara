@@ -36,12 +36,13 @@ sub features {
 }
 
 sub href {
-    my ($self, $gene, $transcript ) = @_;
+    my ($self, $gene, $transcript, %highlights ) = @_;
     my $gid = $gene->stable_id();
     my $tid = $transcript->stable_id();
-    return $self->{'config'}->{'_href_only'} eq '#tid' ?
+    my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
+    return ( $self->{'config'}->get('vega_altsplice_transcript_lite','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
         "#$tid" : 
-        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid);
+        qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
 }
 
 sub zmenu {
@@ -74,6 +75,12 @@ sub zmenu {
 sub text_label {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->external_name() || $transcript->stable_id();
+    my $config = $self->{config};
+    my $label = $gene->type();
+    my $short_labels = $config->get('_settings','opt_shortlabels');
+    unless( $short_labels ){
+      $id .= "\n$label"; 
+    }
     return $id;
 }
 
