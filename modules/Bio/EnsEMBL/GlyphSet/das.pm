@@ -26,14 +26,11 @@ sub init_label {
 
   my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  qq(/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das);
 
-												     
+                                                                                         
 #  my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ? qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) :  qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
 
   my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ? qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/dasconfview?_das_edit=$1&conf_script=$script&conf_script_params=$params\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) :  qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
-						
-
-												   
-
+#  my $track_label = $self->{'extras'}->{'caption'} || $self->{'extras'}->{'label'} || $self->{'extras'}->{'name'};
   my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
   $track_label =~ s/^(managed_|managed_extdas)//;
 
@@ -83,13 +80,18 @@ sub _initOLD {
   my $dsn = $Extra->{'dsn'};
   
   my( $features, $styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
-  my @features = grep {
+  my @features = 
+  sort { $a->das_start <=> $b->das_start }
+  grep {
     $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
     $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
     $_->das_start <= $configuration->{'length'} &&
     $_->das_end > 0
   } @{ $features || [] };
 
+  foreach (@features) {
+    warn printf( "%12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
+  }
   $configuration->{'features'} = \@features;
   my %styles;
   if( $styles && @$styles && $configuration->{'use_style'} ) {
@@ -140,8 +142,8 @@ sub RENDER_simple {
     if( $configuration->{'depth'}>0 ) {
       $row = $self->bump( $START, $END, $label_length, $configuration->{'depth'} );
       if( $row < 0 ) { ## SKIP IF BUMPED...
-	  $more_features = 1;
-	  next;
+         $more_features = 1;
+         next;
       }
     } else {
       next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
@@ -289,7 +291,10 @@ sub RENDER_grouped {
     ## Display if not stranded OR
     my @t_features = sort { $a->das_start <=> $b->das_start } @$value;
     my @features = (shift @t_features);
+    $_ = $features[0];
+    warn sprintf( ">> %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
     foreach( @t_features ) { # Nasty hacky bit that ensures we don't have duplicate das features....
+      warn sprintf( "   %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
       if($_->das_start <= $features[-1]->das_end ) {
         $features[-1]->das_end( $_->das_end ) if $_->das_end > $features[-1]->das_end;
       } else {
@@ -306,10 +311,10 @@ sub RENDER_grouped {
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
 
-#	 warn("$ID:$label:$label_length:$row");
+#        warn("$ID:$label:$label_length:$row");
     if( $row < 0 ) { ## SKIP IF BUMPED...
-	$more_features = 1;
-	next;
+       $more_features = 1;
+       next;
     }
     my( $href, $zmenu ) = $self->zmenu( $f );
     my $Composite = new Sanger::Graphics::Glyph::Composite({
@@ -462,9 +467,9 @@ sub RENDER_grouped {
 
 #  if we have displayed the specified number of rows and there are still some features left then display a note saying that.
       if($more_features) {
-	  my $yx = $configuration->{'depth'};
-	  my $ID = 'There are more '.$self->{'extras'}->{'caption'}.' features in this region. Increase source depth to view them all ';
-	  $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
+         my $yx = $configuration->{'depth'};
+         my $ID = 'There are more '.$self->{'extras'}->{'caption'}.' features in this region. Increase source depth to view them all ';
+         $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
       }    
 
   return 1; ## We have rendered at least one feature....
@@ -740,8 +745,6 @@ sub _init {
 
   };
 
-
-
   my $dsn = $Extra->{'dsn'};
   my $url = defined($Extra->{'url'}) ? $Extra->{'url'}."/$dsn" :  $Extra->{'protocol'}.'://'. $Extra->{'domain'} ."/$dsn";
 
@@ -772,68 +775,72 @@ sub _init {
       my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
       my $name = $das_name || $url;
       foreach my $gene (@$genes) {
-#			 warn("GENE:$gene:".$gene->stable_id);	
-	  my $dasf = $gene->get_all_DASFeatures;
-	  my %dhash = %{$dasf};
+#                      warn("GENE:$gene:".$gene->stable_id);       
+         my $dasf = $gene->get_all_DASFeatures;
+         my %dhash = %{$dasf};
 
-	 
-	  my $fcount = 0;
-	  my %fhash = ();
-	  my @aa = @{$dhash{$name}};
-	  foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{ $aa[1] || [] }) {
-	      if ($f->das_end) {
-		  if ($f->das_start <= $configuration->{'length'}) {
-		      push(@das_features, $f);
-		      
-		  }
-	      } else {
-		  if (exists $fhash{$f->das_segment->ref}) {
-		      $fhash{$f->das_segment->ref}->{count} ++;
-		  } else {
-		      $fhash{$f->das_segment->ref}->{count} = 1;
-		      $fhash{$f->das_segment->ref}->{feature} = $f;
-		  }
-	      }
-	  }
-	  
-	  foreach my $key (keys %fhash) {
-#				  warn("FT:$key:".$fhash{$key}->{count});
-	      my $ft = $fhash{$key}->{feature}; 
-	      if ((my $count = $fhash{$key}->{count}) > 1) {
-		  $ft->{das_feature_label} = "$key/$count";
+        
+         my $fcount = 0;
+         my %fhash = ();
+         my @aa = @{$dhash{$name}};
+         foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{ $aa[1] || [] }) {
+             if ($f->das_end) {
+                if ($f->das_start <= $configuration->{'length'}) {
+                    push(@das_features, $f);
+                    
+                }
+             } else {
+                if (exists $fhash{$f->das_segment->ref}) {
+                    $fhash{$f->das_segment->ref}->{count} ++;
+                } else {
+                    $fhash{$f->das_segment->ref}->{count} = 1;
+                    $fhash{$f->das_segment->ref}->{feature} = $f;
+                }
+             }
+         }
+         
+         foreach my $key (keys %fhash) {
+#                              warn("FT:$key:".$fhash{$key}->{count});
+             my $ft = $fhash{$key}->{feature}; 
+             if ((my $count = $fhash{$key}->{count}) > 1) {
+                $ft->{das_feature_label} = "$key/$count";
 
-		  $ft->{das_note} = "Found $count annotations for $key";
-		  $ft->{das_link_label}  = 'View annotations in geneview';
-		  $ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&:DASselect_${srcname}=0&DASselect_${srcname}=1#$srcname";
-		  
-	      }
-	      $ft->{das_type_id}->{id} = 'summary';
-	      $ft->{das_start} = $gene->start;
-	      $ft->{das_end} = $gene->end;
-	      $ft->{das_orientation} = $gene->strand;
-	      $ft->{_gsf_strand} = $gene->strand;
-	      $ft->{das_strand} = $gene->strand;
-	      
-	      #	  warn(Dumper($ft));
-	      push(@das_features, $ft);
-	  }
+                $ft->{das_note} = "Found $count annotations for $key";
+                $ft->{das_link_label}  = 'View annotations in geneview';
+                $ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&:DASselect_${srcname}=0&DASselect_${srcname}=1#$srcname";
+                
+             }
+             $ft->{das_type_id}->{id} = 'summary';
+             $ft->{das_start} = $gene->start;
+             $ft->{das_end} = $gene->end;
+             $ft->{das_orientation} = $gene->strand;
+             $ft->{_gsf_strand} = $gene->strand;
+             $ft->{das_strand} = $gene->strand;
+             
+             #         warn(Dumper($ft));
+             push(@das_features, $ft);
+         }
       }
   } else {
 #      warn("EL:($dsn)".$self->{'container'});
-      my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
-      $styles = $das_styles;
-      @das_features = grep {
-	  $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
-	      $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
-	      $_->das_start <= $configuration->{'length'} &&
-	      $_->das_end > 0
-	  } @{ $features || [] };
+    my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
+    $styles = $das_styles;
+  foreach my $f (@$features) {
+    my $str = join('##', $f->das_feature_label, $f->das_type_id, $f->das_start, $f->das_end);
+    warn("$str");
+  }
+    @das_features = grep {
+      $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
+      $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
+      $_->das_start <= $configuration->{'length'} &&
+      $_->das_end > 0
+    } @{ $features || [] };
   }
 
-#  foreach my $f (@das_features) {
-#		my $str = join('==', $f->das_feature_label, $f->das_type_id, $f->das_start, $f->das_end);
-#		warn("$str");
-#  }
+  foreach my $f (@das_features) {
+    my $str = join('==', $f->das_feature_label, $f->das_type_id, $f->das_start, $f->das_end);
+    warn("$str");
+  }
 # warn("RET:".@das_features);
   $configuration->{'features'} = \@das_features;
   my %styles;
