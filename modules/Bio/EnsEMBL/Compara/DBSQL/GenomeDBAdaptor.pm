@@ -106,6 +106,29 @@ sub fetch_by_dbID{
 }
 
 
+=head2 fetch_all
+
+  Args       : none
+  Example    : none
+  Description: gets all GenomeDBs for this compara database
+  Returntype : listref Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_all {
+  my ( $self ) = @_;
+
+  if ( !defined $self->{'_GenomeDB_cache'}) {
+    $self->create_GenomeDBs;
+  }
+
+  my @genomeDBs = values %{$self->{'_GenomeDB_cache'}};
+  return \@genomeDBs;
+} 
+
+
 
 =head2 fetch_by_name_assembly
 

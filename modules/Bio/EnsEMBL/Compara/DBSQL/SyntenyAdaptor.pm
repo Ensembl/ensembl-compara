@@ -45,6 +45,9 @@ use strict;
 sub setSpecies {
     my( $self, $synteny_db, $species1, $species2 ) = @_;
 
+    $species1 =~ tr/_/ /;
+    $species2 =~ tr/_/ /;
+
     $self->{'_species_main'}      = $species1;
     $self->{'_species_secondary'} = $species2;
 }
