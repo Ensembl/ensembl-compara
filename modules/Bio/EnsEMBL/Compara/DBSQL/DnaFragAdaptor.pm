@@ -45,10 +45,10 @@ use strict;
 
 # Object preamble - inherits from Bio::Root::RootI
 
-use Bio::EnsEMBL::BaseAdaptor;
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 
-@ISA = qw(Bio::EnsEMBL::BaseAdaptor);
+@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
 =head2 fetch_by_dbID
