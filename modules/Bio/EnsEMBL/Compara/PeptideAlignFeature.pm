@@ -82,16 +82,6 @@ sub init_from_feature {
     "not a [$feature]");
   }
 
-=head3
-  my $memberAdaptor = $self->db->get_MemberAdaptor();
-
-  my $qy_member  = $memberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', $feature->seqname);
-  my $hit_member = $memberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', $feature->hseqname);
-
-  $self->query_member_id($qy_member->dbID);
-  $self->hit_member_id($hit_member->dbID);
-=cut
-
   $self->queryid($feature->seqname);
   $self->hitid($feature->hseqname);
 
