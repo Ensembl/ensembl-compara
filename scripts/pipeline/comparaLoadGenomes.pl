@@ -5,6 +5,7 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::Taxon;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
@@ -165,8 +166,8 @@ sub submitGenome
 
   my $taxon_id = $meta->get_taxonomy_id;  
   my $taxon = $meta->get_Species;
-  $taxon->ncbi_taxid($taxon_id);
   bless $taxon, "Bio::EnsEMBL::Compara::Taxon";
+  $taxon->ncbi_taxid($taxon_id);
   $self->{'comparaDBA'}->get_TaxonAdaptor->store($taxon);
 
   my $genome_name = $taxon->binomial;
