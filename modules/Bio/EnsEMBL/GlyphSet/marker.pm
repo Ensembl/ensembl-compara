@@ -1,54 +1,78 @@
 package Bio::EnsEMBL::GlyphSet::marker;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+use Bio::EnsEMBL::GlyphSet;
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Bump;
 
-sub squish {1;}
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
 
-use constant PRIORITY   => 50;
-use constant MAP_WEIGHT => 2;
+my $MAP_WEIGHT = 2;
+my $PRIORITY   = 50;
 
-sub my_label { return "Markers"; }
+sub _init {
+  my $self = shift;
 
-sub features {
-    my ($self) = @_;
+  my $slice         = $self->{'container'};
+  my $Config        = $self->{'config'};
+  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my $bitmap_length = int($slice->length() * $pix_per_bp);
+  my @bitmap;
 
-    return $self->{'container'}->get_all_MarkerFeatures(undef, 
-							$self->{container}{_config_file_name_} eq 'Homo_sapiens' ? PRIORITY : 0,
-							MAP_WEIGHT);
+  return unless $self->strand() == -1;
+
+  $self->{'colours'} = $Config->get('marker','colours');
+  my $fontname       = "Tiny";
+  my $row_height     = 8;
+  my ($w,$h)         = $Config->texthelper->px2bp($fontname);
+      $w             = $Config->texthelper->width($fontname);
+
+  my $labels         = $Config->get('marker', 'labels' ) eq 'on';
+  foreach my $f (@{$slice->get_all_MarkerFeatures(undef,
+    $self->{container}{_config_file_name_} eq 'Homo_sapiens' ? $PRIORITY : 0,
+    $MAP_WEIGHT)}
+  ){
+    my $ms           = $f->marker->display_MarkerSynonym;
+    my $fid          = $ms->name;
+    my $bp_textwidth = $w * length("$fid ");
+    my ($feature_colour, $label_colour, $part_to_colour) = $self->colour($f);
+    my $href         = "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=$fid";
+
+    $self->push( new Sanger::Graphics::Glyph::Rect({
+      'x' => $f->start - 1,        'y' => 0,         'height' => $row_height, 'width' => ($f->end-$f->start+1),
+      'colour' => $feature_colour, 'absolutey' => 1,
+      'href'   => $href, 'zmenu' => { 'caption' => ($ms->source eq 'unists' ? "uniSTS:$fid" : $fid), 'Marker info' => $href }
+    }));
+    next unless $labels;
+    my $glyph = new Sanger::Graphics::Glyph::Text({
+      'x'         => $f->start()-1,
+      'y'         => $row_height + 2,
+      'height'    => $Config->texthelper->height($fontname),
+      'width'     => $bp_textwidth,
+      'font'      => $fontname,
+      'colour'    => $label_colour,
+      'absolutey' => 1,
+      'text'      => $fid,
+      'href'      => "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=$fid",
+    });
+
+    my $bump_start = int($glyph->x() * $pix_per_bp);
+       $bump_start = 0 if $bump_start < 0;
+    my $bump_end = $bump_start + $bp_textwidth;
+    next if $bump_end > $bitmap_length;
+    my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
+    $glyph->y($glyph->y() + (1.2 * $row * $h));
+    $self->push($glyph);
+  }    
 }
-
-sub href {
-    my ($self, $f ) = @_;
-    return "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=".
-      $f->marker->display_MarkerSynonym->name;
-}
-sub zmenu {
-    my ($self, $f ) = @_;
-
-    my $ms = $f->marker->display_MarkerSynonym;
-    my $name = $ms->name;
-    my $src = $ms->source;
-    if($src && $src eq 'unists') {
-      $name = "uniSTS:$name";
-    }
-
-    return { 
-        'caption' => $name,
-	 'Marker info' => $self->href($f)
-    };
-}
-
 
 sub colour {
-    my ($self, $f) = @_;
-
-    my $type = $f->marker->type;
-
-    $type = '' unless(defined($type));
-
-    return( $self->{'colours'}{"$type"}, $self->{'colours'}{"$type"}, '' );
+  my ($self, $f) = @_;
+  my $type = $f->marker->type;
+     $type = '' unless(defined($type));
+  my $col = $self->{'colours'}->{"$type"};
+  return $col, $col, '';
 }
 
 1;
