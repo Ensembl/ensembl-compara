@@ -30,7 +30,6 @@ sub new {
     };
 
     bless($self, $class);
-
     $self->init_label() if($self->can('init_label'));
 
 #    &eprof_start(qq(glyphset_$class));
@@ -54,13 +53,13 @@ sub _init {
 sub basepairs_per_pixel {
     my ($self) = @_;
     my $Config = $self->{'config'};
-    my $pixels = $Config->get($Config->script(), '_settings' ,'width');
+    my $pixels = $Config->get( '_settings' ,'width' );
     return (defined $pixels && $pixels) ? $self->{'container'}->length() / $pixels : undef; 
 }    
 
 sub glob_bp {
     my ($self) = @_;
-    return int($self->basepairs_per_pixel);
+    return int($self->basepairs_per_pixel());
 }
 #########
 # return our list of glyphs
