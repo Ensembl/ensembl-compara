@@ -60,7 +60,7 @@ sub _init {
 	my ($start, $end, $colour, $label, $hi_colour);
 	
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
-        print "STR: ".$vg->strand()." -- ".$self->strand()."\n";
+        print STDERR "STR: ".$vg->start()." ".$vg->strand()." -- ".$self->strand()."\n";
         next if( $vg->strand() != $self->strand() );
         $start = $vg->start();
         $start = $vg->end();        
@@ -83,10 +83,11 @@ sub _init {
 	    	if (exists $highlights{$label}){
     		    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
     		}
-        } else {
+            } else {
 	    	$colour = $unknown_col;
     		$label	= "NOVEL";
 	    }
+	    print STDERR "GENE: $label\n"; 
 	} else {
         next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());    
 	    ########## skip if it's not on the strand we're drawing
