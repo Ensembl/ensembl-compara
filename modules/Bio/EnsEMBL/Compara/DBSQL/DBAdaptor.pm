@@ -83,7 +83,27 @@ sub new {
     my @conf = do $conf_file;
 
     foreach my $genome (@conf) {
-      my ($species, $assembly, $db) = @$genome;
+      my ($species, $assembly, $db_hash) = @$genome;
+
+      my $module = $db_hash->{'module'};
+
+      my $db;
+
+      eval {
+	require $module;
+
+	$db = $module->new(-dbname => $db_hash->dbname,
+			   -host   => $db_hash->host,
+			   -user   => $db_hash->user,
+			   -pass   => $db_hash->pass,
+			   -port   => $db_hash->port,
+			   -driver => $db_hash->driver);
+      };
+
+      if($@) {
+	$self->throw("could not load module specified in configuration " .
+		     "file:$@");
+      }
 
       unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
 	$self->throw("[$db] specified in conf file is not a " .
