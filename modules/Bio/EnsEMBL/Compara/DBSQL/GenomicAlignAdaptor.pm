@@ -133,6 +133,30 @@ sub fetch_align_id_by_align_name {
   return $align_id;
 }
 
+=head2 fetch_align_name_by_align_id
+
+ Title   : fetch_align_name_by_align_id
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_align_name_by_align_id {
+  my ($self,$align_id) = @_;
+  
+  unless (defined $align_id) {
+    $self->throw("align_id must be defined as argument");
+  }
+
+  my $sth = $self->prepare("select align_name from align where align_id=\"$align_id\"");
+  $sth->execute();
+  my ($align_name) = $sth->fetchrow_array;
+  return $align_name;
+}
 
 =head2 fetch_by_genomedb_dnafrag_list
 
@@ -205,14 +229,14 @@ sub get_AlignBlockSet{
        $self->throw("Must get AlignBlockSet by row number");
    }
 
-   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand , b.perc_id, b.score  from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
+   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand ,b.perc_id,b.score,b.cigar_line  from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
    $sth->execute;
 
    my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
 #   my $core_db;
  
    while( my $ref = $sth->fetchrow_arrayref ) {
-       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand, $perc_id, $score) = @$ref;
+       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand,$perc_id,$score,$cigar_string) = @$ref;
        my $alignblock = Bio::EnsEMBL::Compara::AlignBlock->new();
        $alignblock->align_start($align_start);
        $alignblock->align_end($align_end);
@@ -221,6 +245,7 @@ sub get_AlignBlockSet{
        $alignblock->strand($raw_strand);
        $alignblock->perc_id($perc_id);
        $alignblock->score($score);
+       $alignblock->cigar_string($cigar_string);
       
        
        if( ! defined $dnafraghash{$raw_id} ) {
