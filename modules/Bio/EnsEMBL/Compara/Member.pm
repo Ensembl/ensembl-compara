@@ -216,6 +216,23 @@ sub stable_id {
   return $self->{'_stable_id'};
 }
 
+=head2 version
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub version {
+  my $self = shift;
+  $self->{'_version'} = shift if(@_);
+  return $self->{'_version'};
+}
+
 =head2 description
 
   Arg [1]    : string $description (optional)
