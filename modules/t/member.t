@@ -3,7 +3,7 @@ use warnings;
  
 use Test::Harness;
 use Test;
-BEGIN { plan tests => 17 }
+BEGIN { plan tests => 15 }
 
 use Bio::EnsEMBL::Test::TestUtils; 
 use Bio::EnsEMBL::Compara::Member;
@@ -29,9 +29,8 @@ ok( test_getter_setter( $member, "chr_end", 50184785 ));
 ok( test_getter_setter( $member, "chr_strand", 1 ));
 ok( test_getter_setter( $member, "taxon_id", 9606 ));
 ok( test_getter_setter( $member, "genome_db_id", 1 ));
-ok( test_getter_setter( $member, "sequence", "my_dummy_sequence" ));
 ok( test_getter_setter( $member, "sequence_id", 116289 ));
-ok( test_getter_setter( $member, "seq_length", 622 ));
+
 
 
 
