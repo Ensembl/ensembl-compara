@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::genscan;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -38,35 +37,37 @@ sub _init {
     my $small_contig   = 0;
     my @allfeatures    = ();
 
+	my $k = 1;
     foreach my $seq_feat ($VirtualContig->get_all_PredictionFeatures()){
 		if ($seq_feat->strand() == $strand){
-			push @allfeatures,$seq_feat->sub_SeqFeature();
+			#print STDERR "Strand: $strand == ", $seq_feat->strand(), " for genscan\n";
+			#print STDERR "ID: ", $seq_feat->id(), " for genscan\n";
+			my @tmp = $seq_feat->sub_SeqFeature();
+			$id{$seq_feat->id()} = \@tmp;
+			$k++;
 		}
     }
-	
-  	foreach my $f (@allfeatures){
-		unless ( $id{$f->id()} ){
-			$id{$f->id()} = [];
-		}
-		push(@{$id{$f->id()}}, $f );
-	}
+
 	foreach my $i (keys %id){
 
 		@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
 		my $has_origin = undef;
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'zmenu'     => { 
-				caption => "Genscan $i",
-				'View peptide' => "/perl/dumpview?type=genscan&id=$i",		
-		 },
 	    });
 		foreach my $f (@{$id{$i}}){
+
 			unless (defined $has_origin){
 				$Composite->x($f->start());
 				$Composite->y(0);
 				$has_origin = 1;
+				my $id = $f->id();
+				$Composite->{'zmenu'}     = { 
+						caption => "Genscan $id",
+						'View peptide' => "/perl/dumpview?type=genscan&id=$id",		
+				 },
 			}
-			#print STDERR "Feature [$j: $f] start: ", $f->start(), " ID:", $f->id(),  "(strand: $strand)\n";
+			
+			#print STDERR "Feature [$f ($i)] start: ", $f->start(), " ID:", $f->id(),  " (strand: $strand)\n";
 			#print STDERR "Feature length: ", $x1, " ID:", $f->id(),  "\n";
 			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 				'x'      	=> $f->start(),
@@ -116,8 +117,6 @@ sub _init {
 	    	next if $row > $Config->get($Config->script(), 'genscan', 'dep');
 	    	$Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
 
-			# if we are bumped && on a large contig then draw frames around features....
-			#$Composite->bordercolour($feature_colour) unless ($small_contig);
 		}
 		
 		# now save the composite glyph...
