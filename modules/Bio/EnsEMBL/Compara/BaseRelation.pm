@@ -354,40 +354,26 @@ sub Member_count_by_source_taxon {
 # DEPRECATED METHODS
 ####################
 
-=head2 source_id
-
-=cut
-
 sub source_id {
   my $self = shift;
   deprecate("source method is deprecated. Calling $self->method_link_id instead\n");
-  return $self->method_link_species_set->method_link_id;
+
+  $self->{'_method_link_id'} = shift if (@_);
+  return $self->method_link_id;
 }
 
 sub source_name {
   my $self = shift;
   deprecate("source_name method is now deprecated. Calling method_link_type instead.\n");
-  return  $self->method_link_type
+
+  $self->{'_method_link_type'} = shift if (@_);
+  return $self->method_link_type;
 }
-
-=head2 known_sources
-
- Args       : none
- Example    : $FamilyAdaptor->known_sources
- Description: get all database name, source of the family members
- Returntype : an array reference of string
- Exceptions : none
- Caller     : general
-
-=cut
 
 sub known_sources {
   my ($self) = @_;
-  deprecate("deprecated method\n");
-  unless (defined $self->{_known_sources}) {
-      $self->{'_known_sources'} = $self->adaptor->_known_sources;
-  }
-  return $self->{'_known_sources'};
+  deprecate();
+  throw("Get this data from the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object\n");
 }
 
 1;
