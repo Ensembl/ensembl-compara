@@ -91,7 +91,8 @@ sub _init {
         });
         $self->push($gpadding);        
     }
-    foreach my $band (@$bands){
+    if( @$bands ) {
+      foreach my $band (@$bands){
         my $bandname       = $band->name();
         my $vc_band_start  = $band->start() + $v_offset;
         my $vc_band_end    = $band->end() + $v_offset;
@@ -204,6 +205,18 @@ sub _init {
             });
             $self->push($tglyph);
         }
+      }
+    } else {
+      foreach (0,$wid) {
+        $self->push(new Sanger::Graphics::Glyph::Line({
+          'x'                => $v_offset-1,
+          'y'                => $h_offset+$_,
+          'width'            => $chr_length,
+          'height'           => 0,
+          'colour'           => $black,
+          'absolutey'        => 1,
+        }));
+      }
     }
 
     foreach( @decorations ) {
@@ -218,8 +231,8 @@ sub _init {
         ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
     
     foreach my $end ( 
-        ( $bands->[ 0]->stain() eq 'tip' ? () : 0 ),
-        ( $bands->[-1]->stain() eq 'tip' ? () : 1 )
+        ( @$bands && $bands->[ 0]->stain() eq 'tip' ? () : 0 ),
+        ( @$bands && $bands->[-1]->stain() eq 'tip' ? () : 1 )
      ) {
         my $direction = $end ? -1 : 1;
         foreach my $I ( 0..$#lines ) {

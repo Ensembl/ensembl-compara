@@ -200,10 +200,10 @@ sub _init {
 	}
       }
     } else {
-      $gband = new Sanger::Graphics::Glyph::Line({
+      my $gband = new Sanger::Graphics::Glyph::Line({
                 'x'      => 0,
                 'y'      => 2,
-                'width'  => $length,
+                'width'  => $chr_length,
                 'height' => 0,
                 'colour' => $black,
                 'absolutey' => 1,
@@ -213,7 +213,7 @@ sub _init {
             $gband = new Sanger::Graphics::Glyph::Line({
                 'x'      => 0,
                 'y'      => 12,
-                'width'  => $length,
+                'width'  => $chr_length,
                 'height' => 0,
                 'colour' => $black,
                 'absolutey' => 1,

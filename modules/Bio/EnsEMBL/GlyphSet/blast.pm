@@ -84,7 +84,7 @@ sub _init {
         'y'         => 4,
         'width'     => $vc_e - $vc_s,
         'height'    => 0,
-        'colour'    => $cmap->id_by_name('yellow1'),
+        'colour'    => $cmap->id_by_name('background0'),
         'absolutey' => 1,
     });
     $self->push($gline);
