@@ -72,7 +72,6 @@ sub _init {
     my ( $features, $styles ) = @{ $vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[] };
     $use_style = 0 unless $styles && @{$styles};
     
-    warn Dumper( $styles );
     #print STDERR "STYLE: $use_style\n";
 
     eval{
@@ -169,7 +168,7 @@ sub _init {
                 } else {
                   $colour = $feature_colour;
                 }
-            warn "@{[$f->das_id]} - @{[$f->das_group_type]} - @{[$f->das_type_id]}";
+            #warn "@{[$f->das_id]} - @{[$f->das_group_type]} - @{[$f->das_type_id]}";
             if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
                 my $f     = shift @features;
                 my $START = $f->das_start() < 1        ? 1       : $f->das_start();
@@ -386,35 +385,36 @@ sub bump{
 }
 
 sub zmenu {
-        my( $self, $f ) = @_;
-        my $id = $f->das_group_id() || $f->das_id();
-        my $zmenu = {
-            'caption'         => $self->{'extras'}->{'label'},
-#                "DAS source info" => $self->{'extras'}->{'url'},
-        };
-        $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
-        $zmenu->{"03:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
-        $zmenu->{"04:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
+  my( $self, $f ) = @_;
+  my $id = $f->das_feature_label() || $f->das_group_label() || $f->das_group_id() || $f->das_id();
+  #warn "@{[$f->das_group_id]} - @{[$f->das_id]}";
+  my $zmenu = {
+    'caption'         => $self->{'extras'}->{'label'},
+#   "DAS source info" => $self->{'extras'}->{'url'},
+  };
+  $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
+  $zmenu->{"03:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
+  $zmenu->{"04:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
 
-        $zmenu->{"05:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
-        $zmenu->{"06:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-        $zmenu->{"07:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
-        my $href = undef;
-        if($self->{'extras'}->{'fasta'}) {
-            foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
-            my ($type, $db ) = split /_/, $string, 2;
-                $zmenu->{ "20:$type sequence" } = $self->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $f->das_id() } );
-            $href = $zmenu->{ "20:$type sequence" } unless defined($href);
-            }
-        }
-        $href = $f->das_link() if $f->das_link() && !$href;
-        if($id && uc($id) ne 'NULL') {
-            $zmenu->{"01:ID: $id"} = '';
-            if($self->{'extras'}->{'linkURL'}){
-                 $href = $zmenu->{"08:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
-         } 
-        } 
-        return( $href, $zmenu );
+  $zmenu->{"05:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
+  $zmenu->{"06:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
+  $zmenu->{"07:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+  my $href = undef;
+  if($self->{'extras'}->{'fasta'}) {
+    foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
+    my ($type, $db ) = split /_/, $string, 2;
+      $zmenu->{ "20:$type sequence" } = $self->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
+      $href = $zmenu->{ "20:$type sequence" } unless defined($href);
+    }
+  }
+  $href = $f->das_link() if $f->das_link() && !$href;
+  if($id && uc($id) ne 'NULL') {
+    $zmenu->{"01:ID: $id"} = '';
+    if($self->{'extras'}->{'linkURL'}){
+      $href = $zmenu->{"08:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+    } 
+  } 
+  return( $href, $zmenu );
 }
 
 
