@@ -41,7 +41,7 @@ sub href {
     foreach(@{$self->{'mapfrags'}}) {
         return sprintf(
             'http://wwwdev.sanger.ac.uk/cgi-bin/tracefetch/viewtrace?species=%s&contig=%s&focus=%s&bori=%s&cori=%s',
-             $ENV{'ENSEMBL_SPECIES'}, $_->name, 
+             @{[$self->{container}{_config_file_name_}]}, $_->name, 
              $_->orientation > 0 ? ( $f->start-$_->start+1 ) : ( $_->end-$f->start+1 ) ,
              $self->strand, $_->orientation
         ) if $_->start <= $f->start && $f->start <= $_->end;

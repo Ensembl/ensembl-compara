@@ -7,19 +7,20 @@ sub my_label { return "Band BACs"; }
 
 sub features {
     my ($self) = @_;
-    my $container_length = $self->{'container'}->length();
+    my $container_length = $self->{'container'}->length();	
 	return $self->{'container'}->get_all_MapFrags( 'bacs_bands' );
 }
 
 sub zmenu {
     my ($self, $f ) = @_;
-    return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bac_bands', 'threshold_navigation' ) || 2e7) * 1000;
+	return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bac_bands', 'threshold_navigation' ) || 2e7) * 1000;
+	
 	my $chr = $f->{'seq'};
 	my $chr_start = $f->{'seq_start'};
 	my $chr_end = $f->{'seq_end'};
 
 	my $page = ($ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ? 'contigview' : 'cytoview';
-    my $page_link = qq(/$ENV{'ENSEMBL_SPECIES'}/$page?chr=$chr&chr_start=$chr_start&chr_end=$chr_end) ;
+    my $page_link = qq(/@{[$self->{container}{_config_file_name_}]}/$page?chr=$chr&chr_start=$chr_start&chr_end=$chr_end) ;
 	
 	my $zmenu = { 
         'caption'   => "BAC: ".$f->name,

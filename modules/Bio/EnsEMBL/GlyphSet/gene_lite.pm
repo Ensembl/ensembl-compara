@@ -29,10 +29,10 @@ sub init_label {
     'text'      => $self->my_label(),
     'font'      => 'Small',
     'absolutey' => 1,
-    'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','gene_lite')],
+    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','gene_lite')],
     'zmenu'     => {
       'caption'                     => 'HELP',
-      "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'gene_lite\\')]
+      "01:Track information..."     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'gene_lite\\')]
     }
   });
   $self->label($label);
@@ -235,8 +235,8 @@ sub _init {
 	"length: ".($g->{'chr_end'}-$g->{'chr_start'}+1)  => ''
       }; 
       if( $g->{'db'} ne '' ) {
-        $rect->{'zmenu'}->{"Gene: $g->{'ens_ID'}"} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}&db=$g->{'db'}"; 
-        $rect->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}&db=$g->{'db'}" ;
+        $rect->{'zmenu'}->{"Gene: $g->{'ens_ID'}"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$g->{'ens_ID'}&db=$g->{'db'}"; 
+        $rect->{'href'} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$g->{'ens_ID'}&db=$g->{'db'}" ;
       }
     }
     my $depth = $Config->get('gene_lite', 'dep');

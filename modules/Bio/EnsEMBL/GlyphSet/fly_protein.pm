@@ -10,7 +10,7 @@ sub my_label { return "Dros. Peptides"; }
 sub features {
     my ($self) = @_;
 
-    return $self->{'container'}->get_all_ProteinAlignFeatures('peptides_bdgp',80);
+    return $self->{'container'}->get_all_ProteinAlignFeatures('drosophila-peptides',80);
 }
 
 sub href {

@@ -116,15 +116,15 @@ sub _init {
 	    'absolutey' => 1,
 		'zmenu' => {
 			'caption' => "Band $bandname",
-			"00:Zoom to width"  => "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?l=$chr:$band_start-$band_end",
+			"00:Zoom to width"  => "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?l=$chr:$band_start-$band_end",
                 }
         });
         foreach my $script (qw(contigview cytoview)) {
           next if $script eq $ENV{'ENSEMBL_SCRIPT'};
-          $gband->{'zmenu'}{ "01:Display in $script" } = "/$ENV{'ENSEMBL_SPECIES'}/$script?l=$chr:$band_start-$band_end";
+          $gband->{'zmenu'}{ "01:Display in $script" } = "/@{[$self->{container}{_config_file_name_}]}/$script?l=$chr:$band_start-$band_end";
         }	
-	if( $ENV{'ENSEMBL_SPECIES'} =~ /Anopheles_gambiae/i ){
-          $gband->{'zmenu'}{ "02:View band diagram" } = "/$ENV{'ENSEMBL_SPECIES'}/BACmap?chr=$chr&band=$band_no",
+	if( @{[$self->{container}{_config_file_name_}]} =~ /Anopheles_gambiae/i ){
+          $gband->{'zmenu'}{ "02:View band diagram" } = "/@{[$self->{container}{_config_file_name_}]}/BACmap?chr=$chr&band=$band_no",
         }
     	$self->push($gband);
 	$i++;

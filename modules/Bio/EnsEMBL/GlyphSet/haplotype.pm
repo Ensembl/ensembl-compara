@@ -34,7 +34,7 @@ $self->{'config'}->get($self->check(), 'col'), $self->{'config'}->get($self->che
 
 sub href {
     my ($self, $f ) = @_;
-    return "/$ENV{'ENSEMBL_SPECIES'}/haploview?haplotype=".$f->id;
+    return "/@{[$self->{container}{_config_file_name_}]}/haploview?haplotype=".$f->id;
 }
 sub zmenu {
     my ($self, $f ) = @_;

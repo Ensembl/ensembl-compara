@@ -105,9 +105,9 @@ sub _init {
                 "05:bp: $hit->[0]-$hit->[1]" => '',
                 "06:length: ".($hit->[1]-$hit->[0]+1) => '',
                 '16:Show blast alignment' =>
-				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=hit_format&id=$hit->[4]&hit=$hit->[5]",
+				    "/@{[$self->{container}{_config_file_name_}]}/blastview?format=hit_format&id=$hit->[4]&hit=$hit->[5]",
                 '17:Show on karyotype' =>
-				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=karyo_format&id=$hit->[4]"
+				    "/@{[$self->{container}{_config_file_name_}]}/blastview?format=karyo_format&id=$hit->[4]"
             },
     	});
     

@@ -62,7 +62,7 @@ sub _init {
 			'y'      => 0,
 			'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},
 			'height' => $_->{'scaledvalue'},
-			'href'   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
+			'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
 		});
 		$self->push($g_x);
 	    $g_x = new Sanger::Graphics::Glyph::Line({

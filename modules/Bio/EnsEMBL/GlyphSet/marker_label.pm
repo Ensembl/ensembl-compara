@@ -44,7 +44,7 @@ sub _init {
 		'colour'    => $label_colour,
 		'absolutey' => 1,
 		'text'	    => $fid,
-		'href'      => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
+		'href'      => "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=$fid",
 
 		});
 

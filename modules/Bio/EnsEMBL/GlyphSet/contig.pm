@@ -13,21 +13,19 @@ use Sanger::Graphics::ColourMap;
 use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
 
 sub init_label {
-    my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Sanger::Graphics::Glyph::Text({
-            'text'      => 'DNA(contigs)',
-            'font'      => 'Small',
-            'absolutey' => 1,
-            'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','contig')],
-
-            'zmenu'     => {
-            'caption'                     => 'HELP',
-            "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'contig\\')]
-            }
-
-    });
-    $self->label($label);
+  my ($self) = @_;
+  return if( defined $self->{'config'}->{'_no_label'} );
+  my $label = new Sanger::Graphics::Glyph::Text({
+    'text'      => 'DNA(contigs)',
+    'font'      => 'Small',
+    'absolutey' => 1,
+    'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','contig')],
+    'zmenu'     => {
+      'caption'                     => 'HELP',
+      '01:Track information...'     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'contig\\')]
+    }
+  });
+  $self->label($label);
 }
 
 
@@ -154,7 +152,7 @@ sub _init_assembled_contig {
         if($show_navigation) {
             $composite->{'zmenu'} = {
 		        "caption" => $_,
-		        "Export this contig" => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=contig&id=$_"
+		        "Export this contig" => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=contig&id=$_"
 		    }; 
         }
            
@@ -419,14 +417,14 @@ sub _init_non_assembled_contig {
     
         if($navigation eq 'on') {
             $glyph->{'href'} = 
-    	    "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?contig=$rid";
+    	    "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?contig=$rid";
         }
     
         if($show_navigation) {
             $glyph->{'zmenu'} = {
     		       'caption' => $rid,
     		       '02:Centre on contig' => $glyph->{'href'},
-		       "04:Export this contig" => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=contig&id=$rid"
+		       "04:Export this contig" => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=contig&id=$rid"
     		};
 	    if ($clone){
 		$glyph->{'zmenu'}{"01:Clone: $clone"};

@@ -42,7 +42,7 @@ sub _init {
 			'height' => $_->{'scaledvalue'},
 			'bordercolour' => $snps_col,
 			'absolutey' => 1,
-			'href'   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
+			'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
 		});
 	    $self->push($g_x);
 	}

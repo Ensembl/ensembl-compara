@@ -12,10 +12,7 @@ sub my_label {
 sub colours {
     my $self = shift;
     my $Config = $self->{'config'};
-    return {
-        'unknown'   => $Config->get('rprot_lite','col'),
-        'hi'   => $Config->get('rprot_lite','hi'),
-    };
+    return $Config->get('rprot_lite','colours');
 }
 
 sub transcript_type {
@@ -25,7 +22,7 @@ sub transcript_type {
 
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
-    my $colour = $colours->{'unknown'};
+    my $colour = $colours->{'_col'};
     my $highlight;
     if( exists $highlights{$gene->stable_id()} ){
         $highlight = $colours->{'hi'};

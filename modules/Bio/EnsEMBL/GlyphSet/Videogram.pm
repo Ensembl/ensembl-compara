@@ -99,7 +99,7 @@ sub _init {
 
         my $HREF;
         if($self->{'config'}->{'_band_links'}) {
-            $HREF = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&vc_start=$vc_band_start&vc_end=$vc_band_end";
+            $HREF = "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$vc_band_start&vc_end=$vc_band_end";
         }
         if ($stain eq "acen"){
             my $gband;

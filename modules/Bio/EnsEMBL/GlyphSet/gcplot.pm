@@ -17,10 +17,10 @@ sub init_label {
         'text'      => '%GC',
         'font'      => 'Small',
         'absolutey' => 1,
-        'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','gcplot')],
+        'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','gcplot')],
         'zmenu'     => {
             'caption'                     => 'HELP',
-            "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'gcplot\\')]
+            "01:Track information..."     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'gcplot\\')]
         }
     });
     $self->label($label);

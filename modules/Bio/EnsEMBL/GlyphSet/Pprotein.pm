@@ -58,7 +58,7 @@ sub _init {
                     'colour'   => $colour,
                     'zmenu' => {
                     'caption' => "Splice Information",
-                    "00:Exon: $exon_id" => "/$ENV{'ENSEMBL_SPECIES'}/exonview?exon=$exon_id&db=$db",
+                    "00:Exon: $exon_id" => "/@{[$self->{container}{_config_file_name_}]}/exonview?exon=$exon_id&db=$db",
                     "01:Start Phase: $start_phase" => "",
                     '02:End Phase: '. ($pep_splice->{$exon_offset}{'phase'} +1) => "",
                     '03:Length: '.($exon_offset - $x)  => "", },

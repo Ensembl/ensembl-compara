@@ -9,11 +9,8 @@ sub my_label { return "Human proteins"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures(
-        "human_protein", 80, $self->glob_bp
-    ),$self->{'container'}->get_all_SimilarityFeatures(
-        "human_refseq", 80, $self->glob_bp
-    );
+    return $self->{'container'}->get_all_SimilarityFeatures( "human_protein", 80),
+    $self->{'container'}->get_all_SimilarityFeatures(         "human_refseq", 80);
 }
 
 sub colour {

@@ -49,7 +49,7 @@ sub href {
     my ($self, $gene, $transcript) = @_;
     return $self->{'config'}->{'_href_only'} eq '#tid' ?
         "#".$transcript->stable_id() :
-        "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=".$gene->stable_id();
+        "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=".$gene->stable_id();
 
 }
 
@@ -68,16 +68,16 @@ sub zmenu {
         'caption'                       => $id,
         "00:Transcr:$vtid"              => "",
         "01:(Gene:".$gene->stable_id().")"  => "",
-        '03:Transcript information'     => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=".$gene->stable_id(),
-        '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=" . $transcript->translation->stable_id(),
-        '05:Supporting evidence'        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$vtid",
-        '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid",
-        '08:cDNA sequence'              => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$vtid",
+        '03:Transcript information'     => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=".$gene->stable_id(),
+        '04:Protein information'        => "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=" . $transcript->translation->stable_id(),
+        '05:Supporting evidence'        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$vtid",
+        '07:Protein sequence (FASTA)'   => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid",
+        '08:cDNA sequence'              => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$vtid",
     };
     my $DB = EnsWeb::species_defs->databases;
     if($DB->{'ENSEMBL_EXPRESSION'}) {
       $zmenu->{'06:Expression information'}
-        = "/$ENV{'ENSEMBL_SPECIES'}/sageview?alias=".$gene->stable_id();
+        = "/@{[$self->{container}{_config_file_name_}]}/sageview?alias=".$gene->stable_id();
     }
     return $zmenu;
 }

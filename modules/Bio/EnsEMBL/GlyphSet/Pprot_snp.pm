@@ -76,7 +76,7 @@ sub _init {
 					'absolutewidth' => 1,
 					'zmenu' => {
 						'caption' => "Insert Information",
-						"00:SNP ID: ".$int->{'snp_id'} => "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=".$int->{'snp_id'}."&source=".$int->{'snp_source'},
+						"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=".$int->{'snp_id'}."&source=".$int->{'snp_source'},
 						"01:Insert: ". $int->{'allele'} => "",
 						"02:Start: $x" => "",
 						'03:End: '.($x + 1)  => "",
@@ -100,7 +100,7 @@ sub _init {
 					'absolutewidth' => 1,
 					'zmenu' => {
 						'caption' => "Deletion Information",
-						"00:SNP ID: ".$int->{'snp_id'} => "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=".$int->{'snp_id'}."&source=".$int->{'snp_source'},
+						"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=".$int->{'snp_id'}."&source=".$int->{'snp_source'},
 						"01:Deletion: ". $int->{'allele'} => "",
 						"02:Start: $x" => "",
 						'03:End: '. ($x + length($int->{'allele'})) => "",
@@ -135,7 +135,7 @@ sub _init {
 		'absolutewidth' => 1,
 		'zmenu' => {
 			'caption' => "SNP Information",
-			"00:SNP ID: ".$int->{'snp_id'} => "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=".$int->{'snp_id'}."&source=".$int->{'snp_source'},
+			"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=".$int->{'snp_id'}."&source=".$int->{'snp_source'},
 			"01:SNP Type: $type"   => "",
 			"02:Residue: $x" => "",
 			"03:$snp" => "", 

@@ -14,7 +14,7 @@ sub features {
 
 sub href {
     my ($self,$f)= @_;
-    return "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?l=".$f->name;
+    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?l=".$f->name;
 }
 sub zmenu {
     my ($self, $f ) = @_;

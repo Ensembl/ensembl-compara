@@ -18,10 +18,10 @@ sub init_label {
         'text'      => 'Gene legend',
         'font'      => 'Small',
         'absolutey' => 1,
-        'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','${SPECIES_SHORT}_gene_classification','')],
+        'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','${SPECIES_SHORT}_gene_classification','')],
         'zmenu'     => {
-          'caption'                     => 'HELP',
-          "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'${SPECIES_SHORT}_gene_classification\\',\\'\\')]
+          'caption'                 => 'HELP',
+          '01:Track information...' => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'${SPECIES_SHORT}_gene_classification\\',\\'\\')]
         }
     });
     $self->label($label);

@@ -17,7 +17,7 @@ sub init_label {
     return if( defined $self->{'config'}->{'_no_label'} );
 
     my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ?
-qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] : qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
+qq[javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] : qq[javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
 
     (my $T = $URL)=~s/\'/\\\'/g;
     #####'###### 
@@ -71,12 +71,17 @@ sub _init {
     my @features;
     my ( $features, $styles ) = @{ $vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[] };
     $use_style = 0 unless $styles && @{$styles};
+    
+    warn Dumper( $styles );
+    #print STDERR "STYLE: $use_style\n";
 
     eval{
         @features = grep { $_->das_type_id() !~ /(contig|component|karyotype)/i } @{$features||[]};
     };
     my %styles = ();
-    if( $use_style ) { 
+    if( $use_style ) {
+        #print STDERR Dumper($styles);
+        
        foreach(@$styles) {
           $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
        } 
@@ -164,7 +169,8 @@ sub _init {
                 } else {
                   $colour = $feature_colour;
                 }
-            if( ( $f->das_group_type || $f->das_type_id() ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
+            warn "@{[$f->das_id]} - @{[$f->das_group_type]} - @{[$f->das_type_id]}";
+            if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
                 my $f     = shift @features;
                 my $START = $f->das_start() < 1        ? 1       : $f->das_start();
                 my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
@@ -283,33 +289,85 @@ sub _init {
                 'zmenu'        => $zmenu,
             });
             $Composite->{'href'} = $href if $href;
+                my $display_type;
                 my $style;
                 my $colour;
                 if($use_style) {
                   $style = $styles{$f->das_type_category}{$f->das_type_id} || $styles{$f->das_type_category}{'default'} || $styles{'default'}{'default'};
                   $colour = $style->{'attrs'}{'fgcolor'}||$feature_colour;
+                  $display_type = "draw_".$style->{'glyph'} || 'draw_box';
                 } else {
                   $colour = $feature_colour;
+                  $display_type = 'draw_box';
                 }
-            $Composite->push( new Sanger::Graphics::Glyph::Rect({
-                'x'          => $START-1,
-                'y'          => 0,
-                'width'      => $END-$START+1,
-                'height'     => 8,
-                'colour'     => $colour,
-                'absolutey' => 1
-            }) );
+                $display_type = 'draw_box' unless $self->can( $display_type );
+                if( $display_type eq 'draw_box') {
+                  $Composite->push( $self->$display_type( $START, $END , $colour, $self->{'pix_per_bp'} ) );
+                } else {
+                  $Composite->push(
+                     new Sanger::Graphics::Glyph::Space({
+    'x'          => $START-1,
+    'y'          => 0,
+    'width'      => $END-$START+1,
+    'height'     => 8,
+    'absolutey' => 1
+                }) );
+                }
             #$glyph->{'href'} = $href if $href;
             # DONT DISPLAY IF BUMPING AND BUMP HEIGHT TOO GREAT
             my $H =$self->feature_label( $Composite, $label, $colour, $START, $END );
 #            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*(1.4*$h+$H) * $row } = '';
             $Composite->y($Composite->y() - $tstrand*(1.4*$h+$H) * $row) if $row;
+            $self->push(  $self->$display_type( $START, $END , $colour, $self->{'pix_per_bp'}, - $tstrand*(1.4*$h+$H) * $row) ) unless $display_type eq 'draw_box';
             $self->push($Composite);
         }
     
         $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
     }   
     #warn( $self->{'extras'}->{'caption'}." $C glyphs drawn from $T ( $C1 )" );
+}
+
+sub draw_box {
+  my( $self, $START, $END, $colour, $pix_per_bp ) =@_;
+  return new Sanger::Graphics::Glyph::Rect({
+    'x'          => $START-1,
+    'y'          => 0,
+    'width'      => $END-$START+1,
+    'height'     => 8,
+    'colour'     => $colour,
+    'absolutey' => 1
+  });
+}
+
+sub draw_farrow {
+  my( $self, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
+
+  my $points;
+  if( ($END - $START+1) > 4 / $pix_per_bp ) {
+     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+8, $END - 4/$pix_per_bp, $OFFSET+8, $END, $OFFSET+4, $END - 4/$pix_per_bp, $OFFSET ];
+  } else {
+     $points = [ $START-1, $OFFSET, $START-1, $OFFSET+8, $END, $OFFSET+4 ];
+  }
+  return new Sanger::Graphics::Glyph::Poly({
+    'points' => $points,
+    'colour'     => $colour,
+    'absolutey' => 1
+  });
+}
+
+sub draw_rarrow {
+  my( $self, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
+  my $points;
+  if( ($END - $START+1) > 4 / $pix_per_bp ) {
+     $points = [ $END, $OFFSET, $END, $OFFSET+8, $START -1 + 4/$pix_per_bp, $OFFSET+8, $START - 1, $OFFSET + 4, $START - 1 + 4/$pix_per_bp, $OFFSET ];
+  } else {
+     $points = [ $END, $OFFSET, $END, $OFFSET + 8, $START-1, $OFFSET+4 ];
+  }
+  return new Sanger::Graphics::Glyph::Poly({
+    'points' => $points,
+    'colour'     => $colour,
+    'absolutey' => 1
+  });
 }
 
 sub bump{

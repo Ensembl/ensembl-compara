@@ -139,7 +139,7 @@ sub href {
 
 my ($cloneid) = split /\./ ,  $f->{'embl_clone'};
 
-    return "http://www.ensembl.org/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?clone=". $cloneid;
+    return "http://www.ensembl.org/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=". $cloneid;
 }
 
 sub colour {

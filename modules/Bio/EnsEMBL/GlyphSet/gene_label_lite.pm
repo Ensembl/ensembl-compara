@@ -197,14 +197,14 @@ sub _init {
 				"length: ".($g->{'chr_end'}-$g->{'chr_start'}+1) 	=> ''
 			}; 
             if( $g->{'ens_ID'} ne '' ) {
-    			$tglyph->{'zmenu'}->{"Gene: $g->{'ens_ID'}"} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}"; 
-                $tglyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}" ;
+    			$tglyph->{'zmenu'}->{"Gene: $g->{'ens_ID'}"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$g->{'ens_ID'}"; 
+                $tglyph->{'href'} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$g->{'ens_ID'}" ;
             }
 		}
 		
         my $depth = $Config->get('gene_label_lite', 'dep');
         if ($depth > 0){ # we bump
-            my $bump_start = int($tglyph->x() * $pix_per_bp);
+            my $bump_start = int($tglyph->{'x'} * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
     
             my $bump_end = $bump_start + int($tglyph->width()*$pix_per_bp) +1;
@@ -217,7 +217,7 @@ sub _init {
             );
     
             #next if $row > $depth;
-                $tglyph->y($tglyph->y() + (1.2 * $row * $h) + 1);
+                $tglyph->y($tglyph->{'y'} + (1.2 * $row * $h) + 1);
         }
 		
         push @gene_glyphs, $tglyph;

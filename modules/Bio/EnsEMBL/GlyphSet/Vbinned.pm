@@ -30,6 +30,7 @@ sub _init {
     my $data            = $Config->get( $track ,'data');
        $data = $data->{$chr};
     return unless $data;
+    my $label2          = $Config->get( $track, 'labels' );
     my $wid             = $Config->get( $track ,'width');
     my $max_len         =  $Config->container_width();
     my $bin_size        = $max_len/$Config->get($track,'bins');
@@ -40,6 +41,12 @@ sub _init {
       foreach(@$data) { $max_data = $_ if $_>$max_data; }
     }
     return unless $max_data;
+    $self->label2( new Sanger::Graphics::Glyph::Text({
+       'text'      => "Max: $max_data",
+       'font'      => 'Tiny',
+       'colour'	=> $Config->get( $track,'col'),
+       'absolutey' => 1,
+    }) ); # if $label2;
     my $old_y;
     $self->push( new Sanger::Graphics::Glyph::Space( {
       'x' => 1, 'width' => 3, 'height' => $wid, 'y' => 0, 'absolutey'=>1 

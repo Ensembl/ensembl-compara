@@ -13,10 +13,10 @@ sub init_label {
 		'text'      => "Start/Stop",
 		'font'      => 'Small',
 		'absolutey' => 1,
-        'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','codons')],
+        'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','codons')],
         'zmenu'     => {
             'caption'                     => 'HELP',
-            "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'codons\\')]
+            "01:Track information..."     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'codons\\')]
         }
     });
     $self->label($label);

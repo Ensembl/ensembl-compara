@@ -41,7 +41,7 @@ sub href {
     my ($self, $vt) = @_;
     return $self->{'config'}->{'_href_only'} eq '#tid' ?
         "#$vt->{'stable_id'}" :
-        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$vt->{'gene'});
+        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$vt->{'gene'});
 
 }
 

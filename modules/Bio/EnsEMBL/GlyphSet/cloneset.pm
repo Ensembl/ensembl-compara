@@ -38,7 +38,7 @@ sub image_label {
 
 sub href {
     my ($self, $f ) = @_;
-    return "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=".$f->name
+    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=".$f->name
 }
 
 sub tag {

@@ -46,7 +46,7 @@ sub unbumped_zmenu {
 
 sub unbumped_href {
     my ($self, $ref, $target ) = @_;
-    return "/$ENV{'ENSEMBL_SPECIES'}/dotterview?ref=".join(':',$ENV{'ENSEMBL_SPECIES'},@$ref).
+    return "/@{[$self->{container}{_config_file_name_}]}/dotterview?ref=".join(':',@{[$self->{container}{_config_file_name_}]},@$ref).
                         "&hom=".join(':','Rattus_norvegicus', @$target ) ;
 }
 

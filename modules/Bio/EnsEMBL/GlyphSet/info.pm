@@ -20,7 +20,7 @@ sub _init {
         'font'      => 'Tiny',
         'colour'    => 'black',
         'text'      => sprintf( "Ensembl %s    %s:%d-%d    %s",
-           $ENV{'ENSEMBL_SPECIES'}, $self->{'container'}->chr_name,
+           @{[$self->{container}{_config_file_name_}]}, $self->{'container'}->chr_name,
            $self->{'container'}->chr_start(), $self->{'container'}->chr_end,
            scalar( gmtime() )
         ),

@@ -46,7 +46,7 @@ sub href {
 
     return ($self->{'config'}->get('vega_transcript_lite','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
        "#$tid" :
-       qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=vega&gene=$gid);
+       qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega&gene=$gid);
 }
 
 sub zmenu {
@@ -61,17 +61,17 @@ sub zmenu {
     my $zmenu = {
         'caption'                       => "Vega Gene",
         "00:$id"			=> "",
-	"01:Gene:$gid"                  => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid&db=vega",
-        "02:Transcr:$tid"    	        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$tid&db=vega",                	
-        '04:Export cDNA'                => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
+	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=vega",
+        "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=vega",                	
+        '04:Export cDNA'                => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
         "06:Sanger curated ($type)"     => '',
     };
     
     if($pid) {
     $zmenu->{"03:Peptide:$pid"}=
-    	qq(/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=$pid&db=vega);
+    	qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid&db=vega);
     $zmenu->{'05:Export Peptide'}=
-    	qq(/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
+    	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
     }
     
     return $zmenu;

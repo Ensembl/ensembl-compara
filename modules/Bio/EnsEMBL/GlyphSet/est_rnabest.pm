@@ -1,15 +1,15 @@
-package Bio::EnsEMBL::GlyphSet::est;
+package Bio::EnsEMBL::GlyphSet::est_rnabest;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "ESTs"; }
+sub my_label { return "ESTs (RNA best)"; }
 
 sub features {
     my ($self) = @_;
 
-    return $self->{'container'}->get_all_DnaAlignFeatures(undef, 0, 'est' );
+    return $self->{'container'}->get_all_DnaAlignFeatures('RNA_BEST', 80 );
 }
 
 sub colour {

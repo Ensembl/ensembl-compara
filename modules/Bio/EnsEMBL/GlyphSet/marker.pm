@@ -21,7 +21,7 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    return "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=".
+    return "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=".
       $f->marker->display_MarkerSynonym->name;
 }
 sub zmenu {

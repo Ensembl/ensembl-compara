@@ -123,7 +123,7 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    return "http://vega.sanger.ac.uk/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$f->{'embl_clone'}
+    return "http://vega.sanger.ac.uk/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$f->{'embl_clone'}
 }
 
 sub colour {
