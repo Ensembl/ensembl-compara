@@ -1,4 +1,5 @@
 package Bio::EnsEMBL::GlyphSet::primer_reverse;
+
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
@@ -13,31 +14,21 @@ sub features {
 my ($self) = @_;
 my $temp_file = $self->{'config'}->{'temp_file'};
 my (@primer_all, @line, %remove_duplicates, $key);
-open (EPRIMER_RESULTS4GRAPH, "<$temp_file") or die "Cannot open EPRIMER_RESULTS4GRAPH file for reading:  $!";
- while (<EPRIMER_RESULTS4GRAPH>) {
-my @primer;
- chomp;
- s/^\s+//; # remove leading spaces
- @line = split /\s+/, $_; # split string on space and create array
-
-
-
- if (/REVERSE PRIMER/) { 
- @primer = @line[2..6];
-push @primer, $self->{'config'}->{'startbp'};
-
-
-$key = join('',@line[2..6]) ;
-
-
- if (!(exists($remove_duplicates{$key}))) {
-$remove_duplicates{$key}++;
-push @primer_all, \@primer;
-} 
-
-
-
- }
+open (EPRIMER_RESULTS4GRAPH, "<$temp_file") or return undef;
+while (<EPRIMER_RESULTS4GRAPH>) {
+	my @primer;
+ 	chomp;
+ 	s/^\s+//; # remove leading spaces
+ 	@line = split /\s+/, $_; # split string on space and create array
+	if (/REVERSE PRIMER/) { 
+ 		@primer = @line[2..6];
+		push @primer, $self->{'config'}->{'startbp'};
+		$key = join('',@line[2..6]) ;
+		if (!(exists($remove_duplicates{$key}))) {
+			$remove_duplicates{$key}++;
+			push @primer_all, \@primer;
+		} 
+	}
 }
 
 close (EPRIMER_RESULTS4GRAPH);
@@ -45,15 +36,9 @@ return \@primer_all;
 
 }
 
-
-
-
-
-
 ##################################################
 ####### copied from GlyphSet_simple.pm ###########
 #### will override _init sub in GlyphSet_simple.pm
-
 
 sub _init {
     my ($self) = @_;
@@ -98,94 +83,58 @@ sub _init {
 ## Set up bumping bitmap    
     my @bitmap         = undef;
 
-
-
-## Get information about bp/pixels  
+# Get information about bp/pixels  
   
     my $pix_per_bp     =   $Config->transform()->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
     my $dep = $Config->get($type, 'dep');
-
     my $flag   = 1;
     my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
     my $previous_end;
     my ($T,$C,$C1) = 0;
     my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
-
-
- my $features = $self->features; 
+	my $features = $self->features; 
+    if(!defined($features)) {
+      $self->errorTrack("Could not open results file");
+      return;
+    }
     my @eprimer_glyphs = ();
 
     foreach my $f ( @{$features} ) {
-
       my @eprimer = @{$f};
-
       my $start = ($eprimer[0]);
-
-      
-
       next if $start > $vc_length; ## Skip if totally outside VC
       my $end = $start + 12;
-      
       next if $end < 1;            ## Skip if totally outside VC
       $end   = $vc_length if $end > $vc_length;
       $T++;
       $C ++;
       $previous_end = $end;
       $flag = 0;
-     
-     
 
+	 my $img_end =  $end;
+	 my $img_start =  $end - 6/$pix_per_bp;  
+	 my $row = 0;
+     if ($dep > 0){ # we bump
+		my $img_s = int($img_start * $pix_per_bp);
+			$img_s = 0 if $img_s < 0;
+		my $img_e   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
+			$img_e   = $bitmap_length if $img_e > $bitmap_length;
 
- my $img_end =  $end;
-
- my $img_start =  $end - 6/$pix_per_bp;
-     
- my $row = 0;
-
-
-       if ($dep > 0){ # we bump
-
-	my $img_s = int($img_start * $pix_per_bp);
-	$img_s = 0 if $img_s < 0;
-	my  $img_e   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
-	$img_e   = $bitmap_length if $img_e > $bitmap_length;
-	 
-      
-	 
-	 
-	 
-	 $row = &Sanger::Graphics::Bump::bump_row(
-						  $img_s,    $img_e,    $bitmap_length,    \@bitmap
-						 );
-	 next if $row > $dep;
-      }
-      
-      
-     
-      my $poly;
-     
-     
-	
-	$poly = new Sanger::Graphics::Glyph::Poly({
+		$row = &Sanger::Graphics::Bump::bump_row( $img_s, $img_e, $bitmap_length, \@bitmap);
+	 	next if $row > $dep;
+     }
+     my $poly;
+		$poly = new Sanger::Graphics::Glyph::Poly({
 						   'points'    => [$img_start, 4 + ($row * $h),
-								   $img_end, 0 + ($row * $h),
-								   $img_end , 8 + ($row * $h)],
-						
+										   $img_end, 0 + ($row * $h),
+										   $img_end , 8 + ($row * $h)],
 						   'colour'  => 'orange',
 						  });
- 
+  
+    push @eprimer_glyphs, $poly;  
 
-
-
-
-
-    
-      push @eprimer_glyphs, $poly;  
-
-
-
-my $space = new Sanger::Graphics::Glyph::Space({
+	my $space = new Sanger::Graphics::Glyph::Space({
                 'x'          => $img_start-1,
                 'y'          => ($row * $h),
                 'width'      => 8/$pix_per_bp,
@@ -196,44 +145,13 @@ my $space = new Sanger::Graphics::Glyph::Space({
             });
 
 
-$space->{'zmenu'} =  $self->zmenu($f) ;
-push @eprimer_glyphs, $space;
+	$space->{'zmenu'} =  $self->zmenu($f) ;
+	push @eprimer_glyphs, $space;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    }
-    
-    
-    
-    
+    }   
     foreach( @eprimer_glyphs) {   $self->push($_); }
-    
-    
-  }
-
-
-
-
-
-
-
-
-
+   
+}
 
 sub zmenu {
     my ($self, $f) = @_;
@@ -250,21 +168,7 @@ sub zmenu {
 	"06:Search for forward primers" => $jsfunction	 
    );   
     
-    return \%zmenu;
+   return \%zmenu;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 1;

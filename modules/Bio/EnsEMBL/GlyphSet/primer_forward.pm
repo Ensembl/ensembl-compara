@@ -1,4 +1,5 @@
 package Bio::EnsEMBL::GlyphSet::primer_forward;
+
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
@@ -13,48 +14,34 @@ sub features {
 my ($self) = @_;
 my $temp_file = $self->{'config'}->{'temp_file'};
 my (@primer_all, @line, %remove_duplicates, $key);
-open (EPRIMER_RESULTS4GRAPH, "<$temp_file") or die "Cannot open EPRIMER_RESULTS4GRAPH file for reading:  $!";
+open (EPRIMER_RESULTS4GRAPH, "<$temp_file") or return undef;
  while (<EPRIMER_RESULTS4GRAPH>) {
-my @primer;
- chomp;
- s/^\s+//; # remove leading spaces
- @line = split /\s+/, $_; # split string on space and create array
-
- if (/FORWARD PRIMER/) {
- @primer = @line[2..6];
-  
-push @primer, $self->{'config'}->{'startbp'};
-$key = join('',@line[2..6]) ;
-
- if (!(exists($remove_duplicates{$key}))) {
-$remove_duplicates{$key}++;
-push @primer_all, \@primer;
-} 
-
- }
-
-}
-
+		my @primer;
+		chomp;
+ 		s/^\s+//; # remove leading spaces
+ 		@line = split /\s+/, $_; # split string on space and create array
+		if (/FORWARD PRIMER/) {
+ 			@primer = @line[2..6];
+			push @primer, $self->{'config'}->{'startbp'};
+			$key = join('',@line[2..6]) ;
+			if (!(exists($remove_duplicates{$key}))) {
+				$remove_duplicates{$key}++;
+				push @primer_all, \@primer;
+			} 
+ 		}
+	}
 close (EPRIMER_RESULTS4GRAPH);
 return \@primer_all;
-
 }
-
-
-
-
-
 
 ##################################################
 ####### copied from GlyphSet_simple.pm ###########
 #### will override _init sub in GlyphSet_simple.pm
 
-
 sub _init {
     my ($self) = @_;
     my $type = $self->check();
-    return unless defined $type;      
-  
+    return unless defined $type;        
 
  my $VirtualContig   = $self->{'container'};
  my $Config          = $self->{'config'};
@@ -74,16 +61,14 @@ sub _init {
     my $navigation     = $Config->get( $type, 'navigation' ) || 'on';
     my $max_length_nav = $Config->get( $type, 'navigation_threshold' ) || 15000000;
 
-
 ## VC to long to display featues dump an error message
     if( $vc_length > $max_length *1010 ) {
         $self->errorTrack( $self->my_label." only displayed for less than $max_length Kb.");
-        return; }
-
+        return; 
+	}
 
 ## Decide whether we are going to include navigation (independent of switch) 
-    $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1010);
-    
+    $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1010);    
     my $h = 12;
 
 ## Get highlights...
@@ -93,10 +78,7 @@ sub _init {
 ## Set up bumping bitmap    
     my @bitmap         = undef;
 
-
-
-## Get information about bp/pixels  
-  
+## Get information about bp/pixels    
     my $pix_per_bp     =   $Config->transform()->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
     my $dep = $Config->get($type, 'dep');
@@ -107,98 +89,67 @@ sub _init {
     my ($T,$C,$C1) = 0;
     my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
 
-
- my $features = $self->features; 
+ 	my $features = $self->features; 
+    if(!defined($features)) {
+      $self->errorTrack("Could not open results file");
+      return;
+    }
     my @eprimer_glyphs = ();
 
     foreach my $f ( @{$features} ) {
+    	my @eprimer = @{$f};
+		my $start = ($eprimer[0]);
+		next if $start > $vc_length; ## Skip if totally outside VC
+      	my $end = $start + 12;
+      	next if $end < 1;            ## Skip if totally outside VC
+      	$end   = $vc_length if $end > $vc_length;
+      	$T++;
+      	$C ++;
+      	$previous_end = $end;
+      	$flag = 0;
 
-      my @eprimer = @{$f};
-
-      my $start = ($eprimer[0]);
-
-      
-
-      next if $start > $vc_length; ## Skip if totally outside VC
-      my $end = $start + 12;
-      
-      next if $end < 1;            ## Skip if totally outside VC
-      $end   = $vc_length if $end > $vc_length;
-      $T++;
-      $C ++;
-      $previous_end = $end;
-      $flag = 0;
-     
-     
-
-
- my $img_end =  $end;
-
- my $img_start =  $end - 6/$pix_per_bp;
-     
- my $row = 0;
-
-
-       if ($dep > 0){ # we bump
-
-	my $img_s = int($img_start * $pix_per_bp);
-	$img_s = 0 if $img_s < 0;
-	my  $img_e   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
-	$img_e   = $bitmap_length if $img_e > $bitmap_length;	 
-	 $row = &Sanger::Graphics::Bump::bump_row(
-						  $img_s,    $img_e,    $bitmap_length,    \@bitmap
-						 );
-	 next if $row > $dep;   }
+ 		my $img_end =  $end;
+		my $img_start =  $end - 6/$pix_per_bp;     
+		my $row = 0;
+        if ($dep > 0){ # we bump
+			my $img_s = int($img_start * $pix_per_bp);
+			$img_s = 0 if $img_s < 0;
+			my  $img_e   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
+			$img_e   = $bitmap_length if $img_e > $bitmap_length;	 
+	 		$row = &Sanger::Graphics::Bump::bump_row($img_s,    $img_e,    $bitmap_length,    \@bitmap );
+	 	next if $row > $dep;   }
       
      # my $primer_type = $eprimer[4]; 
       my $poly;
      # if ($primer_type eq 'forward') {
-	$poly = new Sanger::Graphics::Glyph::Poly({
+	 $poly = new Sanger::Graphics::Glyph::Poly({
 						   'points'    => [$img_start, 0 +($row * $h),
-								   $img_start, 8 +($row * $h),
-								   $img_end, 4 + ($row * $h)],
-						 
-						   'colour'  => 'red', 
- });
+								  		 $img_start, 8 +($row * $h),
+								  		 $img_end, 4 + ($row * $h)],
+						   'colour'  => 'red', });
    
+	 push @eprimer_glyphs, $poly;  
 
- push @eprimer_glyphs, $poly;  
-
-
- my $space = new Sanger::Graphics::Glyph::Space({
+ 	 my $space = new Sanger::Graphics::Glyph::Space({
                 'x'          => $img_start-1,
                 'y'          => ($row * $h),
                 'width'      => 8/$pix_per_bp,
                 'height'     => 8,
                 "colour"     => 'transparent',
-                'absolutey'  => 1
-						
+                'absolutey'  => 1			
             });
 
-
-$space->{'zmenu'} =  $self->zmenu($f) ;
-push @eprimer_glyphs, $space;
- }
+	$space->{'zmenu'} =  $self->zmenu($f) ;
+	push @eprimer_glyphs, $space;
+ 	}
     
-    foreach( @eprimer_glyphs) {   
-$self->push($_); 
-}
-    
-    
-  }
-
-
-
-
-
+    foreach( @eprimer_glyphs) {  $self->push($_);} 
+   }
 
 sub zmenu {
     my ($self, $f) = @_;
-    
     my @eprimer = @{$f};
-
-my $jsfunction = qq(javascript:pop_input(\\'$eprimer[4]\\', \\'forward\\'));
-
+	my $jsfunction = qq(javascript:pop_input(\\'$eprimer[4]\\', \\'forward\\'));
     my %zmenu = ( 
         'caption'  => "Forward primer: ",
         '01:Position: ' . ($eprimer[0] + $eprimer[5]) => '',
@@ -206,28 +157,10 @@ my $jsfunction = qq(javascript:pop_input(\\'$eprimer[4]\\', \\'forward\\'));
         "03:Annealing Temperature: " . $eprimer[2] => '',
         "04:%GC: " . $eprimer[3] => '',
         "05:Sequence: " . $eprimer[4] => '',  
-"06:Search for reverse primers " => $jsfunction
- 
-   );   
+		"06:Search for reverse primers " => $jsfunction
+ 	);   
     
     return \%zmenu;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 1;
