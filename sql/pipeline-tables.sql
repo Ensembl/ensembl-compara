@@ -93,14 +93,14 @@ CREATE TABLE genome_db_stats (
 --   sequence_id      - optional use (store chunk sequence in DB)
                        
 CREATE TABLE dnafrag_chunk (
-  dnafrag_chunk_id    int(10) NOT NULL DEFAULT '0',
+  dnafrag_chunk_id    int(10) NOT NULL auto_increment,
   dnafrag_id          int(10) NOT NULL DEFAULT '0',
-  stable_id           varchar(40) NOT NULL,
   seq_start           int(10) unsigned NOT NULL DEFAULT '0',
   seq_end             int(10) unsigned NOT NULL DEFAULT '0',
+  sequence_id         int(10) NOT NULL DEFAULT '0',
 
   PRIMARY KEY (dnafrag_chunk_id),
-  UNIQUE      (stable_id)
+  KEY (sequence_id)
 );
 
 CREATE TABLE subset_dnafrag_chunk (
