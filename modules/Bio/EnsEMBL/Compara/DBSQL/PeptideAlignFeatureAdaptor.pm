@@ -382,7 +382,7 @@ sub fetch_by_dbIDs{
 
   my $id_string = join(",", @ids);
   my $constraint = "paf.peptide_align_feature_id in ($id_string)";
-  printf("fetch_by_dbIDs has contraint\n$constraint\n");
+  #printf("fetch_by_dbIDs has contraint\n$constraint\n");
 
   #return first element of _generic_fetch list
   return $self->_generic_fetch($constraint);
@@ -511,6 +511,66 @@ sub fetch_all {
 
   return $self->_generic_fetch();
 }
+
+
+=head2 fetch_best_web_for_member_genome_db
+  Arg [1]    : member_id of query peptide member
+  Arg [2]    : genome_db_id of hit species
+  Description: Returns all the 'best' PeptideAlignFeatures starting with qmember_id
+               hitting onto the hit_genome_db_id via recursive search
+  Returntype : array of Bio::EnsEMBL::Compara::PeptideAlignFeature objects by reference
+               or undef if nothing found
+  Exceptions : none
+  Caller     : general
+=cut
+sub fetch_best_web_for_member_genome_db
+{
+  # recursive search to find web of 'best' hits starting with a given
+  # qmember_id and hit_genome_db_id
+  my $self               = shift;
+  my $qmember_id         = shift;
+  my $hit_genome_db_id   = shift;
+
+  my $tested_member_ids  = {};
+  my $found_paf_ids      = {};
+
+  $self->_recursive_find_best_pafs_for_member_genome_db(
+             $qmember_id,
+             $hit_genome_db_id,
+             $tested_member_ids,
+             $found_paf_ids);
+
+  return $self->fetch_by_dbIDs(keys %$found_paf_ids);
+}
+
+sub _recursive_find_best_pafs_for_member_genome_db
+{
+  # recursive search to find web of 'best' hits starting with a given
+  # member_id and genome_db_ids
+  my $self               = shift;
+  my $qmember_id         = shift;
+  my $hit_genome_db_id   = shift;
+  my $tested_member_ids  = shift;  #ref to hash
+  my $found_paf_ids      = shift;  #ref to hash
+
+  return unless($qmember_id and $hit_genome_db_id);
+  return if($tested_member_ids->{$qmember_id}); #already tested this member
+
+  $tested_member_ids->{$qmember_id} = 1;
+
+  my $sql = "SELECT peptide_align_feature_id, hmember_id, qgenome_db_id ".
+            "FROM peptide_align_feature ".
+            "WHERE qmember_id=? and hgenome_db_id=? and hit_rank=1";
+  my $sth = $self->prepare($sql);
+  $sth->execute($qmember_id, $hit_genome_db_id);
+  while (my ($pafID, $hmember_id, $qgenome_db_id) = $sth->fetchrow_array()) {
+    #printf("found pafID $pafID in recursive search\n");
+    $found_paf_ids->{$pafID} = 1;
+    $self->_recursive_find_best_pafs_for_member_genome_db($hmember_id, $qgenome_db_id, $tested_member_ids, $found_paf_ids);
+  }
+  $sth->finish;
+}
+
 
 =head2 _generic_fetch
 
