@@ -8,6 +8,16 @@ use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
 my ($desc_file,$fasta_file) = @ARGV;
 
+my $host;
+my $dbname;
+my $dbuser;
+my $dbpass;
+
+GetOptions('host=s' => \$host,
+	   'dbname=s' => \$dbname,
+	   'dbuser=s' => \$dbuser,
+	   'dbpass=s' => \$dbpass);
+
 my %seqinfo;
 
 if ($desc_file =~ /\.gz/) {
@@ -40,10 +50,10 @@ EXIT 2\n";
 close DESC
   || die "$desc_file: $!";
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => 'ecs2e.internal.sanger.ac.uk',
-                                                     -user   => 'ensadmin',
-                                                     -pass   => 'ensembl',
-                                                     -dbname => 'ensembl_compara_20_1b');
+my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                     -user   => $dbuser,
+                                                     -pass   => $dbpass,
+                                                     -dbname => $dbname);
 
 my $MemberAdaptor = $db->get_MemberAdaptor;
 
@@ -60,22 +70,24 @@ while (<$FH>) {
       my $source = uc($seqinfo{$member_stable_id}{'type'});
       if ($source eq "ENSEMBLPEP") {
         print STDERR "$member_stable_id sequence skipped\n";
+        $member_stable_id = $new_id;
+        undef $member_seq;
         next;
       }
       my $member = $MemberAdaptor->fetch_by_source_stable_id($source, $member_stable_id);
       unless (defined $member) {
         print STDERR "$source, $member_stable_id not in db\n";
         $member_stable_id = $new_id;
+        undef $member_seq;
         next;
       }
       print STDERR "$source, $member_stable_id";
       $member->sequence($member_seq);
       $MemberAdaptor->update_sequence($member);
       print STDERR " loaded\n";
-      undef $member_stable_id;
-      undef $member_seq;
     }
     $member_stable_id = $new_id;
+    undef $member_seq;
   } elsif (/^[a-zA-Z\*]+$/) { ####### add * for protein with stop in it!!!!
     chomp;
     $member_seq .= $_;
