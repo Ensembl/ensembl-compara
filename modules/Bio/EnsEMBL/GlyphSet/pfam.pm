@@ -41,89 +41,92 @@ sub _init {
    
     foreach my $feat ($protein->each_Protein_feature()) {
        if ($feat->feature2->seqname =~ /^PF\w+/) {
-	   		push(@{$hash{$feat->feature2->seqname}},$feat);
+	   push(@{$hash{$feat->feature2->seqname}},$feat);
        }
     }
     
-	my $font = "Small";
+    my $font = "Small";
     foreach my $key (keys %hash) {
-		my @row = @{$hash{$key}};
-		my $desc = $row[0]->idesc();
+	my @row = @{$hash{$key}};
+	my $desc = $row[0]->idesc();
 		
-		my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    	'zmenu' => {
-				'caption'  	=> "Pfam domain",
-				$key 		=> "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?$key"
-	    	},
-		});
-		my $colour = $Config->get($Config->script(), 'pfam','col');
-        #$Composite->bordercolour($colour); 
+	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+	    'x' => $row[0]->feature1->start(),
+	    'y' => $y,
+	    'zmenu' => {
+		'caption'  	=> "Pfam domain",
+		$key 		=> "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?$key"
+	    },
+	});
+	my $colour = $Config->get($Config->script(), 'pfam','col');
 
-		my $pfsave;
-		my $minx = 100000000;
-		my $maxx = 0;
+	my $pfsave;
+	my ($minx, $maxx);
 		
-		foreach my $pf (@row) {
-	    	my $x = $pf->feature1->start();
-			$minx = $x if ($x < $minx);
-	    	my $w = $pf->feature1->end() - $x;
-			$maxx = $pf->feature1->end() if ($pf->feature1->end() > $maxx);
-	    	my $id = $pf->feature2->seqname();
+	foreach my $pf (@row) {
+	    my $x  = $pf->feature1->start();
+	    $minx  = $x if ($x < $minx || !defined($minx));
+	    my $w  = $pf->feature1->end() - $x;
+	    $maxx  = $pf->feature1->end() if ($pf->feature1->end() > $maxx || !defined($maxx));
+	    my $id = $pf->feature2->seqname();
 
-	    	my $rect = new Bio::EnsEMBL::Glyph::Rect({
-			'x'        => $x,
-			'y'        => $y,
-			'width'    => $w,
-			'height'   => $h,
-			'colour'   => $colour,
-	    	});
-	    	$Composite->push($rect);
-	    	$pfsave = $pf;
-		}
-
-		#########
-		# add a domain linker
-		#
 	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		'x'        => $minx,
-		'y'        => $y + 2,
-		'width'    => $maxx - $minx,
-		'height'   => 0,
+		'x'        => $x,
+		'y'        => $y,
+		'width'    => $w,
+		'height'   => $h,
 		'colour'   => $colour,
-		'absolutey' => 1,
 	    });
 	    $Composite->push($rect);
+	    $pfsave = $pf;
+	}
 
-		my $fontheight = $Config->texthelper->height($font);
-		my $text = new Bio::EnsEMBL::Glyph::Text({
-	    	'font'   => $font,
-	    	'text'   => $pfsave->idesc,
-	    	'x'      => $row[0]->feature1->start(),
-	    	'y'      => $h + 1,
-	    	'height' => $fontheight,
-	    	'colour' => $black,
-		});
-		$Composite->push($text);
+	#########
+	# add a domain linker
+	#
+	my $rect = new Bio::EnsEMBL::Glyph::Rect({
+	    'x'        => $minx,
+	    'y'        => $y + 2,
+	    'width'    => $maxx - $minx,
+	    'height'   => 0,
+	    'colour'   => $colour,
+	    'absolutey' => 1,
+	});
+	$Composite->push($rect);
 
-		if ($Config->get($Config->script(), 'pfam', 'dep') > 0){ # we bump
+	my $fontheight = $Config->texthelper->height($font);
+	my $fontwidth  = $Config->texthelper->width($font);
+	my $desc = $pfsave->idesc();
+
+	my $text = new Bio::EnsEMBL::Glyph::Text({
+	    'font'   => $font,
+	    'text'   => $desc,
+	    'x'      => $row[0]->feature1->start(),
+	    'y'      => $h + 1,
+	    'height' => $fontheight,
+	    'width'  => $fontwidth * length($desc) * 1.1,
+	    'colour' => $black,
+	});
+	$Composite->push($text);
+	
+	if ($Config->get($Config->script(), 'pfam', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
-
+	    
             my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
             my $row = &Bump::bump_row(      
-                          $bump_start,
-                          $bump_end,
-                          $bitmap_length,
-                          \@bitmap
-            );
+				      $bump_start,
+				      $bump_end,
+				      $bitmap_length,
+				      \@bitmap
+				      );
             $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
         }
-		
-
-		$this->push($Composite);
+	
+	$this->push($Composite);
     }
-    
+
 }
 
 1;
