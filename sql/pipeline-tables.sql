@@ -102,3 +102,10 @@ CREATE TABLE subset_dnafrag_chunk (
  UNIQUE(subset_id, dnafrag_chunk_id)
 );
 
+CREATE TABLE genomic_align_block_job_track (
+  genomic_align_block_id  bigint unsigned NOT NULL,
+  analysis_job_id         int NOT NULL,
+
+  UNIQUE(genomic_align_block_id, analysis_job_id)
+);
+
