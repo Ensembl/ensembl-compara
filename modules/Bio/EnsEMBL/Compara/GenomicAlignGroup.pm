@@ -30,7 +30,7 @@ GET VALUES
   my $dbID = $genomic_align_group->dbID();
   my $genomic_aligns = $genomic_align_group->genomic_align_array();
 
-=head1 DESCRIPTION
+=head1 OBJECT ATTRIBUTES
 
 =over
 
@@ -41,6 +41,10 @@ corresponds to genomic_align_group.group_id
 =item adaptor
 
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor object to access DB
+
+=item type
+
+corresponds to genomic_align_group.type
 
 =item genomic_align_array
 
@@ -71,6 +75,7 @@ use strict;
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Scalar::Util qw(weaken);
 
 
 =head2 new (CONSTRUCTOR)
@@ -187,6 +192,13 @@ sub type {
 
   if (defined($type)) {
     $self->{'type'} = $type;
+
+  } elsif (!defined($self->{'type'})) {
+    # Tries to get the data from other sources
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlignGroup object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
 
   return $self->{'type'};
@@ -207,16 +219,43 @@ sub type {
 
 sub genomic_align_array {
   my ($self, $genomic_align_array) = @_;
+  my $genomic_align_adaptor;
  
   if (defined($genomic_align_array)) {
     foreach my $genomic_align (@$genomic_align_array) {
       throw("$genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object")
           unless ($genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+      weaken($self->{'genomic_align_array'}->{$genomic_align->dbID} = $genomic_align);
+      if (!defined($genomic_align_adaptor)) {
+        if (defined($genomic_align->adaptor)) {
+          $genomic_align_adaptor = $genomic_align->adaptor;
+        } elsif (defined($self->adaptor)) {
+          $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
+        }
+      }
     }
-    $self->{'genomic_align_array'} = $genomic_align_array;
+    $self->{'genomic_align_array'}->{'genomic_align_adaptor'} = $genomic_align_adaptor;
+
+  } elsif (!defined($self->{'genomic_align_array'})) {
+    # Try to get genomic_align_array from other sources
+    if (defined($self->{'adaptor'}) and defined($self->{'dbID'})) {
+      
+    }
   }
-  
-  return $self->{'genomic_align_array'};
+
+  $genomic_align_array = ();
+  $genomic_align_adaptor = $self->{'genomic_align_array'}->{'genomic_align_adaptor'};
+  if (defined($genomic_align_adaptor)) {
+    while (my ($dbID, $genomic_align) = each %{$self->{'genomic_align_array'}}) {
+      next if ($dbID !~ /^\d+$/);
+      if (!defined($genomic_align)) {
+        # Weak reference has died
+        weaken($self->{'genomic_align_array'}->{$dbID} = $genomic_align_adaptor->fetch_by_dbID($dbID));
+      }
+      push(@$genomic_align_array, $genomic_align_adaptor->fetch_by_dbID($dbID));
+    }
+  }
+  return $genomic_align_array;
 }
 
 1;
