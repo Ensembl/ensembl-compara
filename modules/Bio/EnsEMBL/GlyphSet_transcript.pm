@@ -125,7 +125,6 @@ sub _init {
             my $coding_start = $transcript->coding_start() || $transcript->start();
             my $coding_end   = $transcript->coding_end()   || $transcript->end();
 
-            #warn( "TS: ".$transcript->start." TE: ".$transcript->end." CS: ".$transcript->coding_start." CE: ".$transcript->coding_end );
             for(my $i = 0; $i < @exons; $i++) {
 	         my $exon = @exons[$i];
 	         next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 
@@ -160,7 +159,6 @@ sub _init {
 	    # Calculate and draw the coding region of the exon
 	             my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
 	             my $filled_end   = $box_end > $coding_end  ? $coding_end   : $box_end;
-                    # warn( "BS: $box_start BE: $box_end FS: $filled_start FE: $filled_end ") ;
 	    # only draw the coding region if there is such a region
 	             if( $filled_start <= $filled_end ) {
 	    #Draw a filled rectangle in the coding region of the exon

@@ -37,6 +37,7 @@ sub colour {
 }
 sub href {
     my( $self,$f) = @_;
+    return undef;
     foreach(@{$self->{'mapfrags'}}) {
         return sprintf(
             'http://wwwdev.sanger.ac.uk/cgi-bin/tracefetch/viewtrace?species=%s&contig=%s&focus=%s&bori=%s&cori=%s',
