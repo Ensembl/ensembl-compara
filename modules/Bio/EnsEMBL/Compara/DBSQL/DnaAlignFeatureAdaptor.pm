@@ -242,8 +242,8 @@ sub fetch_all_by_Slice {
     }
   } else {
     foreach my $f (@$features) {
-      my $start  = $slice_end - $f->start + 1;
-      my $end    = $slice_end - $f->end   + 1;
+      my $start  = $slice_end - $f->end   + 1;
+      my $end    = $slice_end - $f->start + 1;
       my $strand = $f->strand * -1;
       $f->start($start);
       $f->end($end);
