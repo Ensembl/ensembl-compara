@@ -398,8 +398,15 @@ sub load_children_if_needed {
 sub distance_to_parent {
   my $self = shift;
   $self->{'_distance_to_parent'} = shift if(@_);
-  $self->{'_distance_to_parent'} = 1 unless(defined($self->{'_distance_to_parent'}));
+  $self->{'_distance_to_parent'} = 0.0 unless(defined($self->{'_distance_to_parent'}));
   return $self->{'_distance_to_parent'};
+}
+
+sub distance_to_root {
+  my $self = shift;
+  my $dist = $self->distance_to_parent;
+  $dist += $self->parent->distance_to_root if($self->parent);
+  return $dist;
 }
 
 sub left_index {
@@ -430,7 +437,9 @@ sub print_tree {
     chop($indent);
     $indent .= " ";
   }
+  for(my $i=0; $i<$self->distance_to_parent()*30; $i++) { $indent .= ' '; }
   $indent .= "   |";
+
 
   my $children = $self->children;
   my $count=0;
@@ -448,7 +457,13 @@ sub print_node {
   my $indent = shift;
 
   $indent = '' unless(defined($indent));
-  printf("%s-%s(%s)NS\n", $indent, $self->name, $self->node_id);
+  print($indent);
+  #if($self->parent) {
+  #  for(my $i=0; $i<$self->parent->distance_to_root()*30; $i++) { print(' '); }
+  #}
+  for(my $i=0; $i<$self->distance_to_parent()*30; $i++) { print('-'); }
+  printf("(%s)", $self->node_id);
+  printf("NS:%s\n", $self->name);
 }
 
 
