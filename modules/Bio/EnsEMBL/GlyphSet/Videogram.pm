@@ -206,8 +206,7 @@ sub _init {
       my $direction = $end ? -1 : 1;
       foreach my $I ( 0..$#lines ) {
         my ( $bg_x, $black_x ) = @{$lines[$I]};
-        my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx;
-        print STDERR "VO: $v_offset\nCL: $chr_length\nBPP: $bpperpx\tXX: $xx\n";
+        my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx +(1-$end)*10;
         push @decorations, new Bio::EnsEMBL::Glyph::Line({
             'x'      => $xx,
             'y'      => $h_offset,
@@ -251,16 +250,25 @@ sub _init {
   if($self->{'highlights'}->{$chr}) {
 	my $high_flag = 'l';
 	
-	foreach( sort { $a->{'start'} <=> $b->{'start'} } @{$self->{'highlights'}->{$chr}} ) {
+	my @highlights = @{$self->{'highlights'}->{$chr}};
+        my @starts = map { $_->{'type'} eq 'arrow' ? $_->{'start'} : () } @highlights;
+	my @sorting_keys = sort { $starts[$a] <=> $starts[$b] } 0..$#starts;
+	print STDERR join ' -- ',@sorting_keys; print STDERR "\n"; 
+	print STDERR join ' -- ',map {$starts[$_]} @sorting_keys; print STDERR "\n"; 
+        my @flags = ();
+        my $flag = 'l';
+	foreach( @sorting_keys) { $flags[$_] = $flag = $flag eq 'l' ? 'r' : 'l'; }
+	foreach( @highlights ) { 
 		my $start     = $v_offset + $_->{'start'};
 		my $end       = $v_offset + $_->{'end'};
 		my $type;
 		if( $_->{'type'} eq 'arrow' ) {
+			$high_flag = shift @flags;
 			$type      = "highlight_$high_flag".'harrow';
-			$high_flag = $high_flag eq 'r' ? 'l' : 'r';
 		} else {
 			$type      = "highlight_$_->{'type'}";
 		}
+		print STDERR "XX: $type\n";
 		my $zmenu     = $_->{'zmenu'};
 		my $col		  = $_->{'col'};
     	########## dynamic require of the right type of renderer
