@@ -750,12 +750,16 @@ sub dnafrag_strand {
 
 =head2 aligned_sequence
 
-  Arg [1]    : string $aligned_sequence
-  Arg[2...]  : array of string @flags
+  Arg [1...] : string $aligned_sequence or string @flags
   Example    : $aligned_sequence = $genomic_align->aligned_sequence
+  Example    : $aligned_sequence = $genomic_align->aligned_sequence("+FIX_SEQ");
   Example    : $genomic_align->aligned_sequence("ACTAGTTAGCT---TATCT--TTAAA")
   Description: With no arguments, rebuilds the alignment string for this sequence
                using the cigar_line information and the original sequence if needed.
+  Flags      : +FIX_SEQ
+                   With this flag, the method will return a sequence that could be
+                   directly aligned with the original_sequence of the reference
+                   genomic_align.
   Returntype : string $aligned_sequence
   Exceptions : thrown if sequence contains unknown symbols
   Warning    : warns if getting data from other sources fails.
@@ -764,14 +768,20 @@ sub dnafrag_strand {
 =cut
 
 sub aligned_sequence {
-  my ($self, $aligned_sequence, @flags) = @_;
+  my ($self, @aligned_sequence_or_flags) = @_;
+  my $aligned_sequence;
 
   my $fix_seq = 0;
-  foreach my $flag (@flags) {
-    if ($flag eq "FIX_SEQ") {
-      $fix_seq = 1;
+  foreach my $flag (@aligned_sequence_or_flags) {
+    if ($flag =~ /^\+/) {
+      if ($flag eq "+FIX_SEQ") {
+        $fix_seq = 1;
+      } else {
+        warning("Unknow flag $flag when calling".
+            " Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence()");
+      }
     } else {
-      warning("Unknow flag $flag when calling Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence()");
+      $aligned_sequence = $flag;
     }
   }
   
