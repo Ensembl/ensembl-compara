@@ -150,7 +150,7 @@ $method_link_species_set = $method_link_species_set_adaptor->store($method_link_
 ## Each line of the MAP file corresponds to a multiple alignment
 foreach my $this_line (@{$map_file}) {
 
-  $this_line =~ /[\r\n]+$/; # chop the <end_of_line> for either Mac, Unix or DOS file
+  $this_line =~ s/[\r\n]+$//; # chop the <end_of_line> for either Mac, Unix or DOS file
   ## First col corresponds to the alignment_id, next ones to the coordinates of the
   ## sequences in the FASTA files.
   my ($align_id, @fields) = split(" *\t *", $this_line);
@@ -176,9 +176,10 @@ foreach my $this_line (@{$map_file}) {
       next;
     }
 
-    ## Store data in a hash
+    ## Store data in a hash. MAVID coordinates system does not match EnsEMBL one.
+    ## 1 must be added to the starting position of the alignment.
     $this_alignment->{$this_species}->{dnafrag} = $dnafrag;
-    $this_alignment->{$this_species}->{dnafrag_start} = $dnafrag_start;
+    $this_alignment->{$this_species}->{dnafrag_start} = $dnafrag_start + 1;
     $this_alignment->{$this_species}->{dnafrag_end} = $dnafrag_end;
     $this_alignment->{$this_species}->{dnafrag_strand} = ($dnafrag_strand eq "+")?1:-1;
   }
@@ -216,6 +217,22 @@ foreach my $this_line (@{$map_file}) {
             -aligned_sequence => $this_alignment->{$species}->{aligned_sequence},
             -level_id => 1
         );
+#print STDERR "Bio::EnsEMBL::Compara::GenomicAlign corresponds to ",
+#  $this_genomic_align->dnafrag->genome_db->name, " ", $this_genomic_align->dnafrag->name," [",
+#  $this_genomic_align->dnafrag_start, "-", $this_genomic_align->dnafrag_end, "] (",
+#  ($this_genomic_align->dnafrag_strand == 1?"+":"-"), ")\n";
+    my $db_sequence = $this_genomic_align->dnafrag->slice->subseq(
+            $this_genomic_align->dnafrag_start,
+            $this_genomic_align->dnafrag_end
+        );
+    my $mavid_sequence = $this_genomic_align->original_sequence;
+    if ($db_sequence ne $mavid_sequence) {
+      print STDERR "DATAB: ", substr($db_sequence, 0, 10), "..",
+          substr($db_sequence, -11), "\n";
+      print STDERR "MAVID: ", substr($mavid_sequence, 0, 10), "..",
+          substr($mavid_sequence, -11), "\n";
+      die "\n\n";
+    }
     push(@$these_genomic_aligns, $this_genomic_align) if ($this_genomic_align);
   }
   if (!$these_genomic_aligns) {
