@@ -95,9 +95,9 @@ sub db_adaptor{
   }
 
   unless (defined $self->{'_db_adaptor'}) {
-    warning("Could not obtain DBAdaptor for Genome DBAdaptor with name=[".$self->name."] and\n".
-            "assembly=[" . $self->assembly."]. It must be loaded using config file or\n" .
-            "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
+    warning("Not able to get DBAdaptor for GenomeDB with name=[".$self->name."] and assembly=[" . $self->assembly."].\n".
+            "It must be loaded at the time of compara db connection either using a Compara.conf file or\n".
+            "setting the locator column in the genome_db table for the corresponding entry.\n");
   }
   
   return $self->{'_db_adaptor'};
