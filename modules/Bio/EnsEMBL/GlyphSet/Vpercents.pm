@@ -34,14 +34,14 @@ sub _init {
     my $chr      	= $self->{'container'}->{'chr'};
    	my $gc_col 	= $Config->get( 'Vpercents','col_gc' );
    	my $repeat_col 	= $Config->get( 'Vpercents','col_repeat' );
+	my $chr_slice = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);	
 	
-	
-    my $repeats 	= $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'repeat'); 
-    my $gc 		    = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'gc');
+    my $repeats 	= $self->{'container'}->{'da'}->fetch_Featureset_by_Slice($chr_slice,'repeat',150,1); 
+    my $gc 		    = $self->{'container'}->{'da'}->fetch_Featureset_by_Slice($chr_slice,'gc', 150,1);
 
     return unless $repeats->size() && $gc->size();
-	my $max_repeats = $repeats->{'_biggest_value'};
-	my $max_gc      = $gc->{'_biggest_value'};
+	my $max_repeats = $repeats->max_value;
+	my $max_gc      = $gc->max_value;
 	my $MAX 	= $max_repeats > $max_gc ? $max_repeats : $max_gc;
 	$MAX ||= 1;
 
@@ -49,34 +49,33 @@ sub _init {
 	$repeats->stretch(0);
    	$gc->scale_to_fit( $max_gc / $MAX * $Config->get( 'Vpercents', 'width' ) );
 	$gc->stretch(0);
-		
 
-	my @repeats = $repeats->get_binvalues();
-	my @gc 		= $gc->get_binvalues();	
+	my @repeats = @{$repeats->get_all_binvalues()};
+	my @gc 		= @{$gc->get_all_binvalues()};	
 	my @points  = [];
 	my $old_x = undef;
 	my $old_y = undef;
     foreach (@repeats) {
 	    my $g_x = new Sanger::Graphics::Glyph::Space({
-			'x'      => $_->{'chromosomestart'},
+			'x'      => $_->start,
 			'y'      => 0,
-			'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},
-			'height' => $_->{'scaledvalue'},
-			'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
+			'width'  => $_->end - $_->start,
+			'height' => $_->scaledvalue,
+			'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->start&vc_end=$_->end"
 		});
 		$self->push($g_x);
 	    $g_x = new Sanger::Graphics::Glyph::Line({
-			'x'      => ($_->{'chromosomeend'}+$_->{'chromosomestart'})/2,
+			'x'      => ($_->end + $_->start)/2,
 			'Y'      => 0,
 			'width'  => 0,
-			'height' => $_->{'scaledvalue'},
+			'height' => $_->scaledvalue,
 			'colour' => $repeat_col,
 			'absolutey' => 1,
 		});
 	    $self->push($g_x);
 		my $gcvalue = shift @gc;					
-		my $new_x = ($gcvalue->{'chromosomeend'}+$gcvalue->{'chromosomestart'})/2;
-		my $new_y = $gcvalue->{'scaledvalue'};
+		my $new_x = ($gcvalue->end + $gcvalue->start)/2;
+		my $new_y = $gcvalue->scaledvalue ;
 		if(defined $old_x) {
 
 		    my $g_x = new Sanger::Graphics::Glyph::Line({

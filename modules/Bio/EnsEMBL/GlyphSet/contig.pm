@@ -59,9 +59,8 @@ sub _init {
     $feature->{'locations'}{'contig'} = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
     foreach( @{$vc->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
       my $path;
-	  eval { $path = $ctg_slice->project($_->name); };
-	
-	  next unless($path || @$path = 1);
+      eval { $path = $ctg_slice->project($_->name); };
+      next unless($path || @$path != 1);
       $path = $path->[0][2];
       $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
     }

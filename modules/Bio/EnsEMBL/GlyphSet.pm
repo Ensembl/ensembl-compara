@@ -42,10 +42,23 @@ sub label2 {
     return $self->{'label2'};
 }
 
+sub my_config {
+  my( $self, $key ) = @_;
+  return $self->{'_my_config_'}{ $key } ||= $self->{'config'}->get($self->check(), $key );
+}
+
 sub check {
-    my( $self ) = @_;
-    ( my $feature_name = ref $self) =~s/.*:://;
-    return $self->{'config'}->is_available_artefact( $feature_name ) ? $feature_name : undef ;
+  my( $self ) = @_;
+  unless( $self->{'_check_'} ) {
+    my $feature_name = ref $self;
+    if( exists( $self->{'extras'}{'config_key'} ) ) {
+      $feature_name =  $self->{'extras'}{'config_key'} ;
+    } else {
+      $feature_name =~s/.*:://;
+    }
+    $self->{'_check_'} = $self->{'config'}->is_available_artefact( $feature_name ) ? $feature_name : undef ;
+  }
+  return $self->{'_check_'};
 }
 
 ## Stuff copied out of scalebar.pm so that contig.pm can use it!
@@ -54,10 +67,13 @@ sub HASH_URL {
   my($self,$db,$hash) = @_;
   return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&".join '&', map { "$_=$hash->{$_}" } keys %{$hash||{}};
 }
+
 sub ID_URL {
   my($self,$db,$id) = @_;
+  warn "ID_URL called";
   return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&ID=$id";
 }
+
 sub zoom_URL {
     my( $self, $PART, $interval_middle, $width, $factor, $highlights ) = @_;
     my $start = int( $interval_middle - $width / 2 / $factor);

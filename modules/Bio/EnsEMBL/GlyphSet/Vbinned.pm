@@ -33,7 +33,8 @@ sub _init {
     my $wid             = $Config->get( $track ,'width');
     my $max_len         = $Config->container_width();
     my $bin_size        = $max_len/$Config->get($track,'bins');
-    my $v_offset    = $max_len - ($self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1);
+	my $slice			= $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);
+    my $v_offset    = $max_len - ($slice->length() || 1);
     my $max_data        = $Config->get( $track, 'max_value' );
 	my $chr_min_data ;
     my $chr_max_data = 0;
