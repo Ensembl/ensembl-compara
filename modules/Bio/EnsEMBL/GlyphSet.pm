@@ -12,6 +12,8 @@ use vars qw(@ISA $AUTOLOAD);
 #########
 # constructor
 #
+
+sub commify { local $_ = reverse $_[1]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
 sub slice2sr {
   my( $self, $s, $e ) = @_;
 
