@@ -232,8 +232,10 @@ sub store_gene_and_all_transcripts
                    -genome_db=>$self->{'genome_db'});
     print(" => member " . $gene_member->stable_id);
 
-    $MemberAdaptor->store($gene_member);
-    print(" : stored");
+    eval {
+      $MemberAdaptor->store($gene_member);
+      print(" : stored");
+    };
 
     $self->{'geneSubset'}->add_member($gene_member);
     print("\n");
@@ -261,9 +263,11 @@ sub store_gene_and_all_transcripts
 
     print(" => member " . $pep_member->stable_id);
 
-    $MemberAdaptor->store($pep_member);
-    $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
-    print(" : stored");
+    eval {
+      $MemberAdaptor->store($pep_member);
+      $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
+      print(" : stored");
+    };
 
 
     if($pep_member->seq_length > $maxLength) {
