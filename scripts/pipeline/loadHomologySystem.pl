@@ -65,7 +65,7 @@ $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $s
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
     die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
-      unless(-d $hive_params{'hive_output_dir'});
+      if(($hive_params{'hive_output_dir'} ne "") and !(-d $hive_params{'hive_output_dir'}));
     $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
   }
 }
@@ -149,7 +149,7 @@ sub prepareGenomeAnalysis
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_analysis->dbID);
-  $stats->batch_size(7000);
+  $stats->batch_size(100);
   $stats->hive_capacity(-1);
   $stats->update();
 
@@ -159,19 +159,52 @@ sub prepareGenomeAnalysis
   #
   # GenomeLoadMembers
   #
-  my $load_analysis = Bio::EnsEMBL::Analysis->new(
+  my $load_genome = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeLoadMembers',
-      -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($load_analysis->dbID);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_genome);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($load_genome->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1); #unlimited
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($submit_analysis, $load_analysis);
+  $dataflowRuleDBA->create_rule($submit_analysis, $load_genome);
+
+
+  #
+  # LoadUniProt
+  #
+  my $loadUniProt = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'LoadUniProt',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt',
+      );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($loadUniProt);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($loadUniProt->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->status('LOADING');
+  $stats->update();
+
+
+  #
+  # BlastSubsetStaging
+  #
+  my $blastSubsetStaging = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'BlastSubsetStaging',
+      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastSubsetStaging);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($blastSubsetStaging->dbID);
+  $stats->batch_size(100);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+  $dataflowRuleDBA->create_rule($load_genome, $blastSubsetStaging);
+  $dataflowRuleDBA->create_rule($loadUniProt, $blastSubsetStaging, 2);
 
   #
   # GenomeSubmitPep
@@ -188,7 +221,7 @@ sub prepareGenomeAnalysis
   $stats->hive_capacity(3);
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($load_analysis, $submitpep_analysis);
+  $dataflowRuleDBA->create_rule($blastSubsetStaging, $submitpep_analysis);
 
   #
   # GenomeDumpFasta
@@ -206,7 +239,7 @@ sub prepareGenomeAnalysis
   $stats->hive_capacity(-1);
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($load_analysis, $dumpfasta_analysis);
+  $dataflowRuleDBA->create_rule($blastSubsetStaging, $dumpfasta_analysis);
 
   #
   # GenomeCalcStats
@@ -224,7 +257,7 @@ sub prepareGenomeAnalysis
   $stats->hive_capacity(-1);
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($load_analysis, $calcstats_analysis);
+  $dataflowRuleDBA->create_rule($blastSubsetStaging, $calcstats_analysis);
 
   #
   # CreateBlastRules
@@ -243,10 +276,14 @@ sub prepareGenomeAnalysis
   $stats->status('BLOCKED');
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
-  $ctrlRuleDBA->create_rule($load_analysis, $blastrules_analysis);
+  $ctrlRuleDBA->create_rule($blastSubsetStaging, $blastrules_analysis);
   $ctrlRuleDBA->create_rule($submitpep_analysis, $blastrules_analysis);
   $ctrlRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
+
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+       -input_id       => '{blast_all=>1}',
+       -analysis       => $blastrules_analysis,
+      );
 
   #
   # CreateBuildHomologyJobs
