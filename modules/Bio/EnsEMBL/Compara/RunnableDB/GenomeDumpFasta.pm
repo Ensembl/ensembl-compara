@@ -106,8 +106,6 @@ sub run
   #my $blast_analysis = $self->updateBlastAnalysis($blastdb);
   my $blast_analysis = $self->createBlastAnalysis($blastdb);
   
-  $self->createBlastRules();
-  
   return 1;
 }
 
@@ -242,80 +240,6 @@ sub createBlastAnalysis
   $self->db->get_AnalysisAdaptor()->store($analysis);
 
   return $analysis;
-}
-
-sub phylumForGenomeDBID
-{
-  my $self = shift;
-  my $genome_db_id = shift;
-  my $phylum;
-
-  unless($genome_db_id) { return undef; }
-  
-  my $sql = "SELECT phylum FROM genome_db_extn " .
-            "WHERE genome_db_id=$genome_db_id;";
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
-  $sth->execute();
-  $sth->bind_columns( undef, \$phylum );
-  $sth->fetch();
-  $sth->finish();
-
-  return $phylum;
-}
-
-
-# scan the analysis table for valid SubmitPep_<> analyses that
-# can get made conditions of any blast_<> analyses
-sub createBlastRules
-{
-  my $self = shift;
-
-  my $genomeList   = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all();
-  my $analysisList = $self->db->get_AnalysisAdaptor->fetch_all();
-
-  foreach my $genomeDB1 (@{$genomeList}) {
-    my $blastLogicName = "blast_" . $genomeDB1->dbID. "_". $genomeDB1->assembly;
-    my $blastAnalysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($blastLogicName);
-    if($blastAnalysis) {
-      my $blastPhylum = $self->phylumForGenomeDBID($genomeDB1->dbID);
-      #rint("\nANALYSIS ".$blastAnalysis->logic_name()." is a ".$blastPhylum."\n");
-
-      foreach my $analysis (@{$analysisList}) {
-        my %parameters = $self->parameter_hash($analysis->parameters());
-        if($parameters{'genome_db_id'} and
-           ($parameters{'genome_db_id'} ne $genomeDB1->dbID))
-        {
-          my $phylum = $self->phylumForGenomeDBID($parameters{'genome_db_id'});
-          #print("  check ".$analysis->logic_name().
-          #      " genome_db_id=".$parameters{'genome_db_id'}.
-          #      " phylum=".$phylum."\n");
-          if(($blastPhylum eq $phylum) and ($analysis->logic_name =~ /SubmitPep_/)) {
-            #$analysis is a SubmitPep so it's the condition
-            #$blastAnalysis is the goal
-            $self->addSimpleRule($analysis, $blastAnalysis);
-          }
-        }
-      }
-    }
-  }
-}
-
-
-sub addSimpleRule
-{
-  my $self = shift;
-  my $conditionAnalysis = shift;
-  my $goalAnalysis = shift;
-  
-  print("RULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
-  
-  my $rule = Bio::EnsEMBL::Compara::SimpleRule->new(
-      '-goal_analysis'      => $goalAnalysis,
-      '-condition_analysis' => $conditionAnalysis);
-      
-  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($rule);
-
-  my $temp_rule = $self->{'comparaDBA'}->get_adaptor('SimpleRule')->fetch_by_dbID($rule->dbID);
 }
 
 
