@@ -60,6 +60,10 @@ CREATE TABLE genome_db (
 #
 #    This table indexes the genomic alignments
 #
+-- All queries in the API uses the primary key as rows are always fetched using
+--   the genomic_align_block_id. The key "method_link_species_set_id" is used by
+--   MART when fetching all the genomic_align_blocks corresponding to a given
+--   method_link_species_set_id.z
 
 CREATE TABLE genomic_align_block (
   genomic_align_block_id int(10) NOT NULL AUTO_INCREMENT,
@@ -69,7 +73,7 @@ CREATE TABLE genomic_align_block (
   length int(10),
 
   PRIMARY KEY genomic_align_block_id (genomic_align_block_id),
-  KEY method_link_species_set (genomic_align_block_id, method_link_species_set_id)
+  KEY method_link_species_set_id (method_link_species_set_id)
 );
 
 #
