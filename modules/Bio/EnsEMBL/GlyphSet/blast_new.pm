@@ -12,7 +12,9 @@ sub features {
   my @T = ();
   foreach my $T ( $self->highlights ) {
     next unless /BLAST_NEW:(.*)/;
-    eval { push @T, $self->{'container'}->get_all_SearchFeatures($1); }; 
+    eval { 
+        push @T, $self->{'container'}->get_all_SearchFeatures($1); 
+        }; 
     warn $@ if $@;
   }
   return @T;
@@ -24,7 +26,9 @@ sub href {
     my $meta = pop @bits;
     my( $ticket,$hsp_id,$use_date ) = split( '!!', $meta );
     $use_date || return $id;
-    $type ||= 'ALIGN';
+    if (!$type || (ref($type) eq 'ARRAY')){
+        $type = 'ALIGN';
+    };
     my $htmpl = '/Multi/blastview?ticket=%s&hsp_id=%s!!%s&_display=%s';
     return sprintf($htmpl, $ticket, $hsp_id, $use_date, $type);
     #   return $self->ID_URL( 'SRS_PROTEIN', $id );
