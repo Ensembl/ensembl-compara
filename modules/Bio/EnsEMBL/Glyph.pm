@@ -22,7 +22,8 @@ sub new {
     #########
     # initialise all fields except type
     #
-    for my $field (qw(x y width height text colour bordercolour font onmouseover onmouseout zmenu href pen brush background id points absolutex absolutey)) {
+#    for my $field (qw(x y width height text colour bordercolour font onmouseover onmouseout zmenu href pen brush background id points absolutex absolutey)) {
+    for my $field (keys %{$params_ref}) {
 	$self->{$field} = $$params_ref{$field} if(defined $$params_ref{$field});
     }
 
@@ -67,12 +68,10 @@ sub transform {
     #
     if(defined $this->absolutex()) {
 	$scalex     = 1;
-	$translatex = 0;
     }
 
     if(defined $this->absolutey()) {
 	$scaley     = 1;
-	$translatey = 0;
     }
 
     #########
@@ -90,29 +89,36 @@ sub transform {
     $this->pixely($this->pixely() + $translatey);
 
     #########
-    # apply mirror along x=y, flip along x=0 & translate x+=width
-    # this is nasty rotation without the even nastier matrix manipulation
+    # todo: check rotation
     #
-    if($rotation == 90) {
-	#########
-	# mirror in x=y
-	#
-	my $t1 = $this->pixelx();
-	$this->pixelx($this->pixely());
-	$this->pixely($t1);
-
-	my $t2 = $this->pixelwidth();
-	$this->pixelwidth($this->pixelheight());
-	$this->pixelheight($t2);
-
-	#########
-	# flip along x=0
-	#
-	$this->pixelx(-$this->pixelx());
-
-	#########
-	# translate x+=width
-	#
-	$this->pixelx($this->pixelx() + $clipwidth);
-    }
 }
+
+sub centre {
+    my ($this, $arg) = @_;
+
+    my ($x, $y);
+
+    if($arg eq "px") {
+	#########
+	# return calculated px coords
+	# pixel coordinates are only available after a transformation has been applied
+	#
+        $x = int($this->pixelwidth() / 2) + $this->pixelx();
+        $y = int($this->pixelheight() / 2) + $this->pixely();
+    } else {
+	#########
+	# return calculated bp coords
+	#
+        $x = int($this->width() / 2) + $this->x();
+        $y = int($this->height() / 2) + $this->y();
+    }
+
+    return ($x, $y);
+}
+
+sub end {
+    my ($this) = @_;
+    return $this->{'x'} + $this->{'width'};
+}
+
+1;
