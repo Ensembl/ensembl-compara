@@ -45,11 +45,7 @@ my $alignment_type = 'TRANSLATED_BLAT';
 
 GetOptions('h' 			=> \$help,
 	   'file=s' 		=> \$file,
-	   'host=s' 		=> \$host,
 	   'dbname=s' 		=> \$dbname,
-	   'dbuser=s' 		=> \$dbuser,
-	   'pass=s' 		=> \$pass,
-	   'port=i' 		=> \$port,
 	   'cs_genome_db_id=s' 	=> \$cs_genome_db_id,
 	   'qy_genome_db_id=s' 	=> \$qy_genome_db_id,
 	   'alignment_type=s' 	=> \$alignment_type,
@@ -62,10 +58,7 @@ if ($help) {
 }
 
 unless (defined $file &&
-	defined $host &&
 	defined $dbname &&
-	defined $dbuser &&
-	defined $pass &&
 	defined $cs_genome_db_id &&
 	defined $qy_genome_db_id &&
 	defined $conf_file) {
@@ -228,7 +221,7 @@ my $max_alignment_length = 0;
 #my ($ref_seq,$qy_seq);
 my @DnaDnaAlignFeatures;
 
-my ($cs_chr,$cs_start,$cs_end, $cs_strand, $qy_chr, $qy_start, $qy_end, $qy_strand, $score, $percid, $group, $cigar);
+my ($cs_chr,$cs_start,$cs_end, $cs_strand, $qy_chr, $qy_start, $qy_end, $qy_strand, $score, $percid, $group, $cigar, $qy_cigar, $cs_cigar, $length);
 my ($no, $qy_sps, $Qchr_type, $prog, $typ, $cs_sps, $Tchr_type, $posit); 
 #NB NEED TO RECREATE CIGARS FROM THE LENGTHS OF THE ALIGNMENTS --SHOULD BE ok as NO GAPS-- so ok both strands
 
@@ -250,13 +243,22 @@ LINE:while (my $line =<FILE>) {
 
       $no=~/\d+\((\d+)\)/;
       $group =$1;
+      
       my $qy_length = $qy_end - $qy_start+1;
       my $cs_length = $cs_end - $cs_start+1;
-      unless ($qy_length== $cs_length){
-      	print STDERR "lengths not equal $qy_length != $cs_length\n";
-	print STDERR "$line\n";
-      	}
-	 $cigar=$qy_length."M";
+     if ($alignment_type =~/BLAT/){#no gaps
+      	unless ($qy_length== $cs_length){
+      		print STDERR "lengths not equal $qy_length != $cs_length\n";
+		print STDERR "$line\n";
+		$qy_cigar=$qy_length."M";
+		$cs_cigar=$qy_cigar;
+      		}
+	}else{
+	($cs_cigar, $qy_cigar, $length)=parse_old_cigar_line($cigar);
+	}
+	
+	
+	
 
 #Removed the monscore as the scores reported are for each member of a PSL line and therefore shouldn't be used to eliminate single hsps
 
@@ -355,9 +357,9 @@ unless ($qy_chr eq  $prev_qy_chr){ #print STDERR $cs_dnafrag->type ."CS_TYPE\n";
 ######################################################################################################################
 if ($tab>0){
 
-	print GAB "$GAB_id\t$species_set_id\t$score\t$percid\t$qy_length\n";  
-	print GA  "$qy_GA_id\t$GAB_id\t$species_set_id\t$qy_dnafrag_id\t$qy_start\t$qy_end\t$qy_strand\t$cigar\t$level\n"; #No level yet 
-	print GA  "$cs_GA_id\t$GAB_id\t$species_set_id\t$cs_dnafrag_id\t$cs_start\t$cs_end\t$cs_strand\t$cigar\t$level\n";
+	print GAB "$GAB_id\t$species_set_id\t$score\t$percid\t$length\n";  
+	print GA  "$qy_GA_id\t$GAB_id\t$species_set_id\t$qy_dnafrag_id\t$qy_start\t$qy_end\t$qy_strand\t$qy_cigar\t$level\n"; #No level yet 
+	print GA  "$cs_GA_id\t$GAB_id\t$species_set_id\t$cs_dnafrag_id\t$cs_start\t$cs_end\t$cs_strand\t$cs_cigar\t$level\n";
 	print GAG "$group\t$group_type\t$qy_GA_id\n"; #possability of two differnet groupings for the two species
 	print GAG "$group\t$group_type\t$cs_GA_id\n";
 	}
@@ -383,7 +385,7 @@ else{
   	$query_genomic_align->dnafrag_start($qy_start);
   	$query_genomic_align->dnafrag_end($qy_end);
   	$query_genomic_align->dnafrag_strand($qy_strand);
-  	$query_genomic_align->cigar_line($cigar);
+  	$query_genomic_align->cigar_line($qy_cigar);
   	$query_genomic_align->level_id($level);
 
 #2nd: consensus_genomic_align 
@@ -394,13 +396,13 @@ else{
   	$consensus_genomic_align->dnafrag_start($cs_start);
   	$consensus_genomic_align->dnafrag_end($cs_end);
   	$consensus_genomic_align->dnafrag_strand($cs_strand);
-  	$consensus_genomic_align->cigar_line($cigar);
+  	$consensus_genomic_align->cigar_line($cs_cigar);
   	$consensus_genomic_align->level_id($level);
 
 #3rd genomic_align_block --  
   	$genomic_align_block->method_link_species_set($method_link_species_set);
   	$genomic_align_block->score($score);
-  	$genomic_align_block->length($qy_length);
+  	$genomic_align_block->length($length);
   	$genomic_align_block->perc_id($percid);
   	$genomic_align_block->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
 
@@ -466,4 +468,62 @@ exit 1\n";
   }
   return int($number_identity/$length*100);
 }
+
+##############################################################################
+##  PARSE OLD CIGAR LINE
+=head2 parse_old_cigar_line
+ Arg [1]    : string $old_cigar_line
+   Example    : 
+   Description: 
+   Returntype : 
+   Exceptions : 
+     
+=cut
+     
+     
+###############################################################################
+sub parse_old_cigar_line {
+  my ($old_cigar_line) = @_;
+  my ($consensus_cigar_line, $query_cigar_line, $length);
+  
+  my @pieces = split(/(\d*[DIMG])/, $old_cigar_line);
+  
+  #   print join("<- ->", @pieces);
+  
+  my $consensus_matches_counter = 0;
+  my $query_matches_counter = 0;
+  foreach my $piece ( @pieces ) {
+  next if ($piece !~ /^(\d*)([MDI])$/);
+  	my $num = ($1 or 1);
+	my $type = $2;
+	
+	if( $type eq "M" ) {
+	$consensus_matches_counter += $num;
+	$query_matches_counter += $num;
+	
+	} elsif( $type eq "D" ) {
+   	$consensus_cigar_line .= (($consensus_matches_counter == 1) ? "" : $consensus_matches_counter)."M";
+   	$consensus_matches_counter = 0;
+   	$consensus_cigar_line .= (($num == 1) ? "" : $num)."G";
+   	$query_matches_counter += $num;
+	
+	} elsif( $type eq "I" ) {
+	$consensus_matches_counter += $num;
+	$query_cigar_line .= (($query_matches_counter == 1) ? "" : $query_matches_counter)."M";
+	$query_matches_counter = 0;
+	$query_cigar_line .= (($num == 1) ? "" : $num)."G";
+	}
+  $length += $num;
+   }
+$consensus_cigar_line .= (($consensus_matches_counter == 1) ? "" : $consensus_matches_counter)."M"
+if ($consensus_matches_counter);
+$query_cigar_line .= (($query_matches_counter == 1) ? "" : $query_matches_counter)."M"
+if ($query_matches_counter);
+
+#   print join("\n", $old_cigar_line, $consensus_cigar_line, $query_cigar_line, $length);
+
+return ($consensus_cigar_line, $query_cigar_line, $length);
+}
+
+
 
