@@ -156,23 +156,29 @@ sub _init {
         foreach my $f (
             sort { $a->[0] <=> $b->[0] }
             map { [$_->start, $_->end ] }
-            grep { !($strand_flag eq 'b' && $strand != $_->strand || $_->start < 1 || $_->end > $length) } @$features
+            grep { !($strand_flag eq 'b' && $strand != $_->strand || $_->start > $length || $_->end < 1) } @$features
         ) {
+            my $START   = $f->[0];
+            my $END     = $f->[1];
+            ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
+            $START      = 1 if $START < 1;
+            $END        = $length if $END > $length;
             $T++; $C1++;
-            next if( $f->[1] * $pix_per_bp ) == int( $X * $pix_per_bp );
-            $X = $f->[0];
+            next if( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
+            $X = $START;
             $C++;
+
             $self->push(new Sanger::Graphics::Glyph::Rect({
                 'x'          => $X-1,
                 'y'          => 0, # $y_pos,
-                'width'      => $f->[1]-$X+1,
+                'width'      => $END-$X+1,
                 'height'     => $h,
                 'colour'     => $feature_colour,
                 'absolutey'  => 1,
             }));
         }
     }
-    # warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
 1;

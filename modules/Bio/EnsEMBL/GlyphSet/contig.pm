@@ -44,6 +44,7 @@ sub _init {
     return unless ($self->strand() == 1);
   
     my $vc = $self->{'container'};
+    $self->{'vc'} = $vc;
     my $length = $vc->length();
   
     my $ystart = 3;
@@ -82,7 +83,7 @@ sub _init {
 sub _init_assembled_contig {
     my ($self, $ystart, $contig_tiling_path) = @_;
 
-    my $vc = $self->{'container'};
+    my $vc = $self->{'vc'};
   
     my $length = $vc->length();
 
@@ -353,7 +354,7 @@ sub _init_assembled_contig {
 sub _init_non_assembled_contig {
     my ($self, $ystart, $contig_tiling_path) = @_;
 
-    my $vc = $self->{'container'};
+    my $vc = $self->{'vc'};
     my $length = $vc->length();
 
     my $Config = $self->{'config'};

@@ -71,7 +71,7 @@ sub render {
                 my $first = $glyphset->{'tags'}{$_}[0];
                 my $glyph = new Sanger::Graphics::Glyph::Poly({
                       'pixelpoints'       => [ @points ],
-                      'colour'       => $first->{'col'},
+                      'bordercolour'       => $first->{'col'},
                       'absolutex'    => 1,
                       'absolutey'    => 1,
                 });

@@ -76,7 +76,7 @@ sub _init {
     return unless defined $type;
 
     my $Config        = $self->{'config'};
-    my $container     = $self->{'container'};
+    my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
     my $target        = $Config->{'_draw_single_Transcript'};
     my $target_gene   = $Config->{'geneid'};
     
@@ -109,7 +109,7 @@ sub _init {
             # Skip if no exons for this transcript
 	    next if (@exons == 0);
 	    # If stranded diagram skip if on wrong strand
-	    next if (@exons[0]->strand() != $strand);
+	    next if (@exons[0]->strand() != $strand && $self->{'do_not_strand'}!=1 );
 	    # For exon_structure diagram only given transcript
 	    next if $target && ($transcript->stable_id() ne $target);
 
@@ -124,7 +124,7 @@ sub _init {
 
             my $coding_start = $transcript->coding_start() || $transcript->start();
             my $coding_end   = $transcript->coding_end()   || $transcript->end();
-
+            my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
             for(my $i = 0; $i < @exons; $i++) {
 	         my $exon = @exons[$i];
 	         next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 
@@ -147,7 +147,7 @@ sub _init {
 	      # coding regions.  Non coding portions of exons, are drawn as
 	      # non-filled rectangles
 	      #Draw a non-filled rectangle around the entire exon
-	                 $Composite->push(new Sanger::Graphics::Glyph::Rect({
+	                 $Composite2->push(new Sanger::Graphics::Glyph::Rect({
                             'x'         => $box_start -1 ,
                             'y'         => $y,
                             'width'     => $box_end-$box_start +1,
@@ -169,7 +169,7 @@ sub _init {
                         'height'    => $h,
                         'colour'    => $colour,
                         'absolutey' => 1 });
-	                $Composite->push($rect);
+	                $Composite2->push($rect);
 	             }
 	          } 
 	  #we are finished if there is no other exon defined
@@ -193,7 +193,7 @@ sub _init {
 
                 if( $box_start == $intron_start && $box_end == $intron_end ) {
 	    # draw an wholly in slice intron
-	            $Composite->push(new Sanger::Graphics::Glyph::Intron({
+	            $Composite2->push(new Sanger::Graphics::Glyph::Intron({
                     'x'         => $box_start -1,
                     'y'         => $y,
                     'width'     => $box_end-$box_start + 1,
@@ -204,7 +204,7 @@ sub _init {
                     }));
 	        } else { 
 	      # else draw a "not in slice" intron
-                $Composite->push(new Sanger::Graphics::Glyph::Line({
+                $Composite2->push(new Sanger::Graphics::Glyph::Line({
                      'x'         => $box_start -1 ,
                      'y'         => $y+int($h/2),
                      'width'     => $box_end-$box_start + 1,
@@ -215,7 +215,16 @@ sub _init {
                  }));
                  }
             }
-                
+
+            if($self->can('join')) {
+                my @tags = $self->join( $gene->stable_id );
+                foreach (@tags) {
+                    warn( $gene->stable_id." -> $_" );
+                    $self->tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
+                    $self->tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
+                }
+            }
+            $Composite->push($Composite2);
             my $bump_height = 1.5 * $h;
             if( $Config->{'_add_labels'} ) {
 	        if(my $text_label = $self->text_label($gene, $transcript) ) {

@@ -170,6 +170,7 @@ sub render_Poly {
     my $bordercolour = $self->colour($glyph->bordercolour());
     my $colour       = $self->colour($glyph->colour());
 
+    warn( $bordercolour - $colour );
     my $poly = new GD::Polygon;
 
     return unless(defined $glyph->pixelpoints());

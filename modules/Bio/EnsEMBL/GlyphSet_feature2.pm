@@ -80,6 +80,9 @@ sub _init {
     my $dep            = $Config->get($type, 'dep');
     my $chr_name       = $self->{'container'}->chr_name;
     my $offset         = $self->{'container'}->chr_start - 1;
+    my ($T,$C1,$C) = (0, 0, 0 );
+
+
     if( $dep > 0 ) {
         foreach my $f ( @{$self->features()} ){
             next if $strand_flag eq 'b' && $strand != $f->hstrand ;
@@ -171,13 +174,23 @@ sub _init {
             }
         }
     } else { ## Unbumped....!
-        foreach my $f ( @{$self->features()} ){    
-            my $START = $f->start();
-            my $END   = $f->end();
-            ($START,$END) = ($END, $START) if $END<$START;
-            $START = 1 if $START < 1;
-            $END   = $length if $END > $length;
-            my @X = ( [ $chr_name, $offset+ int(($f->start()+$f->end())/2) ], [ $f->hseqname(), int(($f->hstart() + $f->hend())/2) ] );
+        my $X = -1e8;
+        foreach (
+            sort { $a->[0] <=> $b->[0] }
+            map { [$_->start, $_ ] }
+            grep { !($strand_flag eq 'b' && $strand != $_->hstrand || $_->end < 1 || $_->start > $length) } @{$self->features()}
+        ) {
+            my $f       = $_->[1];
+            my $START   = $_->[0];
+            my $END     = $f->end;
+            ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
+            $START      = 1 if $START < 1;
+            $END        = $length if $END > $length;
+            $T++; $C1++;
+            next if( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
+            $X = $START;
+            $C++;
+            my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ] );
             my $glyph = new Sanger::Graphics::Glyph::Rect({
                 'x'          => $START,
                 'y'          => 0,
@@ -192,6 +205,7 @@ sub _init {
             $self->push($glyph);
         }
     }
+    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
 1;

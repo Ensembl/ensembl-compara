@@ -158,7 +158,8 @@ sub render_Line {
     my $y2     = $y1 + $glyph->pixelheight();
 
     if(defined $glyph->dotted()) {
-        $self->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
+        $self->{'canvas'}->setStyle($colour,$colour,$colour,gdTransparent,gdTransparent,gdTransparent);
+        $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
     } else {
         $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
     }
@@ -169,7 +170,6 @@ sub render_Poly {
 
     my $bordercolour = $self->colour($glyph->bordercolour());
     my $colour       = $self->colour($glyph->colour());
-
     my $poly = new GD::Polygon;
 
     return unless(defined $glyph->pixelpoints());
@@ -183,10 +183,10 @@ sub render_Poly {
         $poly->addPt($x,$y);
     }
 
-    if(defined $colour) {
+    if($glyph->colour) {
     	$self->{'canvas'}->filledPolygon($poly, $colour);
     } else {
-	    $self->{'canvas'}->polygon($poly, $bordercolour);
+        $self->{'canvas'}->polygon($poly, $bordercolour);
     }
 }
 
