@@ -9,6 +9,7 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
 
+srand();
 
 my $conf_file;
 my %analysis_template;
@@ -139,8 +140,26 @@ sub prepareGenomicAlignSystem
   $stats->hive_capacity(-1); #unlimited
   $stats->update();
   $self->{'chunkAnalysis'} = $chunkAnalysis;
-}
 
+  #
+  # CreateDnaRules
+  #
+  my $createRulesAnalysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateDnaRules',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateDnaRules',
+      -parameters      => ""
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createRulesAnalysis);
+  $stats = $createRulesAnalysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(1); #unlimited
+  $stats->update();
+  $self->{'createRulesAnalysis'} = $createRulesAnalysis;
+
+  $ctrlRuleDBA->create_rule($chunkAnalysis, $createRulesAnalysis);
+
+}
 
 
 
@@ -171,15 +190,25 @@ sub prepBlastzPair
   print("PrepBlastzPair\n") if($verbose);
   print("  options : ", $blastzConf->{'options'}, "\n");
 
+  my $hexkey = sprintf("%x", rand(time()));
+  print("hexkey = $hexkey\n");
+
   print("  query :\n");
-  $blastzConf->{'query'}->{'analysis_job'} = 'SubmitBlastZ';
+  $blastzConf->{'query'}->{'analysis_job'} = "SubmitBlastZ-$hexkey";
   $self->store_masking_options($blastzConf->{'query'});
   $self->create_chunk_job($blastzConf->{'query'});
 
   print("  target :\n");
-  $blastzConf->{'target'}->{'create_analysis_prefix'} = 'blastz';
+  $blastzConf->{'target'}->{'create_analysis_prefix'} = "blastz-$hexkey";
   $self->store_masking_options($blastzConf->{'target'});
   $self->create_chunk_job($blastzConf->{'target'});
+
+  my $rule_job = "{'from'=>'SubmitBlastZ-$hexkey','to'=>'blastz-$hexkey'}";
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+        -input_id       => $rule_job,
+        -analysis       => $self->{'createRulesAnalysis'}
+        );
+  
 
 }
 
