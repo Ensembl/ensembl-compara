@@ -78,7 +78,7 @@ sub fetch_by_Member_paired_species {
            [['genome_db', 'gdb'], 'm.genome_db_id = gdb.genome_db_id']];
 
   my $comma_joined_homology_ids = join(',',@homology_ids);
-  $constraint = "gdb.name = '$species' AND hm.homology_id in ($comma_joined_homology_ids)";
+  $constraint = "gdb.name = '$species' AND hm.homology_id in ($comma_joined_homology_ids) AND hm.member_id != " . $member->dbID;
   
   # See in fetch_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member->stable_id;
