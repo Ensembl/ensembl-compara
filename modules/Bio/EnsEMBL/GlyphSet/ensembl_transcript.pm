@@ -24,7 +24,7 @@ sub features {
   my $slice = $self->{'container'};
   my $sp = $self->{'_config_file_name_'};
   my @analyses = ( 'ensembl', 'pseudogene');
-  my $db_alias = $self->{'config'}->get($track,'db_alias') || '';
+  my $db_alias = 'core'; # $self->{'config'}->get($track,'db_alias') || '';
   my @genes;
   foreach my $analysis( @analyses ){
     push @genes, @{ $slice->get_all_Genes( $analysis, $db_alias||() ) }
