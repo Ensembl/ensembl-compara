@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlign module.
 
-This script includes XX tests.
+This script includes 91 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 100;
+    plan tests => 91;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
