@@ -111,9 +111,9 @@ foreach my $ddaf (@DnaDnaAlignFeatures) {
   $hstrand = "-" if ($ddaf->hstrand < 0);
 
   if ($hstrand eq "-") {
-    print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$qy_chrs{$ddaf->hseqname}->length - $ddaf->hend + 1," ",$qy_chrs{$ddaf->hseqname}->length - $ddaf->hstart + 1," ",$hstrand," 0\n";
+    print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$qy_chrs{$ddaf->hseqname}->length - $ddaf->hend + 1," ",$qy_chrs{$ddaf->hseqname}->length - $ddaf->hstart + 1," ",$hstrand," ",$ddaf->score,"\n";
   } else {
-    print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$hstrand," 0\n";
+    print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$hstrand," ",$ddaf->score,"\n";
   }
   my $sb_seq = $species1_sliceadaptor->fetch_by_chr_start_end($ddaf->seqname,$ddaf->start,$ddaf->end)->seq;
   my $qy_seq;
