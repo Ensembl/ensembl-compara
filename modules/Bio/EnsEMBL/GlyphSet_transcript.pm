@@ -251,7 +251,7 @@ sub _init {
         
             if($target) {     
 	  # check the strand of one of the transcript's exons
-	        my ($trans_exon) = $transcript->get_all_Exons();
+	        my ($trans_exon) = @{$transcript->get_all_Exons};
 	        if($trans_exon->strand() == 1) {
 	            my $clip1 = new Sanger::Graphics::Glyph::Line({
                    'x'         => 0,
