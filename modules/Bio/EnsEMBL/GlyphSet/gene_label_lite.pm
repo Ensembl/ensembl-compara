@@ -12,76 +12,98 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 sub _init {
     my $self = shift;
 
+##############################################################################
+# Unstranded (on reverse strand!)                                            #
+##############################################################################
+# May want to change this so that it works on the forward strand, and also   #
+# as a stranded version as well!!!                                           #
+##############################################################################
     return unless ($self->strand() == -1);
 
-    my $vc            = $self->{'container'};
-    my $Config        = $self->{'config'};
-    my $y             = 0;
-    my %highlights;
-    @highlights{$self->highlights} = ();    # build hashkeys of highlight list
-    my @bitmap        = undef;
-    my $im_width      = $Config->image_width();
-    my $type          = $Config->get('gene_label_lite', 'src');
-    my @allgenes      = ();
-    
+##############################################################################
+# Stage 1: Parse parameters                                                  #
+##############################################################################
+
+##############################################################################
+# Stage 1a: Firstly the configuration hash!                                  #
+##############################################################################
+    my $Config         = $self->{'config'};
+    my $known_col      = $Config->get( 'gene_label_lite' , 'known' );
+    my $hi_col         = $Config->get( 'gene_label_lite' , 'hi' );
+    my $unknown_col    = $Config->get( 'gene_label_lite' , 'unknown' );
+    my $ext_col        = $Config->get( 'gene_label_lite' , 'ext' );
+    my $pseudo_col     = $Config->get( 'gene_label_lite' , 'pseudo' );
+    my $max_length     = $Config->get( 'gene_label_lite' , 'threshold' ) || 2000000;
+    my $navigation     = $Config->get( 'gene_label_lite' , 'navigation' ) || 'off';
+    my $max_length_nav = $Config->get( 'gene_label_lite' , 'navigation_threshold' ) || 200000;
+    my $im_width       = $Config->image_width();
+    my $type           = $Config->get( 'gene_label_lite' , 'src' );
+    my $pix_per_bp     = $Config->transform->{'scalex'};
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
 
-    # call on ensembl lite to give us the details of all
-    # genes in the virtual contig
-    &eprof_start("gene-virtualgene_start-get");
-    my $known_col     = $Config->get('gene_label_lite','known');
-    my $hi_col        = $Config->get('gene_label_lite','hi');
-    my $unknown_col   = $Config->get('gene_label_lite','unknown');
-    my $ext_col       = $Config->get('gene_label_lite','ext');
-    my $pseudo_col    = $Config->get('gene_label_lite	','pseudo');
-    my $max_length     = $Config->get( 'gene_label_lite', 'threshold' ) || 2000000;
-    my $navigation     = $Config->get( 'gene_label_lite', 'navigation' ) || 'off';
-    my $max_length_nav = $Config->get( 'gene_label_lite', 'navigation_threshold' ) || 200000;
-
-    my $vc_length     = $vc->length;
-
+##############################################################################
+# Stage 1b: Now the virtual contig                                           #
+##############################################################################
+    my $vc              = $self->{'container'};
+    my $vc_length       = $vc->length;
     if( $vc_length > ($max_length*1001)) {
         $self->errorTrack("Gene labels only displayed for less than $max_length Kb.");
         return;
     }
-	my $show_navigation =  $navigation eq 'on' && ( $vc->length() < $max_length_nav * 1001 );
+	my $show_navigation = $navigation eq 'on' && ( $vc->length() < $max_length_nav * 1001 );
+    my $bitmap_length   = int($vc_length * $pix_per_bp);
+	my $vc_start        = $vc->_global_start();
 
-    my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $bitmap_length = int($vc_length * $pix_per_bp);
-
-#First of all let us deal with all the EnsEMBL genes....
-    my $res = $vc->get_all_VirtualGenes_startend_lite();
-    
+##############################################################################
+# Stage 1c: Initialize other arrays/numbers                                  #
+##############################################################################
+    my $y             = 0;
+    my %highlights;
+    @highlights{$self->highlights} = (); # build hashkeys of highlight list
+    my @bitmap        = undef;
+    my @allgenes      = ();
     my @genes = ();
-	my $vc_start = $vc->_global_start();
 
+##############################################################################
+# Stage 2: Retrieve the gene information from the databases                  #
+##############################################################################
+
+##############################################################################
+# Stage 2a: Retrieve all EnsEMBL genes                                       #
+##############################################################################
+    &eprof_start("gene-virtualgene_start-get");
+    my $res = $vc->get_all_VirtualGenes_startend_lite();
     foreach(@$res) {
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$_->{'stable_id'}} ? 1 : 0;
         if(defined $_->{'synonym'}) {
-                $gene_col = $known_col;
-                $gene_label = $_->{'synonym'};
-                $high = 1 if(exists $highlights{$gene_label});
+            $gene_col = $known_col;
+            $gene_label = $_->{'synonym'};
+            $high = 1 if(exists $highlights{$gene_label});
         } else {
-                $gene_col = $unknown_col;
-                $gene_label = 'NOVEL'; 
+            $gene_col = $unknown_col;
+            $gene_label = 'NOVEL'; 
         }
         push @genes, {
-                'chr_start'  => $_->{'chr_start'},
-                'chr_end'    => $_->{'chr_end'},
-                'start'  => $_->{'start'},
-                'end'    => $_->{'end'},
-                'ens_ID' => $_->{'stable_id'},
-                'label'  => $gene_label,
-                'colour' => $gene_col,
-                'ext_DB' => $_->{'db'},
-                'high'   => $high
-				};
+            'chr_start' => $_->{'chr_start'},
+            'chr_end'   => $_->{'chr_end'},
+            'start'     => $_->{'start'},
+            'strand'    => $_->{'strand'},
+            'end'       => $_->{'end'},
+            'ens_ID'    => $_->{'stable_id'},
+            'label'     => $gene_label,
+            'colour'    => $gene_col,
+            'ext_DB'    => $_->{'db'},
+            'high'      => $high
+        };
     }
     &eprof_end("gene-virtualgene_start-get");
 
+##############################################################################
+# Stage 2b: Retrieve all EMBL (external) genes                               #
+##############################################################################
     &eprof_start("gene-externalgene_start-get");
     if ($type eq 'all'){
         my $res = $vc->get_all_EMBLGenes_startend_lite();
@@ -96,22 +118,25 @@ sub _init {
                 $gene_col = $ext_col;
             }
             push @genes, {
-                    'chr_start'  => $g->{'chr_start'},
-                    'chr_end'    => $g->{'chr_end'},
-                    'start'  => $g->{'start'},
-                    'end'    => $g->{'end'},
-                    'ens_ID' => '', #$g->{'stable_id'},
-                    'label'  => $gene_label,
-                    'colour' => $gene_col,
-                    'ext_DB' => $g->{'db'},
-                    'high'   => $high,
-                    'type'   => 'external'
+                'chr_start' => $g->{'chr_start'},
+                'chr_end'   => $g->{'chr_end'},
+                'start'     => $g->{'start'},
+                'strand'    => $_->{'strand'},
+                'end'       => $g->{'end'},
+                'ens_ID'    => '', #$g->{'stable_id'},
+                'label'     => $gene_label,
+                'colour'    => $gene_col,
+                'ext_DB'    => $g->{'db'},
+                'high'      => $high,
+                'type'      => 'external'
             };
         }
     }
-
     &eprof_end("gene-externalgene_start-get");
 
+##############################################################################
+# Stage 3: Render gene labels                                                #
+##############################################################################
     my @gene_glyphs = ();
     foreach my $g (@genes) {
 		my $start = $g->{'start'};
@@ -164,8 +189,8 @@ sub _init {
         # Draw little taggy bit to indicate start of gene
         ##################################################
         my $taggy = new Bio::EnsEMBL::Glyph::Rect({
-            'x'               => $start,
-            'y'               => $tglyph->y - 1,
+            'x'            => $start,
+            'y'            => $tglyph->y - 1,
             'width'        => 1,
             'height'       => 4,
             'bordercolour' => $g->{'colour'},
@@ -174,8 +199,8 @@ sub _init {
     
         push @gene_glyphs, $taggy;
         $taggy = new Bio::EnsEMBL::Glyph::Rect({
-            'x'               => $start,
-            'y'               => $tglyph->y - 1 + 4,
+            'x'            => $start,
+            'y'            => $tglyph->y - 1 + 4,
             'width'        => $font_w_bp * 0.5,
             'height'       => 0,
             'bordercolour' => $g->{'colour'},
@@ -199,6 +224,9 @@ sub _init {
         }
     }
 
+##############################################################################
+# Stage 3b: Push genes on to track                                           #
+##############################################################################
     foreach( @gene_glyphs) {
         $self->push($_);
     }

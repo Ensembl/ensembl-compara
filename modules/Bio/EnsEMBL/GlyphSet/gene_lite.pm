@@ -67,24 +67,25 @@ sub _init {
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$_->{'stable_id'}} ? 1 : 0;
         if(defined $_->{'synonym'}) {
-                $gene_col = $known_col;
-                $gene_label = $_->{'synonym'};
-                $high = 1 if(exists $highlights{$gene_label});
+            $gene_col = $known_col;
+            $gene_label = $_->{'synonym'};
+            $high = 1 if(exists $highlights{$gene_label});
         } else {
-                $gene_col = $unknown_col;
-                $gene_label = 'NOVEL'; 
+            $gene_col = $unknown_col;
+            $gene_label = 'NOVEL'; 
         }
         push @genes, {
-                'chr_start'  => $_->{'chr_start'},
-                'chr_end'    => $_->{'chr_end'},
-                'start'  => $_->{'start'},
-                'end'    => $_->{'end'},
-                'ens_ID' => $_->{'stable_id'},
-                'label'  => $gene_label,
-                'colour' => $gene_col,
-                'ext_DB' => $_->{'db'},
-                'high'   => $high,
-                'type'   => 'ensembl'
+            'chr_start' => $_->{'chr_start'},
+            'chr_end'   => $_->{'chr_end'},
+            'start'     => $_->{'start'},
+            'strand'    => $_->{'strand'},
+            'end'       => $_->{'end'},
+            'ens_ID'    => $_->{'stable_id'},
+            'label'     => $gene_label,
+            'colour'    => $gene_col,
+            'ext_DB'    => $_->{'db'},
+            'high'      => $high,
+            'type'      => 'ensembl'
         };
     }
     &eprof_end("gene-virtualgene_start-get");
@@ -103,16 +104,17 @@ sub _init {
                 $gene_col = $ext_col;
             }
             push @genes, {
-                    'chr_start'  => $g->{'chr_start'},
-                    'chr_end'    => $g->{'chr_end'},
-                    'start'  => $g->{'start'},
-                    'end'    => $g->{'end'},
-                    'ens_ID' => '', #$g->{'stable_id'},
-                    'label'  => $gene_label,
-                    'colour' => $gene_col,
-                    'ext_DB' => $g->{'db'},
-                    'high'   => $high,
-                    'type'   => 'external'
+                'chr_start' => $g->{'chr_start'},
+                'chr_end'   => $g->{'chr_end'},
+                'start'     => $g->{'start'},
+                'strand'    => $_->{'strand'},
+                'end'       => $g->{'end'},
+                'ens_ID'    => '', #$g->{'stable_id'},
+                'label'     => $gene_label,
+                'colour'    => $gene_col,
+                'ext_DB'    => $g->{'db'},
+                'high'      => $high,
+                'type'      => 'external'
             };
         }
     }
@@ -140,7 +142,7 @@ sub _init {
         });
 		if($show_navigation) {
 			$rect->{'zmenu'} = {
-				'00:caption' 											=> $g->{'label'},
+				'caption' 											=> $g->{'label'},
 				"04:location: $g->{'chr_start'}-$g->{'chr_end'}" 			=> '',
 				"08:length: ".($g->{'chr_end'}-$g->{'chr_start'}+1) 	=> ''
 			};
