@@ -41,10 +41,10 @@ sub _init {
 
     ## need to sort external features into SNPs or traces and treat them differently
     foreach my $f (@xf){
-	if ($f->isa("Bio::EnsEMBL::ExternalData::Variation")) {
-	    # A SNP
-	    push(@snp, $f);
-	}
+		if ($f->isa("Bio::EnsEMBL::ExternalData::Variation")) {
+	    	# A SNP
+	    	push(@snp, $f);
+		}
     }
 
     my $rect;
