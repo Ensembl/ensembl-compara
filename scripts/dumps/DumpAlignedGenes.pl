@@ -167,6 +167,13 @@ The list of species used to get those alignments. Default is
 core database in the registry_configuration_file or any of its
 aliases
 
+=item B<[--expanded]>
+  
+By default the genes are aligned on the original query species.
+In the expanded mode, the deletions in the query species are taken
+into account and represented in the output. Default is "condensed"
+mode.
+
 =back
 
 =head2 OUTPUT
@@ -215,7 +222,7 @@ perl DumpAlignedGenes.pl
 
   For the mapping:
     [--genes_from species]
-        If you want to map mouse genes on human chromosomes, this will
+        If you want to map rat genes on human chromosomes, this will
         be 'Rattus norvegicus' or any alias
     [--max_repetition_length ]
         Default 100. Join or link two pieces of an exon if they do not
@@ -243,6 +250,11 @@ perl DumpAlignedGenes.pl
         "human:mouse". The names should correspond to the name of the
         core database in the registry_configuration_file or any of its
         aliases
+    [--expanded]
+        By default the genes are aligned on the original query species.
+        In the expanded mode, the deletions in the query species are taken
+        into account and represented in the output. Default is "condensed"
+        mode.
 
   Ouput:
     [--output_file filename]
@@ -260,6 +272,7 @@ my $seq_region_end =   50250000;
 my $source_species = "rat"; ## for genes_from
 my $alignment_type = "BLASTZ_NET";
 my $set_of_species = "human:rat";
+my $expanded = 0;
 my $output_file = undef;
 my $max_repetition_length = 100;
 my $max_gap_length = 100;
@@ -288,6 +301,7 @@ GetOptions(
 
     "alignment_type=s" => \$alignment_type,
     "set_of_species=s" => \$set_of_species,
+    "expanded!" => \$expanded,
     "output_file=s" => \$output_file,
   );
 
@@ -433,7 +447,8 @@ my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara'
 # MethodLinkSpeciesSet obejct corresponding to the set of species
 my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
         $query_slice,
-        $method_link_species_set
+        $method_link_species_set,
+        $expanded
     );
 
 # Get all the genes from the source species and map them on the query genome
