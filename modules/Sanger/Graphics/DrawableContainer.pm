@@ -91,7 +91,6 @@ sub new {
     my @glyphsets = ();
     $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
     if( $Container->{'__type__'} eq 'fake' ) {
-    warn "WE HAVE A FAKE CONTAINER";
       my $classname = qq($self->{'prefix'}::GlyphSet::comparafake);
       next unless $self->dynamic_use( $classname );
       my $GlyphSet;
@@ -99,7 +98,6 @@ sub new {
         $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, 1 );
       };
       $Config->container_width(1);
-      warn $@;
       push @glyphsets, $GlyphSet unless $@;
      
     } else {

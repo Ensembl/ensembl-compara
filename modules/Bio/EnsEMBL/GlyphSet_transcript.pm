@@ -79,7 +79,7 @@ sub compact_init {
   my $colours       = $self->colours();
 
   my $fontname      = "Tiny";
-  my $pix_per_bp    = $Config->transform->{'scalex'}; warn $pix_per_bp;
+  my $pix_per_bp    = $Config->transform->{'scalex'};
   my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
   my $_h            = $Config->texthelper->height($fontname);
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
@@ -123,7 +123,8 @@ sub compact_init {
     # Calculate and draw the coding region of the exon
     # only draw the coding region if there is such a region
     if($self->can('join')) {
-      my @tags = $self->join( $gene->stable_id );
+      my @tags;
+         @tags = $self->join( $gene->stable_id ) if $gene->can( 'stable_id' );
       foreach (@tags) {
         $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
         $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
@@ -199,11 +200,13 @@ sub expanded_init {
   my $length  = $container->length;
   my $transcript_drawn = 0;
     
+  my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
+  my $_h            = $Config->texthelper->height($fontname);
 
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
     next if $gene_strand != $strand and $strand_flag eq 'b'; # skip features on wrong strand....
-    next if $target_gene && ($gene->stable_id() ne $target_gene);
+    next if $target_gene && $gene->can('stable_id') && ($gene->stable_id() ne $target_gene);
  
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
       next if $transcript->start > $length || $transcript->end < 1;
@@ -303,7 +306,8 @@ sub expanded_init {
         } # enf of intron-drawing IF
       }
       if($self->can('join')) {
-        my @tags = $self->join( $gene->stable_id );
+        my @tags;
+           @tags = $self->join( $gene->stable_id ) if $gene->can('stable_id');
         foreach (@tags) {
           $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
           $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
@@ -315,23 +319,20 @@ sub expanded_init {
         if(my $text_label = $self->text_label($gene, $transcript) ) {
 	  my @lines = split "\n", $text_label;
           my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-	  
-	  for( my $i=0; $i<@lines; $i++ ){
-	    my $line = $lines[$i];
-  	    my $width_of_label = $font_w_bp * 1.15 * (length($line) + 1);
-	    my $tglyph = new Sanger::Graphics::Glyph::Text
-	      ({
-		'x'         => $Composite->x(),
-		'y'         => $y+($h*($i+1))+2,
-		'height'    => $font_h_bp,
-		'width'     => $width_of_label,
-		'font'      => $fontname,
-		'colour'    => $colour,
-		'text'      => $line,
-		'absolutey' => 1,
-	       });
-	    $Composite->push($tglyph);
-	    $bump_height = 1.7 * $h + ( $h * ( @lines - 1 ) ) + $font_h_bp;
+          my @lines = split "\n", $text_label;
+          for( my $i=0; $i<@lines; $i++ ){
+            my $line = $lines[$i];
+            $Composite->push( new Sanger::Graphics::Glyph::Text({
+              'x'         => $Composite->x(),
+              'y'         => $y + $h + ($i*$_h) + 2,
+              'height'    => $_h,
+              'width'     => $_w * length(" $line "),
+              'font'      => $fontname,
+              'colour'    => $colour,
+              'text'      => $line,
+              'absolutey' => 1,
+            }));
+            $bump_height += $_h;
 	  }
         }
       }

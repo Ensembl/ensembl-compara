@@ -39,15 +39,17 @@ sub _init {
                  '' );
     $type = lc( $type );
 
-    my $authority = lc($SPECIES_DEFS->AUTHORITY);   
+    my $authority = lc($SPECIES_DEFS->AUTHORITY);
 
     ## hack to fix flybase db type definition
     if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')){
       $db = 'core';
     } elsif ($type eq 'genomewise') {
       $db = 'estgene';
-    } else {
+    } elsif( $type ){
       ($SPECIES_DEFS->SITE_TYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
+    } else {
+      $db = 'core';
     }
 
     my $x = 0;
@@ -60,6 +62,14 @@ sub _init {
         for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
             my $colour = $colours[$flip];
             my $exon_id = $pep_splice->{$exon_offset}{'exon'};
+
+            my $exonview_link = '';
+            if( $prot_id ){
+              $exonview_link = sprintf
+                ( "/%s/exonview?exon=%s&db=%s", 
+                  $self->{container}{_config_file_name_}, $exon_id, $db );
+            }
+
             my $rect = new Sanger::Graphics::Glyph::Rect({
                     'x'        => $x,
                     'y'        => $y,
@@ -68,7 +78,7 @@ sub _init {
                     'colour'   => $colour,
                     'zmenu' => {
                     'caption' => "Splice Information",
-                    "00:Exon: $exon_id" => "/@{[$self->{container}{_config_file_name_}]}/exonview?exon=$exon_id&db=$db",
+                    "00:Exon: $exon_id" => $exonview_link,
                     "01:Start Phase: $start_phase" => "",
                     '02:End Phase: '. ($pep_splice->{$exon_offset}{'phase'} +1) => "",
                     '03:Length: '.($exon_offset - $x)  => "", },

@@ -24,7 +24,7 @@ sub init_label {
     }
   });
   $self->label($label);
-  $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
+  $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' ) unless $self->{'config'}{'compara'};
 }
 
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
@@ -150,23 +150,22 @@ sub expanded_init {
       }
     }
     if( ($compara eq 'primary' || $compara eq 'secondary') && $link ) {
-      my( $start, $end, $start2,$end2) = ( $F[0][1]->hstart, $F[0][1]->hend, $F[0][1]->start, $F[0][1]->end ); 
+      my $Z = $strand == -1 ? 1 : 0;
       foreach( @F ) {
         my $f = $_->[1];
-        $start = $f->hstart() if $f->hstart() < $start;
-        $end   = $f->hend()   if $f->hend()   > $end;
-        $start2 = $f->start() if $f->start() < $start2;
-        $end2   = $f->end()   if $f->end()   > $end2;
-      }
-      ($start2,$end2) = $self->slice2sr( $start2, $end );
-      if( $compara eq 'primary' ) {
-        my $TAG = "$TAG_PREFIX.$start.$end:$start2.$end2";
-        $self->join_tag( $Composite, $TAG, 0, 0, $join_col, 'fill', $join_z );
-        $self->join_tag( $Composite, $TAG, 1, 0, $join_col, 'fill', $join_z );
-      } else {
-        my $TAG = "$TAG_PREFIX.$start2.$end2:$start.$end";
-        $self->join_tag( $Composite, $TAG, 1, 0, $join_col, 'fill', $join_z );
-        $self->join_tag( $Composite, $TAG, 0, 0, $join_col, 'fill', $join_z );
+        my( $start, $end, $start2,$end2) = ( $f->hstart, $f->hend, $f->start, $f->end );
+        my( $start3, $end3 ) = $self->slice2sr( $start2, $end2 );
+        my $S = $start2 < $Composite->x ? 0 : ( $start2 - $Composite->x ) / $Composite->width;
+        my $E = $end2   > $Composite->x+$Composite->width ? 1 : ( $end2 - $Composite->x ) / $Composite->width;
+        if( $compara eq 'primary' ) {
+          my $TAG = "$TAG_PREFIX.$start.$end:$start3.$end3.$strand";
+          $self->join_tag( $Composite, $TAG, $S, $Z, $join_col, 'fill', $join_z );
+          $self->join_tag( $Composite, $TAG, $E, $Z, $join_col, 'fill', $join_z );
+        } else {
+          my $TAG = "$TAG_PREFIX.$start3.$end3:$start.$end.".(-$strand);
+          $self->join_tag( $Composite, $TAG, $E, $Z, $join_col, 'fill', $join_z );
+          $self->join_tag( $Composite, $TAG, $S, $Z, $join_col, 'fill', $join_z );
+        }
       }
     }
     $Composite->y( $Composite->y + $y_pos );

@@ -82,12 +82,12 @@ sub render_Intron {
 }
 
 sub render_Poly {
-    my ($self, $glyph) = @_;
-    my $href = $self->_getHref( $glyph );
-    return unless(defined $href && $href);
+  my ($self, $glyph) = @_;
+  my $href = $self->_getHref( $glyph );
+  return unless(defined $href && $href);
 
-    my $pointslist = join ' ',map { int } @{$glyph->pixelpoints()};
-    $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href>\n).$self->{'canvas'} ; 
+  my $pointslist = join ' ',map { int } @{$glyph->pixelpoints()};
+  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href>\n).$self->{'canvas'} ; 
 }
 
 sub render_Space {
@@ -111,6 +111,8 @@ sub _getHref {
     my $X = $glyph->$_;
     $actions{$_} = $X if defined $X;
   }   
+  $actions{'title'} = $glyph->alt if defined $glyph->alt;
+
   if($self->{'show_zmenus'}==1) {
     my $zmenu = $glyph->zmenu();
     if(defined $zmenu && (ref($zmenu) eq '' || ref($zmenu) eq 'HASH' && keys(%$zmenu)>0) ) {

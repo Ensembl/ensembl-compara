@@ -106,8 +106,12 @@ sub _init_non_assembled_contig {
     foreach( @{ $self->{'config'}{'other_slices'}} ) {
       if( $C!= $self->{'config'}->{'slice_number'} ) {
         if( $C ) {
-          $highlights .= sprintf( "&s$C=%s&c$C=%s:%s:%s&w$C=%s", $_->{'location'}->species,
-                       $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
+          if( $_->{'location'} ) {
+            $highlights .= sprintf( "&s$C=%s&c$C=%s:%s:%s&w$C=%s", $_->{'location'}->species,
+                         $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
+          } else {
+            $highlights .= sprintf( "&s$C=%s", $_->{'species'} );
+          }
         } else {
           $highlights .= sprintf( "&c=%s:%s:1&w=%s",
                        $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint,

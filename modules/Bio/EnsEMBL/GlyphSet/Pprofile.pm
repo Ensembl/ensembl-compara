@@ -48,10 +48,10 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x' => $row[0]->start(),
 	    'y' => 0,
-	    'href'	   => $self->ID_URL( 'PROSITE', $key ),
+	    'href'	   => $self->ID_URL( 'PFSCAN', $key ),
 		'zmenu' => {
 		'caption' => "Profile Domain",
-		$key 	  => $self->ID_URL( 'PROSITE', $key )
+		$key 	  => $self->ID_URL( 'PFSCAN', $key )
 	    },
 	});
 

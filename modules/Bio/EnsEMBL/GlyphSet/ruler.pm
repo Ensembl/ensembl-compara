@@ -43,6 +43,8 @@ sub _init {
     my $fontheight     = $Config->texthelper->height($fontname),
     my $fontwidth      = $Config->texthelper->width($fontname),
 
+    my $con_strand         = $self->{'container'}->strand();
+
     #####################################################################
     # The ruler has to be drawn in absolute x, because when the length is
     # too small the rounding errors screw everything
@@ -66,7 +68,6 @@ sub _init {
     });
     $self->push($tglyph);
     $bp_textwidth = $fontwidth * (length($text)+3);
-    
     
     my $lglyph = new Sanger::Graphics::Glyph::Rect({
         'z'         => 1000,
@@ -95,24 +96,27 @@ sub _init {
     # to get aroung px->postion problems we make each arrow head
     # exactly 2 text chars long
     # add the left arrow head....
-    my $gtriagl = new Sanger::Graphics::Glyph::Poly({
+    unless( $Config->{'compara'} && $con_strand == 1 ) {
+      my $gtriagl = new Sanger::Graphics::Glyph::Poly({
         'z'         => 1000,
 	'points'    => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
 	'colour'    => $feature_colour,
 	'absolutex' => 1,'absolutewidth'=>1,
 	'absolutey' => 1,
-    });    
-    $self->push($gtriagl);
-    
+      });    
+      $self->push($gtriagl);
+    }
     # add the right arrow head....
-    my $gtriagr = new Sanger::Graphics::Glyph::Poly({
+    unless( $Config->{'compara'} && $con_strand == -1 ) {
+      my $gtriagr = new Sanger::Graphics::Glyph::Poly({
         'z'         => 1000,
 	'points'    => [$im_width,6, ($im_width-$fontwidth*2),3, ($im_width-$fontwidth*2),9],
 	'colour'    => $feature_colour,
 	'absolutex' => 1,'absolutewidth'=>1,
 	'absolutey' => 1,
-    });
-    $self->push($gtriagr);
+      });
+      $self->push($gtriagr);
+    }
 }
 
 1;
