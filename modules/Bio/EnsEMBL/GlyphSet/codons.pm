@@ -117,7 +117,7 @@ sub _init {
 			});
 			$self->push($glyph);
 		}
-		foreach(@{$data->[ $offset + $phase * 4 + 1]}) { # stop codon info
+		foreach(@{$data->[ $offset + $phase * 4 + 1]}) {
 			my $glyph = new Sanger::Graphics::Glyph::Rect({
     	        'x'      	=> $_,
 		    	'y'      	=> $base + ($phase * $fullheight + $height) * $strand,

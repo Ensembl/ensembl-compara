@@ -8,7 +8,6 @@ use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
-use SiteDefs;
 use Sanger::Graphics::ColourMap;
 
 use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;

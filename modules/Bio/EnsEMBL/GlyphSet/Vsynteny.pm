@@ -9,7 +9,6 @@ use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Space;
-use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
@@ -158,7 +157,7 @@ sub _init {
             'border' => $BORD,
             'side' => $SIDE,
             'href' => qq(/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),
-            'zmenu' => 
+            'zmenu' => $ZMENU
         };
         if($SIDE) {
             my $marked =
@@ -559,11 +558,11 @@ sub draw_chromosome {
             'bordercolour' => $params{'red'},
             'absolutey'  => 1,
             'absolutex'  => 1,
-            'href'       => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$params{'this_chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5),
+            'href'       => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$params{'chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5),
             'zmenu'       => {
                 'caption' => "Entry point",
                 "Jump to ContigView" =>
-                "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$params{'this_chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5)
+                "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$params{'chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5)
             }
         }));
     }

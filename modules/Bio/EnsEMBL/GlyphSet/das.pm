@@ -6,8 +6,9 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Intron;
+use Sanger::Graphics::Bump;
 use ExtURL;
-use SiteDefs;
 
 
 sub init_label {
@@ -66,12 +67,12 @@ sub _init {
     my $h = $self->{'textheight'};
     
     my @features;
-    #warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
-    #warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
+    warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
+    warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
     eval{
         @features = grep { $_->das_type_id() !~ /(contig|component|karyotype)/i } @{$vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[]};
     };
-#    print STDERR map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
+    warn map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
     if($@) {
         print STDERR "----------\n",$@,"---------\n";
         return;
@@ -209,7 +210,7 @@ sub _init {
                     $C ++; 
                     $old_end = $END;
                     $Composite2->push( new Sanger::Graphics::Glyph::Rect({
-                        'x'          => $START,
+                        'x'          => $START-1,
                         'y'          => 0,
                         'width'      => $END-$START+1,
                         'height'     => 8,

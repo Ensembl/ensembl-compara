@@ -9,8 +9,6 @@ use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Line;
 
-use SiteDefs;
-
 sub init_label {
     my ($self) = @_;
     my $label = new Sanger::Graphics::Glyph::Text({

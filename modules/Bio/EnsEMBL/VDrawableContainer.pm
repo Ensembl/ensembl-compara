@@ -59,13 +59,13 @@ sub new {
             $classname->import();
     
             my $GlyphSet;
-            eval { $GlyphSet = new $classname($Container, $Config, $highlights); };
-            if($@) {
-               print STDERR "GLYPHSET $classname failed:\n";
-	       print STDERR $@ . "\n";
+            eval {
+                $GlyphSet = new $classname($Container, $Config, $highlights );
+            };
+            if($@ || !$GlyphSet) {
+                my $reason = $@ || "No reason given just returns undef";
+                print STDERR "GLYPHSET: glyphset $classname failed ($ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason\n";
             } else {
-               ########## load everything from the database
-               ########## don't waste any more time on this row if there's nothing in it
                $GlyphSet->_init();
                $tmp->{$Config->get($row, 'pos')} = $GlyphSet if( @{$GlyphSet->{'glyphs'}} );
             }

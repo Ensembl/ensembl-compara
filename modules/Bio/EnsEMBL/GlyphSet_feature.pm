@@ -165,7 +165,7 @@ sub _init {
         my $X = -1e8;
         foreach my $f (
             sort { $a->[0] <=> $b->[0] }
-            map { [$_->start, $_->end ] }
+            map { [$_->start, $_->end,$_ ] }
             grep { !($strand_flag eq 'b' && $strand != $_->strand || $_->start > $length || $_->end < 1) } @$features
         ) {
             my $START   = $f->[0];
@@ -178,7 +178,7 @@ sub _init {
             $X = $START;
             $C++;
             if($DRAW_CIGAR) {
-               $self->draw_cigar_feature($self, $_, $h, $feature_colour, 'black', $pix_per_bp );
+               $self->draw_cigar_feature($self, $f->[2], $h, $feature_colour, 'black', $pix_per_bp );
             } else {
 	      $self->push(new Sanger::Graphics::Glyph::Rect({
                 'x'          => $X-1,

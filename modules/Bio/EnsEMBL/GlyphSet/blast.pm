@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::blast;
 use strict;
 use EnsWeb;
-use SiteDefs;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -42,7 +41,7 @@ sub _init {
     my @hits;
 
     foreach my $ticket (@blast_tickets) {
-        my $filename = $SiteDefs::ENSEMBL_TMP_DIR_BLAST."/$ticket.cache";
+        my $filename = EnsWeb::species_defs->ENSEMBL_TMP_DIR_BLAST."/$ticket.cache";
         if( -e $filename ) {
             open FH, $filename;
             while(<FH>) {

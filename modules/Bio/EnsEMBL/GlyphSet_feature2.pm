@@ -86,7 +86,7 @@ sub _init {
 
     if( $dep > 0 ) {
         foreach my $f ( @{$self->features()} ){
-            next if $strand_flag eq 'b' && $strand != $f->strand || $f->end < 1 || $f->start > $length ;
+            next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length ;
             push @{$id{$f->hseqname()}}, [$f->start,$f];
         }
 
@@ -159,7 +159,7 @@ sub _init {
                 $ZZ = "chr=$i&vc_start=$start&vc_end=$end";
             }
             $Composite->zmenu( $self->zmenu( "Chr$i $start-$end", $ZZ ) );
-       	    $Composite->href(  $self->href( $i, $ZZ ) );
+       	    $Composite->href(  $self->href( $ZZ ) );
             $self->push( $Composite );
 
             if(exists $highlights{$i}) {
@@ -179,7 +179,7 @@ sub _init {
         foreach (
             sort { $a->[0] <=> $b->[0] }
             map { [$_->start, $_ ] }
-            grep { !($strand_flag eq 'b' && $strand != $_->strand || $_->start > $length || $_->end < 1) } @{$self->features()}
+            grep { !($strand_flag eq 'b' && $strand != $_->hstrand || $_->start > $length || $_->end < 1) } @{$self->features()}
         ) {
             my $f       = $_->[1];
             my $START   = $_->[0];
@@ -219,8 +219,12 @@ sub _init {
                 $self->push($glyph);
             }
         }
+        $self->errorTrack( "No ".$self->my_label." in this region" )
+            unless( $Config->get('_settings','opt_empty_tracks')==0 || $C );
+
     }
 #    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+
 }
 
 1;

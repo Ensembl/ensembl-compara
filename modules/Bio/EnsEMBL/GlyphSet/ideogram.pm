@@ -7,7 +7,6 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Line;
-use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
@@ -77,7 +76,8 @@ sub _init {
     
     my $done_one_acen = 0;	    # flag for tracking place in chromsome
 
-    foreach my $band (@$bands){
+    if(@$bands) {
+      foreach my $band (@$bands){
 	my $bandname       = $band->name();
 # 	my $band2          = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
 # 	my $vc_band_start  = $band2->start();
@@ -198,6 +198,27 @@ sub _init {
 		});
 		$self->push($tglyph);
 	}
+      }
+    } else {
+      $gband = new Sanger::Graphics::Glyph::Line({
+                'x'      => 0,
+                'y'      => 2,
+                'width'  => $length,
+                'height' => 0,
+                'colour' => $black,
+                'absolutey' => 1,
+                });
+            $self->push($gband);
+
+            $gband = new Sanger::Graphics::Glyph::Line({
+                'x'      => 0,
+                'y'      => 12,
+                'width'  => $length,
+                'height' => 0,
+                'colour' => $black,
+                'absolutey' => 1,
+                });
+            $self->push($gband);
     }
 
     ##############################################

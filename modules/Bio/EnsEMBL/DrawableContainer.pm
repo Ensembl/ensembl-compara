@@ -7,6 +7,7 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 
 use Bio::EnsEMBL::GlyphSet::sub_repeat;
+use Bio::EnsEMBL::GlyphSet::das;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 use ExtURL;
@@ -68,8 +69,9 @@ sub new {
             eval {
                 $GlyphSet = new $classname($Container, $Config, $highlights, $strand);
             };
-            if($@) {
-                print STDERR "GLYPHSET $classname failed\n";
+            if($@ || !$GlyphSet) {
+                my $reason = $@ || "No reason given just returns undef";
+                print STDERR "GLYPHSET: glyphset $classname failed ($ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason\n";
             } else {
                 $tmp_glyphset_store->{$Config->get($row, 'pos')} = $GlyphSet;
             }

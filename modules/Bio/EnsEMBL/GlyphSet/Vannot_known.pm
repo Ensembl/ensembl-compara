@@ -1,18 +1,17 @@
-package Bio::EnsEMBL::GlyphSet::Vannot_known;
+package Sanger::Graphics::GlyphSet::Vannot_known;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Text;
-use Bio::EnsEMBL::Glyph::Line;
-use SiteDefs;
+use Sanger::Graphics::GlyphSet;
+@ISA = qw(Sanger::Graphics::GlyphSet);
+use Sanger::Graphics::Glyph::Rect;
+use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Glyph::Line;
 
 sub init_label {
     my ($self) = @_;
     my $Config = $self->{'config'};	
-    my $label = new Bio::EnsEMBL::Glyph::Text({
+    my $label = new Sanger::Graphics::Glyph::Text({
 		'text'      => 'Known',
 		'font'      => 'Small',
 		'colour'	=> $Config->get('Vannot_known','col'),
@@ -35,7 +34,7 @@ sub _init {
     my @gene = $gene->get_binvalues();
 
     foreach (@gene){
-	    my $g_x = new Bio::EnsEMBL::Glyph::Rect({
+	    my $g_x = new Sanger::Graphics::Glyph::Rect({
 		    'x'      => $_->{'chromosomestart'},
 		    'y'      => 0,
 		    'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},
