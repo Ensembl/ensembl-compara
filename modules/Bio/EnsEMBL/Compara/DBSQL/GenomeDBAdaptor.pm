@@ -73,31 +73,25 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   if( defined $self->{'_cache'}->{$dbid} ) {
+   my $gdb = undef;
+
+   # check to see whether all the GenomeDBs haev already been created
+   if ( $self->{'_GenomeDB_cache'}) {
+     if ( defined $self->{'cache'}->{$dbid}) {
        return $self->{'_cache'}->{$dbid};
+     }
+     else {  # return undef if fed a bogus dbID
+       return undef;
+     }
    }
-
-   my $sth = $self->prepare("
-     SELECT name, locator 
-     FROM genome_db 
-     WHERE genome_db_id = $dbid
-   ");
-   $sth->execute;
-
-   my ($name,$locator) = $sth->fetchrow_array();
-
-   if( !defined $name) {
-       $self->throw("No database with this dbID");
+   # otherwise go and create them
+   else {
+     $gdb = $self->create_GenomeDBs($dbid);
    }
-
-   my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
-   $gdb->name($name);
-   $gdb->locator($locator);
-   $gdb->dbID($dbid);
-   $self->{'_cache'}->{$dbid} = $gdb;
 
    return $gdb;
 }
+
 
 =head2 fetch_by_species_tag
 
@@ -180,6 +174,34 @@ sub store{
 
    return $gdb->dbID;
 }
+
+
+sub create_GenomeDBs {
+  my ( $self, $dbid ) = @_;
+
+  # grab all the possible species databases in the genome db table
+  my $sth = $self->prepare("
+     SELECT * 
+     FROM genome_db 
+   ");
+   $sth->execute;
+
+  # build a genome db for each species
+  while ( my @db_row = $sth->fetchrow_array() ) {
+    my ($dbid, $name, $locator) = @db_row;
+
+    my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
+    $gdb->name($name);
+    $gdb->locator($locator);
+    $gdb->dbID($dbid);
+    $self->{'_cache'}->{$dbid} = $gdb;
+  }
+
+  $self->{'_GenomeDB_cache'} = 1;
+  
+  return $self->{'_cache'}->{$dbid};
+}
+
 
 
 1;
