@@ -61,12 +61,12 @@ sub _store_PAFS {
   my $memberDBA = $self->db->get_MemberAdaptor();
 
   my $query = "INSERT INTO peptide_align_feature(".
-                "qmember_id,hmember_id,analysis_id," .
+                "qmember_id,hmember_id,qgenome_db_id,hgenome_db_id,analysis_id," .
                 "qstart,qend,hstart,hend,".
                 "score,evalue,align_length," .
                 "identical_matches,perc_ident,".
                 "positive_matches,perc_pos,hit_rank,cigar_line) ".
-              " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+              " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
   my $sth = $self->db->prepare($query);
 
   foreach my $paf (@out) {
@@ -99,6 +99,8 @@ sub _store_PAFS {
 
       $sth->execute($paf->query_member->dbID,
                     $paf->hit_member->dbID,
+                    $paf->query_member->genome_db_id,
+                    $paf->hit_member->genome_db_id,
                     $analysis_id,
                     $paf->qstart,
                     $paf->qend,
@@ -373,16 +375,14 @@ sub fetch_BRH_by_member_genomedb
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
                        'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       undef],
-                    [ ['member', 'hm'],
-                       'paf.hmember_id=hm.member_id',
                        undef]
                   ];
 
   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1".
                    " AND paf.qmember_id='".$qmember_id."'".
                    " AND paf2.hmember_id='".$qmember_id."'".
-                   " AND hm.genome_db_id='".$hit_genome_db_id."'";
+                   " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
+                   " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
 
   my ($obj) = @{$self->_generic_fetch($constraint, $extrajoin)};
   return $obj;

@@ -56,6 +56,8 @@ CREATE TABLE genome_db_extn (
 -- peptide_align_feature_id  - internal id
 -- qmember_id                - member.member_id of query peptide
 -- hmember_id                - member.member_id of hit peptide
+-- qgenome_db_id             - genome_db_id of query peptide (for query optimization)
+-- hgenome_db_id             - genome_db_id of hit peptide (for query optimization)
 -- qstart                    - start pos in query peptide sequence
 -- qend                      - end  pos in query peptide sequence
 -- hstart                    - start pos in hit peptide sequence
@@ -74,6 +76,8 @@ CREATE TABLE peptide_align_feature (
   peptide_align_feature_id  int(10) unsigned NOT NULL auto_increment,
   qmember_id                int(10) NOT NULL,
   hmember_id                int(10) NOT NULL,
+  qgenome_db_id             int(10) NOT NULL,
+  hgenome_db_id             int(10) NOT NULL,
   analysis_id               int(10) NOT NULL,
   qstart                    int(10) DEFAULT '0' NOT NULL,
   qend                      int(10) DEFAULT '0' NOT NULL,
