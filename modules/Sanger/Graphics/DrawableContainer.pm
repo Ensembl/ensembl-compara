@@ -90,86 +90,93 @@ sub new {
     }
     my @glyphsets = ();
     $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
+
     if( ($Container->{'__type__'}||"") eq 'fake' ) {
       my $classname = qq($self->{'prefix'}::GlyphSet::comparafake);
       next unless $self->dynamic_use( $classname );
       my $GlyphSet;
+      
       eval {
         $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, 1 );
       };
       $Config->container_width(1);
       push @glyphsets, $GlyphSet unless $@;
-     
-    } else {
-    for my $strand (@strands_to_show) {
-      my $tmp_gs_store = {};
-      for my $row ($Config->subsections( 1 )) {
-        next unless (($Config->get($row, 'on')||"") eq "on");
-        my $str_tmp = $Config->get($row, 'str');
-        next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
-        next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
-        if( defined $Config->get($row,'manager')) { 
-          $manager_cache{ $Config->get($row,'manager') } = 1; 
-          next;
-        }
-      ## create a new glyphset for this row
-        my $GlyphSet;
-        my $classname;
-        if( my $glyphset = $Config->get($row,'glyphset') ) {
-          $classname = qq($self->{'prefix'}::GlyphSet::$glyphset);
-          next unless $self->dynamic_use( $classname );
-          eval { # Generic glyphsets need to have the type passed as a fifth parameter...
-            $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, $strand, { 'config_key' => $row } );
-          };
-        } else {
-          $classname = qq($self->{'prefix'}::GlyphSet::$row);
-          next unless $self->dynamic_use( $classname );
-      ## generate a set for both strands
-
-          eval {
-            $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, $strand );
-          };
-        }
-        if($@ || !$GlyphSet) {
-          my $reason = $@ || "No reason given just returns undef";
-          warn "GLYPHSET: glyphset $classname failed at ",gmtime(),"\n",
-               "GLYPHSET: $reason";
-        } else {
-          $tmp_gs_store->{$Config->get($row, 'pos')} = $GlyphSet;
-        }
-      }
-      my $managed_offset = $Config->{'_das_offset'} || 5500;
-      ## install the glyphset managers, we've just cached the ones we need...
-      foreach my $manager ( reverse sort keys %manager_cache ) {
-        next unless $self->dynamic_use(
-          $self->{'prefix'}.qq(::GlyphSet::$manager)
-        );
-        my $classname = $self->{'prefix'}.qq(::GlyphSetManager::$manager);
-        next unless $self->dynamic_use( $classname );
-        my $gsm = new $classname(
-          $Container, $Config, $self->{'highlights'}, $strand
-        );
-        for my $glyphset (
-          sort { $a->managed_name cmp $b->managed_name } $gsm->glyphsets()
-        ) {
-          my $row = $glyphset->managed_name();
-          next if     $Config->get($row, 'on')     eq "off";
-          next if     $Config->get($manager, 'on') eq 'off';
-          my $str_tmp = $Config->get($row, 'str');
-          next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
-          next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
-          $tmp_gs_store->{ $Config->get($row, 'pos') || $managed_offset++ }
-            = $glyphset;
-        }
-      }
-      ## sort out the resulting mess
-      my @tmp = map { $tmp_gs_store->{$_} } 
-                sort { $a <=> $b }
-                keys %{ $tmp_gs_store };
-      push @glyphsets, ($strand == 1 ? reverse @tmp : @tmp);
-    }
     } 
-    my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length() || $panel_width));
+    
+    else {
+      for my $strand (@strands_to_show) {
+	my $tmp_gs_store = {};
+	for my $row ($Config->subsections( 1 )) {
+	  next unless (($Config->get($row, 'on')||"") eq "on");
+	  my $str_tmp = $Config->get($row, 'str');
+	  next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
+	  next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
+	  if( defined $Config->get($row,'manager')) { 
+	    $manager_cache{ $Config->get($row,'manager') } = 1; 
+	    next;
+	  }
+
+	  ## create a new glyphset for this row
+	  my $GlyphSet;
+	  my $classname;
+	  if( my $glyphset = $Config->get($row,'glyphset') ) {
+	    $classname = qq($self->{'prefix'}::GlyphSet::$glyphset);
+	    next unless $self->dynamic_use( $classname );
+	    eval { # Generic glyphsets need to have the type passed as a fifth parameter...
+	      $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, $strand, { 'config_key' => $row } );
+	    };
+	  }
+	  else {
+	    $classname = qq($self->{'prefix'}::GlyphSet::$row);
+	    next unless $self->dynamic_use( $classname );
+	    ## generate a set for both strands
+	    eval {
+	      $GlyphSet = $classname->new( $Container, $Config, $self->{'highlights'}, $strand );
+	    };
+	  }
+	  if($@ || !$GlyphSet) {
+	    my $reason = $@ || "No reason given just returns undef";
+	    warn "GLYPHSET: glyphset $classname failed at ",gmtime(),"\n",
+	      "GLYPHSET: $reason";
+	  } 
+	  else {
+	    $tmp_gs_store->{$Config->get($row, 'pos')} = $GlyphSet;
+	  }
+	}
+	my $managed_offset = $Config->{'_das_offset'} || 5500;
+	## install the glyphset managers, we've just cached the ones we need...
+
+	foreach my $manager ( reverse sort keys %manager_cache ) {
+
+	  next unless $self->dynamic_use(
+					 $self->{'prefix'}.qq(::GlyphSet::$manager)
+					);
+	  my $classname = $self->{'prefix'}.qq(::GlyphSetManager::$manager);
+	  next unless $self->dynamic_use( $classname );
+	  my $gsm = new $classname(
+				   $Container, $Config, $self->{'highlights'}, $strand
+				  );
+
+	  for my $glyphset (sort { $a->managed_name cmp $b->managed_name } $gsm->glyphsets()) {
+	    my $row = $glyphset->managed_name();
+	    next if     $Config->get($row, 'on')     eq "off";
+	    next if     $Config->get($manager, 'on') eq 'off';
+	    my $str_tmp = $Config->get($row, 'str');
+	    next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
+	    next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
+	    $tmp_gs_store->{ $Config->get($row, 'pos') || $managed_offset++ }
+	      = $glyphset;
+	  }
+	}
+	## sort out the resulting mess
+	my @tmp = map { $tmp_gs_store->{$_} } 
+	  sort { $a <=> $b }
+	    keys %{ $tmp_gs_store };
+	push @glyphsets, ($strand == 1 ? reverse @tmp : @tmp);
+      }
+}
+
+   my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length() || $panel_width));
   
   if($show_buttons eq 'yes') {
   for my $glyphset (@glyphsets) {
