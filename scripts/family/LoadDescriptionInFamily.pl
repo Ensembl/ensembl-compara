@@ -3,46 +3,39 @@
 use strict;
 use Getopt::Long;
 use IO::File;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Registry;
+
 $| = 1;
 
 my $usage = "
-Usage: $0 options input_file
-
-Options:
--host 
--dbname family dbname
--dbuser
--dbpass
-
-
+$0
+  [--help]                    this menu
+   --dbname string            (e.g. compara25) one of the compara destination database Bio::EnsEMBL::Registry aliases
+  [--reg_conf filepath]       the Bio::EnsEMBL::Registry configuration file. If none given, 
+                              the one set in ENSEMBL_REGISTRY will be used if defined, if not
+                              ~/.ensembl_init will be used.
 \n";
 
 my $help = 0;
-my ($host,$dbname,$dbuser,$dbpass);
-my $port = "";
+my ($dbname,$reg_conf);
 
 GetOptions('help' => \$help,
-	   'host=s' => \$host,
-           'port=i' => \$port,
 	   'dbname=s' => \$dbname,
-	   'dbuser=s' => \$dbuser,
-	   'dbpass=s' => \$dbpass);
+	   'reg_conf=s' => \$reg_conf);
 
 if ($help || scalar @ARGV != 1) {
   print $usage;
   exit 0;
 }
 
+# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
+# if no reg_conf file is given.
+Bio::EnsEMBL::Registry->load_all($reg_conf);
+
 my ($file) = @ARGV;
 
-my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-                                                            -port   => $port,
-                                                            -user   => $dbuser,
-                                                            -pass   => $dbpass,
-                                                            -dbname => $dbname);
-
-my $sth = $compara_db->prepare("UPDATE family set description = ?, description_score =? where family_id = ?");
+my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname,'compara')->dbc;
+my $sth = $dbc->prepare("UPDATE family set description = ?, description_score =? where family_id = ?");
 
 my $FH = IO::File->new();
 $FH->open($file) || die "Could not open alignment file [$file], $!\n;";
@@ -66,5 +59,6 @@ $line\n";
 }
 
 $FH->close;
+$sth->finish;
 
 exit 0;
