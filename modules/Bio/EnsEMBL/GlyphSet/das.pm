@@ -19,8 +19,6 @@ sub init_label {
     my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ?
 qq[javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] : qq[javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
 
-    (my $T = $URL)=~s/\'/\\\'/g;
-    #####'###### 
     $self->label( new Sanger::Graphics::Glyph::Text({
         'text'      => $self->{'extras'}->{'caption'},
         'font'      => 'Small',
@@ -29,9 +27,9 @@ qq[javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/exter
         'href'      => $URL,
         'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
             {   'caption'                       => 'Configure' ,
-                '01:Advanced configuration...'  => $T }:
+                '01:Advanced configuration...'  => $URL }:
             {   'caption'                       => 'HELP', 
-                "01:Track information..."       => $T }
+                "01:Track information..."       => $URL }
     }) );
 }
 
