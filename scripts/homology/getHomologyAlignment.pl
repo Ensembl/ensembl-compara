@@ -76,7 +76,7 @@ $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('E
 #$member->print_member() if($member);
 
 my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_paired_species($member, $self->{'species'})};
-$homology->print_homology() if($homology);
+#$homology->print_homology() if($homology);
 
 my $queryMA;
 my $orthMA;
@@ -96,8 +96,9 @@ foreach my $ma (@{$homology->get_all_Member_Attribute}) {
 
 }
 print("Homology between ", $queryMA->{'gene'}->stable_id, "(",$queryMA->cigar_start, ",", $queryMA->cigar_end, ",", $queryMA->{'pep_len'}, ")" ,
-      " and ", $orthMA->{'gene'}->stable_id, "(",$orthMA->cigar_start, ",", $orthMA->cigar_end, ",", $orthMA->{'pep_len'}, ")\n"); 
-
+      " and ", $orthMA->{'gene'}->stable_id, "(",$orthMA->cigar_start, ",", $orthMA->cigar_end, ",", $orthMA->{'pep_len'}, ")\n\n"); 
+#print($queryMA->{'peptide'}->sequence, "\n");
+#print($orthMA->{'peptide'}->sequence, "\n");
 
 
 #
@@ -107,8 +108,8 @@ print("Homology between ", $queryMA->{'gene'}->stable_id, "(",$queryMA->cigar_st
 my $alignment = $homology->get_SimpleAlign();
 
 my ($seq1, $seq2)  = $alignment->each_seq;
-my $seqStr1 = $seq1->seq();
-my $seqStr2 = $seq2->seq();
+my $seqStr1 = "|".$seq1->seq().'|';
+my $seqStr2 = "|".$seq2->seq().'|';
 
 if($queryMA->cigar_start>1) {
   my $missingSeq = substr($queryMA->{'peptide'}->sequence, 0, $queryMA->cigar_start-1);
@@ -121,6 +122,18 @@ if($orthMA->cigar_start>1) {
 my $startdiff = $orthMA->cigar_start - $queryMA->cigar_start;
 while($startdiff>0) { $seqStr1 = " ".$seqStr1; $startdiff--; }
 while($startdiff<0) { $seqStr2 = " ".$seqStr2; $startdiff++; }
+
+if($queryMA->cigar_end < $queryMA->{'pep_len'}) {
+  my $missingSeq = substr($queryMA->{'peptide'}->sequence, $queryMA->cigar_end, $queryMA->{'pep_len'}-$queryMA->cigar_end);
+  $seqStr1 .= $missingSeq;
+}
+if($orthMA->cigar_end < $orthMA->{'pep_len'}) {
+  my $missingSeq = substr($orthMA->{'peptide'}->sequence, $orthMA->cigar_end, $orthMA->{'pep_len'}-$orthMA->cigar_end);
+  $seqStr2 .= $missingSeq;
+}
+my $enddiff = length($seqStr1) - length($seqStr2);
+while($enddiff>0) { $seqStr2 .= " "; $enddiff--; }
+while($enddiff<0) { $seqStr1 .= " "; $enddiff++; }
 
 
 my $label1 = sprintf("%20s : ", $seq1->id);
