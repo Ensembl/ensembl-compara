@@ -1,23 +1,18 @@
-package Bio::EnsEMBL::GlyphSet::mouse_swall;
+package Bio::EnsEMBL::GlyphSet::other_swall;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "Mouse proteins"; }
+sub my_label { return "Other proteins"; }
 
 sub features {
     my ($self) = @_;
     return 
     $self->{'container'}->get_all_SimilarityFeatures_above_score(
-        "mouse_swall", 80, $self->glob_bp
-    ),
-    $self->{'container'}->get_all_SimilarityFeatures_above_score(
-        "mouse_refseq", 80, $self->glob_bp
-    ),
-    
-    ;
+        "other_swall", 80, $self->glob_bp
+    );
 }
 
 sub href {

@@ -52,6 +52,30 @@ sub href {
     return "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=".$f->name
 }
 
+sub tag {
+    my ($self, $f) = @_; 
+    my @result = (); 
+    my $bef = $f->BACend_flag;
+    push @result, {
+        'style'  => 'right-end',
+        'colour' => $self->{'colours'}{"bacend"}
+    } if ( $bef == 2 || $bef == 4 );
+    push @result, { 
+        'style'=>'left-end',  
+        'colour' => $self->{'colours'}{"bacend"}
+    } if ( $bef == 2 || $bef == 3 );
+    if( $f->fp_size && $f->fp_size > 0 ) {
+        my $start = int( ($f->start + $f->end - $f->fp_size)/2 );
+        my $end   = $start + $f->fp_size - 1 ;
+        push @result, {
+            'style' => 'underline',
+            'colour' => $self->{'colours'}{"seq_len"},
+            'start'  => $start,
+            'end'    => $end
+        }
+   }
+    return @result;
+}
 ## Create the zmenu...
 ## Include each accession id separately
 

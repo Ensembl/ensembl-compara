@@ -74,7 +74,7 @@ sub _init {
 
     my $useAssembly;
     eval {
-        $useAssembly = $vc->has_AssemblyContigs;
+        $useAssembly = $vc->has_MapSet( 'assembly' ); # Do we have assembly_contigs...
     };
     print STDERR "Using assembly $useAssembly\n";
     my $i = 1;
@@ -86,7 +86,8 @@ sub _init {
 ## Draw a warning track....
         $self->errorTrack("Golden path gap - no contigs to display!");
     } elsif($useAssembly && $length<5e6) { ## THIS IS THE FAKE STUFF FOR MOUSE
-        my @assembly_contigs = $vc->each_AssemblyContig;
+#        my @assembly_contigs = $vc->each_AssemblyContig;
+        my @assembly_contigs = $vc->get_all_MapFrags( 'assembly' );
         my %contigs = ();
         my %big_contigs = ();
         foreach my $big_contig ( @map_contigs ) {
@@ -95,8 +96,10 @@ sub _init {
             $contigs{ $ID } = [];
             $big_contigs{ $ID } = [ $big_contig->start, $big_contig->end ];
             foreach my $little_contig (@assembly_contigs) {
-                my $start = $little_contig->chr_start - $vc->_global_start + 1;
-                my $end   = $little_contig->chr_end   - $vc->_global_start + 1;
+#                my $start = $little_contig->chr_start - $vc->_global_start + 1;
+#               my $end   = $little_contig->chr_end   - $vc->_global_start + 1;
+                my $start = $little_contig->start;
+                my $end   = $little_contig->end;
                 if( $end   >= $big_contig->start || $start <= $big_contig->end ) {
                     $start = $big_contig->start if $big_contig->start > $start;
                     $end   = $big_contig->end   if $big_contig->end   < $end;

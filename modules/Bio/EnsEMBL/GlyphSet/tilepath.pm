@@ -195,9 +195,11 @@ sub _init {
 				\@bitmap
             );
     		next if ($row > $dep);
-            $Composite->y($Composite->y() + (1.4 * $row * $h));
+            $Composite->y_t($Composite->y() + (1.4 * $row * $h));
             if($fish_clone) {
-                $fish_clone->transform( {'translatey' => (1.4 * $row * $h)} );
+                $fish_clone->transform(
+                    {'translatey' => (1.4 * $row * $h)}
+                );
             }
 	    }
 
