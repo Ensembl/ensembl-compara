@@ -44,11 +44,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 
 use strict;
 
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::Blast;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 use vars qw(@ISA);
 
@@ -69,11 +71,12 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
-  my $memberAdaptor = $self->db->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor");
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+                           -DBCONN => $self->db);
 
   
   my $member_id  = $self->input_id;
-  my $member     = $memberAdaptor->fetch_by_dbID($member_id);
+  my $member     = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
   $self->throw("No member in compara for member_id=$member_id") unless defined($member);
 
   my $bioseq     = $member->bioseq();
@@ -127,8 +130,9 @@ sub fetch_input {
 sub write_output {
   my( $self) = @_;
 
-  my $PAFAdaptor = $self->db->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor");
-  $PAFAdaptor->store($self->output);
+  $self->{'comparaDBA'}
+    ->get_PeptideAlignFeatureAdaptor
+    ->store($self->output);
 }
 
 1;
