@@ -7,7 +7,7 @@
 --           tables stores the nodes in a tree formated DB
 -- semantics:
 --      taxon_id                                -- node id in GenBank taxonomy database
---      parent_taxon_id                         -- parent node id in GenBank taxonomy database
+--      parent_id                               -- parent node id in GenBank taxonomy database
 --      rank                                    -- rank of this node (superkingdom, kingdom, ...)
 --      embl_code                               -- locus-name prefix; not unique
 --      division_id                             -- see division.dmp file
@@ -22,7 +22,7 @@
 
 CREATE TABLE ncbi_taxa_nodes (
   taxon_id                        int(10) unsigned NOT NULL,
-  parent_taxon_id                 int(10) unsigned NOT NULL,
+  parent_id                       int(10) unsigned NOT NULL,
   rank                            char(32) default '' NOT NULL,
   embl_code                       int NOT NULL,
   division_id                     int NOT NULL,
@@ -36,9 +36,10 @@ CREATE TABLE ncbi_taxa_nodes (
   comments                        char(40) default '' NOT NULL,
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
+  root_id                         int(10) default 1 NOT NULL,
   
   KEY (taxon_id),
-  KEY (parent_taxon_id),
+  KEY (parent_id),
   KEY (rank),
   KEY (division_id)
 );
