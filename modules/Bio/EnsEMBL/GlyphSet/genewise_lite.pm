@@ -73,16 +73,6 @@ sub text_label {
         ($vt->{'type'} eq 'unknown' ? 'NOVEL' : $id) : $vtid;    
 }
 
-sub legend {
-    my ($self, $colours) = @_;
-    return ('genes', 900, 
-        [
-            'EnsEMBL predicted genes (known)' => $colours->{'known'},
-            'EnsEMBL predicted genes (novel)' => $colours->{'unknown'}
-        ]
-    );
-}
-
 sub error_track_name { return 'EnsEMBL genewises'; }
 
 1;
