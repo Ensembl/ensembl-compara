@@ -699,6 +699,66 @@ sub alignment_strings {
 }
 
 
+=head2 get_SimpleAlign
+
+  Arg [1]    : list of string $flags
+               translated = by default, the sequence alignment will be on nucleotide. With translated flag
+                            the aligned sequences are translated.
+               uc = by default aligned sequences are given in lower cases. With uc flag, the aligned
+                    sequences are given in upper cases.
+  Example    : $daf->get_SimpleAlign or
+               $daf->get_SimpleAlign("translated") or
+               $daf->get_SimpleAlign("translated","uc")
+  Description: Allows to rebuild the alignment string of all the genomic_align objects within
+               this genomic_align_block using the cigar_string information
+               and access to the core database slice objects
+  Returntype : a Bio::SimpleAlign object
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub get_SimpleAlign {
+  my ( $self, @flags ) = @_;
+
+  # setting the flags
+  my $uc = 0;
+  my $translated = 0;
+
+  for my $flag ( @flags ) {
+    $uc = 1 if ($flag =~ /^uc$/i);
+    $translated = 1 if ($flag =~ /^translated$/i);
+  }
+
+  my $sa = Bio::SimpleAlign->new();
+
+  #Hack to try to work with both bioperl 0.7 and 1.2:
+  #Check to see if the method is called 'addSeq' or 'add_seq'
+  my $bio07 = 0;
+  if(!$sa->can('add_seq')) {
+    $bio07 = 1;
+  }
+
+  foreach my $genomic_align (@{$self->genomic_align_array}) {
+    my $alignSeq = $genomic_align->aligned_sequence;
+    
+    my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
+                                         -START  => $genomic_align->dnafrag_start,
+                                         -END    => $genomic_align->dnafrag_end,
+                                         -ID     => $genomic_align->display_id,
+                                         -STRAND => $genomic_align->dnafrag_strand);
+
+    $loc_seq->seq($uc ? uc $loc_seq->translate->seq
+                      : lc $loc_seq->translate->seq) if ($translated);
+
+    if($bio07) { $sa->addSeq($loc_seq); }
+    else       { $sa->add_seq($loc_seq); }
+                     
+  }
+  return $sa;
+}
+
+
 =head2 _print
 
   Arg [1]    : none
