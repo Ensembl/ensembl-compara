@@ -56,6 +56,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
+use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor;
 
@@ -131,7 +132,8 @@ sub createBlastRules
           if(($blastPhylum eq $phylum) and ($analysis->logic_name =~ /SubmitPep_/)) {
             #$analysis is a SubmitPep so it's the condition
             #$blastAnalysis is the goal
-            $self->addSimpleRule($analysis, $blastAnalysis);
+            #$self->addSimpleRule($analysis, $blastAnalysis);
+            $self->addRule($analysis, $blastAnalysis);
           }
         }
       }
@@ -178,7 +180,7 @@ sub addSimpleRule
   my $conditionAnalysis = shift;
   my $goalAnalysis = shift;
   
-  print("RULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
+  print("SIMPLERULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
   
   my $rule = Bio::EnsEMBL::Compara::SimpleRule->new(
       '-goal_analysis'      => $goalAnalysis,
@@ -187,6 +189,24 @@ sub addSimpleRule
   $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($rule);
 
   my $temp_rule = $self->{'comparaDBA'}->get_adaptor('SimpleRule')->fetch_by_dbID($rule->dbID);
+}
+
+
+sub addRule
+{
+  my $self = shift;
+  my $conditionAnalysis = shift;
+  my $goalAnalysis = shift;
+
+  print("RULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
+
+  # really need to check if rule exists even if it's not MP-safe
+  
+  my $rule = Bio::EnsEMBL::Pipeline::Rule->new(
+      '-goalanalysis'      => $goalAnalysis);
+  $rule->add_condition($conditionAnalysis->logic_name());
+
+  $self->db->get_RuleAdaptor->store($rule);
 }
 
 
