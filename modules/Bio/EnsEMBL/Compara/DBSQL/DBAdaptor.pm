@@ -253,6 +253,7 @@ sub get_available_adaptors {
       "Taxon" => "Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor",
       "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
       "DnaFragChunk"        => "Bio::EnsEMBL::Compara::DBSQL::DnaFragChunkAdaptor",
+      "Sequence" => "Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor",
       "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor"
         );
   return (\%pairs);
