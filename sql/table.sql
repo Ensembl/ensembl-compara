@@ -13,7 +13,7 @@ CREATE TABLE dnafrag (
   end int(11) DEFAULT '0' NOT NULL,
   name varchar(40) DEFAULT '' NOT NULL,
   genome_db_id int(10) DEFAULT '0' NOT NULL,
-  dnafrag_type enum('Slice','Chromosome'),
+  dnafrag_type enum('chromosome','scaffold'),
   PRIMARY KEY (dnafrag_id),
   KEY dnafrag_id (dnafrag_id,name),
   UNIQUE name (name,genome_db_id,dnafrag_type)
@@ -62,6 +62,9 @@ CREATE TABLE genomic_align_block (
   score double,
   perc_id int(10),
   cigar_line mediumtext,
+  group_id int(10) DEFAULT '0' NOT NULL,
+  level_id int(10) DEFAULT '0' NOT NULL,
+  strands_reversed tinyint(1) DEFAULT '0' NOT NULL,
 
   KEY consensus_idx (consensus_dnafrag_id,method_link_id,consensus_start,consensus_end,query_dnafrag_id),
   KEY query_dnafrag_id (query_dnafrag_id,method_link_id,query_start,query_end),
@@ -223,6 +226,9 @@ CREATE TABLE homology (
  description		varchar(40), # SEED, PIP, etc...
  dn             float(10,5),
  ds             float(10,5),
+ n              float(10,1),
+ s              float(10,1),
+ lnl            float(10,3),
 
  PRIMARY KEY (homology_id)
 );
