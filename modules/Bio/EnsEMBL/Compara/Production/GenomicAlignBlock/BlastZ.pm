@@ -71,6 +71,7 @@ sub configure_runnable {
   my $self = shift;
 
   my ($first_qy_chunk) = @{$self->query_DnaFragChunkSet->get_all_DnaFragChunks};
+  my ($first_db_chunk) = @{$self->db_DnaFragChunkSet->get_all_DnaFragChunks};
 
   #
   # get the sequences and create the runnable
@@ -82,7 +83,12 @@ sub configure_runnable {
     $qyChunkFile = $self->dumpChunkSetToWorkdir($self->query_DnaFragChunkSet);
   }
 
-  my $dbChunkFile = $self->dumpChunkToWorkdir($self->db_DnaFragChunk);
+  if ($self->db_DnaFragChunkSet->count > 1) {
+    throw("blastz can not use more than 1 sequence in the database/target file. You may
+have specified a group_set_size in the target_dna_collection. In the case of blastz this should only be used for query_dna_collection");
+  }
+
+  my $dbChunkFile = $self->dumpChunkToWorkdir($first_db_chunk);
 
   my $program = $self->analysis->program_file;
   $program = 'blastz' unless($program);
