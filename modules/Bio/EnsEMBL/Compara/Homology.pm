@@ -448,7 +448,7 @@ sub print_homology {
   my $self = shift;
   
   print("Homology : ");
-  foreach my $RefArrayOfMemberAttributeArrayRef ($self->get_Member_Attribute_by_source("ENSEMBLGENE")) {
+  foreach my $RefArrayOfMemberAttributeArrayRef ($self->get_all_Member_Attribute) {
     foreach my $memAttributeArrayRef (@{$RefArrayOfMemberAttributeArrayRef}) {
       my $member = $memAttributeArrayRef->[0];
       my $attribute = $memAttributeArrayRef->[1];
