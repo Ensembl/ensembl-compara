@@ -145,6 +145,7 @@ sub run {
   open $fh, $query_net_file or 
       throw("Could not open net file '$query_net_file' for reading\n");
   my $nets = $self->parse_Net_file($fh);
+  close($fh);
 
   $self->output($nets);  
   
