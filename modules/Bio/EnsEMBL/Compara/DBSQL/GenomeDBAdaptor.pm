@@ -306,7 +306,7 @@ sub check_for_query_db {
                irrespective as to whether this was as the consensus
                or query genome. Returns a list of matching dbIDs 
                separated by white spaces. 
-  Returntype : string 
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDBs 
   Exceptions : none
   Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
 
@@ -316,21 +316,25 @@ sub get_db_links {
   my ( $self, $ref_gdb ) = @_;
   
   my $id = $ref_gdb->dbID;
-  my $db_list = "";
+  my @gdb_list = [];
 
   # check for occurences of the db we are interested in
   # in the consensus list of dbs
   if ( exists %genome_consensus_xreflist->{$id} ) {
-    $db_list = join (" ", @{%genome_consensus_xreflist->{$id}});
+    for my $i ( 0 .. $#{ %genome_consensus_xreflist->{$id} } ) {
+      push @gdb_list, $self->{'_cache'}->{%genome_consensus_xreflist->{$id}[$i]};
+    }
   }
-
+    
   # and check for occurences of the db we are interested in
   # in the query list of dbs
   if ( exists %genome_query_xreflist->{$id} ) {
-    $db_list .= " " . join (" ", @{%genome_query_xreflist->{$id}});
+    for my $i ( 0 .. $#{ %genome_query_xreflist->{$id} } ) {
+      push @gdb_list, $self->{'_cache'}->{%genome_query_xreflist->{$id}[$i]};
+    }
   }
 
-  return $db_list;
+  return \@gdb_list;
 }
 
 
