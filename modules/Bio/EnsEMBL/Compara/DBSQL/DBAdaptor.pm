@@ -42,7 +42,7 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 
-package Bio::EnsEMBL::DBSQL::Compara::DBAdaptor;
+package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use vars qw(@ISA);
 use strict;
@@ -128,7 +128,7 @@ sub get_GenomeDBAdaptor{
 
    if( !defined $self->{'_genomedb_adaptor'} ) {
        require Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
-       $self->{'_genomedb_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor($self);
+       $self->{'_genomedb_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor->new($self);
    }
    return $self->{'_genomedb_adaptor'};
 }
@@ -151,7 +151,7 @@ sub get_DnaFragAdaptor{
 
    if( !defined $self->{'_dnafrag_adaptor'} ) {
        require Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
-       $self->{'_genomedb_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor($self);
+       $self->{'_dnafrag_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->new($self);
    }
    return $self->{'_dnafrag_adaptor'};
 }

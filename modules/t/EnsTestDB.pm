@@ -90,7 +90,7 @@ my $counter=0;
                   'port'          => '3306',
                   'password'      => undef,
                   'schema_sql'    => ['../sql/table.sql','../../ensembl/sql/table.sql'],
-                  'module'        => 'Bio::EnsEMBL::DBSQL::DBAdaptor'
+                  'module'        => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'
                  };
         }
 
@@ -232,7 +232,7 @@ sub test_locator {
 sub ensembl_locator {
     my( $self) = @_;
     
-    my $module = ($self->module() || 'Bio::EnsEMBL::DBSQL::DBAdaptor');
+    my $module = ($self->module() || 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor');
     my $locator = '';
     foreach my $meth (qw{ host port dbname user password }) {
         my $value = $self->$meth();

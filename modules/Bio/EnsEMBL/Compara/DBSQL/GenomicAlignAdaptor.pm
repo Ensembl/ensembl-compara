@@ -87,13 +87,14 @@ sub fetch_GenomicAlign_by_dbID{
 sub get_AlignBlockSet{
    my ($self,$align_id,$row_number) = @_;
 
-   my %contighash;
+   my %dnafraghash;
+   my $dnafragadp = $self->db->get_DnaFragAdaptor;
 
    if( !defined $row_number ) {
        $self->throw("Must get AlignBlockSet by row number");
    }
 
-   my $sth = $self->prepare("select b.align_start,b.align_end,d.name,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b,dnafrag d where b.align_id = $align_id and b.align_row = $row_number and d.dnafrag_id = b.dnafrag_id order by align_start");
+   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b where b.align_id = $align_id and b.align_row = $row_number order by align_start");
    $sth->execute;
 
    my $alignset = Bio::EnsEMBL::Compara::AlignBlockSet->new();
@@ -107,11 +108,11 @@ sub get_AlignBlockSet{
        $alignblock->end($raw_end);
        $alignblock->strand($raw_strand);
        
-       if( ! defined $contighash{$raw_id} ) {
-	   $contighash{$raw_id} = $self->db->get_Contig($raw_id);
+       if( ! defined $dnafraghash{$raw_id} ) {
+	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
        }
 
-       $alignblock->raw_contig($contighash{$raw_id});
+       $alignblock->dnafrag($dnafraghash{$raw_id});
        $alignset->add_AlignBlock($alignblock);
    }
 

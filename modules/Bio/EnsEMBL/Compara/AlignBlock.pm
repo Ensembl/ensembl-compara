@@ -170,28 +170,26 @@ sub strand{
 }
 
 
+=head2 dnafrag
 
-=head2 raw_contig
-
- Title   : raw_contig
- Usage   : $obj->raw_contig($newval)
+ Title   : dnafrag
+ Usage   : $obj->dnafrag($newval)
  Function: 
  Example : 
- Returns : value of raw_contig
+ Returns : value of dnafrag
  Args    : newvalue (optional)
 
 
 =cut
 
-sub raw_contig{
-   my ($obj,$value) = @_;
+sub dnafrag{
+   my ($self,$value) = @_;
    if( defined $value) {
-      $obj->{'raw_contig'} = $value;
+      $self->{'dnafrag'} = $value;
     }
-    return $obj->{'raw_contig'};
+    return $self->{'dnafrag'};
 
 }
-
 
 
 =head2 SeqFeatureI compliant methods
@@ -234,7 +232,7 @@ sub seq{
 sub entire_seq{
    my ($self,@args) = @_;
 
-   return $self->raw_contig->primary_seq;
+   return $self->dnafrag->contig->db_primary_seq;
 }
 
 =head2 primary_tag

@@ -12,7 +12,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::DBSQL::GenomicAlign - Alignment of two pieces of genomic DNA
+Bio::EnsEMBL::Compara::GenomicAlign - Alignment of two pieces of genomic DNA
 
 =head1 SYNOPSIS
 
@@ -83,6 +83,16 @@ sub new {
 
 =head1 SimpleAlignOutputI compliant methods
 
+=cut
+
+
+sub each_seq {
+    my $self = shift;
+
+    return $self->eachSeq;
+}
+
+
 =head2 eachSeq
 
  Title   : eachSeq
@@ -106,7 +116,7 @@ sub eachSeq{
        my @alb = $abs->get_AlignBlocks;
        my $first = $alb[0];
        my $seq = Bio::LocatableSeq->new();
-       $seq->display_id($first->raw_contig->id);
+       $seq->display_id($first->dnafrag->name);
        $seq->start($first->start);
        $seq->end($alb[$#alb]->end);
 
@@ -125,12 +135,18 @@ sub eachSeq{
 	   $prev = $alb;
        }
 
-       $seq->primary_seq->seq($str);
+       $seq->seq($str);
        push(@out,$seq);
 
    }
    
    return @out;
+}
+
+sub displayname {
+    my ($self,@args) = @_;
+
+    return $self->get_displayname(@args);
 }
 
 =head2 get_displayname
