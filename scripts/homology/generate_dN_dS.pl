@@ -37,12 +37,22 @@ GetOptions('help' => \$help,
            'id_file=s' => \$id_file,
            'dir=s' => \$dir_output);
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-						     -port   => $dbport,
-                                                     -user   => $dbuser,
-                                                     -pass   => $dbpass,
-                                                     -dbname => $dbname,
-                                                     -conf_file => $conf_file);
+my $db;
+
+if (defined $conf_file) {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $dbport,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname,
+                                                    -conf_file => $conf_file);
+} else {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $dbport,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname);
+}
 
 my $ha = $db->get_HomologyAdaptor;
 
