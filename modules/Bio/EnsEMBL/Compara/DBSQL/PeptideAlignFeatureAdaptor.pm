@@ -58,7 +58,7 @@ sub store {
 sub _store_PAFS {
   my ($self, @out)  = @_;
 
-  return unless(defined(@out) and scalar(@out));
+  return unless(@out and scalar(@out));
 
   print("_store_PAFS\n");
   my $memberDBA = $self->db->get_MemberAdaptor();
