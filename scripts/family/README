@@ -35,7 +35,9 @@ cd srs
 
 Make sure you have this line in the your ~/.cshrc file in ice.ebi.ac.uk
 
-source /ebi/services/pkgs/srs/etc/prep_srs
+if ( -f /ebi/services/pkgs/srs/etc/prep_srs ) then
+    source /ebi/services/pkgs/srs/etc/prep_srs
+endif
 
 That will make sure you have all the setting ready to use srs (with getz)
 
@@ -62,7 +64,12 @@ The description file looks like
 swissprot       128U_DROME      GTP-binding protein 128UP.      taxon_id=7227;taxon_genus=Drosophila;taxon_species=melanogaster;taxon_sub_species=;taxon_common_name=Fruit fly;taxon_classification=melanogaster:Drosophila:Drosophilidae:Ephydroidea:Muscomorpha:Brachycera:Diptera:Endopterygota:Neoptera:Pterygota:Insecta:Hexapoda:Arthropoda:Metazoa:Eukaryota
 swissprot       1431_SCHMA      14-3-3 protein homolog 1.       taxon_id=6183;taxon_genus=Schistosoma;taxon_species=mansoni;taxon_sub_species=;taxon_common_name=Blood fluke;taxon_classification=mansoni:Schistosoma:Schistosomatidae:Schistosomatoidea:Strigeidida:Digenea:Trematoda:Platyhelminthes:Metazoa:Eukaryota
 
-5- get the Ensembl peptide predictions -- This section has been replaced by a peptide and description dump from the member table which will have been filled already for the homology pipeline. If so go to point 6 
+5- get the Ensembl peptide predictions -- This section has been replaced by a peptide and description dump from the member table which will have been filled already for the homology pipeline.
+The script to use is ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl (don't use -noX or nosplit, use the default setting for these)
+
+~/src/ensembl_main/ensembl-compara/scripts/comparaDumpAllPeptides.pl -conf your-compara-hive.conf -fasta ensembl.pep
+
+If so go to point 6 
 
 Requirements: make sure all Ensembl core databases have
 a) stable ids (look in tables 'exon_stable_id', 'translation_stable_id', 
@@ -114,7 +121,7 @@ bsub -m ecs2_hosts -o metazoa_20_1.RedundantIds.err ~/src/ensembl_main/ensembl-c
 
 Generate the mcl entry index
 
-grep ">"  /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep| sed "s/^>//" |awk '{print $1}'|sort -u|awk 'BEGIN {idx=0} {print idx,$1;idx++} END {}' > metazoa_20_1_nr.tab
+grep ">"  /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep| cut -c -100 | sed "s/^>//" |awk '{print $1}'|sort -u|awk 'BEGIN {idx=0} {print idx,$1;idx++} END {}' > metazoa_20_1_nr.tab
 
 
  Do that from an ecs2d node. Not yet, but you'll to send a mail to ensembl-admin@ebi.ac.uk
@@ -152,7 +159,7 @@ cd -;cd ../blast_in
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For inof on jobs array, see
-http://www.sanger.ac.uk/Users/tjrc/lsf/job-arrays.html
+http://www.sanger.ac.uk/campus/IT/ISG/lsf/job-arrays.shtml
 
 Think about putting out the SEG filter in blastp as we do for homologous genepairs.
 
@@ -191,7 +198,7 @@ echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlas
  To check if the job finished properly
 
 cd ../blast_out
-ls |while read i;do echo -n $i" ";awk '/^Subject/ && $NF=="Done" {print $NF;exit} /^Subject/ && $NF!="Done" {printf $NF" "} /^Job was executed/ {print;exit}' $i;done|awk '{print $2}'|sort |uniq -c
+ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was executed/ {print;exit}' $i;done|awk '{print $2}'|sort |uniq -c
 
  That gives you the number of jobs "Done" and "Exited" if any.
 
@@ -202,6 +209,40 @@ echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlas
 
  Rerun the failed jobs in ../blast_out.
 
+cd ../blast_out
+
+ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was executed/ {print;exit}' $i;done > ../job_status
+
+grep Exited job_status|sed "s/\./ /g"|awk '{print $2}'|sort -n > job_status.ids
+
+awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;next} $1>e+1 && e==s {printf s",";s=$1;e=$1;i++;next} $1>e+1 && e!=s {printf s"-"e",";s=$1;e=$1;i++;next} END {print s"-"e}' job_status.ids > job_status.ids.collapse
+
+grep Exited job_status |awk '{print $1}'|while read i;do del blast_out/$i;done
+
+cat job_status.ids.collapse|while read i;do echo "echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_23_1_nr.index -tab /acari/work7a/abel/family_23_1/srs/metazoa_23_1_nr.tab -dir /acari/work7a/abel/family_23_1/blast_raw/' | bsub -q normal -E \"/acari/work7a/abel/family_23_1/pre_exec\" -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
+
+The /acari/work7a/abel/family_23_1/pre_exec has to be updated and look like
+
+#!/usr/local/bin/bash
+
+if [ -e /data/blastdb/Ensembl/family/metazoa_23_1.pep ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1.index ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.index ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.psq ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.phr ] &&
+   [ -e /data/blastdb/Ensembl/family/metazoa_23_1_nr.pep.pin ]; then
+ exit 0
+else
+ exit 1
+fi
+
+Then move to blast_in and resubmit the failed jobs
+
+cd blast_in
+
+bash rebsub
+
 9- Build the matrix needed by mcl and check it for symmetry
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -211,10 +252,10 @@ ls|xargs gunzip -c > ../mcl/family_20_1.raw
 
 cd ../mcl
 
- create a family_20.hdr header file,
+ create a family_20_1.hdr header file,
  The dimensions should be the number of peptides.
 
-cat > family_20.hdr
+cat > family_20_1.hdr
 (mclheader
 mcltype matrix
 dimensions 467417x467417
@@ -349,7 +390,7 @@ So now what to do e.g. for family_id=1
 
 cd ../clustalw_mpi
 
-echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id<24;" |mysql -h ecs4 -P3352 -N -u ensro ensembl_compara_cara_family_21_1 > clw.ids
+echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1;" |mysql -h ecs4 -P3352 -N -u ensro ensembl_compara_cara_family_21_1 > 1.ids
 
 fastafetch /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep /data/blastdb/Ensembl/family/metazoa_20_1_nr.index 1.ids | grep -v "^Message:" > 1.ids.pep
 
