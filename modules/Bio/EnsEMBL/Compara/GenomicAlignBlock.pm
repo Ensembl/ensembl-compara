@@ -585,6 +585,7 @@ sub get_all_non_reference_genomic_aligns {
   my $all_non_reference_genomic_aligns = [];
  
   my $reference_genomic_align_id = $self->reference_genomic_align_id;
+  my $reference_genomic_align = $self->reference_genomic_align;
   if (!defined($reference_genomic_align_id)) {
     warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::all_non_reference_genomic_aligns".
         " when no reference_genomic_align_id has been set before");
@@ -598,7 +599,8 @@ sub get_all_non_reference_genomic_aligns {
   }
 
   foreach my $this_genomic_align (@$genomic_aligns) {
-    if ($this_genomic_align->dbID != $reference_genomic_align_id) {
+    if ($this_genomic_align->dbID != $reference_genomic_align_id and
+        $this_genomic_align != $reference_genomic_align) {
       push(@$all_non_reference_genomic_aligns, $this_genomic_align);
     }
   }
@@ -821,7 +823,7 @@ sub requesting_slice {
   Example    : $genomic_align_block->reference_slice($reference_slice);
   Description: get/set for attribute reference_slice.
   Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : throw if $reference_slice is not a Bio::EnsEMBL::Slice
+  Exceptions : 
   Caller     : general
 
 =cut
@@ -830,8 +832,8 @@ sub reference_slice {
   my ($self, $reference_slice) = @_;
  
   if (defined($reference_slice)) {
-    throw "[$reference_slice] is not a Bio::EnsEMBL::Slice"
-        unless $reference_slice->isa("Bio::EnsEMBL::Slice");
+#     throw "[$reference_slice] is not a Bio::EnsEMBL::Slice"
+#         unless $reference_slice->isa("Bio::EnsEMBL::Slice");
     $self->{'reference_slice'} = $reference_slice;
   }
 
@@ -928,6 +930,30 @@ sub reference_slice_end {
   }
   
   return $self->{'reference_slice_end'};
+}
+
+
+=head2 reference_slice_strand
+ 
+  Arg [1]    : integer $reference_slice_strand
+  Example    : my $reference_slice_strand = $genomic_align_block->reference_slice_strand;
+  Example    : $genomic_align_block->reference_slice_strand(-1);
+  Description: get/set for attribute reference_slice_strand. A value of 0 will set
+               the attribute to undefined.
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub reference_slice_strand {
+  my ($self, $reference_slice_strand) = @_;
+ 
+  if (defined($reference_slice_strand)) {
+    $self->{'reference_slice_strand'} = ($reference_slice_strand or undef);
+  }
+  
+  return $self->{'reference_slice_strand'};
 }
 
 
