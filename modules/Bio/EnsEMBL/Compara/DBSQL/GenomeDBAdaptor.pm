@@ -47,10 +47,24 @@ use strict;
 
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Compara::GenomeDB;
 
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
+sub new {
+    my ($class,@args) = @_;
+
+    my $self = Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor->new(@args);
+
+    bless $self,$class;
+
+    $self->{'_cache'} = {};
+
+    return $self;
+}
+
+    
 =head2 fetch_by_dbID
 
  Title   : fetch_by_dbID
@@ -70,6 +84,10 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
+   if( defined $self->{'_cache'}->{$dbid} ) {
+       return $self->{'_cache'}->{$dbid};
+   }
+
    my $sth = $self->prepare("select name,locator from genome_db where genome_db_id = $dbid");
    $sth->execute;
 
@@ -83,8 +101,46 @@ sub fetch_by_dbID{
    $gdb->name($name);
    $gdb->locator($locator);
 
+   $self->{'_cache'}->{$dbid} = $gdb;
+
    return $gdb;
+}
+
+=head2 store
+
+ Title   : store
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub store{
+   my ($self,$gdb) = @_;
+
+   if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
+       $self->throw("Must have genomedb arg [$gdb]");
+   }
+
+   if( !defined $gdb->name || !defined $gdb->locator ) {
+       $self->throw("genome db must have a name and a locator");
+   }
+   my $name = $gdb->name;
+   my $locator = $gdb->locator;
+
+   my $sth = $self->prepare("insert into genome_db (name,locator) values ('$name','$locator')");
+
+   $sth->execute();
+
+   $gdb->dbID($sth->{'mysql_insertid'});
+
+   return $gdb->dbID;
 }
 
 
 1;
+
+
