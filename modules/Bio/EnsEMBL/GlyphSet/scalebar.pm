@@ -21,7 +21,7 @@ sub _init {
     my $fontname       = "Tiny";
     my $fontwidth_bp   = $Config->texthelper->width($fontname),
     my ($fontwidth,
-	$fontheight)     = $Config->texthelper->px2bp($fontname),
+	$fontheight)       = $Config->texthelper->px2bp($fontname),
     my $black          = $Config->colourmap->id_by_name('black');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
