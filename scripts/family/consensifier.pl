@@ -12,7 +12,7 @@ use strict;
 use Getopt::Long;
 use Algorithm::Diff qw(LCS);
 
-my @allowed_dbs= qw(SWISSPROT SPTREMBL);
+my @allowed_dbs= qw(Uniprot/SWISSPROT Uniprot/SPTREMBL);
 
 my $usage=<<END_USAGE;
 

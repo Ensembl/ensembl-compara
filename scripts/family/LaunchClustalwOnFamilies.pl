@@ -87,8 +87,8 @@ unless (defined $clustal_file) {
   my @members_attributes;
 
   push @members_attributes,@{$family->get_Member_Attribute_by_source('ENSEMBLPEP')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SWISSPROT')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SPTREMBL')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
 
   open S, ">$sb_file";
   
@@ -99,6 +99,7 @@ unless (defined $clustal_file) {
     print S ">$member_stable_id\n";
     my $seq = $member->sequence;
     $seq =~ s/(.{72})/$1\n/g;
+    chomp $seq;
     print S $seq,"\n";
   }
 
@@ -183,8 +184,8 @@ if ($store) {
   my @members_attributes;
 
   push @members_attributes,@{$family->get_Member_Attribute_by_source('ENSEMBLPEP')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SWISSPROT')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SPTREMBL')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
 
   foreach my $member_attribute (@members_attributes) {
     $FamilyAdaptor->update_relation($member_attribute);

@@ -201,8 +201,8 @@ if ($store) {
   my @members_attributes;
 
   push @members_attributes,@{$family->get_Member_Attribute_by_source('ENSEMBLPEP')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SWISSPROT')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SPTREMBL')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
 
   foreach my $member_attribute (@members_attributes) {
     $FamilyAdaptor->update_relation($member_attribute);
