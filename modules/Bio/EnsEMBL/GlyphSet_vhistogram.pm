@@ -47,38 +47,31 @@ sub _init {
         # we have two tracks to display
         $density2 = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr, $track_def[1]->{'type'});
         $has_density2 = $density2->size();
-    } else {
-        # only one track, get known gene data for scaling
-        $density2 = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr, 'known');
     }
+    # get max density for scaling
+    my $ignore_types = ['gc', 'gene', 'kngene', 'repeat'];
+    my $max_density = $self->{'container'}->{'da'}->get_max_density_per_chromosome($chr, $ignore_types);
     # return if there is no data to display
     return unless ($density1->size() || $has_density2);
     my $density1_max = $density1->{'_biggest_value'};
     my $density2_max = $density2->{'_biggest_value'};
     return unless (($density1_max > 0) || ($has_density2 && ($density2_max > 0)));
 
-    # scale the tracks
-    # if there are 2 tracks, scale them to fit
-    # if there is only one track, scale to fit known genes
-    # reverse scaling if $self->scale_reverse return true
+    # scale the tracks and add glyphs
     my $Hscale_factor1 = 1;
     my $Hscale_factor2 = 1;
-    if  (($density2_max > 0) && ($density1_max > 0)){
-        if ($Config->get($feature_name, 'scale_reverse')) {
-            $Hscale_factor1 = ($density2_max / $density1_max);
-        } else {
-            $Hscale_factor2 = ($density1_max / $density2_max);
-        }
+    if ($max_density > 0) {
+        $Hscale_factor1 = ($density1_max / $max_density);
+        $Hscale_factor2 = ($density2_max / $max_density);
     } 
-    $density2->scale_to_fit($Config->get($feature_name, 'width') * $Hscale_factor1);
-    $density2->stretch(0);
-    $density1->scale_to_fit($Config->get($feature_name, 'width') * $Hscale_factor2);
+    $density1->scale_to_fit($Config->get($feature_name, 'width') * $Hscale_factor1);
     $density1->stretch(0);
-
-    my @density2 = $density2->get_binvalues();
     my @density1 = $density1->get_binvalues();
     my $g_x;
     if ($track_def[1]) {
+        $density2->scale_to_fit($Config->get($feature_name, 'width') * $Hscale_factor2);
+        $density2->stretch(0);
+        my @density2 = $density2->get_binvalues();
         # draw track 2 only if available
         foreach (@density2) {
             $g_x = new Sanger::Graphics::Glyph::Rect({
