@@ -382,8 +382,7 @@ sub fetch_by_subset_id {
   Arg [1]    : int member_id of a peptide member
   Example    : $geneMember = $memberAdaptor->fetch_gene_for_peptide_member_id($peptide_member_id);
   Description: given a member_id of a peptide member,
-               does a join to the member_gene_peptide table returning a single object
-               FOR PRODUCTION PURPOSES ONLY
+               does a join to a copy of member table to extract a member for it's gene
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
@@ -395,15 +394,40 @@ sub fetch_gene_for_peptide_member_id {
 
   $self->throw() unless (defined $peptide_member_id);
 
-  my $constraint = "mgp.peptide_member_id = '$peptide_member_id'";
+  my $constraint = "pepm.member_id = '$peptide_member_id'";
 
-  my $join = [[['member_gene_peptide', 'mgp'], 'm.member_id = mgp.gene_member_id']];
+  my $join = [[['member', 'pepm'], 'm.member_id = pepm.gene_member_id']];
 
   my $obj = undef;
   eval {
     ($obj) = @{$self->_generic_fetch($constraint, $join)};
   };
   return $obj;
+}
+
+=head2 fetch_peptides_for_gene_member_id
+
+  Arg [1]    : int member_id of a peptide member
+  Example    : $geneMember = $memberAdaptor->fetch_gene_for_peptide_member_id($peptide_member_id);
+  Description: given a member_id of a gene member,
+               fetches all peptide members for this gene
+  Returntype : array ref of Bio::EnsEMBL::Compara::Member objects
+  Exceptions :
+  Caller     : general
+
+=cut
+sub fetch_peptides_for_gene_member_id {
+  my ($self, $gene_member_id) = @_;
+
+  $self->throw() unless (defined $gene_member_id);
+
+  my $constraint = "m.gene_member_id = '$gene_member_id'";
+
+  my $peplist = undef;
+  eval {
+    $peplist = $self->_generic_fetch($constraint);
+  };
+  return $peplist;
 }
 
 #
@@ -758,7 +782,6 @@ sub get_source_id_from_name {
   Example    : $memberDBA->store_gene_peptide_link($gene->dbID, $peptide->dbID);
   Description: creates link relationship between gene members and their translated
                peptide members. Store relationship in member_gene_peptide table
-               FOR PRODUCTION PURPOSES ONLY
   Returntype : none
   Exceptions : none
   Caller     : general
@@ -767,11 +790,11 @@ sub get_source_id_from_name {
 sub store_gene_peptide_link {
   my ($self, $gene_member_id, $peptide_member_id) = @_;
 
-  my $sth =
-    $self->prepare("INSERT ignore INTO member_gene_peptide (gene_member_id, peptide_member_id)
-                    VALUES (?,?)");
-  $sth->execute($gene_member_id, $peptide_member_id);
-  $sth->finish;
+  eval {
+    my $sth = $self->prepare("UPDATE member SET gene_member_id=? where member_id=?");
+    $sth->execute($gene_member_id, $peptide_member_id);
+    $sth->finish;
+  };
 }
 
 1;
