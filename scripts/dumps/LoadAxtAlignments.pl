@@ -26,12 +26,12 @@ Options:
 
 my $help = 0;
 my $host = "ecs1b.internal.sanger.ac.uk";
-my $dbname = "ensembl_compara_tight_12_1";
+my $dbname = "ensembl_compara_tight_13_1";
 my $dbuser = "ensadmin";
 my $pass = "ensembl";
 
-my $reference_species;
-my $query_species;
+my $cs_genome_db_id;
+my $qy_genome_db_id;
 my $min_score = 0;
 my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf";
 
@@ -40,8 +40,8 @@ my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/En
 	    'dbname=s' => \$dbname,
 	    'dbuser=s' => \$dbuser,
 	    'pass=s' => \$pass,
-	    'reference_species=s' => \$reference_species,
-	    'query_species=s' => \$query_species,
+	    'cs_genome_db_id=s' => \$cs_genome_db_id,
+	    'qy_genome_db_id=s' => \$qy_genome_db_id,
 	    'min_score=i' => \$min_score);
 
 if ($help) {
@@ -75,9 +75,9 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor ('-conf_file' => $conf_file
 						      '-pass' => $pass);
 
 my $gdb_adaptor = $db->get_GenomeDBAdaptor;
-my $cs_genome_db_id = 7;
+#my $cs_genome_db_id = 7;
 my $cs_genome_db = $gdb_adaptor->fetch_by_dbID($cs_genome_db_id);
-my $qy_genome_db_id = 8;
+#my $qy_genome_db_id = 8;
 my $qy_genome_db= $gdb_adaptor->fetch_by_dbID($qy_genome_db_id);
 
 my @genomicaligns;
@@ -196,8 +196,8 @@ while (defined (my $line =<>)) {
 
 print STDERR "Done\n";
 
-print STDERR "Preparing data for storage...";
-print STDERR scalar @DnaDnaAlignFeatures,"\n";
+print STDERR "Preparing data for storage for ";
+print STDERR scalar @DnaDnaAlignFeatures," features...\n";
 foreach my $f (@DnaDnaAlignFeatures) {
   my ($cs_chr,$cs_start,$cs_end,$qy_chr,$qy_start,$qy_end,$qy_strand,$score,$percid,$cigar) = ($f->seqname,$f->start,$f->end,$f->hseqname,$f->hstart,$f->hend,$f->hstrand,$f->score,$f->percent_id,$f->cigar_string);
   
