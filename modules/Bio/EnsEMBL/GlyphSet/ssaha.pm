@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::ssaha;
 use strict;
 use EnsWeb;
+use SiteDefs;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -41,7 +42,7 @@ sub _init {
     my @hits;
 
     foreach my $ticket (@ssaha_tickets) {
-        my $filename = EnsWeb::species_defs->ENSEMBL_TMP_ROOT."/blastqueue/$ticket.cache";
+        my $filename = $SiteDefs::ENSEMBL_TMP_DIR_BLAST."/$ticket.cache";
         if( -e $filename ) {
             open FH, $filename;
             while(<FH>) {
