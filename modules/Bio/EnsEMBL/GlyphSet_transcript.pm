@@ -38,6 +38,7 @@ sub my_label {
 
 sub colours {   return {}; }
 sub features {  return []; }
+sub legend { return undef; }
 
 sub _init {
     my ($self) = @_;
