@@ -94,7 +94,7 @@ sub new {
       $host = 'localhost';
   }
   if ( ! $port ) {
-      $port = undef;
+      $port = "";
   }
   
   my $dsn = "DBI:$driver:database=$db;host=$host;port=$port";
