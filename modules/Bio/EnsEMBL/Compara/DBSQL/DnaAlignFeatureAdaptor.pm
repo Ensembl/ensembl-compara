@@ -177,7 +177,7 @@ sub fetch_all_by_species_region {
       my $top_slice;
       if ($query_slice_adaptor) {
         $top_slice = $query_slice_adaptor->fetch_by_region(
-                $query_genomic_align->dnafrag->type,
+                $query_genomic_align->dnafrag->coord_system_name,
                 $query_genomic_align->dnafrag->name
             );
       } else {
@@ -250,7 +250,7 @@ sub fetch_all_by_species_region {
       my $df_name = $this_dnafrag->name;
       my $score = $this_genomic_align_block->score;
       my $perc_id = $this_genomic_align_block->perc_id;
-      my $qdf_start = $query_genomic_align->dnafrag->start;
+      my $qdf_start = 1;
       my $ga_query_start = $query_genomic_align->dnafrag_start;
       my $ga_query_end = $query_genomic_align->dnafrag_end;
       my $ga_query_strand = $query_genomic_align->dnafrag_strand;
@@ -263,7 +263,8 @@ sub fetch_all_by_species_region {
       }
 # $t1 += tv_interval ($t0);
 # $t0 = [gettimeofday];
-      my $ga_group_id = $consensus_genomic_align->genomic_align_group_by_type("default")->dbID;
+      my $ga_group_id = $consensus_genomic_align->genomic_align_group_by_type("default");
+      $ga_group_id = $ga_group_id->dbID if (defined($ga_group_id));
 # $t2 += tv_interval ($t0);
 # $t0 = [gettimeofday];
       my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
