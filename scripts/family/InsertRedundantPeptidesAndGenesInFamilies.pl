@@ -38,7 +38,7 @@ my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname,'compara')->dbc;
 
 print STDERR "Getting sequence_id vs member_id information from the database...";
 
-my $sql = "select sequence_id,member_id from member where source_name in ('SWISSPROT','SPTREMBL','ENSEMBLPEP')";
+my $sql = "select sequence_id,member_id from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP')";
 my $sth = $dbc->prepare($sql);
 $sth->execute;
 
