@@ -5,7 +5,7 @@ GlyphSet to draw polyA sites
 
 =head1 DESCRIPTION
 
-Displays polyA sites stored as simple features
+Displays polyA sites stored in simple_feature
 
 =head1 LICENCE
 
@@ -41,7 +41,6 @@ use Bio::EnsEMBL::GlyphSet_simple;
 
 =cut
 
-
 sub my_label { return "PolyA sites"; }
 
 
@@ -49,7 +48,7 @@ sub my_label { return "PolyA sites"; }
 
   Arg[1]      : none 
   Example     : my $f = $self->features;
-  Description : this function does the data fetching from the Glovar database
+  Description : this function does the data fetching from the core database
   Return type : listref of Bio::EnsEMBL::DnaDnaAlignFeature objects
   Exceptions  : none
   Caller      : $self->_init()
@@ -71,7 +70,7 @@ sub features {
                 hashref describing the zmenu entries and properties
   Return type : hashref
   Exceptions  : none
-  Caller      : $self->_init()
+  Caller      : 
 
 =cut
 
