@@ -30,12 +30,16 @@ sub _init {
     
     foreach my $key (keys %hash) {
 	
-	print STDERR "VERSION11 PROSITE, prints: $key\n";
+	print STDERR "VERSION12 PROSITE, prints: $key\n";
+
+	my @row = @{$hash{$key}};
+       	my $desc = $row[0]->idesc();
 
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
-		'caption'  => $key
+		'caption'  => $key,
+		    $desc => ''
 		},
 		});
 	

@@ -14,32 +14,49 @@ sub _init {
     my $y          = 0;
     my $h          = 4;
     my $highlights = $this->highlights();
+    my $key = "Intron";
+
+    my $x = 0;
+    my $w = 0;
+
+
+    print STDERR "INTRON VERSION003\n";
    
-#Draw the protein
-    my $length = $protein->length();
+    my $colour = $Config->get($Config->script(), 'intron','col');
 
-    my $xp = 0;
-    my $wp = $length;
+    my @introns = $protein->each_Intron_feature();
 
-   
-    my $colour = $Config->get($Config->script(), 'protein','col');
-
-    my $rect = new Bio::EnsEMBL::Glyph::Rect({
-			'x'        => $xp,
-			'y'        => $y,
-			'width'    => $wp,
-			'height'   => $h,
-			'id'       => $protein->id(),
-			'colour'   => $colour,
-			'zmenu' => {
-			    'caption' => $protein->id(),
-			},
-		    });
-    
+    if (@introns) {
+	my $composite = new Bio::EnsEMBL::Glyph::Composite({
+	    'id'    => $key,
+	    'zmenu' => {
+		'caption'  => $key
+		},
+		});
+	my $colour = $Config->get($Config->script(), 'prints','col');
+	
+	foreach my $int (@introns) {
+	    my $x = $int->feature1->start();
+	    my $w = $int->feature1->end() - $x;
+	    my $id = $int->feature2->seqname();
+	    
+	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+		'x'        => $x,
+		'y'        => $y,
+		'width'    => $w,
+		'height'   => $h,
+		'id'       => $id,
+		'colour'   => $colour,
+		'zmenu' => {
+		    'caption' => $id,
+		},
+	    });
+	    $composite->push($rect) if(defined $rect);
 #    push @{$this->{'glyphs'}}, $rect;   
-    $this->push($rect);
-    
-   
+	    
+	}
+	$this->push($composite);
+    }
 }
 1;
 

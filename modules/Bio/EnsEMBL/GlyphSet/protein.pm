@@ -21,6 +21,8 @@ sub _init {
     my $xp = 0;
     my $wp = $length;
 
+    print STDERR "PROT VERSION001\n";
+
    
     my $colour = $Config->get($Config->script(), 'protein','col');
 

@@ -29,15 +29,19 @@ sub _init {
     }
     
     foreach my $key (keys %hash) {
-	
-	print STDERR "VERSION10 PRINTS, prints: $key\n";
+       
+	my @row = @{$hash{$key}};
+       
+     
+	my $desc = $row[0]->idesc();
 
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
-		'caption'  => $key
-		},
-		});
+		'caption'  => $key,
+		$desc => '',
+	    },
+	});
 	my $colour = $Config->get($Config->script(), 'prints','col');
 	
 
@@ -45,15 +49,13 @@ sub _init {
 	
 	#colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 	
-	my @row = @{$hash{$key}};
+	
 
 	foreach my $pr (@row) {
 	    my $x = $pr->feature1->start();
 	    my $w = $pr->feature1->end() - $x;
 	    my $id = $pr->feature2->seqname();
 	    
-	    print STDERR "$x\t$w\t$id\thauteur: $h\n";
-
 	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
 		'x'        => $x,
 		'y'        => $y,
@@ -73,10 +75,7 @@ sub _init {
 	
 #	push @{$this->{'glyphs'}}, $Composite;
 	$this->push($Composite);
-
-	print STDERR "HT: $h\n";
 	$y = $y + 8;
-	print STDERR "HTPLUS: $h\n";
     }
     
 }

@@ -18,10 +18,10 @@ sub _init {
     my $h          = 8;
     my $highlights = $self->highlights();
 	my $cmap  = new ColourMap;
-	my $blue  = $cmap->id_by_name('blue');
+	my $snp_col = $Config->get($Config->script(),'snp','col');
 
     my @bitmap      = undef;
-    my ($im_width, $im_height) = $Config->dimensions();
+    my $im_width = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
     my $type = $Config->get($Config->script(),'gene','src');
     my @xf=$VirtualContig->get_all_ExternalFeatures();
@@ -45,7 +45,7 @@ sub _init {
 			'y'      => 0,
 			'width'  => 2,
 			'height' => $h,
-			'colour' => $blue,
+			'colour' => $snp_col,
 			'absolutey'  => 1,
 			'zmenu'     => { caption => $s->id() },
 		});

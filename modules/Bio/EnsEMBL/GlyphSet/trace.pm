@@ -20,7 +20,7 @@ sub _init {
 	my $trace_col = $Config->get($Config->script(),'trace','col');
 
     my @bitmap      = undef;
-    my ($im_width, $im_height) = $Config->dimensions();
+    my $im_width = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
     my $type = $Config->get($Config->script(),'gene','src');
     my @xf=$VirtualContig->get_all_ExternalFeatures();
@@ -41,7 +41,7 @@ sub _init {
     foreach my $s (@trace) {
 		my $x = $s->start();
 		my $x1 = $s->end();
-		print STDERR "Trace start: ", $x, " ID:", $s->id(),  "\n";
+		#print STDERR "Trace start: ", $x, " ID:", $s->id(),  "\n";
 		my $traceglyph = new Bio::EnsEMBL::Glyph::Rect({
 			'x'      => $x,
 			'y'      => 0,

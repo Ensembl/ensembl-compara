@@ -20,34 +20,34 @@ sub _init {
     print STDERR "HERE PFAM 1\n";
 
    foreach my $feat ($protein->each_Protein_feature()) {
-       print STDERR "PFAMTESTFEAT: ".$feat->feature2->seqname, "\n";
-       
+              
        if ($feat->feature2->seqname =~ /^PF\w+/) {
-	    print STDERR "FEAT: ".$feat->feature2->seqname, "\n";
-	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	    
-	   
-	    
-	}
+	   push(@{$hash{$feat->feature2->seqname}},$feat);
+       }
     }
     
     foreach my $key (keys %hash) {
 	
-	print STDERR "VERSION9, prints: $key\n";
-
+	
+	my @row = @{$hash{$key}};
+       
+     
+	my $desc = $row[0]->idesc();
+	print STDERR "DESC: $desc\n";
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
-		'caption'  => $key
-		},
-		});
+		'caption'  => $key,
+		$desc => ''
+	    },
+	});
 	   
 	my $colour = $Config->get($Config->script(), 'pfam','col');
 #To be changed
 	
 	#$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 
-	my @row = @{$hash{$key}};
+	
 	
 
 	foreach my $pf (@row) {

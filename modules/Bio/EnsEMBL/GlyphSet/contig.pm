@@ -23,6 +23,8 @@ sub _init {
 	my $col2  = $cmap->id_by_name('contigblue2');
 	my $col3  = $cmap->id_by_name('black');
 	my $white  = $cmap->id_by_name('white');
+	my $black  = $cmap->id_by_name('black');
+	my $red    = $cmap->id_by_name('red');
 
 	my @map_contigs = $VirtualContig->_vmap->each_MapContig();
 	my $start = $map_contigs[0]->start();
@@ -30,7 +32,7 @@ sub _init {
 	my $tot_width = $end - $start;
 	my $ystart = 75;
 
-	my ($im_width, $im_height) = $Config->dimensions();
+    my $im_width = $Config->image_width();
 
 	my $gline = new Bio::EnsEMBL::Glyph::Rect({
 	    	'x'      => 1,
@@ -68,8 +70,8 @@ sub _init {
 		#print STDERR "Contig!\n";
 
 		my ($w,$h) = $Config->texthelper->px2bp('Tiny');
-		my $text = $temp_rawcontig->contig->id();
-		my $bp_textwidth = $w * length($text) +2;
+		my $text = $temp_rawcontig->contig->cloneid();
+		my $bp_textwidth = $w * length($text) * 1.1; # add 10% for scaling text
 		unless ($bp_textwidth > ($temp_rawcontig->end - $temp_rawcontig->start)){
 			my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 	    		'x'      => $temp_rawcontig->start + int(($temp_rawcontig->end - $temp_rawcontig->start)/2) - ($bp_textwidth)/2,
@@ -173,8 +175,21 @@ sub _init {
 		'absolutex'  => 1,
 	});
 	$self->push($tick);
-}
 
+	my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
+		'x'      => $Config->{'_wvc_start'} - $VirtualContig->_global_start(),
+		'y'      => $ystart - 4 ,
+		'width'  => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
+		'height' => 22,
+		'bordercolour' => $red,
+		'absolutey'  => 1,
+		'id'	=> 'enigma',
+		'zmenu'     => { foo => 'foo' },
+	});
+	$self->push($boxglyph);
+
+
+}
 
 
 1;

@@ -5,24 +5,32 @@ use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
+use Bio::EnsEMBL::Glyph::Intron;
+use Bio::EnsEMBL::Glyph::Text;
+use Bio::EnsEMBL::Glyph::Composite;
+use Bump;
 
 sub _init {
-    my ($this, $VirtualContig, $Config) = @_;
+    my ($self, $VirtualContig, $Config) = @_;
 
-    for(my $i = 0; $i<1000; $i+=100) {
-	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'      => $i,
-	    'y'      => 0,
-	    'width'  => 20,
-	    'height' => 8,
-	    'id'     => qq(fpc$i),
-	    #########
-	    # evil:
-	    #
-	    'colour'    => $Config->get('contigviewtop', 'marker', 'col'),
-	});
+    return unless ($self->strand() == -1);
+    my $h          = 8;
+    my $highlights = $self->highlights();
 
-	$this->push($glyph);
-    }
+    my $feature_colour 	= $Config->get($Config->script(),'marker','col');
+
+  	foreach my $f ($VirtualContig->get_landmark_MarkerFeatures()){
+		my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+			'x'      	=> $f->start(),
+			'y'      	=> 0,
+			'width'  	=> $f->length(),
+			'height' 	=> $h,
+			'colour' 	=> $feature_colour,
+			'absolutey' => 1,
+			'zmenu'     => { 'caption' => $f->id() },
+		});
+		$self->push($glyph);
+	}	
 }
+
 1;

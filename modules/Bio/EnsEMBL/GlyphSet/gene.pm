@@ -19,7 +19,7 @@ sub _init {
     my $highlights = $this->highlights();
 
     my @bitmap      = undef;
-    my ($im_width, $im_height) = $Config->dimensions();
+    my $im_width    = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
     my $type = $Config->get($Config->script(),'gene','src');
 	my @allgenes = ();
@@ -64,6 +64,9 @@ sub _init {
 				'height'   => $h,
 				'colour'   => $colour,
 				'absolutey' => 1,
+				'zmenu' => {
+					'caption' => $vgid,
+				},
 			});
     	}
 
