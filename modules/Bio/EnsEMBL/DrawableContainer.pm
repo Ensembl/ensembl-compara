@@ -1,5 +1,5 @@
 package Bio::EnsEMBL::DrawableContainer;
-use Bio::Root::RootI;
+use Bio::EnsEMBL::Root;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -9,7 +9,7 @@ use Bio::EnsEMBL::GlyphSetManager::das;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use ExtURL;
 
-@ISA = qw(Bio::Root::RootI);
+@ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
     my ($class, $Container, $Config, $highlights, $strandedness, $Storage) = @_;
