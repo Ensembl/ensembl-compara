@@ -97,7 +97,8 @@ sub href {
       exists $highlights{$gid} ){ return( "#$tid" ) }
 
   my $species = $self->{container}{_config_file_name_};
-  return "/$species/$script_name?gene=$gid";
+  my $db = $self->my_config('db_alias') || 'core';
+  return "/$species/$script_name?db=$db&gene=$gid";
 }
 
 sub gene_href {
@@ -110,10 +111,11 @@ sub zmenu {
 
   my $sp = $self->{container}{_config_file_name_};
   my $db = $self->my_config('db_alias') || 'core';
+  my $name = $self->my_config('db_alias') || 'Ensembl';
 
   my $gid = $gene->stable_id();
   my $zmenu = {
-    'caption'          => "Ensembl Gene",
+    'caption'          => "$name Gene",
     "01:Gene:$gid"     => "/$sp/geneview?gene=$gid&db=$db",
     '04:Export Gene'   => "/$sp/exportview?tab=fasta&".
                           "type=feature&ftype=gene&id=$gid",
