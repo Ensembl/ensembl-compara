@@ -12,6 +12,7 @@ use SiteDefs;
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
+
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => $self->{'extras'}->{'caption'},
 	'font'      => 'Small',
@@ -39,156 +40,103 @@ sub _init {
 # at the top or at the bottom!
 
     return if( $strand eq 'r' && $self->strand() != -1 || $strand eq 'f' && $self->strand() != 1 );
-	
+
+    $self->{'bitmap'} = [];	
     my $tstrand = $self->strand;
     my $cmap            = $Config->colourmap();
     my $feature_colour 	= $Config->get($das_name, 'col') || $Config->colourmap()->id_by_name('contigblue1');
 	my $dep             = $Config->get($das_name, 'dep');
 	my $group           = $Config->get($das_name, 'group');
-    my $vc 		        = $self->{'container'};
+    my $vc                 = $self->{'container'};
     my $border          = $Config->colourmap()->id_by_name('black');
     my $red             = $Config->colourmap()->id_by_name('red');
-    my ($w,$h)          = $Config->texthelper()->real_px2bp('Tiny');
-    my $length          = $vc->length();
+    ($self->{'textwidth'},$self->{'textheight'})          = $Config->texthelper()->real_px2bp('Tiny');
     my $length          = $vc->length() +1;
-    my @bitmap         	= undef;
-    my $pix_per_bp  	= $Config->transform->{'scalex'};
-    my $bitmap_length 	= int(($length+1) * $pix_per_bp);
 
-    $w *= ($length+1)/$length;
+    $self->{'pix_per_bp'} = $Config->transform->{'scalex'};
+    $self->{'bitmap_length'} = int(($length+1) * $self->{'pix_per_bp'});
+
+    $self->{'textwidth'} *= ($length+1)/$length;
+    my $h = $self->{'textheight'};
     
     my @features;
     eval{
-        @features = $vc->get_all_DASFeatures();
+        @features = grep { ($_->das_dsn() eq $self->{'extras'}->{'dsn'}) && ($_->das_type_id() !~ /(contig|component|karyotype)/i) }$vc->get_all_DASFeatures();
     };
 #    print STDERR map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
     if($@) {
         print STDERR "----------\n",$@,"---------\n";
         return;
     }
-    my $link_text = $self->{'extras'}->{'linktext'} || 'Additional info';
-	my $ext_url;
-	if( $self->{'extras'}->{'linkURL'} ) {
-		if($self->{'extras'}->{'name'} =~ /^extdas_/) {
-			$ext_url = ExtURL->new(
-				$self->{'extras'}->{'linkURL'} => $self->{'extras'}->{'linkURL'}
-			);
-		} else {
-			$ext_url = ExtURL->new();		
-		}
-	}
+    $self->{'link_text'}  = $self->{'extras'}->{'linktext'} || 'Additional info';
+    $self->{'ext_url'} =  $self->{'extras'}->{'name'} =~ /^extdas_/ ? 
+	ExtURL->new( $self->{'extras'}->{'linkURL'} => $self->{'extras'}->{'linkURL'} ) :
+	ExtURL->new();        
 	
-    my $text = '';
-    my $empty_flag =1;
+    my $empty_flag  = 1;
 
     my $STRAND = $self->strand();
     if($group==1) {
 	    my %grouped;
 	    foreach my $f(@features){
-		    next unless ( $f->das_dsn() eq $self->{'extras'}->{'dsn'} );
             if($f->das_type_id() eq '__ERROR__') {
-                $self->errorTrack(
-					'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')'
-				);
-		    	return;
+                $self->errorTrack( 'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')' );
+            	return;
             }
-            next if ($f->das_type_id() =~ /contig/i);       # raw_contigs
-            next if ($f->das_type_id() =~ /component/i);       # clones
-            next if ($f->das_type_id() =~ /karyotype/i);    # karyotype 
-    		next if $strand eq 'b' &&
-                ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
+            next if $strand eq 'b' && ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
     	    my $fid = $f->das_id;
-		    next unless $fid;
-		    $fid = "G:".$f->das_group_id if $f->das_group_id;
-		    $grouped{$fid} = [] unless(exists $grouped{$fid});
+            next unless $fid;
+                     $fid  = "G:".$f->das_group_id if $f->das_group_id;
+            $grouped{$fid} = [] unless(exists $grouped{$fid});
 	   	    push @{$grouped{$fid}}, $f;
-            $empty_flag =0; # We have a feature (its on one of the strands!)
+            $empty_flag = 0; # We have a feature (its on one of the strands!)
 	    }
 
         if($empty_flag) {
-			$self->errorTrack(
-				'No '.$self->{'extras'}->{'caption'}.
-				' features in this region'
-			);
-		    return;
+        	$self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
+            return;
         }	
-		foreach my $value (values %grouped) {
-			my $f = $value->[0];
-		## Display if not stranded OR
-			my @features = sort { $a->das_start <=> $b->das_start } @$value;
-			my $start = $features[0]->das_start;
-			my $START = $start < 1 ? 1 : $start;
-			my $end = $features[-1]->das_end;
+        
+        foreach my $value (values %grouped) {
+        	my $f = $value->[0];
+        ## Display if not stranded OR
+        	my @features = sort { $a->das_start <=> $b->das_start } @$value;
+        	my $start = $features[0]->das_start;
+        	my $START = $start < 1 ? 1 : $start;
+        	my $end   = $features[-1]->das_end;
         ### A general list of features we don't want to draw via DAS ###
        
-			my $id      	= $f->das_id();
-			my $display_id  = "ID: " .  $f->das_id();
-		#print STDERR "Drawing feature: ",$f->das_id(),' - ',$f->das_start(), " - ",
-		#      $f->das_end(), " - ", $feature_colour,"\n";
-        ### if there is an error in the retrieval of the DAS source then
-        ### a feature with ->id "__ERROR__" is added to the feature list
-        ### this forces an error text to be displayed below [ error message is in ->das_id() ]
-        	$empty_flag = 0;
-
-                        my $href = '';
-			my $zmenu = {
-            	'caption'         => $self->{'extras'}->{'label'},
-#                "DAS source info" => $self->{'extras'}->{'url'},
-        	};
-			if($id && $id ne 'null') {
-				if($self->{'extras'}->{'linkURL'}){
-					$zmenu->{$link_text} = $href = $ext_url->get_url( $self->{'extras'}->{'linkURL'}, $id );
-				}
-	    			$zmenu->{$display_id} = '';
-				#print STDERR "DAS SNP ID: $id\n";
-			}
-			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
-				if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
-			$zmenu->{"SCORE: ". $f->das_score()      } = ''
-				if $f->das_score() && uc($f->das_score()) ne 'NULL';
-			$zmenu->{"METHOD: ". $f->das_method_id()  } = ''
-				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
-			$zmenu->{"CATEGORY: ". $f->das_type_category() } = ''
-				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-			if( $f->das_link() && uc($f->das_link()) ne 'NULL' ) {
-			     $zmenu->{"DAS LINK: ".$f->das_link_label() } = $href = $f->das_link() ;
-                        }
-   		# JS5: If we have an ID then we can add this to the Zmenu and
-		#      also see if we can make a link to any additional information
-		#      about the source.
-			if($id && $id ne 'null') {
-				if($self->{'extras'}->{'linkURL'}){
-					$zmenu->{$link_text} = $href = $ext_url->get_url( $self->{'extras'}->{'linkURL'}, $id );
-				}
-	    			$zmenu->{$display_id} = '';
-				#print STDERR "DAS SNP ID: $id\n";
-			}
-			my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-				'y'            => 0,
-				'x'            => $START,
-				'absolutey'    => 1,
-            	'zmenu'     => $zmenu,
-			});
-			$Composite->{'href'} = $href if $href;
-            if( $f->das_type_id() =~ /(CDS|transcript|exon)/i ) { 
-                my $f = shift @features;
-                my $START = $f->das_start() <  1       ? 1 : $f->das_start();
+            my ($href, $zmenu ) = $self->zmenu( $f );
+        	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+                'y'            => 0,
+                'x'            => $START,
+                'absolutey'    => 1,
+            	'zmenu'        => $zmenu,
+        	});
+        	$Composite->{'href'} = $href if $href;
+            
+            ## if we are dealing with a transcript (CDS/transcript/exon) then join with introns...
+            
+            if( $f->das_type_id() =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
+                my $f     = shift @features;
+                my $START = $f->das_start() < 1        ? 1       : $f->das_start();
                 my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
                 my $old_end = $END;
-    			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+            	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
         	        'x'      	=> $START,
-    	    		'y'      	=> 0,
-    	    		'width'  	=> $END-$START,
-    		    	'height' 	=> 8,
-    		    	'colour' 	=> $feature_colour,
-    	    		'absolutey' => 1,
+    	            'y'      	=> 0,
+    	            'width'  	=> $END-$START,
+                	'height' 	=> 8,
+                	'colour' 	=> $feature_colour,
+    	            'absolutey' => 1,
                 	'zmenu'     => $zmenu
                 });
+        	#$glyph->{'href'} = $href if $href;
                 $end = $old_end if $end <= $old_end;
                 $Composite->push($glyph);
-    			foreach(@features) {
+            	foreach(@features) {
                     my $START = $f->das_start() <  1       ? 1 : $f->das_start();
-    				$glyph = new Bio::EnsEMBL::Glyph::Intron({
+                    $glyph = new Bio::EnsEMBL::Glyph::Intron({
                         'x'         => $old_end,
                         'y'         => 0,
                         'width'     => $_->das_start()-$old_end,
@@ -197,160 +145,179 @@ sub _init {
                         'absolutey' => 1,
                         'strand'    => $STRAND,
                     });
-    				$Composite->push($glyph);
+        	    #$glyph->{'href'} = $href if $href;
+                    $Composite->push($glyph);
                     my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
                     $old_end = $END;
-    				$glyph = new Bio::EnsEMBL::Glyph::Rect({
+                    $glyph = new Bio::EnsEMBL::Glyph::Rect({
         	        	'x'      	=> $_->das_start(),
-    	    			'y'      	=> 0,
-    	    			'width'  	=> $END-$_->das_start(),
-    		    		'height' 	=> 8,
-    		    		'colour' 	=> $feature_colour,
-    	    			'absolutey' => 1,
-                		'zmenu'     => $zmenu
-    				});
-    				$Composite->push($glyph);
+    	            	'y'      	=> 0,
+    	            	'width'  	=> $END-$_->das_start(),
+                        'height' 	=> 8,
+                        'colour' 	=> $feature_colour,
+    	            	'absolutey' => 1,
+                        'zmenu'     => $zmenu
+                    });
+        	    #$glyph->{'href'} = $href if $href;
+                    $Composite->push($glyph);
                     $end = $old_end if $end <= $old_end;
                 }
-            } else {
-    			$Composite->bordercolour($feature_colour);
-    			foreach(@features) {
+            } else { ## GENERAL GROUPED FEATURE!
+        	my $Composite2 = new Bio::EnsEMBL::Glyph::Composite({
+                'y'            => 0,
+                'x'            => $START,
+                'absolutey'    => 1,
+                    	'zmenu'        => $zmenu,
+        	});
+            	$Composite2->bordercolour($feature_colour);
+            	foreach(@features) {
                     my $START = $_->das_start() <  1       ? 1 : $_->das_start();
                     my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
-    				my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+                    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
         	        	'x'      	=> $START,
-    	    			'y'      	=> 0,
-    	    			'width'  	=> $END-$START,
-    		    		'height' 	=> 8,
-    		    		'colour' 	=> $feature_colour,
-    	    			'absolutey' => 1,
-                		'zmenu'     => $zmenu
-    				});
-    				$Composite->push($glyph);
-                }
-			}
-		
-	    	if ($dep > 0) { # we bump
-            	my $bump_start = int($Composite->x() * $pix_per_bp);
-            	$bump_start = 0 if ($bump_start < 0);
-
-            	my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
-            	$bump_end = $bitmap_length if $bump_end > $bitmap_length;
-            	my $row = &Bump::bump_row(
-				    $bump_start,
-					$bump_end,
-					$bitmap_length,
-					\@bitmap
-            	);
-    			next if ($row > $dep);
-            	$Composite->y($Composite->y() - $tstrand * 1.4 * $row * $h);
-	    	}
-	    	$self->push($Composite);     
+    	            	'y'      	=> 0,
+    	            	'width'  	=> $END-$START,
+                        'height' 	=> 8,
+                        'colour' 	=> $feature_colour,
+    	            	'absolutey' => 1,
+                        'zmenu'     => $zmenu
+                    });
+        	    #$glyph->{'href'} = $href if $href;
+                    $Composite2->push($glyph);
+               	}
+        	#$Composite2->{'href'} = $href if $href;
+        	$Composite->push($Composite2);
+        }
+            # DONT DISPLAY IF BUMPING AND BUMP HEIGHT TOO GREAT
+            my $H =$self->feature_label( $Composite, $f->das_id, $feature_colour, $start < 1 ? 1 : $start , $end > $length ? $length : $end );
+            $self->push($Composite) unless( $dep>0 && $self->bump($Composite, $dep, $tstrand *(1.4*$h+$H) ) );
     	}
   	} else {
-		foreach my $f(@features){
-## Display if not stranded OR
-#            print STDERR "got feature:", $f->das_dsn(), "-", $self->{'extras'}->{'dsn'},"\n";
-    		next unless ( $f->das_dsn() eq $self->{'extras'}->{'dsn'} );
-#            print STDERR "passed DSN test\n";
+        foreach my $f(@features){
         	if($f->das_type_id() eq '__ERROR__') {
-				$self->errorTrack(
-					'Error retrieving '.$self->{'extras'}->{'caption'}.
-					' features ('.$f->id.')'
-				);
-		    	return;
+                $self->errorTrack(
+                	'Error retrieving '.$self->{'extras'}->{'caption'}.
+                	' features ('.$f->das_id.')'
+                );
+            	return;
         	}
-	        next if ($f->das_type_id() =~ /contig/i);       # raw_contigs
-            next if ($f->das_type_id() =~ /component/i);       # clones
-    	    next if ($f->das_type_id() =~ /karyotype/i);    # karyotype bands
-#            print STDERR "passed type test\n";
-	        $empty_flag =0; # We have a feature (its on one of the strands!)
-    		next if $strand eq 'b' &&
-                ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
+	        $empty_flag = 0; # We have a feature (its on one of the strands!)
+            next if $strand eq 'b' && ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
                 
-#            print STDERR "passed strand test\n";
-        
-        	### A general list of features we don't want to draw via DAS ###
-       
-		   	my $id = $f->das_id();
-			my $display_id      = "ID: $id";
-        
- 
-		#print STDERR "Drawing feature: ",$f->das_id(),' - ',$f->das_start(), " - ", $f->das_end(), " - ", $feature_colour,"\n";
-        ### if there is an error in the retrieval of the DAS source then
-        ### a feature with ->id "__ERROR__" is added to the feature list
-        ### this forces an error text to be displayed below [ error message is in ->das_id() ]
-        	$empty_flag = 0;
-
-			my $href=undef;
-			my $zmenu = {
-                	'caption'                       => $self->{'extras'}->{'label'},
-    	    		};
-			if($id && $id ne 'null') {
-				if($self->{'extras'}->{'linkURL'}){
-					$zmenu->{$link_text} = $href = $ext_url->get_url( $self->{'extras'}->{'linkURL'}, $id );
-				}
-	    		$zmenu->{$display_id} = '';
-			#print STDERR "DAS SNP ID: $id\n";
-			}
-			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
-				if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
-			$zmenu->{"SCORE: ". $f->das_score()      } = ''
-				if $f->das_score() && uc($f->das_score()) ne 'NULL';
-			$zmenu->{"METHOD: ". $f->das_method_id()  } = ''
-				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
-			$zmenu->{"CATEGORY: ". $f->das_type_category() } = ''
-				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-			if( $f->das_link() && uc($f->das_link()) ne 'NULL' ) {
-			   $zmenu->{"DAS LINK: ".$f->das_link_label() } = $href = $f->das_link()
-           		} 
-   		# JS5: If we have an ID then we can add this to the Zmenu and
-		#      also see if we can make a link to any additional information
-		#      about the source.
-            my $START = $f->das_start() <  1       ? 1 : $f->das_start();
+        	my ($href, $zmenu ) = $self->zmenu( $f );
+            my $START = $f->das_start() <  1       ? 1       : $f->das_start();
             my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
-			my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-				'y'            => 0,
-				'x'            => $START,
-				'absolutey'    => 1,
+        	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+                'y'            => 0,
+                'x'            => $START,
+                'absolutey'    => 1,
             	'zmenu'        => $zmenu,
-			});
-			$Composite->{'href'} = $href if $href;
-		
-			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+        	});
+        	$Composite->{'href'} = $href if $href;
+        
+        	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
     	        'x'      	=> $START,
-		    	'y'      	=> 0,
-	    		'width'  	=> $END-$START,
-		    	'height' 	=> 8,
-	    		'colour' 	=> $feature_colour,
-		    	'absolutey' => 1,
+            	'y'      	=> 0,
+	            'width'  	=> $END-$START,
+            	'height' 	=> 8,
+	            'colour' 	=> $feature_colour,
+            	'absolutey' => 1,
     	        'zmenu'     => $zmenu,
-			});
-			$Composite->push($glyph);
-        #$glyph->bordercolour($border);
-		    if ($dep > 0) { # we bump
-        	    my $bump_start = int($Composite->x() * $pix_per_bp);
-            	$bump_start = 0 if ($bump_start < 0);
+        	});
+        	#$glyph->{'href'} = $href if $href;
 
-	            my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
-    	        $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
-        	    my $row = &Bump::bump_row(
-				    $bump_start,
-					$bump_end,
-					$bitmap_length,
-					\@bitmap
-	            );
-    			next if ($row > $dep);
-        	    $Composite->y($Composite->y() - $tstrand * 1.4 * $row * $h);
-		    }
-		    $self->push($Composite);     
-	    }
+         	$Composite->push($glyph);
+            # DONT DISPLAY IF BUMPING AND BUMP HEIGHT TOO GREAT
+            my $H =$self->feature_label( $Composite, $f->das_id, $feature_colour, $START, $END );
+            $self->push($Composite) unless( $dep>0 && $self->bump($Composite, $dep, $tstrand *(1.4*$h+$H) ) );
+	 }
     
-		$self->errorTrack(
-			'No '.$self->{'extras'}->{'caption'}.
-			' features in this region'
-		) if $empty_flag;
+	$self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
     }   
+}
+
+sub bump{
+    my ($self, $Composite, $dep, $height ) = @_;
+    my $bump_start = int($Composite->x() * $self->{'pix_per_bp'} );
+       $bump_start = 0 if ($bump_start < 0);
+
+	my $bump_end = $bump_start + int($Composite->width() * $self->{'pix_per_bp'});
+       $bump_end = $self->{'bitmap_length'} if ($bump_end > $self->{'bitmap_length'});
+    my $row = &Bump::bump_row(
+	    $bump_start,    $bump_end,   $self->{'bitmap_length'}, $self->{'bitmap'}
+    );
+    return 1 if ($row > $dep); ## DON'T DISPLAY!
+    $Composite->y($Composite->y() - $height * $row);
+    return 0;
+}
+
+sub zmenu {
+        my( $self, $f ) = @_;
+        my $id = $f->das_id;
+        my $zmenu = {
+            'caption'         => $self->{'extras'}->{'label'},
+#                "DAS source info" => $self->{'extras'}->{'url'},
+        };
+        $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
+        $zmenu->{"03:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
+        $zmenu->{"04:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
+
+        $zmenu->{"05:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
+        $zmenu->{"06:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
+        $zmenu->{"07:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+        my $href = undef;
+        if($self->{'extras'}->{'fasta'}) {
+            foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
+        	my ($type, $db ) = split /_/, $string, 2;
+                $zmenu->{ "20:$type sequence" } = $self->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $f->das_id() } );
+        	$href = $zmenu->{ "20:$type sequence" } unless defined($href);
+            }
+        }
+        if($id && uc($id) ne 'NULL') {
+            $zmenu->{"01:ID: $id"} = '';
+            if($self->{'extras'}->{'linkURL'}){
+                 $href = $zmenu->{"08:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+	     } 
+        } 
+        return( $href, $zmenu );
+}
+
+
+sub feature_label {
+	my( $self, $composite, $ID, $feature_colour, $start, $end ) = @_;
+        if( uc($self->{'extras'}->{'labelflag'}) eq 'O' ) {
+            my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
+            return unless $bp_textwidth < ($end - $start);
+            my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+               'x'          => int(( $end + $start - $bp_textwidth)/2),
+               'y'          => 1,
+               'width'      => $bp_textwidth,
+               'height'     => $self->{'textheight'},
+               'font'       => 'Tiny',
+               'colour'     => $self->{'config'}->colourmap->contrast($feature_colour),
+               'text'       => $ID,
+               'absolutey'  => 1,
+            });
+            $composite->push($tglyph);
+	    return 0;
+        } elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {
+            my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
+            print STDERR "XXX> $ID $self->{'textheight'} XX\n";
+            my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+               'x'          => $start,
+               'y'          => $self->{'textheight'} + 2,
+               'width'      => $bp_textwidth,
+               'height'     => $self->{'textheight'},
+               'font'       => 'Tiny',
+               'colour'     => $feature_colour,
+               'text'       => $ID,
+               'absolutey'  => 1,
+            });
+            $composite->push($tglyph);
+            return $self->{'textheight'} + 4
+        } else {
+            return 0;
+	}
 }
 
 sub das_name {
