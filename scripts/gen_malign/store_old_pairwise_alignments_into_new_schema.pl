@@ -218,7 +218,9 @@ while (my @values = $old_sth->fetchrow_array) {
   }
   
   $consensus_genomic_align->dbID(0);
+  $consensus_genomic_align->method_link_species_set_id(0);
   $consensus_genomic_align->method_link_species_set($method_link_species_set);
+  $consensus_genomic_align->dnafrag_id(0);
   $consensus_genomic_align->dnafrag($consensus_dnafrag);
   $consensus_genomic_align->dnafrag_start($values[1]);
   $consensus_genomic_align->dnafrag_end($values[2]);
@@ -226,8 +228,12 @@ while (my @values = $old_sth->fetchrow_array) {
   $consensus_genomic_align->cigar_line($consensus_cigar_line);
   $consensus_genomic_align->level_id($values[12]);
   
+#   $consensus_genomic_align->_print();
+  
   $query_genomic_align->dbID(0);
+  $query_genomic_align->method_link_species_set_id(0);
   $query_genomic_align->method_link_species_set($method_link_species_set);
+  $query_genomic_align->dnafrag_id(0);
   $query_genomic_align->dnafrag($query_dnafrag);
   $query_genomic_align->dnafrag_start($values[4]);
   $query_genomic_align->dnafrag_end($values[5]);
@@ -235,6 +241,10 @@ while (my @values = $old_sth->fetchrow_array) {
   $query_genomic_align->cigar_line($query_cigar_line);
   $query_genomic_align->level_id($values[12]);
   
+#   $query_genomic_align->_print();
+  
+#   <STDIN>;
+
   $genomic_align_block->dbID(0);
   $genomic_align_block->method_link_species_set($method_link_species_set);
   $genomic_align_block->score($values[8]);
