@@ -4,40 +4,11 @@ use Bio::Root::RootI;
 use strict;
 use lib "../../../../modules";
 use vars qw(@ISA);
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
-
-#########
-# take out this 'use' eventually:
-#
-use Bio::EnsEMBL::Renderer::gif;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 use constant DRAW_PATH => '/mysql/ensembl/www/server/ensembl-draw/modules';
 
 @ISA = qw(Bio::Root::RootI);
-
-=head1 NAME
-
-Bio::EnsEMBL::DrawableContainer - top level container for ensembl-draw drawing code.
-
-=head1 SYNOPSIS
-
-Bio::EnsEMBL::DrawableContainer is a container class for any number of GlyphSets.
-
-=cut
-
-@ISA = qw(Exporter);
-
-=head1 METHODS
-
-=head2 new - Class constructor.
-
-my $gss = new Bio::EnsEMBL::DrawableContainer($display, $Container, $ConfigObject);
-
-	$display       - contigviewtop|contigviewbottom|protview
-	$Container     - vc|other_container_obj on which the image will be built
-	$ConfigObject  - WebUserConfig object
-
-=cut
 
 sub new {
     my ($class, $display, $Container, $Config, $highlights, $strandedness) = @_;
@@ -53,10 +24,10 @@ sub new {
 	return;
     }
 
-    if($display !~ /transview|contigviewbottom|protview/) {
-	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new Unknown display type $display\n);
-	return;
-    }
+#    if($display !~ /transview|contigviewbottom|protview/) {
+#	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new Unknown display type $display\n);
+#	return;
+#    }
 
     if(!defined $Container) {
 	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No container defined\n);
@@ -82,6 +53,8 @@ sub new {
     my @subsections = $Config->subsections($self->{'display'});
 
     my @order = sort { $Config->get($self->{'display'}, $a, 'pos') <=> $Config->get($self->{'display'}, $b, 'pos') } @subsections;
+
+    &eprof_start('glyphset_creation');
 
     for my $strand (@strands_to_show) {
       my @tmp;
@@ -116,7 +89,6 @@ sub new {
 	    print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
 	    next;
 	}
-
 	$classname->import();
 
 	#########
@@ -128,17 +100,11 @@ sub new {
       }
     }
 
+    &eprof_end('glyphset_creation');
+
     bless($self, $class);
     return $self;
 }
-
-=head2 render - renders object data into an image
-
-my $imagestring = $gss->render($type);
-
-	$type        - imagemap|gif|png|ps|pdf|tiff|wmf|fla
-
-=cut
 
 #########
 # render does clever drawing things
@@ -146,17 +112,10 @@ my $imagestring = $gss->render($type);
 sub render {
     my ($self, $type) = @_;
 
-    #########
-    # query boundary conditions of glyphsets?
-    # set up canvas?
-    # DO GLOBBING & BUMPING!!!
-    #
-
-    my ($width, $height) = $self->config()->dimensions();
-
     my $transform_ref = {
 	'translatex' => 0,
 	'translatey' => 0,
+#	'scaley' => 2,
     };
 
     #########
@@ -180,7 +139,9 @@ sub render {
     #########
     # big, shiny, rendering 'GO' button
     #
+    &eprof_start(qq(renderer_creation_$type));
     my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'}, $transform_ref);
+    &eprof_end(qq(renderer_creation_$type));
 
     return $renderer->canvas();
 }

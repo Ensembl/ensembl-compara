@@ -5,6 +5,7 @@ use Bio::Root::RootI;
 use Exporter;
 use vars qw(@ISA $AUTOLOAD);
 @ISA = qw(Exporter Bio::Root::RootI);
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 #########
 # constructor
@@ -26,7 +27,10 @@ sub new {
     };
 
     bless($self, $class);
+
+    &eprof_start(qq(glyphset_$class));
     $self->_init($VirtualContig, $Config);
+    &eprof_end(qq(glyphset_$class));
 
     return $self;
 }
@@ -232,6 +236,13 @@ sub strand {
     my ($this, $strand) = @_;
     $this->{'strand'} = $strand if(defined $strand);
     return $this->{'strand'};
+}
+
+sub height {
+    my ($this) = @_;
+    my $h = $this->{'maxy'} - $this->{'miny'};
+    $h *=-1 if($h < 0);
+    return $h;
 }
 
 1;

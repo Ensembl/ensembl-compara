@@ -4,14 +4,13 @@ use Exporter;
 use vars qw(@ISA);
 use lib "../../../../modules";
 use ColourMap;
-use Bio::EnsEMBL::Glyph::Clip;
-use WMF;
-use GD;
 
 @ISA = qw(Exporter);
 
 sub new {
     my ($class, $config, $container, $glyphsets_ref, $transform_ref) = @_;
+
+    my $spacing = 5;
 
     #########
     # set up the type to be gif|wmf|ps|whatever
@@ -22,39 +21,33 @@ sub new {
     #########
     # calculate scaling factors and canvas dimensions
     #
-    my $im_height = 2;
+    my $im_height = $spacing;
     for my $glyphset (@{$glyphsets_ref}) {
-	$glyphset->maxy($glyphset->maxy()+2);
-	$im_height += ($glyphset->maxy() - $glyphset->miny());
+	$im_height += $glyphset->height() + $spacing;
     }
 
     my $im_width = $config->image_width();
-    %{$transform_ref}->{'scalex'} = $config->scalex();
-    %{$transform_ref}->{'translatey'} += 2;
-
-    #########
-    # create a fresh canvas
-    #
-    my $canvas;
-    if($type eq "gif") {
-	$canvas = new GD::Image($im_width, $im_height);
-	$canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
-
-    } elsif($type eq "wmf") {
-	$canvas = new WMF($im_width, $im_height);
-	$canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
-    }
+    $$transform_ref{'scalex'} = $config->scalex();
 
     my $self = {
 	'glyphsets' => $glyphsets_ref,
 	'transform' => $transform_ref,
-	'canvas'    => $canvas,
+	'canvas'    => undef,
 	'colourmap' => $config->colourmap(),
 	'config'    => $config,
 	'container' => $container,
 	'type'      => undef,
+	'spacing'   => $spacing,
     };
+
     bless($self, $class);
+
+    #########
+    # create a fresh canvas
+    #
+    if($self->can('init_canvas')) {
+	$self->init_canvas($config, $im_width, $im_height);
+    }
 
     $self->render();
 
@@ -63,23 +56,27 @@ sub new {
 
 sub render {
     my ($this) = @_;
-    my $previous_maxy = 0;
 
     my ($cstart, $cend);
 
     $cstart = 0;
     $cend   = $this->{'container'}->length();
 
+    #########
+    # give us a top margin
+    #
+#    $this->{'transform'}->{'translatey'} += $this->{'transform'}->{'spacing'};
+
+    my $yoffset = $this->{'spacing'};
+    my $iteration = 0;
     for my $glyphset (@{$this->{'glyphsets'}}) {
 
 	#########
-	# slide this row to the bottom of the previous row
-	# also remove any whitespace at the top of this row
-	# lastly add a teensy gap between the rows
+	# remove any whitespace at the top of this row
 	#
-	# NB: this is rotation-sensitive!
-	#
-	$this->{'transform'}->{'translatey'} += $previous_maxy - $glyphset->miny();
+	my $gminy = $glyphset->miny();
+
+	$this->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $this->{'spacing'});
 
 	for my $glyph ($glyphset->glyphs()) {
 
@@ -91,7 +88,11 @@ sub render {
 	    }
 	}
 
-	$previous_maxy = $glyphset->maxy();
+	#########
+	# translate the top of the next row to the bottom of this one
+	#
+	$yoffset += $glyphset->height();
+	$iteration ++;
     }
 }
 
