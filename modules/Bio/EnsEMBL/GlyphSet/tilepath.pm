@@ -11,7 +11,8 @@ sub my_label { return "Tilepath"; }
 
 sub features {
   my ($self) = @_;
-  return $self->{'container'}->get_all_MiscFeatures( 'tilepath' );
+  my @a = sort{ $a->seq_region_start <=> $b->seq_region_start } @{$self->{'container'}->get_all_MiscFeatures( 'tilepath' )};
+  return \@a;
 }
 
 ## If tile path clones are very long then we draw them as "outlines" as

@@ -6,6 +6,8 @@ use Bio::EnsEMBL::GlyphSet_simple;
 
 sub my_label { return $_[0]->my_config('label'); }
 
+sub help_link { return 'compara_synteny'; }
+
 sub features {
   my ($self) = @_;
   my $species = $self->my_config('species');

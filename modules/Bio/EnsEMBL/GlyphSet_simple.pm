@@ -12,7 +12,7 @@ use  Sanger::Graphics::Bump;
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    my $HELP_LINK = $self->check();
+    my $HELP_LINK = $self->can('help_link') ? $self->help_link : $self->check();
     my $label = new Sanger::Graphics::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',

@@ -17,7 +17,7 @@ sub features {
         my $string = substr( $seq, $phase , 3 * int ( (length($seq) - $phase)/3 ) );
         if($strand == -1 ) {
            $string = reverse $string;
-           $string =~tr/AGCT/TCGA/ ;
+           $string =~tr/AGCTagct/TCGAtcga/ ;
         }
         my $bioseq = new Bio::Seq( -seq => $string, -moltype => 'dna' );
         $string = $bioseq->translate->seq;
