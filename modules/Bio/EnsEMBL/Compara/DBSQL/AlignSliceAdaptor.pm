@@ -34,3 +34,4 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   return $align_slice;
 }
 
+1;
