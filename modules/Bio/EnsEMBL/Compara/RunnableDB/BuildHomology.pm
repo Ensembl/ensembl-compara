@@ -48,6 +48,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHomology;
 
 use strict;
+#use Statistics::Descriptive;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
@@ -59,6 +60,7 @@ use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Subset;
+use Bio::EnsEMBL::Compara::Functions;
 
 use vars qw(@ISA);
 
@@ -115,6 +117,10 @@ sub run
 
   my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
 
+  $self->test_RHS();
+  exit(1);
+
+  
   while(@blast_list) {
     my $blast1 = shift @blast_list;
     foreach my $blast2 (@blast_list) {
@@ -122,9 +128,12 @@ sub run
 
       $self->{'member_BRH_PAF_hash'} = {};
       $self->{'membersToBeProcessed'} = {};
-
+   
       $self->set_member_list($blast1);
       $self->set_member_list($blast2);
+
+      my $genome_db_id = parse_as_hash($blast1->parameters)->{'genome_db_id'};
+      $self->calc_inter_genic_distance($genome_db_id);
 
       $self->get_BRH_for_species_pair($blast1, $blast2);
 
@@ -161,8 +170,7 @@ sub set_member_list
 
   print(STDERR "set_member_list from analysis ".$analysis->logic_name()."\n");
 
-  my %params = $analysis->parameter_hash();
-  my $subset_id = $params{subset_id};
+  my $subset_id = parse_as_hash($analysis->parameters)->{'subset_id'};
 
   my $subset = $self->{'comparaDBA'}->get_SubsetAdaptor->fetch_by_dbID($subset_id);
   foreach my $member_id (@{$subset->member_id_list}) {
@@ -224,7 +232,7 @@ sub get_BRH_for_species_pair
 
     my $homology = $paf->return_as_homology();
     $homology->description('BRH');
-    eval { $homologyDBA->store($homology); };
+    #eval { $homologyDBA->store($homology); };
 
     $self->{'member_BRH_PAF_hash'}->{$paf->query_member->dbID} = $paf;
     $self->{'member_BRH_PAF_hash'}->{$paf->hit_member->dbID} = $paf;
@@ -285,9 +293,12 @@ sub find_RHS_for_species_pair
   print(STDERR "  analysis1 ".$analysis1->logic_name()."\n");
   print(STDERR "  analysis2 ".$analysis2->logic_name()."\n");
 
-  my %params = $analysis1->parameter_hash();
-  my $subset_id = $params{subset_id};
+  my $subset_id = parse_as_hash($analysis1->parameters)->{'subset_id'};
 
+  #
+  # fetch the peptide members (via subset) ordered on chromosomes
+  # then convert into synenty_segments (again of peptide members)
+  #
   print("about to fetch members\n");
   my $startTime = time();
   my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor();
@@ -298,10 +309,10 @@ sub find_RHS_for_species_pair
 
   my $syntenySegment = $self->get_next_syneny_segment($sortedMembers);
   while($syntenySegment) {
-
     # do my processing of synteny
     $self->print_synteny_segement($syntenySegment);
-
+    $self->process_synteny_segement($syntenySegment);
+    
     #get next segment
     $syntenySegment = $self->get_next_syneny_segment($sortedMembers);
   }
@@ -382,6 +393,124 @@ sub print_synteny_segement
 }
 
 
+sub process_synteny_segement
+{
+  my $self = shift;
+  my $syntenySegmentRef = shift;
+
+  return unless($syntenySegmentRef and @{$syntenySegmentRef});
+  my @syntenySegment = @{$syntenySegmentRef};
+
+  # members in synteny segment
+  my $firstMember = shift @syntenySegment;
+  my $lastMember = pop @syntenySegment;
+  
+  my $refPAF = $self->{'member_BRH_PAF_hash'}->{$firstMember->dbID};
+  foreach my $peptideMember (@syntenySegment) {
+    $self->find_RHS($refPAF, $peptideMember);
+  }
+
+  $refPAF = $self->{'member_BRH_PAF_hash'}->{$lastMember->dbID};
+  foreach my $peptideMember (@syntenySegment) {
+    $self->find_RHS($refPAF, $peptideMember);
+  }
+}
+
+sub test_RHS
+{
+  my $self = shift;
+  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
+  my $refPAF = $pafDBA->fetch_by_dbID(461006); #BRH
+  print("BRH : "); $refPAF->display_short;
+  my $memberPep = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(260152); #muspep
+  #$self->print_member($memberPep);
+  
+  $self->find_RHS($refPAF, $memberPep);
+}
+
+
+sub find_RHS
+{
+  my $self = shift;
+  my $refPAF = shift;  #from syntenySegment
+  my $memberPep = shift;
+
+  return unless($refPAF and $memberPep);
+=head2
+  print(STDERR "find_RHS\n");
+  print(STDERR "  BRH\n    ");
+  $self->print_member($refPAF->query_member, " QUERY\n    ");
+  $self->print_member($refPAF->hit_member, " HIT\n");
+  print(STDERR "  member\n    ");
+  $self->print_member($memberPep);
+=cut
+  if($refPAF->query_member->chr_start < $memberPep->chr_start) { #BRH to left
+    return
+      if(($memberPep->chr_start - $refPAF->query_member->chr_end) > 1500000)
+  }
+  if($refPAF->query_member->chr_start > $memberPep->chr_start) { #BRH to right
+    return
+      if(($refPAF->query_member->chr_start - $memberPep->chr_end) > 1500000)
+  }
+
+  my $sql = "SELECT paf1.peptide_align_feature_id ".
+            " FROM member qm, member hm, ".
+            " peptide_align_feature paf1, peptide_align_feature paf2, ".
+            " member_gene_peptide ".
+            " WHERE paf1.hmember_id=paf2.qmember_id ".
+            " AND paf1.qmember_id=paf2.hmember_id ".
+            " AND qm.member_id=paf1.qmember_id ".
+            " AND hm.member_id=member_gene_peptide.gene_member_id ".
+            " AND member_gene_peptide.peptide_member_id=paf1.hmember_id ".
+            " AND paf1.hit_rank=1 ".
+            " AND hm.genome_db_id=". $refPAF->hit_member->genome_db_id .
+            " AND hm.chr_name=". $refPAF->hit_member->chr_name .
+            " AND hm.chr_start<". scalar($refPAF->hit_member->chr_end+1500000) .
+            " AND hm.chr_end>". scalar($refPAF->hit_member->chr_start-1500000) .
+            " AND paf1.qmember_id=". $memberPep->dbID .
+            " AND paf2.hmember_id=". $memberPep->dbID . 
+            " ORDER BY hm.chr_start";
+
+  #print("$sql\n");            
+  my $sth = $self->{'comparaDBA'}->prepare($sql);
+  $sth->execute();
+
+  my ($paf1_id);
+  $sth->bind_columns(\$paf1_id);
+  my @paf_id_list;
+  while ($sth->fetch()) {
+    push @paf_id_list, $paf1_id;
+  }
+  $sth->finish;
+
+  #print("  CONVERT PAF => Homology objects and store\n");
+  my $pafDBA      = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor();
+  my $homologyDBA = $self->{'comparaDBA'}->get_HomologyAdaptor();
+
+  #$startTime = time();
+  foreach $paf1_id (@paf_id_list) {
+    my $paf = $pafDBA->fetch_by_dbID($paf1_id); #does a print
+    print("RHS : "); $paf->display_short;
+
+    my $homology = $paf->return_as_homology();
+    $homology->description('RHS');
+    #eval { $homologyDBA->store($homology); };
+
+    $self->{'member_BRH_PAF_hash'}->{$paf->query_member->dbID} = $paf;
+    $self->{'member_BRH_PAF_hash'}->{$paf->hit_member->dbID} = $paf;
+    delete $self->{'membersToBeProcessed'}->{$paf->query_member->dbID};
+    delete $self->{'membersToBeProcessed'}->{$paf->hit_member->dbID};
+  }
+  #print(time()-$startTime . " sec to convert PAF to Homology\n");
+  
+}
+
+#################################
+#
+# General routines
+#
+#################################
+
 sub print_member
 {
   my $self = shift;
@@ -392,9 +521,71 @@ sub print_member
         "(".$member->dbID.")".
         "\t".$member->chr_name ." : ".
         $member->chr_start ."- ". $member->chr_end);
-  if($self->{'member_BRH_PAF_hash'}->{$member->dbID}) { print(" BRH "); }
+  my $paf = $self->{'member_BRH_PAF_hash'}->{$member->dbID};
+  if($paf) { print(" BRH(".$paf->dbID.")" ); }
   if($postfix) { print(" $postfix"); } 
   else { print("\n"); }
 }
+
+
+sub calc_inter_genic_distance
+{
+  my $self = shift;
+  my $genome_db_id = shift;
+
+  print("calc_inter_genic_distance genome_db_id=$genome_db_id\n");
+  my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id);
+  my $desc = $genomeDB->name() . " genes";
+  print("  desc = $desc\n");
+  my $subset = $self->{'comparaDBA'}->get_SubsetAdaptor->fetch_by_set_description($desc);
+  print("fetched subset_id ". $subset->dbID . "\n");
+  my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor();
+  $memberDBA->_final_clause("ORDER BY m.chr_name, m.chr_start");
+  my $sortedMembers = $memberDBA->fetch_by_subset_id($subset->dbID);
+  print(scalar(@{$sortedMembers}) . " members to process\n");
+
+  my $lastMember = undef;
+  my $count = 0;
+  my $distSum = 0;
+  my $minDist = undef;
+  my $maxDist = undef;
+  my $dist;
+  my $overlapCount = 0;
+  foreach my $member (@{$sortedMembers}) {
+    if($lastMember) {
+      if($lastMember->chr_name ne $member->chr_name) {
+        $lastMember = undef;
+      }
+      else {
+        $count++;
+        $dist = ($member->chr_start - $lastMember->chr_end);
+        $distSum += $dist;
+
+        if($dist < 0) {
+          $overlapCount++;
+          $self->print_member($lastMember, "lastMember");
+          $self->print_member($member, "member, dist<0\n");
+        }
+
+        unless($minDist and $dist>$minDist) { $minDist=$dist; }
+        unless($maxDist and $dist<$maxDist) { $maxDist=$dist; }
+
+        $lastMember = $member;
+      }
+    }
+    else {
+      $lastMember = $member;
+    }
+  }
+
+  my $averageIntergenicDistance = scalar($distSum/$count);
+
+  print("$count intergenic intervals\n");
+  print("$overlapCount overlapping genes\n");
+  print("$averageIntergenicDistance average intergenic distance\n");
+  print("maxDist = $maxDist\n");
+  print("minDist = $minDist\n");
+}
+
 
 1;
