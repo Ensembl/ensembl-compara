@@ -9,10 +9,11 @@ $0 -host ecs2c -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_14_1
 ";
 
 my $help = 0;
-my ($host,$dbname,$dbuser,$dbpass);
+my ($host,$port,$dbname,$dbuser,$dbpass);
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
+           'port=i' => \$port,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
 	   'dbname=s' => \$dbname);
@@ -23,6 +24,7 @@ if ($help) {
 }
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
+                                                     -port => $port,
 						     -dbname => $dbname,
 						     -user => $dbuser,
 						     -pass => $dbpass);
