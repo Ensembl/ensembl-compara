@@ -1298,7 +1298,7 @@ sub reverse_complement {
 
 =head2 get_Mapper
 
-  Args       : [optional] integer $cache
+  Arg[1]     : [optional] integer $cache
   Example    : $this_mapper = $genomic_align->get_Mapper();
   Example    : $mapper1 = $genomic_align1->get_Mapper();
                $mapper2 = $genomic_align2->get_Mapper();
@@ -1311,6 +1311,8 @@ sub reverse_complement {
                to transform coordinates into the "alignment" coordinates and then to
                the other Bio::EnsEMBL::Compara::GenomicAlign coordinates using the
                corresponding Bio::EnsEMBL::Mapper.
+               The coordinates of the "alignment" starts with the reference_slice_start
+               position of the GenomicAlingBlock if available or 1 otherwise.
                With the $cache argument you can decide whether you want to cache the
                result or not. Result is *not* cached by default.
   Returntype : Bio::EnsEMBL::Mapper object
@@ -1328,10 +1330,11 @@ sub get_Mapper {
     }
   
     my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
-  
+
     my @cigar_pieces = ($self->cigar_line =~ /(\d*[GMD])/g);
-    my $alignment_position = 1;
-    if ($self->dnafrag_strand == 1) {
+    my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+    my $rel_strand = $self->dnafrag_strand;
+    if ($rel_strand == 1) {
       my $sequence_position = $self->dnafrag_start;
       foreach my $cigar_piece (@cigar_pieces) {
         my $cigar_type = substr($cigar_piece, -1, 1 );
@@ -1344,7 +1347,7 @@ sub get_Mapper {
                   "sequence", #$self->dbID,
                   $sequence_position,
                   $sequence_position + $cigar_count - 1,
-                  $self->dnafrag_strand,
+                  $rel_strand,
                   "alignment", #$self->genomic_align_block->dbID,
                   $alignment_position,
                   $alignment_position + $cigar_count - 1
@@ -1368,7 +1371,7 @@ sub get_Mapper {
                   "sequence", #$self->dbID,
                   $sequence_position - $cigar_count + 1,
                   $sequence_position,
-                  $self->dnafrag_strand,
+                  $rel_strand,
                   "alignment", #$self->genomic_align_block->dbID,
                   $alignment_position,
                   $alignment_position + $cigar_count - 1
