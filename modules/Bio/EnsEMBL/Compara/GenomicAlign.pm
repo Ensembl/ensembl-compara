@@ -458,7 +458,7 @@ sub alignment_strings {
 
   my ($seq, $hseq);
   $seq = $self->consensus_dnafrag->slice->subseq($self->consensus_start, $self->consensus_end) if ($seq_flag || $fix_seq_flag);
-  $hseq = $self->query_dnafrag->slice->subseq($self->query_start, $self->query_end) if ($hseq_flag || $fix_hseq_flag);
+  $hseq = $self->query_dnafrag->slice->subseq($self->query_start, $self->query_end, $self->query_strand) if ($hseq_flag || $fix_hseq_flag);
 
   my $rseq= "";
   # rseq - result sequence
