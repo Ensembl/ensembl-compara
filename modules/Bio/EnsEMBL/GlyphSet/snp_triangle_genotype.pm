@@ -39,11 +39,6 @@ sub features {
     $genotyped_snp->{'_type'} = $snp->{'_type'};
   }
 
-  if(@genotyped_snps) {
-    $self->{'config'}->{'snp_legend_features'}->{'snps'} 
-        = { 'priority' => 1000, 'legend' => [] };
-  }
-
   return \@genotyped_snps;
 }
 1;
