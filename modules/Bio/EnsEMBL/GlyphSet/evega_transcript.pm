@@ -90,7 +90,7 @@ sub zmenu {
   "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=vega",
     "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=vega",          
     '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
-    "06:Sanger curated ($type)"   => '',
+    "06:Vega curated ($type)"   => '',
   };
   
   if($pid) {
@@ -112,7 +112,7 @@ sub gene_zmenu {
   my $zmenu = {
     'caption'             => "Vega Gene",
     "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=vega),
-    "06:Sanger curated ($type)"   => '',
+    "06:Vega curated ($type)"   => '',
   };
   return $zmenu;
 }
@@ -186,6 +186,6 @@ sub legend {
   );
 }
 
-sub error_track_name { return 'Sanger transcripts'; }
+sub error_track_name { return 'Vega transcripts'; }
 
 1;
