@@ -77,7 +77,7 @@ use strict;
 use Bio::EnsEMBL::Compara::Domain;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelationAdaptor);
+our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 
 =head2 fetch_by_relation
@@ -231,16 +231,16 @@ sub fetch_Taxon_by_dbname_dbID {
 sub _tables {
   my $self = shift;
 
-  return {['domain', 'd'], ['source', 's']};
+  return (['domain', 'd'], ['source', 's']);
 }
 
 sub _columns {
   my $self = shift;
 
-  return qw (d.domain_id,
-             d.stable_id,
-             d.description,
-             s.source_id,
+  return qw (d.domain_id
+             d.stable_id
+             d.description
+             s.source_id
              s.source_name);
 }
 
@@ -256,12 +256,12 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @domains, Bio::EnsEMBL::Compara::Domain->new_fast
-      ('_dbID' => $domain_id,
+      ({'_dbID' => $domain_id,
        '_stable_id' => $stable_id,
        '_description' => $description,
        '_source_id' => $source_id,
        '_source_name' => $source_name,
-       '_adaptor' => $self);
+       '_adaptor' => $self});
   }
   
   return \@domains;  
@@ -309,8 +309,8 @@ sub store {
   $sth->execute($dom->stable_id,$dom->source_id,$dom->description);
   $dom->dbID($sth->{'mysql_insertid'});
 
-  foreach my $member (@{$dom->get_all_members}) {
-    $self->store_relation($member, $dom);
+  foreach my $member_attribute (@{$dom->get_all_Member}) {
+    $self->store_relation($member_attribute, $dom);
   }
 
   return $dom->dbID;

@@ -244,7 +244,7 @@ sub fetch_Taxon_by_dbname_dbID {
 sub fetch_alignment {
   my($self, $family) = @_;
 
-  my $members = $family->get_all_members;
+  my $members = $family->get_all_Member;
   return unless(@$members);
 
   my $sth = $self->prepare("SELECT family_member_id, alignment 
@@ -273,17 +273,17 @@ sub fetch_alignment {
 sub _tables {
   my $self = shift;
 
-  return {['family', 'f'], ['source', 's']};
+  return (['family', 'f'], ['source', 's']);
 }
 
 sub _columns {
   my $self = shift;
 
-  return qw (f.family_id,
-             f.stable_id,
-             f.description,
-             f.descritpion_score,
-             s.source_id,
+  return qw (f.family_id
+             f.stable_id
+             f.description
+             f.descritpion_score
+             s.source_id
              s.source_name);
 }
 
@@ -299,13 +299,13 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @families, Bio::EnsEMBL::Compara::Family->new_fast
-      ('_dbID' => $family_id,
+      ({'_dbID' => $family_id,
        '_stable_id' => $stable_id,
        '_description' => $description,
        '_description_score' => $description_score,
        '_source_id' => $source_id,
        '_source_name' => $source_name,
-       '_adaptor' => $self);
+       '_adaptor' => $self});
   }
   
   return \@families;  
@@ -353,8 +353,8 @@ sub store {
   $sth->execute($fam->stable_id,$fam->source_id,$fam->description,$fam->description_score);
   $fam->dbID($sth->{'mysql_insertid'});
 
-  foreach my $member (@{$fam->get_all_members}) {   
-    $self->store_relation($member, $fam);
+  foreach my $member_attribue (@{$fam->get_all_Member}) {   
+    $self->store_relation($member_attribue, $fam);
   }
 
   return $fam->dbID;
