@@ -1,20 +1,46 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Getopt::Long;
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Attribute;
 
+my $usage = "
+$0 options input_data_file
+  [--help]                      this menu
+   --dbname string              (e.g. compara23) one of the compara database Bio::EnsEMBL::Registry aliases
+  [--source_name string]        the source name of the homology to be loaded (default is ENSEMBL_PARALOGUES);
+  [--description string]        the description of the homology to be loaded (default is YoungParalogues)
+  [--reg_conf filepath]         the Bio::EnsEMBL::Registry configuration file. If none given, 
+                                the one set in ENSEMBL_REGISTRY will be used if defined, if not
+                                ~/.ensembl_init will be used.
+\n";
+
+my $help = 0;
+my $source_name = "ENSEMBL_PARALOGUES";
+my $description = "YoungParalogues";
+my ($dbname,$reg_conf);
+
+GetOptions('help' => \$help,
+           'dbname=s' => \$dbname,
+           'source_name=s' => \$source_name,
+           'description=s' => \$description,
+           'reg_conf=s' => \$reg_conf);
+
 $! = 1;
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => "ia64e",
-                                                     -port => 3306,
-                                                     -user => "ensadmin",
-                                                     -pass => "ensembl",
-                                                     -dbname => "ensembl_compara_23_1");
+unless (scalar @ARGV) {
+  print $usage;
+  exit 0;
+}
 
-my $ha = $db->get_HomologyAdaptor;
-my $ma = $db->get_MemberAdaptor;
+# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
+# if no reg_conf file is given.
+Bio::EnsEMBL::Registry->load_all($reg_conf);
+
+my $ha = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Homology');
+my $ma = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Member');
 
 my $idx = 1;
 
@@ -51,12 +77,10 @@ while (<>) {
   $stable_id .= sprintf ("%011.0d",$idx);
   $idx++;
   $homology->stable_id($stable_id);
-  $homology->source_name("ENSEMBL_PARALOGUES");
-  # BestReciprocalHit
-  # ReciprocalHitbasedonSynteny
-  $homology->description("YoungParalogues");
-  $homology->dn(0,$dn);
-  $homology->ds(0,$ds);
+  $homology->source_name($source_name);
+  $homology->description($description);
+  $homology->dn($dn,0);
+  $homology->ds($ds,0);
   $homology->n($n);
   $homology->s($s);
   $homology->lnl($lnl);
@@ -65,6 +89,7 @@ while (<>) {
   $homology->add_Member_Attribute([$gene_member2, $attribute2]);
   print $homology->stable_id," ready to load\n";
   $ha->store($homology);
+  $ha->update_genetic_distance($homology);
 }
 
 
