@@ -262,7 +262,7 @@ sub store{
    }
 
    if( !defined $dnafrag->name ) {
-       $self->throw("dna frag must have a name");
+       $self->throw("dnafrag must have a name");
    }
 
    my $name = $dnafrag->name;
@@ -272,7 +272,7 @@ sub store{
 
    my $sth = $self->prepare("insert into dnafrag (name,genome_db_id,dnafrag_type) values (?,?,?)");
 
-   $sth->execute($dnafrag->name,$gdb->dbID,$dnafrag->type);
+   $sth->execute($name,$gid,$type);
 
    $dnafrag->dbID($sth->{'mysql_insertid'});
    $dnafrag->adaptor($self);
