@@ -490,18 +490,19 @@ sub _final_clause {
 sub _load_sequence {
   my ($self, $member) = @_;
 
-  my $sql = "SELECT sequence.sequence " .
+  my $sql = "SELECT sequence.sequence, sequence.length " .
             "FROM member,sequence " .
             "WHERE member.sequence_id=sequence.sequence_id " .
             "AND member.member_id = ?;";
   my $sth = $self->prepare($sql);
   $sth->execute($member->dbID);
 
-  my $sequence;
-  $sth->bind_columns(\$sequence);
+  my ($sequence, $seq_length);
+  $sth->bind_columns(\$sequence, \$seq_length);
 
   if ($sth->fetch()) {
     $member->sequence($sequence);
+    $member->seq_length($seq_length);
   }
   $sth->finish();
 }
