@@ -3,6 +3,41 @@ The perl script subsetAxtFromAndToCompara.pl that is used for generating
 the HCR alignments, uses the subsetAxt executable to filter out high 
 conserved alignments using the tight matrix and score threshold of 
 3400 (basically allows alignments of 34 bp minimum length).
+
+The executables are in 
+/nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt
+/nfs/acari/abel/bin/i386/subsetAxt
+and are the ones used in subsetAxtFromAndToCompara.pl.
+(See notes below if you want to compile it yourself)
+
+Here is the process to generate the HCR stored in a compara database
+
+> mkdir /ecs2/work4/compara_abel_cara/ensembl_release_26/compara/hcr/Hs35Mm33
+
+> cd /ecs2/work4/compara_abel_cara/ensembl_release_26/compara/hcr/Hs35Mm33
+
+> mysql -h ecs2 -P3362 -u ensro -N -e "select name from dnafrag where genome_db_id=1" abel_ensembl_compara_26_1 |sort -u > Hs35_chr_names
+
+cat Hs35_chr_names | while read i;do bsub -q normal -Ralpha -o $i.out ~/src/ensembl_main/ensembl-compara/scripts/hcr/subsetAxtFromAndToCompara.pl --src_dbname abelcompara26 --seq_region $i --qy human --tg mouse --src_method_link_type BLASTZ_NET --dest_method_link_type BLASTZ_NET_TIGHT ;done
+
+The HCR alignments are stored in the same compara database that was used to fetch the alignments to be rescored (given by --src_dbname). If you want to store them in another compara database use --dest_dbname.
+Obviously you should your registry file set up with the aliases, you want to use.
+The default matrix used is /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/hcr/tight.mat.
+You have --help to get all the parameters explained.
+
+Check that all the loading have gone well
+> ls |grep out|while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /Job was executed/ {print $6;exit}' $i;done|awk '{print $2}'|sort |uniq -c
+110 Done
+
+This number should be the same as 
+
+> wc -l Hs35_chr_names
+        110 Hs35_chr_names
+
+And it is done.
+
+Compiling subsetAxt.c
+=====================
 It is a C executable from UCSC. The C source code is available vi cvs 
 
 mkdir ~/src
@@ -26,34 +61,6 @@ cd ../lib/i386/
 ln -s jkOwnLib.a jkhgap.a
 cd ../../hg/mouseStuff/subsetAxt/
 make
-
-The executables are in 
-/nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt
-/nfs/acari/abel/bin/i386/subsetAxt
-and are the ones used in subsetAxtFromAndToCompara.pl.
-
-Here is the process to generate the HCR stored in a compara database
-
-> mkdir /ecs2/work3/abel/ensembl_release_26_1/compara/hcr/Hs35Mm33
-
-> cd /ecs2/work3/abel/ensembl_release_26_1/compara/hcr/Hs35Mm33
-
-> mysql -h ecs2 -P3362 -u ensro -N -e "select name from dnafrag where genome_db_id=1" abel_ensembl_compara_26_1 |sort -u > Hs35_chr_names
-
-cat Hs35_chr_names | while read i;do bsub -q normal -Ralpha -o $i.out ~/src/ensembl_main/ensembl-compara/scripts/hcr/subsetAxtFromAndToCompara.pl --src_dbname abelcompara26 --seq_region $i --qy human --tg mouse --src_method_link_type BLASTZ_NET --dest_method_link_type BLASTZ_NET_TIGHT ;done
-
-The HCR alignments are stored in the same compara database that was used to fetch the alignments to be rescored (given by --src_dbname). If you want to store them in another compara database use --dest_dbname.
-
-Check that all the loading have gone well
-> ls |grep out|while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /Job was executed/ {print $6;exit}' $i;done|awk '{print $2}'|sort |uniq -c
-110 Done
-
-This number should be the same as 
-
-> wc -l Hs35_chr_names
-        110 Hs35_chr_names
-
-And it is done.
 
 axt Format definition
 =====================

@@ -14,11 +14,11 @@ $0
   [--dest_dbname string]          (e.g. compara23) one of the compara destination database Bio::EnsEMBL::Registry aliases
                                   if not specified it will be set to src_dbname
    --seq_region string            (e.g. 22)
-   --seq_region_start integer     (e.g. 50000000)
-   --seq_region_end integer       (e.g. 50500000)
+  [--seq_region_start integer]    (e.g. 50000000)
+  [--seq_region_end integer]      (e.g. 50500000)
    --qy string                    (e.g. human) the query species (i.e. a Bio::EnsEMBL::Registry alias)
                                   from which alignments are queried and seq_region refer to
-   --tg string                    (e.g. mouse) the target sepcies (i.e. a Bio::EnsEMBL::Registry alias)
+   --tg string                    (e.g. mouse) the target species (i.e. a Bio::EnsEMBL::Registry alias)
                                   to which alignments are queried
   [--src_method_link_type string] (e.g. BLASTZ_NET) type of alignment queried (default: BLASTZ_NET)
   [--dest_method_link_type string](e.g. BLASTZ_NET_TIGHT) type of alignment to store (default: BLASTZ_NET_TIGHT)
