@@ -4,7 +4,7 @@ use warnings;
 
 BEGIN { $| = 1;  
 	use Test;
-	plan tests => 7;
+	plan tests => 12;
 }
 
 use MultiTestDB;
@@ -13,7 +13,7 @@ use TestUtils qw ( debug test_getter_setter );
 use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 
 # switch on the debug prints
-our $verbose = 1;
+our $verbose = 0;
 
 my $multi = MultiTestDB->new( "multi" );
 my $homo_sapiens = MultiTestDB->new("homo_sapiens");
@@ -53,7 +53,7 @@ ok( defined $hum && defined $mouse && defined $rat );
 
 my $dfa = $compara_db->get_DnaFragAdaptor();
 my $hfrags = $dfa->fetch_all_by_GenomeDB_region( $hum, 'Chromosome', "X" );
-
+my $rfrags =  $dfa->fetch_all_by_GenomeDB_region( $rat, 'Chromosome', "X" );
 
 #######
 #  3  #
@@ -73,7 +73,7 @@ debug();
 #######
 #  4  #
 #######
-ok( scalar @$aligns == 1 );
+ok( scalar @$aligns == 2 );
 
 my $mfrags = $dfa->fetch_all_by_GenomeDB_region( $mouse, 'Chromosome', "X" );
 
@@ -85,7 +85,7 @@ debug();
 #######
 #  5  #
 #######
-ok( $aligns->[0]->cigar_line() eq "19MD30M" );
+ok( grep {$_->cigar_line() eq "19MD30M"} @$aligns );
 
 debug( "Mouse -- Rat direct" );
 $aligns = $gaa->fetch_all_by_dnafrag_genomedb( $mfrags->[0], $hum );
@@ -98,7 +98,40 @@ $aligns = $gaa->fetch_all_by_dnafrag_genomedb( $hfrags->[0], $rat );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
+debug( "Rat -- Human deduced" );
+$aligns = $gaa->fetch_all_by_dnafrag_genomedb( $rfrags->[0], $hum );
+map { print_hashref( $_ ) } @$aligns;
+debug();
 
+
+#########
+#  6-10  #
+#########
+ok( grep {$_->cigar_line eq "26MD3MD2M2D5M3I10M"} @$aligns);
+ok( grep {$_->cigar_line eq "19MD21M"} @$aligns);
+
+ok( grep {$_->consensus_start == 320 && $_->consensus_end == 327 &&
+	  $_->query_start == 202 && $_->query_end == 209 &&
+	  $_->cigar_line eq '8M'} @$aligns );
+
+ok( grep {$_->consensus_start == 330 && $_->consensus_end == 332 &&
+	  $_->query_start == 212 && $_->query_end == 214 &&
+	  $_->cigar_line eq '3M'} @$aligns );
+
+ok( grep {$_->consensus_start == 336 && $_->consensus_end == 338 &&
+	  $_->query_start == 218 && $_->query_end == 220 &&
+	  $_->cigar_line eq '3M'} @$aligns );
+
+
+#######
+#  11  #
+#######
+ok( scalar @$aligns == 5 );
+
+
+#######
+#  12  #
+#######
 $multi->hide( "compara", "genomic_align_block" );
 $gaa->store( $aligns );
 
@@ -117,10 +150,7 @@ if( $verbose ) {
   debug();
 }
 
-#######
-#  6  #
-#######
-ok( $count == 2 );
+ok( $count == 5 );
 
 
 
@@ -133,9 +163,6 @@ sub print_hashref {
 }
 
 
-#######
-#  7  #
-#######
-ok( scalar @$aligns == 2 );
+
 
     
