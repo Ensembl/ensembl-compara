@@ -773,10 +773,13 @@ sub aligned_sequence {
   my $aligned_sequence;
 
   my $fix_seq = 0;
+  my $fake_seq = 0;
   foreach my $flag (@aligned_sequence_or_flags) {
     if ($flag =~ /^\+/) {
       if ($flag eq "+FIX_SEQ") {
         $fix_seq = 1;
+      } elsif ($flag eq "+FAKE_SEQ") {
+        $fake_seq = 1;
       } else {
         warning("Unknow flag $flag when calling".
             " Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence()");
@@ -800,7 +803,12 @@ sub aligned_sequence {
 
   } elsif (!defined($self->{'aligned_sequence'})) {
     # Try to get the aligned_sequence from other sources...
-    if (defined($self->cigar_line) and defined($self->original_sequence)) {
+    if (defined($self->cigar_line) and $fake_seq) {
+      # ...from the corresponding cigar_line (using a fake seq)
+      $aligned_sequence = _get_fake_aligned_sequence_from_cigar_line(
+          $self->{'cigar_line'});
+    
+    } elsif (defined($self->cigar_line) and defined($self->original_sequence)) {
       my $original_sequence = $self->original_sequence;
       # ...from the corresponding orginial_sequence and cigar_line
       $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
@@ -814,7 +822,7 @@ sub aligned_sequence {
     }
   }
 
-  $aligned_sequence = $self->{'aligned_sequence'};
+  $aligned_sequence = $self->{'aligned_sequence'} if (defined($self->{'aligned_sequence'}));
   if ($aligned_sequence and $fix_seq) {
     $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
         $aligned_sequence, $self->genomic_align_block->reference_genomic_align->cigar_line, $fix_seq);
@@ -1380,12 +1388,7 @@ sub get_Mapper {
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
       throw "1" if ($self->genomic_align_block->reference_genomic_align->dnafrag_strand != 1);
 #       throw "2: (".$self->genomic_align_block->reference_genomic_align->dnafrag_end." - ". $self->genomic_align_block->reference_genomic_align->dnafrag_start.")" if ($self->dnafrag_strand != 1);
-      my $this_aligned_seq;
-      if (defined($self->{'aligned_sequence'})) {
-        $this_aligned_seq = $self->{'aligned_sequence'};
-      } else {
-        $this_aligned_seq = _get_fake_aligned_sequence_from_cigar_line($self->cigar_line);
-      }
+      my $this_aligned_seq = $self->aligned_sequence("+FAKE_SEQ");
 
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
       my $aln_seq_pos = 0;
