@@ -61,7 +61,7 @@ sub zmenu {
         "00:Transcr:$vtid"              => "",
         "01:(Gene:$gene->stable_id())"  => "",
         '03:Transcript information'     => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gene->stable_id()",
-        '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=" . $transcript->translation_id(),
+        '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=" . $transcript->translation->stable_id(),
         '05:Supporting evidence'        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$vtid",
         '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$vtid",
         '08:cDNA sequence'              => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$vtid",
