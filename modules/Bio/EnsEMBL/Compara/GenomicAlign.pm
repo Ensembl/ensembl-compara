@@ -373,7 +373,7 @@ sub sequence_align_string {
     $cseq = $consensus_slice->subseq( $self->consensus_start(),
                                       $self->consensus_end(), 1 );
     $qseq = $query_slice->subseq( $self->query_start(),
-                                  $self->query_end(), 1 );
+				  $self->query_end(), $self->query_strand() );
   }
 
   my $rseq= "";
