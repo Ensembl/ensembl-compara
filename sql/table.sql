@@ -254,7 +254,7 @@ CREATE TABLE family_member (
  cigar_line	mediumtext,
  
  UNIQUE KEY (family_id,member_id),
- UNIQUE KEY (member_id,family_id),
+ UNIQUE KEY (member_id,family_id)
 );
 
 
