@@ -21,17 +21,31 @@ This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdapto
   
   use Bio::EnsEMBL::Registry;
 
+  ## Load adaptors using the Registry
   Bio::EnsEMBL::Registry->load_all();
 
-  my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-          $compara_dbname,
-          'compara',
-          'AlignSlice'
-      );
+  ## Fetch the query slice
+  my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+          "Homo sapiens", "core", "Slice");
+  my $query_slice = $query_slice_adaptor->fetch_by_region(
+          "chromosome", "14", 50000001, 50010001);
 
+  ## Fetch the method_link_species_set
+  my $mlss_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+          "Compara26", "compara", "MethodLinkSpeciesSet");
+  my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases(
+          "BLASTZ_NET", ["Homo sapiens", "Rattus norvegicus"]);
+
+  ## Fetch the align_slice
+  my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+          "Compara26",
+          "compara",
+          "AlignSlice"
+      );
   my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
           $query_slice,
-          $method_link_species_set
+          $method_link_species_set,
+          "expanded"
       );
 
 =head1 OBJECT ATTRIBUTES
@@ -101,12 +115,16 @@ sub new {
 
   Arg[1]     : Bio::EnsEMBL::Slice $query_slice
   Arg[2]     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg[3]     : [optional] boolean $expanded
   Example    :
       my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
               $query_slice, $method_link_species_set);
   Description: Fetches from the database all the data needed for the AlignSlice
                corresponding to the $query_slice and the given
-               $method_link_species_set
+               $method_link_species_set. Setting $expanded to anything different
+               from 0 or "" will create an AlignSlice in "expanded" mode. This means
+               that gaps are allowed in the reference species in order to allocate
+               insertions from other species.
   Returntype : Bio::EnsEMBL::Compara::AlignSlice
   Exceptions : thrown if wrong arguments are given
   Caller     : $obejct->methodname
