@@ -77,16 +77,12 @@ sub _store_PAFS {
         my $qy_member  = $memberDBA->fetch_by_source_stable_id('ENSEMBLPEP', $paf->query_member->stable_id);
         if($qy_member) {
           $paf->query_member($qy_member);
-          my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->query_member->dbID);
-          $qy_member->gene_member($gene);
         }
       }
       unless($paf->hit_member->dbID) {
         my $hit_member = $memberDBA->fetch_by_source_stable_id('ENSEMBLPEP', $paf->hit_member->stable_id);
         if($hit_member) {
           $paf->hit_member($hit_member);
-          my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->hit_member->dbID);
-          $hit_member->gene_member($gene);
         }
       }
 
@@ -264,13 +260,9 @@ sub _objs_from_sth {
     my $memberDBA = $self->db->get_MemberAdaptor;
     if($column{'qmember_id'} and $memberDBA) {
       $paf->query_member($memberDBA->fetch_by_dbID($column{'qmember_id'}));
-      my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->query_member->dbID);
-      $paf->query_member->gene_member($gene);      
     }
     if($column{'hmember_id'} and $memberDBA) {
       $paf->hit_member($memberDBA->fetch_by_dbID($column{'hmember_id'}));
-      my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->hit_member->dbID);
-      $paf->hit_member->gene_member($gene);
     }
   
     #$paf->display_short();
