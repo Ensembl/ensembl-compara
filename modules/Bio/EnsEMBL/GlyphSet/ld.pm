@@ -6,6 +6,8 @@ use Sanger::Graphics::Glyph::Text;
 use POSIX;
 use Data::Dumper;
 
+use Time::HiRes qw( time );
+
 sub init_label {
   my $self = shift;
   my $key = $self->_key();
@@ -23,12 +25,15 @@ sub _init {
   return unless ($self->strand() == -1);
 
   my $Config   = $self->{'config'};
-  my $only_pop = 0; #$Config->{'_ld_population'};
+  my $only_pop = $Config->{'_ld_population'};
   my $TAG_LENGTH = 8;
   my $key = $self->_key();
   my $offset = $self->{'container'}->start - 1;
-  my $data = $self->{'container'}->get_all_LD_values; 
 
+  my $starttime = time();
+  my $data = $self->{'container'}->get_all_LD_values; 
+   warn ( "time used for ld-getting: ". time()-$starttime );
+ 
   #Create array of arrayrefs containing $vf_id => $vf in start order
   my @snps  = sort { $a->[1]->start <=> $b->[1]->start }
     map  { [ $_ => $data->{'variationFeatures'}{$_} ] }
@@ -37,34 +42,33 @@ sub _init {
   my $number_of_snps = scalar(@snps);
   $self->errorTrack( "No LD ($key) features in this region" ) unless $number_of_snps;
   return unless $number_of_snps;
-
   my %pop_LD   = ();
   my %pop_snps = ();
   foreach my $m ( 0 .. ($number_of_snps-2) ) {
     foreach my $n ( ($m+1) .. ($number_of_snps-1) ) {
+      my $hr;
 
       #$data->{ldContainer}=>{$vf1_id - $vf2_id}{pop_id}{hash of ld info}
       if ($only_pop) {
-#	warn "here is pop $only_pop\n";
-	$only_pop = 140;
-	my $ld_hash = $data->{'ldContainer'}{ $snps[$m][0].'-'.$snps[$n][0] }{$only_pop};
-      }
-
-      my $hr = $data->{'ldContainer'}{ $snps[$m][0].'-'.$snps[$n][0] };
-	#warn Data::Dumper::Dumper($hr);
-      
-      if ($only_pop) {
-	$pop_snps{ $only_pop}{ $m } = $pop_snps{ $only_pop }{ $n } = 1;
-	$pop_LD{ $only_pop }{ $m }{ $n } = $pop_LD{ $only_pop }{ $n }{ $m } = $hr->{$only_pop}{$key};
+	$hr->{$only_pop} = $data->{'ldContainer'}{ $snps[$m][0].'-'.$snps[$n][0] }->{$only_pop};
       }
       else {
-	foreach my $pop_id ( keys %$hr ) {
-	  $pop_snps{ $pop_id }{ $m } = $pop_snps{ $pop_id }{ $n } = 1;
-	  $pop_LD{ $pop_id }{ $m }{ $n } = $pop_LD{ $pop_id }{ $n }{ $m } = $hr->{$pop_id}{$key};
-	}
+	$hr = $data->{'ldContainer'}{ $snps[$m][0].'-'.$snps[$n][0] };
+      }
+
+      foreach my $pop_id ( keys %$hr ) {
+	next unless ( keys %{ $hr->{$pop_id} });
+	$pop_snps{ $pop_id }{ $m } = $pop_snps{ $pop_id }{ $n } = 1;
+	$pop_LD{ $pop_id }{ $m }{ $n } = $pop_LD{ $pop_id }{ $n }{ $m } = $hr->{$pop_id}{$key};	
       }
     } 
   }
+
+  # Exit and return 'no data' if there are no data for this population
+  $self->errorTrack( "No LD ($key) features for this population" ) unless  (keys %pop_snps);
+  return unless  (keys %pop_snps);
+
+
   my @colour_gradient = ( 'white', 
     $Config->colourmap->build_linear_gradient( 40, 'pink', 'indianred2', 'red' )
   );
