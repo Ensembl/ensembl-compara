@@ -130,7 +130,7 @@ sub prepareGenomeAnalysis
 
   my $dataflowRuleDBA = $self->{'comparaDBA'}->get_DataflowRuleAdaptor;
   my $analysisStatsDBA = $self->{'comparaDBA'}->get_AnalysisStatsAdaptor;
-
+  my $stats;
   #
   # SubmitGenome
   #
@@ -141,6 +141,10 @@ sub prepareGenomeAnalysis
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy'
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_analysis->dbID);
+  $stats->batch_size(7000);
+  $stats->hive_capacity(-1);
+  $stats->update();
 
   return $submit_analysis  
     unless($analysis_template{fasta_dir});
@@ -155,6 +159,10 @@ sub prepareGenomeAnalysis
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers'
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($load_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1); #unlimited
+  $stats->update();
 
   $dataflowRuleDBA->create_rule($submit_analysis, $load_analysis);
 
@@ -176,6 +184,10 @@ sub prepareGenomeAnalysis
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep'
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($submitpep_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(3);
+  $stats->update();
 
   $dataflowRuleDBA->create_rule($load_analysis, $submitpep_analysis);
 
@@ -198,6 +210,10 @@ sub prepareGenomeAnalysis
       -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($dumpfasta_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($dumpfasta_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(3);
+  $stats->update();
 
   $dataflowRuleDBA->create_rule($submitpep_analysis, $dumpfasta_analysis);
 
@@ -217,9 +233,13 @@ sub prepareGenomeAnalysis
       -logic_name      => 'CreateBlastRules',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules',
-      -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
+      -parameters      => '',
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($blastrules_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(1);
+  $stats->update();
 
   $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
