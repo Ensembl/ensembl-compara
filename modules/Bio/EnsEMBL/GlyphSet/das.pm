@@ -154,7 +154,7 @@ sub _init {
             	'zmenu'     => $zmenu,
 			});
 			$Composite->{'href'} = $href if $href;
-            if( $f->das_type_id() =~ /(transcript|exon)/i ) { 
+            if( $f->das_type_id() =~ /(CDS|transcript|exon)/i ) { 
                 my $f = shift @features;
                 my $START = $f->das_start() <  1       ? 1 : $f->das_start();
                 my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
