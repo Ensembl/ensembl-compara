@@ -188,12 +188,16 @@ sub new {
     
   my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id,
           $score, $perc_id, $length, $reference_genomic_align, $reference_genomic_align_id,
-          $genomic_align_array, $starting_genomic_align_id) = 
+          $genomic_align_array, $starting_genomic_align_id, $ungapped_genomic_align_blocks) = 
     rearrange([qw(
         ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID
         SCORE PERC_ID LENGTH REFERENCE_GENOMIC_ALIGN REFERENCE_GENOMIC_ALIGN_ID
-        GENOMIC_ALIGN_ARRAY STARTING_GENOMIC_ALIGN_ID)], @args);
+        GENOMIC_ALIGN_ARRAY STARTING_GENOMIC_ALIGN_ID UNGAPPED_GENOMIC_ALIGN_BLOCKS)],
+            @args);
 
+  if (defined($ungapped_genomic_align_blocks)) {
+    return $self->_create_from_a_list_of_ungapped_genomic_align_blocks($ungapped_genomic_align_blocks);
+  }
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->dbID($dbID) if (defined ($dbID));
   $self->method_link_species_set($method_link_species_set) if (defined ($method_link_species_set));
@@ -477,9 +481,9 @@ sub reference_genomic_align {
   } elsif (!defined($self->{'reference_genomic_align'})) {
     
     ## ...from the reference_genomic_align_id attribute
-    if (defined($self->{'reference_genomic_align_id'}) and $self->genomic_align_array) {
+    if (defined($self->{'reference_genomic_align_id'}) and @{$self->get_all_GenomicAligns}) {
       my $reference_genomic_align_id = $self->{'reference_genomic_align_id'};
-      foreach my $this_genomic_align (@{$self->genomic_align_array}) {
+      foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
         if ($this_genomic_align->dbID == $reference_genomic_align_id) {
           $self->{'reference_genomic_align'} = $this_genomic_align;
           return $this_genomic_align;
@@ -586,14 +590,14 @@ sub get_all_non_reference_genomic_aligns {
         " when no reference_genomic_align_id has been set before");
     return $all_non_reference_genomic_aligns;
   }
-  my $genomic_align_array = $self->genomic_align_array; ## Lazy loading compliant
-  if (!defined($genomic_align_array)) {
+  my $genomic_aligns = $self->get_all_GenomicAligns; ## Lazy loading compliant
+  if (!@$genomic_aligns) {
     warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::all_non_reference_genomic_aligns".
         " when no genomic_align_array can be retrieved");
     return $all_non_reference_genomic_aligns;
   }
 
-  foreach my $this_genomic_align (@$genomic_align_array) {
+  foreach my $this_genomic_align (@$genomic_aligns) {
     if ($this_genomic_align->dbID != $reference_genomic_align_id) {
       push(@$all_non_reference_genomic_aligns, $this_genomic_align);
     }
@@ -780,6 +784,8 @@ sub length {
     if (defined($self->{'adaptor'}) and defined($self->dbID)) {
       # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
       $self->adaptor->retrieve_all_direct_attributes($self);
+    } elsif (@{$self->get_all_GenomicAligns} and $self->get_all_GenomicAligns->[0]->aligned_sequence) {
+      $self->{'length'} = CORE::length($self->get_all_GenomicAligns->[0]->aligned_sequence);
     }
   }
   
@@ -941,8 +947,7 @@ sub alignment_strings {
   my ($self) = @_;
   my $alignment_strings = [];
 
-  return $alignment_strings if (!$self->genomic_align_array);
-  foreach my $genomic_align (@{$self->genomic_align_array}) {
+  foreach my $genomic_align (@{$self->get_all_GenomicAligns}) {
     push(@$alignment_strings, $genomic_align->aligned_sequence);
   }
 
@@ -995,7 +1000,7 @@ sub get_SimpleAlign {
     $bio07 = 1;
   }
 
-  foreach my $genomic_align (@{$self->genomic_align_array}) {
+  foreach my $genomic_align (@{$self->get_all_GenomicAligns}) {
     my $alignSeq = $genomic_align->aligned_sequence;
     
     my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
@@ -1015,27 +1020,186 @@ sub get_SimpleAlign {
 }
 
 
-=head2 get_all_ungapped_GenomicAlignBlocks
+=head2 _create_from_a_list_of_ungapped_genomic_align_blocks (testing)
+
+  Args       : listref of ungapped Bio::EnsEMBL::Compara::GenomicAlignBlocks
+  Example    : $new_genomic_align_block =
+                  $self->_create_from_a_list_of_ungapped_genomic_align_blocks(
+                      $ungapped_genomic_align_blocks
+                  );
+  Description: Takes a list of ungapped Bio::EnsEMBL::Compara::GenomicAlignBlock
+               objects and creates a new Bio::EnsEMBL::Compara::GenomicAlignBlock
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
+  Exceptions : lots...
+  Caller     : new()
+
+=cut
+
+sub _create_from_a_list_of_ungapped_genomic_align_blocks {
+  my ($self, $ungapped_genomic_align_blocks) = @_;
+
+  ## Set adaptor
+  my $adaptor = undef;
+  foreach my $genomic_align_block (@$ungapped_genomic_align_blocks) {
+    if ($genomic_align_block->adaptor) {
+      $self->adaptor($adaptor);
+      last;
+    }
+  }
+  
+  ## Set method_link_species_set
+  my $method_link_species_set = undef;
+  foreach my $genomic_align_block (@$ungapped_genomic_align_blocks) {
+    if ($genomic_align_block->method_link_species_set) {
+      if ($method_link_species_set) {
+        if ($method_link_species_set->dbID != $genomic_align_block->method_link_species_set->dbID) {
+          warning("Creating a GenomicAlignBlock from a list of ungapped GenomicAlignBlock with".
+              " different method_link_species_set is not supported");
+          return undef;
+        }
+      } else {
+        $method_link_species_set = $genomic_align_block->method_link_species_set;
+      }
+    }
+  }
+  $self->method_link_species_set($method_link_species_set);
+  
+  ## Set method_link_species_set_id
+  my $method_link_species_set_id = undef;
+  foreach my $genomic_align_block (@$ungapped_genomic_align_blocks) {
+    if ($genomic_align_block->method_link_species_set_id) {
+      if ($method_link_species_set_id) {
+        if ($method_link_species_set_id != $genomic_align_block->method_link_species_set_id) {
+          warning("Creating a GenomicAlignBlock from a list of ungapped GenomicAlignBlock with".
+              " different method_link_species_set_id is not supported");
+          return undef;
+        }
+      } else {
+        $method_link_species_set_id = $genomic_align_block->method_link_species_set_id;
+      }
+    }
+  }
+  $self->method_link_species_set_id($method_link_species_set_id);
+
+  my $genomic_aligns;
+  ## Check blocks and create new genomic_aligns
+  foreach my $genomic_align_block (@$ungapped_genomic_align_blocks) {
+    foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
+      my $dnafrag_id = $this_genomic_align->dnafrag_id;
+      if (!defined($genomic_aligns->{$dnafrag_id})) {
+        $genomic_aligns->{$dnafrag_id} = new Bio::EnsEMBL::Compara::GenomicAlign(
+                -adaptor => $this_genomic_align->adaptor,
+                -method_link_species_set => $method_link_species_set,
+                -method_link_species_set_id => $method_link_species_set_id,
+                -dnafrag => $this_genomic_align->dnafrag,
+                -dnafrag_start => $this_genomic_align->dnafrag_start,
+                -dnafrag_end => $this_genomic_align->dnafrag_end,
+                -dnafrag_strand => $this_genomic_align->dnafrag_strand,
+            );
+      } else {
+        ## Check strand
+        if ($this_genomic_align->dnafrag_strand < $genomic_aligns->{$dnafrag_id}->dnafrag_strand) {
+          warning("The list of ungapped GenomicAlignBlock is inconsistent in strand");
+          return undef;
+        }
+
+        ## Check order and lengthen genomic_align
+        if ($this_genomic_align->dnafrag_strand == -1) {
+          if ($this_genomic_align->dnafrag_end >= $genomic_aligns->{$dnafrag_id}->dnafrag_start) {
+            warning("The list of ungapped GenomicAlignBlock must be previously sorted");
+            return undef;
+          }
+          $genomic_aligns->{$dnafrag_id}->dnafrag_start($this_genomic_align->dnafrag_start);
+        } else {
+          if ($this_genomic_align->dnafrag_start <= $genomic_aligns->{$dnafrag_id}->dnafrag_end) {
+            warning("The list of ungapped GenomicAlignBlock must be previously sorted");
+            return undef;
+          }
+          $genomic_aligns->{$dnafrag_id}->dnafrag_end($this_genomic_align->dnafrag_end);
+        }
+      }
+    }
+  }
+  
+  ## Create cigar lines
+  my $cigar_lines;
+  for (my $i=0; $i<@$ungapped_genomic_align_blocks; $i++) {
+    my $genomic_align_block = $ungapped_genomic_align_blocks->[$i];
+    my $block_length = 0;
+    ## Calculate block length
+    foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
+      if ($block_length) {
+        if ($block_length != CORE::length($this_genomic_align->aligned_sequence)) {
+          warning("The list of ungapped GenomicAlignBlock is inconsistent in gaps");
+          return undef;
+        }
+      } else {
+        $block_length = CORE::length($this_genomic_align->aligned_sequence);
+      }
+    }
+    ## Fix cigar line according to block length
+    while (my ($id, $genomic_align) = each %{$genomic_aligns}) {
+      my $is_included_in_this_block = 0;
+      foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
+        if ($this_genomic_align->dnafrag_id == $id) {
+          $is_included_in_this_block = 1;
+          $cigar_lines->{$id} .= $this_genomic_align->cigar_line;
+          last;
+        }
+      }
+      if (!$is_included_in_this_block) {
+        $cigar_lines->{$id} .= $block_length."D";
+      }
+    }
+
+    ## Add extra gaps between genomic_align_blocks
+    if (defined($ungapped_genomic_align_blocks->[$i+1])) {
+      foreach my $genomic_align1 (@{$genomic_align_block->get_all_GenomicAligns}) {
+        foreach my $genomic_align2 (@{$ungapped_genomic_align_blocks->[$i+1]->get_all_GenomicAligns}) {
+          next if ($genomic_align1->dnafrag_id != $genomic_align2->dnafrag_id);
+          ## $gap is the piece of sequence of this dnafrag between this block and the next one
+          my $gap;
+          if ($genomic_align1->dnafrag_strand == 1) {
+            $gap = $genomic_align2->dnafrag_start - $genomic_align1->dnafrag_end - 1;
+          } else {
+            $gap = $genomic_align1->dnafrag_start - $genomic_align2->dnafrag_end - 1;
+          }
+          if ($gap) {
+            foreach my $genomic_align3 (@{$genomic_align_block->get_all_GenomicAligns}) {
+              if ($genomic_align1->dnafrag_id == $genomic_align3->dnafrag_id) {
+                ## Add (mis)matches for this sequence
+                $cigar_lines->{$genomic_align3->dnafrag_id} .= $gap."M";
+              } else {
+                ## Add gaps for others
+                $cigar_lines->{$genomic_align3->dnafrag_id} .= $gap."D";
+              }
+            }
+          }
+        }
+      }
+    }
+
+  }
+
+  while (my ($id, $genomic_align) = each %{$genomic_aligns}) {
+    $genomic_align->cigar_line($cigar_lines->{$id});
+    $self->add_GenomicAlign($genomic_align);
+  }
+
+  return $self;
+}
+
+
+=head2 get_all_ungapped_GenomicAlignBlocks (testing)
 
   Args       : none
-  Example    : 
-  Description: 
-  Returntype : none
+  Example    : my $ungapped_genomic_align_blocks =
+                   $self->get_all_ungapped_GenomicAlignBlocks();
+  Description: split the GenomicAlignBlock object into a set of ungapped
+               alignments
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks objects
   Exceptions : none
   Caller     : general
-
-  
-  TEST SCRIPT:
-
-perl -MBio::EnsEMBL::Registry -MBio::AlignIO -e 'Bio::EnsEMBL::Registry->load_all();
-$mlssa = Bio::EnsEMBL::Registry->get_adaptor("compara", "compara", "MethodLinkSpeciesSet");
-$dfa = Bio::EnsEMBL::Registry->get_adaptor("compara", "compara", "DnaFrag");
-$gaba = Bio::EnsEMBL::Registry->get_adaptor("compara", "compara", "GenomicAlignBlock");
-$mlss = $mlssa->fetch_by_dbID(72);
-$df = $dfa->fetch_by_dbID(48);
-$gab = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $df, 18379925, 18380048);
-$gab->[0]->get_all_ungapped_GenomicAlignBlocks;
-'
 
 =cut
 
@@ -1043,7 +1207,7 @@ sub get_all_ungapped_GenomicAlignBlocks {
   my ($self) = @_;
   my $ungapped_genomic_align_blocks = [];
 
-  my $genomic_aligns = $self->genomic_align_array;
+  my $genomic_aligns = $self->get_all_GenomicAligns;
   my $aln_length = CORE::length($genomic_aligns->[0]->aligned_sequence);
 #   foreach my $this_genomic_align (@$genomic_aligns) {
 #     print STDERR join(" - ", $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
@@ -1063,7 +1227,7 @@ sub get_all_ungapped_GenomicAlignBlocks {
       if ($this_end_block_pos == $aln_pos) {
         ## try to find the end of the gaps
         my $gap_string = substr($this_genomic_align->aligned_sequence, $aln_pos);
-        my ($gap) = $gap_string =~ /^(\-+)/;
+        ($gap) = $gap_string =~ /^(\-+)/;
         my $gap_length = CORE::length($gap);
         $this_end_block_pos = $aln_pos+$gap_length;
       } else {
@@ -1104,7 +1268,9 @@ sub get_all_ungapped_GenomicAlignBlocks {
                 -dnafrag_strand => $this_genomic_align->dnafrag_strand,
                 -cigar_line => $cigar_line,
             );
-        $reference_genomic_align = $new_genomic_align if ($self->reference_genomic_align == $this_genomic_align);
+        $reference_genomic_align = $new_genomic_align
+            if (defined($self->reference_genomic_align) and
+                $self->reference_genomic_align == $this_genomic_align);
         push(@$new_genomic_aligns, $new_genomic_align);
       }
       ## Create a new GenomicAlignBlock
@@ -1139,7 +1305,7 @@ sub get_all_ungapped_GenomicAlignBlocks {
 sub reverse_complement {
   my ($self) = @_;
 
-  my $gas = $self->genomic_align_array;
+  my $gas = $self->get_all_GenomicAligns;
   foreach my $ga (@{$gas}) {
     $ga->reverse_complement;
   }
@@ -1216,8 +1382,8 @@ alignments will throw an exception.
 sub get_old_consensus_genomic_align {
   my ($self) = @_;
 
-  my $genomic_aligns = $self->genomic_align_array;
-  if (!$genomic_aligns) {
+  my $genomic_aligns = $self->get_all_GenomicAligns;
+  if (!@$genomic_aligns) {
     throw "Bio::EnsEMBL::Compara::GenomicAlignBlock ($self) does not have any associated".
         " Bio::EnsEMBL::Compara::GenomicAlign";
   }
@@ -1283,8 +1449,8 @@ sub get_old_consensus_genomic_align {
 sub get_old_query_genomic_align {
   my ($self) = @_;
 
-  my $genomic_aligns = $self->genomic_align_array;
-  if (!$genomic_aligns) {
+  my $genomic_aligns = $self->get_all_GenomicAligns;
+  if (!@$genomic_aligns) {
     throw "Bio::EnsEMBL::Compara::GenomicAlignBlock ($self) does not have any associated".
         " Bio::EnsEMBL::Compara::GenomicAlign";
   }
