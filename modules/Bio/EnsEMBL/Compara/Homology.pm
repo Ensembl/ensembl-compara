@@ -29,6 +29,26 @@ sub new {
 }
 
 
+=head2 species
+
+ Title   : species
+ Usage   : $obj->species($newval)
+ Function: 
+ Example : 
+ Returns : value  of species
+ Args    : newvalue (optional)
+
+
+=cut
+
+sub species {
+   my ($obj,$value) = @_;
+   if( defined $value) {
+      $obj->{'_species'} = $value;
+    }
+    return $obj->{'_species'};
+
+}
 
 
 =head2 stable_id
