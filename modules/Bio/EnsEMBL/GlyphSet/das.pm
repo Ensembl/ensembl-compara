@@ -105,6 +105,8 @@ sub _initOLD {
   $self->{helplink} = $Config->get($das_config_key, 'helplink');
   my $renderer = $Config->get($das_config_key, 'renderer');
   $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
+
+
   return $self->$renderer( $configuration );
 }
 
@@ -846,13 +848,13 @@ sub _init {
 
   $self->{helplink} = $Config->get($das_config_key, 'helplink');
   my $renderer = $Config->get($das_config_key, 'renderer');
-  my $group = $Config->get($das_config_key, 'group');
-  if (! defined($group)) {
-		$group = 1;
-  }
+  my $group = $Config->get($das_config_key, 'group') || 'y';
+
 #  $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
-  $renderer = $renderer ? "RENDER_$renderer" : ($group ? 'RENDER_grouped' : 'RENDER_simple');
-#  warn("RENDER:$renderer");
+  $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'n' ? 'RENDER_simple' : 'RENDER_grouped');
+  $renderer =~ s/RENDER_RENDER/RENDER/;
+
+#  warn("RENDER:[$das_config_key: $group] $renderer");
   return $self->$renderer( $configuration );
 }
 
