@@ -47,13 +47,14 @@ sub _init {
 
     return unless $known_genes->size() && $genes->size();
 
-   	$genes->scale_to_fit( $Config->get( 'Vgenes', 'width' ) );
-	$genes->stretch(0);
-	my $Hscale_factor = $known_genes->max_value / $genes->max_value;
-   	$known_genes->scale_to_fit( $Config->get( 'Vgenes', 'width' ) * $Hscale_factor );	
-	$known_genes->stretch(0);
-	my @genes = @{$genes->get_all_binvalues()};
-	my @known_genes = @{$known_genes->get_all_binvalues()};	
+    $genes->scale_to_fit( $Config->get( 'Vgenes', 'width' ) );
+    $genes->stretch(0);
+    my $Hscale_factor = $known_genes->max_value / ($genes->max_value || 1 );
+    $known_genes->scale_to_fit( $Config->get( 'Vgenes', 'width' ) * 
+				$Hscale_factor );	
+    $known_genes->stretch(0);
+    my @genes = @{$genes->get_all_binvalues()};
+    my @known_genes = @{$known_genes->get_all_binvalues()};	
 
     foreach (@genes){
        my $known_gene = shift @known_genes;	
