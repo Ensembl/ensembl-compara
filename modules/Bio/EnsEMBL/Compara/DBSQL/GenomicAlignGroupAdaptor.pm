@@ -27,9 +27,17 @@ Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor - Object to access data i
 
   $genomic_align_group_adaptor->store($genomic_align_group);
 
+  $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_GenomicAlign($genomic_align);
+  $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_genomic_align_id(11223);
+
+  $genomic_align_group = $genomic_align_group_adaptor->fetch_by_GenomicAlign_type($genomic_align,
+      "default");
+  $genomic_align_group = $genomic_align_group_adaptor->fetch_by_genomic_align_id_type(11223,
+      "default");
+
 =head1 DESCRIPTION
 
-Describe the object here
+This class is intended to access data in genomic_align_group table
 
 =head1 AUTHOR
 
@@ -52,7 +60,7 @@ use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Utils::Exception qw(throw info);
+use Bio::EnsEMBL::Utils::Exception qw(throw info deprecate);
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
@@ -203,14 +211,9 @@ sub fetch_by_dbID {
 =head2 fetch_all_by_GenomicAlign
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
-                      - or -
-               integer $genomic_align_id
   Example    : my $genomic_align_groups =
                   $genomic_align_group_adaptor->fetch_all_by_GenomicAlign(
                           $genomic_align)
-  Example    : my $genomic_align_groups =
-                  $genomic_align_group_adaptor->fetch_all_by_GenomicAlign(
-                          124214)
   Description: Returns all the  Bio::EnsEMBL::Compara::GenomicAlignGroup
                corresponding to the given Bio::EnsEMBL::Compara::GenomicAlign.
   Returntype : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignGroup
@@ -226,10 +229,6 @@ sub fetch_all_by_GenomicAlign {
 
   my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
   
-  # Get Bio::EnsEMBL::Compara::GenomicAlign object from dbID if needed
-  if ($genomic_align =~ /^\d+$/) {
-    $genomic_align = $genomic_align_adaptor->fetch_by_dbID($genomic_align);
-  }
   # Check Bio::EnsEMBL::Compara::GenomicAlign object
   unless($genomic_align && ref $genomic_align && 
         $genomic_align->isa('Bio::EnsEMBL::Compara::GenomicAlign')) {
@@ -269,18 +268,104 @@ sub fetch_all_by_GenomicAlign {
   return $genomic_align_groups;
 }
 
-=head2 fetch_by_GenomicAlign_and_type
+=head2 fetch_all_by_genomic_align_id
+
+  Arg  1     : integer $genomic_align_id
+  Example    : my $genomic_align_groups =
+                  $genomic_align_group_adaptor->fetch_all_by_genomic_align_id(
+                          124214)
+  Description: Returns all the  Bio::EnsEMBL::Compara::GenomicAlignGroup
+               corresponding to the given Bio::EnsEMBL::Compara::GenomicAlign.
+  Returntype : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignGroup
+               objects.
+  Exceptions : none
+  Caller     : object->methodname
+
+=cut
+
+sub fetch_all_by_genomic_align_id {
+  my ($self, $genomic_align_id) = @_;
+  my $genomic_align_groups = [];
+
+  my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
+  
+  my $genomic_align_block_sql = qq{
+              SELECT
+                group_id,
+                type
+              FROM
+                genomic_align_group
+              WHERE
+                genomic_align_id = ?
+        };
+  
+  my $sth = $self->prepare($genomic_align_block_sql);
+  $sth->execute($genomic_align_id);
+
+
+  my $groups;
+  while (my $values = $sth->fetchrow_arrayref) {
+    my ($group_id, $type) = @$values;
+
+    $groups->{$group_id}->{'type'} = $type;
+  }
+
+  foreach my $group_id (keys %$groups) {
+    my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
+            -dbID => $group_id,
+            -adaptor => $self,
+            -type => $groups->{$group_id}->{'type'},
+        );
+    push(@{$genomic_align_groups}, $genomic_align_group);
+  }
+
+  return $genomic_align_groups;
+}
+
+# # =head2 fetch_by_GenomicAlign_and_type
+# # 
+# #   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
+# #                       - or -
+# #                integer $genomic_align_id
+# #   Arg  2     : string $genomic_align_group_type
+# #   Example    : my $genomic_align_group =
+# #                   $genomic_align_group_adaptor->fetch_by_GenomicAlign_and_type(
+# #                           $genomic_align, "default")
+# #   Example    : my $genomic_align_groups =
+# #                   $genomic_align_group_adaptor->fetch_all_by_GenomicAlign(
+# #                           124214, "default")
+# #   Description: Returns a Bio::EnsEMBL::Compara::GenomicAlignGroup corresponding
+# #                to the given Bio::EnsEMBL::Compara::GenomicAlign and group_type.
+# #   Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup
+# #   Exceptions : none
+# #   Caller     : object::methodname
+# # 
+# # =cut
+
+sub fetch_by_GenomicAlign_and_type {
+  my ($self, $genomic_align, $type) = @_;
+  my $genomic_align_group;
+
+  deprecate("Use fetch_by_GenomicAlign_type method instead");
+
+  my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
+
+  # Get Bio::EnsEMBL::Compara::GenomicAlign object from dbID if needed
+  if ($genomic_align =~ /^\d+$/) {
+    $genomic_align = $genomic_align_adaptor->fetch_by_dbID($genomic_align);
+  }
+
+  return $self->fetch_by_GenomicAlign_type($genomic_align, $type);
+}
+
+
+=head2 fetch_by_GenomicAlign_type
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
-                      - or -
-               integer $genomic_align_id
   Arg  2     : string $genomic_align_group_type
   Example    : my $genomic_align_group =
                   $genomic_align_group_adaptor->fetch_by_GenomicAlign_and_type(
                           $genomic_align, "default")
-  Example    : my $genomic_align_groups =
-                  $genomic_align_group_adaptor->fetch_all_by_GenomicAlign(
-                          124214, "default")
   Description: Returns a Bio::EnsEMBL::Compara::GenomicAlignGroup corresponding
                to the given Bio::EnsEMBL::Compara::GenomicAlign and group_type.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup
@@ -289,20 +374,16 @@ sub fetch_all_by_GenomicAlign {
 
 =cut
 
-sub fetch_by_GenomicAlign_and_type {
+sub fetch_by_GenomicAlign_type {
   my ($self, $genomic_align, $type) = @_;
   my $genomic_align_group;
 
   my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
   
-  # Get Bio::EnsEMBL::Compara::GenomicAlign object from dbID if needed
-  if ($genomic_align =~ /^\d+$/) {
-    $genomic_align = $genomic_align_adaptor->fetch_by_dbID($genomic_align);
-  }
   # Check Bio::EnsEMBL::Compara::GenomicAlign object
   unless($genomic_align && ref $genomic_align && 
         $genomic_align->isa('Bio::EnsEMBL::Compara::GenomicAlign')) {
-    throw("dnafrag argument must be a Bio::EnsEMBL::Compara::GenomicAlign not a [$genomic_align]");
+    throw("[$genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object");
   }
 
   my $genomic_align_block_sql = qq{
@@ -356,6 +437,39 @@ sub fetch_by_GenomicAlign_and_type {
   }
 
   return $genomic_align_group;
+}
+
+
+=head2 fetch_by_genomic_align_id_type
+
+  Arg  1     : integer $genomic_align_id
+  Arg  2     : string $genomic_align_group_type
+  Example    : my $genomic_align_group =
+                  $genomic_align_group_adaptor->fetch_by_genomic_align_id_type(
+                          12322, "default")
+  Description: Returns a Bio::EnsEMBL::Compara::GenomicAlignGroup corresponding
+               to the given Bio::EnsEMBL::Compara::GenomicAlign defined by the
+               $genomic_align_id and to the group_type.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup
+  Exceptions : none
+  Caller     : object::methodname
+
+=cut
+
+sub fetch_by_genomic_align_id_type {
+  my ($self, $genomic_align_id, $type) = @_;
+  my $genomic_align_group;
+
+  my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
+  
+  # Get Bio::EnsEMBL::Compara::GenomicAlign object
+  my $genomic_align = $genomic_align_adaptor->fetch_by_dbID($genomic_align_id);
+  unless($genomic_align && ref $genomic_align && 
+        $genomic_align->isa('Bio::EnsEMBL::Compara::GenomicAlign')) {
+    throw("[$genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object");
+  }
+
+  return $self->fetch_by_GenomicAlign_type($genomic_align, $type);
 }
 
 
