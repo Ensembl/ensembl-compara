@@ -9,31 +9,31 @@
     '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
   },
   { TYPE => HIVE,
-    'hive_output_dir'      => "/ecs4/work2/ensembl/jessica/data/hive_output/jessica_compara_blastz_HsMm_27i",
+    'hive_output_dir'      => "/ecs4/work2/ensembl/jessica/data/hive_output/jessica_compara_blastz_HsMm_27i/workers",
   },
 
   { TYPE => SPECIES,
-    'abrev'          => 'Hs34e',
+    'abrev'          => 'Hs35b',
     'genome_db_id'   => 1,
     'taxon_id'       => 9606,
     'phylum'         => 'Vertebrata',
     'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'host'           => "ia64e",
-    'port'           => 3306,
+    'host'           => "ecs2",
+    'port'           => 3365,
     'user'           => "ensro",
-    'dbname'         => "jessica_homo_sapiens_core_27_35a",
+    'dbname'         => "homo_sapiens_core_29_35b",
   },
 
   { TYPE => SPECIES,
-    'abrev'          => 'Mm32b',
+    'abrev'          => 'Mm33e',
     'genome_db_id'   => 2,
     'taxon_id'       => 10090,
     'phylum'         => 'Vertebrata',
     'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'host'           => "ia64e",
-    'port'           => 3306,
+    'host'           => "ecs2",
+    'port'           => 3365,
     'user'           => "ensro",
-    'dbname'         => "jessica_mus_musculus_core_27_33c",
+    'dbname'         => "jessica_mus_musculus_core_29_33e",
   },
 
 
@@ -47,6 +47,20 @@
     'group_set_size'        => 4000000, #optional, default: undef i.e. not sequence grouping
     'masking_options'       => '{default_soft_masking => 1}', # 0 for hard masking, comment the line for no masking
 #    'masking_options_file'       => '/path/to/masking/options/file/for/mouse',
+# if both masking_options_file and masking_options are specific masking_options_file has priority over masking_options
+# masking_options_file contains a perl hash reference of the following format
+#
+# {
+# "repeat_name_L1P" => 0,
+# "repeat_class_SINE/Alu" => 0,
+# "repeat_name_L1PA7" => 0,
+# "repeat_name_L1PA3" => 0,
+# "repeat_name_PRIMA4-int" => 0
+# }
+#
+# that defined the masking 0:hard or 1:soft for particular repeat_name or repeat_class as defined in the repeat_consensus
+# table in the core database.
+
   },
 
   { TYPE => DNA_COLLECTION,
@@ -68,7 +82,7 @@
         '-parameters'    => "{method_link=>'BLASTZ_RAW',options=>'T=1 T=1 L=3000 H=2200 M=40000000 O=400 E=30'}",
         '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
     },
-    'max_parallel_workers'    => 400, #depending on the speed of the 'core' and 'compara' databases used, default is 200
+    'max_parallel_workers'    => 200, #depending on the speed of the 'core' and 'compara' databases used, default is 200
     'batch_size'              => 3, #optional, default: 1. 3 is optimal for blastz
     'query_collection_name'   => 'mouse chr11',
     'target_collection_name'  => 'human chr17',
