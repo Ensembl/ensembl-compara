@@ -113,7 +113,7 @@ sub fetch_input
                            -DBCONN => $self->db);
 
   $self->{'blast_analyses'} = ();
-  $self->{'verbose'} = 0;
+  $self->{'verbose'} = 1;
   $self->{'store'} = 1;
   $self->{'getAllRHS'} = undef;
   $self->{'doRHS'} = 1;
@@ -461,7 +461,7 @@ sub process_synteny_segement
   my $syntenySegmentRef = shift;
 
   return unless($syntenySegmentRef and @{$syntenySegmentRef});
-  if($self->{'verbose'}) {
+  if($self->{'verbose'}>1) {
     print("process_synteny_segement\n");
     $self->print_synteny_segement($syntenySegmentRef);
   }
@@ -527,12 +527,12 @@ sub find_RHS
   return if($self->{'onlyOneHomology'} and
             ($self->{'membersToBeProcessed'}->{$memberPep->dbID}));
 
-  if($self->{'verbose'}>1) {
+  if($self->{'verbose'}>2) {
     print("ref BRH : "); $refPAF->display_short();
     $self->print_member($refPAF->query_member, " BRH QUERY\n");
     $self->print_member($refPAF->hit_member, " BRH HIT\n");
   }
-  if($self->{'verbose'}) {
+  if($self->{'verbose'}>1) {
     $self->print_member($memberPep, "test for RHS synteny\n");
   }
 
@@ -571,7 +571,7 @@ sub find_RHS
             " AND hm.chr_end>'". scalar($refPAF->hit_member->chr_start-1500000) ."'".
             " ORDER BY paf1.score DESC, paf1.evalue, paf1.perc_ident DESC, paf1.perc_pos DESC";
 
-  print("$sql\n") if($self->{'verbose'}>1);
+  print("$sql\n") if($self->{'verbose'}>2);
   my $sth = $self->{'comparaDBA'}->prepare($sql);
   $sth->execute();
 
