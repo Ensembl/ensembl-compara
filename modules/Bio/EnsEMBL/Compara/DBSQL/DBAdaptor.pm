@@ -66,11 +66,7 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 sub get_GenomeDBAdaptor{
    my ($self) = @_;
 
-   if( !defined $self->{'_genomedb_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
-       $self->{'_genomedb_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor->new($self);
-   }
-   return $self->{'_genomedb_adaptor'};
+   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor");
 }
 
 =head2 get_DnaFragAdaptor
@@ -88,11 +84,7 @@ sub get_GenomeDBAdaptor{
 sub get_DnaFragAdaptor{
    my ($self) = @_;
 
-   if( !defined $self->{'_dnafrag_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
-       $self->{'_dnafrag_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->new($self);
-   }
-   return $self->{'_dnafrag_adaptor'};
+   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor");
 }
 
 =head2 get_GenomicAlignAdaptor
@@ -108,13 +100,10 @@ sub get_DnaFragAdaptor{
 =cut
 
 sub get_GenomicAlignAdaptor{
-   my ($self) = @_;
-
-   if( !defined $self->{'_genomicalign_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
-       $self->{'_genomicalign_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor->new($self);
-   }
-   return $self->{'_genomicalign_adaptor'};
+  my ($self) = @_;
+   
+  return 
+    $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor");
 }
 
 
@@ -133,11 +122,7 @@ sub get_GenomicAlignAdaptor{
 sub get_HomologyAdaptor{
    my ($self) = @_;
 
-   if( !defined $self->{'_homology_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
-       $self->{'_homology_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor->new($self);
-   }
-   return $self->{'_homology_adaptor'};
+   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor");
 }
 
 
@@ -156,11 +141,8 @@ sub get_HomologyAdaptor{
 sub get_SyntenyRegionAdaptor{
    my ($self) = @_;
 
-   if( !defined $self->{'_genomicalign_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor;
-       $self->{'_genomicalign_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor->new($self);
-   }
-   return $self->{'_genomicalign_adaptor'};
+   return 
+     $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor");
 }
 
 1;

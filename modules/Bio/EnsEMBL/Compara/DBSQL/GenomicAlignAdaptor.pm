@@ -47,10 +47,37 @@ use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::AlignBlockSet; 
+use Bio::EnsEMBL::Utils::Cache; #CPAN LRU cache
+
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-# we inheriet new
+my $CACHE_SIZE = 4;
+
+
+=head2 new
+
+  Arg [1]    : list of argument to super class constructor @args
+  Example    : $gaa = new Bio::EnsEMBL::Compara::GenomicAlignAdaptor($db);
+  Description: Creates a new GenomicAlignAdaptor.  The superclass constructor
+               is extended to initialise an internal cache.
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::DBSQL::DBConnection
+
+=cut
+
+sub new {
+  my ($class, @args) = @_;
+
+  my $self = $class->SUPER::new(@args);
+
+  #initialize internal LRU cache
+  tie(%{$self->{'_cache'}}, 'Bio::EnsEMBL::Utils::Cache', $CACHE_SIZE);
+  
+  return $self;
+}
+     
 
 sub fetch_by_dbID {
     my ($self,$id,$row_id) = @_;
@@ -395,6 +422,15 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
   unless (defined $dnafrag_type) {
     $dnafrag_type = "VirtualContig";
   }
+  
+  #check the internal cache 
+  my $key = join( ':', $sb_species, $qy_species, $chr_name, 
+		  $chr_start, $chr_end, $dnafrag_type);
+  if(exists $self->{'_cache'}->{$key}) {
+    print "using cache key = $key\n";
+    return $self->{'_cache'}->{$key};
+  }
+
   my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,$dnafrag_type);
   
   foreach my $df (@list_dnafrag) {
@@ -460,7 +496,34 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
       }
     }
   }
+  
+  #update the internal cache and return the results
+  $self->{'_cache'}->{$key} = \@DnaDnaAlignFeatures;
+
   return \@DnaDnaAlignFeatures;
+}
+
+
+=head2 deleteObj
+
+  Arg [1]    : none
+  Example    : none
+  Description: Clears the internal cache prior so correct garbage collection 
+               can occur.
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::DBSQL::DBConnection::deleteObj
+
+=cut
+
+sub deleteObj {
+  my $self = shift;
+
+  #perform superclass cleanup
+  $self->SUPER::deleteObj;
+
+  #flush internal cache
+  %{$self->{'_cache'}} = ();
 }
 
 1;
