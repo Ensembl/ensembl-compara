@@ -35,26 +35,40 @@ sub features {
 
 sub image_label {
   my ($self, $f ) = @_;
-  return( $f->get_scalar_attribute('name'), 'overlaid' );
+  return '';
+  #return( $f->get_scalar_attribute('name') );
 }
 
 ## Link back to this page centred on the map fragment
 
 sub href {
-  my ($self, $f ) = @_;
+  my ($self, $id, $feature_data ) = @_;
+  my $f = $feature_data->[0][2];
   return '';
 }
-
 
 ## Create the zmenu...
 ## Include each accession id separately
 sub zmenu {
-    my ($self, $f ) = @_;
-    return undef();
-    my $zmenu = { 
-        'caption' => $f->get_scalar_attribute('name'),
-    };
+    my ($self, $id, $feat_data ) = @_;
+    my $f = $feat_data->[0][2];
+    #my $zmenu = {};
+    my $zmenu = { 'caption' => 'Reporter Data' };
+    my $i = 0;
+    foreach my $attrib( @{$f->get_all_Attributes} ){
+      $i++;
+      my $key = sprintf( "%2.2d:%s:%s", $i, $attrib->name, $attrib->value );
+      $zmenu->{$key} = '';
+    }
     return $zmenu;
 }
+
+## 
+sub feature_group{
+  my( $self, $f ) = @_;
+  return $f->get_scalar_attribute('compositeName');
+}
+
+
 
 1;
