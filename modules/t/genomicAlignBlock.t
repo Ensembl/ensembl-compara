@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlignBlock module.
 
-This script includes 32 tests.
+This script includes 36 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 32;
+    plan tests => 36;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -398,11 +398,39 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start met
 # 31
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start method");
+  $genomic_align_blocks->[0]->requesting_slice_start(0);
+  ok($genomic_align_blocks->[0]->requesting_slice_start, undef);
+
+# 
+# 32
+# 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_start method");
+  $genomic_align_blocks->[0]->requesting_slice_start(100);
+  ok($genomic_align_blocks->[0]->requesting_slice_start, 100);
+
+# 
+# 33
+# 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
   ok($genomic_align_blocks->[0]->requesting_slice_end,
     $genomic_align_blocks->[0]->starting_genomic_align->dnafrag_end - $slice->start + 1);
 
 # 
-# 32
+# 34
+# 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
+  $genomic_align_blocks->[0]->requesting_slice_end(0);
+  ok($genomic_align_blocks->[0]->requesting_slice_end, undef);
+
+# 
+# 35
+# 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end method");
+  $genomic_align_blocks->[0]->requesting_slice_end(1000);
+  ok($genomic_align_blocks->[0]->requesting_slice_end, 1000);
+
+# 
+# 36
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->alignment_strings method");
   $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
