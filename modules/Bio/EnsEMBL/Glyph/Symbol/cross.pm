@@ -4,7 +4,13 @@ Bio::EnsEMBL::Glyph::Symbol::cross
 
 =head1 DESCRIPTION
 
-A collection of drawing-code glyphs to represent a cross.
+A collection of drawing-code glyphs to represent a cross.  Centred on range of feature.
+
+=head1 ATTRIBS
+
+POINT - if true, draws the cross centred on start & end, otherwise the cross is scaled to the feature width
+
+LINEWIDTH - if a point feature, specifies the width of the symbol
 
 =cut
 
@@ -24,19 +30,31 @@ sub draw {
     my $y_offset = $feature->{'y_offset'};
     my $pix_per_bp = $feature->{'pix_per_bp'};
     
-    # Point feature, so just use start
     my $start = $feature->{'start'};
+    my $end = $feature->{'end'};
    
     my $linecolour = $style->{'fgcolor'};
     my $fillcolour = $style->{'bgcolor'} || $style->{'colour'};
     $linecolour ||= $fillcolour;
 
     my $height = $style->{'height'};
-    my $width =  $style->{'linewidth'} || $height;
-    $width /= $pix_per_bp;  # remember, x in bp, y in pixels
+    my $mid_x = $start + (($end - $start)/2) - 1;
+    my ($width, $start_x);
+
+    # is this a point feature, or do we want to scale across the feature?
+    if (($end - $start <= 1) || $style->{'point'}){  # point feature
+	$width =  $style->{'linewidth'} || $height;
+	$width /= $pix_per_bp;  # remember, x in bp, y in pixels
+	$start_x = $mid_x -$width/2;
+    }
+    else {  # Scale to full feature width
+	$width = $end - $start;
+	$start_x = $start - 1;
+    }
+
 
     return (new Sanger::Graphics::Glyph::Line({
-	    'x'          => $start -1 -$width/2,
+	    'x'          => $start_x,
 	    'y'          => $y_offset + $height/2,
 	    'width'      => $width,
 	    'height'     => 0,
@@ -44,7 +62,7 @@ sub draw {
 	    'absolutey' => 1
 	}),
 	new Sanger::Graphics::Glyph::Line({
-	    'x'          => $start-1,
+	    'x'          => $mid_x,
 	    'y'          => $y_offset,
 	    'width'      => 0,
 	    'height'     => $height,
