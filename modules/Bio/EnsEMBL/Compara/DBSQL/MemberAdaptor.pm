@@ -46,9 +46,9 @@ sub list_internal_ids {
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
+  Description: Returns the Member created from the database defined by the
                the id $id.
-  Returntype : Bio::EnsEMBL::SeqFeature
+  Returntype : Bio::EnsEMBL::Compara::Member
   Exceptions : thrown if $id is not defined
   Caller     : general
 
