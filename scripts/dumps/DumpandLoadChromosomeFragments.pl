@@ -186,7 +186,7 @@ sub printout_by_overlapping_chunks {
 
     print STDERR "getting soft masked sequence...\n";
     if (%not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,0,\%not_default_masking_cases);
+      $seq = $slice->get_repeatmasked_seq(undef,1,\%not_default_masking_cases);
     } else {
       $seq = $slice->get_repeatmasked_seq(undef,1);
     }
