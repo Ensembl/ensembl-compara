@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::Glyph::Composite;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::Glyph::Rect;
 @ISA = qw(Bio::EnsEMBL::Glyph::Rect);
 
