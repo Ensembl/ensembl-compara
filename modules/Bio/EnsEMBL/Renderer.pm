@@ -11,25 +11,6 @@ use Bio::EnsEMBL::Glyph::Rect;
 sub new {
     my ($class, $config, $container, $glyphsets_ref, $transform_ref) = @_;
 
-    my $spacing = 5;
-
-    #########
-    # set up the type to be gif|wmf|ps|whatever
-    # 
-    my $type = $class;
-    $type =~ s/.*:://;
-
-    #########
-    # calculate scaling factors and canvas dimensions
-    #
-    my $im_height = $spacing;
-    for my $glyphset (@{$glyphsets_ref}) {
-	$im_height += $glyphset->height() + $spacing;
-    }
-
-    my $im_width = $config->image_width();
-    $$transform_ref{'scalex'} = $config->scalex();
-
     my $self = {
 	'glyphsets' => $glyphsets_ref,
 	'transform' => $transform_ref,
@@ -37,18 +18,10 @@ sub new {
 	'colourmap' => $config->colourmap(),
 	'config'    => $config,
 	'container' => $container,
-	'type'      => undef,
-	'spacing'   => $spacing,
+	'spacing'   => 5,
     };
 
     bless($self, $class);
-
-    #########
-    # create a fresh canvas
-    #
-    if($self->can('init_canvas')) {
-	$self->init_canvas($config, $im_width, $im_height);
-    }
 
     $self->render();
 
@@ -57,16 +30,6 @@ sub new {
 
 sub render {
     my ($this) = @_;
-
-    my ($cstart, $cend);
-
-    $cstart = 0;
-    $cend   = $this->{'container'}->length();
-
-    #########
-    # give us a top margin
-    #
-#    $this->{'transform'}->{'translatey'} += $this->{'transform'}->{'spacing'};
 
     #########
     # pull out alternating background colours for this script
@@ -78,7 +41,84 @@ sub render {
 	'1' => $config->get($config->script(), '_settings', 'bgcolour2') || $white,
     };
 
-    my $yoffset = $this->{'spacing'};
+    my $bgcolour_flag;
+    $bgcolour_flag = 1 if($$bgcolours{0} ne $$bgcolours{1});
+
+    my $spacing = $this->{'spacing'};
+
+    #########
+    # calculate the maximum label width (plus margin)
+    #
+    my $label_length_px = 0;
+
+    for my $glyphset (@{$this->{'glyphsets'}}) {
+	next if(!defined $glyphset->label());
+
+	$glyphset->label->text($glyphset->label->text());
+
+	my $chars  = length($glyphset->label->text());
+	my $pixels = $chars * $config->texthelper->width($glyphset->label->font());
+	
+	$label_length_px = $pixels if($pixels > $label_length_px);
+    }
+
+    #########
+    # add spacing before and after labels
+    #
+    $label_length_px += $spacing * 2;
+
+    #########
+    # calculate scaling factors
+    #
+    my $pseudo_im_width = $config->image_width() - $label_length_px - $spacing;
+
+    #########
+    # set scaling factor for base-pairs -> pixels
+    #
+    $this->{'transform'}->{'scalex'}         = $pseudo_im_width / $config->container_width();
+
+    #########
+    # set scaling factor for 'absolutex' coordinates -> real pixel coords
+    #
+    $this->{'transform'}->{'absolutescalex'} = $pseudo_im_width / $config->image_width();
+
+    #########
+    # because our text label starts are < 0, translate everything back onto the canvas
+    #
+    my $extra_translation = $label_length_px;
+    $this->{'transform'}->{'translatex'} += $extra_translation;
+
+    #########
+    # now set all our labels up with scaled negative coords
+    # and while we're looping, tot up the image height
+    #
+    my $im_height = 0;
+
+    for my $glyphset (@{$this->{'glyphsets'}}) {
+	
+	my $fntheight = (defined $glyphset->label())?$config->texthelper->height($glyphset->label->font()):0;
+	my $gstheight = $glyphset->height();
+
+	if($gstheight > $fntheight) {
+	    $im_height += $gstheight + $spacing;
+	} else {
+	    $im_height += $fntheight + $spacing;
+	}
+
+	next if(!defined $glyphset->label());
+	$glyphset->label->x(-($extra_translation - $spacing) / $this->{'transform'}->{'scalex'});
+    }
+
+    my $im_width = $config->image_width();
+
+    #########
+    # create a fresh canvas
+    #
+    if($this->can('init_canvas')) {
+	$this->init_canvas($config, $im_width, $im_height);
+    }
+
+    my $yoffset = $spacing;
     my $iteration = 0;
     for my $glyphset (@{$this->{'glyphsets'}}) {
 
@@ -87,24 +127,37 @@ sub render {
 	#
 	my $gminy = $glyphset->miny();
 
-	$this->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $this->{'spacing'});
+	$this->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $spacing);
+
+	if(defined $bgcolour_flag) {
+	    #########
+	    # colour the area behind this strip
+	    #
+	    my $background = new Bio::EnsEMBL::Glyph::Rect({
+		'x'         => 0,
+		'y'         => $gminy,
+		'width'     => $this->{'config'}->image_width(),
+		'height'    => $glyphset->maxy() - $gminy,
+		'colour'    => $$bgcolours{$iteration % 2},
+		'absolutex' => 1,
+	    });
+	    $glyphset->unshift($background);
+	}
 
 	#########
-	# colour the area behind this strip
+	# set up the label for this strip
 	#
-	my $background = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'         => 0,
-	    'y'         => $glyphset->miny(),
-	    'width'     => $this->{'config'}->image_width(),
-	    'height'    => $glyphset->maxy() - $glyphset->miny(),
-	    'colour'    => $$bgcolours{$iteration % 2},
-	    'absolutex' => 1,
-	});
+	if(defined $glyphset->label()) {
+	    my $gh = $config->texthelper->height($glyphset->label->font());
+	    $glyphset->label->y((($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $glyphset->miny());
+	    $glyphset->label->height($gh);
+	    $glyphset->push($glyphset->label());
+	}
 
-	$glyphset->unshift($background);
-
+	#########
+	# loop through everything and draw it
+	#
 	for my $glyph ($glyphset->glyphs()) {
-
 	    my $method = $this->method($glyph);
 	    if($this->can($method)) {
 		$this->$method($glyph);
