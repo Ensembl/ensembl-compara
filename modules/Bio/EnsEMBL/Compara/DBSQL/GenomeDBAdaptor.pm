@@ -97,7 +97,7 @@ sub fetch_by_dbID{
 		  "Genome DBAdaptor for name=[".$gdb->name."], ".
 		  "assembly=[" . $gdb->assembly."] must be loaded using " .
 		  "config file or\n" .
-		  "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_genome");
+		  "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
    }
 
    $gdb->db_adaptor($dba);
