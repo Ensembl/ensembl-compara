@@ -26,16 +26,17 @@ my ( $host, $user, $pass, $port, $dbname, $chromosome, $start, $end,
      $species, $conf_file );
 
 
-GetOptions( "host=s", \$host,
-	    "user=s", \$user,
-	    "pass=s", \$pass,
-	    "port=i", \$port,
-	    "dbname=s", \$dbname,
-	    "chromosome=s", \$chromosome,
-	    "start=i", \$start,
-	    "end=i", \$end,
-	    "species=s", \$species,
-	    "conf_file=s", \$conf_file
+GetOptions(
+	   "host=s", \$host,
+	   "user=s", \$user,
+	   "pass=s", \$pass,
+	   "port=i", \$port,
+	   "dbname=s", \$dbname,
+	   "chromosome=s", \$chromosome,
+	   "start=i", \$start,
+	   "end=i", \$end,
+	   "species=s", \$species,
+	   "conf_file=s", \$conf_file
 	  );
 
 # change this to use supplied compara database
@@ -49,8 +50,6 @@ my $compara = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
    -pass => $pass,
    -conf_file => $conf_file
   );
-
-
 
 # # the following you dont need if you have a  config file for the 
 # # compara database (it will attach the ensembl database automatically then)
@@ -88,19 +87,23 @@ my $compara = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
 
 my $all_genome_dbs = $compara->get_GenomeDBAdaptor()->fetch_all();
 
-#push( @$all_genome_dbs, $compara->get_GenomeDBAdaptor()->fetch_by_name_assembly
-#      ( "Homo sapiens", "NCBI30" ));
-#push( @$all_genome_dbs, $compara->get_GenomeDBAdaptor()->fetch_by_name_assembly
-#      ( "Mus musculus", "MGSC3" ));
-#push( @$all_genome_dbs, $compara->get_GenomeDBAdaptor()->fetch_by_name_assembly
-#      ( "Rattus norvegicus", "Rat_Nov02" ));
-
 # there is a fetch_all on genome_DB, but by time of writing this,
 #  compara wasnt filled and configured properly
 
-
 my ( $primary_species ) = grep { $_->name() eq $species } @$all_genome_dbs;
 my ( @other_species ) = grep { $_->name() ne $species } @$all_genome_dbs;
+
+my @wanted_other_species;
+
+foreach my $other_species (@other_species) {
+  my $name = $other_species->name;
+  my $assembly = $other_species->assembly;
+  if (defined $compara->get_db_adaptor($name,$assembly)) {
+    push @wanted_other_species,$other_species;
+  }
+}
+
+@other_species = @wanted_other_species;
 
 my $primary_slice = $primary_species->db_adaptor()->get_SliceAdaptor()->
   fetch_by_chr_start_end( $chromosome, $start, $end );
