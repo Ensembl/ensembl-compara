@@ -25,8 +25,20 @@ fasta_nr_filename      new FASTA file without redundancy
 redundant_ids_filename file containing the redundant ids
 \n";
 
-my $pmatch_executable = "/usr/local/ensembl/bin/pmatch_ms2";
+#" makes emacs colr formatting happier...
+
+my $pmatch_executable = "/usr/local/ensembl/bin/pmatch";
 my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
+
+
+unless (-e $fastafetch_executable) {
+  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch.old";
+  if (-e "/proc/version") {
+    # it is a linux machine
+    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch.old";
+  }
+}
+
 my $help = 0;
 
 GetOptions('h' => \$help,
@@ -83,10 +95,10 @@ my %stored_at_index;
 
 while (my $line = <PM>) {
   chomp $line;
-  my ($length, $qid, $qstart, $qend, $qperc, $qlen, $tid, $tstart, $tend, $tperc, $tlen) = split /\s+/,$line;
+  my ($length, $qid, $qstart, $qend, $qperc, $tid, $tstart, $tend, $tperc, $qlen, $tlen) = split /\s+/,$line;
   next if ($qid eq $tid);
-  next unless ($length == $qlen && $length == $tlen && $qperc == 100);
-
+ 
+  next unless ($length == $qlen && $length == $tlen);
   if (defined $stored_at_index{$qid} && defined $stored_at_index{$tid}) {
     if ($stored_at_index{$qid} != $stored_at_index{$tid}) {
       warn "Query $qid and target $tid have been stored in 2 different indices.
