@@ -1,0 +1,1175 @@
+#
+# Ensembl module for Bio::EnsEMBL::Compara::AlignSlice::Slice
+#
+# Original author: Javier Herrero <jherrero@ebi.ac.uk>
+#
+# Copyright EnsEMBL Team
+#
+# You may distribute this module under the same terms as perl itself
+
+# pod documentation - main docs before the code
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::AlignSlice::Slice - These obejcts contain all the information needed
+for mapping features through genomic alignments
+
+=head1 INHERITING
+
+This module inherits methods and attributes from Bio::EnsEMBL::Slice module.
+
+=head1 SYNOPSIS
+  
+
+SET VALUES
+
+GET VALUES
+
+=head1 OBJECT ATTRIBUTES
+
+=over
+
+=item attribute
+
+Description
+
+=back
+
+=head1 AUTHORS
+
+Javier Herrero (jherrero@ebi.ac.uk)
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004. EnsEMBL Team
+
+You may distribute this module under the same terms as perl itself
+
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
+
+
+# Let the code begin...
+
+
+package Bio::EnsEMBL::Compara::AlignSlice::Slice;
+
+use strict;
+use Bio::EnsEMBL::Slice;
+use Bio::EnsEMBL::CoordSystem;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
+
+our @ISA = qw(Bio::EnsEMBL::Slice);
+
+=head2 new (CONSTRUCTOR)
+
+  Arg[1]     : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+
+=cut
+
+sub new {
+  my ($class, @args) = @_;
+
+  my $self = {};
+  bless $self,$class;
+
+  my ($length, $requesting_slice, $method_link_species_set, $name) =
+      rearrange([qw(
+          LENGTH REQUESTING_SLICE METHOD_LINK_SPECIES_SET NAME
+      )], @args);
+
+  my $version = "";
+  if ($requesting_slice and ref($requesting_slice) and
+      $requesting_slice->isa("Bio::EnsEMBL::Slice")) {
+    my $name = $requesting_slice->name;
+    $name =~ s/\:/_/g;
+    $version .= $name;
+  }
+  if ($method_link_species_set and ref($method_link_species_set) and
+      $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
+    $version .= "+".$method_link_species_set->method_link_type;
+    my $species_set = $method_link_species_set->species_set();
+    if ($species_set) {
+      $species_set = [sort {$a->name cmp $b->name} @{$species_set}];
+      $version .= "(\"".join("\"+\"", map {$_->name} @$species_set)."\")";
+    }
+  }
+  my $coord_system = new Bio::EnsEMBL::CoordSystem(
+          -NAME => 'align_slice',
+          -VERSION => $version,
+          -TOP_LEVEL => 0,
+          -SEQUENCE_LEVEL => 1,
+          -RANK => 1,
+      );
+
+  $self->{start} = 1;
+  $self->{end} = $length;
+  $self->{strand} = 1;
+  $self->{adaptor} = undef;
+  $self->{coord_system} = $coord_system;
+  $self->{seq_region_name} = ($name or "FakeAlignSlice");
+  $self->{seq_region_length} = $length;
+  $self->{located_slices} = [];
+
+  return $self;
+}
+
+
+=head2 add_Slice_Mapper_pair
+
+  Arg[1]     : Bio::EnsEMBL::Slice $slice
+  Arg[2]     : Bio::EnsEMBL::Mapper $mapper
+  Arg[3]     : integer $start
+  Arg[4]     : integer $end
+  Arg[5]     : integer $strand
+  Example    : $slice->add_Slice_Mapper_pair($slice, $mapper, 124, 542, -1);
+  Description: Attaches a pair of Slice and the corresponding Mapper
+               to this Bio::EnsEMBL::Compara::AlginSlice::Slice
+               object. The Mapper contains the information for
+               mapping coordinates from (to) the Slice to (from) the
+               Bio::EnsEMBL::Compara::AlignSlice. Start, end and strand
+               locates the $slice in the AlignSlice
+  Returntype : 
+  Exceptions : throws if $slice is not a Bio::EnsEMBL::Slice object
+  Exceptions : throws if $mapper is not a Bio::EnsEMBL::Mapper object
+
+=cut
+
+sub add_Slice_Mapper_pair {
+  my ($self, $slice ,$mapper, $start, $end, $strand) = @_;
+
+  if (!$slice or !ref($slice) or !$slice->isa("Bio::EnsEMBL::Slice")) {
+    throw("[$slice] must be a Bio::EnsEMBL::Slice object");
+  }
+  if (!$mapper or !ref($mapper) or !$mapper->isa("Bio::EnsEMBL::Mapper")) {
+    throw("[$slice] must be a Bio::EnsEMBL::Mapper object");
+  }
+
+  push(@{$self->{slice_mapper_pairs}}, {
+          slice => $slice,
+          mapper => $mapper,
+          start => $start,
+          end => $end,
+          strand => $strand,
+      });
+
+  return $self->{slice_mapper_pairs};
+}
+
+
+=head2 get_all_Slice_Mapper_pair
+
+  Arg[1]     : - none -
+  Example    : $slice_mapper_pairs = $slice->get_all_Slice_Mapper_pairs();
+  Description: Returns all pairs of Slices and Mappers attached to this
+               Bio::EnsEMBL::Compara::AlignSlice::Slice
+  Returntype : list ref of hashes which keys are "slice", "mapper", "start",
+               "end" and "strand". Each hash corresponds to a pair of Slice
+               and Mapper and the coordintes needed to locate the Slice in
+               the AlignSlice.
+  Exceptions : return a ref to an empty list if no pairs have been attached
+               so far.
+
+=cut
+
+sub get_all_Slice_Mapper_pairs {
+  my ($self) = @_;
+  my $slice_mapper_pairs = ($self->{slice_mapper_pairs} or []);
+
+  return $slice_mapper_pairs;
+}
+
+
+=head2 add_GenomicAlign
+
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
+  Example    : $slice->add_GenomicAlign($genomic_align);
+  Description: Attaches a GenomicAlign to this compara Slice
+  Returntype : list ref of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions : throws if $genomic_align is not a
+               Bio::EnsEMBL::Compara::GenomicAlign object
+
+=cut
+
+sub add_GenomicAlign {
+  my ($self, $genomic_align) = @_;
+
+  if (!$genomic_align or !ref($genomic_align) or
+      !$genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign")) {
+    throw("[$genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object");
+  }
+  push(@{$self->{genomic_aligns}}, $genomic_align);
+
+  return $self->{genomic_aligns};
+}
+
+
+=head2 get_all_GenomicAligns
+
+  Arg[1]     : - none -
+  Example    : $genomic_aligns = $slice->get_all_GenomicAligns();
+  Description: Returns all GenomicAligns attached to this compara Slice
+  Returntype : list ref of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions : returns a ref to an empty list if no GenomicAligns have
+               been attahced so far.
+
+=cut
+
+sub get_all_GenomicAligns {
+  my ($self) = @_;
+  my $genomic_aligns = ($self->{genomic_aligns} or []);
+
+  return $genomic_aligns;
+}
+
+
+=head2 get_all_Genes
+
+  Arg [1]    : (optional) string $logic_name
+               The name of the analysis used to generate the genes to retrieve
+  Arg [2]    : (optional) string $dbtype
+               The dbtype of genes to obtain.  This assumes that the db has
+               been added to the DBAdaptor under this name (using the
+               DBConnection::add_db_adaptor method).
+  Arg [3]    : (optional) boolean $load_transcripts
+               If set to true, transcripts will be loaded immediately rather
+               than being lazy-loaded on request.  This will result in a
+               significant speed up if the Transcripts and Exons are going to
+               be used (but a slow down if they are not).
+  Example    : @genes = @{$slice->get_all_Genes};
+  Description: Retrieves all genes that overlap this slice.
+  Returntype : listref of Bio::EnsEMBL::Genes
+  Exceptions : none
+  Caller     : none
+
+=cut
+
+sub get_all_Genes {
+#  my ($self, $logic_name, $dbtype, $load_transcripts) = @_;
+  my ($self, @parameters) = @_;
+
+  my ($max_repetition_length,
+      $max_gap_length,
+      $max_intron_length,
+      $strict_order_of_exon_pieces,
+      $strict_order_of_exons,
+      $return_unmapped_exons) = rearrange([qw(
+          MAX_REPETITION_LENGTH
+          MAX_GAP_LENGTH
+          MAX_INTRON_LENGTH
+          STRICT_ORDER_OF_EXON_PIECES
+          STRICT_ORDER_OF_EXONS
+          RETURN_UNMAPPED_EXONS
+      )], @parameters);
+  $max_repetition_length = 100 if (!defined($max_repetition_length));
+  $max_gap_length = 1000 if (!defined($max_gap_length));
+  $max_intron_length = 100000 if (!defined($max_intron_length));
+  $strict_order_of_exon_pieces = 1 if (!defined($strict_order_of_exon_pieces));
+  $strict_order_of_exons = 0 if (!defined($strict_order_of_exons));
+  $return_unmapped_exons = 1 if (!defined($return_unmapped_exons));
+
+  my $key = 'key_'.
+      $max_repetition_length.":".
+      $max_gap_length.":".
+      $max_intron_length.":".
+      $strict_order_of_exon_pieces.":".
+      $strict_order_of_exons.":".
+      $return_unmapped_exons;
+  
+  if (!defined($self->{$key})) {
+    my $all_genes = [];
+
+    my $all_pairs = $self->get_all_Slice_Mapper_pairs;
+    return [] if (!$all_pairs or !@$all_pairs);
+
+#     my $these_genomic_aligns = [];
+#     foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks}) {
+#       # print STDERR "GenomicAlignBlock: $this_genomic_align_block->{dbID}\n";
+#       my $all_genomic_aligns = $this_genomic_align_block->genomic_align_array;
+#       foreach my $this_genomic_align (@$all_genomic_aligns) {
+#         my $this_genome_db = $this_genomic_align->dnafrag->genome_db;
+#         # print STDERR "GenomicAlign: ($this_genome_db->{dbID}:$this_genomic_align->{dnafrag}->{name}) [$this_genomic_align->{dnafrag_start} - $this_genomic_align->{dnafrag_end}]\n";
+#         push(@$these_genomic_aligns, $this_genomic_align);
+#       }
+#     }
+#     if (!@$these_genomic_aligns) {
+#       $self->{$key} = [];
+#       return [];
+#     }
+
+    ## Create larger Slices in order to speed up fetching of genes
+    my $all_slices_coordinates;
+    my $this_slice_coordinates;
+    my $this_slice_adaptor = $all_pairs->[0]->{slice}->adaptor;
+    foreach my $pair (sort {
+            $a->{slice}->seq_region_name cmp $b->{slice}->seq_region_name or
+            $a->{slice}->start <=> $b->{slice}->start } @$all_pairs) {
+# print STDERR "Foreach pair ($pair)... $pair->{slice}->{seq_region_name} $pair->{slice}->{start}\n";
+            
+      my $this_slice = $pair->{slice};
+      if ($this_slice_coordinates and
+          ($this_slice_coordinates->{seq_region_name} eq $this_slice->seq_region_name) and
+          (($this_slice->start - $this_slice_coordinates->{end}) < 10000000)) {
+        ## lengthen current slice_coordinates
+        $this_slice_coordinates->{end} = $this_slice->end;
+      } else {
+        ## save a deep copy (if needed) and reset current slice_coordinates
+        if ($this_slice_coordinates->{seq_region_name}) {
+          my $new_slice_coordinates = {
+                  "coord_system_name" => $this_slice_coordinates->{coord_system_name},
+                  "seq_region_name" => $this_slice_coordinates->{seq_region_name},
+                  "start" => $this_slice_coordinates->{start},
+                  "end" => $this_slice_coordinates->{end},
+                  "pairs" => $this_slice_coordinates->{pairs}
+              };
+          push(@$all_slices_coordinates, $new_slice_coordinates);
+        }
+        $this_slice_coordinates->{coord_system_name} = $this_slice->coord_system_name;
+        $this_slice_coordinates->{seq_region_name} = $this_slice->seq_region_name;
+        $this_slice_coordinates->{start} = $this_slice->start;
+        $this_slice_coordinates->{end} = $this_slice->end;
+        $this_slice_coordinates->{pairs} = [];
+      }
+      ## Add this pair to the set of pairs of the current slice_coordinates
+      push(@{$this_slice_coordinates->{pairs}}, $pair);
+    }
+    push(@$all_slices_coordinates, $this_slice_coordinates) if ($this_slice_coordinates);
+
+    foreach $this_slice_coordinates (@$all_slices_coordinates) {
+# print STDERR "Foreach this_slice_coordinates...\n";
+      my $this_slice = $this_slice_adaptor->fetch_by_region(
+              $this_slice_coordinates->{coord_system_name},
+              $this_slice_coordinates->{seq_region_name},
+              $this_slice_coordinates->{start},
+              $this_slice_coordinates->{end}
+          );
+
+      ## Do not load transcripts immediately or the cache could produce
+      ## some troubles in some special cases! Moreover, in this way we will have
+      ## the genes, the transcripts and the exons in the same slice!!
+      my $these_genes = $this_slice->get_all_Genes();
+      foreach my $pair (@{$this_slice_coordinates->{pairs}}) {
+# print STDERR "Foreach pair ($pair)...\n";
+        foreach my $this_gene (@$these_genes) {
+# print STDERR "1. GENE: $this_gene->{stable_id} ($this_gene->{start} - $this_gene->{end})\n";
+          $this_gene->{original_slice} = $this_gene->slice if (!defined($this_gene->{original_slice}));
+          my $mapped_gene = $self->_get_mapped_Gene($this_gene, $pair, $return_unmapped_exons);
+# print STDERR "2. GENE: $mapped_gene->{stable_id} ($mapped_gene->{start} - $mapped_gene->{end})\n";
+#           $mapped_gene = $self->_get_mapped_Gene($this_gene, $pair);
+          if ($mapped_gene and @{$mapped_gene->get_all_Transcripts}) {
+            push(@$all_genes, $mapped_gene);
+          }
+        }
+      }
+    }
+
+    $all_genes = _compile_mapped_Genes(
+            $all_genes,
+            $max_repetition_length,
+            $max_gap_length,
+            $max_intron_length,
+            $strict_order_of_exon_pieces,
+            $strict_order_of_exons
+        );
+
+    $self->{$key} = $all_genes;
+  }
+
+  return $self->{$key};
+}
+
+
+=head2 _get_mapped_Gene
+
+  Arg[1]     : Bio::EnsEMBL::Gene $original_gene
+  Arg[2]     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
+  Example    : my $mapped_gene = $align_slice->get_mapped_Gene($orignal_gene, $genomic_align);
+  Description: returns a new Bio::EnsEMBL::Gene object. Mapping is based on exons.
+               The object returned contains Bio::EnsEMBL::Transcripts objects. Those
+               mapped transcripts contain Bio::EnsEMBL::Compara::AlignSlice::Exon objects.
+               If no exon can be mapped, the returned object will contain an empty array of
+               transcripts. Since mapped objects are not stored in the DB, they have no dbID
+               and no adaptor.
+  Returntype : Bio::EnsEMBL::Gene object. (new object)
+  Exceptions : returns undef if no part of $original_gene can be mapped using this
+               $genomic_align. This method assumes that the slices of all the exons got
+               from that gene have the same coordinates as the gene slice. It will throw
+               if this is not true.
+  Caller     : get_all_Genes
+
+=cut
+
+sub _get_mapped_Gene {
+  my ($self, $gene, $pair, $return_unmapped_exons) = @_;
+  
+  my $range_start = $pair->{slice}->start - $gene->slice->start + 1;
+  my $range_end = $pair->{slice}->end - $gene->slice->start + 1;
+  my $slice_length = $gene->slice->end - $gene->slice->start + 1;
+  return undef if (($gene->start > $range_end) or ($gene->end < $range_start));
+
+  my $from_mapper = $pair->{mapper};
+  my $to_mapper = $self->{to_mapper};
+
+  my $these_transcripts = [];
+
+  foreach my $this_transcript (@{$gene->get_all_Transcripts}) {
+    $this_transcript->{this_slice} = $this_transcript->slice;
+    my $these_exons = [];
+    my $all_exons = $this_transcript->get_all_Exons;
+    for (my $i=0; $i<@$all_exons; $i++){
+      my $this_exon = $all_exons->[$i];
+      if (!defined($this_exon->{original_slice})) {
+        $this_exon->{original_slice} = $this_exon->slice;
+        $this_exon->{original_start} = $this_exon->start;
+        $this_exon->{original_end} = $this_exon->end;
+      }
+      $this_exon->{this_slice} = $this_exon->slice;
+      throw("Oops, this method assumes that all the exons are defined on the same slice as the".
+          " gene they belong to") if ($this_exon->slice->start != $gene->slice->start);
+      my $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
+              -EXON => $this_exon,
+              -ALIGN_SLICE => $self,
+              -FROM_MAPPER => $from_mapper,
+              -TO_MAPPER => $to_mapper,
+              -ORIGINAL_RANK => $i + 1
+          );
+      if ($return_unmapped_exons) {
+        push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
+      } else {
+        push(@{$these_exons}, $this_align_exon) if ($this_align_exon and defined($this_align_exon->start));
+      }
+    }
+    if (grep {$_->start} @$these_exons) { ## if any of the exons has been mapped
+      my $new_transcript = $this_transcript->new(
+              -stable_id => $this_transcript->stable_id,
+              -version => $this_transcript->version,
+              -external_db => $this_transcript->external_db,
+              -external_name => $this_transcript->external_name,
+              -external_status => $this_transcript->external_status,
+              -display_xref => $this_transcript->display_xref,
+              -analysis => $this_transcript->analysis,
+              -exons => $these_exons,
+          );
+
+     push(@{$these_transcripts}, $new_transcript);
+    }
+  }
+  if (!@$these_transcripts) {
+    return undef;
+  }
+  ## Create a new gene object. This is needed in order to avoid
+  ## troubles with cache. Attach mapped transcripts.
+  my $mapped_gene = $gene->new(
+          -ANALYSIS => $gene->analysis,
+          -SEQNAME => $gene->seqname,
+          -STABLE_ID => $gene->stable_id,
+          -VERSION => $gene->version,
+          -EXTERNAL_NAME => $gene->external_name,
+          -TYPE => $gene->type,
+          -EXTERNAL_DB => $gene->external_db,
+          -EXTERNAL_STATUS => $gene->external_status,
+          -DISPLAY_XREF => $gene->display_xref,
+          -DESCRIPTION => $gene->description,
+          -TRANSCRIPTS => $these_transcripts
+      );
+
+  return $mapped_gene;
+}
+
+
+=head2 _compile_mapped_Genes
+
+  Arg[1]     : listref of Bio::EnsEMBL::Gene $mapped_genes
+  Arg[2]     : int $max_repetition_length
+  Arg[3]     : int $max_gap_length
+  Arg[4]     : int $max_intron_length
+  Arg[5]     : int $strict_order_of_exon_pieces
+  Arg[6]     : int $strict_order_of_exons
+  Example    : my $compiled_genes = $align_slice->compile_mapped_Genes($mapped_genes,
+                       100, 1000, 100000, 1, 0);
+  Description: This method compiles all the pieces of gene mapped before into a list
+               of Bio::EnsEMBL::Gene objects. It tries to merge pieces of the same
+               exon, link them according to their original transcript and finally
+               group the transcripts in Bio::EnsEMBL::Gene objects. Merging and
+               linking of Exons is done according to some rules that can be changed
+               with the parameters.
+  Parameters:  They are sent as is to _separate_in_incompatible_sets_of_Exons() and
+               _merge_Exons() methods. Please refer to them elsewhere in this
+               document.
+  Returntype : listref of Bio::EnsEMBL::Gene objects. (overrides $mapped_genes)
+  Exceptions : none
+  Caller     : $object->methodname
+
+=cut
+
+sub _compile_mapped_Genes {
+  my ($mapped_genes, $max_repetition_length, $max_gap_length, $max_intron_length, 
+      $strict_order_of_exon_pieces, $strict_order_of_exons) = @_;
+
+  my $verbose = verbose();
+  verbose(0); # Avoid warnings when mapped transcripts are not in the same strand
+  
+  ## Compile genes: group transcripts by gene->stable_id
+  my $gene_by_gene_stable_id;
+  my $transcripts_by_gene_stable_id;
+  foreach my $mapped_gene (@$mapped_genes) {
+# print STDERR "1. GENE:$mapped_gene->{stable_id} ", join(" - ", map {$_->stable_id} @{$mapped_gene->get_all_Transcripts}), "\n";
+    if (!$gene_by_gene_stable_id->{$mapped_gene->stable_id}) {
+      $gene_by_gene_stable_id->{$mapped_gene->stable_id} = $mapped_gene;
+    }
+    ## Group all the transcripts by gene stable_id...
+    push(@{$transcripts_by_gene_stable_id->{$mapped_gene->stable_id}},
+        @{$mapped_gene->get_all_Transcripts});
+  }
+#   $mapped_genes = [values %$genes_by_stable_id];
+
+  ## Compile transcripts: group exons by transcript->stable_id
+  while (my ($gene_stable_id, $set_of_transcripts) = each %$transcripts_by_gene_stable_id) {
+    my $transcript_by_transcript_stable_id;
+    my $exons_by_transcript_stable_id;
+    foreach my $transcript (@{$set_of_transcripts}) {
+      if (!$transcript_by_transcript_stable_id->{$transcript->stable_id}) {
+        $transcript_by_transcript_stable_id->{$transcript->stable_id} = $transcript;
+      }
+      ## Group all the exons by the transcript stable_id...
+# print STDERR "0. TRANS:$transcript->{stable_id} ", join(" - ", map {$_->stable_id} @{$transcript->get_all_Exons}), "\n";
+      push(@{$exons_by_transcript_stable_id->{$transcript->stable_id}},
+          @{$transcript->get_all_Exons});
+    }
+
+    ## Try to merge splitted exons whenever possible
+    while (my ($transcript_stable_id, $set_of_exons) = each %$exons_by_transcript_stable_id) {
+# print STDERR "1. ", join(" - ", map {$_->stable_id} @{$set_of_exons}), "\n";
+      $exons_by_transcript_stable_id->{$transcript_stable_id} = _merge_Exons(
+              $set_of_exons,
+              $max_repetition_length,
+              $max_gap_length, 
+              $strict_order_of_exon_pieces
+          );
+# print STDERR "2. ", join(" - ", map {$_->stable_id} @{$exons_by_transcript_stable_id->{$transcript_stable_id}}), "\n";
+    }
+    my $all_transcripts;
+    while (my ($transcript_stable_id, $set_of_exons) = each %$exons_by_transcript_stable_id) {
+#       my $sets_of_compatible_exons = [$set_of_exons];
+      my $sets_of_compatible_exons = _separate_in_incompatible_sets_of_Exons(
+              $set_of_exons,
+              $max_repetition_length,
+              $max_intron_length,
+              $strict_order_of_exons
+          );
+
+        my $old_transcript = $transcript_by_transcript_stable_id->{$transcript_stable_id};
+#       # Save first set of exons in the 
+#       my $first_set_of_compatible_exons = shift(@{$sets_of_compatible_exons});
+#       my $first_transcript = $transcript_by_transcript_stable_id->{$transcript_stable_id};
+#       $first_transcript->flush_Exons();
+#       foreach my $exon (@$first_set_of_compatible_exons) {
+#         $first_transcript->add_Exon($exon);
+#       }
+#       push(@$all_transcripts, $first_transcript);
+
+      foreach my $this_set_of_compatible_exons (@{$sets_of_compatible_exons}) {
+        my $new_transcript = $old_transcript->new(
+                -stable_id => $old_transcript->stable_id,
+                -version => $old_transcript->version,
+                -external_db => $old_transcript->external_db,
+                -external_name => $old_transcript->external_name,
+                -external_status => $old_transcript->external_status,
+                -display_xref => $old_transcript->display_xref,
+                -analysis => $old_transcript->analysis,
+                -EXONS => $this_set_of_compatible_exons
+            );
+        push(@$all_transcripts, $new_transcript);
+      }
+    }
+    
+    $gene_by_gene_stable_id->{$gene_stable_id}->{'_transcript_array'} = $all_transcripts;
+    # adjust start, end, strand and slice
+    $gene_by_gene_stable_id->{$gene_stable_id}->recalculate_coordinates;
+  }
+  verbose($verbose);
+
+  return [values %$gene_by_gene_stable_id];
+}
+
+
+=head2 _merge_Exons
+
+  Arg[1]     : listref of Bio::EnsEMBL::Compara::AlignSlice::Exon $set_of_exons
+  Arg[2]     : int $max_repetition_length
+  Arg[3]     : int $max_gap_length
+  Arg[4]     : int $strict_order_of_exon_pieces
+  Example    : my $merged_exons = _merge_Exons($exons_to_be_merged, 100, 1000, 1);
+  Description: Takes a list of Bio::EnsEMBL::Compara::AlignSlice::Exon objects and
+               tries to merge them according to exon stable_id and some rules that can
+               be tunned using some optional parameters. This method can overwrite some
+               of the exon in the $set_of_exons.
+  Parameters:  MAX_REPETITION_LENGTH. In principle you want to merge together pieces
+                   of an exon which do not overlap (the beginning and the end of the
+                   exon). With this flag you can to set up what amount of the original
+                   exon is allowed on two aligned exons to be merged.
+               MAX_GAP_LENGTH. If the distance between two pieces of exons in the
+                   aligned slice is larger than this parameter, they will not be
+                   merged. Setting this parameter to -1 will
+                   avoid any merging event.
+               STRICT_ORDER_OF_EXON_PIECES. This flag allows you to decide whether two
+                   pieces of an exon should be merged or not if they are not in the
+                   right order, for instance if the end of the original exon will
+                   appear before the start on the merged exon.
+  Returntype : lisref of Bio::EnsEMBL::Compara::AlignSlice::Exon objects.
+  Exceptions : none
+  Caller     : methodname
+
+=cut
+
+sub _merge_Exons {
+  my ($set_of_exons, $max_repetition_length, $max_gap_length, $strict_order_of_exon_pieces) = @_;
+  my $merged_exons = []; # returned value
+
+  my $exon_by_stable_id;
+  # Group exons by stable_id
+  foreach my $exon (@$set_of_exons) {
+    push(@{$exon_by_stable_id->{$exon->stable_id}}, $exon);
+  }
+      
+  # Merge compatible pieces of exons
+  foreach my $these_exons (values %$exon_by_stable_id) {
+
+    if (!grep {$_->start} @$these_exons) {
+      push(@$merged_exons, $these_exons->[0]);
+    }
+
+    # Sort exons according to 
+    $these_exons= [sort {($a->start or 0) <=> ($b->start or 0)} @$these_exons];
+  
+    while (my $first_exon = shift @$these_exons) {
+      if (!defined($first_exon->start)) {
+#         push(@$merged_exons, $first_exon);
+        next;
+      }
+      for (my $count=0; $count<@$these_exons; $count++) {
+        my $second_exon = $these_exons->[$count];
+        # Check strands
+        next if ($first_exon->strand != $second_exon->strand);
+
+        my $gap_between_pieces_of_exon = $second_exon->start - $first_exon->end - 1;
+        # Check whether both mapped parts do not overlap
+        next if ($gap_between_pieces_of_exon < 0);
+
+        # Check maximum gap between both pieces of exon
+        next if ($gap_between_pieces_of_exon > $max_gap_length);
+
+        # Check whether both mapped parts are in the right order
+        if ($strict_order_of_exon_pieces) {
+          if ($first_exon->strand == 1) {
+            next if ($first_exon->get_aligned_start > $second_exon->get_aligned_start);
+          } else {
+            next if ($first_exon->get_aligned_end < $second_exon->get_aligned_end);
+          }
+        }
+
+        # Check maximum overlapping within original exon, i.e. how much of the
+        # same exon can be mapped twice
+        my $repetition_length;
+        if ($first_exon->strand == 1) {
+          $repetition_length = $first_exon->get_aligned_end - $second_exon->get_aligned_start + 1;
+        } else {
+          $repetition_length = $second_exon->get_aligned_end - $first_exon->get_aligned_start + 1;
+        }
+        next if ($repetition_length > $max_repetition_length);
+  
+        ## Merge exons!!
+        $second_exon = splice(@$these_exons, $count, 1); # remove exon from the list
+        $count-- if (@$these_exons);
+        $first_exon->end($second_exon->end);
+        if ($first_exon->strand == 1) {
+          $first_exon->append_Exon($second_exon, $gap_between_pieces_of_exon);
+        } else {
+          $first_exon->prepend_Exon($second_exon, $gap_between_pieces_of_exon);
+        }
+      }
+      push(@$merged_exons, $first_exon);
+    }
+  }
+
+  return $merged_exons;
+}
+
+
+=head2 _separate_in_incompatible_sets_of_Exons
+
+  Arg[1]     : listref of Bio::EnsEMBL::Compara::AlignSlice::Exon $set_of_exons
+  Arg[2]     : int $max_repetition_length
+  Arg[3]     : int $max_intron_length
+  Arg[4]     : int $strict_order_of_exons
+  Example    : my $sets_of_exons = _separate_in_incompatible_sets_of_Exons(
+                   $set_of_exons, 100, 100000, 0);
+  Description: Takes a list of Bio::EnsEMBL::Compara::AlignSlice::Exon and separate
+               them in sets of comaptible exons. Compatibility is defined taking into
+               account 5 parameters:
+                 - exons must be in the same strand
+                 - exons cannot overlap on the align_slice
+                 - distance between exons cannot be larger than MAX_INTRON_LENGTH
+                 - two exons with the same stable_id can belong to the same transcript
+                   only if they represent diferent parts of the original exon. Some
+                   overlapping is allowed (see MAX_REPETITION_LENGTH parameter).
+                 - exons must be in the same order as in the original transcript
+                   if the STRICT_ORDER_OF_EXONS parameter is true.
+  Parameters:  MAX_REPETITION_LENGTH. In principle you want to link together pieces
+                   of an exon which do not overlap (the beginning and the end of the
+                   exon). With this flag you can to set up what amount of the original
+                   exon is allowed on two aligned exons to be linked.
+               MAX_INTRON_LENGTH. If the distance between two exons in the aligned slice
+                   is larger than this parameter, they will not be linked.
+               STRICT_ORDER_OF_EXONS. This flag allows you to decide whether two
+                   exons should be linked or not if they are not in the
+                   original order.
+  Returntype : listref of lisrefs of Bio::EnsEMBL::Compara::AlignSlice::Exon objects.
+  Exceptions : none
+  Caller     : methodname
+
+=cut
+
+sub _separate_in_incompatible_sets_of_Exons {
+  my ($set_of_exons, $max_repetition_length, $max_intron_length, $strict_order_of_exons) = @_;
+  my $sets_of_exons = [];
+
+  my $last_exon;
+  my $this_set_of_exons = [];
+
+  ###################################################################
+  ##
+  ##  Return all the exons by strand.
+  ##   - A given exon can be mapped partially on both strands!
+  ##
+  if (grep {$_->strand and $_->strand == 1} @$set_of_exons and grep {$_->strand and $_->strand == -1} @$set_of_exons) {
+    ## Keep track of the exons that have been mapped by strand
+    my $indexes;
+    foreach my $exon (@$set_of_exons) {
+      if ($exon->strand) {
+        $indexes->{$exon->strand}->{$exon->original_rank} = 1;
+      }
+    }
+
+    my $forward_stranded_set_of_exons; # set of exons to be returned in the forward strand
+    my $reverse_stranded_set_of_exons; # set of exons to be returned in the reverse strand
+    foreach my $exon (@$set_of_exons) {
+      my $new_exon = $exon->copy();
+      if ($exon->strand) {
+        if ($exon->strand == 1) {
+          if ($indexes->{"-1"}->{$exon->original_rank}) {
+            ## This exon has been mapped on the reverse strand as well
+            push(@$forward_stranded_set_of_exons, $exon);
+            next;
+          } else {
+            ## Undef coordinates of the new exon before adding it to the set
+            ## of reverse stranded exons
+            $new_exon->start(undef);
+            $new_exon->end(undef);
+            $new_exon->strand(undef);
+          }
+        } else {
+          if ($indexes->{"1"}->{$exon->original_rank}) {
+            ## This exon has been mapped on the forward strand as well
+            push(@$reverse_stranded_set_of_exons, $new_exon);
+            next;
+          } else {
+            ## Undef coordinates of the new exon before adding it to the set
+            ## of forward stranded exons
+            $exon->start(undef);
+            $exon->end(undef);
+            $exon->strand(undef);
+          }
+        }
+      }
+      push(@$forward_stranded_set_of_exons, $exon);
+      push(@$reverse_stranded_set_of_exons, $new_exon);
+    }
+    push(@$sets_of_exons, @{_separate_in_incompatible_sets_of_Exons($reverse_stranded_set_of_exons)});
+    $set_of_exons = $forward_stranded_set_of_exons;
+  }
+  ##
+  ###################################################################
+  
+  foreach my $this_exon (_sort_Exons(@$set_of_exons)) {
+    if (!defined($this_exon->start)) {
+      push(@$this_set_of_exons, $this_exon);
+      next;
+    }
+    if ($last_exon) {
+      # Calculate intron length
+      my $intron_length = $this_exon->start - $last_exon->end - 1;
+      # Calculate whether both mapped parts are in the right order
+      my $order_is_ok = 1;
+      if ($strict_order_of_exons) {
+        if ($this_exon->strand == $this_exon->exon->strand) {
+          $order_is_ok = 0 if ($this_exon->exon->start < $last_exon->exon->start);
+        } else {
+          $order_is_ok = 0 if ($this_exon->exon->start > $last_exon->exon->start);
+        }
+      }
+      my $repetition_length = 0;
+      if ($last_exon->stable_id eq $this_exon->stable_id) {
+        if ($this_exon->strand == 1) {
+          $repetition_length = $last_exon->get_aligned_end - $this_exon->get_aligned_start + 1;
+        } else {
+          $repetition_length = $this_exon->get_aligned_end - $last_exon->get_aligned_start + 1;
+        }
+      }
+
+      if (($last_exon->strand != $this_exon->strand) or
+          ($intron_length < 0) or
+          ($intron_length > $max_intron_length) or
+          (!$order_is_ok) or
+          ($repetition_length > $max_repetition_length)) {
+        # this_exon and last_exon should be in separate sets. Save current
+        # set_of_exons and start a new set_of_exons
+        push(@$sets_of_exons, $this_set_of_exons);
+        $this_set_of_exons = [];
+      }
+    }
+    push(@$this_set_of_exons, $this_exon);
+    $last_exon = $this_exon;
+  }
+  push(@$sets_of_exons, $this_set_of_exons);
+
+  return $sets_of_exons;
+}
+
+sub _sort_Exons {
+  my @exons = @_;
+  my @sorted_exons = ();
+
+  my @mapped_exons = grep {defined($_->start)} @exons;
+  my @unmapped_exons = grep {!defined($_->start)} @exons;
+
+  @mapped_exons = sort {$a->start <=> $b->start} @mapped_exons;
+  my $sorted_exons_by_rank;
+  foreach my $mapped_exon (@mapped_exons) {
+    my $rank = $mapped_exon->original_rank;
+    # the same exon can be mapped twice!
+    push(@{$sorted_exons_by_rank->{$rank}}, $mapped_exon);
+  }
+
+  @unmapped_exons = sort {$a->original_rank <=> $b->original_rank} @unmapped_exons;
+  foreach my $unmapped_exon (@unmapped_exons) {
+    my $rank = $unmapped_exon->original_rank;
+    do {
+      if (defined($sorted_exons_by_rank->{$rank}) or $rank == 1) {
+        push(@{$sorted_exons_by_rank->{$rank}}, $unmapped_exon);
+        $rank = 0;
+      }
+      $rank--;
+    } while ($rank > 0);
+  }
+
+  foreach my $exons (sort {($a->[0]->start or 0) <=> 
+      ($b->[0]->start or 0)} values %$sorted_exons_by_rank) {
+    push(@sorted_exons, @{$exons});
+  }
+
+  return @sorted_exons;
+}
+
+=head2 OVERWRITEN METHODS FROM Bio::EnsEMBL::Slice module
+
+=head2 WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
+
+ All the methods that need acces to the database (the adaptor) and which
+ are not listed here are not supported!!
+
+=head2 WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
+
+=head2 invert (not supported)
+
+Maybe at some point...
+
+This method returns undef
+
+=cut
+
+sub invert {
+  warning("Cannot invert a Bio::EnsEMBL::Compara::AlignSlice::Slice object"); 
+  return undef;
+}
+
+
+=head2 seq
+
+  Arg [1]    : none
+  Example    : print "SEQUENCE = ", $slice->seq();
+  Description: Returns the sequence of the region represented by this
+               slice formatted as a string.
+               This Slice is made of several Bio::EnsEMBL::Slices mapped
+               on it with gaps inside and regions with no matching
+               sequence. The resulting string might contain gaps and/or
+               dots as padding characters. If several Slices map on the
+               same positions, the last one will override the positions.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub seq {
+  my $self = shift;
+  my $start = 1;
+  my $end = $self->length;
+  my $strand = 1;
+
+  return $self->{seq} if (defined($self->{seq}));
+
+  $self->{seq} = $self->subseq(1, $self->length, 1);
+
+  return $self->{seq};
+}
+
+
+=head2 subseq
+
+  Arg  [1]   : int $startBasePair
+               relative to start of slice, which is 1.
+  Arg  [2]   : int $endBasePair
+               relative to start of slice.
+  Arg  [3]   : (optional) int $strand
+               The strand of the slice to obtain sequence from. Default
+               value is 1.
+  Description: returns string of dna sequence
+               This Slice is made of several Bio::EnsEMBL::Slices mapped
+               on it with gaps inside and regions with no matching
+               sequence. The resulting string might contain gaps and/or
+               dots as padding characters. If several Slices map on the
+               same positions, the last one will override the positions.
+  Returntype : txt
+  Exceptions : end should be at least as big as start
+               strand must be set
+  Caller     : general
+
+=cut
+
+sub subseq {
+  my ($self, $start, $end, $strand) = @_;
+
+  $start = 1 if (!defined($start));
+  $end ||= $self->length;
+  $strand ||= 1;
+
+  my $seq = "." x ($end - $start + 1);
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    my $this_slice = $pair->{slice};
+    my $mapper = $pair->{mapper};
+    my $slice_start = $pair->{start};
+    my $slice_end = $pair->{end};
+    next if ($slice_start > $end or $slice_end < $start);
+    
+    $slice_start -= $start; # $slice_start is now in subseq coordinates
+    $slice_end -= $start; # $slice_end is now in subseq coordinates
+
+    my @sequence_coords = $mapper->map_coordinates(
+            'alignment',
+            $start,
+            $end,
+            $strand,
+            'alignment'
+        );
+    my $this_pos = 0;
+    foreach my $sequence_coord (@sequence_coords) {
+      ## $sequence_coord refer to genomic_align (a slice in the [+] strand)
+
+      if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+        my $subseq;
+        if ($this_slice->strand == 1) {
+          $subseq = $this_slice->subseq(
+                  $sequence_coord->start - $this_slice->start + 1,
+                  $sequence_coord->end - $this_slice->start + 1,
+                  $sequence_coord->strand * $pair->{strand}
+              );
+        } else {
+          $subseq = $this_slice->subseq(
+                  $this_slice->end - $sequence_coord->end + 1,
+                  $this_slice->end - $sequence_coord->start + 1,
+                  $sequence_coord->strand * $pair->{strand}
+              );
+        }
+        substr($seq, $this_pos, $sequence_coord->length, $subseq);
+      } else {
+        ## Gap or sequence outside of any alignment
+        if ($this_pos < $slice_end and ($this_pos + $sequence_coord->length) > $slice_start) {
+          my $start_position_of_gap_seq = $this_pos;
+          my $end_position_of_gap_seq = $this_pos + $sequence_coord->length;
+          if ($this_pos < $slice_start) {
+            $start_position_of_gap_seq = $slice_start;
+          }
+          if ($end_position_of_gap_seq > $slice_end) {
+            $end_position_of_gap_seq = $slice_end;
+          }
+          my $length_of_gap_seq = $end_position_of_gap_seq - $start_position_of_gap_seq;
+          substr($seq, $start_position_of_gap_seq, $length_of_gap_seq, "-" x $length_of_gap_seq);
+        }
+      }
+      $this_pos += $sequence_coord->length;
+    }
+  }
+  return $seq;
+}
+
+
+=head2 expand (not supported)
+
+Expanding a Bio::EnsEMBL::Compara::AlignSlice::Slice object is not supported at the moment.
+You could create a new Bio::EnsEMBL::Slice and fetch a new Bio::EnsEMBL::Compara::AlignSlice
+from it. On the hand, if you only want to extend the sequence, you could use the subseq method
+with a negatve start value or an end value larger than the end of this Slice.
+
+This method returns undef
+
+=cut
+
+sub expand {
+  my $self = shift;
+  warning("Cannot expand a Bio::EnsEMBL::Compara::AlignSlice::Slice object"); 
+  return undef;
+}
+
+
+=head2 get_all_Attributes
+
+  Arg [1]    : optional string $attrib_code
+               The code of the attribute type to retrieve values for.
+  Example    : ($htg_phase) = @{$slice->get_all_Attributes('htg_phase')};
+               @slice_attributes    = @{$slice->get_all_Attributes()};
+  Description: Gets a list of Attributes of this slice''s seq_region.
+               Optionally just get Attributes for given code.
+               This Slice is made of several Bio::EnsEMBL::Slices mapped
+               on it. This method go through all of them, retrieves the
+               data, compiles them and returns them as they would belong
+               this Bio::EnsEMBL::Compara::AlignSlice::Slice object.
+  Returntype : listref Bio::EnsEMBL::Attribute
+  Exceptions : warning if slice does not have attached adaptor
+  Caller     : general
+
+=cut
+
+sub get_all_Attributes {
+  my $self = shift;
+  my $attributes;
+
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    my $this_slice = $pair->{slice};
+    my $these_attributes = $this_slice->get_all_Attributes(@_);
+    foreach my $this_attribute (@$these_attributes) {
+      my $code = $this_attribute->code;
+      if (!defined($attributes->{$code})) {
+        $attributes->{$code} = $this_attribute;
+      } else {
+        my $value = $attributes->{$code}->value + $this_attribute->value;
+        $attributes->{$code}->value($value);
+      }
+    }
+  }
+  return [values %$attributes];
+}
+
+
+=head2 get_all_VariationFeatures
+
+    Args       : none
+    Description :returns all variation features on this slice. This function will only work 
+                correctly if the variation database has been attached to the core database.
+                This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
+                method go through all of them, retrieves the data and maps them on this
+                Bio::EnsEMBL::Compara::AlignSlice::Slice object.
+    ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
+    Exceptions : none
+    Caller     : contigview, snpview
+
+=cut
+
+sub get_all_VariationFeatures {
+  my $self = shift;
+
+  return $self->_method_returning_simple_features("get_all_VariationFeatures", @_)
+}
+
+
+=head2 get_all_genotyped_VariationFeatures
+
+    Args       : none
+    Function   : returns all variation features on this slice that have been genotyped. This
+                 function will only work correctly if the variation database has been
+                 attached to the core database.
+                 This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
+                 method go through all of them, retrieves the data and maps them on this
+                 Bio::EnsEMBL::Compara::AlignSlice::Slice object.
+    ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
+    Exceptions : none
+    Caller     : contigview, snpview
+
+=cut
+
+sub get_all_genotyped_VariationFeatures {
+  my $self = shift;
+
+  return $self->_method_returning_simple_features("get_all_genotyped_VariationFeatures", @_)
+}
+
+
+sub _method_returning_simple_features {
+  my $self = shift;
+  my $method = shift;
+  my $ret = [];
+
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    my $this_slice = $pair->{slice};
+    my $this_mapper = $pair->{mapper};
+    my $this_ret = $this_slice->$method(@_);
+    foreach my $this_object (@$this_ret) {
+      my @alignment_coords = $this_mapper->map_coordinates(
+              'sequence',
+              $this_object->slice->start + $this_object->start - 1,
+              $this_object->slice->start + $this_object->end - 1,
+              $this_object->strand,
+              'sequence'
+          );
+      my ($start, $end, $strand);
+      foreach my $alignment_coord (@alignment_coords) {
+        if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+          if (!defined($start) or $start > $alignment_coord->start) {
+            $start = $alignment_coord->start;
+          }
+          if (!defined($end) or $end < $alignment_coord->end) {
+            $end = $alignment_coord->end;
+          }
+          if (!defined($strand)) {
+            $strand = $alignment_coord->strand;
+          }
+        }
+      }
+      if (defined($start) and defined($end) and defined($strand)) {
+        $this_object->{start} = $start;
+        $this_object->{end} = $end;
+        $this_object->{strand} = $strand;
+        $this_object->{slice} = $self;
+        push(@$ret, $this_object);
+      }
+    }
+  }
+  return $ret;
+}
+
+1;
