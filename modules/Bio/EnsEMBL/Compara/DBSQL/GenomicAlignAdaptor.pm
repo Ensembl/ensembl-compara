@@ -39,8 +39,6 @@ The rest of the documentation details each of the object methods. Internal metho
 
 # Let the code begin...
 
-    BEGIN { print STDERR "Looking at this...\n";
-            require "Bio/EnsEMBL/Pipeline/pipeConf.pl"; }
 
 package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 use vars qw(@ISA);
@@ -170,8 +168,8 @@ sub get_AlignBlockSet{
        
        if( ! defined $dnafraghash{$raw_id} ) {
 	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
-           print "raw_di: $raw_id\n\n";
-          print "in GAdaptor:", $dnafragadp->fetch_by_dbID($raw_id);
+           #print "raw_di: $raw_id\n\n";
+           #print "in GAdaptor:", $dnafragadp->fetch_by_dbID($raw_id);
 	   #$alignset->core_adaptor($dnafraghash{$raw_id}->genomedb->ensembl_db);
        }
 
