@@ -337,7 +337,6 @@ sub cache_sequence
   # fetching may have occurred in a previous method call, so keep this logic
   # separate to make sure it will get stored
   if($self->sequence_id==0) {
-    print "    cacheing sequence back to compara for chunk\n";
     $self->adaptor->update_sequence($self);
   }
 
