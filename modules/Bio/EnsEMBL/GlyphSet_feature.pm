@@ -43,7 +43,7 @@ sub href     { return undef; }
 ## group are linked together via an open rectangle. Can be subclassed.
 sub feature_group{
   my( $self, $f ) = @_;
-  return $f->can('hseqname') ? $f->hseqname : $f->seqname;
+  return $f->display_id;
 }
 
 sub _init {
