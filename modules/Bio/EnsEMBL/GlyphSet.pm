@@ -4,6 +4,7 @@ use Exporter;
 use Sanger::Graphics::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
+use EnsWeb;
 
 use vars qw(@ISA $AUTOLOAD);
 
@@ -88,7 +89,7 @@ sub HASH_URL {
 
 sub ID_URL {
   my($self,$db,$id) = @_;
-  return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&ID=$id";
+  return exists( EnsWeb->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) ? "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&ID=$id" : "";
 }
 
 sub zoom_URL {
