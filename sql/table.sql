@@ -44,7 +44,7 @@ CREATE TABLE genome_db (
   assembly          varchar(255) DEFAULT '' NOT NULL,
   assembly_default  tinyint(1) DEFAULT 1,
   genebuild         varchar(255) DEFAULT '' NOT NULL,
-  locator           mediumtext,
+  locator           varchar(255) DEFAULT '' NOT NULL,
 
   PRIMARY KEY (genome_db_id),
   UNIQUE name (name,assembly,genebuild)
@@ -153,12 +153,12 @@ CREATE TABLE source (
 );
 
 CREATE TABLE taxon (
- taxon_id		int(10) NOT NULL,
- genus			varchar(50),
- species	        varchar(50),
- sub_species		varchar(50),
- common_name		varchar(100),
- classification	        mediumtext,
+ taxon_id         int(10) NOT NULL,
+ genus            varchar(50),
+ species          varchar(50),
+ sub_species      varchar(50),
+ common_name      varchar(100),
+ classification   mediumtext,
 
  PRIMARY KEY (taxon_id),
  KEY (genus,species),
@@ -166,17 +166,17 @@ CREATE TABLE taxon (
 );
 
 CREATE TABLE member (
- member_id	int(10) NOT NULL auto_increment,
- stable_id	varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
+ member_id      int(10) NOT NULL auto_increment,
+ stable_id      varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
  version        int(10) DEFAULT '0', 
- source_id	int(10) NOT NULL, # foreign key from source table
- taxon_id	int(10) NOT NULL, # foreign key from taxon table
- genome_db_id	int(10), # foreign key from genome_db table
+ source_id      int(10) NOT NULL, # foreign key from source table
+ taxon_id       int(10) NOT NULL, # foreign key from taxon table
+ genome_db_id   int(10), # foreign key from genome_db table
  sequence_id    int(10), # foreign key from sequence table
  description    varchar(255),
- chr_name	char(40),
- chr_start	int(10),
- chr_end	int(10),
+ chr_name       char(40),
+ chr_start      int(10),
+ chr_end        int(10),
  chr_strand     tinyint(1) NOT NULL,
 
  PRIMARY KEY (member_id),
