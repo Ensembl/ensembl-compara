@@ -141,6 +141,7 @@ if (defined $output) {
   open F, ">$output";
   $fh = \*F;
 }    
+my $output_seq = Bio::SeqIO->new( -fh => $fh, -format => 'Fasta');
 
 foreach my $chr (@{$chromosomes}) {
   print STDERR "fetching slice...\n";
@@ -171,7 +172,7 @@ setting chr_end=chr_length\n";
   
   print STDERR "..fetched slice for $coordinate_system ",$slice->seq_region_name," from position ",$slice->start," to position ",$slice->end,"\n";
 
-  printout_by_overlapping_chunks($slice,$overlap,$chunk_size,$fh);
+  printout_by_overlapping_chunks($slice,$overlap,$chunk_size,$output_seq);
   
   $chr_end = undef;
 }
@@ -179,7 +180,7 @@ setting chr_end=chr_length\n";
 close $fh;
 
 sub printout_by_overlapping_chunks {
-  my ($slice,$overlap,$chunk_size,$fh) = @_;
+  my ($slice,$overlap,$chunk_size,$output_seq) = @_;
   my $seq;
 
   if ($masked == 1) {
@@ -249,7 +250,6 @@ sub printout_by_overlapping_chunks {
 				     -moltype => 'dna'
 				    );
     }
-    my $output_seq = Bio::SeqIO->new( -fh => $fh, -format => 'Fasta');
     $output_seq->write_seq($chunk);
   }
   print STDERR "Done\n";
