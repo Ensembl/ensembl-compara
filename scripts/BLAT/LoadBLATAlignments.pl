@@ -78,9 +78,9 @@ unless (defined $file &&
 #########The use of the coord_
 
 if ($tab){
-	$GAB=$file.".GAB";
-	$GAG=$file.".GAG";
-	$GA=$file.".GA";
+	$GAB="genomic_align_block.".$file;
+	$GAG="genomic_align_group.".$file;
+	$GA="genomic_align.".$file;
 	open (GAB, ">$GAB") or die "can't open $GAB:$!\n";
 	open (GAG, ">$GAG") or die "can't open $GAG:$!\n";
 	open (GA, ">$GA") or die "can't open $GA:$!\n";
