@@ -155,17 +155,35 @@ use Bio::SimpleAlign;
 
 =head2 new (CONSTRUCTOR)
 
-  Arg[1]     : a reference to a hash where keys can be:
-                 -adaptor
-                 -dbID
-                 -method_link_species_set
-                 -method_link_species_set_id
-                 -score
-                 -perc_id
-                 -length
-                 -reference_genomic_align
-                 -reference_genomic_align_id
-                 -genomic_align_array
+  Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
+  Arg [-ADAPTOR]
+              : (opt.) Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor $adaptor
+                (the adaptor for connecting to the database)
+  Arg [-METHOD_LINK_SPECIES_SET]
+              : (opt.) Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
+                (this defines the type of alignment and the set of species used
+                to get this GenomicAlignBlock)
+  Arg [-METHOD_LINK_SPECIES_SET_ID]
+              : (opt.) int $mlss_id (the database internal ID for the $mlss)
+  Arg [-SCORE]: (opt.) float $score (the score of this alignment)
+  Arg [-PERC_ID]
+              : (opt.) int $perc_id (the percentage of identity, only used for pairwise)
+  Arg [-LENGTH]
+              : (opt.) int $length (the length of this alignment, taking into account
+                gaps and all)
+  Arg [-REFERENCE_GENOMIC_ALIGN]
+              : (opt.) Bio::EnsEMBL::Compara::GenomicAlign $reference_genomic_align (the
+                Bio::EnsEMBL::Compara::GenomicAlign corresponding to the requesting
+                Bio::EnsEMBL::Compara::DnaFrag or Bio::EnsEMBL::Slice when this
+                Bio::EnsEMBL::Compara::GenomicAlignBlock has been fetched from a
+                Bio::EnsEMBL::Compara::DnaFrag or a Bio::EnsEMBL::Slice)
+  Arg [-REFERENCE_GENOMIC_ALIGN_ID]
+              : (opt.) int $reference_genomic_align (the database internal ID of the
+                $reference_genomic_align)
+  Arg [-GENOMIC_ALIGN_ARRAY]
+              : (opt.) array_ref $genomic_aligns (a reference to the array of
+                Bio::EnsEMBL::Compara::GenomicAlign objects corresponding to this
+                Bio::EnsEMBL::Compara::GenomicAlignBlock object)
   Example    : my $genomic_align_block =
                    new Bio::EnsEMBL::Compara::GenomicAlignBlock(
                        -adaptor => $gaba,
