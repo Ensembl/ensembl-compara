@@ -285,7 +285,7 @@ sub createBlastAnalysis
 
   my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
   $stats->batch_size(40);
-  $stats->hive_capacity(600);
+  $stats->hive_capacity(50);
   $stats->update();
   
   return $analysis;
