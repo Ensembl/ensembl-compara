@@ -1,3 +1,6 @@
+#########
+# Author: js5
+#
 package Bio::EnsEMBL::GlyphSet::Videogram;
 use strict;
 use vars qw(@ISA);
@@ -10,6 +13,7 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Space;
+use Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
@@ -37,7 +41,12 @@ sub _init {
     my $black  = 'black';
     my $bg     = $Config->get('_settings','bgcolor');
     my $red    = 'red';
- 
+
+    $self->{'pix_per_bp'}     = $Config->image_width() / $Config->container_width();
+    $self->{'bitmap_length'}  = $Config->image_width();
+    $self->{'reverse_bitmap'} = [];
+    $self->{'forward_bitmap'} = [];
+
     my %COL = ();
     $COL{'gpos100'} = 'black'; #add_rgb([200,200,200]);
     $COL{'tip'}     = 'slategrey';
@@ -158,7 +167,7 @@ sub _init {
             });
             push @decorations, $gband;
         } else {
-            $stain = 'gneg' if($self->{'config'}->{'_hide_bands'} eq 'yes' );
+            $stain = 'gneg' if(($self->{'config'}->{'_hide_bands'}||"no") eq 'yes' );
             my $R = $vc_band_start;
             my $T = $bpperpx * ( int($vc_band_end/$bpperpx) - int($vc_band_start/$bpperpx) );
             my $gband = new Sanger::Graphics::Glyph::Rect({
@@ -297,7 +306,7 @@ sub _init {
 # Firstly create a highlights array which contains merged entries!
             my @temp_highlights = @{$highlight_set->{$chr}};
             my @highlights;
-            if($highlight_set->{'merge'} eq 'no') {
+            if($highlight_set->{'merge'} && $highlight_set->{'merge'} eq 'no') {
                 @highlights = @temp_highlights;
             } else {
                 my @bin_flag;
@@ -357,8 +366,9 @@ sub _init {
                         'zmenu'     => $zmenu,
                         'col'       => $col,
                         'id'        => $_->{'id'},
+			'strand'    => $_->{'strand'},
                     } );
-                    $self->push($g);
+                    $g and $self->push($g);
                 }
             }
         }
@@ -504,4 +514,50 @@ sub highlight_rharrow {
         'zmenu'  => $details->{'zmenu'}
     });
 }
+
+sub highlight_rhbox {
+  my ($self, $details) = @_;
+  $details->{'strand'} = "+";
+  return $self->highlight_strandedbox($details);
+}
+
+sub highlight_lhbox {
+  my ($self, $details) = @_;
+  $details->{'strand'} = "-";
+  return $self->highlight_strandedbox($details);
+}
+
+sub highlight_strandedbox {
+  my ($self, $details) = @_;
+  my $strand           = $details->{'strand'} || "";
+  my $draw_length      = $details->{'end'}-$details->{'start'};
+  my $bump_start       = int($details->{'start'} * $self->{'pix_per_bp'});
+  $bump_start          = 0 if ($bump_start < 0);
+  my $bump_end         = $bump_start + int($draw_length * $self->{'pix_per_bp'}) +1;
+  $bump_end            = $self->{'bitmap_length'} if ($bump_end > $self->{'bitmap_length'});
+  my $cmap             = $self->{'config'}->colourmap();
+  my $ori              = ($strand eq "-")?-1:1;
+  my $bitmap           = ($strand eq "-")?"reverse_bitmap":"forward_bitmap";
+  my $row              = &Sanger::Graphics::Bump::bump_row(
+							   $bump_start,
+							   $bump_end,
+							   $self->{'bitmap_length'},
+							   $self->{$bitmap},
+							  );
+  my $pos              = 7 + $ori*12 + $ori*$row*($details->{'padding'}+2);
+  my $dep              = $self->{'config'}->get('Videogram','dep');
+
+  return if($dep && $row > ($dep-1));
+  return Sanger::Graphics::Glyph::Rect->new({
+					     #'bordercolour' => "black",
+					     'x'            => $details->{'start'},
+					     'y'            => $pos,
+					     'width'        => $draw_length, #$details->{'end'}-$details->{'start'},
+					     'height'       => $details->{'padding'},
+					     'colour'       => $details->{'col'},
+					     'absolutey'    => 1,
+					     'zmenu'        => $details->{'zmenu'}
+					    });
+}
+
 1;
