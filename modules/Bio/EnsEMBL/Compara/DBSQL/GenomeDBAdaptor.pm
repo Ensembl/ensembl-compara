@@ -52,17 +52,6 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
-#sub new {
-#    my ($class,@args) = @_;
-
-#    my $self = Bio::EnsEMBL::DBSQL::BaseAdaptor->new(@args);
-
-#    bless $self,$class;
-
-#    $self->{'_cache'} = {};
-
-#    return $self;
-#}
 
     
 =head2 fetch_by_dbID
