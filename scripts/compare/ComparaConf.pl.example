@@ -19,6 +19,7 @@ package main;
 		'qy_fragment_type' => 'vc', # query fragment type vc or raw
 		'qy_fragment_size' => 1000, # query virtual contig size to be dumped (bp)
 		'qy_walk_step'=> 5000, # base pairs separating 2 query fragments
+		'get_all_possible_pairs'=> 1, # if set to 0 look for limited number of pair...
 	       );
 }
 

@@ -1,55 +1,70 @@
 #!/usr/local/bin/perl -w
 
+BEGIN {
+    require "Bio/EnsEMBL/Compara/ComparaConf.pl";
+    # Can we have a way of reading a (local) ComparaConf.pl as well?
+    # e.g. if it exists in the current dir, use that one in preference
+}
+
 use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 print "# debut: ",time,"\n";
 
-my ($input_chr_name) = @ARGV;
+my $input_chr_name = $ARGV[0];
 
-my $compara_host = 'ecs1b.sanger.ac.uk';
-my $compara_dbname = 'compara_human_28_mouse_2';
-my $compara_dbuser = 'ensro';
+if ($input_chr_name eq "23") {
+  $input_chr_name = "X";
+} elsif ($input_chr_name eq "24") {
+  $input_chr_name = "Y";
+}
+
+#Get and set general options
+my %conf =  %::ComparaConf;
+
+my $sb_species = $conf{'sb_species'};
+my $sb_host = $conf{'sb_host'};
+my $sb_dbname = $conf{'sb_dbname'};
+my $sb_dbuser = $conf{'sb_dbuser'};
+my $sb_static_type = $conf{'sb_static_type'};
+my $sb_chr_name_restriction = $conf{'sb_chr_name_restriction'};
+my $sb_fragment_type = $conf{'sb_fragment_type'};
+my $sb_fragment_size = $conf{'sb_fragment_size'};
+
+my $qy_species = $conf{'qy_species'};
+my $qy_host = $conf{'qy_host'};
+my $qy_dbname = $conf{'qy_dbname'};
+my $qy_dbuser = $conf{'qy_dbuser'};
+my $qy_static_type = $conf{'qy_static_type'};
+my $qy_chr_name_restriction = $conf{'qy_chr_name_restriction'};
+my $qy_fragment_type = $conf{'qy_fragment_type'};
+my $qy_fragment_size = $conf{'qy_fragment_size'};
+my $qy_walk_step = $conf{'qy_walk_step'};
+
+my $compara_host = $conf{'cp_host'};
+my $compara_dbname = $conf{'cp_dbname'};
+my $compara_dbuser = $conf{'cp_dbuser'};
+my $get_all_possible_pairs = $conf{'get_all_possible_pairs'};
 
 my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $compara_host,
 							      -user => $compara_dbuser,
 							      -dbname => $compara_dbname );
 
-my $ncbi_host = 'ecs1e.sanger.ac.uk';
-my $ncbi_dbname = 'ens_NCBI_28';
-my $ncbi_dbuser = 'ensro';
+my $ncbi_db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $sb_host,
+						  -user => $sb_dbuser,
+						  -dbname => $sb_dbname );
 
-my $ncbi_db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $ncbi_host,
-						  -user => $ncbi_dbuser,
-						  -dbname => $ncbi_dbname );
-#$ncbi_db->static_golden_path_type('NCBI_26');
-#my $sncbi = $ncbi_db->get_StaticGoldenPathAdaptor;
-
-my $mouse_host = 'ecs1f.sanger.ac.uk';
-my $mouse_dbname = 'alistair_mouse_si_Nov01 ';
-my $mouse_dbuser = 'ensro';
-
-my $mouse_db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $mouse_host,
-						   -user => $mouse_dbuser,
-						   -dbname => $mouse_dbname );
+my $mouse_db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $qy_host,
+						   -user => $qy_dbuser,
+						   -dbname => $qy_dbname );
 
 $| = 1;
-
-#$mouse_db->static_golden_path_type('sanger_20011015_2');
-#my $smouse = $mouse_db->get_StaticGoldenPathAdaptor;
 
 # HUMAN assembly data reading
 #############################
 
 print "# HUMAN assembly data reading...\n";
-
-# list all chromosome name
-#my $sth = $ncbi_db->prepare("select distinct(chr_name) from static_golden_path where chr_name not like \"%NT%\"");
-
-#unless ($sth->execute()) {
-#  $ncbi_db->throw("Failed execution of a select query");
-#}
 
 # key $contig_id
 # value array = ($chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori)
@@ -59,20 +74,35 @@ my %human_contig;
 # value array of contig_ids
 my %human_chromosome;
 
-#while (my ($chr_name) = $sth->fetchrow_array()) {
-#  last if ($chr_name eq "10");
 print "# chr nb ",$input_chr_name,"\n";
+
 if (defined $input_chr_name) {
   my $chr_name = $input_chr_name;
-  my $sth = $ncbi_db->prepare("select c.id,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from contig c,static_golden_path s where c.internal_id = s.raw_id and s.chr_name=\"$chr_name\" order by s.chr_start asc");
+  if ($sb_fragment_type eq "vc") {
+    my $sth = $ncbi_db->prepare("select max(chr_end) from static_golden_path where type= ? and chr_name=?;");
+    
+    unless ($sth->execute($sb_static_type,$chr_name)) {
+      $ncbi_db->throw("Failed execution of a select query");
+    }
+    my ($length) = $sth->fetchrow_array();
+    for (my $start=1;$start<=$length;$start+=$sb_fragment_size) {
+      my $end = $start+$sb_fragment_size-1;
+      $end = $length if ($end > $length);
+      my $contig_id = $chr_name.".".$start.".".$end;
+      $human_contig{$contig_id} = [$chr_name,$start,$end,1,$sb_fragment_size,1];
+      push @{$human_chromosome{$chr_name}},$contig_id;
+    }
+  } elsif ($sb_fragment_type eq "raw") {
+    my $sth = $ncbi_db->prepare("select c.id,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from contig c,static_golden_path s where c.internal_id = s.raw_id and s.chr_name=? order by s.chr_start asc");
+    
+    unless ($sth->execute($chr_name)) {
+      $ncbi_db->throw("Failed execution of a select query");
+    }
 
-  unless ($sth->execute()) {
-    $ncbi_db->throw("Failed execution of a select query");
-  }
-
-  while (my ($contig_id,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori) = $sth->fetchrow_array()) {
-    $human_contig{$contig_id} = [$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori];
-    push @{$human_chromosome{$chr_name}},$contig_id;
+    while (my ($contig_id,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori) = $sth->fetchrow_array()) {
+      $human_contig{$contig_id} = [$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori];
+      push @{$human_chromosome{$chr_name}},$contig_id;
+    }
   }
 } else {
   die "Needs a input chromosome name\n";
@@ -84,10 +114,10 @@ if (defined $input_chr_name) {
 print "# MOUSE assembly data reading...\n";
 
 # list all chromosome name
-my $sth = $mouse_db->prepare("select distinct(chr_name) from static_golden_path");
+my $sth = $mouse_db->prepare("select distinct(chr_name) from static_golden_path where chr_name not like ?");
 
-unless ($sth->execute()) {
-  $ncbi_db->throw("Failed execution of a select query");
+unless ($sth->execute($qy_chr_name_restriction)) {
+  $mouse_db->throw("Failed execution of a select query");
 }
 
 # key $contig_id
@@ -100,18 +130,33 @@ my %mouse_chromosome;
 
 while (my ($chr_name) = $sth->fetchrow_array()) {
 #  next if ($chr_name ne "4" && $chr_name ne "5" && $chr_name ne "NA_unmapped");
-  next if ($chr_name =~ /^NA.*$/);
   print "# chr nb ",$chr_name,"\n";
 
-  my $sth = $mouse_db->prepare("select c.id,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from contig c,static_golden_path s where c.internal_id = s.raw_id and s.chr_name=\"$chr_name\" order by s.chr_start asc");
-
-  unless ($sth->execute()) {
-    $ncbi_db->throw("Failed execution of a select query");
-  }
-
-  while (my ($contig_id,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori) = $sth->fetchrow_array()) {
-    $mouse_contig{$contig_id} = [$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori];
-    push @{$mouse_chromosome{$chr_name}},$contig_id;
+  if ($qy_fragment_type eq "vc") {
+    my $sth = $mouse_db->prepare("select max(chr_end) from static_golden_path where type= ? and chr_name=?;");
+    
+    unless ($sth->execute($qy_static_type,$chr_name)) {
+      $mouse_db->throw("Failed execution of a select query");
+    }
+    my ($length) = $sth->fetchrow_array();
+    for (my $start=1;$start<=$length;$start+=$sb_fragment_size) {
+      my $end = $start+$sb_fragment_size-1;
+      $end = $length if ($end > $length);
+      my $contig_id = $chr_name.".".$start.".".$end;
+      $mouse_contig{$contig_id} = [$chr_name,$start,$end,1,$sb_fragment_size,1];
+      push @{$mouse_chromosome{$chr_name}},$contig_id;
+    }
+  } elsif ($sb_fragment_type eq "raw") {
+    my $sth = $mouse_db->prepare("select c.id,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from contig c,static_golden_path s where c.internal_id = s.raw_id and s.chr_name=? order by s.chr_start asc");
+    
+    unless ($sth->execute($chr_name)) {
+      $mouse_db->throw("Failed execution of a select query");
+    }
+    
+    while (my ($contig_id,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori) = $sth->fetchrow_array()) {
+      $mouse_contig{$contig_id} = [$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori];
+      push @{$mouse_chromosome{$chr_name}},$contig_id;
+    }
   }
 }
 
@@ -122,65 +167,51 @@ print "# HUMAN <-> MOUSE correspondance...\n";
 
 foreach my $chr_name (keys %human_chromosome) {
   
-#  my $index = 0;
   my @gaps;
   my $gap = new Compara::Gap;
   my $close_the_gap = 0;
 
   print "# chr_name: $chr_name, number of contigs: ",scalar @{$human_chromosome{$chr_name}},"\n";
   print "# nb contig: ", scalar @{$human_chromosome{$chr_name}},"\n";
-  foreach my $contig_id (@{$human_chromosome{$chr_name}}) {
-#    $index++;
-    my $sth = $compara_db->prepare("select g.align_id,g.dnafrag_id,g.raw_start-g.align_start from dnafrag d,genomic_align_block g where d.dnafrag_id=g.dnafrag_id and d.name=\"$contig_id\"");
 
-    unless ($sth->execute()) {
-      $compara_db->throw("Failed execution of a select query");
-    }
+  foreach my $contig_id (@{$human_chromosome{$chr_name}}) {
     
     my $align_found = 0;
     my @align_blocks;
 
-    while (my ($align_id,$dnafrag_id,$offset_compara) = $sth->fetchrow_array()) {
+    my $sth = $compara_db->prepare("select d.name,g.align_start,g.align_end,g.raw_start,g.raw_end,g.raw_strand  from dnafrag d,genomic_align_block g,align a where d.dnafrag_id=g.dnafrag_id and a.align_id=g.align_id and a.align_name=? order by name asc,align_start asc");
 
-      unless ($align_id =~ /^\d+$/ && $dnafrag_id =~ /^\d+$/) {
-	print "# $align_id:$dnafrag_id:\n";
-	die;
-      }
+    unless ($sth->execute($contig_id)) {
+      $compara_db->throw("Failed execution of a select query");
+    }
 
-      my $sth = $compara_db->prepare("select d.name,g.align_start,g.align_end,g.raw_start,g.raw_end,g.raw_strand from dnafrag d,genomic_align_block g where align_id=$align_id and g.dnafrag_id!=$dnafrag_id and d.dnafrag_id=g.dnafrag_id order by g.align_start asc");
+    while (my ($name,$align_start,$align_end,$raw_start,$raw_end,$raw_strand) = $sth->fetchrow_array()) {
       
-      unless ($sth->execute()) {
-	$compara_db->throw("Failed execution of a select query");
+      unless (defined $mouse_contig{$name}) {
+	next;
+      }
+      
+      my @human_contig_feat = @{$human_contig{$contig_id}};
+      my @mouse_contig_feat = @{$mouse_contig{$name}};
+      
+      if ($human_contig_feat[5] == 1) {
+
+# should not consider here align blocks which are outside of the part of contig used in the golden path assembly
+
+	my $offset_gp = $human_contig_feat[1]-$human_contig_feat[3];
+	push  @align_blocks, [$contig_id,@{$human_contig{$contig_id}},$name,@{$mouse_contig{$name}},$raw_start,$raw_end,$raw_strand,$align_start,$align_end,$raw_strand*$mouse_contig_feat[5],$align_start+$offset_gp,$align_end+$offset_gp];
+
+      } elsif ($human_contig_feat[5] == -1) {
+
+# should not consider here align blocks which are outside of the part of contig used in the golden path assembly
+
+	my $offset_gp = $human_contig_feat[1]+$human_contig_feat[4];
+	push  @align_blocks, [$contig_id,@{$human_contig{$contig_id}},$name,@{$mouse_contig{$name}},$raw_start,$raw_end,$raw_strand,$align_start,$align_end,-($raw_strand*$mouse_contig_feat[5]),$offset_gp-$align_end,$offset_gp-$align_start];
+	
       }
 
-      while (my ($name,$align_start,$align_end,$raw_start,$raw_end,$raw_strand) = $sth->fetchrow_array()) {
+      $align_found = 1;
 
-	unless (defined $mouse_contig{$name}) {
-	  next;
-	}
-
-	my @human_contig_feat = @{$human_contig{$contig_id}};
-	my @mouse_contig_feat = @{$mouse_contig{$name}};
-	
-	if ($human_contig_feat[5] == 1) {
-
-# should not consider here align blocks which are outside of the part of contig used in the golden path assembly
-
-	  my $offset_gp = $human_contig_feat[1]-$human_contig_feat[3];
-	  push  @align_blocks, [$contig_id,@{$human_contig{$contig_id}},$name,@{$mouse_contig{$name}},$raw_start,$raw_end,$raw_strand,$align_start+$offset_compara,$align_end+$offset_compara,$raw_strand*$mouse_contig_feat[5],$align_start+$offset_compara+$offset_gp,$align_end+$offset_compara+$offset_gp];
-
-	} elsif ($human_contig_feat[5] == -1) {
-
-# should not consider here align blocks which are outside of the part of contig used in the golden path assembly
-
-	  my $offset_gp = $human_contig_feat[1]+$human_contig_feat[4];
-	  push  @align_blocks, [$contig_id,@{$human_contig{$contig_id}},$name,@{$mouse_contig{$name}},$raw_start,$raw_end,$raw_strand,$align_start+$offset_compara,$align_end+$offset_compara,-($raw_strand*$mouse_contig_feat[5]),$offset_gp-($align_end+$offset_compara),$offset_gp-($align_start+$offset_compara)];
-
-	}
-
-	$align_found = 1;
-
-      } 
     }
     
     if ($align_found) {
@@ -188,8 +219,6 @@ foreach my $chr_name (keys %human_chromosome) {
       @align_blocks = sort {$a->[-2] <=> $b->[-2] || $a->[-1] <=> $b->[-1]} @align_blocks;
       
       foreach my $align_block (@align_blocks) {
-	
-#	print join(" ",@{$align_block}),"\n";
 	
 	if (scalar @{$gap->contigs}) {
 	  
@@ -306,33 +335,6 @@ foreach my $chr_name (keys %human_chromosome) {
 
 
     print "# gap: ",$gap->chromosome," ",$gap->start," ",$gap->end," ",$gap->size,"\n";
-#    print "downstream_mapped_border_contigs\n";
-#    if (scalar @{$gap->downstream_mapped_border_contigs}) {
-#	print "# down_contig: ",$gap->downstream_mapped_border_contigs->[-1]->id," ",$gap->downstream_mapped_border_contigs->[-1]->chr_name," ",$gap->downstream_mapped_border_contigs->[-1]->chr_start," ",$gap->downstream_mapped_border_contigs->[-1]->chr_end," ",$gap->downstream_mapped_border_contigs->[-1]->raw_start," ",$gap->downstream_mapped_border_contigs->[-1]->raw_end," ",$gap->downstream_mapped_border_contigs->[-1]->raw_strand,"\n";
-#    }
-#    foreach my $contig (@{$gap->downstream_mapped_border_contigs}) {
-#      print "down_contig: ",$contig->id," ",$contig->chr_name," ",$contig->chr_start," ",$contig->chr_end," ",$contig->raw_start," ",$contig->raw_end," ",$contig->raw_strand,"\n";
-#    }
-#    print "contigs\n";
-#    foreach my $contig (@{$gap->contigs}) {
-#      print "contig: ",$contig->id," ",$contig->chr_name," ",$contig->chr_start," ",$contig->chr_end," ",$contig->raw_start," ",$contig->raw_end," ",$contig->raw_strand,"\n";
-#    }
-#    print "upstream_mapped_border_contigs\n";
-#    my $j;
-#    if (scalar @{$gap->upstream_mapped_border_contigs} >= 5) {
-#      $j = 5;
-#    } else {
-#      $j = scalar @{$gap->upstream_mapped_border_contigs};
-#    }
-#    if (scalar @{$gap->upstream_mapped_border_contigs}) {
-#	print "# up_contig: ",$gap->upstream_mapped_border_contigs->[0]->id," ",$gap->upstream_mapped_border_contigs->[0]->chr_name," ",$gap->upstream_mapped_border_contigs->[0]->chr_start," ",$gap->upstream_mapped_border_contigs->[0]->chr_end," ",$gap->upstream_mapped_border_contigs->[0]->raw_start," ",$gap->upstream_mapped_border_contigs->[0]->raw_end," ",$gap->upstream_mapped_border_contigs->[0]->raw_strand,"\n";
-#    }
-#    for (my $i = 0; $i < $j; $i++) {
-#      my $contig = $gap->upstream_mapped_border_contigs->[$i];
-#      print "up_contig: ",$contig->id," ",$contig->chr_name," ",$contig->chr_start," ",$contig->chr_end," ",$contig->raw_start," ",$contig->raw_end," ",$contig->raw_strand,"\n";
-#    }
-    
-#    next;
     
     if (scalar @{$gap->downstream_mapped_border_contigs} &&
 	scalar @{$gap->upstream_mapped_border_contigs}) {
@@ -353,9 +355,8 @@ foreach my $chr_name (keys %human_chromosome) {
 	  $strand = -1;
 	}
 	
-	if (abs($gap->size - abs($chr_end - $chr_start)) <= 10000) {
-	  
-#	  print "# A1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+	if (abs($gap->size - abs($chr_end - $chr_start)) <= 10000 || $get_all_possible_pairs) {
+	  print "# A1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
 	  print_contigs_between_down_and_upstream($mouse_db,$gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);	
 	  
 	} elsif ($gap->size > abs($chr_end - $chr_start)) {
@@ -372,7 +373,7 @@ foreach my $chr_name (keys %human_chromosome) {
 	    }
 	  }
 	  
-#	  print "# A2.1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+	  print "# A2.1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
 	  print_contigs_between_down_and_upstream($mouse_db,$restricted_gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);
 	  
 	  $restricted_gap = new Compara::Gap;
@@ -387,7 +388,7 @@ foreach my $chr_name (keys %human_chromosome) {
 	    }
 	  }
 	  
-#	  print "# A2.2 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+	  print "# A2.2 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
 	  print_contigs_between_down_and_upstream($mouse_db,$restricted_gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);
 	  
 	  
@@ -403,7 +404,7 @@ foreach my $chr_name (keys %human_chromosome) {
 	    $chr_start = $gap->downstream_mapped_border_contigs->[-1]->chr_start - $gap->size;
 	    $chr_end = $gap->downstream_mapped_border_contigs->[-1]->chr_end;
 	  }
-#	  print "# A3.1 = B1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+	  print "# A3.1 = B1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
 	  print_contigs_between_down_and_upstream($mouse_db,$gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);
 	  
 	  $chr_name = $gap->upstream_mapped_border_contigs->[0]->chr_name;
@@ -415,7 +416,7 @@ foreach my $chr_name (keys %human_chromosome) {
 	    $chr_start = $gap->upstream_mapped_border_contigs->[0]->chr_start - $gap->size;
 	    $chr_end = $gap->upstream_mapped_border_contigs->[0]->chr_end;
 	  }
-#	  print "# A3.2 = B2 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+	  print "# A3.2 = B2 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
 	  print_contigs_between_down_and_upstream($mouse_db,$gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);
 	  
 	}
@@ -432,7 +433,7 @@ foreach my $chr_name (keys %human_chromosome) {
 	  $chr_start = $gap->downstream_mapped_border_contigs->[-1]->chr_start - $gap->size;
 	  $chr_end = $gap->downstream_mapped_border_contigs->[-1]->chr_end;
 	}
-#	print "# B1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+	print "# B1 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
 	print_contigs_between_down_and_upstream($mouse_db,$gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);
 	
 	$chr_name = $gap->upstream_mapped_border_contigs->[0]->chr_name;
@@ -444,7 +445,7 @@ foreach my $chr_name (keys %human_chromosome) {
 	  $chr_start = $gap->upstream_mapped_border_contigs->[0]->chr_start - $gap->size;
 	  $chr_end = $gap->upstream_mapped_border_contigs->[0]->chr_end;
 	}
-#	print "# B2 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+	print "# B2 chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
 	print_contigs_between_down_and_upstream($mouse_db,$gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);
 	
       }
@@ -461,7 +462,7 @@ foreach my $chr_name (keys %human_chromosome) {
 	$chr_start = $gap->downstream_mapped_border_contigs->[-1]->chr_start - $gap->size;
 	$chr_end = $gap->downstream_mapped_border_contigs->[-1]->chr_end;
       }
-#      print "# C chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
+      print "# C chr_start: $chr_start, chr_end: $chr_end, chr_name: $chr_name\n";
       print_contigs_between_down_and_upstream($mouse_db,$gap,$chr_start,$chr_end,$chr_name,$strand,\%correspondance_already_printed);
 
     } elsif (scalar @{$gap->upstream_mapped_border_contigs}) {
@@ -490,28 +491,51 @@ sub print_contigs_between_down_and_upstream ($$$$$$) {
   my ($mouse_db,$gap,$chr_start,$chr_end,$chr_name,$strand,$correspondance_already_printed_href) = @_; 
   my $sth;
   my $size = $chr_end - $chr_start + 1;
-  if ($strand > 0) {
-    $sth = $mouse_db->prepare("select fpcctg_name,chr_name,chr_start,chr_end,raw_start,raw_end,raw_ori from static_golden_path where chr_start>=$chr_start and chr_end<=$chr_end and chr_name=\"$chr_name\" order by chr_start asc");
-  } elsif ($strand < 0) {
-    $sth = $mouse_db->prepare("select fpcctg_name,chr_name,chr_start,chr_end,raw_start,raw_end,raw_ori from static_golden_path where chr_start>=$chr_start and chr_end<=$chr_end and chr_name=\"$chr_name\" order by chr_start desc");
-  } 
-	
-  unless ($sth->execute()) {
-    $mouse_db->throw("Failed execution of a select query");
-  }
+#  if ($strand > 0) {
+#    $sth = $mouse_db->prepare("select c.id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where c.internal_id=s.raw_id and s.chr_start>=$chr_start and s.chr_end<=$chr_end and s.chr_name=\"$chr_name\" order by chr_start asc");
+#  } elsif ($strand < 0) {
+#    $sth = $mouse_db->prepare("select c.id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where c.internal_id=s.raw_id and s.chr_start>=$chr_start and s.chr_end<=$chr_end and s.chr_name=\"$chr_name\" order by chr_start desc");
+#  } 
 
   my @Mapped_Contigs;
-  while (my ($id,$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_strand) = $sth->fetchrow_array()) {
+  
+  if ($qy_fragment_type eq "raw") {
+    if ($strand > 0) {
+      $sth = $mouse_db->prepare("select c.id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where c.internal_id=s.raw_id and s.chr_start<=$chr_end and s.chr_end>=$chr_start and s.chr_name=\"$chr_name\" order by chr_start asc");
+    } elsif ($strand < 0) {
+      $sth = $mouse_db->prepare("select c.id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where c.internal_id=s.raw_id and s.chr_start<=$chr_end and s.chr_end>=$chr_start and s.chr_name=\"$chr_name\" order by chr_start desc");
+    } 
+    
+    unless ($sth->execute()) {
+      $mouse_db->throw("Failed execution of a select query");
+    }
 
-    my $contig = new Compara::Contig;
-    $contig->id($id);
-    $contig->chr_name($chr_name);
-    $contig->chr_start($chr_start);
-    $contig->chr_end($chr_end);
-    $contig->raw_start($raw_start);
-    $contig->raw_end($raw_end);
-    $contig->raw_strand($raw_strand);
-    push @Mapped_Contigs, $contig;
+    while (my ($id,$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_strand) = $sth->fetchrow_array()) {
+      
+      my $contig = new Compara::Contig;
+      $contig->id($id);
+      $contig->chr_name($chr_name);
+      $contig->chr_start($chr_start);
+      $contig->chr_end($chr_end);
+      $contig->raw_start($raw_start);
+      $contig->raw_end($raw_end);
+      $contig->raw_strand($raw_strand);
+      push @Mapped_Contigs, $contig;
+    }
+  } elsif ($sb_fragment_type eq "vc") {
+    foreach my $id (@{$mouse_chromosome{$chr_name}}) {
+      my ($id_chr_name,$id_chr_start,$id_chr_end,$raw_start,$raw_end,$raw_strand) = @{$mouse_contig{$id}};
+      next unless ($id_chr_start<=$chr_end && $id_chr_end>=$chr_start);
+      my $contig = new Compara::Contig;
+      $contig->id($id);
+      $contig->chr_name($id_chr_name);
+      $contig->chr_start($id_chr_start);
+      $contig->chr_end($id_chr_end);
+      $contig->raw_start($raw_start);
+      $contig->raw_end($raw_end);
+      $contig->raw_strand($raw_strand);
+      push @Mapped_Contigs, $contig;
+    }
   }
 
   if ($strand > 0) {
@@ -521,7 +545,10 @@ sub print_contigs_between_down_and_upstream ($$$$$$) {
   }
 
   my ($main_window,$splipping_window,$mapped_contig_size) = (50000,10000,$chr_end - $chr_start + 1);
-
+  if ($get_all_possible_pairs) {
+    $main_window = $gap->size;
+  }
+  
   my ($contigW,$contigSW,$mapped_contigW,$mapped_contigSW);
   if ($gap->size == $mapped_contig_size) {
     ($contigW,$contigSW,$mapped_contigW,$mapped_contigSW) = ($main_window,$splipping_window,$main_window,$splipping_window);
@@ -607,7 +634,8 @@ sub print_correspondance ($$$) {
   foreach my $contig (@{$contigs_aref}) {
     foreach my $mapped_contig (@{$mapped_contigs_aref}) {
       next if (exists $correspondance_already_printed_href->{$contig->id}{$mapped_contig->id});
-      print "Homo_sapiens:",$contig->id,"::Mus_musculus:",$mapped_contig->id,"\n";
+      print "$sb_species:$sb_fragment_type:",$contig->id,"::$qy_species:$qy_fragment_type:",$mapped_contig->id,"\n";
+#      print "Homo_sapiens:",$contig->id,"::Mus_musculus:",$mapped_contig->id,"\n";
 #      print "Homo_sapiens:",$contig->id," ",$contig->chr_start," ",$contig->chr_end,"::Mus_musculus:",$mapped_contig->id," ",$mapped_contig->chr_start," ",$mapped_contig->chr_end,"\n";
       $correspondance_already_printed_href->{$contig->id}{$mapped_contig->id} = 1;
     }
