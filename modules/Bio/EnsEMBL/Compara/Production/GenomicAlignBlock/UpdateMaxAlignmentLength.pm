@@ -77,9 +77,6 @@ sub fetch_input {
   #
   $self->debug(0);
 
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
   $self->print_params;
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -116,33 +113,6 @@ sub write_output
 # subroutines
 #
 #####################################
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
-  
-  my $params = eval($param_string);
-  return unless($params);
-
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
-  }
-  # from analysis parameters
-
-  # from job input_id
-
-  return;
-
-}
-
-sub print_params {
-  my $self = shift;
-
-  print(" params: None\n");
-}
 
 sub update_meta_table {
   my $self = shift;
