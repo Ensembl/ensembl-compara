@@ -156,13 +156,10 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
- warn "GETTING FEATURES...";
   my $track = 'evega_transcript';
-  warn "@{[keys %{$self->{'config'}}]}";
   if( my $alias = $self->{'config'}->get($track,'db_alias') ){
     return $self->{'container'}->get_all_Genes('otter',$alias);
   } elsif( $self->{'config'}->{'fakecore'} ) {
-warn( " WE HAVE A FAKE CORE ### " );
     return $self->{'container'}->get_all_Genes('otter');
   } else {
     return $self->{'container'}->get_all_Genes('otter','vega');

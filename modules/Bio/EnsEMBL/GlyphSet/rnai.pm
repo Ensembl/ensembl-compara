@@ -25,8 +25,8 @@ sub zmenu {
   
   # warn( join '  ', map { "$_-$f->{$_}" } keys %$f );
   my $score = $f->score();
-  my $start = $self->{'container'}->start() + $f->start() - 1;
-  my $end   = $self->{'container'}->start() + $f->end() - 1;
+my ($start,$end) = $self->slice2sr( $f->start, $f->end );
+
 
   return {
         'caption' => 'RNAi',

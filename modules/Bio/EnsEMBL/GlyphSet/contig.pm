@@ -154,10 +154,16 @@ sub _init_non_assembled_contig {
     });
     push @colours, shift @colours;
     
+    my $script = $ENV{'ENSEMBL_SCRIPT'};
+    my $caption = 'Centre on';
+    if(  $script eq 'multicontigview' ) { 
+      $script = 'contigview';
+      $caption = 'Jump to contigview';
+    } 
     if($navigation eq 'on') {
       foreach( qw(chunk supercontig clone scaffold contig) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
-          $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?ch=$ch&region=$Q->[0]);
+          $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch&region=$Q->[0]);
         }
       }
     }
@@ -177,7 +183,7 @@ sub _init_non_assembled_contig {
           $POS++;
           $glyph->{'zmenu'}{"$POS:EMBL source file"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
           $POS++;
-          $glyph->{'zmenu'}{"$POS:Centre on $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?ch=$ch&region=$name);
+          $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch&region=$name);
           $POS++;
           $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=$_&id=$name);
           $POS++;

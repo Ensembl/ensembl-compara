@@ -19,16 +19,14 @@ sub href {
 }
 
 sub zmenu {
-    my ($self, $f ) = @_;
+  my ($self, $f ) = @_;
 
-    my $score = $f->score();
-    my $start = $self->{'container'}->start() + $f->start() -1;
-    my $end = $self->{'container'}->start() + $f->end() - 1;
-
-    return {
-        'caption'                                     => 'tRNA',
-        "01:Score: $score"                            => '',
-        "02:bp: $start-$end"                          => ''
-    };
+  my $score = $f->score();
+  my ($start,$end) = $self->slice2sr( $f->start, $f->end );
+  return {
+    'caption'                                     => 'tRNA',
+    "01:Score: $score"                            => '',
+    "02:bp: $start-$end"                          => ''
+  };
 }
 1;

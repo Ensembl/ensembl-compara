@@ -23,8 +23,8 @@ sub zmenu {
   my ($self, $f ) = @_;
   
   my $score = $f->score();
-  my $start = $self->{'container'}->start() + $f->start() - 1;
-  my $end   = $self->{'container'}->start() + $f->end() - 1;
+my ($start,$end) = $self->slice2sr( $f->start, $f->end );
+
   return {
 	'caption' => 'Operon',
         "00:".$f->display_label => $self->href( $f ),

@@ -59,7 +59,6 @@ sub _init {
 
   my $colours        = $Config->get($type,'colour_set' ) ? {$Config->{'_colourmap'}->colourSet( $Config->get($type,'colour_set' ) )} : $Config->get($type,'colours');
 
-  $self->datadump( $colours );  
   my $max_length     = $Config->get($type,'threshold') || 1e6;
   my $max_length_nav = $Config->get($type,'navigation_threshold') || 50e3;
   my $navigation     = $Config->get($type,'navigation') || 'off';
@@ -79,7 +78,6 @@ sub _init {
 
   my $fontname       = "Tiny";
   my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
-  warn "$font_w_bp";
   my $database = $Config->get($type,'database');
 
   my $used_colours = {};
@@ -90,7 +88,6 @@ sub _init {
   foreach my $logic_name (split /\s+/, $Config->get($type,'logic_name') ) {
    my $genes = $self->features( $logic_name, $database );
    foreach my $g (@$genes) {
-    warn "$g @{[$g->analysis->logic_name]} -- @{[$g->type]}";
     my $gene_label = $self->gene_label( $g );
     my $GT         = $self->gene_col( $g );
        $GT =~ s/XREF//g;

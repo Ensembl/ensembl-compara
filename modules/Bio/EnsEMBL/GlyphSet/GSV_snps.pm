@@ -54,10 +54,8 @@ sub _init {
   my @tmp;
   foreach my $snpref ( @{$Config->{'snps'}} ) {
     my $location = int( ($snpref->[0]+$snpref->[1])/2 );
-    warn "WE HAVE A SNP..... LOC -> $location";
     my $snp = $snpref->[2];
     my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID().":".($snp->start * $dir +$offset) };
-    warn $snp->dbID().":".($snp->start * $dir +$offset) ;
     next unless $cod_snp;
     next if $snp->end < $transcript->start - $EXTENT;
     next if $snp->start > $transcript->end + $EXTENT;

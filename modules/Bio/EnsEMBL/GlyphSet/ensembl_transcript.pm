@@ -40,7 +40,6 @@ sub colour {
 
   my $genecol = $colours->{ "_".$transcript->external_status }[0];
 
-  warn "GENECOL $genecol";
   if( $gene->type eq 'bacterial_contaminant' ) {
     $genecol = $colours->{'_BACCOM'}[0];
   } elsif( $transcript->external_status eq '' and ! $translation_id ) {

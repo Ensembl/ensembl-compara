@@ -115,7 +115,6 @@ sub text_label {
 sub gene_text_label {
   my ($self, $gene ) = @_;
   my $gid = $gene->stable_id();
-  warn $gid,"\n";
   my $id  = ($gene->external_name() eq '') ? $gid : $gene->external_name();
   if( $self->{'config'}->{'_both_names_'} eq 'yes') {
     return $gid.(($gene->external_name() eq '') ? '' : " ($id)" );

@@ -18,7 +18,6 @@ sub features {
   my $method    = $self->my_config('CALL')||'get_all_DnaAlignFeatures';
   my $database  = $self->my_config('DATABASE') || undef;
   my $threshold = defined( $self->my_config('THRESHOLD')) ? $self->my_config('THRESHOLD') : 80;
-  warn "$method - $database - $threshold";
   if( $self->my_config( 'FEATURES' ) eq 'UNDEF' ) {
     return $self->{'container'}->$method(undef ,$threshold, $database);
   } else {

@@ -57,7 +57,6 @@ sub zmenu {
 
 sub image_label {
   my ($self, $f) = @_;
-  warn $self->{'strand'};
   if( $self->{'config'}->get('_settings','simplehap') ) {
     return $self->{'strand'} > 0 ? undef : ( $f->{'alternate_slice'}->seq_region_name, 'under' ) ;
   }
