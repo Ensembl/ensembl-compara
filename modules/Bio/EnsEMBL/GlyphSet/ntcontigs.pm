@@ -7,9 +7,8 @@ use Bio::EnsEMBL::GlyphSet_simple;
 sub my_label { return "NT Contigs"; }
 
 sub features {
-    my ($self) = @_;
-    my $container_length = $self->{'container'}->length();
-    return $self->{'container'}->get_all_MiscFeatures( 'ntctgs' );
+  my ($self) = @_;
+  return $self->{'container'}->get_all_MiscFeatures( 'ntctgs' );
 }
 
 sub href {
