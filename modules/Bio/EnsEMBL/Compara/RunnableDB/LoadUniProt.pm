@@ -78,9 +78,8 @@ use Bio::EnsEMBL::Compara::Subset;
 
 use Bio::EnsEMBL::Hive;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 =head2 fetch_input
 
@@ -103,7 +102,7 @@ sub fetch_input {
   $self->{'taxon_id'} = undef;  #no ncbi_taxid filter, get all metzoa
 
   if(defined($self->input_id)) {
-    print("input_id = ".$self->input_id."\n");
+    #print("input_id = ".$self->input_id."\n");
     my $input_hash = eval($self->input_id);
     if(defined($input_hash)) {
       $self->{'accession_number'} = $input_hash->{'accession_number'} if(defined($input_hash->{'accession_number'}));
@@ -153,7 +152,7 @@ sub write_output
   $outputHash->{'ss'} = $self->{'subset'}->dbID;
   my $output_id = main::encode_hash($outputHash);
 
-  print("output_id = $output_id\n");
+  #print("output_id = $output_id\n");
   $self->input_id($output_id);                    
   return 1;
 }
@@ -184,7 +183,7 @@ sub loadMembersFromUniprotIdList
   my $index=1;
   foreach my $id (@$uniprot_ids) {
     $index++;
-    print("check/load $index ids\n") if($index % 100 == 0);
+    print("check/load $index ids\n") if($index % 100 == 0 and $self->debug);
     my $stable_id = $id;
     $stable_id = $1 if($id =~ /$source:(.*)/);
     my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('Uniprot/'.$source, $stable_id);
@@ -201,7 +200,7 @@ sub loadMembersFromUniprotIdList
   }
   $self->pfetch_and_store_by_ids($source, @id_chunk);
 
-  printf("fetched %d ids from %s\n", $count, $source);
+  printf("fetched %d ids from %s\n", $count, $source) if($self->debug);
 }
 
 
@@ -216,9 +215,9 @@ sub get_metazoa_uniprot_ids
               " ! [$source-org: *'\''*]) ".
               " & [$source-SeqLength# 80:])\"";
 
-  print("$cmd\n");
+  print("$cmd\n") if($self->debug);
   my @ids = split(/\s/, qx/$cmd/);
-  printf("fetched %d ids from %s\n", scalar(@ids), $source);
+  printf("fetched %d ids from %s\n", scalar(@ids), $source) if($self->debug);
   return \@ids;
 }
 
@@ -234,9 +233,9 @@ sub fetch_all_uniprot_ids_for_taxid
              " ! [$source-org: */*]) ".
              " ! [$source-org: *'\''*])\"";
 
-  print("$cmd\n");
+  print("$cmd\n") if($self->debug);
   my @ids = split(/\s/, qx/$cmd/);
-  printf("fetched %d ids from %s\n", scalar(@ids), $source);
+  printf("fetched %d ids from %s\n", scalar(@ids), $source) if($self->debug);
   return \@ids;
 }
 
@@ -287,7 +286,9 @@ sub store_bioseq
   my $species = $bioseq->species;
   return unless($species);
 
-  printf("store_bioseq %s %s : %d : %s", $source, $bioseq->display_id, $species->ncbi_taxid, $species->species);
+  if($self->debug) {
+    printf("store_bioseq %s %s : %d : %s", $source, $bioseq->display_id, $species->ncbi_taxid, $species->species);
+  }
    
   my $taxon = $self->{'comparaDBA'}->get_TaxonAdaptor->fetch_by_dbID($species->ncbi_taxid);
   unless($taxon) {
@@ -310,11 +311,11 @@ sub store_bioseq
 
   eval {
     $self->{'comparaDBA'}->get_MemberAdaptor->store($member);
-    print(" --stored");
+    print(" --stored") if($self->debug);
   };
 
   $self->{'subset'}->add_member($member);
-  print("\n");
+  print("\n") if($self->debug);
 }
 
 
