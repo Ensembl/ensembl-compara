@@ -24,6 +24,24 @@ sub new {
   return bless {}, $class;
 }
 
+=head2 new_fast
+
+  Arg [1]    : hash reference $hashref
+  Example    : none
+  Description: This is an ultra fast constructor which requires knowledge of
+               the objects internals to be used.
+  Returntype : 
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub new_fast {
+  my ($class, $hashref) = @_;
+
+  return bless $hashref, $class;
+}
+
 sub AUTOLOAD {
   my $self = shift;
   my $method = $AUTOLOAD;
@@ -32,5 +50,8 @@ sub AUTOLOAD {
   $self->{lc $method} = shift if(@_);
   return $self->{lc $method};
 }
+
+
+sub DESTROY {}
 
 1;
