@@ -46,6 +46,7 @@ use vars qw(@ISA);
 use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -231,7 +232,7 @@ sub fetch_all_by_GenomeDB_region {
 
 =cut
 
-sub fetch_all{
+sub fetch_all {
   my ($self) = @_;
 
   my $sth = $self->prepare(qq{
@@ -246,12 +247,14 @@ sub fetch_all{
       });
 
    $sth->execute;
-   return _objs_from_sth( $sth );
+   return $self->_objs_from_sth( $sth );
 }
 
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
+
+  throw if (!$sth);
 
   my $these_dnafrags = [];
 
@@ -301,11 +304,11 @@ sub store {
    my ($self,$dnafrag) = @_;
 
    if( !defined $dnafrag ) {
-       $self->throw("Must store $dnafrag object");
+       throw("Must store $dnafrag object");
    }
 
    if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
-       $self->throw("Must have dnafrag arg [$dnafrag]");
+       throw("Must have dnafrag arg [$dnafrag]");
    }
 
    if (defined $dnafrag->adaptor() && $dnafrag->adaptor() == $self) {
@@ -319,11 +322,11 @@ sub store {
    }
 
    if( !defined $gdb->dbID ) {
-       $self->throw("genomedb must be stored (no dbID). Store genomedb first");
+       throw("genomedb must be stored (no dbID). Store genomedb first");
    }
 
   if( !defined $dnafrag->name ) {
-       $self->throw("dnafrag must have a name");
+       throw("dnafrag must have a name");
    }
 
    my $name = $dnafrag->name;
