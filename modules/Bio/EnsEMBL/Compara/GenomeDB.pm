@@ -211,8 +211,19 @@ sub get_VC_by_start_end{
       $self->db_adaptor->static_golden_path_type('UCSC');
       my ($chr_name,$t_start,$t_end) = $self->db_adaptor->get_StaticGoldenPathAdaptor->get_chr_start_end_of_contig($name);
 
-      my $chr_start = $t_start + $start -1;
-      my $chr_end = $chr_start + $length -1;
+      my ($chr_start,$chr_end);
+      my $max_end = $t_end - $t_start;
+
+      if ($start <= 0){
+         $chr_start = 1;
+      }else{
+         $chr_start = $t_start + $start -1;
+      }
+      if ($end > $max_end){
+         $chr_end = $t_end;
+      }else{
+         $chr_end = $chr_start + $length -1;
+      }
 
       return $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end ($chr_name,$chr_start,$chr_end);
 
