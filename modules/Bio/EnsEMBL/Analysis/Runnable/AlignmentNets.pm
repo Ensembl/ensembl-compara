@@ -68,8 +68,8 @@ sub new {
 
   $self->query_length_hash($query_lengths);
   $self->target_length_hash($target_lengths);
-  $self->chains([sort {$b->[0]->score <=> $a->[0]->score} @{$chains}]);
   $self->chainNet($chain_net) if defined $chain_net;
+  $self->chains($self->sort_chains_by_max_block_score($chains));
 
   return $self;
 }
@@ -156,6 +156,28 @@ sub run {
 
 
 #####################################################
+sub sort_chains_by_max_block_score {
+  my ($self, $chains) = @_;
+
+  # sort the chains by maximum score
+  my @chain_hashes;
+  foreach my $chain (@$chains) {
+    my $chain_hash = { chain => $chain };
+    foreach my $block (@$chain) {
+      if (not exists $chain_hash->{score} or
+          $block->score > $chain_hash->{score}) {
+        $chain_hash->{score} = $block->score;
+      }
+    }
+    push @chain_hashes, $chain_hash;
+  }
+  
+  my @sorted = map { $_->{chain}} sort {$b->{score} <=> $a->{score}} @chain_hashes;
+
+  return \@sorted;
+}
+
+#####################################################
 
 sub write_chains {
   my ($self, $fh) = @_;
@@ -179,17 +201,25 @@ sub write_chains {
         # query and target, and be on the same strand on those
         # sequences, otherwise all bets are off
         $query_name = $gf->seqname;
-        $query_strand = $gf->strand;
         $target_name = $gf->hseqname,
+        $query_strand = $gf->strand;
         $target_strand = $gf->hstrand;
+
+        # the chain must be written with respect to the forward strand
+        # of the query. Since we are dealing with the ungapped blocks below,
+        # this can be achieved by swapping the strands if the query is reverse. 
+        if ($query_strand == -1) {
+          $query_strand  *= -1;
+          $target_strand *= -1;
+        }
       }
       
       if (not defined $chain_score or $chain_score < $gf->score) {
         $chain_score = $gf->score;
       }
       
-      foreach my $uf ($gf->ungapped_features) {
-        
+      foreach my $uf ($gf->ungapped_features) {        
+
         my $sens_f = {
           q_start  => $uf->start,
           q_end    => $uf->end,
@@ -197,19 +227,18 @@ sub write_chains {
           t_end    => $uf->hend,
           len      => $uf->end - $uf->start + 1,
         };
-        if ($query_strand == -1) {
-          $sens_f->{q_start} = $self->query_length_hash->{$uf->seqname} - $uf->end + 1;
-          $sens_f->{q_end}   = $self->query_length_hash->{$uf->seqname} - $uf->start + 1;
-        }
+
         if ($target_strand == -1) {
           $sens_f->{t_start} = $self->target_length_hash->{$uf->hseqname} - $uf->hend + 1;
           $sens_f->{t_end}   = $self->target_length_hash->{$uf->hseqname} - $uf->hstart + 1;        
         }
-        
+
         push @ungapped_features, $sens_f;    
       }
     }
     
+    @ungapped_features = sort {$a->{q_start} <=> $b->{q_start}} @ungapped_features;
+
     # write chain header here
     printf($fh "chain %d %s %d %s %d %d %s %d %s %s %s %d\n",
            $chain_score,
@@ -225,7 +254,6 @@ sub write_chains {
            $ungapped_features[-1]->{t_end},
            $chain_id);
     
-    @ungapped_features = sort {$a->{q_start} <=> $b->{q_start}} @ungapped_features;
     for (my $i = 0; $i < @ungapped_features; $i++) {
       my $f = $ungapped_features[$i];
       
@@ -251,18 +279,21 @@ sub write_chains {
 sub parse_Net_file {
   my ($self, $fh) = @_;
   
-  my (%new_chains);
+  my (%new_chains, %new_chain_scores);
 
   while(<$fh>) {
 
     /(\s+)fill\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\d+\s+\d+\s+(.+)$/ and do {
-      my $level_id = int( (length($1) - 1) / 2 ) + 1;
+      my $indent = length($1) - 1;
+      my $level_id = int( $indent / 2 ) + 1;
       my $q_start  = $2 + 1;
       my $q_end    = $q_start + $3 - 1;
-      my $rest = $4;
+      my $rest     = $4;
 
       my ($score)    = $rest =~ /score\s+(\d+)/;
       my ($chain_id) = $rest =~ /id\s+(\d+)/;
+
+      $new_chain_scores{$chain_id} += $score;
 
       my $restricted_fps = 
           $self->restrict_between_positions($self->chains->[$chain_id],
@@ -271,13 +302,21 @@ sub parse_Net_file {
 
 
       foreach my $fp (@$restricted_fps) {
-
         $fp->score($score);
         $fp->level_id($level_id);
       }
 
-      push @{$new_chains{$chain_id}}, @$restricted_fps;
+      if (@$restricted_fps) {
+        push @{$new_chains{$chain_id}}, @$restricted_fps;
+      }
     };
+  }
+
+  foreach my $cid (keys %new_chains) {
+    my $chain_score = $new_chain_scores{$cid};
+    foreach my $fp (@{$new_chains{$cid}}) {
+      $fp->score($chain_score);
+    }
   }
 
   return [values %new_chains];
