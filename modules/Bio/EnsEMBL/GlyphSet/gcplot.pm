@@ -57,23 +57,22 @@ sub _init {
     my $max = 0;
     
     for (my $i=0; $i<$divs; $i++){
-        my $subseq = substr($seq, int($i*$divlen), int($divlen));
+        my $subseq  = substr($seq, int($i*$divlen), int($divlen));
 #       my $G = $subseq =~ tr/G/G/; my $C = $subseq =~ tr/C/C/;
-        my $GC = $subseq =~ tr/GC//;
+        my $GC      = $subseq =~ tr/GC/GC/;
         my $percent = 99;
         if ( length($subseq)>0 ) { # catch divide by zero....
             $percent = $GC / length($subseq);
             $percent = $percent < .25 ? 0 : ($percent >.75 ? .5 : $percent -.25);
             $percent *= 40;
         }
-        push (@gc, $percent);
+        push @gc, $percent;
     }
         
-    my $range = $max - $min;
-    my $percent = shift @gc;
-    my $count = 0;
-    while(@gc) {
-        my $new = shift @gc;   
+    my $range       = $max - $min;
+    my $percent     = shift @gc;
+    my $count       = 0;
+    foreach my $new (@gc) {
         unless($percent==99 || $new==99) {
             $self->push(
                 new Bio::EnsEMBL::Glyph::Line({
@@ -86,37 +85,19 @@ sub _init {
                 })
             ); 
         }
-        $percent = $new;
+        $percent    = $new;
         $count++;
     }
-    my $line = new Bio::EnsEMBL::Glyph::Line({
-        'x'         => 0,
-        'y'         => 10, # 50% point for line
-        'width'     => $vclen,
-        'height'    => 0,
-        'colour'    => $line_colour,
-        'absolutey' => 1,
-    });
-    $self->push($line);
-    
+    $self->push(
+        new Bio::EnsEMBL::Glyph::Line({
+            'x'         => 0,
+            'y'         => 10, # 50% point for line
+            'width'     => $vclen,
+            'height'    => 0,
+            'colour'    => $line_colour,
+            'absolutey' => 1,
+        })
+    );
 }            
-#    my $fontname = "Tiny";
-#    #my $text = "% GC by $divlen bp window [dotted line shows 50%] Max = $max %, Min = $min %";
-#    my $text =  "% GC by $divlen bp window. [Max = $max%, Min = $min%]";
-#
-#    my ($tw,$th)     = $Config->texthelper->px2bp($fontname);
-#    my $bp_textwidth = $tw * length($text) * 1.1; # add 10% for scaling text
-#
-#    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-#        'x'         => $vclen/2 - $bp_textwidth/2,
-#        'y'         => 22,
-#        'height'    => $Config->texthelper->height($fontname),
-#        'font'      => $fontname,
-#        'colour'    => $black,
-#        'text'      => $text,
-#        'absolutey' => 1,
-#    });
-#    #$self->push($tglyph);
-
 1;
 
