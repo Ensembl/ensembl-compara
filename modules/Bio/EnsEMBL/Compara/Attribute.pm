@@ -18,7 +18,9 @@ our ($AUTOLOAD, %ok_field);
              'peptide_member_id' => 1,
              'perc_cov' => 1,
              'perc_id' => 1,
-             'perc_pos' => 1);
+             'perc_pos' => 1,
+             'peptide_align_feature_id' => 1
+             );
 
 
 sub new {
