@@ -1,0 +1,116 @@
+
+Based on the quick and simple indications given by Jessica on Dec 14th, 2004
+and a first attempt to run a whole genome blastz pipeline.
+
+1- code API needed and executable
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-0?)
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensembl-pipeline
+
+  executables
+  ~~~~~~~~~~~
+  blastz
+      using /usr/local/ensembl/bin/blastz
+
+1.2 Code checkout
+
+    bioperl code
+
+      cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
+
+    core ensembl code
+
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+
+    ensembl-pipeline code (for Runnables)
+
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+
+    ensembl-hive code
+
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+
+in tcsh
+    setenv BASEDIR   /some/path/to/modules
+    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+
+in bash
+    BASEDIR=/some/path/to/modules
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+
+
+2- Create a hive/compara database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pick a mysql instance and create a database
+
+mysqladmin -h ia64g -P3306 -uensadmin -pxxxx -e "create database abel_compara_human_cow_blastz_27"
+
+cd ~/src/ensembl_main/ensembl-hive/sql
+mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < tables.sql
+
+cd ~/src/ensembl_main/ensembl-compara/sql
+mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < table.sql
+mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < pipeline-tables.sql
+
+3- Choose a working directory with enough disk space
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The genomicalign pipelinetakes several GB of space for output of workers
+
+mkdir -p /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27
+
+This directory needs to be set in 'hive_output_dir' variable in the compara-hive
+configuration file. See below.
+
+4- Copy and modify your compara-hive config file
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline
+cp compara-hive-genomicalign.conf.example compara_human_cow_27.conf
+<editor> compara_human_cow_27.conf
+
+you may need to change the database names, port, dbnames, and the
+paths to the 'hive_output_dir'
+
+
+5- Run the configure scripts
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline
+./comparaLoadGenomes.pl -conf compara_human_cow_27.conf
+./loadGenomicAlignSystem.pl -conf compara_human_cow_27.conf
+
+The loadGenomicAlignSystem script creates the analysis entries for the processing
+system, and creates both the dataflow rule and the analysis control rules.
+It also initializes the analysis_stats row for each analysis.  These row hold
+information like batch_size, hive_capacity, and run-time stats that the Hive's
+Queen will update.
+
+The comparaLoadGenomes script use the information in the conf file to connect to
+the core databases, queries for things like taxon_id, assembly, gene_build, and names
+to create entries in the genome_db table.  It also sets the genome_db.locator column to
+allow the system to know where the respective core databases are located. This script 
+will also 'seed' the pipeline/hive system by creating the first jobs in the analysis_job 
+table for the analysis 'SubmitGenome'.
+
+These scripts may give you warnings if the output directories are not available or if
+it's unable to connect to core databases.
+
+At this point the system is ready to run
+
+
+6- Run the beekeeper
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd ~src/ensembl_main/ensembl-hive/scripts
+./lsf_beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_human_cow_blastz_27 -loop
+
+where xxxx is the password for write access to the database
+
+for more details on controling/monitoring the hive system see 
+~src/ensembl_main/ensembl-hive/script/lsf_beekeeper -help
+
+
+
