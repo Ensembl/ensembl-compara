@@ -211,7 +211,7 @@ sub create_GenomeDBs {
      FROM genome_db 
    ");
    $sth->execute;
-  
+
   # build a genome db for each species
   while ( my @db_row = $sth->fetchrow_array() ) {
     my ($dbid, $name, $locator) = @db_row;
@@ -297,7 +297,7 @@ sub check_for_query_db {
 
 
 
-=head2 get_db_links
+=head2 get_all_db_links
 
   Arg        : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
   Example    : 
@@ -312,11 +312,11 @@ sub check_for_query_db {
 
 =cut
 
-sub get_db_links {
+sub get_all_db_links {
   my ( $self, $ref_gdb ) = @_;
   
   my $id = $ref_gdb->dbID;
-  my @gdb_list = [];
+  my @gdb_list;
 
   # check for occurences of the db we are interested in
   # in the consensus list of dbs
