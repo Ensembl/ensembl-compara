@@ -4,7 +4,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Getopt::Long;
 
-my $usage = "\n$0 [options] matches_result_file|STDIN
+my $usage = "\nUsage: $0 [options] matches_result_file|STDIN
 
  Insert into a feature table in \"feature_dbname\", matches as feature pairs.
 
@@ -30,30 +30,47 @@ Options:
 
 
 my $help = 0;
-my $core_host   = 'ecs1d';
-my $core_dbname = 'homo_sapiens_core_130';
-#my $core_dbname = 'mus_musculus_core_1_3';
+my $core_host;
+my $core_dbname;
 my $core_dbuser = 'ensro';
 
-my $feature_host = 'ecs1d';
-my $feature_dbname = 'human_mouse_1_3_20020204';
-#my $feature_dbname = 'mouse_human_1_3_20020204';
-my $feature_dbuser = 'ensadmin';
-my $feature_pass   = 'ensembl';
+my $feature_host;
+my $feature_dbname;
+my $feature_dbuser;
+my $feature_pass;
 
-my $species_reference = 2;
+my $species_reference = 1;
 
 &GetOptions('h' => \$help,
-	    'core_host:s' => \$core_host,
-	    'core_dbname:s' => \$core_dbname,
+	    'core_host=s' => \$core_host,
+	    'core_dbname=s' => \$core_dbname,
 	    'core_dbuser:s' => \$core_dbuser,
-	    'feature_host' => \$feature_host,
-	    'feature_dbname' => \$feature_dbname,
-	    'feature_dbuser:s' => \$feature_dbuser,
-	    'feature_pass:s' => \$feature_pass,
+	    'feature_host=s' => \$feature_host,
+	    'feature_dbname=s' => \$feature_dbname,
+	    'feature_dbuser=s' => \$feature_dbuser,
+	    'feature_pass=s' => \$feature_pass,
 	    'species_reference:i' => \$species_reference);
 
 if ($help) {
+  print $usage;
+  exit 0;
+}
+
+unless (defined $core_host ||
+	defined $core_dbname ||
+	defined $feature_host ||
+	defined $feature_dbname ||
+	defined $feature_dbuser ||
+	defined $feature_pass) {
+  print "
+!!! IMPORTANT : All following parameters should be defined !!!
+  core_host
+  core_dbname
+  feature_host
+  feature_dbname
+  feature_dbuser
+  feature_pass
+";
   print $usage;
   exit 0;
 }
@@ -82,7 +99,6 @@ $db = new Bio::EnsEMBL::DBSQL::DBAdaptor ('-host' => $feature_host,
 
 while (<>) {
   my ($contig1,$start1,$end1,$strand1,$contig2,$start2,$end2,$strand2) = split;
-  print "$contig1,$start1,$end1,$strand1,$contig2,$start2,$end2,$strand2\n";
   my $internal_id = $contig_name2internal_id{"contig".$species_reference};
   my $sth;
   if ($species_reference == 1) {
