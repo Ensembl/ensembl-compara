@@ -4,11 +4,12 @@ use strict;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
-use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::Hive::SimpleRule;
+use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::DBLoader;
 
 
@@ -66,7 +67,6 @@ my $analysis = $self->prepareGenomeAnalysis();
 
 foreach my $speciesPtr (@speciesList) {
   $self->submitGenome($speciesPtr, $analysis);
-  #$self->prepareMemberPepAnalyses($speciesPtr);
 }
 
 
@@ -128,6 +128,9 @@ sub prepareGenomeAnalysis
 {
   my $self = shift;
 
+  my $dataflowRuleDBA = $self->{'comparaDBA'}->get_DataflowRuleAdaptor;
+  my $analysisStatsDBA = $self->{'comparaDBA'}->get_AnalysisStatsAdaptor;
+
   #
   # SubmitGenome
   #
@@ -153,6 +156,8 @@ sub prepareGenomeAnalysis
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_analysis);
 
+  $dataflowRuleDBA->create_rule($submit_analysis, $load_analysis);
+
   if(defined($self->{'pipelineDBA'})) {
     my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$load_analysis);
     $rule->add_condition($submit_analysis->logic_name());
@@ -160,10 +165,6 @@ sub prepareGenomeAnalysis
       $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
     }
   }
-  my $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
-      '-condition_analysis' => $submit_analysis,
-      '-goal_analysis'      => $load_analysis);
-  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
 
   #
   # GenomeSubmitPep
@@ -174,7 +175,9 @@ sub prepareGenomeAnalysis
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep'
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_analysis);
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
+
+  $dataflowRuleDBA->create_rule($load_analysis, $submitpep_analysis);
 
   if(defined($self->{'pipelineDBA'})) {
     my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$submitpep_analysis);
@@ -183,10 +186,6 @@ sub prepareGenomeAnalysis
       $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
     }
   }
-  $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
-      '-condition_analysis' => $load_analysis,
-      '-goal_analysis'      => $submitpep_analysis);
-  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
 
   #
   # GenomeDumpFasta
@@ -200,17 +199,15 @@ sub prepareGenomeAnalysis
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($dumpfasta_analysis);
 
+  $dataflowRuleDBA->create_rule($submitpep_analysis, $dumpfasta_analysis);
+
   if(defined($self->{'pipelineDBA'})) {
     my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
-    $rule->add_condition($submitpep_analysis->logic_name());
+    $rule->add_condition($load_analysis->logic_name());
     unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
       $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
     }
   }
-  $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
-      '-condition_analysis' => $submitpep_analysis,
-      '-goal_analysis'      => $dumpfasta_analysis);
-  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
 
   #
   # CreateBlastRules
@@ -224,6 +221,8 @@ sub prepareGenomeAnalysis
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
 
+  $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
+
   if(defined($self->{'pipelineDBA'})) {
     my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$blastrules_analysis);
     $rule->add_condition($dumpfasta_analysis->logic_name());
@@ -231,10 +230,6 @@ sub prepareGenomeAnalysis
       $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
     }
   }
-  $simplerule = Bio::EnsEMBL::Hive::SimpleRule->new(
-      '-condition_analysis' => $dumpfasta_analysis,
-      '-goal_analysis'      => $blastrules_analysis);
-  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($simplerule);
   
   
   # create an unlinked analysis called blast_template
@@ -388,40 +383,12 @@ sub submitGenome
       print("  stored genome_db_id in input_id_analysis\n") if($verbose);
   } if(defined($self->{'pipelineDBA'}));
 
-  $self->{'comparaDBA'}->get_AnalysisJobAdaptor->create_new_job(
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
       -input_id       => $input_id,
-      -analysis_id    => $analysis->dbID,
+      -analysis       => $analysis,
       -input_job_id   => 0,
       #-block          => 'YES',
       );
-
-}
-
-
-
-# Creates the SubmitPep_<genome_db_id>_<assembly> and
-# blast__<genome_db_id>_<assembly> analyses for this species/genomeDB
-# These analyses exist in the 'MemberPep' chain (input_id_type)
-sub prepareMemberPepAnalyses
-{
-  my $self = shift;
-  my $species  = shift;  #hash reference
-
-  my $submitpep_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -logic_name      => "SubmitPep_".$species->{'genome_db'}->dbID()."_".$species->{'genome_db'}->assembly(),
-     #-db              => $blastdb->dbname(),
-     #-db_file         => $subset->dump_loc(),
-     #-db_version      => '1',
-      -parameters      => "genome_db_id=>".$species->{'genome_db'}->dbID(), #"subset_id=>".$subset->dbID().
-      -input_id_type   => 'MemberPep'
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
-
-
-  my $blast_analysis = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
-  $blast_analysis->logic_name("blast_" . $species->{'genome_db'}->dbID(). "_". $species->{'genome_db'}->assembly());
-  $blast_analysis->input_id_type('MemberPep');
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_analysis);
 
 }
 
