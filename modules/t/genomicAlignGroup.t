@@ -95,10 +95,10 @@ my $genomic_align_group_adaptor = $compara_db->get_GenomicAlignGroupAdaptor;
 my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor;
 
 ## Data extracted from the database and used to check and test the API
-my $genomic_align_group_id = 3597147;
+my $genomic_align_group_id = 251834;
 my $genomic_align_group_type = "default";
-my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID(9505792);
-my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID(9505794);
+my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID(10292464);
+my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID(10292450);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
 
 ##
