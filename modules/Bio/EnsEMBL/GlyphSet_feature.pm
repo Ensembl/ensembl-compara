@@ -62,9 +62,10 @@ sub _init {
     my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
+    my $LEN = $VirtualContig->length
     my @bitmap         = undef;
     my $pix_per_bp     = $Config->transform()->{'scalex'};
-    my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
+    my $bitmap_length  = int($LEN * $pix_per_bp);
     my $feature_colour = $Config->get($type, 'col');
     my $hi_colour      = $Config->get($type, 'hi');
     my %id             = ();
@@ -73,6 +74,7 @@ sub _init {
 
     foreach my $f ( $self->features ){
         next if( $strand_flag eq 'b' && $strand != $f->strand );
+        next if( $f->start < 1 || $f->end > $LEN );
         $id{$f->id()} = [] unless $id{$f->id()};
         push @{$id{$f->id()}}, $f;
     }
