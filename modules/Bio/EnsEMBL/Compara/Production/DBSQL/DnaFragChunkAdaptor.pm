@@ -18,8 +18,6 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
-
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -46,14 +44,21 @@ sub store {
   return unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
 
   my $query = "INSERT INTO dnafrag_chunk".
-              "(dnafrag_id,sequence_id,seq_start,seq_end) VALUES (?,?,?,?)";
+              "(dnafrag_id,sequence_id,seq_start,seq_end,masking_analysis_data_id) ".
+              "VALUES (?,?,?,?,?)";
 
-  my $seqDBA = $self->db->get_SequenceAdaptor;
-  $dfc->sequence_id($seqDBA->store($dfc->sequence));
+  $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence));
+
+  if($dfc->masking_analysis_data_id==0 and defined($dfc->masking_options)) {
+    my $dataDBA = $self->db->get_AnalysisDataAdaptor;
+    $dfc->masking_analysis_data_id($dataDBA->store($dfc->masking_options));
+  }
 
   #print("$query\n");
   my $sth = $self->prepare($query);
-  $sth->execute($dfc->dnafrag_id, $dfc->sequence_id, $dfc->seq_start, $dfc->seq_end);
+  $sth->execute($dfc->dnafrag_id, $dfc->sequence_id,
+                $dfc->seq_start, $dfc->seq_end,
+                $dfc->masking_analysis_data_id);
   $dfc->dbID( $sth->{'mysql_insertid'} );
   $sth->finish();
   return $dfc;
@@ -225,6 +230,8 @@ sub _objs_from_sth {
     }
     if($column{'masking_analysis_data_id'}) {
       $dfc->masking_options($dataDBA->fetch_by_dbID($column{'masking_analysis_data_id'}));
+      #set masking_analysis_data_id second because setting masking_options resets the ID
+      $dfc->masking_analysis_data_id($column{'masking_analysis_data_id'});
     }
 
     #$dfc->display_short();
