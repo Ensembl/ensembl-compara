@@ -141,7 +141,7 @@ sub store {
   if (!$dbID) {
     $sth = $self->prepare($method_link_species_sql);
     foreach my $genome_db_id (@genome_db_ids) {
-      $sth->execute("NULL", $method_link_id, $genome_db_id);
+      $sth->execute($dbID, $method_link_id, $genome_db_id);
       $dbID = $sth->{'mysql_insertid'};
     }
   }
