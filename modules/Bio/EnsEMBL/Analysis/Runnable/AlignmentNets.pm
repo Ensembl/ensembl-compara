@@ -279,7 +279,7 @@ sub write_chains {
 sub parse_Net_file {
   my ($self, $fh) = @_;
   
-  my (%new_chains, %new_chain_scores);
+  my (%new_chains, %new_chain_scores, @last_gap, @last_parent_chain);
 
   while(<$fh>) {
 
@@ -289,27 +289,60 @@ sub parse_Net_file {
       my $q_start  = $2 + 1;
       my $q_end    = $q_start + $3 - 1;
       my $rest     = $4;
-
+      
       my ($score)    = $rest =~ /score\s+(\d+)/;
       my ($chain_id) = $rest =~ /id\s+(\d+)/;
-
+      
       $new_chain_scores{$chain_id} += $score;
-
+      
       my $restricted_fps = 
           $self->restrict_between_positions($self->chains->[$chain_id],
                                             $q_start,
                                             $q_end);
-
-
+      
+      
       foreach my $fp (@$restricted_fps) {
         $fp->score($score);
         $fp->level_id($level_id);
       }
-
+      
       if (@$restricted_fps) {
         push @{$new_chains{$chain_id}}, @$restricted_fps;
+        
+        if ($indent > 0) {
+          # the new alignment has been inserted into the parent gap
+          # need to split parent chain into two:
+          #  begin -> $insert_start - 1,
+          #  $insert_end + 1 -> end
+          my $parent_chain = $new_chains{$last_parent_chain[$indent - 2]};
+          
+          my ($insert_start, $insert_end) = ($last_gap[$indent - 1]->[0],
+                                             $last_gap[$indent - 1]->[1]);
+
+          my $chain1 = $self->restrict_between_positions($parent_chain, 
+                                                         $parent_chain->[0]->start,
+                                                         $insert_start - 1);
+          my $chain2 = $self->restrict_between_positions($parent_chain, 
+                                                         $insert_end + 1,
+                                                         $parent_chain->[-1]->end);
+          
+          $new_chains{$last_parent_chain[$indent - 2]} = [@$chain1, @$chain2];
+        }
+        
+        $last_parent_chain[$indent] = $chain_id;
       }
     };
+    /^(\s+)gap\s+(\d+)\s+(\d+)/ and do {
+      my $indent = length($1) - 1;
+
+      my $q_insert_start = $2 + 1;
+      my $q_insert_end = $q_insert_start + $3 - 1;
+
+      $last_gap[$indent] = [$q_insert_start, $q_insert_end];
+    };
+
+
+
   }
 
   foreach my $cid (keys %new_chains) {
