@@ -88,6 +88,37 @@ sub fetch_by_dbID {
 }
 
 
+sub fetch_all_by_genomedb_position {
+  my ( $self, $genome_db, $name, $start, $end ) = @_;
+  
+  my $sql = "
+   SELECT genome_db_id, dnafrag_type, dnafrag_id, 
+          name, start, end
+     FROM dnafrag 
+    WHERE name = ? 
+      AND genome_db_id = ?
+  ";
+
+  if( defined $end ) {
+    $sql .= "
+      AND end >= ?
+      AND start <= ?
+    ";
+  }
+
+  my $sth = $self->prepare( $sql );
+  if( defined $end ) {
+    $sth->execute( $name, $genome_db->dbID(), $start, $end );
+  } else {
+    $sth->execute(  $name, $genome_db->dbID() );
+  }
+
+  $self->_objs_from_sth( $sth );
+}
+
+
+
+
 =head2 fetch_by_name_genomedb_id
 
  Title   : fetch_by_name_genome_db_id
@@ -238,7 +269,7 @@ sub _objs_from_sth {
   
   my ( $dbID, $dnafrag_type, $name, $start, $end, $genome_db_id );
   $sth->bind_columns
-    ( \$genome_db_id, \$dbID, \$dnafrag_type, 
+    ( \$genome_db_id,  \$dnafrag_type, \$dbID,
       \$name, \$start, \$end,  );
   my $gda = $self->db->get_GenomeDBAdaptor();
 

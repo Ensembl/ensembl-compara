@@ -220,6 +220,8 @@ sub create_GenomeDBs {
     $gdb->name($name);
     $gdb->locator($locator);
     $gdb->dbID($dbid);
+    $gdb->adaptor( $self );
+
     $self->{'_cache'}->{$dbid} = $gdb;
   }
 
@@ -244,7 +246,7 @@ sub create_GenomeDBs {
 
 
 sub check_for_consensus_db {
-  my ( $self, $con_gdb, $query_gdb ) = @_;
+  my ( $self, $query_gdb, $con_gdb ) = @_;
 
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
@@ -279,7 +281,7 @@ sub check_for_consensus_db {
 =cut
 
 sub check_for_query_db {
-  my ( $self, $query_gdb, $con_gdb ) = @_;
+  my ( $self, $con_gdb, $query_gdb ) = @_;
 
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;

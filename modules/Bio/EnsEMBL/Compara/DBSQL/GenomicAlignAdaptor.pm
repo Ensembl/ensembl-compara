@@ -47,6 +47,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::AlignBlockSet; 
+use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Cache; #CPAN LRU cache
 
 
@@ -337,7 +338,7 @@ sub store {
 
 
 
-=head2 fetch_all_by_dnafrag
+=head2 _fetch_all_by_dnafrag_genomedb_direct
 
   Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
                All genomic aligns that align to this frag
@@ -357,7 +358,7 @@ sub store {
 =cut
 
 
-sub fetch_all_by_dnafrag {
+sub _fetch_all_by_dnafrag_genomedb_direct {
    my ($self,$dnafrag, $target_genome, $start,$end) = @_;
 
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
@@ -367,9 +368,9 @@ sub fetch_all_by_dnafrag {
 	
    my $dnafrag_id = $dnafrag->dbID;
    
-   my $genome_db = $dnafrag->genomeDB();
+   my $genome_db = $dnafrag->genomedb();
    my $select = "SELECT ".join( ",", map { "gab.".$_ } $self->_columns() ).
-     "FROM genomic_align_block gab ";
+     " FROM genomic_align_block gab ";
    if( defined $target_genome ) {
      $select .= ", dnafrag d"
    }
@@ -380,14 +381,14 @@ sub fetch_all_by_dnafrag {
 
    if( !defined($target_genome) ||
        $genome_db->has_query( $target_genome ) ) {
-     $sql = $select . "WHERE gab.consensus_dnafrag_id = $dnafrag_id";
+     $sql = $select . " WHERE gab.consensus_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
        $sql .= " AND gab.consensus_start<= $end
                  AND gab.consensus_end >= $start";
      }
      if( defined $target_genome ) {
        $sql .= " AND gab.query_dnafrag_id = d.dnafrag_id
-                 AND d.genome_db =".$target_genome->dbID();
+                 AND d.genome_db_id = ".$target_genome->dbID();
      }
      $sth = $self->prepare( $sql );
      $sth->execute();
@@ -397,14 +398,14 @@ sub fetch_all_by_dnafrag {
    if( !defined($target_genome) ||
        $genome_db->has_consensus( $target_genome ) ) {
      
-     $sql = $select . "WHERE gab.query_dnafrag_id = $dnafrag_id";
+     $sql = $select . " WHERE gab.query_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
        $sql .= " AND gab.query_start<= $end
                  AND gab.query_end >= $start";
      }
      if( defined $target_genome ) {
        $sql .= " AND gab.consensus_dnafrag_id = d.dnafrag_id
-                 AND d.genome_db =".$target_genome->dbID();
+                 AND d.genome_db_id = ".$target_genome->dbID();
      }
      $sth = $self->prepare( $sql );
      $sth->execute();
@@ -416,7 +417,7 @@ sub fetch_all_by_dnafrag {
 
 
 
-=head2 fetch_all_by_dnafrag_species
+=head2 fetch_all_by_dnafrag_genomedb
 
   Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Arg  2     : string $query_species
@@ -433,18 +434,17 @@ sub fetch_all_by_dnafrag {
 =cut
 
 
-sub fetch_all_by_dnafrag_species {
-  my ( $self, $dnafrag, $species, $start, $end ) = @_;
+sub fetch_all_by_dnafrag_genomedb {
+  my ( $self, $dnafrag, $target_genome, $start, $end ) = @_;
 
-  my $genome_cons = $dnafrag->genomeDB();
-  my $genome_query = $self->db()->get_GenomeDBAdaptor()->
-    fetch_by_species_tag( $species );
+  my $genome_cons = $dnafrag->genomedb();
+  my $genome_query = $target_genome;
   
   # direct or indirect ??
-  if( $genome_cons->has_consensus( $genome_query )) {
-    # direct with a flip
-  } elsif( $genome_cons->has_query( $genome_query )) {
-    # direct 
+  if( $genome_cons->has_consensus( $genome_query ) ||
+      $genome_cons->has_query( $genome_query )) {
+    $self->_fetch_all_by_dnafrag_genomedb_direct
+      ( $dnafrag, $target_genome, $start, $end );
   } else {
     # indirect checks
     my $linked_cons = $genome_cons->linked_genomes();
@@ -462,24 +462,29 @@ sub fetch_all_by_dnafrag_species {
     #collect GenomicAligns from all linked genomes
     my $set1 = [];
     for my $g ( @$linked ) {
-      my $g_res = $self->fetch_all_by_dnafrag( $dnafrag, $g, $start, $end );
+      my $g_res = $self->_fetch_all_by_dnafrag_genomedb_direct
+	( $dnafrag, $g, $start, $end );
       push( @$set1, @$g_res );
     }
 
     # go from each dnafrag in the result set to target_genome
-    my %frags = map { $_->query_dnafrag() => 1 } @$set1;
+    # there is room for improvement here: create start end
+
+    my %frags = map { $_->query_dnafrag() => $_->query_dnafrag() } @$set1;
     
     my $set2 = [];
-    for my $frag ( keys %frags ) {
-      my $d_res = $self->fetch_all_by_dnafrag( $frag, $genome_query );
+    for my $frag ( values %frags ) {
+      my $d_res = $self->_fetch_all_by_dnafrag_genomedb_direct
+	( $frag, $genome_query );
       push( @$set2, @$d_res );
     }
     # now set1 and set2 have to merge...
+    $self->_merge_alignsets( $set1, $set2 );
   }
 }
 
 
-=head2 _merge_fragsets
+=head2 _merge_alignsets
 
   Arg  1     : listref Bio::EnsEMBL::Compara::GenomicAlign $set1
                from consensus to query
@@ -550,9 +555,9 @@ sub _merge_alignsets {
       delete $overlapping_sets[ $setno ]->{ $align };
     } else {
       # insert into the set and do all the overlap business
-      $overlapping_sets[ $setno ]->{ $align } = 1;
+      $overlapping_sets[ $setno ]->{ $align } = $align;
       # the other set contains everything this align overlaps with
-      for my $align2 ( keys %{$overlapping_sets[ 1 - $setno ]} ) {
+      for my $align2 ( values %{$overlapping_sets[ 1 - $setno ]} ) {
         if( $setno == 0 ) {
           $self->_add_derived_alignments( $merged_aligns, $align, $align2 );
         } else {
@@ -561,14 +566,271 @@ sub _merge_alignsets {
       }
     }
   }
+
+  return $merged_aligns;
 }
+
+
+
+=head2 _add_derived_alignments
+
+  Arg  1     : listref 
+    Additional description lines
+    list, listref, hashref
+  Example    :  ( optional )
+  Description: testable description
+  Returntype : none, txt, int, float, Bio::EnsEMBL::Example
+  Exceptions : none
+  Caller     : object::methodname or just methodname
+
+=cut
 
 
 sub _add_derived_alignments {
+  my ( $self, $merged_aligns, $alignA, $alignB ) = @_;
+
+  # variable name explanation
+  # q - query c - consensus s - start e - end l - last
+  # o, ov overlap j - jump_in_
+  # r - result
+  my ( $qs, $qe, $lqs, $lqe, $cs, $ce, $lcs, $lce,
+       $ocs, $oce, $oqs, $oqe, $jc, $jq, $ovs, $ove,
+       $rcs, $rce, $rqs, $rqe);
+
+  # initialization phase
+  
+
+  my @cigA = ( $alignA->cigar_line =~ /(\d*[MDI])/g );
+  my @cigB;
+  my $line = $alignB->cigar_line();
+
+  if( $alignA->query_strand == -1 ) {
+    @cigB = reverse ( $line =~ /(\d*[MDI])/g ); 
+  } else {
+    @cigB = ( $line =~ /(\d*[MDI])/g ); 
+  }
+
+  # need a 'normalized' start for qs, qe, oxs so I dont 
+  # have to check strandedness all the time  
+
+  # consensus is strand 1 and is not compared to anything,
+  # can keep its original coordinate system
+ 
+  $lce = $alignA->consensus_start() - 1;
+  $ce = $lce;
+  $cs = $ce + 1;
+  
+  # alignBs query can be + or - just keep relative coords for now
+  $lqe = 0; $lqs = 1;
+  $qe = 0; $qs = 1;
+
+  # ocs will be found relative to oce and has to be comparable
+  # to oqs. But it could be that we have to move downwards if we
+  # are not - strand. thats why coordinates are trnaformed here
+
+  if( $alignA->query_strand == -1 ) {
+    # query_end is first basepair of alignment
+    if( $alignA->query_end() < $alignB->consensus_end() ) {
+      # oqs/e = 0 ocs/e = difference
+      $oqe = 0; $oqs = 1;
+      $oce = $alignB->consensus_end() - $alignA->query_end();
+      $ocs = $oce + 1;
+    } else {
+      $oce = 0; $ocs = 1;
+      $oqe = $alignA->query_end() - $alignB->consensus_end();
+      $oqs = $oqe + 1;
+    }
+  } else {
+    # in theory no coordinate magic necessary :-)
+    $oqs = $alignA->query_start();
+    $oqe = $alignA->query_end();
+    $ocs = $alignB->consensus_start();
+    $oce = $alignB->consensus_end();
+  }
+
+  # initializing result
+  $rcs = $rce = $rqs = $rqe = 0;
+  my @result_cig= ();
+
+  my $current_match = 0;
+  my $new_match;
+  
+
+  while( 1 ) {
+    print "ocs $ocs oce $oce oqs $oqs oqe $oqe\n";
+    print "cs $cs ce $ce qs $qs qe $qe\n";
+    print "rcs $rcs rce $rce rqs $rqs rqe $rqe\n";
+    print "\n";
+
+
+    # exit if you request a new piece of alignment and the cig list is 
+    # empty
+
+    if( $oce < $ocs || $oce < $oqs ) {
+      # next M area in cigB
+      last unless @cigB;
+      $self->_next_cig( \@cigB, \$ocs, \$oce, \$qs, \$qe ); 
+      next;
+    }
+    if( $oqe < $oqs || $oqe < $ocs ) {
+      # next M area in cigA
+      last unless @cigA;
+      $self->_next_cig( \@cigA, \$cs, \$ce, \$oqs, \$oqe );
+      next;
+    }
+
+    # now matching region overlap in reference genome
+    $ovs = $ocs < $oqs ? $oqs : $ocs;
+    $ove = $oce < $oqe ? $oce : $oqe;
+    
+    if( $current_match ) {
+      $jc = $cs + ( $ovs - $oqs ) - $lce - 1;
+      $jq = $qs + ( $ovs - $ocs ) - $lqe - 1;
+    } else {
+      $jc = $jq = 0;
+    }
+
+    $new_match = $ove - $ovs + 1;
+    my $new_ga = 0;
+
+    print "";
+
+    if( $jc == 0 ) {
+      if( $jq == 0 ) {
+	$current_match += $new_match;
+      } else {
+        # store current match;
+	push( @result_cig, $current_match."M" );
+	$jq = "" if ($jq == 1); 
+	# jq deletions;
+	push( @result_cig, $jq."D" );
+	$current_match = $new_match;
+      }
+    } else {
+      if( $jq == 0 ) {
+        # store current match;
+	push( @result_cig, $current_match."M" );
+	# jc insertions;
+	$jc = "" if( $jc == 1 );
+	push( @result_cig, $jc."I" );
+	$current_match = $new_match;
+         
+      } else {
+
+	push( @result_cig, $current_match."M" );
+	# new GA
+	my $query_strand = $alignA->query_strand() * $alignB->query_strand();
+	my ( $query_start, $query_end );
+	if( $query_strand == 1 ) {
+	  $query_start = $rqs + $alignB->query_start() - 1;
+	  $query_end = $rqe + $alignB->query_end() - 1;
+	} else {
+	  $query_end = $alignB->query_end() - $rqs + 1;
+	  $query_start = $alignB->query_end() - $rqe + 1;
+	}
+      
+	my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new
+	  ( -consensus_dnafrag => $alignA->consensus_dnafrag,
+	    -query_dnafrag => $alignB->query_dnafrag,
+	    -cigar_line => join("",@result_cig),
+	    -consensus_start => $rcs,
+	    -consensus_end => $rce,
+	    -query_strand => $query_strand, 
+	    -query_start => $query_start,
+	    -query_end => $query_end
+	    -adaptor => $self,
+	    -perc_id => $alignA->perc_id() * $alignB->perc_id() / 10000,
+	    -score => $alignA->score() < $alignB->score() ? $alignA->score() : $alignB->score()
+	  );
+	push( @$merged_aligns, $ga );
+	$rcs = $rce = $rqs = $rqe = 0;
+	@result_cig = ();
+	
+	$current_match = $new_match;
+      }
+    }
+
+
+    
+    $rcs = $cs+($ovs-$oqs) unless $rcs;
+    $rce = $cs+($ove-$oqs);
+    $rqs = $qs+($ovs-$ocs) unless $rqs;
+    $rqe = $qs+($ove-$ocs);
+
+    # update the last positions
+    $lcs = $cs; $lce = $ce; $lqs = $qs; $lqe = $qe;
+
+    # next piece on the one that end earlier
+    my $cmp = ( $oce <=> $oqe );
+ 
+    if( $cmp >= 0 ) {
+      # next M area in cigB
+      $self->_next_cig( \@cigB, \$ocs, \$oce, \$qs, \$qe ); 
+    }
+    if( $cmp <= 0 ) {
+      # next M area in cigA
+      $self->_next_cig( \@cigA, \$cs, \$ce, \$oqs, \$oqe );
+    } 
+  } # end of while loop
+
+  # if there is a last floating current match
+  if( $current_match ) {
+    push( @result_cig, $current_match."M" );
+    # new GA
+    my $query_strand = $alignA->query_strand() * $alignB->query_strand();
+    my ( $query_start, $query_end );
+    if( $query_strand == 1 ) {
+      $query_start = $rqs + $alignB->query_start() - 1;
+      $query_end = $rqe + $alignB->query_end() - 1;
+    } else {
+      $query_end = $alignB->query_end() - $rqs + 1;
+      $query_start = $alignB->query_end() - $rqe + 1;
+    }
+  
+    my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new
+      ( -consensus_dnafrag => $alignA->consensus_dnafrag,
+	-query_dnafrag => $alignB->query_dnafrag,
+	-cigar_line => join("",@result_cig),
+	-consensus_start => $rcs,
+	-consensus_end => $rce,
+	-query_strand => $query_strand, 
+	-query_start => $query_start,
+	-query_end => $query_end
+	-adaptor => $self,
+	-perc_id => $alignA->perc_id() * $alignB->perc_id() / 10000,
+	-score => $alignA->score() < $alignB->score() ? $alignA->score() : $alignB->score()
+      );
+    push( @$merged_aligns, $ga );
+  # nothing to return all in merged_aligns
+  }
 }
 
 
+sub _next_cig {
+  my ( $self, $ciglist, $cs, $ce, $qs, $qe ) = @_;
+  
+  my ( $cig_elem, $type, $count );
+  my $count;
+  do {
+    $cig_elem = shift( @$ciglist );
+    ( $count ) = ($cig_elem =~ /(\d*)/);
+    $count || ( $count = 1 );
 
+    ( $type ) = ( $cig_elem =~ /(.)$/ );
+    if( $type eq 'D' ) {
+      $$qe += $count;
+    } elsif( $type eq 'I' ) {
+      $$ce += $count;
+    } else {
+      $$cs = $$ce + 1;
+      $$ce = $$cs + $count - 1;
+      $$qs = $$qe + 1;
+      $$qe = $$qs + $count - 1;
+    } 
+  } until ( $type eq 'M' || ! ( @$ciglist ));
+}
+
+  
 =head2 fetch_DnaDnaAlignFeature_by_species_chr_start_end
 
  Arg [1]    : string subject_species
