@@ -91,6 +91,78 @@ sub fetch_by_dbID{
 
 }
 
+=head2 fetch_by_name_genomedb_id
+
+ Title   : fetch_by_name_genome_db_id
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_by_name_genomedb_id{
+   my ($self,$name,$genomedb_id) = @_;
+ 
+   if( !defined $name) {
+       $self->throw("fetch_by_name_genomedb_id requires dnafrag name");
+   }
+ 
+   if( !defined $genomedb_id) {
+       $self->throw("fetch_by_name_genomedb_id requires genomedb_id");
+   }
+
+   my $sth = $self->prepare("select dnafrag_id,dnafrag_type from dnafrag where name = ? and genome_db_id = ?");
+   $sth->execute($name,$genomedb_id);
+ 
+   my ($dbID,$type) = $sth->fetchrow_array();
+ 
+   if( !defined $dbID) {
+       $self->throw("No dnafrag with this name $name and genomedb $genomedb_id");
+   }
+ 
+   my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
+ 
+   $dnafrag->dbID($dbID);
+   $dnafrag->name($name);
+   $dnafrag->type($type);
+   $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genomedb_id));
+ 
+   return $dnafrag;
+}
+
+=head2 fetch_all
+
+ Title   : fetch_all
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_all{
+   my ($self) = @_;
+ 
+   my $query = "SELECT dnafrag_id FROM dnafrag";
+   my $sth = $self->prepare($query);
+   $sth->execute;
+
+   my @dnafrags;
+
+   while (my ($id) = $sth->fetchrow_array){
+      my $dnafrag = $self->fetch_by_dbID($id);
+      push (@dnafrags,$dnafrag);   
+   }
+
+   return @dnafrags;
+
+}
+
 =head2 store
 
  Title   : store
@@ -131,9 +203,9 @@ sub store{
    my $name = $dnafrag->name;
    my $gid =  $gdb->dbID;
 
-   my $sth = $self->prepare("insert into dnafrag (name,genome_db_id) values ('$name',$gid)");
+   my $sth = $self->prepare("insert into dnafrag (name,genome_db_id,dnafrag_type) values (?,?,?)");
 
-   $sth->execute();
+   $sth->execute($dnafrag->name,$gdb->dbID,$dnafrag->type);
 
    $dnafrag->dbID($sth->{'mysql_insertid'});
    $dnafrag->adaptor($self);
