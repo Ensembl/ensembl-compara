@@ -29,7 +29,12 @@ sub _init {
     # check we are not in a big gap!
     my @map_contigs;
     
-    if ($self->{'container'}->has_AssemblyContigs) {
+    my $useAssembly;
+    eval {
+        $useAssembly = $vc->has_AssemblyContigs;
+    };
+
+    if ($useAssembly) {
        @map_contigs = $self->{'container'}->each_AssemblyContig;
     } else {
        @map_contigs = $self->{'container'}->_vmap->each_MapContig();

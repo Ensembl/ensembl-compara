@@ -68,7 +68,11 @@ sub _init {
 
     
     my @map_contigs = ();
-    my $useAssembly = $vc->has_AssemblyContigs;
+    my $useAssembly;
+    eval {
+        $useAssembly = $vc->has_AssemblyContigs;
+    };
+    print STDERR "Using assembly $useAssembly\n";
 
     if ($useAssembly) {
        @map_contigs = $vc->each_AssemblyContig;
@@ -137,6 +141,8 @@ sub _init {
                 'colour'    => $col,
                 'absolutey' => 1,
 			});
+            my $cid = $rid;
+            $cid=~s/^([^\.]+\.[^\.]+)\..*/$1/;
             $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=".
                         $vc->_chr_name()."&vc_start=".
                         ($cstart)."&vc_end=".
@@ -144,7 +150,8 @@ sub _init {
 			$glyph->{'zmenu'} = {
                     'caption' => $rid,
                     "01:Clone: $clone"   => '',
-                    '02:Centre on contig' => $glyph->{'href'}
+                    '02:Centre on contig' => $glyph->{'href'},
+                    "03:EMBL source file" => $self->{'config'}->{'ext_url'}->get_url( 'EMBL', $cid )
 			} if $show_navigation;
 			
             $self->push($glyph);
