@@ -9,6 +9,8 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bio::EnsEMBL::Glyph::Line;
 use Bump;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
+
 
 sub init_label {
     my ($self) = @_;
@@ -43,7 +45,10 @@ sub _init {
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($Config->container_width() * $pix_per_bp);
 
+    &eprof_start('transcript - get_all_Genes_exononly()');
     @allgenes = $container->get_all_Genes_exononly();
+    &eprof_end('transcript - get_all_Genes_exononly()');
+    &eprof_start('transcript - get_all_ExternalGenes()');
     unless($target) {
 	if ($type eq 'all'){
 	    foreach my $vg ($container->get_all_ExternalGenes()) {
@@ -52,6 +57,7 @@ sub _init {
 	    }
 	} 
     }
+    &eprof_end('transcript - get_all_ExternalGenes()');
     $type = undef;
     
   GENE: for my $eg (@allgenes) {
@@ -63,15 +69,12 @@ sub _init {
     TRANSCRIPT: for my $transcript ($eg->each_Transcript()) {
 	next if ($target && ($transcript->id() ne $target) );
         my $hi_colour = $hi_colour_gene;
-        #########
-        # test transcript strand
-        #
+        ########## test transcript strand
+
         my $tstrand = $transcript->strand_in_context($vcid);
         next TRANSCRIPT if($tstrand != $self->strand());
 	
-        #########
-        # set colour for transcripts and test if we're highlighted or not
-        # 
+        ########## set colour for transcripts and test if we're highlighted or not
         my @dblinks = ();
         my $id = $transcript->id();
         my $gene_name;
@@ -153,13 +156,15 @@ sub _init {
 		# we have a normal Ensembl transcript...
 		$Composite->{'zmenu'}  = {
 		    'caption'					   => $id,
-		    '00:Ensembl transcript'    	   => "",
-		    '01:Transcript information'    => "/perl/geneview?gene=$vgid",
-		    '02:Protein information'       => "/perl/protview?peptide=$pid",
-		    '05:Protein sequence (FASTA)'  => "/perl/exportview?type=feature&ftype=peptide&id=$tid",
-		    '03:Supporting evidence'       => "/perl/transview?transcript=$tid",
-		    '04:Expression information'    => "/perl/sageview?alias=$vgid",
-		    '06:cDNA sequence'             => "/perl/exportview?type=feature&ftype=cdna&id=$tid",
+            	'caption'					   => $id,
+            	"00:Transcr:$tid"   		   => "",
+            	"01:(Gene:$vgid)"     		   => "",
+             	'02:Transcript information'    => "/perl/geneview?gene=$vgid",
+           		'03:Protein information'       => "/perl/protview?peptide=$pid",
+            	'04:Supporting evidence'       => "/perl/transview?transcript=$tid",
+            	'05:Expression information'    => "/perl/sageview?alias=$vgid",
+            	'06:Protein sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
+            	'07:cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
 		};
 	    }
 	} #end of Skip this next chunk if single transcript mode

@@ -38,8 +38,19 @@ sub _init {
     my $dep            = $Config->get('genscan', 'dep');
     my $k              = 1;
 
-    foreach my $seq_feat ($VirtualContig->get_all_PredictionFeatures()){
-	if ($seq_feat->strand() == $strand){
+    FEAT: foreach my $seq_feat ($VirtualContig->get_all_PredictionFeatures()){
+	my @feat = $seq_feat->sub_SeqFeature;
+	my $feat_strand;
+
+	if ($#feat >= 0) {
+	    $feat_strand = $feat[0]->strand;
+	} else {
+	    $self->warn("WARNING: Prediction feature has no sub features - skipping\n");
+	    next FEAT;
+	}
+	    
+	print STDERR "GENSCAN strand  " . $feat_strand . " " . $seq_feat->strand . " " . $strand . " " . $seq_feat->id . " " . $seq_feat->start . " " . $seq_feat->end . "\n";
+	if ($feat_strand == $strand){
 	    my @tmp = $seq_feat->sub_SeqFeature();
 	    $id{$seq_feat->id()} = \@tmp;
 	    $k++;
@@ -47,9 +58,8 @@ sub _init {
     }
 
     foreach my $i (keys %id){
-	
 	@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
-	#print STDERR "GENSCAN: seq_feature id: $i\n";
+	print STDERR "GENSCAN: seq_feature id: $i \n";
 	my $has_origin = undef;
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 

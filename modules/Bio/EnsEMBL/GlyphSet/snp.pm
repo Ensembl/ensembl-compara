@@ -36,7 +36,7 @@ sub _init {
     my $im_width      = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
     my $type          = $Config->get('gene','src');
-	print STDERR "snp.pm: ".$self->glob_bp()." *\n";
+#	print STDERR "snp.pm: ".$self->glob_bp()." *\n";
     my @xf            = $VirtualContig->get_all_ExternalFeatures( $self->glob_bp() );
     my @snp;
 

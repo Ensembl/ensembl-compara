@@ -34,23 +34,24 @@ sub _init {
     my $type          = $Config->get('gene', 'src');
     my @allgenes      = ();
 
-#    &eprof_start("gene-virtualgene_start-get");
+    &eprof_start("gene-virtualgene_start-get");
     push @allgenes, $VirtualContig->get_all_VirtualGenes_startend();
-#    &eprof_end("gene-virtualgene_start-get");
+    &eprof_end("gene-virtualgene_start-get");
 
-#    &eprof_start("gene-externalgene_start-get");
+    &eprof_start("gene-externalgene_start-get");
 #    if ($type eq 'all'){
 	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
 	    $vg->{'_is_external'} = 1;
 	    push (@allgenes, $vg);
 	}
 #    }
-#    &eprof_end("gene-externalgene_start-get");
+    &eprof_end("gene-externalgene_start-get");
 
 #    &eprof_start("gene-render-code");
     my $ext_col       = $Config->get('gene','ext');
     my $known_col     = $Config->get('gene','known');
     my $unknown_col   = $Config->get('gene','unknown');
+    my $pseudo_col   = $Config->get('gene','pseudo');
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($VirtualContig->length * $pix_per_bp);
 
@@ -61,29 +62,14 @@ sub _init {
 
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
 	    $colour   = $vg->gene->is_known()?$known_col:$unknown_col;
-
-		#print STDERR "External gene type: ", $vg->gene->type(), "\n";
-
-#	    my @temp_geneDBlinks = $vg->gene->each_DBLink();
-#	    my @ids;
-#	    
-#	    foreach my $DB_link ( @temp_geneDBlinks ){
-#		push @ids, $DB_link->display_id();
-#	    }
-#	    push @ids, $vg->id();
-#	    
-#	    my %union = ();
-#	    my %isect = ();
-#	    for my $e (@ids, $self->highlights()) { $union{$e}++ && $isect{$e}++ }
-#	    $colour = $Config->get('gene', 'hi') if(scalar keys %isect > 0);
-
 	    $start    = $vg->start();
 	    $end      = $vg->end();
 	} else {
-	    # for the moment we are ignoring external genes...
-	    #next;
 	    # EXTERNAL ANNOYING GENES
 	    $colour   = $ext_col;
+		if ($vg->type() =~ /pseudo/){
+	    	$colour   = $pseudo_col;
+		}
 	    my @coords;
 	    foreach my $trans ($vg->each_Transcript){
             foreach my $exon ( $trans->each_Exon ) {

@@ -35,14 +35,15 @@ sub _init {
     my $im_width      = $Config->image_width();
     my $bitmap_length = $VirtualContig->length();
     my $type          = $Config->get('gene','src');
-	print STDERR "repeat.pm: ".$self->glob_bp()." *\n";	
+#	print STDERR "repeat.pm: ".$self->glob_bp()." *\n";	
     my @xf            = $VirtualContig->get_all_ExternalFeatures( $self->glob_bp() );
     my @trace;
     
     foreach my $f (@xf){
 		#print STDERR "$f ", $f->id(), " ", $f->source_tag(), "\n";
-		if ($f->isa("Bio::EnsEMBL::FeaturePair")) {
+		if ($f->isa("Bio::EnsEMBL::Ext::FeaturePair") || $f->isa("Bio::EnsEMBL::FeaturePair")) {
 	    	if ($f->source_tag() eq "trace") { # its an exonerate_gapped mouse trace match
+				#print STDERR "\tsaved", $f->id(),"\n";
 				push (@trace, $f);
 	    	}
 		}	

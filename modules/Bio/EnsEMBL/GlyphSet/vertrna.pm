@@ -7,6 +7,7 @@ use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Intron;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Bump;
 
 sub init_label {
@@ -35,12 +36,12 @@ sub _init {
     my $bitmap_length 	= int($VirtualContig->length * $pix_per_bp);
     my $small_contig    = 0;
     my $dep             = $Config->get('vertrna', 'dep');
-    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("embl_vertrna",80,$self->glob_bp());  
+    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_by_strand("embl_vertrna",80,$self->glob_bp(),$strand);  
 	
     my %id = ();
     
     foreach my $f (@allfeatures){
-	next unless ($f->strand() == $strand);
+	#next unless ($f->strand() == $strand);
 	unless ( $id{$f->id()} ){
 	    $id{$f->id()} = [];
 	}
@@ -56,7 +57,18 @@ sub _init {
 	    },
 	});
 	
-	@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
+	#&eprof_start("=========================>Schwartz");
+	#@{$id{$i}} =  	map  { $_->[1] }
+	#				sort { $a->[0] <=> $b->[0] }
+	#				map  { [$_->start(), $_] } 
+	#				@{$id{$i}};
+	#&eprof_end("=========================>Schwartz");
+
+
+	#&eprof_start("=========================>Sort");
+	#@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
+	#&eprof_end("=========================>Sort");
+ 
 	foreach my $f (@{$id{$i}}){
 	    unless (defined $has_origin){
 		$Composite->x($f->start());
@@ -81,52 +93,6 @@ sub _init {
 	    $Composite->push($glyph);
 	}
 	
-	#if($VirtualContig->length() <= 250001){
-	if(0){
-	    # loop through glyphs again adding connectors...
-	    my @g = $Composite->glyphs();
-	    for (my $i = 1; $i<scalar(@g); $i++){
-		my $hstart  = $g[$i]->{'_feature'}->hstart();
-		my $hend    = $g[$i-1]->{'_feature'}->hend();
-		my $fstart  = $g[$i-1]->{'_feature'}->start();
-		my $flength = $g[$i-1]->{'_feature'}->length();
-		
-		#print STDERR "$prefix Last end   = ", $hend, "\n";
-		#print STDERR "$prefix Next start = ", $hstart, "\n";
-		#print STDERR "$prefix Difference = ", $hstart - $hend, "\n";
-		
-		if (($hstart - $hend) < 5 && ($hstart - $hend) > -5 ){	# they are close
-		    #print STDERR "$prefix Close ($i): ",$hstart, " <-> ", $hend, "\n";
-		    
-		    my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
-			'x'      	=> $fstart + $flength,
-			'y'      	=> 0,
-			'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
-			'height' 	=> $h,
-			'strand' 	=> $strand,
-			'colour' 	=> $feature_colour,
-			'absolutey' => 1,
-		    });
-		    $Composite->{'zmenu'}->{"[Intron $i] bp $hend - $hstart"} = '';
-		    #$Composite->push($intglyph);
-		    
-		} else {
-		    $Composite->{'zmenu'}->{"[Intron $i] bp $hend - $hstart"} = '';
-		    next;
-		    #print STDERR "$prefix Not close: ",$hstart, " <=======> ", $hend, "\n"; 
-		    my $intglyph = new Bio::EnsEMBL::Glyph::Line({
-			'x'      	=> $fstart + $flength,
-			'y'      	=> int($h * 0.5),
-			'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
-			'height' 	=> 0,
-			'colour' 	=> $feature_colour,
-			'dotted'	=> 1,
-			'absolutey' => 1,
-		    });
-		    $Composite->push($intglyph);
-		}
-	    }
-	}
 	
 	if ($dep > 0){ # we bump
 	    my $bump_start = int($Composite->x() * $pix_per_bp);

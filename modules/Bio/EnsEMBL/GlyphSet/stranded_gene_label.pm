@@ -47,6 +47,7 @@ sub _init {
     }
 
     my $ext_col        = $Config->get('stranded_gene_label','ext');
+    my $pseudo_col   = $Config->get('gene','pseudo');
     my $known_col      = $Config->get('stranded_gene_label','known');
     my $unknown_col    = $Config->get('stranded_gene_label','unknown');
     my $pix_per_bp     = $Config->transform->{'scalex'};
@@ -60,7 +61,6 @@ sub _init {
 	my ($start, $end, $colour, $label, $hi_colour);
 	
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
-        print STDERR "STR: ".$vg->start()." ".$vg->strand()." -- ".$self->strand()."\n";
         next if( $vg->strand() != $self->strand() );
         $start = $vg->start();
         $start = $vg->end();        
@@ -87,11 +87,13 @@ sub _init {
 	    	$colour = $unknown_col;
     		$label	= "NOVEL";
 	    }
-	    print STDERR "GENE: $label\n"; 
 	} else {
         next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());    
 	    ########## skip if it's not on the strand we're drawing
 	    $colour = $ext_col;
+		if ($vg->type() =~ /pseudo/){
+	    	$colour   = $pseudo_col;
+		}
 	    my @coords;
 	    foreach my $trans ($vg->each_Transcript){
     		foreach my $exon ( $trans->each_Exon ) {

@@ -38,8 +38,8 @@ sub _init {
     my $small_contig   = 0;
     my $dep            = $Config->get('sptr', 'dep');
 	
-    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("sptr",80,$self->glob_bp());  
-    @allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
+    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_by_strand("sptr",80,$self->glob_bp(),$strand);  
+    #@allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
     
     foreach my $f (@allfeatures){
         unless ( $id{$f->id()} ){
@@ -49,10 +49,10 @@ sub _init {
     }
     foreach my $i (keys %id){
 
-        @{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
-        if ($strand == -1){
+        #@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
+        #if ($strand == -1){
             #@{$id{$i}} =  reverse @{$id{$i}};
-        }
+        #}
         my $j = 1;
 		
 		my $did = $i;

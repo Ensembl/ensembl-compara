@@ -35,7 +35,7 @@ sub _init {
     my $bitmap_length  = $VirtualContig->length();
     my $feature_colour = $Config->get('repeat','col');
     my %id = ();
-	print STDERR "repeat.pm: ".$self->glob_bp()." *\n";
+# print STDERR "repeat.pm: ".$self->glob_bp()." *\n";
     my @allfeatures = $VirtualContig->get_all_RepeatFeatures($self->glob_bp());  
 	
     foreach my $f (@allfeatures){

@@ -37,8 +37,8 @@ sub _init {
     my $small_contig   = 0;
     my $dep            = $Config->get('unigene', 'dep');
 
-    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("unigene.seq",80,$self->glob_bp());  
-    @allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
+    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_by_strand("unigene.seq",80,$self->glob_bp(),$strand);  
+    #@allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
     
     foreach my $f (@allfeatures){
 	unless ( $id{$f->id()} ){
@@ -48,7 +48,7 @@ sub _init {
     }
     foreach my $i (keys %id){
 	
-	@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
+	#@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
 	#@{$id{$i}} =  reverse @{$id{$i}} if ($strand == -1);
 	my $j = 1;
 	

@@ -36,6 +36,7 @@ sub _init {
     my $ext_col        = $Config->get('gene','ext');
     my $known_col      = $Config->get('gene','known');
     my $unknown_col    = $Config->get('gene','unknown');
+    my $pseudo_col   = $Config->get('gene','pseudo');
     my $pix_per_bp     = $Config->transform->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
     my $fontname       = "Tiny";
@@ -72,15 +73,19 @@ sub _init {
     		$label	= "NOVEL";
 	    }
 	} else {
-	    $colour = $ext_col;
+	    # EXTERNAL ANNOYING GENES
+	    $colour   = $ext_col;
+		if ($vg->type() =~ /pseudo/){
+	    	$colour   = $pseudo_col;
+		}
 	    my @coords;
 	    foreach my $trans ($vg->each_Transcript){
-		foreach my $exon ( $trans->each_Exon ) {
-		    if( $exon->seqname eq $VirtualContig->id ) { 
-			push(@coords,$exon->start);
-			push(@coords,$exon->end);
-		    }
-	       }
+    		foreach my $exon ( $trans->each_Exon ) {
+    		    if( $exon->seqname eq $VirtualContig->id ) { 
+        			push(@coords,$exon->start);
+           			push(@coords,$exon->end);
+		        }
+	        }
 	    }
 	    @coords = sort {$a <=> $b} @coords;
 	    $start = $coords[0];
