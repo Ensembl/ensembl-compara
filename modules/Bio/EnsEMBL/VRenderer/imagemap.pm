@@ -81,12 +81,12 @@ sub _getHref {
        $alt = (defined $alt) ? qq( alt="$alt")  : "";
 
     ######### zmenus will override existing href, alt, onmouseover & onmouseout attributes
-    my $zmenu = $glyph->zmenu();
-    if(defined $zmenu) {
-		$href        = qq( href="javascript:void(0);");
-		$alt         = qq();
-		$onmouseover = qq( onmouseover=") . &JSTools::js_menu($zmenu) . qq(");
-    }
+        my $zmenu = $glyph->zmenu();
+        if(defined $zmenu) {
+    		$href        = qq( href="javascript:void(0);") unless( defined $href );
+    		$alt         = qq();
+    		$onmouseover = qq( onmouseover=") . &JSTools::js_menu($zmenu) . qq(");
+        }
 	return "$href$onmouseover$onmouseout$alt" if(defined $href);
 	return undef;
 }
