@@ -57,10 +57,13 @@ sub _init {
 
     # fetch the chromosome bands that cover this VC.
     my $kba         = $self->{'container'}->{'ka'};
-    my @bands       = $kba->fetch_all_by_chromosome($chr);
-    my $chr_length  = $kba->fetch_chromosome_length($chr) || 1;
-    my $v_offset    = $Config->container_width() - $chr_length; # bottom align each chromosome!
+    my @bands       = $kba->fetch_by_chr_name($chr);
+    my $chr_length  = $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
+    
+    # bottom align each chromosome!
+    my $v_offset    = $Config->container_width() - $chr_length; 
     my $bpperpx     = $Config->container_width()/$Config->{'_image_height'};
+
     # over come a bottom border/margin problem....
 
     my $done_1_acen = 0;        # flag for tracking place in chromsome
