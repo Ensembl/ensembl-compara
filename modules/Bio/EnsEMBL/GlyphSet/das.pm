@@ -105,6 +105,10 @@ sub RENDER_simple {
   my( $self, $configuration ) = @_;
   my $old_end = -1e9;
   my $empty_flag = 1;
+
+# flag to indicate if not all features have been displayed 
+  my $more_features = 0;
+
   foreach my $f( sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'}} ){
     if($f->das_type_id() eq '__ERROR__') {
       $self->errorTrack(
@@ -122,7 +126,10 @@ sub RENDER_simple {
     my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
     if( $configuration->{'depth'}>0 ) {
       $row = $self->bump( $START, $END, $label_length, $configuration->{'depth'} );
-      next if $row < 0;
+      if( $row < 0 ) { ## SKIP IF BUMPED...
+	  $more_features = 1;
+	  next;
+      }
     } else {
       next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
     }
@@ -138,6 +145,8 @@ sub RENDER_simple {
     my $display_type;
     my $style;
     my $colour;
+
+
     if($configuration->{'use_style'}) {
       $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id} || $configuration->{'styles'}{$f->das_type_category}{'default'} || $configuration->{'styles'}{'default'}{'default'};
       $colour = $style->{'attrs'}{'fgcolor'}||$configuration->{'colour'};
@@ -146,6 +155,66 @@ sub RENDER_simple {
       $colour = $configuration->{'colour'};
       $display_type = 'draw_box';
     }
+
+
+# if it is a summary of non-positional features then just display a gene-wide line with a link to geneview where all annotations can be viewed
+    if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
+      my $f     = shift @{$configuration->{'features'}};
+      my $START = $f->das_start() < 1        ? 1       : $f->das_start();
+      my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+
+      my $smenu = $self->smenu($f);
+      $Composite->{zmenu} = $smenu;
+      use integer;
+
+      my $glyph = new Sanger::Graphics::Glyph::Line({
+        'x'          => $START-1,
+        'y'          => 0,
+        'width'      => 0,
+        'height'     => $configuration->{'h'},
+        'colour'     => $colour,
+        'absolutey'  => 1
+      });
+
+      $Composite->push($glyph);
+      
+      $glyph = new Sanger::Graphics::Glyph::Line({
+        'x'          => $START,
+        'y'          => 0,
+        'width'      => 0,
+        'height'     => $configuration->{'h'},
+        'colour'     => $colour,
+        'absolutey'  => 1,
+        'absolutex'  => 1
+      });
+
+      $Composite->push($glyph);
+
+      my $md = $configuration->{'h'} / 2; 
+
+      $glyph = new Sanger::Graphics::Glyph::Rect({
+        'x'          => $START-1,
+        'y'          => $md - 1,
+        'width'      => $END-$START+1,
+        'height'     => 2,
+        'colour'     => $colour,
+        'absolutey'  => 1
+      });
+
+      $Composite->push($glyph);
+
+      $glyph = new Sanger::Graphics::Glyph::Rect({
+        'x'          => $END-1,
+        'y'          => 0,
+        'width'      => 1,
+        'height'     => $configuration->{'h'},
+        'colour'     => $colour,
+        'absolutey'  => 1
+      });
+
+      $Composite->push($glyph);
+
+  } else {
     $display_type = 'draw_box' unless $self->can( $display_type );
     if( $display_type eq 'draw_box') {
       $Composite->push( $self->$display_type( $configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'} ) );
@@ -158,12 +227,21 @@ sub RENDER_simple {
         'absolutey' => 1
       }) );
     }
+}
     my $H =$self->feature_label( $Composite, $label, $colour, $START, $END );
     $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) if $row;
     $self->push(  $self->$display_type( $configuration->{'h'}, $START, $END , $colour, $self->{'pix_per_bp'}, - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) ) unless $display_type eq 'draw_box';
     $self->push( $Composite );
   }
   $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
+
+  if($more_features) {
+# There are more features to display : show the note
+      my $yx = $configuration->{'depth'};
+      my $ID = 'There are more '.$self->{'extras'}->{'label'}.' features in this region. Increase source depth to view them all ';
+      $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
+  }    
+
   return $empty_flag ? 0 : 1 ;
 }
 
@@ -189,6 +267,11 @@ sub RENDER_grouped {
     $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
     return 0; ## A " 0 " return indicates no features drawn....
   }    
+
+
+# Flag to indicate if not all features got displayed due to the small depth setting
+  my $more_features = 0;
+
   foreach my $value (values %grouped) {
     my $f = $value->[0];
     ## Display if not stranded OR
@@ -212,7 +295,10 @@ sub RENDER_grouped {
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
 
 #	 warn("$ID:$label:$label_length:$row");
-    next if( $row < 0 ); ## SKIP IF BUMPED...
+    if( $row < 0 ) { ## SKIP IF BUMPED...
+	$more_features = 1;
+	next;
+    }
     my( $href, $zmenu ) = $self->zmenu( $f );
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'            => 0,
@@ -231,9 +317,8 @@ sub RENDER_grouped {
       $colour = $configuration->{'colour'};
     }
 
-#	 warn("DRAW:");
-#	 warn(Dumper($f));
-	 if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
+# if it is a summary of non-positional features then just display a gene-wide line with a link to geneview where all annotations can be viewed
+    if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
       my $f     = shift @features;
       my $START = $f->das_start() < 1        ? 1       : $f->das_start();
       my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
@@ -361,7 +446,16 @@ sub RENDER_grouped {
     my $H =$self->feature_label( $Composite, $label , $colour, $start < 1 ? 1 : $start , $end > $configuration->{'length'} ? $configuration->{'length'} : $end );
     $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$H) * $row) if $row;
     $self->push($Composite);
-  }
+}
+
+#  if we have displayed the specified number of rows and there are still some features left then display a note saying that.
+      if($more_features) {
+	  warn("MORE FEATURES");
+	  my $yx = $configuration->{'depth'};
+	  my $ID = 'There are more '.$self->{'extras'}->{'caption'}.' features in this region. Increase source depth to view them all ';
+	  $self->errorTrack($ID, undef, $configuration->{'tstrand'}*($configuration->{'h'}) * $yx);
+      }    
+
   return 1; ## We have rendered at least one feature....
 }
 
@@ -642,12 +736,12 @@ sub _init {
 
   my $srcname = $Extra->{'label'} || $das_name;
   $srcname =~ s/^(managed_|mananged_extdas)//;
-  my $dastype = $Extra->{'type'};
+  my $dastype = $Extra->{'type'} || 'ensembl_location';
   my @das_features = ();
 #  warn("TYPE: $dastype\n".Dumper($Extra));
   $Extra->{labelflag} = 'u';
-  $configuration->{colour} = $Extra->{color} || $Config->get($das_config_key, 'col') || 'contigblue1';
-  $configuration->{depth} = $Extra->{depth} || $Config->get($das_config_key, 'dep') || 4;
+  $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{color} || 'contigblue1';
+  $configuration->{depth} =  $Config->get($das_config_key, 'dep') || $Extra->{depth}  || 4;
   $configuration->{use_style} = $Extra->{stylesheet} ? $Extra->{stylesheet} eq 'y' : $Config->get($das_config_key, 'stylesheet') eq 'Y';
   $configuration->{labelling} = $Extra->{labelflag} =~ /^[ou]$/i ? 1 : 0;
   $configuration->{length} = $container_length;
@@ -661,67 +755,66 @@ sub _init {
   my $styles;
 
   if ($dastype ne 'ensembl_location') {
-		my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
-		my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
-		my $name = $das_name || $url;
-		foreach my $gene (@$genes) {
+      my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
+      my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
+      my $name = $das_name || $url;
+      foreach my $gene (@$genes) {
 #			 warn("GENE:$gene:".$gene->stable_id);	
-			 my $dasf = $gene->get_all_DASFeatures;
-			 my %dhash = %{$dasf};
+	  my $dasf = $gene->get_all_DASFeatures;
+	  my %dhash = %{$dasf};
 
-			 my $fcount = 0;
-			 my %fhash = ();
-			 my @aa = @{$dhash{$name}};
-			 foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{ $aa[1] || [] }) {
-				  if ($f->das_end) {
-						if ($f->das_start <= $configuration->{'length'}) {
-							 push(@das_features, $f);
-
-						}
-				  } else {
-						if (exists $fhash{$f->das_segment->ref}) {
-							 $fhash{$f->das_segment->ref}->{count} ++;
-						} else {
-							 $fhash{$f->das_segment->ref}->{count} = 1;
-							 $fhash{$f->das_segment->ref}->{feature} = $f;
-						}
-				  }
-			 }
-
-			 foreach my $key (keys %fhash) {
-#				  warn("FT:$key:".$fhash{$key}->{count});
-				  my $ft = $fhash{$key}->{feature}; 
-				  if ((my $count = $fhash{$key}->{count}) > 1) {
-						$ft->{das_feature_label} = "$key/$count";
-
-						$ft->{das_note} = "Found $count annotations for $key";
-						$ft->{das_link_label}  = 'View annotations in geneview';
-						$ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&DASselect=$srcname#$srcname";
+	 
+	  my $fcount = 0;
+	  my %fhash = ();
+	  my @aa = @{$dhash{$name}};
+	  foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{ $aa[1] || [] }) {
+	      if ($f->das_end) {
+		  if ($f->das_start <= $configuration->{'length'}) {
+		      push(@das_features, $f);
+		      
+		  }
+	      } else {
+		  if (exists $fhash{$f->das_segment->ref}) {
+		      $fhash{$f->das_segment->ref}->{count} ++;
+		  } else {
+		      $fhash{$f->das_segment->ref}->{count} = 1;
+		      $fhash{$f->das_segment->ref}->{feature} = $f;
+		  }
+	      }
+	  }
 	  
-				  }
-				  $ft->{das_type_id}->{id} = 'summary';
-				  $ft->{das_start} = $gene->start;
-				  $ft->{das_end} = $gene->end;
-				  $ft->{das_orientation} = $gene->strand;
-				  $ft->{_gsf_strand} = $gene->strand;
-				  $ft->{das_strand} = $gene->strand;
-				  
-				  #	  warn(Dumper($ft));
-				  push(@das_features, $ft);
-			 }
+	  foreach my $key (keys %fhash) {
+#				  warn("FT:$key:".$fhash{$key}->{count});
+	      my $ft = $fhash{$key}->{feature}; 
+	      if ((my $count = $fhash{$key}->{count}) > 1) {
+		  $ft->{das_feature_label} = "$key/$count";
 
-	
-
-		}
-  }	else {
-		my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
-		$styles = $das_styles;
-		@das_features = grep {
-			 $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
-				  $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
-				  $_->das_start <= $configuration->{'length'} &&
-				  $_->das_end > 0
-			 } @{ $features || [] };
+		  $ft->{das_note} = "Found $count annotations for $key";
+		  $ft->{das_link_label}  = 'View annotations in geneview';
+		  $ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&DASselect=$srcname#$srcname";
+		  
+	      }
+	      $ft->{das_type_id}->{id} = 'summary';
+	      $ft->{das_start} = $gene->start;
+	      $ft->{das_end} = $gene->end;
+	      $ft->{das_orientation} = $gene->strand;
+	      $ft->{_gsf_strand} = $gene->strand;
+	      $ft->{das_strand} = $gene->strand;
+	      
+	      #	  warn(Dumper($ft));
+	      push(@das_features, $ft);
+	  }
+      }
+  } else {
+#      warn("EL:($dsn)".$self->{'container'});
+      my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
+      $styles = $das_styles;
+      @das_features = grep {
+	  $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
+	      $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
+	      $_->das_start <= $configuration->{'length'} &&
+	      $_->das_end > 0
+	  } @{ $features || [] };
   }
 
 #  foreach my $f (@das_features) {
