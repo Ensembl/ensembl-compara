@@ -12,13 +12,14 @@ use SiteDefs;
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $chr = $self->{'container'}->_chr_name() || "Chrom. Band";
+    my $chr = $self->{'container'}->_chr_name();
+    $chr = $chr ? "Chr $chr" : "Chrom. Band";
     $chr .= " " x (12 - length($chr));
 	
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => ucfirst($chr),
-	'font'      => 'Small',
-	'absolutey' => 1,
+    	'text'      => ucfirst($chr),
+    	'font'      => 'Small',
+    	'absolutey' => 1,
     });
     $self->label($label);
 }
