@@ -253,29 +253,72 @@ sub get_all_Genes_by_genome_db_id {
   my ($self, $genome_db_id, @flags) = @_;
 
   if (!defined($self->{'all_genes_from_'.$genome_db_id})) {
-    my $all_genes;
-  
-    my $this_slice_adaptor;
-    foreach my $this_genomic_align_block (@{$self->{'all_genomic_align_blocks'}}) {
+    my $all_genes = [];
+
+    my $these_genomic_aligns = [];
+    foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks}) {
       # print STDERR "GenomicAlignBlock: $this_genomic_align_block->{dbID}\n";
       my $all_genomic_aligns = $this_genomic_align_block->genomic_align_array;
       foreach my $this_genomic_align (@$all_genomic_aligns) {
         my $this_genome_db = $this_genomic_align->dnafrag->genome_db;
         # print STDERR "GenomicAlign: ($this_genome_db->{dbID}:$this_genomic_align->{dnafrag}->{name}) [$this_genomic_align->{dnafrag_start} - $this_genomic_align->{dnafrag_end}]\n";
         next if ($this_genome_db->dbID != $genome_db_id);
-        $this_slice_adaptor = $this_genome_db->db_adaptor->get_SliceAdaptor if (!$this_slice_adaptor);
-        my $this_slice = $this_slice_adaptor->fetch_by_region(
-                $this_genomic_align->dnafrag->coord_system_name,
-                $this_genomic_align->dnafrag->name,
-                $this_genomic_align->dnafrag_start,
-                $this_genomic_align->dnafrag_end
-            );
-        my $these_genes = $this_slice->get_all_Genes();
+        push(@$these_genomic_aligns, $this_genomic_align);
+      }
+    }
+    if (!@$these_genomic_aligns) {
+      $self->{'all_genes_from_'.$genome_db_id} = [];
+      return [];
+    }
+
+    my $all_slices_coordinates;
+    my $this_slice_coordinates;
+    my $this_slice_adaptor = $these_genomic_aligns->[0]->dnafrag->genome_db->db_adaptor->get_SliceAdaptor;
+    foreach my $this_genomic_align (sort {
+            $a->dnafrag->name cmp $b->dnafrag->name or
+            $a->dnafrag_start <=> $b->dnafrag_start }
+          @$these_genomic_aligns) {
+      if ($this_slice_coordinates and
+          ($this_slice_coordinates->{name} eq $this_genomic_align->dnafrag->name) and
+          (($this_genomic_align->dnafrag_start - $this_slice_coordinates->{end}) < 10000000)) {
+        $this_slice_coordinates->{end} = $this_genomic_align->dnafrag_end;
+      } else {
+        push(@$all_slices_coordinates, {
+                "coord_system_name" => $this_slice_coordinates->{coord_system_name},
+                "name" => $this_slice_coordinates->{name},
+                "start" => $this_slice_coordinates->{start},
+                "end" => $this_slice_coordinates->{end},
+                "genomic_aligns" => $this_slice_coordinates->{genomic_aligns}
+            }) if ($this_slice_coordinates->{name});
+        $this_slice_coordinates->{coord_system_name} = $this_genomic_align->dnafrag->coord_system_name;
+        $this_slice_coordinates->{name} = $this_genomic_align->dnafrag->name;
+        $this_slice_coordinates->{start} = $this_genomic_align->dnafrag_start;
+        $this_slice_coordinates->{end} = $this_genomic_align->dnafrag_end;
+        $this_slice_coordinates->{genomic_aligns} = [];
+      }
+      push(@{$this_slice_coordinates->{genomic_aligns}}, $this_genomic_align);
+    }
+    push(@$all_slices_coordinates, $this_slice_coordinates) if ($this_slice_coordinates);
+
+    foreach $this_slice_coordinates (@$all_slices_coordinates) {
+      my $this_slice = $this_slice_adaptor->fetch_by_region(
+              $this_slice_coordinates->{coord_system_name},
+              $this_slice_coordinates->{name},
+              $this_slice_coordinates->{start},
+              $this_slice_coordinates->{end}
+          );
+
+      ## Do not load transcript immediately or the cache could produce
+      ## some troubles in some special cases! Moreover, in this way we will have
+      ## the genes, the transcripts and the exons in the same slice!!
+      my $these_genes = $this_slice->get_all_Genes();
+      foreach my $this_genomic_align (@{$this_slice_coordinates->{genomic_aligns}}) {
         foreach my $this_gene (@$these_genes) {
+          $this_gene->{original_slice} = $this_gene->slice if (!defined($this_gene->{original_slice}));
           # print STDERR "\n1.GENE ($this_gene->{stable_id}) $this_gene\n";
           my $mapped_gene = $self->_get_mapped_Gene($this_gene, $this_genomic_align);
 #           $mapped_gene = $self->_get_mapped_Gene($this_gene, $this_genomic_align);
-          if (@{$mapped_gene->get_all_Transcripts}) {
+          if ($mapped_gene and @{$mapped_gene->get_all_Transcripts}) {
             push(@$all_genes, $mapped_gene);
           }
         }
@@ -283,7 +326,7 @@ sub get_all_Genes_by_genome_db_id {
     }
 
     $all_genes = _compile_mapped_Genes($all_genes, @flags);
-  
+
     $self->{'all_genes_from_'.$genome_db_id} = $all_genes;
   }
 
@@ -311,18 +354,35 @@ sub get_all_Genes_by_genome_db_id {
 sub _get_mapped_Gene {
   my ($self, $gene, $genomic_align) = @_;
 
+  my $range_start = $genomic_align->{dnafrag_start} - $gene->slice->start + 1;
+  my $range_end = $genomic_align->{dnafrag_end} - $gene->slice->start + 1;
   my $slice_length = $gene->slice->end - $gene->slice->start + 1;
+  return undef if (($gene->start > $range_end) or ($gene->end < $range_start));
+
+  my $from_mapper = $genomic_align->get_Mapper;
+  my $to_mapper = $genomic_align->genomic_align_block->reference_genomic_align->get_Mapper;
 
   my $these_transcripts = [];
+
   foreach my $this_transcript (@{$gene->get_all_Transcripts}) {
+    $this_transcript->{this_slice} = $this_transcript->slice;
     my $these_exons = [];
     foreach my $this_exon (@{$this_transcript->get_all_Exons}) {
-      if ($this_exon->start < $slice_length and $this_exon->end > 0) {
+      if (!defined($this_exon->{original_slice})) {
+        $this_exon->{original_slice} = $this_exon->slice;
+        $this_exon->{original_start} = $this_exon->start;
+        $this_exon->{original_end} = $this_exon->end;
+      }
+      $this_exon->{this_slice} = $this_exon->slice;
+throw if ($this_exon->slice->start != $gene->slice->start);
+#       $range_start = $genomic_align->{dnafrag_start} - $this_exon->slice->start + 1;
+#       $range_end = $genomic_align->{dnafrag_end} - $this_exon->slice->start + 1;
+      if ($this_exon->start < $range_end and $this_exon->end > $range_start) {
         my $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
                 -EXON => $this_exon,
                 -ALIGN_SLICE => $self->reference_Slice,
-                -FROM_MAPPER => $genomic_align->get_Mapper,
-                -TO_MAPPER => $genomic_align->genomic_align_block->reference_genomic_align->get_Mapper,
+                -FROM_MAPPER => $from_mapper,
+                -TO_MAPPER => $to_mapper,
             );
         push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
       } else {
@@ -350,6 +410,7 @@ sub _get_mapped_Gene {
   if (!@$these_transcripts) {
     info("No transcript of gene ".$gene->stable_id." can be mapped using".
         " Bio::EnsEMBL::Compara::GenomicAlign #".$genomic_align->dbID);
+    return undef;
   }
   ## Create a new gene object. This is needed in order to avoid
   ## troubles with cache. Attach mapped transcripts.
@@ -369,6 +430,7 @@ sub _get_mapped_Gene {
 
   return $mapped_gene;
 }
+
 
 
 sub _compile_mapped_Genes {
