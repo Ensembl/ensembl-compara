@@ -215,7 +215,30 @@ sub createAlignmentNetsJobs
       }
     }
     $sth->finish;
-    foreach my $genomic_slices (@genomic_slices) {
+    push @genomic_slices, [$slice_start,$slice_end];
+
+    my @grouped_genomic_slices;
+    undef $slice_start;
+    undef $slice_end;
+    my $max_slice_length = 1000000;
+    while (my $genomic_slices = shift @genomic_slices) {
+      my ($start, $end) = @{$genomic_slices};
+      unless (defined $slice_start) {
+        ($slice_start,$slice_end) = ($start, $end);
+        next;
+      }
+      my $slice_length = $slice_end - $slice_start + 1;
+      my $length = $end - $start + 1;
+      if ($slice_length > $max_slice_length || $slice_length + $length > $max_slice_length) {
+        push @grouped_genomic_slices, [$slice_start,$slice_end];
+        ($slice_start,$slice_end) = ($start, $end);
+      } else {
+        $slice_end = $end;
+      }
+    }
+    push @grouped_genomic_slices, [$slice_start,$slice_end];
+
+    while (my $genomic_slices = shift @grouped_genomic_slices) {
       my ($start, $end) = @{$genomic_slices};
       my $input_hash = {};
       $input_hash->{'start'} = $start;
