@@ -512,12 +512,11 @@ sub find_RHS
   # Current code will take all results, but could limit to only
   # 'best' ie first result returned
   my $sql = "SELECT paf1.peptide_align_feature_id, paf1.hmember_id".
-            " FROM member qm, member hm,".
+            " FROM member hm,".
             " peptide_align_feature paf1, peptide_align_feature paf2,".
             " member_gene_peptide".
             " WHERE paf1.hmember_id=paf2.qmember_id".
             " AND paf1.qmember_id=paf2.hmember_id".
-            " AND qm.member_id=paf1.qmember_id".
             " AND hm.member_id=member_gene_peptide.gene_member_id".
             " AND member_gene_peptide.peptide_member_id=paf1.hmember_id".
             #" AND paf1.hit_rank=1".
