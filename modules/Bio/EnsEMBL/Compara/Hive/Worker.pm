@@ -223,6 +223,8 @@ sub run
     $alive=undef if($self->cause_of_death);
   }
 
+  $self->cause_of_death('NATURAL') if($self->{'_work_done'}>1000);
+
   $self->adaptor->register_worker_death($self);
 }
 
