@@ -162,6 +162,7 @@ sub _columns {
              dfc.dnafrag_id
              dfc.seq_start
              dfc.seq_end
+						 dfc.sequence_id
             );
 }
 
@@ -195,6 +196,7 @@ sub _objs_from_sth {
     $dfc->dnafrag_id($column{'dnafrag_id'});
     $dfc->seq_start($column{'seq_start'});
     $dfc->seq_end($column{'seq_end'});
+    $dfc->sequence_id($column{'sequence_id'});
 
     if($column{'dnafrag_id'} and $self->db->get_DnaFragAdaptor) {
       $dfc->dnafrag($self->db->get_DnaFragAdaptor->fetch_by_dbID($column{'dnafrag_id'}));
@@ -279,5 +281,6 @@ sub _generic_fetch {
 
   return $self->_objs_from_sth($sth);
 }
+
 
 1;

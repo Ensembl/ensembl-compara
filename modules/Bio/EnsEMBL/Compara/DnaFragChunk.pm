@@ -18,6 +18,7 @@ package Bio::EnsEMBL::Compara::DnaFragChunk;
 
 use strict;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
 sub new {
@@ -35,7 +36,7 @@ sub new {
   Arg        : none
   Example    : $slice = $chunk->slice;
   Description: Meta method which uses the dnafrag of this chunk to get the genomeDB
-               to connect to corresponding core database, and then to uses the core's
+               to connect to corresponding core database, and then to uses the core
                SliceAdaptor to get a slice associated with the dnafrag type and name and
                the this chunks start,end.
   Returntype : Bio::EnsEMBL::Slice object
@@ -185,11 +186,24 @@ sub seq_end {
   return $self->{'seq_end'};
 }
 
-sub seq_id {
+sub sequence_id {
   my $self = shift;
-
-
+  return $self->{'sequence_id'} = shift if(@_);
+  return $self->{'sequence_id'};
 }
+
+sub sequence {
+  my $self = shift;
+  return $self->{'_sequence'} = shift if(@_);
+  return $self->{'_sequence'} if(defined($self->{'_sequence'}));	
+
+	#lazy load the sequence if sequence_id is set
+  if(defined($self->sequence_id()) and defined($self->adaptor())) {
+    $self->{'_sequence'} = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbID($self->sequence_id);
+  }
+	return $self->{'_sequence'};
+}
+
 
 =head3
 sub display_chunk {
