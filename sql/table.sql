@@ -226,13 +226,15 @@ CREATE TABLE homology (
 );
 
 CREATE TABLE homology_member (
- homology_id	int(10) NOT NULL,
- member_id	char(40) NOT NULL,
- cigar_line	mediumtext,
- perc_cov	int(10),
- perc_id	int(10),
- perc_pos	int(10),
- flag		varchar(255), # pseudogene, fused, splitted, etc...
+ homology_id            int(10) NOT NULL,
+ member_id              int(10) NOT NULL,
+ peptide_member_id      int(10),
+ cigar_line	        mediumtext,
+ cigar_start            int(10),
+ cigar_end              int(10),
+ perc_cov	        int(10),
+ perc_id	        int(10),
+ perc_pos	        int(10)
 
  UNIQUE KEY (member_id,homology_id),
  UNIQUE KEY (homology_id,member_id)
