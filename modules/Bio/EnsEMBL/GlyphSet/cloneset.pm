@@ -12,7 +12,8 @@ sub my_label { return "1mb cloneset"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_MapFrags( 'cloneset' );
+    my @features = $self->{'container'}->get_all_MapFrags( 'cloneset' );
+    return grep { abs( $_->end - $_->start ) < 3e6 } @features;
 }
 
 ## If bac map clones are very long then we draw them as "outlines" as
