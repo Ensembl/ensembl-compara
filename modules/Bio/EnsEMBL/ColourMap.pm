@@ -121,10 +121,13 @@ sub new {
     'IMCB_HOME'  => 'purple3'
   );
   $self->colourSet( 'glovar_sts',
-    'col'        => 'grey',
-    'unknown'    => 'grey',
-    'pass'       => 'green',
-    'fail'       => 'red',
+    'col'               => 'grey',
+    'Unknown'           => 'grey',
+    'PCR_pass'          => 'green',
+    'Failed'            => 'red',
+    'Sequence_pass'     => 'green',
+    'HW_pass'           => 'green',
+    'Multiple_product'  => 'red',
   );
   $self->colourSet( 'snp',
     '_coding'      => 'red',
