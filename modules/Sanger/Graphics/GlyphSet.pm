@@ -1,6 +1,7 @@
 package Sanger::Graphics::GlyphSet;
 use strict;
 use Exporter;
+use Sanger::Graphics::Glyph::Diagnostic;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Space;
 
@@ -214,6 +215,19 @@ sub transform {
     foreach( @{$self->{'glyphs'}} ) {
 	$_->transform($T);
     }
+}
+
+sub _dump {
+  my($self) = shift;
+  $self->push( new Sanger::Graphics::Glyph::Diagnostic({
+    'x'      =>0 ,
+    'y'      =>0 ,
+    'track'  => ref($self),
+    'strand' => $self->strand(),
+    'glyphs' => scalar @{$self->{'glyphs'}},
+    @_
+  }));
+  return;
 }
 
 sub errorTrack {

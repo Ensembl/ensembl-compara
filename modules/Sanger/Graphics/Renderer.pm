@@ -34,7 +34,8 @@ sub render {
   my $im_height = $spacing * 1.5;
   
   for my $glyphset (@{$self->{'glyphsets'}}) {
-    next if (scalar @{$glyphset->{'glyphs'}} == 0);
+    next if (scalar @{$glyphset->{'glyphs'}} == 0 || 
+             scalar @{$glyphset->{'glyphs'}} == 1 && ref($glyphset->{'glyphs'}[0])=~/Diagnostic/ );
     
     my $fntheight = (defined $glyphset->label())?$config->texthelper->height($glyphset->label->font()):0;
     my $gstheight = $glyphset->height();
@@ -82,11 +83,7 @@ sub render {
       }       
     }
     foreach( @{$glyphset->{'glyphs'}} ) {
-      if($_->{'z'}) {
-	push @{$layers{$_->{'z'}}}, $_;
-      } else {
-	push @{$layers{0}},$_;
-      } 
+      push @{$layers{$_->{'z'}||0}}, $_;
     }
   }
   
@@ -125,6 +122,7 @@ sub method {
   return qq(render_$suffix);
 }
 
+sub render_Diagnostic { 1; }
 sub render_Composite {
   my ($self, $glyph) = @_;
   
