@@ -19,7 +19,7 @@ sub init_label {
 qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] : qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
 
     (my $T = $URL)=~s/\'/\\\'/g;
- 
+    #####'###### 
     $self->label( new Sanger::Graphics::Glyph::Text({
         'text'      => $self->{'extras'}->{'caption'},
         'font'      => 'Small',
