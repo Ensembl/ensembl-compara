@@ -19,7 +19,7 @@ sub _init {
   my $h             = 24;
     
   my @bitmap        = undef;
-  my $colours       = $Config->get('snp_join','colours' );
+  my $colours       = $Config->get('snp_fake','colours' );
 
   my $pix_per_bp    = $Config->transform->{'scalex'};
 
@@ -38,10 +38,10 @@ sub _init {
     my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
-    my $tag_root = join ':', $snp->id, $start+$snp->start, $start+$snp->end;
-    my $type = substr($snp->type(),3,6);
-    my $colour = $colours->{"_$type"};
-    my $label = $snp->alleles;
+    my $tag_root = $snp->dbID;
+    my $type = $snp->get_consequence_type();
+    my $colour = $colours->{$type};
+    my $label = $snp->allele_string;
     my $bp_textwidth = $w * length("$label");
     if( $bp_textwidth < $E-$S+1 ) {
       my $textglyph = new Sanger::Graphics::Glyph::Text({
@@ -111,7 +111,7 @@ sub zmenu {
     my $start = $f->start() + $self->{'container'}->start() - 1;
     my $end   = $f->end() + $self->{'container'}->start() - 1;
 
-    my $allele = $f->alleles;
+    my $allele = $f->allele_string;
     my $pos =  $start;
     if($f->{'range_type'} eq 'between' ) {
        $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
@@ -119,26 +119,20 @@ sub zmenu {
        $pos = "$start&nbsp;-&nbsp;$end";
    }
     my %zmenu = ( 
-        'caption'           => "SNP: ".$f->id(),
+        'caption'           => "SNP: ".$f->variation_name(),
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $pos" => '',
-        "03:class: ".$f->snpclass => '',
-        "03:status: ".$f->status => '',
-        "06:mapweight: ".$f->{'_mapweight'} => '',
-        "07:ambiguity code: ".$f->{'_ambiguity_code'} => '',
+        "03:class: ".$f->var_class() => '',
+        "03:status: ".join(', ', @{$f->get_all_validation_states||[]} ) => '',
+        "06:mapweight: ".$f->map_weight => '',
+        "07:ambiguity code: ".$f->ambig_code => '',
         "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
    );
 
     my %links;
     
-    my $source = $f->source_tag; 
-    foreach my $link ($f->each_DBLink()) {
-      my $DB = $link->database;
-      if( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || ($DB eq 'dbSNP' && $source eq 'dbSNP') || $DB eq 'WI' ) {
-        $zmenu{"16:$DB:".$link->primary_id } = $self->ID_URL( $DB, $link->primary_id );
-      }
-    }
-    my $type = substr($f->type(),3);
+    my $source = $f->source; 
+    my $type = $f->get_consequence_type;
     $zmenu{"57:Type: $type"} = "" unless $type eq '';  
     return \%zmenu;
 }
@@ -146,8 +140,8 @@ sub zmenu {
 sub href {
     my ($self, $f ) = @_;
     my $start = $self->{'container'}->start()+$f->start;
-    my $snp_id = $f->id;
-    my $source = $f->source_tag;
+    my $snp_id = $f->variation_name;
+    my $source = $f->source;
     my $seq_region_name = $self->{'container'}->seq_region_name();
 
     return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id&source=$source&chr=$seq_region_name&vc_start=$start";

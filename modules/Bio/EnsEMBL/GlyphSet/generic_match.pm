@@ -96,7 +96,7 @@ sub zmenu {
      $extra_URL .= ( $self->my_config('CALL') eq 'get_all_ProteinAlignFeatures' ? 'ProteinAlignFeature' : 'DnaAlignFeature' );
      $extra_URL .= "&id=$id";
      $extra_URL .= "&db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
-  $zmenu->{ 'View all hits' } = $extra_URL;
-  return $zmenu;
+  push @zmenus, 'View all hits',  $extra_URL;
+  return \@zmenus;
 }
 1;

@@ -4,10 +4,12 @@ use vars qw(@ISA);
 use EnsWeb;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
+use Bio::EnsEMBL::Variation::VariationFeature;
 use Sanger::Graphics::Glyph::Space;
 use Bio::EnsEMBL::GlyphSet;
   
 @Bio::EnsEMBL::GlyphSet::snp_join::ISA = qw(Bio::EnsEMBL::GlyphSet);
+
 sub _init {
   my ($self) = @_;
 
@@ -34,8 +36,12 @@ sub _init {
   if( $Config->{'fakeslice'} ) {
     @snps = @{$Config->{'snps'}};
   } else {
-    @snps = map { [ $_->start, $_->end, $_  ] } 
-          grep { $_->score < 4 } @{$self->{'container'}->get_all_SNPs()};
+    my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+    @snps = map  { [ $_->[1]->start, $_->[1]->end, $_->[1]  ] } 
+            sort { $a->[0] <=> $b->[0] }
+            map { [ - $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+            grep { $_->map_weight < 4 }
+            @{$self->{'container'}->get_all_VariationFeatures()};
     my $context = $Config->get( 'snp_join', 'context' );
     if( $context && @snps ) {
       my $features = $self->{'container'}->get_all_Genes(lc(EnsWeb::species_defs->AUTHORITY));
@@ -64,26 +70,23 @@ sub _init {
   my $tag2 = $tag + ($strand == -1 ? 1 : 0);
   my $start = $container->start();
   my $T = $strand == 1 ? 1 : 0;
+  my $C=0;
   foreach my $snp_ref ( @snps ) { 
     my $snp = $snp_ref->[2];
     my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
-    my $tag_root = join ':', $snp->id, $start+$snp->start, $start+$snp->end;
+    my $tag_root = $snp->dbID();
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
-    my $type = substr($snp->type(),3,6);
-    my $colour = $colours->{"_$type"};
+    my $type = $snp->get_consequence_type();
+    my $colour = $colours->{$type};
     my $tglyph = new Sanger::Graphics::Glyph::Space({
       'x' => $S-1,
       'y' => 0,
       'height' => 0,
       'width'  => $E-$S+1,
     });
-  #  $self->join_tag( $tglyph, "X:$tag_root-$tag", $T, 0, $colour,'fill',-3 );
-  #  $self->join_tag( $tglyph, "X:$tag_root-$tag", 1-$T,0, $colour,'fill',-3 );
     $self->join_tag( $tglyph, "X:$tag_root=$tag2", .5, 0, $colour,'',-3 );
     $self->join_tag( $tglyph, "X:$tag_root-$tag", .5,0, $colour,'fill',-3 );
-  #  $self->join_tag( $tglyph, "X:$tag_root=$tag2", $T, 0, $colour,'',-3 );
-  #  $self->join_tag( $tglyph, "X:$tag_root=$tag2", 1-$T, 0, $colour,'',-3 );
     $self->push( $tglyph );
   }
 }

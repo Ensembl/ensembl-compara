@@ -55,35 +55,36 @@ sub _init {
   foreach my $snpref ( @{$Config->{'snps'}} ) {
     my $location = int( ($snpref->[0]+$snpref->[1])/2 );
     my $snp = $snpref->[2];
-    my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID().":".($snp->start * $dir +$offset) };
+    my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID()};
     next unless $cod_snp;
     next if $snp->end < $transcript->start - $EXTENT;
     next if $snp->start > $transcript->end + $EXTENT;
     my( $colour, $label );
-    if( $cod_snp->{'type'} eq '01:syn' ) { ## Synonymous
+
+    if( $cod_snp->consequence_type eq 'SYNONYMOUS_CODING' ) { ## Synonymous
       $colour = 'chartreuse1';
       if( $cod_snp->{'aa_alternatives'} ) {
         @tmp = ( "02:Amino acid: $cod_snp->{'aa_wildtype'} -> $cod_snp->{'aa_alternatives'}", '' );
-        $label  = "$cod_snp->{'aa_wildtype'}-$cod_snp->{'aa_alternatives'}";
+        $label  = $cod_snp->pep_allele_string;
       } else {
         @tmp = ( "02:Amino acid: $cod_snp->{'aa_wildtype'}", '' );
-        $label  = $cod_snp->{'aa_wildtype'};
+        $label  = $cod_snp->pep_allele_string;
       }
-    } elsif( $cod_snp->{'type'} eq '01:non-syn' ) { ## Non-synonymous 
+    } elsif( $cod_snp->consequence_type eq 'NON_SYNONYMOUS_CODING' ) { ## Non-synonymous 
       $colour = 'coral';
-      $label  = "$cod_snp->{'aa_wildtype'}-$cod_snp->{'aa_alternatives'}";
+      $label  = $cod_snp->pep_allele_string;
       @tmp = ( "02:Amino acid: $cod_snp->{'aa_wildtype'} -> $cod_snp->{'aa_alternatives'}",'' );
-    } elsif( $cod_snp->{'type'} eq '01:prem-stop' || $cod_snp->{'type'} eq '01:no-stop' ) { ## Prem-stop
+    } elsif( $cod_snp->consequence_type eq '01:prem-stop' || $cod_snp->consequence_type eq '01:no-stop' ) { ## Prem-stop
       $colour = 'red';
       $label  = "$cod_snp->{'aa_wildtype'}-$cod_snp->{'aa_alternatives'}";
       @tmp = ( "02:Amino acid: $cod_snp->{'aa_wildtype'} -> $cod_snp->{'aa_alternatives'}",'' );
-    } elsif( $cod_snp->{'type'} eq '01:coding' ) { ## Coding SNP
+    } elsif( $cod_snp->consequence_type eq 'FRAMESHIFT_CODING' ) { ## Coding SNP
       $colour = 'gold';
       $label = ' ';
-    } elsif( $cod_snp->{'type'} eq '02:utr' ) { ## UTR SNP
+    } elsif( $cod_snp->consequence_type =~ 'UTR' ) { ## UTR SNP
       $colour = 'cadetblue3';  
       $label = ' ';
-    } elsif( $cod_snp->{'type'} eq '03:intron' ) {
+    } elsif( $cod_snp->consequence_type eq 'INTRONIC' ) {
       $colour = 'grey65';
       $label = ' ';
     } else {
@@ -102,16 +103,16 @@ sub _init {
       'text'      => $label,
       'absolutey' => 1,
     });
-    my $allele =  $snp->alleles;
+    my $allele =  $snp->allele_string;
     my $chr_start = $snp->start() + $offset;
     my $chr_end   = $snp->end() + $offset;
     my $pos =  $chr_start;
-    if($snp->{'range_type'} eq 'between' ) {
-      $pos = "between&nbsp;$chr_start&nbsp;&amp;&nbsp;$chr_end";
-    } elsif($snp->{'range_type'} ne 'exact' ) {
+    if( $chr_end < $chr_start ) {
+      $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+    } elsif($chr_end > $chr_start ) {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
-    my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->id]}&source=@{[$snp->source_tag]}&chr=$seq_region_name&vc_start=$chr_start";
+    my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->variation_name]}&source=@{[$snp->source]}&chr=$seq_region_name&vc_start=$chr_start";
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S - $font_w_bp / 2,
       'y'         => $h + 2,
@@ -120,13 +121,13 @@ sub _init {
       'colour'    => $colour,
       'absolutey' => 1,
       'zmenu' => {
-        'caption' => 'SNP '.$snp->id,
-        "01:".substr($cod_snp->{'type'},3) => '',
+        'caption' => 'SNP '.$snp->variation_name,
+        "01:".$cod_snp->consequence_type => '',
         @tmp,
         '11:SNP properties' => $href,
         "12:bp $pos" => '',
-        "13:class: ".$snp->snpclass => '',
-        "14:ambiguity code: ".$snp->{'_ambiguity_code'} => '',
+        "13:class: ".$snp->var_class => '',
+        "14:ambiguity code: ".$snp->ambig_code => '',
         "15:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
       }
     });
