@@ -54,7 +54,7 @@ sub _init {
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 			'zmenu'     => { 
 				'caption' => "$i",
-				'EMBL mRNA' => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$i",		
+				"EMBL: $i" => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$i",		
 			},
 	    });
 

@@ -100,7 +100,8 @@ sub _init {
 	    		'zmenu' => {
 					'caption' => $rid,
 					'Contig information'     => "/perl/seqentryview?seqentry=$clone&contigid=$rid",
-					"FPC ID: $fpc_id"     	 => "",
+					"FPC clone ID: $fpc_id"     	 => "",
+					"Request clone $fpc_id"     => "http://www.sanger.ac.uk/Teams/Team63/CloneRequest/",
 	    		},
 			});
 			$self->push($glyph);
@@ -209,29 +210,33 @@ sub _init {
     });
     $self->push($tick);
     
-    my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
-	'x'      => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
-	'y'      => $ystart - 4 ,
-	'width'  => $self->{'config'}->{'_wvc_end'} - $self->{'config'}->{'_wvc_start'},
-	'height' => 22,
-	'bordercolour' => $red,
-	'absolutey'  => 1,
-	'id'	=> 'enigma',
-	'zmenu'     => { foo => 'foo' },
-    });
-    $self->push($boxglyph);
- 
-    my $boxglyph2 = new Bio::EnsEMBL::Glyph::Rect({
-	'x'      => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
-	'y'      => $ystart - 3 ,
-	'width'  => $self->{'config'}->{'_wvc_end'} - $self->{'config'}->{'_wvc_start'},
-	'height' => 20,
-	'bordercolour' => $red,
-	'absolutey'  => 1,
-	'id'	=> 'enigma',
-	'zmenu'     => { foo => 'foo' },
-    });
-    $self->push($boxglyph2);
+	if ($self->{'config'}->script() eq "contigviewtop"){
+		# only draw focus box on the correct display...
+    	my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
+		'x'      => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
+		'y'      => $ystart - 4 ,
+		'width'  => $self->{'config'}->{'_wvc_end'} - $self->{'config'}->{'_wvc_start'},
+		'height' => 22,
+		'bordercolour' => $red,
+		'absolutey'  => 1,
+		'id'	=> 'enigma',
+		'zmenu'     => { foo => 'foo' },
+    	});
+    	$self->push($boxglyph);
+
+    	my $boxglyph2 = new Bio::EnsEMBL::Glyph::Rect({
+		'x'      => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
+		'y'      => $ystart - 3 ,
+		'width'  => $self->{'config'}->{'_wvc_end'} - $self->{'config'}->{'_wvc_start'},
+		'height' => 20,
+		'bordercolour' => $red,
+		'absolutey'  => 1,
+		'id'	=> 'enigma',
+		'zmenu'     => { foo => 'foo' },
+    	});
+    	$self->push($boxglyph2);
+	}
+
 }
 
 

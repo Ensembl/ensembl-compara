@@ -107,6 +107,8 @@ sub _init {
         }
         
         my $tid = $transcript->id();
+        my $pid = $tid;
+		$pid =~ s/ENST/ENSP/io;
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 		
 		if ($tid =~ /(.*)\.trans\.(\d+)/o){
@@ -119,7 +121,8 @@ sub _init {
 			# we have a normal Ensembl transcript...
         	$Composite->{'zmenu'}  = {
             	'caption'					=> $id,
-            	'More information'          => "/perl/geneview?gene=$vgid",
+            	'Transcript information'          => "/perl/geneview?gene=$vgid",
+            	'Protein information'          => "/perl/protview?peptide=$pid",
             	'Peptide sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
             	'Supporting evidence'       => "/perl/transview?gene=$tid",
             	'cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
