@@ -18,50 +18,88 @@ sub new {
     chartreuse4 grey25 deeppink4 slateblue3
     olivedrab4 gold4 blueviolet seagreen4 violetred3
   )];
-  $self->colourSet( 'core_gene',
-    '_KNOWN'     => 'rust',
-    '_KNOWNXREF' => 'rust',
-    '_XREF'      => 'black',
-    '_ORTH'     => 'green3',
-    '_PREDXREF'  => 'red3',
-    '_PRED'      => 'red3',
-    '_BACCOM'      => 'red',
-    '_'          => 'black', 
-    '_PSEUDO'   => 'grey50', 
-    'refseq'    => 'blue',
-    'hi'        => 'highlight1',
-    'superhi'   => 'highlight2'
+  my %core = (
+    '_KNOWN'     => [ 'rust', 'known' ],
+    '_KNOWNXREF' => [ 'rust', 'known' ],
+    '_XREF'      => [ 'black','novel' ],
+    '_ORTH'      => [ 'green3', 'ortholog' ],
+    '_PREDXREF'  => [ 'red3',   'prediction'  ],
+    '_PRED'      => [ 'red3',   'prediction'  ],
+    '_BACCOM'    => [ 'red',    'bacterial contaminent' ],
+    '_'          => [ 'black',  'novel' ],
+    '_PSEUDO'    => [ 'grey50', 'pseudogene' ],
+  );
+  $self->colourSet( 'ensembl_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    map { $_ => [ $core{$_}[0], "EnsEMBL predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+  );
+  $self->colourSet( 'wormbase_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    map { $_ => [ $core{$_}[0], "Wormbase predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+  );
+  $self->colourSet( 'flybase_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    map { $_ => [ $core{$_}[0], "Flybase predicted genes (@{[$core{$_}[1]]})" ] } keys %core
   );
   $self->colourSet( 'vega_gene',
     'hi'                    => 'highlight1',
     'superhi'               => 'highlight2',
-    'Novel_CDS'             => 'blue',
-    'Novel_CDS_in_progress' => 'cornflowerblue',
-    'Putative'              => 'lightslateblue',
-    'Known'                 => 'dodgerblue4',
-    'Known_in_progress'     => 'lightskyblue4',
-    'Pseudogene'            => 'grey70',
-    'Processed_pseudogene'  => 'grey38',
-    'Unprocessed_pseudogene'=> 'grey27',
-    'Novel_Transcript'      => 'skyblue3',
-    'Ig_Segment'            => 'midnightblue',
-    'Ig_Pseudogene_Segment' => 'mediumpurple4',
-    'Predicted_Gene'        => 'steelblue4',
-    'Transposon'            => 'steelblue',
-    'Polymorphic'           => 'blue4',
+    'Novel_CDS'             => [ 'blue', 'Curated novel CDS' ],
+    'Putative'              => [ 'lightslateblue', 'Curated putative' ],
+    'Known'                 => [ 'dodgerblue4', 'Curated novel genes' ],
+    'Pseudogene'            => [ 'grey70', 'Curated psuedogenes' ],
+    'Processed_pseudogene'  => [ 'grey38', 'Curated processed psuedogenes' ],
+    'Unprocessed_pseudogene'=> [ 'grey27', 'Curated unprocessed pseudogenes' ],
+    'Novel_Transcript'      => [ 'skyblue3', 'Curated Ig Segment' ],
+    'Ig_Segment'            => [ 'midnightblue', 'Curated Ig Segment' ],
+    'Ig_Pseudogene_Segment' => [ 'mediumpurple4', 'Curated Id Pseudogene' ],
+    'Predicted_Gene'        => [ 'steelblue4', 'Curated prediction'] ,
+    'Transposon'            => [ 'steelblue', 'Curated transposon'] ,
+    'Polymorphic'           => [ 'blue4', 'Curated Polymorhic' ]
+  );
+  $self->colourSet( 'rna_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'rna-pseudo' => [ 'plum3', 'RNA Pseudogene' ] ,
+    'rna-real'   => [ 'plum4', 'RNA gene' ]
   );
   $self->colourSet( 'est_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
-    'genomewise' => 'purple1',
-    'est_genebuilder' => 'purple1',
-    'estgene'    => 'purple1',
-    'est_gene'    => 'purple1',
+    'genomewise' => [ 'purple1', 'EST gene' ],
+    'est_genebuilder' => [ 'purple1', 'EST gene' ],
+    'estgene'    => [ 'purple1', 'EST gene' ],
+    'est_gene'    => [ 'purple1', 'EST gnee' ]
+  );
+  $self->colourSet( 'prot_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    '_col'       => [ 'orchid4', 'Aligned protein' ], 
+  );
+  $self->colourSet( 'refseq_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    '_refseq' => [ 'blue', 'Aligned RefSeq' ],
+  );
+
+  $self->colourSet( 'protein',
+    'default'    => 'gold',
+    'refseq'     => 'orange',
   );
   $self->colourSet( 'cdna',
-    'col'    => 'chartreuse3',
-    'refseq' => 'mediumspringgreen',
-    'riken'  => 'olivedrab4',
+    'default'    => 'chartreuse3',
+    'refseq'     => 'mediumspringgreen',
+    'riken'      => 'olivedrab4',
+  );
+  $self->colourSet( 'mrna',
+    'default'    => 'red',
+  );
+  $self->colourSet( 'est',
+    'default'    => 'purple1',
+    'genoscope'  => 'purple3',
   );
   $self->colourSet( 'glovar_sts',
     'col'    => 'grey',
@@ -85,20 +123,6 @@ sub new {
     ''               => 'magenta',
     'est'            => 'magenta',
     'microsatellite' => 'plum4',
-  );
-  $self->colourSet( 'protein',
-    'col'        => 'gold',
-    'refseq'     => 'orange',
-  );
-  $self->colourSet( 'prot_gene',
-    'hi'         => 'highlight1',
-    'superhi'    => 'highlight2',
-    '_col'       => 'orchid4',
-  );
-  $self->colourSet( 'refseq_gene',
-        'hi'         => 'highlight1',
-        'superhi'    => 'highlight2',
-        '_refseq' => 'blue',
   );
   return $self;
 }
