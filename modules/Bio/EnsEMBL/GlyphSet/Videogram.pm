@@ -98,25 +98,34 @@ sub _init {
     # bottom align each chromosome!
     my $v_offset    = $Config->container_width() - $chr_length; 
     my $bpperpx     = $Config->container_width()/$Config->{'_image_height'};
-    # over come a bottom border/margin problem....
+    # overcome a bottom border/margin problem....
 
     my $done_1_acen = 0;        # flag for tracking place in chromsome
     my $wid         = $Config->get('Videogram','width');
     my $h_wid       = int($wid/2);
     my $padding     = $Config->get('Videogram','padding') || 6;
-        
-    # max width of band label is 6 characters
-    my $h_offset    = int(
-        $self->{'config'}->get('Videogram','totalwidth')
-            - $wid
-            - ($self->{'config'}->{'_band_labels'} eq 'on' ? ($w * 6 + 4) : 0 )
-    )/2;
+
+    my $style       = $Config->get('Videogram', 'style');
+    
+    my $h_offset;
+    # get text labels in correct place!
+    if ($style eq 'text') {
+        $h_offset = $padding;
+    }
+    else {
+        # max width of band label is 6 characters
+        $h_offset    = int($self->{'config'}->get('Videogram', 'totalwidth') 
+                            - $wid
+                            - ($self->{'config'}->{'_band_labels'} eq 'on' ? ($w * 6 + 4) : 0 )
+                            )/2;
+    }
 
     my @decorations;
 
     if($padding) {
     # make sure that there is a blank image behind the chromosome so that the
-    # glyhset doesn't get "horizontally" squashed.
+    # glyphset doesn't get "horizontally" squashed.
+   
         my $gpadding = new Sanger::Graphics::Glyph::Space({
             'x'         => 0,
             'y'         => $h_offset - $padding,
@@ -574,6 +583,51 @@ sub highlight_wideline {
         'absolutey' => 1,
         'zmenu'     => $details->{'zmenu'}
     });
+}
+
+sub highlight_text {
+    my $self = shift;
+    my $details = shift;
+    my $composite = new Sanger::Graphics::Glyph::Composite();
+  
+    $composite->push( 
+        new Sanger::Graphics::Glyph::Rect({
+        'x'             => $details->{'start'},
+        'y'             => $details->{'h_offset'}-$details->{'padding'},
+        'width'         => $details->{'end'}-$details->{'start'},
+        'height'        => $details->{'wid'}+$details->{'padding'}*2,
+        'bordercolour'  => $details->{'col'},
+        'absolutey'     => 1,
+        })
+    );
+    # line pointing to feature
+    #$composite->push(
+    # new Sanger::Graphics::Glyph::Line({
+    #   'x'         => $details->{'mid'},
+    #   'y'         => $details->{'h_offset'}-$details->{'padding'},,
+    #   'width'     => 0,
+    #   'height'    => $details->{'wid'}/2,
+    #   'colour'    => $details->{'col'},
+    #   'absolutey' => 1,
+    #  })
+    #);
+    
+    # text label for feature
+    $composite->push (new Sanger::Graphics::Glyph::Text({
+        'x'         => $details->{'mid'}-$details->{'padding2'},
+        'y'         => $details->{'wid'}+$details->{'padding'}*3,
+        'width'     => 0,
+        'height'    => $details->{'wid'},
+        'font'      => 'Tiny',
+        'colour'    => $details->{'col'},
+        'text'      => $details->{'id'},
+        'absolutey' => 1,
+        })
+    );
+    # set up clickable area for complete graphic
+    $composite->{'zmenu'}   = $details->{'zmenu'};
+    
+    return $composite;
 }
 
 sub highlight_lharrow {
