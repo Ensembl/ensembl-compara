@@ -167,7 +167,7 @@ sub create_haplotype_block {
         'y'          => $global_ystart - 30 + 1,
         'font'       => 'Small',
         'colour'     => $black,
-        'text'       => "Poly. ID",
+        'text'       => "dbSNP ID",
         'absolutex'  => 1,
         'absolutey'  => 1,
     });
