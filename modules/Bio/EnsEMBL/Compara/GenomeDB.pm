@@ -58,8 +58,27 @@ sub new {
     
     my $self = {};
     bless $self,$class;
-    
-# set stuff in self from @args
+
+#    my ( $db_adaptor ) = $self->_rearrange([qw(DBADAPTOR)],@args);
+    my ( $dba ) = $args[1];
+
+    if ( !defined $dba ) {
+      $self->throw("No DBAdaptor set during GenomeDB object creation.");
+    }
+
+    my $species = $dba->get_MetaContainer->get_Species->binomial;
+    $species =~ s/\s/_/;
+
+    $self->species($species);
+
+    my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=".$dba->dbname.";user=".
+                  $dba->username.";pass=".$dba->password;
+
+    $self->locator($locator);
+
+    # store the DBAdaptor
+    $self->db_adaptor($dba);
+
     return $self;
 }
 
@@ -174,30 +193,24 @@ sub adaptor{
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+=head2 species
+ 
+  Arg [1]    : string
+  Example    : $genomedb->species;
+  Description: Getter/Setter for the species attribute
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+sub species{
+   my ($self,$value) = @_;
+   if( defined $value) {
+      $self->{'species'} = $value;
+    }
+    return $self->{'species'};
+}
 
 
 1;
