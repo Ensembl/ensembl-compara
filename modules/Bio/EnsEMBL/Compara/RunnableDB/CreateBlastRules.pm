@@ -166,7 +166,7 @@ sub createBlastRules
 
       foreach my $analysis (@{$analysisList}) {
         if($analysis->logic_name =~ /SubmitPep_/) {
-          my $genome_db_id = parse_as_hash($analysis->parameters)->{'genome_db_id'};
+          my $genome_db_id = eval($analysis->parameters)->{'genome_db_id'};
           if($genome_db_id and ($genome_db_id ne $genomeDB1->dbID)) {
             my $phylum = $self->phylumForGenomeDBID($genome_db_id);
             #print("  check ".$analysis->logic_name().
@@ -292,8 +292,8 @@ sub addBuildHomologyInput
   }
 
 
-  my $genome_db_id1 = parse_as_hash($analysis1->parameters)->{'genome_db_id'};
-  my $genome_db_id2 = parse_as_hash($analysis2->parameters)->{'genome_db_id'};
+  my $genome_db_id1 = eval($analysis1->parameters)->{'genome_db_id'};
+  my $genome_db_id2 = eval($analysis2->parameters)->{'genome_db_id'};
   if(($analysis1->logic_name =~ /blast_/) and
      ($analysis2->logic_name =~ /blast_/) and
      $genome_db_id1 and $genome_db_id2)
@@ -373,30 +373,6 @@ sub checkRuleExists
   }
 
   return undef;
-}
-
-sub parse_as_hash{
-  my $hash_string = shift;
-
-  my %hash;
-
-  return \%hash unless($hash_string);
-
-  my @pairs = split (/,/, $hash_string);
-  foreach my $pair (@pairs) {
-    my ($key, $value) = split (/=>/, $pair);
-    if ($key && $value) {
-      $key   =~ s/^\s+//g;
-      $key   =~ s/\s+$//g;
-      $value =~ s/^\s+//g;
-      $value =~ s/\s+$//g;
-
-      $hash{$key} = $value;
-    } else {
-      $hash{$key} = "__NONE__";
-    }
-  }
-  return \%hash;
 }
 
 1;

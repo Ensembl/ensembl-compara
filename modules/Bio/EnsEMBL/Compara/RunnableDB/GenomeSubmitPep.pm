@@ -222,7 +222,7 @@ sub createSubmitPepAnalysis {
         -db              => '',
         -db_file         => $subset->dump_loc(),
         -db_version      => '1',
-        -parameters      => "subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID(),
+        -parameters      => "{subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID()."}",
         -logic_name      => $logic_name,
         -input_id_type   => 'MemberPep',
         -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
