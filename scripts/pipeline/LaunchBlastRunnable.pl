@@ -10,7 +10,8 @@ use Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 #use Bio::EnsEMBL::GenePair::DBSQL::PairAdaptor;
 
-my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
+my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
+my $compara_conf="";
 my $member_id=8;
 my $logic_name='homology_blast_10116';
 my $verbose=1;
@@ -52,12 +53,15 @@ unless (defined($member_id) and defined($logic_name)) {
 
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
+                                                     -port => $port,
 						     -user => $user,
 						     -pass => $pass,
 						     -dbname => $dbname);
 
-testBlastRunnable($db, "/nfs/acari/jessica/work2/FastaPeptidesFiles/ENSMUSP00000027035.fasta",
-                  "/ecs4/work2/ensembl/jessica/data/FastaPeptidesFiles/rattus_norvegicus_core_20_3b.fasta");
+#testBlastRunnable($db, "/home/jessica/data/FastaPeptidesFiles/ENSMUSP00000027035.fasta",
+#                  "/home/jessica/data/FastaPeptidesFiles/Rattus_norvegicus_RGSC3.1.fasta");
+
+testBlastRunnableDB($db, $member_id);
 
 exit(0);
 
@@ -88,7 +92,6 @@ sub usage {
 sub displayHSP {
   my($feature) = @_;
   
-  my $percent_ident = $feature->identical_matches;
   my $percent_ident = int($feature->identical_matches*100/$feature->alignment_length);
   my $pos = int($feature->positive_matches*100/$feature->alignment_length);
   
@@ -116,7 +119,7 @@ sub testBlastRunnableDB
   
   my $analysis = $db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
 
-  my $runnabledb = Bio::EnsEMBL::Pipeline::RunnableDB::BlastComparaPep->new(
+  my $runnabledb = Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep->new(
                   -db    => $db,
 		  -input_id => $member_id,
 		  -analysis => $analysis);
@@ -125,12 +128,12 @@ sub testBlastRunnableDB
   $runnabledb->run;
 
   # check output
-  my @outputs = $runnabledb->output;
-  print("have $#outputs outputs\n");
-  foreach my $output (@outputs) {
-    print("=> $output\n");
+  #my @outputs = $runnabledb->output;
+  #print("have $#outputs outputs\n");
+  #foreach my $output (@outputs) {
+  #  print("=> $output\n");
     #displayHSP($output);
-  }
+  #}
 
   $runnabledb->write_output;
 
