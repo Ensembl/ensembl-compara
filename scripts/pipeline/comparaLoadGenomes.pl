@@ -275,10 +275,12 @@ sub submitGenome
     return;
   }
 
-  my $taxon_id = $genomeDBA->get_MetaContainer->get_taxonomy_id;
-  my $genome_name = $genomeDBA->get_MetaContainer->get_Species->binomial;
+  my $meta = $genomeDBA->get_MetaContainer;
+  my $taxon_id = $meta->get_taxonomy_id;
+  my $genome_name = $meta->get_Species->binomial;
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
+  my $genebuild = $meta->get_genebuild;
 
   if($species->{taxon_id} && ($taxon_id ne $species->{taxon_id})) {
     throw("$genome_name taxon_id=$taxon_id not as expected ". $species->{taxon_id});
@@ -288,6 +290,8 @@ sub submitGenome
   $genome->taxon_id($taxon_id);
   $genome->name($genome_name);
   $genome->assembly($assembly);
+  $genome->genebuild($genebuild);
+  $genome->locator($locator);
 
   $self->{'comparaDBA'}->get_GenomeDBAdaptor->store($genome);
   $species->{'genome_db'} = $genome;
