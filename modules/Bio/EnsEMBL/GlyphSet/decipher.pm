@@ -47,7 +47,7 @@ sub features {
 		);
 
   my $res   = [];
-  @features = sort { $a->group() cmp $b->group() } @features;
+  @features = sort { $a->orientation() cmp $b->orientation() || $a->group() cmp $b->group() } @features;
 
   while(@features) {
     my @parts  = $features[0..1];
@@ -59,13 +59,15 @@ sub features {
     my $s = Bio::EnsEMBL::SeqFeature->new(
 					  -start   => $hard->start()+$offset,
 					  -end     => $hard->end()+$offset,
-					  -strand  => ($soft->orientation() eq "-")?-1:1,
+					  -strand  => -1,
 					  -seqname => $hard->label(),
 					 );
-    $s->{'_softstart'} = $soft->start()+$offset;
-    $s->{'_softend'}   = $soft->end()+$offset;
-    $s->{'_note'}      = $soft->note();
-    $s->{'_link'}      = $soft->link();
+    $s->{'decipher_softstart'} = $soft->start()+$offset;
+    $s->{'decipher_softend'}   = $soft->end()+$offset;
+    $s->{'decipher_note'}      = $soft->note();
+    $s->{'decipher_link'}      = $soft->link();
+    $s->{'decipher_strand'}    = ($soft->orientation() eq "-")?-1:1;
+
     push @{$res}, $s;
   }
   return $res;
@@ -73,7 +75,7 @@ sub features {
 
 sub colour {
   my ($self, $f) = @_;
-  ($f->strand() < 0)?"red":"green";
+  ($f->{'decipher_strand'} < 0)?"red":"green";
 }
 
 sub href  { return undef; }
@@ -81,8 +83,8 @@ sub zmenu {
   my ($self, $f) = @_;
   return {
 	  'caption' => "DECIPHER:" . $f->seqname(),
-	  '01:<b>Phenotype:</b>' . $f->{'_note'} => undef,
-	  '02:Report' => $f->{'_link'},
+	  '01:<b>Phenotype:</b>' . $f->{'decipher_note'} => undef,
+	  '02:Report' => $f->{'decipher_link'},
 	 };
 }
 
@@ -94,14 +96,14 @@ sub image_label {
 sub tag {
   my ($self, $f) = @_;
   return ({
-	   'start'  => $f->{'_softstart'},
+	   'start'  => $f->{'decipher_softstart'},
 	   'end'    => $f->start(),
 	   'style'  => 'line',
 	   'colour' => $self->colour($f),
 	  },
 	  {
 	   'start'  => $f->end(),
-	   'end'    => $f->{'_softend'},
+	   'end'    => $f->{'decipher_softend'},
 	   'style'  => 'line',
 	   'colour' => $self->colour($f),
 	  });
