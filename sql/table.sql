@@ -234,7 +234,7 @@ CREATE TABLE homology_member (
  cigar_end              int(10),
  perc_cov	        int(10),
  perc_id	        int(10),
- perc_pos	        int(10)
+ perc_pos	        int(10),
 
  UNIQUE KEY (member_id,homology_id),
  UNIQUE KEY (homology_id,member_id)
