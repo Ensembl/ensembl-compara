@@ -20,7 +20,6 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-    warn( EnsWeb::species_defs->ENSEMBL_EMBOSS_PATH );
     return unless EnsWeb::species_defs->ENSEMBL_EMBOSS_PATH;
     return unless my $strand = $self->strand eq -1;
     my $vc     = $self->{'container'};
@@ -64,7 +63,6 @@ sub _init {
             /^\s*(\d+)\s*(\d+)\s*(\d+)\s*(\w+)\s*(\w+)\s*([.\d]+)\s*([.\d]+)\s*([.\d]+)\s*([.\d]+)/ ) {
             ( my $regexp = "^$seq".'$' ) =~s/([SWMKYRNVHDB])/$map{$1}/eg;
 	    unless(substr($sequence,$st-1,$en-$st+1) =~ /$regexp/) {
-		warn( "FLIPPING - $name - $seq ($st,$en) ($s_3p,$s_5p) ($s_3pr,$s_5pr)" );
                 $en = 2 * $st - $en;
 	        if($s_3p ne '.') {
 			($s_3p,$s_5p) = (2*$st-$s_5p-1,2*$st-$s_3p-1);
@@ -73,7 +71,6 @@ sub _init {
 	        ($s_3pr,$s_5pr) = (2*$st-$s_5pr-1,2*$st-$s_3pr-1);
                 }
 		($st,$en) = ($en,$st);
-		warn( "FLIPPED - $name - $seq ($st,$en) ($s_3p,$s_5p) ($s_3pr,$s_5pr)" );
             }
             $s_3pr = -10000 if $s_3pr eq '.';
             $s_5pr = -10000 if $s_5pr eq '.';
@@ -122,7 +119,6 @@ sub _init {
             'y' => 0
         });
         unless($start > $length || $end < 1 ) {
-	    warn( "PUSHED - 1" );
             $Composite->push( new Sanger::Graphics::Glyph::Rect({
     	       'x'      => $start -1 ,
     	       'y'      => 0,
@@ -159,7 +155,6 @@ sub _init {
                     if($X<1) { ## DO NOT DRAW DOWN TAG
                         $X = 0;
                     } else {
-			warn( "$f->{'start'}-$f->{'end'} :: $X" );
                         $Composite->push( new Sanger::Graphics::Glyph::Rect({
                     	    'x'      => $X  , 'y'      => $h1, 'width'  => 0,
                             'height' => 5, 'colour' => $cut_colour, 'absolutey' => 1,
@@ -202,7 +197,6 @@ sub _init {
           }
         }
         next unless @{$Composite->{'composite'}||[]};
-        warn( $f->{'name'}." ".($Composite->width * 2)." ".(1.2 * $w * $pix_per_bp * length( $f->{'name'} )) );
 	if( $Composite->width * 2 > 1.2 * $w / $pix_per_bp * length( $f->{'name'} ) ) {
               $Composite->push( new Sanger::Graphics::Glyph::Text({
                 'x'          => $Composite->x,
