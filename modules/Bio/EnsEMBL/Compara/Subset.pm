@@ -34,6 +34,9 @@ use strict;
 use Bio::Species;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Root;
+
+@Bio::EnsEMBL::Compara::Subset::ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
   my ($class, @args) = @_;
