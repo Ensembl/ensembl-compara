@@ -53,7 +53,7 @@ use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
@@ -77,12 +77,13 @@ sub fetch_input {
   # $self->parameters OR
   # $self->input_id
   #
-  $self->{'genome_db_id'}      = 0;  # 'gdb'
-  $self->{'store_seq'}         = 1;
-  $self->{'overlap'}           = 1000;
-  $self->{'chunk_size'}        = 1000000;
-  $self->{'masking'}            = 'soft';
-  $self->{'mask_params'}       = undef;
+  $self->{'genome_db_id'}             = 0;  # 'gdb'
+  $self->{'store_seq'}                = 0;
+  $self->{'overlap'}                  = 1000;
+  $self->{'chunk_size'}               = 1000000;
+  $self->{'chr_name'}                 = undef;
+  $self->{'masking_analysis_data_id'} = 0;
+  $self->{'masking_options'}          = undef;
 
   $self->{'analysis_job'}             = undef;
   $self->{'create_analysis_prefix'}   = undef; # 'analysis', 'job'
@@ -96,7 +97,7 @@ sub fetch_input {
   
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
   #get the Compara::GenomeDB object for the genome_db_id
   $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->
@@ -161,14 +162,22 @@ sub get_params {
   
   my $params = eval($param_string);
   return unless($params);
+
+  foreach my $key (keys %$params) {
+    print("  $key : ", $params->{$key}, "\n");
+  }
       
   $self->{'store_seq'} = $params->{'store_seq'} if(defined($params->{'store_seq'}));
   $self->{'chunk_size'} = $params->{'chunk_size'} if(defined($params->{'chunk_size'}));
   $self->{'overlap'} = $params->{'overlap'} if(defined($params->{'overlap'}));
-  $self->{'masking'} = $params->{'masking'} if(defined($params->{'masking'}));
 
   $self->{'genome_db_id'} = $params->{'gdb'} if(defined($params->{'gdb'}));
-
+  $self->{'chr_name'} = $params->{'chr_name'} if(defined($params->{'chr_name'}));
+  $self->{'masking_options'} = $params->{'masking_options'}
+    if(defined($params->{'masking_options'}));
+  $self->{'masking_analysis_data_id'} = $params->{'masking_analysis_data_id'}
+    if(defined($params->{'masking_analysis_data_id'}));
+    
   $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
   $self->{'create_analysis_prefix'} = $params->{'create_analysis_prefix'}
     if(defined($params->{'create_analysis_prefix'}));
@@ -182,11 +191,12 @@ sub print_params {
   my $self = shift;
 
   print(" params:\n");
-  print("   genome_db_id : ", $self->{'genome_db_id'},"\n"); 
-  print("   store_seq    : ", $self->{'store_seq'},"\n");
-  print("   chunk_size   : ", $self->{'chunk_size'},"\n");
-  print("   overlap      : ", $self->{'overlap'} ,"\n");
-  print("   masking      : ", $self->{'masking'} ,"\n");
+  print("   genome_db_id             : ", $self->{'genome_db_id'},"\n"); 
+  print("   store_seq                : ", $self->{'store_seq'},"\n");
+  print("   chunk_size               : ", $self->{'chunk_size'},"\n");
+  print("   overlap                  : ", $self->{'overlap'} ,"\n");
+  print("   masking_analysis_data_id : ", $self->{'masking_analysis_data_id'} ,"\n");
+  print("   masking_options          : ", $self->{'masking_options'} ,"\n") if($self->{'masking_options'});
  #print("   prog         : ", $self->{'prog'} ,"\n");
  #print("   create       : ", $self->{'create'} ,"\n");
 }
@@ -204,8 +214,13 @@ sub create_chunks_from_genomeDB
   $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   my $SliceAdaptor = $genome_db->db_adaptor->get_SliceAdaptor;
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
-  
-  my $chromosomes = $SliceAdaptor->fetch_all('toplevel');
+
+  my $chromosomes = [];
+  if(defined $self->{'chr_name'}) {
+    push @{$chromosomes}, $SliceAdaptor->fetch_by_region('chromosome', $self->{'chr_name'});
+  } else {
+    $chromosomes = $SliceAdaptor->fetch_all('toplevel');
+  }
 
   my $starttime = time();
   foreach my $chr (@{$chromosomes}) {
@@ -257,9 +272,13 @@ sub create_dnafrag_chunks {
     $chunk->dnafrag($dnafrag);
     $chunk->seq_start($i);
     $chunk->seq_end($i + $self->{'chunk_size'} - 1);
+    $chunk->masking_analysis_data_id($self->{'masking_analysis_data_id'});
+    if($self->{'masking_options'}) {
+      $chunk->masking_options($self->{'masking_options'});
+    }
 
     if($self->{'chunk_size'} <=15000000 and $self->{'store_seq'}) {
-      my $bioseq = $chunk->fetch_masked_sequence($self->{'masking'}, $self->{'mask_params'});
+      my $bioseq = $chunk->fetch_masked_sequence;
       $chunk->sequence($bioseq->seq);
     }
     print "storing chunk ",$chunk->display_id,"\n";
@@ -342,24 +361,6 @@ sub create_chunk_analysis {
   $stats->update();
   
   return;
-}
-
-
-sub test {
-  my $self = shift;
-
-  my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
-  
-  my $qyChunk = $dnafragDBA->fetch_by_dbID(1);
-  my $dbChunk = $dnafragDBA->fetch_by_dbID(2);
-
-  my $starttime = time();
-  my $qySeq = $qyChunk->fetch_masked_sequence;
-  print scalar(time()-$starttime), " secs\n";
-  my $dbSeq = $dbChunk->fetch_masked_sequence;
-  print scalar(time()-$starttime), " secs\n";
-
-  exit(0);
 }
 
 1;
