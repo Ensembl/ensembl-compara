@@ -16,14 +16,14 @@ use Bump;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => 'Genes',
         'font'      => 'Small',
         'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
@@ -34,7 +34,7 @@ sub _init {
     my $y              = 0;
     my @bitmap         = undef;
     my $im_width       = $Config->image_width();
-    my $type           = $Config->get($Config->script(),'gene','src');
+    my $type           = $Config->get('gene','src');
     my @allgenes       = $VirtualContig->get_all_Genes_exononly();
     my %highlights;
     @highlights{$self->highlights()} = ();    # build hashkeys of highlight list
@@ -46,9 +46,9 @@ sub _init {
 	}
     }
 
-    my $ext_col        = $Config->get($Config->script(),'gene','ext');
-    my $known_col      = $Config->get($Config->script(),'gene','known');
-    my $unknown_col    = $Config->get($Config->script(),'gene','unknown');
+    my $ext_col        = $Config->get('gene','ext');
+    my $known_col      = $Config->get('gene','known');
+    my $unknown_col    = $Config->get('gene','unknown');
     my $pix_per_bp     = $Config->transform->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
     my $fontname       = "Tiny";
@@ -87,26 +87,26 @@ sub _init {
 		    # check for highlighting
 		    #########################
 		    if (exists $highlights{$DB_link->display_id}){
-			$hi_colour = $Config->get($Config->script(), 'gene', 'hi');
+			$hi_colour = $Config->get( 'gene', 'hi');
 		    }
-
+		    
 		    if ( $DB_link->database() eq 'HUGO' ) {
 			$displaylink = $DB_link;
 			last;
 		    }
-
-		    if ( 
+		    
+		    if (
 			$DB_link->database() eq  'SP' ||
 			$DB_link->database() eq  'SPTREMBL' ||
 			$DB_link->database() eq  'SCOP' ) {
 			$displaylink = $DB_link;
 		    }
 		}
-
+		
 		if (exists $highlights{$vg->id}){
-		    $hi_colour = $Config->get($Config->script(), 'gene', 'hi');
+		    $hi_colour = $Config->get( 'gene', 'hi');
 		}
-
+		
 		if( $displaylink ) {
 		    $label = $displaylink->display_id();
 		} else {
@@ -122,12 +122,11 @@ sub _init {
 	    # skip if it's not on the strand we're drawing
 	    #
 	    next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());
-
+	    
 	    $colour = $ext_col;
 	    $label  = $vg->id;
 	    $label  =~ s/gene\.//;
 	}
-
 
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 	
@@ -148,24 +147,6 @@ sub _init {
 	});
 
 	$Composite->push($tglyph);
-
-
-	#########
-	# bump it baby, yeah!
-    	# bump-nology!
-	#
-#    	my $bump_start = int($start * $pix_per_bp);
-#	$bump_start    = 0 if ($bump_start < 0);
-
-#    	my $bump_end = $bump_start + $bp_textwidth;
-#    	next if $bump_end > $bitmap_length;
-#    	my $row = &Bump::bump_row(      
-#	    $bump_start,
-#	    $bump_end,
-#	    $bitmap_length,
-#	    \@bitmap
-#    	);
-
 	$Composite->colour($hi_colour) if(defined $hi_colour);
 
 	##################################################

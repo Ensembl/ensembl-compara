@@ -8,53 +8,43 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'pdb',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
-    my ($this) = @_;
+    my ($self) = @_;
 
-    my $protein = $this->{'container'};
-    my $Config = $this->{'config'};
-
+    my $protein    = $self->{'container'};
+    my $Config     = $self->{'config'};
     my $y          = 0;
     my $h          = 4;
-    my $highlights = $this->highlights();
-   
-#Draw the protein
-    my $length = $protein->length();
+    my $highlights = $self->highlights();
+    my $length     = $protein->length();
+    my $xp         = 0;
+    my $wp         = $length;
 
-    my $xp = 0;
-    my $wp = $length;
-
-#    print STDERR "PROT VERSION001\n";
-
-   
-    my $colour = $Config->get($Config->script(), 'pdb','col');
+    my $colour = $Config->get('pdb', 'col');
 
     my $rect = new Bio::EnsEMBL::Glyph::Rect({
-			'x'        => $xp,
-			'y'        => $y,
-			'width'    => $wp,
-			'height'   => $h,
-			'id'       => $protein->id(),
-			'colour'   => $colour,
-			'zmenu' => {
-			    'caption' => $protein->id(),
-			},
-		    });
+	'x'        => $xp,
+	'y'        => $y,
+	'width'    => $wp,
+	'height'   => $h,
+	'id'       => $protein->id(),
+	'colour'   => $colour,
+	'zmenu' => {
+	    'caption' => $protein->id(),
+	},
+    });
     
-#    push @{$this->{'glyphs'}}, $rect;   
-    $this->push($rect);
-    
-   
+    $self->push($rect);
 }
 1;
 

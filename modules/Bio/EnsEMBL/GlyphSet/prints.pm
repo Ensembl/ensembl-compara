@@ -9,27 +9,27 @@ use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Prints',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
-    my ($this) = @_;
+    my ($self) = @_;
     my %hash;
-    my $protein       = $this->{'container'};
+    my $protein       = $self->{'container'};
     my @bitmap;
-    my $Config        = $this->{'config'};
+    my $Config        = $self->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($protein->length * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
-    my $colour        = $Config->get($Config->script(), 'prints','col');
+    my $colour        = $Config->get('prints','col');
     my $caption       = "Prints";
     my $font          = "Small";
     my ($fontwidth,
@@ -103,7 +103,7 @@ sub _init {
 	});
 	$Composite->push($text);
 
-	if ($Config->get($Config->script(), 'prints', 'dep') > 0){ # we bump
+	if ($Config->get('prints', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 	    
@@ -118,7 +118,7 @@ sub _init {
             $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
         }
 	
-	$this->push($Composite);
+	$self->push($Composite);
     }
 }
 

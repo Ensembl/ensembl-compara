@@ -31,7 +31,7 @@ sub _init {
     my $highlights    = $self->highlights();
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
-    my $type          = $Config->get($Config->script(),'gene','src');
+    my $type          = $Config->get('gene', 'src');
     my @allgenes      = ();
 
 #    &eprof_start("gene-virtualgene_start-get");
@@ -48,9 +48,9 @@ sub _init {
 #    &eprof_end("gene-externalgene_start-get");
 
 #    &eprof_start("gene-render-code");
-    my $ext_col       = $Config->get($Config->script(),'gene','ext');
-    my $known_col     = $Config->get($Config->script(),'gene','known');
-    my $unknown_col   = $Config->get($Config->script(),'gene','unknown');
+    my $ext_col       = $Config->get('gene','ext');
+    my $known_col     = $Config->get('gene','known');
+    my $unknown_col   = $Config->get('gene','unknown');
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($VirtualContig->length * $pix_per_bp);
 
@@ -73,7 +73,7 @@ sub _init {
 #	    my %union = ();
 #	    my %isect = ();
 #	    for my $e (@ids, $self->highlights()) { $union{$e}++ && $isect{$e}++ }
-#	    $colour = $Config->get($Config->script(), 'gene', 'hi') if(scalar keys %isect > 0);
+#	    $colour = $Config->get('gene', 'hi') if(scalar keys %isect > 0);
 
 	    $start    = $vg->start();
 	    $end      = $vg->end();
@@ -106,19 +106,19 @@ sub _init {
 	    'absolutey' => 1,
 	});
 
-	my $depth = $Config->get($Config->script(), 'gene', 'dep');
+	my $depth = $Config->get('gene', 'dep');
         if ($depth > 0){ # we bump
             my $bump_start = int($rect->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 
             my $bump_end = $bump_start + int($rect->width()*$pix_per_bp) +1;
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            my $row = &Bump::bump_row(      
-                          $bump_start,
-                          $bump_end,
-                          $bitmap_length,
-                          \@bitmap
-            );
+            my $row = &Bump::bump_row(
+				      $bump_start,
+				      $bump_end,
+				      $bitmap_length,
+				      \@bitmap
+				      );
 
             #next if $row > $depth;
             $rect->y($rect->y() + (6 * $row ));

@@ -4,20 +4,18 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
 use Bio::EnsEMBL::Glyph::Text;
 use SiteDefs;
-use ColourMap;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
     
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Tile Path',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
@@ -51,22 +49,17 @@ sub _init {
 	    $end        = $length if ($end > $length);
 
 	    if ($i%2 == 0){
-		$col  = $Config->get($Config->script(),'tilepath','col1'),
-		$lab  = $Config->get($Config->script(),'tilepath','lab1'),
+		$col  = $Config->get('tilepath','col1'),
+		$lab  = $Config->get('tilepath','lab1'),
 	    } else {
-		$col  = $Config->get($Config->script(),'tilepath','col2'),		
-		$lab  = $Config->get($Config->script(),'tilepath','lab2'),
+		$col  = $Config->get('tilepath','col2'),		
+		$lab  = $Config->get('tilepath','lab2'),
 	    }
 			
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 		'y'            => 0,
 		'x'            => $start,
-#		'bordercolour' => $lab,
 		'absolutey'    => 1,
-#		'zmenu'        => {
-#		    'caption'            => "Clone $id",
-#		    "Request clone $id"  =>"http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$id&query=Requested%20via%20Ensembl",
-#		},
 	    });
 
 	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
@@ -94,19 +87,19 @@ sub _init {
 	    	$Composite->push($tglyph);
 	    }
 			
-	    if ($Config->get($Config->script(), 'tilepath', 'dep') > 0){ # we bump
+	    if ($Config->get('tilepath', 'dep') > 0){ # we bump
             	my $bump_start = int($Composite->x() * $pix_per_bp);
             	$bump_start = 0 if ($bump_start < 0);
 
             	my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
             	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            	my $row = &Bump::bump_row(      
+            	my $row = &Bump::bump_row(
 					  $bump_start,
 					  $bump_end,
 					  $bitmap_length,
 					  \@bitmap
 					  );
-		next if ($row > $Config->get($Config->script(), 'tilepath', 'dep'));
+		next if ($row > $Config->get('tilepath', 'dep'));
             	$Composite->y($Composite->y() + (1.4 * $row * $h));
 	    }
 

@@ -23,18 +23,16 @@ sub init_label {
 sub _init {
     my ($self) = @_;
 	
-    my $h          = 0;
-    my $fontname = "Tiny";
-
-    my $Config        			= $self->{'config'};
-    my $fontheight 				= $Config->texthelper->height($fontname),
-    my $fontwidth_bp 			= $Config->texthelper->width($fontname),
-    my ($fontwidth,$dontcare) 	= $Config->texthelper->px2bp($fontname),
+    my $h                     = 0;
+    my $fontname              = "Tiny";
+    my $Config        	      = $self->{'config'};
+    my $fontheight 	      = $Config->texthelper->height($fontname),
+    my $fontwidth_bp 	      = $Config->texthelper->width($fontname),
+    my ($fontwidth,$dontcare) = $Config->texthelper->px2bp($fontname),
 	
-    my $feature_colour 	= $Config->get($Config->script(),'prot_scalebar','col');
-    my $len = $self->{'container'}->length();
-
-    my $divs = set_scale_division($len);
+    my $feature_colour 	      = $Config->get('prot_scalebar','col');
+    my $len                   = $self->{'container'}->length();
+    my $divs                  = set_scale_division($len);
     
     my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 	'x'         => 0,
@@ -45,37 +43,23 @@ sub _init {
 	'absolutey' => 1,
     });
     $self->push($glyph);
-
-	my $last_end = 0;
+    
+    my $last_end = 0;
     for (my $i=0;$i<int($len/$divs); $i++){
 	
-		my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    	'x'         => $i * $divs,
-	    	'y'         => 4,
-	    	'width'     => 0,
-	    	'height'    => 2,
-	    	'colour'    => $feature_colour,
-	    	'absolutey' => 1,
-		});
-		$self->push($tick);
-
-		my $text = $i * $divs;
-		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	    	'x'      	=> $i * $divs,
-	    	'y'      	=> 8,
-	    	'height'	=> $fontheight,
-	    	'font'   	=> $fontname,
-	    	'colour' 	=> $feature_colour,
-	    	'text'   	=> $text,
-	    	'absolutey' => 1,
-		});
-		$self->push($tglyph);
-   }
+	my $tick = new Bio::EnsEMBL::Glyph::Rect({
+	    'x'         => $i * $divs,
+	    'y'         => 4,
+	    'width'     => 0,
+	    'height'    => 2,
+	    'colour'    => $feature_colour,
+	    'absolutey' => 1,
+	});
+	$self->push($tick);
 	
-	# label first tick
-	my $text = "0";
+	my $text = $i * $divs;
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-	    'x'      	=> 0,
+	    'x'      	=> $i * $divs,
 	    'y'      	=> 8,
 	    'height'	=> $fontheight,
 	    'font'   	=> $fontname,
@@ -84,41 +68,55 @@ sub _init {
 	    'absolutey' => 1,
 	});
 	$self->push($tglyph);
-
-	my $im_width = $Config->image_width();
-	$text = $len;
-
-	# label last tick
-	my $endglyph = new Bio::EnsEMBL::Glyph::Text({
-	    'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
-	    'y'      	=> 8,
-	    'height'	=> $fontheight,
-	    'font'   	=> $fontname,
-	    'colour' 	=> $feature_colour,
-	    'text'   	=> $text,
-	    'absolutex'  => 1,
-	    'absolutey' => 1,
-	});
-	$self->push($endglyph);
-
-	# add last tick
-	my $im_width = $Config->image_width();
-	my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'          => $im_width,
-	    'y'          => 4,
-	    'width'      => 0,
-	    'height'     => 2,
-	    'colour'     => $feature_colour,
-	    'absolutex'  => 1,
-	    'absolutey'  => 1,
-	});
-	$self->push($tick);
+    }
+    
+    # label first tick
+    my $text = "0";
+    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+	'x'      	=> 0,
+	'y'      	=> 8,
+	'height'	=> $fontheight,
+	'font'   	=> $fontname,
+	'colour' 	=> $feature_colour,
+	'text'   	=> $text,
+	'absolutey' => 1,
+    });
+    $self->push($tglyph);
+    
+    my $im_width = $Config->image_width();
+    $text = $len;
+    
+    # label last tick
+    my $endglyph = new Bio::EnsEMBL::Glyph::Text({
+	'x'      	=> $im_width -(length("$text ")*$fontwidth_bp),
+	'y'      	=> 8,
+	'height'	=> $fontheight,
+	'font'   	=> $fontname,
+	'colour' 	=> $feature_colour,
+	'text'   	=> $text,
+	'absolutex'  => 1,
+	'absolutey' => 1,
+    });
+    $self->push($endglyph);
+    
+    # add last tick
+    my $im_width = $Config->image_width();
+    my $tick = new Bio::EnsEMBL::Glyph::Rect({
+	'x'          => $im_width,
+	'y'          => 4,
+	'width'      => 0,
+	'height'     => 2,
+	'colour'     => $feature_colour,
+	'absolutex'  => 1,
+	'absolutey'  => 1,
+    });
+    $self->push($tick);
 }
 
 ##############################################################################
 sub set_scale_division {
     my ($full_length) = @_;
-
+    
     my $num_of_digits = length( int( $full_length / 10 ) );
     $num_of_digits--;
 
@@ -173,9 +171,9 @@ sub bp_to_nearest_unit {
 
     my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
       
-    if ( $unit ne "bp" ){
+    if ( $unit ne "bp" ) {
 	$unit_str = sprintf( "%.${dp}f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), " $unit" );
-    }else{
+    } else {
 	$unit_str = "$value $unit";
     }
     return $unit_str;

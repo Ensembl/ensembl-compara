@@ -10,32 +10,32 @@ use ColourMap;
 use Bump;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Pfam',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
-    my ($this) = @_;
+    my ($self) = @_;
     my %hash;
     my $caption       = "Pfam";
     my @bitmap        = undef;
-    my $protein       = $this->{'container'};
-    my $Config        = $this->{'config'};
+    my $protein       = $self->{'container'};
+    my $Config        = $self->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $bitmap_length = int($this->{'container'}->length * $pix_per_bp);
+    my $bitmap_length = int($self->{'container'}->length() * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
     my $cmap          = new ColourMap;
     my $black         = $cmap->id_by_name('black');
     my $red           = $cmap->id_by_name('red');
     my $font          = "Small";
-    my $colour        = $Config->get($Config->script(), 'pfam','col');
+    my $colour        = $Config->get('pfam','col');
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
@@ -105,13 +105,13 @@ sub _init {
 	});
 	$Composite->push($text);
 
-	if ($Config->get($Config->script(), 'pfam', 'dep') > 0){ # we bump
+	if ($Config->get('pfam', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 	    
             my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            my $row = &Bump::bump_row(      
+            my $row = &Bump::bump_row(
 				      $bump_start,
 				      $bump_end,
 				      $bitmap_length,
@@ -120,7 +120,7 @@ sub _init {
             $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
         }
 	
-	$this->push($Composite);
+	$self->push($Composite);
     }
 
 }

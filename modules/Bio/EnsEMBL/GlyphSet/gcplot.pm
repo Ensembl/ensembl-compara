@@ -20,6 +20,7 @@ sub init_label {
     });
     $this->label($label);
 }
+
 sub _init {
     my ($self) = @_;
 
@@ -29,31 +30,30 @@ sub _init {
     my @map_contigs = $self->{'container'}->_vmap->each_MapContig();
     return unless (@map_contigs);
 
-    my $VirtualContig = $self->{'container'};
-    my $Config = $self->{'config'};
-    my $vclen	= $VirtualContig->length();
+    my $VirtualContig   = $self->{'container'};
+    my $Config          = $self->{'config'};
+    my $vclen	        = $VirtualContig->length();
     return if ($vclen < 10000);	# don't want a GC plot for very short sequences
-
 
     my $h               = 0;
     my $highlights      = $self->highlights();
-    my $feature_colour 	= $Config->get($Config->script(),'gcplot','hi');
-    my $alt_colour 	    = $Config->get($Config->script(),'gcplot','low');
-    my $cmap 			= $Config->colourmap();
-    my $black 			= $cmap->id_by_name('black');
-    my $red 			= $cmap->id_by_name('red');
-    my $rust 			= $cmap->id_by_name('rust');
+    my $feature_colour 	= $Config->get('gcplot','hi');
+    my $alt_colour 	= $Config->get('gcplot','low');
+    my $cmap 		= $Config->colourmap();
+    my $black 		= $cmap->id_by_name('black');
+    my $red 		= $cmap->id_by_name('red');
+    my $rust 		= $cmap->id_by_name('rust');
 	
-    my $im_width = $Config->image_width();
-    my $divs = int($im_width/10);
-    my $divlen = int($vclen/$divs);
+    my $im_width        = $Config->image_width();
+    my $divs            = int($im_width/10);
+    my $divlen          = int($vclen/$divs);
 	
     #print STDERR "Divs = $divs\n";
     my $seq = $VirtualContig->seq();
-    my @gc = ();
+    my @gc  = ();
     my $min = 100;
     my $max = 0;
-	
+    
     for (my $i=0; $i<$divs; $i++){
 	#print STDERR "Div: $i\n";
 	my $subseq = substr($seq, $i*$divlen, $divlen);

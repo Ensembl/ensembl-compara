@@ -12,38 +12,33 @@ use Bump;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
     'text'      => 'SpTrEMBL',
     'font'      => 'Small',
     'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
     my ($self) = @_;
 
-    my $VirtualContig 	= $self->{'container'};
-    my $Config 			= $self->{'config'};
-
-    my $strand         	= $self->strand();
-    my $h              	= 8;
-    my $highlights		= $self->highlights();
-    my @bitmap         	= undef;
-    my $pix_per_bp  	= $Config->transform->{'scalex'};
-    my $bitmap_length 	= int($VirtualContig->length * $pix_per_bp);
-    my $feature_colour 	= $Config->get($Config->script(),'sptr','col');
-    my %id = ();
+    my $VirtualContig  = $self->{'container'};
+    my $Config 	       = $self->{'config'};
+    my $strand         = $self->strand();
+    my $h              = 8;
+    my $highlights     = $self->highlights();
+    my @bitmap         = undef;
+    my $pix_per_bp     = $Config->transform->{'scalex'};
+    my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
+    my $feature_colour = $Config->get('sptr','col');
+    my %id             = ();
     my $small_contig   = 0;
     
 	
-    my $glob_bp = 0;
-	if ($self->{'container'}->length() > 1000){
-		$glob_bp = 100;
-	}
-    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("sptr",80,$glob_bp);  
+    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("sptr",80,$self->glob_bp());  
     @allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
     
     foreach my $f (@allfeatures){
@@ -131,7 +126,7 @@ sub _init {
             }
         }
         
-        if ($Config->get($Config->script(), 'sptr', 'dep') > 0){ # we bump
+        if ($Config->get('sptr', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 

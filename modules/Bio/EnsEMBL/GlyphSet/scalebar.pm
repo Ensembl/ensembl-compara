@@ -23,9 +23,9 @@ sub _init {
     my ($fontwidth,
 	$fontheight)     = $Config->texthelper->px2bp($fontname),
     my $black          = $Config->colourmap->id_by_name('black');
-    my $feature_colour = $Config->get($Config->script(),'scalebar','col');
-    my $subdivs        = $Config->get($Config->script(),'scalebar','subdivs');
-    my $abbrev         = $Config->get($Config->script(),'scalebar','abbrev');
+    my $feature_colour = $Config->get('scalebar', 'col');
+    my $subdivs        = $Config->get('scalebar', 'subdivs');
+    my $abbrev         = $Config->get('scalebar', 'abbrev');
 
     my $chr            = $Container->_chr_name();
     my $len            = $Container->length();

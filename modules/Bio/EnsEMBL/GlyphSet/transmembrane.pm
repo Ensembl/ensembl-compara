@@ -8,51 +8,41 @@ use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => 'Transmembrane',
         'font'      => 'Small',
         'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
-    my ($this) = @_;
+    my ($self) = @_;
     my %hash;
-    my $caption = "transmembrane";
-
+    my $caption    = "transmembrane";
     my $y          = 0;
     my $h          = 4;
-    my $highlights = $this->highlights();
-
-    my $protein = $this->{'container'};
-    my $Config = $this->{'config'};  
+    my $highlights = $self->highlights();
+    my $protein    = $self->{'container'};
+    my $Config     = $self->{'config'};  
 
     foreach my $feat ($protein->each_Protein_feature()) {
-
 	if ($feat->feature2->seqname eq "transmembrane") {
-
-	    push(@{$hash{$feat->feature1->seqname}},$feat);
+	    push @{$hash{$feat->feature1->seqname}}, $feat;
 	}
     }
     
     foreach my $key (keys %hash) {
-	
-	
-	my @row = @{$hash{$key}};
-	
-	
-	my $desc = $row[0]->idesc();
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	});
-	   
-	my $colour = $Config->get($Config->script(), 'transmembrane','col');
+       	my @row       = @{$hash{$key}};
+	my $desc      = $row[0]->idesc();
+	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
+	my $colour    = $Config->get('transmembrane', 'col');
 
 	foreach my $pf (@row) {
-	    my $x = $pf->feature1->start();
-	    my $w = $pf->feature1->end - $x;
+	    my $x  = $pf->feature1->start();
+	    my $w  = $pf->feature1->end - $x;
 	    my $id = $pf->feature2->seqname();
 	    
 	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
@@ -64,12 +54,10 @@ sub _init {
 		'colour'   => $colour,
 	    });
 	    
-	    
 	    $Composite->push($rect) if(defined $rect);
-	    
 	}
 
-	$this->push($Composite);
+	$self->push($Composite);
 	$y = $y + 8;
     }
 }

@@ -13,17 +13,16 @@ use Bump;
 sub _init {
     my $self = shift;
     my $VirtualContig = $self->{'container'};
-    my $Config = $self->{'config'};
-    
-    my $pix_per_bp  = $Config->transform->{'scalex'};
-    my $bitmap_length = int($VirtualContig->length * $pix_per_bp);
+    my $Config        = $self->{'config'};
+    my $pix_per_bp    = $Config->transform->{'scalex'};
+    my $bitmap_length = int($VirtualContig->length() * $pix_per_bp);
     my @bitmap;
 
     return unless ($self->strand() == -1);
 
-    my $feature_colour 	= $Config->get($Config->script(),'marker','col');
-    my $fontname = "Tiny";
-    my ($w,$h) = $Config->texthelper->px2bp($fontname);
+    my $feature_colour = $Config->get('marker','col');
+    my $fontname       = "Tiny";
+    my ($w,$h)         = $Config->texthelper->px2bp($fontname);
     $w = $Config->texthelper->width($fontname);
 
     foreach my $f ($VirtualContig->get_landmark_MarkerFeatures()){

@@ -9,27 +9,27 @@ use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
 
 sub init_label {
-    my ($this) = @_;
+    my ($self) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
 	'text'      => 'Prosite',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
-    $this->label($label);
+    $self->label($label);
 }
 
 sub _init {
-    my ($this) = @_;
+    my ($self) = @_;
     my %hash;
     my $y             = 0;
     my $h             = 4;
     my @bitmap        = undef;
-    my $protein       = $this->{'container'};
-    my $Config        = $this->{'config'};
+    my $protein       = $self->{'container'};
+    my $Config        = $self->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($protein->length() * $pix_per_bp);
-    my $colour        = $Config->get($Config->script(), 'prosite','col');
+    my $colour        = $Config->get('prosite','col');
     my $font          = "Small";
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
@@ -105,7 +105,7 @@ sub _init {
 	});
 	$Composite->push($text);
 
-	if ($Config->get($Config->script(), 'prosite', 'dep') > 0){ # we bump
+	if ($Config->get('prosite', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 
@@ -120,7 +120,7 @@ sub _init {
             $Composite->y($Composite->y() + (1.5 * $row * ($h + $fontheight)));
         }
 	
-	$this->push($Composite);
+	$self->push($Composite);
     }
 }
 

@@ -20,7 +20,7 @@ sub _init {
     @highlights{$self->highlights} = ();    # build hashkeys of highlight list
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
-    my $type          = $Config->get($Config->script(),'gene','src');
+    my $type          = $Config->get('gene', 'src');
     my @allgenes      = ();
 
     push @allgenes, $VirtualContig->get_all_VirtualGenes_startend();
@@ -32,9 +32,9 @@ sub _init {
 	}
     }
 
-    my $ext_col        = $Config->get($Config->script(),'gene','ext');
-    my $known_col      = $Config->get($Config->script(),'gene','known');
-    my $unknown_col    = $Config->get($Config->script(),'gene','unknown');
+    my $ext_col        = $Config->get('gene','ext');
+    my $known_col      = $Config->get('gene','known');
+    my $unknown_col    = $Config->get('gene','unknown');
     my $pix_per_bp     = $Config->transform->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
     my $fontname       = "Tiny";
@@ -58,7 +58,7 @@ sub _init {
 		    # check for highlighting
 		    #########################
 		    if (exists $highlights{$DB_link->display_id}){
-			$hi_colour = $Config->get($Config->script(), 'gene', 'hi');
+			$hi_colour = $Config->get( 'gene', 'hi');
 		    }
 
 		    if( $DB_link->database() eq 'HUGO' ) {
@@ -74,7 +74,7 @@ sub _init {
 		}
 
 		if (exists $highlights{$vg->id}){
-		    $hi_colour = $Config->get($Config->script(), 'gene', 'hi');
+		    $hi_colour = $Config->get( 'gene', 'hi');
 		}
 
 		if( $displaylink ) {

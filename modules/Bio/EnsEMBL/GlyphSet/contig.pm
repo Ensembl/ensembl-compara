@@ -37,26 +37,26 @@ sub _init {
 #						    -ensdb  => $ENSEMBL_DB,
 #						    );
 #    my $fpc_map = $mapdb->get_Map( 'FPC' );
-    
-    my $cmap  = new ColourMap;
-    my $col1  = $cmap->id_by_name('contigblue1');
-    my $col2  = $cmap->id_by_name('contigblue2');
-    my $col3  = $cmap->id_by_name('black');
-    my $white = $cmap->id_by_name('white');
-    my $black = $cmap->id_by_name('black');
-    my $red   = $cmap->id_by_name('red');
 
+    my $Config   = $self->{'config'};
+    my $cmap     = $Config->colourmap();
+    my $col1     = $cmap->id_by_name('contigblue1');
+    my $col2     = $cmap->id_by_name('contigblue2');
+    my $col3     = $cmap->id_by_name('black');
+    my $white    = $cmap->id_by_name('white');
+    my $black    = $cmap->id_by_name('black');
+    my $red      = $cmap->id_by_name('red');
     my $ystart   = 0;
-    my $im_width = $self->{'config'}->image_width();
-    my ($w,$h)   = $self->{'config'}->texthelper()->px2bp('Tiny');
+    my $im_width = $Config->image_width();
+    my ($w,$h)   = $Config->texthelper()->px2bp('Tiny');
     my $length   = $self->{'container'}->length();
 
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
-    	'x'      => 1,
-    	'y'      => $ystart+7,
-    	'width'  => $im_width,
-    	'height' => 0,
-    	'colour' => $cmap->id_by_name('grey1'),
+    	'x'         => 1,
+    	'y'         => $ystart+7,
+    	'width'     => $im_width,
+    	'height'    => 0,
+    	'colour'    => $cmap->id_by_name('grey1'),
 	'absolutey' => 1,
 	'absolutex' => 1,
     });
@@ -64,13 +64,13 @@ sub _init {
 
     my @map_contigs = ();
     @map_contigs = $self->{'container'}->_vmap->each_MapContig();
-    if (@map_contigs){
+    if (@map_contigs) {
 	my $start     = $map_contigs[0]->start();
     	my $end       = $map_contigs[-1]->end();
     	my $tot_width = $end - $start;
-
+	
     	my $i = 1;
-
+	
 	my %colours = (
 		       $i  => $col1,
 		       !$i => $col2,
@@ -78,13 +78,13 @@ sub _init {
     	foreach my $temp_rawcontig ( @map_contigs ) {
 	    my $col = $colours{$i};
 	    $i      = !$i;
-
+	    
 	    my $rend   = $temp_rawcontig->end();
 	    my $rstart = $temp_rawcontig->start();
 	    my $rid    = $temp_rawcontig->contig->id();
 	    my $clone  = $temp_rawcontig->contig->cloneid();
 	    my $strand = $temp_rawcontig->strand();
-
+	    
 	    my $c      = $self->{'container'}->dbobj()->get_Clone($clone);
 #	    my $fpc    = $fpc_map->get_Clone_by_name($c->embl_id);
 #	    my $fpc_id = "unknown";
@@ -92,7 +92,7 @@ sub _init {
 #
 #	    my @matching = grep { /$rid|$clone|$fpc_id/ } $self->highlights();
 #	    if(scalar @matching > 0) {
-#		$col = $self->{'config'}->get($self->{'config'}->script(), 'contig', 'hi');
+#		$col = $Config->get('contig', 'hi');
 #	    }
 
 	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
@@ -223,18 +223,18 @@ sub _init {
     });
     $self->push($tick);
     
-    my $vc_size_limit = $self->{'config'}->get('contigviewtop','_settings','default_top_vc_size');
+    my $vc_size_limit = $Config->get('_settings', 'default_vc_size');
     #print STDERR "VC size limit: $vc_size_limit\n";
     #print STDERR "VC size: ", $self->{'container'}->length(), "\n";
 
     # only draw a red box if we are in contigview top and there is a detailed display
-    if ($self->{'config'}->script() eq "contigviewtop" && ($length <= $vc_size_limit+1)){
+    if ($Config->script() eq "contigviewtop" && ($length <= $vc_size_limit+1)){
 
 	# only draw focus box on the correct display...
     	my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'            => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
+	    'x'            => $Config->{'_wvc_start'} - $self->{'container'}->_global_start(),
 	    'y'            => $ystart - 4 ,
-	    'width'        => $self->{'config'}->{'_wvc_end'} - $self->{'config'}->{'_wvc_start'},
+	    'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
 	    'height'       => 22,
 	    'bordercolour' => $red,
 	    'absolutey'    => 1,
@@ -242,9 +242,9 @@ sub _init {
     	$self->push($boxglyph);
 
     	my $boxglyph2 = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'            => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
+	    'x'            => $Config->{'_wvc_start'} - $self->{'container'}->_global_start(),
 	    'y'            => $ystart - 3 ,
-	    'width'        => $self->{'config'}->{'_wvc_end'} - $self->{'config'}->{'_wvc_start'},
+	    'width'        => $Config->{'_wvc_end'} - $Config->{'_wvc_start'},
 	    'height'       => 20,
 	    'bordercolour' => $red,
 	    'absolutey'    => 1,
