@@ -218,11 +218,13 @@ sub fetch_by_species_chr_start_end {
 sub fetch_all{
    my ($self) = @_;
  
-   my $query = "SELECT genome_db_id, dnafrag_type, dnafrag_id, 
-                       name, start, end
-                  FROM dnafrag";
-   $sth->execute;
+   my $sth = $self->prepare( "
+     SELECT genome_db_id, dnafrag_type, dnafrag_id, 
+            name, start, end
+       FROM dnafrag
+   " );
 
+   $sth->execute;
    return _objs_from_sth( $sth );
 }
 
@@ -241,7 +243,7 @@ sub _objs_from_sth {
       
     $dnafrag->dbID( $dbID );
     $dnafrag->name( $name );
-    $dnafrag->type( $type);
+    $dnafrag->type( $dnafrag_type);
     $dnafrag->start( $start );
     $dnafrag->end( $end );
     $dnafrag->genomedb( $self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id) );
