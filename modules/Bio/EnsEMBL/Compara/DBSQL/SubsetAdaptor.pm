@@ -261,21 +261,26 @@ sub store {
     . "not a $subset");
   }
 
-  my $sth =
-    $self->prepare("INSERT INTO subset (description)
-                    VALUES (?)");
-
-  $sth->execute($subset->description);
-  $subset->dbID( $sth->{'mysql_insertid'} );
+  my $sth = $self->prepare("INSERT ignore INTO subset (description) VALUES (?)");
+  if($sth->execute($subset->description) >0) {
+    $subset->dbID( $sth->{'mysql_insertid'} );
+  } else {
+    #print("insert failed, do select\n");
+    my $sth2 = $self->prepare("SELECT subset_id FROM subset WHERE description=?");
+    $sth2->execute($subset->description);
+    my($id) = $sth2->fetchrow_array();
+    $subset->dbID($id);
+    $sth2->finish;
+  }
+  $sth->finish;
+  #print("SubsetAdaptor:store() dbID = ", $subset->dbID, "\n");
 
   my @memberIds = @{$subset->member_id_list()};
+  $sth = $self->prepare("INSERT ignore INTO subset_member (subset_id, member_id) VALUES (?,?)");
   foreach my $member_id (@memberIds) {
-    my $sth =
-      $self->prepare("INSERT INTO subset_member (subset_id, member_id)
-                      VALUES (?,?)");
-    $sth->execute($subset->dbID, $member_id);
-    $sth->finish;
+    $sth->execute($subset->dbID, $member_id) if($member_id);
   }
+  $sth->finish;
 
   $subset->adaptor($self);
 
@@ -303,10 +308,9 @@ sub store_link {
       "set arg must be a [Bio::EnsEMBL::Compara::Subset] "
     . "not a $subset");
   }
+  return unless($member_id);
 
-  my $sth =
-    $self->prepare("INSERT INTO subset_member (subset_id, member_id)
-                    VALUES (?,?)");
+  my $sth = $self->prepare("INSERT ignore INTO subset_member (subset_id, member_id) VALUES (?,?)");
   $sth->execute($subset->dbID, $member_id);
   $sth->finish;
 }

@@ -4,7 +4,8 @@ CREATE TABLE subset (
  description    varchar(50),
  dump_loc       varchar(255),
 
- PRIMARY KEY (subset_id)
+ PRIMARY KEY (subset_id),
+ UNIQUE (description)
 );
 
 CREATE TABLE subset_member (
