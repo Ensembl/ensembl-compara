@@ -146,7 +146,9 @@ sub prepareGenomeAnalysis
 
   my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$load_analysis);
   $rule->add_condition($submit_analysis->logic_name());
-  $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+  unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
+    $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+  }
 
   
   my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
@@ -160,16 +162,52 @@ sub prepareGenomeAnalysis
 
   $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
   $rule->add_condition($load_analysis->logic_name());
-  $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+  unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
+    $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+  }
 
   # create an unlinked analysis called blast_template
   # it will not have rule goal/conditions so it will never execute
   my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
   $blast_template->input_id_type('MemberPep');
-  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($blast_template);
+  eval { $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($blast_template); };
 
   return $submit_analysis;
+}
+
+
+sub checkIfRuleExists
+{
+  my $dba = shift;
+  my $rule = shift;
+
+  my $conditions = $rule->list_conditions;
+  
+  my $sql = "SELECT rule_id FROM rule_goal ".
+            " WHERE rule_goal.goal='" . $rule->goalAnalysis->dbID."'";
+  my $sth = $dba->prepare($sql);
+  $sth->execute;
+
+  RULE: while( my($ruleID) = $sth->fetchrow_array ) {
+    my $sql = "SELECT condition FROM rule_conditions ".
+              " WHERE rule_id='$ruleID'";
+    my $sth_cond = $dba->prepare($sql);
+    $sth_cond->execute;
+    while( my($condition) = $sth_cond->fetchrow_array ) {
+      my $foundCondition=0;
+      foreach my $qcond (@{$conditions}) {
+        if($qcond eq $condition) { $foundCondition=1; }
+      }
+      unless($foundCondition) { next RULE; }      
+    }
+    $sth_cond->finish;
+    # made through all conditions so this is a match
+    print("RULE EXISTS as $ruleID\n");
+    return $ruleID;
+  }
+  $sth->finish;
+  return undef;
 }
 
 
