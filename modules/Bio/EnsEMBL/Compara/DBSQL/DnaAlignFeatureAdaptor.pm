@@ -209,7 +209,7 @@ sub fetch_all_by_Slice {
     $qy_assembly = $qy_gdb->assembly;
     warn "qy_assembly was undef. Queried the default one for $qy_species = $qy_assembly\n";
   }
-
+  
   my $cs_species =
       $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
   my $cs_assembly = $slice->assembly_type;
