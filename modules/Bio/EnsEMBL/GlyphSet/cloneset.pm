@@ -22,7 +22,7 @@ sub features {
 sub colour {
     my ($self, $f) = @_;
     my $type = $f->positioned_by();
-    return $self->{'colours'}{"col_$type"}, $self->{'colours'}{"lab_$type"}, '';
+    return $self->{'colours'}{"col_$type"}||'red', $self->{'colours'}{"lab_$type"}||'black', '';
 }
 
 ## Return the image label and the position of the label
