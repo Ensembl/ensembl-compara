@@ -197,7 +197,7 @@ sub printout_by_overlapping_chunks {
 
     print STDERR "getting soft masked sequence...\n";
     if (%not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,0,\%not_default_masking_cases);
+      $seq = $slice->get_repeatmasked_seq(undef,1,\%not_default_masking_cases);
     } else {
       $seq = $slice->get_repeatmasked_seq(undef,1);
     }
@@ -239,7 +239,10 @@ sub printout_by_overlapping_chunks {
       if (defined $phusion) {
 	$id = $phusion.".".$coordinate_system.":".$slice->seq_region_name.".".$chr_start;
       } else {
-	$id = $coordinate_system.":".$slice->seq_region_name.".".$chr_start.".".$chr_start+$chunk_size-1;
+	$id = $coordinate_system . ":" . 
+          $slice->seq_region_name . "." . 
+            $chr_start . "." . 
+              ($chr_start + $chunk_size - 1);
       }
       $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$i+$chunk_size-1),
 				     -id  => $id,
