@@ -7,11 +7,14 @@ use strict;
 # 1 The input FASTA file $fasta contains duplicated id entries
 # 2 Query id and target id have been stored in 2 different indices.
 
+$| = 1;
+
 my ($fasta,$fastaindex,$fasta_nr,$redundant_file) = @ARGV;
 
 my $pmatch_executable = "/usr/local/ensembl/bin/pmatch_ms2";
 my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
 
+print STDERR "Reading redundant fasta file...";
 open FASTA, $fasta ||
   die "Could not open $fasta, $!\n";
 
@@ -34,30 +37,30 @@ EXIT 1;"
 undef %ids_already_seen;
 
 close FASTA;
+print STDERR "Done\n";
 
-#open PM, "pmatch_ms2 $fasta $fasta|" ||
-#  die "Can not open a filehandle in the pmatch output, $!\n";
+print STDERR "Running and parsing pmatch ouput...\n";
+open PM, "$pmatch_executable $fasta $fasta|" ||
+  die "Can not open a filehandle in the pmatch output, $!\n";
 
-my $pmatch_file = "/acari/work7a/abel/family_19_2/tmp/metazoa_19_2.pmatch.nr.gz";
+#my $pmatch_file = "/acari/work7a/abel/family_19_2/tmp/metazoa_19_2.pmatch.nr.gz";
 
-if ($pmatch_file =~ /\.gz/) {
-  open PM, "gunzip -c $pmatch_file|" ||
-    die "$pmatch_file: $!";
-} else {
-  open PM, $pmatch_file ||
-    die "$pmatch_file: $!";
-}
+#if ($pmatch_file =~ /\.gz/) {
+#  open PM, "gunzip -c $pmatch_file|" ||
+#    die "$pmatch_file: $!";
+#} else {
+#  open PM, $pmatch_file ||
+#    die "$pmatch_file: $!";
+#}
 
 my @redundancies;
 my %stored_at_index;
-my $index = 0;
 
 # The whole process that results are sorted by $qid and $tid which is basically what pmatch
 # output does. If the result appears in a randon way (no reason for that though) the process may break
 # with exit code 1
 
 while (my $line = <PM>) {
-  $index++;
   chomp $line;
   my ($length, $qid, $qstart, $qend, $qperc, $qlen, $tid, $tstart, $tend, $tperc, $tlen) = split /\s+/,$line;
   next if ($qid eq $tid);
@@ -65,7 +68,7 @@ while (my $line = <PM>) {
 
   if (defined $stored_at_index{$qid} && defined $stored_at_index{$tid}) {
     if ($stored_at_index{$qid} != $stored_at_index{$tid}) {
-      warn "$index Query $qid and target $tid have been stored in 2 different indices.
+      warn "Query $qid and target $tid have been stored in 2 different indices.
 $line
 EXIT 2";
       exit 2;
@@ -87,6 +90,9 @@ EXIT 2";
   }
 }
 
+print STDERR "pmatch Done...\n";
+
+print STDERR "Generating the non redundant fasta file and the redundant ids file...";
 my $rand = time().rand(1000);
 my $ids_file = "/tmp/ids.$rand";
 open ID, ">$ids_file";
@@ -105,6 +111,8 @@ foreach my $redundancy (@redundancies) {
 
 close NR;
 close ID;
+
+print STDERR "Done\n";
 
 my $new_fasta_file = "/tmp/fasta.$rand";
 
