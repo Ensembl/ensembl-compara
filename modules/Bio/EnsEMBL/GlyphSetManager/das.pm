@@ -44,9 +44,9 @@ sub init {
         my $das_species = $ext_das->{'data'}->{$das_source_name}->{'species'};
         next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
             my $extra_config 		    = $ext_das->{'data'}->{$das_source_name};
-            foreach( keys(%{$ext_das->{'data'}->{$das_source_name}})) {
-	         warn("\t$_\t".$ext_das->{'data'}{$das_source_name}{$_}."\n");
-            }
+         #   foreach( keys(%{$ext_das->{'data'}->{$das_source_name}})) {
+	 #        warn("\t$_\t".$ext_das->{'data'}{$das_source_name}{$_}."\n");
+         #   }
  
 	       $extra_config->{'name'} 	= "managed_extdas_$das_source_name";
 	       $extra_config->{'url'} 		= "http://$extra_config->{'URL'}/das";
