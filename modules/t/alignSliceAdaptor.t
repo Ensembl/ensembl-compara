@@ -38,7 +38,7 @@ perl -w ../../../ensembl-test/scripts/runtests.pl -c
 
 This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
 
-This script includes *** tests.
+This script includes 197 tests.
 
 =head1 AUTHOR
 
@@ -65,7 +65,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 300;
+    plan tests => 197;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
