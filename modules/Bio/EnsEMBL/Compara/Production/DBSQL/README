@@ -1,0 +1,4 @@
+This directory is for any production specific adaptors
+or for subclasses of base compara adaptors.  The subclasses
+can implement production specific API routines which can be
+hidden from the end users.
