@@ -4,7 +4,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return "Haplotypes"; }
+sub my_label { return "Haplotype blocks"; }
 
 sub features {
     my ($self) = @_;
