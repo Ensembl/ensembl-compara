@@ -2,6 +2,7 @@ package Bio::EnsEMBL::Compara::Homology;
 
 use strict;
 use Bio::EnsEMBL::Compara::BaseRelation;
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::SimpleAlign;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
@@ -273,7 +274,7 @@ sub ds {
     if ($apply_threshold_on_ds) {
       return undef;
     } else {
-      warn "Threshold on ds values is switched off. Be aware that you may obtain saturated ds values that are not to be trusted, neither the dn/ds ratio\n";
+      warning("Threshold on ds values is switched off. Be aware that you may obtain saturated ds values that are not to be trusted, neither the dn/ds ratio\n");
     }
   }
 

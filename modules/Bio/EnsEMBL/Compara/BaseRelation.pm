@@ -1,17 +1,17 @@
 package Bio::EnsEMBL::Compara::BaseRelation;
 
 use strict;
-use Bio::EnsEMBL::Root;
-
-our @ISA = qw(Bio::EnsEMBL::Root);
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
 sub new {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+
+  my $self = bless {}, $class;
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor) = $self->_rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR)], @args);
+    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor) = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR)], @args);
     
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
@@ -136,14 +136,14 @@ sub add_Member_Attribute {
 
   my ($member, $attribute) = @{$member_attribute};
 
-  $self->throw("member argument not defined\n") unless($member);
-  $self->throw("attribute argument not defined\n") unless($attribute);
+  throw("member argument not defined\n") unless($member);
+  throw("attribute argument not defined\n") unless($attribute);
   
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw("Need to add a Bio::EnsEMBL::Compara::Member, not a $member\n");
+    throw("Need to add a Bio::EnsEMBL::Compara::Member, not a $member\n");
   }
   unless ($attribute->isa('Bio::EnsEMBL::Compara::Attribute')) {
-    $self->throw("Need to add a Bio::EnsEMBL::Compara::Attribute, not a $attribute\n");
+    throw("Need to add a Bio::EnsEMBL::Compara::Attribute, not a $attribute\n");
   }
 
   if (defined $self->{'_this_one_first'} && $self->{'_this_one_first'} eq $member->stable_id) {
@@ -201,7 +201,7 @@ sub get_all_Member_Attribute {
 sub get_Member_Attribute_by_source {
   my ($self, $source_name) = @_;
 
-  $self->throw("Should give defined source_name as arguments\n") unless (defined $source_name);
+  throw("Should give defined source_name as arguments\n") unless (defined $source_name);
 
   unless (defined $self->{'_members_by_source'}->{$source_name}) {
     my $MemberAdaptor = $self->adaptor->db->get_MemberAdaptor();
@@ -228,7 +228,7 @@ sub get_Member_Attribute_by_source {
 sub get_Member_Attribute_by_source_taxon {
   my ($self, $source_name, $taxon_id) = @_;
 
-  $self->throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
+  throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
 
   unless (defined $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id}) {
     my $MemberAdaptor = $self->adaptor->db->get_MemberAdaptor();
@@ -255,7 +255,7 @@ sub get_Member_Attribute_by_source_taxon {
 sub Member_count_by_source {
   my ($self, $source_name) = @_; 
   
-  $self->throw("Should give a defined source_name as argument\n") unless (defined $source_name);
+  throw("Should give a defined source_name as argument\n") unless (defined $source_name);
   
   return scalar @{$self->get_Member_Attribute_by_source($source_name)};
 }
@@ -275,7 +275,7 @@ sub Member_count_by_source {
 sub Member_count_by_source_taxon {
   my ($self, $source_name, $taxon_id) = @_; 
   
-  $self->throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
+  throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
 
   return scalar @{$self->get_Member_Attribute_by_source_taxon($source_name,$taxon_id)};
 }

@@ -2,6 +2,8 @@ package Bio::EnsEMBL::Compara::Family;
 
 use strict;
 use Bio::EnsEMBL::Compara::BaseRelation;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 use IO::File;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
@@ -25,7 +27,7 @@ sub new {
   
   if (scalar @args) {
      #do this explicitly.
-     my ($description_score) = $self->_rearrange([qw(DESCRIPTION_SCORE)], @args);
+     my ($description_score) = rearrange([qw(DESCRIPTION_SCORE)], @args);
       
       $description_score && $self->description_score($description_score);
   }
@@ -72,7 +74,7 @@ sub read_clustalw {
 
   my %align_hash;
   my $FH = IO::File->new();
-  $FH->open($file) || $self->throw("Could not open alignment file [$file]");
+  $FH->open($file) || throw("Could not open alignment file [$file]");
 
   <$FH>; #skip header
   while(<$FH>) {
@@ -122,7 +124,7 @@ sub read_clustalw {
       $attribute->cigar_line($cigar_line);
 
     } else {
-      $self->warn("No member for alignment portion: [$id]");
+      warning("No member for alignment portion: [$id]");
     }
   }
 }
