@@ -64,7 +64,7 @@ sub _init {
 	my $start = $band->start();
 	my $end = $band->end();
 	my $stain = $band->stain();
-
+	
 	my $vc_band_start = $start;# - $self->{'container'}->chr_start();
 	$vc_band_start    = 0 if ($vc_band_start < 0);
 	my $vc_band_end = $end;# - $self->{'container'}->chr_start();
@@ -103,7 +103,9 @@ sub _init {
 	    });
 	    $self->push($tglyph);
 	}
-	
+		my $vc_ajust = 1 - $self->{'container'}->chr_start ;
+		my $band_start = $band->{'start'} - $vc_ajust;
+		my $band_end = $band->{'end'} - $vc_ajust;
     	my $gband = new Sanger::Graphics::Glyph::Rect({
 	    'x'      => $min_start -1 ,
 	    'y'      => 0,
@@ -111,6 +113,11 @@ sub _init {
 	    'height' => 10,
 	    'bordercolour' => $black,
 	    'absolutey' => 1,
+		'zmenu' => {
+			'caption' => "Band $bandname",
+			"00:Zoom to width"  => "/$ENV{'ENSEMBL_SPECIES'}/cytoview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
+			"01:Display in contigview"   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",}
+#		'href'      => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
 	});
     	$self->push($gband);
 	
