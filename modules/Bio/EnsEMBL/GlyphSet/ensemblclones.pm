@@ -1,170 +1,135 @@
 package Bio::EnsEMBL::GlyphSet::ensemblclones;
+
 use strict;
-use vars qw(@ISA);
+
 use Bio::EnsEMBL::GlyphSet_simple;
-use Bio::EnsEMBL::Feature;
+use Bio::EnsEMBL::SimpleFeature;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Bio::Das; 
 use EnsWeb;
 use Data::Dumper;
 
+use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { return "Ensembl Clones"; }
 
 sub features {
-    my ($self)      = @_;
-    return unless ref(EnsWeb::species_defs->ENSEMBL_TRACK_DAS_SOURCES) eq 'HASH';
-    my $slice       = $self->{'container'};
-    my @clones      = ();
+    my $self = shift;
+    return unless ref(EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES) eq 'HASH';
+    
+    my $slice = $self->{'container'};
+    my @clones = ();
 
-    ###### Create a list of clones to fetch #######
-    foreach (@{$slice->get_tiling_path()}){
-        my $clone = $_->component_Seq->clone->embl_id;
-        push(@clones, $clone);
-    }        
+    # create a list of clones to fetch
+    foreach my $segment (@{ $slice->project('clone') }){
+        my $clone = $segment->to_Slice->seq_region_name;
+        my ($clone_name) = split(/\./, $clone);
+        push(@clones, $clone_name);
+    }
 
-    ###### Get DAS source config for this track ######
+    # get DAS source config for this track
     my $species_defs    = &EnsWeb::species_defs();
     my $source          = "das_ENSEMBLCLONES";
-    my $dbname          = EnsWeb::species_defs->ENSEMBL_TRACK_DAS_SOURCES->{$source};
+    my $dbname          = EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$source};
+    return unless $dbname;
+    
     my $URL             = $dbname->{'url'};
     my $dsn             = $dbname->{'dsn'};
     my $types           = $dbname->{'types'} || [];
     my $adaptor         = undef;
     my %SEGMENTS        = ();
-    ###### Register a callback function to handle the DAS features #######
-    ###### Called whenever the DAS XML parser finds a feature      #######
+
+    # register a callback function to handle the DAS features
+    # called whenever the DAS XML parser finds a feature
     my $feature_callback =  sub {
         my $f = shift;
-     #  return if (exists $SEGMENTS{$f->segment->ref().".".$f->segment->version()} );
-        $SEGMENTS{$f->segment->ref().".".$f->segment->version()}++;
-       # warn "\nSTORE: ", $f->segment->ref().".".$f->segment->version(), "\n";
+        my $s = $f->segment;
+        $SEGMENTS{join(".", $s->ref, $s->version)}++;
     };
 
-
-    ###### Create a new DAS adaptor #######
+    # create a new DAS adaptor
     eval {
         $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
         $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
-                                -url        => $URL,
-                                -dsn        => $dsn,
-                                -types      => $types || [], 
-                                -proxy_url  => &EnsWeb::species_defs->ENSEMBL_DAS_PROXY,
-                                );
+                        -url        => $URL,
+                        -dsn        => $dsn,
+                        -types      => $types || [], 
+                        -proxy_url  => &EnsWeb::species_defs->ENSEMBL_DAS_PROXY,
+        );
     };
-    if($@) {
-      warn("\nEnsembl Clones DASAdaptor creation error\n$@\n") 
+    if ($@) {
+        warn "Ensembl Clones DASAdaptor creation error: $@\n";
     } 
        
-    my $dbh 	    = $adaptor->_db_handle();
-    my $response    = undef;
-    $types          = []; # just for now....
+    my $dbh = $adaptor->_db_handle();
+    my $response;
     
-#    print "<br>\nclones" , join "\n", @clones;
-#    print "<br>\nfeaturecallback" ,  $feature_callback;
+    # warn "clones:" , join "\n", @clones;
 
-
-    ###### DAS fetches happen here ##########
-    if(1){     
-       $response = $dbh->features(
-                   -dsn         =>  "$URL/$dsn",
-                   -segment     =>  \@clones,
-                   -callback    =>  $feature_callback,
-                   -type        =>  $types,
-       );
-    }
+    # DAS fetches happen here
+    $response = $dbh->features(
+            -dsn         =>  "$URL/$dsn",
+            -segment     =>  \@clones,
+            -callback    =>  $feature_callback,
+            -type        =>  $types,
+    );
   
-    ####### DAS URL debug trace ##########
-    if(0){
-        $response = $dbh->features(
-                          -dsn        =>  "http://ecs3.internal.sanger.ac.uk:4001/das/$dsn",
-                          -segment    =>  \@clones,
-                          -callback   =>  $feature_callback,
-                          -type       =>  $types,
-        );
-    }
-    
-   #print  "<br>SUCCESS<br>\n" if $response->is_success;
-   # print  "<br>" . Dumper($response);
-   # my $results = $response->results();
-   # print  "<Br>RESULTS: $results\n";
-   # foreach my $seg (keys %{$results}){
-   #     print  "<br>SEGMENT: $seg\n";
-   # }
-    
     my $res = [];
+    foreach my $seg (keys %SEGMENTS){
+        my ($seg_name, $seg_version) = split(/\./, $seg);
+        foreach my $p (@{ $slice->project('clone') }) {
+            my $clone_slice = $p->to_Slice;
+            my ($name, $version) = split(/\./, $clone_slice->seq_region_name);
+            if ($name =~ /$seg_name/) {
+                my $f = Bio::EnsEMBL::SimpleFeature->new(
+                    -display_label  => $seg,
+                    -start          => $p->from_start,
+                    -end            => $p->from_end,
+                    -strand         => $clone_slice->strand,
+                );
 
-    foreach my $c (keys %SEGMENTS){
-
-        my ($name,$ver) = split(/\./,$c);
-        foreach my $p (@{$slice->get_tiling_path()}){
-
-#print "<br>ensemblclones.pm contig name" .  $p->{contig}->name() . " name". $name;
-
-
-
-            if ($p->{contig}->name() =~ /$name/){
-                my $s = Bio::EnsEMBL::Feature->new();
-                
-                # remember if the Vega clone version is newer/older/same as e! clone
-                if($ver > $p->component_Seq->clone->embl_version){
-                    $s->{'status'} = 1; # vega has newer clone version
-                } elsif ($ver == $p->{contig}->clone->embl_version){
-                    $s->{'status'} = 0; # vega has same clone version
+                # remember if the Vega clone version is newer/older/same as e!
+                # clone
+                if ($seg_version > $version) {
+                    $f->{'status'} = 'newer';
+                } elsif ($seg_version == $version){
+                    $f->{'status'} = 'same';
                 } else {
-                    $s->{'status'} = -1;# vega has older clone version
+                    $f->{'status'} = 'older';
                 }
-                my $id = $p->component_Seq->clone->embl_id() . "." . $p->component_Seq->clone->embl_version();
-                my $label = $id . " >";
-                if($p->{strand} == -1){
-                    $label = "< "  . $id;
-                }
-                $s->id($label);
-                $s->start($p->{start});
-                $s->end($p->{end});
-                $s->strand($p->{strand});
-                $s->{'embl_clone'} = $c;
-                push(@{$res}, $s,)
+
+                push(@{$res}, $f);
             }
         }
-    }       
+    }
     return $res;
-    
 }
 
 sub href {
-    my ($self, $f ) = @_;
-
-my ($cloneid) = split /\./ ,  $f->{'embl_clone'};
-
-    return "http://www.ensembl.org/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=". $cloneid;
+    my ($self, $f) = @_;
+    my ($cloneid) = split /\./ ,  $f->display_id;
+    return "http://www.ensembl.org/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
 }
 
 sub colour {
     my ($self, $f ) = @_;
-        if ($f->{'status'} > 0){
-            return  $self->{'colours'}{"col1"},$self->{'colours'}{"lab1"},'border';
-        } elsif ($f->{'status'} == 0) {
-            return  $self->{'colours'}{"col2"},$self->{'colours'}{"lab2"},'border';
-        } else {
-            return  $self->{'colours'}{"col3"},$self->{'colours'}{"lab3"},'border';
-        }
+    return $self->{'colours'}->{'col_'.$f->{'status'}},
+           $self->{'colours'}->{'lab'};
 }
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->id,'overlaid');
+    return ($f->display_id, 'overlaid');
 }
 
 sub zmenu {
     my ($self, $f ) = @_;
     my $zmenu = { 
-        'caption' => "EnsEMBL Clones: ".$f->id,
-        '01:bp: '.$f->start."-".$f->end => '',
-        '02:length: '.($f->end-$f->start+1). ' bps' => '',
-        '03:Jump to EnsEMBL' => $self->href($f),
+        'caption' => $f->display_id,
+        '03:status: '.$f->{'status'}.' version' => '',
+        '04:Jump to Ensembl' => $self->href($f),
     };
     return $zmenu;
 }
