@@ -123,7 +123,6 @@ sub new {
     my $xoffset = -$translateX * $scalex;
 
     for my $glyphset (@{$self->{'glyphsets'}}) {
-        print STDERR "GLYPHSET\n";
         $Config->{'_max_width'} = $xoffset + $Config->image_width();
         ########## set up the label for this strip 
 	########## first we get the max width of label in characters

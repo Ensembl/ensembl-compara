@@ -275,6 +275,7 @@ sub _init {
 				my $bin_length = $padding * ( $highlight_style eq 'arrow' ? 1.5 : 1 ) * $bpperpx;
 				foreach(@temp_highlights) {
 					my $bin_id = int( (2 * $v_offset+ $_->{'start'}+$_->{'end'}) / 2 / $bin_length );
+                    $bin_id = 0 if $bin_id<0;
 					if(my $offset = $bin_flag[$bin_id]) { # We already have a highlight in this bin - so add this one to it!
 						my $zmenu_length = keys %{$highlights[$offset]->{'zmenu'}};
 						foreach my $entry (sort keys %{$_->{'zmenu'}}) { 
