@@ -447,17 +447,21 @@ sub _get_mapped_Gene {
       $this_exon->{this_slice} = $this_exon->slice;
       throw("Oops, this method assumes that all the exons are defined on the same slice as the".
           " gene they belong to") if ($this_exon->slice->start != $gene->slice->start);
-      my $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
-              -EXON => $this_exon,
-              -ALIGN_SLICE => $self,
-              -FROM_MAPPER => $from_mapper,
-              -TO_MAPPER => $to_mapper,
-              -ORIGINAL_RANK => $i + 1
-          );
-      if ($return_unmapped_exons) {
+      if ($this_exon->start <= $range_end and $this_exon->end >= $range_start) {
+        my $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
+                -EXON => $this_exon,
+                -ALIGN_SLICE => $self,
+                -FROM_MAPPER => $from_mapper,
+                -TO_MAPPER => $to_mapper,
+                -ORIGINAL_RANK => $i + 1
+            );
         push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
-      } else {
-        push(@{$these_exons}, $this_align_exon) if ($this_align_exon and defined($this_align_exon->start));
+      } elsif ($return_unmapped_exons) {
+        my $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
+                -EXON => $this_exon,
+                -ORIGINAL_RANK => $i + 1
+            );
+        push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
       }
     }
     if (grep {$_->start} @$these_exons) { ## if any of the exons has been mapped
