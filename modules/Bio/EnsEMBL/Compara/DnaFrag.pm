@@ -400,6 +400,28 @@ sub slice {
 }
 
 
+=head2 display_id
+  Args       : none
+  Example    : my $id = $dnafrag->display_id;
+  Description: returns string describing this chunk which can be used
+               as display_id of a Bio::Seq object or in a fasta file.
+               Uses dnafrag information in addition to start and end.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+=cut
+sub display_id {
+  my $self = shift;
+
+  return "" unless($self->genome_db);
+  my $id = $self->genome_db->taxon_id. ".".
+           $self->genome_db->dbID. ":".
+           $self->coord_system_name.":".
+           $self->name;
+  return $id;
+}
+
+
 #####################################################################
 #####################################################################
 

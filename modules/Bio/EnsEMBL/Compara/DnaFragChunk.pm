@@ -149,12 +149,10 @@ sub fetch_masked_sequence {
 sub display_id {
   my $self = shift;
 
-  my $dnafrag = $self->dnafrag;
-  return "" unless($dnafrag);
-  my $id = $dnafrag->genome_db->taxon_id. ".".
-           $dnafrag->genome_db->dbID. ":".
-           $dnafrag->coord_system_name.":".
-           $dnafrag->name.".".
+  return "" unless($self->dnafrag);
+  return "" unless($self->dnafrag->genome_db);
+  
+  my $id = $self->dnafrag->display_id .".".
            $self->seq_start.".".
            $self->seq_end;
   return $id;
