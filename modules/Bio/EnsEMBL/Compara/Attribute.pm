@@ -2,6 +2,9 @@ package Bio::EnsEMBL::Compara::Attribute;
 
 use strict;
 use Carp;
+use Bio::EnsEMBL::Root;
+
+our @ISA = qw(Bio::EnsEMBL::Root);
 
 our ($AUTOLOAD, %ok_field);
 
@@ -51,6 +54,90 @@ sub AUTOLOAD {
   return $self->{lc $method};
 }
 
+sub alignment_string {
+  my ($self, $member) = @_;
+
+  unless (defined $self->cigar_line) {
+    $self->throw("To get an alignment_string, the cigar_line needs to be define\n");
+  }
+  unless (defined $self->{'alignment_string'}) {
+    my $sequence = $member->sequence;
+    my $cigar_line = $self->cigar_line;
+    $cigar_line =~ s/([MD])/$1 /g;
+    my @cigar_segments = split " ",$cigar_line;
+    my $alignment_string = "";
+    my $seq_start = 0;
+    foreach my $segment (@cigar_segments) {
+      if ($segment =~ /^(\d*)D$/) {
+        my $length = $1;
+        $length = 1 if ($length eq "");
+        $alignment_string .= "-" x $length;
+      } elsif ($segment =~ /^(\d*)M$/) {
+        $alignment_string .= substr($sequence,$seq_start,$1);
+        $seq_start = $1;
+      }
+    }
+    $self->{'alignment_string'} = $alignment_string;
+  }
+
+  return $self->{'alignment_string'};
+}
+
+=head2 cdna_alignment_string
+
+  Arg [1]    : none
+  Example    : my $cdna_alignment = $family_member->cdna_alignment_string();
+  Description: Converts the peptide alignment string to a cdna alignment
+               string.  This only works for EnsEMBL peptides whose cdna can
+               be retrieved from the attached EnsEMBL databse.
+               If the cdna cannot be retrieved undef is returned and a
+               warning is thrown.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub cdna_alignment_string {
+  my ($self, $member) = @_;
+
+  if($member->source_name ne 'ENSEMBLPEP') {
+    $self->warn("Don't know how to retrieve cdna for database [$member->source_name]");
+    return undef;
+  }
+
+  my $genome_db_id = $member->genome_db_id;
+
+  my $genome_db =
+    $member->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+
+  my $ta = $genome_db->db_adaptor->get_TranscriptAdaptor;
+  my $transcript = $ta->fetch_by_translation_stable_id($member->stable_id);
+
+  if(!$transcript) {
+    $self->warn("Could not retrieve transcript via peptide id [" .
+                $member->stable_id . "] from database [" .
+                $genome_db->db_adaptor->dbname . "]");
+    return undef;
+  }
+
+  my $cdna = $transcript->translateable_seq;
+  my $cdna_len = length($cdna);
+  my $start = 0;
+  my $cdna_align_string = '';
+  foreach my $pep (split(//,$self->alignment_string($member))) {
+    last if($start >= $cdna_len);
+
+    if($pep eq '-') {
+      $cdna_align_string .= '--- ';
+    } else {
+      $cdna_align_string .= substr($cdna, $start, 3) .' ';
+    }
+    $start += 3;
+  }
+
+  return $cdna_align_string;
+}
 
 sub DESTROY {}
 
