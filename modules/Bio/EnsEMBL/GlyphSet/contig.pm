@@ -66,8 +66,16 @@ sub _init {
     });
     $self->push($gline);
 
+    
     my @map_contigs = ();
-    @map_contigs = $vc->_vmap->each_MapContig();
+    my $useAssembly = $vc->has_AssemblyContigs;
+    print STDERR "Using assembly $useAssembly\n";
+    if ($useAssembly) {
+       @map_contigs = $vc->each_AssemblyContig;
+    } else {
+       @map_contigs = $vc->_vmap->each_MapContig();
+    }
+
     if (@map_contigs) {
         my $start     = $map_contigs[0]->start() -1;
         my $end       = $map_contigs[-1]->end();
@@ -85,20 +93,21 @@ sub _init {
         
             my $rend   = $temp_rawcontig->end();
             my $rstart = $temp_rawcontig->start() -1;
-            my $rid    = $temp_rawcontig->contig->id();
-            my $clone  = $temp_rawcontig->contig->cloneid();
-            my $strand = $temp_rawcontig->strand();
-        
-#            my $c      = $vc->dbobj()->get_Clone($clone);
-#        my $fpc    = $fpc_map->get_Clone_by_name($c->embl_id);
-#        my $fpc_id = "unknown";
-#        $fpc_id    = $fpc->name() if(defined $fpc);
-#
-#        my @matching = grep { /$rid|$clone|$fpc_id/ } $self->highlights();
-#        if(scalar @matching > 0) {
-#        $col = $Config->get('contig', 'hi');
-#        }
+            
+            my $rid; 
+            my $strand;
+            my $clone;
 
+            if ($useAssembly) {
+               $rid = $temp_rawcontig->display_id;
+               $strand = $temp_rawcontig->orientation;
+               $clone = $temp_rawcontig->display_id;
+            } else {
+               $rid    = $temp_rawcontig->contig->id();
+               $clone  = $temp_rawcontig->contig->cloneid();
+               $strand = $temp_rawcontig->strand();
+            }
+        
             my $glyph = new Bio::EnsEMBL::Glyph::Rect({
                 'x'         => $rstart,
                 'y'         => $ystart+2,
