@@ -100,6 +100,7 @@ sub fetch_input {
 
   $self->{'source'} = 'SWISSPROT';
   $self->{'taxon_id'} = undef;  #no ncbi_taxid filter, get all metzoa
+  $self->{'accession_number'} = 1;
 
   if(defined($self->input_id)) {
     #print("input_id = ".$self->input_id."\n");
