@@ -124,7 +124,10 @@ foreach my $chr (@chromosomes) {
   
   if (defined($syntenydir) && defined($syntenyext)) {
     $syntenyfile = $syntenydir . "/$chr_name.$syntenyext";
-  } 
+    system("touch $syntenydir/t.gff") unless (-e "$syntenydir/t.gff");
+  } else {
+    system("touch t.gff") unless (-e "t.gff");
+  }
   
   print STDERR "Build synteny regions...\n";
 
@@ -134,10 +137,12 @@ my $command = "java -DAPOLLO_ROOT=$ENV{APOLLO_ROOT} -mx300M apollo.gui.SyntenyPa
 $command\n";
 
   unless (system($command) == 0) {
+    unlink glob("/tmp/$chr_name.$max_distance.$min_size_cluster.syn.out /tmp/$chr_name.$max_distance.$min_size_cluster.syn.err");
     die "Problem when running java command, $!\n";
   }
 
   unless (system("grep cluster /tmp/$chr_name.$max_distance.$min_size_cluster.syn.out > /tmp/$chr_name.$max_distance.$min_size_cluster.gff") == 0) {
+    unlink glob("/tmp/$chr_name.$max_distance.$min_size_cluster.syn.out /tmp/$chr_name.$max_distance.$min_size_cluster.syn.err /tmp/$chr_name.$max_distance.$min_size_cluster.gff");
     die "Problem when running grep command, $!\n";
   }
   
