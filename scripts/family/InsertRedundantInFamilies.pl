@@ -191,7 +191,12 @@ while (<$FH>) {
       } 
       my $attribute = $aa->fetch_by_Member_Relation($member,$family)->[0];
       if (defined $attribute) {
-        print STDERR "$source, $member_stable_id already loaded\n";
+        if ($attribute->cigar_line =~ /^[+\d*(M|D)]+$/) {
+          print STDERR "$source, $member_stable_id family attribute already loaded\n";
+        } else {
+          $fa->update_relation([ $member,$attribute ]);
+          print STDERR "$source, $member_stable_id family attribute already updated\n";
+        }
       } else {
         $attribute = new Bio::EnsEMBL::Compara::Attribute;
         $attribute->cigar_line($refid_attribute->cigar_line);
