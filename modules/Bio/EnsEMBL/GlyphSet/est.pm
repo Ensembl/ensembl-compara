@@ -18,14 +18,13 @@ sub features {
 
 sub colour {
   my ($self, $id) = @_;
-  return $id =~ /^BX/ ? 'red' : 'green';
+  return $id =~ /^BX/ ? $self->{'colours'}{'genoscope'} : $self->{'colours'}{'col'}';
 }
 
 
 sub href {
     my ($self, $id ) = @_;
-    my $estid = $id;
-    $estid =~s/(.*?)\.\d+/$1/;
+    my( $estid = $id ) =~ s/(.*?)\.\d+/$1/ ;
     return $self->{'config'}->{'ext_url'}->get_url( 'EST', $estid );
 }
 
