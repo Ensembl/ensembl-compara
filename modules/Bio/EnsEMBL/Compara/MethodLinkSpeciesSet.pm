@@ -38,7 +38,7 @@ GET VALUES
   my $meth_lnk_species_set = $method_link_species_set->species_set();
 
 
-=head1 OBJECT MEMBERS
+=head1 OBJECT ATTRIBUTES
 
 =over
 
@@ -48,7 +48,7 @@ corresponds to method_link_species.method_link_species_set
 
 =item adaptor
 
-Bio::EnsEMBL::Compara::MethodLinkSpeciesSetAdaptor object to access DB
+Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor object to access DB
 
 =item method_link_id
 
@@ -88,9 +88,9 @@ use strict;
 
 # Object preamble
 
-use Bio::EnsEMBL::Root;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
-@ISA = qw(Bio::EnsEMBL::Root);
 
 # new() is written here 
 
@@ -128,7 +128,7 @@ sub new {
 		$method_link_type,
 		$species_set
 	
-	) = $self->_rearrange([qw(
+	) = rearrange([qw(
 			
 			DBID
 			ADAPTOR
@@ -281,10 +281,10 @@ sub species_set {
     ## Check content
     my $genome;
     foreach my $genome_db (@$arg) {
-      $self->throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($genome_db));
-      $self->throw("$genome_db must be a Bio::EnsEMBL::Compara::GenomeDB\n")
+      throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($genome_db));
+      throw("$genome_db must be a Bio::EnsEMBL::Compara::GenomeDB\n")
         unless $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB");
-      $self->throw("GenomeDB (".$genome_db->name."; dbID=".$genome_db->dbID.
+      throw("GenomeDB (".$genome_db->name."; dbID=".$genome_db->dbID.
           ") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
         if $genome->{$genome_db->dbID};
 
