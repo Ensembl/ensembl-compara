@@ -10,7 +10,7 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Sanger::Graphics::Glyph::Text({
-        'text'      => 'Variation legend',
+        'text'      => 'SNP legend',
         'font'      => 'Small',
         'absolutey' => 1,
     });

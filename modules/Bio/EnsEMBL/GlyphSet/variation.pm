@@ -8,7 +8,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
 
-sub my_label { return "Variations"; }
+sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
@@ -35,13 +35,26 @@ sub features {
 sub href {
   my ($self, $f ) = @_;
   &eprof_start('href'); 
-  my $start = $self->slice2sr( $f->start, $f->end );
-  my $id = $f->variation_name;
-  $id =~ s/^rs//;
-  my $source = $f->source;
-  my $region = $self->{'container'}->seq_region_name();  # call  on slice
+  my %link_info = (
+		   start  => $self->slice2sr( $f->start, $f->end ),
+		   id     => $f->variation_name,
+		   source => $f->source,
+		   region => $self->{'container'}->seq_region_name(),
+);
   &eprof_end('href');
-  return "/@{[$self->{container}{_config_file_name_}]}/variationview?snp=$id&source=$source&c=$region:$start";
+  return \%link_info;
+}
+
+sub snpview_href {
+  my ($self, $f ) = @_;
+  my $link = $self->href($f);
+  return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$link->{id}&source=$link->{source}&c=$link->{region}:$link->{start}";
+}
+
+sub ldview_href {
+  my ($self, $f ) = @_;
+  my $link = $self->href($f);
+  return "/@{[$self->{container}{_config_file_name_}]}/ldview?snp=$link->{id}&source=$link->{source}&c=$link->{region}:$link->{start}";
 }
 
 sub image_label {
@@ -56,18 +69,18 @@ sub image_label {
 sub tag {
   my ($self, $f) = @_;
   &eprof_start( 'tag' );
-  my $this_is_a_temporary_variable_so_that_I_can_eprof_tag;
+  my $so_that_I_can_eprof_tag;
   if($f->start > $f->end ) {
     
     my $consequence_type = $f->get_consequence_type;
-    $this_is_a_temporary_variable_so_that_I_can_eprof_tag = ( { 'style' => 'insertion', 
+    $so_that_I_can_eprof_tag = ( { 'style' => 'insertion', 
 	       'colour' => $self->{'colours'}{"$consequence_type"} } );
   }
   else {
-     $this_is_a_temporary_variable_so_that_I_can_eprof_tag = undef;
+     $so_that_I_can_eprof_tag = undef;
   }
   &eprof_end( 'tag' );
-  return $this_is_a_temporary_variable_so_that_I_can_eprof_tag;
+  return $so_that_I_can_eprof_tag;
 }
 
 sub colour {
@@ -118,10 +131,11 @@ sub zmenu {
   my $status = join ", ", @{$f->get_all_validation_states};
   my %zmenu = ( 
  	       caption               => "SNP: " . ($f->variation_name),
- 	       '01:SNP properties'   => $self->href( $f ),
- 	       "02:bp: $pos"         => '',
- #	       "03:status: ".($status || '-') => '',
- 	       "03:variation type: ".($f->var_class || '-') => '',
+ 	       '01:SNP properties'   => $self->snpview_href( $f ),
+ 	       '02:View in LDView'   =>  $self->ldview_href( $f ),
+ 	       "03:bp: $pos"         => '',
+ 	       "04:status: ".($status || '-') => '',
+ 	       "05:variation type: ".($f->var_class || '-') => '',
  	       "07:ambiguity code: ".$f->ambig_code => '',
  	       "08:alleles: ".$f->allele_string => '',
 	      );
