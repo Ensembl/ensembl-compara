@@ -3,7 +3,7 @@
 use strict;
 use DBI;
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Taxon;
 use Bio::EnsEMBL::Analysis;
@@ -60,7 +60,7 @@ if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
 # the globals into a nice '$self' package
 my $self = bless {};
 
-$self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor(%compara_conf);
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 if(%hive_params) {
