@@ -40,6 +40,8 @@ keys:
   srs => valid values 'swissprot', 'sptrembl', 'uniprot'
   taxon_id => optional if one want to load from a specific species
               if not specified it will load all 'metazoa' from the srs source
+  accession_number => 1 optional if one want to load Accession Number (AC) as 
+                      stable_id rather than Entry Name (ID) as it is done by default
 more examples:                            
   "{srs=>'swissprot'}" #loads all swissprot metazoa
   "{srs=>'swissprot', taxon_id=>4932}"
@@ -100,6 +102,7 @@ sub fetch_input {
     print("input_id = ".$self->input_id."\n");
     my $input_hash = eval($self->input_id);
     if(defined($input_hash)) {
+      $self->{'accession_number'} = $input_hash->{'accession_number'} if(defined($input_hash->{'accession_number'}));
       $self->{'source'} = $input_hash->{'srs'} if(defined($input_hash->{'srs'}));
       $self->{'taxon_id'} = $input_hash->{'taxon_id'} if(defined($input_hash->{'taxon_id'}));
     }
@@ -268,6 +271,12 @@ sub store_bioseq
   my $bioseq = shift;
   my $source = shift;
 
+  if ($source =~ /swissprot/i) {
+    $source = "Uniprot/SWISSPROT";
+  } elsif ($source =~ /sptrembl/i) {
+    $source = "Uniprot/SPTREMBL";
+  }
+
   return unless($bioseq);
   my $species = $bioseq->species;
   return unless($species);
@@ -283,8 +292,11 @@ sub store_bioseq
   }
 
   my $member = new Bio::EnsEMBL::Compara::Member;
-
-  $member->stable_id($bioseq->display_id);
+  if (defined $self->{'accession_number'} && $self->{'accession_number'} == 1) {
+    $member->stable_id($bioseq->accession_number);
+  } else {
+    $member->stable_id($bioseq->display_id);
+  }
   $member->taxon_id($taxon->dbID);
   $member->description($bioseq->desc);
   $member->source_name($source);
