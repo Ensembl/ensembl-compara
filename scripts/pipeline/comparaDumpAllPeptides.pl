@@ -131,7 +131,7 @@ sub dump_fasta {
 
   my $sql = "SELECT member.sequence_id, member.stable_id, member.description, sequence.sequence, member.taxon_id, member.source_name " .
             " FROM member, sequence " .
-            " WHERE member.source_name in ('ENSEMBLPEP','SWISSPROT','SPTREMBL') ".
+            " WHERE member.source_name in ('ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL') ".
             " AND member.sequence_id=sequence.sequence_id ";
 
   if ($noredundancy) {
@@ -163,6 +163,7 @@ sub dump_fasta {
     }
     unless($self->{'removeXedSeqs'} and ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
       $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
+      chomp $sequence;
       print FASTAFILE ">$stable_id $description\n$sequence\n";
     }
   }
