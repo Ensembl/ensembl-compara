@@ -225,19 +225,24 @@ sub genomic_align_array {
     foreach my $genomic_align (@$genomic_align_array) {
       throw("$genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object")
           unless ($genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
-      # stores data in a hash where keys are genomic_align_ids and values are weak references
-      # to the corresponding Bio::EnsEMBL::Compara::GenomicAlign obects. Storing data in such
-      # a way will allow us to restore easily weak references if they are destroyed.
-      weaken($self->{'genomic_align_array'}->{$genomic_align->dbID} = $genomic_align);
       if (!defined($genomic_align_adaptor)) {
         if (defined($genomic_align->adaptor)) {
           $genomic_align_adaptor = $genomic_align->adaptor;
         } elsif (defined($self->adaptor)) {
-          $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
+          $genomic_align_adaptor = $self->adaptor->db->get_GenomicAlignAdaptor;
         }
       }
+      if (defined($genomic_align_adaptor)) {
+        # stores data in a hash where keys are genomic_align_ids and values are weak references
+        # to the corresponding Bio::EnsEMBL::Compara::GenomicAlign obects. Storing data in such
+        # a way will allow us to restore easily weak references if they are destroyed.
+        weaken($self->{'genomic_align_array'}->{$genomic_align->dbID} = $genomic_align);
+      } else {
+        # If the adaptor cannot be retrieved, use strong references.
+        $self->{'genomic_align_array'}->{$genomic_align->dbID} = $genomic_align;
+      }
     }
-    $self->{'genomic_align_array'}->{'genomic_align_adaptor'} = $genomic_align_adaptor;
+    $self->{'genomic_align_adaptor'} = $genomic_align_adaptor;
 
   } elsif (!defined($self->{'genomic_align_array'})) {
     # Try to get genomic_align_array from other sources
@@ -247,16 +252,27 @@ sub genomic_align_array {
   }
 
   $genomic_align_array = ();
-  $genomic_align_adaptor = ($self->{'genomic_align_array'}->{'genomic_align_adaptor'}
-          or $self->adaptor->db->get_GenomicAlignAdaptor);
-  while (my ($dbID, $genomic_align) = each %{$self->{'genomic_align_array'}}) {
-    next if ($dbID !~ /^\d+$/);
-    if (!defined($genomic_align)) {
-      # Weak reference has been destroyed, restore it using the genomic_align_id
-      weaken($self->{'genomic_align_array'}->{$dbID} = $genomic_align_adaptor->fetch_by_dbID($dbID))
-          if (defined($genomic_align_adaptor));
+  if ($self->{'genomic_align_adaptor'}) {
+    $genomic_align_adaptor = $self->{'genomic_align_adaptor'};
+  } elsif (defined($self->adaptor)) {
+    $genomic_align_adaptor = $self->adaptor->db->get_GenomicAlignAdaptor;
+  }
+
+  if (defined($genomic_align_adaptor)) {
+    # We are using weak references
+    while (my ($dbID, $genomic_align) = each %{$self->{'genomic_align_array'}}) {
+      next if ($dbID !~ /^\d+$/);
+      if (!defined($genomic_align)) {
+        # Weak reference has been destroyed, restore it using the genomic_align_id
+        weaken($self->{'genomic_align_array'}->{$dbID} =
+                $genomic_align_adaptor->fetch_by_dbID($dbID));
+      }
+      push(@$genomic_align_array, $genomic_align_adaptor->fetch_by_dbID($dbID));
     }
-    push(@$genomic_align_array, $genomic_align_adaptor->fetch_by_dbID($dbID));
+  
+  } else {
+    # We are using strong references
+    $genomic_align_array = [values %{$self->{'genomic_align_array'}}];
   }
   return $genomic_align_array;
 }
