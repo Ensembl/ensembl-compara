@@ -63,7 +63,6 @@ my $self = bless {};
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
-#$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
@@ -173,14 +172,6 @@ sub prepareGenomeAnalysis
 
   $dataflowRuleDBA->create_rule($submit_analysis, $load_analysis);
 
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$load_analysis);
-    $rule->add_condition($submit_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
-
   #
   # GenomeSubmitPep
   #
@@ -197,14 +188,6 @@ sub prepareGenomeAnalysis
   $stats->update();
 
   $dataflowRuleDBA->create_rule($load_analysis, $submitpep_analysis);
-
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$submitpep_analysis);
-    $rule->add_condition($load_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
 
   #
   # GenomeDumpFasta
@@ -224,14 +207,6 @@ sub prepareGenomeAnalysis
 
   $dataflowRuleDBA->create_rule($load_analysis, $dumpfasta_analysis);
 
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
-    $rule->add_condition($load_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
-
   #
   # GenomeCalcStats
   #
@@ -249,14 +224,6 @@ sub prepareGenomeAnalysis
   $stats->update();
 
   $dataflowRuleDBA->create_rule($load_analysis, $calcstats_analysis);
-
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$calcstats_analysis);
-    $rule->add_condition($load_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
 
   #
   # CreateBlastRules
@@ -280,16 +247,6 @@ sub prepareGenomeAnalysis
   $ctrlRuleDBA->create_rule($submitpep_analysis, $blastrules_analysis);
   $ctrlRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
-  
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$blastrules_analysis);
-    $rule->add_condition($dumpfasta_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
-
-  
   #
   # blast_template
   #
@@ -299,7 +256,6 @@ sub prepareGenomeAnalysis
   # the dynamic creation of the analyses like blast_1_NCBI34
   my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
-  $blast_template->input_id_type('MemberPep');
   eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
 
   #
@@ -337,11 +293,6 @@ sub prepareGenomeAnalysis
     $stats->hive_capacity(3);
     $stats->update();
     $dataflowRuleDBA->create_rule($submitHomology,$buildHomology);
-  }
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$buildHomology);
-    $rule->add_condition($submitHomology->logic_name());
-    $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
   }
 
   #
