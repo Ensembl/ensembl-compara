@@ -178,7 +178,7 @@ CREATE TABLE family (
  stable_id		varchar(40) NOT NULL, # e.g. ENSF0000012345
  source_id              int(10) NOT NULL, # foreign key from source table
  description		varchar(255),
- descritpion_score	double,
+ description_score	double,
 
  PRIMARY KEY (family_id), 
  UNIQUE KEY (stable_id),
@@ -211,8 +211,8 @@ CREATE TABLE domain_member (
  member_start	int(10),
  member_end	int(10),
 
- UNIQUE KEY (domain_id,member_id),
- UNIQUE KEY (member_id,domain_id)
+ UNIQUE KEY (domain_id,member_id,member_start,member_end),
+ UNIQUE KEY (member_id,domain_id,member_start,member_end)
 );
 
 CREATE TABLE homology (
