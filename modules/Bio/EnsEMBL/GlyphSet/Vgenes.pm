@@ -45,8 +45,6 @@ sub _init {
 
     my $v_offset = $Config->container_width() - ($chr_slice->length() || 1);
 
-    #warn Data::Dumper::Dumper( $known_genes );
-    warn( "===>X ",$known_genes->size," ", $genes->size );
     return unless $known_genes->size() && $genes->size();
 
    	$genes->scale_to_fit( $Config->get( 'Vgenes', 'width' ) );
