@@ -291,23 +291,30 @@ sub _objs_from_sth {
 
 =head2 store
 
- Title   : store
- Usage   :
- Function:
- Example :
- Returns :
- Args    :
+ Arg [1]     : Bio::EnsEMBL::Compara::DnaFrag $new_dnafrag
+ Example     : $dnafrag_adaptor->store($new_dnafrag)
+ Description : Stores a Bio::EnsEMBL::Compara::DnaFrag object
+               in the DB-
+ ReturnType  : integer new_dnafrag_id
+ Exceptions  : throw if $new_dnafrag is not a
+               Bio::EnsEMBL::Compara::DnaFrag object
+ Exceptions  : does not store anything if $new_dnafrag->adaptor is
+               already defined and is equal to this adaptor
+ Exceptions  : throw if $new_dnafrag->genome_db is not defined or has
+               no dbID.
+ Exceptions  : throw if $new_dnafrag has no name
+ Caller      : $object->methodname
 
 =cut
 
 sub store {
-   my ($self,$dnafrag) = @_;
+   my ($self, $dnafrag) = @_;
 
    if( !defined $dnafrag ) {
        throw("Must store $dnafrag object");
    }
 
-   if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
+   if( !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
        throw("Must have dnafrag arg [$dnafrag]");
    }
 
