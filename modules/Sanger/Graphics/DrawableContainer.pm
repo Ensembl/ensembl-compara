@@ -145,7 +145,7 @@ sub new {
     }
     
     my $x_scale = $panel_width /(
-                    ($Config->container_width()||$Container->length()) +1 );
+                    ($Config->container_width()||$Container->length()));
   
   if($show_buttons eq 'yes') {
   for my $glyphset (@glyphsets) {
