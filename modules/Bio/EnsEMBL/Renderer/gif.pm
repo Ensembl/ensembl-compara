@@ -156,9 +156,9 @@ sub render_Line {
     my $y2     = $y1 + $glyph->pixelheight();
 
     if(defined $glyph->dotted()) {
-	$self->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
+        $self->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
     } else {
-	$self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
+        $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
     }
 }
 
@@ -176,16 +176,15 @@ sub render_Poly {
     my $pairs_of_points = (scalar @points)/ 2;
 
     for(my $i=0;$i<$pairs_of_points;$i++) {
-	my $x = shift @points;
-	my $y = shift @points;
-
-	$poly->addPt($x,$y);
+    	my $x = shift @points;
+    	my $y = shift @points;
+        $poly->addPt($x,$y);
     }
 
     if(defined $colour) {
-	$self->{'canvas'}->filledPolygon($poly, $colour);
+    	$self->{'canvas'}->filledPolygon($poly, $colour);
     } else {
-	$self->{'canvas'}->polygon($poly, $bordercolour);
+	    $self->{'canvas'}->polygon($poly, $bordercolour);
     }
 }
 
