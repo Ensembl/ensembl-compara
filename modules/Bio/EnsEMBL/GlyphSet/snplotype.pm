@@ -75,6 +75,7 @@ sub create_multiple_haplotype_block {
         my $foo = $hap->patterns();
         #print STDERR ">> $foo<<\n";
         my @patterns = @{$foo};
+				
         my $pattern_length = length($patterns[0]->pattern());
         #print STDERR "Pattern length: $pattern_length\n";
 
@@ -96,7 +97,7 @@ sub create_multiple_haplotype_block {
         }     
         # OK, its safe to open them...
 
-        ## draw a matrix of block representing the grouped haplotype consensus patters
+        ## draw a matrix of block representing the grouped haplotype consensus pattern
 
         foreach my $pat (@patterns){        
 
@@ -166,7 +167,7 @@ sub create_haplotype_block {
         'y'          => $global_ystart - 30 + 1,
         'font'       => 'Small',
         'colour'     => $black,
-        'text'       => "SNP ID",
+        'text'       => "Poly. ID",
         'absolutex'  => 1,
         'absolutey'  => 1,
     });
@@ -222,6 +223,10 @@ sub create_haplotype_block {
     my $j = 0;
     foreach my $pat (@patterns){        
         # draw the consensus columns...
+
+		#print STDERR "PAT: ",$pat->id(), " count: ", $pat->count(), "\n";
+		next if ($pat->count() < 2); # ignore singletons
+			
         my $type = "cons";
         if($showconsensus){
             foreach(split('',$pat->pattern())){
@@ -242,17 +247,17 @@ sub create_haplotype_block {
         foreach my $key (keys %samples){
             my $i = 0;
             my @sample = split('',$samples{$key});
-    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-        'x'          => $xstart + 5,
-        'y'          => $global_ystart - 30 + 1,
-        'font'       => 'Small',
-        'colour'     => $black,
-        'text'       => $j+1,
-        'absolutex'  => 1,
-        'absolutey'  => 1,
-    });
-    $self->push($tglyph);
-    $j++;
+    		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
+        		'x'          => $xstart + 5,
+        		'y'          => $global_ystart - 30 + 1,
+        		'font'       => 'Small',
+        		'colour'     => $black,
+        		'text'       => $j+1,
+        		'absolutex'  => 1,
+        		'absolutey'  => 1,
+    		});
+    		$self->push($tglyph);
+    		$j++;
             foreach my $b (@sample){
                 if ($b eq $consensus_base_for_row[$i]){
                     $type = 'wt';
@@ -292,7 +297,7 @@ sub create_haplotype_block {
         'y'          => $global_ystart - 30 + 1,
         'font'       => 'Small',
         'colour'     => $black,
-        'text'       => "SNP Pos.",
+        'text'       => "Poly. Pos.",
         'absolutex'  => 1,
         'absolutey'  => 1,
     });
@@ -355,7 +360,12 @@ sub draw_labelled_snp_block {
         $fg = $white;        
     } 
     
-    if (uc($label) eq "N" && $type ne "cons"){
+	if ($label eq "+"){
+        $bg = $red;
+        $fg = $white;        	
+	}
+	
+    if (uc($label) =~ /[N|\?|\-]/ && $type ne "cons"){
         return();
     } else {
         my $block = new Bio::EnsEMBL::Glyph::Rect({
@@ -404,7 +414,12 @@ sub draw_unlabelled_snp_block {
         $fg = $white;        
     } 
     
-    if (uc($label) eq "N" && $type ne "cons"){
+	if ($label eq "+"){
+        $bg = $red;
+        $fg = $white;        	
+	}
+
+    if (uc($label) =~ /[N|\?|\-]/ && $type ne "cons"){
         return();
     } else {
         my $block = new Bio::EnsEMBL::Glyph::Rect({
