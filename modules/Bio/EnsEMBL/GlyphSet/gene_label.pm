@@ -42,7 +42,8 @@ sub _init {
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
-    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
+
+#    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
     foreach my $vg (@allgenes) {
 
 	my ($start, $end, $colour, $label,$hi_colour);
@@ -53,18 +54,22 @@ sub _init {
 
 	    if ($vg->gene->is_known) {
     		$colour = $known_col;
-            my @temp_geneDBlinks = $vg->gene->each_DBLink();
+                my @temp_geneDBlinks = $vg->gene->each_DBLink();
 	     	
-        # find a decent label:
-    		foreach my $DB_link ( @temp_geneDBlinks ) {
-                my $db = $DB_link->database();
-                        # check in order of preference:
-                $label = $DB_link->display_id() if( $db_names{$db} );
-                last if($db eq 'HUGO');
-    		}
-    
+                # find a decent label:
+              DBLINK:
+                # check in order of preference:
+                foreach my $db ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
+                    foreach my $DB_link ( @temp_geneDBlinks ) {
+                        if ($db eq $DB_link->database() ) {
+                            $label = $DB_link->display_id();
+                            last DBLINK;
+                        }
+                    }
+		}
+                
     		$label = $vg->id() unless( defined $label );
-                    # check for highlighting
+                # check for highlighting
     		if (exists $highlights{$label}){
     		    $hi_colour = $Config->get( 'gene', 'hi');
     		}
