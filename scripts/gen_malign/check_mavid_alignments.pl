@@ -184,11 +184,11 @@ print STDERR "Looking for ",
   }
 
   my $genomic_align_blocks =
-      $genomic_align_block_adaptor->fetch_all_by_dnafrag_and_method_link_species_set(
+      $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
+          $method_link_species_set,
           $this_alignment->{dnafrag},
           $this_alignment->{dnafrag_start},
-          $this_alignment->{dnafrag_end},
-          $method_link_species_set
+          $this_alignment->{dnafrag_end}
       );
   my $genomic_align_block;
   if (@$genomic_align_blocks > 1) {
