@@ -3,6 +3,7 @@ use strict;
 use Exporter;
 use Sanger::Graphics::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 use vars qw(@ISA $AUTOLOAD);
 
@@ -19,10 +20,16 @@ sub new {
       return undef;
     }
     my $self = $class->SUPER::new( @_ );
-       $self->{'bumpbutton'} = undef;
+    $self->{'bumpbutton'} = undef;
     return $self;
 }
 
+sub __init {
+  my $self = shift;
+  eprof_start('init_'.ref($self));
+  $self->_init(@_);
+  eprof_end('init_'.ref($self));
+}
 sub bumpbutton {
     my ($self, $val) = @_;
     $self->{'bumpbutton'} = $val if(defined $val);
