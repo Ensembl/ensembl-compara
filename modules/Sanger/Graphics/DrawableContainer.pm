@@ -220,6 +220,7 @@ sub new {
 							  'height'    => $glyphset->maxy() - $gminy,
 							  'colour'    => $bgcolours->[$iteration % 2],
 							  'absolutex' => 1,
+							  'absolutewidth' => 1,
 							 });
       #########
       # this accidentally gets stuffed in twice (for gif & imagemap)
