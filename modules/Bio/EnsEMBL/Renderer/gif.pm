@@ -38,9 +38,9 @@ sub add_canvas_frame {
 sub canvas {
     my ($self, $canvas) = @_;
     if(defined $canvas) {
-	$self->{'canvas'} = $canvas;
+        $self->{'canvas'} = $canvas ;
     } else {
-	return $self->{'canvas'}->gif();
+        return $self->{'canvas'}->gif();
     }
 }
 
