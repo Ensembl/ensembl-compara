@@ -204,24 +204,9 @@ sub store_gene_and_all_transcripts
   my @longestPeptideMember;
   my $maxLength=0;
   my $gene_member;
+  my $gene_member_not_stored = 1;
 
   my $MemberAdaptor = $self->{'comparaDBA'}->get_MemberAdaptor();
-
-  if($self->{'store_genes'}) {
-    print("     gene       " . $gene->stable_id ) if($self->{'verbose'});
-    $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
-                   -gene=>$gene,
-                   -genome_db=>$self->{'genome_db'});
-    print(" => member " . $gene_member->stable_id) if($self->{'verbose'});
-
-    eval {
-      $MemberAdaptor->store($gene_member);
-      print(" : stored") if($self->{'verbose'});
-    };
-
-    $self->{'geneSubset'}->add_member($gene_member);
-    print("\n") if($self->{'verbose'});
-  }
 
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
     $self->{'transcriptCount'}++;
@@ -253,6 +238,25 @@ sub store_gene_and_all_transcripts
     }
     print(" len=",$pep_member->seq_length ) if($self->{'verbose'});
 
+    # store gene_member here only if at least one peptide is to be loaded for
+    # the gene.
+    if($self->{'store_genes'} && $gene_member_not_stored) {
+      print("     gene       " . $gene->stable_id ) if($self->{'verbose'});
+      $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
+                                                                  -gene=>$gene,
+                                                                  -genome_db=>$self->{'genome_db'});
+      print(" => member " . $gene_member->stable_id) if($self->{'verbose'});
+      
+      eval {
+        $MemberAdaptor->store($gene_member);
+        print(" : stored") if($self->{'verbose'});
+      };
+      
+      $self->{'geneSubset'}->add_member($gene_member);
+      print("\n") if($self->{'verbose'});
+      $gene_member_not_stored = 0;
+    }
+    
     $MemberAdaptor->store($pep_member);
     $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
     print(" : stored\n") if($self->{'verbose'});
