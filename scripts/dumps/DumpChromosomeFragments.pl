@@ -39,7 +39,7 @@ $0 [-help]
                      depending on the repeat class or name. See RepeatMaksingRestriction.conf.example,
                      and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
    -o output_filename
-   -coord_system coordinate system (default=chromosome)
+   -coord_system coordinate system (default=chromosome, but must be all of same type-->2 dumps for danio and can't use all for them )
 
 
 ";
@@ -223,9 +223,9 @@ sub printout_by_overlapping_chunks {
       my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = join ".", ($phusion.$slice->seq_region_name,$chr_start);
+	$id = $phusion.".".$coordinate_system.":".$slice->seq_region_name.".".$chr_start;
       } else {
-	$id = join ".", ($slice->seq_region_name,$chr_start,$slice->end);
+	$id = $coordinate_system.":".$slice->seq_region_name.".".$chr_start.".".$slice->end;
       }
       $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$seq->length),
 				     -id  => $id,
@@ -237,9 +237,9 @@ sub printout_by_overlapping_chunks {
       my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = join ".", ($phusion.$slice->seq_region_name,$chr_start);
+	$id = $phusion.".".$coordinate_system.":".$slice->seq_region_name.".".$chr_start;
       } else {
-	$id = join ".", ($slice->seq_region_name,$chr_start,$chr_start+$chunk_size-1);
+	$id = $coordinate_system.":".$slice->seq_region_name.".".$chr_start.".".$chr_start+$chunk_size-1;
       }
       $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$i+$chunk_size-1),
 				     -id  => $id,
