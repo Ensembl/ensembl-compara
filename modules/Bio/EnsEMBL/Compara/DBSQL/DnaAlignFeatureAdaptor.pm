@@ -143,7 +143,10 @@ sub fetch_all_by_species_region {
 
   #constrain coordinates so they are completely within the dna frag
   my $this_dnafrag_length = $this_dnafrag->length;
+  $this_dnafrag_start = 1 unless (defined $this_dnafrag_start);
   $this_dnafrag_start = ($this_dnafrag_start < 1)  ? 1 : $this_dnafrag_start;
+
+  $this_dnafrag_end = $this_dnafrag_length unless (defined $this_dnafrag_end);
   $this_dnafrag_end   = ($this_dnafrag_end > $this_dnafrag_length) ? $this_dnafrag_length : $this_dnafrag_end;
 
   #fetch all alignments in the region we are interested in
