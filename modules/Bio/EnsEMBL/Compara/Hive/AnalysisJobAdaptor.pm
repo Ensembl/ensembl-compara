@@ -286,7 +286,7 @@ sub create_new_job {
             " SET input_id=\"$input_id\" ".
             " ,input_analysis_job_id='$input_analysis_job_id' ".
             " ,analysis_id='$analysis_id' ";
-  $sql .= " ,status='BLOCKED'" if($blocked);
+  $sql .= " ,status='BLOCKED', job_claim='BLOCKED'" if($blocked);
 
   my $sth = $self->prepare($sql);
   $sth->execute();
