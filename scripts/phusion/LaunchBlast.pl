@@ -59,12 +59,12 @@ unless ($qy_input_only) {
   
   $sb_file = "/tmp/sb.$rand";
   unless (system("$fastafetch_executable $subject_fasta $subject_index $sb_id > $sb_file") == 0) {
-    unlink glob("/tmp/*$rand*");
+    unlink glob("/tmp/*$rand*") unless ($keeptmp);
     die "error in fastafetch $sb_id, $!\n";
   }
 
   unless (system("pressdb $sb_file > /dev/null") == 0) {
-    unlink glob("/tmp/*$rand*");
+    unlink glob("/tmp/*$rand*") unless ($keeptmp);
     die "error in pressdb, $!\n";
   }
 
@@ -88,7 +88,7 @@ my $cigar_file = "/tmp/cigar.$rand";
 foreach my $qy_seq (@query_seq) {
 
   unless(system("$fastafetch_executable $query_fasta $query_index $qy_seq > $qy_file") ==0) {
-    unlink glob("/tmp/*$rand*");
+    unlink glob("/tmp/*$rand*") unless ($keeptmp);
     die "error in fastafetch $qy_seq, $!\n";
   } 
   
@@ -105,19 +105,19 @@ foreach my $qy_seq (@query_seq) {
 # sequence contains MOSTLY Ns, no seeding is possible.
 # the message sent by wublastn is "There are no valid contexts in the requested search."
 
-    unlink glob("/tmp/*$rand*");
+    unlink glob("/tmp/*$rand*") unless ($keeptmp);
     die "error in wublast, $!\n";
   }
   my $cmd_line = "$FilterBlast_executable $FilterBlastArgs -p $p";
   unless (system("$cmd_line $subject_tag $min_score $blast_file >> $cigar_file") == 0) {
-    unlink glob("/tmp/*$rand*");
+    unlink glob("/tmp/*$rand*") unless ($keeptmp);
     die "error in cigar, $!\n";
   }
 }
 
 my $final_file = $dir."/".basename($input).".cigar";
 unless (system("cp $cigar_file $final_file") == 0) {
-  unlink glob("/tmp/*$rand*");
+  unlink glob("/tmp/*$rand*") unless ($keeptmp);
   die "error in cp $cigar_file,$1\n";
 }
 
