@@ -77,27 +77,52 @@ use Bio::EnsEMBL::Test::TestUtils;
 
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 
+#####################################################################
+## Connect to the test database using the MultiTestDB.conf file
+
+my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
+my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
+my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
+
+my $species = [
+        "homo_sapiens",
+#         "mus_musculus",
+        "rattus_norvegicus",
+        "gallus_gallus",
+    ];
+
+my $species_db;
+my $species_db_adaptor;
+my $species_gdb;
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (@$species) {
+  $species_db->{$this_species} = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  die if (!$species_db->{$this_species});
+  $species_db_adaptor->{$this_species} = $species_db->{$this_species}->get_DBAdaptor('core');
+  $species_gdb->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly(
+          $species_db_adaptor->{$this_species}->get_MetaContainer->get_Species->binomial,
+          $species_db_adaptor->{$this_species}->get_CoordSystemAdaptor->fetch_all->[0]->version
+      );
+  $species_gdb->{$this_species}->db_adaptor($species_db_adaptor->{$this_species});
+}
+
+##
+#####################################################################
+
 # switch off the debug prints 
 our $verbose = 0;
 
-my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
-my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
-
-my $compara_db = $multi->get_DBAdaptor( "compara" );
-
 my $genomic_align_group;
 my $all_genomic_align_group;
-my $genomic_align_group_adaptor = $compara_db->get_GenomicAlignGroupAdaptor;
-my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor;
+my $genomic_align_group_adaptor = $compara_db_adaptor->get_GenomicAlignGroupAdaptor;
+my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor;
 
 ## Data extracted from the database and used to check and test the API
-my $genomic_align_group_id = 3597147;
+my $genomic_align_group_id = 251834;
 my $genomic_align_group_type = "default";
-my $genomic_align_1_id = 9505792;
+my $genomic_align_1_id = 10292464;
 my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_1_id);
-my $genomic_align_2_id = 9505794;
+my $genomic_align_2_id = 10292450;
 my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_2_id);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
   
