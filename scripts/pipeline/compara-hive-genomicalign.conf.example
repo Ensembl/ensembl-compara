@@ -1,0 +1,70 @@
+# copy/paste configuration file from Jessica to run human/cow blastz
+# with minor modifications on settings
+[
+  { # information to connect to compara/hive database
+    TYPE => COMPARA,
+    '-host'     => "ia64g",
+    '-port'     => "3306",
+    '-user'     => "ensadmin",
+    '-pass'     => "ensembl",
+    '-dbname'   => "abel_compara_human_cow_blastz_27",
+    '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
+  },
+  { TYPE => HIVE,
+    'hive_output_dir'      => "/acari/work7a/abel/hive/abel_compara_human_cow_blastz_27",
+  },
+
+  { TYPE => SPECIES,
+    'abrev'          => 'Hs34e',
+    'genome_db_id'   => 1,
+    'taxon_id'       => 9606,
+    'phylum'         => 'Vertebrata',
+    'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    'host'           => "ia64e",
+    'port'           => 3306,
+    'user'           => "ensro",
+    'dbname'         => "jessica_homo_sapiens_core_27_35a",
+  },
+
+  { TYPE => SPECIES,
+    'abrev'          => 'Bt1',
+    'genome_db_id'   => 17,
+    'phylum'         => 'Vertebrata',
+    'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    'host'           => "ecs2",
+    'port'           => 3365,
+    'user'           => "ensro",
+    'dbname'         => "klh_bos_taurus_seq_24_1",
+  },
+
+  { TYPE => GENOMIC_ALIGN,
+    'subtype' => 'blastz',
+    'method_link' => [1001, 'BLASTZ_RAW'],
+    'analysis_template' => {
+        '-program'       => 'blastz',
+        '-parameters'    => "{method_link=>'BLASTZ_RAW',options=>'T=1 L=5000 H=2200 M=40000000 O=400 E=30'}",
+        '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
+    },
+    'query' => {
+      'name_assembly'   => 'Bos taurus:COW1',
+      'genome_db_id'    => 17,
+      'chunk_size'      => 10100000,
+      'overlap'         =>   100000,
+#if no grouping is needed, comment the line above
+      'group_set_size'  => 10000000,
+      'masking_options' => {'default_soft_masking' => 1},
+    },
+    'target' => {
+      'name_assembly'   => 'Homo sapiens:NCBI35',
+      'genome_db_id'    => 1,
+# if you want to run on a specific region of the genome give coord_system_name:dnafrag_name
+# and uncomment line below
+#      'region'          => 'chromosome:22',
+      'chunk_size'      => 30000000,
+      'overlap'         => 0,
+      'masking_options' => do('./human35.spec'),
+    }
+  },
+
+  { TYPE => END }
+]
