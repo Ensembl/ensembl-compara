@@ -28,7 +28,7 @@ sub features {
 sub href {
     my ($self, $f ) = @_;
 
-    my $chr_start = $self->{'container'}->chr_start()+$f->start;
+    my $chr_start = $self->{'container'}->start()+$f->start;
     my $snp_id = $f->snpid || $f->id;
 
     my $source = $f->source_tag;
