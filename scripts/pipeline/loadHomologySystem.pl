@@ -107,7 +107,7 @@ sub parse_conf {
       if($confPtr->{TYPE} eq 'COMPARA') {
         %compara_conf = %{$confPtr};
       }
-      if($confPtr->{TYPE} eq 'BLAST_TEMPLATE') {
+      if(($confPtr->{TYPE} eq 'BLAST_TEMPLATE') or ($confPtr->{TYPE} eq 'BLASTP_TEMPLATE')) {
         %analysis_template = %{$confPtr};
       }
       if($confPtr->{TYPE} eq 'HIVE') {
