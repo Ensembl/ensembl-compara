@@ -39,6 +39,7 @@ GetOptions('help'     => \$help,
            'dbname=s' => \$dbname,
            'g=s'      => \$self->{'gene_stable_id'},
 	   'sp=s'     => \$self->{'species'},
+	   'l=i'      => \$aaPerLine,
           );
 
 if ($help) { usage(); }
@@ -142,18 +143,6 @@ while($numLines>0) {
   $numLines--;
 }
 
-exit(1);
-
-
-my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
-my $paf_list = $pafDBA->fetch_all_RH_by_member($member->dbID);
-foreach my $paf (@{$paf_list}) {  
-  $paf->display_short() if($paf);
-  #my $rpaf = $pafDBA->fetch_by_dbID($paf->rhit_dbID) if($paf->rhit_dbID);
-  #$rpaf->display_short() if($rpaf);
-}
-
-
 exit(0);
 
 
@@ -172,6 +161,9 @@ sub usage {
   print "  -dbname <name>         : compara mysql database <name>\n";
   print "  -dbuser <name>         : compara mysql connection user <name>\n";
   print "  -dbpass <pass>         : compara mysql connection password\n";
+  print "  -g <id>                : stable_id of query gene\n";
+  print "  -sp <name>             : name of target species\n";
+  print "  -l <num>               : number if bases per line for pretty output\n";
   print "getHomologyAlignment.pl v1.1\n";
   
   exit(1);  
