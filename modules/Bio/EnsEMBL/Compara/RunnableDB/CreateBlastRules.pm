@@ -59,7 +59,7 @@ use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::SimpleRuleAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use vars qw(@ISA);
 
@@ -105,7 +105,7 @@ sub fetch_input {
   #variable DBConnection to create the new connection (in essence a copy)
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
- 
+
   return 1;
 }
 
@@ -123,7 +123,7 @@ sub write_output
   my $self = shift;
 
   my $input_hash = eval($self->input_id);
-  if($input_hash->{'peps'} and $input_hash->{'blast'}) {
+  if($input_hash and $input_hash->{'peps'} and $input_hash->{'blast'}) {
     my $conditionLogicName = $input_hash->{'peps'};
     my $goalLogicName = $input_hash->{'blast'};
     print("create rule $conditionLogicName => $goalLogicName\n");
@@ -176,8 +176,6 @@ sub createBlastRules
             if($self->{'create_all'} or ($blastPhylum eq $phylum) ) {
               #$analysis is a SubmitPep so it's the condition
               #$blastAnalysis is the goal
-              # $self->addSimpleRule($analysis, $blastAnalysis);
-
               $self->addHomologyPair($analysis, $blastAnalysis);
             }
           }
@@ -198,7 +196,7 @@ sub phylumForGenomeDBID
 
   my $sql = "SELECT phylum FROM genome_db_extn " .
             "WHERE genome_db_id=$genome_db_id;";
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  my $sth = $self->db->prepare( $sql );
   $sth->execute();
   $sth->bind_columns( undef, \$phylum );
   $sth->fetch();
@@ -214,26 +212,14 @@ sub addHomologyPair
   my $conditionAnalysis = shift;
   my $goalAnalysis = shift;
 
-  #$self->addRule($conditionAnalysis, $goalAnalysis);
-  $self->addSimpleRule($conditionAnalysis, $goalAnalysis);
+  if($self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor')) {
+    $self->db->get_DataflowRuleAdaptor->create_rule($conditionAnalysis, $goalAnalysis);
+  } else {
+    $self->addRule($conditionAnalysis, $goalAnalysis);
+  }
+
   #$self->addBuildHomologyInput($conditionAnalysis, $goalAnalysis);
-}
 
-sub addSimpleRule
-{
-  my $self = shift;
-  my $conditionAnalysis = shift;
-  my $goalAnalysis = shift;
-  
-  print("SIMPLERULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
-  
-  my $rule = Bio::EnsEMBL::Hive::SimpleRule->new(
-      '-goal_analysis'      => $goalAnalysis,
-      '-condition_analysis' => $conditionAnalysis);
-      
-  $self->{'comparaDBA'}->get_SimpleRuleAdaptor->store($rule);
-
-  my $temp_rule = $self->{'comparaDBA'}->get_SimpleRuleAdaptor->fetch_by_dbID($rule->dbID);
 }
 
 
@@ -244,7 +230,7 @@ sub addRule
   my $goalAnalysis = shift;
   my $rule;
 
-  print("RULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
+  print("PIPELINE RULE ".$conditionAnalysis->logic_name." -> ".$goalAnalysis->logic_name."\n");
 
   $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalanalysis' => $goalAnalysis);
   $rule->add_condition($conditionAnalysis->logic_name());
@@ -264,7 +250,19 @@ sub addBuildHomologyInput
   my $analysis2 = shift;
   my $noRHS = shift;
 
+  return unless($analysis1 and $analysis2);
+  return unless($analysis1->parameters and $analysis2->parameters);
+  return unless($analysis1->logic_name =~ /blast_/);
+  return unless($analysis2->logic_name =~ /blast_/);
+
+  my $genome_db_id1 = eval($analysis1->parameters)->{'genome_db_id'};
+  my $genome_db_id2 = eval($analysis2->parameters)->{'genome_db_id'};
+  return unless ($genome_db_id1 and $genome_db_id2);
+
+  
   my $input_id;
+
+  my $isHive = $self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
 
   #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
 
@@ -277,6 +275,13 @@ sub addBuildHomologyInput
       );
     $self->db->get_AnalysisAdaptor()->store($submitHomology);
     $self->{'submitHomology'} = $submitHomology;
+    if($isHive) {
+      my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($submitHomology->dbID);
+      $stats->batch_size(7000);
+      $stats->hive_capacity(1);
+      $stats->status('BLOCKED');
+      $stats->update();
+    }
 
 
     my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
@@ -285,42 +290,47 @@ sub addBuildHomologyInput
         -input_id_type   => 'homology',
         -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
       );
-    $self->db->get_AnalysisAdaptor()->store($buildHomology);
+    $self->db->get_AnalysisAdaptor->store($buildHomology);
     $self->{'buildHomology'} = $buildHomology;
+    if($isHive) {
+      my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($buildHomology->dbID);
+      $stats->batch_size(1);
+      $stats->hive_capacity(3);
+      $stats->update();
+    }
 
-    $self->{'comparaDBA'}->get_SimpleRuleAdaptor->create_rule($submitHomology,$buildHomology);
+    if($isHive) {
+      $self->db->get_DataflowRuleAdaptor->create_rule($submitHomology,$buildHomology);
+    } else {
+      my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$buildHomology);
+      $rule->add_condition($submitHomology->logic_name());
+      $self->db->get_RuleAdaptor->store($rule);
+    }
   }
 
 
-  my $genome_db_id1 = eval($analysis1->parameters)->{'genome_db_id'};
-  my $genome_db_id2 = eval($analysis2->parameters)->{'genome_db_id'};
-  if(($analysis1->logic_name =~ /blast_/) and
-     ($analysis2->logic_name =~ /blast_/) and
-     $genome_db_id1 and $genome_db_id2)
-  {
-    if($genome_db_id1 < $genome_db_id2) {
-      $input_id = "{blasts=>['".$analysis1->logic_name . "','". $analysis2->logic_name . "']";
-    } else {
-      $input_id = "{blasts=>['".$analysis2->logic_name . "','". $analysis1->logic_name . "']";
-    }
-    if($noRHS and ($noRHS eq 'noRHS')) { $input_id .= ",noRHS=>1"; }
-    $input_id .= "}";
-    print("HOMOLOGY '$input_id'\n");
+  if($genome_db_id1 < $genome_db_id2) {
+    $input_id = "{blasts=>['".$analysis1->logic_name . "','". $analysis2->logic_name . "']";
+  } else {
+    $input_id = "{blasts=>['".$analysis2->logic_name . "','". $analysis1->logic_name . "']";
+  }
+  if($noRHS and ($noRHS eq 'noRHS')) { $input_id .= ",noRHS=>1"; }
+  $input_id .= "}";
+  print("HOMOLOGY '$input_id'\n");
 
-    $self->{'comparaDBA'}->get_AnalysisJobAdaptor->create_new_job(
+  if($isHive) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
-        -analysis_id    => $self->{'submitHomology'}->dbID,
+        -analysis       => $self->{'submitHomology'},
         -input_job_id   => 0,
-        -block          => 'YES',
         );
-
-   # $sicDBA->store_input_id_analysis($input_id,
-   #                                  $self->{'submitHomology'},
-   #                                  'gaia', #execution_host
-   #                                  0 #save runtime NO (ie do insert)
-   #                                 );
-
-   
+  } else {
+    $self->db->get_StateInfoContainer->store_input_id_analysis(
+        $input_id,
+        $self->{'submitHomology'},
+        'gaia', #execution_host
+        0 #save runtime NO (ie do insert)
+        );
   }
 }
 
