@@ -59,9 +59,9 @@ sub fetch_by_Member_paired_species {
   my $sth =  $self->generic_fetch_sth($constraint, $join);
   
   my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
-      $source_id, $source_name);
+      $source_id, $source_name, $subtype);
 
-  $sth->bind_columns(\$homology_id, \$stable_id, \$description,
+  $sth->bind_columns(\$homology_id, \$stable_id, \$description, \$subtype,
                      \$dn ,\$ds, \$n, \$s, \$lnl, \$threshold_on_ds,
                      \$source_id, \$source_name);
 
@@ -143,6 +143,7 @@ sub _columns {
   return qw (h.homology_id
              h.stable_id
              h.description
+             h.subtype
              h.dn
              h.ds
              h.n
@@ -157,9 +158,9 @@ sub _objs_from_sth {
   my ($self, $sth) = @_;
   
   my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
-      $source_id, $source_name);
+      $source_id, $source_name, $subtype);
 
-  $sth->bind_columns(\$homology_id, \$stable_id, \$description, \$dn, \$ds,
+  $sth->bind_columns(\$homology_id, \$stable_id, \$description, \$subtype, \$dn, \$ds,
                      \$n, \$s, \$lnl, \$threshold_on_ds, \$source_id, \$source_name);
 
   my @homologies = ();
@@ -169,6 +170,7 @@ sub _objs_from_sth {
       ({'_dbID' => $homology_id,
        '_stable_id' => $stable_id,
        '_description' => $description,
+       '_subtype' => $subtype,
        '_dn' => $dn,
        '_ds' => $ds,
        '_n' => $n,
@@ -216,9 +218,9 @@ sub store {
   $hom->source_id($self->store_source($hom->source_name));
     
   unless($hom->dbID) {
-    my $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?)";
+    my $sql = "INSERT INTO homology (stable_id, source_id, description, subtype) VALUES (?,?,?,?)";
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->stable_id,$hom->source_id,$hom->description);
+    $sth->execute($hom->stable_id,$hom->source_id,$hom->description, $hom->subtype);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
