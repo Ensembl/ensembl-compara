@@ -88,8 +88,9 @@ sub _init {
     
     my $done_one_acen = 0;	    # flag for tracking place in chromsome
 
-    if(@$bands) {
-      foreach my $band (@$bands){
+    my @bands =  sort{$a->start <=> $b->start } @$bands;
+    if(@bands) {
+      foreach my $band (@bands){
 	my $bandname       = $band->name();
 # 	my $band2          = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
 # 	my $vc_band_start  = $band2->start();
