@@ -72,6 +72,16 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 
 our @ISA = qw(Bio::EnsEMBL::Slice);
 
+## Creates a new coordinate system for creating gap Slices.
+my $gap_coord_system = new Bio::EnsEMBL::CoordSystem(
+        -NAME => 'gap',
+        -VERSION => "none",
+        -TOP_LEVEL => 0,
+        -SEQUENCE_LEVEL => 1,
+        -RANK => 1,
+    );
+
+
 =head2 new (CONSTRUCTOR)
 
   Arg[1]     : 
@@ -1156,6 +1166,7 @@ sub get_all_underlying_Slices {
 #     if ($strand == 1) {
       if ($start_position > $current_position) {
         my $this_underlying_slice = new Bio::EnsEMBL::Slice(
+              -coord_system => $gap_coord_system,
               -seq_region_name => "GAP",
               -start => $current_position,
               -end => $start_position - 1,
@@ -1178,6 +1189,7 @@ sub get_all_underlying_Slices {
 #     }
     $current_position = $end_position + 1;
     my $this_underlying_slice = new Bio::EnsEMBL::Slice(
+            -coord_system => $this_slice->coord_system,
             -seq_region_name => $this_slice->seq_region_name,
             -start => $this_subseq_start,
             -end => $this_subseq_end,
@@ -1192,6 +1204,7 @@ sub get_all_underlying_Slices {
   }
   if ($end >= $current_position) {
     my $this_underlying_slice = new Bio::EnsEMBL::Slice(
+          -coord_system => $gap_coord_system,
           -seq_region_name => "GAP",
           -start => $current_position,
           -end => $end,
