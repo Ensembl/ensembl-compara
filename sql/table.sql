@@ -87,7 +87,8 @@ create table align (
        score    varchar(20),
        align_name     varchar(40),
 
-       PRIMARY KEY (align_id)
+       PRIMARY KEY (align_id),
+       KEY (align_name)
 );
 
 create table align_row (
