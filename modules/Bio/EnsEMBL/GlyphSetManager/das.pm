@@ -40,6 +40,8 @@ sub init {
 
     for my $das_source_name ( keys %{$ext_das->{'data'}} ) {
 		next unless( $Config->get("extdas_$das_source_name",'on') eq 'on' );
+        my $das_species = $ext_das->{'data'}->{$das_source_name}->{'species'};
+        next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
 		my $extra_config 		    = $ext_das->{'data'}->{$das_source_name};
 		$extra_config->{'name'} 	= "extdas_$das_source_name";
 		$extra_config->{'url'} 		= "http://$extra_config->{'URL'}/das";
