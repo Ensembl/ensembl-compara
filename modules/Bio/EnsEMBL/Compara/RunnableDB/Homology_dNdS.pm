@@ -66,7 +66,7 @@ use vars qw(@ISA);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'codeml_parameters_href'};
+  $self->{'codeml_parameters_href'} = undef;
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -85,13 +85,15 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
+  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
   
   my $params = eval($param_string);
   return unless($params);
 
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
+  if($self->debug) {
+    foreach my $key (keys %$params) {
+      print("  $key : ", $params->{$key}, "\n");
+    }
   }
 
   if (defined $params->{'dNdS_analysis_data_id'}) {
@@ -149,7 +151,12 @@ sub calc_genetic_distance
   }
   $codeml->alignment($aln);
   my ($rc,$parser) = $codeml->run();
+  if($rc == 0) {
+    print_simple_align($aln, 80);
+    print("codeml error : ", $codeml->error_string, "\n");
+  }
   my $result = $parser->next_result;
+  
   my $MLmatrix = $result->get_MLmatrix();
 
   #print "n = ", $MLmatrix->[0]->[1]->{'N'},"\n";
@@ -167,6 +174,41 @@ sub calc_genetic_distance
   $homology->lnl($MLmatrix->[0]->[1]->{'lnL'});
 
   return $homology;
+}
+
+sub print_simple_align
+{
+  my $alignment = shift;
+  my $aaPerLine = shift;
+  $aaPerLine=40 unless($aaPerLine and $aaPerLine > 0);
+
+  my ($seq1, $seq2)  = $alignment->each_seq;
+  my $seqStr1 = "|".$seq1->seq().'|';
+  my $seqStr2 = "|".$seq2->seq().'|';
+
+  my $enddiff = length($seqStr1) - length($seqStr2);
+  while($enddiff>0) { $seqStr2 .= " "; $enddiff--; }
+  while($enddiff<0) { $seqStr1 .= " "; $enddiff++; }
+
+  my $label1 = sprintf("%40s : ", $seq1->id);
+  my $label2 = sprintf("%40s : ", "");
+  my $label3 = sprintf("%40s : ", $seq2->id);
+
+  my $line2 = "";
+  for(my $x=0; $x<length($seqStr1); $x++) {
+    if(substr($seqStr1,$x,1) eq substr($seqStr2, $x,1)) { $line2.='|'; } else { $line2.=' '; }
+  }
+
+  my $offset=0;
+  my $numLines = (length($seqStr1) / $aaPerLine);
+  while($numLines>0) {
+    printf("$label1 %s\n", substr($seqStr1,$offset,$aaPerLine));
+    printf("$label2 %s\n", substr($line2,$offset,$aaPerLine));
+    printf("$label3 %s\n", substr($seqStr2,$offset,$aaPerLine));
+    print("\n\n");
+    $offset+=$aaPerLine;
+    $numLines--;
+  }
 }
 
 1;
