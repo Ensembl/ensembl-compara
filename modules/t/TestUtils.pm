@@ -1,11 +1,14 @@
 use strict;
+use warnings;
 
 package TestUtils;
 
-require Exporter;
-use vars qw( @ISA @EXPORT_OK );
-@ISA=('Exporter');
-@EXPORT_OK=qw(&debug &test_getter_setter);
+use Exporter;
+
+use vars qw( @ISA @EXPORT );
+
+@ISA = qw(Exporter);
+@EXPORT = qw(debug test_getter_setter count_rows);
 
 =head2 test_getter_setter
 
@@ -37,7 +40,8 @@ sub test_getter_setter {
     $object->$method($test_val);
     
     #verify value was set
-    $ret_val = ($object->$method eq $test_val);
+    $ret_val = (!defined($test_val) && !defined($object->$method)) || 
+	       ($object->$method eq $test_val);
 
     #restore the old value
     $object->$method($old_val);
@@ -46,14 +50,20 @@ sub test_getter_setter {
 }
 
 sub debug {
-  my $txt = shift;
   if( $::verbose ) {
-    print STDERR $txt,"\n";
+    print STDERR @_,"\n";
   }
 }
 
+sub count_rows {
+  my $db = shift;
+  my $tablename = shift;
 
-
+  my $sth = $db->prepare( "select count(*) from $tablename" );
+  $sth->execute();
+  my ( $count ) = $sth->fetchrow_array();
+  return $count;
+}
 
 1;
 
