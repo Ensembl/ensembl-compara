@@ -117,6 +117,11 @@ sub new {
 	my $pixels = $chars * $Config->texthelper->width($glyphset->label->font());
 	
 	$label_length_px = $pixels if($pixels > $label_length_px);
+
+	#########
+	# just for good measure:
+	#
+	$glyphset->label->width($label_length_px);
     }
 
     #########
