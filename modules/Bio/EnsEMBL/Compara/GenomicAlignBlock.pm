@@ -499,6 +499,9 @@ sub genomic_align_array {
     my $genomic_align_adaptor = $self->adaptor->db->get_GenomicAlignAdaptor();
     $self->{'genomic_align_array'} = 
         $genomic_align_adaptor->fetch_all_by_genomic_align_block_id($self->{'dbID'});
+    foreach my $this_genomic_align (@{$self->{'genomic_align_array'}}) {
+      $this_genomic_align->genomic_align_block($self);
+    }
   }
   
   return $self->{'genomic_align_array'};
