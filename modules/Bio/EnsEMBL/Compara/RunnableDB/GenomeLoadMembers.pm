@@ -54,6 +54,7 @@ use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -219,7 +220,7 @@ sub store_gene_and_all_transcripts
     }
 
     unless (defined $transcript->translation->stable_id) {
-      warn("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+      throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
       next;
     }
 
