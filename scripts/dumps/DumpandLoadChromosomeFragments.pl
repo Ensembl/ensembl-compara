@@ -23,6 +23,7 @@ DumpandLoadChromosomeFragments.pl
             -mask_restriction RepeatMaksingRestriction.conf
             -o 		output_filename
 	    -load 	1
+	    -dump 	1
 
 $0 [-help]
    -host compara mysql host
@@ -44,6 +45,7 @@ $0 [-help]
                      and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
    -o output_filename
    -load 0/1 if true load Dnafrags into db 
+   -dump 0/1 if true dump Dnafrags into flatfiles 
    -conf	Compara.conf file
 
 
@@ -68,6 +70,7 @@ my $help = 0;
 my $mask_restriction_file;
 my $coordinate_system="chromosome";
 my $load=0;
+my $dump=0;
 my $conf="/nfs/acari/cara/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf";
 
 GetOptions('help' => \$help,
@@ -86,7 +89,8 @@ GetOptions('help' => \$help,
 	   'coord_system=s' => \$coordinate_system,
 	   'o=s' => \$output,
 	   'conf' =>\$conf,
-	   'load=i' => \$load);
+	   'load=i' => \$load,
+	   'dump=i' => \$dump);
 
 if ($help) {
   print $usage;
@@ -135,7 +139,7 @@ my $filename='';
 
 CHR:foreach my $chr (@chromosomes) {
 	if(($chr->seq_region_name =~/MT/)){next CHR;}
-	if (defined $output) {
+	if (($dump) && (defined $output)) {
 	 	if ($phusion){$filename=$phusion."_".$chr->seq_region_name.".".$output;}
 	 	else{$filename=$chr->seq_region_name.".".$output;}
 		print STDERR "opening $filename\n";
@@ -143,8 +147,10 @@ CHR:foreach my $chr (@chromosomes) {
   		$fh = \*F;
 		}    
  	
-	print STDERR "printing slice ".$chr->name."...\n";
- 	printout_by_overlapping_chunks($chr,$overlap,$chunk_size,$fh);
+	if($dump) {
+		print STDERR "printing slice ".$chr->name."...\n";
+ 		printout_by_overlapping_chunks($chr,$overlap,$chunk_size,$fh);
+		}
 	if($load){	
 		print STDERR "loading dnafrag for ".$chr->name."...\n";
 		my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
