@@ -59,7 +59,7 @@ sub _init {
 
     foreach my $i (keys %id){
 	@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
-	print STDERR "GENSCAN: seq_feature id: $i \n";
+#	print STDERR "GENSCAN: seq_feature id: $i \n";
 	my $has_origin = undef;
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 
@@ -89,7 +89,8 @@ sub _init {
 	    $Composite->push($glyph);
 	}
 	
-	# loop through glyphs again adding connectors...
+	
+        # loop through glyphs again adding connectors...
 	my @g = $Composite->glyphs();
 	for (my $i = 1; $i<scalar(@g); $i++){
 	    my $id = $Composite->id();
