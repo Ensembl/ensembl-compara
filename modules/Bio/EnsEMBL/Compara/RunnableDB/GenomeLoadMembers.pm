@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::GenomeLoadMembers->new (
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -63,9 +63,8 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 =head2 fetch_input
 
@@ -147,7 +146,7 @@ sub write_output
 
   my $output_id = "{gdb=>" . $self->{'genome_db'}->dbID .
                   ",ss=>" . $self->{'pepSubset'}->dbID . "}";
-  $self->input_id($output_id);                    
+  $self->input_job->input_id($output_id);                    
   return 1;
 }
 
