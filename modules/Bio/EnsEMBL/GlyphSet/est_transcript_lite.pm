@@ -32,7 +32,7 @@ sub href {
     my ($self, $vt) = @_;
     return $self->{'config'}->{'_href_only'} eq '#tid' ?
         "#$vt->{'stable_id'}" :
-        qq(/$ENV{'ENSEMBL_SPECIES'}/est_transview?transcript=$vt->{'transcript_name'});
+        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=estgene&gene=$vt->{'gene'});
 
 }
 
@@ -40,12 +40,21 @@ sub zmenu {
     my ($self, $vt) = @_;
     my $vtid = $vt->{'stable_id'};
     my $id   = $vt->{'synonym'} eq '' ? $vtid : $vt->{'synonym'};
-    my $zmenu = {
-        'caption'                       => $id,
-        "00:Transcr:$vtid"              => "",
-        "01:(Gene:$vt->{'gene'})"       => "",
-        "02:Transcript data"            => $self->href($vt),
-    };
+    my $zmenu = 
+      {
+       'caption'                => "EST Gene",
+       "02:Gene: $vt->{gene}" => $self->href( $vt ),
+      };
+    $zmenu->{"03:Protien: $vt->{translation}"} =
+      qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=estgene&peptide=$vt->{translation}) if defined $vt->{translation};
+    
+    
+#    my $zmenu = {
+#        'caption'                       => $id,
+#        "00:Transcr:$vtid"              => "",
+#        "01:(Gene:$vt->{'gene'})"       => "",
+#        "02:Transcript data"            => $self->href($vt),
+#    };
     return $zmenu;
 }
 
