@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::genscan_lite;
 use strict;
 use vars qw(@ISA);
+use EnsWeb;
 use Bio::EnsEMBL::GlyphSet_transcript;
 use Bio::EnsEMBL::Gene;
 
@@ -41,19 +42,19 @@ sub colour {
 sub href {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->stable_id();
-    return undef if $id =~ /^\d/;
-    return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'Peptide_ens_genscan830', 'ID' => $id } );
+    return undef unless my $gft = EnsWeb::species_defs->GENSCAN_FASTA_TABLE;
+    return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => "Peptide_$gft" , 'ID' => $id } );
     
 }
 
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->stable_id();
-    return undef if $id =~ /^\d/;
-     return {
+    return { 'cation' => $id } unless my $gft = EnsWeb::species_defs->GENSCAN_FASTA_TABLE;
+    return {
 	'caption' => $id,
         '01:Peptide sequence' => $self->href( $gene, $transcript ),
-        '02:cDNA sequence'    => $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'cDNA_ens_genscan830', 'ID' => $id } ),
+        '02:cDNA sequence'    => $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => "cDNA_$gft", 'ID' => $id } ),
     };
 
 }
