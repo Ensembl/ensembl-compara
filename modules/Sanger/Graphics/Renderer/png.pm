@@ -18,4 +18,19 @@ sub canvas {
     }
 }
 
+sub render_Sprite {
+  my ($self, $glyph) = @_;
+  my $spritename     = $glyph->{'sprite'} || "unknown";
+  my $config         = $self->config();
+
+  unless(exists $config->{'_spritecache'}->{$spritename}) {
+    my $libref = $config->get("_settings", "spritelib");
+    my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
+    my $fn     = "$lib/$spritename.png";
+    $config->{'_spritecache'}->{$spritename} = GD::Image->newFromPng($fn);
+  }
+
+  return $self->SUPER::render_Sprite($glyph);
+}
+
 1;

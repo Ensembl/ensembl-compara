@@ -27,6 +27,12 @@ sub new {
   return $self;
 }
 
+sub config {
+  my ($self, $config) = @_;
+  $self->{'config'}   = $config if($config);
+  return $self->{'config'};
+}
+
 sub render {
   my ($self) = @_;
   
@@ -153,6 +159,14 @@ sub render_Composite {
 # empty stub for Blank spacer objects with no rendering at all
 #
 sub render_Space {
+}
+
+#########
+# placeholder for renderers which can't import sprites
+#
+sub render_Sprite {
+  my $self = shift;
+  return $self->render_Rect(@_);
 }
 
 1;

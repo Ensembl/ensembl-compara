@@ -270,4 +270,29 @@ sub render_Bezier {
   }
 }
 
+sub render_Sprite {
+  my ($self, $glyph) = @_;
+  my $spritename     = $glyph->{'sprite'} || "unknown";
+  my $config         = $self->config();
+
+  unless(exists $config->{'_spritecache'}->{$spritename}) {
+    my $libref = $config->get("_settings", "spritelib");
+    my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
+    my $fn     = "$lib/$spritename.gif";
+    $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif($fn);
+  }
+
+  my $sprite = $config->{'_spritecache'}->{$spritename};
+  my ($width, $height) = $sprite->getBounds();
+
+  $self->{'canvas'}->copyRescaled($sprite,
+				  $glyph->{'pixelx'},
+				  $glyph->{'pixely'},
+				  0,
+				  0,
+				  $glyph->{'pixelwidth'}  || 1,
+				  $glyph->{'pixelheight'} || 1,
+				  $width,
+				  $height);
+}
 1;
