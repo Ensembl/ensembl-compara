@@ -27,6 +27,7 @@ $sameRHS=0;
 $BRH2RHS=0;
 $RHS2BRH=0;
 $countAdds=0;
+$count20=0;
 $count21=0;
 $BRHCount=0;
 $RHSCount=0;
@@ -38,6 +39,7 @@ foreach $line (<RH20>) {
   ($mouseGene20, $ratGene20, $type20) = split(/\s/, $line);
 	$key = $mouseGene20 ."_". $ratGene20;
 	#print("storing compara20 key='$key' value='$type20'\n");
+  $count20++;
   if($compara20->{$key}) {
 	  print("compara20 duplicate\n$line\nalready as ".$compara20->{$key}."\n");
 	}
@@ -71,6 +73,7 @@ foreach $line (<RH21>) {
 		$newRHS++ if($type21 eq 'RHS');
 	}
 }
+print("$count20 total homologies in compara20\n");
 print("$count21 total homologies in compara21\n");
 printf("%1.1f%% same BRH ($sameBRH/$BRHCount)\n", scalar($sameBRH/$BRHCount*100.0));
 printf("%1.1f%% same RHS ($sameRHS/$RHSCount)\n", scalar($sameRHS/$RHSCount*100.0));
