@@ -427,13 +427,6 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
     $dnafrag_type = "VirtualContig";
   }
   
-  #check the internal cache 
-  my $key = join( ':', $sb_species, $qy_species, $chr_name, 
-		  $chr_start, $chr_end, $dnafrag_type);
-  if(exists $self->{'_cache'}->{$key}) {
-    return $self->{'_cache'}->{$key};
-  }
-
   my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,$dnafrag_type);
   
   foreach my $df (@list_dnafrag) {
@@ -512,10 +505,83 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
     }
   }
   
-  #update the internal cache and return the results
-  $self->{'_cache'}->{$key} = \@DnaDnaAlignFeatures;
-
   return \@DnaDnaAlignFeatures;
+}
+
+
+
+
+=head2 fetch_DnaDnaAlignFeature_by_Slice
+
+ Arg [1]    : Bio::EnsEMBL::Slice
+ Arg [2]    : string query_species
+              e.g. "Mus_musculus"
+ Example    : $gaa->fetch_DnaDnaAlignFeature_by_Slice($slice, "Mus_musculus");
+ Description: find matches of query_species in the region of a slice of a 
+              subject species
+ Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
+ Exceptions : none
+ Caller     : general
+
+=cut
+
+sub fetch_DnaDnaAlignFeatures_by_Slice {
+  my ($self, $slice, $qy_species) = @_;
+
+  unless($slice && ref $slice && $slice->isa('Bio::EnsEMBL::Slice')) {
+    $self->throw("Invalid slice argument [$slice]\n");
+  }
+
+  unless($qy_species) {
+    $self->throw("Query species argument is required");
+  }
+
+  #we will probably use a taxon object instead of a string eventually
+  my $species = $slice->adaptor->db->get_MetaContainer->get_Species;
+  my $sb_species = $species->binomial;
+  $sb_species =~ s/ /_/; #replace spaces with underscores
+
+  my $key = join(':', "SLICE", $slice->name, $sb_species, $qy_species);
+
+  if(exists $self->{'_cache'}->{$key}) {
+    return $self->{'_cache'}->{$key};
+  } 
+
+  my $slice_start = $slice->chr_start;
+  my $slice_end   = $slice->chr_end;
+  my $slice_strand = $slice->strand;
+
+  my $features = $self->fetch_DnaDnaAlignFeature_by_species_chr_start_end(
+						$sb_species,
+						$qy_species,
+						$slice->chr_name,
+						$slice_start,
+					        $slice_end);
+
+  if($slice_strand == 1) {
+    foreach my $f (@$features) {
+      my $start  = $f->start - $slice_start + 1;
+      my $end    = $f->end   - $slice_start + 1;
+      $f->start($start);
+      $f->end($end);
+      $f->contig($slice);
+    }
+  } else {
+    foreach my $f (@$features) {
+      my $start  = $slice_end - $f->start + 1;
+      my $end    = $slice_end - $f->end   + 1;
+      my $strand = $f->strand * -1;
+      $f->start($start);
+      $f->end($end);
+      $f->strand($strand);
+      $f->contig($slice);
+    }
+  }
+
+  #update the cache
+  $self->{'_cache'}->{$key} = $features;
+
+  return $features;
 }
 
 
