@@ -7,6 +7,13 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Bump;
 
+sub features {
+    ## features are now returned by a subroutine, so that this can be 
+    ## overridden by subclasses
+    my ($self, $logic_name, $database) = @_;
+    return $self->{'container'}->get_all_Genes($logic_name, $database);
+}
+
 sub _init {
   my $self = shift;
 
@@ -59,7 +66,7 @@ sub _init {
 
   my $database = $Config->get($type,'database');
   foreach my $logic_name ( split /\s+/, $Config->get($type,'logic_name') ) { 
-  foreach my $g (@{$vc->get_all_Genes( $logic_name, $database )}) {
+  foreach my $g (@{$self->features( $logic_name, $database )}) {
     my $gene_label = $self->gene_label( $g );
     my $gene_col   = $colours->{ $self->gene_col( $g ) };
     my $ens_ID     = $self->ens_ID( $g );
