@@ -24,8 +24,7 @@ sub _init {
     my $vc     = $self->{'container'}
     my $config = $self->{'config'};
     my $cmap   = $config->colourmap();
-    my $white  = $cmap->id_by_name('white');
-    my $black  = $cmap->id_by_name('black');
+    my $cut_colour = 'blue';
     my $length = $vc->length;
     my $seq = $vc->subseq(-$PADDING,$length+2*$PADDING);
     my $filename = $EnsWeb::species_defs->ENSEMBL_TMP_DIR."/".&Digest::MD5::md5_hex(rand()).".restrict";
@@ -103,7 +102,7 @@ sub _init {
                     	    'y'      => $h1,
                     	    'width'  => 0,
                     	    'height' => 4,
-                    	    'colour' => 'black',
+                    	    'colour' => $cut_colour,
                     	    'absolutey' => 1,
                     	}));
                     }
@@ -112,7 +111,7 @@ sub _init {
                     	'y'      => $h2,
                     	'width'  => $f->{'start'} - $X + 1,
                     	'height' => 0,
-                    	'colour' => 'black',
+                    	'colour' => $cut_colour,
                     	'absolutey' => 1,
                     }));
                 }
@@ -126,7 +125,7 @@ sub _init {
                     	    'y'      => $h1,
                     	    'width'  => 0,
                     	    'height' => 4,
-                    	    'colour' => 'black',
+                    	    'colour' => $cut_colour,
                     	    'absolutey' => 1,
                     	}));
                     }
@@ -135,7 +134,7 @@ sub _init {
                     	'y'      => $h2,
                     	'width'  => $X - $f->{'end'} + 1,
                     	'height' => 0,
-                    	'colour' => 'black',
+                    	'colour' => $cut_colour,
                     	'absolutey' => 1,
                     }));
                 }
@@ -146,7 +145,7 @@ sub _init {
                     'y'      => $h1,
                     'width'  => 0,
                     'height' => 4,
-                    'colour' => 'black',
+                    'colour' => $cut_colour,
                     'absolutey' => 1,
                 }));
             }
