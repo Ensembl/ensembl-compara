@@ -1,3 +1,68 @@
+#!/usr/local/ensembl/bin/perl -w
+
+#
+# Test script for Bio::EnsEMBL::Compara::DnaFrag module
+#
+# Written by Javier Herrero (jherrero@ebi.ac.uk)
+#
+# Copyright (c) 2004. EnsEMBL Team
+#
+# You may distribute this module under the same terms as perl itself
+
+=head1 NAME
+
+genomeDBAdaptor.t
+
+=head1 INSTALLATION
+
+*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+YOU MUST EDIT THE <MultiTestDB.conf> FILE BEFORE USING THIS TEST SCRIPT!!!
+
+*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+Please, read the README file for instructions.
+
+=head1 SYNOPSIS
+
+For running this test only:
+perl -w ../../../ensembl-test/scripts/runtests.pl genomeDBAdaptor.t
+
+For running all the test scripts:
+perl -w ../../../ensembl-test/scripts/runtests.pl
+
+For running all the test scripts and cleaning the database afterwards:
+perl -w ../../../ensembl-test/scripts/runtests.pl -c
+
+=head1 DESCRIPTION
+
+This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
+
+This script (as far as possible) tests all the methods defined in the
+Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor module.
+
+This script includes XX tests.
+
+=head1 AUTHOR
+
+Javier Herrero (jherrero@ebi.ac.uk)
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004. EnsEMBL Team
+
+You may distribute this module under the same terms as perl itself
+
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
+
+=cut
+
+
 use strict;
 use warnings;
 
@@ -7,101 +72,81 @@ use Bio::EnsEMBL::Test::TestUtils;
 BEGIN {
   $| = 1;
   use Test;
-  plan tests => 12;
+  plan tests => 8;
 }
 
-our $verbose = 0;
+#####################################################################
+## Connect to the test database using the MultiTestDB.conf file
 
-my $multi = Bio::EnsEMBL::Test::MultiTestDB->new('multi');
+my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
+my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
+my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
-my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
+my $species = [
+        "homo_sapiens",
+#         "mus_musculus",
+        "rattus_norvegicus",
+        "gallus_gallus",
+    ];
 
-my $hs_dba = $homo_sapiens->get_DBAdaptor('core');
-my $mm_dba = $mus_musculus->get_DBAdaptor('core');
-my $rn_dba = $rattus_norvegicus->get_DBAdaptor('core');
-my $compara_dba = $multi->get_DBAdaptor('compara');
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (@$species) {
+  my $species_db = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  my $species_db_adaptor = $species_db->get_DBAdaptor('core');
+  my $species_gdb = $genome_db_adaptor->fetch_by_name_assembly(
+          $species_db_adaptor->get_MetaContainer->get_Species->binomial,
+          $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version
+      );
+  $species_gdb->db_adaptor($species_db_adaptor);
+}
 
-my $mouse_name     = $mm_dba->get_MetaContainer->get_Species->binomial;
-my $mouse_assembly = $mm_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
-my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
-my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
-my $rat_name       = $rn_dba->get_MetaContainer->get_Species->binomial;
-my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
+##
+#####################################################################
 
-#######
-#  1  #
-#######
-my $gdba = $compara_dba->get_GenomeDBAdaptor;
-ok($gdba);
+my $genome_db;
+my $all_genome_dbs;
+my $num_of_genomes = 13;
+my $genome_db_id = 1;
+my $method_link_id = 1;
+my $num_of_db_links = 2;
 
-my $hs_gdb = $gdba->fetch_by_name_assembly($human_name,$human_assembly);
-$hs_gdb->db_adaptor($hs_dba);
-my $mm_gdb = $gdba->fetch_by_name_assembly($mouse_name,$mouse_assembly);
-$mm_gdb->db_adaptor($mm_dba);
-my $rn_gdb = $gdba->fetch_by_name_assembly($rat_name,$rat_assembly);
-$rn_gdb->db_adaptor($rn_dba);
+$genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
+ok($genome_db, '/^Bio::EnsEMBL::Compara::GenomeDB/', "Fetching Bio::EnsEMBL::Compara::GenomeDB by dbID");
+
+$genome_db = $genome_db_adaptor->fetch_by_dbID(-$genome_db_id);
+ok($genome_db, undef, "Fetching Bio::EnsEMBL::Compara::GenomeDB by unknown dbID");
+
+$all_genome_dbs = $genome_db_adaptor->fetch_all();
+ok(scalar(@$all_genome_dbs), $num_of_genomes, "Checking the total number of genomes");
+
+$genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
+my $name = $genome_db->name;
+my $assembly = $genome_db->assembly;
+
+$genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
+ok($genome_db->dbID, $genome_db_id, "Fetching by name and default assembly");
+
+$genome_db = $genome_db_adaptor->fetch_by_name_assembly($name, $assembly);
+ok($genome_db->dbID, $genome_db_id, "Fetching by name and assembly");
 
 
-#######
-# 2-5 #
-#######
-my $gdb = $gdba->fetch_by_dbID(1);
-ok($gdb->name, 'Homo sapiens');
-debug("gdb_name = " . $gdb->name);
-
-ok($gdb->assembly, 'NCBI34');
-debug("gdb->assembly = " . $gdb->assembly);
-
-ok($gdb->dbID, 1);
-debug("gdb->dbID = " . $gdb->dbID);
-
-ok($gdb->taxon_id, 9606);
-debug("gdb->taxon_id = " . $gdb->taxon_id);
-
-#######
-# 6-9 #
-#######
-$gdb = $gdba->fetch_by_name_assembly('Mus musculus', 'NCBIM32');
-ok($gdb->name, 'Mus musculus');
-debug("gdb_name = " . $gdb->name);
-
-ok($gdb->assembly, 'NCBIM32');
-debug("gdb->assembly = " . $gdb->assembly);
-
-ok($gdb->dbID, 2);
-debug("gdb->dbID = " . $gdb->dbID);
-
-ok($gdb->taxon_id, 10090);
-debug("gdb->taxon_id = " . $gdb->taxon_id);
-
-#########
-# 10-11 #
-#########
 $multi->hide('compara', 'genome_db');
-$gdb->{'dbID'} = undef;
-$gdb->{'adaptor'} = undef;
-$gdba->store($gdb);
+## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+  $genome_db_adaptor->create_GenomeDBs; # reset globals
+$all_genome_dbs = $genome_db_adaptor->fetch_all();
+## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+  $genome_db_adaptor->create_GenomeDBs; # reset globals
+ok(scalar(@$all_genome_dbs), 0, "Checking hide method");
 
-my $sth = $compara_dba->dbc->prepare('SELECT genome_db_id
-                                FROM genome_db
-                                WHERE name = ? AND assembly = ?');
-$sth->execute($gdb->name, $gdb->assembly);
-
-ok($gdb->dbID && ($gdb->adaptor == $gdba));
-debug("gdb->dbID = " . $gdb->dbID);
-
-my ($id) = $sth->fetchrow_array;
-$sth->finish;
-
-
-ok($id && $id == $gdb->dbID);
-debug("[$id] == [" . $gdb->dbID . "]?");
-
+$genome_db_adaptor->store($genome_db);
+## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+  $genome_db_adaptor->create_GenomeDBs; # reset globals
+$all_genome_dbs = $genome_db_adaptor->fetch_all();
+ok(scalar(@$all_genome_dbs), 1, "Checking store method");
 $multi->restore('compara', 'genome_db');
+## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+  $genome_db_adaptor->create_GenomeDBs; # reset globals
 
-# 
-# 12
-# 
-ok(scalar(@{$gdba->get_all_db_links($hs_gdb, 1)}), 3);
+$genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
+ok(scalar(@{$genome_db_adaptor->get_all_db_links($genome_db, $method_link_id)}), $num_of_db_links,
+    "Check number of links for genome_db_id($genome_db_id) and method_link_id($method_link_id)");
