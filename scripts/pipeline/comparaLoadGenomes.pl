@@ -15,9 +15,8 @@ my $conf_file;
 my %analysis_template;
 my @speciesList = ();
 
-my %compara_conf = {};
-$compara_conf{'-user'} = 'ensadmin';
-$compara_conf{'-pass'} = 'ensembl';
+my %compara_conf = ();
+#$compara_conf{'-user'} = 'ensadmin';
 $compara_conf{'-port'} = 3306;
 
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
@@ -25,10 +24,10 @@ my ($subset_id, $genome_db_id, $prefix, $fastadir);
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
-           'host=s'   => \$host,
-           'port=i'   => \$port,
-           'user=s'   => \$user,
-           'pass=s'   => \$pass,
+           'dbhost=s' => \$host,
+           'dbport=i' => \$port,
+           'dbuser=s' => \$user,
+           'dbpass=s' => \$pass,
            'dbname=s' => \$dbname
           );
 
@@ -48,7 +47,7 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
   usage(); 
 }
 
-if(not(-d $analysis_template{'fasta_dir'})) {
+if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
   die("\nERROR!!\n  ". $analysis_template{'fasta_dir'} . " fasta_dir doesn't exist, can't configure\n");
 }
 
@@ -79,15 +78,15 @@ exit(0);
 #######################
 
 sub usage {
-  print "comparaLoadGenomes.pl -pass {-compara | -host -user -dbname} {-genome_db_id | -subset_id } [options]\n";
+  print "comparaLoadGenomes.pl [options]\n";
   print "  -help                  : print this help\n";
-  print "  -conf <path>           : config file describing compara and external genome databases\n";
-  print "  -host <machine>        : use <machine> as location of compara DB\n";
-  print "  -port <port#>          : use <port#> for mysql connection\n";
-  print "  -user <name>           : use user <name> to connect to compara DB\n";
-  print "  -pass <pass>           : use password to connect to compara DB\n";
-  print "  -dbname <name>         : use database <name> to connect to compara DB\n";
-  print "comparaLoadGenomes.pl v1.0\n";
+  print "  -conf <path>           : config file describing compara, templates, and external genome databases\n";
+  print "  -dbhost <machine>      : compara mysql database host <machine>\n";
+  print "  -dbport <port#>        : compara mysql port number\n";
+  print "  -dbname <name>         : compara mysql database <name>\n";
+  print "  -dbuser <name>         : compara mysql connection user <name>\n";
+  print "  -dbpass <pass>         : compara mysql connection password\n";
+  print "comparaLoadGenomes.pl v1.1\n";
   
   exit(1);  
 }
@@ -96,7 +95,7 @@ sub usage {
 sub parse_conf {
   my($conf_file) = shift;
 
-  if(-e $conf_file) {
+  if($conf_file and (-e $conf_file)) {
     #read configuration file from disk
     my @conf_list = @{do $conf_file};
 
@@ -127,6 +126,8 @@ sub prepareGenomeAnalysis
 {
   my $self = shift;
 
+  return  unless($analysis_template{fasta_dir});
+  
   if($self->{'pipelineDBA'}->get_AnalysisAdaptor()->fetch_by_logic_name('SubmitGenome')) { return; }
 
   
@@ -150,7 +151,7 @@ sub prepareGenomeAnalysis
   $rule->add_condition($submit_analysis->logic_name());
   $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
 
-
+  
   my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeDumpFasta',
@@ -196,11 +197,14 @@ sub submitGenome
     $species->{pass}   && ($locator .= ";pass=".$species->{pass});
     $species->{dbname} && ($locator .= ";dbname=".$species->{dbname});
   }
-  print("locator = $locator\n");
+  print("    locator = $locator\n");
 
   my $genomeDBA = Bio::EnsEMBL::DBLoader->new($locator);
 
-  unless($genomeDBA) { throw("unable to connect to genome database $locator\n"); }
+  unless($genomeDBA) {
+    print("ERROR: unable to connect to genome database $locator\n");
+    return;
+  }
 
   my $taxon_id = $genomeDBA->get_MetaContainer->get_taxonomy_id;
   my $genome_name = $genomeDBA->get_MetaContainer->get_Species->binomial;
@@ -230,12 +234,26 @@ sub submitGenome
   #
   # now fill table genome_db_extra
   #
-  my $sql = "INSERT INTO genome_db_extn SET " .
-            " genome_db_id=". $genome->dbID.
-            ",phylum='" . $species->{phylum}."'".
-            ",locator='".$locator."';";
+  my ($sth, $sql);
+  $sth = $self->{'comparaDBA'}->prepare("SELECT genome_db_id FROM genome_db_extn
+      WHERE genome_db_id = ".$genome->dbID);
+  $sth->execute;
+  my $dbID = $sth->fetchrow_array();
+  $sth->finish();
 
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  if($dbID) {
+    $sql = "UPDATE genome_db_extn SET " .
+              ",phylum='" . $species->{phylum}."'".
+              ",locator='".$locator."'".
+              " WHERE genome_db_id=". $genome->dbID;
+  }
+  else {
+    $sql = "INSERT INTO genome_db_extn SET " .
+              " genome_db_id=". $genome->dbID.
+              ",phylum='" . $species->{phylum}."'".
+              ",locator='".$locator."'";
+  }
+  $sth = $self->{'comparaDBA'}->prepare( $sql );
   $sth->execute();
   $sth->finish();
 
