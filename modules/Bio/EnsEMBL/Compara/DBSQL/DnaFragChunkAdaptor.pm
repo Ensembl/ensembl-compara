@@ -69,6 +69,28 @@ sub store {
 }
 
 
+sub update_sequence
+{
+  my $self = shift;
+  my $dfc  = shift;
+
+  return 0 unless($dfc);
+  return 0 unless($dfc->isa('Bio::EnsEMBL::Compara::DnaFragChunk'));
+  return 0 unless($dfc->dbID);
+  return 0 unless(defined($dfc->sequence));
+  
+  my $seqDBA = $self->db->get_SequenceAdaptor;
+  my $newSeqID = $seqDBA->store($dfc->sequence);
+
+  return if($dfc->sequence_id == $newSeqID); #sequence unchanged
+
+  my $sth = $self->prepare("UPDATE dnafrag_chunk SET sequence_id=? where dnafrag_chunk_id=?");
+  $sth->execute($newSeqID, $dfc->dbID);
+  $sth->finish();
+  return $newSeqID;
+}
+
+
 ###############################################################################
 #
 # fetch methods
