@@ -315,7 +315,7 @@ sub submit_job {
           -logic_name      => $logic_name,
           -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         );
-      $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($analysis);
+      $self->db->get_AnalysisAdaptor()->store($analysis);
 
       my $stats = $analysis->stats;
       $stats->batch_size(7000);
