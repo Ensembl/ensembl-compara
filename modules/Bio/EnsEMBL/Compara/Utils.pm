@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::Utils;
 use vars qw(@ISA);
 use strict;
 
-# Object preamble - inherits from Bio::Root::RootI
+# Object preamble
 
 
 =head2 dual_AlignBlockSet_from_FeaturePair_list
