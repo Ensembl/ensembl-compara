@@ -109,7 +109,7 @@ sub _init {
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 
-            my $bump_end = $bump_start + int($Composite->width() * $pix_per_bp);
+            my $bump_end = $bump_start + int($Composite->width() / $pix_per_bp);
             print STDERR "BUMP: $bump_start $bump_end\n";
             print STDERR "XX: ".$Composite->width()." - $pix_per_bp\n";
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
