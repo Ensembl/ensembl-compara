@@ -115,7 +115,7 @@ sub _init {
       $snp_names.= "-".$data->{'variationFeatures'}{$snp_n->[0]}->variation_name;
 
       $self->push( Sanger::Graphics::Glyph::Poly->new({
-        'title'  => "$snp_names: $value",
+        'title'  => "$snp_names: ". ($value || "n/a"),
         'points' => [ 
 	  $x,   $y   * $height_ppb + $yoffset , 
 	  $flag_triangle < 0 ? (): ( $x+$d2,     $flag_triangle * $height_ppb + $yoffset ), 
