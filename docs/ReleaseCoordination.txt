@@ -1,0 +1,71 @@
+
+March 30th 2005
+
+This document is a first attempt to describe the different steps that the compara
+release coordination has to overlook to hopefully have a successful production cycle.
+
+1. Once the release coordinator has sent the mail for declaration of intention,
+ask the other members of compara group (or related) what they intend to produce.
+Sometimes, you have to wait a bit that gene builders do their declaration first
+to know what compara will need to produce and also potential schema changes.
+
+For orthologues and family, ask Jessica (jessica@ebi.ac.uk)
+For paralogues, ask Dan Andrews (dta@sanger.ac.uk)
+For whole genome alignments and synteny ask Javier (jherrero@ebi.ac.uk)
+or Abel (abel@ebi.ac.uk)
+
+2. Mail the compara declaration of intention to ensembl-admin
+
+3. Usually the protein/gene compara production and whole genome alignments (WGA)
+production are done separately in 2 different databases, and even MySQL instances.
+
+A lot of the WGA data released the month before is just "recycled". Have a database
+copy of the latest compara release on your chosen MySQL instance, and renamed for
+the new release (e.g. copy ensembl_compara_30 to ensembl_compara_31)
+
+Delete none WGA related data (e.g. homology, family, taxon...)
+Delete out of date WGA.
+
+4. IMPORTANT: making sure there is no conflict between protein and WGA production
+on
+
+genome_db_id
+method_link_species_set_id
+
+Some of these can be recycled. At the moment, the only way to avoid conflicts is
+that the persons in production communicated/exchange/agree on the common genome_db_id and
+method_link_species_set_id to be used.
+
+Usually method_link_species_set_id range is as follow
+    1 to 10000 WGA
+10001 to 20000 Synteny
+20001 tp 30000 Homology
+30001 to 40000 Family
+
+Inside the WGA production, avoid genomic_align_block_id and genomic_align_id conflicts
+between different method_link_species_set production.
+
+5. Merging of protein/gene production and WGA production. Each production is in a database, and both databases must be on the same MySQL instance.
+
+There is no script for the following now (we should have one though), the protein/gene
+data is moved to the WGA database by a serie of insert/select from and to the following tables.
+
+homology
+homology_member
+family
+family_member
+member
+sequence
+taxon
+peptide_align_feature (this one take a while)
+
+by a serie of insert ignore/select from and to the following tables.
+
+method_link
+method_link_species_set
+
+A potential check script to write should check that both genome_db tables are consistent.
+
+6. Once the database is merge, run the heathchecks to spot potential conflicts
+see ensembl-compara/docs/healthchecks.txt
+
