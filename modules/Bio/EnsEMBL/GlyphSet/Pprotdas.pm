@@ -21,7 +21,7 @@ sub init_label {
   my $indent   = 1;
   my $Config   = $self->{'config'};
   my $confkey  = $self->{'extras'}->{'confkey'};
-  my $text     = $self->{'extras'}->{'name'};
+  my $text     = $self->{'extras'}->{'label'} || $self->{'extras'}->{'name'};
   my $colour   = $Config->get($confkey,'col') || 'black';
 
   my $print_label = ( length($text) > ( $numchars - $indent ) ? 
