@@ -27,7 +27,13 @@ sub _init {
     return unless ($self->strand() == -1);
 
     # check we are not in a big gap!
-    my @map_contigs = $self->{'container'}->_vmap->each_MapContig();
+    my @map_contigs;
+    
+    if ($self->{'container'}->has_AssemblyContigs) {
+       @map_contigs = $self->{'container'}->each_AssemblyContig;
+    } else {
+       @map_contigs = $self->{'container'}->_vmap->each_MapContig();
+    }
     return unless (@map_contigs);
 
     my $VirtualContig   = $self->{'container'};

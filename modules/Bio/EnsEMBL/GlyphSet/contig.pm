@@ -69,7 +69,7 @@ sub _init {
     
     my @map_contigs = ();
     my $useAssembly = $vc->has_AssemblyContigs;
-    print STDERR "Using assembly $useAssembly\n";
+
     if ($useAssembly) {
        @map_contigs = $vc->each_AssemblyContig;
     } else {
@@ -77,8 +77,17 @@ sub _init {
     }
 
     if (@map_contigs) {
-        my $start     = $map_contigs[0]->start() -1;
-        my $end       = $map_contigs[-1]->end();
+        my $start;
+        my $end;
+
+        if ($useAssembly) {
+         $start     = $map_contigs[0]->chr_start - 1;
+         $end       = $map_contigs[-1]->chr_end;
+        } else {
+         $start     = $map_contigs[0]->start -1;
+         $end       = $map_contigs[-1]->end;
+        }
+        
         my $tot_width = $end - $start;
     
         my $i = 1;
@@ -87,27 +96,39 @@ sub _init {
                $i  => $col1,
                !$i => $col2,
         );
+
         foreach my $temp_rawcontig ( @map_contigs ) {
             my $col = $colours{$i};
             $i      = !$i;
-        
-            my $rend   = $temp_rawcontig->end();
-            my $rstart = $temp_rawcontig->start() -1;
-            
+
+            my $rend;
+            my $rstart;
+
+            my $cstart;
+            my $cend;
+
             my $rid; 
             my $strand;
             my $clone;
 
-            if ($useAssembly) {
-               $rid = $temp_rawcontig->display_id;
-               $strand = $temp_rawcontig->orientation;
-               $clone = $temp_rawcontig->display_id;
+            if ($useAssembly) {       
+              $cend   = $temp_rawcontig->chr_end;
+              $cstart = $temp_rawcontig->chr_start -1;
+              $rend   = $temp_rawcontig->chr_end - $vc->_global_start + 1;
+              $rstart = $temp_rawcontig->chr_start - $vc->_global_start + 1;
+              $rid    = $temp_rawcontig->display_id;
+              $strand = $temp_rawcontig->orientation;
+              $clone  = $temp_rawcontig->display_id;
             } else {
-               $rid    = $temp_rawcontig->contig->id();
-               $clone  = $temp_rawcontig->contig->cloneid();
-               $strand = $temp_rawcontig->strand();
+              $cend   = $temp_rawcontig->end() + $vc->_global_start -1;
+              $cstart = $temp_rawcontig->start() + $vc->_global_start -1;
+              $rend   = $temp_rawcontig->end;
+              $rstart = $temp_rawcontig->start;
+              $rid    = $temp_rawcontig->contig->id();
+              $clone  = $temp_rawcontig->contig->cloneid();
+              $strand = $temp_rawcontig->strand();
             }
-        
+
             my $glyph = new Bio::EnsEMBL::Glyph::Rect({
                 'x'         => $rstart,
                 'y'         => $ystart+2,
@@ -118,8 +139,8 @@ sub _init {
 			});
             $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=".
                         $vc->_chr_name()."&vc_start=".
-                        ($vc->_global_start()+$rstart-1)."&vc_end=".
-                        ($vc->_global_start()+$rend-1);
+                        ($cstart)."&vc_end=".
+                        ($cend);
 			$glyph->{'zmenu'} = {
                     'caption' => $rid,
                     "01:Clone: $clone"   => '',
