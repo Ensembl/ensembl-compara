@@ -1,9 +1,75 @@
+#!/usr/local/ensembl/bin/perl -w
+
+#
+# Test script for Bio::EnsEMBL::Compara::DnaFrag module
+#
+# Written by Abel Ureta-Vidal (abel@ebi.ac.uk) and Javier Herrero (jherrero@ebi.ac.uk)
+#
+# Copyright (c) 2004. EnsEMBL Team
+#
+# You may distribute this module under the same terms as perl itself
+
+=head1 NAME
+
+dnaFrag.t
+
+=head1 INSTALLATION
+
+*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+YOU MUST EDIT THE <MultiTestDB.conf> FILE BEFORE USING THIS TEST SCRIPT!!!
+
+*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+Please, read the README file for instructions.
+
+=head1 SYNOPSIS
+
+For running this test only:
+perl -w ../../../ensembl-test/scripts/runtests.pl dnaFrag.t
+
+For running all the test scripts:
+perl -w ../../../ensembl-test/scripts/runtests.pl
+
+For running all the test scripts and cleaning the database afterwards:
+perl -w ../../../ensembl-test/scripts/runtests.pl -c
+
+=head1 DESCRIPTION
+
+This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
+
+This script (as far as possible) tests all the methods defined in the
+Bio::EnsEMBL::Compara::DnaFrag module.
+
+This script includes 24 tests.
+
+=head1 AUTHORS
+
+Abel Ureta-Vidal (abel@ebi.ac.uk)
+Javier Herrero (jherrero@ebi.ac.uk)
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004. EnsEMBL Team
+
+You may distribute this module under the same terms as perl itself
+
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
+
+=cut
+
+
 use strict;
 use warnings;
  
 use Test::Harness;
 use Test;
-BEGIN { plan tests => 13 }
+BEGIN { plan tests => 24 }
 
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
@@ -11,26 +77,26 @@ use Bio::EnsEMBL::Utils::Exception qw(verbose);
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-my $df = new Bio::EnsEMBL::Compara::DnaFrag;
-
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
-my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
-
 my $compara_db = $multi->get_DBAdaptor( "compara" );
-my $gdba = $compara_db->get_GenomeDBAdaptor();
+my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
 
-my $hs_gdb = $gdba->fetch_by_name_assembly( "Homo sapiens", 'NCBI34' );
-my $mm_gdb = $gdba->fetch_by_name_assembly( "Mus musculus", 'NCBIM32' );
-my $rn_gdb = $gdba->fetch_by_name_assembly( "Rattus norvegicus", 'RGSC3.1' );
+my $species = {
+        "homo_sapiens" => ["Homo sapiens", 'NCBI34'],
+#         "mus_musculus" => ["Mus musculus", 'NCBIM33'],
+        "rattus_norvegicus" => ["Rattus norvegicus", 'RGSC3.1'],
+        "gallus_gallus" => ["Gallus gallus", 'WASHUC1'],
+    };
 
-$hs_gdb->db_adaptor($homo_sapiens->get_DBAdaptor('core'));
-$mm_gdb->db_adaptor($mus_musculus->get_DBAdaptor('core'));
-$rn_gdb->db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
+## Connect to core DB specified in the MultiTestDB.conf file
+while (my ($key, $value) = each %$species) {
+  my $species = Bio::EnsEMBL::Test::MultiTestDB->new($key);
+  my $species_gdb = $genome_db_adaptor->fetch_by_name_assembly(@$value);
+  $species_gdb->db_adaptor($species->get_DBAdaptor('core'));
+}
 
 ##
 #####################################################################
@@ -40,22 +106,92 @@ my $dummy_db = new Bio::EnsEMBL::Compara::GenomeDB;
 
 ok(!$dnafrag_adaptor, "", "Checking Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object");
 ok(!$dummy_db, "", "Checking Bio::EnsEMBL::Compara::GenomeDB object");
-ok( $df );
-ok( test_getter_setter( $df, "genome_db", $dummy_db ));
-ok( test_getter_setter( $df, "coord_system_name", "dummy" ));
-ok( test_getter_setter( $df, "adaptor", $dnafrag_adaptor ));
-ok( test_getter_setter( $df, "dbID", 42 ));
-ok( test_getter_setter( $df, "name", "dummy_name" ));
-ok( test_getter_setter( $df, "length", 156 ));
+
+my $dnafrag;
+my $dbID = 19;
+my $adaptor = $dnafrag_adaptor;
+my $length = 105311216;
+my $name = "14";
+my $genome_db_id = 1;
+my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
+my $coord_system_name = "chromosome";
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+ok($dnafrag, '/^Bio::EnsEMBL::Compara::DnaFrag/', "Creating a new Bio::EnsEMBL::Compara::DnaFrag obejct");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-dbID => $dbID);
+ok($dnafrag->dbID, $dbID, "Checking dbID set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-adaptor => $dnafrag_adaptor);
+ok($dnafrag->adaptor, $dnafrag_adaptor, "Checking adaptor set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-length => $length);
+ok($dnafrag->length, $length, "Checking length set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-name => $name);
+ok($dnafrag->name, $name, "Checking name set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-genome_db => $genome_db);
+ok($dnafrag->genome_db, $genome_db, "Checking genome_db set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-genome_db_id => $genome_db_id);
+ok($dnafrag->genome_db_id, $genome_db_id, "Checking genome_db_id set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-coord_system_name => $coord_system_name);
+ok($dnafrag->coord_system_name, $coord_system_name, "Checking coord_system_name set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->dbID($dbID);
+ok($dnafrag->dbID, $dbID, "Checking dbID method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->adaptor($dnafrag_adaptor);
+ok($dnafrag->adaptor, $dnafrag_adaptor, "Checking adaptor method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->length($length);
+ok($dnafrag->length, $length, "Checking length method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->name($name);
+ok($dnafrag->name, $name, "Checking name method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->genome_db($genome_db);
+ok($dnafrag->genome_db, $genome_db, "Checking genome_db method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-adaptor=>$dnafrag_adaptor, -genome_db_id=>$genome_db_id);
+ok($dnafrag->genome_db->dbID, $genome_db_id, "Getting genome_db from adaptor and genome_db_id");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->genome_db_id($genome_db_id);
+ok($dnafrag->genome_db_id, $genome_db_id, "Checking genome_db_id method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->genome_db($genome_db);
+ok($dnafrag->genome_db_id, $genome_db_id, "Getting genome_db_id from genome_db");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag();
+$dnafrag->coord_system_name($coord_system_name);
+ok($dnafrag->coord_system_name, $coord_system_name, "Checking coord_system_name set in new method");
+
+$dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
+        -adaptor => $dnafrag_adaptor,
+        -genome_db_id => $genome_db_id,
+        -coord_system_name => $coord_system_name,
+        -name => $name
+    );
+ok($dnafrag->slice, '/^Bio::EnsEMBL::Slice/', "Checking slice getter method");
+
 
 # Test deprecated methods...
 verbose(0);
-ok( test_getter_setter( $df, "start", 1 ), 1,
+ok( test_getter_setter( $dnafrag, "start", 1 ), 1,
     "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::start method ");
-ok( test_getter_setter( $df, "end", 256 ), 1,
+ok( test_getter_setter( $dnafrag, "end", 256 ), 1,
     "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::end method ");
-ok( test_getter_setter( $df, "genomedb", $dummy_db ), 1,
+ok( test_getter_setter( $dnafrag, "genomedb", $dummy_db ), 1,
     "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::genomedb method ");
-ok( test_getter_setter( $df, "type", "dummy" ), 1,
+ok( test_getter_setter( $dnafrag, "type", "dummy" ), 1,
     "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::type method ");
-
+verbose('WARNING');
