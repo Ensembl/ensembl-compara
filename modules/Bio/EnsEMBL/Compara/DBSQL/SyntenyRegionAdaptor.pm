@@ -43,11 +43,6 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::SyntenyRegion;
 use strict;
 
-# Object preamble - inheriets from Bio::Root::RootI
-
-use Bio::Root::RootI;
-
-
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
