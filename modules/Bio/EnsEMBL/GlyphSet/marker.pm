@@ -29,9 +29,10 @@ sub _init {
       $w             = $Config->texthelper->width($fontname);
 
   my $labels         = $Config->get('marker', 'labels' ) eq 'on';
-  foreach my $f (@{$slice->get_all_MarkerFeatures(undef,
-    $self->{container}{_config_file_name_} eq 'Homo_sapiens' ? $PRIORITY : 0,
-    $MAP_WEIGHT)}
+
+  my $priority = ($self->{container}{_config_file_name_} eq 'Homo_sapiens' ? 
+                  $PRIORITY : undef);
+  foreach my $f (@{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)}
   ){
     my $ms           = $f->marker->display_MarkerSynonym;
     my $fid          = $ms->name;
