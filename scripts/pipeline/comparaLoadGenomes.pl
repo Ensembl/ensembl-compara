@@ -162,8 +162,14 @@ sub submitGenome
   }
 
   my $meta = $genomeDBA->get_MetaContainer;
-  my $taxon_id = $meta->get_taxonomy_id;
-  my $genome_name = $meta->get_Species->binomial;
+
+  my $taxon_id = $meta->get_taxonomy_id;  
+  my $taxon = $meta->get_Species;
+  $taxon->ncbi_taxid($taxon_id);
+  bless $taxon, "Bio::EnsEMBL::Compara::Taxon";
+  $self->{'comparaDBA'}->get_TaxonAdaptor->store($taxon);
+
+  my $genome_name = $taxon->binomial;
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
   my $genebuild = $meta->get_genebuild;  
