@@ -16,20 +16,16 @@ use Getopt::Long;
 
 my $usage = "\nUsage: $0 [options] axtFile|STDIN
 
- Insert into a compara database BLAT alignments
+ Insert BLAT alignments into compara db or into tab delimited files for import
 
-$0 -file BLAT_parsed_data_file -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
+$0 -file BLAT_parsed_data_file -dbname ensembl_compara_12_1 \
 -conf_file /nfs/acari/cara/.Registry.conf
 -alignment_type WGA_BLAT -cs_genome_db_id 1 -qy_genome_db_id 2 -load tab
 
 Options:
 
  -file	BLAT_parsed_data_file \(for whole genome\)
- -host        host for compara database
- -dbname      compara database name
- -port 		eg3353
- -dbuser      username for connection to \"compara_dbname\"
- -pass        passwd for connection to \"compara_dbname\"
+ -dbname      compara database name or alias
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
  -alignment_type type of alignment stored e.g.TRANSLATED_BLAT (default: WGA_BLAT) 
