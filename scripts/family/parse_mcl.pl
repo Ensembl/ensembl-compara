@@ -190,7 +190,6 @@ my $max_cluster_index;
 
 foreach my $cluster (@clusters) {
   my ($cluster_index, @cluster_members) = split /\s+/,$cluster;
-#  next if ($cluster_index != 1);
   print STDERR "Loading cluster $cluster_index...";
 
   unless (defined $max_cluster_index) {
@@ -237,19 +236,17 @@ foreach my $cluster (@clusters) {
     $taxon->sub_species($taxon_hash->{'taxon_sub_species'});
     $taxon->ncbi_taxid($taxon_hash->{'taxon_id'});
 
-    my $member = new Bio::EnsEMBL::Compara::Member;
-    $member->stable_id($seqid);
-    $member->taxon_id($taxon->ncbi_taxid);
-    $member->taxon($taxon);
-    $member->description($seqinfo{$seqid}{'description'});
-    $member->genome_db_id("NULL");
-    $member->chr_name("NULL");
-    $member->chr_start("NULL");
-    $member->chr_end("NULL");
-    $member->sequence("NULL");
-    
-    
-    $member->source_name(uc $seqinfo{$seqid}{'type'});
+    my $member = Bio::EnsEMBL::Compara::Member->new_fast
+      ({'_stable_id' => $seqid,
+        '_taxon_id' => $taxon->ncbi_taxid,
+        '_taxon' => $taxon,
+        '_description' => $seqinfo{$seqid}{'description'},
+        '_source_name' => uc $seqinfo{$seqid}{'type'},
+        '_genome_db_id' => "NULL",
+        '_chr_name' => "NULL",
+        '_chr_start' => "NULL",
+        '_chr_end' => "NULL",
+        '_sequence' => "NULL"});
     
     if ($member->source_name eq "ENSEMBLPEP" ||
         $member->source_name eq "ENSEMBLGENE") {
@@ -316,8 +313,8 @@ foreach my $cluster (@clusters) {
 print STDERR "Loading singleton kept out of clustering because of no blastp hit...";
 
 foreach my $seqid (keys %seqinfo) {
-  print STDERR "trying to get singletons.....\n";
   next if (defined $seqinfo{$seqid}{'printed'});
+  print STDERR "trying to get singletons.....\n";
   $max_cluster_index++;
 
   print STDERR "Loading singleton $max_cluster_index...";
