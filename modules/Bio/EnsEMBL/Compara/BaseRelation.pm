@@ -153,6 +153,7 @@ sub method_link_type {
   $self->{'_method_link_type'} = shift if (@_);
   unless (defined $self->{'_method_link_type'}) {
     my $mlss = $self->method_link_species_set;
+    throw("method_link_type needs a valid method_link_species_set") unless($mlss);
     $self->{'_method_link_type'} = $mlss->method_link_type;
   }
 
