@@ -180,3 +180,5 @@ sub adaptor{
     return $obj->{'adaptor'};
 
 }
+
+1;
