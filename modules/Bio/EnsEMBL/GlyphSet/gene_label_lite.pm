@@ -77,12 +77,17 @@ sub _init {
 
     my %gene_objs;
     foreach my $g (@{$vc->get_all_Genes('', 1)}) {
-      my $source = $g->analysis->logic_name;
+      my $source = lc($g->analysis->logic_name);
       $gene_objs{$source} ||= [];
       push @{$gene_objs{$source}}, $g;
     }
-      
-    foreach my $g (@{$gene_objs{'otter'}}) { 
+    
+    ## hack to make it work for vega
+    my $logic_name;
+    if ($self->can('logic_name')) {
+        $logic_name = $self->logic_name;
+    }
+    foreach my $g (@{$gene_objs{'otter'}}, @{$gene_objs{$logic_name}}) { 
       my $gene_label = $g->external_name() || $g->stable_id();   
       my $high = exists $highlights{ $gene_label }; 
       my $type = $g->type(); 
