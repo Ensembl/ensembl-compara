@@ -41,6 +41,7 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::Utils::Exception qw(throw info);
 
 
@@ -232,7 +233,7 @@ sub fetch_by_dbID {
                     - or -
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Arg  2     : Bio::EnsEMBL::Slice $original_slice
-  Arg  5     : [optional] integer $limit
+  Arg  3     : [optional] integer $limit
   Example    : my $genomic_align_blocks =
                   $genomic_align_block_adaptor->fetch_all_by_Slice(
                       2, $original_slice);
@@ -254,15 +255,7 @@ sub fetch_all_by_Slice {
   my ($self, $method_link_species_set, $original_slice, $limit) = @_;
   my $all_genomic_align_blocks = []; # Returned value
 
-  ## Parse, check and get method_link_species_set_id if needed
-  my $method_link_species_set_id;
-  if ($method_link_species_set =~ /^\d+$/) {
-    $method_link_species_set_id = $method_link_species_set;
-  } else {
-    throw("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-        if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-    $method_link_species_set_id = $method_link_species_set->dbID;
-  }
+  ## method_link_species_set_id will be checked in the fetch_all_by_DnaFrag method
 
   ## Check original_slice
   unless($original_slice && ref $original_slice && 
@@ -298,7 +291,7 @@ sub fetch_all_by_Slice {
     my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
             $genome_db, $this_slice->seq_region_name
         );
-    my $these_genomic_align_blocks = fetch_all_by_DnaFrag(
+    my $these_genomic_align_blocks = $self->fetch_all_by_DnaFrag(
             $method_link_species_set,
             $this_dnafrag,
             $this_slice->start,
@@ -312,14 +305,14 @@ sub fetch_all_by_Slice {
     # need to convert features to requested coord system
     # if it was different then the one we used for fetching
 
-    if($top_slice->coord_system_name ne $original_slice->coord_system_name) {
+    if($top_slice->name ne $original_slice->name) {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
         my $feature = new Bio::EnsEMBL::Feature(
-                -slice => $top_slice
-                -start => $this_genomic_align_block->starting_genomic_align->dnafrag_start
+                -slice => $top_slice,
+                -start => $this_genomic_align_block->starting_genomic_align->dnafrag_start,
                 -end => $this_genomic_align_block->starting_genomic_align->dnafrag_end
             );
-        $feature->transfer($original_slice);
+        $feature = $feature->transfer($original_slice);
         $this_genomic_align_block->requesting_slice($original_slice);
         $this_genomic_align_block->requesting_slice_start($feature->start);
         $this_genomic_align_block->requesting_slice_end($feature->end);
