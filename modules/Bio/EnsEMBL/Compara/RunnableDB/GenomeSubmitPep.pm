@@ -87,22 +87,38 @@ sub fetch_input {
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
   $self->{'analysisStatsDBA'} = $self->db->get_AnalysisStatsAdaptor;
-  
-  my $genome_db_id = $input_hash->{'gdb'};
-  my $subset_id    = $input_hash->{'ss'};
 
-  print("gdb = $genome_db_id\n");
-  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
-
-  #get the Compara::GenomeDB object for the genome_db_id
-  $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
   $self->db->dbc->disconnect_when_inactive(0);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  unless($subset_id) {
-    # get the subset of 'longest transcripts' for this genome_db_id
-    $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
+    
+  my $genome_db_id = $input_hash->{'gdb'};
+  my $subset_id    = $input_hash->{'ss'};
+  $self->{'reference_name'} = undef;
+
+  if(defined($genome_db_id)) {
+    print("gdb = $genome_db_id\n");
+
+    #get the Compara::GenomeDB object for the genome_db_id
+    $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+
+    $self->{'reference_name'} = $self->{'genome_db'}->dbID()."_".$self->{'genome_db'}->assembly();
+
+    unless($subset_id) {
+      # get the subset of 'longest transcripts' for this genome_db_id
+      $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
+    }
   }
+  
+  throw("no subset defined, can't figure out which peptides to use\n") 
+    unless(defined($subset_id));
+  
   $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id); 
+
+  unless($self->{'reference_name'}) {
+    $self->{'reference_name'} = $self->{'pepSubset'}->description;
+    $self->{'reference_name'} =~ s/\s+/_/g;
+  }
+
   
   return 1;
 }
@@ -187,10 +203,8 @@ sub createSubmitPepAnalysis {
   print("\ncreateSubmitPepAnalysis\n");
 
   #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
-
-  my $logic_name = "SubmitPep_" .
-                   $self->{'genome_db'}->dbID() .
-                   "_".$self->{'genome_db'}->assembly();
+  
+  my $logic_name = "SubmitPep_" . $self->{'reference_name'};
 
   print("  see if analysis '$logic_name' is in database\n");
   my $analysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
@@ -202,7 +216,7 @@ sub createSubmitPepAnalysis {
         -db              => '',
         -db_file         => $subset->dump_loc(),
         -db_version      => '1',
-        -parameters      => "{subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID()."}",
+        -parameters      => "{subset_id=>" . $subset->dbID()."}",
         -logic_name      => $logic_name,
         -input_id_type   => 'MemberPep',
         -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
