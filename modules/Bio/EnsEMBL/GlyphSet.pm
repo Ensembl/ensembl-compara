@@ -59,7 +59,7 @@ sub basepairs_per_pixel {
 
 sub glob_bp {
     my ($self) = @_;
-    return int($self->basepairs_per_pixel());
+    return int($self->basepairs_per_pixel()*2);
 }
 #########
 # return our list of glyphs
