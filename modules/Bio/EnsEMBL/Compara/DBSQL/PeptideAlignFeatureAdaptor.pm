@@ -363,6 +363,32 @@ sub fetch_by_dbID{
   return $obj;
 }
 
+=head2 fetch_by_dbIDs
+  Arg [1...] : int $id (multiple)
+               the unique database identifier for the feature to be obtained
+  Example    : $paf = $adaptor->fetch_by_dbID(1234);
+  Description: Returns the PeptideAlignFeature created from the database defined by the
+               the id $id.
+  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+=cut
+
+sub fetch_by_dbIDs{
+  my $self = shift;
+  my @ids = @_;
+
+  return undef unless(scalar(@ids));
+
+  my $id_string = join(",", @ids);
+  my $constraint = "paf.peptide_align_feature_id in ($id_string)";
+  printf("fetch_by_dbIDs has contraint\n$constraint\n");
+
+  #return first element of _generic_fetch list
+  return $self->_generic_fetch($constraint);
+}
+
+
 =head2 fetch_BRH_by_member_genomedb
 
   Arg [1]    : member_id of query peptide member
