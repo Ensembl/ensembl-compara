@@ -81,9 +81,11 @@ sub fetch_by_dbID{
 
    my $dnafrag;
 
-   eval{
-     $dnafrag= $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);
-   }; if ($@) { $self->warn ("Unable to fetch dnafrag associated with this protein.\n$@");}
+   if($dnafrag_id !=0){	# not a protein with mapped coordinates
+	   eval{
+    	 $dnafrag= $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);
+	   }; if ($@) { $self->warn ("Unable to fetch dnafrag associated with this protein.\n$@");}
+	}
 
 
    my $protein = Bio::EnsEMBL::Compara::Protein->new( 	-dbid 	=> $dbid,
