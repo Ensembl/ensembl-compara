@@ -1,12 +1,32 @@
-
+#!/usr/local/bin/perl -w
 
 use strict;
 
-open(S,"/scratch4/ensembl/birney/static_mouse.txt");
+open(MS,"/scratch4/ensembl/birney/static_mouse.txt") || die "Could not open /scratch4/ensembl/birney/static_mouse.txt; $!\n";
 
-my %contig;
+my %mouse_golden_contigs;
 
-while( <S> ) {
+while (<MS>) {
+    my ($id,$chr,$start,$end,$raw_start,$raw_end,$raw_ori) = split;
+    next if ($chr =~ /^NA.*$/);
+    my $h = {};
+    #print STDERR "Storing $chr,$start,$end for $id\n";
+    $h->{'chr'} = $chr;
+    $h->{'start'} = $start;
+    $h->{'end'} = $end;
+    $h->{'raw_start'} = $raw_start;
+    $h->{'raw_end'} = $raw_end;
+    $h->{'raw_ori'} = $raw_ori;
+    $mouse_golden_contigs{$id} = $h;
+}
+
+close MS;
+
+open(HS,"/nfs/acari/abel/work/mouse_human/human_golden_contigs") || die "Could not open /nfs/acari/abel/work/mouse_human/human_golden_contigs; $!\n";
+
+my %human_golden_contigs;
+
+while (<HS>) {
     my ($id,$chr,$start,$end,$raw_start,$raw_end,$raw_ori) = split;
     my $h = {};
     #print STDERR "Storing $chr,$start,$end for $id\n";
@@ -16,106 +36,171 @@ while( <S> ) {
     $h->{'raw_start'} = $raw_start;
     $h->{'raw_end'} = $raw_end;
     $h->{'raw_ori'} = $raw_ori;
-    $contig{$id} = $h;
+    $human_golden_contigs{$id} = $h;
 }
 
-
+close HS;
 
 my $glob = 50;
+my $min_size = 30;
 $| = 1;
-my ($current_start,$current_end,$prev_id,$current_m_start,$current_m_end,$current_strand);
 
-while( <> ) {
-    my ($align_id,$d,$human_id,$start,$end,$mouse_id,$m_start,$m_end,$strand) = split;
-    #print STDERR "Seeing $align_id vs $prev_id $current_end $start\n";
+my ($current_start,$current_end,$prev_id,$prev_mouse_id,$prev_human_id,$current_m_start,$current_m_end,$current_strand);
+
+while (<>) {
+  my ($align_id,$d,$human_id,$start,$end,$mouse_id,$m_start,$m_end,$strand) = split;
+  
+  # avoid non-golden contigs
+  next unless (defined $mouse_golden_contigs{$mouse_id});
+  next unless (defined $human_golden_contigs{$human_id});
+  
+  #print STDERR "Seeing $align_id vs $prev_id $current_end $start\n";
+  
+  if (! defined $prev_id) {
     
-    if( !defined $prev_id ) {
+    # first contig
+    $current_start = $start;
+    $current_end   = $end;
+    $prev_id       = $align_id;
+    $prev_mouse_id = $mouse_id;
+    $prev_human_id = $human_id;
+    $current_m_start = $m_start;
+    $current_m_end   = $m_end;
+    $current_strand  = $strand;
+    
+  } elsif ($align_id == $prev_id &&
+	   ($current_end + $glob) > $start) {
+    # join hit separated by less than $glob 
+    # globbed. Simply extend end and worry about m_start and m_end
+    #print STDERR "globbed out\n";
+    
+    $current_end = $end;
+    if ($m_start < $current_m_start) {
+      $current_m_start = $m_start;
+    }
+    if ($m_end  > $current_m_end) {
+      $current_m_end = $m_end;
+    }
+    
+  } else {
+    # write the block out
+    #print STDERR "Writing out\n";
+    # first map mouse to chromosomal coordinates
+    
+    if ($current_end - $current_start < $min_size ||
+	$current_m_end - $current_m_start < $min_size) {
+      # protect us against micro-matches... why do we have them?
+      $current_start = $start;
+      $current_end   = $end;
+      $prev_id       = $align_id;
+      $prev_mouse_id = $mouse_id;
+      $prev_human_id = $human_id;
+      $current_m_start = $m_start;
+      $current_m_end   = $m_end;
+      $current_strand  = $strand;
+      next;
+    }
+    
+    # taking $prev_mouse_id and $prev_human_id because they are from these ones we want to dump match information
+    # not the $mouse_id and $human_id from the current while (<>) entry !!!
 
-	# first contig
-	$current_start = $start;
-	$current_end   = $end;
-	$prev_id       = $align_id;
-	$current_m_start = $m_start;
-	$current_m_end   = $m_end;
-	$current_strand  = $strand;
-    } elsif( $align_id == $prev_id && ($current_end + $glob) > $start ) {
-	# globbed. Simply extend end and worry about m_start and m_end
-	#print STDERR "globbed out\n";
+    my $h = $mouse_golden_contigs{$prev_mouse_id};
 
-	$current_end = $end;
-	if( $m_start < $current_m_start ) {
-	    $current_m_start = $m_start;
-	}
-	if( $m_end  > $current_m_end ) {
-	    $current_m_end = $m_end;
-	}
+    my ($chr_start,$chr_end,$chr_strand);
+    
+    if( $h->{'raw_ori'} == 1 ) {
+      $chr_start = $h->{'start'} + $current_m_start - $h->{'raw_start'} +1;
+      $chr_end   = $h->{'start'} + $current_m_end - $h->{'raw_start'} +1;
     } else {
-	# write the block out
-	#print STDERR "Writing out\n";
-	# first map mouse to chromosomal coordinates
+      $chr_start = $h->{'start'} + $h->{'raw_end'} - $current_m_end;
+      $chr_end   = $h->{'start'} + $h->{'raw_end'} - $current_m_start;
+    }
+    
+    if( $h->{'raw_ori'} == $current_strand ) {
+      $chr_strand = 1;
+    } else {
+      $chr_strand = -1;
+    }
+    
+    # now figure out where this is on denormalised coordinates
+    
+    my ($de_scontig_id,$de_start) = &map_to_denormalised($h->{'chr'},$chr_start);
+    my ($de_econtig_id,$de_end)   = &map_to_denormalised($h->{'chr'},$chr_end);
+    
+    #print STDERR "Got $de_scontig_id vs $de_econtig_id $chr_start $chr_end\n";
+    
+    # if we cross boundaries - currently skip!
+    
+    if( $de_scontig_id eq $de_econtig_id ) {
+      # dump it
+      print "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+    }
+    
+    # initialization with the current while (<>) entry
 
-	# protect us against micro-matches... why do we have them?
-	my $min_size = 30;
-	if( $current_end - $current_start < $min_size || $current_m_end - $current_m_start < $min_size ) {
-	    $current_start = $start;
-	    $current_end   = $end;
-	    $prev_id       = $align_id;
-	    $current_m_start = $m_start;
-	    $current_m_end   = $m_end;
-	    $current_strand  = $strand;
-	    next;
-	}
-	
-	my $h = $contig{$mouse_id};
-	my ($chr_start,$chr_end,$chr_strand);
-
-	if( $h->{'raw_ori'} == 1 ) {
-	    $chr_start = $h->{'start'} + $current_m_start - $h->{'raw_start'} +1;
-	    $chr_end   = $h->{'start'} + $current_m_end - $h->{'raw_start'} +1;
-	} else {
-	    $chr_start = $h->{'start'} + $h->{'raw_end'} - $current_m_end;
-	    $chr_end   = $h->{'start'} + $h->{'raw_end'} - $current_m_start;
-	    $chr_strand = -1 * $current_strand;
-	}
-
-	# now figure out where this is on denormalised coordinates
-
-	my ($de_scontig_id,$de_start) = &map_to_denormalised($h->{'chr'},$chr_start);
-	my ($de_econtig_id,$de_end)   = &map_to_denormalised($h->{'chr'},$chr_end);
-
-	#print STDERR "Got $de_scontig_id vs $de_econtig_id $chr_start $chr_end\n";
-
-	# if we cross boundaries - currently skip!
-
-	if( $de_scontig_id eq $de_econtig_id ) {
-	    # dump it
-	    print "$human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$current_strand\n";
-	}
-
-	$current_start = $start;
-	$current_end   = $end;
-	$prev_id       = $align_id;
-	$current_m_start = $m_start;
-	$current_m_end   = $m_end;
-	$current_strand  = $strand;
-    } 
+    $current_start = $start;
+    $current_end   = $end;
+    $prev_id       = $align_id;
+    $prev_mouse_id = $mouse_id;
+    $prev_human_id = $human_id;
+    $current_m_start = $m_start;
+    $current_m_end   = $m_end;
+    $current_strand  = $strand;
+  } 
 }
 
+# getting out the while (<>), dumping last entry if necessary
 
-sub map_to_denormalised {
-    my ($chr,$pos) = @_;
+unless ($current_end - $current_start < $min_size || 
+	$current_m_end - $current_m_start < $min_size) {
+  # protect us against micro-matches... why do we have them?
+  
+  my $h = $mouse_golden_contigs{$prev_mouse_id};
 
-    my $block = int($pos / 5000000);
+  my ($chr_start,$chr_end,$chr_strand);
+  
+  if ($h->{'raw_ori'} == 1) {
+    $chr_start = $h->{'start'} + $current_m_start - $h->{'raw_start'} + 1;
+    $chr_end   = $h->{'start'} + $current_m_end - $h->{'raw_start'} + 1;
+  } else {
+    $chr_start = $h->{'start'} + $h->{'raw_end'} - $current_m_end;
+    $chr_end   = $h->{'start'} + $h->{'raw_end'} - $current_m_start;
+  }
+  
+  if ($h->{'raw_ori'} == $current_strand) {
+    $chr_strand = 1;
+  } else {
+    $chr_strand = -1;
+  }
+  
+  # now figure out where this is on denormalised coordinates
+  
+  my ($de_scontig_id,$de_start) = &map_to_denormalised($h->{'chr'},$chr_start);
+  my ($de_econtig_id,$de_end)   = &map_to_denormalised($h->{'chr'},$chr_end);
+  
+  #print STDERR "Got $de_scontig_id vs $de_econtig_id $chr_start $chr_end\n";
+  
+  # if we cross boundaries - currently skip!
 
-    my $start = ($block * 5000000) +1;
-    my $end   = ($block+1) * 5000000;
+  if ($de_scontig_id eq $de_econtig_id) {
+    # dump it
+    print "$prev_human_id\t$current_start\t$current_end\t1\t$de_scontig_id\t$de_start\t$de_end\t$chr_strand\t$prev_mouse_id\n";
+  }
+}
 
-    my $rem   = $pos - $start +1; # plus 1 for 'biological' coordinates
-
-    my $id = $chr.".".$start."-".$end;
-
-
-    return ($id,$rem);
+sub map_to_denormalised ($$) {
+  my ($chr,$pos) = @_;
+  
+  my $block = int($pos / 5000000);
+  
+  my $start = ($block * 5000000) + 1;
+  my $end   = ($block + 1) * 5000000;
+  
+  my $rem   = $pos - $start + 1; # plus 1 for 'biological' coordinates
+  
+  my $denorm_contig_id = $chr.".".$start."-".$end;
+  
+  return ($denorm_contig_id,$rem);
 }
 
 
