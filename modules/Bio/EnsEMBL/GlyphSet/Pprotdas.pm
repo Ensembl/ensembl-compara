@@ -66,12 +66,10 @@ sub _init {
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
     my $das_feat_ref = $self->{extras}->{features};
-    ref( $das_feat_ref ) eq 'ARRAY' || 
-      ( warn("No feature array for ProteinDAS track") &&  return );
-    my @das_feats = @$das_feat_ref;
+    ref( $das_feat_ref ) eq 'ARRAY' || ( warn("No feature array for ProteinDAS track") &&  return );
 
-    foreach my $feat(@das_feats) {
-	push(@{$hash{$feat->das_feature_id}},$feat);
+    foreach my $feat (@$das_feat_ref) {
+      push(@{$hash{$feat->das_feature_id}},$feat); # if defined $feat->start;
     }
     foreach my $key (keys %hash) {
 	my @row  = @{$hash{$key}};

@@ -147,7 +147,7 @@ sub _init {
   };
  
   push @{$SPRITES->{'nav'}}, 'flip_strand', 'set_as_primary' if $self->{'config'}->{'slice_number'};
-  if(0) {
+  if(1) {
   foreach my $key ( keys %$SPRITES ) {
     my( $pos, $step,  @sprite_array ) =  @{$SPRITES->{$key}};
 

@@ -15,7 +15,7 @@ sub features {
     my ($self) = @_;
 
     return $self->{'container'}->get_all_MarkerFeatures(undef, 
-							PRIORITY,
+							$self->{container}{_config_file_name_} eq 'Homo_sapiens' ? PRIORITY : 0,
 							MAP_WEIGHT);
 }
 

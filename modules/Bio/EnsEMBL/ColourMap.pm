@@ -117,6 +117,8 @@ sub new {
   $self->colourSet( 'est',
     'default'    => 'purple1',
     'genoscope'  => 'purple3',
+    'WZ' => 'purple1',
+    'IMCB_HOME' => 'purple3'
   );
   $self->colourSet( 'glovar_sts',
     'col'    => 'grey',
