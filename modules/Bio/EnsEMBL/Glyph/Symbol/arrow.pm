@@ -21,7 +21,7 @@ use Bio::EnsEMBL::Glyph::Symbol::generic_span;
 # the connecting bar should start (i.e. the rightmost point of the arrowhead).
 # Points should be drawn clockwise.
 
-sub start_symbol {
+sub start_symbol {  # Left-pointing arrowhead
     my $self = shift;
     my $style = $self->style;
     my $feature = $self->feature;
@@ -52,7 +52,7 @@ sub start_symbol {
 }
 
 
-sub end_symbol {
+sub end_symbol {    # Right-pointing arrowhead
     my $self = shift;
     my $style = $self->style;
     my $feature = $self->feature;
@@ -82,5 +82,10 @@ sub end_symbol {
     
     return ($points, $bar_end);
 }
+
+sub default_bar_style {
+    return 'line';
+}
+
 
 1;
