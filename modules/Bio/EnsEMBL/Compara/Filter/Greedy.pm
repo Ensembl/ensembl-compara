@@ -8,27 +8,27 @@ use strict;
 =head2 filter
 
     Title   :   filter
-    Usage   :   filter(@)
+    Usage   :   filter(\@)
     Function:   Clean the Array of Bio::EnsEMBL::FeaturePairs in three steps, 
                 First, determines the highest scored hit, and fix the expected strand hit
                 Second, hits on expected strand are kept if they do not overlap, 
                 either on query or subject sequence, previous strored, higher scored hits.
                 If hit goes trough the second step, the third test makes sure that the hit
                 is coherent position according to previous ones. 
-    Returns :   Array of Bio::EnsEMBL::FeaturePairs
-    Args    :   Array of Bio::EnsEMBL::FeaturePairs
+    Returns :   Array reference of Bio::EnsEMBL::FeaturePairs
+    Args    :   Array reference of Bio::EnsEMBL::FeaturePairs
 
 =cut
 
 sub filter {
-  my ($self,@DnaDnaAlignFeatures) = @_;
+  my ($self,$DnaDnaAlignFeatures) = @_;
 
-  @DnaDnaAlignFeatures = sort {$b->score <=> $a->score} @DnaDnaAlignFeatures;
+  my @{$DnaDnaAlignFeatures} = sort {$b->score <=> $a->score} @{$DnaDnaAlignFeatures};
   
   my @DnaDnaAlignFeatures_filtered;
   my $ref_strand;
 
-  foreach my $fp (@DnaDnaAlignFeatures) {
+  foreach my $fp (@{$DnaDnaAlignFeatures}) {
 
     if ($fp->strand < 0) {
       $fp->reverse_complement;
@@ -72,7 +72,7 @@ sub filter {
     }
     push @DnaDnaAlignFeatures_filtered, $fp if ($add_fp);
   }
-  return @DnaDnaAlignFeatures_filtered;
+  return \@DnaDnaAlignFeatures_filtered;
 }
 
 1;
