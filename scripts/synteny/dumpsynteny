@@ -1,172 +1,106 @@
-#!/usr/local/ensembl/bin/perl
+#!/usr/local/ensembl/bin/perl -w
 
 use strict;
-
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Analysis;
+use Bio::EnsEMBL::Registry;
 use Getopt::Long;
 
 my $usage = "
-dumpsynteny -host ecs1b.sanger.ac.uk 
-            -user ensro
-	    -port 3352
-            -dbname ensembl_compara_10_1
-            -chr_names \"22\"
-            -species1 \"Homo sapiens\"
-            -assembly1 NCBI30
-            -species2 \"Mus musculus\"
-            -assembly2 MGSC3
-            -conf_file Compara.conf
-	    -level 1
-            -align_type BLASTZ_NET
-
-$0 [-help]
-   -host compara_db_host_server
-   -user username (default = 'ensro')
-   -port db port no
-   -dbname compara_database_name
-   -chr_names \"20,21,22\" (default = \"all\")
-   -species1 (e.g. \"Homo sapiens\") from which alignments are queried and chr_names refer to
-   -assembly1 (e.g. NCBI30) assembly version of species1
-   -species2 (e.g. \"Mus musculus\") to which alignments are queried
-   -assembly2 (e.g. MGSC3) assembly version of species2
-   -align_type BLASTZ_NET
-   -level 1 (the BLASTz level to use. if not defined defaults to 0)
-   -conf_file comparadb_configuration_file
-              (see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example)
-
+$0
+  [--help]                      this menu
+   --dbname string              (e.g. compara23) one of the compara database Bio::EnsEMBL::Registry aliases
+   --seq_region string          (e.g. 22)
+   --qy string                  (e.g. human) the query species (i.e. a Bio::EnsEMBL::Registry alias)
+                                from which alignments are queried and seq_region refer to
+   --tg string                  (e.g. mouse) the target sepcies (i.e. a Bio::EnsEMBL::Registry alias)
+                                to which alignments are queried
+  [--alignment_type string]     (e.g. TRANSLATED_BLAT) type of alignment stored (default: BLASTZ_NET)
+  [--reg_conf filepath]         the Bio::EnsEMBL::Registry configuration file. If none given, 
+                                the one set in ENSEMBL_REGISTRY will be used if defined, if not
+  [--level interger]            highest level to be dumped
 ";
 
 my $help = 0;
-my $host = 'ecs4';
-my $user = 'ensro';
-my $pass = '';
-my $dbname = 'ensembl_compara_20_1';
-my $port= 3352;
-my $species1 = 'Homo sapiens';
-my $species1_assembly = 'NCBI34';
-my $species2 = 'Mus musculus';
-my $species2_assembly = 'MGSC32';
+my $dbname;
 my $alignment_type = "BLASTZ_NET";
-my $level=0;
-my $chr_names = "all";
-my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf";
+my $seq_region;
+my $qy_species;
+my $tg_species;
+my $level = 1;
+my $reg_conf;
 
-$| = 1;
+GetOptions('help' => \$help,
+	   'dbname=s' => \$dbname,
+	   'seq_region=s' => \$seq_region,
+	   'qy=s' => \$qy_species,
+	   'tg=s' => \$tg_species,
+	   'alignment_type=s' => \$alignment_type,
+           'level=s' => \$level,
+           'reg_conf=s' => \$reg_conf);
 
-&GetOptions('help' => \$help,
-	    'host:s' => \$host,
-	    'user:s' => \$user,
-	    'dbname:s' => \$dbname,
-	    'pass:s' => \$pass,
-	    'port=i' => \$port,
-	    'species1:s' => \$species1,
-	    'assembly1:s' => \$species1_assembly,
-	    'species2:s' => \$species2,
-	    'assembly2:s' => \$species2_assembly,
-	    'chr_names=s' => \$chr_names,
-	    'conf_file=s' => \$conf_file,
-	    'level=s' => \$level,
-	    'align_type=s' => \$alignment_type);
+$|=1;
 
 if ($help) {
   print $usage;
   exit 0;
 }
 
-print STDERR "Time in dumpgff " . time . "\n";
+# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
+# if no reg_conf file is given.
+Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my $compdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $host,
-							  -user        => $user,
-							  -dbname      => $dbname,
-							  -port		=> $port,
-							  -pass        => $pass,
-							  -conf_file   => $conf_file);
+print STDERR "Start time when dumping gff for synteny on chr $seq_region " . time . "\n";
 
-my $coredb = $compdb->get_db_adaptor($species1,$species1_assembly);
+my $dafa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'DnaAlignFeature');
+my $sa = Bio::EnsEMBL::Registry->get_adaptor($qy_species, 'core', 'Slice');
 
-my $DnaAlignFeatureAdaptor = $compdb->get_DnaAlignFeatureAdaptor;
-my $SliceAdaptor = $coredb->get_SliceAdaptor;
-#my $ChromosomeAdaptor = $coredb->get_ChromosomeAdaptor;
+my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaContainer')->get_Species->binomial;
 
-my @chromosomes;
-my @chr_names;
-if (defined $chr_names and $chr_names ne "all") {
+my $slice = $sa->fetch_by_region('toplevel',$seq_region);
+my $seq_region_length = $slice->length;
+my $coord_system_name = $slice->coord_system->name;
 
-   @chr_names = split /,/, $chr_names;
+my $start = 1;
+my $chunk = 5000000;
+
+open SYN,"|sort -u > $seq_region.syten.gff";
+
+while ($start <= $seq_region_length) {
+  my $end = $start + $chunk -1;
+  $end = $seq_region_length if ($end > $seq_region_length);
+  
+  $slice = $sa->fetch_by_region($coord_system_name, $seq_region, $start, $end);
+  
+  my $dafs = $dafa->fetch_all_by_Slice($slice, $tg_binomial,undef,$alignment_type);
+  print STDERR "Got ", scalar @{$dafs}," features for chunk $start to $end on chr $seq_region\n";
+  
+  foreach my $daf (@{$dafs}) {
+    
+    my ($strand,$hstrand) = qw(+ +);
+    $strand = "-" if ($daf->strand < 0);
+    $hstrand = "-" if ($daf->hstrand < 0);
+    
+    # keep on the basis of level_id
+    next if ($daf->level_id > $level);
+    
+    # print out a in gff format
+    print SYN  
+      $daf->seqname . "\t" .
+        "synteny\t" .
+          "similarity\t" .
+            $daf->seq_region_start . "\t" .
+              $daf->seq_region_end . "\t" .
+                $daf->score . "\t" .
+                  $strand . "\t" .
+                    ".\t" .
+                      $daf->hseqname . "\t" .
+                        $daf->hstart . "\t" .
+                          $daf->hend . "\t" .
+                            $hstrand . "\t" .
+                              ".\n";
   }
-#  foreach my $chr (@chr_names) {
-#    push @chromosomes, $SliceAdaptor->fetch_by_region($coord_type, $chr_name);
-#  }
-#} else {
-  @chromosomes = @{$SliceAdaptor->fetch_all('toplevel')};
-#}
-
-foreach my $chr (@chromosomes) {
-#check if needed
-if ((grep {$_ eq $chr->seq_region_name} @chr_names ) || ($chr_names eq "all")){
-	
-
-  my $length = $chr->length;
-
-  print STDERR "Got chr ".$chr->seq_region_name." length $length\n";
-  
-  my $start = 1;
-  my $chunk = 5000000;
-  
-  my $chr_name = $chr->seq_region_name;
-  open SYN,"|sort -u > $chr_name.syten.gff";
-  
-  while ($start <= $length) {
-    
-    my $end = $start + $chunk -1;
-    
-    if ($end > $length) {$end = $length;}
-    
-    my $Slice = $SliceAdaptor->fetch_by_region( $chr->coord_system->name, $chr_name,
-						       $start,
-						       $end);
-
-    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_species_region($species1,$species1_assembly,$species2,$species2_assembly,$chr_name,$start,$end,$alignment_type, undef, $chr->coord_system->name);
-
-    print STDERR "Got features " . scalar(@{$synteny}) . "\n";
-    
-    foreach my $f (@{$synteny}) {
-
-      my ($strand,$hstrand) = qw(+ +);
-
-      if ($f->strand < 0) {
-	$strand = "-";
-      }
-      if ($f->hstrand < 0) {
-	$hstrand = "-";
-      }
-
-####keep on the basis of level_id
-if($f->level_id<=$level){
-
-
-      
-      # print out a in gff format
-      print SYN  
-	$f->seqname . "\t" .
-	"synteny\t" .
-	"similarity\t" .
-	$f->start . "\t" .
-	$f->end . "\t" .
-	$f->score . "\t" .
-	$strand . "\t" .
-	".\t" .
-	$f->hseqname . "\t" .
-	$f->hstart . "\t" .
-	$f->hend . "\t" .
-	$hstrand . "\t" .
-	".\n" 
-    }
-    }
-    $start += $chunk;
-  }
-  close SYN;
+  $start += $chunk;
 }
-}
+
+close SYN;
+
+print STDERR "End time when dumping gff for synteny on chr $seq_region " . time . "\n";
