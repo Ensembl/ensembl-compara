@@ -112,7 +112,7 @@ sub new {
 			   -port   => $db_hash->{'port'},
 			   -driver => $db_hash->{'driver'});
       };
-      $db->disconnect_when_inactive(1);
+      $db->disconnect_when_inactive(0);
 
       if($@) {
         $self->throw("could not load module specified in configuration file:$@");
@@ -174,7 +174,7 @@ sub add_db_adaptor {
   #  if($dba->isa('Bio::EnsEMBL::Container')) {
   #    $dba = $dba->_obj;
   #  }
-  $dba->disconnect_when_inactive(1);
+  $dba->disconnect_when_inactive(0);
   my $mc = $dba->get_MetaContainer;
   my $csa = $dba->get_CoordSystemAdaptor;
   
