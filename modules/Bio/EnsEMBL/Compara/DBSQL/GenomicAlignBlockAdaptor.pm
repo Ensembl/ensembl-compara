@@ -462,7 +462,8 @@ sub retrieve_all_direct_attributes {
   
   ## Populate the object
   $genomic_align_block->adaptor($self);
-  $genomic_align_block->method_link_species_set_id($method_link_species_set_id);
+  $genomic_align_block->method_link_species_set_id($method_link_species_set_id)
+      if (defined($method_link_species_set_id));
   $genomic_align_block->score($score) if (defined($score));
   $genomic_align_block->perc_id($perc_id) if (defined($perc_id));
   $genomic_align_block->length($length) if (defined($length));
