@@ -162,6 +162,8 @@ sub render_Intron {
     my $y1 = $glyph->pixely() + int($glyph->pixelheight() / 2);
     my $h1 = -int($glyph->pixelheight() / 2);
 
+    $h1 = -$h1 if($glyph->strand() == -1);
+
     my $x2 = $x1 + $w1;
     my $y2 = $y1 + $h1;
     my $w2 = $w1;
