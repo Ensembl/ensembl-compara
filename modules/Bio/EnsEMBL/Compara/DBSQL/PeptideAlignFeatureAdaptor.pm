@@ -48,12 +48,16 @@ sub store {
 
   @pafList = sort sort_by_score_evalue_and_pid @pafList;
   my $rank=1;
-  foreach my $feature (@pafList) {
-    $feature->hit_rank($rank++);
+  my $prevPaf = undef;
+  foreach my $paf (@pafList) {
+    $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
+    $paf->hit_rank($rank);
+    $prevPaf = $paf;
   }
 
   $self->_store_PAFS(@pafList);
 }
+
 
 sub _store_PAFS {
   my ($self, @out)  = @_;
@@ -127,6 +131,17 @@ sub sort_by_score_evalue_and_pid {
     $a->evalue <=> $b->evalue ||
       $b->perc_ident <=> $a->perc_ident ||
         $b->perc_pos <=> $a->perc_pos;
+}
+
+
+sub pafs_equal {
+  my ($paf1, $paf2) = @_;
+  return 0 unless($paf1 and $paf2);
+  return 1 if(($paf1->score == $paf2->score) and
+              ($paf1->evalue == $paf2->evalue) and
+              ($paf1->perc_ident == $paf2->perc_ident) and
+              ($paf1->perc_pos == $paf2->perc_pos));
+  return 0;              
 }
 
 
@@ -354,7 +369,7 @@ sub fetch_by_dbID{
   Arg [2]    : genome_db_id of hit species
   Example    : $paf = $adaptor->fetch_BRH_by_member_genomedb(31957, 3);
   Description: Returns the PeptideAlignFeature created from the database
-  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature object
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : none
   Caller     : general
 
@@ -381,8 +396,7 @@ sub fetch_BRH_by_member_genomedb
                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
 
-  my ($obj) = @{$self->_generic_fetch($constraint, $extrajoin)};
-  return $obj;
+  return $self->_generic_fetch($constraint, $extrajoin);
 }
 
 
@@ -406,7 +420,7 @@ sub fetch_all_RH_by_member_genomedb
   my $qmember_id       = shift;
   my $hit_genome_db_id = shift;
 
-  #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+  #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id and $hit_genome_db_id);
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
