@@ -17,9 +17,11 @@ create table dnafrag (
        dnafrag_id integer(10) NOT NULL auto_increment,
        name      varchar(40) NOT NULL,
        genome_db_id integer(10) NOT NULL,
-       dnafrag_type ENUM ( 'RawContig', 'Chromosome'),
+       dnafrag_type ENUM ('RawContig','Chromosome','VirtualContig'),
        PRIMARY KEY(dnafrag_id), 
-       UNIQUE KEY (name,dnafrag_type)
+#       UNIQUE KEY (name,dnafrag_type)
+       KEY (dnafrag_id, name),
+       UNIQUE KEY (name,genome_db_id,dnafrag_type)
 );
 
 #
