@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::genscan_lite;
+package Bio::EnsEMBL::GlyphSet::genewise;
 use strict;
 use vars qw(@ISA);
 use EnsWeb;
@@ -8,24 +8,24 @@ use Bio::EnsEMBL::Gene;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
-    return 'Genscans';
+    return 'Genewise';
 }
 
 sub colours {
     my $self = shift;
     my $Config = $self->{'config'};
     return {
-        'hi'               => $Config->get('genscan_lite','hi'),
-        'col'              => $Config->get('genscan_lite','col'),
-        'super'            => $Config->get('genscan_lite','superhi'),
+        'hi'               => $Config->get('genewise','hi'),
+        'col'              => $Config->get('genewise','col'),
+        'super'            => $Config->get('genewise','superhi'),
     };
 }
 
 sub features {
   my $self = shift;
   my @genes = ();
-  #obtain genscan transcripts
-  foreach my $transcript (@{$self->{'container'}->get_all_PredictionTranscripts('Genscan')}) {
+  #obtain genewise transcripts
+  foreach my $transcript (@{$self->{'container'}->get_all_PredictionTranscripts('GENEWISE')}) {
     my $gene = new Bio::EnsEMBL::Gene();
        $gene->add_Transcript($transcript);
     push @genes, $gene;
