@@ -115,6 +115,18 @@ sub fetch_by_condition_and_goal
 }
 
 
+sub create_rule
+{
+  my ($self, $condition, $goal) = @_;
+
+  my $rule = Bio::EnsEMBL::Compara::SimpleRule->new(
+	 '-goal_analysis'      => $goal, 
+	 '-condition_analysis' => $condition);
+  $self->store($rule);
+  return $rule;
+}
+
+
 =head2 store
 
   Title   : store
