@@ -207,7 +207,7 @@ sub _init {
     $Config->{'legend_features'}->{'refseq_genes'} = {
       'priority' => 801,
       'legend'  => [
-         'RefSeq proteins' => $colours->{'refseq'},
+         'GeneWise (RefSeq)' => $colours->{'refseq'},
       ] };
   }
 

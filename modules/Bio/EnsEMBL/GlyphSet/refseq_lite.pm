@@ -6,7 +6,7 @@ use Bio::EnsEMBL::GlyphSet_transcript;
 
 sub my_label {
     my $self = shift;
-    return "RefSeq proteins";
+    return "GeneWise (RefSeq)";
 }
 
 sub colours {
@@ -45,7 +45,7 @@ sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $pid  = $transcript->stable_id();
     return {
-        'caption'  => "RefSeq protein",
+        'caption'  => "GeneWise (RefSeq)",
         $pid       => $self->href( $gene, $transcript )
     };
 }
@@ -57,6 +57,6 @@ sub text_label {
 
 sub legend { return ;}
 
-sub error_track_name { return 'RefSeq proteins'; }
+sub error_track_name { return 'GeneWise (RefSeq)'; }
 
 1;
