@@ -64,7 +64,7 @@ sub _init {
         $start = $vg->start();
         $start = $vg->end();        
 	    ########## skip if this one isn't on the strand we're drawing
-	    if($vg->is_known()) {
+	    if($vg->gene->is_known()) {
                 # this is duplicated  from gene_label.pm, so needs refactoring ...
 	    	$colour = $known_col;
             my @temp_geneDBlinks = $vg->gene->each_DBLink();
@@ -80,7 +80,7 @@ sub _init {
 		    $label = $vg->id() unless( defined $label );
             # check for highlighting
 	    	if (exists $highlights{$label}){
-    		    $hi_colour = $Config->get( 'gene', 'hi');
+    		    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
     		}
         } else {
 	    	$colour = $unknown_col;
