@@ -1,7 +1,7 @@
 #!/usr/local/ensembl/bin/perl -w
 
 #
-# Test script for Bio::EnsEMBL::Compara::DnaFrag module
+# Test script for Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor module
 #
 # Written by Javier Herrero (jherrero@ebi.ac.uk)
 #
@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor module.
 
-This script includes XX tests.
+This script includes 8 tests.
 
 =head1 AUTHOR
 
