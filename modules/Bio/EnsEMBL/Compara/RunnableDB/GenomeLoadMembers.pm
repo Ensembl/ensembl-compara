@@ -122,8 +122,9 @@ sub fetch_input {
   
   
   #using genome_db_id, connect to external core database
-  $self->{'coreDBA'} = $self->connectGenomeCore($genome_db_id);
-
+  $self->{'coreDBA'} = $self->{'genome_db'}->connect_to_genome_locator();
+  $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
+  
   #global boolean control value (whether the genes are also stored as members)
   $self->{'store_genes'} = 1;
 
@@ -142,6 +143,9 @@ sub run
 {
   my $self = shift;
 
+  $self->{'comparaDBA'}->disconnect_when_inactive(0);
+  $self->{'coreDBA'}->disconnect_when_inactive(0);  
+  
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, useing the SliceAdaptor
   # it will load all slices, all genes, and all transscripts
@@ -157,7 +161,10 @@ sub run
   #
   # This creates the starting point for the blasts (members against database)
   $self->submitSubsetForAnalysis();
-                      
+
+  $self->{'comparaDBA'}->disconnect_when_inactive(1);
+  $self->{'coreDBA'}->disconnect_when_inactive(1);
+                                          
   return 1;
 }
 
@@ -180,32 +187,6 @@ sub write_output
 #
 #####################################
 
-sub connectGenomeCore
-{
-  #using genome_db_id, connect to external core database
-  my $self = shift;
-  my $genome_db_id = shift;
-  my $genomeDBA;
-
-  my $sql = "SELECT locator FROM genome_db_extn " .
-            "WHERE genome_db_extn.genome_db_id=$genome_db_id;";
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
-  $sth->execute();
-
-  my ($locator);
-  $sth->bind_columns( undef, \$locator );
-
-  if( $sth->fetch() ) {
-    print("genome_db_id=$genome_db_id => $locator\n");
-    $genomeDBA = Bio::EnsEMBL::DBLoader->new($locator);
-  }
-  $sth->finish();
-
-  $self->throw("Can't connect to genome database for id=$genome_db_id")  unless($genomeDBA);
-
-  return $genomeDBA;
-}
-
 
 sub loadMembersFromCoreSlices
 {
@@ -217,7 +198,6 @@ sub loadMembersFromCoreSlices
 
   $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'pepSubset'});
   $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'geneSubset'});
-
 
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
