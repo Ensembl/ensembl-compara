@@ -172,9 +172,9 @@ sub new {
         next unless defined $glyphset->bumpbutton;
         $glyphset->bumpbutton->x(-($extra_translation + $button_width - $spacing) / $scalex);
         $glyphset->bumpbutton->width(10/$scalex);
-        foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
+#        foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
 #           delete $_->{'absolutex'};
-        }
+#        }
     }
     
     ########## pull out alternating background colours for this script
