@@ -1,21 +1,23 @@
-package Bio::EnsEMBL::GlyphSet::chimp_synteny;
+package Bio::EnsEMBL::GlyphSet::generic_synteny;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return "Chimp synteny"; }
+sub my_label { return $_[0]->my_config('label'); }
 
 sub features {
-    my ($self) = @_;
-    return $self->{'container'}->get_all_compara_Syntenies( 'Pan troglodytes' );
+  my ($self) = @_;
+  my $species = $self->my_config('species');
+  (my $species_2 = $species) =~ s/_/ /;
+  return $self->{'container'}->get_all_compara_Syntenies( $species_2 );
 }
 
 sub colour {
   my ($self, $f) = @_;
   unless(exists $self->{'config'}{'pool'}) {
     $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
-    $self->{'config'}{'ptr'}     = 0;
+    $self->{'config'}{'ptr'}  = 0;
   }
   my $return = $self->{'config'}{ $f->{'hit_chr_name'} };
   unless( $return ) {
@@ -35,24 +37,19 @@ sub image_label {
          ( $f->{'rel_ori'}<0 ? '' : '>' ) , 'under';
 }
 
-## Link back to this page centred on the map fragment
-
-sub href {
-    my ($self, $f ) = @_;
-    return undef;
-}
+sub href { return undef; }
 
 ## Create the zmenu...
 ## Include each accession id separately
 
 sub zmenu {
-    my ($self, $f ) = @_;
-    my $zmenu = { 
-        'caption' => "$f->{'hit_chr_name'} $f->{'hit_chr_start'}-$f->{'hit_chr_end'}",
-        '01:bps: '.$f->{'chr_start'}."-".$f->{'chr_end'} => '',
-        '02:Orientation:'.($f->{'rel_ori'}<0 ? ' reverse' : ' same')  => '',
-    };
-    return $zmenu;
+  my ($self, $f ) = @_;
+  my $zmenu = { 
+    'caption' => "$f->{'hit_chr_name'} $f->{'hit_chr_start'}-$f->{'hit_chr_end'}",
+    '01:bps: '.$f->{'chr_start'}."-".$f->{'chr_end'} => '',
+    '02:Orientation:'.($f->{'rel_ori'}<0 ? ' reverse' : ' same')  => '',
+  };
+  return $zmenu;
 }
 
 1;

@@ -30,7 +30,7 @@ sub _init {
     $w = $Config->texthelper->width($fontname);
 
     foreach my $f (@{$slice->get_all_MarkerFeatures(undef,
-						    $PRIORITY,
+						    $self->{container}{_config_file_name_} eq 'Homo_sapiens' ? PRIORITY : 0,
 						    $MAP_WEIGHT)}){
         my $fid = $f->marker->display_MarkerSynonym->name;
 	my $bp_textwidth = $w * length("$fid ");
