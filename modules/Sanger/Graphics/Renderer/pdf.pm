@@ -43,6 +43,7 @@ sub canvas {
 
 sub Y { my( $self, $glyph ) = @_; return $self->{'canvas'}{'im_height'} - $glyph->pixely() - $glyph->pixelheight(); }
 sub X { my( $self, $glyph ) = @_; return $glyph->pixelx() ; }
+sub XY { my( $self, $x, $y ) = @_; return ( $x, $self->{'canvas'}{'im_height'} - $y ); }
 sub H { my( $self, $glyph ) = @_; return 1 + $glyph->pixelheight(); }
 sub W { my( $self, $glyph ) = @_; return 1 + $glyph->pixelwidth(); }
 
@@ -57,7 +58,6 @@ sub hybrid      { my $self = shift; $self->{'canvas'}{'page'}->hybrid; }
 
 sub render_Rect {
     my ($self, $glyph) = @_;
-    warn "Rect";
     my $gcolour       = $glyph->colour();
     my $gbordercolour = $glyph->bordercolour();
 
@@ -87,7 +87,6 @@ sub render_Text {
     my ($self, $glyph) = @_;
     my $font = $glyph->font();
 #    return;
-    warn "Text";
 
     my $gcolour = $glyph->colour() || $self->{'colourmap'}->id_by_name("black");
     my $text    = $glyph->text();
@@ -113,7 +112,6 @@ sub render_Intron {
     my ($self, $glyph) = @_;
     my $gcolour = $glyph->colour();
 
-    warn 'Intron';
     my $x = $self->X($glyph);
     my $w = $self->W($glyph)/2;
     my $h = $self->H($glyph)/2 * ( $glyph->strand == -1 ? -1 : 1 );
@@ -132,7 +130,6 @@ sub render_Intron {
 sub render_Line {
     my ($self, $glyph) = @_;
 
-    warn 'Line';
     my $gcolour = $glyph->colour();
     return if $gcolour eq 'transparent';
 
@@ -155,14 +152,12 @@ sub render_Line {
 
 sub render_Poly {
     my ($self, $glyph) = @_;
-    warn 'Poly';
     my $gbordercolour = $glyph->bordercolour();
     my $gcolour       = $glyph->colour();
 
     my @points = @{$glyph->pixelpoints()};
     my $pairs_of_points = (scalar @points)/ 2;
-    my $lastx = $points[-2];
-    my $lasty = $self->{'canvas'}{'im_height'} - $points[-1];
+    my ($lastx,$lasty) = $self->XY($points[-2],$points[-1]);
 
     if(defined $gcolour) {
         return if $gcolour eq 'transparent';
@@ -175,7 +170,7 @@ sub render_Poly {
 
     $self->move( $lastx , $lasty );
     while( my ($x,$y) = splice(@points,0,2) ) {
-       $y = $self->{'canvas'}{'im_height'}-$y;
+       ($x,$y) = $self->XY($x,$y);
        $self->line( $x , $y );
     }
     if(defined $gcolour) {
