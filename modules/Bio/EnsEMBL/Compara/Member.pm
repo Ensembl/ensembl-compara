@@ -433,12 +433,25 @@ sub seq_length {
   return $self->{'_seq_length'};
 }
 
+
+=head2 sequence_id
+
+  Arg [1]    : int $sequence_id
+  Example    : my $sequence_id = $member->sequence_id;
+  Description: Extracts the sequence_id of this member
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub sequence_id {
   my $self = shift;
   $self->{'_sequence_id'} = shift if(@_);
   if(!defined($self->{'_sequence_id'})) { $self->{'_sequence_id'}=0; }
   return $self->{'_sequence_id'};
 }
+
 
 =head2 bioseq
 
@@ -463,6 +476,29 @@ sub bioseq {
                           -desc       => $self->description(),
                          );
   return $seq;             
+}
+
+=head2 gene_member
+
+  Arg[0]     : Bio::EnsEMBL::Compara::Member $geneMember (optional)
+  Example    : my $primaryseq = $member->primaryseq;
+  Description: returns sequence this member as a Bio::Seq object
+  Returntype : Bio::EnsEMBL::Compara::Member object
+  Exceptions : if arg[0] isn't a Bio::EnsEMBL::Compara::Member object
+  Caller     : PeptideAlignFeatureAdaptor (set), general
+
+=cut
+
+sub gene_member {
+  my $self = shift;
+
+  if (@_) {
+    my $gene_member = shift;
+    $self->throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$gene_member]")
+      unless ($gene_member->isa('Bio::EnsEMBL::Compara::Member'));
+    $self->{'_gene_member'} = $gene_member;
+  }
+  return $self->{'_gene_member'};
 }
 
 1;
