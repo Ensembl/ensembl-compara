@@ -26,7 +26,9 @@ sub _init {
     my ($self) = @_;
     my $Config = $self->{'config'};
     my $chr      = $self->{'container'}->{'chr'};
-    my $snps     = $self->{'container'}->{'da'}->get_density_per_chromosome_type($chr,'snp');
+    my $snps     = $self->{'container'}->{'da'}->get_density_per_chromosome_type( $chr,'snp' );
+    return unless $snps->size(); # Return nothing if their is no 'snp' data in the database - this should stop the barfing completely <g>
+    
 	my $snps_col = $Config->get( 'Vsnps','col' );
 	
    	$snps->scale_to_fit( $Config->get( 'Vsnps', 'width' ) );
