@@ -80,6 +80,9 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 # switch off the debug prints 
 our $verbose = 0;
 
+#####################################################################
+## Connect to the test database using the MultiTestDB.conf file
+
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
 my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
@@ -97,6 +100,9 @@ my $genomic_align_group_type = "default";
 my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID(9505792);
 my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID(9505794);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
+
+##
+#####################################################################
   
 # 
 # 1
