@@ -15,7 +15,7 @@ Need dna-dna matches stored in an ensembl compara database or a set of gff files
 
 core, trace and compara core modules
 
-  cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-12 ensembl ensembl-compara ensembl-trace
+  cvs co -r branch-ensembl-18 ensembl ensembl-compara
 
 bioperl ensembl modules
 
