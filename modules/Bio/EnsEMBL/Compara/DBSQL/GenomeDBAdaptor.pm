@@ -124,7 +124,15 @@ sub fetch_all {
     $self->create_GenomeDBs;
   }
 
-  my @genomeDBs = values %{$self->{'_GenomeDB_cache'}};
+  my @genomeDBs = values %{$self->{'_cache'}};
+
+  for my $gdb ( @genomeDBs ) {
+    my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
+    if($dba) {
+      $gdb->db_adaptor($dba);
+    }
+  }
+    
   return \@genomeDBs;
 } 
 
