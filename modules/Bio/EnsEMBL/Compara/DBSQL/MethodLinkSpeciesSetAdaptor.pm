@@ -128,6 +128,7 @@ sub store {
   if (!$sth->fetchrow_array) {
     throw("method_link_id $method_link_id is not in the database!\n");
   }
+  $sth->finish;
 
   ## Fetch genome_db_ids from Bio::EnsEMBL::Compara::GenomeDB objects
   my @genome_db_ids;
@@ -724,6 +725,7 @@ sub _get_method_link_id_from_type {
   $sth->execute($method_link_type);
   
   $dbID = $sth->fetchrow_array();
+  $sth->finish;
 
   return $dbID;
 }
