@@ -7,6 +7,7 @@ package Sanger::Graphics::Renderer::gif;
 use strict;
 use Sanger::Graphics::Renderer;
 use GD;
+use Math::Bezier;
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::Renderer);
 
@@ -247,6 +248,26 @@ sub render_Composite {
     #
     $glyph->{'colour'} = undef;
     $self->render_Rect($glyph) if(defined $glyph->{'bordercolour'});
+}
+
+sub render_Bezier {
+  my ($self, $glyph) = @_;
+
+  my $colour = $self->colour($glyph->{'colour'});
+
+  return unless(defined $glyph->pixelpoints());
+
+  my @coords = @{$glyph->pixelpoints()};
+  my $bezier = Math::Bezier->new(\@coords);
+  my $points = $bezier->curve($glyph->{'samplesize'}||20);
+
+  my ($lx,$ly);
+  while (@$points) {
+    my ($x, $y) = splice(@$points, 0, 2);
+    
+    $self->{'canvas'}->line($lx, $ly, $x, $y, $colour) if(defined($lx) && defined($ly));
+    ($lx, $ly) = ($x, $y);
+  }
 }
 
 1;
