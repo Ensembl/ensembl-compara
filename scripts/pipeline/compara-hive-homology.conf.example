@@ -38,6 +38,10 @@
     'species_sets' => '[[1,2,3,14],[4,13],[11,16]]'
   },
 
+  { TYPE => HOMOLOGY,
+    'species_sets' => '[[1,2,3,4,5,6,7,9,11,12,13,14,16,17]]'
+  },
+
   { TYPE => SPECIES,
     'abrev'          => 'Hs34e',
     'genome_db_id'   => 1,

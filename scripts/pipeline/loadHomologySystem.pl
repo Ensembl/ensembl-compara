@@ -5,9 +5,6 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Analysis;
-use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
 
@@ -17,6 +14,7 @@ my %analysis_template;
 my @speciesList = ();
 my %hive_params ;
 my %dnds_params;
+my %homology_params;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -88,7 +86,7 @@ sub usage {
   print "loadHomologySystem.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates\n";
-  print "loadHomologySystem.pl v1.0\n";
+  print "loadHomologySystem.pl v1.2\n";
   
   exit(1);  
 }
@@ -115,6 +113,9 @@ sub parse_conf {
       if($confPtr->{TYPE} eq 'dNdS') {
         %dnds_params = %{$confPtr};
       }
+      if($confPtr->{TYPE} eq 'HOMOLOGY') {
+        %homology_params = %{$confPtr};
+      }
     }
   }
 }
@@ -140,7 +141,7 @@ sub prepareGenomeAnalysis
   #
   # SubmitGenome
   #
-  my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $submit_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
       -input_id_type   => 'genome_db_id',
@@ -158,7 +159,7 @@ sub prepareGenomeAnalysis
   #
   # GenomeLoadMembers
   #
-  my $load_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $load_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeLoadMembers',
       -input_id_type   => 'genome_db_id',
@@ -175,7 +176,7 @@ sub prepareGenomeAnalysis
   #
   # GenomeSubmitPep
   #
-  my $submitpep_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $submitpep_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeSubmitPep',
       -input_id_type   => 'genome_db_id',
@@ -192,7 +193,7 @@ sub prepareGenomeAnalysis
   #
   # GenomeDumpFasta
   #
-  my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $dumpfasta_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeDumpFasta',
       -input_id_type   => 'genome_db_id',
@@ -210,7 +211,7 @@ sub prepareGenomeAnalysis
   #
   # GenomeCalcStats
   #
-  my $calcstats_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $calcstats_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomeCalcStats',
       -input_id_type   => 'genome_db_id',
@@ -228,7 +229,7 @@ sub prepareGenomeAnalysis
   #
   # CreateBlastRules
   #
-  my $blastrules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $blastrules_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateBlastRules',
       -input_id_type   => 'genome_db_id',
@@ -248,39 +249,45 @@ sub prepareGenomeAnalysis
   $ctrlRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
   #
+  # CreateBuildHomologyJobs
+  #
+  my $createBuildHomologyJobs = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'CreateBuildHomologyJobs',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBuildHomologyJobs',
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($createBuildHomologyJobs);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($createBuildHomologyJobs->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(1);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+  $ctrlRuleDBA->create_rule($blastrules_analysis, $createBuildHomologyJobs);
+
+  if (defined $homology_params{'species_sets'}) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+         -input_id       => '{species_sets=>' . $homology_params{'species_sets'} . '}',
+         -analysis       => $createBuildHomologyJobs,
+        );
+  }
+
+
+  #
   # blast_template
   #
   # create an unlinked analysis called blast_template
   # it will not have rules so it will never execute
   # used to store module,parameters... to be used as template for
   # the dynamic creation of the analyses like blast_1_NCBI34
-  my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
+  my $blast_template = new Bio::EnsEMBL::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
   eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
-
-  #
-  # SubmitHomologyPair
-  #
-  my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'SubmitHomologyPair',
-      -input_id_type   => 'homology',
-      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitHomology);
-  if(defined($self->{'hiveDBA'})) {
-    my $stats = $analysisStatsDBA->fetch_by_analysis_id($submitHomology->dbID);
-    $stats->batch_size(7000);
-    $stats->hive_capacity(1);
-    $stats->status('BLOCKED');
-    $stats->update();
-  }
 
 
   #
   # BuildHomology
   #
-  my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $buildHomology = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'BuildHomology',
       -input_id_type   => 'homology',
@@ -292,14 +299,13 @@ sub prepareGenomeAnalysis
     $stats->batch_size(1);
     $stats->hive_capacity(3);
     $stats->update();
-    $dataflowRuleDBA->create_rule($submitHomology,$buildHomology);
   }
 
   #
   # CreateHomology_dNdSJob
   #
 
-  my $CreateHomology_dNdSJob = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateHomology_dNdSJob',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
@@ -325,7 +331,7 @@ sub prepareGenomeAnalysis
   # Homology_dNdS
   #
 
-  my $homology_dNdS = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Homology_dNdS',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
@@ -348,7 +354,7 @@ sub prepareGenomeAnalysis
   # Threshold_on_dS
   #
 
-  my $threshold_on_dS = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Threshold_on_dS',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
