@@ -57,7 +57,8 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x'     => $row[0]->feature1->start(),
 	    'y'     => $y,
-	    'zmenu' => {
+	    'href'	   => $ext_url->get_url( 'PFAM', $key ),
+		'zmenu' => {
 		'caption' => "Pfam domain",
 		$key      => $ext_url->get_url( 'PFAM', $key )
 	    },
