@@ -51,6 +51,7 @@ if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
     die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
       unless(-d $hive_params{'hive_output_dir'});
+    $self->{'comparaDBA'}->get_MetaContainer->delete_key('hive_output_dir');
     $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
   }
 }
@@ -58,8 +59,10 @@ if(%hive_params) {
 
 $self->prepareGenomicAlignSystem;
 
-foreach my $blastzConf (@{$self->{'blastz_conf_list'}}) {
-  $self->prepBlastzPair($blastzConf);
+foreach my $genomicAlignConf (@{$self->{'genomic_align_conf_list'}}) {
+  if($genomicAlignConf->{'subtype'} eq 'blastz') {
+    $self->prepBlastzPair($genomicAlignConf);
+  }
 }
 
 exit(0);
@@ -75,7 +78,7 @@ sub usage {
   print "loadGenomicAlignSystem.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates\n";
-  print "loadGenomicAlignSystem.pl v1.0\n";
+  print "loadGenomicAlignSystem.pl v1.1\n";
   
   exit(1);  
 }
@@ -85,7 +88,7 @@ sub parse_conf {
   my $self = shift;
   my $conf_file = shift;
 
-  $self->{'blastz_conf_list'} = [];
+  $self->{'genomic_align_conf_list'} = [];
   
   if($conf_file and (-e $conf_file)) {
     #read configuration file from disk
@@ -100,8 +103,8 @@ sub parse_conf {
         %hive_params = %{$confPtr};
       }
 
-      if($confPtr->{TYPE} eq 'BLASTZ') {
-        push @{$self->{'blastz_conf_list'}} , $confPtr;
+      if($confPtr->{TYPE} eq 'GENOMIC_ALIGN') {
+        push @{$self->{'genomic_align_conf_list'}} , $confPtr;
       }
 
     }
@@ -125,8 +128,6 @@ sub prepareGenomicAlignSystem
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $stats;
 
-  $self->{'hiveDBA'}->dbc->do("insert ignore into method_link set method_link_id=1001, type='BLASTZ_RAW'");
-
   #
   # ChunkDna
   #
@@ -143,6 +144,25 @@ sub prepareGenomicAlignSystem
   $stats->update();
   $self->{'chunkAnalysis'} = $chunkAnalysis;
 
+
+  #
+  # CreateChunkSets
+  #
+  my $chunkSetAnalysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateChunkSets',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateChunkSets',
+      -parameters      => ""
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($chunkSetAnalysis);
+  $stats = $chunkSetAnalysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1); #unlimited
+  $stats->update();
+  $self->{'CreateChunkSets'} = $chunkSetAnalysis;
+
+  $dataflowRuleDBA->create_rule($chunkAnalysis, $chunkSetAnalysis, 2);
+  
   #
   # CreateDnaRules
   #
@@ -160,25 +180,32 @@ sub prepareGenomicAlignSystem
   $self->{'createRulesAnalysis'} = $createRulesAnalysis;
 
   $ctrlRuleDBA->create_rule($chunkAnalysis, $createRulesAnalysis);
+  $ctrlRuleDBA->create_rule($chunkSetAnalysis, $createRulesAnalysis);
 
 }
 
 
 
 =head3
-  { TYPE => BLASTZ,
-    'options' => 'T=2 H=2200',
+  { TYPE => GENOMIC_ALIGN,
+    'subtype' => 'blastz',
+    'method_link' => [1001, 'BLASTZ_RAW'],
+    'analysis_template' => {
+         '-program'       => 'blastz',
+         '-parameters'    => "{options=>'T=2 L=3000 H=2200 M=40000000 O=400 E=30 Q=/ecs4/work2/ensembl/jessica/data/ensembl_compara_26_1/MmRn-score.matrix'}",
+         '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
+    },
     'query' => {
-      'genome_db_id'    => 2,
-      'chunk_size'      => 1000000,
-      'overlap'         => 1000,
-      'masking_options' => do('./masking_mouse33.pl'),
+      'genome_db_id'    => 3, #RAT
+      'chunk_size'      => 30000000,
+      'overlap'         => 0,
+      'masking_options' => {'default_soft_masking' => 1},
     },
     'target' => {
-      'genome_db_id'    => 1,
-      'chunk_size'      => 30000000,
-      'overlap'         => 1000,
-      'masking_options' => do('./masking_human35.pl'),
+      'genome_db_id'    => 2, #MOUSE
+      'chunk_size'      => 10100000,
+      'overlap'         =>   100000,
+      'masking_options' => {'default_soft_masking' => 1},
     }
   },
 =cut
@@ -187,23 +214,42 @@ sub prepareGenomicAlignSystem
 sub prepBlastzPair
 {
   my $self        = shift;
-  my $blastzConf  = shift;  #hash reference
+  my $genomic_align_conf  = shift;  #hash reference
 
   print("PrepBlastzPair\n") if($verbose);
-  print("  options : ", $blastzConf->{'options'}, "\n");
 
+  if($genomic_align_conf->{'method_link'}) {
+    my ($method_link_id, $type) = @{$genomic_align_conf->{'method_link'}};
+    my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$type'";
+    print("$sql\n");
+    $self->{'hiveDBA'}->dbc->do($sql);
+  }
+      
   my $hexkey = sprintf("%x", rand(time()));
   print("hexkey = $hexkey\n");
 
+  #
+  # blastz_$hexkey_template
+  #
+  # create an unlinked analysis called blastz_$hexkey_template
+  # it will not have rules so it will never execute
+  # used to store module,parameters... to be used as template for
+  # the dynamic creation of the dbchunk analyses
+  my $blastz_template = new Bio::EnsEMBL::Analysis(%{$genomic_align_conf->{'analysis_template'}});
+  my $logic_name = "blastz-".$hexkey;
+  $blastz_template->logic_name($logic_name);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($blastz_template);
+
+  
   print("  query :\n");
-  $blastzConf->{'query'}->{'analysis_job'} = "SubmitBlastZ-$hexkey";
-  $self->store_masking_options($blastzConf->{'query'});
-  $self->create_chunk_job($blastzConf->{'query'});
+  $genomic_align_conf->{'query'}->{'analysis_job'} = "SubmitBlastZ-$hexkey";
+  $self->store_masking_options($genomic_align_conf->{'query'});
+  $self->create_chunk_job($genomic_align_conf->{'query'});
 
   print("  target :\n");
-  $blastzConf->{'target'}->{'create_analysis_prefix'} = "blastz-$hexkey";
-  $self->store_masking_options($blastzConf->{'target'});
-  $self->create_chunk_job($blastzConf->{'target'});
+  $genomic_align_conf->{'target'}->{'analysis_template'} = $blastz_template->logic_name;
+  $self->store_masking_options($genomic_align_conf->{'target'});
+  $self->create_chunk_job($genomic_align_conf->{'target'});
 
   my $rule_job = "{'from'=>'SubmitBlastZ-$hexkey','to'=>'blastz-$hexkey'}";
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
