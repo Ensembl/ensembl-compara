@@ -311,18 +311,24 @@ sub submitSubsetForAnalysis {
                    $self->{'genome_db'}->dbID() .
                    "_".$self->{'genome_db'}->assembly();
 
-  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      #-db              => $blastdb->dbname(),
-      -db_file         => $subset->dump_loc(),
-      -db_version      => '1',
-      -parameters      => "subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID(),
-      -logic_name      => $logic_name,
-      -input_id_type   => 'MemberPep'
-    );
-  $self->db->get_AnalysisAdaptor()->store($analysis);
+  print("  see if analysis '$logic_name' is in database\n");                   
+  my $analysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
+  if($analysis) { print("  YES in database with analysis_id=".$analysis->dbID()); }
+  
+  unless($analysis) {                   
+    $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+        #-db              => $blastdb->dbname(),
+        -db_file         => $subset->dump_loc(),
+        -db_version      => '1',
+        -parameters      => "subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID(),
+        -logic_name      => $logic_name,
+        -input_id_type   => 'MemberPep'
+      );
+    $self->db->get_AnalysisAdaptor()->store($analysis);
+  }
 
   #my $host = hostname();
-  print("store using sic\n");
+  print(STDERR "store member_id into input_id_analysis table\n");
   my $errorCount=0;
   my $tryCount=0;
   my @member_id_list = @{$subset->member_id_list()};
@@ -345,7 +351,7 @@ sub submitSubsetForAnalysis {
       } # should handle the error, but ignore for now
     }
   };
-  print("CREATED all input_id_analysis\n");
+  print(STDERR "CREATED all input_id_analysis\n");
 
   return $logic_name;
 }
