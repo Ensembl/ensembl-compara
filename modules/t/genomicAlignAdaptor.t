@@ -33,26 +33,23 @@ ok( defined $gdba );
 # with the test dbs these are different every time
 #
 
-$compara_db->add_db_adaptor($homo_sapiens->get_DBAdaptor('core'));
-$compara_db->add_db_adaptor($mus_musculus->get_DBAdaptor('core'));
-$compara_db->add_db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
+my $hs_gdb = $gdba->fetch_by_name_assembly( "Homo sapiens", 'NCBI34' );
+my $mm_gdb = $gdba->fetch_by_name_assembly( "Mus musculus", 'NCBIM32' );
+my $rn_gdb = $gdba->fetch_by_name_assembly( "Rattus norvegicus", 'RGSC3.1' );
 
-
-my $hum = $gdba->fetch_by_name_assembly( "Homo sapiens", 'NCBI34' );
-my $mouse = $gdba->fetch_by_name_assembly( "Mus musculus", 'NCBIM32' );
-my $rat = $gdba->fetch_by_name_assembly( "Rattus norvegicus", 'RGSC3.1' );
-
-
+$hs_gdb->db_adaptor($homo_sapiens->get_DBAdaptor('core'));
+$mm_gdb->db_adaptor($mus_musculus->get_DBAdaptor('core'));
+$rn_gdb->db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
 
 #######
 #  2  #
 #######
 debug( "GenomeDBs for hum, mouse, rat exist" );
-ok( defined $hum && defined $mouse && defined $rat );
+ok( defined $hs_gdb && defined $mm_gdb && defined $rn_gdb );
 
 my $dfa = $compara_db->get_DnaFragAdaptor();
-my $hfrags = $dfa->fetch_all_by_GenomeDB_region( $hum, 'chromosome', "14" );
-my $rfrags =  $dfa->fetch_all_by_GenomeDB_region( $rat, 'chromosome', "6" );
+my $hfrags = $dfa->fetch_all_by_GenomeDB_region( $hs_gdb, 'chromosome', "14" );
+my $rfrags =  $dfa->fetch_all_by_GenomeDB_region( $rn_gdb, 'chromosome', "6" );
 
 #######
 #  3  #
@@ -65,7 +62,7 @@ ok( scalar( @$hfrags ) == 1 );
 my $gaa = $compara_db->get_GenomicAlignAdaptor();
 
 debug( "Human -- Mouse direct alignments" );
-my $aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $mouse , 50000000, 50250000,"BLASTZ_NET");
+my $aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $mm_gdb , 50000000, 50250000,"BLASTZ_NET");
 #map { print_hashref( $_ ) } @$aligns;
 debug();
 
@@ -74,10 +71,10 @@ debug();
 #######
 ok( scalar @$aligns == 255 );
 
-my $mfrags = $dfa->fetch_all_by_GenomeDB_region( $mouse, 'chromosome', "12" );
+my $mfrags = $dfa->fetch_all_by_GenomeDB_region( $mm_gdb, 'chromosome', "12" );
 
 debug( "Mouse -- Human reverse direct" );
-$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $mfrags->[0], $hum, 66608000,66615600,"BLASTZ_NET" );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $mfrags->[0], $hs_gdb, 66608000,66615600,"BLASTZ_NET" );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
@@ -87,18 +84,18 @@ debug();
 ok( grep {$_->cigar_line() eq "32MI30M3D31M2D33M"} @$aligns );
 
 debug( "Mouse -- Rat direct" );
-$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $mfrags->[0], $hum, 66608000,66615600,"BLASTZ_NET" );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $mfrags->[0], $hs_gdb, 66608000,66615600,"BLASTZ_NET" );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
 
 debug( "Human -- Rat direct" );
-$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $rat, 50000000, 50250000,"BLASTZ_NET" );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $rn_gdb, 50000000, 50250000,"BLASTZ_NET" );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
 debug( "Rat -- Human direct" );
-$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $rfrags->[0], $hum, 92842600, 92852150,"BLASTZ_NET" );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $rfrags->[0], $hs_gdb, 92842600, 92852150,"BLASTZ_NET" );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
