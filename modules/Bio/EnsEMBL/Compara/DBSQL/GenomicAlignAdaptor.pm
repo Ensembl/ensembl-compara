@@ -74,7 +74,7 @@ sub fetch_by_dbID {
 sub list_align_ids{
    my ($self) = @_;
 
-   $sth = $self->prepare("select align_id from align");
+   my $sth = $self->prepare("select align_id from align");
    $sth->execute();
 
    my @out;
