@@ -189,7 +189,6 @@ $old_sth->execute();
 
 my $method_link_species_sets;
 
-my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet();
 my $consensus_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
 my $query_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
 my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock();
@@ -206,7 +205,9 @@ while (my @values = $old_sth->fetchrow_array) {
   
   my $genomes_key = join("+", sort ($consensus_dnafrag->genomedb->name, $query_dnafrag->genomedb->name));
   my $method_link_id = $values[7];
+  my $method_link_species_set;
   if (!defined($method_link_species_sets->{$genomes_key}->{$method_link_id})) {
+    $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet();
     $method_link_species_set->dbID(0);
     $method_link_species_set->method_link_id($method_link_id);
     $method_link_species_set->species_set([$consensus_dnafrag->genomedb, $query_dnafrag->genomedb]);
@@ -216,6 +217,7 @@ while (my @values = $old_sth->fetchrow_array) {
   } else {
     $method_link_species_set = $method_link_species_sets->{$genomes_key}->{$method_link_id};
   }
+#   print "MethodLinkSpeciesSet ($genomes_key) for ($method_link_id) = ", $method_link_species_set->dbID, "\n";
   
   $consensus_genomic_align->dbID(0);
   $consensus_genomic_align->method_link_species_set_id(0);
