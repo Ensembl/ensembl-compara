@@ -1,21 +1,22 @@
 
 
-use Bio::EnsEMBL::Compara::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::AlignIO;
 
 
 $host = 'ecs1b';
 $dbname = 'abel_compara_human_mouse';
 
 
-$db = Bio::EnsEMBL::Compara::DBAdaptor( -host => $host , -dbname => $dbname , -dbuser => 'ensro');
+$db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -host => $host , -dbname => $dbname , -user => 'ensro');
 
-my @ids = @ARGV;
+my $id = shift;
 
 $ga = $db->get_GenomicAlignAdaptor();
 
 $genomedb = $db->get_GenomeDBAdaptor->fetch_by_species_tag("Homo_sapiens");
 
-@aligns = fetch_by_genomedb_dnafrag_list($genomedb,\@ids);
+@aligns = $ga->fetch_by_dbID($id);
 
 
 
