@@ -45,11 +45,11 @@ The dumping is done with ensembl-compara/scripts/pipeline/comparaDumpAllPeptides
 Don't use -noX or nosplit, use the default setting. The dumping process will dump only one version of each sequence,
 so no redundancy is expected in the fasta file.
 
-~/src/ensembl_main/ensembl-compara/scripts/comparaDumpAllPeptides.pl -conf your-compara-hive.conf -fasta ensembl.pep > ensembl.pep.err 2>&1 &
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf your-compara-hive.conf --noredundancy -fasta metazoa_26_1.pep > metazoa_26_1.pep.err 2>&1 &
 
 or if you don't have the hive conf file
 
-~/src/ensembl_main/ensembl-compara/scripts/comparaDumpAllPeptides.pl --dbhost ia64e --dbport 3306 --dbuser ensro --dbname jessica_ensembl_compara_26_1 --fasta metazoa_26_1.pep > metazoa_26_1.pep.err 2>&1 &
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost ia64e --dbport 3306 --dbuser ensro --dbname jessica_ensembl_compara_26_1 --no_redundancy --fasta metazoa_26_1.pep > metazoa_26_1.pep.err 2>&1 &
 
 4- distribute the fasta file over the farm
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,7 +115,7 @@ ls|wc -l
  It is better to place the output files in a different directory to reduce the burden on the filesystem.
  (The fewer files per directory the better).
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_26_1.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_26_1.index -tab /acari/work7a/abel/family_26_1/fasta/metazoa_26_1.tab -dir /acari/work7a/abel/family_26_1/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_26_1/pre_exec.pl" -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_26_1.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_26_1.index -tab /acari/work7a/abel/family_26_1/fasta/metazoa_26_1.tab -dir /acari/work7a/abel/family_26_1/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_26_1/pre_exec.sh" -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
 
 The /acari/work7a/abel/family_26_1/pre_exec has to be updated and look like. In %file, you have respectively the file path and byte size of each file you want to check for.
 
@@ -257,9 +257,9 @@ nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname ab
 12- Run muscle or clustalw over all the families
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Step 14 should be run also at the same time. It is not dependant on multiple alignments.
+!!!Step 14 should be run also at the same time. It is not dependant on multiple alignments.
 
-cd ../clustalw
+cd ../muscle
  
  Just create the number of directory needed by 10000 families and only for those with 2 or more members.
 No need to run clustalw on 1 sequence. Let's say that we have 40000 families and only 27152 families
@@ -279,6 +279,12 @@ echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchClus
 Somtimes in muscle the memory needed is high so you can resubmit failed jobs with -R ressource requirement.
 
 echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host ecs2 -port 3362 -dbname abel_ensembl_compara_26_1 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX}  -store' | bsub -q bigmem -R 'select[mem>8000] rusage[mem=9000]' -JFamilyMucsle"[20001-27152]" -o %I.out
+
+If even like that muscle does not run properly, add the -fast option to LaunchMuscleOnFamilies.pl script.
+
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host ecs2 -port 3362 -dbname abel_ensembl_compara_26_1 -dbuser ensadmin -dbpass ensembl -family_id ${LSB_JOBINDEX} -fast -store' | bsub -q bigmem -R 'select[mem>8000] rusage[mem=9000]' -JFamilyMucsle"[20001-27152]" -o %I.out
+
+And if then again it does not work, run clustalw_mpi (see below).
 
 NB: For very small families or singletons, the -q small is the right queue to use, as jobs will be extremely quick. For largest families, let's say from family_id 1 to 500 however (where number of members are often > 150), jobs can be longer, and so the -q normal should be used instead of -q small
 
@@ -354,16 +360,10 @@ mysql -h ecs2 -u ensadmin -pxxxx -P3364 ensembl_compara_26_1 < update_singletons
 
     This part really sucks and need a profound rethinking to get the description more clean and consistant.
 
-Insert redundant protein description in the family_26_1.description.
-
-       ~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantInDescription.pl -host ia64e -port 3306 -dbname ensembl_compara_26_1  ../fasta/metazoa_26_1.RedundantIds ../fasta/metazoa_26_1.desc.gz  > family_26_1.description.Red 2> family_26_1.description.Red.err &
-
-cat family_26_1.description.Red >> family_26_1.description
-
        ensembl-compara/scritps/family/consensifier.pl 
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       consensifier.pl -d SWISSPROT family_26_1.description > family_26_1.description.SWISSPROT-consensus
-       consensifier.pl -d SPTREMBL family_26_1.description > family_26_1.description.SPTREMBL-consensus
+       consensifier.pl -d "Uniprot/SWISSPROT" family_26_1.description > family_26_1.description.SWISSPROT-consensus 2> family_26_1.description.SWISSPROT-consensus.err
+       consensifier.pl -d "Uniprot/SPTREMBL" family_26_1.description > family_26_1.description.SPTREMBL-consensus 2> family_26_1.description.SPTREMBL-consensus.err
        This step takes approx 2 hours total
 
        ensembl-compara/scripts/family/assemble-consensus.pl
@@ -374,6 +374,6 @@ family_26_1.description.SPTREMBL-consensus  > family_26_1.description-consensus 
 
 update the family description in ensembl_family_26_1 with the data in family_26_1.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
 
-LoadDescriptionInFamily.pl -host ecs2d -port 3306 -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_26_1 family_26_1.description-consensus
+LoadDescriptionInFamily.pl --dbname abelcompara26 family_26_1.description-consensus
 
 
