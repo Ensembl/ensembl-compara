@@ -34,7 +34,8 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub fetch_node_by_nestedset_id {
   my ($self, $node_id) = @_;
 
-  my $constraint = "WHERE nestedset_id = $node_id";
+  my $table= $self->tables->[0]->[1];
+  my $constraint = "WHERE $table.nestedset_id = $node_id";
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
@@ -47,7 +48,8 @@ sub fetch_parent_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $constraint = "WHERE nestedset_id = " . $node->_parent_id;
+  my $table= $self->tables->[0]->[1];
+  my $constraint = "WHERE $table.nestedset_id = " . $node->_parent_id;
   my ($parent) = @{$self->_generic_fetch($constraint)};
   return $parent;
 }
@@ -78,7 +80,7 @@ sub fetch_subtree_under_node {
 
   my $table = $self->tables->[0]->[0];
 
-  my $constraint = "INNER JOIN $table AS root_node ON ( ". $table .".left_index 
+  my $constraint = "INNER JOIN $table AS root_node ON ( $table.left_index 
                          BETWEEN root_node.left_index AND root_node.right_index)
                     WHERE root_node.nestedset_id=". $node->nestedset_id;
 
@@ -114,13 +116,14 @@ sub update {
     $root_id = $node->root->nestedset_id;
   }
 
-  my $sql = "UPDATE " .  $self->tables->[0]->[0] . " SET ".
+  my $table= $self->tables->[0]->[0];
+  my $sql = "UPDATE $table SET ".
                "parent_id=$parent_id".
                ",root_id=$root_id".
                ",left_index=" . $node->left_index .
                ",right_index=" . $node->right_index .
                ",distance_to_parent=" . $node->distance_to_parent.
-             "WHERE nestedset_id=". $node->nestedset_id;
+             "WHERE $table.nestedset_id=". $node->nestedset_id;
 
   $self->dbc->do($sql);
 }
@@ -193,6 +196,10 @@ sub tables {
 sub columns {
   my $self = shift;
   throw("must subclass and provide correct column names");
+}
+
+sub left_join_clause {
+  return "";
 }
 
 sub default_where_clause {
@@ -387,6 +394,7 @@ sub _generic_fetch {
   my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
 
   my $sql = "SELECT $columns FROM $tablenames";
+  $sql .= " ". $self->left_join_clause;
   $sql .= " $constraint" if($constraint);
 
   #append additional clauses which may have been defined
