@@ -103,12 +103,14 @@ sub fetch_masked_sequence {
   my $starttime = time();
   if(defined($self->masking_options)) {
     my $masking_options = eval($self->masking_options);
-    if($masking_options and $masking_options->{'default_soft_masking'} == 1) {
-      #print "getting SOFT masked sequence...\n";
-      $seq = $slice->get_repeatmasked_seq(undef,1,$masking_options);
-    } else {
+    if(defined($masking_options->{'default_soft_masking'}) and
+       $masking_options->{'default_soft_masking'} == 0)
+    {
       #print "getting HARD masked sequence...\n";
       $seq = $slice->get_repeatmasked_seq(undef,0,$masking_options);
+    } else {
+      #print "getting SOFT masked sequence...\n";
+      $seq = $slice->get_repeatmasked_seq(undef,1,$masking_options);
     }
   }
   else {  # no masking options set, so get unmasked sequence
