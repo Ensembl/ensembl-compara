@@ -15,6 +15,22 @@ $0 options input_data_file
   [--reg_conf filepath]         the Bio::EnsEMBL::Registry configuration file. If none given, 
                                 the one set in ENSEMBL_REGISTRY will be used if defined, if not
                                 ~/.ensembl_init will be used.
+
+The format of the input file is 23 tab-separated columns. One homology per line.
+dn ds n s lnl threshold_on_ds \
+gene_stable_id1 translation_stable_id1 cigar_line1 \
+cigar_start1 cigar_end1 perc_cov1 perc_id1 perc_pos1 \
+gene_stable_id2 translation_stable_id2 cigar_line2 \
+cigar_start2 cigar_end2 perc_cov2 perc_id2 perc_pos2
+
+e.g.
+
+0.0409  0.0806  1320.8  419.2   -2725.175299    0.5333  \
+ENSG00000184263 ENSP00000328059 47MD159MD243M39D37M2D4MD90M     \
+1       580     100.00  92.24   94.48   \
+ENSG00000131263 ENSP00000253571 624M        \
+1       624     92.95   85.74   87.82
+
 \n";
 
 my $help = 0;
@@ -89,7 +105,9 @@ while (<>) {
   $homology->add_Member_Attribute([$gene_member2, $attribute2]);
   print $homology->stable_id," ready to load\n";
   $ha->store($homology);
-  $ha->update_genetic_distance($homology);
+  if (defined $homology->n) {
+    $ha->update_genetic_distance($homology);
+  }
 }
 
 
