@@ -1,11 +1,6 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-#use Bio::EnsEMBL::Pipeline::Tools::Promoterwise;
-use Bio::EnsEMBL::Pipeline::Runnable::Promoterwise;
-
-
-
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::Seq;
