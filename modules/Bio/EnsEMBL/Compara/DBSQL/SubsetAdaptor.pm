@@ -217,13 +217,6 @@ sub _objs_from_sth {
 
     @{$subset->{'_member_id_list'}} = @member_id_list;
 
-    #foreach $member_id (@{$setMemberIds{$subset_id}}) {
-    #  $subset->add_member_id($member_id);
-      #print("  add member_id $member_id\n");
-      #my $member = $MemberAdapter->fetch_by_dbID($member_id);
-      #$subset->add_member($member);
-    #}
-
     push @sets, $subset;
   }
 
