@@ -8,10 +8,14 @@ use Bio::EnsEMBL::GlyphSet_feature;
 sub my_label { return "Blast hits"; }
 
 sub features {
-    my ($self) = @_;
-    return map {
-       /BLAST_NEW:(.*)/? $self->{'container'}->get_all_SearchFeatures($1):()
-    } $self->highlights;
+  my ($self) = @_;
+  my @T = ();
+  foreach my $T ( $self->highlights ) {
+    next unless /BLAST_NEW:(.*)/;
+    eval { push @T, $self->{'container'}->get_all_SearchFeatures($1); }; 
+    warn $@ if $@;
+  }
+  return @T;
 }
 
 sub href {
