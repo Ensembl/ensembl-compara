@@ -1,27 +1,6 @@
 #!/usr/local/ensembl/bin/perl -w
 
 
-if (@ARGV <28)
-    {
-    die "\n\tUsage : parse_tBLASTx_ouput.pl 
-	With params:    -F filename			(Fr2.229.err)
-			-O output file name (capital O)	(Fr2HS34_chr22 for gff line data)
-			-T track_name			(Fr2_Hs34_tBLASTx)
-			-D diff between aligns to be included as 1 (15000)
-			-S1 species 1			(Fr2)
-			-S1_sps 			\"Fugu rubripes\"
-			-S1_ass				FUGU2
-			-S2 species 2 (db species)	(Hs34)
-			-S2_sps 			\"Homo sapiens\"
-			-S2_ass				NCBI34
-			-CF conf_file
-			-H compara_host			ecs4
-			-P compara_port			3352
-			-DB compara name		ensembl_compara_21_1
-			-M  matrix_file			blosum62
-	";
-    }
- 
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
@@ -32,31 +11,73 @@ use Bio::EnsEMBL::Translation;
 #use Bio::EnsEMBL::TranscriptI;
 use Bio::Tools::CodonTable;
 use Bio::EnsEMBL::Compara::Matrix::Generic;
+use Bio::EnsEMBL::Compara::Matrix::IO;
+use Getopt::Long;
 
-my %args = @ARGV;
-my $file=$args{"-F"};
-my $outfile= $args{"-O"}.".tbx";
-my $data=$args{"-O"}.".data";
-my $sps1=$args{"-S1"};
-my $sps1_ass=$args{"-S1_ass"};
-my $sps1_sps=$args{"-S1_sps"};
-my $sps2=$args{"-S2"};
-my $sps2_ass=$args{"-S2_ass"};
-my $sps2_sps=$args{"-S2_sps"};
+
+my $usage="
+$0 [-help]
+	-F 	filename		(Fr2.229.err)
+	-O 	output file name 	(Fr2HS34_chr22 for gff line data)
+	-D 	diff between aligns to be included as 1 (15000)
+	-S1 	species 1 (Query)	(Fr2)
+	-S1_sps latin name		\"Fugu rubripes\"
+	-S1_ass	Assembly name		FUGU2
+	-S2 	species 2 (target)	(Hs34)
+	-S2_sps latin name		\"Homo sapiens\"
+	-S2_ass	assembly		NCBI34
+	-CF 	conf_file		Compara.conf
+	-H 	compara_host		ecs4
+	-P 	compara_port		3352
+	-DB 	compara name		ensembl_compara_21_1
+	-M  	matrix_file		blosum62 (optional)
+	-R	reverse output order(tbx file for query rather than target)	0 or 1 1=reverse (optional)
+	";
+    
+ 
+
+
+my ($file, $outfile, $track, $data ,$sps1 ,$sps1_ass, $sps1_sps, $sps2, $sps2_ass, $sps2_sps, $diff, $host, $port, $dbname, $matrix_file, $reverse_output, $help);
+
+my $minus_count=0;
+my $conf_file="~/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf";
+my @new_features=();
+my $matrix;
 my %prev;
 my $i=0;
 my @all=();
 my @sorted=();
-my $diff=$args{"-D"};
-my @new_features=();
-my $conf_file=$args{"-CF"};
-my $host=$args{"-H"};
-my $port = $args{"-P"};
-my $dbname=$args{"-DB"};
-my $matrix_file=$args{"-M"};
-my $minus_count=0;
 
-my $matrix;
+
+unless (scalar @ARGV) {print $usage; exit 0;}
+
+GetOptions(	'help'		=>	\$help, 
+		'F=s'		=>	\$file,
+		'O=s'		=>	\$outfile, 
+		'S1=s'		=>	\$sps1,
+		'S1_ass=s'	=>	\$sps1_ass, 
+		'S1_sps=s'	=>	\$sps1_sps, 
+		'S2=s'		=>	\$sps2, 
+		'S2_ass=s'	=>	\$sps2_ass, 
+		'S2_sps=s'	=>	\$sps2_sps, 
+		'D=i'		=>	\$diff,
+		'CF=s'		=>	\$conf_file, 
+		'H=s'		=>	\$host, 
+		'P=i'		=>	\$port, 
+		'DB=s'		=>	\$dbname, 
+		'M=s'		=>	\$matrix_file,
+		'R=i'		=>	\$reverse_output);
+		
+if ($help){print $usage; exit 0;}
+
+my $t3stats=$outfile.".t3";
+$track=$outfile."_TransBLAT";
+$data=$outfile.".data";
+$outfile=$outfile.".tbx";
+
+if ($reverse_output){print "*********$reverse_output*********\n\n";}
+
+
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
 						      -user => 'ensro',
 						      -port => $port,
@@ -75,23 +96,36 @@ $matrix = $mp->next_matrix;
 	open (FILE, $file) or die  "can't open $file: $!";
 	open (OUT,  ">$outfile") or die "can't open $outfile: $!";
 	open (DATA, ">$data") or die "can't open $data: $!";
-	print OUT "track name=".$args{"-T"}." description=\"BLAT of ".$args{"-S1"}." with ".$args{"-S2"}."(GFF)\" useScore=1 color=333300\n";
-	print DATA $args{"-S1"}."_chr\tprog\tfeature\tQ start\tQ end\tQ_strand".$args{"-S2"}."\tchr\tH start\tH end\tT_strand\tScore\tno ident\t no similar\t cigar line\n";
+	open (TSTATS, ">$t3stats") or die "can't open $t3stats: $!";
+	print TSTATS "sps1\tchr1\tQ_start\tQ_end\tQ_strand\tsps2\tchr2\tT_start\tT_end\tT_strand\tscore\tident\tposit\tcigar\tt0 t1 t2\tbase3\tlen\tsum_len\n"; 
+		
+	print OUT "track name=$track description=\"BLAT of $sps1 with $sps2(GFF)\" useScore=1 color=333300\n";
+	print DATA "no(group)\tsps1\tchr1\tprog\tfeat\tQ_start\tQ_end\tQ_strand\tsps2\tchr2\tT_start\tT_end\tT_strand\tscore\tident\tposit\tcigar\n";
 	
 	LINE:while (my $line=<FILE>)
 		{
 		
 		chomp $line; 
 		my @atrib=split /\t/,$line;
-		#unless ((defined($atrib[9])) && ($atrib[0] =~ /$sps1/) && ($atrib[4]-$atrib[3] >=15)){ next LINE;}
-		my ($chr1, $chr1_2, $offset1) = split /\./,$atrib[0];#just for BEE
-		$chr1=$chr1.".".$chr1_2;#just for BEE
 		
-		$atrib[0] =~/(\S+)\.(\d+)$/; #use for rest
 		
-		#my $chr1 = $1;
-		#my $offset1=$2;
+################################################################################################
+## Need some sort of general reg expression here to cope with the weird honey bee groupings
+##But Havn't managed to work one out therefore at present here is a hard coded hackaround
+##
+################################################################################################		
 		
+		unless ((defined($atrib[9])) && ($atrib[0] =~ /$sps1/) && ($atrib[4]-$atrib[3] >=15)){ next LINE;}
+		my ($chr1, $chr1_2, $offset1); 
+		if ($sps1 =~/Am/){
+			($chr1, $chr1_2, $offset1) = split /\./,$atrib[0];#just for BEE
+			$chr1=$chr1.".".$chr1_2;#just for BEE
+			}
+		else{
+			$atrib[0] =~/(\S+)\.(\d+)$/; #use for rest
+		 	$chr1 = $1;
+			$offset1=$2;
+			}
 		$chr1=~s/$sps1//;
 		my $chr2; my $offset2;
 		#my ($chr2, $offset2) = split /\./,$atrib[5];
@@ -201,13 +235,16 @@ if ($matrix_file){
 	}
 else {
 	for (my $i=0; $i<$aa_len; $i++){
+	
 		if ($Qaa[$i] eq $Taa[$i]){
 			$score+=2;
 			$id++;
+			
 			}
 		else {############# no differentiation for stop codons as sticking to BLAT matrix
 			$score-=1;
 			}
+
 		}
 	
 	}
@@ -216,9 +253,15 @@ else {
     $i2 = ($t0 or $t2)? $t1/(($t0+$t2)/2) : $t1;
     $i3 = ($t0 or $t1)? $t2/(($t1+$t0)/2) : $t2;
 my @base3period=sort {$b<=>$a}($i1, $i2, $i3);	
-my $base3period= $base3period[0];				 
-if ($score<=0){print STDERR " $score for $chr1, $Qstart, $Qend, $Qst, $chr2, $Hstart, $Hend, $Hst\n"; 						 print STDERR "$Q_aa;\n$T_aa\n";
+my $base3period= $base3period[0];
+my $sum_len=($t0+$t1+$t2)/$len;	
+
+			 
+if ($score<=0){
+		print STDERR " $score for $chr1, $Qstart, $Qend, $Qst, $chr2, $Hstart, $Hend, $Hst\n"; 
+		print STDERR "$Q_aa;\n$T_aa\n";
 		$minus_count++;
+		$score=0;
 		next LINE;} 				 
 				 
 		
@@ -247,6 +290,7 @@ if ($score<=0){print STDERR " $score for $chr1, $Qstart, $Qend, $Qst, $chr2, $Hs
 				t0	=> $t0,
 				t1	=> $t1,
 				t2	=> $t2,
+				sum_len	=> $sum_len,
 				base3	=> $base3period
 };
 				
@@ -258,9 +302,9 @@ if ($score<=0){print STDERR " $score for $chr1, $Qstart, $Qend, $Qst, $chr2, $Hs
 		
 		
 	#need to sort array on Hstart first 
-#NB I DO CHECK THAT THE FR ALIGNMENTS ARE ON DIFFERENT SCAFFOLDS -- NOT NEEDED FOR HS AS THEY ARE ALL ON ONE CHR!!!!!!!
+#NB I DO CHECK THAT THE Query ALIGNMENTS ARE ON DIFFERENT SCAFFOLDS -- NOT NEEDED FOR HS AS THEY ARE ALL ON ONE CHR!!!!!!!
 
-#FIRST GROUP BY Fr scaffold
+#FIRST GROUP BY Query seq_region
 my @sorteds=sort{$a->{chr1} cmp $b->{chr1} || $a->{Q_start} <=> $b->{Q_start}} @all;
 my $prev_chr; my $chr=0; my @all_same;
 my $lc=0;
@@ -403,7 +447,9 @@ my @new_sorted_hsps=sort{$a->{Q_start}<=>$b->{Q_start} || $a->{T_start} <=> $b->
  $A=0; $qsdiff=0; $qediff=0;  $ssdiff=0;  $sediff=0; $compare='';
 my @new_parsed_hsps=@new_sorted_hsps;	
 	
-	
+	use Getopt::Long;
+
+
 OVERLAP:foreach my $align (@new_sorted_hsps){###Need to redo this as a sub
 
     	unless ($A==0){
@@ -534,18 +580,48 @@ OVERLAP:foreach my $align (@new_sorted_hsps){###Need to redo this as a sub
 
 	}
 
-my @sorted_features=sort{$a->{chr2} cmp $b->{chr2} || $a->{T_strand_no}<=>$b->{T_strand_no} || $a->{Q_strand_no}<=>$b->{Q_strand_no} || $a->{chr1} cmp $b->{chr1} ||$a->{T_start}<=>$b->{T_start} } @new_features;
+#######################################################################################
+## print out into general data file, and tab file for URL/DAS display
+## NB data file now a tab delimited file for upload directly into genomic_align genome
+## Plus file of t3 stats
+#####################################################################################
 
 
+
+#####################################################################################
+##		SORT for GROUPING
+##
+##We do not use strand for display therefore ignore
+##Sort with:
+#target chromosome, query chromosome, target start, query start for Target display and reverse if specific for query
+#####################################################################################
+
+
+#my @sorted_features=sort{$a->{chr2} cmp $b->{chr2} || $a->{T_strand_no}<=>$b->{T_strand_no} || $a->{Q_strand_no}<=>$b->{Q_strand_no} || $a->{chr1} cmp $b->{chr1} ||$a->{T_start}<=>$b->{T_start} } @new_features;
+
+my @sorted_features;
+###To display for query
+if ($reverse_output){
+	@sorted_features=sort{$a->{chr1} cmp $b->{chr1} || $a->{chr2} cmp $b->{chr2} ||$a->{Q_start}<=>$b->{Q_start}|| $a->{T_start}<=>$b->{T_start}} @new_features;
+	}
+else{
+###To display for target
+	@sorted_features=sort{$a->{chr2} cmp $b->{chr2} || $a->{chr1} cmp $b->{chr1} ||$a->{T_start}<=>$b->{T_start}|| $a->{Q_start}<=>$b->{Q_start}} @new_features;
+	}
 
 	my $x=0;my $ok=0;
 	foreach my $array (@sorted_features){
 #########################################
-#probably add a loop to give overlapping aligns the same id(x) no, so that displayed together--- also join everything within a certain (short)distance 
+
 		$x++; $ok++; #start at 1
 		unless ($ok==1){
 		#print STDERR $sorted_features[$ok-2]->{chr1}." eq ".$array->{chr1}."\n";
-			if (($sorted_features[$ok-2]->{chr2} eq $array->{chr2}) && ($sorted_features[$ok-2]->{chr1} eq $array->{chr1}) && ($sorted_features[$ok-2]->{Q_strand} eq $array->{Q_strand}) && ($sorted_features[$ok-2]->{T_strand} eq $array->{T_strand})) {
+		
+			#if (($sorted_features[$ok-2]->{chr2} eq $array->{chr2}) && ($sorted_features[$ok-2]->{chr1} eq $array->{chr1}) && ($sorted_features[$ok-2]->{Q_strand} eq $array->{Q_strand}) && ($sorted_features[$ok-2]->{T_strand} eq $array->{T_strand})) { ###use if strand important
+			
+			if (($sorted_features[$ok-2]->{chr2} eq $array->{chr2}) && ($sorted_features[$ok-2]->{chr1} eq $array->{chr1})){ ##use when strand irrelevant for grouping 
+			
+			
 			my $deltaH = $array->{T_start}-$sorted_features[$ok-2]->{T_end};
 			my $deltaQ = $array->{Q_start}-$sorted_features[$ok-2]->{Q_end};
 				if (($deltaH <= $diff) && ($deltaQ <= $diff)){#overlap
@@ -553,15 +629,22 @@ my @sorted_features=sort{$a->{chr2} cmp $b->{chr2} || $a->{T_strand_no}<=>$b->{T
 					}
 				}
 			}
-		my $qlen=$array->{Q_end}-$array->{Q_start}+1;
-		my $tlen=$array->{T_end}-$array->{T_start}+1;
-		#print OUT "$array->{chr2}\t$array->{prog}\t$array->{feat}\t$array->{T_start}\t$array->{T_end}\t$array->{score}\t$array->{T_strand}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$qlen\t$tlen\t$x\t\n";		
-		print OUT "$array->{chr2}\t$array->{prog}\t$array->{feat}\t$array->{T_start}\t$array->{T_end}\t$array->{score}\t$array->{T_strand}\t.\t$x\t\n";		
+		if ($reverse_output){
+			print OUT "$array->{chr1}\t$array->{prog}\t$array->{feat}\t$array->{Q_start}\t$array->{Q_end}\t$array->{score}\t$array->{Q_strand}\t.\t$x\t\n";		
+			}
+		else{
+			print OUT "$array->{chr2}\t$array->{prog}\t$array->{feat}\t$array->{T_start}\t$array->{T_end}\t$array->{score}\t$array->{T_strand}\t.\t$x\t\n";	
+			}	
 		print DATA "$ok($x)\t$array->{sps1}\t$array->{chr1}\t$array->{prog}\t$array->{feat}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\n";
 		
+		
+		print TSTATS "$array->{sps1}\t$array->{chr1}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$array->{len}\t$array->{sum_len}\n"; 
+		
 		$prev{T_start}=$array->{T_start};
-		unless ((defined($prev{T_strand})) && ($prev{T_strand} eq $array->{T_strand}) && ($prev{T_end}>$array->{T_end})){ $prev{T_end}=$array->{T_end};}
-		$prev{T_strand}=$array->{T_strand};
+		
+####use if strand needed		
+		#unless ((defined($prev{T_strand})) && ($prev{T_strand} eq $array->{T_strand}) && ($prev{T_end}>$array->{T_end})){ $prev{T_end}=$array->{T_end};}
+		#$prev{T_strand}=$array->{T_strand};
 		}
 		
 		print STDERR "Lost $minus_count bad seqs\n";		 
