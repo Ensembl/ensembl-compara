@@ -4,41 +4,67 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
 
-my ($host,$dbname,$dbuser,$chr_name,$chr_start,$chr_end,$sb_species,$qy_species,$dnafrag_type);
+my $usage = "
+$0 [-help]
+   -host mysql_host_server
+   -user username (default = 'ensro')
+   -dbname ensembl_compara_database
+   -chr_name (e.g. 22)
+   -chr_start
+   -chr_end
+   -species1 (e.g. \"Homo sapiens\") from which alignments are queried and chr_name refer to
+   -assembly1 (e.g. NCBI30) assembly version of species1
+   -species2 (e.g. \"Mus musculus\") to which alignments are queried
+   -assembly2 (e.g. MGSC3) assembly version of species2
+   -conf_file compara_conf_file
 
-GetOptions('host=s' => \$host,
+";
+
+my ($host,$dbname);
+my $dbuser = 'ensro';
+my ($chr_name,$chr_start,$chr_end);
+my ($species1,$assembly1,$species2,$assembly2);
+my $conf_file;
+my $help = 0;
+
+unless (scalar @ARGV) {
+  print $usage;
+  exit 0;
+}
+
+GetOptions('help' => \$help,
+	   'host=s' => \$host,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'chr_name=s' => \$chr_name,
 	   'chr_start=i' => \$chr_start,
 	   'chr_end=i' => \$chr_end,
-	   'sb_species=s' => \$sb_species,
-	   'qy_species=s' => \$qy_species,
-	   'dnafrag_type=s' => \$dnafrag_type);
-
-# Connecting to compara database
-
-unless (defined $dbuser) {
-  $dbuser = 'ensro';
-}
+	   'species1=s' => \$species1,
+	   'assembly1=s' => \$assembly1,
+	   'species2=s' => \$species2,
+	   'assembly2=s' => \$assembly2,
+	   'conf_file=s' => \$conf_file);
 
 $|=1;
 
+if ($help) {
+  print $usage;
+  exit 0;
+}
+
+# Connecting to compara database
+
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
 						      -user => $dbuser,
-						      -dbname => $dbname);
+						      -dbname => $dbname,
+						      -conf_file => $conf_file);
 
-my $gdbadp = $db->get_GenomeDBAdaptor;
-
-
-my $sb_species_dbadaptor = $gdbadp->fetch_by_species_tag($sb_species)->db_adaptor;
-
-my $sb_chradp = $sb_species_dbadaptor->get_ChromosomeAdaptor;
+my $species1_dbadaptor = $db->get_db_adaptor($species1,$assembly1);
+my $sb_chradp = $species1_dbadaptor->get_ChromosomeAdaptor;
 my $chr = $sb_chradp->fetch_by_chr_name($chr_name);
 
-my $qy_species_dbadaptor = $gdbadp->fetch_by_species_tag($qy_species)->db_adaptor;
-
-my $qy_chradp = $qy_species_dbadaptor->get_ChromosomeAdaptor;
+my $species2_dbadaptor = $db->get_db_adaptor($species2,$assembly2);
+my $qy_chradp = $species2_dbadaptor->get_ChromosomeAdaptor;
 my $qy_chrs = $qy_chradp->fetch_all;
 
 my %qy_chrs;
@@ -54,14 +80,10 @@ unless (defined $chr_start) {
   $chr_start = 1;
 }
 
-unless (defined $dnafrag_type) {
-  $dnafrag_type = "Chromosome";
-}
-
 if ($chr_start > $chr->length) {
   warn "chr_start $chr_start larger than chr_length ".$chr->length."
-exit 3\n";
-  exit 3;
+exit 1\n";
+  exit 1;
 }
 unless (defined $chr_end) {
   warn "WARNING : setting chr_end=chr_length ".$chr->length."\n";
@@ -73,12 +95,12 @@ setting chr_end=chr_length\n";
   $chr_end = $chr->length;
 }
 
-my $sb_species_sliceadaptor = $sb_species_dbadaptor->get_SliceAdaptor;
-my $qy_species_sliceadaptor = $qy_species_dbadaptor->get_SliceAdaptor;
+my $species1_sliceadaptor = $species1_dbadaptor->get_SliceAdaptor;
+my $species2_sliceadaptor = $species2_dbadaptor->get_SliceAdaptor;
 
 my $dafad = $db->get_DnaAlignFeatureAdaptor;
 
-my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($sb_species,$qy_species,$dnafrag_type,$chr_name,$chr_start,$chr_end)};
+my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$chr_name,$chr_start,$chr_end)};
 
 my $index = 0;
 
@@ -93,12 +115,12 @@ foreach my $ddaf (@DnaDnaAlignFeatures) {
   } else {
     print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$hstrand," 0\n";
   }
-  my $sb_seq = $sb_species_sliceadaptor->fetch_by_chr_start_end($ddaf->seqname,$ddaf->start,$ddaf->end)->seq;
+  my $sb_seq = $species1_sliceadaptor->fetch_by_chr_start_end($ddaf->seqname,$ddaf->start,$ddaf->end)->seq;
   my $qy_seq;
   if ($ddaf->hstrand > 0) {
-    $qy_seq = $qy_species_sliceadaptor->fetch_by_chr_start_end($ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->seq;
+    $qy_seq = $species2_sliceadaptor->fetch_by_chr_start_end($ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->seq;
   } else {
-    $qy_seq = $qy_species_sliceadaptor->fetch_by_chr_start_end($ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->invert->seq;
+    $qy_seq = $species2_sliceadaptor->fetch_by_chr_start_end($ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->invert->seq;
   }
   ($sb_seq,$qy_seq) = make_gapped_align_from_cigar_string($sb_seq,$qy_seq,$ddaf->cigar_string);
   print lc $sb_seq,"\n";
