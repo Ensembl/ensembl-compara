@@ -281,7 +281,7 @@ sub fetch_by_Member_Family_source {
   my ($self, $member, $source_name) = @_;
   deprecate("fetch_by_Member_Family_source method is deprecated. Calling 
 fetch_all_by_Member_method_link_type instead");
-  return $self->fetch_all_by_Member_method_link_type;
+  return $self->fetch_all_by_Member_method_link_type($member, $source_name);
 }
 
 1;
