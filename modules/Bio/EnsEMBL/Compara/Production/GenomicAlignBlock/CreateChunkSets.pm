@@ -194,7 +194,7 @@ sub create_chunk_sets
   my $set_size = 0;
 
   foreach my $chunk (@$all_chunks) {
-    if(($set_size + $chunk->length) > $self->{'max_set_bps'}) {
+    if(($chunkSet->count > 0) and (($set_size + $chunk->length) > $self->{'max_set_bps'})) {
       #set has hit max, so save it
       $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
       $self->submit_job($chunkSet);
@@ -208,9 +208,10 @@ sub create_chunk_sets
     #$chunkSet->add_DnaFragChunk($chunk);
     $set_size += $chunk->length;
   }
-  
-  $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
-  $self->submit_job($chunkSet);
+  if($chunkSet->count > 0) {
+    $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
+    $self->submit_job($chunkSet);
+  }
 
   printf("create_chunk_sets : total time %d secs\n", (time()-$starttime));
 }
