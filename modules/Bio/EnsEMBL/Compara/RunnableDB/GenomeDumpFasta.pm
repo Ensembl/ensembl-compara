@@ -133,18 +133,17 @@ sub run
   # dump longest peptide subset for this genome_db_id to a fasta file
   # and configure it to be used as a blast database
   my $blastdb = $self->dumpPeptidesToFasta();
-
-  # update the blast analysis setting the blast database
-  #my $blast_analysis = $self->updateBlastAnalysis($blastdb);
-  my $blast_analysis = $self->createBlastAnalysis($blastdb);
   
   return 1;
 }
 
+
 sub write_output
 {
-  #need to subclass otherwise it defaults to a version that fails
-  #just return 1 so success
+  # update the blast analysis setting the blast database
+  #my $blast_analysis = $self->updateBlastAnalysis($blastdb);
+  my $blast_analysis = $self->createBlastAnalysis($blastdb);
+
   return 1;
 }
 

@@ -140,6 +140,13 @@ sub fetch_input
 
 sub run
 {
+  my( $self) = @_;
+  return 1;
+}
+
+
+sub write_output
+{
   my $self = shift;
 
   my @blast_list = @{$self->{'blast_analyses'}};
@@ -174,13 +181,6 @@ sub run
 
     }
   }
-
-  return 1;
-}
-
-sub write_output
-{
-  my( $self) = @_;
 
   return 1;
 }

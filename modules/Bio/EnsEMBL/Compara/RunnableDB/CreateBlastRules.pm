@@ -109,6 +109,14 @@ sub fetch_input {
 
 sub run
 {
+  #need to subclass otherwise it defaults to a version that fails
+  #just return 1 so success
+  return 1;
+}
+
+
+sub write_output
+{
   my $self = shift;
 
   my $input_hash = eval($self->input_id);
@@ -127,12 +135,6 @@ sub run
   return 1;
 }
 
-sub write_output
-{
-  #need to subclass otherwise it defaults to a version that fails
-  #just return 1 so success
-  return 1;
-}
 
 
 
