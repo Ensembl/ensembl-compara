@@ -1,6 +1,6 @@
-# Copyright EnsEMBL 1999-2003
+# Copyright EnsEMBL 1999-2004
 #
-# Ensembl module for Bio::EnsEMBL::DBSQL::DnaAlignFeatureAdaptor
+# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor
 #
 # You may distribute this module under the same terms as perl itself
 
@@ -32,6 +32,8 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Cache; #CPAN LRU cache
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
+use Bio::EnsEMBL::Utils::Exception qw(warning throw);
+
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 my $CACHE_SIZE = 4;
@@ -60,7 +62,6 @@ sub new {
 
   return $self;
 }
-
 
 
 
@@ -95,7 +96,7 @@ sub new {
 sub fetch_all_by_species_region {
   my ($self, $cs_species, $cs_assembly, 
       $qy_species, $qy_assembly,
-      $chr_name, $start, $end,$alignment_type, $limit) = @_;
+      $chr_name, $start, $end, $alignment_type, $limit) = @_;
 
   $limit = 0 unless (defined $limit);
 
@@ -109,10 +110,10 @@ sub fetch_all_by_species_region {
   #retrieve dna fragments from the subjects species region of interest
   my $dfa = $self->db->get_DnaFragAdaptor;
   my $dnafrags = $dfa->fetch_all_by_GenomeDB_region($cs_gdb,
-						    $dnafrag_type,
-						    $chr_name,
-						    $start,
-						    $end);
+                                                    $dnafrag_type,
+                                                    $chr_name,
+                                                    $start,
+                                                    $end);
 
   my $gaa = $self->db->get_GenomicAlignAdaptor;
 
@@ -130,16 +131,14 @@ sub fetch_all_by_species_region {
 
     #fetch all alignments in the region we are interested in
     my $genomic_aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB($df,
-							     $qy_gdb,
-							     $df_start,
-							     $df_end,
-							     $alignment_type,
+                                                             $qy_gdb,
+                                                             $df_start,
+                                                             $df_end,
+                                                             $alignment_type,
                                                              $limit);
 
     #convert genomic aligns to dna align features
     foreach my $ga (@$genomic_aligns) {
-      my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new(
-				       '-cigar_string' => $ga->cigar_line);
       my $qdf = $ga->query_dnafrag;
 
       #calculate chromosomal coords
@@ -149,19 +148,20 @@ sub fetch_all_by_species_region {
       #skip features which do not overlap the requested region
       #next if ($cstart > $end || $cend < $start); 
 
-      $f->seqname($df->contig->chr_name);
-      $f->start($cstart);
-      $f->end($cend);
-      $f->strand(1);
-      $f->species($cs_species);
-      $f->score($ga->score);
-      $f->percent_id($ga->perc_id);
-
-      $f->hstart($qdf->start + $ga->query_start - 1);
-      $f->hend($qdf->start + $ga->query_end -1);
-      $f->hstrand($ga->query_strand);
-      $f->hseqname($qdf->contig->chr_name);
-      $f->hspecies($qy_species);
+      my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
+        ({'cigar_string' => $ga->cigar_line(),
+          'seqname'      => $df->contig()->seq_region_name(),
+          'start'        => $cstart,
+          'end'          => $cend,
+          'strand'       => 1,
+          'species'      => $cs_species,
+          'score'        => $ga->score(),
+          'percent_id'   => $ga->perc_id(),
+          'hstart'       => $qdf->start() + $ga->query_start() - 1,
+          'hend'         => $qdf->start() + $ga->query_end() -1,
+          'hstrand'      => $ga->query_strand(),
+          'hseqname'     => $qdf->contig()->seq_region_name(),
+          'hspecies'     => $qy_species});
 
       push @out, $f;
     }
@@ -192,70 +192,87 @@ sub fetch_all_by_species_region {
 =cut
 
 sub fetch_all_by_Slice {
-  my ($self, $slice, $qy_species, $qy_assembly, $assembly_type, $limit) = @_;
+  my ($self, $orig_slice, $qy_species, $qy_assembly, $assembly_type, 
+      $limit) = @_;
 
-  unless($slice && ref $slice && $slice->isa('Bio::EnsEMBL::Slice')) {
-    $self->throw("Invalid slice argument [$slice]\n");
+  unless($orig_slice && ref $orig_slice && 
+         $orig_slice->isa('Bio::EnsEMBL::Slice')) {
+    throw("Invalid slice argument [$orig_slice]\n");
   }
 
   unless($qy_species) {
-    $self->throw("Query species argument is required");
+    throw("Query species argument is required");
   }
 
   $limit = 0 unless (defined $limit);
 
   unless (defined $qy_assembly) {
-    my $qy_gdb = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($qy_species);
+    my $qy_gdb = 
+      $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($qy_species);
     $qy_assembly = $qy_gdb->assembly;
-    warn "qy_assembly was undef. Queried the default one for $qy_species = $qy_assembly\n";
+    warning("qy_assembly was undef. Queried the default " .
+            "one for $qy_species = $qy_assembly\n");
+  }
+
+  my $slice_adaptor = $orig_slice->adaptor();
+
+  if(!$slice_adaptor) {
+    warning("Slice has no attached adaptor. Cannot get Compara features.");
   }
   
-  my $cs_species =
-      $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
-  my $cs_assembly = $slice->assembly_type;
+  my $cs_species = 
+    $slice_adaptor->db->get_MetaContainer->get_Species->binomial();
 
-  my $key = uc(join(':', "SLICE", $slice->name,
-		 $cs_species,$cs_assembly,
-		 $qy_species, $qy_assembly,$assembly_type));
+  my $key = uc(join(':', $orig_slice->name,
+                    $cs_species, $qy_species, $qy_assembly, $assembly_type));
 
   if(exists $self->{'_cache'}->{$key}) {
     return $self->{'_cache'}->{$key};
   }
 
-  my $slice_start = $slice->chr_start;
-  my $slice_end   = $slice->chr_end;
-  my $slice_strand = $slice->strand;
+  my @projection = @{$orig_slice->project('toplevel')};  
+  return [] if(!@projection);
 
-  my $features = $self->fetch_all_by_species_region($cs_species,$cs_assembly,
-						    $qy_species,$qy_assembly,
-						    $slice->chr_name,
-						    $slice_start, $slice_end,$assembly_type,
-                                                    $limit);
+  my @results;
 
-  if($slice_strand == 1) {
-    foreach my $f (@$features) {
-      my $start  = $f->start - $slice_start + 1;
-      my $end    = $f->end   - $slice_start + 1;
-      $f->start($start);
-      $f->end($end);
-      $f->contig($slice);
-    }
-  } else {
-    foreach my $f (@$features) {
-      my $start  = $slice_end - $f->end   + 1;
-      my $end    = $slice_end - $f->start + 1;
-      my $strand = $f->strand * -1;
-      $f->start($start);
-      $f->end($end);
-      $f->strand($strand);
-      $f->contig($slice);
+  foreach my $segment (@projection) {
+    my $slice = $segment->[2];
+    my $slice_start = $slice->start;
+    my $slice_end   = $slice->end;
+    my $slice_strand = $slice->strand;
+
+    my $cs_assembly = $slice->coord_system->version();
+
+    my $features = $self->fetch_all_by_species_region($cs_species,$cs_assembly,
+                                                      $qy_species,$qy_assembly,
+                                                      $slice->seq_region_name,
+                                                      $slice_start, $slice_end,
+                                                      $assembly_type,
+                                                      $limit);
+
+    # We need to attach slices of the entire seq region to the features.
+    # The features come without any slices at all, but their coords are
+    # relative to the beginning of the seq region.
+
+    my $top_slice = $slice_adaptor->fetch_by_region('toplevel', 
+                                                   $slice->seq_region_name);
+    map {$_->slice($top_slice)} @$features;
+
+    # need to convert features to requested coord system
+    # if it was different then the one we used for fetching
+
+    if($top_slice->name() ne $orig_slice->name()) {
+      foreach my $f (@$features) {
+        push @results, $f->transfer($orig_slice);
+      }
+    } else {
+      push @results, @$features;
     }
   }
 
   #update the cache
-  $self->{'_cache'}->{$key} = $features;
-
-  return $features;
+  $self->{'_cache'}->{$key} = \@results;
+  return \@results;
 }
 
 =head2 deleteObj
