@@ -52,6 +52,7 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 #use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
@@ -179,9 +180,9 @@ sub print_params {
   printf("   target_collection          : (%d) %s\n",
          $self->{'target_collection'}->dbID, $self->{'target_collection'}->description);
   printf("   query_genome_db           : (%d) %s\n", 
-         $self->{'query_genome_db'}->dbID, $self->{'query_genome_db'}->dbID);
+         $self->{'query_genome_db'}->dbID, $self->{'query_genome_db'}->name);
   printf("   target_genome_db          : (%d) %s\n",
-         $self->{'target_genome_db'}->dbID, $self->{'target_genome_db'}->dbID);
+         $self->{'target_genome_db'}->dbID, $self->{'target_genome_db'}->name);
 }
 
 
