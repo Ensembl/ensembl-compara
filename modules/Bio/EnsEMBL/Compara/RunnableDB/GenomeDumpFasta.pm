@@ -58,7 +58,6 @@ use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
