@@ -33,7 +33,7 @@ sub colour {
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
   my $highlight = undef;
-  my $colour = $colours->{$gene->type()}[0];
+  my $colour = $colours->{lc($gene->type())}[0];
 
   if(exists $highlights{$gene->external_name}) {
     $highlight = $colours->{'superhi'};
@@ -71,10 +71,10 @@ sub zmenu {
   my $gid = $gene->stable_id();
   
   my $zmenu = {
-    'caption'              	=> "EST Gene",
-    "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=estgene",
-    "02:Transcr:$tid"    	=> "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=estgene",                	
-    '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cDNA&id=$tid"
+    'caption'         => "EST Gene",
+    "01:Gene:$gid"    => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=estgene",
+    "02:Transcr:$tid" => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=estgene",                	
+    '04:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cDNA&id=$tid"
   };
 
   if ($transcript->external_name()){
