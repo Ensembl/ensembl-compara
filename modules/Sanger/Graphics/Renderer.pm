@@ -74,7 +74,7 @@ sub render {
         my $Z     = undef;
 	my @points = map { 
           $COL  = defined($COL)  ? $COL  : $_->{'col'};
-          $FILL = defined($FILL) ? $FILL : $_->{'style'} eq 'fill'; 
+          $FILL = defined($FILL) ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill'); 
           $Z    = defined($Z)    ? $Z    : $_->{'z'};
 	  (
 	   $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
@@ -82,11 +82,11 @@ sub render {
 	  ) } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
 	my $first = $glyphset->{'tags'}{$_}[0];
         my $PAR = { 
-	  'pixelpoints'  => [ @points ],
-	  'bordercolour' => $COL,
-	  'absolutex'    => 1,
-          'absolutey'    => 1,
-       };
+		   'pixelpoints'  => [ @points ],
+		   'bordercolour' => $COL,
+		   'absolutex'    => 1,
+		   'absolutey'    => 1,
+		  };
         $PAR->{'colour'} = $COL if($FILL);
 	my $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
 	push @{$layers{defined $Z ? $Z : -1 }}, $glyph;
