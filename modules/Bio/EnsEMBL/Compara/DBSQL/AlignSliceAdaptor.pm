@@ -1,3 +1,69 @@
+#
+# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
+#
+# Cared for by Javier Herrero <jherrero@ebi.ac.uk>
+#
+# Copyright EnsEMBL Team
+#
+# You may distribute this module under the same terms as perl itself
+#
+# pod documentation - main docs before the code
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor - An AlignSlice can be used to map genes from one species onto another one. This adaptor is used to fetch all the data needed for an AlignSlice from the database.
+
+=head1 INHERITANCE
+
+This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+
+=head1 SYNOPSIS
+  
+  use Bio::EnsEMBL::Registry;
+
+  Bio::EnsEMBL::Registry->load_all();
+
+  my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($compara_dbname, 'compara', 'AlignSlice');
+
+  my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+          $query_slice,
+          $method_link_species_set
+      );
+
+=head1 OBJECT ATTRIBUTES
+
+=over
+
+=item db (from SUPER class)
+
+=back
+
+=head1 AUTHORS
+
+Javier Herrero (jherrero@ebi.ac.uk)
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004. EnsEMBL Team
+
+You may distribute this module under the same terms as perl itself
+
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
+
+
+# Let the code begin...
+
 package Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor;
 
 use strict;
@@ -7,6 +73,17 @@ use Bio::EnsEMBL::Compara::AlignSlice;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+=head2 new (CONSTRUCTOR)
+
+  Arg        : 
+  Example    : 
+  Description: Creates a new AlignSliceAdaptor object
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::Registry->get_adaptor
+
+=cut
+
 sub new {
   my $class = shift;
 
@@ -15,9 +92,25 @@ sub new {
   return $self;
 }
 
+
+=head2 fetch_by_Slice_MethodLinkSpeciesSet
+
+  Arg[1]     : Bio::EnsEMBL::Slice $query_slice
+  Arg[2]     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Example    :
+      my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
+              $query_slice, $method_link_species_set);
+  Description: Fetches from the database all the data needed for the AlignSlice
+               corresponding to the $query_slice and the given
+               $method_link_species_set
+  Returntype : Bio::EnsEMBL::Compara::AlignSlice
+  Exceptions : thrown if wrong arguments are given
+  Caller     : $obejct->methodname
+
+=cut
+
 sub fetch_by_Slice_MethodLinkSpeciesSet {
   my ($self, $reference_slice, $method_link_species_set) = @_;
-
 
   throw("[$reference_slice] is not a Bio::EnsEMBL::Slice")
       unless ($reference_slice and ref($reference_slice) and
@@ -25,6 +118,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
       unless ($method_link_species_set and ref($method_link_species_set) and
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  
   # Use cache whenever possible
   my $key = $reference_slice->name.":".$method_link_species_set->dbID;
   return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
