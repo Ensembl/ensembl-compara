@@ -48,8 +48,6 @@ sub Bio::EnsEMBL::Analysis::runnableDB
   die("self must be a [Bio::EnsEMBL::Analysis] not a [$self]")
     unless($self->isa('Bio::EnsEMBL::Analysis'));
 
-  return $self->{'runnableDB'} if($self->{'runnableDB'});
-
   my $runnable;
   if($self->module =~ "Bio::") { $runnable = $self->module; }
   else { $runnable = "Bio::EnsEMBL::Pipeline::RunnableDB::".$self->module; }
@@ -64,8 +62,7 @@ sub Bio::EnsEMBL::Analysis::runnableDB
                                 );
   print STDERR "Instantiated ".$runnable." runnabledb\n" if($self->{'verbose'});
 
-  $self->{'runnableDB'} = $runobj;
-  return $self->{'runnableDB'};
+  return $runobj
 }
 
 1;
