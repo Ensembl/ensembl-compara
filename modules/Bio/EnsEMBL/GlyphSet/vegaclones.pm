@@ -18,8 +18,8 @@ sub features {
     my @clones      = ();
 
     ###### Create a list of clones to fetch #######
-    foreach ($slice->get_tiling_path()){
-        my $clone = $_->{contig}->clone->embl_id;
+    foreach (@{$slice->get_tiling_path()}){
+        my $clone = $_->component_Seq->clone->embl_id;
         push(@clones, $clone);
     }        
 
@@ -89,19 +89,19 @@ sub features {
     my $res = [];
     foreach my $c (keys %SEGMENTS){
         my ($name,$ver) = split(/\./,$c);
-        foreach my $p ($slice->get_tiling_path()){
-            if ($p->{contig}->id() =~ /$name/){
+        foreach my $p (@{$slice->get_tiling_path()}){
+            if ($p->{contig}->name() =~ /$name/){
                 my $s = Bio::EnsEMBL::SeqFeature->new();
                 
                 # remember if the Vega clone version is newer/older/same as e! clone
-                if($ver > $p->{contig}->clone->embl_version){
+                if($ver > $p->component_Seq->clone->embl_version){
                     $s->{'status'} = 1; # vega has newer clone version
                 } elsif ($ver == $p->{contig}->clone->embl_version){
                     $s->{'status'} = 0; # vega has same clone version
                 } else {
                     $s->{'status'} = -1;# vega has older clone version
                 }
-                my $id = $p->{contig}->clone->embl_id() . "." . $p->{contig}->clone->embl_version();
+                my $id = $p->component_Seq->clone->embl_id() . "." . $p->component_Seq->clone->embl_version();
                 my $label = $id . " >";
                 if($p->{strand} == -1){
                     $label = "< "  . $id;
