@@ -3,8 +3,8 @@ use strict;
 use vars qw(@ISA);
 # use Bio::EnsEMBL::GlyphSet_simple;
 # @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
-use Bio::EnsEMBL::GlyphSet_feature;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
+use Bio::EnsEMBL::GlyphSet_feature2;
+@ISA = qw(Bio::EnsEMBL::GlyphSet_feature2);
 
 
 sub my_label { return "Mouse matches"; }

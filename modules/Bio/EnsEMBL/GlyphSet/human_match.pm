@@ -12,7 +12,7 @@ sub my_label { return "Human matches"; }
 sub features {
     my ($self) = @_;
     
-    return  $self->{'container'}->get_all_DnaDnaAlignFeature( $self->{'config'}->{'_databases'}->{'compara'}, $ENV{'ENSEMBL_SPECIES'}, 'Homo_sapiens' );
+    return  $self->{'container'}->get_all_compara_DnaAlignFeatures( 'Homo_sapiens' );
 }
 
 sub href {
