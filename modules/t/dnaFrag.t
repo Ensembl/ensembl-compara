@@ -81,27 +81,31 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 ## Connect to the test database using the MultiTestDB.conf file
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
-my $compara_db = $multi->get_DBAdaptor( "compara" );
-my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
+my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
+my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
-my $species = {
-        "homo_sapiens" => ["Homo sapiens", 'NCBI34'],
-#         "mus_musculus" => ["Mus musculus", 'NCBIM33'],
-        "rattus_norvegicus" => ["Rattus norvegicus", 'RGSC3.1'],
-        "gallus_gallus" => ["Gallus gallus", 'WASHUC1'],
-    };
+my $species = [
+        "homo_sapiens",
+#         "mus_musculus",
+        "rattus_norvegicus",
+        "gallus_gallus",
+    ];
 
 ## Connect to core DB specified in the MultiTestDB.conf file
-while (my ($key, $value) = each %$species) {
-  my $species = Bio::EnsEMBL::Test::MultiTestDB->new($key);
-  my $species_gdb = $genome_db_adaptor->fetch_by_name_assembly(@$value);
-  $species_gdb->db_adaptor($species->get_DBAdaptor('core'));
+foreach my $this_species (@$species) {
+  my $species_db = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  my $species_db_adaptor = $species_db->get_DBAdaptor('core');
+  my $species_gdb = $genome_db_adaptor->fetch_by_name_assembly(
+          $species_db_adaptor->get_MetaContainer->get_Species->binomial,
+          $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version
+      );
+  $species_gdb->db_adaptor($species_db_adaptor);
 }
 
 ##
 #####################################################################
 
-my $dnafrag_adaptor = $compara_db->get_DnaFragAdaptor;
+my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor;
 my $dummy_db = new Bio::EnsEMBL::Compara::GenomeDB;
 
 ok(!$dnafrag_adaptor, "", "Checking Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object");
