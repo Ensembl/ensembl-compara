@@ -171,8 +171,8 @@ sub display_id {
 sub bioseq {
   my $self = shift;
 
-  throw("DnaFragChunk sequence_id undefined") unless defined($self->sequence_id());
-  throw("No sequence for DnaFragChunk " . $self->dbID()) unless defined($self->sequence());
+  return undef unless defined($self->sequence_id());
+  return undef unless defined($self->sequence());
 
   my $seq = Bio::Seq->new(-seq        => $self->sequence(),
                           -display_id => $self->display_id(),
