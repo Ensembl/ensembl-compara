@@ -276,14 +276,12 @@ sub prepareGenomeAnalysis
   $stats->status('BLOCKED');
   $stats->update();
 
+  $ctrlRuleDBA->create_rule($load_genome, $blastrules_analysis);
   $ctrlRuleDBA->create_rule($blastSubsetStaging, $blastrules_analysis);
   $ctrlRuleDBA->create_rule($submitpep_analysis, $blastrules_analysis);
   $ctrlRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-       -input_id       => '{blast_all=>1}',
-       -analysis       => $blastrules_analysis,
-      );
+  $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
   #
   # CreateBuildHomologyJobs
