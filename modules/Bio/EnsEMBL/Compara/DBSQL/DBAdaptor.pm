@@ -228,4 +228,27 @@ sub get_db_adaptor {
   return $gdb->db_adaptor;
 }
 
+sub get_available_adaptors{
+ 
+  my %pairs =  ( "MetaContainer" => "Bio::EnsEMBL::DBSQL::MetaContainer",
+	      'SyntenyRegion'   => 'Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor',
+	      "DnaAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor",
+	      "Synteny"         => "Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor",
+	      "GenomeDB"        => "Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor",
+	      "DnaFrag" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor",
+	      "GenomicAlign" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor",
+	      "Homology" => "Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor",
+	      "Family" => "Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor",
+	      "Domain" => "Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor",
+	      "Subset" => "Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor",
+	      "Member" => "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor",
+	      "Attribute" => "Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor",
+	      "Taxon" => "Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor",
+	      "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
+	      "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor"
+        );
+  return (%pairs);
+}
+ 
+
 1;
