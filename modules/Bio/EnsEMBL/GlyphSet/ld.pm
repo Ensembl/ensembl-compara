@@ -101,7 +101,7 @@ sub _init {
   foreach my $m ( 0 .. ($number_of_snps-2) ) {
     my $snp_m1 = $snps[ $m+1 ];
     my $snp_m  = $snps[ $m   ];
-    my $d2 = ( $snp_m1->[1]->start - $snp_m->[1]->start )/2 ; # halfway between m and mth snp
+    my $d2 = ( $snp_m1->[1]->start - $snp_m->[1]->start )/2; # m & mth SNP midpt
     foreach my $n ( reverse( ($m+1) .. ($number_of_snps-1) ) ) {
       my $snp_n1 = $snps[ $n-1 ];
       my $snp_n  = $snps[ $n   ];
@@ -111,8 +111,11 @@ sub _init {
       my $flag_triangle = $y-$d2;  # top box is a triangle
       my $value = $data->{'ldContainer'}{$snp_m->[0].'-'.$snp_n->[0]}{ $only_pop }{$key};
       my $colour = defined($value) ? $colour_gradient[POSIX::floor(40 * $value)] : "white";
+      my $snp_names = $data->{'variationFeatures'}{$snp_m->[0]}->variation_name;
+      $snp_names.= "-".$data->{'variationFeatures'}{$snp_n->[0]}->variation_name;
+
       $self->push( Sanger::Graphics::Glyph::Poly->new({
-        'title'  => $value,
+        'title'  => "$snp_names: $value",
         'points' => [ 
 	  $x,   $y   * $height_ppb + $yoffset , 
 	  $flag_triangle < 0 ? (): ( $x+$d2,     $flag_triangle * $height_ppb + $yoffset ), 
