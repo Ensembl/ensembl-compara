@@ -203,6 +203,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
+use Bio::EnsEMBL::Compara::AlignSlice;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::LocatableSeq;
@@ -340,75 +341,13 @@ foreach my $this_set_of_genomic_align_blocks (@$sets_of_genomic_align_blocks) {
 
 my $all_aligns;
 if ($project_on_query) {
-  my $projected_sequences;
-  my $query_length = $seq_region_end - $seq_region_start + 1;
-  foreach my $this_species (split(":", $set_of_species)) {
-    ## Create empty seq for projecting
-    $projected_sequences->{$this_species} = "." x $query_length;
-    
-    ## Project sequences
-    foreach my $this_genomic_align_block (@{$fake_genomic_align_blocks}) {
-      my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align;
-      my $start = $reference_genomic_align->dnafrag_start;
-      my $end = $reference_genomic_align->dnafrag_end;
-      foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
-        next if ($this_genomic_align->dnafrag->genome_db->dbID != $genome_db->{$this_species}->dbID);
-        my $aligned_sequence = $this_genomic_align->aligned_sequence("+FIX_SEQ");
-        my $this_start = $start - $seq_region_start;
-        my $this_end = $end - $seq_region_end;
-        if ($reference_genomic_align->dnafrag_start < $seq_region_start) {
-          substr($aligned_sequence, 0, ($seq_region_start - $reference_genomic_align->dnafrag_start), "");
-          $this_start = 0;
-        }
-        if ($reference_genomic_align->dnafrag_end > $seq_region_end) {
-          substr($aligned_sequence, ($seq_region_end - $reference_genomic_align->dnafrag_end)) = "";
-          $this_end = $query_length;
-        }
-        my @pieces = split(/(\-+)/, $aligned_sequence);
-        foreach my $piece (@pieces) {
-          next if ($piece eq "");
-          if ($piece !~ /^\-+$/) {
-            ## Overwrite this piece in the projected seq
-            substr($projected_sequences->{$this_species}, $this_start, length($piece), $piece);
-          } else {
-            ## Overwrite only "blanks" by gaps
-            my $substr = substr($projected_sequences->{$this_species}, $this_start, length($piece));
-            $substr =~ tr/\./\-/;
-            substr($projected_sequences->{$this_species}, $this_start, length($piece), $substr);
-          }
-          $this_start += length($piece);
-        }
-      }
-    }
-  }
 
-  ## Create a single Bio::SimpleAlign for the projection  
-  my $simple_align = Bio::SimpleAlign->new();
-  $simple_align->id("ProjectedFakeMultiAlign");
-
-  ## Query seq
-  my $seq = Bio::LocatableSeq->new(
-            -SEQ    => $query_slice->seq,
-            -START  => $seq_region_start,
-            -END    => $seq_region_end,
-            -ID     => $query_species.":".$query_slice->seq_region_name,
-            -STRAND => 1
-        );
-  $simple_align->add_seq($seq);
-
-  ## Remaining seqs
-  foreach my $this_species (keys %$projected_sequences) {
-    my $seq_name = $this_species;
-    my $aligned_sequence = $projected_sequences->{$this_species};
-    my $seq = Bio::LocatableSeq->new(
-            -SEQ    => $aligned_sequence,
-            -START  => 1,
-            -END    => $query_length,
-            -ID     => $seq_name,
-            -STRAND => 1
-        );
-    $simple_align->add_seq($seq);
-  }
+  ## Create an AlignSlice for projecting on query_slice
+  my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
+          -REFERENCE_SLICE => $query_slice,
+          -GENOMIC_ALIGN_BLOCKS => $fake_genomic_align_blocks
+      );
+  my $simple_align = $align_slice->get_projected_SimpleAlign;
   push(@$all_aligns, $simple_align);
 
 } else {
