@@ -425,8 +425,8 @@ sub _get_mapped_Gene {
   
   my $range_start = $pair->{slice}->start - $gene->slice->start + 1;
   my $range_end = $pair->{slice}->end - $gene->slice->start + 1;
-  my $slice_length = $gene->slice->end - $gene->slice->start + 1;
   return undef if (($gene->start > $range_end) or ($gene->end < $range_start));
+  my $slice_length = $gene->slice->end - $gene->slice->start + 1;
 
   my $from_mapper = $pair->{mapper};
   my $to_mapper = $self->{to_mapper};
@@ -658,6 +658,7 @@ sub _merge_Exons {
 
     if (!grep {$_->start} @$these_exons) {
       push(@$merged_exons, $these_exons->[0]);
+      next;
     }
 
     # Sort exons according to 
@@ -811,10 +812,25 @@ sub _separate_in_incompatible_sets_of_Exons {
   }
   ##
   ###################################################################
-  
+
+  my $transcript_strand = 1;
+  if (grep {$_->strand and $_->strand == -1} @$set_of_exons) {
+    $transcript_strand = -1;
+  }
   foreach my $this_exon (_sort_Exons(@$set_of_exons)) {
     if (!defined($this_exon->start)) {
-      push(@$this_set_of_exons, $this_exon);
+      if ($transcript_strand == -1) {
+        ## Insert this exon in the right place
+        for (my $i=0; $i<@$this_set_of_exons; $i++) {
+          if ($this_set_of_exons->[$i]->original_rank == $this_exon->original_rank - 1) {
+            splice(@$this_set_of_exons, $i, 0, $this_exon);
+            last;
+          }
+        }
+      } else {
+        ## Append this exon
+        push(@$this_set_of_exons, $this_exon);
+      }
       next;
     }
     if ($last_exon) {
