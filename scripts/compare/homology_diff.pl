@@ -197,8 +197,8 @@ sub loadReferenceCompara
       $self->{'refDups'}++;
       print("ref_compara duplicate '$key' already as ".$self->{'compara_ref_hash'}->{$key}."\n");
     }
-    $BRHCount++ if($type eq 'BRH');
-    $RHSCount++ if($type eq 'RHS');
+    $BRHCount++ if($type =~ /BRH/);
+    $RHSCount++ if($type =~ /RHS/);
 
     $self->{'compara_ref_hash'}->{$key} = $type;
     $self->{'compara_ref_missing'}->{$key} = $type;
@@ -249,26 +249,28 @@ sub compareComparas
 
     #print("check compara21 key='$key' '$new_type' vs '$type20'\n");
     $new_homology_count++;
-    #$BRHCount++ if($new_type eq 'BRH');
-    #$RHSCount++ if($new_type eq 'RHS');
     if($ref_type) {
       #print("check compara21 key='$key' '$new_type' vs '$type20'\n");
-      $sameBRH++ if(($ref_type =~ /^BRH/) and ($ref_type eq $new_type));
-      $sameRHS++ if(($ref_type =~ /^RHS/) and ($ref_type eq $new_type));
+      my $tmp_ref = $ref_type;  $tmp_ref='UBRH' if($tmp_ref eq 'BRH');
+      $sameBRH++ if(($ref_type =~ /BRH/) and ($tmp_ref eq $new_type));
+      $sameRHS++ if(($ref_type eq 'RHS') and ($new_type eq 'RHS'));
 
       my $count = $self->{'conversion_hash'}->{$ref_type}->{$new_type};
       $count=0 unless($count);
       $self->{'conversion_hash'}->{$ref_type}->{$new_type} = $count+1;
       
-      $BRH2BRH++ if(($ref_type =~ /^BRH/) and ($new_type =~ /^BRH/) and ($ref_type ne $new_type));
-      $BRH2RHS++ if(($ref_type =~ /^BRH/) and ($new_type eq 'RHS'));
-      $RHS2BRH++ if(($ref_type eq 'RHS') and ($new_type =~ /^BRH/));
+      $BRH2BRH++ if(($ref_type =~ /BRH/) and ($new_type =~ /BRH/) and ($ref_type ne $new_type));
+      $BRH2RHS++ if(($ref_type =~ /BRH/) and ($new_type eq 'RHS'));
+      if(($ref_type =~ /RHS/) and ($new_type =~ /BRH/)) {
+        $RHS2BRH++;
+	print("homology_id $homology_id $gene_id1 $gene_id2  $ref_type => $new_type : $key\n") if($new_type eq 'UBRH');
+      }
 
       delete $self->{'compara_ref_missing'}->{$key};
     }
     else {
-      $newBRH++ if($new_type =~ /^BRH/);
-      $newRHS++ if($new_type =~ /^RHS/);
+      $newBRH++ if($new_type =~ /BRH/);
+      $newRHS++ if($new_type =~ /RHS/);
     }
   }
 }
@@ -313,7 +315,7 @@ sub print_missing_stats
     my $count = $typeCount{$type};
     $count=0 unless($count);
     $typeCount{$type} = $count+1;
-    #print("  $key => " . $self->{'compara_ref_missing'}->{$key} . "\n");
+    print("  $key => " . $self->{'compara_ref_missing'}->{$key} . "\n") if($type =~ /BRH/);
   }
   
   foreach my $type (keys(%typeCount)) {
