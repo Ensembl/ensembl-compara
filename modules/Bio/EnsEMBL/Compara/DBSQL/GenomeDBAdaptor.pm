@@ -409,7 +409,7 @@ sub get_all_db_links {
   my $gdb_list;
 
   my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_and_genome_db(
+  my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_id_GenomeDB(
           $method_link_id,
           $ref_gdb
       );

@@ -117,9 +117,9 @@ sub fetch_all_by_species_region {
   # Get the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct corresponding to the alignment_type and
   # the couple of genomes
   my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_and_genome_db_ids(
+  my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
           $alignment_type,
-          [$consensus_genome_db->dbID, $query_genome_db->dbID]
+          [$consensus_genome_db, $query_genome_db]
       );
   return [] if (!$method_link_species_set);
   
