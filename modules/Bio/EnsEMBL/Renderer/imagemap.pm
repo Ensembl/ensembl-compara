@@ -62,6 +62,11 @@ sub render_Poly {
     $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href>\n).$self->{'canvas'} ; 
 }
 
+sub render_Space {
+    my ($self, $glyph) = @_;
+    return $self->render_Rect($glyph);
+}
+
 sub render_Composite {
     my ($self, $glyph) = @_;
     return $self->render_Rect($glyph);

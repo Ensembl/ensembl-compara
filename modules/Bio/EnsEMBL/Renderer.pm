@@ -113,7 +113,7 @@ sub render_Composite {
 #########
 # empty stub for Blank spacer objects with no rendering at all
 #
-sub render_Blank {
+sub render_Space {
 }
 
 1;
