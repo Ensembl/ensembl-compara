@@ -78,6 +78,7 @@ sub _store_PAFS {
           $paf->query_member($qy_member);
           my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->query_member->dbID);
           $qy_member->gene_member($gene);
+        }
       }
       unless($paf->hit_member->dbID) {
         my $hit_member = $memberDBA->fetch_by_source_stable_id('ENSEMBLPEP', $paf->hit_member->stable_id);
