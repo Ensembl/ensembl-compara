@@ -115,7 +115,7 @@ sub _store_PAFS {
       # $paf->display_short();
     }
   }
-  print("$query\n");
+  #print("$query\n");
   my $sth = $self->db->prepare($query);
   $sth->execute();
   $sth->finish();
