@@ -10,7 +10,8 @@ sub my_label {
 
 sub colour {
   my( $self, $id ) = @_;
-  my $colours =  $self->{'colours'}->{ $self->object_type($id) };
+  my $colours =  $self->{'colours'}->{ $self->object_type($id) } ||
+                 $self->my_config('col') || 'black';
 }
 
 sub features {
@@ -18,11 +19,20 @@ sub features {
   my $method    = $self->my_config('CALL')||'get_all_DnaAlignFeatures';
   my $database  = $self->my_config('DATABASE') || undef;
   my $threshold = defined( $self->my_config('THRESHOLD')) ? $self->my_config('THRESHOLD') : 80;
+
+  my @logic_names;
   if( $self->my_config( 'FEATURES' ) eq 'UNDEF' ) {
-    return $self->{'container'}->$method(undef ,$threshold, $database);
+    @logic_names = ( undef() );
   } else {
-    return map { $self->{'container'}->$method($_ ,$threshold, $database) } split /\s+/, ($self->my_config( 'FEATURES' ) || $self->check() ) ;
+    @logic_names = split( /\s+/, 
+                          ( $self->my_config( 'FEATURES' ) ||
+                            $self->check() ) );
+  }   
+  my @feats;
+  foreach my $nm( @logic_names ){
+    push( @feats, @{$self->{'container'}->$method($nm,$threshold,$database)} );
   }
+  return [@feats];
 }
 
 sub object_type {
