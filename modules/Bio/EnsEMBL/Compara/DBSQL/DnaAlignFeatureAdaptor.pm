@@ -1,4 +1,4 @@
-# Copyright EnsEMBL 1999-2004
+# cOpyright EnsEMBL 1999-2004
 #
 # Ensembl module for Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor
 #
@@ -311,9 +311,11 @@ sub interpolate_best_location {
   if ($based_on_group_id) {
     my @ordered_name_strands = sort {scalar @{$name_strand_clusters{$b}} <=> scalar @{$name_strand_clusters{$a}}} keys %name_strand_clusters;
     
-    my @best_blocks = sort {$a->hseq_region_start <=> $b->hseq_region_end} @{$name_strand_clusters{$ordered_name_strands[0]}};
+    my @best_blocks = sort {$a->hseq_region_start <=> $b->hseq_region_end} @{$name_strand_clusters{$ordered_name_strands[0]}||[]};
 
-    if ($slice->strand > 0) {
+    if( !@best_blocks ) {
+      return undef;
+    } elsif ($slice->strand > 0) {
       return ($best_blocks[0]->hseq_region_name,
               $best_blocks[0]->hseq_region_start 
               + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2),
@@ -332,7 +334,7 @@ sub interpolate_best_location {
       # an array of arrayrefs
       # name, strand, start, end, nb of blocks
       my @sub_clusters;
-      foreach my $block (sort {$a->hseq_region_start <=> $b->hseq_region_start} @{$name_strand_clusters{$name_strand}}) {
+      foreach my $block (sort {$a->hseq_region_start <=> $b->hseq_region_start} @{$name_strand_clusters{$name_strand}||[]}) {
         unless (scalar @sub_clusters) {
           push @sub_clusters, [$block->hseq_region_name,$block->hseq_region_strand, $block->hseq_region_start, $block->hseq_region_end, 1];
           next;
@@ -372,7 +374,9 @@ sub interpolate_best_location {
     # sort by the max number of blocks desc
     @refined_clusters = sort {$b->[-1] <=> $a->[-1]} @refined_clusters;
 
-    if ($slice->strand > 0) {
+    if(!@refined_clusters) {
+      return undef;
+    } elsif ($slice->strand > 0) {
       return ($refined_clusters[0]->[0], #hseq_region_name,
               $refined_clusters[0]->[2]
               + int(($refined_clusters[0]->[3] - $refined_clusters[0]->[2])/2),
