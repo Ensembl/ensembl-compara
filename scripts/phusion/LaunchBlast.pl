@@ -7,7 +7,7 @@ use File::Basename;
 my ($input,$subject_tag,$subject_fasta,$subject_index,$query_tag,$query_fasta,$query_index,$dir);
 
 my $fastafetch_executable = "/nfs/acari/abel/bin/fastafetch";
-my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
+my $FilterBlast_executable = "/nfs/acari/cara/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
 my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 
 my $min_score = 300;
@@ -100,8 +100,13 @@ foreach my $qy_seq (@query_seq) {
 # sequence contains ONLY Ns, no seeding is possible.
 # the message sent by wublastn is "There are no valid contexts in the requested search."
 
+# 4352
+# because wublastn produce a EXIT CODE 17 (23*256 = 4352). The reason is that the query 
+# sequence is too short, no seeding is possible.
+# the message sent by wublastn is " query sequence is shorter than the word length, W=11."
+
 # 5888
-# because wublastn produce a EXIT CODE 16 (23*256 = 4096). The reason is that the query 
+# because wublastn produce a EXIT CODE 23 (23*256 = 5888). The reason is that the query 
 # sequence contains MOSTLY Ns, no seeding is possible.
 # the message sent by wublastn is "There are no valid contexts in the requested search."
 
