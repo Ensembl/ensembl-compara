@@ -49,7 +49,6 @@ use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-
 # Hashes for storing a cross-referencing of compared genomes
 my %genome_consensus_xreflist;
 my %genome_query_xreflist;
@@ -70,7 +69,7 @@ my %genome_query_xreflist;
 
 =cut
 
-sub fetch_by_dbID{
+sub fetch_by_dbID {
    my ($self,$dbid) = @_;
 
    if( !defined $dbid) {
@@ -86,15 +85,6 @@ sub fetch_by_dbID{
 
    if(!$gdb) {
      return undef; # return undef if fed a bogus dbID
-   }
-
-   # set up the dbadaptor for this genome db
-   # this could have been added after the cache was created which is why
-   # it is re-added every request
-   my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
-
-   if (defined $dba) {
-     $gdb->db_adaptor($dba);
    }
 
    return $gdb;
@@ -121,17 +111,8 @@ sub fetch_all {
 
   my @genomeDBs = values %{$self->{'_cache'}};
 
-  for my $gdb ( @genomeDBs ) {
-    my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
-    if($dba) {
-      $gdb->db_adaptor($dba);
-    }
-  }
-    
   return \@genomeDBs;
 } 
-
-
 
 =head2 fetch_by_name_assembly
 
@@ -174,8 +155,6 @@ sub fetch_by_name_assembly{
 
    return $self->fetch_by_dbID($id);
 }
-
-
 
 =head2 store
 
@@ -316,6 +295,8 @@ sub create_GenomeDBs {
   }
 
   $self->{'_GenomeDB_cache'} = 1;
+
+  $self->sync_with_registry();
 }
 
 
@@ -407,30 +388,83 @@ sub check_for_query_db {
 =cut
 
 sub get_all_db_links {
-  my ( $self, $ref_gdb,$method_link_id ) = @_;
+  my ($self, $ref_gdb, $method_link_id) = @_;
   
-  my $id = $ref_gdb->dbID;
-  my @gdb_list;
+  my $gdb_list;
 
-  # check for occurences of the db we are interested in
-  # in the consensus list of dbs
-  if ( exists $genome_consensus_xreflist{$id . ":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{ $genome_consensus_xreflist{$id . ":" .$method_link_id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_consensus_xreflist{$id . ":" .$method_link_id}[$i]};
+  my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
+  my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_and_genome_db(
+          $method_link_id,
+          $ref_gdb
+      );
+
+  foreach my $this_method_link_species_set (@{$method_link_species_sets}) {
+    foreach my $this_genome_db (@{$this_method_link_species_set->species_set}) {
+      $gdb_list->{$this_genome_db} = 1;
     }
   }
 
-  # and check for occurences of the db we are interested in
-  # in the query list of dbs
-  if ( exists $genome_query_xreflist{$id . ":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{ $genome_query_xreflist{$id . ":" .$method_link_id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_query_xreflist{$id . ":" .$method_link_id}[$i]};
-    }
-  }
-
-  return \@gdb_list;
+  return keys %$gdb_list;
 }
 
+
+=head2 sync_with_registry
+  Example    :
+  Description: Synchronize all the cached genome_db objects
+               db_adaptor (connections to core databases)
+               with those set in Bio::EnsEMBL::Registry.
+               Order of presidence is Registry.conf > ComparaConf > genome_db.locator
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::DBSQL::DBAdaptor
+=cut
+sub sync_with_registry {
+  my $self = shift;
+
+  return unless(eval "require Bio::EnsEMBL::Registry");
+  
+  #print("Registry eval TRUE\n");
+  my $genomeDBs = $self->fetch_all();
+
+  foreach my $genome_db (@{$genomeDBs}) {
+    my $coreDBA;
+    my $registry_name = $genome_db->name ." ". $genome_db->assembly;
+    if(Bio::EnsEMBL::Registry->get_alias($registry_name, 1)) {
+      $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
+    }
+    if(!defined($coreDBA) and Bio::EnsEMBL::Registry->get_alias($genome_db->name, 1)) {
+      $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core');
+      Bio::EnsEMBL::Registry->add_alias($genome_db->name, $registry_name);
+    }
+
+    if($coreDBA) {
+      #defined in registry so override any previous connection
+      #and set in GenomeDB object (ie either locator or compara.conf)
+      $genome_db->db_adaptor($coreDBA);
+    } else {
+      #fetch from genome_db which may be from a compara.conf or from
+      #a locator
+      $coreDBA = $genome_db->db_adaptor();
+      if(defined($coreDBA)) {
+        Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
+        Bio::EnsEMBL::Registry->add_alias($registry_name, $genome_db->name);
+      }
+    }
+  }
+}
+
+
+sub deleteObj {
+  my $self = shift;
+
+  if($self->{'_cache'}) {
+    foreach my $dbID (keys %{$self->{'_cache'}}) {
+      delete $self->{'_cache'}->{$dbID};
+    }
+  }
+
+  $self->SUPER::deleteObj;
+}
 
 1;
 
