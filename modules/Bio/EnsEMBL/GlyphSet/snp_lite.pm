@@ -77,34 +77,25 @@ sub zmenu {
     my( $chr_start, $chr_end ) = $self->slice2sr( $f->start, $f->end );
 
     my $allele = $f->alleles;
-    my $pos =  $chr_start;
-    if($f->{'range_type'} eq 'between' ) {
-       $pos = "between&nbsp;$chr_start&nbsp;&amp;&nbsp;$chr_end";
-    } elsif($f->{'range_type'} ne 'exact' ) {
-       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
-   }
-    my %zmenu = ( 
-        'caption'           => "SNP: " . ($f->snpid || $f->id),
-        '01:SNP properties' => $self->href( $f ),
-        "02:bp: $pos" => '',
-        "03:class: ".$f->snpclass => '',
-        "03:status: ".$f->status => '',
-        "06:mapweight: ".$f->{'_mapweight'} => '',
-        "07:ambiguity code: ".$f->{'_ambiguity_code'} => '',
-        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
-   );
-
-    my %links;
-    
-    my $source = $f->source_tag; 
+    my $dbsnp_id  = '';
+    my $tsc_id    = '';
+    my $hgbase_id = '';
+    my $wi_id     = '';
     foreach my $link ($f->each_DBLink()) {
       my $DB = $link->database;
-      if( $DB eq 'TSC-CSHL' || $DB eq 'HGBASE' || ($DB eq 'dbSNP' && $source eq 'dbSNP') || $DB eq 'WI' ) {
-        $zmenu{"16:$DB:".$link->primary_id } = $self->ID_URL( $DB, $link->primary_id );
-      }
+         if( $DB eq 'TSC-CSHL' ) { $tsc_id    = $link->primary_id; }
+      elsif( $DB eq 'HGBASE'   ) { $hgbase_id = $link->primary_id; }
+      elsif( $DB eq 'WI'       ) { $wi_id     = $link->primary_id; }
+      elsif( $DB eq 'dbSNP' && $f->source_tag eq 'dbSNP' ) { $dbsnp_id  = $link->primary_id; }
     }
-    my $type = substr($f->type(),3);
-    $zmenu{"57:Type: $type"} = "" unless $type eq '';  
-    return \%zmenu;
+    
+    return "zs( '@{[join ';',
+      'hs', $self->{'container'}->seq_region_name, $chr_start, $chr_end-$chr_start,
+      $f->snpid||$f->id, $f->source_tag, $f->status, $f->{'_mapweight'},
+      $f->{'_ambiguity_code'}, (length($allele<16)?$allele : substr($allele,0,14).'..'),
+      substr( $f->type(),3 ),
+      $dbsnp_id, $tsc_id, $hgbase_id, $wi_id
+      ]}')";
+      
 }
 1;
