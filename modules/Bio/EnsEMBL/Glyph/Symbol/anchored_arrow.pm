@@ -28,7 +28,7 @@ sub start_symbol {
     my $feature = $self->feature;
 
     my $start = $feature->{'start'};
-    my $orientation = $feature->{'orientation'};
+    my $orientation = $self->orientation;
     my $pix_per_bp = $feature->{'pix_per_bp'};
     my $y_offset = $feature->{'y_offset'};
     my $trunc_start = $feature->{'trunc_start'};
@@ -123,7 +123,7 @@ sub orientation {
     else {
 	$orientation = 1;
     }
-
+    return $orientation;
 }
 
 1;
