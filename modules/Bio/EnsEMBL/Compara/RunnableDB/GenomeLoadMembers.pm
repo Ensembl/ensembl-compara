@@ -103,6 +103,8 @@ sub fetch_input {
   #global boolean control value (whether the genes are also stored as members)
   $self->{'store_genes'} = 1;
 
+  $self->{'verbose'} = 0;
+
   #variables for tracking success of process  
   $self->{'sliceCount'}       = 0;
   $self->{'geneCount'}        = 0;
@@ -167,12 +169,12 @@ sub loadMembersFromCoreSlices
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
   my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
+  print("fetched ",scalar(@slices), " slices to load from\n");
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;
     #print("slice " . $slice->name . "\n");
     foreach my $gene (@{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
-#      if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
       if((lc($gene->type) ne 'pseudogene') and 
          (lc($gene->type) ne 'bacterial_contaminant') and
          ($gene->type !~ /RNA/i)) {
@@ -206,34 +208,34 @@ sub store_gene_and_all_transcripts
   my $MemberAdaptor = $self->{'comparaDBA'}->get_MemberAdaptor();
 
   if($self->{'store_genes'}) {
-    print("     gene       " . $gene->stable_id );
+    print("     gene       " . $gene->stable_id ) if($self->{'verbose'});
     $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
                    -gene=>$gene,
                    -genome_db=>$self->{'genome_db'});
-    print(" => member " . $gene_member->stable_id);
+    print(" => member " . $gene_member->stable_id) if($self->{'verbose'});
 
     eval {
       $MemberAdaptor->store($gene_member);
-      print(" : stored");
+      print(" : stored") if($self->{'verbose'});
     };
 
     $self->{'geneSubset'}->add_member($gene_member);
-    print("\n");
+    print("\n") if($self->{'verbose'});
   }
 
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
     $self->{'transcriptCount'}++;
     #print("gene " . $gene->stable_id . "\n");
-    print("     transcript " . $transcript->stable_id );
+    print("     transcript " . $transcript->stable_id ) if($self->{'verbose'});
 
     unless (defined $transcript->translation) {
-      warn("\nCOREDB error: No translation for transcript transcript_id" . $transcript->dbID."\n");
-      next; #only use for Chimp
+      warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
+      next;
     }
 
     unless (defined $transcript->translation->stable_id) {
-      warn("\nCOREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
-      next; #only use for Chimp
+      warn("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+      next;
     }
 
     my $description = $self->fasta_description($gene, $transcript);
@@ -243,17 +245,17 @@ sub store_gene_and_all_transcripts
          -translate=>'yes',
          -description=>$description);
 
-    print(" => member " . $pep_member->stable_id);
+    print(" => member " . $pep_member->stable_id) if($self->{'verbose'});
 
     unless($pep_member->sequence) {
-      print("  => NO SEQUENCE!\n");
+      print("  => NO SEQUENCE!\n") if($self->{'verbose'});
       next;
     }
-    print(" len=",$pep_member->seq_length );
+    print(" len=",$pep_member->seq_length ) if($self->{'verbose'});
 
     $MemberAdaptor->store($pep_member);
     $MemberAdaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
-    print(" : stored\n");
+    print(" : stored\n") if($self->{'verbose'});
 
     if($pep_member->seq_length > $maxLength) {
       $maxLength = $pep_member->seq_length;
