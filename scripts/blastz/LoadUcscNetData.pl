@@ -19,6 +19,7 @@ my $max_gap_size = 50;
 my $matrix_file;
 my $show_matrix_to_be_used = 0;
 my $help = 0;
+my $check_length = 0;
 
 my $usage = "
 $0
@@ -30,6 +31,7 @@ $0
    --tSpecies string          (e.g. mouse) the UCSC target species (i.e. a Bio::EnsEMBL::Registry alias)
                               to which tName refers to
    --qSpecies string          (e.g. Rn3) the UCSC query species (i.e. a Bio::EnsEMBL::Registry alias)
+  [--check_length]            check the chromosome length between ucsc and ensembl, then exit
   [--method_link_type string] (e.g. BLASTZ_NET) type of alignment queried (default: BLASTZ_NET)
   [--reg_conf filepath]       the Bio::EnsEMBL::Registry configuration file. If none given, 
                               the one set in ENSEMBL_REGISTRY will be used if defined, if not
@@ -58,6 +60,7 @@ GetOptions('help' => \$help,
            'tSpecies=s' => \$tSpecies,
            'tName=s' => \$tName,
            'qSpecies=s' => \$qSpecies,
+           'check_length' => \$check_length,
 	   'reg_conf=s' => \$reg_conf,
            'start_net_index=i' => \$start_net_index,
            'max_gap_size=i' => \$max_gap_size,
@@ -134,6 +137,8 @@ my %qdnafrags;
 foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
   $qdnafrags{$df->name} = $df;
 }
+
+check_length() if ($check_length);
 
 my $matrix_hash;
 
@@ -265,7 +270,7 @@ while( $sth->fetch() ) {
       exit 2;
     }
     unless ($qdnafrag->length == $c_qSize) {
-      print STDERR "tSize = $c_qSize for tName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
+      print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
       print STDERR "net_index is $net_index\n";
       exit 3;
     }
@@ -524,3 +529,66 @@ exit 1\n";
   return ($score, int($number_identity/$length*100));
 }
 
+sub check_length {
+
+  my $sql = "show tables like '"."%"."chain$qSpecies'";
+  my $sth = $ucsc_dbc->prepare($sql);
+  $sth->execute();
+
+  my ($table);
+  $sth->bind_columns(\$table);
+  
+  my (%tNames,%qNames);
+  
+  while( $sth->fetch() ) {
+    $sql = "select tName,tSize from $table group by tName,tSize";
+    
+    my $sth2 = $ucsc_dbc->prepare($sql);
+    $sth2->execute();
+    
+    my ($tName,$tSize);
+    
+    $sth2->bind_columns(\$tName,\$tSize);
+
+    while( $sth2->fetch() ) {
+      $tName =~ s/^chr//;
+      $tNames{$tName} = $tSize;
+    }
+    $sth2->finish;
+
+    $sql = "select qName,qSize from $table group by qName,qSize";
+
+    $sth2 = $ucsc_dbc->prepare($sql);
+    $sth2->execute();
+
+    my ($qName,$qSize);
+    
+    $sth2->bind_columns(\$qName,\$qSize);
+
+    while( $sth2->fetch() ) {
+      $qName =~ s/^chr//;
+      $qNames{$qName} = $qSize;
+    }
+    $sth2->finish;
+  }
+
+  $sth->finish;
+
+  # Checking the chromosome length from UCSC with Ensembl.
+  foreach my $tName (keys %tNames) {
+    my $tdnafrag = $tdnafrags{$tName};
+    next unless (defined $tdnafrag);
+    unless ($tdnafrag->length == $tNames{$tName}) {
+      print STDERR "tSize = " . $tNames{$tName} ." for tName = $tName and Ensembl has dnafrag length of ",$tdnafrag->length . "\n";
+    }
+  }
+  # Checking the chromosome length from UCSC with Ensembl.
+  foreach my $qName (keys %qNames) {
+    my $qdnafrag = $qdnafrags{$qName};
+    next unless (defined $qdnafrag);
+    unless ($qdnafrag->length == $qNames{$qName}) {
+      print STDERR "qSize = " . $qNames{$qName} ." for qName = $qName and Ensembl has dnafrag length of ",$qdnafrag->length . "\n";
+    }
+  }
+  exit 0;
+}
