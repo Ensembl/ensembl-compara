@@ -394,7 +394,7 @@ sub store_featurePair_as_genomicAlignBlock
   #
   # test if I'm getting the indexes right
   #
-  if($self->debug > 1) {
+  if($self->debug > 2) {
     print_simple_align($fp->get_SimpleAlign, 80);
 
     my $testChunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
@@ -457,7 +457,7 @@ sub store_featurePair_as_genomicAlignBlock
   print("$track_sql\n") if($self->debug);
   $self->{'comparaDBA'}->dbc->do($track_sql);
 
-  if($self->debug > 1) { print_simple_align($GAB->get_SimpleAlign, 80);}
+  if($self->debug > 2) { print_simple_align($GAB->get_SimpleAlign, 80);}
 
   return $GAB;
 }
