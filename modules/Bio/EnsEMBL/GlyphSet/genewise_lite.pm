@@ -13,8 +13,8 @@ sub colours {
     my $self = shift;
     my $Config = $self->{'config'};
     return {
+        'similarity_genewise'   => $Config->get('genewise_lite','similarity_genewise'),
         'unknown'   => $Config->get('genewise_lite','unknown'),
-        'known'     => $Config->get('genewise_lite','known'),
         'pseudo'    => $Config->get('genewise_lite','pseudo'),
         'ext'       => $Config->get('genewise_lite','ext'),
         'hi'        => $Config->get('genewise_lite','hi'),

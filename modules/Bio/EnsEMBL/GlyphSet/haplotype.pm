@@ -11,42 +11,28 @@ sub my_label { return "Haplotypes"; }
 
 sub features {
     my ($self) = @_;
-    #print STDERR "Getting adaptor!!!\n";
-    unless( $self->{'config'}->{'_hap_adaptor'} ) {
-        my $db_details = EnsWeb::species_defs->databases;
-        #print STDERR "DB: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'NAME'}."\n";
-        #print STDERR "UN: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'USER'}."\n";
-        #print STDERR "PW: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'PASS'}."\n";
-        #print STDERR "HT: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'HOST'}."\n";
-        #print STDERR "PT: ".$db_details->{'ENSEMBL_HAPLOTYPE'}{'PORT'}."\n";
-        my $dbad = Bio::EnsEMBL::DBSQL::DBAdaptor->new( 
-            -dbname => $db_details->{'ENSEMBL_HAPLOTYPE'}{'NAME'},
-            -user   => $db_details->{'ENSEMBL_HAPLOTYPE'}{'USER'},
-            -pass   => $db_details->{'ENSEMBL_HAPLOTYPE'}{'PASS'},
-            -host   => $db_details->{'ENSEMBL_HAPLOTYPE'}{'HOST'},
-            -port   => $db_details->{'ENSEMBL_HAPLOTYPE'}{'PORT'},
-        );
-        $self->{'config'}->{'_hap_adaptor'} = Bio::EnsEMBL::ExternalData::Haplotype::HaplotypeAdaptor->new( $dbad );
-    }
-    #print STDERR "Getting data!!!\n";
     return $self->{'container'}->get_Haplotypes_start_end(
-        $self->{'config'}->{'_hap_adaptor'}
+        $self->{'config'}->{'_databases'}->{'haplotype'}
     );
 }
 
 sub tag {
     my( $self, $f ) = @_;
     my $col = $self->{'config'}->get($self->check(), 'col');
-    return { 'style'  => 'right-snp',
-             'colour' => $col },
-           { 'style'  => 'left-snp',
-             'colour' => $col };
+    my $vc_start = $self->{'container'}->_global_start()-1;
+    my @tags = ();
+    my %snps = $f->fetchSNPs( ); # returns a hash -> name => location
+    foreach my $snp ( keys %snps ) {
+        push @tags, { 'style' => 'snp', 'start' => $snps{$snp} - $vc_start, colour => $col };
+    }
+    return @tags;
 }
 
 sub colour {
     my( $self, $f ) = @_;
     return $self->{'config'}->get($self->check(), 'col'), $self->{'config'}->get($self->check(), 'lab'), 'line'; 
 }
+
 sub href {
     my ($self, $f ) = @_;
     return "/$ENV{'ENSEMBL_SPECIES'}/haploview?haplotype=".$f->id;

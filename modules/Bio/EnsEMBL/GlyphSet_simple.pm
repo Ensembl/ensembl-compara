@@ -199,6 +199,28 @@ sub _init {
         	        });
                     $composite->push($line);
                     push @tag_glyphs, $triangle;
+                } elsif($tag->{'style'} eq 'snp') {
+                    next if( $tag->{'start'} < 1) ;
+                    next if( $tag->{'start'} > $vc_length );
+                    my $triangle_start =  $tag->{'start'} - 4/$pix_per_bp;
+                    my $triangle_end   =  $tag->{'start'} + 4/$pix_per_bp;
+    	            my $line = new Bio::EnsEMBL::Glyph::Space({
+                        'x'          => $triangle_start,
+                        'y'          => $h,
+                        'width'      => 8/$pix_per_bp,
+                        'height'     => 0,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $triangle_start, $h,
+                                         $tag->{'start'}, 0,
+                                         $triangle_end,   $h  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    $composite->push($line);
+                    push @tag_glyphs, $triangle;
                 } elsif($tag->{'style'} eq 'left-snp') {
                     next if($start > $f->start());
                     my $triangle_start =  $start - 4/$pix_per_bp;

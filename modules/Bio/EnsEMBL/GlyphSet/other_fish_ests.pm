@@ -4,7 +4,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "other fish ESTs"; }
+sub my_label { return "Other fish ESTs"; }
 
 sub features {
 
