@@ -21,7 +21,8 @@ sub features {
 
 sub object_type {
   my($self,$id)=@_;
-  return $self->{'type_cache'}{$id} ||= ref($self->my_config('TYPE')) eq 'CODE' ? &{$self->my_config{'TYPE'}}($id) : '';
+  my $F = $self->my_config('TYPE');
+  return $self->{'type_cache'}{$id} ||= ref($F) eq 'CODE' ? &$F($id) : '';
 }
 
 sub SUB_ID {
@@ -47,7 +48,10 @@ sub SUB_HREF { return href( @_ ); }
 sub href {
   my ( $self, $id ) = @_;
   my $type = $self->object_type($id);
-  return $self->ID_URL( $self->my_config( "URL_KEY_$type" || $self->my_config( 'URL_KEY' ) || 'SRS_PROTEIN', $self->SUB_ID($id) );
+  return $self->ID_URL( 
+    $self->my_config( "URL_KEY_$type" ) || $self->my_config( 'URL_KEY' ) || 'SRS_PROTEIN',
+    $self->SUB_ID($id)
+  );
 }
 
 sub zmenu {
@@ -60,6 +64,6 @@ sub zmenu {
       return {( 'caption', map { s/###(\w+)###/my $M="SUB_$1";$self->$M($id)/eg; $_ } @Q )};
     }
   }
-  return { 'caption' => $self->SUB_ID($id),  $self->my_config('ZMENU_LABEL') || "Protein homology" => $self->href( $id ) };
+  return { 'caption' => $self->SUB_ID($id),  ($self->my_config('ZMENU_LABEL')||"Protein homology") => $self->href( $id ) };
 }
 1;
