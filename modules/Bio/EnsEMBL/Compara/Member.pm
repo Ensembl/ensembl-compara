@@ -91,7 +91,6 @@ sub new_from_gene {
     $self->chr_start($gene->seq_region_start);
     $self->chr_end($gene->seq_region_end);
     $self->chr_strand($gene->seq_region_strand);
-    $self->seq_length(0);
     $self->source_name("ENSEMBLGENE");
     $self->version($gene->version);
   }
@@ -144,7 +143,6 @@ sub new_from_transcript {
   $self->chr_start($transcript->coding_region_start);
   $self->chr_end($transcript->coding_region_end);
   $self->chr_strand($transcript->seq_region_strand);
-  $self->seq_length(0);
   $self->version($transcript->translation->version);
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
@@ -166,14 +164,12 @@ sub new_from_transcript {
     else {
       #$seq_string =~ s/(.{72})/$1\n/g;
       $self->sequence($seq_string);
-      $self->seq_length($peptideBioSeq->length);
     }
   }
   else {
     $self->stable_id($transcript->stable_id);
     $self->source_name("ENSEMBLTRANS");
     #$self->sequence($transcript->seq);
-    #$self->seq_length($transcript->length);
   }
 
   #print("Member->new_from_transcript\n");
@@ -417,26 +413,31 @@ sub genome_db {
 }
 
 =head2 sequence
-
   Arg [1]    : string $sequence
   Example    : my $seq = $member->sequence;
-  Description: Extracts the sequence string of this member
+  Description: Get/set the sequence string of this member
+               Will lazy load by sequence_id if needed and able
   Returntype : string
   Exceptions : none
   Caller     : general
-
 =cut
 
 sub sequence {
   my $self = shift;
-  $self->{'_sequence'} = shift if(@_);
 
+  if(@_) {
+    $self->{'_seq_length'} = undef;
+    $self->{'_sequence'} = shift;
+    $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
+    return $self->{'_sequence'};
+  }
+  
   if(!defined($self->{'_sequence'}) and
      defined($self->sequence_id()) and     
      defined($self->adaptor))
   {
-    print("lazy load sequence\n");
-    $self->adaptor->_load_sequence($self);
+    $self->{'_sequence'} = $self->adaptor->_fetch_sequence_by_id($self->sequence_id);
+    $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
   }
 
   return $self->{'_sequence'};
@@ -444,9 +445,8 @@ sub sequence {
 
 
 =head2 seq_length
-  Arg [1]    : int $seq_length
   Example    : my $seq_length = $member->seq_length;
-  Description: Extracts the sequence length of this member
+  Description: get the sequence length of this member
   Returntype : int
   Exceptions : none
   Caller     : general
@@ -454,13 +454,12 @@ sub sequence {
 
 sub seq_length {
   my $self = shift;
-  $self->{'_seq_length'} = shift if(@_);
-  
-  if(!defined($self->{'_seq_length'}) and
-     defined($self->sequence_id()) and
-     defined($self->adaptor))
-  {
-    $self->adaptor->_load_sequence($self);
+
+  unless(defined($self->{'_seq_length'})) {
+    #need to check case if user is calling seq_length first
+    #call $self->sequence (to lazy load if needed)
+    my $seq = $self->sequence;
+    $self->{'_seq_length'} = length($seq) if(defined($seq));
   }
   return $self->{'_seq_length'};
 }

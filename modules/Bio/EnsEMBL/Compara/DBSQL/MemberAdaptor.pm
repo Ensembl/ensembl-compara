@@ -4,6 +4,8 @@ use strict;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -533,9 +535,6 @@ sub _objs_from_sth {
         $attribute->$autoload_method($column{$autoload_method});
       }
     }
-    #if(defined($member->sequence_id())) {
-    #  $self->_load_sequence($member);
-    #}
     if (defined $attribute) {
       push @members, [$member, $attribute];
     } else {
@@ -558,23 +557,16 @@ sub _final_clause {
   return $self->{'_final_clause'};
 }
 
-sub _load_sequence {
-  my ($self, $member) = @_;
+sub _fetch_sequence_by_id {
+  my ($self, $sequence_id) = @_;
 
-  my $sql = "SELECT sequence.sequence, sequence.length " .
-            "FROM sequence " .
-            "WHERE sequence_id = ?";
+  my $sql = "SELECT sequence.sequence FROM sequence WHERE sequence_id = ?";
   my $sth = $self->prepare($sql);
-  $sth->execute($member->sequence_id);
+  $sth->execute($sequence_id);
 
-  my ($sequence, $seq_length);
-  $sth->bind_columns(\$sequence, \$seq_length);
-
-  if ($sth->fetch()) {
-    $member->sequence($sequence);
-    $member->seq_length($seq_length);
-  }
+  my ($sequence) = $sth->fetchrow_array();
   $sth->finish();
+  return $sequence;
 }
 
 #
@@ -658,13 +650,29 @@ sub store {
 sub update_sequence {
   my ($self, $member) = @_;
 
-  return unless($member);
-  return unless($member->sequence_id);
+  return 0 unless($member);
+  unless($member->dbID) {
+    throw("MemberAdapter::update_sequence member must have valid dbID\n");
+  }
+  unless(defined($member->sequence)) {
+    warning("MemberAdapter::update_sequence with undefined sequence\n");
+  }
 
-  my $sql = "UPDATE sequence SET sequence = ? WHERE sequence_id = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($member->sequence, $member->sequence_id);
-  $sth->finish;
+  if($member->sequence_id) {
+    my $sth = $self->prepare("UPDATE sequence SET sequence = ?, length=? WHERE sequence_id = ?");
+    $sth->execute($member->sequence, $member->seq_length, $member->sequence_id);
+    $sth->finish;
+  } else {
+    my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+    $sth2->execute($member->sequence, $member->seq_length);
+    $member->sequence_id( $sth2->{'mysql_insertid'} );
+    $sth2->finish;
+
+    my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
+    $sth3->execute($member->sequence_id, $member->dbID);
+    $sth3->finish;
+  }
+  return 1;
 }
 
 
