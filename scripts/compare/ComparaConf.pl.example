@@ -1,0 +1,25 @@
+
+BEGIN {
+package main;
+
+%ComparaConf = (
+		'sb_species' => 'Homo_sapiens', # subject species name
+		'sb_host' => 'ecs1e.sanger.ac.uk', # subject database host
+		'sb_dbname' => 'NCBI29_raw', # subject database name
+		'sb_dbuser' => 'ensro', # subject database username
+		'sb_static_type' => 'NCBI_29', # subject static golden database type
+		'sb_fragment_type' => 'raw', # subject fragment type vc or raw
+		'sb_fragment_size' => 250000, # subject virtual contig size to be dumped (bp)
+		'sb_chr_name_restriction' => '%NT%', # subject database chr_name restriction
+		'qy_species' => 'Mus_musculus', # query species name
+		'qy_host' => 'ecs1d.sanger.ac.uk', # query database host
+		'qy_dbname' => 'mus_musculus_core_5_3', # query database name
+		'qy_dbuser' => 'ensro', # query database username
+		'qy_static_type' => 'CHR', # query static golden database type
+		'qy_fragment_type' => 'vc', # query fragment type vc or raw
+		'qy_fragment_size' => 1000, # query virtual contig size to be dumped (bp)
+		'qy_walk_step'=> 5000, # base pairs separating 2 query fragments
+	       );
+}
+
+1;
