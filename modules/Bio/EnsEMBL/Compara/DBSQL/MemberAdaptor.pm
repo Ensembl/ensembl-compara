@@ -636,16 +636,6 @@ sub store {
     #sucessful insert
     $member->dbID( $sth->{'mysql_insertid'} );
     $sth->finish;
-
-    # insert in sequence table to generate new
-    # sequence_id to insert into member table;
-    if(defined($member->sequence)) {
-      $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence));
-
-      my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
-      $sth3->execute($member->sequence_id, $member->dbID);
-      $sth3->finish;
-    }
   } else {
     $sth->finish;
     #UNIQUE(source_id,stable_id) prevented insert since member was already inserted
@@ -658,6 +648,18 @@ sub store {
   }
 
   $member->adaptor($self);
+
+  # insert in sequence table to generate new
+  # sequence_id to insert into member table;
+  if(defined($member->sequence) and $member->sequence_id == 0) {
+    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence));
+
+    my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
+    $sth3->execute($member->sequence_id, $member->dbID);
+    $sth3->finish;
+  }
+
+
   if (defined $member->taxon) {
     $self->db->get_TaxonAdaptor->store($member->taxon);
   }
