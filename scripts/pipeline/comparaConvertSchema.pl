@@ -118,7 +118,7 @@ sub convert_sequence {
   my $sth = $db->prepare("SELECT member.member_id, member.sequence " .
                          " FROM member" .
                          " WHERE member.sequence IS NOT NULL".
-                         " LIMIT 1000 ");
+                         " LIMIT 5000 ");
   $sth->execute();
 
   my ($member_id, $sequence);
