@@ -187,8 +187,7 @@ sub add_child {
   #print("add_child\n");  $self->print_node; $child->print_node;
 
   #object linkage
-  $child->retain;
-  $child->disavow_parent;
+  $child->retain->disavow_parent;
   $child->_set_parent($self);
 
   $self->{'_children_id_hash'} = {} unless($self->{'_children_id_hash'});
@@ -208,6 +207,17 @@ sub store_child {
   $self->adaptor->store($child);
 }
 
+=head2 remove_child
+
+  Overview   : unlink and release child from self if its mine
+               might cause child to delete if refcount reaches Zero.
+  Arg [1]    : $child Bio::EnsEMBL::Compara::NestedSet instance
+  Example    : $self->remove_child($child);
+  Returntype : undef
+  Caller     : general
+
+=cut
+
 sub remove_child {
   my ($self, $child) = @_;
 
@@ -219,6 +229,7 @@ sub remove_child {
            $self->{'_children_id_hash'}->{$child->nestedset_id});
   
   delete $self->{'_children_id_hash'}->{$child->nestedset_id};
+  $child->_set_parent(undef);
   $child->release;
   return undef;
 }
@@ -237,7 +248,7 @@ sub remove_child {
 sub disavow_parent {
   my $self = shift;
 
-  my $parent = $self->{'_parent_node'};
+  my $parent = $self->{'_parent_node'}; #use variable to bypass parent autoload
   $self->_set_parent(undef);
   if($parent) {
     $parent->remove_child($self);
@@ -267,8 +278,11 @@ sub release_children {
   my @kids = values(%{$self->{'_children_id_hash'}});
   foreach my $child (@kids) {
     #printf("  parent %d releasing child %d\n", $self->nestedset_id, $child->nestedset_id);
-    $child->release if(defined($child));
-  }  
+    if($child) {
+      $child->release_children;
+      $child->release;
+    }
+  }
   $self->{'_children_id_hash'} = undef;
   return $self;
 }
@@ -424,7 +438,7 @@ sub print_node {
   my $indent = shift;
 
   $indent = '' unless(defined($indent));
-  printf("%s-%s(%s)\n", $indent, $self->name, $self->nestedset_id);
+  printf("%s-%s(%s)NS\n", $indent, $self->name, $self->nestedset_id);
 }
 
 
@@ -523,12 +537,16 @@ sub merge_node_via_shared_ancestor {
 #
 ##################################
 
-sub flatten {
+sub flatten_tree {
   my $self = shift;
-  foreach my $child (@{$self->children}) {
-    next if($child->is_leaf);
-  }
   
+  my $leaves = $self->get_all_leaves;
+  foreach my $leaf (@{$leaves}) { $leaf->retain->disavow_parent; }
+
+  $self->release_children;
+  foreach my $leaf (@{$leaves}) { $self->add_child($leaf); $leaf->release; }
+  
+  return $self;
 }
 
 ##################################
@@ -593,7 +611,7 @@ sub _recursive_get_all_leaves {
   my $self = shift;
   my $leaves = shift;
     
-  $leaves->{$self->nestedset_id} = $self;
+  $leaves->{$self->nestedset_id} = $self if($self->is_leaf);
 
   foreach my $child (@{$self->children}) {
     $child->_recursive_get_all_leaves($leaves);
