@@ -115,13 +115,21 @@ sub fetch_all_by_species_region {
       );
   return [] if (!$this_dnafrag);
 
-  # Get the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct corresponding to the alignment_type and
+  # Get the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object corresponding to the alignment_type and
   # the couple of genomes
   my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
+  my $method_link_species_set;
+  if ($consensus_genome_db->dbID == $query_genome_db->dbID) {
+    # Allow to fetch the right method_link_species_set for self-comparisons!
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
+        $alignment_type, [$consensus_genome_db]);
+  } else {
+    # Normal, pairwise comparisons...
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
           $alignment_type,
           [$consensus_genome_db, $query_genome_db]
       );
+  }
   return [] if (!$method_link_species_set);
   
 #   my $gaa = $self->db->get_GenomicAlignAdaptor;
