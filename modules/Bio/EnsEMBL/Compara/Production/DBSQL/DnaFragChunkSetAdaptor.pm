@@ -350,6 +350,12 @@ sub _final_clause {
   return '';
 }
 
+sub _fetch_all_DnaFragChunk_by_ids {
+  my $self = shift;
+  my $chunkID_list = shift;  #list reference
+
+  return $self->db->get_DnaFragChunkAdaptor->fetch_by_dbIDs(@$chunkID_list);
+}
 
 1;
 

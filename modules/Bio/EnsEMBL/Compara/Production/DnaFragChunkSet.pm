@@ -190,7 +190,7 @@ sub get_all_DnaFragChunks {
   {
     #lazy load all the DnaFragChunk objects
     $self->{'_cached_chunk_list'} =
-      $self->adaptor->fetch_all_by_dnafrag_chunk_ids(@{$self->dnafrag_chunk_ids});
+      $self->adaptor->_fetch_all_DnaFragChunk_by_ids($self->dnafrag_chunk_ids);
   }
   return $self->{'_cached_chunk_list'};
 }
