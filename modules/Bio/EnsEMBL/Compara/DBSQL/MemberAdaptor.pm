@@ -73,6 +73,16 @@ sub fetch_by_dbID{
   return $obj;
 }
 
+sub fetch_by_dbIDs{
+  my $self = shift;
+
+  my $ids = join(',' , @_);
+  my $constraint = "m.member_id in ($ids)";
+
+  #return first element of _generic_fetch list
+  return _generic_fetch($constraint);
+}
+
 =head2 fetch_by_source_stable_id
 
   Arg [1]    : string $source_name
@@ -95,13 +105,10 @@ sub fetch_by_source_stable_id {
     $self->throw("fetch_by_source_stable_id must have an stable_id");
   }
 
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-  my ($source_table, $source_syn) = @{$tabs[1]};
-
+  my $source_id = $self->get_source_id_from_name($source_name);
+  
   #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${source_syn}.source_name = '$source_name' AND ${syn}.stable_id = '$stable_id'";
+  my $constraint = "m.source_id = '$source_id' AND m.stable_id = '$stable_id'";
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
@@ -142,7 +149,8 @@ sub fetch_by_source {
   $self->throw("source_name arg is required\n")
     unless ($source_name);
 
-  my $constraint = "s.source_name = '$source_name'";
+  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_id = '$source_id'";
 
   return $self->_generic_fetch($constraint);
 }
@@ -164,7 +172,8 @@ sub fetch_by_source_taxon {
   $self->throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
-  my $constraint = "s.source_name = '$source_name' and m.taxon_id = $taxon_id";
+  my $source_id = $self->get_source_id_from_name($source_name);    
+  my $constraint = "m.source_id = '$source_id' and m.taxon_id = $taxon_id";
 
   return $self->_generic_fetch($constraint);
 }
@@ -241,14 +250,15 @@ sub fetch_by_relation {
 sub fetch_by_relation_source {
   my ($self, $relation, $source_name) = @_;
 
-  my $join;
-  my $constraint = "s.source_name = '$source_name'";
-
   $self->throw() 
     unless (defined $relation && ref $relation);
   
   $self->throw("source_name arg is required\n")
     unless ($source_name);
+
+  my $join;
+  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_id = '$source_id'";
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
     my $family_id = $relation->dbID;
@@ -301,14 +311,15 @@ sub fetch_by_relation_source {
 sub fetch_by_relation_source_taxon {
   my ($self, $relation, $source_name, $taxon_id) = @_;
 
-  my $join;
-  my $constraint = "s.source_name = '$source_name' AND m.taxon_id = $taxon_id";
-
   $self->throw()
     unless (defined $relation && ref $relation);
   
   $self->throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
+
+  my $join;
+  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_id = '$source_id' AND m.taxon_id = $taxon_id";
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
     my $family_id = $relation->dbID;
@@ -466,13 +477,14 @@ sub _generic_fetch {
 sub _tables {
   my $self = shift;
 
-  return (['member', 'm'], ['source', 's']);
+  return (['member', 'm']);
 }
 
 sub _columns {
   my $self = shift;
 
   return qw (m.member_id
+             m.source_id
              m.stable_id
              m.version
              m.taxon_id
@@ -483,8 +495,7 @@ sub _columns {
              m.chr_end
              m.chr_strand
              m.sequence_id
-             s.source_id
-             s.source_name);
+             );
 }
 
 sub _objs_from_sth {
@@ -510,7 +521,7 @@ sub _objs_from_sth {
         '_chr_strand' => $column{'chr_strand'},
         '_sequence_id' => $column{'sequence_id'},
         '_source_id' => $column{'source_id'},
-        '_source_name' => $column{'source_name'},
+        '_source_name' => $self->get_source_name_from_id($column{'source_id'}),
         '_adaptor' => $self});
 
     my @_columns = $self->_columns;
@@ -537,8 +548,7 @@ sub _objs_from_sth {
 
 sub _default_where_clause {
   my $self = shift;
-
-  return 'm.source_id = s.source_id';
+  return '';
 }
 
 sub _final_clause {
@@ -695,6 +705,52 @@ sub store_source {
   }
 }
 
+=head2 get_source_name_from_id
+  Arg [1]    :
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
+=cut
+
+sub get_source_name_from_id {
+  my ($self,$source_id) = @_;
+
+  $self->{'_source_id2name_hash'} = {} unless($self->{'_source_id2name_hash'});
+  my $source_name = $self->{'_source_id2name_hash'}->{$source_id};
+  return $source_name if($source_name);
+  
+  # source_id not in hash, so reload source table from DB
+  $self->{'_source_name2id_hash'} = {} unless($self->{'_source_name2id_hash'});
+  my $sql = "SELECT source_id, source_name FROM source";
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  while(my ($id, $name) = $sth->fetchrow_array()) {
+    $self->{'_source_id2name_hash'}->{$id} = $name;
+    $self->{'_source_name2id_hash'}->{$name} = $id;
+  }
+  $sth->finish;
+
+  $source_name = $self->{'_source_id2name_hash'}->{$source_id};
+  $source_name = '' unless($source_name);
+  return $source_name;
+}
+
+sub get_source_id_from_name {
+  my ($self,$source_name) = @_;
+
+  $self->{'_source_name2id_hash'} = {} unless($self->{'_source_name2id_hash'});
+  my $source_id = $self->{'_source_name2id_hash'}->{$source_name};
+  return $source_id if($source_id);
+  
+  # source_name not in hash, so reload source table from DB
+  # by calling get_source_name_from_id(-1) (a non-valid id)
+  $self->get_source_name_from_id(-1);
+  $source_id = $self->{'_source_name2id_hash'}->{$source_name};
+  $source_id = -1 unless($source_id);
+  return $source_id 
+}
 
 =head2 store_gene_peptide_link
   Arg [1]    : int member_id of gene member
