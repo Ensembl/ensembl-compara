@@ -89,7 +89,7 @@ sub _init {
             '3p_r' => [ 0, 0 ],
             '5p_r' => [ 0, 0 ],
         );
-        foreach my $tag { keys %points } {
+        foreach my $tag ( keys %points ) {
             my $X = $f->{ $tag };
             my $h1 = $points{ $tag }[0];
             my $h2 = $points{ $tag }[1];
