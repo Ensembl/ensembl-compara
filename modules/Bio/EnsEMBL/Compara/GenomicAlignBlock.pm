@@ -1362,18 +1362,43 @@ sub reverse_complement {
 
 sub restrict_between_reference_positions {
   my ($self, $start, $end, $reference_genomic_align) = @_;
+  my $genomic_align_block;
+  my $new_reference_genomic_align;
+  my $new_genomic_aligns;
 
   $reference_genomic_align ||= $self->reference_genomic_align;
   throw("A reference Bio::EnsEMBL::Compara::GenomicAlign must be given") if (!$reference_genomic_align);
   $start = $reference_genomic_align->dnafrag_start if (!defined($start));
   $end = $reference_genomic_align->dnafrag_end if (!defined($end));
 
-  my $this_pos = $reference_genomic_align->dnafrag_start;
-  my $excess_at_the_start = $start - $reference_genomic_align->dnafrag_start;
-  my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $end;
+  foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
+    my $new_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+          -method_link_species_set => $this_genomic_align->method_link_species_set,
+          -dnafrag => $this_genomic_align->dnafrag,
+          -dnafrag_start => $this_genomic_align->dnafrag_start,
+          -dnafrag_end => $this_genomic_align->dnafrag_end,
+          -dnafrag_strand => $this_genomic_align->dnafrag_strand,
+          -cigar_line => $this_genomic_align->cigar_line
+      );
+    if ($this_genomic_align == $reference_genomic_align) {
+      $new_reference_genomic_align = $new_genomic_align;
+    }
+    push(@$new_genomic_aligns, $new_genomic_align);
+  }
+  throw("Reference GenomicAlign not found!") if (!$new_reference_genomic_align);
+  $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -method_link_species_set => $self->method_link_species_set,
+          -genomic_align_array => $new_genomic_aligns,
+          -reference_genomic_align => $new_reference_genomic_align
+      );
+  throw("Reference GenomicAlign not found!") if (!$genomic_align_block->reference_genomic_align);
+
+  my $this_pos = $new_reference_genomic_align->dnafrag_start;
+  my $excess_at_the_start = $start - $new_reference_genomic_align->dnafrag_start;
+  my $excess_at_the_end  = $new_reference_genomic_align->dnafrag_end - $end;
 
   if ($excess_at_the_start > 0) {
-    my $this_ref_align_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq (N's and gaps).
+    my $this_ref_align_seq = $new_reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq (N's and gaps).
     ## Memory optimization: start looking from $excess_at_the_end from the start
     my $truncated_seq = substr($this_ref_align_seq, 0, $excess_at_the_start, "");
     my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
@@ -1385,10 +1410,8 @@ sub restrict_between_reference_positions {
     $truncated_seq = ($1 or "").$truncated_seq; ## Only the length of this matters
     my $total_length_in_the_alignment = CORE::length($truncated_seq);
 
-    ## Truncate GenomicAlignBlock
-    $self->dbID(0); # unset dbID
     ## Truncate all the GenomicAligns
-    foreach my $genomic_align (@{$self->get_all_GenomicAligns}) {
+    foreach my $genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
       my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
       my $this_truncated_seq = substr($aligned_sequence, 0, $total_length_in_the_alignment);
       substr($aligned_sequence, 0, $total_length_in_the_alignment, "");
@@ -1403,14 +1426,13 @@ sub restrict_between_reference_positions {
       } else {
         $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
       }
-      $genomic_align->dbID(0); # unset dbID
     }
   } elsif ($excess_at_the_start < 0) {
     warning("Start [$start] is lower than start position of the reference Bio::EnsEMBL::Compara::GenomicAlign");
   }
 
   if ($excess_at_the_end > 0) {
-    my $this_ref_align_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
+    my $this_ref_align_seq = $new_reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
     ## Optimization: start looking from $excess_at_the_end from the end because
     ## the pattern match at the end of the string could be very slow
     my $truncated_seq = substr($this_ref_align_seq, -$excess_at_the_end, $excess_at_the_end, "");
@@ -1421,9 +1443,9 @@ sub restrict_between_reference_positions {
     my $total_length_in_the_alignment = CORE::length($truncated_seq);
 
     ## Truncate GenomicAlignBlock
-    $reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
+    $new_reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
     ## Truncate all the GenomicAligns
-    foreach my $genomic_align (@{$self->get_all_GenomicAligns}) {
+    foreach my $genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
       my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
       my $this_truncated_seq = substr($aligned_sequence, - $total_length_in_the_alignment, $total_length_in_the_alignment, "");
       $genomic_align->aligned_sequence($aligned_sequence);
@@ -1437,13 +1459,13 @@ sub restrict_between_reference_positions {
       } else {
         $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
       }
-      $genomic_align->dbID(0); # unset dbID
     }
   } elsif ($excess_at_the_end < 0) {
     warning("End [$end] is larger than end position of the reference Bio::EnsEMBL::Compara::GenomicAlign");
   }
 
-  return $self;
+  throw("Reference GenomicAlign not found!") if (!$genomic_align_block->get_all_GenomicAligns->[0]);
+  return $genomic_align_block;
 }
 
 
