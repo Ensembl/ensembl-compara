@@ -86,7 +86,7 @@ sub new {
             }
             $classname->import();
             my $gsm = new $classname($Container, $Config, $highlights, $strand);
-            for my $glyphset ($gsm->glyphsets()) {
+            for my $glyphset ( sort { $a->managed_name cmp $b->managed_name } $gsm->glyphsets()) {
                 my $row = $glyphset->managed_name();
                      ########## skip this row if user has it turned off
                 next if !($Config->get($row, 'on') eq "on") ||
