@@ -61,15 +61,17 @@ sub new {
     my $self = {};
     bless $self,$class;
     
-    my ($align_id,$adaptor,$align_name) = $self->_rearrange([qw(ALIGN_ID ADAPTOR ALIGN_NAME)],@args);
+    my ($align_id,$align_row_id,$adaptor,$align_name) = $self->_rearrange([qw(ALIGN_ID ALIGN_ROW_ID ADAPTOR ALIGN_NAME)],@args);
 
     if (defined $align_id) {
       $self->align_id($align_id);
     }
+    if (defined $align_row_id) {
+      $self->align_row_id($align_row_id);
+    }
     if (defined $adaptor) {
       $self->adaptor($adaptor);
-   }
-   
+    }
     if (defined $align_name) {
       $self->align_name($align_name);
     }
@@ -269,6 +271,27 @@ sub align_id{
 
 }
 
+=head2 align_row_id
+
+ Title   : align_row_id
+ Usage   : $obj->align_row_id($newval)
+ Function: 
+ Example : 
+ Returns : value of align_row_id
+ Args    : newvalue (optional)
+
+
+=cut
+
+sub align_row_id{
+   my ($obj,$value) = @_;
+   if( defined $value) {
+      $obj->{'align_row_id'} = $value;
+    }
+    return $obj->{'align_row_id'};
+
+}
+
 =head2 align_name
 
  Title	 : align_name
@@ -385,17 +408,9 @@ sub _ensure_loaded{
 
 sub _load_all_blocks{
    my ($self,@args) = @_;
-   my $id = $self->align_id;
-
-   my $sth = $self->adaptor->prepare("select align_row_id from genomic_align_block where align_id = '$id'");
-   
-   $sth->execute;
-   my $align_row;
-   while( ($align_row) = $sth->fetchrow_array ) {
-       my $abs = $self->get_AlignBlockSet($align_row);
-       $self->add_AlignBlockSet($align_row,$abs);
-   }
-       
+   my $align_row_id = $self->align_row_id;
+   my $abs = $self->get_AlignBlockSet($align_row_id);
+   $self->add_AlignBlockSet($align_row_id,$abs);
 }
 
 =head2 _loaded_align_block
