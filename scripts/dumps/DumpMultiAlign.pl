@@ -1,3 +1,4 @@
+#!/usr/local/ensembl/bin/perl -w
 # get a slice from the commandline arguments
 # get genomicaligns from compara for that slice
 # try to get slices for target regions
