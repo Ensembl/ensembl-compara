@@ -106,8 +106,8 @@ sub _init {
 		    'caption' => $rid,
 		    'Contig information'     => "/perl/seqentryview?seqentry=$clone&contigid=$rid",
 #		    "FPC ID: $fpc_id"  => "",
-		    "Request clone (FPC ID: $fpc_id)"  =>
-			"http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$fpc_id&query=Requested%20via%20Ensembl",
+#		    "Request clone (FPC ID: $fpc_id)"  =>
+#			"http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$fpc_id&query=Requested%20via%20Ensembl",
 		},
 	    });
 	    $self->push($glyph);

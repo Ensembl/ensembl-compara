@@ -24,41 +24,40 @@ sub init_label {
 sub _init {
     my ($this) = @_;
     my %hash;
-    my $caption = "Pfam";
-
+    my $caption         = "Pfam";
     my @bitmap         	= undef;
-    my $protein = $this->{'container'};
-    my $Config = $this->{'config'};
+    my $protein         = $this->{'container'};
+    my $Config          = $this->{'config'};
     my $pix_per_bp  	= $Config->transform->{'scalex'};
     my $bitmap_length 	= int($this->{'container'}->length * $pix_per_bp);
-	
-    my $y          = 0;
-    my $h          = 4;
-    my $cmap  = new ColourMap;
-    my $black = $cmap->id_by_name('black');
-    my $red   = $cmap->id_by_name('red');
-    
-   
+    my $y               = 0;
+    my $h               = 4;
+    my $cmap            = new ColourMap;
+    my $black           = $cmap->id_by_name('black');
+    my $red             = $cmap->id_by_name('red');
+    my $font            = "Small";
+    my $colour          = $Config->get($Config->script(), 'pfam','col');
+    my ($fontwidth,
+	$fontheight)    = $Config->texthelper->px2bp($font);
+
     foreach my $feat ($protein->each_Protein_feature()) {
        if ($feat->feature2->seqname =~ /^PF\w+/) {
 	   push(@{$hash{$feat->feature2->seqname}},$feat);
        }
     }
     
-    my $font = "Small";
     foreach my $key (keys %hash) {
-	my @row = @{$hash{$key}};
+	my @row  = @{$hash{$key}};
 	my $desc = $row[0]->idesc();
 		
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'x' => $row[0]->feature1->start(),
-	    'y' => $y,
+	    'x'     => $row[0]->feature1->start(),
+	    'y'     => $y,
 	    'zmenu' => {
-		'caption'  	=> "Pfam domain",
-		$key 		=> "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?$key"
+		'caption' => "Pfam domain",
+		$key      => "http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?$key"
 	    },
 	});
-	my $colour = $Config->get($Config->script(), 'pfam','col');
 
 	my $pfsave;
 	my ($minx, $maxx);
@@ -85,26 +84,24 @@ sub _init {
 	# add a domain linker
 	#
 	my $rect = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'        => $minx,
-	    'y'        => $y + 2,
-	    'width'    => $maxx - $minx,
-	    'height'   => 0,
-	    'colour'   => $colour,
+	    'x'         => $minx,
+	    'y'         => $y + 2,
+	    'width'     => $maxx - $minx,
+	    'height'    => 0,
+	    'colour'    => $colour,
 	    'absolutey' => 1,
 	});
 	$Composite->push($rect);
 
-	my $fontheight = $Config->texthelper->height($font);
-	my $fontwidth  = $Config->texthelper->width($font);
 	my $desc = $pfsave->idesc();
-
+	my $len = length($desc) + 1;
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->feature1->start(),
 	    'y'      => $h + 1,
 	    'height' => $fontheight,
-	    'width'  => $fontwidth * length($desc) * 1.1,
+	    'width'  => $fontwidth * $len * 1.1,
 	    'colour' => $black,
 	});
 	$Composite->push($text);

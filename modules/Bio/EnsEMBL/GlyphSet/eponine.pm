@@ -9,13 +9,12 @@ use Bio::EnsEMBL::Glyph::Poly;
 use Bio::EnsEMBL::Glyph::Text;
 use SiteDefs;
 use ColourMap;
-use IO::Socket;
 
 sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'Eponine TSS',
+	'text'      => 'TSS Eponine(Das)',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
@@ -24,103 +23,34 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-	
+
 	return unless ($self->strand() == -1);
 	
-	my $SERVER = 'servlet.sanger.ac.uk';
-	my $PORT = 8080;
-	my $EP_REQUEST1 = 'GET /das/tss_eponine/features?ref=';
-	my $EP_REQUEST2 = ' HTTP/1.0';
+    my $Config         	= $self->{'config'};
+    my $feature_colour 	= $Config->get($Config->script(),'high','col');
+	my $vc 				= $self->{'container'};
+	my $length 			= $vc->length();
 
-    my $Config         = $self->{'config'};
-    my $feature_colour = $Config->get($Config->script(),'eponine','col');
-	my $length = $self->{'container'}->length();
-
-    my @map_contigs = ();
-	my %eplist = ();
-	my $i = 0;
-	@map_contigs = $self->{'container'}->_vmap->each_MapContig();
-    if (@map_contigs){
-		my $start = $map_contigs[0]->start();
-    	my $end   = $map_contigs[-1]->end();
-    	my $tot_width = $end - $start;
-
-   		foreach my $temp_rawcontig ( @map_contigs ) {
-
-        	my $socket = IO::Socket::INET->new(PeerAddr => $SERVER,
-                    	   PeerPort => $PORT,
-                    	   Proto    => 'tcp',
-                    	   Type     => SOCK_STREAM,
-                    	   Timeout  => 10,
-                    	   ) or warn("Cannot make socket to $SERVER on port $PORT!\n");
-
-			my $REQ = "$EP_REQUEST1" . $temp_rawcontig->contig->id() . "$EP_REQUEST2";
-			print $socket "$REQ\n\n";
-			my ($s, $e, $o) = undef;
-			while(<$socket>){
-
-				if(/<FEATURE id="null">/o){ $eplist{$i} = [];}
-        		if(/<START>(\d+)<\/START>/o){ $s = $1;}
-        		if(/<END>(\d+)<\/END>/o){ $e = $1;}
-        		if(/<ORIENTATION>(.)<\/ORIENTATION>/o){$o = $1;}
-
-				if ($s && $e && $o){
-					print STDERR "OK: $s && $e && $o\n";
-    				my( $mapcontig,$raw_start,$ori) = $self->{'container'}->raw_contig_position(1,1);
-    				if ($o eq '+'){
-						$s 		= $self->{'container'}->_global_start + $s - $temp_rawcontig->rawcontig_start();
-						$e   	= $self->{'container'}->_global_start + $e - $temp_rawcontig->rawcontig_start();
-    				}
-    				else {
-						my $s2 	= $self->{'container'}->_global_start + $temp_rawcontig->rawcontig_start() - $e;
-						my $e2  = $self->{'container'}->_global_start + $temp_rawcontig->rawcontig_start() - $s;
-						$s = $s2;
-						$e = $e2;
-    				}
-					push @{$eplist{$i}}, ($s,$e);
-					$i++;
-					($s, $e, $o) = undef;
-				}
-			}
-			close($socket);
-						
-		}
-	}
-	
-	foreach my $key (keys %eplist){
-	
-		#print STDERR "$key => ", join(" ", @{$eplist{$key}}), "\n";
-		#print STDERR "Length: $length\n";
-		#print STDERR "Gstart: ", $self->{'container'}->_global_start(),"\n";
-		#print STDERR "Gend: ", $self->{'container'}->_global_end(),"\n";
-
-		my $s = @{$eplist{$key}}->[0];
-		my $e = @{$eplist{$key}}->[1];
-		my $l = @{$eplist{$key}}->[1] - @{$eplist{$key}}->[0];
-
-		#print STDERR "E start: $s\n";
-		#print STDERR "E end: $e\n";
-		#print STDERR "E length: $l\n";
+	my @features = $vc->get_all_ExternalFeatures();
+	foreach my $f(@features){
+		next unless ($f->primary_tag() eq "das" && $f->source_tag() eq "tss_eponine");
 		
-		if ($s < $self->{'container'}->_global_start || $e > $self->{'container'}->_global_end){
-			print STDERR "Bounds error: $s [",$self->{'container'}->_global_start,"], $e [",$self->{'container'}->_global_end,"]\n";
-		}
+		my $type = $f->seqname();
 		my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-	    	'x'      		=> $s,
-	    	'y'      		=> 0,
-	    	'width'  		=> $l,
-	    	'height' 		=> 10,
-	    	'colour' 		=> $feature_colour,
-	    	'absolutey'  	=> 1,
-#	    	'zmenu' 		=> {
-#				'caption' => 'Transcription start site',
-#				'Eponine' => "",
-#	    	},
+			'x'      	=> $f->start(),
+			'y'      	=> 0,
+			'width'  	=> $f->end()-$f->start(),
+			'height' 	=> 8,
+			'colour' 	=> $feature_colour,
+			'absolutey' => 1,
+            'zmenu'     => {
+                'caption' 	=> "Eponine Transcript start site",
+                "DAS source info" 		=> "http://servlet.sanger.ac.uk:8080/das/dsn",
+			}
 		});
-		#print STDERR "Pushing $glyph\n";
 		$self->push($glyph);
-
 	}
+	
 }
 
 

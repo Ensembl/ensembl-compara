@@ -23,15 +23,18 @@ sub init_label {
 sub _init {
     my ($this) = @_;
     my %hash;
-    my $y          = 0;
-    my $h          = 4;
+    my $y             = 0;
+    my $h             = 4;
+    my @bitmap        = undef;
+    my $protein       = $this->{'container'};
+    my $Config        = $this->{'config'};
+    my $pix_per_bp    = $Config->transform->{'scalex'};
+    my $bitmap_length = int($protein->length() * $pix_per_bp);
+    my $colour        = $Config->get($Config->script(), 'prosite','col');
+    my $font          = "Small";
+    my ($fontwidth,
+	$fontheight)  = $Config->texthelper->px2bp($font);
 
-    my @bitmap         	= undef;
-    my $protein         = $this->{'container'};
-    my $Config          = $this->{'config'};
-    my $pix_per_bp  	= $Config->transform->{'scalex'};
-    my $bitmap_length 	= int($this->{'container'}->length * $pix_per_bp);
-    
     foreach my $feat ($protein->each_Protein_feature()) {
 	if ($feat->feature2->seqname =~ /^PS\w+/) {
 	    push(@{$hash{$feat->feature2->seqname}},$feat);
@@ -51,13 +54,11 @@ sub _init {
 	    },
 	});
 
-	my $colour = $Config->get($Config->script(), 'prosite','col');
 	my @row = @{$hash{$key}};
 
 	my $prsave;
 	my ($minx, $maxx);
 
-	my $font = "Small";
 	foreach my $pr (@row) {
 	    my $x  = $pr->feature1->start();
 	    $minx  = $x if ($x < $minx || !defined($minx));
@@ -93,21 +94,20 @@ sub _init {
 	#########
 	# add a label
 	#
-	my ($fontwidth, $fontheight) = $Config->texthelper->px2bp($font);
-
 	my $desc = $prsave->idesc();
-
+	my $len  = length($desc) + 1;
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->feature1->start(),
 	    'y'      => $h + 1,
 	    'height' => $fontheight,
-	    'width'  => $fontwidth * length($desc) * 1.1,
+	    'width'  => $fontwidth * $len * 1.1,
 	    'colour' => $colour,
 	});
-
 	$Composite->push($text);
+
+	print STDERR qq(prosite: length = ), length($desc), qq( fontwidth = $fontwidth glyphwidth = ), $text->width(), "\n");
 
 	if ($Config->get($Config->script(), 'prosite', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
