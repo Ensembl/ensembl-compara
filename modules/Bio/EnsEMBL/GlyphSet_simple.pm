@@ -497,7 +497,7 @@ sub _init {
     }
     # warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
 ## No features show "empty track line" if option set....  ##
-    $self->error() if $flag; 
+    $self->no_features() if $flag; 
 }
 
 1;
