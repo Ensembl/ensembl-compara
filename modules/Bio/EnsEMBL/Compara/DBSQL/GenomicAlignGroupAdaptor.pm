@@ -231,25 +231,21 @@ sub fetch_all_by_GenomicAlign {
 
   my $genomic_align_block_sql = qq{
               SELECT
-                  b.group_id,
-                  b.type,
-                  b.genomic_align_id
+                group_id,
+                type
               FROM
-                genomic_align_group a, genomic_align_group b
+                genomic_align_group
               WHERE
-                a.group_id = b.group_id
-                AND a.genomic_align_id = ?
+                genomic_align_id = ?
         };
-  
-  my @values;
   
   my $sth = $self->prepare($genomic_align_block_sql);
   $sth->execute($genomic_align->dbID);
 
-  # Group results in order to be able to build Bio::EnsEMBL::Compara::GenomicAlignGroupAdaptor objects
+
   my $groups;
   while (my $values = $sth->fetchrow_arrayref) {
-    my ($group_id, $type, $genomic_align_id) = @$values;
+    my ($group_id, $type) = @$values;
 
     $groups->{$group_id}->{'type'} = $type;
   }
