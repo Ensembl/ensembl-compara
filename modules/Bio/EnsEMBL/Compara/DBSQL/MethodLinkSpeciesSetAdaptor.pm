@@ -171,7 +171,15 @@ sub store {
   
   if (!$dbID) {
     ## Lock the table in order to avoid a concurrent process to store the same object with a different dbID
-    $self->dbc->do("LOCK TABLES method_link WRITE, method_link_species_set WRITE");
+    # from mysql documentation 13.4.5 : 
+    #   "If your queries refer to a table using an alias, then you must lock the table using that same alias. 
+    #   "It will not work to lock the table without specifying the alias" 
+    #Thus we need to lock method_link_species_set as a, method_link_species_set as b, and method_link_species_set 
+
+    $self->dbc->do(qq{ LOCK TABLES method_link WRITE, 
+                       method_link_species_set as a WRITE, 
+                       method_link_species_set as b WRITE,
+                       method_link_species_set WRITE });
 
     # Now, check if the object has not been stored before (tables are locked)
     $sth = $self->prepare($select_sql);
