@@ -81,6 +81,9 @@ sub new_from_gene {
       "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
       "not a [$genome_db]");
     }
+    unless (defined $gene->stable_id) {
+      throw("COREDB error: does not contain gene_stable_id for gene_id ". $gene->dbID."\n");
+    }
 
     $self->stable_id($gene->stable_id);
     $self->taxon_id($genome_db->taxon_id);
@@ -149,6 +152,10 @@ sub new_from_transcript {
       throw("request to translate a transcript without a defined translation",
             $transcript->stable_id);
     }
+    unless (defined $transcript->translation->stable_id) {
+      throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+    }
+    
     $self->stable_id($transcript->translation->stable_id);
     $self->source_name("ENSEMBLPEP");
 
@@ -169,6 +176,9 @@ sub new_from_transcript {
     }
   }
   else {
+    unless (defined $transcript->stable_id) {
+      throw("COREDB error: does not contain transcript stable id for transcript_id ".$transcript->dbID."\n");
+    }
     $self->stable_id($transcript->stable_id);
     $self->source_name("ENSEMBLTRANS");
     #$self->sequence($transcript->seq);
