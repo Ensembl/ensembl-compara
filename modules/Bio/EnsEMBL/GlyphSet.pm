@@ -4,6 +4,7 @@ use Bio::Root::RootI;
 use Exporter;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Space;
+use EnsWeb;
 
 use vars qw(@ISA $AUTOLOAD);
 @ISA = qw(Exporter Bio::Root::RootI);
@@ -268,50 +269,50 @@ sub transform {
 ###
 ### gene_specific functions 
 ###
-sub virtualGene_details {
-    my ($self, $vg, %highlights) = @_;
+#sub virtualGene_details {
+#    my ($self, $vg, %highlights) = @_;
+#
+#    my $highlight = 0;
+#    my $genetype  = 'unknown';
+#    my $label     = "NOVEL";
+#    if ($vg->gene->is_known) {
+#        $genetype = 'known';
+#        my @temp_geneDBlinks = $vg->gene->each_DBLink();
+#    # find a decent label:
+#        $label = $vg->id();
+#        $highlight = 1 if exists $highlights{$label}; # check for highlighting
+#        ( $label, $highlight ) = $self->_label_highlight( $label, $highlight, \%highlights, \@temp_geneDBlinks );
+#        
+#    }
+#    return ( $genetype, $label, $highlight, $vg->start(), $vg->end() );
+#}
 
-    my $highlight = 0;
-    my $genetype  = 'unknown';
-    my $label     = "NOVEL";
-    if ($vg->gene->is_known) {
-        $genetype = 'known';
-        my @temp_geneDBlinks = $vg->gene->each_DBLink();
-    # find a decent label:
-        $label = $vg->id();
-        $highlight = 1 if exists $highlights{$label}; # check for highlighting
-        ( $label, $highlight ) = $self->_label_highlight( $label, $highlight, \%highlights, \@temp_geneDBlinks );
-        
-    }
-    return ( $genetype, $label, $highlight, $vg->start(), $vg->end() );
-}
-
-sub _label_highlight {
-    my ($self,$label,$highlight,$highlights,$dblinks) = @_;
-    my $max_pref = 0;
-    my %db_names = ( # preference for naming scheme!
-        'FlyBase'       => 110, 'HUGO'          => 100,
-        'SP'            =>  90,
-        'SWISS-PROT'    =>  80, 'SPTREMBL'      =>  70,
-        'SCOP'          =>  60, 'LocusLink'     =>  50,
-        'RefSeq'        =>  40 
-    );
-
-    foreach ( @$dblinks ) {
-        my $db = $_->database();
-        # reset if precedence is higher!
-        #print STDERR "_l_h:\t".ref($self)."\t$db\t$db_names{$db}\t".$_->display_id()."\t|\n";
-        if( $db_names{$db} ) {
-            $highlight = 1 if exists $highlights->{$_->display_id()}; # check for highlighting
-            # if this is a more prefered label then we will use it!
-            if( $db_names{$db}>$max_pref) {
-                $label = $_->display_id();
-                $max_pref = $db_names{$db};
-            }
-        }
-    }
-    return($label, $highlight);
-}
+#sub _label_highlight {
+#    my ($self,$label,$highlight,$highlights,$dblinks) = @_;
+#    my $max_pref = 0;
+#    my %db_names = ( # preference for naming scheme!
+#        'FlyBase'       => 110, 'HUGO'          => 100,
+#        'SP'            =>  90,
+#        'SWISS-PROT'    =>  80, 'SPTREMBL'      =>  70,
+#        'SCOP'          =>  60, 'LocusLink'     =>  50,
+#        'RefSeq'        =>  40 
+#    );
+#
+#    foreach ( @$dblinks ) {
+#        my $db = $_->database();
+#        # reset if precedence is higher!
+#        #print STDERR "_l_h:\t".ref($self)."\t$db\t$db_names{$db}\t".$_->display_id()."\t|\n";
+#        if( $db_names{$db} ) {
+#            $highlight = 1 if exists $highlights->{$_->display_id()}; # check for highlighting
+#            # if this is a more prefered label then we will use it!
+#            if( $db_names{$db}>$max_pref) {
+#                $label = $_->display_id();
+#                $max_pref = $db_names{$db};
+#            }
+#        }
+#    }
+#    return($label, $highlight);
+#}
 
 sub errorTrack {
 	my ($self, $message) = @_;
@@ -333,32 +334,32 @@ sub errorTrack {
 	return;
 }
 
-sub externalGene_details {
-    my ($self, $vg, $vc_id, %highlights) = @_;
-
-    my $highlight = 0;
-    my $label     = "NOVEL";
-    my $start;
-    my $end;
-    
-    my $genetype   = ($vg->type() =~ /pseudo/) ? 'pseudo' : 'ext';
-
-    foreach my $trans ($vg->each_Transcript){
-        foreach my $exon ( $trans->get_all_Exons ) {
-            if($exon->seqname eq $vc_id) {
-                $start = $exon->start if ( $exon->start < $start || !defined $start );
-                $end   = $exon->end   if ( $exon->end   > $end   || !defined $end );
-	    }
-    	}
-    }
-    $label  = $vg->stable_id;
-    $highlight = 1 if exists $highlights{$label};
-    $label  =~ s/gene\.//;
-    $highlight = 1 if exists $highlights{$label};
-    my @temp_geneDBlinks = $vg->each_DBLink();
-    ( $label, $highlight ) = $self->_label_highlight( $label, $highlight, \%highlights, \@temp_geneDBlinks );
-    return ( $genetype, $label, $highlight, $start, $end );
-}
+#sub externalGene_details {
+#    my ($self, $vg, $vc_id, %highlights) = @_;
+#
+#    my $highlight = 0;
+#    my $label     = "NOVEL";
+#    my $start;
+#    my $end;
+#    
+#    my $genetype   = ($vg->type() =~ /pseudo/) ? 'pseudo' : 'ext';
+#
+#    foreach my $trans ($vg->each_Transcript){
+#        foreach my $exon ( $trans->get_all_Exons ) {
+#            if($exon->seqname eq $vc_id) {
+#                $start = $exon->start if ( $exon->start < $start || !defined $start );
+#                $end   = $exon->end   if ( $exon->end   > $end   || !defined $end );
+#           }
+#    	}
+#    }
+#    $label  = $vg->stable_id;
+#    $highlight = 1 if exists $highlights{$label};
+#    $label  =~ s/gene\.//;
+#    $highlight = 1 if exists $highlights{$label};
+#    my @temp_geneDBlinks = $vg->each_DBLink();
+#    ( $label, $highlight ) = $self->_label_highlight( $label, $highlight, \%highlights, \@temp_geneDBlinks );
+#    return ( $genetype, $label, $highlight, $start, $end );
+#}
 
 ## Stuff copied out of scalebar.pm so that contig.pm can use it!
 ##
@@ -384,5 +385,28 @@ sub zoom_zmenu {
     };
 }
 
+sub check {
+    my( $self ) = @_;
+    my ($feature_name) = reverse split '::', ref($self) ;
+    my $features_ref = $self->{'config'}->get('_settings','features') || [];
+    my $options_ref  = $self->{'config'}->get('_settings','options')  || [];
+    foreach( @$features_ref, @$options_ref ) {
+        next unless $_->[0] eq $feature_name;
+        return $feature_name if $_->[2] eq  '';
+        my ($field, $string) = split /\s+/, $_->[2];
+        if($field eq 'databases') {
+            my $DB = EnsWeb::species_defs->databases;
+            return defined $DB->{$string} && $DB->{$string}->{'NAME'} ne '' ? $feature_name : undef;
+        } elsif($field eq 'traces') {
+            my $DB = EnsWeb::species_defs->ENSEMBL_SPECIES_TRACE_DATABASES;
+            return defined $DB->{$string} && $DB->{$string}->{'NAME'} ne '' ? $feature_name : undef;
+        } elsif($field eq 'features') {
+            my $FT = EnsWeb::species_defs->DB_FEATURES;
+            return defined $FT->{uc($string)} && $FT->{uc($string)}   ne '' ? $feature_name : undef;
+        }
+        return undef;
+    }
+    return $feature_name; # If not found in lists then should always be drawn?
+}
 
 1;
