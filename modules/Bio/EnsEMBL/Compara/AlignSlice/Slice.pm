@@ -1161,6 +1161,7 @@ sub get_all_underlying_Slices {
             if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate") and !defined($this_subseq_strand));
       }
     }
+    next if (!defined($this_subseq_start)); # if the whole requested region correspond to a gap
     my $start_position = ($start>$slice_start)?$start:$slice_start; # in AlignSlice coordinates
     my $end_position = ($end<$slice_end)?$end:$slice_end; # in AlignSlice coordinates
 #     if ($strand == 1) {
