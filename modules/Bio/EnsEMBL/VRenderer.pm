@@ -45,6 +45,57 @@ sub render {
         }
 
     }
+
+    my %tags;
+    my %layers = ();
+    for my $glyphset (@{$self->{'glyphsets'}}) {
+      foreach( keys %{$glyphset->{'tags'}}) {
+        if($tags{$_}) {
+          # my @points = ( @{$tags{$_}}, @{$glyphset->{'tags'}{$_}} );
+          my $COL   = undef;
+          my $FILL  = undef;
+          my $Z     = undef;
+          my @points = map { 
+            $COL  = defined($COL)  ? $COL  : $_->{'col'};
+            $FILL = defined($FILL) ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill'); 
+            $Z    = defined($Z)    ? $Z    : $_->{'z'};
+            (
+             $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
+             $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
+            ) } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
+          my $first = $glyphset->{'tags'}{$_}[0];
+          my $PAR = { 
+                     'pixelpoints'  => [ @points ],
+                     'bordercolour' => $COL,
+                     'absolutex'    => 1,
+                     'absolutey'    => 1,
+                    };
+          $PAR->{'colour'} = $COL if($FILL);
+          my $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
+          push @{$layers{defined $Z ? $Z : -1 }}, $glyph;
+          delete $tags{$_};
+        } else {
+          $tags{$_} = $glyphset->{'tags'}{$_}
+        }       
+      }
+      foreach( @{$glyphset->{'glyphs'}} ) {
+        push @{$layers{$_->{'z'}||0}}, $_;
+      }
+    }
+    
+    for my $layer ( sort { $a<=>$b } keys %layers ) {
+      #########
+      # loop through everything and draw it
+      #
+      for ( @{$layers{$layer}} ) {
+        my $method = $self->method($_);
+        if($self->can($method)) {
+          $self->$method($_);
+        } else {
+          print STDERR qq(Sanger::Graphics::Renderer::render: Do not know how to $method\n);
+        }
+      }
+    }
         
     ########## the last thing we do in the render process is add a frame
     ########## so that it appears on the top of everything else...
