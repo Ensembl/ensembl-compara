@@ -69,8 +69,11 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
+  my $memberAdaptor = $self->db->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor");
+
+  
   my $member_id  = $self->input_id;
-  my $member     = $self->db->get_MemberAdaptor->fetch_by_dbID($member_id);
+  my $member     = $memberAdaptor->fetch_by_dbID($member_id);
   $self->throw("No member in compara for member_id=$member_id") unless defined($member);
 
   my $bioseq     = $member->bioseq();
@@ -124,7 +127,8 @@ sub fetch_input {
 sub write_output {
   my( $self) = @_;
 
-  $self->db->get_PeptideAlignFeatureAdaptor->store($self->output);
+  my $PAFAdaptor = $self->db->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor");
+  $PAFAdaptor->store($self->output);
 }
 
 1;
