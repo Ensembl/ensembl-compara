@@ -21,10 +21,11 @@ $0
                                 to which alignments are queried
   [--alignment_type string]     (e.g. TRANSLATED_BLAT) type of alignment stored (default: BLASTZ_NET)
   [--tsl]                       print out a translated alignment
-  [--oo]                        Original orientation output from the alignment program. Mostly useful in
-                                association with -tsl option, when a full translated alignment program has
-                                been used e.g TRANSLATED_BLAT (helps to obtain the right translation phase
-                                used during the alignment process)
+  [--oo]                        By default, the alignments are dumped so that the --qy species sequence is 
+                                always on forward strand. --oo is mostly useful in association with -tsl 
+                                option, when a full translated alignment program has been used e.g 
+                                TRANSLATED_BLAT, and allow to obtain the right translation phase. So the --qy
+                                species sequence might be reverse complemented.
   [--ft string]                 alignment format, available in bioperl Bio::AlignIO (default: clustalw)
                                 Also available are gaf and axtplus.
   [--uc]                        print out sequence in upper cases (default is lower cases)
@@ -150,12 +151,12 @@ my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaCo
 
 my $dafad = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','DnaAlignFeature');
 
-my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_Slice($qy_slice,$tg_binomial,undef,$alignment_type,$limit)};
+my $DnaDnaAlignFeatures = $dafad->fetch_all_by_Slice($qy_slice,$tg_binomial,undef,$alignment_type,$limit);
 
 my $index = 0;
 
-foreach my $ddaf (@DnaDnaAlignFeatures) {
-
+foreach my $ddaf (@{$DnaDnaAlignFeatures}) {
+  
   if ($ddaf->cigar_string eq "") {
     warn $ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$ddaf->hstrand," ",$ddaf->score," has no cigar line";
     next;
