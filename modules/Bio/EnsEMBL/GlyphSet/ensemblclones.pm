@@ -8,12 +8,15 @@ use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Bio::Das; 
 use EnsWeb;
-use Data::Dumper;
+use ExtURL;
 
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return "Ensembl Clones"; }
+sub my_label {
+    my $self = shift;
+    return $self->my_config('other') . " clones";
+}
 
 sub features {
     my $self = shift;
@@ -31,7 +34,7 @@ sub features {
 
     # get DAS source config for this track
     my $species_defs    = &EnsWeb::species_defs();
-    my $source          = "das_ENSEMBLCLONES";
+    my $source          = $self->my_config('dsn');
     my $dbname          = EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$source};
     return unless $dbname;
     
@@ -110,7 +113,8 @@ sub features {
 sub href {
     my ($self, $f) = @_;
     my ($cloneid) = split /\./ ,  $f->display_id;
-    return "http://www.ensembl.org/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
+    my $exturl = ExtURL->new;
+    return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
 }
 
 sub colour {
@@ -129,7 +133,7 @@ sub zmenu {
     my $zmenu = { 
         'caption' => $f->display_id,
         '03:status: '.$f->{'status'}.' version' => '',
-        '04:Jump to Ensembl' => $self->href($f),
+        '04:Jump to '.$self->my_config('other') => $self->href($f),
     };
     return $zmenu;
 }
