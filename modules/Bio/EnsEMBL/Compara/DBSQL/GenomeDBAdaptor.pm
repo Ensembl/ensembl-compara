@@ -46,6 +46,7 @@ use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Utils::Exception;
 
 # Hashes for storing a cross-referencing of compared genomes
 my %genome_consensus_xreflist;
@@ -323,9 +324,10 @@ sub create_GenomeDBs {
 sub check_for_consensus_db {
   my ( $self, $query_gdb, $con_gdb, $method_link_id) = @_;
 
-  deprecated("consensus and query sequences are not used anymore.".
+  deprecate("consensus and query sequences are not used anymore.".
               " Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock".
               " for more details");
+
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
@@ -365,9 +367,10 @@ sub check_for_consensus_db {
 sub check_for_query_db {
   my ( $self, $con_gdb, $query_gdb,$method_link_id ) = @_;
 
-  deprecated("consensus and query sequences are not used anymore.".
+  deprecate("consensus and query sequences are not used anymore.".
               " Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock".
               " for more details");
+
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
