@@ -90,10 +90,10 @@ sub zmenu {
         "02:length: @{[$f->length]} bps" => '',
         "03:Centre on clone:" => $self->href($f),
     };
-    foreach(@{$f->get_all_attribute_values('synonyms')}) {
+    foreach(@{$f->get_all_attribute_values('synonym')}) {
         $zmenu->{"11:Synonym: $_" } = '';
     }
-    foreach(@{$f->get_all_attribute_values('embl_accs')}) {
+    foreach(@{$f->get_all_attribute_values('embl_acc')}) {
         $zmenu->{"12:EMBL: $_" } = '';
     }
     (my $state = $f->get_scalar_attribute('state'))=~s/^\d\d://;

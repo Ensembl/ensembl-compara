@@ -24,7 +24,8 @@ sub _init {
   return unless $self->strand() == -1;
   my $offset = $self->{'container'}->chr_start - 1;
   my $Config        = $self->{'config'};
-  my $EXTENT       = $Config->{'extent'};
+  my $EXTENT        = $Config->get('_settings','context');
+     $EXTENT        = 1e6 if $EXTENT eq 'FULL';
   my $chr_name = $self->{'container'}->chr_name();
     
   my @transcripts   = $Config->{'transcripts'};
@@ -54,6 +55,7 @@ sub _init {
     my $location = int( ($snpref->[0]+$snpref->[1])/2 );
     my $snp = $snpref->[2];
     my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID().":".($snp->start+$offset) };
+    next unless $cod_snp;
     next if $snp->end < $transcript->start - $EXTENT;
     next if $snp->start > $transcript->end + $EXTENT;
     my( $colour, $label );

@@ -54,7 +54,7 @@ sub zmenu {
     return {
 	'caption' => $id,
         '01:Peptide sequence' => $self->href( $gene, $transcript ),
-       # '02:cDNA sequence'    => $self->HASH_URL( 'FASTAVIEW', { 'FASTADB' => "cDNA_$gft", 'ID' => $id } ),
+        '02:cDNA sequence'    => $self->HASH_URL( 'FASTAVIEW', { 'FASTADB' => "cDNA_$gft", 'ID' => $id } ),
     };
 
 }

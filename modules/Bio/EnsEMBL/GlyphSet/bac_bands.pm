@@ -34,7 +34,7 @@ sub zmenu {
     "01:Jump to $page" => $self->href($f),
     "02:Status: @{[$f->get_scalar_attribute('status')]}"   => '',
   };
-  foreach( @{$f->get_all_attribute_values('synonyms')} ) {
+  foreach( @{$f->get_all_attribute_values('synonym')} ) {
     $zmenu->{"04:BAC band: $_"} = '';
   }
   foreach(@{$f->get_all_attribute_values('embl_accs')}) {
