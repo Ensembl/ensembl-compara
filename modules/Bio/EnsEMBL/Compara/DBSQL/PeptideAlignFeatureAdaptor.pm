@@ -163,7 +163,7 @@ sub _store_PAFS {
 
       my $analysis_id = 0;
       if($feature->analysis()) {
-        print("feature has analysis '".$feature->analysis->logic_name()."' dbID=".$feature->analysis->dbID."\n");
+        #print("feature has analysis '".$feature->analysis->logic_name()."' dbID=".$feature->analysis->dbID."\n");
         $analysis_id=$feature->analysis()->dbID();
       }
 
