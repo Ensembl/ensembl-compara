@@ -90,7 +90,7 @@ sub new {
     }
     my @glyphsets = ();
     $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
-    if( $Container->{'__type__'} eq 'fake' ) {
+    if( ($Container->{'__type__'}||"") eq 'fake' ) {
       my $classname = qq($self->{'prefix'}::GlyphSet::comparafake);
       next unless $self->dynamic_use( $classname );
       my $GlyphSet;
@@ -104,7 +104,7 @@ sub new {
     for my $strand (@strands_to_show) {
       my $tmp_gs_store = {};
       for my $row ($Config->subsections( 1 )) {
-        next unless ($Config->get($row, 'on') eq "on");
+        next unless (($Config->get($row, 'on')||"") eq "on");
         my $str_tmp = $Config->get($row, 'str');
         next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
         next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
