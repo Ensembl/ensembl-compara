@@ -5,6 +5,8 @@ use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::SeqFeature;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
+
 sub my_label { return "Sequence"; }
 
 sub features {
@@ -13,7 +15,9 @@ sub features {
     my $seq = $self->{'container'}->seq;
     my $strand = $self->strand;
     if($strand == -1 ) { $seq=~tr/ACGT/TGCA/; }
+    &eprof_start('mf');
     $self->{'mapfrags'} = $self->{'container'}->get_all_MapFrags( 'assembly' );
+    &eprof_end('mf');
     my @features = map { 
        Bio::EnsEMBL::SeqFeature->new(
 	   -start => ++$start,
@@ -33,12 +37,12 @@ sub colour {
 }
 sub href {
     my( $self,$f) = @_;
-    if(@{$self->{'mapfrags'}}) { 
-        foreach(@{$self->{'mapfrags'}}) {
-	  warn("MF: ".$_->start);
-        }
-        warn( "SQ: ". $f->start );
+    foreach(@{$self->{'mapfrags'}}) {
+        return "http://wwwdev.sanger.ac.uk/cgi-bin/tracefetch/viewtrace?species=$ENV{'ENSEMBL_SPECIES'}&contig=".
+		$_->name."&focus=".( $_->orientation > 0 ? ( $f->start-$_->start+1 ) : ( $_->end-$f->start+1 ) )
+            if $_->start <= $f->start && $f->start <= $_->end;
     }
+    return undef;
 }
 sub zmenu {
     my ($self, $f ) = @_;

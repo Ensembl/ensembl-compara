@@ -81,6 +81,7 @@ sub new {
         ########## install the glyphset managers, we've just cached the ones we need...
         foreach my $manager ( keys %{$Config->{'_managers'}} ) {
             my $classname = $PREFIX."::GlyphSetManager::$manager";
+            warn( "MANAGER $classname" );
             eval "require $classname";
             if($@) {
                 print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);

@@ -8,12 +8,14 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use ExtURL;
 use SiteDefs;
+use Data::Dumper;
+
 
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
 
-    my $URL = $self->das_name =~ /^managed_(.*)$/ ?
+    my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ?
 qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)] : qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)] ;
 
     (my $T = $URL)=~s/\'/\\\'/g;
@@ -24,7 +26,7 @@ qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/externaldas?action=edit&k
         'colour'    => $self->{'config'}->colourmap()->id_by_name('contigblue2'),
         'absolutey' => 1,
         'href'      => $URL,
-        'zmenu'     => $self->das_name =~/^managed_/ ?
+        'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
             {   'caption'                       => 'Configure' ,
                 '01:Advanced configuration...'  => $T }:
             {   'caption'                       => 'HELP', 
@@ -37,8 +39,11 @@ sub _init {
     my ($self) = @_;
 
     my $Config          = $self->{'config'};
-    my $das_name        = $self->das_name();
-    my $strand          = $Config->get($das_name, 'str');
+    ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
+    $das_config_key =~ s/^managed_das/das/;
+
+    warn( Dumper( $Config->{'user'} ));
+    my $strand          = $Config->get($das_config_key, 'str');
 # If strand is 'r' or 'f' then we display everything on one strand (either
 # at the top or at the bottom!
 
@@ -47,12 +52,12 @@ sub _init {
     $self->{'bitmap'} = [];    
     my $tstrand = $self->strand;
     my $cmap            = $Config->colourmap();
-    my $feature_colour  = $Config->get($das_name, 'col') || $Config->colourmap()->id_by_name('contigblue1');
-    my $dep             = $Config->get($das_name, 'dep');
-    my $group           = $Config->get($das_name, 'group');
+    my $feature_colour  = $Config->get($das_config_key, 'col') || 'contigblue1';
+    my $dep             = $Config->get($das_config_key, 'dep');
+    my $group           = $Config->get($das_config_key, 'group');
     my $vc              = $self->{'container'};
-    my $border          = $Config->colourmap()->id_by_name('black');
-    my $red             = $Config->colourmap()->id_by_name('red');
+    my $border          = 'black' ;
+    my $red             = 'red' ;
     ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
     my $length          = $vc->length() +1;
 
@@ -74,7 +79,7 @@ sub _init {
         return;
     }
     $self->{'link_text'}    = $self->{'extras'}->{'linktext'} || 'Additional info';
-    $self->{'ext_url'}      = $self->{'extras'}->{'name'} =~ /^managed_/ ? 
+    $self->{'ext_url'}      = $self->{'extras'}->{'name'} =~ /^managed_extdas/ ? 
         ExtURL->new( $self->{'extras'}->{'linkURL'} => $self->{'extras'}->{'linkURL'} ) :
         ExtURL->new();        
     

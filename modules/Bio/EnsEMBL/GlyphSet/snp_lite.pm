@@ -37,7 +37,6 @@ sub href {
 
 sub image_label {
   my ($self, $f) = @_;
-  warn( $f->{'_ambiguity_code'} );
   return $f->{'_ambiguity_code'} eq '-' ? undef : ($f->{'_ambiguity_code'},'overlaid');
 }
 

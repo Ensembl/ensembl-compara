@@ -32,7 +32,7 @@ sub init {
         warn( $das_source_name );
 	next unless( $Config->get("managed_$das_source_name",'on') eq 'on' );
 	my $extra_config = EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$das_source_name};
-	$extra_config->{'name'} = $das_source_name;
+	$extra_config->{'name'} = "managed_$das_source_name";
 	$self->add_glyphset( $extra_config );
     }
     my $ext_das = new ExternalDAS();
@@ -49,7 +49,7 @@ sub init {
 	         warn("\t$_\t".$ext_das->{'data'}{$das_source_name}{$_}."\n");
             }
  
-	       $extra_config->{'name'} 	= "$das_source_name";
+	       $extra_config->{'name'} 	= "managed_extdas_$das_source_name";
 	       $extra_config->{'url'} 		= "http://$extra_config->{'URL'}/das";
         warn( "ADDING GLYPHSET $das_species $das_source_name" );
 	       $self->add_glyphset( $extra_config );		

@@ -92,7 +92,7 @@ sub _init {
         });
         $self->push($gpadding);        
     }
-    foreach my $band (sort @$bands){
+    foreach my $band (@$bands){
         my $bandname       = $band->name();
         my $vc_band_start  = $band->start() + $v_offset;
         my $vc_band_end    = $band->end() + $v_offset;
