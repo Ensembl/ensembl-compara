@@ -316,7 +316,8 @@ sub _label_highlight {
     my ($self,$label,$highlight,$highlights,$dblinks) = @_;
     my $max_pref = 0;
     my %db_names = ( # preference for naming scheme!
-        'HUGO'          => 100, 'SP'            =>  90,
+        'FlyBase'       => 110, 'HUGO'          => 100,
+        'SP'            =>  90,
         'SWISS-PROT'    =>  80, 'SPTREMBL'      =>  70,
         'SCOP'          =>  60, 'LocusLink'     =>  50,
         'RefSeq'        =>  40 
@@ -343,11 +344,12 @@ sub errorTrack {
 	my $length = $self->{'container'}->length() +1;
     my ($w,$h) = $self->{'config'}->texthelper()->real_px2bp('Tiny');
     my $red    = $self->{'config'}->colourmap()->id_by_name('red');
+    my ($w2,$h2) = $self->{'config'}->texthelper()->real_px2bp('Small');
 	my $bp_textwidth = $w * length($message);
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
     	'x'         => int(($length - $bp_textwidth)/2),
-        'y'         => 0,
-    	'height' 	=> 8,
+        'y'         => int(($h2-$h)/2),
+    	'height' 	=> $h2,
         'font'      => 'Tiny',
         'colour'    => $red,
         'text'      => $message,

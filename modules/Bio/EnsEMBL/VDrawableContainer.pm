@@ -39,7 +39,7 @@ sub new {
                 eval {
     		        $GlyphSet = new Bio::EnsEMBL::GlyphSet::Videogram(
     			                $Container, $Config, $highlights, 0,
-    			                { 'chr' => "chr$chr" }
+    			                { 'chr' => $chr }
     		        );
     		    };
     		    if($@) {

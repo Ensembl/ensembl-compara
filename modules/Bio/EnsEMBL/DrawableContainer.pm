@@ -123,6 +123,7 @@ sub new {
     ########## just for good measure:
         $glyphset->label->width($label_length_px);
         next unless defined $glyphset->bumped();
+        print STDERR "creating composite for bumped button\n";
         $composite = new Bio::EnsEMBL::Glyph::Composite({
                 'y'            => 0,
 				'x'            => 0,

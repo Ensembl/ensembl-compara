@@ -61,6 +61,7 @@ sub _init {
     unless($target) { # Skip in single transcript mode
         if ($type eq 'all'){
             foreach my $vg ( $container->get_all_ExternalGenes() ) {
+                next if $vg->type =~/^(genebuild|genewise|HUMACE|merged)/; # Skip sanger genes
                 $vg->{'_is_external'} = 1;
                 push (@allgenes, $vg);
             }

@@ -69,13 +69,7 @@ sub _init {
 	    my $end	= $clone->end();
 	    $end        = $length if ($end > $length);
 
-	    if ($i%2 == 0){
-			$col  = $col1;
-			$lab  = $lab1;
-	    } else {
-			$col  = $col2;
-			$lab  = $lab2;
-	    }
+        ($col,$lab)  = ($col1,$lab1);
 			
         my $fish = $clone->FISHmap(); $fish = "$fish";
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({

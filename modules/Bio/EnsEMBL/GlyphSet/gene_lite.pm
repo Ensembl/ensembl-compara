@@ -45,6 +45,14 @@ sub _init {
     my $unknown_col   = $Config->get('gene_lite','unknown');
     my $ext_col       = $Config->get('gene_lite','ext');
     my $pseudo_col    = $Config->get('gene_lite','pseudo');
+    my $sanger_colours = { 
+           'Novel_CDS'        => $Config->get('gene_lite','sanger_Novel_CDS'), 
+           'Putative'         => $Config->get('gene_lite','sanger_Putative'), 
+           'Known'            => $Config->get('gene_lite','sanger_Known'), 
+           'Novel_Transcript' => $Config->get('gene_lite','sanger_Novel_Transcript'), 
+           'Pseudogene'       => $Config->get('gene_lite','sanger_Pseudogene'), 
+    }; 
+
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $vc_length     = $vc->length;
     my $bitmap_length = int( $vc_length * $pix_per_bp );
@@ -59,10 +67,37 @@ sub _init {
 	my $show_navigation =  $navigation eq 'on' && ( $vc->length() < $max_length_nav * 1001 );
     
 #First of all let us deal with all the EnsEMBL genes....
-    my $res = $vc->get_all_VirtualGenes_startend_lite();
-
 	my $vc_start = $vc->_global_start();
     my @genes = ();
+    
+    if ($type eq 'all'){ 
+           my $res = $vc->get_all_SangerGenes_startend_lite(); 
+           foreach my $g (@$res){ 
+               my( $gene_col, $gene_label, $high); 
+               $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0; 
+               $gene_label = $g->{'stable_id'}; 
+               $high       = 1 if(exists $highlights{ $gene_label }); 
+               my $T = $g->{'type'}; 
+               $T =~ s/HUMACE-//; 
+               $gene_col = $sanger_colours->{ $T }; 
+               push @genes, { 
+                   'chr_start' => $g->{'chr_start'}, 
+                   'chr_end'   => $g->{'chr_end'}, 
+                   'start'     => $g->{'start'}, 
+                   'strand'    => $g->{'strand'}, 
+                   'end'       => $g->{'end'}, 
+                   'ens_ID'    => '', #$g->{'stable_id'}, 
+                   'label'     => $gene_label, 
+                   'colour'    => $gene_col, 
+                   'ext_DB'    => $g->{'db'}, 
+                   'high'      => $high, 
+                   'type'      => $g->{'type'} 
+               }; 
+           } 
+       } 
+
+    my $res = $vc->get_all_VirtualGenes_startend_lite();
+
     foreach(@$res) {
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$_->{'stable_id'}} ? 1 : 0;
@@ -96,7 +131,7 @@ sub _init {
         foreach my $g (@$res){
             my( $gene_col, $gene_label, $high);
             $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0;
-            $gene_label = $g->{'synonym'};
+            $gene_label = $g->{'synonym'} || $g->{'stable_id'};
             $high       = 1 if(exists $highlights{ $gene_label });
             if($g->{'type'} eq 'pseudo') {
                 $gene_col = $pseudo_col;

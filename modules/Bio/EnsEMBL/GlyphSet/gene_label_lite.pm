@@ -42,6 +42,13 @@ sub _init {
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
+    my $sanger_colours = { 
+           'Novel_CDS'        => $Config->get('gene_label_lite','sanger_Novel_CDS'), 
+           'Putative'         => $Config->get('gene_label_lite','sanger_Putative'), 
+           'Known'            => $Config->get('gene_label_lite','sanger_Known'), 
+           'Novel_Transcript' => $Config->get('gene_label_lite','sanger_Novel_Transcript'), 
+           'Pseudogene'       => $Config->get('gene_label_lite','sanger_Pseudogene'), 
+    }; 
 
 ##############################################################################
 # Stage 1b: Now the virtual contig                                           #
@@ -74,6 +81,32 @@ sub _init {
 # Stage 2a: Retrieve all EnsEMBL genes                                       #
 ##############################################################################
     &eprof_start("gene-virtualgene_start-get");
+    if ($type eq 'all'){ 
+           my $res = $vc->get_all_SangerGenes_startend_lite(); 
+           foreach my $g (@$res){ 
+               my( $gene_col, $gene_label, $high); 
+               $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0; 
+               $gene_label = $g->{'stable_id'}; 
+               $high       = 1 if(exists $highlights{ $gene_label }); 
+               my $T = $g->{'type'}; 
+               $T =~ s/HUMACE-//; 
+               $gene_col = $sanger_colours->{ $T }; 
+               push @genes, { 
+                   'chr_start' => $g->{'chr_start'}, 
+                   'chr_end'   => $g->{'chr_end'}, 
+                   'start'     => $g->{'start'}, 
+                   'strand'    => $g->{'strand'}, 
+                   'end'       => $g->{'end'}, 
+                   'ens_ID'    => '', #$g->{'stable_id'}, 
+                   'label'     => $gene_label, 
+                   'colour'    => $gene_col, 
+                   'ext_DB'    => $g->{'db'}, 
+                   'high'      => $high, 
+                   'type'      => $g->{'type'} 
+               }; 
+           } 
+       } 
+
     my $res = $vc->get_all_VirtualGenes_startend_lite();
     foreach(@$res) {
         my( $gene_col, $gene_label, $high);
@@ -110,7 +143,7 @@ sub _init {
         foreach my $g (@$res){
             my( $gene_col, $gene_label, $high);
             $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0;
-            $gene_label = $g->{'synonym'};
+            $gene_label = $g->{'synonym'} || $g->{'stable_id'};
             $high       = 1 if(exists $highlights{ $gene_label });
             if($g->{'type'} eq 'pseudo') {
                 $gene_col = $pseudo_col;

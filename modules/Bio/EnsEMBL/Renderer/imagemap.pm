@@ -11,6 +11,7 @@ use vars qw(@ISA);
 sub init_canvas {
     my ($self, $config, $im_width, $im_height) = @_;
     $self->canvas("");
+    $self->{'show_zmenus'} = $config->get("_settings","opt_zmenus");
 }
 
 sub add_canvas_frame {
@@ -87,11 +88,13 @@ sub _getHref {
        $alt = (defined $alt) ? qq( alt="$alt")  : "";
 
     ######### zmenus will override existing href, alt, onmouseover & onmouseout attributes
-    my $zmenu = $glyph->zmenu();
-    if(defined $zmenu) {
-		$href        = qq( href="javascript:void(0);") unless( defined $href );
-		$alt         = qq();
-		$onmouseover = qq( onmouseover=") . &JSTools::js_menu($zmenu) . qq(");
+    if($self->{'show_zmenus'}==1) {
+        my $zmenu = $glyph->zmenu();
+        if(defined $zmenu) {
+    		$href        = qq( href="javascript:void(0);") unless( defined $href );
+    		$alt         = qq();
+    		$onmouseover = qq( onmouseover=") . &JSTools::js_menu($zmenu) . qq(");
+        }
     }
 	return "$href$onmouseover$onmouseout$alt" if(defined $href);
 	return undef;

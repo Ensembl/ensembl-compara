@@ -14,7 +14,7 @@ sub init_label {
     eval {
         $chr = $self->{'container'}->_chr_name();
     };
-    $chr = "Chromosome " if $@;
+    $chr = "Chromosome" if $@;
     my $label = new Bio::EnsEMBL::Glyph::Text({
     	'text'      => "$chr band",
     	'font'      => 'Small',

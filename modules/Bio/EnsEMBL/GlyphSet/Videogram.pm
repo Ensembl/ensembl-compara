@@ -3,7 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use EnsWeb;
+
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Poly;
 use Bio::EnsEMBL::Glyph::Text;
@@ -15,7 +15,6 @@ sub init_label {
     my ($self) = @_;
     return if( $self->{'config'}->{'_label'} eq 'none'  );
     my $chr = $self->{'container'}->{'chr'} || $self->{'extras'}->{'chr'};
-    $chr =~s/^chr//;
     $chr = uc($chr);
     $chr = "Chromosome $chr" if( $self->{'config'}->{'_label'} eq 'above' );
     my $label = new Bio::EnsEMBL::Glyph::Text({

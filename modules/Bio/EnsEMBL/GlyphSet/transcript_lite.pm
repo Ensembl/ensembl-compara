@@ -16,7 +16,7 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     
-    my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || 'Transcript';
+    my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || 'Transcript(l)';
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $label_text,
@@ -109,9 +109,11 @@ sub _init {
         my @exon_lengths = @{$vt->{'exon_structure'}};
         my $end = $vt->{'start'} - 1;
         my $start = 0;
+        print STDERR "TRANSCRIPT: $vtid, $vt->{'start'}-$vt->{'end'}\n          : ",join(' : ',@exon_lengths),"\n";
         foreach my $length (@exon_lengths) {
             $flag = 1-$flag;
             ($start,$end) = ($end+1,$end+$length);
+            print STDERR "transcript_lite-- EXON: $start - $end\n";
             last if $start > $container->{'length'};
             next if $end< 0;
             my $box_start = $start < 1 ?       1 :       $start;
