@@ -93,19 +93,19 @@ sub _init {
 	#########
 	# add a label
 	#
-	my $desc = $prsave->id();
-        print STDERR "$fontwidth\n";
-	my $text = new Bio::EnsEMBL::Glyph::Text({
-	    'font'   => $font,
-	    'text'   => $desc,
-	    'x'      => $row[0]->feature1->start(),
-	    'y'      => $h + 1,
-	    'height' => $fontheight,
-	    'width'  => $fontwidth * length($desc),
-	    'colour' => $colour,
-            'absolutey' => 1
-	});
-	$Composite->push($text);
+#	my $desc = $prsave->id();
+#        print STDERR "$fontwidth\n";
+#	my $text = new Bio::EnsEMBL::Glyph::Text({
+#	    'font'   => $font,
+#	    'text'   => $desc,
+#	    'x'      => $row[0]->feature1->start(),
+#	    'y'      => $h + 1,
+#	    'height' => $fontheight,
+#	    'width'  => $fontwidth * length($desc),
+#	    'colour' => $colour,
+#            'absolutey' => 1
+#	});
+#	$Composite->push($text);
 
 	if ($Config->get('superfamily', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
