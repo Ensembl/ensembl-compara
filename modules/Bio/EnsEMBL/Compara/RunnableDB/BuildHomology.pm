@@ -90,7 +90,7 @@ sub fetch_input
 
   $self->{'blast_analyses'} = ();
   $self->{'verbose'} = 0;
-  $self->{'store'} = undef;
+  $self->{'store'} = 1;
   $self->{'getAllRHS'} = undef;
   $self->{'onlyOneHomology'} = undef;  #filter to place member in only 1 homology
   
@@ -523,7 +523,7 @@ sub find_RHS
 
   my ($paf1_id, $hmember_id);
   my @paf_id_list;
-  $sth->bind_columns(\$paf1_id, $hmember_id);
+  $sth->bind_columns(\$paf1_id, \$hmember_id);
   while ($sth->fetch()) {
     next if($self->{'onlyOneHomology'} and
             ($self->{'membersToBeProcessed'}->{$hmember_id}));
