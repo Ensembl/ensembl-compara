@@ -1,23 +1,42 @@
 
 ################################################################################
 #
+# Table structure for table 'genome_db_extn'
+#
+# semantics:
+# genome_db_id - foreign key to genome_db table
+# phylum       - string to identify homology groupings
+# dblocator    - string to identify location of the external genome database (or file).
+
+
+CREATE TABLE genome_db_extn (
+  genome_db_id                int(10) DEFAULT '0' NOT NULL,
+  phylum                      varchar(40) DEFAULT '' NOT NULL,
+  locator                     mediumtext,
+
+  KEY genome_db_id  (genome_db_id)
+);
+
+
+################################################################################
+#
 # Table structure for table 'analysis'
-# 
+#
 # semantics:
 # analysis_id - internal id
-# created   - date to distinguish newer and older versions off the 
+# created   - date to distinguish newer and older versions off the
 #             same analysis. Not well maintained so far.
 # logic_name  string to identify the analysis. Used mainly inside pipeline.
 # db, db_version, db_file
 #  - db should be a database name, db version the version of that db
-#    db_file the file system location of that database, 
+#    db_file the file system location of that database,
 #    probably wiser to generate from just db and configurations
 # program, program_version,program_file
 #  - The binary used to create a feature. Similar semantic to above
 # module, module_version
 #  - Perl module names (RunnableDBS usually) executing this analysis.
 # parameters a paramter string which is processed by the perl module
-# gff_source, gff_feature 
+# gff_source, gff_feature
 #  - how to make a gff dump from features with this analysis
 
 
@@ -39,7 +58,8 @@ CREATE TABLE analysis (
   gff_feature                 varchar(40),
 
   PRIMARY KEY (analysis_id),
-  KEY logic_name_idx( logic_name )
+  KEY logic_name_idx( logic_name ),
+  UNIQUE(logic_name)
 
 );
 

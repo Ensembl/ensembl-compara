@@ -211,28 +211,6 @@ CREATE TABLE member_gene_peptide(
 );
 
 
-#this table stores the raw results of the peptide to peptide blasts
-CREATE TABLE peptide_align_feature (
-  id                  int(10) unsigned NOT NULL auto_increment,
-  id1                 varchar(40) DEFAULT '' NOT NULL,
-  qstart              int(10) DEFAULT '0' NOT NULL,
-  qend                int(10) DEFAULT '0' NOT NULL,
-  id2                 varchar(40) DEFAULT '' NOT NULL,
-  hstart              int(11) DEFAULT '0' NOT NULL,
-  hend                int(11) DEFAULT '0' NOT NULL,
-  score               double(16,4) DEFAULT '0.0000' NOT NULL,
-  evalue              varchar(20),
-  identical_matches   int(10),
-  pid                 int(10),
-  positive_matches    int(10),
-  pos                 int(10),
-  cigar_line          mediumtext,
-  
-  PRIMARY KEY (id),
-  KEY id1 (id1),
-  KEY id2 (id2)
-);
-
 CREATE TABLE family (
  family_id		int(10) NOT NULL auto_increment,
  stable_id		varchar(40) NOT NULL, # e.g. ENSF0000012345
