@@ -49,9 +49,13 @@ use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
+
+# Hashes for storing a cross-referencing of compared genomes
+my %genome_consensus_xreflist;
+my %genome_query_xreflist;
+
+
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
-
 
     
 =head2 fetch_by_dbID
@@ -73,23 +77,17 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   my $gdb = undef;
-
    # check to see whether all the GenomeDBs haev already been created
-   if ( $self->{'_GenomeDB_cache'}) {
-     if ( defined $self->{'cache'}->{$dbid}) {
-       return $self->{'_cache'}->{$dbid};
-     }
-     else {  # return undef if fed a bogus dbID
-       return undef;
-     }
-   }
-   # otherwise go and create them
-   else {
-     $gdb = $self->create_GenomeDBs($dbid);
+   if ( !defined $self->{'_GenomeDB_cache'}) {
+     $self->create_GenomeDBs;
    }
 
-   return $gdb;
+   if ( defined $self->{'_cache'}->{$dbid}) {
+     return $self->{'_cache'}->{$dbid};
+   }
+   else {  # return undef if fed a bogus dbID
+     return undef;
+   }
 }
 
 
@@ -176,16 +174,45 @@ sub store{
 }
 
 
-sub create_GenomeDBs {
-  my ( $self, $dbid ) = @_;
+=head2 create_GenomeDBs
+ 
+  Args       : none
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : none
+  Caller     : 
 
-  # grab all the possible species databases in the genome db table
+=cut
+
+sub create_GenomeDBs {
+  my ( $self ) = @_;
+
+  # Populate the hash array which cross-references the consensus
+  # and query dbs
+
   my $sth = $self->prepare("
-     SELECT * 
+     SELECT consensus_genome_db_id query_genome_db_id
+     FROM genomic_align_genome
+  ");
+
+  $sth->execute;
+
+  while ( my @db_row = $sth->fetchrow_array() ) {
+    my ( $con, $query ) = @db_row;
+
+ #   print STDERR $con . " " . $query . "\n";
+    push @{ %genome_consensus_xreflist->{$con}}, $query;
+    push @{ %genome_query_xreflist->{$query}}, $con;
+  }
+  
+  # grab all the possible species databases in the genome db table
+  $sth = $self->prepare("
+     SELECT genome_db_id, name, locator 
      FROM genome_db 
    ");
    $sth->execute;
-
+  
   # build a genome db for each species
   while ( my @db_row = $sth->fetchrow_array() ) {
     my ($dbid, $name, $locator) = @db_row;
@@ -195,13 +222,100 @@ sub create_GenomeDBs {
     $gdb->locator($locator);
     $gdb->dbID($dbid);
     $self->{'_cache'}->{$dbid} = $gdb;
+#    print STDERR "Building a GenomeDB: ". $name . " " . $dbid . "\n";
   }
 
-  $self->{'_GenomeDB_cache'} = 1;
-  
-  return $self->{'_cache'}->{$dbid};
+  $self->{'_GenomeDB_cache'} = 1;  
 }
 
+
+=head2 check_for_consensus_db
+ 
+  Args       : none
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+
+sub check_for_consensus_db {
+  my ( $self, $con_dbid, $query_dbid ) = @_;
+  
+  if ( exists %genome_consensus_xreflist->{$con_dbid} ) {
+    foreach my $db ( %genome_consensus_xreflist->{$con_dbid} ) {
+      if ( $query_dbid == $db ) {
+	return $db;
+      }
+    }
+  }
+  return 0;
+}
+
+
+
+=head2 check_for_query_db
+ 
+  Args       : none
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub check_for_query_db {
+  my ( $self, $query_dbid, $con_dbid ) = @_;
+  
+  if ( exists %genome_query_xreflist->{$query_dbid} ) {
+    foreach my $db ( %genome_consensus_xreflist->{$query_dbid} ) {
+      if ( $con_dbid == $db ) {
+	return $db;
+      }
+    }
+  }
+  return 0;
+}
+
+
+
+=head2 get_db_links
+ 
+  Args       : none
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub get_db_links {
+  my ( $self, $ref_dbid ) = @_;
+  
+  my $db_list = "";
+
+  # check for occurences of the db we are interested in
+  # in the consensus list of dbs
+  if ( exists %genome_consensus_xreflist->{$ref_dbid} ) {
+    foreach my $db ( %genome_consensus_xreflist->{$ref_dbid} ) {
+      $db_list .= $db .  " "; 
+    }
+  }
+
+  # and check for occurences of the db we are interested in
+  # in the query list of dbs
+  if ( exists %genome_query_xreflist->{$ref_dbid} ) {
+    foreach my $db ( %genome_query_xreflist->{$ref_dbid} ) {
+      $db_list .= $db .  " "; 
+    }
+  }
+
+  return $db_list;
+}
 
 
 1;
