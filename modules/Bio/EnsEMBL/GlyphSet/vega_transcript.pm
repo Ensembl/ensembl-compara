@@ -47,18 +47,9 @@ sub features {
         $genes = $self->{'container'}->get_all_Genes('otter');
     }
 
-    # zfish hack
-    foreach my $gene (@{ $genes }) {
-        if ($gene->type eq 'Novel_CDS') {
-            $gene_adaptor->annotate_gene($gene);
-            foreach my $tr (@{ $gene->get_all_Transcripts || [] }) {
-                unless ($tr->transcript_info->class->name eq 'Coding') {
-                    $tr->type('Novel_Transcript');
-                }
-            }
-        }
-    }
-    
+    # determine transcript type
+    $gene_adaptor->set_transcript_type($genes);
+
     &eprof_end($self->check);
     &eprof_dump(\*STDERR);
     
@@ -146,7 +137,8 @@ sub text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $type = $legend_map{$gene->type} || $gene->type;
+        my $tt = $transcript->type || $gene->type;
+        my $type = $legend_map{$tt} || $tt;
         $id .= " \n$type ";
     }
     return $id;
