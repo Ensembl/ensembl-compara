@@ -55,7 +55,7 @@ sub _init {
 	    push (@allgenes, $vg);
 	}
     }
-	my $type = undef;
+	$type = undef;
 	
     GENE: for my $eg (@allgenes) {
     	my $vgid = $eg->id();

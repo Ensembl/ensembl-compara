@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::gene;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -107,7 +106,25 @@ sub _init {
 	    'absolutey' => 1,
 	});
 
-	# we don't bump genes...(as opposed to transcripts)
+	my $depth = $Config->get($Config->script(), 'gene', 'dep');
+        if ($depth > 0){ # we bump
+            my $bump_start = int($rect->x() * $pix_per_bp);
+            $bump_start = 0 if ($bump_start < 0);
+
+            my $bump_end = $bump_start + int($rect->width()*$pix_per_bp) +1;
+            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
+            my $row = &Bump::bump_row(      
+                          $bump_start,
+                          $bump_end,
+                          $bitmap_length,
+                          \@bitmap
+            );
+
+	    print STDERR "GENE $vgid $bump_start - $bump_end BUMPED TO $row\n";
+            #next if $row > $depth;
+            $rect->y($rect->y() + (6 * $row ));
+            $rect->height(4);
+	}
 	$self->push($rect);
     }
 #    &eprof_end("gene-render-code");

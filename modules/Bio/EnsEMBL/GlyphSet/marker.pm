@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::marker;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -30,6 +29,8 @@ sub _init {
     my $Config = $self->{'config'};
 
     my $h          = 8;
+    if ($Config->script() eq "contigviewtop"){ $h =4;}
+
     my $highlights = $self->highlights();
 
     my $feature_colour 	= $Config->get($Config->script(),'marker','col');
