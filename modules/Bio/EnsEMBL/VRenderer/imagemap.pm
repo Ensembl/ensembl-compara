@@ -22,10 +22,10 @@ sub render_Rect {
     my ($self, $glyph) = @_;
 	my $href = $self->_getHref( $glyph );
 	return unless(defined $href);
-    my $x1 = $glyph->pixelx();
-    my $x2 = $x1 + $glyph->pixelwidth();
-    my $y1 = $glyph->pixely();
-    my $y2 = $y1 + $glyph->pixelheight();
+    my $x1 = int( $glyph->pixelx() );
+    my $x2 = int( $x1 + $glyph->pixelwidth() );
+    my $y1 = int( $glyph->pixely() );
+    my $y2 = int( $y1 + $glyph->pixelheight() );
 
     $x1 = 0 if($x1<0);
     $x2 = 0 if($x2<0);
@@ -51,7 +51,7 @@ sub render_Poly {
     my ($self, $glyph) = @_;
 	my $href = $self->_getHref( $glyph );
 	return unless(defined $href);
-    my $pointslist = join ' ',reverse @{$glyph->pixelpoints()};
+    my $pointslist = join ' ',map { int } reverse @{$glyph->pixelpoints()};
     $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href>\n).$self->{'canvas'} ; 
 }
 

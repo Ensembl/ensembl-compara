@@ -49,10 +49,10 @@ sub render_Rect {
 #	return;
 #    }
 
-    my $x1 = $glyph->pixelx();
-    my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
-    my $y1 = $glyph->pixely();
-    my $y2 = $glyph->pixely() + $glyph->pixelheight();
+    my $x1 = int( $glyph->pixelx() );
+    my $x2 = int( $glyph->pixelx() + $glyph->pixelwidth() );
+    my $y1 = int( $glyph->pixely() );
+    my $y2 = int( $glyph->pixely() + $glyph->pixelheight() );
 #print STDERR qq(imagemap got glyph $glyph pixelheight = ), $glyph->pixelheight(), qq(\n);
 
     $x1 = 0 if($x1<0);
