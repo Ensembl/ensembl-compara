@@ -935,4 +935,24 @@ sub _generic_parse_features {
 #  print ::LOG "Exit with cigar $string.\n";
 }
 
+sub species{
+    my ($self,$arg) = @_;
+
+    if (defined($arg)) {
+	return $self->{'_species'} = $arg;
+    } else {
+	return $self->{'_species'};
+    }
+}
+
+sub hspecies{
+    my ($self,$arg) = @_;
+
+    if (defined($arg)) {
+	return $self->{'_hspecies'} = $arg;
+    } else {
+	return $self->{'_hspecies'};
+    }
+}
+
 1;
