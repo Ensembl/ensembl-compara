@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Renderer::SVG;
+package Bio::EnsEMBL::Renderer::svg;
 use strict;
 
 use Bio::EnsEMBL::Renderer;
