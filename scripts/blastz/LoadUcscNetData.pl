@@ -159,16 +159,16 @@ if ($matrix_file) {
   $matrix_hash = matrix_hash($primates_matrix_string);
   print STDERR "Using primates scoring matrix\n";
   print STDERR "\n$primates_matrix_string\n";
-} elsif ( grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598)) &&
-          grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598)) ) {
+} elsif ( grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
+          grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) ) {
   $matrix_hash = matrix_hash($mammals_matrix_string);
   print STDERR "Using mammals scoring matrix\n";
   print STDERR "\n$mammals_matrix_string\n";
-} elsif ( (grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598)) &&
-           grep(/^$qTaxon_id$/, (31033, 7955, 9031, 99883)))
+} elsif ( (grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
+           grep(/^$qTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))
           ||
-          (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598)) &&
-           grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883)))) {
+          (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
+           grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))) {
   $matrix_hash = matrix_hash($mammals_vs_other_vertebrates_matrix_string);
   print STDERR "Using mammals_vs_other_vertebrates scoring matrix\n";
   print STDERR "\n$mammals_vs_other_vertebrates_matrix_string\n";
