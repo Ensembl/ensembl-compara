@@ -750,6 +750,7 @@ sub dnafrag_strand {
 =head2 aligned_sequence
 
   Arg [1]    : string $aligned_sequence
+  Arg[2...]  : array of string @flags
   Example    : $aligned_sequence = $genomic_align->aligned_sequence
   Example    : $genomic_align->aligned_sequence("ACTAGTTAGCT---TATCT--TTAAA")
   Description: With no arguments, rebuilds the alignment string for this sequence
@@ -762,28 +763,38 @@ sub dnafrag_strand {
 =cut
 
 sub aligned_sequence {
-  my ($self, $aligned_sequence) = @_;
+  my ($self, $aligned_sequence, @flags) = @_;
 
+  my $fix_seq = 0;
+  foreach my $flag (@flags) {
+    if ($flag eq "FIX_SEQ") {
+      $fix_seq = 1;
+    } else {
+      warning("Unknow flag $flag when calling Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence()");
+    }
+  }
+  
   if (defined($aligned_sequence)) {
     $aligned_sequence =~ s/[\r\n]+$//;
-    ## Check sequence
-    throw("Unreadable sequence ($aligned_sequence)") if ($aligned_sequence !~ /^[\-A-Z]+$/i);
+    
+    if ($aligned_sequence) {
+      ## Check sequence
+      throw("Unreadable sequence ($aligned_sequence)") if ($aligned_sequence !~ /^[\-A-Z]+$/i);
+      $self->{'aligned_sequence'} = $aligned_sequence;
+    } else {
+      $self->{'aligned_sequence'} = undef;
+    }
 
-    $self->{'aligned_sequence'} = $aligned_sequence;
 
   } elsif (!defined($self->{'aligned_sequence'})) {
     # Try to get the aligned_sequence from other sources...
-    if (defined($self->cigar_line) and defined($self->original_sequence) and
-        defined($self->dnafrag_strand)) {
+    if (defined($self->cigar_line) and defined($self->original_sequence)) {
       my $original_sequence = $self->original_sequence;
-      if ($self->dnafrag_strand != 1) {
-        $original_sequence = reverse $original_sequence;
-        $original_sequence =~ tr/ATCGatcg/TAGCtagc/;
-      }
       # ...from the corresponding orginial_sequence and cigar_line
       $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
           $original_sequence, $self->{'cigar_line'});
       $self->{'aligned_sequence'} = $aligned_sequence;
+
     } else {
       warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->aligned_sequence".
           " You either have to specify more information (see perldoc for".
@@ -791,7 +802,13 @@ sub aligned_sequence {
     }
   }
 
-  return $self->{'aligned_sequence'};
+  $aligned_sequence = $self->{'aligned_sequence'};
+  if ($aligned_sequence and $fix_seq) {
+    $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
+        $aligned_sequence, $self->genomic_align_block->reference_genomic_align->cigar_line, 1);
+  } 
+
+  return $aligned_sequence;
 }
 
 
@@ -807,7 +824,8 @@ sub aligned_sequence {
                If no argument is given, the cigar_line is not defined but both
                the dbID and the adaptor are, it tries to fetch and set all
                the direct attributes from the database using the dbID of the
-               Bio::EnsEMBL::Compara::GenomicAlign object.
+               Bio::EnsEMBL::Compara::GenomicAlign object. You can reset this
+               attribute using an empty string as argument.
   Returntype : string
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
@@ -819,7 +837,11 @@ sub cigar_line {
   my ($self, $arg) = @_;
 
   if (defined($arg)) {
-    $self->{'cigar_line'} = $arg ;
+    if ($arg) {
+      $self->{'cigar_line'} = $arg;
+    } else {
+      $self->{'cigar_line'} = undef;
+    }
 
   } elsif (!defined($self->{'cigar_line'})) {
     # Try to get the cigar_line from other sources...
@@ -1018,7 +1040,8 @@ sub genomic_align_group_id_by_type {
   Example    : $original_sequence = $genomic_align->original_sequence
   Description: get/set original sequence. If no argument is given and the original_sequence
                is not defined, it tries to fetch the data from other sources like the
-               aligned sequence or the the Bio::EnsEMBL::Compara:DnaFrag object.
+               aligned sequence or the the Bio::EnsEMBL::Compara:DnaFrag object. You can
+               reset this attribute using an empty string as argument.
   Returntype : string $original_sequence
   Exceptions : 
   Caller     : object->methodname
@@ -1029,27 +1052,31 @@ sub original_sequence {
   my ($self, $original_sequence) = @_;
 
   if (defined($original_sequence)) {
-    $self->{'original_sequence'} = $original_sequence;
+    if ($original_sequence) {
+      $self->{'original_sequence'} = $original_sequence;
+    } else {
+      $self->{'original_sequence'} = undef;
+    }
 
   } elsif (!defined($self->{'original_sequence'})) {
     # Try to get the data from other sources...
     
-    if ($self->{'aligned_sequence'} and $self->{'dnafrag_strand'}) {
+    if ($self->{'aligned_sequence'}) {
       # ...from the aligned sequence
       $self->{'original_sequence'} = $self->{'aligned_sequence'};
       $self->{'original_sequence'} =~ s/\-//g;
-      if ($self->{'dnafrag_strand'} != 1) {
-        $self->{'original_sequence'} = reverse $self->{'original_sequence'};
-        $self->{'original_sequence'} =~ tr/ATCGatcg/TAGCtagc/;
-      }
 
     } elsif (!defined($self->{'original_sequence'}) and defined($self->dnafrag)
           and defined($self->dnafrag_start) and defined($self->dnafrag_end)
-          and defined($self->dnafrag->slice)) {
+          and defined($self->dnafrag_strand) and defined($self->dnafrag->slice)) {
       # ...from the dnafrag object. Uses dnafrag, dnafrag_start and dnafrag_methods instead of the attibutes
       # in the <if> clause because the attributes can be retrieved from other sources if they have not been
       # already defined.
-      $self->{'original_sequence'} = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
+      $self->{'original_sequence'} = $self->dnafrag->slice->subseq(
+              $self->dnafrag_start,
+              $self->dnafrag_end,
+              $self->dnafrag_strand
+          );
     } else {
       warn("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
           " You either have to specify more information (see perldoc for".
@@ -1108,7 +1135,7 @@ sub _get_cigar_line_from_aligned_sequence {
 =cut
 
 sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
-  my ($original_sequence, $cigar_line) = @_;
+  my ($original_sequence, $cigar_line, $fix_seq) = @_;
   my $aligned_sequence = "";
 
   return undef if (!$original_sequence or !$cigar_line);
@@ -1125,7 +1152,11 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
       $seq_pos += $cigCount;
     } elsif( $cigType eq "G" || $cigType eq "D") {
-      $aligned_sequence .=  "-" x $cigCount;
+      if ($fix_seq) {
+        $seq_pos += $cigCount;
+      } else {
+        $aligned_sequence .=  "-" x $cigCount;
+      }
     }
   }
   throw("Cigar line ($seq_pos) does not match sequence lenght (".length($original_sequence).")") if ($seq_pos != length($original_sequence));
@@ -1223,14 +1254,14 @@ sub reverse_complement {
   # reverse strand
   $self->dnafrag_strand($self->dnafrag_strand * -1);
 
-  # reverse orignal and aligned sequences if cached
-  my $original_sequence = $self->original_sequence;
+  # reverse original and aligned sequences if cached
+  my $original_sequence = $self->{'original_sequence'};
   if ($original_sequence) {
     $original_sequence = reverse $original_sequence;
     $original_sequence =~ tr/ATCGatcg/TAGCtagc/;
     $self->original_sequence($original_sequence);
   }
-  my $aligned_sequence = $self->aligned_sequence;
+  my $aligned_sequence = $self->{'aligned_sequence'};
   if ($aligned_sequence) {
     $aligned_sequence = reverse $aligned_sequence;
     $aligned_sequence =~ tr/ATCGatcg/TAGCtagc/;
