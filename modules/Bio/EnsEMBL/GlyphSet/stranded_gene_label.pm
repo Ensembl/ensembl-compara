@@ -54,7 +54,7 @@ sub _init {
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
-    
+    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
     for my $vg (@allgenes) {
 	
 	my ($start, $end, $colour, $label, $hi_colour);
@@ -83,16 +83,11 @@ sub _init {
                 my @temp_geneDBlinks = $vg->gene->each_DBLink();
 	 	
                 # find a decent label:
-              DBLINK:
 		foreach my $DB_link ( @temp_geneDBlinks ) {
-                    my $db = $DB_link->database();
+            my $db = $DB_link->database();
                     # check in order of preference:
-                    foreach my $d ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
-                        if ($db eq $d ) {
-                            $label = $DB_link->display_id();
-                            last DBLINK;
-                        }
-                    }
+            $label = $DB_link->display_id() if ($db_names{$db} );
+            last if($db eq 'HUGO');
 		}
 
 		if( ! defined $label ) {

@@ -41,7 +41,7 @@ sub _init {
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
-    
+    my %db_names = ( 'HUGO'=>1,'SP'=>1, 'SPTREMBL'=>1, 'SCOP'=>1 );
     foreach my $vg (@allgenes) {
 
 	my ($start, $end, $colour, $label,$hi_colour);
@@ -51,33 +51,25 @@ sub _init {
 	    $end    = $vg->end();
 
 	    if ($vg->gene->is_known) {
-		$colour = $known_col;
-                my @temp_geneDBlinks = $vg->gene->each_DBLink();
-	 	
-                # find a decent label:
-              DBLINK:
-		foreach my $DB_link ( @temp_geneDBlinks ) {
-                    my $db = $DB_link->database();
-                    # check in order of preference:
-                    foreach my $d ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
-                        if ($db eq $d ) {
-                            $label = $DB_link->display_id();
-                            last DBLINK;
-                        }
-                    }
-		}
-
-		if( ! defined $label ) {
-                    $label = $vg->id(); # fallback on ENSG
-                } 
-
-                # check for highlighting
-		if (exists $highlights{$label}){
-		    $hi_colour = $Config->get( 'gene', 'hi');
-		}
+    		$colour = $known_col;
+            my @temp_geneDBlinks = $vg->gene->each_DBLink();
+	     	
+        # find a decent label:
+    		foreach my $DB_link ( @temp_geneDBlinks ) {
+                my $db = $DB_link->database();
+                        # check in order of preference:
+                $label = $DB_link->display_id() if( $db_names{$db} );
+                last if($db eq 'HUGO');
+    		}
+    
+    		$label = $vg->id() unless( defined $label );
+                    # check for highlighting
+    		if (exists $highlights{$label}){
+    		    $hi_colour = $Config->get( 'gene', 'hi');
+    		}
 	    } else {
-		$colour = $unknown_col;
-		$label	= "NOVEL";
+    		$colour = $unknown_col;
+    		$label	= "NOVEL";
 	    }
 	} else {
 	    $colour = $ext_col;
