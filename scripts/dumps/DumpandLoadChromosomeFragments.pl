@@ -18,6 +18,8 @@ DumpandLoadChromosomeFragments.pl
             -phusion 	Hs
             -mask_restriction RepeatMaksingRestriction.conf
             -o 		output_filename ending
+	    -reg_conf	Registry.conf
+	    -group	no of files to group the scaffolds into (if needed)
 	    -load 	1
 	    -dump 	1
 	    -all	1
@@ -36,10 +38,11 @@ $0 [-help]
                      depending on the repeat class or name. See RepeatMaksingRestriction.conf.example,
                      and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
    -o output_filename ending eg fa
+   -group	100
    -load 0/1 if true load Dnafrags into db 
    -dump 0/1 if true dump Dnafrags into flatfiles 
    -all	0/1   if true then put all chunks into same file
-   -conf	Registry.conf file
+   -reg_conf	Registry.conf file
 
 
 ";
@@ -47,6 +50,7 @@ $0 [-help]
 $| = 1;
 
 my $all;
+my $group;
 my $host = 'localhost';
 my $dbname;
 my $assembly;
@@ -63,20 +67,21 @@ my $load=0;
 my $dump=0;
 my $conf="/nfs/acari/cara/.Registry.conf";
 
-GetOptions('help' => \$help,
-	   'dbname=s'  => \$dbname,
+GetOptions('help'	=> \$help,
+	   'dbname=s'	=> \$dbname,
 	   'assembly=s' => \$assembly,
-	   'overlap=i' => \$overlap,
+	   'overlap=i'	=> \$overlap,
 	   'chunk_size=i' => \$chunk_size,
-	   'masked=i' => \$masked,
+	   'masked=i'	=> \$masked,
            'mask_restriction=s' => \$mask_restriction_file,
-	   'phusion=s' => \$phusion,
+	   'phusion=s'	=> \$phusion,
 	   'coord_system=s' => \$coordinate_system,
-	   'o=s' => \$output,
-	   'reg_conf=s' =>\$conf,
-	   'load=i' => \$load,
-	   'all=i'  => \$all,
-	   'dump=i' => \$dump);
+	   'o=s'	=> \$output,
+	   'reg_conf=s' => \$conf,
+	   'group=i'	=> \$group,
+	   'load=i'	=> \$load,
+	   'all=i'	=> \$all,
+	   'dump=i'	=> \$dump);
 
 if ($help) {
   print $usage;
@@ -88,18 +93,19 @@ if (defined $conf) {
 }
 else {print " Need Registry file \n"; exit 2;}
 print "Got them \n";
-my $sliceadaptor = Bio::EnsEMBL::Registry->get_adaptor($assembly,'core','Slice');
+my $sliceadaptor = Bio::EnsEMBL::Registry->get_adaptor($assembly,'core','Slice') or die "can't get sliceadaptor for: $assembly,'core','Slice'\n";
 print "Got sliceadaptor $sliceadaptor\n";
 					     
 my %not_default_masking_cases;
 if (defined $mask_restriction_file) {
   %not_default_masking_cases = %{do $mask_restriction_file};
 }
-my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB');
+my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB') or die "can't get genome_db_adaptor for $dbname,'compara','GenomeDB'\n";
 my $genome_db_all = $genome_db_adaptor->fetch_all;
 my $genome_db; 
-print scalar(@$genome_db_all)."\n";
+print "no in genome_db: ".scalar(@$genome_db_all)."\n";
 foreach my $gdb (@$genome_db_all){
+#print "assembly=$assembly\t".$gdb->assembly."\n";
 if ($gdb->assembly eq $assembly) { $genome_db = $gdb};
 }
 
@@ -108,7 +114,7 @@ my $dnafrag_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'D
 
 # include duplicate regions (such as pseudo autosomal regions)
 my @chromosomes = @{$sliceadaptor->fetch_all('toplevel', undef, 0, 1)};
-print scalar @chromosomes ."\n"; 
+print "no of chromosomes: ".scalar @chromosomes ."\n"; 
 if (scalar @chromosomes < 1 ) {
   warn "No chromosomes available for toplevel $assembly
 exit 1\n";
@@ -117,26 +123,23 @@ exit 1\n";
 
 my $fh = \*STDOUT;
 my $filename='';
+my $count =0; my $file_no = 0;
 
 CHR:foreach my $chr (@chromosomes) {
 	if(($chr->seq_region_name =~/[M|m][T|t]/)){next CHR;}
+	$count++;
+	if ($group) {  if($count==$group) {$count = 0; $file_no++; }}
 	if (($dump>0) && (defined $output)) {
-	 	if ($phusion){
-			if ($all){
-				$filename=$phusion."_all.".$output;
-				}
-			else{
-				$filename=$phusion."_".$chr->seq_region_name.".".$output;
-				}
+		if ($all){
+			$filename = "all.".$output;
 			}
-	 	else{
-			if ($all){
-				$filename = "all.".$output;
-				}
-			else {
-				$filename=$chr->seq_region_name.".".$output;
-				}
+		elsif ($group){
+			$filename=$file_no.".".$output;
 			}
+		else {
+			$filename=$chr->seq_region_name.".".$output;
+			}
+			
 		print STDERR "opening $filename\n";
   		open F, ">>$filename";
   		$fh = \*F;
