@@ -265,6 +265,7 @@ foreach my $cluster (@clusters) {
 
     my $member = Bio::EnsEMBL::Compara::Member->new_fast
       ({'_stable_id' => $seqid,
+        '_version' => 0,
         '_taxon_id' => $taxon->ncbi_taxid,
         '_taxon' => $taxon,
         '_description' => $seqinfo{$seqid}{'description'},
@@ -293,7 +294,9 @@ foreach my $cluster (@clusters) {
         $member->chr_name($transcript->slice->seq_region_name);
         $member->chr_start($transcript->coding_region_start);
         $member->chr_end($transcript->coding_region_end);
-        $member->sequence($transcript->translate->seq); 
+        $member->sequence($transcript->translate->seq);
+        $member->version($transcript->translation->version);
+        
       } 
       elsif ($member->source_name eq "ENSEMBLGENE") {
         $gene = $GeneAdaptor->fetch_by_stable_id($member->stable_id);
@@ -306,6 +309,7 @@ foreach my $cluster (@clusters) {
         $member->chr_name($gene->slice->seq_region_name);
         $member->chr_start($gene->seq_region_start);
         $member->chr_end($gene->seq_region_end);
+        $member->version($gene->version);
       }
     }
     
