@@ -2,11 +2,9 @@
 
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Tools::Block;
-use Bio::EnsEMBL::FeaturePair;
-use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Getopt::Long;
 
 my $usage = "\nUsage: $0 [options] axtFile|STDIN
@@ -220,46 +218,23 @@ while (my $line =<>) {
   if ($line =~ /^$/) {
     
     my $identity = identity($ref_seq,$qy_seq);
-    
-    my @ungapped_features;    
-    my $block = new Bio::EnsEMBL::Pipeline::Tools::Block;
-    $block->score($score);
-    $block->identity($identity);
-    $block->qstart($ref_start);
-    $block->qend($ref_end);
-    $block->qstrand(1);
-    $block->qlength(length($ref_seq));
-    $block->sstart($qy_start);
-    $block->send($qy_end);
-    $block->sstrand($qy_strand);
-    $block->slength(length($qy_seq));
-    $block->qseq($ref_seq);
-    $block->sseq($qy_seq);
+    my $cigar_string = cigar_gen($ref_seq,$qy_seq);
 
-    while (my $ungapped_block = $block->nextUngappedBlock("blastn")) {
-      my ($qstart,$qend,$qstrand,$sstart,$send,$sstrand,$score,$perc_id) = ($ungapped_block->qstart,$ungapped_block->qend,$ungapped_block->qstrand,$ungapped_block->sstart,$ungapped_block->send,$ungapped_block->sstrand,$ungapped_block->score,$ungapped_block->identity);
-      
-      my $fp = new Bio::EnsEMBL::FeaturePair;
-      
-      $fp->start($qstart);
-      $fp->end($qend);
-      $fp->strand($qstrand);
-      $fp->seqname($ref_chr);
-      
-      $fp->hstart($sstart);
-      $fp->hend($send);
-      $fp->hstrand($sstrand);
-      $fp->hseqname($qy_chr);
-      
-      $fp->score($score);
-      $fp->percent_id($perc_id);
-      
-      push @ungapped_features, $fp;
-    }
-    my $DnaDnaAlignFeature = new Bio::EnsEMBL::DnaDnaAlignFeature('-features' => \@ungapped_features);
+    my $f = new Bio::EnsEMBL::DnaDnaAlignFeature(-cigar_string => $cigar_string);
     
-    push @DnaDnaAlignFeatures,$DnaDnaAlignFeature ;
+    $f->seqname($ref_chr);
+    $f->start($ref_start);
+    $f->end($ref_end);
+    $f->strand(1);
+    $f->hseqname($qy_chr);
+    $f->hstart($qy_start);
+    $f->hend($qy_end);
+    $f->hstrand($qy_strand);
+    $f->score($score);
+    $f->percent_id($identity);
     
+    push @DnaDnaAlignFeatures,$f ;
+
     undef $ref_seq;
     undef $qy_seq;
   }
@@ -341,4 +316,45 @@ exit 1\n";
     }
   }
   return int($number_identity/$length*100);
+}
+
+sub cigar_gen {
+  my ($q,$s) = @_;
+  my @q = split //,$q;
+  my @s = split //,$s;
+  my $i = 0;
+  my @ret = ();
+  for (; $i <= $#q; $i++) {
+    my $q = $q[$i];
+    my $s = $s[$i];
+    if($q eq "\-") {
+      push @ret,"D";
+      next;
+    }
+    if($s eq "\-") {
+      push @ret,"I";
+      next;
+    }
+    push @ret,"M";
+  }
+  my $c = 0;
+  my $ret = "";
+  for ($i=1; $i <= $#ret; $i++) {
+    if ($ret[$i] eq $ret[$i-1]) {
+      $c++;
+      next;
+    }
+    if($c == 0) {
+      $ret .= $ret[$i-1];
+      next;
+    }
+    $ret .= sprintf "%d$ret[$i-1]",++$c;
+    $c = 0;
+  }
+  if($c == 0) {
+    $ret .= $ret[$i-1];
+  } else {
+    $ret .= sprintf "%d$ret[$i-1]",++$c;
+  }
+  return $ret;
 }
