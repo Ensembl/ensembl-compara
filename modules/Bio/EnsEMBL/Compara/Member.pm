@@ -516,6 +516,11 @@ sub gene_member {
       unless ($gene_member->isa('Bio::EnsEMBL::Compara::Member'));
     $self->{'_gene_member'} = $gene_member;
   }
+  if(!defined($self->{'_gene_member'}) and
+     defined($self->adaptor) and $self->dbID)
+  {
+    $self->{'_gene_member'} = $self->adaptor->fetch_gene_for_peptide_member_id($self->dbID);
+  }
   return $self->{'_gene_member'};
 }
 
@@ -541,6 +546,76 @@ sub print_member
          $self->dbID,$self->chr_name,$self->chr_start, $self->chr_end);
   if($postfix) { print(" $postfix"); }
   else { print("\n"); }
+}
+
+
+=head2 gene
+
+  Args       : none
+  Example    : $gene = $member->gene
+  Description: if member is an 'ENSEMBLGENE' returns Bio::EnsEMBL::Gene object
+               by connecting to ensembl genome core database
+  Returntype : Bio::EnsEMBL::Gene or undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub gene {
+  my $self = shift;
+  
+  unless($self->{'core_gene'}) {
+    my $coreDBA = $self->genome_db->db_adaptor;
+    if($self->source_name eq 'ENSEMBLGENE') {    
+      $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->stable_id);
+    }
+    if($self->source_name eq 'ENSEMBLPEP') {
+      $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->gene_member->stable_id);
+    }
+  }
+  return $self->{'core_gene'};
+}
+
+=head2 transcript
+
+  Args       : none
+  Example    : $transcript = $member->transcript
+  Description: if member is an 'ENSEMBLPEP returns Bio::EnsEMBL::Transcript object
+               by connecting to ensembl genome core database
+  Returntype : Bio::EnsEMBL::Transcript or undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub transcript {
+  my $self = shift;
+  
+  return undef unless($self->source_name eq 'ENSEMBLPEP');
+  unless($self->{'core_transcript'}) {
+    my $coreDBA = $self->genome_db->db_adaptor;
+    $self->{'core_transcript'} = $coreDBA->get_TranscriptAdaptor->fetch_by_translation_stable_id($self->stable_id);
+  }
+  return $self->{'core_transcript'};
+}
+
+
+=head2 translation
+
+  Args       : none
+  Example    : $translation = $member->translation
+  Description: if member is an 'ENSEMBLPEP' returns Bio::EnsEMBL::Translation object
+               by connecting to ensembl genome core database
+  Returntype : Bio::EnsEMBL::Gene or undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub translation {
+  my $self = shift;
+  return $self->transcript->translation if($self->transcript);
+  return undef;
 }
 
 # DEPRECATED METHODS
