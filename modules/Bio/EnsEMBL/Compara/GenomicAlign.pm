@@ -436,8 +436,257 @@ sub _loaded_align_block{
 
 
 
+### getters and setters ###
+
+=head2 dbID
+ 
+  Arg [1]    : int $dbID
+  Example    : none
+  Description: get/set for attribute dbID
+  Returntype : int
+  Exceptions : none
+  Caller     : set only by adaptor on store or retrieve
+ 
+=cut
+ 
+ 
+sub dbID {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'_dbID'} = $arg ;
+   }
+   return $self->{'_dbID'};
+}
 
 
+
+=head2 consensus_dnafrag_id
+ 
+  Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $consensus_dnafrag
+  Example    : none
+  Description: get/set for attribute consensus_dnafrag_id
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub consensus_dnafrag_id {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'consensus_dnafrag_id'} = $arg ;
+   }
+   return $self->{'consensus_dnafrag_id'};
+}
+
+
+
+=head2 consensus_start
+ 
+  Arg [1]    : int $consensus_start
+  Example    : none
+  Description: get/set for attribute consensus_start
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub consensus_start {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'consensus_start'} = $arg ;
+   }
+   return $self->{'consensus_start'};
+}
+
+
+
+=head2 consensus_end
+ 
+  Arg [1]    : int $consensus_end
+  Example    : none
+  Description: get/set for attribute consensus_end
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub consensus_end {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'consensus_end'} = $arg ;
+   }
+   return $self->{'consensus_end'};
+}
+
+
+
+=head2 query_dnafrag_id
+ 
+  Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $query_dnafrag
+  Example    : none
+  Description: get/set for attribute query_dnafrag_id
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub query_dnafrag_id {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'query_dnafrag_id'} = $arg ;
+   }
+   return $self->{'query_dnafrag_id'};
+}
+
+
+
+=head2 query_start
+ 
+  Arg [1]    : int $query_start
+  Example    : none
+  Description: get/set for attribute query_start
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub query_start {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'query_start'} = $arg ;
+   }
+   return $self->{'query_start'};
+}
+
+
+
+=head2 query_end
+ 
+  Arg [1]    : int $query_end
+  Example    : none
+  Description: get/set for attribute query_end
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub query_end {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'query_end'} = $arg ;
+   }
+   return $self->{'query_end'};
+}
+
+
+=head2 query_strand
+ 
+  Arg [1]    : int $query_strand
+  Example    : none
+  Description: get/set for attribute query_strand
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub query_strand {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'query_strand'} = $arg ;
+   }
+   return $self->{'query_strand'};
+}
+
+
+
+=head2 score
+ 
+  Arg [1]    : double $score
+  Example    : none
+  Description: get/set for attribute score  
+  Returntype : double
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub score {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'score'} = $arg ;
+   }
+   return $self->{'score'};
+}
+
+
+
+=head2 perc_id
+ 
+  Arg [1]    : int $perc_id
+  Example    : none
+  Description: get/set for attribute perc_id  
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub perc_id {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'perc_id'} = $arg ;
+   }
+   return $self->{'perc_id'};
+}
+
+
+
+=head2 cigar_line
+ 
+  Arg [1]    : string $cigar_line
+  Example    : none
+  Description: get/set for attribute cigar_line  
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+ 
+sub cigar_line {
+   my ($self, $arg) = @_;
+ 
+   if ( defined $arg ) {
+      $self->{'cigar_line'} = $arg ;
+   }
+   return $self->{'cigar_line'};
+}
 
 
 1;
