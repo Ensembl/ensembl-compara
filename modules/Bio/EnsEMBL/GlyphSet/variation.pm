@@ -35,13 +35,13 @@ sub features {
 sub href {
   my ($self, $f ) = @_;
   &eprof_start('href'); 
-  my( $chr_start, $chr_end ) = $self->slice2sr( $f->start, $f->end );
+  my $start = $self->slice2sr( $f->start, $f->end );
   my $id = $f->variation_name;
   $id =~ s/^rs//;
   my $source = $f->source;
-  my $chr_name = $self->{'container'}->seq_region_name();  # call seq region on slice
+  my $region = $self->{'container'}->seq_region_name();  # call  on slice
   &eprof_end('href');
-  return "/@{[$self->{container}{_config_file_name_}]}/variationview?snp=$id&source=$source&chr=$chr_name&vc_start=$chr_start";
+  return "/@{[$self->{container}{_config_file_name_}]}/variationview?snp=$id&source=$source&c=$region:$start";
 }
 
 sub image_label {
@@ -104,15 +104,15 @@ sub colour {
 sub zmenu {
   my ($self, $f ) = @_;
   &eprof_start('zmenu');
-  my( $chr_start, $chr_end ) = $self->slice2sr( $f->start, $f->end );
+  my( $start, $end ) = $self->slice2sr( $f->start, $f->end );
   my $allele = $f->allele_string;
-  my $pos =  $chr_start;
+  my $pos =  $start;
 
   if($f->start > $f->end  ) {
-    $pos = "between&nbsp;$chr_start&nbsp;&amp;&nbsp;$chr_end";
+    $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
   }
   elsif($f->start < $f->end ) {
-    $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+    $pos = "$start&nbsp;-&nbsp;$end";
   }
 
   my $status = join ", ", @{$f->get_all_validation_states};
