@@ -121,4 +121,36 @@ sub read_clustalw {
   }
 }
 
+sub get_SimpleAlign {
+  my $self = shift;
+
+  my $sa = Bio::SimpleAlign->new();
+
+  #Hack to try to work with both bioperl 0.7 and 1.2:
+  #Check to see if the method is called 'addSeq' or 'add_seq'
+  my $bio07 = 0;
+  if(!$sa->can('add_seq')) {
+    $bio07 = 1;
+  }
+
+  foreach my $member_attribute (@{$self->get_all_Member}) {
+    my ($member, $attribute) = @{$member_attribute};
+    my $seqstr = $attribute->alignment_string($member);
+    next if(!$seqstr);
+    my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
+                                     -START  => 1,
+                                     -END    => length($seqstr),
+                                     -ID     => $member->stable_id,
+                                     -STRAND => 0);
+
+    if($bio07) {
+      $sa->addSeq($seq);
+    } else {
+      $sa->add_seq($seq);
+    }
+  }
+
+  return $sa;
+}
+
 1;
