@@ -111,6 +111,8 @@ sub _columns {
   return qw (h.homology_id
              h.stable_id
              h.description
+             h.dn
+             h.ds
              s.source_id
              s.source_name);
 }
@@ -118,9 +120,9 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $stable_id, $description, $source_id, $source_name);
+  my ($homology_id, $stable_id, $description, $dn, $ds, $source_id, $source_name);
 
-  $sth->bind_columns(\$homology_id, \$stable_id, \$description,
+  $sth->bind_columns(\$homology_id, \$stable_id, \$description, \$dn, \$ds,
                      \$source_id, \$source_name);
 
   my @homologies = ();
@@ -130,6 +132,8 @@ sub _objs_from_sth {
       ({'_dbID' => $homology_id,
        '_stable_id' => $stable_id,
        '_description' => $description,
+       '_dn' => $dn,
+       '_ds' => $ds,
        '_source_id' => $source_id,
        '_source_name' => $source_name,
        '_adaptor' => $self});
@@ -178,9 +182,9 @@ sub store {
     $hom->dbID($rowhash->{homology_id});
   } else {
   
-    $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?)";
+    $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?,?,?)";
     $sth = $self->prepare($sql);
-    $sth->execute($hom->stable_id,$hom->source_id,$hom->description);
+    $sth->execute($hom->stable_id,$hom->source_id,$hom->description, $hom->dn, $hom->ds);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
