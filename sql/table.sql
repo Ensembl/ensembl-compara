@@ -13,7 +13,7 @@ CREATE TABLE dnafrag (
   end int(11) DEFAULT '0' NOT NULL,
   name varchar(40) DEFAULT '' NOT NULL,
   genome_db_id int(10) DEFAULT '0' NOT NULL,
-  dnafrag_type enum('chromosome','scaffold', 'supercontig'),
+  dnafrag_type enum('chromosome','scaffold', 'supercontig') NOT NULL,
 
   PRIMARY KEY (dnafrag_id),
   KEY dnafrag_id (dnafrag_id,name),
@@ -186,8 +186,8 @@ CREATE TABLE member (
 
 CREATE TABLE sequence (
  sequence_id    int(10) NOT NULL auto_increment,
- sequence       mediumtext,
- length         int(10),
+ sequence       mediumtext NOT NULL,
+ length         int(10) NOT NULL,
 
  PRIMARY KEY (sequence_id)
 );
