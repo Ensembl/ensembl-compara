@@ -68,7 +68,6 @@ sub _init {
             $label = $vg->id();
     		foreach my $DB_link ( @temp_geneDBlinks ) {
                 my $db = $DB_link->database();
-                print STDERR "DB: $db - $db_names{$db} ".$DB_link->display_id()."\n";
                 # reset if precedence is higher!
                 if( $db_names{$db} && $db_names{$db}>$max_pref) {
                     $label = $DB_link->display_id();
