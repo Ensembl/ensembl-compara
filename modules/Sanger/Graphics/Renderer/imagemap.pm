@@ -18,7 +18,7 @@ sub init_canvas {
     $self->canvas("");
     $self->{'show_zmenus'} = defined( $config->get("_settings","opt_zmenus") ) ? $config->get("_settings","opt_zmenus") : 1;
     $self->{'zmenu_zclick'} = $config->get("_settings","opt_zclick");
-    $self->{'zmenu_behaviour'} = $config->get("_settings","zemnu_behaviour") || 'onmouseover';
+    $self->{'zmenu_behaviour'} = $config->get("_settings","zmenu_behaviour") || 'onmouseover';
 }
 
 sub add_canvas_frame {
@@ -114,7 +114,7 @@ sub _getHref {
   if($self->{'show_zmenus'}==1) {
     my $zmenu = $glyph->zmenu();
     if(defined $zmenu && (ref($zmenu) eq '' || ref($zmenu) eq 'HASH' && keys(%$zmenu)>0) ) {
-      if($self->{'zmenu_zclick'} || $self->{'zmenu_behaviour'} eq 'onClick') {
+      if($self->{'zmenu_zclick'} || ($self->{'zmenu_behaviour'} =~ /onClick/i)) {
         #$actions{'ondoubleclick'} = $actions{'href'}        if exists $actions{'href'};
         $actions{'onclick'}       = &Sanger::Graphics::JSTools::js_menu($zmenu).";return false;";   
         delete $actions{'onmouseover'};

@@ -121,8 +121,9 @@ sub render_Intron {
     my $w = $self->W($glyph)/2;
     my $h = $self->H($glyph)/2 * ( $glyph->strand == -1 ? -1 : 1 );
     my $y = $self->Y($glyph);
-    my $x = $glyph->pixelx();
-    my $y = $self->Y($glyph) - ($glyph->strand() == -1 ? $h*2 : 0 );
+    
+    $x = $glyph->pixelx();
+    $y = $self->Y($glyph) - ($glyph->strand() == -1 ? $h*2 : 0 );
 
 
     $self->strokecolor( $gcolour );
