@@ -45,6 +45,39 @@ create table dnafrag_region (
 );
 
 
+
+#
+# Table structure for table 'gene_relationship'
+#
+
+CREATE TABLE gene_relationship (
+  gene_relationship_id int(10) NOT NULL auto_increment,
+  relationship_stable_id varchar(40),
+  relationship_type enum('homologous_pair','family','interpro'),
+  description varchar(255),
+  annotation_confidence_score double,
+  PRIMARY KEY (gene_relationship_id)
+);
+
+#
+# Table structure for table 'gene_relationship_member'
+#
+
+CREATE TABLE gene_relationship_member (
+  gene_relationship_id int(10),
+  genome_db_id int(10),
+  member_stable_id varchar(40),
+  KEY gene_relationship_id (gene_relationship_id)
+);
+
+
+
+
+
+
+
+
+
 create table align (
        align_id integer(10) NOT NULL auto_increment,
        score    varchar(20),
