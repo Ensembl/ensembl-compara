@@ -1,7 +1,7 @@
 
 
 use Test;
-BEGIN { plan tests => 5 }
+BEGIN { plan tests => 7 }
 
 
 
@@ -47,7 +47,9 @@ $alignblockset = $align->get_AlignBlockSet(1);
 
 ($a,$alignblock) = $alignblockset->get_AlignBlocks;
 
-ok ($alignblock->start == 25 && $alignblock->end == 30 && $alignblock->align_start == 15 
+$a = undef;
+
+ok ($alignblock->start == 11 && $alignblock->end == 16 && $alignblock->align_start == 15 
 	&& $alignblock->align_end == 20);
 
 $alignout = Bio::AlignIO->new( -format => 'fasta',-file => '>t/test.aln' );
@@ -58,5 +60,6 @@ ok 6;
 $alignin = Bio::AlignIO->new( -format => 'fasta',-file => 't/test.aln');
 
 $aln = $alignin->next_aln();
-
+$aln = undef;
 ok 7;
+
