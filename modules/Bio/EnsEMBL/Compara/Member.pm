@@ -421,26 +421,25 @@ sub sequence_id {
   return $self->{'_sequence_id'};
 }
 
-=head2 primaryseq
+=head2 bioseq
 
   Args       : none
   Example    : my $primaryseq = $member->primaryseq;
-  Description: returns sequence this member as a Bio::PrimarySeq object
-  Returntype : Bio::PrimarySeq object
+  Description: returns sequence this member as a Bio::Seq object
+  Returntype : Bio::Seq object
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub primaryseq {
+sub bioseq {
   my $self = shift;
 
-  my $seq = Bio::PrimarySeq->new(-seq        => $self->sequence(),
-                                 -id         => $self->stable_id(),
-                                 -primary_id => $self->stable_id(),
-                                 -desc       => $self->description(),
-                                 -moltype    => undef
-                                );
+  my $seq = Bio::Seq->new(-seq        => $self->sequence(),
+                          -id         => $self->stable_id(),
+                          -primary_id => $self->stable_id(),
+                          -desc       => $self->description(),
+                         );
   return $seq;             
 }
 
