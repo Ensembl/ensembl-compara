@@ -55,7 +55,6 @@ while (<>) {
   # BestReciprocalHit
   # ReciprocalHitbasedonSynteny
   $homology->description("YoungParalogues");
-  $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
   $homology->dn(0,$dn);
   $homology->ds(0,$ds);
   $homology->n($n);
