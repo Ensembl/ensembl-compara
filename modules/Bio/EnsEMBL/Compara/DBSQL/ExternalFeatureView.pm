@@ -112,6 +112,7 @@ sub get_Ensembl_SeqFeatures_contig_list{
      push(@contigs,$hash_ref->{$id});
    }
 
+   my @contigs = @$contigs;
    my %hash;
 
    foreach my $c ( @contigs ) {
