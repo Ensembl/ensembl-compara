@@ -3,6 +3,7 @@ use Bio::Root::RootI;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::Videogram;
+use EnsWeb;
 
 @ISA = qw(Bio::Root::RootI);
 
@@ -30,21 +31,21 @@ sub new {
     ########## loop over all the glyphsets the user wants:
     my $tmp = {};
     for my $row ($Config->subsections()) {
-	if( $row eq 'Videogram' && $Config->{'_all_chromomosomes'} eq 'yes') {
+    	if( $row eq 'Videogram' && $Config->{'_all_chromomosomes'} eq 'yes') {
             my $pos = $tmp->{$Config->get($row, 'pos')};
-	    foreach my $chr (1..22,qw(X Y)) {
-		my $GlyphSet;
-               	eval {
-		    $GlyphSet = new Bio::EnsEMBL::GlyphSet::Videogram(
-			   $Container, $Config, $highlights, 0,
-			   { 'chr' => $chr }
-		    );
-		};
-		if($@) {
-		    print STDERR "GLYPHSET Videogram($chr) failed\n";
-		} else {
-		   $GlyphSet->_init();
-		   $tmp->{$pos++} = $GlyphSet if( @{$GlyphSet->{'glyphs'}} );
+    	    foreach my $chr ( @{EnsWeb::species_defs->ENSEMBL_CHROMOSOMES} ) {
+    		    my $GlyphSet;
+                eval {
+    		        $GlyphSet = new Bio::EnsEMBL::GlyphSet::Videogram(
+    			                $Container, $Config, $highlights, 0,
+    			                { 'chr' => "chr$chr" }
+    		        );
+    		    };
+    		    if($@) {
+    		        print STDERR "GLYPHSET Videogram($chr) failed\n";
+    		    } else {
+    		        $GlyphSet->_init();
+    		        $tmp->{$pos++} = $GlyphSet if( @{$GlyphSet->{'glyphs'}} );
                 }
             } 
         } else {
@@ -52,22 +53,22 @@ sub new {
             my $classname = qq(Bio::EnsEMBL::GlyphSet::$row);
             ########## require & import the package
             eval "require $classname";
-        
+            
             if($@) {
                 print STDERR qq(VDrawableContainer::new failed to require $classname: $@\n);
                 next;
             } 
             $classname->import();
-
+    
             my $GlyphSet;
             eval { $GlyphSet = new $classname($Container, $Config, $highlights); };
             if($@) {
-                 print STDERR "GLYPHSET $classname failed\n";
+               print STDERR "GLYPHSET $classname failed\n";
             } else {
-                 ########## load everything from the database
-                 ########## don't waste any more time on this row if there's nothing in it
-                 $GlyphSet->_init();
-                 $tmp->{$Config->get($row, 'pos')} = $GlyphSet if( @{$GlyphSet->{'glyphs'}} );
+               ########## load everything from the database
+               ########## don't waste any more time on this row if there's nothing in it
+               $GlyphSet->_init();
+               $tmp->{$Config->get($row, 'pos')} = $GlyphSet if( @{$GlyphSet->{'glyphs'}} );
             }
         }
     }
@@ -91,14 +92,38 @@ sub new {
     my $yoffset = 0;
 
     my $glyphsets = @{$self->{'glyphsets'}};
+
+##
+## Firstly lets work how many entries to draw per row!
+## Then work out the minimum start for each of these rows
+## We then shift up all these points up by that many base 
+## pairs to close up any gaps
+##
+
     my $entries_per_row = int( ($glyphsets - 1) / ($Config->{'_rows'} || 1) ) +1; 
     my $entry_no = 0;
-    my $xoffset = 0;
     $Config->{'_max_height'} =  0;
     $Config->{'_max_width'}  =  0;
 
+    my @row_min   = ();
+    my @row_max   = ();
+    my $row_count = 0;
+    my $row_index = 0;
     for my $glyphset (@{$self->{'glyphsets'}}) {
-		print STDERR "GLYPHSET: $entry_no $xoffset $yoffset\n";
+        $row_min[$row_index] = $glyphset->minx() if(!defined $row_min[$row_index] || $row_min[$row_index] > $glyphset->minx() );
+        $row_max[$row_index] = $glyphset->maxx() if(!defined $row_max[$row_index] || $row_max[$row_index] < $glyphset->maxx() );
+        unless(++$row_count < $entries_per_row) {
+            $row_count = 0;
+            $row_index++;
+        }
+    }
+    ## Close up gap!
+    my $translateX = shift @row_min;
+    $Config->{'transform'}->{'translatex'} -= $translateX * $scalex; #$xoffset;
+    my $xoffset = -$translateX * $scalex;
+
+    for my $glyphset (@{$self->{'glyphsets'}}) {
+		print STDERR "GLYPHSET: $entry_no $xoffset $yoffset ".$glyphset->minx()." ".$glyphset->maxx()."\n";
         $Config->{'_max_width'} = $xoffset + $Config->image_width();
         ########## set up the label for this strip 
 	########## first we get the max width of label in characters
@@ -138,8 +163,10 @@ sub new {
         unless(++$entry_no < $entries_per_row) {
             $entry_no = 0;
             $yoffset = 0;
-            $xoffset += $Config->image_width();
-        	$Config->{'transform'}->{'translatex'} += $Config->image_width(); #$xoffset;
+            my $translateX = shift @row_min;
+            $xoffset += $Config->image_width() - $translateX * $scalex;
+            ## Shift down - and then close up gap!
+        	$Config->{'transform'}->{'translatex'} += $Config->image_width() - $translateX * $scalex; #$xoffset;
         }
     }
 
