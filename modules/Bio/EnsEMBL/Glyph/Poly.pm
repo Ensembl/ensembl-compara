@@ -86,12 +86,10 @@ sub transform {
     #
     if(defined $this->absolutex()) {
 	$scalex     = 1;
-	$translatex = 0;
     }
 
     if(defined $this->absolutey()) {
 	$scaley     = 1;
-	$translatey = 0;
     }
 
     #########

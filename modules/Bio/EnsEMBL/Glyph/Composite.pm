@@ -43,6 +43,26 @@ sub push {
 	# y unchanged
 	$this->height(($gy + $gh) - $this->y());
     }
+
+    #########
+    # make the glyph coords relative to the composite container
+    #
+    $glyph->x($gx - $this->x());
+    $glyph->y($gy - $this->y());
+}
+
+sub first {
+    my ($this) = @_;
+    return if(!defined $this->{'composite'});
+    return @{$this->{'composite'}}[0];
+}
+
+sub last {
+    my ($this) = @_;
+    return if(!defined $this->{'composite'});
+    my $len = scalar @{$this->{'composite'}};
+    return undef if($len == 0);
+    return @{$this->{'composite'}}[$len - 1];
 }
 
 1;
