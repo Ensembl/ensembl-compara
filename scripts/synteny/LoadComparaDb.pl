@@ -79,15 +79,15 @@ WHERE mls1.method_link_id = ml.method_link_id AND
       mls2.method_link_id = ml.method_link_id AND 
       mls1.genome_db_id = ? AND
       mls2.genome_db_id = ? AND
-      mls1.species_set=mls2.species_set AND
+      mls1.species_set = mls2.species_set AND
       ml.method_link_id = ?");
 
 $sth_method_link_species->execute($genome_db_id1,$genome_db_id2,$method_link_id);
 my ($already_stored) = $sth_method_link_species->fetchrow_array();
 
 unless (defined $already_stored) {
-  $sth_method_link_species = $db->prepare("select max(species_set) from method_link_species");
-  $sth_method_link_species->execute();
+  $sth_method_link_species = $db->prepare("select max(species_set) from method_link_species where method_link_id = ?");
+  $sth_method_link_species->execute($method_link_id);
   my ($max_species_set) = $sth_method_link_species->fetchrow_array();
 
   $max_species_set = 0 unless (defined $max_species_set);
