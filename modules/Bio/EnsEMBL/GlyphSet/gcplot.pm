@@ -138,7 +138,7 @@ sub _init {
 		'text'   	=> $text,
 		'absolutey' => 1,
 	});
-	$self->push($tglyph);
+	#$self->push($tglyph);
 
 }
 

@@ -65,6 +65,8 @@ sub _init {
 	    $start    = $vg->start();
 	    $end      = $vg->end();
 	} else {
+		# for the moment we are ignoring external genes...
+		next;
 	    # EXTERNAL ANNOYING GENES
 	    $colour   = $ext_col;
 	    my @exons;
@@ -89,25 +91,7 @@ sub _init {
 	    'absolutey' => 1,
 	});
 
-	#########
-	# bump it baby, yeah!
-    # bump-nology!
-	#
-    my $bump_start = int($rect->x() * $pix_per_bp);
-	$bump_start    = 0 if ($bump_start < 0);
-
-    my $bump_end = $bump_start + int($rect->width()*$pix_per_bp);
-    if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-    my $row = &Bump::bump_row(      
-	$bump_start,
-	$bump_end,
-	$bitmap_length,
-	\@bitmap
-    );
-
 	# we don't bump genes...(as opposed to transcripts)
-	#next if $row > $Config->get($Config->script(), 'gene', 'dep');
-    #$rect->y($rect->y() + (1.5 * $row * $h));
     $self->push($rect);
 	
     }

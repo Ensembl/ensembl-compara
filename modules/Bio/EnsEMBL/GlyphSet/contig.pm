@@ -50,7 +50,8 @@ sub _init {
 
     my $ystart = 75;
     my $im_width = $self->{'config'}->image_width();
-	my ($w,$h) = $self->{'config'}->texthelper->px2bp('Tiny');
+	my ($w,$h) = $self->{'config'}->texthelper()->px2bp('Tiny');
+	my $length = $self->{'container'}->length();
 
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
     	'x'      => 1,
@@ -124,7 +125,7 @@ sub _init {
 		my $text = "Golden path gap - no contigs to display!";
 		my $bp_textwidth = $w * length($text);
 	    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-		'x'      => int(($self->{'container'}->length())/2 - ($bp_textwidth)/2),
+		'x'      => int(($length)/2 - ($bp_textwidth)/2),
 		'y'      => $ystart+4,
 		'font'   => 'Tiny',
 		'colour' => $red,
@@ -210,7 +211,12 @@ sub _init {
     });
     $self->push($tick);
     
-	if ($self->{'config'}->script() eq "contigviewtop"){
+	my $vc_size_limit = $self->{'config'}->get('contigviewtop','_settings','default_top_vc_size');
+	#print STDERR "VC size limit: $vc_size_limit\n";
+	#print STDERR "VC size: ", $self->{'container'}->length(), "\n";
+
+	# only draw a red box if we are in contigview top and there is a detailed display
+	if ($self->{'config'}->script() eq "contigviewtop" && ($length <= $vc_size_limit+1)){
 		# only draw focus box on the correct display...
     	my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
 		'x'      => $self->{'config'}->{'_wvc_start'} - $self->{'container'}->_global_start(),
