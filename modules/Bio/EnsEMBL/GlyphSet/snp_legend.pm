@@ -24,8 +24,8 @@ sub _init {
 
     return unless ($self->strand() == -1);
 
-    my $BOX_HEIGHT    = 4;
-    my $BOX_WIDTH     = 20;
+    my $BOX_HEIGHT    = 7;
+    my $BOX_WIDTH     = 10;
     my $NO_OF_COLUMNS = 5;
     my $FONTNAME      = "Tiny";
 
@@ -56,12 +56,11 @@ sub _init {
         $y++ unless $x==0;
         $x=0;
         while( my ($legend, $colour) = splice @colours, 0, 2 ) {
-            $self->push(new Bio::EnsEMBL::Glyph::Rect({
-                'x'         => $im_width * $x/$NO_OF_COLUMNS,
-                'y'         => $y * $BOX_HEIGHT * 2 + 6,
-                'width'     => $BOX_WIDTH, 
-                'height'    => $BOX_HEIGHT,
-                'colour'    => $colour,
+            $self->push(new Bio::EnsEMBL::Glyph::Poly({
+                'points'    => [ $im_width * $x/$NO_OF_COLUMNS, 3+$BOX_HEIGHT,
+                    $im_width * $x/$NO_OF_COLUMNS + 4, 3,
+                    $im_width * $x/$NO_OF_COLUMNS + 8, 3+$BOX_HEIGHT  ],
+        	    'colour'    => $colour,
                 'absolutey' => 1,
                 'absolutex' => 1,
             }));
