@@ -145,7 +145,7 @@ sub _init {
                         $other_chr,$box->{'hit_chr_start'}/1e6,$box->{'hit_chr_end'}/1e6) => 
 		( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' ),
 
-	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?species=$OTHER&chr=$this_chr&loc=).int(($box->{'chr_end'}+$box->{'chr_start'})/2)
+	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?otherspecies=$OTHER&chr=$this_chr&loc=).int(($box->{'chr_end'}+$box->{'chr_start'})/2)
 
 	    };
 
@@ -187,7 +187,7 @@ sub _init {
                 ) => 
                     ( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' )
             );
-            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?species=@{[$self->{container}{_config_file_name_}]}&chr=$other_chr&loc=).int(($box->{'hit_chr_end'}+$box->{'hit_chr_start'})/2) : '' ;
+            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{_config_file_name_}]}&chr=$other_chr&loc=).int(($box->{'hit_chr_end'}+$box->{'hit_chr_start'})/2) : '' ;
             $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;
             push @{$highlights_secondary->{$other_chr}}, {
                 'rel_ori' => $box->{'rel_ori'},
