@@ -47,6 +47,9 @@ sub _init {
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
+    my $rat_colours = { 
+       'refseq' => $Config->get('gene_lite','refseq'), 
+    }; 
     my $sanger_colours = { 
            'Novel_CDS'        => $Config->get('gene_label_lite','sanger_Novel_CDS'), 
            'Putative'         => $Config->get('gene_label_lite','sanger_Putative'), 
@@ -162,6 +165,29 @@ sub _init {
         };
     }
     &eprof_end("gene-externalgene_start-get");
+
+##############################################################################
+# Stage 2d: Retrieve all RefSeq genes                                        #
+##############################################################################
+    foreach my $g (@{ $vc->get_all_Genes_by_source('refseq', 1) } ) { ## Hollow genes
+        my $gene_label = $g->stable_id();
+        my $high = (exists $highlights{ $g->stable_id() }) ||
+          exists ($highlights{$gene_label});
+        my $gene_col = $rat_colours->{'refseq'};
+        push @genes, {
+                'chr_start' => $g->start() + $offset,
+                'chr_end'   => $g->end() + $offset,
+                'start'     => $g->start(),
+                'strand'    => $g->strand(),
+                'end'       => $g->end(),
+                'ens_ID'    => '', #$g->{'stable_id'},
+                'label'     => $gene_label,
+                'colour'    => $gene_col,
+                'ext_DB'    => $g->external_db(),
+                'high'      => $high,
+                'type'      => $g->type()
+        };
+    }
 
 ##############################################################################
 # Stage 3: Render gene labels                                                #
