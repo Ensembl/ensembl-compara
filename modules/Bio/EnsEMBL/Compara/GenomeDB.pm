@@ -80,11 +80,11 @@ sub new {
 
 =cut
 
-sub db_adaptor{
+sub db_adaptor {
   my ( $self, $dba ) = @_;
 
   if($dba) {
-    unless(ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
+    unless($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
       $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
     }
     $self->{'_db_adaptor'} = $dba;
