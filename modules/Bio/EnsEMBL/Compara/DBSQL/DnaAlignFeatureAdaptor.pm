@@ -150,7 +150,7 @@ sub fetch_all_by_species_region {
 
       my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
         ({'cigar_string' => $ga->cigar_line(),
-          'seqname'      => $df->contig()->seq_region_name(),
+          'seqname'      => $df->name,
           'start'        => $cstart,
           'end'          => $cend,
           'strand'       => 1,
@@ -160,7 +160,7 @@ sub fetch_all_by_species_region {
           'hstart'       => $qdf->start() + $ga->query_start() - 1,
           'hend'         => $qdf->start() + $ga->query_end() -1,
           'hstrand'      => $ga->query_strand(),
-          'hseqname'     => $qdf->contig()->seq_region_name(),
+          'hseqname'     => $qdf->name,
           'hspecies'     => $qy_species});
 
       push @out, $f;
