@@ -41,7 +41,7 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw info);
 
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -126,7 +126,13 @@ sub store {
   if (!$genomic_align_block->dbID) {
     $genomic_align_block->dbID($sth->{'mysql_insertid'});
   }
-  
+  info("Stored Bio::EnsEMBL::Compara::GenomicAlignBlock ".
+        ($genomic_align_block->dbID or "NULL").
+        ", mlss=".$genomic_align_block->method_link_species_set->dbID.
+        ", scr=".$genomic_align_block->score.
+        ", id=".$genomic_align_block->perc_id."\%".
+        ", l=".$genomic_align_block->length);
+
   ## Stores genomic_align entries
   my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
   $genomic_align_adaptor->store($genomic_align_block->genomic_align_array);
