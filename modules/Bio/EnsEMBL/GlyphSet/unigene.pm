@@ -70,7 +70,7 @@ sub _init {
 			$j++;
 		}
 		
-		if($VirtualContig->length() < 100000){
+		if($VirtualContig->length() < 100001){
 			# loop through glyphs again adding connectors...
 			my @g = $Composite->glyphs();
 			for (my $i = 1; $i<scalar(@g); $i++){

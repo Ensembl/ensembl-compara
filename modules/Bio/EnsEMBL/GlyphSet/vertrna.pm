@@ -13,27 +13,19 @@ use Bump;
 sub _init {
     my ($self, $VirtualContig, $Config) = @_;
 
-	my $strand = $self->strand();
-    my $y          = 0;
-    my $h          = 8;
-    my $highlights = $self->highlights();
+	my $strand 		= $self->strand();
+    my $y          	= 0;
+    my $h          	= 8;
+    my $highlights 	= $self->highlights();
 
-    my @bitmap      	= undef;
-    my $im_width 		= $Config->image_width();
-    my $src 			= $Config->get($Config->script(),'feature','col');
-	my $cmap  			= $Config->colourmap();
+    my $feature_colour 	= $Config->get($Config->script(),'vertrna','col');
+	my @bitmap      	= undef;
     my $bitmap_length 	= $VirtualContig->length();
-	my @allfeatures;
-
-	my $feature_colour = $cmap->id_by_name('pine');
 
     my $glob_bp = 100;
-
-    my @vert = $VirtualContig->get_all_SimilarityFeatures_above_score("embl_vertrna",80,$glob_bp);  
-    push @allfeatures,@vert;
+    my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("embl_vertrna",80,$glob_bp);  
 	
 	my %id = ();
-	@allfeatures = sort { $a->id() cmp $b->id() } @allfeatures;
 	
   	foreach my $f (@allfeatures){
 		next unless ($f->strand() == $strand);
@@ -75,33 +67,55 @@ sub _init {
 			$Composite->push($glyph);
 		}
 		
-		if(1){
-		# loop through glyphs again adding connectors...
-		my @g = $Composite->glyphs();
-		for (my $i = 1; $i<scalar(@g); $i++){
-			print STDERR "[ID:",$Composite->id(),"] ";
-			if (($g[$i]->{'_feature'}->hstart() - $g[$i-1]->{'_feature'}->hend()) < 5){	# they are close
-				print STDERR "Close ($i): ",$g[$i]->{'_feature'}->hstart(), " - ", $g[$i-1]->{'_feature'}->hend(), "\n";
+		if($VirtualContig->length() < 100000){
+			# loop through glyphs again adding connectors...
+			my @g = $Composite->glyphs();
+			for (my $i = 1; $i<scalar(@g); $i++){
+				my $id = $Composite->id();
+				my $prefix  =  "[ID: $id]";
+				my $hstart  = $g[$i]->{'_feature'}->hstart();
+				my $hend    = $g[$i-1]->{'_feature'}->hend();
+				my $fstart  = $g[$i-1]->{'_feature'}->start();
+				my $flength = $g[$i-1]->{'_feature'}->length();
 
-				my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
-					'x'      	=> $g[$i-1]->{'_feature'}->start() + $g[$i-1]->{'_feature'}->length(),
-					'y'      	=> 0,
-					'width'  	=> $g[$i]->{'_feature'}->start() - ($g[$i-1]->{'_feature'}->start() + $g[$i-1]->{'_feature'}->length()),
-					'height' 	=> $h,
-					'colour' 	=> $feature_colour,
-					'absolutey' => 1,
-				});
+				#print STDERR "$prefix Last end   = ", $hend, "\n";
+				#print STDERR "$prefix Next start = ", $hstart, "\n";
+				#print STDERR "$prefix Difference = ", $hstart - $hend, "\n";
+				
+				if (($hstart - $hend) < 5 && ($hstart - $hend) > -5 ){	# they are close
+					print STDERR "$prefix Close ($i): ",$hstart, " <-> ", $hend, "\n";
+					
+					my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
+						'x'      	=> $fstart + $flength,
+						'y'      	=> 0,
+						'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
+						'height' 	=> $h,
+						'strand' 	=> $strand,
+						'colour' 	=> $feature_colour,
+						'absolutey' => 1,
+					});
+					$Composite->{'zmenu'}->{"[$id:$i] $hend - $hstart"} = 1;;
+					#print STDERR "Adding inton to composite glyph ...\n";
+					$Composite->push($intglyph);
 
-				#print STDERR "Adding inton to composite glyph ...\n";
-				#$Composite->push($intglyph);
-
-			} else {
-				print STDERR "Not close: ",$g[$i]->{'_feature'}->hstart(), " - ", $g[$i-1]->{'_feature'}->hend(), "\n"; 
+				} else {
+					print STDERR "$prefix Not close: ",$hstart, " <=======> ", $hend, "\n"; 
+					my $intglyph = new Bio::EnsEMBL::Glyph::Line({
+						'x'      	=> $fstart + $flength,
+						'y'      	=> int($h * 0.5),
+						'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
+						'height' 	=> 0,
+						'colour' 	=> $feature_colour,
+						'dotted'	=> 1,
+						'absolutey' => 1,
+					});
+					$Composite->{'zmenu'}->{"[$id:$i] $hend - $hstart ======> GAP"} = 1;;
+					#$Composite->push($intglyph);
+				}
 			}
 		}
-		}
 		
-		if ($Config->get($Config->script(), 'feature', 'dep') > 0){ # we bump
+		if ($Config->get($Config->script(), 'vertrna', 'dep') > 0){ # we bump
 	    	my $bump_start = $Composite->x();
 	    	$bump_start = 0 if ($bump_start < 0);
 
