@@ -142,7 +142,7 @@ sub write_output
   #$output_id .= "}";
 
   print("output_id = $output_id\n");
-  $self->input_id($output_id);                    
+  $self->input_id($output_id);
   return 1;
 }
 
@@ -181,10 +181,20 @@ sub get_params {
   $self->{'masking_analysis_data_id'} = $params->{'masking_analysis_data_id'}
     if(defined($params->{'masking_analysis_data_id'}));
     
-  $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
   $self->{'create_analysis_prefix'} = $params->{'analysis_template'}
     if(defined($params->{'analysis_template'}));
 
+  #if I'm supposed to run a post analysis 'CreateChunkSet'
+  #redirect the output via branch '2' to that analysis
+  #yeah it's a bit hard coded, but it's a tightly coupled system anyways
+  #and this is a bit of a 'glue' component anyways
+  if(defined($params->{'group_set_size'})) {
+    $self->branch_code(2);
+    #printf("HAS group_set so redirect to branch=%d\n", $self->branch_code);
+  } elsif(defined($params->{'analysis_job'})) {
+    $self->{'analysis_job'} = $params->{'analysis_job'};
+  }
+  
   return;
 
 }
@@ -201,8 +211,6 @@ sub print_params {
   print("   overlap                  : ", $self->{'overlap'} ,"\n");
   print("   masking_analysis_data_id : ", $self->{'masking_analysis_data_id'} ,"\n");
   print("   masking_options          : ", $self->{'masking_options'} ,"\n") if($self->{'masking_options'});
- #print("   prog         : ", $self->{'prog'} ,"\n");
- #print("   create       : ", $self->{'create'} ,"\n");
 }
 
 
