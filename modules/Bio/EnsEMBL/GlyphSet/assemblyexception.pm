@@ -74,4 +74,5 @@ sub colour {
   return $f->type eq 'PAR' ? 'blue3' : 'red3';
 }
 
+sub no_features { }
 1;
