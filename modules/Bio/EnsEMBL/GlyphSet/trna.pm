@@ -22,8 +22,8 @@ sub zmenu {
     my ($self, $f ) = @_;
 
     my $score = $f->score();
-    my $start = $self->{'container'}->chr_start() + $f->start() -1;
-    my $end = $self->{'container'}->chr_start() + $f->end() - 1;
+    my $start = $self->{'container'}->start() + $f->start() -1;
+    my $end = $self->{'container'}->start() + $f->end() - 1;
 
     return {
         'caption'                                     => 'tRNA',

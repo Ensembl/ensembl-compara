@@ -68,7 +68,7 @@ sub _init {
     }
     my $show_navigation = $navigation eq 'on' && ( $vc_length < $max_length_nav * 1001 );
     my $bitmap_length   = int($vc_length * $pix_per_bp);
-	my $vc_start        = $vc->chr_start();
+	my $vc_start        = $vc->start();
     my $offset = $vc_start-1;
 ##############################################################################
 # Stage 1c: Initialize other arrays/numbers                                  #

@@ -42,11 +42,11 @@ sub _init {
     my $navigation     = $Config->get('scalebar', 'navigation');
     my $abbrev         = $Config->get('scalebar', 'abbrev');
     my $clone_based    = $Config->get('_settings','clone_based') eq 'yes';
-    my $param_string   = $clone_based ? $Config->get('_settings', 'clone') : ("chr=" . $Container->chr_name());
+    my $param_string   = $clone_based ? $Config->get('_settings', 'clone') : ("chr=" . $Container->seq_region_name());
 
     my $main_width     = $Config->get('_settings', 'main_vc_width');
     my $len            = $Container->length();
-    my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->chr_start();
+    my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->start();
     my $global_end     = $global_start + $len - 1;
 
     my( $major_unit, $minor_unit );

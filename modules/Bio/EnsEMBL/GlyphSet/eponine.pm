@@ -27,8 +27,8 @@ sub zmenu {
     my ($self, $f ) = @_;
     
     my $score = $f->score();
-    my $start = $f->start() + $self->{'container'}->chr_start() - 1;
-    my $end   = $f->end()   + $self->{'container'}->chr_start() - 1;
+    my $start = $f->start() + $self->{'container'}->start() - 1;
+    my $end   = $f->end()   + $self->{'container'}->start() - 1;
 
     return {
         'caption'                                     => 'eponine',

@@ -35,9 +35,9 @@ sub _init {
     return unless @ssaha_tickets;
 
     my $vc   = $self->{'container'};
-    my $vc_s = $vc->chr_start();
-    my $vc_e = $vc->chr_end();
-    my $vc_chr = $vc->chr_name();
+    my $vc_s = $vc->start();
+    my $vc_e = $vc->end();
+    my $vc_chr = $vc->name();
     my @hits;
 
     foreach my $ticket (@ssaha_tickets) {

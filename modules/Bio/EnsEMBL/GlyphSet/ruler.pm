@@ -34,8 +34,8 @@ sub _init {
                $strand_flag eq 'f' && $strand != 1 );
 
     my $len            = $self->{'container'}->length();
-    my $global_start   = $self->{'container'}->chr_start();
-    my $global_end     = $self->{'container'}->chr_end();
+    my $global_start   = $self->{'container'}->start();
+    my $global_end     = $self->{'container'}->end();
     my $highlights     = $self->highlights();
     my $im_width       = $Config->image_width();
     my $feature_colour = $Config->get('ruler','col');

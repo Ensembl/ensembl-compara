@@ -28,7 +28,7 @@ sub _init {
     my $protein    = $self->{'container'};
     my $Config     = $self->{'config'};  
 
-    my @transm_feat = @{$protein->get_all_TransmembraneFeatures()};
+    my @transm_feat = @{$protein->get_all_ProteinFeatures('tmhmm')};
     foreach my $feat(@transm_feat) {
 	push(@{$hash{$feat->feature1->seqname}},$feat);
     }

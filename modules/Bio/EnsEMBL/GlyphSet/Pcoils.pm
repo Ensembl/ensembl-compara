@@ -29,7 +29,7 @@ sub _init {
     my $protein = $self->{'container'};
     my $Config  = $self->{'config'}; 
     
-    my @coils_feat = @{$protein->get_all_CoilsFeatures};
+    my @coils_feat = @{$protein->get_all_ProteinFeatures('ncoils')};
     foreach my $feat(@coils_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
     }

@@ -32,7 +32,7 @@ sub features {
 sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
-    my $VCS = $self->{'container'}->chr_start()-1;
+    my $VCS = $self->{'container'}->start()-1;
     my $zmenu = { 
         'caption' => "Matepair",
         '01:note: '.$f->error => '',

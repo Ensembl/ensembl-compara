@@ -20,8 +20,8 @@ sub _init {
         'font'      => 'Tiny',
         'colour'    => 'black',
         'text'      => sprintf( "Ensembl %s    %s:%d-%d    %s",
-           @{[$self->{container}{_config_file_name_}]}, $self->{'container'}->chr_name,
-           $self->{'container'}->chr_start(), $self->{'container'}->chr_end,
+           @{[$self->{container}{_config_file_name_}]}, $self->{'container'}->name,
+           $self->{'container'}->start(), $self->{'container'}->end,
            scalar( gmtime() )
         ),
         'absolutey' => 1,

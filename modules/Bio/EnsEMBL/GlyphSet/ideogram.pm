@@ -11,7 +11,7 @@ use Sanger::Graphics::Glyph::Line;
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $chr = $self->{'container'}->chr_name();
+    my $chr = $self->{'container'}->seq_region_name();
     $chr = $chr ? "Chr $chr" : "Chrom. Band";
     $chr .= " " x (12 - length($chr));
 	
@@ -53,13 +53,13 @@ sub _init {
 
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper->px2bp('Tiny');
-    my $chr      = $self->{'container'}->chr_name();
+    my $chr      = $self->{'container'}->seq_region_name();
     my $len      = $self->{'container'}->length();
 
     # fetch the chromosome bands that cover this VC.
     my $kba   = $self->{'container'}->adaptor()->db()->get_KaryotypeBandAdaptor();
     my $bands = $kba->fetch_all_by_chr_name($chr);
-    my $chr_length = $self->{'container'}->get_Chromosome()->length();
+    my $chr_length = $self->{'container'}->length();
     
     # get rid of div by zero...
     $chr_length |= 1;
@@ -249,7 +249,7 @@ sub _init {
     # Draw the zoom position red box
     #################################
     $gband = new Sanger::Graphics::Glyph::Rect({
-    	'x'      => $self->{'container'}->chr_start(),
+    	'x'      => $self->{'container'}->start(),
     	'y'      => 0,
     	'width'  => $len,
     	'height' => 14,

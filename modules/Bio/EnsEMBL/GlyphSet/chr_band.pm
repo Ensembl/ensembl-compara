@@ -58,7 +58,7 @@ sub _init {
     my $min_start;
     my $max_end; 
     foreach my $band (reverse @$bands){
-	my $chr = $band->chr_name();
+	my $chr = $band->slice()->name();
 	my $bandname = $band->name();
 	   $bandname =~ /(\d+)\w?/;
 	my $band_no = $1;
@@ -66,9 +66,9 @@ sub _init {
 	my $end = $band->end();
 	my $stain = $band->stain();
 	
-	my $vc_band_start = $start;# - $self->{'container'}->chr_start();
+	my $vc_band_start = $start;
 	$vc_band_start    = 0 if ($vc_band_start < 0);
-	my $vc_band_end = $end;# - $self->{'container'}->chr_start();
+	my $vc_band_end = $end;
 	$vc_band_end      =  $self->{'container'}->length() if ($vc_band_end > $self->{'container'}->length());
 	
         my $min_start = $vc_band_start if(!defined $min_start || $min_start > $vc_band_start); 
@@ -104,7 +104,7 @@ sub _init {
 	    });
 	    $self->push($tglyph);
 	}
-		my $vc_ajust = 1 - $self->{'container'}->chr_start ;
+		my $vc_ajust = 1 - $self->{'container'}->start ;
 		my $band_start = $band->{'start'} - $vc_ajust;
 		my $band_end = $band->{'end'} - $vc_ajust;
     	my $gband = new Sanger::Graphics::Glyph::Rect({

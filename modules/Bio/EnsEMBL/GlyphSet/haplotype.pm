@@ -17,7 +17,7 @@ sub features {
 sub tag {
     my( $self, $f ) = @_;
     my $col = $self->{'config'}->get($self->check(), 'col');
-    my $vc_start = $self->{'container'}->chr_start()-1;
+    my $vc_start = $self->{'container'}->start()-1;
     my @tags = ();
     my %snps = $f->fetchSNPs( ); # returns a hash -> name => location
     foreach my $snp ( keys %snps ) {

@@ -60,7 +60,7 @@ sub _init {
     my $kba         = $self->{'container'}->{'ka'};
     my $bands       = $kba->fetch_all_by_chr_name($chr);
     
-    my $chr_length = $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
+    my $chr_length = $self->{'container'}->{'sa'}->fetch_by_region( 'toplevel', $chr )->length || 1;
     # bottom align each chromosome!
     my $v_offset    = $Config->container_width() - $chr_length; 
     my $bpperpx     = $Config->container_width()/$Config->{'_image_height'};

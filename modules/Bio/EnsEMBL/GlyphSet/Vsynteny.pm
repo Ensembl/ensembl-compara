@@ -58,8 +58,8 @@ sub _init {
     my $chr         = $self->{'container'}->{'chr'} || 1;
     my $kba         = $self->{'container'}->{'ka_main'};
     my $kba2        = $self->{'container'}->{'ka_secondary'};
-    my $ca         = $self->{'container'}->{'ca_main'};
-    my $ca2        = $self->{'container'}->{'ca_secondary'};
+    my $sa         = $self->{'container'}->{'sa_main'};
+    my $sa2        = $self->{'container'}->{'sa_secondary'};
     my $synteny_data= $self->{'container'}->{'synteny'};
     my $OTHER       = $self->{'container'}->{'other_species'};
     my $OTHER_T     = $OTHER; $OTHER_T =~s/_/ /g;
@@ -73,7 +73,7 @@ sub _init {
     
 ## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
 
-    my $chr_length  = $ca->fetch_by_chr_name( $chr )->length();
+    my $chr_length  = $sa->fetch_by_region( 'toplevel', $chr )->length;
     my $bands       = $kba->fetch_all_by_chr_name( $chr );
 
 ## NOW LETS GRAB THE IMAGE PARAMETERS
@@ -230,7 +230,8 @@ sub _init {
     return if $num_chr==0;
     my $secondary_length = int( 2 * ( $length + $spacing ) / ($num_chr+1-$FLAG) - $spacing );
     foreach my $chr2 ( @chromosomes ) {
-        my $chr_length_2  = $ca2->fetch_by_chr_name( $chr2 )->length() || 0;
+        my $chr_length_2  = $sa2->fetch_by_region( 'toplevel', $chr2 )->length() || 0;
+        warn ">>> $chr2 - $chr_length_2";
         my $bands_2       = $kba2->fetch_all_by_chr_name( $chr2 );
         my ($h_offset2, $v_offset2) = $flag==0 ?
             ( $h_offset + $N/2 * ( $secondary_length + $spacing ),
@@ -431,8 +432,8 @@ sub draw_chromosome {
 ## This is the end of the         
 
     foreach my $end ( 
-        ( $params{'bands'}[ 0]->stain() eq 'tip' ? () : 1 ),
-        ( $params{'bands'}[-1]->stain() eq 'tip' ? () : -1 )
+        ( $params{'bands'}[ 0]->stain() eq 'tip' ? () : -1 ),
+        ( $params{'bands'}[-1]->stain() eq 'tip' ? () : 1 )
      ) {
         foreach my $I ( 0..$#lines ) {
             my ( $bg_x, $black_x ) = @{$lines[$I]};

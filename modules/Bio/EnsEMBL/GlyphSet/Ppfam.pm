@@ -41,7 +41,7 @@ sub _init {
 
     #foreach my $feat ($protein->each_Protein_feature()) {
        #if ($feat->feature2->seqname =~ /^PF\w+/) {
-    my @pf_feat = @{$protein->get_all_PfamFeatures()};
+    my @pf_feat = @{$protein->get_all_ProteinFeatures('Pfam')};
     foreach my $feat(@pf_feat) {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
     }

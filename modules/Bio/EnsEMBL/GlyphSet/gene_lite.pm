@@ -94,7 +94,7 @@ sub _init {
   my $show_navigation = $navigation eq 'on' && ( $vc->length() < $max_length_nav * 1001 );
    
   #First of all let us deal with all the EnsEMBL genes....
-  my $vc_start = $vc->chr_start();
+  my $vc_start = $vc->start();
   my $offset = $vc_start - 1;
 
   my %gene_objs;
