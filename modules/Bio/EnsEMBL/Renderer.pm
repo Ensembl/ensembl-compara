@@ -100,13 +100,13 @@ sub render_Composite {
     my ($self, $glyph) = @_;
 
     for my $subglyph (@{$glyph->{'composite'}}) {
-	my $method = $self->method($subglyph);
+    	my $method = $self->method($subglyph);
 
-	if($self->can($method)) {
-	    $self->$method($subglyph);
-	} else {
-	    print STDERR qq(Bio::EnsEMBL::Renderer::render_Composite: Do not know how to $method\n);
-	}
+	    if($self->can($method)) {
+    	    $self->$method($subglyph);
+    	} else {
+	        print STDERR qq(Bio::EnsEMBL::Renderer::render_Composite: Do not know how to $method\n);
+    	}
     }
 }
 
