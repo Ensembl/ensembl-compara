@@ -145,7 +145,7 @@ close DESC
 print STDERR "Done\n";
 
 print STDERR "Reading mcl file...";
-if ($index_file =~ /\.gz/) {
+if ($mcl_file =~ /\.gz/) {
   open MCL, "gunzip -c $mcl_file|" ||
     die "$mcl_file: $!";
 } else {
