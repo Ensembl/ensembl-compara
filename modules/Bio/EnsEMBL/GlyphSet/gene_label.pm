@@ -51,28 +51,25 @@ sub _init {
 	    if ($vg->gene->is_known){
 		$colour = $known_col;
 		my @temp_geneDBlinks = $vg->gene->each_DBLink();
-		my ($hugo, $swisslink, $sptrembllink);
+		my $displaylink;
 		
 		foreach my $DB_link ( @temp_geneDBlinks ){
+
 		    if( $DB_link->database() eq 'HUGO' ) {
-			$hugo = $DB_link;
+			$displaylink = $DB_link;
 			last;
 		    }
-		    if( $DB_link->database() =~ /SP/o ) {
-			$swisslink = $DB_link;
-		    }
-		    if( $DB_link->database() eq 'SPTREMBL' ) {
-			$sptrembllink = $DB_link;
+		    if( $DB_link->database() eq  'SP' ||
+			$DB_link->database() eq  'SPTREMBL' ||
+			$DB_link->database() eq  'SCOP' ) {
+			$displaylink = $DB_link;
 		    }
 		}
 
-		if( $hugo ) {
-		    $label = $hugo->display_id();
-		} elsif ( $swisslink ) {
-		    $label = $swisslink->display_id();
-		} elsif ( $sptrembllink ) {
-		    $label = $sptrembllink->display_id();
-		} else {
+		if( $displaylink ) {
+		    $label = $displaylink->display_id();
+		} 
+		else {
 		    $label = $vg->id();
 		}
 		push @ids, $label;

@@ -12,7 +12,7 @@ sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-        'text'      => 'transmembrane',
+        'text'      => 'Transmembrane',
         'font'      => 'Small',
         'absolutey' => 1,
     });
@@ -20,7 +20,7 @@ sub init_label {
 }
 
 sub _init {
-    my ($this, $protein, $Config) = @_;
+    my ($this) = @_;
     my %hash;
     my $caption = "transmembrane";
 
@@ -47,10 +47,8 @@ sub _init {
 	
 	my $desc = $row[0]->idesc();
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'id'    => $key,
 	    'zmenu' => {
-		'caption'  => $key,
-		$desc => ''
+		'caption'  => 'Transmembrane domain',
 	    },
 	});
 	   

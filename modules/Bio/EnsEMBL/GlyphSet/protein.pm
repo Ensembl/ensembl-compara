@@ -12,7 +12,7 @@ sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'protein',
+	'text'      => 'Peptide',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
@@ -27,32 +27,21 @@ sub _init {
 
     my $y          = 0;
     my $h          = 4;
-    my $highlights = $this->highlights();
-   
-#Draw the protein
-    my $length = $protein->length();
-
-    my $xp = 0;
-    my $wp = $length;
-
-    print STDERR "PROT VERSION001\n";
-
    
     my $colour = $Config->get($Config->script(), 'protein','col');
 
     my $rect = new Bio::EnsEMBL::Glyph::Rect({
-			'x'        => $xp,
+			'x'        => 0,
 			'y'        => $y,
-			'width'    => $wp,
+			'width'    => $protein->length(),
 			'height'   => $h,
 			'id'       => $protein->id(),
 			'colour'   => $colour,
 			'zmenu' => {
 			    'caption' => $protein->id(),
 			},
-		    });
+	});
     
-#    push @{$this->{'glyphs'}}, $rect;   
     $this->push($rect);
     
    

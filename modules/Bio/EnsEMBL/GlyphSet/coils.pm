@@ -12,7 +12,7 @@ sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-        'text'      => 'coils',
+        'text'      => 'Coils',
         'font'      => 'Small',
         'absolutey' => 1,
     });
@@ -22,7 +22,6 @@ sub init_label {
 sub _init {
     my ($this, $protein, $Config) = @_;
     my %hash;
-    my $caption = "coils";
 
     my $y          = 0;
     my $h          = 4;
@@ -31,59 +30,42 @@ sub _init {
     my $protein = $this->{'container'};
     my $Config = $this->{'config'}; 
     
-foreach my $feat ($protein->each_Protein_feature()) {
-              
-    print STDERR $feat->feature2->seqname, "\n";
-
-       if ($feat->feature2->seqname eq "coils") {
-	   push(@{$hash{$feat->feature2->seqname}},$feat);
-       }
-    }
-    
-    foreach my $key (keys %hash) {
-	
-	
-	my @row = @{$hash{$key}};
-       
-     
-	my $desc = $row[0]->idesc();
-
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'id'    => $key,
-	    'zmenu' => {
-		'caption'  => $key,
-		$desc => ''
-	    },
-	});
-	   
-	my $colour = $Config->get($Config->script(), 'coils','col');
-#To be changed
-	
-	#$colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
-
-
-	foreach my $pf (@row) {
-	    my $x = $pf->feature1->start();
-	    my $w = $pf->feature1->end - $x;
-	    my $id = $pf->feature2->seqname();
-	    
-	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		'x'        => $x,
-		'y'        => $y,
-		'width'    => $w,
-		'height'   => $h,
-		'id'       => $id,
-		'colour'   => $colour,
-	    });
-	    
-	    
-	    $Composite->push($rect) if(defined $rect);
-	    
+	foreach my $feat ($protein->each_Protein_feature()) {
+     	   if ($feat->feature2->seqname eq "coils") {
+	   		push(@{$hash{$feat->feature2->seqname}},$feat);
+    	   }
 	}
+    
+    my $caption = "Coils";
+    foreach my $key (keys %hash) {
+		my @row = @{$hash{$key}};
+		my $desc = $row[0]->idesc();
 
-#	push @{$this->{'glyphs'}}, $Composite;
-	$this->push($Composite);
-	$y = $y + 8;
+		my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+	    	'zmenu' => {
+			'caption'  => $caption,
+	    	},
+		});
+
+		my $colour = $Config->get($Config->script(), 'coils','col');
+		foreach my $pf (@row) {
+	    	my $x = $pf->feature1->start();
+	    	my $w = $pf->feature1->end - $x;
+	    	my $id = $pf->feature2->seqname();
+
+	    	my $rect = new Bio::EnsEMBL::Glyph::Rect({
+			'x'        => $x,
+			'y'        => $y,
+			'width'    => $w,
+			'height'   => $h,
+			'id'       => $id,
+			'colour'   => $colour,
+	    	});
+	    	$Composite->push($rect) if(defined $rect);	    
+		}
+
+		$this->push($Composite);
+		$y = $y + 8;
     }
         
    

@@ -12,7 +12,7 @@ sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'prosite',
+	'text'      => 'Prosite',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
@@ -20,78 +20,69 @@ sub init_label {
 }
 
 sub _init {
-    my ($this, $protein, $Config) = @_;
+    my ($this) = @_;
     my %hash;
-    my $caption = "prosite";
-
-
     my $y          = 0;
     my $h          = 4;
-    my $highlights = $this->highlights();
 
     my $protein = $this->{'container'};
     my $Config = $this->{'config'};
 
     
-   foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->feature2->seqname =~ /^PS\w+/) {
-	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	}
+    foreach my $feat ($protein->each_Protein_feature()) {
+		if ($feat->feature2->seqname =~ /^PS\w+/) {
+			push(@{$hash{$feat->feature2->seqname}},$feat);
+		}
     }
     
-    foreach my $key (keys %hash) {
-	
+    my $caption = "Prosite";
 
-	my @row = @{$hash{$key}};
+    foreach my $key (keys %hash) {
+		my @row = @{$hash{$key}};
        	my $desc = $row[0]->idesc();
 
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'id'    => $key,
-	    'zmenu' => {
-		'caption'  => $key,
-		    $desc => ''
-		},
+		my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+	    	'zmenu' => {
+				'caption'  	=> "Prosite: $desc",
+				$key 		=> "http://www.expasy.ch/cgi-bin/nicesite.pl?$key"
+			},
+			});
+
+		my $colour = $Config->get($Config->script(), 'prosite','col');
+		my @row = @{$hash{$key}};
+
+		my $prsave;
+		foreach my $pr (@row) {
+	    	my $x = $pr->feature1->start();
+	    	my $w = $pr->feature1->end - $x;
+	    	my $id = $pr->feature1->id();
+
+	    	my $rect = new Bio::EnsEMBL::Glyph::Rect({
+			'x'        => $x,
+			'y'        => $y,
+			'width'    => $w,
+			'height'   => $h,
+			'id'       => $id,
+			'colour'   => $colour,
+	    	});
+			
+	    	$Composite->push($rect) if(defined $rect);
+	    	$prsave = $pr;
+		}
+
+		my $font = "Tiny";
+		my $text = new Bio::EnsEMBL::Glyph::Text({
+	    	'font'   => $font,
+	    	'text'   => $prsave->idesc,
+	    	'x'      => $row[0]->feature1->start(),
+	    	'y'      => $h,
+	    	'height' => $Config->texthelper->height($font),
+	    	'colour' => $colour,
 		});
 
-	my $colour = $Config->get($Config->script(), 'prosite','col');
-	
-	my @row = @{$hash{$key}};
+		#$this->push($text);
 
-	my $prsave;
-	foreach my $pr (@row) {
-	    my $x = $pr->feature1->start();
-	    my $w = $pr->feature1->end - $x;
-	    my $id = $pr->feature1->id();
-	
-	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		'x'        => $x,
-		'y'        => $y,
-		'width'    => $w,
-		'height'   => $h,
-		'id'       => $id,
-		'colour'   => $colour,
-	    });
-	    
-	    
-	    $Composite->push($rect) if(defined $rect);
-
-	    $prsave = $pr;
-	}
-
-	my $font = "Small";
-	my $text = new Bio::EnsEMBL::Glyph::Text({
-	    'font'   => $font,
-	    'text'   => $prsave->idesc,
-	    'x'      => $row[0]->feature1->start(),
-	    'y'      => $h,
-	    'height' => $Config->texthelper->height($font),
-	    'colour' => $colour,
-	});
-
-	$this->push($text);
-	
-	$this->push($Composite);
-	$y = $y + 8;
+		$this->push($Composite);
     }
     
 }

@@ -12,7 +12,7 @@ sub init_label {
     my ($this) = @_;
 
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'prints',
+	'text'      => 'Prints',
 	'font'      => 'Small',
 	'absolutey' => 1,
     });
@@ -22,83 +22,67 @@ sub init_label {
 sub _init {
     my ($this) = @_;
     my %hash = undef;
-    my $caption = "prints";
-
     my $protein = $this->{'container'};
     my $Config = $this->{'config'};
 
     my $y          = 0;
     my $h          = 4;
-    my $highlights = $this->highlights();
-    
     
     foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->feature2->seqname =~ /^PR\w+/) {
-	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	    
-	   
-	    
-	}
+		if ($feat->feature2->seqname =~ /^PR\w+/) {
+	    	push(@{$hash{$feat->feature2->seqname}},$feat);
+		}
     }
     
+    my $caption = "Prints";
     foreach my $key (keys %hash) {
-       
-	my @row = @{$hash{$key}};
-       
-     
-	my $desc = $row[0]->idesc();
+		my @row = @{$hash{$key}};
+		my $desc = $row[0]->idesc();
+		my $colour = $Config->get($Config->script(), 'prints','col');
+		
+		
+		my $Composite = new Bio::EnsEMBL::Glyph::Composite({
+	    	'bordercolour' => $colour,
+	    	'zmenu' => {
+				'caption'  	=> $key,
+				$key 		=> "http://methionine.sbc.man.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?prints_accn=$key&display_opts=Prints",
+			},
+		});
 
-	my $colour = $Config->get($Config->script(), 'prints','col');
+		my $prsave;
+		foreach my $pr (@row) {
+	    	my $x = $pr->feature1->start();
+	    	my $w = $pr->feature1->end() - $x;
+	    	my $id = $pr->feature2->seqname();
 
-	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-	    'id'    => $key,
-	    'zmenu' => {
-		'caption'  => $key,
-		$desc => '',
-	    },
-	    'bordercolour' => $colour,
-	});
+	    	my $rect = new Bio::EnsEMBL::Glyph::Rect({
+			'x'        => $x,
+			'y'        => $y,
+			'width'    => $w,
+			'height'   => $h,
+			'id'       => $id,
+			'colour'   => $colour,
+	    	});
+	    	$Composite->push($rect) if(defined $rect);
+	    	$prsave = $pr;
+		}
 
-	my $prsave;
-	foreach my $pr (@row) {
-	    my $x = $pr->feature1->start();
-	    my $w = $pr->feature1->end() - $x;
-	    my $id = $pr->feature2->seqname();
-	    
-	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		'x'        => $x,
-		'y'        => $y,
-		'width'    => $w,
-		'height'   => $h,
-		'id'       => $id,
-		'colour'   => $colour,
-#		'zmenu' => {
-#		    'caption' => $id,
-#		},
-	    });
-	    
-	    
-	    $Composite->push($rect) if(defined $rect);
-	    $prsave = $pr;
-	}
+		#########
+		# add a label
+		#
+		my $font = "Small";
+		my $text = new Bio::EnsEMBL::Glyph::Text({
+	    	'font'   => $font,
+	    	'text'   => $prsave->idesc,
+	    	'x'      => $row[0]->feature1->start(),
+	    	'y'      => $h + 1,
+	    	'height' => $Config->texthelper->height($font),
+	    	'colour' => $colour,
+		});
 
-	#########
-	# add a label
-	#
-	my $font = "Small";
-	my $text = new Bio::EnsEMBL::Glyph::Text({
-	    'font'   => $font,
-	    'text'   => $prsave->idesc,
-	    'x'      => $row[0]->feature1->start(),
-	    'y'      => $h,
-	    'height' => $Config->texthelper->height($font),
-	    'colour' => $colour,
-	});
-
-	$this->push($text);
-
-	$this->push($Composite);
-	$y = $y + 8;
+		$this->push($text);
+		$this->push($Composite);
+		$y = $y + 8;
     }
     
 }
