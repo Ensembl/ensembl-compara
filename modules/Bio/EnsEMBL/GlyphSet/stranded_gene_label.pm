@@ -78,41 +78,31 @@ sub _init {
 	    next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());
 
 	    if($vg->is_known()) {
+                # this is duplicated  from gene_label.pm, so needs refactoring ...
 		$colour = $known_col;
-		my @temp_geneDBlinks = $vg->each_DBLink();
-		my $displaylink;
+                my @temp_geneDBlinks = $vg->gene->each_DBLink();
 	 	
-		foreach my $DB_link ( @temp_geneDBlinks ){
-		    #########################
-		    # check for highlighting
-		    #########################
-		    if (exists $highlights{$DB_link->display_id}){
-			$hi_colour = $Config->get( 'stranded_gene_label', 'hi');
-		    }
-		    
-		    if ( $DB_link->database() eq 'HUGO' ) {
-			$displaylink = $DB_link;
-			last;
-		    }
-		    
-		    if (
-			$DB_link->database() eq  'SP' ||
-			$DB_link->database() eq  'SPTREMBL' ||
-			$DB_link->database() eq  'SCOP' ) {
-			$displaylink = $DB_link;
-		    }
+                # find a decent label:
+              DBLINK:
+		foreach my $DB_link ( @temp_geneDBlinks ) {
+                    my $db = $DB_link->database();
+                    # check in order of preference:
+                    foreach my $d ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
+                        if ($db eq $d ) {
+                            $label = $DB_link->display_id();
+                            last DBLINK;
+                        }
+                    }
 		}
-		
-		if (exists $highlights{$vg->id}){
-		    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
+
+		if( ! defined $label ) {
+                    $label = $vg->id(); # fallback on ENSG
+                } 
+
+                # check for highlighting
+		if (exists $highlights{$label}){
+		    $hi_colour = $Config->get( 'gene', 'hi');
 		}
-		
-		if( $displaylink ) {
-		    $label = $displaylink->display_id();
-		} else {
-		    $label = $vg->id();
-		}
-		
 	    } else {
 		$colour = $unknown_col;
 		$label	= "NOVEL";
