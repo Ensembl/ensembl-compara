@@ -13,11 +13,11 @@ my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 my $min_score = 300;
 my $qy_input_only = 0;
 my $p = "blastn";
-my $debug = 0;
+my $FilterBlastArgs = "";
 my $keeptmp = 0;
 
 GetOptions('keeptmp' => \$keeptmp,
-	   'debug' => \$debug,
+	   'FilterBlastArgs=s' => \$FilterBlastArgs,
 	   'i=s' => \$input,
 	   'st=s' => \$subject_tag,
 	   'sf=s' => \$subject_fasta,
@@ -108,8 +108,7 @@ foreach my $qy_seq (@query_seq) {
     unlink glob("/tmp/*$rand*");
     die "error in wublast, $!\n";
   }
-  my $cmd_line = "$FilterBlast_executable -p $p";
-  $cmd_line .= " -debug" if ($debug);
+  my $cmd_line = "$FilterBlast_executable $FilterBlastArgs -p $p";
   unless (system("$cmd_line $subject_tag $min_score $blast_file >> $cigar_file") == 0) {
     unlink glob("/tmp/*$rand*");
     die "error in cigar, $!\n";
