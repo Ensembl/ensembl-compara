@@ -33,7 +33,6 @@ use Bio::EnsEMBL::Utils::Cache; #CPAN LRU cache
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 use Bio::EnsEMBL::Utils::Exception;
-use Time::HiRes qw( usleep ualarm gettimeofday tv_interval ); ## For time tracking purposes, should  be removed for production
 
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -95,10 +94,6 @@ sub new {
 
 =cut
 
-my $t1 = 0;
-my $t2 = 0;
-my $t3 = 0;
-
 sub fetch_all_by_species_region {
   my ($self, $consensus_species, $consensus_assembly,
       $query_species, $query_assembly,
@@ -143,11 +138,14 @@ sub fetch_all_by_species_region {
   };
   foreach my $this_dnafrag (@$dnafrags) {
     #caclulate coords relative to start of dnafrag
-    my $this_dnafrag_start = $start - $this_dnafrag->start + 1;
-    my $this_dnafrag_end   = $end   - $this_dnafrag->start + 1;
+## Bio::EnsEMBL::Compara::Dnafrag::start is always 1
+#     my $this_dnafrag_start = $start - $this_dnafrag->start + 1;
+#     my $this_dnafrag_end   = $end   - $this_dnafrag->start + 1;
+    my $this_dnafrag_start = $start;
+    my $this_dnafrag_end   = $end;
 
     #constrain coordinates so they are completely within the dna frag
-    my $this_dnafrag_length = $this_dnafrag->end - $this_dnafrag->start + 1;
+    my $this_dnafrag_length = $this_dnafrag->length;
     $this_dnafrag_start = ($this_dnafrag_start < 1)  ? 1 : $this_dnafrag_start;
     $this_dnafrag_end   = ($this_dnafrag_end > $this_dnafrag_length) ? $this_dnafrag_length : $this_dnafrag_end;
 
@@ -162,7 +160,6 @@ sub fetch_all_by_species_region {
 
    #convert genomic align blocks to dna align features
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-# my $t0 = [gettimeofday];
       my $consensus_genomic_align;
       my $query_genomic_align;
       if ($this_genomic_align_block->genomic_align_array->[0]->dnafrag->dbID == $this_dnafrag->dbID) {
@@ -185,8 +182,11 @@ sub fetch_all_by_species_region {
       }
       
       #calculate chromosomal coords
-      my $cstart = $this_dnafrag->start + $consensus_genomic_align->dnafrag_start - 1;
-      my $cend   = $this_dnafrag->start + $consensus_genomic_align->dnafrag_end - 1;
+## Bio::EnsEMBL::Compara::Dnafrag::start is always 1.
+#       my $cstart = $this_dnafrag->start + $consensus_genomic_align->dnafrag_start - 1;
+#       my $cend   = $this_dnafrag->start + $consensus_genomic_align->dnafrag_end - 1;
+      my $cstart = $consensus_genomic_align->dnafrag_start;
+      my $cend   = $consensus_genomic_align->dnafrag_end;
 
       #skip features which do not overlap the requested region
       #next if ($cstart > $end || $cend < $start); 
@@ -261,12 +261,7 @@ sub fetch_all_by_species_region {
         $ga_strands_reversed = 1;
         $ga_query_strand = -$ga_query_strand;
       }
-# $t1 += tv_interval ($t0);
-# $t0 = [gettimeofday];
-      my $ga_group_id = $consensus_genomic_align->genomic_align_group_by_type("default");
-      $ga_group_id = $ga_group_id->dbID if (defined($ga_group_id));
-# $t2 += tv_interval ($t0);
-# $t0 = [gettimeofday];
+      my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
       my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new_fast
         ({'cigar_string' => $ga_cigar_line,
           'seqname'      => $df_name,
@@ -286,31 +281,8 @@ sub fetch_all_by_species_region {
           'group_id'     => $ga_group_id,
           'level_id'     => $ga_level_id,
           'strands_reversed' => $ga_strands_reversed});
-# print STDERR
-# "
-#   'cigar_string' => $ga_cigar_line
-#   'seqname'      => $df_name
-#   'start'        => $cstart
-#   'end'          => $cend
-#   'strand'       => 1
-#   'species'      => $consensus_species
-#   'score'        => $score
-#   'percent_id'   => $perc_id
-#   'hstart'       => ", ($qdf_start + $ga_query_start - 1), "
-#   'hend'         => ", ($qdf_start + $ga_query_end -1), "
-#   'hstrand'      => $ga_query_strand
-#   'hseqname'     => $qdf_name
-#   'hspecies'     => $query_species
-#   'hslice'       => ", $top_slice->dbID, "
-#   'alignment_type' => $alignment_type
-#   'group_id'     => $ga_group_id
-#   'level_id'     => $ga_level_id
-#   'strands_reversed' => $ga_strands_reversed
-# ";
 
       push @out, $f;
-# $t3 += tv_interval ($t0);
-# print STDERR "Bio::EnsEMBL::Compara::DnaAlignFeatureAdaptor::fetch_all_by_species_region $t1 - $t2 - $t3\n";
     }
    }
 
