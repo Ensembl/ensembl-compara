@@ -36,7 +36,10 @@ sub _init {
     my $bitmap_length 	= int($VirtualContig->length * $pix_per_bp);
     my $small_contig    = 0;
     my $dep             = $Config->get('vertrna', 'dep');
+
+    #&eprof_start('vert - simi');
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_by_strand("embl_vertrna",80,$self->glob_bp(),$strand);  
+    #&eprof_end('vert - simi');
 	
     my %id = ();
     

@@ -245,6 +245,8 @@ sub _init {
 	    $Composite->push($clip);
         }
 
+	#print STDERR "Trans label  $tid, $id\n";
+
 	my $width_of_label  = $font_w_bp * (length($tid) + 1);
 	my $start_of_label  = int( ($start_exon->start() + $end_exon->end() - $width_of_label )/2 );
 	$start_of_label  = $start_exon->start();

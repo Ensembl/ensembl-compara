@@ -34,20 +34,20 @@ sub _init {
     my $type          = $Config->get('gene', 'src');
     my @allgenes      = ();
 
-    &eprof_start("gene-virtualgene_start-get");
+    #&eprof_start("gene-virtualgene_start-get");
     push @allgenes, $VirtualContig->get_all_VirtualGenes_startend();
-    &eprof_end("gene-virtualgene_start-get");
+    #&eprof_end("gene-virtualgene_start-get");
 
-    &eprof_start("gene-externalgene_start-get");
+    #&eprof_start("gene-externalgene_start-get");
 #    if ($type eq 'all'){
 	foreach my $vg ($VirtualContig->get_all_ExternalGenes()){
 	    $vg->{'_is_external'} = 1;
 	    push (@allgenes, $vg);
 	}
 #    }
-    &eprof_end("gene-externalgene_start-get");
+    #&eprof_end("gene-externalgene_start-get");
 
-#    &eprof_start("gene-render-code");
+#    #&eprof_start("gene-render-code");
     my $ext_col       = $Config->get('gene','ext');
     my $known_col     = $Config->get('gene','known');
     my $unknown_col   = $Config->get('gene','unknown');
@@ -114,7 +114,7 @@ sub _init {
 	}
 	$self->push($rect);
     }
-#    &eprof_end("gene-render-code");
+#    #&eprof_end("gene-render-code");
     
 }
 

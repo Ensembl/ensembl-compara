@@ -45,10 +45,10 @@ sub _init {
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($Config->container_width() * $pix_per_bp);
 
-    &eprof_start('transcript - get_all_Genes_exononly()');
+    #&eprof_start('transcript - get_all_Genes_exononly()');
     @allgenes = $container->get_all_Genes_exononly();
-    &eprof_end('transcript - get_all_Genes_exononly()');
-    &eprof_start('transcript - get_all_ExternalGenes()');
+    #&eprof_end('transcript - get_all_Genes_exononly()');
+    #&eprof_start('transcript - get_all_ExternalGenes()');
     unless($target) {
     if ($type eq 'all'){
         foreach my $vg ($container->get_all_ExternalGenes()) {
@@ -57,7 +57,7 @@ sub _init {
         }
     } 
     }
-    &eprof_end('transcript - get_all_ExternalGenes()');
+    #&eprof_end('transcript - get_all_ExternalGenes()');
     $type = undef;
     
   GENE: for my $eg (@allgenes) {

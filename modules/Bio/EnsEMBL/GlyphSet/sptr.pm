@@ -8,6 +8,8 @@ use Bio::EnsEMBL::Glyph::Line;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
+
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
@@ -37,16 +39,24 @@ sub _init {
     my %id             = ();
     my $small_contig   = 0;
     my $dep            = $Config->get('sptr', 'dep');
-	
+#&eprof_start('sptr - get simi');	
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_by_strand("sptr",80,$self->glob_bp(),$strand);  
     #@allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
-    
+
+#&eprof_end('sptr - get simi');	
+
+    #&eprof_start("sptr-feature-sort");
     foreach my $f (@allfeatures){
         unless ( $id{$f->id()} ){
             $id{$f->id()} = [];
         }
         push(@{$id{$f->id()}}, $f );
     }
+    #&eprof_end("sptr-feature-sort");
+
+
+    #&eprof_start("sptr-feature-glyph-build");
+
     foreach my $i (keys %id){
 
         #@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
@@ -125,7 +135,9 @@ sub _init {
                 }
             }
         }
-        
+
+	#&eprof_start("sptr-feature-bump-glyph");
+
         if ($dep > 0) { # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
@@ -146,10 +158,14 @@ sub _init {
             $Composite->bordercolour($feature_colour) unless ($small_contig);
 
         }
+
+	#&eprof_end("sptr-feature-bump-glyph");
         
         # now save the composite glyph...
         $self->push($Composite);
     }
+
+    #&eprof_end("sptr-feature-glyph-build");
     
 }
 
