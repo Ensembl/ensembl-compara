@@ -21,7 +21,7 @@ sub colour {
 
 sub href {
     my ($self, $id ) = @_;
-    my( $estid = $id ) =~ s/(.*?)\.\d+/$1/ ;
+    ( my $estid = $id ) =~ s/(.*?)\.\d+/$1/ ;
     return $self->{'config'}{'ext_url'}->get_url( 'EST', $estid );
 }
 

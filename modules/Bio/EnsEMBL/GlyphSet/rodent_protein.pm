@@ -1,16 +1,16 @@
-package Bio::EnsEMBL::GlyphSet::rat_protein;
+package Bio::EnsEMBL::GlyphSet::rodent_protein;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
-sub my_label { return "Rat proteins"; }
+sub my_label { return "Rodent proteins"; }
 
 sub features {
     my ($self) = @_;
     return $self->{'container'}->get_all_SimilarityFeatures(
-        "rat_protein", 80, $self->glob_bp
+        "rodent_protein", 80, $self->glob_bp
     );
 }
 

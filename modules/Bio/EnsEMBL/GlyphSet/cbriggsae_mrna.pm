@@ -9,7 +9,7 @@ sub my_label { return "C.briggsae mRNAs"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures("Briggsae_mRNAs",80,$self->glob_bp);
+    return $self->{'container'}->get_all_SimilarityFeatures("cbriggsae_mrna",80,$self->glob_bp);
 }
 
 sub href {
