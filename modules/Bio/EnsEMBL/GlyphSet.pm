@@ -24,15 +24,17 @@ sub new {
 	'maxx'       => undef,
 	'maxy'       => undef,
 	'label'      => undef,
+	'container'  => $VirtualContig,
+	'config'     => $Config,
     };
 
     bless($self, $class);
 
     $self->init_label() if($self->can('init_label'));
 
-    &eprof_start(qq(glyphset_$class));
-    $self->_init($VirtualContig, $Config);
-    &eprof_end(qq(glyphset_$class));
+#    &eprof_start(qq(glyphset_$class));
+#    $self->_init($VirtualContig, $Config);
+#    &eprof_end(qq(glyphset_$class));
 
     return $self;
 }
@@ -43,7 +45,7 @@ sub new {
 # keep track of x,y,width,height as it goes.
 #
 sub _init {
-    my ($this, $VirtualContig, $Config) = @_;
+    my ($this) = @_;
     print STDERR qq($this unimplemented\n);
 }
 
