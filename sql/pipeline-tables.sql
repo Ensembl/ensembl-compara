@@ -41,7 +41,7 @@ CREATE TABLE genome_db_extn (
   phylum                      varchar(40) DEFAULT '' NOT NULL,
   locator                     mediumtext,
 
-  KEY genome_db_id  (genome_db_id)
+  UNIQUE KEY genome_db_id  (genome_db_id)
 );
 
 
