@@ -27,30 +27,35 @@ sub _init {
     my $navigation     = $Config->get( 'repeat_line_lite', 'navigation' ) || 'off';
     my $max_length_nav = $Config->get( 'repeat_line_lite', 'navigation_threshold' ) || 2000;
     my $feature_colour = $Config->get( 'repeat_line_lite', 'col' );
+    my $vc_length      = $vc->length;
     my $h              = 8;
     
     return unless ( $self->strand() == -1 );
 
-    if( $vc->length() > ($max_length*1001)) {
+    if( $vc_length > ($max_length*1001)) {
         $self->errorTrack("Repeats only displayed for less than $max_length Kb.");
         return;
     }
 	
-	my $show_navigation =  $navigation eq 'on' && ( $vc->length() < $max_length_nav * 1001 );
+	my $show_navigation =  $navigation eq 'on' && ( $vc_length < $max_length_nav * 1001 );
 	
 	my $repeats = $vc->dbobj->get_LiteAdaptor->fetch_virtualRepeatFeatures_start_end(
 		$vc->_chr_name,		# Chromosome name
 		$vc->_global_start, # Start
 		$vc->_global_end,   # End
-		'L',				# LINE repeats -> hid is L.....
+		'LINE',				# LINE repeats 
 		$self->glob_bp() 	# Globbing factor
 	);
 	
 	foreach my $f ( @$repeats ) {
+        my $start = $f->{'start'};
+        $start = 1 if $start < 1;
+        my $end = $f->{'end'};
+        $end = $vc_length if $end>$vc_length;
         my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-            'x'         => $f->{'start'},
+            'x'         => $start,
             'y'         => 0,
-            'width'     => $f->{'chr_end'}-$f->{'chr_start'},
+            'width'     => $end-$start,
             'height'    => $h,
             'colour'    => $feature_colour,
             'absolutey' => 1,
