@@ -3,6 +3,7 @@ use strict;
 use Bio::EnsEMBL::Renderer::gif;
 use vars qw(@ISA);
 use WMF;
+use WMF::Polygon;
 @ISA = qw(Bio::EnsEMBL::Renderer::gif);
 
 sub init_canvas {
@@ -20,5 +21,61 @@ sub canvas {
 	return $self->{'canvas'}->wmf();
     }
 }
+
+sub render_Text {
+    my ($self, $glyph) = @_;
+
+    my $colour = $self->colour($glyph->colour());
+
+    #########
+    # BAH! HORRIBLE STINKY STUFF!
+    # I'd take GD voodoo calls any day
+    #
+    if($glyph->font() eq "Tiny") {
+        $self->{'canvas'}->string(gdTinyFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "Small") {
+        $self->{'canvas'}->string(gdSmallFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "MediumBold") {
+        $self->{'canvas'}->string(gdMediumBoldFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "Large") {
+        $self->{'canvas'}->string(gdLargeFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+
+    } elsif($glyph->font() eq "Giant") {
+        $self->{'canvas'}->string(gdGiantFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+    }
+
+}
+
+sub render_Poly {
+    my ($self, $glyph) = @_;
+
+    my $bordercolour = $self->colour($glyph->bordercolour());
+    my $colour       = $self->colour($glyph->colour());
+
+    my $poly = new WMF::Polygon;
+
+    return unless(defined $glyph->pixelpoints());
+
+    my @points = @{$glyph->pixelpoints()};
+    my $pairs_of_points = (scalar @points)/ 2;
+
+    for(my $i=0;$i<$pairs_of_points;$i++) {
+	my $x = shift @points;
+	my $y = shift @points;
+
+	$poly->addPt($x,$y);
+    }
+
+    if(defined $colour) {
+	$self->{'canvas'}->filledPolygon($poly, $colour);
+    } else {
+	$self->{'canvas'}->polygon($poly, $bordercolour);
+    }
+}
+
+
 
 1;
