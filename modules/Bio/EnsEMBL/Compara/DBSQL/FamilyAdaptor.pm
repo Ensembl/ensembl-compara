@@ -107,6 +107,92 @@ sub fetch_by_dbID{
 	return $family;
 
 }
+
+=head2 fetch_by_dnafrag_id
+ 
+ Title   : fetch_by_dnafrag_id
+ Usage   :
+ Function: for fetching all families sitting on a dnafrag
+ Example :
+ Returns :
+ Args    :
+ 
+ 
+=cut
+ 
+sub fetch_by_dnafrag_id{
+   my ($self,$dnafrag_id) = @_;
+ 
+   my $query = "select distinct fp.family_id 
+                from family_protein fp, protein p, dnafrag d 
+                where p.protein_id = fp.protein_id and p.dnafrag_id = d.dnafrag_id and d.dnafrag_id = ?";
+   my $sth = $self->prepare($query);
+   $sth->execute($dnafrag_id);
+ 
+   my @families;
+   while (my ($family_id) = $sth->fetchrow_array){
+      my $family = $self->fetch_by_dbID($family_id);
+      push (@families,$family);
+   }
+
+   return @families;
+}
+
+=head2 fetch_all
+ 
+ Title   : fetch_all
+ Usage   :
+ Function: for fetching all families
+ Example :
+ Returns :
+ Args    :
+ 
+ 
+=cut
+ 
+sub fetch_all{
+   my ($self) = @_;
+ 
+   my $query = "SELECT family_id FROM family";
+   my $sth = $self->prepare($query);
+   $sth->execute;
+ 
+   my @families;
+   while (my ($family_id) = $sth->fetchrow_array){
+      my $family = $self->fetch_by_dbID($family_id);
+      push (@families,$family);
+   }
+
+   return @families;
+}
+
+
+=head2 get_all_dbIDs
+ 
+ Title   : get_all_dbIDs
+ Usage   :
+ Function:
+ Example :
+ Returns :
+ Args    :
+ 
+ 
+=cut
+ 
+sub get_all_dbIDs{
+   my ($self) = @_;
+ 
+   my $query = "SELECT family_id FROM family";
+   my $sth = $self->prepare($query);
+   $sth->execute;
+ 
+   my @ids;
+   while (my ($family_id) = $sth->fetchrow_array){
+      push (@ids,$family_id);
+   }
+   return @ids;
+}
+
 =head2 fetch_members_by_dbname
 
  Title   : fetch_members_by_dbname
@@ -340,6 +426,7 @@ sub store{
    foreach my $mem (@members){
 
 	my $prot_id = $self->db->get_ProteinAdaptor->store_if_needed($mem);
+
 	my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,score) VALUES(?,?,?)");
     $sth->execute($dbID,$prot_id,$mem->family_score);#store into family_protein
 
@@ -481,14 +568,14 @@ sub get_all_alignments{
 sub store_alignment{
 	my ($self,$famid,$aln,$type) = @_;
 
-	(! $fam->isa('Bio::EnsEMBL::Compara::Family') && $self->throw("Did not net get a Bio::EnsEMBL::Compara::Family but a $fam");
-	(! $aln->isa('Bio::SimpleAlign') && $self->throw("Did not get a Bio::SimpleAlign but a $aln");
+#	(! $fam->isa('Bio::EnsEMBL::Compara::Family')) && $self->throw("Did not net get a Bio::EnsEMBL::Compara::Family but a $fam");
+	#(! $aln->isa('Bio::SimpleAlign')) && $self->throw("Did not get a Bio::SimpleAlign but a $aln");
 
 	 $type || $self->throw("Need to specify type of alignment");
 
 	 my $q = "INSERT INTO family_alignment(family_id,alignment_type,alignment_cigar_line)
 			 VALUES ($famid ,'$type','".$aln->cigar_line."')"; 
-	 $sth = $self->prepare($q);
+	my  $sth = $self->prepare($q);
 	 $sth->execute();
 	 return $sth->{'mysql_insertid'};
 #	if ($type =~/clustalw/){ 
