@@ -6,9 +6,10 @@ Example for Hs34 against Rn3
 cd /ecs2/work3/abel/blastz/Hs34Rn3/
 mkdir ucsc_sql;cd ucsc_sql
 
-wget -t 5 http://genome.cse.ucsc.edu/goldenPath/hg16/database/
+wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database
 
-grep Rn3 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;do wget -t 5 http://genome.cse.ucsc.edu/goldenPath/hg16/database/$i;done
+
+grep Rn3 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;do wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i;done
 
 2- set up a mysql database
 
