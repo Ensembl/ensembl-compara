@@ -173,7 +173,7 @@ CREATE TABLE genomic_align (
   PRIMARY KEY genomic_align_id (genomic_align_id),
   KEY genomic_align_block_id (genomic_align_block_id),
   KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
-) MAX_ROWS = 100000000 AVG_ROW_LENGTH = 60;
+) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60;
 
 
 #
