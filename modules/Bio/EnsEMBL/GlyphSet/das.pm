@@ -80,7 +80,7 @@ sub _init {
     my @features = grep 
       {
 	$_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
-	$_->das_type_id() !~ /^(contig|component|karyotype):/i
+	$_->das_type_id() !~ /^(contig|component|karyotype):/i &&
         $_->das_start <= $length &&
         $_->das_end > 0
       } @{ $features || [] };
