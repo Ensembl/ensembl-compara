@@ -341,7 +341,7 @@ sub create_dnafrag_chunks {
     print "  dbID=",$chunk->dbID, "\n";
 
     # do grouping if requested
-    if($self->{'group_set_size'}) {
+    if($self->{'group_set_size'} and ($chunk->length < $self->{'group_set_size'})) {
       if(($chunkSet->count > 0) and (($set_size + $chunk->length) > $self->{'group_set_size'})) {
         #set has hit max, so save it
         $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
