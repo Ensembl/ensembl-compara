@@ -86,37 +86,35 @@ sub _init {
 # Stage 2a: Retrieve all EnsEMBL genes                                       #
 ##############################################################################
     &eprof_start("gene-virtualgene_start-get");
-    if ($type eq 'all' && &checkDB('ENSEMBL_SANGER')){ 
-           my $res = $vc->get_all_SangerGenes_startend_lite(); 
-           foreach my $g (@$res){ 
-               my( $gene_col, $gene_label, $high); 
-               $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0; 
-               $gene_label = $g->{'stable_id'}; 
-               $high       = 1 if(exists $highlights{ $gene_label }); 
-               my $T = $g->{'type'}; 
-               $T =~ s/HUMACE-//; 
-               $gene_col = $sanger_colours->{ $T }; 
-               push @genes, { 
-                   'chr_start' => $g->{'chr_start'}, 
-                   'chr_end'   => $g->{'chr_end'}, 
-                   'start'     => $g->{'start'}, 
-                   'strand'    => $g->{'strand'}, 
-                   'end'       => $g->{'end'}, 
-                   'ens_ID'    => '', #$g->{'stable_id'}, 
-                   'label'     => $gene_label, 
-                   'colour'    => $gene_col, 
-                   'ext_DB'    => $g->{'db'}, 
-                   'high'      => $high, 
-                   'type'      => $g->{'type'} 
-               }; 
-           } 
-       } 
+    my $res = $vc->get_all_SangerGenes_startend_lite(); 
+    foreach my $g (@$res){ 
+        my( $gene_col, $gene_label, $high); 
+        $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0; 
+        $gene_label = $g->{'stable_id'}; 
+        $high       = 1 if(exists $highlights{ $gene_label }); 
+        my $T = $g->{'type'}; 
+        $T =~ s/HUMACE-//; 
+        $gene_col = $sanger_colours->{ $T }; 
+        push @genes, { 
+            'chr_start' => $g->{'chr_start'}, 
+            'chr_end'   => $g->{'chr_end'}, 
+            'start'     => $g->{'start'}, 
+            'strand'    => $g->{'strand'}, 
+            'end'       => $g->{'end'}, 
+            'ens_ID'    => '', #$g->{'stable_id'}, 
+            'label'     => $gene_label, 
+            'colour'    => $gene_col, 
+            'ext_DB'    => $g->{'db'}, 
+            'high'      => $high, 
+            'type'      => $g->{'type'} 
+        }; 
+    } 
 
     my $res = $vc->get_all_VirtualGenes_startend_lite();
     foreach(@$res) {
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$_->{'stable_id'}} ? 1 : 0;
-        if(defined $_->{'synonym'}) {
+        if(defined $_->{'synonym'} && $_->{'synonym'} ne '') {
             $gene_col = $known_col;
             $gene_label = $_->{'synonym'};
             $high = 1 if(exists $highlights{$gene_label});
@@ -143,19 +141,14 @@ sub _init {
 # Stage 2b: Retrieve all EMBL (external) genes                               #
 ##############################################################################
     &eprof_start("gene-externalgene_start-get");
-    if ($type eq 'all' && &checkDB('ENSEMBL_SANGER')){ 
-        my $res = $vc->get_all_EMBLGenes_startend_lite();
-        foreach my $g (@$res){
-            my( $gene_col, $gene_label, $high);
-            $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0;
-            $gene_label = $g->{'synonym'} || $g->{'stable_id'};
-            $high       = 1 if(exists $highlights{ $gene_label });
-            if($g->{'type'} eq 'pseudo') {
-                $gene_col = $pseudo_col;
-            } else {
-                $gene_col = $ext_col;
-            }
-            push @genes, {
+    my $res = $vc->get_all_EMBLGenes_startend_lite();
+    foreach my $g (@$res){
+        my( $gene_col, $gene_label, $high);
+        $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0;
+        $gene_label = $g->{'synonym'} || $g->{'stable_id'};
+        $high       = 1 if(exists $highlights{ $gene_label });
+        $gene_col = $g->{'type'} eq 'pseudo' ? $pseudo_col : $ext_col;
+        push @genes, {
                 'chr_start' => $g->{'chr_start'},
                 'chr_end'   => $g->{'chr_end'},
                 'start'     => $g->{'start'},
@@ -167,8 +160,7 @@ sub _init {
                 'ext_DB'    => $g->{'db'},
                 'high'      => $high,
                 'type'      => $g->{'type'}
-            };
-        }
+        };
     }
     &eprof_end("gene-externalgene_start-get");
 
@@ -185,7 +177,7 @@ sub _init {
         $end = $vc_length if $end > $vc_length;
         my $label = $g->{'label'};
 
-	next if $label eq '';
+	    next if $label eq '';
         my $tglyph = new Bio::EnsEMBL::Glyph::Text({
             'x'         => $start,	
             'y'         => $y,

@@ -1,215 +1,33 @@
 package Bio::EnsEMBL::GlyphSet::tilepath;
 use strict;
-use Bump;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Poly;
-use Bio::EnsEMBL::Glyph::Text;
-use SiteDefs;
+use Bio::EnsEMBL::GlyphSet::bac_map;
+@ISA = qw(Bio::EnsEMBL::GlyphSet::bac_map);
 
-sub init_label {
+sub my_label { return "Tilepath"; }
+
+## Retrieve all tile path clones - these are the clones in the
+## subset "tilepath".
+
+sub features {
     my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'Tile Path',
-	'font'      => 'Small',
-	'absolutey' => 1,
-    });
-    $self->label($label);
+    return $self->{'container'}->get_all_MapFrags( 'tilepath' );
 }
 
-sub _init {
-    my ($self) = @_;
-
-    return unless ($self->strand() == -1);
-    
-	my $vc              = $self->{'container'};
-    my $length   		= $vc->length();
-    my $Config 			= $self->{'config'};
-    my @bitmap         		= undef;
-    my $pix_per_bp  		= $Config->transform->{'scalex'};
-    my $bitmap_length 		= int($length * $pix_per_bp);
-
-    my $ystart   		= 0;
-    my $im_width 		= $Config->image_width();
-    my ($w,$h)   		= $Config->texthelper()->px2bp('Tiny');
-    my ($col, $lab) 	        = ();
-    my $i 			= 1;
-    my $dep                     = $Config->get('tilepath', 'dep');
-    my $col1                    = $Config->get('tilepath', 'col1');
-    my $col2                    = $Config->get('tilepath', 'col2');
-    my $lab1                    = $Config->get('tilepath', 'lab1');
-    my $lab2                    = $Config->get('tilepath', 'lab2');
-    my $include_fish            = $Config->get('tilepath', 'fish' );
-    my $threshold_navigation    = ($Config->get('tilepath', 'threshold_navigation') || 2e6)*1001;
-	my $show_navigation = $length < $threshold_navigation;
-	my $blue = $Config->colourmap->id_by_name('contigblue1');
-	my $green = $Config->colourmap->id_by_name('black');
-    my @asm_clones = $vc->get_all_FPCClones( $include_fish );
-	my $vc_start   = $vc->_global_start();
-    if (@asm_clones){
-
-    my @fish_clones;
-	foreach my $clone ( @asm_clones ) {
-
-	    my $id    	= $clone->name();		
-	    my $start	= $clone->start();
-	    my $end	    = $clone->end();
-        my $cl_len  = $end-$start+1;
-
-		($col,$lab) = $i ? ($col1,$lab1) : ($col2,$lab2);
-        my $MAX_WIDTH = 300000;
-        my($box_start,$box_end);
-        
-        my $fish_clone = undef;
-	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-			'y'            => 0,
-			'x'            => $start,
-			'absolutey'    => 1
-		});
-		
-	    if($cl_len > $MAX_WIDTH) {
-            $box_start = $start;
-            $box_end   = $box_start + 20/2;
-            if($box_end=>1 && $box_start<=$length) { ## We can draw this
-                $box_start = 1       if $box_start < 1;
-                $box_end   = $length if $box_end   >  $length;
-        	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-            		'x'         => $box_start,
-        	    	'y'         => $ystart+2,
-            		'width'     => $box_end-$box_start+1,
-            		'height'    => 7,
-            		'colour'    => $col,
-            		'absolutey' => 1,
-        	    });
-        	    $Composite->push($glyph);
-            }
-            $box_end   = $end;
-            $box_start = $box_end - 20/2;
-            if($box_end=>1 && $box_start<=$length) { ## We can draw this
-                $box_start = 1       if $box_start < 1;
-                $box_end   = $length if $box_end   >  $length;
-        	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-            		'x'         => $box_start,
-        	    	'y'         => $ystart+2,
-            		'width'     => $box_end-$box_start+1,
-            		'height'    => 7,
-            		'colour'    => $col,
-            		'absolutey' => 1,
-        	    });
-        	    $Composite->push($glyph);
-            }
-            $box_start = $start + 20/2;
-            $box_end   = $end  - 20/2;
-            if($box_end=>1 && $box_start<=$length) { ## We can draw this
-                $box_start = 1       if $box_start < 1;
-                $box_end   = $length if $box_end   >  $length;
-                foreach (2,9) {
-            	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-                		'x'         => $box_start,
-            	    	'y'         => $ystart+$_,
-                		'width'     => $box_end-$box_start+1,
-                		'height'    => 0,
-                		'colour'    => $col,
-                		'absolutey' => 1,
-            	    });
-                    $Composite->push($glyph);
-                }
-            }
-    	    $start      = 0 if ($start < 0);
-	        $end        = $length if ($end > $length);
-        } else {
-    	    $start      = 0 if ($start < 0);
-	        $end        = $length if ($end > $length);
-    	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-        		'x'         => $start,
-    	    	'y'         => $ystart+2,
-        		'width'     => $end - $start,
-        		'height'    => 7,
-        		'colour'    => $col,
-        		'absolutey' => 1,
-    	    });
-    	    $Composite->push($glyph);
-        }
-
-        if($show_navigation) {
-            
-    		$Composite->{'zmenu'} = {
-				'caption' => $id || $clone->embl_acc,
-				'02:EMBL id: '.$clone->embl_acc => '',
-				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
-				"04:length: ".($clone->length()) => '',
-            };
-            $Composite->{'zmenu'}->{"05:Centre: ".$clone->organisation} = ''
-                if $clone->organisation;
-            $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc
-                if $ENV{'ENSEMBL_SCRIPT'} ne 'contigview' ;
-	    } 
-
-        if( $include_fish eq 'FISH' ) {
-            my $fish = $clone->FISHmap();
-            if($fish ne '') {
-            	$Composite->{'zmenu'}->{"05:FISH: $fish"} = '' if( $show_navigation);
-                my $triangle_end =  $start + 3/$pix_per_bp;
-                $triangle_end = $end if( $triangle_end > $end);
-    	        $fish_clone = new Bio::EnsEMBL::Glyph::Poly({
-                    'points'    => [ $start, $ystart+2,
-                                     $start, $ystart+5,
-                                     $triangle_end, $ystart+2  ],
-    	    	    'colour'    => $fish=~/^\*/ ? $green : $blue,
-        	    	'absolutey' => 1,
-    
-        	    });
-            }
-        }
-
-
-
-	    my $bp_textwidth = $w * length($id || $clone->embl_acc) * 1.1; # add 10% for scaling text
-	    unless ($bp_textwidth > ($end - $start)){
-    		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-    		    'x'          => int(( $end + $start - $bp_textwidth)/2),
-    		    'y'          => $ystart+2,
-    		    'width'      => $bp_textwidth,
-    		    'height'     => $h,
-    		    'font'       => 'Tiny',
-    		    'colour'     => $lab,
-    		    'text'       => $id || $clone->embl_acc,
-    		    'absolutey'  => 1,
-    		});
-	    	$Composite->push($tglyph);
-	    }
-        
-	    if ($dep > 0) { # we bump
-            my $bump_start = int($Composite->x() * $pix_per_bp);
-            $bump_start = 0 if ($bump_start < 0);
-
-            my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
-            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            my $row = &Bump::bump_row(
-			    $bump_start,
-				$bump_end,
-				$bitmap_length,
-				\@bitmap
-            );
-    		next if ($row > $dep);
-            $Composite->y($Composite->y() + (1.4 * $row * $h));
-            if($fish_clone) {
-                $fish_clone->transform(
-                    {'translatey' => (1.4 * $row * $h)}
-                );
-            }
-	    }
-
-	    $self->push($Composite); 			
-	    $i = 1-$i;
-    	    push @fish_clones,$fish_clone if($fish_clone);
-    	}
-        foreach( @fish_clones ) { $self->push($_); }		
-    }
+## If tile path clones are very long then we draw them as "outlines" as
+## we aren't convinced on their quality...
+sub tag {
+    return ();
 }
 
+sub colour {
+    my ($self, $f ) = @_;
+    $self->{'_colour_flag'} = $self->{'_colour_flag'}==1 ? 2 : 1;
+    return 
+        $self->{'colours'}{"col$self->{'_colour_flag'}"},
+        $self->{'colours'}{"lab$self->{'_colour_flag'}"},
+        $f->length > $self->{'config'}->get( "tilepath2", 'outline_threshold' ) ? 'border' : ''
+        ;
+}
 
 1;

@@ -109,6 +109,7 @@ sub _init {
 		## Display if not stranded OR
 			my @features = sort { $a->das_start <=> $b->das_start } @$value;
 			my $start = $features[0]->das_start;
+			my $START = $start < 1 ? 1 : $start;
 			my $end = $features[-1]->das_end;
         ### A general list of features we don't want to draw via DAS ###
        
@@ -149,7 +150,7 @@ sub _init {
 			}
 			my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 				'y'            => 0,
-				'x'            => $start,
+				'x'            => $START,
 				'absolutey'    => 1,
             	'zmenu'     => $zmenu,
 			});
@@ -171,6 +172,7 @@ sub _init {
                 $end = $old_end if $end <= $old_end;
                 $Composite->push($glyph);
     			foreach(@features) {
+                    my $START = $f->das_start() <  1       ? 1 : $f->das_start();
     				$glyph = new Bio::EnsEMBL::Glyph::Intron({
                         'x'         => $old_end,
                         'y'         => 0,

@@ -75,18 +75,16 @@ sub _init {
 #First of all let us deal with all the EnsEMBL genes....
 	my $vc_start = $vc->_global_start();
     my @genes = ();
-    
-    if ($type eq 'all' && &checkDB('ENSEMBL_SANGER')){ 
-           my $res = []; # $vc->get_all_SangerGenes_startend_lite(); 
-           foreach my $g (@$res){ 
-               my( $gene_col, $gene_label, $high); 
-               $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0; 
-               $gene_label = $g->{'stable_id'}; 
-               $high       = 1 if(exists $highlights{ $gene_label }); 
-               my $T = $g->{'type'}; 
-               $T =~ s/HUMACE-//; 
-               $gene_col = $sanger_colours->{ $T }; 
-               push @genes, { 
+
+        my $res = $vc->get_all_SangerGenes_startend_lite(); 
+        foreach my $g (@$res){ 
+            my( $gene_col, $gene_label, $high); 
+            $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0; 
+            $gene_label = $g->{'stable_id'}; 
+            $high       = 1 if(exists $highlights{ $gene_label }); 
+            (my $T = $g->{'type'}) =~ s/HUMACE-//; 
+            $gene_col = $sanger_colours->{ $T }; 
+            push @genes, { 
                    'chr_start' => $g->{'chr_start'}, 
                    'chr_end'   => $g->{'chr_end'}, 
                    'start'     => $g->{'start'}, 
@@ -98,25 +96,24 @@ sub _init {
                    'ext_DB'    => $g->{'db'}, 
                    'high'      => $high, 
                    'type'      => $g->{'type'} 
-               }; 
-           } 
-        $Config->{'legend_features'}->{'sanger_genes'} = {
-            'priority' => 1000,
-            'legend'  => [
-                'Sanger curated known genes'    => $sanger_colours->{'Known'},
-                'Sanger curated novel CDS'      => $sanger_colours->{'Novel_CDS'},
-                'Sanger curated putative'       => $sanger_colours->{'Putative'},
-                'Sanger curated novel Trans'    => $sanger_colours->{'Novel_Transcript'},
-                'Sanger curated pseudogenes'    => $sanger_colours->{'Pseudogene'}
-            ]
-        }  if(@$res>0);
-    } 
+            }; 
+            $Config->{'legend_features'}->{'sanger_genes'} = {
+                'priority' => 1000,
+                'legend'  => [
+                    'Sanger curated known genes'    => $sanger_colours->{'Known'},
+                    'Sanger curated novel CDS'      => $sanger_colours->{'Novel_CDS'},
+                    'Sanger curated putative'       => $sanger_colours->{'Putative'},
+                    'Sanger curated novel Trans'    => $sanger_colours->{'Novel_Transcript'},
+                    'Sanger curated pseudogenes'    => $sanger_colours->{'Pseudogene'}
+                ]
+            }  if(@$res>0);
+        } 
     my $res = $vc->get_all_VirtualGenes_startend_lite();
 
     foreach(@$res) {
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$_->{'stable_id'}} ? 1 : 0;
-        if(defined $_->{'synonym'}) {
+        if(defined $_->{'synonym'} && $_->{'synonym'} ne '') {
             $gene_col = $known_col;
             $gene_label = $_->{'synonym'};
             $high = 1 if(exists $highlights{$gene_label});
@@ -148,7 +145,6 @@ sub _init {
     &eprof_end("gene-virtualgene_start-get");
 
     &eprof_start("gene-externalgene_start-get");
-    if ($type eq 'all' && &checkDB('ENSEMBL_EMBL')){ 
         my $res = $vc->get_all_EMBLGenes_startend_lite();
         foreach my $g (@$res){
             my( $gene_col, $gene_label, $high);
@@ -181,7 +177,6 @@ sub _init {
                 'EMBL pseudogenes'        => $pseudo_col,
             ]
         }  if(@$res>0);
-    }
 
     &eprof_end("gene-externalgene_start-get");
 

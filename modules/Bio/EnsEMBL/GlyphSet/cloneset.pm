@@ -1,168 +1,87 @@
 package Bio::EnsEMBL::GlyphSet::cloneset;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Text;
-use SiteDefs;
+use Bio::EnsEMBL::GlyphSet_simple;
+@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub init_label {
+sub my_label { return "1mb cloneset"; }
+
+## Retrieve all BAC map clones - these are the clones in the
+## subset "bac_map" - if we are looking at a long segment then we only
+## retrieve accessioned clones ("acc_bac_map")
+
+sub features {
     my ($self) = @_;
-    return if( defined $self->{'config'}->{'_no_label'} );
-    my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => '1MB cloneset',
-	'font'      => 'Small',
-	'absolutey' => 1,
-    });
-    $self->label($label);
+    return $self->{'container'}->get_all_MapFrags( 'cloneset' );
 }
 
-sub _init {
-    my ($self) = @_;
+## If bac map clones are very long then we draw them as "outlines" as
+## we aren't convinced on their quality...
 
-    return unless ($self->strand() == -1);
-    
-    my $vc   		    = $self->{'container'};
-    my $length   		= $vc->length();
-    my $Config 			= $self->{'config'};
-    my @bitmap         		= undef;
-    my $pix_per_bp  		= $Config->transform->{'scalex'};
-    my $bitmap_length 		= int($length * $pix_per_bp);
 
-    my $ystart   		= 0;
-    my $im_width 		= $Config->image_width();
-    my ($w,$h)   		= $Config->texthelper()->px2bp('Tiny');
-    my ($col, $lab) 	        = ();
-    my $i 			= 1;
-    my $include_fish            = $Config->get('tilepath', 'fish' );
-    my $dep                     = $Config->get('cloneset', 'dep');
-    my $threshold_navigation    = ($Config->get('tilepath', 'threshold_navigation') || 2e6)*1001;
-	my $show_navigation = $length < $threshold_navigation;
-    my $col1                    = $Config->get('cloneset', 'col1');
-    my $col2                    = $Config->get('cloneset', 'col2');
-    my $lab1                    = $Config->get('cloneset', 'lab1');
-    my $lab2                    = $Config->get('cloneset', 'lab2');
-	my $blue = $Config->colourmap->id_by_name('contigblue1');
-	my $green = $Config->colourmap->id_by_name('black');
+sub colour {
+    my ($self, $f) = @_;
+    $self->{'_colour_flag'} = $self->{'_colour_flag'}==1 ? 2 : 1;
+    return 
+        $self->{'colours'}{"col$self->{'_colour_flag'}"},
+        $self->{'colours'}{"lab$self->{'_colour_flag'}"},
+        $f->length > $self->{'config'}->get( "tilepath2", 'outline_threshold' ) ? 'border' : '' ;
+}
 
-	my @cloneset = $vc->get_all_clones_in_cloneset('1MB');
-	my %hash;
-	%hash = map { @$_ } @cloneset;
+## Return the image label and the position of the label
+## (overlaid means that it is placed in the centre of the
+## feature.
 
-    my @asm_clones = $vc->get_all_FPCClones( $include_fish );
+sub image_label {
+    my ($self, $f ) = @_;
+    return ($f->name,'overlaid');
+}
 
-	my @cloneset_clones = map { exists $hash{$_->embl_acc} ? ([$_, $hash{$_->embl_acc}]) : () }
-		@asm_clones;
+## Link back to this page centred on the map fragment
 
-	my $vc_start = $vc->_global_start;
-    my @fish_clones;
-    if (@cloneset_clones){
+sub href {
+    my ($self, $f ) = @_;
+    return "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=".$f->name
+}
 
-	foreach my $clone_ref ( @cloneset_clones	 ) {
-        my $fish_clone;
-		my $clone   = $clone_ref->[0];
-		my $synonym = $clone_ref->[1];
-	    my $id    	= $clone->name();		
-	    my $start	= $clone->start();
-	    $start      = 0 if ($start < 0);
-	    my $end	= $clone->end();
-	    $end        = $length if ($end > $length);
-
-        ($col,$lab)  = ($col1,$lab1);
-			
-        my $fish = $clone->FISHmap(); $fish = "$fish";
-	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-    		'y'            => 0,
-	    	'x'            => $start,
-    		'absolutey'    => 1,
-	    });
-
-        if($show_navigation) {
-            $Composite->{'zmenu'} = {
-    				'caption'                     => $id,
-    		    	"01:synonym: $synonym" 	      => '',
-    				'02:EMBL id: '.$clone->embl_acc  => '',
-    				"03:loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
-    				"04:length: ".($clone->length()) => '',
-            };
-            if($ENV{'ENSEMBL_SCRIPT'} ne 'contigview') {
-                $Composite->{'zmenu'}->{'06:Jump to Contigview'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?clone=".$clone->embl_acc;
-            }
+sub tag {
+    my ($self, $f) = @_; 
+    my @result = (); 
+    if( $f->fp_size && $f->fp_size > 0 ) {
+        my $start = int( ($f->start + $f->end - $f->fp_size)/2 );
+        my $end   = $start + $f->fp_size - 1 ;
+        push @result, {
+            'style' => 'underline',
+            'colour' => $self->{'colours'}{"seq_len"},
+            'start'  => $start,
+            'end'    => $end
         }
+   }
+    return @result;
+}
+## Create the zmenu...
+## Include each accession id separately
 
-        
-	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-		'x'         => $start,
-		'y'         => $ystart+2,
-		'width'     => $end - $start,
-		'height'    => 7,
-		'colour'    => $col,
-		'absolutey' => 1
-	    });
-	    $Composite->push($glyph);
-
-        if( $include_fish eq 'FISH' ) {
-            my $fish = $clone->FISHmap();
-            if($fish ne '') {
-      		    $Composite->{'zmenu'}->{"05:FISH: $fish"} = '' if( ($include_fish eq 'FISH') and $show_navigation);
-                my $triangle_end =  $start + 3/$pix_per_bp;
-                $triangle_end = $end if( $triangle_end > $end);
-    	        $fish_clone = new Bio::EnsEMBL::Glyph::Poly({
-                    'points'    => [ $start, $ystart+2,
-                                     $start, $ystart+5,
-                                     $triangle_end, $ystart+2  ],
-    	    	    'colour'    => $fish=~/^\*/ ? $green : $blue,
-        	    	'absolutey' => 1,
-    
-        	    });
-            }
-        }
-
-	    my $bp_textwidth = $w * length($synonym) * 1.1; # add 10% for scaling text
-	    unless ($bp_textwidth > ($end - $start)){
-		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-		    'x'          => $start + int(($end - $start)/2 - ($bp_textwidth)/2),
-		    'y'          => $ystart+2,
-		    'width'      => $bp_textwidth,
-		    'height'     => $h,
-		    'font'       => 'Tiny',
-		    'colour'     => $lab,
-		    'text'       => $synonym,
-		    'absolutey'  => 1,
-		});
-	    	$Composite->push($tglyph);
-	    }
-			
-	    if ($dep > 0) { # we bump
-            	my $bump_start = int($Composite->x() * $pix_per_bp);
-            	$bump_start = 0 if ($bump_start < 0);
-
-            	my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
-            	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            	my $row = &Bump::bump_row(
-					  $bump_start,
-					  $bump_end,
-					  $bitmap_length,
-					  \@bitmap
-					  );
-		next if ($row > $dep);
-            	$Composite->y($Composite->y() + (1.4 * $row * $h));
-                if($fish_clone) {
-                    $fish_clone->transform( {'translatey' => (1.4 * $row * $h)} );
-                }
-	    }
-        push @fish_clones, $fish_clone if($fish_clone);
-    
-	    $self->push($Composite); 			
-	    $i++;
-    	}
-        foreach( @fish_clones ) { $self->push($_); }		
-		
-    } else {
-        $self->errorTrack("There are no 1MB clones within this interval");
+sub zmenu {
+    my ($self, $f ) = @_;
+    return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
+    my $zmenu = { 
+        'caption' => "Clone: ".$f->name,
+        '01:bp: '.$f->seq_start."-".$f->seq_end => '',
+        '02:length: '.$f->length.' bps' => '',
+        '03:Centre on clone:' => $self->href($f),
+    };
+    foreach($f->embl_accs) {
+        $zmenu->{"12:EMBL: $_" } = '';
     }
+    $zmenu->{'13:Organisation: '.$f->organisation} = '' if($f->organisation);
+    $zmenu->{'14:State: '.substr($f->state,3)        } = ''              if($f->state);
+    $zmenu->{'15:Seq length: '.$f->seq_len } = ''        if($f->seq_len);    
+    $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
+    $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    
+    $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''        if($f->BACend_flag);    
+    $zmenu->{'30:'.$f->note } = ''        if($f->note);    
+    return $zmenu;
 }
-
 
 1;

@@ -62,7 +62,7 @@ sub text_label { return ''; }
 
 sub legend {
     my ($self, $colours) = @_;
-    return ('genes', 1000, 
+    return ('est_genes', 1000, 
         [
             'EST genes'                       => $colours->{'genomewise'},
         ]

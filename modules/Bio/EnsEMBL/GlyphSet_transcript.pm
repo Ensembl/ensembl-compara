@@ -74,7 +74,10 @@ sub _init {
         # For alternate splicing diagram only draw transcripts in gene
         next if $target_gene && $vt->{'gene'}       ne $target_gene;    
         # For exon_structure diagram only given transcript
+        print STDERR "TARGET: $target....\n";
         next if $target      && $vt->{'stable_id'} ne $target;         #
+        print STDERR "TARGET: ....$target\n";
+
         $count=1;        
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({'y'=>$y,'height'=>$h});
         

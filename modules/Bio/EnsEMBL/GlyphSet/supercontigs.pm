@@ -33,7 +33,7 @@ sub image_label {
 sub zmenu {
     my ($self, $f ) = @_;
     my $zmenu = { 
-        'caption' => "Clone: ".$f->name,
+        'caption' => "FPC contig: ".$f->name,
         '01:bp: '.$f->seq_start."-".$f->seq_end => '',
         '02:length: '.$f->length.' bps' => '',
         '03:Centre on FPC ctg' => $self->href($f),

@@ -55,7 +55,7 @@ sub render {
     # create a fresh canvas
     #
     if($self->can('init_canvas')) {
-	$self->init_canvas($config, $im_width, $im_height);
+    	$self->init_canvas($config, $im_width, $im_height);
     }
 
     for my $glyphset (@{$self->{'glyphsets'}}) {
