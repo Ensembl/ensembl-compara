@@ -81,6 +81,8 @@ sub _init {
       {
 	$_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
 	$_->das_type_id() !~ /^(contig|component|karyotype):/i
+        $_->das_start <= $length &&
+        $_->das_end > 0
       } @{ $features || [] };
 
     my %styles = ();
