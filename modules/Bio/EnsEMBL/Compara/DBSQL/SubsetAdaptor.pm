@@ -208,12 +208,12 @@ sub _objs_from_sth {
 
     @member_id_list = keys(%{$setMemberIds{$subset_id}});
     my $count = $#member_id_list + 1;
-    print("subset id = $subset_id has $count unique member_ids\n");
+    # print("subset id = $subset_id has $count unique member_ids\n");
     
     $subset = Bio::EnsEMBL::Compara::Subset->new(-dbid => $subset_id,
                                                  -name => $setNames{$subset_id},
                                                  -adaptor => $self);
-    print("create set '" . $setNames{$subset_id} . "' id=$subset_id\n");
+    # print("loading set '" . $setNames{$subset_id} . "' id=$subset_id\n");
 
     @{$subset->{'_member_id_list'}} = @member_id_list;
 

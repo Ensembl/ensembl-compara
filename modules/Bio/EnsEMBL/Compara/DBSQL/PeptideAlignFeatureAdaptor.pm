@@ -549,12 +549,12 @@ sub _generic_fetch {
   #append additional clauses which may have been defined
   $sql .= " $final_clause";
 
-  print STDERR $sql,"\n";
+  # print STDERR $sql,"\n";
   my $sth = $self->prepare($sql);
   $sth->execute;
 
-#  print STDERR $sql,"\n";
-  print STDERR "sql execute finished. about to build objects\n";
+  # print STDERR $sql,"\n";
+  # print STDERR "sql execute finished. about to build objects\n";
 
   return $self->_objs_from_sth($sth);
 }
