@@ -2,19 +2,19 @@ package Bio::EnsEMBL::Compara::Member;
 
 use strict;
 use Bio::Seq;
-use Bio::EnsEMBL::Root;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Gene;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-our @ISA = qw(Bio::EnsEMBL::Root);
-
 sub new {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
 
+  my $self = bless {}, $class;
+  
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id) = $self->_rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
+    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id) = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
 
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
@@ -66,19 +66,19 @@ sub new_fast {
 
 sub new_from_gene {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = $class->new(@args);
 
   if (scalar @args) {
 
-    my ($gene, $genome_db) = $self->_rearrange([qw(GENE GENOME_DB)], @args);
+    my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);
 
     unless(defined($gene) and $gene->isa('Bio::EnsEMBL::Gene')) {
-      $self->throw(
+      throw(
       "gene arg must be a [Bio::EnsEMBL::Gene] ".
       "not a [$gene]");
     }
     unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-      $self->throw(
+      throw(
       "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
       "not a [$genome_db]");
     }
@@ -91,7 +91,6 @@ sub new_from_gene {
     $self->chr_start($gene->seq_region_start);
     $self->chr_end($gene->seq_region_end);
     $self->chr_strand($gene->seq_region_strand);
-    $self->seq_length(0);
     $self->source_name("ENSEMBLGENE");
     $self->version($gene->version);
   }
@@ -119,20 +118,20 @@ sub new_from_gene {
 
 sub new_from_transcript {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = $class->new(@args);
   my $peptideBioSeq;
   my $seq_string;
 
-  my ($transcript, $genome_db, $translate, $description) = $self->_rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
+  my ($transcript, $genome_db, $translate, $description) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
   #my ($transcript, $genome_db, $translate) = @args;
 
   unless(defined($transcript) and $transcript->isa('Bio::EnsEMBL::Transcript')) {
-    $self->throw(
+    throw(
     "transcript arg must be a [Bio::EnsEMBL::Transcript]".
     "not a [$transcript]");
   }
   unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-    $self->throw(
+    throw(
     "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
     "not a [$genome_db]");
   }
@@ -144,14 +143,12 @@ sub new_from_transcript {
   $self->chr_start($transcript->coding_region_start);
   $self->chr_end($transcript->coding_region_end);
   $self->chr_strand($transcript->seq_region_strand);
-  $self->seq_length(0);
   $self->version($transcript->translation->version);
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
     if(not defined($transcript->translation)) {
-      $self->throw(
-        "request to translate a transcript without a defined translation",
-        $transcript->stable_id);
+      throw("request to translate a transcript without a defined translation",
+            $transcript->stable_id);
     }
     $self->stable_id($transcript->translation->stable_id);
     $self->source_name("ENSEMBLPEP");
@@ -162,19 +159,17 @@ sub new_from_transcript {
     #$seq_string = $transcript->translation->seq;
 
     if ($seq_string =~ /^X+$/) {
-      warn "X+ in sequence from translation " . $transcript->translation->stable_id."\n";
+      warning("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
     }
     else {
       #$seq_string =~ s/(.{72})/$1\n/g;
       $self->sequence($seq_string);
-      $self->seq_length($peptideBioSeq->length);
     }
   }
   else {
     $self->stable_id($transcript->stable_id);
     $self->source_name("ENSEMBLTRANS");
     #$self->sequence($transcript->seq);
-    #$self->seq_length($transcript->length);
   }
 
   #print("Member->new_from_transcript\n");
@@ -359,7 +354,7 @@ sub taxon {
   if (@_) {
     my $taxon = shift;
     unless ($taxon->isa('Bio::EnsEMBL::Compara::Taxon')) {
-      $self->throw(
+      throw(
 		   "taxon arg must be a [Bio::EnsEMBL::Compara::Taxon".
 		   "not a [$taxon]");
     }
@@ -368,7 +363,7 @@ sub taxon {
   } else {
     unless (defined $self->{'_taxon'}) {
       unless (defined $self->taxon_id) {
-        $self->throw("can't fetch Taxon without a taxon_id");
+        throw("can't fetch Taxon without a taxon_id");
       }
       my $TaxonAdaptor = $self->adaptor->db->get_TaxonAdaptor;
       $self->{'_taxon'} = $TaxonAdaptor->fetch_by_dbID($self->taxon_id);
@@ -398,7 +393,7 @@ sub genome_db {
   if (@_) {
     my $genome_db = shift;
     unless ($genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-      $self->throw(
+      throw(
 		   "arg must be a [Bio::EnsEMBL::Compara::GenomeDB".
 		   "not a [$genome_db]");
     }
@@ -407,7 +402,7 @@ sub genome_db {
   } else {
     unless (defined $self->{'_genome_db'}) {
       unless (defined $self->genome_db_id) {
-        $self->throw("can't fetch GenomeDB without a genome_db_id");
+        throw("can't fetch GenomeDB without a genome_db_id");
       }
       my $GenomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
       $self->{'_genome_db'} = $GenomeDBAdaptor->fetch_by_dbID($self->genome_db_id);
@@ -418,50 +413,65 @@ sub genome_db {
 }
 
 =head2 sequence
-
   Arg [1]    : string $sequence
   Example    : my $seq = $member->sequence;
-  Description: Extracts the sequence string of this member
+  Description: Get/set the sequence string of this member
+               Will lazy load by sequence_id if needed and able
   Returntype : string
   Exceptions : none
   Caller     : general
-
 =cut
 
 sub sequence {
   my $self = shift;
-  $self->{'_sequence'} = shift if(@_);
+
+  if(@_) {
+    $self->{'_seq_length'} = undef;
+    $self->{'_sequence'} = shift;
+    $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
+    return $self->{'_sequence'};
+  }
+  
+  if(!defined($self->{'_sequence'}) and
+     defined($self->sequence_id()) and     
+     defined($self->adaptor))
+  {
+    $self->{'_sequence'} = $self->adaptor->_fetch_sequence_by_id($self->sequence_id);
+    $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
+  }
+
   return $self->{'_sequence'};
 }
 
 
 =head2 seq_length
-
-  Arg [1]    : int $seq_length
   Example    : my $seq_length = $member->seq_length;
-  Description: Extracts the sequence length of this member
+  Description: get the sequence length of this member
   Returntype : int
   Exceptions : none
   Caller     : general
-
 =cut
 
 sub seq_length {
   my $self = shift;
-  $self->{'_seq_length'} = shift if(@_);
+
+  unless(defined($self->{'_seq_length'})) {
+    #need to check case if user is calling seq_length first
+    #call $self->sequence (to lazy load if needed)
+    my $seq = $self->sequence;
+    $self->{'_seq_length'} = length($seq) if(defined($seq));
+  }
   return $self->{'_seq_length'};
 }
 
 
 =head2 sequence_id
-
   Arg [1]    : int $sequence_id
   Example    : my $sequence_id = $member->sequence_id;
   Description: Extracts the sequence_id of this member
   Returntype : int
   Exceptions : none
   Caller     : general
-
 =cut
 
 sub sequence_id {
@@ -486,8 +496,8 @@ sub sequence_id {
 sub bioseq {
   my $self = shift;
 
-  $self->throw("Member stable_id undefined") unless defined($self->stable_id());
-  $self->throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
+  throw("Member stable_id undefined") unless defined($self->stable_id());
+  throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
 
   my $seq = Bio::Seq->new(-seq        => $self->sequence(),
                           -id         => $self->stable_id(),
@@ -503,7 +513,7 @@ sub bioseq {
   Example    : my $primaryseq = $member->primaryseq;
   Description: returns sequence this member as a Bio::Seq object
   Returntype : Bio::EnsEMBL::Compara::Member object
-  Exceptions : if arg[0] isn't a Bio::EnsEMBL::Compara::Member object
+  Exceptions : if arg[0] is not a Bio::EnsEMBL::Compara::Member object
   Caller     : MemberAdaptor(set), general
 
 =cut
@@ -513,7 +523,7 @@ sub gene_member {
   my $gene_member = shift;
 
   if ($gene_member) {
-    $self->throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$gene_member]")
+    throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$gene_member]")
       unless ($gene_member->isa('Bio::EnsEMBL::Compara::Member'));
     $self->{'_gene_member'} = $gene_member;
   }

@@ -18,73 +18,21 @@ my $_paf_build_homology_idx = time(); #global index counter
 
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
-use vars qw(@ISA);
 use strict;
-use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Attribute;
+use Bio::EnsEMBL::Utils::Exception;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
-@ISA = qw(Bio::EnsEMBL::Root);
-
 sub new {
-  my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my ($class) = @_;
+  my $self = {};
+
+  bless $self,$class;
 
   $self->query_member(new Bio::EnsEMBL::Compara::Member);
   $self->hit_member(new Bio::EnsEMBL::Compara::Member);
-
-  if (scalar @args) {
-    my ($query_stable_id,$hit_stable_id,
-        $query_member_id,$hit_member_id,
-        $analysis,
-        $qstart,$hstart,$qend,$hend,
-        $qlength,$hlength,$alength,
-        $score,$evalue,$pid,$pos,
-        $cigar_line,$feature
-       ) = $self->_rearrange([qw(
-        QUERYID
-        HITID
-        QMEMBERID
-        HMEMBERID
-        ANALYSIS
-        QSTART
-        QEND
-        HSTART
-        HEND
-        QLENGTH
-        HLENGTH
-        ALENGTH
-        SCORE
-        EVALUE
-        PID
-        POS
-        CIGAR
-        FEATURE
-      )],@args);
-
-    $feature && $self->init_from_feature($feature);
-    
-    $query_stable_id && $self->query_member->stable_id($query_stable_id);
-    $hit_stable_id && $self->hit_member->stable_id($hit_stable_id);
-    $query_member_id && $self->query_member->dbID($query_member_id);
-    $hit_member_id && $self->hit_member->dbID($hit_member_id);
-    $analysis && $self->analysis($analysis);
-    $qstart && $self->qstart($qstart);
-    $hstart && $self->hstart($hstart);
-    $qend && $self->qend($qend);
-    $hend && $self->hend($hend);
-    $qlength && $self->qlength($qlength);
-    $hlength && $self->hlength($hlength);
-    $alength && $self->alignment_length($alength);
-    $score && $self->score($score);
-    $evalue && $self->evalue($evalue);
-    $pid && $self->perc_ident($pid);
-    $pos && $self->perc_pos($pos);
-    $cigar_line && $self->cigar_line($cigar_line);
-  }
-
   return $self;
 }
 
@@ -92,9 +40,7 @@ sub init_from_feature {
   my($self, $feature) = @_;
 
   unless(defined($feature) and $feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
-    $self->throw(
-    "arg must be a [Bio::EnsEMBL::BaseAlignFeature] ".
-    "not a [$feature]");
+    throw("arg must be a [Bio::EnsEMBL::BaseAlignFeature] not a [$feature]");
   }
 
   $self->query_member->stable_id($feature->seqname);
@@ -117,6 +63,7 @@ sub init_from_feature {
 
   $self->perc_ident(int($feature->identical_matches*100/$feature->alignment_length));
   $self->perc_pos(int($feature->positive_matches*100/$feature->alignment_length));
+  return $self;
 }
 
 
@@ -129,7 +76,7 @@ sub return_as_homology
   my $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
   $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
   $homology->stable_id($stable_id);
-  $homology->source_name("ENSEMBL_HOMOLOGS");
+  $homology->source_name("ENSEMBL_ORTHOLOGUES");
 
   # NEED TO BUILD THE Attributes (ie homology_members)
   #
@@ -222,7 +169,7 @@ sub query_member {
   my ($self,$arg) = @_;
 
   if (defined($arg)) {
-    $self->throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$arg]")
+    throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$arg]")
         unless($arg->isa('Bio::EnsEMBL::Compara::Member'));
     $self->{'_query_member'} = $arg;
   }
@@ -233,7 +180,7 @@ sub  hit_member {
   my ($self,$arg) = @_;
 
   if (defined($arg)) {
-    $self->throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$arg]")
+    throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$arg]")
         unless($arg->isa('Bio::EnsEMBL::Compara::Member'));
     $self->{'_hit_member'} = $arg;
   }
@@ -387,7 +334,7 @@ sub analysis
 
   if (defined($analysis)) {
     unless($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      $self->throw("arg must be a [Bio::EnsEMBL::Analysis] not a [$analysis]");
+      throw("arg must be a [Bio::EnsEMBL::Analysis] not a [$analysis]");
     }
     $self->{_analysis} = $analysis;
   }

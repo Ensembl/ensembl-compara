@@ -40,11 +40,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
+
 use vars qw(@ISA);
+
 use strict;
-
-# Object preamble - inherits from Bio::Root::RootI
-
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 
@@ -156,7 +155,7 @@ sub fetch_all_by_GenomeDB_region {
     push @bind_values, $end;
   }
 
-  my $sth = $self->db->prepare($sql);
+  my $sth = $self->prepare($sql);
   $sth->execute(@bind_values);
 
   return $self->_objs_from_sth($sth);
@@ -275,21 +274,19 @@ sub store{
    return $dnafrag->dbID;
 }
 
+=head2 is_already_stored
 
-=head2 store_if_needed
-
- Title   : store_if_needed
- Usage   : $self->store_if_needed($dnafrag)
- Function: store instance in the defined database if NOT
-           already present.
+ Title   : is_already_stored
+ Usage   : $self->is_already_stored($dnafrag)
+ Function: checks if already stored by querying database
  Example :
- Returns : $dnafrag->dbID
+ Returns : $dnafrag->dbID if stored and 0 if not stored
  Args    : Bio::EnsEMBL::Compara::DnaFrag object
 
 
 =cut
 
-sub store_if_needed {
+sub is_already_stored {
    my ($self,$dnafrag) = @_;
 
    if( !defined $dnafrag ) {
@@ -327,10 +324,9 @@ sub store_if_needed {
        WHERE name= ?
          AND genome_db_id= ?
          AND start = ?
-         AND end = ?
    ");
 
-   unless ($sth->execute( $name, $gid, $dnafrag->start(), $dnafrag->end())) {
+   unless ($sth->execute( "$name", $gid, $dnafrag->start())) {
      $self->throw("Failed execution of a select query");
    }
 
@@ -341,9 +337,31 @@ sub store_if_needed {
      $dnafrag->dbID($dnafrag_id);
      $dnafrag->adaptor( $self );
      return $dnafrag_id;
-   } else {
-     $self->store($dnafrag);
-   }
+   } 
+  return 0;
+  } 
+   
+
+=head2 store_if_needed
+
+ Title   : store_if_needed
+ Usage   : $self->store_if_needed($dnafrag)
+ Function: store instance in the defined database if NOT
+           already present.
+ Example :
+ Returns : $dnafrag->dbID
+ Args    : Bio::EnsEMBL::Compara::DnaFrag object
+
+
+=cut
+
+
+sub store_if_needed {
+
+   my ($self,$dnafrag) = @_;
+
+   $self->store($dnafrag) unless($self->is_already_stored($dnafrag));
+   return $dnafrag->dbID;
 }
 
 1;
