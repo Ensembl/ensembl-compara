@@ -387,7 +387,7 @@ sub _load_all_blocks{
    my ($self,@args) = @_;
    my $id = $self->align_id;
 
-   my $sth = $self->adaptor->prepare("select align_row_id from genomic_align_block where align_id = '$id'");
+   my $sth = $self->adaptor->prepare("select distinct(align_row_id) from genomic_align_block where align_id = '$id'");
    
    $sth->execute;
    my $align_row;
