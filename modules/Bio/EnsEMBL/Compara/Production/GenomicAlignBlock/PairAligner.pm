@@ -98,9 +98,13 @@ sub get_params {
     $self->query_DnaFragChunkSet->add_DnaFragChunk($qy_chunk);
   }
 
+  if(defined($params->{'dbChunkSetID'})) {
+    my $chunkset = $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->fetch_by_dbID($params->{'dbChunkSetID'});
+    $self->db_DnaFragChunkSet($chunkset);
+  }
   if(defined($params->{'dbChunk'})) {
     my $db_chunk = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->fetch_by_dbID($params->{'dbChunk'});
-    $self->db_DnaFragChunk($db_chunk);
+    $self->db_DnaFragChunkSet->add_DnaFragChunk($db_chunk);
   }
 
   $self->options($params->{'options'})              if(defined($params->{'options'}));
@@ -140,12 +144,14 @@ sub query_DnaFragChunkSet {
   return $self->{'_query_DnaFragChunkSet'};
 }
 
-sub db_DnaFragChunk {
+sub db_DnaFragChunkSet {
   my $self = shift;
-  $self->{'_db_DnaFragChunk'} = shift if(@_);
-  return $self->{'_db_DnaFragChunk'};
+  $self->{'_db_DnaFragChunkSet'} = shift if(@_);
+  unless(defined($self->{'_db_DnaFragChunkSet'})) {
+    $self->{'_db_DnaFragChunkSet'} = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+  }
+  return $self->{'_db_DnaFragChunkSet'};
 }
-
 
 ##########################################
 #
@@ -181,22 +187,24 @@ sub fetch_input {
   $self->get_params($self->input_id);
 
   throw("Missing qyChunk(s)") unless($self->query_DnaFragChunkSet->count > 0);
-  throw("Missing dbChunk")    unless($self->db_DnaFragChunk);
+  throw("Missing dbChunk")    unless($self->db_DnaFragChunkSet->count > 0);
   throw("Missing method_link_type") unless($self->method_link_type);
   
   my ($first_qy_chunk) = @{$self->query_DnaFragChunkSet->get_all_DnaFragChunks};
-
+  my ($first_db_chunk) = @{$self->db_DnaFragChunkSet->get_all_DnaFragChunks};
+  
   #
   # create method_link_species_set
   #
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $mlss->method_link_type($self->method_link_type);
-  if ($first_qy_chunk->dnafrag->genome_db->dbID == $self->db_DnaFragChunk->dnafrag->genome_db->dbID) {
+  if ($first_qy_chunk->dnafrag->genome_db->dbID == $first_db_chunk->dnafrag->genome_db->dbID) {
     $mlss->species_set([$first_qy_chunk->dnafrag->genome_db]);
   } else {
     $mlss->species_set([$first_qy_chunk->dnafrag->genome_db,
-                        $self->db_DnaFragChunk->dnafrag->genome_db]);
+                        $first_db_chunk->dnafrag->genome_db]);
   } 
+
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->{'method_link_species_set'} = $mlss;
 
