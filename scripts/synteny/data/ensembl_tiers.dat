@@ -1,0 +1,91 @@
+// TIER Fields (comma separated) in file:
+//  Group tier   label
+//  Visibility   flag
+//  Expanded     flag
+//  Sorted       flag [Optional]
+//  Rows         maximum number of rows to show for this tier [optional]
+//
+// Order of tiers determines tier order in display.
+//
+// TYPE Fields (comma separated)
+//  Group tier to appear in
+//  Type label
+//  types that are to appear with this label (inside curly braces)
+//  colour of this feature type (can be an RGB triplet)
+//  use score information to set the size of this field?
+//  minimum score for sizing
+//  maximum score for sizing
+//  what glyph to use
+//  columns in detail table
+//  sort order in table determined by this column
+//  reverse sort order?
+//  what method to use for grouping features (GENE, SINGLE, HOMOLOGY)
+//  URL used to link from apollo to the underlying data.
+
+tier Sequence, true, true, false 
+type Sequence, Sequence, {"sequence" "SEQUENCE"}, "255,255,102", false, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, SINGLE, "http://www.ensembl.org/perl/contigview?contig="
+
+tier Gene, true, true, false 
+type Gene, EnsemblGene, {"ensembl"}, "204,51,0", false, 0.0, 0.0, apollo.gui.DrawableGeneSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, GENE, "http://www.ensembl.org/perl/geneview?transcript="
+type Gene, Hugo, {"hugo"}, "204,51,0", false, 0.0, 0.0, apollo.gui.DrawableGeneSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, GENE, "http://www.ensembl.org/perl/geneview?gene=__ID.__"
+type Gene, Swissprot, {"swiss"}, "204,51,0", false, 0.0, 0.0, apollo.gui.DrawableGeneSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, GENE, "http://www.ensembl.org/perl/geneview?gene=__ID.__"
+type Gene, Sptrembl, {"sptrembl"}, "204,51,0", false, 0.0, 0.0, apollo.gui.DrawableGeneSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, GENE, "http://www.ensembl.org/perl/geneview?gene=__ID.__"
+type Gene, Embl, {"embl" "embl_load_gene"}, "51,204,0", false, 0.0, 0.0, apollo.gui.DrawableGeneSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, GENE, "http://srs.ebi.ac.uk/srs6bin/cgi-bin/wgetz?-page+qResult+-e+[EMBL-Gene:__ID__]+-vn+1"
+
+tier ESTGene, true, true, false 
+type ESTGene, ESTGene, {"genomewise"}, "153,102,255", false, 0.0, 0.0, apollo.gui.DrawableGeneSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, GENE
+
+tier Prediction, true, true, false
+type Prediction, Genscan, {"genscan" "GENSCAN"}, "0,153,153", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {score GENOMIC_RANGE}, GENOMIC_RANGE, false, GENE
+type Prediction, tRNA, {"TrnaScan"}, red, true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {score GENOMIC_RANGE}, GENOMIC_RANGE, false, SINGLE
+
+tier mRNA, true, false, true, 7
+type mRNA, mRNA, {"vertebrate_mRNA_eg" "embl_vertrna" "human_mrna" "mouse_mrna"}, "51,153,0", true, 0.0, 2000.0, apollo.gui.DrawableResultSeqFeature, {score GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE}, GENOMIC_RANGE, false, HOMOLOGY, "http://www.ebi.ac.uk/cgi-bin/emblfetch?"
+
+tier Protein, true, false, true, 7
+type Protein, Protein, {"sptr" "blastp" "wublastp" "human_swall" "mouse_swall" "swall"}, "255,153,0", true, 0.0, 2000.0, apollo.gui.DrawableResultSeqFeature, {score GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE}, GENOMIC_RANGE, false, HOMOLOGY, "http://www.ebi.ac.uk/cgi-bin/swissfetch?"
+
+tier VertRNA, true, true, true, 7
+type VertRNA, EMBLVertRNA, {"wublastx" "vert" "tblastn" "wutblastn"}, "51,153,0", true, 0.0, 2000.0, apollo.gui.DrawableResultSeqFeature, {score GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE}, GENOMIC_RANGE, false, HOMOLOGY, "http://www.ebi.ac.uk/cgi-bin/emblfetch?"
+
+tier Unigene, true, false, true, 7
+type Unigene, Unigene, {"unigene.seq"}, red, true, 0.0, 2000.0, apollo.gui.DrawableResultSeqFeature, {score GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE}, GENOMIC_RANGE, false, HOMOLOGY, "http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=__ID.__&CID=__ID__"
+
+tier EST, true, false, false
+type EST, EST, {"EST_eg" "dbest" "EST"}, "153,153,255", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {NAME score GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE}, GENOMIC_RANGE, false, HOMOLOGY, "http://www.ebi.ac.uk/cgi-bin/emblfetch?__ID.__"
+
+tier Markers, true, true, false
+type Markers, Markers, {"epcr"}, "255,0,255" , true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, SINGLE, "http://www.ensembl.org/perl/markerview?marker="
+
+tier Variation, true, true, false
+type Variation, SNP, {"Variation"}, "102,102,255", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, SINGLE, "http://www.ensembl.org/perl/snpview?snp="
+
+tier CPGIsland, true, true, false
+type CPGIsland, cpgisle, {"cpg"}, "130,0,130", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {GENOMIC_RANGE GENOMIC_LENGTH score}, GENOMIC_RANGE, false, SINGLE
+
+tier Exonerate, true, true, true, 7
+type Exonerate, "Exonerate gapped", {"exonerate_gapped"}, cyan, true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE}, GENOMIC_RANGE, false, SINGLE, "http://trace.ensembl.org/perl/traceview?tracedb=0&traceid="
+
+tier trace, true, false, true, 7
+type trace, trace, {"trace"}, "255,102,255", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE SCORE}, GENOMIC_RANGE, false, SINGLE, "http://trace.ensembl.org/perl/traceview?tracedb=0&traceid="
+type trace, trace, {"cluster"}, "orange", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE SCORE}, GENOMIC_RANGE, false, SINGLE, "http://trace.ensembl.org/perl/traceview?tracedb=0&traceid="
+type trace, trace, {"pogstet"}, "blue", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE SCORE}, GENOMIC_RANGE, false, SINGLE, "http://trace.ensembl.org/perl/traceview?tracedb=0&traceid="
+
+
+tier synteny, true, false, true, 7
+type synteny, synteny, {"synteny"}, "255,102,255", true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {GENOMIC_RANGE GENOMIC_LENGTH MATCH_RANGE SCORE}, GENOMIC_RANGE, false, SINGLE, "http://www.ensembl.org/__ID:__/contigview?contig=__ID__"
+
+tier Repeat, true, false, false
+type Repeat, Repeat, {"repeat" "RepeatMasker" "repeatrasker" "RepeatMasker_SINE" "RepeatMasker_LINE"}, gray, true, 0.0, 100.0, apollo.gui.DrawableResultSeqFeature, {NAME GENOMIC_RANGE}, GENOMIC_RANGE, false, SINGLE
+
+tier stopcodon_frame1, true, false, false
+type stopcodon_frame1, stopcodon_frame1, {"codons" "stopcodon_frame1"}, red, false, 0.0, 0.0, apollo.gui.DrawableTerminalCodon, {NAME GENOMIC_RANGE}, NAME, false
+
+tier stopcodon_frame2, true, false, false
+type stopcodon_frame2, stopcodon_frame2, {"codons" "stopcodon_frame2"}, red, false, 0.0, 0.0, apollo.gui.DrawableTerminalCodon, {NAME GENOMIC_RANGE}, NAME, false
+
+tier stopcodon_frame3, true, false, false
+type stopcodon_frame3, stopcodon_frame3, {"stopcodon_frame3"}, red, false, 0.0, 0.0, apollo.gui.DrawableTerminalCodon, {NAME GENOMIC_RANGE}, NAME, false
+
+tier "Annotation", true, true, false, 100, true
+type "Annotation", "Annotation", {gene transcript exon transposon tRNA}, "255,215,0", false, 0, 0, "apollo.gui.DrawableAnnotatedSeqFeature", {GENOMIC_RANGE EVIDENCE}, EVIDENCE, false

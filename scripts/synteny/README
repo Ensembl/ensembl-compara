@@ -1,0 +1,113 @@
+19th August 2002
+----------------
+
+Generating synteny blocks from raw dna-dna matches
+--------------------------------------------------
+
+Need dna-dna matches stored in an ensembl compara database or a set of gff files, one per chromosome
+
+
+2. Configuration
+-----------------
+
+
+2.1 Code needed : 
+
+core, trace and compara core modules
+
+  cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-6 ensembl ensembl-compara ensembl-trace
+
+bioperl ensembl modules
+
+  cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r ?Tag? bioperl-live
+
+
+2.2 Set up the perl environment :
+
+  cd ensembl-compara/scripts/synteny
+  setenv BASEDIR /some/path/to modules
+  setenv PERL5LIB ${BASEDIR}/bioperl-0.7:${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-trace/modules
+
+
+2.3 Databases needed
+
+  2.3.1 Compara database
+
+    You will need the hostname, database name, username and password to the relevant compara database
+
+  2.3.2 Core database
+
+    You will need the above information for the core database as well as the name of the static golden path.
+    This database is used to fetch the names and the lengths of the chromosomes.
+
+
+3. Dumping the raw dna-dna matches
+----------------------------------
+
+  3.1. The dumping script (Example only - don't run anything yet).
+
+    This lives in  
+
+       ensembl-compara/scripts/synteny/dumpsynteny
+
+		This dumps out dna-dna in gff format one chromosome at a time and the format of the command is
+
+
+			./dumpsynteny -chr 1 -org1 Homo_sapiens -org2 Mus_musculus          \ 
+                     -corehost ecs2d -corename homo_sapiens_core_8_30     \
+                     -comphost ecs1b -compname compara_human_30_mouse_3_final
+
+    This will write out all the dna-dna matches for human chromosome 1 against mouse into a file called
+
+      1.synteny.gff
+
+   3.2  Dumping all matches for all chromosomes 
+		
+   Use the -all option to dump gff for all chromosomes as follows
+
+    ./dumpsynteny -chr all -org1 Homo_spaiens -org2 Mus_musculus          \ 
+                  -corehost ecs2d -corename homo_sapiens_core_8_30         \
+                 - comphost ecs1b -compname compara_human_30_mouse_3_final
+
+   This will generate a set of files n.synteny.gff where n is the chromosome name
+
+
+4.0 Making synteny blocks
+
+  4.1  Setting the environment
+
+  For the forseeable future this will be done using the apollo code so your path will need to be set to include a JVM.  On the alphas use the following
+
+  setenv PATH /usr/opt/java131/bin/:${PATH}
+
+and
+
+  setenv CLASSPATH ensembl-compara/scripts/synteny/synteny.jar
+
+
+  4.2 Running over all chromosomes
+
+     ./makesyntenyblocks -corehost ecs2d -corename homo_sapiens_core_8_30 -corepath NCBI_30 \ 
+                         -chr all -syntenydir  /acari/work1/michele/synteny -syntenyext syten.gff
+
+  This will generate two sets of files.  
+
+	  1) The output from the program in <chr>.100000.syn.out
+		2) The synteny block gff in <chr>.100000.gff
+
+
+
+5 In practice
+
+
+cd /acari/work1/michele/baseline/ensembl-compara/scripts/synteny
+
+source perllib
+
+./dumpsynteny -chr all -org1 Homo_spaiens -org2 Mus_musculus          \ 
+              -corehost ecs2d -corename homo_sapiens_core_8_30         \
+              -comphost ecs1b -compname compara_human_30_mouse_3_final
+
+
+ ./makesyntenyblocks -corehost ecs2d -corename homo_sapiens_core_8_30 -corepath NCBI_30 \ 
+                         -chr all -syntenydir ./  -syntenyext syten.gff

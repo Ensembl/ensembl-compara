@@ -1,0 +1,85 @@
+#!/usr/local/bin/perl
+
+use strict;
+
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::ExternalData::EXONERATESQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Getopt::Long;
+
+my $corehost;
+my $corename;
+my $coreuser = 'ensro';
+my $corepass = '';
+my $corepath;
+my $chr;
+
+my $syntenyfile;
+my $syntenydir;
+my $syntenyext;
+
+$| = 1;
+
+&GetOptions('corehost:s' => \$corehost,
+						'coreuser:s' => \$coreuser,
+						'corename:s' => \$corename,
+						'corepass:s' => \$corepass,
+						'corepath:s' => \$corepath,
+						'chr:s'         => \$chr,
+						'syntenyfile:s' => \$syntenyfile,
+						'syntenydir:s'  => \$syntenydir,
+						'syntenyext:s'  => \$syntenyext,
+             );
+
+
+if (!(-e $syntenyfile) && (!(-d $syntenydir))) {
+	print STDERR "Must either input a syntenyfile or a directory where the files live\n";
+	exit(0);
+}
+
+my $coredb = new Bio::EnsEMBL::DBSQL::DBAdaptor(-host        => $corehost,
+																								-user        => $coreuser,
+																								-dbname      => $corename,
+																								-pass        => $corepass,
+																								-perlonlyfeatures => 0);
+
+print STDERR "Connected to database $corename\n";
+
+$coredb->static_golden_path_type($corepath);
+
+my $sgpa   = $coredb->get_StaticGoldenPathAdaptor();
+
+print STDERR "Got path $corepath\n";
+
+my @chr;
+
+if (defined($chr) && $chr eq "all") {
+  @chr = $sgpa->get_all_chromosome_name; 
+} elsif (defined($chr)) {
+  push(@chr,$chr);
+} else {
+  print "Must either specifiy a chromosome name with -chr <chrname>  or specify all chromosomes with -chr all\n";
+  exit(0);
+}
+
+print STDERR "Chromsomes input are [@chr]\n";
+
+foreach my $chr (@chr) {
+
+	print STDERR "Processing chr $chr\n";
+
+	my $f = "t.gff";
+  my $g = "t.gff";
+
+	if (defined($syntenydir) && defined($syntenyext)) {
+		$syntenyfile = $syntenydir . "/$chr.$syntenyext";
+	} 
+
+	my $command = "java -mx300M -classpath apollo.jar -DAPOLLO_ROOT=. apollo.gui.SyntenyPanel $f $g $syntenyfile  100000 100000 1 0 2>&1 1 > $chr.100000.syn.out";
+
+	print STDERR "Running command $command\n";
+
+	system ($command);
+	system("grep cluster $chr.100000.syn.out > $chr.100000.gff");
+
+}
