@@ -33,7 +33,7 @@ sub _init {
     
     my ($x,$y) = (0,0);
 	
-    my $snps = $vc->{'bg2_snps'};
+    my $snps = $vc->{'image_snps'};
 	for my $int (@$snps) {
 		$key{$int->{'type'}} = 1;}
 	if ($key{'insert'}){
