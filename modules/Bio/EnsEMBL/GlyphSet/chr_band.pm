@@ -118,7 +118,7 @@ sub _init {
 			'caption' => "Band $bandname",
 			"00:Zoom to width"  => "/$ENV{'ENSEMBL_SPECIES'}/cytoview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
 			"01:Display in contigview"   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
-			"02:View band diagram"   => "/$ENV{'ENSEMBL_SPECIES'}/BACmap?chr=$chr&band=$band_no",}
+			}
 #		'href'      => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
 	});
     	$self->push($gband);
