@@ -20,7 +20,7 @@ sub x {
     my $minx = undef;
     my @pts = @{$this->points()};
 
-    while(my $pt = shift @pts) {
+    while(defined(my $pt = shift @pts)) {
 	shift @pts; # dispose of spare 'y' coord
 	$minx = $pt if(!defined $minx || $pt < $minx);
     }
@@ -33,7 +33,7 @@ sub y {
     my @pts = @{$this->points()};
 
     shift @pts; # dispose of 'x'
-    while(my $pt = shift @pts) {
+    while(defined(my $pt = shift @pts)) {
 	shift @pts; # dispose of spare 'x' coord
 	$miny = $pt if(!defined $miny || $pt < $miny);
     }
@@ -55,7 +55,7 @@ sub width {
     my $maxx = undef;
     my @pts = @{$this->points()};
 
-    while(my $pt = shift @pts) {
+    while(defined(my $pt = shift @pts)) {
 	shift @pts; # dispose of spare 'y' coord
 	$maxx = $pt if(!defined $maxx || $pt > $maxx);
     }
@@ -70,7 +70,7 @@ sub height {
     my @pts    = @{$this->points()};
 
     shift @pts;
-    while(my $pt = shift @pts) {
+    while(defined(my $pt = shift @pts)) {
 	shift @pts; # dispose of spare 'x' coord
     	$maxy = $pt if(!defined $maxy || $pt > $maxy);
     }
