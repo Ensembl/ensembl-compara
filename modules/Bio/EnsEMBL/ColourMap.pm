@@ -52,6 +52,7 @@ sub new {
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
     'genomewise' => 'purple1',
+    'est_genebuilder' => 'purple1',
     'estgene'    => 'purple1',
     'est_gene'    => 'purple1',
   );
