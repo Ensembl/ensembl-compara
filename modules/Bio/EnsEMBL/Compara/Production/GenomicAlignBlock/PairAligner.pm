@@ -324,18 +324,10 @@ sub dumpChunkToWorkdir
   #print("fastafile = '$fastafile'\n");
 
   if($self->debug){print("dumpChunkToWorkdir : $fastafile\n");}
-  my $bioseq = $chunk->bioseq;
-  if($chunk->sequence_id==0 and ($bioseq->length <= 5000000)) {
-    #print "    cacheing sequence back to compara for chunk\n";
-    $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
-  }
-  #printf("  writing chunk %s\n", $chunk->display_id);
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
-  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
-  $output_seq->write_seq($bioseq);
-  close OUTSEQ;
+  $chunk->cache_sequence;
+  $chunk->dump_to_fasta_file($fastafile);
+
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
 
   return $fastafile
@@ -395,7 +387,7 @@ sub store_featurePair_as_genomicAlignBlock
     $testChunk->dnafrag($qyChunk->dnafrag);
     $testChunk->seq_start($qyChunk->seq_start+$fp->start-1);
     $testChunk->seq_end($qyChunk->seq_start+$fp->end-1);
-    my $bioseq = $testChunk->fetch_masked_sequence;
+    my $bioseq = $testChunk->bioseq;
     print($bioseq->seq, "\n");
   }
 
