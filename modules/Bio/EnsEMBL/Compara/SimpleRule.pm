@@ -136,6 +136,95 @@ sub adaptor {
   return $self->{'_adaptor'};
 }
 
+=head2
+  Override these methods to maintain compatibility with Rule.pm
+  to allow faster development until I can disentangle things
+=cut
+
+sub add_condition {
+  my $self = shift;
+  my $condition = shift;
+  $self->conditionAnalysis($condition);
+}
+
+sub list_conditions {
+  my $self = shift;
+  my @conditions;
+  push @conditions, $self->conditionAnalysis();
+  return \@conditions;
+}
+
+sub has_condition_of_input_id_type {
+  my $self = shift;
+  my $input_type = shift;
+
+  $self->throw("No condition defined") unless($self->conditionAnalysis);
+
+  return 1 if($self->conditionAnalysis->input_id_type eq $input_type);
+  return 0;
+}
+
+=head2 check_for_analysis
+
+ -args: [analysis list], 'input id type', {completed accumulators}, verbose
+ -returns: Either bits for status if nothing can be done;
+           1 - Failed Input_Id_Type Check.
+           2 - Failed Already Complete Check [so is complete].
+           4 - Failed Condition Check.
+           Or;
+           $goalAnalysis if it should be done
+=cut
+
+
+sub check_for_analysis {
+  my $self = shift;
+  my ($analist, $input_id_type, $completed_accumulator_href, $verbose) = @_;
+  my %anaHash;
+  my $return = 0;
+
+  # reimplement with proper identity check!
+  my $goal_anal    = $self->goalAnalysis;
+  my $goal         = $goal_anal->dbID;
+  my $goal_id_type = $goal_anal->input_id_type;
+
+  print "\nHave goal type ".$goal_id_type." and input id type ".$input_id_type."\n" if($verbose);
+
+#This id isn't of the right type so doesn't satify goal
+  if ($goal_id_type ne 'ACCUMULATOR' &&
+      $goal_id_type ne $input_id_type) {
+    print "In check_for_analysis failed input_id_type check as goal input_id type ".
+      "isn't the same as the input_id type\n" if($verbose);
+    $return += 1;
+  }
+
+
+  print "My goal is " . $goal_anal->logic_name . "\n" if($verbose);
+
+  for my $analysis ( @$analist ) {
+
+    print " Analysis " . $analysis->logic_name . " " . $analysis->dbID . "\n" if($verbose);
+    $anaHash{$analysis->logic_name} = $analysis;
+
+    if ($goal == $analysis->dbID) {
+      # already done
+      print $goal_anal->logic_name." already done\n" if($verbose);
+      $return += 2;
+    }
+  }
+
+#the completed_accumulator_href contains input_id_type ACCUMULATOR anals that have completed
+  for my $cond ( @{$self->{'_conditions'}} ) {
+    if ( ! exists $anaHash{$cond} && ! exists $completed_accumulator_href->{$cond}) {
+      print " failed condition check for $cond\n" if($verbose);
+      $return += 4;
+    }
+  }
+
+  return $return if $return;
+  return $goal_anal;
+}
+
+
 1;
 
 
