@@ -462,10 +462,6 @@ sub get_this_genomic_align {
           my $projected_start = $projection_segments->[0]->from_start;
           my $projected_end = $projection_segments->[0]->from_end;
           my $projected_slice = $projection_segments->[0]->to_Slice;
-          warning("$projected_start != ", $projected_slice->start)
-              if ($projected_start != $projected_slice->start);
-          warning("$projected_end != ", $projected_slice->end)
-              if ($projected_end != $projected_slice->end);
           $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
                   $genome_db->{$species},
                   $projected_slice->seq_region_name
