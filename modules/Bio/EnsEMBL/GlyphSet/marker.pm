@@ -38,4 +38,15 @@ sub zmenu {
     };
 }
 
+
+sub colour {
+    my ($self, $f) = @_;
+
+    my $type = $f->marker->type;
+
+    $type = '' unless(defined($type));
+
+    return( $self->{'colours'}{"$type"}, $self->{'colours'}{"$type"}, '' );
+}
+
 1;

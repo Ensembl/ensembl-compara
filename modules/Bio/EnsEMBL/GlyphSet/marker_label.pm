@@ -24,7 +24,7 @@ sub _init {
 
     return unless ($self->strand() == -1);
 
-    my $feature_colour = $Config->get('marker','col');
+    $self->{'colours'} = $Config->get('marker','colours');
     my $fontname       = "Tiny";
     my ($w,$h)         = $Config->texthelper->px2bp($fontname);
     $w = $Config->texthelper->width($fontname);
@@ -34,12 +34,14 @@ sub _init {
 						    $MAP_WEIGHT)}){
         my $fid = $f->marker->display_MarkerSynonym->name;
 	my $bp_textwidth = $w * length("$fid ");
+	my ($feature_colour, $label_colour, $part_to_colour) = 
+	  $self->colour($f);
 	my $glyph = new Sanger::Graphics::Glyph::Text({
 		'x'	    => $f->start()-1,
 		'y'	    => 0,
 		'height'    => $Config->texthelper->height($fontname),
 		'font'	    => $fontname,
-		'colour'    => $feature_colour,
+		'colour'    => $label_colour,
 		'absolutey' => 1,
 		'text'	    => $fid,
 		'href'      => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
@@ -64,6 +66,22 @@ sub _init {
     	$glyph->y($glyph->y() + (1.2 * $row * $h));
     	$self->push($glyph);
     }	
+}
+
+
+
+sub colour {
+    my ($self, $f) = @_;
+
+    my $type = $f->marker->type;
+
+    $type = '' unless(defined($type));
+
+    my $col = $self->{'colours'}->{"$type"};
+
+    warn "$type => $col"; 
+
+    return ($col, $col, '' );
 }
 
 1;
