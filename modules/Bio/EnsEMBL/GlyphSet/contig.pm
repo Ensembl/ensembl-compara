@@ -176,12 +176,17 @@ sub _init_non_assembled_contig {
       foreach( qw( contig clone supercontig scaffold chunk) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
           my $name =$Q->[0];
-             $name =~ s/\.\d+$// if $_ eq 'clone';
+	  $name =~ s/\.\d+$// if $_ eq 'clone';
           $label ||= $tile->{'locations'}->{$_}->[0];
           (my $T=ucfirst($_))=~s/contig/Contig/g;
           $glyph->{'zmenu'}{"$POS:$T $name"} ='' unless $_ eq 'contig';
           $POS++;
-          $glyph->{'zmenu'}{"$POS:EMBL source file"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
+          if( /clone/) {
+	    my $ens_URL = $self->ID_URL('EGB_ENSEMBL', $name);
+	    $glyph->{'zmenu'}{"$POS:View in Ensembl"} = $ens_URL if $ens_URL;
+	    $POS++;
+	  }
+	  $glyph->{'zmenu'}{"$POS:EMBL source file"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
           $POS++;
           $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch&region=$name);
           $POS++;
