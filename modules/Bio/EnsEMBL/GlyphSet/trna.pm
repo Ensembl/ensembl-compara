@@ -31,15 +31,15 @@ sub _init {
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("tRNA",25,$self->glob_bp());  
     
     foreach my $f (@allfeatures){
-	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-	    'x'      	=> $f->start(),
-	    'y'      	=> 0,
-	    'width'  	=> $f->length(),
-	    'height' 	=> $h,
-	    'colour' 	=> $feature_colour,
-	    'absolutey' => 1,
-	});
-	$self->push($glyph);
+    	my $glyph = new Bio::EnsEMBL::Glyph::Rect({
+    	    'x'      	=> $f->start(),
+    	    'y'      	=> 0,
+    	    'width'  	=> $f->length(),
+    	    'height' 	=> $h,
+    	    'colour' 	=> $feature_colour,
+    	    'absolutey' => 1,
+    	});
+    	$self->push($glyph);
     }
 }
 
