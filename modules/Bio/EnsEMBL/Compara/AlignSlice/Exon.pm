@@ -240,11 +240,17 @@ sub map_Exon_on_Slice {
     return undef;
   }
 
-  $aligned_start += 1 - $slice->start;
-  $aligned_end += 1 - $slice->start;
-  $self->start($aligned_start);
-  $self->end($aligned_end);
-  $self->strand($aligned_strand);
+  if ($slice->strand == 1) {
+    $aligned_start += 1 - $slice->start;
+    $aligned_end += 1 - $slice->start;
+    $self->start($aligned_start);
+    $self->end($aligned_end);
+    $self->strand($aligned_strand);
+  } else {
+    $self->start($slice->end - $aligned_end + 1);
+    $self->end($slice->end - $aligned_start + 1);
+    $self->strand(-$aligned_strand);
+  }
   $self->cigar_line($aligned_cigar);
 
   return $self;
@@ -274,75 +280,6 @@ sub exon {
   }
 
   return $self->{'exon'};
-}
-
-
-=head2 genomic_align
-
-  Arg[1]     : [optinal] Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
-  Example    : $align_exon->genomic_align($genomic_align);
-  Example    : $genomic_align = $align_exon->genomic_align();
-  Description: Get/set the attribute genomic_align
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : throw if $genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object
-
-=cut
-
-sub genomic_align {
-  my ($self, $genomic_align) = @_;
-
-  if (defined($genomic_align)) {
-    my $type = "Bio::EnsEMBL::Compara::GenomicAlign";
-    throw("[$genomic_align] should be a $type object")
-        unless ($genomic_align and ref($genomic_align) and $genomic_align->isa($type));
-    $self->{'genomic_align'} = $genomic_align;
-  }
-
-  return $self->{'genomic_align'};
-}
-
-
-=head2 from_genomic_align_id
-
-  Arg[1]     : [optinal] integer $from_genomic_align_id
-  Example    : $align_exon->from_genomic_align_id($from_genomic_align_id);
-  Example    : $from_genomic_align_id= $align_exon->from_genomic_align_id();
-  Description: Get/set the attribute from_genomic_align_id
-  Returntype : integer
-  Exceptions : 
-
-=cut
-
-sub from_genomic_align_id {
-  my ($self, $from_genomic_align_id) = @_;
-
-  if (defined($from_genomic_align_id)) {
-    $self->{'from_genomic_align_id'} = $from_genomic_align_id;
-  }
-
-  return $self->{'from_genomic_align_id'};
-}
-
-
-=head2 to_genomic_align_id
-
-  Arg[1]     : [optinal] integer $to_genomic_align_id
-  Example    : $align_exon->to_genomic_align_id($to_genomic_align_id);
-  Example    : $to_genomic_align_id= $align_exon->to_genomic_align_id();
-  Description: Get/set the attribute to_genomic_align_id
-  Returntype : integer
-  Exceptions : 
-
-=cut
-
-sub to_genomic_align_id {
-  my ($self, $to_genomic_align_id) = @_;
-
-  if (defined($to_genomic_align_id)) {
-    $self->{'to_genomic_align_id'} = $to_genomic_align_id;
-  }
-
-  return $self->{'to_genomic_align_id'};
 }
 
 
@@ -421,9 +358,11 @@ sub seq {
     $self->{'_seq_cache'} = $seq->seq();
   }
 
+  ## Use _template_seq if defined. It is a concatenation of several original
+  ## exon sequences and is produced during the merging of align_exons.
   if(!defined($self->{'_seq_cache'})) {
     my $seq = &_get_aligned_sequence_from_original_sequence_and_cigar_line(
-        $self->exon->seq->seq,
+        ($self->{'_template_seq'} or $self->exon->seq->seq),
         $self->cigar_line,
         "ref"
     );
@@ -436,6 +375,90 @@ sub seq {
           -moltype => 'dna',
           -alphabet => 'dna',
       );
+}
+
+
+=head2 append_Exon
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub append_Exon {
+  my ($self, $exon, $gap_length) = @_;
+
+  $self->seq(new Bio::Seq(-seq =>
+          $self->seq->seq.("-"x$gap_length).$exon->seq->seq));
+  
+  ## As it is possible to merge two partially repeated parts of an Exon,
+  ## the merging is done by concatenating both cigar_lines with the right
+  ## number of gaps in the middle. The underlaying sequence must be lengthen
+  ## accordingly. This is stored in the _template_seq private attribute
+  if (defined($self->{'_template_seq'})) {
+    $self->{'_template_seq'} .= $self->exon->seq->seq
+  } else {
+    $self->{'_template_seq'} = $self->exon->seq->seq x 2;
+  }
+
+  if ($gap_length) {
+    $self->cigar_line(
+        $self->cigar_line.
+        $gap_length."D".
+        $exon->cigar_line);
+  } else {
+    $self->cigar_line(
+        $self->cigar_line.
+        $exon->cigar_line);
+  }
+
+  return $self;
+}
+
+
+=head2 prepend_Exon
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub prepend_Exon {
+  my ($self, $exon, $gap_length) = @_;
+
+  $self->seq(new Bio::Seq(-seq =>
+          $exon->seq->seq.("-"x$gap_length).$self->seq->seq));
+
+  ## As it is possible to merge two partially repeated parts of an Exon,
+  ## the merging is done by concatenating both cigar_lines with the right
+  ## number of gaps in the middle. The underlaying sequence must be lengthen
+  ## accordingly. This is stored in the _template_seq private attribute
+  if (defined($self->{'_template_seq'})) {
+    $self->{'_template_seq'} .= $self->exon->seq->seq
+  } else {
+    $self->{'_template_seq'} = $self->exon->seq->seq x 2;
+  }
+
+  if ($gap_length) {
+    $self->cigar_line(
+        $exon->cigar_line.
+        $gap_length."D".
+        $self->cigar_line);
+  } else {
+    $self->cigar_line(
+        $exon->cigar_line.
+        $self->cigar_line);
+  }
+
+  return $self;
 }
 
 
@@ -465,7 +488,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
-    $cigCount = 1 unless $cigCount;
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
 
     if( $cigType eq "M" ) {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
