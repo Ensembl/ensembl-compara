@@ -278,7 +278,6 @@ nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl -host ecs2b
 
 Then make sure to load the sequences for SWISSPROT/SPTREMBL loaded in compara.
 
-
 nohup ~/src/ensembl_main/ensembl-compara/scripts/family/LoadSeqInFamily.pl -host ecs2b -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 ../srs/metazoa_20_1.desc.gz /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep > family_20_1.seqload 2>&1 &
 
 12- Generates the family descriptions
@@ -308,7 +307,9 @@ LoadDescriptionInFamily.pl -host ecs2d -dbuser ecs2dadmin -dbpass xxxx -dbname e
 
 cd ../clustalw
  
- Just create the number of directory needed by 10000 families, let's say that we have 27152 families.
+ Just create the number of directory needed by 10000 families and only for those with 2 or more members.
+No need to run clustalw on 1 sequence. Let's say that we have 40000 families and only 27152 families
+have 2 or more peptide members
 
 mkdir 10000 20000 27152
 cd 27152
@@ -333,7 +334,7 @@ cd ../clustalw_mpi
 
 echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=10000;" |mysql -h ecs4 -P3351 -N -u ensro ensembl_compara_19_2 > 1.ids
 
-fastafetch /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep /data/blastdb/Ensembl/family/metazoa_20_1_nr.index 1.ids | grep -v "^MEssage:" > 1.ids.pep
+fastafetch /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep /data/blastdb/Ensembl/family/metazoa_20_1_nr.index 1.ids | grep -v "^Message:" > 1.ids.pep
 
 bsub  -o 1.out -n10 -R"linux span[ptile=2]" ~/src/ensembl_main/ensembl-compara/scripts/family/run_clustalw_mpi.sh 1.ids.pep
 
