@@ -128,7 +128,7 @@ sub _init {
             $C1 += @{$id{$i}}; ## Diagnostic report....
 
             my $Composite = new Sanger::Graphics::Glyph::Composite({
-                'zmenu'    => $self->zmenu( $i ),
+                'zmenu'    => $self->zmenu( $i, $id{$i} ),
                 'href'     => $self->href( $i ),
 	            'x' => $F[0][0]> 1 ? $F[0][0]-1 : 0,
                     'width' => 0,
