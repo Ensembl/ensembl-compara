@@ -5,27 +5,45 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 
 my $conf_file;
-my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
+my %analysis_template;
+my @speciesList = ();
+
+my %db_conf = {};
+$db_conf{'-user'} = 'ensadmin';
+$db_conf{'-pass'} = 'ensembl';
+$db_conf{'-port'} = 3306;
+
+my ($help, $host, $user, $pass, $dbname, $port, $conf_file, $adaptor);
 my ($subset_id, $genome_db_id, $prefix, $fastadir);
-my $analysis_conf;
 
 GetOptions('help' => \$help,
+           'conf=s' => \$conf_file,
            'host=s' => \$host,
            'user=s' => \$user,
            'pass=s' => \$pass,
            'dbname=s' => \$dbname,
-	   'port=i' => \$port,
-           'compara=s' => \$compara_conf,
+           'port=i' => \$port,
+           #'compara=s' => \$compara_conf,
            'genome_db_id=i' => \$genome_db_id,
            'subset_id=i' => \$subset_id,
-	   'prefix=s' => \$prefix,
-	   'fastadir=s' => \$fastadir,
-	   'analysis=s' => \$analysis_conf
-	  );
-	  
-	  
+           'prefix=s' => \$prefix,
+           'fastadir=s' => \$fastadir,
+           #'analysis=s' => \$analysis_conf
+          );
+
+parse_conf($conf_file);
+
+if($host)   { $db_conf{'-host'}   = $host; }
+if($port)   { $db_conf{'-port'}   = $port; }
+if($dbname) { $db_conf{'-dbname'} = $dbname; }
+if($user)   { $db_conf{'-user'}   = $user; }
+if($pass)   { $db_conf{'-pass'}   = $pass; }
+
+
+=head3
 if(-e $compara_conf) {
   my %conf = %{do $compara_conf};
 
@@ -36,11 +54,11 @@ if(-e $compara_conf) {
   $dbname = $conf{'dbname'} if $conf{dbname};
   $adaptor = $conf{'adaptor'} if $conf{adaptor};
 }
-
+=cut
 
 if ($help) { usage(); }
 
-unless(defined($host) and defined($user) and defined($dbname)) {
+unless(defined($db_conf{'-host'}) and defined($db_conf{'-user'}) and defined($db_conf{'-dbname'})) {
   print "\nERROR : must specify host, user, and database to connect to compara\n\n";
   usage(); 
 }
@@ -50,11 +68,7 @@ unless(defined($fastadir) and ($fastadir =~ /^\//)) {
 }
 
 
-my $comparaDBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
-                                                             -port => $port,
-                                                             -user => $user,
-                                                             -pass => $pass,
-                                                             -dbname => $dbname);
+my $comparaDBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%db_conf);
 my $pipelineDBA = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $comparaDBA);
 
 my @subsets;
@@ -103,12 +117,18 @@ foreach my $subset (@subsets) {
   # write fasta file
   $comparaDBA->get_SubsetAdaptor->dumpFastaForSubset($subset, $fastafile);
 
-  # do setdb to prepare it as a blast database
-  print("Prepare fasta file as blast database\n");
-  system("setdb $fastafile");
+  my $blastdb     = new Bio::EnsEMBL::Pipeline::Runnable::BlastDB (
+      -dbfile     => $fastafile,
+      -type       => 'PROTEIN');
+  $blastdb->run;
+  print("registered ". $blastdb->dbname . " for ".$blastdb->dbfile . "\n");
 
-  # set up the analysis and input_id_analysis tables for the pipelinw
-  SubmitSubsetForAnalysis($comparaDBA, $pipelineDBA, $subset); #uses global DBAs
+  # do setdb to prepare it as a blast database
+  #print("Prepare fasta file as blast database\n");
+  #system("setdb $fastafile");
+
+  # set up the analysis and input_id_analysiDBCONNECTs tables for the pipelinw
+  SubmitSubsetForAnalysis($comparaDBA, $pipelineDBA, $subset, $blastdb); #uses global DBAs
 }
 
 exit(0);
@@ -138,6 +158,29 @@ sub usage {
   print "comparaDumpGenes.pl v1.0\n";
   
   exit(1);  
+}
+
+
+sub parse_conf {
+  my($conf_file) = shift;
+
+  if(-e $conf_file) {
+    #read configuration file from disk
+    my @conf_list = @{do $conf_file};
+
+    foreach my $confPtr (@conf_list) {
+      print("HANDLE type " . $confPtr->{TYPE} . "\n");
+      if($confPtr->{TYPE} eq 'COMPARA') {
+        %db_conf = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'BLAST_TEMPLATE') {
+        %analysis_template = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'SPECIES') {
+        push @speciesList, $confPtr;
+      }
+    }
+  }
 }
 
 =head3
@@ -319,7 +362,7 @@ sub dumpFastaForSubset {
   system("setdb $fastafile");
 }
 
-
+=head4
 sub taxonIDForSubsetID {
   my ($dbh, $subset_id) = @_;
 
@@ -372,9 +415,9 @@ sub addAnalysisForSubset {
       -created         => $analconf{created}
     );
 
-  $analysisAdaptor->store($analysis);  
+  $analysisAdaptor->store($analysis);
 } 
-
+=cut
 
 sub SubmitSubsetForAnalysis {
   my($comparaDBA, $pipelineDBA, $subset) = @_;
@@ -387,7 +430,7 @@ sub SubmitSubsetForAnalysis {
   my $logic_name = "SubmitPep_" . $genome->assembly();
 
   my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db              => "subset_id=" . $subset->dbID(),
+      -db              => "subset_id=" . $subset->dbID().";genome_db_id=".$genome->dbID,
       -db_file         => $subset->dump_loc(),
       -db_version      => '1',
       -logic_name      => $logic_name,
@@ -421,6 +464,33 @@ sub SubmitSubsetForAnalysis {
   };
   print("CREATED all input_id_analysis\n");
 
-}
+=head3
+  #
+  # now add the 'blast' analysis
+  #
+  $logic_name = "blast_" . $genome->assembly();
+  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db              => "subset_id=" . $subset->dbID().";genome_db_id=".$genome->dbID,
+      -db_file         => $subset->dump_loc(),
+      -db_version      => '1',
+      -logic_name      => $logic_name,
+      -input_id_type   => 'MemberPep'
+    );
 
+  $pipelineDBA->get_AnalysisAdaptor()->store($analysis);
+
+
+
+  my $logic_name = "blast_" . $species1Ptr->{abrev};
+  print("build analysis $logic_name\n");
+  my %analParams = %analysis_template;
+  $analParams{'-logic_name'}    = $logic_name;
+  $analParams{'-input_id_type'} = $species1Ptr->{condition}->input_id_type();
+  $analParams{'-db'}            = $species2Ptr->{abrev};
+  $analParams{'-db_file'}       = $species2Ptr->{condition}->db_file();
+  my $analysis = new Bio::EnsEMBL::Pipeline::Analysis(%analParams);
+  $db->get_AnalysisAdaptor->store($analysis);
+=cut
+
+}
 
