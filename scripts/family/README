@@ -1,6 +1,4 @@
 
-CHECK dbuser/user and port options!!!!!
-
 1- code API needed and executable
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -345,7 +343,7 @@ So now what to do e.g. for family_id=1
 
 cd ../clustalw_mpi
 
-echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1;" |mysql -h ecs4 -P3351 -N -u ensro ensembl_compara_19_2 > 1.ids
+echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1;" |mysql -h ecs4 -P3351 -N -u ensro ensembl_compara_20_1 > 1.ids
 
 fastafetch /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep /data/blastdb/Ensembl/family/metazoa_20_1_nr.index 1.ids | grep -v "^Message:" > 1.ids.pep
 
@@ -378,9 +376,19 @@ To Load the clustalw alignment,
 14- Insert the redundant proteins in the compara db
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The following step needs to run with an older version of BioPerl (0.7) or with a patched version. 
+The Taxon object in more recent versions of bioperl does some excessive validation of species/genus
+information that will cause the following to fail.
+
 cd ../srs
 
-awk '{for (i=2;i<=NF;i++) print $i}' metazoa_20_dryrun.RedundantIds|fastafetch /data/blastdb/Ensembl/family/metazoa_20_dryrun.pep /data/blastdb/Ensembl/family/metazoa_20_dryrun.index stdin |grep -v "^Message" > metazoa_20_1.RedundantIds.pep
+First, set all singletons cigar_line to the length(m.sequence) + "M", because some singletons will disappear with the addition of redundant sequences.
+
+echo "select family_id,count(*) as count from family_member group by family_id having count=1;"|mysql -h ecs2 -u ensro -P3364 ensembl_compara_20_1 |grep -v  family_id |awk '{print "select family_id,length(m.sequence) from member m,family_member fm where fm.member_id=m.member_id and fm.family_id="$1";"}'|mysql -h ecs2 -u ensro -P3364 ensembl_compara_20_1 |grep -v family_id|awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
+
+mysql -h ecs2 -u ensadmin -pxxxx -P3364 ensembl_compara_20_1 < update_singletons_cigar_line.sql
+
+awk '{for (i=2;i<=NF;i++) print $i}' metazoa_20_1.RedundantIds|fastafetch /data/blastdb/Ensembl/family/metazoa_20_1.pep /data/blastdb/Ensembl/family/metazoa_20_1.index stdin |grep -v "^Message" > metazoa_20_1.RedundantIds.pep
 
 ~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantInFamilies.pl -host ecs2b -port 3306 -dbname ensembl_compara_20_1 -dbuser ensadmin -dbpass xxxx -conf_file ../mcl/Compara.conf metazoa_20_1.RedundantIds metazoa_20_1.desc.gz metazoa_20_1.RedundantIds.pep > metazoa_20_1.RedundantIds.load.err 2>&1 &
 
