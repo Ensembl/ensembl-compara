@@ -9,36 +9,76 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
   Arg [1]    : (optional) string $constraint
                An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
+               e.g. "fm.family_id = $family_id"
+  Arg [2]    : (optional) arrayref $join
+               the arrayref $join should contain arrayrefs of this form
+               [['family_member', 'fm'],
+                # the table to join with synonym (mandatory) as an arrayref
+                'm.member_id = fm.member_id',
+                # the join condition (mandatory)
+                [qw(fm.family_id fm.member_id fm.cigar_line)]]
+                # any additional columns that the join could imply (optional)
+                # as an arrayref
+  Example    : $arrayref = $a->generic_fetch($constraint, $join);
+  Description: Performs a database fetch and returns BaseRelation-inherited objects
+  Returntype : arrayref of Bio::EnsEMBL::Compara::BaseRelation-inherited objects
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor::generic_fetch_sth
+
+=cut
+   
+sub generic_fetch {
+  my ($self, $constraint, $join) = @_;
+
+  my $sth = $self->generic_fetch_sth($constraint, $join);
+
+  return $self->_objs_from_sth($sth);
+  
+}
+
+=head2 generic_fetch_sth
+
+  Arg [1]    : (optional) string $constraint
+               An SQL query constraint (i.e. part of the WHERE clause)
+               e.g. "fm.family_id = $family_id"
+  Arg [2]    : (optional) arrayref $join
+               the arrayref $join should contain arrayrefs of this form
+               [['family_member', 'fm'],
+                # the table to join with synonym (mandatory) as an arrayref
+                'm.member_id = fm.member_id',
+                # the join condition (mandatory)
+                [qw(fm.family_id fm.member_id fm.cigar_line)]]
+                # any additional columns that the join could imply (optional)
+                # as an arrayref 
+  Example    : $sth = $a->generic_fetch_sth($constraint, $join);
+  Description: Performs a database fetch and returns the SQL state handle
+  Returntype : DBI::st
   Exceptions : none
   Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::generic_fetch
 
 =cut
   
-sub generic_fetch {
-  my ($self, $constraint, $join, $extra_columns) = @_;
+sub generic_fetch_sth {
+  my ($self, $constraint, $join) = @_;
   
   my @tables = $self->_tables;
   my $columns = join(', ', $self->_columns());
   
   if ($join) {
-    my ($tablename, $condition) = @{$join};
-    if ($tablename && $condition) {
-      push @tables, $tablename;
-      
-      if($constraint) {
-        $constraint .= " AND $condition";
-      } else {
-        $constraint = " $condition";
+    foreach my $single_join (@{$join}) {
+      my ($tablename, $condition, $extra_columns) = @{$single_join};
+      if ($tablename && $condition) {
+        push @tables, $tablename;
+        
+        if($constraint) {
+          $constraint .= " AND $condition";
+        } else {
+          $constraint = " $condition";
+        }
+      } 
+      if ($extra_columns) {
+        $columns .= ", " . join(', ', @{$extra_columns});
       }
-    } 
-    if ($extra_columns) {
-      $columns .= ", " . join(', ', @{$extra_columns});
     }
   }
       
@@ -64,10 +104,12 @@ sub generic_fetch {
   $sql .= " $final_clause";
 
   my $sth = $self->prepare($sql);
-#print STDERR $sql,"\n";
+
+#  print STDERR $sql,"\n";
+
   $sth->execute;  
 
-  return $self->_objs_from_sth($sth);
+  return $sth;
 }
 
 sub fetch_all {
@@ -227,19 +269,18 @@ sub store_relation {
 }
 
 sub update_relation {
-  my ($self, $member_attribute, $relation) = @_;
+  my ($self, $member_attribute) = @_;
 
   my ($member, $attribute) = @{$member_attribute};
   my $sql;
   my $sth;
-  
-  if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    $attribute->family_id($relation->dbID);
+ 
+  if (defined $attribute->family_id) {
     $sql = "UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?";
     $sth = $self->prepare($sql);
     $sth->execute($attribute->cigar_line, $attribute->family_id, $attribute->member_id);
   } else {
-    $self->throw("update_relation only implemented for Bio::EnsEMBL::Compara::Family relation, but you have $relation\n");
+    $self->throw("update_relation only implemented for family relation, but you have either a domain or homology relation\n");
   }
 }
 
