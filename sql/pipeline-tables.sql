@@ -143,3 +143,32 @@ CREATE TABLE analysis (
 
 );
 
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'genome_db_stats'
+--
+-- overview: This tables statistics related to whole genomes
+--           The type of data analyzed is described in the 'data_type' field
+-- semantics:
+--   genome_db_id - link to genome_db table id
+--   data_type    - descriptor of type e.g. intergenic
+--   (rest of columns are standard statistical values calculated from the
+--    dataset defined by 'data_type')
+
+CREATE TABLE genome_db_stats (
+    genome_db_id    int(10) NOT NULL default '0',
+    data_type       varchar(20) NOT NULL,
+    count           int(10) NOT NULL,
+    mean            double NOT NULL default '0',
+    median          double NOT NULL default '0',
+    mode            double NOT NULL,
+    stddev          double NOT NULL,
+    variance        double NOT NULL,
+    min             double NOT NULL default '0',
+    max             double NOT NULL default '0',
+    overlap_count   int(10) NOT NULL default '0',
+
+    UNIQUE KEY genome_db_id_type (genome_db_id, data_type)
+);
+
