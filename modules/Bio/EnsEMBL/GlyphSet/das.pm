@@ -800,7 +800,7 @@ sub _init {
 
 		  $ft->{das_note} = "Found $count annotations for $key";
 		  $ft->{das_link_label}  = 'View annotations in geneview';
-		  $ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&DASselect=$srcname#$srcname";
+		  $ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&:DASselect_${srcname}=0&DASselect_${srcname}=1#$srcname";
 		  
 	      }
 	      $ft->{das_type_id}->{id} = 'summary';
