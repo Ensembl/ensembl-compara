@@ -14,7 +14,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-my $_paf_build_homology_idx = 1; #global index counter
+my $_paf_build_homology_idx = time(); #global index counter
 
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
