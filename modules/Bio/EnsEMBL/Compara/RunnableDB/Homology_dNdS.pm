@@ -53,12 +53,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use Bio::EnsEMBL::Pipeline::Runnable::Blast;
-use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 
 use Bio::Tools::Run::Phylo::PAML::Codeml;
@@ -111,8 +106,8 @@ sub calc_genetic_distance
   my $self = shift;
   my $homology = shift;
 
-  print("use codeml to get genetic distance of homology\n");
-  $homology->print_homology;
+  #print("use codeml to get genetic distance of homology\n");
+  #$homology->print_homology;
   
   my $aln = $homology->get_SimpleAlign("cdna");
   
@@ -122,13 +117,13 @@ sub calc_genetic_distance
   my $result = $parser->next_result;
   my $MLmatrix = $result->get_MLmatrix();
 
-  print "n = ", $MLmatrix->[0]->[1]->{'N'},"\n";
-  print "s = ", $MLmatrix->[0]->[1]->{'S'},"\n";
-  print "t = ", $MLmatrix->[0]->[1]->{'t'},"\n";
-  print "lnL = ", $MLmatrix->[0]->[1]->{'lnL'},"\n";
-  print "Ka = ", $MLmatrix->[0]->[1]->{'dN'},"\n";
-  print "Ks = ", $MLmatrix->[0]->[1]->{'dS'},"\n";
-  print "Ka/Ks = ", $MLmatrix->[0]->[1]->{'omega'},"\n";
+  #print "n = ", $MLmatrix->[0]->[1]->{'N'},"\n";
+  #print "s = ", $MLmatrix->[0]->[1]->{'S'},"\n";
+  #print "t = ", $MLmatrix->[0]->[1]->{'t'},"\n";
+  #print "lnL = ", $MLmatrix->[0]->[1]->{'lnL'},"\n";
+  #print "Ka = ", $MLmatrix->[0]->[1]->{'dN'},"\n";
+  #print "Ks = ", $MLmatrix->[0]->[1]->{'dS'},"\n";
+  #print "Ka/Ks = ", $MLmatrix->[0]->[1]->{'omega'},"\n";
 
   $homology->n($MLmatrix->[0]->[1]->{'N'});
   $homology->s($MLmatrix->[0]->[1]->{'S'});
