@@ -52,6 +52,8 @@ package Bio::EnsEMBL::Compara::DBSQL::ExternalFeatureView;
 use vars qw(@ISA);
 use strict;
 
+use Bio::EnsEMBL::Compara::ExternalViewAlign;
+
 # Object preamble - inherits from Bio::Root::RootI
 
 use Bio::Root::RootI;
@@ -80,6 +82,7 @@ sub new {
   if( !defined $genome_db) {
       $self->throw("Cannot make ExternalFeatureView of comparative database from $species_tag");
   }
+
 
   $self->compara($compara);
   $self->genome_db($genome_db);
@@ -112,7 +115,7 @@ sub get_Ensembl_SeqFeatures_contig_list{
 
    my @list = keys %hash;
 
-   my @galn = $self->adaptor->fetch_by_genomedb_dnafrag_list($self->genome_db,\@list);
+   my @galn = $self->compara->get_GenomicAlignAdaptor->fetch_by_genomedb_dnafrag_list($self->genome_db,\@list);
 
    my @out;
 

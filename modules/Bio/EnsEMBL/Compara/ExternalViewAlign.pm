@@ -107,6 +107,27 @@ sub end{
 
 }
 
+=head2 strand
+
+ Title   : strand
+ Usage   : $obj->strand($newval)
+ Function: 
+ Example : 
+ Returns : value of strand
+ Args    : newvalue (optional)
+
+
+=cut
+
+sub strand{
+   my ($self,$value) = @_;
+   if( defined $value) {
+      $self->{'strand'} = $value;
+    }
+    return $self->{'strand'};
+
+}
+
 =head2 seqname
 
  Title   : seqname

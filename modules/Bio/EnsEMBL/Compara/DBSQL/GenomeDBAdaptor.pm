@@ -100,7 +100,7 @@ sub fetch_by_dbID{
    my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
    $gdb->name($name);
    $gdb->locator($locator);
-
+   $gdb->dbID($dbid);
    $self->{'_cache'}->{$dbid} = $gdb;
 
    return $gdb;

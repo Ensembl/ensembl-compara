@@ -58,6 +58,8 @@ sub new {
     my $self = {};
     bless $self,$class;
     $self->{'_align_block'}= [];
+    $self->{'_contig_hash'}= {};
+
 # set stuff in self from @args
     return $self;
 }
@@ -99,8 +101,33 @@ sub add_AlignBlock{
    if( !ref $bl || !$bl->isa('Bio::EnsEMBL::Compara::AlignBlock') ) {
        $self->throw("Must add an AlignBlock [$bl]");
    }
+   my $n = $bl->dnafrag->name();
+
+   if( !defined $self->{'_contig_hash'}->{$n} ) {
+       $self->{'_contig_hash'}->{$n} = [];
+   }
+
+   push(@{$self->{'_contig_hash'}->{$n}},$bl);
 
    push(@{$self->{'_align_block'}},$bl);
+}
+
+=head2 contig_list
+
+ Title   : contig_list
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub contig_list{
+   my ($self) = @_;
+
+   return keys %{$self->{'_contig_hash'}};
 }
 
 

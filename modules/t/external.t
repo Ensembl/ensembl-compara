@@ -1,6 +1,6 @@
 
 use Test;
-BEGIN { plan tests => 7 }
+BEGIN { plan tests => 5 }
 
 
 
@@ -47,3 +47,6 @@ my $ensv = Bio::EnsEMBL::Compara::DBSQL::ExternalFeatureView->new( -species => '
 ok $ensv;
 
 
+my @feats = $ensv->get_Ensembl_SeqFeatures_contig_list('AC021078.00006','AC021078.00007');
+
+ok (scalar(@feats) == 3)
