@@ -160,6 +160,9 @@ sub new_from_transcript {
     if ($seq_string =~ /^X+$/) {
       warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
     }
+    elsif (length($seq_string) == 0) {
+      warn("zero length sequence from translation " . $transcript->translation->stable_id."\n");
+    }
     else {
       #$seq_string =~ s/(.{72})/$1\n/g;
       $self->sequence($seq_string);
