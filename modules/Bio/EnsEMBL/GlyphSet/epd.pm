@@ -7,10 +7,9 @@ use Bio::EnsEMBL::GlyphSet_feature;
 sub my_label { return "EPD"; }
 
 sub features {
-
     my ($self) = @_;
-    return
-$self->{'container'}->get_all_SimilarityFeatures_by_strand("epd",1,$self->glob_bp,$self->strand());
+
+    return $self->{'container'}->get_all_DnaAlignFeatures("BLAST_FUGU_EPD",1);
 }
 
 sub href {
