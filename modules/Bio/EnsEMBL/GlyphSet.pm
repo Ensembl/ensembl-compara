@@ -332,14 +332,14 @@ sub externalGene_details {
     my $genetype   = ($vg->type() =~ /pseudo/) ? 'pseudo' : 'ext';
 
     foreach my $trans ($vg->each_Transcript){
-        foreach my $exon ( $trans->each_Exon ) {
+        foreach my $exon ( $trans->get_all_Exons ) {
             if($exon->seqname eq $vc_id) {
                 $start = $exon->start if ( $exon->start < $start || !defined $start );
                 $end   = $exon->end   if ( $exon->end   > $end   || !defined $end );
 	    }
     	}
     }
-    $label  = $vg->id;
+    $label  = $vg->stable_id;
     $highlight = 1 if exists $highlights{$label};
     $label  =~ s/gene\.//;
     $highlight = 1 if exists $highlights{$label};
