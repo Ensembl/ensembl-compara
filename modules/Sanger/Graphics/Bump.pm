@@ -20,7 +20,8 @@ package Sanger::Graphics::Bump;
 use strict;
 use Carp;
 sub bump_row {
-    my($start,$end,$bit_length,$bit_array)=@_;
+    my($start,$end,$bit_length,$bit_array,$max_row)=@_;
+    $max_row = 1e9 unless defined $max_row;
     my $row=0;
     my $len=$end-$start+1;
 
@@ -38,8 +39,9 @@ sub bump_row {
                 $bit_array->[$row]=($bit_array->[$row] | $element);
             } else {
                 $row++;
+                return $max_row + 10 if $row > $max_row;
                 redo LOOP;
-            }
+            } 
 	} else{
             $$bit_array[$row]=$element;
         }
