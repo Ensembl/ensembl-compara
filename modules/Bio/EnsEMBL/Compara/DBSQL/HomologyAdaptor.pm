@@ -106,6 +106,24 @@ sub fetch_by_Member_Homology_source {
   return $self->generic_fetch($constraint, $join);
 }
 
+
+sub fetch_all_by_genome_pair {
+  my ($self, $genome_db_id1, $genome_db_id2) = @_;
+
+  my $join = [ [['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],
+               [['member', 'm1'], 'hm1.member_id = m1.member_id'],
+               [['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id'],
+               [['member', 'm2'], 'hm2.member_id = m2.member_id'],
+             ];
+
+  my $constraint = "m1.genome_db_id= $genome_db_id1";
+  $constraint .= " AND m2.genome_db_id = $genome_db_id2";
+
+  $self->{'_this_one_first'} = undef; #not relevant
+
+  return $self->generic_fetch($constraint, $join);
+}
+
 #
 # internal methods
 #
