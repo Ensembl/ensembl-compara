@@ -52,12 +52,9 @@ use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
-
-use Bio::EnsEMBL::Pipeline::RunnableDB;
 
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
@@ -65,17 +62,16 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
-use vars qw(@ISA);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
-=head2 fetch_input
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   none
-    Returns :   none
-    Args    :   none
-=cut
+####################################
+#
+# Subclass methods
+#
+####################################
+
 
 sub fetch_input
 {
@@ -97,13 +93,12 @@ sub fetch_input
                            -disconnect_when_inactive =>0);
 
   $self->{'blast_analyses'} = ();
-  $self->{'verbose'} = 1;
   $self->{'store'} = 1;
   $self->{'getAllRHS'} = undef; #switch to look for synteny beyond a best (hit_rank>1)
   $self->{'doRHS'} = 1;
   $self->{'onlyOneHomology'} = undef;  #filter to place member in only 1 homology
   
-  print("input_id = " . $self->input_id . "\n");
+  if($self->debug) { print("input_id = " . $self->input_id . "\n"); }
   
   if($self->input_id =~ '^{') {
     $self->load_blasts_from_input();
@@ -113,9 +108,11 @@ sub fetch_input
     $self->load_all_blasts();
   }
 
-  print("blasts :\n");
-  foreach my $analysis (@{$self->{'blast_analyses'}}) {
-    print("   ".$analysis->logic_name."\n");
+  if($self->debug) {
+    print("blasts :\n");
+    foreach my $analysis (@{$self->{'blast_analyses'}}) {
+      print("   ".$analysis->logic_name."\n");
+    }
   }
 
   #make sure method_link table is properly loaded
@@ -130,8 +127,8 @@ sub run
   my( $self) = @_;
 
   if($self->input_id eq 'test'){
-    $self->{'verbose'} = 1;
     print("RUN TESTS!!!\n");
+    $self->debug(1);
     $self->test_best_paf_web('ENSP00000344183',2);
 
     $self->test_RHS;
@@ -161,7 +158,9 @@ sub write_output
   while(@blast_list) {
     my $blast1 = shift @blast_list;
     foreach my $blast2 (@blast_list) {
-      print("   check pair ".$blast1->logic_name." <=> ".$blast2->logic_name."\n");
+      if($self->debug) {
+        print("   check pair ".$blast1->logic_name." <=> ".$blast2->logic_name."\n");
+      }
 
       #$self->{'qmember_PAF_BRH_hash'} = {};
       $self->{'membersToBeProcessed'} = {};
@@ -172,7 +171,9 @@ sub write_output
 
       $self->set_member_list($blast1);
       $self->set_member_list($blast2);
-      print(scalar(keys %{$self->{'membersToBeProcessed'}}) . " members to be processed for HOMOLOGY\n");
+      if($self->debug) {
+        print(scalar(keys %{$self->{'membersToBeProcessed'}}) . " members to be processed for HOMOLOGY\n");
+      }
 
       $self->process_species_pair($blast1, $blast2);
       $self->process_species_pair($blast2, $blast1);
@@ -180,10 +181,12 @@ sub write_output
     }
   }
   
-  my $runTime = time() - $self->{'startTime'};
-  my $mins = int($runTime/60);
-  my $secs = $runTime % 60;
-  printf("total processing time %d min %d secs\n", $mins, $secs);
+  if($self->debug) {
+    my $runTime = time() - $self->{'startTime'};
+    my $mins = int($runTime/60);
+    my $secs = $runTime % 60;
+    printf("total processing time %d min %d secs\n", $mins, $secs);
+  }
 
   return 1;
 }
@@ -201,7 +204,7 @@ sub set_member_list
   my $self      = shift;
   my $analysis = shift;
 
-  print("set_member_list from analysis ".$analysis->logic_name()."\n");
+  if($self->debug) { print("set_member_list from analysis ".$analysis->logic_name()."\n"); }
 
   my $subset_id = eval($analysis->parameters)->{'subset_id'};
 
@@ -210,7 +213,7 @@ sub set_member_list
     $self->{'membersToBeProcessed'}->{$member_id} = $member_id;  #like an STL set
   }
   my @mkeys = keys %{$self->{'membersToBeProcessed'}};
-  print("  count ". $#mkeys . "\n");
+  if($self->debug) { print("  count ". $#mkeys . "\n"); }
 }
 
 
@@ -234,20 +237,21 @@ sub load_blasts_from_input
 {
   my $self = shift;
 
-  print("load_blasts_from_input\n");
+  if($self->debug) { print("load_blasts_from_input\n"); }
   my $input_hash = eval($self->input_id);
 
   if($input_hash->{'noRHS'}) {
     $self->{'doRHS'}=undef;
-    print("TURN OFF RHS analysis\n");
+    if($self->debug) { print("TURN OFF RHS analysis\n"); }
   }
 
-  print("$input_hash\n");
-  print("keys: ", keys(%{$input_hash}), "\n");
   my $logic_names = $input_hash->{'blasts'};
-  print("$logic_names\n");
+  if($self->debug) {
+    print("$input_hash\n");
+    print("keys: ", keys(%{$input_hash}), "\n");
+    print("$logic_names\n");
+  }
   foreach my $logic_name (@{$logic_names}) {
-    print("get blast $logic_name\n");
     my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
     if($analysis->logic_name =~ /blast_\d+/) {
       push @{$self->{'blast_analyses'}}, $analysis;
@@ -269,9 +273,11 @@ sub determine_method_link_species_set
   my $analysis1 = shift;  # query species (get subset_id)
   my $analysis2 = shift;  # db species (analysis_id, ie blast)
 
-  print("determine_method_link_species_set\n");
-  print("  analysis1 ".$analysis1->logic_name()."\n");
-  print("  analysis2 ".$analysis2->logic_name()."\n");
+  if($self->debug) {
+    print("determine_method_link_species_set\n");
+    print("  analysis1 ".$analysis1->logic_name()."\n");
+    print("  analysis2 ".$analysis2->logic_name()."\n");
+  }
 
   my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
   my $hit_genome_db_id = eval($analysis2->parameters)->{'genome_db_id'};
@@ -295,16 +301,18 @@ sub delete_previous_homology_method_link_species_set
 {
   my $self = shift;
 
-  printf("delete_previous_homology_method_link_species_set\n");
-  printf("  method_link_species_set : %d\n", $self->{'method_link_species_set'}->dbID);
+  if($self->debug) {
+    printf("delete_previous_homology_method_link_species_set\n");
+    printf("  method_link_species_set : %d\n", $self->{'method_link_species_set'}->dbID);
+  }
 
   my $sql = "DELETE homology, homology_member from homology, homology_member ".
 	    "WHERE homology.homology_id = homology_member.homology_id ".
-	    "AND homology.method_link_species_set_id = " .
+            "AND homology.method_link_species_set_id = " .
 	    $self->{'method_link_species_set'}->dbID;
-  print("$sql\n");
+  #print("$sql\n");
   my $delcount = $self->{'comparaDBA'}->dbc->do($sql);
-  print("deleted $delcount rows\n");
+  if($self->debug) { print("deleted $delcount rows\n"); }
 }
 
 
@@ -315,9 +323,11 @@ sub process_species_pair
   my $analysis1 = shift;  # query species (get subset_id)
   my $analysis2 = shift;  # db species (analysis_id, ie blast)
 
-  print("process_species_pair_by_synteny_segment\n");
-  print("  analysis1 ".$analysis1->logic_name()."\n");
-  print("  analysis2 ".$analysis2->logic_name()."\n");
+  if($self->debug) { 
+    print("process_species_pair_by_synteny_segment\n");
+    print("  analysis1 ".$analysis1->logic_name()."\n");
+    print("  analysis2 ".$analysis2->logic_name()."\n");
+  }
 
   my $subset_id        = eval($analysis1->parameters)->{'subset_id'};
   my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
@@ -326,15 +336,19 @@ sub process_species_pair
   # fetch the peptide members (via subset) ordered on chromosomes
   # then convert into synenty_segments (again of peptide members)
   #
-  print("about to fetch sorted members for".
-        " genome_db_id=$q_genome_db_id".
-        " subset_id=$subset_id\n");
+  if($self->debug) {
+    print("about to fetch sorted members for".
+          " genome_db_id=$q_genome_db_id".
+          " subset_id=$subset_id\n");
+  }
   my $startTime = time();
   my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor();
   $memberDBA->_final_clause("ORDER BY m.chr_name, m.chr_start");
   my $sortedMembers = $memberDBA->fetch_by_subset_id($subset_id);
-  print(time()-$startTime . " sec memberDBA->fetch_by_subset_id\n");
-  print(scalar(@{$sortedMembers}) . " members to process for HOMOLOGY\n");
+  if($self->debug) {
+    print(time()-$startTime . " sec memberDBA->fetch_by_subset_id\n");
+    print(scalar(@{$sortedMembers}) . " members to process for HOMOLOGY\n");
+  }
 
   my $syntenySegment = $self->get_next_syneny_segment($sortedMembers, $hit_genome_db_id);
   while($syntenySegment) {
@@ -388,7 +402,7 @@ sub get_next_syneny_segment
 
     
     my $pafsArray = $pafDBA->fetch_BRH_web_for_member_genome_db($member->dbID, $hit_genome_db_id);
-    printf("  %d pafs in bestweb\n", scalar(@$pafsArray)) if($pafsArray);
+    if($self->debug) { printf("  %d pafs in bestweb\n", scalar(@$pafsArray)) if($pafsArray); }
 
     #first test if 1-to-1 BRH
     last if($self->check_BRHweb_is_unique($member, $pafsArray));
@@ -490,14 +504,14 @@ sub check_BRHweb_for_recent_duplicates
     }
   }
 
-  print("MULTIPLE BRHs are RECENT DUPLICATION\n");
+  if($self->debug) { print("MULTIPLE BRHs are RECENT DUPLICATION\n"); }
   my $subtype = "DUP 1.$multiCount";
   foreach my $paf (@{$pafsArray}) {
     next if($paf->query_member->genome_db_id != $query_member->genome_db_id);
     $self->store_paf_as_homology($paf, "MBRH", $subtype);
     $query_member->{'RHpaf'} = $paf;
   }
-  print("\n");
+  if($self->debug) { print("\n"); }
   return 1;
 }
 
@@ -535,14 +549,14 @@ sub check_segment_BRH_synteny
   my $rightPAFArray = $lastMember->{'BRH_paf_array'};
   return 0 unless($leftPAF and $rightPAFArray);
 
-  if($self->{'verbose'}) {
+  if($self->debug >1) {
     print("MULTIPLE BRH for member : ");
     $self->print_member($lastMember);
     $self->print_synteny_segement($syntenySegmentRef);
     print(" LEFT  "); $leftPAF->display_short();
-  }
 
-  foreach my $paf (@{$rightPAFArray}) { print(" RIGHT "); $paf->display_short(); }
+    foreach my $paf (@{$rightPAFArray}) { print(" RIGHT "); $paf->display_short(); }
+  }
 
   #first loop look for one that hits the same chromosome as the leftPAF
   #if more than one BRH falls on same chromosome
@@ -559,7 +573,7 @@ sub check_segment_BRH_synteny
   if($lastMember->{'RHpaf'}) {
     #print("PICK: "); $lastMember->{'RHpaf'}->display_short();
     $self->store_paf_as_homology($lastMember->{'RHpaf'}, 'MBRH', 'SYN');
-    print("\n");
+    #print("\n");
     return 1;
   }
   return 0;
@@ -572,7 +586,7 @@ sub process_synteny_segement
   my $syntenySegmentRef = shift;
 
   return unless($syntenySegmentRef and @{$syntenySegmentRef});
-  if($self->{'verbose'}>2) {
+  if($self->debug >2) {
     print("process_synteny_segement\n");
     $self->print_synteny_segement($syntenySegmentRef);
   }
@@ -651,12 +665,12 @@ sub find_RHS
   return if($self->{'onlyOneHomology'} and
             !defined($self->{'membersToBeProcessed'}->{$memberPep->dbID}));
 
-  if($self->{'verbose'}>3) {
+  if($self->debug>3) {
     print("ref BRH : "); $refPAF->display_short();
     $self->print_member($refPAF->query_member, " BRH QUERY\n");
     $self->print_member($refPAF->hit_member, " BRH HIT\n");
   }
-  if($self->{'verbose'}>2) {
+  if($self->debug>2) {
     $self->print_member($memberPep, "test for RHS synteny\n");
   }
 
@@ -714,12 +728,12 @@ sub orig_find_RHS
   return if($self->{'onlyOneHomology'} and
             !defined($self->{'membersToBeProcessed'}->{$memberPep->dbID}));
 
-  if($self->{'verbose'}>3) {
+  if($self->debug>3) {
     print("ref BRH : "); $refPAF->display_short();
     $self->print_member($refPAF->query_member, " BRH QUERY\n");
     $self->print_member($refPAF->hit_member, " BRH HIT\n");
   }
-  if($self->{'verbose'}>2) {
+  if($self->debug>2) {
     $self->print_member($memberPep, "test for RHS synteny\n");
   }
 
@@ -758,7 +772,7 @@ sub orig_find_RHS
             " AND hm.chr_end>'". scalar($refPAF->hit_member->chr_start-1500000) ."'".
             " ORDER BY paf1.score DESC, paf1.evalue, paf1.perc_ident DESC, paf1.perc_pos DESC";
 
-  print("$sql\n") if($self->{'verbose'}>3);
+  if($self->debug>3) { print("$sql\n"); } 
   my $sth = $self->{'comparaDBA'}->prepare($sql);
   $sth->execute();
 
@@ -792,7 +806,7 @@ sub store_paf_as_homology
   my $subtype = shift;
   $subtype = '' unless($subtype);
 
-  if($self->{'verbose'}) { print("$type $subtype : "); $paf->display_short; }
+  if($self->debug) { print("$type $subtype : "); $paf->display_short; }
 
   # load the genes for this PAF
   # member_gene values must be properly set before $paf->create_homology
@@ -811,7 +825,7 @@ sub store_paf_as_homology
   my $key = $paf->hash_key;
   my $hashtype=$self->{'storedHomologies'}->{$key};
   if($hashtype) {
-    warn($paf->hash_key." homology already stored as $hashtype not $type $subtype\n") if($self->{'verbose'}>1);
+    warn($paf->hash_key." homology already stored as $hashtype not $type $subtype\n") if($self->debug>1);
   } else {
     $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) if($self->{'store'});
     $self->{'storedHomologies'}->{$key} = $type." ".$subtype;
@@ -868,64 +882,6 @@ sub parse_as_hash{
   return \%hash;
 }
 
-sub calc_inter_genic_distance
-{
-  my $self = shift;
-  my $genome_db_id = shift;
-
-  print("calc_inter_genic_distance genome_db_id=$genome_db_id\n");
-  my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id);
-  my $desc = $genomeDB->name() . " genes";
-  print("  desc = $desc\n");
-  my $subset = $self->{'comparaDBA'}->get_SubsetAdaptor->fetch_by_set_description($desc);
-  print("fetched subset_id ". $subset->dbID . "\n");
-  my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor();
-  $memberDBA->_final_clause("ORDER BY m.chr_name, m.chr_start");
-  my $sortedMembers = $memberDBA->fetch_by_subset_id($subset->dbID);
-  print(scalar(@{$sortedMembers}) . " members to process\n");
-
-  my $lastMember = undef;
-  my $count = 0;
-  my $distSum = 0;
-  my $minDist = undef;
-  my $maxDist = undef;
-  my $dist;
-  my $overlapCount = 0;
-  foreach my $member (@{$sortedMembers}) {
-    if($lastMember) {
-      if($lastMember->chr_name ne $member->chr_name) {
-        $lastMember = undef;
-      }
-      else {
-        $count++;
-        $dist = ($member->chr_start - $lastMember->chr_end);
-        $distSum += $dist;
-
-        if($dist < 0) {
-          $overlapCount++;
-          # $self->print_member($lastMember, "lastMember");
-          # $self->print_member($member, "member, dist<0\n");
-        }
-
-        unless($minDist and $dist>$minDist) { $minDist=$dist; }
-        unless($maxDist and $dist<$maxDist) { $maxDist=$dist; }
-
-        $lastMember = $member;
-      }
-    }
-    else {
-      $lastMember = $member;
-    }
-  }
-
-  my $averageIntergenicDistance = scalar($distSum/$count);
-
-  print("$count intergenic intervals\n");
-  print("$overlapCount overlapping genes\n");
-  print("$averageIntergenicDistance average intergenic distance\n");
-  print("maxDist = $maxDist\n");
-  print("minDist = $minDist\n");
-}
 
 
 sub test_best_paf_web
