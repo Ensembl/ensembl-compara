@@ -46,6 +46,7 @@ sub _init {
     $COL{'gpos25'}  = $cmap->id_by_name('grey1'); #add_rgb([240,240,240]);
     $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
     $COL{'gneg'}    = $white;
+    $COL{'gpos'}    = $black; #add_rgb([240,240,240]);
     $COL{'acen'}    = $cmap->id_by_name('slategrey');
     $COL{'stalk'}   = $cmap->id_by_name('slategrey');
 
