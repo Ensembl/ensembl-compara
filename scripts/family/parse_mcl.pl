@@ -7,6 +7,8 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Taxon;
+use Bio::EnsEMBL::Compara::Attribute;
+use Bio::EnsEMBL::Slice;
 
 $| = 1;
 
@@ -22,7 +24,6 @@ Options:
 -dbname family dbname
 -dbuser
 -dbpass
--release release version i.e. 13_1
 -prefix family stable id prefix (default: ENSF)
 -offset family id numbering start (default:1)
 
@@ -36,6 +37,7 @@ my $host;
 my $dbname;
 my $dbuser;
 my $dbpass;
+my $conf_file;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
@@ -43,7 +45,8 @@ GetOptions('help' => \$help,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
 	   'prefix=s' => \$family_prefix,
-	   'offset=i' => \$family_offset);
+	   'offset=i' => \$family_offset,
+           'conf_file=s' => \$conf_file);
 
 if ($help) {
   print $usage;
@@ -63,9 +66,10 @@ my %seqinfo;
 my %member_index;
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-                                                            -user   => $dbuser,
-                                                            -dbname => $dbname,
-                                                            -pass => $dbpass);
+                                                     -user   => $dbuser,
+                                                     -dbname => $dbname,
+                                                     -pass => $dbpass,
+                                                     -conf_file => $conf_file);
 
 my $fa = $db->get_FamilyAdaptor;
 my $gdb = $db->get_GenomeDBAdaptor;
@@ -186,6 +190,7 @@ my $max_cluster_index;
 
 foreach my $cluster (@clusters) {
   my ($cluster_index, @cluster_members) = split /\s+/,$cluster;
+#  next if ($cluster_index != 1);
   print STDERR "Loading cluster $cluster_index...";
 
   unless (defined $max_cluster_index) {
@@ -271,6 +276,7 @@ foreach my $cluster (@clusters) {
         $member->chr_name($transcript->get_all_Exons->[0]->contig->chr_name);
         $member->chr_start($transcript->coding_region_start);
         $member->chr_end($transcript->coding_region_end);
+        $member->sequence($transcript->translate->seq); 
       } 
       elsif ($member->source_name eq "ENSEMBLGENE") {
         $gene = $GeneAdaptor->fetch_by_stable_id($member->stable_id);
@@ -295,7 +301,8 @@ foreach my $cluster (@clusters) {
 
   my $dbID = $fa->store($family);
 
-  foreach my $member (@{$family->get_all_Member}) {
+  foreach my $member_attribute (@{$family->get_all_Member_Attribute}) {
+    my ($member,$attribute) = @{$member_attribute};
     print $member->source_name,"\t$dbID\t",$member->stable_id,"\t",$seqinfo{$member->stable_id}{'description'},"\n";
     $seqinfo{$member->stable_id}{'printed'} = 1;
   }
@@ -309,6 +316,7 @@ foreach my $cluster (@clusters) {
 print STDERR "Loading singleton kept out of clustering because of no blastp hit...";
 
 foreach my $seqid (keys %seqinfo) {
+  print STDERR "trying to get singletons.....\n";
   next if (defined $seqinfo{$seqid}{'printed'});
   $max_cluster_index++;
 
@@ -379,6 +387,7 @@ foreach my $seqid (keys %seqinfo) {
       $member->chr_name($transcript->get_all_Exons->[0]->contig->chr_name);
       $member->chr_start($transcript->coding_region_start);
       $member->chr_end($transcript->coding_region_end);
+      $member->sequence($transcript->translate->seq);
     } 
     elsif ($member->source_name eq "ENSEMBLGENE") {
       $gene = $GeneAdaptor->fetch_by_stable_id($member->stable_id);
@@ -406,6 +415,8 @@ foreach my $seqid (keys %seqinfo) {
   $seqinfo{$member->stable_id}{'printed'} = 1;
   print STDERR "Done\n";
 }
+
+print STDERR "END\n";
 
 sub parse_taxon {
   my ($str) = @_;
