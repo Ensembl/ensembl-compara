@@ -6,7 +6,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::DBSQL::DnaAlignFeatureAdaptor
+Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor
 
 =head1 SYNOPSIS
 
@@ -120,12 +120,18 @@ sub fetch_all_by_species_region {
     foreach my $ga (@$genomic_aligns) {
       my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new(
 				       '-cigar_string' => $ga->cigar_line);
-      my $cdf = $ga->consensus_dnafrag;
       my $qdf = $ga->query_dnafrag;
+      
+      #calculate chromosomal coords
+      my $cstart = $df->start + $ga->consensus_start - 1;
+      my $cend   = $df->start + $ga->consensus_end - 1;
+      
+      #skip features which do not overlap the requested region
+      next if ($cstart > $end || $cend < $start);
 
-      $f->contig($cdf->contig);
-      $f->start($cdf->start + $ga->consensus_start - 1);
-      $f->end($cdf->start + $ga->consensus_end - 1);
+      $f->contig($df->contig);
+      $f->start($cstart);
+      $f->end($cend);
       $f->strand(1);
       $f->species($sb_species);
       $f->score($ga->score);
