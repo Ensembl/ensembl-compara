@@ -320,6 +320,10 @@ sub addBuildHomologyInput
 
   return unless($self->{'submitHomology'});
   
+  my $phylum1 = $self->phylumForGenomeDBID($genome_db_id1);
+  my $phylum2 = $self->phylumForGenomeDBID($genome_db_id2);
+  $noRHS='noRHS' if(!defined($noRHS) and $phylum1 ne $phylum2);
+
   my $input_id;
 
   my $isHive = $self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
