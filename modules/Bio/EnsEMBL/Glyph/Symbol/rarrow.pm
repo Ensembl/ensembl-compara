@@ -12,19 +12,25 @@ package Bio::EnsEMBL::Glyph::Symbol::rarrow;
 use strict;
 use Sanger::Graphics::Glyph::Poly;
 
+use vars qw(@ISA);
+use Bio::EnsEMBL::Glyph::Symbol;
+@ISA = qw(Bio::EnsEMBL::Glyph::Symbol);
+
 sub draw {
-    my ($class, $featuredata, $styledata) = @_;
+    my $self = shift;
+    my $style = $self->style;
+    my $feature = $self->feature;
 
-    my $rowheight = $featuredata->{'row_height'};
-    my $start = $featuredata->{'start'};
-    my $end = $featuredata->{'end'};
-    my $pix_per_bp = $featuredata->{'pix_per_bp'};
-    my $y_offset = $featuredata->{'y_offset'};
+    my $rowheight = $feature->{'row_height'};
+    my $start = $feature->{'start'};
+    my $end = $feature->{'end'};
+    my $pix_per_bp = $feature->{'pix_per_bp'};
+    my $y_offset = $feature->{'y_offset'};
     
-    my $linecolour = $styledata->{'fgcolor'};
-    my $fillcolour = $styledata->{'bgcolor'} || $styledata->{'colour'};
+    my $linecolour = $style->{'fgcolor'};
+    my $fillcolour = $style->{'bgcolor'} || $style->{'colour'};
 
-    my $height = $styledata->{'height'};
+    my $height = $style->{'height'};
 
     my $slope = $height/2/$pix_per_bp;
 

@@ -12,20 +12,26 @@ package Bio::EnsEMBL::Glyph::Symbol::box;
 use strict;
 use Sanger::Graphics::Glyph::Rect;
 
-sub draw {
-    my ($class, $featuredata, $styledata) = @_;
+use vars qw(@ISA);
+use Bio::EnsEMBL::Glyph::Symbol;
+@ISA = qw(Bio::EnsEMBL::Glyph::Symbol);
 
-    my $rowheight = $featuredata->{'row_height'};
-    my $start = $featuredata->{'start'};
-    my $end = $featuredata->{'end'};
-    my $pix_per_bp = $featuredata->{'pix_per_bp'};
-    my $y_offset = $featuredata->{'y_offset'};
+sub draw {
+    my $self = shift;
+    my $style = $self->style;
+    my $feature = $self->feature;
+
+    my $rowheight = $feature->{'row_height'};
+    my $start = $feature->{'start'};
+    my $end = $feature->{'end'};
+    my $pix_per_bp = $feature->{'pix_per_bp'};
+    my $y_offset = $feature->{'y_offset'};
    
-    my $linecolour = $styledata->{'fgcolor'};
-    my $fillcolour = $styledata->{'bgcolor'} || $styledata->{'colour'};
+    my $linecolour = $style->{'fgcolor'};
+    my $fillcolour = $style->{'bgcolor'} || $style->{'colour'};
     $linecolour ||= $fillcolour;
 
-    my $height = $styledata->{'height'};
+    my $height = $style->{'height'};
 
     return new Sanger::Graphics::Glyph::Rect({
     	'x'          => $start-1,

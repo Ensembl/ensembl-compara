@@ -228,19 +228,21 @@ sub RENDER_simple {
 	    'absolutey' => 1
 	  }) );
     }
+
+    my $featuredata = {
+			'row_height'    => $row_height, 
+			'start'		=> $START, 
+			'end'		=> $END , 
+			'pix_per_bp'    => $self->{'pix_per_bp'}, 
+			'y_offset'	=> $y_offset,
+			'trunc_start'   => $trunc_start,
+			'trunc_end'	=> $trunc_end,
+			'orientation'   => $orientation,
+			};
+			
     # Draw feature symbol
-    $self->push( $glyph_symbol->draw( {
-				    'row_height'    => $row_height, 
-				    'start'	    => $START, 
-				    'end'	    => $END , 
-				    'pix_per_bp'    => $self->{'pix_per_bp'}, 
-				    'y_offset'	    => $y_offset,
-				    'trunc_start'   => $trunc_start,
-				    'trunc_end'	    => $trunc_end,
-				    'orientation'   => $orientation,
-				    },
-				      $styledata,
-				    ));  
+    my $symbol = $glyph_symbol->new($featuredata, $styledata);  
+    $self->push($symbol->draw);
   }
 
     # Offset label coords by which row we're on
