@@ -1,13 +1,13 @@
 package Bio::EnsEMBL::GlyphSet;
 use strict;
-use Bio::EnsEMBL::Root;
+use Bio::Root::RootI;
 use Exporter;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Space;
 use EnsWeb;
 
 use vars qw(@ISA $AUTOLOAD);
-@ISA = qw(Exporter Bio::EnsEMBL::Root);
+@ISA = qw(Exporter Bio::Root::RootI);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 #########
@@ -388,6 +388,8 @@ sub zoom_zmenu {
 sub check {
     my( $self ) = @_;
     my ($feature_name) = reverse split '::', ref($self) ;
+
+    #print STDERR "Checking feature name : $feature_name\n";
 
     return $self->{'config'}->is_available_artefact( $feature_name ) ? 
       $feature_name :

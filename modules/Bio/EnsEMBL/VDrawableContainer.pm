@@ -1,11 +1,11 @@
 package Bio::EnsEMBL::VDrawableContainer;
-use Bio::EnsEMBL::Root;
+use Bio::Root::RootI;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::Videogram;
 use EnsWeb;
 
-@ISA = qw(Bio::EnsEMBL::Root);
+@ISA = qw(Bio::Root::RootI);
 
 sub new {
     my ($class, $Container, $Config, $highlights, $strandedness, $spacing) = @_;
@@ -64,7 +64,8 @@ sub new {
             my $GlyphSet;
             eval { $GlyphSet = new $classname($Container, $Config, $highlights); };
             if($@) {
-               print STDERR "GLYPHSET $classname failed\n";
+               print STDERR "GLYPHSET $classname failed:\n";
+	       print STDERR $@ . "\n";
             } else {
                ########## load everything from the database
                ########## don't waste any more time on this row if there's nothing in it

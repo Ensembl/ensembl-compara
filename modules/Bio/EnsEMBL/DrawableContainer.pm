@@ -1,5 +1,5 @@
 package Bio::EnsEMBL::DrawableContainer;
-use Bio::EnsEMBL::Root;
+use Bio::Root::RootI;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -9,7 +9,7 @@ use Bio::EnsEMBL::GlyphSetManager::das;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use ExtURL;
 
-@ISA = qw(Bio::EnsEMBL::Root);
+@ISA = qw(Bio::Root::RootI);
 
 sub new {
     my ($class, $Container, $Config, $highlights, $strandedness, $Storage) = @_;
@@ -65,7 +65,7 @@ sub new {
                     $GlyphSet = new $classname($Container, $Config, $highlights, $strand);
                 };
                 if($@) {
-                    print STDERR "GLYPHSET $classname failed\n";
+                    print STDERR "GLYPHSET $classname failed:\n$@\n";
                 } else {
                     $tmp_glyphset_store->{$Config->get($row, 'pos')} = $GlyphSet;
                 }
@@ -108,17 +108,15 @@ sub new {
         $glyphset->label->width( $pixels ); ### JS5 ###
         $glyphset->label->pixelwidth( $pixels ); ### JS5 ###
         next unless defined $glyphset->bumped();
+
         my $NAME = ref($glyphset);
         $NAME =~ s/^.*:://;
         $composite = new Bio::EnsEMBL::Glyph::Composite({
                 'y'            => 0,
-		'x'            => 2,
-		'height' => 8,
-		'absolutey'    => 1,
-                'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
-                        ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
-                'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
-                'width'        => 1
+				'x'            => 2,
+				'absolutey'    => 1,
+                'width'        => 10
+                'height'       => 8
         });
         
         my $box_glyph = new Bio::EnsEMBL::Glyph::Rect({
@@ -129,6 +127,9 @@ sub new {
 		    	'bordercolour'	=> $black,
 		    	'absolutey' => 1,
 				'absolutex' => 1,
+                'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
+                               ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
+                'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
         });
         my $horiz_glyph = new Bio::EnsEMBL::Glyph::Text({
             'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
@@ -136,8 +137,8 @@ sub new {
             'absolutey' => 1,
             'x'         => 4,
             'y'      	=> $glyphset->bumped() eq 'yes' ? -1.5 : -1,
-	    'width'  	=> 10,
-	    'height' 	=> 8,
+		    'width'  	=> 1,
+		    'height' 	=> 8,
             'colour'    => $black,
             'absolutex' => 1
         });
@@ -170,7 +171,7 @@ sub new {
         $glyphset->label->x(-($extra_translation - $spacing) / $scalex);
         next unless defined $glyphset->bumpbutton;
         $glyphset->bumpbutton->x(-($extra_translation + $button_width - $spacing) / $scalex);
-        $glyphset->bumpbutton->width(10 / $scalex);
+        $glyphset->bumpbutton->width(10/$scalex)
         foreach( @{$glyphset->bumpbutton->{'composite'}} ) {
 #           delete $_->{'absolutex'};
         }

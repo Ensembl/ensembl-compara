@@ -12,21 +12,13 @@ use vars qw(@ISA $AUTOLOAD);
 sub new {
     my ($class, $params_ref) = @_;
     my $self = {
-	'background' => 'transparent',
-	'composite'  => undef,           # arrayref for Glyph::Composite to store other glyphs in
-	'points'     => [],		 # listref for Glyph::Poly to store x,y paired points
-        $params_ref ? %$params_ref : ()
+	    'background' => 'transparent',
+	    'composite'  => undef,          # arrayref for Glyph::Composite to store other glyphs in
+	    'points'     => [],		        # listref for Glyph::Poly to store x,y paired points
+        ref($params_ref) eq 'HASH' ? %$params_ref : ()
     };
     bless($self, $class);
-
-    #########
-    # initialise all fields except type
-    #
-#    for my $field (qw(x y width height text colour bordercolour font onmouseover onmouseout zmenu href pen brush background id points absolutex absolutey)) {
-#    for my $field (keys %{$params_ref}) {
-#	$self->{$field} = $$params_ref{$field} if(defined $$params_ref{$field});
-#    }
-
+    ########## initialise all fields except type
     return $self;
 }
 
@@ -37,7 +29,7 @@ sub AUTOLOAD {
     my ($this, $val) = @_;
     no strict 'refs';
     (my $field = $AUTOLOAD) =~ s/.*:://;
-    *{$AUTOLOAD} = sub { $_[0]->{$field} = $_[1] if defined $_[1]; return $_[0]->{$field}; };
+    *{$AUTOLOAD} = sub { $_[0]->{$field}=$_[1] if defined $_[1]; return $_[0]->{$field}; };
     $this->{$field} = $val if(defined $val);
     return $this->{$field};
 }

@@ -111,10 +111,10 @@ sub _init {
         
         my @tag_glyphs = ();
 
+## Lets see about placing labels on objects...        
         my $composite = new Bio::EnsEMBL::Glyph::Composite();
         my $glyph;
         if($part_to_colour eq 'line') {
-            
         #    print STDERR "PUSHING LINE\n"; 
             $composite->push( new Bio::EnsEMBL::Glyph::Space({
                 'x'          => $start,
@@ -142,7 +142,7 @@ sub _init {
                 'absolutey'  => 1
             }) );
         }
-## Lets see about placing labels on objects...        
+        $composite->push($glyph);
         my $rowheight = int($h * 1.5);
 
         if( $self->can('tag')) {
@@ -306,6 +306,7 @@ sub _init {
                 $composite->push($glyph,$tglyph);
             }
 	    }
+
 ## Lets see if we can Show navigation ?...
         if($navigation) {
             $composite->{'zmenu'} = $self->zmenu( $f ) if $self->can('zmenu');
