@@ -192,6 +192,28 @@ sub assembly {
   return $self->{'assembly'};
 }
 
+=head2 assembly_default
+
+  Arg [1]    : (optional) int
+  Example    : $gdb->assembly_default(1);
+  Description: Getter/Setter for the assembly_default of this genome db.
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub assembly_default {
+  my $self = shift;
+  my $boolean = shift;
+
+  if(defined $boolean) {
+    $self->{'assembly_default'} = $boolean;
+  }
+
+  return $self->{'assembly_default'};
+}
+
 
 
 =head2 taxon_id

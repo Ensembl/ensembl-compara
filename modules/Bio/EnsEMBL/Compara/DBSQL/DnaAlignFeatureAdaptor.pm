@@ -68,12 +68,12 @@ sub new {
 
  Arg [1]    : string $cs_species
               e.g. "Homo sapiens"
- Arg [2]    : string $cs_assembly
-              e.g. "NCBI_31"
+ Arg [2]    : string $cs_assembly (can be undef)
+              e.g. "NCBI_31" if undef assembly_default will be taken
  Arg [3]    : string $qy_species
               e.g. "Mus musculus"
- Arg [4]    : string $qy_assembly
-              e.g. "MGSC_3"
+ Arg [4]    : string $qy_assembly (can be undef)
+              e.g. "MGSC_3", if undef assembly_default will be taken
  Arg [5]    : string $chr_name
               the name of the chromosome to retrieve alignments from (e.g. 'X')
  Arg [6]    : int start
@@ -195,10 +195,16 @@ sub fetch_all_by_Slice {
     $self->throw("Invalid slice argument [$slice]\n");
   }
 
-  unless($qy_species && $qy_assembly) {
+  unless($qy_species) {
     $self->throw("Query species argument is required");
   }
-
+  
+  unless (defined $qy_assembly) {
+    my $qy_gdb = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($qy_species);
+    $qy_assembly = $qy_gdb->assembly;
+    warn "qy_assembly was undef. Queried the default one for $qy_species = $qy_assembly\n";
+  }
+  
   my $cs_species =
       $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
   my $cs_assembly = $slice->assembly_type;

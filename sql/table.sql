@@ -69,6 +69,7 @@ CREATE TABLE genome_db (
   taxon_id int(10) DEFAULT '0' NOT NULL,
   name varchar(40) DEFAULT '' NOT NULL,
   assembly varchar(255) DEFAULT '' NOT NULL,
+  assembly_default tinyint(1) DEFAULT 1,
   PRIMARY KEY (genome_db_id),
   UNIQUE name (name,assembly)
 );

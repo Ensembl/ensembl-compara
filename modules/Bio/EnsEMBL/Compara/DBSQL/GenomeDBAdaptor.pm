@@ -93,7 +93,7 @@ sub fetch_by_dbID{
    # it is re-added every request
    my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
    if(!$dba) {
-     $self->throw("Could not obtain DBAdaptor for dbID [$dbid].\n" .
+     $self->warn("Could not obtain DBAdaptor for dbID [$dbid].\n" .
 		  "Genome DBAdaptor for name=[".$gdb->name."], ".
 		  "assembly=[" . $gdb->assembly."] must be loaded using " .
 		  "config file or\n" .
@@ -154,16 +154,21 @@ sub fetch_all {
 sub fetch_by_name_assembly{
    my ($self, $name, $assembly) = @_;
 
-   unless($name && $assembly) {
-     $self->throw('name and assembly arguments are required');
+   unless($name) {
+     $self->throw('name arguments are required');
    }
-
-   my $sth = $self->prepare(
-	     "SELECT genome_db_id
-              FROM genome_db
-              WHERE name = ? AND assembly = ?");
-
-   $sth->execute($name, $assembly);
+   
+   my $sth;
+   
+   unless (defined $assembly) {
+     my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly_default = 1";
+     $sth = $self->prepare($sql);
+     $sth->execute($name);
+   } else {
+     my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly = ?";
+     $sth = $self->prepare($sql);
+     $sth->execute($name, $assembly);
+   }
 
    my ($id) = $sth->fetchrow_array();
 
@@ -206,6 +211,14 @@ sub store{
     $self->throw("genome db must have a name, assembly, and taxon_id");
   }
 
+  my $assembly_default;
+  unless (defined $gdb->assembly_default) {
+    $assembly_default = 1;
+    $gdb->assembly_default(1);
+  } else {
+    $assembly_default = $gdb->assembly_default;
+  }
+  
   my $sth = $self->prepare("
       SELECT genome_db_id
       FROM genome_db
@@ -219,8 +232,8 @@ sub store{
   if(!$dbID) {
     #if the genome db has not been stored before, store it now
     my $sth = $self->prepare("
-        INSERT into genome_db (name,assembly,taxon_id)
-        VALUES ('$name','$assembly', $taxon_id)
+        INSERT into genome_db (name,assembly,taxon_id,assembly_default)
+        VALUES ('$name','$assembly', $taxon_id, $assembly_default)
       ");
 
     $sth->execute();
@@ -273,19 +286,20 @@ sub create_GenomeDBs {
 
   # grab all the possible species databases in the genome db table
   $sth = $self->prepare("
-     SELECT genome_db_id, name, assembly, taxon_id
+     SELECT genome_db_id, name, assembly, taxon_id, assembly_default
      FROM genome_db 
    ");
    $sth->execute;
 
   # build a genome db for each species
   while ( my @db_row = $sth->fetchrow_array() ) {
-    my ($dbid, $name, $assembly, $taxon_id) = @db_row;
+    my ($dbid, $name, $assembly, $taxon_id, $assembly_default) = @db_row;
 
     my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
     $gdb->name($name);
     $gdb->assembly($assembly);
     $gdb->taxon_id($taxon_id);
+    $gdb->assembly_default($assembly_default);
     $gdb->dbID($dbid);
     $gdb->adaptor( $self );
 
