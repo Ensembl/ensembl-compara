@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlignBlock module.
 
-This script includes 53 tests.
+This script includes 66 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 61;
+    plan tests => 66;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -540,6 +540,30 @@ do {
   }
 };
 
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_ungapped_GenomicAlignBlocks method");
+$genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+
+do {
+  my $ungapped_genomic_align_blocks = $genomic_align_block->get_all_ungapped_GenomicAlignBlocks();
+  my $new_gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -UNGAPPED_GENOMIC_ALIGN_BLOCKS => $ungapped_genomic_align_blocks
+      );
+  ok(scalar(@{$new_gab->get_all_GenomicAligns}), scalar(@{$genomic_align_block->get_all_GenomicAligns}),
+      "New from ungapped: Comparing original and resulting number of GenonimAligns");
+  ok($new_gab->length, $genomic_align_block->length,
+      "New from ungapped: Comparing original and resulting lengh of alignments");
+  ok($new_gab->method_link_species_set_id, $genomic_align_block->method_link_species_set_id,
+      "New from ungapped: Comparing original and resulting method_link_species_set_id");
+  my $dnafrag_id = $genomic_align_block->get_all_GenomicAligns->[0]->dnafrag_id;
+  my $new_ga;
+  foreach my $genomic_align (@{$new_gab->get_all_GenomicAligns}) {
+    $new_ga = $genomic_align if ($genomic_align->dnafrag_id == $dnafrag_id);
+  }
+  ok($dnafrag_id, $new_ga->dnafrag_id,
+      "New from ungapped: Comparing first dnafrag_id");
+  ok($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence, $new_ga->aligned_sequence,
+      "New from ungapped: Comparing first aligned_sequence");
+};
 
 #####################################################################
 ## TEST DEPRECATED METHODS
