@@ -114,7 +114,7 @@ sub store {
 
   foreach my $feature (@features) {
     if($feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
-      displayHSP_short($feature);
+      #displayHSP_short($feature);
       my $pepFeature = new Bio::EnsEMBL::Compara::PeptideAlignFeature(-feature => $feature);
       #displayPAF_short($pepFeature);
       push @pafList, $pepFeature;

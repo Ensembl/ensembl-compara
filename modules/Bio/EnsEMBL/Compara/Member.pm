@@ -435,6 +435,9 @@ sub sequence_id {
 sub bioseq {
   my $self = shift;
 
+  $self->throw("Member stable_id undefined") unless defined($self->stable_id());
+  $self->throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
+
   my $seq = Bio::Seq->new(-seq        => $self->sequence(),
                           -id         => $self->stable_id(),
                           -primary_id => $self->stable_id(),

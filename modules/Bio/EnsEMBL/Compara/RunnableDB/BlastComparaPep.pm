@@ -67,15 +67,15 @@ use vars qw(@ISA);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->throw("No input id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   my $member_id  = $self->input_id;
   my $member     = $self->db->get_MemberAdaptor->fetch_by_dbID($member_id);
   $self->throw("No member in compara for member_id=$member_id") unless defined($member);
 
   my $bioseq     = $member->bioseq();
+  $self->throw("Unable to make bioseq for member_id=$member_id") unless defined($bioseq);
   $self->query($bioseq);
-
 
   my ($thr, $thr_type);
   my %p = $self->parameter_hash;
