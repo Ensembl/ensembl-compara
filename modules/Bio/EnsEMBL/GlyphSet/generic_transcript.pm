@@ -70,14 +70,12 @@ sub colour {
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
 
-#  my $genecol = $colours->{ "_".$gene->external_status }[0];
-#  if( $gene->type eq 'bacterial_contaminant' ) {
-#    $genecol = $colours->{'_BACCOM'}[0];
-#  }
-#  if(exists $highlights{$gene->stable_id()}) {
-#    return ($genecol, $colours->{'hi'});
-#  }
-  return ('black', undef);
+  my $analysis = $gene->analysis ? $gene->analysis->logic_name : '';
+  $colours ||= {};
+  my $genecol = $colours->{$analysis} || $colours->{'col'} || 'black';
+
+  return( $genecol, undef );
+
 }
 
 sub href {
@@ -152,7 +150,6 @@ sub zmenu {
 
 sub gene_zmenu {
   my ($self, $gene ) = @_;
-  warn( "DEPRECATED: use zmenu directly; now copes with missing transcript");
   return $self->zmenu( $gene );
 }
 
@@ -160,10 +157,10 @@ sub gene_zmenu {
 sub text_label {
   my ($self, $gene, $transcript) = @_;
 
-  my $obj = $transcript || $gene;
+  my $obj = $transcript || $gene || return '';
 
-  my $tid = $transcript->stable_id();
-  my $eid = $transcript->external_name();
+  my $tid = $obj->stable_id();
+  my $eid = $obj->external_name();
   my $id = $eid || $tid;
 
   my $Config = $self->{config};
@@ -183,8 +180,6 @@ sub text_label {
 
 sub gene_text_label {
   my ($self, $gene ) = @_;
-  warn( "DEPRECATED: use text_label directly; ".
-        "now copes with missing transcript");
   return $self->text_label($gene);
 }
 
