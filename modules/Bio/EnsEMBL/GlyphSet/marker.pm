@@ -5,7 +5,7 @@ use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 my $PRIORITY   = 50;
-my $MAP_WEIGHT = 80;
+my $MAP_WEIGHT = 2;
 
 sub my_label { return "Markers"; }
 
