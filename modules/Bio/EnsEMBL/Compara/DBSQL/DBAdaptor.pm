@@ -115,9 +115,9 @@ sub new {
         throw("could not load module specified in configuration file:$@");
       }
 
-      unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
+      unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
         throw("[$db] specified in conf file is not a " .
-             "Bio::EnsEMBL::DBSQL::DBConnection");
+             "Bio::EnsEMBL::DBSQL::DBAdaptor");
       }
 
       if (defined $db) {
@@ -128,8 +128,6 @@ sub new {
       }
     }
   }
-
-  $self->get_GenomeDBAdaptor->sync_with_registry();
 
   return $self;
 }
@@ -232,5 +230,33 @@ sub get_db_adaptor {
   return $gdb->db_adaptor;
 }
 
+
+sub get_available_adaptors{
+ 
+  my %pairs =  (
+      "MetaContainer" => "Bio::EnsEMBL::DBSQL::MetaContainer",
+      "MethodLinkSpeciesSet" => "Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor",
+      "SyntenyRegion"   => "Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor",
+      "DnaAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor",
+      "Synteny"         => "Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor",
+      "GenomeDB"        => "Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor",
+      "DnaFrag" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor",
+      "GenomicAlignBlock" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor",
+      "GenomicAlign" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor",
+      "GenomicAlignGroup" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor",
+      "Homology" => "Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor",
+      "Family" => "Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor",
+      "Domain" => "Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor",
+      "Subset" => "Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor",
+      "Member" => "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor",
+      "Attribute" => "Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor",
+      "Taxon" => "Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor",
+      "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
+      "DnaFragChunk"        => "Bio::EnsEMBL::Compara::DBSQL::DnaFragChunkAdaptor",
+      "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor"
+        );
+  return (\%pairs);
+}
+ 
 
 1;
