@@ -1,0 +1,113 @@
+
+This directory contains a set of tests for the EnsEMBL Compara API
+modules. The test-genome-DBs.zip file contains the set of data that is 
+used by the tests.
+
+The test system requires some modules which are in a seperate
+CVS module ensembl-test.  To use the tests you must add the
+ensembl-test modules to your PERL5LIB environment variable.
+
+Example:
+
+setenv PERL5LIB ${PERL5LIB}:${ENSHOME}/ensembl-test/modules
+
+NB: read also ensembl-test/scripts/README
+
+In order to run the tests you must update the MultiTestDB.conf
+file with the information (username, host, etc.) for a mysql
+instance where you have write permission. 
+Running test case(s) which require a database will automatically 
+create a temporary database during the test(s) execution.
+In case you want to remove the temporary database after all tests,
+use the -c option.
+
+
+Running all tests or just a single test
+=======================================
+
+To run tests use the runtests.pl script in ensembl-test/scripts directory.
+
+Examples:
+
+#run all tests in the t directory
+ensembl-test/scripts/runtests.pl t
+
+#run 3 tests
+ensembl-test/scripts/runtests.pl t/dnaFrag.t t/genomeDBAdaptor.t t/genomicAlignAdaptor.t
+
+#run a single test
+ensembl-test/scripts/runtests.pl t/dnaFrag.t
+
+#run all tests in the current directory and clean up
+ensembl-test/scripts/runtests.pl -c
+
+Which data is compara and core test databases
+=============================================
+
+Homo sapiens chr 14 between 50,000,000 and 50,250,000 bp position was the primary species
+region to pull out data from.
+You can find such region definition in
+homo_sapiens.seq_region_file,
+mus_musculus.seq_region_file,
+rattus_norvegicus.seq_region_file
+files, so that you know which region are available to fetch data from
+
+in compara db, you have 
+BLASTZ_NET alignments between human/mouse and human/rat
+Orthologues between human/mouse and human/rat
+2 Families and all members for these 2 families 
+
+in core dbs, you can pull out dna sequence, repeat features, genes, transcripts,
+translation, exons, and meta info, only for the genomic regions detailed in the
+*.seq_region_file.
+
+Creating the small test databases in test-genome-DBs.zip
+========================================================
+
+Description of the procedure to create a small compara dabatase as well as small core
+databases for human, mouse and rat.
+You will need to have complete compara, human core, mouse core and rat core on the
+MySQL instance you plan to create your test database, here
+ ensembl_compara_23_1
+ homo_sapiens_core_23_34e
+ mus_musculus_core_23_32c
+ rattus_norvegicus_core_23_3c
+respectively
+
+cd ~/src/ensembl_main/ensembl-compara/modules/t
+
+./CreateComparaTestDatabase.pl -s ensembl_compara_23_1 -d ensembl_compara_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file homo_sapiens.seq_region_file
+
+./CreateCoreTestDatabase.pl -s homo_sapiens_core_23_34e -d homo_sapiens_core_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file homo_sapiens.seq_region_file 
+
+This above script ill have created the mus_musculus.seq_region_file and rattus_norvegicus.seq_region_file files for the folowing steps.
+
+./CreateCoreTestDatabase.pl -s mus_musculus_core_23_32c -d mus_musculus_core_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file mus_musculus.seq_region_file
+
+./CreateCoreTestDatabase.pl -s rattus_norvegicus_core_23_3c -d rattus_norvegicus_core_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file rattus_norvegicus.seq_region_file
+
+ Dumping the databases. For use of mysqldump with -T option, you will need to run it on 
+ the same machine that runs the MySQL instance, here ia64f
+
+mkdir -p test-genome-DBs/homo_sapiens/core test-genome-DBs/mus_musculus/core test-genome-DBs/rattus_norvegicus/core test-genome-DBs/multi/compara
+
+cd test-genome-DBs/homo_sapiens/core
+
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ homo_sapiens_core_test
+
+cd ../../mus_musculus/core
+
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ mus_musculus_core_test
+
+cd ../../rattus_norvegicus/core
+
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ rattus_norvegicus_core_test
+
+cd test-genome-DBs/multi/compara
+
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ ensembl_compara_test
+
+cd ../../
+
+zip -r -b /tmp test-genome-DBs test-genome-DBs
+
