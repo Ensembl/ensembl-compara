@@ -53,6 +53,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
@@ -202,7 +203,7 @@ sub createSubmitPepAnalysis {
   my $self    = shift;
   my $subset  = shift;
 
-  print("\createSubmitPepAnalysis\n");
+  print("\ncreateSubmitPepAnalysis\n");
 
   #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
   my $jobDBA = $self->db->get_AnalysisJobAdaptor;
@@ -216,8 +217,9 @@ sub createSubmitPepAnalysis {
   if($analysis) { print("  YES in database with analysis_id=".$analysis->dbID()); }
 
   unless($analysis) {
+    print("  NOPE: go ahead and insert\n");
     $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-        #-db              => $blastdb->dbname(),
+        -db              => '',
         -db_file         => $subset->dump_loc(),
         -db_version      => '1',
         -parameters      => "subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID(),
