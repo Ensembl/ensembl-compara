@@ -100,6 +100,10 @@ sub db_adaptor{
   }
   
   unless (defined $self->{'_db_adaptor'}) {
+    $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
+  }
+
+  unless (defined $self->{'_db_adaptor'}) {
     $self->throw("Could not obtain DBAdaptor for Genome DBAdaptor with name=[".$self->name."] and\n".
                  "assembly=[" . $self->assembly."]. It must be loaded using config file or\n" .
                  "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
@@ -290,13 +294,11 @@ sub connect_to_genome_locator
   my $self = shift;
 
   return undef if($self->locator eq '');
-  unless($self->{'_core_db'}) { 
-    my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
-    return undef unless($genomeDBA);
-    $genomeDBA->disconnect_when_inactive(1);
-    $self->{'_core_db'} = $genomeDBA;
-  }
-  return $self->{'_core_db'};
+
+  my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
+  return undef unless($genomeDBA);
+  $genomeDBA->disconnect_when_inactive(1);
+  return $genomeDBA;
 }
 
 =head2 has_consensus
