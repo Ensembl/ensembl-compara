@@ -66,7 +66,7 @@ sub _init {
     my $done_1_acen = 0;        # flag for tracking place in chromsome
     my $wid         = $Config->get('Videogram','width');
     my $h_wid       = int($wid/2);
-    my $padding     = $Config->get('Videogram','padding');
+    my $padding     = $Config->get('Videogram','padding') || 6;
         
     # max width of band label is 6 characters
     my $h_offset    = int(
