@@ -42,7 +42,7 @@ GET VALUES
   my $length = $genomic_align_block->length;
   my alignment_strings = $genomic_align_block->alignment_strings;
 
-=head1 DESCRIPTION
+=head1 OBJECT ATTRIBUTES
 
 =over
 
@@ -54,9 +54,13 @@ corresponds to genomic_align_block.genomic_align_block_id
 
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object to access DB
 
-=item method_link_species_set
+=item method_link_species_set_id
 
 corresponds to method_link_species.method_link_species_set (external ref.)
+
+=item method_link_species_set
+
+Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet object corresponding to method_link_species_set_id
 
 =item score
 
@@ -107,6 +111,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
                  -adaptor
                  -dbID
                  -method_link_species_set
+                 -method_link_species_set_id
                  -score
                  -perc_id
                  -length
@@ -132,15 +137,16 @@ sub new {
   my $self = {};
   bless $self,$class;
     
-  my ($adaptor, $dbID, $method_link_species_set, $score,
-          $perc_id, $length, $genomic_align_array) = 
+  my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id,
+          $score, $perc_id, $length, $genomic_align_array) = 
     rearrange([qw(
-        ADAPTOR DBID METHOD_LINK_SPECIES_SET SCORE
-        PERC_ID LENGTH GENOMIC_ALIGN_ARRAY)], @args);
+        ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID
+        SCORE PERC_ID LENGTH GENOMIC_ALIGN_ARRAY)], @args);
 
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->dbID($dbID) if (defined ($dbID));
   $self->method_link_species_set($method_link_species_set) if (defined ($method_link_species_set));
+  $self->method_link_species_set_id($method_link_species_set_id) if (defined ($method_link_species_set_id));
   $self->score($score) if (defined ($score));
   $self->perc_id($perc_id) if (defined ($perc_id));
   $self->length($length) if (defined ($length));
@@ -213,7 +219,10 @@ sub dbID {
   Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Example    : $method_link_species_set = $genomic_align_block->method_link_species_set;
   Example    : $genomic_align_block->method_link_species_set($method_link_species_set);
-  Description: get/set for attribute method_link_species
+  Description: get/set for attribute method_link_species_set. If no
+               argument is given, the method_link_species_set is not defined but
+               both the method_link_species_set_id and the adaptor are, it tries
+               to fetch the data using the method_link_species_set_id
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : thrown if $method_link_species_set is not a
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
@@ -228,9 +237,66 @@ sub method_link_species_set {
     thrown("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
         unless ($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
     $self->{'method_link_species_set'} = $method_link_species_set;
+    if ($self->{'method_link_species_set_id'}) {
+      warning("Defining both method_link_species_set_id and method_link_species_set");
+      throw("method_link_species_set object does not match previously defined method_link_species_set_id")
+          if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+    }
+
+  } elsif (!defined($self->{'method_link_species_set'}) and defined($self->{'adaptor'})
+          and defined($self->method_link_species_set_id)) {
+    # Try to get object from ID. Use method_link_species_set_id function and not the attribute in the <if>
+    # clause because the attribute can be retrieved from other sources if it has not been already defined.
+    my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
+    $self->{'method_link_species_set'} = $mlssa->fetch_by_dbID($self->{'method_link_species_set_id'})
   }
 
   return $self->{'method_link_species_set'};
+}
+
+
+=head2 method_link_species_set_id
+
+  Arg [1]    : integer $method_link_species_set_id
+  Example    : $method_link_species_set_id = $genomic_align_block->method_link_species_set_id;
+  Example    : $genomic_align_block->method_link_species_set_id(3);
+  Description: Getter/Setter for the attribute method_link_species_set_id. If no
+               argument is given, the method_link_species_set_id is not defined but
+               the method_link_species_set is, it tries to get the data from the
+               method_link_species_set object. If this fails, it tries to get and set
+               all the direct attributes from the database using the dbID of the
+               Bio::Ensembl::Compara::GenomicAlignBlock object.
+  Returntype : integer
+  Exceptions : thrown if $method_link_species_set_id does not match a previously defined
+               method_link_species_set
+  Caller     : object::methodname
+
+=cut
+
+sub method_link_species_set_id {
+  my ($self, $method_link_species_set_id) = @_;
+
+  if (defined($method_link_species_set_id)) {
+    $self->{'method_link_species_set_id'} = $method_link_species_set_id;
+    if (defined($self->{'method_link_species_set'}) and $self->{'method_link_species_set_id'}) {
+      warning("Defining both method_link_species_set_id and method_link_species_set");
+      throw("method_link_species_set_id does not match previously defined method_link_species_set object")
+          if ($self->{'method_link_species_set'} and
+              $self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+    }
+
+  } elsif (!($self->{'method_link_species_set_id'})) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'method_link_species_set'})) {
+      # ...from the object
+      $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
+    } elsif (defined($self->{'adaptor'}) and defined($self->dbID)) {
+      # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
+  }
+
+  return $self->{'method_link_species_set_id'};
 }
 
 
@@ -239,7 +305,10 @@ sub method_link_species_set {
   Arg [1]    : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Example    : $genomic_aligns = $genomic_align_block->genomic_align_array();
                $genomic_align_block->genomic_align_array([$genomic_align1, $genomic_align2]);
-  Description: get/set for attribute genomic_align_array
+  Description: get/set for attribute genomic_align_array. If no argument is given, the
+               genomic_align_array is not defined but both the dbID and the adaptor are,
+               it tries to fetch the data from the database using the dbID of the
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object.
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
@@ -253,9 +322,17 @@ sub genomic_align_array {
     foreach my $genomic_align (@$genomic_align_array) {
       throw("$genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object")
           unless ($genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
-      $genomic_align->genomic_align_block($self);
+      # Create weak circular reference to genomic_align_block from each genomic_align
+      $genomic_align->genomic_align_block($self); 
     }
     $self->{'genomic_align_array'} = $genomic_align_array;
+
+  } elsif (!defined($self->{'genomic_align_array'}) and defined($self->adaptor)
+        and defined($self->{'genomic_align_block_id'})) {
+    # Fetch data from DB (allow lazy fetching of genomic_align_block objects)
+    my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor();
+    $self->{'genomic_align_array'} = 
+        $genomic_align_adaptor->fetch_all_by_genomic_align_block($self->{'genomic_align_block_id'});
   }
   
   return $self->{'genomic_align_array'};
@@ -267,7 +344,10 @@ sub genomic_align_array {
   Arg [1]    : double $score
   Example    : my $score = $genomic_align_block->score();
                $genomic_align_block->score(56.2);
-  Description: get/set for attribute score  
+  Description: get/set for attribute score. If no argument is given, the score
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlignBlock object.
   Returntype : double
   Exceptions : none
   Caller     : general
@@ -279,6 +359,12 @@ sub score {
 
   if (defined($score)) {
     $self->{'score'} = $score;
+  } elsif (!defined($self->{'score'})) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+      # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
 
   return $self->{'score'};
@@ -290,7 +376,10 @@ sub score {
   Arg [1]    : double $perc_id
   Example    : my $perc_id = $genomic_align_block->perc_id;
   Example    : $genomic_align_block->perc_id(95.4);
-  Description: get/set for attribute perc_id
+  Description: get/set for attribute perc_id. If no argument is given, the perc_id
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlignBlock object.
   Returntype : double
   Exceptions : none
   Caller     : general
@@ -302,6 +391,12 @@ sub perc_id {
  
   if (defined($perc_id)) {
     $self->{'perc_id'} = $perc_id;
+  } elsif (!defined($self->{'perc_id'})) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+      # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
   
   return $self->{'perc_id'};
@@ -313,7 +408,10 @@ sub perc_id {
   Arg [1]    : integer $length
   Example    : my $length = $genomic_align_block->length;
   Example    : $genomic_align_block->length(562);
-  Description: get/set for attribute length
+  Description: get/set for attribute length. If no argument is given, the length
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlignBlock object.
   Returntype : integer
   Exceptions : none
   Caller     : general
@@ -325,6 +423,12 @@ sub length {
  
   if (defined($length)) {
     $self->{'length'} = $length;
+  } elsif (!defined($self->{'length'})) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+      # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
   
   return $self->{'length'};
