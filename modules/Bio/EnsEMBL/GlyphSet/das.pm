@@ -8,6 +8,7 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Intron;
 use Sanger::Graphics::Bump;
+use Bio::EnsEMBL::Glyph::Symbol::box;	# default symbol for features
 use Data::Dumper;
 use POSIX qw(floor);
 use ExtURL;
@@ -98,33 +99,66 @@ sub RENDER_simple {
       'zmenu'     => $zmenu,
     });
     $Composite->{'href'} = $href if $href;
-    my $display_type;
+    my $glyph_symbol;
     my $style;
     my $colour;
     my $glyph_height;
     my $row_height = $configuration->{'h'};
+    my $attribs = {};  # style attributes for this feature
 
     # Configure style for this feature
     if($configuration->{'use_style'}) {
+	
+      #warn(Dumper($configuration->{'styles'}));
       $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
       $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
       $style ||= $configuration->{'styles'}{'default'}{'default'};
-
-      $colour = $style->{'attrs'}{'fgcolor'}||$configuration->{'colour'};
-      $display_type = "draw_".$style->{'glyph'} || 'draw_box';
-      if (exists $style->{'attrs'} && exists $style->{'attrs'}{'height'}){
-        $glyph_height = $style->{'attrs'}{'height'};
-      }
+      $glyph_symbol = $style->{'glyph'};
+     
+      $attribs = $style->{'attrs'} || {};
+      $colour = $attribs->{'fgcolor'} || $configuration->{'colour'};
+      $glyph_height = $attribs->{'height'};
     } 
-    else {
-      $glyph_height = $configuration->{'h'};
-      $colour = $configuration->{'colour'};
-      $display_type = 'draw_box';
+    
+    # Load the glyph symbol module that we need to draw this style symbol
+    $glyph_symbol ||= 'box';
+    $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::'.$glyph_symbol;
+    unless ($self->dynamic_use($glyph_symbol)){
+	$glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
     }
+    
+    # HACK BECAUSE THE DYNAMIC USE RETVAL IS WRONG:
+    unless ($glyph_symbol->can('draw')){
+	$glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
+    }
+     
+    # these are for non-symbol-using drawing code I want to remove later
+    $glyph_height   ||= $row_height;
+    $colour	    ||= $configuration->{'colour'};
 
+    # this is the way attribute passing should be done for the symbol stuff
+    $attribs->{'height'} ||= $glyph_height;
+    $attribs->{'colour'} ||= $colour;
 
-    # if it is a summary of non-positional features then just display a 
-    # gene-wide line with a link to geneview where all annotations can be viewed
+    # Add truncation flags to the attribs
+    $attribs->{'trunc_start'} = 1 if $START ne $f->das_start();
+    $attribs->{'trunc_end'} = 1 if $END ne $f->das_end();
+
+    # Draw label first, so we can get the label_height to use in poly offsets
+    my $label_height =$self->feature_label( $Composite, 
+					    $label, 
+					    $colour, 
+					    $glyph_height,
+					    $START, 
+					    $END );
+
+    my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
+
+    # if the feature is a summary of non-positional features (i.e. genedas
+    # source viewed on contigview) 
+    # then just display a gene-wide line with a link to geneview where all 
+    # annotations can be viewed
+    # THIS SHOULD BE TURNED INTO A GLYPH SYMBOL MODULE
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
       my $f     = shift @{$configuration->{'features'}};
       my $START = $f->das_start() < 1        ? 1       : $f->das_start();
@@ -183,51 +217,28 @@ sub RENDER_simple {
 
   } 
   else {
-    $display_type = 'draw_box' unless $self->can( $display_type );
-    if( $display_type eq 'draw_box') {
-      $Composite->push( $self->draw_box($glyph_height, 
-					$START, 
-					$END , 
-					$colour, 
-					$self->{'pix_per_bp'} 
-					)
-				    );
-    } 
-    else {
-      # clickable box
-      $Composite->push( new Sanger::Graphics::Glyph::Space({
-        'x'         => $START-1,
-        'y'         => 0,
-        'width'     => $END-$START+1,
-        'height'    => $glyph_height,
-        'absolutey' => 1
-      }) );
+    unless ($glyph_symbol eq 'box'){
+	# make clickable box to anchor zmenu
+	  $Composite->push( new Sanger::Graphics::Glyph::Space({
+	    'x'         => $START-1,
+	    'y'         => 0,
+	    'width'     => $END-$START+1,
+	    'height'    => $glyph_height,
+	    'absolutey' => 1
+	  }) );
     }
+    # Draw feature symbol
+    $self->push( $glyph_symbol->draw( $row_height, 
+				      $START, 
+				      $END , 
+				      $self->{'pix_per_bp'}, 
+				      $y_offset,
+				      $attribs,
+				    ));  
   }
 
-    # Draw label
-    my $label_height =$self->feature_label( $Composite, 
-					    $label, 
-					    $colour, 
-					    $glyph_height,
-					    $START, 
-					    $END );
-
-
-    # Draw non-box features
-    unless ($display_type eq 'draw_box'){
-	$self->push( $self->$display_type( $glyph_height, 
-					    $START, 
-					    $END , 
-					    $colour, 
-					    $self->{'pix_per_bp'}, 
-	- $configuration->{'tstrand'}*($row_height+2+$label_height) * $row
-					)
-		    );  
-    }	
-
-    # Offset y coords by which row we're on
-    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row) if $row;
+    # Offset label coords by which row we're on
+    $Composite->y($Composite->y() + $y_offset);
 
     $self->push( $Composite );
   } # END loop over features
@@ -345,6 +356,7 @@ sub RENDER_grouped {
       $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
       $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
       $style ||= $configuration->{'styles'}{'default'}{'default'};
+      $style ||= $configuration->{'styles'}{'default'};
 
       $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'};
       if (exists $style->{'attrs'} && exists $style->{'attrs'}{'height'}){
@@ -504,8 +516,10 @@ sub RENDER_grouped {
 					    $END 
 					   );
 
+    my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
     # Offset y coords by which row we're on
-    $Composite->y($Composite->y() - $configuration->{'tstrand'}*($configuration->{'h'}+2+$label_height) * $row) if $row;
+    $Composite->y($Composite->y() + $y_offset);
+    
     $self->push($Composite);
   }
 
@@ -703,66 +717,6 @@ sub feature_label {
 
 sub das_name     { return $_[0]->{'extras'}->{'name'}; }
 sub managed_name { return $_[0]->{'extras'}->{'name'}; }
-
-################################################################################
-## "Glyph" renderers...                                                      ###
-################################################################################
-
-sub draw_box { # Box -- ####
-  my( $self, $h, $START, $END, $colour, $pix_per_bp ) =@_;
-  return new Sanger::Graphics::Glyph::Rect({
-    'x'          => $START-1,
-    'y'          => 0,
-    'width'      => $END-$START+1,
-    'height'     => $h,
-    'colour'     => $colour,
-    'absolutey' => 1
-  });
-}
-
-sub draw_farrow { # Forward arrow -- ###>
-  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
-  my $slope = $h/2/$pix_per_bp;
-  my $points = ( $END - $START + 1 > $slope ) ?
-    [
-      $START - 1,    $OFFSET,
-      $START - 1,    $OFFSET + $h,
-      $END - $slope, $OFFSET + $h,
-      $END,          $OFFSET + $h/2,
-      $END - $slope, $OFFSET
-    ] : [
-      $START-1,      $OFFSET,
-      $START-1,      $OFFSET + $h,
-      $END,          $OFFSET + $h/2
-    ];
-  return new Sanger::Graphics::Glyph::Poly({
-    'points'    => $points,
-    'colour'    => $colour,
-    'absolutey' => 1
-  });
-}
-
-sub draw_rarrow { # Reverse arrow -- <###
-  my( $self, $h, $START, $END, $colour, $pix_per_bp, $OFFSET ) =@_;
-  my $slope = $h/2/$pix_per_bp;
-  my $points = ( $END - $START + 1 > $slope ) ?
-    [
-      $END,                $OFFSET,
-      $END,                $OFFSET + $h,
-      $START - 1 + $slope, $OFFSET + $h,
-      $START - 1,          $OFFSET + $h/2,
-      $START - 1 + $slope, $OFFSET
-    ] : [
-      $END,                $OFFSET,
-      $END,                $OFFSET + $h,
-      $START-1,            $OFFSET + $h/2
-    ];
-  return new Sanger::Graphics::Glyph::Poly({
-    'points'    => $points,
-    'colour'    => $colour,
-    'absolutey' => 1
-  });
-}
 
 sub _init {
   my ($self) = @_;
