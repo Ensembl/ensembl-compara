@@ -266,6 +266,8 @@ sub run
     my $claim = $jobDBA->claim_jobs_for_worker($self);
     my $jobs = $jobDBA->fetch_by_job_claim($claim);
 
+    $self->adaptor->check_in($self);
+
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 
     print(STDOUT "processing ",scalar(@{$jobs}), "jobs \n");

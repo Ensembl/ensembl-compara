@@ -248,6 +248,19 @@ sub register_worker_death {
   $sth->finish;
 }
 
+
+sub check_in {
+  my ($self, $worker) = @_;
+
+  return unless($worker);  
+  my $sql = "UPDATE hive SET last_check_in=now()";
+  $sql .= " WHERE hive_id='" . $worker->hive_id ."'";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+}
+
 1;
 
 
