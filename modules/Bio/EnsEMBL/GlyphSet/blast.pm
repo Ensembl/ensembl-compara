@@ -1,5 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::blast;
 use strict;
+use EnsWeb;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -40,8 +41,9 @@ sub _init {
     my @hits;
 
     foreach my $ticket (@blast_tickets) {
-        if( -e "/nfs/WWW/data/blastqueue/$ticket.cache" ) {
-            open FH, "/nfs/WWW/data/blastqueue/$ticket.cache";
+        my $filename = EnsWeb::species_defs->ENSEMBL_TMP_ROOT."/blastqueue/$ticket.cache";
+        if( -e $filename ) {
+            open FH, $filename;
             while(<FH>) {
                 chomp;
                 my ($h_chr, $h_s, $h_e, $h_score, $h_percent, $h_name, $h_strand,$p_n,$q_s,$q_e) = split /\|/;
