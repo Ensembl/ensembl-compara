@@ -4,35 +4,27 @@ use vars qw(@ISA);
 use Sanger::Graphics::Glyph;
 @ISA = qw(Sanger::Graphics::Glyph);
 
-
 #  The constructor for a circle should be as follows:
 
 #        my $circle = Sanger::Graphics::Glyph::Circle->new({
 #            'x'         => 50,
 #            'y'         => 50,
-#            'width'     => 1,    #(bases|pixels)
+#            'diameter'  => 2,    #(bases|pixels)
+#            'radius'    => 1,    #(bases|pixels)  : specify one of width|diameter|radius
 #            'pixperbp'  => $pix_per_bp,
-#            'absolutewidth' => undef|1, # (undef=bases, 1=pixes)
+#            'absolutewidth' => undef|1, # (undef=bases, 1=pixels)
 #            'colour'    => $colour,
 #            'filled'    => 1,              # to have a filled circle
 #        });
 
-#########
-# constructor
-# _methods is a hash of valid methods you can call on this object
-#
 sub new {
   my ($class, $params_ref) = @_;
-  my $self = {
-	      'background' => 'transparent',
-	      'composite'  => undef,          # arrayref for Glyph::Composite to store other glyphs in
-	      'points'     => [],		        # listref for Glyph::Poly to store x,y paired points
-	      ref($params_ref) eq 'HASH' ? %$params_ref : ()
-	     };
-  
+  my $self = $class->SUPER::new($params_ref);
+
   $self->{'absoluteheight'} = $self->{'absolutewidth'};
-  bless($self, $class);
-  
+  $self->{'width'}        ||= $self->{'diameter'};
+  $self->{'width'}        ||= $self->{'radius'} * 2;
+
   return $self;
 }
 
@@ -46,9 +38,10 @@ sub centre {
   return ($self->{'x'}, $self->{'y'});
 }
 
-sub pixelheight {
-  my ($self) = @_;
-  return $self->pixelwidth();
+sub transform {
+  my ($self, @args) = @_;
+  $self->SUPER::transform(@args);
+  $self->{'pixelheight'} = $self->{'pixelwidth'};
 }
 
 sub height {

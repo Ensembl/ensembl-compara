@@ -54,23 +54,23 @@ sub width {
 	shift @pts; # dispose of spare 'y' coord
 	$maxx = $pt if(!defined $maxx || $pt > $maxx);
     }
-    my $minx = $this->x();
-
+    my $minx = $this->x() || 0;
+    $maxx ||= 0;
     return $maxx - $minx;
 }
 
 sub height {
     my ($this) = @_;
-    my $maxy = undef;
-    my @pts = @{$this->points()};
+    my $maxy   = undef;
+    my @pts    = @{$this->points()};
 
     shift @pts;
     while(my $pt = shift @pts) {
 	shift @pts; # dispose of spare 'x' coord
     	$maxy = $pt if(!defined $maxy || $pt > $maxy);
     }
-    my $miny = $this->y();
-
+    my $miny = $this->y() || 0;
+    $maxy  ||= 0;
     return $maxy - $miny;
 }
 
