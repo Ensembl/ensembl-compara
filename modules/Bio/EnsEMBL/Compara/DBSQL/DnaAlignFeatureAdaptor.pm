@@ -319,11 +319,17 @@ sub interpolate_best_location {
 #    print "---\n";
 #    print $best_blocks[0]->hseq_region_name," ",$best_blocks[0]->hseq_region_start + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2)," ",$best_blocks[0]->hseq_region_strand,"\n";
     
-    return ($best_blocks[0]->hseq_region_name,
-            $best_blocks[0]->hseq_region_start 
-            + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2),
-            $best_blocks[0]->hseq_region_strand);
-   
+    if ($slice->strand > 0) {
+      return ($best_blocks[0]->hseq_region_name,
+              $best_blocks[0]->hseq_region_start 
+              + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2),
+              $best_blocks[0]->hseq_region_strand);
+    } else {
+      return ($best_blocks[0]->hseq_region_name,
+              $best_blocks[0]->hseq_region_start 
+              + int(($best_blocks[-1]->hseq_region_end - $best_blocks[0]->hseq_region_start)/2),
+              $best_blocks[0]->hseq_region_strand * -1);
+    }
 #    my $best_key ;
 #    foreach my $key (@ordered_keys) {
 #      unless (defined $best_key) {
