@@ -31,6 +31,9 @@ sub colour {
 
     my $genecol = $colours->{ "_".$transcript->external_status };
 
+    if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
+       $genecol = $colours->{'_pseudogene'};
+    }
     if(exists $highlights{$transcript->stable_id()}) {
       return ($genecol, $colours->{'superhi'});
     } elsif(exists $highlights{$transcript->external_name()}) {
@@ -96,7 +99,8 @@ sub text_label {
         return $tid.(($transcript->external_name() eq '') ? '' : " ($id)" );
     }
 
-    return $self->{'config'}->{'_transcript_names_'} eq 'yes' ? ($transcript->external_name || 'NOVEL') : $tid;    
+    return $self->{'config'}->{'_transcript_names_'} eq 'yes' ? ($transcript->external_name || 
+              ( $transcript->translation->stable_id ? 'NOVEL' : 'Pseudogene') ) : $tid;    
   }
 
 sub legend {
