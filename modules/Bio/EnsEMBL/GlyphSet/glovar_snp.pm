@@ -25,8 +25,8 @@ Post questions to the EnsEMBL development list ensembl-dev@ebi.ac.uk
 package Bio::EnsEMBL::GlyphSet::glovar_snp;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet::snp_lite;
-@ISA = qw(Bio::EnsEMBL::GlyphSet::snp_lite);
+use Bio::EnsEMBL::GlyphSet_simple;
+@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 =head2 my_label
 
@@ -56,14 +56,14 @@ sub features {
     my $self = shift;
     
     ## don't display glovar SNPs on chr6 haplotypes (they broken ...)
-    return if ($self->{'container'}->chr_name =~ /_/);
+    return if ($self->{'container'}->seq_region_name =~ /_/);
     
     my @snps = 
         map { $_->[1] } 
         sort { $a->[0] <=> $b->[0] }
         map { [ substr($_->type,0,2) * 1e9 + $_->start, $_ ] }
         grep { $_->score < 4 } 
-            @{$self->{'container'}->get_all_ExternalLiteFeatures('GlovarSNP')};
+            @{$self->{'container'}->get_all_ExternalFeatures('GlovarSNP')};
 
     if(@snps) {
         $self->{'config'}->{'snp_legend_features'}->{'snps'} 
@@ -71,14 +71,51 @@ sub features {
     }
 
     ## hack to disable consequences on chr7
-    if ($self->{'container'}->chr_name == 7) {
+    if ($self->{'container'}->seq_region_name == 7) {
         foreach my $snp (@snps) {
-            $snp->{'_type'} = undef;
-            $snp->{'_consequence'} = undef;
+            $snp->type(undef);
+            $snp->consequence(undef);
         }
     }
 
     return \@snps;
+}
+
+=head2 href
+
+  Arg[1]      : a Bio::EnsEMBL::SNP object
+  Example     : my $href = $self->href($f);
+  Description : returns a href to link to snpview
+  Return type : String
+  Exceptions  : none
+  Caller      : $self->_init()
+
+=cut
+
+sub href {
+    my ($self, $f) = @_;
+    my ($chr_start, $chr_end) = $self->slice2sr($f->start, $f->end);
+    my $snp_id = $f->display_id;
+    my $source = $f->source_tag;
+    my $chr_name = $self->{'container'}->seq_region_name();
+    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id&source=$source&chr=$chr_name&vc_start=$chr_start";
+}
+
+=head2 
+
+  Arg[1]      : a Bio::EnsEMBL::SNP object
+  Example     : my $label = $self->image_label($f);
+  Description : returns the ambiguity code for labelling the snp in the 
+                neighbourhood image
+  Return type : String
+  Exceptions  : none
+  Caller      : self->_init()
+
+=cut
+
+sub image_label {
+    my ($self, $f) = @_;
+    return $f->ambiguity_code eq '-' ? undef : ($f->ambiguity_code,'overlaid');
 }
 
 =head2 tag
@@ -145,12 +182,12 @@ sub colour {
 
 sub zmenu {
     my ($self, $f ) = @_;
-    my $chr_start = $f->start() + $self->{'container'}->chr_start() - 1;
-    my $chr_end   = $f->end() + $self->{'container'}->chr_start() - 1;
+    my $chr_start = $f->start + $self->{'container'}->start - 1;
+    my $chr_end   = $f->end + $self->{'container'}->start - 1;
 
     my $allele = $f->alleles;
     my $pos;
-    my $id = $f->snpid || $f->id;
+    my $id = $f->display_id;
     if ($chr_start == $chr_end) {
         $pos = "$chr_start";
     } else {

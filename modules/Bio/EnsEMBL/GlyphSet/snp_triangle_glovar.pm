@@ -44,7 +44,7 @@ sub tag {
     my ($col,$labcol) =  $self->colour($f);
     #warn( "snp - $col - $labcol" );
     if ($f->snpclass eq 'SNP - substitution') {
-	return( { 'style' => 'box', 'letter' => $f->{'_ambiguity_code'}, 'colour' => $col, 'label_colour' => $labcol } );
+	return( { 'style' => 'box', 'letter' => $f->ambiguity_code, 'colour' => $col, 'label_colour' => $labcol } );
     }
     if ($f->snpclass =~ /Complex/) {
 	return( { 'style' => 'left-snp', 'colour' => $col } );
