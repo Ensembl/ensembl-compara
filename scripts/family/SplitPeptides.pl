@@ -18,7 +18,7 @@ GetOptions('maxids=i' => \$maxids);
 #
 while(<>) {
   chomp;
-  (undef, $id) = split;
+  ($id) = split;
 
   open(FH, ">PeptideSet.$postfix") if($copied == 0);
 
