@@ -12,6 +12,7 @@ sub features {
 }
 
 sub href {
+  my $self = shift;
   my $f = shift;
   my $chr = $f->seq_region_name;
   my $chr_start = $f->seq_region_start;
@@ -21,6 +22,7 @@ sub href {
 
   return qq(/@{[$self->{container}{_config_file_name_}]}/$page?chr=$chr&chr_start=$chr_start&chr_end=$chr_end) ;
 }
+
 sub zmenu {
   my ($self, $f ) = @_;
   return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bac_bands', 'threshold_navigation' ) || 2e7) * 1000;

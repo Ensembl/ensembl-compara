@@ -20,7 +20,7 @@ sub tag {
     my ($self, $f) = @_;
     my @result = ();
 
-   if( $f->get_attribyte('FISHmap') ) {
+   if( $f->get_scalar_attribute('FISHmap') ) {
         push @result, {
             'style' => 'left-triangle',
             'colour' => $self->{'colours'}{"fish_tag"},
