@@ -206,7 +206,7 @@ sub _init {
       my $direction = $end ? -1 : 1;
       foreach my $I ( 0..$#lines ) {
         my ( $bg_x, $black_x ) = @{$lines[$I]};
-        my $xx = $v_offset + $chr_length * $end + ($I+.5) * $direction * $bpperpx - $end;
+        my $xx = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx;
         print STDERR "VO: $v_offset\nCL: $chr_length\nBPP: $bpperpx\tXX: $xx\n";
         push @decorations, new Bio::EnsEMBL::Glyph::Line({
             'x'      => $xx,
