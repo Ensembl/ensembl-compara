@@ -165,8 +165,6 @@ sub db_DnaFragChunk {
 sub fetch_input {
   my( $self) = @_;
 
-  $self->debug(0);
-
   #
   # run subclass configure_defaults method
   #
