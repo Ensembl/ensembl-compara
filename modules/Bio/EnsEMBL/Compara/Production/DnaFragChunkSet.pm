@@ -42,6 +42,7 @@ sub new {
 
   $self->{'_dnafrag_chunk_id_list'} = [];
   $self->{'_cached_chunk_list'} = undef;
+  $self->{'_total_basepairs'} = 0;
 
   if (scalar @args) {
     #do this explicitly.
@@ -143,7 +144,7 @@ sub add_dnafrag_chunk_id {
     my $chunk_id = shift;
     $count = push @{$self->{'_dnafrag_chunk_id_list'}}, $chunk_id;
     #print("added $count element to list\n");
-
+    $self->{'_total_basepairs'}=0; #reset so will be recalculated
     if(defined($self->adaptor)) {
       $self->adaptor->store_link($self->dbID, $chunk_id);
     }
@@ -168,6 +169,7 @@ sub add_DnaFragChunk {
     unless(defined($self->{'_cached_chunk_list'}));
   
   push @{$self->{'_cached_chunk_list'}}, $chunk;
+  $self->{'_total_basepairs'} += $chunk->length;
 
   return $count;
 }
@@ -191,6 +193,7 @@ sub get_all_DnaFragChunks {
     #lazy load all the DnaFragChunk objects
     $self->{'_cached_chunk_list'} =
       $self->adaptor->_fetch_all_DnaFragChunk_by_ids($self->dnafrag_chunk_ids);
+    $self->{'_total_basepairs'}=0; #reset so it's recalculated
   }
   return $self->{'_cached_chunk_list'};
 }
@@ -226,5 +229,28 @@ sub count {
   return scalar(@{$self->dnafrag_chunk_ids()});
 }
 
+
+=head2 total_basepairs
+
+  Example    : $size = $chunkSet->total_basepairs;
+  Description: returns summed length of all DnaFragChunks in this set
+  Returntype : int
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub total_basepairs {
+  my $self = shift;
+  unless($self->{'_total_basepairs'}) {
+    $self->{'_total_basepairs'} =0;
+    if($self->get_all_DnaFragChunks) {
+      foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
+        $self->{'_total_basepairs'} += $chunk->length;
+      }
+    }
+  }
+  return $self->{'_total_basepairs'};
+}
 
 1;
