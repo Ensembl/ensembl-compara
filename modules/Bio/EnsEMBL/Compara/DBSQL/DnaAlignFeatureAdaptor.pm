@@ -149,7 +149,7 @@ sub fetch_all_by_species_region {
       #skip features which do not overlap the requested region
       #next if ($cstart > $end || $cend < $start); 
 
-      $f->seqname($df->contig->chr_name);
+      $f->seqname($df->name);
       $f->start($cstart);
       $f->end($cend);
       $f->strand(1);
@@ -160,7 +160,7 @@ sub fetch_all_by_species_region {
       $f->hstart($qdf->start + $ga->query_start - 1);
       $f->hend($qdf->start + $ga->query_end -1);
       $f->hstrand($ga->query_strand);
-      $f->hseqname($qdf->contig->chr_name);
+      $f->hseqname($qdf->name);
       $f->hspecies($qy_species);
 
       push @out, $f;
