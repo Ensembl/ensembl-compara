@@ -10,7 +10,7 @@ sub my_label {
 }
 
 sub logic_name {
-return ('genoscope', 'havana', 'sanger', 'zfish');
+return ('genoscope', 'havana', 'sanger', 'zfish', 'washu' );
 }
 
 sub zmenu_caption {
