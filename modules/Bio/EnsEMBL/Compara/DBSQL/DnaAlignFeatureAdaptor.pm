@@ -89,7 +89,8 @@ sub new {
  Description: Retrieves alignments between the consensus and query species
               from a specified region of the consensus genome.
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
- Exceptions : none
+ Exceptions : returns a ref to an empty list if no DnaFrag or no MethodLinkSpeciesSet
+              is found in the compara DB.
  Caller     : general
 
 =cut
@@ -112,8 +113,8 @@ sub fetch_all_by_species_region {
           $consensus_genome_db,
           $chromosome_name,
       );
+  return [] if (!$this_dnafrag);
 
-      
   # Get the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct corresponding to the alignment_type and
   # the couple of genomes
   my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
