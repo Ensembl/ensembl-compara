@@ -39,13 +39,13 @@ sub _init {
     my @trace;
     
     foreach my $f (@xf){
-	if ($f->isa("Bio::EnsEMBL::FeaturePair")) {
-	    # An Exonerate trace match
-	    if ($f->analysis->dbID == 7) { # its an exonerate mouse trace match
-		push (@trace, $f);
-		#print SDTERR "$f\n"
-	    }
-	}	
+		if ($f->isa("Bio::EnsEMBL::FeaturePair")) {
+	    	# An Exonerate trace match
+	    	if ($f->analysis->dbID == 1) { # its an exonerate_gapped mouse trace match
+			push (@trace, $f);
+			#print SDTERR "$f\n"
+	    	}
+		}	
     }
     
     my $rect;
