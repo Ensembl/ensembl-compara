@@ -97,7 +97,7 @@ my %not_default_masking_cases;
 if (defined $mask_restriction_file) {
   %not_default_masking_cases = %{do $mask_restriction_file};
 }
-my $SliceAdaptor = $db->get_adaptor($dbname, 'core', 'Slice') ;
+my $SliceAdaptor = $db->get_adaptor($dbname, 'core', 'Slice') or die "can't get Adaptor for $dbname, 'core', 'Slice'\n";
 
 my $chromosomes;
 
