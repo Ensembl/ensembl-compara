@@ -159,7 +159,8 @@ sub _objs_from_sth {
        '_threshold_on_ds' => $threshold_on_ds,
        '_source_id' => $source_id,
        '_source_name' => $source_name,
-       '_adaptor' => $self});
+       '_adaptor' => $self,
+       '_this_one_first' => $self->{'_this_one_first'}});
   }
   
   return \@homologies;  
