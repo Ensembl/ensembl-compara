@@ -167,15 +167,25 @@ CREATE TABLE member (
  source_id	int(10) NOT NULL, # foreign key from source table
  taxon_id	int(10) NOT NULL, # foreign key from taxon table
  genome_db_id	int(10), # foreign key from genome_db table
+ sequence_id    int(10), # foreign key from sequence table
  description    varchar(255),
  chr_name	char(40),
  chr_start	int(10),
  chr_end	int(10),
- sequence	mediumtext,
 
  PRIMARY KEY (member_id),
- UNIQUE KEY (source_id,stable_id)
+ UNIQUE KEY (source_id,stable_id),
+ KEY (sequence_id)
 );
+
+CREATE TABLE sequence (
+ sequence_id    int(10) NOT NULL auto_increment,
+ sequence       mediumtext,
+ length         int(10),
+
+ PRIMARY KEY (sequence_id)
+);
+
 
 CREATE TABLE family (
  family_id		int(10) NOT NULL auto_increment,
