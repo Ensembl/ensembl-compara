@@ -24,45 +24,39 @@ sub init_label {
 sub _init {
     my ($self) = @_;
 
-    #########
-    # only draw contigs once - on one strand
-    #
     return unless ($self->strand() == -1);
     
+    my $length   		= $self->{'container'}->length();
     my $Config 			= $self->{'config'};
-    my $cmap  = new ColourMap;
-    my $white = $cmap->id_by_name('white');
-    my $black = $cmap->id_by_name('black');
-
     my @bitmap         	= undef;
     my $pix_per_bp  	= $Config->transform->{'scalex'};
-    my $bitmap_length 	= int($self->{'container'}->length * $pix_per_bp);
+    my $bitmap_length 	= int($length * $pix_per_bp);
 
-    my $ystart   = 0;
-    my $im_width = $self->{'config'}->image_width();
-    my ($w,$h)   = $self->{'config'}->texthelper()->px2bp('Tiny');
-    my $length   = $self->{'container'}->length();
-	my ($col, $lab) = ();
+    my $ystart   		= 0;
+    my $im_width 		= $self->{'config'}->image_width();
+    my ($w,$h)   		= $self->{'config'}->texthelper()->px2bp('Tiny');
+	my ($col, $lab) 	= ();
+    my $i 				= 1;
 	
     my @asm_clones = $self->{'container'}->get_all_FPCClones();
     if (@asm_clones){
 
-    	my $i = 1;
-		if ($i%2 == 0){
-		       $col  => $Config->get($Config->script(),'tilepath','col1'),
-		       $lab  => $Config->get($Config->script(),'tilepath','lab1'),
-		} else {
-		       $col  => $Config->get($Config->script(),'tilepath','col2'),		
-		       $lab  => $Config->get($Config->script(),'tilepath','lab2'),
-		}
 	   	foreach my $clone ( @asm_clones ) {
 
 	    	my $id    	= $clone->name();		
 			my $start	= $clone->start();
 			$start = 0 if ($start < 0);
     		my $end		= $clone->end();
-			$end = $self->{'container'}->length if ($end > $self->{'container'}->length);
+			$end = $length if ($end > $length);
 
+			if ($i%2 == 0){
+		    	   $col  = $Config->get($Config->script(),'tilepath','col1'),
+		    	   $lab  = $Config->get($Config->script(),'tilepath','lab1'),
+			} else {
+		    	   $col  = $Config->get($Config->script(),'tilepath','col2'),		
+		    	   $lab  = $Config->get($Config->script(),'tilepath','lab2'),
+			}
+			
         	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 					'absolutey' => 1,
 			});
@@ -74,9 +68,6 @@ sub _init {
 				'height'    => 7,
 				'colour'    => $col,
 				'absolutey' => 1,
-				'zmenu'     => {
-		    		'caption' => $id,
-				},
 	    	});
 	    	$Composite->push($glyph);
 
@@ -107,12 +98,11 @@ sub _init {
             	);
 				next if ($row > $Config->get($Config->script(), 'tilepath', 'dep'));
             	$Composite->y($Composite->y() + (1.4 * $row * $h));
-				#$Composite->bordercolour($black);
         	}
-        	$self->push($Composite);
- 			
+
+        	$self->push($Composite); 			
+			$i++;
     	}
-		$i++;
 		
 	}
 }

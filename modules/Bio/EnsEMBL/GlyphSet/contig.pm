@@ -139,7 +139,8 @@ sub _init {
 	});
 	$self->push($tglyph);
     }
-    my $gline = new Bio::EnsEMBL::Glyph::Rect({
+
+    $gline = new Bio::EnsEMBL::Glyph::Rect({
 	'x'         => 0,
 	'y'         => $ystart,
 	'width'     => $im_width,
@@ -150,7 +151,7 @@ sub _init {
     });
     $self->push($gline);
     
-    my $gline = new Bio::EnsEMBL::Glyph::Rect({
+    $gline = new Bio::EnsEMBL::Glyph::Rect({
 	'x'         => 0,
 	'y'         => $ystart+14,
 	'width'     => $im_width,
