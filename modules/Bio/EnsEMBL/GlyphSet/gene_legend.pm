@@ -10,7 +10,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 sub init_label {
     my ($self) = @_;
-        return if( defined $self->{'config'}->{'_no_label'} );
+    return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => 'Gene legend',
         'font'      => 'Small',
@@ -24,17 +24,16 @@ sub _init {
 
     return unless ($self->strand() == -1);
 
-    my $vc = $self->{'container'};
+    my $BOX_HEIGHT    = 4;
+    my $BOX_WIDTH     = 20;
+    my $NO_OF_COLUMNS = 3;
+    my $FONTNAME      = "Tiny";
+
+    my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
-    my $y             = 0;
-    my $h             = 4;
     my $im_width      = $Config->image_width();
     my $type          = $Config->get('gene_legend', 'src');
-    my $BOX_WIDTH     = 20;
-    my $fontname      = "Tiny";
-    # call on ensembl lite to give us the details of all
-    # genes in the virtual contig
-    my $NO=3;
+
     my @colours;
     return unless $Config->{'legend_features'};
     my %features = %{$Config->{'legend_features'}};
@@ -57,32 +56,27 @@ sub _init {
         $y++ unless $x==0;
         $x=0;
         while( my ($legend, $colour) = splice @colours, 0, 2 ) {
-            if($legend ne '') { ## Draw box
-                my $rect = new Bio::EnsEMBL::Glyph::Rect({
-                    'x'         => $im_width * $x/$NO,
-                    'y'         => $y * $h * 2 + 6,
-                    'width'     => $BOX_WIDTH, 
-                    'height'    => $h,
-                    'colour'    => $colour,
-                    'absolutey' => 1,
-                    'absolutex' => 1,
-                });
-                my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-                    'x'         => $im_width * $x/$NO + $BOX_WIDTH,
-                    'y'         => $y * $h * 2 + 4,
-                    'height'    => $Config->texthelper->height($fontname),
-                    'font'      => $fontname,
-                    'colour'    => $colour,
-                    'text'      => uc(" $legend"),
-                    'absolutey' => 1,
-                    'absolutex' => 1,
-                 });
-                 $self->push($rect);
-                 $self->push($tglyph);
-             ## Write text;
-            }
+            $self->push(new Bio::EnsEMBL::Glyph::Rect({
+                'x'         => $im_width * $x/$NO_OF_COLUMNS,
+                'y'         => $y * $BOX_HEIGHT * 2 + 6,
+                'width'     => $BOX_WIDTH, 
+                'height'    => $BOX_HEIGHT,
+                'colour'    => $colour,
+                'absolutey' => 1,
+                'absolutex' => 1,
+            }));
+            $self->push(new Bio::EnsEMBL::Glyph::Text({
+                'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
+                'y'         => $y * $BOX_HEIGHT * 2 + 4,
+                'height'    => $Config->texthelper->height($FONTNAME),
+                'font'      => $FONTNAME,
+                'colour'    => $colour,
+                'text'      => uc(" $legend"),
+                'absolutey' => 1,
+                'absolutex' => 1,
+            }));
             $x++;
-            if($x==$NO) {
+            if($x==$NO_OF_COLUMNS) {
                 $x=0;
                 $y++;
             }

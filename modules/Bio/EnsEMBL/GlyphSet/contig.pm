@@ -107,9 +107,14 @@ sub _init {
                 'colour'    => $col,
                 'absolutey' => 1,
 			});
+            $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=".
+                        $vc->_chr_name()."&vc_start=".
+                        ($vc->_global_start()+$rstart-1)."&vc_end=".
+                        ($vc->_global_start()+$rend-1);
 			$glyph->{'zmenu'} = {
                     'caption' => $rid,
-                    'Contig information'     => "/$ENV{'ENSEMBL_SPECIES'}/seqentryview?seqentry=$clone&contigid=$rid",
+                    "01:Clone: $clone"   => '',
+                    '02:Centre on contig' => $glyph->{'href'}
 			} if $show_navigation;
 			
             $self->push($glyph);

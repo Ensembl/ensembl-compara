@@ -42,19 +42,23 @@ sub href {
     my ($self, $vt) = @_;
     return $self->{'config'}->{'_href_only'} eq '#tid' ?
         "#$vt->{'stable_id'}" :
-        qq(/$ENV{'ENSMEBL_SPECIES'}/geneview?db=sanger&gene=$vt->{'gene'});
+        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=sanger&gene=$vt->{'gene'});
 }
 
 sub zmenu {
     my ($self, $vt) = @_;
     my $T = $vt->{'type'};
     $T =~ s/HUMACE-//g;
-	return  {
+    my $zmenu = {
         'caption'           => "Sanger Gene",
 		"01:$vt->{'stable_id'}"    => '',
         "02:Gene: $vt->{'gene'}"   => $self->href( $vt ),
-		"03:Sanger curated ($T)"   => ''
+		"04:Sanger curated ($T)"   => ''
     };
+    $zmenu->{"03:Transcript"} =
+        qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=sanger&peptide=$vt->{'translation'}) if defined $vt->{'translation'};
+
+	return $zmenu;
 }
 
 sub text_label {

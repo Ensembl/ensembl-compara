@@ -70,6 +70,7 @@ sub _init {
     my $text = '';
     my $empty_flag =1;
 
+    my $STRAND = $self->strand();
     if($group==1) {
 	    my %grouped;
 	    foreach my $f(@features){
@@ -82,7 +83,9 @@ sub _init {
             }
             next if ($f->das_type_id() =~ /contig/i);       # raw_contigs
             next if ($f->das_type_id() =~ /karyotype/i);    # karyotype 
-		    my $fid = $f->das_id;
+    		next if $strand eq 'b' &&
+                ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
+    	    my $fid = $f->das_id;
 		    next unless $fid;
 		    $fid = "G:".$f->das_group_id if $f->das_group_id;
 		    $grouped{$fid} = [] unless(exists $grouped{$fid});
@@ -100,7 +103,6 @@ sub _init {
 		foreach my $value (values %grouped) {
 			my $f = $value->[0];
 		## Display if not stranded OR
-    		next if ( $strand eq 'b' && $f->strand() != $self->strand() );
 			my @features = sort { $a->das_start <=> $b->das_start } @$value;
 			my $start = $features[0]->das_start;
 			my $end = $features[-1]->das_end;
@@ -193,7 +195,9 @@ sub _init {
     	    next if ($f->das_type_id() =~ /karyotype/i);    # karyotype bands
 #            print STDERR "passed type test\n";
 	        $empty_flag =0; # We have a feature (its on one of the strands!)
-    		next if ( $strand eq 'b' && $f->strand() != $self->strand() );
+    		next if $strand eq 'b' &&
+                ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
+                
 #            print STDERR "passed strand test\n";
         
         	### A general list of features we don't want to draw via DAS ###
