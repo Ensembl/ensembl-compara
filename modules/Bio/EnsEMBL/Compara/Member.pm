@@ -428,8 +428,12 @@ sub genome_db {
 =cut
 
 sub sequence {
-  my $self = shift;
-  $self->{'_sequence'} = shift if(@_);
+  my $self = shift;#
+
+  if(@_) {
+    $self->{'_sequence'} = shift;
+    return $self->{'_sequence'};
+  }
 
   if(!defined($self->{'_sequence'}) and
      defined($self->sequence_id()) and     
@@ -454,8 +458,12 @@ sub sequence {
 
 sub seq_length {
   my $self = shift;
-  $self->{'_seq_length'} = shift if(@_);
-  
+
+  if(@_) {
+    $self->{'_seq_length'} = shift;
+    return $self->{'_seq_length'};
+  }
+
   if(!defined($self->{'_seq_length'}) and
      defined($self->sequence_id()) and
      defined($self->adaptor))
