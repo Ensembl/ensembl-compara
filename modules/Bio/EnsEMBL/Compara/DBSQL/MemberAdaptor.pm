@@ -618,16 +618,22 @@ sub store {
                               chr_name, chr_start, chr_end)
                             VALUES (?,?,?,?,?,?,?,?,?,?)");
 
-  $sth->execute($member->stable_id,
-                $member->version,
-                $member->source_id,
-                $member->taxon_id,
-                $member->genome_db_id,
-                $member->sequence_id,
-                $member->description,
-                $member->chr_name,
-                $member->chr_start,
-                $member->chr_end);
+  eval {                            
+    $sth->execute($member->stable_id,
+                  $member->version,
+                  $member->source_id,
+                  $member->taxon_id,
+                  $member->genome_db_id,
+                  $member->sequence_id,
+                  $member->description,
+                  $member->chr_name,
+                  $member->chr_start,
+                  $member->chr_end);
+  };
+  if($@) {
+    warn("unable to store stable_id=".$member->stable_id."\n");
+    warn("$@");
+  }                
 
   $member->dbID( $sth->{'mysql_insertid'} );
 
