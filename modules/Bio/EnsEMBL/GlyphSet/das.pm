@@ -67,12 +67,12 @@ sub _init {
     my $h = $self->{'textheight'};
     
     my @features;
-    warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
-    warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
+    # warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
+    # warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
     eval{
         @features = grep { $_->das_type_id() !~ /(contig|component|karyotype)/i } @{$vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[]};
     };
-    warn map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
+    # warn map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
     if($@) {
         print STDERR "----------\n",$@,"---------\n";
         return;
