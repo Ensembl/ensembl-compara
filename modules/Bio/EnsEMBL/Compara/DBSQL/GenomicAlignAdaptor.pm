@@ -102,12 +102,9 @@ sub store {
       $self->throw( "dna_fragment in GenomicAlign is not in DB" );
      }
   }
-
   # all clear for storing
   for my $ga ( @$genomic_aligns ) {
-    
     my $method_link_id = $self->_method_link_id_by_alignment_type($ga->alignment_type);
-
     unless (defined $method_link_id) {
       $self->throw("There is no method_link with this type [".$ga->alignment_type."] in the DB.");
     }
@@ -121,17 +118,38 @@ sub store {
 			     "\"".$ga->cigar_line()."\"",
                              $ga->group_id,
                              $ga->level_id,
-                             $ga->revserse_strand).
+                             $ga->strands_reversed).
 	  ")" );
   }
-  
   my $sth = $self->prepare( $sql.join( ",", @values ));
   $sth->execute();
 }
      
  
 
-
+sub store_daf {
+  my ($self, $dafs, $dnafrag, $hdnafrag, $alignment_type) = @_;
+  my @gas;
+  foreach my $daf (@{$dafs}) {
+    my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new_fast
+      ({'consensus_dnafrag' => $dnafrag,
+        'consensus_start' => $daf->start,
+        'consensus_end' => $daf->end,
+        'query_dnafrag' => $hdnafrag,
+        'query_start' => $daf->hstart,
+        'query_end' => $daf->hend,
+        'query_strand' => $daf->hstrand,
+        'alignment_type' => $alignment_type,
+        'score' => $daf->score,
+        'perc_id' => $daf->percent_id,
+        'group_id' => $daf->group_id,
+        'level_id' => $daf->level_id,
+        'cigar_line' => $daf->cigar_string
+       });
+          push @gas, $ga;
+  }
+  $self->store(\@gas);
+}
 
 
 =head2 _fetch_all_by_DnaFrag_GenomeDB_direct
