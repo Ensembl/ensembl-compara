@@ -4,13 +4,38 @@ use strict;
 
 # to work you have to get the pmatch output from /nfs/disk5/ms2/bin/pmatch
 # EXIT STATUS
-# 1 Query id and target id have been stored in 2 different indices.
+# 1 The input FASTA file $fasta contains duplicated id entries
+# 2 Query id and target id have been stored in 2 different indices.
 
 my ($fasta,$fastaindex,$fasta_nr,$redundant_file) = @ARGV;
 
+open FASTA, $fasta ||
+  die "Could not open $fasta, $!\n";
+
+my @all_ids;
+my %ids_already_seen;
+
+while (my $line = <FASTA>) {
+  if ($line =~ /^>(\S+)\s*.*$/) {
+    my $id = $1;
+    if ($ids_already_seen{$id}) {
+      warn "The input FASTA file $fasta contains duplicated id entries, e.g. $id
+Make sure that is not the case.
+EXIT 1;"
+    }
+    push @all_ids, $id;
+    $ids_already_seen{$id} = 1;
+  }
+}
+
+undef %ids_already_seen;
+
+close FASTA;
+
+#open PM, "pmatch_ms2 $fasta $fasta|" ||
+#  die "Can not open a filehandle in the pmatch output, $!\n";
 
 my $pmatch_file = "/acari/work7a/abel/family_19_2/tmp/metazoa_19_2.pmatch.nr.gz";
-#my $pmatch_file = "test2";
 
 if ($pmatch_file =~ /\.gz/) {
   open PM, "gunzip -c $pmatch_file|" ||
@@ -59,9 +84,22 @@ EXIT 1";
   }
 }
 
-foreach my $redundancy (@redundancies) {
-  print join " ",@{$redundancy},"\n";
+#foreach my $redundancy (@redundancies) {
+#  print join " ", @{$redundancy},"\n";
+#}
+
+open ID, ">ids_file";
+
+foreach my $id (@all_ids) {
+  next if ($stored_at_index{$id});
+  print ID $id,"\n";
 }
+
+foreach my $redundancy (@redundancies) {
+  print ID $redundancy->[0],"\n";
+}
+
+close ID;
 
 exit 0;
 
