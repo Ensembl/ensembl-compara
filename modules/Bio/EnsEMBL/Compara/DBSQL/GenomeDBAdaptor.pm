@@ -88,15 +88,6 @@ sub fetch_by_dbID{
      return undef; # return undef if fed a bogus dbID
    }
 
-   # set up the dbadaptor for this genome db
-   # this could have been added after the cache was created which is why
-   # it is re-added every request
-   my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
-
-   if (defined $dba) {
-     $gdb->db_adaptor($dba);
-   }
-
    return $gdb;
 }
 
@@ -121,17 +112,8 @@ sub fetch_all {
 
   my @genomeDBs = values %{$self->{'_cache'}};
 
-  for my $gdb ( @genomeDBs ) {
-    my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
-    if($dba) {
-      $gdb->db_adaptor($dba);
-    }
-  }
-    
   return \@genomeDBs;
 } 
-
-
 
 =head2 fetch_by_name_assembly
 
@@ -174,8 +156,6 @@ sub fetch_by_name_assembly{
 
    return $self->fetch_by_dbID($id);
 }
-
-
 
 =head2 store
 
@@ -431,6 +411,19 @@ sub get_all_db_links {
   return \@gdb_list;
 }
 
+
+sub deleteObj {
+  my $self = shift;
+
+  if($self->{'_cache'}) {
+    warn "deleting the cache\n";
+    foreach my $dbID (keys %{$self->{'_cache'}}) {
+      delete $self->{'_cache'}->{$dbID};
+    }
+  }
+
+  $self->SUPER::deleteObj;
+}
 
 1;
 
