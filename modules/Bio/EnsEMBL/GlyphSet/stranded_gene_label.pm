@@ -35,7 +35,7 @@ sub _init {
     my @bitmap         = undef;
     my $im_width       = $Config->image_width();
     my $type           = $Config->get('stranded_gene_label','src');
-    my @allgenes       = $VirtualContig->get_all_Genes_exononly();
+    my @allgenes       = $VirtualContig->get_all_VirtualGenes_startend();
     my %highlights;
     @highlights{$self->highlights()} = ();    # build hashkeys of highlight list
 
@@ -70,13 +70,10 @@ sub _init {
 	$start = $coords[0];
 	$end   = $coords[-1];   
 
+    next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());
+    
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
-
-	    #########
-	    # skip if this one isn't on the strand we're drawing
-	    #
-	    next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());
-
+	    ########## skip if this one isn't on the strand we're drawing
 	    if($vg->is_known()) {
                 # this is duplicated  from gene_label.pm, so needs refactoring ...
 		$colour = $known_col;
@@ -90,11 +87,8 @@ sub _init {
             last if($db eq 'HUGO');
 		}
 
-		if( ! defined $label ) {
-                    $label = $vg->id(); # fallback on ENSG
-                } 
-
-                # check for highlighting
+		$label = $vg->id() unless( defined $label );
+        # check for highlighting
 		if (exists $highlights{$label}){
 		    $hi_colour = $Config->get( 'gene', 'hi');
 		}
@@ -103,11 +97,7 @@ sub _init {
 		$label	= "NOVEL";
 	    }
 	} else {
-	    #########
-	    # skip if it's not on the strand we're drawing
-	    #
-	    next if(($vg->each_Transcript())[0]->strand_in_context($VirtualContig->id()) != $self->strand());
-	    
+	    ########## skip if it's not on the strand we're drawing
 	    $colour = $ext_col;
 	    $label  = $vg->id;
 	    $label  =~ s/gene\.//;
