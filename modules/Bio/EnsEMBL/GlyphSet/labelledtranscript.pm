@@ -155,10 +155,10 @@ sub _init {
             	'00:Ensembl transcript'        => "",
              	'01:Transcript information'    => "/perl/geneview?gene=$vgid",
 		'02:Protein information'       => "/perl/protview?peptide=$pid",
-            	'05:Protein sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
+            	'05:Protein sequence (FASTA)'  => "/perl/exportview?type=feature&ftype=peptide&id=$tid",
             	'03:Supporting evidence'       => "/perl/transview?transcript=$tid",
             	'04:Expression information'    => "/perl/sageview?alias=$vgid",
-            	'06:cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
+            	'06:cDNA sequence'             => "/perl/exportview?type=feature&ftype=cdna&id=$tid",
 	    };
 	}
         my @exons = $transcript->each_Exon_in_context($vcid);
