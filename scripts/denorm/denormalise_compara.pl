@@ -22,7 +22,7 @@ while( <S> ) {
 
 
 my $glob = 50;
-
+$| = 1;
 my ($current_start,$current_end,$prev_id,$current_m_start,$current_m_end,$current_strand);
 
 while( <> ) {
@@ -57,6 +57,12 @@ while( <> ) {
 	# protect us against micro-matches... why do we have them?
 	my $min_size = 30;
 	if( $current_end - $current_start < $min_size || $current_m_end - $current_m_start < $min_size ) {
+	    $current_start = $start;
+	    $current_end   = $end;
+	    $prev_id       = $align_id;
+	    $current_m_start = $m_start;
+	    $current_m_end   = $m_end;
+	    $current_strand  = $strand;
 	    next;
 	}
 	
@@ -101,12 +107,13 @@ sub map_to_denormalised {
 
     my $block = int($pos / 5000000);
 
-    my $start = ($block * 500000) +1;
+    my $start = ($block * 5000000) +1;
     my $end   = ($block+1) * 5000000;
 
     my $rem   = $pos - $start +1; # plus 1 for 'biological' coordinates
 
     my $id = $chr.".".$start."-".$end;
+
 
     return ($id,$rem);
 }
