@@ -370,6 +370,7 @@ sub _create_underlying_Slices {
           -requesting_slice => $self->reference_Slice,
           -method_link_species_set => $genomic_align_blocks->[0]->method_link_species_set,
           -name => $ref_species,
+          -expanded => $expanded,
       );
 #   $self->{slices}->{$ref_species}->to_Mapper($big_mapper) if (!$expanded);
   $self->{slices}->{$ref_species}->add_Slice_Mapper_pair(
@@ -393,6 +394,7 @@ sub _create_underlying_Slices {
                 -requesting_slice => $self->reference_Slice,
                 -method_link_species_set => $this_genomic_align_block->method_link_species_set,
                 -name => $species,
+                -expanded => $expanded,
             );
 #         $self->{slices}->{$species}->to_Mapper($big_mapper) if (!$expanded);
       }
