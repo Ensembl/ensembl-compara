@@ -49,45 +49,49 @@ sub new {
 
     my $self = {};
     bless $self,$class;
-
-	my ($dbID, $external_id,,$external_dbname,$seq_start,$seq_end,$strand,$dnafrag_id,$adaptor) = 
-			$self->_rearrange([qw(	DBID
-                                    EXTERNAL_ID
-                                    EXTERNAL_DBNAME
-                                    SEQ_START
-                                    SEQ_END
-                                    STRAND
-                                    DNAFRAG_ID
-                                    ADAPTOR)],@args);
-
-
-	if (defined $dbID){
-		$self->dbID($dbID);
+    
+    my ($dbID, $external_id,$external_dbname,$seq_start,$seq_end,$strand,$dnafrag_id,$seq,$adaptor) = 
+	$self->_rearrange([qw(	DBID
+				EXTERNAL_ID
+				EXTERNAL_DBNAME
+				SEQ_START
+				SEQ_END
+				STRAND
+				DNAFRAG_ID
+				SEQ
+				ADAPTOR)],@args);
+    
+    
+    if (defined $dbID){
+	$self->dbID($dbID);
+    }
+    if (defined $external_id){
+	$self->external_id($external_id);
+    }else {$self->thow("Protein must have an external_id");}
+    
+    if (defined $external_dbname){
+	$self->external_dbname($external_dbname);
+    }
+    if (defined $seq_start){
+	$self->seq_start($seq_start);
+    }
+    if (defined $seq_end){
+	$self->seq_end($seq_end);
+    }
+    if (defined $strand){
+	$self->strand($strand);
+    }
+    if (defined $dnafrag_id){
+	$self->dnafrag_id($dnafrag_id);
+    }
+    if (defined $seq){
+	$self->seq($seq);
+    }
+    if (defined $adaptor){
+	$self->adaptor($adaptor);
 	}
-	if (defined $external_id){
-		$self->external_id($external_id);
-	}else {$self->thow("Protein must have an external_id");}
-
-	if (defined $external_dbname){
-		$self->external_dbname($external_dbname);
-	}
-	if (defined $seq_start){
-		$self->seq_start($seq_start);
-	}
-	if (defined $seq_end){
-		$self->seq_end($seq_end);
-	}
-	if (defined $strand){
-		$self->strand($strand);
-	}
-	if (defined $dnafrag_id){
-		$self->dnafrag_id($dnafrag_id);
-	}
-	if (defined $adaptor){
-		$self->adaptor($adaptor);
-	}
-
-	return $self;
+    
+    return $self;
 }
 
 
@@ -110,23 +114,23 @@ sub dbID {
    return $self->{'dbID'};
 
 }
-=head2 peptide_sequence_id
+=head2 protein_sequence_id
 
- Title   : peptide_sequence_id
- Usage   : $obj->peptide_sequence_id($newval)
+ Title   : protein_sequence_id
+ Usage   : $obj->protein_sequence_id($newval)
  Function:
- Returns : value of peptide_sequence_id
+ Returns : value of protein_sequence_id
  Args    : newvalue (optional)
 
 =cut
 
-sub peptide_sequence_id{
+sub protein_sequence_id{
    my $self = shift;
    if( @_ ) {
       my $value = shift;
-      $self->{'peptide_sequence_id'} = $value;
+      $self->{'protein_sequence_id'} = $value;
    }
-   return $self->{'peptide_sequence_id'};
+   return $self->{'protein_sequence_id'};
 
 }
 
@@ -202,19 +206,19 @@ sub stable_id{
 =cut
  
 sub seq {
-   my ($self,$value) = @_;
- 
-   if (defined $value) {
-     if(! $self->validate_seq($value)) {
-           $self->throw("Attempting to set the sequence to [$value] which does not look healthy");
-       }
-     $self->{'seq'} = $value;
-   }
-   if (! exists ($self->{'seq'})){
-     $self->throw("No ProteinAdaptor attached to this Protein object. Can't fetch peptide sequence") unless defined($self->adaptor);
-     $self->{'seq'} = $self->adaptor->fetch_peptide_seq($self->peptide_sequence_id);
-   }
-   return $self->{'seq'};
+    my ($self,$value) = @_;
+    
+    if (defined $value) {
+	if(! $self->validate_seq($value)) {
+	    $self->throw("Attempting to set the sequence to [$value] which does not look healthy");
+	}
+	$self->{'seq'} = $value;
+    }
+    if (! exists ($self->{'seq'})){
+	$self->throw("No ProteinAdaptor attached to this Protein object. Can't fetch protein sequence") unless defined($self->adaptor);
+	$self->{'seq'} = $self->adaptor->fetch_protein_seq($self->protein_sequence_id);
+    }
+    return $self->{'seq'};
 }
 
 

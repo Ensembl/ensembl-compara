@@ -479,30 +479,41 @@ sub get_all_alignments{
 =cut
 
 sub store_alignment{
-	my ($self,$fam,$aln,$type) = @_;
-	if ($type =~/clustalw/){ 
+	my ($self,$famid,$aln,$type) = @_;
+
+	(! $fam->isa('Bio::EnsEMBL::Compara::Family') && $self->throw("Did not net get a Bio::EnsEMBL::Compara::Family but a $fam");
+	(! $aln->isa('Bio::SimpleAlign') && $self->throw("Did not get a Bio::SimpleAlign but a $aln");
+
+	 $type || $self->throw("Need to specify type of alignment");
+
+	 my $q = "INSERT INTO family_alignment(family_id,alignment_type,alignment_cigar_line)
+			 VALUES ($famid ,'$type','".$aln->cigar_line."')"; 
+	 $sth = $self->prepare($q);
+	 $sth->execute();
+	 return $sth->{'mysql_insertid'};
+#	if ($type =~/clustalw/){ 
 		#not sure of a better way of doing this than to writing to a tmp file
 		#since SimpleAlign takes a file handle and prints the alignment in a clustalw
 		#format
-		open (ALN,">tmpfile");
-		$aln->write_clustalw(\*ALN);
-		close (ALN);
-	
-		open (ALN, "tmpfile");
-		my @alnstr = <ALN>;
-		close (ALN);
-		my $alnstr = $self->_process_clustalw(@alnstr);# need to process clustalw output for storage into mysql
-	        my $famid = $fam->dbID;	
-		my $q = "INSERT INTO family_alignment(family_id,alignment_type,alignment)
-			 VALUES ($famid ,'$type','$alnstr')";
-		$q = $self->prepare($q);
-		$q->execute();
-
-		
-	}
-	else {
-		$self->throw("Sorry storing alignment of type $type not functional yet!");
-	}
+#		open (ALN,">tmpfile");
+#		$aln->write_clustalw(\*ALN);
+#		close (ALN);
+#	
+#		open (ALN, "tmpfile");
+#		my @alnstr = <ALN>;
+#		close (ALN);
+#		my $alnstr = $self->_process_clustalw(@alnstr);# need to process clustalw output for storage into mysql
+#	        my $famid = $fam->dbID;	
+#		my $q = "INSERT INTO family_alignment(family_id,alignment_type,alignment)
+#			 VALUES ($famid ,'$type','$alnstr')";
+#		$q = $self->prepare($q);
+#		$q->execute();
+#
+#		
+#	}
+#	else {
+#		$self->throw("Sorry storing alignment of type $type not functional yet!");
+#	}
 }
 
 =head2 _process_clustalw

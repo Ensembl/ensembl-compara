@@ -86,9 +86,9 @@ create table genomic_align_block (
 
 CREATE TABLE protein (
   protein_id int(10) unsigned DEFAULT '0' NOT NULL auto_increment,
-  peptide_sequence_id int(10) NOT NULL,
+  protein_sequence_id int(10) NOT NULL,
   protein_external_id varchar(40) DEFAULT '0' NOT NULL,
-  peptide_external_dbname varchar(40) NOT NULL,
+  protein_external_dbname varchar(40) NOT NULL,
   dnafrag_id int(10) DEFAULT '' ,
   seq_start int(10) unsigned DEFAULT '0' ,
   seq_end int(10) unsigned DEFAULT '0' ,
@@ -96,7 +96,7 @@ CREATE TABLE protein (
 
   PRIMARY KEY (protein_id),
   KEY (dnafrag_id),
-  KEY (peptide_sequence_id),
+  KEY (protein_sequence_id),
   UNIQUE KEY (protein_external_id)
 
 );
@@ -104,22 +104,19 @@ CREATE TABLE protein (
 # SEMANTICS
 # protein_id - internal 
 # protein_external_id - id of protein in another database (stable_id if external_id is an ensembl core database)
-# protein_db_id - foreign key to proteinDB table
 # dnafrag_id - foreign key (dnafrag internal id from dnafrag table)
 # seq_start, seq_end - coordinates of the protein on the dnafrag
-# protein_db_id - foreign key of protein_db table
 
-
-CREATE TABLE peptide_sequence(
-       peptide_sequence_id int(10) NOT NULL auto_increment,
+CREATE TABLE protein_sequence(
+       protein_sequence_id int(10) NOT NULL auto_increment,
        sequence mediumtext,
 
-       PRIMARY KEY(peptide_sequence_id)
+       PRIMARY KEY(protein_sequence_id)
 );
 
 # SEMANTICS
-# peptide_sequence_id - internal id 
-# sequence - peptide sequence
+# protein_sequence_id - internal id 
+# sequence - protein sequence
 
 CREATE TABLE score (
   score_id    int(10) NOT NULL auto_increment,
@@ -191,14 +188,14 @@ CREATE TABLE family_stable_id (
 #
 CREATE TABLE family_alignment (
    family_alignment_id	int(10) unsigned NOT NULL auto_increment,
-   family_id int(10) NOT NULL, # ensembl family ids
-   alignment_type  varchar(40) NOT NULL,
-   alignment mediumtext,
+   family_id int(10) unsigned NOT NULL, # ensembl family ids
+   alignment_type varchar(40) NOT NULL,
+   alignment_cigar_line mediumtext,
 
    PRIMARY KEY(family_alignment_id),
-   UNIQUE KEY(family_id ,alignment_type)
+   UNIQUE KEY(family_id ,alignment_type),
+   KEY(alignment_type)
 );
-
 
 # SEMANTICS
 # family_alignment_id - internal id

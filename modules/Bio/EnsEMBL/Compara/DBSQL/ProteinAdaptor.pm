@@ -70,10 +70,10 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   my $sth = $self->prepare("select protein_external_id, protein_external_dbname,peptide_sequence_id,seq_start, seq_end, strand,dnafrag_id from protein where protein_id = $dbid");
+   my $sth = $self->prepare("select protein_external_id, protein_external_dbname,protein_sequence_id,seq_start, seq_end, strand,dnafrag_id from protein where protein_id = $dbid");
    $sth->execute;
 
-   my ($external_id,$external_dbname,$peptide_sequence_id,$seq_start,$seq_end,$strand,$dnafrag_id) = $sth->fetchrow_array();
+   my ($external_id,$external_dbname,$protein_sequence_id,$seq_start,$seq_end,$strand,$dnafrag_id) = $sth->fetchrow_array();
 
    if( !defined $external_id) {
        $self->throw("No protein with this dbID $dbid");
@@ -83,15 +83,15 @@ sub fetch_by_dbID{
    my $protein = Bio::EnsEMBL::Compara::Protein->new( 	-dbid 	=> $dbid,
 														-external_id	=> $external_id,
 														-external_dbname=> $external_dbname,
-														-peptide_sequence_id=> $peptide_sequence_id,
+														-protein_sequence_id=> $protein_sequence_id,
 														-seq_start	=> $seq_start,
 														-seq_end	=> $seq_end,
 														-strand	=> $strand,
 														-dnafrag_id	=> $dnafrag_id);
 
-   my $query = "Select sequence from peptide_sequence where peptide_sequence_id = ?";
+   my $query = "Select sequence from protein_sequence where protein_sequence_id = ?";
    $sth = $self->prepare($query);
-   $sth->execute($peptide_sequence_id);
+   $sth->execute($protein_sequence_id);
 
    my ($seq) = $sth->fetchrow_array;
 
@@ -199,17 +199,17 @@ sub store{
    }
 
 
-   my $sth = $self->prepare("insert into peptide_sequence (sequence) values (?)");
+   my $sth = $self->prepare("insert into protein_sequence (sequence) values (?)");
    $sth->execute($protein->seq);
 
-   $protein->peptide_sequence_id($sth->{'mysql_insertid'});
+   $protein->protein_sequence_id($sth->{'mysql_insertid'});
 
-   my $sth = $self->prepare("insert into protein (protein_external_id,protein_external_dbname,peptide_sequence_id,seq_start,seq_end,strand,dnafrag_id) values (?,?,?,?,?,?,?)");
+   my $sth = $self->prepare("insert into protein (protein_external_id,protein_external_dbname,protein_sequence_id,seq_start,seq_end,strand,dnafrag_id) values (?,?,?,?,?,?,?)");
 
 
    # Should we flag if the protein has no dnafrag attached?
 
-   $sth->execute($protein->external_id,$protein->external_dbname,$protein->peptide_sequence_id,$protein->seq_start,$protein->seq_end,$protein->strand,$protein->dnafrag_id);
+   $sth->execute($protein->external_id,$protein->external_dbname,$protein->protein_sequence_id,$protein->seq_start,$protein->seq_end,$protein->strand,$protein->dnafrag_id);
 
    $protein->dbID($sth->{'mysql_insertid'});
    $protein->adaptor($self);
@@ -259,30 +259,30 @@ sub store_if_needed {
    }
 }
 
-=head2 fetch_peptide_seq
+=head2 fetch_protein_seq
 
- Title   : fetch_peptide_seq
- Usage   : $self->fetch_peptide_seq($protein->dbID)
+ Title   : fetch_protein_seq
+ Usage   : $self->fetch_protein_seq($protein->dbID)
  Function: fetches the seq of a protein with a given dbID
  Example :
- Returns : peptide sequence as a string
+ Returns : protein sequence as a string
  Args    : int dbID
 
 
 =cut
 
-sub fetch_peptide_seq {
+sub fetch_protein_seq {
 
   my ($self,$value);
 
-  $self->throw("Trying to fetch peptide seq without giving a peptide sequence dbID");
+  $self->throw("Trying to fetch protein seq without giving a protein sequence dbID");
 
-  my $query = "Select sequence from peptide_sequence where peptide_sequence_id=? ";
+  my $query = "Select sequence from protein_sequence where protein_sequence_id=? ";
   my $sth = $self->prepare($query);
   $sth->execute($value); 
 
   my ($str) = $sth->fetchrow_array 
-        or $self->throw("No sequence stored for peptide sequence id $value");
+        or $self->throw("No sequence stored for protein sequence id $value");
 
   return $str;
 
