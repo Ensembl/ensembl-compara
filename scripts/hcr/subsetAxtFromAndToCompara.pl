@@ -89,7 +89,10 @@ exit 1 unless (-e $subsetAxt_executable);
 
 # Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
 # if no reg_conf file is given.
+if (defined $reg_conf) {
 Bio::EnsEMBL::Registry->load_all($reg_conf);
+}
+else {print " Need Registry file \n"; exit 2;}
 
 my $qy_sa = Bio::EnsEMBL::Registry->get_adaptor($qy_species,'core','Slice');
 throw "Cannot get adaptor for ($qy_species,'core','Slice')" if (!$qy_sa);
@@ -177,8 +180,9 @@ sub generateAxt {
     $header .= $hend . " ";
     $header .= $hstrand . " ";
     $aligned_sequences .= $ga->aligned_sequence . "\n";
-    
+#print STDERR $ga->dbID."\n$header\n";    
     $header .= $gab->score . "\n";
+#print STDERR "and after\n$header\n";    
 
     print F $header;
     print F $aligned_sequences;
