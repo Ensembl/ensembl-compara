@@ -35,6 +35,16 @@ sub y {
     return $miny;
 }
 
+sub y_transform {
+    my ($this, $delta) = @_;
+    my @pts = @{$this->points()};
+    my @newpts = ();
+    while( my($x,$y) = splice(@pts,0,2) ) {
+        push @newpts, $x, $y + $delta
+    }
+    $this->points( \@newpts );
+}
+
 sub width {
     my ($this) = @_;
     my $maxx = undef;
