@@ -1,0 +1,10 @@
+delete from analysis where analysis_id>4;
+delete from input_id_analysis where analysis_id>1;
+delete from member;
+delete from peptide_align_feature;
+delete from subset;
+delete from subset_member;
+delete from job;
+delete from job_status;
+delete from rule_goal where rule_id>2;
+delete from rule_conditions where rule_id>2;

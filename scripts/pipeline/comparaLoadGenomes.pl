@@ -8,6 +8,7 @@ use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::SimpleRule;
 use Bio::EnsEMBL::DBLoader;
 
 
@@ -20,7 +21,7 @@ my %compara_conf = ();
 $compara_conf{'-port'} = 3306;
 
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
-my ($subset_id, $genome_db_id, $prefix, $fastadir);
+my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
@@ -28,7 +29,8 @@ GetOptions('help'     => \$help,
            'dbport=i' => \$port,
            'dbuser=s' => \$user,
            'dbpass=s' => \$pass,
-           'dbname=s' => \$dbname
+           'dbname=s' => \$dbname,
+           'v' => \$verbose,
           );
 
 if ($help) { usage(); }
@@ -100,7 +102,7 @@ sub parse_conf {
     my @conf_list = @{do $conf_file};
 
     foreach my $confPtr (@conf_list) {
-      print("HANDLE type " . $confPtr->{TYPE} . "\n");
+      print("HANDLE type " . $confPtr->{TYPE} . "\n") if($verbose);
       if($confPtr->{TYPE} eq 'COMPARA') {
         %compara_conf = %{$confPtr};
       }
@@ -129,7 +131,8 @@ sub prepareGenomeAnalysis
   my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
-      -input_id_type   => 'genome_db_id'
+      -input_id_type   => 'genome_db_id',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy'
     );
   $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
 
@@ -149,6 +152,10 @@ sub prepareGenomeAnalysis
   unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
     $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
   }
+  my $simplerule = Bio::EnsEMBL::Compara::SimpleRule->new(
+      '-condition_analysis' => $submit_analysis,
+      '-goal_analysis'      => $load_analysis);
+  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($simplerule);
 
   
   my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
@@ -165,7 +172,32 @@ sub prepareGenomeAnalysis
   unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
     $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
   }
+  $simplerule = Bio::EnsEMBL::Compara::SimpleRule->new(
+      '-condition_analysis' => $load_analysis,
+      '-goal_analysis'      => $dumpfasta_analysis);
+  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($simplerule);
 
+
+  my $blastrules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateBlastRules',
+      -input_id_type   => 'genome_db_id',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules',
+      -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
+    );
+  $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
+
+  $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$blastrules_analysis);
+  $rule->add_condition($dumpfasta_analysis->logic_name());
+  unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
+    $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+  }
+  $simplerule = Bio::EnsEMBL::Compara::SimpleRule->new(
+      '-condition_analysis' => $dumpfasta_analysis,
+      '-goal_analysis'      => $blastrules_analysis);
+  $self->{'comparaDBA'}->get_adaptor('SimpleRule')->store($simplerule);
+  
+  
   # create an unlinked analysis called blast_template
   # it will not have rule goal/conditions so it will never execute
   my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
@@ -217,21 +249,21 @@ sub submitGenome
   my $species  = shift;  #hash reference
   my $analysis = shift;  #reference to Analysis object
 
-  print("SubmitGenome for ".$species->{abrev}."\n");
+  print("SubmitGenome for ".$species->{abrev}."\n") if($verbose);
 
   #
   # connect to external genome database
   #
   my $locator = $species->{dblocator};
   unless($locator) {
-    print("  dblocator not specified, building one\n");
+    print("  dblocator not specified, building one\n")  if($verbose);
     $locator = $species->{module}."/host=".$species->{host};
     $species->{port}   && ($locator .= ";port=".$species->{port});
     $species->{user}   && ($locator .= ";user=".$species->{user});
     $species->{pass}   && ($locator .= ";pass=".$species->{pass});
     $species->{dbname} && ($locator .= ";dbname=".$species->{dbname});
   }
-  print("    locator = $locator\n");
+  print("    locator = $locator\n")  if($verbose);
 
   my $genomeDBA;
   eval {
@@ -257,15 +289,16 @@ sub submitGenome
   $genome->name($genome_name);
   $genome->assembly($assembly);
 
-  print("  about to store genomeDB\n");
-  print("    taxon_id = '".$genome->taxon_id."'\n");
-  print("    name = '".$genome->name."'\n");
-  print("    assembly = '".$genome->assembly."'\n");
-
   $self->{'comparaDBA'}->get_GenomeDBAdaptor->store($genome);
   $species->{'genome_db'} = $genome;
 
-  print("    genome_db id=".$genome->dbID."\n");
+ if($verbose) {
+    print("  about to store genomeDB\n");
+    print("    taxon_id = '".$genome->taxon_id."'\n");
+    print("    name = '".$genome->name."'\n");
+    print("    assembly = '".$genome->assembly."'\n");
+    print("    genome_db id=".$genome->dbID."\n");
+  }
 
   #
   # now fill table genome_db_extra
@@ -289,25 +322,33 @@ sub submitGenome
               ",phylum='" . $species->{phylum}."'".
               ",locator='".$locator."'";
   }
-  print("$sql\n");
+  print("$sql\n") if($verbose);
   $sth = $self->{'comparaDBA'}->prepare( $sql );
   $sth->execute();
   $sth->finish();
-  print("done SQL\n");
+  print("done SQL\n") if($verbose);
 
   #
   # now configure the input_id_analysis table with the genome_db_id
   #
+  my $input_id = "{gdb=>".$genome->dbID."}";
   eval {
-    print("about to PIC\n");
+    print("about to store_input_id_analysis\n") if($verbose);
     $self->{'pipelineDBA'}->get_StateInfoContainer->store_input_id_analysis(
-        $genome->dbID, #input_id
+        $input_id,
         $analysis,     #SubmitGenome analysis
         'gaia',        #execution_host
         0              #save runtime NO (ie do insert)
       );
-      print("  stored genome_db_id in input_id_analysis\n");
+      print("  stored genome_db_id in input_id_analysis\n") if($verbose);
   };
+
+  $self->{'comparaDBA'}->get_AnalysisJobAdaptor->create_new_job(
+      -input_id       => $input_id,
+      -analysis_id    => $analysis->dbID,
+      -input_job_id   => 0,
+      -block          => 'YES',
+      );
 
 }
 

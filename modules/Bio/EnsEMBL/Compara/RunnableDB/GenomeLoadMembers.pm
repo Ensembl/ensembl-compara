@@ -56,7 +56,6 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::Blast;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 
@@ -66,10 +65,61 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 
-
+use Bio::EnsEMBL::Pipeline::RunnableDB;
 use vars qw(@ISA);
-
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+
+sub init {
+  my $self = shift;
+  #$self->SUPER::init();
+  $self->batch_size(1);
+  $self->carrying_capacity(20);
+}
+
+=head2 batch_size
+  Arg [1] : (optional) string $value
+  Title   :   batch_size
+  Usage   :   $value = $self->batch_size;
+              $self->batch_size($new_value);
+  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
+               before querying the database for the next job batch.  Used by the
+               Hive system to manage the number of workers needed to complete a
+               particular job type.
+  DefaultValue : 1
+  Returntype : integer scalar
+=cut
+
+sub batch_size {
+  my $self = shift;
+  my $value = shift;
+
+  $self->{'_batch_size'} = 1 unless($self->{'_batch_size'});
+  $self->{'_batch_size'} = $value if($value);
+
+  return $self->{'_batch_size'};
+}
+
+=head2 carrying_capacity
+  Arg [1] : (optional) string $value
+  Title   :   batch_size
+  Usage   :   $value = $self->carrying_capacity;
+              $self->carrying_capacity($new_value);
+  Description: Defines the total number of Workers of this RunnableDB for a particular
+               analysis_id that can be created in the hive.  Used by Queen to manage
+               creation of Workers.
+  DefaultValue : 1
+  Returntype : integer scalar
+=cut
+
+sub carrying_capacity {
+  my $self = shift;
+  my $value = shift;
+
+  $self->{'_carrying_capacity'} = 1 unless($self->{'_carrying_capacity'});
+  $self->{'_carrying_capacity'} = $value if($value);
+
+  return $self->{'_carrying_capacity'};
+}
 
 =head2 fetch_input
 
@@ -85,13 +135,24 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->throw("No input_id") unless defined($self->input_id);
+  print("input_id = ".$self->input_id."\n");
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
+  my $input_hash = eval($self->input_id);
+  my $genome_db_id = $input_hash->{'gdb'};
+  print("gdb = $genome_db_id\n");
+  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db);
 
+  #get the Compara::GenomeDB object for the genome_db_id
+  $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+  
+  
   #using genome_db_id, connect to external core database
-  $self->{'coreDBA'} = $self->connectGenomeCore($self->input_id);
+  $self->{'coreDBA'} = $self->connectGenomeCore($genome_db_id);
 
   #global boolean control value (whether the genes are also stored as members)
   $self->{'store_genes'} = 1;
@@ -132,8 +193,13 @@ sub run
 
 sub write_output 
 {  
+  my $self = shift;
   #need to subclass otherwise it defaults to a version that fails
   #just return 1 so success
+
+  my $output_id = "{gdb=>" . $self->{'genome_db'}->dbID .
+                  ",ss=>" . $self->{'pepSubset'}->dbID . "}";
+  $self->input_id($output_id);                    
   return 1;
 }
 
@@ -174,10 +240,6 @@ sub connectGenomeCore
 sub loadMembersFromCoreSlices
 {
   my $self = shift;
-  my $genome_db_id = $self->input_id();
-
-  #get the Compara::GenomeDB object for the genome_db_id
-  $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 
   #create subsets for the gene members, and the longest peptide members
   $self->{'pepSubset'}  = Bio::EnsEMBL::Compara::Subset->new(-name=>$self->{'genome_db'}->name . ' longest translations');
@@ -199,8 +261,8 @@ sub loadMembersFromCoreSlices
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }
-      # if($self->{'transcriptCount'} >= 1000) { last SLICE; }
-      # if($geneCount >= 1000) { last SLICE; }
+      if($self->{'transcriptCount'} >= 100) { last SLICE; }
+      # if($self->{'geneCount'} >= 1000) { last SLICE; }
     }
     # last SLICE;
   }
@@ -247,11 +309,13 @@ sub store_gene_and_all_transcripts
     print("     transcript " . $transcript->stable_id );
 
     unless (defined $transcript->translation) {
-      warn("COREDB error: No translation for transcript transcript_id" . $transcript->dbID."\n");
+      warn("\nCOREDB error: No translation for transcript transcript_id" . $transcript->dbID."\n");
+      next; #only use for Chimp
     }
 
     unless (defined $transcript->translation->stable_id) {
-      warn("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+      warn("\nCOREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+      next; #only use for Chimp
     }
 
     my $description = $self->fasta_description($gene, $transcript);
@@ -312,7 +376,8 @@ sub submitSubsetForAnalysis {
   
   print("\nSubmitSubsetForAnalysis\n");
 
-  my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
+  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
+  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
 
   my $logic_name = "SubmitPep_" .
                    $self->{'genome_db'}->dbID() .
@@ -329,7 +394,8 @@ sub submitSubsetForAnalysis {
         -db_version      => '1',
         -parameters      => "subset_id=>" . $subset->dbID().",genome_db_id=>".$self->{'genome_db'}->dbID(),
         -logic_name      => $logic_name,
-        -input_id_type   => 'MemberPep'
+        -input_id_type   => 'MemberPep',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
       );
     $self->db->get_AnalysisAdaptor()->store($analysis);
   }
@@ -340,8 +406,20 @@ sub submitSubsetForAnalysis {
   my $tryCount=0;
   my @member_id_list = @{$subset->member_id_list()};
   print($#member_id_list+1 . " members in subset\n");
-  eval {
-    foreach my $member_id (@member_id_list) {
+
+  foreach my $member_id (@member_id_list) {
+    $jobDBA->create_new_job (
+        -input_id       => $member_id,
+        -analysis_id    => $analysis->dbID,
+        -input_job_id   => 0,
+        -block          => 1
+        );
+  }
+
+  print("CREATED all analysis_jobs\n");
+      
+
+=head3
       eval {
         $tryCount++;
         $sicDBA->store_input_id_analysis($member_id, #input_id
@@ -358,7 +436,8 @@ sub submitSubsetForAnalysis {
       } # should handle the error, but ignore for now
     }
   };
-  print("CREATED all input_id_analysis\n");
+=cut
+
 
   return $logic_name;
 }

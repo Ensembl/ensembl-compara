@@ -144,6 +144,18 @@ CREATE TABLE analysis (
 
 );
 
+create table hive (
+  hive_id          int(10) NOT NULL auto_increment,
+  analysis_id      int(10) NOT NULL,
+  host	           varchar(40) DEFAULT '' NOT NULL,
+  process_id       int(10) NOT NULL,
+  work_done        int(11) DEFAULT '0' NOT NULL,
+  born	           datetime NOT NULL,
+  last_check_in    datetime NOT NULL,
+  died             datetime DEFAULT NULL,
+  cause_of_death   enum('', 'NATURAL', 'NO_WORK', 'UNKNOWN') default '' NOT NULL,
+  PRIMARY KEY (hive_id),
+);
 
 ------------------------------------------------------------------------------------
 --
@@ -176,4 +188,28 @@ CREATE TABLE simple_rule (
 );
 
 
+
+CREATE TABLE analysis_job (
+  analysis_job_id        int(10) NOT NULL auto_increment,
+  input_analysis_job_id  int(10) NOT NULL,  #analysis_job which created this from rules
+  analysis_id            int(10) NOT NULL,
+  input_id               varchar(100) not null,
+  job_claim              varchar(40) DEFAULT NULL, #UUID
+  hive_id                int(10) NOT NULL,
+  status                 enum('CREATED', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT', 'DONE') DEFAULT 'CREATED' NOT NULL,
+  retry_count            int(10) not NULL default '0',
+  completed              datetime NOT NULL,
+  result                 smallint(10) unsigned NOT NULL,
+
+  PRIMARY KEY       (analysis_job_id),
+  UNIQUE KEY        (analysis_id, input_id)
+);
+
+
+CREATE TABLE job_files (
+  analysis_job_id     int(10) NOT NULL,
+  stdout_file         varchar(255) NOT NULL,
+  stderr_file         varchar(255) NOT NULL,
+  temp_dir            varchar(255) DEFAULT ''
+);
 

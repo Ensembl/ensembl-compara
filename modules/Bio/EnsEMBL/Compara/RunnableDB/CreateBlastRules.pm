@@ -64,11 +64,69 @@ use vars qw(@ISA);
 
 @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
+sub init {
+  my $self = shift;
+  #$self->SUPER::init();
+  $self->batch_size(1);
+  $self->carrying_capacity(20);
+}
+
+=head2 batch_size
+  Arg [1] : (optional) string $value
+  Title   :   batch_size
+  Usage   :   $value = $self->batch_size;
+              $self->batch_size($new_value);
+  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
+               before querying the database for the next job batch.  Used by the
+               Hive system to manage the number of workers needed to complete a
+               particular job type.
+  DefaultValue : 1
+  Returntype : integer scalar
+=cut
+
+sub batch_size {
+  my $self = shift;
+  my $value = shift;
+
+  $self->{'_batch_size'} = 1 unless($self->{'_batch_size'});
+  $self->{'_batch_size'} = $value if($value);
+
+  return $self->{'_batch_size'};
+}
+
+=head2 carrying_capacity
+  Arg [1] : (optional) string $value
+  Title   :   batch_size
+  Usage   :   $value = $self->carrying_capacity;
+              $self->carrying_capacity($new_value);
+  Description: Defines the total number of Workers of this RunnableDB for a particular
+               analysis_id that can be created in the hive.  Used by Queen to manage
+               creation of Workers.
+  DefaultValue : 1
+  Returntype : integer scalar
+=cut
+
+sub carrying_capacity {
+  my $self = shift;
+  my $value = shift;
+
+  $self->{'_carrying_capacity'} = 1 unless($self->{'_carrying_capacity'});
+  $self->{'_carrying_capacity'} = $value if($value);
+
+  return $self->{'_carrying_capacity'};
+}
+
+
 sub fetch_input {
   my $self = shift;
 
   $self->throw("No input_id") unless defined($self->input_id);
+  print("input_id = ".$self->input_id."\n");
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
+  $self->{'create_all'} = 1;
+
+  
   #create a new Compara::DBAdaptor which points to the same database
   #as the Pipeline::DBAdaptor passed in ($self->db)
   #the -DBCONN options uses the dbname,user,pass,port,host,driver from the
@@ -83,13 +141,15 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
- 
-  my($conditionLogicName, $goalLogicName) = split(/,/, $self->input_id());
-  if($conditionLogicName and $goalLogicName) {
+
+  my $input_hash = eval($self->input_id);
+  if($input_hash->{'peps'} and $input_hash->{'blast'}) {
+    my $conditionLogicName = $input_hash->{'peps'};
+    my $goalLogicName = $input_hash->{'blast'};
     print("create rule $conditionLogicName => $goalLogicName\n");
     my $conditionAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($conditionLogicName);
     my $goalAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($goalLogicName);
-    $self->addRule($conditionAnalysis, $goalAnalysis);
+    $self->addHomologyPair($conditionAnalysis, $goalAnalysis);
   }
   else {
     $self->createBlastRules();
@@ -139,12 +199,12 @@ sub createBlastRules
             #      " genome_db_id=".$parameters{'genome_db_id'}.
             #      " phylum=".$phylum."\n");
   
-            if(($self->input_id() eq 'all') or ($blastPhylum eq $phylum) ) {
+            if($self->{'create_all'} or ($blastPhylum eq $phylum) ) {
               #$analysis is a SubmitPep so it's the condition
               #$blastAnalysis is the goal
               # $self->addSimpleRule($analysis, $blastAnalysis);
 
-              $self->addRule($analysis, $blastAnalysis);
+              $self->addHomologyPair($analysis, $blastAnalysis);
             }
           }
         }
@@ -186,6 +246,17 @@ sub phylumForGenomeDBID
 }
 
 
+sub addHomologyPair
+{
+  my $self = shift;
+  my $conditionAnalysis = shift;
+  my $goalAnalysis = shift;
+
+  #$self->addRule($conditionAnalysis, $goalAnalysis);
+  $self->addSimpleRule($conditionAnalysis, $goalAnalysis);
+  #$self->addBuildHomologyInput($conditionAnalysis, $goalAnalysis);
+}
+
 sub addSimpleRule
 {
   my $self = shift;
@@ -224,46 +295,75 @@ sub addRule
 }
 
 
+sub addBuildHomologyInput
+{
+  my $self = shift;
+  my $analysis1 = shift;
+  my $analysis2 = shift;
+  my $noRHS = shift;
+
+  my $input_id;
+
+  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
+
+  unless($self->{'submitHomology'}) {
+    my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'SubmitHomologyPair',
+        -input_id_type   => 'homology',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
+      );
+    $self->db->get_AnalysisAdaptor()->store($submitHomology);
+    $self->{'submitHomology'} = $submitHomology;
+  }
+
+  my $genome_db_id1 = parse_as_hash($analysis1->parameters)->{'genome_db_id'};
+  my $genome_db_id2 = parse_as_hash($analysis2->parameters)->{'genome_db_id'};
+  if(($analysis1->logic_name =~ /blast_/) and
+     ($analysis2->logic_name =~ /blast_/) and
+     $genome_db_id1 and $genome_db_id2)
+  {
+    if($genome_db_id1 < $genome_db_id2) {
+      $input_id = "{bl1=>".$analysis1->logic_name . ",bl2=>". $analysis2->logic_name;
+    } else {
+      $input_id = "{bl1=>".$analysis2->logic_name . ",bl2=>". $analysis1->logic_name;
+    }
+    if($noRHS and ($noRHS eq 'noRHS')) { $input_id .= ",noRHS=>1"; }
+    $input_id .= "}";
+    print("HOMOLOGY '$input_id'\n");
+
+    $self->{'comparaDBA'}->get_AnalysisJobAdaptor->create_new_job(
+        -input_id       => $input_id,
+        -analysis_id    => $self->{'submitHomology'}->dbID,
+        -input_job_id   => 0,
+        -block          => 'YES',
+        );
+
+   # $sicDBA->store_input_id_analysis($input_id,
+   #                                  $self->{'submitHomology'},
+   #                                  'gaia', #execution_host
+   #                                  0 #save runtime NO (ie do insert)
+   #                                 );
+
+   
+  }
+}
+
 sub createBuildHomologyInput
 {
   my $self = shift;
-  my ($analysis1, $analysis2, $input_id);
+  my ($analysis1, $analysis2);
 
-  my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
   my @analysisList = @{$self->db->get_AnalysisAdaptor->fetch_all()};
-
-  my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'SubmitHomologyPair',
-      -input_id_type   => 'homology'
-    );
-  $self->db->get_AnalysisAdaptor()->store($submitHomology);
 
   while(@analysisList) {
     $analysis1 = shift @analysisList;
     foreach my $analysis2 (@analysisList) {
-      my $genome_db_id1 = parse_as_hash($analysis1->parameters)->{'genome_db_id'};
-      my $genome_db_id2 = parse_as_hash($analysis2->parameters)->{'genome_db_id'};
-      if(($analysis1->logic_name =~ /blast_/) and
-         ($analysis2->logic_name =~ /blast_/) and
-         $genome_db_id1 and $genome_db_id2)
-      { 
-        if($genome_db_id1 < $genome_db_id2) {
-          $input_id = $analysis1->logic_name . ",". $analysis2->logic_name;
-        } else {
-          $input_id = $analysis2->logic_name . ",". $analysis1->logic_name;
-        }
-        print("HOMOLOGY '$input_id'\n");
-
-        $sicDBA->store_input_id_analysis($input_id,
-                                         $submitHomology,
-                                         'gaia', #execution_host
-                                         0 #save runtime NO (ie do insert)
-                                        );
-      }
+      $self->addBuildHomologyInput($analysis1, $analysis2);
     }
   }
 }
+
 
 
 sub checkRuleExists

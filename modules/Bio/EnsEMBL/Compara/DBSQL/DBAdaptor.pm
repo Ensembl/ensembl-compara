@@ -182,7 +182,7 @@ sub add_db_adaptor {
   my ($cs) = @{$csa->fetch_all};
   my $assembly = $cs ? $cs->version : '';
 
-  warn "ADDING GENOME DB $species $assembly $dba";
+  #warn "ADDING GENOME DB $species $assembly $dba";
   $self->{'genomes'}->{"$species:".uc($assembly) } = $dba;
 }
 
@@ -531,6 +531,17 @@ sub add_CanonicalAdaptor
 
   $self->{'default_module'}->{$canonical_name} = $module;
   $self->{'current_module'}->{$canonical_name} = $module;
+}
+
+sub get_HiveAdaptor {
+  my $self = shift;
+
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::Hive::HiveAdaptor" );
+}
+
+sub get_AnalysisJobAdaptor {
+  my $self = shift;
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::Hive::AnalysisJobAdaptor" );
 }
 
 1;

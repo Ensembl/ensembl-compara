@@ -20,7 +20,7 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 2- Choose a working directory with enough disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The family pipeline takes several GB of space (5BG should be sufficient).
+The family pipeline takes several GB of space (5BG should be sufficient). (df -k)
 
 mkdir /acari/work7a/abel/family_20_1
 cd /acari/work7a/abel/family_20_1
@@ -53,6 +53,8 @@ ssh ice.ebi.ac.uk 'getz -e -sf swiss "((([libs={sptrembl}-Organism: metazoa] ! [
 
 4- Format SWISSPROT/SPTREMBL files to get fasta and description file
 
+NB This needs bioperl 1.2
+
 ~/src/ensembl_main/ensembl-compara/scripts/family/GetSeqAndDescription.pl -swiss metazoa.swissprot.gz -sptrembl metazoa.sptrembl.gz -fasta metazoa.pep -desc metazoa.desc > metazoa.err 2>&1 &
 
 The description file looks like
@@ -60,7 +62,7 @@ The description file looks like
 swissprot       128U_DROME      GTP-binding protein 128UP.      taxon_id=7227;taxon_genus=Drosophila;taxon_species=melanogaster;taxon_sub_species=;taxon_common_name=Fruit fly;taxon_classification=melanogaster:Drosophila:Drosophilidae:Ephydroidea:Muscomorpha:Brachycera:Diptera:Endopterygota:Neoptera:Pterygota:Insecta:Hexapoda:Arthropoda:Metazoa:Eukaryota
 swissprot       1431_SCHMA      14-3-3 protein homolog 1.       taxon_id=6183;taxon_genus=Schistosoma;taxon_species=mansoni;taxon_sub_species=;taxon_common_name=Blood fluke;taxon_classification=mansoni:Schistosoma:Schistosomatidae:Schistosomatoidea:Strigeidida:Digenea:Trematoda:Platyhelminthes:Metazoa:Eukaryota
 
-5- get the Ensembl peptide predictions
+5- get the Ensembl peptide predictions -- This section has been replaced by a peptide and description dump from the member table which will have been filled already for the homology pipeline. If so go to point 6 
 
 Requirements: make sure all Ensembl core databases have
 a) stable ids (look in tables 'exon_stable_id', 'translation_stable_id', 
@@ -176,7 +178,7 @@ ls|wc -l
 echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_20_1_nr.index -tab /acari/work7a/abel/family_20_1/srs/metazoa_20_1_nr.tab -dir /acari/work7a/abel/family_20_1/blast_raw/' | bsub -q normal -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
 
  In this kind of construction the full path of each file/script is needed.
- The -Rncbi in the bsub, is there to select machine where the NCBI blast database is accessble locally, basically the ecs and rlx nodes.
+ Check that the BLASTMAT points to /usr/local/ensembl/data/blastmat
 
  When it is complete, you should get 2 new files
 
@@ -210,6 +212,7 @@ ls|xargs gunzip -c > ../mcl/family_20_1.raw
 cd ../mcl
 
  create a family_20.hdr header file,
+ The dimensions should be the number of peptides.
 
 cat > family_20.hdr
 (mclheader
@@ -223,13 +226,11 @@ ln -s ../srs/metazoa_20_1_nr.tab family_20_1.tab
 
 ~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_20_1
 
- That will generate a family_20_1.sym matrix file. Check the matrix for symmetry
+ This takes about an hour and will generate a family_20_1.sym matrix file. Check the matrix for symmetry
 
 ~/src/ensembl_main/ensembl-compara/scripts/family/mcx.sh family_20_1
 
- The generated family_20_1.sym.check file should look something like that. Nothing 
-has to appear after the begin, but the closin parenthesis, ). If not, That means the 
-matrix is not symmetric, that is not good for mcl to run from
+ The generated family_20_1.sym.check file should look something like that. Nothing should appear after the 'begin', except the closing parenthesis ')'. If not, That means the matrix is not symmetric, which is not good for mcl to run from
 
 (mclheader
 mcltype matrix
@@ -246,11 +247,11 @@ rm family_20.raw
 10- Run mcl
    ~~~~~~~
 
-This step will use parciluar machine, aristotle that have 187Gb of memory :))) and 32 CPUs. As mcl can be multi-threaded, it is very useful.
+This step uses aristotle which has 187Gb of memory :))) and 32 CPUs. As mcl can be multi-threaded, it is very useful.
 
 bsub -C0 -R 'select[ncpus>=16 && mem>5000] rusage[mem=5000]' -q aristotle -n 16 -f "family_20_1.sym > /tmp/family_20_1.sym" -f "family_20_1.mcl < /tmp/family_20_1.mcl" -o mcl.out /nfs/acari/abel/bin/mcl /tmp/family_20_1.sym -I 3.0 -t 16 -P 10000 -S 1000 -R 1200 -pct 90 -do log -o /tmp/family_20_1.mcl
 
-NB: when ever you ahve finished running mcl (maybe with different parameters), don't forget 
+NB: when ever you have finished running mcl (maybe with different parameters), don't forget 
 to delete /tmp/family_20_1.* from aristotle /tmp (a shell script having the flavour of 
 mcxassemble.sh or mcx.sh could do it automatically...not very useful though if several mcl run 
 have to be tested)
@@ -259,14 +260,14 @@ To save space,
 
 gzip family_20_1.mcl.gz
 
-11- Load in a family database
+11- Load into compara database
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following step needs to run with an older version of BioPerl (0.7) or with a patched version. 
 The Taxon object in more recent versions of bioperl does some excessive validation of species/genus
 information that will cause the following to fail.
 
-You'll need a compara dababase set up, with genome_db, taxon, and method_link tables prefilled. See in
+You'll need a compara database set up, with genome_db, taxon, and method_link tables prefilled. See in
 ensembl-compara/sql
 
 NB: This step will load the sequence for ENSEMBLPEP only, not for SWISSPROT or SPTREMBL entries. Those will be loaded in the clustalw step...Should change things here to load them all at once...
@@ -275,6 +276,10 @@ Set up a Compara.conf file following the example in
 ~/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 
 This can take a while, several hours, and you can not do anything else before the loading is completed.
+
+Even though the peptides are already loaded this step still needs to be run as it checks taxon info etc*****Should change this
+
+NB bioperl 0.7 is needed
 
 nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl -host ecs2b -port 3306 -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_1 -conf_file Compara.conf family_20_1.mcl.gz family_20_1.tab ../srs/metazoa_20_1.desc.gz ../srs/metazoa_20_1.RedundantIds > family_20_1.description 2> family_20_1.description.err &
 
@@ -291,6 +296,7 @@ nohup ~/src/ensembl_main/ensembl-compara/scripts/family/LoadSeqInFamily.pl -host
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        consensifier.pl -d SWISSPROT family_20_1.description > family_20_1.description.SWISSPROT-consensus
        consensifier.pl -d SPTREMBL family_20_1.description > family_20_1.description.SPTREMBL-consensus
+       This step takes approx 2 hours total
 
        ensembl-compara/scripts/family/assemble-consensus.pl
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -328,8 +334,8 @@ cd ../10000 for family_id from 1 to 10000
 clustalw_mpi
 ============
 
-For the ~10 biggest families (usually family_id 1 to 10), the number of sequence is so important that 
-the clustalw will never end (i.e. they take a _very_ long time). Kill those jobs that did not completed after 24h.
+For the ~10 biggest families (usually family_id 1 to 10), the number of sequence such that 
+the clustalw will never end (i.e. they take a _very_ long time). Kill those jobs that have not completed after 24h.
 You will have to run them with the parallelized version of clustalw (that is installed on bc nodes).
 As the mpi version is working is rsh command, you want to make sure that you have a ~/.rhosts that contains at least this
 
@@ -343,13 +349,14 @@ So now what to do e.g. for family_id=1
 
 cd ../clustalw_mpi
 
-echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1;" |mysql -h ecs4 -P3351 -N -u ensro ensembl_compara_20_1 > 1.ids
+echo "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id<24;" |mysql -h ecs4 -P3352 -N -u ensro ensembl_compara_cara_family_21_1 > clw.ids
 
 fastafetch /data/blastdb/Ensembl/family/metazoa_20_1_nr.pep /data/blastdb/Ensembl/family/metazoa_20_1_nr.index 1.ids | grep -v "^Message:" > 1.ids.pep
 
 bsub  -o 1.out -n10 -R"linux span[ptile=2]" ~/src/ensembl_main/ensembl-compara/scripts/family/run_clustalw_mpi.sh 1.ids.pep
 
-NB: -n10 tells NFS that you will use 10 CPUs. There is no clear algorithm to choose the right number of CPUs to be used depending on the number of sequences. The more sequences you have the less efficient the mpi implementation is. Guy Coates did some testing
+NB: span[ptile=2] tells NFS to use 2CPU's per machine 
+-n10 tells NFS that you will use 10 CPUs. There is no clear algorithm to choose the right number of CPUs to be used depending on the number of sequences. The more sequences you have the less efficient the mpi implementation is. Guy Coates did some testing
 
 9658 seq 10 CPUs ~14hr
 9658 seq 16 CPUs ~13hr
@@ -384,7 +391,7 @@ cd ../srs
 
 First, set all singletons cigar_line to the length(m.sequence) + "M", because some singletons will disappear with the addition of redundant sequences.
 
-echo "select family_id,count(*) as count from family_member group by family_id having count=1;"|mysql -h ecs2 -u ensro -P3364 ensembl_compara_20_1 |grep -v  family_id |awk '{print "select family_id,length(m.sequence) from member m,family_member fm where fm.member_id=m.member_id and fm.family_id="$1";"}'|mysql -h ecs2 -u ensro -P3364 ensembl_compara_20_1 |grep -v family_id|awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
+echo "select family_id,count(*) as count from family_member group by family_id having count=1;"|mysql -h ecs2 -u ensro -P3364 ensembl_compara_20_1 |grep -v  family_id |awk '{print "select family_id, length(s.sequence) from member m,family_member fm, sequence s where fm.member_id=m.member_id and fm.family_id="$1" and s.sequence_id = m.sequence_id;"}'|mysql -h ecs2 -u ensro -P3364 ensembl_compara_20_1 |grep -v family_id|awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
 
 mysql -h ecs2 -u ensadmin -pxxxx -P3364 ensembl_compara_20_1 < update_singletons_cigar_line.sql
 
@@ -400,19 +407,19 @@ See ensembl-compara/sql/UpdatePrefilledTable.pl and ensembl-compara/sql/genome_d
 Here is an example of the genome_db table,
 
 mysql> select * from genome_db;
-+--------------+----------+-------------------------+----------+------------------+
-| genome_db_id | taxon_id | name                    | assembly | assembly_default |
-+--------------+----------+-------------------------+----------+------------------+
-|            1 |     9606 | Homo sapiens            | NCBI34   |                1 |
-|            2 |    10090 | Mus musculus            | NCBIM30  |                1 |
-|            3 |    10116 | Rattus norvegicus       | RGSC3.1  |                1 |
-|            4 |    31033 | Fugu rubripes           | FUGU2    |                1 |
-|            5 |     7165 | Anopheles gambiae       | MOZ2A    |                1 |
-|            6 |     7227 | Drosophila melanogaster | DROM3A   |                1 |
-|            7 |     6239 | Caenorhabditis elegans  | CEL102   |                1 |
-|            8 |     6238 | Caenorhabditis briggsae | CBR25    |                1 |
-|            9 |     7955 | Danio rerio             | ZFISH2   |                1 |
-+--------------+----------+-------------------------+----------+------------------+
++--------------+----------+-------------------------+----------+------------------+----------+
+| genome_db_id | taxon_id | name                    | assembly | assembly_default |Genebuild |
++--------------+----------+-------------------------+----------+------------------+----------+
+|            1 |     9606 | Homo sapiens            | NCBI34   |                1 |          |
+|            2 |    10090 | Mus musculus            | NCBIM30  |                1 |          |
+|            3 |    10116 | Rattus norvegicus       | RGSC3.1  |                1 |          |
+|            4 |    31033 | Fugu rubripes           | FUGU2    |                1 |          |
+|            5 |     7165 | Anopheles gambiae       | MOZ2A    |                1 |          |
+|            6 |     7227 | Drosophila melanogaster | DROM3A   |                1 |          |
+|            7 |     6239 | Caenorhabditis elegans  | CEL102   |                1 |          |
+|            8 |     6238 | Caenorhabditis briggsae | CBR25    |                1 |          |
+|            9 |     7955 | Danio rerio             | ZFISH2   |                1 |          |
++--------------+----------+-------------------------+----------+------------------+----------+
 9 rows in set (0.00 sec)
 
 Once the genome_db is loaded, run the following script to load the gene stable ids:
