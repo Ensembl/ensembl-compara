@@ -23,7 +23,7 @@ sub colours {
 
 sub features {
     my $self = shift;
-    return $self->{'container'}->get_all_VirtualTranscripts_startend_lite( 'embl' );
+    return $self->{'container'}->get_all_VirtualTranscripts_startend_lite_coding( 'embl' );
 }
 
 sub colour {
