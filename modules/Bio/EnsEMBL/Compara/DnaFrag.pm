@@ -12,23 +12,84 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DnaFrag - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::DnaFrag - Defines the DNA sequences used in the database.
 
 =head1 SYNOPSIS
 
-Give standard usage here
+  use Bio::EnsEMBL::Compara::DnaFrag; 
+  my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
+          -dbID => 1,
+          -adaptor => $dnafrag_adaptor,
+          -length => 256,
+          -name => "19",
+          -genome_db => $genome_db,
+          -coord_system_name => "chromosome"
+        );
 
-=head1 DESCRIPTION
 
-Describe the object here
+SET VALUES
+  $dnafrag->dbID(1);
+  $dnafrag->adaptor($dnafrag_adaptor);
+  $dnafrag->length(256);
+  $dnafrag->genome_db($genome_db);
+  $dnafrag->genome_db_id(123);
+  $dnafrag->coord_system_name("chromosome");
+  $dnafrag->name("19");
 
-=head1 AUTHOR - Ewan Birney
+GET VALUES
+  $dbID = $dnafrag->dbID;
+  $dnafrag_adaptor = $dnafrag->adaptor;
+  $length = $dnafrag->length;
+  $genome_db = $dnafrag->genome_db;
+  $genome_db_id = $dnafrag->genome_db_id;
+  $coord_system_name = $dnafrag->coord_system_name;
+  $name = $dnafrag->name;
 
-This modules is part of the Ensembl project http://www.ensembl.org
 
-Email birney@ebi.ac.uk
+=head1 OBJECT ATTRIBUTES
 
-Describe contact details here
+=over
+
+=item dbID
+
+corresponds to dnafrag.dnafrag_id
+
+=item adaptor
+
+Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object to access DB
+
+=item length
+
+corresponds to dnafrag.length
+
+=item genome_db_id
+
+corresponds to dnafrag.genome_db_id
+
+=item genome_db
+
+Bio::EnsEMBL::Compara::GenomeDB object corresponding to genome_db_id
+
+=item coord_system_name
+
+corresponds to dnafrag.coord_system_name
+
+=item name
+
+corresponds to dnafrag.name
+
+=back
+
+=head1 AUTHOR
+
+Javier Herrero (jherrero@ebi.ac.uk)
+
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
@@ -43,7 +104,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DnaFrag;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument;
 
 sub new {
@@ -53,35 +114,24 @@ sub new {
 
   bless $self,$class;
 
-  my ($name,$contig,$genomedb,$type,$adaptor,$dbID) =
-    rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);
+#   my ($name,$contig,$genomedb,$type,$adaptor,$dbID) =
+#     rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);
+#    if ( defined $contig) {
+#      $self->contig($contig);
+#    }
 
-   if( defined $name) {
-     	 $self->name($name);
-   }
-   if( defined $contig) {
-     $self->contig($contig);
-   }
+  my ($dbID, $adaptor, $length, $name, $genome_db, $genome_db_id, $coord_system_name) =
+    rearrange([qw(DBID ADAPTOR LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME)],@args);
 
-   if (defined $genomedb){
-     $self->genomedb($genomedb);
-   }
+  $self->dbID($dbID) if (defined($dbID));
+  $self->adaptor($adaptor) if (defined($adaptor));
+  $self->length($length) if (defined($length));
+  $self->name($name) if (defined($name));
+  $self->genome_db($genome_db) if (defined($genome_db));
+  $self->genome_db_id($genome_db_id) if (defined($genome_db_id));
+  $self->coord_system_name($coord_system_name) if (defined($coord_system_name));
 
-   if (defined $adaptor){
-     $self->adaptor($adaptor);
-   }
-
-   if (defined $type){
-     $self->type($type);
-   }
-
-   if (defined $dbID) {
-     $self->dbID($dbID);
-   }
-
-
-# set stuff in self from @args
-    return $self;
+  return $self;
 }
 
 sub new_fast {
@@ -91,29 +141,195 @@ sub new_fast {
   return bless $hashref, $class;
 }
 
+=head2 dbID
+
+ Arg [1]   : int $dbID
+ Example   : $dbID = $dnafrag->dbID()
+ Example   : $dnafrag->dbID(1)
+ Function  : get/set dbID attribute.
+ Returns   : integer
+ Exeption  : none
+ Caller    : $object->dbID
+
+=cut
+
+sub dbID {
+  my ($self, $dbID) = @_;
+   
+  if (defined($dbID)) {
+    $self->{'dbID'} = $dbID;
+  }
+
+  return $self->{'dbID'};
+}
+
+
+=head2 adpator
+
+ Arg [1]   : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor $dnafrag_adaptor
+ Example   : $dnafrag_adaptor = $dnafrag->adaptor()
+ Example   : $dnafrag->adaptor($dnafrag_adaptor)
+ Function  : get/set adaptor attribute.
+ Returns   : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object
+ Exeption  : thrown if argument is not a Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
+             object
+ Caller    : $object->adaptor
+
+=cut
+
+sub adaptor {
+  my ($self, $adaptor) = @_;
+   
+  if (defined($adaptor)) {
+    throw("[$adaptor] must be a Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object")
+      unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor"));
+    $self->{'adaptor'} = $adaptor;
+  }
+
+  return $self->{'adaptor'};
+}
+
+
+=head2 length
+
+ Arg [1]   : int $length
+ Example   : $length = $dnafrag->length()
+ Example   : $dnafrag->length(256)
+ Function  : get/set length attribute.
+ Returns   : integer
+ Exeption  : none
+ Caller    : $object->length
+
+=cut
+
+sub length {
+  my ($self, $length) = @_;
+   
+  if (defined($length)) {
+    $self->{'length'} = $length;
+  }
+
+  return $self->{'length'};
+}
+
+
 =head2 name
 
- Title   : name
- Usage   : $obj->name($newval)
+ Arg [1]   : string $name
+ Example   : $name = $dnafrag->name()
+ Example   : $dnafrag->name("19")
+ Function  : get/set name attribute.
+ Returns   : string
+ Exeption  : none
+ Caller    : $object->name
+
+=cut
+
+sub name {
+  my ($self, $name) = @_;
+   
+  if (defined($name)) {
+    $self->{'name'} = $name;
+  }
+
+  return $self->{'name'};
+}
+
+
+=head2 genome_db
+
+ Arg [1]   : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+ Example   : $genome_db = $dnafrag->genome_db()
+ Example   : $dnafrag->genome_db($genome_db)
+ Function  : get/set genome_db attribute.
+ Returns   : Bio::EnsEMBL::Compara::GenomeDB object
+ Exeption  : thrown if argument is not a Bio::EnsEMBL::Compara::GenomeDB
+             object
+ Caller    : $object->genome_db
+
+=cut
+
+sub genome_db {
+  my ($self, $genome_db) = @_;
+   
+  if (defined($genome_db)) {
+    throw("[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object")
+      unless ($genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+    $self->{'genome_db'} = $genome_db;
+  
+  } elsif (!defined($self->{'genome_db'})) {
+    # Try to get data from other sources
+    if (defined($self->{'genome_db_id'}) and defined($self->{'adaptor'})) {
+      $self->{'genome_db'} =
+          $self->{'adaptor'}->db->get_GenomeDBAdaptor->fetch_by_dbID($self->{'genome_db_id'});
+    }
+  }
+
+  return $self->{'genome_db'};
+}
+
+
+=head2 genome_db_id
+
+ Arg [1]   : int $genome_db_id
+ Example   : $genome_db_id = $dnafrag->genome_db_id()
+ Example   : $dnafrag->genome_db_id(123)
+ Function  : get/set genome_db_id attribute.
+ Returns   : integer
+ Exeption  : none
+ Caller    : $object->genome_db_id
+
+=cut
+
+sub genome_db_id {
+  my ($self, $genome_db_id) = @_;
+   
+  if (defined($genome_db_id)) {
+    $self->{'genome_db_id'} = $genome_db_id;
+  
+  } elsif (!defined($self->{'genome_db_id'})) {
+    # Try to get data from other sources
+    if (defined($self->{'genome_db'})) {
+      $self->{'genome_db_id'} = $self->{'genome_db'}->dbID;
+    }
+  }
+
+  return $self->{'genome_db_id'};
+}
+
+
+=head2 coord_system_name
+
+ Title   : coord_system_name
+ Usage   : $obj->coord_system_name($newval)
  Function: 
  Example : 
- Returns : value of name
+ Returns : value of coord_system_name
  Args    : newvalue (optional)
+ 
+ Arg [1]   : string $coord_system_name
+ Example   : $coord_system_name = $dnafrag->coord_system_name()
+ Example   : $dnafrag->coord_system_name("chromosome")
+ Function  : get/set coord_system_name attribute.
+ Returns   : string
+ Exeption  : none
+ Caller    : $object->coord_system_name
 
 
 =cut
 
-sub name{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'name'} = $value;
-    }
-    return $self->{'name'};
+sub coord_system_name {
+  my ($self, $coord_system_name) = @_;
 
+  if (defined($coord_system_name)) {
+    $self->{'coord_system_name'} = $coord_system_name;
+  }
+
+  return $self->{'coord_system_name'};
 }
 
 
-=head2 contig
+=head2 contig [NOT YET IMPLEMENTED]
 
  Title   : contig
  Usage   :
@@ -148,6 +364,17 @@ sub contig {
    return $self->{'_contig'};
 }
 
+=head2 slice [NOT YET IMPLEMENTED]
+
+ Title   : slice
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
 sub slice {
   my ($self) = @_;
   
@@ -159,7 +386,82 @@ sub slice {
   return $self->{'_slice'};
 }
 
-=head2 genomedb
+
+#####################################################################
+#####################################################################
+
+=head1 DEPRECATED METHODS
+
+Bio::EnsEMBL::Compara::DnaFrag::start and Bio::EnsEMBL::Compara::DnaFrag::end
+methods are no longer used. All Bio::EnsEMBL::Compara::DnaFrag objects start
+in 1. Start and end coordinates have been replaced by length attribute. Please,
+use Bio::EnsEMBL::Compara::DnaFrag::length method to access it.
+
+Bio::EnsEMBL::Compara::DnaFrag::genomedb has been renamed
+Bio::EnsEMBL::Compara::DnaFrag::genome_db.
+
+Bio::EnsEMBL::Compara::DnaFrag::type has been renamed
+Bio::EnsEMBL::Compara::DnaFrag::coord_system_name.
+
+=cut
+
+#####################################################################
+#####################################################################
+
+
+
+
+=head2 start [DEPRECATED]
+ 
+  DEPRECATED! All Bio::EnsEMBL::Compara::DnaFrag objects start in 1
+  
+  Arg [1]    : int
+  Example    : $dnafrag->start(1);
+  Description: Getter/Setter for the start attribute
+  Returntype : int
+  Exceptions : thrown when trying to set a starting position different from 1
+  Caller     : general
+
+=cut
+ 
+sub start{
+  my ($self,$value) = @_;
+
+  deprecate("All Bio::EnsEMBL::Compara::DnaFrag objects start in 1");
+  if (defined($value) and ($value != 1)) {
+    throw("Trying to set a start value different from 1!\n".
+        "All Bio::EnsEMBL::Compara::DnaFrag objects start in 1");
+  }
+
+  return 1;
+}
+
+
+
+=head2 end [DEPRECATED]
+ 
+  DEPRECATED! Use Bio::EnsEMBL::Compara::DnaFrag::length method instead
+
+  Arg [1]    : int $end
+  Example    : $dnafrag->end(42);
+  Description: Getter/Setter for the start attribute
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+
+sub end {
+  my ($self, $end) = @_;
+  deprecate("Use Bio::EnsEMBL::Compara::DnaFrag::length method instead");
+
+  return $self->length($end);
+}
+
+
+=head2 genomedb [DEPRECATED]
+
+ DEPRECATD! Use Bio::EnsEMBL::Compara::DnaFrag::genome_db method instead
 
  Title   : genomedb
  Usage   : $obj->genomedb($newval)
@@ -168,140 +470,32 @@ sub slice {
  Returns : value of genomedb
  Args    : newvalue (optional)
 
-
 =cut
 
 sub genomedb {
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'genomedb'} = $value;
-    }
-    return $self->{'genomedb'};
-
+  my ($self, @args) = @_;
+  deprecate("Use Bio::EnsEMBL::Compara::DnaFrag::genome_db method instead");
+  return $self->genome_db(@args);
 }
 
-=head2 type
+
+=head2 type [DEPRECATED]
+
+ DEPRECATD! Use Bio::EnsEMBL::Compara::DnaFrag::coord_system_name method instead
 
  Title   : type
  Usage   : $obj->type($newval)
  Function: 
  Example : 
- Returns : value of type
+ Returns : value of coord_system_name (former type)
  Args    : newvalue (optional)
 
-
 =cut
 
-sub type{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'type'} = $value;
-    }
-    return $self->{'type'};
-
-}
-
-=head2 adaptor
-
- Title   : adaptor
- Usage   : $obj->adaptor($newval)
- Function: 
- Example : 
- Returns : value of adaptor
- Args    : newvalue (optional)
-
-
-=cut
-
-sub adaptor{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'adaptor'} = $value;
-    }
-    return $self->{'adaptor'};
-
-}
-
-=head2 dbID
-
- Title   : dbID
- Usage   : $obj->dbID($newval)
- Function: 
- Example : 
- Returns : value of dbID
- Args    : newvalue (optional)
-
-
-=cut
-
-sub dbID{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'dbID'} = $value;
-    }
-    return $self->{'dbID'};
-
-}
-
-
-
-=head2 start
- 
-  Arg [1]    : int
-  Example    : $dnafrag->start(42);
-  Description: Getter/Setter for the start attribute
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
- 
-sub start{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'start'} = $value;
-    }
-    return $self->{'start'};
-}
-
-
-
-=head2 end
- 
-  Arg [1]    : int
-  Example    : $dnafrag->end(42);
-  Description: Getter/Setter for the start attribute
-  Returntype : int
-  Exceptions : none
-  Caller     : general
- 
-=cut
- 
-sub end{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'end'} = $value;
-    }
-    return $self->{'end'};
-}
-
-=head2 length
- 
-  Arg [1]    : int
-  Example    : $dnafrag->length;
-  Description: Getter for the length attribute
-  Returntype : int
-  Exceptions : none
-  Caller     : general
- 
-=cut
- 
-sub length{
-  my ($self) = @_;
-  unless (defined $self->{'length'}) {
-    $self->{'length'} = $self->{'end'} - $self->{'start'} + 1;
-  }
-   return $self->{'length'};
+sub type {
+  my ($self, @args) = @_;
+  deprecate("Use Bio::EnsEMBL::Compara::DnaFrag::coord_system_name method instead");
+  return $self->coord_system_name(@args);
 }
 
 1;
