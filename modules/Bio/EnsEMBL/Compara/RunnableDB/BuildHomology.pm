@@ -462,6 +462,9 @@ sub find_RHS
   my $memberPep = shift;
 
   return unless($refPAF and $memberPep);
+
+  return unless($self->{'membersToBeProcessed'}->{$memberPep->dbID});
+
   if($self->{'verbose'}) {
     print("ref BRH : "); $refPAF->display_short();
     $self->print_member($refPAF->query_member, " BRH QUERY\n");
