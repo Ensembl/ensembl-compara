@@ -66,15 +66,12 @@ unless (defined $id_file) {
   }
   close ID;
 }
-#my $idx = 0;
 
 my $tmp_out = "/tmp/codeml.".time().rand(1000);
 
 open O, ">$tmp_out" ||
   die "Can not open /tmp/$tmp_out";
 
-
-autoflush O 1;
 
 foreach my $homology (@{$homologies}) {
 
@@ -92,26 +89,31 @@ foreach my $homology (@{$homologies}) {
   close F;
   
   print O $homology->dbID," ",$homology->description," ";
-#  unless (system("/nfs/acari/abel/ftp/paml3.13d/test/modified/codeml_leo < /tmp/seq.$rand.phy > /tmp/seq.$rand.codeml 2> /tmp/seq.$rand.codeml.err") == 0) {
+# need to retrieve the codeml.ctl original file so that we can use the original codeml, not 
+# the one Llew modified with hard coded parameters
   unless (system("$codeml_executable < /tmp/seq.$rand.phy > /tmp/seq.$rand.codeml 2> /tmp/seq.$rand.codeml.err") == 0) {
     unlink glob("/tmp/*$rand*");
     warn "error in codeml, $!, for homology stable_id ". $homology->stable_id,"\n";
     print O "codeml FAILED\n";
     next;
   }
+  my $no_result = 1;
   open CODEML, "/tmp/seq.$rand.codeml";
   while (my $line = <CODEML>) {
     next if ($line =~ /^$/);
     last if ($line =~ /^\s+N\s+S\s+dN\s+dS\s+dN\/dS\s+lnL$/);
-#    CG10220-PA      ENSANGP00000021079      994.3   250.7   0.51651 6.69608 0.07714 -3037.747
+#    CG10220-PA      ENSANGP00000021079      994.3   250.7   0.51651 6.69608 0.07714 -3037.747 
+#                                            N       S       dN      dS      dN/dS   lnL
     if ($line =~ /^\S+\t\S+\t\d+(\.\d*)?\t\d+(\.\d*)?\t\d+(\.\d*)?\t\d+(\.\d*)?\t\d+(\.\d*)?\t-?\d+(\.\d*)?$/) {
       print O $line;
+      $no_result = 0;
     }
   }
   close CODEML;
   unlink glob("/tmp/*$rand*");
-#  $idx++;
-#  last if ($idx == 10);
+  if ($no_result) {
+    print O "codeml FAILED\n";
+  }
   next;
 }
 
