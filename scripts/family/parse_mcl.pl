@@ -1,15 +1,12 @@
 #!/usr/local/ensembl/bin/perl -w
-# $Id$
-
-# Parse MCL output (numbers) back into real clusters (with protein names)
 
 use strict;
 use Getopt::Long;
 use IO::File;
-use Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::ExternalData::Family::Family;
-use Bio::EnsEMBL::ExternalData::Family::FamilyMember;
-use Bio::EnsEMBL::ExternalData::Family::Taxon;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Family;
+use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::Taxon;
 
 $| = 1;
 
@@ -32,7 +29,7 @@ Options:
 \n";
 
 my $help = 0 ;
-my $release_number;
+my $family_source_name = "ENSEMBL_FAMILIES";
 my $family_prefix = "ENSF";
 my $family_offset = 1;
 my $host;
@@ -45,7 +42,6 @@ GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
-	   'release=s' => \$release_number,
 	   'prefix=s' => \$family_prefix,
 	   'offset=i' => \$family_offset);
 
@@ -66,12 +62,17 @@ my @clusters;
 my %seqinfo;
 my %member_index;
 
-my $family_db = new Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor(-host   => $host,
-									 -user   => $dbuser,
-									 -dbname => $dbname,
-									 -pass => $dbpass);
+my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                            -user   => $dbuser,
+                                                            -dbname => $dbname,
+                                                            -pass => $dbpass);
 
-my $FamilyAdaptor = $family_db->get_FamilyAdaptor;
+my $fa = $db->get_FamilyAdaptor;
+my $gdb = $db->get_GenomeDBAdaptor;
+my %genomedbs;
+foreach my $genomedb (@{$gdb->fetch_all}) {
+  $genomedbs{$genomedb->taxon_id} = $genomedb;
+}
 
 print STDERR "Reading index file...";
 
@@ -193,19 +194,21 @@ foreach my $cluster (@clusters) {
     $max_cluster_index = $cluster_index;
   }
 
-  my $Family = new  Bio::EnsEMBL::ExternalData::Family::Family;
   my $family_stable_id = sprintf ("$family_prefix%011.0d",$cluster_index + $family_offset);
-  $Family->stable_id($family_stable_id);
-  $Family->release($release_number);
-  $Family->description("NULL");
-  $Family->annotation_confidence_score(0);
-
-  foreach my $member (@cluster_members) {
-    last if ($member =~ /^\$$/);
-    my $seqid = $member_index{$member};
+  my $family = Bio::EnsEMBL::Compara::Family->new_fast
+    ({
+      '_stable_id' => $family_stable_id,
+      '_source_name' => $family_source_name,
+      '_description' => "NULL",
+      '_description_score' => 0
+     });
+  
+  foreach my $member_idx (@cluster_members) {
+    last if ($member_idx =~ /^\$$/);
+    my $seqid = $member_index{$member_idx};
 
     unless($seqid) {
-      warn("no seqid defined for member [$member]\n");
+      warn("no seqid defined for member [$member_idx]\n");
       next;
     }
 
@@ -224,24 +227,77 @@ foreach my $cluster (@clusters) {
 
     my $taxon_hash = parse_taxon($seqinfo{$seqid}{'taxon'});
     my @classification = split(':',$taxon_hash->{'taxon_classification'});
-    my $taxon = new Bio::EnsEMBL::ExternalData::Family::Taxon->new(-classification=>\@classification);
+    my $taxon = new Bio::EnsEMBL::Compara::Taxon->new(-classification=>\@classification);
     $taxon->common_name($taxon_hash->{'taxon_common_name'});
     $taxon->sub_species($taxon_hash->{'taxon_sub_species'});
     $taxon->ncbi_taxid($taxon_hash->{'taxon_id'});
 
-    my $FamilyMember = new Bio::EnsEMBL::ExternalData::Family::FamilyMember;
-    $FamilyMember->stable_id($seqid);
-    $FamilyMember->database(uc $seqinfo{$seqid}{'type'});
-    $FamilyMember->taxon($taxon);
-    $FamilyMember->alignment_string("NULL");
-    $Family->add_member($FamilyMember);
+    my $member = new Bio::EnsEMBL::Compara::Member;
+    $member->stable_id($seqid);
+    $member->taxon_id($taxon->ncbi_taxid);
+    $member->taxon($taxon);
+    $member->description($seqinfo{$seqid}{'description'});
+    $member->genome_db_id("NULL");
+    $member->chr_name("NULL");
+    $member->chr_start("NULL");
+    $member->chr_end("NULL");
+    $member->sequence("NULL");
+    
+    
+    $member->source_name(uc $seqinfo{$seqid}{'type'});
+    
+    if ($member->source_name eq "ENSEMBLPEP" ||
+        $member->source_name eq "ENSEMBLGENE") {
+      #get genome_db_id
+      my $genomedb = $genomedbs{$member->taxon_id};
+      $member->genome_db_id($genomedb->dbID);
+      #get chr_name, chr_start, chr_end
+      my $core_db = $db->get_db_adaptor($genomedb->name, $genomedb->assembly);
+      my $GeneAdaptor = $core_db->get_GeneAdaptor;
+      my $TranscriptAdaptor = $core_db->get_TranscriptAdaptor;
+      my $gene;
+      my $transcript;
+
+      my $empty_slice = new Bio::EnsEMBL::Slice(-empty => 1,
+                                                -adaptor => $core_db->get_SliceAdaptor());
+
+      if ($member->source_name eq "ENSEMBLPEP") {
+        $transcript = $TranscriptAdaptor->fetch_by_translation_stable_id($member->stable_id);
+        my %ex_hash;
+        foreach my $exon (@{$transcript->get_all_Exons}) {
+          $ex_hash{$exon} = $exon->transform($empty_slice);
+        }
+        $transcript->transform(\%ex_hash);
+        $member->chr_name($transcript->get_all_Exons->[0]->contig->chr_name);
+        $member->chr_start($transcript->coding_region_start);
+        $member->chr_end($transcript->coding_region_end);
+      } 
+      elsif ($member->source_name eq "ENSEMBLGENE") {
+        $gene = $GeneAdaptor->fetch_by_stable_id($member->stable_id);
+        
+        unless (defined $gene) {
+          print STDERR $member->stable_id," ",$member->source_name," ",$member->taxon_id," is undef!!!\n";
+          die;
+        }
+        $gene->transform( $empty_slice );
+        $member->chr_name($gene->chr_name);
+        $member->chr_start($gene->start);
+        $member->chr_end($gene->end);
+      }
+    }
+    
+
+    my $attribute = new Bio::EnsEMBL::Compara::Attribute;
+    $attribute->cigar_line("NULL");
+    
+    $family->add_Member_Attribute([$member, $attribute]);
   }
 
-  my $dbID = $FamilyAdaptor->store($Family);
+  my $dbID = $fa->store($family);
 
-  foreach my $FamilyMember (@{$Family->get_all_members}) {
-    print $FamilyMember->database,"\t$dbID\t",$FamilyMember->stable_id,"\t",$seqinfo{$FamilyMember->stable_id}{'description'},"\n";
-    $seqinfo{$FamilyMember->stable_id}{'printed'} = 1;
+  foreach my $member (@{$family->get_all_Member}) {
+    print $member->source_name,"\t$dbID\t",$member->stable_id,"\t",$seqinfo{$member->stable_id}{'description'},"\n";
+    $seqinfo{$member->stable_id}{'printed'} = 1;
   }
   print STDERR "Done\n";
 }
@@ -258,12 +314,14 @@ foreach my $seqid (keys %seqinfo) {
 
   print STDERR "Loading singleton $max_cluster_index...";
 
-  my $Family = new  Bio::EnsEMBL::ExternalData::Family::Family;
   my $family_stable_id = sprintf ("$family_prefix%011.0d",$max_cluster_index + $family_offset);
-  $Family->stable_id($family_stable_id);
-  $Family->release($release_number);
-  $Family->description("NULL");
-  $Family->annotation_confidence_score(0);
+  my $family = Bio::EnsEMBL::Compara::Family->new_fast
+    ({
+      '_stable_id' => $family_stable_id,
+      '_source_name' => $family_source_name,
+      '_description' => "NULL",
+      '_description_score' => 0
+     });
 
   if(!$seqinfo{$seqid}{'taxon'}) {
     warn("taxon is not defined for seqid [$seqid]");
@@ -275,22 +333,77 @@ foreach my $seqid (keys %seqinfo) {
 
   my $taxon_hash = parse_taxon($seqinfo{$seqid}{'taxon'});
   my @classification = split(':',$taxon_hash->{'taxon_classification'});
-  my $taxon = new Bio::EnsEMBL::ExternalData::Family::Taxon(-classification=>\@classification);
+  my $taxon = new Bio::EnsEMBL::Compara::Taxon(-classification => \@classification);
   $taxon->common_name($taxon_hash->{'taxon_common_name'});
   $taxon->sub_species($taxon_hash->{'taxon_sub_species'});
   $taxon->ncbi_taxid($taxon_hash->{'taxon_id'});
   
-  my $FamilyMember = new Bio::EnsEMBL::ExternalData::Family::FamilyMember;
-  $FamilyMember->stable_id($seqid);
-  $FamilyMember->database(uc $seqinfo{$seqid}{'type'});
-  $FamilyMember->taxon($taxon);
-  $FamilyMember->alignment_string("NULL");
-  $Family->add_member($FamilyMember);
-  
-  my $dbID = $FamilyAdaptor->store($Family);
+  my $member = new Bio::EnsEMBL::Compara::Member;
+  $member->stable_id($seqid);
+  $member->taxon_id($taxon->ncbi_taxid);
+  $member->taxon($taxon);
+  $member->description($seqinfo{$seqid}{'description'});
+  $member->genome_db_id("NULL");
+  $member->chr_name("NULL");
+  $member->chr_start("NULL");
+  $member->chr_end("NULL");
 
-  print $FamilyMember->database,"\t$dbID\t",$FamilyMember->stable_id,"\t",$seqinfo{$FamilyMember->stable_id}{'description'},"\n";
-  $seqinfo{$FamilyMember->stable_id}{'printed'} = 1;
+  # Maybe think about loading the peptide sequence at this stage not at the clustalw
+  $member->sequence("NULL");
+  
+    
+  $member->source_name(uc $seqinfo{$seqid}{'type'});
+  
+  if ($member->source_name eq "ENSEMBLPEP" ||
+      $member->source_name eq "ENSEMBLGENE") {
+    #get genome_db_id
+    my $genomedb = $genomedbs{$member->taxon_id};
+    $member->genome_db_id($genomedb->dbID);
+    #get chr_name, chr_start, chr_end
+    my $core_db = $db->get_db_adaptor($genomedb->name, $genomedb->assembly);
+    my $GeneAdaptor = $core_db->get_GeneAdaptor;
+    my $TranscriptAdaptor = $core_db->get_TranscriptAdaptor;
+    my $gene;
+    my $transcript;
+    
+    my $empty_slice = new Bio::EnsEMBL::Slice(-empty => 1,
+                                              -adaptor => $core_db->get_SliceAdaptor());
+
+    if ($member->source_name eq "ENSEMBLPEP") {
+      $transcript = $TranscriptAdaptor->fetch_by_translation_stable_id($member->stable_id);
+      my %ex_hash;
+      foreach my $exon (@{$transcript->get_all_Exons}) {
+        $ex_hash{$exon} = $exon->transform($empty_slice);
+      }
+      $transcript->transform(\%ex_hash);
+      $member->chr_name($transcript->get_all_Exons->[0]->contig->chr_name);
+      $member->chr_start($transcript->coding_region_start);
+      $member->chr_end($transcript->coding_region_end);
+    } 
+    elsif ($member->source_name eq "ENSEMBLGENE") {
+      $gene = $GeneAdaptor->fetch_by_stable_id($member->stable_id);
+      
+      unless (defined $gene) {
+        print STDERR $member->stable_id," ",$member->source_name," ",$member->taxon_id," is undef!!!\n";
+        die;
+      }
+      $gene->transform( $empty_slice );
+      $member->chr_name($gene->chr_name);
+      $member->chr_start($gene->start);
+      $member->chr_end($gene->end);
+    }
+  }
+  
+  
+  my $attribute = new Bio::EnsEMBL::Compara::Attribute;
+  $attribute->cigar_line("NULL");
+  
+  $family->add_Member_Attribute([$member, $attribute]);
+  
+  my $dbID = $fa->store($family);
+
+  print $member->source_name,"\t$dbID\t",$member->stable_id,"\t",$seqinfo{$member->stable_id}{'description'},"\n";
+  $seqinfo{$member->stable_id}{'printed'} = 1;
   print STDERR "Done\n";
 }
 
