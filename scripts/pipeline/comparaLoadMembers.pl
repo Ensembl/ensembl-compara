@@ -221,7 +221,7 @@ sub store_gene_and_all_transcripts
 sub fasta_description {
   my ($gene, $transcript) = @_; 
 
-  my $description = " Transcript:" . $transcript->stable_id .
+  my $description = "Transcript:" . $transcript->stable_id .
 		    " Gene:" .       $gene->stable_id .
 		    " Chr:" .        $gene->seq_region_name .
 		    " Start:" .      $gene->seq_region_start .
