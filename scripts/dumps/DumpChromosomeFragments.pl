@@ -88,18 +88,18 @@ my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $host,
 my $ChromosomeAdaptor = $db->get_ChromosomeAdaptor;
 my $SliceAdaptor = $db->get_SliceAdaptor;
 
-my @chromosomes;
+my $chromosomes;
 
 if (defined $chr_names and $chr_names ne "all") {
   my @chr_names = split /,/, $chr_names;
   foreach my $chr_name (@chr_names) {
-    push @chromosomes, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
+    push @{$chromosomes}, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
   }
 } else {
-  @chromosomes = @{$ChromosomeAdaptor->fetch_all}
+  $chromosomes = $ChromosomeAdaptor->fetch_all;
 }
  
-if (scalar @chromosomes > 1 && 
+if (scalar @{$chromosomes} > 1 && 
     (defined $chr_start || defined $chr_end)) {
   warn "When more than one chr_name is specified chr_start and chr_end must not be specified
 exit 1\n";
@@ -127,7 +127,7 @@ if (defined $output) {
   $fh = \*F;
 }    
 
-foreach my $chr (@chromosomes) {
+foreach my $chr (@{$chromosomes}) {
   print STDERR "fetching slice...\n";
  
   # futher checks on arguments
