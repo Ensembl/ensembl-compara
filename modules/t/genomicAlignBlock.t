@@ -389,8 +389,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->length method");
 # 29
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice method");
-  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_Slice(
-          $method_link_species_set_id,
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+          $method_link_species_set,
           $slice
       );
   ok($genomic_align_blocks->[0]->requesting_slice, $slice);

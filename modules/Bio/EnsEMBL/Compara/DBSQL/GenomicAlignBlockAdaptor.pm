@@ -42,7 +42,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Feature;
-use Bio::EnsEMBL::Utils::Exception qw(throw info);
+use Bio::EnsEMBL::Utils::Exception qw(throw info deprecate);
 
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -230,18 +230,56 @@ sub fetch_by_dbID {
 }
 
 
-=head2 fetch_all_by_Slice
+# # =head2 fetch_all_by_Slice
+# # 
+# #   Arg  1     : integer $method_link_species_set_id
+# #                     - or -
+# #                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+# #   Arg  2     : Bio::EnsEMBL::Slice $original_slice
+# #   Arg  3     : [optional] integer $limit
+# #   Example    : my $genomic_align_blocks =
+# #                   $genomic_align_block_adaptor->fetch_all_by_Slice(
+# #                       2, $original_slice);
+# #   Example    : my $genomic_align_blocks =
+# #                   $genomic_align_block_adaptor->fetch_all_by_Slice(
+# #                       $method_link_species_set, $original_slice);
+# #   Description: Retrieve the corresponding
+# #                Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
+# #   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
+# #                adaptor and method_link_species_set are actually stored in the objects. The remaining
+# #                attributes are only retrieved when required.
+# #   Exceptions : Returns ref. to an empty array if no matching
+# #                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
+# #   Caller     : $object->mthod_name
+# # 
+# # =cut
 
-  Arg  1     : integer $method_link_species_set_id
-                    - or -
-               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+sub fetch_all_by_Slice {
+  my ($self, $method_link_species_set, $original_slice, $limit) = @_;
+  my $all_genomic_align_blocks = []; # Returned value
+
+  deprecate("Use fetch_all_by_MethodLinkSpeciesSet_Slice method instead");
+
+  if ($method_link_species_set =~ /^\d+$/) {
+    my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set);
+  }
+
+  return $self->fetch_all_by_MethodLinkSpeciesSet_Slice(
+          $method_link_species_set,
+          $original_slice,
+          $limit
+      );
+}
+
+
+=head2 fetch_all_by_MethodLinkSpeciesSet_Slice
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Arg  2     : Bio::EnsEMBL::Slice $original_slice
   Arg  3     : [optional] integer $limit
   Example    : my $genomic_align_blocks =
-                  $genomic_align_block_adaptor->fetch_all_by_Slice(
-                      2, $original_slice);
-  Example    : my $genomic_align_blocks =
-                  $genomic_align_block_adaptor->fetch_all_by_Slice(
+                  $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
                       $method_link_species_set, $original_slice);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
@@ -250,41 +288,41 @@ sub fetch_by_dbID {
                attributes are only retrieved when required.
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
-  Caller     : $object->mthod_name
+  Caller     : $object->method_name
 
 =cut
 
-sub fetch_all_by_Slice {
-  my ($self, $method_link_species_set, $original_slice, $limit) = @_;
+sub fetch_all_by_MethodLinkSpeciesSet_Slice {
+  my ($self, $method_link_species_set, $reference_slice, $limit) = @_;
   my $all_genomic_align_blocks = []; # Returned value
 
-  ## method_link_species_set_id will be checked in the fetch_all_by_DnaFrag method
+  ## method_link_species_set will be checked in the fetch_all_by_MethodLinkSpeciesSet_DnaFrag method
 
   ## Check original_slice
-  unless($original_slice && ref $original_slice && 
-         $original_slice->isa('Bio::EnsEMBL::Slice')) {
-    throw("[$original_slice] should be a Bio::EnsEMBL::Slice object\n");
+  unless($reference_slice && ref $reference_slice && 
+         $reference_slice->isa('Bio::EnsEMBL::Slice')) {
+    throw("[$reference_slice] should be a Bio::EnsEMBL::Slice object\n");
   }
 
   $limit = 0 if (!defined($limit));
 
   ## Get the Bio::EnsEMBL::Compara::GenomeDB object corresponding to the
-  ## $original_slice
-  my $slice_adaptor = $original_slice->adaptor();
+  ## $reference_slice
+  my $slice_adaptor = $reference_slice->adaptor();
   if(!$slice_adaptor) {
     warning("Slice has no attached adaptor. Cannot get Compara alignments.");
     return $all_genomic_align_blocks;
   }
   my $primary_species_binomial_name = 
       $slice_adaptor->db->get_MetaContainer->get_Species->binomial;
-  my $primary_species_assembly = $original_slice->coord_system->version;
+  my $primary_species_assembly = $reference_slice->coord_system->version;
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
   my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
           $primary_species_binomial_name,
           $primary_species_assembly
       );
 
-  my $projection_segments = $original_slice->project('toplevel');
+  my $projection_segments = $reference_slice->project('toplevel');
   return [] if(!@$projection_segments);
 
   foreach my $this_projection_segment (@$projection_segments) {
@@ -294,7 +332,7 @@ sub fetch_all_by_Slice {
     my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
             $genome_db, $this_slice->seq_region_name
         );
-    my $these_genomic_align_blocks = $self->fetch_all_by_DnaFrag(
+    my $these_genomic_align_blocks = $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
             $method_link_species_set,
             $this_dnafrag,
             $this_slice->start,
@@ -308,15 +346,15 @@ sub fetch_all_by_Slice {
     # need to convert features to requested coord system
     # if it was different then the one we used for fetching
 
-    if($top_slice->name ne $original_slice->name) {
+    if($top_slice->name ne $reference_slice->name) {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
         my $feature = new Bio::EnsEMBL::Feature(
                 -slice => $top_slice,
                 -start => $this_genomic_align_block->starting_genomic_align->dnafrag_start,
                 -end => $this_genomic_align_block->starting_genomic_align->dnafrag_end
             );
-        $feature = $feature->transfer($original_slice);
-        $this_genomic_align_block->requesting_slice($original_slice);
+        $feature = $feature->transfer($reference_slice);
+        $this_genomic_align_block->requesting_slice($reference_slice);
         $this_genomic_align_block->requesting_slice_start($feature->start);
         $this_genomic_align_block->requesting_slice_end($feature->end);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
@@ -337,19 +375,66 @@ sub fetch_all_by_Slice {
 }
 
 
-=head2 fetch_all_by_DnaFrag
+# # =head2 fetch_all_by_DnaFrag
+# # 
+# #   Arg  1     : integer $method_link_species_set_id
+# #                     - or -
+# #                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+# #   Arg  2     : integer $dnafrag_id
+# #                     - or -
+# #                Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+# #   Arg  3     : integer $start
+# #   Arg  4     : integer $end
+# #   Arg  5     : integer $limit
+# #   Example    : my $genomic_align_blocks =
+# #                   $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
+# #                       2, 19, 50000000, 50250000);
+# #   Description: Retrieve the corresponding
+# #                Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
+# #   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
+# #                adaptor and method_link_species_set are actually stored in the objects. The remaining
+# #                attributes are only retrieved when requiered.
+# #   Exceptions : Returns ref. to an empty array if no matching
+# #                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
+# #   Caller     : none
+# # 
+# # =cut
 
-  Arg  1     : integer $method_link_species_set_id
-                    - or -
-               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
-  Arg  2     : integer $dnafrag_id
-                    - or -
-               Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+sub fetch_all_by_DnaFrag {
+  my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit) = @_;
+  my $genomic_align_blocks = []; # returned object
+
+  deprecate("Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag method instead");
+
+  if ($dnafrag =~ /^\d+$/) {
+    my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
+    $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag);
+  }
+
+  if ($method_link_species_set =~ /^\d+$/) {
+    my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set);
+  }
+
+  return $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+          $method_link_species_set,
+          $dnafrag,
+          $start,
+          $end,
+          $limit
+      )
+}
+
+
+=head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Arg  3     : integer $start
   Arg  4     : integer $end
   Arg  5     : integer $limit
   Example    : my $genomic_align_blocks =
-                  $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
+                  $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
                       2, 19, 50000000, 50250000);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
@@ -362,27 +447,20 @@ sub fetch_all_by_Slice {
 
 =cut
 
-sub fetch_all_by_DnaFrag {
+sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit) = @_;
   my $genomic_align_blocks = []; # returned object
 
-  my $dnafrag_id;
-  if ($dnafrag =~ /^\d+$/) {
-    $dnafrag_id = $dnafrag;
-  } else {
-    throw("$dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag object")
-        if (!$dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
-    $dnafrag_id = $dnafrag->dbID;
-  }
+  throw("[$dnafrag] is not a Bio::EnsEMBL::Compara::DnaFrag object")
+      unless ($dnafrag and $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
+  my $dnafrag_id = $dnafrag->dbID;
+  throw("[$dnafrag] has no dbID") if (!$dnafrag_id);
 
-  my $method_link_species_set_id;
-  if ($method_link_species_set =~ /^\d+$/) {
-    $method_link_species_set_id = $method_link_species_set;
-  } else {
-    throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-        if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-    $method_link_species_set_id = $method_link_species_set->dbID;
-  }
+  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+      unless ($method_link_species_set and
+          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  my $method_link_species_set_id = $method_link_species_set->dbID;
+  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
   my $lower_bound = $start - $self->{'max_alignment_length'};
   my $sql = qq{
