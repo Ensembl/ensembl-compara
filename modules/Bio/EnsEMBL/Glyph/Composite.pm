@@ -12,11 +12,37 @@ sub push {
 
     push @{$this->{'composite'}}, $glyph;
 
-    $this->x($glyph->x()) if(!defined $this->x() || $glyph->x() < $this->x());
-    $this->y($glyph->y()) if(!defined $this->y() || $glyph->y() < $this->y());
+    my $gx = $glyph->x();
+    my $gw = $glyph->width();
+    my $gy = $glyph->y();
+    my $gh = $glyph->height();
 
-    $this->width($this->width()   + $glyph->width());
-    $this->height($glyph->height()) if(!defined $this->height() || $glyph->height() > $this->height());
+    #########
+    # track max and min dimensions
+    #
+    # x
+    #
+    $this->x($gx) if(!defined($this->x()));
+    $this->y($gy) if(!defined($this->y()));
+    $this->width($gw) if(!defined($this->width()));
+    $this->height($gh) if(!defined($this->height()));
+
+    if($gx < $this->x()) {
+	$this->x($gx);
+	$this->width($this->x() - $gx + $this->width());
+    } elsif(($gx + $gw) > ($this->x() + $this->width())) {
+	# x unchanged
+	$this->width(($gx + $gw) - $this->x());
+    }
+    # y
+    #
+    if($gy < $this->y()) {
+	$this->y($gy);
+	$this->height($this->y() - $gy + $this->height());
+    } elsif(($gy + $gh) > ($this->y() + $this->height())) {
+	# y unchanged
+	$this->height(($gy + $gh) - $this->y());
+    }
 }
 
 1;
