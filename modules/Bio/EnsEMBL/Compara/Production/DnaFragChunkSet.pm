@@ -40,6 +40,9 @@ sub new {
   my $self = {};
   bless $self,$class;
 
+  $self->{'_dnafrag_chunk_id_list'} = [];
+  $self->{'_cached_chunk_list'} = undef;
+
   if (scalar @args) {
     #do this explicitly.
     my ($dbid, $description, $adaptor) = rearrange([qw(DBID NAME ADAPTOR)], @args);
@@ -47,9 +50,6 @@ sub new {
     $self->dbID($dbid)               if($dbid);
     $self->description($description) if($description);
     $self->adaptor($adaptor)         if($adaptor);
-
-    $self->{'_dnafrag_chunk_id_list'} = [];
-    $self->{'_cached_chunk_list'} = undef;
   }
 
   return $self;
@@ -176,7 +176,7 @@ sub add_DnaFragChunk {
 
   Example    : @chunks = @{$chunkSet->get_all_DnaFragChunks};
   Description: returns array reference to all the DnaFragChunk objects in this set
-               will lazy load the set if it wasn't previously loaded
+               will lazy load the set if it was not previously loaded
   Returntype : reference to array of Bio::EnsEMBL::Compara::Production::DnaFragChunk objects
   Exceptions :
   Caller     :
