@@ -208,7 +208,6 @@ sub get_FamilyAdaptor{
    return $self->{'_family_adaptor'};
 }
 
-
 =head2 get_GenomicAlignAdaptor
 
  Title   : get_GenomicAlignAdaptor
@@ -230,6 +229,54 @@ sub get_GenomicAlignAdaptor{
    }
    return $self->{'_genomicalign_adaptor'};
 }
+
+=head2 get_ConservedClusterAdaptor
+
+ Title   : get_ConservedClusterAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_ConservedClusterAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_conservedcluster_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::ConservedClusterAdaptor;
+       $self->{'_conservedcluster_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ConservedClusterAdaptor->new($self);
+   }
+   return $self->{'_conservedcluster_adaptor'};
+}
+
+=head2 get_ConservedSegmentAdaptor
+
+ Title   : get_ConservedSegmentAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_ConservedSegmentAdaptor{
+   my ($self) = @_;
+
+   if( !defined $self->{'_conservedsegment_adaptor'} ) {
+       require Bio::EnsEMBL::Compara::DBSQL::ConservedSegmentAdaptor;
+       $self->{'_conservedsegment_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ConservedSegmentAdaptor->new($self);
+   }
+   return $self->{'_conservedsegment_adaptor'};
+}
+
+
+=head2 get_SyntenyRegionAdaptor
+
 
 
 =head2 get_SyntenyRegionAdaptor
