@@ -173,7 +173,6 @@ sub cdna_alignment_string {
         $start += 3;
       }
     }
-    print STDERR "cdna_align_string: ",$cdna_align_string,"\n";
     $self->{'cdna_alignment_string'} = $cdna_align_string
   }
   
