@@ -19,12 +19,11 @@ sub features {
   &eprof_end( 'get_all_vf' );
   &eprof_start( 'sort_vf' );  
   my @vari_features = 
-     map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ 
-							 #$ct{$_->consequence_type} *
+     map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ $ct{$_->get_consequence_type} *
        1e9 + $_->start, $_ ] } grep { $_->map_weight < 4 } @$vf_ref;
   &eprof_end( 'sort_vf' );
 
-#  warn "@{[ map { $_->consequence_type } @vari_features ]}";
+#  warn "@{[ map { $_->get_consequence_type } @vari_features ]}";
   if(@vari_features) {
     $self->{'config'}->{'variation_legend_features'}->{'variations'} 
         = { 'priority' => 1000, 'legend' => [] };
@@ -39,7 +38,7 @@ sub href {
   my( $chr_start, $chr_end ) = $self->slice2sr( $f->start, $f->end );
   my $id = $f->variation_name;
   $id =~ s/^rs//;
-  my $source = $f->{'_source'}; #$f->variation->source;
+  my $source = $f->source;
   my $chr_name = $self->{'container'}->seq_region_name();  # call seq region on slice
   &eprof_end('href');
   return "/@{[$self->{container}{_config_file_name_}]}/variationview?snp=$id&source=$source&chr=$chr_name&vc_start=$chr_start";
@@ -60,7 +59,7 @@ sub tag {
   my $this_is_a_temporary_variable_so_that_I_can_eprof_tag;
   if($f->start > $f->end ) {
     
-    my $consequence_type = $f->consequence_type;
+    my $consequence_type = $f->get_consequence_type;
     $this_is_a_temporary_variable_so_that_I_can_eprof_tag = ( { 'style' => 'insertion', 
 	       'colour' => $self->{'colours'}{"$consequence_type"} } );
   }
@@ -77,7 +76,7 @@ sub colour {
   #  'FRAMESHIFT_CODING',  'NON_SYNONYMOUS_CODING',  'SYNONYMOUS_CODING',
   #  '5PRIME_UTR','3PRIME_UTR','INTRONIC','UPSTREAM','DOWNSTREAM','INTERGENIC'
   &eprof_start( 'colour' );
-  my $consequence_type = $f->consequence_type();
+  my $consequence_type = $f->get_consequence_type();
   unless($self->{'config'}->{'variation_types'}{$consequence_type}) {
     my %labels = (
          	  '_'                    => 'Other SNPs',
@@ -92,11 +91,11 @@ sub colour {
 		  'INTERGENIC'           => 'Intergenic SNPs',
 		 );
     push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
-     $labels{"$consequence_type"} => $self->{'colours'}{"$consequence_type"};
+     $labels{$consequence_type} => $self->{'colours'}{$consequence_type};
     $self->{'config'}->{'variation_types'}{$consequence_type} = 1;
   }
   &eprof_end( 'colour' );
-  return $self->{'colours'}{"$consequence_type"},
+  return $self->{'colours'}{$consequence_type},
     $self->{'colours'}{"label$consequence_type"}, 
       $f->start > $f->end ? 'invisible' : '';
 }
@@ -116,8 +115,7 @@ sub zmenu {
     $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
   }
 
-#  my $variation = $f->variation;
-#  my $status = join ", ", @{$variation->get_all_validation_states};
+  my $status = join ", ", @{$f->get_all_validation_states};
   my %zmenu = ( 
  	       caption               => "SNP: " . ($f->variation_name),
  	       '01:SNP properties'   => $self->href( $f ),
@@ -130,11 +128,12 @@ sub zmenu {
 
  # foreach my $db (@{  $variation->get_all_synonym_sources }) {
   #  if( $db eq 'TSC-CSHL' || $db eq 'HGVBASE' || $db eq 'dbSNP' || $db eq 'WI' ) {
-      $zmenu{"16:dbSNP: ".$f->variation_name} =$self->ID_URL("dbSNP", $f->variation_name);
+  $zmenu{"16:dbSNP: ".$f->variation_name} =
+    $self->ID_URL("dbSNP", $f->variation_name) if $f->source eq 'dbSNP';
   #  }
   #}
 
-  my $consequence_type = $f->consequence_type;
+  my $consequence_type = $f->get_consequence_type;
   $zmenu{"57:Type: $consequence_type"} = "" unless $consequence_type eq '';  
   eprof_end( 'zmenu' );
   return \%zmenu;
