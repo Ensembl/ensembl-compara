@@ -95,9 +95,9 @@ sub description {
 
 =head2 method_link_species_set
 
-  Arg [1]    : None
+  Arg [1]    : MethodLinkSpeciesSet object (optional)
   Example    : 
-  Description: 
+  Description: getter/setter method for the MethodLinkSpeciesSet for this relation
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
   Exceptions : 
   Caller     : 
@@ -107,8 +107,16 @@ sub description {
 sub method_link_species_set {
   my $self = shift;
 
-  $self->{'_method_link_species_set'} = shift if (@_);
+  if(@_) {
+    my $mlss = shift;
+    unless ($mlss->isa('Bio::EnsEMBL::Compara::MethodLinkSpeciesSet')) {
+      throw("Need to add a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet, not a $mlss\n");
+    }
+    $self->{'_method_link_species_set'} = $mlss;
+    $self->{'_method_link_species_set_id'} = $mlss->dbID;
+  }
 
+  #lazy load from method_link_species_set_id
   if ( ! defined $self->{'_method_link_species_set'} && defined $self->method_link_species_set_id) {
     my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
