@@ -71,9 +71,9 @@ sub get_synteny_for_chromosome {
     }
     my $sth =$self->prepare(
         "select sr.synteny_region_id,
-                df.dnafrag_type as core_type,  df.name as core_name,
+                df.coord_system_name as core_type,  df.name as core_name,
                 dfr.seq_start as core_start,   dfr.seq_end as core_end,
-                df_h.dnafrag_type as hit_type, df_h.name as hit_name,
+                df_h.coord_system_name as hit_type, df_h.name as hit_name,
                 dfr_h.seq_start as hit_start,  dfr_h.seq_end as hit_end,
                 sr.rel_orientation
            from dnafrag as df,         dnafrag as df_h,
