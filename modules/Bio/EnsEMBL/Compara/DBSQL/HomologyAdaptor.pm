@@ -193,8 +193,6 @@ sub _fetch_homologues_by_species_relationship_id{
 	    and	    gd.name = '$hspecies' 
             and	    grm.gene_relationship_id = $internal_id";
 
-    warn $q;
-
     my @genes=$self->_get_homologues($q);
 
 }
