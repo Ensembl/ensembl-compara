@@ -139,9 +139,9 @@ sub RENDER_simple {
     my $row = 0;
     my $START = $f->das_start() <  1       ? 1       : $f->das_start();
     my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
-    if( $configuration->{'depth'}>0 ) {
+    if( $configuration->{'depth'} > 0 ) {
       $row = $self->bump( $START, $END, $label_length, $configuration->{'depth'} );
-      if( $row <= 0 ) { ## SKIP IF BUMPED...
+      if( $row < 0 ) { ## SKIP IF BUMPED...
 	  $more_features = 1;
 	  next;
       }
@@ -311,7 +311,7 @@ sub RENDER_grouped {
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
 
-    if( $row <= 0 ) { ## SKIP IF BUMPED...
+    if( $row < 0 ) { ## SKIP IF BUMPED...
 	$more_features = 1;
 	next;
     }
@@ -821,13 +821,8 @@ sub _init {
          }
       }
   } else {
-#      warn("EL:($dsn)".$self->{'container'});
     my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
     $styles = $das_styles;
-  foreach my $f (@$features) {
-    my $str = join('##', $f->das_feature_label, $f->das_type_id, $f->das_start, $f->das_end);
-    warn("$str");
-  }
     @das_features = grep {
       $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
       $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
@@ -836,11 +831,6 @@ sub _init {
     } @{ $features || [] };
   }
 
-  foreach my $f (@das_features) {
-    my $str = join('==', $f->das_feature_label, $f->das_type_id, $f->das_start, $f->das_end);
-    warn("$str");
-  }
-# warn("RET:".@das_features);
   $configuration->{'features'} = \@das_features;
   my %styles;
   if( $styles && @$styles && $configuration->{'use_style'} ) {
