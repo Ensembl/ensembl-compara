@@ -195,19 +195,11 @@ sub store {
   $hom->isa('Bio::EnsEMBL::Compara::Homology') ||
     $self->throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom");
 
-  my $sql = "SELECT homology_id from homology where stable_id = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($hom->stable_id);
-  my $rowhash = $sth->fetchrow_hashref;
-
   $hom->source_id($self->store_source($hom->source_name));
-
-  if ($rowhash->{homology_id}) {
-    $hom->dbID($rowhash->{homology_id});
-  } else {
-  
-    $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?)";
-    $sth = $self->prepare($sql);
+    
+  unless($hom->dbID) {
+    my $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?)";
+    my $sth = $self->prepare($sql);
     $sth->execute($hom->stable_id,$hom->source_id,$hom->description);
     $hom->dbID($sth->{'mysql_insertid'});
   }
