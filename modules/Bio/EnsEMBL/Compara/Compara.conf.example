@@ -1,0 +1,14 @@
+(
+['Homo sapiens', 'NCBI_31', {'host' => "ecs2b.internal.sanger.ac.uk",
+                              'user' => "ensro",
+                              'dbname' => "ens_NCBI_31",
+                              'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}],
+['Mus musculus', 'CHR', {'host' => "ecs2d.internal.sanger.ac.uk",
+                          'user' => "ensro",
+                          'dbname' => "mus_musculus_core_9_3",
+                          'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}],
+['Rattus norvegicus', 'Rat_Nov02', {'host' => "ecs2a.internal.sanger.ac.uk",
+                                     'user' => "ensro",
+                                     'dbname' => "rat_Nov02",
+                                     'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}]
+)
