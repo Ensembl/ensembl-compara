@@ -545,6 +545,14 @@ sub store {
   return $member->dbID;
 }
 
+sub update_sequence {
+  my ($self, $member) = @_;
+
+  my $sql = "UPDATE member SET sequence = ? WHERE member_id = ?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($member->sequence, $member->dbID);
+}
+
 =head2 store_source
 
   Arg [1]    : 
