@@ -2,7 +2,6 @@ package Bio::EnsEMBL::GlyphSet::unigene;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
-use ExtURL;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
@@ -10,13 +9,15 @@ sub my_label { return "Unigene"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_by_strand("unigene.seq",80,$self->glob_bp(),$self->strand());
+    return $self->{'container'}->get_all_SimilarityFeatures_above_score("unigene.seq",80,$self->glob_bp());
 }
 
+sub href { 
+    my ($self, $id ) = @_;
+    return $self->{'config'}->{'ext_url'}->get_url( 'UNIGENE', $id );
+}    
 sub zmenu {
     my ($self, $id ) = @_;
-    my $ext_url = ExtURL->new;
-    my $unigeneid = $id;
-    return { 'caption' => "$id", "UniGene cluster $id" => $ext_url->get_url( 'UNIGENE', $unigeneid ) };
+    return { 'caption' => "$id", "UniGene cluster $id" => $self->href( $id ) };
 }
 1;
