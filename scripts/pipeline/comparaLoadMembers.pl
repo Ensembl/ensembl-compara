@@ -12,7 +12,7 @@ use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
 
 my $help = 0;
-my ($host,$port,$dbname,$dbuser,$dbpass,$conf_file,$fastafile);
+my ($host,$port,$dbname,$dbuser,$dbpass,$compara_conf,$conf_file,$fastafile);
 my ($genome_db_id);
 my ($prefix);
 my $method_link_type = "HOMOLOGOUS_GENE";
@@ -25,6 +25,7 @@ GetOptions('help' => \$help,
            'user=s' => \$dbuser,
            'pass=s' => \$dbpass,
            'dbname=s' => \$dbname,
+           'compara=s' => \$compara_conf,	   
            'conf=s' => \$conf_file,
            'genome_db_id=i' => \$genome_db_id,
 	   'prefix=s' => \$prefix,
@@ -33,12 +34,23 @@ GetOptions('help' => \$help,
 
 if ($help) { usage(); }
 
+if(-e $compara_conf) {	  
+  my %conf = %{do $compara_conf};
+
+  $host = $conf{'host'};
+  $port = $conf{'port'};
+  $dbuser = $conf{'user'};
+  $dbname = $conf{'dbname'};
+  #$adaptor = $conf{'adaptor'};
+}
+
+
 unless(defined($host) and defined($dbuser) and defined($dbname)) {
   print "\nERROR : must specify host, user, and database to connect to compara\n\n";
   usage(); 
 }
 unless(defined($genome_db_id)) { 
-  print "\nERROR : must specify genome_db_id to connect to compara\n\n";
+  print "\nERROR : must specify genome_db_id or assembly to connect to coreDB\n\n";
   usage(); 
 }
 unless(defined($conf_file)) { 
@@ -49,7 +61,7 @@ unless(defined($conf_file)) {
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-conf_file => $conf_file,
                                                      -host => $host,
-						     -port => $port,
+                                                     -port => $port,
                                                      -dbname => $dbname,
                                                      -user => $dbuser,
                                                      -pass => $dbpass);
@@ -205,7 +217,6 @@ sub store_gene_and_all_transcripts
   }
   #if($longestCount >= 1000) { last SLICE; }
 }
- 
  
 sub fasta_description {
   my ($gene, $transcript) = @_; 
