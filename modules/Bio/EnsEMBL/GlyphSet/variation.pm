@@ -123,7 +123,9 @@ sub zmenu {
   my %zmenu = ( 
  	       caption               => "SNP: " . ($f->variation_name),
  	       '01:SNP properties'   => $self->href( $f, 'snpview' ),
- 	       '02:View in LDView'   => $self->href( $f, 'ldview' ),
+               ( $self->{'config'}->_is_available_artefact( 'database_tables ENSEMBL_VARIATION.pairwise_ld' ) ?
+ 	         ( '02:View in LDView'   => $self->href( $f, 'ldview' ) ) : ()
+               ),
  	       "03:bp: $pos"         => '',
  	       "04:status: ".($status || '-') => '',
  	       "05:SNP type: ".($f->var_class || '-') => '',
