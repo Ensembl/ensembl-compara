@@ -103,7 +103,7 @@ sub run
 {
   my $self = shift;
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   if($self->{'source'}) {
     $self->loadMembersFromUniprot($self->{'source'});
@@ -145,10 +145,25 @@ sub loadMembersFromUniprot
 
   my $count = scalar(@uniprot_ids);
   
-  while(@uniprot_ids) {
-    my @id_chunk = splice(@uniprot_ids, 0, 30);
-    $self->pfetch_and_store_by_ids($source, @id_chunk);
+# while(@uniprot_ids) {
+#   my @id_chunk = splice(@uniprot_ids, 0, 30);
+#   $self->pfetch_and_store_by_ids($source, @id_chunk);
+# }
+
+  my $index=1;
+  foreach my $id (@uniprot_ids) {
+    $index++;
+    print("check/load $index ids\n") if($index % 100 == 0);
+    my $stable_id = $id;
+    $stable_id = $1 if($id =~ /$source:(.*)/);
+    my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id($source, $stable_id);
+    if($member) {
+      #print("$source $stable_id : already loadled in compara\n");
+    } else {
+      $self->pfetch_and_store_by_ids($source, $id);
+    }
   }
+
   printf("fetched %d ids from %s\n", $count, $source);
 }
 
