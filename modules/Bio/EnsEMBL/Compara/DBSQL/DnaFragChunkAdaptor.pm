@@ -16,6 +16,7 @@ package Bio::EnsEMBL::Compara::DBSQL::DnaFragChunkAdaptor;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFragChunk;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
 use vars '@ISA';
 
@@ -43,13 +44,18 @@ sub store {
   return unless(@out and scalar(@out));
 
   my $query = "INSERT INTO dnafrag_chunk(".
-                "dnafrag_id,seq_start,seq_end) VALUES ";
-
+                "dnafrag_id,sequence_id,seq_start,seq_end) VALUES ";
+  my $seqDBA = $self->db->get_SequenceAdaptor;
+  
   my $addComma=0;
   foreach my $dfc (@out) {
     if($dfc->isa('Bio::EnsEMBL::Compara::DnaFragChunk')) {
+
+      $dfc->sequence_id($seqDBA->store($dfc->sequence));
+      
       $query .= ", " if($addComma);
       $query .= "(".$dfc->dnafrag_id.
+                ",".$dfc->sequence_id.
                 ",".$dfc->seq_start.
                 ",".$dfc->seq_end.")";
       $addComma=1;
