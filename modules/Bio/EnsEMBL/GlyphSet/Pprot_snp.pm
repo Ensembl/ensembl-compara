@@ -71,7 +71,7 @@ sub _init {
 					'points'    => [ $triangle_start, $h,
                                      $x, $h-5,
                                      $triangle_end, $h  ],
-                    'colour'    => $Config->get('Pprot_snp', $int->{'bg'}),
+                    'colour'    => $Config->get('Pprot_snp', $int->{'type'}),
                     'absolutey' => 1,
 					'absolutewidth' => 1,
 					'zmenu' => {
@@ -95,7 +95,7 @@ sub _init {
 					'points'    => [ $triangle_start, $h-5,
                                      $x, $h,
                                      $triangle_end, $h-5  ],
-                    'colour'    => $Config->get('Pprot_snp', $int->{'bg'}),
+                    'colour'    => $Config->get('Pprot_snp', $int->{'type'}),
                     'absolutey' => 1,
 					'absolutewidth' => 1,
 					'zmenu' => {
@@ -130,7 +130,7 @@ sub _init {
 		'x'        => $x-($w/2),
 		'width'    => $w,
 		'height'   => $h,
-		'colour'   => $Config->get('Pprot_snp', $int->{'bg'}),
+		'colour'   => $Config->get('Pprot_snp', $int->{'type'}),
 		'absolutey' => 1,
 		'absolutewidth' => 1,
 		'zmenu' => {
