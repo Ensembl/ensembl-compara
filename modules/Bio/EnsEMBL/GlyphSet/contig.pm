@@ -207,8 +207,7 @@ sub _init {
                 'absolutey' => 1,
 			});
             my $cid = $rid;
-            #$cid=~s/^([^\.]+\.[^\.]+)\..*/$1/;
-            $cid=~s/^([^\.]+)\..*/$1/;
+            $cid=~s/^([^._]+).*/$1/;
             $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?contig=$rid" if $navigation eq 'on';
             $glyph->{'zmenu'} = {
                 'caption' => $rid,
