@@ -1,5 +1,6 @@
 package Sanger::Graphics::Renderer;
 use strict;
+use Sanger::Graphics::Glyph::Poly;
 
 sub new {
     my ($class, $config, $container, $glyphsets_ref) = @_;
@@ -54,21 +55,53 @@ sub render {
     	$self->init_canvas($config, $im_width, $im_height);
     }
 
+    my %tags;
+    my %layers = ();
     for my $glyphset (@{$self->{'glyphsets'}}) {
-	next if(scalar @{$glyphset->{'glyphs'}} == 0);
+        foreach( keys %{$glyphset->{'tags'}}) {
+    	    if($tags{$_}) {
+                # my @points = ( @{$tags{$_}}, @{$glyphset->{'tags'}{$_}} );
+                my @points = map { 
+                (
+			$_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
+                        $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
+                ) } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
+                # warn (join '-',' ',@points,' ');
+                # warn ("COL: ",$glyphset->{'tags'}{$_}[0]{'col'} );
+                my $first = $glyphset->{'tags'}{$_}[0];
+                my $glyph = new Sanger::Graphics::Glyph::Poly({
+                      'pixelpoints'       => [ @points ],
+                      'colour'       => $first->{'col'},
+                      'absolutex'    => 1,
+                      'absolutey'    => 1,
+                });
+                push @{$layers{defined $first->{'z'} ? $first->{'z'} : -1 }}, $glyph;
+                delete $tags{$_};
+	    } else {
+                $tags{$_} = $glyphset->{'tags'}{$_}
+            }       
+        }
+        foreach( @{$glyphset->{'glyphs'}} ) {
+	    if($_->{'z'}) {
+                push @{$layers{$_->{'z'}}}, $_;
+            } else {
+                push @{$layers{0}},$_;
+            } 
+        }
+    }
 
+    for my $layer ( sort { $a<=>$b } keys %layers ) {
 	#########
 	# loop through everything and draw it
 	#
-	for my $glyph ($glyphset->glyphs()) {
-	    my $method = $self->method($glyph);
+	for ( @{$layers{$layer}} ) {
+	    my $method = $self->method($_);
 	    if($self->can($method)) {
-		$self->$method($glyph);
+		$self->$method($_);
 	    } else {
 		print STDERR qq(Sanger::Graphics::Renderer::render: Do not know how to $method\n);
 	    }
 	}
-
     }
 	
 

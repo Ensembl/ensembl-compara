@@ -55,6 +55,13 @@ sub glob_bp {
     my ($self) = @_;
     return int( $self->basepairs_per_pixel()*2 );
 }
+
+sub tag {
+    my( $self, $glyph, $tag, $x_pos, $y_pos, $col ) = @_;
+    push @{$self->{'tags'}{$tag}}, { 'glyph' => $glyph, 'x' => $x_pos, 'y' => $y_pos, 'col'
+=> $col };
+}
+
 #########
 # return our list of glyphs
 #
