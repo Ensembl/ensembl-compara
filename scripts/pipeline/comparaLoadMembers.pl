@@ -107,7 +107,9 @@ SLICE: foreach my $slice (@slices) {
   #print(STDERR "slice " . $slice->name . "\n");
   foreach my $gene (@{$slice->get_all_Genes}) {
     $geneCount++;
-    if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
+    if((lc($gene->type) ne 'pseudogene') and 
+       (lc($gene->type) ne 'bacterial_contaminant') and
+       ($gene->type !~ /RNA/i)) {
       $realGeneCount++;
       store_gene_and_all_transcripts($gene);
     }
