@@ -345,19 +345,19 @@ sub contig {
    my ($self) = @_;
 
    if( !defined $self->{'_contig'} ) {
-     my $core_dbadaptor = $self->genomedb->db_adaptor;
-     if ($self->type eq "RawContig") {
+     my $core_dbadaptor = $self->genome_db->db_adaptor;
+     if ($self->coord_system_name eq "RawContig") {
        $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_region('seqlevel', $self->name);
      }
-     elsif ($self->type eq "VirtualContig") {
+     elsif ($self->coord_system_name eq "VirtualContig") {
        my ($chr,$start,$end) = split /\./, $self->name;
        $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_region('toplevel',$start,$end);
      } 
-     elsif ($self->type eq "Chromosome") {
+     elsif ($self->coord_system_name eq "Chromosome") {
        $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_region('toplevel',$self->name);
      } 
      else {
-       throw ("Can't fetch contig of ".$self->name." with type ".$self->type);
+       throw ("Can't fetch contig of ".$self->name." with coordinate system ".$self->coord_system_name);
      }
    }
    
@@ -379,8 +379,8 @@ sub slice {
   my ($self) = @_;
   
   unless (defined $self->{'_slice'}) {
-    my $dba = $self->genomedb->db_adaptor;
-    $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->type, $self->name);
+    my $dba = $self->genome_db->db_adaptor;
+    $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
   }
 
   return $self->{'_slice'};
