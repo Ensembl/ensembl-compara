@@ -279,17 +279,17 @@ sub create_GenomeDBs {
      FROM genomic_align_genome
   ");
 
-  $sth->execute;
-
-  while ( my @db_row = $sth->fetchrow_array() ) {
-    my ( $con, $query, $method_link_id ) = @db_row;
-
-    $genome_consensus_xreflist{$con .":" .$method_link_id} ||= [];
-    $genome_query_xreflist{$query .":" .$method_link_id} ||= [];
-
-    push @{ $genome_consensus_xreflist{$con .":" .$method_link_id}}, $query;
-    push @{ $genome_query_xreflist{$query .":" .$method_link_id}}, $con;
-  }
+#   $sth->execute;
+# 
+#   while ( my @db_row = $sth->fetchrow_array() ) {
+#     my ( $con, $query, $method_link_id ) = @db_row;
+# 
+#     $genome_consensus_xreflist{$con .":" .$method_link_id} ||= [];
+#     $genome_query_xreflist{$query .":" .$method_link_id} ||= [];
+# 
+#     push @{ $genome_consensus_xreflist{$con .":" .$method_link_id}}, $query;
+#     push @{ $genome_query_xreflist{$query .":" .$method_link_id}}, $con;
+#   }
 
   # grab all the possible species databases in the genome db table
   $sth = $self->prepare("
