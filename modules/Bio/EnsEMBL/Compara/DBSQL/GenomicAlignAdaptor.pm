@@ -46,8 +46,8 @@ use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
-use Bio::EnsEMBL::Compara::FeatureAwareAlignBlockSet;
 use Bio::EnsEMBL::Compara::AlignBlockSet; 
+
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 # we inheriet new
