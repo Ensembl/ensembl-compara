@@ -578,9 +578,9 @@ sub dnafrag_id {
   Arg [1]    : integer $dnafrag_start
   Example    : $dnafrag_start = $genomic_align->dnafrag_start;
   Example    : $genomic_align->dnafrag_start(1233354);
-  Description: Getter/Setter for the attribute dnafrag_start. If no argument is given, the level_id
-               is not defined but both the dbID and the adaptor are, it tries to
-               fetch and set all the direct attributes from the database using the
+  Description: Getter/Setter for the attribute dnafrag_start. If no argument is given, the
+               dnafrag_start is not defined but both the dbID and the adaptor are, it tries
+               to fetch and set all the direct attributes from the database using the
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
@@ -608,9 +608,9 @@ sub dnafrag_start {
   Arg [1]    : integer $dnafrag_end
   Example    : $dnafrag_end = $genomic_align->dnafrag_end;
   Example    : $genomic_align->dnafrag_end(1235320);
-  Description: Getter/Setter for the attribute dnafrag_end. If no argument is given, the level_id
-               is not defined but both the dbID and the adaptor are, it tries to
-               fetch and set all the direct attributes from the database using the
+  Description: Getter/Setter for the attribute dnafrag_end. If no argument is given, the
+               dnafrag_end is not defined but both the dbID and the adaptor are, it tries
+               to fetch and set all the direct attributes from the database using the
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
@@ -638,9 +638,9 @@ sub dnafrag_end {
   Arg [1]    : integer $dnafrag_strand (1 or -1)
   Example    : $dnafrag_strand = $genomic_align->dnafrag_strand;
   Example    : $genomic_align->dnafrag_strand(1);
-  Description: Getter/Setter for the attribute dnafrag_strand. If no argument is given, the level_id
-               is not defined but both the dbID and the adaptor are, it tries to
-               fetch and set all the direct attributes from the database using the
+  Description: Getter/Setter for the attribute dnafrag_strand. If no argument is given, the
+               dnafrag_strand is not defined but both the dbID and the adaptor are, it tries
+               to fetch and set all the direct attributes from the database using the
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
@@ -762,6 +762,80 @@ sub level_id {
   }
 
   return $self->{'level_id'};
+}
+
+
+=head2 genomic_align_groups
+ 
+  Arg [1]    : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_groups
+  Example    : $genomic_align_groups = $genomic_align->genomic_align_groups;
+  Example    : $genomic_align->genomic_align_groups($genomic_align_groups);
+  Description: get/set for attribute genomic_align_groups. If no argument is given, the
+               genomic_align_groups are not defined but both the dbID and the adaptor are,
+               it tries to fetch and set teh data from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
+  Returntype : int
+  Exceptions : none
+  Caller     : object::methodname
+ 
+=cut
+
+sub genomic_align_groups {
+  my ($self, $genomic_align_groups) = @_;
+
+  if (defined($genomic_align_groups)) {
+    foreach my $this_genomic_align_group (@$genomic_align_groups) {
+      my $type = $this_genomic_align_group->type;
+      $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
+    }
+
+  } elsif (!defined($self->{'genomic_align_group'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    $genomic_align_groups = $self->adaptor->db->get_GenomicAlignGroupAdaptor->fetch_all_by_GenomicAlign($self);
+    foreach my $this_genomic_align_group (@$genomic_align_groups) {
+      my $type = $this_genomic_align_group->type;
+      $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
+    }
+  }
+
+  $genomic_align_groups = [values %{$self->{'genomic_align_group'}}];
+  return $genomic_align_groups;
+}
+
+
+=head2 genomic_align_group_by_type
+ 
+  Arg [1]    : [mandatory] string $type (genomic_align_group.type)
+  Arg [2]    : [optional] Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_group
+  Example    : $genomic_align_group = $genomic_align->genomic_align_group_by_type("default");
+  Example    : $genomic_align->genomic_align_group_by_type("default", $genomic_align_group);
+  Description: get/set for the Bio::EnsEMBL::Compara::GenomicAlginGroup object
+               corresponding to this Bio::EnsEMBL::Compara::GenomicAlign object and the
+               given type.
+  Returntype : int
+  Exceptions : none
+  Caller     : object::methodname
+ 
+=cut
+
+sub genomic_align_group_by_type {
+  my ($self, $type, $genomic_align_group) = @_;
+
+  $type = "default" if (!$type);
+
+  if (defined($genomic_align_group)) {
+    $self->{'genomic_align_group'}->{$type} = $genomic_align_group;
+
+  } elsif (!defined($self->{'genomic_align_group'}->{$type}) and defined($self->{'dbID'})
+          and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    my $genomic_align_groups = $self->adaptor->db->get_GenomicAlignGroupAdaptor->fetch_all_by_GenomicAlign($self);
+    foreach my $this_genomic_align_group (@$genomic_align_groups) {
+      $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
+    }
+  }
+
+  return $self->{'genomic_align_group'}->{$type};
 }
 
 
