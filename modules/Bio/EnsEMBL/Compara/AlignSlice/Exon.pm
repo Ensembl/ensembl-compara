@@ -214,7 +214,6 @@ sub map_Exon_on_Slice {
   my $slice = $self->slice;
 
   if (!defined($slice) or !defined($original_exon) or !defined($from_mapper)) {
-    warn("[$self] cannot be mapped");
     return undef;
   }
 
