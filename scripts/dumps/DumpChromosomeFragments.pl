@@ -8,7 +8,7 @@ use Getopt::Long;
 
 my $usage = "
 DumpChromosomeFragments.pl -host ecs1b.sanger.ac.uk 
-            -user ensro
+            -dbuser ensro
             -dbname homo_sapiens_core_10_30
             -chr_names \"22\"
             -chr_start 1

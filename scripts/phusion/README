@@ -36,7 +36,7 @@ Empty set (0.98 sec)
  Then dump the sequence for each chromosome, e.g.
 
 ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
-	-host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 \
+	-host ecs2d.internal.sanger.ac.uk -dbuser ensro  -dbname homo_sapiens_core_12_31 \
 	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 \
 	-phusion Hs -o output_filename
 
@@ -44,7 +44,7 @@ ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
 
 > echo "select name from chromosome where name not like \"%_NT_%\" and name not like \"%_DR%\";"|mysql -h ecs2d -u ensro homo_sapiens_core_12_31|awk '!/name/'|sort -u > Hs31_chr_names
 
-> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
+> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
 
  Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
  Delete the intermediate files.
@@ -197,5 +197,5 @@ Hs ---------------
 
  Then load the alignment in your compara dv with ensembl-compara/scripts/phusion/LoadComparaDb.pl
 
->ensembl-compara/scripts/phusion/LoadComparaDb.pl -host ecs2.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
+>ensembl-compara/scripts/phusion/LoadComparaDb.pl -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
 
