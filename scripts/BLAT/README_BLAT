@@ -33,7 +33,7 @@ NB lines beginning with $ are command lines
 example used will be chicken against human
 
 $ cd /ecs4/work2/ensembl/cara/DNAFA/TX/
-$ mkdir Gg1 Hs34
+$ mkdir Gg1 Hs35
 
 $cd Gg1
 
@@ -75,10 +75,10 @@ $ grep ">" Gg1.fa | sed "s/>//" | cut -c-100 | awk 'BEGIN {ind=1; size=40} size>
 To run BLAT
 
 $ cd ../../../BLAT/
-$ mkdir Gg1Hs34
-$ cd Gg1Hs34
+$ mkdir Gg1Hs35
+$ cd Gg1Hs35
 
-$ cp ../../DNAFA/TX/Hs34/Hs34_chr_names ./
+$ cp ../../DNAFA/TX/Hs35/Hs35_chr_names ./
 
 Find out how many jobs to run: 
 $ ls ../../DNAFA/TX/Gg1/Gg1Ids/ | wc -l
@@ -90,20 +90,20 @@ NB At the moment the output comes from a print statement in Blat --- which isn\'
 As many jobs are involved its best to run these without nfs using the Run_LaunchBLAT.sh script which is as follows:
 
 
-cat Hs34_chr_nmaes | while read i; do 
-bsub -q normal -J"Gg1Hs34_$i\[1]" -o Hs34_$i/bsout.Gg1Hs34.$i.%I <<EOF
+cat Hs35_chr_nmaes | while read i; do 
+bsub -q normal -J"Gg1Hs35_$i\[1]" -o Hs35_$i/bsout.Gg1Hs35.$i.%I <<EOF
 . /usr/local/lsf/conf/profile.lsf
 /ecs4/work2/ensembl/cara/BLAT/LaunchBLAT.pl \
 -idqy /ecs4/work2/ensembl/cara/DNAFA/TX/Gg1/Gg1Ids/Gg1Ids.\${LSB_JOBINDEX} \
 -fastaqy /ecs4/work2/ensembl/cara/DNAFA/TX/Gg1/Gg1.fa \
 -indexqy /ecs4/work2/ensembl/cara/DNAFA/TX/Gg1/Gg1.fa.index \
--fastadb /ecs4/work2/ensembl/cara/DNAFA/TX/Hs34/$i.fa \
--query_type dnax -target_type dnax  -makefile Hs34_$i/5.ooc \
-2> /tmp/err.Gg1Hs34.\${LSB_JOBINDEX}.$i.\$\$ 
+-fastadb /ecs4/work2/ensembl/cara/DNAFA/TX/Hs35/$i.fa \
+-query_type dnax -target_type dnax  -makefile Hs35_$i/5.ooc \
+2> /tmp/err.Gg1Hs35.\${LSB_JOBINDEX}.$i.\$\$ 
 status=\$?
 set -e 
-lsrcp /tmp/err.Gg1Hs34.\${LSB_JOBINDEX}.$i.\$\$ ecs4b:$PWD/Hs34_$i/Gg1Hs34.\${LSB_JOBINDEX}.$i.err
-/bin/rm -f /tmp/err.Gg1Hs34.\${LSB_JOBINDEX}.$i.\$\$ 
+lsrcp /tmp/err.Gg1Hs35.\${LSB_JOBINDEX}.$i.\$\$ ecs4b:$PWD/Hs35_$i/Gg1Hs35.\${LSB_JOBINDEX}.$i.err
+/bin/rm -f /tmp/err.Gg1Hs35.\${LSB_JOBINDEX}.$i.\$\$ 
 exit \$status
 EOF
 done
@@ -116,19 +116,52 @@ Check everything ran ok and run with the rest 2-x where x is the number of id fi
 Check everything ran ok. Should run overnight but can take as long as 3 days depending on the load on the farm, and whether the chickens have been fed recently.
 
 
-$ cat Hs34_chr_names | while read i ; do cd Hs34_$i ; echo "doing Hs34_$i " ; echo "err: " ; ls | grep err| wc -l ; echo "errors: "; ls | grep err| xargs grep rror ; echo -n "out: " ; ls | grep out| wc -l ; echo -n "Done: " ; ls |grep out | xargs grep Done | wc -l ; echo  "Exit: " ; ls |grep out | xargs grep Exit ; cd ../ ; done
+$ cat Hs35_chr_names | while read i ; do cd Hs35_$i ; echo "doing Hs35_$i " ; echo "errors: "; ls | grep err| xargs grep rror ; echo -n out ; l | grep out | wc -l; echo -n err ; l | grep err | wc -l; echo -n Done ; l | grep out | xargs grep Done |wc -l ; echo -n "cant open" ; l | grep err | xargs grep "Can\'t open" | wc  -l ; l | grep out |xargs grep Exit; cd ../; done
 
-Any repeats need to be deleted and rerun. 
+There should be the same number of files as there were jobs -- ie the number of id files
+
+Any failures need to be deleted and rerun. 
 
 
 grep out reults lines
 
 
-$ cat Hs34_chr_names | while read i ; do cd Hs34_$i ; echo "doing Hs34_$i " ; ls | grep err | xargs grep -h Gg1 > ../Gg1Hs34_$i\.raw ; cd ../ ; done
+$ cat Hs35_chr_names | while read i ; do cd Hs35_$i ; echo "doing Hs35_$i " ; ls | grep err | xargs grep -h Gg >> ../Gg1Hs35_$i\.raw ; cd ../ ; done
 
 parse these files to remove overlapped hsps
 
-$ cat Hs34_chr_names | while read i ; do  ; done
+$ cat Hs35_chr_names | while read i ; do  echo "/nfs/acari/cara/src/ensembl_main/ensembl-compara/scripts/BLAT/parse_and_score.pl -F Gg1Hs35_$i\.raw -O Gg1Hs35_$i -D 15000 -S1 Gg -S2 Hs -CF /nfs/acari/cara/.Registry.conf "  | bsub -q normal -o Gg1Hs35_$i\.out;; done
+
+Check these all ran ok 
+cat Hs35_chr_names | while read i ; do echo $i ; grep Lost Gg1Hs35_$i.out ; done
+
+Then load into db. The easiest way to do this is to create tab files and then load these manually. But be warned that the method_link_species_set table gets filled in which can cause problems if the files are not loaded later.
+
+ cat all the data files into one file. 
+ cat Gg1Hs35_*.data >>Gg1Hs35.data
+ 
+/nfs/acari/cara/src/ensembl_main/ensembl-compara/scripts/BLAT/LoadBLATAlignments.pl -dbname cara_ensembl_compara_27_1 -cs_genome_db_id 1 -qy_genome_db_id 11 -file Gg1Hs35.data -alignment_type TRANSLATED_BLAT -conf_file  /nfs/acari/cara/.Registry.conf  -tab 1
+
+if loading directly then leave off "-tab 0"
+
+
+This will produce the following files 
+
+genomic_align_block.Gg1Hs35.data
+genomic_align.Gg1Hs35.data
+genomic_align_group.Gg1Hs35.data
+
+logon to the machine that has the db on it. (eg. caa-stat mysql_3364 on ecs2 will tell you which machine ecs2:3364 is currently on). These are loaded into the db using :
+
+mysql -S /mysql/data_3364/mysql_3364.sock -u ensadmin -Pxxxxxxx 
+
+mysql> use cara_ensembl_compara_27_1 ;
+
+database changed
+
+mysql> load data infile /ecs2/scratch3/cara/BLAT/Gg1Hs35/genomic_align_block.Gg1Hs35.data into table genomic_align_block ;
+
+repeat for the other two files and you're done!
 
 
 

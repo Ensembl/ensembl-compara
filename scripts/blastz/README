@@ -8,10 +8,20 @@ mkdir ucsc_sql;cd ucsc_sql
 
 wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database
 
-Then you have to know what is the mouse abbreviation used by UCSC, here is Mm5
+(replace hg17 with the species abbreviation of interest (check by going to a webpage and typing in the URL -- it should be a valid webpage)
 
+Then you have to know what is the mouse abbreviation used by UCSC, here is mm5
+
+
+to find out what the abreviation might be 
+grep "net" index.html |awk -F "\"" '{print $6}'|grep ^net
+and check through the output for an abbreviation that looks relevent.
+
+Then wget the files with:
 
 grep Mm5 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;do wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i;done
+
+again remembering to replace hg17 with the relevent species abbreviation. Note they tend to be in the format of canFam1 or xenTro1 or galGal2 for more recently added species.
 
 2- set up a mysql database
 
@@ -25,14 +35,28 @@ ls *.sql|while read i;do mysql -h ecs2 -P3366 -u ensadmin -pensembl abel_ucsc_ch
 
 ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz;mysqlimport -h ecs2 -P3366 -u ensadmin -pensembl abel_ucsc_chain_data_Hs35Mm33 $i;gzip $i;echo $i loaded;done
 
+mysqlimport didn not work on ia64e so use the following instead:
+
+ls *.gz | sed "s/\.txt.gz//" | while read i ; do echo "Loading $i..." ; gunzip $i.txt.gz ; mysql -h ia64e -pensembl -u ensadmin -e "load data infile '/ecs2/scratch3/cara/UCSC/Mm33Xt1/ucsc_sql/$i.txt' into table $i" cara_ucsc_chain_data_xenTro1mm5 ; gzip $i.txt ; echo $i loaded ; done
 
 Load in compara
 
 cd ../load
 
-mysql -h ecs2 -P3366 -u ensro -N -e "show tables" abel_ucsc_chain_data_Hs35Mm33|awk -F "_chain" '/^chr/ {print $1}'|sort -u|while read i;do bsub -o $i.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl --ucsc_dbname ucscHs35Mm33 --dbname abelcompara26 --tSpecies human --tName $i --qSpecies Mm5 --method_link_type BLASTZ_NET ;done
 
-WARNING: The only requirement here is that the registry alias name of the --qSpecies (in the example Mm5) has 
+NB at the moment the "random" chromosomal bits are not used for some species -- check this and if nessary remove the grep in the command line
+
+Run the script first with the --check_length option first to see if the chromosomes lengths match between ensembl and UCSC 
+
+  
+mysql -h ecs2 -P3366 -u ensro -N -e "show tables" abel_ucsc_chain_data_Hs35Mm33|grep -v random |awk -F "_chain" '/^chr/ {print $1}'|sort -u|while read i;do bsub -o $i.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl --ucsc_dbname ucscHs35Mm33 --dbname abelcompara26 --tSpecies human --tName $i --qSpecies Mm5 --method_link_type BLASTZ_NET --reg_conf /nfs/acari/abel/.Registry.conf ;done
+
+WARNING:
+
+The taxon_id is hard coded into the loading script so that it knows which matrix to use. THis needs to be added each time a new species is added. 
+
+
+ The only requirement here is that the registry alias name of the --qSpecies (in the example Mm5) has 
 to be the same as the name of the netMm5 table in the UCSC database.
 For example, if the net table from UCSC is named netGalGal2, one of registry alias name of the corresponding chicken core
 database has to be GalGal2.

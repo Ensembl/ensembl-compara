@@ -35,7 +35,7 @@ $0 [-help]
 my ($file, $outfile, $track, $data ,$sps1, $sps2, $diff, $matrix_file, $reverse_output, $help);
 
 my $minus_count=0;
-my $conf_file="~/.Registry.conf";
+my $conf_file="/nfs/acari/cara/.Registry.conf";
 my @new_features=();
 my $matrix;
 my %prev;
@@ -77,8 +77,8 @@ $data=$outfile.".data";
 if ($reverse_output){print "*********$reverse_output*********\n\n";}
 
 
-my $sliceadaptor1 = $db->get_adaptor($sps1, 'core', 'Slice');
-my $sliceadaptor2 = $db->get_adaptor($sps2, 'core', 'Slice');
+my $sliceadaptor1 = $db->get_adaptor($sps1, 'core', 'Slice') or die "can't get sliceA1\n";
+my $sliceadaptor2 = $db->get_adaptor($sps2, 'core', 'Slice') or die "can't get sliceA2\n";
 
 ###########Get matrix
 if ($matrix_file){
@@ -109,15 +109,27 @@ $matrix = $mp->next_matrix;
 ################################################################################################		
 		
 		unless ((defined($atrib[9])) && ($atrib[0] =~ /$sps1/) && ($atrib[4]-$atrib[3] >=15)){ next LINE;}
-		my ($chr1, $chr1_2, $offset1, $seq_type1); my $chr2; my $offset2; my $seq_type2;
+		my ($chr1, $chr1_2, $sp, $offset1, $seq_type1); my $chr2; my $offset2; my $seq_type2;
 		if ($sps1 =~/Am/){
-			($chr1, $chr1_2, $offset1) = split /\./,$atrib[0];#just for BEE
+			($sp, $chr1, $chr1_2, $offset1) = split /\./,$atrib[0];
+#Am.chromosome:Group6.13.1485001 just for BEE
+			$chr1=~s/chromosome://;
 			$chr1=$chr1.".".$chr1_2;#just for BEE
 			}
 		elsif ($sps1 =~/Fr/){
 			($chr1, $offset1) = split /\./,$atrib[0];
 			$chr1=~s/FrChr_//;
 			$seq_type1="scaffold";
+			}
+		elsif($sps1 =~/Cb/){
+			($chr1_2, $chr1, $offset1) = split /\./,$atrib[0];
+			$chr1= "cb25.".$chr1;
+			$seq_type1="scaffold";
+			}
+		elsif($sps1 =~/Ag/){
+			($chr1, $offset1) = split /\./,$atrib[0];
+			$chr1=~s/Ag2b//;
+			$seq_type1="chromosome";
 			}
 		else{
 			$atrib[0] =~/$sps1\.(\S+):(\S+)\.(\d+)$/; #use for rest
