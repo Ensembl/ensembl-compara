@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::GenomicAlignGroup - Defines groups of genomic aligned seq
       );
 
 SET VALUES
-  $genomic_align_group->adaptor($gen_ali_blk_adaptor);
+  $genomic_align_group->adaptor($gen_ali_group_adaptor);
   $genomic_align_group->dbID(12);
   $genomic_align_group->genomic_align_array([$genomic_align1, $genomic_align2]);
 
@@ -85,8 +85,19 @@ use Scalar::Util qw(weaken);
                  -dbID
                  -type
                  -genomic_align_array
-  Example    : my $genomic_align_block =
-                   new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+=head2 new (CONSTRUCTOR)
+
+  Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
+  Arg [-ADAPTOR]
+              : (opt.) Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor $adaptor
+                (the adaptor for connecting to the database)
+  Arg [-TYPE] : (opt.) string $type (a string identifying the type of grouping)
+  Arg [-GENOMIC_ALIGN_ARRAY]
+              : (opt.) array_ref $genomic_aligns (a reference to the array of
+                Bio::EnsEMBL::Compara::GenomicAlign objects corresponding to this
+                Bio::EnsEMBL::Compara::GenomicAlignGroup object)
+  Example    : my $genomic_align_group =
+                   new Bio::EnsEMBL::Compara::GenomicAlignGroup(
                        -adaptor => $genomic_align_group_adaptor,
                        -type => "pairwise",
                        -genomic_align_array => [$genomic_align1, $genomic_align2...]

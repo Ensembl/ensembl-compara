@@ -167,7 +167,65 @@ use Bio::EnsEMBL::Mapper;
 my $warn_message = "Deprecated use of GenomicAlign object. Consensus and Query DnaFrag are no longer used.\n";
 
 
-# new() is written here 
+=head2 new (CONSTRUCTOR)
+
+  Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
+  Arg [-ADAPTOR]
+              : (opt.) Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor $adaptor
+                (the adaptor for connecting to the database)
+  Arg [-GENOMIC_ALIGN_BLOCK]
+              : (opt.) Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
+                (the block to which this Bio::EnsEMBL::Compara::GenomicAlign object
+                belongs to)
+  Arg [-GENOMIC_ALIGN_BLOCK_ID]
+              : (opt.) int $genomic_align_block_id (the database internal ID for the
+                $genomic_align_block)
+  Arg [-METHOD_LINK_SPECIES_SET]
+              : (opt.) Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
+                (this defines the type of alignment and the set of species used
+                to get this GenomicAlignBlock)
+  Arg [-METHOD_LINK_SPECIES_SET_ID]
+              : (opt.) int $mlss_id (the database internal ID for the $mlss)
+  Arg [-DNAFRAG]
+              : (opt.) Bio::EnsEMBL::Compara::DnaFrag $dnafrag (the genomic
+                sequence object to which this object refers to)
+  Arg [-DNAFRAG_ID]
+              : (opt.) int $dnafrag_id (the database internal ID for the $dnafrag)
+  Arg [-DNAFRAG_START]
+              : (opt.) int $dnafrag_start (the starting position of this
+                Bio::EnsEMBL::Compara::GenomicAling within its corresponding $dnafrag)
+  Arg [-DNAFRAG_END]
+              : (opt.) int $dnafrag_end (the ending position of this
+                Bio::EnsEMBL::Compara::GenomicAling within its corresponding $dnafrag)
+  Arg [-DNAFRAG_STRAND]
+              : (opt.) int $dnafrag_strand (1 or -1; defines in which strand of its
+                corresponding $dnafrag this Bio::EnsEMBL::Compara::GenomicAlign is)
+  Arg [-ALIGNED_SEQUENCE]
+              : (opt.) string $aligned_sequence (the sequence of this object, including
+                gaps and all)
+  Arg [-CIGAR_LINE]
+              : (opt.) string $cigar_line (a compressed way of representing the indels in
+                the $aligned_sequence of this object)
+  Arg [-LEVEL_ID]
+              : (opt.) int $level_id (level of orhologous layer. 1 corresponds to the first
+                layer of orthologous sequences found, 2 and over are addiotional layers)
+  Example     : my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+                        -adaptor => $genomic_align_adaptor,
+                        -genomic_align_block => $genomic_align_block,
+                        -method_link_species_set => $method_link_species_set,
+                        -dnafrag => $dnafrag,
+                        -dnafrag_start => 100001,
+                        -dnafrag_end => 100050,
+                        -dnafrag_strand => -1,
+                        -aligned_sequence => "TTGCAGGTAGGCCATCTGCAAGC----TGAGGAGCAAGGACTCCAGTCGGAGTC"
+                        -level_id => 1,
+                      );
+  Description : Creates a new Bio::EnsEMBL::Compara::GenomicAlign object
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions  : none
+  Caller      : general
+
+=cut
 
 sub new {
     my($class, @args) = @_;
