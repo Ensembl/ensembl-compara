@@ -1,3 +1,17 @@
+=head1 NAME
+
+Bio::EnsEMBL::GlyphSet::gene_lite -
+Glyphset for genes in contigviewtop
+
+=head1 USED BY
+
+    Bio::EnsEMBL::GlyphSet::vega_genoscope_gene_contig
+    Bio::EnsEMBL::GlyphSet::vega_havana_gene_contig
+    Bio::EnsEMBL::GlyphSet::vega_sanger_gene_contig
+    Bio::EnsEMBL::GlyphSet::vega_zfish_gene_contig
+
+=cut
+
 package Bio::EnsEMBL::GlyphSet::gene_lite;
 use strict;
 use vars qw(@ISA);
@@ -12,7 +26,7 @@ sub init_label {
   my ($self) = @_;
   return if( defined $self->{'config'}->{'_no_label'} );
   my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => EnsWeb::species_defs->AUTHORITY.' Genes',
+    'text'      => $self->my_label(),
     'font'      => 'Small',
     'absolutey' => 1,
     'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','gene_lite')],
@@ -22,6 +36,10 @@ sub init_label {
     }
   });
   $self->label($label);
+}
+
+sub my_label {
+    return EnsWeb::species_defs->AUTHORITY . ' Genes';
 }
 
 sub checkDB {
@@ -47,10 +65,19 @@ sub _init {
   my $type         = $Config->get('gene_lite', 'src');
   my @genes     = ();
   my $gene_label;
-  my $colours      = $Config->get('gene_lite', 'colours' ),
-
-  # call on ensembl lite to give us the details of all genes in the virtual contig
-
+  my $colours      = $Config->get('gene_lite', 'colours' );
+  my $vega_gene_types = { 
+         'Novel_CDS'        => 'Curated novel CDS',
+         'Putative'         => 'Curated putative',
+         'Known'            => 'Curated known genes',
+         'Novel_Transcript' => 'Curated novel Trans',
+         'Pseudogene'       => 'Curated pseudogenes',
+         'Ig_Segment'       => 'Curated Ig Segment',
+         'Ig_Pseudogene_Segment'   => 'Curated Ig Pseudogene',
+         'Predicted_Gene'   => 'Curated predicted',
+         'Transposon'	      => 'Curated Transposon',
+         'Polymorphic'      => 'Curated Polymorphic',
+  }; 
   my $pix_per_bp   = $Config->transform->{'scalex'};
   my $vc_length    = $vc->length;
   my $bitmap_length = int( $vc_length * $pix_per_bp );
@@ -70,7 +97,7 @@ sub _init {
 
   my %gene_objs;
   foreach my $g (@{$vc->get_all_Genes('', 1)}) {
-    my $source = $g->analysis->logic_name;
+    my $source = lc($g->analysis->logic_name);
     $gene_objs{$source} ||= [];
     push @{$gene_objs{$source}}, $g;
   }
@@ -79,7 +106,12 @@ sub _init {
   # Draw all of the Vega Genes
   #
   my $F = 0;
-  foreach my $g (@{$gene_objs{'otter'}} ) {
+  ## get vega logic names from child
+  my $logic_name;
+  if ($self->can('logic_name')) {
+    $logic_name = $self->logic_name;
+  }
+  foreach my $g (@{$gene_objs{'otter'}}, @{$gene_objs{$logic_name}}) {
     $F++;
     my $genelabel = $g->stable_id(); 
     my $high = exists $highlights{$genelabel};
@@ -101,20 +133,15 @@ sub _init {
     };
   } 
   if($F>0) {
+    # push all vega gene types present in the DB to the legend array
+    # this is being used by GlyphSet::gene_legend
     $Config->{'legend_features'}->{'vega_genes'} = {
       'priority' => 1000,
-      'legend'  => [ 
-                'Curated known genes'    => $colours->{'Known'},
-                'Curated novel CDS'      => $colours->{'Novel_CDS'},
-                'Curated putative'       => $colours->{'Putative'},
-                'Curated novel Trans'    => $colours->{'Novel_Transcript'},
-                'Curated pseudogenes'    => $colours->{'Pseudogene'},
-                'Curated predicted gene'         => $colours->{'Predicted_Gene'},
-                'Curated Immunoglobulin segment' => $colours->{'Ig_Segment'},
-                'Curated Immunoglobulin pseudogene' => $colours->{'Ig_Pseudogene_Segment'},
-                'Curated Polymorphic' => $colours->{'Polymorphic'},
-       ]
+      'legend'  => [],
     };
+    foreach my $gene_type (sort keys %{ EnsWeb::species_defs->VEGA_GENE_TYPES || {}} ) {
+      push(@{$Config->{'legend_features'}->{'vega_genes'}->{'legend'}}, "$vega_gene_types->{$gene_type}" => $colours->{$gene_type} ) if $colours->{$gene_type};
+    }
   } 
 
   # Draw all of the Core (ensembl) genes
@@ -148,7 +175,7 @@ sub _init {
      #   $authority.' predicted genes (pred)'  => $colours->{'_PRED'},
      #   $authority.' predicted genes (ortholog)'  => $colours->{'_ORTHO'},
         $authority.' predicted genes (novel)' => $colours->{'_'},
-        $authority.' pseudogenes)'  => $colours->{'_PSEUDO'},
+        $authority.' pseudogenes'  => $colours->{'_PSEUDO'},
     ]};
   }
 
