@@ -10,7 +10,7 @@
 #3)based on chromosome rather than chromosome and position. Rather than rewriting more, we decided that as hopefully will only need to run once, for 'complete' removal of nosyntenic regions, then a second run with the species reversed(ie other acts as reference) will throw out any occastions where rndm hits to the same chromosome have been included.
 $| =1;
 use strict;
-
+my $shift=0;
 my $thresh = shift;
 my %simlines = ();
 while(<>) {
@@ -31,22 +31,19 @@ foreach my $Schr (sort keys %simlines) {#for each ref chr
 	my $count=0;
 	my %vote=();
 	foreach my $pos (sort {$a <=> $b} keys %{$simlines{$Schr}}) { # take hsps in order along ref chr
-		my $shift=0;
+		 $shift=0;
 		my @f = split /\t/,$simlines{$Schr}{$pos};
 		my $Qn = $f[1];	#query_chr_name
 		$Qn =~ s/\:\d+\-\d+//; #removes the co-ordinate info
+		push @Q_chr_names,$Qn;
+		push @Q_chr_namelines,$simlines{$Schr}{$pos};
+		$count++;
 		THRESH: if (@Q_chr_names > $thresh) { #eg if there are 7 Q chr names
 			$shift=0;
 			%vote = ();
 			foreach (@Q_chr_names) {
 				$vote{$_}++;
 			}
-#			my @list = (keys %vote);
-#			my $max = pop @list;
-#			foreach (@list) {
-#				$max = $_ if($vote{$max} < $vote{$_});
-#			}
-#		print "count: $count\t".scalar(@Q_chr_names)."\n";
 			if ($count==@Q_chr_names){
 				foreach my $i (0..$mid-1){
 					if ($Q_chr_names[$i] eq $Q_chr_names[$mid]) {
@@ -69,14 +66,22 @@ foreach my $Schr (sort keys %simlines) {#for each ref chr
 				shift @Q_chr_namelines;
 				}
 			}
-		push @Q_chr_names,$Qn;
-		push @Q_chr_namelines,$simlines{$Schr}{$pos};
-		$count++;
+#		print "$shift, $count\n";
 	}
-#	print "last ones $thresh, $count, ".scalar(@Q_chr_names)."\n";	
-	foreach  my $i (1..$mid){
-		if ($Q_chr_names[$mid+$i] eq $Q_chr_names[$mid]) {
-			print  $Q_chr_namelines[$mid+$i];
+#	print "last ones Shift: $shift\t$thresh, $count, ".scalar(@Q_chr_names)."\n";	
+	if($shift){
+#	print "shift is $shift\n";
+		foreach  my $i (0..$mid){
+			if ($Q_chr_names[$mid+$i] eq $Q_chr_names[$mid]) {
+				print  $Q_chr_namelines[$mid+$i];
+				}
+			}
+		}
+	else {
+		foreach  my $i (0..$mid-1){
+			if ($Q_chr_names[$mid+$i] eq $Q_chr_names[$mid]) {
+				print  $Q_chr_namelines[$mid+$i];
+				}
 			}
 		}
 		
