@@ -315,14 +315,14 @@ sub _members {
 		
 			if (ref($proteins) eq "Bio::EnsEMBL::Compara::Protein"){
 				$self->_proteins_loaded(1);
-				if (!exist($proteins->external_id)){
+				if (!$self->exist($proteins->external_id)){
 					push @{$self->{'_members'}{$proteins->external_dbname}},$proteins;
 				}
 				$self->exist($proteins->external_id);
 			}
 			else {
 				$self->_proteins_loaded(0);
-				if (!exist($proteins)){
+				if (!$self->exist($proteins)){
 					push @{$self->{'_members'}{'unloaded'}}, $proteins;	
 				}
 				$self->exist($proteins);
