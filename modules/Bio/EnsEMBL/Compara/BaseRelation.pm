@@ -136,6 +136,9 @@ sub add_Member_Attribute {
 
   my ($member, $attribute) = @{$member_attribute};
 
+  $self->throw("member argument not defined\n") unless($member);
+  $self->throw("attribute argument not defined\n") unless($attribute);
+  
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
     $self->throw("Need to add a Bio::EnsEMBL::Compara::Member, not a $member\n");
   }
