@@ -1,11 +1,10 @@
 package Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
-use vars qw(@ISA);
+
 use strict;
-use Bio::Root::Object;
-use DBI;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::Homology;
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+
+our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =head2 fetch_homologues_of_gene_in_species
 
@@ -43,6 +42,77 @@ sub fetch_homologues_of_gene_in_species{
     return @genes;
 }                               
 
+=head2 fetch_by_relation
+
+ Arg [1]    : string $dbname
+ Arg [2]    : string $member_stable_id
+ Example    : $fams = $FamilyAdaptor->fetch_of_dbname_id('SPTR', 'P01235');
+ Description: find the family to which the given database and  member_stable_id belong
+ Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
+              (could be empty or contain more than one Family in the case of ENSEMBLGENE only)
+ Exceptions : when missing arguments
+ Caller     : general
+
+=cut
+
+sub fetch_by_relation {
+  my ($self, $relation) = @_;
+
+  my $join;
+  my $constraint;
+
+  $self->throw() 
+    unless (defined $relation && ref $relation);
+  
+  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
+    $join = [['homology_member', 'hm'], 'd.homology_id = hm.homology_id'];
+    my $member_id = $relation->dbID;
+    $constraint = "hm.member_id = $member_id";
+  }
+#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
+#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
+#    my $domain_id = $relation->dbID;
+#    $constraint = "df.domain_id = $domain_id";
+#  }
+#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
+#  }
+  else {
+    $self->throw();
+  }
+
+  return $self->generic_fetch($constraint, $join);
+}
+
+sub fetch_by_relation_source {
+  my ($self, $relation, $source_name) = @_;
+
+  my $join;
+  my $constraint = "s.source_name = $source_name";
+
+  $self->throw() 
+    unless (defined $relation && ref $relation);
+  
+  $self->throw("source_name arg is required\n")
+    unless ($source_name);
+
+  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
+    $join = [['homology_member', 'hm'], 'h.homology_id = hm.homology_id'];
+    my $member_id = $relation->dbID;
+    $constraint .= " AND hm.member_id = $member_id";
+  }
+#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
+#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
+#    my $domain_id = $relation->dbID;
+#    $constraint = " AND df.domain_id = $domain_id";
+#  }
+#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
+#  }
+  else {
+    $self->throw();
+  }
+
+  return $self->generic_fetch($constraint, $join);
+}
 
 =head2 fetch_homologues_of_gene
 
