@@ -215,15 +215,20 @@ sub _objs_from_sth {
   $sth->bind_columns(\$simple_rule_id, \$condition_analysis_id, \$goal_analysis_id);
 
   while ($sth->fetch()) {
-    print("fetch dbID=$simple_rule_id  condition_id=$condition_analysis_id  goal_id=$goal_analysis_id\n");
+    print("SimpleRuleAdaptor fetch dbID=$simple_rule_id  condition_id=$condition_analysis_id  goal_id=$goal_analysis_id\n");
     my $condition_analysis = $analysisDBA->fetch_by_dbID($condition_analysis_id);
     my $goal_analysis      = $analysisDBA->fetch_by_dbID($goal_analysis_id);
     
-    push @rules, Bio::EnsEMBL::Compara::SimpleRule->new(
+    my $rule = Bio::EnsEMBL::Compara::SimpleRule->new(
        -adaptor             => $self,
        -dbID                => $simple_rule_id,
        -condition_analysis  => $condition_analysis,
        -goal_analysis       => $goal_analysis);
+    push @rules, $rule;
+    print("  simple_rule dbID=".$rule->dbID.
+	  "  condition_id=".$rule->conditionAnalysis->dbID .
+          "  goal_id=".$rule->goalAnalysis->dbID .
+          "  goal_type=".$rule->goalAnalysis->input_id_type . "\n");
   }
 
   return \@rules;
