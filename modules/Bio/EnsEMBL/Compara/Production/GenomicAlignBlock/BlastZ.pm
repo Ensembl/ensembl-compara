@@ -76,13 +76,13 @@ my $g_compara_BlastZ_workdir;
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'debug'} = 0;
-  
+  $self->{'debug'}   = 0;
+  $self->{'options'} = 'T=2 H=2200';
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -100,14 +100,13 @@ sub fetch_input {
 
   #
   # create method_link_species_set
-  #
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  #  
+  $self->{'comparaDBA'}->dbc->do("insert ignore into method_link set method_link_id=1001, type='BLASTZ_RAW'");
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $mlss->method_link_type("BLASTZ_RAW");
   $mlss->species_set([$qyChunk->dnafrag->genome_db, $dbChunk->dnafrag->genome_db]);
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->{'method_link_species_set'} = $mlss;
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   #
   # get the sequences and create the runnable
@@ -130,10 +129,12 @@ sub fetch_input {
   my $dbChunkFile = $self->dumpChunkToWorkdir($dbChunk);
 
   #print("running with analysis '".$self->analysis->logic_name."'\n");
+  print("options : ", $self->{'options'}, "\n");
   my $runnable =  new Bio::EnsEMBL::Pipeline::Runnable::Blastz (
-                  -query     => $qySeq,
-                  -database  => $dbChunkFile,
-                  -options   => 'T=2 H=2200');
+                    -query     => $qySeq,
+                    -database  => $dbChunkFile,
+                    -options   => $self->{'options'},
+                  );
 
   $self->runnable($runnable);
   
@@ -145,12 +146,15 @@ sub run
 {
   my $self = shift;
 
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);  
+
   my $starttime = time();
   foreach my $runnable ($self->runnable) {
     throw("Runnable module not set") unless($runnable);
     $runnable->run();
   }
   #print STDERR (time()-$starttime), " secs to BlastZ\n";
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   return 1;
 }
 
@@ -204,6 +208,7 @@ sub get_params {
 
   $self->{'qy_chunk_id'} = $params->{'qyChunk'} if(defined($params->{'qyChunk'}));
   $self->{'db_chunk_id'} = $params->{'dbChunk'} if(defined($params->{'dbChunk'}));
+  $self->{'options'}     = $params->{'options'} if(defined($params->{'options'}));
   return;
 }
 
