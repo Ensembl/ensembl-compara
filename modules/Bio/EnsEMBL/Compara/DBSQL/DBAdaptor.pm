@@ -493,26 +493,6 @@ sub get_AnalysisAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::AnalysisAdaptor" );
 }
 
-sub get_Queen {
-  my $self = shift;
-
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::Queen" );
-}
-
-sub get_AnalysisJobAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor" );
-}
-
-sub get_AnalysisStatsAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor" );
-}
-
-sub get_DataflowRuleAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor" );
-}
 
 
 sub deleteObj {
