@@ -62,22 +62,21 @@ sub new {
 #    my ( $db_adaptor ) = $self->_rearrange([qw(DBADAPTOR)],@args);
     my ( $dba ) = $args[1];
 
-    if ( !defined $dba ) {
-      $self->throw("No DBAdaptor set during GenomeDB object creation.");
+    if ( defined $dba ) {
+
+      my $species = $dba->get_MetaContainer->get_Species->binomial;
+      $species =~ s/\s/_/;
+      
+      $self->species($species);
+      
+      my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=".$dba->dbname.";user=".
+	$dba->username.";pass=".$dba->password;
+
+      $self->locator($locator);
+      
+      # store the DBAdaptor
+      $self->db_adaptor($dba);
     }
-
-    my $species = $dba->get_MetaContainer->get_Species->binomial;
-    $species =~ s/\s/_/;
-
-    $self->species($species);
-
-    my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=".$dba->dbname.";user=".
-                  $dba->username.";pass=".$dba->password;
-
-    $self->locator($locator);
-
-    # store the DBAdaptor
-    $self->db_adaptor($dba);
 
     return $self;
 }
@@ -96,7 +95,12 @@ sub new {
 =cut
 
 sub db_adaptor{
-   my ($self) = @_;
+   my ( $self, $arg ) = @_;
+
+   if( $arg ) {
+     $self->{'_db_adaptor'} = $arg;
+     return $arg;
+   }
 
    if( !defined $self->{'_db_adaptor'} ) {
        # this will throw if it can't build it
