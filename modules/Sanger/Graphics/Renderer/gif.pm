@@ -225,11 +225,8 @@ sub render_Poly {
         $poly->addPt($x,$y);
     }
 
-    if($glyph->colour) {
-    	$self->{'canvas'}->filledPolygon($poly, $colour);
-    } else {
-        $self->{'canvas'}->polygon($poly, $bordercolour);
-    }
+    if($glyph->{colour})        { $self->{'canvas'}->filledPolygon($poly, $colour); }
+    if($glyph->{bordercolour})  { $self->{'canvas'}->polygon($poly, $bordercolour); }
 }
 
 sub render_Composite {

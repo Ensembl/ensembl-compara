@@ -75,6 +75,7 @@ sub new {
 
   foreach my $CC ( @{$self->{'contents'}} ) {
     my( $Container,$Config) = @$CC;
+    $self->debug( 'start', ref($Config) ) if( $self->can('debug') );
     $Config->{'panel_width'} = $panel_width;
     unless(defined $Container) {
       warn ref($self).qq( No container defined);
@@ -261,6 +262,7 @@ sub new {
     $yoffset += $inter_space;
     $self->{'__extra_block_spacing__'}+= $inter_space;
     $Config->{'panel_width'} = undef;
+    $self->debug( 'end', ref($Config) ) if( $self->can('debug') );
   }
 
   return $self;

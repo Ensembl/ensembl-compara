@@ -74,15 +74,16 @@ sub render {
 	   $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
 	   $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
 	  ) } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
-	# warn (join '-',' ',@points,' ');
 	# warn ("COL: ",$glyphset->{'tags'}{$_}[0]{'col'} );
 	my $first = $glyphset->{'tags'}{$_}[0];
-	my $glyph = Sanger::Graphics::Glyph::Poly->new({
-							'pixelpoints'       => [ @points ],
-							($first->{'style'} eq 'fill' ? 'colour' : 'bordercolour')       => $first->{'col'},
-							'absolutex'    => 1,
-							'absolutey'    => 1,
-						       });
+        my $PAR = { 
+	  'pixelpoints'       => [ @points ],
+	  'bordercolour'      => $first->{'col'},
+	  'absolutex'    => 1,
+          'absolutey'    => 1,
+       };
+        $PAR->{'colour'} = $first->{'col'} if($first->{'style'} eq 'fill');
+	my $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
 	push @{$layers{defined $first->{'z'} ? $first->{'z'} : -1 }}, $glyph;
 	delete $tags{$_};
       } else {
