@@ -439,7 +439,6 @@ sub sequence {
      defined($self->sequence_id()) and     
      defined($self->adaptor))
   {
-    print("lazy load sequence\n");
     $self->adaptor->_load_sequence($self);
   }
 
