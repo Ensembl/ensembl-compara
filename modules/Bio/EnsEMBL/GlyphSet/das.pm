@@ -41,17 +41,19 @@ sub _init {
     my $border          = $Config->colourmap()->id_by_name('black');
     my $red             = $Config->colourmap()->id_by_name('red');
     my ($w,$h)          = $Config->texthelper()->real_px2bp('Tiny');
+    my $length          = $vc->length();
     my $length          = $vc->length() +1;
     my @bitmap         	= undef;
     my $pix_per_bp  	= $Config->transform->{'scalex'};
-    my $bitmap_length 	= int($length * $pix_per_bp);
+    my $bitmap_length 	= int(($length+1) * $pix_per_bp);
 
-    $w *= $length/($length-1);
+    $w *= ($length+1)/$length;
     
     my @features;
     eval{
         @features = $vc->get_all_DASFeatures();
     };
+#    print STDERR map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
     if($@) {
         print STDERR "----------\n",$@,"---------\n";
         return;
@@ -125,13 +127,15 @@ sub _init {
         	};
 			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
 				if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
+			$zmenu->{"SCORE: ". $f->das_score()      } = ''
+				if $f->das_score() && uc($f->das_score()) ne 'NULL';
 			$zmenu->{"METHOD: ". $f->das_method_id()  } = ''
 				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
-			$zmenu->{"CATEGORY: ". $f->das_type_category() } => ''
+			$zmenu->{"CATEGORY: ". $f->das_type_category() } = ''
 				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
 			$zmenu->{"DAS LINK: ".$f->das_link_label() } = $f->das_link()
 				if $f->das_link() && uc($f->das_link()) ne 'NULL';
-        
+  
    		# JS5: If we have an ID then we can add this to the Zmenu and
 		#      also see if we can make a link to any additional information
 		#      about the source.
@@ -152,11 +156,13 @@ sub _init {
 			$Composite->{'href'} = $href if $href;
             if( $f->das_type_id() =~ /(transcript|exon)/i ) { 
                 my $f = shift @features;
-                my $old_end = $f->das_end();
+                my $START = $f->das_start() <  1       ? 1 : $f->das_start();
+                my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
+                my $old_end = $END;
     			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-        	        'x'      	=> $f->das_start(),
+        	        'x'      	=> $START,
     	    		'y'      	=> 0,
-    	    		'width'  	=> $old_end-$f->das_start(),
+    	    		'width'  	=> $END-$START,
     		    	'height' 	=> 8,
     		    	'colour' 	=> $feature_colour,
     	    		'absolutey' => 1,
@@ -174,12 +180,13 @@ sub _init {
                         'absolutey' => 1,
                         'strand'    => $STRAND,
                     });
-                    $old_end = $_->das_end();
     				$Composite->push($glyph);
+                    my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
+                    $old_end = $END;
     				$glyph = new Bio::EnsEMBL::Glyph::Rect({
         	        	'x'      	=> $_->das_start(),
     	    			'y'      	=> 0,
-    	    			'width'  	=> $old_end-$_->das_start(),
+    	    			'width'  	=> $END-$_->das_start(),
     		    		'height' 	=> 8,
     		    		'colour' 	=> $feature_colour,
     	    			'absolutey' => 1,
@@ -191,11 +198,12 @@ sub _init {
             } else {
     			$Composite->bordercolour($feature_colour);
     			foreach(@features) {
-    				$end = $_->das_end if $end <= $_->das_end;
+                    my $START = $_->das_start() <  1       ? 1 : $_->das_start();
+                    my $END   = $_->das_end()   > $length  ? $length : $_->das_end();
     				my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-        	        	'x'      	=> $_->das_start(),
+        	        	'x'      	=> $START,
     	    			'y'      	=> 0,
-    	    			'width'  	=> $_->das_end()-$_->das_start(),
+    	    			'width'  	=> $END-$START,
     		    		'height' 	=> 8,
     		    		'colour' 	=> $feature_colour,
     	    			'absolutey' => 1,
@@ -259,17 +267,18 @@ sub _init {
 
 			my $zmenu = {
                 	'caption'                       => $self->{'extras'}->{'label'},
-#                	"DAS source info"               => $self->{'extras'}->{'url'},
     	    };
 			$zmenu->{"TYPE: ". $f->das_type_id()      } = ''
-				if $f->das_type_id() && uc($f->das_type_id())!='NULL';
+				if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
+			$zmenu->{"SCORE: ". $f->das_score()      } = ''
+				if $f->das_score() && uc($f->das_score()) ne 'NULL';
 			$zmenu->{"METHOD: ". $f->das_method_id()  } = ''
-				if $f->das_method_id() && uc($f->das_method_id())!='NULL';
-			$zmenu->{"CATEGORY: ". $f->das_type_category() } => ''
-				if $f->das_type_category() && uc($f->das_type_category())!='NULL';
+				if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
+			$zmenu->{"CATEGORY: ". $f->das_type_category() } = ''
+				if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
 			$zmenu->{"DAS LINK: ".$f->das_link_label() } = $f->das_link()
 				if $f->das_link() && uc($f->das_link()) ne 'NULL';
-        
+            
    		# JS5: If we have an ID then we can add this to the Zmenu and
 		#      also see if we can make a link to any additional information
 		#      about the source.
@@ -281,22 +290,24 @@ sub _init {
 	    		$zmenu->{$display_id} = '';
 			#print STDERR "DAS SNP ID: $id\n";
 			}
+            my $START = $f->das_start() <  1       ? 1 : $f->das_start();
+            my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
 			my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 				'y'            => 0,
-				'x'            => $f->das_start(),
+				'x'            => $START,
 				'absolutey'    => 1,
-            	'zmenu'     => $zmenu,
+            	'zmenu'        => $zmenu,
 			});
 			$Composite->{'href'} = $href if $href;
 		
 			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
-    	        'x'      	=> $f->das_start(),
+    	        'x'      	=> $START,
 		    	'y'      	=> 0,
-	    		'width'  	=> $f->das_end()-$f->das_start(),
+	    		'width'  	=> $END-$START,
 		    	'height' 	=> 8,
 	    		'colour' 	=> $feature_colour,
 		    	'absolutey' => 1,
-    	        'zmenu'     => $zmenu
+    	        'zmenu'     => $zmenu,
 			});
 			$Composite->push($glyph);
         #$glyph->bordercolour($border);
