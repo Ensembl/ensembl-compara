@@ -77,7 +77,7 @@ sub new {
 
         my $managed_offset = $Config->{'_das_offset'} || 5500;
         ########## install the glyphset managers, we've just cached the ones we need...
-        foreach my $manager ( keys %{$Config->{'_managers'}} ) {
+        foreach my $manager ( reverse sort keys %{$Config->{'_managers'}} ) {
             my $classname = $PREFIX."::GlyphSetManager::$manager";
             eval "require $classname";
             if($@) {
