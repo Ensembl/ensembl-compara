@@ -2,21 +2,18 @@
 
 use strict;
 use Getopt::Long;
-use Bio::EnsEMBL::ExternalData::Family::FamilyMember;
-use Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::Attribute;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 $| = 1;
 
 my $usage = "
 Usage: $0 options
 
-i.e.
-
-$0 
-
 Options:
 -host 
--dbname family dbname
+-dbname
 -dbuser
 -dbpass
 -conf_file
@@ -43,57 +40,58 @@ if ($help) {
   exit 0;
 }
 
-my $family_db = new Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor(-host   => $host,
-									 -user   => $dbuser,
-									 -pass   => $dbpass,
-									 -dbname => $dbname,
-									 -conf_file => $conf_file);
+my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                     -user   => $dbuser,
+                                                     -pass   => $dbpass,
+                                                     -dbname => $dbname,
+                                                     -conf_file => $conf_file);
 
-my $external_name = "ENSEMBLGENE";
-
-my $sth = $family_db->prepare("select external_db_id from external_db where name = ?");
-$sth->execute($external_name);
-my ($external_db_id) = $sth->fetchrow_array();
-
-unless (defined $external_db_id) {
-  $sth = $family_db->prepare("insert into external_db (name) values (?)");
-  $sth->execute($external_name);
-  $external_db_id = $sth->{'mysql_insertid'};
+my $genome_dbs = $db->get_GenomeDBAdaptor->fetch_all;
+my %genome_db;
+foreach my $gdb (@{$genome_dbs}) {
+  $genome_db{$gdb->taxon_id} = $gdb;
 }
 
-my %GeneAdaptors;
-my $FamilyAdaptor = $family_db->get_FamilyAdaptor;
-my $FamilyMemberAdaptor = $family_db->get_FamilyMemberAdaptor;
-my $GenomeDBAdaptor = $family_db->get_GenomeDBAdaptor;
+my $fa = $db->get_FamilyAdaptor;
+my $ma = $db->get_MemberAdaptor;
+my %already_stored;
 
-my $family_ids = $FamilyAdaptor->list_familyIds;
-
-foreach my $family_id (@{$family_ids}) {
-  my %gene_already_stored;
-  my $family = $FamilyAdaptor->fetch_by_dbID($family_id);
-  my $members = $family->get_members_by_dbname('ENSEMBLPEP');
-  next unless (scalar @{$members});
-  foreach my $member (@{$members}) {
-    my $ga = fetch_GeneAdaptor_by_taxon($member->taxon_id);
+foreach my $family_id (@{$fa->list_internal_ids}) {
+  my $family = $fa->fetch_by_dbID($family_id);
+  print STDERR "family: ", $family->stable_id,"\n";
+  my $members_attributes = $family->get_Member_Attribute_by_source('ENSEMBLPEP');
+  foreach my $member_attribute (@{$members_attributes}) {
+    my ($member, $attribute) = @{$member_attribute};
+    print STDERR "peptide: ", $member->stable_id,"\n";
+    my $gdb = $genome_db{$member->taxon_id};
+    my $ga = $gdb->db_adaptor->get_GeneAdaptor;
     my $gene = $ga->fetch_by_Peptide_id($member->stable_id);
 
-    next if (defined $gene_already_stored{$gene->stable_id});
-    
-    my $fm = new Bio::EnsEMBL::ExternalData::Family::FamilyMember;
-    $fm->stable_id($gene->stable_id);
-    $fm->taxon_id($member->taxon_id);
-    $fm->external_db_id($external_db_id);
-    $FamilyMemberAdaptor->store($family_id,$fm);
-    $gene_already_stored{$gene->stable_id} = 1;
-    print STDERR "Stored ",$gene->stable_id," in family $family_id\n";
-  }
-}
+    next if (defined $already_stored{$gene->stable_id . "_" .$family->stable_id});
 
-sub fetch_GeneAdaptor_by_taxon {
-  my ($taxon_id) = @_;
-  unless (defined $GeneAdaptors{$taxon_id}) {
-    my $genome_db = $GenomeDBAdaptor->fetch_by_taxon_id($taxon_id);
-    $GeneAdaptors{$taxon_id} = $genome_db->db_adaptor->get_GeneAdaptor;
+    print STDERR "gene family: ", $gene->stable_id," ",$family->stable_id,"\n";
+    my $gene_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE',$gene->stable_id);
+    
+    unless (defined $gene_member) {
+      my $empty_slice = new Bio::EnsEMBL::Slice(-empty => 1,
+                                                -adaptor => $gdb->db_adaptor->get_SliceAdaptor);
+      $gene->transform( $empty_slice );
+      $gene_member = new Bio::EnsEMBL::Compara::Member;
+      $gene_member->stable_id($gene->stable_id);
+      $gene_member->taxon_id($member->taxon_id);
+      $gene_member->description("NULL");
+      $gene_member->genome_db_id($gdb->dbID);
+      $gene_member->chr_name($gene->chr_name);
+      $gene_member->chr_start($gene->start);
+      $gene_member->chr_end($gene->end);
+      $gene_member->sequence("NULL");
+      $gene_member->source_name("ENSEMBLGENE");
+    }
+
+    my $gene_attribute = new Bio::EnsEMBL::Compara::Attribute;
+    $gene_attribute->cigar_line("NULL");
+
+    $fa->store_relation([ $gene_member,$gene_attribute ],$family);
+    $already_stored{$gene_member->stable_id . "_" .$family->stable_id} = 1;
   }
-  return $GeneAdaptors{$taxon_id};
 }
