@@ -8,49 +8,34 @@
 # internal ids are integers named tablename_id
 # same name is given in foreign key relations
 
-create table genome_db (
-       genome_db_id integer(10) NOT NULL auto_increment,
-       name varchar(40) NOT NULL,
-       locator varchar(255) NOT NULL,
-       PRIMARY KEY(genome_db_id),
-       UNIQUE KEY (name,locator)
-);
+#
+# Table structure for table 'dnafrag'
+#
 
-
-create table dnafrag (
-       dnafrag_id integer(10) NOT NULL auto_increment,
-       name      varchar(40) NOT NULL,
-       genome_db_id integer(10) NOT NULL,
-       dnafrag_type ENUM ('RawContig','Chromosome','VirtualContig'),
-       PRIMARY KEY(dnafrag_id), 
-#       UNIQUE KEY (name,dnafrag_type)
-       KEY (dnafrag_id, name),
-       UNIQUE KEY (name,genome_db_id,dnafrag_type)
+CREATE TABLE dnafrag (
+  dnafrag_id int(10) NOT NULL auto_increment,
+  start int(11) DEFAULT '0' NOT NULL,
+  end int(11) DEFAULT '0' NOT NULL,
+  name varchar(40) DEFAULT '' NOT NULL,
+  genome_db_id int(10) DEFAULT '0' NOT NULL,
+  dnafrag_type enum('RawContig','Chromosome','VirtualContig'),
+  PRIMARY KEY (dnafrag_id),
+  KEY dnafrag_id (dnafrag_id,name),
+  UNIQUE name (name,genome_db_id,dnafrag_type)
 );
 
 #
-# We have now decided that Synteny is inherently pairwise
-# these tables hold the pairwise information for the synteny
-# regions. We reuse the dnafrag table as a link out for identifiers
-# (eg, '2' on mouse).
+# Table structure for table 'dnafrag_region'
 #
 
-create table synteny_region (
-    synteny_region_id integer(10) NOT NULL auto_increment,
-    rel_orientation   tinyint(1)  NOT NULL DEFAULT 1,
-    PRIMARY KEY (synteny_region_id)
+CREATE TABLE dnafrag_region (
+  synteny_region_id int(10) DEFAULT '0' NOT NULL,
+  dnafrag_id int(10) DEFAULT '0' NOT NULL,
+  seq_start int(10) unsigned DEFAULT '0' NOT NULL,
+  seq_end int(10) unsigned DEFAULT '0' NOT NULL,
+  UNIQUE unique_synteny (synteny_region_id,dnafrag_id),
+  UNIQUE unique_synteny_reversed (dnafrag_id,synteny_region_id)
 );
-
-create table dnafrag_region (
-    synteny_region_id integer(10) NOT NULL, # PK synteny_region
-    dnafrag_id        integer(10) NOT NULL, # PK dnafrag
-    seq_start         int (10) unsigned NOT NULL,
-    seq_end           int (10) unsigned NOT NULL,
-    UNIQUE KEY unique_synteny (synteny_region_id,dnafrag_id),
-    UNIQUE KEY unique_synteny_reversed (dnafrag_id,synteny_region_id)
-);
-
-
 
 #
 # Table structure for table 'gene_relationship'
@@ -80,201 +65,89 @@ CREATE TABLE gene_relationship_member (
   KEY member_stable_id (member_stable_id)
 );
 
-create table align (
-       align_id integer(10) NOT NULL auto_increment,
-       score    varchar(20),
-       align_name     varchar(40),
+#
+# Table structure for table 'genome_db'
+#
 
-       PRIMARY KEY (align_id),
-       KEY (align_name)
+CREATE TABLE genome_db (
+  genome_db_id int(10) NOT NULL auto_increment,
+  taxon_id int(10) DEFAULT '0' NOT NULL,
+  name varchar(40) DEFAULT '' NOT NULL,
+  locator varchar(255) DEFAULT '' NOT NULL,
+  PRIMARY KEY (genome_db_id),
+  UNIQUE name (name,locator)
 );
 
-create table align_row (
-       align_row_id integer(10) NOT NULL auto_increment,
-       align_id     integer(10),
-       PRIMARY KEY (align_row_id)
+#
+# Table structure for table 'genomic_align_block'
+#
+
+CREATE TABLE genomic_align_block (
+  consensus_dnafrag_id int(10) DEFAULT '0' NOT NULL,
+  consensus_start int(10) DEFAULT '0' NOT NULL,
+  consensus_end int(10) DEFAULT '0' NOT NULL,
+  query_dnafrag_id int(10) DEFAULT '0' NOT NULL,
+  query_start int(10) DEFAULT '0' NOT NULL,
+  query_end int(10) DEFAULT '0' NOT NULL,
+  query_strand tinyint(4) DEFAULT '0' NOT NULL,
+  score double,
+  perc_id int(10),
+  cigar_line mediumtext,
+  PRIMARY KEY (consensus_dnafrag_id,consensus_start,consensus_end,query_dnafrag_id),
+  KEY query_dnafrag_id (query_dnafrag_id,query_start,query_end),
+  KEY query_dnafrag_id_2 (query_dnafrag_id,query_end)
 );
 
-create table genomic_align_block (
-       align_id      integer(10) NOT NULL,
-       align_start   integer(10) NOT NULL,
-       align_end     integer(10) NOT NULL,
-       align_row_id  integer(10) NOT NULL,
-       dnafrag_id    integer(10) NOT NULL,
-       raw_start     integer(10) NOT NULL,
-       raw_end       integer(10) NOT NULL,
-       raw_strand    integer(10) NOT NULL,
-       score         double   ,
-       perc_id       integer(10) ,
-       cigar_line    mediumtext,
+#
+# Table structure for table 'genomic_align_genome'
+#
 
-       PRIMARY KEY (align_id,align_start,align_end,align_row_id,dnafrag_id),
-       KEY (dnafrag_id,raw_start,raw_end),
-       KEY (dnafrag_id,raw_end),
-       KEY (dnafrag_id)
-       );
+CREATE TABLE genomic_align_genome (
+  consensus_genome_db_id int(11) DEFAULT '0' NOT NULL,
+  query_genome_db_id int(11) DEFAULT '0' NOT NULL
+);
 
-# method_link table specifies which kind of link can exist between species 
+# method_link table specifies which kind of link can exist between species
 # (dna/dna alignment, synteny regions, homologous gene pairs,...)
+
+#
+# Table structure for table 'method_link'
+#
 
 CREATE TABLE method_link (
   method_link_id int(10) NOT NULL auto_increment,
-  method_link_type varchar(10) NOT NULL,
+  method_link_type varchar(10) DEFAULT '' NOT NULL,
   PRIMARY KEY (method_link_id)
 );
 
-# method_link_species table specifying which species are part of a method_link_id
+
+# method_link_species table specifying which species are part of a 
+# method_link_id
+
+#
+# Table structure for table 'method_link_species'
+#
 
 CREATE TABLE method_link_species (
-  method_link_id int(10), # PK method_link
-  genome_db_id int(10), # PK genome_db
-  UNIQUE KEY (method_link_id,genome_db_id)
+  method_link_id int(10),
+  genome_db_id int(10),
+  UNIQUE method_link_id (method_link_id,genome_db_id)
 );
 
-##################################################################
-##################################################################
-
-# The following tables would probably be part of the new compara schema
-
+#
 # We have now decided that Synteny is inherently pairwise
 # these tables hold the pairwise information for the synteny
 # regions. We reuse the dnafrag table as a link out for identifiers
 # (eg, '2' on mouse).
 #
-# create table synteny_region (
-#     synteny_region_id integer(10) NOT NULL auto_increment,
-#     orientation       tinyint(1)  NOT NULL DEFAULT 1,
-# 
-#     PRIMARY KEY (synteny_region_id)
-# );
 
-# create table dna_region (
-#     dna_region_id integer(10) NOT NULL auto_increment,
-#     synteny_region_id integer(10) NOT NULL,
-#     dnafrag_id        integer(10) NOT NULL,
-#     start             integer(10) NOT NULL,
-#     end               integer(10) NOT NULL,
+#
+# Table structure for table 'synteny_region'
+#
 
-#     PRIMARY KEY (dna_region_id),
-#     UNIQUE KEY unique_synteny (synteny_region_id,dnafrag_id),
-#     UNIQUE KEY unique_synteny_reversed (dnafrag_id,synteny_region_id)
-# );
+CREATE TABLE synteny_region (
+  synteny_region_id int(10) NOT NULL auto_increment,
+  rel_orientation tinyint(1) DEFAULT '1' NOT NULL,
+  PRIMARY KEY (synteny_region_id)
+);
 
-# create table dnafrag (
-#     dnafrag_id   integer(10) NOT NULL auto_increment,
-#     name         varchar(40) NOT NULL,
-#     source_db_id integer(10) NOT NULL,
-#     species_id   integer(10) NOT NULL,
-#     type         ENUM ( 'RawContig', 'Chromosome'),
-
-#     PRIMARY KEY(dnafrag_id), 
-#     UNIQUE KEY (name,type)
-# );
-
-
-# create table source_db (
-#     source_db_id integer(10) NOT NULL auto_increment,
-#     name         varchar(40) NOT NULL,
-#     locator      varchar(255) NOT NULL,
-
-#     PRIMARY KEY(source_db_id),
-#     UNIQUE KEY (name,locator)
-# );
-
-# create table species (
-#     species_id integer(10) NOT NULL auto_increment,
-#     name       varchar(255) NOT NULL,
-
-#     PRIMARY KEY(species_id)
-# );
-
-# CREATE TABLE protein_relationship (
-#     protein_relationship_id integer(10) NOT NULL auto_increment,
-#     stable_id   varchar(40) NOT NULL,
-#     type        enum('homologous_pair','family','interpro','domain'),
-#     description varchar(255),
-
-#     PRIMARY KEY (protein_relationship_id)
-# );
-
-
-# CREATE TABLE protein_relationship_member (
-#     protein_relationship_member_id integer(10) NOT NULL auto_increment,
-#     protein_relationship_id integer(10) NOT NULL,
-#     source_db_id            integer(10) NOT NULL,
-#     species_id              integer(10) NOT NULL,
-#     member_stable_id        varchar(40) NOT NULL,
-
-#     PRIMARY KEY (protein_relationship_member_id),
-#     KEY protein_relationship_id (protein_relationship_id)
-# );
-
-
-# create table dna_align (
-#     dna_align_id integer(10) NOT NULL auto_increment,
-#     name         varchar(40) NOT NULL,
-
-#     PRIMARY KEY (dna_align_id)
-# );
-
-# create table dna_align_block (
-#     dna_align_block_id integer(10) NOT NULL auto_increment,
-#     dna_align_id       integer(10) NOT NULL,
-#     dna_align_start    integer(10) NOT NULL,
-#     dna_align_end      integer(10) NOT NULL,
-#     dnafrag_id         integer(10) NOT NULL,
-#     hit_start          integer(10) NOT NULL,
-#     hit_end            integer(10) NOT NULL,
-#     hit_strand         integer(10) NOT NULL,
-#     score              double,
-#     perc_id            integer(10),
-#     cigar_line         mediumtext,
-#     dna_align_row_id   integer(10) NOT NULL,
-
-#     PRIMARY KEY (dna_align_block_id),
-#     KEY (dnafrag_id,hit_start,hit_end),
-#     KEY (dnafrag_id,hit_end),
-#     KEY (dnafrag_id)
-# );
-
-# Table containing denormalised data to allow conversion between 
-# protein and DNA coordinates
-
-# create table _protein_locator (
-#     _protein_locator_id integer(10) NOT NULL auto_increment,
-#     protein_relationship_member_id integer(10) NOT NULL,
-#     dnafrag_id          integer(10) NOT NULL,
-#     start               integer(10) NOT NULL,
-#     end                 integer(10) NOT NULL,
-#     strand              integer(10) NOT NULL,
-
-#     PRIMARY KEY (_protein_locator_id),
-#     KEY (dnafrag_id,start,end),
-#     KEY (dnafrag_id,end)
-# );
-
-# create table _protein_gene (
-#     _protein_gene_id integer(10) NOT NULL auto_increment,
-#     protein_relationship_member_id integer(10) NOT NULL,
-#     gene_stable_id varchar(40) NOT NULL,
-
-#     PRIMARY KEY (_protein_gene_id)
-# );
-
-# create table dna_align_row (
-#     dna_align_row_id integer(10) NOT NULL auto_increment,
-#     dna_align_id     integer(10) NOT NULL,
-
-#     PRIMARY KEY (dna_align_row_id)
-# );
-
-# create table protein_relationship_alignment (
-#    protein_relationship_alignment_id  integer(10) NOT NULL auto_increment,
-#    protein_relationship_id integer(10) NOT NULL, 
-#    alignment_type          varchar(40) NOT NULL,
-#    alignment_cigar_line    mediumtext,
- 
-#    PRIMARY KEY(protein_relationship_alignment_id),
-#    UNIQUE KEY(protein_relationship_id ,alignment_type),
-#    KEY(alignment_type)
-# );
