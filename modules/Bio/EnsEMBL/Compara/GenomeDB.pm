@@ -225,10 +225,14 @@ sub get_VC_by_start_end{
          $chr_end = $chr_start + $length -1;
       }
 
-      return $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end ($chr_name,$chr_start,$chr_end);
+      my $vc = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end ($chr_name,$chr_start,$chr_end);
+      $vc->id($name);
+      return $vc;
 
    }elsif ($type eq 'Chromosome'){
 	  $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end($name,$start,$end);
+      $contig->id($name);
+      return $contig;
    }else {
       $self->throw ("Can't fetch contig of dnafrag with type $type");
    }

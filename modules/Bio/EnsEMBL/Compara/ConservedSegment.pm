@@ -211,27 +211,43 @@ sub get_all_non_coding_regions{
 
   my $dnafrag = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->dnafrag_id);
 
-  my $vc = $dnafrag->genomedb->get_VC_by_start_end ($dnafrag->name,$dnafrag->type,($self->seq_start-5000),($self->seq_end+5000));
+  my $contig;
   my @exons;
+  my $first_start;
+  my $last_end;
 
-  foreach my $gene ($vc->get_all_Genes){
-    push (@exons,$gene->get_all_Exons);
-
+  if ($dnafrag->type eq 'RawContig'){
+    $contig = $dnafrag->genomedb->get_Contig($dnafrag->name,'RawContig');
+    foreach my $gene ( $contig->get_all_Genes){
+      foreach my $ex ($gene->get_all_Exons){
+         next if (($ex->start < $self->seq_start-5000) || ($ex->end > $self->seq_end+5000));
+         push (@exons,$ex); 
+      }
+    }
+  $first_start = (($self->seq_start - 5000) < 1) ? 1 : ($self->seq_start - 5000);
+  $last_end = (($self->seq_end + 5000) > ($contig->length-1)) ? $contig->length - 1 : ($self->seq_end + 5000);
+  }elsif ($dnafrag->type eq 'Chromosome'){
+    $contig = $dnafrag->genomedb->get_VC_by_start_end ($dnafrag->name,$dnafrag->type,($self->seq_start-5000),($self->seq_end+5000));
+    foreach my $gene ($contig->get_all_Genes_exononly){
+      push (@exons,$gene->get_all_Exons);
+    }
+  $first_start = 1;
+  $last_end = $contig->length - 1; 
   }
   @exons = sort {$a->start <=> $b->start
                            ||
                  $a->end <=> $b->end  } @exons;
-
   my @non_cds;
 
   my $first_ncds= new Bio::EnsEMBL::SeqFeature 
                        (-seqname => $exons[0]->seqname,
-                        -start   => 1,
+                        -start   => $first_start,
                         -end     => ($exons[0]->start -1),
-                        -strand  => 1
+                        -strand  => 1,
+                        -source_tag => $dnafrag->genomedb->name
                        );
 
-  $first_ncds->attach_seq($vc->primary_seq);
+  $first_ncds->attach_seq($contig->primary_seq);
   push (@non_cds,$first_ncds);
 
   for (my $i = 0; $i <= $#exons ; $i++){
@@ -241,7 +257,7 @@ sub get_all_non_coding_regions{
     for ( my $j = $i; $j <= $#exons; $j++){
       if ($j == $#exons){
          $start = $exons[$j]->end + 1;
-         $end = $vc->length - 1;
+         $end = $last_end;
          $i = $j;
       }
       elsif ($exons[$j+1]->start > $exons[$i]->end + 1){
@@ -255,15 +271,16 @@ sub get_all_non_coding_regions{
                        (-seqname => $exons[$1]->seqname,
                         -start   => $start,
                         -end     => $end,
-                        -strand  => 1
+                        -strand  => 1,
+                        -source_tag => $dnafrag->genomedb->name
                        );
 
 
-    $ncds->attach_seq($vc->primary_seq);
+    $ncds->attach_seq($contig->primary_seq);
     push (@non_cds,$ncds);
   }
 
-  return (@non_cds);
+  return ($contig,@non_cds);
 
 }
 
