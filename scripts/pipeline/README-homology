@@ -16,48 +16,64 @@
 
 1.2 Code checkout
 
-    bioperl code
+bioperl code;
 
-      cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07  bioperl-live
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07  \
+    bioperl-live
 
-    core ensembl code
+core ensembl code
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
 
-    ensembl-pipeline code (for Runnables)
+ensembl-compara code (for Compara API and schema)
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
 
-    ensembl-hive code
+ensembl-pipeline code (for Runnables)
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+
+ensembl-hive code
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+
+
+1.3 Perl environment
 
 in tcsh
-    setenv BASEDIR   /some/path/to/modules
-    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+  $ setenv BASEDIR   /some/path/to/modules
+  $ setenv PERL5LIB ${BASEDIR}/ensembl/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/bioperl-live:${PERL5LIB}
 
 in bash
-    BASEDIR=/some/path/to/modules
-    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+  $ BASEDIR=/some/path/to/modules
+  $ export PERL5LIB=${BASEDIR}/ensembl/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/bioperl-live:${PERL5LIB}
 
 
 2- Configure database
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Pick a mysql instance and create a database
+Pick a mysql instance and create a database;
 
-mysqladmin -h ecs2 -P3361 -uensadmin -pxxxx -e "create database ensembl_compara_jess_23_1"
+  $ mysqladmin -hecs2 -P3361 -uensadmin -pxxxx \
+    -e "create database ensembl_compara_jess_23_1"
 
-cd ~/src/ensembl_main/ensembl-hive/sql
-mysql -h ecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 < tables.sql
+And load the schemas;
 
-cd ~/src/ensembl_main/ensembl-compara/sql
-mysql -h ecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 < table.sql
-mysql -h ecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 < pipeline-tables.sql
-./UpdatePrefilledTable.pl -host ecs2 -port 3361 -user ensadmin -pass xxxx -dbname ensembl_compara_jess_23_1 -table taxon -file taxon.txt
-./UpdatePrefilledTable.pl -host ecs2 -port 3361 -user ensadmin -pass xxxx -dbname ensembl_compara_jess_23_1 -table method_link -file method_link.txt
-
-You don't need to prefill the genome_db table as this is done now with a script that connects to core databases.
+  $ cd $BASEDIR
+  $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
+    < ensembl-hive/sql/tables.sql
+  $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
+    < ensembl-compara/sql/table.sql
+  $ mysql -hecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 \
+    < ensembl-compara/sql/pipeline-tables.sql
 
 
 3- Choose a working directory with enough disk space
@@ -65,7 +81,6 @@ You don't need to prefill the genome_db table as this is done now with a script 
 The homology pipeline takes several GB of space for fasta databases and
 error and output from the RunnableDBs
 
-e.g.
 fasta blast database directory =
 /nfs/ecs4/work2/ensembl/jessica/data/blastDB/ensembl_compara_jess_23_1
 
@@ -76,62 +91,83 @@ hive worker output directory =
 4- Copy and modify the compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline
-cp compara-hive-homology.conf.example compara-23.conf
-<editor> compara-23.conf
+You may need to change the database names, port, dbnames, and the
+paths to the 'hive_output_dir' and 'fasta_dir'. Note that these dirs
+must exist.
 
-you may need to change the database names, port, dbnames, and the
-paths to the 'hive_output_dir' and 'fasta_dir'
+  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+  $ cp compara-hive-homology.conf.example compara-23.conf
+  <editor> compara-23.conf
+
+4.1 Copy and modify the Bio::EnsEMBL::Pipeline::Config::General.pm file
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You may need to change the locations of BIN_DIR, DATA_DIR and LIB_DIR;
+
+  $ cd ~/src/ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config
+  $ cp General.pm.example General.pm
+  <editor> General.pm
 
 
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline
-./loadHomologySystem.pl -conf compara-23.conf
-./comparaLoadGenomes.pl -conf compara-23.conf
 
-The loadHomologySystem script creates the analysis entries for the processing
-system, and creates both the dataflow rule and the analysis control rules.
-It also initializes the analysis_stats row for each analysis.  These row hold
-information like batch_size, hive_capacity, and run-time stats that the Hive's
-Queen will update.
+The loadHomologySystem script creates the analysis entries for the
+processing system, and creates both the dataflow rule and the analysis
+control rules.  It also initializes the analysis_stats row for each
+analysis.  These row hold information like batch_size, hive_capacity,
+and run-time stats that the Hive's Queen will update.
 
-The comparaLoadGenomes script use the information in the conf file to connect to
-the core databases, queries for things like taxon_id, assembly, gene_build, and names
-to create entries in the genome_db table.  It also sets the genome_db.locator column to
-allow the system to know where the respective core databases are located.  There is an
-additional table called genome_db_extn which will be deprecated shortly, but as of today
-(16 June, 2004) it is still used to hold a 'phylum' value for each genome to allow the
-option of building homologies only within phylums.  This script will also 'seed' the
-pipeline/hive system by creating the first jobs in the analysis_job table for
-the analysis 'SubmitGenome'.
+The comparaLoadGenomes script use the information in the conf file to
+connect to the core databases, queries for things like taxon_id,
+assembly, gene_build, and names to create entries in the genome_db
+table.  It also sets the genome_db.locator column to allow the system
+to know where the respective core databases are located.  There is an
+additional table called genome_db_extn which will be deprecated
+shortly, but as of today (16 June, 2004) it is still used to hold a
+'phylum' value for each genome to allow the option of building
+homologies only within phylums.  This script will also 'seed' the
+pipeline/hive system by creating the first jobs in the analysis_job
+table for the analysis 'SubmitGenome'.
 
-These scripts may give you warnings if the output directories are not available or if
-it's unable to connect to core databases.
+These scripts may give you warnings if the output directories are not
+available or if it's unable to connect to core databases.
+
+ $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+ $ ./loadHomologySystem.pl -conf compara-23.conf
+ $ ./comparaLoadGenomes.pl -conf compara-23.conf
 
 At this point the system is ready to run
 
 
 6- Run the beekeeper
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cd ~src/ensembl_main/ensembl-hive/scripts
-./lsf_beekeeper.pl -url mysql://ensadmin:xxxx@ecs2:3361/ensembl_compara_jess_23_1 -loop
+
+There are two beekepers, one which uses LSF job submission system, and
+another that uses the local machine only. If using the local machoine,
+replace 'lsf_beekeper' with 'local_beekeper'.
+
+ $ cd $BASEDIR/ensembl-hive/scripts
+ $ ./lsf_beekeeper.pl \
+   -url mysql://ensadmin:xxxx@ecs2:3361/ensembl_compara_jess_23_1 -loop
 
 where xxxx is the password for write access to the database
 
-Depending on system load this will usually complete in under 24 hours (most likely 8-12 hours).
+Depending on system load this will usually complete in under 24 hours
+(most likely 8-12 hours).
 
 for more details on controling the hive system see 
-~src/ensembl_main/ensembl-hive/script/README-beekeeper
+  $BASEDIR/ensembl-hive/script/README-beekeeper
+
 
 7 - Calculate the dn/ds values
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Currently this hasn't been turned into a runnableDB so must be run by hand.  These only
-   need to be calculated for Human-Mouse-Rat homologs.
+Currently this hasn't been turned into a runnableDB so must be run by
+hand.  These only need to be calculated for Human-Mouse-Rat homologs.
 
-   See this README
+See this README
 
-   ~src/ensembl_main/ensembl-compara/script/homology/README-dNdS
+  $BASEDIR/ensembl-compara/script/homology/README-dNdS
 
 
