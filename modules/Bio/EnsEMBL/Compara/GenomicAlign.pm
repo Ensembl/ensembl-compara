@@ -42,6 +42,7 @@ SET VALUES
   $genomic_align->dnafrag_end(100050);
   $genomic_align->dnafrag_strand(-1);
   $genomic_align->aligned_sequence("TTGCAGGTAGGCCATCTGCAAGC----TGAGGAGCAAGGACTCCAGTCGGAGTC");
+  $genomic_align->original_sequence("TTGCAGGTAGGCCATCTGCAAGCTGAGGAGCAAGGACTCCAGTCGGAGTC");
   $genomic_align->cigar_line("23M4G27M");
   $genomic_align->level_id(1);
 
@@ -58,6 +59,7 @@ GET VALUES
   $dnafrag_end = $genomic_align->dnafrag_end;
   $dnafrag_strand = $genomic_align->dnafrag_strand;
   $aligned_sequence = $genomic_align->aligned_sequence;
+  $original_sequence = $genomic_align->original_sequence;
   $cigar_line = $genomic_align->cigar_line;
   $level_id = $genomic_align->level_id;
 
@@ -124,7 +126,7 @@ corresponds to the sequence rebuilt using dnafrag and cigar_line
 
 =item original_sequence
 
-corresponds to the original sequence. It can be rebuilt from the dnafrag info or can be used
+corresponds to the original sequence. It can be rebuilt from the aligned_sequence, the dnafrag object or can be used
 in conjuction with cigar_line to get the aligned_sequence.
 
 =back
@@ -330,8 +332,11 @@ sub genomic_align_block {
           if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
     }
 
-  } elsif (!defined($self->{'genomic_align_block'}) and defined($self->{'genomic_align_block_id'}) and
+  } elsif (!defined($self->{'genomic_align_block'}) and defined($self->genomic_align_block_id) and
           defined($self->{'adaptor'})) {
+    # Try to fetch the data using the genomic_align_block_id. Uses genomic_align_block_id function and not
+    # the attribute in the <if> clause because the attribute can be retrieved from other sources if it has
+    # not been already defined.
     my $genomic_align_block_adaptor = $self->{'adaptor'}->db->get_GenomicAlignBlockAdaptor;
     $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
             $self->{'genomic_align_block_id'});
@@ -347,9 +352,11 @@ sub genomic_align_block {
   Example    : $genomic_align_block_id = $genomic_align->genomic_align_block_id;
   Example    : $genomic_align->genomic_align_block_id(1032);
   Description: Getter/Setter for the attribute genomic_align_block_id. If no
-               argument is given, the genomic_align_block_id is not defined but
-               the genomic_align_block is, it tries to get the data from the
-               genomic_align_block object. Use 0 as argument to clear this attribute.
+               argument is given and the genomic_align_block_id is not defined, it
+               tries to get the data from other sources like the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object or the database using
+               the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
+               Use 0 as argument to clear this attribute.
   Returntype : integer
   Exceptions : thrown if $genomic_align_block_id does not match a previously defined
                genomic_align_block
@@ -368,8 +375,16 @@ sub genomic_align_block_id {
           if ($self->{'genomic_align_block'} and
               $self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
     }
-  } elsif (!($self->{'genomic_align_block_id'}) and defined($self->{'genomic_align_block'})) {
-    $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
+
+  } elsif (!($self->{'genomic_align_block_id'})) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'genomic_align_block'}) and defined($self->{'genomic_align_block'}->dbID)) {
+      # ...from the corresponding Bio::EnsEMBL::Compara::GenomicAlignBlock object
+      $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
+    } elsif (defined($self->{'adaptor'}) and defined($self->{'dbID'})) {
+      # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
 
   return $self->{'genomic_align_block_id'};
@@ -382,9 +397,10 @@ sub genomic_align_block_id {
   Example    : $method_link_species_set = $genomic_align->method_link_species_set;
   Example    : $genomic_align->method_link_species_set($method_link_species_set);
   Description: Getter/Setter for the attribute method_link_species_set. If no
-               argument is given, the method_link_species_set is not defined but
-               both the method_link_species_set_id and the adaptor are, it tries
-               to fetch the data using the method_link_species_set_id
+               argument is given and the method_link_species_set is not defined, it
+               tries to get the data from other sources like the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object or from
+               the method_link_species_set_id.
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : thrown if $method_link_species_set is not a
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object or if 
@@ -407,15 +423,21 @@ sub method_link_species_set {
           if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
     }
   
-  } elsif (!defined($self->{'method_link_species_set'}) and defined($self->{'method_link_species_set_id'}) and
-          defined($self->{'adaptor'})) {
-    my $method_link_species_set_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
-    $self->{'method_link_species_set'} = $method_link_species_set_adaptor->fetch_by_dbID(
-            $self->{'method_link_species_set_id'});
-  
-  } elsif (!defined($self->{'method_link_species_set'}) and
-          defined($self->genomic_align_block)) {
-    $self->{'method_link_species_set'} = $self->genomic_align_block->method_link_species_set;
+  } elsif (!defined($self->{'method_link_species_set'})) {
+    # Try to get the object from other sources...
+    if (defined($self->genomic_align_block) and ($self->{'genomic_align_block'}->method_link_species_set)) {
+      # ...from the corresponding Bio::EnsEMBL::Compara::GenomicAlignBlock object. Uses genomic_align_block
+      # function and not the attribute in the <if> clause because the attribute can be retrieved from other
+      # sources if it has not been already defined.
+      $self->{'method_link_species_set'} = $self->genomic_align_block->method_link_species_set;
+    } elsif (defined($self->method_link_species_set_id) and defined($self->{'adaptor'})) {
+      # ...from the method_link_species_set_id. Uses method_link_species_set_id function and not the attribute
+      # in the <if> clause because the attribute can be retrieved from other sources if it has not been
+      # already defined.
+      my $method_link_species_set_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
+      $self->{'method_link_species_set'} = $method_link_species_set_adaptor->fetch_by_dbID(
+              $self->{'method_link_species_set_id'});
+    }
   }
 
   return $self->{'method_link_species_set'};
@@ -428,9 +450,11 @@ sub method_link_species_set {
   Example    : $method_link_species_set_id = $genomic_align->method_link_species_set_id;
   Example    : $genomic_align->method_link_species_set_id(3);
   Description: Getter/Setter for the attribute method_link_species_set_id. If no
-               argument is given, the method_link_species_set_id is not defined but
-               the method_link_species_set is, it tries to get the data from the
-               method_link_species_set object. Use 0 as argument to clear this attribute.
+               argument is given and the method_link_species_set_id is not defined, it
+               tries to get the data from other sources like the corresponding
+               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object or the database
+               using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
+               Use 0 as argument to clear this attribute.
   Returntype : integer
   Exceptions : thrown if $method_link_species_set_id does not match a previously defined
                method_link_species_set
@@ -449,8 +473,15 @@ sub method_link_species_set_id {
           if ($self->{'method_link_species_set'} and
               $self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
     }
-  } elsif (!($self->{'method_link_species_set_id'}) and defined($self->{'method_link_species_set'})) {
-    $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
+  } elsif (!$self->{'method_link_species_set_id'}) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'method_link_species_set'}) and $self->{'method_link_species_set'}->dbID) {
+      # ...from the corresponding Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+      $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
+    } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
 
   return $self->{'method_link_species_set_id'};
@@ -486,8 +517,10 @@ sub dnafrag {
       throw("dnafrag object does not match previously defined dnafrag_id")
           if ($self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
     }
-  } elsif (!defined($self->{'dnafrag'}) and defined($self->{'dnafrag_id'}) and
-          defined($self->{'adaptor'})) {
+  
+  } elsif (!defined($self->{'dnafrag'}) and defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
+    # Try to get the object from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
+    # clause because the attribute can be retrieved from other sources if it has not been already defined.
     my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
     $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
   }
@@ -502,9 +535,11 @@ sub dnafrag {
   Example    : $dnafrag_id = $genomic_align->dnafrag_id;
   Example    : $genomic_align->dnafrag_id(134);
   Description: Getter/Setter for the attribute dnafrag_id. If no
-               argument is given, the dnafrag_id is not defined but
-               the dnafrag is, it tries to get the data from the
-               dnafrag object. Use 0 as argument to clear this attribute.
+               argument is given and the dnafrag_id is not defined, it tries to
+               get the ID from other sources like the corresponding
+               Bio::EnsEMBL::Compara::DnaFrag object or the database using the dbID
+               of the Bio::EnsEMBL::Compara::GenomicAlign object.
+               Use 0 as argument to clear this attribute.
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
@@ -522,8 +557,16 @@ sub dnafrag_id {
       throw("dnafrag_id does not match previously defined dnafrag object")
           if ($self->{'dnafrag'} and $self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
     }
-  } elsif (!($self->{'dnafrag_id'}) and defined($self->{'dnafrag'})) {
-    $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
+
+  } elsif (!($self->{'dnafrag_id'})) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'dnafrag'}) and defined($self->{'dnafrag'}->dbID)) {
+      # ...from the corresponding Bio::EnsEMBL::Compara::DnaFrag object
+      $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
+    } elsif (defined($self->{'adaptor'}) and defined($self->{'dbID'})) {
+      # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
 
   return $self->{'dnafrag_id'};
@@ -535,7 +578,10 @@ sub dnafrag_id {
   Arg [1]    : integer $dnafrag_start
   Example    : $dnafrag_start = $genomic_align->dnafrag_start;
   Example    : $genomic_align->dnafrag_start(1233354);
-  Description: Getter/Setter for the attribute dnafrag_start
+  Description: Getter/Setter for the attribute dnafrag_start. If no argument is given, the level_id
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
   Caller     : object::methodname
@@ -547,6 +593,10 @@ sub dnafrag_start {
 
   if (defined($dnafrag_start)) {
      $self->{'dnafrag_start'} = $dnafrag_start;
+
+  } elsif (!defined($self->{'dnafrag_start'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    $self->adaptor->retrieve_all_direct_attributes($self);
   }
 
   return $self->{'dnafrag_start'};
@@ -558,7 +608,10 @@ sub dnafrag_start {
   Arg [1]    : integer $dnafrag_end
   Example    : $dnafrag_end = $genomic_align->dnafrag_end;
   Example    : $genomic_align->dnafrag_end(1235320);
-  Description: Getter/Setter for the attribute dnafrag_end
+  Description: Getter/Setter for the attribute dnafrag_end. If no argument is given, the level_id
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
   Caller     : object::methodname
@@ -570,6 +623,10 @@ sub dnafrag_end {
 
   if (defined($dnafrag_end)) {
      $self->{'dnafrag_end'} = $dnafrag_end;
+
+  } elsif (!defined($self->{'dnafrag_end'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    $self->adaptor->retrieve_all_direct_attributes($self);
   }
 
   return $self->{'dnafrag_end'};
@@ -581,7 +638,10 @@ sub dnafrag_end {
   Arg [1]    : integer $dnafrag_strand (1 or -1)
   Example    : $dnafrag_strand = $genomic_align->dnafrag_strand;
   Example    : $genomic_align->dnafrag_strand(1);
-  Description: Getter/Setter for the attribute dnafrag_strand
+  Description: Getter/Setter for the attribute dnafrag_strand. If no argument is given, the level_id
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : integer
   Exceptions : none
   Caller     : object::methodname
@@ -593,6 +653,10 @@ sub dnafrag_strand {
 
   if (defined($dnafrag_strand)) {
      $self->{'dnafrag_strand'} = $dnafrag_strand;
+
+  } elsif (!defined($self->{'dnafrag_strand'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    $self->adaptor->retrieve_all_direct_attributes($self);
   }
 
   return $self->{'dnafrag_strand'};
@@ -622,7 +686,7 @@ sub aligned_sequence {
 
     $self->{'aligned_sequence'} = $aligned_sequence;
 
-  } elsif (!defined($self->{'aligned_sequence'}) and defined($self->{'cigar_line'})) {
+  } elsif (!defined($self->{'aligned_sequence'}) and defined($self->cigar_line)) {
     $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
         $self->original_sequence, $self->{'cigar_line'});
     $self->{'aligned_sequence'} = $aligned_sequence;
@@ -641,6 +705,10 @@ sub aligned_sequence {
                If no argument is given, the cigar line has not been
                defined yet but the aligned sequence was, it calculates
                the cigar line based on the aligned (gapped) sequence.
+               If no argument is given, the cigar_line is not defined but both
+               the dbID and the adaptor are, it tries to fetch and set all
+               the direct attributes from the database using the dbID of the
+               Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : string
   Exceptions : none
   Caller     : object::methodname
@@ -654,8 +722,13 @@ sub cigar_line {
     $self->{'cigar_line'} = $arg ;
 
   } elsif (!defined($self->{'cigar_line'}) and defined($self->{'aligned_sequence'})) {
+    # Try to get the cigar_line from the aligned sequence
     my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
     $self->cigar_line($cigar_line);
+  
+  } elsif (!defined($self->{'cigar_line'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    $self->adaptor->retrieve_all_direct_attributes($self);
   }
 
   return $self->{'cigar_line'};
@@ -667,7 +740,10 @@ sub cigar_line {
   Arg [1]    : int $level_id
   Example    : $level_id = $genomic_align->level_id;
   Example    : $genomic_align->level_id(1);
-  Description: get/set for attribute level_id
+  Description: get/set for attribute level_id. If no argument is given, the level_id
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
   Returntype : int
   Exceptions : none
   Caller     : object::methodname
@@ -675,10 +751,14 @@ sub cigar_line {
 =cut
 
 sub level_id {
-  my ($self, $arg) = @_;
+  my ($self, $level_id) = @_;
 
-  if ( defined $arg ) {
-    $self->{'level_id'} = $arg ;
+  if (defined($level_id)) {
+    $self->{'level_id'} = $level_id;
+
+  } elsif (!defined($self->{'level_id'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+    $self->adaptor->retrieve_all_direct_attributes($self);
   }
 
   return $self->{'level_id'};
@@ -689,8 +769,9 @@ sub level_id {
 
   Arg [1]    : none
   Example    : $original_sequence = $genomic_align->original_sequence
-  Description: get original sequence from dnafrag object and dnafrag_start
-               and dnafrag attributes
+  Description: get/set original sequence. If no argument is given and the original_sequence
+               is not defined, it tries to fetch the data from other sources like the
+               aligned sequence or the the Bio::EnsEMBL::Compara:DnaFrag object.
   Returntype : string $original_sequence
   Exceptions : 
   Caller     : object::methodname
@@ -702,9 +783,22 @@ sub original_sequence {
 
   if (defined($original_sequence)) {
     $self->{'original_sequence'} = $original_sequence;
-  } elsif (!defined($self->{'original_sequence'}) and defined($self->dnafrag) and defined($self->dnafrag_start) and
-         defined($self->dnafrag_end)) {
-    $self->{'original_sequence'} = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
+
+  } elsif (!defined($self->{'original_sequence'})) {
+    # Try to get the data from other sources...
+    
+    if ($self->{'aligned_sequence'}) {
+      # ...from the aligned sequence
+      $self->{'original_sequence'} = $self->{'aligned_sequence'};
+      $self->{'original_sequence'} =~ s/\-//g;
+
+    } elsif (!defined($self->{'original_sequence'}) and defined($self->dnafrag)
+          and defined($self->dnafrag_start) and defined($self->dnafrag_end)) {
+      # ...from the dnafrag object. Uses dnafrag, dnafrag_start and dnafrag_methods instead of the attibutes
+      # in the <if> clause because the attributes can be retrieved from other sources if they have not been
+      # already defined.
+      $self->{'original_sequence'} = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
+    }
   }
 
   return $self->{'original_sequence'};
