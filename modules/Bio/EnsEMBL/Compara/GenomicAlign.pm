@@ -951,11 +951,11 @@ sub original_sequence {
       }
 
     } elsif (!defined($self->{'original_sequence'}) and defined($self->dnafrag)
-          and defined($self->dnafrag_start) and defined($self->dnafrag_end)) {
+          and defined($self->dnafrag_start) and defined($self->dnafrag_end)
+          and defined($self->dnafrag->slice)) {
       # ...from the dnafrag object. Uses dnafrag, dnafrag_start and dnafrag_methods instead of the attibutes
       # in the <if> clause because the attributes can be retrieved from other sources if they have not been
       # already defined.
-      throw if (!$self->dnafrag);
       $self->{'original_sequence'} = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
     }
   }
