@@ -64,6 +64,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Utils::Exception qw( verbose );
 use Getopt::Long;
 
 ###############################################################################
@@ -106,6 +107,7 @@ my $new_dbport = '3362';
 my $method_link_id;
 my $start;
 my $num;
+my $verbose = 0;
 
 	
 GetOptions('help' => \$help,
@@ -122,11 +124,16 @@ GetOptions('help' => \$help,
 	   'method_link_id=s' => \$method_link_id,
 	   'start=i' => \$start,
 	   'num=i' => \$num,
+	   'v' => \$verbose,
 	   );
 
 if ($help) {
   print $description, $usage;
   exit(0);
+}
+
+if ($verbose) {
+  verbose('INFO');
 }
 
 if (!$old_dbhost or !$old_dbname or !$old_dbuser or !$old_dbport) {
@@ -261,7 +268,11 @@ while (my @values = $old_sth->fetchrow_array) {
   $genomic_align_group->dbID($values[11]);
   $genomic_align_group->type("default");
   $genomic_align_group->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
+
+  ## Store genomic_align_block (this stores genomic_aligns as well)
   $genomic_align_block_adaptor->store($genomic_align_block);
+
+  ## Store genomic_align_group
   $genomic_align_group_adaptor->store($genomic_align_group);
 
   $counter++;
