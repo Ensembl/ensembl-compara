@@ -45,13 +45,14 @@ sub _init {
             open FH, "/nfs/WWW/data/blastqueue/$ticket.cache";
             while(<FH>) {
                 chomp;
-                my ($h_chr, $h_s, $h_e, $h_score, $h_percent, $h_name, $h_strand) = split /\|/;
+                my ($h_chr, $h_s, $h_e, $h_score, $h_percent, $h_name, $h_strand,$p_n,$q_s,$q_e) = split /\|/;
                 if($h_chr eq $vc_chr) {
-                    push @hits, [$h_s,$h_e,$h_score,$h_percent,$ticket, $h_name, $h_strand ] if(
-                        ($h_s < $vc_s && $vc_e > $h_e) ||
-                        ($vc_s <= $h_s && $h_s <= $vc_e) ||
-                        ($vc_s <= $h_e && $h_e <= $vc_e)
-                    )
+		    print STDERR "$vc_s -> $vc_e :: $h_s -> $h_e\n"; 
+		    print STDERR "PUSHED:\n" unless(	($h_s > $vc_e) || ( $h_e < $vc_s));
+
+                    push @hits, [$h_s,$h_e,$h_score,$h_percent,$ticket, $h_name, $h_strand, $p_n,$q_s,$q_e ] unless(
+                        ($h_s > $vc_e) || ( $h_e < $vc_s)
+                    );
                 }
             }
             close FH;
@@ -79,14 +80,15 @@ sub _init {
         'y'         => 4,
         'width'     => $vc_e - $vc_s,
         'height'    => 0,
-        'colour'    => $cmap->id_by_name('grey1'),
+        'colour'    => $cmap->id_by_name('yellow1'),
         'absolutey' => 1,
     });
     $self->push($gline);
 
     ## Lets draw a box foreach hit!
     foreach my $hit ( @hits ) {
-		my $strand = $hit->[6] eq 'Plus' ? 1 : -1;
+		my $strand = $hit->[6];
+	print STDERR "HIT! $strand -", $self->strand,"\n";
         next if $strand != $self->strand();
         my $start = $hit->[0] < $vc_s ? $vc_s : $hit->[0];
         my $end   = $hit->[1] > $vc_e ? $vc_e : $hit->[1];
@@ -101,10 +103,13 @@ sub _init {
             'absolutey' => 1,
             'zmenu'     => {
                 'caption' => 'Blast hit',
-                "Score: $hit->[2]; identity: $hit->[3]%" => '',
-                '&nbsp;&nbsp;Show blast alignment' =>
+                "01:Score: $hit->[2]; identity: $hit->[3]%" => '',
+                "02:Hit: $hit->[5]" => '',
+                "03:Hit probability: $hit->[7]" => '',
+                "04:Query start/end: $hit->[8]/$hit->[9]" => '',
+                '06:Show blast alignment' =>
 				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=hit_format&id=$hit->[4]&hit=$hit->[5]",
-                '&nbsp;&nbsp;Show on karyotype' =>
+                '07:Show on karyotype' =>
 				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=karyo_format&id=$hit->[4]"
             },
 	});
