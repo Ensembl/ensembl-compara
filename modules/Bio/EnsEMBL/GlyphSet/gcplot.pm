@@ -56,7 +56,6 @@ sub _init {
     my $min = 100;
     my $max = 0;
     
-    $self->push($line);
     for (my $i=0; $i<$divs; $i++){
         my $subseq = substr($seq, int($i*$divlen), int($divlen));
 #       my $G = $subseq =~ tr/G/G/; my $C = $subseq =~ tr/C/C/;
@@ -98,6 +97,7 @@ sub _init {
         'colour'    => $line_colour,
         'absolutey' => 1,
     });
+    $self->push($line);
     
 }            
 #    my $fontname = "Tiny";

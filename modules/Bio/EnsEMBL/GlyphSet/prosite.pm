@@ -92,7 +92,6 @@ sub _init {
 	# add a label
 	#
 	my $desc = $prsave->idesc();
-        print STDERR "$fontwidth\n";
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
@@ -110,8 +109,6 @@ sub _init {
             $bump_start = 0 if ($bump_start < 0);
 
             my $bump_end = $bump_start + int($Composite->width() / $pix_per_bp);
-            print STDERR "BUMP: $bump_start $bump_end\n";
-            print STDERR "XX: ".$Composite->width()." - $pix_per_bp\n";
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
             my $row = &Bump::bump_row(      
 				      $bump_start,

@@ -87,7 +87,7 @@ GENE:
         };
         $type = $eg->type();
       
-        print STDERR sprintf( "%-10s %-20s %-20s %-20s\n",'GENE:',$vgid,$type, $gene_label );
+#        print STDERR sprintf( "%-10s %-20s %-20s %-20s\n",'GENE:',$vgid,$type, $gene_label );
 TRANSCRIPT:
         for my $transcript ($eg->each_Transcript()) {
             next if ($target && ($transcript->id() ne $target) );
@@ -109,8 +109,8 @@ TRANSCRIPT:
                     ($id, $highlight) = $self->_label_highlight($tid, $highlight, \%highlights, \@dblinks)
                 }                   #end of Skip in single transcript mode
             };
-        print STDERR sprintf( "%-10s %-20s %-20s %-20s\n",'TRANS:',$tid, '--' , $id );
-        foreach(@dblinks) { print STDERR "-----> $_\n"; }
+#        print STDERR sprintf( "%-10s %-20s %-20s %-20s\n",'TRANS:',$tid, '--' , $id );
+#        foreach(@dblinks) { print STDERR "-----> $_\n"; }
       
             my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
             $colour = @dblinks ? $known_colour : $unknown_colour;

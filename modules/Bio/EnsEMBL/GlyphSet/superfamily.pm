@@ -35,8 +35,7 @@ sub _init {
 
     my @ps_feat = $protein->get_all_SuperfamilyFeatures();
     foreach my $feat(@ps_feat) {
-	print STDERR $feat;
-	push(@{$hash{$feat->feature2->seqname}},$feat);
+	    push(@{$hash{$feat->feature2->seqname}},$feat);
     }
     
     my $PID = $self->{'container'}->id;
@@ -112,8 +111,6 @@ sub _init {
             $bump_start = 0 if ($bump_start < 0);
 
             my $bump_end = $bump_start + int($Composite->width() * $pix_per_bp);
-            print STDERR "BUMP: $bump_start $bump_end\n";
-            print STDERR "XX: ".$Composite->width()." - $pix_per_bp\n";
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
             my $row = &Bump::bump_row(      
 				      $bump_start,

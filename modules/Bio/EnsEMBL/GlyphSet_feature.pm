@@ -46,9 +46,6 @@ sub _init {
     my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
-    foreach( keys %highlights) {
-      print STDERR "$type : $_\n";
-    }
     my @bitmap         = undef;
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $bitmap_length  = int($VirtualContig->length * $pix_per_bp);
