@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkDna
+Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db       = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Pipeline::RunnableDB::ChunkDna->new (
+my $runnable = Bio::EnsEMBL::Pipeline::RunnableDB::ChunkAndGroupDna->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -44,7 +44,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkDna;
+package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -54,7 +54,10 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
+
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
@@ -63,12 +66,15 @@ our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
 
 =head2 fetch_input
+
     Title   :   fetch_input
     Usage   :   $self->fetch_input
     Function:   prepares global variables and DB connections
     Returns :   none
     Args    :   none
+
 =cut
+
 sub fetch_input {
   my( $self) = @_;
 
@@ -84,10 +90,12 @@ sub fetch_input {
   $self->{'region'}                   = undef;
   $self->{'masking_analysis_data_id'} = 0;
   $self->{'masking_options'}          = undef;
+  $self->{'group_set_size'}           = undef;
 
   $self->{'analysis_job'}             = undef;
   $self->{'create_analysis_prefix'}   = undef; # 'analysis', 'job'
-  #$self->{'coordinate_system'} = "chromosome";
+  $self->{'collection_id'}            = undef;
+  $self->{'collection_name'}          = undef;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -123,7 +131,7 @@ sub run
   # access the ensembl_core database, useing the SliceAdaptor
   # it will load all slices, all genes, and all transscripts
   # and convert them into members to be stored into compara
-  $self->create_chunks_from_genomeDB($self->{'genome_db'});
+  $self->create_chunks;
   
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
                                           
@@ -135,16 +143,16 @@ sub write_output
 {  
   my $self = shift;
 
-  my $output_id = $self->input_id;
-
-  #$output_id =~ s/\}$//;
-  #$output_id .= ",ss=>".$self->{'subset'}->dbID;
-  #$output_id .= "}";
+  my $outputHash = {};
+  $outputHash = eval($self->input_id) if(defined($self->input_id));
+  $outputHash->{'collection_id'} = $self->{'dna_collection'}->dbID;
+  my $output_id = main::encode_hash($outputHash);
 
   print("output_id = $output_id\n");
-  $self->input_id($output_id);
+  $self->input_id($output_id);                    
   return 1;
 }
+
 
 
 ######################################
@@ -166,6 +174,11 @@ sub get_params {
   foreach my $key (keys %$params) {
     print("  $key : ", $params->{$key}, "\n");
   }
+  
+  if($params->{'input_data_id'}) {
+    my $input_id = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($params->{'input_data_id'});
+    $self->get_params($input_id);
+  }
       
   $self->{'store_seq'} = $params->{'store_seq'} if(defined($params->{'store_seq'}));
   $self->{'chunk_size'} = $params->{'chunk_size'} if(defined($params->{'chunk_size'}));
@@ -181,19 +194,14 @@ sub get_params {
   $self->{'masking_analysis_data_id'} = $params->{'masking_analysis_data_id'}
     if(defined($params->{'masking_analysis_data_id'}));
     
-  $self->{'create_analysis_prefix'} = $params->{'analysis_template'}
+  $self->{'create_analysis_prefix'} = $params->{'analysis_template'} 
     if(defined($params->{'analysis_template'}));
+  $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
 
-  #if I'm supposed to run a post analysis 'CreateChunkSet'
-  #redirect the output via branch '2' to that analysis
-  #yeah it's a bit hard coded, but it's a tightly coupled system anyways
-  #and this is a bit of a 'glue' component anyways
-  if(defined($params->{'group_set_size'})) {
-    $self->branch_code(2);
-    #printf("HAS group_set so redirect to branch=%d\n", $self->branch_code);
-  } elsif(defined($params->{'analysis_job'})) {
-    $self->{'analysis_job'} = $params->{'analysis_job'};
-  }
+  $self->{'group_set_size'} = $params->{'group_set_size'} if(defined($params->{'group_set_size'}));
+
+  $self->{'collection_name'} = $params->{'collection_name'} if(defined($params->{'collection_name'}));
+  $self->{'collection_id'} = $params->{'collection_id'} if(defined($params->{'collection_id'}));
   
   return;
 
@@ -214,15 +222,22 @@ sub print_params {
 }
 
 
-sub create_chunks_from_genomeDB
+sub create_chunks
 {
   my $self      = shift;
-  my $genome_db = shift;
 
-  #$self->{'subset'} = new Bio::EnsEMBL::Compara::Subset;
-  #$self->{'subset'}->description($genome_db->name . ' chunks');
-  #$self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'subset'});
+  my $genome_db = $self->{'genome_db'};
 
+  my $collectionDBA = $self->{'comparaDBA'}->get_DnaCollectionAdaptor;
+  if ($self->{'collection_id'}) {
+    $self->{'dna_collection'} = $collectionDBA->fetch_by_dbID($self->{'collection_id'});
+  } else {
+    $self->{'dna_collection'} = new Bio::EnsEMBL::Compara::Production::DnaCollection;
+    $self->{'dna_collection'}->description($self->{'collection_name'});
+    $collectionDBA->store($self->{'dna_collection'});
+  }
+  throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->{'dna_collection'});
+  
   $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   my $SliceAdaptor = $genome_db->db_adaptor->get_SliceAdaptor;
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
@@ -237,6 +252,7 @@ sub create_chunks_from_genomeDB
   }
 
   my $starttime = time();
+  $self->{'chunkset_counter'} = 1;
   foreach my $chr (@{$chromosomes}) {
     #print "fetching dnafrag\n";
 
@@ -262,6 +278,12 @@ sub create_chunks_from_genomeDB
     $self->create_dnafrag_chunks($dnafrag);
 
   }
+ 
+  #
+  # finish by storing all the dna_objects of the collection 
+  #
+  $collectionDBA->store($self->{'dna_collection'});
+
   print "genome_db ",$genome_db->dbID, " : total time ", (time()-$starttime), " secs\n";
 }
 
@@ -288,6 +310,12 @@ sub create_dnafrag_chunks {
 
   my $lasttime = time();
 
+  my $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+  $chunkSet->description(sprintf("collection_id:%d group:%d",
+                                 $self->{'dna_collection'}->dbID, 
+                                 $self->{'chunkset_counter'}++));
+  my $set_size = 0;
+
   #all seq in inclusive coordinates so need to +1
   for ($i; $i<=$length; $i=$i+$self->{'chunk_size'}-$self->{'overlap'}) {
 
@@ -312,10 +340,43 @@ sub create_dnafrag_chunks {
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
     print "  dbID=",$chunk->dbID, "\n";
 
+    # do grouping if requested
+    if($self->{'group_set_size'}) {
+      if(($chunkSet->count > 0) and (($set_size + $chunk->length) > $self->{'group_set_size'})) {
+        #set has hit max, so save it
+        $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
+        $self->{'dna_collection'}->add_dna_object($chunkSet);
+        #$self->submit_job($chunkSet);
+        printf("created chunkSet(%d) %d chunks, %1.3f mbase\n",
+               $chunkSet->dbID, $chunkSet->count, $set_size/1000000.0);
+        $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;        
+        $chunkSet->description(sprintf("collection_id:%d group:%d",
+                                       $self->{'dna_collection'}->dbID, 
+                                       $self->{'chunkset_counter'}++));
+        $set_size = 0;
+      }
+
+      $chunkSet->add_dnafrag_chunk_id($chunk->dbID);
+      #$chunkSet->add_DnaFragChunk($chunk);
+      $set_size += $chunk->length;
+    }
+    else {
+      #not doing grouping so put the $chunk directly into the collection
+      $self->{'dna_collection'}->add_dna_object($chunk);
+    }
+    
     $self->submit_job($chunk) if($self->{'analysis_job'});
     $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
+    
   }
-  
+
+  #save the last chunkSet if it isn't empty
+  if($chunkSet->count > 0) {
+    $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
+    #$self->submit_job($chunkSet);
+    $self->{'dna_collection'}->add_dna_object($chunkSet);
+  }
+
   #print "Done\n";
   #print scalar(time()-$lasttime), " secs to chunk, and store\n";
 }

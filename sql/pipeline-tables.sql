@@ -1,7 +1,7 @@
 
 CREATE TABLE subset (
  subset_id      int(10) NOT NULL auto_increment,
- description    varchar(50),
+ description    varchar(255),
  dump_loc       varchar(255),
 
  PRIMARY KEY (subset_id),
@@ -95,17 +95,60 @@ CREATE TABLE dnafrag_chunk (
   KEY (sequence_id)
 );
 
-CREATE TABLE subset_dnafrag_chunk (
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'dnafrag_chunk_set'
+--
+-- overview: This tables holds sets of dnafrag_chunk references
+--
+-- semantics:
+--   subset_id        - foreign key link to subset table
+--   dnafrag_chunk_id - foreign key link to dnafrag_chunk table
+
+CREATE TABLE dnafrag_chunk_set (
  subset_id          int(10) NOT NULL,
  dnafrag_chunk_id   int(10) NOT NULL,
 
  UNIQUE(subset_id, dnafrag_chunk_id)
 );
 
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'dna_collection'
+--
+-- overview: ObjectOriented database table design where join logic is encapsulated in 
+--           object adaptor not in table schema.
+--           This table holds links to variable foreign dna related tables.
+--           This allows for the system to create various dnafrag_chunk and
+--           dnafrag_chunk_set objects and then to be able to regroup them in
+--           any arbirary way.  This allows for the a chunk to be in multiple sets
+--           and in multiple collections, and for collections to include both chunks
+--           and sets of chunks. Object design allow system to adapt to design changes
+--           without needing to alter database schema.
+--
+-- semantics:
+--   dna_collection_id   - foreign key link to subset table, unique for a collection
+--                         uses subset table to generate unique ids.
+--   table_name          - name of table on which to join the foreign_id to
+--   foreign_id          - foreign key link to <table_name> table
+
+CREATE TABLE dna_collection (
+ dna_collection_id      int(10) NOT NULL,
+ table_name             varchar(80),
+ foreign_id             int(10) NOT NULL,
+ 
+ FOREIGN KEY (dna_collection_id) REFERENCES subset(subset_id),
+
+ UNIQUE(dna_collection_id, table_name, foreign_id)
+);
+
+
 CREATE TABLE genomic_align_block_job_track (
   genomic_align_block_id  bigint unsigned NOT NULL,
   analysis_job_id         int NOT NULL,
 
-  UNIQUE(genomic_align_block_id, analysis_job_id)
+  UNIQUE (genomic_align_block_id, analysis_job_id)
 );
 

@@ -5,6 +5,7 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
@@ -59,8 +60,14 @@ if(%hive_params) {
 
 $self->prepareGenomicAlignSystem;
 
+foreach my $chunkGroupConf (@{$self->{'chunk_group_conf_list'}}) {
+  print("prepChunkGroupJob\n");
+  $self->store_masking_options($chunkGroupConf);
+  $self->create_chunk_job($chunkGroupConf);
+}
+
 foreach my $genomicAlignConf (@{$self->{'genomic_align_conf_list'}}) {
-  if($genomicAlignConf->{'subtype'} eq 'blastz') {
+  if($genomicAlignConf->{'subtype'} and ($genomicAlignConf->{'subtype'} eq 'blastz')) {
     $self->prepBlastzPair($genomicAlignConf);
   }
 }
@@ -89,22 +96,28 @@ sub parse_conf {
   my $conf_file = shift;
 
   $self->{'genomic_align_conf_list'} = [];
+  $self->{'chunk_group_conf_list'} = [];
+  $self->{'chunkCollectionHash'} = {};
   
   if($conf_file and (-e $conf_file)) {
     #read configuration file from disk
     my @conf_list = @{do $conf_file};
 
     foreach my $confPtr (@conf_list) {
-      print("HANDLE type " . $confPtr->{TYPE} . "\n") if($verbose);
-      if($confPtr->{TYPE} eq 'COMPARA') {
+      my $type = $confPtr->{TYPE};
+      delete $confPtr->{TYPE};
+      print("HANDLE type $type\n") if($verbose);
+      if($type eq 'COMPARA') {
         %compara_conf = %{$confPtr};
       }
-      if($confPtr->{TYPE} eq 'HIVE') {
+      elsif($type eq 'HIVE') {
         %hive_params = %{$confPtr};
       }
-
-      if($confPtr->{TYPE} eq 'GENOMIC_ALIGN') {
+      elsif($type eq 'GENOMIC_ALIGN') {
         push @{$self->{'genomic_align_conf_list'}} , $confPtr;
+      }
+      elsif($type eq 'DNA_CHUNK_GROUP_SET') {
+        push @{$self->{'chunk_group_conf_list'}} , $confPtr;
       }
 
     }
@@ -129,12 +142,12 @@ sub prepareGenomicAlignSystem
   my $stats;
 
   #
-  # ChunkDna
+  # ChunkAndGroupDna
   #
   my $chunkAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
-      -logic_name      => 'ChunkDna',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkDna',
+      -logic_name      => 'ChunkAndGroupDna',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
       -parameters      => ""
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($chunkAnalysis);
@@ -143,44 +156,43 @@ sub prepareGenomicAlignSystem
   $stats->hive_capacity(-1); #unlimited
   $stats->update();
   $self->{'chunkAnalysis'} = $chunkAnalysis;
-
-
-  #
-  # CreateChunkSets
-  #
-  my $chunkSetAnalysis = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'CreateChunkSets',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateChunkSets',
-      -parameters      => ""
-    );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($chunkSetAnalysis);
-  $stats = $chunkSetAnalysis->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1); #unlimited
-  $stats->update();
-  $self->{'CreateChunkSets'} = $chunkSetAnalysis;
-
-  $dataflowRuleDBA->create_rule($chunkAnalysis, $chunkSetAnalysis, 2);
   
   #
-  # CreateDnaRules
+  # CreatePairAlignerJobs
   #
-  my $createRulesAnalysis = Bio::EnsEMBL::Analysis->new(
+  my $createBlastJobsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
-      -logic_name      => 'CreateDnaRules',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateRules',
+      -logic_name      => 'CreatePairAlignerJobs',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreatePairAlignerJobs',
       -parameters      => ""
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createRulesAnalysis);
-  $stats = $createRulesAnalysis->stats;
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createBlastJobsAnalysis);
+  $stats = $createBlastJobsAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(1); #unlimited
   $stats->update();
-  $self->{'createRulesAnalysis'} = $createRulesAnalysis;
+  $self->{'createBlastJobsAnalysis'} = $createBlastJobsAnalysis;
 
-  $ctrlRuleDBA->create_rule($chunkAnalysis, $createRulesAnalysis);
-  $ctrlRuleDBA->create_rule($chunkSetAnalysis, $createRulesAnalysis);
+  $ctrlRuleDBA->create_rule($chunkAnalysis, $createBlastJobsAnalysis);
+
+  #
+  # FilterDuplicates
+  #
+  my $filterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'FilterDuplicates',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
+      -parameters      => ""
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($filterDuplicatesAnalysis);
+  $stats = $filterDuplicatesAnalysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1); #unlimited
+  $stats->status('BLOCKED');
+  $stats->update();
+  $self->{'filterDuplicatesAnalysis'} = $filterDuplicatesAnalysis;
+
+  $dataflowRuleDBA->create_rule($createBlastJobsAnalysis, $filterDuplicatesAnalysis);
 
 }
 
@@ -210,7 +222,6 @@ sub prepareGenomicAlignSystem
   },
 =cut
 
-
 sub prepBlastzPair
 {
   my $self        = shift;
@@ -219,10 +230,24 @@ sub prepBlastzPair
   print("PrepBlastzPair\n") if($verbose);
 
   if($genomic_align_conf->{'method_link'}) {
-    my ($method_link_id, $type) = @{$genomic_align_conf->{'method_link'}};
-    my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$type'";
+    my ($method_link_id, $method_link_type) = @{$genomic_align_conf->{'method_link'}};
+    my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
     print("$sql\n");
     $self->{'hiveDBA'}->dbc->do($sql);
+        
+    #
+    # create method_link_species_set
+    #
+    my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+    $mlss->method_link_type($method_link_type); 
+    my $gdb_id1 = $self->{'chunkCollectionHash'}->{$genomic_align_conf->{'query'}}->{'genome_db_id'};
+    my $gdb_id2 = $self->{'chunkCollectionHash'}->{$genomic_align_conf->{'target'}}->{'genome_db_id'};
+    my $gdb1 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id1);
+    my $gdb2 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id2);
+    $mlss->species_set([$gdb1, $gdb2]);
+    $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+    $self->{'method_link_species_set'} = $mlss;
+    $genomic_align_conf->{'method_link_species_set_id'} = $mlss->dbID;
   }
       
   my $hexkey = sprintf("%x", rand(time()));
@@ -244,20 +269,26 @@ sub prepBlastzPair
   $stats->update();
 
 
-  print("  query :\n");
-  $genomic_align_conf->{'query'}->{'analysis_job'} = "SubmitBlastZ-$hexkey";
-  $self->store_masking_options($genomic_align_conf->{'query'});
-  $self->create_chunk_job($genomic_align_conf->{'query'});
+  #print("  query :\n");
+  #$genomic_align_conf->{'query'}->{'analysis_job'} = "SubmitBlastZ-$hexkey";
+  #$self->store_masking_options($genomic_align_conf->{'query'});
+  #$self->create_chunk_job($genomic_align_conf->{'query'});
 
-  print("  target :\n");
-  $genomic_align_conf->{'target'}->{'analysis_template'} = $blastz_template->logic_name;
-  $self->store_masking_options($genomic_align_conf->{'target'});
-  $self->create_chunk_job($genomic_align_conf->{'target'});
+  #print("  target :\n");
+  #$genomic_align_conf->{'target'}->{'analysis_template'} = $blastz_template->logic_name;
+  #$self->store_masking_options($genomic_align_conf->{'target'});
+  #$self->create_chunk_job($genomic_align_conf->{'target'});
 
-  my $rule_job = "{'from'=>'SubmitBlastZ-$hexkey','to'=>'blastz-$hexkey'}";
+  my $rule_job = "{'pair_aligner'=>'" . $blastz_template->logic_name . "'";
+  $rule_job .= ",'query_dna'=>'"  . $genomic_align_conf->{'query'}  . "'";
+  $rule_job .= ",'target_dna'=>'" . $genomic_align_conf->{'target'} . "'";
+  $rule_job .= ",'method_link_species_set_id'=>".$genomic_align_conf->{'method_link_species_set_id'} 
+    if(defined($genomic_align_conf->{'method_link_species_set_id'}));
+  $rule_job .= "}";
+  
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $rule_job,
-        -analysis       => $self->{'createRulesAnalysis'}
+        -analysis       => $self->{'createBlastJobsAnalysis'}
         );
   
 
@@ -290,6 +321,13 @@ sub create_chunk_job
 {
   my $self = shift;
   my $chunkingConf = shift;
+  
+  if($chunkingConf->{'collection_name'}) {
+    my $collection_name = $chunkingConf->{'collection_name'};
+    
+    
+    $self->{'chunkCollectionHash'}->{$collection_name} = $chunkingConf;
+  }
 
   my $input_id = "{";
   my @keys = keys %{$chunkingConf};
@@ -299,6 +337,7 @@ sub create_chunk_job
     $input_id .= "'$key'=>'" . $chunkingConf->{$key} . "',";
   }
   $input_id .= "}";
+
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,

@@ -59,7 +59,7 @@ sub store {
   #print("DnaFragChunkSetAdaptor:store() dbID = ", $chunkSet->dbID, "\n");
 
   my @dnafrag_chunkIds = @{$chunkSet->dnafrag_chunk_ids()};
-  $sth = $self->prepare("INSERT ignore INTO subset_dnafrag_chunk (subset_id, dnafrag_chunk_id) VALUES (?,?)");
+  $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (subset_id, dnafrag_chunk_id) VALUES (?,?)");
   foreach my $dnafrag_chunk_id (@dnafrag_chunkIds) {
     $sth->execute($chunkSet->dbID, $dnafrag_chunk_id) if($dnafrag_chunk_id);
   }
@@ -88,7 +88,7 @@ sub store_link {
 
   return unless($subset_id and $dnafrag_chunk_id);
 
-  my $sth = $self->prepare("INSERT ignore INTO subset_dnafrag_chunk (subset_id, dnafrag_chunk_id) VALUES (?,?)");
+  my $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (subset_id, dnafrag_chunk_id) VALUES (?,?)");
   $sth->execute($subset_id, $dnafrag_chunk_id);
   $sth->finish;
 }
@@ -109,7 +109,7 @@ sub store_link {
 sub delete_link {
   my ($self, $subset_id, $dnafrag_chunk_id) = @_;
 
-  my $sth = $self->prepare("DELETE FROM subset_dnafrag_chunk WHERE subset_id=? AND dnafrag_chunk_id=?");
+  my $sth = $self->prepare("DELETE FROM dnafrag_chunk_set WHERE subset_id=? AND dnafrag_chunk_id=?");
   $sth->execute($subset_id, $dnafrag_chunk_id);
   $sth->finish;
 }
@@ -275,7 +275,7 @@ sub _generic_fetch {
 sub _tables {
   my $self = shift;
 
-  return (['subset', 's'], ['subset_dnafrag_chunk', 'sc']);
+  return (['subset', 's'], ['dnafrag_chunk_set', 'sc']);
 }
 
 sub _columns {

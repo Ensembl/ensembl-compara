@@ -92,7 +92,7 @@ sub fetch_input {
   $self->{'chunk_size'}               = 1000000;
   $self->{'region'}                   = undef;
   $self->{'analysis_job'}             = undef;
-  $self->debug(1);
+  $self->debug(0);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -223,7 +223,7 @@ sub filter_duplicates {
 
   my @del_list = values(%{$self->{'delete_hash'}});  
   foreach my $gab (@del_list) {
-    print("DELETE "); print_gab($gab);
+    #print("DELETE "); print_gab($gab);
   }
 
   printf("%d gabs to delete\n", scalar(keys(%{$self->{'delete_hash'}})));
@@ -308,7 +308,7 @@ sub removed_equals_from_genomic_align_block_list {
       next if($self->{'delete_hash'}->{$gab2->dbID}); #already deleted so skip it
     
       if(genomic_align_blocks_identical($gab1, $gab2)) {
-        if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'},) {
+        if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
           printf("WARNING!!!!!! identical GABs dbID:%d,%d  SAME JOB:%d,%d\n", 
                $gab1->dbID, $gab2->dbID, 
                $gab1->{'analysis_job_id'},$gab2->{'analysis_job_id'},);
@@ -373,14 +373,16 @@ sub remove_edge_artifacts_from_genomic_align_block_list {
         }
 
         unless($self->process_overlap_for_chunk_edge_truncation($gab1, $gab2, $region_start, $region_end)) {
-          if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-            printf("SAME JOB overlaping GABs %d %d\n", $gab1->dbID, $gab2->dbID);
+          if($self->debug) {
+            if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
+              printf("SAME JOB overlaping GABs %d %d\n", $gab1->dbID, $gab2->dbID);
+            }
+            else {
+              printf("DIFFERENT JOB overlaping GABs %d %d\n", $gab1->dbID, $gab2->dbID);
+            }
+            print("  "); print_gab($gab1);
+            print("  "); print_gab($gab2);
           }
-          else {
-            printf("DIFFERENT JOB overlaping GABs %d %d\n", $gab1->dbID, $gab2->dbID);
-          }
-          print("  "); print_gab($gab1);
-          print("  "); print_gab($gab2);
         }
       } 
     }
