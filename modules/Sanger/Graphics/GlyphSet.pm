@@ -8,7 +8,11 @@ use strict;
 use Exporter;
 use Sanger::Graphics::Glyph::Diagnostic;
 use Sanger::Graphics::Glyph::Text;
+use Sanger::Graphics::Root;
 use Sanger::Graphics::Glyph::Space;
+
+use Sanger::Graphics::Root
+@Sanger::Graphics::GlyphSet::ISA = qw( Sanger::Graphics::Root );
 
 #########
 # constructor

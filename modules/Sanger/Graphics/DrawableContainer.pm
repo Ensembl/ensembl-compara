@@ -169,7 +169,7 @@ sub new {
       push @glyphsets, ($strand == 1 ? reverse @tmp : @tmp);
     }
     } 
-    my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length()));
+    my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length() || $panel_width));
   
   if($show_buttons eq 'yes') {
   for my $glyphset (@glyphsets) {

@@ -24,6 +24,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Sanger::Graphics::Root;
 use strict;
+use Data::Dumper;
 
 =head2 new
 
@@ -53,4 +54,12 @@ sub dynamic_use {
   return 1;
 }
 
+sub datadump {
+  my $self = shift;
+  my $i=0;
+  warn Data::Dumper::Dumper( @_ ? [@_] : $self );
+  while( my @Q = caller(++$i) ) {
+    warn "  at $Q[3] (file $Q[1] line $Q[2])\n"; 
+  }
+}
 1;

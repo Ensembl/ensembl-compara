@@ -32,7 +32,7 @@ sub render_Sprite {
     };
     if( $@ || !$config->{'_spritecache'}->{$spritename} ) {
       eval {
-        $config->{'_spritecache'}->{$spritename} = GD::Image->newFromGif("$lib/missing.png");
+        $config->{'_spritecache'}->{$spritename} = GD::Image->newFromPng("$lib/missing.png");
       };
     }
   }
