@@ -987,16 +987,27 @@ sub subseq {
   $end ||= $self->length;
   $strand ||= 1;
 
-  my $seq = "." x ($end - $start + 1);
+  my $length = ($end - $start + 1);
+  my $seq = "." x $length;
   foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
     my $this_slice = $pair->{slice};
     my $mapper = $pair->{mapper};
     my $slice_start = $pair->{start};
     my $slice_end = $pair->{end};
     next if ($slice_start > $end or $slice_end < $start);
-    
+
+    # Set slice_start and slice_end in "subseq" coordinates (0 based, for compliance wiht substr() perl func) and trim them
     $slice_start -= $start; # $slice_start is now in subseq coordinates
+    $slice_start = 0 if ($slice_start < 0);
     $slice_end -= $start; # $slice_end is now in subseq coordinates
+    $slice_end = $length if ($slice_end > $length);
+
+    # Invert start and end for the reverse strand
+    if ($strand == -1) {
+      my $aux = $slice_end;
+      $slice_end = $length - $slice_start;
+      $slice_start = $length - $aux;
+    }
 
     my @sequence_coords = $mapper->map_coordinates(
             'alignment',
@@ -1005,6 +1016,25 @@ sub subseq {
             $strand,
             'alignment'
         );
+    #####################
+    # $this_pos refers to the starting position of the subseq if requesting the forward strand
+    # or the ending position of the subseq if the reverse strand has been requested:
+    #
+    # FORWARD STRAND (1)
+    # $this_pos = 0
+    #      |
+    #      ---------------------------------------------------------------------->
+    #      <----------------------------------------------------------------------
+    #
+    # REVERSE STRAND (-1)
+    #      ---------------------------------------------------------------------->
+    #      <----------------------------------------------------------------------
+    #                                                                            |
+    #                                                                      $this_pos = 0
+    #
+    # All remaining coordinates work in the same way except the start and end position
+    # of the gaps which correspond to the coordinates in the original Slice...
+    #
     my $this_pos = 0;
     foreach my $sequence_coord (@sequence_coords) {
       ## $sequence_coord refer to genomic_align (a slice in the [+] strand)
@@ -1025,25 +1055,156 @@ sub subseq {
               );
         }
         substr($seq, $this_pos, $sequence_coord->length, $subseq);
-      } else {
-        ## Gap or sequence outside of any alignment
-        if ($this_pos < $slice_end and ($this_pos + $sequence_coord->length) > $slice_start) {
+
+      } else {  ## Gap or sequence outside of any alignment
+        ############
+        # Get the start and end positions of this gap in "subseq" coordinates
+        my $this_original_start = $sequence_coord->start - $start;
+        my $this_original_end = $sequence_coord->end - $start;
+        if ($strand == -1) {
+          my $aux = $this_original_end;
+          $this_original_end = $length - $this_original_start;
+          $this_original_start = $length - $aux;
+        }
+        if ($this_original_start < $slice_end and $this_original_end > $slice_start) {
+          ## This is a gap
           my $start_position_of_gap_seq = $this_pos;
           my $end_position_of_gap_seq = $this_pos + $sequence_coord->length;
-          if ($this_pos < $slice_start) {
+          if ($start_position_of_gap_seq < $slice_start) {
             $start_position_of_gap_seq = $slice_start;
           }
           if ($end_position_of_gap_seq > $slice_end) {
             $end_position_of_gap_seq = $slice_end;
           }
           my $length_of_gap_seq = $end_position_of_gap_seq - $start_position_of_gap_seq;
-          substr($seq, $start_position_of_gap_seq, $length_of_gap_seq, "-" x $length_of_gap_seq);
+          substr($seq, $start_position_of_gap_seq, $length_of_gap_seq, "-" x $length_of_gap_seq) if ($length_of_gap_seq > 0);
         }
       }
       $this_pos += $sequence_coord->length;
     }
   }
   return $seq;
+}
+
+
+=head2 get_all_underlying_Slices
+
+  Arg  [1]   : int $startBasePair
+               relative to start of slice, which is 1.
+  Arg  [2]   : int $endBasePair
+               relative to start of slice.
+  Arg  [3]   : (optional) int $strand
+               The strand of the slice to obtain sequence from. Default
+               value is 1.
+  Description: This Slice is made of several Bio::EnsEMBL::Slices mapped
+               on it with gaps inside and regions with no matching
+               sequence. This method returns these Slices (or part of
+               them) with the original coordinates and the gapped
+               sequence attached to them. Additionally, extra Slices
+               could be returned in order to fill in gaps between
+               underlying Slices.
+  Returntype : listref of Bio::EnsEMBL::Slice objects
+  Exceptions : end should be at least as big as start
+  Caller     : general
+
+=cut
+
+sub get_all_underlying_Slices {
+  my ($self, $start, $end, $strand) = @_;
+  my $underlying_slices = [];
+
+  $start = 1 if (!defined($start));
+  $end ||= $self->length;
+  $strand ||= 1;
+
+  my $current_position;
+#   if ($strand == 1) {
+    $current_position = $start;
+#   } else {
+#     $current_position = $end;
+#   }
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    my $this_slice = $pair->{slice};
+    my $mapper = $pair->{mapper};
+    my $slice_start = $pair->{start};
+    my $slice_end = $pair->{end};
+    next if ($slice_start > $end or $slice_end < $start);
+
+    my @sequence_coords = $mapper->map_coordinates(
+            'alignment',
+            $start,
+            $end,
+            $strand,
+            'alignment'
+        );
+    my $this_subseq_start;
+    my $this_subseq_end;
+    my $this_subseq_strand;
+    foreach my $sequence_coord (@sequence_coords) {
+      ## $sequence_coord refer to genomic_align (a slice in the [+] strand)
+      if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+        $this_subseq_start = $sequence_coord->start
+            if (!defined($this_subseq_start) or $this_subseq_start > $sequence_coord->start);
+        $this_subseq_end = $sequence_coord->end
+            if (!defined($this_subseq_end) or $this_subseq_end < $sequence_coord->end);
+        $this_subseq_strand = $sequence_coord->strand
+            if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate") and !defined($this_subseq_strand));
+      }
+    }
+    my $start_position = ($start>$slice_start)?$start:$slice_start; # in AlignSlice coordinates
+    my $end_position = ($end<$slice_end)?$end:$slice_end; # in AlignSlice coordinates
+#     if ($strand == 1) {
+      if ($start_position > $current_position) {
+        my $this_underlying_slice = new Bio::EnsEMBL::Slice(
+              -seq_region_name => "GAP",
+              -start => $current_position,
+              -end => $start_position - 1,
+              -strand => 0
+            );
+        $this_underlying_slice->{seq} = "." x ($start_position - $current_position);
+        push(@$underlying_slices, $this_underlying_slice);
+      }
+#     } else {
+#       if ($end_position < $current_position) {
+#         my $this_underlying_slice = new Bio::EnsEMBL::Slice(
+#               -seq_region_name => "GAP",
+#               -start => $end_position + 1,
+#               -end => $current_position,
+#               -strand => 0
+#             );
+#         $this_underlying_slice->{seq} = "." x ($current_position - $end_position);
+#         unshift(@$underlying_slices, $this_underlying_slice);
+#       }
+#     }
+    $current_position = $end_position + 1;
+    my $this_underlying_slice = new Bio::EnsEMBL::Slice(
+            -seq_region_name => $this_slice->seq_region_name,
+            -start => $this_subseq_start,
+            -end => $this_subseq_end,
+            -strand => $this_subseq_strand
+        );
+    $this_underlying_slice->{seq} = $self->subseq($start_position, $end_position, $strand);
+#     if ($strand == 1) {
+      push(@$underlying_slices, $this_underlying_slice);
+#     } else {
+#       unshift(@$underlying_slices, $this_underlying_slice);
+#     }
+  }
+  if ($end >= $current_position) {
+    my $this_underlying_slice = new Bio::EnsEMBL::Slice(
+          -seq_region_name => "GAP",
+          -start => $current_position,
+          -end => $end,
+          -strand => 0
+        );
+    $this_underlying_slice->{seq} = "." x ($end - $current_position + 1);
+    push(@$underlying_slices, $this_underlying_slice);
+  }
+  if ($strand == -1) {
+    @$underlying_slices = reverse(@$underlying_slices);
+  }
+
+  return $underlying_slices;
 }
 
 
