@@ -126,13 +126,8 @@ sub fetch_all_by_Member_method_link_type {
   }
   
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-
-  my $constraint = " ";
-  foreach my $mlss (@{$mlss_arrayref}) {
-    $constraint .= " AND " unless ($constraint eq " ");
-    $constraint .= "f.method_link_species_set_id = ";
-    $constraint .= $mlss->dbID;
-  }
+  
+  my $constraint =  " f.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
 
   $constraint .= " AND fm.member_id = " . $member->dbID;
 

@@ -108,13 +108,7 @@ sub fetch_all_by_Member_method_link_type {
   }
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-
-  my $constraint = " ";
-  foreach my $mlss (@{$mlss_arrayref}) {
-    $constraint .= " AND " unless ($constraint eq " ");
-    $constraint .= "h.method_link_species_set_id = ";
-    $constraint .= $mlss->dbID;
-  }
+  my $constraint =  " h.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
 
   $constraint .= " AND hm.member_id = " . $member->dbID;
 
@@ -154,14 +148,9 @@ sub fetch_all_by_method_link_type {
     warnings("There is no $method_link_type data stored in the database\n");
     return [];
   }
-
-  my $constraint = " ";
-  foreach my $mlss (@{$mlss_arrayref}) {
-     $constraint .= " AND " unless ($constraint eq " ");
-     $constraint .= "h.method_link_species_set_id = ";
-     $constraint .= $mlss->dbID;
-  }
-
+  
+  my $constraint =  " h.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
+  
   return $self->generic_fetch($constraint);
 }
 
