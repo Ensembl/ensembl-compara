@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::pfam;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -24,21 +23,21 @@ sub init_label {
 sub _init {
     my ($this) = @_;
     my %hash;
-    my $caption         = "Pfam";
-    my @bitmap         	= undef;
-    my $protein         = $this->{'container'};
-    my $Config          = $this->{'config'};
-    my $pix_per_bp  	= $Config->transform->{'scalex'};
-    my $bitmap_length 	= int($this->{'container'}->length * $pix_per_bp);
-    my $y               = 0;
-    my $h               = 4;
-    my $cmap            = new ColourMap;
-    my $black           = $cmap->id_by_name('black');
-    my $red             = $cmap->id_by_name('red');
-    my $font            = "Small";
-    my $colour          = $Config->get($Config->script(), 'pfam','col');
+    my $caption       = "Pfam";
+    my @bitmap        = undef;
+    my $protein       = $this->{'container'};
+    my $Config        = $this->{'config'};
+    my $pix_per_bp    = $Config->transform->{'scalex'};
+    my $bitmap_length = int($this->{'container'}->length * $pix_per_bp);
+    my $y             = 0;
+    my $h             = 4;
+    my $cmap          = new ColourMap;
+    my $black         = $cmap->id_by_name('black');
+    my $red           = $cmap->id_by_name('red');
+    my $font          = "Small";
+    my $colour        = $Config->get($Config->script(), 'pfam','col');
     my ($fontwidth,
-	$fontheight)    = $Config->texthelper->px2bp($font);
+	$fontheight)  = $Config->texthelper->px2bp($font);
 
     foreach my $feat ($protein->each_Protein_feature()) {
        if ($feat->feature2->seqname =~ /^PF\w+/) {
@@ -94,18 +93,18 @@ sub _init {
 	$Composite->push($rect);
 
 	my $desc = $pfsave->idesc();
-	my $len = length($desc) + 1;
+
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->feature1->start(),
 	    'y'      => $h + 1,
 	    'height' => $fontheight,
-	    'width'  => $fontwidth * $len * 1.1,
+	    'width'  => $fontwidth * length($desc),
 	    'colour' => $black,
 	});
 	$Composite->push($text);
-	
+
 	if ($Config->get($Config->script(), 'pfam', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);

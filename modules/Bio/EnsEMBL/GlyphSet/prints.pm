@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::prints;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -22,26 +21,26 @@ sub init_label {
 
 sub _init {
     my ($this) = @_;
-    my %hash = undef;
-    my $protein = $this->{'container'};
+    my %hash          = undef;
+    my $protein       = $this->{'container'};
+    my @bitmap        = undef;
+    my $Config        = $this->{'config'};
+    my $pix_per_bp    = $Config->transform->{'scalex'};
+    my $bitmap_length = int($protein * $pix_per_bp);
+    my $y             = 0;
+    my $h             = 4;
+    my $colour        = $Config->get($Config->script(), 'prints','col');
+    my $caption       = "Prints";
+    my $font          = "Small";
+    my ($fontwidth,
+	$fontheight)  = $Config->texthelper->px2bp($font);
 
-    my @bitmap         	= undef;
-    my $Config = $this->{'config'};
-    my $pix_per_bp  	= $Config->transform->{'scalex'};
-    my $bitmap_length 	= int($this->{'container'}->length * $pix_per_bp);
-
-    my $y          = 0;
-    my $h          = 4;
-    
     foreach my $feat ($protein->each_Protein_feature()) {
 	if ($feat->feature2->seqname =~ /^PR\w+/) {
 	    push(@{$hash{$feat->feature2->seqname}},$feat);
 	}
     }
     
-    my $colour = $Config->get($Config->script(), 'prints','col');
-		
-    my $caption = "Prints";
     foreach my $key (keys %hash) {
 	my @row = @{$hash{$key}};
 	my $desc = $row[0]->idesc();
@@ -58,7 +57,6 @@ sub _init {
 	my $prsave;
 	my ($minx, $maxx);
 		
-	my $font = "Small";
 	foreach my $pr (@row) {
 	    my $x  = $pr->feature1->start();
 	    $minx  = $x if ($x < $minx || !defined($minx));
@@ -93,22 +91,18 @@ sub _init {
 	#########
 	# add a label
 	#
-	my $fontheight = $Config->texthelper->height($font);
-	my $fontwidth  = $Config->texthelper->width($font);
-	my $desc       = $prsave->idesc();
-
+	my $desc = $prsave->idesc();
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->feature1->start(),
 	    'y'      => $h + 1,
 	    'height' => $fontheight,
-	    'width'  => $fontwidth * length($desc) * 1.1,
+	    'width'  => $fontwidth * length($desc),
 	    'colour' => $colour,
 	});
-	
 	$Composite->push($text);
-	
+
 	if ($Config->get($Config->script(), 'prints', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);

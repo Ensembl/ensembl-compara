@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::prosite;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -95,25 +94,22 @@ sub _init {
 	# add a label
 	#
 	my $desc = $prsave->idesc();
-	my $len  = length($desc) + 1;
 	my $text = new Bio::EnsEMBL::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->feature1->start(),
 	    'y'      => $h + 1,
 	    'height' => $fontheight,
-	    'width'  => $fontwidth * $len * 1.1,
+	    'width'  => $fontwidth * length($desc),
 	    'colour' => $colour,
 	});
 	$Composite->push($text);
-
-	print STDERR qq(prosite: length = ), length($desc), qq( fontwidth = $fontwidth glyphwidth = ), $text->width(), "\n");
 
 	if ($Config->get($Config->script(), 'prosite', 'dep') > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 
-            my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
+            my $bump_end = $bump_start + int($Composite->width() * $pix_per_bp);
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
             my $row = &Bump::bump_row(      
 				      $bump_start,

@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::eponine;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -35,7 +34,11 @@ sub _init {
 	foreach my $f(@features){
 		next unless ($f->primary_tag() eq "das" && $f->source_tag() eq "tss_eponine");
 		
-		my $type = $f->seqname();
+		my $type = $f->das_name();
+		my $dsn = $f->das_dsn();
+		my $source = $f->source_tag();
+		#print STDERR "DAS feature name: $type from DSN: $dsn\n";
+		
 		my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 			'x'      	=> $f->start(),
 			'y'      	=> 0,
@@ -44,7 +47,8 @@ sub _init {
 			'colour' 	=> $feature_colour,
 			'absolutey' => 1,
             'zmenu'     => {
-                'caption' 	=> "Eponine Transcript start site",
+                'caption' 	=> "Transcript start site",
+                $type 		=> "",
                 "DAS source info" 		=> "http://servlet.sanger.ac.uk:8080/das/dsn",
 			}
 		});

@@ -1,13 +1,13 @@
 package Bio::EnsEMBL::GlyphSet::gcplot;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Intron;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
+use Bio::EnsEMBL::Glyph::Line;
 use Bump;
 
 sub init_label {

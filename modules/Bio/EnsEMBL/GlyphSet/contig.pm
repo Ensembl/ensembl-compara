@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::contig;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
@@ -47,7 +46,7 @@ sub _init {
     my $black = $cmap->id_by_name('black');
     my $red   = $cmap->id_by_name('red');
 
-    my $ystart   = 75;
+    my $ystart   = 0;
     my $im_width = $self->{'config'}->image_width();
     my ($w,$h)   = $self->{'config'}->texthelper()->px2bp('Tiny');
     my $length   = $self->{'container'}->length();
@@ -84,6 +83,7 @@ sub _init {
 	    my $rstart = $temp_rawcontig->start();
 	    my $rid    = $temp_rawcontig->contig->id();
 	    my $clone  = $temp_rawcontig->contig->cloneid();
+	    my $strand = $temp_rawcontig->strand();
 
 	    my $c      = $self->{'container'}->dbobj()->get_Clone($clone);
 	    my $fpc    = $fpc_map->get_Clone_by_name($c->embl_id);
@@ -112,7 +112,13 @@ sub _init {
 	    });
 	    $self->push($glyph);
 
-	    my $bp_textwidth = $w * length($clone) * 1.1; # add 10% for scaling text
+		if ($strand > 0 ){
+			$clone = $clone . "->";
+		} else {
+			$clone = "<-" . $clone;
+		}
+		
+	    my $bp_textwidth = $w * length($clone) * 1.2; # add 20% for scaling text
 	    unless ($bp_textwidth > ($rend - $rstart)){
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 		    'x'          => $rstart + int(($rend - $rstart)/2 - ($bp_textwidth)/2),

@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::stranded_contig;
 use strict;
 use vars qw(@ISA);
-use lib "..";
 use Bio::EnsEMBL::GlyphSet::contig;
 @ISA = qw(Bio::EnsEMBL::GlyphSet::contig);
 #use Bio::EnsEMBL::Glyph::Rect;

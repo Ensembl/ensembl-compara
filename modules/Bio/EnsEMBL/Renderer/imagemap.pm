@@ -1,6 +1,5 @@
 package Bio::EnsEMBL::Renderer::imagemap;
 use strict;
-use lib "..";
 use Bio::EnsEMBL::Renderer;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer);

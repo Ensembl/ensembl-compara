@@ -1,6 +1,5 @@
 package Bio::EnsEMBL::Renderer::png;
 use strict;
-use lib ".";
 use Bio::EnsEMBL::Renderer::gif;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer::gif);
