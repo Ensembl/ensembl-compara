@@ -27,7 +27,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
 
-@ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
+@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 =head2 my_label
 
@@ -40,14 +40,14 @@ use Bio::EnsEMBL::GlyphSet_feature;
 
 =cut
 
-sub my_label { return "Glovar STS"; }
+sub my_label { return "STSs"; }
 
 =head2 features
 
   Arg[1]      : none 
   Example     : my $f = $self->features;
   Description : this function does the data fetching from the Glovar database
-  Return type : listref of Bio::EnsEMBL::DnaDnaAlignFeature objects
+  Return type : listref of Bio::EnsEMBL::ExternalData::Glovar::STS objects
   Exceptions  : none
   Caller      : $self->_init()
 
@@ -55,31 +55,64 @@ sub my_label { return "Glovar STS"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_ExternalLiteFeatures('GlovarSTS');
+    return $self->{'container'}->get_all_ExternalFeatures('GlovarSTS');
 }
 
 =head2 colour
 
-  Arg[1]      : feature ID
-  Arg[2]      : a Bio::EnsEMBL::DnaDnaAlignFeature object
-  Example     : my $colour = $self->colour($id, $f);
+  Arg[1]      : a Bio::EnsEMBL::ExternalData::Glovar::STS object
+  Example     : my $colour = $self->colour($f);
   Description : sets the colour for displaying STSs. Colour depends on pass
                 status
-  Return type : String - colour name
+  Return type : List of glyph colour, label colour, glyph style
   Exceptions  : none
   Caller      : $self->_init()
 
 =cut
 
 sub colour {
-    my ($self, $id, $f) = @_;
-    return $self->{'colours'}->{$f->{'_pass'}}
+    my ($self, $f) = @_;
+    my $pass = $f->pass_status;
+    my $colour = $self->{'colours'}->{$pass} || $self->{'colours'}->{'col'};
+    return ($colour, $colour, 'border');
+}
+
+=head2 tag
+
+  Arg[1]      : Bio::EnsEMBL::ExternalData::Glovar::STS object
+  Example     : my @tags = $self->tag($sts);
+  Description : draws filled boxes for the primers at start/end of the STS
+  Return type : List of tags
+  Exceptions  : none
+  Caller      : Bio::EnsEMBL::Glyphset_simple
+
+=cut
+
+sub tag {
+    my ($self, $f) = @_;
+    my @tags;
+    my @colours = $self->colour($f);
+    # forward primer
+    push @tags, {
+      'style'  => 'rect',
+      'colour' => $colours[0],
+      'start'  => $f->start,
+      'end'    => $f->start + $f->sense_length - 1,
+    };
+    # reverse primer
+    push @tags, {
+      'style'  => 'rect',
+      'colour' => $colours[0],
+      'start'  => $f->end - $f->antisense_length + 1,
+      'end'    => $f->end,
+    };
+    return @tags;
 }
 
 =head2 href
 
-  Arg[1]      : feature ID
-  Example     : my $href = $self->href($id);
+  Arg[1]      : a Bio::EnsEMBL::ExternalData::Glovar::STS object
+  Example     : my $href = $self->href($f);
   Description : returns a href
   Return type : String - href
   Exceptions  : none
@@ -88,15 +121,14 @@ sub colour {
 =cut
 
 sub href { 
-    my ($self, $id) = @_;
-    return $self->ID_URL( 'GLOVAR_STS', $id );
+    my ($self, $f) = @_;
+    return $self->ID_URL( 'GLOVAR_STS', $f->dbID );
 }
 
 =head2 zmenu
 
-  Arg[1]      : feature ID
-  Arg[2]      : a listref of Bio::EnsEMBL::DnaDnaAlignFeature objects
-  Example     : my $zmenu = $self->zmenu($id, $feature_array);
+  Arg[1]      : a Bio::EnsEMBL::ExternalData::Glovar::STS object
+  Example     : my $zmenu = $self->zmenu($f);
   Description : creates the zmenu (context menu) for the glyphset. Returns a
                 hashref describing the zmenu entries and properties
   Return type : hashref
@@ -106,14 +138,14 @@ sub href {
 =cut
 
 sub zmenu {
-    my ($self, $id, $f_arr) = @_;
-    ## get first object of the STS pair
-    my $f = $f_arr->[0][2];
+    my ($self, $f) = @_;
     return {
-        'caption' => $f->hseqname,
-        '01:ID: '.$id => '',
-        '02:Test status: '.$f->{'_pass'} => '',
-        "03:STS Report" => $self->href( $id ),
+        'caption' => $f->display_id,
+        '01:ID: '.$f->dbID => '',
+        '02:Test status: '.$f->pass_status => '',
+        '03:Assay type: '.$f->assay_type => '',
+        '04:Source: Glovar' => '',
+        "05:STS Report" => $self->href($f),
     };
 }
 1;
