@@ -175,20 +175,26 @@ sub _init {
       my $bump_height = 1.5 * $h;
       if( $Config->{'_add_labels'} ) {
         if(my $text_label = $self->text_label($gene, $transcript) ) {
+	  my @lines = split "\n", $text_label;
           my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-          my $width_of_label = $font_w_bp * 1.15 * (length($text_label) + 1);
-          my $tglyph = new Sanger::Graphics::Glyph::Text({
-            'x'         => $Composite->x(),
-            'y'         => $y+$h+2,
-            'height'    => $font_h_bp,
-            'width'     => $width_of_label,
-            'font'      => $fontname,
-            'colour'    => $colour,
-            'text'      => $text_label,
-            'absolutey' => 1,
-          });
-          $Composite->push($tglyph);
-          $bump_height = 1.7 * $h + $font_h_bp;
+	  
+	  for( my $i=0; $i<@lines; $i++ ){
+	    my $line = $lines[$i];
+  	    my $width_of_label = $font_w_bp * 1.15 * (length($line) + 1);
+	    my $tglyph = new Sanger::Graphics::Glyph::Text
+	      ({
+		'x'         => $Composite->x(),
+		'y'         => $y+($h*($i+1))+2,
+		'height'    => $font_h_bp,
+		'width'     => $width_of_label,
+		'font'      => $fontname,
+		'colour'    => $colour,
+		'text'      => $line,
+		'absolutey' => 1,
+	       });
+	    $Composite->push($tglyph);
+	    $bump_height = 1.7 * $h + ( $h * ( @lines - 1 ) ) + $font_h_bp;
+	  }
         }
       }
 

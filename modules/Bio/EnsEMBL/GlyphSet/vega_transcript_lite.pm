@@ -78,9 +78,24 @@ sub zmenu {
     return $zmenu;
 }
 
+
+my %legend_map = 
+  ( 'Known'                 => 'Curated known gene',
+    'Novel_CDS'             => 'Curated novel CDS',
+    'Putative'              => 'Curated putative',
+    'Novel_Transcript'      => 'Curated novel Trans' ,
+    'Pseudogene'            => 'Curated pseudogenes' ,
+    'Processed_pseudogene'  => 'Curated processed pseudogenes' ,
+    'Unprocessed_pseudogene'=> 'Curated unprocessed pseudogenes' ,
+    'Predicted_Gene'        => 'Curated predicted gene' ,
+    'Ig_Segment'            => 'Curated Immunoglobulin segment' ,
+    'Ig_Pseudogene_Segment' => 'Curated Immunoglobulin pseudogene' ,
+    'Polymorphic'           => 'Curated Polymorphic'  );
 sub text_label {
     my ($self, $gene, $transcript) = @_;
-    return $transcript->external_name() || $transcript->stable_id();
+    my $id = $transcript->external_name() || $transcript->stable_id();
+    my $type = $legend_map{$transcript->type} || $transcript->type;
+    return "$id\n$type";
 }
 
 sub features {
@@ -88,7 +103,6 @@ sub features {
 
   return $self->{'container'}->get_all_Genes('otter');
 }
-
 
 sub legend {
     my ($self, $colours) = @_;
