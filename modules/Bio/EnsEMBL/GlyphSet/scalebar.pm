@@ -147,7 +147,7 @@ sub _init {
          'absolutey' => 1,
          'alt'       => 'xxx'
       });
-      if ($navigation eq 'on'){
+      if ($navigation eq 'on' && $Config->{'compara'} ne 'secondary' ){
         ($t->{'href'},$t->{'zmenu'}) = $self->interval( $param_string, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
       } elsif( $navigation eq 'zoom' ) {
         ($t->{'href'},$t->{'zmenu'}) = $self->zoom_interval( $param_string, $start, $end, $contig_strand, $global_start, $main_width, $highlights, $global_end-$global_start);
