@@ -217,7 +217,6 @@ sub fetch_by_relation {
                          hm.perc_cov
                          hm.perc_id
                          hm.perc_pos
-                         hm.exon_count
                          hm.flag)];
   }
   else {
