@@ -5,6 +5,9 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Compara::GenomicAlign;
+#use Bio::EnsEMBL::Utils::Exception qw(verbose);
+#verbose("INFO");
+
 
 my $ucsc_dbname;
 my $dbname;
@@ -164,15 +167,18 @@ if ($matrix_file) {
   $matrix_hash = matrix_hash($mammals_matrix_string);
   print STDERR "Using mammals scoring matrix\n";
   print STDERR "\n$mammals_matrix_string\n";
-} elsif ( (grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
+} elsif ( (grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
            grep(/^$qTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))
           ||
-          (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
+          (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
            grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))) {
   $matrix_hash = matrix_hash($mammals_vs_other_vertebrates_matrix_string);
   print STDERR "Using mammals_vs_other_vertebrates scoring matrix\n";
   print STDERR "\n$mammals_vs_other_vertebrates_matrix_string\n";
 }
+else {
+	die "taxon_id undefined or matrix not set up for this pair of species $tTaxon_id, $qTaxon_id)\n";
+	}
 
 
 print STDERR "Here is the matrix hash structure\n";
@@ -245,10 +251,16 @@ while( $sth->fetch() ) {
       next;
     }
   }
-
-  my $c_table = "chr" . $n_tName . "_chain" . $qSpecies;
-  my $cl_table = "chr" .$n_tName . "_chain" . $qSpecies . "Link";
-
+my $c_table; my $cl_table;
+ if ($tName){
+ 	$c_table = "chr" . $n_tName . "_chain" . $qSpecies;
+  	$cl_table = "chr" .$n_tName . "_chain" . $qSpecies . "Link";
+	}
+else
+	{
+	$c_table = "chain".$qSpecies;
+	$cl_table= "chain".$qSpecies."Link";
+	}
   $sql = "select c.bin,c.score,c.tName,c.tSize,c.tStart,c.tEnd,c.qName,c.qSize,c.qStrand,c.qStart,c.qEnd,cl.chainId,cl.tStart,cl.tEnd,cl.qStart,cl.qStart+cl.tEnd-cl.tStart as qEnd from $c_table c, $cl_table cl where c.id=cl.chainId and cl.chainId = ?";
 
   my $sth2 = $ucsc_dbc->prepare($sql);
@@ -272,9 +284,7 @@ while( $sth->fetch() ) {
     unless ($qdnafrag->length == $c_qSize) {
       	print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
       	print STDERR "net_index is $net_index\n";
-#    	unless ($c_qName =~/Un/){
       		exit 3;
-#	}
     }
     
     $c_qStrand = 1 if ($c_qStrand eq "+");
