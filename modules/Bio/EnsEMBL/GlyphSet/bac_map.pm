@@ -17,7 +17,7 @@ sub features {
     return 
       map { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
-          map { [$_->seq_start-$_->state*1e9, $_] }
+          map { [$_->seq_start-$_->state*1e9 * $_->BACend_flag/4, $_] }
             $self->{'container'}->get_all_MapFrags(
               $container_length > $max_full_length ? 'acc_bac_map' : 'bac_map'
             );
@@ -59,11 +59,11 @@ sub tag {
     push @result, {
         'style'  => 'right-end',
         'colour' => $self->{'colours'}{"bacend"}
-    } if ( $bef == 2 || $bef == 4 );
+    } if ( $bef == 2 || $bef == 3 );
     push @result, { 
         'style'=>'left-end',  
         'colour' => $self->{'colours'}{"bacend"}
-    } if ( $bef == 2 || $bef == 3 );
+    } if ( $bef == 1 || $bef == 3 );
     if( $f->fp_size && $f->fp_size > 0 ) {
         my $start = int( ($f->start + $f->end - $f->fp_size)/2 );
         my $end   = $start + $f->fp_size - 1 ;
@@ -81,6 +81,7 @@ sub tag {
 
 sub zmenu {
     my ($self, $f ) = @_;
+    return if $self->{'container'}->length() > $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e10;
     my $zmenu = { 
         'caption' => "Clone: ".$f->name,
         '01:bp: '.$f->seq_start."-".$f->seq_end => '',
@@ -94,8 +95,8 @@ sub zmenu {
     $zmenu->{'14:State: '.substr($f->state,3)        } = ''              if($f->state);
     $zmenu->{'15:Seq length: '.$f->seq_len } = ''        if($f->seq_len);    
     $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
-    $zmenu->{'17:super_ctg:  '.$f->superctg} = ''       if($f->superctg);    
-    $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''    if($f->BACend_flag);    
+    $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    
+    $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''        if($f->BACend_flag);    
     return $zmenu;
 }
 

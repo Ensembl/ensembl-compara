@@ -112,7 +112,7 @@ sub _init {
 
         if( $self->can('tag')) {
             foreach my $tag ( $self->tag($f) ) {
-                if($tag->{'style'} eq 'left-end') {
+                if($tag->{'style'} eq 'left-end' && $start == $f->start) {
                     my $line = new Bio::EnsEMBL::Glyph::Rect({
                         'x'          => $start,
                         'y'          => 0,
@@ -122,7 +122,7 @@ sub _init {
                         'absolutey'  => 1
                     });
                     $composite->push($line);
-                } elsif($tag->{'style'} eq 'right-end') {
+                } elsif($tag->{'style'} eq 'right-end' && $end == $f->end) {
                     my $line = new Bio::EnsEMBL::Glyph::Rect({
                         'x'          => $end,
                         'y'          => 0,
