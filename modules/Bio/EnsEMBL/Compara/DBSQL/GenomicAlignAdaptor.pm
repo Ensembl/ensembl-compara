@@ -126,6 +126,98 @@ sub store {
 }
      
  
+=head2 store_malign (TRANSITIONAL)
+
+  Arg  1     : listref  Bio::EnsEMBL::Compara::GenomicAlign $ga 
+               The things you want to store with the same align_block_id
+  Example    : none
+  Description: It stores the given GA in the database. Attached
+               objects are not stored. Make sure you store them first. It
+               returns the number of sequneces in the multiple alignment.
+  Returntype : integer
+  Exceptions : not stored linked dnafrag objects throw.
+  Caller     : general
+
+=cut
+
+sub store_malign {
+  my ( $self, $genomic_aligns ) = @_;
+
+  my $sql = "INSERT INTO genomic_align_block (
+			align_block_id,
+			consensus_dnafrag_id,
+			consensus_start,
+			consensus_end,
+			query_dnafrag_id,
+			query_start,
+			query_end,
+			query_strand,
+			method_link_id,
+			score,
+			perc_id,
+			cigar_line,
+			group_id,
+			level_id,
+			strands_reversed
+		) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+  
+  my $values;
+  
+  for my $ga ( @$genomic_aligns ) {
+    # check if everything has dbIDs
+    if( ! defined $ga->consensus_dnafrag()->dbID() ||
+	! defined $ga->query_dnafrag()->dbID() ) {
+      $self->throw( "dna_fragment in GenomicAlign is not in DB" );
+     }
+  }
+  # all clear for storing
+  for my $ga ( @$genomic_aligns ) {
+    my $method_link_id = $self->_method_link_id_by_alignment_type($ga->alignment_type);
+    unless (defined $method_link_id) {
+      $self->throw("There is no method_link with this type [".$ga->alignment_type."] in the DB.");
+    }
+    
+    push( @$values, [
+			$ga->consensus_dnafrag()->dbID(),
+			$ga->consensus_start(), $ga->consensus_end(),
+			$ga->query_dnafrag()->dbID(),
+			$ga->query_start, $ga->query_end(), 
+			$ga->query_strand(),$method_link_id, 
+			$ga->score(), $ga->perc_id(),
+			"\"".$ga->cigar_line()."\"",
+			$ga->group_id,
+			$ga->level_id,
+			$ga->strands_reversed,
+		] );
+  }
+  
+  ## Locks table genomic_align_block to avoid troubles with concurrent stores
+  my $sth = $self->prepare(qq{LOCK TABLES genomic_align_block WRITE});
+  $sth->execute();
+  ## Checks table lock
+  die "Cannot lock genomic_align_block table\n" if (!$sth->{"Executed"});
+  
+  ## Fetch last align_block_id
+  $sth = $self->prepare(qq{SELECT MAX(align_block_id) FROM genomic_align_block});
+  $sth->execute();
+  my ($align_block_id) = $sth->fetchrow_array();
+  $align_block_id++;
+  
+  ## Stores data, all of them with the same id
+  $sth = $self->prepare($sql);
+  #print $align_block_id, "\n";
+  foreach my $value (@$values) {
+    $sth->execute($align_block_id, @$value);
+  }
+
+  ## Unlock tables
+  $sth = $self->prepare(qq{UNLOCK TABLES});
+  $sth->execute();
+
+  return scalar(@$values);
+}
+     
+ 
 
 sub store_daf {
   my ($self, $dafs, $dnafrag, $hdnafrag, $alignment_type) = @_;
