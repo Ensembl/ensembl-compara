@@ -59,6 +59,7 @@ sub _init {
     # fetch the chromosome bands that cover this VC.
     my $kba         = $self->{'container'}->{'ka'};
     my $bands       = $kba->fetch_all_by_chr_name($chr);
+    print STDERR "BANDS: $bands for CHR: $chr\n";
     
     my $chr_length = 
       $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
@@ -207,9 +208,9 @@ sub _init {
         }
     }
 
-	foreach( @decorations ) {
-		$self->push($_);
-	}
+    foreach( @decorations ) {
+        $self->push($_);
+    }
     ##############################################
     # Draw the ends of the ideogram
     ##############################################
@@ -271,41 +272,41 @@ sub _init {
     if(defined $self->{'highlights'}) {
 
     foreach my $highlight_set (reverse @{$self->{'highlights'}}) {
-	my $highlight_style = $highlight_set->{'style'};
+    my $highlight_style = $highlight_set->{'style'};
         my $type ="highlight_$highlight_style";
-		
+        
         if($highlight_set->{$chr}) {
 # Firstly create a highlights array which contains merged entries!
             my @temp_highlights = @{$highlight_set->{$chr}};
             my @highlights;
-    		if($highlight_set->{'merge'} eq 'no') {
-				@highlights = @temp_highlights;
-			} else {
-				my @bin_flag;
-				my $bin_length = $padding * ( $highlight_style eq 'arrow' ? 1.5 : 1 ) * $bpperpx;
-				foreach(@temp_highlights) {
-					my $bin_id = int( (2 * $v_offset+ $_->{'start'}+$_->{'end'}) / 2 / $bin_length );
+            if($highlight_set->{'merge'} eq 'no') {
+                @highlights = @temp_highlights;
+            } else {
+                my @bin_flag;
+                my $bin_length = $padding * ( $highlight_style eq 'arrow' ? 1.5 : 1 ) * $bpperpx;
+                foreach(@temp_highlights) {
+                    my $bin_id = int( (2 * $v_offset+ $_->{'start'}+$_->{'end'}) / 2 / $bin_length );
                     $bin_id = 0 if $bin_id<0;
-					if(my $offset = $bin_flag[$bin_id]) { # We already have a highlight in this bin - so add this one to it!
-						my $zmenu_length = keys %{$highlights[$offset]->{'zmenu'}};
-						foreach my $entry (sort keys %{$_->{'zmenu'}}) { 
-							next if $entry eq 'caption';
-							my $value = $_->{'zmenu'}->{$entry};
-							$entry=~s/\d\d+://;
-							$highlights[$offset]->{'zmenu'}->{ sprintf("%02d:%s",$zmenu_length++,$entry) }
-								= $value;
-							$highlights[$offset]->{'start'} = $_->{'start'} if
-								($highlights[$offset]->{'start'} > $_->{'start'});
-							$highlights[$offset]->{'end'} = $_->{'end'} if
-								($highlights[$offset]->{'end'} < $_->{'end'});
-						}
-					} else { # We don't
-						push @highlights, $_;
-						$bin_flag[$bin_id] = $#highlights;
-					}
-				}
-				my @highlights = @highlights;
-			}
+                    if(my $offset = $bin_flag[$bin_id]) { # We already have a highlight in this bin - so add this one to it!
+                        my $zmenu_length = keys %{$highlights[$offset]->{'zmenu'}};
+                        foreach my $entry (sort keys %{$_->{'zmenu'}}) { 
+                            next if $entry eq 'caption';
+                            my $value = $_->{'zmenu'}->{$entry};
+                            $entry=~s/\d\d+://;
+                            $highlights[$offset]->{'zmenu'}->{ sprintf("%02d:%s",$zmenu_length++,$entry) }
+                                = $value;
+                            $highlights[$offset]->{'start'} = $_->{'start'} if
+                                ($highlights[$offset]->{'start'} > $_->{'start'});
+                            $highlights[$offset]->{'end'} = $_->{'end'} if
+                                ($highlights[$offset]->{'end'} < $_->{'end'});
+                        }
+                    } else { # We don't
+                        push @highlights, $_;
+                        $bin_flag[$bin_id] = $#highlights;
+                    }
+                }
+                my @highlights = @highlights;
+            }
 # Now we render the points!
             my $high_flag = 'l';
             my @starts = map { $_->{'start'} } @highlights;
@@ -323,7 +324,7 @@ sub _init {
                     $type      = "highlight_${high_flag}h$highlight_style";
                 }
                 my $zmenu     = $_->{'zmenu'};
-                my $col          = $_->{'col'};
+                my $col       = $_->{'col'};
             ########## dynamic require of the right type of renderer
                 if($self->can($type)) {
                     my $g = $self->$type( {
@@ -339,7 +340,7 @@ sub _init {
                         'col'       => $col,
                         'id'        => $_->{'id'},
                     } );
-					$self->push($g);
+                    $self->push($g);
                 }
             }
         }
@@ -433,7 +434,7 @@ sub highlight_labelline {
 sub highlight_wideline {
     my $self = shift;
     my $details = shift;
-	return new Sanger::Graphics::Glyph::Line({
+    return new Sanger::Graphics::Glyph::Line({
         'x'         => $details->{'mid'},
         'y'         => $details->{'h_offset'}-$details->{'padding'},,
         'width'     => 0,
