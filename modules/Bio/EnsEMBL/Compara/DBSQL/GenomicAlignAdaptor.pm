@@ -243,8 +243,8 @@ sub fetch_all_by_dnafrag_genomedb {
 
     # go from each dnafrag in the result set to target_genome
     # there is room for improvement here: create start end
-
-    my %frags = map { $_->query_dnafrag() => $_->query_dnafrag() } @$set1;
+    my %frags = map { $_->query_dnafrag->dbID => $_->query_dnafrag } @$set1;
+    
     
     my $set2 = [];
     for my $frag ( values %frags ) {
@@ -416,9 +416,9 @@ sub _add_derived_alignments {
   } else {
     # in theory no coordinate magic necessary :-)
     $oqs = $alignA->query_start();
-    $oqe = $alignA->query_end();
+    $oqe = $oqs - 1; 
     $ocs = $alignB->consensus_start();
-    $oce = $alignB->consensus_end();
+    $oce = $ocs - 1;
   }
 
   # initializing result
@@ -494,7 +494,7 @@ sub _add_derived_alignments {
 	my ( $query_start, $query_end );
 	if( $query_strand == 1 ) {
 	  $query_start = $rqs + $alignB->query_start() - 1;
-	  $query_end = $rqe + $alignB->query_end() - 1;
+	  $query_end = $rqe + $alignB->query_start() - 1;
 	} else {
 	  $query_end = $alignB->query_end() - $rqs + 1;
 	  $query_start = $alignB->query_end() - $rqe + 1;
@@ -664,12 +664,14 @@ sub _objs_from_sth {
   while( $sth->fetch() ) {
     my $genomic_align;
     
-    if( $reverse && $query_strand == -1 ) {
-      # alignment of the opposite strand
-
+    if( $reverse ) {
       $cigar_string =~ tr/DI/ID/;
-      my @pieces = ( $cigar_string =~ /(\d*[MDI])/g );
-      $cigar_string= join( "", reverse( @pieces ));
+      if( $query_strand == -1 ) {
+	# alignment of the opposite strand
+
+	my @pieces = ( $cigar_string =~ /(\d*[MDI])/g );
+	$cigar_string= join( "", reverse( @pieces ));
+      }
     }
     
     $genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new
