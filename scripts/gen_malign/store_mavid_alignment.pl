@@ -147,7 +147,6 @@ my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
     );
 $method_link_species_set = $method_link_species_set_adaptor->store($method_link_species_set);
 
-
 ## Each line of the MAP file corresponds to a multiple alignment
 foreach my $this_line (@{$map_file}) {
 
@@ -163,11 +162,19 @@ foreach my $this_line (@{$map_file}) {
     my  $dnafrag_start = shift(@fields);
     my  $dnafrag_end = shift(@fields);
     my  $dnafrag_strand = shift(@fields);
-    next if ($dnafrag_name eq "NA" or $dnafrag_name !~ /^chr(\d+)$/);
 
-    my $chromosome = $1;
+    my ($chromosome) = $dnafrag_name =~ /^chr(.+)$/;
     my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(@{$berkeley_2_ensembl->{$this_species}});
     my $dnafrag = get_this_dnafrag($genome_db, 'chromosome', $chromosome);
+    if (!$dnafrag) {
+      if ($chromosome) {
+        print STDERR
+           "Skipping ",
+           join("::", @{$berkeley_2_ensembl->{$this_species}}, $chromosome),
+           "\n";
+      }
+      next;
+    }
 
     ## Store data in a hash
     $this_alignment->{$this_species}->{dnafrag} = $dnafrag;
@@ -183,7 +190,8 @@ foreach my $this_line (@{$map_file}) {
   } elsif (-e "$mavid_dir/$align_id.fa") {
     @these_sequences = read_all_sequences("$mavid_dir/$align_id.fa", "fasta");
   } else {
-    die ;
+    print STDERR "\nCannot find <$mavid_dir/$align_id.fa[.bz2]> file.\n\n";
+    next;
   }
 
   my $alignment_length = $these_sequences[0]->length();
@@ -210,6 +218,10 @@ foreach my $this_line (@{$map_file}) {
         );
     push(@$these_genomic_aligns, $this_genomic_align) if ($this_genomic_align);
   }
+  if (!$these_genomic_aligns) {
+    print STDERR "Skipping alignment $align_id!!!\n";
+    next;
+  }
 
   my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -method_link_species_set => $method_link_species_set,
@@ -220,9 +232,7 @@ foreach my $this_line (@{$map_file}) {
 
   ## Store everything
   $genomic_align_block_adaptor->store($genomic_align_block);
-  print STDERR "\b\b\b\b\b\b\b\b\b\b", $genomic_align_block->dbID;
 }
-  print STDERR "\b\b\b\b\b\b\b\b\b\bDone.\n";
 
 exit(0);
 
@@ -247,6 +257,7 @@ exit(0);
 sub get_this_dnafrag {
   my ($genome_db, $fragment_type, $fragment_name) = @_;
 
+  return if (!$fragment_name);
   my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, $fragment_type, $fragment_name);
   my $dnafrag;
   foreach my $this_dnafrag (@$dnafrags) {
