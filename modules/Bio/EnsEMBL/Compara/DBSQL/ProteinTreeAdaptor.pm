@@ -20,11 +20,13 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor;
 
 use strict;
+use Switch;
 use Bio::EnsEMBL::Compara::NestedSet;
-use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 
@@ -66,13 +68,22 @@ sub update {
                               left_index=?,
                               right_index=?,
                               distance_to_parent=? 
-			    WHERE node_id=?");
+                            WHERE node_id=?");
   $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, 
-                $node->distance_to_parent,
-		$node->node_id);
+                $node->distance_to_parent, $node->node_id);
 
   $node->adaptor($self);
   $sth->finish;
+
+  if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+    my $sql = "UPDATE protein_tree_member SET ". 
+              "cigar_line='". $node->cigar_line . "'";
+    $sql .= " cigar_start=" . $node->cigar_start if($node->cigar_start);              
+    $sql .= " cigar_end=" . $node->cigar_end if($node->cigar_end);              
+    $sql .= " WHERE node_id=". $node->node_id;
+    $self->dbc->do($sql);
+  }
+
 }
 
 
@@ -225,8 +236,7 @@ sub init_instance_from_rowhash {
   
   #SUPER is NestedSetAdaptor
   $self->SUPER::init_instance_from_rowhash($node, $rowhash);
-
-  if($rowhash->{'member_id'}) {
+   if($rowhash->{'member_id'}) {
     Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
     
     $node->cigar_line($rowhash->{'cigar_line'});
@@ -238,6 +248,154 @@ sub init_instance_from_rowhash {
   $node->adaptor($self);
   
   return $node;
+}
+
+
+sub parse_newick_into_tree
+{
+  my $self = shift;
+  my $newick = shift;
+  my $tree = shift;
+  
+  $newick = "(Mouse:0.76985,
+              ((((Human:0.11449,Chimp:0.15471):0.03695,
+                 Gorilla:0.15680):0.02121,
+                   Orang:0.29209)Hominidae:0.04986,
+                   Gibbon:0.35537)Hominoidea:0.41983,
+                   Bovine:0.91675);";
+
+  my $count=1;
+  my $root = new Bio::EnsEMBL::Compara::NestedSet;
+  $root->node_id($count++);
+  
+  my $state=1;
+  $newick =~ s/\s//g;
+  print("$newick\n");
+  my $token = next_token(\$newick, "(");
+  my $lastset = $root;
+  my $node = $root;
+
+  while($token) {
+    printf("state %d : '%s'\n", $state, $token);
+    switch ($state) {
+      case 1 { #new node
+        $node = new Bio::EnsEMBL::Compara::NestedSet;
+        $node->node_id($count++);
+        $lastset->add_child($node);
+        if($token eq '(') { #create new set
+          #printf("    create set\n");
+          $token = next_token(\$newick, "(:,");
+          $state = 1;
+          $lastset = $node;
+        } else {
+          $state = 2;
+        }
+      }
+      case 2 { #naming a node
+        if(!($token =~ /[:,);]/)) { 
+          $node->name($token);
+          print("    naming leaf"); $node->print_node;
+          $token = next_token(\$newick, ":,)");
+        }
+        $state = 3;
+      }
+      case 3 { # optional : and distance
+        if($token eq ':') {
+          $token = next_token(\$newick, ",)");
+          $node->distance_to_parent($token);
+          print("set distance: $token"); $node->print_node;
+          $token = next_token(\$newick, ",)"); #move to , or )
+        }
+        $state = 4;
+      }
+      case 4 { # end node
+        if($token eq ')') {
+          print("end set : "); $lastset->print_node;
+          $node = $lastset;        
+          $lastset = $lastset->parent;
+          $token = next_token(\$newick, ":,);");
+          $state=2;
+        } elsif($token eq ',') {
+          $token = next_token(\$newick, "(:,");
+          $state=1;
+        } elsif($token eq ';') {
+          #done with tree
+          $state=1;
+          $token = next_token(\$newick, "(");
+        } else {
+          throw("parse error: expected ')' or ','\n");
+        }
+      }
+
+    }
+  }
+  
+  $root->print_tree;
+  $root->release;
+}
+
+sub next_token {
+  my $string = shift;
+  my $delim = shift;
+  
+  return undef unless(length($$string));
+  
+  #print("input =>$$string\n");
+  #print("delim =>$delim\n");
+  my $index=undef;
+
+  my @delims = split(/ */, $delim);
+  foreach my $dl (@delims) {
+    my $pos = index($$string, $dl);
+    if($pos>=0) {
+      $index = $pos unless(defined($index));
+      $index = $pos if($pos<$index);
+    }
+  }
+  unless(defined($index)) {
+    throw("couldn't find delimiter $delim\n");
+  }
+
+  my $token ='';
+
+  if($index==0) {
+    $token = substr($$string,0,1);
+    $$string = substr($$string, 1);
+  } else {
+    $token = substr($$string, 0, $index);
+    $$string = substr($$string, $index);
+  }
+
+  #print("  token     =>$token\n");
+  #print("  outstring =>$$string\n\n");
+  
+  return $token;
+}
+
+##########################################################
+#
+# explicit method forwarding to MemberAdaptor
+#
+##########################################################
+
+sub _fetch_sequence_by_id {
+  my $self = shift;
+  return $self->db->get_MemberAdaptor->_fetch_sequence_by_id(@_);
+}
+
+sub fetch_gene_for_peptide_member_id { 
+  my $self = shift;
+  return $self->db->get_MemberAdaptor->fetch_gene_for_peptide_member_id(@_);
+}
+
+sub fetch_peptides_for_gene_member_id {
+  my $self = shift;
+  return $self->db->get_MemberAdaptor->fetch_peptides_for_gene_member_id(@_);
+}
+
+sub fetch_longest_peptide_member_for_gene_member_id {
+  my $self = shift;
+  return $self->db->get_MemberAdaptor->fetch_longest_peptide_member_for_gene_member_id(@_);
 }
 
 
