@@ -2,6 +2,7 @@
 
 use strict;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor; 
 use Bio::AlignIO;
 use Bio::LocatableSeq;
@@ -126,9 +127,9 @@ if ($help) {
   exit 0;
 }
 
-if (defined $reg_conf) {
-  Bio::EnsEMBL::Registry->load_all($reg_conf);
-}
+# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
+# if no reg_conf file is given.
+Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 $format = lc $format;
 
@@ -141,6 +142,8 @@ Use the axtplus format instead
 }
 
 my $qy_sa = Bio::EnsEMBL::Registry->get_adaptor($qy_species,'core','Slice');
+throw "Cannot get adaptor for ($qy_species,'core','Slice')" if (!$qy_sa);
+
 my $qy_slice = $qy_sa->fetch_by_region('toplevel',$seq_region,$seq_region_start,$seq_region_end);
 
 my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaContainer')->get_Species->binomial;
