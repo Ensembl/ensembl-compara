@@ -261,7 +261,7 @@ sub loadMembersFromCoreSlices
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }
-      if($self->{'transcriptCount'} >= 100) { last SLICE; }
+      # if($self->{'transcriptCount'} >= 100) { last SLICE; }
       # if($self->{'geneCount'} >= 1000) { last SLICE; }
     }
     # last SLICE;

@@ -286,11 +286,16 @@ sub createBlastAnalysis
 
   my $logic_name = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
 
-  my $params = "subset_id=>" . $self->{'pepSubset'}->dbID . "," .
-               "genome_db_id=>" . $self->{'genome_db'}->dbID;
+  my $params = "{subset_id=>" . $self->{'pepSubset'}->dbID .
+               ",genome_db_id=>" . $self->{'genome_db'}->dbID;
   if($blast_template->parameters()) {
-    $params .= "," . $blast_template->parameters();
+    my $parmhash = eval($blast_template->parameters);
+    if($parmhash->{'options'}) {
+      $params .= ",options=>'" . $parmhash->{'options'} . "'";
+    }
   }
+  $params .= '}';
+  
   print("createBlastAnalysis\n  params = $params\n");
   
   my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(

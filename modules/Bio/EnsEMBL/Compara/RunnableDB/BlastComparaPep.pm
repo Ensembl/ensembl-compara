@@ -149,18 +149,18 @@ sub fetch_input {
   $self->query($bioseq);
 
   my ($thr, $thr_type, $options);
-  my %p = $self->parameter_hash;
+  my $p = eval($self->analysis->parameters);
 
-  if (defined $p{-threshold} && defined $p{-threshold_type}) {
-      $thr      = $p{-threshold};
-      $thr_type = $p{-threshold_type};
+  if (defined $p->{'-threshold'} && defined $p->{'-threshold_type'}) {
+      $thr      = $p->{-threshold};
+      $thr_type = $p->{-threshold_type};
   }
   else {
       $thr_type = 'PVALUE';
       $thr      = 1e-10;
   }
-  if (defined $p{options}) {
-    $options = $p{options};
+  if (defined $p->{'options'}) {
+    $options = $p->{'options'};
     # print("!!!found my options : $options\n");
   }
   else {
