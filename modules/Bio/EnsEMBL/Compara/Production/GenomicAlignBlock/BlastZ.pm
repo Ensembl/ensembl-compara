@@ -101,11 +101,13 @@ sub fetch_input {
   #
   # create method_link_species_set
   #
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $mlss->method_link_type("BLASTZ_RAW");
   $mlss->species_set([$qyChunk->dnafrag->genome_db, $dbChunk->dnafrag->genome_db]);
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->{'method_link_species_set'} = $mlss;
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   #
   # get the sequences and create the runnable
@@ -170,12 +172,8 @@ sub write_output {
       $self->store_featurePair_as_genomicAlignBlock($fp);
     }
   }
-
-  #$self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store($self->output);
-
   printf("%d FeaturePairs found\n", scalar($self->output));
   #print STDERR (time()-$starttime), " secs to write_output\n";
-
 }
 
 
