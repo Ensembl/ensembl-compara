@@ -76,11 +76,27 @@ sub draw_parallel{
 			$bar_end, $y_offset
 		      ];
     }
+    
+    # BAR_STYLE can be one of:
+    #   full (top = height, bottom = y_offset)
+    #   indent (solid bar, indented from height by some chunk)
+    #   line (top = bottom)
+    my $bar_style = $style->{'bar_style'} || $self->default_bar_style;
+    my ($bar_top, $bar_bottom);
 
-    my $bar_indent = int($height/3) + 1;  # artistic choice - nothing magic
-    my $bar_bottom = $y_offset + $bar_indent;
-    my $bar_top = $y_offset + $height - $bar_indent;
-
+    if ($bar_style =~ /full/i){
+	$bar_bottom = $y_offset;
+	$bar_top = $y_offset + $height;
+    }
+    elsif ($bar_style =~ /indent/i){
+	my $bar_indent = int($height/3) + 1;  # artistic choice - nothing magic
+	$bar_bottom = $y_offset + $bar_indent;
+	$bar_top = $y_offset + $height - $bar_indent;
+    }
+    else { # default default to line
+	$bar_top = $bar_bottom = $y_offset + $height/2;
+    }
+	
     # 1) add left arrowhead
     push @$points, @$start_points;
 
@@ -106,15 +122,19 @@ sub draw_parallel{
         'absolutey' => 1
     });
 
-
-
 }
+
 
 sub draw_orthogonal{
     my $self = shift;
-    warn "ORTHOGONAL!";
-    return undef;
+    warn "ORTHOGONAL - haven't implemented this yet...";
+    $self->draw_parallel();
+}
 
+
+# Allow each subclass to override the default bar style
+sub default_bar_style{
+   return 'line';
 }
 
 1;
