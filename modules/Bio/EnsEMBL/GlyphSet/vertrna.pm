@@ -9,8 +9,7 @@ sub my_label { return "EMBL mRNAs"; }
 
 sub features {
     my ($self) = @_;
-    
-    my $self->{'container'}->get_all_DnaAlignFeatures_above_score('Vertrna', 80);
+    $self->{'container'}->get_all_DnaAlignFeatures_above_score('Vertrna', 80);
 }
 
 sub href {
