@@ -15,7 +15,7 @@ use vars qw(@ISA $AUTOLOAD);
 sub new {
     my $class = shift;
     if(!$class) {
-      warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in $ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
+      warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
       warn( "EnsEMBL::GlyphSet::failed with a call of new on an undefined value" );
       return undef;
     }
@@ -52,23 +52,23 @@ sub check {
 
 sub HASH_URL {
   my($self,$db,$hash) = @_;
-  return "/$ENV{'ENSEMBL_SPECIES'}/r?d=$db&".join '&', map { "$_=$hash->{$_}" } keys %{$hash||{}};
+  return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&".join '&', map { "$_=$hash->{$_}" } keys %{$hash||{}};
 }
 sub ID_URL {
   my($self,$db,$id) = @_;
-  return "/$ENV{'ENSEMBL_SPECIES'}/r?d=$db&ID=$id";
+  return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&ID=$id";
 }
 sub zoom_URL {
     my( $self, $PART, $interval_middle, $width, $factor, $highlights ) = @_;
     my $start = int( $interval_middle - $width / 2 / $factor);
     my $end   = int( $interval_middle + $width / 2 / $factor);        
-    return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights);
+    return qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights);
 }
 
 sub zoom_zoom_zmenu {
     my ($self, $chr, $interval_middle, $width, $highlights, $zoom_width) = @_;
     $chr =~s/.*=//;
-    return qq(zz('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$zoom_width', '$highlights' ));
+    return qq(zz('/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$zoom_width', '$highlights' ));
     return { 
             'caption'                          => "Navigation",
             '03:Zoom in (x2)'                  => $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights)."&zoom_width=".int($zoom_width/2),
@@ -79,7 +79,7 @@ sub zoom_zoom_zmenu {
 sub zoom_zmenu {
     my ($self, $chr, $interval_middle, $width, $highlights) = @_;
     $chr =~s/.*=//;
-    return qq(zn('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights' ));
+    return qq(zn('/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights' ));
     return { 
             'caption'                          => "Navigation",
             '01:Zoom in (x10)'                 => $self->zoom_URL($chr, $interval_middle, $width, 10  , $highlights),
@@ -93,7 +93,7 @@ sub zoom_zmenu {
 }
 
 sub draw_cigar_feature {
-  my( $self, $Composite, $f, $h, $feature_colour, $delete_colour, $pix_per_bp ) = @_;
+  my( $self, $Composite, $f, $h, $feature_colour, $delete_colour, $pix_per_bp, $DO_NOT_FLIP ) = @_;
 ## Find the 5' end of the feature.. (start if on forward strand of forward feature....)
   #return unless $f;
   my $Q = ref($f); $Q="$Q";
@@ -101,7 +101,7 @@ sub draw_cigar_feature {
     if($Q eq 'SCALAR') { warn("DRAWINGCODE_CIGAR << ",$$f," >> ",$self->label->text," not a feature!"); }
     if($Q eq 'HASH') { warn("DRAWINGCODE_CIGAR { ",join( "; ", keys %$f)," }  ",$self->label->text," not a feature!"); }
     if($Q eq 'ARRAY') { warn("DRAWINGCODE_CIGAR [ ", join( "; ", @$f ), " ] ",$self->label->text," not a feature!"); }
-  my $S = (my $O = $self->strand ) == 1 ? $f->start : $f->end;
+  my $S = (my $O = $DO_NOT_FLIP ? 1 : $self->strand ) == 1 ? $f->start : $f->end;
   my $length = $self->{'container'}->length;
 
   my @delete;

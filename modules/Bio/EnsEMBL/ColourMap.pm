@@ -27,6 +27,7 @@ sub new {
     '_PRED'      => 'red3',
     '_'          => 'black', 
     '_PSEUDO'   => 'grey50', 
+    'refseq'    => 'blue',
     'hi'        => 'highlight1',
     'superhi'   => 'highlight2'
   );

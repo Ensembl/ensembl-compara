@@ -1,8 +1,8 @@
 package Sanger::Graphics::Glyph::Poly;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::Glyph;
-@ISA = qw(Bio::EnsEMBL::Glyph);
+use Sanger::Graphics::Glyph;
+@ISA = qw(Sanger::Graphics::Glyph);
 
 sub points {
     my ($this, $points_ref) = @_;

@@ -32,6 +32,7 @@ sub new {
                   ($Container->{'chr'}); 
   my $pos = 100000;
   my $row = '';
+  $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
   my @subsections =
     map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
@@ -49,7 +50,7 @@ sub new {
       };
       if($@ || !$GlyphSet) {
         my $reason = $@ || "No reason given just returns undef";
-        warn "GLYPHSET: glyphset $classname failed ($ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
+        warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
       } else {
          $GlyphSet->_init();
          push @{$self->{'glyphsets'}},  $GlyphSet;

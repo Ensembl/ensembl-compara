@@ -17,10 +17,10 @@ sub init_label {
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
-        'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
+        'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
         'zmenu'     => {
             'caption'                     => 'HELP',
-            "01:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'$HELP_LINK\\')]
+            "01:Track information..."     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'$HELP_LINK\\')]
         }
     });
     $self->label($label);
@@ -73,6 +73,8 @@ sub _init {
     my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
     my $bitmap_length  = int($length * $pix_per_bp);
     my $feature_colour = $Config->get($type, 'col');
+    my $join_col       = $Config->get($type, 'join_col');
+    my $join_z         = $Config->get($type, 'join_z') || 0;
     my $hi_colour      = $Config->get($type, 'hi');
     my %id             = ();
     my $small_contig   = 0;
@@ -95,6 +97,7 @@ sub _init {
 
 ## Now go through each feature in turn, drawing them
         my @glyphs;
+        my $BLOCK = 0;
         foreach my $i (keys %id){
             $T+=@{$id{$i}}; ## Diagnostic report....
             my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
@@ -132,19 +135,25 @@ sub _init {
                 $C++;
                 if($DRAW_CIGAR) {
                   # warn( "CIGAR LINE $type" );
-                  $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp );
+                  $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp, 1 );
                 } else {
                   my $START = $_->[0] < 1 ? 1 : $_->[0];
                   my $END   = $f->end > $length ? $length : $f->end;
                   $X = $START;
-                  $Composite->push(new Sanger::Graphics::Glyph::Rect({
+                  my $BOX = new Sanger::Graphics::Glyph::Rect({
                     'x'          => $X-1,
-                    'y'          => 0, 
+                    'y'          => 0,
                     'width'      => $END-$X+1,
                     'height'     => $h,
                     'colour'     => $feature_colour,
                     'absolutey'  => 1,
-                  }));
+                  });
+                  if( $strand_flag eq 'z' && $join_col) {
+                     $self->join_tag( $BOX, "BLOCK_$type$BLOCK", $strand == -1 ? 0 : 1, 0 , $join_col, 'fill', $join_z ) ;
+                     $self->join_tag( $BOX, "BLOCK_$type$BLOCK", $strand == -1 ? 1 : 0, 0 , $join_col, 'fill', $join_z ) ;
+                     $BLOCK++;
+                  }
+                  $Composite->push($BOX);
                 }
             }
             $Composite->y( $Composite->y + $y_pos );
@@ -200,7 +209,7 @@ sub _init {
                     'width' => 0,
                     'y' => 0
                 });
-                $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp);
+                $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp, 1 );
                 $Composite->bordercolour($feature_colour);
                 $self->push( $Composite );
             } else {

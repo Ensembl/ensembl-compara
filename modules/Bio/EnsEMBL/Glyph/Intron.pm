@@ -1,7 +1,7 @@
 package Sanger::Graphics::Glyph::Intron;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::Glyph;
-@ISA = qw(Bio::EnsEMBL::Glyph);
+use Sanger::Graphics::Glyph;
+@ISA = qw(Sanger::Graphics::Glyph);
 
 1;

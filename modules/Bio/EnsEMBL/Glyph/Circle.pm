@@ -1,8 +1,8 @@
 package Sanger::Graphics::Glyph::Circle;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::Glyph;
-@ISA = qw(Bio::EnsEMBL::Glyph);
+use Sanger::Graphics::Glyph;
+@ISA = qw(Sanger::Graphics::Glyph);
 
 sub diameter {
     my ($self, $val) = @_;

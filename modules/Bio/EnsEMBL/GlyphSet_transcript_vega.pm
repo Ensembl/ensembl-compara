@@ -41,7 +41,7 @@ sub href {
     my $tid = $transcript->stable_id();
     return $self->{'config'}->{'_href_only'} eq '#tid' ?
         "#$tid" : 
-        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid);
+        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid);
 }
 
 sub zmenu {
@@ -54,19 +54,19 @@ sub zmenu {
         'caption' 	    => $self->zmenu_caption(),
         "00:$id"	    => "",
         '01:Type: ' . $gene->type() => "",
-	"02:Gene:$gid"      => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid&db=core",
-        "03:Transcr:$tid"   => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$tid&db=core",                	
-        "04:Exon:$tid"	    => "/$ENV{'ENSEMBL_SPECIES'}/exonview?transcript=$tid&db=core",
-        '05:Supporting evidence'    => "/$ENV{'ENSEMBL_SPECIES'}/exonview?transcript=$tid&db=core#evidence",
+	"02:Gene:$gid"      => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core",
+        "03:Transcr:$tid"   => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=core",                	
+        "04:Exon:$tid"	    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid&db=core",
+        '05:Supporting evidence'    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid&db=core#evidence",
 
-        '08:Export cDNA'  => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
+        '08:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
     };
     my $DB = EnsWeb::species_defs->databases;
-    $zmenu->{'07:Expression information'} = "/$ENV{'ENSEMBL_SPECIES'}/sageview?alias=$gid" if $DB->{'ENSEMBL_EXPRESSION'}; 
+    $zmenu->{'07:Expression information'} = "/@{[$self->{container}{_config_file_name_}]}/sageview?alias=$gid" if $DB->{'ENSEMBL_EXPRESSION'}; 
 
     if ($pid) {
-        $zmenu->{"06:Peptide:$pid"} =  "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=$pid";
-        $zmenu->{'09:Export Peptide'}	= "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid";
+        $zmenu->{"06:Peptide:$pid"} =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
+        $zmenu->{'09:Export Peptide'}	= "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid";
     }
     return $zmenu;
 }

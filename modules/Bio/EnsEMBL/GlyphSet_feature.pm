@@ -7,6 +7,7 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use  Sanger::Graphics::Bump;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
+use Data::Dumper;
 
 sub init_label {
     my ($self) = @_;
@@ -16,10 +17,10 @@ sub init_label {
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
-        'href'      => qq[javascript:X=hw('$ENV{'ENSEMBL_SPECIES'}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
+        'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
         'zmenu'     => {
             'caption'                     => 'HELP',
-            "02:Track information..."     => qq[javascript:X=hw(\\'$ENV{'ENSEMBL_SPECIES'}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'$HELP_LINK\\')]
+            "02:Track information..."     => qq[javascript:X=hw(\\'@{[$self->{container}{_config_file_name_}]}\\',\\'$ENV{'ENSEMBL_SCRIPT'}\\',\\'$HELP_LINK\\')]
         }
     });
     if( $self->{'extras'} && $self->{'extras'}{'description'} ) {
@@ -88,7 +89,7 @@ sub _init {
     my $small_contig   = 0;
     my $dep            = $Config->get(  $type, 'dep' );
 
-    my @features = grep { ref($_)eq'ARRAY'} $self->features;
+    my @features = grep { ref($_) eq 'ARRAY' } $self->features;
 
     my $h              = ($Config->get('_settings','opt_halfheight') && $dep>0) ? 4 : 8;
 
@@ -96,7 +97,7 @@ sub _init {
     if( $dep > 0 ) {
         foreach my $features (@features) {
           foreach my $f ( @$features ){
-            next if $strand_flag eq 'b' && $strand != $f->strand || $f->end < 1 || $f->start > $length ;
+            next if $strand_flag eq 'b' && $strand != ($f->strand||-1) || $f->end < 1 || $f->start > $length ;
             push @{$id{$f->id()}}, [$f->start,$f->end,$f];
           }
         }
@@ -160,9 +161,9 @@ sub _init {
             $self->push( $Composite );
             if(exists $highlights{$i}) {
                 my $glyph = new Sanger::Graphics::Glyph::Rect({
-                    'x'         => $Composite->x() - 1/$pix_per_bp,
-                    'y'         => $Composite->y() - 1,
-                    'width'     => $Composite->width() + 2/$pix_per_bp,
+                    'x'         => $Composite->{'x'} - 1/$pix_per_bp,
+                    'y'         => $Composite->{'y'} - 1,
+                    'width'     => $Composite->{'width'} + 2/$pix_per_bp,
                     'height'    => $h + 2,
                     'colour'    => $hi_colour,
                     'absolutey' => 1,
@@ -175,7 +176,7 @@ sub _init {
         foreach my $f (
             sort { $a->[0] <=> $b->[0] }
             map { [$_->start, $_->end,$_ ] }
-            grep { !($strand_flag eq 'b' && $strand != $_->strand || $_->start > $length || $_->end < 1) } 
+            grep { !($strand_flag eq 'b' && $strand != ($_->strand||-1) || $_->start > $length || $_->end < 1) } 
             map { @$_ } @features
         ) {
             my $START   = $f->[0];

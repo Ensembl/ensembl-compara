@@ -1,8 +1,8 @@
 package Sanger::Graphics::Glyph::Ellipse;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::Glyph;
-@ISA = qw(Bio::EnsEMBL::Glyph);
+use Sanger::Graphics::Glyph;
+@ISA = qw(Sanger::Graphics::Glyph);
 
 #########
 # probably needs some clever stuff
