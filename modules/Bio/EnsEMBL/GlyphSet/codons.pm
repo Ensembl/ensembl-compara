@@ -80,20 +80,23 @@ sub _init {
 # Store the information in the codon cache for the reverse strand
 		$Config->{'__codon__cache__'} = $data;
 	}
-# The twelve elements in the @data array (@{$Config->{'__codon__cache__'}})
-# are
-#  1 => coordinates of phase 0 start codons on forward strand
-#  2 => coordinates of phase 0 stop  codons on forward strand
-#  3 => coordinates of phase 0 start codons on reverse strand
-#  4 => coordinates of phase 0 stop  codons on reverse strand
-#  5 => coordinates of phase 2 start codons on forward strand
-#  6 => coordinates of phase 2 stop  codons on forward strand
-#  7 => coordinates of phase 2 start codons on reverse strand
-#  8 => coordinates of phase 2 stop  codons on reverse strand
-#  9 => coordinates of phase 3 start codons on forward strand
-# 10 => coordinates of phase 3 stop  codons on forward strand
-# 11 => coordinates of phase 3 start codons on reverse strand
-# 12 => coordinates of phase 3 stop  codons on reverse strand
+# The twelve elements in the @data array, 
+#      @{$Config->{'__codon__cache__'}}
+# are:
+#  1 => coordinates of phase 0 start codons on forward-> strand
+#  2 => coordinates of phase 0 stop  codons on forward-> strand
+#  3 => coordinates of phase 0 start codons on <-reverse strand
+#  4 => coordinates of phase 0 stop  codons on <-reverse strand
+#
+#  5 => coordinates of phase 2 start codons on forward-> strand
+#  6 => coordinates of phase 2 stop  codons on forward-> strand
+#  7 => coordinates of phase 2 start codons on <-reverse strand
+#  8 => coordinates of phase 2 stop  codons on <-reverse strand
+#
+#  9 => coordinates of phase 3 start codons on forward-> strand
+# 10 => coordinates of phase 3 stop  codons on forward-> strand
+# 11 => coordinates of phase 3 start codons on <-reverse strand
+# 12 => coordinates of phase 3 stop  codons on <-reverse strand
 	my $fullheight = $height * 2 + $padding; 
 	foreach my $phase (0..2){
 		# Glyphs are 3 basepairs wide 
