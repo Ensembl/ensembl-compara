@@ -12,7 +12,13 @@ sub my_label { return "Human matches"; }
 sub features {
     my ($self) = @_;
     
-    return  $self->{'container'}->get_all_compara_DnaAlignFeatures( 'Homo_sapiens' );
+    my $assembly = 
+      EnsWeb::species_defs->other_species('Homo_sapiens')->{'ENSEMBL_GOLDEN_PATH'};
+
+    return $self->{'container'}->get_all_compara_DnaAlignFeatures(
+							   'Homo sapiens',
+							    $assembly);
+
 }
 
 sub href {

@@ -12,7 +12,12 @@ sub my_label { return "Mouse matches"; }
 sub features {
     my ($self) = @_;
     
-    return $self->{'container'}->get_all_compara_DnaAlignFeatures('Mus_musculus' );
+    my $assembly = 
+      EnsWeb::species_defs->other_species('Mus_musculus')->{'ENSEMBL_GOLDEN_PATH'};
+
+    return $self->{'container'}->get_all_compara_DnaAlignFeatures(
+							   'Mus musculus',
+							    $assembly);
 }
 
 sub href {
