@@ -276,6 +276,7 @@ sub create_GenomeDBs {
    $sth->execute;
 
   # build a genome db for each species
+  $self->{'_cache'} = undef;
   while ( my @db_row = $sth->fetchrow_array() ) {
     my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator) = @db_row;
 
@@ -322,7 +323,9 @@ sub create_GenomeDBs {
 sub check_for_consensus_db {
   my ( $self, $query_gdb, $con_gdb, $method_link_id) = @_;
 
-  deprecated();
+  deprecated("consensus and query sequences are not used anymore.".
+              " Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock".
+              " for more details");
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
@@ -362,7 +365,9 @@ sub check_for_consensus_db {
 sub check_for_query_db {
   my ( $self, $con_gdb, $query_gdb,$method_link_id ) = @_;
 
-  deprecated();
+  deprecated("consensus and query sequences are not used anymore.".
+              " Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock".
+              " for more details");
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
