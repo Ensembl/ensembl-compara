@@ -261,6 +261,7 @@ sub createBlastAnalysis
     );
 
   $self->db->get_AnalysisAdaptor()->store($analysis);
+  $self->db->get_AnalysisAdaptor()->update($analysis);
 
   my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
   $stats->batch_size(40);
