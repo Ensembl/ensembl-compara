@@ -44,32 +44,85 @@ CREATE TABLE simple_rule (
 
 ------------------------------------------------------------------------------------
 --
--- Table structure for table 'network_rule'
+-- Table structure for table 'dataflow_rule'
 --
 -- overview:
---   Extension of simple_rule design except that goal is now in extended URL format e.g.
+--   Extension of simple_rule design except that goal(to) is now in extended URL format e.g.
 --   mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
 --   (full network address of an analysis).  The only requirement is that there are rows in 
---   the analysis_job, analysis, network_rule, and hive tables so that the following join
+--   the analysis_job, analysis, dataflow_rule, and hive tables so that the following join
 --   works on the same database 
---   WHERE analysis.analysis_id = network_rule.condition_analysis_id 
---   AND analysis_job.analysis_id=analysis.analysis_id
---   AND hive.analysis_id=analysis.analysis_id
+--   WHERE analysis.analysis_id = dataflow_rule.from_analysis_id 
+--   AND   analysis.analysis_id = analysis_job.analysis_id
+--   AND   analysis.analysis_id = hive.analysis_id
+--
+--   These are the rules used to create entries in the analysis_job table where the
+--   input_id (control data) is passed from one analysis to the next to define work.
 --  
 --   The analysis table will be extended so that it can specify different read and write
 --   databases, with the default being the database the analysis is on
 --
 -- semantics:
---   condition_analysis_id    - foreign key to analysis table analysis_id
---   goal_analysis_url        - foreign key to net distributed analysis reference
+--   from_analysis_id     - foreign key to analysis table analysis_id
+--   to_analysis_url      - foreign key to net distributed analysis reference
 
-CREATE TABLE network_rule (
-  condition_analysis_id    int(10) unsigned NOT NULL,
-  goal_analysis_url        varchar(255) default '' NOT NULL,
+CREATE TABLE dataflow_rule (
+  from_analysis_id    int(10) unsigned NOT NULL,
+  to_analysis_url     varchar(255) default '' NOT NULL,
 
-  UNIQUE (condition_analysis_id, goal_analysis_url)
+  UNIQUE (from_analysis_id, to_analysis_url)
 );
 
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'analysis_ctrl_rule'
+--
+-- overview:
+--   These rules define a higher level of control.  These rules are used to turn
+--   whole anlysis nodes on/off (READY/BLOCKED).
+--   If any of the condition_analyses are not 'DONE' the ctrled_analysis is set BLOCKED
+--   When all conditions become 'DONE' then ctrled_analysis is set to READY
+--   The workers switch the analysis.status to 'WORKING' and 'DONE'.
+--   But any moment if a condition goes false, the analysis is reset to BLOCKED.
+--
+--   This process of watching conditions and flipping the ctrled_analysis state
+--   will be accomplished by another automous agent (CtrlWatcher.pm)
+--
+-- semantics:
+--   condition_analysis_url  - foreign key to net distributed analysis reference
+--   ctrled_analysis_id      - foreign key to analysis table analysis_id
+
+CREATE TABLE dataflow_rule (
+  condition_analysis_url     varchar(255) default '' NOT NULL,
+  ctrled_analysis_id         int(10) unsigned NOT NULL,
+
+  UNIQUE (from_analysis_id, to_analysis_url)
+);
+
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'analysis_job'
+--
+-- overview:
+--   The analysis_job is the heart of this sytem.  It is the kiosk or blackboard
+--   where workers find things to do and then post work for other works to do.
+--   The job_claim is a UUID set with an UPDATE LIMIT by worker as they fight
+--   over the work.  These jobs are created prior to work being done, are claimed
+--   by workers, are updated as the work is done, with a final update on completion.
+--
+-- semantics:
+--   analysis_job_id        - autoincrement id
+--   input_analysis_job_id  - previous analysis_job which created this one (and passed input_id)
+--   analysis_id            - the analysis_id needed to accomplish this job.
+--   input_id               - input data passed into Analysis:RunnableDB to control the work
+--   job_claim              - UUID set by workers as the fight over jobs
+--   hive_id                - link to hive table to define which worker claimed this job
+--   status                 - state the job is in
+--   retry_count            - number times job had to be reset when worker failed to run it
+--   completed              - timestamp when job was completed
+--   result                 - 0/1 state (inherited from old pipeline)
 
 CREATE TABLE analysis_job (
   analysis_job_id        int(10) NOT NULL auto_increment,
@@ -90,20 +143,27 @@ CREATE TABLE analysis_job (
 );
 
 
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'analysis_job_files'
+--
+-- overview:
+--   Parallel table to analysis_job table which holds paths to the STDOUT and STDERR
+--   output from the RunnableDB used to do the job.
+--
+-- semantics:
+--   analysis_job_id        - foreign key
+--   stdout_file            - path to STDOUT file
+--   stderr_file            - path to STDERR file
+--   temp_dir               - path to directory where any temp files where created
+
 CREATE TABLE analysis_job_files (
   analysis_job_id     int(10) NOT NULL,
   stdout_file         varchar(255) NOT NULL,
   stderr_file         varchar(255) NOT NULL,
   temp_dir            varchar(255) DEFAULT ''
-);
 
-
-CREATE TABLE analysis_status (
-  analysis_id    int(10) NOT NULL,
-  status         enum('BLOCKED', 'READY','WORKING','DONE') DEFAULT 'READY' NOT NULL,
-  jobs_todo      int(10) DEFAULT '0' NOT NULL,
-  jobs_done      int(10) DEFAULT '0' NOT NULL,
-  last_update    datetime NOT NULL,
+  UNIQUE KEY (analysis_job_id)
 );
 
 
