@@ -1,14 +1,26 @@
+
+# This file specifies where are the ensembl core databases used in a compara
+# database. For each species (e.g. Homo sapiens, without _ between genus and
+# species) and corresponding assembly (NCBI31), it gives the mysql host server
+# the user name used to connect, the database name and the adaptor to be used.
+#
+# This configuration file is used when connecting a compara database with
+# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor using the -conf_file option.
+#
+# then you can easily retrieve core dbadaptors with
+# $compara_db->get_bd_adaptor("Homo sapiens","NCBI31")
+
 [
-['Homo sapiens', 'NCBI_31', {'host' => "ecs2b.internal.sanger.ac.uk",
-                              'user' => "ensro",
-                              'dbname' => "ens_NCBI_31",
-                              'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}],
-['Mus musculus', 'CHR', {'host' => "ecs2d.internal.sanger.ac.uk",
-                          'user' => "ensro",
-                          'dbname' => "mus_musculus_core_9_3",
-                          'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}],
-['Rattus norvegicus', 'Rat_Nov02', {'host' => "ecs2a.internal.sanger.ac.uk",
-                                     'user' => "ensro",
-                                     'dbname' => "rat_Nov02",
-                                     'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}]
+['Homo sapiens', 'NCBI31', {'host' => "ecs2b.internal.sanger.ac.uk",
+                            'user' => "ensro",
+                            'dbname' => "ens_NCBI_31",
+                            'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}],
+['Mus musculus', 'MGSC3', {'host' => "ecs2d.internal.sanger.ac.uk",
+                           'user' => "ensro",
+                           'dbname' => "mus_musculus_core_10_3",
+                           'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}],
+['Rattus norvegicus', 'RGSC2', {'host' => "ecs2a.internal.sanger.ac.uk",
+                                'user' => "ensro",
+                                'dbname' => "rat_Nov02",
+                                'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}]
 ]
