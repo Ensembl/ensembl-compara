@@ -87,7 +87,7 @@ CREATE TABLE genomic_align (
   PRIMARY KEY genomic_align_id (genomic_align_id),
   KEY genomic_align_block_id (genomic_align_block_id),
   KEY dnafrag_id (dnafrag_id, dnafrag_start, dnafrag_start),
-  KEY dnafrag_id2 (dnafrag_id, method_link_speceis_set, dnafrag_start, dnafrag_end)
+  KEY dnafrag_id2 (dnafrag_id, method_link_species_set, dnafrag_start, dnafrag_end)
 );
 
 #
