@@ -7,7 +7,7 @@ CREATE TABLE hive (
   born	           datetime NOT NULL,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
-  cause_of_death   enum('', 'NATURAL', 'NO_WORK', 'UNKNOWN') DEFAULT '' NOT NULL,
+  cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
   PRIMARY KEY (hive_id),
 );
 
