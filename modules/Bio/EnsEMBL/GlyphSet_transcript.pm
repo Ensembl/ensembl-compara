@@ -84,6 +84,8 @@ sub _init {
         my @exon_lengths = @{$vt->{'exon_structure'}};
         my $end = $vt->{'start'} - 1;
         my $start = 0;
+        my $coding_start = $vt->{'coding_start'} || $vt->{'start'};
+        my $coding_end   = $vt->{'coding_end'}   || $vt->{'end'};
         foreach my $length (@exon_lengths) {
             $flag = 1-$flag;
             ($start,$end) = ($end+1,$end+$length);
@@ -92,15 +94,38 @@ sub _init {
             my $box_start = $start < 1 ?       1 :       $start;
             my $box_end   = $end   > $vc_length ? $vc_length : $end;
             if($flag == 1) { ## draw an exon ##
-                my $rect = new Bio::EnsEMBL::Glyph::Rect({
-                    'x'         => $box_start,
-                    'y'         => $y,
-                    'width'     => $box_end-$box_start,
-                    'height'    => $h,
-                    'colour'    => $colour,
-                    'absolutey' => 1,
-                });
-                $Composite->push($rect);
+                if($box_start < $coding_start || $box_end > $coding_end ) {
+                    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'         => $box_start,
+                        'y'         => $y+1,
+                        'width'     => $box_end-$box_start,
+                        'height'    => $h-2,
+                        'bordercolour' => $colour,
+                        'absolutey' => 1,
+                    });
+                    $Composite->push($rect);
+                    my $START = $box_start < $coding_start ? $coding_start : $box_start;
+                    my $END   = $box_end   < $coding_end   ? $box_end      : $coding_end;
+                    $rect = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'         => $START,
+                        'y'         => $y,
+                        'width'     => $END - $START,
+                        'height'    => $h,
+                        'colour'    => $colour,
+                        'absolutey' => 1,
+                    });
+                    $Composite->push($rect);
+                } else {
+                    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'         => $box_start,
+                        'y'         => $y,
+                        'width'     => $box_end-$box_start,
+                        'height'    => $h,
+                        'colour'    => $colour,
+                        'absolutey' => 1,
+                    });
+                    $Composite->push($rect);
+                }
             ## else draw an wholly in vc intron ##
             } elsif( $box_start == $start && $box_end == $end ) { 
                 my $intron = new Bio::EnsEMBL::Glyph::Intron({
