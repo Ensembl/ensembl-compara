@@ -117,8 +117,9 @@ sub _init {
             $colour = $Config->get('labelledtranscript','pseudo');
         }
 
-        my $tid = $transcript->id();
-        my $pid = $tid;
+        my $tid = $transcript->stable_id();
+        my $p   = $transcript->translation;
+        my $pid = $p ? $p->stable_id() : $tid;
 
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 		
