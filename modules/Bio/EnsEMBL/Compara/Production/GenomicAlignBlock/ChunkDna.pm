@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ChunkDna
+Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkDna
 
 =cut
 
@@ -44,7 +44,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ChunkDna;
+package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkDna;
 
 use strict;
 
@@ -56,8 +56,8 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Subset;
-use Bio::EnsEMBL::Compara::DnaFragChunk;
+#use Bio::EnsEMBL::Compara::Subset;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
