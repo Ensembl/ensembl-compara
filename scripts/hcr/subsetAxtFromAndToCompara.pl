@@ -11,7 +11,8 @@ my $usage = "
 $0
   [--help]                        this menu
    --src_dbname string            (e.g. compara23) one of the compara source database Bio::EnsEMBL::Registry aliases
-   --dest_dbname string           (e.g. compara23) one of the compara destination database Bio::EnsEMBL::Registry aliases
+  [--dest_dbname string]          (e.g. compara23) one of the compara destination database Bio::EnsEMBL::Registry aliases
+                                  if not specified it will be set to src_dbname
    --seq_region string            (e.g. 22)
    --seq_region_start integer     (e.g. 50000000)
    --seq_region_end integer       (e.g. 50500000)
@@ -77,6 +78,15 @@ if ($help) {
   exit 0;
 }
 
+my $subsetAxt_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt";
+
+if (-e "/proc/version") {
+  # it is a linux machine
+  $subsetAxt_executable = "/nfs/acari/abel/bin/i386/subsetAxt";
+}
+
+exit 1 unless (-e $subsetAxt_executable);
+
 # Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
 # if no reg_conf file is given.
 Bio::EnsEMBL::Registry->load_all($reg_conf);
@@ -104,7 +114,7 @@ my %tg_dnafrags;
 my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaContainer')->get_Species->binomial;
 my $tg_gdb = $gdba->fetch_by_name_assembly($tg_binomial);
 
-my $mlss = $mlssa->fetch_by_method_link_and_genome_db_ids($src_method_link_type, [$qy_gdb->dbID, $tg_gdb->dbID]);
+my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($src_method_link_type, [$qy_gdb->dbID, $tg_gdb->dbID]);
 my %repeated_alignment;
 
 my $dest_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
@@ -117,7 +127,7 @@ while (1)  {
   last unless (scalar @$gabs);
   print STDERR "Preparing to rescore ",scalar @$gabs," gabs\n";
   my $axtFile = generateAxt($gabs);
-  my $rescored_axtFile = subsetAxt($axtFile, $matrix, $threshold);
+  my $rescored_axtFile = subsetAxt($subsetAxt_executable,$axtFile, $matrix, $threshold);
   my $nb_gab = storeAxt($rescored_axtFile, $dest_dbname, $dest_mlss);
   
   print STDERR "Nb of gab loaded: $nb_gab\n";
@@ -180,9 +190,11 @@ sub generateAxt {
 }
 
 sub subsetAxt {
-  my ($axtFile, $matrix, $threshold) = @_;
+  my ($subsetAxt_executable, $axtFile, $matrix, $threshold) = @_;
 
-  unless (system("/nfs/acari/abel/bin/alpha-dec-osf4.0/subsetAxt $axtFile $axtFile.out $matrix $threshold") == 0) {
+ 
+
+  unless (system("$subsetAxt_executable $axtFile $axtFile.out $matrix $threshold") == 0) {
     unlink "$axtFile.out";
     return 0;
   } else {
