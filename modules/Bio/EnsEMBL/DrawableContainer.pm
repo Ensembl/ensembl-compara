@@ -8,23 +8,13 @@ use Bio::EnsEMBL::Glyph::Rect;
 @ISA = qw(Bio::Root::RootI);
 
 sub new {
-    my ($class, $display, $Container, $Config, $highlights, $strandedness) = @_;
+    my ($class, $Container, $Config, $highlights, $strandedness) = @_;
 
     my @strands_to_show = (1, -1);
 
     if($strandedness == 1) {
        @strands_to_show = (1);
     }
-
-    if(!defined $display) {
-	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No display type defined\n);
-	return;
-    }
-
-#    if($display !~ /transview|contigviewbottom|protview/) {
-#	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new Unknown display type $display\n);
-#	return;
-#    }
 
     if(!defined $Container) {
 	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No container defined\n);
@@ -38,7 +28,6 @@ sub new {
 
     my $self = {
 	'vc'         => $Container,
-	'display'    => $display,
 	'glyphsets'  => [],
 	'config'     => $Config,
 	'spacing'    => 5,
@@ -49,9 +38,9 @@ sub new {
     # loop over all the glyphsets the user wants:
     #
 
-    my @subsections = $Config->subsections($self->{'display'});
+    my @subsections = $Config->subsections();
 
-    my @order = sort { $Config->get($self->{'display'}, $a, 'pos') <=> $Config->get($self->{'display'}, $b, 'pos') } @subsections;
+    my @order = sort { $Config->get($a, 'pos') <=> $Config->get($b, 'pos') } @subsections;
 
     &eprof_start('glyphset_creation');
 
@@ -71,9 +60,9 @@ sub new {
 	#########
 	# skip this row if user has it turned off
 	#
-	next if ($Config->get($self->{'display'}, $row, 'on') eq "off");
-	next if ($Config->get($self->{'display'}, $row, 'str') eq "r" && $strand != -1);
-	next if ($Config->get($self->{'display'}, $row, 'str') eq "f" && $strand != 1);
+	next if ($Config->get($row, 'on') eq "off");
+	next if ($Config->get($row, 'str') eq "r" && $strand != -1);
+	next if ($Config->get($row, 'str') eq "f" && $strand != 1);
 
 	#########
 	# create a new glyphset for this row
@@ -140,6 +129,9 @@ sub new {
     my $scalex = $pseudo_im_width / $Config->container_width();
     $Config->{'transform'}->{'scalex'} = $scalex;
 
+
+    print STDERR qq(my config is $Config and my image_width = ), $Config->image_width(), qq(\n);
+
     #########
     # set scaling factor for 'absolutex' coordinates -> real pixel coords
     #
@@ -161,8 +153,8 @@ sub new {
     #
     my $white  = $Config->bgcolour() || $Config->colourmap->id_by_name('white');
     my $bgcolours = {
-	'0' => $Config->get($Config->script(), '_settings', 'bgcolour1') || $white,
-	'1' => $Config->get($Config->script(), '_settings', 'bgcolour2') || $white,
+	'0' => $Config->get('_settings', 'bgcolour1') || $white,
+	'1' => $Config->get('_settings', 'bgcolour2') || $white,
     };
 
     my $bgcolour_flag;
