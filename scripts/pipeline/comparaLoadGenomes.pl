@@ -239,8 +239,6 @@ sub submitGenome
   #
   # now configure the input_id_analysis table with the genome_db_id
   #
-  my $input_id = "{gdb=>".$genome->dbID."}";
-
   my $analysisDBA = $self->{'hiveDBA'}->get_AnalysisAdaptor;
   my $submitGenome = $analysisDBA->fetch_by_logic_name('SubmitGenome');
 
@@ -256,6 +254,13 @@ sub submitGenome
     $stats->hive_capacity(-1);
     $stats->update();
   }
+
+  my $genomeHash = {};
+  $genomeHash->{'gdb'} = $genome->dbID;
+  if(defined($species->{'pseudo_stableID_prefix'})) {
+    $genomeHash->{'pseudo_stableID_prefix'} = $species->{'pseudo_stableID_prefix'};
+  }
+  my $input_id = encode_hash($genomeHash);
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,

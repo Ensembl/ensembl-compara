@@ -88,6 +88,9 @@ sub fetch_input {
   my $genome_db_id = $input_hash->{'gdb'};
   print("gdb = $genome_db_id\n");
   $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  if($input_hash->{'pseudo_stableID_prefix'}) {
+    $self->{'pseudo_stableID_prefix'} = $input_hash->{'pseudo_stableID_prefix'};
+  }
   
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
@@ -209,18 +212,28 @@ sub store_gene_and_all_transcripts
 
   my $MemberAdaptor = $self->{'comparaDBA'}->get_MemberAdaptor();
 
-  foreach my $transcript (@{$gene->get_all_Transcripts}) {
-    $self->{'transcriptCount'}++;
-    #print("gene " . $gene->stable_id . "\n");
-    print("     transcript " . $transcript->stable_id ) if($self->{'verbose'});
+  if(defined($self->{'pseudo_stableID_prefix'})) {
+    $gene->stable_id($self->{'pseudo_stableID_prefix'} ."G_". $gene->dbID);
+  }
 
+  foreach my $transcript (@{$gene->get_all_Transcripts}) {
     unless (defined $transcript->translation) {
       warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
       next;
     }
+    my $translation = $transcript->translation;
+    
+    if(defined($self->{'pseudo_stableID_prefix'})) {
+      $transcript->stable_id($self->{'pseudo_stableID_prefix'} ."T_". $transcript->dbID);
+      $translation->stable_id($self->{'pseudo_stableID_prefix'} ."P_". $translation->dbID);
+    }
 
-    unless (defined $transcript->translation->stable_id) {
-      throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+    $self->{'transcriptCount'}++;
+    #print("gene " . $gene->stable_id . "\n");
+    print("     transcript " . $transcript->stable_id ) if($self->{'verbose'});
+
+    unless (defined $translation->stable_id) {
+      throw("COREDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
       next;
     }
 
