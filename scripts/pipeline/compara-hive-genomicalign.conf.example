@@ -1,17 +1,15 @@
-# copy/paste configuration file from Jessica to run human/cow blastz
-# with minor modifications on settings
 [
   { # information to connect to compara/hive database
     TYPE => COMPARA,
-    '-host'     => "ia64g",
+    '-host'     => "ia64e",
     '-port'     => "3306",
     '-user'     => "ensadmin",
     '-pass'     => "ensembl",
-    '-dbname'   => "abel_compara_human_cow_blastz_27",
+    '-dbname'   => "jessica_compara_blastz_HsMm_27i",
     '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
   },
   { TYPE => HIVE,
-    'hive_output_dir'      => "/acari/work7a/abel/hive/abel_compara_human_cow_blastz_27",
+    'hive_output_dir'      => "/ecs4/work2/ensembl/jessica/data/hive_output/jessica_compara_blastz_HsMm_27i",
   },
 
   { TYPE => SPECIES,
@@ -27,46 +25,50 @@
   },
 
   { TYPE => SPECIES,
-    'abrev'          => 'Bt1',
-    'genome_db_id'   => 17,
+    'abrev'          => 'Mm32b',
+    'genome_db_id'   => 2,
+    'taxon_id'       => 10090,
     'phylum'         => 'Vertebrata',
     'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'host'           => "ecs2",
-    'port'           => 3365,
+    'host'           => "ia64e",
+    'port'           => 3306,
     'user'           => "ensro",
-    'dbname'         => "klh_bos_taurus_seq_24_1",
+    'dbname'         => "jessica_mus_musculus_core_27_33c",
   },
+
+
+  { TYPE => DNA_CHUNK_GROUP_SET,
+    'collection_name'       => 'mouse chr11 141F582B-75E8-11D9-8407-000D93B97580',
+    'genome_db_id'          => 2,
+    'genome_name_assembly'  => 'Mus musculus:NCBIM33',
+    'region'                => 'chromosome:11',
+    'chunk_size'            => 1100000,
+    'overlap'               =>  100000,
+    'group_set_size'        => 4000000,
+    'masking_options'       => do('./masking_mouse33.spec'),
+  },
+
+  { TYPE => DNA_CHUNK_GROUP_SET,
+    'collection_name'       => 'human chr17 E23BC007-75E7-11D9-8334-000D93B97580',
+    'genome_db_id'          => 1,
+    'genome_name_assembly'  => 'Homo sapiens:NCBI35',
+    'region'                => 'chromosome:17',
+    'chunk_size'            => 30000000,
+    'overlap'               => 0,
+    'masking_options'       => do('./masking_human35.spec'),
+  },
+
 
   { TYPE => GENOMIC_ALIGN,
     'subtype' => 'blastz',
     'method_link' => [1001, 'BLASTZ_RAW'],
     'analysis_template' => {
         '-program'       => 'blastz',
-        '-parameters'    => "{method_link=>'BLASTZ_RAW',options=>'T=1 L=5000 H=2200 M=40000000 O=400 E=30'}",
+        '-parameters'    => "{method_link=>'BLASTZ_RAW',options=>'T=1 T=1 L=3000 H=2200 M=40000000 O=400 E=30'}",
         '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
     },
-    'query' => {
-      'name_assembly'   => 'Bos taurus:COW1',
-      'genome_db_id'    => 17,
-      'chunk_size'      => 10100000,
-      'overlap'         =>   100000,
-#if no grouping is needed, comment the line above
-      'group_set_size'  => 10000000,
-      'masking_options' => {'default_soft_masking' => 1},
-    },
-    'target' => {
-      'name_assembly'   => 'Homo sapiens:NCBI35',
-      'genome_db_id'    => 1,
-# if you want to run on a specific region of the genome give coord_system_name:dnafrag_name
-# and uncomment one of the 'region' line below
-# for the whole chromosome 22
-#      'region'          => 'chromosome:22',
-# for chromosome 22 between 10Mb position to 11Mb position
-#      'region'          => 'chromosome:22:10000000:11000000',
-      'chunk_size'      => 30000000,
-      'overlap'         => 0,
-      'masking_options' => do('./human35.spec'),
-    }
+    'query'  => 'mouse chr11 141F582B-75E8-11D9-8407-000D93B97580',
+    'target' => 'human chr17 E23BC007-75E7-11D9-8334-000D93B97580',
   },
 
   { TYPE => END }
