@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Test::TestUtils qw(debug test_getter_setter);
 BEGIN {
   $| = 1;
   use Test;
-  plan tests => 11;
+  plan tests => 13;
 }
 
 #set to 1 to turn on debug prints
@@ -87,3 +87,9 @@ debug("[$id] == [" . $homology->dbID . "]?");
 $multi->restore('compara', 'homology');
 $multi->restore('compara', 'homology_member');
 $multi->restore('compara', 'method_link_species_set');
+
+$homologies = $ha->fetch_all_by_method_link_type("ENSEMBL_ORTHOLOGUES");
+#$homologies = $ha->fetch_by_source("ENSEMBL_ORTHOLOGUES");
+
+ok($homologies);
+ok(scalar @{$homologies} == 2);
