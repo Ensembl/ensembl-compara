@@ -41,7 +41,13 @@ my $gss = new Bio::EnsEMBL::DrawableContainer($display, $Container, $ConfigObjec
 =cut
 
 sub new {
-    my ($class, $display, $Container, $Config, $highlights) = @_;
+    my ($class, $display, $Container, $Config, $highlights, $strandedness) = @_;
+
+    my @strands_to_show = (1, -1);
+
+    if($strandedness == 1) {
+       @strands_to_show = (1);
+    }
 
     if(!defined $display) {
 	print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No display type defined\n);
@@ -76,9 +82,9 @@ sub new {
 
     my @subsections = $Config->subsections($self->{'display'});
 
-    my @order = sort { $Config->get($self->{'display'}, $a, 'dep') <=> $Config->get($self->{'display'}, $b, 'dep') } @subsections;
+    my @order = sort { $Config->get($self->{'display'}, $a, 'pos') <=> $Config->get($self->{'display'}, $b, 'pos') } @subsections;
 
-    for my $strand (1, -1) {
+    for my $strand (@strands_to_show) {
       my @tmp;
 
       if($strand == 1) {
