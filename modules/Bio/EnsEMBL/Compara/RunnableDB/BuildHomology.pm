@@ -94,11 +94,12 @@ sub fetch_input
   $self->{'verbose'} = 0;
   $self->{'store'} = 1;
   $self->{'getAllRHS'} = undef;
+  $self->{'doRHS'} = 1;
   $self->{'onlyOneHomology'} = undef;  #filter to place member in only 1 homology
   
   print("input_id = " . $self->input_id . "\n");
   
-  if($self->input_id =~ ',') {
+  if($self->input_id =~ '^{') {
     $self->load_blasts_from_input();
   }
   elsif($self->input_id eq 'all'){
@@ -281,10 +282,17 @@ sub load_blasts_from_input
   my $self = shift;
 
   print("load_blasts_from_input\n");
-  my $input = $self->input_id;
-  $input =~ s/\s//g;
-  my @logic_names = split(/,/ , $input);
-  foreach my $logic_name (@logic_names) {
+  my $input_hash = eval($self->input_id);
+
+  print("blast1 => ", $input_hash->{'bl1'}, "\n");
+  print("blast2 => ", $input_hash->{'bl2'}, "\n");
+  if($input_hash->{'noRHS'}) {
+    $self->{'doRHS'}=undef;
+    print("TURN OFF RHS analysis\n");
+  }
+
+  my $logic_names = $input_hash->{'blasts'};
+  foreach my $logic_name (@{$logic_names}) {
     my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
     if($analysis->logic_name =~ /blast_\d+/) {
       push @{$self->{'blast_analyses'}}, $analysis;
@@ -487,6 +495,7 @@ sub find_RHS
   my $memberPep = shift;
 
   return unless($refPAF and $memberPep);
+  return unless($self->{'doRHS'});
 
   return if($self->{'onlyOneHomology'} and
             ($self->{'membersToBeProcessed'}->{$memberPep->dbID}));
