@@ -49,11 +49,13 @@ sub _init {
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
 	    $start  = $vg->start();
 	    $end    = $vg->end();
-	    if ($vg->gene->is_known){
+
+	    if ($vg->gene->is_known) {
 		$colour = $known_col;
-		my @temp_geneDBlinks = $vg->gene->each_DBLink();
+                my @temp_geneDBlinks = $vg->gene->each_DBLink();
 		my $displaylink;
 	 	
+              DBLINK:
 		foreach my $DB_link ( @temp_geneDBlinks ){
 		    #########################
 		    # check for highlighting
@@ -62,20 +64,13 @@ sub _init {
 			$hi_colour = $Config->get( 'gene', 'hi');
 		    }
 
-		    if( $DB_link->database() eq 'HUGO' ) {
-			$displaylink = $DB_link;
-			last;
-		    }
-		    if( 
-			$DB_link->database() eq  'SP' ||
-			$DB_link->database() eq  'SPTREMBL' ||
-			$DB_link->database() eq  'SCOP' ) {
-			$displaylink = $DB_link;
-		    }
-		}
-
-		if (exists $highlights{$vg->id}){
-		    $hi_colour = $Config->get( 'gene', 'hi');
+                    my $db = $DB_link->database();
+                    foreach my $d ( qw(HUGO SWISS-PROT SPTREMBL SCOP) ) {
+                        if ($db eq $d ) {
+                            $displaylink = $DB_link;
+                            last DBLINK;
+                        }
+                    }
 		}
 
 		if( $displaylink ) {
@@ -83,6 +78,10 @@ sub _init {
 		} 
 		else {
 		    $label = $vg->id();
+		}
+
+		if (exists $highlights{$vg->id}){
+		    $hi_colour = $Config->get( 'gene', 'hi');
 		}
 		
 	    } else {
