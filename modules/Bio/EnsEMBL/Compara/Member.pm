@@ -66,7 +66,7 @@ sub new_fast {
 
 sub new_from_gene {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = $class->new(@args);
 
   if (scalar @args) {
 
@@ -118,7 +118,7 @@ sub new_from_gene {
 
 sub new_from_transcript {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = $class->new(@args);
   my $peptideBioSeq;
   my $seq_string;
 
