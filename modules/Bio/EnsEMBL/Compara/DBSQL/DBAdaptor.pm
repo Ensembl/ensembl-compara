@@ -42,7 +42,6 @@ package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Exception;
@@ -56,10 +55,11 @@ use Bio::EnsEMBL::Utils::Argument;
 
   Arg [..]   : list of named arguments.  See Bio::EnsEMBL::DBConnection.
                [-CONF_FILE] optional name of a file containing configuration
-               information for comparas genome databases.  If databases are
-               not added in this way, then they should be added via the
-               method add_DBAdaptor. An example of the conf file can be found
-               in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
+               information for compara genome databases. An example of the conf file
+               can be found in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
+               *** WARNING *** -CONF_FILE is now deprecated. Compara now uses the more generic
+               Bio::EnsEMBL::Registry configuration file.
+
   Example    :  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
 						    -user   => 'root',
 						    -dbname => 'pog',
@@ -81,6 +81,9 @@ sub new {
   my ($conf_file) = rearrange(['CONF_FILE'], @args);
 
   if(defined($conf_file) and $conf_file ne "") {
+    deprecate("Compara.conf file is deprecated. Compara is now using the\n" .
+              "more generic Bio::EnsEMBL::Registry configuration file\n");
+
     #read configuration file from disk
     my @conf = @{do $conf_file};
 
@@ -98,13 +101,14 @@ sub new {
         }
         require "${mod}.pm";
 
+
         $db = $module->new(-dbname => $db_hash->{'dbname'},
                            -host   => $db_hash->{'host'},
                            -user   => $db_hash->{'user'},
                            -pass   => $db_hash->{'pass'},
                            -port   => $db_hash->{'port'},
                            -driver => $db_hash->{'driver'},
-                           -disconnect_when_inactive =>0);
+                           -disconnect_when_inactive => $db_hash->{'disconnect_when_inactive'});
       };
 
       if($@) {
@@ -155,14 +159,13 @@ sub add_db_adaptor {
 
   deprecate("add_db_adaptor is deprecated. Correct method is to call\n" .
             "dba->get_GenomeDBAdaptor->fetch_by_name_assembly(<name>,<assembly>)->db_adaptor(<coreDBA>)\n".
-            "Or to use the Registry\n");
+            "Or to use add_DBAdaptor using the Bio::EnsEMBL::Registry\n");
 
   unless($dba && ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
     $self->throw("dba argument must be a Bio::EnsEMBL::DBSQL::DBAdaptor\n" .
                  "not a [$dba]");
   }
 
-  # $dba->db->disconnect_when_inactive(0);
   my $mc = $dba->get_MetaContainer;
   my $csa = $dba->get_CoordSystemAdaptor;
   
@@ -208,7 +211,7 @@ sub get_db_adaptor {
 
   deprecate("get_db_adaptor is deprecated. Correct method is to call\n".
             "dba->get_GenomeDBAdaptor->fetch_by_name_assembly(<name>,<assembly>)->db_adaptor\n".
-            "Or to use the Registry\n");
+            "Or to use get_DBAdaptor using the Bio::EnsEMBL::Registry\n");
 
   unless($species && $assembly) {
     throw("species and assembly arguments are required\n");
@@ -226,18 +229,5 @@ sub get_db_adaptor {
 
   return $gdb->db_adaptor;
 }
-
-sub deleteObj {
-  my $self = shift;
-
-  if($self->{'genomes'}) {
-    foreach my $db (keys %{$self->{'genomes'}}) {
-      delete $self->{'genomes'}->{$db};
-    }
-  }
-
-  $self->SUPER::deleteObj;
-}
-
 
 1;
