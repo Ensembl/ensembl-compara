@@ -77,7 +77,9 @@ CREATE TABLE genomic_align_block (
 # 
 #   This table stores the sequences belonging to the same genomic_align_block entry
 #
-
+-- primary key is used when fecthing by dbID
+-- key genomic_align_block_id is used when fetching by genomic_align_block_id
+-- key dnafrag is used in all other queries
 CREATE TABLE genomic_align (
   genomic_align_id int(10) NOT NULL AUTO_INCREMENT,
   genomic_align_block_id int(10) NOT NULL,
@@ -91,8 +93,7 @@ CREATE TABLE genomic_align (
 
   PRIMARY KEY genomic_align_id (genomic_align_id),
   KEY genomic_align_block_id (genomic_align_block_id),
-  KEY dnafrag_id (dnafrag_id, dnafrag_start, dnafrag_start),
-  KEY dnafrag_id2 (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
+  KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
 );
 
 #
