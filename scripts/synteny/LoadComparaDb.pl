@@ -83,7 +83,7 @@ while (defined (my $line = <>) ) {
     $tg_dnafrag->name($tg_chr);
     $tg_dnafrag->genome_db($tg_gdb);
     $tg_dnafrag->coord_system_name($tg_slices{$tg_chr}->coord_system->name);
-    $tg_dnafrag->end($tg_slices{$tg_chr}->req_region_length);
+    $tg_dnafrag->length($tg_slices{$tg_chr}->seq_region_length);
     $dfa->store_if_needed($tg_dnafrag);
 
 # print STDERR "1: $qy_chr, 2: $tg_chr, qy_end: " .$qy_dnafrag->end.", tg_end: ". $tg_dnafrag->end."\n";
