@@ -50,6 +50,7 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+my $MAX_ALIGNMENT = 14000;
 
 =head2 store
 
@@ -148,8 +149,9 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
        $genome_db->has_query( $target_genome ) ) {
      $sql = $select . " WHERE gab.consensus_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
-       $sql .= " AND gab.consensus_start<= $end
-                 AND gab.consensus_end >= $start";
+       $sql .= ( " AND gab.consensus_start <= $end
+                 AND gab.consensus_start >= ".( $start-$MAX_ALIGNMENT )."
+                 AND gab.consensus_end >= $start" );
      }
      if( defined $target_genome ) {
        $sql .= " AND gab.query_dnafrag_id = d.dnafrag_id
@@ -165,12 +167,13 @@ sub _fetch_all_by_dnafrag_genomedb_direct {
      
      $sql = $select . " WHERE gab.query_dnafrag_id = $dnafrag_id";
      if (defined $start && defined $end) {
-       $sql .= " AND gab.query_start<= $end
-                 AND gab.query_end >= $start";
+       $sql .= ( " AND gab.query_start <= $end
+                 AND gab.query_start >= ".( $start-$MAX_ALIGNMENT ) ."
+                 AND gab.query_end >= $start" ) ;
      }
      if( defined $target_genome ) {
-       $sql .= " AND gab.consensus_dnafrag_id = d.dnafrag_id
-                 AND d.genome_db_id = ".$target_genome->dbID();
+       $sql .= ( " AND gab.consensus_dnafrag_id = d.dnafrag_id
+                 AND d.genome_db_id = ".$target_genome->dbID());
      }
      $sth = $self->prepare( $sql );
      $sth->execute();
@@ -214,8 +217,10 @@ sub fetch_all_by_dnafrag_genomedb {
   # direct or indirect ??
   if( $genome_cons->has_consensus( $genome_query ) ||
       $genome_cons->has_query( $genome_query )) {
-    $self->_fetch_all_by_dnafrag_genomedb_direct
+
+    return $self->_fetch_all_by_dnafrag_genomedb_direct
       ( $dnafrag, $target_genome, $start, $end );
+    
   } else {
     # indirect checks
     my $linked_cons = $genome_cons->linked_genomes();
@@ -240,17 +245,26 @@ sub fetch_all_by_dnafrag_genomedb {
 
     # go from each dnafrag in the result set to target_genome
     # there is room for improvement here: create start end
-    my %frags = map { $_->query_dnafrag->dbID => $_->query_dnafrag } @$set1;
+    # my %frags = map { $_->query_dnafrag->dbID => $_->query_dnafrag } @$set1;
     
-    
-    my $set2 = [];
-    for my $frag ( values %frags ) {
+    my $merged_aligns = [];
+    my $frag;
+
+    for my $alignA ( @$set1 ) {
+      $frag = $alignA->query_dnafrag();
+      $start = $alignA->query_start();
+      $end = $alignA->query_end();
+
       my $d_res = $self->_fetch_all_by_dnafrag_genomedb_direct
-	( $frag, $genome_query );
-      push( @$set2, @$d_res );
+	( $frag, $genome_query, $start, $end );
+
+      for my $alignB ( @$d_res ) {
+	$self->_add_derived_alignments( $merged_aligns, $alignA, $alignB );
+      } 
     }
     # now set1 and set2 have to merge...
-    $self->_merge_alignsets( $set1, $set2 );
+    # $self->_merge_alignsets( $set1, $set2 );
+    return $merged_aligns;
   }
 }
 
