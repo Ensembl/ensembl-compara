@@ -29,14 +29,14 @@ sub _init {
     return unless ($self->strand() == 1);
 
     # This sucks hard. We already have a map DB connection, can anyone find it?
-    my $mapdb   = new Bio::EnsEMBL::Map::DBSQL::Obj(   
-						    -user   => $ENSEMBL_DBUSER, 
-						    -dbname => $ENSEMBL_MAP,
-						    -host   => $ENSEMBL_HOST,
-						    -port   => $ENSEMBL_HOST_PORT,
-						    -ensdb  => $ENSEMBL_DB,
-						    );
-    my $fpc_map = $mapdb->get_Map( 'FPC' );
+#    my $mapdb   = new Bio::EnsEMBL::Map::DBSQL::Obj(   
+#						    -user   => $ENSEMBL_DBUSER, 
+#						    -dbname => $ENSEMBL_MAP,
+#						    -host   => $ENSEMBL_HOST,
+#						    -port   => $ENSEMBL_HOST_PORT,
+#						    -ensdb  => $ENSEMBL_DB,
+#						    );
+#    my $fpc_map = $mapdb->get_Map( 'FPC' );
     
     my $cmap  = new ColourMap;
     my $col1  = $cmap->id_by_name('contigblue1');
@@ -86,10 +86,10 @@ sub _init {
 	    my $strand = $temp_rawcontig->strand();
 
 	    my $c      = $self->{'container'}->dbobj()->get_Clone($clone);
-	    my $fpc    = $fpc_map->get_Clone_by_name($c->embl_id);
-	    my $fpc_id = "unknown";
-	    $fpc_id    = $fpc->name() if(defined $fpc);
-
+#	    my $fpc    = $fpc_map->get_Clone_by_name($c->embl_id);
+#	    my $fpc_id = "unknown";
+#	    $fpc_id    = $fpc->name() if(defined $fpc);
+#
 #	    my @matching = grep { /$rid|$clone|$fpc_id/ } $self->highlights();
 #	    if(scalar @matching > 0) {
 #		$col = $self->{'config'}->get($self->{'config'}->script(), 'contig', 'hi');
