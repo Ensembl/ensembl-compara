@@ -312,10 +312,10 @@ sub _create_underlying_Slices {
     }
     $reference_genomic_align->genomic_align_block->reference_slice_start($align_slice_length + 1);
     if ($expanded) {
-      $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence);
+      $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence("+FAKE_SEQ"));
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper);
     } else {
-      $align_slice_length += CORE::length($reference_genomic_align->original_sequence);
+      $align_slice_length += $reference_genomic_align->dnafrag_end - $reference_genomic_align->dnafrag_start + 1;
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0,1));
     }
     $reference_genomic_align->genomic_align_block->reference_slice_end($align_slice_length);
@@ -386,7 +386,7 @@ sub _create_underlying_Slices {
 #               (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
             (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
       my $species = $this_genomic_align->dnafrag->genome_db->name;
-      throw ("This species [$species] is not included in the Bio::EnsEMBL::Compara::MethodLinkSpeicesSet")
+      throw ("This species [$species] is not included in the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
           if (!defined($self->{slices}->{$species}));
       if (!defined($slice_adaptors->{$species})) {
         $slice_adaptors->{$species} =
