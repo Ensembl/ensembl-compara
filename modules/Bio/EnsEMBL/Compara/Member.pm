@@ -234,6 +234,7 @@ sub stable_id {
 sub version {
   my $self = shift;
   $self->{'_version'} = shift if(@_);
+  $self->{'_version'} = 0 unless(defined($self->{'_version'}));
   return $self->{'_version'};
 }
 
