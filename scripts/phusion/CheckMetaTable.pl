@@ -54,7 +54,7 @@ if (! defined $stored_max_alignment_length) {
    print STDERR "Stored max_alignment_length value $stored_max_alignment_length in meta table\n";
 } elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
   $db->get_MetaContainer->update_key_value("max_alignment_length",$max_alignment_length + 1);
-  print STDERR "Updated max_alignment_length value $stored_max_alignment_length in meta table\n";
+  print STDERR "Updated max_alignment_length value ",$max_alignment_length + 1," in meta table\n";
 } else {
   print STDERR "No update needed in meta table\n";
 }
