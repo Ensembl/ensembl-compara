@@ -229,6 +229,7 @@ CREATE TABLE homology (
  n              float(10,1),
  s              float(10,1),
  lnl            float(10,3),
+ threshold_on_ds float(10,5),
 
  PRIMARY KEY (homology_id)
 );
