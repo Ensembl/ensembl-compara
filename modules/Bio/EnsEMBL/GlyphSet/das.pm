@@ -59,7 +59,7 @@ sub _init {
   $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
   $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
   ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
-  $self->{'textwidth'}     *= (1 + 1/$configuration->{'length'});
+  $self->{'textwidth'}     *= (1 + 1/($configuration->{'length'}||1) );
   $configuration->{'h'} = $self->{'textheight'};
 
   my $dsn = $Extra->{'dsn'};
