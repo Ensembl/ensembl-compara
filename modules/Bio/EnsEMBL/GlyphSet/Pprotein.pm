@@ -45,7 +45,7 @@ sub _init {
     if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')){
       $db = 'core';
     } elsif ($type eq 'genomewise') {
-      $db = 'estgene';
+      $db = 'est';
     } elsif( $type ){
       ($SPECIES_DEFS->ENSEMBL_SITETYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
     } else {

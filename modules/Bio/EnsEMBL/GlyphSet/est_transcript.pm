@@ -50,7 +50,7 @@ sub href {
 
   return ( $self->{'config'}->get('est_transcript','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
         "#$tid" : 
-        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=estgene&gene=$gid);
+        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=est&gene=$gid);
 
 }
 
@@ -58,7 +58,7 @@ sub gene_href {
   my ($self, $gene, %highlights) = @_;
   my $gid = $gene->stable_id();
   return ( $self->{'config'}->get('est_transcript','_href_only') eq '#gid' && exists $highlights{$gid} ) ?
-    "#$gid" : qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=estgene&gene=$gid);
+    "#$gid" : qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=est&gene=$gid);
 }
 
 
@@ -72,8 +72,8 @@ sub zmenu {
   
   my $zmenu = {
     'caption'         => "EST Gene",
-    "01:Gene:$gid"    => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=estgene",
-    "02:Transcr:$tid" => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=estgene",                	
+    "01:Gene:$gid"    => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=est",
+    "02:Transcr:$tid" => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=est",                	
     '04:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cDNA&id=$tid"
   };
 
@@ -83,7 +83,7 @@ sub zmenu {
   }   
 
   if($pid) {
-    $zmenu->{"03:Peptide:$pid"}   = qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid&db=estgene);
+    $zmenu->{"03:Peptide:$pid"}   = qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid&db=est);
     $zmenu->{'05:Export Peptide'} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
   }
   return $zmenu;
@@ -94,7 +94,7 @@ sub gene_zmenu {
   my $gid = $gene->stable_id();
   my $zmenu = {
     'caption'                   => "EST Gene",
-    "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=estgene",
+    "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=est",
   };
   $zmenu->{"00:@{[$gene->external_name()]}"} = '' if $gene->external_name();
   return $zmenu;
@@ -125,10 +125,11 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
+  warn "FEATURES EST TRANSCRIPT";
   my $track = 'est_transcript';
   my $db_alias = $self->{'config'}->get($track,'db_alias');
   if( ! $db_alias and ! $self->{'config'}->{'fakecore'} ){
-    $db_alias = 'estgene';
+    $db_alias = 'est';
   }
   my $slice = $self->{'container'};
   my @genes;

@@ -306,16 +306,19 @@ sub expanded_init {
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id() : undef;
     next if $gene_strand != $strand and $strand_flag eq 'b'; # skip features on wrong strand....
     next if $target_gene && $gene_stable_id ne $target_gene;
-    my %TAGS = ();
+    my %TAGS = (); my @GENE_TAGS;
     if( $link && ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
       if( $gene_stable_id ) {
+        my $alt_alleles = $gene->get_all_alt_alleles();   
         if( $Config->{'previous_species'} ) {
           my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'previous_species'} );
           push @{$TAGS{$psid}}, map { $Config->{'slice_id'}. "#$_#$pid" } @{$href};
+          push @GENE_TAGS, map { $Config->{'slice_id'}. "=@{[$_->stable_id]}=$gene_stable_id" } @{$alt_alleles};
         }
         if( $Config->{'next_species'} ) {
           my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'next_species'} );
           push @{$TAGS{$psid}}, map { ($Config->{'slice_id'}+1). "#$pid#$_" } @{$href};
+          push @GENE_TAGS, map { ($Config->{'slice_id'}+1). "=$gene_stable_id=@{[$_->stable_id]}" } @{$alt_alleles};
         }
       }
     }
@@ -345,6 +348,9 @@ sub expanded_init {
         foreach( @{$TAGS{$transcript->translation->stable_id}||[]} ) { 
           $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col, 'line', $join_z ) ;
         }
+      }
+      foreach( @GENE_TAGS) { 
+        $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col, 'line', $join_z ) ;
       }
       for(my $i = 0; $i < @exons; $i++) {
         my $exon = @exons[$i];
