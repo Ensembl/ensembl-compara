@@ -18,9 +18,11 @@ sub init_label {
   my $Config   = $self->{'config'};
   my $confkey  = $self->{'extras'}->{'confkey'};
   my $text     = $self->{'extras'}->{'name'};
+  my $authority= $self->{'extras'}->{'authority'} || '';
   my $colour   = $Config->get($confkey,'col') || 'black';
   my $fontname = 'Small';
   my $fontwidth= $Config->texthelper->width($fontname);
+  my $longtext = $text;
 
   my $textlen = length($text);
   if( $textlen > $numchars ){ # Truncate
@@ -31,12 +33,16 @@ sub init_label {
   $self->{'extras'}->{'x_offset'} = $negative_extend;
 
 
+  my $zmenu = { caption=>$longtext };
+  $authority and $zmenu->{"01:Details"} = $authority;
+
   my $label = new Sanger::Graphics::Glyph::Text
     ({
       'text'      => $text,
       'font'      => $fontname,
       'colour'    => $colour,
       'absolutey' => 1,
+      'zmenu'     => $zmenu
      });
   $self->label($label);
 }

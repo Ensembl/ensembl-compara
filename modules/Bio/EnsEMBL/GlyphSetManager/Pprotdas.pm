@@ -11,10 +11,13 @@ sub init {
   my ($self) = @_;
 
   my $Config = $self->{'config'};
-  my $protein = $self->{'container'};
+  my $translation = $self->{'container'};
+
+  my @das_adaptors = map{$_->adaptor} @{$translation->get_all_DASFactories};
+  my %authorities = map{$_->name => $_->authority} @das_adaptors;
 
   # Get features. The data structure returned is YUK!
-  my $feat_container = $protein->get_all_DASFeatures();
+  my $feat_container = $translation->get_all_DASFeatures();
   ref( $feat_container ) ne 'HASH' and return; # Sanity check
 
   # Set the order flag. This ensures glyphsets are drawn in the order 
@@ -32,6 +35,7 @@ sub init {
       ({ 
         name=>"DAS $das_confkey",
         confkey=>$user_confkey,
+        authority=>$authorities{$das_confkey},
         order  => sprintf("%05d", $self->{order} -- )
        });
 
