@@ -73,7 +73,7 @@ sub adaptor {
 sub dbID {
   my ($self,$value) = @_;
 
-  return $self->taxon_id($value);
+  return $self->ncbi_taxid($value);
 }
 
 =head2 taxon_id
