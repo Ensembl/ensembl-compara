@@ -136,16 +136,18 @@ sub store {
     push(@genome_db_ids, $species->dbID);
   }
 
-  $sth = $self->prepare(qq{
-		SELECT
-		  method_link_species_set_id, COUNT(*) as count
-		FROM
-			method_link_species_set
-		WHERE
-			genome_db_id in (}.join(",", @genome_db_ids).qq{)
-			AND method_link_id = $method_link_id
-		GROUP BY method_link_species_set_id
-		HAVING count = }.scalar(@genome_db_ids));
+  my $select_sql = qq{
+          SELECT
+            method_link_species_set_id, COUNT(*) as count
+          FROM
+                  method_link_species_set
+          WHERE
+                  genome_db_id in (}.join(",", @genome_db_ids).qq{)
+                  AND method_link_id = $method_link_id
+          GROUP BY method_link_species_set_id
+          HAVING count = }.scalar(@genome_db_ids);
+
+  $sth = $self->prepare($select_sql);
   $sth->execute();
 
   my ($dbID) = $sth->fetchrow_array();
@@ -155,8 +157,9 @@ sub store {
     $self->dbc->do("LOCK TABLES method_link WRITE, method_link_species_set WRITE");
 
     # Now, check if the object has not been stored before (tables are locked)
+    $sth = $self->prepare($select_sql);
     $sth->execute();
-    $dbID = $sth->fetchrow_array();
+    ($dbID) = $sth->fetchrow_array();
 
     # If the object still does not exist in the DB, store it
     if (!$dbID) {
