@@ -35,17 +35,16 @@ Empty set (0.98 sec)
 
  Then dump the sequence for each chromosome, e.g.
 
-ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl
-DumpChromosomeFragments.pl \
+ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl \
 	-host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 \
-	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0
+	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 \
 	-phusion Hs -o output_filename
 
  To send that on the farm
 
 > echo "select name from chromosome where name not like \"%_NT_%\" and name not like \"%_DR%\";"|mysql -h ecs2d -u ensro homo_sapiens_core_12_31|awk '!/name/'|sort -u > Hs31_chr_names
 
-> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ~/src/ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
+> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names $i -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
 
  Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
  Delete the intermediate files.
@@ -78,9 +77,10 @@ For details on the phusion program, see
 Mullikin, JC and Ning, Z. "The Phusion Assembler", Genome Research 13, 81-90, 2003
 
  The phusion run on human/mouse needs ~32gb of memory, so you'll need to run it on aristotle.
- Here is the command line.
+ Here is the command line to send the job to aristotle
 
-/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/phusion -kmer 17 -depth 2 -match 2 -match2 2 -set 50 -break 1 -SCG /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa mates /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa > phusion17-60k.out 2> phusion17-60k.err
+bsub -q acaritest -C0 -R"select[mem>=20000] rusage[mem=20000]" -o phusion17-60k.out -e phusion17-60k.err /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/phusion -kmer 17 -depth 2 -match 2 -match2 2 -set 50 -break 1 -SCG /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa mates /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa
+
 
  Takes another ~6 hours
 
