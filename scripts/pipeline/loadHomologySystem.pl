@@ -344,10 +344,36 @@ sub prepareGenomeAnalysis
     $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
   }
 
+  #
+  # CreateHomology_dNdSJob
+  #
+
+  my $CreateHomology_dNdSJob = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateHomology_dNdSJob',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs'
+  );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($CreateHomology_dNdSJob);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHomology_dNdSJob->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $ctrlRuleDBA->create_rule($buildHomology,$CreateHomology_dNdSJob);
+  }
+  if (defined $dnds_params{'species_sets'}) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+        (
+         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . '}',
+         -analysis       => $CreateHomology_dNdSJob,
+        );
+  }
 
   #
   # Homology_dNdS
   #
+
   my $homology_dNdS = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Homology_dNdS',
@@ -364,7 +390,7 @@ sub prepareGenomeAnalysis
     $stats->hive_capacity(-1);
     $stats->status('BLOCKED');
     $stats->update();
-    $ctrlRuleDBA->create_rule($buildHomology,$homology_dNdS);
+    $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
   }
 
 
