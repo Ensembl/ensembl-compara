@@ -98,7 +98,7 @@ sub _init {
             $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0;
             $gene_label = $g->{'synonym'};
             $high       = 1 if(exists $highlights{ $gene_label });
-            if(defined $_->{'type'} eq 'pseudo') {
+            if(defined $g->{'type'} eq 'pseudo') {
                 $gene_col = $pseudo_col;
             } else {
                 $gene_col = $ext_col;
@@ -107,7 +107,7 @@ sub _init {
                 'chr_start' => $g->{'chr_start'},
                 'chr_end'   => $g->{'chr_end'},
                 'start'     => $g->{'start'},
-                'strand'    => $_->{'strand'},
+                'strand'    => $g->{'strand'},
                 'end'       => $g->{'end'},
                 'ens_ID'    => '', #$g->{'stable_id'},
                 'label'     => $gene_label,
@@ -148,6 +148,7 @@ sub _init {
 			};
             if( $g->{'type'} eq 'ensembl') {
     			$rect->{'zmenu'}->{"02:$g->{'ens_ID'}"} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}" ;
+    			$rect->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}" ;
             } else {
                 $rect->{'zmenu'}->{"02:$g->{'ens_ID'}"} = '';
             }

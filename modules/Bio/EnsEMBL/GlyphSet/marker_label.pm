@@ -36,6 +36,8 @@ sub _init {
 		'colour'    => $feature_colour,
 		'absolutey' => 1,
 		'text'	    => $fid,
+        'href'      => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
+
 		});
 
 	##############

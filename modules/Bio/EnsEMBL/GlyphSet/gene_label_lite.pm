@@ -112,7 +112,7 @@ sub _init {
             $high       = exists $highlights{ $g->{'stable_id'} } ? 1 : 0;
             $gene_label = $g->{'synonym'};
             $high       = 1 if(exists $highlights{ $gene_label });
-            if(defined $_->{'type'} eq 'pseudo') {
+            if(defined $g->{'type'} eq 'pseudo') {
                 $gene_col = $pseudo_col;
             } else {
                 $gene_col = $ext_col;
@@ -121,7 +121,7 @@ sub _init {
                 'chr_start' => $g->{'chr_start'},
                 'chr_end'   => $g->{'chr_end'},
                 'start'     => $g->{'start'},
-                'strand'    => $_->{'strand'},
+                'strand'    => $g->{'strand'},
                 'end'       => $g->{'end'},
                 'ens_ID'    => '', #$g->{'stable_id'},
                 'label'     => $gene_label,
@@ -163,7 +163,10 @@ sub _init {
 				"bp: $g->{'chr_start'}-$g->{'chr_end'}" 			=> '',
 				"length: ".($g->{'chr_end'}-$g->{'chr_start'}+1) 	=> ''
 			}; 
-			$tglyph->{'zmenu'}->{"Gene: $g->{'ens_ID'}"} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}" if $g->{'ens_ID'} ne '';
+            if( $g->{'ens_ID'} ne '' ) {
+    			$tglyph->{'zmenu'}->{"Gene: $g->{'ens_ID'}"} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}"; 
+                $tglyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$g->{'ens_ID'}" ;
+            }
 		}
 		
         my $depth = $Config->get('gene_label_lite', 'dep');

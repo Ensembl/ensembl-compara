@@ -74,6 +74,7 @@ sub _init {
     }                 # end of Skip in single transcript mode
     #&eprof_end('transcript - get_all_ExternalGenes()');
     $type = undef;
+    my $PREFIX = "^".EnsWeb::species_defs->ENSEMBL_PREFIX."T";
     
 GENE:
     my $count = 0;
@@ -119,7 +120,6 @@ TRANSCRIPT:
                 if ($eg->{'_is_external'}) {
                     $colour = $type eq "pseudo" ? $pseudo_colour : $ext_colour;
                 }
-				my $PREFIX = "^".EnsWeb::species_defs->ENSEMBL_PREFIX."T";
                 if( $Config->{'_href_only'} eq '#tid' ) {
                     $Composite->{'href'} = qq(#$tid);
                 } elsif ($tid !~ /$PREFIX/o){
@@ -164,7 +164,7 @@ TRANSCRIPT:
                             '08:cDNA sequence'          => "/perl/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
                     };
 					$Composite->{'zmenu'}->{"02:(Gene:$gene_label)"} if $gene_label;
-
+                    $Composite->{'href'} = "/perl/geneview?gene=$vgid";
                 }
             } #end of Skip this next chunk if single transcript mode
             my @exons = $transcript->each_Exon_in_context($vcid);
@@ -248,7 +248,12 @@ EXON:
             my $bump_height;
             if( $Config->{'_add_labels'} ) {
                 my ($font_w_bp, $font_h_bp)   = $Config->texthelper->px2bp($fontname);
-                my $tid = $transcript->stable_id();
+                my $tid;
+                if( $Config->{'_transcript_names_'} eq 'yes' ) {
+                    $tid = $id=~/$PREFIX/o ? 'NOVEL' : $id;
+                } else {
+                    $tid = $transcript->stable_id();
+                }
                 my $width_of_label  = $font_w_bp * (length($tid) + 1);
                 my $start_of_label  = int( ($start_exon->start() + $end_exon->end() - $width_of_label )/2 );
                 $start_of_label  = $start_exon->start();

@@ -43,9 +43,10 @@ sub _init {
 	    'colour' 	=> $feature_colour,
 	    'absolutey' => 1,
 	    'zmenu'     => { 
-		'caption' => $fid,
-		'Marker info' => "/perl/markerview?marker=$fid",
+    		'caption' => $fid,
+	    	'Marker info' => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
 	    },
+        'href'      => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
 	});
 	$self->push($glyph);
     }
