@@ -23,6 +23,7 @@ sub new {
 	'maxx'       => undef,
 	'maxy'       => undef,
 	'label'      => undef,
+	'label2'     => undef,	
 	'container'  => $VirtualContig,
 	'config'     => $Config,
 	'extras'     => $extra_config,
@@ -74,7 +75,6 @@ sub glyphs {
 #
 sub push {
     my ($self, $Glyph) = @_;
-
     my ($gx, $gw, $gy, $gh);
 
 	#########
@@ -98,17 +98,19 @@ sub push {
     # x
     #
     if($gx < $self->minx()) {
-	$self->minx($gx);
-    } elsif(($gx + $gw) > $self->maxx()) {
-	$self->maxx($gx + $gw);
+		$self->minx($gx);
+    };
+	if(($gx + $gw) > $self->maxx()) {
+		$self->maxx($gx + $gw);
     }
 
     # y
     # 
     if($gy < $self->miny()) {
-	$self->miny($gy);
-    } elsif(($gy + $gh) > $self->maxy()) {
-	$self->maxy($gy + $gh);
+		$self->miny($gy);
+    };
+	if(($gy + $gh) > $self->maxy()) {
+		$self->maxy($gy + $gh);
     }
 }
 
@@ -144,18 +146,20 @@ sub unshift {
     # x
     #
     if($gx < $self->minx()) {
-	$self->minx($gx);
-    } elsif(($gx + $gw) > $self->maxx()) {
-	$self->maxx($gx + $gw);
+		$self->minx($gx);
+    } 
+	if(($gx + $gw) > $self->maxx()) {
+		$self->maxx($gx + $gw);
     }
 
     # y
     # 
 
     if($gy < $self->miny()) {
-	$self->miny($gx);
-    } elsif(($gy + $gh) > $self->maxy()) {
-	$self->maxy($gy + $gh);
+		$self->miny($gx);
+    }
+	if(($gy + $gh) > $self->maxy()) {
+		$self->maxy($gy + $gh);
     }
 }
 
@@ -256,6 +260,12 @@ sub label {
     my ($self, $val) = @_;
     $self->{'label'} = $val if(defined $val);
     return $self->{'label'};
+}
+
+sub label2 {
+    my ($self, $val) = @_;
+    $self->{'label2'} = $val if(defined $val);
+    return $self->{'label2'};
 }
 
 sub transform {
