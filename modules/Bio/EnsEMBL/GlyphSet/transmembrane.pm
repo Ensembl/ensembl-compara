@@ -28,12 +28,11 @@ sub _init {
     my $protein    = $self->{'container'};
     my $Config     = $self->{'config'};  
 
-    foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->feature2->seqname eq "transmembrane") {
-	    push @{$hash{$feat->feature1->seqname}}, $feat;
-	}
+    my @transm_feat = $protein->get_all_TransmembraneFeatures();
+    foreach my $feat(@transm_feat) {
+	push(@{$hash{$feat->feature1->seqname}},$feat);
     }
-    
+
     foreach my $key (keys %hash) {
        	my @row       = @{$hash{$key}};
 	my $desc      = $row[0]->idesc();

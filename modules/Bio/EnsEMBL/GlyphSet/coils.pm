@@ -29,10 +29,9 @@ sub _init {
     my $protein = $self->{'container'};
     my $Config  = $self->{'config'}; 
     
-    foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->feature2->seqname eq "coils") {
-	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	}
+    my @coils_feat = $protein->get_all_CoilsFeatures;
+    foreach my $feat(@coils_feat) {
+	push(@{$hash{$feat->feature2->seqname}},$feat);
     }
     
     my $caption = "Coils";

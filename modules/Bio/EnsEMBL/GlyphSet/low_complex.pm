@@ -29,10 +29,9 @@ sub _init {
     my $Config 		= $self->{'config'};
     my $caption 	= "Low complexity region";
 
-    foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->feature2->seqname eq "low_complexity") {
-	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	}
+    my @lcompl_feat = $protein->get_all_LowcomplFeatures();
+    foreach my $feat(@lcompl_feat) {
+	push(@{$hash{$feat->feature2->seqname}},$feat);
     }
     
     foreach my $key (keys %hash) {

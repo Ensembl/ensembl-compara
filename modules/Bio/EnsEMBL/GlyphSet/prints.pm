@@ -35,10 +35,9 @@ sub _init {
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
-    foreach my $feat ($protein->each_Protein_feature()) {
-	if ($feat->feature2->seqname =~ /^PR\w+/) {
-	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	}
+    my @pr_feat = $protein->get_all_PrintsFeatures();
+    foreach my $feat(@pr_feat) {
+	push(@{$hash{$feat->feature2->seqname}},$feat);
     }
     
     foreach my $key (keys %hash) {

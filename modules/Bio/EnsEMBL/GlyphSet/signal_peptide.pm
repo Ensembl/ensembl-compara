@@ -28,12 +28,9 @@ sub _init {
     my $protein = $self->{'container'};
     my $Config  = $self->{'config'};  
 
-    foreach my $feat ($protein->each_Protein_feature()) {
-	#print STDERR "desc: ",$feat->feature2->seqname ,"!\n";
-	if ($feat->feature2->seqname eq "signalp") {
-	    #print STDERR "found a sig peptide!\n";
-	    push(@{$hash{$feat->feature2->seqname}},$feat);
-	}
+    my @sigp_feat = $protein->get_all_SigpFeatures();
+    foreach my $feat(@sigp_feat) {
+	push(@{$hash{$feat->feature2->seqname}},$feat);
     }
     
     my $caption = "signal_peptide";

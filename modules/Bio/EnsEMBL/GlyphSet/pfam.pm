@@ -39,11 +39,14 @@ sub _init {
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
 
-    foreach my $feat ($protein->each_Protein_feature()) {
-       if ($feat->feature2->seqname =~ /^PF\w+/) {
-	   push(@{$hash{$feat->feature2->seqname}},$feat);
-       }
+    #foreach my $feat ($protein->each_Protein_feature()) {
+       #if ($feat->feature2->seqname =~ /^PF\w+/) {
+    my @pf_feat = $protein->get_all_PfamFeatures();
+    foreach my $feat(@pf_feat) {
+	push(@{$hash{$feat->feature2->seqname}},$feat);
     }
+       #}
+   #}
     
     foreach my $key (keys %hash) {
 	my @row  = @{$hash{$key}};
