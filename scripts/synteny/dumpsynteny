@@ -10,6 +10,7 @@ use Getopt::Long;
 my $usage = "
 dumpsynteny -host ecs1b.sanger.ac.uk 
             -user ensro
+	    -port 3352
             -dbname ensembl_compara_10_1
             -chr_names \"22\"
             -species1 \"Homo sapiens\"
@@ -17,16 +18,19 @@ dumpsynteny -host ecs1b.sanger.ac.uk
             -species2 \"Mus musculus\"
             -assembly2 MGSC3
             -conf_file Compara.conf
+            -align_type BLASTZ_NET
 
 $0 [-help]
    -host compara_db_host_server
    -user username (default = 'ensro')
+   -port db port no
    -dbname compara_database_name
    -chr_names \"20,21,22\" (default = \"all\")
    -species1 (e.g. \"Homo sapiens\") from which alignments are queried and chr_names refer to
    -assembly1 (e.g. NCBI30) assembly version of species1
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
+   -align_type BLASTZ_NET
    -conf_file comparadb_configuration_file
               (see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example)
 
@@ -37,7 +41,7 @@ my $host = 'ecs2d.internal.sanger.ac.uk';
 my $user = 'ensro';
 my $pass = '';
 my $dbname = 'ensembl_compara_10_1';
-
+my $port= 3352;
 my $species1 = 'Homo sapiens';
 my $species1_assembly = 'NCBI30';
 my $species2 = 'Mus musculus';
@@ -54,12 +58,14 @@ $| = 1;
 	    'user:s' => \$user,
 	    'dbname:s' => \$dbname,
 	    'pass:s' => \$pass,
+	    'port=i' => \$port,
 	    'species1:s' => \$species1,
 	    'assembly1:s' => \$species1_assembly,
 	    'species2:s' => \$species2,
 	    'assembly2:s' => \$species2_assembly,
 	    'chr_names=s' => \$chr_names,
-	    'conf_file=s' => \$conf_file);
+	    'conf_file=s' => \$conf_file,
+	    'align_type=s' => \$assembly_type);
 
 if ($help) {
   print $usage;
@@ -71,6 +77,7 @@ print STDERR "Time in dumpgff " . time . "\n";
 my $compdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $host,
 							  -user        => $user,
 							  -dbname      => $dbname,
+							  -port		=> $port,
 							  -pass        => $pass,
 							  -conf_file   => $conf_file);
 
