@@ -158,17 +158,18 @@ sub loadMembersFromUniprot
     my $stable_id = $id;
     $stable_id = $1 if($id =~ /$source:(.*)/);
     my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id($source, $stable_id);
-    if($member) {
+    if($member and $member->sequence_id) {
       #print("$source $stable_id : already loadled in compara\n");
     } else {
+      #print("need to load $index : $source $stable_id\n");
       push @id_chunk, $id;
-      #$self->pfetch_and_store_by_ids($source, $id);
     }
     if(scalar(@id_chunk)>=30) {
       $self->pfetch_and_store_by_ids($source, @id_chunk);
       @id_chunk = ();
     }
   }
+  $self->pfetch_and_store_by_ids($source, @id_chunk);
 
   printf("fetched %d ids from %s\n", $count, $source);
 }
