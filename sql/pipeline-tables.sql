@@ -137,6 +137,7 @@ CREATE TABLE analysis (
   module_version              varchar(40),
   gff_source                  varchar(40),
   gff_feature                 varchar(40),
+  status                      enum('BLOCKED', 'READY','WORKING','DONE') DEFAULT 'READY' NOT NULL,
 
   PRIMARY KEY (analysis_id),
   KEY logic_name_idx( logic_name ),
