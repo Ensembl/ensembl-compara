@@ -1026,7 +1026,7 @@ sub get_SimpleAlign {
     $bio07 = 1;
   }
 
-  foreach my $genomic_align (@{$self->get_all_GenomicAligns}) {
+  foreach my $genomic_align ($self->reference_genomic_align,@{$self->get_all_non_reference_genomic_aligns}) {
     my $alignSeq = $genomic_align->aligned_sequence;
     
     my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
