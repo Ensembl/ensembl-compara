@@ -7,14 +7,14 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Taxon;
 use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Hive;
 
 
 my $conf_file;
 my %analysis_template;
 my @speciesList = ();
+my @uniprotList = ();
 my %hive_params ;
 
 my %compara_conf = ();
@@ -76,6 +76,9 @@ foreach my $speciesPtr (@speciesList) {
   $self->submitGenome($speciesPtr);
 }
 
+foreach my $srsPtr (@uniprotList) {
+  $self->submitUniprot($srsPtr);
+}
 
 exit(0);
 
@@ -122,6 +125,9 @@ sub parse_conf {
       if($confPtr->{TYPE} eq 'HIVE') {
         %hive_params = %{$confPtr};
       }
+      if($confPtr->{TYPE} eq 'UNIPROT') {
+        push @uniprotList, $confPtr;
+      }
     }
   }
 }
@@ -137,7 +143,9 @@ sub submitGenome
   #
   # connect to external genome database
   #
+  my $genomeDBA = undef;
   my $locator = $species->{dblocator};
+
   unless($locator) {
     print("  dblocator not specified, building one\n")  if($verbose);
     $locator = $species->{module}."/host=".$species->{host};
@@ -149,7 +157,6 @@ sub submitGenome
   $locator .= ";disconnect_when_inactive=1";
   print("    locator = $locator\n")  if($verbose);
 
-  my $genomeDBA;
   eval {
     $genomeDBA = Bio::EnsEMBL::DBLoader->new($locator);
   };
@@ -255,3 +262,35 @@ sub submitGenome
 }
 
 
+sub submitUniprot
+{
+  my $self         = shift;
+  my $uniprotHash  = shift;  #hash reference
+
+  my $analysisDBA = $self->{'hiveDBA'}->get_AnalysisAdaptor;
+  my $loadUniProt = $analysisDBA->fetch_by_logic_name('LoadUniProt');
+
+  unless($loadUniProt) {
+    $loadUniProt = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'LoadUniProt',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt',
+      );
+    $analysisDBA->store($loadUniProt);
+    my $stats = $loadUniProt->stats;
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('LOADING');
+    $stats->update();
+  }
+
+  delete $uniprotHash->{'TYPE'};
+  my $input_id = encode_hash($uniprotHash);
+
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+        -input_id       => $input_id,
+        -analysis       => $loadUniProt,
+        -input_job_id   => 0
+        );
+
+}
