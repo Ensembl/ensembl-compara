@@ -121,7 +121,7 @@ sub _init {
         $high = exists $highlights{$g->stable_id()} ? 1 : 0;
         my $gene_label = $g->external_name;
         if(defined $gene_label && $gene_label ne '') {
-            $gene_col = $g->external_status eq 'KNOWN' ? $known_col : ( $g->external_status eq 'xref' ? $xref_col : $pred_col );
+            $gene_col = $g->external_status eq 'KNOWN' ? $known_col : ( $g->external_status eq 'XREF' ? $xref_col : $pred_col );
             $gene_label = $g->external_name();
             $high = 1 if(exists $highlights{$gene_label});
         } else {
