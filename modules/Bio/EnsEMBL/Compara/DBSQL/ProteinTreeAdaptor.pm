@@ -34,17 +34,9 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 sub fetch_AlignedMember_by_member_id_root_id {
   my ($self, $member_id, $root_id) = @_;
-  
-  my $join = [[['protein_tree_member', 'tm'], 
-               't.node_id = tm.node_id',
-               ['tm.cigar_line']],
-              [['member', 'm'], 
-               'tm.member_id = m.member_id',
-               Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->columns()] 
-             ];
-  
-  my $constraint = "WHERE m.member_id = $member_id and t.root_id = $root_id";
-  my ($node) = @{$self->_generic_fetch($constraint, $join)};
+    
+  my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id and t.root_id = $root_id";
+  my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
 
@@ -202,7 +194,7 @@ sub tables {
 }
 
 sub left_join_clause {
-  return "left join protein_tree_member tm using (node_id) left join member m using(member_id)";
+  return "left join protein_tree_member tm on t.node_id = tm.node_id left join member m on tm.member_id = m.member_id";
 }
 
 sub default_where_clause {
