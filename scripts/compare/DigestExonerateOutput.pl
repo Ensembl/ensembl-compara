@@ -8,7 +8,7 @@ BEGIN {
 
 use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::FeatureFactory;
+use Bio::EnsEMBL::FeaturePair;
 use Bio::SeqIO;
 use Getopt::Long;
 
@@ -59,7 +59,7 @@ while (defined (my $exonerate_output_file = shift @ARGV)) {
       if ($hstrand eq "+") {$hstrand = 1}
       if ($hstrand eq "+") {$hstrand = -1}
 
-      my $fp = Bio::EnsEMBL::FeatureFactory->new_feature_pair();
+      my $fp = Bio::EnsEMBL::FeaturePair->new;
 
       $fp->start($qstart + 1);
       $fp->end($qend);
