@@ -1,12 +1,21 @@
-=head1 NAME Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
+=head1 NAME
+
+  Bio::EnsEMBL::Hive::DBSQL::PeptideAlignFeatureAdaptor
 
 =head1 SYNOPSIS
 
+  $peptideAlignFeatureAdaptor = $db_adaptor->get_PeptideAlignFeatureAdaptor;
+  $peptideAlignFeatureAdaptor = $peptideAlignFeatureObj->adaptor;
+
+=head1 DESCRIPTION
+
+  Module to encapsulate all db access for persistent class PeptideAlignFeature
+  There should be just one per application and database connection.
+
 =head1 CONTACT
 
-  Michele Clamp : michele@sanger.ac.uk
-
-=head1 APPENDIX
+  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
 
@@ -17,10 +26,165 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 #use Bio::EnsEMBL::Compara::SyntenyPair;
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
+use Bio::EnsEMBL::Utils::Exception;
 
 use vars '@ISA';
 
 @ISA = ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+
+#############################
+#
+# fetch methods
+#
+#############################
+
+
+=head2 fetch_all_by_qmember_id
+
+  Arg [1]    : int $member->dbID
+               the database id for a peptide member
+  Example    : $pafs = $adaptor->fetch_all_by_qmember_id($member->dbID);
+  Description: Returns all PeptideAlignFeatures from all target species
+               where the query peptide member is know.
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_qmember_id{
+  my $self = shift;
+  my $member_id = shift;
+
+  throw("member_id undefined") unless($member_id);
+  my $constraint = "paf.qmember_id = $member_id";
+  return $self->_generic_fetch($constraint);
+}
+
+=head2 fetch_all_by_hmember_id
+
+  Arg [1]    : int $member->dbID
+               the database id for a peptide member
+  Example    : $pafs = $adaptor->fetch_all_by_hmember_id($member->dbID);
+  Description: Returns all PeptideAlignFeatures from all query species
+               where the hit peptide member is know.
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_hmember_id{
+  my $self = shift;
+  my $member_id = shift;
+
+  throw("member_id undefined") unless($member_id);
+  my $constraint = "paf.hmember_id = $member_id";
+  return $self->_generic_fetch($constraint);
+}
+
+
+=head2 fetch_all_by_qmember_id_hmember_id
+
+  Arg [1]    : int $query_member->dbID
+               the database id for a peptide member
+  Arg [2]    : int $hit_member->dbID
+               the database id for a peptide member
+  Example    : $pafs = $adaptor->fetch_all_by_qmember_id_hmember_id($qmember_id, $hmember_id);
+  Description: Returns all PeptideAlignFeatures for a given query member and
+               hit member.  If pair didn't align array will be empty.
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
+  Exceptions : thrown if either member_id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_qmember_id_hmember_id{
+  my $self = shift;
+  my $qmember_id = shift;
+  my $hmember_id = shift;
+
+  throw("must specify query member dbID") unless($qmember_id);
+  throw("must specify hit member dbID") unless($hmember_id);
+  my $constraint = "paf.qmember_id=$qmember_id AND paf.hmember_id=$hmember_id";
+  return $self->_generic_fetch($constraint);
+}
+
+
+=head2 fetch_all_by_qmember_id_hgenome_db_id
+
+  Arg [1]    : int $query_member->dbID
+               the database id for a peptide member
+  Arg [2]    : int $hit_genome_db->dbID
+               the database id for a genome_db
+  Example    : $pafs = $adaptor->fetch_all_by_qmember_id_hgenome_db_id(
+                    $member->dbID, $genome_db->dbID);
+  Description: Returns all PeptideAlignFeatures for a given query member and
+               target hit species specified via a genome_db_id
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
+  Exceptions : thrown if either member->dbID or genome_db->dbID is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_qmember_id_hgenome_db_id{
+  my $self = shift;
+  my $qmember_id = shift;
+  my $hgenome_db_id = shift;
+
+  throw("must specify query member dbID") unless($qmember_id);
+  throw("must specify hit genome_db dbID") unless($hgenome_db_id);
+  my $constraint = "paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hgenome_db_id";
+  return $self->_generic_fetch($constraint);
+}
+
+
+=head2 fetch_all_by_hmember_id_qgenome_db_id
+
+  Arg [1]    : int $hit_member->dbID
+               the database id for a peptide member
+  Arg [2]    : int $query_genome_db->dbID
+               the database id for a genome_db
+  Example    : $pafs = $adaptor->fetch_all_by_hmember_id_qgenome_db_id(
+                    $member->dbID, $genome_db->dbID);
+  Description: Returns all PeptideAlignFeatures for a given hit member and
+               query species specified via a genome_db_id
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
+  Exceptions : thrown if either member->dbID or genome_db->dbID is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_hmember_id_qgenome_db_id{
+  my $self = shift;
+  my $hmember_id = shift;
+  my $qgenome_db_id = shift;
+
+  throw("must specify hit member dbID") unless($hmember_id);
+  throw("must specify query genome_db dbID") unless($qgenome_db_id);
+  my $constraint = "paf.hmember_id=$hmember_id AND paf.qgenome_db_id=$qgenome_db_id";
+  return $self->_generic_fetch($constraint);
+}
+
+
+=head2 final_clause
+
+  Arg [1]    : <string> SQL clause
+  Example    : $adaptor->final_clause("ORDER BY paf.qmember_id LIMIT 10");
+               $pafs = $adaptor->fetch_all;
+               $adaptor->final_clause("");
+  Description: getter/setter method for specifying an extension to the SQL prior to
+               a fetch operation.  Useful final clauses are either 'ORDER BY' or 'LIMIT'
+  Returntype : <string>
+  Caller     : general
+
+=cut
+
+sub final_clause {
+  my $self = shift;
+  $self->{'_final_clause'} = shift if(@_);
+  return $self->{'_final_clause'};
+}
 
 
 #############################
@@ -234,12 +398,6 @@ sub _default_where_clause {
   return '';
 }
 
-sub _final_clause {
-  my $self = shift;
-  $self->{'_final_clause'} = shift if(@_);
-  return $self->{'_final_clause'};
-}
-
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -299,39 +457,6 @@ sub _objs_from_sth {
 #
 ###############################################################################
 
-=head2 list_internal_ids
-
-  Arg        : None
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub list_internal_ids {
-  my $self = shift;
-
-  my @tables = $self->_tables;
-  my ($name, $syn) = @{$tables[0]};
-  my $sql = "SELECT ${syn}.${name}_id from ${name} ${syn}";
-
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  my $internal_id;
-  $sth->bind_columns(\$internal_id);
-
-  my @internal_ids;
-  while ($sth->fetch()) {
-    push @internal_ids, $internal_id;
-  }
-
-  $sth->finish;
-
-  return \@internal_ids;
-}
 
 =head2 fetch_by_dbID
 
@@ -366,14 +491,16 @@ sub fetch_by_dbID{
 }
 
 =head2 fetch_by_dbIDs
+
   Arg [1...] : int $id (multiple)
                the unique database identifier for the feature to be obtained
-  Example    : $paf = $adaptor->fetch_by_dbID(1234);
+  Example    : $pafs = $adaptor->fetch_by_dbID(paf1_id, $paf2_id, $paf3_id);
   Description: Returns the PeptideAlignFeature created from the database defined by the
                the id $id.
-  Returntype : Bio::EnsEMBL::Compara::PeptideAlignFeature
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : thrown if $id is not defined
   Caller     : general
+
 =cut
 
 sub fetch_by_dbIDs{
@@ -404,6 +531,7 @@ sub fetch_by_dbIDs{
 
 =cut
 
+
 sub fetch_BRH_by_member_genomedb
 {
   # using trick of specifying table twice so can join to self
@@ -430,6 +558,7 @@ sub fetch_BRH_by_member_genomedb
 
 
 =head2 fetch_all_RH_by_member_genomedb
+
   Overview   : This an experimental method and not currently used in production
   Arg [1]    : member_id of query peptide member
   Arg [2]    : genome_db_id of hit species
@@ -462,14 +591,15 @@ sub fetch_all_RH_by_member_genomedb
                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
 
-  #$self->_final_clause("ORDER BY paf.hit_rank");
+  #$self->final_clause("ORDER BY paf.hit_rank");
   my $objs = $self->_generic_fetch($constraint, $extrajoin);
-  #$self->_final_clause("");
+  #$self->final_clause("");
   return $objs;
 }
 
 
 =head2 fetch_all_RH_by_member
+
   Overview   : This an experimental method and not currently used in production
   Arg [1]    : member_id of query peptide member
   Example    : $feat = $adaptor->fetch_by_dbID($musBlastAnal, $ratBlastAnal);
@@ -504,9 +634,10 @@ sub fetch_all_RH_by_member
 =head2 fetch_all
 
   Arg        : None
-  Example    :
-  Description:
-  Returntype :
+  Example    : @pafs = @{$adaptor->fetch_all};
+  Description: fetch all peptide align features.  Not generally useful since it
+               can return millions of objects.
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions :
   Caller     :
 
@@ -520,6 +651,7 @@ sub fetch_all {
 
 
 =head2 fetch_BRH_web_for_member_genome_db
+
   Overview   : This is the new (compara_24) algorithm method for finding UBRH and MBRH
                homologies.  
   Arg [1]    : member_id of query peptide member
@@ -530,7 +662,9 @@ sub fetch_all {
                or undef if nothing found
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub fetch_BRH_web_for_member_genome_db
 {
   # recursive search to find web of 'best' hits starting with a given
@@ -642,7 +776,7 @@ sub _generic_fetch {
   my $sql = "SELECT $columns FROM $tablenames";
 
   my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
+  my $final_clause = $self->final_clause;
 
   #append a where clause if it was defined
   if($constraint) {
