@@ -533,9 +533,9 @@ sub _objs_from_sth {
         $attribute->$autoload_method($column{$autoload_method});
       }
     }
-    if(defined($member->sequence_id())) {
-      $self->_load_sequence($member);
-    }
+    #if(defined($member->sequence_id())) {
+    #  $self->_load_sequence($member);
+    #}
     if (defined $attribute) {
       push @members, [$member, $attribute];
     } else {

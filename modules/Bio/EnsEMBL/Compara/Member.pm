@@ -431,37 +431,49 @@ sub genome_db {
 sub sequence {
   my $self = shift;
   $self->{'_sequence'} = shift if(@_);
+
+  if(!defined($self->{'_sequence'}) and
+     defined($self->sequence_id()) and     
+     defined($self->adaptor))
+  {
+    print("lazy load sequence\n");
+    $self->adaptor->_load_sequence($self);
+  }
+
   return $self->{'_sequence'};
 }
 
 
 =head2 seq_length
-
   Arg [1]    : int $seq_length
   Example    : my $seq_length = $member->seq_length;
   Description: Extracts the sequence length of this member
   Returntype : int
   Exceptions : none
   Caller     : general
-
 =cut
 
 sub seq_length {
   my $self = shift;
   $self->{'_seq_length'} = shift if(@_);
+  
+  if(!defined($self->{'_seq_length'}) and
+     defined($self->sequence_id()) and
+     defined($self->adaptor))
+  {
+    $self->adaptor->_load_sequence($self);
+  }
   return $self->{'_seq_length'};
 }
 
 
 =head2 sequence_id
-
   Arg [1]    : int $sequence_id
   Example    : my $sequence_id = $member->sequence_id;
   Description: Extracts the sequence_id of this member
   Returntype : int
   Exceptions : none
   Caller     : general
-
 =cut
 
 sub sequence_id {
