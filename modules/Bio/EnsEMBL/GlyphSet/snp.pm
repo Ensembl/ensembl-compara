@@ -13,7 +13,15 @@ use Bump;
 sub _init {
     my ($self, $VirtualContig, $Config) = @_;
 
-	return unless ($self->strand() == -1);
+    return unless ($self->strand() == -1);
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'SNP',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $self->label($label);
+
     my $y          = 0;
     my $h          = 8;
     my $highlights = $self->highlights();

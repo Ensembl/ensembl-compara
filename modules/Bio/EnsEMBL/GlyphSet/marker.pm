@@ -14,6 +14,14 @@ sub _init {
     my ($self, $VirtualContig, $Config) = @_;
 
     return unless ($self->strand() == -1);
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'markers',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $self->label($label);
+
     my $h          = 8;
     my $highlights = $self->highlights();
 

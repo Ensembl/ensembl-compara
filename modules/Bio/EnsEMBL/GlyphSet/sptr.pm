@@ -14,16 +14,22 @@ use Bump;
 sub _init {
     my ($self, $VirtualContig, $Config) = @_;
 
-	my $strand = $self->strand();
-	print STDERR "STARTING STRAND: $strand\n";
-    my $h          = 8;
-    my $highlights = $self->highlights();
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'SpTrEMBL',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $self->label($label);
 
-    my @bitmap      	= undef;
-    my $bitmap_length 	= $VirtualContig->length();
-    my $feature_colour 	= $Config->get($Config->script(),'sptr','col');
-	my %id = ();
-
+    my $strand         = $self->strand();
+    my $h              = 8;
+    my $highlights     = $self->highlights();
+    my @bitmap         = undef;
+    my $bitmap_length  = $VirtualContig->length();
+    my $feature_colour = $Config->get($Config->script(),'sptr','col');
+    my %id = ();
+	my $small_contig   = 0;
+	
     my $glob_bp = 100;
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("sptr",80,$glob_bp);  
 	@allfeatures =  grep $_->strand() == $strand, @allfeatures; # keep only our strand's features
@@ -37,7 +43,9 @@ sub _init {
 	foreach my $i (keys %id){
 
 		@{$id{$i}} =  sort {$a->start() <=> $b->start() } @{$id{$i}};
-		#@{$id{$i}} =  reverse @{$id{$i}} if ($strand == -1);
+		if ($strand == -1){
+			#@{$id{$i}} =  reverse @{$id{$i}};
+		}
 		my $j = 1;
 
 		my $has_origin = undef;
@@ -70,7 +78,9 @@ sub _init {
 			$j++;
 		}
 		
-		if($VirtualContig->length() < 100000){
+		#if($VirtualContig->length() <= 250001){
+		if(0){
+			$small_contig = 1;
 			# loop through glyphs again adding connectors...
 			my @g = $Composite->glyphs();
 			for (my $i = 1; $i<scalar(@g); $i++){
@@ -133,6 +143,10 @@ sub _init {
 
 	    	next if $row > $Config->get($Config->script(), 'sptr', 'dep');
 	    	$Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
+
+			# if we are bumped && on a large contig then draw frames around features....
+			$Composite->bordercolour($feature_colour) unless ($small_contig);
+
 		}
 		
 		# now save the composite glyph...

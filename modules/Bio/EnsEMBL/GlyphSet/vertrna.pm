@@ -13,14 +13,22 @@ use Bump;
 sub _init {
     my ($self, $VirtualContig, $Config) = @_;
 
-	my $strand 		= $self->strand();
-    my $y          	= 0;
-    my $h          	= 8;
-    my $highlights 	= $self->highlights();
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'mRNA',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $self->label($label);
 
-    my $feature_colour 	= $Config->get($Config->script(),'vertrna','col');
-	my @bitmap      	= undef;
-    my $bitmap_length 	= $VirtualContig->length();
+    my $strand         = $self->strand();
+    my $y              = 0;
+    my $h              = 8;
+    my $highlights     = $self->highlights();
+
+    my $feature_colour = $Config->get($Config->script(),'vertrna','col');
+    my @bitmap         = undef;
+    my $bitmap_length  = $VirtualContig->length();
+	my $small_contig   = 0;
 
     my $glob_bp = 100;
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("embl_vertrna",80,$glob_bp);  
@@ -67,7 +75,8 @@ sub _init {
 			$Composite->push($glyph);
 		}
 		
-		if($VirtualContig->length() < 100000){
+		#if($VirtualContig->length() <= 250001){
+		if(0){
 			# loop through glyphs again adding connectors...
 			my @g = $Composite->glyphs();
 			for (my $i = 1; $i<scalar(@g); $i++){
@@ -130,6 +139,9 @@ sub _init {
 
 	    	next if $row > $Config->get($Config->script(), 'vertrna', 'dep');
 	    	$Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
+
+			# if we are bumped && on a large contig then draw frames around features....
+			$Composite->bordercolour($feature_colour) unless ($small_contig);
 		}
 		
 		# now save the composite glyph...

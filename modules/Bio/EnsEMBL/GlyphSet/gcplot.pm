@@ -23,7 +23,16 @@ sub _init {
 	#my $red 			= $cmap->add_rgb([255,0,0]);
 	my $black 			= $cmap->id_by_name('black');
 	my $red 			= $cmap->id_by_name('red');
+	my $rust 			= $cmap->id_by_name('rust');
 	
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => '%GC',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $self->label($label);
+
+
 	#my $divlen = 20000;
 	my $im_width = $Config->image_width();
 	#if ($divlen > 400) { $divlen = 400;}
@@ -44,80 +53,72 @@ sub _init {
 		#$subseq =~ s/N//igo;
 		my $G = $subseq =~ tr/G/G/;
 		my $C = $subseq =~ tr/C/C/;
-		my $percent = ($G+$C)/length($subseq);
+		my $percent = int((($G+$C)/length($subseq))*100);
 		#print STDERR "$percent\n";
-		if ($percent < $min){ $min = $percent;}
-		if ($percent > $max){ $max = $percent;}
+		if ($percent > 20){
+			if ($percent < $min){ $min = $percent;}
+			if ($percent > $max){ $max = $percent;}
+		}
 		push (@gc, $percent);
 	}
 		
-	my $line = new Bio::EnsEMBL::Glyph::Line({
-	    'x'      	=> 0,
-	    'y'      	=> 10, # 50% point for line
-	    'width'  	=> $VirtualContig->length(),
-	    'height' 	=> 0,
-	    'colour' 	=> $red,
-		'absolutey' => 1,
-		'dotted'  	=> 1,
-	});
-	$self->push($line);
 		
 	my $range = $max - $min;
 	#print STDERR "Min   = $min\n";
 	#print STDERR "Max   = $max\n";
 	#print STDERR "Range = $range\n";
+	my $scale = 20/$range;				# height per pel of this glyphset/range
+	my $median = ($range/2) * $scale; 
+	#print STDERR "Scale = $scale\n";
+	#print STDERR "Median = $median\n";
 	
-	if(0){
+	if(1){
 		for (my $i=0; $i<$divs; $i++){	
-			#print STDERR "Current bar = $gc[$i]\n";
+			next if ($gc[$i] < 20);
+			my $pixpos = ($gc[$i] - $min) * $scale;
+			#print STDERR "Poxpos = $pixpos (from $gc[$i] - $min)\n";
 
-			my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    		'x'      => $i * $divlen,
-	    		'y'      => 20 - int(20 * $gc[$i]),
-	    		'width'  => $divlen,
-	    		'height' => int(20 * $gc[$i]),
-	    		'bordercolour' => $alt_colour,
-				'absolutey'  => 1,
-			});
-			if ($gc[$i] > 0.5) { 
-				print STDERR "\tover bar ==>  $gc[$i]\n";
-				$tick->{'bordercolour'} = $feature_colour;
+			if ($pixpos <= $median){
+				# below the line
+				#print STDERR "Poxpos = $pixpos (from $gc[$i] - $min)\n";
+				my $tick = new Bio::EnsEMBL::Glyph::Rect({
+	    			'x'      => $i * $divlen,
+	    			'y'      => $median,
+	    			'width'  => $divlen,
+	    			'height' => $median - $pixpos,
+	    			'bordercolour' => $alt_colour,
+					'absolutey'  => 1,
+				});
+				$self->push($tick);
+			} else { 
+				# above the line
+				my $tick = new Bio::EnsEMBL::Glyph::Rect({
+	    			'x'      => $i * $divlen,
+	    			'y'      => $median - ($pixpos - $median),
+	    			'width'  => $divlen,
+	    			'height' => $pixpos - $median,
+	    			'bordercolour' => $feature_colour,
+					'absolutey'  => 1,
+				});
+				$self->push($tick);
 			}
-			$self->push($tick);
 		}
-	}
-	
-	for (my $i=0; $i<$divs; $i++){	
-		#print STDERR "Current bar = $gc[$i]\n";
-
-		my $tick = new Bio::EnsEMBL::Glyph::Rect({
-	    	'x'      => $i * $divlen,
-	    	'y'      => int(10 * $gc[$i]),
-	    	'width'  => $divlen,
-	    	'height' => 10 - int(10 * $gc[$i]),
-	    	'bordercolour' => $alt_colour,
-			'absolutey'  => 1,
-		});
-		if ($gc[$i] > 0.5) { 
-			print STDERR "\tover bar ==>  $gc[$i]\n";
-			$tick->{'bordercolour'} = $feature_colour;
-		}
-		$self->push($tick);
 	}
 	
 	my $line = new Bio::EnsEMBL::Glyph::Line({
-	    'x'      => 0,
-	    'y'      => 20,
-	    'width'  => $VirtualContig->length(),
-	    'height' => 0,
-	    'colour' => $black,
-		'absolutey'  => 1,
+	    'x'      	=> 0,
+	    'y'      	=> $median, # 50% point for line
+	    'width'  	=> $VirtualContig->length(),
+	    'height' 	=> 0,
+	    'colour' 	=> $rust,
+		'absolutey' => 1,
+#		'dotted'  	=> 1,
 	});
 	$self->push($line);
-		
+			
     my $fontname = "Tiny";
-	my $text = "% GC by $divlen bp window [dotted line shows 50%]";
-	#my $text = "% GC by $divlen bp window";
+	#my $text = "% GC by $divlen bp window [dotted line shows 50%] Max = $max %, Min = $min %";
+	my $text = "% GC by $divlen bp window. [Max = $max%, Min = $min%]";
 	my ($w,$h) = $Config->texthelper->px2bp($fontname);
 	my $bp_textwidth = $w * length($text) * 1.1; # add 10% for scaling text
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
@@ -125,7 +126,7 @@ sub _init {
 		'y'      	=> 22,
 		'height'    => $Config->texthelper->height($fontname),
 		'font'   	=> $fontname,
-		'colour' 	=> $feature_colour,
+		'colour' 	=> $black,
 		'text'   	=> $text,
 		'absolutey' => 1,
 	});

@@ -14,15 +14,23 @@ use Bump;
 sub _init {
     my ($self, $VirtualContig, $Config) = @_;
 
-	my $strand = $self->strand();
-	print STDERR "STARTING STRAND: $strand\n";
+    my $strand = $self->strand();
+
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'Unigene',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $self->label($label);
+
     my $h          = 8;
     my $highlights = $self->highlights();
 
     my @bitmap      	= undef;
     my $bitmap_length 	= $VirtualContig->length();
     my $feature_colour 	= $Config->get($Config->script(),'unigene','col');
-	my %id = ();
+    my %id = ();
+	my $small_contig   = 0;
 
     my $glob_bp = 100;
     my @allfeatures = $VirtualContig->get_all_SimilarityFeatures_above_score("unigene.seq",80,$glob_bp);  
@@ -70,7 +78,8 @@ sub _init {
 			$j++;
 		}
 		
-		if($VirtualContig->length() < 100001){
+		#if($VirtualContig->length() <= 250001){
+		if(0){
 			# loop through glyphs again adding connectors...
 			my @g = $Composite->glyphs();
 			for (my $i = 1; $i<scalar(@g); $i++){
@@ -118,7 +127,7 @@ sub _init {
 			}
 		}
 		
-		if ($Config->get($Config->script(), 'feature', 'dep') > 0){ # we bump
+		if ($Config->get($Config->script(), 'unigene', 'dep') > 0){ # we bump
 	    	my $bump_start = $Composite->x();
 	    	$bump_start = 0 if ($bump_start < 0);
 
@@ -133,6 +142,9 @@ sub _init {
 
 	    	next if $row > $Config->get($Config->script(), 'unigene', 'dep');
 	    	$Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
+
+			# if we are bumped && on a large contig then draw frames around features....
+			$Composite->bordercolour($feature_colour) unless ($small_contig);
 		}
 		
 		# now save the composite glyph...

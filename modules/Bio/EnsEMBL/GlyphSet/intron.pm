@@ -20,7 +20,7 @@ sub _init {
     my $w = 0;
 
 
-    print STDERR "INTRON VERSION003\n";
+    print STDERR "INTRON VERSION100\n";
    
     my $colour = $Config->get($Config->script(), 'intron','col');
 
@@ -40,6 +40,11 @@ sub _init {
 	    my $w = $int->feature1->end() - $x;
 	    my $id = $int->feature2->seqname();
 	    
+	    my $start = $int->feature2->start();
+	    my $end = $int->feature2->end();
+
+	    my $length = $end - $start;
+	    
 	    my $rect = new Bio::EnsEMBL::Glyph::Rect({
 		'x'        => $x,
 		'y'        => $y,
@@ -49,6 +54,7 @@ sub _init {
 		'colour'   => $colour,
 		'zmenu' => {
 		    'caption' => $id,
+		    $length => ''
 		},
 	    });
 	    $composite->push($rect) if(defined $rect);

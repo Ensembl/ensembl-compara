@@ -14,6 +14,13 @@ use Bump;
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;
 
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+	'text'      => 'Transcript',
+	'font'      => 'Small',
+	'absolutey' => 1,
+    });
+    $this->label($label);
+
     my $y             = 0;
     my $h             = 8;
     my $highlights    = $this->highlights();
