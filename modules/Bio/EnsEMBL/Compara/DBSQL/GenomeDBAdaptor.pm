@@ -226,8 +226,16 @@ sub store{
               " VALUES ('$name','$assembly', $taxon_id, $assembly_default, '$genebuild', '$locator')";
     #print("$sql\n");
     my $sth = $self->prepare($sql);
-    $sth->execute();
-    $dbID = $sth->{'mysql_insertid'};
+    if($sth->execute()) {
+      $dbID = $sth->{'mysql_insertid'};
+
+      if($gdb->dbID) {
+        $sql = "UPDATE genome_db SET genome_db_id=".$gdb->dbID .
+               " WHERE genome_db_id=$dbID";
+        my $sth = $self->prepare($sql);
+        if($sth->execute()) { $dbID = $gdb->dbID; }
+      }
+    }
   }
   else {
     my $sql = "UPDATE genome_db SET ".
