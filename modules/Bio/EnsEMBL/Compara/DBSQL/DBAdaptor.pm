@@ -129,8 +129,6 @@ sub new {
     }
   }
 
-  $self->get_GenomeDBAdaptor->sync_with_registry();
-
   return $self;
 }
 
