@@ -264,8 +264,11 @@ sub create_GenomeDBs {
   while ( my @db_row = $sth->fetchrow_array() ) {
     my ( $con, $query ) = @db_row;
 
-    push @{ %genome_consensus_xreflist->{$con}}, $query;
-    push @{ %genome_query_xreflist->{$query}}, $con;
+    $genome_consensus_xreflist{$con} ||= [];
+    $genome_query_xreflist{$query} ||= [];
+
+    push @{ $genome_consensus_xreflist{$con}}, $query;
+    push @{ $genome_query_xreflist{$query}}, $con;
   }
 
   # grab all the possible species databases in the genome db table
@@ -316,9 +319,9 @@ sub check_for_consensus_db {
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
 
-  if ( exists %genome_consensus_xreflist->{$cid} ) {
-    for my $i ( 0 .. $#{%genome_consensus_xreflist->{$cid}} ) {
-      if ( $qid == %genome_consensus_xreflist->{$cid}[$i] ) {
+  if ( exists $genome_consensus_xreflist{$cid} ) {
+    for my $i ( 0 .. $#{$genome_consensus_xreflist{$cid}} ) {
+      if ( $qid == $genome_consensus_xreflist{$cid}[$i] ) {
 	return 1;
       }
     }
@@ -350,9 +353,9 @@ sub check_for_query_db {
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
 
-  if ( exists %genome_query_xreflist->{$qid} ) {
-    for my $i ( 0 .. $#{%genome_query_xreflist->{$qid}} ) {
-      if ( $cid == %genome_query_xreflist->{$qid}[$i] ) {
+  if ( exists $genome_query_xreflist{$qid} ) {
+    for my $i ( 0 .. $#{$genome_query_xreflist{$qid}} ) {
+      if ( $cid == $genome_query_xreflist{$qid}[$i] ) {
 	return 1;
       }
     }
@@ -385,17 +388,17 @@ sub get_all_db_links {
 
   # check for occurences of the db we are interested in
   # in the consensus list of dbs
-  if ( exists %genome_consensus_xreflist->{$id} ) {
-    for my $i ( 0 .. $#{ %genome_consensus_xreflist->{$id} } ) {
-      push @gdb_list, $self->{'_cache'}->{%genome_consensus_xreflist->{$id}[$i]};
+  if ( exists $genome_consensus_xreflist{$id} ) {
+    for my $i ( 0 .. $#{ $genome_consensus_xreflist{$id} } ) {
+      push @gdb_list, $self->{'_cache'}->{$genome_consensus_xreflist{$id}[$i]};
     }
   }
 
   # and check for occurences of the db we are interested in
   # in the query list of dbs
-  if ( exists %genome_query_xreflist->{$id} ) {
-    for my $i ( 0 .. $#{ %genome_query_xreflist->{$id} } ) {
-      push @gdb_list, $self->{'_cache'}->{%genome_query_xreflist->{$id}[$i]};
+  if ( exists $genome_query_xreflist{$id} ) {
+    for my $i ( 0 .. $#{ $genome_query_xreflist{$id} } ) {
+      push @gdb_list, $self->{'_cache'}->{$genome_query_xreflist{$id}[$i]};
     }
   }
 
