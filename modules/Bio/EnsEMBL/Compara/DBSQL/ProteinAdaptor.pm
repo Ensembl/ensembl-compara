@@ -70,10 +70,10 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   my $sth = $self->prepare("select protein_external_id, protein_db_id ,seq_start, seq_end, strand,dnafrag_id from protein where protein_id = $dbid");
+   my $sth = $self->prepare("select protein_external_id, protein_external_dbname,peptide_sequence_id,seq_start, seq_end, strand,dnafrag_id from protein where protein_id = $dbid");
    $sth->execute;
 
-   my ($external_id,$proteinDB_id,$seq_start,$seq_end,$strand,$dnafrag_id) = $sth->fetchrow_array();
+   my ($external_id,$external_dbname,$peptide_sequence_id,$seq_start,$seq_end,$strand,$dnafrag_id) = $sth->fetchrow_array();
 
    if( !defined $external_id) {
        $self->throw("No protein with this dbID $dbid");
@@ -85,11 +85,11 @@ sub fetch_by_dbID{
      $dnafrag= $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);
    }; if ($@) { $self->warn ("Unable to fetch dnafrag associated with this protein.\n$@");}
 
-   my $proteinDB= $self->db->get_ProteinDBAdaptor->fetch_by_dbID($proteinDB_id);
 
    my $protein = Bio::EnsEMBL::Compara::Protein->new( 	-dbid 	=> $dbid,
 														-external_id	=> $external_id,
-														-proteinDB	=> $proteinDB,
+														-external_dbname=> $external_dbname,
+														-peptide_sequence_id=> $peptide_sequence_id,
 														-seq_start	=> $seq_start,
 														-seq_end	=> $seq_end,
 														-strand	=> $strand,
@@ -183,39 +183,30 @@ sub fetch_Proteins_by_family_id{
 sub store{
    my ($self,$protein) = @_;
 
-   if( !defined $protein) {
-       $self->throw("Must store $protein object");
-   }
-
-   my $pdb = $protein->proteinDB();
- 
-   if( !defined $pdb || !ref $pdb || !$pdb->isa('Bio::EnsEMBL::Compara::ProteinDB') ) {
-       $self->throw("Must have proteindb attached to the protein to store the protein [$pdb]");
-   }
- 
-   if( !defined $protein || !ref $protein || !$protein->isa('Bio::EnsEMBL::Compara::Protein') ) {
-       $self->throw("Must have protein arg [$protein]");
-   }
- 
-   if( !defined $pdb->dbID ) {
-       $self->throw("proteindb must be stored (no dbID). Store proteindb first");
-   }
-
-   if( !defined $protein || !ref $protein || !$protein->isa('Bio::EnsEMBL::Compara::Protein') ) {
-       $self->throw("Must have protein arg [$protein]");
+   if( !$protein->isa ('Bio::EnsEMBL::Compara::Protein') {
+       $self->throw("$protein must be a 'Bio::EnsEMBL::Compara::Protein'");
    }
 
    if( !defined $protein->external_id) {
        $self->throw("Protein must have a external id");
    }
 
+   if (!defined $protein->seq){
+       $self->warn("Storing compara protein with out a sequence attached to it.");
+   }
 
-   my $sth = $self->prepare("insert into protein (protein_external_id,protein_db_id,seq_start,seq_end,strand,dnafrag_id) values (?,?,?,?,?,?)");
+
+   my $sth = $self->prepare("insert into peptide_sequence (sequence) values (?)");
+   $sth->execute($protein->seq);
+
+   $protein->peptide_sequence_id($sth->{'mysql_insertid'});
+
+   my $sth = $self->prepare("insert into protein (protein_external_id,protein_external_dbname,peptide_sequence_id,seq_start,seq_end,strand,dnafrag_id) values (?,?,?,?,?,?,?)");
 
    my $dnafrag_id;
    $dnafrag_id = (defined $protein->dnafrag) ? $protein->dnafrag->dbID : ''; 
 
-   $sth->execute($protein->external_id,$protein->proteinDB->dbID,$protein->seq_start,$protein->seq_end,$protein->strand,$dnafrag_id);
+   $sth->execute($protein->external_id,$protein->external_dbname,$protein->peptide_sequence_id,$protein->seq_start,$protein->seq_end,$protein->strand,$dnafrag_id);
 
    $protein->dbID($sth->{'mysql_insertid'});
    $protein->adaptor($self);
@@ -239,28 +230,14 @@ sub store{
 sub store_if_needed {
    my ($self,$protein) = @_;
 
-   if( !defined $protein ) {
-       $self->throw("Must store $protein object");
+   if( !$protein->isa ('Bio::EnsEMBL::Compara::Protein') {
+       $self->throw("$protein must be a 'Bio::EnsEMBL::Compara::Protein'");
    }
 
-   my $pdb = $protein->proteinDB();
-
-   if( !defined $pdb || !ref $pdb || !$pdb->isa('Bio::EnsEMBL::Compara::ProteinDB') ) {
-       $self->throw("Must have proteindb attached to the protein to store the protein [$pdb]");
+   if( !defined $protein->external_id) {
+       $self->throw("Protein must have a external id");
    }
 
-   if( !defined $protein || !ref $protein || !$protein->isa('Bio::EnsEMBL::Compara::Protein') ) {
-       $self->throw("Must have protein arg [$protein]");
-   }
-	
-   if( !defined $pdb->dbID ) {
-       $self->throw("proteindb must be stored (no dbID). Store proteindb first");
-   }
-
-   if( !defined $protein->external_id ) {
-       $self->throw("protein must have a external_id");
-   }
-   
    my $sth = $self->prepare("select protein_id from protein where protein_external_id = '".$protein->external_id."'");
 
    unless ($sth->execute()) {
@@ -277,6 +254,35 @@ sub store_if_needed {
      my $protein_id = $self->store($protein);
      return $protein_id;
    }
+}
+
+=head2 fetch_peptide_seq
+
+ Title   : fetch_peptide_seq
+ Usage   : $self->fetch_peptide_seq($protein->dbID)
+ Function: fetches the seq of a protein with a given dbID
+ Example :
+ Returns : peptide sequence as a string
+ Args    : int dbID
+
+
+=cut
+
+sub fetch_peptide_seq {
+
+  my ($self,$value);
+
+  $self->throw("Trying to fetch peptide seq without giving a peptide sequence dbID");
+
+  my $query = "Select sequence from peptide_sequence where peptide_sequence_id ? ";
+  my $sth = $self->prepare($query);
+  $sth->execute($value); 
+
+  my ($str) = $sth->fetchrow_array 
+        or $self->throw("No sequence stored for peptide sequence id $value");
+
+  return $str;
+
 }
 
 1;

@@ -139,28 +139,6 @@ sub get_GenomeDBAdaptor{
    return $self->{'_genomedb_adaptor'};
 }
 
-=head2 get_ProteinDBAdaptor
-
- Title   : get_ProteinDBAdaptor
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub get_ProteinDBAdaptor{
-   my ($self) = @_;
-
-   if( !defined $self->{'_proteindb_adaptor'} ) {
-       require Bio::EnsEMBL::Compara::DBSQL::ProteinDBAdaptor;
-       $self->{'_proteindb_adaptor'}  = Bio::EnsEMBL::Compara::DBSQL::ProteinDBAdaptor->new($self);
-   }
-   return $self->{'_proteindb_adaptor'};
-}
-
 =head2 get_ProteinAdaptor
 
  Title   : get_ProteinAdaptor

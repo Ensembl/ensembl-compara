@@ -86,44 +86,41 @@ create table genomic_align_block (
 
 CREATE TABLE protein (
   protein_id int(10) unsigned DEFAULT '0' NOT NULL auto_increment,
+  peptide_sequence_id int(10) NOT NULL,
   protein_external_id varchar(40) DEFAULT '0' NOT NULL,
-  protein_db_id int(10) NOT NULL,
-  seq_start int(10) unsigned DEFAULT '0' NOT NULL,
-  seq_end int(10) unsigned DEFAULT '0' NOT NULL,
-  strand tinyint(2) DEFAULT '0' NOT NULL,
-  dnafrag_id int(10) DEFAULT '' NOT NULL,
+  peptide_external_dbname varchar(40) NOT NULL,
+  dnafrag_id int(10) DEFAULT '' ,
+  seq_start int(10) unsigned DEFAULT '0' ,
+  seq_end int(10) unsigned DEFAULT '0' ,
+  strand tinyint(2) DEFAULT '0' ,
 
   PRIMARY KEY (protein_id),
   KEY (dnafrag_id),
-  UNIQUE KEY (protein_external_id,protein_db_id)
+  KEY (peptide_sequence_id),
+  UNIQUE KEY (protein_external_id)
 
 );
 
 # SEMANTICS
 # protein_id - internal 
 # protein_external_id - id of protein in another database (stable_id if external_id is an ensembl core database)
+# protein_db_id - foreign key to proteinDB table
 # dnafrag_id - foreign key (dnafrag internal id from dnafrag table)
 # seq_start, seq_end - coordinates of the protein on the dnafrag
 # protein_db_id - foreign key of protein_db table
 
 
-create table protein_db (
-       protein_db_id integer(10) NOT NULL auto_increment,
-       name varchar(40) NOT NULL,
-       locator varchar(255) NOT NULL,
+CREATE TABLE peptide_sequence(
+       peptide_sequence_id int(10) NOT NULL auto_increment,
+       sequence mediumtext,
 
-       PRIMARY KEY(protein_db_id),
-       UNIQUE KEY (name,locator)
+       PRIMARY KEY(peptide_sequence_id)
 );
 
 # SEMANTICS
-# protein_db_id - internal 
-# name- name of protein database
-# locator- locator string to the database
+# peptide_sequence_id - internal id 
+# sequence - peptide sequence
 
-#
-# Table structure for table 'score'
-#
 CREATE TABLE score (
   score_id    int(10) NOT NULL auto_increment,
   score       int(10) NOT NULL,
@@ -162,6 +159,7 @@ CREATE TABLE family (
    family_id    int(10) NOT NULL auto_increment,
    threshold    int(10) ,
    description  varchar(255), 
+   annotation_confidence_score double DEFAULT 0,
 
    PRIMARY KEY(family_id),
    KEY (threshold)

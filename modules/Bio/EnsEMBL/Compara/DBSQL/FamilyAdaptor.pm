@@ -43,8 +43,6 @@ package Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor;
 use vars qw(@ISA);
 use strict;
 
-# Object preamble - inherits from Bio::Root::RootI
-
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::Protein;
 use Bio::EnsEMBL::Compara::Family;
@@ -61,42 +59,53 @@ use Bio::AlignIO;
  Example :
  Returns : 
  Args    :
-
+ this function does "lazy fetching" in that it only stores the list of member protein ids. 
+ the actual protein object are fetched when called by get_all_members or get_members_by_db.
 
 =cut
 
 sub fetch_by_dbID{
-   my ($self,$dbid) = @_;
+	my ($self,$dbid,$lazyfetch) = @_;
 
-   if( !defined $dbid) {
+	if( !defined $dbid) {
        $self->throw("Must fetch by dbid");
-   }
+	}
+	#get family info
+	my $sth = $self->prepare("SELECT f.threshold,f.description,f.annotation_confidence_score FROM family f WHERE f.family_id = $dbid");
+	$sth->execute;
+	(my ($threshold,$description,$annot_score) = $sth->fetchrow_array()) or $self->throw("No family with this dbID $dbid");
 
-   my $sth = $self->prepare("select threshold,description,annotation_confidence_score from family where family_id = $dbid");
-   $sth->execute;
-   (my ($threshold,$description,$annot_score) = $sth->fetchrow_array()) or 
-       $self->throw("No family with this dbID $dbid");
+	#get list of member proteins
+	$sth = $self->prepare("select protein_id from family_protein where family_id = $dbid");
+  	$sth->execute;
+	my @proteins;	
+	
+	if ($lazyfetch eq "T" || !defined($lazyfetch)){
+		while(my $prot = $sth->fetchrow_array()){
+			push @proteins, $prot;
+		}
+	}
+	else{ 
+		#fetch objects instead. Heavy. Use lazyfetch where possible except maybe for loading databases
+		while (my ($protein_id) = $sth->fetchrow_array()){
+    		my $protein = $self->db->get_ProteinAdaptor->fetch_by_dbID($protein_id);
+	    	$protein->family_id($dbid);
+			push @proteins, $protein;
+		}
+	}
+		
+	#create the family
+	my $family = Bio::EnsEMBL::Compara::Family->new(-dbid   => $dbid,
+						                            -threshold => $threshold,
+                        						    -description => $description,
+						                            -annotationscore=>$annot_score,
+						                            -adaptor => $self,
+													-members => \@proteins);
 
-   my $family = Bio::EnsEMBL::Compara::Family->new( 	-dbid 	=> $dbid,
-							-threshold => $threshold,
-							-description => $description,
-							-annotationscore=>$annot_score,
-							-adaptor => $self);
+    #set the family_stable_id if there exist one	
+    $self->set_stable_entry_info($family);
 
-   $sth = $self->prepare("select protein_id,rank from family_protein where family_id = $dbid");
-   $sth->execute;
-   my ($protein_id, $rank);
-
-   while (($protein_id,$rank) = $sth->fetchrow_array()){
-    my $protein = $self->db->get_ProteinAdaptor->fetch_by_dbID($protein_id);
-    $protein->family_rank($rank);
-    $protein->family_id($dbid);
-    $family->add_member($protein);
-   }
-
-   $self->get_stable_entry_info($family);
-
-   return $family;
+	return $family;
 
 }
 
@@ -111,11 +120,11 @@ sub fetch_by_dbID{
 
 =cut
 
-sub get_stable_entry_info {
+sub set_stable_entry_info {
   my ($self,$fam) = @_;
 
   if( !defined $fam || !ref $fam || !$fam->isa('Bio::EnsEMBL::Compara::Family') ) {
-     $self->throw("Needs a family bject, not a $fam");
+     $self->throw("Needs Bio::EnsEMBL::Compara::Family, not a $fam");
   }
 
   my $sth = $self->prepare("select stable_id,UNIX_TIMESTAMP(created),UNIX_TIMESTAMP(modified),version from family_stable_id where family_id = ".$fam->dbID);
@@ -127,7 +136,7 @@ sub get_stable_entry_info {
   $fam->modified($array[2]);
   $fam->version($array[3]);
   
-  return 1;
+  return $fam;
 }
 
 =head2 get_alignment_types
@@ -169,17 +178,50 @@ sub get_alignment_types{
 sub fetch_by_stable_id{
   my ($self,$stable_id) = @_;
   
-  my $query= "Select family_id from family_stable_id where stable_id = $stable_id";
+  my $query= "Select family_id from family_stable_id where stable_id = '$stable_id'";
   my $sth = $self->prepare($query);
   $sth->execute;
 
-  my $dbID = $sth->fetchrow_array;
+  my ($dbID) = $sth->fetchrow_array;
 
   if (!defined $dbID){
     $self->throw("Database does not contain family with stable id : $stable_id");
   }else{
     return $self->fetch_by_dbID($dbID);
   } 
+}
+
+=head2 get_members_of_db
+
+ Title   : get_members_of_db
+ Usage   : $famadp->get_members_of_db
+ Function: get all members of the family which belong to a specified db 
+ Returns : an array of Bio::EnsEMBL::Compara::Protein
+ Args    : a family dbID, the database name
+
+=cut
+
+sub get_members_of_db{
+	my ($self,$dbID,$dbname);
+	if (!(defined $dbID) || !(defined $dbname)){
+		$self->throw("Must supply a valid dbID and database name");
+	}
+   	my $sth = $self->prepare(" SELECT fp.protein_id,fp.rank 
+							FROM family_protein fp,protein p,protein_db pdb 
+							WHERE fp.family_id = $dbID 
+							AND fp.protein_id = p.protein_id 
+							AND p.protein_db_id=pdb.protein_db_id 
+							AND pdb.name=$dbname");
+   	$sth->execute;
+   	my ($protein_id, $rank);
+	my @proteins;
+   	while (($protein_id,$rank) = $sth->fetchrow_array()){
+   		my $protein = $self->db->get_ProteinAdaptor->fetch_by_dbID($protein_id);
+	    $protein->family_rank($rank);
+    	$protein->family_id($dbID);
+		push @proteins, $protein;
+   	}
+	return @proteins;
 }
 
 =head2 store
@@ -200,11 +242,6 @@ sub store{
    if( !defined $family) {
        $self->throw("Must provide a Bio::EnsEMBL::Compara::Family object");
    }
-
-   if( !defined $family || !ref $family || !$family->isa('Bio::EnsEMBL::Compara::Family') ) {
-       $self->throw("Must have family arg [$family]");
-   }
-    
    ###store family### 
 
    my $sth = $self->prepare("INSERT INTO family(threshold,description,annotation_confidence_score) VALUES (?,?,?)");
@@ -222,7 +259,7 @@ sub store{
    foreach my $mem (@members){
 
 	if (defined $mem->family_rank){
-		$rank = $mem->famliy_rank;
+		$rank = $mem->family_rank;
 	}
 	else {
 		$self->warn("rank not defined..giving one ");
@@ -240,21 +277,21 @@ sub store{
     my $sth = $self->prepare("INSERT INTO family_stable_id(family_id, stable_id) VALUES (?,?)");
     
     if (defined $family->stable_id){
-	$sth->execute($family->dbID, $family->stable_id);
+		$sth->execute($family->dbID, $family->stable_id);
     }
     else {
-	my $stable_id;
-	my $sth = $self->prepare("SELECT MAX(stable_id) from family_stable_id");
-	$sth->execute;
-	my $max= $sth->fetchrow_array;
-	if (!$max){
-		$stable_id = "ENSF00000000001";
-	}
-	else {
-		$max++;
-		$stable_id = $max; 
-	}	
-	$sth->execute($family->dbID,$stable_id);
+		my $stable_id;
+		my $sth = $self->prepare("SELECT MAX(stable_id) from family_stable_id");
+		$sth->execute;
+		my $max= $sth->fetchrow_array;
+		if (!$max){
+				$stable_id = "ENSF00000000001";
+		}
+		else {
+			$max++;
+			$stable_id = $max; 
+		}	
+		$sth->execute($family->dbID,$stable_id);
     }
    
    return $family->dbID;

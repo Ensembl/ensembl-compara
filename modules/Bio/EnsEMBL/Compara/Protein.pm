@@ -42,7 +42,7 @@ use strict;
 
 use Bio::Root::RootI;
 
-@ISA = qw(Bio::Root::RootI);
+@ISA = qw(Bio::PrimarySeq);
 
 sub new {
     my ($class,@args) = @_;
@@ -50,10 +50,10 @@ sub new {
     my $self = {};
     bless $self,$class;
 
-	my ($dbID, $external_id,,$proteinDB,$seq_start,$seq_end,$strand,$dnafrag,$adaptor) = 
+	my ($dbID, $external_id,,$external_dbname,$seq_start,$seq_end,$strand,$dnafrag,$adaptor) = 
 			$self->_rearrange([qw(	DBID
                                     EXTERNAL_ID
-                                    PROTEINDB
+                                    EXTERNAL_DBNAME
                                     SEQ_START
                                     SEQ_END
                                     STRAND
@@ -67,8 +67,9 @@ sub new {
 	if (defined $external_id){
 		$self->external_id($external_id);
 	}else {$self->thow("Protein must have an external_id");}
-	if (defined $proteinDB){
-		$self->proteinDB($proteinDB);
+
+	if (defined $external_dbname){
+		$self->external_dbname($external_dbname);
 	}
 	if (defined $seq_start){
 		$self->seq_start($seq_start);
@@ -110,6 +111,46 @@ sub dbID {
 
 }
 
+=head2 peptide_sequence_id
+
+ Title   : peptide_sequence_id
+ Usage   : $obj->peptide_sequence_id($newval)
+ Function:
+ Returns : value of peptide_sequence_id
+ Args    : newvalue (optional)
+
+=cut
+
+sub peptide_sequence_id{
+   my $self = shift;
+   if( @_ ) {
+      my $value = shift;
+      $self->{'peptide_sequence_id'} = $value;
+   }
+   return $self->{'peptide_sequence_id'};
+
+}
+
+=head2 external_dbname
+
+ Title   : external_dbname
+ Usage   : $obj->external_dbname($newval)
+ Function:
+ Returns : value of external_dbname
+ Args    : newvalue (optional)
+
+=cut
+
+sub external_dbname{
+   my $self = shift;
+   if( @_ ) {
+      my $value = shift;
+      $self->{'external_dbname'} = $value;
+   }
+   return $self->{'external_dbname'};
+
+}
+
 =head2 external_id
 
  Title   : external_id
@@ -130,26 +171,51 @@ sub external_id {
 
 }
 
-=head2 proteinDB
+=head2 stable_id
 
- Title   : proteinDB
- Usage   : $obj->proteinDB(val)
+ Title   : stable_id
+ Usage   : $obj->stable_id($newval)
  Function:
- Returns : proteinDB obj associated with this Protein
+ Returns : value of stable_id, an ensembl stable identifier
  Args    : newvalue (optional)
 
 =cut
 
-sub proteinDB{
+sub stable_id{
    my $self = shift;
    if( @_ ) {
       my $value = shift;
-      $self->{'proteinDB'} = $value;
+      $self->{'stable_id'} = $value;
    }
-   return $self->{'proteinDB'};
+   return $self->{'stable_id'} ;
 
 }
 
+=head2 seq
+ 
+ Title   : seq
+ Usage   : $string    = $obj->seq()
+ Function: Returns the sequence as a string of letters.
+ Returns : A scalar
+ Args    : none
+ 
+=cut
+ 
+sub seq {
+   my ($self,$value) = @_;
+ 
+   if (defined $value) {
+     if(! $self->validate_seq($value)) {
+           $self->throw("Attempting to set the sequence to [$value] which does not look healthy");
+       }
+     $self->{'seq'} = $value;
+   }
+   if (! exists ($self->{'seq'})){
+     $self->throw("No ProteinAdaptor attached to this Protein object. Can't fetch peptide sequence");
+     $self->{'seq'} = $self->adaptor->fetch_peptide_seq($self->peptide_sequence_id);
+   }
+   return $self->{'seq'};
+}
 
 
 =head2 seq_start
@@ -294,28 +360,6 @@ sub family_id{
       $self->{'family_id'} = $value;
     }
     return $self->{'family_id'};
-
-}
-
-
-=head2 family_rank
-
- Title   : family_rank
- Usage   : $obj->family_rank($newval)
- Function: Getset for protein's Family Rank
- Returns : int  
- Args    : 
-
-
-=cut
-
-sub family_rank{
-   my ($self,$value) = @_;
-
-   if(defined $value) {
-      $self->{'rank'} = $value;
-   } 
-    return $self->{'rank'};
 
 }
 

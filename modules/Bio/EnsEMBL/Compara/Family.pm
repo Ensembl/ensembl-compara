@@ -40,39 +40,61 @@ use strict;
 
 # Object preamble - inheriets from Bio::Root::RootI
 
-use Bio::Root::RootI;
+use Bio::Root::Root;
 use Bio::EnsEMBL::Compara::Protein;
-use Bio::Tools::Run::Alignment::Clustalw;
 
-@ISA = qw(Bio::Root::RootI);
+@ISA = qw(Bio::Root::Root);
+
+=head2 new
+
+ Title   : new 
+ Usage   : $obj->new($newval)
+ Function:
+ Returns : value of new 
+ Args    : newvalue (optional)
+ Comments:
+		  Creates a new family object with the option of using 
+		  --lazy fetching (just fetching list of protein_ids, objects fetched only when using get_all_members or get_members_by_db)
+		  --industrious fetching (load the protein objects into the family. Mainly useful for doing loading of databases)
+		  use the --lazyfetching [T/F] option, defaults to T
+ 
+
+=cut
 
 sub new {
     my ($class,@args) = @_;
     my $self = {};
     bless $self,$class;
-    my ($dbID,$stable_id,$threshold,$adaptor,$description) = $self->_rearrange([qw(
-									DBID
-									STABLEID
-									THRESHOLD
-									ADAPTOR
-									DESCRIPTION
-					     				)],@args);
+    my ($dbID,$stable_id,$threshold,$adaptor,$description,$annot_score,$members) = $self->_rearrange([qw(
+																										DBID
+																										STABLEID
+																										THRESHOLD
+																										ADAPTOR
+																										DESCRIPTION
+																										ANNOTATIONSCORE
+																										MEMBERS
+																										)],@args);
     if (defined $dbID){
-	$self->dbID($dbID);
+		$self->dbID($dbID);
     }
     if (defined $adaptor){
-	$self->adaptor($adaptor);
+		$self->adaptor($adaptor);
     }
     if (defined $stable_id){
-	$self->stable_id($stable_id);
+		$self->stable_id($stable_id);
     }
     if (defined $threshold){
-	$self->threshold($threshold);
+		$self->threshold($threshold);
     }
     if (defined $description){
-	$self->description($description);
+		$self->description($description);
     }
-
+    if (defined $annot_score){
+		$self->annotation_score($annot_score);
+    }
+	if (defined $members){
+		$self->add_members(@$members);
+	}
 	return $self;
 
 }
@@ -132,6 +154,7 @@ sub adaptor{
    my $obj = shift;
    if( @_ ) {
       my $value = shift;
+	  $obj->throw("$value not a Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor") unless $value->isa("Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor");
       $obj->{'adaptor'} = $value;
     }
     return $obj->{'adaptor'};
@@ -158,6 +181,26 @@ sub description{
 
 }
 
+=head2 annotation_score
+
+ Title	 : annotation_score
+ Usage	 : $obj->annotation_score($newval)
+ Function: Getset for annotation_score object
+ Returns : value of annotation-score 
+ Args	 : newvalue(optional)
+
+=cut
+
+sub annotation_score{
+   my $obj = shift;
+   if( @_ ) {
+      my $value = shift;
+	$obj->{'annotation_score'} = $value;
+    }
+    return $obj->{'annotation_score'};
+
+}
+
 =head2 size
 
  Title   : size
@@ -170,38 +213,66 @@ sub description{
 =cut
 
 sub size {
- my ($self, $db_name) = @_; 
- 	if (defined $db_name) { 
-		return scalar($self->get_members_of_db($db_name)); 
- 	}
+ my ($self, $name) = @_; 
+ 	#don't worry about caching...this is done in get_members_of_db
+	if (defined $name){
+		my $size = scalar($self->get_members_of_db($name));
+		return $size;
+	}
  	else { 
-		return scalar($self->get_all_members());
+		return scalar($self->get_all_members);
 	}
 
 }
 
-=head2 add_member
+=head2 add_members
 
- Title   : add_member
- Usage   : $fam->add_member
+ Title   : add_members
+ Usage   : $fam->add_members
  Function: returns the number of members of the family
  Returns : an array of family members
  Args : a Bio::EnsEMBL::Compara::Protein obj 
 
 =cut
 
-sub add_member {
-   my ($self,$fam_protein) = @_;
-   $self->throw("add_member currently only supports Bio::EnsEMBL::Compara::Protein") unless $fam_protein->isa('Bio::EnsEMBL::Compara::Protein');
+sub add_members {
+	my ($self,@fam_protein) = @_;
+ 	 
+	foreach my $fam_protein (@fam_protein){
+		my $id;
+		if (ref($fam_protein) eq "HASH"){ #a protein id
+			if ($fam_protein->isa("Bio::EnsEMBL::Compara::Protein")){
+				$self->_proteins_loaded(1);
+				$id = $fam_protein->external_id;
+			}
+		}
+		elsif($self->_proteins_loaded){
+
+		}
+		else {
+			$self->_proteins_loaded(0);
+			$id = $fam_protein;
+		}	
+				 
+   		if(!$self->exist($fam_protein)){ #check whether familyprotein already exists
+			my @prot;
+			push @prot, $fam_protein;
+			$self->_members(@prot);
+#   			push @{$self->{_members}},$fam_protein;
+   		}
+	    else {
+			$self->warn("Protein with ID:".$id." already exists!");
+		}
+	}
+   return $self->members;
    
-   if(!$self->exist($fam_protein)){ #check whether familyprotein already exists
-   	push @{$self->{_members}},$fam_protein;
-   }
-   else {
-	$self->warn("Protein with dbID:".$fam_protein->dbID." already exists!");
-   }
-   return $self->get_all_members;
-   
+}
+sub _proteins_loaded{
+	my ($self,$load) = @_;
+	if (defined $load){
+		$self->{'_proteins_loaded'} = $load;
+	}
+	return $self->{'_proteins_loaded'};
 }
 
 =head2 exist
@@ -216,12 +287,17 @@ sub add_member {
 
 sub exist {
 	my ($self,$famprot) = @_;
-	$self->throw("add_member currently only supports Bio::EnsEMBL::Compara::Protein") unless $famprot->isa('Bio::EnsEMBL::Compara::Protein');
-
-	foreach my $mem ($self->get_all_members){
-		if ($mem->external_id eq $famprot->external_id){
+	
+	foreach my $mem ($self->_members){
+		if (!$mem->isa("Bio::EnsEMBL::Compara::Protein")){ #members are identifiers
+			if ($mem eq $famprot){
+				return 1;
+			}
+		}
+		elsif ($mem->external_id eq $famprot->external_id){#members are proteins
 			return 1;
 		}
+		else{}
 	}
 	return 0;
 }
@@ -238,17 +314,51 @@ sub exist {
 
 sub get_members_of_db {
 	my ($self,$dbname)=@_;
-	$self->throw("No database name specified for get_members_of_db ! ") unless defined($dbname);
-
-	my @mems = ();
-	foreach my $mem ($self->get_all_members){
-		if ($mem->proteinDB->name eq $dbname){
-			push @mems, $mem;
-		}
+	if (!$self->proteins_loaded){
+		$self->get_all_members;
 	}
-	return @mems;
+	$self->warn("No member of from $dbname") unless (scalar($self->_members_of_db($dbname) > 0));
+	return $self->_members_of_db($dbname);
 }	
 
+=head2 members
+
+ Title   : members
+ Usage   : $fam->members
+ Function: get all members of the family which belong to a specified db
+ Returns : an array of Bio::EnsEMBL::Compara::Protein
+ Args    : optional, an array of Bio::EnsEMBL::Compara::Protein 
+
+=cut
+
+sub _members {
+    my ($self,@proteins)=@_;
+    if (!defined ($self->{'_members'})){
+        $self->{'_members'} = {};
+    }
+	if (@proteins){
+		foreach my $prot(@proteins){ #store hashed by dbname
+			if (ref($prot) eq ""){
+				push @{$self->{'_members'}{$prot}},$prot;
+			}
+			else {
+				push @{$self->{'_members'}{$prot->external_dbname}},$prot;
+			}
+			
+		}			
+	}
+	#looping through to return all members..this is to avoid storing another has with all
+	#the proteins
+	my @mems;
+	foreach my $key (keys %{$self->{'_members'}}){
+		push @mems,@{$self->{'_members'}{$key}};
+	}
+    return @mems; 
+}
+sub _members_of_db {
+	my($self,$dbname) = @_;
+	return $self->{'_members'}{$dbname};
+}
 =head2 get_all_members
 
  Title	 : get_all_members
@@ -261,10 +371,19 @@ sub get_members_of_db {
 
 sub get_all_members {
 	my ($self)=@_;
-	if (!defined ($self->{'_members'})){
-		$self->{'_members'} = [];
+	if ($self->_proteins_loaded){
+		return $self->_members;
 	}
-	return @{$self->{'_members'}};
+	elsif($self->adaptor){	
+		#reuse function to fetch family with loaded proteins;
+		my $family = $self->adaptor->fetch_by_dbID($self->dbID,"F");
+		$self->_proteins_loaded(1);
+		return $self->_members($family->get_all_members());	
+	}
+	else {
+		$self->warn("No members for this family ".$self->dbID);
+		return undef;
+	}
 }	
 
 =head2 create_alignment
@@ -283,6 +402,7 @@ sub create_alignment{
 	if (!defined(@params)){
 		@params = ('matrix' => 'BLOSUM');	
 	}
+	require Bio::Tools::Run::Alignment::Clustalw;
 	my $factory = Bio::Tools::Run::Alignment::Clustalw->new(@params);	
 	my @proteins = $self->get_all_members;
 	my @bioseq;
