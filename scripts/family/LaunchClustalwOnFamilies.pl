@@ -28,14 +28,23 @@ my ($family_stable_id,$family_id,$fasta_file,$fasta_index);
 my $dir = ".";
 my $store = 0;
 
-my $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
+# There is a new version of fastafetch on the farm, /usr/local/ensembl/bin/fastafetch
+# We had problem previously with it, as sometimes the fasta files we use have IUPAC letter
+# that fastafetch was not aware of. If any problem with fall back to the compiled version in
+# /nfs/acari/abel/bin/alpha-dec-osf4.0 or /nfs/acari/abel/bin/i386/ and inform Guy Slater to fix
+# the potential bug
 
-if (-e "/proc/version") {
-  # it is a linux machine
-  $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
+my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
+
+unless (-e $fastafetch_executable) {
+  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
+  if (-e "/proc/version") {
+    # it is a linux machine
+    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
+  }
 }
 
-my $clustalw_executable = "/usr/local/ensembl/bin/clustalw1.82";
+my $clustalw_executable = "/usr/local/ensembl/bin/clustalw";
 
 my $help = 0;
 my $host;
@@ -111,7 +120,7 @@ unless (defined $clustal_file) {
 
   my $sb_file = "/tmp/sb.$rand";
 
-  unless (system("$fastafetch_executable $fasta_file $fasta_index $sb_id > $sb_file") == 0) {
+  unless (system("$fastafetch_executable $fasta_file $fasta_index $sb_id |grep -v \"^Message\" > $sb_file") == 0) {
     unlink glob("/tmp/*$rand*");
     die "error in fastafetch $sb_id, $!\n";
   }
@@ -120,7 +129,6 @@ unless (defined $clustal_file) {
   # Just load the sequence as it is in the family db
 
   if (scalar @members_attributes == 1) {
-    exit 0;
     my $FH = IO::File->new();
     $FH->open($sb_file) || die "Could not open fasta file [$sb_file], $!\n;";
     
@@ -138,12 +146,12 @@ unless (defined $clustal_file) {
         $member_seq .= $_;
       }
     }
-  
+    
     if ($number_of_sequence != 1) {
       warn "For family " . $family->stable_id . " we get $number_of_sequence sequence instead of 1
 EXIT 1\n";
       exit 1;
-  }
+    }
     
     $FH->close;
     
@@ -164,7 +172,7 @@ EXIT 1\n";
         $cigar_line .= $seglength . "M";
       }
     }
-      $member->sequence = $member_seq;
+      $member->sequence($member_seq);
       $attribute->cigar_line($cigar_line);
       
       $FamilyAdaptor->update_relation([$member, $attribute]);
