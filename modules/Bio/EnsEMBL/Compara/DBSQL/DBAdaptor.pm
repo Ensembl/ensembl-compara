@@ -104,7 +104,7 @@ sub new {
                            -pass   => $db_hash->{'pass'},
                            -port   => $db_hash->{'port'},
                            -driver => $db_hash->{'driver'},
-                           -disconnect_when_inactive =>1);
+                           -disconnect_when_inactive =>0);
       };
 
       if($@) {
@@ -158,7 +158,7 @@ sub add_db_adaptor {
                  "not a [$dba]");
   }
 
-  $dba->db->disconnect_when_inactive(1);
+  # $dba->db->disconnect_when_inactive(0);
   my $mc = $dba->get_MetaContainer;
   my $csa = $dba->get_CoordSystemAdaptor;
   
