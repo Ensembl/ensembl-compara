@@ -139,5 +139,62 @@ sub store{
    return $dnafrag->dbID;
 }
 
+=head2 store_if_needed
+
+ Title   : store_if_needed
+ Usage   : $self->store_if_needed($dnafrag)
+ Function: store instance in the defined database if NOT
+           already present.
+ Example :
+ Returns : $dnafrag->dbID
+ Args    : Bio::EnsEMBL::Compara::DnaFrag object
+
+
+=cut
+
+sub store_if_needed {
+   my ($self,$dnafrag) = @_;
+
+   if( !defined $dnafrag ) {
+       $self->throw("Must store $dnafrag object");
+   }
+
+   my $gdb = $dnafrag->genomedb();
+
+   if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
+       $self->throw("Must have genomedb attached to the dnafrag to store the dnafrag [$gdb]");
+   }
+
+   if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
+       $self->throw("Must have dnafrag arg [$dnafrag]");
+   }
+
+   if( !defined $gdb->dbID ) {
+       $self->throw("genomedb must be stored (no dbID). Store genomedb first");
+   }
+
+   if( !defined $dnafrag->name ) {
+       $self->throw("dna frag must have a name");
+   }
+   
+   my $name = $dnafrag->name;
+   my $gid =  $gdb->dbID;
+   my $sth = $self->prepare("select dnafrag_id from dnafrag where name='$name' and genome_db_id=$gid");
+
+   if ($sth->execute()) {
+     $self->throw("Failed execution of a select query");
+   }
+
+   my ($dnafrag_id) = $sth->fetchrow_array();
+
+   if (defined $dnafrag_id) {
+     # $dnafrag already stored
+     $dnafrag->dbID($dnafrag_id);
+     return $dnafrag_id;
+   } else {
+     my $dnafrag_id = $self->store($dnafrag);
+     return $dnafrag_id;
+   }
+}
 
 1;
