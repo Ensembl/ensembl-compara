@@ -69,7 +69,7 @@ unless(defined($fastadir) and ($fastadir =~ /^\//)) {
 
 
 my $comparaDBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%db_conf);
-my $pipelineDBA = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $comparaDBA);
+my $pipelineDBA = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $comparaDBA->dbc);
 
 my @subsets;
 
@@ -127,7 +127,7 @@ foreach my $subset (@subsets) {
   #print("Prepare fasta file as blast database\n");
   #system("setdb $fastafile");
 
-  # set up the analysis and input_id_analysiDBCONNECTs tables for the pipelinw
+  # set up the analysis and input_id_analysis tables for the pipeline
   SubmitSubsetForAnalysis($comparaDBA, $pipelineDBA, $subset, $blastdb); #uses global DBAs
 }
 

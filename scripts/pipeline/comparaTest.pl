@@ -61,15 +61,20 @@ unless(defined($self->{'compara_conf'}->{'-host'})
 }
 
 $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
-$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
+$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
-my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(1001);
+my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(66454);
 $member->print_member() if($member);
 
-my $worker = $self->{'comparaDBA'}->get_HiveAdaptor->create_new_worker(16);
-$worker->print_worker;
+my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
+my $paf_list = $pafDBA->fetch_all_RH_by_member_genomedb(66454, 3);
+foreach my $paf (@{$paf_list}) {  
+  $paf->display_short() if($paf);
+  my $rpaf = $pafDBA->fetch_by_dbID($paf->rhit_dbID) if($paf->rhit_dbID);
+  $rpaf->display_short() if($rpaf);
+}
 
-sleep(1000000);
+#sleep(1000000);
 
 exit(0);
 
