@@ -1,12 +1,14 @@
-genome_db_id	taxon_id	name	assembly	assembly_default	
-1	9606	Homo sapiens	NCBI34	1
-2	10090	Mus musculus	NCBIM32	1
-3	10116	Rattus norvegicus	RGSC3.1	1
-4	31033	Fugu rubripes	FUGU2	1
-5	7165	Anopheles gambiae	MOZ2A	1
-6	7227	Drosophila melanogaster	DROM3A	1
-7	6239	Caenorhabditis elegans	CEL116	1
-8	6238	Caenorhabditis briggsae	CBR25	1
-9	7955	Danio rerio	ZFISH3	1
-10	9598	Pan troglodytes	BROAD1	1
-11	9031	Gallus gallus	WASHUC1	1
+genome_db_id	taxon_id	name	assembly	assembly_default	genebuild	locator
+1	9606	Homo sapiens	NCBI34	1	0405Ensembl	
+2	10090	Mus musculus	NCBIM33	1	0409Ensembl	
+3	10116	Rattus norvegicus	RGSC3.1	1	0311Ensembl	
+4	31033	Fugu rubripes	FUGU2	1	0405Ensembl	
+5	7165	Anopheles gambiae	MOZ2A	1	0310Ensembl	
+6	7227	Drosophila melanogaster	DROM3A	1	0307FlyBase	
+7	6239	Caenorhabditis elegans	CEL116	1	0402Wormbase	
+8	6238	Caenorhabditis briggsae	CBR25	1	0302Ensembl	
+9	7955	Danio rerio	ZFISH4	1	0407Ensembl	
+10	9598	Pan troglodytes	CHIMP1	1	0405Ensembl	
+11	9031	Gallus gallus	WASHUC1	1	0406Ensembl	
+12	7460	Apis mellifera	Amel_1.1	1	0409Ensembl		
+13	99883	Tetraodon nigroviridis	TETRAODON7	1	0409Genoscope
