@@ -50,6 +50,7 @@ ensembl-dev@ebi.ac.uk
 =cut
 
 
+# Think about adding "Rat -- Mouse deduced" and "Mouse -- Rat deduced"
 
 use strict;
 

@@ -42,14 +42,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Bio::EnsEMBL::Compara::GenomeDB;
 
-use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::Root;
+use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::DBLoader;
-
-@ISA = qw(Bio::EnsEMBL::Root);
-
 
 sub new {
   my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
@@ -71,15 +67,15 @@ sub new {
 
 =head2 db_adaptor
 
-  Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBConnection $dba
+  Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBAdaptor $dba
                The DBAdaptor containing sequence information for the genome
                represented by this object.
   Example    : $gdb->db_adaptor($dba);
   Description: Getter/Setter for the DBAdaptor containing sequence 
                information for the genome represented by this object.
-  Returntype : Bio::EnsEMBL::DBSQL::DBConnection
+  Returntype : Bio::EnsEMBL::DBSQL::DBAdaptor
   Exceptions : thrown if the argument is not a
-               Bio::EnsEMBL::DBSQL::DBConnection
+               Bio::EnsEMBL::DBSQL::DBAdaptor
   Caller     : general
 
 =cut
@@ -88,20 +84,14 @@ sub db_adaptor{
   my ( $self, $dba ) = @_;
 
   if($dba) {
-    unless(ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
-      $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBConnection not a [$dba]\n");
+    unless(ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
+      $self->throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
     }
     $self->{'_db_adaptor'} = $dba;
   }
   
   unless (defined $self->{'_db_adaptor'}) {
     $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
-  }
-
-  unless (defined $self->{'_db_adaptor'}) {
-    $self->throw("Could not obtain DBAdaptor for Genome DBAdaptor with name=[".$self->name."] and\n".
-                 "assembly=[" . $self->assembly."]. It must be loaded using config file or\n" .
-                 "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor::add_db_adaptor");
   }
   
   return $self->{'_db_adaptor'};
@@ -290,12 +280,10 @@ sub connect_to_genome_locator
 
   return undef if($self->locator eq '');
 
-  my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
+  my $genomeDBA = undef;
+  eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
   return undef unless($genomeDBA);
-  if ($genomeDBA->isa('Bio::EnsEMBL::Container')) {
-    $genomeDBA = $genomeDBA->_obj;
-  }
-  $genomeDBA->disconnect_when_inactive(1);
+
   return $genomeDBA;
 }
 

@@ -41,16 +41,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DnaFrag;
-use vars qw(@ISA);
+
 use strict;
-
-# Object preamble
-
-use Bio::EnsEMBL::Root;
-
-@ISA = qw(Bio::EnsEMBL::Root);
-
-# new() is written here 
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument;
 
 sub new {
   my($class,@args) = @_;
@@ -60,7 +54,7 @@ sub new {
   bless $self,$class;
 
   my ($name,$contig,$genomedb,$type,$adaptor,$dbID) =
-    $self->_rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);
+    rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);
 
    if( defined $name) {
      	 $self->name($name);
@@ -131,7 +125,7 @@ sub name{
 
 =cut
 
-sub contig{
+sub contig {
    my ($self) = @_;
 
    if( !defined $self->{'_contig'} ) {
@@ -147,7 +141,7 @@ sub contig{
        $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_region('toplevel',$self->name);
      } 
      else {
-       $self->throw ("Can't fetch contig of ".$self->name." with type ".$self->type);
+       throw ("Can't fetch contig of ".$self->name." with type ".$self->type);
      }
    }
    
@@ -177,7 +171,7 @@ sub slice {
 
 =cut
 
-sub genomedb{
+sub genomedb {
    my ($self,$value) = @_;
    if( defined $value) {
       $self->{'genomedb'} = $value;
