@@ -99,12 +99,26 @@ sub db_adaptor{
   my ( $self, $arg ) = @_;
   
   if( $arg ) {
-    $self->{'_db_adaptor'} = $arg;
+    my $dba = $arg;
+
+    #avoid potential memory leak
+    if($dba->isa('Bio::EnsEMBL::Container')) {
+      $dba = $dba->_obj;
+    }
+    $self->{'_db_adaptor'} = $dba;
+
     #update locator string
     $self->locator($arg->locator);
+
   } elsif( !defined $self->{'_db_adaptor'} ) {
     # this will throw if it can't build it
-    $self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator);
+    my $dba  = Bio::EnsEMBL::DBLoader->new($self->locator);
+
+    #avoid potential memory leak
+    if($dba->isa('Bio::EnsEMBL::Container')) {
+      $dba = $dba->_obj;
+    }
+    $self->{'_db_adaptor'} = $dba;
    }
   
   return $self->{'_db_adaptor'};
