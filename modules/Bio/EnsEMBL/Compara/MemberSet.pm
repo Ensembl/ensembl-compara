@@ -45,7 +45,9 @@ sub new {
 
     $dbid && $self->dbID($dbid);
     $name && $self->name($name);
-    $self->{'_member_id_list'} = ();
+
+    #$self->{'_member_id_list'} = [];
+    $self->{'_member_list'} = [];
   }
 
   return $self;
@@ -137,19 +139,23 @@ sub name {
 
 =cut
 
+=head1
 sub add_member_id {
   my $self = shift;
+  my $count=0;
 
   if(@_) {
     my $member_id = shift;
-    my @idList = $self->{'_member_id_list'};
-    push @idList, $member_id;
-    $self->{'_member_id_list'} = @idList;
-    #$self->{'_member_id_list'} .= " " . $member_id;;
-    #$self->{'_member_id_list'} .= " " . $member_id;
+    $count = push @{$self->{'_member_id_list'}}, $member_id;
+    #print("added $count element to list\n");
+
+    if(defined($self->adaptor)) {
+      $self->adaptor->store_link($self, $member_id);
+    }
   }
-  return;
+  return $count
 }
+=cut
 
 sub add_member {
   my ($self, $member) = @_;
@@ -159,35 +165,77 @@ sub add_member {
     "gene arg must be a [Bio::EnsEMBL::Compara::Member] ".
     "not a [$member]");
   }
+  #return $self->add_member_id($member->dbID);
 
-  return add_member_id($member->dbID);
+  my $count = push @{$self->{'_member_list'}}, $member;
+
+  if(defined($self->adaptor)) {
+    $self->adaptor->store_link($self, $member->dbID);
+  }
+
 }
 
-=head2 member_id_list
+=head2 member_list
 
   Arg [1]    : 
   Example    :
   Description:
-  Returntype : list of strings
+  Returntype : reference to array of Bio::EnsEMBL::Compara::Member objects
   Exceptions :
   Caller     :
 
 =cut
-
+=head3
 sub member_id_list {
   my $self = shift;
-  my @idList = ();
 
-  #@idList = split(/\s/, $self->{'_member_id_list'});
-  #return @idList;
   return $self->{'_member_id_list'};
 }
+=cut
+
+sub member_list {
+  my $self = shift;
+
+  return $self->{'_member_list'};
+}
+
 
 sub count {
   my $self = shift;
 
-  my $count = @{$self->member_id_list};
-  return $count;
+  #return $#{$self->member_id_list()} + 1;
+  return $#{$self->member_list()} + 1;
+
+  #my @idList = @{$self->member_id_list()};
+  #my $count = $#idList;
+  #return $count;
+}
+
+
+sub output_to_fasta {
+  my ($self, $fastaPath, $prefix) = @_;
+
+  if(defined($fastaPath)) {
+    if($fastaPath ne "stdout") {
+      open FASTA_FP,">$fastaPath";
+    } else {
+      open FASTA_FP,">-";
+    }
+  }
+
+  foreach my $member (@{member_list()}) {
+
+    my $seq_string = $member->sequence;
+
+    $seq_string =~ s/(.{72})/$1\n/g;
+    
+    print FASTA_FP ">$prefix" .
+        $member->stable_id . " " .
+        $member->description . "\n" .
+        $seq_string . "\n";
+  }
+
+  close(FASTA_FP);
 }
 
 1;

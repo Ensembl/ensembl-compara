@@ -92,7 +92,7 @@ sub fetch_by_set_name {
   }
 
   #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "ms.name = '$name'";
+  my $constraint = "m.name = '$member_set_name'";
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
@@ -115,8 +115,6 @@ sub fetch_all {
 
   return $self->_generic_fetch();
 }
-
-
 
 
 
@@ -196,14 +194,14 @@ sub _generic_fetch {
 sub _tables {
   my $self = shift;
 
-  return (['member_set', 'ms'], ['member_set_link', 'l']);
+  return (['member_set', 'm'], ['member_set_link', 'l']);
 }
 
 sub _columns {
   my $self = shift;
 
-  return qw (ms.member_set_id
-             ms.name
+  return qw (m.member_set_id
+             m.name
              l.member_set_id
              l.member_id);
 }
@@ -215,38 +213,44 @@ sub _objs_from_sth {
   $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
 
   my @memberSets = ();
-  my %setNames = {};
-  my %setMemberIds = {};
+  my %setNames;
+  my %setMemberIds;
+  my $MemberAdapter = $self->db->get_MemberAdaptor;
 
   while ($sth->fetch()) {
-    my ($member_set_id, $name);
-    $member_set_id = $column{'ms.member_set_id'};
-    $name = $column{'ms.name'};
-    $member_id = $column{'l.member_id'}
+    my ($member_set_id, $name, $member_id);
+    $member_set_id = $column{'m.member_set_id'};
+    $name = $column{'m.name'};
+    $member_id = $column{'l.member_id'};
 
-    if(not defined($setNames{$member_set_id})) {
-      $setNames{$member_set_id} = $name;
-      $setMemberIds{$member_set_id} = ($member_id);
+    if(defined($setMemberIds{$member_set_id})) {
+      push @{$setMemberIds{$member_set_id}}, $member_id;
     }
     else {
-      push $setMemberIds{$member_set_id}, $member_id;
+      $setNames{$member_set_id} = $name;
+      $setMemberIds{$member_set_id} = [$member_id];
     }
   }
 
-  @memberSetIds = keys(%setNames);
-  foreach $member_set_id (@memberSetIds) {
-    my ($memberSet);
+  my @allMemberSetIds = keys(%setNames);
+  foreach my $member_set_id (@allMemberSetIds) {
+    my ($memberSet, @member_id_list, $member_id);
 
     @member_id_list = $setMemberIds{$member_set_id};
     
     $memberSet = Bio::EnsEMBL::Compara::MemberSet->new_fast
-      ({'_dbID' => $member_set_id,
-        '_name' => $setNames{$member_set_id},
-        '_member_id_list' => @member_id_list;
-        '_adaptor' => $self});
+        ({'_dbID' => $member_set_id,
+          '_name' => $setNames{$member_set_id},
+          '_adaptor' => $self});
+
+    foreach $member_id (@{$setMemberIds{$member_set_id}}) {
+      #$memberSet->add_member_id($member_id);
+
+      my $member = $MemberAdapter->fetch_by_dbID($member_id);
+      $memberSet->add_member($member);
+    }
 
     push @memberSets, $memberSet;
-
   }
   return \@memberSets
 }
@@ -254,7 +258,7 @@ sub _objs_from_sth {
 sub _default_where_clause {
   my $self = shift;
 
-  return 'ms.member_set_id = l.member_set_id';
+  return 'm.member_set_id = l.member_set_id';
 }
 
 sub _final_clause {
@@ -262,6 +266,7 @@ sub _final_clause {
 
   return '';
 }
+
 
 #
 # STORE METHODS
@@ -293,11 +298,47 @@ sub store {
                     VALUES (?)");
 
   $sth->execute($memberSet->name);
-
   $memberSet->dbID( $sth->{'mysql_insertid'} );
 
+  my @memberIds = @{$memberSet->member_id_list()};
+  foreach my $member_id (@memberIds) {
+    my $sth =
+      $self->prepare("INSERT INTO member_set_link (member_set_id, member_id)
+                      VALUES (?,?)");
+    $sth->execute($memberSet->dbID, $member_id);
+  }
 
+  $memberSet->adaptor($self);
+  
   return $memberSet->dbID;
+}
+
+
+=head2 store_link
+
+  Arg [1]    :  Bio::EnsEMBL::Compara::MemberSet $memberSet
+  Arg [2]    :  int $member_id
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub store_link {
+  my ($self, $memberSet, $member_id) = @_;
+
+  unless($memberSet->isa('Bio::EnsEMBL::Compara::MemberSet')) {
+    $self->throw(
+      "member_set arg must be a [Bio::EnsEMBL::Compara::MemberSet] "
+    . "not a $memberSet");
+  }
+
+  my $sth =
+    $self->prepare("INSERT INTO member_set_link (member_set_id, member_id)
+                    VALUES (?,?)");
+  $sth->execute($memberSet->dbID, $member_id);
 }
 
 

@@ -402,6 +402,23 @@ sub get_DomainAdaptor {
 =head2 get_MemberAdaptor
 
   Arg [1]    : none
+  Example    : $ma = $dba->get_MemberSetAdaptor
+  Description: Retrieves a MemberSetAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::MemberSetAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_MemberSetAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberSetAdaptor" );
+}
+
+=head2 get_MemberAdaptor
+
+  Arg [1]    : none
   Example    : $ma = $dba->get_MemberAdaptor
   Description: Retrieves a MemberAdaptor for this compara database
   Returntype : Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
@@ -412,7 +429,7 @@ sub get_DomainAdaptor {
 
 sub get_MemberAdaptor {
   my $self = shift;
-  
+
   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor" );
 }
 

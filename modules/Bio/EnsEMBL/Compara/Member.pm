@@ -121,7 +121,7 @@ sub new_from_transcript {
   my $peptideBioSeq;
   my $seq_string;
 
-  my ($transcript, $genome_db, $translate) = $self->_rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE)], @args);
+  my ($transcript, $genome_db, $translate, $description) = $self->_rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
   #my ($transcript, $genome_db, $translate) = @args;
 
   unless(defined($transcript) and $transcript->isa('Bio::EnsEMBL::Transcript')) {
@@ -136,7 +136,8 @@ sub new_from_transcript {
   }
 
   $self->taxon_id($genome_db->taxon_id);
-  $self->description("NULL");
+  if(defined($description)) { $self->description($description); }
+  else { $self->description("NULL"); }
   $self->genome_db_id($genome_db->dbID);
   $self->chr_name($transcript->seq_region_name);
   $self->chr_start($transcript->coding_region_start);
