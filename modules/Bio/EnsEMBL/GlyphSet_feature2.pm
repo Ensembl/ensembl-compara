@@ -120,8 +120,13 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
             $Composite->push($glyph);
         }
     
-	$start =int(( $start + $end) /2);
-        my $ZZ = "contig=$i&fpos_start=$start&fpos_end=$start&fpos_context=50000";
+        my $ZZ;
+        if($end-$start<100000) {
+	    $start =int(( $start + $end) /2);
+            $ZZ = "contig=$i&fpos_start=$start&fpos_end=$start&fpos_context=50000";
+	} else {
+            $ZZ = "contig=$i&fpos_start=$start&fpos_end=$end";
+        }
 	$Composite->zmenu( $self->zmenu( $i, $ZZ ) );
 	$Composite->href( $self->href( $i, $ZZ ) );
         if ($dep > 0){ # we bump

@@ -368,7 +368,7 @@ sub zoom_URL {
     my( $self, $PART, $interval_middle, $width, $factor, $highlights ) = @_;
     my $start = int( $interval_middle - $width / 2 / $factor);
     my $end   = int( $interval_middle + $width / 2 / $factor);        
-    return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights);
+    return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights#vc);
 }
 
 sub zoom_zmenu {
