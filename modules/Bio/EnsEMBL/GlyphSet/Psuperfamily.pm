@@ -48,7 +48,8 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x' => $row[0]->feature1->start(),
 	    'y' => 0,
-	    'zmenu' => { "SCOP: $KK" => $URLS->get_url('SUPERFAMILY',$KK) },
+	    'href' => $URLS->get_url('SUPERFAMILY',$KK) ,
+		'zmenu' => { "SCOP: $KK" => $URLS->get_url('SUPERFAMILY',$KK) },
 	});
 
 	my @row = @{$hash{$key}};

@@ -48,7 +48,8 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x' => $row[0]->feature1->start(),
 	    'y' => 0,
-	    'zmenu' => {
+		'href'	   => $ext_url->get_url( 'PROSITE', $key ),
+		'zmenu' => {
 		'caption' => "Prosite Domain",
 		$key 	  => $ext_url->get_url( 'PROSITE', $key )
 	    },
@@ -73,7 +74,7 @@ sub _init {
 		'height'   => $h,
 		'colour'   => $colour,
 	    });
-			
+				
 	    $Composite->push($rect);
 	    $prsave = $pr;
 	}

@@ -51,7 +51,8 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x'     => $row[0]->feature1->start(),
 	    'y'     => $y,
-	    'zmenu' => {
+	    'href'	   => $ext_url->get_url( 'PRINTS', $key ),
+		'zmenu' => {
 		'caption'  	=> "Prints Domain",
 		$key 		=> $ext_url->get_url( 'PRINTS', $key  )
 	    },
