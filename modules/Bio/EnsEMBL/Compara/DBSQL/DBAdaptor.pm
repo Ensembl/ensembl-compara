@@ -114,10 +114,10 @@ sub new {
 		     "Bio::EnsEMBL::DBSQL::DBConnection");
       }
 
-      #avoid possible memory leaks
-      if($db->isa('Bio::EnsEMBL::DBSQL::Container')) {
-	$db = $db->_obj;
-      }
+      #compara should hold onto the actual container objects
+      #     if($db->isa('Bio::EnsEMBL::DBSQL::Container')) {
+      #	$db = $db->_obj;
+      #      }
 
       $self->{'genomes'}->{"$species:$assembly"} = $db;
     }
@@ -154,15 +154,10 @@ sub add_db_adaptor {
 		 "not a [$dba]");
   }
 
-  #avoid potential memory leaks
-  if($dba->isa('Bio::EnsEMBL::Container')) {
-    $dba = $dba->_obj;
-  }
-
-  unless($dba->can('get_MetaContainer')) {
-    $self->throw("Do not know how to obtain meta information for database" .
-		 "[$dba]. Cannot determine species or assembly");
-  }
+  #compara should hold onto the actual container objects...
+  #  if($dba->isa('Bio::EnsEMBL::Container')) {
+  #    $dba = $dba->_obj;
+  #  }
 
   my $mc = $dba->get_MetaContainer;
 
@@ -358,6 +353,20 @@ sub get_MetaContainer {
     my $self = shift;
 
     return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::MetaContainer");
+}
+
+
+
+sub deleteObj {
+  my $self = shift;
+
+  if($self->{'genomes'}) {
+    foreach my $db (keys %{$self->{'genomes'}}) {
+      delete $self->{'genomes'}->{$db};
+    }
+  }
+
+  $self->SUPER::deleteObj;
 }
 
 
