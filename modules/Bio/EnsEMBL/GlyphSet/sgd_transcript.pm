@@ -9,7 +9,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 sub my_label {
   my $self = shift;
-  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "Wormbase trans.";
+  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "SGD trans.";
 }
 
 sub colours {
@@ -103,7 +103,7 @@ sub zmenu {
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
   my $zmenu = {
-    'caption'                       => "Wormbase Gene",
+    'caption'                       => "SGD Gene",
     "00:$id"			=> "",
     "01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core",
     "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=core",                	
@@ -147,9 +147,9 @@ sub text_label {
     if( $gene->type eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
     } elsif( $transcript->translation ) {
-      $id.= $eid ? "Wormbase known trans" : "Wormbase novel trans";
+      $id.= $eid ? "SGD known trans" : "SGD novel trans";
     } else {
-      $id .= "Wormbase pseudogene";
+      $id .= "SGD pseudogene";
     }
   }
   return $id;
@@ -171,7 +171,7 @@ sub gene_text_label {
     if( $gene->type eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
     } else {
-      $id.= $eid ? "Wormbase known trans" : "Wormbase novel trans";
+      $id.= $eid ? "SGD known trans" : "SGD novel trans";
     }
   }
   return $id;
@@ -180,12 +180,12 @@ sub gene_text_label {
 sub legend {
   my ($self, $colours) = @_;
   return ('genes', 900, [
-    'Wormbase predicted genes (known)' => $colours->{'_KNOWN'}[0],
-    'Wormbase predicted genes (novel)' => $colours->{'_'}[0],
-    'Wormbase pseudogenes'             => $colours->{'_PSEUDO'}[0],
+    'SGD predicted genes (known)' => $colours->{'_KNOWN'}[0],
+    'SGD predicted genes (novel)' => $colours->{'_'}[0],
+    'SGD pseudogenes'             => $colours->{'_PSEUDO'}[0],
   ]);
 }
 
-sub error_track_name { return 'Wormbase transcripts'; }
+sub error_track_name { return 'SGD transcripts'; }
 
 1;
