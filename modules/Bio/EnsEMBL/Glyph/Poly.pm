@@ -67,7 +67,8 @@ sub height {
 
 sub transform {
     my ($this, $transform_ref) = @_;
-
+#    return if(defined $this->{'read-only'});
+#    $this->{'read-only'} = 1;
 
     my $scalex     = $$transform_ref{'scalex'}     || 1;
     my $scaley     = $$transform_ref{'scaley'}     || 1;
@@ -110,10 +111,6 @@ sub transform {
 	#
 	$x = $x + $translatex;
 	$y = $y + $translatey;
-
-	#########
-	# (joy!) deal with rotation here
-	#
 
 	push @{$this->{'pixelpoints'}}, ($x, $y);
     }

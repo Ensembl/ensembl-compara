@@ -52,16 +52,18 @@ sub AUTOLOAD {
 #
 sub transform {
     my ($this, $transform_ref) = @_;
+#    return if(defined $this->{'read-only'});
+#    $this->{'read-only'} = 1;
 
     my $scalex     = $$transform_ref{'scalex'}     || 1;
     my $scaley     = $$transform_ref{'scaley'}     || 1;
     my $translatex = $$transform_ref{'translatex'} || 0;
     my $translatey = $$transform_ref{'translatey'} || 0;
     my $rotation   = $$transform_ref{'rotation'}   || 0;
-    my $clipx      = $$transform_ref{'clipx'}      || 0;
-    my $clipy      = $$transform_ref{'clipy'}      || 0;
-    my $clipwidth  = $$transform_ref{'clipwidth'}  || 0;
-    my $clipheight = $$transform_ref{'clipheight'} || 0;
+#    my $clipx      = $$transform_ref{'clipx'}      || 0;
+#    my $clipy      = $$transform_ref{'clipy'}      || 0;
+#    my $clipwidth  = $$transform_ref{'clipwidth'}  || 0;
+#    my $clipheight = $$transform_ref{'clipheight'} || 0;
 
     #########
     # override transformation if we've set x/y to be absolute (pixel) coords

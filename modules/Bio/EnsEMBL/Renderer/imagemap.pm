@@ -10,8 +10,8 @@ use vars qw(@ISA);
 # imagemaps also aren't too fussed about width & height boundaries
 #
 sub init_canvas {
-    my ($this, $config, $im_width, $im_height) = @_;
-    $this->canvas("");
+    my ($self, $config, $im_width, $im_height) = @_;
+    $self->canvas("");
 }
 
 sub add_canvas_frame {
@@ -20,9 +20,9 @@ sub add_canvas_frame {
 }
 
 sub render_Rect {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
 
-    $glyph->transform($this->{'config'}->{'transform'});
+    $self->transform($glyph);
 
     my $onmouseover = $glyph->onmouseover();
     $onmouseover = (defined $onmouseover)?qq( onmouseover="$onmouseover"):"";
@@ -71,7 +71,13 @@ sub render_Rect {
 #	return;
 #    }
 
-    $this->{'canvas'} .= qq(<area coords="$x1 $y1 $x2 $y2"$href$onmouseover$onmouseout$alt>\n) if(defined $href);
+    #########
+    # make the imagemap cover our area exactly
+    #
+    $y2 += 1;
+    $x2 += 1;
+
+    $self->{'canvas'} .= qq(<area coords="$x1 $y1 $x2 $y2"$href$onmouseover$onmouseout$alt>\n) if(defined $href);
 #print STDERR qq(imagemap $glyph: $x1, $y1, $x2, $y2\n) if(ref($glyph) eq "Bio::EnsEMBL::Glyph::Composite");
 }
 
@@ -91,8 +97,8 @@ sub render_Poly {
 }
 
 sub render_Composite {
-    my ($this, $glyph) = @_;
-    return $this->render_Rect($glyph);
+    my ($self, $glyph) = @_;
+    return $self->render_Rect($glyph);
 }
 
 sub render_Line {

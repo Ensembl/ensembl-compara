@@ -44,6 +44,7 @@ sub new {
 	'display'    => $display,
 	'glyphsets'  => [],
 	'config'     => $Config,
+	'read-only'  => undef,
     };
     bless($self, $class);
 
@@ -176,10 +177,10 @@ sub new {
 #
 sub render {
     my ($self, $type) = @_;
-
+    
     $self->{'config'}->{'transform'}->{'translatex'} ||= 0;
-    $self->{'config'}->{'transform'}->{'translatey'} ||= 0;
-
+    $self->{'config'}->{'transform'}->{'translatey'} ||= 0; # 
+    
     #########
     # build the name/type of render object we want
     #
@@ -202,8 +203,10 @@ sub render {
     # big, shiny, rendering 'GO' button
     #
     &eprof_start(qq(renderer_creation_$type));
-    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'});
+    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'}, $self->{'read-only'});
     &eprof_end(qq(renderer_creation_$type));
+
+    $self->{'read-only'} = 1;
 
     return $renderer->canvas();
 }

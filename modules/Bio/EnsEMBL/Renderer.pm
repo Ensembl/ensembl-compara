@@ -5,11 +5,12 @@ use vars qw(@ISA);
 use lib "../../../../modules";
 use ColourMap;
 use Bio::EnsEMBL::Glyph::Rect;
+use Bio::EnsEMBL::Renderer;
 
 @ISA = qw(Exporter);
 
 sub new {
-    my ($class, $config, $container, $glyphsets_ref) = @_;
+    my ($class, $config, $container, $glyphsets_ref, $read_only) = @_;
 
     my $self = {
 	'glyphsets' => $glyphsets_ref,
@@ -18,6 +19,7 @@ sub new {
 	'config'    => $config,
 	'container' => $container,
 	'spacing'   => 5,
+	'read-only' => $read_only,
     };
 
     bless($self, $class);
@@ -95,7 +97,12 @@ sub render {
 		'colour'    => $$bgcolours{$iteration % 2},
 		'absolutex' => 1,
 	    });
-	    $glyphset->unshift($background);
+
+	    #########
+	    # this accidentally gets stuffed in twice (for gif & imagemap)
+	    # so with rounding errors and such we shouldn't track this for maxy & miny values
+	    #
+	    unshift @{$glyphset->{'glyphs'}}, $background;
 	}
 
 	#########
@@ -129,27 +136,27 @@ sub render {
     }
 	
 
-	#########
-	# the last thing we do in the render process is add a frame
-	# so that it appears on the top of everything else...
+    #########
+    # the last thing we do in the render process is add a frame
+    # so that it appears on the top of everything else...
 	
-	$self->add_canvas_frame($config, $im_width, $im_height);
-	}
+    $self->add_canvas_frame($config, $im_width, $im_height);
+}
 
-	sub canvas {
-    	my ($self, $canvas) = @_;
-    	$self->{'canvas'} = $canvas if(defined $canvas);
-    	return $self->{'canvas'};
-	}
+sub canvas {
+    my ($self, $canvas) = @_;
+    $self->{'canvas'} = $canvas if(defined $canvas);
+    return $self->{'canvas'};
+}
 
-	sub method {
+sub method {
     	my ($self, $glyph) = @_;
 
     	my ($suffix) = ref($glyph) =~ /.*::(.*)/;
     	return qq(render_$suffix);
-	}
+}
 
-	sub render_Composite {
+sub render_Composite {
     my ($self, $glyph) = @_;
 
     #########
@@ -174,12 +181,16 @@ sub render {
 	    print STDERR qq(Bio::EnsEMBL::Renderer::render_Composite: Do not know how to $method\n);
 	}
     }
-	}
+}
 
-	#########
-	# empty stub for Blank spacer objects with no rendering at all
-	#
-	sub render_Blank {
-	}
+#########
+# empty stub for Blank spacer objects with no rendering at all
+#
+sub render_Blank {
+}
 
+sub transform {
+    my ($self, $glyph) = @_;
+    $glyph->transform($self->{'config'}->{'transform'}) unless(defined $self->{'read-only'});
+}
 1;

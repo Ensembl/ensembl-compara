@@ -77,7 +77,7 @@ sub render_Rect {
     my $bordercolour  = $self->colour($gbordercolour);
     my $colour        = $self->colour($gcolour);
 
-    $glyph->transform($self->{'config'}->{'transform'});
+    $self->transform($glyph);
 
     my $x1 = $glyph->pixelx();
     my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
@@ -95,7 +95,7 @@ sub render_Text {
     my ($self, $glyph) = @_;
 
     my $colour = $self->colour($glyph->colour());
-    $glyph->transform($self->{'config'}->{'transform'});
+    $self->transform($glyph);
 
     #########
     # BAH! HORRIBLE STINKY STUFF!
@@ -130,7 +130,7 @@ sub render_Intron {
 
     my $colour = $self->colour($glyph->colour());
 
-    $glyph->transform($self->{'config'}->{'transform'});
+    $self->transform($glyph);
 
     my ($xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand);
 
@@ -154,7 +154,7 @@ sub render_Intron {
 
 sub render_Line {
     my ($self, $glyph) = @_;
-    $glyph->transform($self->{'config'}->{'transform'});
+    $self->transform($glyph);
 
     my $colour = $self->colour($glyph->colour());
     my $x1     = $glyph->pixelx() + 0;
@@ -177,7 +177,9 @@ sub render_Poly {
 
     my $poly = new GD::Polygon;
 
-    $glyph->transform($self->{'config'}->{'transform'});
+    $self->transform($glyph);
+
+    return unless(defined $glyph->pixelpoints());
 
     my @points = @{$glyph->pixelpoints()};
     my $pairs_of_points = (scalar @points)/ 2;
@@ -207,11 +209,9 @@ sub render_Composite {
     #########
     # draw & colour the bounding area if specified
     #
-    if(defined $glyph->colour() || defined $glyph->bordercolour()) {
-	my $rect = $glyph;
-	$rect->transform($self->{'config'}->{'transform'});
-	$self->render_Rect($rect);
-    }
+    my $rect = $glyph;
+    $self->render_Rect($rect);
+    $self->transform($rect) if(defined $glyph->colour() || defined $glyph->bordercolour());
 }
 
 1;

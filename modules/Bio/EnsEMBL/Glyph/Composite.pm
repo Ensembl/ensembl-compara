@@ -6,11 +6,11 @@ use Bio::EnsEMBL::Glyph::Rect;
 @ISA = qw(Bio::EnsEMBL::Glyph::Rect);
 
 sub push {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
 
     return if (!defined $glyph);
 
-    push @{$this->{'composite'}}, $glyph;
+    push @{$self->{'composite'}}, $glyph;
 
     my $gx = $glyph->x();
     my $gw = $glyph->width();
@@ -22,53 +22,53 @@ sub push {
     #
     # x
     #
-    $this->x($gx) if(!defined($this->x()));
-    $this->y($gy) if(!defined($this->y()));
-    $this->width($gw) if(!defined($this->width()));
-    $this->height($gh) if(!defined($this->height()));
+    $self->x($gx) if(!defined($self->x()));
+    $self->y($gy) if(!defined($self->y()));
+    $self->width($gw) if(!defined($self->width()));
+    $self->height($gh) if(!defined($self->height()));
 
-    if($gx < $this->x()) {
-	$this->x($gx);
-	$this->width($this->x() - $gx + $this->width());
-    } elsif(($gx + $gw) > ($this->x() + $this->width())) {
+    if($gx < $self->x()) {
+	$self->x($gx);
+	$self->width($self->x() - $gx + $self->width());
+    } elsif(($gx + $gw) > ($self->x() + $self->width())) {
 	# x unchanged
-	$this->width(($gx + $gw) - $this->x());
+	$self->width(($gx + $gw) - $self->x());
     }
     # y
     #
-    if($gy < $this->y()) {
-	$this->y($gy);
-	$this->height($this->y() - $gy + $this->height());
-    } elsif(($gy + $gh) > ($this->y() + $this->height())) {
+    if($gy < $self->y()) {
+	$self->y($gy);
+	$self->height($self->y() - $gy + $self->height());
+    } elsif(($gy + $gh) > ($self->y() + $self->height())) {
 	# y unchanged
-	$this->height(($gy + $gh) - $this->y());
+	$self->height(($gy + $gh) - $self->y());
     }
 
     #########
     # make the glyph coords relative to the composite container
     # NOTE: watch out for this if you're creating glyphsets! - don't do this twice
     #
-    $glyph->x($gx - $this->x()) unless(defined $glyph->absolutex());
-    $glyph->y($gy - $this->y()) unless(defined $glyph->absolutey());
+    $glyph->x($gx - $self->x()) unless(defined $glyph->absolutex());
+    $glyph->y($gy - $self->y()) unless(defined $glyph->absolutey());
 }
 
 sub first {
-    my ($this) = @_;
-    return if(!defined $this->{'composite'});
-    return @{$this->{'composite'}}[0];
+    my ($self) = @_;
+    return if(!defined $self->{'composite'});
+    return @{$self->{'composite'}}[0];
 }
 
 sub last {
-    my ($this) = @_;
-    return if(!defined $this->{'composite'});
-    my $len = scalar @{$this->{'composite'}};
+    my ($self) = @_;
+    return if(!defined $self->{'composite'});
+    my $len = scalar @{$self->{'composite'}};
     return undef if($len == 0);
-    return @{$this->{'composite'}}[$len - 1];
+    return @{$self->{'composite'}}[$len - 1];
 }
 
 sub glyphs {
-    my ($this) = @_;
-    return @{$this->{'composite'}};
+    my ($self) = @_;
+    return @{$self->{'composite'}};
 }
 
 1;
