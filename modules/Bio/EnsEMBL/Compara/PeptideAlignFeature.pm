@@ -420,7 +420,8 @@ sub display_short {
 
   my $qm = $self->query_member;
   my $hm = $self->hit_member;
-  print("PAF(",$self->dbID,") ",
+  my $dbID = $self->dbID;  $dbID = '' unless($dbID);
+  print("PAF(",$dbID,") ",
         "\t" , $qm->stable_id,"(".$self->qstart,",",$self->qend,")",
         "(",$qm->chr_name,":",$qm->chr_start,")\t",
         "\t" , $hm->stable_id, "(".$self->hstart,",",$self->hend,")",
