@@ -425,7 +425,6 @@ sub _columns {
              m.chr_name
              m.chr_start
              m.chr_end
-             m.sequence
              s.source_id
              s.source_name);
 }
@@ -449,7 +448,7 @@ sub _objs_from_sth {
         '_chr_name' => $column{'chr_name'},
         '_chr_start' => $column{'chr_start'},
         '_chr_end' => $column{'chr_end'},
-        '_sequence' => $column{'sequence'},
+        #'_sequence' => $column{'sequence'},
         '_source_id' => $column{'source_id'},
         '_source_name' => $column{'source_name'},
         '_adaptor' => $self});
@@ -521,34 +520,43 @@ sub store {
 
   $member->source_id($self->store_source($member->source_name));
 
-  my $sth = 
-    $self->prepare("INSERT INTO member (stable_id,source_id, 
+  my $sth =
+    $self->prepare("INSERT INTO member (stable_id,source_id,
                                 taxon_id, genome_db_id, description,
-                                chr_name, chr_start, chr_end, sequence) 
-                    VALUES (?,?,?,?,?,?,?,?,?)");
+                                chr_name, chr_start, chr_end)
+                    VALUES (?,?,?,?,?,?,?,?)");
 
   $sth->execute($member->stable_id,
-		$member->source_id, 
-		$member->taxon_id,
-		$member->genome_db_id,
+                $member->source_id,
+                $member->taxon_id,
+                $member->genome_db_id,
                 $member->description,
-		$member->chr_name, 
-		$member->chr_start,
-		$member->chr_end,
-		$member->sequence);
+                $member->chr_name,
+                $member->chr_start,
+                $member->chr_end);
 
   $member->dbID( $sth->{'mysql_insertid'} );
+
+
+  if(defined($member->sequence)) {
+    $sth = $self->prepare("INSERT INTO sequence (member_id, sequence)
+                           VALUES (?,?)");
+    $sth->execute($member->dbID,
+                  $member->sequence);
+  }
+
   $member->adaptor($self);
   if (defined $member->taxon) {
     $self->db->get_TaxonAdaptor->store_if_needed($member->taxon);
   }
+
   return $member->dbID;
 }
 
 sub update_sequence {
   my ($self, $member) = @_;
 
-  my $sql = "UPDATE member SET sequence = ? WHERE member_id = ?";
+  my $sql = "UPDATE sequence SET sequence = ? WHERE member_id = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($member->sequence, $member->dbID);
 }
@@ -582,7 +590,6 @@ sub store_source {
 }
 
 1;
-
 
 
 

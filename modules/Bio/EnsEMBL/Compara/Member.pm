@@ -1,7 +1,10 @@
 package Bio::EnsEMBL::Compara::Member;
 
 use strict;
+use Bio::Seq;
 use Bio::EnsEMBL::Root;
+use Bio::EnsEMBL::Gene;
+use Bio::EnsEMBL::Compara::GenomeDB;
 
 our @ISA = qw(Bio::EnsEMBL::Root);
 
@@ -17,7 +20,7 @@ sub new {
     $stable_id && $self->stable_id($stable_id);
     $description && $self->description($description);
     $source_id && $self->source_id($source_id);
-    $source_name && $self->source_id($source_name);
+    $source_name && $self->source_name($source_name);
     $adaptor && $self->adaptor($adaptor);
     $taxon_id && $self->taxon_id($taxon_id);
     $genome_db_id && $self->genome_db_id($genome_db_id);
@@ -43,6 +46,141 @@ sub new_fast {
 
   return bless $hashref, $class;
 }
+
+=head2 new_from_gene
+
+  Args       : Requires both an Bio::Ensembl:Gene object and a
+             : Bio::Ensembl:Compara:GenomeDB object
+  Example    : $member = Bio::EnsEMBL::Compara::Member->new_from_gene(
+                -gene   => $gene,
+                -genome_db => $genome_db);
+  Description: contructor method which takes an Ensembl::Gene object
+               and Compara:GenomeDB object and creates a new Member object
+               translating from the Gene object
+  Returntype : Bio::Ensembl::Compara::Member
+  Exceptions :
+  Caller     :
+  
+=cut
+
+sub new_from_gene {
+  my ($class, @args) = @_;
+  my $self = $class->SUPER::new(@args);
+
+  if (scalar @args) {
+  
+    my ($gene, $genome_db) = $self->_rearrange([qw(GENE GENOME_DB)], @args);
+
+    unless(defined($gene) and $gene->isa('Bio::EnsEMBL::Gene')) {
+      $self->throw(
+      "gene arg must be a [Bio::EnsEMBL::Gene] ".
+      "not a [$gene]");
+    }
+    unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
+      $self->throw(
+      "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
+      "not a [$genome_db]");
+    }
+
+    $self->stable_id($gene->stable_id);
+    $self->taxon_id($genome_db->taxon_id);
+    $self->description("NULL");
+    $self->genome_db_id($genome_db->dbID);
+    $self->chr_name($gene->seq_region_name);
+    $self->chr_start($gene->seq_region_start);
+    $self->chr_end($gene->seq_region_end);
+    #$self->sequence("NULL");
+    $self->seq_length(0);
+    $self->source_name("ENSEMBLGENE");
+  }
+  return $self;
+}
+
+
+=head2 new_from_transcript
+
+  Arg[1]     : Bio::Ensembl:Transcript object
+  Arg[2]     : Bio::Ensembl:Compara:GenomeDB object
+  Arg[3]     : string where value='translate' causes transcript object to translate
+               to a peptide
+  Example    : $member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
+                  $transcript, $genome_db,
+                -translate);
+  Description: contructor method which takes an Ensembl::Gene object
+               and Compara:GenomeDB object and creates a new Member object
+               translating from the Gene object
+  Returntype : Bio::Ensembl::Compara::Member
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub new_from_transcript {
+  my ($class, @args) = @_;
+  my $self = $class->SUPER::new(@args);
+  my $peptideBioSeq;
+  my $seq_string;
+
+  my ($transcript, $genome_db, $translate) = $self->_rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE)], @args);
+  #my ($transcript, $genome_db, $translate) = @args;
+
+  unless(defined($transcript) and $transcript->isa('Bio::EnsEMBL::Transcript')) {
+    $self->throw(
+    "transcript arg must be a [Bio::EnsEMBL::Transcript]".
+    "not a [$transcript]");
+  }
+  unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
+    $self->throw(
+    "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
+    "not a [$genome_db]");
+  }
+
+  $self->taxon_id($genome_db->taxon_id);
+  $self->description("NULL");
+  $self->genome_db_id($genome_db->dbID);
+  $self->chr_name($transcript->seq_region_name);
+  $self->chr_start($transcript->coding_region_start);
+  $self->chr_end($transcript->coding_region_end);
+  $self->seq_length(0);
+  
+  if(($translate eq 'translate') or ($translate eq 'yes')) {
+    if(not defined($transcript->translation)) {
+      $self->throw(
+        "request to translate a transcript without a defined translation",
+        $transcript->stable_id);
+    }
+    $self->stable_id($transcript->translation->stable_id);
+    $self->source_name("ENSEMBLPEP");
+
+    $peptideBioSeq = $transcript->translate;
+    $seq_string = $peptideBioSeq->seq;
+    # OR
+    #$seq_string = $transcript->translation->seq;
+
+    if ($seq_string =~ /^X+$/) {
+      warn "X+ in sequence from translation_id " . $transcript->translation->dbID."\n";
+    }
+    else {
+      #$seq_string =~ s/(.{72})/$1\n/g;
+      $self->sequence($seq_string);
+      $self->seq_length($peptideBioSeq->length);
+    }
+  }
+  else {
+    $self->stable_id($transcript->stable_id);
+    $self->source_name("ENSEMBLTRANS");
+    #$self->sequence($transcript->seq);
+    #$self->seq_length($transcript->length);
+  }
+
+  #print("Member->new_from_transcript\n");
+  #print("  source_name = '" . $self->source_name . "'\n");
+  #print("  stable_id = '" . $self->stable_id . "'\n");
+  #print("  taxon_id = '" . $self->taxon_id . "'\n");
+  #print("  chr_name = '" . $self->chr_name . "'\n");
+  return $self;
+}
+
 
 =head2 dbID
 
@@ -256,6 +394,24 @@ sub sequence {
   my $self = shift;
   $self->{'_sequence'} = shift if(@_);
   return $self->{'_sequence'};
+}
+
+
+=head2 seq_length
+
+  Arg [1]    : int $seq_length
+  Example    : my $seq_length = $member->seq_length;
+  Description: Extracts the sequence length of this member
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub seq_length {
+  my $self = shift;
+  $self->{'_seq_length'} = shift if(@_);
+  return $self->{'_seq_length'};
 }
 
 1;
