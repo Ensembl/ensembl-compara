@@ -280,11 +280,10 @@ sub connect_to_genome_locator
 
   return undef if($self->locator eq '');
 
-  my $genomeDBA;
+  my $genomeDBA = undef;
   eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
   return undef unless($genomeDBA);
 
-  # $genomeDBA->dbc->disconnect_when_inactive(1);
   return $genomeDBA;
 }
 
