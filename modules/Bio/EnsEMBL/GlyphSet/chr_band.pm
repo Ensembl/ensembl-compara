@@ -39,9 +39,9 @@ sub _init {
  
     my %COL = ();
     $COL{'gpos100'} = $cmap->id_by_name('black'); #add_rgb([200,200,200]);
-    $COL{'gpos75'}  = $cmap->id_by_name('grey3'); #add_rgb([210,210,210]);
-    $COL{'gpos50'}  = $cmap->id_by_name('grey2'); #add_rgb([230,230,230]);
-    $COL{'gpos25'}  = $cmap->id_by_name('grey1'); #add_rgb([240,240,240]);
+    $COL{'gpos75'}  = $cmap->id_by_name('grey75'); #add_rgb([210,210,210]);
+    $COL{'gpos50'}  = $cmap->id_by_name('grey50'); #add_rgb([230,230,230]);
+    $COL{'gpos25'}  = $cmap->id_by_name('grey25'); #add_rgb([240,240,240]);
     $COL{'gpos'}    = $black; #add_rgb([240,240,240]);
     $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
     $COL{'gneg'}    = $white;
@@ -55,10 +55,10 @@ sub _init {
     my $prev_end = 0;
     my $i = 0;
     # fetch the chromosome bands that cover this VC.
-    my @bands = $self->{'container'}->get_KaryotypeBands();
+    my $bands = $self->{'container'}->get_all_KaryotypeBands();
     my $min_start;
     my $max_end; 
-    foreach my $band (reverse @bands){
+    foreach my $band (reverse @$bands){
 	my $chr = $band->chr_name();
 	my $bandname = $band->name();
 	
@@ -74,9 +74,9 @@ sub _init {
         my $min_start = $vc_band_start if(!defined $min_start || $min_start > $vc_band_start); 
         my $max_end   = $vc_band_end   if(!defined $max_end   || $max_end   < $vc_band_end); 
     	my $gband = new Sanger::Graphics::Glyph::Rect({
-	    'x'      => $vc_band_start,
+	    'x'      => $vc_band_start -1 ,
 	    'y'      => 0,
-	    'width'  => $vc_band_end - $vc_band_start,
+	    'width'  => $vc_band_end - $vc_band_start +1 ,
 	    'height' => 10,
 	    'colour' => $COL{$stain},
 #    		'bordercolour' => $black,
@@ -106,9 +106,9 @@ sub _init {
 	}
 	
     	my $gband = new Sanger::Graphics::Glyph::Rect({
-	    'x'      => $min_start,
+	    'x'      => $min_start -1 ,
 	    'y'      => 0,
-	    'width'  => $max_end - $min_start,
+	    'width'  => $max_end - $min_start + 1,
 	    'height' => 10,
 	    'bordercolour' => $black,
 	    'absolutey' => 1,

@@ -8,7 +8,7 @@ sub my_label { return "Markers"; }
 
 sub features {
     my ($self) = @_;
-    return [ $self->{'container'}->get_landmark_MarkerFeatures() ];
+    return $self->{'container'}->get_landmark_MarkerFeatures();
 }
 
 sub href {

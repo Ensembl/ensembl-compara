@@ -44,7 +44,7 @@ sub _init {
     return unless ($self->strand() == 1);
   
     my $vc = $self->{'container'};
-    my $length = $vc->length() +1;
+    my $length = $vc->length();
   
     my $ystart = 3;
   
@@ -53,7 +53,7 @@ sub _init {
         'y'         => $ystart + 7,
         'width'     => $length,
         'height'    => 0,
-        'colour'    => $self->{'config'}->colourmap()->id_by_name('grey1'),
+        'colour'    => $self->{'config'}->colourmap()->id_by_name('grey50'),
         'absolutey' => 1,
     });
 
@@ -124,7 +124,7 @@ sub _init_assembled_contig {
     my %colours2 = ( $i  => $cmap->id_by_name('grey2'), 
 		   !$i => $cmap->id_by_name('grey3'));
     
-    $w *= $length/($length-1);
+    $w;
 
     my @assembly_contigs = $vc->get_all_MapFrags( 'assembly' );
     my %contigs = ();
@@ -354,7 +354,7 @@ sub _init_non_assembled_contig {
     my ($self, $ystart, $contig_tiling_path) = @_;
 
     my $vc = $self->{'container'};
-    my $length = $vc->length() +1;
+    my $length = $vc->length();
 
     my $Config = $self->{'config'};
 
@@ -392,12 +392,10 @@ sub _init_non_assembled_contig {
     my %colours  = ( $i  => $cmap->id_by_name('contigblue1'), 
 	          	    !$i => $cmap->id_by_name('contigblue2'));
   
-    $w *= $length/($length-1);
+    my $tot_width = $contig_tiling_path->[0][-1]{'end'} - 
+        $contig_tiling_path->[0][0]{'start'} + 1;
 
-    my $tot_width = @$contig_tiling_path[-1]->{'end'} - 
-        @$contig_tiling_path[0]->{'start'} + 1;
-
-    foreach my $tile ( @$contig_tiling_path ) {
+    foreach my $tile ( @{$contig_tiling_path->[0]} ) {
         my $col = $colours{$i};
         $i      = !$i;
         

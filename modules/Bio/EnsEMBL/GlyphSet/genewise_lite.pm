@@ -46,10 +46,9 @@ sub href {
 
 }
 
-sub genes {
+sub features {
   my ($self) = @_;
-
-  return $self->{'container'}->get_Genes_by_type('genewise');
+  return $self->{'container'}->get_all_Genes_by_type('genewise');
 }
 
 sub zmenu {

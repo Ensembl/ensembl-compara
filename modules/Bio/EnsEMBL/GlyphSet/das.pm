@@ -132,7 +132,7 @@ sub _init {
             my ($href, $zmenu ) = $self->zmenu( $f );
             my $Composite = new Sanger::Graphics::Glyph::Composite({
                 'y'            => 0,
-                'x'            => $START,
+                'x'            => $START-1,
                 'absolutey'    => 1,
                 'zmenu'        => $zmenu,
             });
@@ -149,9 +149,9 @@ sub _init {
                 $C1 ++; 
                 $C ++; 
                 my $glyph = new Sanger::Graphics::Glyph::Rect({
-                    'x'          => $START,
+                    'x'          => $START-1,
                     'y'          => 0,
-                    'width'      => $END-$START,
+                    'width'      => $END-$START+1,
                     'height'     => 8,
                     'colour'     => $feature_colour,
                     'absolutey'  => 1,
@@ -177,9 +177,9 @@ sub _init {
                         'strand'    => $STRAND,
                     }) );
                     $Composite->push( new Sanger::Graphics::Glyph::Rect({
-                        'x'          => $f_start,
+                        'x'          => $f_start-1,
                         'y'          => 0,
-                        'width'      => $END-$f_start,
+                        'width'      => $END-$f_start+1,
                         'height'     => 8,
                         'colour'     => $feature_colour,
                         'absolutey' => 1,
@@ -189,7 +189,7 @@ sub _init {
             } else { ## GENERAL GROUPED FEATURE!
                 my $Composite2 = new Sanger::Graphics::Glyph::Composite({
                     'y'            => 0,
-                    'x'            => $START,
+                    'x'            => $START-1,
                     'absolutey'    => 1,
                     'zmenu'        => $zmenu,
                 });
@@ -206,7 +206,7 @@ sub _init {
                     $Composite2->push( new Sanger::Graphics::Glyph::Rect({
                         'x'          => $START,
                         'y'          => 0,
-                        'width'      => $END-$START,
+                        'width'      => $END-$START+1,
                         'height'     => 8,
                         'colour'     => $feature_colour,
                         'absolutey' => 1,
@@ -253,16 +253,16 @@ sub _init {
             $old_end = $START;
             my $Composite = new Sanger::Graphics::Glyph::Composite({
                 'y'            => 0,
-                'x'            => $START,
+                'x'            => $START-1,
                 'absolutey'    => 1,
                 'zmenu'        => $zmenu,
             });
             $Composite->{'href'} = $href if $href;
         
             $Composite->push( new Sanger::Graphics::Glyph::Rect({
-                'x'          => $START,
+                'x'          => $START-1,
                 'y'          => 0,
-                'width'      => $END-$START,
+                'width'      => $END-$START+1,
                 'height'     => 8,
                 'colour'     => $feature_colour,
                 'absolutey' => 1
@@ -333,7 +333,7 @@ sub feature_label {
             my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
             return unless $bp_textwidth < ($end - $start);
             my $tglyph = new Sanger::Graphics::Glyph::Text({
-               'x'          => int(( $end + $start - $bp_textwidth)/2),
+               'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
                'y'          => 1,
                'width'      => $bp_textwidth,
                'height'     => $self->{'textheight'},
@@ -348,7 +348,7 @@ sub feature_label {
             my $bp_textwidth = $self->{'textwidth'} * length($ID) * 1.2; # add 10% for scaling text
             # print STDERR "XXX> $ID $self->{'textheight'} XX\n";
             my $tglyph = new Sanger::Graphics::Glyph::Text({
-               'x'          => $start,
+               'x'          => $start -1,
                'y'          => $self->{'textheight'} + 2,
                'width'      => $bp_textwidth,
                'height'     => $self->{'textheight'},

@@ -83,13 +83,15 @@ sub _init {
     
     #First of all let us deal with all the EnsEMBL genes....
     my $vc_start = $vc->chr_start();
+    my $offset = $vc_start - 1;
     my @genes = ();
 
     #
     # Draw all of the Sanger Genes
     #
-    my @res = $vc->get_Genes_by_source( "sanger",1 ); 
-    foreach my $g (@res){ 
+    my $F = 0;
+    foreach my $g (@{$vc->get_all_Genes_by_source( "sanger",1 )} ) {
+      $F++;
       my $genelabel = $g->stable_id(); 
       my $high = exists $highlights{$genelabel};
       my $type = $g->type();
@@ -98,8 +100,8 @@ sub _init {
       my $gene_col = $sanger_colours->{ $type };
 
       push @genes, { 
-		   'chr_start' => $g->start() + $vc->chr_start() - 1, 
-                   'chr_end'   => $g->end() + $vc->chr_start() - 1, 
+		   'chr_start' => $g->start() + $offset,
+                   'chr_end'   => $g->end() + $offset,
                    'start'     => $g->start(), 
                    'strand'    => $g->strand(), 
                    'end'       => $g->end(), 
@@ -111,7 +113,7 @@ sub _init {
                    'type'      => $g->type()
             };
     } 
-    if(scalar @res) {
+    if($F>0) {
       $Config->{'legend_features'}->{'sanger_genes'} = {
        'priority' => 1000,
        'legend'  => [
@@ -126,32 +128,33 @@ sub _init {
     #
     # Draw all of the Core (ensembl) genes
     #
-    my @res = $vc->get_Genes_by_source( "core",1 );
-    for my $gene (@res) {
-      my $high = (exists $highlights{ $gene->stable_id() }) 
-              || (exists $highlights{ $gene->external_name() });
+    $F=0;
+    foreach my $g (@{$vc->get_all_Genes_by_source( "core",1 )} ) {
+      $F++;
+      my $high = (exists $highlights{ $g->stable_id() }) 
+              || (exists $highlights{ $g->external_name() });
       my ($gene_col, $gene_label);
-      if(defined $gene->external_name() && $gene->external_name() ne '') {
+      $gene_label = $g->external_name;
+      if(defined $gene_label && $gene_label ne '') {
 	$gene_col = $known_col;
-	$gene_label = $gene->external_name;
       } else {
 	$gene_col = $unknown_col;
 	$gene_label = 'NOVEL'; 
       }
       push @genes, {
-            'chr_start' => $gene->start + $vc->chr_start - 1,
-            'chr_end'   => $gene->end + $vc->chr_end - 1,
-            'start'     => $gene->start(),
-            'strand'    => $gene->strand(),
-            'end'       => $gene->end(),
-            'ens_ID'    => '', #$gene->stable_id(),
+            'chr_start' => $g->start + $offset,
+            'chr_end'   => $g->end + $offset,
+            'start'     => $g->start(),
+            'strand'    => $g->strand(),
+            'end'       => $g->end(),
+            'ens_ID'    => '', #$g->stable_id(),
             'label'     => $gene_label,
             'colour'    => $gene_col,
-            'ext_DB'    => $gene->external_db(),
+            'ext_DB'    => $g->external_db(),
             'high'      => $high,
             'type'      => 'ensembl' };
     }
-    if(scalar @res) {
+    if($F>0) {
       $Config->{'legend_features'}->{'genes'} = {
 	'priority' => 900,
         'legend'  => [
@@ -166,8 +169,9 @@ sub _init {
     #
     # Draw all EMBL Genes
     #
-    my @res = $vc->get_Genes_by_source('embl',1);
-    foreach my $g (@res){
+    $F=0;
+    foreach my $g (@{$vc->get_all_Genes_by_source( "embl",1 )} ) {
+      $F++;
       my $gene_label = $g->external_name() || $g->stable_id();
       
       my $high = exists $highlights{ $g->external_name() } ||
@@ -181,8 +185,8 @@ sub _init {
       }
 
       push @genes, {
-		'chr_start' => $g->start + $vc->chr_start() - 1,
-                'chr_end'   => $g->end + $vc->chr_start() - 1,
+		'chr_start' => $g->start + $offset,
+                'chr_end'   => $g->end + $offset,
                 'start'     => $g->start(),
                 'strand'    => $g->strand(),
                 'end'       => $g->end(),
@@ -195,7 +199,7 @@ sub _init {
             };
         }
 
-    if(scalar @res) {
+    if($F>0) {
       $Config->{'legend_features'}->{'embl_genes'} = {
             'priority' => 800,
             'legend'  => [
@@ -217,9 +221,9 @@ sub _init {
         $end = $vc_length if $end > $vc_length;
 
         my $rect = new Sanger::Graphics::Glyph::Rect({
-                'x'         => $start,
+                'x'         => $start-1,
                 'y'         => 0,
-                'width'     => $end - $start,
+                'width'     => $end - $start+1,
                 'height'    => $h,
                 'colour'    => $g->{'colour'},
                 'absolutey' => 1,
@@ -258,9 +262,9 @@ sub _init {
         push @gene_glyphs, $rect;
         if($g->{'high'}) {
             my $rect2 = new Sanger::Graphics::Glyph::Rect({
-                'x'         => $start - 1/$pix_per_bp,
+                'x'         => $start -1 - 1/$pix_per_bp,
                 'y'         => $rect->y()-1,
-                'width'     => $end - $start  + 2/$pix_per_bp,
+                'width'     => $end - $start  +1 + 2/$pix_per_bp,
                 'height'    => $rect->height()+2,
                 'colour'    => $hi_col,
                 'absolutey' => 1,

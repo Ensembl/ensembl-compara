@@ -86,10 +86,10 @@ sub text_label {
     return $transcript->stable_id();
 }
 
-sub genes {
+sub features {
   my ($self) = @_;
 
-  return $self->{'container'}->get_Genes_by_source('sanger');
+  return $self->{'container'}->get_all_Genes_by_source('sanger');
 }
 
 

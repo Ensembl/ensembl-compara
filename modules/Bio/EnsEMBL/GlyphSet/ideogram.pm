@@ -58,7 +58,7 @@ sub _init {
 
     # fetch the chromosome bands that cover this VC.
     my $kba   = $self->{'container'}->adaptor()->db()->get_KaryotypeBandAdaptor();
-    my @bands = $kba->fetch_by_chr_name($chr);
+    my $bands = $kba->fetch_all_by_chr_name($chr);
     my $chr_length = $self->{'container'}->get_Chromosome()->length();
     
     # get rid of div by zero...
@@ -77,7 +77,7 @@ sub _init {
     
     my $done_one_acen = 0;	    # flag for tracking place in chromsome
 
-    foreach my $band (@bands){
+    foreach my $band (@$bands){
 	my $bandname       = $band->name();
 # 	my $band2          = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
 # 	my $vc_band_start  = $band2->start();
@@ -94,7 +94,7 @@ sub _init {
 	    my $gband;
 	    if ($done_one_acen){
 		$gband = new Sanger::Graphics::Glyph::Poly({
-		    'points'       => [	$vc_band_start,7, 
+		    'points'       => [	$vc_band_start-1,7, 
 					$vc_band_end,2,
 					$vc_band_end,12,
 				      ],
@@ -103,7 +103,7 @@ sub _init {
 		});
 	    } else {
 		$gband = new Sanger::Graphics::Glyph::Poly({
-		    'points'       => [	$vc_band_start,2, 
+		    'points'       => [	$vc_band_start-1,2, 
 					$vc_band_end,7,
 					$vc_band_start,12,
 					],
@@ -118,10 +118,10 @@ sub _init {
 	} 
 	elsif ($stain eq "stalk"){
 	    my $gband = new Sanger::Graphics::Glyph::Poly({
-		'points'       => [ $vc_band_start,2, 
+		'points'       => [ $vc_band_start-1,2, 
 				    $vc_band_end,12,
 				    $vc_band_end,2,
-				    $vc_band_start,12, 
+				    $vc_band_start-1,12, 
 				  ],
 		'colour'       => $COL{$stain},
 		'absolutey'    => 1,
@@ -130,9 +130,9 @@ sub _init {
 	    $self->push($gband);
 	    
 	    $gband = new Sanger::Graphics::Glyph::Rect({
-		'x'      => $vc_band_start,
+		'x'      => $vc_band_start-1,
 		'y'      => 5,
-		'width'  => $vc_band_end - $vc_band_start,
+		'width'  => $vc_band_end - $vc_band_start + 1,
 		'height' => 4,
 		'colour' => $COL{$stain},
 		'absolutey' => 1,
@@ -143,9 +143,9 @@ sub _init {
 	}
 	else {
 	    my $gband = new Sanger::Graphics::Glyph::Rect({
-		'x'      => $vc_band_start,
+		'x'      => $vc_band_start -1,
 		'y'      => 2,
-		'width'  => $vc_band_end - $vc_band_start,
+		'width'  => $vc_band_end - $vc_band_start + 1,
 		'height' => 10,
 		'colour' => $COL{$stain},
 		'absolutey' => 1,
@@ -153,9 +153,9 @@ sub _init {
 	    $self->push($gband);
 	    
 	   $gband = new Sanger::Graphics::Glyph::Line({
-		'x'      => $vc_band_start,
+		'x'      => $vc_band_start-1,
 		'y'      => 2,
-		'width'  => $vc_band_end - $vc_band_start,
+		'width'  => $vc_band_end - $vc_band_start + 1,
 		'height' => 0,
 		'colour' => $black,
 		'absolutey' => 1,
@@ -163,9 +163,9 @@ sub _init {
 	    $self->push($gband);
 	    
 	    $gband = new Sanger::Graphics::Glyph::Line({
-		'x'      => $vc_band_start,
+		'x'      => $vc_band_start-1,
 		'y'      => 12,
-		'width'  => $vc_band_end - $vc_band_start,
+		'width'  => $vc_band_end - $vc_band_start + 1,
 		'height' => 0,
 		'colour' => $black,
 		'absolutey' => 1,
@@ -189,7 +189,7 @@ sub _init {
 	my $bp_textwidth = $w * length($bandname);
 	unless ($stain eq "acen" || $stain eq "tip" || $stain eq "stalk" ||($bp_textwidth > ($vc_band_end - $vc_band_start))){
 		my $tglyph = new Sanger::Graphics::Glyph::Text({
-		'x'      => ($vc_band_end + $vc_band_start - $bp_textwidth)/2,
+		'x'      => ($vc_band_end + $vc_band_start - 1 - $bp_textwidth)/2,
 		'y'      => 4,
 		'font'   => 'Tiny',
 		'colour' => $fontcolour,

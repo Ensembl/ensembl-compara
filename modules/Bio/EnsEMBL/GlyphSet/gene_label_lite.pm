@@ -64,10 +64,10 @@ sub _init {
         $self->errorTrack("Gene labels only displayed for less than $max_length Kb.");
         return;
     }
-	my $show_navigation = $navigation eq 'on' && ( $vc->length() < $max_length_nav * 1001 );
+	my $show_navigation = $navigation eq 'on' && ( $vc_length < $max_length_nav * 1001 );
     my $bitmap_length   = int($vc_length * $pix_per_bp);
 	my $vc_start        = $vc->chr_start();
-
+    my $offset = $vc_start-1;
 ##############################################################################
 # Stage 1c: Initialize other arrays/numbers                                  #
 ##############################################################################
@@ -87,16 +87,15 @@ sub _init {
 ##############################################################################
     &eprof_start("gene-virtualgene_start-get");
 
-    my @res = $vc->get_Genes_by_source('sanger', 1); 
-    foreach my $g (@res){ 
+    foreach my $g (@{ $vc->get_all_Genes_by_source('sanger', 1) } ) { ## Hollow genes
       my $gene_label = $g->stable_id();  
       my $high = exists $highlights{ $gene_label }; 
       my $type = $g->type(); 
       $type =~ s/HUMACE-//; 
       my $gene_col = $sanger_colours->{ $type }; 
         push @genes, { 
-            'chr_start' => $g->start() + $vc->chr_start() - 1, 
-            'chr_end'   => $g->end() + $vc->chr_start() - 1, 
+            'chr_start' => $g->start() + $offset, 
+            'chr_end'   => $g->end() + $offset, 
             'start'     => $g->start(), 
             'strand'    => $g->strand(), 
             'end'       => $g->end(), 
@@ -112,28 +111,28 @@ sub _init {
 ##############################################################################
 # Stage 2b: Retrieve all core (ensembl) genes                                #
 ##############################################################################
-    my @res = $vc->get_Genes_by_source('core', 1);
-    foreach my $gene (@res) {
+    foreach my $g (@{ $vc->get_all_Genes_by_source('core', 1) } ) { ## Hollow genes
         my( $gene_col, $gene_label, $high);
-        $high = exists $highlights{$gene->stable_id()} ? 1 : 0;
-        if(defined $gene->external_name && $gene->external_name() ne '') {
+        $high = exists $highlights{$g->stable_id()} ? 1 : 0;
+        my $gene_label = $g->external_name;
+        if(defined $gene_label && $gene_label ne '') {
             $gene_col = $known_col;
-            $gene_label = $gene->external_name();
+            $gene_label = $g->external_name();
             $high = 1 if(exists $highlights{$gene_label});
         } else {
             $gene_col = $unknown_col;
             $gene_label = 'NOVEL'; 
         }
         push @genes, {
-            'chr_start' => $gene->start() + $vc->chr_start - 1,
-            'chr_end'   => $gene->end() + $vc->chr_start - 1,
-            'start'     => $gene->start(),
-            'strand'    => $gene->strand(),
-            'end'       => $gene->end(),
-            'ens_ID'    => $gene->stable_id(),
+            'chr_start' => $g->start() + $offset,
+            'chr_end'   => $g->end() + $offset,
+            'start'     => $g->start(),
+            'strand'    => $g->strand(),
+            'end'       => $g->end(),
+            'ens_ID'    => $g->stable_id(),
             'label'     => $gene_label,
             'colour'    => $gene_col,
-            'ext_DB'    => $gene->external_db(),
+            'ext_DB'    => $g->external_db(),
             'high'      => $high
         };
     }
@@ -143,15 +142,14 @@ sub _init {
 # Stage 2c: Retrieve all EMBL (external) genes                               #
 ##############################################################################
     &eprof_start("gene-externalgene_start-get");
-    my @res = $vc->get_Genes_by_source('embl', 1);
-    foreach my $g (@res){
+    foreach my $g (@{ $vc->get_all_Genes_by_source('embl', 1) } ) { ## Hollow genes
        	my $gene_label = $g->external_name() || $g->stable_id();          
 	my $high = (exists $highlights{ $g->stable_id() }) || 
 	  exists ($highlights{$gene_label});
         my $gene_col = ($g->type() eq 'pseudo') ? $pseudo_col : $ext_col;
         push @genes, {
-                'chr_start' => $g->start() + $vc->chr_start() - 1,
-                'chr_end'   => $g->end() + $vc->chr_end() -1,
+                'chr_start' => $g->start() + $offset,
+                'chr_end'   => $g->end() + $offset,
                 'start'     => $g->start(),
                 'strand'    => $g->strand(),
                 'end'       => $g->end(),
@@ -180,7 +178,7 @@ sub _init {
 
 	    next if $label eq '';
         my $tglyph = new Sanger::Graphics::Glyph::Text({
-            'x'         => $start,	
+            'x'         => $start-1,	
             'y'         => $y,
             'height'    => $Config->texthelper->height($fontname),
             'width'     => $font_w_bp * length(" $label "),
@@ -224,9 +222,9 @@ sub _init {
         # Draw little taggy bit to indicate start of gene
         ##################################################
         my $taggy = new Sanger::Graphics::Glyph::Rect({
-            'x'            => $start,
+            'x'            => $start-1,
             'y'            => $tglyph->y - 1,
-            'width'        => 1,
+            'width'        => 0,
             'height'       => 4,
             'bordercolour' => $g->{'colour'},
             'absolutey'    => 1,
@@ -234,7 +232,7 @@ sub _init {
     
         push @gene_glyphs, $taggy;
         $taggy = new Sanger::Graphics::Glyph::Rect({
-            'x'            => $start,
+            'x'            => $start-1,
             'y'            => $tglyph->y - 1 + 4,
             'width'        => $font_w_bp * 0.5,
             'height'       => 0,

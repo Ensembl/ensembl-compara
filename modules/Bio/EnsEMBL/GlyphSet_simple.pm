@@ -139,7 +139,6 @@ sub _init {
         my $img_end   = $end;
         my ($label,$style) = $self->image_label( $f, $w );
         my $bp_textwidth = $w * length("$label") *1.1; # add 10% for scaling text
-        warn( $bp_textwidth );
 
         my( $tag_start ,$tag_end) = ($start, $end);
         if( $label && $style ne 'overlaid' ) {

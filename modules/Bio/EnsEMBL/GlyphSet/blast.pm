@@ -100,9 +100,9 @@ sub _init {
         $start = 0 if $start < 0;
         my ($col)    = map { $_->[0] <= $hit->[3] ? $_->[1] : () } @colours;
         my $gbox = new Sanger::Graphics::Glyph::Rect({
-            'x'         => $start - $vc_s,
+            'x'         => $start - $vc_s ,
             'y'         => 0,
-            'width'     => $end - $start,
+            'width'     => $end - $start + 1 ,
             'height'    => 8,
             'colour'    => $col,
             'absolutey' => 1,

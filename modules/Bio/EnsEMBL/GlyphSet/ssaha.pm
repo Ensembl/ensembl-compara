@@ -102,7 +102,7 @@ sub _init {
         my $gbox = new Sanger::Graphics::Glyph::Rect({
             'x'         => $start - $vc_s,
             'y'         => 0,
-            'width'     => $end - $start,
+            'width'     => $end - $start + 1,
             'height'    => 8,
             'colour'    => $col,
             'absolutey' => 1,

@@ -56,10 +56,10 @@ sub zmenu {
 
 sub text_label { return ''; }
 
-sub genes {
+sub features {
   my ($self) = @_;
 
-  return $self->{'container'}->get_Genes_by_source('estgene');
+  return $self->{'container'}->get_all_Genes_by_source('estgene');
 }
 
 sub legend {

@@ -22,10 +22,10 @@ sub colours {
     };
 }
 
-sub genes {
+sub features {
   my ($self) = @_;
 
-  return $self->{'container'}->get_Genes_by_source('embl');
+  return $self->{'container'}->get_all_Genes_by_source('embl');
 }
 
 

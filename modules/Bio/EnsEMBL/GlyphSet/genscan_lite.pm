@@ -22,25 +22,15 @@ sub colours {
 
 sub genes {
   my $self = shift;
-
-  my @transcripts = ();
   my @genes = ();
-
   #obtain genscan transcripts
-  @transcripts = 
-    $self->{'container'}->get_all_PredictionTranscripts('Genscan');
-
-  #wrap each transcript in a gene object
-  warn( join "\nXX\t", @transcripts ) ;
-  foreach my $transcript (@transcripts) {
+  foreach my $transcript (@{$self->{'container'}->get_all_PredictionTranscripts('Genscan')}) {
     my $gene = new Bio::EnsEMBL::Gene();
-
-    $gene->add_Transcript($transcript);
-    
+       $gene->add_Transcript($transcript);
     push @genes, $gene;
   }
 
-  return @genes;
+  return \@genes;
 }
 
 sub colour {

@@ -56,10 +56,10 @@ sub features {
 }
 
 
-sub genes {
+sub features {
   my $self = shift;
 
-  $self->throw("genes not implemented by subclass of Glyphset_transcript\n");
+  $self->throw("features not implemented by subclass of Glyphset_transcript\n");
 }
 
 
@@ -99,15 +99,13 @@ sub _init {
     my $length  = $container->length;
     my $transcript_drawn = 0;
     
-    my @genes = $self->genes();
-
-    foreach my $gene (@genes) {
+    foreach my $gene (@{$self->features()}) {
       # For alternate splicing diagram only draw transcripts in gene
         next if $target_gene && ($gene->stable_id() ne $target_gene);
 
-        foreach my $transcript ($gene->get_all_Transcripts()) {
+        foreach my $transcript (@{$gene->get_all_Transcripts()}) {
 	    #sort exons on their start coordinate
-            my @exons = sort {$a->start <=> $b->start} $transcript->get_all_Exons();
+            my @exons = sort {$a->start <=> $b->start} @{$transcript->get_all_Exons()};
             # Skip if no exons for this transcript
 	    next if (@exons == 0);
 	    # If stranded diagram skip if on wrong strand

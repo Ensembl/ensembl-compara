@@ -11,16 +11,11 @@ sub my_label { return "SNPs"; }
 sub features {
   my ($self) = @_;
   
-  &eprof_start('snp_1');
-  my @T = $self->{'container'}->get_all_SNPs();  
-  &eprof_end('snp_1');
-  &eprof_start('snp_2');
   my @snps = 
              map { $_->[1] } 
              sort { $a->[0] <=> $b->[1] }
              map { [ substr($_->type,0,2) * 1e9 + $_->start, $_ ] }
-             grep { $_->score < 4 } @T;
-  &eprof_end('snp_2');
+             grep { $_->score < 4 } @{$self->{'container'}->get_all_SNPs()};
 
   if(@snps) {
     $self->{'config'}->{'snp_legend_features'}->{'snps'} 
