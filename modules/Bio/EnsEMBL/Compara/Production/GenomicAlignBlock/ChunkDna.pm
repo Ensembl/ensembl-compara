@@ -47,34 +47,28 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkDna;
 
 use strict;
+use Time::HiRes qw(time gettimeofday tv_interval);
+use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Member;
-#use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
+
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+
 
 =head2 fetch_input
-
     Title   :   fetch_input
     Usage   :   $self->fetch_input
     Function:   prepares global variables and DB connections
     Returns :   none
     Args    :   none
-
 =cut
-
 sub fetch_input {
   my( $self) = @_;
 
@@ -90,8 +84,8 @@ sub fetch_input {
   $self->{'masking'}            = 'soft';
   $self->{'mask_params'}       = undef;
 
-  $self->{'prog'}              = undef;
-  $self->{'create'}            = undef; # 'analysis', 'job'
+  $self->{'analysis_job'}             = undef;
+  $self->{'create_analysis_prefix'}   = undef; # 'analysis', 'job'
   #$self->{'coordinate_system'} = "chromosome";
 
   $self->get_params($self->parameters);
@@ -174,9 +168,10 @@ sub get_params {
   $self->{'masking'} = $params->{'masking'} if(defined($params->{'masking'}));
 
   $self->{'genome_db_id'} = $params->{'gdb'} if(defined($params->{'gdb'}));
-  $self->{'prog'} = $params->{'prog'} if(defined($params->{'prog'}));
-  $self->{'create'} = $params->{'create'} if(defined($params->{'create'}));
-  #$self->{'coordinate_system'} = $params->{'coordinate_system'} if(defined($params->{'coordinate_system'});
+
+  $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
+  $self->{'create_analysis_prefix'} = $params->{'create_analysis_prefix'}
+    if(defined($params->{'create_analysis_prefix'}));
 
   return;
 
@@ -217,9 +212,9 @@ sub create_chunks_from_genomeDB
     #print "fetching dnafrag\n";
 
     my ($dnafrag) = @{$dnafragDBA->fetch_all_by_GenomeDB_region(
-                       $genome_db,
-                       $chr->coord_system->name(), #$self->{'coordinate_system'},
-                       $chr->seq_region_name)};
+                      $genome_db,
+                      $chr->coord_system->name(), #$self->{'coordinate_system'},
+                      $chr->seq_region_name)};
 
     #if($dnafrag) { print("  already stores as dbID ", $dnafrag->dbID, "\n"); }
     unless($dnafrag) {
@@ -269,10 +264,84 @@ sub create_dnafrag_chunks {
     }
     print "storing chunk ",$chunk->display_id,"\n";
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
+
+    $self->submit_job($chunk) if($self->{'analysis_job'});
+    $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
   }
   
   #print "Done\n";
   #print scalar(time()-$lasttime), " secs to chunk, and store\n";
+}
+
+
+sub submit_job {
+  my $self  = shift;
+  my $chunk = shift;
+
+  unless($self->{'submit_analysis'}) {
+    #print("\ncreate Submit Analysis\n");
+    my $logic_name = $self->{'analysis_job'};
+
+    #print("  see if analysis '$logic_name' is in database\n");
+    my $analysis =  $self->{'comparaDBA'}->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
+    #if($analysis) { print("  YES in database with analysis_id=".$analysis->dbID()); }
+
+    unless($analysis) {
+      #print("  NOPE: go ahead and insert\n");
+      $analysis = Bio::EnsEMBL::Analysis->new(
+          -db              => '',
+          -db_file         => '',
+          -db_version      => '1',
+          -parameters      => "",
+          -logic_name      => $logic_name,
+          -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        );
+      $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($analysis);
+
+      my $stats = $analysis->stats;
+      $stats->batch_size(7000);
+      $stats->hive_capacity(11);
+      $stats->status('BLOCKED');
+      $stats->update();
+    }
+    $self->{'submit_analysis'} = $analysis;
+  }
+
+  my $input_id = "{'qyChunk'=>" . $chunk->dbID . "}";
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+        -input_id       => $input_id,
+        -analysis       => $self->{'submit_analysis'},
+        -input_job_id   => 0,
+        );
+
+  return;        
+}
+
+
+sub create_chunk_analysis {
+  #routine to create one analysis per chunk
+  my $self  = shift;
+  my $chunk = shift;
+
+  my $logic_name = $self->{'create_analysis_prefix'} . "_". $chunk->dbID;
+  my $parameters = "{'dbChunk'=>" . $chunk->dbID . "}";
+
+  my $analysis = Bio::EnsEMBL::Analysis->new(
+      -db              => '',
+      -db_file         => '',
+      -db_version      => '1',
+      -parameters      => $parameters,
+      -logic_name      => $logic_name,
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
+    );
+  $self->db->get_AnalysisAdaptor()->store($analysis);
+
+  my $stats = $analysis->stats;
+  $stats->batch_size(10);
+  $stats->hive_capacity(500);
+  $stats->update();
+  
+  return;
 }
 
 
