@@ -4,6 +4,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 use Bio::EnsEMBL::Glyph::Rect;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 @ISA = qw( Bio::EnsEMBL::GlyphSet );
 
@@ -39,11 +40,13 @@ sub _init {
 	
 	my $show_navigation =  $navigation eq 'on' && ( $vc_length < $max_length_nav * 1001 );
 
-	
+    &eprof_start('lite_adaptor_call');
 	my $repeats = $vc->dbobj->get_LiteAdaptor->fetch_virtualRepeatFeatures_start_end(
 		$vc->_chr_name(), $vc->_global_start(), $vc->_global_end(), undef, $self->glob_bp() 
 	);
+    &eprof_end('lite_adaptor_call');
 
+    &eprof_start('lite_drawing');
 	foreach my $f ( @$repeats ) {
         my $start = $f->{'start'};
         $start = 1 if $start < 1;
@@ -64,6 +67,7 @@ sub _init {
 		} if($show_navigation);
         $self->push( $glyph );
     }
+    &eprof_end('lite_drawing');
 }
 
 1;
