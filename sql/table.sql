@@ -8,7 +8,8 @@ create table genome_db (
        genome_db_id integer(10) NOT NULL auto_increment,
        name varchar(40) NOT NULL,
        locator varchar(255) NOT NULL,
-       PRIMARY KEY(genome_db_id)
+       PRIMARY KEY(genome_db_id),
+       UNIQUE KEY (name,locator)
 );
 
 
@@ -18,8 +19,7 @@ create table dnafrag (
        genome_db_id integer(10) NOT NULL,
        dnafrag_type ENUM ( 'RawContig', 'Chromosome'),
        PRIMARY KEY(dnafrag_id), 
-       KEY (dnafrag_id, name),
-       UNIQUE KEY (name)
+       UNIQUE KEY (name,dnafrag_type)
 );
 
 #
@@ -90,12 +90,12 @@ CREATE TABLE protein (
   protein_db_id int(10) NOT NULL,
   seq_start int(10) unsigned DEFAULT '0' NOT NULL,
   seq_end int(10) unsigned DEFAULT '0' NOT NULL,
-  strand int(10) unsigned DEFAULT '0' NOT NULL,
+  strand tinyint(2) DEFAULT '0' NOT NULL,
   dnafrag_id int(10) DEFAULT '' NOT NULL,
 
   PRIMARY KEY (protein_id),
   KEY (dnafrag_id),
-  UNIQUE KEY (protein_external_id)
+  UNIQUE KEY (protein_external_id,protein_db_id)
 
 );
 
@@ -112,7 +112,8 @@ create table protein_db (
        name varchar(40) NOT NULL,
        locator varchar(255) NOT NULL,
 
-       PRIMARY KEY(protein_db_id)
+       PRIMARY KEY(protein_db_id),
+       UNIQUE KEY (name,locator)
 );
 
 # SEMANTICS
@@ -158,9 +159,8 @@ CREATE TABLE score_protein (
 # Table structure for table 'family_'
 #
 CREATE TABLE family (
-   family_id    int(10) unsigned NOT NULL auto_increment,
-   family_stable_id varchar(10), # ensembl family ids 
-   threshold    int(10) NOT NULL,
+   family_id    int(10) NOT NULL auto_increment,
+   threshold    int(10) ,
    description  varchar(255), 
 
    PRIMARY KEY(family_id),
@@ -171,21 +171,63 @@ CREATE TABLE family (
 # threshold - similarity threshold with which the family was built 
 
 #
+# Table structure for table 'family_'
+#
+CREATE TABLE family_stable_id (
+   family_id	int(10) NOT NULL auto_increment,
+   stable_id varchar(40), # ensembl family ids
+   version   int(10) DEFAULT '1' NOT NULL,
+   created   datetime NOT NULL,
+   modified  datetime NOT NULL,
+    
+   PRIMARY KEY(family_id),
+   UNIQUE(stable_id,version)
+);
+# SEMANTICS
+# family_id - internal id
+# threshold - similarity threshold with which the family was built
+
+
+#
+#Table structure for table 'family_alignment'
+#
+CREATE TABLE family_alignment (
+   family_alignment_id	int(10) unsigned NOT NULL auto_increment,
+   family_id int(10) NOT NULL, # ensembl family ids
+   alignment_type  varchar(40) NOT NULL,
+   alignment mediumtext,
+
+   PRIMARY KEY(family_alignment_id),
+   UNIQUE KEY(family_id ,alignment_type)
+);
+
+
+# SEMANTICS
+# family_alignment_id - internal id
+# family - the family for which the multiple alignment was done on
+# alignment - the alignment string
+
+#
 # Table structure for table 'family_protein'
 #
 CREATE TABLE family_protein (
-   family_id     int(10) unsigned NOT NULL,
+   family_protein_id     int(10) unsigned NOT NULL auto_increment,
+   family_id     int(10) NOT NULL,
    protein_id    int(10) NOT NULL,
    rank          int(10) NOT NULL,
+   score         float(10) DEFAULT 0,
  
-   PRIMARY KEY(family_id),
+   PRIMARY KEY(family_protein_id),
+   KEY(family_id),
    KEY (protein_id),
    KEY (rank)
 );
 # SEMANTICS
-# family_id - internal id
-# protein_id - foreign key from protein table
+# family_protein_id - internal id
+# family_id - foreign key to family table
+# protein_id - foreign key to protein table
 # rank - the rank of this protein within the family
+# score - the score of this protein associated with this family
 # Families are simply collections of proteins, and each protein
 # has a rank in the family according to how closely similar it is to the best match in the family
 
