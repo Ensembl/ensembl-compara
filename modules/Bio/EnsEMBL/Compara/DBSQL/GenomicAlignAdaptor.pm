@@ -1,10 +1,9 @@
-
+# Copyright EnsEMBL 1999-2003
 #
 # Ensembl module for Bio::EnsEMBL::DBSQL::GenomicAlignAdaptor
 #
 # Cared for by Ewan Birney <birney@ebi.ac.uk>
 #
-# Copyright Ewan Birney
 #
 # You may distribute this module under the same terms as perl itself
 
@@ -46,8 +45,10 @@ use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
-use Bio::EnsEMBL::Compara::AlignBlockSet; 
 use Bio::EnsEMBL::Compara::DnaFrag;
+
+# do we need these ??
+use Bio::EnsEMBL::Compara::AlignBlockSet; 
 use Bio::EnsEMBL::Utils::Cache; #CPAN LRU cache
 
 
@@ -80,260 +81,54 @@ sub new {
 }
      
 
-sub fetch_by_dbID {
-    my ($self,$id,$row_id) = @_;
-    return $self->fetch_GenomicAlign_by_dbID($id,$row_id);
-}
-
-
-
-sub list_align_ids{
-   my ($self) = @_;
-
-   $self->throw( "This is useless now. I think we need the dnafrags for just one species here" );
-}
-
-
-
-=head2 fetch_GenomicAlign_by_dbID
-
- Title   : fetch_GenomicAlign_by_dbID
- Usage   :
- Function:
- Example :
- Reterns : #kailan: returns protein_id(can get protein_name (align_name)  from the align table)
- Args    :
-
-got to fix this
-
-=cut
-
-sub fetch_GenomicAlign_by_dbID{
-  my ($self,$align_id,$align_row_id) = @_;
-
-  $self->throw( "Useless now, only alignments should come back from this adaptor" );
-
-#  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $align_id,
-#						   -adaptor => $self,
-#						   -align_row_id => $align_row_id);
-}
-
-=head2 fetch_align_id_by_align_name
-
- Title   : fetch_align_id_by_align_name
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub fetch_align_id_by_align_name {
-  my ($self,$align_name) = @_;
-
-  $self->throw( "This is the slice name in one of the species. Should be fetch_by_dnafrag" );
-#  unless (defined $align_name) {
-#    $self->throw("align_name must be defined as argument");
-#  }
-
-#  my $sth = $self->prepare("select align_id from align where align_name=\"$align_name\"");
-#  $sth->execute();
-#  my ($align_id) = $sth->fetchrow_array;
-#  return $align_id;
-}
-
-=head2 fetch_align_name_by_align_id
-
- Title   : fetch_align_name_by_align_id
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub fetch_align_name_by_align_id {
-  my ($self,$align_id) = @_;
-  
-  $self->throw( "fetch_by_dnafrag is better choice now" );
-}
-
-=head2 fetch_by_genomedb_dnafrag_list
-
- Title   : fetch_by_genomedb_dnafrag_list
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub fetch_by_genomedb_dnafrag_list{
-   my ($self,$genomedb,$dnafrag_list) = @_;
-   # dnafrags have genomedb, so it should be redundant here
-   
-   $self->warn( "use fetch_all_by_dnafrags( \$dnafrag, \"query\""); 
-   $self->fetch_all_by_dnafrags( $dnafrag_list );
-
-   my $str;
-
-   if( !defined $dnafrag_list || !ref $genomedb || !$genomedb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
-       $self->throw("Misformed arguments");
-   }
-
-   foreach my $id ( @{$dnafrag_list} ) {
-       $str .= "'$id',";
-   }
-   $str =~ s/\,$//g;
-   $str = "($str)";
-   my $gid = $genomedb->dbID();
-
-   if( !defined  $gid ) {
-       $self->throw("Your genome db is not database aware");
-   }
-
-   my $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.name in $str and d.genome_db_id = $gid and d.dnafrag_id = gab.dnafrag_id group by gab.align_id,gab.align_row_id";
-   
-   my $sth = $self->prepare($sql);
-
-   $sth->execute();
-
-   my @out;
-
-   while( my ($gaid,$row_id) = $sth->fetchrow_array ) {
-       push(@out,$self->fetch_by_dbID($gaid,$row_id));
-   }
-	    
-
-   return @out;
-}
-
-
-=head2 get_AlignBlockSet
-    
- Title   : get_AlignBlockSet
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub get_AlignBlockSet{
-   my ($self,$align_id,$row_number) = @_;
-
-   my %dnafraghash;
-   my $dnafragadp = $self->db->get_DnaFragAdaptor;
-
-   if( !defined $row_number ) {
-       $self->throw("Must get AlignBlockSet by row number");
-   }
-
-   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand ,b.perc_id,b.score,b.cigar_line  from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
-   $sth->execute;
-
-   my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
-
-   while( my $ref = $sth->fetchrow_arrayref ) {
-       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand,$perc_id,$score,$cigar_string) = @$ref;
-       my $alignblock = Bio::EnsEMBL::Compara::AlignBlock->new();
-       $alignblock->align_start($align_start);
-       $alignblock->align_end($align_end);
-       $alignblock->start($raw_start);
-       $alignblock->end($raw_end);
-       $alignblock->strand($raw_strand);
-       $alignblock->perc_id($perc_id);
-       $alignblock->score($score);
-       $alignblock->cigar_string($cigar_string);
-      
-       
-       if( ! defined $dnafraghash{$raw_id} ) {
-	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
-       }
-
-       $alignblock->dnafrag($dnafraghash{$raw_id});
-       $alignset->add_AlignBlock($alignblock);
-   }
-   return $alignset;
-}
-
-
-
 =head2 store
 
- Title   : store
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
+  Arg  1     : listref  Bio::EnsEMBL::Compara::GenomicAlign $ga 
+               The things you want to store
+  Example    : none
+  Description: It stores the give GA in the database. Attached
+               objects are not stored. Make sure you store them first.
+  Returntype : none
+  Exceptions : not stored linked dnafrag objects throw.
+  Caller     : general
 
 =cut
 
 sub store {
-   my ($self,$aln,$align_id) = @_;
+  my ( $self, $genomic_aligns ) = @_;
 
-   if( !defined $aln || !ref $aln || !$aln->isa('Bio::EnsEMBL::Compara::GenomicAlign') ) {
-       $self->throw("Must store with a GenomicAlign, not a $aln");
-   }
+  my $sql = "INSERT INTO genomic_align_block
+             ( consensus_dnafrag_id, consensus_start, consensus_end,
+               query_dnafrag_id, query_start, query_end, query_strand,
+               score, perc_id, cigar_line ) VALUES ";
+  
+  my @values;
+  
+  for my $ga ( @$genomic_aligns ) {
+    # check if everything has dbIDs
+    if( ! defined $ga->consensus_dnafrag()->dbID() ||
+	! defined $ga->query_dnafrag()->dbID() ) {
+      $self->throw( "dna_fragment in GenomicAlign is not in DB" );
+     }
+  }
 
-   unless (defined $align_id) {
-     $self->throw("An align_id must be specified and defined");
-   }
-
-   my $dnafragadp = $self->db->get_DnaFragAdaptor();
-
-   foreach my $abs ( $aln->each_AlignBlockSet ) {
-       foreach my $ab ( $abs->get_AlignBlocks ) {
-	   if( !defined $ab->dnafrag ) {
-	       $self->throw("Must have a dnafrag attached to alignblocks");
-	   }
-	   if( !defined $ab->dnafrag->dbID ) {
-	       $dnafragadp->store_if_needed($ab->dnafrag);
-	   }
-       }
-   }
-
-   # for each alignblockset, store the row and then the alignblocks themselves
-   
-   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand,score,perc_id,cigar_line) values (?,?,?,?,?,?,?,?,?,?,?)");
-
-   foreach my $ab ( $aln->each_AlignBlockSet ) {
-       my $sth2 = $self->prepare("insert into align_row (align_id) values ($align_id)");
-       $sth2->execute();
-       my $row_id = $sth2->{'mysql_insertid'};
-       
-       foreach my $a ( $ab->get_AlignBlocks ) {
-	   $sth3->execute($align_id,
-			  $a->align_start,
-			  $a->align_end,
-			  $row_id,
-			  $a->dnafrag->dbID,
-			  $a->start,
-			  $a->end,
-			  $a->strand,
-                          $a->score,
-                          $a->perc_id,
-			  $a->cigar_string
-			  );
-
-       }
-   }
-    
-   $aln->dbID($align_id);
-
-   return $align_id;
+  # all clear for storing
+  for my $ga ( @$genomic_aligns ) {
+    push( @values, "(".join( "," , $ga->consensus_dnafrag()->dbID(),
+			     $ga->consensus_start(), $ga->consensus_end(),
+			     $ga->query_dnafrag()->dbID(),
+			     $ga->query_start, $ga->query_end(), 
+			     $ga->query_strand(), 
+			     $ga->score(), $ga->perc_id(),
+			     "\"".$ga->cigar_line()."\"" ).
+	  ")" );
+  }
+  
+  my $sth = $self->prepare( $sql.join( ",", @values ));
+  $sth->execute();
 }
-
+     
+ 
 
 
 
@@ -505,7 +300,6 @@ sub fetch_all_by_dnafrag_genomedb {
 
 sub _merge_alignsets {
   my ( $self, $alignset1, $alignset2 ) = @_;
-
   # sorting of both sets
   # walking through and finding overlapping GAs
   # create GA from overlapping GA
@@ -632,13 +426,13 @@ sub _add_derived_alignments {
     # query_end is first basepair of alignment
     if( $alignA->query_end() < $alignB->consensus_end() ) {
       # oqs/e = 0 ocs/e = difference
-      $oqe = 0; $oqs = 1;
-      $oce = $alignB->consensus_end() - $alignA->query_end();
-      $ocs = $oce + 1;
-    } else {
       $oce = 0; $ocs = 1;
-      $oqe = $alignA->query_end() - $alignB->consensus_end();
+      $oqe = $alignB->consensus_end() - $alignA->query_end();
       $oqs = $oqe + 1;
+    } else {
+      $oqe = 0; $oqs = 1;
+      $oce = $alignA->query_end() - $alignB->consensus_end();
+      $ocs = $oce + 1;
     }
   } else {
     # in theory no coordinate magic necessary :-)
@@ -657,10 +451,10 @@ sub _add_derived_alignments {
   
 
   while( 1 ) {
-    print "ocs $ocs oce $oce oqs $oqs oqe $oqe\n";
-    print "cs $cs ce $ce qs $qs qe $qe\n";
-    print "rcs $rcs rce $rce rqs $rqs rqe $rqe\n";
-    print "\n";
+    # print "ocs $ocs oce $oce oqs $oqs oqe $oqe\n";
+    # print "cs $cs ce $ce qs $qs qe $qe\n";
+    # print "rcs $rcs rce $rce rqs $rqs rqe $rqe\n";
+    # print "\n";
 
 
     # exit if you request a new piece of alignment and the cig list is 
@@ -692,8 +486,6 @@ sub _add_derived_alignments {
 
     $new_match = $ove - $ovs + 1;
     my $new_ga = 0;
-
-    print "";
 
     if( $jc == 0 ) {
       if( $jq == 0 ) {
@@ -729,6 +521,10 @@ sub _add_derived_alignments {
 	  $query_start = $alignB->query_end() - $rqe + 1;
 	}
       
+	my $score = ( $alignA->score() < $alignB->score()) ? 
+	  $alignA->score() : $alignB->score();
+	my $perc_id =  int( $alignA->perc_id() * $alignB->perc_id() / 100 );
+
 	my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new
 	  ( -consensus_dnafrag => $alignA->consensus_dnafrag,
 	    -query_dnafrag => $alignB->query_dnafrag,
@@ -737,10 +533,10 @@ sub _add_derived_alignments {
 	    -consensus_end => $rce,
 	    -query_strand => $query_strand, 
 	    -query_start => $query_start,
-	    -query_end => $query_end
+	    -query_end => $query_end,
 	    -adaptor => $self,
-	    -perc_id => $alignA->perc_id() * $alignB->perc_id() / 10000,
-	    -score => $alignA->score() < $alignB->score() ? $alignA->score() : $alignB->score()
+	    -perc_id => $perc_id,
+	    -score => $score
 	  );
 	push( @$merged_aligns, $ga );
 	$rcs = $rce = $rqs = $rqe = 0;
@@ -784,12 +580,16 @@ sub _add_derived_alignments {
     my ( $query_start, $query_end );
     if( $query_strand == 1 ) {
       $query_start = $rqs + $alignB->query_start() - 1;
-      $query_end = $rqe + $alignB->query_end() - 1;
+      $query_end = $rqe + $alignB->query_start() - 1;
     } else {
       $query_end = $alignB->query_end() - $rqs + 1;
       $query_start = $alignB->query_end() - $rqe + 1;
     }
   
+    my $score = ( $alignA->score() < $alignB->score()) ? 
+      $alignA->score() : $alignB->score();
+    my $perc_id =  int( $alignA->perc_id() * $alignB->perc_id() / 100  );
+    
     my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new
       ( -consensus_dnafrag => $alignA->consensus_dnafrag,
 	-query_dnafrag => $alignB->query_dnafrag,
@@ -798,10 +598,10 @@ sub _add_derived_alignments {
 	-consensus_end => $rce,
 	-query_strand => $query_strand, 
 	-query_start => $query_start,
-	-query_end => $query_end
+	-query_end => $query_end,
 	-adaptor => $self,
-	-perc_id => $alignA->perc_id() * $alignB->perc_id() / 10000,
-	-score => $alignA->score() < $alignB->score() ? $alignA->score() : $alignB->score()
+	-perc_id => $perc_id,
+	-score => $score
       );
     push( @$merged_aligns, $ga );
   # nothing to return all in merged_aligns
@@ -1126,5 +926,217 @@ sub deleteObj {
   #flush internal cache
   %{$self->{'_cache'}} = ();
 }
+
+
+
+###################################################################
+
+#      Following is old stuff that will stay until we have running
+#      scripts, then can go 
+
+###################################################################
+
+
+sub fetch_by_dbID {
+  my ($self,$id,$row_id) = @_;
+  $self->throw( "no dbIDs for GenomicAlignBlocks, nothing links to them" );
+}
+
+
+# function to be removed before release
+sub list_align_ids{
+   my ($self) = @_;
+
+   $self->throw( "This is useless now. I think we need the dnafrags for just one species here" );
+}
+
+
+
+# remove function before release
+
+=head2 fetch_GenomicAlign_by_dbID
+
+ Title   : fetch_GenomicAlign_by_dbID
+ Usage   :
+ Function:
+ Example :
+ Reterns : #kailan: returns protein_id(can get protein_name (align_name)  from the align table)
+ Args    :
+
+got to fix this
+
+=cut
+
+sub fetch_GenomicAlign_by_dbID{
+  my ($self,$align_id,$align_row_id) = @_;
+
+  $self->throw( "Useless now, only alignments should come back from this adaptor" );
+
+#  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $align_id,
+#						   -adaptor => $self,
+#						   -align_row_id => $align_row_id);
+}
+
+
+# remove this function before release
+
+=head2 fetch_align_id_by_align_name
+
+ Title   : fetch_align_id_by_align_name
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_align_id_by_align_name {
+  my ($self,$align_name) = @_;
+
+  $self->throw( "This is the slice name in one of the species. Should be fetch_by_dnafrag" );
+#  unless (defined $align_name) {
+#    $self->throw("align_name must be defined as argument");
+#  }
+
+#  my $sth = $self->prepare("select align_id from align where align_name=\"$align_name\"");
+#  $sth->execute();
+#  my ($align_id) = $sth->fetchrow_array;
+#  return $align_id;
+}
+
+
+# remove function before release
+
+=head2 fetch_align_name_by_align_id
+
+ Title   : fetch_align_name_by_align_id
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_align_name_by_align_id {
+  my ($self,$align_id) = @_;
+  
+  $self->throw( "fetch_by_dnafrag is better choice now" );
+}
+
+=head2 fetch_by_genomedb_dnafrag_list
+
+ Title   : fetch_by_genomedb_dnafrag_list
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_by_genomedb_dnafrag_list{
+   my ($self,$genomedb,$dnafrag_list) = @_;
+   # dnafrags have genomedb, so it should be redundant here
+   
+   $self->warn( "use fetch_all_by_dnafrags( \$dnafrag, \"query\""); 
+   $self->fetch_all_by_dnafrags( $dnafrag_list );
+
+   my $str;
+
+   if( !defined $dnafrag_list || !ref $genomedb || !$genomedb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
+       $self->throw("Misformed arguments");
+   }
+
+   foreach my $id ( @{$dnafrag_list} ) {
+       $str .= "'$id',";
+   }
+   $str =~ s/\,$//g;
+   $str = "($str)";
+   my $gid = $genomedb->dbID();
+
+   if( !defined  $gid ) {
+       $self->throw("Your genome db is not database aware");
+   }
+
+   my $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.name in $str and d.genome_db_id = $gid and d.dnafrag_id = gab.dnafrag_id group by gab.align_id,gab.align_row_id";
+   
+   my $sth = $self->prepare($sql);
+
+   $sth->execute();
+
+   my @out;
+
+   while( my ($gaid,$row_id) = $sth->fetchrow_array ) {
+       push(@out,$self->fetch_by_dbID($gaid,$row_id));
+   }
+	    
+
+   return @out;
+}
+
+
+# remove before release
+
+=head2 get_AlignBlockSet
+    
+ Title   : get_AlignBlockSet
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_AlignBlockSet{
+   my ($self,$align_id,$row_number) = @_;
+
+   $self->throw( "Function should be obsolete" );
+
+   my %dnafraghash;
+   my $dnafragadp = $self->db->get_DnaFragAdaptor;
+
+   if( !defined $row_number ) {
+       $self->throw("Must get AlignBlockSet by row number");
+   }
+
+   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand ,b.perc_id,b.score,b.cigar_line  from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
+   $sth->execute;
+
+   my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
+
+   while( my $ref = $sth->fetchrow_arrayref ) {
+       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand,$perc_id,$score,$cigar_string) = @$ref;
+       my $alignblock = Bio::EnsEMBL::Compara::AlignBlock->new();
+       $alignblock->align_start($align_start);
+       $alignblock->align_end($align_end);
+       $alignblock->start($raw_start);
+       $alignblock->end($raw_end);
+       $alignblock->strand($raw_strand);
+       $alignblock->perc_id($perc_id);
+       $alignblock->score($score);
+       $alignblock->cigar_string($cigar_string);
+      
+       
+       if( ! defined $dnafraghash{$raw_id} ) {
+	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
+       }
+
+       $alignblock->dnafrag($dnafraghash{$raw_id});
+       $alignset->add_AlignBlock($alignblock);
+   }
+   return $alignset;
+}
+
+
+
+
+
 
 1;
