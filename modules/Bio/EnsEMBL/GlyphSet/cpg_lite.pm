@@ -6,6 +6,8 @@ use Bio::EnsEMBL::GlyphSet_simple_hash;
 
 sub my_label { return "CpG islands"; }
 
+sub my_helplink { return "markers"; }
+
 sub features {
     my ($self) = @_;
     return @{$self->{'container'}->get_all_virtualfeatures_lite(

@@ -11,15 +11,20 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
-    my ($type)         = reverse split '::', ref($self) ;
     return if( defined $self->{'config'}->{'_no_label'} );
+    my $HELP_LINK = $self->check();
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
+        'zmenu'     => {
+            'caption'                     => 'HELP',
+            "01:Track information..."     =>
+qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#$HELP_LINK\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
+        }
     });
-    $self->bumped( $self->{'config'}->get($type, 'dep')==0 ? 'no' : 'yes' );
     $self->label($label);
+    $self->bumped( $self->{'config'}->get($HELP_LINK, 'dep')==0 ? 'no' : 'yes' );
 }
 
 sub my_label {

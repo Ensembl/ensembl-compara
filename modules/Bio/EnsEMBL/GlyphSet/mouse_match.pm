@@ -12,10 +12,7 @@ sub my_label { return "Mouse matches"; }
 sub features {
     my ($self) = @_;
     
-    return grep { 
-        ( $_->isa("Bio::EnsEMBL::Ext::FeaturePair") || $_->isa("Bio::EnsEMBL::FeaturePair") ) 
-	        && $_->source_tag() eq "trace"
-    } $self->{'container'}->get_all_ExternalFeatures( $self->glob_bp() );
+    return  $self->{'container'}->get_all_DnaDnaAlignFeature( $self->{'config'}->{'_databases'}->{'compara'}, $ENV{'ENSEMBL_SPECIES'}, 'Mus_musculus' );
 }
 
 sub href {

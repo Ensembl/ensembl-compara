@@ -7,14 +7,12 @@ use Bio::EnsEMBL::GlyphSet_feature2;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature2);
 
 
-sub my_label { return "Human matches"; }
+sub my_label { return "Muman matches"; }
 
 sub features {
     my ($self) = @_;
-    return grep { 
-        ( $_->isa("Bio::EnsEMBL::Ext::FeaturePair") || $_->isa("Bio::EnsEMBL::FeaturePair") ) 
-	        && $_->source_tag() eq "trace"
-    } $self->{'container'}->get_all_ExternalFeatures( $self->glob_bp() );
+    
+    return  $self->{'container'}->get_all_DnaDnaAlignFeature( $self->{'config'}->{'_databases'}->{'compara'}, $ENV{'ENSEMBL_SPECIES'}, 'Homo_sapiens' );
 }
 
 sub href {
@@ -26,7 +24,7 @@ sub zmenu {
     my ($self, $id, $chr_pos ) = @_;
     return { 
 		'caption'    => $id, # $f->id,
-		'Jump to Homo sapiens' => $self->href( $id, $chr_pos )
+		'Jump to Homo spaiens' => $self->href( $id, $chr_pos )
     };
 }
 1;

@@ -11,20 +11,22 @@ use Bio::EnsEMBL::Glyph::Line;
 use Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
-
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
-    
-    my $label_text = $self->{'config'}->{'_draw_single_Transcript'} || 'Transcript';
-
+    my $HELP_LINK = $self->check();
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
+        'zmenu'     => {
+            'caption'                     => 'HELP',
+            "01:Track information..."     =>
+qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#$HELP_LINK\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
+        }
     });
-
     $self->label($label);
+#    $self->bumped( $self->{'config'}->get($HELP_LINK, 'dep')==0 ? 'no' : 'yes' );
 }
 
 sub my_label {
@@ -97,9 +99,9 @@ sub _init {
                 if($box_start < $coding_start || $box_end > $coding_end ) {
                     my $rect = new Bio::EnsEMBL::Glyph::Rect({
                         'x'         => $box_start,
-                        'y'         => $y+1,
+                        'y'         => $y,
                         'width'     => $box_end-$box_start,
-                        'height'    => $h-2,
+                        'height'    => $h,
                         'bordercolour' => $colour,
                         'absolutey' => 1,
                     });

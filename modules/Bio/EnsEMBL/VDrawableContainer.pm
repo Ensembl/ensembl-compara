@@ -8,7 +8,7 @@ use EnsWeb;
 @ISA = qw(Bio::Root::RootI);
 
 sub new {
-    my ($class, $Container, $Config, $highlights, $strandedness) = @_;
+    my ($class, $Container, $Config, $highlights, $strandedness, $spacing) = @_;
 
     if(!defined $Container) {
         print STDERR qq(Bio::EnsEMBL::DrawableContainer::new No container defined\n);
@@ -24,7 +24,7 @@ sub new {
         'vc'         => $Container,
         'glyphsets'  => [],
         'config'     => $Config,
-        'spacing'    => 20,
+        'spacing'    => $spacing || 20,
     };
     bless($self, $class);
 
@@ -80,6 +80,7 @@ sub new {
     my $spacing = $self->{'spacing'};
     
     ########## set scaling factor for base-pairs -> pixels
+        print STDERR ">>>> ",$Config->container_width(),"\n";
     my $scalex = $Config->{'_image_height'} / $Config->container_width();
     $Config->{'transform'}->{'scalex'} = $scalex;
     

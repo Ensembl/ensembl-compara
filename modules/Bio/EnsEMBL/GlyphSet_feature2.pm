@@ -11,15 +11,20 @@ use Bump;
 
 sub init_label {
     my ($self) = @_;
-    my ($type)         = reverse split '::', ref($self) ;
     return if( defined $self->{'config'}->{'_no_label'} );
+    my $HELP_LINK = $self->check();
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
+        'zmenu'     => {
+            'caption'                     => 'HELP',
+            "01:Track information..."     =>
+qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#$HELP_LINK\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
+        }
     });
-    $self->bumped( $self->{'config'}->get($type, 'dep')==0 ? 'no' : 'yes' );
     $self->label($label);
+    $self->bumped( $self->{'config'}->get($HELP_LINK, 'dep')==0 ? 'no' : 'yes' );
 }
 
 sub my_label {
@@ -76,8 +81,8 @@ sub _init {
         next if( $strand_flag eq 'b' && $strand != $f->strand );
         next if( $f->start < $f->end && ($f->start < 1 || $f->end   > $LEN) );
         next if( $f->start > $f->end && ($f->end   < 1 || $f->start > $LEN) );
-        $id{$f->id()} = [] unless $id{$f->id()};
-        push @{$id{$f->id()}}, $f;
+        $id{$f->hseqname()} = [] unless $id{$f->hseqname()};
+        push @{$id{$f->hseqname()}}, $f;
     }
 
 ## No features show "empty track line" if option set....
@@ -90,7 +95,7 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
         my $has_origin = undef;
     
 
-        my $start   = 100000000;
+        my $start   = 1e10;
         my $end   = 0;
 
         my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
@@ -122,9 +127,9 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
         my $ZZ;
         if($end-$start<100000) {
 	    $start =int(( $start + $end) /2);
-            $ZZ = "contig=$i&fpos_start=$start&fpos_end=$start&fpos_context=50000";
+            $ZZ = "chr=$i&vc_start=$start&vc_end=$end&fpos_context=50000";
 	} else {
-            $ZZ = "contig=$i&fpos_start=$start&fpos_end=$end";
+            $ZZ = "chr=$i&vc_start=$start&vc_end=$end";
         }
 	$Composite->zmenu( $self->zmenu( $i, $ZZ ) );
 	$Composite->href( $self->href( $i, $ZZ ) );

@@ -12,10 +12,16 @@ use Bump;
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
+    my $HELP_LINK = $self->check();
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
+        'zmenu'     => {
+            'caption'                     => 'HELP',
+            "01:Track information..."     =>
+qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#$HELP_LINK\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
+        }
     });
     $self->label($label);
 }
@@ -23,6 +29,11 @@ sub init_label {
 sub my_label {
     my ($self) = @_;
     return 'Missing label';
+}
+
+sub my_description {
+    my ($self) = @_;
+    return $self->my_label();
 }
 
 sub features {

@@ -103,9 +103,10 @@ sub new {
                      $Config->texthelper->width($glyphset->label->font());
     
         $label_length_px = $pixels if($pixels > $label_length_px);
-    
+
         ########## just for good measure:
-        $glyphset->label->width($label_length_px);
+        $glyphset->label->width( $pixels ); ### JS5 ###
+        $glyphset->label->pixelwidth( $pixels ); ### JS5 ###
         next unless defined $glyphset->bumped();
         $composite = new Bio::EnsEMBL::Glyph::Composite({
                 'y'            => 0,
@@ -220,7 +221,13 @@ sub new {
             my $gh = $Config->texthelper->height($glyphset->label->font());
             $glyphset->label->y((($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy);
             $glyphset->label->height($gh);
-            $glyphset->push($glyphset->label());
+
+            $glyphset->label()->pixelwidth(
+                length($glyphset->label->text()) *
+                     $Config->texthelper->width($glyphset->label->font()) / $scalex
+            );
+            
+            $glyphset->push( $glyphset->label() );
             if( defined $glyphset->bumpbutton()) {
                 $glyphset->bumpbutton->y(int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy));
                 $glyphset->push($glyphset->bumpbutton());
