@@ -234,28 +234,46 @@ sub store {
 
 
 =head2 update_genetic_distance
+
  Arg [1]    : Bio::EnsEMBL::Compara::Homology $homology
  Example    : $HomologyAdaptor->update_genetic_distance($homology)
  Description: updates the n,s,dn,ds,lnl values from a homology object into a compara database
  Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Homology
  Caller     : Bio::EnsEMBL::Compara::Runnable::Homology_dNdS
+
 =cut
+
 sub update_genetic_distance {
   my $self = shift;
   my $hom = shift;
 
   throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom")
     unless($hom->isa('Bio::EnsEMBL::Compara::Homology'));
+
   throw("homology object must have dbID")
     unless ($hom->dbID);
-  unless($hom->dn and $hom->ds and $hom->n and $hom->lnl and $hom->s) {
+  # We use here internal hash key for _dn and _ds because the dn and ds method call
+  # do some filtering based on the threshold_on_ds.
+  unless($hom->{'_dn'} and $hom->{'_ds'} and $hom->n and $hom->lnl and $hom->s) {
     warn("homology needs valid dn, ds, n, s, and lnl values to store");
     return $self;
   }
 
-  my $sql = "UPDATE homology SET dn=?, ds=?, n=?, s=?, lnl=? WHERE homology_id=?";
+  my $sql = "UPDATE homology SET dn=?, ds=?, n=?, s=?, lnl=?";
+
+  if (defined $hom->threshold_on_ds) {
+    $sql .= ", threshold_on_ds=?";
+  }
+
+  $sql .= " WHERE homology_id=?";
+
   my $sth = $self->prepare($sql);
-  $sth->execute($hom->dn,$hom->ds,$hom->n, $hom->s, $hom->lnl, $hom->dbID);
+
+  if (defined $hom->threshold_on_ds) {
+    $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->threshold_on_ds, $hom->dbID);
+  } else {
+    $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->dbID);
+  }
   $sth->finish();
 
   return $self;
