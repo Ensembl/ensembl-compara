@@ -191,9 +191,10 @@ while (<$FH>) {
       } 
       my $attribute = $aa->fetch_by_Member_Relation($member,$family)->[0];
       if (defined $attribute) {
-        if ($attribute->cigar_line =~ /^[\d*(M|D)]+$/) {
+        if ($attribute->cigar_line =~ /^[\dMD]+$/) {
           print STDERR "$source, $member_stable_id family attribute already loaded\n";
         } else {
+          $attribute->cigar_line($refid_attribute->cigar_line);
           $fa->update_relation([ $member,$attribute ]);
           print STDERR "$source, $member_stable_id family attribute updated\n";
         }
