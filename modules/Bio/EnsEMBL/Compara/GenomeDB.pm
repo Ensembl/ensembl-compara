@@ -151,4 +151,53 @@ sub dbID{
 
 }
 
+
+=head2 adaptor
+ 
+  Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomeDBAdaptor $adaptor
+  Example    : $adaptor = $GenomeDB->adaptor();
+  Description: Getter/Setter for the GenomeDB object adaptor used
+               by this GenomeDB for database interaction.
+  Returntype : Bio::EnsEMBL::Compara::GenomeDBAdaptor
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+sub adaptor{
+   my ($self,$value) = @_;
+   if( defined $value) {
+      $self->{'adaptor'} = $value;
+    }
+    return $self->{'adaptor'};
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 1;
