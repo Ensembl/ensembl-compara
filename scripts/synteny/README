@@ -47,7 +47,7 @@ works with branch-07, but should also work with branch-1-2, need a try.
 3. Dumping the raw dna-dna matches
 ----------------------------------
 
-  3.1. The dumping script (Example only - don't run anything yet).
+  3.1. The dumping script
 
 
 ensembl-compara/scripts/synteny/dumpsynteny
@@ -60,8 +60,8 @@ cat Mm3_chr_names |while read i;do bsub -q acari -o $i.out -e $i.err ~/src/ensem
 
 This will write out all the dna-dna matches for human chromosomes against mouse into files called
 
-	1.synteny.gff
-	2.synteny.gff
+	1.syten.gff
+	2.syten.gff
 	etc...
 
 
@@ -77,24 +77,16 @@ This will write out all the dna-dna matches for human chromosomes against mouse 
 
   4.2 Running over all chromosomes
 
-touch t.gff
-
-cat Hs31_chr_names|while read i;do bsub -q acari -Ralpha -o $i.bsub.out -e $i.bsub.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/makesyntenyblocks -host ecs1b -dbname ensembl_compara_11_1 -species "Homo sapiens" -assembly NCBI31 -chr_names $i -syntenyfile $i.syten.gff -conf_file ~/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf;done
+cat Mm3_chr_names|while read i;do bsub -q acari -Ralpha -o $i.bsub.out -e $i.bsub.err ~/src/ensembl_main/ensembl-compara/scripts/synteny/makesyntenyblocks -host ecs1b -dbname ensembl_compara_11_1 -species "Mus musculus" -assembly MGSC3 -chr_names $i -max_distance 100000 -min_size_cluster 100000 -syntenyfile $i.syten.gff -conf_file ~/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf;done
 
 This will generate two sets of files.  
-	1) The output from the program in <chr>.100000.syn.out
-	2) The synteny block gff in <chr>.100000.gff
+	1) The STDOUT from the program in <chr>.100000.100000.syn.out  
+	2) The STDERR from the program in <chr>.100000.100000.syn.out
+	3) The synteny block gff in <chr>.100000.100000.gff
 
 
 5- Load in compara db
 
-echo "select d.name,d.dnafrag_id from dnafrag d,genome_db g where d.genome_db_id=g.genome_db_id and g.name=\"Caenorhabditis elegans\" and d.dnafrag_type=\"Chromosome\" group by d.name;" |mysql -h ecs1b -u ensro ensembl_compara_11_1|awk '!/name/' > Ce95_chr_names
+cat *.100000.100000.gff| ensembl-compara/scripts/synteny/LoadComparaDb.pl -host ecs2d -dbuser
+ecs2dadmin -dbpass xxxx -dbname ensembl_compara_13_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -genome_db_id1 2 -genome_db_id2 3
 
-echo "select d.name,d.dnafrag_id from dnafrag d,genome_db g where d.genome_db_id=g.genome_db_id and g.name=\"Caenorhabditis briggsae\" and d.dnafrag_type=\"Chromosome\" group by d.name;" |mysql -h ecs1b -u ensro ensembl_compara_11_1|awk '!/name/' > Cb25_chr_names
-
-check what in the max synteny_region_id in the compara_db
-ugly but works, that would need a proper script
-
-cat *.100000.gff|awk '{print $1,$4,$5,$9,$10,$11,$7}'|sort|join Ce95_chr_names -|awk '{print $5,$6,$7,$2,$3,$4,$8}'|sort |join Cb25_chr_names -|awk '{print $5,$6,$7,$2,$3,$4,$8}'|awk 'BEGIN {synteny_region_id=1} {print "insert into synteny_region values ("synteny_region_id","$7");";print "insert into dnafrag_region values ("synteny_region_id","$1","$2","$3");";print "insert into dnafrag_region values ("synteny_region_id","$4","$5","$6");";synteny_region_id++}' > synteny.sql
-
-mysql -h ecs1b -u ensadmin -pensembl ensembl_compara_11_1_test < synteny.sql
