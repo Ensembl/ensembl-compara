@@ -1266,10 +1266,10 @@ sub get_all_ungapped_GenomicAlignBlocks {
   my $ungapped_genomic_align_blocks = [];
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
-  my $aln_length = CORE::length($genomic_aligns->[0]->aligned_sequence);
+  my $aln_length = CORE::length($genomic_aligns->[0]->aligned_sequence("+FAKE_SEQ"));
 #   foreach my $this_genomic_align (@$genomic_aligns) {
 #     print STDERR join(" - ", $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
-#         $this_genomic_align->dnafrag_strand, $this_genomic_align->aligned_sequence), "\n";
+#         $this_genomic_align->dnafrag_strand, $this_genomic_align->aligned_sequence("+FAKE_SEQ")), "\n";
 #   }
 
   my $aln_pos = 0;
@@ -1281,17 +1281,17 @@ sub get_all_ungapped_GenomicAlignBlocks {
 
     ## Get the (next) first gap from all the aligned sequences (sets: $gap_pos, $gap and $genomic_align_block_id)
     foreach my $this_genomic_align (@$genomic_aligns) {
-      my $this_end_block_pos = index($this_genomic_align->aligned_sequence, "-", $aln_pos);
+      my $this_end_block_pos = index($this_genomic_align->aligned_sequence("+FAKE_SEQ"), "-", $aln_pos);
       if ($this_end_block_pos == $aln_pos) {
         ## try to find the end of the gaps
-        my $gap_string = substr($this_genomic_align->aligned_sequence, $aln_pos);
+        my $gap_string = substr($this_genomic_align->aligned_sequence("+FAKE_SEQ"), $aln_pos);
         ($gap) = $gap_string =~ /^(\-+)/;
         my $gap_length = CORE::length($gap);
         $this_end_block_pos = $aln_pos+$gap_length;
       } else {
         $these_genomic_aligns_with_no_gaps->{$this_genomic_align} = $this_genomic_align;
       }
-      $this_end_block_pos = CORE::length($this_genomic_align->aligned_sequence) if ($this_end_block_pos < 0); # no more gaps have been found in this sequence
+      $this_end_block_pos = CORE::length($this_genomic_align->aligned_sequence("+FAKE_SEQ")) if ($this_end_block_pos < 0); # no more gaps have been found in this sequence
 
       
       if (!defined($end_block_pos) or $this_end_block_pos < $end_block_pos) {
@@ -1303,7 +1303,7 @@ sub get_all_ungapped_GenomicAlignBlocks {
       my $new_genomic_aligns;
       my $reference_genomic_align;
       foreach my $this_genomic_align (values %$these_genomic_aligns_with_no_gaps) {
-        my $previous_seq = substr($this_genomic_align->aligned_sequence, 0, $aln_pos );
+        my $previous_seq = substr($this_genomic_align->aligned_sequence("+FAKE_SEQ"), 0, $aln_pos );
         $previous_seq =~ s/\-//g;
         my $dnafrag_start;
         my $dnafrag_end;
@@ -1405,7 +1405,8 @@ sub restrict_between_reference_positions {
           -dnafrag_start => $this_genomic_align->dnafrag_start,
           -dnafrag_end => $this_genomic_align->dnafrag_end,
           -dnafrag_strand => $this_genomic_align->dnafrag_strand,
-          -cigar_line => $this_genomic_align->cigar_line
+          -cigar_line => $this_genomic_align->cigar_line,
+          -level_id => $this_genomic_align->level_id
       );
     if ($this_genomic_align == $reference_genomic_align) {
       $new_reference_genomic_align = $new_genomic_align;
