@@ -6,6 +6,12 @@
 #
 # Table structure for table 'dnafrag'
 #
+-- Index <name> has genome_db_id in the first place because unless fetching all danfrags
+--   or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause
+-- Unique key <name> is used to ensure that
+--   Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name
+--   will always fetch a single row. This can be used in the EnsEMBL Compara DB
+--   because we store top-level dnafrags only.
 
 CREATE TABLE dnafrag (
   dnafrag_id int(10) NOT NULL auto_increment,
@@ -15,8 +21,7 @@ CREATE TABLE dnafrag (
   coord_system_name varchar(40) DEFAULT NULL,
 
   PRIMARY KEY (dnafrag_id),
-  KEY dnafrag_id (dnafrag_id,name),
-  UNIQUE name (name,genome_db_id,coord_system_name)
+  UNIQUE name (genome_db_id, name)
 );
 
 #
