@@ -183,7 +183,7 @@ sub fetch_Proteins_by_family_id{
 sub store{
    my ($self,$protein) = @_;
 
-   if( !$protein->isa ('Bio::EnsEMBL::Compara::Protein') {
+   if( !$protein->isa ('Bio::EnsEMBL::Compara::Protein')) {
        $self->throw("$protein must be a 'Bio::EnsEMBL::Compara::Protein'");
    }
 
@@ -230,7 +230,7 @@ sub store{
 sub store_if_needed {
    my ($self,$protein) = @_;
 
-   if( !$protein->isa ('Bio::EnsEMBL::Compara::Protein') {
+   if( !$protein->isa ('Bio::EnsEMBL::Compara::Protein')) {
        $self->throw("$protein must be a 'Bio::EnsEMBL::Compara::Protein'");
    }
 
@@ -274,7 +274,7 @@ sub fetch_peptide_seq {
 
   $self->throw("Trying to fetch peptide seq without giving a peptide sequence dbID");
 
-  my $query = "Select sequence from peptide_sequence where peptide_sequence_id ? ";
+  my $query = "Select sequence from peptide_sequence where peptide_sequence_id=? ";
   my $sth = $self->prepare($query);
   $sth->execute($value); 
 
