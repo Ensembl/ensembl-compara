@@ -64,15 +64,22 @@ sub _init {
             'absolutey' => 1,
         });
         $self->push($tick);
+        $self->tag( $tick, "ruler_$i", $self->strand()==-1 ? 1 : 0, 0.5, 'grey80'  ); 
 
+        for( my $j = 1 ; $j < 5; $j ++ ) {
+          my $t = new Sanger::Graphics::Glyph::Space({
+            'x'         => ($i + $j/5) * $divs,
+            'y'         => 4,
+            'width'     => $divs / 5,
+            'height'    => 2,
+            'absolutey' => 1,
+          });
+          $self->push($t);
+          $self->tag( $t, "ruler_$i"."_$j", 0, 0 , 'grey90'  ); 
+        }
         if ($navigation eq 'on'){
             $self->interval(
-                $param_string,
-                $last_end,
-                $i * $divs,
-                $global_start,
-                $global_end-$global_start,
-                $highlights
+                $param_string, $last_end, $i * $divs, $global_start, $global_end-$global_start, $highlights
             );
             $last_end = $i * $divs;
         }
@@ -147,7 +154,23 @@ sub _init {
     }
         
     # last tick
+
     my $im_width = $Config->image_width();
+    my $j = ( int($len/$divs) + 1 )* 5;
+    my $X = 0;
+    foreach( $j = int($len/$divs) * 5 ; $j < $len/$divs * 5 ; $j++ ) {
+          last if ($j > 200 );
+          my $t = new Sanger::Graphics::Glyph::Space({
+            'x'         => $j * $divs / 5,
+            'y'         => 4,
+            'width'     => 0,
+            'height'    => 2,
+            'absolutey' => 1,
+          });
+          $self->push($t);
+          $self->tag( $t, "ruler_99_$j", $self->strand()==-1 ? 1 : 0, 0.5, 'grey90'  );
+    }
+
     my $tick = new Sanger::Graphics::Glyph::Rect({
         'x'          => $im_width - 1,
         'y'          => 4,
@@ -157,6 +180,7 @@ sub _init {
         'absolutex'  => 1,
         'absolutey'  => 1,
     });
+    $self->tag( $tick, "ruler_99" , $self->strand()==-1 ? 1 : 0, 0.5, 'grey80' ); 
     $self->push($tick);
 }
 
