@@ -747,7 +747,7 @@ sub _merge_Exons {
 =cut
 
 sub _separate_in_incompatible_sets_of_Exons {
-  my ($set_of_exons, $max_repetition_length, $max_intron_length, $strinct_order_of_exons) = @_;
+  my ($set_of_exons, $max_repetition_length, $max_intron_length, $strict_order_of_exons) = @_;
   my $sets_of_exons = [];
 
   my $last_exon;
@@ -758,8 +758,8 @@ sub _separate_in_incompatible_sets_of_Exons {
       my $intron_length = $this_exon->start - $last_exon->end - 1;
       # Calculate whether both mapped parts are in the right order
       my $order_is_ok = 1;
-      if ($strinct_order_of_exons) {
-        if ($this_exon->strand == 1) {
+      if ($strict_order_of_exons) {
+        if ($this_exon->strand == $this_exon->exon->strand) {
           $order_is_ok = 0 if ($this_exon->exon->start < $last_exon->exon->start);
         } else {
           $order_is_ok = 0 if ($this_exon->exon->start > $last_exon->exon->start);
