@@ -138,13 +138,13 @@ sub contig{
      }
      elsif ($self->type eq "VirtualContig") {
        my ($chr,$start,$end) = split /\./, $self->name;
-       $self->{'_contig'} = $core_dbadaptor->->get_SliceAdaptor->fetch_by_chr_start_end($chr,$start,$end);
+       $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_chr_start_end($chr,$start,$end);
      } 
      elsif ($self->type eq "Chromosome") {
-       $self->{'_contig'} = $core_dbadaptor->->get_SliceAdaptor->fetch_by_chr_name($self->name);
+       $self->{'_contig'} = $core_dbadaptor->get_SliceAdaptor->fetch_by_chr_name($self->name);
      } 
      else {
-       $self->throw ("Can't fetch contig of ".$self->name." with type ".$self->$type);
+       $self->throw ("Can't fetch contig of ".$self->name." with type ".$self->type);
      }
    }
    
