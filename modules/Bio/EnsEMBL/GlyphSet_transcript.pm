@@ -245,6 +245,8 @@ sub _init {
   }
   if($transcript_drawn) {
     my ($key, $priority, $legend) = $self->legend( $colours );
+    # define which legend_features should be displayed
+    # this is being used by GlyphSet::gene_legend
     $Config->{'legend_features'}->{$key} = {
       'priority' => $priority,
       'legend'   => $legend
