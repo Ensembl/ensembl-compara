@@ -50,11 +50,6 @@ my $reg_conf;
 my $limit_number = 10000;
 my $limit_index_start = 0;
 
-unless (scalar @ARGV) {
-  print $usage;
-  exit 0;
-}
-
 GetOptions('help' => \$help,
 	   'src_dbname=s' => \$src_dbname,
 	   'dest_dbname=s' => \$dest_dbname,
@@ -117,7 +112,7 @@ $dest_mlss->species_set([$tg_gdb, $qy_gdb]);
 $dest_mlss->method_link_type($dest_method_link_type);
 
 while (1)  {
-  my $gabs = $gaba->fetch_all_by_DnaFrag_method_link_species_set($qy_dnafrag, $mlss, undef, undef, $limit_number, $limit_index_start);
+  my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $qy_dnafrag, undef, undef, $limit_number, $limit_index_start);
 
   last unless (scalar @$gabs);
   print STDERR "Preparing to rescore ",scalar @$gabs," gabs\n";
