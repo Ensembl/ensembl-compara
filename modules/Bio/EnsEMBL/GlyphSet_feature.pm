@@ -49,7 +49,9 @@ sub href {
 
 sub _init {
     my ($self) = @_;
-    my ($type)         = reverse split '::', ref($self) ;
+    my $type = $self->check();
+    return unless defined $type;
+
     my $VirtualContig  = $self->{'container'};
     my $Config         = $self->{'config'};
     my $strand         = $self->strand();

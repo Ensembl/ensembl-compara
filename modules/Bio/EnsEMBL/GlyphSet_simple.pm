@@ -32,7 +32,9 @@ sub features {
 
 sub _init {
     my ($self) = @_;
-    my ($type)          = reverse split '::', ref($self) ;
+    my $type = $self->check();
+    return unless defined $type;
+    
     print STDERR "TRACK: GlyphSet_simple::$type\n";
     my $VirtualContig   = $self->{'container'};
     my $Config          = $self->{'config'};
@@ -80,13 +82,14 @@ sub _init {
     foreach my $f ( $self->features ) {
 ## Check strand for display ##
         next if( $strand_flag eq 'b' && $strand != $f->strand );
-## Check start and end are not outside VC.... ##
+## Check start are not outside VC.... ##
         my $start = $f->start();
         next if $start>$vc_length; ## Skip if totally outside VC
+        $start = 1 if $start < 1;
+## Check end are not outside VC.... ##
         my $end   = $f->end();
         next if $end<1;            ## Skip if totally outside VC
-           $start =          1 if $start < 1;
-           $end   = $vc_length if $end>$vc_length;
+        $end   = $vc_length if $end>$vc_length;
 
         $flag = 0;
         ($feature_colour, $label_colour) = $self->colour( $f ) if $self->can('colour');
@@ -175,7 +178,6 @@ sub _init {
         }
     }
 ## No features show "empty track line" if option set....  ##
-## Now go through each feature in turn, drawing them      ##
     print STDERR "TRACK: GlyphSet_simple::$type\n";
     $self->errorTrack( "No $type features in this region" )
         if( $Config->get('_settings','opt_empty_tracks')==1 && $flag );
