@@ -108,7 +108,7 @@ sub _init {
         my $glyph;
         if($part_to_colour eq 'line') {
             
-            print STDERR "PUSHING LINE\n"; 
+     #       print STDERR "PUSHING LINE\n"; 
             $composite->push( new Bio::EnsEMBL::Glyph::Space({
                 'x'          => $start,
                 'y'          => 0,
