@@ -290,7 +290,7 @@ sub dumpChunkSetToWorkdir
   foreach my $chunk (@$chunk_array) {
     #rintf("  writing chunk %s\n", $chunk->display_id);
     my $bioseq = $chunk->bioseq;
-    if($chunk->sequence_id==0 and ($bioseq->length <= 5000000)) {
+    if($chunk->sequence_id==0) {
       #rint "    cacheing sequence back to compara for chunk\n";
       $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
     }
