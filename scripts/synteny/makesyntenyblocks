@@ -1,85 +1,154 @@
-#!/usr/local/bin/perl
+#!/usr/local/ensembl/bin/perl
 
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::ExternalData::EXONERATESQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
 
-my $corehost;
-my $corename;
-my $coreuser = 'ensro';
-my $corepass = '';
-my $corepath;
-my $chr;
+my $usage = "
+
+./makesyntenyblocks -host ecs1b.internal.sanger.ac.uk
+                    -user ensro
+                    -dbname ensembl_compara_10_1
+                    -chr_names \"1,10,11,12,13,14,15,16,17,18,19,2,20,21,22,3,4,5,6,7,8,9,X,Y\"
+                    -species \"Homo sapiens\"
+                    -assembly NCBI30
+                    -conf_file Compara.conf
+                    -max_distance 100000 
+                    -min_size_cluster 100000 
+                    -syntenydir ~/synteny/Hs30Rn1
+                    -syntenyex syten.gff
+
+$0 [-help]
+   -host compara_db_host_server
+   -user username (default = 'ensro')
+   -dbname compara_database_name
+   -chr_names \"20,21,22\" (default = \"all\")
+   -species (e.g. \"Homo sapiens\") from which alignments are queried and chr_names refer to
+   -assembly (e.g. NCBI30) assembly version of species
+   -conf_file comparadb_configuration_file
+              (see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example)
+   -max_distance distance in bp to cluster hits together, (default 100000)
+   -min_size_cluster minimum size in bp to keep a cluster (default 100000) 
+   -syntenyfile gff alignment file
+   -syntenydir path to a directory where gff alignment files live
+   -syntenyext file extension of gff alignment files
+";
+
+my $help = 0;
+my $host;
+my $dbname;
+my $user = 'ensro';
+my $pass = '';
+my $species;
+my $species_assembly;
+my $conf_file;
+my $chr_names;
 
 my $syntenyfile;
 my $syntenydir;
 my $syntenyext;
-
+my $max_distance = 100000;
+my $min_size_cluster = 100000;
+  
 $| = 1;
 
-&GetOptions('corehost:s' => \$corehost,
-						'coreuser:s' => \$coreuser,
-						'corename:s' => \$corename,
-						'corepass:s' => \$corepass,
-						'corepath:s' => \$corepath,
-						'chr:s'         => \$chr,
-						'syntenyfile:s' => \$syntenyfile,
-						'syntenydir:s'  => \$syntenydir,
-						'syntenyext:s'  => \$syntenyext,
-             );
+&GetOptions('help' => \$help,
+	    'host:s' => \$host,
+	    'user:s' => \$user,
+	    'dbname:s' => \$dbname,
+	    'pass:s' => \$pass,
+	    'species:s' => \$species,
+	    'assembly:s' => \$species_assembly,
+	    'chr_names=s' => \$chr_names,
+	    'conf_file=s' => \$conf_file,
+	    'max_distance=i' => \$max_distance,
+	    'min_size_cluster=i' => \$min_size_cluster,
+	    'syntenyfile:s' => \$syntenyfile,
+	    'syntenydir:s'  => \$syntenydir,
+	    'syntenyext:s'  => \$syntenyext);
 
-
-if (!(-e $syntenyfile) && (!(-d $syntenydir))) {
-	print STDERR "Must either input a syntenyfile or a directory where the files live\n";
-	exit(0);
+if (defined $syntenyfile && ! -e $syntenyfile) {
+  print STDERR "syntenyfile syntenyfile does not exist\n";
+  exit 1;
 }
 
-my $coredb = new Bio::EnsEMBL::DBSQL::DBAdaptor(-host        => $corehost,
-																								-user        => $coreuser,
-																								-dbname      => $corename,
-																								-pass        => $corepass,
-																								-perlonlyfeatures => 0);
+if (! defined $syntenyfile && ! (defined $syntenydir && defined $syntenyext)) {
+  print STDERR "
+Must either input a syntenyfile with -syntenyfile OR 
+a directory where the files live with -syntenydir AND a synteny file extension with -syntenyex
 
-print STDERR "Connected to database $corename\n";
+";
+  exit 2;
+}
 
-$coredb->static_golden_path_type($corepath);
+if ($help) {
+  print $usage;
+  exit 0;
+}
 
-my $sgpa   = $coredb->get_StaticGoldenPathAdaptor();
+my $compdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host        => $host,
+							 -user        => $user,
+							 -dbname      => $dbname,
+							 -pass        => $pass,
+							 -conf_file   => $conf_file);
 
-print STDERR "Got path $corepath\n";
 
-my @chr;
+print STDERR "Connected to database $dbname\n";
+print STDERR "$species,$species_assembly\n";
 
-if (defined($chr) && $chr eq "all") {
-  @chr = $sgpa->get_all_chromosome_name; 
-} elsif (defined($chr)) {
-  push(@chr,$chr);
+my $coredb = $compdb->get_db_adaptor($species,$species_assembly);
+
+my $SliceAdaptor = $coredb->get_SliceAdaptor;
+my $ChromosomeAdaptor = $coredb->get_ChromosomeAdaptor;
+
+my @chromosomes;
+
+if (defined $chr_names and $chr_names ne "all") {
+  my @chr_names = split /,/, $chr_names;
+  foreach my $chr_name (@chr_names) {
+    push @chromosomes, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
+  }
 } else {
-  print "Must either specifiy a chromosome name with -chr <chrname>  or specify all chromosomes with -chr all\n";
-  exit(0);
+  @chromosomes = @{$ChromosomeAdaptor->fetch_all}
 }
 
-print STDERR "Chromsomes input are [@chr]\n";
+#print STDERR "Chromsomes input are [@chr]\n";
 
-foreach my $chr (@chr) {
-
-	print STDERR "Processing chr $chr\n";
-
-	my $f = "t.gff";
+foreach my $chr (@chromosomes) {
+  my $chr_name = $chr->chr_name;
+  print STDERR "Processing chr ",$chr->chr_name,"\n";
+  
+  my $f = "t.gff";
   my $g = "t.gff";
+  
+  if (defined($syntenydir) && defined($syntenyext)) {
+    $syntenyfile = $syntenydir . "/$chr_name.$syntenyext";
+  } 
+  
+  print STDERR "Build synteny regions...\n";
 
-	if (defined($syntenydir) && defined($syntenyext)) {
-		$syntenyfile = $syntenydir . "/$chr.$syntenyext";
-	} 
+my $command = "java -DAPOLLO_ROOT=$ENV{APOLLO_ROOT} -mx300M apollo.gui.SyntenyPanel $f $g $syntenyfile $max_distance $min_size_cluster 1 0 > /tmp/$chr_name.$max_distance.$min_size_cluster.syn.out 2> /tmp/$chr_name.$max_distance.$min_size_cluster.syn.err";
 
-	my $command = "java -mx300M -classpath apollo.jar -DAPOLLO_ROOT=. apollo.gui.SyntenyPanel $f $g $syntenyfile  100000 100000 1 0 2>&1 1 > $chr.100000.syn.out";
+  print STDERR "Running apollo....
+$command\n";
 
-	print STDERR "Running command $command\n";
+  unless (system($command) == 0) {
+    die "Problem when running java command, $!\n";
+  }
 
-	system ($command);
-	system("grep cluster $chr.100000.syn.out > $chr.100000.gff");
+  unless (system("grep cluster /tmp/$chr_name.$max_distance.$min_size_cluster.syn.out > /tmp/$chr_name.$max_distance.$min_size_cluster.gff") == 0) {
+    die "Problem when running grep command, $!\n";
+  }
+  
+  unless (defined $syntenydir) {
+    $syntenydir = $ENV{PWD};;
+  }
 
+  unless (system("cp /tmp/$chr_name.$max_distance.$min_size_cluster.* $syntenydir") == 0) {
+    unlink glob("/tmp/$chr_name.$max_distance.$min_size_cluster.syn.out /tmp/$chr_name.$max_distance.$min_size_cluster.syn.err /tmp/$chr_name.$max_distance.$min_size_cluster.gff");
+    die "error in cp command, $!\n";
+  }
+
+  unlink glob("/tmp/$chr_name.$max_distance.$min_size_cluster.syn.out /tmp/$chr_name.$max_distance.$min_size_cluster.syn.err /tmp/$chr_name.$max_distance.$min_size_cluster.gff");
 }
