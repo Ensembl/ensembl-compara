@@ -16,12 +16,13 @@ sub features {
 sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bacs', 'threshold_navigation' ) || 2e7) * 1000;
+    my $ext_url = $self->{'config'}->{'ext_url'};
     my $zmenu = { 
         'caption'   => "BAC: ".$f->name,
         '01:Status: '.$f->status => ''
     };
-    $zmenu->{'02:bacend: '.$f->bac_1} = '' if $f->bac_1;
-    $zmenu->{'03:bacend: '.$f->bac_2} = '' if $f->bac_2;
+    $zmenu->{'02:bacend: '.$f->bac_1} = $ext_url->get_url( 'EMBL', $f->bac_1 ) if $f->bac_1;
+    $zmenu->{'03:bacend: '.$f->bac_2} = $ext_url->get_url( 'EMBL', $f->bac_2 ) if $f->bac_2;
 
     return $zmenu;
 }

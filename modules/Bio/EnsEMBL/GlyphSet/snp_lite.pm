@@ -4,6 +4,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple_hash;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple_hash);
 
+
 sub my_label { return "SNPs"; }
 
 sub features {
@@ -19,7 +20,8 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    return "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=$f->{'id'}&chr=$f->{'chr_name'}&vc_start=$f->{'chr_start'}";
+    my $ID = $f->{'id'} == 0 ? $f->{'anosnpid'} : $f->{'id'};
+    return "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=$ID&chr=$f->{'chr_name'}&vc_start=$f->{'chr_start'}";
 }
 
 sub colour {
@@ -43,15 +45,15 @@ sub zmenu {
     my ($self, $f ) = @_;
     my $ext_url = $self->{'config'}->{'ext_url'};
     
+    my $ID = $f->{'id'} == 0 ? $f->{'anosnpid'} : $f->{'id'};
     my %zmenu = ( 
-        'caption'           => "SNP: ".$f->{'id'},
+        'caption'           => "SNP: ".$ID,
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $f->{'chr_start'}" => '',
-        '03:dbSNP data'     => $ext_url->get_url('SNP', $f->{'id'}),
     );
-    $zmenu{"04:TSC-CSHL data"} = $ext_url->get_url( 'TSC-CSHL', $f->{'tscid'} )    if defined $f->{'tscid'};
-#    $zmenu{"06:CGAP-GAI data"} = $ext_url->get_url( 'CGAP-GAI', $pid );  
-    $zmenu{"05:HGBASE data"}   = $ext_url->get_url( 'HGBASE',   $f->{'hgbaseid'} ) if defined $f->{'hgbaseid'};  
+    $zmenu{'03:dbSNP data'} = $ext_url->get_url('SNP', $f->{'id'}) if $f->{'id'}>0;
+    $zmenu{"04:TSC-CSHL data"} = $ext_url->get_url( 'TSC-CSHL', $f->{'tscid'} )  if defined( $f->{'tscid'} ) && $f->{'tscid'}!='';
+    $zmenu{"05:HGBASE data"}   = $ext_url->get_url( 'HGBASE',   $f->{'hgbaseid'} ) if defined( $f->{'hgbaseid'} ) && $f->{'hgbaseid'}!='';  
     my $T = substr($f->{'type'},3);
     $zmenu{"06:Type: $T"}   = "" unless $T eq '';  
     return \%zmenu;
