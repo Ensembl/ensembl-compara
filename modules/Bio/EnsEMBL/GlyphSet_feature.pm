@@ -117,8 +117,8 @@ sub _init {
             my $Composite = new Sanger::Graphics::Glyph::Composite({
                 'zmenu'    => $self->zmenu( $i ),
                 'href'     => $self->href( $i ),
-	        'x' => $F[0][0]> 1 ? $F[0][0] : 1,
-	        'y' => 0
+	            'x' => $F[0][0]> 1 ? $F[0][0]-1 : 0,
+	            'y' => 0
             });
 
             my $X = -1000000;
@@ -127,7 +127,7 @@ sub _init {
                 $X = $f->[0];
                 $C++;
                 $Composite->push(new Sanger::Graphics::Glyph::Rect({
-                    'x'          => $X,
+                    'x'          => $X-1,
                     'y'          => 0, # $y_pos,
                     'width'      => $f->[1]-$X+1,
                     'height'     => $h,
@@ -162,7 +162,7 @@ sub _init {
             $X = $f->[0];
             $C++;
             $self->push(new Sanger::Graphics::Glyph::Rect({
-                'x'          => $X,
+                'x'          => $X-1,
                 'y'          => 0, # $y_pos,
                 'width'      => $f->[1]-$X+1,
                 'height'     => $h,

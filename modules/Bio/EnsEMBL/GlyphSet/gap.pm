@@ -40,12 +40,10 @@ sub _init {
     return unless defined $type;
 
 
-	my $vc = $self->{'container'};
-    my $vc_start = $vc->_global_start();
-    my $useAssembly;
+    my $vc = $self->{'container'};
+    my $vc_start = $vc->chr_start();
     eval { ## Assembly contigs don't work - don't know enough about gaps!
-        $useAssembly = $vc->has_AssemblyContigs;
-        return if $useAssembly;
+        return if $vc->has_MapSet('assembly' );
     };
 
     my $length   = $vc->length() +1;
@@ -70,8 +68,8 @@ sub _init {
     my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');
     my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
     my $clone       = $Config->get('_settings','clone');
-    my $param_string   = $clone_based ? "seqentry=1&clone=$clone" : ("chr=".$vc->_chr_name());
-    my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $vc->_global_start();
+    my $param_string   = $clone_based ? "seqentry=1&clone=$clone" : ("chr=".$vc->chr_name());
+    my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $vc->chr_start();
     my $global_end     = $global_start + $length - 1;
     
     $w *= $length/($length-1);

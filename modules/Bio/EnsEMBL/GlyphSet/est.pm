@@ -12,7 +12,7 @@ sub features {
     #    $self->{'container'}->get_all_ExternalFeatures($self->glob_bp);
 
     return 
-      $self->{'container'}->get_all_DnaAlignFeatures_above_score('ex_e2g_feat',
+      $self->{'container'}->get_all_DnaAlignFeatures('ex_e2g_feat',
 								 0);
 }
 

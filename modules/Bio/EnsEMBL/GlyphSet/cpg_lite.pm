@@ -10,7 +10,7 @@ sub my_helplink { return "markers"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimpleFeatures_above_score('CpG', 25);
+    return $self->{'container'}->get_all_SimpleFeatures('CpG', 25);
 }
 
 sub zmenu {

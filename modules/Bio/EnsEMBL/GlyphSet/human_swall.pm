@@ -9,7 +9,7 @@ sub my_label { return "Human proteins"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_above_score(
+    return $self->{'container'}->get_all_SimilarityFeatures(
         "genewise_sup", 80, $self->glob_bp
     );
 }

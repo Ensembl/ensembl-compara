@@ -13,7 +13,7 @@ sub my_helplink { return "markers"; }
 sub features {
     my ($self) = @_;
 
-    return $self->{'container'}->get_all_SimpleFeatures_above_score('Eponine', 
+    return $self->{'container'}->get_all_SimpleFeatures('Eponine', 
 								    .8);
 }
 

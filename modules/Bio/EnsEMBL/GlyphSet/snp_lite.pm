@@ -43,8 +43,7 @@ sub href {
 sub colour {
   my ($self, $f) = @_;
 
-  my $type = substr($f->type(), 3);
-
+  my $type = substr($f->type(),3,6);
   unless($self->{'config'}->{'snp_types'}{$type}) {
     my %labels = (
 	 '_coding' => 'Coding SNPs',

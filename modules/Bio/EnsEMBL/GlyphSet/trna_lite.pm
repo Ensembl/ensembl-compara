@@ -9,7 +9,7 @@ sub my_label { return "tRNAs"; }
 sub features {
   my ($self) = @_;
   return 
-    $self->{'container'}->get_all_SimpleFeatures_above_score('tRNAscan',25);
+    $self->{'container'}->get_all_SimpleFeatures('tRNAscan',25);
 }
 
 sub href {

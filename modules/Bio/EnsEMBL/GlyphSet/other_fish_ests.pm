@@ -7,10 +7,8 @@ use Bio::EnsEMBL::GlyphSet_feature;
 sub my_label { return "Other fish ESTs"; }
 
 sub features {
-
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_by_strand("other_fish_ests",1,$self->glob_bp,$self->strand());
-
+    return $self->{'container'}->get_all_DnaAlignFeatures("other_fish_ests",1);
 }
 
 sub href {

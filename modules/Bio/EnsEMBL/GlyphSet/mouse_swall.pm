@@ -10,14 +10,9 @@ sub my_label { return "Mouse proteins"; }
 sub features {
     my ($self) = @_;
     return 
-    $self->{'container'}->get_all_SimilarityFeatures_above_score(
-        "mouse_swall", 80, $self->glob_bp
-    ),
-    $self->{'container'}->get_all_SimilarityFeatures_above_score(
-        "mouse_refseq", 80, $self->glob_bp
-    ),
-    
-    ;
+    \{ @{$self->{'container'}->get_all_SimilarityFeatures( "mouse_swall", 80)}, 
+       @{$self->{'container'}->get_all_SimilarityFeatures( "mouse_refseq", 80)}
+    };
 }
 
 sub href {

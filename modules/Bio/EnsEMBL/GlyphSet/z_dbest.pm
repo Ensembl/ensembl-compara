@@ -9,9 +9,7 @@ sub my_label { return "EST"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_above_score(
-        "z_dbest", 80, $self->glob_bp
-    );
+    return $self->{'container'}->get_all_SimilarityFeatures( "z_dbest", 80, $self->glob_bp);
 }
 
 sub href {

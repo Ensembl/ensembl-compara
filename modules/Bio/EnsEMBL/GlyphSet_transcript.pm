@@ -150,9 +150,9 @@ sub _init {
 	      # non-filled rectangles
 	      #Draw a non-filled rectangle around the entire exon
 	                 $Composite->push(new Sanger::Graphics::Glyph::Rect({
-                            'x'         => $box_start,
+                            'x'         => $box_start -1 ,
                             'y'         => $y,
-                            'width'     => $box_end-$box_start,
+                            'width'     => $box_end-$box_start +1,
                             'height'    => $h,
                             'bordercolour' => $colour,
                             'absolutey' => 1,
@@ -165,7 +165,7 @@ sub _init {
 	             if( $filled_start <= $filled_end ) {
 	    #Draw a filled rectangle in the coding region of the exon
         	        my $rect = new Sanger::Graphics::Glyph::Rect({
-                        'x'         => $filled_start,
+                        'x'         => $filled_start -1,
                         'y'         => $y,
                         'width'     => $filled_end - $filled_start + 1,
                         'height'    => $h,
@@ -196,9 +196,9 @@ sub _init {
                 if( $box_start == $intron_start && $box_end == $intron_end ) {
 	    # draw an wholly in slice intron
 	            $Composite->push(new Sanger::Graphics::Glyph::Intron({
-                    'x'         => $box_start,
+                    'x'         => $box_start -1,
                     'y'         => $y,
-                    'width'     => $box_end-$box_start,
+                    'width'     => $box_end-$box_start + 1,
                     'height'    => $h,
                     'colour'    => $colour,
                     'absolutey' => 1,
@@ -207,9 +207,9 @@ sub _init {
 	        } else { 
 	      # else draw a "not in slice" intron
                 $Composite->push(new Sanger::Graphics::Glyph::Line({
-                     'x'         => $box_start,
+                     'x'         => $box_start -1 ,
                      'y'         => $y+int($h/2),
-                     'width'     => $box_end-$box_start,
+                     'width'     => $box_end-$box_start + 1,
                      'height'    => 0,
                      'absolutey' => 1,
                      'colour'    => $colour,
@@ -256,7 +256,7 @@ sub _init {
 	        my ($trans_exon) = $transcript->get_all_Exons();
 	        if($trans_exon->strand() == 1) {
 	            my $clip1 = new Sanger::Graphics::Glyph::Line({
-                   'x'         => 1,
+                   'x'         => 0,
                    'y'         => -4,
                    'width'     => $length,
                    'height'    => 0,
@@ -265,7 +265,8 @@ sub _init {
                 });
 	            $self->push($clip1);
 	            $clip1 = new Sanger::Graphics::Glyph::Poly({
-                	'points' => [$length - 4/$pix_per_bp,-2,
+                	'points' => [
+                        $length - 4/$pix_per_bp,-2,
                         $length                ,-4,
                         $length - 4/$pix_per_bp,-6],
 			        'colour'    => $colour,
@@ -274,7 +275,7 @@ sub _init {
                 $self->push($clip1);
 	        } else {
 	            my $clip1 = new Sanger::Graphics::Glyph::Line({
-                   'x'         => 1,
+                   'x'         => 0,
                    'y'         => $h+4,
                    'width'     => $length,
                    'height'    => 0,
@@ -283,9 +284,9 @@ sub _init {
                 });
 	            $self->push($clip1);
 	            $clip1 = new Sanger::Graphics::Glyph::Poly({
-                    'points'    => [1+4/$pix_per_bp,$h+6,
-                                    1,              $h+4,
-                                    1+4/$pix_per_bp,$h+2],
+                    'points'    => [ 4/$pix_per_bp,$h+6,
+                                     0,              $h+4,
+                                     4/$pix_per_bp,$h+2],
 		            'colour'    => $colour,
                     'absolutey' => 1,
                 });

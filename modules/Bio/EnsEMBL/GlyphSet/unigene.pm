@@ -9,8 +9,7 @@ sub my_label { return "Unigene"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_DnaAlignFeatures_above_score("Unigene"
-								      ,80);
+    return $self->{'container'}->get_all_DnaAlignFeatures("Unigene",80);
 }
 
 sub href { 
