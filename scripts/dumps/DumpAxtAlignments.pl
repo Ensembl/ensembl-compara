@@ -17,7 +17,7 @@ $0 [-help]
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
    -conf_file compara_conf_file
-
+              see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 ";
 
 my ($host,$dbname);
