@@ -399,6 +399,7 @@ sub zmenu {
   $zmenu->{"05:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
   $zmenu->{"06:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
   $zmenu->{"07:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+  $zmenu->{"08:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
   my $href = undef;
   if($self->{'extras'}->{'fasta'}) {
     foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
