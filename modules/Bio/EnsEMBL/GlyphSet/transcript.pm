@@ -168,8 +168,8 @@ sub _init {
                 		'03:Protein information'    => "/perl/protview?peptide=$pid",
                 		'04:Supporting evidence'    => "/perl/transview?transcript=$tid",
                 		'05:Expression information' => "/perl/sageview?alias=$vgid",
-                		'06:Protein sequence (FASTA)' => "/perl/exportview?type=feature&ftype=peptide&id=$tid",
-                		'07:cDNA sequence'          => "/perl/exportview?type=feature&ftype=cdna&id=$tid",
+                		'06:Protein sequence (FASTA)' => "/perl/exportview?tab=fasta&type=feature&ftype=peptide&id=$tid",
+                		'07:cDNA sequence'          => "/perl/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
         		};
         	}
     	} #end of Skip this next chunk if single transcript mode
