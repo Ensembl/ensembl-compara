@@ -1,6 +1,6 @@
 # $Id$
 # 
-# BioPerl module for Bio::EnsEMBL::ExternalData::Family::DBSQL::TaxonAdaptor
+# BioPerl module for Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor
 # 
 # Cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
 #
@@ -24,13 +24,13 @@ TaxonAdaptor - DESCRIPTION of Object
 
 =cut
 
-package Bio::EnsEMBL::ExternalData::Family::DBSQL::TaxonAdaptor;
+package Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor;
 
 use vars qw(@ISA);
 use strict;
 
 #use Bio::Species;
-use Bio::EnsEMBL::ExternalData::Family::Taxon;
+use Bio::EnsEMBL::Compara::Taxon;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -41,7 +41,7 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
  Usage   : $taxonadaptor->fetch_by_dbID($id);
  Function: fetches a taxon given its internal database identifier (taxon_id)
  Example : $taxonadaptor->fetch_by_dbID(1)
- Returns : a Bio::EnsEMBL::ExternalData::Family::Taxon object if found, undef otherwise
+ Returns : a Bio::EnsEMBL::Compara::Taxon object if found, undef otherwise
  Args    : an integer
 
 
@@ -60,7 +60,7 @@ sub fetch_by_dbID {
   $q->execute($taxon_id);
   
   if (defined (my $rowhash = $q->fetchrow_hashref)) {
-    my $taxon = new Bio::EnsEMBL::ExternalData::Family::Taxon;
+    my $taxon = new Bio::EnsEMBL::Compara::Taxon;
     
     $taxon->ncbi_taxid($taxon_id); #for bioperl-1-0-0 on
     $taxon->sub_species($rowhash->{sub_species});
@@ -80,7 +80,7 @@ sub fetch_by_dbID {
  Usage   : $taxonadaptor->fetch_by_taxon_id($id);
  Function: fetches a taxon given its internal database identifier (taxon_id)
  Example : $taxonadaptor->fetch_by_taxon_id(1)
- Returns : a Bio::EnsEMBL::ExternalData::Family::Taxon object if found, undef otherwise
+ Returns : a Bio::EnsEMBL::Compara::Taxon object if found, undef otherwise
  Args    : an integer
 
 
@@ -101,15 +101,15 @@ sub fetch_by_taxon_id {
  Function: Stores a taxon object into the database
  Example : $memberadaptor->store($member)
  Returns : $member->dbID
- Args    : An Bio::EnsEMBL::ExternalData::Taxon object
+ Args    : An Bio::EnsEMBL::Compara::Taxon object
 
 =cut
 
 sub store {
   my ($self,$taxon) = @_;
 
-  $taxon->isa('Bio::EnsEMBL::ExternalData::Family::Taxon') ||
-    $self->throw("You have to store a Bio::EnsEMBL::ExternalData::Family::Taxon object, not a $taxon");
+  $taxon->isa('Bio::EnsEMBL::Compara::Taxon') ||
+    $self->throw("You have to store a Bio::EnsEMBL::Compara::Taxon object, not a $taxon");
 
   my $q = "INSERT INTO taxon (taxon_id,genus,species,sub_species,common_name,classification) 
            VALUES (?,?,?,?,?,?)";
@@ -129,7 +129,7 @@ sub store {
  Function: Stores a taxon object only if it doesn't exists in the database 
  Example : $memberadaptor->store($member)
  Returns : $member->dbID
- Args    : An Bio::EnsEMBL::ExternalData::Taxon object
+ Args    : An Bio::EnsEMBL::Compara::Taxon object
 
 =cut
 
