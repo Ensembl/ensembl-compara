@@ -50,23 +50,33 @@ sub href {
 
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
-
+    my $id ;  
+    my $tid = $transcript->stable_id();
+    my $pid = $transcript->translation->stable_id(),
+    my $gid = $gene->stable_id();
+   
     my $zmenu = {
-       'caption'                     => "EST Gene",
-       "02:Gene: " . $gene->stable_id()  => $self->href( $gene, $transcript ),
+        'caption'              	=> "EST Gene",
+	"01:Gene:$gid"          => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid&db=estgene",
+        "02:Transcr:$tid"    	=> "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$tid&db=estgene",                	
+        '04:Export cDNA'        => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cDNA&id=$tid"
     };
 
-    my $translation_id = $transcript->translation()->stable_id();
+    if ($transcript->external_name()){
+    	$id = $transcript->external_name();
+	$zmenu->{"00:$id"}= '';
+    }   
 
-    if(defined $translation_id) {
-      $zmenu->{"03:Protein: $translation_id"} =
-	qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=estgene&peptide=$translation_id);
+    if($pid) {
+    $zmenu->{"03:Peptide:$pid"}=
+    	qq(/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=$pid&db=estgene);
+    $zmenu->{'05:Export Peptide'}=
+    	qq(/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
     }
     
     return $zmenu;
   }
 
-#sub text_label { return ''; }
 sub text_label {
     my ($self, $gene, $transcript) = @_;
     my $tid = $transcript->stable_id();

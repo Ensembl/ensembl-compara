@@ -14,7 +14,7 @@ sub colours {
     my $Config = $self->{'config'};
     return {
         'hi'               => $Config->get('sanger_transcript_lite','hi'),
-        'super'            => $Config->get('sanger_transcript_lite','superhi'),
+        'superhi'          => $Config->get('sanger_transcript_lite','superhi'),
         'HUMACE-Novel_CDS'        => $Config->get('sanger_transcript_lite','sanger_Novel_CDS'),
         'HUMACE-Putative'         => $Config->get('sanger_transcript_lite','sanger_Putative'),
         'HUMACE-Known'            => $Config->get('sanger_transcript_lite','sanger_Known'),
@@ -59,23 +59,27 @@ sub href {
 
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
-    my $type = $transcript->type();
     my $tid = $transcript->stable_id();
+    my $pid = $transcript->translation->stable_id(),
     my $gid = $gene->stable_id();
-
+    my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
+    my $type = $transcript->type();
     $type =~ s/HUMACE-//g;
+    
     my $zmenu = {
-        'caption'                   => "Sanger Gene",
-	"01:$tid"                   => '',
-        "02:Gene: $gid"             => $self->href( $gene, $transcript ),
-        "04:Sanger curated ($type)" => ''
+        'caption'                       => "Sanger Gene",
+        "00:$tid"			=> "",
+	"01:Gene:$gid"                  => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid&db=sanger",
+        "02:Transcr:$tid"    	        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$tid&db=sanger",                	
+        '04:Export cDNA'                => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
+        "06:Sanger curated ($type)"     => '',
     };
-
-    my $translation_id = $transcript->translation()->stable_id();
-
-    if($translation_id ne '') {
-      $zmenu->{"03:Protein"} = 
-	qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=sanger&peptide=$translation_id);
+    
+    if($pid) {
+    $zmenu->{"03:Peptide:$pid"}=
+    	qq(/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=$pid&db=sanger);
+    $zmenu->{'05:Export Peptide'}=
+    	qq(/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
     }
     
     return $zmenu;
