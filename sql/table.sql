@@ -219,6 +219,7 @@ CREATE TABLE member (
  taxon_id       int(10) NOT NULL, # foreign key from taxon table
  genome_db_id   int(10), # foreign key from genome_db table
  sequence_id    int(10), # foreign key from sequence table
+ gene_member_id int(10), # foreign key to member table
  description    varchar(255),
  chr_name       char(40),
  chr_start      int(10),
@@ -227,16 +228,18 @@ CREATE TABLE member (
 
  PRIMARY KEY (member_id),
  UNIQUE KEY (stable_id, source_name),
- KEY (sequence_id)
+ KEY (sequence_id),
+ KEY (gene_member_id)
 );
 
 CREATE TABLE sequence (
  sequence_id    int(10) NOT NULL auto_increment,
- sequence       mediumtext NOT NULL,
  length         int(10) NOT NULL,
+ sequence       longtext NOT NULL,
 
- PRIMARY KEY (sequence_id)
-);
+ PRIMARY KEY (sequence_id),
+ KEY sequence (sequence(7))
+) MAX_ROWS = 1000000 AVG_ROW_LENGTH = 19000;
 
 
 CREATE TABLE family (
