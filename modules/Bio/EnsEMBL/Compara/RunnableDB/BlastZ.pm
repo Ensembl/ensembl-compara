@@ -76,6 +76,8 @@ my $g_compara_BlastZ_workdir;
 sub fetch_input {
   my( $self) = @_;
 
+  $self->{'debug'} = 0;
+  
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -189,47 +191,6 @@ sub global_cleanup {
 #
 ##########################################
 
-# using the genome_db and longest peptides subset, create a fasta
-# file which can be used as a blast database
-sub dumpPeptidesToFasta
-{
-  my $self = shift;
-
-  my $startTime = time();
-  my $params = eval($self->analysis->parameters);
-  my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($params->{'genome_db_id'});
-  
-  # create logical path name for fastafile
-  my $species = $genomeDB->name();
-  $species =~ s/\s+/_/g;  # replace whitespace with '_' characters
-
-  #create temp directory to hold fasta databases
-  $g_compara_BlastZ_workdir = "/tmp/worker.$$/";
-  mkdir($g_compara_BlastZ_workdir, 0777);
-  
-  my $fastafile = $g_compara_BlastZ_workdir.
-                  $species . "_" .
-                  $genomeDB->assembly() . ".fasta";
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-  print("fastafile = '$fastafile'\n");
-
-  # write fasta file to local /tmp/disk
-  my $subset   = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($params->{'subset_id'});
-  $self->{'comparaDBA'}->get_SubsetAdaptor->dumpFastaForSubset($subset, $fastafile);
-
-  # configure the fasta file for use as a blast database file
-  my $blastdb     = new Bio::EnsEMBL::Pipeline::Runnable::BlastDB (
-      -dbfile     => $fastafile,
-      -type       => 'PROTEIN');
-  $blastdb->run;
-  print("registered ". $blastdb->dbname . " for ".$blastdb->dbfile . "\n");
-
-  printf("took %d secs to dump database to local disk\n", (time() - $startTime));
-
-  return $fastafile
-}
-
 
 sub store_featurePair_as_genomicAlignBlock
 {
@@ -238,58 +199,76 @@ sub store_featurePair_as_genomicAlignBlock
 
   my $qyChunk = $self->{'qyChunk'};
   my $dbChunk = $self->{'dbChunk'};
-  
-  print("qyChunk : ",$qyChunk->display_id,"\n");
-  print("dbChunk : ",$dbChunk->display_id,"\n");
-  print STDOUT $fp->seqname."\t".
-               $fp->start."\t".
-               $fp->end."\t".
-               $fp->strand."\t".
-               $fp->hseqname."\t".
-               $fp->hstart."\t".
-               $fp->hend."\t".
-               $fp->hstrand."\t".
-               $fp->score."\t".
-               $fp->percent_id."\t".
-               $fp->cigar_string."\n";
+
+  if($self->{'debug'}) {
+    print("qyChunk : ",$qyChunk->display_id,"\n");
+    print("dbChunk : ",$dbChunk->display_id,"\n");
+    print STDOUT $fp->seqname."\t".
+                 $fp->start."\t".
+                 $fp->end."\t".
+                 $fp->strand."\t".
+                 $fp->hseqname."\t".
+                 $fp->hstart."\t".
+                 $fp->hend."\t".
+                 $fp->hstrand."\t".
+                 $fp->score."\t".
+                 $fp->percent_id."\t".
+                 $fp->cigar_string."\n";
+  }                 
 
   $fp->slice($qyChunk->slice);
   $fp->hslice($dbChunk->slice);               
-  my $simpleAlign = $fp->get_SimpleAlign;
-  print_simple_align($simpleAlign, 80);
-               
+
+  #
+  # test if I'm getting the indexes right
+  #
+  if($self->{'debug'}) {
+    print_simple_align($fp->get_SimpleAlign, 80);
+
+    my $testChunk = new Bio::EnsEMBL::Compara::DnaFragChunk();
+    $testChunk->dnafrag($qyChunk->dnafrag);
+    $testChunk->seq_start($qyChunk->seq_start+$fp->start-1);
+    $testChunk->seq_end($qyChunk->seq_start+$fp->end-1);
+    my $bioseq = $testChunk->fetch_masked_sequence('soft');
+    print($bioseq->seq, "\n");
+  }
+
+
   my $genomic_align1 = new Bio::EnsEMBL::Compara::GenomicAlign;
   $genomic_align1->method_link_species_set($self->{'method_link_species_set'});
   $genomic_align1->dnafrag($qyChunk->dnafrag);
-  $genomic_align1->dnafrag_start($qyChunk->seq_start + $fp->start);
-  $genomic_align1->dnafrag_end($qyChunk->seq_start + $fp->end);
+  $genomic_align1->dnafrag_start($qyChunk->seq_start + $fp->start -1);
+  $genomic_align1->dnafrag_end($qyChunk->seq_start + $fp->end -1);
   $genomic_align1->dnafrag_strand($fp->strand);
   $genomic_align1->level_id(1);
   
   my $cigar1 = $fp->cigar_string;
   $cigar1 =~ s/I/M/g;
   $cigar1 = compact_cigar_line($cigar1);
+  $cigar1 =~ s/D/G/g;
   $genomic_align1->cigar_line($cigar1);
 
 
   my $genomic_align2 = new Bio::EnsEMBL::Compara::GenomicAlign;
   $genomic_align2->method_link_species_set($self->{'method_link_species_set'});
   $genomic_align2->dnafrag($dbChunk->dnafrag);
-  $genomic_align2->dnafrag_start($dbChunk->seq_start + $fp->hstart);
-  $genomic_align2->dnafrag_end($dbChunk->seq_start + $fp->hend);
+  $genomic_align2->dnafrag_start($dbChunk->seq_start + $fp->hstart -1);
+  $genomic_align2->dnafrag_end($dbChunk->seq_start + $fp->hend -1);
   $genomic_align2->dnafrag_strand($fp->hstrand);
-  $genomic_align2->cigar_line("23M4G27M");
   $genomic_align2->level_id(1);
 
   my $cigar2 = $fp->cigar_string;
   $cigar2 =~ s/D/M/g;
   $cigar2 =~ s/I/D/g;
   $cigar2 = compact_cigar_line($cigar2);
+  $cigar2 =~ s/D/G/g;
   $genomic_align2->cigar_line($cigar2);
-  
-  print("original cigar_line ",$fp->cigar_string,"\n");
-  print("   $cigar1\n");
-  print("   $cigar2\n");
+
+  if($self->{'debug'}) {
+    print("original cigar_line ",$fp->cigar_string,"\n");
+    print("   $cigar1\n");
+    print("   $cigar2\n");
+  }
 
   my $GAB = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
   $GAB->method_link_species_set($self->{'method_link_species_set'});
@@ -299,7 +278,9 @@ sub store_featurePair_as_genomicAlignBlock
   $GAB->length($fp->alignment_length);
 
   $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->store($GAB);
-  exit(1);
+
+  if($self->{'debug'}) { print_simple_align($GAB->get_SimpleAlign, 80);}
+
   return $GAB;
 }
 
@@ -370,7 +351,6 @@ sub print_simple_align
     $offset+=$aaPerLine;
     $numLines--;
   }
-
 }
 
 1;
