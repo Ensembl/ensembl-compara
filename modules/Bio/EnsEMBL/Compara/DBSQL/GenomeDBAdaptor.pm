@@ -77,7 +77,11 @@ sub fetch_by_dbID{
        return $self->{'_cache'}->{$dbid};
    }
 
-   my $sth = $self->prepare("select name,locator from genome_db where genome_db_id = $dbid");
+   my $sth = $self->prepare("
+     SELECT name, locator 
+     FROM genome_db 
+     WHERE genome_db_id = $dbid
+   ");
    $sth->execute;
 
    my ($name,$locator) = $sth->fetchrow_array();
@@ -86,7 +90,7 @@ sub fetch_by_dbID{
        $self->throw("No database with this dbID");
    }
 
-   my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new(-adaptor => $self->dbadaptor);
+   my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
    $gdb->name($name);
    $gdb->locator($locator);
    $gdb->dbID($dbid);
@@ -110,7 +114,11 @@ sub fetch_by_dbID{
 sub fetch_by_species_tag{
    my ($self,$tag) = @_;
 
-   my $sth = $self->prepare("select genome_db_id from genome_db where name = '$tag'");
+   my $sth = $self->prepare("
+     SELECT genome_db_id 
+     FROM genome_db 
+     WHERE name = '$tag'
+   ");
    $sth->execute;
 
    my ($id) = $sth->fetchrow_array();
@@ -148,8 +156,11 @@ sub store{
    my $name = $gdb->name;
    my $locator = $gdb->locator;
 
-   my $query = "Select genome_db_id from genome_db where name = '$name' and locator = '$locator'";
-   my $sth = $self->prepare($query);
+   my $sth = $self->prepare("
+      SELECT genome_db_id 
+      FROM genome_db 
+      WHERE name = '$name' and locator = '$locator'
+   ");
    $sth->execute;
 
    my $dbID = $sth->fetchrow_array();
