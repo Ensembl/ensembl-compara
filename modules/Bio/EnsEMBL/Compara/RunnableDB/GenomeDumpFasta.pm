@@ -87,18 +87,31 @@ sub fetch_input {
 
   my $genome_db_id = $input_hash->{'gdb'};
   my $subset_id    = $input_hash->{'ss'};
+  $self->{'logic_name'} = undef;
 
-  print("gdb = $genome_db_id\n");
-  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  if(defined($genome_db_id)) {
+    print("gdb = $genome_db_id\n");
 
-  #get the Compara::GenomeDB object for the genome_db_id
-  $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+    #get the Compara::GenomeDB object for the genome_db_id
+    $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 
-  unless($subset_id) {
-    # get the subset of 'longest transcripts' for this genome_db_id
-    $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
+    $self->{'logic_name'} = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
+
+    unless($subset_id) {
+      # get the subset of 'longest transcripts' for this genome_db_id
+      $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
+    }
   }
+  
+  throw("no subset defined, can't figure out which peptides to use\n") 
+    unless(defined($subset_id));
+  
   $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id); 
+  
+  unless($self->{'logic_name'}) {
+    $self->{'logic_name'} = "blast_" . $self->{'pepSubset'}->description;
+    $self->{'logic_name'} =~ s/\s+/_/g;
+  }  
   
   return 1;
 }
@@ -173,17 +186,19 @@ sub dumpPeptidesToFasta
 {
   my $self = shift;
 
-  # create logical path name for fastafile
-  my $species = $self->{'genome_db'}->name();
-  $species =~ s/\s+/_/g;  # replace whitespace with '_' characters
-
   # fasta_dir in parameter_hash
   my %parameters = $self->parameter_hash($self->analysis->parameters());
-  print("fasta_dir = " . $parameters{'fasta_dir'});
+  printf("fasta_dir = %s\n", $parameters{'fasta_dir'});
 
-  my $fastafile = $parameters{'fasta_dir'} . "/" .
-                  $species . "_" .
+  # create logical path name for fastafile
+  my $fastafile = $parameters{'fasta_dir'} . "/";
+  if($self->{'genome_db'}) {
+    $fastafile .= $self->{'genome_db'}->name() . "_" . 
                   $self->{'genome_db'}->assembly() . ".fasta";
+  } else {
+    $fastafile .= $self->{'logic_name'} . ".fasta";
+  }
+  $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   print("fastafile = '$fastafile'\n");
 
@@ -208,7 +223,7 @@ sub updateBlastAnalysis
   my $blastdb = shift;
 
   
-  my $logic_name = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
+  my $logic_name = $self->{'logic_name'};
   print("UPDATE the blastDB for analysis $logic_name\n");
   my $blast_analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
 
@@ -233,10 +248,9 @@ sub createBlastAnalysis
 
   my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
 
-  my $logic_name = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
+  my $params = "{subset_id=>" . $self->{'pepSubset'}->dbID;
+  $params .= ",genome_db_id=>" . $self->{'genome_db'}->dbID if($self->{'genome_db'});
 
-  my $params = "{subset_id=>" . $self->{'pepSubset'}->dbID .
-               ",genome_db_id=>" . $self->{'genome_db'}->dbID;
   if($blast_template->parameters()) {
     my $parmhash = eval($blast_template->parameters);
     if($parmhash->{'options'}) {
@@ -251,7 +265,7 @@ sub createBlastAnalysis
       -db              => $blastdb->dbname,
       -db_file         => $blastdb->dbfile,
       -db_version      => '1',
-      -logic_name      => $logic_name,
+      -logic_name      => $self->{'logic_name'},
       -input_id_type   => 'MemberPep',
       -program         => $blast_template->program(),
       -program_file    => $blast_template->program_file(),
