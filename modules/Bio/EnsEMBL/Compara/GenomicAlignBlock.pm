@@ -619,6 +619,8 @@ sub get_all_non_reference_genomic_aligns {
                genomic_align_array is not defined but both the dbID and the adaptor are,
                it tries to fetch the data from the database using the dbID of the
                Bio::EnsEMBL::Compara::GenomicAlignBlock object.
+               You can unset all cached GenomicAlign using 0 as argument. They will be
+               loaded again from the database if needed.
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
@@ -629,6 +631,12 @@ sub genomic_align_array {
   my ($self, $genomic_align_array) = @_;
  
   if (defined($genomic_align_array)) {
+    if (!$genomic_align_array) {
+      ## Clean cache.
+      $self->{'genomic_align_array'} = undef;
+      $self->{'reference_genomic_align'} = undef;
+      return undef;
+    }
     foreach my $genomic_align (@$genomic_align_array) {
       throw("[$genomic_align] is not a Bio::EnsEMBL::Compara::GenomicAlign object")
           unless ($genomic_align and $genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));

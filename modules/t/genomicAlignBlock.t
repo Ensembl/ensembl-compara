@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlignBlock module.
 
-This script includes 73 tests.
+This script includes 81 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 74;
+    plan tests => 81;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -643,6 +643,18 @@ do {
   ok(length($genomic_align_block->get_all_GenomicAligns->[0]->aligned_sequence), $length);
     
 };
+
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->genomic_align_array(0) method [free GenomicAligns]");
+$genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
+$genomic_align_block->reference_genomic_align($genomic_align_block->get_all_GenomicAligns->[0]) ;
+ok($genomic_align_block->reference_genomic_align(), $genomic_align_block->get_all_GenomicAligns->[0]);
+ok($genomic_align_block->reference_genomic_align_id, $genomic_align_block->get_all_GenomicAligns->[0]->dbID);
+$genomic_align_block->genomic_align_array(0) ;
+ok($genomic_align_block->{reference_genomic_align}, undef);
+ok($genomic_align_block->{genomic_align_array}, undef);
+ok($genomic_align_block->reference_genomic_align_id, $genomic_align_block->get_all_GenomicAligns->[0]->dbID);
+ok($genomic_align_block->reference_genomic_align);
+ok($genomic_align_block->genomic_align_array);
 
 
 #####################################################################
