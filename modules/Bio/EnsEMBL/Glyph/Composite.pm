@@ -27,7 +27,7 @@ sub push {
     if($gx < $self->x()) {
 	my $offset = $self->x() - $gx;
 	$self->x($gx);
-	$self->width($self->x() - $gx + $self->width());
+	$self->width($self->width() + $offset);
 
 	#########
 	# if the new glyph is set outside LHS boundary, then the composite stretches
@@ -37,7 +37,8 @@ sub push {
 	    $offset_glyph->x($offset_glyph->x() + $offset);
 	}
 
-    } elsif(($gx + $gw) > ($self->x() + $self->width())) {
+    }
+    if(($gx + $gw) > ($self->x() + $self->width())) {
 	# x unchanged
 	$self->width(($gx + $gw) - $self->x());
     }
@@ -46,7 +47,7 @@ sub push {
     if($gy < $self->y()) {
 	my $offset = $self->y() - $gy;
 	$self->y($gy);
-	$self->height($self->y() - $gy + $self->height());
+	$self->height($self->height() + $offset);
 
 	#########
 	# if the new glyph is set outside TOP boundary, then the composite stretches
@@ -56,7 +57,8 @@ sub push {
 	    $offset_glyph->y($offset_glyph->y() + $offset);
 	}
 
-    } elsif(($gy + $gh) > ($self->y() + $self->height())) {
+    }
+    if(($gy + $gh) > ($self->y() + $self->height())) {
 	# y unchanged
 	$self->height(($gy + $gh) - $self->y());
     }
