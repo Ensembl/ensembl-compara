@@ -35,7 +35,7 @@ sub _init {
     my $slice = $self->{'container'};
 
     # check we are not in a big gap!
-    return unless @{$slice->project('contig')};
+    return unless @{$slice->project('seqlevel')};
 
     my $Config          = $self->{'config'};
     my $vclen           = $slice->length();
