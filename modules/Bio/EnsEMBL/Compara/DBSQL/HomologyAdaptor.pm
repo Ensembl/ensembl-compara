@@ -52,10 +52,10 @@ sub fetch_by_Member_paired_species {
 
   my $sth =  $self->generic_fetch_sth($constraint, $join);
   
-  my ($homology_id, $stable_id, $description, $source_id, $source_name);
+  my ($homology_id, $stable_id, $description, $source_id, $source_name, $dn, $ds);
 
   $sth->bind_columns(\$homology_id, \$stable_id, \$description,
-                     \$source_id, \$source_name);
+                     \$dn ,\$ds, \$source_id, \$source_name);
 
   my @homology_ids = ();
   
