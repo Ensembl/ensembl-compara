@@ -268,4 +268,23 @@ sub restrict_between_positions {
   }
 }
 
+sub reverse_complement {
+  my ($self) = @_;
+
+  # reverse strand in both sequences
+  $self->strand($self->strand * -1);
+  $self->hstrand($self->hstrand * -1);
+  
+  # reverse cigar_string as consequence
+  my $cigar_string = $self->cigar_string;
+  $cigar_string =~ s/(D|I|M)/$1 /g;
+  my @cigar_pieces = split / /,$cigar_string;
+  $cigar_string = "";
+  while (my $piece = pop @cigar_pieces) {
+    $cigar_string .= $piece;
+  }
+
+  $self->cigar_string($cigar_string);
+}
+
 1;
