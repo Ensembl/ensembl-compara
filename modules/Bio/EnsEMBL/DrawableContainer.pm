@@ -4,6 +4,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::GlyphSetManager::das;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 @ISA = qw(Bio::Root::RootI);
 
@@ -140,7 +141,6 @@ sub new {
     #
     $label_length_px += $spacing * 2;
     
-    print STDERR "\nLABEL LENGTH: $label_length_px\n\n";
     #########
     # calculate scaling factors
     #
@@ -185,18 +185,29 @@ sub new {
     #
     my $yoffset = $spacing;
     my $iteration = 0;
+
+
     for my $glyphset (@{$self->{'glyphsets'}}) {
 	
 	#########
 	# load everything from the database
 	#
+	my $ref_glyphset = ref($glyphset);
+	&eprof_start($ref_glyphset . "_database_work");
 	$glyphset->_init();
-	
+	&eprof_end($ref_glyphset . "_database_work");
+
+	&eprof_start($ref_glyphset . "_drawing_work");
+        
 	#########
 	# don't waste any more time on this row if there's nothing in it
 	#
-	next if(scalar @{$glyphset->{'glyphs'}} == 0);
-	
+#	next if(scalar @{$glyphset->{'glyphs'}} == 0);
+	if(scalar @{$glyphset->{'glyphs'}} == 0) {
+	    &eprof_end($ref_glyphset . "_drawing_work");
+	    next;
+	};
+
 	#########
 	# remove any whitespace at the top of this row
 	#
@@ -241,6 +252,8 @@ sub new {
 	#
 	$yoffset += $glyphset->height();
 	$iteration ++;
+
+	&eprof_end($ref_glyphset . "_drawing_work");
     }
 
     return $self;
@@ -271,7 +284,9 @@ sub render {
     #########
     # big, shiny, rendering 'GO' button
     #
+    &eprof_start("$renderer_type");
     my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'});
+    &eprof_end("$renderer_type");
 
     return $renderer->canvas();
 }
