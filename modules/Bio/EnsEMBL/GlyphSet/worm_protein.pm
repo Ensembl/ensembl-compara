@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::wormpep;
+package Bio::EnsEMBL::GlyphSet::worm_protein;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
@@ -10,7 +10,7 @@ sub my_label { return "Wormpep Proteins"; }
 sub features {
     my ($self) = @_;
 
-    return $self->{'container'}->get_all_ProteinAlignFeatures('WormPep',80);
+    return $self->{'container'}->get_all_ProteinAlignFeatures('wormpep',80);
 }
 
 sub href {

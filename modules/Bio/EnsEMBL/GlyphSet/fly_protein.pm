@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::dros_prot;
+package Bio::EnsEMBL::GlyphSet::fly_protein;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
