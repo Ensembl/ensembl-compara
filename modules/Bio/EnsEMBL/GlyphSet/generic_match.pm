@@ -15,8 +15,15 @@ sub colour {
 
 sub features {
   my ($self) = @_;
-  my $method = $self->my_config('CALL')||'get_all_DnaAlignFeatures';
-  return map { $self->{'container'}->$method($_ ,80) } split /\s+/, ($self->my_config( 'FEATURES' ) || $self->check() ) ;
+  my $method    = $self->my_config('CALL')||'get_all_DnaAlignFeatures';
+  my $database  = $self->my_config('DATABASE') || undef;
+  my $threshold = defined( $self->my_config('THRESHOLD')) ? $self->my_config('THRESHOLD') : 80;
+  warn "$method - $database - $threshold";
+  if( $self->my_config( 'FEATURES' ) eq 'UNDEF' ) {
+    return $self->{'container'}->$method(undef ,$threshold, $database);
+  } else {
+    return map { $self->{'container'}->$method($_ ,$threshold, $database) } split /\s+/, ($self->my_config( 'FEATURES' ) || $self->check() ) ;
+  }
 }
 
 sub object_type {
