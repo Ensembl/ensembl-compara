@@ -45,8 +45,10 @@ sub _init {
 
     $protein->dbID || return; # Non-database translation
 
-    my $logic_name = $self->my_config('LOGIC_NAME'); # For URLs
-    my $compact    = $self->my_config('compact');    # For Seg/Coil
+    my $logic_name    = $self->my_config('LOGIC_NAME'); 
+    my $url_key       = $self->my_config('URL_KEY');
+    my $zmenu_caption = $self->my_config('caption');
+    my $compact       = $self->my_config('compact'); # For Seg/Coil etc
                                                      # No label/grouping
 
     my @pf_feat = @{$protein->get_all_ProteinFeatures($logic_name)};
@@ -61,10 +63,10 @@ sub _init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({
 	    'x'     => $row[0]->start(),
 	    'y'     => $y,
-	    'href'	   => $self->ID_URL( uc($logic_name), $key ),
+	    'href'  => $self->ID_URL( $url_key, $key ),
             'zmenu' => {
-              'caption' => $self->my_config('track_label'),
-              $key      => $self->ID_URL( uc($logic_name), $key )
+              'caption' => $zmenu_caption,
+              $key      => $self->ID_URL( $url_key, $key )
 	    },
 	});
 
