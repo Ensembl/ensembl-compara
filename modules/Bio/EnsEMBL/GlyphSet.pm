@@ -17,16 +17,18 @@ sub new {
 	'x'          => undef,
 	'y'          => undef,
 	'width'      => undef,
-	'height'     => undef,
 	'highlights' => $highlights,
 	'strand'     => $strand,
 	'minx'       => undef,
 	'miny'       => undef,
 	'maxx'       => undef,
 	'maxy'       => undef,
+	'label'      => undef,
     };
 
     bless($self, $class);
+
+    $self->init_label() if($self->can('init_label'));
 
     &eprof_start(qq(glyphset_$class));
     $self->_init($VirtualContig, $Config);
@@ -42,7 +44,7 @@ sub new {
 #
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;
-    print STDERR qq(Bio::EnsEMBL::GlyphSetI::_init unimplemented\n);
+    print STDERR qq($this unimplemented\n);
 }
 
 #########
@@ -185,22 +187,6 @@ sub y {
 }
 
 #########
-# read-only width
-#
-sub width {
-    my ($this) = @_;
-    return $this->{'width'};
-}
-
-#########
-# read-only height
-#
-sub height {
-    my ($this) = @_;
-    return $this->{'height'};
-}
-
-#########
 # read-only highlights ('|'-separated ids to colour)
 #
 sub highlights {
@@ -243,6 +229,19 @@ sub height {
     my $h = $this->{'maxy'} - $this->{'miny'};
     $h *=-1 if($h < 0);
     return $h;
+}
+
+sub width {
+    my ($this) = @_;
+    my $w = $this->{'maxx'} - $this->{'minx'};
+    $w *=-1 if($w < 0);
+    return $w;
+}
+
+sub label {
+    my ($this, $val) = @_;
+    $this->{'label'} = $val if(defined $val);
+    return $this->{'label'};
 }
 
 1;
