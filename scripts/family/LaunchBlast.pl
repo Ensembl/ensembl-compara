@@ -15,12 +15,15 @@ my $blast_executable = "/usr/local/ensembl/bin/blastall";
 # the potential bug
 
 my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
+#my $fastafetch_executable;
 
 unless (-e $fastafetch_executable) {
-  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
+#  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
+  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch.old";
   if (-e "/proc/version") {
     # it is a linux machine
-    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
+#    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
+    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch.old";
   }
 }
 
@@ -43,7 +46,9 @@ my $qy_file = "/tmp/qy.$rand";
 my $blast_file = "/tmp/blast.$rand";
 my $raw_file = "/tmp/raw.$rand";
 
-unless(system("$fastafetch_executable $fastadb $fastaindex $idqy |grep -v \"^Message\" > $qy_file") == 0) {
+# We should get the sequence directly from the compara database.
+
+unless(system("$fastafetch_executable -F true $fastadb $fastaindex $idqy |grep -v \"^Message\" > $qy_file") == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in $fastafetch_executable, $!\n";
 } 
