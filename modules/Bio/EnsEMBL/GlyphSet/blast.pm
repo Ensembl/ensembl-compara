@@ -21,7 +21,6 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-
 #    return unless ($self->strand() == 1);
 
     # Lets see if we have a BLAST hit
@@ -65,6 +64,9 @@ sub _init {
     my $Config   = $self->{'config'};
     my $ppb      = $Config->transform->{'scalex'};
     my $cmap     = $Config->colourmap();
+    my $bitmap_length = int($Config->container_width() * $ppb);
+    my @bitmap = undef;
+
     my @colours = (
 	[ 99, $cmap->add_hex( 'ff0000' ) ], 
 	[ 90, $cmap->add_hex( 'ff4c4c' ) ],
@@ -112,9 +114,28 @@ sub _init {
                 '07:Show on karyotype' =>
 				    "/$ENV{'ENSEMBL_SPECIES'}/blastview?format=karyo_format&id=$hit->[4]"
             },
-	});
+    	});
+    
+        my $bump_height = 10;
+        ########## bump it baby, yeah! - bump-nology!
+        my $bump_start = int($gbox->x * $ppb);
+        $bump_start = 0 if ($bump_start < 0);
+        my $bump_end = $bump_start + int($gbox->width * $ppb)+1;
+        if ($bump_end > $bitmap_length) { $bump_end = $bitmap_length };
+    
+        my $row = &Bump::bump_row(
+            $bump_start,
+            $bump_end,
+            $bitmap_length,
+            \@bitmap
+        );
+    
+        #########
+        # shift the composite container by however much we're bumped
+        #
+        $gbox->y($gbox->y() - $self->strand() * $bump_height * $row);
         $self->push($gbox);
     }
-}
+}   
 
 1;
