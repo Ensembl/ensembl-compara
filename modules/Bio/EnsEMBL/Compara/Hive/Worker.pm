@@ -203,7 +203,12 @@ sub output_dir {
 
 sub job_limit {
   my $self=shift;
-  $self->{'_job_limit'}=shift if(@_);
+  if(@_) {
+    $self->{'_job_limit'}=shift;
+    if($self->{'_job_limit'} > $self->batch_size) {
+      $self->batch_size($self->{'_job_limit'});
+    }
+  }
   return $self->{'_job_limit'};
 }
 
@@ -213,7 +218,10 @@ sub print_worker {
      " analysis_id=(",$self->analysis->dbID,")",$self->analysis->logic_name,
      " host=",$self->host,
      " ppid=",$self->process_id,
-     "\n");  
+     "\n");
+  print("  batch_size=",$self->batch_size,"\n");
+  print("  job_limit=",$self->job_limit,"\n") if($self->job_limit);
+  print("  output_dir = ", $self->output_dir, "\n") if($self->output_dir);
 }
 
 ###############################
@@ -241,6 +249,7 @@ sub batch_size {
     my $runObj = $self->analysis->runnableDB;
     $self->{'_batch_size'} = $runObj->batch_size if($runObj);
   } unless($self->{'_batch_size'});
+  return $self->{'_batch_size'};
 }
 
 
