@@ -53,11 +53,6 @@ CREATE TABLE gene_relationship_member (
   gene_relationship_id int(10),
   genome_db_id int(10),
   member_stable_id char(40),
-  chrom_start int(10),
-  chrom_end int(10),
-  chromosome char(40),
-  description text,
-  display_id char(40),
   KEY gene_relationship_id (gene_relationship_id),
   KEY member_stable_id (member_stable_id)
 );
