@@ -149,12 +149,12 @@ sub _init {
         	        });
                     push @tag_glyphs, $triangle;
                 } elsif($tag->{'style'} eq 'triangle') {
-                    my $triangle_start =  $start - 3/$pix_per_bp;
-                    my $triangle_end   =  $start + 3/$pix_per_bp;
+                    my $triangle_start =  $start - 4/$pix_per_bp;
+                    my $triangle_end   =  $start + 4/$pix_per_bp;
     	            my $line = new Bio::EnsEMBL::Glyph::Rect({
                         'x'          => $triangle_start,
                         'y'          => $h,
-                        'width'      => 6/$pix_per_bp,
+                        'width'      => 8/$pix_per_bp,
                         'height'     => 0,
                         "colour"     => $tag->{'colour'},
                         'absolutey'  => 1
