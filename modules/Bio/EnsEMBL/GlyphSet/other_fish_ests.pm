@@ -8,7 +8,7 @@ sub my_label { return "Other fish ESTs"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_DnaAlignFeatures("other_fish_ests",1);
+    return $self->{'container'}->get_all_DnaAlignFeatures("BLAST_OTHER_FISH_ESTS",1);
 }
 
 sub href {

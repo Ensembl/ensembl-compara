@@ -10,7 +10,7 @@ sub features {
     my ($self) = @_;
 
     
-    return $self->{'container'}->get_all_SimilarityFeatures_by_strand("hum",1,$self->glob_bp,$self->strand());
+    return $self->{'container'}->get_all_ProteinAlignFeatures("BLASTX_HUM_SPTR",1);
 }
 
 sub href {

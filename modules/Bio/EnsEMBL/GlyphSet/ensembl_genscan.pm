@@ -8,7 +8,7 @@ sub my_label { return "Ens. Genscan pep."; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimilarityFeatures_by_strand("ensembl_genscan",1,$self->glob_bp,$self->strand());
+    return $self->{'container'}->get_all_ProteinAlignFeatures("BLASTX_HUM_GENSCAN",1);
 }
 
 sub href {
