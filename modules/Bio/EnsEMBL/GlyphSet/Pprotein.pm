@@ -1,11 +1,14 @@
 package Bio::EnsEMBL::GlyphSet::Pprotein;
 use strict;
-use vars qw(@ISA);
+use vars qw(@ISA $SPECIES_DEFS);
+use SpeciesDefs;
 use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use EnsEMBL::Web::GeneTrans::support;
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+$SPECIES_DEFS = SpeciesDefs->new();
 
 sub init_label {
     my ($self) = @_;
@@ -21,57 +24,67 @@ sub init_label {
 sub _init {
     my ($self) = @_;
     my $db;
-	my $protein = $self->{'container'};	
+    my $protein = $self->{'container'};	
     my $Config  = $self->{'config'};
-	my $pep_splice = $protein->{'image_splice'};
-	my $type = $protein->gene->type();
-	
-	if ($type eq 'ensembl'){$db = 'core'}
-	elsif ($type eq 'genomewise'){$db = 'estgene'}
-	else {$db = 'vega'}
-		
-    my $x 		= 0;
-	my $y       = 0;
-    my $h       = 4; 
-	my $flip = 0;
-	my @colours  = ($Config->get('Pprotein','col1'), $Config->get('Pprotein','col2'));
-	my $start_phase = 1;
-	if ($pep_splice){
-	for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
-	   my $colour = $colours[$flip];
-	   my $exon_id = $pep_splice->{$exon_offset}{'exon'};
- 	   my $rect = new Sanger::Graphics::Glyph::Rect({
-		'x'        => $x,
-		'y'        => $y,
-		'width'    => $exon_offset - $x,
-		'height'   => $h,
-		'id'       => $protein->id(),
-		'colour'   => $colour,
-		'zmenu' => {
-			'caption' => "Splice Information",
-			"00:Exon: $exon_id" => "/$ENV{'ENSEMBL_SPECIES'}/exonview?exon=$exon_id&db=$db",
-			"01:Start Phase: $start_phase" => "",
-			'02:End Phase: '. ($pep_splice->{$exon_offset}{'phase'} +1) => "",
-			'03:Length: '.($exon_offset - $x)  => "", },
-    	});
-  
-    $self->push($rect);
-	$x = $exon_offset ;
-	$start_phase = ($pep_splice->{$exon_offset}{'phase'} +1) ;
-	$flip = 1-$flip;
-	}
-	}else{
-	 my $rect = new Sanger::Graphics::Glyph::Rect({
-	'x'        => 0,
-	'y'        => $y,
-	'width'    => $protein->length(),
-	'height'   => $h,
-	'id'       => $protein->id(),
-	'colour'   => $colours[0],
-    });
-    
-    $self->push($rect);
-	}
+    my $pep_splice = $protein->{'image_splice'};
+    my $type = $protein->gene->type();
+    my $dbmap = {
+        "Vega" => {
+            "ensembl" => "ensembl",
+            "other" => "core",
+        },
+        "Ensembl" => {
+            "ensembl" => "core",
+            "other" => "vega",
+        },
+    };
+
+    if ($type eq 'ensembl') { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'ensembl'} }
+    elsif ($type eq 'genomewise'){$db = 'estgene'}
+    else { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'other'} }
+
+    my $x = 0;
+    my $y = 0;
+    my $h = 4; 
+    my $flip = 0;
+    my @colours  = ($Config->get('Pprotein','col1'), $Config->get('Pprotein','col2'));
+    my $start_phase = 1;
+    if ($pep_splice){
+        for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
+            my $colour = $colours[$flip];
+            my $exon_id = $pep_splice->{$exon_offset}{'exon'};
+            my $rect = new Sanger::Graphics::Glyph::Rect({
+                    'x'        => $x,
+                    'y'        => $y,
+                    'width'    => $exon_offset - $x,
+                    'height'   => $h,
+                    'id'       => $protein->id(),
+                    'colour'   => $colour,
+                    'zmenu' => {
+                    'caption' => "Splice Information",
+                    "00:Exon: $exon_id" => "/$ENV{'ENSEMBL_SPECIES'}/exonview?exon=$exon_id&db=$db",
+                    "01:Start Phase: $start_phase" => "",
+                    '02:End Phase: '. ($pep_splice->{$exon_offset}{'phase'} +1) => "",
+                    '03:Length: '.($exon_offset - $x)  => "", },
+                    });
+
+            $self->push($rect);
+            $x = $exon_offset ;
+            $start_phase = ($pep_splice->{$exon_offset}{'phase'} +1) ;
+            $flip = 1-$flip;
+        }
+    } else {
+        my $rect = new Sanger::Graphics::Glyph::Rect({
+                'x'        => 0,
+                'y'        => $y,
+                'width'    => $protein->length(),
+                'height'   => $h,
+                'id'       => $protein->id(),
+                'colour'   => $colours[0],
+                });
+
+        $self->push($rect);
+    }
 }
 1;
 
