@@ -345,9 +345,9 @@ sub store{
 	}	
    foreach my $mem (@members){
 
+	my $prot_id = $self->db->get_ProteinAdaptor->store_if_needed($mem);
 	my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,score) VALUES(?,?,?)");
-    $sth->execute($dbID,$mem->dbID,$mem->family_score);#store into family_protein
-	$self->db->get_ProteinAdaptor->store_if_needed($mem);
+    $sth->execute($dbID,$prot_id,$mem->family_score);#store into family_protein
 
    }
     ####store family stable_id###
