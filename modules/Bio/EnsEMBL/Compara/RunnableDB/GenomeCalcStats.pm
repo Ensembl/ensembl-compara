@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::GenomeLoadMembers->new (
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -62,9 +62,8 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 =head2 batch_size
   Title   :   batch_size
@@ -169,7 +168,9 @@ sub calc_intergenic_stats
   my $overlapCount=0;
   
   my $lastMember = shift @{$sortedMembers};
+  #$lastMember->print_member;
   foreach my $member (@{$sortedMembers}) {
+    #$member->print_member;
     $genesize_stats->add_data($member->chr_end - $member->chr_start);
 
     if($lastMember->chr_name ne $member->chr_name) {
@@ -215,7 +216,7 @@ sub insert_statistics
   $sql .=  " ,overlap_count='".$stats->{'overlapCount'}."'" if($stats->{'overlapCount'});
 
   print("$sql\n");            
-  my $sth = $self->db->prepare($sql);
+  my $sth = $self->db->dbc->prepare($sql);
   $sth->execute;
   $sth->finish;
 }
