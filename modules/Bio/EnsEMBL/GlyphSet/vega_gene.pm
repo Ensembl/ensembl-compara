@@ -12,8 +12,7 @@ sub features {
     my $avail = (split(/ /, $self->my_config('available')))[1]
                 . "." . $self->{'container'}->seq_region_name;
     return ([]) unless(EnsWeb::species_defs->get_config(
-                EnsWeb::species_defs->name, 'DB_FEATURES')->{uc($avail)});
-    
+                $self->{'container'}{'_config_file_name_'}, 'DB_FEATURES')->{uc($avail)});
     my $db = $self->{'container'}->adaptor->db->get_db_adaptor('vega');
     return $db->get_GeneAdaptor->fetch_all_by_Slice_and_author($self->{'container'}, $self->my_config('author'), $logic_name);
 }
