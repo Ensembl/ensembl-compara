@@ -14,7 +14,6 @@ sub features {
     
     my $assembly = 
       EnsWeb::species_defs->other_species('Caenorhabditis_elegans','ENSEMBL_GOLDEN_PATH');
-    return [] unless $assembly;
 
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 							   'Caenorhabditis elegans',

@@ -14,8 +14,6 @@ sub features {
     
     my $assembly = EnsWeb::species_defs->other_species('Homo_sapiens','ENSEMBL_GOLDEN_PATH');
 
-    return [] unless $assembly;
-
     return $self->{'container'}->get_all_compara_DnaAlignFeatures(
 								  'Homo sapiens',
 								  $assembly,
