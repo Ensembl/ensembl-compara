@@ -1248,7 +1248,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   Arg [1]    : string $cigar_line
   Example    : $aligned_sequence = _get_fake_aligned_sequence_from_cigar_line(
                    "3MD8M2D3M")
-  Description: get gapped sequence of N's from the cigar line
+  Description: get gapped sequence of N\'s from the cigar line
   Returntype : string $fake_aligned_sequence
   Exceptions : 
   Caller     : methodname
