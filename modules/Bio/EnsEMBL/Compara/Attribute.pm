@@ -118,7 +118,8 @@ sub cdna_alignment_string {
   my ($self, $member) = @_;
 
   if($member->source_name ne 'ENSEMBLPEP') {
-    $self->warn("Don't know how to retrieve cdna for database [$member->source_name]");
+    $self->warn("Don't know how to retrieve cdna for database [@{[$member->source_name]}]
+      SPECIES @{[ $member->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($member->genome_db_id)->db_adaptor->dbname ]}" );
     return undef;
   }
 
