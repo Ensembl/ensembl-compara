@@ -17,11 +17,11 @@ Relates every method_link with the species_set for which it has been used
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet({
+  my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
                        -adaptor => $method_link_species_set_adaptor,
                        -method_link_type => "MULTIZ",
                        -species_set => [$gdb1, $gdb2, $gdb3]
-                   });
+                   );
 
 SET VALUES
   $method_link_species_set->dbID(12);
@@ -96,22 +96,27 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 =head2 new (CONSTRUCTOR)
 
-  Arg[1]     : a reference to a hash where keys can be:
-                 -adaptor
-                 -method_link_id
-                 -method_link_type
-                 -species_set (ref. to an array of
-                       Bio::EnsEMBL::Compara::GenomeDB objects)
-  Example    : my $method_link_species_set =
-                   new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet({
+  Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
+  Arg [-ADAPTOR]
+              : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor $adaptor
+                (the adaptor for connecting to the database)
+  Arg [-METHOD_LINK_ID]
+              : (opt.) int $method_link_id (the database internal ID for the method_link)
+  Arg [-METHOD_LINK_TYPE]
+              : (opt.) string $method_link_type (the name of the method_link)
+  Arg [-SPECIES_SET]
+              : (opt.) arrayref $genome_dbs (a reference to an array of
+                Bio::EnsEMBL::Compara::GenomeDB objects)
+  Example     : my $method_link_species_set =
+                   new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
                        -adaptor => $method_link_species_set_adaptor,
                        -method_link_type => "MULTIZ",
                        -species_set => [$gdb1, $gdb2, $gdb3]
-                   });
-  Description: Creates a new MethodLinkSpeciesSet object
-  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
-  Exceptions : none
-  Caller     : general
+                   );
+  Description : Creates a new MethodLinkSpeciesSet object
+  Returntype  : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Exceptions  : none
+  Caller      : general
 
 =cut
 
@@ -121,22 +126,9 @@ sub new {
   my $self = {};
   bless $self,$class;
     
-  my (
-		$dbID,
-		$adaptor,
-		$method_link_id,
-		$method_link_type,
-		$species_set
-	
-	) = rearrange([qw(
-			
-			DBID
-			ADAPTOR
-			METHOD_LINK_ID
-			METHOD_LINK_TYPE
-			SPECIES_SET
-
-		)], @args);
+  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set) =
+      rearrange([qw(
+          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET)], @args);
 
   $self->dbID($dbID) if (defined ($dbID));
   $self->adaptor($adaptor) if (defined ($adaptor));
