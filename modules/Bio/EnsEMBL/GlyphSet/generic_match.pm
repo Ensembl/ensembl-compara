@@ -28,7 +28,7 @@ sub features {
 sub object_type {
   my($self,$id)=@_;
   my $F = $self->my_config('SUBTYPE');
-  return $self->{'type_cache'}{$id} ||= ref($F) eq 'CODE' ? &$F($id) : '';
+  return $self->{'type_cache'}{$id} ||= ref($F) eq 'CODE' ? &$F($id) : $F;
 }
 
 sub SUB_ID {
@@ -68,6 +68,7 @@ sub zmenu {
     $T = $T->{ $self->object_type($id) } || $T->{'default'};
   }
   $id =~ s/'/\'/g;
-  return {( 'caption', map { s/###(\w+)###/my $M="SUB_$1";$self->$M($id)/eg; $_ } @$T )} if $T && @$T;
+  my @T = $T ? @$T : ();
+  return {( 'caption', map { s/###(\w+)###/my $M="SUB_$1";$self->$M($id)/eg; $_ } @T )} if $T && @T;
 }
 1;

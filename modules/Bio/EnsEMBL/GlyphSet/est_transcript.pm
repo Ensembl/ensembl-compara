@@ -17,7 +17,10 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
    
   my $highlight = undef;
+  warn lc($transcript->type())||lc($gene->type());
+  warn keys %$colours;
   my $colour = $colours->{lc($transcript->type())||lc($gene->type())}[0];
+  warn ">>>> $colour <<<<";
 
   if(exists $highlights{$transcript->stable_id()}) {
     $highlight = $colours->{'superhi'};

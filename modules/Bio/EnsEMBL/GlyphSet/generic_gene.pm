@@ -4,7 +4,8 @@ use strict;
 use Bio::EnsEMBL::GlyphSet_gene;
 @Bio::EnsEMBL::GlyphSet::generic_gene::ISA = qw(Bio::EnsEMBL::GlyphSet_gene);
 
-sub my_label { my $self = shift; return $self->my_config('track_label'); }
+sub my_label { my $self = shift; warn $self->my_config('track_label'); 
+ return $self->my_config('track_label'); }
 
 sub ens_ID {
   my( $self, $g ) = @_;

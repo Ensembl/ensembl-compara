@@ -14,7 +14,7 @@ sub analysis_logic_name{
 
 sub my_label {
   my $self = shift;
-  return $self->analysis_logic_name;
+  return $self->my_config('track_label') || $self->analysis_logic_name;
 }
 
 sub colours {
@@ -65,7 +65,7 @@ sub zmenu {
   my $ev_link = 
     ( "/$tld/exportview?tab=fasta&type=feature&ftype=transcript&".
       "fasta_option=%s&id=%s" );
-  return
+  my $zmenu = 
     {
      'caption' => $id,
      '01:Transcript'     =>$self->href( $gene, $transcript ),
@@ -73,6 +73,13 @@ sub zmenu {
      '03:Export cDNA'    =>sprintf( $ev_link, 'cdna', $id ),
      '04:Export peptide' =>sprintf( $ev_link, 'peptide', $id ),
     };
+  my $ADD = $self->{'config'}->get(lc( $self->analysis_logic_name ),'ADDITIONAL_ZMENU');
+  if( $ADD && ref($ADD) eq 'HASH' ) {
+    foreach (keys %$ADD) {
+      $zmenu->{ $_ } = $self->ID_URL( $ADD->{$_}, $id );
+    }
+  }
+  return $zmenu;
 }
 
 sub text_label {
@@ -83,9 +90,7 @@ sub text_label {
   my $short_labels = $Config->get('_settings','opt_shortlabels');
 
   if( ! $short_labels ){
-    my $analysis = $transcript->analysis || last;
-    my $logic_name = $analysis->logic_name || last;
-    $id .= "\nAb-initio $logic_name trans";
+    $id .= "\nAb-initio ".$self->my_label." trans";
   }
   return $id;
 }

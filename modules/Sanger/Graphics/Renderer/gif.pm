@@ -52,12 +52,10 @@ sub canvas {
 # GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
 # 
 sub colour {
-    my ($self, $id) = @_;
-    $id ||= "black";
-
-    $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
-
-    return $self->{'_GDColourCache'}->{$id};
+  my ($self, $id) = @_;
+  $id ||= "black";
+  $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+  return $self->{'_GDColourCache'}->{$id};
 }
 
 sub render_Rect {
@@ -67,6 +65,7 @@ sub render_Rect {
 
     my $gcolour       = $glyph->{'colour'};
     my $gbordercolour = $glyph->{'bordercolour'};
+
     # (avc)
     # this is a no-op to let us define transparent glyphs
     # and which can still have an imagemap area BUT make

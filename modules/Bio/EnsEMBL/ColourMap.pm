@@ -34,6 +34,18 @@ sub new {
     'superhi'    => 'highlight2',
     map { $_ => [ $core{$_}[0], "EnsEMBL predicted genes (@{[$core{$_}[1]]})" ] } keys %core
   );
+  $self->colourSet( 'bee_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    map { $_ => [ $core{$_}[0], "Bee predicted genes (@{[$core{$_}[1]]})" ] } keys %core
+  );
+  $self->colourSet( 'genoscope_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    '_GSTEN' => [ 'black', 'Genoscope predicted genes' ],
+    '_HOX' => [ 'rust', 'Genoscope annotated genes' ],
+    '_CYT' => [ 'rust', 'Genoscope annoateed genes' ],
+  );
   $self->colourSet( 'wormbase_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
@@ -71,6 +83,7 @@ sub new {
   $self->colourSet( 'est_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
+    'EST_Genebuilder'  => [ 'purple1', 'EST gene' ],
     'genomewise' => [ 'purple1', 'EST gene' ],
     'est_genebuilder' => [ 'purple1', 'EST gene' ],
     'estgene'    => [ 'purple1', 'EST gene' ],
@@ -95,6 +108,8 @@ sub new {
     'default'    => 'chartreuse3',
     'refseq'     => 'mediumspringgreen',
     'riken'      => 'olivedrab4',
+    'genoscope'  => 'green',
+    'genoscope_ecotig'  => 'blue',
   );
   $self->colourSet( 'mrna',
     'default'    => 'red',

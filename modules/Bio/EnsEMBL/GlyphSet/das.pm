@@ -84,14 +84,14 @@ sub _init {
   }
   $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
   $self->{'ext_url'}      = ExtURL->new( $Extra->{'name'} =~ /^managed_extdas/ ? ($Extra->{'linkURL'} => $Extra->{'linkURL'}) : () );
-  my $renderer = $Config->get($das_config_key, 'group') ? 'expanded_init' : 'compact_init' ;
-  $renderer = 'density_init';
+  my $renderer = $Config->get($das_config_key, 'renderer');
+  $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
   warn "RENDERER... $renderer";
   return $self->$renderer( $configuration );
 }
 
 
-sub compact_init {
+sub RENDER_simple {
   my( $self, $configuration ) = @_;
   my $old_end = -1e9;
   my $empty_flag = 1;
@@ -161,7 +161,7 @@ sub compact_init {
   return $empty_flag ? 0 : 1 ;
 }
 
-sub expanded_init {
+sub RENDER_grouped {
   my( $self, $configuration ) = @_; 
   my %grouped;
   my $empty_flag = 1;
@@ -309,7 +309,7 @@ sub to_bin {
   return ($bin,$offset);
 }
 
-sub density_init {
+sub RENDER_density {
   my( $self, $configuration ) = @_;
   my $empty_flag = 1;
   my $no_of_bins = floor( $configuration->{'length'} * $self->{'pix_per_bp'} / 2);

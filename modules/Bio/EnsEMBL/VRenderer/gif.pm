@@ -55,7 +55,7 @@ sub render_Rect {
   
   my $canvas = $self->{'canvas'};
   
-  my $gcolour       = $glyph->colour() || "";
+  my $gcolour       = $glyph->colour();
   my $gbordercolour = $glyph->bordercolour();
   # (avc)
   # this is a no-op to let us define transparent glyphs

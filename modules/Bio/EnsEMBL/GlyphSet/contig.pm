@@ -173,7 +173,7 @@ sub _init_non_assembled_contig {
         'caption' => $rid,
       };
       my $POS = 10;
-      foreach( qw(scaffold contig clone supercontig chunk) ) {
+      foreach( qw( contig clone supercontig scaffold chunk) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
           my $name =$Q->[0];
              $name =~ s/\.\d+$// if $_ eq 'clone';
