@@ -99,8 +99,6 @@ my %not_default_masking_cases;
 if (defined $mask_restriction_file) {
   %not_default_masking_cases = %{do $mask_restriction_file};
 }
-
-#my $ChromosomeAdaptor = $db->get_ChromosomeAdaptor;
 my $SliceAdaptor = $db->get_SliceAdaptor;
 
 my $chromosomes;
@@ -108,8 +106,6 @@ my $chromosomes;
 if (defined $chr_names and $chr_names ne "all") {
   my @chr_names = split /,/, $chr_names;
   foreach my $chr_name (@chr_names) {
-    #push @{$chromosomes}, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
-    #push @{$chromosomes}, $ChromosomeAdaptor->fetch_by_region("chromosome", $chr_name);
     print STDERR "chr_name=$chr_name\n";
     push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coordinate_system , $chr_name);
   }
@@ -227,9 +223,9 @@ sub printout_by_overlapping_chunks {
       my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = join ".", ($phusion.$seq->seq_region_name,$chr_start);
+	$id = join ".", ($phusion.$slice->seq_region_name,$chr_start);
       } else {
-	$id = join ".", ($seq->seq_region_name,$chr_start,$slice->end);
+	$id = join ".", ($slice->seq_region_name,$chr_start,$slice->end);
       }
       $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$seq->length),
 				     -id  => $id,
@@ -241,9 +237,9 @@ sub printout_by_overlapping_chunks {
       my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = join ".", ($phusion.$seq->seq_region_name,$chr_start);
+	$id = join ".", ($phusion.$slice->seq_region_name,$chr_start);
       } else {
-	$id = join ".", ($seq->seq_region_name,$chr_start,$chr_start+$chunk_size-1);
+	$id = join ".", ($slice->seq_region_name,$chr_start,$chr_start+$chunk_size-1);
       }
       $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$i+$chunk_size-1),
 				     -id  => $id,
