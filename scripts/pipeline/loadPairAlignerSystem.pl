@@ -209,7 +209,11 @@ sub createPairAlignerAnalysis
       print("You need to load the genomeDBs first, with comparaLoadGenomes.pl \n");
       exit(3);
     }
-    $mlss->species_set([$gdb1, $gdb2]);
+    if ($gdb1->dbID == $gdb2->dbID) {
+      $mlss->species_set([$gdb1]);
+    } else {
+      $mlss->species_set([$gdb1, $gdb2]);
+    }
     $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
     $self->{'method_link_species_set'} = $mlss;
     $pair_aligner_conf->{'method_link_species_set_id'} = $mlss->dbID;
