@@ -154,14 +154,14 @@ sub _init {
 	    $tag_start = $start;
             $tag_end = $end;
             if($tag->{'style'} eq 'snp' ) {
-                $tag_start = $start - 1/2 - 3/$bp_textwidth;
-                $tag_end   = $start - 1/2 + 3/$bp_textwidth;
+                $tag_start = $start - 1/2 - 3/$pix_per_bp;
+                $tag_end   = $start - 1/2 + 3/$pix_per_bp;
             } elsif( $tag->{'style'} eq 'left-snp') {
-                $tag_start = $start - 1 - 3/$bp_textwidth;
-                $tag_end   = $start - 1 + 3/$bp_textwidth;
+                $tag_start = $start - 1 - 3/$pix_per_bp;
+                $tag_end   = $start - 1 + 3/$pix_per_bp;
             } elsif($tag->{'style'} eq 'right-snp') {
-                $tag_start = $end - 3/$bp_textwidth;
-                $tag_end   = $end + 3/$bp_textwidth;
+                $tag_start = $end - 3/$pix_per_bp;
+                $tag_end   = $end + 3/$pix_per_bp;
             } elsif($tag->{'style'} eq 'underline') {
                 $tag_start = $tag->{'start'} if defined $tag->{'start'};
                 $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
