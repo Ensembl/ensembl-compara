@@ -229,7 +229,8 @@ sub createBlastAnalysis
   if($blast_template->parameters()) {
     $params .= "," . $blast_template->parameters();
   }
-
+  print("createBlastAnalysis\n  params = $params\n");
+  
   my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db              => $blastdb->dbname,
       -db_file         => $blastdb->dbfile,
@@ -243,7 +244,9 @@ sub createBlastAnalysis
       -parameters      => $params,
     );
 
-  $self->db->get_AnalysisAdaptor()->store($analysis);
+  eval {
+    $self->db->get_AnalysisAdaptor()->store($analysis);
+  };
 
   return $analysis;
 }
