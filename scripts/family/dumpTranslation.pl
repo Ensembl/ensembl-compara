@@ -3,8 +3,6 @@
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::ExternalData::Family::FamilyConf;
-
 use Getopt::Long;
 
 my $usage = "
@@ -13,7 +11,6 @@ $0 [-help]
    -user username (default = 'ensro')
    -port port_number
    -dbname ensembl_database
-   -path assembly_type (e.g. NCBI33)
    -file fasta_file_name
    -taxon_file taxon_file_name
 
@@ -25,7 +22,6 @@ my $port = "";
 my $dbname;
 my $file;
 my $taxon_file;
-my $path;
 my $help = 0;
 
 $| = 1;
@@ -36,7 +32,6 @@ $| = 1;
   'port=i' => \$port,
   'user=s'   => \$user,
   'dbname=s' => \$dbname,
-  'path=s'   => \$path,
   'file=s' => \$file,
   'taxon_file=s' => \$taxon_file
 );
@@ -53,11 +48,14 @@ my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor(
 					    -port => $port
 );
 
-$db->assembly_type($path);
-
-
 my $taxon_id = $db->get_MetaContainer->get_taxonomy_id;
-my %TaxonConf = %Bio::EnsEMBL::ExternalData::Family::FamilyConf::TaxonConf;
+my $species = $db->get_MetaContainer->get_Species;
+my ($genus_string, $species_string) = split " ", $species->binomial;
+my $taxon_info = "taxon_id=$taxon_id;";
+$taxon_info .= "taxon_genus=$genus_string;";
+$taxon_info .= "taxon_species=$species_string;";
+$taxon_info .= "taxon_sub_species=;taxon_common_name=" . $species->common_name . ";";
+$taxon_info .= "taxon_classification=" . join(":",$species->classification) .";";
 
 if (defined $file) {
   open FP,">$file";
@@ -74,7 +72,7 @@ if (defined $taxon_file) {
 my $slice_adaptor = $db->get_SliceAdaptor;
 my $gene_adaptor = $db->get_GeneAdaptor;
 
-my @geneIDs = @{$gene_adaptor->list_geneIds()};
+my @geneIDs = @{$gene_adaptor->list_dbIDs()};
 
 foreach my $gid (@geneIDs) {
   my $gene = $gene_adaptor->fetch_by_dbID($gid, 1); #fetch in chromosomal crds
@@ -100,12 +98,12 @@ foreach my $gid (@geneIDs) {
     #use stable ids in the headers if available, otherwise use dbIDs
     if (defined $translation->stable_id) {
       print TX "ensemblpep\t" , $translation->stable_id ,
-               "\t\t" .$TaxonConf{$taxon_id} ."\n";
+               "\t\t" .$taxon_info ."\n";
       print FP ">" , $translation->stable_id ," Transcript:" , 
                $transcript->stable_id , " Gene:" . $gene->stable_id;
     } else {
       print TX "ensemblpep\t" , $translation->dbID , "\t\t" ,
-               $TaxonConf{$taxon_id} ."\n";
+               $taxon_info ."\n";
       print FP ">" , $translation->dbID ," Transcript:" . $transcript->dbID ,
           " Gene:" , $gene->dbID; 
     }
