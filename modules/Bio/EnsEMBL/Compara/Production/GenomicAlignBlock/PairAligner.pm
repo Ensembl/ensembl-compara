@@ -116,6 +116,7 @@ sub get_params {
 sub worker_temp_directory {
   return $g_compara_PairAlign_workdir;
 }
+
 sub options {
   my $self = shift;
   $self->{'_options'} = shift if(@_);
@@ -165,7 +166,6 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->debug(0);
-  $self->{'delete_work_files'} = 1;
 
   #
   # run subclass configure_defaults method
@@ -251,10 +251,6 @@ sub write_output {
 
 
 sub global_cleanup {
-  my $self = shift;
-
-  return unless($self->{'delete_work_files'});
-
   if($g_compara_PairAlign_workdir) {
     unlink(<$g_compara_PairAlign_workdir/*>);
     rmdir($g_compara_PairAlign_workdir);
