@@ -242,7 +242,7 @@ while (my @values = $old_sth->fetchrow_array) {
   $genomic_align_block->perc_id($values[9]);
   $genomic_align_block->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
   
-  $genomic_align_group->dbID(0);
+  $genomic_align_group->dbID($values[11]);
   $genomic_align_group->type("default");
   $genomic_align_group->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
 
