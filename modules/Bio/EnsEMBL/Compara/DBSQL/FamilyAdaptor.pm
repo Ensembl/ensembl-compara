@@ -70,6 +70,7 @@ sub fetch_by_dbID{
 	if( !defined $dbid) {
        $self->throw("Must fetch by dbid");
 	}
+
 	#get family info
 	my $sth = $self->prepare("SELECT f.threshold,f.description,f.annotation_confidence_score FROM family f WHERE f.family_id = $dbid");
 	$sth->execute;
@@ -224,6 +225,39 @@ sub get_members_of_db{
 	return @proteins;
 }
 
+=head2 store_if_needed
+
+ Title   : store_if_needed
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+sub store_if_needed {
+	my ($self,$family) = @_;
+	if (!$family ->isa('Bio::EnsEMBL::Compara::Family')){
+		$self->throw("$family must be a Bio::EnsEMBL::Compara::Family");
+	}
+	if (!defined $family->stable_id){
+		$self->throw("Family must have a stable id to use this option. If not, use \$family->store");
+	}
+	my $sid = $family->stable_id;
+	my $sth = $self->prepare("select f.family_id from family f, family_stable_id fs where f.family_id=fs.family_id and fs.stable_id ='$sid'");
+	$self->throw("Failed execution of a select query") unless ($sth->execute());
+
+	my $family_id = $sth->fetchrow_array();
+	if (defined $family_id){
+		$family->dbID($family_id);
+		return $family_id;
+	}
+	else {
+		my $family_id = $self->store($family);
+		return $family_id;
+	}
+}
 =head2 store
 
  Title   : store
@@ -253,24 +287,18 @@ sub store{
   
    ###store family members###
    my $rank = 0;
-
-   my @members = sort {$b->family_score <=> $a->family_score} $family->get_all_members();
-
+   my @members;
+   if ($family->size > 0){
+	   @members = sort {$b->family_score <=> $a->family_score} $family->get_all_members();
+	}
+   else{
+		$self->warn("Family has no members. Cannot store.");
+		return undef;
+	}	
    foreach my $mem (@members){
 
-	if (defined $mem->family_rank){
-		$rank = $mem->family_rank;
-	}
-	else {
-		$self->warn("rank not defined..giving one ");
-		$rank++;
-	}
-
-    $self->db->get_ProteinAdaptor->store_if_needed($mem);#store into protein table if not already there
-#	$self->throw("Protein rank not defined!") unless defined($mem->family_rank);
-    $self->throw("Protein dbID not defined!") unless defined($mem->dbID);
-   my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,rank,score) VALUES(?,?,?,?)");
-    $sth->execute($dbID,$mem->dbID,$rank,$mem->family_score);#store into family_protein
+	my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,score) VALUES(?,?,?)");
+    $sth->execute($dbID,$mem->dbID,$mem->family_score);#store into family_protein
 
    }
     ####store family stable_id###
@@ -348,13 +376,14 @@ sub get_alignment_by_type{
 sub _type_exists {
   my ($self,$fam,$type) = @_;
   $self->throw("[$fam] is not a Bio::EnsEMBL::Compara::Family obj!") unless $fam->isa("Bio::EnsEMBL::Compara::Family");
-  my @types = $self->get_alignment_types($fam);
-  foreach my $t(@types){
-	if ($t =~/$type/){
+  my $sth = $self->prepare("select alignment_type from family_alignment where family_id=".$fam->dbID. " and alignment_type=$type");
+  $sth->execute;
+  if (my $row = $sth->fetchrow_array){
 		return 1;
-	}
   }
-  return 0;
+  else {
+		return 0;
+  }
 }
 
 =head2 get_all_alignments
