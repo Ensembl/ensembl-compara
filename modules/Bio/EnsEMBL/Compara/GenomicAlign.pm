@@ -35,7 +35,9 @@ SET VALUES
   $genomic_align->genomic_align_block($genomic_align_block);
   $genomic_align->genomic_align_block_id(1032);
   $genomic_align->method_link_species_set($method_link_species_set);
-  $genomic_align->dnafrag_id($dnafrag);
+  $genomic_align->method_link_species_set_id(3);
+  $genomic_align->dnafrag($dnafrag);
+  $genomic_align->dnafrag_id(134);
   $genomic_align->dnafrag_start(100001);
   $genomic_align->dnafrag_end(100050);
   $genomic_align->dnafrag_strand(-1);
@@ -49,7 +51,9 @@ GET VALUES
   $genomic_align_block = $genomic_align->genomic_block;
   $genomic_align_block_id = $genomic_align->genomic_align_block_id;
   $method_link_species_set = $genomic_align->method_link_species_set;
+  $method_link_species_set_id = $genomic_align->method_link_species_set_id;
   $dnafrag = $genomic_align->dnafrag;
+  $dnafrag_id = $genomic_align->dnafrag_id;
   $dnafrag_start = $genomic_align->dnafrag_start;
   $dnafrag_end = $genomic_align->dnafrag_end;
   $dnafrag_strand = $genomic_align->dnafrag_strand;
@@ -60,7 +64,70 @@ GET VALUES
 
 =head1 OBJECT ATTRIBUTES
 
+=over
 
+=item dbID
+
+corresponds to genomic_align.genomic_align_id
+
+=item adaptor
+
+Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object to access DB
+
+=item genomic_align_block_id
+
+corresponds to genomic_align_block.genomic_align_block_id (ext. reference)
+
+=item genomic_align_block
+
+Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlock object corresponding to genomic_align_block_id
+
+=item method_link_species_set_id
+
+corresponds to method_link_species.method_link_species_set (external ref.)
+
+=item method_link_species_set
+
+Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet object corresponding to method_link_species_set_id
+
+=item dnafrag_id
+
+corresponds to dnafrag.dnafrag_id (external ref.)
+
+=item dnafrag
+
+Bio::EnsEMBL::Compara::DBSQL::DnaFrag object corresponding to dnafrag_id
+
+=item dnafrag_start
+
+corresponds to genomic_align.dnafrag_start
+
+=item dnafrag_end
+
+corresponds to genomic_align.dnafrag_end
+
+=item dnafrag_strand
+
+corresponds to genomic_align.dnafrag_strand
+
+=item cigar_line
+
+corresponds to genomic_align.cigar_line
+
+=item level_id
+
+corresponds to genomic_align.level_id
+
+=item aligned_sequence
+
+corresponds to the sequence rebuilt using dnafrag and cigar_line
+
+=item original_sequence
+
+corresponds to the original sequence. It can be rebuilt from the dnafrag info or can be used
+in conjuction with cigar_line to get the aligned_sequence.
+
+=back
 
 =head1 AUTHOR
 
@@ -106,9 +173,10 @@ sub new {
         $score, $perc_id,
 
         $cigar_line, $adaptor,
-          
+
         $dbID, $genomic_align_block, $genomic_align_block_id, $method_link_species_set,
-        $dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand,
+        $method_link_species_set_id, $dnafrag, $dnafrag_id,
+        $dnafrag_start, $dnafrag_end, $dnafrag_strand,
         $aligned_sequence, $level_id ) = 
       
       rearrange([qw(
@@ -119,7 +187,8 @@ sub new {
           CIGAR_LINE ADAPTOR
                             
           DBID GENOMIC_ALIGN_BLOCK GENOMIC_ALIGN_BLOCK_ID METHOD_LINK_SPECIES_SET
-          DNAFRAG DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND
+          METHOD_LINK_SPECIES_SET_ID DNAFRAG DNAFRAG_ID
+          DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND
           ALIGNED_SEQUENCE LEVEL_ID)], @args);
 
     $self->adaptor( $adaptor ) if defined $adaptor;
@@ -132,7 +201,8 @@ sub new {
         or defined($perc_id)) {
       
       if (defined($dbID) or defined($genomic_align_block) or defined($genomic_align_block_id)
-          or defined($method_link_species_set) or defined($dnafrag) or defined($dnafrag_start)
+          or defined($method_link_species_set) or defined($method_link_species_set_id)
+          or defined($dnafrag) or defined($dnafrag_id) or defined($dnafrag_start)
           or defined($dnafrag_end) or defined($dnafrag_strand) or defined($aligned_sequence)
           or defined($level_id)) {
         throw("Mixing new and old parameters.\n");
@@ -150,7 +220,7 @@ sub new {
       $self->alignment_type( $alignment_type ) if defined $alignment_type;
       $self->score( $score ) if defined $score;
       $self->perc_id( $perc_id ) if defined $perc_id;
-    
+
       return $self;
     }
     
@@ -158,7 +228,9 @@ sub new {
     $self->genomic_align_block($genomic_align_block) if (defined($genomic_align_block));
     $self->genomic_align_block_id($genomic_align_block_id) if (defined($genomic_align_block_id));
     $self->method_link_species_set($method_link_species_set) if (defined($method_link_species_set));
+    $self->method_link_species_set_id($method_link_species_set_id) if (defined($method_link_species_set_id));
     $self->dnafrag($dnafrag) if (defined($dnafrag));
+    $self->dnafrag_id($dnafrag_id) if (defined($dnafrag_id));
     $self->dnafrag_start($dnafrag_start) if (defined($dnafrag_start));
     $self->dnafrag_end($dnafrag_end) if (defined($dnafrag_end));
     $self->dnafrag_strand($dnafrag_strand) if (defined($dnafrag_strand));
@@ -235,10 +307,12 @@ sub dbID {
   Description: Getter/Setter for the attribute genomic_align_block
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object. If no
                argument is given, the genomic_align_block is not defined but
-               both the genomic_align_block_id and the adaptor are, it tried
+               both the genomic_align_block_id and the adaptor are, it tries
                to fetch the data using the genomic_align_block_id.
   Exceptions : thrown if $genomic_align_block is not a
-               Bio::EnsEMBL::Compara::GenomicAlignBlock object
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object or if 
+               $genomic_align_block does not match a previously defined
+               genomic_align_block_id
   Caller     : general
 
 =cut
@@ -250,9 +324,15 @@ sub genomic_align_block {
     throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
         if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
     weaken($self->{'genomic_align_block'} = $genomic_align_block);
+    if (defined($self->{'genomic_align_block_id'})) {
+      warning("Defining both genomic_align_block_id and genomic_align_block");
+      throw("dbID of genomic_align_block object does not match previously defined genomic_align_block_id")
+          if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
+    }
+
   } elsif (!defined($self->{'genomic_align_block'}) and defined($self->{'genomic_align_block_id'}) and
           defined($self->{'adaptor'})) {
-    my $genomic_align_block_adaptor = $self->{'adaptor'}->get_GenomicAlignBlockAdaptor;
+    my $genomic_align_block_adaptor = $self->{'adaptor'}->db->get_GenomicAlignBlockAdaptor;
     $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
             $self->{'genomic_align_block_id'});
   }
@@ -268,10 +348,11 @@ sub genomic_align_block {
   Example    : $genomic_align->genomic_align_block_id(1032);
   Description: Getter/Setter for the attribute genomic_align_block_id. If no
                argument is given, the genomic_align_block_id is not defined but
-               the genomic_align_block is, it tried to get the data from the
+               the genomic_align_block is, it tries to get the data from the
                genomic_align_block object.
   Returntype : integer
-  Exceptions : 
+  Exceptions : thrown if $genomic_align_block_id does not match a previously defined
+               genomic_align_block
   Caller     : general
 
 =cut
@@ -281,6 +362,11 @@ sub genomic_align_block_id {
 
   if (defined($genomic_align_block_id)) {
     $self->{'genomic_align_block_id'} = $genomic_align_block_id;
+    if (defined($self->{'genomic_align_block'})) {
+      warning("Defining both genomic_align_block_id and genomic_align_block");
+      throw("genomic_align_block_id does not match previously defined genomic_align_block object")
+          if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
+    }
   } elsif (!defined($self->{'genomic_align_block_id'}) and defined($self->{'genomic_align_block'})) {
     $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
   }
@@ -294,10 +380,15 @@ sub genomic_align_block_id {
   Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
   Example    : $method_link_species_set = $genomic_align->method_link_species_set;
   Example    : $genomic_align->method_link_species_set($method_link_species_set);
-  Description: Getter/Setter for the attribute method_link_species_set
+  Description: Getter/Setter for the attribute method_link_species_set. If no
+               argument is given, the method_link_species_set is not defined but
+               both the method_link_species_set_id and the adaptor are, it tries
+               to fetch the data using the method_link_species_set_id
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : thrown if $method_link_species_set is not a
-               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object or if 
+               $method_link_species_set does not match a previously defined
+               method_link_species_set_id
   Caller     : general
 
 =cut
@@ -306,12 +397,61 @@ sub method_link_species_set {
   my ($self, $method_link_species_set) = @_;
 
   if (defined($method_link_species_set)) {
-     throw("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-         if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-     $self->{'method_link_species_set'} = $method_link_species_set;
+    throw("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+        if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+    $self->{'method_link_species_set'} = $method_link_species_set;
+    if (defined($self->{'method_link_species_set_id'})) {
+      warning("Defining both method_link_species_set_id and method_link_species_set");
+      throw("method_link_species_set object does not match previously defined method_link_species_set_id")
+          if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+    }
+  
+  } elsif (!defined($self->{'method_link_species_set'}) and defined($self->{'method_link_species_set_id'}) and
+          defined($self->{'adaptor'})) {
+    my $method_link_species_set_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
+    $self->{'method_link_species_set'} = $method_link_species_set_adaptor->fetch_by_dbID(
+            $self->{'method_link_species_set_id'});
+  
+  } elsif (!defined($self->{'method_link_species_set'}) and
+          defined($self->genomic_align_block)) {
+    $self->{'method_link_species_set'} = $self->genomic_align_block->method_link_species_set;
   }
 
   return $self->{'method_link_species_set'};
+}
+
+
+=head2 method_link_species_set_id
+
+  Arg [1]    : integer $method_link_species_set_id
+  Example    : $method_link_species_set_id = $genomic_align->method_link_species_set_id;
+  Example    : $genomic_align->method_link_species_set_id(3);
+  Description: Getter/Setter for the attribute method_link_species_set_id. If no
+               argument is given, the method_link_species_set_id is not defined but
+               the method_link_species_set is, it tries to get the data from the
+               method_link_species_set object.
+  Returntype : integer
+  Exceptions : thrown if $method_link_species_set_id does not match a previously defined
+               method_link_species_set
+  Caller     : general
+
+=cut
+
+sub method_link_species_set_id {
+  my ($self, $method_link_species_set_id) = @_;
+
+  if (defined($method_link_species_set_id)) {
+    $self->{'method_link_species_set_id'} = $method_link_species_set_id;
+    if (defined($self->{'method_link_species_set'})) {
+      warning("Defining both method_link_species_set_id and method_link_species_set");
+      throw("method_link_species_set_id does not match previously defined method_link_species_set object")
+          if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+    }
+  } elsif (!defined($self->{'method_link_species_set_id'}) and defined($self->{'method_link_species_set'})) {
+    $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
+  }
+
+  return $self->{'method_link_species_set_id'};
 }
 
 
@@ -319,11 +459,15 @@ sub method_link_species_set {
 
   Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
   Example    : $dnafrag = $genomic_align->dnafrag;
-  Example    : $genomic_align->dnafrag_id($dnafrag);
-  Description: Getter/Setter for the attribute Bio::EnsEMBL::Compara::DnaFrag 
+  Example    : $genomic_align->dnafrag($dnafrag);
+  Description: Getter/Setter for the attribute dnafrag. If no
+               argument is given, the dnafrag is not defined but
+               both the dnafrag_id and the adaptor are, it tries
+               to fetch the data using the dnafrag_id
   Returntype : Bio::EnsEMBL::Compara::DnaFrag object
   Exceptions : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
-               object
+               object or if $dnafrag does not match a previously defined
+               dnafrag_id
   Caller     : general
 
 =cut
@@ -332,12 +476,54 @@ sub dnafrag {
   my ($self, $dnafrag) = @_;
 
   if (defined($dnafrag)) {
-     throw("$dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag object")
-         if (!$dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
-     $self->{'dnafrag'} = $dnafrag;
+    throw("$dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag object")
+        if (!$dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
+    $self->{'dnafrag'} = $dnafrag;
+    if (defined($self->{'dnafrag_id'})) {
+      warning("Defining both dnafrag_id and dnafrag");
+      throw("dnafrag object does not match previously defined dnafrag_id")
+          if ($self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
+    }
+  } elsif (!defined($self->{'dnafrag'}) and defined($self->{'dnafrag_id'}) and
+          defined($self->{'adaptor'})) {
+    my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
+    $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
   }
 
   return $self->{'dnafrag'};
+}
+
+
+=head2 dnafrag_id
+
+  Arg [1]    : integer $dnafrag_id
+  Example    : $dnafrag_id = $genomic_align->dnafrag_id;
+  Example    : $genomic_align->dnafrag_id(134);
+  Description: Getter/Setter for the attribute dnafrag_id. If no
+               argument is given, the dnafrag_id is not defined but
+               the dnafrag is, it tries to get the data from the
+               dnafrag object.
+  Returntype : integer
+  Exceptions : thrown if $dnafrag_id does not match a previously defined
+               dnafrag
+  Caller     : 
+
+=cut
+
+sub dnafrag_id {
+  my ($self, $dnafrag_id) = @_;
+
+  if (defined($dnafrag_id)) {
+    warning("Defining both dnafrag_id and dnafrag")
+        if (defined($self->{'dnafrag'}));
+    $self->{'dnafrag_id'} = $dnafrag_id;
+    throw("dnafrag_id does not match previously defined dnafrag object")
+        if ($self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
+  } elsif (!defined($self->{'dnafrag_id'}) and defined($self->{'dnafrag'})) {
+    $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
+  }
+
+  return $self->{'dnafrag_id'};
 }
 
 
@@ -509,14 +695,16 @@ sub level_id {
 =cut
 
 sub original_sequence {
-  my ($self) = @_;
-  my $seq;
+  my ($self, $original_sequence) = @_;
 
-  if (defined($self->dnafrag) and defined($self->dnafrag_start) and defined($self->dnafrag_end)) {
-    $seq = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
+  if (defined($original_sequence)) {
+    $self->{'original_sequence'} = $original_sequence;
+  } elsif (!defined($self->{'original_sequence'}) and defined($self->dnafrag) and defined($self->dnafrag_start) and
+         defined($self->dnafrag_end)) {
+    $self->{'original_sequence'} = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
   }
 
-  return $seq;
+  return $self->{'original_sequence'};
 }
 
 =head2 _get_cigar_line_from_aligned_sequence
@@ -590,6 +778,43 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   throw("Cigar line does not match sequence lenght") if ($seq_pos != length($original_sequence));
 
   return $aligned_sequence;
+}
+
+
+=head2 _print
+
+  Arg [1]    : none
+  Example    : $genomic_align->_print
+  Description: print attributes of the object to the STDOUT. Used for debuging purposes.
+  Returntype : none
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub _print {
+  my ($self) = @_;
+
+  print
+"Bio::EnsEMBL::Compara::GenomicAlign object ($self)
+  dbID = ".($self->dbID or "-undef-")."
+  adaptor = ".($self->adaptor or "-undef-")."
+  genomic_align_block = ".($self->genomic_align_block or "-undef-")."
+  genomic_align_block_id = ".($self->genomic_align_block_id or "-undef-")."
+  method_link_species_set = ".($self->method_link_species_set or "-undef-")."
+  method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
+  dnafrag = ".($self->dnafrag or "-undef-")."
+  dnafrag_id = ".($self->dnafrag_id or "-undef-")."
+  dnafrag_start = ".($self->dnafrag_start or "-undef-")."
+  dnafrag_end = ".($self->dnafrag_end or "-undef-")."
+  dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
+  cigar_line = ".($self->cigar_line or "-undef-")."
+  level_id = ".($self->level_id or "-undef-")."
+  original_sequence = ".($self->original_sequence or "-undef-")."
+  aligned_sequence = ".($self->aligned_sequence or "-undef-")."
+  
+";
+
 }
 
 
