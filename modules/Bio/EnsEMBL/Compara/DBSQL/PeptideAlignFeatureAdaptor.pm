@@ -272,7 +272,7 @@ sub _store_PAFS {
                 ",".$paf->hstart.
                 ",".$paf->hend.
                 ",".$paf->score.
-                ",".$paf->evalue.
+                ",'".$paf->evalue."'".
                 ",".$paf->alignment_length.
                 ",".$paf->identical_matches.
                 ",".$paf->perc_ident.
