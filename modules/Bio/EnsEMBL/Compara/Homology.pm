@@ -122,7 +122,7 @@ sub get_SimpleAlign {
     my ($member, $attribute) = @{$member_attribute};
     my $peptide_member = $ma->fetch_by_dbID($attribute->peptide_member_id);
     my $seqstr;
-    if (defined $alignment && $alignment eq "cdna") {
+    if (defined $alignment && $alignment =~ /^cdna$/i) {
       $seqstr = $attribute->cdna_alignment_string($peptide_member);
       $seqstr =~ s/\s+//g;
     } else {
