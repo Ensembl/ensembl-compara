@@ -325,7 +325,9 @@ sub store{
        $self->throw("Must provide a Bio::EnsEMBL::Compara::Family object");
    }
    ###store family### 
-
+   if ($self != $family->adaptor){ #if storing to a different database
+		$family->get_all_members();
+   }
    my $sth = $self->prepare("INSERT INTO family(threshold,description,annotation_confidence_score) VALUES (?,?,?)");
    $sth->execute($family->threshold,$family->description,$family->annotation_score);
    my $dbID = $sth->{'mysql_insertid'};
@@ -334,15 +336,7 @@ sub store{
    $family->adaptor($self);
   
    ###store family members###
-   my $rank = 0;
-   my @members;
-   if ($family->size > 0){
-	   @members = sort {$b->family_score <=> $a->family_score} $family->get_all_members();
-	}
-   else{
-		$self->warn("Family has no members. Cannot store.");
-		return undef;
-	}	
+   my @members = $family->get_all_members();
    foreach my $mem (@members){
 
 	my $prot_id = $self->db->get_ProteinAdaptor->store_if_needed($mem);
