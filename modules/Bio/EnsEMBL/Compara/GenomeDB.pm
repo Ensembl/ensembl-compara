@@ -290,11 +290,13 @@ sub connect_to_genome_locator
   my $self = shift;
 
   return undef if($self->locator eq '');
-  
-  my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
-  return undef unless($genomeDBA);
-  $genomeDBA->disconnect_when_inactive(1);
-  return $genomeDBA;
+  unless($self->{'_core_db'}) { 
+    my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
+    return undef unless($genomeDBA);
+    $genomeDBA->disconnect_when_inactive(1);
+    $self->{'_core_db'} = $genomeDBA;
+  }
+  return $self->{'_core_db'};
 }
 
 =head2 has_consensus
