@@ -39,12 +39,15 @@ sub push {
 
     }
     if(($gx + $gw) > ($self->x() + $self->width())) {
+	#########
 	# x unchanged
 	$self->width(($gx + $gw) - $self->x());
     }
+    #########
     # y
     #
     if($gy < $self->y()) {
+
 	my $offset = $self->y() - $gy;
 	$self->y($gy);
 	$self->height($self->height() + $offset);
