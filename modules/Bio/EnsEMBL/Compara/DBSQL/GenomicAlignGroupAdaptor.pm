@@ -391,7 +391,7 @@ sub retrieve_all_direct_attributes {
   
   ## Populate the object
   $genomic_align_group->adaptor($self);
-  $genomic_align_group->type($type);
+  $genomic_align_group->type($type) if (defined($type));
 
   return $genomic_align_group;
 }
