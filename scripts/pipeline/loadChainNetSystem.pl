@@ -227,6 +227,33 @@ sub prepareChainSystem
   $self->{'alignmentChainsAnalysis'} = $alignmentChainsAnalysis;
 
   $ctrlRuleDBA->create_rule($createAlignmentChainsJobsAnalysis, $alignmentChainsAnalysis);
+
+  #
+  # creating UpdateMaxAlignmentLengthAfterChain analysis
+  #
+  
+  my $updateMaxAlignmentLengthAfterChainAnalysis = Bio::EnsEMBL::Analysis->new
+    (-db_version      => '1',
+     -logic_name      => 'UpdateMaxAlignmentLengthAfterChain',
+     -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+     -parameters      => "");
+  
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterChainAnalysis);
+  my $stats = $updateMaxAlignmentLengthAfterChainAnalysis->stats;
+  $stats->hive_capacity(1);
+  $stats->update();
+  $self->{'updateMaxAlignmentLengthAfterChainAnalysis'} = $updateMaxAlignmentLengthAfterChainAnalysis;
+  
+  
+  #
+  # create UpdateMaxAlignmentLengthAfterChain job
+  #
+  my $input_id = 1;
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+      (-input_id       => $input_id,
+       -analysis       => $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
+
+  $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
 }
 
 sub prepareNetSystem {
@@ -294,6 +321,36 @@ sub prepareNetSystem {
   $ctrlRuleDBA->create_rule($createAlignmentNetsJobsAnalysis, $alignmentNetsAnalysis);
 
   $self->prepCreateAlignmentNetsJobs($netConf,$alignmentNetsAnalysis->logic_name);
+
+  unless (defined $self->{'updateMaxAlignmentLengthAfterNetAnalysis'}) {
+
+    #
+    # creating UpdateMaxAlignmentLengthAfterNet analysis
+    #
+
+    my $updateMaxAlignmentLengthAfterNetAnalysis = Bio::EnsEMBL::Analysis->new
+      (-db_version      => '1',
+       -logic_name      => 'UpdateMaxAlignmentLengthAfterNet',
+       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+       -parameters      => "");
+
+    $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterNetAnalysis);
+    my $stats = $updateMaxAlignmentLengthAfterNetAnalysis->stats;
+    $stats->hive_capacity(1);
+    $stats->update();
+    $self->{'updateMaxAlignmentLengthAfterNetAnalysis'} = $updateMaxAlignmentLengthAfterNetAnalysis;
+
+    #
+    # create UpdateMaxAlignmentLengthAfterNet job
+    #
+    my $input_id = 1;
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+        (-input_id       => $input_id,
+         -analysis       => $self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
+  }
+
+  $ctrlRuleDBA->create_rule($alignmentNetsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
+
 }
 sub storeMaskingOptions
 {
