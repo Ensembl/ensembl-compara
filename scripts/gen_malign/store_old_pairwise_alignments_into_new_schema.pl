@@ -277,7 +277,7 @@ sub parse_old_cigar_line {
 
   my @pieces = split(/(\d*[DIMG])/, $old_cigar_line);
   
-#  print join("<- ->", @pieces);
+#   print join("<- ->", @pieces);
 
   my $consensus_matches_counter = 0;
   my $query_matches_counter = 0;
@@ -290,17 +290,27 @@ sub parse_old_cigar_line {
     if( $type eq "M" ) {
       $consensus_matches_counter += $num;
       $query_matches_counter += $num;
+    
     } elsif( $type eq "D" ) {
-      $consensus_cigar_line .= $consensus_matches_counter."M";
-      $consensus_cigar_line .= $num."G";
+      $consensus_cigar_line .= (($consensus_matches_counter == 1) ? "" : $consensus_matches_counter)."M";
+      $consensus_matches_counter = 0;
+      $consensus_cigar_line .= (($num == 1) ? "" : $num)."G";
       $query_matches_counter += $num;
+    
     } elsif( $type eq "I" ) {
       $consensus_matches_counter += $num;
-      $query_cigar_line .= $query_matches_counter."M";
-      $query_cigar_line .= $num."G";
+      $query_cigar_line .= (($query_matches_counter == 1) ? "" : $query_matches_counter)."M";
+      $query_matches_counter = 0;
+      $query_cigar_line .= (($num == 1) ? "" : $num)."G";
     }
     $length += $num;
   }
+  $consensus_cigar_line .= (($consensus_matches_counter == 1) ? "" : $consensus_matches_counter)."M"
+      if ($consensus_matches_counter);
+  $query_cigar_line .= (($query_matches_counter == 1) ? "" : $query_matches_counter)."M"
+      if ($query_matches_counter);
 
+#   print join("\n", $old_cigar_line, $consensus_cigar_line, $query_cigar_line, $length);
+  
   return ($consensus_cigar_line, $query_cigar_line, $length);
 }
