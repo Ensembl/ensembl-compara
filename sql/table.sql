@@ -146,3 +146,16 @@ CREATE TABLE synteny_region (
   PRIMARY KEY (synteny_region_id)
 );
 
+
+#
+# This table stores meta information about the compara database
+#
+CREATE TABLE meta (
+    meta_id INT not null auto_increment,
+    meta_key varchar( 40 ) not null,
+    meta_value varchar( 255 ) not null,
+
+    PRIMARY KEY( meta_id ),
+    KEY meta_key_index ( meta_key ),
+    KEY meta_value_index ( meta_value )
+);
