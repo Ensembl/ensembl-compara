@@ -129,6 +129,9 @@ sub fetch_masked_sequence {
   #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
 
   #print STDERR "sequence length : ",$seq->length,"\n";
+
+  $self->sequence($seq->seq);
+
   return $seq;
 }
 
@@ -163,9 +166,10 @@ sub display_id {
 
 =head2 bioseq
 
+  Description: returns sequence of this chunk as a Bio::Seq object
+               will fetch from core if not previously cached in compara
   Args       : none
   Example    : my $bioseq = $chunk->bioseq;
-  Description: returns stored sequence of this chunk as a Bio::Seq object
   Returntype : Bio::Seq object
   Exceptions : none
   Caller     : general
@@ -305,5 +309,43 @@ sub masking_analysis_data_id {
   return $self->{'masking_analysis_data_id'};
 }
 
+
+sub dump_to_fasta_file
+{
+  my $self = shift;
+  my $fastafile = shift;
+  
+  my $bioseq = $self->bioseq;
+
+  #printf("  writing chunk %s\n", $self->display_id);
+  open(OUTSEQ, ">$fastafile")
+    or $self->throw("Error opening $fastafile for write");
+  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
+  $output_seq->write_seq($bioseq);
+  close OUTSEQ;
+
+  return $self;
+}
+
+
+sub cache_sequence
+{
+  my $self = shift;
+  
+  # $self->sequence will load from compara if available, if not go fetch it
+  unless($self->sequence) {
+    $self->fetch_masked_sequence;
+  }
+  
+  # fetching sequence will set $self->sequence but not sequence_id so store it
+  # fetching may have occurred in a previous method call, so keep this logic
+  # separate to make sure it will get stored
+  if($self->sequence_id==0) {
+    print "    cacheing sequence back to compara for chunk\n";
+    $self->adaptor->update_sequence($self);
+  }
+
+  return $self;
+}
 
 1;
