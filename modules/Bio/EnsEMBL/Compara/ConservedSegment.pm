@@ -1,6 +1,6 @@
 
 #
-# EnsEMBL module for Bio::EnsEMBL::Orthology::ConservedSegment
+# EnsEMBL module for Bio::EnsEMBL::Compara::ConservedSegment
 #
 # Cared for by EnsEMBL (www.ensembl.org)
 #
@@ -12,7 +12,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Orthology::ConservedSegment 
+Bio::EnsEMBL::Compara::ConservedSegment 
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 
-package Bio::EnsEMBL::Orthology::ConservedSegment;
+package Bio::EnsEMBL::Compara::ConservedSegment;
 use vars qw(@ISA);
 use strict;
 
@@ -45,12 +45,67 @@ use Bio::Root::RootI;
 @ISA = qw(Bio::Root::RootI);
 
 sub new {
-    my ($class,$adaptor,@args) = @_;
+    my ($class,@args) = @_;
 
     my $self = {};
     bless $self,$class;
+ 
+    $self->{'_protein_id_array'} = [];
+    
+    my ($dbID, $genome_db_id,$conserved_cluster_id,$seq_start,$seq_end,$intervening_genes,$dnafrag_id,$seq,$protein_ids,$adaptor) = 
+    $self->_rearrange([qw(	DBID
+                            GENOMEDB_ID
+                            CONSERVED_CLUSTER_ID
+                            SEQ_START
+                            SEQ_END
+                            INTERVENING_GENES
+                            DNAFRAG_ID
+                            PROTEIN_IDS
+                            ADAPTOR)],@args);
+    
+    
+    if (defined $dbID){
+      $self->dbID($dbID);
+    }
+
+    if (defined $genome_db_id){
+      $self->genome_db_id($genome_db_id);
+    }
 
 
+    if (defined $seq_start){
+      $self->seq_start($seq_start);
+    }else {
+      $self->throw("Conserved Segment must have a seq_start");
+    }
+
+    if (defined $seq_end){
+      $self->seq_end($seq_end);
+    }else {
+      $self->throw("Conserved Segment must have a seq_end");
+    }
+
+    if (defined $dnafrag_id){
+      $self->dnafrag_id($dnafrag_id);
+    }else {
+      $self->throw("Conserved Segment must have a dnafrag_id");
+    }
+
+    if (defined @{$protein_ids}){
+      foreach my $id (@{$protein_ids}){
+         $self-add_Protein_id ($id);
+      }
+    }
+
+    if (defined $intervening_genes){
+      $self->intervening_genes($intervening_genes);
+	}
+
+    if (defined $adaptor){
+      $self->adaptor($adaptor);
+	}
+    
+    return $self;
 }
 
 
@@ -74,23 +129,204 @@ sub dbID {
 
 }
 
-=head2 conserved_genes
- Title   : conserved_genes
- Usage   : $obj->conserved_genes($newval) 
- Function: getset for conserved_genes value
- Returns : value of conserved_genes
+=head2 genome_db_id
+
+ Title   : genome_db_id
+ Usage   : $obj->genome_db_id($newval)
+ Function:
+ Returns : value of genome_db_id, reference id to another database
  Args    : newvalue (optional)
 
 =cut
 
-sub conserved_genes{
+sub genome_db_id {
+   my $self = shift;
+   if( @_ ) {
+      my $value = shift;
+      $self->{'genome_db_id'} = $value;
+   }
+   return $self->{'genome_db_id'};
+
+}
+
+
+=head2 conserved_cluster_id
+
+ Title   : conserved_cluster_id
+ Usage   : $obj->conserved_cluster_id($newval)
+ Function:
+ Returns : value of conserved_cluster_id
+ Args    : newvalue (optional)
+
+=cut
+
+sub conserved_cluster_id{
+   my $self = shift;
+   if( @_ ) {
+      my $value = shift;
+      $self->{'conserved_cluster_id'} = $value;
+   }
+   return $self->{'conserved_cluster_id'};
+}
+
+=head2 contig
+ 
+ Title   : contig
+ Usage   : $contig = $obj->contig()
+ Function: Returns a VC of this segment
+ Returns : A contig
+ Args    : none
+ 
+=cut
+ 
+sub contig {
+  
+  my ($self) = @_;
+  
+  my $dnafrag = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->dnafrag_id);
+
+  my $contig =  $dnafrag->genomedb->get_VC_by_start_end ($dnafrag->name,$dnafrag->type,$self->seq_start,$self->seq_end);
+    
+}
+
+
+=head2 seq_start
+ Title   : seq_start
+ Usage   : $obj->seq_start($newval) 
+ Function: getset for seq_start value
+ Returns : value of seq_start
+ Args    : newvalue (optional)
+
+=cut
+
+sub seq_start{
    my $self = shift;
 
    if( @_ ) {
       my $value = shift;
-      $self->{'conserved_genes'} = $value;
+      $self->{'seq_start'} = $value;
    }
-   return $self->{'conserved_genes'};
+   return $self->{'seq_start'};
 
 }
 
+=head2 seq_end
+ Title   : seq_end
+ Usage   : $obj->seq_end($newval) 
+ Function: getset for seq_end value
+ Returns : value of seq_end
+ Args    : newvalue (optional)
+
+=cut
+
+sub seq_end{
+   my $self = shift;
+
+   if( @_ ) {
+      my $value = shift;
+      $self->{'seq_end'} = $value;
+   }
+   return $self->{'seq_end'};
+
+}
+
+=head2 intervening_genes
+ Title   : intervening_genes
+ Usage   : $obj->intervening_genes($newval) 
+ Function: getset for intervening_genes
+ Returns : number of intervening genes within this conserved_seg.
+ Args    : 
+
+=cut
+
+sub intervening_genes{
+   my ($self,$value) = @_;
+
+   if (defined $value){ 
+   $self->{'intervening_genes'} = $value;
+   }
+   return $self->{'intervening_genes'};
+}
+
+=head2 dnafrag_id
+ Title   : dnafrag_id
+ Usage   : $obj->dnafrag_id($newval) 
+ Function: getset for dnafrag_id
+ Returns : dnafrag_id that this protein sits on.
+ Args    : dnafrag_id that this protein sits on.
+
+=cut
+
+sub dnafrag_id{
+   my ($self,$value) = @_;
+
+   if (defined $value){ 
+   $self->{'dnafrag_id'} = $value;
+   }
+   return $self->{'dnafrag_id'};
+
+}
+
+
+=head2 get_all_Protein_ids
+
+ Title   : get_all_Protein_ids
+ Usage   : $obj->get_all_Protein_ids
+ Function: 
+ Returns : array of protein_ids;
+ Args    : 
+
+
+=cut
+
+sub get_all_Protein_ids{
+
+    my ($self) = @_;
+
+    return @{$self->{'_protein_id_array'}};
+
+}
+
+=head2 add_Protein_id
+ 
+ Title   : add_Protein_id
+ Usage   : $obj->add_Protein_id($protein_dbID)
+ Function:
+ Returns : 
+ Args    :
+ 
+ 
+=cut
+ 
+sub add_Protein_id{
+ 
+    my ($self,$protein_dbID) = @_;
+
+    $self->throw("Trying to add protein id without supplying argument") unless defined ($protein_dbID);
+
+    push (@{$self->{'_protein_id_array'}},$protein_dbID);
+ 
+}
+
+=head2 adaptor
+ 
+ Title   : adaptor
+ Usage   : $obj->adaptor($newval)
+ Function: Getset for adaptor object
+ Returns : Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor
+ Args    : Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor
+ 
+ 
+=cut
+
+sub adaptor{
+   my $obj = shift;
+   if( @_ ) {
+      my $value = shift;
+      $obj->{'adaptor'} = $value;
+    }
+    return $obj->{'adaptor'};
+
+}
+
+1;
