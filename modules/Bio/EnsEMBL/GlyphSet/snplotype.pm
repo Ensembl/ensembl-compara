@@ -364,8 +364,12 @@ sub draw_labelled_snp_block {
         $bg = $red;
         $fg = $white;        	
 	}
+	if ($label eq "-"){
+        $bg = $white;
+        $fg = $red;        	
+	}
 	
-    if (uc($label) =~ /[N|\?|\-]/ && $type ne "cons"){
+    if (uc($label) =~ /[N|\?]/ && $type ne "cons"){
         return();
     } else {
         my $block = new Bio::EnsEMBL::Glyph::Rect({
@@ -418,8 +422,12 @@ sub draw_unlabelled_snp_block {
         $bg = $red;
         $fg = $white;        	
 	}
+	if ($label eq "-"){
+        $bg = $white;
+        $fg = $red;        	
+	}
 
-    if (uc($label) =~ /[N|\?|\-]/ && $type ne "cons"){
+    if (uc($label) =~ /[N|\?]/ && $type ne "cons"){
         return();
     } else {
         my $block = new Bio::EnsEMBL::Glyph::Rect({
