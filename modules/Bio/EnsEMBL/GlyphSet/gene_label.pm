@@ -16,7 +16,8 @@ sub _init {
     my $VirtualContig = $self->{'container'};
     my $Config        = $self->{'config'};
     my $y             = 0;
-    my $highlights    = $self->highlights();
+    my %highlights;
+    @highlights{$self->highlights} = ();    # build hashkeys of highlight list
     my @bitmap        = undef;
     my $im_width      = $Config->image_width();
     my $type          = $Config->get($Config->script(),'gene','src');
@@ -39,12 +40,11 @@ sub _init {
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
-
+    
     foreach my $vg (@allgenes) {
 
-	my ($start, $end, $colour, $label);
-	my @ids = ();
-
+	my ($start, $end, $colour, $label,$hi_colour);
+	
 	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
 	    $start  = $vg->start();
 	    $end    = $vg->end();
@@ -52,10 +52,15 @@ sub _init {
 		$colour = $known_col;
 		my @temp_geneDBlinks = $vg->gene->each_DBLink();
 		my $displaylink;
-		
+	 	
 		foreach my $DB_link ( @temp_geneDBlinks ){
-		    
-		    #print STDERR "DBLINKS: ",$vg->id," : ",$DB_link->database," - ",$DB_link->display_id,"\n";
+		    #########################
+		    # check for highlighting
+		    #########################
+		    if (exists $highlights{$DB_link->display_id}){
+			$hi_colour = $Config->get($Config->script(), 'gene', 'hi');
+		    }
+
 		    if( $DB_link->database() eq 'HUGO' ) {
 			$displaylink = $DB_link;
 			last;
@@ -68,21 +73,21 @@ sub _init {
 		    }
 		}
 
+		if (exists $highlights{$vg->id}){
+		    $hi_colour = $Config->get($Config->script(), 'gene', 'hi');
+		}
+
 		if( $displaylink ) {
 		    $label = $displaylink->display_id();
 		} 
 		else {
 		    $label = $vg->id();
 		}
-		push @ids, $label;
-		#print STDERR "Labels @ids\n";
 		
-
 	    } else {
 		$colour = $unknown_col;
 		$label	= "NOVEL";
 	    }
-#	    push @ids, $vg->id();
 	} else {
 	    $colour = $ext_col;
 	    $start  = ($vg->each_Transcript())[0]->start_exon->start();
@@ -90,18 +95,7 @@ sub _init {
 	    $label  = $vg->id;
 	    $label  =~ s/gene\.//;
 	}
-
-	#########
-	# figure out if we've got anything to highlight
-	#
-	my $hi_colour;
-	my %union = ();
-	my %isect = ();
-	for my $e (@ids, $self->highlights()) { $union{$e}++ && $isect{$e}++ }
-	#print STDERR "Hi:", scalar($self->highlights()), "\n";
 	
-	$hi_colour = $Config->get($Config->script(), 'gene', 'hi') if(scalar keys %isect > 0);
-
 	######################
 	# Make and bump label
 	######################
