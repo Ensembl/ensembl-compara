@@ -94,7 +94,7 @@ sub fetch_input {
   throw("Missing qyChunk") unless($qyChunk);
   throw("Missing dbChunk") unless($dbChunk);
   
-  print STDERR ("have chunks\n  ",$qyChunk->display_id,"\n  ", $dbChunk->display_id,"\n");
+  #print STDERR ("have chunks\n  ",$qyChunk->display_id,"\n  ", $dbChunk->display_id,"\n");
   $self->{'qyChunk'} = $qyChunk;
   $self->{'dbChunk'} = $dbChunk;
 
@@ -116,9 +116,9 @@ sub fetch_input {
 
   my $qySeq = $qyChunk->bioseq;
   unless($qySeq) {
-    printf(STDERR "fetching qy chunk %s on-the-fly\n", $qyChunk->display_id);
+    #printf(STDERR "fetching qy chunk %s on-the-fly\n", $qyChunk->display_id);
     $qySeq = $qyChunk->fetch_masked_sequence(2);  #soft masked
-    print STDERR (time()-$starttime), " secs to fetch qyChunk seq\n";
+    #print STDERR (time()-$starttime), " secs to fetch qyChunk seq\n";
 
     if($qySeq->length <= 5000000) {
       #print "  writing sequence back to compara for chunk\n";
@@ -150,7 +150,7 @@ sub run
     throw("Runnable module not set") unless($runnable);
     $runnable->run();
   }
-  print STDERR (time()-$starttime), " secs to BlastZ\n";
+  #print STDERR (time()-$starttime), " secs to BlastZ\n";
   return 1;
 }
 
@@ -172,7 +172,7 @@ sub write_output {
       $self->store_featurePair_as_genomicAlignBlock($fp);
     }
   }
-  printf("%d FeaturePairs found\n", scalar($self->output));
+  #printf("%d FeaturePairs found\n", scalar($self->output));
   #print STDERR (time()-$starttime), " secs to write_output\n";
 }
 
@@ -197,7 +197,7 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
+  #print("parsing parameter string : ",$param_string,"\n");
 
   my $params = eval($param_string);
   return unless($params);
@@ -223,14 +223,14 @@ sub dumpChunkToWorkdir
                   "chunk_" . $chunk->dbID . ".fasta";
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
-  print("fastafile = '$fastafile'\n");
+  #print("fastafile = '$fastafile'\n");
 
   my $bioseq = $chunk->bioseq;
   unless($bioseq) {
-    printf("fetching chunk %s on-the-fly\n", $chunk->display_id);
+    #printf("fetching chunk %s on-the-fly\n", $chunk->display_id);
     my $starttime = time();
     $bioseq = $chunk->fetch_masked_sequence(2);  #soft masked
-    print STDERR (time()-$starttime), " secs to fetch chunk seq\n";
+    #print STDERR (time()-$starttime), " secs to fetch chunk seq\n";
     $chunk->sequence($bioseq->seq);
   }
  
