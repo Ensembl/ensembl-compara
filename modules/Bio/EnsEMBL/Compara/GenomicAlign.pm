@@ -1128,7 +1128,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
       $aligned_sequence .=  "-" x $cigCount;
     }
   }
-  throw("Cigar line does not match sequence lenght") if ($seq_pos != length($original_sequence));
+  throw("Cigar line ($seq_pos) does not match sequence lenght (".length($original_sequence).")") if ($seq_pos != length($original_sequence));
 
   return $aligned_sequence;
 }
@@ -1174,6 +1174,7 @@ sub _print {
 }
 
 =head2 display_id
+  
   Args       : none
   Example    : my $id = $genomic_align->display_id;
   Description: returns string describing this genomic_align which can be used
@@ -1186,7 +1187,9 @@ sub _print {
   Returntype : string
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub display_id {
   my $self = shift;
 
@@ -1220,6 +1223,20 @@ sub reverse_complement {
   # reverse strand
   $self->dnafrag_strand($self->dnafrag_strand * -1);
 
+  # reverse orignal and aligned sequences if cached
+  my $original_sequence = $self->original_sequence;
+  if ($original_sequence) {
+    $original_sequence = reverse $original_sequence;
+    $original_sequence =~ tr/ATCGatcg/TAGCtagc/;
+    $self->original_sequence($original_sequence);
+  }
+  my $aligned_sequence = $self->aligned_sequence;
+  if ($aligned_sequence) {
+    $aligned_sequence = reverse $aligned_sequence;
+    $aligned_sequence =~ tr/ATCGatcg/TAGCtagc/;
+    $self->aligned_sequence($aligned_sequence);
+  }
+  
   # reverse cigar_string as consequence
   my $cigar_line = $self->cigar_line;
   $cigar_line =~ s/(D|G|M)/$1 /g;
@@ -1230,6 +1247,98 @@ sub reverse_complement {
   }
 
   $self->cigar_line($cigar_line);
+}
+
+
+=head2 get_Mapper
+
+  Args       : [optional] integer $cache
+  Example    : $this_mapper = $genomic_align->get_Mapper();
+  Example    : $mapper1 = $genomic_align1->get_Mapper();
+               $mapper2 = $genomic_align2->get_Mapper();
+  Description: creates and returns a Bio::EnsEMBL::Mapper to map coordinates from
+               the original sequence of this Bio::EnsEMBL::Compara::GenomicAlign
+               to the aligned sequence, i.e. the alignment. In order to map a sequence
+               from this Bio::EnsEMBL::Compara::GenomicAlign object to another
+               Bio::EnsEMBL::Compara::GenomicAlign of the same
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object, you may use this mapper
+               to transform coordinates into the "alignment" coordinates and then to
+               the other Bio::EnsEMBL::Compara::GenomicAlign coordinates using the
+               corresponding Bio::EnsEMBL::Mapper.
+               With the $cache argument you can decide whether you want to cache the
+               result or not. Result is *not* cached by default.
+  Returntype : Bio::EnsEMBL::Mapper object
+  Exceptions : throw if no cigar_line can be found
+
+=cut
+
+sub get_Mapper {
+  my ($self, $cache) = @_;
+  $cache = 0 if (!defined($cache));
+
+  if (!defined($self->{'mapper'})) {
+    if (!$self->cigar_line) {
+      throw("[$self] has no cigar_line and cannot be retrieved by any means");
+    }
+  
+    my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+  
+    my @cigar_pieces = ($self->cigar_line =~ /(\d*[GMD])/g);
+    my $alignment_position = 1;
+    if ($self->dnafrag_strand == 1) {
+      my $sequence_position = $self->dnafrag_start;
+      foreach my $cigar_piece (@cigar_pieces) {
+        my $cigar_type = substr($cigar_piece, -1, 1 );
+        my $cigar_count = substr($cigar_piece, 0 ,-1 );
+        $cigar_count = 1 unless $cigar_count;
+    
+        if( $cigar_type eq "M" ) {
+        $mapper->add_map_coordinates(
+                  "sequence", #$self->dbID,
+                  $sequence_position,
+                  $sequence_position + $cigar_count - 1,
+                  $self->dnafrag_strand,
+                  "alignment", #$self->genomic_align_block->dbID,
+                  $alignment_position,
+                  $alignment_position + $cigar_count - 1
+              );
+          $sequence_position += $cigar_count;
+          $alignment_position += $cigar_count;
+        } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+          $alignment_position += $cigar_count;
+        }
+      }
+    } else {
+      my $sequence_position = $self->dnafrag_end;
+      foreach my $cigar_piece (@cigar_pieces) {
+        my $cigar_type = substr($cigar_piece, -1, 1 );
+        my $cigar_count = substr($cigar_piece, 0 ,-1 );
+        $cigar_count = 1 unless $cigar_count;
+    
+        if( $cigar_type eq "M" ) {
+        $mapper->add_map_coordinates(
+                  "sequence", #$self->dbID,
+                  $sequence_position - $cigar_count + 1,
+                  $sequence_position,
+                  $self->dnafrag_strand,
+                  "alignment", #$self->genomic_align_block->dbID,
+                  $alignment_position,
+                  $alignment_position + $cigar_count - 1
+              );
+          $sequence_position -= $cigar_count;
+          $alignment_position += $cigar_count;
+        } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+          $alignment_position += $cigar_count;
+        }
+      }
+    }
+
+    return $mapper if (!$cache);
+
+    $self->{'mapper'} = $mapper;
+  }
+
+  return $self->{'mapper'};
 }
 
 #####################################################################
