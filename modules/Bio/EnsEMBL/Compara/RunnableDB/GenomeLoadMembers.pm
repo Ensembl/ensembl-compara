@@ -194,7 +194,10 @@ sub loadMembersFromCoreSlices
     #print("slice " . $slice->name . "\n");
     foreach my $gene (@{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
-      if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
+#      if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
+      if((lc($gene->type) ne 'pseudogene') and 
+         (lc($gene->type) ne 'bacterial_contaminant') and
+         ($gene->type !~ /RNA/i)) {
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }
