@@ -3,6 +3,7 @@ package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use strict;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
+use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
@@ -559,14 +560,7 @@ sub _final_clause {
 
 sub _fetch_sequence_by_id {
   my ($self, $sequence_id) = @_;
-
-  my $sql = "SELECT sequence.sequence FROM sequence WHERE sequence_id = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($sequence_id);
-
-  my ($sequence) = $sth->fetchrow_array();
-  $sth->finish();
-  return $sequence;
+  return $self->db->get_SequenceAdaptor->fetch_by_dbID($sequence_id);
 }
 
 #
@@ -619,10 +613,7 @@ sub store {
     # insert in sequence table to generate new
     # sequence_id to insert into member table;
     if(defined($member->sequence)) {
-      my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
-      $sth2->execute($member->sequence, $member->seq_length);
-      $member->sequence_id( $sth2->{'mysql_insertid'} );
-      $sth2->finish;
+      $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence));
 
       my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
       $sth3->execute($member->sequence_id, $member->dbID);
@@ -663,10 +654,7 @@ sub update_sequence {
     $sth->execute($member->sequence, $member->seq_length, $member->sequence_id);
     $sth->finish;
   } else {
-    my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
-    $sth2->execute($member->sequence, $member->seq_length);
-    $member->sequence_id( $sth2->{'mysql_insertid'} );
-    $sth2->finish;
+    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence));
 
     my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
     $sth3->execute($member->sequence_id, $member->dbID);
