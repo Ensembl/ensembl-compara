@@ -89,7 +89,7 @@ sub _init {
     my ($T,$C1,$C) = (0, 0, 0 );
     if( $dep > 0 ) {
         foreach my $f ( @$features ){
-            next if $strand_flag eq 'b' && $strand != $f->strand || $f->start < 1 || $f->end > $length ;
+            next if $strand_flag eq 'b' && $strand != $f->strand || $f->end < 1 || $f->start > $length ;
             push @{$id{$f->id()}}, [$f->start,$f->end];
         }
 ## No features show "empty track line" if option set....
@@ -102,10 +102,12 @@ sub _init {
     
             $T+=@{$id{$i}}; ## Diagnostic report....
             my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
-            my $bump_start = int($F[0][0] * $pix_per_bp);
+            my $START = $F[0][0] < 1 ? 1 : $F[0][0];
+            my $END   = $F[0][1] > $length ? $length : $F[0][1];
+            my $bump_start = int($START * $pix_per_bp);
                $bump_start--; 
                $bump_start = 0 if $bump_start < 0;
-            my $bump_end   = int($F[-1][1] * $pix_per_bp);
+            my $bump_end   = int($END * $pix_per_bp);
                $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
             my $row = & Sanger::Graphics::Bump::bump_row(
                 $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
@@ -125,12 +127,14 @@ sub _init {
             my $X = -1000000;
             foreach my $f ( @F ){
                 next if int($f->[1] * $pix_per_bp) == int( $X * $pix_per_bp );
-                $X = $f->[0];
+                my $START = $f->[0] < 1 ? 1 : $f->[0];
+                my $END   = $f->[1] > $length ? $length : $f->[1];
+                $X = $START;
                 $C++;
                 $Composite->push(new Sanger::Graphics::Glyph::Rect({
                     'x'          => $X-1,
                     'y'          => 0, # $y_pos,
-                    'width'      => $f->[1]-$X+1,
+                    'width'      => $END-$X+1,
                     'height'     => $h,
                     'colour'     => $feature_colour,
                     'absolutey'  => 1,

@@ -81,7 +81,7 @@ sub _init {
 
 ## VC to long to display featues dump an error message
     if( $vc_length > $max_length *1010 ) {
-        $self->errorTrack( "$type only displayed for less than $max_length Kb.");
+        $self->errorTrack( $self->my_label." only displayed for less than $max_length Kb.");
         return;
     }
 

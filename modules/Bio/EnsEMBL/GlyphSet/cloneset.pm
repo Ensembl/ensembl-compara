@@ -80,8 +80,9 @@ sub zmenu {
     foreach($f->embl_accs) {
         $zmenu->{"12:EMBL: $_" } = '';
     }
+    (my $state = $f->state)=~s/^\d\d://;
     $zmenu->{'13:Organisation: '.$f->organisation} = '' if($f->organisation);
-    $zmenu->{'14:State: '.substr($f->state,3)        } = ''              if($f->state);
+    $zmenu->{"14:State: $state"        } = ''              if($f->state);
     $zmenu->{'15:Seq length: '.$f->seq_len } = ''        if($f->seq_len);    
     $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
     $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    

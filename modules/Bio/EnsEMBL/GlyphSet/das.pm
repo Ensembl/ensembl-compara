@@ -66,8 +66,8 @@ sub _init {
     my $h = $self->{'textheight'};
     
     my @features;
-    warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
-    warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
+    #warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
+    #warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
     eval{
         @features = grep { $_->das_type_id() !~ /(contig|component|karyotype)/i } @{$vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[]};
     };
@@ -282,12 +282,13 @@ sub _init {
     
         $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
     }   
-    warn( $self->{'extras'}->{'caption'}." $C glyphs drawn from $T ( $C1 )" );
+    #warn( $self->{'extras'}->{'caption'}." $C glyphs drawn from $T ( $C1 )" );
 }
 
 sub bump{
     my ($self, $start, $end, $length, $dep ) = @_;
     my $bump_start = int($start * $self->{'pix_per_bp'} );
+       $bump_start --;
        $bump_start = 0 if ($bump_start < 0);
     
     $end = $start + $length if $end < $start + $length;

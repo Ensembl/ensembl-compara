@@ -25,4 +25,4 @@ sub zmenu {
         "Protein homology" => $self->href( $id ),
     };
 }
-;
+1;

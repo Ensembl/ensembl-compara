@@ -24,6 +24,7 @@ sub _init {
     my $black          = $Config->colourmap->id_by_name('black');
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? "&highlight=$highlights" : '';
+    my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
@@ -64,7 +65,7 @@ sub _init {
             'absolutey' => 1,
         });
         $self->push($tick);
-        $self->tag( $tick, "ruler_$i", $self->strand()==-1 ? 1 : 0, 0.5, 'grey80'  ); 
+        $self->join_tag( $tick, "ruler_$i", $self->strand()==-1 ? 1 : 0, 0.5, 'grey80'  ) if($REGISTER_LINE); 
 
         for( my $j = 1 ; $j < 5; $j ++ ) {
           my $t = new Sanger::Graphics::Glyph::Space({
@@ -75,7 +76,7 @@ sub _init {
             'absolutey' => 1,
           });
           $self->push($t);
-          $self->tag( $t, "ruler_$i"."_$j", 0, 0 , 'grey90'  ); 
+          $self->join_tag( $t, "ruler_$i"."_$j", 0, 0 , 'grey90'  ) if($REGISTER_LINE);  
         }
         if ($navigation eq 'on'){
             $self->interval(
@@ -168,7 +169,7 @@ sub _init {
             'absolutey' => 1,
           });
           $self->push($t);
-          $self->tag( $t, "ruler_99_$j", $self->strand()==-1 ? 1 : 0, 0.5, 'grey90'  );
+          $self->join_tag( $t, "ruler_99_$j", $self->strand()==-1 ? 1 : 0, 0.5, 'grey90'  ) if($REGISTER_LINE);
     }
 
     my $tick = new Sanger::Graphics::Glyph::Rect({
@@ -180,7 +181,7 @@ sub _init {
         'absolutex'  => 1,
         'absolutey'  => 1,
     });
-    $self->tag( $tick, "ruler_99" , $self->strand()==-1 ? 1 : 0, 0.5, 'grey80' ); 
+    $self->join_tag( $tick, "ruler_99" , $self->strand()==-1 ? 1 : 0, 0.5, 'grey80' ) if($REGISTER_LINE); 
     $self->push($tick);
 }
 
