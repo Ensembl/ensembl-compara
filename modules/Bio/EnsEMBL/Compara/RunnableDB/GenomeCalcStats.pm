@@ -51,13 +51,10 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::GenomeCalcStats;
 
 use strict;
+use Statistics::Descriptive;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
-
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Runnable::Blast;
-use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
@@ -167,32 +164,23 @@ sub calc_intergenic_stats
   my $sortedMembers = $memberDBA->fetch_by_source_taxon('ENSEMBLGENE', $self->{'genome_db'}->taxon_id);
   print(scalar(@{$sortedMembers}) . " members to process\n");
 
+  my $intergenic_stats = Statistics::Descriptive::Full->new();
+  my $genesize_stats = Statistics::Descriptive::Full->new();
+  my $overlapCount=0;
+  
   my $lastMember = undef;
-  my $count = 0;
-  my $distSum = 0;
-  my $minDist = undef;
-  my $maxDist = undef;
-  my $dist;
-  my $overlapCount = 0;
   foreach my $member (@{$sortedMembers}) {
+    $genesize_stats->add_data($member->chr_end - $member->chr_start);
+
     if($lastMember) {
       if($lastMember->chr_name ne $member->chr_name) {
         $lastMember = undef;
       }
       else {
-        $count++;
-        $dist = ($member->chr_start - $lastMember->chr_end);
-        $distSum += $dist;
+        my $dist = ($member->chr_start - $lastMember->chr_end);
+        $intergenic_stats->add_data($dist);
 
-        if($dist < 0) {
-          $overlapCount++;
-          # $self->print_member($lastMember, "lastMember");
-          # $self->print_member($member, "member, dist<0\n");
-        }
-
-        unless($minDist and $dist>$minDist) { $minDist=$dist; }
-        unless($maxDist and $dist<$maxDist) { $maxDist=$dist; }
-
+        $overlapCount++ if($dist < 0);
         $lastMember = $member;
       }
     }
@@ -201,29 +189,39 @@ sub calc_intergenic_stats
     }
   }
 
-  my $averageIntergenicDistance = scalar($distSum/$count);
+  $intergenic_stats->{'overlapCount'} = $overlapCount;
+  
+  print("intergenic overlap = ",$overlapCount,"\n");
+  print("intergenic overlap = ",$intergenic_stats->{'overlapCount'},"\n");
 
-  print("$count intergenic intervals\n");
-  print("$overlapCount overlapping genes\n");
-  print("$averageIntergenicDistance average intergenic distance\n");
-  print("maxDist = $maxDist\n");
-  print("minDist = $minDist\n");
+  $self->insert_statistics($intergenic_stats, 'intergenic');
+  $self->insert_statistics($genesize_stats, 'gene_size');  
+}
 
-  my $sql = "INSERT ignore into genome_db_stats SET"
-            ." genome_db_id=".$self->{'genome_db'}->dbID;
+
+sub insert_statistics
+{
+  my $self = shift;
+  my $stats = shift;
+  my $dataType = shift; 
+  
+  my $sql = "INSERT ignore INTO genome_db_stats SET data_type='$dataType'"
+            ." ,genome_db_id=".$self->{'genome_db'}->dbID
+            ." ,count='".$stats->count()."'"
+            ." ,mean='".$stats->mean()."'"
+            ." ,median='".$stats->median()."'"
+            ." ,mode='".$stats->mode()."'"
+            ." ,stddev='".$stats->standard_deviation()."'"
+            ." ,variance='".$stats->variance()."'"
+            ." ,min='".$stats->min()."'"
+            ." ,max='".$stats->max()."'";
+
+  $sql .=  " ,overlap_count='".$stats->{'overlapCount'}."'" if($stats->{'overlapCount'});
+
+  print("$sql\n");            
   my $sth = $self->db->prepare($sql);
   $sth->execute;
   $sth->finish;
-  
-  my $sql = "UPDATE genome_db_stats SET"
-            ." intergenic_mean='$averageIntergenicDistance'"
-            ." ,intergenic_min='$minDist'"
-            ." ,intergenic_max='$maxDist'"
-            ." WHERE genome_db_id=".$self->{'genome_db'}->dbID;
-  $sth = $self->db->prepare($sql);
-  $sth->execute;
-  $sth->finish;
-
 }
 
 
