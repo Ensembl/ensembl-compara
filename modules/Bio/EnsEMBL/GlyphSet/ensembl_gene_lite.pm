@@ -11,7 +11,8 @@ sub legend_captions {
     '_KNOWN' => 'Ensembl predicted genes (known)',
     '_PRED' => 'Ensembl predicted genes (pred)',
     '_ORTHO' => 'Ensembl predicted genes (ortholog)',
-    '_PSEUDO' => 'Ensembl predicted genes (known)',
+    '_PSEUDO' => 'Ensembl pseudogenes',
+    '_BACCOM' => 'Bacterial contaminant gene' ,
     '_' => 'Ensembl predicted genes (novel)',
   }
 }
@@ -23,12 +24,12 @@ sub ens_ID {
 
 sub gene_label {
   my( $self, $g ) = @_;
-  return $g->external_name || 'NOVEL';
+  return $g->type eq 'bacterial_contaminant' ? 'Bac. contam.' : ( $g->type eq 'pseudogene' ? 'Pseudogene' : ( $g->external_name || 'NOVEL' ) );
 }
 
 sub gene_col {
   my( $self, $g ) = @_;
-  return '_'.$g->external_status;
+  return $g->type eq 'bacterial_contaminant' ? '_BACCOM' : ( $g->type eq 'pseudogene' ? '_PSEUDO' : '_'.$g->external_status );
 }
 
 

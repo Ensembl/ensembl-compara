@@ -11,12 +11,13 @@ sub ens_ID {
 
 sub gene_label {
   my( $self, $g ) = @_;
-  return $g->external_name || 'NOVEL';
+  return $g->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $g->type eq 'pseudogene' ? 'Pseudogene' : ( $g->external_name || 'NOVEL' ) );
 }
 
 sub gene_col {
   my( $self, $g ) = @_;
-  return '_'.$g->external_status;
+  return $g->type eq 'bacterial_contaminant' ? '_BACCOM' : ( $g->type eq 'pseudogene' ? '_PSEUDO' : '_'.$g->external_status );
 }
+
 
 1;

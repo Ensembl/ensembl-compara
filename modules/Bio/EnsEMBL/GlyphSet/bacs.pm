@@ -17,7 +17,7 @@ sub zmenu {
     return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bacs', 'threshold_navigation' ) || 2e7) * 1000;
     my $zmenu = { 
         'caption'   => "BAC: @{[$f->get_scalar_attribute('name')]}",
-        '01:Status: @{[$f->get_scalar_attribute('status')]}" => ''
+        "01:Status: @{[$f->get_scalar_attribute('status')]}" => ''
     };
     foreach( $f->get_scalar_attribute('embl_accs') ) {
         $zmenu->{"02:bacend: $_"} = $self->ID_URL( 'EMBL', $_);

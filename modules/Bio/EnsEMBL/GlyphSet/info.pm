@@ -20,7 +20,7 @@ sub _init {
         'font'      => 'Tiny',
         'colour'    => 'black',
         'text'      => sprintf( "Ensembl %s    %s:%d-%d    %s",
-           @{[$self->{container}{_config_file_name_}]}, $self->{'container'}->name,
+           @{[$self->{container}{_config_file_name_}]}, $self->{'container'}->seq_region_name,
            $self->{'container'}->start(), $self->{'container'}->end,
            scalar( gmtime() )
         ),

@@ -72,10 +72,11 @@ sub _init {
   my $used_colours = {};
   my $FLAG = 0;
   foreach my $logic_name (split /\s+/, $Config->get($type,'logic_name') ) {
-   my $genes = $vc->get_all_Genes( $Config->get($type,'logic_name'), $database );
+   my $genes = $vc->get_all_Genes( $logic_name, $database );
    foreach my $g (@$genes) {
     my $gene_label = $self->gene_label( $g );
     my $GT         = $self->gene_col( $g );
+       $GT =~ s/XREF//g;
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ $gene_label } || $highlights{ $g->stable_id };
@@ -136,7 +137,9 @@ sub _init {
     $FLAG=1;
    }
   } 
+  warn "ADDING FEATURES....";
   if($FLAG) {
+    warn "TYPE $type ", $Config->get( $type, 'pos' );
     $Config->{'legend_features'}->{$type} = {
       'priority' => $Config->get( $type, 'pos' ),
       'legend'  => $self->legend( $used_colours )
@@ -149,7 +152,8 @@ sub legend {
   my @legend = ();
   my $lcap = $self->legend_captions();
   foreach my $key ( %{$lcap} ) {
-    push @legend, $lcap->{$_} => $colours->{$_} if exists $colours->{$_};
+    warn "$key $lcap->{$key} $colours->{$key}";
+    push @legend, $lcap->{$key} => $colours->{$key} if exists $colours->{$key};
   } 
   return \@legend;
 }

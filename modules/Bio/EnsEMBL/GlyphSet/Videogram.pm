@@ -95,8 +95,9 @@ sub _init {
         });
         $self->push($gpadding);        
     }
-    if( @$bands ) {
-      foreach my $band (@$bands){
+    my @bands =  sort{$a->start <=> $b->start } @$bands;
+    if( @bands ) {
+      foreach my $band (@bands){
         my $bandname       = $band->name();
         my $vc_band_start  = $band->start() + $v_offset;
         my $vc_band_end    = $band->end() + $v_offset;
@@ -237,8 +238,8 @@ sub _init {
         ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) ;
     
     foreach my $end ( 
-        ( @$bands && $bands->[ 0]->stain() eq 'tip' ? () : 0 ),
-        ( @$bands && $bands->[-1]->stain() eq 'tip' ? () : 1 )
+        ( @bands && $bands[ 0]->stain() eq 'tip' ? () : 0 ),
+        ( @bands && $bands[-1]->stain() eq 'tip' ? () : 1 )
      ) {
         my $direction = $end ? -1 : 1;
         foreach my $I ( 0..$#lines ) {

@@ -25,6 +25,7 @@ sub new {
     '_ORTH'     => 'green3',
     '_PREDXREF'  => 'red3',
     '_PRED'      => 'red3',
+    '_BACCOM'      => 'red',
     '_'          => 'black', 
     '_PSEUDO'   => 'grey50', 
     'refseq'    => 'blue',
@@ -52,6 +53,7 @@ sub new {
     'superhi'    => 'highlight2',
     'genomewise' => 'purple1',
     'estgene'    => 'purple1',
+    'est_gene'    => 'purple1',
   );
   $self->colourSet( 'cdna',
     'col'    => 'chartreuse3',

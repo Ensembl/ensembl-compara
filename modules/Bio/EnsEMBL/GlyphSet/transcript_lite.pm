@@ -35,7 +35,9 @@ sub colour {
 
     my $genecol = $colours->{ "_".$transcript->external_status };
 
-    if( $transcript->external_status eq '' and ! $translation_id ) {
+    if( $gene->type eq 'bacterial_contaminant' ) {
+       $genecol = $colours->{'_BACCOM'};
+    } elsif( $transcript->external_status eq '' and ! $translation_id ) {
        $genecol = $colours->{'_PSEUDO'};
     }
     if(exists $highlights{$transcript->stable_id()}) {
@@ -102,9 +104,14 @@ sub text_label {
         $id .= $eid ? " ($eid)" : '';
     }
     unless( $short_labels ){
-      $id .= $transcript->external_status eq  'PSEUDO' ? 
-            "\nEnsembl pseudogene" :
-            ( $eid ? "\nEnsembl known trans" : "\nEnsembl novel trans" );
+      $id .= "\n";
+      if( $gene->type eq 'bacterial_contaminant' ) {
+        $id.= 'Bacterial cont.';
+      } elsif( $transcript->translation ) {
+        $id.= $eid ? "Ensembl known trans" : "Ensembl novel trans";
+      } else {
+        $id .= "Ensembl pseudogene";
+      }
     }
     return $id;
     #$self->{'config'}->{'_transcript_names_'} eq 'yes' ? IGNORED

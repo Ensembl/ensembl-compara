@@ -29,11 +29,11 @@ sub features {
 ###             GREY
 
 sub colour {
-    my ($self, $f) = @_;
-    my $type = $f->get_scalar_attribute('mismatch') ? 'MISMATCH' : 
-               ($f->get_scalar_attribute('start_pos') eq $f->get_scalar_attribute('end_pos') ?
-                $f->get_scalar_attribute('start_pos') : 'DIFFERENT');
-    return $self->{'colours'}{"col_$type"}||'grey50', $self->{'colours'}{"lab_$type"}||'black', '';
+  my ($self, $f) = @_;
+  my $type = $f->get_scalar_attribute('mismatch') ? 'MISMATCH' : 
+            ($f->get_scalar_attribute('start_pos') eq $f->get_scalar_attribute('end_pos') ?
+             $f->get_scalar_attribute('start_pos') : 'DIFFERENT');
+  return $self->{'colours'}{"col_$type"}||'grey50', $self->{'colours'}{"lab_$type"}||'black', '';
 }
 
 ## Return the image label and the position of the label
@@ -41,46 +41,44 @@ sub colour {
 ## feature.
 
 sub image_label {
-    my ($self, $f ) = @_;
-    return (qq(@{[$f->get_scalar_attribute('name')]}),'overlaid');
+  my ($self, $f ) = @_;
+  return (qq(@{[$f->get_scalar_attribute('name')]}),'overlaid');
 }
 
 ## Link back to this page centred on the map fragment
 
 sub href {
-    my ($self, $f ) = @_;
-    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_scalar_attribute('name')]}";
+  my ($self, $f ) = @_;
+  return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_scalar_attribute('name')]}";
 }
 
 sub tag {
-    my ($self, $f) = @_; 
-    my @result = (); 
-    my $offset = $self->{'container'}->start - 1 ;
-    unless( $f->get_scalar_attribute('mismatch') ) {
-      if( $f->get_scalar_attribute('bac_start') < $f->seq_region_start ) {
-        push @result, {
-          'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
-          'start' => $f->get_scalar_attribute('bac_start') - $offset, 'end'    => $f->seq_region_start
-        }
-      }
-      if(  $f->get_scalar_attribute('bac_end') > $f->seq_region_end ) {
-      if( $f->bac_end && $f->bac_end > $f->seq_end ) {
-        push @result, {
-          'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
-          'start' => $f->seq_region_end,       'end'    => $f->get_scalar_attribute('bac_end') - $offset
-        }
-      }
+  my ($self, $f) = @_; 
+  my @result = (); 
+  my $offset = $self->{'container'}->start - 1 ;
+  unless( $f->get_scalar_attribute('mismatch') ) {
+    if( $f->get_scalar_attribute('bac_start') && $f->get_scalar_attribute('bac_start') < $f->seq_region_start ) {
+      push @result, {
+        'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
+        'start' => $f->get_scalar_attribute('bac_start') - $offset, 'end'    => $f->seq_region_start
+      };
     }
-   if( $f->get_scalar_attribute('FISHmap') ) {
-        push @result, {
-	    'style' => 'left-triangle',
-	    'colour' => $self->{'colours'}{"fish_tag"},
-	}
-   }
-    return @result;
+    if(  $f->get_scalar_attribute('bac_end') && $f->get_scalar_attribute('bac_end') > $f->seq_region_end ) {
+      push @result, {
+        'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
+        'start' => $f->seq_region_end,       'end'    => $f->get_scalar_attribute('bac_end') - $offset
+      };
+    }
+  }
+  if( $f->get_scalar_attribute('FISHmap') ) {
+    push @result, {
+      'style' => 'left-triangle',
+      'colour' => $self->{'colours'}{"fish_tag"},
+    };
+  }
+  return @result;
 }
-1;
-__END__
+
 ## Create the zmenu...
 ## Include each accession id separately
 sub zmenu {
