@@ -415,109 +415,86 @@ sub strands_reversed {
    return $self->{'strands_reversed'};
 }
 
-=head2 sequence_align_string
+=head2 alignment_strings
 
-  Arg  1     : Bio::EnsEMBL::Slice $consensus_slice
-               A slice covering the conensus area of this alignment
-  Arg  2     : Bio::EnsEMBL::Slice $query_slice
-               A slice covering the query_area of this alignment
-  Arg  3..   : list of String $flags
-               FRAG_SLICES = slices cover the dna frags
-               ALIGN_SLICES = slices cover just the aligned area
-               FIX_CONSENSUS = dont put dashes in consensus sequence on 
-               alignment printout
-               FIX_QUERY = dont put dashes in query sequence on alignment
-               CONSENSUS = return the consensus aligned sequence
-               QUERY = return the query aligned sequence
-  Example    : none
-  Description: returns representations of the aligned sequences according to
-               the flags.
-  Returntype : String
-  Exceptions : none
-  Caller     : general
+  Arg [1]    : list of string $flags
+               FIX_SEQ = does not introduce gaps (dashes) in seq (consensus) aligned sequence
+                         and delete the corresponding insertions in hseq aligned sequence
+               FIX_HSEQ = does not introduce gaps (dashes) in hseq (query) aligned sequence
+                         and delete the corresponding insertions in seq aligned sequence
+               NO_SEQ = return the seq (consensus) aligned sequence as an empty string
+               NO_HSEQ = return the hseq (query) aligned sequence as an empty string
+               This 2 last flags would save a bit of time as doing so no querying to the core
+               database in done to get the sequence.
+  Example    : $ga->alignment_strings or
+               $ga->alignment_strings("FIX_HSEQ") or
+               $ga->alignment_strings("NO_SEQ","FIX_SEQ")
+  Description: Allows to rebuild the alignment string of both the seq (consensus) and 
+               hseq (query) sequence using the cigar_string information and the slice 
+               and hslice objects
+  Returntype : array reference containing 2 strings
+               the first corresponds to seq (consensus)
+               the second corresponds to hseq (query)
+  Exceptions : 
+  Caller     : 
 
 =cut
 
-
-sub sequence_align_string {
-  my ( $self, $consensus_slice, $query_slice, @flags ) = @_;
-
-  my ( $cseq, $qseq );
-  my @cig = ( $self->cigar_line() =~ /(\d*[DIM])/g );
+sub alignment_strings {
+  my ( $self, @flags ) = @_;
 
   # set the flags
-  my ( $consensus, $query, $fix_consensus, $fix_query, $align_slices,
-       $frag_slices );
+  my $seq_flag = 1;
+  my $hseq_flag = 1;
+  my $fix_seq_flag = 0;
+  my $fix_hseq_flag = 0;
 
   for my $flag ( @flags ) {
-    if( $flag eq "CONSENSUS" ) { $consensus = 1 }
-    elsif( $flag eq "QUERY" ) { $query = 1 }
-    elsif( $flag eq "FIX_CONSENSUS" ) { $fix_consensus = 1 }
-    elsif( $flag eq "FIX_QUERY" ) { $fix_query = 1 }
-    elsif( $flag eq "ALIGN_SLICES" ) { $align_slices = 1 }
+    $seq_flag = 0 if ($flag eq "NO_SEQ");
+    $hseq_flag = 0 if ($flag eq "NO_HSEQ");
+    $fix_seq_flag = 1 if ($flag eq "FIX_SEQ");
+    $fix_hseq_flag = 1 if ($flag eq "FIX_HSEQ");
   } 
-  
-  # here fill cseq and qseq with the aligned area sequence
 
-  if( $align_slices ) {
-    $cseq = $consensus_slice->seq();
-    $qseq = $query_slice->seq();
-  } else {
-    $cseq = $consensus_slice->subseq( $self->consensus_start(),
-                                      $self->consensus_end(), 1 );
-    $qseq = $query_slice->subseq( $self->query_start(),
-				  $self->query_end(), $self->query_strand() );
-  }
+  my ($seq, $hseq);
+  $seq = $self->consensus_dnafrag->slice->subseq($self->consensus_start, $self->consensus_end) if ($seq_flag || $fix_seq_flag);
+  $hseq = $self->query_dnafrag->slice->subseq($self->query_start, $self->query_end) if ($hseq_flag || $fix_hseq_flag);
 
   my $rseq= "";
   # rseq - result sequence
+  my $rhseq= "";
+  # rhseq - result hsequence
 
-  my ( $cigCount, $cigType );
-  my ( $cpos, $qpos );
-  $cpos = 0; $qpos = 0;
+  my $seq_pos = 0;
+  my $hseq_pos = 0;
+
+  my @cig = ( $self->cigar_line =~ /(\d*[DIM])/g );
 
   for my $cigElem ( @cig ) {
-    $cigType = substr( $cigElem, -1, 1 );
-    $cigCount = substr( $cigElem, 0 ,-1 );
+    my $cigType = substr( $cigElem, -1, 1 );
+    my $cigCount = substr( $cigElem, 0 ,-1 );
     $cigCount = 1 unless $cigCount;
 
     if( $cigType eq "M" ) {
-      if( $consensus ) {
-        $rseq .= substr( $cseq, $cpos, $cigCount );
-      } else {
-        $rseq .= substr( $qseq, $qpos, $cigCount );
-      }
-      $cpos += $cigCount;
-      $qpos += $cigCount;
+        $rseq .= substr( $seq, $seq_pos, $cigCount ) if ($seq_flag);
+        $rhseq .= substr( $hseq, $hseq_pos, $cigCount ) if ($hseq_flag);
+      $seq_pos += $cigCount;
+      $hseq_pos += $cigCount;
     } elsif( $cigType eq "D" ) {
-      if( $consensus ) {
-        if( ! $fix_consensus ) {
-          $rseq .=  "-" x $cigCount;
-        }
-      } else {
-        if( ! $fix_consensus ) {
-          $rseq .= substr( $qseq, $qpos, $cigCount );
-        }
+      if( ! $fix_seq_flag ) {
+        $rseq .=  "-" x $cigCount if ($seq_flag);
+        $rhseq .= substr( $hseq, $hseq_pos, $cigCount ) if ($hseq_flag);
       }
-
-      $qpos += $cigCount;
+      $hseq_pos += $cigCount;
     } elsif( $cigType eq "I" ) {
-      if( $consensus ) {
-        if( ! $fix_query ) {
-          $rseq .= substr( $cseq, $cpos, $cigCount );
-        }
-      } else {
-        if( ! $fix_query ) {
-          $rseq .= "-" x $cigCount;
-        }
+      if( ! $fix_hseq_flag ) {
+        $rseq .= substr( $seq, $seq_pos, $cigCount ) if ($seq_flag);
+        $rhseq .= "-" x $cigCount if ($hseq_flag);
       }
-     
-      $cpos += $cigCount;
+      $seq_pos += $cigCount;
     }
-  }     
-  return $rseq;
+  }
+  return [ $rseq,$rhseq ];
 }
-
-
 
 1;
