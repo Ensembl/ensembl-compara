@@ -54,7 +54,8 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
                [-CONF_FILE] optional name of a file containing configuration
                information for comparas genome databases.  If databases are
                not added in this way, then they should be added via the
-               method add_DBAdaptor.
+               method add_DBAdaptor. An example of the conf file can be found
+               in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
   Example    :  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
 						    -user   => 'root',
 						    -dbname => 'pog',

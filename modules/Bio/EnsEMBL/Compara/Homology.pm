@@ -87,6 +87,16 @@ sub stable_id {
 
 sub display_id {
    my ($obj,$value) = @_;
+
+   warn "
+Deprecated method, you should get this info now going through the core DBAdaptor
+of the corresponding species. This can be done easily specifying a conf file
+when connecting to a compara (look in the perldoc) and then using the get_db_adaptor.
+Then use the fetch_by_stable_id in the core GeneAdaptor module.
+WARN: returning undef\n";
+
+   return undef;
+
    if( defined $value) {
       $obj->{'_display_id'} = $value;
     }
@@ -109,6 +119,16 @@ sub display_id {
 
 sub description {
    my ($obj,$value) = @_;
+
+   warn "
+Deprecated method, you should get this info now going through the core DBAdaptor
+of the corresponding species. This can be done easily specifying a conf file
+when connecting to a compara (look in the perldoc) and then using the get_db_adaptor.
+Then use the fetch_by_stable_id in the core GeneAdaptor module.
+WARN: returning undef\n";
+
+   return undef;
+
    if( defined $value) {
       $obj->{'_description'} = $value;
     }
@@ -132,6 +152,16 @@ sub description {
 
 sub chrom_start {
    my ($obj,$value) = @_;
+
+   warn "
+Deprecated method, you should get this info now going through the core DBAdaptor
+of the corresponding species. This can be done easily specifying a conf file
+when connecting to a compara (look in the perldoc) and then using the get_db_adaptor.
+Then use the fetch_by_stable_id in the core GeneAdaptor module.
+WARN: returning undef\n";
+
+   return undef;
+
    if( defined $value) {
       $obj->{'_chrom_start'} = $value;
     }
@@ -154,6 +184,16 @@ sub chrom_start {
 
 sub chrom_end {
    my ($obj,$value) = @_;
+
+   warn "
+Deprecated method, you should get this info now going through the core DBAdaptor
+of the corresponding species. This can be done easily specifying a conf file
+when connecting to a compara (look in the perldoc) and then using the get_db_adaptor.
+Then use the fetch_by_stable_id in the core GeneAdaptor module.
+WARN: returning undef\n";
+
+   return undef;
+
    if( defined $value) {
       $obj->{'_chrom_end'} = $value;
     }
@@ -177,6 +217,16 @@ sub chrom_end {
 
 sub chromosome {
    my ($obj,$value) = @_;
+
+   warn "
+Deprecated method, you should get this info now going through the core DBAdaptor
+of the corresponding species. This can be done easily specifying a conf file
+when connecting to a compara (look in the perldoc) and then using the get_db_adaptor.
+Then use the fetch_by_stable_id in the core GeneAdaptor module.
+WARN: returning undef\n";
+
+   return undef;
+
    if( defined $value) {
       $obj->{'_chromosome'} = $value;
     }
