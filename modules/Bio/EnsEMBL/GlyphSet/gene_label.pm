@@ -56,13 +56,14 @@ sub _init {
 		foreach my $DB_link ( @temp_geneDBlinks ){
 
 		    if( $DB_link->database() eq 'HUGO' ) {
-			$displaylink = $DB_link;
-			last;
+				$displaylink = $DB_link;
+				last;
 		    }
-		    if( $DB_link->database() eq  'SP' ||
-			$DB_link->database() eq  'SPTREMBL' ||
-			$DB_link->database() eq  'SCOP' ) {
-			$displaylink = $DB_link;
+		    if( 
+				$DB_link->database() eq  'SP' ||
+				$DB_link->database() eq  'SPTREMBL' ||
+				$DB_link->database() eq  'SCOP' ) {
+				$displaylink = $DB_link;
 		    }
 		}
 
@@ -73,6 +74,8 @@ sub _init {
 		    $label = $vg->id();
 		}
 		push @ids, $label;
+		print STDERR "Labels @ids\n";
+		
 
 	    } else {
 		$colour = $unknown_col;
@@ -94,6 +97,8 @@ sub _init {
 	my %union = ();
 	my %isect = ();
 	for my $e (@ids, $self->highlights()) { $union{$e}++ && $isect{$e}++ }
+	print STDERR "Hi:", scalar($self->highlights()), "\n";
+	
 	$hi_colour = $Config->get($Config->script(), 'gene', 'hi') if(scalar keys %isect > 0);
 
 	######################
