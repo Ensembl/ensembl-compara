@@ -77,9 +77,21 @@ sub zmenu {
   if( ref( $T ) eq 'HASH' ) {
     $T = $T->{ $self->object_type($id) } || $T->{'default'};
   }
-  $id =~ s/'/\'/g;
-  my @T = $T ? @$T : ();
-  my $zmenu = {( 'caption', map { s/###(\w+)###/my $M="SUB_$1";$self->$M($id)/eg; $_ } @T )} if $T && @T;
+  $id =~ s/'/\'/g; #'
+
+  my @T = @{$T||[]};
+  my @zmenus=('caption');
+  foreach my $t(@T){
+    if( $t =~ m/###(\w+)###/ ){
+      if( $self->can( "SUB_$1" ) ){
+        my $m="SUB_$1";
+        $t =~ s/###(\w+)###/$self->$m($id)/eg 
+      }                                 
+      else{ $t =~ s/###(\w+)###/$self->ID_URL( $1, $self->SUB_ID( $id ) )/eg }
+    }
+    push @zmenus, $t;
+  }
+
   my $extra_URL  = "/@{[$self->{container}{_config_file_name_}]}/featureview?type=";
      $extra_URL .= ( $self->my_config('CALL') eq 'get_all_ProteinAlignFeatures' ? 'ProteinAlignFeature' : 'DnaAlignFeature' );
      $extra_URL .= "&id=$id";
