@@ -1,5 +1,11 @@
 #!/usr/local/bin/perl -w
 
+BEGIN {
+    require "Bio/EnsEMBL/Compara/ComparaConf.pl";
+    # Can we have a way of reading a (local) ComparaConf.pl as well?
+    # e.g. if it exists in the current dir, use that one in preference
+}
+
 use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::FeatureFactory;
@@ -8,20 +14,29 @@ use Getopt::Long;
 
 $| = 1;
 
-my $qy_host = 'ecs1f.sanger.ac.uk';
-my $qy_dbname = 'alistair_mouse_si_Nov01';
-my $qy_dbuser = 'ensro';
-my $qy_static_type = "SI_Nov01";
+my %conf =  %::ComparaConf;
+
+my $sb_species = $conf{'sb_species'};
+my $sb_fragment_type = $conf{'sb_fragment_type'};
+my $sb_fragment_size = $conf{'sb_fragment_size'};
+my $qy_species = $conf{'qy_species'};
+my $qy_host = $conf{'qy_host'};
+my $qy_dbname = $conf{'qy_dbname'};
+my $qy_dbuser = $conf{'qy_dbuser'};
+my $qy_static_type = $conf{'qy_static_type'};
+my $qy_chr_name_restriction = $conf{'qy_chr_name_restriction'};
+my $qy_fragment_type = $conf{'qy_fragment_type'};
+my %qy_chr_length;
 
 my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $qy_host,
 					     -user => $qy_dbuser,
 					     -dbname => $qy_dbname);
 
-my $sth = $db->prepare("select max(chr_end - chr_start) from static_golden_path");
+my $sth = $db->prepare("select max(chr_end-chr_start) from static_golden_path where type=? and chr_name not like ?");
 
 my $max_contig_length;
 
-unless ($sth->execute()) {
+unless ($sth->execute($qy_static_type,$qy_chr_name_restriction)) {
   $db->throw("Failed execution of a select query");
 } else {
   ($max_contig_length) = $sth->fetchrow_array();  
@@ -35,10 +50,8 @@ while (defined (my $exonerate_output_file = shift @ARGV)) {
   while (defined (my $line = <F>)) {
     chomp $line;
     #cigar: 11.958792.959291 290 500 - AC007006.3.1.112027 108878 109088 + 996.00 M 210
-#    my ($qy_frag_id,$tg_contig_id,$score);
     if ($line =~ /^cigar:\s+(\S+)\s+(\d+)\s+(\d+)\s+([+-])\s+(\S+)\s+(\d+)\s+(\d+)\s+([+-])\s+(\d+\.\d+)\s+.*$/) {
       my ($qname,$qstart,$qend,$qstrand,$hname,$hstart,$hend,$hstrand,$score) = ($1,$2,$3,$4,$5,$6,$7,$8,$9);
-#      ($qy_frag_id,$tg_contig_id,$score) = ($1,$2,$3);
 
       $score = int($score);
       if ($qstrand eq "+") {$qstrand = 1}
@@ -58,7 +71,6 @@ while (defined (my $exonerate_output_file = shift @ARGV)) {
       $fp->hseqname($hname);
       $fp->score($score);
       push @{$frag_hits{$qname}{$hname}}, $fp;
-#      print $line,"\n";;
     } elsif ($line =~ /^(\S+)\s+(\S+)\s+(\d+)$/) {
       ($qy_frag_id,$tg_contig_id,$score) = ($1,$2,$3);
     }
@@ -86,25 +98,40 @@ while (defined (my $exonerate_output_file = shift @ARGV)) {
     }
     
     print STDERR "$qname\t$highest_hname\t$highest_score\n";
-#    next;
     my ($chr_name,$chr_start,$chr_end) = split /\./, $qname;
-    
-#    my $sth = $db->prepare("select c.id,c.internal_id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where s.raw_id=c.internal_id and s.chr_name=\"$chr_name\" and s.chr_end>=$chr_start and s.chr_start>=$chr_start - $max_contig_length + 1 and s.chr_start<=$chr_end");
 
-    ## if type condition has to be added, take this query
-    my $sth = $db->prepare("select c.id,c.internal_id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where s.raw_id=c.internal_id and s.chr_name=\"$chr_name\" and s.chr_end>=$chr_start and s.chr_start>=$chr_start - $max_contig_length + 1 and s.chr_start<=$chr_end and type=\"$qy_static_type\"");
-    
-    unless ($sth->execute()) {
-      $db->throw("Failed execution of a select query");
-    }
-    
-    while (my ($id,$internal_id,$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori) = $sth->fetchrow_array()) {
-      #Homo_sapiens:AC062026.2.140587.164530::Mus_musculus:c078004285.Contig1
-      print "Homo_sapiens:".$highest_hname."::Mus_musculus:".$id."\n";
+    if ($qy_fragment_type eq "raw") { 
+      my $sth = $db->prepare("select c.id,c.internal_id,s.chr_name,s.chr_start,s.chr_end,s.raw_start,s.raw_end,s.raw_ori from static_golden_path s,contig c where s.raw_id=c.internal_id and s.chr_name=? and s.chr_end>=? and s.chr_start>=? - ? + 1 and s.chr_start<=? and s.type=?");
+      
+      unless ($sth->execute($chr_name,$chr_start,$chr_start,$max_contig_length,$chr_end,$qy_static_type)) {
+	$db->throw("Failed execution of a select query");
+      }
+      
+      while (my ($id,$internal_id,$chr_name,$chr_start,$chr_end,$raw_start,$raw_end,$raw_ori) = $sth->fetchrow_array()) {
+	#Homo_sapiens:raw:AC062026.2.140587.164530::Mus_musculus:raw:c078004285.Contig1
+	print "$sb_species:$sb_fragment_type:$highest_hname"."::"."$qy_species:$qy_fragment_type:$id\n";
+      }
+    } elsif ($qy_fragment_type eq "vc") {
+
+      unless ($qy_chr_length{$chr_name}) {
+	my $sth = $db->prepare("select max(chr_end) from static_golden_path where chr_name=? and type=?");
+	
+	unless ($sth->execute($chr_name,$qy_static_type)) {
+	  $db->throw("Failed execution of a select query");
+	}
+
+	$qy_chr_length{$chr_name} = $sth->fetchrow_array();
+      }
+
+      for (my $start = $sb_fragment_size * int($chr_start/$sb_fragment_size) + 1;$start <= $chr_end;$start += $sb_fragment_size) {
+	my $end = $start + $sb_fragment_size - 1;
+	$end = $qy_chr_length{$chr_name} if ($end > $qy_chr_length{$chr_name});
+	my $id = $chr_name.".".$start.".".$end;
+	print "$sb_species:$sb_fragment_type:$highest_hname"."::"."$qy_species:$qy_fragment_type:$id\n";
+      }
     }
   }
 }
-
 
 
 ## Taken from CrossComparer slightly modified
