@@ -81,7 +81,7 @@ sub tag {
 
 sub zmenu {
     my ($self, $f ) = @_;
-    return if $self->{'container'}->length() > $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e10;
+    return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
     my $zmenu = { 
         'caption' => "Clone: ".$f->name,
         '01:bp: '.$f->seq_start."-".$f->seq_end => '',

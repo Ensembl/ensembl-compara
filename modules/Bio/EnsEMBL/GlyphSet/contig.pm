@@ -76,7 +76,6 @@ sub _init {
     eval {
         $useAssembly = $vc->has_MapSet( 'assembly' ); # Do we have assembly_contigs...
     };
-    print STDERR "Using assembly $useAssembly\n";
     my $i = 1;
     
     my %colours  = ( $i  => $col1, !$i => $col2 );

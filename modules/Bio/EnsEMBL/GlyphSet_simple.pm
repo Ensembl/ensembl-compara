@@ -178,7 +178,7 @@ sub _init {
             
             if( $style eq 'overlaid' ) {
                 if($bp_textwidth < ($end - $start)){
-                    print STDERR "X: $label - $label_colour\n";
+                   # print STDERR "X: $label - $label_colour\n";
         		    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
         		        'x'          => int(( $end + $start - $bp_textwidth)/2),
             		    'y'          => 1,

@@ -75,7 +75,7 @@ sub new {
         ########## install the glyphset managers
         ########## DAS first....
         my $DasManager = new Bio::EnsEMBL::GlyphSetManager::das($Container, $Config, $highlights, $strand);
-        my $das_offset = 200;
+        my $das_offset = $Config->{'_das_offset'} || 5500;
         for my $glyphset ($DasManager->glyphsets()) {
             my $row = $glyphset->das_name();
             ########## skip this row if user has it turned off
