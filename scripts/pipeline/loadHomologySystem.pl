@@ -142,7 +142,7 @@ sub prepareGenomeAnalysis
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
       -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy'
+      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_analysis->dbID);
@@ -306,7 +306,7 @@ sub prepareGenomeAnalysis
       -db_version      => '1',
       -logic_name      => 'SubmitHomologyPair',
       -input_id_type   => 'homology',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
+      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitHomology);
   if(defined($self->{'hiveDBA'})) {
