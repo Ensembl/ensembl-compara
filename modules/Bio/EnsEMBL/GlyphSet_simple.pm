@@ -60,7 +60,7 @@ sub _init {
 ## Decide whether we are going to include navigation (independent of switch) 
     $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1001);
     
-    my $h              = 8;
+    my $h              = 9;
 ## Get highlights...
     my %highlights;
     @highlights{$self->highlights()} = ();
@@ -103,7 +103,7 @@ sub _init {
         });
 ## Lets see about placing labels on objects...        
         my $composite;
-        my $rowheight = $h * 1.5;
+        my $rowheight = int($h * 1.5);
         if( $self->can('image_label')) {
             my ($label,$style) = $self->image_label( $f );
             my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
@@ -113,9 +113,10 @@ sub _init {
     	        if($bp_textwidth > ($end - $start)){
                     $composite = $glyph;
                 } else {
+                    print STDERR "X: $label - $label_colour\n";
         		    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
         		        'x'          => int(( $end + $start - $bp_textwidth)/2),
-            		    'y'          => 2,
+            		    'y'          => 1,
             		    'width'      => $bp_textwidth,
         	    	    'height'     => $th,
         		        'font'       => 'Tiny',
@@ -154,7 +155,7 @@ sub _init {
         if ($dep > 0){ # we bump
             my $bump_start = int($composite->x() * $pix_per_bp);
             $bump_start    = 0 if $bump_start < 0;
-            my $bump_end = $bump_start + ($composite->width() * $pix_per_bp);
+            my $bump_end = $bump_start + 1 + ($composite->width() * $pix_per_bp);
             $bump_end    = $bitmap_length if $bump_end > $bitmap_length;
             my $row = &Bump::bump_row(
                 $bump_start,    $bump_end,    $bitmap_length,    \@bitmap

@@ -5,10 +5,21 @@ use Bio::EnsEMBL::Glyph::Rect;
 @ISA = qw(Bio::EnsEMBL::Glyph::Rect);
 
 sub push {
-    my ($self, $glyph) = @_;
+  my ($self) = shift;
+  $self->_push_unshift('push',@_);
+}
 
-    return if (!defined $glyph);
+sub unshift {
+  my ($self) = shift;
+  $self->_push_unshift('unshift',@_);
+}
 
+sub _push_unshift {    
+  my $self      = shift;
+  my $direction = shift;
+  
+  foreach my $glyph ( ($direction eq 'push') ? @_ : reverse @_ ) {
+    next unless $glyph;
     my $gx = $glyph->x();
     my $gw = $glyph->width();
     my $gy = $glyph->y();
@@ -73,7 +84,12 @@ sub push {
     $glyph->x($gx - $self->x()) unless(defined $glyph->absolutex());
     $glyph->y($gy - $self->y()) unless(defined $glyph->absolutey());
 
-    push @{$self->{'composite'}}, $glyph;
+    if($direction eq 'push') {
+        push @{$self->{'composite'}}, $glyph;
+    } else {
+        unshift @{$self->{'composite'}}, $glyph;
+    }
+  }
 }
 
 sub first {
