@@ -234,11 +234,11 @@ sub method_link_species_set {
   my ($self, $method_link_species_set) = @_;
 
   if (defined($method_link_species_set)) {
-    thrown("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+    throw("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
         unless ($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
     $self->{'method_link_species_set'} = $method_link_species_set;
     if ($self->{'method_link_species_set_id'}) {
-      warning("Defining both method_link_species_set_id and method_link_species_set");
+#       warning("Defining both method_link_species_set_id and method_link_species_set");
       throw("method_link_species_set object does not match previously defined method_link_species_set_id")
           if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
     }
@@ -279,7 +279,7 @@ sub method_link_species_set_id {
   if (defined($method_link_species_set_id)) {
     $self->{'method_link_species_set_id'} = $method_link_species_set_id;
     if (defined($self->{'method_link_species_set'}) and $self->{'method_link_species_set_id'}) {
-      warning("Defining both method_link_species_set_id and method_link_species_set");
+#       warning("Defining both method_link_species_set_id and method_link_species_set");
       throw("method_link_species_set_id does not match previously defined method_link_species_set object")
           if ($self->{'method_link_species_set'} and
               $self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
@@ -327,12 +327,12 @@ sub genomic_align_array {
     }
     $self->{'genomic_align_array'} = $genomic_align_array;
 
-  } elsif (!defined($self->{'genomic_align_array'}) and defined($self->adaptor)
-        and defined($self->{'genomic_align_block_id'})) {
+  } elsif (!defined($self->{'genomic_align_array'}) and defined($self->{'adaptor'})
+        and defined($self->{'dbID'})) {
     # Fetch data from DB (allow lazy fetching of genomic_align_block objects)
-    my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor();
+    my $genomic_align_adaptor = $self->adaptor->db->get_GenomicAlignAdaptor();
     $self->{'genomic_align_array'} = 
-        $genomic_align_adaptor->fetch_all_by_genomic_align_block($self->{'genomic_align_block_id'});
+        $genomic_align_adaptor->fetch_all_by_genomic_align_block($self->{'dbID'});
   }
   
   return $self->{'genomic_align_array'};
