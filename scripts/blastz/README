@@ -22,11 +22,14 @@ ls *.sql|while read i;do mysql -h ecs4 -P3352 -u ensadmin -pensembl ucsc_chain_d
 
 ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz;mysqlimport -h ecs4 -P3352 -u ensadmin -pensembl ucsc_chain_data_Hs34Rn3 $i;gzip $i;echo $i loaded;done
 
- create a new index, not necessary, I created it just for conviniance for debugging :)
-
-create index chainId on netRn3 (chainId); 
+# create a new index, not necessary, I created it just for conviniance for debugging :)
+# create index chainId on netRn3 (chainId); 
 
 Load in compara
 
-~/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl -ucsc_host ecs4 -ucsc_port 3352 -ucsc_dbname ucsc_chain_data_Mm32Rn3 -host ecs2 -port 3364 -dbuser ensadmin -dbpass ensembl -dbname ensembl_compara_20_abel -alignment_type BLASTZ_NET -tSpecies Rn3 -tgenome_db_id  2 -qgenome_db_id 3 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/Compara.conf
+mysql -h ecs4 -P3352 -u ensro -N -e "show tables" ucsc_chain_data_Mm33Rn3|awk -F "_chain" '/^chr/ {print $1}'|sort -u|while read i;do bsub -o $i.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl --ucsc_dbname ucscMm33Rn3 --dbname abelcompara24test --tSpecies mouse  --tName $i --qSpecies Rn3 --alignment_type BLASTZ_NET ;done
 
+WARNING: The only requirement here is that the registry alias name of the --qSpecies (in the example Rn3) has 
+to be the same as the name of the netRn3 table in the UCSC database.
+For example, if the net table from UCSC is named netGalGal2, the registry alias name of the corresponding chicken core
+database has to be GalGal2.
