@@ -209,8 +209,6 @@ my $qy_exon_no=scalar(@{$qy_exons});
 my $cs_exon_no=scalar(@{$cs_exons});
 
 
-Here*************************************************
-
 my $Qseq=$sliceQ->seq;
 my $Tseq=$sliceT->seq;
 my @Qs=split //,$Qseq;
@@ -678,7 +676,7 @@ else{
 		print DATA "$ok($x)\t$array->{sps1}\t$array->{chr1}\t$array->{prog}\t$array->{feat}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\n";
 		
 		
-		print TSTATS "$array->{sps1}\t$array->{chr1}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$array->{len}\t$array->{sum_len}\n"; 
+		print TSTATS "$array->{sps1}\t$array->{chr1}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{cigar}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$array->{len}\t$array->{sum_len}\t$array->{Q_gene_no}\t$array->{T_gene_no}\t$array->{Q_exon_no}\t$array->{T_exon_no}\n"; 
 		
 		$prev{T_start}=$array->{T_start};
 		
