@@ -10,7 +10,7 @@ sub features {
   my ($self) = @_;
   
   my @snps = sort { $a->type() cmp $b->type() || $a->start() <=> $b->start()}  
-                  grep { $_->mapweight < 4 } $self->{'container'}->get_all_SNPs();
+                  grep { $_->score < 4 } $self->{'container'}->get_all_SNPs();
 
   if(@snps) {
     $self->{'config'}->{'snp_legend_features'}->{'snps'} 
@@ -61,7 +61,7 @@ sub zmenu {
         'caption'           => "SNP: ".$f->id(),
         '01:SNP properties' => $self->href( $f ),
         "02:bp: $chr_start" => '',
-        '08:mapweight: '.$f->mapweight => '',
+        '08:score: '.$f->score => '',
      
    );
 

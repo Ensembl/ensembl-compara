@@ -31,6 +31,7 @@ sub genes {
     $self->{'container'}->get_all_PredictionTranscripts('Genscan');
 
   #wrap each transcript in a gene object
+  warn( join "\nXX\t", @transcripts ) ;
   foreach my $transcript (@transcripts) {
     my $gene = new Bio::EnsEMBL::Gene();
 

@@ -81,7 +81,7 @@ sub _init {
     my $dep            = $Config->get($type, 'dep');
 
     foreach my $f ( $self->features ){
-        warn( "feature $f\n" );
+        # warn( "feature $f\n" );
         next if( $strand_flag eq 'b' && $strand != $f->strand );
         next if( $f->start < 1 || $f->end > $length );
 
