@@ -208,7 +208,7 @@ sub y {
 #
 sub highlights {
     my ($self) = @_;
-    return @{$self->{'highlights'}};
+    return defined $self->{'highlights'} ? @{$self->{'highlights'}} : ();
 }
 
 sub minx {
@@ -274,4 +274,74 @@ sub transform {
     }
 }
 
+###
+### gene_specific functions 
+###
+sub virtualGene_details {
+    my ($self, $vg, %highlights) = @_;
+
+    my $highlight = 0;
+    my $genetype  = 'unknown';
+    my $label     = "NOVEL";
+    if ($vg->gene->is_known) {
+        $genetype = 'known';
+        my @temp_geneDBlinks = $vg->gene->each_DBLink();
+    # find a decent label:
+        $label = $vg->id();
+        $highlight = 1 if exists $highlights{$label}; # check for highlighting
+        ( $label, $highlight ) = $self->_label_highlight( $label, $highlight, \%highlights, \@temp_geneDBlinks );
+        
+    }
+    return ( $genetype, $label, $highlight, $vg->start(), $vg->end() );
+}
+
+sub _label_highlight {
+    my ($self,$label,$highlight,$highlights,$dblinks) = @_;
+    my $max_pref = 0;
+    my %db_names = ( # preference for naming scheme!
+        'HUGO'          => 100, 'SP'            =>  90,
+        'SWISS-PROT'    =>  80, 'SPTREMBL'      =>  70,
+        'SCOP'          =>  60, 'LocusLink'     =>  50,
+        'RefSeq'        =>  40 
+    );
+
+    foreach ( @$dblinks ) {
+        my $db = $_->database();
+        # reset if precedence is higher!
+        #print STDERR "_l_h:\t".ref($self)."\t$db\t$db_names{$db}\t".$_->display_id()."\t|\n";
+        if( $db_names{$db} ) {
+            $highlight = 1 if exists $highlights->{$_->display_id()}; # check for highlighting
+            # if this is a more prefered label then we will use it!
+            if( $db_names{$db}>$max_pref) {
+                $label = $_->display_id();
+                $max_pref = $db_names{$db};
+            }
+        }
+    }
+    return($label, $highlight);
+}
+
+sub externalGene_details {
+    my ($self, $vg, $vc_id, %highlights) = @_;
+
+    my $highlight = 0;
+    my $label     = "NOVEL";
+    my $start;
+    my $end;
+    
+    my $genetype   = ($vg->type() =~ /pseudo/) ? 'pseudo' : 'ext';
+    foreach my $trans ($vg->each_Transcript){
+        foreach my $exon ( $trans->each_Exon ) {
+            if($exon->seqname eq $vc_id) {
+                $start = $exon->start if ( $exon->start < $start || !defined $start );
+                $end   = $exon->end   if ( $exon->end   > $end   || !defined $end );
+		    }
+    	}
+    }
+    $label  = $vg->id;
+    $highlight = 1 if exists $highlights{$label};
+    $label  =~ s/gene\.//;
+    $highlight = 1 if exists $highlights{$label};
+    return ( $genetype, $label, $highlight, $start, $end );
+}
 1;

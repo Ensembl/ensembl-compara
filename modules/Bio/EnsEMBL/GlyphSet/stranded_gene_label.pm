@@ -50,6 +50,7 @@ sub _init {
     my $pseudo_col     = $Config->get('stranded_gene_label','pseudo');
     my $known_col      = $Config->get('stranded_gene_label','known');
     my $unknown_col    = $Config->get('stranded_gene_label','unknown');
+    my $hi_colour      = $Config->get('stranded_gene_label','hi');
     my $pix_per_bp     = $Config->transform->{'scalex'};
     my $bitmap_length  = int($vc->length * $pix_per_bp);
     my $fontname       = "Tiny";
@@ -67,52 +68,15 @@ sub _init {
 
     for my $vg (@allgenes) {
 	
-	my ($start, $colour, $label, $hi_colour);
+	my ($start, $genetype, $highlight, $colour, $label);
 	
-	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
-	    ########## skip if this one isn't on the strand we're drawing
-        next if( $vg->strand() != $self->strand() );
-        $start = $vg->start();
-	    if($vg->gene->is_known()) {
-                # this is duplicated  from gene_label.pm, so needs refactoring ...
-	    	$colour = $known_col;
-            my @temp_geneDBlinks = $vg->gene->each_DBLink();
-	 	
-                # find a decent label:
-            my $max_pref = 0;
-            $label = $vg->id();
-    		foreach my $DB_link ( @temp_geneDBlinks ) {
-                my $db = $DB_link->database();
-                # reset if precedence is higher!
-                if( $db_names{$db} && $db_names{$db}>$max_pref) {
-                    $label = $DB_link->display_id();
-                    $max_pref = $db_names{$db};
-                }
-    		}
-            # check for highlighting
-	    	if (exists $highlights{$label}){
-    		    $hi_colour = $Config->get( 'stranded_gene_label', 'hi');
-    		}
-        } else {
-	    	$colour = $unknown_col;
-    		$label	= "NOVEL";
-	    }
-	} else {
-        next if(($vg->each_Transcript())[0]->strand_in_context($vc->id()) != $self->strand());    
-	    ########## skip if it's not on the strand we're drawing
-		$colour   =  ($vg->type() =~ /pseudo/) ? $pseudo_col : $ext_col;
-        $start = undef;
-	    foreach my $trans ($vg->each_Transcript){
-    		foreach my $exon ( $trans->each_Exon ) {
-#                print STDERR "XX: ".join(' -- ',$exon->seqname(),$vc->id(),$exon->start,$start,"\n");
-    		    if( ($exon->seqname eq $vc->id) && ( $exon->start < $start || !defined $start) ) { 
-        			$start = $exon->start;
-		        }
-	        }
-	    }
-	    $label  = $vg->id;
-	    $label  =~ s/gene\.//;
-	}
+    if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
+        ($genetype, $label, $highlight, $start) = $self->virtualGene_details( $vg, %highlights );
+        $colour = $genetype eq 'known' ? $known_col : $unknown_col;
+    } else { # EXTERNAL ANNOYING GENES
+        ($genetype, $label, $highlight, $start) = $self->externalGene_details( $vg, $vc->id, %highlights );
+        $colour   = $genetype eq 'pseudo' ? $pseudo_col : $ext_col;
+    }
 
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({});
 	
@@ -131,7 +95,7 @@ sub _init {
 	});
 
 	$Composite->push($tglyph);
-	$Composite->colour($hi_colour) if(defined $hi_colour);
+	$Composite->colour($hi_colour) if($highlight);
 
 	##################################################
 	# Draw little taggy bit to indicate start of gene

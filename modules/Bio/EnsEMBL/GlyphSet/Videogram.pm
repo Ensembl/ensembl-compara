@@ -92,7 +92,10 @@ sub _init {
 		my $stain          = $band->stain();
 
 #	print STDERR "$chr band:$bandname stain:$stain start:$vc_band_start end:$vc_band_end\n";		
-		my $HREF = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&vc_start=$vc_band_start&vc_end=$vc_band_end";
+		my $HREF;
+		if($self->{'config'}->{'_band_links'}) {
+			$HREF = "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&vc_start=$vc_band_start&vc_end=$vc_band_end";
+		}
 		if ($stain eq "acen"){
 		    my $gband;
 		    if ($done_1_acen){
@@ -223,13 +226,22 @@ sub _init {
     #######################################
     # Do the highlighting bit at the end!!!
     #######################################
-	foreach( @{$self->{'highlights'}->{$chr}} ) {
+  if($self->{'highlights'}->{"chr$chr"}) {
+	my $high_flag = 'l';
+	
+	foreach( sort { $a->{'start'} <=> $b->{'start'} } @{$self->{'highlights'}->{"chr$chr"}} ) {
 		my $start     = $v_offset + $_->{'start'};
 		my $end       = $v_offset + $_->{'end'};
-		my $type      = "highlight_$_->{'type'}";
+		my $type;
+		if( $_->{'type'} eq 'arrow' ) {
+			$type      = "highlight_$high_flag".'harrow';
+			$high_flag = $high_flag eq 'r' ? 'l' : 'r';
+		} else {
+			$type      = "highlight_$_->{'type'}";
+		}
 		my $zmenu     = $_->{'zmenu'};
 		my $col		  = $_->{'col'};
-		
+		print STDERR "$type: $start: $end: $zmenu: $col\n";
     	########## dynamic require of the right type of renderer
 		if($self->can($type)) {
 			$self->$type( {
@@ -240,12 +252,13 @@ sub _init {
 				'h_offset' => $h_offset,
 				'wid'    => $wid,
 				'padding'  => $padding,
-				'padding2'  => $padding * $bpperpx & sqrt(3)/2,
+				'padding2'  => $padding * $bpperpx * sqrt(3)/2,
 				'zmenu'    => $zmenu,
 				'col'	   => $col,
 			} );
 		}
 	}
+  }
 }
 
 sub highlight_box {
