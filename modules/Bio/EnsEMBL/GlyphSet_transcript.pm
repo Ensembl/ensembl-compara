@@ -106,76 +106,64 @@ sub _init {
         next if $target_gene && ($gene->stable_id() ne $target_gene);
 
         foreach my $transcript ($gene->get_all_Transcripts()) {
-	        #sort exons on their start coordinate
+	    #sort exons on their start coordinate
             my @exons = sort {$a->start <=> $b->start} $transcript->get_all_Exons();
             # Skip if no exons for this transcript
-	        next if (@exons == 0);
-	        # If stranded diagram skip if on wrong strand
-	        next if (@exons[0]->strand() != $strand);
-	        # For exon_structure diagram only given transcript
-	        next if $target && ($transcript->stable_id() ne $target);
+	    next if (@exons == 0);
+	    # If stranded diagram skip if on wrong strand
+	    next if (@exons[0]->strand() != $strand);
+	    # For exon_structure diagram only given transcript
+	    next if $target && ($transcript->stable_id() ne $target);
 
             $transcript_drawn=1;        
             my $Composite = new Bio::EnsEMBL::Glyph::Composite({'y'=>$y,'height'=>$h});
         
             $Composite->{'href'} = $self->href( $gene, $transcript );
 	
-	        $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
+	    $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
 	
-	        my($colour, $hilight) = 
-	            $self->colour( $gene, $transcript, $colours, %highlights );
+	    my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
 
             my $coding_start = $transcript->coding_start() || $transcript->start();
             my $coding_end   = $transcript->coding_end()   || $transcript->end();
 
             for(my $i = 0; $i < @exons; $i++) {
-	            my $exon = @exons[$i];
-	  
-	  #Skip this exon if it is not defined (can happen w/ genscans)
-	            next unless defined $exon; 
+	         my $exon = @exons[$i];
+	         next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 
+	         my $next_exon = ($i+1 < scalar(@exons)) ? @exons[$i+1] : undef;
+	         #First draw the exon
+	         # We are finished if this exon starts outside the slice
+	         last if $exon->start() > $length;
 
-	            my $next_exon = ($i+1 < scalar(@exons)) ? @exons[$i+1] : undef;
-	    
-	  #First draw the exon
-	  # We are finished if this exon starts outside the slice
-	            last if $exon->start() > $length;
+	         my($box_start, $box_end);
 
-	            my($box_start, $box_end);
-
-	  # only draw this exon if is inside the slice
-	            if($exon->end() > 0) {
-	    #calculate exon region within boundaries of slice
-	                $box_start = $exon->start();
-	                $box_start = 1 if $box_start < 1 ;
-                    $box_end = $exon->end();
-	                $box_end = $length if$box_end > $length;
-                }
-	            if($box_start < $coding_start || $box_end > $coding_end ) {
+	         # only draw this exon if is inside the slice
+	         if($exon->end() > 0) { #calculate exon region within boundaries of slice
+	             $box_start = $exon->start();
+	             $box_start = 1 if $box_start < 1 ;
+                     $box_end = $exon->end();
+	             $box_end = $length if$box_end > $length;
+	             if($box_start < $coding_start || $box_end > $coding_end ) {
 	      # The start of the transcript is before the start of the coding
 	      # region OR the end of the transcript is after the end of the
 	      # coding regions.  Non coding portions of exons, are drawn as
 	      # non-filled rectangles
-
 	      #Draw a non-filled rectangle around the entire exon
-	                my $rect = new Bio::EnsEMBL::Glyph::Rect({
-                        'x'         => $box_start,
-                        'y'         => $y,
-                        'width'     => $box_end-$box_start,
-                        'height'    => $h,
-                        'bordercolour' => $colour,
-                        'absolutey' => 1,
-		            });
-	                $Composite->push($rect);
-                }
-
-	    #
+	                 $Composite->push(new Bio::EnsEMBL::Glyph::Rect({
+                            'x'         => $box_start,
+                            'y'         => $y,
+                            'width'     => $box_end-$box_start,
+                            'height'    => $h,
+                            'bordercolour' => $colour,
+                            'absolutey' => 1,
+		        }));
+            	     } 
 	    # Calculate and draw the coding region of the exon
-	    #
-	            my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
-	            my $filled_end   = $coding_end > $coding_end  ? $coding_end   : $box_end;
+	             my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
+	             my $filled_end   = $coding_end > $coding_end  ? $coding_end   : $box_end;
 	    # only draw the coding region if there is such a region
-	            if( $filled_start <= $filled_end ) {
-	      #Draw a filled rectangle in the coding region of the exon
+	             if( $filled_start <= $filled_end ) {
+	    #Draw a filled rectangle in the coding region of the exon
         	        my $rect = new Bio::EnsEMBL::Glyph::Rect({
                         'x'         => $filled_start,
                         'y'         => $y,
@@ -184,11 +172,10 @@ sub _init {
                         'colour'    => $colour,
                         'absolutey' => 1 });
 	                $Composite->push($rect);
-	            }
-	        } 
-	    
+	             }
+	          } 
 	  #we are finished if there is no other exon defined
-            last unless defined $next_exon;
+                last unless defined $next_exon;
 
 	  #calculate the start and end of this intron
 	        my $intron_start = $exon->end() + 1;
@@ -201,14 +188,14 @@ sub _init {
 	        last if($intron_start > $length);
 	  
 	  #calculate intron region within slice boundaries
-	        $box_start = $intron_start < 1 ? 1 : $box_start;
+	        $box_start = $intron_start < 1 ? 1 : $intron_start;
 	        $box_end   = $intron_end > $length ? $length : $intron_end;
 
 	        my $intron;
 
-            if( $box_start == $intron_start && $box_end == $intron_end ) {
+                if( $box_start == $intron_start && $box_end == $intron_end ) {
 	    # draw an wholly in slice intron
-	            $intron = new Bio::EnsEMBL::Glyph::Intron({
+	            $Composite->push(new Bio::EnsEMBL::Glyph::Intron({
                     'x'         => $box_start,
                     'y'         => $y,
                     'width'     => $box_end-$box_start,
@@ -216,10 +203,10 @@ sub _init {
                     'colour'    => $colour,
                     'absolutey' => 1,
                     'strand'    => $strand,
-                });
+                    }));
 	        } else { 
 	      # else draw a "not in slice" intron
-                $intron = new Bio::EnsEMBL::Glyph::Line({
+                $Composite->push(new Bio::EnsEMBL::Glyph::Line({
                      'x'         => $box_start,
                      'y'         => $y+int($h/2),
                      'width'     => $box_end-$box_start,
@@ -227,13 +214,12 @@ sub _init {
                      'absolutey' => 1,
                      'colour'    => $colour,
                      'dotted'    => 1,
-                 });
+                 }));
+                 }
             }
-	        $Composite->push($intron);
-        }
                 
-        my $bump_height = 1.5 * $h;
-        if( $Config->{'_add_labels'} ) {
+            my $bump_height = 1.5 * $h;
+            if( $Config->{'_add_labels'} ) {
 	        if(my $text_label = $self->text_label($gene, $transcript) ) {
                 my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
 	            my $width_of_label = $font_w_bp * 1.15 * (length($text_label) + 1);
@@ -250,28 +236,22 @@ sub _init {
 	            $Composite->push($tglyph);
 	            $bump_height = 1.7 * $h + $font_h_bp;
 	        }
-        }
+            }
  
         ########## bump it baby, yeah! bump-nology!
-        my $bump_start = int($Composite->x * $pix_per_bp);
-        $bump_start = 0 if ($bump_start < 0);
+            my $bump_start = int($Composite->x * $pix_per_bp);
+            $bump_start = 0 if ($bump_start < 0);
     
-        my $bump_end = $bump_start + int($Composite->width * $pix_per_bp)+1;
-        if ($bump_end > $bitmap_length) { $bump_end = $bitmap_length };
-    
-        my $row = &Bump::bump_row(
-            $bump_start,
-            $bump_end,
-            $bitmap_length,
-            \@bitmap
-        );
+            my $bump_end = $bump_start + int($Composite->width * $pix_per_bp)+1;
+            $bump_end = $bitmap_length if $bump_end > $bitmap_length;
+            my $row = &Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap);
     
         ########## shift the composite container by however much we're bumped
-        $Composite->y($Composite->y() - $strand * $bump_height * $row);
-        $Composite->colour($hilight) if(defined $hilight && !defined $target);
-        $self->push($Composite);
+            $Composite->y($Composite->y() - $strand * $bump_height * $row);
+            $Composite->colour($hilight) if(defined $hilight && !defined $target);
+            $self->push($Composite);
         
-        if($target) {     
+            if($target) {     
 	  # check the strand of one of the transcript's exons
 	        my ($trans_exon) = $transcript->get_all_Exons();
 	        if($trans_exon->strand() == 1) {
@@ -311,17 +291,18 @@ sub _init {
                 });
 	            $self->push($clip1);
 	        }
-        }
-    }
-      
-    if($transcript_drawn) {
-        my ($key, $priority, $legend) = $self->legend( $colours );
-        $Config->{'legend_features'}->{$key} = {
-            'priority' => $priority,
-            'legend'   => $legend
-	    } if defined($key);
-    } elsif( $Config->get('_settings','opt_empty_tracks')!=0) {
-        $self->errorTrack( "No ".$self->error_track_name()." in this region" );
-    }
+           }  
+      }
+      }
+          if($transcript_drawn) {
+             my ($key, $priority, $legend) = $self->legend( $colours );
+             $Config->{'legend_features'}->{$key} = {
+                'priority' => $priority,
+                'legend'   => $legend
+	     } if defined($key);
+      } elsif( $Config->get('_settings','opt_empty_tracks')!=0) {
+          $self->errorTrack( "No ".$self->error_track_name()." in this region" );
+     }
+
 }
 1;
