@@ -239,8 +239,11 @@ sub prepBlastzPair
   my $logic_name = "blastz-".$hexkey;
   $blastz_template->logic_name($logic_name);
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($blastz_template);
+  my $stats = $blastz_template->stats;
+  $stats->hive_capacity(800);
+  $stats->update();
 
-  
+
   print("  query :\n");
   $genomic_align_conf->{'query'}->{'analysis_job'} = "SubmitBlastZ-$hexkey";
   $self->store_masking_options($genomic_align_conf->{'query'});
