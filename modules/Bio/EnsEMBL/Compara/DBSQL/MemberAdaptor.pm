@@ -338,12 +338,13 @@ sub fetch_by_relation_source_taxon {
 
 =head2 fetch_by_subset_id
 
-  Arg [1]    :
-  Example    :
-  Description:
-  Returntype :
+  Arg [1]    : int subset_id
+  Example    : @members = @{$memberAdaptor->fetch_by_subset_id($subset_id)};
+  Description: given a subset_id, does a join to the subset_member table
+               to return a list of Member objects in this subset
+  Returntype : list by reference of Compara::Member objects
   Exceptions :
-  Caller     :
+  Caller     : general
 
 =cut
 
@@ -359,6 +360,31 @@ sub fetch_by_subset_id {
   return $self->_generic_fetch($constraint, $join);
 }
 
+
+=head2 fetch_gene_for_peptide_member_id
+
+  Arg [1]    : int member_id of a peptide member
+  Example    : $geneMember = $memberAdaptor->fetch_gene_for_peptide_member_id($peptide_member_id);
+  Description: given a member_id of a peptide member,
+               does a join to the member_gene_peptide table returning a single object
+  Returntype : Bio::EnsEMBL::Compara::Member object
+  Exceptions :
+  Caller     : general
+
+=cut
+
+sub fetch_gene_for_peptide_member_id {
+  my ($self, $peptide_member_id) = @_;
+
+  $self->throw() unless (defined $peptide_member_id);
+
+  my $constraint = "mgp.peptide_member_id = '$peptide_member_id'";
+
+  my $join = [[['member_gene_peptide', 'mgp'], 'm.member_id = mgp.gene_member_id']];
+
+  my ($obj) = @{$self->_generic_fetch($constraint, $join)};
+  return $obj
+}
 
 #
 # INTERNAL METHODS
