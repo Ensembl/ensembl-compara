@@ -81,7 +81,6 @@ sub new {
 
 sub fetch_by_dbID {
     my ($self,$id,$row_id) = @_;
-#    print STDERR "ai3,ari3: $id,$row_id\n";
     return $self->fetch_GenomicAlign_by_dbID($id,$row_id);
 }
 
@@ -330,7 +329,7 @@ sub store {
        my $sth2 = $self->prepare("insert into align_row (align_id) values ($align_id)");
        $sth2->execute();
        my $row_id = $sth2->{'mysql_insertid'};
-
+       
        foreach my $a ( $ab->get_AlignBlocks ) {
 	   $sth3->execute($align_id,
 			  $a->align_start,
@@ -369,7 +368,7 @@ sub store {
 =cut
 
 sub fetch_by_dnafrag{
-   my ($self,$dnafrag) = @_;
+   my ($self,$dnafrag,$start,$end) = @_;
 
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
     unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
@@ -377,9 +376,14 @@ sub fetch_by_dnafrag{
    #formating the $dnafrag
 	
    my $dnafrag_id = $dnafrag->dbID;
-	
-   my $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.dnafrag_id=$dnafrag_id and d.dnafrag_id = gab.dnafrag_id group by gab.align_id,gab.align_row_id";
    
+   my $sql;
+   unless (defined $start && defined $end) {
+     $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.dnafrag_id=$dnafrag_id and d.dnafrag_id = gab.dnafrag_id group by gab.align_id,gab.align_row_id";
+   } else {
+     $sql = "select gab.align_id,gab.align_row_id from genomic_align_block gab,dnafrag d where d.dnafrag_id=$dnafrag_id and d.dnafrag_id = gab.dnafrag_id and gab.raw_start<=$end and gab.raw_end>=$start group by gab.align_id,gab.align_row_id";
+   }
+
    my $sth = $self->prepare($sql);
 
    $sth->execute();
@@ -433,7 +437,12 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
   my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,$dnafrag_type);
   
   foreach my $df (@list_dnafrag) {
-    my @genomicaligns = $self->fetch_by_dnafrag($df);
+    my @genomicaligns;
+    if ($dnafrag_type eq "VirtualContig") {
+      @genomicaligns = $self->fetch_by_dnafrag($df);
+    } elsif ($dnafrag_type eq "Chromosome") {
+      @genomicaligns = $self->fetch_by_dnafrag($df,$chr_start,$chr_end);
+    }
 
     foreach my $genomicalign (@genomicaligns) {
 
@@ -442,7 +451,6 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
         my %alignblocks;
 
         foreach my $alignblock ($alignblockset->get_AlignBlocks) {
-#	  print STDERR $alignblock->dnafrag->genomedb->name," ",$alignblock->align_start."-".$alignblock->align_end,"\n";
 	  $alignblocks{$alignblock->dnafrag->genomedb->name}{$alignblock->align_start."-".$alignblock->align_end} = $alignblock;
 	} 
 
@@ -452,16 +460,26 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
 	  my $alignblock2 = $alignblocks{$qy_species}{$key};	
 	  
 	  next unless (defined $alignblock2);
-	  
-	  my ($chr_name1,$chr_start1,$chr_end1) = split /\./, $alignblock1->dnafrag->name;
-	  $alignblock1->start($alignblock1->start + $chr_start1 - 1);
-	  $alignblock1->end($alignblock1->end + $chr_start1 - 1);
-	  
+
+	  my ($chr_name1,$chr_start1,$chr_end1);
+	  if ($alignblock1->dnafrag->type eq "VirtualContig") {
+	    ($chr_name1,$chr_start1,$chr_end1) = split /\./, $alignblock1->dnafrag->name;
+	    $alignblock1->start($alignblock1->start + $chr_start1 - 1);
+	    $alignblock1->end($alignblock1->end + $chr_start1 - 1);
+	  } else {
+	    $chr_name1 = $alignblock1->dnafrag->name;
+	  }
+
 	  next unless ($alignblock1->start <= $chr_end && $alignblock1->end >= $chr_start);
 	  
-	  my ($chr_name2,$chr_start2,$chr_end2) = split /\./, $alignblock2->dnafrag->name;
-	  $alignblock2->start($alignblock2->start + $chr_start2 - 1);
-	  $alignblock2->end($alignblock2->end + $chr_start2 - 1);
+	  my ($chr_name2,$chr_start2,$chr_end2);
+	  if ($alignblock2->dnafrag->type eq "VirtualContig") {
+	    ($chr_name2,$chr_start2,$chr_end2) = split /\./, $alignblock2->dnafrag->name;
+	    $alignblock2->start($alignblock2->start + $chr_start2 - 1);
+	    $alignblock2->end($alignblock2->end + $chr_start2 - 1);
+	  } else {
+	    $chr_name2 = $alignblock2->dnafrag->name;
+	  }
 
 	  my $DnaDnaAlignFeature = new Bio::EnsEMBL::DnaDnaAlignFeature('-cigar_string' => $alignblock1->cigar_string);
 	  my $feature1 = new Bio::EnsEMBL::SeqFeature;
@@ -486,9 +504,7 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
 	  if ($DnaDnaAlignFeature->strand == -1) {
 	    $DnaDnaAlignFeature->reverse_complement;
 	  }
-#	  print STDERR "push\n";
-#	  print STDERR $alignblock1->start - $chr_start1 + 1," ",$alignblock1->end - $chr_start1 + 1,"\n";
-#	  print STDERR $DnaDnaAlignFeature->species," ",$DnaDnaAlignFeature->seqname," ",$DnaDnaAlignFeature->start," ",$DnaDnaAlignFeature->end," ",$DnaDnaAlignFeature->strand," ",$DnaDnaAlignFeature->hspecies," ",$DnaDnaAlignFeature->hseqname," ",$DnaDnaAlignFeature->hstart," ",$DnaDnaAlignFeature->hend," ",$DnaDnaAlignFeature->hstrand," ",$DnaDnaAlignFeature->score," ",$DnaDnaAlignFeature->percent_id," ",$DnaDnaAlignFeature->cigar_string,"\n";
+
 	  push @DnaDnaAlignFeatures,$DnaDnaAlignFeature;
 
 	}
