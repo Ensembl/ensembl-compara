@@ -1,5 +1,3 @@
-
-
 #
 # Ensembl module for Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
 #
@@ -49,7 +47,6 @@ use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-
 # Hashes for storing a cross-referencing of compared genomes
 my %genome_consensus_xreflist;
 my %genome_query_xreflist;
@@ -70,7 +67,7 @@ my %genome_query_xreflist;
 
 =cut
 
-sub fetch_by_dbID{
+sub fetch_by_dbID {
    my ($self,$dbid) = @_;
 
    if( !defined $dbid) {
@@ -259,17 +256,17 @@ sub create_GenomeDBs {
      FROM genomic_align_genome
   ");
 
-  $sth->execute;
-
-  while ( my @db_row = $sth->fetchrow_array() ) {
-    my ( $con, $query, $method_link_id ) = @db_row;
-
-    $genome_consensus_xreflist{$con .":" .$method_link_id} ||= [];
-    $genome_query_xreflist{$query .":" .$method_link_id} ||= [];
-
-    push @{ $genome_consensus_xreflist{$con .":" .$method_link_id}}, $query;
-    push @{ $genome_query_xreflist{$query .":" .$method_link_id}}, $con;
-  }
+#   $sth->execute;
+# 
+#   while ( my @db_row = $sth->fetchrow_array() ) {
+#     my ( $con, $query, $method_link_id ) = @db_row;
+# 
+#     $genome_consensus_xreflist{$con .":" .$method_link_id} ||= [];
+#     $genome_query_xreflist{$query .":" .$method_link_id} ||= [];
+# 
+#     push @{ $genome_consensus_xreflist{$con .":" .$method_link_id}}, $query;
+#     push @{ $genome_query_xreflist{$query .":" .$method_link_id}}, $con;
+#   }
 
   # grab all the possible species databases in the genome db table
   $sth = $self->prepare("
@@ -301,7 +298,11 @@ sub create_GenomeDBs {
 }
 
 
-=head2 check_for_consensus_db
+=head2 check_for_consensus_db [DEPRECATED]
+
+  DEPRECATED : consensus and query sequences are not used anymore.
+               Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock
+               for more details.
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
@@ -321,6 +322,7 @@ sub create_GenomeDBs {
 sub check_for_consensus_db {
   my ( $self, $query_gdb, $con_gdb, $method_link_id) = @_;
 
+  deprecated();
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
@@ -336,7 +338,11 @@ sub check_for_consensus_db {
 }
 
 
-=head2 check_for_query_db
+=head2 check_for_query_db [DEPRECATED]
+
+  DEPRECATED : consensus and query sequences are not used anymore.
+               Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock
+               for more details.
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
   Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
@@ -356,6 +362,7 @@ sub check_for_consensus_db {
 sub check_for_query_db {
   my ( $self, $con_gdb, $query_gdb,$method_link_id ) = @_;
 
+  deprecated();
   # just to make things a wee bit more readable
   my $cid = $con_gdb->dbID;
   my $qid = $query_gdb->dbID;
@@ -389,28 +396,24 @@ sub check_for_query_db {
 =cut
 
 sub get_all_db_links {
-  my ( $self, $ref_gdb,$method_link_id ) = @_;
+  my ($self, $ref_gdb, $method_link_id) = @_;
   
-  my $id = $ref_gdb->dbID;
-  my @gdb_list;
+  my $gdb_list;
 
-  # check for occurences of the db we are interested in
-  # in the consensus list of dbs
-  if ( exists $genome_consensus_xreflist{$id . ":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{ $genome_consensus_xreflist{$id . ":" .$method_link_id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_consensus_xreflist{$id . ":" .$method_link_id}[$i]};
+  my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
+  my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_and_genome_db(
+          $method_link_id,
+          $ref_gdb
+      );
+
+  foreach my $this_method_link_species_set (@{$method_link_species_sets}) {
+    foreach my $this_genome_db (@{$this_method_link_species_set->species_set}) {
+      next if ($this_genome_db->dbID eq $ref_gdb->dbID);
+      $gdb_list->{$this_genome_db} = $this_genome_db;
     }
   }
 
-  # and check for occurences of the db we are interested in
-  # in the query list of dbs
-  if ( exists $genome_query_xreflist{$id . ":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{ $genome_query_xreflist{$id . ":" .$method_link_id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_query_xreflist{$id . ":" .$method_link_id}[$i]};
-    }
-  }
-
-  return \@gdb_list;
+  return [values %$gdb_list];
 }
 
 
@@ -471,6 +474,7 @@ sub deleteObj {
 
   $self->SUPER::deleteObj;
 }
+
 
 1;
 

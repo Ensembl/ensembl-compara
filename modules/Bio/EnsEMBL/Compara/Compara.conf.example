@@ -15,8 +15,9 @@
 # via the -conf_file option) and the add_db_adaptor/get_db_adaptor methods are 
 # now DEPRECATED.
 # For now, you can still use them, but you will have a warning message telling you to
-# use the more generic Bio::EnsEMBL::Registry configuration file. See perldoc Bio::EnsEMBL::Registry
-# and ensembl/modules/Bio/EnsEMBL/Utils/ensembl_init.example 
+# use the more generic Bio::EnsEMBL::Registry configuration file. See perldoc
+# Bio::EnsEMBL::Registry and ensembl/modules/Bio/EnsEMBL/Utils/ensembl_init.example
+
 
 [
 ['Homo sapiens', 'NCBI34', {'host' => "ensembldb.ensembl.org",

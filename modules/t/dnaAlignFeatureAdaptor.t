@@ -55,12 +55,12 @@ my $dafa = $compara_dba->get_DnaAlignFeatureAdaptor;
 #######
 
 my $slice = $hs_dba->get_SliceAdaptor->fetch_by_region('toplevel',14,50000010,50249000);
-my $mouse_matches = 
+my $mouse_matches =
 	$dafa->fetch_all_by_Slice($slice, $mouse_name, $mouse_assembly, "BLASTZ_NET");
 
 
 my $num = scalar(@$mouse_matches);
-ok($num == 255);
+ok($num, 255);
 debug("\ngot $num human-mouse matches\n");
 
 $verbose && &print_matches($mouse_matches);
@@ -75,11 +75,10 @@ my $human_matches =
 	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly, "BLASTZ_NET");
 
 $num = scalar(@$human_matches);
-ok($num == 10);
+ok($num, 10);
 
 debug("\ngot $num mouse-human matches\n");
 $verbose && &print_matches($human_matches);
-
 
 #######
 #  3  #
@@ -88,7 +87,7 @@ $verbose && &print_matches($human_matches);
 my $rat_matches = $dafa->fetch_all_by_Slice($slice, $rat_name, $rat_assembly, "BLASTZ_NET");
 $num = scalar(@$rat_matches);
 
-ok($num == 56);
+ok($num, 56);
 
 debug("\ngot $num mouse-rat matches\n");
 $verbose && &print_matches($rat_matches);
@@ -102,7 +101,7 @@ $mouse_matches =
 	$dafa->fetch_all_by_Slice($slice, $mouse_name, $mouse_assembly, "BLASTZ_NET");
 $num = scalar(@$mouse_matches);
 
-ok($num == 54);
+ok($num, 54);
 debug("\ngot $num rat-mouse matches\n");
 $verbose && &print_matches($mouse_matches);
 
@@ -118,7 +117,7 @@ $slice = $hs_dba->get_SliceAdaptor->fetch_by_region('toplevel',14,50000010,50249
 $rat_matches = $dafa->fetch_all_by_Slice($slice, $rat_name, $rat_assembly,"BLASTZ_NET");
 $num = scalar(@$rat_matches);
 
-ok($num == 281);
+ok($num, 281);
 debug("\ngot $num human-rat matches\n");
 $verbose && &print_matches($rat_matches);
 
@@ -135,7 +134,7 @@ $human_matches =
 	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly,"BLASTZ_NET");
 $num = scalar(@$human_matches);
 
-ok($num == 11);
+ok($num, 11);
 debug("got $num rat-human matches\n");
 $verbose && &print_matches($human_matches);
 

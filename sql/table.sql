@@ -6,18 +6,22 @@
 #
 # Table structure for table 'dnafrag'
 #
+-- Index <name> has genome_db_id in the first place because unless fetching all danfrags
+--   or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause
+-- Unique key <name> is used to ensure that
+--   Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name
+--   will always fetch a single row. This can be used in the EnsEMBL Compara DB
+--   because we store top-level dnafrags only.
 
 CREATE TABLE dnafrag (
   dnafrag_id int(10) NOT NULL auto_increment,
-  start int(11) DEFAULT '0' NOT NULL,
-  end int(11) DEFAULT '0' NOT NULL,
+  length int(11) DEFAULT '0' NOT NULL,
   name varchar(40) DEFAULT '' NOT NULL,
   genome_db_id int(10) DEFAULT '0' NOT NULL,
-  dnafrag_type enum('chromosome','scaffold', 'supercontig') NOT NULL,
+  coord_system_name varchar(40) DEFAULT NULL,
 
   PRIMARY KEY (dnafrag_id),
-  KEY dnafrag_id (dnafrag_id,name),
-  UNIQUE name (name,genome_db_id,dnafrag_type)
+  UNIQUE name (genome_db_id, name)
 );
 
 #
@@ -29,6 +33,7 @@ CREATE TABLE dnafrag_region (
   dnafrag_id int(10) DEFAULT '0' NOT NULL,
   seq_start int(10) unsigned DEFAULT '0' NOT NULL,
   seq_end int(10) unsigned DEFAULT '0' NOT NULL,
+  
   UNIQUE unique_synteny (synteny_region_id,dnafrag_id),
   UNIQUE unique_synteny_reversed (dnafrag_id,synteny_region_id)
 );
@@ -53,37 +58,67 @@ CREATE TABLE genome_db (
 #
 # Table structure for table 'genomic_align_block'
 #
+#    This table indexes the genomic alignments
+#
 
 CREATE TABLE genomic_align_block (
-  consensus_dnafrag_id int(10) DEFAULT '0' NOT NULL,
-  consensus_start int(10) DEFAULT '0' NOT NULL,
-  consensus_end int(10) DEFAULT '0' NOT NULL,
-  query_dnafrag_id int(10) DEFAULT '0' NOT NULL,
-  query_start int(10) DEFAULT '0' NOT NULL,
-  query_end int(10) DEFAULT '0' NOT NULL,
-  query_strand tinyint(4) DEFAULT '0' NOT NULL,
-  method_link_id int(10) DEFAULT '0' NOT NULL,
+  genomic_align_block_id int(10) NOT NULL AUTO_INCREMENT,
+  method_link_species_set_id int(10) DEFAULT '0' NOT NULL,
   score double,
-  perc_id int(10),
+  perc_id int(10) DEFAULT NULL,
+  length int(10),
+
+  PRIMARY KEY genomic_align_block_id (genomic_align_block_id),
+  KEY method_link_species_set (genomic_align_block_id, method_link_species_set_id)
+);
+
+#
+# Table structure for table 'genomic_align'
+# 
+#   This table stores the sequences belonging to the same genomic_align_block entry
+#
+
+CREATE TABLE genomic_align (
+  genomic_align_id int(10) NOT NULL AUTO_INCREMENT,
+  genomic_align_block_id int(10) NOT NULL,
+  method_link_species_set_id int(10) DEFAULT '0' NOT NULL,
+  dnafrag_id int(10) DEFAULT '0' NOT NULL,
+  dnafrag_start int(10) DEFAULT '0' NOT NULL,
+  dnafrag_end int(10) DEFAULT '0' NOT NULL,
+  dnafrag_strand tinyint(4) DEFAULT '0' NOT NULL,
   cigar_line mediumtext,
-  group_id int(10) DEFAULT '0' NOT NULL,
   level_id int(10) DEFAULT '0' NOT NULL,
-  strands_reversed tinyint(1) DEFAULT '0' NOT NULL,
 
-  KEY consensus_idx (consensus_dnafrag_id,method_link_id,consensus_start,consensus_end,query_dnafrag_id),
-  KEY query_dnafrag_id (query_dnafrag_id,method_link_id,query_start,query_end),
-  KEY query_dnafrag_id_2 (query_dnafrag_id,method_link_id,query_end)
+  PRIMARY KEY genomic_align_id (genomic_align_id),
+  KEY genomic_align_block_id (genomic_align_block_id),
+  KEY dnafrag_id (dnafrag_id, dnafrag_start, dnafrag_start),
+  KEY dnafrag_id2 (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
 );
 
 #
-# Table structure for table 'genomic_align_genome'
+# Table structure for table 'genomic_align_group'
+# 
+#   This table can store several groupings of the genomic aligned sequences
 #
 
-CREATE TABLE genomic_align_genome (
-  consensus_genome_db_id int(11) DEFAULT '0' NOT NULL,
-  query_genome_db_id int(11) DEFAULT '0' NOT NULL,
-  method_link_id int(10) DEFAULT '0' NOT NULL
+CREATE TABLE genomic_align_group (
+  group_id int(10) NOT NULL AUTO_INCREMENT,
+  type varchar(40) NOT NULL,
+  genomic_align_id int(10) NOT NULL,
+
+  KEY group_id (group_id),
+  KEY genomic_align_id (genomic_align_id, type)
 );
+
+-- #
+-- # Table structure for table 'genomic_align_genome'
+-- #
+-- 
+-- CREATE TABLE genomic_align_genome (
+--   consensus_genome_db_id int(11) DEFAULT '0' NOT NULL,
+--   query_genome_db_id int(11) DEFAULT '0' NOT NULL,
+--   method_link_id int(10) DEFAULT '0' NOT NULL
+-- );
 
 # method_link table specifies which kind of link can exist between species
 # (dna/dna alignment, synteny regions, homologous gene pairs,...)
@@ -95,6 +130,7 @@ CREATE TABLE genomic_align_genome (
 CREATE TABLE method_link (
   method_link_id int(10) NOT NULL auto_increment,
   type varchar(50) DEFAULT '' NOT NULL,
+  
   PRIMARY KEY (method_link_id),
   KEY type (type)
 );
@@ -103,14 +139,18 @@ CREATE TABLE method_link (
 # method_link_id
 
 #
-# Table structure for table 'method_link_species'
+# Table structure for table 'method_link_species_set'
 #
+-- method_link_species_set_id is a multiple key. It defines a set of species
+--   (genome_db_ids) linked through a method_link_id. 
 
-CREATE TABLE method_link_species (
+CREATE TABLE method_link_species_set (
+  method_link_species_set_id int(10) NOT NULL AUTO_INCREMENT,
   method_link_id int(10),
-  species_set int(10),
   genome_db_id int(10),
-  KEY method_link_id (method_link_id,species_set,genome_db_id)
+
+  KEY method_link_species_set (method_link_species_set_id),
+  KEY method_link_id (method_link_id, method_link_species_set_id, genome_db_id)
 );
 
 #

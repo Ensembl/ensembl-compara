@@ -57,7 +57,7 @@ sub list_internal_ids {
 
 =cut
 
-sub fetch_by_dbID{
+sub fetch_by_dbID {
   my ($self,$id) = @_;
 
   unless(defined $id) {
@@ -76,7 +76,7 @@ sub fetch_by_dbID{
   return $obj;
 }
 
-sub fetch_by_dbIDs{
+sub fetch_by_dbIDs {
   my $self = shift;
 
   my $ids = join(',' , @_);

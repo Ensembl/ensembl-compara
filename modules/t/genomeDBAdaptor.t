@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Test::TestUtils;
 BEGIN {
   $| = 1;
   use Test;
-  plan tests => 11;
+  plan tests => 12;
 }
 
 our $verbose = 0;
@@ -48,32 +48,32 @@ $rn_gdb->db_adaptor($rn_dba);
 # 2-5 #
 #######
 my $gdb = $gdba->fetch_by_dbID(1);
-ok($gdb->name eq 'Homo sapiens');
+ok($gdb->name, 'Homo sapiens');
 debug("gdb_name = " . $gdb->name);
 
-ok($gdb->assembly eq 'NCBI34');
+ok($gdb->assembly, 'NCBI34');
 debug("gdb->assembly = " . $gdb->assembly);
 
-ok($gdb->dbID eq 1);
+ok($gdb->dbID, 1);
 debug("gdb->dbID = " . $gdb->dbID);
 
-ok($gdb->taxon_id eq 9606);
+ok($gdb->taxon_id, 9606);
 debug("gdb->taxon_id = " . $gdb->taxon_id);
 
 #######
 # 6-9 #
 #######
 $gdb = $gdba->fetch_by_name_assembly('Mus musculus', 'NCBIM32');
-ok($gdb->name eq 'Mus musculus');
+ok($gdb->name, 'Mus musculus');
 debug("gdb_name = " . $gdb->name);
 
-ok($gdb->assembly eq 'NCBIM32');
+ok($gdb->assembly, 'NCBIM32');
 debug("gdb->assembly = " . $gdb->assembly);
 
-ok($gdb->dbID == 2);
+ok($gdb->dbID, 2);
 debug("gdb->dbID = " . $gdb->dbID);
 
-ok($gdb->taxon_id == 10090);
+ok($gdb->taxon_id, 10090);
 debug("gdb->taxon_id = " . $gdb->taxon_id);
 
 #########
@@ -101,5 +101,7 @@ debug("[$id] == [" . $gdb->dbID . "]?");
 
 $multi->restore('compara', 'genome_db');
 
-
-
+# 
+# 12
+# 
+ok(scalar(@{$gdba->get_all_db_links($hs_gdb, 1)}), 3);

@@ -74,12 +74,18 @@ sub fetch_by_dbID {
     return $self->{'_dna_frag_id_cache'}->{$dbid};
   }
 
-  my $sth = $self->prepare("
-    SELECT genome_db_id, dnafrag_type, dnafrag_id,
-           name, start, end
-      FROM dnafrag
-     WHERE dnafrag_id = ?
- ");
+  my $sth = $self->prepare(qq{
+          SELECT
+            dnafrag_id,
+            length,
+            name,
+            genome_db_id,
+            coord_system_name
+          FROM
+            dnafrag
+          WHERE
+            dnafrag_id = ?
+      });
 
   $sth->execute($dbid);
 
@@ -92,6 +98,60 @@ sub fetch_by_dbID {
   return $dna_frags->[0];
 }
 
+
+
+=head2 fetch_by_GenomeDB_and_name
+
+  Arg [1]    : integer $genome_db_id
+                  - or -
+               Bio::EnsEMBL::Compara::DBSQL::GenomeDB
+  Arg [2]    : string $name
+  Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($human_genome_db, 'X');
+  Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(1, 'X');
+  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag obejct corresponding to the
+               Bio::EnsEMBL::Compara::GenomeDB and name given.
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag
+  Exceptions : throw when genome_db_id cannot be retrieved
+  Caller     : $dnafrag_adaptor->fetch_by_GenomeDB_and_name
+
+=cut
+
+sub fetch_by_GenomeDB_and_name {
+  my ($self, $genome_db, $name) = @_;
+  my $dnafrag; # Returned value
+  
+  my $genome_db_id;
+  if ($genome_db =~ /^\d+$/) {
+    $genome_db_id = $genome_db;
+  } elsif ($genome_db && ref $genome_db && 
+      $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
+    $genome_db_id = $genome_db->dbID;
+    if (!$genome_db_id) {
+      throw("[$genome_db] does not have a dbID");
+    }
+  } else {
+    throw("[$genome_db] must be Bio::EnsEMBL::Compara::GenomeDB\n");
+  }
+
+  my $sql = qq{
+          SELECT
+            dnafrag_id,
+            length,
+            name,
+            genome_db_id,
+            coord_system_name
+          FROM
+            dnafrag
+          WHERE
+            genome_db_id = ?
+            AND name = ?
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($genome_db_id, $name);
+
+  return $self->_objs_from_sth($sth)->[0];
+}
 
 
 =head2 fetch_all_by_GenomeDB_region
@@ -110,7 +170,7 @@ sub fetch_by_dbID {
 =cut
 
 sub fetch_all_by_GenomeDB_region {
-  my ($self, $genome_db, $dnafrag_type, $name, $start, $end) = @_;
+  my ($self, $genome_db, $coord_system_name, $name) = @_;
 
   unless($genome_db && ref $genome_db && 
 	 $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
@@ -128,16 +188,24 @@ sub fetch_all_by_GenomeDB_region {
 #    $self->throw('dnafrag_type argument must be defined');
 #  }
 
-  my $sql = 'SELECT d.genome_db_id, d.dnafrag_type, d.dnafrag_id,
-                    d.name, d.start, d.end
-             FROM  dnafrag d
-             WHERE d.genome_db_id = ?';
+  my $sql = qq{
+          SELECT
+            dnafrag_id,
+            length,
+            name,
+            genome_db_id,
+            coord_system_name
+          FROM
+            dnafrag d
+          WHERE
+            genome_db_id = ?
+      };
 
   my @bind_values = ($gdb_id);
 
-  if(defined $dnafrag_type) {
-    $sql .= ' AND d.dnafrag_type = ?';
-    push @bind_values, "$dnafrag_type";
+  if(defined $coord_system_name) {
+    $sql .= ' AND coord_system_name = ?';
+    push @bind_values, "$coord_system_name";
   }
 
   if(defined $name) {
@@ -145,21 +213,12 @@ sub fetch_all_by_GenomeDB_region {
     push @bind_values, "$name";
   }
 
-  if(defined $start) {
-    $sql .= ' AND d.end >= ?';
-    push @bind_values, $start;
-  }
-
-  if(defined $end) {
-    $sql .= ' AND d.start <= ?';
-    push @bind_values, $end;
-  }
-
   my $sth = $self->prepare($sql);
   $sth->execute(@bind_values);
 
   return $self->_objs_from_sth($sth);
 }
+
 
 =head2 fetch_all
 
@@ -173,13 +232,18 @@ sub fetch_all_by_GenomeDB_region {
 =cut
 
 sub fetch_all{
-   my ($self) = @_;
- 
-   my $sth = $self->prepare( "
-     SELECT genome_db_id, dnafrag_type, dnafrag_id, 
-            name, start, end
-       FROM dnafrag
-   " );
+  my ($self) = @_;
+
+  my $sth = $self->prepare(qq{
+          SELECT
+            dnafrag_id,
+            length,
+            name,
+            genome_db_id,
+            coord_system_name
+          FROM
+            dnafrag
+      });
 
    $sth->execute;
    return _objs_from_sth( $sth );
@@ -187,31 +251,37 @@ sub fetch_all{
 
 
 sub _objs_from_sth {
-  my ( $self, $sth ) = @_;
+  my ($self, $sth) = @_;
 
-  my $result = [];
+  my $these_dnafrags = [];
 
-  my ( $dbID, $dnafrag_type, $name, $start, $end, $genome_db_id );
-  $sth->bind_columns
-    ( \$genome_db_id,  \$dnafrag_type, \$dbID,
-      \$name, \$start, \$end,  );
+  my ($dbID, $length, $name, $genome_db_id, $coord_system_name);
+  $sth->bind_columns(
+          \$dbID,
+          \$length,
+          \$name,
+          \$genome_db_id,
+          \$coord_system_name
+      );
+
   my $gda = $self->db->get_GenomeDBAdaptor();
 
-  while( $sth->fetch() ) {
+  while ($sth->fetch()) {
 
-    my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
+    my $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new(
+            -dbID => $dbID,
+            -adaptor => $self,
+            -length => $length,
+            -name => $name,
+            -genome_db_id => $genome_db_id,
+            -coord_system_name => $coord_system_name
+        );
 
-    $dnafrag->dbID( $dbID );
-    $dnafrag->name( $name );
-    $dnafrag->type( $dnafrag_type);
-    $dnafrag->start( $start );
-    $dnafrag->end( $end );
-    $dnafrag->genomedb( $gda->fetch_by_dbID( $genome_db_id ));
 
-    push( @$result, $dnafrag );
+    push(@$these_dnafrags, $this_dnafrag);
   }
 
-  return $result;
+  return $these_dnafrags;
 }
 
 
@@ -323,10 +393,9 @@ sub is_already_stored {
         FROM dnafrag 
        WHERE name= ?
          AND genome_db_id= ?
-         AND start = ?
    ");
 
-   unless ($sth->execute( "$name", $gid, $dnafrag->start())) {
+   unless ($sth->execute( "$name", $gid )) {
      $self->throw("Failed execution of a select query");
    }
 
@@ -339,7 +408,7 @@ sub is_already_stored {
      return $dnafrag_id;
    } 
   return 0;
-  } 
+} 
    
 
 =head2 store_if_needed

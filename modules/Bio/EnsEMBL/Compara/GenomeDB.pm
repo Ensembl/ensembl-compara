@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::GenomeDB;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(warning);
+use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::DBLoader;
 
 sub new {
