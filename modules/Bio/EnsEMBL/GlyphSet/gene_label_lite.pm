@@ -104,7 +104,7 @@ sub _init {
             'ens_ID'    => '', #$g->{'stable_id'}, 
             'label'     => $gene_label, 
             'colour'    => $gene_col, 
-            'ext_DB'    => $g->{'db'}, 
+            'ext_DB'    => $g->{'external_db'}, 
             'high'      => $high, 
             'type'      => $g->{'type'} 
         }; 
@@ -131,7 +131,7 @@ sub _init {
             'ens_ID'    => $_->{'stable_id'},
             'label'     => $gene_label,
             'colour'    => $gene_col,
-            'ext_DB'    => $_->{'db'},
+            'ext_DB'    => $_->{'external_db'},
             'high'      => $high
         };
     }
@@ -157,7 +157,7 @@ sub _init {
                 'ens_ID'    => '', #$g->{'stable_id'},
                 'label'     => $gene_label,
                 'colour'    => $gene_col,
-                'ext_DB'    => $g->{'db'},
+                'ext_DB'    => $g->{'external_db'},
                 'high'      => $high,
                 'type'      => $g->{'type'}
         };

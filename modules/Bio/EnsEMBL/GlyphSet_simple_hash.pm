@@ -3,6 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 use Bio::EnsEMBL::Glyph::Rect;
+use Bio::EnsEMBL::Glyph::Poly;
 use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
 use Bump;
@@ -17,6 +18,8 @@ sub init_label {
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
+        'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#$HELP_LINK\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
+
         'zmenu'     => {
             'caption'                     => 'HELP',
             "01:Track information..."     =>
@@ -66,7 +69,7 @@ sub _init {
 ## Decide whether we are going to include navigation (independent of switch) 
     $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1001);
     
-    my $h              = 8;
+    my $h              = $Config->get( $type, 'track_height' ) || 8;
 ## Get highlights...
     my %highlights;
     @highlights{$self->highlights()} = ();
@@ -97,6 +100,7 @@ sub _init {
         $end   = $vc_length if $end>$vc_length;
 
         $flag = 0;
+        my @tag_glyphs;
         ($feature_colour, $label_colour) = $self->colour( $f ) if $self->can('colour');
         
         my $glyph = new Bio::EnsEMBL::Glyph::Rect({
@@ -108,17 +112,98 @@ sub _init {
             'absolutey'  => 1
         });
 ## Lets see about placing labels on objects...        
-        my $composite;
+        my $composite = new Bio::EnsEMBL::Glyph::Composite();
+        $composite->push($glyph);
         my $rowheight = $h * 1.5;
+        if( $self->can('tag')) {
+            foreach my $tag ( $self->tag($f) ) {
+                if($tag->{'style'} eq 'left-end' && $start == $f->start) {
+                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'          => $start,
+                        'y'          => 0,
+                        'width'      => 0,
+                        'height'     => $h,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+                    $composite->push($line);
+                } elsif($tag->{'style'} eq 'right-end' && $end == $f->end) {
+                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'          => $end,
+                        'y'          => 0,
+                        'width'      => 0,
+                        'height'     => $h,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+                    $composite->push($line);
+                } elsif($tag->{'style'} eq 'left-triangle') {
+                    my $triangle_end =  $start + 3/$pix_per_bp;
+                    $triangle_end = $end if( $triangle_end > $end);
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $start, 0,
+                                         $start, 3,
+                                         $triangle_end, 0  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    push @tag_glyphs, $triangle;
+                } elsif($tag->{'style'} eq 'triangle') {
+                    my $triangle_start =  $start - 3/$pix_per_bp;
+                    my $triangle_end   =  $start + 3/$pix_per_bp;
+    	            my $line = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'          => $triangle_start,
+                        'y'          => $h,
+                        'width'      => 6/$pix_per_bp,
+                        'height'     => 0,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $triangle_start, $h,
+                                         $start, 0,
+                                         $triangle_end, $h  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    $composite->push($line);
+                    push @tag_glyphs, $triangle;
+                } elsif($tag->{'style'} eq 'right-triangle') {
+                    my $triangle_start =  $end - 3/$pix_per_bp;
+                    $triangle_start = $start if( $triangle_start < $start);
+    	            my $triangle = new Bio::EnsEMBL::Glyph::Poly({
+                        'points'    => [ $end, 0,
+                                         $end, 3,
+                                         $triangle_start, 0  ],
+        	    	    'colour'    => $tag->{'colour'},
+            	    	'absolutey' => 1,
+        	        });
+                    push @tag_glyphs, $triangle;
+                } elsif($tag->{'style'} eq 'underline') {
+                    my $underline_start = $tag->{'start'} || $start ;
+                    my $underline_end   = $tag->{'end'}   || $end ;
+                    $underline_start = 1          if $underline_start < 1;
+                    $underline_end   = $vc_length if $underline_end   > $vc_length;
+                    my $line = new Bio::EnsEMBL::Glyph::Rect({
+                        'x'          => $underline_start,
+                        'y'          => $h,
+                        'width'      => $underline_end - $underline_start + 1,
+                        'height'     => 0,
+                        "colour"     => $tag->{'colour'},
+                        'absolutey'  => 1
+                    });
+                    $composite->push($line);
+                }
+            }
+        }
+
         if( $self->can('image_label')) {
             my ($label,$style) = $self->image_label( $f );
             my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
             my $bp_textwidth = $w * length($label) * 1.1; # add 10% for scaling text
             
             if( $style eq 'overlaid' ) {
-    	        if($bp_textwidth > ($end - $start)){
-                    $composite = $glyph;
-                } else {
+    	        if($bp_textwidth < ($end - $start)){
         		    my $tglyph = new Bio::EnsEMBL::Glyph::Text({
         		        'x'          => int(( $end + $start - $bp_textwidth)/2),
             		    'y'          => 2,
@@ -129,8 +214,7 @@ sub _init {
             		    'text'       => $label,
             		    'absolutey'  => 1,
         	    	});
-                    $composite = new Bio::EnsEMBL::Glyph::Composite();
-                    $composite->push($glyph,$tglyph);
+                    $composite->push($tglyph);
                 } 
             } else {
                 $rowheight += $th;
@@ -144,12 +228,9 @@ sub _init {
             		    'text'       => $label,
             		    'absolutey'  => 1,
                 });
-                $composite = new Bio::EnsEMBL::Glyph::Composite();
-                $composite->push($glyph,$tglyph);
+                $composite->push($tglyph);
             }
-	    } else {
-            $composite = $glyph;
-        }
+	    }
 ## Lets see if we can Show navigation ?...
         if($navigation) {
             $composite->{'zmenu'} = $self->zmenu( $f ) if $self->can('zmenu');
@@ -167,8 +248,13 @@ sub _init {
             );
             next if $row > $dep;
             $composite->y( $composite->y() - $row * $rowheight * $strand );
+            foreach(@tag_glyphs) {
+                $_->y_transform( - $row * $rowheight * $strand );
+            }
         }
         $self->push($composite);
+        $self->push(@tag_glyphs);
+
 ## Are we going to highlight this item...
         if(exists $highlights{$f->{'id'}}) {
             my $high = new Bio::EnsEMBL::Glyph::Rect({

@@ -14,10 +14,18 @@ sub features {
 
 sub href {
     my ($self, $id ) = @_;
-    return $self->{'config'}->{'ext_url'}->get_url('EMBL',$id);
+    if($id =~ /^N[MP]/) {
+        return $self->{'config'}->{'ext_url'}->get_url('REFSEQ',$id);
+    } else {
+        return $self->{'config'}->{'ext_url'}->get_url('EMBL',$id);
+    }
 }
 sub zmenu {
     my ($self, $id ) = @_;
-    return { 'caption' => "$id", "EMBL: $id" => $self->href( $id ) };
+    if($id =~ /^N[MP]/) {
+        return { 'caption' => "$id", "REFSEQ: $id" => $self->href( $id ) };
+    } else {
+        return { 'caption' => "$id", "EMBL: $id" => $self->href( $id ) };
+    }
 }
 1;

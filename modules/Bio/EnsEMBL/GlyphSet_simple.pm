@@ -17,6 +17,7 @@ sub init_label {
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
+        'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#$HELP_LINK\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
         'zmenu'     => {
             'caption'                     => 'HELP',
             "01:Track information..."     =>
@@ -88,7 +89,7 @@ sub _init {
     my $label_colour      = $Config->get($type, 'lab') || $self->{'colours'} && $self->{'colours'}{'lab'};
     my $hi_colour         = $Config->get($type, 'hi')  || $self->{'colours'} && $self->{'colours'}{'hi'};
     my $part_to_colour    = '';
-    my $dep            = $Config->get($type, 'dep');
+    my $dep               = $Config->get($type, 'dep');
 
     my $flag           = 1;
     my ($w,$th) = $Config->texthelper()->px2bp('Tiny');

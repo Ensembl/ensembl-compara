@@ -16,6 +16,14 @@ sub init_label {
         'text'      => 'Genes',
         'font'      => 'Small',
         'absolutey' => 1,
+        'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#gene_lite\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
+
+        'zmenu'     => {
+            'caption'                     => 'HELP',
+            "01:Track information..."     =>
+qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#gene_lite\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
+        }
+
     });
     $self->label($label);
 }
@@ -93,7 +101,7 @@ sub _init {
                    'ens_ID'    => '', #$g->{'stable_id'}, 
                    'label'     => $gene_label, 
                    'colour'    => $gene_col, 
-                   'ext_DB'    => $g->{'db'}, 
+                   'ext_DB'    => $g->{'external_db'}, 
                    'high'      => $high, 
                    'type'      => $g->{'type'} 
             }; 
@@ -130,7 +138,7 @@ sub _init {
             'ens_ID'    => $_->{'stable_id'},
             'label'     => $gene_label,
             'colour'    => $gene_col,
-            'ext_DB'    => $_->{'db'},
+            'ext_DB'    => $_->{'external_db'},
             'high'      => $high,
             'type'      => 'ensembl'
         };
@@ -165,7 +173,7 @@ sub _init {
                 'ens_ID'    => '', #$g->{'stable_id'},
                 'label'     => $gene_label,
                 'colour'    => $gene_col,
-                'ext_DB'    => $g->{'db'},
+                'ext_DB'    => $g->{'external_db'},
                 'high'      => $high,
                 'type'      => $g->{'type'}
             };

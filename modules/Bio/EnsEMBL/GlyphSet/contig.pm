@@ -18,6 +18,14 @@ sub init_label {
 	    'text'      => 'DNA(contigs)',
     	'font'      => 'Small',
 	    'absolutey' => 1,
+        'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#contig\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
+
+        'zmenu'     => {
+            'caption'                     => 'HELP',
+            "01:Track information..."     =>
+qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#contig\\\',\\\'helpview\\\',\\\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\\\');X.focus();void(0)]
+        }
+
     });
     $self->label($label);
 }
@@ -36,7 +44,8 @@ sub _init {
 	my $module = ref($self);
 	$module = $1 if $module=~/::([^:]+)$/;
     my $threshold_navigation    = ($Config->get($module, 'threshold_navigation') || 2e6)*1001;
-	my $show_navigation = $length < $threshold_navigation;
+    my $navigation     = $Config->get($module, 'navigation') || 'on';
+	my $show_navigation = ($length < $threshold_navigation) && ($navigation eq 'on');
     my $highlights = join('|', $self->highlights() ) ;
     $highlights = $highlights ? "&highlight=$highlights" : '';
     my $cmap     = $Config->colourmap();
@@ -200,7 +209,7 @@ sub _init {
             my $cid = $rid;
             #$cid=~s/^([^\.]+\.[^\.]+)\..*/$1/;
             $cid=~s/^([^\.]+)\..*/$1/;
-            $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?contig=$rid";
+            $glyph->{'href'} = "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?contig=$rid" if $navigation eq 'on';
             $glyph->{'zmenu'} = {
                 'caption' => $rid,
 	            "01:Clone: $clone"    => '',
@@ -345,35 +354,37 @@ sub _init {
     my $width = $interval * ($length / $im_width) ;
     my $interval_middle = $width/2;
 
-    foreach my $i(0..9){
-        my $pos = $i * $interval;
-        # the forward strand ticks
-        $tick = new Bio::EnsEMBL::Glyph::Space({
-            'x'         => 0 + $pos,
-            'y'         => $ystart-4,
-            'width'     => $interval,
-            'height'    => 3,
-            'absolutey' => 1,
-            'absolutex' => 1,
-            'href'		=> $self->zoom_URL($param_string, $interval_middle + $global_start, $length,  1  , $highlights),
-            'zmenu'     => $self->zoom_zmenu( $param_string, $interval_middle + $global_start, $length, $highlights ),
-        });
-        $self->unshift($tick);
-        # the reverse strand ticks
-        $tick = new Bio::EnsEMBL::Glyph::Space({
-            'x'         => $im_width - $pos,
-            'y'         => $ystart+16,
-            'width'     => $interval,
-            'height'    => 3,
-            'absolutey' => 1,
-            'absolutex' => 1,
-            'href'		=> $self->zoom_URL(     $param_string, $global_end-$interval_middle, $length,  1  , $highlights),
-            'zmenu'     => $self->zoom_zmenu(   $param_string, $global_end-$interval_middle, $length, $highlights ),
-        });
-        $self->unshift($tick);
-        $interval_middle += $width;
-    }
+    if($navigation eq 'on') {
 
+        foreach my $i(0..9){
+            my $pos = $i * $interval;
+            # the forward strand ticks
+            $tick = new Bio::EnsEMBL::Glyph::Space({
+                'x'         => 0 + $pos,
+                'y'         => $ystart-4,
+                'width'     => $interval,
+                'height'    => 3,
+                'absolutey' => 1,
+                'absolutex' => 1,
+                'href'		=> $self->zoom_URL($param_string, $interval_middle + $global_start, $length,  1  , $highlights),
+                'zmenu'     => $self->zoom_zmenu( $param_string, $interval_middle + $global_start, $length, $highlights ),
+            });
+            $self->unshift($tick);
+            # the reverse strand ticks
+            $tick = new Bio::EnsEMBL::Glyph::Space({
+                'x'         => $im_width - $pos,
+                'y'         => $ystart+16,
+                'width'     => $interval,
+                'height'    => 3,
+                'absolutey' => 1,
+                'absolutex' => 1,
+                'href'		=> $self->zoom_URL(     $param_string, $global_end-$interval_middle, $length,  1  , $highlights),
+                'zmenu'     => $self->zoom_zmenu(   $param_string, $global_end-$interval_middle, $length, $highlights ),
+            });
+            $self->unshift($tick);
+            $interval_middle += $width;
+        }
+    }
 }
 
 1;

@@ -17,6 +17,7 @@ sub init_label {
         'text'      => $self->my_label(),
         'font'      => 'Small',
         'absolutey' => 1,
+        'href'      => qq[javascript:X=window.open(\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#$HELP_LINK\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)],
         'zmenu'     => {
             'caption'                     => 'HELP',
             "01:Track information..."     =>
@@ -130,7 +131,7 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
 	} else {
             $ZZ = "chr=$i&vc_start=$start&vc_end=$end";
         }
-	$Composite->zmenu( $self->zmenu( $i, $ZZ ) );
+	$Composite->zmenu( $self->zmenu( "Chr$i $start-$end", $ZZ ) );
 	$Composite->href( $self->href( $i, $ZZ ) );
         if ($dep > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);

@@ -6,7 +6,7 @@ use Bio::EnsEMBL::GlyphSet_transcript;
 
 sub my_label {
     my $self = shift;
-    return $self->{'config'}->{'_draw_single_Transcript'} || 'Transcripts';
+    return $self->{'config'}->{'_draw_single_Transcript'} || 'Ensembl trans.';
 }
 
 sub colours {

@@ -6,7 +6,7 @@ use Bio::EnsEMBL::GlyphSet_transcript;
 
 sub my_label {
     my $self = shift;
-    return $self->{'config'}->{'_draw_single_Transcript'} || 'Sanger Transcr.';
+    return $self->{'config'}->{'_draw_single_Transcript'} || 'Sanger trans.';
 }
 
 sub colours {
@@ -56,7 +56,7 @@ sub zmenu {
 		"04:Sanger curated ($T)"   => ''
     };
     $zmenu->{"03:Protien"} =
-        qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=sanger&peptide=$vt->{'translation'}) if defined $vt->{'translation'};
+        qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=sanger&peptide=$vt->{'translation'}) if $vt->{'translation'} ne '';
 
 	return $zmenu;
 }

@@ -80,7 +80,6 @@ sub new {
     my $spacing = $self->{'spacing'};
     
     ########## set scaling factor for base-pairs -> pixels
-        print STDERR ">>>> ",$Config->container_width(),"\n";
     my $scalex = $Config->{'_image_height'} / $Config->container_width();
     $Config->{'transform'}->{'scalex'} = $scalex;
     
