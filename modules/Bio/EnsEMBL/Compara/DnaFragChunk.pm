@@ -70,10 +70,10 @@ sub slice {
                and from the external core database associated with the slice
                it extracts the masked DNA sequence.
                Returns as Bio::Seq object.  does not cache sequence internally
-  Arg [1]    : (int) masked status of the sequence [optional]
-                0 unmasked (default)
-                1 masked
-                2 soft-masked
+  Arg [1]    : (int or string) masked status of the sequence [optional]
+                0 or ''     = unmasked (default)
+                1 or 'hard' = masked
+                2 or 'soft' = soft-masked
   Arg[2]     : (ref to hash) hash of masking options [optional]
   Example    : $bioseq = $chunk->get_sequence(1);
   Returntype : Bio::Seq or undef if a problem
@@ -95,7 +95,7 @@ sub fetch_masked_sequence {
 
   my $id = $self->display_id;
 
-  if ($masked == 1) {
+  if ((lc $masked eq 'hard') or ($masked eq 1)) {
 
     #print STDERR "getting masked sequence...";
     if ($not_default_masking_cases) {
@@ -105,7 +105,7 @@ sub fetch_masked_sequence {
     }
     #print STDERR "...got masked sequence...";
 
-  } elsif ($masked == 2) {
+  } elsif ((lc $masked eq 'soft') or ($masked eq 2)) {
     
     #print STDERR "getting soft masked sequence...";
     if ($not_default_masking_cases) {
