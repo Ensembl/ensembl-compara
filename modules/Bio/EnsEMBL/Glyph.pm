@@ -93,6 +93,10 @@ sub transform {
     #
     $this->pixelx($this->pixelx() + $translatex) if(defined $translatex);
     $this->pixely($this->pixely() + $translatey) if(defined $translatey);
+
+  #  $this->pixelx($this->pixelx()-1);
+  #  $this->pixelwidth($this->pixelwidth()+1);
+	
 }
 
 sub centre {
