@@ -8,6 +8,8 @@ use strict;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::AlignIO;
+use Bio::LocatableSeq;
 
 # specify connection to compara
 # specify species chromsome start end
@@ -22,9 +24,11 @@ unless ( @ARGV ) {
   exit();
 }
 
-my ( $host, $user, $port, $dbname, $chromosome, $start, $end,$species, $conf_file );
+my ( $host, $user, $port, $dbname, $seq_region, $seq_region_start, $seq_region_end,$species, $conf_file );
 my $pass = "";
-my $alignment_type = "WGA";
+my $alignment_type = "BLASTZ_NET";
+my $output_format = "fasta";
+my $coord_system = "chromosome";
 
 GetOptions(
 	   "host=s" => \$host,
@@ -32,10 +36,12 @@ GetOptions(
 	   "pass=s" => \$pass,
 	   "port=i" => \$port,
 	   "dbname=s" => \$dbname,
-	   "chromosome=s" => \$chromosome,
-	   "start=i" => \$start,
-	   "end=i" => \$end,
+	   "seq_region=s" => \$seq_region,
+	   "seq_region_start=i" => \$seq_region_start,
+	   "seq_region_end=i" => \$seq_region_end,
 	   "alignment_type=s" => \$alignment_type,
+           "output_format=s" => \$output_format,
+           "coord_system=s" => \$coord_system,
 	   "species=s" => \$species,
 	   "conf_file=s" => \$conf_file
 	  );
@@ -43,44 +49,11 @@ GetOptions(
 # change this to use supplied compara database
 
 my $compara = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $host,
+                                                          -port => $port,
 							  -user => $user,
 							  -dbname => $dbname,
 							  -pass => $pass,
 							  -conf_file => $conf_file);
-
-# # the following you dont need if you have a  config file for the 
-# # compara database (it will attach the ensembl database automatically then)
-
-# my $human_db = Bio::EnsEMBL::DBSQL::DBAdaptor->new
-#   (
-#    -host => 'ecs2d.internal.sanger.ac.uk',
-#    -user => 'ensro',
-#    -dbname => 'homo_sapiens_core_10_30'
-#   );
-
-# # add the dba to the compara database
-# $compara->add_db_adaptor( $human_db );
-
-
-# my $rat_db = Bio::EnsEMBL::DBSQL::DBAdaptor->new
-#   (
-#    -host => 'ecs2d.internal.sanger.ac.uk',
-#    -user => 'ensro',
-#    -dbname => 'rattus_norvegicus_core_9_01'
-#   );
-
-# # add the dba to the compara database
-# $compara->add_db_adaptor( $rat_db );
-
-# my $mouse_db = Bio::EnsEMBL::DBSQL::DBAdaptor->new
-#   (
-#    -host => 'ecs2d.internal.sanger.ac.uk',
-#    -user => 'ensro',
-#    -dbname => 'mus_musculus_core_10_3'
-#   );
-
-# # add the dba to the compara database
-# $compara->add_db_adaptor( $mouse_db );
 
 my $all_genome_dbs = $compara->get_GenomeDBAdaptor()->fetch_all();
 
@@ -103,8 +76,7 @@ foreach my $other_species (@other_species) {
 @other_species = @wanted_other_species;
 
 my $primary_slice = $primary_species->db_adaptor()->get_SliceAdaptor()->
-  fetch_by_chr_start_end( $chromosome, $start, $end );
-
+  fetch_by_region("toplevel",$seq_region, $seq_region_start, $seq_region_end);
 my $primary_seq = $primary_slice->seq();
 my @other_seq;
 
@@ -112,10 +84,10 @@ my @other_seq;
 my $dnafrags = $compara->get_DnaFragAdaptor()->fetch_all_by_GenomeDB_region
   ( 
    $primary_species,
-   "Chromosome",
-   $chromosome,
-   $start,
-   $end
+   $coord_system,
+   $seq_region,
+   $seq_region_start,
+   $seq_region_end
   );
 
 my $gaa = $compara->get_GenomicAlignAdaptor;
@@ -126,12 +98,12 @@ my $alignments_found = 0;
 
 for( my $i_species = 0; $i_species<=$#other_species; $i_species++ ) {
   my $qy_gdb = $other_species[$i_species];
-  $other_seq[$i_species] = "~" x length( $primary_seq );
+  $other_seq[$i_species] = "." x length( $primary_seq );
 
   foreach my $df (@$dnafrags) {
     #caclulate coords relative to start of dnafrag
-    my $df_start = $start - $df->start + 1;
-    my $df_end   = $end   - $df->start + 1;
+    my $df_start = $seq_region_start - $df->start + 1;
+    my $df_end   = $seq_region_end   - $df->start + 1;
   
     #constrain coordinates so they are completely within the dna frag
     my $len = $df->end - $df->start + 1;
@@ -148,21 +120,13 @@ for( my $i_species = 0; $i_species<=$#other_species; $i_species++ ) {
     
     for my $align ( @$genomic_aligns ) {
 
-      my $cfrag = $align->consensus_dnafrag();
-      my $qfrag = $align->query_dnafrag();
-
-  
-      my $aligned_string = $align->sequence_align_string
-	( 
-	 $cfrag->contig(), $qfrag->contig(),
-	  "QUERY", "FIX_CONSENSUS" 
-	);
+      my ($fake,$aligned_string) = @{$align->alignment_strings("NO_SEQ","FIX_SEQ")};
       if( ! $aligned_string ) { next } else {$alignments_found = 1; }
 
       # now put it in the other_seq_array
       my ( $p_start, $p_end );
-      $p_start = $align->consensus_start() + $cfrag->start() - $primary_slice->chr_start();
-      $p_end = $align->consensus_end() + $cfrag->start() - $primary_slice->chr_start();
+      $p_start = $align->consensus_start() + $align->consensus_dnafrag->start() - $primary_slice->start();
+      $p_end = $align->consensus_end() + $align->consensus_dnafrag->start() - $primary_slice->start();
 
       # put the align string into result
       $count++;
@@ -179,34 +143,33 @@ if( ! $alignments_found ) {
   print STDERR "$count alignments done\n";
 }
 
-# printing the results
-#
-# This code prints 60 bases on top of each other
-#
-#for( my $i=0; $i<length( $primary_seq ); $i+=60 ){
-#  print "$i - ",($i+59),"\n";
-#  print substr( $primary_seq, $i, 60 ),"\n";
-#  for( my $j=0; $j<=$#other_seq; $j++ ) {
-#   print substr( $other_seq[$j], $i, 60 ),"\n";
-#  }
-#  print "\n"
-#}
+my $alignIO = Bio::AlignIO->newFh(-interleaved => 0,
+                                  -fh => \*STDOUT,
+                                  -format => $output_format,
+                                  -idlength => 20);
 
-#
-# print a fasta with species name as sequence name
-#
+my $sa = Bio::SimpleAlign->new();
 
-print ">".$primary_species->name()."\n";
-for( my $i=0; $i<length( $primary_seq ); $i+=60 ){
-  print substr( $primary_seq, $i, 60 ),"\n";
-}
+
+my $seq = Bio::LocatableSeq->new(-SEQ    => $primary_seq,
+                                 -START  => 1,
+                                 -END    => length($primary_seq),
+                                 -ID     => $primary_species->name(),
+                                 -STRAND => 0);
+
+$sa->add_seq($seq);
+
 for( my $i_species = 0; $i_species<=$#other_species; $i_species++ ) {
-  print ">".$other_species[$i_species]->name()."\n";
   my $seq=$other_seq[$i_species];
-  for( my $i=0; $i<length( $seq ); $i+=60 ){
-    print substr( $seq, $i, 60 ),"\n";
-  }
+  my $locseq = Bio::LocatableSeq->new(-SEQ    => $seq,
+                                 -START  => 1,
+                                 -END    => length($seq),
+                                 -ID     => $other_species[$i_species]->name(),
+                                 -STRAND => 0);
+  $sa->add_seq($locseq);
 }
+
+print $alignIO $sa;
 
 exit;
 
@@ -225,9 +188,9 @@ Usage: DumpMultiAlign.pl options
   -conf_file filename
   to specify compara database connection
   
-  -chromosome -c 
-  -start -st
-  -end -e 
+  -seq_region
+  -seq_region_start
+  -seq_region_end
   -alignment_type e.g. WGA (default WGA)
   -species -sp
 
