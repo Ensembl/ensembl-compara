@@ -93,6 +93,7 @@ sub render_Text {
 
     my $colour = $self->colour($glyph->colour());
 
+  #  print STDERR "RENDERING TEXT ",$glyph->pixely(), ",", $glyph->pixelx(), " -> ", $glyph->text()," ;\n";
     #########
     # BAH! HORRIBLE STINKY STUFF!
     # I'd take GD voodoo calls any day
