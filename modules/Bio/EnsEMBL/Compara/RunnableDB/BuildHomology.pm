@@ -604,6 +604,13 @@ sub store_paf_as_homology
 
   if($self->{'verbose'}) { print("$type : "); $paf->display_short; }
 
+  # load the genes for this PAF
+  my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor;
+  my $queryGene = $memberDBA->fetch_gene_for_peptide_member_id($paf->query_member->dbID);
+  $paf->query_member->gene_member($queryGene);
+  my $hitGene = $memberDBA->fetch_gene_for_peptide_member_id($paf->hit_member->dbID);
+  $paf->hit_member->gene_member($hitGene);
+
   my $homology = $paf->return_as_homology();
   $homology->description($type);
 
