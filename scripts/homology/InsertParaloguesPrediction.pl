@@ -10,7 +10,8 @@ my $usage = "
 $0 options input_data_file
   [--help]                      this menu
    --dbname string              (e.g. compara23) one of the compara database Bio::EnsEMBL::Registry aliases
-  [--source_name string]        the source name of the homology to be loaded (default is ENSEMBL_PARALOGUES);
+   --species string             (e.g. human) one of the species database Bio::EnsEMBL::Registry aliases
+  [--method_link_type string]   the source name of the homology to be loaded (default is ENSEMBL_PARALOGUES);
   [--description string]        the description of the homology to be loaded (default is YoungParalogues)
   [--reg_conf filepath]         the Bio::EnsEMBL::Registry configuration file. If none given, 
                                 the one set in ENSEMBL_REGISTRY will be used if defined, if not
@@ -34,13 +35,15 @@ ENSG00000131263 ENSP00000253571 624M        \
 \n";
 
 my $help = 0;
-my $source_name = "ENSEMBL_PARALOGUES";
+my $method_link_type = "ENSEMBL_PARALOGUES";
 my $description = "YoungParalogues";
+my $species;
 my ($dbname,$reg_conf);
 
 GetOptions('help' => \$help,
            'dbname=s' => \$dbname,
-           'source_name=s' => \$source_name,
+           'species=s' => \$species,
+           'method_link_type=s' => \$method_link_type,
            'description=s' => \$description,
            'reg_conf=s' => \$reg_conf);
 
@@ -57,8 +60,18 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $ha = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Homology');
 my $ma = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Member');
+my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB');
+my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet');
+
+my $Binomial = Bio::EnsEMBL::Registry->get_adaptor($species,'core','MetaContainer')->get_Species->binomial;
+my $gdb = $gdba->fetch_by_name_assembly($Binomial);
 
 my $idx = 1;
+
+my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+$mlss->species_set([$gdb]);
+$mlss->method_link_type($method_link_type);
+$mlssa->store($mlss);
 
 while (<>) {
   chomp;
@@ -70,21 +83,21 @@ while (<>) {
 
   my $gene_member1 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id1);
   unless (defined  $gene_member1) {
-    print "$gene_stable_id1 not in db\n";
+    print STDERR "$gene_stable_id1 not in db\n";
   }
   my $peptide_member1 = $ma->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id1);
   unless (defined  $peptide_member1) {
-    print "$translation_stable_id1 not in db\n";
+    print STDERR "$translation_stable_id1 not in db\n";
   }
   my $attribute1 = return_attribute($peptide_member1, $cigar_line1, $cigar_start1, $cigar_end1,$perc_cov1,$perc_id1,$perc_pos1);
 
   my $gene_member2 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id2);
   unless (defined  $gene_member2) {
-    print "$gene_stable_id2 not in db\n";
+    print STDERR "$gene_stable_id2 not in db\n";
   }
   my $peptide_member2 = $ma->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id2);
   unless (defined  $peptide_member2) {
-    print "$translation_stable_id2 not in db\n";
+    print STDERR "$translation_stable_id2 not in db\n";
   }
   my $attribute2 = return_attribute($peptide_member2, $cigar_line2, $cigar_start2, $cigar_end2,$perc_cov2,$perc_id2,$perc_pos2);
 
@@ -92,8 +105,9 @@ while (<>) {
   my $stable_id = $gene_member1->taxon_id . "_" . $gene_member2->taxon_id . "_";
   $stable_id .= sprintf ("%011.0d",$idx);
   $idx++;
+  $homology->method_link_species_set($mlss);
   $homology->stable_id($stable_id);
-  $homology->source_name($source_name);
+  $homology->method_link_type($method_link_type);
   $homology->description($description);
   $homology->dn($dn,0);
   $homology->ds($ds,0);
