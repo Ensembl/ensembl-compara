@@ -480,7 +480,7 @@ sub bioseq {
 
 =head2 gene_member
 
-  Arg[0]     : Bio::EnsEMBL::Compara::Member $geneMember (optional)
+  Arg[1]     : Bio::EnsEMBL::Compara::Member $geneMember (optional)
   Example    : my $primaryseq = $member->primaryseq;
   Description: returns sequence this member as a Bio::Seq object
   Returntype : Bio::EnsEMBL::Compara::Member object
@@ -499,6 +499,31 @@ sub gene_member {
     $self->{'_gene_member'} = $gene_member;
   }
   return $self->{'_gene_member'};
+}
+
+
+=head2 print_member
+
+  Arg[1]     : string $postfix
+  Example    : $member->print_member("BRH");
+  Description: used for debugging, prints out key descriptive elements
+               of member 
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+sub print_member
+{
+  my $self = shift;
+  my $postfix = shift;
+
+  print("   ".$self->stable_id.
+        "(".$self->dbID.")".
+        "\t".$self->chr_name ." : ".
+        $self->chr_start ."- ". $self->chr_end);
+  if($postfix) { print(" $postfix"); }
+  else { print("\n"); }
 }
 
 1;
