@@ -22,9 +22,7 @@ if ($help) {
   exit 0;
 }
 
-if (defined $reg_conf) {
-  Bio::EnsEMBL::Registry->load_all($reg_conf);
-}
+Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $stored_max_alignment_length;
 my $mc = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MetaContainer');
@@ -53,7 +51,7 @@ if ($max_alignment_length < $qy_max) {
 
 if (! defined $stored_max_alignment_length) {
   $mc->store_key_value("max_alignment_length",$max_alignment_length + 1);
-   print STDERR "Stored max_alignment_length value $stored_max_alignment_length in meta table\n";
+   print STDERR "Stored max_alignment_length value ",$max_alignment_length + 1," in meta table\n";
 } elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
   $mc->update_key_value("max_alignment_length",$max_alignment_length + 1);
   print STDERR "Updated max_alignment_length value ",$max_alignment_length + 1," in meta table\n";
