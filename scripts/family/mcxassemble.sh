@@ -10,12 +10,12 @@ if [ ! -n $file_prefix ] || [ $nb_arg -gt 1 ]; then
  exit 1
 fi
 
-if [ ! -e $file_prefix.tab ] ||  [ ! -e $file_prefix.tab ] ||  [ ! -e $file_prefix.tab ]; then
+if [ ! -e $file_prefix.tab ] ||  [ ! -e $file_prefix.hdr ] ||  [ ! -e $file_prefix.raw ]; then
  echo "$file_prefix.tab, $file_prefix.hdr or $file_prefix.raw does not exist"
  exit 2
 fi
 
-bsub -q bigmem -R 'select[mem>2000] rusage[mem=3000] alpha' -o $file_prefix.mcxassemble.err \
+bsub -q bigmem -R 'select[alpha && mem>2000] rusage[mem=3000]' -o $file_prefix.mcxassemble.err \
 <<EOF
 #!/usr/local/bin/bash 
 . /usr/local/lsf/conf/profile.lsf
