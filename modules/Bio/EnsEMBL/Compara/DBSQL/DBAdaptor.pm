@@ -402,8 +402,7 @@ sub DESTROY {
        $obj->{'_db_handle'}->disconnect;
        $obj->{'_db_handle'} = undef;
    }
-   $obj->deleteObj();
-
+#   $obj->deleteObj();
 }
 
 
