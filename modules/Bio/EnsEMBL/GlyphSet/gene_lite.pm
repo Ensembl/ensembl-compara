@@ -94,8 +94,17 @@ sub _init {
                    'type'      => $g->{'type'} 
                }; 
            } 
-       } 
-
+        $Config->{'legend_features'}->{'sanger_genes'} = {
+            'priority' => 1000,
+            'legend'  => [
+                'Sanger curated known genes'    => $sanger_colours->{'Known'},
+                'Sanger curated novel CDS'      => $sanger_colours->{'Novel_CDS'},
+                'Sanger curated putative'       => $sanger_colours->{'Putative'},
+                'Sanger curated novel Trans'    => $sanger_colours->{'Novel_Transcript'},
+                'Sanger curated pseudogenes'    => $sanger_colours->{'Pseudogene'}
+            ]
+        }  if(@$res>0);
+    } 
     my $res = $vc->get_all_VirtualGenes_startend_lite();
 
     foreach(@$res) {
@@ -123,6 +132,13 @@ sub _init {
             'type'      => 'ensembl'
         };
     }
+    $Config->{'legend_features'}->{'genes'} = {
+        'priority' => 900,
+        'legend'  => [
+            'EnsEMBL predicted genes (known)' => $known_col,
+            'EnsEMBL predicted genes (novel)' => $unknown_col
+        ]
+    }  if(@$res>0);
     &eprof_end("gene-virtualgene_start-get");
 
     &eprof_start("gene-externalgene_start-get");
@@ -152,6 +168,13 @@ sub _init {
                 'type'      => $g->{'type'}
             };
         }
+        $Config->{'legend_features'}->{'embl_genes'} = {
+            'priority' => 800,
+            'legend'  => [
+                'EMBL curated genes'      => $ext_col,
+                'EMBL pseudogenes'        => $pseudo_col,
+            ]
+        }  if(@$res>0);
     }
 
     &eprof_end("gene-externalgene_start-get");
