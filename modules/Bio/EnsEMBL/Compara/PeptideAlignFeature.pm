@@ -43,14 +43,26 @@ sub init_from_feature {
     throw("arg must be a [Bio::EnsEMBL::BaseAlignFeature] not a [$feature]");
   }
 
-  my ($source_name, $stable_id) = split(/:/, $feature->seqname);
-  $self->query_member->source_name($source_name);
-  $self->query_member->stable_id($stable_id);
+  if($feature->seqname =~ /member_id_(\d+)/) {
+    #printf("qseq: member_id = %d\n", $1);
+    $self->query_member->dbID($1);
+  } else {
+    my ($source_name, $stable_id) = split(/:/, $feature->seqname);
+    #printf("qseq: %s %s\n", $source_name, $stable_id);
+    $self->query_member->source_name($source_name);
+    $self->query_member->stable_id($stable_id);
+  }
 
-  ($source_name, $stable_id) = split(/:/, $feature->hseqname);
-  $self->hit_member->source_name($source_name);
-  $self->hit_member->stable_id($stable_id);
-
+  if($feature->hseqname =~ /member_id_(\d+)/) {
+    #printf("hseq: member_id = %d\n", $1);
+    $self->hit_member->dbID($1);
+  } else {
+    my ($source_name, $stable_id) = split(/:/, $feature->hseqname);
+    #printf("hseq: %s %s\n", $source_name, $stable_id);
+    $self->hit_member->source_name($source_name);
+    $self->hit_member->stable_id($stable_id);
+  }
+  
   $self->analysis($feature->analysis);
 
   $self->qstart($feature->start);
