@@ -75,7 +75,11 @@ This will write out all the dna-dna matches for human chromosomes against mouse 
 
   4.2 Running over all chromosomes
 
-ls *.syten.gff|sed "s/\.syten\.gff//"|while read i;do java -classpath ~/src/ensembl_main/ensembl-compara/scripts/synteny/BuildSynteny.jar BuildSynteny $i.syten.gff 100000 100000 > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err;done
+ls *.syten.gff|sed "s/\.syten\.gff//"|while read i;do java -classpath ~/src/ensembl_main/ensembl-compara/scripts/synteny/BuildSynteny.jar BuildSynteny $i.syten.gff 100000 100000 false > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err;done
+
+NOTE: the last parameter "false" is only needed for human/mouse, human/rat and mouse/rat NOT for 
+elegans/briggsae (it can be ommitted). Don't ask me (Abel) what that does, Steve Searle included this 
+argument to make it work over mammals and worms.
 
 cat *.BuildSynteny.out|grep cluster > Mm3Rn2.100000.100000.BuildSynteny
 
@@ -83,3 +87,39 @@ cat *.BuildSynteny.out|grep cluster > Mm3Rn2.100000.100000.BuildSynteny
 
 ensembl-compara/scripts/synteny/LoadComparaDb.pl -host ecs2d -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_13_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -genome_db_id1 2 -genome_db_id2 3 Mm3Rn2.100000.100000.BuildSynteny
 
+
+NOTE: not important for production, it is just to know how to create the BuildSynteny.jar file from
+BuildSynteny.java
+
+BuildSynteny.java has still dependancies on apollo code, basically those
+
+import apollo.datamodel.*; //for FeatureSet and FeatureSetI
+import apollo.seq.io.*; //for GFFFile
+import apollo.util.*; //for QuickSort
+
+Better to do all the following on a PC linux box, either yours or one of the rlx blades. That because
+apollo does not compile properly on alpha, Don't ask me why...I've used j2sdk1.4.1_02 from sun.
+
+1- get the apollo source code
+
+ http://gmod.sourceforge.net/cvs.shtml
+
+2- compile apollo.
+
+ See the README
+
+3- Compile BuildSynteny.java
+
+ if your apollo classfiles directory is ~/src/apollo/src/java/classfiles/, then
+
+ javac -classpath ~/src/apollo/src/java/classfiles/ BuildSynteny.java
+
+4- Create the first part of BuildSynteny.jar
+
+ jar cvf BuildSynteny.jar -C ~/src/apollo/src/java/classfiles/ apollo
+
+5- Then integrate BuildSynteny.class in it
+
+ jar uvf BuildSynteny.jar BuildSynteny.class
+
+And that should be all :)
