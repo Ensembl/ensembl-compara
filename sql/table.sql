@@ -41,9 +41,9 @@ CREATE TABLE genome_db (
   genome_db_id      int(10) NOT NULL auto_increment,
   taxon_id          int(10) DEFAULT '0' NOT NULL,
   name              varchar(40) DEFAULT '' NOT NULL,
-  assembly          varchar(255) DEFAULT '' NOT NULL,
+  assembly          varchar(100) DEFAULT '' NOT NULL,
   assembly_default  tinyint(1) DEFAULT 1,
-  genebuild         varchar(255) DEFAULT '' NOT NULL,
+  genebuild         varchar(100) DEFAULT '' NOT NULL,
   locator           varchar(255) DEFAULT '' NOT NULL,
 
   PRIMARY KEY (genome_db_id),
