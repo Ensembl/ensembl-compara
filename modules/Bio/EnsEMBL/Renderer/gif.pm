@@ -7,10 +7,33 @@ use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::Renderer);
 
 sub init_canvas {
-    my ($this, $config, $im_width, $im_height) = @_;
+    my ($self, $config, $im_width, $im_height) = @_;
     my $canvas = new GD::Image($im_width, $im_height);
     $canvas->colorAllocate($config->colourmap()->rgb_by_id($config->bgcolor()));
-    $this->canvas($canvas);
+    $self->canvas($canvas);
+}
+
+sub add_canvas_frame {
+    my ($self, $config, $im_width, $im_height) = @_;
+	
+	return if (defined $config->{'no_image_frame'});
+	
+	# default image frame colour
+	my $imageframecol = $config->colourmap()->id_by_name('black');
+	
+	# custom image frame colour
+	if (defined $config->{'image_frame_colour'}){
+		$imageframecol = $config->colourmap()->id_by_name($config->{'image_frame_colour'});
+	}
+    my $framecolour = $self->colour($imageframecol);
+
+	# for contigview bottom box we need an extra thick border...
+	if ($config->script() eq "contigviewbottom"){		
+    	$self->{'canvas'}->rectangle(1, 1, $im_width-2, $im_height-2, $framecolour);		
+	}
+	
+    $self->{'canvas'}->rectangle(0, 0, $im_width-1, $im_height-1, $framecolour);
+	
 }
 
 sub canvas {
@@ -27,10 +50,10 @@ sub canvas {
 # GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
 # 
 sub colour {
-    my ($this, $id) = @_;
-    $id ||= $this->{'colourmap'}->id_by_name("black");
-    my $colour = $this->{'_GDColourCache'}->{$id} || $this->{'canvas'}->colorAllocate($this->{'colourmap'}->rgb_by_id($id));
-    $this->{'_GDColourCache'}->{$id} = $colour;
+    my ($self, $id) = @_;
+    $id ||= $self->{'colourmap'}->id_by_name("black");
+    my $colour = $self->{'_GDColourCache'}->{$id} || $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_id($id));
+    $self->{'_GDColourCache'}->{$id} = $colour;
     return $colour;
 }
 
@@ -42,6 +65,14 @@ sub render_Rect {
 
     my $gcolour       = $glyph->colour();
     my $gbordercolour = $glyph->bordercolour();
+	# (avc)
+	# this is a no-op to let us define transparent glyphs
+	# and which can still have an imagemap area BUT make
+	# sure it is smaller than the carrent largest glyph in
+	# this glyphset because its height is not recorded!
+	if ($gcolour eq 'transparent'){
+		return;
+	}
 
     my $bordercolour  = $self->colour($gbordercolour);
     my $colour        = $self->colour($gcolour);
@@ -55,33 +86,35 @@ sub render_Rect {
 
     $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
     $canvas->rectangle($x1, $y1, $x2, $y2, $bordercolour) if(defined $gbordercolour);
-#print STDERR qq(gif $glyph: $x1, $y1, $x2, $y2\n) if(ref($glyph) eq "Bio::EnsEMBL::Glyph::Composite");
+	
+	#print STDERR qq(gif $glyph: $x1, $y1, $x2, $y2\n) if(ref($glyph) eq "Bio::EnsEMBL::Glyph::Composite");
+
 }
 
 sub render_Text {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
 
-    my $colour = $this->colour($glyph->colour());
-    $glyph->transform($this->{'config'}->{'transform'});
+    my $colour = $self->colour($glyph->colour());
+    $glyph->transform($self->{'config'}->{'transform'});
 
     #########
     # BAH! HORRIBLE STINKY STUFF!
     # I'd take GD voodoo calls any day
     #
     if($glyph->font() eq "Tiny") {
-        $this->{'canvas'}->string(gdTinyFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+        $self->{'canvas'}->string(gdTinyFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
 
     } elsif($glyph->font() eq "Small") {
-        $this->{'canvas'}->string(gdSmallFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+        $self->{'canvas'}->string(gdSmallFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
 
     } elsif($glyph->font() eq "MediumBold") {
-        $this->{'canvas'}->string(gdMediumBoldFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+        $self->{'canvas'}->string(gdMediumBoldFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
 
     } elsif($glyph->font() eq "Large") {
-        $this->{'canvas'}->string(gdLargeFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+        $self->{'canvas'}->string(gdLargeFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
 
     } elsif($glyph->font() eq "Giant") {
-        $this->{'canvas'}->string(gdGiantFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
+        $self->{'canvas'}->string(gdGiantFont, $glyph->pixelx(), $glyph->pixely(), $glyph->text(), $colour);
     }
 
 }
@@ -120,31 +153,31 @@ sub render_Intron {
 }
 
 sub render_Line {
-    my ($this, $glyph) = @_;
-    $glyph->transform($this->{'config'}->{'transform'});
+    my ($self, $glyph) = @_;
+    $glyph->transform($self->{'config'}->{'transform'});
 
-    my $colour = $this->colour($glyph->colour());
+    my $colour = $self->colour($glyph->colour());
     my $x1     = $glyph->pixelx() + 0;
     my $y1     = $glyph->pixely() + 0;
     my $x2     = $x1 + $glyph->pixelwidth();
     my $y2     = $y1 + $glyph->pixelheight();
 
     if(defined $glyph->dotted()) {
-	$this->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
+	$self->{'canvas'}->dashedLine($x1, $y1, $x2, $y2, $colour);
     } else {
-	$this->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
+	$self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
     }
 }
 
 sub render_Poly {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
 
-    my $bordercolour = $this->colour($glyph->bordercolour());
-    my $colour       = $this->colour($glyph->colour());
+    my $bordercolour = $self->colour($glyph->bordercolour());
+    my $colour       = $self->colour($glyph->colour());
 
     my $poly = new GD::Polygon;
 
-    $glyph->transform($this->{'config'}->{'transform'});
+    $glyph->transform($self->{'config'}->{'transform'});
 
     my @points = @{$glyph->pixelpoints()};
     my $pairs_of_points = (scalar @points)/ 2;
@@ -157,27 +190,27 @@ sub render_Poly {
     }
 
     if(defined $colour) {
-	$this->{'canvas'}->filledPolygon($poly, $colour);
+	$self->{'canvas'}->filledPolygon($poly, $colour);
     } else {
-	$this->{'canvas'}->polygon($poly, $bordercolour);
+	$self->{'canvas'}->polygon($poly, $bordercolour);
     }
 }
 
 sub render_Composite {
-    my ($this, $glyph) = @_;
+    my ($self, $glyph) = @_;
 
     #########
     # now loop through $glyph's children
     #
-    $this->SUPER::render_Composite($glyph);
+    $self->SUPER::render_Composite($glyph);
 
     #########
     # draw & colour the bounding area if specified
     #
     if(defined $glyph->colour() || defined $glyph->bordercolour()) {
 	my $rect = $glyph;
-	$rect->transform($this->{'config'}->{'transform'});
-	$this->render_Rect($rect);
+	$rect->transform($self->{'config'}->{'transform'});
+	$self->render_Rect($rect);
     }
 }
 

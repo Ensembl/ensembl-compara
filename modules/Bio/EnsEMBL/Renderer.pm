@@ -28,12 +28,12 @@ sub new {
 }
 
 sub render {
-    my ($this) = @_;
+    my ($self) = @_;
 
     #########
     # pull out alternating background colours for this script
     #
-    my $config = $this->{'config'};
+    my $config = $self->{'config'};
     my $white  = $config->bgcolour() || $config->colourmap->id_by_name('white');
     my $bgcolours = {
 	'0' => $config->get($config->script(), '_settings', 'bgcolour1') || $white,
@@ -48,9 +48,9 @@ sub render {
     # and while we're looping, tot up the image height
     #
     my $im_height = 0;
-    my $spacing = $this->{'spacing'};
+    my $spacing = $self->{'spacing'};
 
-    for my $glyphset (@{$this->{'glyphsets'}}) {
+    for my $glyphset (@{$self->{'glyphsets'}}) {
 	next if (scalar @{$glyphset->{'glyphs'}} == 0);
 
 	my $fntheight = (defined $glyphset->label())?$config->texthelper->height($glyphset->label->font()):0;
@@ -68,20 +68,20 @@ sub render {
     #########
     # create a fresh canvas
     #
-    if($this->can('init_canvas')) {
-	$this->init_canvas($config, $im_width, $im_height);
+    if($self->can('init_canvas')) {
+	$self->init_canvas($config, $im_width, $im_height);
     }
 
     my $yoffset = $spacing;
     my $iteration = 0;
-    for my $glyphset (@{$this->{'glyphsets'}}) {
+    for my $glyphset (@{$self->{'glyphsets'}}) {
 	next if(scalar @{$glyphset->{'glyphs'}} == 0);
 	#########
 	# remove any whitespace at the top of this row
 	#
 	my $gminy = $glyphset->miny();
 
-	$this->{'config'}->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $spacing);
+	$self->{'config'}->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $spacing);
 
 	if(defined $bgcolour_flag) {
 	    #########
@@ -90,7 +90,7 @@ sub render {
 	    my $background = new Bio::EnsEMBL::Glyph::Rect({
 		'x'         => 0,
 		'y'         => $gminy,
-		'width'     => $this->{'config'}->image_width(),
+		'width'     => $self->{'config'}->image_width(),
 		'height'    => $glyphset->maxy() - $gminy,
 		'colour'    => $$bgcolours{$iteration % 2},
 		'absolutex' => 1,
@@ -103,20 +103,21 @@ sub render {
 	#
 	if(defined $glyphset->label()) {
 	    my $gh = $config->texthelper->height($glyphset->label->font());
-	    $glyphset->label->y((($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $glyphset->miny());
+	    $glyphset->label->y((($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy);
 	    $glyphset->label->height($gh);
 	    $glyphset->push($glyphset->label());
 	}
 
+#print STDERR qq($self: iteration = $iteration, glyphset=$glyphset, gminy= $gminy, translatey = ), $config->transform->{'translatey'}, qq(\n);
 	#########
 	# loop through everything and draw it
 	#
 	for my $glyph ($glyphset->glyphs()) {
-	    my $method = $this->method($glyph);
-	    if($this->can($method)) {
-		$this->$method($glyph);
+	    my $method = $self->method($glyph);
+	    if($self->can($method)) {
+		$self->$method($glyph);
 	    } else {
-		print STDERR qq(Bio::EnsEMBL::Renderer::render: Don't know how to $method\n);
+		print STDERR qq(Bio::EnsEMBL::Renderer::render: Do not know how to $method\n);
 	    }
 	}
 
@@ -126,23 +127,30 @@ sub render {
 	$yoffset += $glyphset->height();
 	$iteration ++;
     }
-}
+	
 
-sub canvas {
-    my ($this, $canvas) = @_;
-    $this->{'canvas'} = $canvas if(defined $canvas);
-    return $this->{'canvas'};
-}
+	#########
+	# the last thing we do in the render process is add a frame
+	# so that it appears on the top of everything else...
+	
+	$self->add_canvas_frame($config, $im_width, $im_height);
+	}
 
-sub method {
-    my ($this, $glyph) = @_;
+	sub canvas {
+    	my ($self, $canvas) = @_;
+    	$self->{'canvas'} = $canvas if(defined $canvas);
+    	return $self->{'canvas'};
+	}
 
-    my ($suffix) = ref($glyph) =~ /.*::(.*)/;
-    return qq(render_$suffix);
-}
+	sub method {
+    	my ($self, $glyph) = @_;
 
-sub render_Composite {
-    my ($this, $glyph) = @_;
+    	my ($suffix) = ref($glyph) =~ /.*::(.*)/;
+    	return qq(render_$suffix);
+	}
+
+	sub render_Composite {
+    my ($self, $glyph) = @_;
 
     #########
     # we've already applied the transformation in the 'render' routine,
@@ -152,26 +160,26 @@ sub render_Composite {
     my $yoffset = $glyph->y();
 
     for my $subglyph (@{$glyph->{'composite'}}) {
-	my $method = $this->method($subglyph);
+	my $method = $self->method($subglyph);
 
-	if($this->can($method)) {
+	if($self->can($method)) {
 	    #########
 	    # offset child glyphs by the composite coordinates
 	    #
 	    $subglyph->x($subglyph->x() + $xoffset);
 	    $subglyph->y($subglyph->y() + $yoffset);
 
-	    $this->$method($subglyph);
+	    $self->$method($subglyph);
 	} else {
-	    print STDERR qq(Bio::EnsEMBL::Renderer::render_Composite: Don't know how to $method\n);
+	    print STDERR qq(Bio::EnsEMBL::Renderer::render_Composite: Do not know how to $method\n);
 	}
     }
-}
+	}
 
-#########
-# empty stub for Blank spacer objects with no rendering at all
-#
-sub render_Blank {
-}
+	#########
+	# empty stub for Blank spacer objects with no rendering at all
+	#
+	sub render_Blank {
+	}
 
 1;

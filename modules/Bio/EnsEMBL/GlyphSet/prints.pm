@@ -49,14 +49,16 @@ sub _init {
      
 	my $desc = $row[0]->idesc();
 
+	my $colour = $Config->get($Config->script(), 'prints','col');
+
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'id'    => $key,
 	    'zmenu' => {
 		'caption'  => $key,
 		$desc => '',
 	    },
+	    'bordercolour' => $colour,
 	});
-	my $colour = $Config->get($Config->script(), 'prints','col');
 	
 
 #To be changed
@@ -77,9 +79,9 @@ sub _init {
 		'height'   => $h,
 		'id'       => $id,
 		'colour'   => $colour,
-		'zmenu' => {
-		    'caption' => $id,
-		},
+#		'zmenu' => {
+#		    'caption' => $id,
+#		},
 	    });
 	    
 	    
@@ -88,6 +90,22 @@ sub _init {
 	}
 	
 #	push @{$this->{'glyphs'}}, $Composite;
+
+	#########
+	# add a label
+	#
+	my $font = "Small";
+	my $text = new Bio::EnsEMBL::Glyph::Text({
+	    'font'   => $font,
+	    'text'   => $key,
+	    'x'      => $row[0]->feature1->start(),
+	    'y'      => $h,
+	    'height' => $Config->texthelper->height($font),
+	    'colour' => $colour,
+	});
+
+	$this->push($text);
+
 	$this->push($Composite);
 	$y = $y + 8;
     }

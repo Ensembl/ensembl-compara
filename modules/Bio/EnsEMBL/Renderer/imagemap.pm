@@ -14,6 +14,11 @@ sub init_canvas {
     $this->canvas("");
 }
 
+sub add_canvas_frame {
+    my ($self, $config, $im_width, $im_height) = @_;
+	return(); # no-op!	
+}
+
 sub render_Rect {
     my ($this, $glyph) = @_;
 
@@ -50,7 +55,7 @@ sub render_Rect {
     my $x1 = $glyph->pixelx();
     my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
     my $y1 = $glyph->pixely();
-    my $y2 = $glyph->pixely() + $glyph->pixelheight() + 1;
+    my $y2 = $glyph->pixely() + $glyph->pixelheight();
 #print STDERR qq(imagemap got glyph $glyph pixelheight = ), $glyph->pixelheight(), qq(\n);
 
     $x1 = 0 if($x1<0);
