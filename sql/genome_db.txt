@@ -7,7 +7,7 @@ genome_db_id	taxon_id	name	assembly	assembly_default	genebuild	locator
 6	7227	Drosophila melanogaster	DROM3A	1	0307FlyBase	
 7	6239	Caenorhabditis elegans	CEL116	1	0402Wormbase	
 8	6238	Caenorhabditis briggsae	CBR25	1	0302Ensembl	
-9	7955	Danio rerio	ZFISH4	1	0409Ensembl	
+9	7955	Danio rerio	ZFISH4	1	0407Ensembl	
 10	9598	Pan troglodytes	BROAD1	1	0405Ensembl	
 11	9031	Gallus gallus	WASHUC1	1	0406Ensembl	
 12	7460	Apis mellifera	Amel_1.1	1	0409Ensembl		
