@@ -74,7 +74,7 @@ if(%hive_params) {
 }
 
 
-my $analysis = $self->prepareGenomeAnalysis();
+$self->prepareGenomeAnalysis();
 
 exit(0);
 
@@ -393,8 +393,33 @@ sub prepareGenomeAnalysis
     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
   }
 
+  #
+  # Threshold_on_dS
+  #
 
-  return $submit_analysis;
+  my $threshold_on_dS = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'Threshold_on_dS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
+  );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($threshold_on_dS);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($threshold_on_dS->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $ctrlRuleDBA->create_rule($homology_dNdS,$threshold_on_dS);
+  }
+  if (defined $dnds_params{'species_sets'}) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+        (
+         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . '}',
+         -analysis       => $threshold_on_dS,
+        );
+  }
+
+  return 1;
 }
 
 sub store_codeml_parameters
