@@ -174,6 +174,7 @@ sub createBlastRules
       #print("\nANALYSIS ".$blastAnalysis->logic_name()." is a ".$blastPhylum."\n");
       foreach my $analysis (@{$analysisList}) {
         next unless($analysis->logic_name =~ /SubmitPep_/);
+        $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($analysis, $self->{'submitHomology'});
 
         my $genome_db_id = eval($analysis->parameters)->{'genome_db_id'};
         next unless($genome_db_id);
