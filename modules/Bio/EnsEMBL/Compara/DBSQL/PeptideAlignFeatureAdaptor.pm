@@ -60,7 +60,6 @@ sub _store_PAFS {
 
   return unless(@out and scalar(@out));
 
-  print("_store_PAFS\n");
   my $memberDBA = $self->db->get_MemberAdaptor();
 
   my $query = "INSERT INTO peptide_align_feature(".
