@@ -7,6 +7,10 @@ Bio::EnsEMBL::Glyph::Symbol::anchored_arrow
 Subclass of generic_span to implement a directional arrow with an arrowhead
 at one end and a vertical bar at the other:  |----->
 
+=head1 ATTRIBS
+
+- orientation: +/- force direction of arrow
+
 =cut
 
 package Bio::EnsEMBL::Glyph::Symbol::anchored_arrow;

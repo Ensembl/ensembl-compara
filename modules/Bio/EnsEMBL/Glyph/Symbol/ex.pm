@@ -8,9 +8,10 @@ A collection of drawing-code glyphs to represent an X.  Centred on range of feat
 
 =head1 ATTRIBS
 
-POINT - if true, draws the cross centred on start & end, otherwise the cross is scaled to the feature width
+- point : if true, draws the symbol the default width, otherwise it is scaled
+to the feature width
 
-LINEWIDTH - if a point feature, specifies the width of the symbol
+- linewidth : if a point feature, specifies the width of the symbol
 
 =cut
 
