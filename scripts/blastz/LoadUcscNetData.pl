@@ -258,6 +258,18 @@ while( $sth->fetch() ) {
   my @fps;
   my @dafs;
   while( $sth2->fetch() ) {
+    # Checking the chromosome length from UCSC with Ensembl.
+    unless ($tdnafrag->length == $c_tSize) {
+      print STDERR "tSize = $c_tSize for tName = $c_tName and Ensembl has dnafrag length of ",$tdnafrag->length,"\n";
+      print STDERR "net_index is $net_index\n";
+      exit 2;
+    }
+    unless ($qdnafrag->length == $c_qSize) {
+      print STDERR "tSize = $c_qSize for tName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
+      print STDERR "net_index is $net_index\n";
+      exit 3;
+    }
+    
     $c_qStrand = 1 if ($c_qStrand eq "+");
     $c_qStrand = -1 if ($c_qStrand eq "-");
     $c_tStart++;
