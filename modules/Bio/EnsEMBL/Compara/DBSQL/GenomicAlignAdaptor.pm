@@ -369,13 +369,20 @@ sub fetch_by_dnafrag{
 
 =head2 fetch_DnaDnaAlignFeature_by_species_chr_start_end
 
- Title	 : fetch_DnaDnaAlignFeature_by_species_chr_start_end
- Usage	 :
- Function:
- Example :
- Returns : an array of Bio::EnsEMBL::Compara::DnaDnaAlignFeature objects 
- Args 	 : subject_species, query_species, chr_name, chr_start and chr_end on subject species 
-           and type of dnafrag from which data as to be queried
+ Arg [1]    : string subject_species
+              e.g. "Homo_sapiens"
+ Arg [2]    : string query_species
+              e.g. "Mus_musculus"
+ Arg [3]    : string chr_name
+ Arg [4]    : int chr_start
+ Arg [5]    : int chr_end
+ Arg [6]    : string dnafrag_type (optional)
+              type of dnafrag from which data as to be queried, default is "VirtualContig"
+ Example    : fetch_DnaDnaAlignFeature_by_species_chr_start_end("Homo_sapiens","Mus_musculus","X",250000,"VirtualContig");
+ Description: find matches of query_species on subject_species between chromosome coordinates on subject_species
+ Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
+ Exceptions : none
+ Caller     : general
 
 =cut
 
@@ -385,7 +392,10 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
   my @DnaDnaAlignFeatures;
 
   my $dfad = $self->db->get_DnaFragAdaptor;
-  my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,"VirtualContig");
+  unless (defined $dnafrag_type) {
+    $dnafrag_type = "VirtualContig";
+  }
+  my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,$dnafrag_type);
   
   foreach my $df (@list_dnafrag) {
     my @genomicaligns = $self->fetch_by_dnafrag($df);
@@ -418,7 +428,7 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
 	  $alignblock2->start($alignblock2->start + $chr_start2 - 1);
 	  $alignblock2->end($alignblock2->end + $chr_start2 - 1);
 
-	  my $DnaDnaAlignFeature = new Bio::EnsEMBL::Compara::DnaDnaAlignFeature('-cigar_string' => $alignblock1->cigar_string);
+	  my $DnaDnaAlignFeature = new Bio::EnsEMBL::DnaDnaAlignFeature('-cigar_string' => $alignblock1->cigar_string);
 	  my $feature1 = new Bio::EnsEMBL::SeqFeature;
 	  $feature1->seqname($chr_name1);
 	  $feature1->start($alignblock1->start);
@@ -450,7 +460,7 @@ sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
       }
     }
   }
-  return @DnaDnaAlignFeatures;
+  return \@DnaDnaAlignFeatures;
 }
 
 1;
