@@ -115,6 +115,7 @@ sub compact_init {
       my $e = $exon->end;
       $s = 1 if $s < 0;
       $e = $length if $e>$length;
+      $transcript_drawn = 1;
       $Composite2->push(new Sanger::Graphics::Glyph::Rect({
         'x' => $s-1, 'y' => $y, 'width' => $e-$s+1,
         'height' => $h, 'colour'=>$colour, 'absolutey' => 1
@@ -185,10 +186,17 @@ sub compact_init {
     $self->push($Composite);
   }
 
-  if( $Config->get('_settings','opt_empty_tracks')!=0 && $gene_drawn==0 ) {
+  if($transcript_drawn) {
+    my ($key, $priority, $legend) = $self->legend( $colours );
+    # define which legend_features should be displayed
+    # this is being used by GlyphSet::gene_legend
+    $Config->{'legend_features'}->{$key} = {
+      'priority' => $priority,
+      'legend'   => $legend
+    } if defined($key);
+  } elsif( $Config->get('_settings','opt_empty_tracks')!=0) {
     $self->errorTrack( "No ".$self->error_track_name()." in this region" );
   }
-
 }
 
 sub get_homologous_gene_ids {
