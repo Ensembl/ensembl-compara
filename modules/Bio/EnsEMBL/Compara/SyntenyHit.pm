@@ -14,7 +14,7 @@ Bio::EnsEMBL::Protein_Hit - Object representing one Protein_Hit (for synteny)
 
     # $db is Bio::EnsEMBL::DB::Obj 
 
-     my $protein_hit = Bio::EnsEMBL::Synteny_Hit->new (-dbID       => $dbID,  
+     my $protein_hit = Bio::EnsEMBL::SyntenyHit->new (-dbID       => $dbID,  
                                                        -align_id    => $align_id,
                                                        -dnafrag_id=> $dnafrag_id,
                                                        -adaptor   => $adaptor
@@ -43,7 +43,7 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 
-package Bio::EnsEMBL::Compara::Synteny_Hit;
+package Bio::EnsEMBL::Compara::SyntenyHit;
 use vars qw(@ISA);
 use Bio::Root::RootI;
 
