@@ -281,13 +281,11 @@ sub get_Member_Attribute_by_source {
 
   throw("Should give defined source_name as arguments\n") unless (defined $source_name);
 
-  unless (defined $self->{'_members_by_source'}->{$source_name}) {
-    my $MemberAdaptor = $self->adaptor->db->get_MemberAdaptor();
-    my $members = $MemberAdaptor->fetch_by_relation_source($self,$source_name);
+  $self->get_all_Member_Attribute;
 
-    $self->{'_members_by_source'}->{$source_name} = [];
-    push @{$self->{'_members_by_source'}->{$source_name}}, @{$members};
-  }
+  $self->{'_members_by_source'}->{$source_name} = [] 
+    unless(defined($self->{'_members_by_source'}->{$source_name}));
+    
   return $self->{'_members_by_source'}->{$source_name};
 }
 
@@ -307,14 +305,11 @@ sub get_Member_Attribute_by_source_taxon {
   my ($self, $source_name, $taxon_id) = @_;
 
   throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
+  $self->get_all_Member_Attribute;  
 
-  unless (defined $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id}) {
-    my $MemberAdaptor = $self->adaptor->db->get_MemberAdaptor();
-    my $members = $MemberAdaptor->fetch_by_relation_source_taxon($self,$source_name,$taxon_id);
+  $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id} = []
+    unless(defined($self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id}));
 
-    $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id} = [];
-    push @{$self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id}}, @{$members};
-  }
   return $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id};
 }
 
