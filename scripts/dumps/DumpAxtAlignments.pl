@@ -28,6 +28,7 @@ my ($species1,$assembly1,$species2,$assembly2);
 my $conf_file;
 my $help = 0;
 my $alignment_type = "WGA";
+my $limit = 0;
 
 unless (scalar @ARGV) {
   print $usage;
@@ -46,7 +47,8 @@ GetOptions('help' => \$help,
 	   'species2=s' => \$species2,
 	   'assembly2=s' => \$assembly2,
 	   'alignment_type=s' => \$alignment_type,
-	   'conf_file=s' => \$conf_file);
+	   'conf_file=s' => \$conf_file,
+           'limit=i' => \$limit);
 
 $|=1;
 
@@ -103,7 +105,7 @@ my $species2_sliceadaptor = $species2_dbadaptor->get_SliceAdaptor;
 
 my $dafad = $db->get_DnaAlignFeatureAdaptor;
 
-my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$chr_name,$chr_start,$chr_end,$alignment_type)};
+my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$chr_name,$chr_start,$chr_end,$alignment_type,$limit)};
 
 my $index = 0;
 
