@@ -65,8 +65,7 @@ my $analysis = $self->prepareGenomeAnalysis();
 
 foreach my $speciesPtr (@speciesList) {
   $self->submitGenome($speciesPtr, $analysis);
-
-  $self->prepareMemberPepAnalyses($speciesPtr);
+  #$self->prepareMemberPepAnalyses($speciesPtr);
 }
 
 
@@ -165,12 +164,10 @@ sub prepareGenomeAnalysis
 
   # create an unlinked analysis called blast_template
   # it will not have rule goal/conditions so it will never execute
-=head4
   my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
   $blast_template->input_id_type('MemberPep');
   $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($blast_template);
-=cut
 
   return $submit_analysis;
 }
@@ -275,11 +272,9 @@ sub prepareMemberPepAnalyses
   $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
 
 
-
   my $blast_analysis = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
   $blast_analysis->logic_name("blast_" . $species->{'genome_db'}->dbID(). "_". $species->{'genome_db'}->assembly());
   $blast_analysis->input_id_type('MemberPep');
-  
   $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($blast_analysis);
 
 }
