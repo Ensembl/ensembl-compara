@@ -19,7 +19,7 @@ sub features {
 }
 
 sub href {
-    my ($self, $id, $chr_pos ) = @_;
+    my ($self, $chr_pos ) = @_;
     return "/Rattus_norvegicus/$ENV{'ENSEMBL_SCRIPT'}?$chr_pos";
 }
 
@@ -27,16 +27,20 @@ sub zmenu {
     my ($self, $id, $chr_pos ) = @_;
     return { 
 		'caption'    => $id, # $f->id,
-		'Jump to Rattus norvegicus' => $self->href( $id, $chr_pos )
+		'Jump to Rattus norvegicus' => $self->href( $chr_pos )
     };
 }
 
 
 sub unbumped_zmenu {
-    my ($self, $ref, $target ) = @_;
-    return { 
-    	'caption'    => 'Dot-plot', 
-    	'Dotter' => $self->unbumped_href( $ref, $target ),
+    my ($self, $ref, $target,$width ) = @_;
+    my ($chr,$pos) = @$target;
+    my $chr_pos = "l=$chr:".($pos-$width)."-".($pos+$width);
+
+    return {
+        'caption'    => 'Dot-plot',
+        'Dotter' => $self->unbumped_href( $ref, $target ),
+        'Jump to Rattus norevgicus' => $self->href( $chr_pos )
     };
 }
 

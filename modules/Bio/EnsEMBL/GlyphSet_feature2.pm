@@ -119,8 +119,6 @@ sub _init {
             $C1 += @{$id{$i}}; ## Diagnostic report....
 
             my $Composite = new Sanger::Graphics::Glyph::Composite({
-                'zmenu'    => $self->zmenu( $i ),
-                'href'     => $self->href( $i ),
 	            'x' => $F[0][0]> 1 ? $F[0][0]-1 : 0,
                     'width' => 0,
 	            'y' => 0
@@ -135,7 +133,7 @@ sub _init {
                 $C++;
                 if($DRAW_CIGAR &&$f->cigar_string()) {
                   warn( "CIGAR LINE $type" );
-                  $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black' );
+                  $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp );
                 } else {
                   my $START = $_->[0] < 1 ? 1 : $_->[0];
                   my $END   = $f->end > $length ? $length : $f->end;
@@ -193,7 +191,7 @@ sub _init {
             next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
             $X = $START;
             $C++;
-            my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ] );
+            my @X = ( [ $chr_name, $offset+ int(($_->[0]+$f->end)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2) );
             if($DRAW_CIGAR && $f->cigar_string() ) {
                 warn( "UNBUMPED CIGAR LINE $type" );
                 my $Composite = new Sanger::Graphics::Glyph::Composite({
@@ -203,7 +201,7 @@ sub _init {
                     'width' => 0,
                     'y' => 0
                 });
-                $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black');
+                $self->draw_cigar_feature($Composite, $f, $h, $feature_colour, 'black', $pix_per_bp);
                 $Composite->bordercolour($feature_colour);
                 $self->push( $Composite );
             } else {

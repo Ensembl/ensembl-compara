@@ -61,19 +61,19 @@ sub _init {
     return unless defined $type;
 
     my $length = $self->{'container'}->length();
-    my $DRAW_CIGAR = $length < 1e5 ;
-    my $Config = $self->{'config'};
     my $strand = $self->strand;
+    my $Config = $self->{'config'};
     my $strand_flag    = $Config->get($type, 'str');
     return if( $strand_flag eq 'r' && $strand != -1 ||
                $strand_flag eq 'f' && $strand != 1 );
+    my $pix_per_bp     = $Config->transform()->{'scalex'};
+    my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
 
     my $h              = 8;
     my %highlights;
     @highlights{$self->highlights()} = ();
 
     my @bitmap         = undef;
-    my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $bitmap_length  = int($length * $pix_per_bp);
     my $feature_colour = $Config->get(  $type, 'col' );
     my $hi_colour      = $Config->get(  $type, 'hi'  );
@@ -131,7 +131,7 @@ sub _init {
                 next if int($f->[1] * $pix_per_bp) == int( $X * $pix_per_bp );
                 $C++;
                 if($DRAW_CIGAR) {
-                  $self->draw_cigar_feature($Composite, $f->[2], $h, $feature_colour, 'black' );
+                  $self->draw_cigar_feature($Composite, $f->[2], $h, $feature_colour, 'black', $pix_per_bp );
                 } else {
                   my $START = $f->[0] < 1 ? 1 : $f->[0];
                   my $END   = $f->[1] > $length ? $length : $f->[1];
@@ -178,7 +178,7 @@ sub _init {
             $X = $START;
             $C++;
             if($DRAW_CIGAR) {
-               $self->draw_cigar_feature($self, $_, $h, $feature_colour, 'black' );
+               $self->draw_cigar_feature($self, $_, $h, $feature_colour, 'black', $pix_per_bp );
             } else {
 	      $self->push(new Sanger::Graphics::Glyph::Rect({
                 'x'          => $X-1,

@@ -68,7 +68,7 @@ sub zoom_zmenu {
 }
 
 sub draw_cigar_feature {
-  my( $self, $Composite, $f, $h, $feature_colour, $delete_colour ) = @_;
+  my( $self, $Composite, $f, $h, $feature_colour, $delete_colour, $pix_per_bp ) = @_;
 ## Find the 5' end of the feature.. (start if on forward strand of forward feature....)
   my $S = (my $O = $self->strand ) == 1 ? $f->start : $f->end;
   my $length = $self->{'container'}->length;
@@ -105,7 +105,7 @@ sub draw_cigar_feature {
 ## If a deletion temp store it so that we can draw after all matches....
     } elsif($type eq 'D') {
       ($s,$e) = ($e,$s) if $s<$e;
-      next if $e < 1 || $s > $length;  ## Skip if all outside box
+      next if $e < 1 || $s > $length || $pix_per_bp < 1 ;  ## Skip if all outside box
       push @delete, $e;
     }
   }
