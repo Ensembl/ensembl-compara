@@ -236,7 +236,7 @@ sub create_GenomeDBs {
                analysed against the specific query genome database.
                Returns the dbID of the database of the query genomeDB if 
                one is found.  A 0 is returned if no match is found.
-  Returntype : int
+  Returntype : int ( 0 or 1 )
   Exceptions : none
   Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
 
@@ -253,7 +253,7 @@ sub check_for_consensus_db {
   if ( exists %genome_consensus_xreflist->{$cid} ) {
     for my $i ( 0 .. $#{%genome_consensus_xreflist->{$cid}} ) {
       if ( $qid == %genome_consensus_xreflist->{$cid}[$i] ) {
-	return (%genome_consensus_xreflist->{$cid}[$i]);
+	return 1;
       }
     }
   }
@@ -272,7 +272,7 @@ sub check_for_consensus_db {
                Returns the dbID of the database of the consensus 
                genomeDB if one is found.  A 0 is returned if no match is
                found.
-  Returntype : int
+  Returntype : int ( 0 or 1 )
   Exceptions : none
   Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
 
@@ -288,7 +288,7 @@ sub check_for_query_db {
   if ( exists %genome_query_xreflist->{$qid} ) {
     for my $i ( 0 .. $#{%genome_query_xreflist->{$qid}} ) {
       if ( $cid == %genome_query_xreflist->{$qid}[$i] ) {
-	return (%genome_query_xreflist->{$qid}[$i]);
+	return 1;
       }
     }
   }
