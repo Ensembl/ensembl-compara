@@ -237,6 +237,49 @@ sub dbID{
 
 }
 
+
+
+=head2 start
+ 
+  Arg [1]    : int
+  Example    : $dnafrag->start(42);
+  Description: Getter/Setter for the start attribute
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+sub start{
+   my ($self,$value) = @_;
+   if( defined $value) {
+      $self->{'start'} = $value;
+    }
+    return $self->{'start'};
+}
+
+
+
+=head2 end
+ 
+  Arg [1]    : int
+  Example    : $dnafrag->end(42);
+  Description: Getter/Setter for the start attribute
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+ 
+=cut
+ 
+sub end{
+   my ($self,$value) = @_;
+   if( defined $value) {
+      $self->{'end'} = $value;
+    }
+    return $self->{'end'};
+}
+
+
 1;
 
 
