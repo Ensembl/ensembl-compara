@@ -126,7 +126,7 @@ sub fetch_input {
   # get the compara data: MethodLinkSpeciesSet, reference DnaFrag, 
   # and GenomicAlignBlocks
   ################################################################
-  print "mlss_id: ",$self->{'method_link_species_set_id'},"\n";
+#  print "mlss_id: ",$self->{'method_link_species_set_id'},"\n";
   my $mlss = $mlssa->fetch_by_dbID($self->{'method_link_species_set_id'});
 
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->{'method_link_species_set_id'}."\n")
@@ -146,7 +146,7 @@ sub fetch_input {
   # get the target slices and bin the GenomicAlignBlocks by group id
   ###################################################################
   my (%features_by_group, %query_lengths, %target_lengths);
-  
+  my $number_of_gabs = scalar @{$gabs};
   while (my $gab = shift @{$gabs}) {
     my ($qy_ga) = $gab->reference_genomic_align;
     my ($tg_ga) = @{$gab->get_all_non_reference_genomic_aligns};
@@ -160,27 +160,31 @@ sub fetch_input {
       $self->target_DnaFrag_hash->{$tg_ga->dnafrag->name} = $tg_ga->dnafrag;
     }
 
-    my $daf_cigar = $self->daf_cigar_from_compara_cigars($qy_ga->cigar_line,
-                                                         $tg_ga->cigar_line);
+#    my $daf_cigar = $self->daf_cigar_from_compara_cigars($qy_ga->cigar_line,
+#                                                         $tg_ga->cigar_line);
 
-    my $daf = Bio::EnsEMBL::DnaDnaAlignFeature->new
-        (-seqname => $qy_ga->dnafrag->name,
-         -start    => $qy_ga->dnafrag_start,
-         -end      => $qy_ga->dnafrag_end,
-         -strand   => $qy_ga->dnafrag_strand,
-         -hseqname => $tg_ga->dnafrag->name,
-         -hstart   => $tg_ga->dnafrag_start,
-         -hend     => $tg_ga->dnafrag_end,
-         -hstrand  => $tg_ga->dnafrag_strand,
-         -score    => $gab->score,
-         -cigar_string => $daf_cigar);
+#    my $daf = Bio::EnsEMBL::DnaDnaAlignFeature->new
+#        (-seqname => $qy_ga->dnafrag->name,
+#         -start    => $qy_ga->dnafrag_start,
+#         -end      => $qy_ga->dnafrag_end,
+#         -strand   => $qy_ga->dnafrag_strand,
+#         -hseqname => $tg_ga->dnafrag->name,
+#         -hstart   => $tg_ga->dnafrag_start,
+#         -hend     => $tg_ga->dnafrag_end,
+#         -hstrand  => $tg_ga->dnafrag_strand,
+#         -score    => $gab->score,
+#         -cigar_string => $daf_cigar);
 
     my $group_id = $qy_ga->genomic_align_group_id_by_type($self->{'input_group_type'});
     if ($group_id != $tg_ga->genomic_align_group_id_by_type($self->{'input_group_type'})) {
       throw("GenomicAligns in a GenomicAlignBlock belong to different group");
     }
 
-    push @{$features_by_group{$group_id}}, $daf;
+#    push @{$features_by_group{$group_id}}, $daf;
+#    if ($number_of_gabs > 100000) {
+#      $gab->genomic_align_array(0);
+#    }
+    push @{$features_by_group{$group_id}}, $gab;
   }
 
   $WORKDIR = "/tmp/worker.$$";
@@ -206,6 +210,28 @@ sub fetch_input {
   my $run = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
   $self->runnable($run);
 
+}
+
+=head2 run
+
+  Arg [1]   : Bio::EnsEMBL::Analysis::RunnableDB
+  Function  : cycles through all the runnables, calls run and pushes
+  their output into the RunnableDBs output array
+  Returntype: array ref
+  Exceptions: none
+  Example   : 
+
+=cut
+
+sub run{
+  my ($self) = @_;
+  foreach my $runnable(@{$self->runnable}){
+    $runnable->run;
+#    my $converted_output = $self->convert_output($runnable->output);
+#    $self->output($converted_output);
+    $self->output($runnable->output);
+    rmdir($runnable->workdir) if (defined $runnable->workdir);
+  }
 }
 
 sub query_dnafrag {
