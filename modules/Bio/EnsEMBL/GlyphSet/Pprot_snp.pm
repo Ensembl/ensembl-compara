@@ -52,8 +52,8 @@ sub _init {
 	my $snps		= $protein->{'image_snps'};  
     my $x		   = 0;
 	my $y          = 0;
-    my $h          = 5;
-	my $w      	   = 5;
+    my $h          = 4;
+	my $w      	   = 4;
     my $key        = "Prot SNP";    
 	my $last_indel;
 	my @bump_array;
@@ -69,7 +69,7 @@ sub _init {
       my $triangle_start =  $x + 3/$pix_per_bp;
 	  my $triangle = new Sanger::Graphics::Glyph::Poly({
 					'points'    => [ $triangle_start, $h,
-                                     $x, $h-5,
+                                     $x, $h-4,
                                      $triangle_end, $h  ],
                     'colour'    => $Config->get('Pprot_snp', $int->{'type'}),
                     'absolutey' => 1,
@@ -92,9 +92,9 @@ sub _init {
 	  my $triangle = new Sanger::Graphics::Glyph::Poly({
                     'x'        => $x,
 					'width'    => $w,
-					'points'    => [ $triangle_start, $h-5,
+					'points'    => [ $triangle_start, $h-4,
                                      $x, $h,
-                                     $triangle_end, $h-5  ],
+                                     $triangle_end, $h-4  ],
                     'colour'    => $Config->get('Pprot_snp', $int->{'type'}),
                     'absolutey' => 1,
 					'absolutewidth' => 1,
