@@ -148,13 +148,11 @@ sub dump_fasta {
   $sth->bind_columns( undef, \$stable_id, \$description, \$sequence, \$taxon_id );
 
   while( $sth->fetch() ) {
-    $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
-
     #if removedXedSeqs defined then it contains the minimum num of
     # Xs in a row that is not acceptable, the regex X{#,}? says
     # if X occurs # or more times (not exhaustive search)
-    unless($self->{'removeXedSeqs'} and
-          ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
+    unless($self->{'removeXedSeqs'} and ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
+      $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
       print FASTAFILE ">$stable_id $description\n$sequence\n";
       print DESCFILE "ensemblpep\t$stable_id\t\t", $self->{'taxon_hash'}->{$taxon_id}, "\n";
     }
