@@ -333,7 +333,7 @@ sub _init {
         my $e = $tag->{'end'}   > $vc_length ? $vc_length : $tag->{'end'}; 
     my $rect = new Sanger::Graphics::Glyph::Rect({
                     'x'          => $s-1,
-                    'y'          => 1,
+                    'y'          => 0,
                     'width'      => $e-$s+1,
                     'height'     => $h,
                     "colour"     => $tag->{'colour'},
