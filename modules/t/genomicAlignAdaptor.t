@@ -107,7 +107,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_by_dbID(1171
   ok($genomic_align->dnafrag_start, 49999812);
   ok($genomic_align->dnafrag_end, 50000028);
   ok($genomic_align->dnafrag_strand, 1);
-  ok($genomic_align->cigar_line, "86M2G63MG34M7G6M12G15M44G13M");
+  ok($genomic_align->cigar_line, "86M2D63MD34M7D6M12D15M44D13M");
   ok($genomic_align->level_id, 1);
 
 
