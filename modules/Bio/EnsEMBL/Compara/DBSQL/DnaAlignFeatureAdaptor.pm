@@ -310,14 +310,14 @@ sub fetch_all_by_Slice {
 
 sub interpolate_best_location {
   my ($self,$slice,$species,$alignment_type) = @_;
-  
+  $| =1 ;
   my $max_distance_for_clustering = 10000;
   my $dafs = $self->fetch_all_by_Slice($slice, $species, undef, $alignment_type);
 
   my %name_strand_clusters;
   my $based_on_group_id = 1;
   foreach my $daf (@{$dafs}) {
-    if ($daf->group_id > 0 && $alignment_type ne "TRANSLATED_BLAT") {
+    if (defined $daf->group_id && $daf->group_id > 0 && $alignment_type ne "TRANSLATED_BLAT") {
       push @{$name_strand_clusters{$daf->group_id}}, $daf;
     } else {
       $based_on_group_id = 0 if ($based_on_group_id);
@@ -334,7 +334,9 @@ sub interpolate_best_location {
     return ($best_blocks[0]->hseqname,
             $best_blocks[0]->hstart 
             + int(($best_blocks[-1]->hend - $best_blocks[0]->hstart)/2),
-            $best_blocks[0]->hstrand * $slice->strand);
+            $best_blocks[0]->hstrand * $slice->strand,
+            $best_blocks[0]->hstart,
+            $best_blocks[-1]->hend);
 
   } else {
     
@@ -387,7 +389,9 @@ sub interpolate_best_location {
     return ($refined_clusters[0]->[0], #hseqname,
             $refined_clusters[0]->[2]
             + int(($refined_clusters[0]->[3] - $refined_clusters[0]->[2])/2),
-            $refined_clusters[0]->[1] * $slice->strand);
+            $refined_clusters[0]->[1] * $slice->strand,
+            $refined_clusters[0]->[2],
+            $refined_clusters[0]->[3]);
 
   }
 }
