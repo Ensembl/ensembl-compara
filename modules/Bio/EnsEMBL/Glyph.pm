@@ -52,47 +52,48 @@ sub AUTOLOAD {
 #
 sub transform {
     my ($this, $transform_ref) = @_;
-#    return if(defined $this->{'read-only'});
-#    $this->{'read-only'} = 1;
 
-    my $scalex     = $$transform_ref{'scalex'}     || 1;
-    my $scaley     = $$transform_ref{'scaley'}     || 1;
-    my $translatex = $$transform_ref{'translatex'} || 0;
-    my $translatey = $$transform_ref{'translatey'} || 0;
-    my $rotation   = $$transform_ref{'rotation'}   || 0;
-#    my $clipx      = $$transform_ref{'clipx'}      || 0;
-#    my $clipy      = $$transform_ref{'clipy'}      || 0;
-#    my $clipwidth  = $$transform_ref{'clipwidth'}  || 0;
-#    my $clipheight = $$transform_ref{'clipheight'} || 0;
+    my $scalex     = $$transform_ref{'scalex'};
+    my $scaley     = $$transform_ref{'scaley'};
+    my $translatex = $$transform_ref{'translatex'};
+    my $translatey = $$transform_ref{'translatey'};
 
     #########
     # override transformation if we've set x/y to be absolute (pixel) coords
     #
     if(defined $this->absolutex()) {
-	$scalex     = $$transform_ref{'absolutescalex'} || 1;
+	$scalex = $$transform_ref{'absolutescalex'};
     }
 
     if(defined $this->absolutey()) {
-	$scaley     = $$transform_ref{'absolutescaley'} || 1;
+	$scaley = $$transform_ref{'absolutescaley'};
     }
+
+    #########
+    # copy the real coords & sizes if we don't have them already
+    #
+    $this->{'pixelx'}      ||= $this->{'x'};
+    $this->{'pixely'}      ||= $this->{'y'};
+    $this->{'pixelwidth'}  ||= $this->{'width'};
+    $this->{'pixelheight'} ||= $this->{'height'};
 
     #########
     # apply scale
     #
-    $this->pixelx      (int($this->x()      * $scalex));
-    $this->pixely      (int($this->y()      * $scaley));
-    $this->pixelwidth  (int($this->width()  * $scalex));
-    $this->pixelheight (int($this->height() * $scaley));
+    if(defined $scalex) {
+    	$this->pixelx      (int($this->pixelx()      * $scalex));
+    	$this->pixelwidth  (int($this->pixelwidth()  * $scalex));
+    }
+    if(defined $scaley) {
+    	$this->pixely      (int($this->pixely()      * $scaley));
+    	$this->pixelheight (int($this->pixelheight() * $scaley));
+    }
 
     #########
     # apply translation
     #
-    $this->pixelx($this->pixelx() + $translatex);
-    $this->pixely($this->pixely() + $translatey);
-
-    #########
-    # todo: check rotation
-    #
+    $this->pixelx($this->pixelx() + $translatex) if(defined $translatex);
+    $this->pixely($this->pixely() + $translatey) if(defined $translatey);
 }
 
 sub centre {

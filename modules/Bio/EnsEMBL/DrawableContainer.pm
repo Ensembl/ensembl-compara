@@ -5,6 +5,7 @@ use strict;
 use lib "../../../../modules";
 use vars qw(@ISA);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
+use Bio::EnsEMBL::Glyph::Rect;
 
 use constant DRAW_PATH => '/mysql/ensembl/www/server/ensembl-draw/modules';
 
@@ -44,7 +45,7 @@ sub new {
 	'display'    => $display,
 	'glyphsets'  => [],
 	'config'     => $Config,
-	'read-only'  => undef,
+	'spacing'    => 5,
     };
     bless($self, $class);
 
@@ -108,7 +109,7 @@ sub new {
     #########
     # calculate real scaling here
     # 
-    my $spacing = 5;
+    my $spacing = $self->{'spacing'};
 
     #########
     # calculate the maximum label width (plus margin)
@@ -159,12 +160,78 @@ sub new {
     }
 
     #########
+    # pull out alternating background colours for this script
+    #
+    my $white  = $Config->bgcolour() || $Config->colourmap->id_by_name('white');
+    my $bgcolours = {
+	'0' => $Config->get($Config->script(), '_settings', 'bgcolour1') || $white,
+	'1' => $Config->get($Config->script(), '_settings', 'bgcolour2') || $white,
+    };
+
+    my $bgcolour_flag;
+    $bgcolour_flag = 1 if($$bgcolours{0} ne $$bgcolours{1});
+
+    #########
     # go ahead and do all the database work
     #
-    for my $gs (@{$self->{'glyphsets'}}) {
-		&eprof_start($gs);
-		$gs->_init();
-		&eprof_end($gs);
+    my $yoffset = $spacing;
+    my $iteration = 0;
+    for my $glyphset (@{$self->{'glyphsets'}}) {
+
+	#########
+	# load everything from the database
+	#
+	$glyphset->_init();
+
+	#########
+	# don't waste any more time on this row if there's nothing in it
+	#
+	next if(scalar @{$glyphset->{'glyphs'}} == 0);
+
+	#########
+	# remove any whitespace at the top of this row
+	#
+	my $gminy = $glyphset->miny();
+
+	$Config->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $spacing);
+
+	if(defined $bgcolour_flag) {
+	    #########
+	    # colour the area behind this strip
+	    #
+	    my $background = new Bio::EnsEMBL::Glyph::Rect({
+		'x'         => 0,
+		'y'         => $gminy,
+		'width'     => $Config->image_width(),
+		'height'    => $glyphset->maxy() - $gminy,
+		'colour'    => $$bgcolours{$iteration % 2},
+		'absolutex' => 1,
+	    });
+
+	    #########
+	    # this accidentally gets stuffed in twice (for gif & imagemap)
+	    # so with rounding errors and such we shouldn't track this for maxy & miny values
+	    #
+	    unshift @{$glyphset->{'glyphs'}}, $background;
+	}
+
+	#########
+	# set up the label for this strip
+	#
+	if(defined $glyphset->label()) {
+	    my $gh = $Config->texthelper->height($glyphset->label->font());
+	    $glyphset->label->y((($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy);
+	    $glyphset->label->height($gh);
+	    $glyphset->push($glyphset->label());
+	}
+
+	$glyphset->transform();
+
+	#########
+	# translate the top of the next row to the bottom of this one
+	#
+	$yoffset += $glyphset->height();
+	$iteration ++;
     }
 
     &eprof_end('glyphset_creation');
@@ -177,9 +244,6 @@ sub new {
 #
 sub render {
     my ($self, $type) = @_;
-    
-    $self->{'config'}->{'transform'}->{'translatex'} ||= 0;
-    $self->{'config'}->{'transform'}->{'translatey'} ||= 0; # 
     
     #########
     # build the name/type of render object we want
@@ -203,10 +267,8 @@ sub render {
     # big, shiny, rendering 'GO' button
     #
     &eprof_start(qq(renderer_creation_$type));
-    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'}, $self->{'read-only'});
+    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'});
     &eprof_end(qq(renderer_creation_$type));
-
-    $self->{'read-only'} = 1;
 
     return $renderer->canvas();
 }

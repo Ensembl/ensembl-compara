@@ -246,4 +246,11 @@ sub label {
     return $this->{'label'};
 }
 
+sub transform {
+    my ($self) = @_;
+    for my $glyph (@{$self->{'glyphs'}}) {
+	$glyph->transform($self->{'config'}->{'transform'});
+    }
+}
+
 1;
