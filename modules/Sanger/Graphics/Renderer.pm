@@ -8,15 +8,16 @@ use Sanger::Graphics::Glyph::Poly;
 use strict;
 
 sub new {
-  my ($class, $config, $container, $glyphsets_ref) = @_;
+  my ($class, $config, $extra_spacing, $glyphsets_ref) = @_;
   
   my $self = {
 	      'glyphsets' => $glyphsets_ref,
 	      'canvas'    => undef,
 	      'colourmap' => $config->colourmap(),
 	      'config'    => $config,
-	      'container' => $container,
-	      'spacing'   => 5,
+	      'extra_spacing' => $extra_spacing,
+	      'spacing'   => $config->get('_settings','spacing')||2,
+	      'margin'    => $config->get('_settings','margin')||5,
 	     };
   
   bless($self, $class);
@@ -36,7 +37,7 @@ sub render {
   # and while we're looping, tot up the image height
   #
   my $spacing   = $self->{'spacing'};
-  my $im_height = $spacing * 1.5;
+  my $im_height = $self->{'margin'} * 2 - $spacing;
   
   for my $glyphset (@{$self->{'glyphsets'}}) {
     next if (scalar @{$glyphset->{'glyphs'}} == 0 || 
@@ -51,14 +52,15 @@ sub render {
       $im_height += $fntheight + $spacing;
     }
   }
-  $config->image_height($im_height);
+  $im_height += $self->{'extra_spacing'};
+  $config->image_height( $im_height );
   my $im_width = $config->image_width();
   
   #########
   # create a fresh canvas
   #
   if($self->can('init_canvas')) {
-    $self->init_canvas($config, $im_width, $im_height);
+    $self->init_canvas($config, $im_width, $im_height );
   }
   
   my %tags;

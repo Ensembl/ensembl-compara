@@ -5,6 +5,7 @@
 #
 package Sanger::Graphics::DrawableContainer;
 use strict;
+
 use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
@@ -15,244 +16,243 @@ use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Renderer::png;
 use Sanger::Graphics::Renderer::imagemap;
 
-sub new {
-  my ($class, $Container, $Config, $highlights, $strandedness, $Storage) = @_;
-  
-  my @strands_to_show = (defined $strandedness && $strandedness == 1) ? (1) : (1, -1);
-  
-  unless(defined $Container) {
-    print STDERR qq(Sanger::Graphics::DrawableContainer::new No container defined\n);
-    return;
+sub _init {
+  my $class = shift;
+  my $Contents = shift;
+  unless(ref($Contents) eq 'ARRAY') {
+    $Contents = [[ $Contents, shift ]];
+  } else {
+    my $T = [];
+    while( @$Contents ) {
+      push @$T, [splice(@$Contents,0,2)] ;
+    }
+    $Contents = $T;
   }
-  
-  unless(defined $Config) {
-    print STDERR qq(Sanger::Graphics::DrawableContainer::new No Config object defined\n);
-    return;
-  }
-  
+  my( $highlights, $strandedness, $Storage) = @_;
+
+
   my $self = {
-	      'vc'            => $Container,
-	      'glyphsets'     => [],
-	      'config'        => $Config,
-	      'spacing'       => 5,
-	      'button_width'  => 16,
-	      'storage'       => $Storage
-	     };
-  bless($self, $class);
-  
-  my $black = "red"; # arf.
-  
-  #########
-  # loop over all turned on & tuned in glyphsets
-  #
-  for my $strand (@strands_to_show) {
+    'glyphsets'     => [],
+    'config'        => $Contents->[0][1],
+    'storage'       => $Storage,
+    'prefix'        => 'Sanger::Graphics',
+    'contents'      => $Contents,
+    'highlights'    => $highlights || [],
+    'strandedness'  => $strandedness || 0,
+    '__extra_block_spacing__'    => 0,
+  };
+  bless( $self, $class );
+  return $self;
+}
 
-    my $tmp_glyphset_store = {};
+sub new {
+  my $class = shift;
+  my $self = $class->_init( @_ ); 
+  my $button_width = $self->{'config'}->get('_settings','button_width') || 7;
+  my $show_buttons = $self->{'config'}->get('_settings','show_buttons') || 'no' ;
+  my $show_labels  = $self->{'config'}->get('_settings','show_labels')  || 'yes';
+  my $label_width  = $self->{'config'}->get('_settings','label_width')  || 100;
+  my $margin       = $self->{'config'}->get('_settings','margin')       || 5;
+  my $trackspacing = $self->{'config'}->get('_settings','spacing')      || 2;
+  my $intercontainerspacing = $self->{'config'}->get('_settings','intercontainer')      || $margin * 2;
+  my $image_width  = $self->{'config'}->get('_settings','width')        || 700;
+  my $label_start  = $margin + ($show_buttons eq 'yes' ? $button_width + $margin : 0);
+  my $panel_start  = $label_start + ($show_labels  eq 'yes' ? $label_width + $margin  : 0);
+  my $panel_width  = $image_width - $panel_start - $margin;
+  
+  $self->{'__extra_block_spacing__'} -= $intercontainerspacing;
+  ######### loop over all turned on & tuned in glyphsets
+  my @strands_to_show = $self->{'strandedness'} == 1 ? (1) : (1, -1);
+  my $PERFIX = 'Sanger::Graphics';
+  my %manager_cache = ();
+  my $yoffset = $margin;
+  my $iteration = 0;
 
-    for my $row ($Config->subsections()) {
-      next unless ($Config->get($row, 'on') eq "on");
-      my $str_tmp = $Config->get($row, 'str');
-      next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
-      next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
+  foreach my $CC ( @{$self->{'contents'}} ) {
+    my( $Container,$Config) = @$CC;
+    $Config->{'panel_width'} = $panel_width;
+    unless(defined $Container) {
+      warn ref($self).qq( No container defined);
+      next;
+    }
+    unless(defined $Config) {
+      warn ref($self).qq( No Config object defined);
+      next;
+    }
+    my @glyphsets = ();
+    for my $strand (@strands_to_show) {
+      my $tmp_glyphset_store = {};
+      for my $row ($Config->subsections( 1 )) {
+        next unless ($Config->get($row, 'on') eq "on");
+        my $str_tmp = $Config->get($row, 'str');
+        next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
+        next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
+        next if defined $Config->get($row,'manager'); 
+      ########## create a new glyphset for this row
+      my $classname = $self->{'prefix'}.qq(::GlyphSet::$row);
+      next unless $self->dynamic_use( $classname );
       
-      #########
-      # create a new glyphset for this row
-      #
-      my $classname = qq(Sanger::Graphics::GlyphSet::$row);
+      ########## generate a set for both strands
 
-      #########
-      # generate a set for both strands
-      #
       my $GlyphSet;
       eval {
-	$GlyphSet = new $classname($Container, $Config, $highlights, $strand);
+        $GlyphSet = new $classname($Container, $Config, $self->{'highlights'}, $strand);
       };
-      if($@) {
-	print STDERR "GLYPHSET $classname failed\n";
+      if($@ || !$GlyphSet) {
+          my $reason = $@ || "No reason given just returns undef";
+          warn "GLYPHSET: glyphset $classname failed at ".gmtime()."\nGLYPHSET: $reason";
       } else {
-	$tmp_glyphset_store->{$Config->get($row, 'pos')} = $GlyphSet;
+        $tmp_glyphset_store->{$Config->get($row, 'pos')} = $GlyphSet;
       }
     }
+    my $managed_offset = $Config->{'_das_offset'} || 5500;
+      ########## install the glyphset managers, we've just cached the ones we need...
+      foreach my $manager ( reverse sort keys %{$Config->{'_managers'}} ) {
+        next unless $self->dynamic_use( $self->{'prefix'}.qq(::GlyphSet::$manager) );
+        my $classname = $self->{'prefix'}.qq(::GlyphSetManager::$manager);
+        next unless $self->dynamic_use( $classname );
+        my $gsm = new $classname($Container, $Config, $self->{'highlights'}, $strand);
+        for my $glyphset ( sort { $a->managed_name cmp $b->managed_name } $gsm->glyphsets()) {
+          my $row = $glyphset->managed_name();
+          next unless ($Config->get($row, 'on') eq "on");
+          my $str_tmp = $Config->get($row, 'str');
+          next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
+          next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
+          $tmp_glyphset_store->{$Config->get($row, 'pos') || $managed_offset++} = $glyphset;
+        }
+      }
+      #########
+      # sort out the resulting mess
+      #
+      my @tmp = map { $tmp_glyphset_store->{$_} } sort { $a <=> $b } keys %{ $tmp_glyphset_store };
+      push @glyphsets, ($strand == 1 ? reverse @tmp : @tmp);
+    }
+    
+    my $x_scale = $panel_width /( ($Config->container_width()||$Container->length()) +1 );
 
-    #########
-    # sort out the resulting mess
-    #
-    my @tmp = map { $tmp_glyphset_store->{$_} } sort { $a <=> $b } keys %{ $tmp_glyphset_store };
-    push @{$self->{'glyphsets'}}, ($strand == 1 ? reverse @tmp : @tmp);
-  }
-    
-  #########
-  # calculate real scaling here
-  #
-  my $spacing      = $self->{'spacing'};
-  my $button_width = $self->{'button_width'};
   
-  #########
-  # calculate the maximum label width (plus margin)
-  #
-  my $label_length_px = 0;
-  
-  for my $glyphset (@{$self->{'glyphsets'}}) {
-    my $composite;
-    next unless defined $glyphset->label();
-    
-    my $pixels = length($glyphset->label->text()) * $Config->texthelper->width($glyphset->label->font());
-    
-    $label_length_px = $pixels if($pixels > $label_length_px);
-    
-    #########
-    # just for good measure:
-    #
-    $glyphset->label->width($label_length_px);
+  if($show_buttons eq 'yes') {
+  for my $glyphset (@glyphsets) {
     next unless defined $glyphset->bumped();
-    $composite = Sanger::Graphics::Glyph::Composite->new({
-							  'y'         => 0,
-							  'x'         => 0,
-							  'absolutey' => 1,
-							  'width'     => 10
-							 });
-    
     my $NAME = ref($glyphset);
-    $NAME =~ s/^.*:://;
-    my $box_glyph = Sanger::Graphics::Glyph::Rect->new({
-							'x'            => 2,
-							'y'            => 0,
-							'width'        => 10,
-							'height'       => 8,
-							'bordercolour' => $black,
-							'absolutey'    => 1,
-							'absolutex'    => 1,
-							'href'         => $Config->get( '_settings', 'URL')."$NAME%3A".($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
-							'id'           => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
-						       });
-    my $horiz_glyph = Sanger::Graphics::Glyph::Text->new({
-							  'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
-							  'font'      => 'Small',
-							  'absolutey' => 1,
-							  'x'         => 4,
-							  'y'         => $glyphset->bumped() eq 'yes' ? -1.5 : -1,
-							  'width'     => 10,
-							  'height'    => 8,
-							  'colour'    => $black,
-							  'absolutex' => 1
-							 });
-    
-    $composite->push($box_glyph);
-    $composite->push($horiz_glyph);
-  }
-  
-  #########
-  # add spacing before and after labels
-  #
-  $label_length_px += $spacing * 2;
-  
-  #########
-  # calculate scaling factors
-  #
-  my $pseudo_im_width = $Config->image_width() - $label_length_px - $spacing - $button_width;
-  my $scalex = $pseudo_im_width / $Config->container_width();
-  
-  #########
-  # set scaling factor for base-pairs -> pixels
-  #
-  $Config->{'transform'}->{'scalex'} = $scalex;
-    
-  #########
-  # set scaling factor for 'absolutex' coordinates -> real pixel coords
-  #
-  $Config->{'transform'}->{'absolutescalex'} = $pseudo_im_width / $Config->image_width();
-  
-  #########
-  # because our text label starts are < 0, translate everything back onto the canvas
-  #
-  my $extra_translation = $label_length_px + $button_width;
-  $Config->{'transform'}->{'translatex'} += $extra_translation;
-  
-  #########
-  # set the X-locations for each of the bump buttons/labels
-  #
-  for my $glyphset (@{$self->{'glyphsets'}}) {
-    next unless defined $glyphset->label();
-    
-    $glyphset->label->x(-($extra_translation - $spacing) /  $scalex);
-  }
-  
-  #########
-  # pull out alternating background colours for this script
-  #
-  my $white  = $Config->bgcolour() || "white";
-  my $bgcolours = [ $Config->get('_settings', 'bgcolour1') || $white,
-		    $Config->get('_settings', 'bgcolour2') || $white ];
-  
-  my $bgcolour_flag;
-  $bgcolour_flag = 1 if($bgcolours->[0] ne $bgcolours->[1]);
-  
-  #########
-  # go ahead and do all the database work
-  #
-  my $yoffset = $spacing;
-  my $iteration = 0;
-  for my $glyphset (@{$self->{'glyphsets'}}) {
-    #########
-    # load everything from the database
-    #
-    my $ref_glyphset = ref($glyphset);
-    $glyphset->_init();
-
-    #########
-    # don't waste any more time on this row if there's nothing in it
-    #
-    next if(scalar @{$glyphset->{'glyphs'}} == 0);
-
-    #########
-    # remove any whitespace at the top of this row
-    my $gminy = $glyphset->miny();
-    $Config->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $spacing);
-    
-    if(defined $bgcolour_flag) {
-      #########
-      # colour the area behind this strip
-      #
-      my $background = new Sanger::Graphics::Glyph::Rect({
-							  'x'         => 0,
-							  'y'         => $gminy,
-							  'width'     => $Config->image_width(),
-							  'height'    => $glyphset->maxy() - $gminy,
-							  'colour'    => $bgcolours->[$iteration % 2],
-							  'absolutex' => 1,
-							  'absolutewidth' => 1,
-							 });
-      #########
-      # this accidentally gets stuffed in twice (for gif & imagemap)
-      # so with rounding errors and such we shouldn't track this for maxy & miny values
-      #
-      unshift @{$glyphset->{'glyphs'}}, $background;
+      $NAME =~ s/^.*:://;
+      my $box_glyph = new Sanger::Graphics::Glyph::Rect({
+        'x' => -$panel_start + $margin,
+        'y'             => 0,
+        'width'         => $button_width,
+        'height'        => $button_width,
+        'bordercolour'  => 'red',
+        'absolutey' => 1,
+        'absolutex' => 1,
+        'absolutewidth' =>1, 'pixperbp' => $x_scale,
+        'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
+                       ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
+        'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
+      });
+      my $horiz_glyph = new Sanger::Graphics::Glyph::Text({
+        'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
+        'font'      => 'Small',
+        'absolutey' => 1,
+        'x'         => -$panel_start + $margin + 2,
+        'y'         => -2,
+        'width'     => 1,
+        'height'    => 6,
+        'colour'    => 'red',
+        'absolutex' => 1, 'absolutewidth' => 1, 'pixperbp' => $x_scale
+      });
+      $glyphset->bumpbutton([$horiz_glyph, $box_glyph]);
     }
-    
-    #########
-    # set up the "bumping button" label for this strip
-    #
-    if(defined $glyphset->label()) {
-      my $gh = $Config->texthelper->height($glyphset->label->font());
-      $glyphset->label->y((($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy);
-      $glyphset->label->height($gh);
-      $glyphset->push($glyphset->label());
+    }
+    ########## set scaling factor for base-pairs -> pixels
+    $Config->{'transform'}->{'scalex'} = $x_scale;
+    $Config->{'transform'}->{'absolutescalex'} = 1;
+
+    ########## because our text label starts are < 0, translate everything back onto the canvas
+    $Config->{'transform'}->{'translatex'} = $panel_start;
+
+    ########## set the X-locations for each of the bump buttons/labels
+    for my $glyphset (@glyphsets) {
+        next unless defined $glyphset->label();
+      $glyphset->label->{'absolutex'}= 1;
+      $glyphset->label->{'absolutewidth'}= 1;
+      $glyphset->label->{'pixperbp'}= $x_scale;
+      if( defined $glyphset->label ) { $glyphset->label->x(-$label_width - $margin ); }
     }
 
-    $glyphset->transform();
-    
-    #########
-    # translate the top of the next row to the bottom of this one
-    #
-    $yoffset += $glyphset->height();
-    $iteration ++;
+    ########## pull out alternating background colours for this script
+    my $white  = $Config->bgcolour() || 'white';
+    my $bgcolours = [ $Config->get('_settings', 'bgcolour1') || $white,
+                      $Config->get('_settings', 'bgcolour2') || $white ];
+
+    my $bgcolour_flag;
+    $bgcolour_flag = 1 if($bgcolours->[0] ne $bgcolours->[1]);
+
+    ########## go ahead and do all the database work
+    for my $glyphset (@glyphsets) {
+      ########## load everything from the database
+      my $ref_glyphset = ref($glyphset);
+      $glyphset->_init();
+      ########## don't waste any more time on this row if there's nothing in it
+      if(scalar @{$glyphset->{'glyphs'}} ==0) {
+        $glyphset->_dump('rendered' => 'no');
+        next;
+      };
+      ########## remove any whitespace at the top of this row
+      my $gminy = $glyphset->miny();
+      $Config->{'transform'}->{'translatey'} = -$gminy + $yoffset;
+
+      if(defined $bgcolour_flag) {
+        ########## colour the area behind this strip
+        my $background = new Sanger::Graphics::Glyph::Rect({
+          'x'         => 0,
+          'y'         => $gminy,
+          'z'         => -100,
+          'width'     => $panel_width,
+          'height'    => $glyphset->maxy() - $gminy,
+          'colour'    => $bgcolours->[$iteration % 2],
+          'absolutewidth' =>1,
+          'absolutex' => 1,
+        });
+        ########## this accidentally gets stuffed in twice (for gif & imagemap)
+        ########## so with rounding errors and such we shouldn't track this for maxy & miny values
+        unshift @{$glyphset->{'glyphs'}}, $background;
+      }
+      ########## set up the "bumping button" label for this strip
+      if(defined $glyphset->label()) {
+        my $gh = $Config->texthelper->height($glyphset->label->font());
+        $glyphset->label->y((($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy);
+        $glyphset->label->height($gh);
+        $glyphset->label()->pixelwidth( $label_width );
+        $glyphset->push( $glyphset->label() );
+        $glyphset->_dump('rendered' => $glyphset->label()->text());
+      } else {
+        $glyphset->_dump('rendered' => 'No label' );
+      }
+      if( $show_buttons eq 'yes' && defined $glyphset->bumpbutton()) {
+        $glyphset->bumpbutton->[0]->y(int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy));
+        $glyphset->bumpbutton->[1]->y(2+int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy));
+        $glyphset->push(@{$glyphset->bumpbutton()});
+      }
+
+      $glyphset->transform();
+      ########## translate the top of the next row to the bottom of this one
+      $yoffset += $glyphset->height() + $trackspacing;
+      $iteration ++;
+    }
+    push @{$self->{'glyphsets'}}, @glyphsets;
+    $yoffset += $intercontainerspacing;
+    $self->{'__extra_block_spacing__'}+= $intercontainerspacing;
+    $Config->{'panel_width'} = undef;
   }
+
   return $self;
 }
 
 #########
 # render does clever drawing things
 #
+sub dynamic_use { return 1; }
+
 sub render {
   my ($self, $type) = @_;
   
@@ -260,11 +260,11 @@ sub render {
   # build the name/type of render object we want
   #
   my $renderer_type = qq(Sanger::Graphics::Renderer::$type);
-  
+  $self->dynamic_use( $renderer_type );
   #########
   # big, shiny, rendering 'GO' button
   #
-  my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'});
+  my $renderer = $renderer_type->new($self->{'config'}, $self->{'__extra_block_spacing__'}, $self->{'glyphsets'});
   return $renderer->canvas();
 }
 
