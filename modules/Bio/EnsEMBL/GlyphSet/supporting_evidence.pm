@@ -164,7 +164,7 @@ $self->push($desc);
    		($score < 80 && $datalib !~ /pfamfrag/i)){
 		$exon_colour = $LOW_SCORE;}
 
-      my $alignment_href = $self->href($hit, $exon_count);
+      my $alignment_href = $self->href($hit, $exon_count) ;
 
     my $rect = new Sanger::Graphics::Glyph::Rect({
        'x'         => $x ,
