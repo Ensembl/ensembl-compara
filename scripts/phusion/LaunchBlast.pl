@@ -13,7 +13,7 @@ if (-e "/proc/version") {
   $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
 }
 
-my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
+my $FilterBlast_executable = "/nfs/acari/cara/src/ensembl_main/ensembl-compara/scripts/phusion/FilterBlast.pl";
 
 my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 
@@ -98,7 +98,7 @@ foreach my $qy_seq (@query_seq) {
     unlink glob("/tmp/*$rand*") unless ($keeptmp);
     die "error in fastafetch $qy_seq, $!\n";
   } 
-  
+#  print STDERR "$qy_file, $sb_file, $blast_file\n";
   my $status = system("$blast_executable $sb_file $qy_file > $blast_file");
   unless ($status == 0 || $status == 4096 || $status == 4352 || $status == 5888) {
 
@@ -130,7 +130,7 @@ foreach my $qy_seq (@query_seq) {
 my $final_file = $dir."/".basename($input).".cigar";
 unless (system("cp $cigar_file $final_file") == 0) {
   unlink glob("/tmp/*$rand*") unless ($keeptmp);
-  die "error in cp $cigar_file,$1\n";
+  die "error in cp $cigar_file,$!\n";
 }
 
 unlink glob("/tmp/*$rand*") unless ($keeptmp);
