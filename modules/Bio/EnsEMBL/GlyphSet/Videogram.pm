@@ -41,7 +41,7 @@ sub _init {
     $COL{'gpos75'}  = $cmap->id_by_name('grey3'); #add_rgb([210,210,210]);
     $COL{'gpos50'}  = $cmap->id_by_name('grey2'); #add_rgb([230,230,230]);
     $COL{'gpos25'}  = $cmap->id_by_name('grey1'); #add_rgb([240,240,240]);
-    $COL{'gvar'}    = $cmap->id_by_name('offwhite'); #add_rgb([222,220,220]);
+    $COL{'gvar'}    = $cmap->add_rgb([222,220,220]);
     $COL{'gneg'}    = $white;
     $COL{'acen'}    = $cmap->id_by_name('slategrey');
     $COL{'stalk'}   = $cmap->id_by_name('slategrey');
