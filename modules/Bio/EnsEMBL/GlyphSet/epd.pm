@@ -13,19 +13,16 @@ sub features {
 $self->{'container'}->get_all_SimilarityFeatures_by_strand("epd",1,$self->glob_bp,$self->strand());
 }
 
+sub href {
+    my ( $self, $id ) = @_;
+    $id =~ s/(\w+)\.\S+/$1/g;
+    return $self->{'config'}->{'ext_url'}->get_url( 'SG_EPD', $id );
+}
+
 sub zmenu {
     my ($self, $id ) = @_;
-    #$id =~ s/(.*)\.\d+/$1/o;
-    my $biodb = 'epd'; #specify db name here - corresponds to bioperl_db, biodatabases table
-
-    my $contig_id = $id;
     $id =~ s/(\w+)\.\S+/$1/g;
-
-    return {
-        'caption' => "$contig_id",
-            "Promoter Sequence" =>"/perl/bioperldbview?id=$id&biodb=$biodb&format=fasta",
-
-    };
+    return { 'caption' => "$id", "Promoter Sequence" => $self->href( $id ) };
 }
-;
 
+1;

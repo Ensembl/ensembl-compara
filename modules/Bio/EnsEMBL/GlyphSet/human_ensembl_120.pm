@@ -8,23 +8,20 @@ sub my_label { return "TBlastx Human"; }
 
 sub features {
     my ($self) = @_;
-    return
-$self->{'container'}->get_all_SimilarityFeatures_by_strand("human_ensembl_120",1,$self->glob_bp,$self->strand());
+    my @Q = $self->{'container'}->get_all_SimilarityFeatures_by_strand("human_ensembl_120",1,$self->glob_bp,$self->strand());
+    print STDERR map { ">> ".$_->start.", ".$_->end.", ".$_->id.".$_->strand.", " <<\n" } grep { $_->start > $_->end } @Q;
+    print STDERR map { "== ".$_->start.", ".$_->end.", ".$_->id.".$_->strand.", " ==\n" } grep { $_->start < $_->end } @Q;
+    return @Q;
+}
+
+sub href {
+    my ( $self, $id ) = @_;
+    return $self->{'config'}->{'ext_url'}->get_url( 'HUMAN_CONTIGVIEW', $id );
 }
 
 sub zmenu {
     my ($self, $id ) = @_;
-    #$id =~ s/(.*)\.\d+/$1/o;
-    #marie - uses local bioperl db to serve up protein homology
-    my $biodb = 'ensembl_nov_pep'; #specify db name here - corresponds to bioperl_db, biodatabases table
-    
-    my $contig_id = $id;
-    $id =~ s/(\w+)\.\S+/$1/g;
-    
-    return {
-        'caption' => "$contig_id",
-            "Human homologous sequence" =>"http://www.ensembl.org/Homo_sapiens/seqentryview?seqentry=$id&contigid=$contig_id",
-
-    };
+    return { 'caption' => "$id", "Human homologous sequence" => $self->href( $id ) };
 }
-;
+
+1;

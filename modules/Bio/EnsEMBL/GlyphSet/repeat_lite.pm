@@ -11,6 +11,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
+    print STDERR "LABEL\n";
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => 'Repeats',
         'font'      => 'Small',
@@ -42,8 +43,13 @@ sub _init {
 
     &eprof_start('lite_adaptor_call');
 	my $repeats = $vc->dbobj->get_LiteAdaptor->fetch_virtualRepeatFeatures_start_end(
-		$vc->_chr_name(), $vc->_global_start(), $vc->_global_end(), undef, $self->glob_bp() 
+		$vc->_chr_name(), $vc->_global_start(), $vc->_global_end(), '', $self->glob_bp() 
 	);
+    unless(@$repeats>0 || $Config->get('_settings','opt_empty_tracks')==0 ) {
+        $self->errorTrack("No repeats in this region");
+        return;
+    }
+
     &eprof_end('lite_adaptor_call');
     &eprof_start('lite_drawing');
 	foreach my $f ( @$repeats ) {

@@ -72,7 +72,12 @@ sub text_label {
     my ($self, $vt) = @_;
     my $vtid = $vt->{'stable_id'};
     my $id   = $vt->{'synonym'} eq '' ? $vtid : $vt->{'synonym'};
+    if( $self->{'config'}->{'_both_names_'} ) {
+        return $vtid.($vt->{'synonym'} eq '' ? '' : " ($id)" );
+    }
     return $self->{'config'}->{'_transcript_names_'} eq 'yes' ?
+        ($vt->{'type'} eq 'unknown' ? 'NOVEL' : $id) : $vtid;    
+    return $self->{'config'}->{'_both_names_'} eq 'yes' ?
         ($vt->{'type'} eq 'unknown' ? 'NOVEL' : $id) : $vtid;    
 }
 

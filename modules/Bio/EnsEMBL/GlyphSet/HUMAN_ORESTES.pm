@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::HUMAN_ORESTES;
+package Bio::EnsEMBL::GlyphSet::human_orestes;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
@@ -12,14 +12,18 @@ sub features {
     return $self->{'container'}->get_all_SimilarityFeatures_by_strand("HUMAN_ORESTES",1,$self->glob_bp,$self->strand());
 }
 
+sub href {
+    my ( $self, $id ) = @_;
+    $id =~ s/(.*)\.\d+/$1/o;
+    return $self->{'config'}->{'ext_url'}->get_url( 'HUMAN_ORESTES', $id );
+}
+
 sub zmenu {
     my ($self, $id ) = @_;
     $id =~ s/(.*)\.\d+/$1/o;
-    #marie - uses local bioperl db to serve up protein homology
-    my $biodb = 'HUMAN_ORESTES';#specify db name here - corresponds to bioperl_db, biodatabases table
-    return {
-        'caption' => "$id",
-         "$id"     => "/perl/bioperldbview?id=$id&biodb=$biodb&format=GenBank"};
-
+    return { 'caption' => "$id", "$id homology" => $self->href( $id ) };
 }
-;
+
+
+1;
+

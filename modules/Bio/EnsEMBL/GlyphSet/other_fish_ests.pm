@@ -13,15 +13,16 @@ sub features {
 
 }
 
+sub href {
+    my ( $self, $id ) = @_;
+    $id =~ s/(.*)\.\d+/$1/o;
+    return $self->{'config'}->{'ext_url'}->get_url( 'SG_HUM', $id );
+}
+
 sub zmenu {
     my ($self, $id ) = @_;
     $id =~ s/(.*)\.\d+/$1/o;
-    #marie - uses local bioperl db to serve up protein homology
-    my $biodb = 'other_fish_ests'; #specify db name here - corresponds to bioperl_db, biodatabases table
-    return {
-        'caption' => "$id",
-                "$id"     => "/perl/bioperldbview?id=$id&biodb=$biodb&format=fasta"};
-
+    return { 'caption' => "$id", "$id" => $self->href( $id ) };
 }
-;
 
+1;

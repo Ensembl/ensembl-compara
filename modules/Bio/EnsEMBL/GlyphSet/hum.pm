@@ -13,14 +13,16 @@ sub features {
     return $self->{'container'}->get_all_SimilarityFeatures_by_strand("hum",1,$self->glob_bp,$self->strand());
 }
 
+sub href {
+    my ( $self, $id ) = @_;
+    $id =~ s/(.*)\.\d+/$1/o;
+    return $self->{'config'}->{'ext_url'}->get_url( 'SG_HUM', $id );
+}
+
 sub zmenu {
     my ($self, $id ) = @_;
     $id =~ s/(.*)\.\d+/$1/o;
-    #marie - uses local bioperl db to serve up protein homology    
-    my $biodb = 'hum'; #specify db name here - corresponds to bioperl_db, biodatabases table 
-    return {
-        'caption' => "$id",
-            "Protein homology" => "/$ENV{ENSEMBL_SPECIES}/bioperldbview?id=$id&biodb=$biodb&format=swiss",
-    };
+    return { 'caption' => "$id", "Protein homology" => $self->href( $id ) };
 }
-;
+
+1;

@@ -36,7 +36,7 @@ sub zmenu {
         'caption' => "Clone: ".$f->name,
         '01:bp: '.$f->seq_start."-".$f->seq_end => '',
         '02:length: '.$f->length.' bps' => '',
-        '03:Centre on superctg' => $self->href($f),
+        '03:Centre on FPC ctg' => $self->href($f),
     };
     return $zmenu;
 }
