@@ -1245,12 +1245,12 @@ sub expand {
                The code of the attribute type to retrieve values for.
   Example    : ($htg_phase) = @{$slice->get_all_Attributes('htg_phase')};
                @slice_attributes    = @{$slice->get_all_Attributes()};
-  Description: Gets a list of Attributes of this slice''s seq_region.
-               Optionally just get Attributes for given code.
+  Description: Gets a list of Attributes of all teh underlying slice''s
+               seq_region. Optionally just get Attributes for given code.
                This Slice is made of several Bio::EnsEMBL::Slices mapped
                on it. This method go through all of them, retrieves the
-               data, compiles them and returns them as they would belong
-               this Bio::EnsEMBL::Compara::AlignSlice::Slice object.
+               data and return them in order. There will be one set of
+               Attributes by underlying slice.
   Returntype : listref Bio::EnsEMBL::Attribute
   Exceptions : warning if slice does not have attached adaptor
   Caller     : general
@@ -1259,22 +1259,13 @@ sub expand {
 
 sub get_all_Attributes {
   my $self = shift;
-  my $attributes;
+  my $attributes = [];
 
   foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
     my $this_slice = $pair->{slice};
-    my $these_attributes = $this_slice->get_all_Attributes(@_);
-    foreach my $this_attribute (@$these_attributes) {
-      my $code = $this_attribute->code;
-      if (!defined($attributes->{$code})) {
-        $attributes->{$code} = $this_attribute;
-      } else {
-        my $value = $attributes->{$code}->value + $this_attribute->value;
-        $attributes->{$code}->value($value);
-      }
-    }
+    push(@$attributes, @{$this_slice->get_all_Attributes(@_)});
   }
-  return [values %$attributes];
+  return $attributes;
 }
 
 
@@ -1352,12 +1343,14 @@ sub _method_returning_simple_features {
           }
         }
       }
+      my $new_object;
+      %$new_object = %$this_object;
       if (defined($start) and defined($end) and defined($strand)) {
-        $this_object->{start} = $start;
-        $this_object->{end} = $end;
-        $this_object->{strand} = $strand;
-        $this_object->{slice} = $self;
-        push(@$ret, $this_object);
+        $new_object->{start} = $start;
+        $new_object->{end} = $end;
+        $new_object->{strand} = $strand;
+        $new_object->{slice} = $self;
+        push(@$ret, $new_object);
       }
     }
   }
