@@ -292,10 +292,11 @@ sub connect_to_genome_locator
 
   my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
   return undef unless($genomeDBA);
-  if ($genomeDBA->isa('Bio::EnsEMBL::Container')) {
-    $genomeDBA = $genomeDBA->_obj;
-  }
+#  if ($genomeDBA->isa('Bio::EnsEMBL::Container')) {
+#    $genomeDBA = $genomeDBA->_obj;
+#  }
   $genomeDBA->disconnect_when_inactive(1);
+  print "::::",$genomeDBA,"\n";
   return $genomeDBA;
 }
 
