@@ -117,7 +117,7 @@ sub createBlastRules
 
   foreach my $from_analysis (@fromList) {
     my $stats = $from_analysis->stats;
-    $stats->status('READY');
+    $stats->status('LOADING');
     $stats->update;
   }
 }
