@@ -44,7 +44,7 @@ sub _init {
     my $URL = ExtURL->new();
  
     foreach my $vg ( $container->get_all_ExternalGenes ) {
-	next unless $vg->type eq "genomewise_test";
+	next unless $vg->type eq "genomewise";
 	push @allgenes, $vg;
     }
     unless (scalar @allgenes > 0){
