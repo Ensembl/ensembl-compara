@@ -117,7 +117,7 @@ sub _store_PAFS {
                 ",".$paf->hit_rank.
                 ",'".$paf->cigar_line."')";
       $addComma=1;
-      $paf->display_short();
+      # $paf->display_short();
     }
   }
   print("$query\n");
