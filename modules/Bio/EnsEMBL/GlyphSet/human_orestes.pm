@@ -8,7 +8,7 @@ sub my_label { return "Human ORESTES"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_DnaAlignFeatures("HUMAN_ORESTES",1);
+    return $self->{'container'}->get_all_DnaAlignFeatures("TBLASTX_HUM_ORF",1);
 }
 
 sub href {

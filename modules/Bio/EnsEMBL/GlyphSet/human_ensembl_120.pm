@@ -11,7 +11,7 @@ sub features {
     my $Q = $self->{'container'}->get_all_DnaAlignFeatures("TBLASTX_HUM",1);
 #    print STDERR map { ">> ".$_->start.", ".$_->end.", ".$_->id.".$_->strand.", " <<\n" } grep { $_->start > $_->end } @$Q;
 #    print STDERR map { "== ".$_->start.", ".$_->end.", ".$_->id.".$_->strand.", " ==\n" } grep { $_->start < $_->end } @$Q;
-    return @$Q;
+    return $Q;
 }
 
 sub href {
