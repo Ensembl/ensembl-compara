@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 73;
+    plan tests => 74;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -286,10 +286,15 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align me
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_genomic_aligns method");
   my $first_reference_genomic_align_id = $genomic_align_blocks->[0]->reference_genomic_align->dbID;
-  my $second_reference_genomic_align_id =
-      $genomic_align_blocks->[0]->get_all_non_reference_genomic_aligns->[0]->dbID;
-  $genomic_align_blocks->[0]->reference_genomic_align_id($second_reference_genomic_align_id);
-  ok($genomic_align_blocks->[0]->reference_genomic_align->dbID, $second_reference_genomic_align_id);
+  my $second_reference_genomic_align =
+      $genomic_align_blocks->[0]->get_all_non_reference_genomic_aligns->[0];
+  $genomic_align_blocks->[0]->reference_genomic_align_id($second_reference_genomic_align->dbID);
+  ok($genomic_align_blocks->[0]->reference_genomic_align->dbID, $second_reference_genomic_align->dbID);
+  $genomic_align_blocks->[0]->reference_genomic_align->{dbID} = undef;
+  $genomic_align_blocks->[0]->{reference_genomic_align_id} = undef;
+  ok(@{$genomic_align_blocks->[0]->get_all_non_reference_genomic_aligns}, 1,
+      "Testing get_all_non_referenfe_genomic_aligns when reference_genomic_align has no dbID");
+  
   verbose("DEPRECATE");
 
 # 

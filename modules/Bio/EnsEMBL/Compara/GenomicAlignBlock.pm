@@ -150,6 +150,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
 use Bio::EnsEMBL::Compara::GenomicAlign;
+use Bio::SimpleAlign;
 
 
 =head2 new (CONSTRUCTOR)
@@ -395,7 +396,7 @@ sub reference_genomic_align_id {
     ## Synchronises reference_genomic_align and reference_genomic_align_id
     if (defined($self->{'reference_genomic_align'}) and
         defined($self->{'reference_genomic_align'}->dbID) and
-        ($self->{'reference_genomic_align'}->dbID != $self->{'reference_genomic_align_id'})) {
+        ($self->{'reference_genomic_align'}->dbID != ($self->{'reference_genomic_align_id'} or 0))) {
         $self->{'reference_genomic_align'} = undef; ## Attribute will be set on request
     }
 
@@ -586,9 +587,9 @@ sub get_all_non_reference_genomic_aligns {
  
   my $reference_genomic_align_id = $self->reference_genomic_align_id;
   my $reference_genomic_align = $self->reference_genomic_align;
-  if (!defined($reference_genomic_align_id)) {
+  if (!defined($reference_genomic_align_id) and !defined($reference_genomic_align)) {
     warning("Trying to get Bio::EnsEMBL::Compara::GenomicAlign::all_non_reference_genomic_aligns".
-        " when no reference_genomic_align_id has been set before");
+        " when no reference_genomic_align has been set before");
     return $all_non_reference_genomic_aligns;
   }
   my $genomic_aligns = $self->get_all_GenomicAligns; ## Lazy loading compliant
@@ -599,7 +600,7 @@ sub get_all_non_reference_genomic_aligns {
   }
 
   foreach my $this_genomic_align (@$genomic_aligns) {
-    if ($this_genomic_align->dbID != $reference_genomic_align_id and
+    if (($this_genomic_align->dbID or -1) != ($reference_genomic_align_id or -2) and
         $this_genomic_align != $reference_genomic_align) {
       push(@$all_non_reference_genomic_aligns, $this_genomic_align);
     }
