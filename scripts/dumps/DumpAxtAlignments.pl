@@ -10,7 +10,7 @@ $0 [-help]
    -user username (default = 'ensro')
    -dbname ensembl_compara_database
    -port eg 3352 (default)
-   -seq_region_name (e.g. chromosome:22)
+   -seq_region (e.g. chromosome:22)
    -seq_region_start
    -seq_region_end
    -species1 (e.g. \"Homo sapiens\") from which alignments are queried and seq_region refer to
@@ -110,7 +110,6 @@ my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} 
 my $index = 0;
 
 foreach my $ddaf (@DnaDnaAlignFeatures) {
-  print STDERR $ddaf->group_id," ",$ddaf->level_id," ",$ddaf->strands_reversed,"\n";
   if ($ddaf->cigar_string eq "") {
     warn $ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$ddaf->hstrand," ",$ddaf->score," has no cigar line";
     next;
