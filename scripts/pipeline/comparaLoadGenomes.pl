@@ -61,7 +61,8 @@ if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
 # the globals into a nice '$self' package
 my $self = bless {};
 
-$self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
 #$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
 
 if(%hive_params) {
@@ -73,10 +74,8 @@ if(%hive_params) {
 }
 
 
-my $analysis = $self->prepareGenomeAnalysis();
-
 foreach my $speciesPtr (@speciesList) {
-  $self->submitGenome($speciesPtr, $analysis);
+  $self->submitGenome($speciesPtr);
 }
 
 
@@ -130,191 +129,10 @@ sub parse_conf {
 }
 
 
-#
-# need to make sure analysis 'SubmitGenome' is in database
-# this is a generic analysis of type 'genome_db_id'
-# the input_id for this analysis will be a genome_db_id
-# the full information to access the genome will be in the compara database
-# also creates 'GenomeLoadMembers' analysis and
-# 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
-sub prepareGenomeAnalysis
-{
-  my $self = shift;
-
-  my $dataflowRuleDBA = $self->{'comparaDBA'}->get_DataflowRuleAdaptor;
-  my $analysisStatsDBA = $self->{'comparaDBA'}->get_AnalysisStatsAdaptor;
-  my $stats;
-  #
-  # SubmitGenome
-  #
-  my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'SubmitGenome',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy'
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_analysis->dbID);
-  $stats->batch_size(7000);
-  $stats->hive_capacity(-1);
-  $stats->update();
-
-  return $submit_analysis  
-    unless($analysis_template{fasta_dir});
-
-  #
-  # GenomeLoadMembers
-  #
-  my $load_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'GenomeLoadMembers',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeLoadMembers'
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($load_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($load_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1); #unlimited
-  $stats->update();
-
-  $dataflowRuleDBA->create_rule($submit_analysis, $load_analysis);
-
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$load_analysis);
-    $rule->add_condition($submit_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
-
-  #
-  # GenomeSubmitPep
-  #
-  my $submitpep_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'GenomeSubmitPep',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep'
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitpep_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($submitpep_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(3);
-  $stats->update();
-
-  $dataflowRuleDBA->create_rule($load_analysis, $submitpep_analysis);
-
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$submitpep_analysis);
-    $rule->add_condition($load_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
-
-  #
-  # GenomeDumpFasta
-  #
-  my $dumpfasta_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'GenomeDumpFasta',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
-      -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($dumpfasta_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($dumpfasta_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(3);
-  $stats->update();
-
-  $dataflowRuleDBA->create_rule($submitpep_analysis, $dumpfasta_analysis);
-
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$dumpfasta_analysis);
-    $rule->add_condition($load_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
-
-  #
-  # CreateBlastRules
-  #
-  my $blastrules_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'CreateBlastRules',
-      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules',
-      -parameters      => '',
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($blastrules_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(1);
-  $stats->update();
-
-  $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
-
-  if(defined($self->{'pipelineDBA'})) {
-    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$blastrules_analysis);
-    $rule->add_condition($dumpfasta_analysis->logic_name());
-    unless(checkIfRuleExists($self->{'pipelineDBA'}, $rule)) {
-      $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
-    }
-  }
-  
-  
-  # create an unlinked analysis called blast_template
-  # it will not have rule goal/conditions so it will never execute
-  my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
-  $blast_template->logic_name("blast_template");
-  $blast_template->input_id_type('MemberPep');
-  eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
-
-  return $submit_analysis;
-}
-
-
-sub checkIfRuleExists
-{
-  my $dba = shift;
-  my $rule = shift;
-
-  my $conditions = $rule->list_conditions;
-  
-  my $sql = "SELECT rule_id FROM rule_goal ".
-            " WHERE rule_goal.goal='" . $rule->goalAnalysis->dbID."'";
-  my $sth = $dba->prepare($sql);
-  $sth->execute;
-
-  RULE: while( my($ruleID) = $sth->fetchrow_array ) {
-    my $sql = "SELECT condition FROM rule_conditions ".
-              " WHERE rule_id='$ruleID'";
-    my $sth_cond = $dba->prepare($sql);
-    $sth_cond->execute;
-    while( my($condition) = $sth_cond->fetchrow_array ) {
-      my $foundCondition=0;
-      foreach my $qcond (@{$conditions}) {
-        if($qcond eq $condition) { $foundCondition=1; }
-      }
-      unless($foundCondition) { next RULE; }      
-    }
-    $sth_cond->finish;
-    # made through all conditions so this is a match
-    print("RULE EXISTS as $ruleID\n");
-    return $ruleID;
-  }
-  $sth->finish;
-  return undef;
-}
-
-
 sub submitGenome
 {
   my $self     = shift;
   my $species  = shift;  #hash reference
-  my $analysis = shift;  #reference to Analysis object
 
   print("SubmitGenome for ".$species->{abrev}."\n") if($verbose);
 
@@ -376,53 +194,59 @@ sub submitGenome
   #
   # now fill table genome_db_extra
   #
-  my ($sth, $sql);
-  $sth = $self->{'comparaDBA'}->prepare("SELECT genome_db_id FROM genome_db_extn
-      WHERE genome_db_id = ".$genome->dbID);
-  $sth->execute;
-  my $dbID = $sth->fetchrow_array();
-  $sth->finish();
+  eval {
+    my ($sth, $sql);
+    $sth = $self->{'comparaDBA'}->prepare("SELECT genome_db_id FROM genome_db_extn
+        WHERE genome_db_id = ".$genome->dbID);
+    $sth->execute;
+    my $dbID = $sth->fetchrow_array();
+    $sth->finish();
 
-  if($dbID) {
-    $sql = "UPDATE genome_db_extn SET " .
-              "phylum='" . $species->{phylum}."'".
-              ",locator='".$locator."'".
-              " WHERE genome_db_id=". $genome->dbID;
-  }
-  else {
-    $sql = "INSERT INTO genome_db_extn SET " .
-              " genome_db_id=". $genome->dbID.
-              ",phylum='" . $species->{phylum}."'".
-              ",locator='".$locator."'";
-  }
-  print("$sql\n") if($verbose);
-  $sth = $self->{'comparaDBA'}->prepare( $sql );
-  $sth->execute();
-  $sth->finish();
-  print("done SQL\n") if($verbose);
+    if($dbID) {
+      $sql = "UPDATE genome_db_extn SET " .
+                "phylum='" . $species->{phylum}."'".
+                ",locator='".$locator."'".
+                " WHERE genome_db_id=". $genome->dbID;
+    }
+    else {
+      $sql = "INSERT INTO genome_db_extn SET " .
+                " genome_db_id=". $genome->dbID.
+                ",phylum='" . $species->{phylum}."'".
+                ",locator='".$locator."'";
+    }
+    print("$sql\n") if($verbose);
+    $sth = $self->{'comparaDBA'}->prepare( $sql );
+    $sth->execute();
+    $sth->finish();
+    print("done SQL\n") if($verbose);
+  };
 
   #
   # now configure the input_id_analysis table with the genome_db_id
   #
   my $input_id = "{gdb=>".$genome->dbID."}";
-  eval {
-    print("about to store_input_id_analysis\n") if($verbose);
-    $self->{'pipelineDBA'}->get_StateInfoContainer->store_input_id_analysis(
-        $input_id,
-        $analysis,     #SubmitGenome analysis
-        'gaia',        #execution_host
-        0              #save runtime NO (ie do insert)
-      );
-      print("  stored genome_db_id in input_id_analysis\n") if($verbose);
-  } if(defined($self->{'pipelineDBA'}));
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-      -input_id       => $input_id,
-      -analysis       => $analysis,
-      -input_job_id   => 0,
-      #-block          => 'YES',
-      );
+  my $submitAnalysis = $self->{'comparaDBA'}->get_AnalysisAdaptor->
+                       fetch_by_logic_name('SubmitGenome');
 
+  if($submitAnalysis) {                                              
+    eval {
+      print("about to store_input_id_analysis\n") if($verbose);
+      $self->{'pipelineDBA'}->get_StateInfoContainer->store_input_id_analysis(
+          $input_id,
+          $submitAnalysis,     #SubmitGenome analysis
+          'gaia',        #execution_host
+          0              #save runtime NO (ie do insert)
+        );
+        print("  stored genome_db_id in input_id_analysis\n") if($verbose);
+    } if(defined($self->{'pipelineDBA'}));
+
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+        -input_id       => $input_id,
+        -analysis       => $submitAnalysis,
+        -input_job_id   => 0
+        );
+  }
 }
 
 
