@@ -38,7 +38,7 @@ Internal methods are usually preceded with a _
 use strict;
 
 use Bio::EnsEMBL::Analysis;
-
+use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 
 sub Bio::EnsEMBL::Analysis::runnableDB
 {
@@ -64,6 +64,54 @@ sub Bio::EnsEMBL::Analysis::runnableDB
 
   return $runobj
 }
+
+=head3
+Section dealing with getting/setting analysis.status
+=cut
+
+sub Bio::EnsEMBL::Analysis::status
+{
+  my( $self, $value ) = @_;
+
+  return undef unless($self->adaptor);
+  
+  if($value) {
+    $self->adaptor->update_status($self->dbID, $value);
+    return $value;
+  }
+  return $self->adaptor->get_status($self->dbID);
+}
+
+
+sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::update_status
+{
+  my($self, $analysis_id, $value ) = @_;
+
+  return undef unless($analysis_id and $value);
+
+  my $sql = "UPDATE analysis SET status='$value'".
+            " WHERE analysis_id=" . $analysis_id;
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;            
+}
+
+
+sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::get_status
+{
+  my($self, $analysis_id) = @_;
+
+  return undef unless($analysis_id);
+
+  my $sql = "SELECT status FROM analysis ".
+            " WHERE analysis_id=" . $analysis_id;
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  my ($status) = $sth->fetchrow;
+  $sth->finish;
+  return $status;
+}
+
 
 1;
 

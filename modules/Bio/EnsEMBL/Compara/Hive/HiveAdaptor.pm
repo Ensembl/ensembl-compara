@@ -214,6 +214,15 @@ sub _final_clause {
 sub create_new_worker {
   my ($self,$analysis_id) = @_;
 
+  if($self->db->get_AnalysisAdaptor) {
+    my $status = $self->db->get_AnalysisAdaptor->get_status($analysis_id);
+    return undef unless($status);
+    if($status eq 'BLOCKED') {
+      print("Analysis is BLOCKED, can't create workers\n");
+      return undef;    
+    }
+  }
+  
   my $host = hostname;
   my $ppid = getppid;
   
