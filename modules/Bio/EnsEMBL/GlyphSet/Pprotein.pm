@@ -6,6 +6,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use EnsEMBL::Web::GeneTrans::support;
+
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 $SPECIES_DEFS = SpeciesDefs->new();
@@ -27,21 +28,22 @@ sub _init {
     my $protein = $self->{'container'};	
     my $Config  = $self->{'config'};
     my $pep_splice = $protein->{'image_splice'};
-    my $type = $protein->gene->type();
-    my $dbmap = {
+    my $type = lc($protein->gene->type);
+	my $authority = lc($SPECIES_DEFS->AUTHORITY);   
+	my $dbmap = {
         "Vega" => {
-            "ensembl" => "ensembl",
-            "other" => "core",
+            "ensembl" => "core",
+            "other" => "ensembl",			
         },
         "EnsEMBL" => {
             "ensembl" => "core",
             "other" => "vega",
         },
     };
-
-    if ($type eq 'ensembl') { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'ensembl'} }
-    elsif ($type eq 'genomewise'){$db = 'estgene'}
-    else { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'other'} }
+## hack to fix flybase db type definition
+    if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')) { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'ensembl'} ;}
+    elsif ($type eq 'genomewise'){$db = 'estgene';}
+	else { $db = $dbmap->{$SPECIES_DEFS->SITE_TYPE}->{'other'}; }
 
     my $x = 0;
     my $y = 0;
