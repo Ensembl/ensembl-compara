@@ -89,8 +89,14 @@ sub compact_init {
   my $transcript_drawn = 0;
 
   my $gene_drawn = 0;
+ 
+  my $compara = $Config->{'compara'};
+  my $link    = 1 ; #$compara ? $Config->get($type,'join') : 0;
+  my $join_col = 'blue';
+  my $join_z   = -10;
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
+    my $gene_stable_id = $gene->stable_id;
     next if $gene_strand != $strand and $strand_flag eq 'b';
     $gene_drawn = 1;
 ## Get all the exons which overlap the region for this gene....
@@ -130,6 +136,19 @@ sub compact_init {
         $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
       }
     }
+    if( ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
+      if( $Config->{'previous_species'} ) {
+        foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
+          $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
+        } 
+      }
+      if( $Config->{'next_species'} ) {
+        foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'next_species'} ) ) {
+          $self->join_tag( $Composite2, ($Config->{'slice_id'}+1)."#$msid#$gene_stable_id", 0.5, 0.5 , $join_col, 'line', $join_z ) 
+        } 
+      }
+    }
+
     $Composite->push($Composite2);
     my $bump_height = $h + 2;
     if( $Config->{'_add_labels'} ) {
@@ -172,6 +191,72 @@ sub compact_init {
 
 }
 
+sub get_homologous_gene_ids {
+  my( $self, $gene_id, $species ) = @_;
+  my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+  my $ma = $compara_db->get_MemberAdaptor;
+  my $qy_member = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+  return () unless (defined $qy_member);
+  my $ha = $compara_db->get_HomologyAdaptor;
+  my @homologues;
+  foreach my $homology (@{$ha->fetch_by_Member_paired_species($qy_member, $species)}){
+    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
+      my ($member, $attribute) = @{$member_attribute};
+      next if ($member->stable_id eq $qy_member->stable_id);
+      push @homologues, $member->stable_id;
+    }
+  }
+  return @homologues;
+}
+
+sub get_homologous_peptide_ids_from_gene {
+  my( $self, $gene_id, $species ) = @_;
+  my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+  my $ma = $compara_db->get_MemberAdaptor;
+  my $qy_member = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+  return () unless (defined $qy_member);
+  my $ha = $compara_db->get_HomologyAdaptor;
+  my @homologues;
+  my $STABLE_ID = undef;
+  my $peptide_id = undef;
+  foreach my $homology (@{$ha->fetch_by_Member_paired_species($qy_member, $species)}){
+    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
+      my ($member, $attribute) = @{$member_attribute};
+      if( $member->stable_id eq $qy_member->stable_id ) {
+        unless( $STABLE_ID) {
+          my $T = $ma->fetch_by_dbID( $peptide_id = $attribute->peptide_member_id );
+          $STABLE_ID = $T->stable_id;
+        }
+      } else {
+        push @homologues, $attribute->peptide_member_id;
+      }
+    }
+  }
+  return ( $STABLE_ID, $peptide_id, \@homologues );
+}
+
+sub get_homologous_peptide_ids {
+  my( $self, $gene_id, $species ) = @_;
+  my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+
+  my $peptide_sql = qq(select m.stable_id
+  from homology_member as hm, member as m, source as s, genome_db as gd,
+       homology_member as ohm, member as om, genome_db as ogd
+ where m.member_id = hm.peptide_member_id and hm.homology_id = ohm.homology_id and
+       ohm.peptide_member_id = om.member_id and
+       om.source_id = s.source_id and m.source_id = s.source_id and s.source_name = 'ENSEMBLPEP' and
+       m.genome_db_id = gd.genome_db_id  and gd.name = ? and
+       om.genome_db_id = ogd.genome_db_id  and ogd.name = ? and
+        om.stable_id = ?);
+
+  ( my $current_species = $self->{'container'}{_config_file_name_} ) =~ s/_/ /g;
+  ( my $other_species   = $species )                                 =~ s/_/ /g;
+  my $results = $compara_db->prepare( $peptide_sql );
+     $results->execute( $other_species, $current_species, $gene_id );
+
+  return map {@$_} @{$results->fetchall_arrayref};
+}
+
 sub expanded_init {
   my ($self) = @_;
   my $type = $self->check();
@@ -203,14 +288,32 @@ sub expanded_init {
   my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
   my $_h            = $Config->texthelper->height($fontname);
 
+  my $compara = $Config->{'compara'};
+  my $link    = 1 ; #$compara ? $Config->get($type,'join') : 0;
+  
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
+    my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id() : undef;
     next if $gene_strand != $strand and $strand_flag eq 'b'; # skip features on wrong strand....
-    next if $target_gene && $gene->can('stable_id') && ($gene->stable_id() ne $target_gene);
- 
+    next if $target_gene && $gene_stable_id ne $target_gene;
+    my %TAGS = ();
+    if( ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
+      if( $Config->{'previous_species'} ) {
+        my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'previous_species'} );
+        push @{$TAGS{$psid}}, map { $Config->{'slice_id'}. "#$_#$pid" } @{$href};
+      }
+      if( $Config->{'next_species'} ) {
+        my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'next_species'} );
+        push @{$TAGS{$psid}}, map { ($Config->{'slice_id'}+1). "#$pid#$_" } @{$href};
+      }
+    }
+    my $join_col = 'blue';
+    my $join_z   = -10;
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
-      next if $transcript->start > $length || $transcript->end < 1;
+      next if $transcript->start > $length ||  $transcript->end < 1;
       my @exons = sort {$a->start <=> $b->start} grep { $_ } @{$transcript->get_all_Exons()};#sort exons on their start coordinate 
+
+      #$self->datadump( $gene_stable_id, \%TAGS );
       # Skip if no exons for this transcript
       next if (@exons == 0);
       # If stranded diagram skip if on wrong strand
@@ -226,6 +329,11 @@ sub expanded_init {
       my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
       my $coding_end   = defined ( $transcript->coding_region_end() )   ? $transcript->coding_region_end :    -1e6;
       my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+      if( $transcript->translation ) { 
+        foreach( @{$TAGS{$transcript->translation->stable_id}||[]} ) { 
+          $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col, 'line', $join_z ) ;
+        }
+      }
       for(my $i = 0; $i < @exons; $i++) {
         my $exon = @exons[$i];
         next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 

@@ -43,7 +43,7 @@ sub zmenu {
 
 
 sub unbumped_zmenu {
-  my ($self, $ref, $target,$width, $text, $ori ) = @_;
+  my ($self, $ref, $target,$width, $text, $text2, $ori, $type ) = @_;
   my ($chr,$pos) = @$target;
   my $domain  = $self->my_config('linkto'); 
   my $first_species  = $self->{container}{_config_file_name_};
@@ -84,6 +84,7 @@ sub unbumped_zmenu {
     %extra,
     'caption'    => $text,
     'Dotter' => $self->unbumped_href( $ref, $target ),
+    'Alignment' => sprintf( "/%s/alignview?module=DNADNA&l=%s&s1=%s&l1=%s&type=%s", $first_species, $text2, $second_species, $text, $type ),
     "Jump to $species_2" => $self->href( $chr_pos ), 
     $ori => '' };
 }

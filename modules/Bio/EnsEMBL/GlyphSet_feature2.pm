@@ -157,12 +157,12 @@ sub expanded_init {
         my( $start3, $end3 ) = $self->slice2sr( $start2, $end2 );
         my $S = $start2 < $Composite->x ? 0 : ( $start2 - $Composite->x ) / $Composite->width;
         my $E = $end2   > $Composite->x+$Composite->width ? 1 : ( $end2 - $Composite->x ) / $Composite->width;
-        if( $compara eq 'primary' ) {
-          my $TAG = "$TAG_PREFIX.$start.$end:$start3.$end3.$strand";
+        if( $strand != -1 ) {
+          my $TAG = $Config->{'slice_id'}."$TAG_PREFIX.$start.$end:$start3.$end3.$strand";
           $self->join_tag( $Composite, $TAG, $S, $Z, $join_col, 'fill', $join_z );
           $self->join_tag( $Composite, $TAG, $E, $Z, $join_col, 'fill', $join_z );
         } else {
-          my $TAG = "$TAG_PREFIX.$start3.$end3:$start.$end.".(-$strand);
+          my $TAG = ($Config->{'slice_id'}+1)."$TAG_PREFIX.$start3.$end3:$start.$end.".(-$strand);
           $self->join_tag( $Composite, $TAG, $E, $Z, $join_col, 'fill', $join_z );
           $self->join_tag( $Composite, $TAG, $S, $Z, $join_col, 'fill', $join_z );
         }
@@ -248,12 +248,12 @@ sub compact_init {
     next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
     $X = $START;
     $C++;
-    my @X = ( [ $chr_name, int(($rs+$re)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2), "@{[$f->hseqname]}: @{[$f->hstart]}-@{[$f->hend]}" );
+    my @X = ( [ $chr_name, int(($rs+$re)/2) ], [ $f->hseqname, int(($f->hstart + $f->hend)/2) ], int($WIDTH/2), "@{[$f->hseqname]}:@{[$f->hstart]}-@{[$f->hend]}", "$chr_name:$rs-$re" );
     my $TO_PUSH;
     if($DRAW_CIGAR) {
       $TO_PUSH = new Sanger::Graphics::Glyph::Composite({
-        'zmenu' => $self->unbumped_zmenu( @X ) , 
-        'href'  => $self->unbumped_href( @X , 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) ) ,
+        'href'  => $self->unbumped_href( @X ) , 
+        'zmenu' => $self->unbumped_zmenu( @X , 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ), $f->{'alignment_type'} ) ,
         'x'     => $START-1,
         'width' => 0,
         'y'     => 0
@@ -270,19 +270,19 @@ sub compact_init {
         'absolutey'  => 1,
         '_feature'   => $f, 
         'href'       => $self->unbumped_href( @X ),
-        'zmenu'      => $self->unbumped_zmenu( @X, 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) )
+        'zmenu'      => $self->unbumped_zmenu( @X, 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ), $f->{'alignment_type'} )
       });
     }
     if( ($compara eq 'primary' || $compara eq 'secondary') && $link ) {
       my( $start, $end, $start2,$end2) = ( $f->hstart, $f->hend, $f->start, $f->end );
       my( $start2, $end2 ) = $self->slice2sr( $start2, $end2 );
       my $Z = $strand == -1 ? 1 : 0;
-      if( $compara eq 'primary' ) {
-        my $TAG = "$TAG_PREFIX.$start.$end:$start2.$end2.$strand";
+      if( $strand != -1 ) {
+        my $TAG = $Config->{'slice_id'}."$TAG_PREFIX.$start.$end:$start2.$end2.$strand";
         $self->join_tag( $TO_PUSH, $TAG, 0, $Z, $join_col, 'fill', $join_z );
         $self->join_tag( $TO_PUSH, $TAG, 1, $Z, $join_col, 'fill', $join_z );
       } else {
-        my $TAG = "$TAG_PREFIX.$start2.$end2:$start.$end.".(-$strand);
+        my $TAG = ($Config->{'slice_id'}+1)."$TAG_PREFIX.$start2.$end2:$start.$end.".(-$strand);
         $self->join_tag( $TO_PUSH, $TAG, 1, $Z, $join_col, 'fill', $join_z );
         $self->join_tag( $TO_PUSH, $TAG, 0, $Z, $join_col, 'fill', $join_z );
       }

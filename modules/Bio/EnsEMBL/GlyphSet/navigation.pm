@@ -44,7 +44,7 @@ sub href_flip_strand {
 }
 
 sub href_left  { return $_[0]->href_shift( -0.5 ); }
-sub href_nudge_left   { return $_[0]->href_shift(  0.1 ); }
+sub href_nudge_left   { return $_[0]->href_shift(  -0.1 ); }
 sub href_nudge_right  { return $_[0]->href_shift(  0.1 ); }
 sub href_right { return $_[0]->href_shift(  0.5 ); }
  
