@@ -68,6 +68,8 @@ unless(defined($self->{'outputFasta'})) {
 $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
 $self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
 
+get_taxon_descriptions($self);  #creates hash from taxon_id to a description
+
 dump_fasta($self);
 
 exit(0);
@@ -124,7 +126,7 @@ sub parse_conf {
 sub dump_fasta {
   my $self = shift;
 
-  my $sql = "SELECT member.stable_id, member.description, sequence.sequence " .
+  my $sql = "SELECT member.stable_id, member.description, sequence.sequence, member.taxon_id " .
             " FROM member, sequence, source " .
             " WHERE member.source_id=source.source_id ".
             " AND source.source_name='ENSEMBLPEP' ".
@@ -132,15 +134,18 @@ sub dump_fasta {
             " GROUP BY member.member_id ORDER BY member.stable_id;";
 
   my $fastafile = $self->{'outputFasta'};
+  my $descfile = $fastafile . ".desc";
   open FASTAFILE, ">$fastafile"
     or die "Could open $fastafile for output\n";
+  open DESCFILE, ">$descfile"
+    or die "Could open $descfile for output\n";
   print("writing fasta to loc '$fastafile'\n");
 
   my $sth = $self->{'comparaDBA'}->prepare( $sql );
   $sth->execute();
 
-  my ($stable_id, $description, $sequence);
-  $sth->bind_columns( undef, \$stable_id, \$description, \$sequence );
+  my ($stable_id, $description, $sequence, $taxon_id);
+  $sth->bind_columns( undef, \$stable_id, \$description, \$sequence, \$taxon_id );
 
   while( $sth->fetch() ) {
     $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
@@ -151,9 +156,38 @@ sub dump_fasta {
     unless($self->{'removeXedSeqs'} and
           ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
       print FASTAFILE ">$stable_id $description\n$sequence\n";
+      print DESCFILE "ensemblpep\t$stable_id\t", $self->{'taxon_hash'}->{$taxon_id}, "\n";
     }
   }
   close(FASTAFILE);
+  close(DESCFILE);
 
   $sth->finish();
+}
+
+
+sub get_taxon_descriptions {
+  my $self = shift;
+
+  $self->{'taxon_hash'} = {};
+  
+  my ($taxon_id, $genus, $species, $sub_species, $common_name, $classification);
+  my $sql = "SELECT taxon_id, genus, species, sub_species, common_name, classification ".
+            " FROM taxon";
+  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  $sth->execute();
+  $sth->bind_columns(\$taxon_id, \$genus, \$species, \$sub_species, \$common_name, \$classification );
+  while($sth->fetch()) {
+    $classification =~ s/\s+/:/g;
+    $sub_species='' if($sub_species eq 'NULL');
+    my $taxonDesc = "taxon_id=$taxon_id;".
+                    "taxon_genus=$genus;".
+                    "taxon_species=$species;".
+                    "taxon_sub_species=$sub_species;".
+                    "taxon_common_name=$common_name;".
+                    "taxon_classification=$classification;";
+    $self->{'taxon_hash'}->{$taxon_id} = $taxonDesc;
+    print("$taxonDesc\n");
+  }
+  $sth->finish;
 }
