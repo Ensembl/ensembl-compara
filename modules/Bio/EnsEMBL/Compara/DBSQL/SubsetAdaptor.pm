@@ -183,7 +183,6 @@ sub _objs_from_sth {
   my @sets = ();
   my %setNames;
   my %setMemberIds;
-  my $MemberAdapter = $self->db->get_MemberAdaptor;
 
   while ($sth->fetch()) {
     my ($subset_id, $name, $member_id);
