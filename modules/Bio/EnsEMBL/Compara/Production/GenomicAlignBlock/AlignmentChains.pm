@@ -96,6 +96,9 @@ sub get_params {
   if (defined($params->{'max_gap'})) {
     $self->MAX_GAP($params->{'max_gap'});
   }
+  if (defined($params->{'group_type'})) {
+    $self->GROUP_TYPE($params->{'group_type'});
+  }
 
   return 1;
 }
