@@ -178,14 +178,22 @@ sub createPairAlignerJobs
 
   my $count=0;
   foreach my $target_dna (@{$target_dna_list}) {
-
     my $input_hash = {};
-    $input_hash->{'dbChunk'} = $target_dna->dbID;
 
+    $input_hash->{'dbChunk'}      = undef;
+    $input_hash->{'dbChunkSetID'} = undef;
+
+    if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
+      $input_hash->{'dbChunk'} = $target_dna->dbID;
+    }
+    if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+      $input_hash->{'dbChunkSetID'} = $target_dna->dbID;
+    }
+    
     foreach my $query_dna (@{$query_dna_list}) {
       $input_hash->{'qyChunk'}      = undef
       $input_hash->{'qyChunkSetID'} = undef;
-    
+
       if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
         $input_hash->{'qyChunk'} = $query_dna->dbID;
       }
