@@ -4,6 +4,7 @@ use Exporter;
 use vars qw(@ISA);
 use lib "../../../../modules";
 use ColourMap;
+use Bio::EnsEMBL::Glyph::Rect;
 
 @ISA = qw(Exporter);
 
@@ -67,6 +68,16 @@ sub render {
     #
 #    $this->{'transform'}->{'translatey'} += $this->{'transform'}->{'spacing'};
 
+    #########
+    # pull out alternating background colours for this script
+    #
+    my $config = $this->{'config'};
+    my $white  = $config->bgcolour() || $config->colourmap->id_by_name('white');
+    my $bgcolours = {
+	'0' => $config->get($config->script(), '_settings', 'bgcolour1') || $white,
+	'1' => $config->get($config->script(), '_settings', 'bgcolour2') || $white,
+    };
+
     my $yoffset = $this->{'spacing'};
     my $iteration = 0;
     for my $glyphset (@{$this->{'glyphsets'}}) {
@@ -77,6 +88,20 @@ sub render {
 	my $gminy = $glyphset->miny();
 
 	$this->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $this->{'spacing'});
+
+	#########
+	# colour the area behind this strip
+	#
+	my $background = new Bio::EnsEMBL::Glyph::Rect({
+	    'x'         => 0,
+	    'y'         => $glyphset->miny(),
+	    'width'     => $this->{'config'}->image_width(),
+	    'height'    => $glyphset->maxy() - $glyphset->miny(),
+	    'colour'    => $$bgcolours{$iteration % 2},
+	    'absolutex' => 1,
+	});
+
+	$glyphset->unshift($background);
 
 	for my $glyph ($glyphset->glyphs()) {
 
