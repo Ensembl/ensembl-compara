@@ -734,21 +734,23 @@ sub _objs_from_sth {
     
     my $alignment_type = $self->_alignment_type_by_method_link_id($method_link_id);
     
-    $genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new
-      (
-       -adaptor => $self,
-       -consensus_dnafrag => $da->fetch_by_dbID( $consensus_dnafrag_id ),
-       -consensus_start => $consensus_start,
-       -consensus_end => $consensus_end,
-       -query_dnafrag => $da->fetch_by_dbID( $query_dnafrag_id ),
-       -query_start => $query_start,
-       -query_end => $query_end,
-       -query_strand => $query_strand,
-       -alignment_type => $alignment_type,
-       -score => $score,
-       -perc_id => $perc_id,
-       -cigar_line => $cigar_string
-      );
+    # it is WAY faster to use a hacky constructor like this, rather than
+    # using a standard rearrange style constructor
+    $genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new_fast
+      ({
+       'adaptor' => $self,
+       'consensus_dnafrag' => $da->fetch_by_dbID( $consensus_dnafrag_id ),
+       'consensus_start' => $consensus_start,
+       'consensus_end' => $consensus_end,
+       'query_dnafrag' => $da->fetch_by_dbID( $query_dnafrag_id ),
+       'query_start' => $query_start,
+       'query_end' => $query_end,
+       'query_strand' => $query_strand,
+       'alignment_type' => $alignment_type,
+       'score' => $score,
+       'perc_id' => $perc_id,
+       'cigar_line' => $cigar_string
+      });
 
 
     push( @$result, $genomic_align );
@@ -762,18 +764,28 @@ sub _objs_from_sth {
 sub _alignment_type_by_method_link_id {
   my ($self,$method_link_id) = @_;
 
+
   unless (defined $method_link_id) {
     $self->throw("method_link_id has to be defined");
   } 
 
-  my $sth = $self->prepare("
-     SELECT type
+  $self->{'_align_type_cache'} ||= {};
+  $self->{'_method_link_id_cache'} ||= {};
+  
+  if($self->{'_method_link_id_cache'}->{$method_link_id}) {
+    return $self->{'_method_link_id_cache'}->{$method_link_id};
+  }
+
+  my $sth = $self->prepare(
+    "SELECT type
      FROM method_link
-     WHERE method_link_id = ?
-  ");
+     WHERE method_link_id = ?");
 
   $sth->execute($method_link_id);
   my ($alignment_type) = $sth->fetchrow_array();
+
+  $self->{'_align_type_cache'}->{$alignment_type} = $method_link_id;
+  $self->{'_method_link_id_cache'}->{$method_link_id} = $alignment_type;
 
   return $alignment_type;
 }
@@ -784,15 +796,23 @@ sub _method_link_id_by_alignment_type {
   unless (defined $alignment_type) {
     $self->throw("alignment_type has to be defined");
   }
-  
-  my $sth = $self->prepare("
-     SELECT method_link_id
+  $self->{'_align_type_cache'} ||= {};
+  $self->{'_method_link_id_cache'} ||= {};
+
+  if($self->{'_align_type_cache'}->{$alignment_type}) {
+    return $self->{'_align_type_cache'}->{$alignment_type};
+  }
+
+  my $sth = $self->prepare(
+    "SELECT method_link_id
      FROM method_link
-     WHERE type = ?
-  ");
+     WHERE type = ?");
 
   $sth->execute($alignment_type);
   my ($method_link_id) = $sth->fetchrow_array();
+
+  $self->{'_align_type_cache'}->{$alignment_type} = $method_link_id;
+  $self->{'_method_link_id_cache'}->{$method_link_id} = $alignment_type;
 
   return $method_link_id;
 }

@@ -69,18 +69,26 @@ sub fetch_by_dbID {
     $self->throw("Must fetch by dbid");
   }
 
+  $self->{'_dna_frag_id_cache'} ||= {};
+
+  if($self->{'_dna_frag_id_cache'}->{$dbid}) {
+    return $self->{'_dna_frag_id_cache'}->{$dbid};
+  }
+
   my $sth = $self->prepare("
     SELECT genome_db_id, dnafrag_type, dnafrag_id,
            name, start, end
       FROM dnafrag
      WHERE dnafrag_id = ?
-  ");
+ ");
 
   $sth->execute($dbid);
 
   my $dna_frags = $self->_objs_from_sth($sth);
 
   $self->throw("No dnafrag with this dbID $dbid") unless(@$dna_frags);
+
+  $self->{'_dna_frag_id_cache'}->{$dbid} = $dna_frags->[0];
 
   return $dna_frags->[0];
 }
