@@ -166,6 +166,29 @@ sub store {
 }
      
 
+=head2 delete_by_genomic_align_block_id
+
+  Arg  1     : integer $genomic_align_block_id
+  Example    : $gen_ali_blk_adaptor->delete_by_genomic_align_block_id(352158763);
+  Description: It removes the mathing GenomicAlign objects from the database
+  Returntype : none
+  Exceptions : 
+  Caller     : general
+
+=cut
+
+sub delete_by_genomic_align_block_id {
+  my ($self, $genomic_align_block_id) = @_;
+
+  my $genomic_align_sql =
+        qq{DELETE FROM genomic_align WHERE genomic_align_block_id = ?};
+  
+  ## Deletes genomic_block entries
+  my $sth = $self->prepare($genomic_align_sql);
+  $sth->execute($genomic_align_block_id);
+}
+
+
 =head2 fetch_by_dbID
 
   Arg  1     : integer $dbID
