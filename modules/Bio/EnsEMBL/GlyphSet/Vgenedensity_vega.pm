@@ -55,8 +55,8 @@ sub _init {
     my $chr_slice = $slice_adapt->fetch_by_region('chromosome', $chr);
 
     ## get max density for scaling
-    foreach my $type (qw(knownGeneDensity novelCDSDensity novelTransDensity IgSegDensity predictedIgPseudoDensity putativeTransDensity predictedTransDensity pseudoGeneDensity)) {
-        my $max = $density_adapt->fetch_Featureset_by_Slice($chr_slice, $type, 150, 1)->max_value;
+    foreach (@{ $Config->get('_settings', 'scale_values') }) {
+        my $max = $density_adapt->fetch_Featureset_by_Slice($chr_slice, $_, 150, 1)->max_value;
         $self->{'_max'} = $max if ($max > $self->{'_max'}); 
     }
 
