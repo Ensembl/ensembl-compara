@@ -18,6 +18,8 @@ $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
 $self->{'analysis_id'} = undef;
+$self->{'job_limit'}   = 1000;
+$self->{'outdir'}      = "/ecs4/work2/ensembl/jessica/data/hive-output";
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
@@ -30,6 +32,8 @@ GetOptions('help'           => \$help,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
            'analysis_id=i'  => \$self->{'analysis_id'},
+           'limit=i'        => \$self->{'job_limit'},
+           'outdir=s'       => \$self->{'outdir'},
           );
 
 $self->{'analysis_id'} = shift;
@@ -64,8 +68,8 @@ $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'
 my $worker = $self->{'comparaDBA'}->get_HiveAdaptor->create_new_worker($self->{'analysis_id'});
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
 
-$worker->output_dir("/ecs4/work2/ensembl/jessica/data/hive-output");
-# $worker->job_limit(1);
+if($self->{'outdir'}) { $worker->output_dir($self->{'outdir'}); }
+$worker->job_limit($self->{'job_limit'});
 
 $worker->print_worker();
 $worker->run();
@@ -91,6 +95,8 @@ sub usage {
   print "  -dbuser <name>         : mysql connection user <name>\n";
   print "  -dbpass <pass>         : mysql connection password\n";
   print "  -analysis_id <id>      : analysis_id in db\n";
+  print "  -limit <num>           : #jobs to run before worker can die naturally\n";
+  print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
   print "runWorker.pl v1.0\n";
   
   exit(1);  
