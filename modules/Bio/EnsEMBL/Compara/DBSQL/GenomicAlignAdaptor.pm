@@ -101,13 +101,62 @@ got to fix this
 =cut
 
 sub fetch_GenomicAlign_by_dbID{
-   my ($self,$dbid) = @_;
-   #my ($self,$dbid, $align_name) = @_;
+  my ($self,$dbid) = @_;
+  #my ($self,$dbid, $align_name) = @_;
 
-   return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self);
-   #return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self, -align_name =>$align_name);
+  return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self);
+  #return Bio::EnsEMBL::Compara::GenomicAlign->new( -align_id => $dbid, -adaptor => $self, -align_name =>$align_name);
 }
 
+=head2 fetch_align_id_by_align_name
+
+ Title   : fetch_align_id_by_align_name
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_align_id_by_align_name {
+  my ($self,$align_name) = @_;
+  
+  unless (defined $align_name) {
+    $self->throw("align_name must be defined as argument");
+  }
+
+  my $sth = $self->prepare("select align_id from align where align_name=\"$align_name\"");
+  $sth->execute();
+  my ($align_id) = $sth->fetchrow_array;
+  return $align_id;
+}
+
+=head2 fetch_align_name_by_align_id
+
+ Title   : fetch_align_name_by_align_id
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_align_name_by_align_id {
+  my ($self,$align_id) = @_;
+  
+  unless (defined $align_id) {
+    $self->throw("align_id must be defined as argument");
+  }
+
+  my $sth = $self->prepare("select align_name from align where align_id=\"$align_id\"");
+  $sth->execute();
+  my ($align_name) = $sth->fetchrow_array;
+  return $align_name;
+}
 
 =head2 fetch_by_genomedb_dnafrag_list
 
@@ -180,14 +229,14 @@ sub get_AlignBlockSet{
        $self->throw("Must get AlignBlockSet by row number");
    }
 
-   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand , b.perc_id, b.score  from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
+   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand ,b.perc_id,b.score,b.cigar_line  from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
    $sth->execute;
 
    my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
-   my $core_db;
+#   my $core_db;
  
    while( my $ref = $sth->fetchrow_arrayref ) {
-       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand, $perc_id, $score) = @$ref;
+       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand,$perc_id,$score,$cigar_string) = @$ref;
        my $alignblock = Bio::EnsEMBL::Compara::AlignBlock->new();
        $alignblock->align_start($align_start);
        $alignblock->align_end($align_end);
@@ -196,6 +245,7 @@ sub get_AlignBlockSet{
        $alignblock->strand($raw_strand);
        $alignblock->perc_id($perc_id);
        $alignblock->score($score);
+       $alignblock->cigar_string($cigar_string);
       
        
        if( ! defined $dnafraghash{$raw_id} ) {
@@ -207,7 +257,7 @@ sub get_AlignBlockSet{
 
        $alignblock->dnafrag($dnafraghash{$raw_id});
        $alignset->add_AlignBlock($alignblock);
-       $core_db = $dnafraghash{$raw_id}->genomedb->ensembl_db; 
+#       $core_db = $dnafraghash{$raw_id}->genomedb->ensembl_db; 
    }
 
    #$alignset->core_adaptor($core_db);
@@ -230,10 +280,14 @@ sub get_AlignBlockSet{
 =cut
 
 sub store {
-   my ($self,$aln) = @_;
+   my ($self,$aln,$align_id) = @_;
 
    if( !defined $aln || !ref $aln || !$aln->isa('Bio::EnsEMBL::Compara::GenomicAlign') ) {
        $self->throw("Must store with a GenomicAlign, not a $aln");
+   }
+
+   unless (defined $align_id) {
+     $self->throw("An align_id must be specified and defined");
    }
 
    my $dnafragadp = $self->db->get_DnaFragAdaptor();
@@ -251,14 +305,14 @@ sub store {
 
    # store the alignment first
 
-   my $sth = $self->prepare("insert into align (score) values ('0.0')");
-   $sth->execute;
-   $aln->dbID($sth->{'mysql_insertid'});
-   my $align_id = $aln->dbID;
+#   my $sth = $self->prepare("insert into align (score) values ('0.0')");
+#   $sth->execute;
+#   $aln->dbID($sth->{'mysql_insertid'});
+#   my $align_id = $aln->dbID;
 
    # for each alignblockset, store the row and then the alignblocks themselves
    
-   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand,score,perc_id) values (?,?,?,?,?,?,?,?,?,?)");
+   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand,score,perc_id,cigar_line) values (?,?,?,?,?,?,?,?,?,?,?)");
 
    foreach my $ab ( $aln->each_AlignBlockSet ) {
        my $sth2 = $self->prepare("insert into align_row (align_id) values ($align_id)");
@@ -275,7 +329,8 @@ sub store {
 			  $a->end,
 			  $a->strand,
                           $a->score,
-                          $a->strand
+                          $a->perc_id,
+			  $a->cigar_string
 			  );
 
        }
@@ -330,6 +385,88 @@ sub fetch_by_dnafrag{
    return @out;
 }
 
+=head2 fetch_DnaDnaAlignFeature_by_species_chr_start_end
 
+ Title	 : fetch_DnaDnaAlignFeature_by_species_chr_start_end
+ Usage	 :
+ Function:
+ Example :
+ Returns : an array of Bio::EnsEMBL::Compara::DnaDnaAlignFeature objects 
+ Args 	 : subject_species, query_species, chr_name, chr_start and chr_end on subject species 
+           and type of dnafrag from which data as to be queried
+
+=cut
+
+sub fetch_DnaDnaAlignFeature_by_species_chr_start_end {
+  my ($self,$sb_species,$qy_species,$chr_name,$chr_start,$chr_end,$dnafrag_type) = @_;
+
+  my @DnaDnaAlignFeatures;
+
+  my $dfad = $self->db->get_DnaFragAdaptor;
+  my @list_dnafrag = $dfad->fetch_by_species_chr_start_end ($sb_species,$chr_name,$chr_start,$chr_end,"VirtualContig");
+
+  foreach my $df (@list_dnafrag) {
+  
+    my @genomicaligns = $self->fetch_by_dnafrag($df);
+
+    foreach my $genomicalign (@genomicaligns) {
+
+      foreach my $alignblockset ($genomicalign->each_AlignBlockSet) {
+
+        my %alignblocks;
+
+        foreach my $alignblock ($alignblockset->get_AlignBlocks) {
+	  $alignblocks{$alignblock->dnafrag->genomedb->name}{$alignblock->align_start."-".$alignblock->align_end} = $alignblock;
+	} 
+
+	foreach my $key (keys %{$alignblocks{$sb_species}}) {
+
+	  my $alignblock1 = $alignblocks{$sb_species}{$key};
+	  my $alignblock2 = $alignblocks{$qy_species}{$key};	
+	  
+	  next unless (defined $alignblock2);
+	  
+	  my ($chr_name1,$chr_start1,$chr_end1) = split /\./, $alignblock1->dnafrag->name;
+	  $alignblock1->start($alignblock1->start + $chr_start1 - 1);
+	  $alignblock1->end($alignblock1->end + $chr_start1 - 1);
+	  
+	  next unless ($alignblock1->start <= $chr_end && $alignblock1->end >= $chr_start);
+	  
+	  my ($chr_name2,$chr_start2,$chr_end2) = split /\./, $alignblock2->dnafrag->name;
+	  $alignblock2->start($alignblock2->start + $chr_start2 - 1);
+	  $alignblock2->end($alignblock2->end + $chr_start2 - 1);
+
+	  my $DnaDnaAlignFeature = new Bio::EnsEMBL::Compara::DnaDnaAlignFeature('-cigar_string' => $alignblock1->cigar_string);
+	  my $feature1 = new Bio::EnsEMBL::SeqFeature;
+	  $feature1->seqname($chr_name1);
+	  $feature1->start($alignblock1->start);
+	  $feature1->end($alignblock1->end);
+	  $feature1->strand($alignblock1->strand);
+
+	  my $feature2 = new Bio::EnsEMBL::SeqFeature;
+	  $feature2->seqname($chr_name2);
+	  $feature2->start($alignblock2->start);
+	  $feature2->end($alignblock2->end);
+	  $feature2->strand($alignblock2->strand);
+
+	  $DnaDnaAlignFeature->feature1($feature1);
+	  $DnaDnaAlignFeature->feature2($feature2);
+	  $DnaDnaAlignFeature->score($alignblock1->score);
+	  $DnaDnaAlignFeature->percent_id($alignblock1->perc_id);
+	  $DnaDnaAlignFeature->species($alignblock1->dnafrag->genomedb->name);
+	  $DnaDnaAlignFeature->hspecies($alignblock2->dnafrag->genomedb->name);
+
+	  if ($DnaDnaAlignFeature->strand == -1) {
+	    $DnaDnaAlignFeature->reverse_complement;
+	  }
+
+	  push @DnaDnaAlignFeatures,$DnaDnaAlignFeature;
+
+	}
+      }
+    }
+  }
+  return @DnaDnaAlignFeatures;
+}
 
 1;

@@ -171,10 +171,72 @@ sub get_Contig{
 
    my $contig;
    if ($type eq 'RawContig'){
-      $contig = $self->db_adaptor->get_Contig($name); 
-   }elsif ($type eq 'Chromosome){
-      #do we really want to be doing this.............
-	  $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_name($name);
+     $contig = $self->db_adaptor->get_Contig($name); 
+   } elsif ($type eq 'Chromosome'){
+     #do we really want to be doing this.............
+     $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_name($name);
+   } elsif ($type eq 'VirtualContig'){
+     #do we really want to be doing this.............
+     my ($chr,$start,$end) = split /\./, $name;
+     $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end($chr,$start,$end);
+   } else {
+     $self->throw ("Can't fetch contig of dnafrag with type $type");
+   }
+   return $contig;
+}
+
+=head2 get_VC_by_start_end
+
+ Title   : get_VC_by_start_end
+ Usage   : $obj->get_VC_by_start_end($name,$type,$start,$end)
+ Function: 
+ Example : 
+ Returns : contig object
+ Args    : Name of Contig
+           Contig type (RawContig,Chromosome)
+           Start location Contig
+           End location on contig
+
+
+=cut
+
+sub get_VC_by_start_end{
+   my ($self,$name,$type,$start,$end) = @_;
+
+   $self->throw("Need contig name in order to fetch contig.") unless defined $name;
+   $self->throw("Need contig type in order to fetch contig.") unless defined $type;
+   $self->throw("Need contig start in order to fetch contig.") unless defined $start;
+   $self->throw("Need contig end in order to fetch contig.") unless defined $end;
+
+   my $length = $end - $start +1;
+   my $contig;
+
+   if ($type eq 'RawContig'){
+#      $self->db_adaptor->static_golden_path_type('UCSC');
+      my ($chr_name,$t_start,$t_end) = $self->db_adaptor->get_StaticGoldenPathAdaptor->get_chr_start_end_of_contig($name);
+
+      my ($chr_start,$chr_end);
+      my $max_end = $t_end - $t_start;
+
+      if ($start <= 0){
+         $chr_start = 1;
+      }else{
+         $chr_start = $t_start + $start -1;
+      }
+      if ($end > $max_end){
+         $chr_end = $t_end;
+      }else{
+         $chr_end = $chr_start + $length -1;
+      }
+
+      my $vc = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end ($chr_name,$chr_start,$chr_end);
+      $vc->id($name);
+      return $vc;
+
+   }elsif ($type eq 'Chromosome'){
+	  $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_start_end($name,$start,$end);
+      $contig->id($name);
+      return $contig;
    }else {
       $self->throw ("Can't fetch contig of dnafrag with type $type");
    }

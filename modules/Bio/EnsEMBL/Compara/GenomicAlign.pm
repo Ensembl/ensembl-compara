@@ -63,14 +63,14 @@ sub new {
     
     my ($align_id,$adaptor,$align_name) = $self->_rearrange([qw(ALIGN_ID ADAPTOR ALIGN_NAME)],@args);
 
-    if( defined $align_id ) {
-	      $self->align_id($align_id);
+    if (defined $align_id) {
+      $self->align_id($align_id);
     }
-    if( defined $adaptor ) {
+    if (defined $adaptor) {
       $self->adaptor($adaptor);
    }
    
-    if (defined $align_name){
+    if (defined $align_name) {
       $self->align_name($align_name);
     }
      
@@ -282,12 +282,16 @@ sub align_id{
 =cut
 
 sub align_name{
-   my ($obj,$value) = @_;
-   if( defined $value) {
-      $obj->{'align_name'} = $value;
-    }
-    return $obj->{'align_name'};
-
+  my ($self,$value) = @_;
+  if (defined $value) {
+    $self->{'align_name'} = $value;
+  }
+  if (! defined $self->{'align_name'} &&
+      defined $self->adaptor &&
+      defined $self->align_id) {
+    $self->{'align_name'} = $self->adaptor->fetch_align_name_by_align_id($self->align_id);
+  }
+  return $self->{'align_name'};
 }
 
 =head2 adaptor
@@ -383,7 +387,7 @@ sub _load_all_blocks{
    my ($self,@args) = @_;
    my $id = $self->align_id;
 
-   my $sth = $self->adaptor->prepare("select align_row_id from genomic_align_block where align_id = '$id'");
+   my $sth = $self->adaptor->prepare("select distinct(align_row_id) from genomic_align_block where align_id = '$id'");
    
    $sth->execute;
    my $align_row;
