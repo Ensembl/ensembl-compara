@@ -28,6 +28,7 @@ $self->{'noSplitSeqLines'} = undef;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
+my $noredundancy = 0;
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
@@ -39,6 +40,7 @@ GetOptions('help'     => \$help,
            'fasta=s'  => \$self->{'outputFasta'},
            'noX=i'    => \$self->{'removeXedSeqs'},
            'nosplit'  => \$self->{'noSplitSeqLines'},
+           'noredundancy' => \$noredundancy
           );
 
 if ($help) { usage(); }
@@ -68,7 +70,7 @@ unless(defined($self->{'outputFasta'})) {
 $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
 $self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
-get_taxon_descriptions($self);  #creates hash from taxon_id to a description
+#get_taxon_descriptions($self);  #creates hash from taxon_id to a description
 
 dump_fasta($self);
 
@@ -93,6 +95,7 @@ sub usage {
   print "  -fasta <path>          : file where fasta dump happens\n";
   print "  -noX <num>             : don't dump if <num> 'X's in a row in sequence\n";
   print "  -nosplit               : don't split sequence lines into readable format\n";
+  print "  -noredundancy         : will dump only one copy of the same peptide\n";
   print "comparaDumpAllPeptides.pl v1.1\n";
   
   exit(1);  
@@ -129,11 +132,15 @@ sub dump_fasta {
   my $sql = "SELECT member.sequence_id, member.stable_id, member.description, sequence.sequence, member.taxon_id, member.source_name " .
             " FROM member, sequence " .
             " WHERE member.source_name in ('ENSEMBLPEP','SWISSPROT','SPTREMBL') ".
-            " AND member.sequence_id=sequence.sequence_id " .
-            " GROUP BY member.member_id ORDER BY member.sequence_id, member.stable_id;";
+            " AND member.sequence_id=sequence.sequence_id ";
+
+  if ($noredundancy) {
+    $sql .= " GROUP BY member.sequence_id";
+  }
+  $sql .= " ORDER BY member.sequence_id, member.stable_id;";
 
   my $fastafile = $self->{'outputFasta'};
-  my $descfile = $fastafile . ".desc";
+ # my $descfile = $fastafile . ".desc";
 
   open FASTAFILE, ">$fastafile"
     or die "Could open $fastafile for output\n";
