@@ -6,8 +6,7 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
-my $usage = "
-$0
+my $usage = "$0
 --help                print this menu
 --dbname string
 [--reg_conf string]
@@ -22,8 +21,8 @@ my $method_link_type = "SYNTENY";
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
 	   'reg_conf=s' => \$reg_conf,
-	   'qy=i' => \$qy_species,
-	   'tg=i' => \$tg_species);
+	   'qy=s' => \$qy_species,
+	   'tg=s' => \$tg_species);
 
 $|=1;
 
@@ -38,7 +37,7 @@ my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname, 'compara')->dbc;
 
 my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 my $dfa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'DnaFrag');
-my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
+my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
 
 my $qy_binomial = Bio::EnsEMBL::Registry->get_adaptor($qy_species,'core','MetaContainer')->get_Species->binomial;
 my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaContainer')->get_Species->binomial;
@@ -47,19 +46,19 @@ my $qy_gdb = $gdba->fetch_by_name_assembly($qy_binomial);
 my $tg_gdb = $gdba->fetch_by_name_assembly($tg_binomial);
 my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 $mlss->method_link_type($method_link_type);
-$mlss->species([$qy_gdb, $tg_gdb]);
+$mlss->species_set([$qy_gdb, $tg_gdb]);
 $mlssa->store($mlss);
 
 my $qy_sa = Bio::EnsEMBL::Registry->get_adaptor($qy_species, 'core', 'Slice');
 my %qy_slices;
 foreach my $qy_slice (@{$qy_sa->fetch_all('toplevel')}) {
-  $qy_slices{$qy_slice->name} = $qy_slice;
+  $qy_slices{$qy_slice->seq_region_name} = $qy_slice;
 }
 
 my $tg_sa = Bio::EnsEMBL::Registry->get_adaptor($tg_species, 'core', 'Slice');
 my %tg_slices;
 foreach my $tg_slice (@{$tg_sa->fetch_all('toplevel')}) {
-  $tg_slices{$tg_slice->name} = $tg_slice;
+  $tg_slices{$tg_slice->seq_region_name} = $tg_slice;
 }
 
 my $sth_synteny_region = $dbc->prepare("insert into synteny_region (rel_orientation) values (?)");
@@ -71,10 +70,10 @@ while (defined (my $line = <>) ) {
   chomp $line;
   if ($line =~ /^(\S+)\t.*\t.*\t(\d+)\t(\d+)\t.*\t(-1|1)\t.*\t(\S+)\t(\d+)\t(\d+)$/) {#####This will need to be changed
     my ($qy_chr,$qy_start,$qy_end,$rel,$tg_chr,$tg_start,$tg_end) = ($1,$2,$3,$4,$5,$6,$7);
-    
+
     my $qy_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
     $qy_dnafrag->name($qy_chr);
-    $qy_dnafrag->genomedb($qy_gdb);
+    $qy_dnafrag->genome_db($qy_gdb);
     $qy_dnafrag->coord_system_name($qy_slices{$qy_chr}->coord_system->name);
     $qy_dnafrag->length($qy_slices{$qy_chr}->seq_region_length);
  
@@ -82,7 +81,7 @@ while (defined (my $line = <>) ) {
     
     my $tg_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
     $tg_dnafrag->name($tg_chr);
-    $tg_dnafrag->genomedb($tg_gdb);
+    $tg_dnafrag->genome_db($tg_gdb);
     $tg_dnafrag->coord_system_name($tg_slices{$tg_chr}->coord_system->name);
     $tg_dnafrag->end($tg_slices{$tg_chr}->req_region_length);
     $dfa->store_if_needed($tg_dnafrag);
