@@ -78,7 +78,7 @@ sub _init {
     my $small_contig   = 0;
     my $dep            = $Config->get($type, 'dep');
 
-    foreach my $f ( $self->features ){
+    foreach my $f ( @{$self->features()} ){
         next if $strand_flag eq 'b' && $strand != $f->hstrand ;
         next if $f->start > $f->end || $f->end < 1 || $f->start > $length;
         $id{$f->hseqname()} = [] unless $id{$f->hseqname()};
