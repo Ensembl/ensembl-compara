@@ -400,6 +400,7 @@ sub _generic_fetch {
   #append additional clauses which may have been defined
   $sql .= " $final_clause";
 
+  # warn $sql;
   my $sth = $self->prepare($sql);
   $sth->execute;  
 
