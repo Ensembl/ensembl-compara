@@ -92,6 +92,7 @@ sub new_from_gene {
     $self->chr_end($gene->seq_region_end);
     $self->seq_length(0);
     $self->source_name("ENSEMBLGENE");
+    $self->version('');
   }
   return $self;
 }
@@ -142,7 +143,8 @@ sub new_from_transcript {
   $self->chr_start($transcript->coding_region_start);
   $self->chr_end($transcript->coding_region_end);
   $self->seq_length(0);
-  
+  $self->version('');
+
   if(($translate eq 'translate') or ($translate eq 'yes')) {
     if(not defined($transcript->translation)) {
       $self->throw(
