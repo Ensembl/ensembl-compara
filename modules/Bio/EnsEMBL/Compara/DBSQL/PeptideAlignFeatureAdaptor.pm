@@ -58,6 +58,8 @@ sub store {
 sub _store_PAFS {
   my ($self, @out)  = @_;
 
+  return unless(defined(@out) and scalar(@out));
+  
   my $memberDBA = $self->db->get_MemberAdaptor();
 
   my $query = "INSERT INTO peptide_align_feature(".
@@ -65,10 +67,9 @@ sub _store_PAFS {
                 "qstart,qend,hstart,hend,".
                 "score,evalue,align_length," .
                 "identical_matches,perc_ident,".
-                "positive_matches,perc_pos,hit_rank,cigar_line) ".
-              " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-  my $sth = $self->db->prepare($query);
+                "positive_matches,perc_pos,hit_rank,cigar_line) VALUES ";
 
+  my $addComma=0;                
   foreach my $paf (@out) {
     if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
 
@@ -95,29 +96,33 @@ sub _store_PAFS {
         $analysis_id=$paf->analysis()->dbID();
       }
 
-      $sth->execute($paf->query_member->dbID,
-                    $paf->hit_member->dbID,
-                    $paf->query_member->genome_db_id,
-                    $paf->hit_member->genome_db_id,
-                    $analysis_id,
-                    $paf->qstart,
-                    $paf->qend,
-                    $paf->hstart,
-                    $paf->hend,
-                    $paf->score,
-                    $paf->evalue,
-                    $paf->alignment_length,
-                    $paf->identical_matches,
-                    $paf->perc_ident,
-                    $paf->positive_matches,
-                    $paf->perc_pos,
-                    $paf->hit_rank,
-                    $paf->cigar_line
-                   );
-      $paf->dbID($sth->{'mysql_insertid'});
+      $query .= "(".$paf->query_member->dbID.
+                ",".$paf->hit_member->dbID.
+                ",".$paf->query_member->genome_db_id.
+                ",".$paf->hit_member->genome_db_id.
+                ",".$analysis_id.
+                ",".$paf->qstart.
+                ",".$paf->qend.
+                ",".$paf->hstart.
+                ",".$paf->hend.
+                ",".$paf->score.
+                ",".$paf->evalue.
+                ",".$paf->alignment_length.
+                ",".$paf->identical_matches.
+                ",".$paf->perc_ident.
+                ",".$paf->positive_matches.
+                ",".$paf->perc_pos.
+                ",".$paf->hit_rank.
+                ",'".$paf->cigar_line."')";
+      $query .= ", " if($addComma);
+      $addComma=1;
       $paf->display_short();
     }
   }
+  print("$query\n");
+  my $sth = $self->db->prepare($query);
+  $sth->execute();
+  $sth->finish();
 }
 
 
