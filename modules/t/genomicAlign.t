@@ -13,6 +13,16 @@
 
 genomicAlign.t
 
+=head1 INSTALLATION
+
+*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+YOU MUST EDIT THE <MultiTestDB.conf> FILE BEFORE USING THIS TEST SCRIPT!!!
+
+*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+Please, read the README file for instructions.
+
 =head1 SYNOPSIS
 
 For running this test only:
@@ -21,6 +31,9 @@ perl -w ../../../ensembl-test/scripts/runtests.pl genomicAlign.t
 For running all the test scripts:
 perl -w ../../../ensembl-test/scripts/runtests.pl
 
+For running all the test scripts and cleaning the database afterwards:
+perl -w ../../../ensembl-test/scripts/runtests.pl -c
+
 =head1 DESCRIPTION
 
 This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
@@ -28,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlign module.
 
-This script includes 40 tests.
+This script includes 47 tests.
 
 =head1 AUTHOR
 
@@ -55,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 40;
+    plan tests => 47;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -67,6 +80,9 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 # switch off the debug prints 
 our $verbose = 0;
+
+#####################################################################
+## Connect to the test database using the MultiTestDB.conf file
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
@@ -83,6 +99,9 @@ my $rn_gdb = $gdba->fetch_by_name_assembly( "Rattus norvegicus", 'RGSC3.1' );
 $hs_gdb->db_adaptor($homo_sapiens->get_DBAdaptor('core'));
 $mm_gdb->db_adaptor($mus_musculus->get_DBAdaptor('core'));
 $rn_gdb->db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
+
+##
+#####################################################################
   
 my $genomic_align;
 my $all_genomic_aligns;
@@ -165,6 +184,17 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_block method");
 # 
 # 16
 # 
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      -genomic_align_block_id => $genomic_align_block_id + 1
+      );
+  ok(eval{$genomic_align->genomic_align_block($genomic_align_block)}, undef,
+          "Testing throw condition");
+
+# 
+# 17
+# 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_block_id method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
@@ -175,9 +205,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_block_id method")
           "Trying to get object genomic_align_block_id from object");
 
 # 
-# 17
+# 18
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_block_id method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
@@ -186,7 +215,18 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_block_id method")
           "Trying to get object genomic_align_block_id from the database");
 
 # 
-# 18
+# 19
+# 
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      -genomic_align_block => $genomic_align_block
+      );
+  ok(eval{$genomic_align->genomic_align_block_id($genomic_align_block_id + 1)}, undef,
+          "Testing throw condition");
+
+# 
+# 20
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -198,9 +238,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set method"
           "Trying to get method_link_species_set object from genomic_align_block");
 
 # 
-# 19
+# 21
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
@@ -210,7 +249,28 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set method"
           "Trying to get method_link_species_set object from method_link_species_set_id");
 
 # 
-# 20
+# 22
+# 
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      );
+  ok($genomic_align->method_link_species_set->dbID, $method_link_species_set_id,
+          "Trying to get method_link_species_set object from the database");
+
+# 
+# 23
+# 
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      -method_link_species_set_id => $method_link_species_set_id + 1
+      );
+  ok(eval{$genomic_align->method_link_species_set($method_link_species_set)}, undef,
+          "Testing throw condition");
+
+# 
+# 24
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set_id method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -222,9 +282,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set_id meth
           "Trying to get method_link_species_set_id from method_link_species_set object");
 
 # 
-# 21
-# 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set_id method");
+# 25
+#
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
@@ -233,7 +292,18 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::method_link_species_set_id meth
           "Trying to get method_link_species_set_id from the database");
 
 # 
-# 22
+# 26
+# 
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      -method_link_species_set => $method_link_species_set
+      );
+  ok(eval{$genomic_align->method_link_species_set_id($method_link_species_set_id + 1)}, undef,
+          "Testing throw condition");
+
+# 
+# 27
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -245,7 +315,18 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag method");
           "Trying to get dnafrag object from dnafrag_id");
 
 # 
-# 23
+# 28
+# 
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      -dnafrag_id => $dnafrag_id + 1
+      );
+  ok(eval{$genomic_align->dnafrag($dnafrag)}, undef,
+          "Testing throw condition");
+
+# 
+# 29
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_id method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -257,9 +338,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_id method");
           "Trying to get dnafrag_id from dnafrag object");
 
 # 
-# 24
+# 30
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_id method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
@@ -268,7 +348,18 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_id method");
           "Trying to get dnafrag_id from the database");
 
 # 
-# 25
+# 31
+# 
+  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+      -adaptor => $genomic_align_adaptor,
+      -dbID => $dbID,
+      -dnafrag => $dnafrag,
+      );
+  ok(eval{$genomic_align->dnafrag_id($dnafrag_id + 1)}, undef,
+          "Testing throw condition");
+
+# 
+# 32
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_start method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -279,7 +370,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_start method");
           "Trying to get dnafrag_start from the database");
 
 # 
-# 26
+# 33
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_end method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -290,7 +381,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_end method");
           "Trying to get dnafrag_end from the database");
 
 # 
-# 27
+# 34
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_strand method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -301,7 +392,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::dnafrag_strand method");
           "Trying to get dnafrag_strand from the database");
 
 # 
-# 28
+# 35
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -314,7 +405,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
           "Trying to get aligned_sequence from original_sequence and cigar_line");
 
 # 
-# 29
+# 36
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -327,9 +418,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
           "- orignal_sequence taken from the database");
 
 # 
-# 30
+# 37
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
@@ -340,9 +430,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
           "- cigar_line taken from the database");
 
 # 
-# 31
+# 38
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
@@ -354,7 +443,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method");
           "- cigar_line taken from the database");
 
 # 
-# 32
+# 39
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::cigar_line method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -366,9 +455,8 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::cigar_line method");
           "Trying to get cigar_line from aligned_sequence");
 
 # 
-# 33
+# 40
 # 
-debug("Test Bio::EnsEMBL::Compara::GenomicAlign::cigar_line method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
       -adaptor => $genomic_align_adaptor,
       -dbID => $dbID,
@@ -377,7 +465,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::cigar_line method");
           "Trying to get cigar_line from the database");
 
 # 
-# 34
+# 41
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::level_id method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -388,7 +476,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::level_id method");
           "Trying to get level_id from the database");
 
 # 
-# 35
+# 42
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::original_sequence method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -400,7 +488,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::original_sequence method");
           "Trying to get original_sequence from aligned_sequence");
 
 # 
-# 36
+# 43
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::original_sequence method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -411,7 +499,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::original_sequence method");
           "Trying to get original_sequence from the database");
 
 # 
-# 37-38
+# 44-45
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_groups method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -444,7 +532,7 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_groups method");
   };
 
 # 
-# 39-40
+# 46-47
 # 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_group_by_type method");
   $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
