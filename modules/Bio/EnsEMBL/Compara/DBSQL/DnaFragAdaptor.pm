@@ -177,12 +177,14 @@ sub fetch_by_species_chr_start_end {
       SELECT d.genome_db_id, d.dnafrag_type, d.dnafrag_id, 
              d.name, d.start, d.end
         FROM dnafrag d, genome_db g 
-       WHERE d.name like ? 
+       WHERE d.name = ?
+         AND d.end >= ?
+         AND d.start <= ?
          AND g.name = ? 
          AND d.genome_db_id=g.genome_db_id
     ");
 
-    $sth->execute("$chr_name.%",$species);
+    $sth->execute($chr_name,$chr_start, $chr_end, $species);
     $list_dnafrag = $self->_objs_from_sth( $sth );
 
   } elsif ($dnafrag_type eq "Chromosome") {
@@ -235,8 +237,11 @@ sub _objs_from_sth {
   my $result = [];
   
   my ( $dbID, $dnafrag_type, $name, $start, $end, $genome_db_id );
-  $sth->bind_columns( \$genome_db_id, \$dbID, \$dnafrag_type, \$name, \$start, \$end,  );
- 
+  $sth->bind_columns
+    ( \$genome_db_id, \$dbID, \$dnafrag_type, 
+      \$name, \$start, \$end,  );
+  my $gda = $self->db->get_GenomeDBAdaptor();
+
   while( $sth->fetch() ) {
 
     my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
@@ -246,7 +251,7 @@ sub _objs_from_sth {
     $dnafrag->type( $dnafrag_type);
     $dnafrag->start( $start );
     $dnafrag->end( $end );
-    $dnafrag->genomedb( $self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id) );
+    $dnafrag->genomedb( $gda->fetch_by_dbID( $genome_db_id ));
     
     push( @$result, $dnafrag );
   }
