@@ -1,0 +1,31 @@
+
+To run compara healthchecks
+---------------------------
+
+ cvs co ensj-healthcheck
+
+set your environnement variable JAVA_HOME
+in tcsh
+ setenv JAVA_HOME /usr/opt/java141
+
+or in bash
+ JAVA_HOME=/usr/opt/java141
+ export JAVA_HOME
+
+ cd ensj-healthcheck
+
+compile
+
+ ./compile-healthcheck.sh
+
+set the database.properties to point to your MYSQL server
+
+run the healthcheck with all compara tests
+
+ ./run-healthcheck.sh -d ensembl_compara_23_1 -output all compara_db_constraints
+
+You can run that on just one by giving the java test case name
+e.g. ForeignKeyMemberId
+
+ ./run-healthcheck.sh -d ensembl_compara_23_1 -output all ForeignKeyMemberId
+
