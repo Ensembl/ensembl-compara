@@ -47,7 +47,7 @@ sub features {
     ###### Create a new DAS adaptor #######
     eval {
         $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
-        $adaptor = Bio::EnsEMBL::DBDAS::DASAdaptor->new(
+        $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
                                 -url        => $URL,
                                 -dsn        => $dsn,
                                 -types      => $types || [], 
