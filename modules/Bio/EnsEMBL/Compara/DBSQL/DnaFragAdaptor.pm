@@ -393,10 +393,9 @@ sub is_already_stored {
         FROM dnafrag 
        WHERE name= ?
          AND genome_db_id= ?
-         AND start = ?
    ");
 
-   unless ($sth->execute( "$name", $gid, $dnafrag->start())) {
+   unless ($sth->execute( "$name", $gid )) {
      $self->throw("Failed execution of a select query");
    }
 
@@ -409,7 +408,7 @@ sub is_already_stored {
      return $dnafrag_id;
    } 
   return 0;
-  } 
+} 
    
 
 =head2 store_if_needed
