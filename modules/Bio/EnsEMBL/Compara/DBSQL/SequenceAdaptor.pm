@@ -29,7 +29,9 @@ sub store {
   my $seqID;
   
   return 0 unless($sequence);
-
+  
+  my $lock_sth = $self->prepare("LOCK TABLE sequence WRITE");
+  
   my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
   $sth->execute($sequence);
   ($seqID) = $sth->fetchrow_array();
@@ -37,6 +39,7 @@ sub store {
 
   if($seqID) {
     # print("sequence already stored as id $seqID\n");
+    $self->prepare("UNLOCK TABLES");
     return $seqID;
   }
 
@@ -47,6 +50,7 @@ sub store {
   $seqID = $sth2->{'mysql_insertid'};
   $sth2->finish;
 
+  $self->prepare("UNLOCK TABLES");
   return $seqID;
 }
 
