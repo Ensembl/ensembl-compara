@@ -47,7 +47,7 @@ sub fetch_parent_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $constraint = "WHERE nestedset_id = " . $node->_parent_nestedset_id;
+  my $constraint = "WHERE nestedset_id = " . $node->_parent_id;
   my ($parent) = @{$self->_generic_fetch($constraint)};
   return $parent;
 }
@@ -60,7 +60,7 @@ sub fetch_all_children_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $constraint = "WHERE parent_nestedset_id = " . $node->nestedset_id;
+  my $constraint = "WHERE parent_id = " . $node->nestedset_id;
   my $kids = $self->_generic_fetch($constraint);
   foreach my $child (@{$kids}) { $node->add_child($child); }
 
@@ -91,7 +91,7 @@ sub fetch_subtree_under_node {
 sub fetch_all_roots {
   my $self = shift;
 
-  my $constraint = "WHERE root_nestedset_id = 0";
+  my $constraint = "WHERE root_id = 0";
   return $self->_generic_fetch($constraint);
 }
 
@@ -115,8 +115,8 @@ sub update {
   }
 
   my $sql = "UPDATE " .  $self->tables->[0]->[0] . " SET ".
-               "parent_nestedset_id=$parent_id".
-               ",root_nestedset_id=$root_id".
+               "parent_id=$parent_id".
+               ",root_id=$root_id".
                ",left_index=" . $node->left_index .
                ",right_index=" . $node->right_index .
                ",distance_to_parent=" . $node->distance_to_parent.
@@ -230,8 +230,8 @@ sub init_instance_from_rowhash {
 
   $node->adaptor($self);
   $node->nestedset_id          ($rowhash->{'nestedset_id'});
-  $node->_parent_nestedset_id  ($rowhash->{'parent_nestedset_id'});
-  $node->_root_nestedset_id    ($rowhash->{'root_nestedset_id'});
+  $node->_parent_id            ($rowhash->{'parent_id'});
+  $node->_root_id              ($rowhash->{'root_id'});
   $node->left_index            ($rowhash->{'left_index'});
   $node->right_index           ($rowhash->{'right_index'});
   $node->distance_to_parent    ($rowhash->{'distance_to_parent'});
@@ -315,7 +315,7 @@ sub _build_tree_from_nodes {
 
   #next add children to their parents
   foreach my $node (@{$node_list}) {
-    my $parent = $node_hash{$node->_parent_nestedset_id};  
+    my $parent = $node_hash{$node->_parent_id};  
     $parent->add_child($node);
   }
   

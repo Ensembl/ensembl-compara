@@ -42,7 +42,7 @@ sub fetch_parent_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $constraint = "WHERE t.taxon_id = " . $node->_parent_nestedset_id;
+  my $constraint = "WHERE t.taxon_id = " . $node->_parent_id;
   my ($parent) = @{$self->_generic_fetch($constraint)};
   return $parent;
 }
@@ -66,7 +66,7 @@ sub tables {
 sub columns {
   my $self = shift;
   return ['t.taxon_id as nestedset_id',
-          't.parent_taxon_id as parent_nestedset_id',
+          't.parent_id',
           't.left_index',
           't.right_index',
           't.rank',
