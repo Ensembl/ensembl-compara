@@ -124,8 +124,7 @@ sub new {
     }
   }
 
-  #we want to return the container not the contained object
-  return $container;
+  return $self;
 }
 
 
