@@ -31,8 +31,10 @@ CREATE TABLE dnafrag (
 CREATE TABLE dnafrag_region (
   synteny_region_id int(10) DEFAULT '0' NOT NULL,
   dnafrag_id int(10) DEFAULT '0' NOT NULL,
-  seq_start int(10) unsigned DEFAULT '0' NOT NULL,
-  seq_end int(10) unsigned DEFAULT '0' NOT NULL,
+#  seq_start int(10) unsigned DEFAULT '0' NOT NULL,
+#  seq_end int(10) unsigned DEFAULT '0' NOT NULL,
+  dnafrag_start int(10) unsigned DEFAULT '0' NOT NULL,
+  dnafrag_end int(10) unsigned DEFAULT '0' NOT NULL,
   
   UNIQUE unique_synteny (synteny_region_id,dnafrag_id),
   UNIQUE unique_synteny_reversed (dnafrag_id,synteny_region_id)
@@ -171,8 +173,11 @@ CREATE TABLE method_link_species_set (
 
 CREATE TABLE synteny_region (
   synteny_region_id int(10) NOT NULL auto_increment,
+  method_link_species_set_id int(10) NOT NULL,   
   rel_orientation tinyint(1) DEFAULT '1' NOT NULL,
-  PRIMARY KEY (synteny_region_id)
+
+  PRIMARY KEY (synteny_region_id),
+  KEY (method_link_species_set_id)
 );
 
 
@@ -189,13 +194,6 @@ CREATE TABLE meta (
     KEY meta_value_index ( meta_value )
 );
 
-#CREATE TABLE source (
-# source_id	int(10) NOT NULL auto_increment,
-# source_name	varchar(40) NOT NULL,
-#
-# PRIMARY KEY (source_id),
-# UNIQUE KEY (source_name)
-#);
 
 CREATE TABLE taxon (
  taxon_id         int(10) NOT NULL,
@@ -214,7 +212,6 @@ CREATE TABLE member (
  member_id      int(10) NOT NULL auto_increment,
  stable_id      varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
  version        int(10) DEFAULT '0', 
-# source_id      int(10) NOT NULL, # foreign key from source table
  source_name	varchar(40) NOT NULL,
  taxon_id       int(10) NOT NULL, # foreign key from taxon table
  genome_db_id   int(10), # foreign key from genome_db table
@@ -245,7 +242,6 @@ CREATE TABLE sequence (
 CREATE TABLE family (
  family_id		int(10) NOT NULL auto_increment,
  stable_id		varchar(40) NOT NULL, # e.g. ENSF0000012345
-# source_id              int(10) NOT NULL, # foreign key from source table
  method_link_species_set_id int(10) NOT NULL,
  description		varchar(255),
  description_score	double,
@@ -290,7 +286,6 @@ CREATE TABLE domain_member (
 CREATE TABLE homology (
  homology_id	int(10) NOT NULL auto_increment,
  stable_id      varchar(40),
-# source_id      int(10) NOT NULL, # foreign key from source table
  method_link_species_set_id int(10) NOT NULL,
  description    varchar(40), # UBRH, MBRH, RHS
  subtype        varchar(40) NOT NULL DEFAULT '',
