@@ -11,15 +11,13 @@ sub my_label { return "Haplotypes"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_Haplotypes_start_end(
-        $self->{'config'}->{'_databases'}->{'haplotype'}
-    );
+    return $self->{'container'}->get_all_Haplotypes;
 }
 
 sub tag {
     my( $self, $f ) = @_;
     my $col = $self->{'config'}->get($self->check(), 'col');
-    my $vc_start = $self->{'container'}->_global_start()-1;
+    my $vc_start = $self->{'container'}->chr_start()-1;
     my @tags = ();
     my %snps = $f->fetchSNPs( ); # returns a hash -> name => location
     foreach my $snp ( keys %snps ) {
