@@ -448,7 +448,6 @@ sub _objs_from_sth {
         '_chr_name' => $column{'chr_name'},
         '_chr_start' => $column{'chr_start'},
         '_chr_end' => $column{'chr_end'},
-        #'_sequence' => $column{'sequence'},
         '_source_id' => $column{'source_id'},
         '_source_name' => $column{'source_name'},
         '_adaptor' => $self});
@@ -520,30 +519,33 @@ sub store {
 
   $member->source_id($self->store_source($member->source_name));
 
-  my $sth =
-    $self->prepare("INSERT INTO member (stable_id,source_id,
-                                taxon_id, genome_db_id, description,
-                                chr_name, chr_start, chr_end)
-                    VALUES (?,?,?,?,?,?,?,?)");
+  # first must insert in sequence table to generate new
+  # sequence_id to insert into member table;
+  if(defined($member->sequence)) {
+    my $sth = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+    $sth->execute($member->sequence,
+                  $member->seq_length);
+
+    $member->sequence_id( $sth->{'mysql_insertid'} );
+  }
+
+  
+  my $sth = $self->prepare("INSERT INTO member (stable_id,source_id,
+                              taxon_id, genome_db_id, sequence_id, description,
+                              chr_name, chr_start, chr_end)
+                            VALUES (?,?,?,?,?,?,?,?,?)");
 
   $sth->execute($member->stable_id,
                 $member->source_id,
                 $member->taxon_id,
                 $member->genome_db_id,
+                $member->sequence_id,
                 $member->description,
                 $member->chr_name,
                 $member->chr_start,
                 $member->chr_end);
 
   $member->dbID( $sth->{'mysql_insertid'} );
-
-
-  if(defined($member->sequence)) {
-    $sth = $self->prepare("INSERT INTO sequence (member_id, sequence)
-                           VALUES (?,?)");
-    $sth->execute($member->dbID,
-                  $member->sequence);
-  }
 
   $member->adaptor($self);
   if (defined $member->taxon) {
@@ -587,6 +589,16 @@ sub store_source {
     $sth->execute($source_name);
     return $sth->{'mysql_insertid'};
   }
+}
+
+
+sub store_gene_peptide_link {
+  my ($self, $gene_member_id, $peptide_member_id) = @_;
+
+  my $sth =
+    $self->prepare("INSERT INTO member_gene_peptide (gene_member_id, peptide_member_id)
+                    VALUES (?,?)");
+  $sth->execute($gene_member_id, $peptide_member_id);
 }
 
 1;

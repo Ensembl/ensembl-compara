@@ -1,4 +1,4 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/perl -w
 
 #
 # updates the external db tables on all of the core databases on a given host

@@ -399,21 +399,21 @@ sub get_DomainAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor" );
 }
 
-=head2 get_MemberAdaptor
+=head2 get_SubsetAdaptor
 
   Arg [1]    : none
-  Example    : $ma = $dba->get_MemberSetAdaptor
+  Example    : $ma = $dba->get_SubsetAdaptor
   Description: Retrieves a MemberSetAdaptor for this compara database
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::MemberSetAdaptor
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::SubssetAdaptor
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub get_MemberSetAdaptor {
+sub get_SubsetAdaptor {
   my $self = shift;
   
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::MemberSetAdaptor" );
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor" );
 }
 
 =head2 get_MemberAdaptor

@@ -12,7 +12,7 @@
 
 =head1 NAME
 
-MemberSet - DESCRIPTION of Object
+Subset - DESCRIPTION of Object
 
 =head1 SYNOPSIS
 
@@ -28,7 +28,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-package Bio::EnsEMBL::Compara::MemberSet;
+package Bio::EnsEMBL::Compara::Subset;
 
 use strict;
 use Bio::Species;
@@ -41,13 +41,13 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $name, $adaptor) = $self->_rearrange([qw(DBID NAME ADAPTOR)], @args);
+    my ($dbid, $description, $adaptor) = $self->_rearrange([qw(DBID NAME ADAPTOR)], @args);
 
     $dbid && $self->dbID($dbid);
-    $name && $self->name($name);
+    $description && $self->description($description);
 
-    #$self->{'_member_id_list'} = [];
-    $self->{'_member_list'} = [];
+    $self->{'_member_id_list'} = [];
+    $self->{'_cached_member_list'} = [];
   }
 
   return $self;
@@ -111,9 +111,9 @@ sub dbID {
   return $self->{'_dbID'};
 }
 
-=head2 name
+=head2 description
 
-  Arg [1]    : string $name (optional)
+  Arg [1]    : string $description (optional)
   Example    :
   Description:
   Returntype : string
@@ -122,10 +122,10 @@ sub dbID {
 
 =cut
 
-sub name {
+sub description {
   my $self = shift;
-  $self->{'_name'} = shift if(@_);
-  return $self->{'_name'};
+  $self->{'-description'} = shift if(@_);
+  return $self->{'-description'};
 }
 
 =head2 add_member_id
@@ -139,7 +139,6 @@ sub name {
 
 =cut
 
-=head1
 sub add_member_id {
   my $self = shift;
   my $count=0;
@@ -155,7 +154,6 @@ sub add_member_id {
   }
   return $count
 }
-=cut
 
 sub add_member {
   my ($self, $member) = @_;
@@ -165,14 +163,12 @@ sub add_member {
     "gene arg must be a [Bio::EnsEMBL::Compara::Member] ".
     "not a [$member]");
   }
-  #return $self->add_member_id($member->dbID);
 
-  my $count = push @{$self->{'_member_list'}}, $member;
+  my $count = $self->add_member_id($member->dbID);
 
-  if(defined($self->adaptor)) {
-    $self->adaptor->store_link($self, $member->dbID);
-  }
+  push @{$self->{'_cached_member_list'}}, $member;
 
+  return $count;
 }
 
 =head2 member_list
@@ -185,26 +181,24 @@ sub add_member {
   Caller     :
 
 =cut
-=head3
+
 sub member_id_list {
   my $self = shift;
 
   return $self->{'_member_id_list'};
 }
-=cut
 
 sub member_list {
   my $self = shift;
 
-  return $self->{'_member_list'};
+  return $self->{'_cached_member_list'};
 }
-
 
 sub count {
   my $self = shift;
 
-  #return $#{$self->member_id_list()} + 1;
-  return $#{$self->member_list()} + 1;
+  return $#{$self->member_id_list()} + 1;
+  #return $#{$self->member_list()} + 1;
 
   #my @idList = @{$self->member_id_list()};
   #my $count = $#idList;
@@ -226,7 +220,6 @@ sub output_to_fasta {
   foreach my $member (@{member_list()}) {
 
     my $seq_string = $member->sequence;
-
     $seq_string =~ s/(.{72})/$1\n/g;
     
     print FASTA_FP ">$prefix" .

@@ -14,7 +14,7 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor, $taxon_id, $genome_db_id) = $self->_rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID)], @args);
+    my ($dbid, $stable_id, $description, $source_id, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id) = $self->_rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_ID SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
     
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
@@ -24,6 +24,7 @@ sub new {
     $adaptor && $self->adaptor($adaptor);
     $taxon_id && $self->taxon_id($taxon_id);
     $genome_db_id && $self->genome_db_id($genome_db_id);
+    $sequence_id && $self->sequence_id($sequence_id);
   }
   
   return $self;
@@ -89,7 +90,6 @@ sub new_from_gene {
     $self->chr_name($gene->seq_region_name);
     $self->chr_start($gene->seq_region_start);
     $self->chr_end($gene->seq_region_end);
-    #$self->sequence("NULL");
     $self->seq_length(0);
     $self->source_name("ENSEMBLGENE");
   }
@@ -134,7 +134,6 @@ sub new_from_transcript {
     "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
     "not a [$genome_db]");
   }
-
   $self->taxon_id($genome_db->taxon_id);
   if(defined($description)) { $self->description($description); }
   else { $self->description("NULL"); }
@@ -413,6 +412,13 @@ sub seq_length {
   my $self = shift;
   $self->{'_seq_length'} = shift if(@_);
   return $self->{'_seq_length'};
+}
+
+sub sequence_id {
+  my $self = shift;
+  $self->{'_sequence_id'} = shift if(@_);
+  if(!defined($self->{'_sequence_id'})) { $self->{'_sequence_id'}=0; }
+  return $self->{'_sequence_id'};
 }
 
 1;

@@ -164,14 +164,72 @@ CREATE TABLE member (
  source_id	int(10) NOT NULL, # foreign key from source table
  taxon_id	int(10) NOT NULL, # foreign key from taxon table
  genome_db_id	int(10), # foreign key from genome_db table
+ sequence_id    int(10), # foreign key from sequence table
  description    varchar(255),
  chr_name	char(40),
  chr_start	int(10),
  chr_end	int(10),
- sequence	mediumtext,
 
  PRIMARY KEY (member_id),
- UNIQUE KEY (source_id,stable_id)
+ UNIQUE KEY (source_id,stable_id),
+ KEY (sequence_id)
+);
+
+CREATE TABLE sequence (
+ sequence_id    int(10) NOT NULL auto_increment,
+ sequence       mediumtext,
+ length         int(10),
+
+ PRIMARY KEY (sequence_id)
+);
+
+CREATE TABLE subset (
+ subset_id      int(10) NOT NULL auto_increment,
+ description    varchar(50),
+
+ PRIMARY KEY (subset_id)
+);
+
+CREATE TABLE subset_member (
+ subset_id   int(10) NOT NULL,
+ member_id   int(10) NOT NULL,
+
+ KEY(subset_id),
+ KEY(member_id)
+);
+
+
+# table identifies the relationship of which gene member, each 
+# peptide member is derived from
+CREATE TABLE member_gene_peptide(
+ gene_member_id       int(10) NOT NULL,
+ peptide_member_id    int(10) NOT NULL,
+
+ KEY(gene_member_id),
+ KEY(peptide_member_id)
+);
+
+
+#this table stores the raw results of the peptide to peptide blasts
+CREATE TABLE peptide_align_feature (
+  id                  int(10) unsigned NOT NULL auto_increment,
+  id1                 varchar(40) DEFAULT '' NOT NULL,
+  qstart              int(10) DEFAULT '0' NOT NULL,
+  qend                int(10) DEFAULT '0' NOT NULL,
+  id2                 varchar(40) DEFAULT '' NOT NULL,
+  hstart              int(11) DEFAULT '0' NOT NULL,
+  hend                int(11) DEFAULT '0' NOT NULL,
+  score               double(16,4) DEFAULT '0.0000' NOT NULL,
+  evalue              varchar(20),
+  identical_matches   int(10),
+  pid                 int(10),
+  positive_matches    int(10),
+  pos                 int(10),
+  cigar_line          mediumtext,
+  
+  PRIMARY KEY (id),
+  KEY id1 (id1),
+  KEY id2 (id2)
 );
 
 CREATE TABLE family (
