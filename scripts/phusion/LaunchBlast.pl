@@ -90,6 +90,17 @@ foreach my $qy_seq (@query_seq) {
   
   my $status = system("$blast_executable $sb_file $qy_file > $blast_file");
   unless ($status == 0 || $status == 4096 || $status == 5888) {
+
+# 4096
+# because wublastn produce a EXIT CODE 16 (16*256 = 4096). The reason is that the query
+# sequence contains ONLY Ns, no seeding is possible.
+# the message sent by wublastn is "There are no valid contexts in the requested search."
+
+# 5888
+# because wublastn produce a EXIT CODE 16 (23*256 = 4096). The reason is that the query 
+# sequence contains MOSTLY Ns, no seeding is possible.
+# the message sent by wublastn is "There are no valid contexts in the requested search."
+
     unlink glob("/tmp/*$rand*");
     die "error in wublast, $!\n";
   }
