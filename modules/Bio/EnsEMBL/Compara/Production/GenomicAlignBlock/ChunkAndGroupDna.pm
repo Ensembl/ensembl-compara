@@ -251,8 +251,13 @@ sub create_chunks
     $chromosomes = $SliceAdaptor->fetch_all('toplevel');
   }
 
-  my $starttime = time();
   $self->{'chunkset_counter'} = 1;
+  $self->{'current_chunkset'} = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+  $self->{'current_chunkset'}->description(sprintf("collection_id:%d group:%d",
+                                 $self->{'dna_collection'}->dbID, 
+                                 $self->{'chunkset_counter'}++));
+
+  my $starttime = time();
   foreach my $chr (@{$chromosomes}) {
     #print "fetching dnafrag\n";
 
@@ -279,6 +284,13 @@ sub create_chunks
 
   }
  
+  #save the current_chunkset if it isn't empty
+  if($self->{'current_chunkset'}->count > 0) {
+    $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($self->{'current_chunkset'});
+    #$self->submit_job($self->{'current_chunkset'});
+    $self->{'dna_collection'}->add_dna_object($self->{'current_chunkset'});
+  }
+
   #
   # finish by storing all the dna_objects of the collection 
   #
@@ -296,7 +308,8 @@ sub create_dnafrag_chunks {
 
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
 
-  my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'});
+  my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'})
+    if($self->{'region'});
 
   my $length = $dnafrag->length;
   my $i = 1;
@@ -309,12 +322,6 @@ sub create_dnafrag_chunks {
   #print "  sequence length : ",$length,"\n";
 
   my $lasttime = time();
-
-  my $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-  $chunkSet->description(sprintf("collection_id:%d group:%d",
-                                 $self->{'dna_collection'}->dbID, 
-                                 $self->{'chunkset_counter'}++));
-  my $set_size = 0;
 
   #all seq in inclusive coordinates so need to +1
   for ($i; $i<=$length; $i=$i+$self->{'chunk_size'}-$self->{'overlap'}) {
@@ -336,45 +343,46 @@ sub create_dnafrag_chunks {
       my $bioseq = $chunk->bioseq;
       $chunk->sequence($bioseq->seq);
     }
-    print "storing chunk ",$chunk->display_id;
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
-    print "  dbID=",$chunk->dbID, "\n";
 
     # do grouping if requested
     if($self->{'group_set_size'} and ($chunk->length < $self->{'group_set_size'})) {
-      if(($chunkSet->count > 0) and (($set_size + $chunk->length) > $self->{'group_set_size'})) {
+      if(($self->{'current_chunkset'}->count > 0) and 
+         (($self->{'current_chunkset'}->total_basepairs + $chunk->length) > $self->{'group_set_size'})) 
+      {
         #set has hit max, so save it
-        $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
-        $self->{'dna_collection'}->add_dna_object($chunkSet);
-        #$self->submit_job($chunkSet);
-        printf("created chunkSet(%d) %d chunks, %1.3f mbase\n",
-               $chunkSet->dbID, $chunkSet->count, $set_size/1000000.0);
-        $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;        
-        $chunkSet->description(sprintf("collection_id:%d group:%d",
+        $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($self->{'current_chunkset'});
+        $self->{'dna_collection'}->add_dna_object($self->{'current_chunkset'});
+        #$self->submit_job($self->{'current_chunkset'});
+        if($self->debug) {
+          printf("created chunkSet(%d) %d chunks, %1.3f mbase\n",
+                 $self->{'current_chunkset'}->dbID, $self->{'current_chunkset'}->count, 
+                 $self->{'current_chunkset'}->total_basepairs/1000000.0);
+        }
+        $self->{'current_chunkset'} = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;        
+        $self->{'current_chunkset'}->description(sprintf("collection_id:%d group:%d",
                                        $self->{'dna_collection'}->dbID, 
                                        $self->{'chunkset_counter'}++));
-        $set_size = 0;
       }
 
-      $chunkSet->add_dnafrag_chunk_id($chunk->dbID);
-      #$chunkSet->add_DnaFragChunk($chunk);
-      $set_size += $chunk->length;
+      $self->{'current_chunkset'}->add_DnaFragChunk($chunk);
+      if($self->debug) {
+        printf("chunkSet %d chunks, %1.3f mbase\n",
+               $self->{'current_chunkset'}->count, 
+               $self->{'current_chunkset'}->total_basepairs/1000000.0);
+      }
     }
     else {
       #not doing grouping so put the $chunk directly into the collection
       $self->{'dna_collection'}->add_dna_object($chunk);
+      if($self->debug) {
+        printf("dna_collection : chunk (%d) %s\n",$chunk->dbID, $chunk->display_id);
+      }
     }
     
     $self->submit_job($chunk) if($self->{'analysis_job'});
     $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
     
-  }
-
-  #save the last chunkSet if it isn't empty
-  if($chunkSet->count > 0) {
-    $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($chunkSet);
-    #$self->submit_job($chunkSet);
-    $self->{'dna_collection'}->add_dna_object($chunkSet);
   }
 
   #print "Done\n";
