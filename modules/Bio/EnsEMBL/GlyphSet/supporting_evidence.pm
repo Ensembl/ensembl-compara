@@ -137,7 +137,8 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
             	    'height'     => $TEXT_HEIGHT,
                     'font'       => 'Tiny',
                     'colour'     => 'Black',
-           	    'text'       => ($w * length($desc_text)) > ($CONT_LENGTH - ($TEXT_WIDTH + 20)) ? substr($desc_text, 0, ($CONT_LENGTH / $w) - 40  )."..." : $desc_text,
+           	    'text'       => ($w * length($desc_text)) > ($CONT_LENGTH - ($TEXT_WIDTH + 30)) ? substr($desc_text,
+				0, (($CONT_LENGTH - 100) / $w))."..." : $desc_text,
           	    'absolutey'  => 1,
 		    'absolutex'  => 1,
             	});
