@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::eponine;
+package Bio::EnsEMBL::GlyphSet::high;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -16,7 +16,7 @@ if ($@){ die "Can't use ${species_defs}.pm - $@\n"; }
 
 sub init_label {
     my ($this) = @_;
-    $this->{'das_key'}  = 'eponine';
+    $this->{'das_key'}  = 'high';
     $this->{'das_conf'} = $species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{ $this->{'das_key'} };
     my $label = new Bio::EnsEMBL::Glyph::Text({
         'text'      => $this->{'das_conf'}->{'caption'},
