@@ -10,12 +10,16 @@ use  Sanger::Graphics::Bump;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
+my $MAP_WEIGHT = 2;
+my $PRIORITY   = 50;
+
 sub _init {
     my $self = shift;
-    my $VirtualContig = $self->{'container'};
+
+    my $slice = $self->{'container'};
     my $Config        = $self->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $bitmap_length = int($VirtualContig->length() * $pix_per_bp);
+    my $bitmap_length = int($slice->length() * $pix_per_bp);
     my @bitmap;
 
     return unless ($self->strand() == -1);
@@ -25,8 +29,10 @@ sub _init {
     my ($w,$h)         = $Config->texthelper->px2bp($fontname);
     $w = $Config->texthelper->width($fontname);
 
-    foreach my $f (@{$VirtualContig->get_all_landmark_MarkerFeatures()}){
-	my $fid = $f->display_label();
+    foreach my $f (@{$slice->get_all_MarkerFeatures(undef,
+						    $PRIORITY,
+						    $MAP_WEIGHT)}){
+        my $fid = $f->marker->display_MarkerSynonym->name;
 	my $bp_textwidth = $w * length("$fid ");
 	my $glyph = new Sanger::Graphics::Glyph::Text({
 		'x'	    => $f->start()-1,
@@ -36,7 +42,7 @@ sub _init {
 		'colour'    => $feature_colour,
 		'absolutey' => 1,
 		'text'	    => $fid,
-        'href'      => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
+		'href'      => "/$ENV{'ENSEMBL_SPECIES'}/markerview?marker=$fid",
 
 		});
 
