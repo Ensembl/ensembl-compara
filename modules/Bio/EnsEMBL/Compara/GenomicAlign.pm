@@ -32,7 +32,8 @@ Bio::EnsEMBL::Compara::GenomicAlign - Defines one of the sequences involved in a
 SET VALUES
   $genomic_align->adaptor($adaptor);
   $genomic_align->dbID(12);
-  $genomic_align->genomic_block($genomic_align_block);
+  $genomic_align->genomic_align_block($genomic_align_block);
+  $genomic_align->genomic_align_block_id(1032);
   $genomic_align->method_link_species_set($method_link_species_set);
   $genomic_align->dnafrag_id($dnafrag);
   $genomic_align->dnafrag_start(100001);
@@ -46,6 +47,7 @@ GET VALUES
   $adaptor = $genomic_align->adaptor;
   $dbID = $genomic_align->dbID;
   $genomic_align_block = $genomic_align->genomic_block;
+  $genomic_align_block_id = $genomic_align->genomic_align_block_id;
   $method_link_species_set = $genomic_align->method_link_species_set;
   $dnafrag = $genomic_align->dnafrag;
   $dnafrag_start = $genomic_align->dnafrag_start;
@@ -105,7 +107,7 @@ sub new {
 
         $cigar_line, $adaptor,
           
-        $dbID, $genomic_align_block, $method_link_species_set,
+        $dbID, $genomic_align_block, $genomic_align_block_id, $method_link_species_set,
         $dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand,
         $aligned_sequence, $level_id ) = 
       
@@ -116,7 +118,7 @@ sub new {
                             
           CIGAR_LINE ADAPTOR
                             
-          DBID GENOMIC_ALIGN_BLOCK METHOD_LINK_SPECIES_SET
+          DBID GENOMIC_ALIGN_BLOCK GENOMIC_ALIGN_BLOCK_ID METHOD_LINK_SPECIES_SET
           DNAFRAG DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND
           ALIGNED_SEQUENCE LEVEL_ID)], @args);
 
@@ -129,9 +131,10 @@ sub new {
         or defined($query_strand) or defined($alignment_type) or defined($score)
         or defined($perc_id)) {
       
-      if (defined($dbID) or defined($genomic_align_block) or defined($method_link_species_set)
-          or defined($dnafrag) or defined($dnafrag_start) or defined($dnafrag_end)
-          or defined($dnafrag_strand) or defined($aligned_sequence) or defined($level_id)) {
+      if (defined($dbID) or defined($genomic_align_block) or defined($genomic_align_block_id)
+          or defined($method_link_species_set) or defined($dnafrag) or defined($dnafrag_start)
+          or defined($dnafrag_end) or defined($dnafrag_strand) or defined($aligned_sequence)
+          or defined($level_id)) {
         throw("Mixing new and old parameters.\n");
       }
       
@@ -153,6 +156,7 @@ sub new {
     
     $self->dbID($dbID) if (defined($dbID));
     $self->genomic_align_block($genomic_align_block) if (defined($genomic_align_block));
+    $self->genomic_align_block_id($genomic_align_block_id) if (defined($genomic_align_block_id));
     $self->method_link_species_set($method_link_species_set) if (defined($method_link_species_set));
     $self->dnafrag($dnafrag) if (defined($dnafrag));
     $self->dnafrag_start($dnafrag_start) if (defined($dnafrag_start));
@@ -229,7 +233,10 @@ sub dbID {
   Example    : $genomic_align_block = $genomic_align->genomic_align_block;
   Example    : $genomic_align->genomic_align_block($genomic_align_block);
   Description: Getter/Setter for the attribute genomic_align_block
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object. If no
+               argument is given, the genomic_align_block is not defined but
+               both the genomic_align_block_id and the adaptor are, it tried
+               to fetch the data using the genomic_align_block_id.
   Exceptions : thrown if $genomic_align_block is not a
                Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Caller     : general
@@ -239,13 +246,46 @@ sub dbID {
 sub genomic_align_block {
   my ($self, $genomic_align_block) = @_;
 
-  if( defined $genomic_align_block) {
-     throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
-         if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
-     weaken($self->{'genomic_align_block'} = $genomic_align_block);
+  if (defined($genomic_align_block)) {
+    throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
+        if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+    weaken($self->{'genomic_align_block'} = $genomic_align_block);
+  } elsif (!defined($self->{'genomic_align_block'}) and defined($self->{'genomic_align_block_id'}) and
+          defined($self->{'adaptor'})) {
+    my $genomic_align_block_adaptor = $self->{'adaptor'}->get_GenomicAlignBlockAdaptor;
+    $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
+            $self->{'genomic_align_block_id'});
   }
 
   return $self->{'genomic_align_block'};
+}
+
+
+=head2 genomic_align_block_id
+
+  Arg [1]    : integer $genomic_align_block_id
+  Example    : $genomic_align_block_id = $genomic_align->genomic_align_block_id;
+  Example    : $genomic_align->genomic_align_block_id(1032);
+  Description: Getter/Setter for the attribute genomic_align_block_id. If no
+               argument is given, the genomic_align_block_id is not defined but
+               the genomic_align_block is, it tried to get the data from the
+               genomic_align_block object.
+  Returntype : integer
+  Exceptions : 
+  Caller     : general
+
+=cut
+
+sub genomic_align_block_id {
+  my ($self, $genomic_align_block_id) = @_;
+
+  if (defined($genomic_align_block_id)) {
+    $self->{'genomic_align_block_id'} = $genomic_align_block_id;
+  } elsif (!defined($self->{'genomic_align_block_id'}) and defined($self->{'genomic_align_block'})) {
+    $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
+  }
+
+  return $self->{'genomic_align_block_id'};
 }
 
 
