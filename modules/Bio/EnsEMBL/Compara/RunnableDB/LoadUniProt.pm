@@ -11,37 +11,32 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt
 
 =cut
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::LoadUniProt->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
 
 This object uses the getz and pfetch command line programs to access
 the SRS database of Uniprot sequences.
-Its purpose is to load protein sequences from Uniprot into the compara database.
+Its purpose is to load protein sequences from Uniprot into the compara 
+database.
 Right now it has hard coded filters of a minimum sequence length of 80
 and taxon in metazoa and distinguishes SWISSPROT from SPTREMBL.
 
 The format of the input_id follows the format of a perl hash reference
 example:
-  "{srs=>'uniprot', taxon_id=>4932}" #loads all uniprot for S. cerevisiae
+  "{srs=>'uniprot', taxon_id=>4932}" 
+  #loads all uniprot for S. cerevisiae
+
 keys:
   srs => valid values 'swissprot', 'sptrembl', 'uniprot'
-  taxon_id => optional if one want to load from a specific species
-              if not specified it will load all 'metazoa' from the srs source
-  accession_number => 1 optional if one want to load Accession Number (AC) as 
-                      stable_id rather than Entry Name (ID) as it is done by default
+  taxon_id => <taxon_id>
+       optional if one want to load from a specific species
+       if not specified it will load all 'metazoa' from the srs source
+  genome_db_id => <genome_db_id>
+       optional: will associate this loaded set into the specified 
+       GenomeDB does not create genome_db entry, assumes it was already 
+       created.  Use prudently since it does no checks
+  accession_number => 0/1 (default is 1=on)
+       optional if one want to load Accession Number (AC) (DEFAULT) as 
+       stable_id rather than Entry Name (ID) 
 more examples:
   "{srs=>'swissprot'}" #loads all swissprot metazoa
   "{srs=>'swissprot', taxon_id=>4932}"
@@ -51,7 +46,9 @@ more examples:
 
 =head1 CONTACT
 
-Describe contact details here
+  Contact Jessica Severin on LoadUniprot implemetation/design detail: jessica@ebi.ac.uk
+  Contact Abel Ureta-Vidal on EnsEMBL::Compara in general: abel@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
 
@@ -100,6 +97,7 @@ sub fetch_input {
 
   $self->{'source'} = 'SWISSPROT';
   $self->{'taxon_id'} = undef;  #no ncbi_taxid filter, get all metzoa
+  $self->{'genome_db_id'} = undef;
   $self->{'accession_number'} = 1;
 
   if(defined($self->input_id)) {
@@ -109,6 +107,7 @@ sub fetch_input {
       $self->{'accession_number'} = $input_hash->{'accession_number'} if(defined($input_hash->{'accession_number'}));
       $self->{'source'} = $input_hash->{'srs'} if(defined($input_hash->{'srs'}));
       $self->{'taxon_id'} = $input_hash->{'taxon_id'} if(defined($input_hash->{'taxon_id'}));
+      $self->{'genome_db_id'} = $input_hash->{'genome_db_id'} if(defined($input_hash->{'genome_db_id'}));
     }
   }
     
@@ -151,10 +150,14 @@ sub write_output
   my $outputHash = {};
   $outputHash = eval($self->input_id) if(defined($self->input_id));
   $outputHash->{'ss'} = $self->{'subset'}->dbID;
-  my $output_id = main::encode_hash($outputHash);
+  $outputHash->{'gdb'} = $self->{'genome_db_id'} if($self->{'genome_db_id'});
+  my $output_id = $self->encode_hash($outputHash);
+  
+  $self->input_job->input_id($output_id);
 
-  #print("output_id = $output_id\n");
-  $self->input_id($output_id);                    
+  if($self->{'genome_db_id'}) {
+    $self->dataflow_output_id($output_id, 2);
+  }
   return 1;
 }
 
@@ -309,6 +312,7 @@ sub store_bioseq
   $member->description($bioseq->desc);
   $member->source_name($source);
   $member->sequence($bioseq->seq);
+  $member->genome_db_id($self->{'genome_db_id'}) if($self->{'genome_db_id'});
 
   eval {
     $self->{'comparaDBA'}->get_MemberAdaptor->store($member);
