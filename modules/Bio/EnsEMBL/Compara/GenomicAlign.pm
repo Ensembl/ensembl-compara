@@ -322,5 +322,109 @@ sub cigar_line {
 
 
 
+=head2 sequence_align_string
+
+  Arg  1     : Bio::EnsEMBL::Slice $consensus_slice
+               A slice covering the conensus area of this alignment
+  Arg  2     : Bio::EnsEMBL::Slice $query_slice
+               A slice covering the query_area of this alignment
+  Arg  3..   : list of String $flags
+               FRAG_SLICES = slices cover the dna frags
+               ALIGN_SLICES = slices cover just the aligned area
+               FIX_CONSENSUS = dont put dashes in consensus sequence on 
+               alignment printout
+               FIX_QUERY = dont put dashes in query sequence on alignment
+               CONSENSUS = return the consensus aligned sequence
+               QUERY = return the query aligned sequence
+  Example    : none
+  Description: returns representations of the aligned sequences according to
+               the flags.
+  Returntype : String
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+
+sub sequence_align_string {
+  my ( $self, $consensus_slice, $query_slice, @flags ) = @_;
+
+  my ( $cseq, $qseq );
+  my @cig = ( $self->cigar_line() =~ /(\d*[DIM])/g );
+
+  # set the flags
+  my ( $consensus, $query, $fix_consensus, $fix_query, $align_slices,
+       $frag_slices );
+
+  for my $flag ( @flags ) {
+    if( $flag eq "CONSENSUS" ) { $consensus = 1 }
+    elsif( $flag eq "QUERY" ) { $query = 1 }
+    elsif( $flag eq "FIX_CONSENSUS" ) { $fix_consensus = 1 }
+    elsif( $flag eq "FIX_QUERY" ) { $fix_query = 1 }
+    elsif( $flag eq "ALIGN_SLICES" ) { $align_slices = 1 }
+  } 
+  
+  # here fill cseq and qseq with the aligned area sequence
+
+  if( $align_slices ) {
+    $cseq = $consensus_slice->seq();
+    $qseq = $query_slice->seq();
+  } else {
+    $cseq = $consensus_slice->subseq( $self->consensus_start(),
+                                      $self->consensus_end(), 1 );
+    $qseq = $query_slice->subseq( $self->query_start(),
+                                  $self->query_end(), 1 );
+  }
+
+  my $rseq= "";
+  # rseq - result sequence
+
+  my ( $cigCount, $cigType );
+  my ( $cpos, $qpos );
+  $cpos = 0; $qpos = 0;
+
+  for my $cigElem ( @cig ) {
+    $cigType = substr( $cigElem, -1, 1 );
+    $cigCount = substr( $cigElem, 0 ,-1 );
+    $cigCount = 1 unless $cigCount;
+
+    if( $cigType eq "M" ) {
+      if( $consensus ) {
+        $rseq .= substr( $cseq, $cpos, $cigCount );
+      } else {
+        $rseq .= substr( $qseq, $qpos, $cigCount );
+      }
+      $cpos += $cigCount;
+      $qpos += $cigCount;
+    } elsif( $cigType eq "D" ) {
+      if( $consensus ) {
+        if( ! $fix_consensus ) {
+          $rseq .=  "-" x $cigCount;
+        }
+      } else {
+        if( ! $fix_consensus ) {
+          $rseq .= substr( $qseq, $qpos, $cigCount );
+        }
+      }
+
+      $qpos += $cigCount;
+    } elsif( $cigType eq "I" ) {
+      if( $consensus ) {
+        if( ! $fix_query ) {
+          $rseq .= substr( $cseq, $cpos, $cigCount );
+        }
+      } else {
+        if( ! $fix_query ) {
+          $rseq .= "-" x $cigCount;
+        }
+      }
+     
+      $cpos += $cigCount;
+    }
+  }     
+  return $rseq;
+}
+
+
 
 1;
