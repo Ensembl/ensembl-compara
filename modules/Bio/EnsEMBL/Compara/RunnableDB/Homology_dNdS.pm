@@ -66,16 +66,45 @@ use vars qw(@ISA);
 sub fetch_input {
   my( $self) = @_;
 
+  $self->{'codeml_parameters_href'};
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
+  $self->get_params($self->parameters);
   my $homology_id = $self->input_id;
   $self->{'homology'}= $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_dbID($homology_id);
   return 1 if($self->{'homology'});
   return 0;
+}
+
+sub get_params {
+  my $self         = shift;
+  my $param_string = shift;
+
+  return unless($param_string);
+  print("parsing parameter string : ",$param_string,"\n");
+  
+  my $params = eval($param_string);
+  return unless($params);
+
+  foreach my $key (keys %$params) {
+    print("  $key : ", $params->{$key}, "\n");
+  }
+
+  if (defined $params->{'dNdS_analysis_data_id'}) {
+    my $analysis_data_id = $params->{'dNdS_analysis_data_id'};
+    my $ada = $self->db->get_AnalysisDataAdaptor;
+    my $codeml_parameters_hashref = eval($ada->fetch_by_dbID($analysis_data_id));
+    if (defined $codeml_parameters_hashref) {
+      $self->{'codeml_parameters_href'} = $codeml_parameters_hashref;
+    }
+  }
+  
+  return;
+
 }
 
 
@@ -112,6 +141,12 @@ sub calc_genetic_distance
   my $aln = $homology->get_SimpleAlign("cdna");
   
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
+  if (defined $self->{'codeml_parameters_href'}) {
+    my %params = %{$self->{'codeml_parameters_href'}};
+    foreach my $key (keys %params) {
+      $codeml->set_parameter($key,$params{$key});
+    }
+  }
   $codeml->alignment($aln);
   my ($rc,$parser) = $codeml->run();
   my $result = $parser->next_result;
