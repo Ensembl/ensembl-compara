@@ -418,14 +418,18 @@ sub display_short {
     return;
   }
 
-  print("PAF(".$self->dbID.") ".
-        "\t" . $self->query_member->stable_id."(".$self->qstart.",".$self->qend.")".
-        "\t" . $self->hit_member->stable_id. "(".$self->hstart.",".$self->hend.")".
-        "\t" . $self->score .
-        "\t" . $self->alignment_length .
-        "\t" . $self->perc_ident .
-        "\t" . $self->perc_pos .
-        "\t" . $self->hit_rank .
+  my $qm = $self->query_member;
+  my $hm = $self->hit_member;
+  print("PAF(",$self->dbID,") ",
+        "\t" , $qm->stable_id,"(".$self->qstart,",",$self->qend,")",
+        "(",$qm->chr_name,":",$qm->chr_start,")\t",
+        "\t" , $hm->stable_id, "(".$self->hstart,",",$self->hend,")",
+        "(",$hm->chr_name,":",$hm->chr_start,")\t",
+        "\t" , $self->score ,
+        "\t" , $self->alignment_length ,
+        "\t" , $self->perc_ident ,
+        "\t" , $self->perc_pos ,
+        "\t" , $self->hit_rank ,
         "\n");
 }
 
