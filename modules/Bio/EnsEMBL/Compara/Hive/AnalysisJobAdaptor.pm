@@ -283,7 +283,7 @@ sub create_new_job {
   throw("must define analysis_id") unless($analysis_id);
   
   my $sql = "INSERT ignore into analysis_job ".
-            " SET input_id='$input_id' ".
+            " SET input_id=\"$input_id\" ".
             " ,input_analysis_job_id='$input_analysis_job_id' ".
             " ,analysis_id='$analysis_id' ";
   $sql .= " ,status='BLOCKED'" if($blocked);
