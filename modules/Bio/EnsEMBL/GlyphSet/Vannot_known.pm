@@ -1,12 +1,13 @@
-package Sanger::Graphics::GlyphSet::Vannot_known;
+package Bio::EnsEMBL::GlyphSet::Vannot_known;
 use strict;
 use vars qw(@ISA);
-use Sanger::Graphics::GlyphSet;
-@ISA = qw(Sanger::Graphics::GlyphSet);
+use Bio::EnsEMBL::GlyphSet;
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Line;
+use SiteDefs;
 
 sub init_label {
     my ($self) = @_;
@@ -14,7 +15,7 @@ sub init_label {
     my $label = new Sanger::Graphics::Glyph::Text({
 		'text'      => 'Known',
 		'font'      => 'Small',
-		'colour'	=> $Config->get('Vannot_known','col'),
+		'colour'	=> $Config->get('_colours','Known'),
 		'absolutey' => 1,
     });
 		
@@ -28,7 +29,9 @@ sub _init {
     my $gene     = $self->{'container'}->{'da'}->get_density_per_chromosome_type( $chr,'known' );
     return unless $gene->size(); 
 
-    my $gene_col = $Config->get( 'Vannot_known','col' );
+
+
+    my $gene_col = $Config->get('_colours','Known');
     $gene->scale_to_fit( $Config->get( 'Vannot_known', 'width' ) );
     $gene->stretch(0);
     my @gene = $gene->get_binvalues();
