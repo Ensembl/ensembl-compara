@@ -93,16 +93,16 @@ $0 [-help]
 };
 
 my $help = 0;
-my $old_dbhost = "ecs4";
-my $old_dbname = "ensembl_compara_22_1";
+my $old_dbhost = "ecs2";
+my $old_dbname = "abel_ensembl_compara_23_1";
 my $old_dbuser = "ensro";
 my $old_dbpass;
-my $old_dbport = '3352';
-my $new_dbhost = "ecs4";
-my $new_dbname = "ensembl_compara_javi_22_1";
+my $old_dbport = '3362';
+my $new_dbhost = "ecs2";
+my $new_dbname = "jh7_ensembl_compara_23_1_malign";
 my $new_dbuser;
 my $new_dbpass;
-my $new_dbport = '3352';
+my $new_dbport = '3362';
 my $method_link_id;
 my $start;
 my $num;
@@ -203,14 +203,18 @@ while (my @values = $old_sth->fetchrow_array) {
   my $consensus_dnafrag = $dnafrag_adaptor->fetch_by_dbID($values[0]);
   my $query_dnafrag = $dnafrag_adaptor->fetch_by_dbID($values[3]);
   
-  my $genomes_key = join("+", sort ($consensus_dnafrag->genomedb->name, $query_dnafrag->genomedb->name));
+  my $genomes_key = join("+", sort ($consensus_dnafrag->genome_db->name,
+          $query_dnafrag->genome_db->name));
   my $method_link_id = $values[7];
   my $method_link_species_set;
   if (!defined($method_link_species_sets->{$genomes_key}->{$method_link_id})) {
     $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet();
     $method_link_species_set->dbID(0);
     $method_link_species_set->method_link_id($method_link_id);
-    $method_link_species_set->species_set([$consensus_dnafrag->genomedb, $query_dnafrag->genomedb]);
+    $method_link_species_set->species_set([
+            $consensus_dnafrag->genome_db,
+            $query_dnafrag->genome_db
+        ]);
     
     $method_link_species_set = $mlssa->store($method_link_species_set);
     $method_link_species_sets->{$genomes_key}->{$method_link_id} = $method_link_species_set;
@@ -257,7 +261,6 @@ while (my @values = $old_sth->fetchrow_array) {
   $genomic_align_group->dbID($values[11]);
   $genomic_align_group->type("default");
   $genomic_align_group->genomic_align_array([$consensus_genomic_align, $query_genomic_align]);
-
   $genomic_align_block_adaptor->store($genomic_align_block);
   $genomic_align_group_adaptor->store($genomic_align_group);
 
