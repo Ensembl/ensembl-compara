@@ -97,7 +97,7 @@ sub fetch_masked_sequence {
   my $masking_options = eval($self->masking_options);
   my $starttime = time();
   if(defined($masking_options)) {
-    if($masking_options->{'soft_masking'} == 1) {
+    if($masking_options->{'default_soft_masking'} == 1) {
       #print STDERR "getting SOFT masked sequence...";
       $seq = $slice->get_repeatmasked_seq(undef,1,$masking_options);
       #print STDERR "...got soft masked sequence...";
