@@ -133,4 +133,22 @@ sub ncbi_taxid {
   return $self->{'_ncbi_taxid'};
 }
 
+
+
+=head2 validate_species_name
+ Title   : validate_species_name
+ Usage   :
+ Function: override the inherited method to disable all
+           species name checking since some swissprot species
+           are not valid by the Bioperl definition
+           e.g. SWISSPROT:APV1_DRONO has species novae-hollandiae
+           and the - causes this function to throw an exception
+ Example :
+ Returns : 1
+ Args    :
+=cut
+sub validate_species_name{
+  my( $self, $string ) = @_;
+  return 1;
+}
 1;
