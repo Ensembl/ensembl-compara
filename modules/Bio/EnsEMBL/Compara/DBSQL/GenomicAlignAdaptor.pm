@@ -180,20 +180,23 @@ sub get_AlignBlockSet{
        $self->throw("Must get AlignBlockSet by row number");
    }
 
-   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
+   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand , b.perc_id, b.score  from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
    $sth->execute;
 
    my $alignset  = Bio::EnsEMBL::Compara::AlignBlockSet->new();
    my $core_db;
  
    while( my $ref = $sth->fetchrow_arrayref ) {
-       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand) = @$ref;
+       my($align_start,$align_end,$raw_id,$raw_start,$raw_end,$raw_strand, $perc_id, $score) = @$ref;
        my $alignblock = Bio::EnsEMBL::Compara::AlignBlock->new();
        $alignblock->align_start($align_start);
        $alignblock->align_end($align_end);
        $alignblock->start($raw_start);
        $alignblock->end($raw_end);
        $alignblock->strand($raw_strand);
+       $alignblock->perc_id($perc_id);
+       $alignblock->score($score);
+      
        
        if( ! defined $dnafraghash{$raw_id} ) {
 	   $dnafraghash{$raw_id} = $dnafragadp->fetch_by_dbID($raw_id);
@@ -255,7 +258,7 @@ sub store {
 
    # for each alignblockset, store the row and then the alignblocks themselves
    
-   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand) values (?,?,?,?,?,?,?,?)");
+   my $sth3 = $self->prepare("insert into genomic_align_block (align_id,align_start,align_end,align_row_id,dnafrag_id,raw_start,raw_end,raw_strand,score,perc_id) values (?,?,?,?,?,?,?,?,?,?)");
 
    foreach my $ab ( $aln->each_AlignBlockSet ) {
        my $sth2 = $self->prepare("insert into align_row (align_id) values ($align_id)");
@@ -270,7 +273,9 @@ sub store {
 			  $a->dnafrag->dbID,
 			  $a->start,
 			  $a->end,
-			  $a->strand
+			  $a->strand,
+                          $a->score,
+                          $a->strand
 			  );
 
        }
