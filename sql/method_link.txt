@@ -1,0 +1,5 @@
+method_link_id	type
+1	WGA
+2	WGA_HCR
+3	SYNTENY
+4	HOMOLOGOUS_GENE
