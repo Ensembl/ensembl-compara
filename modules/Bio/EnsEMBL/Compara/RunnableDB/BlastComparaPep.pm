@@ -71,6 +71,8 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
+  #create a Compara::DBAdaptor which shares the same DBI handle
+  #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
                            -DBCONN => $self->db);
 
@@ -79,6 +81,14 @@ sub fetch_input {
   my $member     = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
   $self->throw("No member in compara for member_id=$member_id") unless defined($member);
 
+
+  #I have my data so I can disconnect now until execution is done
+  #need to disconnect both adaptors since each has their own ref_count
+  #to the shared db_handle
+  $self->{'comparaDBA'}->disconnect();
+  $self->db()->disconnect();
+  
+  
   my $bioseq     = $member->bioseq();
   $self->throw("Unable to make bioseq for member_id=$member_id") unless defined($bioseq);
   $self->query($bioseq);
