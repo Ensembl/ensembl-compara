@@ -142,11 +142,12 @@ sub loadMembersFromUniprot
   my $source = shift;
 
   my @uniprot_ids = $self->get_uniprot_ids($source);
+  my @id_chunk; 
 
   my $count = scalar(@uniprot_ids);
   
 # while(@uniprot_ids) {
-#   my @id_chunk = splice(@uniprot_ids, 0, 30);
+#   @id_chunk = splice(@uniprot_ids, 0, 30);
 #   $self->pfetch_and_store_by_ids($source, @id_chunk);
 # }
 
@@ -160,7 +161,12 @@ sub loadMembersFromUniprot
     if($member) {
       #print("$source $stable_id : already loadled in compara\n");
     } else {
-      $self->pfetch_and_store_by_ids($source, $id);
+      push @id_chunk, $id;
+      #$self->pfetch_and_store_by_ids($source, $id);
+    }
+    if(scalar(@id_chunk)>=30) {
+      $self->pfetch_and_store_by_ids($source, @id_chunk);
+      @id_chunk = ();
     }
   }
 
