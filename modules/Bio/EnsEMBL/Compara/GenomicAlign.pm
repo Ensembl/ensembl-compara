@@ -160,6 +160,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Mapper;
 
 # Object preamble
 
