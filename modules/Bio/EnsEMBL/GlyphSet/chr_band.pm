@@ -107,9 +107,7 @@ sub _init {
 		my $vc_ajust = 1 - $self->{'container'}->chr_start ;
 		my $band_start = $band->{'start'} - $vc_ajust;
 		my $band_end = $band->{'end'} - $vc_ajust;
-    	my $gband;
-		if ($ENV{'ENSEMBL_SPECIES'} =~ /Anopheles_gambiae/i){
-		$gband = new Sanger::Graphics::Glyph::Rect({
+    	my $gband = new Sanger::Graphics::Glyph::Rect({
 	    'x'      => $min_start -1 ,
 	    'y'      => 0,
 	    'width'  => $max_end - $min_start + 1,
@@ -118,27 +116,17 @@ sub _init {
 	    'absolutey' => 1,
 		'zmenu' => {
 			'caption' => "Band $bandname",
-			"00:Zoom to width"  => "/$ENV{'ENSEMBL_SPECIES'}/cytoview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
-			"01:Display in contigview"   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
-			"02:View band diagram"   => "/$ENV{'ENSEMBL_SPECIES'}/BACmap?chr=$chr&band=$band_no",}
-	});}
-	else{
-		$gband = new Sanger::Graphics::Glyph::Rect({
-	    'x'      => $min_start -1 ,
-	    'y'      => 0,
-	    'width'  => $max_end - $min_start + 1,
-	    'height' => 10,
-	    'bordercolour' => $black,
-	    'absolutey' => 1,
-		'zmenu' => {
-			'caption' => "Band $bandname",
-			"00:Zoom to width"  => "/$ENV{'ENSEMBL_SPECIES'}/cytoview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
-			"01:Display in contigview"   => "/$ENV{'ENSEMBL_SPECIES'}/contigview?chr=$chr&chr_start=$band_start&chr_end=$band_end",
-			}
-	});
-	}
+			"00:Zoom to width"  => "/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?l=$chr:$band_start-$band_end",
+                }
+        });
+        foreach my $script (qw(contigview cytoview)) {
+          next if $script eq $ENV{'ENSEMBL_SCRIPT'};
+          $gband->{'zmenu'}{ "01:Display in $script" } = "/$ENV{'ENSEMBL_SPECIES'}/$script?l=$chr:$band_start-$band_end";
+        }	
+	if( $ENV{'ENSEMBL_SPECIES'} =~ /Anopheles_gambiae/i ){
+          $gband->{'zmenu'}{ "02:View band diagram" } = "/$ENV{'ENSEMBL_SPECIES'}/BACmap?chr=$chr&band=$band_no",
+        }
     	$self->push($gband);
-		
 	$i++;
     }
 }

@@ -7,7 +7,6 @@ use EnsWeb;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Bump;
 
 sub _init {
     my ($self) = @_;
@@ -37,12 +36,6 @@ sub _init {
     my $len            = $Container->length();
     my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->chr_start();
     my $global_end     = $global_start + $len - 1;
-
-    #print STDERR "VC half length = $global_offset\n";
-    #print STDERR "VC start = $global_start\n";
-    #print STDERR "VC end = $global_end\n";
-
-    ## Lets work out the major and minor units...
 
     my( $major_unit, $minor_unit );
 
@@ -149,8 +142,9 @@ sub zoom_interval {
     # Add the recentering imagemap-only glyphs
     my ( $self, $chr, $start, $end, $global_offset, $width, $highlights, $zoom_width ) = @_;
     my $interval_middle = ($start + $end)/2;
-    return( $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
-           $self->zoom_zoom_zmenu( $chr, $interval_middle, $width, $highlights, $zoom_width )
+    return(
+      $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
+      $self->zoom_zoom_zmenu( $chr, $interval_middle, $width, $highlights, $zoom_width )
     );
 }
 

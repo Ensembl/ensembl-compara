@@ -5,7 +5,6 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use  Sanger::Graphics::Bump;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
@@ -75,7 +74,6 @@ sub _init {
 ##############################################################################
 # Stage 2a: Retrieve all Vega genes                                        #
 ##############################################################################
-    &eprof_start("gene-virtualgene_start-get");
 
     my %gene_objs;
     foreach my $g (@{$vc->get_all_Genes('', 1)}) {
@@ -126,7 +124,6 @@ sub _init {
             'high'      => $high
         };
     }
-    &eprof_end("gene-virtualgene_start-get");
 
 ##############################################################################
 # Stage 2d: Retrieve all RefSeq genes                                        #

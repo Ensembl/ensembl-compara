@@ -153,7 +153,7 @@ sub _init {
 	    $self->push($gband);
 	    
 	   $gband = new Sanger::Graphics::Glyph::Line({
-		'x'      => $vc_band_start-1,
+		'x'      => $vc_band_start,
 		'y'      => 2,
 		'width'  => $vc_band_end - $vc_band_start + 1,
 		'height' => 0,
@@ -163,7 +163,7 @@ sub _init {
 	    $self->push($gband);
 	    
 	    $gband = new Sanger::Graphics::Glyph::Line({
-		'x'      => $vc_band_start-1,
+		'x'      => $vc_band_start,
 		'y'      => 12,
 		'width'  => $vc_band_end - $vc_band_start + 1,
 		'height' => 0,

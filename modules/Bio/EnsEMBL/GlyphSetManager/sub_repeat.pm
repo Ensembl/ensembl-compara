@@ -36,7 +36,7 @@ sub add_glyphset {
    eval { $sub_repeat_glyphset = new Bio::EnsEMBL::GlyphSet::sub_repeat( $self->{'container'}, $self->{'config'}, $self->{'highlights'}, $self->{'strand'}, { 'name' => $name } ); };
 							   
    if($@) {
-      print STDERR "REPEAT GLYPHSET $name failed\n\t'$@'\n";
+      warn "REPEAT GLYPHSET $name failed\n\t'$@'";
    } else {
       push @{$self->{'glyphsets'}}, $sub_repeat_glyphset;
    }

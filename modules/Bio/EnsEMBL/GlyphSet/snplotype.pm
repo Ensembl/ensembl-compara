@@ -7,8 +7,6 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 
-use  Sanger::Graphics::Bump;
-
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
