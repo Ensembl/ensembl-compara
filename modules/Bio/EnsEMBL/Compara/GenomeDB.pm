@@ -46,6 +46,7 @@ use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::Root;
+use Bio::EnsEMBL::DBLoader;
 
 @ISA = qw(Bio::EnsEMBL::Root);
 
@@ -127,7 +128,6 @@ sub name{
   if( defined $value) {
     $self->{'name'} = $value;
   }
-
   return $self->{'name'};
 }
 
@@ -193,7 +193,6 @@ sub assembly {
   if($assembly) {
     $self->{'assembly'} = $assembly;
   }
-
   return $self->{'assembly'};
 }
 
@@ -215,7 +214,7 @@ sub assembly_default {
   if(defined $boolean) {
     $self->{'assembly_default'} = $boolean;
   }
-
+  $self->{'assembly_default'}='1' unless(defined($self->{'assembly_default'}));
   return $self->{'assembly_default'};
 }
 
@@ -232,12 +231,8 @@ sub assembly_default {
 
 sub genebuild {
   my $self = shift;
-  my $genebuild = shift;
-
-  if($genebuild) {
-    $self->{'genebuild'} = $genebuild;
-  }
-
+  $self->{'genebuild'} = shift if (@_);
+  $self->{'genebuild'}='' unless(defined($self->{'genebuild'}));
   return $self->{'genebuild'};
 }
 
@@ -260,8 +255,46 @@ sub taxon_id {
   if($taxon_id) {
     $self->{'taxon_id'} = $taxon_id;
   }
-
   return $self->{'taxon_id'};
+}
+
+=head2 locator
+  Arg [1]    : string
+  Description: Returns a string which describes where the external genome (ensembl core)
+               database base is located. Locator format is:
+               "Bio::EnsEMBL::DBSQL::DBAdaptor/host=ecs4port=3351;user=ensro;dbname=mus_musculus_core_20_32"
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+=cut
+
+sub locator {
+  my $self = shift;
+  $self->{'locator'} = shift if (@_);
+  $self->{'locator'}='' unless(defined($self->{'locator'}));
+  return $self->{'locator'};
+}
+
+=head2 connect_to_genome_locator
+  Arg [1]    : string
+  Description: uses the locator string to connect to the external genome database
+  Returntype : DBConnection/DBAdaptor defined in locator string
+              (usually a Bio::EnsEMBL::DBSQL::DBAdaptor)
+              return undef if locator undefined or unable to connect
+  Exceptions : none
+  Caller     : general
+=cut
+
+sub connect_to_genome_locator
+{
+  my $self = shift;
+
+  return undef if($self->locator eq '');
+  
+  my $genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator);
+  return undef unless($genomeDBA);
+  $genomeDBA->disconnect_when_inactive(1);
+  return $genomeDBA;
 }
 
 =head2 has_consensus

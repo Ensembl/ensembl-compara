@@ -198,28 +198,22 @@ sub store{
     $self->throw("Must have genomedb arg [$gdb]");
   }
 
-  my $name=''; my $assembly=''; my $taxon_id=''; my $genebuild='';
-  $name = $gdb->name;
-  $assembly = $gdb->assembly;
-  $taxon_id = $gdb->taxon_id;
-  $genebuild = $gdb->genebuild if($gdb->genebuild);
+  my $name = $gdb->name;
+  my $assembly = $gdb->assembly;
+  my $assembly_default = $gdb->assembly_default;
+  my $taxon_id = $gdb->taxon_id;
+  my $genebuild = $gdb->genebuild;
+  my $locator = $gdb->locator;
 
   unless($name && $assembly && $taxon_id) {
     $self->throw("genome db must have a name, assembly, and taxon_id");
-  }
-
-  my $assembly_default;
-  unless (defined $gdb->assembly_default) {
-    $assembly_default = 1;
-    $gdb->assembly_default(1);
-  } else {
-    $assembly_default = $gdb->assembly_default;
   }
   
   my $sth = $self->prepare("
       SELECT genome_db_id
       FROM genome_db
-      WHERE name = '$name' and assembly = '$assembly'
+      WHERE taxon_id='$taxon_id' AND name = '$name'
+      AND assembly = '$assembly' AND genebuild = '$genebuild'
    ");
 
   $sth->execute;
@@ -228,12 +222,21 @@ sub store{
 
   if(!$dbID) {
     #if the genome db has not been stored before, store it now
-    my $sql = "INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild) ". 
-              " VALUES ('$name','$assembly', $taxon_id, $assembly_default, '$genebuild')";
-    print("$sql\n");
+    my $sql = "INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild,locator) ". 
+              " VALUES ('$name','$assembly', $taxon_id, $assembly_default, '$genebuild', '$locator')";
+    #print("$sql\n");
     my $sth = $self->prepare($sql);
     $sth->execute();
     $dbID = $sth->{'mysql_insertid'};
+  }
+  else {
+    my $sql = "UPDATE genome_db SET ".
+              " assembly_default = '$assembly_default'".
+              " ,locator = '$locator'".
+              " WHERE genome_db_id=$dbID";
+    #print("$sql\n");
+    my $sth = $self->prepare($sql);
+    $sth->execute();
   }
 
   #update the genomeDB object so that it's dbID and adaptor are set
@@ -282,14 +285,14 @@ sub create_GenomeDBs {
 
   # grab all the possible species databases in the genome db table
   $sth = $self->prepare("
-     SELECT genome_db_id, name, assembly, taxon_id, assembly_default, genebuild
+     SELECT genome_db_id, name, assembly, taxon_id, assembly_default, genebuild, locator
      FROM genome_db 
    ");
    $sth->execute;
 
   # build a genome db for each species
   while ( my @db_row = $sth->fetchrow_array() ) {
-    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild) = @db_row;
+    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator) = @db_row;
 
     my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
     $gdb->name($name);
@@ -299,6 +302,7 @@ sub create_GenomeDBs {
     $gdb->dbID($dbid);
     $gdb->adaptor( $self );
     $gdb->genebuild($genebuild);
+    $gdb->locator($locator);
 
     $self->{'_cache'}->{$dbid} = $gdb;
   }
