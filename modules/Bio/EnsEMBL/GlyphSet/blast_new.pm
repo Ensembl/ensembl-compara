@@ -16,13 +16,42 @@ sub features {
 
 sub href {
     my ( $self, $id ) = @_;
-    return undef;
- #   return $self->ID_URL( 'SRS_PROTEIN', $id );
+    return $id;
+    #   return $self->ID_URL( 'SRS_PROTEIN', $id );
 }
 
 sub zmenu {
-    my ($self, $id ) = @_;
-    # $id =~ s/(.*)\.\d+/$1/o;
-    return { 'caption' => "$id" }; #, "Protein homology" => $self->href( $id ) };
+  my $self = shift;
+  my $zmenu = {};
+
+  $zmenu->{caption} = shift || 'UNKNOWN!';
+
+  my $boxes     = shift || [];
+  my $first_box = $boxes->[0] || [];
+  my $feature   = $first_box->[2];
+  
+  if( $feature ){
+    if( $feature->has_tag('qname') ){ 
+      my $qstring = '';
+      $qstring.= ($feature->each_tag_value('qname'))[0].":";
+      $qstring.= ($feature->each_tag_value('qstart'))[0] ."-";
+      $qstring.= ($feature->each_tag_value('qend'))[0];
+      $zmenu->{"00:Qry: $qstring"} = '';
+    }
+    if( $feature->has_tag('hname') ){ 
+      my $hstring = '';
+      $hstring.= ($feature->each_tag_value('hname'))[0].":";
+      $hstring.= ($feature->each_tag_value('hstart'))[0] ."-";
+      $hstring.= ($feature->each_tag_value('hend'))[0];
+      $zmenu->{"01:Hit: $hstring"} = '';
+    }
+    $zmenu->{"02:Score:     ". $feature->score} = '';
+    $zmenu->{"03:PercentID: ". $feature->percent_id} ='';
+    $zmenu->{"04:Length:    ". $feature->length } = '';
+    my $ev = $feature->p_value;
+    if( defined( $ev ) ){ $zmenu->{"05:P-value: $ev"} = '' };
+  }
+
+  return $zmenu;
 }
 1;
