@@ -168,25 +168,21 @@ sub calc_intergenic_stats
   my $genesize_stats = Statistics::Descriptive::Full->new();
   my $overlapCount=0;
   
-  my $lastMember = undef;
+  my $lastMember = shift @{$sortedMembers};
   foreach my $member (@{$sortedMembers}) {
     $genesize_stats->add_data($member->chr_end - $member->chr_start);
 
-    if($lastMember) {
-      if($lastMember->chr_name ne $member->chr_name) {
-        $lastMember = undef;
-      }
-      else {
-        my $dist = ($member->chr_start - $lastMember->chr_end);
-        $intergenic_stats->add_data($dist);
-
-        $overlapCount++ if($dist < 0);
-        $lastMember = $member;
-      }
+    if($lastMember->chr_name ne $member->chr_name) {
+      print("broken syntenty from \n");
+      $lastMember->print_member;
+      $member->print_member;
     }
     else {
-      $lastMember = $member;
+      my $dist = ($member->chr_start - $lastMember->chr_end);
+      if($dist < 0) { $dist=0; $overlapCount++; }
+      $intergenic_stats->add_data($dist);
     }
+    $lastMember = $member;
   }
 
   $intergenic_stats->{'overlapCount'} = $overlapCount;
