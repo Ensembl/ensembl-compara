@@ -46,6 +46,13 @@ store_multiz_alignment.pl [-help]
   -score minimum_score_threhold (default No minimum)
   -min_seq minimum_number_of_sequences_in_the_multiple_alignment (default No minimum)
 
+store_multiz_alignment.pl [-help]
+  -host mysql_host_server (for ensembl_compara DB)
+  -dbuser db_username (default = 'root')
+  -dbname ensembl_compara_database
+  -port mysql_host_port (default = 3303)
+  -mavid directory_containing_mavid_alignemnts_and_map_file
+
 =head1 KNOWN BUGS
 
 (*) DnaFrag entries must exist in the database. Fake DnaFrag used as a consensus
@@ -67,6 +74,8 @@ hard-coded and thus will get out-to-date at some stage.
 =cut
 
 use strict;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Utils::Exception qw( throw warning info );
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
@@ -84,18 +93,25 @@ use Getopt::Long;
 ##           species naming system.
 ###############################################################################
 my $ucsc_2_ensembl = {
-	"hg16" => {'name' => "Homo sapiens", 'assembly' => "NCBI34"},
-	"mm3"  => {'name' => "Mus musculus", 'assembly' => "NCBIM32"},
-	"rn3"  => {'name' => "Rattus norvegicus", 'assembly' => "RGSC3.1"},
-	"galGal2" => {'name' => "Gallus gallus", 'assembly' => "WASHUC1"},
-	"panTro1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1"},
+      "hg16"    => {'name' => "Homo sapiens", 'assembly' => "NCBI34"},
+      "hg17"    => {'name' => "Homo sapiens", 'assembly' => "NCBI35"},
+      "mm3"     => {'name' => "Mus musculus", 'assembly' => "NCBIM32"},
+      "mm5"     => {'name' => "Mus musculus", 'assembly' => "NCBIM33"},
+      "rn3"     => {'name' => "Rattus norvegicus", 'assembly' => "RGSC3.1"},
+      "galGal2" => {'name' => "Gallus gallus", 'assembly' => "WASHUC1"},
+      "panTro1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1"},
+      "canFam1" => {'name' => "Canis familiaris", 'assembly' => "BROADD1"},
+      "fr1"     => {'name' => "Fugu rubripes", 'assembly' => "FUGU2"},
+      "danRer1"     => {'name' => "Danio rerio", 'assembly' => "ZFISH3"},
 
-	"hg16" => {'name' => "Homo sapiens", 'assembly' => "NCBI34"},
-	"Mm3"  => {'name' => "Mus musculus", 'assembly' => "NCBIM32"},
-	"Rn3"  => {'name' => "Rattus norvegicus", 'assembly' => "RGSC3.1"},
-	"Gg2" => {'name' => "Gallus gallus", 'assembly' => "WASHUC1"},
-	"Pt1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1"},
-	};
+      "hg16" => {'name' => "Homo sapiens", 'assembly' => "NCBI34"},
+      "hg17" => {'name' => "Homo sapiens", 'assembly' => "NCBI35"},
+      "Mm3"  => {'name' => "Mus musculus", 'assembly' => "NCBIM32"},
+      "Mm5"  => {'name' => "Mus musculus", 'assembly' => "NCBIM33"},
+      "Rn3"  => {'name' => "Rattus norvegicus", 'assembly' => "RGSC3.1"},
+      "Gg2" => {'name' => "Gallus gallus", 'assembly' => "WASHUC1"},
+      "Pt1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1"},
+    };
 ###############################################################################
 
 my $usage = qq{USAGE:
@@ -122,19 +138,21 @@ my $skip = 0;
 my $force = 0;
 my $score_threshold;
 my $sequences_threshold;
+my $check_sequences = 1;
 
-	
+
 GetOptions(
-        'help' => \$help,
-        'dbname=s' => \$dbname,
-    	  'reg_conf=s' => \$reg_conf,
-    	  'skip' => \$skip,
-    	  'force' => \$force,
-    	  'multiz=s' => \$multiz_dir,
-        'species=s' => \$species_string,
-    	  'score=i' => \$score_threshold,
-	      'min_seq=i' => \$sequences_threshold,
-    );
+    'help' => \$help,
+    'dbname=s' => \$dbname,
+    'reg_conf=s' => \$reg_conf,
+    'skip' => \$skip,
+    'force' => \$force,
+    'multiz=s' => \$multiz_dir,
+    'species=s' => \$species_string,
+    'score=i' => \$score_threshold,
+    'min_seq=i' => \$sequences_threshold,
+    'check_sequences!' => \$check_sequences,
+  );
 
 if ($help) {
   print $description, $usage;
@@ -156,7 +174,6 @@ my $dnafrag_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'D
 my $genomic_align_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomicAlign');
 my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomicAlignBlock');
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
-my $slice_adaptor;
 
 my $print_multiple_alignment = ""; # used for warnings
 my $score = 0;
@@ -178,18 +195,32 @@ if (!$species_string) {
 }
 my @species  = split("_", $species_string);
 my $species_set;
+my $genome_db;
 foreach my $this_species (@species) {
-  die "Species [$this_species] has not been configured!"
-      if (!$ucsc_2_ensembl->{$this_species});
-  my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
+  if (!$ucsc_2_ensembl->{$this_species}) {
+    warning("Species [$this_species] has not been configured!");
+    print "Do you want to continue with the remaining speceis? ";
+    my $resp = <STDIN>;
+    next if ($resp =~ /^y/i);
+    exit(1);
+  }
+  $genome_db->{$this_species} = eval{$genome_db_adaptor->fetch_by_name_assembly(
       $ucsc_2_ensembl->{$this_species}->{'name'},
       $ucsc_2_ensembl->{$this_species}->{'assembly'}
-      );
-  push (@$species_set, $genome_db);
+      );};
+  if (!$genome_db->{$this_species}) {
+    warning("Assembly ".$ucsc_2_ensembl->{$this_species}->{'assembly'}." of species [$this_species] is not loaded!");
+    print "Do you want to continue with the remaining speceis? ";
+    my $resp = <STDIN>;
+    next if ($resp =~ /^y/i);
+    exit(1);
+  }
+  push (@$species_set, $genome_db->{$this_species});
 }
+
 my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
         -adaptor => $method_link_species_set_adaptor,
-        -method_link_type => "MAVID",
+        -method_link_type => "MULTIZ",
         -species_set => $species_set
     );
 $method_link_species_set = $method_link_species_set_adaptor->store($method_link_species_set);
@@ -222,12 +253,11 @@ foreach my $multiz_file (@multiz_files) {
                   -method_link_species_set => $method_link_species_set,
                   -score => $score
               );
-          print "storing:\n$print_multiple_alignment\n";
+          info("storing:\n$print_multiple_alignment\n");
           $genomic_align_block_adaptor->store($this_genomic_align_block);
           $stored_alignments_counter++;
-#          print "storing:\n$print_multiple_alignment\n";
         } else {
-          print "SKIPPING: ($malign_warning)\n$print_multiple_alignment\n";
+          print STDERR "SKIPPING: $malign_warning\n";
         }
         $malign_warning = "";
         undef(@all_these_genomic_aligns);
@@ -235,9 +265,8 @@ foreach my $multiz_file (@multiz_files) {
         $score = undef;
       }
       
-      ## Retrieves score of the multpile alignment
+      ## Retrieves score of the multiple alignment
       if (/^a/ && /score=(\-?\d+(\.\d+)?)/) {
-#print $_;
         $score = $1;
         if (defined($score_threshold) && ($score < $score_threshold)) {
           $malign_warning .= "- score=$score -";
@@ -266,8 +295,8 @@ foreach my $multiz_file (@multiz_files) {
         $all_warnings{"Species $species"}++;
         next;
       } elsif ($skip) {
-        $malign_warning .= "- $species -";
         $all_warnings{"Species $species"}++;
+        $malign_warning .= "- $species (".$all_warnings{"Species $species"}.") -";
         next;
       } else {
         print "$print_multiple_alignment\n";
@@ -275,22 +304,11 @@ foreach my $multiz_file (@multiz_files) {
       }
     }
     
-    my $species_name = $ucsc_2_ensembl->{$species}->{'name'};
-    my $species_assembly = $ucsc_2_ensembl->{$species}->{'assembly'};
-    
-#    my $cigar_line = get_cigar_line_from_gapped_sequence($alignment);
-    
-    if (!defined($slice_adaptor->{$species})) {
-      $slice_adaptor->{$species} = Bio::EnsEMBL::Registry->get_adaptor($species_name, 'core', 'Slice');
-  #    $db->get_db_adaptor($species_name, $species_assembly)->get_SliceAdaptor;
+    my $dnafrag;
+    if (defined($genome_db->{$species})) {
+      $dnafrag = get_this_dnafrag($genome_db->{$species}, undef, $chromosome);
     }
-    
-    die "Cannot connect to $species_name\n" if (!defined($slice_adaptor->{$species}));
-  
-    my $slice = get_this_slice($species, $chromosome, $start_pos, $length, $strand);
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species_name, $species_assembly);
-    my $dnafrag = get_this_dnafrag($genome_db, 'chromosome', $chromosome);
-    
+
     ## Deal with unknown dnafrags
     if (!$dnafrag) {
       $print_multiple_alignment =~ s/\n$/  **NOT AVAILABLE**\n/;;
@@ -299,56 +317,83 @@ foreach my $multiz_file (@multiz_files) {
         $all_warnings{"Chromosome $species.chr$chromosome"}++;
         next;
       } elsif ($skip) {
-        $malign_warning .= "- $species.chr$chromosome -";
         $all_warnings{"Chromosome $species.chr$chromosome"}++;
+        $malign_warning .= "- $species.chr$chromosome (".$all_warnings{"Chromosome $species.chr$chromosome"}.")-";
         next;
       } else {
-        print "$print_multiple_alignment\n";
-        die "Cannot fetch DnaFrag for ".$ucsc_2_ensembl->{$species}->{'name'}.", chromosome $chromosome\n";
+        throw ("Cannot fetch DnaFrag for ".$ucsc_2_ensembl->{$species}->{'name'}.", chromosome $chromosome\n".
+            $print_multiple_alignment);
       }
     }
     
-    my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign (
-        -adaptor => $genomic_align_adaptor,
-        -dnafrag => $dnafrag,
-        -dnafrag_start => $slice->start,
-        -dnafrag_end => $slice->end,
-        -dnafrag_strand => $slice->strand,
-#        -alignment_type => 'MULTIZ',
-#        -cigar_line => $cigar_line,
-        -aligned_sequence => $aligned_sequence,
-        -group_id => 0,
-        -level_id => 1
-    	);
-    
-#  print "                                       ", $genomic_align->aligned_sequence, "\n";
+    my ($dnafrag_start, $dnafrag_end);
+    if ($strand == 1) {
+      $dnafrag_start = $start_pos + 1;
+      $dnafrag_end = $start_pos + $length;
+    } elsif ($strand == -1) {
+      $dnafrag_start = $dnafrag->length - $start_pos - $length + 1;
+      $dnafrag_end = $dnafrag->length - $start_pos;
+    } else {
+      throw("Cannot understand strand $strand");
+    }
 
-    my $db_sequence = uc($genomic_align->dnafrag->slice->subseq(
-            $genomic_align->dnafrag_start,
-            $genomic_align->dnafrag_end
-        ));
-    my $multiz_sequence = uc($genomic_align->original_sequence);
-    if ($db_sequence ne $multiz_sequence) {
-      print STDERR
-          "Error while retrieving sequence ",
-          $ucsc_2_ensembl->{$species}->{'name'},
-          ", chromosome $chromosome [", $slice->start, "-", $slice->end, "] ",
-          (($slice->strand == 1)?"(+)":"(-)")."\n",
-          " DATABS: ", substr($db_sequence, 0, 10), "..",
-          substr($db_sequence, -11), "\n",
-          " MULTIZ: ", substr($multiz_sequence, 0, 10), "..",
-          substr($multiz_sequence, -11), "\n",
-          "\n";
+    my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign (
+            -adaptor => $genomic_align_adaptor,
+            -dnafrag => $dnafrag,
+            -dnafrag_start => $dnafrag_start,
+            -dnafrag_end => $dnafrag_end,
+            -dnafrag_strand => $strand,
+            -aligned_sequence => $aligned_sequence,
+            -group_id => 0,
+            -level_id => 1
+        );
+
+    if ($check_sequences) {
+      my $db_sequence = uc($genomic_align->dnafrag->slice->subseq(
+              $genomic_align->dnafrag_start,
+              $genomic_align->dnafrag_end,
+              $genomic_align->dnafrag_strand
+          ));
+      my $multiz_sequence = uc($genomic_align->original_sequence);
+      if ($db_sequence ne $multiz_sequence) {
+        my $err_str = 
+            "Error while retrieving sequence ".
+            $ucsc_2_ensembl->{$species}->{'name'}.
+            ", chromosome $chromosome [". $dnafrag_start. "-". $dnafrag_end. "] ".
+            (($strand == 1)?"(+)":"(-)")." -- (MULTIZ start:$start_pos length:$length\n".
+            " DATABS: ". substr($db_sequence, 0, 10). "..".
+            substr($db_sequence, -11). "\n".
+            " MULTIZ: ". substr($multiz_sequence, 0, 10). "..".
+            substr($multiz_sequence, -11);
+        throw $err_str;
+      }
     }
     push(@all_these_genomic_aligns, $genomic_align);
   }
     
+  ## Stores multiple alignment
   if (@all_these_genomic_aligns) {
-    if (!$malign_warning) {
-      $genomic_align_adaptor->store_malign(\@all_these_genomic_aligns);
-    } else {
-      print "SKIPPING: ($malign_warning)\n$print_multiple_alignment\n";
+    # -force option can produce alignments with one sequence only!!
+    if (defined($sequences_threshold) && (@all_these_genomic_aligns < $sequences_threshold)) {
+      $malign_warning .= "- Not Enough Sequences -";
     }
+    if (!$malign_warning) {
+      my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+              -adaptor => $genomic_align_block_adaptor,
+              -genomic_align_array => \@all_these_genomic_aligns,
+              -method_link_species_set => $method_link_species_set,
+              -score => $score
+          );
+      info("storing:\n$print_multiple_alignment\n");
+      $genomic_align_block_adaptor->store($this_genomic_align_block);
+      $stored_alignments_counter++;
+    } else {
+      print STDERR "SKIPPING: $malign_warning\n";
+    }
+    $malign_warning = "";
+    undef(@all_these_genomic_aligns);
+    $print_multiple_alignment = "";
+    $score = undef;
   }
   close(MULTIZ);
 }
@@ -365,104 +410,6 @@ print "End. $stored_alignments_counter multiple alignments out of $all_alignment
  
 exit(0);
 
-###############################################################################
-##  GET THIS SLICE
-
-=head2 get_this_slice
-
-  Arg [1]    : string $species
-  Arg [2]    : string $chromosome
-  Arg [2]    : string $start_pos
-  Arg [2]    : string $length
-  Arg [2]    : string $strand
-  Example    : 
-  Description: Takes UCSC coordinates and returns the corresponding slice
-  Returntype : Bio::EnsEMBL::Slice
-  Exceptions : 
-
-=cut
-
-###############################################################################
-sub get_this_slice {
-  my ($species, $chromosome, $start_pos, $length, $strand) = @_;
-  my $slice;
-    
-  if ($strand == 1) {
-#    print "Fetching sequence ", ($start_pos+1), "-->", ($start_pos+$length), " from chromosome $chromosome of ",
-#	$ucsc_2_ensembl->{$species}->{'name'}, " (assembly ", $ucsc_2_ensembl->{$species}->{'assembly'}, ")\n";
-    $slice = $slice_adaptor->{$species}->fetch_by_region('chromosome',
-							 $chromosome,
-							 ($start_pos+1),
-							 ($start_pos+$length),
-							 1);
-  } elsif ($strand == -1) {
-#    print "Fetching sequence ", (-$start_pos-$length), "<--", ($start_pos), " from chromosome $chromosome of ",
-#	$ucsc_2_ensembl->{$species}->{'name'}, " (assembly ", $ucsc_2_ensembl->{$species}->{'assembly'}, ")\n";
-    $slice = $slice_adaptor->{$species}->fetch_by_region('chromosome',
-							 $chromosome);
-    $slice = $slice_adaptor->{$species}->fetch_by_region('chromosome',
-							 $chromosome,
-							 ($slice->end()-$start_pos-$length+1),
-							 ($slice->end()-$start_pos),
-                                                         -1) if ($slice);
-  }
-  
-#  if ($slice) {
-#    my $sequence = $slice->start()." -> ".$slice->end()." (".($slice->strand()==1?"+":"-").") ";
-#    print $sequence;
-#    for (my $a=0; $a<30-length($sequence); $a++) {print " ";}
-#    print $slice->seq()."\n";
-#  }
-
-  return $slice;  
-}
-
-
-###############################################################################
-##  GET_CIGAR_LINE_FROM_GAPPED_SEQUENCE
-
-=head2 get_cigar_line_from_gapped_sequence
-
-  Arg [1]    : string $sequence
-  Example    : get_cigar_line_from_gapped_sequence("AGTA----GTGTC-TACTA--G");
-               => "4M4G4MG5M2GM"
-  Description: Translates a gapped sequence into a cigar line
-               **WARNING** Returned sequence contains G for gaps!!
-  Returntype : string
-  Exceptions : dies if it founds any strange character in the sequence
-
-=cut
-
-###############################################################################
-sub get_cigar_line_from_gapped_sequence {
-  my ($sequence) = @_;
-  my $cigar_line = "";
-
-  # Check sequence
-  $sequence =~ s/[\r\n]+$//;
-  die "Unreadable sequence ($sequence)" if ($sequence !~ /^[\-A-Z]+$/i);
-    
-  my @pieces = split(/(\-+)/, $sequence);
-  foreach my $piece (@pieces) {
-    my $mode;
-    if ($piece =~ /\-/) {
-      $mode = "G"; #deletions are gaps in the consensus sequences. Those gaps are located in the query one.
-    } else {
-      $mode = "M";
-    }
-    if (length($piece) == 1) {
-      $cigar_line .= $mode;
-    } elsif (length($piece) > 1) { #length can be 0 if the sequence starts with a gap
-      $cigar_line .= length($piece).$mode;
-    }
-  }
-
-  return $cigar_line;
-}
-
-
-###############################################################################
-##  GET THIS DNAFRAG
 
 =head2 get_this_dnafrag
 
@@ -477,14 +424,14 @@ sub get_cigar_line_from_gapped_sequence {
 
 =cut
 
-###############################################################################
 sub get_this_dnafrag {
   my ($genome_db, $fragment_type, $fragment_name) = @_;
 
   my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, $fragment_type, $fragment_name);
   my $dnafrag = undef;
   foreach my $this_dnafrag (@$dnafrags) {
-    if ($this_dnafrag->coord_system_name eq $fragment_type && $this_dnafrag->name eq $fragment_name) {
+    if ((!defined($fragment_type) or ($this_dnafrag->coord_system_name eq $fragment_type))
+        and $this_dnafrag->name eq $fragment_name) {
       $dnafrag = $this_dnafrag;
       last;
     }
