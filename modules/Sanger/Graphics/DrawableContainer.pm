@@ -1,3 +1,8 @@
+#########
+# Author: rmp@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2001
+#
 package Sanger::Graphics::DrawableContainer;
 use strict;
 use Sanger::Graphics::Glyph::Line;

@@ -1,3 +1,8 @@
+#########
+# Author: avc@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2001
+#
 package Sanger::Graphics::Renderer::wmf;
 use strict;
 use Sanger::Graphics::Renderer::gif;

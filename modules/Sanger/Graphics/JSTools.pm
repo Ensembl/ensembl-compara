@@ -1,3 +1,8 @@
+#########
+# Author: rmp@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2001
+#
 package Sanger::Graphics::JSTools;
 use strict;
 
@@ -57,9 +62,10 @@ sub js_menu {
 
     for my $i (sort keys %$items) {
         next if $i eq 'caption';
-    	my $menu_line = $i;
+    	my $menu_line = $i || "";
     	$menu_line =~ s/^\d\d://;
-    	$str .= "\'" . $$items{$i} . "\',\'" . $menu_line . "\',";
+	my $item = $items->{$i} || "";
+    	$str .= "\'" . $item . "\',\'" . $menu_line . "\',";
     }
 
     $str =~ s/(.*),/$1/;

@@ -1,3 +1,9 @@
+#########
+# Author: rmp@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2001
+# GD font utility
+#
 package Sanger::Graphics::TextHelper;
 use strict;
 

@@ -1,3 +1,8 @@
+#########
+# Author: rmp@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2003
+#
 package Sanger::Graphics::Glyph::Circle;
 use strict;
 use vars qw(@ISA);

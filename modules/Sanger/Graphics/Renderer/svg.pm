@@ -1,3 +1,8 @@
+#########
+# Author: js5@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2001
+#
 package Sanger::Graphics::Renderer::svg;
 use strict;
 

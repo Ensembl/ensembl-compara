@@ -1,3 +1,7 @@
+#########
+# Author: jws@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+#
 package Sanger::Graphics::NoOverwrite;
 ###############################################################################
 #

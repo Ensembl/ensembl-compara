@@ -1,3 +1,8 @@
+#########
+# Author: js5@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2003
+#
 package Sanger::Graphics::Renderer::pdf;
 use strict;
 

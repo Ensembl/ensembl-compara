@@ -1,3 +1,8 @@
+#########
+# Author: rmp@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2001
+#
 package Sanger::Graphics::WebUserConfig;
 use strict;
 use Sanger::Graphics::ColourMap;
