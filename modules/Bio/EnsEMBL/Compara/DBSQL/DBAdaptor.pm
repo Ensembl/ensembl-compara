@@ -244,6 +244,7 @@ sub get_available_adaptors {
       "GenomicAlignBlock" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor",
       "GenomicAlign" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor",
       "GenomicAlignGroup" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor",
+      "AlignSlice" => "Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor",
       "Homology" => "Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor",
       "Family" => "Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor",
       "Domain" => "Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor",
