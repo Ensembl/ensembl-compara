@@ -185,7 +185,7 @@ sub dynamic_use {
   return 1 if $parent_namespace->{$module.'::'}; # return if already used
   eval "require $classname";
   if($@) {
-    warn "DrawableContainer: failed to use $classname\nDrawableContainer: $@";
+    warn "VVDrawableContainer: failed to use $classname\nVVDrawableContainer: $@";
     return 0;
   }
   $classname->import();

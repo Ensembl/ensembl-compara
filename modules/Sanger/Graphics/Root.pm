@@ -46,7 +46,7 @@ sub dynamic_use {
   return 1 if $parent_namespace->{$module.'::'}; # return if already used
   eval "require $classname";
   if($@) {
-    warn "DrawableContainer: failed to use $classname\nDrawableContainer: $@";
+    warn "Sanger Graphics Root: failed to use $classname\nSanger Graphics Root: $@";
     return 0;
   }
   $classname->import();

@@ -89,9 +89,13 @@ sub text_label {
 sub features {
   my ($self) = @_;
   if( $self->{'config'}->{'fakecore'} ) {
-    return $self->{'container'}->get_all_Genes('genomewise');
+    my $G = $self->{'container'}->get_all_Genes('genomewise');
+       push @$G, @{$self->{'container'}->get_all_Genes('estgene')};
+    return $G;
   } else {
-    return $self->{'container'}->get_all_Genes('genomewise','estgene');
+    my $G = $self->{'container'}->get_all_Genes('genomewise','estgene');
+       push @$G, @{$self->{'container'}->get_all_Genes('estgene','estgene')};
+    return $G;
   }
 }
 

@@ -33,7 +33,6 @@ sub _init {
   }
   my( $highlights, $strandedness, $Storage) = @_;
 
-  warn "DC: $highlights";
   my $self = {
     'glyphsets'     => [],
     'config'        => $Contents->[0][1],
@@ -99,7 +98,6 @@ sub new {
         next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
         next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
         if( defined $Config->get($row,'manager')) { 
-          warn "MANAGER $row @{[$Config->get($row,'manager')]}"; 
           $manager_cache{ $Config->get($row,'manager') } = 1; 
           next;
         }
