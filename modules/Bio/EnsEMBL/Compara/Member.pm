@@ -537,10 +537,8 @@ sub print_member
   my $self = shift;
   my $postfix = shift;
 
-  print("   ".$self->stable_id.
-        "(".$self->dbID.")".
-        "\t".$self->chr_name ." : ".
-        $self->chr_start ."- ". $self->chr_end);
+  printf("   %s %s(%d)\t%s : %d-%d",$self->source_name, $self->stable_id,
+         $self->dbID,$self->chr_name,$self->chr_start, $self->chr_end);
   if($postfix) { print(" $postfix"); }
   else { print("\n"); }
 }
