@@ -66,7 +66,7 @@ sub new {
       if not defined $features;
   throw("You must supply a query sequence\n") 
       if not defined $query_slice;
-  $self->throw("You must supply a hash ref of target sequences with -target_slices")
+  throw("You must supply a hash ref of target sequences with -target_slices")
       if not defined $target_slices;
 
   $self->faToNib($fa_to_nib) if defined $fa_to_nib;
@@ -123,7 +123,7 @@ sub run {
   $seqio->close;
 
   system($self->faToNib, "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib") 
-      and $self->throw("Could not convert fasta file $query_nib_dir/$query_name.fa to nib");
+      and throw("Could not convert fasta file $query_nib_dir/$query_name.fa to nib");
   unlink "$query_nib_dir/$query_name.fa";
   push @nib_files, "$query_nib_dir/$query_name.nib";
   
@@ -141,7 +141,7 @@ sub run {
     $seqio->close;
    
     system($self->faToNib, "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib") 
-        and $self->throw("Could not convert fasta file $target_nib_dir/$target_name.fa to nib");
+        and throw("Could not convert fasta file $target_nib_dir/$target_name.fa to nib");
     unlink "$target_nib_dir/$target_name.fa";
     push @nib_files, "$target_nib_dir/$target_name.nib";
   }
@@ -158,13 +158,13 @@ sub run {
   # convert the lav file to axt
   ##############################
   system($self->lavToAxt, $lav_file, $query_nib_dir, $target_nib_dir, $axt_file)
-      and $self->throw("Could not convert $lav_file to Axt format");
+      and throw("Could not convert $lav_file to Axt format");
 
   ##################################
   # convert the lav file to axtChain
   ##################################
   system($self->axtChain, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
-        and $self->throw("Something went wrong with axtChain\n");
+        and throw("Something went wrong with axtChain\n");
 
   ##################################
   # read the chain file
@@ -282,7 +282,7 @@ sub parse_Chain_file {
         blocks   => [],
       };
 
-      my ($current_q_start, $current_t_start) = ($data[4], $data[9]);
+      my ($current_q_start, $current_t_start) = ($data[4] + 1, $data[9] + 1);
       my @blocks = ([]);
       
       while(<$fh>) {
