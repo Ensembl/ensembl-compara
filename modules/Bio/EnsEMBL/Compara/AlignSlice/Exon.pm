@@ -94,16 +94,16 @@ our @ISA = qw(Bio::EnsEMBL::Exon);
                        -reference_slice => $reference_slice,
                    );
   Description: Creates a new Bio::EnsEMBL::AlignSlice::Exon object
-  Inheritance: Calls new() method from SUPER class.
   Returntype : Bio::EnsEMBL::Compara::AlignSlice::Exon object
-  Exceptions : return undef if 
+  Exceptions : 
 
 =cut
 
 sub new {
   my ($class, @args) = @_;
 
-  my $self = $class->SUPER::new(@args);
+  my $self = {};
+  bless($self, $class);
 
   my ($exon, $align_slice, $from_mapper, $to_mapper, $original_rank) =
       rearrange([qw(
