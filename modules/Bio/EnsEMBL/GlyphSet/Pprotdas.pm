@@ -69,7 +69,8 @@ sub _init {
     ref( $das_feat_ref ) eq 'ARRAY' || ( warn("No feature array for ProteinDAS track") &&  return );
 
     foreach my $feat (@$das_feat_ref) {
-      push(@{$hash{$feat->das_feature_id}},$feat); # if defined $feat->start;
+#      push(@{$hash{$feat->das_feature_id}},$feat); # if defined $feat->start;
+		  push(@{$hash{$feat->das_feature_id}},$feat)  if ($feat->end); # Draw only features that have location
     }
     foreach my $key (keys %hash) {
 	my @row  = @{$hash{$key}};
