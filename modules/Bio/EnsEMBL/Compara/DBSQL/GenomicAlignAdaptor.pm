@@ -94,7 +94,7 @@ sub get_AlignBlockSet{
        $self->throw("Must get AlignBlockSet by row number");
    }
 
-   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b where b.align_id = $align_id and b.align_row = $row_number order by align_start");
+   my $sth = $self->prepare("select b.align_start,b.align_end,b.dnafrag_id,b.raw_start,b.raw_end,b.raw_strand from genomic_align_block b where b.align_id = $align_id and b.align_row_id = $row_number order by align_start");
    $sth->execute;
 
    my $alignset = Bio::EnsEMBL::Compara::AlignBlockSet->new();
@@ -121,9 +121,9 @@ sub get_AlignBlockSet{
 
 
 
-=head2 store_AlignBlockSet
+=head2 store
 
- Title   : store_AlignBlockSet
+ Title   : store
  Usage   :
  Function:
  Example :
@@ -133,10 +133,29 @@ sub get_AlignBlockSet{
 
 =cut
 
-sub store_AlignBlockSet{
+sub store {
    my ($self,$abs) = @_;
 
+   if( !defined $abs ) {
+       $self->throw("Must store with a $abs");
+   }
 
+   my $dnafragadp = $self->db->get_DnaFragAdaptor();
+
+   foreach my $ab ( $abs->each_AlignBlock ) {
+       if( !defined $ab->dnafrag ) {
+	   $self->throw("Must have a dnafrag attached to alignblocks");
+       }
+       if( !defined $ab->dnafrag->dbID ) {
+	   $dnafragadp->store($ab->dnafrag);
+       }
+   }
+
+   
+   
+   foreach my $ab ( $abs->each_AlignBlock ) {
+   }
+    
 }
 
 
