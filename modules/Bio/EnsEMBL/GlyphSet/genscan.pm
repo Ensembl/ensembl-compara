@@ -65,7 +65,7 @@ sub _init {
 			
 			#$Composite->bordercolour($feature_colour);
 
-			#print STDERR "Feature [$j] start: ", $f->start(), " ID:", $f->id(),  "(strand: $strand)\n";
+			#print STDERR "Feature [$j: $f] start: ", $f->start(), " ID:", $f->id(),  "(strand: $strand)\n";
 			#print STDERR "Feature length: ", $x1, " ID:", $f->id(),  "\n";
 			my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 				'x'      	=> $f->start(),
@@ -82,51 +82,26 @@ sub _init {
 		}
 		
 		#if($VirtualContig->length() <= 250001){
-		if(0){
+		if(1){
 			# loop through glyphs again adding connectors...
 			my @g = $Composite->glyphs();
 			for (my $i = 1; $i<scalar(@g); $i++){
 				my $id = $Composite->id();
 				my $prefix  =  "[ID: $id]";
-				my $hstart  = $g[$i]->{'_feature'}->hstart();
-				my $hend    = $g[$i-1]->{'_feature'}->hend();
 				my $fstart  = $g[$i-1]->{'_feature'}->start();
 				my $flength = $g[$i-1]->{'_feature'}->length();
 
-				#print STDERR "$prefix Last end   = ", $hend, "\n";
-				#print STDERR "$prefix Next start = ", $hstart, "\n";
-				#print STDERR "$prefix Difference = ", $hstart - $hend, "\n";
-				
-				if (($hstart - $hend) < 5 && ($hstart - $hend) > -5 ){	# they are close
-					print STDERR "$prefix Close ($i): ",$hstart, " <-> ", $hend, "\n";
-					
-					my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
-						'x'      	=> $fstart + $flength,
-						'y'      	=> 0,
-						'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
-						'height' 	=> $h,
-						'strand' 	=> $strand,
-						'colour' 	=> $feature_colour,
-						'absolutey' => 1,
-					});
-					$Composite->{'zmenu'}->{"[$id:$i] $hend - $hstart"} = 1;;
-					#print STDERR "Adding inton to composite glyph ...\n";
-					$Composite->push($intglyph);
-
-				} else {
-					print STDERR "$prefix Not close: ",$hstart, " <=======> ", $hend, "\n"; 
-					my $intglyph = new Bio::EnsEMBL::Glyph::Line({
-						'x'      	=> $fstart + $flength,
-						'y'      	=> int($h * 0.5),
-						'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
-						'height' 	=> 0,
-						'colour' 	=> $feature_colour,
-						'dotted'	=> 1,
-						'absolutey' => 1,
-					});
-					$Composite->{'zmenu'}->{"[$id:$i] $hend - $hstart ======> GAP"} = 1;;
-					#$Composite->push($intglyph);
-				}
+				my $intglyph = new Bio::EnsEMBL::Glyph::Intron({
+					'x'      	=> $fstart + $flength,
+					'y'      	=> 0,
+					'width'  	=> $g[$i]->{'_feature'}->start() - ($fstart + $flength),
+					'height' 	=> $h,
+					'strand' 	=> $strand,
+					'colour' 	=> $feature_colour,
+					'absolutey' => 1,
+				});
+				$Composite->{'zmenu'}->{"[$id:$i]"} = 1;
+				$Composite->push($intglyph);
 			}
 		}
 		
@@ -147,7 +122,7 @@ sub _init {
 	    	$Composite->y($Composite->y() + (1.5 * $row * $h * -$strand));
 
 			# if we are bumped && on a large contig then draw frames around features....
-			$Composite->bordercolour($feature_colour) unless ($small_contig);
+			#$Composite->bordercolour($feature_colour) unless ($small_contig);
 		}
 		
 		# now save the composite glyph...
