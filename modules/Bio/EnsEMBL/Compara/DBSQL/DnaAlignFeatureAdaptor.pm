@@ -118,8 +118,10 @@ sub fetch_all_by_species_region {
   my @out = ();
 
   my $cs_sliceadaptor = $cs_gdb->db_adaptor->get_SliceAdaptor;
-  my $qy_sliceadaptor = $qy_gdb->db_adaptor->get_SliceAdaptor;
-  
+  my $qy_sliceadaptor;
+  eval {
+    $qy_sliceadaptor = $qy_gdb->db_adaptor->get_SliceAdaptor;
+  };
   foreach my $df (@$dnafrags) {
     #caclulate coords relative to start of dnafrag
     my $df_start = $start - $df->start + 1;
@@ -141,8 +143,8 @@ sub fetch_all_by_species_region {
     #convert genomic aligns to dna align features
     foreach my $ga (@$genomic_aligns) {
       my $qdf = $ga->query_dnafrag;
-      my $top_slice = $qy_sliceadaptor->fetch_by_region($qdf->type,
-                                                        $qdf->name);
+      my $top_slice = $qy_sliceadaptor ?
+          $qy_sliceadaptor->fetch_by_region($qdf->type, $qdf->name) : undef;
       #calculate chromosomal coords
       my $cstart = $df->start + $ga->consensus_start - 1;
       my $cend   = $df->start + $ga->consensus_end - 1;

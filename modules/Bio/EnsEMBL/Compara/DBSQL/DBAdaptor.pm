@@ -172,7 +172,8 @@ sub add_db_adaptor {
   my $csa = $dba->get_CoordSystemAdaptor;
   
   my $species = $mc->get_Species->binomial;
-  my $assembly = $csa->fetch_top_level->version;
+  my ($cs) = @{$csa->fetch_all};
+  my $assembly = $cs ? $cs->version : '';
 
   $self->{'genomes'}->{"$species:$assembly"} = $dba;
 }
