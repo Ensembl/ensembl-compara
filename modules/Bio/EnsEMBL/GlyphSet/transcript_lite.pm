@@ -12,14 +12,7 @@ sub my_label {
 sub colours {
     my $self = shift;
     my $Config = $self->{'config'};
-    return {
-        'unknown'   => $Config->get('transcript_lite','unknown'),
-        'xref'      => $Config->get('transcript_lite','xref'),
-        'pred'      => $Config->get('transcript_lite','pred'),
-        'known'     => $Config->get('transcript_lite','known'),
-        'hi'        => $Config->get('transcript_lite','hi'),
-        'superhi'   => $Config->get('transcript_lite','superhi')
-    };
+    return $Config->get('transcript_lite','colours');
 }
 
 sub features {
@@ -32,7 +25,7 @@ sub features {
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
-    my $genecol = $colours->{ $transcript->is_known() ? lc( $transcript->external_status ) : 'unknown'};
+    my $genecol = $colours->{ "ensembl_".$transcript->external_status };
 
     if(exists $highlights{$transcript->stable_id()}) {
       return ($genecol, $colours->{'superhi'});

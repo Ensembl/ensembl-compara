@@ -33,32 +33,16 @@ sub _init {
 # Stage 1a: Firstly the configuration hash!                                  #
 ##############################################################################
     my $Config         = $self->{'config'};
-    my $known_col      = $Config->get( 'gene_label_lite' , 'known' );
-    my $hi_col         = $Config->get( 'gene_label_lite' , 'hi' );
-    my $unknown_col    = $Config->get( 'gene_label_lite' , 'unknown' );
-    my $xref_col       = $Config->get( 'gene_label_lite' , 'xref' );
-    my $pred_col       = $Config->get( 'gene_label_lite' , 'pred' );
-    my $ext_col        = $Config->get( 'gene_label_lite' , 'ext' );
-    my $pseudo_col     = $Config->get( 'gene_label_lite' , 'pseudo' );
-    my $max_length     = $Config->get( 'gene_label_lite' , 'threshold' ) || 2000000;
-    my $navigation     = $Config->get( 'gene_label_lite' , 'navigation' ) || 'off';
-    my $max_length_nav = $Config->get( 'gene_label_lite' , 'navigation_threshold' ) || 200000;
     my $im_width       = $Config->image_width();
     my $type           = $Config->get( 'gene_label_lite' , 'src' );
     my $pix_per_bp     = $Config->transform->{'scalex'};
     my $fontname       = "Tiny";
     my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
     my $w              = $Config->texthelper->width($fontname);
-    my $rat_colours = { 
-       'refseq' => $Config->get('gene_lite','refseq'), 
-    }; 
-    my $sanger_colours = { 
-           'Novel_CDS'        => $Config->get('gene_label_lite','sanger_Novel_CDS'), 
-           'Putative'         => $Config->get('gene_label_lite','sanger_Putative'), 
-           'Known'            => $Config->get('gene_label_lite','sanger_Known'), 
-           'Novel_Transcript' => $Config->get('gene_label_lite','sanger_Novel_Transcript'), 
-           'Pseudogene'       => $Config->get('gene_label_lite','sanger_Pseudogene'), 
-    }; 
+    my $colours = $Config->get('gene_lite','colours');
+    my $max_length     = $Config->get('gene_label_lite','threshold') || 1e6;
+    my $max_length_nav = $Config->get('gene_label_lite','navigation_threshold') || 50e3;
+    my $navigation     = $Config->get('gene_label_lite','navigation') || 'off';
 
 ##############################################################################
 # Stage 1b: Now the virtual contig                                           #
@@ -69,7 +53,7 @@ sub _init {
         $self->errorTrack("Gene labels only displayed for less than $max_length Kb.");
         return;
     }
-	my $show_navigation = $navigation eq 'on' && ( $vc_length < $max_length_nav * 1001 );
+    my $show_navigation = $navigation eq 'on' && ( $vc_length < $max_length_nav * 1001 );
     my $bitmap_length   = int($vc_length * $pix_per_bp);
 	my $vc_start        = $vc->chr_start();
     my $offset = $vc_start-1;
@@ -99,12 +83,12 @@ sub _init {
       push @{$gene_objs{$source}}, $g;
     }
       
-    foreach my $g (@{$gene_objs{'sanger'}}) { 
+    foreach my $g (@{$gene_objs{'vega'}}) { 
       my $gene_label = $g->stable_id();  
       my $high = exists $highlights{ $gene_label }; 
       my $type = $g->type(); 
       $type =~ s/HUMACE-//; 
-      my $gene_col = $sanger_colours->{ $type }; 
+      my $gene_col = $colours->{ "vega_$type" }; 
         push @genes, { 
             'chr_start' => $g->start() + $offset, 
             'chr_end'   => $g->end() + $offset, 
@@ -126,15 +110,8 @@ sub _init {
     foreach my $g (@{$gene_objs{'ensembl'}} ) { 
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$g->stable_id()} ? 1 : 0;
-        my $gene_label = $g->external_name;
-        if(defined $gene_label && $gene_label ne '') {
-            $gene_col = $g->external_status eq 'KNOWN' ? $known_col : ( $g->external_status eq 'XREF' ? $xref_col : $pred_col );
-            $gene_label = $g->external_name();
-            $high = 1 if(exists $highlights{$gene_label});
-        } else {
-            $gene_col = $unknown_col;
-            $gene_label = 'NOVEL'; 
-        }
+        my $gene_col = $colours->{'ensembl_'.$g->external_status};
+        my $gene_label = $g->external_name() || 'NOVEL';
         push @genes, {
             'chr_start' => $g->start() + $offset,
             'chr_end'   => $g->end() + $offset,
@@ -157,7 +134,7 @@ sub _init {
         my $gene_label = $g->stable_id();
         my $high = (exists $highlights{ $g->stable_id() }) ||
           exists ($highlights{$gene_label});
-        my $gene_col = $rat_colours->{'refseq'};
+        my $gene_col = $colours->{'refseq'};
         push @genes, {
                 'chr_start' => $g->start() + $offset,
                 'chr_end'   => $g->end() + $offset,
@@ -260,7 +237,7 @@ sub _init {
                 'y'         => $tglyph->y(),
                 'width'     => $font_w_bp * length($label),
                 'height'    => $tglyph->height(),
-                'colour'    => $hi_col,
+                'colour'    => $colours->{'hi'},
                 'absolutey' => 1,
             });
             $self->push($rect2);
