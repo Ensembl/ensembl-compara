@@ -9,6 +9,9 @@ use strict;
 
 my ($fasta,$fastaindex,$fasta_nr,$redundant_file) = @ARGV;
 
+my $pmatch_executable = "/usr/local/ensembl/bin/pmatch_ms2";
+my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
+
 open FASTA, $fasta ||
   die "Could not open $fasta, $!\n";
 
@@ -64,8 +67,8 @@ while (my $line = <PM>) {
     if ($stored_at_index{$qid} != $stored_at_index{$tid}) {
       warn "$index Query $qid and target $tid have been stored in 2 different indices.
 $line
-EXIT 1";
-      exit 1;
+EXIT 2";
+      exit 2;
     }
   } elsif (defined $stored_at_index{$qid}) {
     my $idx = $stored_at_index{$qid};
@@ -84,22 +87,38 @@ EXIT 1";
   }
 }
 
-#foreach my $redundancy (@redundancies) {
-#  print join " ", @{$redundancy},"\n";
-#}
-
-open ID, ">ids_file";
+my $rand = time().rand(1000);
+my $ids_file = "/tmp/ids.$rand";
+open ID, ">$ids_file";
 
 foreach my $id (@all_ids) {
-  next if ($stored_at_index{$id});
+  next if (defined $stored_at_index{$id});
   print ID $id,"\n";
 }
 
+open NR, ">$redundant_file";
+
 foreach my $redundancy (@redundancies) {
+  print NR join " ", @{$redundancy},"\n";
   print ID $redundancy->[0],"\n";
 }
 
+close NR;
 close ID;
+
+my $new_fasta_file = "/tmp/fasta.$rand";
+
+unless(system("$fastafetch_executable $fasta $fastaindex $ids_file |grep -v \"^Message\"> $new_fasta_file") == 0) {
+  unlink glob("/tmp/*$rand*");
+  die "error in $fastafetch_executable, $!\n";
+}
+
+unless (system("cp $new_fasta_file $fasta_nr") == 0) {
+  unlink glob("/tmp/*$rand*");
+  die "error in cp $new_fasta_file $fasta_nr, $!\n";
+}
+
+unlink glob("/tmp/*$rand*");
 
 exit 0;
 
