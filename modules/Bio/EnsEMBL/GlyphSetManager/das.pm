@@ -30,7 +30,7 @@ sub init {
     #
     for my $das_source_name (@das_source_names) {
         warn( $das_source_name );
-	next unless( $Config->get($das_source_name,'on') eq 'on' );
+	next unless( $Config->get("managed_$das_source_name",'on') eq 'on' );
 	my $extra_config = EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$das_source_name};
 	$extra_config->{'name'} = $das_source_name;
 	$self->add_glyphset( $extra_config );
@@ -39,12 +39,17 @@ sub init {
     $ext_das->get_sources();
 
     for my $das_source_name ( keys %{$ext_das->{'data'}} ) {
-        warn( "extdas_$das_source_name" );
-	next unless( $Config->get("extdas_$das_source_name",'on') eq 'on' );
+        warn( "managed_extdas_$das_source_name" );
+	next unless( $Config->get("managed_extdas_$das_source_name",'on') eq 'on' );
         my $das_species = $ext_das->{'data'}->{$das_source_name}->{'species'};
         next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
             my $extra_config 		    = $ext_das->{'data'}->{$das_source_name};
-	       $extra_config->{'name'} 	= "extdas_$das_source_name";
+            warn( "DSN: ",$das_source_name);
+            foreach( keys(%{$ext_das->{'data'}->{$das_source_name}})) {
+	         warn("\t$_\t".$ext_das->{'data'}{$das_source_name}{$_}."\n");
+            }
+ 
+	       $extra_config->{'name'} 	= "$das_source_name";
 	       $extra_config->{'url'} 		= "http://$extra_config->{'URL'}/das";
         warn( "ADDING GLYPHSET $das_species $das_source_name" );
 	       $self->add_glyphset( $extra_config );		
@@ -56,7 +61,7 @@ sub add_glyphset {
 		
 	my $das_glyphset;
 
-        warn("Attaching..... $extra_config->{'name'}" );
+        warn("Attaching..... $extra_config->{'name'} - $extra_config->{'url'}" );
 	eval {
 		$das_glyphset = new Bio::EnsEMBL::GlyphSet::das(
 			$self->{'container'},

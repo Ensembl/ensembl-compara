@@ -59,6 +59,7 @@ sub image_label {
 sub _init {
     my ($self) = @_;
     my $type = $self->check();
+    warn( "TYPE: $type\n" );
     return unless defined $type;
     
     my $VirtualContig   = $self->{'container'};

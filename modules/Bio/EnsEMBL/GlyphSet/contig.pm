@@ -59,20 +59,20 @@ sub _init {
 
     $self->push($gline);
   
-    my @contig_tiling_path = $vc->get_tiling_path();
+    my ($contig_tiling_path) = $vc->get_tiling_path();
   
     my $useAssembly;
 
   # Do we have assembly_contigs?
     $useAssembly = $vc->has_MapSet( 'assembly' ); 
     
-    if (!@contig_tiling_path) {
+    if (!@$contig_tiling_path) {
     ## Draw a warning track....
         $self->errorTrack("Golden path gap - no contigs to display!");
     } elsif($useAssembly && $length < MAX_VIEWABLE_ASSEMBLY_SIZE) {
-        $self->_init_assembled_contig($ystart, \@contig_tiling_path);
+        $self->_init_assembled_contig($ystart, $contig_tiling_path);
     } else {
-        $self->_init_non_assembled_contig($ystart, \@contig_tiling_path);
+        $self->_init_non_assembled_contig($ystart, $contig_tiling_path);
     }
 }
 
@@ -126,14 +126,14 @@ sub _init_assembled_contig {
     
     $w;
 
-    my @assembly_contigs = $vc->get_all_MapFrags( 'assembly' );
+    my $assembly_contigs = $vc->get_all_MapFrags( 'assembly' );
     my %contigs = ();
     my %big_contigs = ();
     foreach my $tile ( @{$contig_tiling_path} ) {
         my $ID = $tile->{'contig'}->name();            
         $contigs{ $ID } = [];
         $big_contigs{ $ID } = [ $tile->{'start'}, $tile->{'end'} ];
-        foreach my $little_contig (@assembly_contigs) {
+        foreach my $little_contig (@{$assembly_contigs}) {
             my $start = $little_contig->start;
             my $end   = $little_contig->end;
             if( $end   >= $tile->{'start'} || $start <= $tile->{'end'} ) {
@@ -328,7 +328,7 @@ sub _init_assembled_contig {
             }) );
       # the reverse strand ticks
             $self->unshift(new Sanger::Graphics::Glyph::Space({
-                'x'         => $im_width - $pos,
+                'x'         => $im_width - $pos - $interval,
                 'y'         => $ystart+16,
                 'width'     => $interval,
                 'height'    => 3,
@@ -392,10 +392,10 @@ sub _init_non_assembled_contig {
     my %colours  = ( $i  => $cmap->id_by_name('contigblue1'), 
 	          	    !$i => $cmap->id_by_name('contigblue2'));
   
-    my $tot_width = $contig_tiling_path->[0][-1]{'end'} - 
-        $contig_tiling_path->[0][0]{'start'} + 1;
+    my $tot_width = $contig_tiling_path->[-1]{'end'} - 
+        $contig_tiling_path->[0]{'start'} + 1;
 
-    foreach my $tile ( @{$contig_tiling_path->[0]} ) {
+    foreach my $tile ( @{$contig_tiling_path} ) {
         my $col = $colours{$i};
         $i      = !$i;
         
@@ -591,17 +591,17 @@ sub _init_non_assembled_contig {
             
       # the reverse strand ticks
             $self->unshift( new Sanger::Graphics::Glyph::Space({
-                'x'         => $im_width - $pos,
+                'x'         => $im_width - $pos - $interval,
                 'y'         => $ystart+16,
                 'width'     => $interval,
                 'height'    => 3,
                 'absolutey' => 1,
                 'absolutex' => 1,
                 'href'	    => $self->zoom_URL($param_string, 
-					     $global_end-$interval_middle, 
+					     $global_end+1-$interval_middle, 
 					     $length,  1  , $highlights),
                 'zmenu'     => $self->zoom_zmenu($param_string, 
-					     $global_end-$interval_middle, 
+					     $global_end+1-$interval_middle, 
 					     $length, $highlights ),
             }) );
             $interval_middle += $width;

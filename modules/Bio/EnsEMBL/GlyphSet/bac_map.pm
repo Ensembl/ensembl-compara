@@ -14,13 +14,14 @@ sub features {
     my ($self) = @_;
     my $container_length = $self->{'container'}->length();
     my $max_full_length  = $self->{'config'}->get( "bac_map", 'full_threshold' ) || 200000000;
-    return 
+    my @sorted =  
       map { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
           map { [$_->seq_start-$_->state*1e9 * $_->BACend_flag/4, $_] }
-            $self->{'container'}->get_all_MapFrags(
+            @{$self->{'container'}->get_all_MapFrags(
               $container_length > $max_full_length ? 'acc_bac_map' : 'bac_map'
-            );
+            )};
+    return \@sorted;
 }
 
 ## If bac map clones are very long then we draw them as "outlines" as
