@@ -21,8 +21,9 @@ DumpChromosomeFragments.pl
             -phusion Hs
             -mask_restriction RepeatMaksingRestriction.conf
             -o output_filename
-	    -coord_system coordinate system (default=chromosome)
-	    -conf Registry.conf
+            -coord_system coordinate system (default=chromosome)
+            -top_level
+            -conf Registry.conf
 
 $0 [-help]
    -dbname core_database_name (or alias)
@@ -35,13 +36,17 @@ $0 [-help]
                                   1 masked
                                   2 soft-masked
    -phusion \"Hs\" tag put in the FASTA header >Hs22.1 
-   -mask_restriction RepeatMaksingRestriction.conf 
-                     Allow you to do hard and soft masking at the same time
-                     depending on the repeat class or name. See RepeatMaksingRestriction.conf.example,
-                     and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
+   -mask_restriction RepeatMaksingRestriction.conf
+       Allow you to do hard and soft masking at the same time depending on
+       the repeat class or name. See RepeatMaksingRestriction.conf.example,
+       and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
    -o output_filename
    -conf Registry.conf
--coord_system coordinate system (default=chromosome, but must be all of same type-->2 dumps for danio and can't use all for them )
+   -coord_system coordinate system (default=chromosome, but must be all of
+       same type-->2 dumps for danio and can't use all for them )
+   -top_level
+       Default: all. Restricts dump to seq_regions which are 'top_level'.
+       This works with -coord_system option only.
 
 
 ";
@@ -60,7 +65,8 @@ my $output;
 my $help = 0;
 my $mask_restriction_file;
 my $coordinate_system="chromosome";
-my $conf ="/nfs/acari/cara/.Registry.conf";
+my $top_level = 0;
+my $conf;
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
@@ -73,6 +79,7 @@ GetOptions('help' => \$help,
            'mask_restriction=s' => \$mask_restriction_file,
 	   'phusion=s' => \$phusion,
 	   'coord_system=s' => \$coordinate_system,
+	   'top_level' => \$top_level,
 	   'conf'	=> \$conf,
 	   'o=s' => \$output);
 
@@ -108,11 +115,14 @@ if (defined $chr_names and $chr_names ne "all") {
     push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coordinate_system , $chr_name);
   }
 } else {
-	if($coordinate_system){
-		$chromosomes=$SliceAdaptor->fetch_all($coordinate_system);
-		}
-	else{
-  $chromosomes = $SliceAdaptor->fetch_all('toplevel');
+  if($coordinate_system){
+    if ($top_level) {
+      $chromosomes = [grep {@{$_->get_all_Attributes('toplevel')}} @{$SliceAdaptor->fetch_all($coordinate_system)}];
+    } else {
+      $chromosomes = $SliceAdaptor->fetch_all($coordinate_system);
+    }
+  } else {
+    $chromosomes = $SliceAdaptor->fetch_all('toplevel');
   }
 }
  
