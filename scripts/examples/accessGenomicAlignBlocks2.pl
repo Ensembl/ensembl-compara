@@ -5,6 +5,7 @@ use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::SimpleAlign;
+use Bio::AlignIO;
 
 my $reg_conf = shift;
 die("must specify registry conf file on commandline\n") unless($reg_conf);
@@ -25,6 +26,12 @@ my $method_link_species_set = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
 my $dnafrag = $comparaDBA->get_DnaFragAdaptor->
      fetch_by_GenomeDB_and_name($humanGDB, '18');
 
+# set up an AlignIO to format SimpleAlign output
+my $alignIO = Bio::AlignIO->newFh(-interleaved => 0,
+                                  -fh => \*STDOUT,
+				  -format => 'psi',
+                                  -idlength => 20);
+
 # get the alignments on a piece of the DnaFrag
 my $genomic_align_blocks = $comparaDBA->get_GenomicAlignBlockAdaptor->
      fetch_all_by_MethodLinkSpeciesSet_DnaFrag($method_link_species_set, $dnafrag, 75550000, 75560000);
@@ -44,46 +51,11 @@ foreach my $this_genomic_align_block (@{$genomic_align_blocks}) {
           $this_genomic_align->dnafrag_strand),
       "\n";
   }
-  print_simple_align($this_genomic_align_block->get_SimpleAlign, 80);
+
+  # print out the alignment (Bio::SimpleAlign object) in the requested
+  # output format through the Bio::AlignIO handler
+  print $alignIO $this_genomic_align_block->get_SimpleAlign;
 
 }
 
 exit(0);
-
-
-sub print_simple_align
-{
-  my $alignment = shift;
-  my $aaPerLine = shift;
-  $aaPerLine=40 unless($aaPerLine and $aaPerLine > 0);
-
-  my ($seq1, $seq2)  = $alignment->each_seq;
-  my $seqStr1 = "|".$seq1->seq().'|';
-  my $seqStr2 = "|".$seq2->seq().'|';
-
-  my $enddiff = length($seqStr1) - length($seqStr2);
-  while($enddiff>0) { $seqStr2 .= " "; $enddiff--; }
-  while($enddiff<0) { $seqStr1 .= " "; $enddiff++; }
-
-  my $label1 = sprintf("%10s : ", $seq1->id);
-  my $label2 = sprintf("%10s : ", "");
-  my $label3 = sprintf("%10s : ", $seq2->id);
-
-  my $line2 = "";
-  for(my $x=0; $x<length($seqStr1); $x++) {
-    if(substr($seqStr1,$x,1) eq substr($seqStr2, $x,1)) { $line2.='|'; } else { $line2.=' '; }
-  }
-
-  my $offset=0;
-  my $numLines = (length($seqStr1) / $aaPerLine);
-  while($numLines>0) {
-    printf("$label1 %s\n", substr($seqStr1,$offset,$aaPerLine));
-    printf("$label2 %s\n", substr($line2,$offset,$aaPerLine));
-    printf("$label3 %s\n", substr($seqStr2,$offset,$aaPerLine));
-    print("\n\n");
-    $offset+=$aaPerLine;
-    $numLines--;
-  }
-}
-
-1;
