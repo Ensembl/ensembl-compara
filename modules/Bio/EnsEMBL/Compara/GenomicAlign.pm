@@ -98,7 +98,7 @@ corresponds to dnafrag.dnafrag_id (external ref.)
 
 =item dnafrag
 
-Bio::EnsEMBL::Compara::DBSQL::DnaFrag object corresponding to dnafrag_id
+Bio::EnsEMBL::Compara::DnaFrag object corresponding to dnafrag_id
 
 =item dnafrag_start
 
@@ -135,7 +135,12 @@ in conjuction with cigar_line to get the aligned_sequence.
 
 Javier Herrero (jherrero@ebi.ac.uk)
 
-This modules is part of the Ensembl project http://www.ensembl.org
+=head1 CONTACT
+
+This modules is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
@@ -212,6 +217,12 @@ sub new {
       
       deprecate($warn_message);
 
+      $self->{_consensus_dnafrag} = new Bio::EnsEMBL::Compara::GenomicAlign(
+              -dnafrag => $consensus_dnafrag,
+          );
+      $self->{_query_dnafrag} = new Bio::EnsEMBL::Compara::GenomicAlign(
+              -dnafrag => $query_dnafrag,
+          );
       $self->consensus_dnafrag( $consensus_dnafrag ) if defined $consensus_dnafrag;
       $self->consensus_start( $consensus_start ) if defined $consensus_start;
       $self->consensus_end( $consensus_end ) if defined $consensus_end;
@@ -331,10 +342,12 @@ sub genomic_align_block {
         $self->{'genomic_align_block'}->dbID($self->{'genomic_align_block_id'});
       }
 #       warning("Defining both genomic_align_block_id and genomic_align_block");
-      throw("dbID of genomic_align_block object does not match previously defined genomic_align_block_id")
+      throw("dbID of genomic_align_block object does not match previously defined genomic_align_block_id.".
+              " If you want to override a Bio::EnsEMBL::Compara::GenomicAlign object, you can reset the ".
+              "genomic_align_block_id using \$genomic_align->genomic_align_block_id(0)")
           if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
-#     } else {
-#       $self->{'genomic_align_block_id'} = $genomic_align_block->dbID;
+    } else {
+      $self->{'genomic_align_block_id'} = $genomic_align_block->dbID;
     }
 
   } elsif (!defined($self->{'genomic_align_block'}) and defined($self->genomic_align_block_id) and
@@ -423,9 +436,14 @@ sub method_link_species_set {
         if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
     $self->{'method_link_species_set'} = $method_link_species_set;
     if ($self->{'method_link_species_set_id'}) {
+      if (!$self->{'method_link_species_set'}->dbID) {
+        $self->{'method_link_species_set'}->dbID($self->{'method_link_species_set_id'});
+      }
 #       warning("Defining both method_link_species_set_id and method_link_species_set");
       throw("method_link_species_set object does not match previously defined method_link_species_set_id")
           if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
+    } else {
+      $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
     }
   
   } elsif (!defined($self->{'method_link_species_set'})) {
@@ -518,9 +536,14 @@ sub dnafrag {
         if (!$dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
     $self->{'dnafrag'} = $dnafrag;
     if ($self->{'dnafrag_id'}) {
+      if (!$self->{'dnafrag'}->dbID) {
+        $self->{'dnafrag'}->dbID($self->{'dnafrag_id'});
+      }
 #       warning("Defining both dnafrag_id and dnafrag");
       throw("dnafrag object does not match previously defined dnafrag_id")
           if ($self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
+    } else {
+      $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
     }
   
   } elsif (!defined($self->{'dnafrag'}) and defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
@@ -691,10 +714,14 @@ sub aligned_sequence {
 
     $self->{'aligned_sequence'} = $aligned_sequence;
 
-  } elsif (!defined($self->{'aligned_sequence'}) and defined($self->cigar_line)) {
-    $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
-        $self->original_sequence, $self->{'cigar_line'});
-    $self->{'aligned_sequence'} = $aligned_sequence;
+  } elsif (!defined($self->{'aligned_sequence'})) {
+    # Try to get the aligned_sequence from other sources...
+    if (defined($self->cigar_line) and defined($self->original_sequence)) {
+      # ...from the corresponding orginial_sequence and cigar_line
+      $aligned_sequence = _get_aligned_sequence_from_original_sequence_and_cigar_line(
+          $self->original_sequence, $self->{'cigar_line'});
+      $self->{'aligned_sequence'} = $aligned_sequence;
+    }
   }
 
   return $self->{'aligned_sequence'};
@@ -726,14 +753,17 @@ sub cigar_line {
   if (defined($arg)) {
     $self->{'cigar_line'} = $arg ;
 
-  } elsif (!defined($self->{'cigar_line'}) and defined($self->{'aligned_sequence'})) {
-    # Try to get the cigar_line from the aligned sequence
-    my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
-    $self->cigar_line($cigar_line);
-  
-  } elsif (!defined($self->{'cigar_line'}) and defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-    # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-    $self->adaptor->retrieve_all_direct_attributes($self);
+  } elsif (!defined($self->{'cigar_line'})) {
+    # Try to get the cigar_line from other sources...
+    if (defined($self->{'aligned_sequence'})) {
+      # ...from the aligned sequence
+      my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
+      $self->cigar_line($cigar_line);
+    
+    } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
   }
 
   return $self->{'cigar_line'};
@@ -876,6 +906,7 @@ sub original_sequence {
       # ...from the dnafrag object. Uses dnafrag, dnafrag_start and dnafrag_methods instead of the attibutes
       # in the <if> clause because the attributes can be retrieved from other sources if they have not been
       # already defined.
+      throw if (!$self->dnafrag);
       $self->{'original_sequence'} = $self->dnafrag->slice->subseq($self->dnafrag_start, $self->dnafrag_end);
     }
   }
@@ -1030,13 +1061,16 @@ sub consensus_dnafrag {
   ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
   if (!defined($self->genomic_align_block)) {
     my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
+            -genomic_align_array => [
+                $self->{_consensus_dnafrag},
+                $self->{_query_dnafrag}
+              ]
         );
     # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag = $consensus_dnafrag
+  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag($consensus_dnafrag)
       if (defined($consensus_dnafrag));
   return $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag;
 }
@@ -1067,7 +1101,7 @@ sub consensus_start {
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_start = $consensus_dnafrag_start  
+  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_start($consensus_dnafrag_start)
       if (defined($consensus_dnafrag_start));
   return $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_start;
 }
@@ -1098,7 +1132,7 @@ sub consensus_end {
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_end = $consensus_dnafrag_end
+  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_end($consensus_dnafrag_end)
       if (defined($consensus_dnafrag_end));
   return $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_end;
 }
@@ -1123,13 +1157,16 @@ sub query_dnafrag {
   ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
   if (!defined($self->genomic_align_block)) {
     my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
+            -genomic_align_array => [
+                $self->{_consensus_dnafrag},
+                $self->{_query_dnafrag}
+              ]
         );
     # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag = $query_dnafrag
+  $self->genomic_align_block->get_old_query_genomic_align->dnafrag($query_dnafrag)
       if (defined($query_dnafrag));
   return $self->genomic_align_block->get_old_query_genomic_align->dnafrag;
 }
@@ -1160,7 +1197,7 @@ sub query_start {
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_start = $query_dnafrag_start
+  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_start($query_dnafrag_start)
       if (defined($query_dnafrag_start));
   return $self->genomic_align_block->get_old_query_genomic_align->dnafrag_start;
 }
@@ -1191,7 +1228,7 @@ sub query_end {
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_end = $query_dnafrag_end
+  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_end($query_dnafrag_end)
       if (defined($query_dnafrag_end));
   return $self->genomic_align_block->get_old_query_genomic_align->dnafrag_end;
 }
@@ -1222,7 +1259,7 @@ sub query_strand {
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand = $query_dnafrag_strand
+  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand($query_dnafrag_strand)
       if (defined($query_dnafrag_strand));
   return $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand;
 }
@@ -1269,7 +1306,7 @@ sub score {
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->score = $score if (defined($score));
+  $self->genomic_align_block->score($score) if (defined($score));
   return $self->genomic_align_block->score;
 }
 
@@ -1299,7 +1336,7 @@ sub perc_id {
     $self->{'genomic_align_block'} = $genomic_align_block;
   }
 
-  $self->genomic_align_block->perc_id = $perc_id if (defined($perc_id));
+  $self->genomic_align_block->perc_id($perc_id) if (defined($perc_id));
   return $self->genomic_align_block->perc_id;
 }
 
