@@ -14,11 +14,15 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
+my $_paf_build_homology_idx = 1; #global index counter
+
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 use vars qw(@ISA);
 use strict;
 use Bio::EnsEMBL::Root;
+use Bio::EnsEMBL::Compara::Homology;
+use Bio::EnsEMBL::Compara::Attribute;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
@@ -114,6 +118,105 @@ sub init_from_feature {
   $self->perc_ident(int($feature->identical_matches*100/$feature->alignment_length));
   $self->perc_pos(int($feature->positive_matches*100/$feature->alignment_length));
 }
+
+
+sub return_as_homology
+{
+  my $self = shift;
+
+  # create an Homology object
+  my $homology = new Bio::EnsEMBL::Compara::Homology;
+  my $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
+  $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
+  $homology->stable_id($stable_id);
+  $homology->source_name("ENSEMBL_HOMOLOGS");
+
+  # NEED TO BUILD THE Attributes (ie homology_members)
+  #
+  # QUERY member
+  #
+  my $attribute;
+  $attribute = new Bio::EnsEMBL::Compara::Attribute;
+  $attribute->member_id($self->query_member->dbID);
+  $attribute->cigar_start($self->qstart);
+  $attribute->cigar_end($self->qend);
+  my $qlen = ($self->qend - $self->qstart + 1);
+  $attribute->perc_cov(int($qlen*100/$self->query_member->seq_length));
+  $attribute->perc_id(int($self->identical_matches*100.0/$qlen));
+  $attribute->perc_pos(int($self->positive_matches*100/$qlen));
+
+  my $cigar_line = $self->cigar_line;
+  #print("original cigar_line '$cigar_line'\n");
+  $cigar_line =~ s/I/M/g;
+  $cigar_line = compact_cigar_line($cigar_line);
+  $attribute->cigar_line($cigar_line);
+  #print("   '$cigar_line'\n");
+
+  $homology->add_Member_Attribute([$self->query_member, $attribute]);
+
+  # HIT member
+  #
+  $attribute = new Bio::EnsEMBL::Compara::Attribute;
+  $attribute->member_id($self->hit_member->dbID);
+  $attribute->cigar_start($self->hstart);
+  $attribute->cigar_end($self->hend);
+  my $hlen = ($self->hend - $self->hstart + 1);
+  $attribute->perc_cov(int($hlen*100/$self->hit_member->seq_length));
+  $attribute->perc_id(int($self->identical_matches*100.0/$hlen));
+  $attribute->perc_pos(int($self->positive_matches*100/$hlen));
+
+  $cigar_line = $self->cigar_line;
+  #print("original cigar_line\n    '$cigar_line'\n");
+  $cigar_line =~ s/D/M/g;
+  $cigar_line =~ s/I/D/g;
+  $cigar_line = compact_cigar_line($cigar_line);
+  $attribute->cigar_line($cigar_line);
+  #print("   '$cigar_line'\n");
+
+  $homology->add_Member_Attribute([$self->hit_member, $attribute]);
+
+  return $homology;
+}
+
+
+sub compact_cigar_line
+{
+  my $cigar_line = shift;
+
+  #print("cigar_line '$cigar_line' => ");
+  my @pieces = ( $cigar_line =~ /(\d*[MDI])/g );
+  my @new_pieces = ();
+  foreach my $piece (@pieces) {
+    $piece =~ s/I/M/;
+    if (! scalar @new_pieces || $piece =~ /D/) {
+      push @new_pieces, $piece;
+      next;
+    }
+    if ($piece =~ /\d*M/ && $new_pieces[-1] =~ /\d*M/) {
+      my ($matches1) = ($piece =~ /(\d*)M/);
+      my ($matches2) = ($new_pieces[-1] =~ /(\d*)M/);
+      if (! defined $matches1 || $matches1 eq "") {
+        $matches1 = 1;
+      }
+      if (! defined $matches2 || $matches2 eq "") {
+        $matches2 = 1;
+      }
+      $new_pieces[-1] = $matches1 + $matches2 . "M";
+    } else {
+      push @new_pieces, $piece;
+    }
+  }
+  my $new_cigar_line = join("", @new_pieces);
+  #print(" '$new_cigar_line'\n");
+  return $new_cigar_line;
+}
+
+
+##########################
+#
+# getter/setter methods
+#
+##########################
 
 sub query_member {
   my ($self,$arg) = @_;
