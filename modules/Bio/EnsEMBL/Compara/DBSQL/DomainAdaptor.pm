@@ -1,9 +1,7 @@
-# $Id$
+#
+# BioPerl module for Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor
 # 
-# BioPerl module for Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
-# 
-# Initially cared for by Philip Lijnzaad <lijnzaad@ebi.ac.uk>
-# Now cared by Elia Stupka <elia@fugu-sg.org> and Abel Ureta-Vidal <abel@ebi.ac.uk>
+# Cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
 #
 # Copyright EnsEMBL
 #
@@ -13,38 +11,26 @@
 
 =head1 NAME
 
-FamilyAdaptor - DESCRIPTION of Object
-
-  This object represents a family coming from a database of protein families.
+DomainAdaptor
 
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-  my $famdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-user   => 'myusername',
-								       -dbname => 'myfamily_db',
-								       -host   => 'myhost');
+  my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-user   => 'myusername',
+						       -dbname => 'mycompra_db',
+						       -host   => 'myhost');
 
-  my $fam_adtor = $famdb->get_FamilyAdaptor;
+  my $da = $famdb->get_DomainAdaptor;
+  my $dom = $da->fetch_by_stable_id('PR00262');
 
-  my $fam = $fam_adtor->fetch_by_stable_id('ENSF000013034');
-  my @fam = @{$fam_adtor->fetch_by_dbname_id('SPTR', 'P000123')};
-  @fam = @{$fam_adtor->fetch_by_description_with_wildcards('interleukin',1)};
-  @fam = @{$fam_adtor->fetch_all()};
+  my $ma = $db->get_MemberAdaptor;
+  my $member = $ma->fetch_by_source_stable_id('SWISSPROT', 'YSV4_CAEEL')};
+  my @dom = @{$da->fetch_by_Member($member)};
 
-  ### You can add the FamilyAdaptor as an 'external adaptor' to the 'main'
-  ### Ensembl database object, then use it as:
 
-  $ensdb = new Bio::EnsEMBL::DBSQL::DBAdaptor->(-user....);
-
-  $ensdb->add_db_adaptor('MyfamilyAdaptor', $fam_adtor);
-
-  # then later on, elsewhere: 
-  $fam_adtor = $ensdb->get_db_adaptor('MyfamilyAdaptor');
-
-  # also available:
-  $ensdb->get_all_db_adaptors;
-  $ensdb->remove_db_adaptor('MyfamilyAdaptor');
+  @dom = @{$da->fetch_by_description_with_wildcards('interleukin',1)};
+  @dom = @{$da->fetch_all};
 
 =head1 DESCRIPTION
 
@@ -53,16 +39,11 @@ clustering SWISSPROT/TREMBL and ensembl protein sets using the TRIBE MCL algorit
 The clustering neatly follows the SWISSPROT DE-lines, which are 
 taken as the description of the whole family.
 
-The objects can be read from and write to a family database.
-
-For more info, see ensembl-doc/family.txt
+The objects can be read from and write to a compara database.
 
 =head1 CONTACT
 
- Philip Lijnzaad <Lijnzaad@ebi.ac.uk> [original perl modules]
- Anton Enright <enright@ebi.ac.uk> [TRIBE algorithm]
- Elia Stupka <elia@fugu-sg.org> [refactoring]
- Able Ureta-Vidal <abel@ebi.ac.uk> [multispecies migration]
+ Abel Ureta-Vidal <abel@ebi.ac.uk>
 
 =head1 APPENDIX
 
@@ -80,11 +61,11 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 
-=head2 fetch_by_relation
+=head2 fetch_by_Member
 
  Arg [1]    : string $dbname
  Arg [2]    : string $member_stable_id
- Example    : $fams = $FamilyAdaptor->fetch_of_dbname_id('SPTR', 'P01235');
+ Example    : $fams = $FamilyAdaptor->fetch_of_source_stable_id('SPTR', 'P01235');
  Description: find the family to which the given database and  member_stable_id belong
  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
               (could be empty or contain more than one Family in the case of ENSEMBLGENE only)
@@ -93,61 +74,32 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =cut
 
-sub fetch_by_relation {
-  my ($self, $relation) = @_;
+sub fetch_by_Member {
+  my ($self, $member) = @_;
 
-  my $join;
-  my $constraint;
+  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+  }
 
-  $self->throw() 
-    unless (defined $relation && ref $relation);
-  
-  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
-    $join = [['domain_member', 'dm'], 'd.domain_id = dm.domain_id'];
-    my $member_id = $relation->dbID;
-    $constraint = "dm.member_id = $member_id";
-  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
-#    my $domain_id = $relation->dbID;
-#    $constraint = "df.domain_id = $domain_id";
-#  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-#  }
-  else {
-    $self->throw();
-  }
+  my $join = [['domain_member', 'dm'], 'd.domain_id = dm.domain_id'];
+  my $constraint = "dm.member_id = " .$member->dbID;
 
   return $self->generic_fetch($constraint, $join);
 }
 
-sub fetch_by_relation_source {
-  my ($self, $relation, $source_name) = @_;
+sub fetch_by_Member_source {
+  my ($self, $member, $source_name) = @_;
 
-  my $join;
-  my $constraint = "s.source_name = $source_name";
+  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+  }
 
-  $self->throw() 
-    unless (defined $relation && ref $relation);
-  
   $self->throw("source_name arg is required\n")
     unless ($source_name);
 
-  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
-    $join = [['domain_member', 'dm'], 'd.domain_id = dm.domain_id'];
-    my $member_id = $relation->dbID;
-    $constraint .= " AND dm.member_id = $member_id";
-  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
-#    my $domain_id = $relation->dbID;
-#    $constraint = " AND df.domain_id = $domain_id";
-#  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-#  }
-  else {
-    $self->throw();
-  }
+  my $join = [['domain_member', 'dm'], 'd.domain_id = dm.domain_id'];
+  my $constraint = "s.source_name = '$source_name'";
+  $constraint .= " AND dm.member_id = " . $member->dbID;
 
   return $self->generic_fetch($constraint, $join);
 }
@@ -180,47 +132,6 @@ sub fetch_by_description_with_wildcards{
     }
 
     return $self->generic_fetch($constraint);
-}
-
-=head2 fetch_Taxon_by_dbname_dbID
-
- Arg [1]    : string $dbname
-              Either "ENSEMBLGENE", "ENSEMBLPEP" or "SPTR" 
- Arg [2]    : int dbID
-              a family_id
- Example    : $FamilyAdaptor->fetch_Taxon_by_dbname('ENSEMBLGENE',1)
- Description: get all the taxons that belong to a particular database and family_id
- Returntype : an array reference of Bio::EnsEMBL::Compara::Taxon objects
-              (which may be empty)
- Exceptions : when missing argument
- Caller     : general
-
-=cut
-
-sub fetch_Taxon_by_dbname_dbID {
-  my ($self,$dbname,$dbID) = @_;
-  
-  $self->throw("Should give defined databasename and family_id as arguments\n") unless (defined $dbname && defined $dbID);
-
-  my $q = "SELECT distinct(taxon_id) as taxon_id
-           FROM family f, family_members fm, external_db edb
-           WHERE f.family_id = fm.family_id
-           AND fm.external_db_id = edb.external_db_id 
-           AND f.family_id = $dbID
-           AND edb.name = '$dbname'"; 
-  $q = $self->prepare($q);
-  $q->execute;
-
-  my @taxons = ();
-
-  while (defined (my $rowhash = $q->fetchrow_hashref)) {
-    my $TaxonAdaptor = $self->db->get_TaxonAdaptor;
-    my $taxon = $TaxonAdaptor->fetch_by_taxon_id($rowhash->{taxon_id});
-    push @taxons, $taxon;
-  }
-    
-  return \@taxons;
-
 }
 
 ##################
@@ -298,17 +209,19 @@ sub store {
   my $sth = $self->prepare($sql);
   $sth->execute($dom->stable_id);
   my $rowhash = $sth->fetchrow_hashref;
+
+  $dom->source_id($self->store_source($dom->source_name));
+
   if ($rowhash->{domain_id}) {
-    return $rowhash->{domain_id};
+    $dom->dbID($rowhash->{domain_id});
+  } else {
+  
+    $sql = "INSERT INTO domain (stable_id, source_id, description) VALUES (?,?,?)";
+    $sth = $self->prepare($sql);
+    $sth->execute($dom->stable_id,$dom->source_id,$dom->description);
+    $dom->dbID($sth->{'mysql_insertid'});
   }
   
-  $dom->source_id($self->store_source($dom->source_name));
-  
-  $sql = "INSERT INTO domain (stable_id, source_id, description) VALUES (?,?,?)";
-  $sth = $self->prepare($sql);
-  $sth->execute($dom->stable_id,$dom->source_id,$dom->description);
-  $dom->dbID($sth->{'mysql_insertid'});
-
   foreach my $member_attribute (@{$dom->get_all_Member}) {
     $self->store_relation($member_attribute, $dom);
   }
