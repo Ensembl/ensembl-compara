@@ -1,12 +1,23 @@
+=head1 NAME
+
+Bio::EnsEMBL::Glyph::Symbol::farrow
+
+=head1 DESCRIPTION
+
+A collection of drawing-code glyphs to represent a forward-pointing arrow.
+
+=cut
+
 package Bio::EnsEMBL::Glyph::Symbol::farrow;
 use strict;
 use Sanger::Graphics::Glyph::Poly;
 
 sub draw {
-    my ($self, $rowheight, $start, $end, $pix_per_bp, $y_offset, $attribs) = @_;
-    warn "($rowheight, $start, $end, $pix_per_bp, $y_offset, $attribs)";
+    my ($class, $rowheight, $start, $end, $pix_per_bp, $y_offset, $attribs) = @_;
     
-    my $colour = $attribs->{'fgcolor'} || $attribs->{'colour'};
+    my $linecolour = $attribs->{'fgcolor'};
+    my $fillcolour = $attribs->{'bgcolor'} || $attribs->{'colour'};
+
     my $height = $attribs->{'height'};
 
     my $slope = $height/2/$pix_per_bp;
@@ -24,7 +35,8 @@ sub draw {
         ];
     return new Sanger::Graphics::Glyph::Poly({
         'points'    => $points,
-        'colour'    => $colour,
+	'colour'     => $fillcolour,
+	'bordercolour' => $linecolour,
         'absolutey' => 1
     });
 
