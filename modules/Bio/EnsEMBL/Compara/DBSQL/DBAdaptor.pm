@@ -50,8 +50,6 @@ use strict;
 
 use Bio::Root::RootI;
 use Bio::EnsEMBL::DB::ObjI;
-
-use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 use DBI;
 
 @ISA = qw(Bio::Root::RootI Bio::EnsEMBL::DB::ObjI);
