@@ -107,7 +107,7 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
             }
 	    $start = $f->hstart() if $f->hstart < $start;
 	    $end   = $f->hend() if $f->hend >$end;
-            print STDERR "F: ",$f->id," - ",$f->start()," - ",$f->end(),"\n";
+       #     print STDERR "F: ",$f->id," - ",$f->start()," - ",$f->end(),"\n";
             my $glyph = new Bio::EnsEMBL::Glyph::Rect({
                 'x'          => $START,
                 'y'          => 0,
