@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 31;
+    plan tests => 32;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -84,11 +84,36 @@ my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
 my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
 my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
-my $compara_db = $multi->get_DBAdaptor( "compara" );
-  
-my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor();
-my $genomic_align_block_adaptor = $compara_db->get_GenomicAlignBlockAdaptor();
-my $method_link_species_set_adaptor = $compara_db->get_MethodLinkSpeciesSetAdaptor();
+my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
+my $hs_dba = $homo_sapiens->get_DBAdaptor('core');
+my $mm_dba = $mus_musculus->get_DBAdaptor('core');
+my $rn_dba = $rattus_norvegicus->get_DBAdaptor('core');
+
+my $mouse_name     = $mm_dba->get_MetaContainer->get_Species->binomial;
+my $mouse_assembly = $mm_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
+my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
+my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
+my $rat_name       = $rn_dba->get_MetaContainer->get_Species->binomial;
+my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
+
+my $gdba = $compara_db_adaptor->get_GenomeDBAdaptor;
+
+my $hs_gdb = $gdba->fetch_by_name_assembly($human_name,$human_assembly);
+$hs_gdb->db_adaptor($hs_dba);
+my $mm_gdb = $gdba->fetch_by_name_assembly($mouse_name,$mouse_assembly);
+$mm_gdb->db_adaptor($mm_dba);
+my $rn_gdb = $gdba->fetch_by_name_assembly($rat_name,$rat_assembly);
+$rn_gdb->db_adaptor($rn_dba);
+
+
+my $slice_adaptor = $homo_sapiens->get_DBAdaptor("core")->get_SliceAdaptor();
+my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor();
+my $genomic_align_block_adaptor = $compara_db_adaptor->get_GenomicAlignBlockAdaptor();
+my $method_link_species_set_adaptor = $compara_db_adaptor->get_MethodLinkSpeciesSetAdaptor();
+
+#####################################################################
+##  DATA USED TO TEST API
+##
 
 my $genomic_align_block;
 my $all_genomic_align_blocks;
@@ -109,10 +134,18 @@ my $dnafrag_start = 50000000;
 my $dnafrag_end = 50001000;
 my $all_genomic_align_block_ids = [3639645, 3639663];
 
+my $slice_coord_system_name = "chromosome";
+my $slice_seq_region_name = "14";
+my $slice_start = 50000000;
+my $slice_end = 50001000;
+
+##
+#####################################################################
+
 # 
 # 1-10
 # 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::fetch_by_dbID method");
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_by_dbID method");
   $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
   ok($genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
   ok($genomic_align_block->dbID, $genomic_align_block_id);
@@ -142,9 +175,36 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::fetch_by_dbI
 # 
 # 11
 # 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::fetch_all_by_dnafrag_and_method_link_species_set method");
-  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_dnafrag_and_method_link_species_set(
-      $dnafrag_id, $dnafrag_start, $dnafrag_end, $method_link_species_set_id);
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by_Slice method");
+  my $slice = $slice_adaptor->fetch_by_region(
+          $slice_coord_system_name,
+          $slice_seq_region_name,
+          $slice_start,
+          $slice_end
+      );
+  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_Slice(
+      $method_link_species_set_id, $slice);
+  do {
+    my $all_fails;
+    foreach my $this_genomic_align_block (@{$all_genomic_align_blocks}) {
+      my $fail = $this_genomic_align_block->dbID;
+      foreach my $that_genomic_align_block_id (@$all_genomic_align_block_ids) {
+        if ($that_genomic_align_block_id == $this_genomic_align_block->dbID) {
+          $fail = undef;
+          last;
+        }
+      }
+      $all_fails .= " <$fail> " if ($fail);
+    }
+    ok($all_fails, undef);
+  };
+
+# 
+# 11
+# 
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->fetch_all_by_DnaFrag method");
+  $all_genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_DnaFrag(
+      $method_link_species_set_id, $dnafrag_id, $dnafrag_start, $dnafrag_end);
   do {
     my $all_fails;
     foreach my $this_genomic_align_block (@{$all_genomic_align_blocks}) {
@@ -163,7 +223,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::fetch_all_by
 # 
 # 12-18
 # 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::retrieve_all_direct_attributes method");
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->retrieve_all_direct_attributes method");
   $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -dbID => $genomic_align_block_id,
           -adaptor => $genomic_align_block_adaptor
@@ -180,7 +240,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::retrieve_all
 # 
 # 19
 # 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::store method");
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->store method");
   $genomic_align_1->dbID(0);
   $genomic_align_1->genomic_align_block_id(0);
   $genomic_align_2->dbID(0);
@@ -222,7 +282,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::store method
   };
 
 $genomic_align_block_id = $genomic_align_block->dbID;
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor::delete method");
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor->delete method");
   $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
   ok($genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
   $genomic_align_block = $genomic_align_block_adaptor->delete_by_dbID($genomic_align_block_id);
