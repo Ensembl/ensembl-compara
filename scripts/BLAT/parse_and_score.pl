@@ -2,7 +2,6 @@
 
 
 use strict;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Root;
@@ -15,21 +14,17 @@ use Bio::EnsEMBL::Compara::Matrix::IO;
 use Getopt::Long;
 
 
+
+######rewrite so that it dosn't link to compara just core as dosn't actually use compara
+
 my $usage="
 $0 [-help]
 	-F 	filename		(Fr2.229.err)
 	-O 	output file name 	(Fr2HS34_chr22 for gff line data)
 	-D 	diff between aligns to be included as 1 (15000)
 	-S1 	species 1 (Query)	(Fr2)
-	-S1_sps latin name		\"Fugu rubripes\"
-	-S1_ass	Assembly name		FUGU2
 	-S2 	species 2 (target)	(Hs34)
-	-S2_sps latin name		\"Homo sapiens\"
-	-S2_ass	assembly		NCBI34
-	-CF 	conf_file		Compara.conf
-	-H 	compara_host		ecs4
-	-P 	compara_port		3352
-	-DB 	compara name		ensembl_compara_21_1
+	-CF 	conf_file		~/.Registry.conf
 	-M  	matrix_file		blosum62 (optional)
 	-R	reverse output order(tbx file for query rather than target)	0 or 1 1=reverse (optional)
 	";
@@ -37,10 +32,10 @@ $0 [-help]
  
 
 
-my ($file, $outfile, $track, $data ,$sps1 ,$sps1_ass, $sps1_sps, $sps2, $sps2_ass, $sps2_sps, $diff, $host, $port, $dbname, $matrix_file, $reverse_output, $help);
+my ($file, $outfile, $track, $data ,$sps1, $sps2, $diff, $matrix_file, $reverse_output, $help);
 
 my $minus_count=0;
-my $conf_file="~/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf";
+my $conf_file="~/.Registry.conf";
 my @new_features=();
 my $matrix;
 my %prev;
@@ -55,37 +50,35 @@ GetOptions(	'help'		=>	\$help,
 		'F=s'		=>	\$file,
 		'O=s'		=>	\$outfile, 
 		'S1=s'		=>	\$sps1,
-		'S1_ass=s'	=>	\$sps1_ass, 
-		'S1_sps=s'	=>	\$sps1_sps, 
 		'S2=s'		=>	\$sps2, 
-		'S2_ass=s'	=>	\$sps2_ass, 
-		'S2_sps=s'	=>	\$sps2_sps, 
 		'D=i'		=>	\$diff,
 		'CF=s'		=>	\$conf_file, 
-		'H=s'		=>	\$host, 
-		'P=i'		=>	\$port, 
-		'DB=s'		=>	\$dbname, 
 		'M=s'		=>	\$matrix_file,
 		'R=i'		=>	\$reverse_output);
 		
 if ($help){print $usage; exit 0;}
 
-my $t3stats=$outfile.".t3";
-$track=$outfile."_TransBLAT";
+
+if (defined $conf_file) {
+  Bio::EnsEMBL::Registry->load_all($conf_file);
+}
+else {
+	print " Need Registry file \n"; exit 2;
+	}
+
+my $db = "Bio::EnsEMBL::Registry";
+
+
+#my $t3stats=$outfile.".t3";
+#$track=$outfile."_TransBLAT";
 $data=$outfile.".data";
-$outfile=$outfile.".tbx";
+#$outfile=$outfile.".tbx";
 
 if ($reverse_output){print "*********$reverse_output*********\n\n";}
 
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
-						      -user => 'ensro',
-						      -port => $port,
-						      -dbname => $dbname,
-						      -conf_file => $conf_file);
-
-my $sliceadaptor1 = $db->get_db_adaptor($sps1_sps,$sps1_ass)->get_SliceAdaptor;
-my $sliceadaptor2 = $db->get_db_adaptor($sps2_sps,$sps2_ass)->get_SliceAdaptor;
+my $sliceadaptor1 = $db->get_adaptor($sps1, 'core', 'Slice');
+my $sliceadaptor2 = $db->get_adaptor($sps2, 'core', 'Slice');
 
 ###########Get matrix
 if ($matrix_file){
@@ -94,13 +87,13 @@ my $mp = new Bio::EnsEMBL::Compara::Matrix::IO (-format => 'scoring',
 $matrix = $mp->next_matrix;
 }
 	open (FILE, $file) or die  "can't open $file: $!";
-	open (OUT,  ">$outfile") or die "can't open $outfile: $!";
+	#open (OUT,  ">$outfile") or die "can't open $outfile: $!";
 	open (DATA, ">$data") or die "can't open $data: $!";
-	open (TSTATS, ">$t3stats") or die "can't open $t3stats: $!";
-	print TSTATS "sps1\tchr1\tQ_start\tQ_end\tQ_strand\tsps2\tchr2\tT_start\tT_end\tT_strand\tscore\tident\tposit\tcigar\tt0 t1 t2\tbase3\tlen\tsum_len\n"; 
+	#open (TSTATS, ">$t3stats") or die "can't open $t3stats: $!";
+	#print TSTATS "sps1\tchr1\tQ_start\tQ_end\tQ_strand\tsps2\tchr2\tT_start\tT_end\tT_strand\tscore\tident\tposit\tcigar\tt0 t1 t2\tbase3\tlen\tsum_len\n"; 
 		
-	print OUT "track name=$track description=\"BLAT of $sps1 with $sps2(GFF)\" useScore=1 color=333300\n";
-	print DATA "no(group)\tsps1\tchr1\tprog\tfeat\tQ_start\tQ_end\tQ_strand\tsps2\tchr2\tT_start\tT_end\tT_strand\tscore\tident\tposit\tcigar\n";
+	#print OUT "track name=$track description=\"BLAT of $sps1 with $sps2(GFF)\" useScore=1 color=333300\n";
+	#print DATA "no(group)\tsps1\tchr1\tprog\tfeat\tQ_start\tQ_end\tQ_strand\tsps2\tchr2\tT_start\tT_end\tT_strand\tscore\tident\tposit\tcigar\n";
 	
 	LINE:while (my $line=<FILE>)
 		{
@@ -116,29 +109,36 @@ $matrix = $mp->next_matrix;
 ################################################################################################		
 		
 		unless ((defined($atrib[9])) && ($atrib[0] =~ /$sps1/) && ($atrib[4]-$atrib[3] >=15)){ next LINE;}
-		my ($chr1, $chr1_2, $offset1); 
+		my ($chr1, $chr1_2, $offset1, $seq_type1); my $chr2; my $offset2; my $seq_type2;
 		if ($sps1 =~/Am/){
 			($chr1, $chr1_2, $offset1) = split /\./,$atrib[0];#just for BEE
 			$chr1=$chr1.".".$chr1_2;#just for BEE
 			}
-		else{
-			$atrib[0] =~/(\S+)\.(\d+)$/; #use for rest
-		 	$chr1 = $1;
-			$offset1=$2;
+		elsif ($sps1 =~/Fr/){
+			($chr1, $offset1) = split /\./,$atrib[0];
+			$chr1=~s/FrChr_//;
+			$seq_type1="scaffold";
 			}
-		$chr1=~s/$sps1//;
-		my $chr2; my $offset2;
-		#my ($chr2, $offset2) = split /\./,$atrib[5];
-		$atrib[5] =~/(\S+)\.(\d+)$/;
-		 $chr2 = $1;
-		 $offset2=$2;
+		else{
+			$atrib[0] =~/$sps1\.(\S+):(\S+)\.(\d+)$/; #use for rest
+			$seq_type1= $1;
+		 	$chr1 = $2;
+			$offset1=$3;
+			}
+				
+#		$chr1=~s/$sps1//;
+			
+		$atrib[5] =~/$sps2\.(\S+):(\S+)\.(\d+)$/;
+		$seq_type2=$1;
+		 $chr2 = $2;
+		$offset2=$3;
+			 
 		
 	
 	
 		
 		
 		
-		$chr2=~s/$sps2//;
 		
 		if($chr2=~/\.\D+:(\S+)$/){
 			$chr2=$1; 
@@ -630,15 +630,15 @@ else{
 				}
 			}
 		if ($reverse_output){
-			print OUT "$array->{chr1}\t$array->{prog}\t$array->{feat}\t$array->{Q_start}\t$array->{Q_end}\t$array->{score}\t$array->{Q_strand}\t.\t$x\t\n";		
+			#print OUT "$array->{chr1}\t$array->{prog}\t$array->{feat}\t$array->{Q_start}\t$array->{Q_end}\t$array->{score}\t$array->{Q_strand}\t.\t$x\t\n";		
 			}
 		else{
-			print OUT "$array->{chr2}\t$array->{prog}\t$array->{feat}\t$array->{T_start}\t$array->{T_end}\t$array->{score}\t$array->{T_strand}\t.\t$x\t\n";	
+			#print OUT "$array->{chr2}\t$array->{prog}\t$array->{feat}\t$array->{T_start}\t$array->{T_end}\t$array->{score}\t$array->{T_strand}\t.\t$x\t\n";	
 			}	
 		print DATA "$ok($x)\t$array->{sps1}\t$array->{chr1}\t$array->{prog}\t$array->{feat}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\n";
 		
 		
-		print TSTATS "$array->{sps1}\t$array->{chr1}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$array->{len}\t$array->{sum_len}\n"; 
+		#print TSTATS "$array->{sps1}\t$array->{chr1}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$array->{len}\t$array->{sum_len}\n"; 
 		
 		$prev{T_start}=$array->{T_start};
 		
@@ -648,7 +648,8 @@ else{
 		}
 		
 		print STDERR "Lost $minus_count bad seqs\n";		 
-close FILE; close OUT; close DATA;
+close FILE; #close OUT; close  TSTATS;
+close DATA;
 
 
 
