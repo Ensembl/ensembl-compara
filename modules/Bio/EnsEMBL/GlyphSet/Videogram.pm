@@ -59,7 +59,6 @@ sub _init {
     # fetch the chromosome bands that cover this VC.
     my $kba         = $self->{'container'}->{'ka'};
     my $bands       = $kba->fetch_all_by_chr_name($chr);
-    print STDERR "BANDS: $bands for CHR: $chr\n";
     
     my $chr_length = 
       $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
@@ -416,7 +415,6 @@ sub highlight_labelline {
     my $self = shift;
     my $details = shift;
     my $composite = new Sanger::Graphics::Glyph::Composite();
-    print STDERR "LABEL LINE CALLED\n";
     $composite->push(
       new Sanger::Graphics::Glyph::Line({
         'x'         => $details->{'mid'},

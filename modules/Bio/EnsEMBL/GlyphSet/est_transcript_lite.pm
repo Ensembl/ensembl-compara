@@ -47,7 +47,7 @@ sub zmenu {
     my $translation_id = $transcript->translation()->stable_id();
 
     if(defined $translation_id) {
-      $zmenu->{"03:Protien: $translation_id"} =
+      $zmenu->{"03:Protein: $translation_id"} =
 	qq(/$ENV{'ENSEMBL_SPECIES'}/protview?db=estgene&peptide=$translation_id);
     }
     
