@@ -37,15 +37,14 @@ sub colour {
 }
 
 sub href {
-  my ($self, $gene, $transcript) = @_;
-
-  if( $self->{'config'}->{'_href_only'} eq '#tid' ) {
-    return "#" . $transcript->stable_id();
-  }
-
+  my ($self, $gene, $transcript, %highlights) = @_;
   my $gid = $gene->stable_id();
+  my $tid = $transcript->stable_id();
 
-  return qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=estgene&gene=$gid);
+  return ( $self->{'config'}->get('est_transcript_lite','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
+        "#$tid" : 
+        qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?db=estgene&gene=$gid);
+
 }
 
 sub zmenu {

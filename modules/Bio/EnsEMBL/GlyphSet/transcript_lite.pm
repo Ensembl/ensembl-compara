@@ -39,12 +39,12 @@ sub colour {
 }
 
 sub href {
-    my ($self, $gene, $transcript ) = @_;
+    my ($self, $gene, $transcript, %highlights ) = @_;
 
     my $gid = $gene->stable_id();
     my $tid = $transcript->stable_id();
-
-    return $self->{'config'}->{'_href_only'} eq '#tid' ?
+    
+    return ( $self->{'config'}->get('transcript_lite','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
         "#$tid" : 
         qq(/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid);
 
