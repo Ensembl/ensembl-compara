@@ -88,7 +88,7 @@ sub _init {
 ## Decide whether we are going to include navigation (independent of switch) 
     $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1010);
     
-    my $h              = 9;
+    my $h            = $Config->get( $type, 'height' ) || 9;
 ## Get highlights...
     my %highlights;
     @highlights{$self->highlights()} = ();
@@ -115,7 +115,7 @@ sub _init {
     my $features = $self->features; 
     unless(ref($features)eq'ARRAY') {
         # warn( ref($self), ' features not array ref ',ref($features) );
-	return; 
+    return; 
     }
     foreach my $f ( @{$features} ) {
 ## Check strand for display ##
@@ -142,15 +142,15 @@ sub _init {
 
         my( $tag_start ,$tag_end) = ($start, $end);
         if( $label && $style ne 'overlaid' ) {
- 	    $tag_start = ( $start + $end - 1 - $bp_textwidth ) /2;
+         $tag_start = ( $start + $end - 1 - $bp_textwidth ) /2;
             $tag_start = 1 if $tag_start < 1;
- 	    $tag_end   = $tag_start + $bp_textwidth;
+         $tag_end   = $tag_start + $bp_textwidth;
         }
         $img_start = $tag_start if $tag_start < $img_start; 
         $img_end   = $tag_end   if $tag_end   > $img_end; 
         my @tags = $self->tag($f);
         foreach my $tag (@tags) {
-	    $tag_start = $start;
+        $tag_start = $start;
             $tag_end = $end;
             if($tag->{'style'} eq 'snp' ) {
                 $tag_start = $start - 1/2 - 4/$pix_per_bp;
@@ -247,39 +247,39 @@ sub _init {
             } elsif($tag->{'style'} eq 'insertion') {
                 my $triangle_end   =  $start - 2/$pix_per_bp;
                 my $triangle_start =  $start + 2/$pix_per_bp;
-    	        my $line = new Sanger::Graphics::Glyph::Rect({
+                my $line = new Sanger::Graphics::Glyph::Rect({
                     'x'          => $start,
                     'y'          => 0,
                     'width'      => 0,
                     'height'     => $h,
                     "colour"     => $tag->{'colour'},
                     'absolutey'  => 1
-        	    });
+                });
                 push @tag_glyphs, $line;
-    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
                     'points'    => [ $triangle_start, $h+2,
                                      $start, $h-1,
                                      $triangle_end, $h+2  ],
-         	    'colour'    => $tag->{'colour'},
+                 'colour'    => $tag->{'colour'},
                     'absolutey' => 1,
-        	    });
+                });
                 push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'left-triangle') {
                 my $triangle_end =  $start -1 + 3/$pix_per_bp;
                 $triangle_end = $end if( $triangle_end > $end);
-    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
                     'points'    => [ $start-1, 0,
                                      $start-1, 3,
                                      $triangle_end, 0  ],
-         	    'colour'    => $tag->{'colour'},
+                 'colour'    => $tag->{'colour'},
                     'absolutey' => 1,
-        	    });
+                });
                 push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'right-snp') {
                 next if($end < $f->end());
                 my $triangle_start =  $end - 1/2 + 4/$pix_per_bp;
                 my $triangle_end   =  $end - 1/2 + 4/$pix_per_bp;
-    	        my $line = new Sanger::Graphics::Glyph::Space({
+                my $line = new Sanger::Graphics::Glyph::Space({
                     'x'          => $triangle_start,
                     'y'          => $h,
                     'width'      => 8/$pix_per_bp,
@@ -287,13 +287,13 @@ sub _init {
                     "colour"     => $tag->{'colour'},
                     'absolutey'  => 1
                 });
-    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
                     'points'    => [ $triangle_start, $h,
                                      $end - 1/2,      0,
                                      $triangle_end,   $h  ],
-           	    'colour'    => $tag->{'colour'},
+                   'colour'    => $tag->{'colour'},
                     'absolutey' => 1,
-        	});
+            });
                 $composite->push($line);
                 push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'snp') {
@@ -301,7 +301,7 @@ sub _init {
                 next if( $tag->{'start'} > $vc_length );
                 my $triangle_start =  $tag->{'start'} - 1/2 - 4/$pix_per_bp;
                 my $triangle_end   =  $tag->{'start'} - 1/2 + 4/$pix_per_bp;
-    	        my $line = new Sanger::Graphics::Glyph::Space({
+                my $line = new Sanger::Graphics::Glyph::Space({
                     'x'          => $triangle_start,
                     'y'          => $h,
                     'width'      => 8/$pix_per_bp,
@@ -309,20 +309,20 @@ sub _init {
                     "colour"     => $tag->{'colour'},
                     'absolutey'  => 1
                 });
-    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
                     'points'    => [ $triangle_start, $h,
                                      $tag->{'start'} - 1/2 , 0,
                                      $triangle_end,   $h  ],
-           	    'colour'    => $tag->{'colour'},
+                   'colour'    => $tag->{'colour'},
                     'absolutey' => 1,
-        	});
+            });
                 $composite->push($line);
                 push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'box') {
                 next if($start > $f->start());
                 my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
                 my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
-    	        my $line = new Sanger::Graphics::Glyph::Rect({
+                my $line = new Sanger::Graphics::Glyph::Rect({
                     'x'          => $triangle_start,
                     'y'          => 1,
                     'width'      => 8/$pix_per_bp,
@@ -346,7 +346,7 @@ sub _init {
                 next if($start > $f->start());
                 my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
                 my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
-    	        my $line = new Sanger::Graphics::Glyph::Space({
+                my $line = new Sanger::Graphics::Glyph::Space({
                     'x'          => $triangle_start,
                     'y'          => $h,
                     'width'      => 8/$pix_per_bp,
@@ -354,12 +354,12 @@ sub _init {
                     "colour"     => $tag->{'colour'},
                     'absolutey'  => 1
                 });
-    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
                     'points'    => [ $triangle_start, 0,
                                      $start - 1/2   , $h,
                                      $triangle_end  , 0  ],
-           	    'colour'    => $tag->{'colour'},
-            	    'absolutey' => 1,
+                   'colour'    => $tag->{'colour'},
+                    'absolutey' => 1,
                 });
                 $composite->push($line);
                 push @tag_glyphs, $triangle;
@@ -367,7 +367,7 @@ sub _init {
                 next if($start > $f->start());
                 my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
                 my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
-    	        my $line = new Sanger::Graphics::Glyph::Space({
+                my $line = new Sanger::Graphics::Glyph::Space({
                     'x'          => $triangle_start,
                     'y'          => $h,
                     'width'      => 8/$pix_per_bp,
@@ -375,25 +375,25 @@ sub _init {
                     "colour"     => $tag->{'colour'},
                     'absolutey'  => 1
                 });
-    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
                     'points'    => [ $triangle_start, $h,
                                      $start - 1/2   , 0,
                                      $triangle_end  , $h  ],
-           	    'colour'    => $tag->{'colour'},
-            	    'absolutey' => 1,
+                   'colour'    => $tag->{'colour'},
+                    'absolutey' => 1,
                 });
                 $composite->push($line);
                 push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'right-triangle') {
                 my $triangle_start =  $end - 3/$pix_per_bp;
                    $triangle_start = $start if( $triangle_start < $start);
-    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                my $triangle = new Sanger::Graphics::Glyph::Poly({
                    'points'    => [ $end, 0,
                                     $end, 3,
                                     $triangle_start, 0  ],
-           	   'colour'    => $tag->{'colour'},
-            	   'absolutey' => 1,
-        	});
+                  'colour'    => $tag->{'colour'},
+                   'absolutey' => 1,
+            });
                 push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'underline') {
                 my $underline_start = $tag->{'start'} || $start ;
@@ -414,32 +414,32 @@ sub _init {
 
             
         if($style) {
-        if( $style eq 'overlaid' ) {
+          if( $style eq 'overlaid' ) {
             if($bp_textwidth < ($end - $start+1)){
-               # print STDERR "X: $label - $label_colour\n";
-                my $tglyph = new Sanger::Graphics::Glyph::Text({
-                    'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
-            	    'y'          => 1,
-            	    'width'      => $bp_textwidth,
-            	    'height'     => $th,
-                    'font'       => 'Tiny',
-                    'colour'     => $label_colour,
-           	    'text'       => $label,
-          	    'absolutey'  => 1,
-            	});
-                $composite->push($tglyph);
-            } 
-        } else {
-            $rowheight += $th;
-            my $tglyph = new Sanger::Graphics::Glyph::Text({
-                'x'          => $start - 1,
-                'y'          => -2-$th,
+              # print STDERR "X: $label - $label_colour\n";
+              my $tglyph = new Sanger::Graphics::Glyph::Text({
+                'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
+                'y'          => 1,
                 'width'      => $bp_textwidth,
                 'height'     => $th,
                 'font'       => 'Tiny',
                 'colour'     => $label_colour,
                 'text'       => $label,
-            		    'absolutey'  => 1,
+                'absolutey'  => 1,
+              });
+              $composite->push($tglyph);
+            } 
+        } else {
+            $rowheight += $th;
+            my $tglyph = new Sanger::Graphics::Glyph::Text({
+              'x'          => $start - 1,
+              'y'          => $strand < 0 ? $h+2 : 2+$h,
+              'width'      => $bp_textwidth,
+              'height'     => $th,
+              'font'       => 'Tiny',
+              'colour'     => $label_colour,
+              'text'       => $label,
+             'absolutey'  => 1,
             });
             my $composite2 = new Sanger::Graphics::Glyph::Composite();
             $composite2->push($composite,$tglyph);
