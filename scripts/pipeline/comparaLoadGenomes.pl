@@ -231,7 +231,7 @@ sub submitGenome
   #
   my $input_id = "{gdb=>".$genome->dbID."}";
 
-  my $analysisDBA = $self->{'comparaDBA'}->get_AnalysisAdaptor;
+  my $analysisDBA = $self->{'hiveDBA'}->get_AnalysisAdaptor;
   my $submitGenome = $analysisDBA->fetch_by_logic_name('SubmitGenome');
 
   unless($submitGenome) {
