@@ -17,6 +17,7 @@ DumpChromosomeFragments.pl -host ecs1b.sanger.ac.uk
             -chunk_size 60000
             -masked 0
             -phusion Hs
+            -mask_restriction RepeatMaksingRestriction.conf
             -o output_filename
 
 $0 [-help]
@@ -32,6 +33,10 @@ $0 [-help]
                                   1 masked
                                   2 soft-masked
    -phusion \"Hs\" tag put in the FASTA header >Hs22.1 
+   -mask_restriction RepeatMaksingRestriction.conf 
+                     Allow you to do hard and soft masking at the same time
+                     depending on the repeat class or name. See RepeatMaksingRestriction.conf.example,
+                     and the get_repeatmasked_seq method in Bio::EnsEMBL::Slice
    -o output_filename
 
 
@@ -52,6 +57,7 @@ my $phusion;
 my $output;
 my $port="";
 my $help = 0;
+my $mask_restriction_file;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
@@ -64,6 +70,7 @@ GetOptions('help' => \$help,
 	   'overlap=i' => \$overlap,
 	   'chunk_size=i' => \$chunk_size,
 	   'masked=i' => \$masked,
+           'mask_restriction=s' => \$mask_restriction_file,
 	   'phusion=s' => \$phusion,
 	   'o=s' => \$output);
 
@@ -84,6 +91,10 @@ my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor (-host => $host,
 					     -user => $dbuser,
 					     -dbname => $dbname,
 					     -port => $port);
+my %not_default_masking_cases;
+if (defined $mask_restriction_file) {
+  %not_default_masking_cases = %{do $mask_restriction_file};
+}
 
 my $ChromosomeAdaptor = $db->get_ChromosomeAdaptor;
 my $SliceAdaptor = $db->get_SliceAdaptor;
@@ -170,14 +181,22 @@ sub printout_by_overlapping_chunks {
   if ($masked == 1) {
 
     print STDERR "getting masked sequence...\n";
-    $seq = $slice->get_repeatmasked_seq;
+    if (%not_default_masking_cases) {
+      $seq = $slice->get_repeatmasked_seq(undef,0,\%not_default_masking_cases);
+    } else {
+      $seq = $slice->get_repeatmasked_seq;
+    }
     $seq->id($slice->chr_name);
     print STDERR "...got masked sequence\n";
 
   } elsif ($masked == 2) {
 
     print STDERR "getting soft masked sequence...\n";
-    $seq = $slice->get_repeatmasked_seq(undef,1);
+    if (%not_default_masking_cases) {
+      $seq = $slice->get_repeatmasked_seq(undef,0,\%not_default_masking_cases);
+    } else {
+      $seq = $slice->get_repeatmasked_seq(undef,1);
+    }
     $seq->id($slice->chr_name);
     print STDERR "...got soft masked sequence\n";
 
