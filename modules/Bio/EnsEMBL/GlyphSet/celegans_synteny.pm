@@ -18,7 +18,6 @@ sub colour {
     $self->{'config'}{'ptr'}     = 0;
   }
   my $return = $self->{'config'}{ $f->{'hit_chr_name'} };
-  warn @{$self->{'config'}{'pool'}};
   unless( $return ) {
     $return = $self->{'config'}{$f->{'hit_chr_name'}} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)%@{$self->{'config'}{'pool'}} ];
   } 
