@@ -1,4 +1,3 @@
-use lib 't';
 use strict;
 use warnings;
 
@@ -7,17 +6,16 @@ BEGIN { $| = 1;
 	plan tests => 10;
 }
 
-use MultiTestDB;
-use TestUtils;
-use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
+use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::Test::TestUtils;
 
 # switch on the debug prints
 our $verbose = 0;
 
-my $multi = MultiTestDB->new( "multi" );
-my $homo_sapiens = MultiTestDB->new("homo_sapiens");
-my $mus_musculus = MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = MultiTestDB->new("rattus_norvegicus");
+my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
+my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
+my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
+my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
 
 my $compara_db = $multi->get_DBAdaptor( "compara" );

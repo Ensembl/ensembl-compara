@@ -1,13 +1,11 @@
 use strict;
 use warnings;
  
-use lib 't';
- 
 use Test::Harness;
 use Test;
 BEGIN { plan tests => 9 }
 
-use TestUtils; 
+use Bio::EnsEMBL::Test::TestUtils; 
 use Bio::EnsEMBL::Compara::DnaFrag;
 
 my $df = new Bio::EnsEMBL::Compara::DnaFrag;

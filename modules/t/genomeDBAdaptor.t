@@ -1,9 +1,8 @@
 use strict;
 use warnings;
 
-use lib 't';
-use MultiTestDB;
-use TestUtils;
+use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::Test::TestUtils;
 
 BEGIN {
   $| = 1;
@@ -13,11 +12,11 @@ BEGIN {
 
 our $verbose = 0;
 
-my $multi = MultiTestDB->new('multi');
+my $multi = Bio::EnsEMBL::Test::MultiTestDB->new('multi');
 
-my $homo_sapiens = MultiTestDB->new("homo_sapiens");
-my $mus_musculus = MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = MultiTestDB->new("rattus_norvegicus");
+my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
+my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
+my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
 my $hs_dba = $homo_sapiens->get_DBAdaptor('core');
 my $mm_dba = $mus_musculus->get_DBAdaptor('core');

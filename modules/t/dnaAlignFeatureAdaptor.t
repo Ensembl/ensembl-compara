@@ -1,9 +1,8 @@
 use strict;
 use warnings;
 
-use lib 't';
-use MultiTestDB;
-use TestUtils qw(debug test_getter_setter);
+use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::Test::TestUtils qw(debug test_getter_setter);
 
 BEGIN {
   $| = 1;
@@ -19,12 +18,12 @@ my $CHR   = '19';
 my $START = 50_000_000;
 my $END   = 50_250_000;
 
-my $multi = MultiTestDB->new('multi');
+my $multi = Bio::EnsEMBL::Test::MultiTestDB->new('multi');
 
 
-my $homo_sapiens = MultiTestDB->new("homo_sapiens");
-my $mus_musculus = MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = MultiTestDB->new("rattus_norvegicus");
+my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
+my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
+my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
 
 my $hs_dba = $homo_sapiens->get_DBAdaptor('core');
