@@ -3,6 +3,7 @@ package Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 use strict;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);                 
 
@@ -90,10 +91,10 @@ sub fetch_by_Member_Homology_source {
   my ($self, $member, $source_name) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
   }
 
-  $self->throw("source_name arg is required\n")
+  throw("source_name arg is required\n")
     unless ($source_name);
   
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
@@ -213,7 +214,7 @@ sub store {
   my ($self,$hom) = @_;
 
   $hom->isa('Bio::EnsEMBL::Compara::Homology') ||
-    $self->throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom");
+    throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom");
 
   $hom->source_id($self->store_source($hom->source_name));
     
@@ -229,6 +230,35 @@ sub store {
   }
 
   return $hom->dbID;
+}
+
+
+=head2 update_genetic_distance
+ Arg [1]    : Bio::EnsEMBL::Compara::Homology $homology
+ Example    : $HomologyAdaptor->update_genetic_distance($homology)
+ Description: updates the n,s,dn,ds,lnl values from a homology object into a compara database
+ Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Homology
+ Caller     : Bio::EnsEMBL::Compara::Runnable::Homology_dNdS
+=cut
+sub update_genetic_distance {
+  my $self = shift;
+  my $hom = shift;
+
+  throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom")
+    unless($hom->isa('Bio::EnsEMBL::Compara::Homology'));
+  throw("homology object must have dbID")
+    unless ($hom->dbID);
+  unless($hom->dn and $hom->ds and $hom->n and $hom->lnl and $hom->s) {
+    warn("homology needs valid dn, ds, n, s, and lnl values to store");
+    return $self;
+  }
+
+  my $sql = "UPDATE homology SET dn=?, ds=?, n=?, s=?, lnl=? WHERE homology_id=?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($hom->dn,$hom->ds,$hom->n, $hom->s, $hom->lnl, $hom->dbID);
+  $sth->finish();
+
+  return $self;
 }
 
 1;
