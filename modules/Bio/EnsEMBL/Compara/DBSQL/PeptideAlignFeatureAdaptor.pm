@@ -251,7 +251,8 @@ sub displayPAF_short {
     return;
   }
 
-  print("PAF ".$paf->query_member->stable_id."(".$paf->qstart.",".$paf->qend.")".
+  print("PAF(".$paf->dbID.") ".
+        "\t" . $paf->query_member->stable_id."(".$paf->qstart.",".$paf->qend.")".
         "\t" . $paf->hit_member->stable_id. "(".$paf->hstart.",".$paf->hend.")".
         "\t" . $paf->score .
         "\t" . $paf->alignment_length .
@@ -435,6 +436,42 @@ sub fetch_by_dbID{
 }
 
 
+=head2 fetch_all_RH_for_pair
+
+  Arg [1,2]  : Bio::EnsEMBL::Analysis objects which define a pair
+  Example    : $feat = $adaptor->fetch_by_dbID($musBlastAnal, $ratBlastAnal);
+  Description: Returns the Member created from the database defined by the
+               the id $id.
+  Returntype : array of Bio::EnsEMBL::Compara::PeptideAlignFeature objects by reference
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_all_RH_for_pair
+{
+  # using trick of specifying table twice so can join to self
+  my $self      = shift;
+  my $analysis1 = shift;
+  my $analysis2 = shift;
+
+  print(STDERR "fetch_all_RH_for_pair\n");
+  print(STDERR "  analysis1 ".$analysis1->logic_name()."\n");
+  print(STDERR "  analysis2 ".$analysis2->logic_name()."\n");
+
+  my $extrajoin = [
+                    [ ['peptide_align_feature', 'paf2'],
+                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+                       undef]
+                  ];
+
+  my $constraint = "paf.analysis_id = ".$analysis1->dbID .
+                   " AND paf2.analysis_id = ".$analysis2->dbID;
+
+  return $self->_generic_fetch($constraint, $extrajoin);
+}
+
+
 =head2 fetch_all
 
   Arg        : None
@@ -512,11 +549,14 @@ sub _generic_fetch {
   #append additional clauses which may have been defined
   $sql .= " $final_clause";
 
+  print STDERR $sql,"\n";
   my $sth = $self->prepare($sql);
   $sth->execute;
 
 #  print STDERR $sql,"\n";
+  print STDERR "sql execute finished. about to build objects\n";
 
   return $self->_objs_from_sth($sth);
 }
+
 1;
