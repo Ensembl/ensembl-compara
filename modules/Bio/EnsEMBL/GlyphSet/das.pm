@@ -15,19 +15,19 @@ use ExtURL;
 
 sub init_label {
   my ($self) = @_;
+
   return if( defined $self->{'config'}->{'_no_label'} );
 
-  my $helplink = (defined($self->{'extras'}->{'helplink'})) ? 
-    $self->{'extras'}->{'helplink'} : 
-      qq(/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das);
+  my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  qq(/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das);
 
-
-  my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ?
-     qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) : 
-     qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
+  my $URL = $self->das_name =~ /^managed_extdas_(.*)$/ ? qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/externaldas?action=edit&key=$1\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0)) :  qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
+  
+																																	  
+  my $track_label = $self->{'extras'}->{'caption'} || $self->{'extras'}->{'label'} || $self->{'extras'}->{'name'};
+  $track_label =~ s/^(managed_|managed_extdas)//;
 
   $self->label( new Sanger::Graphics::Glyph::Text({
-    'text'      => $self->{'extras'}->{'caption'},
+    'text'      => $track_label,
     'font'      => 'Small',
     'colour'    => 'contigblue2',
     'absolutey' => 1,
@@ -38,7 +38,7 @@ sub init_label {
   }) );
 }
 
-sub _init {
+sub _initOLD {
   my ($self) = @_;
   ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
   $das_config_key =~ s/^managed_das/das/;
@@ -70,6 +70,7 @@ sub _init {
   $configuration->{'h'} = $self->{'textheight'};
 
   my $dsn = $Extra->{'dsn'};
+  
   my( $features, $styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
   my @features = grep {
     $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
@@ -209,6 +210,8 @@ sub RENDER_grouped {
     my $label = $f->das_group_label || $f->das_feature_label || $ID;
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
+
+#	 warn("$ID:$label:$label_length:$row");
     next if( $row < 0 ); ## SKIP IF BUMPED...
     my( $href, $zmenu ) = $self->zmenu( $f );
     my $Composite = new Sanger::Graphics::Glyph::Composite({
@@ -227,7 +230,68 @@ sub RENDER_grouped {
     } else {
       $colour = $configuration->{'colour'};
     }
-    if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
+
+#	 warn("DRAW:");
+#	 warn(Dumper($f));
+	 if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
+      my $f     = shift @features;
+      my $START = $f->das_start() < 1        ? 1       : $f->das_start();
+      my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+
+      my $smenu = $self->smenu($f);
+      $Composite->{zmenu} = $smenu;
+      use integer;
+
+      my $glyph = new Sanger::Graphics::Glyph::Line({
+        'x'          => $START-1,
+        'y'          => 0,
+        'width'      => 0,
+        'height'     => $configuration->{'h'},
+        'colour'     => $colour,
+        'absolutey'  => 1
+      });
+
+      $Composite->push($glyph);
+      
+      $glyph = new Sanger::Graphics::Glyph::Line({
+        'x'          => $START,
+        'y'          => 0,
+        'width'      => 0,
+        'height'     => $configuration->{'h'},
+        'colour'     => $colour,
+        'absolutey'  => 1,
+        'absolutex'  => 1
+      });
+
+      $Composite->push($glyph);
+
+      my $md = $configuration->{'h'} / 2; 
+
+      $glyph = new Sanger::Graphics::Glyph::Rect({
+        'x'          => $START-1,
+        'y'          => $md - 1,
+        'width'      => $END-$START+1,
+        'height'     => 2,
+        'colour'     => $colour,
+        'absolutey'  => 1
+      });
+
+      $Composite->push($glyph);
+
+      $glyph = new Sanger::Graphics::Glyph::Rect({
+        'x'          => $END-1,
+        'y'          => 0,
+        'width'      => 1,
+        'height'     => $configuration->{'h'},
+        'colour'     => $colour,
+        'absolutey'  => 1
+      });
+
+      $Composite->push($glyph);
+
+
+
+    }elsif( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
       my $f     = shift @features;
       my $START = $f->das_start() < 1        ? 1       : $f->das_start();
       my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
@@ -541,6 +605,170 @@ sub draw_rarrow { # Reverse arrow -- <###
     'colour'    => $colour,
     'absolutey' => 1
   });
+}
+
+sub _init {
+  my ($self) = @_;
+  ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
+  $das_config_key =~ s/^managed_das/das/;
+  my $Config = $self->{'config'};
+  my $strand = $Config->get($das_config_key, 'str');
+  my $Extra  = $self->{'extras'};
+
+# If strand is 'r' or 'f' then we display everything on one strand (either
+# at the top or at the bottom!
+  return if( $strand eq 'r' && $self->strand() != -1 || $strand eq 'f' && $self->strand() != 1 );
+  my $h;
+  my $container_length =  $self->{'container'}->length() + 1;
+ 
+ 
+  $self->{'bitmap'} = [];    
+  my $configuration = {
+    'strand'   => $strand,
+    'tstrand'  => $self->strand,
+    'STRAND'   => $self->strand(),
+    'cmap'     => $Config->colourmap(),
+    'colour'   => $Config->get($das_config_key, 'col') || 'contigblue1',
+    'depth'    => $Config->get($das_config_key, 'dep') || 4,
+    'use_style'=> $Config->get($das_config_key, 'stylesheet') eq 'Y',
+    'labelling'=> $Extra->{'labelflag'} =~ /^[ou]$/i ? 1 : 0,
+
+  };
+
+
+
+  my $dsn = $Extra->{'dsn'};
+  my $url = defined($Extra->{'url'}) ? $Extra->{'url'}."/$dsn" :  $Extra->{'protocol'}.'://'. $Extra->{'domain'} ."/$dsn";
+
+  my $srcname = $Extra->{'label'} || $das_name;
+  $srcname =~ s/^(managed_|mananged_extdas)//;
+  my $dastype = $Extra->{'type'};
+  my @das_features = ();
+#  warn("TYPE: $dastype\n".Dumper($Extra));
+  $Extra->{labelflag} = 'u';
+  $configuration->{colour} = $Extra->{color} || $Config->get($das_config_key, 'col') || 'contigblue1';
+  $configuration->{depth} = $Extra->{depth} || $Config->get($das_config_key, 'dep') || 4;
+  $configuration->{use_style} = $Extra->{stylesheet} ? $Extra->{stylesheet} eq 'y' : $Config->get($das_config_key, 'stylesheet') eq 'Y';
+  $configuration->{labelling} = $Extra->{labelflag} =~ /^[ou]$/i ? 1 : 0;
+  $configuration->{length} = $container_length;
+
+  $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
+  $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
+  ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
+  $self->{'textwidth'}     *= (1 + 1/($container_length||1) );
+  $configuration->{'h'} = $self->{'textheight'};
+
+  my $styles;
+
+  if ($dastype ne 'ensembl_location') {
+		my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
+		my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
+		my $name = $das_name || $url;
+		foreach my $gene (@$genes) {
+#			 warn("GENE:$gene:".$gene->stable_id);	
+			 my $dasf = $gene->get_all_DASFeatures;
+			 my %dhash = %{$dasf};
+
+			 my $fcount = 0;
+			 my %fhash = ();
+			 my @aa = @{$dhash{$name}};
+			 foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{ $aa[1] || [] }) {
+				  if ($f->das_end) {
+						if ($f->das_start <= $configuration->{'length'}) {
+							 push(@das_features, $f);
+
+						}
+				  } else {
+						if (exists $fhash{$f->das_segment->ref}) {
+							 $fhash{$f->das_segment->ref}->{count} ++;
+						} else {
+							 $fhash{$f->das_segment->ref}->{count} = 1;
+							 $fhash{$f->das_segment->ref}->{feature} = $f;
+						}
+				  }
+			 }
+
+			 foreach my $key (keys %fhash) {
+#				  warn("FT:$key:".$fhash{$key}->{count});
+				  my $ft = $fhash{$key}->{feature}; 
+				  if ((my $count = $fhash{$key}->{count}) > 1) {
+						$ft->{das_feature_label} = "$key/$count";
+
+						$ft->{das_note} = "Found $count annotations for $key";
+						$ft->{das_link_label}  = 'View annotations in geneview';
+						$ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&DASselect=$srcname#$srcname";
+	  
+				  }
+				  $ft->{das_type_id}->{id} = 'summary';
+				  $ft->{das_start} = $gene->start;
+				  $ft->{das_end} = $gene->end;
+				  $ft->{das_orientation} = $gene->strand;
+				  $ft->{_gsf_strand} = $gene->strand;
+				  $ft->{das_strand} = $gene->strand;
+				  
+				  #	  warn(Dumper($ft));
+				  push(@das_features, $ft);
+			 }
+
+	
+
+		}
+  }	else {
+		my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
+		$styles = $das_styles;
+		@das_features = grep {
+			 $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
+				  $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
+				  $_->das_start <= $configuration->{'length'} &&
+				  $_->das_end > 0
+			 } @{ $features || [] };
+  }
+
+#  foreach my $f (@das_features) {
+#		my $str = join('==', $f->das_feature_label, $f->das_type_id, $f->das_start, $f->das_end);
+#		warn("$str");
+#  }
+# warn("RET:".@das_features);
+  $configuration->{'features'} = \@das_features;
+  my %styles;
+  if( $styles && @$styles && $configuration->{'use_style'} ) {
+    foreach(@$styles) {
+      $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
+      $configuration->{'h'} = $_->{'attrs'}{'height'} if exists $_->{'attrs'} && exists $_->{'attrs'}{'height'};
+    } 
+    $configuration->{'styles'} = \%styles;
+  } else {
+    $configuration->{'use_style'} = 0;
+  }
+  $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
+  $self->{'ext_url'}      = ExtURL->new( $Extra->{'name'} =~ /^managed_extdas/ ? ($Extra->{'linkURL'} => $Extra->{'linkURL'}) : () );
+
+
+  $self->{helplink} = $Config->get($das_config_key, 'helplink');
+  my $renderer = $Config->get($das_config_key, 'renderer');
+  my $group = $Config->get($das_config_key, 'group');
+  if (! defined($group)) {
+		$group = 1;
+  }
+#  $renderer = $renderer ? "RENDER_$renderer" : ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple');
+  $renderer = $renderer ? "RENDER_$renderer" : ($group ? 'RENDER_grouped' : 'RENDER_simple');
+#  warn("RENDER:$renderer");
+  return $self->$renderer( $configuration );
+}
+
+sub smenu {
+  my( $self, $f ) = @_;
+  my $note = $f->das_note();
+  my $zmenu = {
+    'caption'         => $self->{'extras'}->{'label'},
+  };
+  $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
+  $zmenu->{"03:".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+
+  if($note && uc($note) ne 'NULL') {
+    $zmenu->{"01:INFO: $note"} = '';
+  } 
+  return( $zmenu );
 }
 
 1;
