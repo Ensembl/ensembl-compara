@@ -29,6 +29,7 @@ $self->{'speciesList'} = ();
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
+my $genome_db_id;
 
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
@@ -37,7 +38,7 @@ GetOptions('help'     => \$help,
            'dbuser=s' => \$user,
            'dbpass=s' => \$pass,
            'dbname=s' => \$dbname,
-           'gdb=i'    => \$self->{'genome_db_id'},
+           'gdb=i'    => \$genome_db_id,
           );
 
 if ($help) { usage(); }
@@ -59,15 +60,22 @@ unless(defined($self->{'compara_conf'}->{'-host'})
   usage(); 
 }
 
-unless(defined($self->{'genome_db_id'})) {
+unless(defined($genome_db_id)) {
   print "\nERROR : must specify genome_db_id\n\n";
   usage();
 }
 
 $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
-$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
+$self->{'comparaDBA'}->disconnect_when_inactive(0);
 
-update_strand($self, $self->{'genome_db_id'});
+$self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+$self->{'coreDBA'} = $self->{'genome_db'}->connect_to_genome_locator();
+$self->{'coreDBA'}->disconnect_when_inactive(0);
+
+my $count;
+do {
+  $count = update_strand($self);
+} while($count>0);
 
 exit(0);
 
@@ -121,20 +129,18 @@ sub parse_conf {
 
 sub update_strand {
   my $self         = shift;
-  my $genome_db_id = shift;
 
-  my $db = $self->{'comparaDBA'};
+  my $db        = $self->{'comparaDBA'};
+  my $genome_db = $self->{'genome_db'};
 
-  my $genome_db      = $db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-  my $coreDBA        = $genome_db->connect_to_genome_locator();
-  my $geneDBA        = $coreDBA->get_GeneAdaptor();
-  my $transcriptDBA = $coreDBA->get_TranscriptAdaptor();
+  my $geneDBA        = $self->{'coreDBA'}->get_GeneAdaptor();
+  my $transcriptDBA  = $self->{'coreDBA'}->get_TranscriptAdaptor();
 
   my $sth = $db->prepare("SELECT member.member_id, member.stable_id, source.source_name " .
                          " FROM member, source" .
                          " WHERE member.source_id=source.source_id".
                          " AND member.chr_strand=0".
-                         " AND member.genome_db_id=$genome_db_id".
+                         " AND member.genome_db_id=".$genome_db->dbID.
                          " LIMIT 5 ");
   $sth->execute();
 
