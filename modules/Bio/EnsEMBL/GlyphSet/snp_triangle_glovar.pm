@@ -1,8 +1,43 @@
+=head1 NAME
+
+Bio::EnsEMBL::GlyphSet::snp_triangle_glovar -
+Glyphset to display Glovar SNP neighbourhood in snpview
+
+=head1 DESCRIPTION
+
+Displays SNP neighbourhood for Glovar SNP in snpview
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 AUTHOR
+
+Patrick Meidl <pm2@sanger.ac.uk>
+
+=head1 CONTACT
+
+Post questions to the EnsEMBL development list ensembl-dev@ebi.ac.uk
+
+=cut
+
 package Bio::EnsEMBL::GlyphSet::snp_triangle_glovar;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::glovar_snp;
 @ISA = qw(Bio::EnsEMBL::GlyphSet::glovar_snp);
+
+=head2 tag
+
+  Arg[1]      : a Bio::EnsEMBL::SNP object
+  Example     : my $tag = $self->tag($f);
+  Description : retrieves the SNP tag (ambiguity code) in the right colour
+  Return type : hashref
+  Exceptions  : none
+  Caller      : $self->_init()
+
+=cut
 
 sub tag {
     my ($self, $f) = @_; 
@@ -15,14 +50,30 @@ sub tag {
 	return( { 'style' => 'left-snp', 'colour' => $col } );
     }
     if ($f->snpclass eq 'SNP - indel' ) {
-	return( { 'style' => 'delta', 'colour' => $col } );
+        if ($f->start == $f->end) {
+	    return( { 'style' => 'delta', 'colour' => $col } );
+        } else {
+            return( { 'style' => 'left-snp', 'colour' => $col } );
+        }
     }
     return ( { 'style'  => 'box', 'colour' => $col, 'letter' => ' ' } );
 }
 
+=head2 colour
+
+  Arg[1]      : a Bio::EnsEMBL::SNP object
+  Example     : my $colour = $self->colour($f);
+  Description : sets the colour for displaying SNPs. They are coloured
+                according to their position on genes
+  Return type : list of colour settings
+  Exceptions  : none
+  Caller      : $self->_init()
+
+=cut
+
 sub colour {
     my ($self, $f) = @_;
-    my $T = $f->type->[0];
+    my $T = $f->type;
     unless($self->{'config'}->{'snp_types'}{$T}) {
         my %labels = (
             '_coding' => 'Coding SNPs',
