@@ -229,7 +229,7 @@ gzip family_18.raw
 
 This step will use parciluar machine, aristotle that have 187Gb of memory :))) and 32 CPUs. As mcl can be multi-threaded, it is very useful.
 
-bsub -q acaritest -n 16 -C0 -R"select[mem>=2000] rusage[mem=2000]" -f "family_18_1.sym > /tmp/family_18_1.sym" -f "family_18_1.mcl < /tmp/family_18_1.mcl" -o mcl.out -e mcl.err /nfs/acari/abel/bin/mcl /tmp/family_18_1.sym -I 3.0 -t 16 -P 1000 -R 500 -pct 95 -o /tmp/family_18_1.mcl
+bsub -q acaritest -n 16 -C0 -R"select[mem>=2000] rusage[mem=2000]" -f "family_18_1.sym > /tmp/family_18_1.sym" -f "family_18_1.mcl < /tmp/family_18_1.mcl" -o mcl.out -e mcl.err /nfs/acari/abel/bin/mcl /tmp/family_18_1.sym -I 3.0 -t 16 -P 10000 -S 1000 -R 1200 -pct 90 -o /tmp/family_18_1.mcl
 
 NOTE: When setting the number of CPUs to use to 16 LSF seems to multiple the memory requirement by
 the number of processors.  Running the above command with -n 16 and 
