@@ -49,7 +49,7 @@ so no redundancy is expected in the fasta file.
 
 or if you don't have the hive conf file
 
-~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost ia64e --dbport 3306 --dbuser ensro --dbname jessica_ensembl_compara_26_1 --no_redundancy --fasta metazoa_26_1.pep > metazoa_26_1.pep.err 2>&1 &
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost ia64e --dbport 3306 --dbuser ensro --dbname jessica_ensembl_compara_26_1 --noredundancy --fasta metazoa_26_1.pep > metazoa_26_1.pep.err 2>&1 &
 
 4- distribute the fasta file over the farm
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
