@@ -1137,6 +1137,10 @@ sub _create_from_a_list_of_ungapped_genomic_align_blocks {
         $block_length = CORE::length($this_genomic_align->aligned_sequence);
       }
     }
+
+    next if ($block_length == 0); # Skip 0-length blocks (shouldn't happen)
+    $block_length = "" if ($block_length == 1); # avoid a "1" in cigar_line
+
     ## Fix cigar line according to block length
     while (my ($id, $genomic_align) = each %{$genomic_aligns}) {
       my $is_included_in_this_block = 0;
@@ -1165,6 +1169,7 @@ sub _create_from_a_list_of_ungapped_genomic_align_blocks {
             $gap = $genomic_align1->dnafrag_start - $genomic_align2->dnafrag_end - 1;
           }
           if ($gap) {
+            $gap = "" if ($gap == 1);
             foreach my $genomic_align3 (@{$genomic_align_block->get_all_GenomicAligns}) {
               if ($genomic_align1->dnafrag_id == $genomic_align3->dnafrag_id) {
                 ## Add (mis)matches for this sequence
@@ -1250,14 +1255,16 @@ sub get_all_ungapped_GenomicAlignBlocks {
         my $dnafrag_start;
         my $dnafrag_end;
         my $cigar_line;
+        my $cigar_length = ($end_block_pos - $aln_pos);
+        $cigar_length = "" if ($cigar_length == 1);
         if ($this_genomic_align->dnafrag_strand == 1) {
           $dnafrag_start = $this_genomic_align->dnafrag_start + CORE::length($previous_seq);
           $dnafrag_end = $dnafrag_start + $end_block_pos - $aln_pos - 1;
-          $cigar_line = ($end_block_pos - $aln_pos)."M";
+          $cigar_line = $cigar_length."M";
         } else {
           $dnafrag_end = $this_genomic_align->dnafrag_end - CORE::length($previous_seq);
           $dnafrag_start = $dnafrag_end - $end_block_pos + $aln_pos + 1;
-          $cigar_line = ($end_block_pos - $aln_pos)."M";
+          $cigar_line = $cigar_length."M";
         }
         my $new_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                 -adaptor => $this_genomic_align->adaptor,

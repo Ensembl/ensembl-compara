@@ -1157,7 +1157,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
-    $cigCount = 1 unless $cigCount;
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
 
     if( $cigType eq "M" ) {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
@@ -1336,7 +1336,8 @@ sub get_Mapper {
       foreach my $cigar_piece (@cigar_pieces) {
         my $cigar_type = substr($cigar_piece, -1, 1 );
         my $cigar_count = substr($cigar_piece, 0 ,-1 );
-        $cigar_count = 1 unless $cigar_count;
+        $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+        next if ($cigar_count < 1);
     
         if( $cigar_type eq "M" ) {
         $mapper->add_map_coordinates(
@@ -1359,7 +1360,8 @@ sub get_Mapper {
       foreach my $cigar_piece (@cigar_pieces) {
         my $cigar_type = substr($cigar_piece, -1, 1 );
         my $cigar_count = substr($cigar_piece, 0 ,-1 );
-        $cigar_count = 1 unless $cigar_count;
+        $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+        next if ($cigar_count < 1);
     
         if( $cigar_type eq "M" ) {
         $mapper->add_map_coordinates(
@@ -1758,7 +1760,7 @@ sub alignment_strings {
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
-    $cigCount = 1 unless $cigCount;
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
 
     if( $cigType eq "M" ) {
         $rseq .= substr( $seq, $seq_pos, $cigCount ) if ($seq_flag);

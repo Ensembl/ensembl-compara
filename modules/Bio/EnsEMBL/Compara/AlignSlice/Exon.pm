@@ -353,7 +353,8 @@ sub get_aligned_start {
     my @cig = ( $cigar_line =~ /(\d*[GMDI])/g );
     my $cigType = substr( $cig[0], -1, 1 );
     my $cigCount = substr( $cig[0], 0 ,-1 );
-    $cigCount = 1 unless $cigCount;
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+    next if ($cigCount == 0);
 
     if ($cigType eq "I") {
       return (1 + $cigCount);
@@ -374,7 +375,8 @@ sub get_aligned_end {
     my @cig = ( $cigar_line =~ /(\d*[GMDI])/g );
     my $cigType = substr( $cig[-1], -1, 1 );
     my $cigCount = substr( $cig[-1], 0 ,-1 );
-    $cigCount = 1 unless $cigCount;
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+    next if ($cigCount == 0);
 
     if ($cigType eq "I") {
       return ($self->exon->end - $self->exon->start + 1 - $cigCount);
@@ -457,6 +459,7 @@ sub append_Exon {
   }
 
   if ($gap_length) {
+    $gap_length = "" if ($gap_length == 1);
     $self->cigar_line(
         $self->cigar_line.
         $gap_length."D".
@@ -499,6 +502,7 @@ sub prepend_Exon {
   }
 
   if ($gap_length) {
+    $gap_length = "" if ($gap_length == 1);
     $self->cigar_line(
         $exon->cigar_line.
         $gap_length."D".

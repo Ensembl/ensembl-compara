@@ -195,8 +195,9 @@ sub fetch_all_by_species_region {
       my @consensus_gapped_pieces;
       foreach my $piece (@consensus_cigar_pieces) {
         next if ($piece !~ /^(\d*)([MDIG])$/);
-        my $num = ($1 or 1);
+        my $num = $1;
         my $type = $2;
+        $num = 1 if ($num !~ /^\d+$/);
         if( $type eq "M" ) {
           for (my $i=0; $i<$num; $i++) {push(@consensus_gapped_pieces, "N")}
         } else {
@@ -206,8 +207,9 @@ sub fetch_all_by_species_region {
       my @query_gapped_pieces;
       foreach my $piece (@query_cigar_pieces) {
         next if ($piece !~ /^(\d*)([MDIG])$/);
-        my $num = ($1 or 1);
+        my $num = $1;
         my $type = $2;
+        $num = 1 if ($num !~ /^\d+$/);
         if( $type eq "M" ) {
           for (my $i=0; $i<$num; $i++) {push(@query_gapped_pieces, "N")}
         } else {
