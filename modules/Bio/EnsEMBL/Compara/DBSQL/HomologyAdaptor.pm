@@ -83,7 +83,6 @@ sub fetch_homologues_of_gene {
 
 	push @genes,$self->_get_homologues($q); 
     }
-
     return @genes;
 }                               
 
