@@ -56,6 +56,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
+use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor;
 
@@ -281,9 +282,7 @@ sub createBlastAnalysis
       -parameters      => $params,
     );
 
-  eval {
-    $self->db->get_AnalysisAdaptor()->store($analysis);
-  };
+  $self->db->get_AnalysisAdaptor()->store($analysis);
 
   return $analysis;
 }
