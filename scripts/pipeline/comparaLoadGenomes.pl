@@ -16,6 +16,7 @@ use Bio::EnsEMBL::DBLoader;
 my $conf_file;
 my %analysis_template;
 my @speciesList = ();
+my %hive_params ;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -62,6 +63,15 @@ my $self = bless {};
 
 $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
 #$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
+
+if(%hive_params) {
+  if(defined($hive_params{'hive_output_dir'})) {
+    die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
+      unless(-d $hive_params{'hive_output_dir'});
+    $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
+  }
+}
+
 
 my $analysis = $self->prepareGenomeAnalysis();
 
@@ -111,6 +121,9 @@ sub parse_conf {
       }
       if($confPtr->{TYPE} eq 'SPECIES') {
         push @speciesList, $confPtr;
+      }
+      if($confPtr->{TYPE} eq 'HIVE') {
+        %hive_params = %{$confPtr};
       }
     }
   }
