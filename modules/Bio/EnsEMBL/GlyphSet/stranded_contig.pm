@@ -14,18 +14,18 @@ sub add_arrows {
     my $gtriag;    
     
     $gtriag = new Bio::EnsEMBL::Glyph::Poly({
-	'points'       => [$im_width-10,$ystart-4, $im_width-10,$ystart, $im_width,$ystart],
-	'colour'       => $black,
-	'absolutex'    => 1,
-	'absolutey'    => 1,
+    	'points'       => [$im_width-10,$ystart-4, $im_width-10,$ystart, $im_width,$ystart],
+	    'colour'       => $black,
+    	'absolutex'    => 1,
+    	'absolutey'    => 1,
     });
     
     $self->push($gtriag);
     $gtriag = new Bio::EnsEMBL::Glyph::Poly({
-	'points'       => [0,$ystart+14, 10,$ystart+14, 10,$ystart+18],
-	'colour'       => $black,
-	'absolutex'    => 1,
-	'absolutey'    => 1,
+	    'points'       => [0,$ystart+14, 10,$ystart+14, 10,$ystart+18],
+    	'colour'       => $black,
+    	'absolutex'    => 1,
+    	'absolutey'    => 1,
     });
     $self->push($gtriag);
  }   

@@ -35,7 +35,6 @@ sub _init {
     my $len            = $Container->length();
     my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->_global_start();
     my $global_end     = $global_start + $len - 1;
-    my $global_offset  = int(($global_end - $global_start)/2);
 
     #print STDERR "VC half length = $global_offset\n";
     #print STDERR "VC start = $global_start\n";
@@ -95,7 +94,7 @@ sub _init {
         for (my $i=0;$i<int($len/$divs); $i++){
             my $text = int($i * $divs + $global_start);                
             if ($abbrev){
-                $text = bp_to_nearest_unit_by_divs(int($i * $divs + $global_start),$divs);                
+                $text = $self->bp_to_nearest_unit_by_divs(int($i * $divs + $global_start),$divs);                
             }
             my $tglyph = new Bio::EnsEMBL::Glyph::Text({
                 'x'         => $i * $divs,
@@ -113,7 +112,7 @@ sub _init {
         # label first and last
         my $text = $global_start;
         if ($abbrev && $len >1000){
-            $text = bp_to_nearest_unit($global_start,2);
+            $text = $self->bp_to_nearest_unit($global_start,2);
         }
         my $tglyph = new Bio::EnsEMBL::Glyph::Text({
             'x'             => 0,
@@ -129,7 +128,7 @@ sub _init {
         my $im_width = $Config->image_width();
         $text = $global_end;
         if ($abbrev && $len >1000){
-            $text = bp_to_nearest_unit($global_end,2);
+            $text = $self->bp_to_nearest_unit($global_end,2);
         }
         
         my $endglyph = new Bio::EnsEMBL::Glyph::Text({
@@ -160,7 +159,6 @@ sub _init {
     $self->push($tick);
 }
 
-
 sub set_scale_division {
     my ($full_length, $max_num_divs) = @_;
 
@@ -183,24 +181,39 @@ sub set_scale_division {
     return $division;
 } 
 
-
+sub interval {
+    # Add the recentering imagemap-only glyphs
+    my ( $self, $chr, $start, $end,
+        $global_offset, $width,
+        $highlights
+    ) = @_;
+    my $interval_middle = $global_offset + ($start + $end)/2;
+    my $interval = new Bio::EnsEMBL::Glyph::Space({
+        'x'         => $start,
+        'y'         => 4,
+        'width'     => $width,
+        'height'    => 15,
+        'absolutey' => 1,
+		'href'		=> $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
+        'zmenu'     => $self->zoom_zmenu( $chr, $interval_middle, $width, $highlights ),
+    });
+    $self->push($interval);
+}
 
 sub bp_to_nearest_unit_by_divs {
-    my ($bp,$divs) = @_;
+    my ($self,$bp,$divs) = @_;
 
-    return bp_to_nearest_unit ($bp,0) if (!defined $divs);
+    return $self->bp_to_nearest_unit($bp,0) if (!defined $divs);
 
     my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
     my $value = $divs / ( 10 ** ( $power_ranger * 3 ) ) ;
 
     my $dp = $value < 1 ? length ($value) - 2 : 0; # 2 for leading "0."
-    return bp_to_nearest_unit ($bp,$dp);
+    return $self->bp_to_nearest_unit ($bp,$dp);
 }
 
-
-
 sub bp_to_nearest_unit {
-    my ($bp,$dp) = @_;
+    my ($self,$bp,$dp) = @_;
     $dp = 1 unless defined $dp;
     
     my @units = qw( bp Kb Mb Gb Tb );
@@ -214,38 +227,5 @@ sub bp_to_nearest_unit {
     return "$value $unit";
 }
 
-sub zoom_URL {
-    my( $PART, $interval_middle, $width, $factor, $highlights ) = @_;
-    my $start = int( $interval_middle - $width / 2 / $factor);
-    my $end   = int( $interval_middle + $width / 2 / $factor);        
-    return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$PART&vc_start=$start&vc_end=$end&$highlights);
-}
-
-sub interval {
-    # Add the recentering imagemap-only glyphs
-    my ($self, $chr, $start, $end, $global_offset, $width, $highlights ) = @_;
-    my $interval_middle = $global_offset + ($start + $end)/2;
-    my $interval = new Bio::EnsEMBL::Glyph::Rect({
-        'x'         => $start,
-        'y'         => 4,
-        'width'     => $width,
-        'height'    => 15,
-        'colour'    => 'transparent',
-        'absolutey' => 1,
-		'href'		=> &zoom_URL($chr, $interval_middle, $width,  1  ,
-		$highlights),
-        'zmenu'     => { 
-            'caption'                          => "Navigation",
-            '01:Zoom in (x10)'                 => &zoom_URL($chr, $interval_middle, $width, 10  , $highlights),
-            '02:Zoom in (x5)'                  => &zoom_URL($chr, $interval_middle, $width,  5  , $highlights),
-            '03:Zoom in (x2)'                  => &zoom_URL($chr, $interval_middle, $width,  2  , $highlights),
-            '04:Centre on this scale interval' => &zoom_URL($chr, $interval_middle, $width,  1  , $highlights), 
-            '05:Zoom out (x0.5)'               => &zoom_URL($chr, $interval_middle, $width,  0.5, $highlights), 
-            '06:Zoom out (x0.2)'               => &zoom_URL($chr, $interval_middle, $width,  0.2, $highlights), 
-            '07:Zoom out (x0.1)'               => &zoom_URL($chr, $interval_middle, $width,  0.1, $highlights)                 
-        },
-    });
-    $self->push($interval);
-}
 
 1;

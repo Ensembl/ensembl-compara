@@ -3,6 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
+use EnsWeb;
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Poly;
 use Bio::EnsEMBL::Glyph::Text;
@@ -29,6 +30,8 @@ sub _init {
     my ($self) = @_;
 
     my $Config = $self->{'config'};
+    return unless $Config->container_width()>0; # The container has zero width !!EXIT!!
+    
     my $col    = undef;
     my $cmap   = $Config->colourmap();
     my $white  = $cmap->id_by_name('white');

@@ -74,10 +74,9 @@ sub _init {
 	    my %grouped;
 	    foreach my $f(@features){
 		    next unless ( $f->das_dsn() eq $self->{'extras'}->{'dsn'} );
-            if($f->id eq '__ERROR__') {
+            if($f->das_type_id() eq '__ERROR__') {
                 $self->errorTrack(
-					'Error retrieving '.$self->{'extras'}->{'caption'}.
-					' features ('.$f->id.')'
+					'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')'
 				);
 		    	return;
             }
@@ -180,8 +179,10 @@ sub _init {
   	} else {
 		foreach my $f(@features){
 ## Display if not stranded OR
+#            print STDERR "got feature:", $f->das_dsn(), "-", $self->{'extras'}->{'dsn'},"\n";
     		next unless ( $f->das_dsn() eq $self->{'extras'}->{'dsn'} );
-        	if($f->id eq '__ERROR__') {
+#            print STDERR "passed DSN test\n";
+        	if($f->das_type_id() eq '__ERROR__') {
 				$self->errorTrack(
 					'Error retrieving '.$self->{'extras'}->{'caption'}.
 					' features ('.$f->id.')'
@@ -190,8 +191,10 @@ sub _init {
         	}
 	        next if ($f->das_type_id() =~ /contig/i);       # raw_contigs
     	    next if ($f->das_type_id() =~ /karyotype/i);    # karyotype bands
+#            print STDERR "passed type test\n";
 	        $empty_flag =0; # We have a feature (its on one of the strands!)
     		next if ( $strand eq 'b' && $f->strand() != $self->strand() );
+#            print STDERR "passed strand test\n";
         
         	### A general list of features we don't want to draw via DAS ###
        

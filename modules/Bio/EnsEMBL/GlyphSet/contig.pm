@@ -5,6 +5,7 @@ use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
 use Bio::EnsEMBL::Glyph::Poly;
+use Bio::EnsEMBL::Glyph::Space;
 use Bio::EnsEMBL::Glyph::Text;
 use SiteDefs;
 use ColourMap;
@@ -35,6 +36,8 @@ sub _init {
 	$module = $1 if $module=~/::([^:]+)$/;
     my $threshold_navigation    = ($Config->get($module, 'threshold_navigation') || 2e6)*1001;
 	my $show_navigation = $length < $threshold_navigation;
+    my $highlights = join('|', $self->highlights() ) ;
+    $highlights = $highlights ? "&highlight=$highlights" : '';
     my $cmap     = $Config->colourmap();
     my $col1     = $cmap->id_by_name('contigblue1');
     my $col2     = $cmap->id_by_name('contigblue2');
@@ -46,12 +49,17 @@ sub _init {
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');
     my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
+    my $clone       = $Config->get('_settings','clone');
+    my $param_string   = $clone_based ? "seqentry=1&clone=$clone" : ("chr=".$vc->_chr_name());
+    my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $vc->_global_start();
+    my $global_end     = $global_start + $length - 1;
+    
     $w *= $length/($length-1);
 
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
         'x'         => 0,
         'y'         => $ystart+7,
-        'width'     => $self->{'container'}->length(),
+        'width'     => $length,
         'height'    => 0,
         'colour'    => $cmap->id_by_name('grey1'),
         'absolutey' => 1,
@@ -81,7 +89,7 @@ sub _init {
             my $clone  = $temp_rawcontig->contig->cloneid();
             my $strand = $temp_rawcontig->strand();
         
-            my $c      = $self->{'container'}->dbobj()->get_Clone($clone);
+            my $c      = $vc->dbobj()->get_Clone($clone);
 #        my $fpc    = $fpc_map->get_Clone_by_name($c->embl_id);
 #        my $fpc_id = "unknown";
 #        $fpc_id    = $fpc->name() if(defined $fpc);
@@ -170,9 +178,9 @@ sub _init {
         # the forward strand ticks
         $tick = new Bio::EnsEMBL::Glyph::Rect({
             'x'         => 0 + $pos,
-            'y'         => $ystart-2,
+            'y'         => $ystart-4,
             'width'     => 0,
-            'height'    => 1,
+            'height'    => 3,
             'colour'    => $col3,
             'absolutey' => 1,
             'absolutex' => 1,
@@ -183,7 +191,7 @@ sub _init {
             'x'         => $im_width - $pos,
             'y'         => $ystart+15,
             'width'     => 0,
-            'height'    => 1,
+            'height'    => 3,
             'colour'    => $col3,
             'absolutey' => 1,
             'absolutex' => 1,
@@ -218,7 +226,7 @@ sub _init {
     if ($Config->get('_settings','draw_red_box') eq 'yes') { #  eq  && ($length <= $vc_size_limit+2))
 
     # only draw focus box on the correct display...
-        my $LEFT_HS = $clone_based ? 0 : $self->{'container'}->_global_start() -1;
+        my $LEFT_HS = $clone_based ? 0 : $global_start -1;
         my $boxglyph = new Bio::EnsEMBL::Glyph::Rect({
             'x'            => $Config->{'_wvc_start'} - $LEFT_HS,
             'y'            => $ystart - 4 ,
@@ -239,6 +247,38 @@ sub _init {
         });
         $self->push($boxglyph2);
     }
+    my $width = $interval * ($length / $im_width) ;
+    my $interval_middle = $width/2;
+
+    foreach my $i(0..9){
+        my $pos = $i * $interval;
+        # the forward strand ticks
+        $tick = new Bio::EnsEMBL::Glyph::Space({
+            'x'         => 0 + $pos,
+            'y'         => $ystart-4,
+            'width'     => $interval,
+            'height'    => 3,
+            'absolutey' => 1,
+            'absolutex' => 1,
+            'href'		=> $self->zoom_URL($param_string, $interval_middle + $global_start, $length,  1  , $highlights),
+            'zmenu'     => $self->zoom_zmenu( $param_string, $interval_middle + $global_start, $length, $highlights ),
+        });
+        $self->push($tick);
+        # the reverse strand ticks
+        $tick = new Bio::EnsEMBL::Glyph::Space({
+            'x'         => $im_width - $pos,
+            'y'         => $ystart+15,
+            'width'     => $interval,
+            'height'    => 3,
+            'absolutey' => 1,
+            'absolutex' => 1,
+            'href'		=> $self->zoom_URL(     $param_string, $global_end-$interval_middle, $length,  1  , $highlights),
+            'zmenu'     => $self->zoom_zmenu(   $param_string, $global_end-$interval_middle, $length, $highlights ),
+        });
+        $self->push($tick);
+        $interval_middle += $width;
+    }
+
 }
 
 1;
