@@ -1197,6 +1197,34 @@ sub display_id {
   return $id;
 }
 
+=head2 reverse_complement
+
+  Args       : none
+  Example    : none
+  Description: reverse complement the object modifing dnafrag_strand and cigar_line
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub reverse_complement {
+  my ($self) = @_;
+
+  # reverse strand
+  $self->dnafrag_strand($self->dnafrag_strand * -1);
+
+  # reverse cigar_string as consequence
+  my $cigar_line = $self->cigar_line;
+  $cigar_line =~ s/(D|G|M)/$1 /g;
+  my @cigar_pieces = split / /,$cigar_line;
+  $cigar_line = "";
+  while (my $piece = pop @cigar_pieces) {
+    $cigar_line .= $piece;
+  }
+
+  $self->cigar_line($cigar_line);
+}
 
 #####################################################################
 #####################################################################
