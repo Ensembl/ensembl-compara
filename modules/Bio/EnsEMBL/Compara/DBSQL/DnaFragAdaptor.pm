@@ -100,6 +100,60 @@ sub fetch_by_dbID {
 
 
 
+=head2 fetch_by_GenomeDB_and_name
+
+  Arg [1]    : integer $genome_db_id
+                  - or -
+               Bio::EnsEMBL::Compara::DBSQL::GenomeDB
+  Arg [2]    : string $name
+  Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($human_genome_db, 'X');
+  Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(1, 'X');
+  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag obejct corresponding to the
+               Bio::EnsEMBL::Compara::GenomeDB and name given.
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag
+  Exceptions : throw when genome_db_id cannot be retrieved
+  Caller     : $dnafrag_adaptor->fetch_by_GenomeDB_and_name
+
+=cut
+
+sub fetch_by_GenomeDB_and_name {
+  my ($self, $genome_db, $name) = @_;
+  my $dnafrag; # Returned value
+  
+  my $genome_db_id;
+  if ($genome_db =~ /^\d+$/) {
+    $genome_db_id = $genome_db;
+  } elsif ($genome_db && ref $genome_db && 
+      $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
+    $genome_db_id = $genome_db->dbID;
+    if (!$genome_db_id) {
+      throw("[$genome_db] does not have a dbID");
+    }
+  } else {
+    throw("[$genome_db] must be Bio::EnsEMBL::Compara::GenomeDB\n");
+  }
+
+  my $sql = qq{
+          SELECT
+            dnafrag_id,
+            length,
+            name,
+            genome_db_id,
+            coord_system_name
+          FROM
+            dnafrag
+          WHERE
+            genome_db_id = ?
+            AND name = ?
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($genome_db_id, $name);
+
+  return $self->_objs_from_sth($sth)->[0];
+}
+
+
 =head2 fetch_all_by_GenomeDB_region
 
   Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomeDB
@@ -164,6 +218,7 @@ sub fetch_all_by_GenomeDB_region {
 
   return $self->_objs_from_sth($sth);
 }
+
 
 =head2 fetch_all
 
