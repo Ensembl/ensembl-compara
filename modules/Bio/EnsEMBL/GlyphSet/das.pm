@@ -8,7 +8,6 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use ExtURL;
 use SiteDefs;
-use Data::Dumper;
 
 
 sub init_label {
@@ -42,7 +41,6 @@ sub _init {
     ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
     $das_config_key =~ s/^managed_das/das/;
 
-    warn( Dumper( $Config->{'user'} ));
     my $strand          = $Config->get($das_config_key, 'str');
 # If strand is 'r' or 'f' then we display everything on one strand (either
 # at the top or at the bottom!

@@ -40,21 +40,19 @@ sub colour {
 
 sub href {
     my ($self, $gene, $transcript) = @_;
-    return undef;
- #   my $id = $transcript->id();
- #   return undef if $id =~ /^\d/;
- #   return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'Peptide_ens_genscan830', 'ID' => $id } );
+    my $id = $transcript->stable_id();
+    return undef if $id =~ /^\d/;
+    return $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'Peptide_ens_genscan830', 'ID' => $id } );
     
 }
 
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
-    return undef;
-    my $id = $transcript->id();
+    my $id = $transcript->stable_id();
     return undef if $id =~ /^\d/;
      return {
 	'caption' => $id,
-        '01:Peptide sequence' => $self->href( $transcript ),
+        '01:Peptide sequence' => $self->href( $gene, $transcript ),
         '02:cDNA sequence'    => $self->{'config'}->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => 'cDNA_ens_genscan830', 'ID' => $id } ),
     };
 

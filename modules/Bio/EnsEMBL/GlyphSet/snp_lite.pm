@@ -28,9 +28,9 @@ sub features {
 sub href {
     my ($self, $f ) = @_;
     
+    my $chr_start = $self->{'container'}->chr_start()+$f->start;
     my $snp_id = $f->id;
     my $source = $f->source_tag;
-    my $chr_start = $self->{'container'}->chr_start();
     my $chr_name = $self->{'container'}->chr_name();
 
     return "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=$snp_id&source=$source&chr=$chr_name&vc_start=$chr_start";
@@ -79,10 +79,16 @@ sub zmenu {
     my $chr_end   = $f->end() + $self->{'container'}->chr_start() - 1;
 
     my $allele = $f->alleles;
+    my $pos =  $chr_start;
+    if($f->{'range_type'} eq 'between' ) {
+       $pos = "between&nbsp;$chr_start&nbsp;&amp;&nbsp;$chr_end";
+    } elsif($f->{'range_type'} ne 'exact' ) {
+       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+   }
     my %zmenu = ( 
         'caption'           => "SNP: ".$f->id(),
         '01:SNP properties' => $self->href( $f ),
-        "02:bp: $chr_start-$chr_end" => '',
+        "02:bp: $pos" => '',
         "03:class: ".$f->snpclass => '',
         "04:mapweight: ".$f->{'_mapweight'} => '',
         "06:ambiguity code: ".$f->{'_ambiguity_code'} => '',

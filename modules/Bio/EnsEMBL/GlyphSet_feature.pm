@@ -82,7 +82,7 @@ sub _init {
 
     my $features = $self->features;
     unless(ref($features)eq'ARRAY') {
-        warn( ref($self), ' features not array ref ',ref($features) );
+        # warn( ref($self), ' features not array ref ',ref($features) );
         return;
     }
 
@@ -171,7 +171,7 @@ sub _init {
             }));
         }
     }
-    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+    # warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
 1;

@@ -59,7 +59,6 @@ sub image_label {
 sub _init {
     my ($self) = @_;
     my $type = $self->check();
-    warn( "TYPE: $type\n" );
     return unless defined $type;
     
     my $VirtualContig   = $self->{'container'};
@@ -81,13 +80,13 @@ sub _init {
     my $max_length_nav = $Config->get( $type, 'navigation_threshold' ) || 15000000;
 
 ## VC to long to display featues dump an error message
-    if( $vc_length > $max_length *1001 ) {
+    if( $vc_length > $max_length *1010 ) {
         $self->errorTrack( "$type only displayed for less than $max_length Kb.");
         return;
     }
 
 ## Decide whether we are going to include navigation (independent of switch) 
-    $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1001);
+    $navigation = ($navigation eq 'on') && ($vc_length <= $max_length_nav *1010);
     
     my $h              = 9;
 ## Get highlights...
@@ -115,7 +114,7 @@ sub _init {
 
     my $features = $self->features; 
     unless(ref($features)eq'ARRAY') {
-        warn( ref($self), ' features not array ref ',ref($features) );
+        # warn( ref($self), ' features not array ref ',ref($features) );
 	return; 
     }
     foreach my $f ( @{$features} ) {
@@ -154,14 +153,14 @@ sub _init {
 	    $tag_start = $start;
             $tag_end = $end;
             if($tag->{'style'} eq 'snp' ) {
-                $tag_start = $start - 1/2 - 3/$pix_per_bp;
-                $tag_end   = $start - 1/2 + 3/$pix_per_bp;
-            } elsif( $tag->{'style'} eq 'left-snp') {
-                $tag_start = $start - 1 - 3/$pix_per_bp;
-                $tag_end   = $start - 1 + 3/$pix_per_bp;
+                $tag_start = $start - 1/2 - 4/$pix_per_bp;
+                $tag_end   = $start - 1/2 + 4/$pix_per_bp;
+            } elsif( $tag->{'style'} eq 'left-snp' || $tag->{'style'} eq 'delta' || $tag->{'style'} eq 'box' ) {
+                $tag_start = $start - 1 - 4/$pix_per_bp;
+                $tag_end   = $start - 1 + 4/$pix_per_bp;
             } elsif($tag->{'style'} eq 'right-snp') {
-                $tag_start = $end - 3/$pix_per_bp;
-                $tag_end   = $end + 3/$pix_per_bp;
+                $tag_start = $end - 4/$pix_per_bp;
+                $tag_end   = $end + 4/$pix_per_bp;
             } elsif($tag->{'style'} eq 'underline') {
                 $tag_start = $tag->{'start'} if defined $tag->{'start'};
                 $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
@@ -258,9 +257,9 @@ sub _init {
         	    });
                 push @tag_glyphs, $line;
     	        my $triangle = new Sanger::Graphics::Glyph::Poly({
-                    'points'    => [ $triangle_start, -2,
-                                     $start, 1,
-                                     $triangle_end, -2  ],
+                    'points'    => [ $triangle_start, $h+2,
+                                     $start, $h-1,
+                                     $triangle_end, $h+2  ],
          	    'colour'    => $tag->{'colour'},
                     'absolutey' => 1,
         	    });
@@ -317,6 +316,51 @@ sub _init {
            	    'colour'    => $tag->{'colour'},
                     'absolutey' => 1,
         	});
+                $composite->push($line);
+                push @tag_glyphs, $triangle;
+            } elsif($tag->{'style'} eq 'box') {
+                next if($start > $f->start());
+                my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
+                my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
+    	        my $line = new Sanger::Graphics::Glyph::Rect({
+                    'x'          => $triangle_start,
+                    'y'          => 1,
+                    'width'      => 8/$pix_per_bp,
+                    'height'     => $h,
+                    "colour"     => $tag->{'colour'},
+                    'absolutey'  => 1
+                });
+                $composite->push($line);
+                my $tglyph = new Sanger::Graphics::Glyph::Text({
+                    'x'          => $start - 1/2 - $w/2,
+                    'y'          => 1,
+                    'width'      => $w,
+                    'height'     => $th,
+                    'font'       => 'Tiny',
+                    'colour'     => $tag->{'label_colour'},
+                    'text'       => $tag->{'letter'},
+                    'absolutey'  => 1,
+                });
+                $composite->push($tglyph);
+            } elsif($tag->{'style'} eq 'delta') {
+                next if($start > $f->start());
+                my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
+                my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
+    	        my $line = new Sanger::Graphics::Glyph::Space({
+                    'x'          => $triangle_start,
+                    'y'          => $h,
+                    'width'      => 8/$pix_per_bp,
+                    'height'     => 0,
+                    "colour"     => $tag->{'colour'},
+                    'absolutey'  => 1
+                });
+    	        my $triangle = new Sanger::Graphics::Glyph::Poly({
+                    'points'    => [ $triangle_start, 0,
+                                     $start - 1/2   , $h,
+                                     $triangle_end  , 0  ],
+           	    'colour'    => $tag->{'colour'},
+            	    'absolutey' => 1,
+                });
                 $composite->push($line);
                 push @tag_glyphs, $triangle;
             } elsif($tag->{'style'} eq 'left-snp') {
@@ -431,7 +475,7 @@ sub _init {
             $self->unshift($high);
         }
     }
-    warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
+    # warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
 ## No features show "empty track line" if option set....  ##
     $self->errorTrack( "No ".$self->my_label." in this region" )
         if( $Config->get('_settings','opt_empty_tracks')==1 && $flag );

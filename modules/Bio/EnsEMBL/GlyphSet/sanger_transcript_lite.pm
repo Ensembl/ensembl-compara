@@ -65,10 +65,10 @@ sub zmenu {
 
     $type =~ s/HUMACE-//g;
     my $zmenu = {
-        'caption'                   => "Sanger Gene",
+        'caption'                   => "Vega Gene",
 	"01:$tid"                   => '',
         "02:Gene: $gid"             => $self->href( $gene, $transcript ),
-        "04:Sanger curated ($type)" => ''
+        "04:Vega curated ($type)" => ''
     };
 
     my $translation_id = $transcript->translation()->stable_id();
@@ -97,15 +97,15 @@ sub legend {
     my ($self, $colours) = @_;
     return ('sanger_genes', 1000,
             [
-                'Sanger curated known genes'    => $colours->{'HUMACE-Known'},
-                'Sanger curated novel CDS'      => $colours->{'HUMACE-Novel_CDS'},
-                'Sanger curated putative'       => $colours->{'HUMACE-Putative'},
-                'Sanger curated novel Trans'    => $colours->{'HUMACE-Novel_Transcript'},
-                'Sanger curated pseudogenes'    => $colours->{'HUMACE-Pseudogene'}
+                'Vega curated known genes'    => $colours->{'HUMACE-Known'},
+                'Vega curated novel CDS'      => $colours->{'HUMACE-Novel_CDS'},
+                'Vega curated putative'       => $colours->{'HUMACE-Putative'},
+                'Vega curated novel Trans'    => $colours->{'HUMACE-Novel_Transcript'},
+                'Vega curated pseudogenes'    => $colours->{'HUMACE-Pseudogene'}
             ]
     );
 }
 
-sub error_track_name { return 'Sanger transcripts'; }
+sub error_track_name { return 'Vega transcripts'; }
 
 1;

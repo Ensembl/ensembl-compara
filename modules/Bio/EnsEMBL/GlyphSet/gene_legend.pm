@@ -45,7 +45,7 @@ sub _init {
        'y'         => 0,
        'width'     => $im_width, 
        'height'    => 0,
-       'colour'    => $Config->colourmap->id_by_name('grey3'),
+       'colour'    => $Config->colourmap->id_by_name('grey50'),
        'absolutey' => 1,
        'absolutex' => 1,
     });

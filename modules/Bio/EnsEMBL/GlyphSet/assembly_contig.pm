@@ -28,7 +28,7 @@ sub colour {
 sub image_label {
     my ($self, $f, $w ) = @_;
     ## Add orientation arrow to the assembly contig...
-    my $label = $f->orientation == 1 ? $f->name."->" : "<-".$f->name;
+    my $label = $f->orientation == 1 ? $f->name." >" : "< ".$f->name;
     ## If the string is too long to fit - try just the arrow!
     if($w * 1.1 * length($label) > $f->length) {
         $label = $f->orientation == 1 ? "->" : "<-";

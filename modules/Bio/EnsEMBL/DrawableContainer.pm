@@ -48,12 +48,10 @@ sub new {
         my $tmp_glyphset_store = {};
         for my $row ($Config->subsections( 1 )) {
         ########## skip this row if user has it turned off
-        #    warn( "TRACK : $row\n" );
             next if ($Config->get($row, 'on') ne "on") ||
                     ($Config->get($row, 'str') eq "r" && $strand != -1) ||
                     ($Config->get($row, 'str') eq "f" && $strand != 1);
 
-        #    warn( "Manager: ".$Config->get($row, 'manager') );
             next if(my $manager = $Config->get($row, 'manager'));
 
             ########## create a new glyphset for this row
@@ -81,7 +79,6 @@ sub new {
         ########## install the glyphset managers, we've just cached the ones we need...
         foreach my $manager ( keys %{$Config->{'_managers'}} ) {
             my $classname = $PREFIX."::GlyphSetManager::$manager";
-            warn( "MANAGER $classname" );
             eval "require $classname";
             if($@) {
                 print STDERR qq(DrawableContainer::new failed to require $classname: $@\n);
@@ -92,7 +89,6 @@ sub new {
             for my $glyphset ($gsm->glyphsets()) {
                 my $row = $glyphset->managed_name();
                      ########## skip this row if user has it turned off
-                warn( "ROW: $row\n" );
                 next if !($Config->get($row, 'on') eq "on") ||
                         ($Config->get($row, 'str') eq "r" && $strand != -1) ||
                         ($Config->get($row, 'str') eq "f" && $strand != 1);

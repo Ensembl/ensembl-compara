@@ -12,7 +12,7 @@ sub my_label { return "1mb cloneset"; }
 
 sub features {
     my ($self) = @_;
-    return grep { abs( $_->end - $_->start ) < 3e6 } @{$self->{'container'}->get_all_MapFrags( 'cloneset' ) };
+    return $self->{'container'}->get_all_MapFrags( 'cloneset' );
 }
 
 ## If bac map clones are very long then we draw them as "outlines" as
@@ -21,11 +21,8 @@ sub features {
 
 sub colour {
     my ($self, $f) = @_;
-    $self->{'_colour_flag'} = $self->{'_colour_flag'}==1 ? 2 : 1;
-    return 
-        $self->{'colours'}{"col$self->{'_colour_flag'}"},
-        $self->{'colours'}{"lab$self->{'_colour_flag'}"},
-        $f->length > $self->{'config'}->get( "tilepath2", 'outline_threshold' ) ? 'border' : '' ;
+    my $type = $f->positioned_by();
+    return $self->{'colours'}{"col_$type"}, $self->{'colours'}{"lab_$type"}, '';
 }
 
 ## Return the image label and the position of the label
@@ -88,9 +85,8 @@ sub zmenu {
     $zmenu->{'15:Seq length: '.$f->seq_len } = ''        if($f->seq_len);    
     $zmenu->{'16:FP length:  '.$f->fp_size } = ''        if($f->fp_size);    
     $zmenu->{'17:super_ctg:  '.$f->superctg} = ''        if($f->superctg);    
-    $zmenu->{'18:BAC flags:  '.$f->bacinfo } = ''        if($f->BACend_flag);    
     $zmenu->{'18:FISH:  '.$f->FISHmap } = ''        if($f->FISHmap);    
-    $zmenu->{'30:'.$f->note } = ''        if($f->note);    
+    $zmenu->{'30:Positioned by:'.$f->positioned_by } = ''        if($f->positioned_by);    
     return $zmenu;
 }
 

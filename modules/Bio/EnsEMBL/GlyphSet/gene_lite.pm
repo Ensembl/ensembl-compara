@@ -87,7 +87,7 @@ sub _init {
     my @genes = ();
 
     #
-    # Draw all of the Sanger Genes
+    # Draw all of the Vega Genes
     #
     my $F = 0;
     foreach my $g (@{$vc->get_all_Genes_by_source( "sanger",1 )} ) {
@@ -117,11 +117,11 @@ sub _init {
       $Config->{'legend_features'}->{'sanger_genes'} = {
        'priority' => 1000,
        'legend'  => [
-	 'Sanger curated known genes'=> $sanger_colours->{'Known'},
-         'Sanger curated novel CDS'  => $sanger_colours->{'Novel_CDS'},
-         'Sanger curated putative'   => $sanger_colours->{'Putative'},
-         'Sanger curated novel Trans'=> $sanger_colours->{'Novel_Transcript'},
-         'Sanger curated pseudogenes'=> $sanger_colours->{'Pseudogene'} ] };
+	 'Vega curated known genes'=> $sanger_colours->{'Known'},
+         'Vega curated novel CDS'  => $sanger_colours->{'Novel_CDS'},
+         'Vega curated putative'   => $sanger_colours->{'Putative'},
+         'Vega curated novel Trans'=> $sanger_colours->{'Novel_Transcript'},
+         'Vega curated pseudogenes'=> $sanger_colours->{'Pseudogene'} ] };
     } 
 
 

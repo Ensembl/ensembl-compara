@@ -18,7 +18,6 @@ sub check { return 'sub_repeat'; }
 
 sub features {
     my $self = shift;
-    warn( "Bio::EnsEMBL::GlyphSet::sub_repeat called with name = ".$self->{'extras'}->{'name'}." -- " );
     return $self->{'container'}->get_all_RepeatFeatures( $self->{'extras'}->{'name'} );
 }
 

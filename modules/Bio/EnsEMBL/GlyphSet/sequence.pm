@@ -38,9 +38,12 @@ sub colour {
 sub href {
     my( $self,$f) = @_;
     foreach(@{$self->{'mapfrags'}}) {
-        return "http://wwwdev.sanger.ac.uk/cgi-bin/tracefetch/viewtrace?species=$ENV{'ENSEMBL_SPECIES'}&contig=".
-		$_->name."&focus=".( $_->orientation > 0 ? ( $f->start-$_->start+1 ) : ( $_->end-$f->start+1 ) )
-            if $_->start <= $f->start && $f->start <= $_->end;
+        return sprintf(
+            'http://wwwdev.sanger.ac.uk/cgi-bin/tracefetch/viewtrace?species=%s&contig=%s&focus=%s&bori=%s&cori=%s',
+             $ENV{'ENSEMBL_SPECIES'}, $_->name, 
+             $_->orientation > 0 ? ( $f->start-$_->start+1 ) : ( $_->end-$f->start+1 ) ,
+             $self->strand, $_->orientation
+        ) if $_->start <= $f->start && $f->start <= $_->end;
     }
     return undef;
 }
