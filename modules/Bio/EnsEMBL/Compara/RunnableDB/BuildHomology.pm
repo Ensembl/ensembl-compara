@@ -144,6 +144,7 @@ sub run
 
   my @blast_list = @{$self->{'blast_analyses'}};
 
+  $self->{'comparaDBA'}->disconnect_when_inactive(0);
   my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
 
   if($self->input_id eq 'test'){ $self->test_RHS; exit(1); }

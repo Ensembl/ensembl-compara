@@ -259,6 +259,7 @@ sub run
     open STDERR, ">&WORKER_STDERR";
   }
 
+  $self->db->disconnect_when_inactive(1);
 
   my $jobDBA = $self->db->get_AnalysisJobAdaptor;
   my $alive=1;  

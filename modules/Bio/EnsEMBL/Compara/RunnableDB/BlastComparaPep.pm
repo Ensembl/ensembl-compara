@@ -107,7 +107,7 @@ sub fetch_input {
                            -DBCONN => $self->db);
   $self->{'comparaDBA'}->disconnect_when_inactive(1);
 
-  
+
   my $member_id  = $self->input_id;
   my $member     = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
   print("member(".$member->dbID.") = '".$member->stable_id."'\n");
@@ -195,7 +195,6 @@ sub write_output {
     }
   }
 
-  $self->{'comparaDBA'}->disconnect_when_inactive(0);
   $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store($self->output);
 }
 
