@@ -29,7 +29,7 @@ sub bump{
 			my $bitmap_length = int($container->length() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
 	    
-            my $bump_end = $bump_start + $glyph->width();
+            my $bump_end = $bump_start + $glyph->width() + 3;
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
             my $row = & Sanger::Graphics::Bump::bump_row(
 				      $bump_start,
@@ -49,7 +49,7 @@ sub _init {
     my ($self) = @_;
     my $protein    = $self->{'container'};
     my $Config     = $self->{'config'};
-	my $snps		= $protein->{'bg2_snps'};  
+	my $snps		= $protein->{'image_snps'};  
     my $x		   = 0;
 	my $y          = 0;
     my $h          = 5;
@@ -116,18 +116,18 @@ sub _init {
 		my $alt_codon = '';
 		if ($int->{'type'} eq 'snp'){
 			$snp = "Alternative Residues: ". $int->{'pep_snp'}  ;
-			$alt_codon = "Ambiguity code: ";
+			$alt_codon = "Codon: ";
 			for my $letter ( 0..2 ){
-				$alt_codon .= $int->{'ambigcode'}[$letter]  ? '('.$int->{'ambigcode'}[$letter].')' : $int->{'nt'}[$letter];   
+				$alt_codon .= $int->{'ambigcode'}[$letter]  ? '['.$int->{'ambigcode'}[$letter].']' : $int->{'nt'}[$letter];   
 			}
 		}else{
-			$snp = "Ambiguity code: ";
+			$snp = "Codon: ";
 			for my $letter ( 0..2 ){
-				$snp .= $int->{'ambigcode'}[$letter]  ? '('.$int->{'ambigcode'}[$letter].')' : $int->{'nt'}[$letter];   
+				$snp .= $int->{'ambigcode'}[$letter]  ? '['.$int->{'ambigcode'}[$letter].']' : $int->{'nt'}[$letter];   
 			}
 		}
 		my $rect = new Sanger::Graphics::Glyph::Rect({
-		'x'        => $x,
+		'x'        => $x-($w/2),
 		'width'    => $w,
 		'height'   => $h,
 		'colour'   => $Config->get('Pprot_snp', $int->{'bg'}),
@@ -138,8 +138,8 @@ sub _init {
 			"00:SNP ID: ".$int->{'snp_id'} => "/$ENV{'ENSEMBL_SPECIES'}/snpview?snp=".$int->{'snp_id'}."&source=".$int->{'snp_source'},
 			"01:SNP Type: $type"   => "",
 			"02:Residue: $x" => "",
-			"03:$snp" => "", },
-	
+			"03:$snp" => "", 
+			"05:Alleles: ".$int->{'allele'} => "", },
 	    });
 		
 		if ($alt_codon){$rect->zmenu->{"04:$alt_codon"} = '';}
