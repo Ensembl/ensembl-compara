@@ -73,7 +73,13 @@ sub create_homology
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
-  my $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
+
+  my $stable_id;  
+  if($self->query_member->taxon_id < $self->hit_member->taxon_id) {
+    $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
+  } else {
+    $stable_id = $self->hit_member->taxon_id . "_" . $self->query_member->taxon_id . "_";
+  }
   $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
   $homology->stable_id($stable_id);
   $homology->method_link_type("ENSEMBL_ORTHOLOGUES");
@@ -355,17 +361,12 @@ sub rhit_dbID {
   return $self->{'_rhit_dbID'};
 }
 
-=head3
-sub sort_by_score_evalue_and_pid {
-  #print("operator redirect YEAH!\n");
-  $b->score <=> $a->score ||
-    $a->evalue <=> $b->evalue ||
-      $b->perc_ident <=> $a->perc_ident ||
-        $b->perc_pos <=> $a->perc_pos;
-}
-=cut
-
 sub display_short {
+  my $self = shift;
+  print($self->get_description(), "\n");
+}
+
+sub get_description {
   my($self) = @_;
 
   unless(defined($self)) {
@@ -379,18 +380,25 @@ sub display_short {
 
   my $header = "PAF(".$dbID.")";
   $header .= "(".$self->rhit_dbID.")" if($self->rhit_dbID);
-  while(length($header)<20) { $header .= ' '; }
-  printf($header);
-  print($qm->stable_id,"(".$self->qstart,",",$self->qend,")",
-        "(",$qm->chr_name,":",$qm->chr_start,")\t",
-        "\t" , $hm->stable_id, "(".$self->hstart,",",$self->hend,")",
-        "(",$hm->chr_name,":",$hm->chr_start,")\t",
-        "\t" , $self->score ,
-        "\t" , $self->alignment_length ,
-        "\t" , $self->perc_ident ,
-        "\t" , $self->perc_pos ,
-        "\t" , $self->hit_rank ,
-        "\n");
+  while(length($header)<17) { $header .= ' '; }
+
+  my $qmem = sprintf("%s(%d,%d)(%s:%d)",
+        $qm->stable_id, $self->qstart, $self->qend, $qm->chr_name, $qm->chr_start);
+  my $hmem = sprintf("%s(%d,%d)(%s:%d)",
+        $hm->stable_id, $self->hstart, $self->hend, $hm->chr_name, $hm->chr_start);
+  while(length($qmem)<50) { $qmem .= ' '; }
+  while(length($hmem)<50) { $hmem .= ' '; }
+
+
+  my $desc_string = sprintf("%s%s%s%7.3f%7d%7d%7d%7d",
+        $header, $qmem, $hmem,
+        $self->score,
+        $self->alignment_length,
+        $self->perc_ident,
+        $self->perc_pos,
+        $self->hit_rank);
+
+  return $desc_string;       
 }
 
 
