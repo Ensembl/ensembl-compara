@@ -24,11 +24,7 @@ sub colour {
 
   my $highlight = undef;
   my $type = $transcript->type() || $gene->type();
-  warn "TYPE: $type";
-  my $colour = $colours->{'RNA'};
-  if ($type =~ /pseudo/){
-    $colour = $colours->{'RNA-pseudogene'};
-  }
+  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }[0];
 
   if(exists $highlights{$transcript->stable_id()}) {
     $highlight = $colours->{'superhi'};
@@ -46,15 +42,15 @@ sub gene_colour {
 
   my $highlight = undef;
   my $type = $gene->type();
-  my $colour = $colours->{$type};
+  my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }[0];
 
   if(exists $highlights{$gene->stable_id()}) {
     $highlight = $colours->{'hi'};
   }
 
   return ($colour, $highlight);
-
 }
+
 sub href {
   my ($self, $gene, $transcript, %highlights ) = @_;
 
@@ -88,7 +84,7 @@ sub zmenu {
   my $zmenu = {
     'caption'             => "ncRNA",
     "00:$id"    => "",
-  "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid",
+    "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid",
     "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid",          
     '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
     "06:$type"   => '',
@@ -163,8 +159,8 @@ sub legend {
   my ($self, $colours) = @_;
   return ('ncRNA', 1000,
       [
-        'RNA'			=> $colours->{'RNA'},
-        'RNA pseudogene'	=> $colours->{'RNA-pseudogene'},
+        'RNA'			=> $colours->{'rna-real'}[0],
+        'RNA pseudogene'	=> $colours->{'rna-psuedo'}[0],
       ]
   );
 }

@@ -22,7 +22,8 @@ sub _init {
   return unless defined $type;
 
   return unless $self->strand() == -1;
-  my $offset = $self->{'container'}->chr_start - 1;
+  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->chr_start - 1 :  $self->{'container'}->chr_end + 1;
+  my $dir    = $self->{'container'}->strand > 0 ? 1 : -1;
   my $Config        = $self->{'config'};
   my $EXTENT        = $Config->get('_settings','context');
      $EXTENT        = 1e6 if $EXTENT eq 'FULL';
@@ -53,8 +54,10 @@ sub _init {
   my @tmp;
   foreach my $snpref ( @{$Config->{'snps'}} ) {
     my $location = int( ($snpref->[0]+$snpref->[1])/2 );
+    warn "WE HAVE A SNP..... LOC -> $location";
     my $snp = $snpref->[2];
-    my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID().":".($snp->start+$offset) };
+    my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID().":".($snp->start * $dir +$offset) };
+    warn $snp->dbID().":".($snp->start * $dir +$offset) ;
     next unless $cod_snp;
     next if $snp->end < $transcript->start - $EXTENT;
     next if $snp->start > $transcript->end + $EXTENT;

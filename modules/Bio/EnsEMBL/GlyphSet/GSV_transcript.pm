@@ -141,17 +141,17 @@ sub colours {
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
-    my $genecol = $colours->{ "_".$transcript->external_status } || 'black';
+    my $genecol = $colours->{ "_".$transcript->external_status }[0] || 'black';
 
     if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
-       $genecol = $colours->{'_pseudogene'};
+       $genecol = $colours->{'_pseudogene'}[0];
     }
     if(exists $highlights{$transcript->stable_id()}) {
-      return ($genecol, $colours->{'superhi'});
+      return ($genecol, $colours->{'superhi'}[0]);
     } elsif(exists $highlights{$transcript->external_name()}) {
-      return ($genecol, $colours->{'superhi'});
+      return ($genecol, $colours->{'superhi'}[0]);
     } elsif(exists $highlights{$gene->stable_id()}) {
-      return ($genecol, $colours->{'hi'});
+      return ($genecol, $colours->{'hi'}[0]);
     }
       
     return ($genecol, undef);

@@ -147,6 +147,7 @@ sub _init {
   };
  
   push @{$SPRITES->{'nav'}}, 'flip_strand', 'set_as_primary' if $self->{'config'}->{'slice_number'};
+  if(0) {
   foreach my $key ( keys %$SPRITES ) {
     my( $pos, $step,  @sprite_array ) =  @{$SPRITES->{$key}};
 
@@ -170,10 +171,11 @@ sub _init {
       $pos += $step;
     }
   }
+}
   my $line = new Sanger::Graphics::Glyph::Rect({
     'z' => 11,
     'x' => -120,
-    'y' => 22,
+    'y' => 12, # 22,
     'colour' => 'black',
     'width' => 120,
     'height' => 0,
@@ -190,7 +192,7 @@ sub _init {
   my $line = new Sanger::Graphics::Glyph::Rect({
     'z' => 11,
     'x' => 0,
-    'y' => 22,
+    'y' => 12, # 22,
     'colour' => 'black',
     'width' => 20000,
     'height' => 0,

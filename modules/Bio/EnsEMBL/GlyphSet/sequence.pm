@@ -17,10 +17,11 @@ sub features {
     if($strand == -1 ) { $seq=~tr/ACGT/TGCA/; }
     my @features = map { 
        Bio::EnsEMBL::SeqFeature->new(
-	   -start => ++$start,
-	   -end   => $start,
+	   -start   => ++$start,
+	   -end     => $start,
            -seqname => $_,
-           -strand  => $strand
+           -strand  => $strand,
+           -display_name => $_,
        )
     } split //, $seq;
     return \@features;

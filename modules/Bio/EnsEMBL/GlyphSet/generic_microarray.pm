@@ -44,7 +44,9 @@ sub image_label {
 sub href {
   my ($self, $id, $feature_data ) = @_;
   my $f = $feature_data->[0][2];
-  return '';
+  $f || return '';
+  my $tmpl = "fastaview?faid=microarray&id=%s";
+  return sprintf( $tmpl, $f->dbID );;
 }
 
 ## Create the zmenu...
@@ -54,7 +56,9 @@ sub zmenu {
     my $f = $feat_data->[0][2];
     #my $zmenu = {};
     my $zmenu = { 'caption' => 'Reporter Data' };
-    my $i = 0;
+    my $href = $self->href($id, $feat_data);
+    if( $href ){ $zmenu->{"01:details..."} = $href }
+    my $i = 1;
     foreach my $attrib( @{$f->get_all_Attributes} ){
       $i++;
       my $key = sprintf( "%2.2d:%s:%s", $i, $attrib->name, $attrib->value );

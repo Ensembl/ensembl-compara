@@ -91,7 +91,7 @@ sub compact_init {
   my $gene_drawn = 0;
  
   my $compara = $Config->{'compara'};
-  my $link    = 1 ; #$compara ? $Config->get($type,'join') : 0;
+  my $link    = $compara ? $Config->get('_settings','opt_join_transcript') : 0;
   my $join_col = 'blue';
   my $join_z   = -10;
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
@@ -136,7 +136,7 @@ sub compact_init {
         $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
       }
     }
-    if( ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
+    if( $link && ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
       if( $Config->{'previous_species'} ) {
         foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
           $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
@@ -289,7 +289,7 @@ sub expanded_init {
   my $_h            = $Config->texthelper->height($fontname);
 
   my $compara = $Config->{'compara'};
-  my $link    = 1 ; #$compara ? $Config->get($type,'join') : 0;
+  my $link    = $compara ? $Config->get($type,'join') : 0;
   
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
@@ -297,7 +297,7 @@ sub expanded_init {
     next if $gene_strand != $strand and $strand_flag eq 'b'; # skip features on wrong strand....
     next if $target_gene && $gene_stable_id ne $target_gene;
     my %TAGS = ();
-    if( ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
+    if( $link && ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
       if( $Config->{'previous_species'} ) {
         my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'previous_species'} );
         push @{$TAGS{$psid}}, map { $Config->{'slice_id'}. "#$_#$pid" } @{$href};

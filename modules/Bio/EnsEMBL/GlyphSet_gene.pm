@@ -33,8 +33,11 @@ sub init_label {
   }));
 }
 
-sub my_label { return 'Sometype of Gene'; }
+sub my_label {    return 'Sometype of Gene'; }
 sub my_captions { return {}; }
+
+sub ens_ID {      return $_[1]->stable_id; }
+sub gene_label {  return $_[1]->stable_id; }
 
 sub _init {
   my ($self) = @_;
@@ -54,8 +57,9 @@ sub _init {
   my $pix_per_bp     = $Config->transform->{'scalex'};
   my $bitmap_length  = int( $vc_length * $pix_per_bp );
 
-  my $colours        = $Config->get($type,'colours');
+  my $colours        = $Config->get($type,'colour_set' ) ? {$Config->{'_colourmap'}->colourSet( $Config->get($type,'colour_set' ) )} : $Config->get($type,'colours');
 
+  $self->datadump( $colours );  
   my $max_length     = $Config->get($type,'threshold') || 1e6;
   my $max_length_nav = $Config->get($type,'navigation_threshold') || 50e3;
   my $navigation     = $Config->get($type,'navigation') || 'off';
@@ -73,13 +77,20 @@ sub _init {
 
   my $F = 0;
 
+  my $fontname       = "Tiny";
+  my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
+  warn "$font_w_bp";
   my $database = $Config->get($type,'database');
 
   my $used_colours = {};
   my $FLAG = 0;
+## We need to store the genes to label...
+  my @GENES_TO_LABEL = ();
+
   foreach my $logic_name (split /\s+/, $Config->get($type,'logic_name') ) {
    my $genes = $self->features( $logic_name, $database );
    foreach my $g (@$genes) {
+    warn "$g @{[$g->analysis->logic_name]} -- @{[$g->type]}";
     my $gene_label = $self->gene_label( $g );
     my $GT         = $self->gene_col( $g );
        $GT =~ s/XREF//g;
@@ -90,8 +101,7 @@ sub _init {
     $type =~ s/HUMACE-//;
     my $start = $g->start;
     my $end   = $g->end;
-    my $chr_start = $start + $offset;
-    my $chr_end   = $end   + $offset;
+    my ($chr_start, $chr_end) = $self->slice2sr( $start, $end );
     next if  $end < 1 || $start > $vc_length || $gene_label eq '';
     $start = 1 if $start<1;
     $end   = $vc_length if $end > $vc_length;
@@ -103,26 +113,42 @@ sub _init {
     $start = 1 if $start<1;
     $end = $vc_length if $end > $vc_length;
 
+    my $HREF;
+    my $Z;
     my $rect = new Sanger::Graphics::Glyph::Rect({
       'x'         => $start-1,
       'y'         => 0,
       'width'     => $end - $start+1,
       'height'    => $h,
-      'colour'    => $gene_col,
+      'colour'    => $gene_col->[0],
       'absolutey' => 1,
     });
 
     if($show_navigation) {
-      $rect->{'zmenu'} = {
+      $Z = {
         'caption' 		              => $gene_label,
         "bp: $chr_start-$chr_end"             => '',
+        "type: @{[$g->type]}"                 => '',
 	"length: @{[$chr_end-$chr_start+1]}"  => ''
       }; 
       if( $ens_ID ne '' ) {
-        $rect->{'zmenu'}->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database"; 
-        $rect->{'href'} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database";
+        $Z->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database"; 
+        $HREF= "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database";
+        $rect->{'href'}  = $HREF;
       }
+      $rect->{'zmenu'} = $Z;
     }
+    my $hilite = $highlights{$gene_label} || $highlights{$g->stable_id};
+    push @GENES_TO_LABEL , {
+      'start' => $start,
+      'label' => $gene_label,
+      'end' => $end,
+      'zmenu' => $Z,
+      'href' => $HREF,
+      'gene' => $g,
+      'col' => $gene_col->[0],
+      'highlight' => $hilite
+    };
     my $bump_start = int($rect->x() * $pix_per_bp);
     $bump_start = 0 if ($bump_start < 0);
     my $bump_end = $bump_start + int($rect->width()*$pix_per_bp) +1;
@@ -139,11 +165,64 @@ sub _init {
       'height'    => $rect->height()+2,
       'colour'    => $colours->{'hi'},
       'absolutey' => 1,
-    })) if $highlights{$gene_label} || $highlights{$g->stable_id};
+    })) if $hilite;
     $FLAG=1;
    }
   } 
-  if($FLAG) {
+  if($FLAG) { ## NOW WE NEED TO ADD THE LABELS_TRACK.... FOLLOWED BY THE LEGEND
+    if( 1 || $Config->get( '_settings', 'opt_gene_labels' ) ) {
+      my $START_ROW = @bitmap + 1;
+      @bitmap = ();
+      foreach my $gr ( @GENES_TO_LABEL ) {
+        my $tglyph = new Sanger::Graphics::Glyph::Text({
+          'x'         => $gr->{'start'}-1,
+          'y'         => 0,
+          'height'    => $h,
+          'width'     => $font_w_bp * length(" $gr->{'label'} "),
+          'font'      => $fontname,
+          'colour'    => $gr->{'col'},
+          'text'      => " $gr->{'label'}",
+          'zmenu'     => $gr->{'zmenu'},
+          'href'      => $gr->{'href'},
+          'absolutey' => 1,
+        });
+      my $bump_start = int($tglyph->{'x'} * $pix_per_bp);
+         $bump_start = 0 if ($bump_start < 0);
+      my $bump_end = $bump_start + int($tglyph->width()*$pix_per_bp) +1;
+         $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
+      my $row = & Sanger::Graphics::Bump::bump_row(
+         $bump_start, $bump_end, $bitmap_length, \@bitmap );
+      $tglyph->y($tglyph->{'y'} + $row * (2+$h) + 1 + ( $START_ROW * 6 ));
+      $self->push( $tglyph );
+    ##################################################
+    # Draw little taggy bit to indicate start of gene
+    ##################################################
+      $self->push( new Sanger::Graphics::Glyph::Rect({
+        'x'            => $gr->{'start'}-1,
+        'y'            => $tglyph->y - 1,
+        'width'        => 0,
+        'height'       => 4,
+        'bordercolour' => $gr->{'col'},
+        'absolutey'    => 1,
+      }));
+      $self->push( new Sanger::Graphics::Glyph::Rect({
+        'x'            => $gr->{'start'}-1,
+        'y'            => $tglyph->y - 1 + 4,
+        'width'        => $font_w_bp * 0.5,
+        'height'       => 0,
+        'bordercolour' => $gr->{'col'},
+        'absolutey'    => 1,
+      }));
+      $self->unshift(new Sanger::Graphics::Glyph::Rect({
+        'x'         => $gr->{'start'}-1 - 1/$pix_per_bp,
+        'y'         => $tglyph->y()-1,
+        'width'     => $tglyph->length()  +1 + 2/$pix_per_bp,
+        'height'    => $tglyph->height()+2,
+        'colour'    => $colours->{'hi'},
+        'absolutey' => 1,
+      })) if $gr->{'hilite'};
+      }
+      }
     $Config->{'legend_features'}->{$type} = {
       'priority' => $Config->get( $type, 'pos' ),
       'legend'  => $self->legend( $used_colours )
@@ -154,10 +233,9 @@ sub _init {
 sub legend {
   my( $self, $colours ) = @_;
   my @legend = ();
-  my $lcap = $self->legend_captions();
-  foreach my $key ( keys %{$lcap} ) {
-    push @legend, $lcap->{$key} => $colours->{$key} if exists $colours->{$key};
-  } 
+  my %X;
+  foreach my $Y ( values %$colours ) { $X{$Y->[1]} = $Y->[0]; }
+  my @legend = %X;
   return \@legend;
 }
 

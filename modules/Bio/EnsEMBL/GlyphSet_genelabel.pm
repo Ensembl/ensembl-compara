@@ -14,6 +14,9 @@ sub features {
     return $self->{'container'}->get_all_Genes($logic_name, $database);
 }
 
+sub ens_ID {      return $_[1]->stable_id; }
+sub gene_label {  return $_[1]->stable_id; }
+
 sub _init {
   my $self = shift;
 
@@ -73,8 +76,7 @@ sub _init {
     my $high = exists $highlights{ $gene_label } || $highlights{ $g->stable_id };
     my $start = $g->start;
     my $end   = $g->end;
-    my $chr_start = $start + $offset;
-    my $chr_end   = $end   + $offset;
+    my ($chr_start, $chr_end) = $self->slice2sr( $start, $end );
     next if  $end < 1 || $start > $vc_length || $gene_label eq '';
     $start = 1 if $start<1;
     $end   = $vc_length if $end > $vc_length;
@@ -92,7 +94,8 @@ sub _init {
       $tglyph->{'zmenu'} = {
         'caption'                            => $gene_label,
 	"bp: $chr_start-$chr_end"            => '',
-        "length: @{[$chr_end-$chr_start+1]}" => ''
+        "length: @{[$chr_end-$chr_start+1]}" => '',
+        "type: @{[$g->type]}"                => ''
       }; 
       if( $ens_ID ne '' ) {
         $tglyph->{'zmenu'}->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database";

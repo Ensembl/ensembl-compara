@@ -55,7 +55,9 @@ sub _init {
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
   return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
-  $self->{'colours'} = $Config->get($type, 'colours');
+  $self->{'colours'} = $Config->get( $type, 'colour_set' ) ? 
+    { $Config->{'_colourmap'}->colourSet( $Config->get( $type, 'colour_set' ) ) } :
+    $Config->get( $type, 'colours' );
   $self->{'feature_colour'} = $Config->get($type, 'col') || $self->{'colours'} && $self->{'colours'}{'col'};
   $self->{'label_colour'}   = $Config->get($type, 'lab') || $self->{'colours'} && $self->{'colours'}{'lab'};
   $self->{'part_to_colour'} = '';
