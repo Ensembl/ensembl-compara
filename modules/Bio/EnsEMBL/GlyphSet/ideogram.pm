@@ -12,8 +12,7 @@ use SiteDefs;
 sub init_label {
     my ($self) = @_;
 	return if( defined $self->{'config'}->{'_no_label'} );
-    my $chr = $self->{'container'}->_chr_name();
-    $chr ||= "Chrom. Band";
+    my $chr = $self->{'container'}->_chr_name() || "Chrom. Band";
     $chr .= " " x (12 - length($chr));
 	
     my $label = new Bio::EnsEMBL::Glyph::Text({
@@ -31,7 +30,6 @@ sub _init {
     # only draw contigs once - on one strand
     #
     return unless ($self->strand() == 1);
-
 
     my $Config = $self->{'config'};
     my $col    = undef;
@@ -62,32 +60,28 @@ sub _init {
     
     # get rid of div by zero...
     $chr_length |= 1;
-    my $vc2chr = $len/$chr_length;
 	
     # over come a bottom border/margin problem....
     my $hack = new Bio::EnsEMBL::Glyph::Rect({
-	'x'      => 1,
-	'y'      => 0,
-	'width'  => 1,
-	'height' => 20,
-	'bordercolour' => $white,
-	'absolutey' => 1,
+		'x'      => 1,
+		'y'      => 0,
+		'width'  => 1,
+		'height' => 20,
+		'bordercolour' => $white,
+		'absolutey' => 1,
     });
     $self->push($hack);
     
     my $done_one_acen = 0;	    # flag for tracking place in chromsome
 
     foreach my $band (@bands){
-	my $bandname = $band->name();
-	my $band2  = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
-	my $start  = $band2->start();
-	my $end    = $band2->end();
-	my $stain  = $band2->stain();
-	my ($vc_band_start,$vc_band_end) = ();
-	
-	$vc_band_start	= $start * $vc2chr; 
-	$vc_band_end	= $end * $vc2chr;
-	#print STDERR "$chr band:$bandname stain:$stain start:$vc_band_start end:$vc_band_end\n";		
+	my $bandname       = $band->name();
+	my $band2          = $self->{'container'}->fetch_karyotype_band_by_name($chr,$bandname);
+	my $vc_band_start  = $band2->start();
+	my $vc_band_end    = $band2->end();
+	my $stain          = $band2->stain();
+
+#	print STDERR "$chr band:$bandname stain:$stain start:$vc_band_start end:$vc_band_end\n";		
 
 	if ($stain eq "acen"){
 	    my $gband;
@@ -188,7 +182,7 @@ sub _init {
 	my $bp_textwidth = $w * length($bandname);
 	unless ($stain eq "acen" || $stain eq "stalk" ||($bp_textwidth > ($vc_band_end - $vc_band_start))){
 		my $tglyph = new Bio::EnsEMBL::Glyph::Text({
-		'x'      => $vc_band_start + ($vc_band_end - $vc_band_start)/2 - ($bp_textwidth)/2,
+		'x'      => ($vc_band_end + $vc_band_start - $bp_textwidth)/2,
 		'y'      => 4,
 		'font'   => 'Tiny',
 		'colour' => $fontcolour,
@@ -213,7 +207,7 @@ sub _init {
     $self->push($gband);
     
     $gband = new Bio::EnsEMBL::Glyph::Line({
-	'x'      => $len,
+	'x'      => $chr_length,
 	'y'      => 2,
 	'width'  => 0,
 	'height' => 10,
@@ -226,9 +220,9 @@ sub _init {
     # Draw the zoom position red box
     #################################
     $gband = new Bio::EnsEMBL::Glyph::Rect({
-    	'x'      => $self->{'container'}->_global_start() * $vc2chr,
+    	'x'      => $self->{'container'}->_global_start(),
     	'y'      => 0,
-    	'width'  => $len * $vc2chr,
+    	'width'  => $len,
     	'height' => 14,
     	'bordercolour' => $red,
 		'absolutey' => 1,
