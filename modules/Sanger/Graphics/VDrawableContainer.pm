@@ -1,5 +1,9 @@
 package Sanger::Graphics::VDrawableContainer;
 use strict;
+use Sanger::Graphics::Root;
+use Data::Dumper;
+use vars qw(@ISA);
+@ISA = qw(Sanger::Graphics::Root);
 
 sub new {
   my ($class, $Container, $Config, $highlights, $strandedness, $spacing) = @_;
@@ -33,15 +37,19 @@ sub new {
     map {
       $Config->get($_, 'on') eq "on" ? [$Config->get($_,'pos')||$pos++,$_] : () ;
     } $Config->subsections;
+
   foreach my $chr ( @chromosomes ) {
     for my $row (@subsections) {
       ########## create a new glyphset for this row
       my $classname = qq(Bio::EnsEMBL::GlyphSet::).( $Config->get($row, 'manager')||$row );
+
       next unless $self->dynamic_use( $classname );
+
       my $GlyphSet;
       eval {
         $GlyphSet = new $classname($Container, $Config, $highlights, 0, { 'chr' => $chr, 'row' => $row } );
       };
+
       if($@ || !$GlyphSet) {
         my $reason = $@ || "No reason given just returns undef";
         warn "GLYPHSET: glyphset $classname failed : $reason";
@@ -171,19 +179,19 @@ sub glyphsets {
   return @{$self->{'glyphsets'}};
 }
 
-sub dynamic_use {
-  my( $self, $classname ) = @_;
-  my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*?)$/;
-  no strict 'refs';
-  return 1 if $parent_namespace->{$module.'::'}; # return if already used
-  eval "require $classname";
-  if($@) {
-    warn "DrawableContainer: failed to use $classname\nDrawableContainer: $@";
-    return 0;
-  }
-  $classname->import();
-  return 1;
-}
+#sub dynamic_use {
+#  my( $self, $classname ) = @_;
+#  my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*?)$/;
+#  no strict 'refs';
+#  return 1 if $parent_namespace->{$module.'::'}; # return if already used
+#  eval "require $classname";
+#  if($@) {
+#    warn "DrawableContainer: failed to use $classname\nDrawableContainer: $@";
+#    return 0;
+#  }
+#  $classname->import();
+#  return 1;
+#}
 
 1;
 
