@@ -48,8 +48,6 @@ sub _init {
                 chomp;
                 my ($h_chr, $h_s, $h_e, $h_score, $h_percent, $h_name, $h_strand,$p_n,$q_s,$q_e) = split /\|/;
                 if($h_chr eq $vc_chr) {
-		    print STDERR "$vc_s -> $vc_e :: $h_s -> $h_e\n"; 
-		    print STDERR "PUSHED:\n" unless(	($h_s > $vc_e) || ( $h_e < $vc_s));
 
                     push @hits, [$h_s,$h_e,$h_score,$h_percent,$ticket, $h_name, $h_strand, $p_n,$q_s,$q_e ] unless(
                         ($h_s > $vc_e) || ( $h_e < $vc_s)
@@ -92,7 +90,6 @@ sub _init {
     ## Lets draw a box foreach hit!
     foreach my $hit ( @hits ) {
 		my $strand = $hit->[6];
-	print STDERR "HIT! $strand -", $self->strand,"\n";
         next if $strand != $self->strand();
         my $start = $hit->[0] < $vc_s ? $vc_s : $hit->[0];
         my $end   = $hit->[1] > $vc_e ? $vc_e : $hit->[1];

@@ -29,19 +29,20 @@ sub _init {
     # check we are not in a big gap!
     my @map_contigs;
     
+    my $VirtualContig   = $self->{'container'};
+
     my $useAssembly;
     eval {
-        $useAssembly = $vc->has_AssemblyContigs;
+        $useAssembly = $VirtualContig->has_AssemblyContigs;
     };
 
     if ($useAssembly) {
-       @map_contigs = $self->{'container'}->each_AssemblyContig;
+       @map_contigs = $VirtualContig->each_AssemblyContig;
     } else {
-       @map_contigs = $self->{'container'}->_vmap->each_MapContig();
+       @map_contigs = $VirtualContig->_vmap->each_MapContig();
     }
     return unless (@map_contigs);
 
-    my $VirtualContig   = $self->{'container'};
     my $Config          = $self->{'config'};
     my $vclen           = $VirtualContig->length();
     return if ($vclen < 10000);    # don't want a GC plot for very short sequences
