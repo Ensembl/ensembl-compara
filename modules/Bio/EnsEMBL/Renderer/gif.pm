@@ -77,8 +77,6 @@ sub render_Rect {
     my $bordercolour  = $self->colour($gbordercolour);
     my $colour        = $self->colour($gcolour);
 
-    $self->transform($glyph);
-
     my $x1 = $glyph->pixelx();
     my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
     my $y1 = $glyph->pixely();
@@ -95,7 +93,6 @@ sub render_Text {
     my ($self, $glyph) = @_;
 
     my $colour = $self->colour($glyph->colour());
-    $self->transform($glyph);
 
     #########
     # BAH! HORRIBLE STINKY STUFF!
@@ -130,8 +127,6 @@ sub render_Intron {
 
     my $colour = $self->colour($glyph->colour());
 
-    $self->transform($glyph);
-
     my ($xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand);
 
     #########
@@ -154,7 +149,6 @@ sub render_Intron {
 
 sub render_Line {
     my ($self, $glyph) = @_;
-    $self->transform($glyph);
 
     my $colour = $self->colour($glyph->colour());
     my $x1     = $glyph->pixelx() + 0;
@@ -176,8 +170,6 @@ sub render_Poly {
     my $colour       = $self->colour($glyph->colour());
 
     my $poly = new GD::Polygon;
-
-    $self->transform($glyph);
 
     return unless(defined $glyph->pixelpoints());
 
@@ -209,9 +201,7 @@ sub render_Composite {
     #########
     # draw & colour the bounding area if specified
     #
-    my $rect = $glyph;
-    $self->render_Rect($rect);
-    $self->transform($rect) if(defined $glyph->colour() || defined $glyph->bordercolour());
+    $self->render_Rect($glyph) if(defined $glyph->colour() || defined $glyph->bordercolour());
 }
 
 1;

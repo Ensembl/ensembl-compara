@@ -71,4 +71,17 @@ sub glyphs {
     return @{$self->{'composite'}};
 }
 
+sub transform {
+    my ($self, $transform_ref) = @_;
+
+    $self->SUPER::transform($transform_ref);
+
+    for my $sg (@{$self->{'composite'}}) {
+	my %tmp_transform = %{$transform_ref};
+	$tmp_transform{'translatex'} = $self->pixelx();
+	$tmp_transform{'translatey'} = $self->pixely();
+	$sg->transform(\%tmp_transform);
+    }
+}
+
 1;

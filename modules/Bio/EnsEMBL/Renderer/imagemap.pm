@@ -22,8 +22,6 @@ sub add_canvas_frame {
 sub render_Rect {
     my ($self, $glyph) = @_;
 
-    $self->transform($glyph);
-
     my $onmouseover = $glyph->onmouseover();
     $onmouseover = (defined $onmouseover)?qq( onmouseover="$onmouseover"):"";
 

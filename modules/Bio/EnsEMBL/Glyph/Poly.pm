@@ -70,49 +70,51 @@ sub transform {
 #    return if(defined $this->{'read-only'});
 #    $this->{'read-only'} = 1;
 
-    my $scalex     = $$transform_ref{'scalex'}     || 1;
-    my $scaley     = $$transform_ref{'scaley'}     || 1;
-    my $translatex = $$transform_ref{'translatex'} || 0;
-    my $translatey = $$transform_ref{'translatey'} || 0;
-    my $rotation   = $$transform_ref{'rotation'}   || 0;
+    my $scalex     = $$transform_ref{'scalex'};
+    my $scaley     = $$transform_ref{'scaley'};
+    my $translatex = $$transform_ref{'translatex'};
+    my $translatey = $$transform_ref{'translatey'};
 
     #########
     # apply transformation
     #
-    my @points = @{$this->points()};
-    my $pairs_of_points = (scalar @points)/ 2;
+    my @tmp_points = @{$this->points()};
+    $this->{'pixelpoints'} ||= \@tmp_points;
 
     #########
     # override transformation if we've set x/y to be absolute (pixel) coords
     #
     if(defined $this->absolutex()) {
-	$scalex     = $$transform_ref{'absolutescalex'} ||1;
+	$scalex     = $$transform_ref{'absolutescalex'};
     }
 
     if(defined $this->absolutey()) {
-	$scaley     = $$transform_ref{'absolutescaley'} ||1;
+	$scaley     = $$transform_ref{'absolutescaley'};
     }
 
     #########
     # apply transformation
     #
-    for(my $i=0;$i<$pairs_of_points;$i++) {
-        my $x = shift @points;
-        my $y = shift @points;
+    my $len = scalar @{$this->{'pixelpoints'}};
+
+    for(my $i=0;$i<$len;$i+=2) {
+        my $x = ${$this->{'pixelpoints'}}[$i];
+        my $y = ${$this->{'pixelpoints'}}[$i+1];
 
 	#########
 	# apply scale
 	#
-	$x = int($x * $scalex);
-	$y = int($y * $scaley);
+	$x = int($x * $scalex) if(defined $scalex);
+	$y = int($y * $scaley) if(defined $scaley);
 
 	#########
 	# apply translation
 	#
-	$x = $x + $translatex;
-	$y = $y + $translatey;
+	$x = $x + $translatex if(defined $translatex);
+	$y = $y + $translatey if(defined $translatey);
 
-	push @{$this->{'pixelpoints'}}, ($x, $y);
+	${$this->{'pixelpoints'}}[$i] = $x;
+	${$this->{'pixelpoints'}}[$i+1] = $y;
     }
 }
 1;
