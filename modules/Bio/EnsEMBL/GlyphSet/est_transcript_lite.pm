@@ -21,7 +21,19 @@ sub colours {
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
     
-    return (  $colours->{$transcript->type()} );
+    my $highlight = undef;
+    my $colour = $colours->{$transcript->type()};
+
+    if(exists $highlights{$transcript->stable_id()}) {
+      $highlight = $colours->{'superhi'};
+    } elsif(exists $highlights{$transcript->external_name}) {
+      $highlight = $colours->{'superhi'};
+    } elsif(exists $highlights{$gene->stable_id()}) {
+      $highlight = $colours->{'hi'};
+    }
+
+    return ($colour, $highlight); 
+    
 }
 
 sub href {
@@ -54,7 +66,20 @@ sub zmenu {
     return $zmenu;
   }
 
-sub text_label { return ''; }
+#sub text_label { return ''; }
+sub text_label {
+    my ($self, $gene, $transcript) = @_;
+    my $tid = $transcript->stable_id();
+    my $id  = ($transcript->external_name() eq '') ? 
+      $tid : $transcript->external_name();
+
+    if( $self->{'config'}->{'_both_names_'} eq 'yes') {
+        return $tid.(($transcript->external_name() eq '') ? '' : " ($id)" );
+    }
+
+    return $self->{'config'}->{'_transcript_names_'} eq 'yes' ? $id : "";    
+  }
+
 
 sub features {
   my ($self) = @_;
