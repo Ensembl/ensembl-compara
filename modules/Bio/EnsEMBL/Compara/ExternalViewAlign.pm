@@ -171,5 +171,8 @@ sub align{
 
 }
 
+sub sub_SeqFeature {
+  return ();
+}
 
 1;
