@@ -287,8 +287,9 @@ sub create_dnafrag_chunks {
       my $bioseq = $chunk->fetch_masked_sequence;
       $chunk->sequence($bioseq->seq);
     }
-    print "storing chunk ",$chunk->display_id,"\n";
+    print "storing chunk ",$chunk->display_id;
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
+    print "  dbID=",$chunk->dbID, "\n";
 
     $self->submit_job($chunk) if($self->{'analysis_job'});
     $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
