@@ -59,8 +59,11 @@ sub _init {
     # fetch the chromosome bands that cover this VC.
     my $kba         = $self->{'container'}->{'ka'};
     my $bands       = $kba->fetch_all_by_chr_name($chr);
-    
-    my $chr_length = $self->{'container'}->{'sa'}->fetch_by_region( 'toplevel', $chr )->length || 1;
+
+    my $slice_adaptor = $self->{'container'}->{'sa'};
+    my $slice = $slice_adaptor->fetch_by_region('toplevel',$chr) ||
+      (warn("$slice_adaptor has no fetch_by_region('toplevel',$chr)" ) && return);
+    my $chr_length = $slice->length || 1;
     # bottom align each chromosome!
     my $v_offset    = $Config->container_width() - $chr_length; 
     my $bpperpx     = $Config->container_width()/$Config->{'_image_height'};
