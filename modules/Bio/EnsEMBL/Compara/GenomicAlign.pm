@@ -81,6 +81,7 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Scalar::Util qw(weaken);
 
 # Object preamble
 
@@ -241,7 +242,7 @@ sub genomic_align_block {
   if( defined $genomic_align_block) {
      throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
          if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
-     $self->{'genomic_align_block'} = $genomic_align_block;
+     weaken($self->{'genomic_align_block'} = $genomic_align_block);
   }
 
   return $self->{'genomic_align_block'};
