@@ -32,7 +32,6 @@ sub init {
     if($@) {
       print STDERR "URL GLYPHSET $track failed ($@)\n";
     } else {
-      warn "Glyphset $track pushed\n";
       push @{$self->{'glyphsets'}}, $url_glyphset;
     }
   }

@@ -64,7 +64,6 @@ sub href {
 sub _init {
     my ($self) = @_;
     my $type = $self->check();
-    warn ">>>> $type ", ref( $self );
     return unless defined $type;
 
     my $length = $self->{'container'}->length();

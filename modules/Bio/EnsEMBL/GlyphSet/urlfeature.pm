@@ -2,6 +2,7 @@ package Bio::EnsEMBL::GlyphSet::urlfeature;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_feature;
+use Data::Dumper;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
 
@@ -12,6 +13,7 @@ sub my_label {
 
 sub check { return 'urlfeature'; }
 
+sub bumped { return undef; }
 sub managed_name {
   my ($self) = @_;
   return $self->{'extras'}{'name'};
