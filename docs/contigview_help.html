@@ -1,0 +1,1889 @@
+
+<html>
+  <head>
+    <title>Eh?: contigview</title>
+    <link rel="stylesheet" type="text/css" href="/Homo_sapiens/cssfixerupper">
+  </head>
+  <body bgcolor="#ffffff" text="#000000" link="#000070" vlink="#a00000" topmargin="2" marginheight="2" leftmargin="2" marginwidth="2" onload="this.focus();">
+  
+  <table border="0" width="100%" cellspacing="0" cellpadding="0">
+    <tr valign="center">
+      <td><img src="/gfx/eh-header.gif" alt="Help" width="200" height="40"></td>
+      <td align="center">
+        <a href="javascript:self.close();"><img src="/gfx/buttons/close.gif" border="0" alt="Close" width="70" height="25" hspace="2" vspace="2"></a>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td align="center" nowrap><form action="/Homo_sapiens/helpview" method="GET">
+  <input type="hidden" name="action" value="search" />
+  <input type="text" size="14" name="kw" value="contigview" />
+  <input type="image" src="/gfx/buttons/lookup.gif" border="0" width="70" height="25" alt="Lookup" hspace="2" vspace="2" align="absmiddle" />
+  </form></td>
+      <td align="center"><a href="/perl/helpview"><img src="/gfx/buttons/index.gif" alt="Index" hspace="2" vspace="2" width="70" height="25" border="0"></a></td>
+    </tr>
+    <tr valign="center">
+      <td colspan="2" align="center">
+        <a href="javascript:history.back();"><img src="/gfx/buttons/prev.gif" border="0" width="70" height="25" alt="Back" hspace="2" vspace="2" align="absmiddle"></a>
+        <a href="javascript:history.forward();"><img src="/gfx/buttons/next.gif" border="0" width="70" height="25" alt="Forward" hspace="2" vspace="2" align="absmiddle"></a>
+        <small>(help history)</small>
+      </td>
+    </tr>
+    <tr><td colspan="3"><hr width="100%"></td></tr>
+  </table>
+  <table border="0" width="100%">
+    <tr valign="top">
+      <td><img src="/gfx/blank.gif" width="1" height="350" alt=""></td>
+      <td width="100%">
+   <small>&nbsp;Found 1 entry:</small><br>
+ 
+  <h3 align="center">Ensembl ContigView</h3><p>
+<b>
+See also extra information on ContigView displays for species other than human: 
+<br>
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig">mouse</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=ratcontig">rat</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=daniocontig">zebrafish</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=fugucontig"><i>Fugu</i></a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=mosquitocontig">mosquito</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=droscontig"><i>Drosophila</i></a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=eleganscontig"><i>C. elegans</i></a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=briggsaecontig"><i>C. briggsae</i></a>
+</b>
+</p>
+
+<p>
+<a href="#Introduction">Introduction</a>
+<br>
+<a href="#Chromosome">Chromosome</a>
+<br>
+<a href="#Overview">Overview</a>
+<br>
+<a href="#NavigationBar">Navigation</a>
+<br>
+<a href="#DetailedView">Detailed View</a>
+<br>
+<a href="#BasepairView">Basepair View</a>
+</p>
+
+<p>
+<b>Features in 'Detailed View' panel</b>
+</p>
+
+<p>
+<a href="#contigs">DNA (contigs)</a>
+<br>
+<a href="#sequence">Sequence, Amino acids</a>
+<br>
+<a href="#transcripts">Transcripts (Genes)</a>
+<br>
+(Ensembl trans., Vega trans., EST trans., GENSCAN trans., SNAP trans.)
+<br>
+<a href="#protein">Protein homology evidence</a>
+<br>
+<a href="#mRNA">mRNA homology evidence (Unigene, EMBL mRNA, (human) cDNA)</a>
+<br>
+<a href="#ESTs">ESTs, tRNA, Eponine, Start/stop</a>
+<br>
+<a href="#match">Whole genome similarity matches</a>
+<br>
+<a href="#marker">Markers, QTLs, CpG islands</a>
+<br>
+<a href="#snps">SNPs, Haplotypes</a>
+<br>
+<a href="#repeats">Repeats</a>
+<br>
+<a href="#tilepath">Tile Path, Vega clones, Gaps, %GC</a>
+<br>
+<a href="#DAS">DAS Sources</a>
+<br>
+(additional data sources, incl. other groups' gene/transcript models) 
+<a href="#BasepairView">Basepair View display</a>
+<br>
+(Sequence, Amino acids, Restriction enzyme sites)
+<br>
+<a href="#customize">Customizing the display</a>
+<br>
+<a href="#export">Export / Download displayed data</a>
+<br>
+<a href="#jump">Jump to ...</a>, 
+<a href="#help">Help</a>
+<br>
+<a href="#mouse">"Mouse-over" - hints for use in Detailed View</a>
+<br>
+</p>
+
+
+<h3 id="Introduction">Introduction</h3>
+
+<p>
+Ensembl '<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' is the principal data visualisation tool for genome sequence annotation information. 
+It provides a high level view of the contig sequences that form the human genome sequence assembly, and of genes and other features that have been placed on it. 
+</p>
+
+<p>
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' can be customized to suit you. 
+More information can be added, or the displays can be simplified to make browsing faster. 
+Please look at the 
+<a href="#customize">options for customizing the display</a>. 
+</p>
+
+<p>
+The page is split into four sections representing different levels of zooming into the chromosome: 
+</p>
+
+<ol>
+
+<li>
+The entire <a href="#Chromosome">chromosome</a> 
+(or alternative sequence block for species with no chromosome assemblies)
+</li>
+
+<li>
+An <a href="#Overview">overview</a> displaying the chromosome region 
+<br>
+(by default 1Mb of DNA is shown)
+</li>
+
+<li>
+The main 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview#DetailedView">Detailed View</a>' panel showing a range of features. 
+<br>
+(by default 100kb of DNA is shown) 
+</li>
+
+<li>
+A '<a href="/Homo_sapiens/helpview?se=1&kw=contigview#BasepairView">Basepair View</a>' panel showing the assembly sequence, six frame translations and restriction enzyme recognition sites
+<br>
+(by default 100 bp of DNA is shown)
+</li>
+
+</ol>
+
+<p>
+The red boxes on the assembly in the 
+'<a href="#Chromosome">Chromosome</a>', 
+'<a href="#Overview">Overview</a>' and 
+'<a href="#DetailedView">Detailed View</a>' panels represent the regions shown at higher magnification in the panel following below. 
+The absolute base pair location of the region displayed in 'Detailed View' is indicated in the 
+<a href="/Homo_sapiens/helpview?se=1&kw=contigview#NavigatorBar">navigator bar</a> at the top of 'Detailed View'. 
+You can use this bar to navigate along any chromosome by entering a new chromosome and/or location (you can specify kb/k or Mb/M as well as entering numbers in base pairs). 
+</p>
+
+<p>
+The search box at the top of the page allows you to search for any identifier present in Ensembl 
+(see <a href="/Homo_sapiens/helpview?se=1&kw=search">Ensembl Search</a>).
+</p>
+
+
+<a name="panel_ideogram"> </a> <!-- Web Code name for 'Chromosome' panel -->
+
+<h3 id="Chromosome">Chromosome</h3>
+
+<p>
+The 'Chromosome' panel displays an ideogram of an entire chromosome with its cytogenetic banding pattern. Maps of cytogenetic bands to the genome seqeunce allow just for crude orientation and are not available for all species. 
+For all those species with genome sequence assemblies in a pre-chromosome stage, Ensembl displays other 'top-level' sequence entities such as '<a href="/Homo_sapiens/helpview?se=1&kw=glossary#Scaffold">scaffolds</a>'. 
+</p>
+
+<p align="center">
+<img src="/gfx/helpview/contigviewchr.gif" alt="Chromosome Panel">
+</p>
+
+<p>
+The red box illustrates the extent of the region displayed in the 
+'<a href="#Overview">Overview</a>' panel below and can be moved by clicking anywhere on the chromosome. 
+The 'Chromosome' display can be turned on or off using the 
+<img src="/gfx/helpview/plus-box.gif" align="middle" alt="plus box"> or 
+<img src="/gfx/helpview/min-box.gif" align="middle" alt="minus box"> box, respectively. 
+</p>
+
+
+<a name="panel_top"> </a> <!-- Web Code name for 'Overview' panel -->
+
+<h3 id="Overview">Overview</h3>
+
+<p>
+The '<a href="#Overview">Overview</a>' panel displays a larger section of a chromosome together with its basic annotation. Usually the range is set to 1 Mb but can be smaller for species with genomes of higher density. 
+The 'Overview' panel displays the following information: 
+</p>
+
+<p align="center">
+<img src="/gfx/helpview/overviewpng.png" alt="Overview Panel">
+</p>
+
+<ul>
+
+<li>
+<p>
+<b>Synteny blocks</b> - 
+Synteny blocks are chromosome segments in other species that conserve the same gene order. 
+The coloured line illustrates the extent of synteny to the other species, and is labelled with chromosome name and orientation ('>' if the orientation is the same, '<' if it is reverse). 
+In '<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>', these blocks are simply displayed. 
+For more details and clickable links to the other species, use the 'Jump to ...' menu on the golden menu bar above the detailed display panel to go to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=cytoview#synteny">CytoView</a>' or
+'<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>'. 
+Syntenic blocks are currently available between human, chimpanzee, mouse, rat and chicken, as well as between <i>Caenorhabditis elegans</i> and <i>Caenorhabditis briggsae</i>. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Chromosome bands</b> - 
+Cytogenetic chromosome band(s) that map to a particular region allow for crude orientation on the genome seqeunce. 
+Mapping data sets of cytogenetic bands to genome seqeunce coordiantes are currently not available for all species displayed in Ensembl. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Scale bar</b> - 
+A scale bar illustrates the physical map coordinates this particular region falls into. 
+Generally, Ensembl displays the genome seqeunce in standard notation from p to q arm. 
+Since estimated gap sizes are included in the physical map, coordinates might change between genome seqeunce assembly builds. 
+</p>
+</li>
+
+<li>
+<p>
+<b>DNA (contigs)</b> - 
+The individual contig seqeunces that form the genome sequence assembly in this particular region are depicted in alternating dark and light blue colour. 
+Where no blue contig is shown, this indicates a gap in the assembly. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Markers</b> - 
+The positions of Sequence Tagged Sites (<a href="/Homo_sapiens/helpview?se=1&kw=glossary#STS">STS</a>) markers are indicated in magenta directly under the contig map ideogram. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Ensembl genes</b> - 
+Coloured boxes represent genes. 
+Thereby 'Ensembl known genes' are red, 'Ensembl novel genes' are black and 'Ensembl pseudogens' are drawn in grey. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Vega genes</b> - 
+Blue genes represent manually 'Curated genes' drawn from the 
+<a href="http://vega.sanger.ac.uk/" target="external">Vega</a> database. 
+For additional information about the categories of genes displayed, see 
+<a href="#Transcripts">transcript information</a> below. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Gene legend</b> - 
+The colour coding of all types of genes is dynamically shown at the bottom of the 
+'<a href="#Overview">Overview</a>' panel in the 'Gene legend' track. 
+</p>
+</li>
+
+</ul>
+
+<p>
+The red box illustrates the extent of the region displayed in the subsequent 
+'<a href="#DetailedView">Detailed View</a>' panel below. 
+You may click anywhere in the 
+'<a href="#Overview">Overview</a>' panel to re-centre the red box at that point on the contig map. 
+The '<a href="#DetailedView">Detailed View</a>' display below will change accordingly. 
+Except for re-centring contigs and genes are not clickable in the 
+'<a href="#Overview">Overview</a>' display, but they are selectable in the 
+'<a href="#DetailedView">Detailed View</a>' panel below. 
+The '<a href="#Overview">Overview</a>' display can be turned on or off using the 
+<img src="/gfx/helpview/plus-box.gif" align="middle" alt="plus box"> or 
+<img src="/gfx/helpview/min-box.gif" align="middle" alt="minus box"> box, respectively. 
+</p>
+
+
+<h3 id="NavigationBar">Navigation Bar</h3>
+
+<p align="center">
+<img src="/gfx/helpview/nav_left_2.gif" alt="move 2 Mb left">
+<img src="/gfx/helpview/nav_left_1.gif" alt="move 1 Mb left">
+<img src="/gfx/helpview/nav_right_1.gif" alt="move 1 Mb right">
+<img src="/gfx/helpview/nav_right_2.gif" alt="move 2 Mb right">
+</p>
+
+<p>
+Clicking on one of these buttons will move the whole display 1 or 2 Mb to the left or right. 
+The size of region represented by the red box will not change. 
+</p>
+
+<p align="center">
+<img src="/gfx/helpview/win_left.gif" alt="move window left">
+<img src="/gfx/helpview/win_right.gif" alt="move window right">
+</p>
+
+<p>
+Clicking on one of these two buttons will scroll the whole display to the left or right by 80% of the current display length. 
+The size of the red box will not change. 
+</p>
+
+<p align="center">
+<img src="/gfx/helpview/plus.gif" alt="plus">
+<img src="/gfx/helpview/zoom.gif" alt="zoom">
+<img src="/gfx/helpview/minus.gif" alt="minus">
+</p>
+
+<p>
+By default, '<a href="#DetailedView">Detailed View</a>' shows a region of 1000 kb. 
+These buttons above provide the option to zoom in and out, varying the size of the region displayed. 
+Use this to restrict or expand the field of view to a scale suitable to view any feature of interest. 
+Click on steps in the ramp to display 1, 5, 10, 50, 100, 200, 500 kb or 1 Mb. 
+Clicking plus or minus zooms in or out by a factor of approximately 2, and allows zooming in to as little as 1 bp. 
+Regions larger than 1 Mb can only be seen in the 
+'<a href="#Overview">Overview</a>' panel. 
+Generally, '<a href="/Homo_sapiens/helpview?se=1&kw=cytoview">CytoView</a>' is recommended for viewing larger segments of a chromosome. 
+</p>
+
+<p>
+To move to a different chromosome or to specify a chromosomal location in base pairs, enter numbers in the appropriate boxes and click on 
+<img src="/gfx/helpview/refresh.gif" align="middle" alt="refresh">. 
+</p>
+
+<p>
+To specify a display between two markers, use 
+'<a href="/Homo_sapiens/helpview?se=1&kw=mapview">MapView</a>'. 
+<br>
+To specify a display between two features, use 
+'<a href="/Homo_sapiens/helpview?se=1&kw=anchorview">AnchorView</a>'. 
+</p>
+
+<p>
+<b>
+You can also navigate by 
+<a href="#mouse">mouse-over</a> on the scale bars at the top and bottom of the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+This brings up a clickable menu that lets you zoom or re-centre the 
+'<a href="#DetailedView">Detailed View</a>' display. 
+</b>
+</p>
+
+
+<a name="panel_bottom"> </a> <!-- Web Code name for 'Deatiled View' panel -->
+
+<h3 id="DetailedView">Detailed View</h3>
+
+<p>
+The third panel '<a href="#DetailedView">Detailed View</a>' shows small regions of chromosomes and provides more detailed information on genome sequence annotation. 
+</p>
+
+<p>
+Features shown for the human genome are described here. 
+There are some differences for other species - see also the additional information for 
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig">mouse</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=ratcontig">rat</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=daniocontig">zebrafish</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=fugucontig">pufferfish</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=mosquitocontig">mosquito</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=droscontig">fuit fly</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=eleganscontig"><i>Caenorhabditis elegans</i></a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=briggsaecontig"><i>Caenorhabditis briggsae</i></a>. 
+</p>
+
+<p>
+The '<a href="#DetailedView">Detailed View</a>' display panel can be turned on or off using the 
+<img src="/gfx/helpview/plus-box.gif" align="middle" alt="plus box"> or 
+<img src="/gfx/helpview/min-box.gif" align="middle" alt="minus box"> button. 
+On the golden bar at the top are pull-down menus that enable you to customize the display, export data and jump to other views (see <a href="#customize">below</a>).
+</p>
+
+<p>
+The DNA sequence is again represented as alternating dark and light blue contigs. 
+The colour-coded features above the contigs are positioned on the <b>forward</b> strand and those below are on the <b>reverse</b> strand of the genome seqeunce in standard notation. 
+</p>
+
+<p>
+Feature tracks are named at the left side of the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+Blue names indicate tracks served from external <a href="#DAS">DAS sources</a> via the Distributed Annotation System. 
+Tracks may be turned on or off and <a href="#customize">customized</a> to suit your requirements. 
+Pointing to a feature with the mouse 
+("<a href="#mouse">mouse-over</a>") will bring up text showing the feature's name and links to more detailed information where available. 
+These pop-up menus can be turned off by unchecking "show pop-up menus" in the "Decorations" pull-down menu. 
+A single click on most features will take you to an appropriate page with more information on that feature (unless you have chosen to display pop-ups by clicking on a feature only). 
+(See <a href="#customize">customizing the display</a> for more details.) 
+</p>
+
+<p align="center">
+<img src="/gfx/helpview/detailed.gif" alt="Deatiled View display">
+</p>
+
+
+<h5 id="contigs">DNA (contigs)</h5>
+
+<p>
+The 'DNA (contigs)' track shows a representation of the genomic sequence assembly. 
+How the assembly was prepared, and how it is represented in Ensembl 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>', differs in different Ensembl species. 
+See information on how the display differs in 
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig">mouse</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=ratcontig">rat</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=daniocontig">zebrafish</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=fugucontig">pufferfish</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=mosquitocontig">mosquito</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=droscontig">fuit fly</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=eleganscontig"><i>Caenorhabditis elegans</i></a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=briggsaecontig"><i>Caenorhabditis briggsae</i></a>. 
+</p>
+
+<p>
+The human assembly is based on the sequence of individual BAC clones. 
+A finished BAC clone will consist of a single contig sequence. 
+Alternating dark and light blue blocks show individual contigs that make up the chromosomal assembly. 
+Hovering the mouse cursor over the contig bar will bring up the full designation of the contig and the accession number of the clone from which it is derived. 
+There is also a clickable link to the appropriate EMBL sequence file. 
+Clicking on a contig centres the display on that contig. 
+The arrowheads show the orientation of the contig sequence given in the EMBL source file relative to the chromosome assembly. 
+Where no blue contig is shown, there is a gap in the assembly. 
+For more information about gaps in the assembly, see the 
+<a href="#tilepath">gap track</a>. 
+</p>
+
+<a name="transcripts"> </a>
+<a name="transcript_lite"> </a>
+<a name="genewise_lite"> </a>
+
+<h5>Transcripts</h5>
+
+<p>
+'<a href="#DetailedView">Detailed View</a>' does not display genes as such but rather their transcripts. 
+Transcripts shown above the blue 'DNA (contigs)' bar are transcribed in the forward direction (left to right), while transcripts shown below the bar are transcribed in the reverse direction (right to left). 
+Ensembl considers genes as a collection of exons - from which there may be many transcripts. 
+Each exon is represented by a coloured box, and the exons in a transcript are joined by angled lines. 
+Untranslated regions of the transcript (5' and 3' UTRs) are now shown as coloured outlines, while the predicted coding regions are shown in solid colour. 
+This distinction is seen best when viewing relatively small regions of a chromosome. 
+</p>
+
+<p>
+If there are several transcripts at the same point on the sequence then that gene has been assessed as producing multiple transcripts (displayed on different lines). 
+</p>
+
+<p>
+<b>ENSEMBL TRANSCRIPTS</b> track shows the Ensembl predicted transcripts. 
+"Known transcripts", which correspond closely to near-full-length species-specific cDNA and/or protein sequences already available in the public sequence databases, are shown in <b>red</b>. 
+"Novel transcripts", which cannot be matched with confidence to specific database entries are shown in <b>black</b>. 
+Note that all the Ensembl predictions (known and novel) are strongly supported by similarity to protein or cDNA sequences. 
+</p>
+
+<p>
+<a href="#mouse">Mouse-over</a> a "known" or "novel" Ensembl transcript will produce a menu with the Ensembl transcript id (ENSTXXXXX) or assigned name at the top, followed by additional identifiers and links: 
+</p>
+
+<ul>
+
+<li>
+<b>Gene</b> will take you to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=geneview">GeneView</a>', providing data on the predicted gene. 
+</li>
+
+<li>
+<b>Transcr.</b> will take you to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>', providing data on the predicted transcript. 
+</li>
+
+<li>
+<b>Peptide</b> will take you to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=protview">ProteinView</a>', providing data on the predicted protein product. 
+</li>
+
+<li>
+<b>Export cDNA</b> will take you to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=exportview">ExportView</a>', allowing you to get the cDNA sequence for this transcript in FASTA format. 
+</li>
+
+<li>
+<b>Export peptide</b> will take you to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=exportview">ExportView</a>', allowing you to get the peptide sequence in FASTA format. 
+</li>
+
+</ul>
+
+<p>
+Clicking on a transcript takes you directly to '<a href="/Homo_sapiens/helpview?se=1&kw=geneview">GeneView</a>'. 
+</p>
+
+<a name="sanger_transcript_lite"> </a>
+<a name="vega_transcript_lite"> </a>
+
+<p>
+<b>VEGA TRANSCRIPTS</b>
+<br>
+<b>On human chromosomes 6, 7, 9, 10, 13, 14, 20 and 22 only</b>, a complete set of manually-curated transcripts is available (additional chromosomes will be available in future releases). 
+Transcripts are the results of comprehensive manual annotation - at present the annotation presented is that prepared by the 
+<a href="http://www.sanger.ac.uk/" target="external">Sanger Institute</a> (chromosomes 6, 9, 10, 13, 20 and 22) and by 
+<a href="http://www.genoscope.cns.fr/chr14/" target="external">Genoscope</a> (chromosome 14) and 
+<a href="http://www.genome.washington.edu/UWGC/chr-7/index.cfm" target="external">Washington University</a> (chromosome 7); and stored in the 
+<a href="http://vega.sanger.ac.uk/" target="external">Vega</a> database. 
+Transcripts are shown in shades of <b>blue</b> and the colour coding is summarized at the bottom of the 
+'<a href="#Overview">Overview</a>' panel. 
+A brief summary of the different categories is given below. 
+</p>
+
+<ul>
+
+<li>
+<p>
+<b>Curated known genes:</b>
+Known genes are identical to known human complementary DNA or protein sequences (all known genes are in the 
+<a href="http://www.ncbi.nlm.nih.gov/LocusLink/" target="external">LocusLink</a> database). 
+</p>
+</li>
+
+<li>
+<p>
+<b>Curated novel CDS:</b> 
+Novel genes are those that have an open reading frame (ORF), are identical to human ESTs that splice into two or more exons, and/or have homology to known genes or proteins (all species). 
+Generally labelled with an identifier derived from the Sanger clone name and a transcript number (e.g. dJ781B1.3-001). 
+</p>
+</li>
+
+<li>
+<p>
+<b>Curated novel transcript:</b>
+Novel transcripts are genes that fit the criteria of novel genes with the exception that a unique ORF cannot be determined. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Curated putative:</b>
+Putative genes are sequences identical to human ESTs that splice into two or more exons but without an ORF. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Curated pseudogene:</b>
+Pseudogenes are homologous to known genes and proteins but with a disrupted ORF (displayed here even though pseudogenes may not be transcribed). 
+</p>
+</li>
+
+<li>
+<p>
+<b>Curated immunoglobulin segments</b>
+</p>
+</li>
+
+<li>
+<p>
+<b>Curated immunoglobulin pseudogenes</b>
+</p>
+</li>
+
+</ul>
+
+
+<p>
+More information about the preparation of these gene sets can be found on the human 
+<a href="http://www.sanger.ac.uk/HGP/Chr20/" target="external">chromosome 20</a> and 
+<a href="http://www.sanger.ac.uk/HGP/Chr22/" target="external">chromosome 22</a> pages at the 
+<a href="http://www.sanger.ac.uk/" target="external">Sanger Institute</a>, at 
+<a href="http://www.genoscope.cns.fr/chr14/" target="external">Genoscope</a> for 
+<a href="http://www.genoscope.cns.fr/chr14/" target="external">chromosome 14</a> and 
+<a href="http://www.genome.washington.edu/" target="external">Washington University</a> for 
+<a href="http://www.genome.washington.edu/UWGC/chr-7/index.cfm" target="external">chromosome 7</a>. 
+</p>
+
+<p>
+<a href="#mouse">Mouse-over</a> a blue curated transcript will produce text showing the name/identifier and the category of gene, and clickable links to '<a href="/Homo_sapiens/helpview?se=1&kw=geneview">GeneView</a>', 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>' and 
+'<a href="/Homo_sapiens/helpview?se=1&kw=protview">ProteinView</a>' pages. 
+You can also reach the 'GeneView' page by a single click on the transcript. 
+</p>
+
+
+<a name="est_transcript_lite"> </a>
+
+<p>
+<b>EST TRANSCRIPTS</b>
+displays transcript predictions made by Ensembl using EST evidence alone. 
+You may wish to compare these predictions with those in the main transcripts track. 
+Clicking on an EST transcript takes you to a modified 
+'<a href="/Homo_sapiens/helpview?se=1&kw=geneview">GeneView</a>' page, which summarises the transcript structure, outlines the prediction method, and shows the sequence of the predicted transcript. 
+Pointing to an EST transcript brings up a menu with the identifiers (e.g. ENSestTxxxxxx) and links to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=geneview">GeneView</a>', 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>' and 
+'<a href="/Homo_sapiens/helpview?se=1&kw=protview">ProteinView</a>' pages. 
+</p>
+
+
+<a name="genscan_lite"> </a>
+<a name="genscan"> </a>
+
+<p>
+<b>GENSCAN</b> tracks show transcripts predicted <i>ab initio</i> by the GENSCAN gene prediction programme. 
+GENSCAN is run on individual contigs, so predictions do not span more than one contig. 
+Pointing to a transcript shows a non-stable identifier based on the contig and the start and end of the Genscan prediction in the contig, plus links to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=fastaview">FASTAView</a>' pages with the sequence of the predicted transcript and protein. 
+Information about these predictions can also be accessed by exporting a flat file of the region, with 'prediction features' selected. 
+See
+<a href="/Homo_sapiens/helpview?se=1&kw=exportview">ExportView</a> for more details. 
+You can also 
+<a href="/Homo_sapiens/Download/" target="external">download</a> a complete set of GENSCAN-predicted transcripts or peptides.
+</p>
+
+
+<a name="snap"> </a>
+
+<p>
+<b>SNAP</b> tracks display transcripts predicted </i>ab initio</i> by the Semi-HMM-based Nucleic Acid Parser 
+(<a href="http://homepage.mac.com/iankorf/" target="external">SNAP</a>). 
+Like GENSCAN, it predicts transcripts solely on the basis of the underlying genomic sequence and does not take any experimental evidence into account. 
+The SNAP track is not available for all species, but SNAP performs better than GENSCAN in some species. 
+</p>
+
+<p>
+Displays of <b>gene and transcript predictions from NCBI and other groups</b> may be available as 
+<a href="#DAS">DAS sources</a>. 
+</p>
+
+
+<a name="protein"> </a>
+<a name="ensembl_genscan"> </a>
+<a name="sptr"> </a>
+<a name="ensembl_mouse_pep"> </a>
+<a name="ensembl_nov_pep"> </a>
+<a name="human_swall"> </a>
+<a name="mouse_swall"> </a>
+<a name="other_swall"> </a>
+<a name="riken_prot"> </a>
+<a name="riken"> </a>
+<a name="hum"> </a>
+<a name="non_hum"> </a>
+
+<h5>Protein homology evidence</h5>
+
+<p>
+Evidence for Ensembl gene predictions, taken from protein sequence entries in databases. 
+The presence of an entry in an evidence track shows that it has significant homology with at least one of the exons displayed in an Ensembl or Genscan transcript. 
+The data sets displayed differ for the different Ensembl species. See information on how the display differs in: 
+<br>
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig">mouse</a>,
+<a href="/Homo_sapiens/helpview?se=1&kw=ratcontig">rat</a>,
+<a href="/Homo_sapiens/helpview?se=1&kw=daniocontig">zebrafish</a>,
+<a href="/Homo_sapiens/helpview?se=1&kw=fugucontig"><i>Fugu</i></a>,
+<a href="/Homo_sapiens/helpview?se=1&kw=mosquitocontig">mosquito</a>,
+<a href="/Homo_sapiens/helpview?se=1&kw=droscontig"><i>Drosophila</i></a>,
+<a href="/Homo_sapiens/helpview?se=1&kw=eleganscontig"><i>C. elegans</i></a>,
+<a href="/Homo_sapiens/helpview?se=1&kw=briggsaecontig"><i>C. briggsae</i></a>
+</p>
+
+<p>
+<b>PROTEINS</b>
+<br>
+Hits to vertebrate protein sequence database entries in 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a> or 
+<a href="http://www.ebi.ac.uk/trembl/" target="external">UniProt/TrEMBL</a>. 
+Also proteins annotated in 
+<a href="http://www.ebi.ac.uk/embl/" target="external">EMBL</a> entries. 
+<a href="#mouse">Mouse-over</a>
+will show the external database identifier and a clickable link to a 
+<a href="http://www.ebi.ac.uk/swissprot/" target="external">UniProt/Swiss-Prot</a> or 
+<a href="http://www.ebi.ac.uk/trembl/" target="external">UniProt/TrEMBL</a> display of this entry (also reached by directly clicking on the feature). 
+A maximum of seven entries are displayed in any one position although more entries may have been mapped to this location. 
+Those entries that were actually used during the building of an Ensembl transcript can be seen in more detail by examining the supporting evidence for that transcript in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>'.
+</p>
+
+<a name="mRNA"> </a>
+<a name="mouse_mrna"> </a>
+<a name="other_mrna"> </a>
+
+<h5>mRNA Homology Evidence</h5>
+<p>
+Evidence for Ensembl gene predictions, taken from mRNA sequence entries in databases. 
+The presence of an entry in an evidence track shows that it has significant homology with at least one of the exons displayed in an Ensembl or Genscan transcript (except for the ESTs track and the human cDNA track which show all above-threshold hits to the assembly - see below). 
+The data sets that were used for the gene predictions and that are displayed in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' differ for the different Ensembl species. 
+See information on how the display differs in: 
+<br>
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig">mouse</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=ratcontig">rat</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=daniocontig">zebrafish</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=fugucontig"><i>Fugu</i></a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=mosquitocontig">mosquito</a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=droscontig"><i>Drosophila</i></a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=eleganscontig"><i>C. elegans</i></a> | 
+<a href="/Homo_sapiens/helpview?se=1&kw=briggsaecontig"><i>C. briggsae</i></a>
+</p>
+
+<a name="unigene"></a>
+
+<p>
+<b>UniGene</b>
+<br>
+Hits to <a href="http://www.ncbi.nlm.nih.gov/UniGene/" target="external">UniGene</a> clusters of GenBank sequence database entries. 
+<a href="#mouse">Mouse-over</a>
+will show the UniGene Cluster ID and a clickable link to details of this cluster provided by NCBI (also reached by directly clicking on the feature). 
+A maximum of seven entries are displayed in any one position although more entries may have been mapped to this location. 
+Those entries that were actually used during the building of an Ensembl transcript can be seen by examining the supporting evidence for that transcript in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>'. 
+</p>
+
+<a name="vertrna"> </a>
+
+<p>
+<b>EMBL mRNAs</b>
+<br>
+Hits to vertebrate mRNA sequences deposited in the 
+<a href="http://www.ebi.ac.uk/embl/" target="external">EMBL Nucleotide Sequence Database</a>. 
+<a href="#mouse">Mouse-over</a> will show the EMBL ID and a clickable link to this EMBL entry (also reached by directly clicking on the feature). 
+A maximum of seven entries are displayed in any one position although more entries may have been mapped to this location. 
+Those entries that were actually used during the building of an Ensembl transcript can be seen by examining the supporting evidence for that transcript in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>'. 
+</p>
+
+<a name="human_mrna"> </a>
+<a name="human_cdna"> </a>
+
+<p>
+<b>Human cDNAs</b>
+<br>
+Hits to human mRNAs deposited in the EMBL Nucleotide Sequence Database (dark green), and to the mRNA class of 
+<a href="http://www.ncbi.nlm.nih.gov/LocusLink/refseq.html" target="external">NCBI RefSeq</a> entries (light green). 
+<a href="#mouse">Mouse-over</a> will show the database ID and a clickable link to this entry (also reached by directly clicking on the feature). 
+For human Ensembl (from release 15.33), this track now shows all cDNAs that were stringently mapped to the assembly, not just those that correspond to exon predictions. 
+Those entries that were actually used during the building of an Ensembl transcript can be seen by examining the supporting evidence for that transcript in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>'. 
+</p>
+
+<a name="ESTs"> </a>
+<a name="est"> </a>
+<a name="other_fish_ests"> </a>
+<a name="human_orestes"> </a>
+<a name="z_dbest"> </a>
+
+<h5>ESTs</h5>
+
+<p>
+(not shown by default)
+<br>
+Hits to species-specific Expressed Sequence Tags. In human and mouse Ensembl, this track shows the evidence on which EST transcripts are based.
+<a href="#mouse">Mouse-over</a> will show the GenBank accession number and a clickable link to the dbEST entry for this EST at NCBI 
+<a href="http://www.ncbi.nlm.nih.gov/dbEST/" target="external">dbEST</a> (also reached by directly clicking on the feature). 
+A maximum of seven entries are displayed in any one position although more entries may have been mapped to this location. 
+Unlike the other 'evidence' tracks, the EST track shows ESTs mapped by homology to the all of the genomic sequence, instead of just to predicted exon regions. 
+</p>
+
+<a name="trna_lite"> </a>
+
+<h5>tRNA</h5>
+
+<p>
+(not shown by default)
+<br>
+Indicates the location of a tRNA gene, predicted by the program tRNAscan-SE 
+(Lowe & Eddy, Nucl Acids Res 25: 955-964, 1997). 
+<br>
+<b>Warning</b>
+In the mouse and rat genomes, tRNAscan is currently unable to distinguish reliably between functional tRNAs, pseudogenes, and tRNA-related SINE repeats. 
+The tRNA track in these species will therefore show a mixture of these elements. 
+</p>
+
+<a name="eponine_lite"> </a>
+
+<h5>Eponine</h5>
+<p>
+(not shown by default)
+<br>
+Transcription start site predictions produced by the 
+<a href="http://www.sanger.ac.uk/Users/td2/eponine/" target="external">Eponine</a> program. 
+</p>
+
+<!-- out-dated
+<p>
+(A different procedure was used for the EPD track in Ensembl 
+<a href="/Homo_sapiens/helpview?se=1&kw=fugucontig">Fugu</a>.) 
+</p>
+-->
+
+<a name="firstef_lite"> </a>
+
+<h5>First Exon Finder</h5>
+
+<p>
+(not shown by default)
+<br>
+A 5' terminal exon and promoter prediction program produced by the 
+<a href="http://rulai.cshl.org/tools/FirstEF/Readme/README.html" target="external">Zhang Lab</a> at the 
+<a href="http://www.cshl.org/" target="external">Cold Spring Harbor Laboratory</a>. 
+</p>
+
+<a name="codons"> </a>
+
+<h5>Start/Stop</h5>
+
+<p>
+(not shown by default)
+<br>
+The positions of potential start and stop codons are displayed (only when less than 50 kb is displayed in 
+'<a href="#DetailedView">Detailed View</a>'). 
+</p>
+
+<a name="match"> </a>
+<a name="human_match"> </a>
+<a name="mouse_match"> </a>
+<a name="rat_match"> </a>
+<a name="hcr_human_match"> </a>
+<a name="hcr_mouse_match"> </a>
+<a name="hcr_rat_match"> </a>
+<a name="celegans_match"> </a>
+<a name="hcr_celegans_match"> </a>
+<a name="cbriggsae_match"> </a>
+<a name="hcr_cbriggsae_match"> </a>
+<a name="hcr_mus_musculus_match"> </a>
+<a name="hcr_rattus_norvegicus_match"> </a>
+<a name="tblat_gallus_gallus_match"> </a>
+<a name="tblat__danio_rerio_match"> </a>
+<a name="tblat_fugu_rubripes_match"> </a>
+<a name="human_ensembl_120"> </a>
+<a name="pan_troglodytes_match"> </a>
+<a name="mus_musculus_match"> </a>
+<a name="rattus_norvegicus_match"> </a>
+
+<p>
+<b>
+The following features are strand independent and are shown at the bottom of the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+Only 'Markers', 'QTLs' 'SNPs' and 'Haplotypes' have clickable links. 
+</b>
+</p>
+
+<a name="marker_label"> </a>
+
+<h5>Whole Genome Similarity Matches</h5>
+<p>
+(not shown by default - turn on using the Compara menu on the golden bar)
+</p>
+
+<p>
+The following table summarizes the species involved in whole genome comparisons, as well as the programs used for the analysis and the abbreviations used for the track label. 
+</p>
+
+<div align="center">
+
+<table border="1" style="height: 595px" width="475">
+<tbody>
+
+<tr>
+<td align="left" rowspan="3" width="107">
+<p align="center">
+<b>Species Pair</b>
+</p>
+</td>
+
+<td colspan="5" width="446">
+<center><b>Comparison type</b></center>
+</td>
+</tr>
+
+<tr>
+<td align="left" colspan="2" width="182">
+<p align="center">
+<a href="http://www.genome.org/cgi/content/abstract/13/1/103"><b>BLASTz</b></a>
+</p>
+</td>
+<td align="left" colspan="2" width="185">
+<p align="center">
+<a href="http://www.genome.org/cgi/content/abstract/13/1/81"><b>Phusion</b></a> /
+<a href="http://nar.oupjournals.org/cgi/content/abstract/25/17/3389" target="external"><b>BLASTn</b></a>
+</p>
+</td>
+<td align="left" width="79">
+<p align="center">
+<a href="http://www.genome.org/cgi/content/abstract/12/4/656"><b>Translated BLAT</b></a>
+</p>
+</td>
+</tr>
+
+<tr>
+<td width="79">
+<p align="center">'<i>cons</i>' track</p>
+</td>
+<td width="79">
+<p align="center">'<i>high cons</i>' track</p>
+</td>
+<td width="79">
+<p align="center">'<i>cons</i>' track</p>
+</td>
+<td width="79">
+<p align="center">'<i>high cons</i>' track</p>
+</td>
+<td width="79">
+<p align="center"><i>trans BLAT</i>' track</p>
+</td>
+</tr>
+
+<tr>
+<td width="107">
+<h6>Human/Chimpanzee</h6>
+</td>
+<td align="center" width="79">
+<p>
++<sup><a href="http://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=28901604&c=chr4&g=netRxBestPt0">*</a></sup>
+</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Human/Rat</h6>
+</td>
+<td align="center" width="79">
+<p>
++<sup><a href="http://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=28901604&c=chr4&g=netRn3">*</a></sup></p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+<td align="center" width="79">
+<p>. </p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">. </td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Human/Mouse</h6>
+</td>
+<td align="center" valign="top" height="26" width="79">
+<p>+<sup><a href="http://http://genome.ucsc.edu/goldenPath/mm4/vsHg16">*</a></sup></p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">.</td>
+</tr>
+<tr>
+<td align="left" width="107">
+<h6>Rat/Mouse</h6>
+</td>
+<td align="center" width="79">
+<p>+<sup><a href="http://http://genome.ucsc.edu/goldenPath/mm4/vsRn3">*</a></sup></p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Human/Chicken</h6>
+</td>
+<td align="center" width="79">
+<p>+<sup><a href="http://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=28901604&c=chr4&g=netRxBestPt0">*</a></sup></p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+ </p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Human/<i>Fugu</i></h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Human/Zebrafish</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Mouse/Fugu</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Mouse/Zebrafish</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Mouse/Chicken</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Rat/Fugu</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Rat/Zebrafish</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Rat/Chicken</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Fugu/Zebrafish</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Chicken/Fugu</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Chicken/Zebrafish</h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+<tr>
+<td align="left" width="107">
+<h6>Mosquito/<i>Drosophila</i></h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>. </p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">+ </td>
+</tr>
+
+<tr>
+<td align="left" valign="top" width="107">
+<h6><i>C. elegans</i>/<i>C. briggsae</i></h6>
+</td>
+<td align="center" width="79">
+<p>.</p>
+</td>
+<td align="center" valign="top" width="79">
+<p>.</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+<td align="center" width="79">
+<p>+</p>
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<p align="center">
+<i>* Data obtained from UCSC Genome Bioinformatics.</i>
+</p>
+
+<p>
+<b>Conserved Regions ('<i>cons</i>' track) and Highly Conserved Regions ('<i>high cons</i>' track)</b>
+</p>
+
+<p>
+The untranslated whole genome comparisons are performed using either BLASTz or Phusion/BLASTn as shown in the above table. 
+The BLASTz data were obtained from UCSC. 
+The Phusion/BLASTn method, used for <i>C. elegans</i> and <i>C. briggsae</i>, firstly runs the two genomes through 
+<a href="http://www.genome.org/cgi/content/abstract/13/1/81" target="external">Phusion</a>, which takes unique 17-mers from one genome and compares them to the second genome, to produce clusters of contigs from the two species. 
+The contigs within these clusters are compared using Washington University's version of BLASTn (without repeat masking). 
+Only syntenous high scoring alignments are kept. 
+</p>
+
+<p>
+Both the Phusion/BLASTn and BLASTz datasets are further post processed to produce a highly conserved regions subset by rescoring the initial alignments through the so-called 'tight' nucleotide scoring matrix 
+(using the 'subsetAxt' program from Jim Kent, UCSC) with a gap open penalty of 2000 and a gap extension penalty of 50. 
+The minimum score threshold was 3400. 
+</p>
+
+<div align="center">
+<pre>
+     A    C    G    T
+ A  100 -200 -100 -200
+ C -200  100 -200 -100
+ G -100 -200  100 -200
+ T -200 -100 -200  100
+</pre>
+</div>
+
+<p>
+These tracks ('<i>high cons</i>' and '<i>cons</i>') may be toggled between grouped and ungrouped displays by clicking the red 
+<img src="/gfx/helpview/plus-box-s.gif" align="middle" alt="plus"> or 
+<img src="/gfx/helpview/min-box-s.gif" align="middle" alt="minus"> box to the left of the track. 
+When the matches are shown as grouped, (individual HSPs on the same region of the chromosome or scaffold are joined by horizontal lines and the 
+<img src="/gfx/helpview/plus-box-s.gif" align="middle" alt="minus"> button is shown). 
+Pointing to the track produces a pop-up window with the coordinates of the assembly segment from the matching species, and a link to see that segment in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>'. 
+<b>
+When the matches are shown as ungrouped (individual HSPs are not joined by horizontal lines and the 
+<img src="/gfx/helpview/min-box-s.gif" align="middle" alt="minus"> button is shown), pointing to (or clicking on) a hit provides a link to a 
+'<a href="/Homo_sapiens/helpview?se=1&kw=dotterview">DotterView</a>' dot matrix display of the aligned region from the two species, centered on the hit (i.e. centered on the HSP). 
+</b>
+There is also a link to to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' in the other species. 
+Clicking on the track links directly to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=dotterview">DotterView</a>'. 
+</p>
+
+<a name="marker_label"> </a>
+
+<p>
+<b>Translated BLAT ('<i>trans BLAT</i>' track)</b>
+</p>
+
+<p>
+The translated BLAT is used to compare genomes from more evolutionarily distant species, at the amino acid level. 
+Thus regions of similarity will be biased towards those that code for proteins, although highly conserved non-coding regions might be detected as well. 
+</p>
+
+<p>
+The softmasked database sequence is translated in all 6 reading frames and is stored in memory as an index of no overlapping 5 amino acid mers. 
+These 5-mers are then compared to the query sequence, also translated in all 6 reading frames, to find regions of likely similarity, which are then extended into full ungapped alignments. 
+The scoring matrix is a simple +2/-1 matrix, which also helps to speed up the querying. 
+</p>
+
+<p>
+<b>N. B.</b> All similarity matches are strand independent tracks and are therefore displayed at the top of the '<a href="#DetailedView">Detailed View</a>'. 
+For more information about regions of conserved synteny, look at 
+'<a href="/Homo_sapiens/helpview?se=1&kw=syntenyview">SyntenyView</a>'. 
+</p>
+
+<a name="marker"> </a>
+<a name="marker_label"> </a>
+
+<h5>Markers</h5>
+
+<p>
+<a href="#mouse">Mouse-over</a> will show the id of the marker and the option to view the details and synonyms in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=markerview">MarkerView</a>'. 
+Note that only a sub-set ot the markers stored in the Ensembl databases are displayed - information about other markers may be found via an Ensembl 
+<a href="/Homo_sapiens/helpview?se=1&kw=search">search</a>.
+</p>
+
+<a name="qtl"> </a>
+
+<h5>QTLs</h5>
+
+<p>
+(Quantitative trait loci) 
+Only a preliminary mapping of <b>rat</b> QTLs is available at present. 
+See 
+<a href="/Homo_sapiens/helpview?se=1&kw=ratcontig">rat ContigView help</a>. 
+</p>
+
+<a name="cpg_lite"> </a>
+
+<h5>CpG Islands</h5>
+
+<p>
+(not shown by default)
+<br>
+Indicates a CpG island. 
+Mouse-over gives some additional information. 
+</p>
+
+<a name="snps"> </a>
+<a name="snp_lite"> </a>
+
+<h5>SNPs</h5>
+
+<p>
+(not shown by default)
+<br>
+Single Nucleotide Polymorphisms and other sequence variations. 
+<br>
+The SNPs are colour-coded as follows: 
+</p>
+
+<ul>
+<li>Red: coding (within the coding sequence of an exon)</li>
+<li>Orange: UTR (within a 5' or 3' untranslated region of an exon)</li>
+<li>Dark Blue: Intron (within an intron of a gene)</li>
+<li>Mid Blue: Flanking (within 10 kb 5' of a transcript start, or 10 kb 3' of a transcript end)</li>
+<li>Grey: Other (not in any of the above categories - not in or flanking a gene)</li>
+</ul>
+
+<p>
+Indels (insertions and deletions) are marked with an arrowhead. 
+</p>
+
+<p>
+When zoomed in on a small region (in the Base Pair view panel, for example) you can see the ambiguity code for the SNP polymorphism. 
+</p>
+
+<p>
+<a href="#mouse">Mouse-over</a> on any SNP will produce a menu with the SNP id at the top and additional information. 
+Depending on the source of the SNP data various links are available. 
+A direct click will take you to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=snpview">SNPView</a>'. 
+<b>SNP properties</b> will take you to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=snpview">SNPView</a>', providing a summary of data about this SNP. 
+<b>HGBASE data</b>, 
+<b>TSC-CSHL data</b> and 
+<b>dbSNP data</b> will take you directly to entries in these SNP databases. 
+</p>
+
+<p>
+SNP information (alleles and ambiguity code) shown in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview>ContigView</a> and 
+'<a href="/Homo_sapiens/helpview?se=1&kw=snpview">SNPView</a>'is taken from the dbSNP entry. 
+To see the alleles and effects as appropriate to a transcript or protein, look at the SNP information in 
+'<a href="/Homo_sapiens/helpview?se=1&kw=transview">TransView</a>' and 
+'<a href="/Homo_sapiens/helpview?se=1&kw=protview">ProteinView</a>'. 
+</p>
+
+<a name="haplotype"> </a>
+
+<h5>Haplotypes</h5>
+
+<p>
+(not shown by default)
+<br>
+A haplotype is a group of several SNPs linked physically on a single chromosome. 
+Haplotype blocks are currently shown for chromosome 22 only. 
+A block is shown as a red line, with triangles marking the positions of the SNPs at the ends of the block. 
+Click anywhere in the block, or use the pop-up menu, to go to a 
+<a href="/Homo_sapiens/helpview?se=1&kw=haploview">HaploView</a> display</a> with a large amount of additional information. 
+</p>
+
+<a name="repeats"> </a>
+<a name="repeat_lite"> </a>
+<a name="sub_repeat"> </a>
+<a name="repeat_alu_lite"> </a>
+<a name="repeat_line_lite"> </a>
+<a name="repeat_ltr_lite"> </a>
+<a name="repeat_mir_lite"> </a>
+<a name="repeat_misc_lite"> </a>
+<a name="repeat_mlt_lite"> </a>
+<a name="repeat_trna_lite"> </a>
+
+<h5>Repeats</h5>
+
+<p>
+(not shown by default)
+<br>
+Regions of repetitive sequence are shown in the Repeats track. 
+Tracks showing only certain classes of repeats can also be displayed. 
+Most tracks are generated by running the program RepeatMasker. 
+Where a 'tandem repeats' track appears, this is generated by running the program Tandem Repeat Finder. 
+<a href="#mouse">Mouse-over</a> on an individual repeat element brings up additional information. 
+Tracks may be switched on or off using the 'Repeats' pull-down menu on the golden bar. 
+</p>
+
+<a name="tilepath"> </a>
+<a name="tilepath2"> </a>
+<a name="bacs"> </a>
+
+<h5>Tile Path and other displays of clones and contigs</h5>
+
+<p>
+Different information is shown for the different Ensembl species. 
+See information on how the display differs in: 
+<br>
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig">mouse</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=ratcontig">rat</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=daniocontig">zebrafish</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=fugucontig">pufferfish</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=mosquitocontig">mosquito</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=droscontig">fuit fly</a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=eleganscontig"><i>Caenorhabditis elegans</i></a>, 
+<a href="/Homo_sapiens/helpview?se=1&kw=briggsaecontig"><i>Caenorhabditis briggsae</i></a>. 
+</p>
+
+<p>
+The <b>tile path</b> track in human Ensembl shows the sequence entries (mostly BAC clones) that were used in the current assembly, and where they map on the assembly. 
+Clones for which FISH-mapping information is available are marked with a blue corner. 
+Where a clone is shown in outline (open bar), the mapping of the clone to the sequence assembly is problematic and the true length is not displayed. 
+The different colours (red and orange) are used only to help distinguish one clone from another. 
+<a href="#mouse">Mouse-over</a> brings up information about the clone. 
+You may want to jump to 
+'<a href="/Homo_sapiens/helpview?se=1&kw=cytoview">CytoView</a>' to access more information about clones. 
+</p>
+
+<p>
+The <b>VEGA clones</b> track in human Ensembl shows clones that have been manually annotated and appear in the VEGA database. 
+</p>
+
+<a name="gap"> </a>
+
+<h5>Gaps</h5>
+
+<p>
+(not shown by default)
+<br>
+Shows gaps in the current sequence assembly. 
+Where possible, gaps are categorised as "inter super-contig" (between two of the NT contigs that are the biggest unit in NCBI assemblies, shown as grey blocks), "inter-clone" (within an NT contig, but not covered by a sequenced clone, shown as small grey blocks) or "intra-clone" (gaps between contigs in an unfinished BAC clone, generally represented by 100 Ns in the sequence, shown in black). 
+Pointing with the mouse shows the category, and the size and position of the gap in the assembly. 
+</p>
+
+<a name="gcplot"> </a>
+
+<h5>%GC</h5>
+
+<p>
+(not shown by default)
+<br>
+The plot shows you the relative content of the nucleotides G+C. 
+The horizontal red line indicates 50% G+C. 
+</p>
+
+<a name="das"> </a>
+<a name="DAS"> </a>
+
+<h3>DAS sources</h3>
+<p>
+See additional information on 
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig#das">mouse</a> DAS displays. 
+</p>
+
+<p>
+DAS (Distributed Annotation System) provides a way of making extra annotation visible. 
+The DAS sources in the DAS pull-down menu are made available via the 
+<a href="http://www.sanger.ac.uk/" target="external">Sanger Institute</a>. 
+Tick to select sources. 
+The selected tracks will be displayed when you close the menu. 
+The names of DAS tracks are shown in <b>blue</b> in the 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' panel. 
+<br>
+<br>
+You can upload your own data into Ensembl using the '<b>Upload data</b>' menu item. 
+For more information see the 
+<a href="/Homo_sapiens/helpview?se=1&kw=upload">data upload</a> help page. 
+<br>
+<br>
+Additional external DAS data sources are available and can be added via the '<b>Manage Sources</b>' option on the menu. 
+For more information see the 
+<a href="/Homo_sapiens/helpview?se=1&kw=dassources">DAS help page</a>. 
+</p>
+
+<p>
+Different DAS sources will be available by default in different Ensembl species. 
+See additional information on 
+<a href="/Homo_sapiens/helpview?se=1&kw=mousecontig#das">mouse</a> displays. 
+Pointing to features in most DAS tracks will produce a pop-up menu showing an identifier, and one or more links to view the associated sequence in FASTA format in an Ensembl 
+'<a href="/Homo_sapiens/helpview?se=1&kw=fastaview">FastaView</a>' page. 
+The 'FastaView' page also provides, where possible, a brief description of the data source and a link to a web page from the group that provided the data for the DAS track. 
+</p>
+
+<p>
+The sources shown by default in the human DAS menu may include: 
+</p>
+
+<ul>
+<li>RefSeq entries from NCBI mapped onto the assembly by Ensembl</li>
+<li>Transcript predictions from other groups (NCBI, Acembly, Fgenesh+, Geneid, SLAM, Twinscan)</li>
+<li>BAC ends</li>
+<li>Microarray probe sequences mapped to the genome sequence assembly (Affymetrix, Sanger)</li>
+</ul>
+
+<a name="sequence"> </a>
+<a name="panel_zoom"> </a> <!-- Web Code name for 'Basepair View' panel -->
+
+<h3 id="BasepairView">Basepair View</h3>
+
+<p>
+The fourth panel is used to show features on a small segment of the assembly. 
+By default, 
+'<a href="#BasepairView">Basepair View</a>', shows a region of 100 bp, taken from the centre of the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+The display can be zoomed in or out, and moved left or right, using navigation controls similar to those of the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+These buttons above provide the option to zoom in and out, varying the size of the region displayed. 
+Use this to restrict or expand the field of view to a scale suitable to view the sequence of interest. 
+Click on steps in the ramp to display 25, 50, 100, 200, 300 and 500 bp. 
+Clicking plus or minus zooms in or out by a factor of approximately 2, and allows zooming in to as little as 1 bp. 
+Regions larger than 500 bp can only be seen in the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+</p>
+
+<p>
+The '<a href="#BasepairView">Basepair View</a>' panel can be turned on or off using the 
+<img src="/gfx/helpview/plus-box.gif" align="middle" alt="plus box"> or 
+<img src="/gfx/helpview/min-box.gif" align="middle" alt="minus box"> button. 
+The tracks can be switched off or on using the 'Decorations' pull-down menu on the gold bar of the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+'<a href="#BasepairView">Basepair View</a>' displays some of the tracks from 
+'<a href="#DetailedView">Detailed View</a>' 
+(DNA (contigs), SNPs, transcripts, tile path) plus the following additional features: 
+</p>
+
+
+<h5>Sequence</h5>
+
+<p>
+The sequence of the genomic assembly (forward strand above the DNA(contigs) bar, reverse strand below). 
+It can be turned on or off via the '<b>Decorations</b>' pull-down menu. 
+Each of the 4 bases has a different background colour, to make it easier to visualise runs of bases. 
+The actual bases are shown when there is room in the display. 
+</p>
+
+<a name="codonseq"> </a>
+
+<h5>Amino acids</h5>
+
+<p>
+Translations of the assembly sequence. 
+All three possible reading frames are shown, above the DNA(contigs) bar for the forward strand, below it for the reverse strand. 
+The tracks are turned on or of via the '<b>Decorations</b>' pull-down menu but will only display information when you are viewing 500 bp or less. 
+Each amino acid has a different background colour, and amino acids with related properties have related shades: 
+</p>
+
+<ul>
+<li>green: hydrophobic (A, G, I, L, M, P, V)</li>
+<li>blue: large hydrophobic (F, H, W, Y)</li>
+<li>gold: negative charge (D, E)</li>
+<li>pink: positive charge (K, R)</li>
+<li>purple: polar (N, Q, S, T)</li>
+<li>yellow: cysteine (C)</li>
+<li>red: stop codon (*)</li>
+</ul>
+
+<p>
+The 
+<a href="http://www.iupac.org/" target="external">IUPAC</a> 
+<a href="http://www.chem.qmul.ac.uk/iupac/AminoAcid/A2021.html" target="external">single letter codes</a> for the amino acids are shown when there is room in the display. 
+
+<!-- The configuration page does no longer exist.
+Setting the amino acids track to 'Compact' using the 
+<a href="config?script=contigviewbottom" target="external">configuration page</a> will show amino acids in one (arbitrary) reading frame only. 
+-->
+</p>
+
+<h5>Restriction Enzymes</h5>
+
+<p>
+Shows sites that could be recognised and cut by restriction endonucleases. 
+The sequence of the site is shown in colour (blue for enzymes that cut the 2 DNA strands in a staggered fashion to produce 'sticky ends'; green for enzymes that cut the 2 DNA strands at the same point to produce 'blunt ends'), together with the name of the enzyme. 
+Red vertical lines mark the expected cut positions (joined to the recognition site where necessary by horizontal lines). 
+Pointing to a site produces a pop-up window with the name of the enzyme and its general recognition sequence. 
+</p>
+
+<a name="customize"> </a>
+
+<h3>Customizing the display</h3>
+
+<p>
+We provide a variety of ways for you to customize the 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' displays. 
+Some features are not displayed by default, but can be added. 
+Turning off unwanted features and functions will make the web pages download faster and make it easier to see the features of interest to you. 
+Customizing is done using: 
+</p>
+
+<ul>
+<li>
+Pull-down menus on the golden menu bar at the top of '<a href="#DetailedView">Detailed View</a>'.
+Changes will take effect when they are closed by clicking at the bottom of the menu. 
+</li>
+
+<li>
+A configuration page (accessed by clicking on 'Advanced...', the last item on both the 'Features' and the 'Decorations' pull-down menus). 
+</li>
+
+<li>
++/- 'toggle' buttons. 
+When an item is displayed, clicking on - will hide it. 
+When an item is hidden, clicking on + will cause it to be displayed. 
+</li>
+
+</ul>
+
+<p>
+<b>
+'<a href="#Chromosome">Chromosome</a>', 
+'<a href="#Overview">Overview</a>', 
+'<a href="#DetailedView">Detailed View</a>' and 
+'<a href="#BasepairView">Basepair View</a>'
+</b>
+ can each be turned on or off using the 
+<img src="/gfx/helpview/plus-box.gif" align="middle" alt="plus box"> or 
+<img src="/gfx/helpview/min-box.gif" align="middle" alt="minus box"> 
+button at the top left of the panel. 
+</p>
+
+<p>
+The <b>pop-up menus</b> that appear when you point to a feature with the mouse can be turned off by unchecking the '<b>show popup menus</b>' option on the '<b>Decorations</b>' pull-down menu on the gold bar. 
+This may speed your browsing (at the cost of some useful functionality). 
+You can still click on a feature to go to a default information page. 
+An alternative way of using the pop-ups is now available: you can choose to have pop-up menus appear only when you click on a feature (check the '<b>... popup on click</b>' option on the '<b>Decorations</b>' menu). 
+However, if you plan to use Ensembl regularly it is well worth getting used to the default behaviour of the pop-up menus (<a href="#mouse">see hints</a>). 
+</p>
+
+<p>
+<b>Features, Repeats, Decorations and DAS sources</b>
+<br>
+(Decorations are properties of the assembly or display, rather than features located on the assembly) 
+</p>
+
+<ul>
+
+<li>
+<p>
+<b>Add or remove</b> items to display using the pull-down menus on the golden bar at the top of the 
+'<a href="#DetailedView">Detailed View</a>' panel, or via the 
+<a href="config?script=contigviewbottom" target="external">configuration page</a>. 
+</p>
+</li>
+
+<li>
+<p>
+<b>Expanded / compact / half-height</b>. 
+Some features can also be set to expanded (default setting - each item displayed on a separate line) or compact (all items displayed on a single line). 
+To switch between the two states, use the red 
+<img src="/gfx/helpview/plus-box-s.gif" align="middle" alt="plus box"> or
+<img src="/gfx/helpview/min-box-s.gif" align="middle" alt="minus box"> 
+box to the left of the feature track or use the 
+<a href="config?script=contigviewbottom" target="external">configuration page</a>.
+It is also possible to set the display to show most of the features at half their normal height (check '<b>Half-height glyphs</b>' on the '<b>Decorations</b>' menu). 
+</p>
+</li>
+
+<li>
+<p>
+Choose your own <b>colours</b> for features via the 
+<a href="config?script=contigviewbottom" target="external">configuration page</a>. 
+</p>
+</li>
+
+<li>
+<p>
+The '<b>show empty tracks</b>' option in the '<b>Decorations</b>' pull-down menu on the gold bar will cause an information message to be displayed for a feature type, even when no features of that type appear in the current view. 
+(You may prefer this to the default behaviour, whereby the track is not displayed at all when there are no features to display.) 
+</p>
+</li>
+
+<li>
+<p>
+Unchecking the <b>Gene legend</b> option in the '<b>Decorations</b>' pull-down menu on the gold bar will remove the descriptive legend explaining the colour-coding of different kind of transcript. 
+</p>
+</li>
+
+<li>
+<p>
+Unchecking the '<b>Show register lines</b>' option in the '<b>Decorations</b>' pull-down menu on the gold bar will remove the evenly spaced vertical lines. 
+</p>
+</li>
+
+</ul>
+
+<p>
+The <b>overall image size</b> is set by default to a width of 700 pixels. 
+This is appropriate for standard-sized screens. 
+The '<b>Image size</b>' pull-down menu on the gold bar allows you to adjust the width up to 1500 pixels. 
+</p>
+
+<a name="export"> </a>
+
+<h3>Export</h3>
+
+<p>
+This pull-down menu on the golden bar gives several options for downloading the data represented in the 
+'<a href="#DetailedView">Detailed View</a>' panel. 
+</p>
+
+<p>
+'<b>Flat file</b>', '<b>FASTA</b>' and '<b>Image</b>' will redirect you to an 
+'<a href="/Homo_sapiens/helpview?se=1&kw=exportview">ExportView</a>' page preset to the extent of chromosome displayed in '<a href="#DetailedView">Detailed View</a>' and to the kind of download you have requested. 
+</p>
+
+<p>
+Ensembl gene list, EST gene list, Vega gene list and SNP list will redirect you to the 
+<a href="/Homo_sapiens/helpview?se=1&kw=martview">EnsMart</a> data mining system, with the displayed region and choice of focus already selected. 
+</p>
+
+<a name="jump"> </a>
+
+<h3>Jump to ...</h3>
+
+<p>
+Options on this pull-down menu (located on the golden bar) allow you to jump to the same region displayed in Ensembl 
+'<a href="/Homo_sapiens/helpview?se=1&kw=cytoview">CytoView</a>', view direct comparisions to other species in Ensembl 
+'<a href="/Homo_sapiens/helpview?se=1&kw=multicontigview">MultiContigView</a>', or to jump to Ensembl 
+'<a href="/Homo_sapiens/helpview?se=1&kw=mapview">MapView</a>'. 
+You can also view the same region displayed in the Human Genome Browser at 
+<a href="http://genome.cse.ucsc.edu/" target="external">UCSC</a>, 
+or in Map Viewer at <a href="http://www.ncbi.nlm.nih.gov/" target="external">NCBI</a>. 
+</p>
+
+<a name="help"> </a>
+
+<h3>Help</h3>
+
+<p>
+An additional pull down menu on the golden bar gives you the option to jump directly to help on the 
+<a href="/Homo_sapiens/helpview?se=1&kw=config">configuration page</a>, a convenient way of customizing 
+'<a href="#DetailedView">Detailed View</a>', more information on 
+'<a href="/Homo_sapiens/helpview?se=1&kw=dassources">DAS Sources</a>' this general help page for 
+'<a href="/Homo_sapiens/helpview?se=1&kw=contigview">ContigView</a>' and to a page for sending questions or comments to the 
+<a href="/helpdesk/" target="external">Helpdesk</a>. 
+</p>
+
+<a name="mouse"> </a>
+
+<h3>Mouse-over and "tooltip text"</h3>
+
+<p>
+For most features in the 
+'<a href="#DetailedView">Detailed View</a>'panel, you can display extra information and links by pointing with the mouse. 
+Putting the mouse pointer over a feature ("mouse-over") brings up a pop-up text window ("tooltip text"). 
+The text looks like a menu. 
+The top menu item is a name or database identifier (bold text and not clickable). 
+Below this may be one or more information points (text in grey and not clickable), and one or more clickable links (text in colour). 
+</p>
+
+<p>
+So that the display does not become cluttered, the pop-up text windows stay on the screen for only about 6 seconds. 
+Click on the <b>X</b> at top-right to close immediately. 
+(The window will also disappear if you move the pointer onto a different feature.) 
+To re-display, move the pointer off the feature and then point again. 
+To click on a displayed link, move the mouse pointer down the menu - the hand link symbol will appear when you are over a clickable link. 
+</p>
+
+<p>
+<b>Hints:</b> 
+Does the pop-up window disappear when you try to move the pointer onto it? 
+You have probably moved through another feature without realising it. 
+Try moving slowly onto a feature and stop moving when the text appears. 
+If you keep having problems, zoom in on the region you are exploring, so that features are not so close together. 
+You can also click directly on most fe<br /><br />
+  
+</td></tr></table>
+<!-- begin footer -->
+
+<TABLE BORDER="0" WIDTH="100%" cellpadding="0" cellspacing="0">
+  <TR bgcolor="#f5f5ff" valign="center">
+    <TD nowrap="nowrap">&nbsp;<I>Date : 2004-10-27 13:18:32</I></TD>
+    <td><img src="/gfx/blank.gif" height="22" alt=""></td>
+    <TD ALIGN="RIGHT" nowrap="nowrap">
+        <I><A target="_new" HREF="/helpdesk/index.html">Help Desk / Suggestions</A></I>&nbsp;
+    </TD>
+  </TR>
+</TABLE>
+
