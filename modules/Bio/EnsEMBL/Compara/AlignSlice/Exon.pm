@@ -32,9 +32,17 @@ GET VALUES
 
 =over
 
-=item attribute
+=item exon
 
-this one
+original Bio::EnsEMBL::Exon object
+
+=item slice
+
+Bio::EnsEMBL::Slice object on which this Bio::EnsEMBL::Compara::AlignSlice::Exon is defined
+
+=item cigar_line
+
+A string describing the mapping of this exon on the slice
 
 =back
 
@@ -134,15 +142,17 @@ sub slice {
   return $self->{'slice'};
 }
 
+
 =head2 map_Exon_on_Slice
 
-  Arg[1]     : none
-  Example    : $align_exon->slice($reference_slice);
-  Example    : $reference_slice = $align_exon->slice();
-  Description: Get/set the attribute slice. This method is overloaded in order
-               to map original coordinates onto the reference Slice.
-  Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : 
+  Arg[1]     : Bio::EnsEMBL::Mapper $from_mapper
+  Arg[2]     : Bio::EnsEMBL::Mapper $to_mapper
+  Example    : $align_exon->map_Exon_on_Slice($from_mapper, $to_mapper);
+  Description: This function takes the original exon and maps it on the slice
+               using the mappers.
+  Returntype : Bio::EnsEMBL::Compara::AlignSlice::Exon object
+  Exceptions : returns undef if not enough information is provided
+  Exceptions : returns undef if no piece of the original exon can be mapped.
   Caller     : new
 
 =cut
@@ -240,6 +250,7 @@ sub map_Exon_on_Slice {
     return undef;
   }
 
+  ## Set coordinates on "slice" coordinates
   if ($slice->strand == 1) {
     $aligned_start += 1 - $slice->start;
     $aligned_end += 1 - $slice->start;
@@ -282,6 +293,18 @@ sub exon {
   return $self->{'exon'};
 }
 
+
+=head2 cigar_line
+
+  Arg[1]     : (optional) string $cigar_line
+  Example    : $align_exon->cigar_line($cigar_line);
+  Example    : $cigar_line = $align_exon->cigar_line();
+  Description: Get/set the attribute cigar_line.
+  Returntype : string
+  Exceptions : none
+  Caller     : object->methodname
+
+=cut
 
 sub cigar_line {
   my ($self, $cigar_line) = @_;
