@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 53;
+    plan tests => 61;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -503,6 +503,42 @@ ok( $st->cigar_line eq "13M44D15M12D6M7D34MD63M2D86M");
 my $res = $genomic_align_block->get_all_non_reference_genomic_aligns->[0];
 ok( $res->dnafrag_strand == -1 );
 ok( $res->cigar_line eq "142M14D127M");
+
+debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_ungapped_GenomicAlignBlocks method");
+$genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice
+  ($method_link_species_set,
+   $slice);
+
+$genomic_align_block = $genomic_align_blocks->[0];
+do {
+  ## This test is only for pairwise alignments!
+  my $sequences;
+  foreach my $genomic_align (@{$genomic_align_block->genomic_align_array}) {
+    push(@$sequences, $genomic_align->aligned_sequence);
+  }
+  my $lengths;
+  my $this_length = 0;
+  while ($sequences->[0]) {
+    my $chr1 = substr($sequences->[0], 0, 1, "");
+    my $chr2 = substr($sequences->[1], 0, 1, "");
+    if ($chr1 eq "-" or $chr2 eq "-") {
+      push(@$lengths, $this_length) if ($this_length);
+      $this_length = 0;
+    } else {
+      $this_length++;
+    }
+  }
+  push(@$lengths, $this_length) if ($this_length);
+
+  my $ungapped_genomic_align_blocks = $genomic_align_block->get_all_ungapped_GenomicAlignBlocks();
+  ## This GenomicAlignBlock contains 7 ungapped GenomicAlignBlocks
+  ok(scalar(@$ungapped_genomic_align_blocks), 7, "Number of ungapped GenomicAlignBlocks");
+  foreach my $ungapped_gab (@$ungapped_genomic_align_blocks) {
+    my $this_length = shift @$lengths;
+    ## This ok() is executed 7 times!!
+    ok($ungapped_gab->length, $this_length, "Ungapped GenomicAlignBlock has an unexpected length");
+  }
+};
 
 
 #####################################################################
