@@ -28,7 +28,7 @@ sub features {
 sub href {
     my ($self, $f ) = @_;
 
-    my $chr_start = $self->{'container'}->start()+$f->start;
+    my( $chr_start, $chr_end ) = $self->slice2sr( $f->start, $f->end );
     my $snp_id = $f->snpid || $f->id;
 
     my $source = $f->source_tag;
@@ -74,8 +74,7 @@ sub colour {
 
 sub zmenu {
     my ($self, $f ) = @_;
-    my $chr_start = $f->start() + $self->{'container'}->start() - 1;
-    my $chr_end   = $f->end() + $self->{'container'}->start() - 1;
+    my( $chr_start, $chr_end ) = $self->slice2sr( $f->start, $f->end );
 
     my $allele = $f->alleles;
     my $pos =  $chr_start;

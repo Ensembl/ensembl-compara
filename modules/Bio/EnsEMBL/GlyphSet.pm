@@ -12,6 +12,14 @@ use vars qw(@ISA $AUTOLOAD);
 #########
 # constructor
 #
+sub slice2sr {
+  my( $self, $s, $e ) = @_;
+
+  return $self->{'container'}->strand < 0 ?
+    ( $self->{'container'}->end   - $e + 1 , $self->{'container'}->end   - $s + 1 ) : 
+    ( $self->{'container'}->start + $s - 1 , $self->{'container'}->start + $e - 1 );
+}
+
 sub new {
     my $class = shift;
     if(!$class) {

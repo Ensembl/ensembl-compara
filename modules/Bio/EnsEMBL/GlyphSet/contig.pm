@@ -123,7 +123,6 @@ sub _init_non_assembled_contig {
        $rstart = 1 if $rstart < 1;
        $rend   = $length if $rend > $length;
                 
-   warn Data::Dumper::Dumper( $tile->{'locations'}," " );
     my $glyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $rstart - 1,
       'y'         => $ystart+2,

@@ -35,8 +35,13 @@ sub features {
 }
 
 sub colour {
-    my ($self, $gene, $transcipt, $colours, %highlights) = @_;
-    return ( $colours->{'col'}, undef );
+  my ($self, $gene, $transcipt, $colours, %highlights) = @_;
+  return ( $colours->{'col'}, undef );
+}
+
+sub gene_colour {
+  my ($self, $gene, $colours, %highlights) = @_;
+  return ( $colours->{'col'}, undef );
 }
 
 sub href {
@@ -55,16 +60,6 @@ sub zmenu {
     '01:Peptide sequence' => $self->href( $gene, $transcript ),
     '02:cDNA sequence'    => $self->HASH_URL( 'FASTAVIEW', { 'FASTADB' => "cDNA_$gft" , 'ID' => $id } ),
   };
-}
-
-sub text_label {
-    my ($self, $gene, $transcript) = @_;
-    return undef;
-}
-
-sub legend {
-    my ($self, $colours) = @_;
-    return undef;
 }
 
 sub error_track_name { return 'SNAPs'; }

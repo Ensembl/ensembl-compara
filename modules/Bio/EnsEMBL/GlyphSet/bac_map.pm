@@ -45,8 +45,8 @@ sub colour {
 ## feature.
 
 sub image_label {
-    my ($self, $f ) = @_;
-    return ("@{[$f->get_scalar_attribute('name')]}",'overlaid');
+  my ($self, $f ) = @_;
+  return ("@{[$f->get_scalar_attribute('name')]}",'overlaid');
 }
 
 ## Link back to this page centred on the map fragment

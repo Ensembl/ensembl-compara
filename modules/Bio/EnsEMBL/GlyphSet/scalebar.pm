@@ -4,6 +4,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use EnsWeb;
+use POSIX qw(ceil floor);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
@@ -26,6 +27,7 @@ sub _init {
 
     my $Config         = $self->{'config'};
     my $Container      = $self->{'container'};
+    my $contig_strand  = $Container->can('strand') ? $Container->strand : 1;
     my $h              = 0;
     my $highlights     = $self->highlights();
     my $fontname       = "Tiny";
@@ -40,13 +42,12 @@ sub _init {
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
     my $navigation     = $Config->get('scalebar', 'navigation');
     my $abbrev         = $Config->get('scalebar', 'abbrev');
-    my $clone_based    = $Config->get('_settings','clone_based') eq 'yes';
-    my $param_string   = $clone_based ? $Config->get('_settings', 'clone') : ("chr=" . $Container->seq_region_name());
+    my $param_string   = "region=" . $Container->seq_region_name();
 
     my $main_width     = $Config->get('_settings', 'main_vc_width');
     my $len            = $Container->length();
-    my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->start();
-    my $global_end     = $global_start + $len - 1;
+    my $global_start   = $contig_strand < 0 ? -$Container->end() : $Container->start();
+    my $global_end     = $contig_strand < 0 ? -$Container->start() : $Container->end();
 
     my( $major_unit, $minor_unit );
 
@@ -73,12 +74,12 @@ sub _init {
 
     ## Now lets draw these....
 
-    my $start = int( $global_start / $minor_unit ) * $minor_unit;
+    my $start = floor( $global_start / $minor_unit ) * $minor_unit;
     my $filled = 1;
-    my $last_text_X = -1e30;
+    my $last_text_X = -1e20;
     while( $start <= $global_end ) { 
-      $filled = 1 - $filled;
       my $end       = $start + $minor_unit - 1;
+      $filled = 1 - $filled;
       my $box_start = $start < $global_start ? $global_start -1 : $start;
       my $box_end   = $end   > $global_end   ? $global_end      : $end;
 
@@ -86,16 +87,16 @@ sub _init {
       my $t = new Sanger::Graphics::Glyph::Rect({
          'x'         => $box_start - $global_start, 
          'y'         => 0,
-         'width'     => $box_end - $box_start + 1,
+         'width'     => abs( $box_end - $box_start + 1 ),
          'height'    => 3,
          ( $filled == 1 ? 'colour' : 'bordercolour' )  => 'black',
          'absolutey' => 1,
          'alt'       => 'xxx'
       });
       if ($navigation eq 'on'){
-        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $param_string, $start, $end, $global_start, $global_end-$global_start+1, $highlights);
+        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $param_string, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
       } elsif( $navigation eq 'zoom' ) {
-        ($t->{'href'},$t->{'zmenu'}) = $self->zoom_interval( $param_string, $start, $end, $global_start, $main_width, $highlights, $global_end-$global_start);
+        ($t->{'href'},$t->{'zmenu'}) = $self->zoom_interval( $param_string, $start, $end, $contig_strand, $global_start, $main_width, $highlights, $global_end-$global_start);
       }
       $self->push($t);
       if($start == $box_start ) { # This is the end of the box!
@@ -113,7 +114,7 @@ sub _init {
             'colour'    => 'black',
             'absolutey' => 1,
         }));
-        my $LABEL = $minor_unit < 250 ? EnsWeb::commify($box_start): $self->bp_to_nearest_unit( $box_start, 2 );
+        my $LABEL = $minor_unit < 250 ? EnsWeb::commify($box_start): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
         if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
           $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,
@@ -143,16 +144,16 @@ sub _init {
 
 sub interval {
     # Add the recentering imagemap-only glyphs
-    my ( $self, $chr, $start, $end, $global_offset, $width, $highlights) = @_;
-    my $interval_middle = ($start + $end)/2;
+    my ( $self, $chr, $start, $end, $contig_strand, $global_offset, $width, $highlights) = @_;
+    my $interval_middle = ($start + $end)/2 * $contig_strand;
     return( $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
             $self->zoom_zmenu( $chr, $interval_middle, $width, $highlights ) );
 }
 
 sub zoom_interval {
     # Add the recentering imagemap-only glyphs
-    my ( $self, $chr, $start, $end, $global_offset, $width, $highlights, $zoom_width ) = @_;
-    my $interval_middle = ($start + $end)/2;
+    my ( $self, $chr, $start, $end, $contig_strand, $global_offset, $width, $highlights, $zoom_width ) = @_;
+    my $interval_middle = ($start + $end)/2 * $contig_strand;
     return(
       $self->zoom_URL($chr, $interval_middle, $width,  1  , $highlights),
       $self->zoom_zoom_zmenu( $chr, $interval_middle, $width, $highlights, $zoom_width )

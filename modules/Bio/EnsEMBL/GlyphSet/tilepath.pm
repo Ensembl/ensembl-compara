@@ -10,23 +10,23 @@ sub my_label { return "Tilepath"; }
 ## subset "tilepath".
 
 sub features {
-    my ($self) = @_;
-    return $self->{'container'}->get_all_MiscFeatures( 'tilepath' );
+  my ($self) = @_;
+  return $self->{'container'}->get_all_MiscFeatures( 'tilepath' );
 }
 
 ## If tile path clones are very long then we draw them as "outlines" as
 ## we aren't convinced on their quality...
 sub tag {
-    my ($self, $f) = @_;
-    my @result = ();
+  my ($self, $f) = @_;
+  my @result = ();
 
-   if( $f->get_scalar_attribute('FISHmap') ) {
-        push @result, {
-            'style' => 'left-triangle',
-            'colour' => $self->{'colours'}{"fish_tag"},
-        }
-   }
-    return @result;
+  if( $f->get_scalar_attribute('FISHmap') ) {
+    push @result, {
+      'style' => 'left-triangle',
+      'colour' => $self->{'colours'}{"fish_tag"},
+    }
+  }
+  return @result;
 }
 
 sub colour {

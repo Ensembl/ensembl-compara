@@ -27,22 +27,155 @@ sub init_label {
     }
   });
   $self->label($label);
-# $self->bumped( $self->{'config'}->get($HELP_LINK, 'dep')==0 ? 'no' : 'yes' );
+  $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
 }
 #'
 sub my_label { return 'Missing label'; }
 sub colours { return {}; } 
-sub text_label { return {}; } 
+sub text_label { return undef; } 
+sub gene_text_label { return undef; } 
 sub transcript_type { return undef; } 
 sub features { return []; }
+sub href { return undef; }
+sub gene_href { return undef; }
+sub zmenu { return undef; }
+sub gene_zmenu { return undef; }
+sub colour { return 'red'; }
+sub gene_colour { my $self = shift; return $self->colour(); } 
 
-  
+ 
 sub _init {
+  my ($self) = @_;
+  my $type   = $self->check();
+  my $Config = $self->{'config'};
+  my $strand_flag = $Config->get($type,'str');
+
+## If forced onto one strand....
+  return if ( $strand_flag eq 'f' and $self->{'container'}{'strand'} != 1 ) ||
+            ( $strand_flag eq 'r' and $self->{'container'}{'strand'} == 1 );
+  if( $Config->get( $type, 'compact' ) ) {
+    $self->compact_init();
+  } else {
+    $self->expanded_init();
+  }
+} 
+
+sub compact_init {
   my ($self) = @_;
   my $type = $self->check();
   return unless defined $type;
 
   my $Config        = $self->{'config'};
+  my $strand_flag   = $Config->get($type,'str');
+  my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
+
+  my $y             = 0;
+  my $h             = 8;
+
+  my %highlights;
+  @highlights{$self->highlights} = ();    # build hashkeys of highlight list
+
+  my @bitmap        = undef;
+  my $colours       = $self->colours();
+
+  my $fontname      = "Tiny";
+  my $pix_per_bp    = $Config->transform->{'scalex'}; warn $pix_per_bp;
+  my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
+  my $_h            = $Config->texthelper->height($fontname);
+  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
+
+  my $strand        = $self->strand();
+  my $length        = $container->length;
+  my $transcript_drawn = 0;
+
+  my $gene_drawn = 0;
+  foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
+    my $gene_strand = $gene->strand;
+    next if $gene_strand != $strand and $strand_flag eq 'b';
+    $gene_drawn = 1;
+## Get all the exons which overlap the region for this gene....
+    my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } map { @{$_->get_all_Exons()} } @{$gene->get_all_Transcripts()};
+    next unless @exons;
+
+    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+       $Composite->{'href'} = $self->gene_href( $gene, %highlights );
+       $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
+    my($colour, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
+
+    $colour ||= 'black';
+    my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+    foreach my $exon (@exons) {
+      my $s = $exon->start;
+      my $e = $exon->end;
+      $s = 1 if $s < 0;
+      $e = $length if $e>$length;
+      $Composite2->push(new Sanger::Graphics::Glyph::Rect({
+        'x' => $s-1, 'y' => $y, 'width' => $e-$s+1,
+        'height' => $h, 'colour'=>$colour, 'absolutey' => 1
+      }));
+    }
+    $Composite2->push(new Sanger::Graphics::Glyph::Rect({
+      'x' => $Composite2->x, 'width' => $Composite2->width,
+      'height' => 0, 'y' => int($y+$h/2), 'colour' => $colour, 'absolutey' =>1,
+    }));
+    # Calculate and draw the coding region of the exon
+    # only draw the coding region if there is such a region
+    if($self->can('join')) {
+      my @tags = $self->join( $gene->stable_id );
+      foreach (@tags) {
+        $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
+        $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
+      }
+    }
+    $Composite->push($Composite2);
+    my $bump_height = $h + 2;
+    if( $Config->{'_add_labels'} ) {
+      if(my $text_label = $self->gene_text_label($gene) ) {
+        my @lines = split "\n", $text_label;
+        $lines[0] = "<- $lines[0]" if $gene_strand < 1;
+        $lines[0] = $lines[0].' ->' if $gene_strand >= 1;
+        for( my $i=0; $i<@lines; $i++ ){
+          my $line = $lines[$i];
+          $Composite->push( new Sanger::Graphics::Glyph::Text({
+            'x'         => $Composite->x(),
+            'y'         => $y + $h + ($i*$_h) + 2,
+            'height'    => $_h,
+            'width'     => $_w * length(" $line "),
+            'font'      => $fontname,
+            'colour'    => $colour,
+            'text'      => $line,
+            'absolutey' => 1,
+          }));
+          $bump_height += $_h;
+        }
+      }
+    }
+
+  ########## bump it baby, yeah! bump-nology!
+    my $bump_start = int($Composite->x * $pix_per_bp);
+       $bump_start = 0 if ($bump_start < 0);
+    my $bump_end = $bump_start + int($Composite->width * $pix_per_bp)+1;
+       $bump_end = $bitmap_length if $bump_end > $bitmap_length;
+    my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap);
+      ########## shift the composite container by however much we're bumped
+    $Composite->y($Composite->y() - $strand * $bump_height * $row);
+    $Composite->colour($hilight) if defined $hilight;
+    $self->push($Composite);
+  }
+
+  if( $Config->get('_settings','opt_empty_tracks')!=0 && $gene_drawn==0 ) {
+    $self->errorTrack( "No ".$self->error_track_name()." in this region" );
+  }
+
+}
+
+sub expanded_init {
+  my ($self) = @_;
+  my $type = $self->check();
+  return unless defined $type;
+
+  my $Config        = $self->{'config'};
+  my $strand_flag   = $Config->{'str'};
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target        = $Config->{'_draw_single_Transcript'};
   my $target_gene   = $Config->{'geneid'};
@@ -64,7 +197,10 @@ sub _init {
   my $length  = $container->length;
   my $transcript_drawn = 0;
     
+
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
+    my $gene_strand = $gene->strand;
+    next if $gene_strand != $strand and $strand_flag eq 'b'; # skip features on wrong strand....
     next if $target_gene && ($gene->stable_id() ne $target_gene);
  
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
