@@ -74,7 +74,30 @@ sub _init {
 		    ],
 	'colour'  => 'grey',
 
+
 						    }));
+
+  # Print info line with population details
+  my $number_of_snps = scalar( @snps );
+  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  my $pop_obj     = $pop_adaptor->fetch_by_dbID($only_pop);
+  my $parents = $pop_obj->get_all_super_Populations;
+  my $name    = "LD($key): ".$pop_obj->name;
+  $name   .= '   ('.(join ', ', map { ucfirst(lc($_->name)) } @{$parents} ).')' if @$parents;
+  $name   .= "   $number_of_snps SNPs";
+
+  $self->push( Sanger::Graphics::Glyph::Text->new({
+      'x'         => 0,
+      'y'         => $yoffset - $text_height - $TAG_LENGTH,
+      'height'    => 0,
+      'font'      => 'Tiny',
+      'colour'    => 'black',
+      'text'      => $name,
+      'absolutey' => 1,
+      'absolutex' => 1,'absolutewidth'=>1,
+						  }));
+
+  # Create triangle
   foreach my $m ( 0 .. ($number_of_snps-2) ) {
     my $snp_m1 = $snps[ $m+1 ];
     my $snp_m  = $snps[ $m   ];
