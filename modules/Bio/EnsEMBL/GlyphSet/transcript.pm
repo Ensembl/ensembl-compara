@@ -30,8 +30,8 @@ sub _init {
     my $Config        = $self->{'config'};
     my $container     = $self->{'container'};
     my $target        = $Config->{'_draw_single_Transcript'};
-    my $y	      = 0;
-    my $h	      = $target ? 30 : 8;	#Single transcript mode - set height to 30 - width to 8!
+    my $y	          = 0;
+    my $h	          = $target ? 30 : 8;	#Single transcript mode - set height to 30 - width to 8!
     my $vcid          = $container->id();
     my $highlights    = join '|','',$self->highlights(),''; # |highlight|highlight|highlight|
     my @bitmap        = undef;
@@ -122,31 +122,33 @@ sub _init {
 	    $hi_colour = $Config->get('transcript','hi') if(defined $highlights && $highlights =~ /\|$tid\|/);
 	    
 	    if ($tid !~ /ENST/o){
-		# if we have an EMBL external transcript we need different links...
-		if($tid !~ /dJ/o){
-		    $Composite->{'zmenu'}  = {
-			'caption'	    	=> "EMBL: $tid",
-			'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
-			'EMBL curated transcript'  => "",
-		    };
-		} else {
-		    my $URL = ExtURL->new();
-		    my $url = $URL->get_url('EMBLGENE', $tid);
-		    
-		    $Composite->{'zmenu'}  = {
-			'caption'	    => "EMBL: $tid",
-			'EMBL curated transcript'  => "",
-			"$tid"			=> $url
-			};
-		}
-		if($type eq "pseudo"){
-		    $tid =~ s/(.*?)\.\d+/$1/;
-		    $Composite->{'zmenu'}  = {
-			'caption'	    	=> "EMBL: $tid",
-			'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
-			'EMBL curated pseudogene'  => "",
-		    };
-		}
+			# if we have an EMBL external transcript we need different links...
+			if($tid !~ /dJ/o){
+		    	$Composite->{'zmenu'}  = {
+				'caption'	    	=> "EMBL: $tid",
+				'More information'  => "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[EMBL-ALLTEXT:$tid]",
+				#'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
+				'EMBL curated transcript'  => "",
+		    	};
+			} else {
+		    	my $URL = ExtURL->new();
+		    	my $url = $URL->get_url('EMBLGENE', $tid);
+
+		    	$Composite->{'zmenu'}  = {
+				'caption'	    => "EMBL: $tid",
+				'EMBL curated transcript'  => "",
+				"$tid"			=> $url
+				};
+			}
+			if($type eq "pseudo"){
+		    	#$tid =~ s/(.*?)\.\d+/$1/;
+		    	$Composite->{'zmenu'}  = {
+				'caption'	    	=> "EMBL: $tid",
+				#'More information'  => "http://www.ebi.ac.uk/cgi-bin/emblfetch?$tid",
+				'More information'  => "http://www.sanger.ac.uk/srs6bin/cgi-bin/wgetz?-e+[EMBL-ALLTEXT:$tid]",
+				'EMBL curated pseudogene'  => "",
+		    	};
+			}
 	    } else {
 		# we have a normal Ensembl transcript...
 		$Composite->{'zmenu'}  = {
@@ -154,10 +156,10 @@ sub _init {
 		    '00:Ensembl transcript'    	   => "",
 		    '01:Transcript information'    => "/perl/geneview?gene=$vgid",
 		    '02:Protein information'       => "/perl/protview?peptide=$pid",
-		    '05:Protein sequence (FASTA)'  => "/perl/dumpview?type=peptide&id=$tid",
+		    '05:Protein sequence (FASTA)'  => "/perl/exportview?type=feature&ftype=peptide&id=$tid",
 		    '03:Supporting evidence'       => "/perl/transview?transcript=$tid",
 		    '04:Expression information'    => "/perl/sageview?alias=$vgid",
-		    '06:cDNA sequence'             => "/perl/dumpview?type=cdna&id=$tid",
+		    '06:cDNA sequence'             => "/perl/exportview?type=feature&ftype=cdna&id=$tid",
 		};
 	    }
 	} #end of Skip this next chunk if single transcript mode
