@@ -54,11 +54,10 @@ use strict;
 
 use Bio::EnsEMBL::Compara::ExternalViewAlign;
 
-# Object preamble - inherits from Bio::Root::RootI
+# Object preamble - inherits from Bio::EnsEMBL::DB::ExternalFeatureFactoryI
 
-use Bio::Root::RootI;
-
-@ISA = qw(Bio::Root::RootI);
+use Bio::EnsEMBL::DB::ExternalFeatureFactoryI
+@ISA = qw(Bio::EnsEMBL::DB::ExternalFeatureFactoryI);
 
 # new() is written here 
 
@@ -105,7 +104,13 @@ sub new {
 =cut
 
 sub get_Ensembl_SeqFeatures_contig_list{
-   my ($self,@contigs) = @_;
+   my ($self,$hash_ref,@internal_contig) = @_;
+
+   my @contigs;
+
+   foreach my $id ( @internal_contig ) {
+     push(@contigs,$hash_ref->{$id});
+   }
 
    my %hash;
 
@@ -123,7 +128,7 @@ sub get_Ensembl_SeqFeatures_contig_list{
        foreach my $abs ( $aln->each_AlignBlockSet ) {
 	   my @aln = $abs->get_AlignBlocks();
 	   foreach my $al ( @aln ) {
-	       if( $hash{$al->dnafrag->name} == 1 ) {
+	       if( exists $hash{$al->dnafrag->name} ) {
 		   my $ex = Bio::EnsEMBL::Compara::ExternalViewAlign->new();
 		   $ex->start($al->start);
 		   $ex->end($al->end);
