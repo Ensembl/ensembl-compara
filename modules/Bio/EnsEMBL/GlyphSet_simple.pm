@@ -142,7 +142,6 @@ sub _init {
     $previous_end = $end;
     $previous_start = $end;
     $flag = 0;
-    my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f );
     my $img_start = $start;
     my $img_end   = $end;
     my ($label,$style) = $self->image_label( $f, $w );
@@ -189,8 +188,8 @@ sub _init {
                           );
       next if $row > $dep;
     }
-    
     my @tag_glyphs = ();
+    my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f );
     
     ## Lets see about placing labels on objects...        
     my $composite = new Sanger::Graphics::Glyph::Composite();
@@ -231,7 +230,8 @@ sub _init {
             }) );
     }
     my $rowheight = int($h * 1.5);
-    foreach my $tag ( $self->tag($f) ) {
+
+    foreach my $tag ( @tags ) {
       if($tag->{'style'} eq 'left-end' && $start == $f->start) {
         my $line = new Sanger::Graphics::Glyph::Rect({
                     'x'          => $start-1,
