@@ -9,7 +9,7 @@ sub my_label { return "Assembly Contig"; }
 sub features {
     my ($self) = @_;
 #    my $container_length = $self->{'container'}->length();
-    return $self->{'container'}->get_all_MapFrags( 'assembly' );
+    return $self->{'container'}->get_all_MiscFeatures( 'assembly' );
 }
 
 sub href {
