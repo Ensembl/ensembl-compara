@@ -62,7 +62,7 @@ sub _init {
   }
   my $tag = $Config->get( 'snp_join', 'tag' );
   my $tag2 = $tag + ($strand == -1 ? 1 : 0);
-  my $start = $container->chr_start();
+  my $start = $container->start();
   my $T = $strand == 1 ? 1 : 0;
   foreach my $snp_ref ( @snps ) { 
     my $snp = $snp_ref->[2];

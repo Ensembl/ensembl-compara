@@ -51,7 +51,7 @@ sub _init {
   }
   my $tag = $Config->get( 'geneexon_bgtrack', 'tag' );
   $tag ++ if $strand == -1;
-  my $start = $container->chr_start();
+  my $start = $container->start();
   my @exons = sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map { [ split /:/, $_ ] } keys %exons;
   my $T = $strand == 1 ? 1 : 0;
   foreach my $EXON ( @exons ) {

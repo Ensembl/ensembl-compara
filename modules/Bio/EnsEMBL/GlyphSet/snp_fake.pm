@@ -32,7 +32,7 @@ sub _init {
   my @snps = @{$Config->{'snps'}};
   my $tag = $Config->get( 'snp_fake', 'tag' );
   my $tag2 = $tag + ($strand == -1 ? 1 : 0);
-  my $start = $container->chr_start();
+  my $start = $container->start();
   foreach my $snp_ref ( @snps ) { 
     my $snp = $snp_ref->[2];
     my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
@@ -108,15 +108,15 @@ sub _init {
 
 sub zmenu {
     my ($self, $f ) = @_;
-    my $chr_start = $f->start() + $self->{'container'}->chr_start() - 1;
-    my $chr_end   = $f->end() + $self->{'container'}->chr_start() - 1;
+    my $start = $f->start() + $self->{'container'}->start() - 1;
+    my $end   = $f->end() + $self->{'container'}->start() - 1;
 
     my $allele = $f->alleles;
-    my $pos =  $chr_start;
+    my $pos =  $start;
     if($f->{'range_type'} eq 'between' ) {
-       $pos = "between&nbsp;$chr_start&nbsp;&amp;&nbsp;$chr_end";
+       $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
     } elsif($f->{'range_type'} ne 'exact' ) {
-       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+       $pos = "$start&nbsp;-&nbsp;$end";
    }
     my %zmenu = ( 
         'caption'           => "SNP: ".$f->id(),
@@ -145,12 +145,12 @@ sub zmenu {
 
 sub href {
     my ($self, $f ) = @_;
-    my $chr_start = $self->{'container'}->chr_start()+$f->start;
+    my $start = $self->{'container'}->start()+$f->start;
     my $snp_id = $f->id;
     my $source = $f->source_tag;
-    my $chr_name = $self->{'container'}->chr_name();
+    my $seq_region_name = $self->{'container'}->seq_region_name();
 
-    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id&source=$source&chr=$chr_name&vc_start=$chr_start";
+    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id&source=$source&chr=$seq_region_name&vc_start=$start";
 }
 
 1;

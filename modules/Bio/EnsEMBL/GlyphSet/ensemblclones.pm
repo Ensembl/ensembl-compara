@@ -2,7 +2,7 @@ package Bio::EnsEMBL::GlyphSet::ensemblclones;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
-use Bio::EnsEMBL::SeqFeature;
+use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Bio::Das; 
@@ -106,7 +106,7 @@ sub features {
 
 
             if ($p->{contig}->name() =~ /$name/){
-                my $s = Bio::EnsEMBL::SeqFeature->new();
+                my $s = Bio::EnsEMBL::Feature->new();
                 
                 # remember if the Vega clone version is newer/older/same as e! clone
                 if($ver > $p->component_Seq->clone->embl_version){

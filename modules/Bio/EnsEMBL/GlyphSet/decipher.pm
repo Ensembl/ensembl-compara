@@ -11,7 +11,7 @@ package Bio::EnsEMBL::GlyphSet::decipher;
 use strict;
 use vars qw(@ISA $DECIPHER_COLOURS);
 use Bio::EnsEMBL::GlyphSet_simple;
-use Bio::EnsEMBL::SeqFeature;
+use Bio::EnsEMBL::Feature;
 use EnsWeb;
 use Bio::Das;
 
@@ -73,7 +73,7 @@ sub features {
     shift @novelfeatures;
     shift @novelfeatures;
 
-    my $s = Bio::EnsEMBL::SeqFeature->new(
+    my $s = Bio::EnsEMBL::Feature->new(
 					  -start   => $hard->start()+$offset,
 					  -end     => $hard->end()+$offset,
 					  -strand  => -1,
@@ -90,7 +90,7 @@ sub features {
   }
 
   for my $known (@knownfeatures) {
-    my $s = Bio::EnsEMBL::SeqFeature->new(
+    my $s = Bio::EnsEMBL::Feature->new(
 					  -start   => $known->start()+$offset,
 					  -end     => $known->end()+$offset,
 					  -strand  => -1,

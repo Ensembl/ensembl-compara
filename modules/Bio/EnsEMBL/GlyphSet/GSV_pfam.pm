@@ -22,9 +22,8 @@ sub _init {
   return unless defined $type;
 
   return unless $self->strand() == -1;
-  my $offset = $self->{'container'}->chr_start - 1;
+  my $offset = $self->{'container'}->start - 1;
   my $Config        = $self->{'config'};
-  my $chr_name = $self->{'container'}->chr_name();
     
   my $y             = 0;
   my $h             = 8;   #Single transcript mode - set height to 30 - width to 8!

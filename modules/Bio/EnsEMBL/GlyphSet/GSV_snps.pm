@@ -22,12 +22,12 @@ sub _init {
   return unless defined $type;
 
   return unless $self->strand() == -1;
-  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->chr_start - 1 :  $self->{'container'}->chr_end + 1;
+  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
   my $dir    = $self->{'container'}->strand > 0 ? 1 : -1;
   my $Config        = $self->{'config'};
   my $EXTENT        = $Config->get('_settings','context');
      $EXTENT        = 1e6 if $EXTENT eq 'FULL';
-  my $chr_name = $self->{'container'}->chr_name();
+  my $seq_region_name = $self->{'container'}->seq_region_name();
     
   my @transcripts   = $Config->{'transcripts'};
   my $y             = 0;
@@ -111,7 +111,7 @@ sub _init {
     } elsif($snp->{'range_type'} ne 'exact' ) {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
-    my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->id]}&source=@{[$snp->source_tag]}&chr=$chr_name&vc_start=$chr_start";
+    my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->id]}&source=@{[$snp->source_tag]}&chr=$seq_region_name&vc_start=$chr_start";
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S - $font_w_bp / 2,
       'y'         => $h + 2,

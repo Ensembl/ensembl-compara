@@ -22,9 +22,9 @@ sub _init {
   return unless defined $type;
 
   return unless $self->strand() == -1;
-  my $offset = $self->{'container'}->chr_start - 1;
+  my $offset = $self->{'container'}->start - 1;
   my $Config        = $self->{'config'};
-  my $chr_name = $self->{'container'}->chr_name();
+  my $seq_region_name = $self->{'container'}->seq_region_name();
     
   my @transcripts   = $Config->{'transcripts'};
   my $y             = 0;
@@ -189,16 +189,16 @@ sub _init {
       });
 
       my $allele =  $snp->alleles;
-      my $chr_start = $snp->start() + $offset;
-      my $chr_end   = $snp->end() + $offset;
-      my $pos =  $chr_start;
+      my $start = $snp->start() + $offset;
+      my $end   = $snp->end() + $offset;
+      my $pos =  $start;
       if($snp->{'range_type'} eq 'between' ) {
-         $pos = "between&nbsp;$chr_start&nbsp;&amp;&nbsp;$chr_end";
+         $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
       } elsif($snp->{'range_type'} ne 'exact' ) {
-         $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+         $pos = "$start&nbsp;-&nbsp;$end";
       }
 
-     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->id]}&source=@{[$snp->source_tag]}&chr=$chr_name&vc_start=$chr_start";
+     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->id]}&source=@{[$snp->source_tag]}&chr=$seq_region_name&vc_start=$start";
 
       my $bglyph = new Sanger::Graphics::Glyph::Rect({
        'x'         => $S - $font_w_bp / 2,

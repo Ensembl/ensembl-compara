@@ -21,9 +21,8 @@ sub _init {
   my $type = $self->check();
   return unless defined $type;
   return unless $self->strand() == -1;
-  my $offset = $self->{'container'}->chr_start - 1;
+  my $offset = $self->{'container'}->start - 1;
   my $Config        = $self->{'config'};
-  my $chr_name = $self->{'container'}->chr_name();
     
   my @transcripts   = $Config->{'transcripts'};
   my $y             = 0;
