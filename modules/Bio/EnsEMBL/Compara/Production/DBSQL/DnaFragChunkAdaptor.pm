@@ -107,6 +107,7 @@ sub update_sequence
   my $sth = $self->prepare("UPDATE dnafrag_chunk SET sequence_id=? where dnafrag_chunk_id=?");
   $sth->execute($newSeqID, $dfc->dbID);
   $sth->finish();
+  $dfc->sequence_id($newSeqID);
   return $newSeqID;
 }
 
