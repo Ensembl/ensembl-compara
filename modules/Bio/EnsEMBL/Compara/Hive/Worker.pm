@@ -264,7 +264,7 @@ sub run
   my $alive=1;  
   while($alive) {
     my $claim = $jobDBA->claim_jobs_for_worker($self);
-    my $jobs = $jobDBA->fetch_by_job_claim($claim);
+    my $jobs = $jobDBA->fetch_by_claim_analysis($claim, $self->analysis->dbID);
 
     $self->adaptor->check_in($self);
 
@@ -278,7 +278,6 @@ sub run
       $job->status('DONE');
       $self->close_and_update_job_output($job);
       $self->{'_work_done'}++;
-
     }
     if($self->job_limit and ($self->{'_work_done'} > $self->job_limit)) { 
       $self->cause_of_death('NATURAL'); 
@@ -288,12 +287,14 @@ sub run
 
   $self->adaptor->register_worker_death($self);
 
-  close STDOUT;
-  close STDERR;
-  close WORKER_STDOUT;
-  close WORKER_STDERR;
-  open STDOUT, ">&OLDOUT";
-  open STDERR, ">&OLDERR";
+  if($self->output_dir()) {
+    close STDOUT;
+    close STDERR;
+    close WORKER_STDOUT;
+    close WORKER_STDERR;
+    open STDOUT, ">&OLDOUT";
+    open STDERR, ">&OLDERR";
+  }
 }
 
 
@@ -305,7 +306,7 @@ sub run_module_with_job
   my $runObj = $self->analysis->runnableDB;
   return 0 unless($runObj);
   return 0 unless($job and ($job->hive_id eq $self->hive_id));
-
+  
   #pass the input_id from the job into the runnableDB object
   $runObj->input_id($job->input_id);
   
@@ -378,6 +379,7 @@ sub close_and_update_job_output
   my $job  = shift;
 
   return unless($job);
+  return unless($self->output_dir);
 
   close STDOUT;
   close STDERR;

@@ -42,21 +42,22 @@ sub fetch_by_dbID {
   return $obj;
 }
 
-=head2 fetch_by_job_claim
-  Arg [1]    : string job_claim
-               the UUID used to claim jobs
-  Example    : $jobs = $adaptor->fetch_by_job_claim('c6658fde-64ab-4088-8526-2e960bd5dd60');
+=head2 fetch_by_claim_analysis
+  Arg [1]    : string job_claim (the UUID used to claim jobs)
+  Arg [2]    : int analysis_id  
+  Example    : $jobs = $adaptor->fetch_by_claim_analysis('c6658fde-64ab-4088-8526-2e960bd5dd60',208);
   Description: Returns a list of jobs for a claim id
   Returntype : Bio::EnsEMBL::Compara::Hive::AnalysisJob
-  Exceptions : thrown if claim_id is not defined
+  Exceptions : thrown if claim_id or analysis_id is not defined
   Caller     : general
 =cut
 
-sub fetch_by_job_claim {
-  my ($self,$claim) = @_;
+sub fetch_by_claim_analysis {
+  my ($self,$claim,$analysis_id) = @_;
 
-  $self->throw("fetch_by_job_claim must have claim ID") unless($claim);
-  my $constraint = "a.job_claim='$claim'";
+  $self->throw("fetch_by_claim_analysis must have claim ID") unless($claim);
+  $self->throw("fetch_by_claim_analysis must have analysis_id") unless($analysis_id);
+  my $constraint = "a.job_claim='$claim' AND a.analysis_id='$analysis_id'";
   return $self->_generic_fetch($constraint);
 }
 
@@ -310,8 +311,7 @@ sub claim_jobs_for_worker {
   my $sql = "UPDATE analysis_job SET job_claim='$claim'".
             " , hive_id='". $worker->hive_id ."'".
             " , status='CLAIMED'".
-            " WHERE job_claim IS NULL".
-            " AND status = 'READY'".
+            " WHERE job_claim='' ".
             " AND analysis_id='" .$worker->analysis->dbID. "'".
             " LIMIT " . $worker->batch_size;
 
@@ -322,7 +322,6 @@ sub claim_jobs_for_worker {
 
   return $claim;
 }
-
 
 1;
 
