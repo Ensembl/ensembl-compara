@@ -22,14 +22,12 @@ sub _init {
     my ($self) = @_;
 
     return unless ($self->strand() == 1);
-    print STDERR "BLAST\n";
 
     # Lets see if we have a BLAST hit
     # entry in higlights of the form BLAST:start:end
 
     my @blast_tickets;
     
-    print STDERR "HI: ",$self->highlights,"\n";
     foreach($self->highlights) { 
         if(/BLAST:(.*)/) { push @blast_tickets, $1; } 
     }
@@ -40,6 +38,7 @@ sub _init {
     my $vc_e = $vc->_global_end();
     my $vc_chr = $vc->_chr_name();
     my @hits;
+
     foreach my $ticket (@blast_tickets) {
         if( -e "/nfs/WWW/data/blastqueue/$ticket.cache" ) {
             open FH, "/nfs/WWW/data/blastqueue/$ticket.cache";
@@ -57,6 +56,7 @@ sub _init {
             close FH;
         }
     }
+
     return unless @hits;
     ## We have a hit!;
   
