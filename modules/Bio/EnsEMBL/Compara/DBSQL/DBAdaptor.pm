@@ -132,12 +132,6 @@ sub new {
     }
   }
 
-  $self->add_CanonicalAdaptor('Analysis'  , 'Bio::EnsEMBL::Pipeline::DBSQL::AnalysisAdaptor');
-  $self->add_CanonicalAdaptor('SimpleRule', 'Bio::EnsEMBL::Compara::DBSQL::SimpleRuleAdaptor');
-  $self->add_CanonicalAdaptor('Domain'    , 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor');
-  $self->add_CanonicalAdaptor('Member'    , 'Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor');
-  $self->add_CanonicalAdaptor('Subset'    , 'Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor');
-
   #we want to return the container not the contained object
   return $container;
 }
@@ -496,7 +490,28 @@ sub get_PeptideAlignFeatureAdaptor {
 
 sub get_AnalysisAdaptor {
   my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Pipeline::DBSQL::AnalysisAdaptor" );
+  return $self->_get_adaptor("Bio::EnsEMBL::DBSQL::AnalysisAdaptor" );
+}
+
+sub get_Queen {
+  my $self = shift;
+
+  return $self->_get_adaptor("Bio::EnsEMBL::Hive::Queen" );
+}
+
+sub get_AnalysisJobAdaptor {
+  my $self = shift;
+  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor" );
+}
+
+sub get_AnalysisStatsAdaptor {
+  my $self = shift;
+  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor" );
+}
+
+sub get_SimpleRuleAdaptor {
+  my $self = shift;
+  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::SimpleRuleAdaptor" );
 }
 
 
@@ -510,38 +525,6 @@ sub deleteObj {
   }
 
   $self->SUPER::deleteObj;
-}
-
-
-=head2 add_CanonicalAdaptor
-
-  Arg [1]    : string $canonical_name
-  Arg [2]    : string $module
-  Example    : $dba->add_CanonicalAdaptor('Analysis', 'Bio::EnsEMBL::Pipeline::DBSQL::AnalysisAdaptor');
-  Description: adds additional adaptor types so that called to -get_adaptor($canonical_name) will work
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub add_CanonicalAdaptor
-{
-  my ($self, $canonical_name, $module) = @_;
-
-  $self->{'default_module'}->{$canonical_name} = $module;
-  $self->{'current_module'}->{$canonical_name} = $module;
-}
-
-sub get_HiveAdaptor {
-  my $self = shift;
-
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::Hive::HiveAdaptor" );
-}
-
-sub get_AnalysisJobAdaptor {
-  my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Compara::Hive::AnalysisJobAdaptor" );
 }
 
 1;
