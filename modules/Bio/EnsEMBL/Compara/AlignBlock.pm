@@ -170,6 +170,49 @@ sub strand{
 }
 
 
+=head2  perc_id
+
+ Title   : perc_id 
+ Usage   : $obj->perc_id($newval)
+ Function:
+ Example :
+ Returns : identity (in percentage) 
+ Args    : newvalue (optional)
+
+
+=cut
+
+sub perc_id{
+   my ($obj,$value) = @_;
+   if( defined $value) {
+      $obj->{'perc_id'} = $value;
+    }
+    return $obj->{'perc_id'};
+
+}
+
+=head2 score 
+
+ Title   : score 
+ Usage   : $obj->score($newval)
+ Function:
+ Example :
+ Returns : identity (in percentage)
+ Args    : newvalue (optional)
+
+
+=cut
+
+sub score{
+   my ($obj,$value) = @_;
+   if( defined $value) {
+      $obj->{'score'} = $value;
+    }
+    return $obj->{'score'};
+
+}
+
+
 =head2 dnafrag
 
  Title   : dnafrag
