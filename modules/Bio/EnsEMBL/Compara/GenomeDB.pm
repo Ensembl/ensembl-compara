@@ -44,8 +44,11 @@ package Bio::EnsEMBL::Compara::GenomeDB;
 
 use strict;
 
+use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::DBLoader;
+
+@Bio::EnsEMBL::Compara::GenomeDB::ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
   my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
@@ -308,8 +311,7 @@ sub has_consensus {
   }
   # and check that you are not trying to compare the same GenomeDB
   if ( $con_gdb eq $self ) {
-    $self->throw("Trying to return consensus / " .
-		 "query information from the same db");
+    $self->throw("Trying to return consensus / query information from the same db");
   }
 
   my $consensus = $self->adaptor->check_for_consensus_db( $self, $con_gdb,$method_link_id);
