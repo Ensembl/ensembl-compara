@@ -47,14 +47,18 @@ sub new {
   
   my ($features, 
       $query_slice,
+      $query_nib_dir,
       $target_slices,
+      $target_nib_dir,
       $fa_to_nib,
       $lav_to_axt,
       $axt_chain,
 
       ) = $self->_rearrange([qw(FEATURES
                                 QUERY_SLICE
+                                QUERY_NIB_DIR
                                 TARGET_SLICES
+                                TARGET_NIB_DIR
                                 FATONIB
                                 LAVTOAXT
                                 AXTCHAIN
@@ -72,6 +76,9 @@ sub new {
   $self->faToNib($fa_to_nib) if defined $fa_to_nib;
   $self->lavToAxt($lav_to_axt) if defined $lav_to_axt;
   $self->axtChain($axt_chain) if defined $axt_chain;
+
+  $self->query_nib_dir($query_nib_dir) if defined $query_nib_dir;
+  $self->target_nib_dir($target_nib_dir) if defined $target_nib_dir;
 
   $self->query_slice($query_slice);
   $self->target_slices($target_slices);
@@ -103,13 +110,9 @@ sub run {
   my $lav_file = "$work_dir/$query_name.lav";
   my $axt_file = "$work_dir/$query_name.axt";
   my $chain_file = "$work_dir/$query_name.chain";
-  my $query_nib_dir = "$work_dir/query_nib";
-  my $target_nib_dir = "$work_dir/target_nib";
-  my @nib_files;
+  my (@nib_files, $query_nib_dir, $target_nib_dir);
 
   mkdir $work_dir;
-  mkdir $query_nib_dir;
-  mkdir $target_nib_dir;
 
   my $fh;
 
@@ -117,34 +120,56 @@ sub run {
   # write the query in nib format 
   # for use by lavToAxt;
   #################################
-  my $seqio = Bio::SeqIO->new(-format => 'fasta',
-                              -file   => ">$query_nib_dir/$query_name.fa");
-  $seqio->write_seq($self->query_slice);
-  $seqio->close;
+  if ($self->query_nib_dir) {
+    if (not -d $self->query_nib_dir) {
+      throw("Could not fine query nib file directory:" . $self->query_nib_dir);
+    } else {
+      $query_nib_dir = $self->query_nib_dir;
+    }
+  } else { 
+    $query_nib_dir = "$work_dir/query_nib";
+    mkdir $query_nib_dir;
 
-  system($self->faToNib, "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib") 
-      and throw("Could not convert fasta file $query_nib_dir/$query_name.fa to nib");
-  unlink "$query_nib_dir/$query_name.fa";
-  push @nib_files, "$query_nib_dir/$query_name.nib";
+    my $seqio = Bio::SeqIO->new(-format => 'fasta',
+                                -file   => ">$query_nib_dir/$query_name.fa");
+    $seqio->write_seq($self->query_slice);
+    $seqio->close;
+    
+    system($self->faToNib, "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib") 
+        and throw("Could not convert fasta file $query_nib_dir/$query_name.fa to nib");
+    unlink "$query_nib_dir/$query_name.fa";
+    push @nib_files, "$query_nib_dir/$query_name.nib";
+  }  
   
   #################################
   # write the targets in nib format 
   # for use by lavToAxt;
   #################################  
-  foreach my $nm (keys %{$self->target_slices}) {
-    my $target = $self->target_slices->{$nm};
-    my $target_name = $target->seq_region_name;
-    
-    $seqio =  Bio::SeqIO->new(-format => 'fasta',
-                              -file   => ">$target_nib_dir/$target_name.fa");
-    $seqio->write_seq($target);
-    $seqio->close;
-   
-    system($self->faToNib, "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib") 
-        and throw("Could not convert fasta file $target_nib_dir/$target_name.fa to nib");
-    unlink "$target_nib_dir/$target_name.fa";
-    push @nib_files, "$target_nib_dir/$target_name.nib";
-  }
+  if ($self->target_nib_dir) {
+    if (not -d $self->target_nib_dir) {
+      throw("Could not fine target nib file directory:" . $self->target_nib_dir);
+    } else {
+      $target_nib_dir = $self->target_nib_dir;
+    }
+  } else {
+    $target_nib_dir =  "$work_dir/target_nib";
+    mkdir $target_nib_dir;
+
+    foreach my $nm (keys %{$self->target_slices}) {
+      my $target = $self->target_slices->{$nm};
+      my $target_name = $target->seq_region_name;
+      
+      my $seqio =  Bio::SeqIO->new(-format => 'fasta',
+                                -file   => ">$target_nib_dir/$target_name.fa");
+      $seqio->write_seq($target);
+      $seqio->close;
+      
+      system($self->faToNib, "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib") 
+          and throw("Could not convert fasta file $target_nib_dir/$target_name.fa to nib");
+      unlink "$target_nib_dir/$target_name.fa";
+      push @nib_files, "$target_nib_dir/$target_name.nib";
+    }
+  }  
   
   ##############################
   # write features in lav format
@@ -174,9 +199,10 @@ sub run {
 
   $self->output($chains);  
   
-  unlink $lav_file, $axt_file, $chain_file, @nib_files;
-  rmdir $query_nib_dir;
-  rmdir $target_nib_dir;
+  #unlink $lav_file, $axt_file, $chain_file, @nib_files;
+  
+  rmdir $query_nib_dir if not $self->query_nib_dir;
+  rmdir $target_nib_dir if not $self->target_nib_dir;
   rmdir $work_dir;
 
   return 1;
@@ -190,7 +216,13 @@ sub write_lav {
 
   my (%features);  
   foreach my $feat (sort {$a->start <=> $b->start} @{$self->features}) {
-    push @{$features{$feat->hseqname}{$feat->strand}{$feat->hstrand}}, $feat;
+    my $strand = $feat->strand;
+    my $hstrand = $feat->hstrand;
+    if ($strand == -1) {
+      $strand  *= -1;
+      $hstrand *= -1;
+    }
+    push @{$features{$feat->hseqname}{$strand}{$hstrand}}, $feat;
   }
   
   my $query_length = $self->query_slice->length;
@@ -239,7 +271,14 @@ sub write_lav {
           print $fh "   b $qstart $tstart\n"; 
           print $fh "   e $qend $tend\n";
           
-          foreach my $seg ($reg->ungapped_features) {
+          my @ug_feats = $reg->ungapped_features;
+          if ($qstrand == -1) {
+            @ug_feats = sort { $b->start <=> $a->start } @ug_feats;
+          } else {
+            @ug_feats = sort { $a->start <=> $b->start } @ug_feats;
+          }
+
+          foreach my $seg (@ug_feats) {
             my $qstartl = $query_strand ?  $query_length - $seg->end + 1 : $seg->start; 
             my $qendl = $query_strand ?  $query_length - $seg->start + 1 : $seg->end; 
             
@@ -384,6 +423,24 @@ sub target_slices {
     $self->{_target_slices_hashref} = $hash_ref;
   }
   return $self->{_target_slices_hashref};
+}
+
+sub query_nib_dir {
+  my ($self, $val) = @_;
+  
+  if (defined $val) {
+    $self->{_query_nib_dir} = $val;
+  }
+  return $self->{_query_nib_dir};
+}
+
+sub target_nib_dir {
+  my ($self, $val) = @_;
+  
+  if (defined $val) {
+    $self->{_target_nib_dir} = $val;
+  }
+  return $self->{_target_nib_dir};
 }
 
 sub features {
