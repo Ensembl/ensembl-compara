@@ -17,7 +17,7 @@ $0 options input_data_file
                                 the one set in ENSEMBL_REGISTRY will be used if defined, if not
                                 ~/.ensembl_init will be used.
 
-The format of the input file is 23 tab-separated columns. One homology per line.
+The format of the input file is 22 tab-separated columns. One homology per line.
 dn ds n s lnl threshold_on_ds \
 gene_stable_id1 translation_stable_id1 cigar_line1 \
 cigar_start1 cigar_end1 perc_cov1 perc_id1 perc_pos1 \
@@ -84,20 +84,24 @@ while (<>) {
   my $gene_member1 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id1);
   unless (defined  $gene_member1) {
     print STDERR "$gene_stable_id1 not in db\n";
+    next;
   }
   my $peptide_member1 = $ma->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id1);
   unless (defined  $peptide_member1) {
     print STDERR "$translation_stable_id1 not in db\n";
+    next;
   }
   my $attribute1 = return_attribute($peptide_member1, $cigar_line1, $cigar_start1, $cigar_end1,$perc_cov1,$perc_id1,$perc_pos1);
 
   my $gene_member2 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id2);
   unless (defined  $gene_member2) {
     print STDERR "$gene_stable_id2 not in db\n";
+    next;
   }
   my $peptide_member2 = $ma->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id2);
   unless (defined  $peptide_member2) {
     print STDERR "$translation_stable_id2 not in db\n";
+    next;
   }
   my $attribute2 = return_attribute($peptide_member2, $cigar_line2, $cigar_start2, $cigar_end2,$perc_cov2,$perc_id2,$perc_pos2);
 
@@ -117,7 +121,7 @@ while (<>) {
   $homology->threshold_on_ds($threshold_on_ds);
   $homology->add_Member_Attribute([$gene_member1, $attribute1]);
   $homology->add_Member_Attribute([$gene_member2, $attribute2]);
-  print $homology->stable_id," ready to load\n";
+  print STDERR $homology->stable_id," ready to load\n";
   $ha->store($homology);
   if (defined $homology->n) {
     $ha->update_genetic_distance($homology);
