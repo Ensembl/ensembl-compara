@@ -21,7 +21,7 @@ sub new {
         'vc'         => $Container,
         'glyphsets'  => [],
         'config'     => $Config,
-        'spacing'    => $spacing || 20,
+        'spacing'    => $spacing || $Config->{'_spacing'} || 20,
     };
     bless($self, $class);
 
