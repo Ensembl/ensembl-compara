@@ -1,0 +1,240 @@
+#
+# You may distribute this module under the same terms as perl itself
+#
+# POD documentation - main docs before the code
+
+=pod 
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::CreateAlignmentChainsJobs
+
+=cut
+
+=head1 SYNOPSIS
+
+my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $runnableDB = Bio::EnsEMBL::Pipeline::RunnableDB::CreateAlignmentChainsJobs->new (
+                                                    -input_id   => $input_id
+                                                    -analysis   => $analysis );
+$runnableDB->fetch_input(); #reads from DB
+$runnableDB->run();
+$runnableDB->output();
+$runnableDB->write_output(); #writes to DB
+
+=cut
+
+=head1 DESCRIPTION
+
+=cut
+
+=head1 CONTACT
+
+Abel Ureta-Vidal <abel@ebi.ac.uk>
+
+=cut
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with a _
+
+=cut
+
+package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateAlignmentChainsJobs;
+
+use strict;
+
+#use Bio::EnsEMBL::Hive;
+use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
+#use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
+#use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+#use Bio::EnsEMBL::Compara::Production::DnaCollection;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+use Bio::EnsEMBL::Pipeline::RunnableDB;
+
+our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+
+my $DEFAULT_DUMP_MIN_SIZE = 11500000;
+
+sub fetch_input {
+  my $self = shift;
+
+  #
+  # parameters which can be set either via
+  # $self->parameters OR
+  # $self->input_id
+  #
+  $self->{'query_collection'} = undef;
+  $self->{'target_collection'} = undef;
+  $self->{'query_genome_db'} = undef;
+  $self->{'target_genome_db'} = undef;
+  $self->{'method_link_species_set'} = undef;
+
+  $self->get_params($self->parameters);
+  $self->get_params($self->input_id);
+
+  # create a Compara::DBAdaptor which shares my DBConnection
+  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
+  
+  # get DnaCollection of query
+  throw("must specify 'query_collection_name' to identify DnaCollection of query") 
+    unless(defined($self->{'query_collection_name'}));
+  $self->{'query_collection'} = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->
+                                fetch_by_set_description($self->{'query_collection_name'});
+  throw("unable to find DnaCollection with name : ". $self->{'query_collection_name'})
+    unless(defined($self->{'query_collection'}));
+
+  # get DnaCollection of target
+  throw("must specify 'target_collection_name' to identify DnaCollection of query") 
+    unless(defined($self->{'target_collection_name'}));
+  $self->{'target_collection'} = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->
+                                fetch_by_set_description($self->{'target_collection_name'});
+  throw("unable to find DnaCollection with name : ". $self->{'target_collection_name'})
+    unless(defined($self->{'target_collection'}));
+
+  # get genome_db of query
+  throw("must specify 'query_genome_db_id' to identify DnaCollection of query") 
+    unless(defined($self->{'query_genome_db_id'}));
+  $self->{'query_genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->
+                                fetch_by_dbID($self->{'query_genome_db_id'});
+  throw("unable to find genome_db with dbID : ". $self->{'query_genome_db_id'})
+    unless(defined($self->{'query_genome_db'}));
+  
+  # get genome_db of target
+  throw("must specify 'target_genome_db_id' to identify DnaCollection of target") 
+    unless(defined($self->{'target_genome_db_id'}));
+  $self->{'target_genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->
+                                fetch_by_dbID($self->{'target_genome_db_id'});
+  throw("unable to find genome_db with dbID : ". $self->{'target_genome_db_id'})
+    unless(defined($self->{'target_genome_db'}));
+
+  # get the MethodLinkSpeciesSet
+  throw("must specify a method_link to identify a MethodLinkSpeciesSet") 
+    unless(defined($self->{'method_link'}));
+  $self->{'method_link_species_set'} = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids($self->{'method_link'}, [$self->{'query_genome_db'}->dbID, $self->{'target_genome_db'}->dbID] );
+  throw("unable to find method_link_species_set for method_link=",$self->{'method_link'}," and the following genome_db_ids ",$self->{'query_genome_db_id'},", ",$self->{'target_genome_db_id'},"\n")
+    unless(defined($self->{'method_link_species_set'}));
+
+  $self->print_params;
+    
+  
+  return 1;
+}
+
+
+sub run
+{
+  my $self = shift;
+  $self->createAlignmentChainsJobs();
+  return 1;
+}
+
+
+sub write_output
+{
+  my $self = shift;
+  return 1;
+}
+
+##################################
+#
+# subroutines
+#
+##################################
+
+sub get_params {
+  my $self         = shift;
+  my $param_string = shift;
+
+  return unless($param_string);
+  print("parsing parameter string : ",$param_string,"\n");
+  
+  my $params = eval($param_string);
+  return unless($params);
+
+  foreach my $key (keys %$params) {
+    print("  $key : ", $params->{$key}, "\n");
+  }
+
+  # from input_id
+  $self->{'query_genome_db_id'} = $params->{'query_genome_db_id'} if(defined($params->{'query_genome_db_id'}));
+  $self->{'target_genome_db_id'} = $params->{'target_genome_db_id'} if(defined($params->{'target_genome_db_id'}));
+  $self->{'query_collection_name'} = $params->{'query_collection_name'} if(defined($params->{'query_collection_name'}));
+  $self->{'target_collection_name'} = $params->{'target_collection_name'} if(defined($params->{'target_collection_name'}));
+  # from parameters
+  $self->{'method_link'} = $params->{'method_link'} if(defined($params->{'method_link'}));
+
+  return;
+}
+
+
+sub print_params {
+  my $self = shift;
+
+  printf(" params:\n");
+  printf("   method_link_species_set_id : %d\n", $self->{'method_link_species_set'}->dbID);
+  printf("   query_collection           : (%d) %s\n", 
+         $self->{'query_collection'}->dbID, $self->{'query_collection'}->description);
+  printf("   target_collection          : (%d) %s\n",
+         $self->{'target_collection'}->dbID, $self->{'target_collection'}->description);
+  printf("   query_genome_db           : (%d) %s\n", 
+         $self->{'query_genome_db'}->dbID, $self->{'query_genome_db'}->dbID);
+  printf("   target_genome_db          : (%d) %s\n",
+         $self->{'target_genome_db'}->dbID, $self->{'target_genome_db'}->dbID);
+}
+
+
+sub createAlignmentChainsJobs
+{
+  my $self = shift;
+
+  my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('AlignmentChains');
+
+  my $query_dna_list  = $self->{'query_collection'}->get_all_dna_objects;
+  my %target_dna_hash;
+  foreach my $dna_object (@{$self->{'target_collection'}->get_all_dna_objects}) {
+    if ($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+      throw("At this stage, AlignmentChains job only work out of DnaFragChunk, not DnaFragChunkSet\n");
+    }
+    $target_dna_hash{$dna_object->dnafrag->dbID} = $dna_object;
+  }
+
+  my $count=0;
+
+  my $sql = "select g2.dnafrag_id from genomic_align g1, genomic_align g2 where g1.method_link_species_set_id = ? and g1.genomic_align_block_id=g2.genomic_align_block_id and g1.dnafrag_id = ? and g2.dnafrag_id != ? group by g2.dnafrag_id";
+  my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
+
+  foreach my $qy_dna_object (@{$query_dna_list}) {
+    my $qy_dnafrag_id = $qy_dna_object->dnafrag->dbID;
+    $sth->execute($self->{'method_link_species_set'}->dbID, $qy_dnafrag_id, $qy_dnafrag_id);
+    my $tg_dnafrag_id;
+    $sth->bind_columns(\$tg_dnafrag_id);
+    while ($sth->fetch()) {
+      next unless (defined $target_dna_hash{$tg_dnafrag_id});
+      
+      my $input_hash = {};
+      $input_hash->{'qyDnaFragID'} = $qy_dnafrag_id;
+      if ($qy_dna_object > $DEFAULT_DUMP_MIN_SIZE) {
+        $input_hash->{'query_nib_dir'} = $self->{'query_collection'}->dump_loc;
+      }
+      $input_hash->{'tgDnaFragID'} = $tg_dnafrag_id;
+      if ($qy_dna_object > $DEFAULT_DUMP_MIN_SIZE) {
+        $input_hash->{'target_nib_dir'} = $self->{'target_collection'}->dump_loc;
+      }
+
+      my $input_id = main::encode_hash($input_hash);
+      #printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+                                                                   -input_id       => $input_id,
+                                                                   -analysis       => $analysis,
+                                                                   -input_job_id   => 0,
+                                                                  );
+      $count++;
+    }
+  }
+  $sth->finish;
+  printf("created %d jobs for AlignmentChains\n", $count);
+}
+
+1;
