@@ -80,13 +80,6 @@ use Scalar::Util qw(weaken);
 
 =head2 new (CONSTRUCTOR)
 
-  Arg[1]     : a reference to a hash where keys can be:
-                 -adaptor
-                 -dbID
-                 -type
-                 -genomic_align_array
-=head2 new (CONSTRUCTOR)
-
   Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
   Arg [-ADAPTOR]
               : (opt.) Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor $adaptor
