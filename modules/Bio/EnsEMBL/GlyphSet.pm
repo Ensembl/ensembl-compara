@@ -13,10 +13,10 @@ sub new {
     my ($class, $VirtualContig, $Config, $highlights, $strand) = @_;
     my $self = {
 	'glyphs'     => [],
-	'x'          => 0,
-	'y'          => 0,
-	'width'      => 0,
-	'height'     => 0,
+	'x'          => undef,
+	'y'          => undef,
+	'width'      => undef,
+	'height'     => undef,
 	'highlights' => $highlights,
 	'strand'     => $strand,
 	'minx'       => undef,
@@ -67,6 +67,7 @@ sub push {
 	$gw = $Glyph->width();
 	$gy = $Glyph->y();
 	$gh = $Glyph->height();
+
     } elsif($Glyph->isa('Bio::EnsEMBL::GlyphSet')) {
 	#########
 	# if we've got a glyphset
@@ -228,31 +229,31 @@ sub highlights {
 sub minx {
     my ($this, $minx) = @_;
     $this->{'minx'} = $minx if(defined $minx);
-    return $this->{'minx'}+0;
+    return $this->{'minx'};
 }
 
 sub miny {
     my ($this, $miny) = @_;
     $this->{'miny'} = $miny if(defined $miny);
-    return $this->{'miny'}+0;
+    return $this->{'miny'};
 }
 
 sub maxx {
     my ($this, $maxx) = @_;
     $this->{'maxx'} = $maxx if(defined $maxx);
-    return $this->{'maxx'}+0;
+    return $this->{'maxx'};
 }
 
 sub maxy {
     my ($this, $maxy) = @_;
     $this->{'maxy'} = $maxy if(defined $maxy);
-    return $this->{'maxy'}+0;
+    return $this->{'maxy'};
 };
 
 sub strand {
     my ($this, $strand) = @_;
     $this->{'strand'} = $strand if(defined $strand);
-    return $this->{'strand'}+0;
+    return $this->{'strand'};
 }
 
 1;
