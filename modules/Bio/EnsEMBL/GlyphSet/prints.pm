@@ -21,9 +21,9 @@ sub init_label {
 
 sub _init {
     my ($this) = @_;
-    my %hash          = undef;
+    my %hash;
     my $protein       = $this->{'container'};
-    my @bitmap        = undef;
+    my @bitmap;
     my $Config        = $this->{'config'};
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = int($protein->length * $pix_per_bp);
