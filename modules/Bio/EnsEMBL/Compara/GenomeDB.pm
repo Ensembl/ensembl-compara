@@ -46,6 +46,9 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Root;
+
+@Bio::EnsEMBL::Compara::GenomeDB::ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
   my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
