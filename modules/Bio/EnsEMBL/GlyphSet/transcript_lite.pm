@@ -60,6 +60,7 @@ sub href {
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $tid = $transcript->stable_id();
+    my $pid = $transcript->translation->stable_id(),
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
     my $zmenu = {
@@ -67,9 +68,9 @@ sub zmenu {
         "00:Transcr:$tid"              => "",
         "01:(Gene:$gid)"       => "",
         '03:Transcript information'     => "/$ENV{'ENSEMBL_SPECIES'}/geneview?gene=$gid",
-        '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=".$transcript->translation->stable_id(),
+        '04:Protein information'        => "/$ENV{'ENSEMBL_SPECIES'}/protview?peptide=$pid",
         '05:Supporting evidence'        => "/$ENV{'ENSEMBL_SPECIES'}/transview?transcript=$tid",
-        '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$tid",
+        '07:Protein sequence (FASTA)'   => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid",
         '08:cDNA sequence'              => "/$ENV{'ENSEMBL_SPECIES'}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
     };
     my $DB = EnsWeb::species_defs->databases;
