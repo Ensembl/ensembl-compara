@@ -425,6 +425,7 @@ sub _columns {
              m.chr_name
              m.chr_start
              m.chr_end
+             m.sequence_id
              s.source_id
              s.source_name);
 }
@@ -448,6 +449,7 @@ sub _objs_from_sth {
         '_chr_name' => $column{'chr_name'},
         '_chr_start' => $column{'chr_start'},
         '_chr_end' => $column{'chr_end'},
+        '_sequence_id' => $column{'sequence_id'},
         '_source_id' => $column{'source_id'},
         '_source_name' => $column{'source_name'},
         '_adaptor' => $self});
@@ -460,6 +462,9 @@ sub _objs_from_sth {
         next if (grep /$autoload_method/,  @_columns);
         $attribute->$autoload_method($column{$autoload_method});
       }
+    }
+    if(defined($member->sequence_id())) {
+      $self->_load_sequence($member);
     }
     if (defined $attribute) {
       push @members, [$member, $attribute];
@@ -480,6 +485,25 @@ sub _final_clause {
   my $self = shift;
 
   return '';
+}
+
+sub _load_sequence {
+  my ($self, $member) = @_;
+
+  my $sql = "SELECT sequence.sequence " .
+            "FROM member,sequence " .
+            "WHERE member.sequence_id=sequence.sequence_id " .
+            "AND member.member_id = ?;";
+  my $sth = $self->prepare($sql);
+  $sth->execute($member->dbID);
+
+  my $sequence;
+  $sth->bind_columns(\$sequence);
+
+  if ($sth->fetch()) {
+    $member->sequence($sequence);
+  }
+  $sth->finish();
 }
 
 #
@@ -562,6 +586,7 @@ sub update_sequence {
   my $sth = $self->prepare($sql);
   $sth->execute($member->sequence, $member->dbID);
 }
+
 
 =head2 store_source
 
