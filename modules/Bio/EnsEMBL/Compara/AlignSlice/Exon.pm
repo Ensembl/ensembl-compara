@@ -105,9 +105,9 @@ sub new {
 
   my $self = $class->SUPER::new(@args);
 
-  my ($exon, $align_slice, $from_mapper, $to_mapper) =
+  my ($exon, $align_slice, $from_mapper, $to_mapper, $original_rank) =
       rearrange([qw(
-          EXON ALIGN_SLICE FROM_MAPPER TO_MAPPER
+          EXON ALIGN_SLICE FROM_MAPPER TO_MAPPER ORIGINAL_RANK
       )], @args);
 
   $self->exon($exon) if (defined ($exon));
@@ -115,8 +115,35 @@ sub new {
 #   $self->from_genomic_align_id($from_genomic_align_id) if (defined($from_genomic_align_id));
 #   $self->to_genomic_align_id($to_genomic_align_id) if (defined($to_genomic_align_id));
   $self->slice($align_slice) if (defined($align_slice));
+  $self->original_rank($original_rank) if (defined($original_rank));
 
-  return $self->map_Exon_on_Slice($from_mapper, $to_mapper);
+  $self->map_Exon_on_Slice($from_mapper, $to_mapper);
+  return $self;
+}
+
+
+=head2 copy (CONSTRUCTOR)
+
+  Arg[1]     : none
+  Example    : my $new_align_slice = $old_align_slice->copy()
+  Description: Creates a new Bio::EnsEMBL::AlignSlice::Exon object which
+               is an exact copy of the calling object
+  Returntype : Bio::EnsEMBL::Compara::AlignSlice::Exon object
+  Exceptions : 
+  Caller     : $obeject->methodname
+
+=cut
+
+sub copy {
+  my ($self) = @_;
+
+  my $copy;
+  while (my ($key, $value) = each %$self) {
+    $copy->{$key} = $value;
+  }
+
+  bless($copy, ref($self));
+  return $copy;
 }
 
 
@@ -140,6 +167,30 @@ sub slice {
   }
 
   return $self->{'slice'};
+}
+
+
+=head2 original_rank
+
+  Arg[1]     : (optional) integer $original_rank
+  Example    : $align_exon->original_rank(5);
+  Example    : $original_rank = $align_exon->original_rank();
+  Description: Get/set the attribute original_rank. The orignal_rank
+               is the position of the orginal Exon in the original
+               Transcript
+  Returntype : integer
+  Exceptions : 
+
+=cut
+
+sub original_rank {
+  my ($self, $original_rank) = @_;
+
+  if (defined($original_rank)) {
+    $self->{'original_rank'} = $original_rank;
+  }
+
+  return $self->{'original_rank'};
 }
 
 
@@ -194,7 +245,7 @@ sub map_Exon_on_Slice {
           # Consider gap between this piece and the previous as a deletion
           my $length = $alignment_coord->start - $last_alignment_coord_end - 1;
           $aligned_cigar .= $length if ($length>1);
-          $aligned_cigar .= "D";
+          $aligned_cigar .= "D" if ($length);
         }
         $last_alignment_coord_end = $alignment_coord->end;
         $global_alignment_coord_start = $alignment_coord->start if (!$global_alignment_coord_start);
@@ -204,7 +255,7 @@ sub map_Exon_on_Slice {
           # Consider gap between this piece and the previous as a deletion
           my $length = $last_alignment_coord_start - $alignment_coord->end - 1;
           $aligned_cigar .= $length if ($length>1);
-          $aligned_cigar .= "D";
+          $aligned_cigar .= "D" if ($length);
         }
         $last_alignment_coord_start = $alignment_coord->start;
         $global_alignment_coord_end = $alignment_coord->end if (!$global_alignment_coord_end);
@@ -214,7 +265,7 @@ sub map_Exon_on_Slice {
       # This piece is outside of the alignment -> consider as an insertion
       my $length = $alignment_coord->length;
       $aligned_cigar .= $length if ($length>1);
-      $aligned_cigar .= "I";
+      $aligned_cigar .= "I" if ($length);
       next;
     }
 
@@ -231,7 +282,7 @@ sub map_Exon_on_Slice {
       }
       my $num = $alignment_coord->end - $alignment_coord->start + 1;
       $aligned_cigar .= $num if ($num > 1);
-      $aligned_cigar .= "M";
+      $aligned_cigar .= "M" if ($num);
 
     } else {
       ## Mapping on the reference_Slice (collapsed mode)
@@ -256,11 +307,11 @@ sub map_Exon_on_Slice {
           }
           my $num = $mapped_coord->end - $mapped_coord->start + 1;
           $aligned_cigar .= $num if ($num > 1);
-          $aligned_cigar .= "M";
+          $aligned_cigar .= "M" if ($num);
         } else {
           my $num = $mapped_coord->end - $mapped_coord->start + 1;
           $aligned_cigar .= $num if ($num > 1);
-          $aligned_cigar .= "I";
+          $aligned_cigar .= "I" if ($num);
         }
       }
     }
