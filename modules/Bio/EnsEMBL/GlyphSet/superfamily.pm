@@ -39,17 +39,17 @@ sub _init {
 	push(@{$hash{$feat->feature2->seqname}},$feat);
     }
     
+    my $PID = $self->{'container'}->id;
     foreach my $key (keys %hash) {
 	my @row = @{$hash{$key}};
        	my $desc = $row[0]->idesc();
-
         my $KK = substr($key,-7);
 	my $Composite = new Bio::EnsEMBL::Glyph::Composite({
 	    'x' => $row[0]->feature1->start(),
 	    'y' => 0,
 	    'zmenu' => {
 		'caption' => "Super family",
-		"SCOP: $KK" => "http://scop.mrc-lmb.cam.ac.uk/scop/pdb.cgi?sid=$KK"
+		"SCOP: $KK" => "http://scop.mrc-lmb.cam.ac.uk/scop/search.cgi?sid=$KK&tlev=sf"
 	    },
 	});
 
