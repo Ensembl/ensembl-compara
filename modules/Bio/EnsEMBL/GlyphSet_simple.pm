@@ -178,7 +178,7 @@ sub _init {
             $img_end   = $BUMP_WIDTH + int($img_end * $pix_per_bp);
             $img_end   = $bitmap_length if $img_end > $bitmap_length;
             $row = &Sanger::Graphics::Bump::bump_row(
-                $img_start,    $img_end,    $bitmap_length,    \@bitmap
+                $img_start,    $img_end,    $bitmap_length,    \@bitmap, $dep
             );
             next if $row > $dep;
         }

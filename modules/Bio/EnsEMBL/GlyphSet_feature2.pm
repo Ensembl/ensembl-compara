@@ -110,7 +110,7 @@ sub _init {
             my $bump_end   = int($END * $pix_per_bp);
                $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
             my $row = & Sanger::Graphics::Bump::bump_row(
-                $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
+                $bump_start,    $bump_end,    $bitmap_length,    \@bitmap, $dep
             );
             next if $row > $dep;
             my $y_pos = - 1.5 * $row * $h * $strand;

@@ -6,7 +6,6 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use  Sanger::Graphics::Bump;
-
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
@@ -106,7 +105,7 @@ sub _init {
 
 ## Now go through each feature in turn, drawing them
         my $y_pos;
-        foreach my $i (sort(keys %id)){
+        foreach my $i (keys %id){
 
             my $has_origin = undef;
     
@@ -120,7 +119,7 @@ sub _init {
             my $bump_end   = int($END * $pix_per_bp);
                $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
             my $row = & Sanger::Graphics::Bump::bump_row(
-                $bump_start,    $bump_end,    $bitmap_length,    \@bitmap
+                $bump_start,    $bump_end,    $bitmap_length,    \@bitmap, $dep
             );
             next if $row > $dep;
             $y_pos = - 1.5 * $row * $h * $strand;
@@ -203,7 +202,7 @@ sub _init {
             }
         }
     }
-    # warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+    warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
 1;
