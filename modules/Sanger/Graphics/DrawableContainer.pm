@@ -69,12 +69,13 @@ sub new {
   $self->{'__extra_block_spacing__'} -= $inter_space;
   ## loop over all turned on & tuned in glyphsets
   my @strands_to_show = $self->{'strandedness'} == 1 ? (1) : (1, -1);
-  my %manager_cache = ();
   my $yoffset = $margin;
   my $iteration = 0;
 
   foreach my $CC ( @{$self->{'contents'}} ) {
+    my %manager_cache = ();
     my( $Container,$Config) = @$CC;
+    # warn ref($Container)," - ",ref($Config);
     $self->debug( 'start', ref($Config) ) if( $self->can('debug') );
     $Config->{'panel_width'} = $panel_width;
     unless(defined $Container) {
@@ -94,9 +95,12 @@ sub new {
         my $str_tmp = $Config->get($row, 'str');
         next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
         next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
-        next if defined $Config->get($row,'manager'); 
+        if( defined $Config->get($row,'manager')) { 
+          $manager_cache{ $Config->get($row,'manager') } = 1; 
+          next;
+        }
       ## create a new glyphset for this row
-      my $classname = $self->{'prefix'}.qq(::GlyphSet::$row);
+      my $classname = $self->{'prefix'}.qq(::GlyphSet::).( $Config->get($row,'glyphset')||$row );
       next unless $self->dynamic_use( $classname );
       ## generate a set for both strands
       my $GlyphSet;
@@ -115,7 +119,7 @@ sub new {
     }
     my $managed_offset = $Config->{'_das_offset'} || 5500;
       ## install the glyphset managers, we've just cached the ones we need...
-      foreach my $manager ( reverse sort keys %{$Config->{'_managers'}} ) {
+      foreach my $manager ( reverse sort keys %manager_cache ) {
         next unless $self->dynamic_use(
           $self->{'prefix'}.qq(::GlyphSet::$manager)
         );
