@@ -148,6 +148,7 @@ sub _init {
             });
             push @decorations, $gband;
         } else {
+            $stain = 'gneg' if($self->{'config'}->{'_hide_bands'} eq 'yes' );
             my $gband = new Bio::EnsEMBL::Glyph::Rect({
                 'x'                => $vc_band_start,
                 'y'                => $h_offset,
