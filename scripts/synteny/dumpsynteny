@@ -18,6 +18,7 @@ dumpsynteny -host ecs1b.sanger.ac.uk
             -species2 \"Mus musculus\"
             -assembly2 MGSC3
             -conf_file Compara.conf
+	    -level 1
             -align_type BLASTZ_NET
 
 $0 [-help]
@@ -31,23 +32,24 @@ $0 [-help]
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
    -align_type BLASTZ_NET
+   -level 1 (the BLASTz level to use. if not defined defaults to 0)
    -conf_file comparadb_configuration_file
               (see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example)
 
 ";
 
 my $help = 0;
-my $host = 'ecs2d.internal.sanger.ac.uk';
+my $host = 'ecs4';
 my $user = 'ensro';
 my $pass = '';
-my $dbname = 'ensembl_compara_10_1';
+my $dbname = 'ensembl_compara_20_1';
 my $port= 3352;
 my $species1 = 'Homo sapiens';
-my $species1_assembly = 'NCBI30';
+my $species1_assembly = 'NCBI34';
 my $species2 = 'Mus musculus';
-my $species2_assembly = 'MGSC3';
-my $assembly_type = "WGA";
-
+my $species2_assembly = 'MGSC32';
+my $alignment_type = "BLASTZ_NET";
+my $level=0;
 my $chr_names = "all";
 my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf";
 
@@ -65,7 +67,8 @@ $| = 1;
 	    'assembly2:s' => \$species2_assembly,
 	    'chr_names=s' => \$chr_names,
 	    'conf_file=s' => \$conf_file,
-	    'align_type=s' => \$assembly_type);
+	    'level=s' => \$level,
+	    'align_type=s' => \$alignment_type);
 
 if ($help) {
   print $usage;
@@ -85,28 +88,34 @@ my $coredb = $compdb->get_db_adaptor($species1,$species1_assembly);
 
 my $DnaAlignFeatureAdaptor = $compdb->get_DnaAlignFeatureAdaptor;
 my $SliceAdaptor = $coredb->get_SliceAdaptor;
-my $ChromosomeAdaptor = $coredb->get_ChromosomeAdaptor;
+#my $ChromosomeAdaptor = $coredb->get_ChromosomeAdaptor;
 
 my @chromosomes;
-
+my @chr_names;
 if (defined $chr_names and $chr_names ne "all") {
-  my @chr_names = split /,/, $chr_names;
-  foreach my $chr_name (@chr_names) {
-    push @chromosomes, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
+
+   @chr_names = split /,/, $chr_names;
   }
-} else {
-  @chromosomes = @{$ChromosomeAdaptor->fetch_all}
-}
+#  foreach my $chr (@chr_names) {
+#    push @chromosomes, $SliceAdaptor->fetch_by_region($coord_type, $chr_name);
+#  }
+#} else {
+  @chromosomes = @{$SliceAdaptor->fetch_all('toplevel')};
+#}
 
 foreach my $chr (@chromosomes) {
+#check if needed
+if ((grep {$_ eq $chr->seq_region_name} @chr_names ) || ($chr_names eq "all")){
+	
+
   my $length = $chr->length;
 
-  print STDERR "Got chr ".$chr->chr_name." length $length\n";
+  print STDERR "Got chr ".$chr->seq_region_name." length $length\n";
   
   my $start = 1;
   my $chunk = 5000000;
   
-  my $chr_name = $chr->chr_name;
+  my $chr_name = $chr->seq_region_name;
   open SYN,"|sort -u > $chr_name.syten.gff";
   
   while ($start <= $length) {
@@ -115,11 +124,11 @@ foreach my $chr (@chromosomes) {
     
     if ($end > $length) {$end = $length;}
     
-    my $Slice = $SliceAdaptor->fetch_by_chr_start_end( $chr->chr_name,
+    my $Slice = $SliceAdaptor->fetch_by_region( $chr->coord_system->name, $chr_name,
 						       $start,
 						       $end);
 
-    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_species_region($species1,$species1_assembly,$species2,$species2_assembly,$chr->chr_name,$start,$end,$assembly_type);
+    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_species_region($species1,$species1_assembly,$species2,$species2_assembly,$chr_name,$start,$end,$alignment_type, undef, $chr->coord_system->name);
 
     print STDERR "Got features " . scalar(@{$synteny}) . "\n";
     
@@ -133,6 +142,11 @@ foreach my $chr (@chromosomes) {
       if ($f->hstrand < 0) {
 	$hstrand = "-";
       }
+
+####keep on the basis of level_id
+if($f->level_id<=$level){
+
+
       
       # print out a in gff format
       print SYN  
@@ -150,8 +164,9 @@ foreach my $chr (@chromosomes) {
 	$hstrand . "\t" .
 	".\n" 
     }
-    
+    }
     $start += $chunk;
   }
   close SYN;
+}
 }

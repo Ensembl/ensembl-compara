@@ -50,19 +50,19 @@ my $genome_db2 = $gdb_adaptor->fetch_by_dbID($genome_db_id2);
 my $dnafrag_adaptor = $db->get_DnaFragAdaptor;
 
 my $dbadaptor1 = $db->get_db_adaptor($genome_db1->name,$genome_db1->assembly);
-my @chromosomes1 = @{$dbadaptor1->get_ChromosomeAdaptor->fetch_all};
+my @chromosomes1 = @{$dbadaptor1->get_SliceAdaptor->fetch_all('toplevel')};
 my %chromosomes1;
 
 foreach my $chr (@chromosomes1) {
-  $chromosomes1{$chr->chr_name} = $chr;
+  $chromosomes1{$chr->seq_region_name} = $chr;
 }
 
 my $dbadaptor2 = $db->get_db_adaptor($genome_db2->name,$genome_db2->assembly);
-my @chromosomes2 = @{$dbadaptor2->get_ChromosomeAdaptor->fetch_all};
+my @chromosomes2 = @{$dbadaptor2->get_SliceAdaptor->fetch_all('toplevel')};
 my %chromosomes2;
 
 foreach my $chr (@chromosomes2) {
-  $chromosomes2{$chr->chr_name} = $chr;
+  $chromosomes2{$chr->seq_region_name} = $chr;
 }
 
 my $sth_method_link = $db->prepare("SELECT method_link_id FROM method_link WHERE type = ?");
@@ -108,24 +108,27 @@ my $line_number = 1;
 
 while (defined (my $line = <>) ) {
   chomp $line;
-  if ($line =~ /^(\S+)\t.*\t.*\t(\d+)\t(\d+)\t.*\t(-1|1)\t.*\t(\S+)\t(\d+)\t(\d+)$/) {
+  if ($line =~ /^(\S+)\t.*\t.*\t(\d+)\t(\d+)\t.*\t(-1|1)\t.*\t(\S+)\t(\d+)\t(\d+)$/) {#####This will need to be changed
     my ($chr1,$start1,$end1,$rel,$chr2,$start2,$end2) = ($1,$2,$3,$4,$5,$6,$7);
     
     my $dnafrag1 = new Bio::EnsEMBL::Compara::DnaFrag;
     $dnafrag1->name($chr1);
     $dnafrag1->genomedb($genome_db1);
-    $dnafrag1->type("Chromosome");
+    $dnafrag1->type($chromosomes1{$chr1}->coord_system->name);
     $dnafrag1->start(1);
     $dnafrag1->end($chromosomes1{$chr1}->length);
+ 
     $dnafrag_adaptor->store_if_needed($dnafrag1);
     
     my $dnafrag2 = new Bio::EnsEMBL::Compara::DnaFrag;
     $dnafrag2->name($chr2);
     $dnafrag2->genomedb($genome_db2);
-    $dnafrag2->type("Chromosome");
+    $dnafrag2->type($chromosomes2{$chr2}->coord_system->name);
     $dnafrag2->start(1);
     $dnafrag2->end($chromosomes2{$chr2}->length);
     $dnafrag_adaptor->store_if_needed($dnafrag2);
+
+# print STDERR "1: $chr1, 2: $chr2, end1: " .$dnafrag1->end.", end2: ". $dnafrag2->end."\n";
   
     $sth_synteny_region->execute($rel);
     my $synteny_region_id = $sth_synteny_region->{'mysql_insertid'};

@@ -21,7 +21,7 @@ Options:
  -port		port no for compara db
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
- -alignment_type type of alignment stored e.g. WGA (default: WGA)
+ -alignment_type type of alignment stored e.g.PHUSION_BLASTN (default: PHUSION_BLASTN)
  -qy_tag corresponds to the prefix used in the name of the query DNA dumps
 \n";
 
@@ -30,7 +30,9 @@ my ($host,$dbname,$dbuser,$dbpass,$conf_file);
 my $cs_genome_db_id;
 my $qy_genome_db_id;
 my $qy_tag;
-my $alignment_type = 'WGA';
+my $alignment_type = 'PHUSION_BLASTN';
+my $cs_coord_type; 
+my $qy_coord_type;
 my $port= 3352;
 
 GetOptions('help' => \$help,
@@ -74,19 +76,20 @@ my $dnafrag_adaptor = $db->get_DnaFragAdaptor;
 my $galn_adaptor = $db->get_GenomicAlignAdaptor;
 
 my $cs_dbadaptor= $db->get_db_adaptor($cs_genome_db->name,$cs_genome_db->assembly);
-my @cs_chromosomes = @{$cs_dbadaptor->get_ChromosomeAdaptor->fetch_all};
+#my @cs_chromosomes = @{$cs_dbadaptor->get_ChromosomeAdaptor->fetch_all};
+my @cs_chromosomes = @{$cs_dbadaptor->get_SliceAdaptor->fetch_all('toplevel')};
 my %cs_chromosomes;
 
 foreach my $chr (@cs_chromosomes) {
-  $cs_chromosomes{$chr->chr_name} = $chr;
+  $cs_chromosomes{$chr->seq_region_name} = $chr;
 }
 
 my $qy_dbadaptor= $db->get_db_adaptor($qy_genome_db->name,$qy_genome_db->assembly);
-my @qy_chromosomes = @{$qy_dbadaptor->get_ChromosomeAdaptor->fetch_all};
+my @qy_chromosomes = @{$qy_dbadaptor->get_SliceAdaptor->fetch_all('toplevel')};
 my %qy_chromosomes;
 
 foreach my $chr (@qy_chromosomes) {
-  $qy_chromosomes{$chr->chr_name} = $chr;
+  $qy_chromosomes{$chr->seq_region_name} = $chr;
 }
 
 # Updating method_link_species if needed (maybe put that in GenomicAlignAdaptor store method)
@@ -142,10 +145,14 @@ my $max_alignment_length = 0;
 while (defined (my $line = <>) ) {
   chomp $line;
   my ($d1,$query_coords,$d3,$d4,$cs_chr,$cs_start,$cs_end,$qy_strand,$d9,$score,$percid,$cigar) = split /\t/,$line;
+  
+  ($cs_coord_type, $cs_chr) =split /:/, $cs_chr;#####All names should now bw of the form chromosome:2 or scaffold:NA34567 etc
+  
   my ($qy_chr,$qy_start,$qy_end);
-  if ($query_coords =~ /^$qy_tag(\S+)\.(\d+):(\d+)-(\d+)$/) {
+  if ($query_coords =~ /^$qy_tag(\S+)\.(\d+):(\d+)-(\d+)$/) {###########################This will need to be changed
     ($qy_chr,$qy_start,$qy_end) = ($1,$2+$3-1,$2+$4-1);
   }
+  ($qy_coord_type, $qy_chr)=split /:/, $qy_chr;#####All names should now bw of the form chromosome:2 or scaffold:NA34567 etc
   
   my $cs_max_alignment_length = $cs_end - $cs_start + 1;
   $max_alignment_length = $cs_max_alignment_length if ($max_alignment_length < $cs_max_alignment_length);  
@@ -161,7 +168,7 @@ while (defined (my $line = <>) ) {
   my $cs_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
   $cs_dnafrag->name($cs_chr);
   $cs_dnafrag->genomedb($cs_genome_db);
-  $cs_dnafrag->type("Chromosome");
+  $cs_dnafrag->type($cs_coord_type);
   $cs_dnafrag->start(1);
   $cs_dnafrag->end($cs_chromosomes{$cs_chr}->length);
   $dnafrag_adaptor->store_if_needed($cs_dnafrag);
@@ -169,7 +176,7 @@ while (defined (my $line = <>) ) {
   my $qy_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
   $qy_dnafrag->name($qy_chr);
   $qy_dnafrag->genomedb($qy_genome_db);
-  $qy_dnafrag->type("Chromosome");
+  $qy_dnafrag->type($qy_coord_type);
   $qy_dnafrag->start(1);
   $qy_dnafrag->end($qy_chromosomes{$qy_chr}->length);
   $dnafrag_adaptor->store_if_needed($qy_dnafrag);
@@ -185,6 +192,9 @@ while (defined (my $line = <>) ) {
   $genomic_align->alignment_type($alignment_type);
   $genomic_align->score($score);
   $genomic_align->perc_id($percid);
+  $genomic_align->group_id(0);
+  $genomic_align->level_id(0);
+  $genomic_align->strands_reversed(0);
 
   if (defined $cigar) {
     $cigar =~ s/D/X/g;

@@ -11,7 +11,7 @@ my $usage = "\nUsage: $0 [options] axtFile|STDIN
 
  Insert into a compara database axt alignments
 
-$0 -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 \
+$0 -host ecs2d.internal.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -port 3352 -dbname ensembl_compara_12_1 \
 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -alignment_type BLASTZ_NET -cs_genome_db_id 1 -qy_genome_db_id 2 -axt axt_file
 
 Options:
@@ -20,9 +20,10 @@ Options:
  -dbname      compara database name
  -dbuser      username for connection to \"compara_dbname\"
  -pass        passwd for connection to \"compara_dbname\"
+ -port 3352
  -cs_genome_db_id   genome_db_id of the consensus species (e.g. 1 for Homo_sapiens)
  -qy_genome_db_id   genome_db_id of the query species (e.g. 2 for Mus_musculus)
- -alignment_type type of alignment stored e.g. WGA (default: BLASTZ_NET) 
+ -alignment_type type of alignment stored e.g. PHUSION_BLASTN_TIGHT(default: BLASTZ_NET_TIGHT) 
  -conf_file compara conf file
  -min_score 300
  -axt axt_file
@@ -31,18 +32,19 @@ Options:
 
 my $help = 0;
 
-my ($host, $dbname, $dbuser, $pass);
+my ($host, $dbname, $dbuser, $pass, $port);
 my ($cs_genome_db_id, $qy_genome_db_id,$conf_file);
 my $axt_file;
 
 my $min_score = 0;
-my $alignment_type = 'BLASTZ_NET';
+my $alignment_type = 'BLASTZ_NET_TIGHT';
 
 GetOptions('h' => \$help,
 	   'host=s' => \$host,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'pass=s' => \$pass,
+	   'port=s' => \$port,
 	   'cs_genome_db_id=s' => \$cs_genome_db_id,
 	   'qy_genome_db_id=s' => \$qy_genome_db_id,
 	   'alignment_type=s' => \$alignment_type,
@@ -85,6 +87,7 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor ('-conf_file' => $conf_file
 						      '-host' => $host,
 						      '-user' => $dbuser,
 						      '-dbname' => $dbname,
+						      '-port' => $port,
 						      '-pass' => $pass);
 
 
@@ -93,7 +96,7 @@ foreach my $key (keys %{$db->{'genomes'}}) {
 }
 
 my $stored_max_alignment_length;
-my $values = $db->get_MetaContainer->list_value_by_key("max_alignment_length");
+my $values = $db->get_MetaContainer->list_value_by_key("max_alignment_length");#metacontainer=trick to speed up positn in chr
 
 if(@$values) {
   $stored_max_alignment_length = $values->[0];
@@ -109,19 +112,22 @@ my $dnafrag_adaptor = $db->get_DnaFragAdaptor;
 my $galn_adaptor = $db->get_GenomicAlignAdaptor;
 
 my $cs_dbadaptor= $db->get_db_adaptor($cs_genome_db->name,$cs_genome_db->assembly);
-my @cs_chromosomes = @{$cs_dbadaptor->get_ChromosomeAdaptor->fetch_all};
+
+
+my @cs_chromosomes = @{$cs_dbadaptor->get_SliceAdaptor->fetch_all('toplevel')};
 my %cs_chromosomes;
 
 foreach my $chr (@cs_chromosomes) {
-  $cs_chromosomes{$chr->chr_name} = $chr;
+  $cs_chromosomes{$chr->seq_region_name} = $chr;
 }
 
 my $qy_dbadaptor= $db->get_db_adaptor($qy_genome_db->name,$qy_genome_db->assembly);
-my @qy_chromosomes = @{$qy_dbadaptor->get_ChromosomeAdaptor->fetch_all};
+my @qy_chromosomes = @{$qy_dbadaptor->get_SliceAdaptor->fetch_all('toplevel')};
 my %qy_chromosomes;
 
 foreach my $chr (@qy_chromosomes) {
-  $qy_chromosomes{$chr->chr_name} = $chr;
+  $qy_chromosomes{$chr->seq_region_name} = $chr;
+#print STDERR $chr->seq_region_name."\n";
 }
 # Updating method_link_species if needed (maybe put that in GenomicAlignAdaptor store method)
 
@@ -292,7 +298,7 @@ foreach my $f (@DnaDnaAlignFeatures) {
   my $cs_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
   $cs_dnafrag->name($cs_chr);
   $cs_dnafrag->genomedb($cs_genome_db);
-  $cs_dnafrag->type("Chromosome");
+  $cs_dnafrag->type($cs_chromosomes{$cs_chr}->coord_system->name());
   $cs_dnafrag->start(1);
   $cs_dnafrag->end($cs_chromosomes{$cs_chr}->length);
   $dnafrag_adaptor->store_if_needed($cs_dnafrag);
@@ -300,7 +306,7 @@ foreach my $f (@DnaDnaAlignFeatures) {
   my $qy_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
   $qy_dnafrag->name($qy_chr);
   $qy_dnafrag->genomedb($qy_genome_db);
-  $qy_dnafrag->type("Chromosome");
+  $qy_dnafrag->type($qy_chromosomes{$qy_chr}->coord_system->name());
   $qy_dnafrag->start(1);
   $qy_dnafrag->end($qy_chromosomes{$qy_chr}->length);
   $dnafrag_adaptor->store_if_needed($qy_dnafrag);
@@ -318,8 +324,11 @@ foreach my $f (@DnaDnaAlignFeatures) {
   $percid = 0 unless (defined $percid);
   $genomic_align->perc_id($percid);
   $genomic_align->cigar_line($cigar);
+  $genomic_align->group_id(0);
+  $genomic_align->level_id(0);
+  $genomic_align->strands_reversed(0);
 
-  $galn_adaptor->store([$genomic_align]);
+  $galn_adaptor->store([$genomic_align]);#from genomic align adaptor
 
   # think here to revert cigar_string if strand==-1 !!
 

@@ -10,14 +10,14 @@ $0 [-help]
    -user username (default = 'ensro')
    -dbname ensembl_compara_database
    -port eg 3352 (default)
-   -seq_region (e.g. chromosome:22)
+   -seq_region (e.g. 22)
    -seq_region_start
    -seq_region_end
    -species1 (e.g. \"Homo sapiens\") from which alignments are queried and seq_region refer to
    -assembly1 (e.g. NCBI30) assembly version of species1
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
-   -alignment_type type of alignment stored e.g. WGA (default: WGA) 
+   -alignment_type type of alignment stored e.g. BLASTZ_NET (default: BLASTZ_NET) 
    -conf_file compara_conf_file
               see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 ";
@@ -28,7 +28,7 @@ my ($seq_region,$seq_region_start,$seq_region_end);
 my ($species1,$assembly1,$species2,$assembly2);
 my $conf_file;
 my $help = 0;
-my $alignment_type = "WGA";
+my $alignment_type = "BLASTZ_NET";
 my $limit = 0;
 my $port=3352;
 
@@ -67,21 +67,22 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
 						      -port => $port,
 						      -dbname => $dbname,
 						      -conf_file => $conf_file);
-
-
-unless ($seq_region =~ /^\S+:\S+$/) {
-  warn "
-seq_region should have be coordinate_system_name:seq_region_name,
-e.g. chromosome:22 or scaffold:scaffold_10
-EXIT 1\n";
-  exit 1;
-}
-my ($coordinate_system_name, $seq_region_name) = split ":", $seq_region;
-
 my $sliceadaptor = $db->get_db_adaptor($species1,$assembly1)->get_SliceAdaptor;
-my $slice = $sliceadaptor->fetch_by_region($coordinate_system_name,$seq_region_name);
 
+
+my @seq_regs= @{$sliceadaptor->fetch_all('toplevel')};
+foreach my $seq_r(@seq_regs) {
+#print STDERR "$seq_region = ".$seq_r->seq_region_name."\n";
+#check if needed
+if ($seq_region eq $seq_r->seq_region_name) {
+
+
+my $slice = $sliceadaptor->fetch_by_region($seq_r->coord_system->name,$seq_region);
 # futher checks on arguments
+
+#print STDERR "$seq_region = ".$seq_r->seq_region_name." is a ".$seq_r->coord_system->name."\n";
+
+
 
 unless (defined $seq_region_start) {
   warn "WARNING : setting seq_region_start=1\n";
@@ -105,7 +106,7 @@ setting seq_region_end=seq_region->length\n";
 
 my $dafad = $db->get_DnaAlignFeatureAdaptor;
 
-my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$seq_region_name,$seq_region_start,$seq_region_end,$alignment_type,$limit,$coordinate_system_name)};
+my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$dafad->fetch_all_by_species_region($species1,$assembly1,$species2,$assembly2,$seq_region,$seq_region_start,$seq_region_end,$alignment_type,$limit,$seq_r->coord_system->name)};
 
 my $index = 0;
 
@@ -115,16 +116,23 @@ foreach my $ddaf (@DnaDnaAlignFeatures) {
     next;
   }
 
-  my $hstrand;
+  my $hstrand; #my $strand;
+  my $flip=0;
+
   $hstrand = "+" if ($ddaf->hstrand > 0);
   $hstrand = "-" if ($ddaf->hstrand < 0);
 
-  if ($hstrand eq "-") {
+   if ($hstrand eq "-")  {
     print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hslice->length - $ddaf->hend + 1," ",$ddaf->hslice->length - $ddaf->hstart + 1," ",$hstrand," ",$ddaf->score,"\n";
-  } else {
+  } 
+ else {
     print $index," ",$ddaf->seqname," ",$ddaf->start," ",$ddaf->end," ",$ddaf->hseqname," ",$ddaf->hstart," ",$ddaf->hend," ",$hstrand," ",$ddaf->score,"\n";
   }
-  my $sb_seq = $ddaf->slice->adaptor->fetch_by_region($ddaf->slice->coord_system->name,$ddaf->seqname,$ddaf->start,$ddaf->end)->seq;
+ 
+  my $sb_seq ;
+    $sb_seq = $ddaf->slice->adaptor->fetch_by_region($ddaf->slice->coord_system->name,$ddaf->seqname,$ddaf->start,$ddaf->end)->seq;
+  
+  
   my $qy_seq;
   if ($ddaf->hstrand > 0) {
     $qy_seq = $ddaf->hslice->adaptor->fetch_by_region($ddaf->hslice->coord_system->name,$ddaf->hseqname,$ddaf->hstart,$ddaf->hend)->seq;
@@ -136,6 +144,8 @@ foreach my $ddaf (@DnaDnaAlignFeatures) {
   print lc $qy_seq,"\n";
   print "\n";
   $index++;
+}
+}
 }
 
 sub make_gapped_align_from_cigar_string {
