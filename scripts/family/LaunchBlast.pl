@@ -7,14 +7,22 @@ use File::Basename;
 my ($idqy,$fastadb,$fastaindex,$dir);
 
 my $blast_executable = "/usr/local/ensembl/bin/blastall"; 
-my $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
 
-if (-e "/proc/version") {
-  # it is a linux machine
-  $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
+# There is a new version of fastafetch on the farm, /usr/local/ensembl/bin/fastafetch
+# We had problem previously with it, as sometimes the fasta files we use have IUPAC letter
+# that fastafetch was not aware of. If any problem with fall back to the compiled version in
+# /nfs/acari/abel/bin/alpha-dec-osf4.0 or /nfs/acari/abel/bin/i386/ and inform Guy Slater to fix
+# the potential bug
+
+my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
+
+unless (-e $fastafetch_executable) {
+  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
+  if (-e "/proc/version") {
+    # it is a linux machine
+    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
+  }
 }
-
-print STDERR "fastafetch_executable: ",$fastafetch_executable,"\n";
 
 my $blast_parser_executable = "/nfs/acari/abel/bin/mcxdeblast";
 my $tab_file;
