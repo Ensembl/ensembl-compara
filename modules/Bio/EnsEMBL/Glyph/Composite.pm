@@ -102,7 +102,7 @@ sub transform {
 
     for my $sg (@{$self->{'composite'}}) {
 		my %tmp_transform = %{$transform_ref};
-		$tmp_transform{'translatex'} = $self->pixelx()+1;
+		$tmp_transform{'translatex'} = $self->pixelx();
 		$tmp_transform{'translatey'} = $self->pixely();
 		$sg->transform(\%tmp_transform);
     }
