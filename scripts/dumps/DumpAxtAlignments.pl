@@ -4,7 +4,7 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
 
-my ($host,$dbname,$dbuser,$chr_name,$chr_start,$chr_end,$sb_species,$qy_species);
+my ($host,$dbname,$dbuser,$chr_name,$chr_start,$chr_end,$sb_species,$qy_species,$dnafrag_type);
 
 GetOptions('host=s' => \$host,
 	   'dbname=s' => \$dbname,
@@ -13,7 +13,8 @@ GetOptions('host=s' => \$host,
 	   'chr_start=i' => \$chr_start,
 	   'chr_end=i' => \$chr_end,
 	   'sb_species=s' => \$sb_species,
-	   'qy_species=s' => \$qy_species);
+	   'qy_species=s' => \$qy_species,
+	   'dnafrag_type=s' => \$dnafrag_type);
 
 # Connecting to compara database
 
@@ -48,6 +49,15 @@ foreach my $qy_chr (@{$qy_chrs}) {
 
 # futher checks on arguments
 
+unless (defined $chr_start) {
+  warn "WARNING : setting chr_start=1\n";
+  $chr_start = 1;
+}
+
+unless (defined $dnafrag_type) {
+  $dnafrag_type = "Chromosome";
+}
+
 if ($chr_start > $chr->length) {
   warn "chr_start $chr_start larger than chr_length ".$chr->length."
 exit 3\n";
@@ -66,14 +76,9 @@ setting chr_end=chr_length\n";
 my $sb_species_sliceadaptor = $sb_species_dbadaptor->get_SliceAdaptor;
 my $qy_species_sliceadaptor = $qy_species_dbadaptor->get_SliceAdaptor;
 
-#my $dnafrag_type = "VirtualContig";
-my $dnafrag_type = "Chromosome";
-
 my $gad = $db->get_GenomicAlignAdaptor;
 
 my @DnaDnaAlignFeatures = sort {$a->start <=> $b->start || $a->end <=> $b->end} @{$gad->fetch_DnaDnaAlignFeature_by_species_chr_start_end($sb_species,$qy_species,$chr_name,$chr_start,$chr_end,$dnafrag_type)};
-
-print scalar @DnaDnaAlignFeatures,"\n";
 
 my $index = 0;
 
