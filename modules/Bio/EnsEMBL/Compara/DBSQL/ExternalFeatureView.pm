@@ -54,11 +54,6 @@ use strict;
 
 use Bio::EnsEMBL::Compara::ExternalViewAlign;
 
-# Object preamble - inherits from Bio::EnsEMBL::DB::ExternalFeatureFactoryI
-
-use Bio::EnsEMBL::DB::ExternalFeatureFactoryI
-@ISA = qw(Bio::EnsEMBL::DB::ExternalFeatureFactoryI);
-
 # new() is written here 
 
 sub new {

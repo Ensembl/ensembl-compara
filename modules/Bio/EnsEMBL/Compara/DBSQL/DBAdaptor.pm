@@ -49,12 +49,11 @@ use strict;
 
 
 use Bio::EnsEMBL::Root;
-use Bio::EnsEMBL::DB::ObjI;
 
 use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 use DBI;
 
-@ISA = qw(Bio::EnsEMBL::Root Bio::EnsEMBL::DB::ObjI);
+@ISA = qw(Bio::EnsEMBL::Root);
 
 sub new {
   my($pkg, @args) = @_;

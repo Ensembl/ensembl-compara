@@ -46,7 +46,6 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::ExternalSyntenyAdaptor;
-use Bio::EnsEMBL::DB::WebExternalFeatureFactoryI;
 use Bio::EnsEMBL::SeqFeature;
 use DBI;
 
@@ -54,7 +53,7 @@ use vars qw(@ISA);
 use strict;
 
 #DBAdaptor checks that it's a ExternalFeatureFactory so need to implement this
-@ISA = qw(Bio::EnsEMBL::Compara::DBSQL::DBAdaptor  Bio::EnsEMBL::DB::WebExternalFeatureFactoryI);
+@ISA = qw(Bio::EnsEMBL::Compara::DBSQL::DBAdaptor);
 
 
 

@@ -12,8 +12,6 @@ Bio::EnsEMBL::Protein_Hit - Object representing one Protein_Hit (for synteny)
 
 =head1 SYNOPSIS
 
-    # $db is Bio::EnsEMBL::DB::Obj 
-
      my $protein_hit = Bio::EnsEMBL::SyntenyHit->new (-dbID       => $dbID,  
                                                        -align_id    => $align_id,
                                                        -dnafrag_id=> $dnafrag_id,
