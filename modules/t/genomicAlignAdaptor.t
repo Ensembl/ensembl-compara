@@ -4,7 +4,7 @@ use warnings;
 
 BEGIN { $| = 1;  
 	use Test;
-	plan tests => 12;
+	plan tests => 10;
 }
 
 use MultiTestDB;
@@ -12,7 +12,7 @@ use TestUtils;
 use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 
 # switch on the debug prints
-our $verbose = 1;
+our $verbose = 0;
 
 my $multi = MultiTestDB->new( "multi" );
 my $homo_sapiens = MultiTestDB->new("homo_sapiens");
@@ -54,13 +54,13 @@ ok( defined $hum && defined $mouse && defined $rat );
 
 my $dfa = $compara_db->get_DnaFragAdaptor();
 my $hfrags = $dfa->fetch_all_by_GenomeDB_region( $hum, 'chromosome', "14" );
-my $rfrags =  $dfa->fetch_all_by_GenomeDB_region( $rat, 'chromosome', "11" );
+my $rfrags =  $dfa->fetch_all_by_GenomeDB_region( $rat, 'chromosome', "6" );
 
 #######
 #  3  #
 #######
 debug( "Human first dnafrag" );
-map { print_hashref( $_ ) } @$hfrags;
+#map { print_hashref( $_ ) } @$hfrags;
 ok( scalar( @$hfrags ) == 1 );
 
 
@@ -68,14 +68,13 @@ my $gaa = $compara_db->get_GenomicAlignAdaptor();
 
 debug( "Human -- Mouse direct alignments" );
 my $aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $mouse , 50000000, 50250000,"BLASTZ_NET");
-map { print_hashref( $_ ) } @$aligns;
+#map { print_hashref( $_ ) } @$aligns;
 debug();
 
 #######
 #  4  #
 #######
-debug(scalar @$aligns);
-ok( scalar @$aligns == 2 );
+ok( scalar @$aligns == 255 );
 
 my $mfrags = $dfa->fetch_all_by_GenomeDB_region( $mouse, 'chromosome', "12" );
 
@@ -87,7 +86,7 @@ debug();
 #######
 #  5  #
 #######
-ok( grep {$_->cigar_line() eq "19MD30M"} @$aligns );
+ok( grep {$_->cigar_line() eq "32MI30M3D31M2D33M"} @$aligns );
 
 debug( "Mouse -- Rat direct" );
 $aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $mfrags->[0], $hum, 66608000,66615600,"BLASTZ_NET" );
@@ -95,46 +94,42 @@ map { print_hashref( $_ ) } @$aligns;
 debug();
 
 
-debug( "Human -- Rat deduced" );
-$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $rat, , 50000000, 50250000,"BLASTZ_NET" );
+debug( "Human -- Rat direct" );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $hfrags->[0], $rat, 50000000, 50250000,"BLASTZ_NET" );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
-debug( "Rat -- Human deduced" );
-$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $rfrags->[0], $hum, 18379900, 18380100,"BLASTZ_NET" );
+debug( "Rat -- Human direct" );
+$aligns = $gaa->fetch_all_by_DnaFrag_GenomeDB( $rfrags->[0], $hum, 92842600, 92852150,"BLASTZ_NET" );
 map { print_hashref( $_ ) } @$aligns;
 debug();
 
+# Think about adding "Rat -- Mouse deduced" and "Mouse -- Rat deduced"
 
 #########
 #  6-10  #
 #########
-ok( grep {$_->cigar_line eq "26MD3MD2M2D5M3I10M"} @$aligns);
-ok( grep {$_->cigar_line eq "19MD21M"} @$aligns);
+ok( grep {$_->cigar_line eq "26M2D7M2I69M4D10MI55M10D5M16D16MD43M8D22M"} @$aligns);
 
-ok( grep {$_->consensus_start == 320 && $_->consensus_end == 327 &&
-	  $_->query_start == 202 && $_->query_end == 209 &&
-	  $_->cigar_line eq '8M'} @$aligns );
+ok( grep {$_->consensus_start == 92842620 && $_->consensus_end == 92842888 &&
+	  $_->query_start == 49999812 && $_->query_end == 50000028 &&
+	  $_->cigar_line eq '86M2I39M14D10MI34M7I6M12I15M44I13M'} @$aligns );
 
-ok( grep {$_->consensus_start == 330 && $_->consensus_end == 332 &&
-	  $_->query_start == 212 && $_->query_end == 214 &&
-	  $_->cigar_line eq '3M'} @$aligns );
-
-ok( grep {$_->consensus_start == 336 && $_->consensus_end == 338 &&
-	  $_->query_start == 218 && $_->query_end == 220 &&
-	  $_->cigar_line eq '3M'} @$aligns );
+ok( grep {$_->consensus_start == 92852113 && $_->consensus_end == 92852234 &&
+	  $_->query_start == 50006864 && $_->query_end == 50006989 &&
+	  $_->cigar_line eq '27MI32M3D32M2D30M'} @$aligns );
 
 
 #######
 #  11  #
 #######
-ok( scalar @$aligns == 5 );
-
+ok( scalar @$aligns == 11 );
 
 #######
 #  12  #
 #######
 $multi->hide( "compara", "genomic_align_block" );
+debug();
 $gaa->store( $aligns );
 
 my $sth = $gaa->prepare( "select count(*) from genomic_align_block" );
@@ -144,6 +139,7 @@ $sth->finish();
 
 
 if( $verbose ) {
+  debug();
   $sth = $gaa->prepare( "select * from genomic_align_block" );
   $sth->execute();
   while( my $aref = $sth->fetchrow_arrayref() ) {
@@ -152,9 +148,7 @@ if( $verbose ) {
   debug();
 }
 
-ok( $count == 5 );
-
-
+ok( $count == 11 );
 
 sub print_hashref {
   my $hr = shift;
