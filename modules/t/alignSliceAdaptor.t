@@ -65,7 +65,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 257;
+    plan tests => 272;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -181,6 +181,17 @@ do {
   my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
+  $seq = $align_slice->{slices}->{'Rattus norvegicus'}->subseq(530, 1600, -1);
+  $seq = reverse($seq);
+  $seq =~ tr/acgtACGT/tgcaTGCA/;
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(530, 1600), $seq);
+
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
+      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, 100, -1)}),
+      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, 100, -1));
+  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
 };
 
 do {
@@ -221,6 +232,10 @@ do {
   ok($all_genomic_align_blocks->[-1]->reference_genomic_align->dnafrag_end, $slice_end,
       "last GAB should have been truncated");
 
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
+      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
 };
 
 do {
@@ -250,6 +265,11 @@ do {
   my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
   ok($seq, $slice->seq);
 ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "...........TACAAAGGATACAGAATAAATGCAGAGGTCCTGAAATTAGACTGTTTTTCTGAGGAGCCGCCACATGGCGCTCTTGATGTCCCGGTTTCTTAAGCTGTAGATAAAGGGGTTGAGCATAGGGGTGACCACAGTGTACACTATCGATGCTACTGCACCCTTCCTGGGAGACAAGGAGACAGCTGAACTGAGGTATACACCAAGGCCAGTTCCATAAAATAAGCAAACAACTGACAGGTGAGAGCCACAAGTAGAGAAGGCTTTATATTTCCCACCAGGTGATGGCATTCTAAGAATGGAGGAAACAATTTTATAGTAAGAGAAAAAAATCCCTGAAATAGGGAGAAAACCAGAGATGGCACCAACAAAATACATGACTATGTTATTGGTAAAGGTATCAGAACAGGCAAGGTTAAGAAGTTGAGATGGATCACAGAAGAAATGGGAAATGTCCACACTCTTGAAATAGGTAAGTTGTAATACCACTGAATTATGCAGCTGAGAAACCAAAAGGCTTATT-----AGAATAGATAGAAAAACCAACAAGCCACAAAGACGAGGGTTCATAATGACCTGGTAGTGCAGAGGATGGCAGATGGCCACAAACCTATCATAAGCCATGGCTGTTAGAAGCA-GACTA---TCCAAACACCCGAAAAGCATAAAAAAGGACATCTGAGTCAGGCATCCTGAATAGGAAATGGCTCTGTTGTTAGTCTGAATGTCCACTATCATTTTTGGTAGTGTGGTGGAAGTGAAACTTATGTCAGCCAAGGATAAGTTAGAGAGGAAAAAGTACATTGGACTGTGGAGGTGAGAATCAAAGCTGACTGTCAGGATGATGAGCAGGTTCCCAAGAATTGTGACCAAGTACATGAAAAGGAACAGTCCAAAGAGTATGGGCTGAAGCTGTAGATCATCTGAGATCCCATGAGGTGGAATTCTGAGATATGTGTTATATTTTGCTCTTCTATATTGCTTGGACACCTTTTGAAAACAAAAGAAGATTGAAAAAATTAAAACAAGTAA--------CCAATAGTGCCTCTGAGTTTTCAGTGAAGGCAGTTTACTGATAAAATCCACAAATTTAAGGGTTAGGCACAGATATCAGTATTTCTCAGTTTTTACAAACTTA---ATCCTAGAATAATTTTATCATTAATTTTTCTGTTATTTGC--CTCGTTCTACATGTGCACATTAGAGGATTTTAATT----AATCTT---AGGACAAAAGCAACCTAGAAAGGAAGCTTGTGATGATAGTCAAGTAGTGACCATTCTTAAGAGAAAATAGAGAATAACAGAA-------GTTCA-TTTAAGAAAAA---TATTATAGCAAAAGAAAATTAACAAGTCAAAAAATTTATTTTA-------AGAATATTATAAAATT-----AGTTTGAGGATTTGTACATATTGTATAACAATAAGAACTGCTTTGTTTAACAGT-ATATTAAAGTTGA....");
+
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
+      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
 };
 
 do {
@@ -293,6 +313,11 @@ do {
   $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
   ok($seq, $slice->seq);
   ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "..TAATGTTAATTCTAAAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGATCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAATTA.......");
+
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
+      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
 };
 
 do {
@@ -336,6 +361,11 @@ do {
   $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
   ok($seq, $slice->seq);
   ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "ATTCTAAAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGATCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAA");
+
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
+      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
 };
 
 do {
@@ -403,6 +433,11 @@ do {
     }
   }
   ok($seq2, $c_seq2);
+
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
+      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
 };
 
 do {
@@ -914,6 +949,9 @@ do {
   ok($seq, $slice->seq);
   $seq = $align_slice->{slices}->{'Rattus norvegicus'}->seq;
   ok($seq, "/^\\.+\$/");
+
+  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
+      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
 };
 
 do {
