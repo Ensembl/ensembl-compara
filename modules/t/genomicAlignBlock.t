@@ -76,39 +76,46 @@ use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
+#####################################################################
+## Connect to the test database using the MultiTestDB.conf file
+
+my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
+my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
+my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
+
+my $species = [
+        "homo_sapiens",
+#         "mus_musculus",
+        "rattus_norvegicus",
+        "gallus_gallus",
+    ];
+
+my $species_db;
+my $species_db_adaptor;
+my $species_gdb;
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (@$species) {
+  $species_db->{$this_species} = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  die if (!$species_db->{$this_species});
+  $species_db_adaptor->{$this_species} = $species_db->{$this_species}->get_DBAdaptor('core');
+  $species_gdb->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly(
+          $species_db_adaptor->{$this_species}->get_MetaContainer->get_Species->binomial,
+          $species_db_adaptor->{$this_species}->get_CoordSystemAdaptor->fetch_all->[0]->version
+      );
+  $species_gdb->{$this_species}->db_adaptor($species_db_adaptor->{$this_species});
+}
+
+##
+#####################################################################
+
 # switch off the debug prints 
 our $verbose = 0;
 
-my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
-my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
-
-my $compara_db = $multi->get_DBAdaptor( "compara" );
-my $gdba = $compara_db->get_GenomeDBAdaptor();
-
-my $hs_genome_db = $gdba->fetch_by_name_assembly(
-        $homo_sapiens->get_DBAdaptor('core')->get_MetaContainer->get_Species->binomial,
-        $homo_sapiens->get_DBAdaptor('core')->get_CoordSystemAdaptor->fetch_all->[0]->version
-    );
-my $mm_genome_db = $gdba->fetch_by_name_assembly(
-        $mus_musculus->get_DBAdaptor('core')->get_MetaContainer->get_Species->binomial,
-        $mus_musculus->get_DBAdaptor('core')->get_CoordSystemAdaptor->fetch_all->[0]->version
-    );
-my $rn_genome_db = $gdba->fetch_by_name_assembly(
-        $rattus_norvegicus->get_DBAdaptor('core')->get_MetaContainer->get_Species->binomial,
-        $rattus_norvegicus->get_DBAdaptor('core')->get_CoordSystemAdaptor->fetch_all->[0]->version
-    );
-
-$hs_genome_db->db_adaptor($homo_sapiens->get_DBAdaptor('core'));
-$mm_genome_db->db_adaptor($mus_musculus->get_DBAdaptor('core'));
-$rn_genome_db->db_adaptor($rattus_norvegicus->get_DBAdaptor('core'));
-  
 # my $genomic_align;
 # my $all_genomic_aligns;
-my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor();
-my $genomic_align_block_adaptor = $compara_db->get_GenomicAlignBlockAdaptor();
-my $method_link_species_set_adaptor = $compara_db->get_MethodLinkSpeciesSetAdaptor();
+my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor();
+my $genomic_align_block_adaptor = $compara_db_adaptor->get_GenomicAlignBlockAdaptor();
+my $method_link_species_set_adaptor = $compara_db_adaptor->get_MethodLinkSpeciesSetAdaptor();
 # my $dnafrag_adaptor = $compara_db->get_DnaFragAdaptor();
 # my $genomeDB_adaptor = $compara_db->get_GenomeDBAdaptor();
 # my $fail;
@@ -128,19 +135,20 @@ my $method_link_species_set_adaptor = $compara_db->get_MethodLinkSpeciesSetAdapt
 
 my $genomic_align_blocks;
 my $genomic_align_block;
-my $genomic_align_block_id = 3639804;
-my $method_link_species_set_id = 2;
+my $genomic_align_block_id = 5857270;
+my $method_link_species_set_id = 72;
 my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
-my $score = 4491;
-my $perc_id = 63;
-my $length = 158;
-my $genomic_algin_1_dbID = 7279606;
+my $score = 4581;
+my $perc_id = 48;
+my $length = 283;
+my $genomic_algin_1_dbID = 11714534;
 my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_1_dbID);
-my $genomic_algin_2_dbID = 7279608;
+my $genomic_algin_2_dbID = 11714544;
 my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_2_dbID);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
-
-my $slice_adaptor = $homo_sapiens->get_DBAdaptor("core")->get_SliceAdaptor();
+die if (!$species_db);
+print STDERR $species_db;
+my $slice_adaptor = $species_db->{"homo_sapiens"}->get_DBAdaptor("core")->get_SliceAdaptor();
 my $slice_coord_system_name = "chromosome";
 my $slice_seq_region_name = "14";
 my $slice_start = 50000000;
