@@ -199,7 +199,10 @@ sub submitGenome
   }
   print("    locator = $locator\n");
 
-  my $genomeDBA = Bio::EnsEMBL::DBLoader->new($locator);
+  my $genomeDBA;
+  eval {
+    $genomeDBA = Bio::EnsEMBL::DBLoader->new($locator);
+  };
 
   unless($genomeDBA) {
     print("ERROR: unable to connect to genome database $locator\n");
