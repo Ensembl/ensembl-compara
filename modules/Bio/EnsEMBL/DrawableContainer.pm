@@ -45,6 +45,7 @@ sub new {
 	'glyphsets'  => [],
 	'config'     => $Config,
     };
+    bless($self, $class);
 
     #########
     # loop over all the glyphsets the user wants:
@@ -56,6 +57,9 @@ sub new {
 
     &eprof_start('glyphset_creation');
 
+    #########
+    # instantiate our list of glyphsets
+    #
     for my $strand (@strands_to_show) {
       my @tmp;
 
@@ -96,13 +100,74 @@ sub new {
 	#
 	my $GlyphSet = new $classname($Container, $Config, qq(|$highlights|), $strand);
 
-	push @{$self->{'glyphsets'}}, $GlyphSet if(scalar @{$GlyphSet->{'glyphs'}} > 0);
+	push @{$self->{'glyphsets'}}, $GlyphSet;
       }
+    }
+
+    #########
+    # calculate real scaling here
+    # 
+    my $spacing = 5;
+
+    #########
+    # calculate the maximum label width (plus margin)
+    #
+    my $label_length_px = 0;
+
+    for my $glyphset (@{$self->{'glyphsets'}}) {
+	next if(!defined $glyphset->label());
+
+	$glyphset->label->text($glyphset->label->text());
+
+	my $chars  = length($glyphset->label->text());
+	my $pixels = $chars * $Config->texthelper->width($glyphset->label->font());
+	
+	$label_length_px = $pixels if($pixels > $label_length_px);
+    }
+
+    #########
+    # add spacing before and after labels
+    #
+    $label_length_px += $spacing * 2;
+
+    #########
+    # calculate scaling factors
+    #
+    my $pseudo_im_width = $Config->image_width() - $label_length_px - $spacing;
+
+    #########
+    # set scaling factor for base-pairs -> pixels
+    #
+    my $scalex = $pseudo_im_width / $Config->container_width();
+    $Config->{'transform'}->{'scalex'} = $scalex;
+
+    #########
+    # set scaling factor for 'absolutex' coordinates -> real pixel coords
+    #
+    $Config->{'transform'}->{'absolutescalex'} = $pseudo_im_width / $Config->image_width();
+
+    #########
+    # because our text label starts are < 0, translate everything back onto the canvas
+    #
+    my $extra_translation = $label_length_px;
+    $Config->{'transform'}->{'translatex'} += $extra_translation;
+
+    for my $glyphset (@{$self->{'glyphsets'}}) {
+	next if(!defined $glyphset->label());
+	$glyphset->label->x(-($extra_translation - $spacing) / $scalex);
+    }
+
+    #########
+    # go ahead and do all the database work
+    #
+    for my $gs (@{$self->{'glyphsets'}}) {
+		&eprof_start($gs);
+		$gs->_init();
+		&eprof_end($gs);
     }
 
     &eprof_end('glyphset_creation');
 
-    bless($self, $class);
     return $self;
 }
 
@@ -112,11 +177,8 @@ sub new {
 sub render {
     my ($self, $type) = @_;
 
-    my $transform_ref = {
-	'translatex' => 0,
-	'translatey' => 0,
-#	'scaley' => 2,
-    };
+    $self->{'config'}->{'transform'}->{'translatex'} ||= 0;
+    $self->{'config'}->{'transform'}->{'translatey'} ||= 0;
 
     #########
     # build the name/type of render object we want
@@ -140,7 +202,7 @@ sub render {
     # big, shiny, rendering 'GO' button
     #
     &eprof_start(qq(renderer_creation_$type));
-    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'}, $transform_ref);
+    my $renderer = $renderer_type->new($self->{'config'}, $self->{'vc'}, $self->{'glyphsets'});
     &eprof_end(qq(renderer_creation_$type));
 
     return $renderer->canvas();
