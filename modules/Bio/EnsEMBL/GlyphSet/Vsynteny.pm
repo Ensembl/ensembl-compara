@@ -73,8 +73,8 @@ sub _init {
     
 ## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
 
-    my $chr_length  = $sa->fetch_by_region( 'toplevel', $chr )->length;
-    my $bands       = $kba->fetch_all_by_chr_name( $chr );
+    my $chr_length  = $sa->fetch_by_region( 'toplevel', $chr )->length; 
+    my $bands       = $Config->is_available_artefact('databases_tables ENSEMBL_DB.karyotype' ) ? $kba->fetch_all_by_chr_name( $chr ) : [];
 
 ## NOW LETS GRAB THE IMAGE PARAMETERS
     my $im_width            = $Config->image_width();
@@ -460,24 +460,24 @@ sub draw_chromosome {
     else {
       $self->unshift(new Sanger::Graphics::Glyph::Rect
 		     ({
-		       'x'          => 0,
+		       'x'          => $v_offset,
 		       'y'          => $h_offset,
-		       'width'      => $chr_length,
+		       'width'      => $chr_length * $scale,
 		       'height'     => $wid,
 		       'colour'     => $params{'white'},
 		       'absolutey'  => 1,
-		       'absolutex'  => 1,'absolutewidth'=>1,
+		       'absolutex'  => 0,'absolutewidth'=>1,
 		      }));
       foreach my $Y ($h_offset, $h_offset+$wid){
 	$self->push(new Sanger::Graphics::Glyph::Line
 		    ({
-		      'x'                => 1,
+		      'x'                => $v_offset+1,
 		      'y'                => $Y,
-		      'width'            => $chr_length - 1,
+		      'width'            => $chr_length * $scale -1,
 		      'height'           => 0,
 		      'colour'           => $params{'black'},
 		      'absolutey'        => 1, 
-		      'absolutex'        => 1,'absolutewidth'=>1,
+		      'absolutex'        => 0,'absolutewidth'=>1,
 		     }));
       }
     } 
@@ -492,6 +492,8 @@ sub draw_chromosome {
     if ( @bands ){
 	@ends = (( $bands[0]->stain() eq 'tip' ? () : 1 ),
 	    ( $bands[-1]->stain() eq 'tip' ? () : -1 ));
+    } else {
+        @ends = (-1,1);
     }
     foreach my $end (@ends){
         foreach my $I ( 0..$#lines ) {
