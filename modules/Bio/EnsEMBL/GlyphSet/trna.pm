@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::trna_lite;
+package Bio::EnsEMBL::GlyphSet::trna;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;

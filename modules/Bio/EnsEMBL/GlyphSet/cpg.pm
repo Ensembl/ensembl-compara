@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::cpg_lite;
+package Bio::EnsEMBL::GlyphSet::cpg;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;

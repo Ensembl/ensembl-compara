@@ -16,6 +16,12 @@ sub features {
 								 0);
 }
 
+sub colour {
+  my ($self, $id) = @_;
+  return $id =~ /^BX/ ? 'red' : 'green';
+}
+
+
 sub href {
     my ($self, $id ) = @_;
     my $estid = $id;

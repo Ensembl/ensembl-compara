@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::eponine_lite;
+package Bio::EnsEMBL::GlyphSet::eponine;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
