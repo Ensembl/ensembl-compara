@@ -446,10 +446,10 @@ sub sync_with_registry {
   foreach my $genome_db (@{$genomeDBs}) {
     my $coreDBA;
     my $registry_name = $genome_db->name ." ". $genome_db->assembly;
-    if(Bio::EnsEMBL::Registry->get_alias($registry_name, 1)) {
+    if(Bio::EnsEMBL::Registry->alias_exists($registry_name)) {
       $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
     }
-    if(!defined($coreDBA) and Bio::EnsEMBL::Registry->get_alias($genome_db->name, 1)) {
+    if(!defined($coreDBA) and Bio::EnsEMBL::Registry->alias_exists($genome_db->name)) {
       $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core');
       Bio::EnsEMBL::Registry->add_alias($genome_db->name, $registry_name);
     }
