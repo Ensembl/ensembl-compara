@@ -44,7 +44,6 @@ CREATE TABLE genome_db (
   assembly          varchar(100) DEFAULT '' NOT NULL,
   assembly_default  tinyint(1) DEFAULT 1,
   genebuild         varchar(100) DEFAULT '' NOT NULL,
-  locator           varchar(255) DEFAULT '' NOT NULL,
 
   PRIMARY KEY (genome_db_id),
   UNIQUE name (name,assembly,genebuild)
@@ -177,7 +176,6 @@ CREATE TABLE member (
  chr_name       char(40),
  chr_start      int(10),
  chr_end        int(10),
- chr_strand     tinyint(1) NOT NULL,
 
  PRIMARY KEY (member_id),
  UNIQUE KEY (source_id,stable_id),
