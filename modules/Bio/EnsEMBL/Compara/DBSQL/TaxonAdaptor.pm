@@ -137,7 +137,7 @@ sub store {
   $taxon->isa('Bio::EnsEMBL::Compara::Taxon') ||
     $self->throw("You have to store a Bio::EnsEMBL::Compara::Taxon object, not a $taxon");
 
-  my $q = "INSERT INTO taxon (taxon_id,genus,species,sub_species,common_name,classification) 
+  my $q = "INSERT ignore INTO taxon (taxon_id,genus,species,sub_species,common_name,classification) 
            VALUES (?,?,?,?,?,?)";
   my $sth = $self->prepare($q);
   $sth->execute($taxon->ncbi_taxid,$taxon->genus,$taxon->species,$taxon->sub_species,$taxon->common_name,join " ",$taxon->classification);
