@@ -67,9 +67,7 @@ use Bio::AlignIO;
 sub fetch_by_dbID{
 	my ($self,$dbid,$lazyfetch) = @_;
 
-	if( !defined $dbid) {
-       $self->throw("Must fetch by dbid");
-	}
+	$self->throw("Must supply a dbid") unless defined ($dbid);
 
 	#get family info
 	my $sth = $self->prepare("SELECT f.threshold,f.description,f.annotation_confidence_score FROM family f WHERE f.family_id = $dbid");
@@ -82,7 +80,7 @@ sub fetch_by_dbID{
 	my @proteins;	
 	
 	if ($lazyfetch eq "T" || !defined($lazyfetch)){
-		while(my $prot = $sth->fetchrow_array()){
+		while(my ($prot) = $sth->fetchrow_array()){
 			push @proteins, $prot;
 		}
 	}
@@ -109,7 +107,58 @@ sub fetch_by_dbID{
 	return $family;
 
 }
+=head2 fetch_members_by_dbname
 
+ Title   : fetch_members_by_dbname
+ Usage   : $famAdptor->fetch_members_by_dbname($famid,$dbname)
+ Function: Returns an array of proteins from a particular db within a family 
+ Returns : 
+ Args    : dbid and dbname
+
+=cut
+
+sub fetch_members_by_dbname {
+	my ($self,$dbid,$dbname) = @_;
+
+	$self->throw("Must supply a db id and db name") unless (defined ($dbid) && defined($dbname));
+	my $sth = $self->prepare("SELECT p.protein_id 	
+						      FROM family_protein fp, protein p 
+							  WHERE p.protein_external_dbname = '$dbname' 
+							  AND p.protein_id = fp.protein_id
+							  AND fp.family_id = $dbid");
+	$sth->execute;
+	my @proteins = ();
+	while(my ($protid) = $sth->fetchrow_array()){
+		my $protein = $self->db->get_ProteinAdaptor->fetch_by_dbID($protid);
+		$protein->family_id($dbid);
+		push @proteins, $protein;
+	}
+	return @proteins;
+}
+
+=head2 nbr_members_of_db 
+
+ Title   : nbr_members_of_db
+ Usage   : $famAdptor->nbr_members_of_db(famid,dbname)
+ Function: returns the number of members of a particular db 
+ Returns : 
+ Args    : 
+
+=cut
+
+sub nbr_members_of_db{
+	my ($self,$dbid,$dbname) = @_;
+	$self->throw("Must supply a db id and dbname") unless (defined($dbid) && defined($dbname));
+
+	my $sth = $self->prepare("SELECT count(p.protein_id)  
+						      FROM family_protein fp, protein p 
+							  WHERE p.protein_external_dbname = '$dbname' 
+							  AND p.protein_id = fp.protein_id
+							  AND fp.family_id = $dbid");
+	$sth->execute;
+	my ($nbr) = $sth->fetchrow_array();
+	return $nbr;
+}
 =head2 get_stable_entry_info
 
  Title   : get_stable_entry_info
@@ -117,7 +166,6 @@ sub fetch_by_dbID{
  Function: gets stable info for gene and places it into the hash
  Returns : 
  Args    : 
-
 
 =cut
 
@@ -299,6 +347,7 @@ sub store{
 
 	my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,score) VALUES(?,?,?)");
     $sth->execute($dbID,$mem->dbID,$mem->family_score);#store into family_protein
+	$self->db->get_ProteinAdaptor->store_if_needed($mem);
 
    }
     ####store family stable_id###
