@@ -3,7 +3,7 @@
 use strict;
 use Getopt::Long;
 use IO::File;
-use Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 $| = 1;
 
 my $usage = "
@@ -34,12 +34,12 @@ if ($help || scalar @ARGV != 1) {
 
 my ($file) = @ARGV;
 
-my $family_db = new Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor(-host   => $host,
+my $family_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
 									 -user   => $dbuser,
 									 -pass   => $dbpass,
 									 -dbname => $dbname);
 
-my $sth = $family_db->prepare("UPDATE family set description = ?, annotation_confidence_score =? where family_id = ?");
+my $sth = $family_db->prepare("UPDATE family set description = ?, description_score =? where family_id = ?");
 
 my $FH = IO::File->new();
 $FH->open($file) || die "Could not open alignment file [$file], $!\n;";
