@@ -40,6 +40,8 @@ bioperl ensembl modules
     You will need the above information for the core database as well as the name of the static golden path.
     This database is used to fetch the names and the lengths of the chromosomes.
 
+	You will need to set up a Compara.conf file, that will hold all necessary information to connect any needed core database. See an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
+
 
 3. Dumping the raw dna-dna matches
 ----------------------------------
@@ -52,10 +54,10 @@ bioperl ensembl modules
 
 		This dumps out dna-dna in gff format one chromosome at a time and the format of the command is
 
-
-			./dumpsynteny -chr 1 -org1 Homo_sapiens -org2 Mus_musculus          \ 
-                     -corehost ecs2d -corename homo_sapiens_core_8_30     \
-                     -comphost ecs1b -compname compara_human_30_mouse_3_final
+	./dumpsynteny -host ecs1b.sanger.ac.uk -user ensro -dbname ensembl_compara_10_1 \
+			-chr_names 1 -species1 "Homo sapiens" -assembly1 NCBI30 \
+			-species2 "Mus musculus" -assembly2 MGSC3 \
+			-conf_file Compara.conf
 
     This will write out all the dna-dna matches for human chromosome 1 against mouse into a file called
 
@@ -65,9 +67,10 @@ bioperl ensembl modules
 		
    Use the -all option to dump gff for all chromosomes as follows
 
-    ./dumpsynteny -chr all -org1 Homo_spaiens -org2 Mus_musculus          \ 
-                  -corehost ecs2d -corename homo_sapiens_core_8_30         \
-                 - comphost ecs1b -compname compara_human_30_mouse_3_final
+	./dumpsynteny -host ecs2d -user ensro -dbname ensembl_compara_10_1 \
+			-chr_names all -species1 "Homo sapiens" -assembly1 NCBI30 \
+			-species2 "Mus musculus" -assembly2 MGSC3 \
+			-conf_file Compara.conf
 
    This will generate a set of files n.synteny.gff where n is the chromosome name
 
