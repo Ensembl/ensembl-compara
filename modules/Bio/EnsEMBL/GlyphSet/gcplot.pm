@@ -61,10 +61,15 @@ sub _init {
 	#$subseq =~ s/N//igo;
 	my $G = $subseq =~ tr/G/G/;
 	my $C = $subseq =~ tr/C/C/;
-	next if (length($subseq) <= 0); # catch divide by zero....
-        my $percent = ($G+$C)/length($subseq);
-        $percent = $percent < .25 ? .25 : $percent >.75 ? .75 : $percent;
-	my $percent = ($percent -.25) * 40;
+        my $percent;
+	if ( ($G+$C)>0 && length($subseq)>0 ) { # catch divide by zero....
+                $percent = ($G+$C) / length($subseq);
+        	$percent = $percent < .25 ? .25 : $percent >.75 ? .75 : $percent;
+		$percent = ($percent -.25) * 40;
+        } else {
+		$percent = 99;
+        }
+        print STDERR "XX: $i - $percent\n";
 	push (@gc, $percent);
     }
 		
@@ -79,7 +84,9 @@ sub _init {
 	
     my $percent = shift @gc;
     my $count = 0;
-    while(my $new = shift @gc) {
+    while(@gc) {
+        my $new = shift @gc;   
+        unless($percent==99 || $new==99) {
 	my $tick = new Bio::EnsEMBL::Glyph::Line({
 		    'x'            => $count * $divlen,
 		    'y'            => 20 - $percent,
@@ -87,8 +94,9 @@ sub _init {
 		    'height'       => $percent - $new,
 		    'colour'       => $colour,
 		    'absolutey'    => 1,
-	});
+	}); 
 	$self->push($tick);
+        }
         $percent = $new;
 	$count++;
     }
