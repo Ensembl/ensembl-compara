@@ -255,7 +255,7 @@ CREATE TABLE homology_member (
  homology_id               int(10) NOT NULL,
  member_id                 int(10) NOT NULL,
  peptide_member_id         int(10),
- peptide_align_feature_id  int(10) unsigned NOT NULL,
+ peptide_align_feature_id  int(10),
  cigar_line                mediumtext,
  cigar_start               int(10),
  cigar_end                 int(10),
