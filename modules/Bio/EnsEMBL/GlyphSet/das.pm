@@ -69,10 +69,7 @@ sub _init {
     my $h = $self->{'textheight'};
     
     my @features;
-    warn ( "DAS-track:". $self->{'extras'}->{'dsn'} );
-    # warn( "KEYS: ".join '', keys(%{$vc->get_all_DASFeatures()||{}}) );
-    my ( $features, $styles ) = @{ $vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}} };
-    warn( @{$styles} ) ;
+    my ( $features, $styles ) = @{ $vc->get_all_DASFeatures()->{$self->{'extras'}{'dsn'}}||[] };
     $use_style = 0 unless $styles && @{$styles};
 
     eval{
@@ -80,14 +77,10 @@ sub _init {
     };
     my %styles = ();
     if( $use_style ) { 
-       warn("USING STYLE ",$self->{'extra'}{'dsn'}) ;
-       warn Data::Dumper->Dump( [ $styles ] );
        foreach(@$styles) {
           $styles{$_->{'category'}}{$_->{'type'}} = $_ unless $_->{'zoom'};
        } 
-    } else {
-       warn("NO STYLE    ",$self->{'extra'}{'dsn'});
-    } 
+    }
     # warn map { "DAS: ". $_->das_dsn. ": ". $_->das_start."-".$_->das_end."|\n"}  @features;
     if($@) {
         print STDERR "----------\n",$@,"---------\n";
@@ -141,11 +134,12 @@ sub _init {
             my $end   = $features[-1]->das_end;
             
             $T += @features;
-            $T += @features-1 if $f->das_type_id =~ /(CDS|translation|transcript|exon)/i;
+            $T += @features-1 if ( $f->das_group_type || $f->das_type_id() ) =~ /(CDS|translation|transcript|exon)/i;
             ### A general list of features we don't want to draw via DAS ###
             # Compute the length of the label...
             my $ID    = $f->das_group_id || $f->das_id;
-            my $label_length = $labelling * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
+            my $label = $f->das_group_label || $f->das_feature_label || $ID;
+            my $label_length = $labelling * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
 
             my $row = $dep > 0 ? $self->bump( $START, $end, $label_length, $dep ) : 0;
 
@@ -170,7 +164,7 @@ sub _init {
                 } else {
                   $colour = $feature_colour;
                 }
-            if( $f->das_type_id() =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
+            if( ( $f->das_group_type || $f->das_type_id() ) =~ /(CDS|translation|transcript|exon)/i ) { ## TRANSCRIPT!
                 my $f     = shift @features;
                 my $START = $f->das_start() < 1        ? 1       : $f->das_start();
                 my $END   = $f->das_end()   > $length  ? $length : $f->das_end();
@@ -246,7 +240,7 @@ sub _init {
                 #$Composite2->{'href'} = $href if $href;
                 $Composite->push($Composite2);
             }
-            my $H =$self->feature_label( $Composite, $ID , $colour, $start < 1 ? 1 : $start , $end > $length ? $length : $end );
+            my $H =$self->feature_label( $Composite, $label , $colour, $start < 1 ? 1 : $start , $end > $length ? $length : $end );
 #            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*(1.4*$h+$H) * $row } = '';
             $Composite->y($Composite->y() - $tstrand*(1.4*$h+$H) * $row) if $row;
             $self->push($Composite);
@@ -263,6 +257,7 @@ sub _init {
             $empty_flag = 0; # We have a feature (its on one of the strands!)
             next if $strand eq 'b' && ( $f->strand() !=1 && $STRAND==1 || $f->strand() ==1 && $STRAND==-1);
             my $ID    = $f->das_id;
+            my $label = $f->das_group_label || $f->das_feature_label || $ID;
             my $label_length = $labelling * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
 
             my $row = 0;
@@ -306,7 +301,7 @@ sub _init {
             }) );
             #$glyph->{'href'} = $href if $href;
             # DONT DISPLAY IF BUMPING AND BUMP HEIGHT TOO GREAT
-            my $H =$self->feature_label( $Composite, $ID, $colour, $START, $END );
+            my $H =$self->feature_label( $Composite, $label, $colour, $START, $END );
 #            $Composite->{'zmenu'}->{"SHIFT ($row) ".$tstrand*(1.4*$h+$H) * $row } = '';
             $Composite->y($Composite->y() - $tstrand*(1.4*$h+$H) * $row) if $row;
             $self->push($Composite);
