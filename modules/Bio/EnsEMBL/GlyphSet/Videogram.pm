@@ -79,7 +79,8 @@ sub _init {
     )/2;
 
     my @decorations;
-    if($padding) {
+
+	if($padding) {
     # make sure that there is a blank image behind the chromosome so that the
     # glyhset doesn't get "horizontally" squashed.
         my $gpadding = new Sanger::Graphics::Glyph::Space({

@@ -8,6 +8,18 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 
+sub init_label {
+  my ($self) = @_;
+  my $chr = $self->{'config'}->get('scalebar','label');
+  my $label = new Sanger::Graphics::Glyph::Text({
+    'text'      => "$chr",	
+    'font'      => 'Small',
+    'absolutey' => 1,
+  });
+  $self->label($label);
+}
+
+
 sub _init {
     my ($self) = @_;
     #return unless ($self->strand() == -1);

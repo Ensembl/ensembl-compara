@@ -37,6 +37,7 @@ sub _init {
     my $max_data        = $Config->get( $track, 'max_value' );
 	my $chr_min_data ;
     my $chr_max_data = 0;
+
     foreach(@$data) { 
 		$chr_min_data = $_ if ($_<$chr_min_data || $chr_min_data eq undef); 
 		$chr_max_data = $_ if $_>$chr_max_data; 

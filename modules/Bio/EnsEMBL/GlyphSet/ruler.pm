@@ -21,9 +21,18 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-    my $Config        = $self->{'config'};
 
-    return unless ($self->strand() == 1);
+    my $type = $self->check();
+    return unless defined $type;
+
+    my $strand = $self->strand;
+    my $Config = $self->{'config'};
+    my $strand_flag    = $Config->get($type, 'str');
+
+    my $strand_flag = 
+    return if( $strand_flag eq 'r' && $strand != -1 ||
+               $strand_flag eq 'f' && $strand != 1 );
+
     my $len            = $self->{'container'}->length();
     my $global_start   = $self->{'container'}->chr_start();
     my $global_end     = $self->{'container'}->chr_end();
@@ -45,6 +54,7 @@ sub _init {
     my $bp_textwidth = $fontwidth * length($text);
     
     my $tglyph = new Sanger::Graphics::Glyph::Text({
+        'z'         => 1000,
 	'x'         => int($im_width/2) - int($bp_textwidth/2),
 	'y'         => 2,
 	'height'    => $fontheight,
@@ -59,6 +69,7 @@ sub _init {
     
     
     my $lglyph = new Sanger::Graphics::Glyph::Rect({
+        'z'         => 1000,
 	'x'         => 0,
 	'y'         => 6,
 	'width'     => int(($im_width - $bp_textwidth)/2),
@@ -70,6 +81,7 @@ sub _init {
     $self->push($lglyph);
     
     my $rglyph = new Sanger::Graphics::Glyph::Rect({
+        'z'         => 1000,
 	'x'         => int(($im_width + $bp_textwidth)/2),
 	'y'         => 6,
 	'width'     => $im_width - (int(($im_width + $bp_textwidth) /2)),
@@ -84,6 +96,7 @@ sub _init {
     # exactly 2 text chars long
     # add the left arrow head....
     my $gtriagl = new Sanger::Graphics::Glyph::Poly({
+        'z'         => 1000,
 	'points'    => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
 	'colour'    => $feature_colour,
 	'absolutex' => 1,'absolutewidth'=>1,
@@ -93,6 +106,7 @@ sub _init {
     
     # add the right arrow head....
     my $gtriagr = new Sanger::Graphics::Glyph::Poly({
+        'z'         => 1000,
 	'points'    => [$im_width,6, ($im_width-$fontwidth*2),3, ($im_width-$fontwidth*2),9],
 	'colour'    => $feature_colour,
 	'absolutex' => 1,'absolutewidth'=>1,
