@@ -126,8 +126,6 @@ sub prepareGenomeAnalysis
 {
   my $self = shift;
 
-  return  unless($analysis_template{fasta_dir});
-  
   my $submit_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
@@ -135,6 +133,8 @@ sub prepareGenomeAnalysis
     );
   $self->{'pipelineDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
 
+  return $submit_analysis  
+    unless($analysis_template{fasta_dir});
 
   my $load_analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db_version      => '1',
