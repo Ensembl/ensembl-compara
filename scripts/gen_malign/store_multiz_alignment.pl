@@ -41,9 +41,10 @@ store_multiz_alignment.pl [-help]
   -conf_file compara_conf_file
       see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
   -multiz_file file_containing_multiz_alignemnts
-  -verbose V (from 0 to 3, default is 0)
   -skip (ignores unknown genome assemblies and skips the whole alignment)
   -force (ignores unknown genome assemblies but stores the remaining sequences of the aligment)
+  -score minimum_score_threhold (default No minimum)
+  -min_seq minimum_number_of_sequences_in_the_multiple_alignment (default No minimum)
 
 =head1 KNOWN BUGS
 
@@ -83,6 +84,7 @@ my $ucsc_2_ensembl = {
 	"hg16" => {'name' => "Homo sapiens", 'assembly' => "NCBI34"},
 	"rn3"  => {'name' => "Rattus norvegicus", 'assembly' => "RGSC3.1"},
 	"galGal2" => {'name' => "Gallus gallus", 'assembly' => "WASHUC1"},
+	"panTro1" => {'name' => "Pan troglodytes", 'assembly' => "CHIMP1"},
 	};
 ###############################################################################
 
@@ -95,13 +97,14 @@ $0 [-help]
   -conf_file compara_conf_file
       see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
   -multiz_file file_containing_multiz_alignemnts
-  -verbose V (from 0 to 3, default is 0)
+  -skip (ignores unknown genome assemblies and skips the whole alignment)
+  -force (ignores unknown genome assemblies but stores the remaining sequences
+      of the aligment)
+  -score minimum_score_threhold (default No minimum)
+  -min_seq minimum_number_of_sequences_in_the_multiple_alignment (default No minimum)
 };
 
 my $help = 0;
-my $verbose = 0;
-my $skip = 0;
-my $force = 0;
 my $dbhost;
 my $dbname;
 my $dbuser;
@@ -109,6 +112,10 @@ my $dbpass;
 my $dbport = '3352';
 my $conf_file;
 my $multiz_file;
+my $skip = 0;
+my $force = 0;
+my $score_threshold;
+my $sequences_threshold;
 
 	
 GetOptions('help' => \$help,
@@ -118,10 +125,11 @@ GetOptions('help' => \$help,
 	   'dbpass=s' => \$dbpass,
 	   'port=i' => \$dbport,
 	   'conf_file=s' => \$conf_file,
-	   'verbose=i' => \$verbose,
 	   'skip' => \$skip,
 	   'force' => \$force,
 	   'multiz_file=s' => \$multiz_file,
+	   'score=i' => \$score_threshold,
+	   'min_seq=i' => \$sequences_threshold,
 	   );
 
 if ($help) {
@@ -155,11 +163,14 @@ my $fake_genome_db = $genome_db_adaptor->fetch_by_name_assembly('fake', 'null');
 my $fake_dnafrag = get_this_dnafrag($fake_genome_db, 'chromosome', 'universal');
 die "DnaFrag for fake consensus dna is not in the database" if (!$fake_dnafrag);
 
-my $print_multiple_alignment = ""; #used for verbose output
-my $sequences = "";
+my $print_multiple_alignment = ""; # used for warnings
 my $score = 0;
-my @multiple_alignment; #array of Bio::EnsEMBL::Compara::GenomicAlign objects to store as a single multiple alignment
-my $store_this_malign = 1;
+my @multiple_alignment; # array of Bio::EnsEMBL::Compara::GenomicAlign objects to store as a single multiple alignment
+my $malign_warning = "";
+my %all_warnings;
+
+my $all_alignments_counter = 0;
+my $stored_alignments_counter = 0;
 
 while (<MULTIZ>) {
   ## For all lines that are not "s" lines (parts of the multiple alignment)
@@ -167,30 +178,39 @@ while (<MULTIZ>) {
     
     ## Stores multiple alignment
     if (@multiple_alignment) {
-      if ($store_this_malign) {
-        $genomic_align_adaptor->store_malign(\@multiple_alignment);
-      } else {
-        print "SKIPPING:\n", $print_multiple_alignment;
+      # -force option can produce alignments with one sequence only!!
+      if (defined($sequences_threshold) && (@multiple_alignment < $sequences_threshold)) {
+        $malign_warning .= "- Not Enough Sequences -";
       }
-      $store_this_malign = 1;
+      if (!$malign_warning) {
+        $genomic_align_adaptor->store_malign(\@multiple_alignment);
+        $stored_alignments_counter++;
+        print "storing:\n$print_multiple_alignment\n";
+      } else {
+        print "SKIPPING: ($malign_warning)\n$print_multiple_alignment\n";
+      }
+      $malign_warning = "";
       undef(@multiple_alignment);
+      $print_multiple_alignment = "";
+      $score = undef;
     }
     
     ## Retrieves score of the multpile alignment
-    if (/^a/ && /score=(\d+(\.\d+)?)/) {
-      print $print_multiple_alignment, "\n", $sequences, "\n\n" if (($verbose > 1) && $print_multiple_alignment);
-      $print_multiple_alignment = "";
-      $sequences = "";
+    if (/^a/ && /score=(\-?\d+(\.\d+)?)/) {
       $score = $1;
+      if (defined($score_threshold) && ($score < $score_threshold)) {
+        $malign_warning .= "- score=$score -";
+      }
+      $all_alignments_counter++;
     }
     
     next;
   }
 
   ## Next is for "s" lines only  
-  $print_multiple_alignment .= $_;
+  $print_multiple_alignment .= "  $1.chr$2 $3 (l=$4) ($5)\n";
   
-  print "$1 - $2 - $3 - $4 - ($5) - $6\n" if ($verbose > 2);
+#  print "$1 - $2 - $3 - $4 - ($5) - $6\n";
   my $species = $1;
   my $chromosome = $2;
   my $start_pos = $3;
@@ -200,29 +220,21 @@ while (<MULTIZ>) {
   
   ## Deal with unknown assemblies
   if (!defined($ucsc_2_ensembl->{$species})) {
+    $print_multiple_alignment =~ s/\n$/  **NOT AVAILABLE**\n/;;
     if ($force) {
-      print "IGNORING: $species.chr$chromosome\n";
+      print "IGNORING: Species $species\n  $species.chr$chromosome $start_pos (l=$length) (", (($strand==1)?"+":"-"), ")\n";
+      $all_warnings{"Species $species"}++;
       next;
     } elsif ($skip) {
-      $store_this_malign = 0;
+      $malign_warning .= "- $species -";
+      $all_warnings{"Species $species"}++;
       next;
     } else {
+      print "$print_multiple_alignment\n";
       die "Cannot map UCSC species name: $species\n";
     }
   }
   
-  ## Deal with unknown chromosomes
-  if ($chromosome =~ /random/) {
-    if ($force) {
-      print "IGNORING: $species.chr$chromosome\n";
-      next;
-    } elsif ($skip) {
-      $store_this_malign = 0;
-      next;
-    } else {
-      die "Cannot use: $species.chr$chromosome\n";
-    }
-  }
   my $species_name = $ucsc_2_ensembl->{$species}->{'name'};
   my $species_assembly = $ucsc_2_ensembl->{$species}->{'assembly'};
   
@@ -237,7 +249,23 @@ while (<MULTIZ>) {
   my $slice = get_this_slice($species, $chromosome, $start_pos, $length, $strand);
   my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species_name, $species_assembly);
   my $dnafrag = get_this_dnafrag($genome_db, 'chromosome', $chromosome);
-  die "Cannot fetch DnaFrag for ".$ucsc_2_ensembl->{$species}->{'name'}.", chromosome $chromosome\n" if (!$dnafrag);
+  
+  ## Deal with unknown dnafrags
+  if (!$dnafrag) {
+    $print_multiple_alignment =~ s/\n$/  **NOT AVAILABLE**\n/;;
+    if ($force) {
+      print "IGNORING: Chromosome $species.chr$chromosome\n";
+      $all_warnings{"Chromosome $species.chr$chromosome"}++;
+      next;
+    } elsif ($skip) {
+      $malign_warning .= "- $species.chr$chromosome -";
+      $all_warnings{"Chromosome $species.chr$chromosome"}++;
+      next;
+    } else {
+      print "$print_multiple_alignment\n";
+      die "Cannot fetch DnaFrag for ".$ucsc_2_ensembl->{$species}->{'name'}.", chromosome $chromosome\n";
+    }
+  }
   
   my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
 		-consensus_dnafrag => $fake_dnafrag,
@@ -262,13 +290,22 @@ while (<MULTIZ>) {
 }
 
 if (@multiple_alignment) {
-  if ($store_this_malign) {
+  if (!$malign_warning) {
     $genomic_align_adaptor->store_malign(\@multiple_alignment);
   } else {
-    print "SKIPPING:\n", $print_multiple_alignment;
+    print "SKIPPING: ($malign_warning)\n$print_multiple_alignment\n";
   }
 }
-print $print_multiple_alignment, "\n", $sequences, "\n\n" if ($verbose > 1);
+
+if (%all_warnings) {
+  print "LIST OF UNKNOWN OBJECTS:\n";
+  while (my($warning, $count) = each %all_warnings) {
+    print " - $warning ($count)\n";
+  }
+  print "\n";
+}
+
+print "End. $stored_alignments_counter multiple alignments out of $all_alignments_counter have been stored.\n";
  
 exit(0);
 
@@ -295,32 +332,31 @@ sub get_this_slice {
   my $slice;
     
   if ($strand == 1) {
-    print "Fetching sequence ", ($start_pos+1), "-->", ($start_pos+$length), " from chromosome $chromosome of ",
-	$ucsc_2_ensembl->{$species}->{'name'}, " (assembly ", $ucsc_2_ensembl->{$species}->{'assembly'}, ")\n"
-	if ($verbose > 1);
+#    print "Fetching sequence ", ($start_pos+1), "-->", ($start_pos+$length), " from chromosome $chromosome of ",
+#	$ucsc_2_ensembl->{$species}->{'name'}, " (assembly ", $ucsc_2_ensembl->{$species}->{'assembly'}, ")\n";
     $slice = $slice_adaptor->{$species}->fetch_by_region('chromosome',
 							 $chromosome,
 							 ($start_pos+1),
 							 ($start_pos+$length),
 							 1);
   } elsif ($strand == -1) {
-    print "Fetching sequence ", (-$start_pos-$length), "<--", ($start_pos), " from chromosome $chromosome of ",
-	$ucsc_2_ensembl->{$species}->{'name'}, " (assembly ", $ucsc_2_ensembl->{$species}->{'assembly'}, ")\n"
-	if ($verbose > 1);
+#    print "Fetching sequence ", (-$start_pos-$length), "<--", ($start_pos), " from chromosome $chromosome of ",
+#	$ucsc_2_ensembl->{$species}->{'name'}, " (assembly ", $ucsc_2_ensembl->{$species}->{'assembly'}, ")\n";
     $slice = $slice_adaptor->{$species}->fetch_by_region('chromosome',
 							 $chromosome);
     $slice = $slice_adaptor->{$species}->fetch_by_region('chromosome',
 							 $chromosome,
 							 ($slice->end()-$start_pos-$length+1),
 							 ($slice->end()-$start_pos),
-							 -1);
+                                                         -1) if ($slice);
   }
-  if ($slice && ($verbose > 1)) {
-    my $sequence = $slice->start()." -> ".$slice->end()." (".($slice->strand()==1?"+":"-").") ";
-    $sequences .= $sequence;
-    for (my $a=0; $a<30-length($sequence); $a++) {$sequences .= " ";}
-    $sequences .= $slice->seq()."\n";
-  }
+  
+#  if ($slice) {
+#    my $sequence = $slice->start()." -> ".$slice->end()." (".($slice->strand()==1?"+":"-").") ";
+#    print $sequence;
+#    for (my $a=0; $a<30-length($sequence); $a++) {print " ";}
+#    print $slice->seq()."\n";
+#  }
 
   return $slice;  
 }
