@@ -1,72 +1,96 @@
 
-1 - dump genomic dna (check that the length in chromsome table is right!!)
+Here is an example of out procedure to align human and mouse genomes.
+The all procedure was designed by Jim Mullikin at the Sanger Institute,
+and adapted to fit in the Ensembl compara by Abel Ureta-Vidal.
 
-DumpChromosomeFragments.pl
+All the command line were run in bash shell.
 
+1 - Move to your working directory. Check the disk space availible
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-2- fastaindex and tagFA.pl
+> cd /ecs2/work3/abel/phusion/
+	
+ Create a FastaPeptidesFiles directory if it does not exit.
 
-3- run phusion (on aristotle)
+> mkdir FastaPeptidesFiles
+> cd FastaPeptidesFiles
 
-4- PhusionBlastExtra
+2 - dump genomic dna from human and mouse genomes
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-5- Dispatch Extra
+> mkdir Hs31
+> cd Hs31
 
-6- LaunchBlast (LSF job arrays)
+ NB: check that the length in chromosome table is right!! 
+     By that I mean that the length in chromosome table should equal to 
+     max(chr_end) in the assembly table in core db.
 
-7- filter hits
+mysql> use homo_sapiens_core_12_31
+Database changed
+mysql>  select c.name,c.length,max(a.chr_end) as alength from assembly a,chromosome c where a.chromosome_id=c.chromosome_id group by c.name having c.length!=alength;
+Empty set (0.98 sec)
 
-8- load in compara
+ If not the same, that needs to be fixed.
+ Do the same thing for mouse.
 
+ Then dump the sequence for each chromosome, e.g.
 
-Hi Jim,
+ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl
+DumpChromosomeFragments.pl \
+	-host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 \
+	-chr_names 22 -overlap 0 -chunk_size 60000 -masked 0
+	-phusion Hs -o output_filename
 
-Many thanks for this meeting, it was very informative. While I still have 
-clear in my mind what we discuss, I wrote below each step needed for the 
-whole process. Could you have a quick look and tell me if I missed 
-something obvious?
+ To send that on the farm
 
-I just had a look to the fasta file used by phusion 
-e.g. /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq
-They does not seem proper fasta file
+> echo "select name from chromosome where name not like \"%_NT_%\" and name not like \"%_DR%\";"|mysql -h ecs2d -u ensro homo_sapiens_core_12_31|awk '!/name/'|sort -u > Hs31_chr_names
 
-> more /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq
-@Hs1.000000001
-TATAACACAAATAAT
-[...]
-+Hs1.000000001
-!IIIIIIIIIIIIIIIII
-[...]
+> cat Hs31_chr_names | while read i;do echo bsub -q acari -o $i.out -e $i.err ~/src/ensembl-compara/scripts/dumps/DumpChromosomeFragments.pl -host ecs2d.sanger.ac.uk -user ensro  -dbname homo_sapiens_core_12_31 -chr_names 22 -overlap 0 -chunk_size 60000 -masked 0 -phusion Hs -o $i.fa;done
 
-May be I am wrong, but I remember you saying that phusion could also take 
-fasta files, so probably this format fastq, is the other kind of format, 
-which is...?
+ Check each job went fine, and concatenate the all chromosome fasta files in one big, e.g. Hs31.fa
+ Delete the intermediate files.
 
-Many Thanks,
+ Do the same for mouse.
 
-Abel
+ Usually the dumps of human and mouse distribute over the farm take around 6 hours.
 
-Script to build a tag file from fasta file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/nfs/team71/psg/jcm/bin/tagFA.pl
+3- Indexing fasta files for phusion and blast jobs
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+ The index file is needed in the post-processing of phusion
+> ensembl-compara/scripts/phusion/fasta2tag.pl Hs31.fa > Hs31.tag
 
-Phusion command line in euler
-~~~~~~~~~~~~~~~~~~~~
-/nfs/team71/psg/jcm/src/phusion/phusion -kmer 17 -depth 2 -match 2 -match2 2 -set 50 -break 1 -SCG 
-/nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq mates /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.fastq 
-/nfs/infodata8/data/jcm/ensembl.mouse.9.3/ensMm9.3.fastq > 
-phusion17-60k.ensHs9.30-ensMm9.3
+ This index file is needed when running the blast jobs
+> /nfs/acari/abel/bin/fastaindex Hs31.fa Hs31.fa.index
 
+4- run phusion (on aristotle)
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Reading Phusion output to obtain pairwise comparison in euler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~jcm/bin/PhusionBlastExtra.pl Hs 1 /nfs/infodata8/data/jcm/ensembl.9.30/ensHs9.30.tag /nfs/infodata8/data/jcm/ensembl.mouse.9.3/ensMm9.3.tag 
-phusion17-60k.ensHs9.30-ensMm9.3 > HsMm.Extra
+> cd /ecs2/work3/phusion
+> mkdir Hs31Mm3
+> cd Hs31Mm3
 
-Hs the reference species,
-1 try to expand to neighbouring segment even if no 17-mer connection 
-exists
+The phusion executable initially used is in /nfs/team71/psg/jcm/src/phusion/phusion.
+I copied it to my home directory to make make sure I always use the same
+/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/phusion
+
+For details on the phusion program, see
+Mullikin, JC and Ning, Z. "The Phusion Assembler", Genome Research 13, 81-90, 2003
+
+ The phusion run on human/mouse needs ~32gb of memory, so you'll need to run it on aristotle.
+ Here is the command line.
+
+/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusion/phusion -kmer 17 -depth 2 -match 2 -match2 2 -set 50 -break 1 -SCG /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa mates /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa > phusion17-60k.out 2> phusion17-60k.err
+
+ Takes another ~6 hours
+
+5- Reading Phusion output to obtain pairwise comparison
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ensembl-compara/scripts/GetExtra.pl Hs 1 /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.tag /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.tag phusion17-60k.out > Extra 2> Extra.err
+
+ Hs the reference species,
+ 1 try to expand to neighbouring segment even if no 17-mer connection exists
 
         60Kb A         60Kb B
 Mm -------------- --------------
@@ -74,28 +98,74 @@ Mm -------------- --------------
 Hs    ------------------ ---------------
            60Kb	C		60Kb D
   
-when 1 A, B, C and D are part on the same cluster.
-when 0, just do a strict connected "graph", so A, B and C are in the same 
-cluster.
-       
+ when argument2 is 1
+  A, B, C and D are part on the same cluster.
+ when argument2 is 0,
+  just do a strict connected "graph", so A, B and C are in the same cluster.
 
-wublast runs
-~~~~~~~~~~~~
-parse HsMm.Extra to know which piece of human and mouse to compare with 
-wublastn
+6- Dispatch the pairwise comparison fro Extra file to run blastn
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First step filter on each pairwise comparison
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+> mkdir Extra_dir
+> cd Extra_dir
+> ensembl-compara/scripts/DispatchExtra.pl ../Extra
 
-./cigar.pl Hs 400 wublastn_output > PBcigar.HsMm.400
+ That will create in the working directory, the input files needed by LaunchBlast.pl
 
-Hs the reference species (here human), 400 the blast minimum threshold
+7- LaunchBlast (LSF job arrays)
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Second step filter take the whole comparisons into account
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ For LSF job arrays specific doc, Tim Cutts has written a very detailed web page.
+ http://www.sanger.ac.uk/Users/tjrc/lsf/job-arrays.html
 
-~jcm/bin/rmRedunGcomp.pl 6 PBcigar.HsMm.400 | rmRedunGcomp.pl 6 > 
-PBcigar.HsMm.300.Max4.3 &
+> ls |wc -l
+ That will be you the number of jobs to be sent
+
+> mkdir ../Cigar
+ This directory will receive the parsed blast outputs
+
+ NB: There is a restriction to alpha machine because the LaunchBlast.pl use a c executable, fastafetch,
+     only compiled on alpha machines. We have to think maybe to use dbfetch instead...need to investigate.
+
+     LaunchBlast.pl runs a filtering program, ensembl-compara/scripts/FilterBlast.pl, that parse the blast 
+     output obtained for each mouse query and keep hits the best hitted human chromosome, and print out
+     in a gff-like format with ciger lines.
+     !!! Maybe a bug, few hits are pointed out with empty cigar line, need investigation !!!
+
+     Not generic at all, I know, so you may need to modify these lines in the code of LaunchBlast.pl
+     my $fastafetch_executable = "/nfs/acari/abel/bin/fastafetch";
+     my $FilterBlast_executable = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/phusionFilterBlast.pl";
+     
+ Check with one job, if everything goes fine
+> echo 'ensembl-compara/scripts/LaunchBlast.pl -i Extra.set${LSB_JOBINDEX} -st Hs -sf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa -si /ecs2/work3/abel/phusion/FastaPeptidesFiles/Hs31/Hs31.fa.index -qt Mm -qf /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa -qi /ecs2/work3/abel/phusion/FastaPeptidesFiles/Mm3/Mm3.fa.index -min_score 300 -dir /ecs2/work3/abel/phusion/Hs31Mm3/Cigar' | bsub -q acari -Ralpha -JHs31Mm3"[1]" -o Extra.set%I.out -e Extra.set%I.err
+
+ If everything goes fine, send all the remaining jobs
+
+> [...] | bsub -q acari -Ralpha -JHs31Mm3"[2-16364]" -o Extra.set%I.out -e Extra.set%I.err
+
+ Resend failed jobs. To check which ones failed e.g.
+
+> ls|grep out|while read i;do awk '/^Subject/ && $NF!="Done" {print;exit}' $i;done
+Subject: Job 276328[1004]: <Hs31Mm3[1-16364]> Exited
+Subject: Job 276328[10055]: <Hs31Mm3[1-16364]> Exited
+
+jobs #1004 and #10055 failed. To resend them only
+
+> rm -f Extra.set1004.* Extra.set10055.*
+> [...] | bsub -q acari -Ralpha -JHs31Mm3"[1004,10055]" -o Extra.set%I.out -e Extra.set%I.err
+
+
+8- Further filter the hits
+   ~~~~~~~~~~~~~~~~~~~~~~~
+
+> cd ../Cigar
+> ls |wc -l
+You should have there as many files as jobs you sent.
+
+> ls | xargs cat | ensembl-compara/scripts/RemoveNonSyntenic.pl 6 > ../rmRedun.1st
+> cd ../
+> ensembl-compara/scripts/RemoveNonSyntenic.pl 6 rmRedun.1st > rmRedun.2nd
+
 
 first argument should be a pair (not an impair)
 
@@ -106,14 +176,26 @@ Mm  - - -   - - -  6 consecutive matches on the same block, 3 are 5' of another
 
 Hs ---------------
 
+!!! Need to investigate here. We are running 2 rounds of this filtering, but still not stabilized i.e. if we run a third or fourth round we will still be deleting hits...!!!
 
--------------------------------------------------------------------------------
+9- Load data in compara db
+   ~~~~~~~~~~~~~~~~~~~~~~~
 
-Dr. Abel Ureta-Vidal
-EnsEMBL project - Room A2-06				http://www.ensembl.org
-EMBL-European Bioinformatics Institute			Tel. 44 (0)1223 494670
-Wellcome Trust Genome Campus, Hinxton			Fax. 44 (0)1223 494468
-Cambridge CB10 1SD, UK					Email. abel@ebi.ac.uk
+ Make sure you have a compaar database to populate. If not create one
 
--------------------------------------------------------------------------------
+> echo "create database ensembl_compara_12_2;" |mysql -h ecs1b -u ensadmin -pxxxx
+> mysql -h ecs1b -u ensadmin -pxxxx ensembl_compara_12_2 < ensembl-compara/sql/table.sql
+
+ make sure that the genome_db table is populated with the corresponding genome entries.
+ if not create those entries
+
+> mysql -h ecs1b -u ensadmin -pxxxx ensembl_compara_12_2
+> insert into genome_db (genome_db_id,taxon_id,name,assembly) values (1,9606,"Homo sapiens","NCBI31");
+> insert into genome_db (genome_db_id,taxon_id,name,assembly) values (1,10090,"Mus musculus","MGSC3");
+
+ Create your Comapara.conf from ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
+
+ Then load the alignment in your compara dv with ensembl-compara/scripts/phusion/LoadComparaDb.pl
+
+>ensembl-compara/scripts/phusion/LoadComparaDb.pl -host ecs2.sanger.ac.uk -dbuser ensadmin -dbpass xxxx -dbname ensembl_compara_12_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -cs_genome_db_id 1 qy_genome_db_id 2 -qy_tag Mm
 
