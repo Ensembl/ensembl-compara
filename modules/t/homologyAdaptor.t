@@ -11,7 +11,7 @@ BEGIN {
 }
 
 #set to 1 to turn on debug prints
-our $verbose = 1;
+our $verbose = 0;
 
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new('multi');
