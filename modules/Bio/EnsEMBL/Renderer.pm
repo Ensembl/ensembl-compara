@@ -9,11 +9,10 @@ use Bio::EnsEMBL::Glyph::Rect;
 @ISA = qw(Exporter);
 
 sub new {
-    my ($class, $config, $container, $glyphsets_ref, $transform_ref) = @_;
+    my ($class, $config, $container, $glyphsets_ref) = @_;
 
     my $self = {
 	'glyphsets' => $glyphsets_ref,
-	'transform' => $transform_ref,
 	'canvas'    => undef,
 	'colourmap' => $config->colourmap(),
 	'config'    => $config,
@@ -44,58 +43,16 @@ sub render {
     my $bgcolour_flag;
     $bgcolour_flag = 1 if($$bgcolours{0} ne $$bgcolours{1});
 
-    my $spacing = $this->{'spacing'};
-
-    #########
-    # calculate the maximum label width (plus margin)
-    #
-    my $label_length_px = 0;
-
-    for my $glyphset (@{$this->{'glyphsets'}}) {
-	next if(!defined $glyphset->label());
-
-	$glyphset->label->text($glyphset->label->text());
-
-	my $chars  = length($glyphset->label->text());
-	my $pixels = $chars * $config->texthelper->width($glyphset->label->font());
-	
-	$label_length_px = $pixels if($pixels > $label_length_px);
-    }
-
-    #########
-    # add spacing before and after labels
-    #
-    $label_length_px += $spacing * 2;
-
-    #########
-    # calculate scaling factors
-    #
-    my $pseudo_im_width = $config->image_width() - $label_length_px - $spacing;
-
-    #########
-    # set scaling factor for base-pairs -> pixels
-    #
-    $this->{'transform'}->{'scalex'}         = $pseudo_im_width / $config->container_width();
-
-    #########
-    # set scaling factor for 'absolutex' coordinates -> real pixel coords
-    #
-    $this->{'transform'}->{'absolutescalex'} = $pseudo_im_width / $config->image_width();
-
-    #########
-    # because our text label starts are < 0, translate everything back onto the canvas
-    #
-    my $extra_translation = $label_length_px;
-    $this->{'transform'}->{'translatex'} += $extra_translation;
-
     #########
     # now set all our labels up with scaled negative coords
     # and while we're looping, tot up the image height
     #
     my $im_height = 0;
+    my $spacing = $this->{'spacing'};
 
     for my $glyphset (@{$this->{'glyphsets'}}) {
-	
+	next if (scalar @{$glyphset->{'glyphs'}} == 0);
+
 	my $fntheight = (defined $glyphset->label())?$config->texthelper->height($glyphset->label->font()):0;
 	my $gstheight = $glyphset->height();
 
@@ -104,9 +61,6 @@ sub render {
 	} else {
 	    $im_height += $fntheight + $spacing;
 	}
-
-	next if(!defined $glyphset->label());
-	$glyphset->label->x(-($extra_translation - $spacing) / $this->{'transform'}->{'scalex'});
     }
 
     my $im_width = $config->image_width();
@@ -121,13 +75,13 @@ sub render {
     my $yoffset = $spacing;
     my $iteration = 0;
     for my $glyphset (@{$this->{'glyphsets'}}) {
-
+	next if(scalar @{$glyphset->{'glyphs'}} == 0);
 	#########
 	# remove any whitespace at the top of this row
 	#
 	my $gminy = $glyphset->miny();
 
-	$this->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $spacing);
+	$this->{'config'}->{'transform'}->{'translatey'} = -$gminy + $yoffset + ($iteration * $spacing);
 
 	if(defined $bgcolour_flag) {
 	    #########
