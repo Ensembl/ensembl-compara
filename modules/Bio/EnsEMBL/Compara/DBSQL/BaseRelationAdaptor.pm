@@ -250,19 +250,19 @@ sub store_relation {
   
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
     $attribute->family_id($relation->dbID);
-    $sql = "INSERT INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
+    $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
     $sth = $self->prepare($sql);
     $sth->execute($attribute->family_id, $attribute->member_id, $attribute->cigar_line);
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
     $attribute->domain_id($relation->dbID);
-    $sql = "INSERT INTO domain_member (domain_id, member_id, member_start, member_end) VALUES (?,?,?,?)";
+    $sql = "INSERT IGNORE INTO domain_member (domain_id, member_id, member_start, member_end) VALUES (?,?,?,?)";
     $sth = $self->prepare($sql);
     $sth->execute($attribute->domain_id, $attribute->member_id, $attribute->member_start, $attribute->member_end);
   }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
     $attribute->homology_id($relation->dbID);
-    $sql = "INSERT INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, cigar_start, cigar_end, perc_cov, perc_id, perc_pos) VALUES (?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, cigar_start, cigar_end, perc_cov, perc_id, perc_pos) VALUES (?,?,?,?,?,?,?,?,?)";
     $sth = $self->prepare($sql);
     $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->cigar_start, $attribute->cigar_end, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos);
   }
