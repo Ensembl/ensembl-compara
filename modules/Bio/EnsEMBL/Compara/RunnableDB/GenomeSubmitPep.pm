@@ -237,6 +237,11 @@ sub createSubmitPepAnalysis {
     $stats->update();   
   }
 
+  # create unblocking rules from CreateBlastRules to this new analysis
+  my $createRules = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('CreateBlastRules');
+  $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($createRules, $analysis);
+
+  
   #my $host = hostname();
   print("store member_id into analysis_job table\n");
   my $errorCount=0;
