@@ -20,15 +20,15 @@ DumpChromosomeFragments.pl -host ecs1b.sanger.ac.uk
             -o output_filename
 
 $0 [-help]
-   -host compara_db_host_server
+   -host core_db_host_server
    -user username (default = 'ensro')
-   -dbname compara_database_name
+   -dbname core_database_name
    -chr_names \"20,21,22\" (default = \"all\")
    -chr_start position on chromosome from dump start (default = 1)
    -chr_end position on chromosome to dump end (default = chromosome length)
    -chunk_size bp size of the sequence fragments dumped (default = 60000)
    -overlap overlap between chunk fragments (default = 0)
-   -masked status of the sequence 0 unmasked
+   -masked status of the sequence 0 unmasked (default)
                                   1 masked
                                   2 soft-masked
    -phusion \"Hs\" tag put in the FASTA header >Hs22.1 
@@ -51,8 +51,10 @@ my $masked = 0;
 my $phusion;
 my $output;
 my $port="";
+my $help = 0;
 
-GetOptions('host=s' => \$host,
+GetOptions('help' => \$help,
+	   'host=s' => \$host,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser,
 	   'port=i' => \$port,
@@ -64,6 +66,11 @@ GetOptions('host=s' => \$host,
 	   'masked=i' => \$masked,
 	   'phusion=s' => \$phusion,
 	   'o=s' => \$output);
+
+if ($help) {
+  print $usage;
+  exit 0;
+}
 
 # Some checks on arguments
 
