@@ -1,4 +1,4 @@
-(
+[
 ['Homo sapiens', 'NCBI_31', {'host' => "ecs2b.internal.sanger.ac.uk",
                               'user' => "ensro",
                               'dbname' => "ens_NCBI_31",
@@ -11,4 +11,4 @@
                                      'user' => "ensro",
                                      'dbname' => "rat_Nov02",
                                      'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}]
-)
+]

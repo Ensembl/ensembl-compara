@@ -80,24 +80,28 @@ sub new {
 
   if($conf_file) {
     #read configuration file from disk
-    my @conf = do $conf_file;
+    my @conf = @{do $conf_file};
 
     foreach my $genome (@conf) {
       my ($species, $assembly, $db_hash) = @$genome;
-
-      my $module = $db_hash->{'module'};
-
       my $db;
 
-      eval {
-	require $module;
+      my $module = $db_hash->{'module'};
+      my $mod = $module;
 
-	$db = $module->new(-dbname => $db_hash->dbname,
-			   -host   => $db_hash->host,
-			   -user   => $db_hash->user,
-			   -pass   => $db_hash->pass,
-			   -port   => $db_hash->port,
-			   -driver => $db_hash->driver);
+      eval {
+	# require needs /'s rather than colons
+	if ( $mod =~ /::/ ) {
+	  $mod =~ s/::/\//g;
+	}
+	require "${mod}.pm";
+
+	$db = $module->new(-dbname => $db_hash->{'dbname'},
+			   -host   => $db_hash->{'host'},
+			   -user   => $db_hash->{'user'},
+			   -pass   => $db_hash->{'pass'},
+			   -port   => $db_hash->{'port'},
+			   -driver => $db_hash->{'driver'});
       };
 
       if($@) {
