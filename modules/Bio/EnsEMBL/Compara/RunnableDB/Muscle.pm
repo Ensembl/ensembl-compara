@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::Muscle
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::Muscle->new ( 
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::Muscle->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -54,17 +54,13 @@ use IO::File;
 use File::Basename;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use Bio::EnsEMBL::Pipeline::Runnable::Blast;
-use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 
 use vars qw(@ISA);
 
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+@ISA = qw(Bio::EnsEMBL::Hive::Process);
 my $g_Worker_workdir;
 
 sub workdir {
