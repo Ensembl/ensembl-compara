@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Glyph::Clip;
+package Bio::EnsEMBL::Glyph::Line;
 use strict;
 use vars qw(@ISA);
 use lib "..";
