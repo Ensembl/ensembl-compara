@@ -186,6 +186,7 @@ CREATE TABLE sequence (
 CREATE TABLE subset (
  subset_id      int(10) NOT NULL auto_increment,
  description    varchar(50),
+ dump_loc       varchar(255),
 
  PRIMARY KEY (subset_id)
 );
