@@ -643,6 +643,7 @@ sub store {
     my $sth2 = $self->prepare("SELECT member_id FROM member WHERE source_name=? and stable_id=?");
     $sth2->execute($member->source_name, $member->stable_id);
     my($id) = $sth2->fetchrow_array();
+    warn("MemberAdaptor: insert failed, but member_id select failed too") unless($id);
     $member->dbID($id);
     $sth2->finish;
   }
