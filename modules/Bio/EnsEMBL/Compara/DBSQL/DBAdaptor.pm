@@ -51,6 +51,24 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBConnection );
 
+=head2 get_SyntenyAdaptor
+
+ Title   : get_SyntenyAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub get_SyntenyAdaptor{
+   my ($self) = @_;
+
+   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor");
+}
+
 =head2 get_GenomeDBAdaptor
 
  Title   : get_GenomeDBAdaptor
