@@ -14,14 +14,14 @@ sub features {
 sub colour {
   my( $self, $f ) = @_;
   my %colours = ( 'END' => 'black', 'contig' => 'grey50', 'clone' => 'grey75', 'superctg' => 'black', 'scaffold' => 'black' );
-  return $colours{ $f->get_attribute('name') };
+  return $colours{ $f->get_scalar_attribute('name') };
 }
 
 sub zmenu {
   my( $self, $f ) = @_;
   return {
-     'caption' => $f->get_attribute('name')." gap",
-     "Location: ".$f->seq_start.' - '.$f->seq_end => '',
+     'caption' => $f->get_scalar_attribute('name')." gap",
+     "Location: ".$f->seq_region_start.' - '.$f->seq_region_end => '',
   };
 }
 

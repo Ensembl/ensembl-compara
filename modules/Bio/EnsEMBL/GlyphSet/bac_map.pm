@@ -96,7 +96,7 @@ sub zmenu {
     qq(02:length: @{[$f->length]} bps)                     => '',
     qq(03:Centre on clone:)                                => $self->href($f),
     };
-    foreach(@{$f->get_all_Attributes('embl_accs')}) {
+    foreach(@{$f->get_all_attribute_values('embl_accs')}) {
         $zmenu->{"12:EMBL: $_" } = '';
     }
     (my $state = $f->get_scalar_attribute('state'))=~s/^\d\d://;

@@ -61,7 +61,8 @@ sub _init {
   warn $type;
   warn $Config->get($type,'logic_name');
   warn $database; 
-  foreach my $g (@{$vc->get_all_Genes( $Config->get($type,'logic_name'), $database )}) {
+  foreach my $logic_name ( split /\s+/, $Config->get($type,'logic_name') ) { 
+  foreach my $g (@{$vc->get_all_Genes( $logic_name, $database )}) {
     my $gene_label = $self->gene_label( $g );
     my $gene_col   = $colours->{ $self->gene_col( $g ) };
     my $ens_ID     = $self->ens_ID( $g );
@@ -132,6 +133,7 @@ sub _init {
       'colour'    => $colours->{'hi'},
       'absolutey' => 1,
     })) if $highlights{$gene_label} || $highlights{$g->stable_id};
+   }
   }
 }
 

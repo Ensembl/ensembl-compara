@@ -14,7 +14,7 @@ sub features {
 
 sub href {
     my ($self, $f ) = @_;
-    return qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?miscfeature=@{[$f->get_attribute('name')]});
+    return qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?miscfeature=@{[$f->get_scalar_attribute('name')]});
 }
 
 sub colour {
@@ -28,14 +28,14 @@ sub colour {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return (qq(@{[$f->get_attribute('name')]}),'overlaid');
+    return (qq(@{[$f->get_scalar_attribute('name')]}),'overlaid');
 }
 
 sub zmenu {
   my ($self, $f ) = @_;
   my $offset = $self->{'container'}->start - 1;
     my $zmenu = { 
-        qq(caption)                                => qq(NT Contig: @{[$f->get_attribute('name')]}),
+        qq(caption)                                => qq(NT Contig: @{[$f->get_scalar_attribute('name')]}),
         qq(01:bp: @{[$f->start+$offset]}-@{[$f->end+$offset]})     => '',
         qq(02:length: @{[$f->length]} bps)         => '',
         qq(03:Centre on NT ctg)                    => $self->href($f),

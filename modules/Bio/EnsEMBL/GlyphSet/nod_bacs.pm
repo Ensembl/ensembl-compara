@@ -22,14 +22,14 @@ sub features {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ("@{[$f->get_attribute('name')]}",'overlaid');
+    return ("@{[$f->get_scalar_attribute('name')]}",'overlaid');
 }
 
 ## Link back to this page centred on the map fragment
 
 sub href {
     my ($self, $f ) = @_;
-    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_attribute('name')]}";
+    return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_scalar_attribute('name')]}";
 }
 
 ## Create the zmenu...
@@ -39,7 +39,7 @@ sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
     my $zmenu = { 
-        'caption' => "Clone: @{[$f->get_attribute('name')]}",
+        'caption' => "Clone: @{[$f->get_scalar_attribute('name')]}",
         "01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}" => '',
         '02:length: @{[$f->length]} bps' => '',
         '03:Centre on clone:' => $self->href($f),

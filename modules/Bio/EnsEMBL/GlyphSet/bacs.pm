@@ -16,10 +16,10 @@ sub zmenu {
     my ($self, $f ) = @_;
     return if $self->{'container'}->length() > ( $self->{'config'}->get( 'bacs', 'threshold_navigation' ) || 2e7) * 1000;
     my $zmenu = { 
-        'caption'   => "BAC: @{[$f->get_attribute('name')]}",
-        '01:Status: @{[$f->get_attribute('status')]}" => ''
+        'caption'   => "BAC: @{[$f->get_scalar_attribute('name')]}",
+        '01:Status: @{[$f->get_scalar_attribute('status')]}" => ''
     };
-    foreach( $f->get_attribute('embl_accs') ) {
+    foreach( $f->get_scalar_attribute('embl_accs') ) {
         $zmenu->{"02:bacend: $_"} = $self->ID_URL( 'EMBL', $_);
     }
     return $zmenu;
@@ -27,7 +27,7 @@ sub zmenu {
 
 sub colour {
     my ($self, $f) = @_;
-    my $state = $f->get_attribute('status');
+    my $state = $f->get_scalar_attribute('status');
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"},
            $f->length > $self->{'config'}->get( "bacs", 'outline_threshold' ) ? 'border' : '';
@@ -35,7 +35,7 @@ sub colour {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->get_attribute('name'),'overlaid');
+    return ($f->get_scalar_attribute('name'),'overlaid');
 }
 
 1;

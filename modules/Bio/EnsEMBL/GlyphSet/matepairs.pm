@@ -43,14 +43,14 @@ sub zmenu {
 
 sub colour {
     my ($self, $f) = @_;
-    my $state = $f->get_attribute('error');
+    my $state = $f->get_scalar_attribute('error');
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"} ;
 }
 
 sub image_label {
     my ($self, $f ) = @_;
-    return (@{[$f->get_attribute('name')]},'overlaid');
+    return (@{[$f->get_scalar_attribute('name')]},'overlaid');
 }
 
 

@@ -65,6 +65,7 @@ sub _init {
   my $transcript_drawn = 0;
     
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
+    warn "$gene @{[$gene->stable_id]} $target_gene";
     next if $target_gene && ($gene->stable_id() ne $target_gene);
  
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {

@@ -21,7 +21,10 @@ sub colours {
 sub features {
   my ($self) = @_;
 
-  return $self->{'container'}->get_all_Genes(lc(EnsWeb::species_defs->AUTHORITY));
+  return [
+   @{$self->{'container'}->get_all_Genes(lc(EnsWeb::species_defs->AUTHORITY))},
+   @{$self->{'container'}->get_all_Genes('pseudogene')}
+  ];
 }
 
 
@@ -33,7 +36,7 @@ sub colour {
     my $genecol = $colours->{ "_".$transcript->external_status };
 
     if( $transcript->external_status eq '' and ! $translation_id ) {
-       $genecol = $colours->{'_pseudogene'};
+       $genecol = $colours->{'_PSEUDO'};
     }
     if(exists $highlights{$transcript->stable_id()}) {
       return ($genecol, $colours->{'superhi'});

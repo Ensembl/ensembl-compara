@@ -68,10 +68,12 @@ sub _init {
   my $F = 0;
 
   my $database = $Config->get($type,'database');
-  my $genes = $vc->get_all_Genes( $Config->get($type,'logic_name'), $database );
 
   my $used_colours = {};
-  foreach my $g (@$genes) {
+  my $FLAG = 0;
+  foreach my $logic_name (split /\s+/, $Config->get($type,'logic_name') ) {
+   my $genes = $vc->get_all_Genes( $Config->get($type,'logic_name'), $database );
+   foreach my $g (@$genes) {
     my $gene_label = $self->gene_label( $g );
     my $GT         = $self->gene_col( $g );
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
@@ -131,8 +133,10 @@ sub _init {
       'colour'    => $colours->{'hi'},
       'absolutey' => 1,
     })) if $highlights{$gene_label} || $highlights{$g->stable_id};
-  }
-  if(@$genes) {
+    $FLAG=1;
+   }
+  } 
+  if($FLAG) {
     $Config->{'legend_features'}->{$type} = {
       'priority' => $Config->get( $type, 'pos' ),
       'legend'  => $self->legend( $used_colours )

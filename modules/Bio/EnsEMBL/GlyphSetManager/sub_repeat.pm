@@ -13,20 +13,18 @@ use EnsWeb;
 ##
 
 sub init {
-    my ($self) = @_;
+  my ($self) = @_;
+  warn "INIT SUBREPEAT";
+  $self->label("Repeats");
+  my $Config = $self->{'config'};
+  my $sub_repeats = $EnsWeb::species_defs->REPEAT_TYPES;
 
- warn "INIT SUBREPEAT";
-    $self->label("Repeats");
-
-    my $Config = $self->{'config'};
-    my $sub_repeats = $EnsWeb::species_defs->REPEAT_TYPES;
-
-    return unless ref($sub_repeats) eq 'HASH';
-    foreach my $name ( sort keys %$sub_repeats) {
-        ( my $N = $name ) =~s/\W+/_/g;  
-	next unless( $Config->get("managed_repeat_$N",'on') eq 'on' );
-	$self->add_glyphset( $name );
-    }
+  return unless ref($sub_repeats) eq 'HASH';
+  foreach my $name ( sort keys %$sub_repeats) {
+    ( my $N = $name ) =~s/\W+/_/g;  
+    next unless( $Config->get("managed_repeat_$N",'on') eq 'on' );
+    $self->add_glyphset( $name );
+  }
 }
 
 sub add_glyphset {

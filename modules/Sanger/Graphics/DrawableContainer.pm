@@ -73,8 +73,11 @@ sub new {
   my $iteration = 0;
 
   foreach my $CC ( @{$self->{'contents'}} ) {
-    my %manager_cache = ();
     my( $Container,$Config) = @$CC;
+    my %manager_cache = ();
+    if( defined( $Config->{'_managers'} ) )  {
+      %manager_cache = map { $_ => 0 } keys %{$Config->{'_managers'}};
+    }
     # warn ref($Container)," - ",ref($Config);
     $self->debug( 'start', ref($Config) ) if( $self->can('debug') );
     $Config->{'panel_width'} = $panel_width;
@@ -96,6 +99,7 @@ sub new {
         next if (defined $str_tmp && $str_tmp eq "r" && $strand != -1);
         next if (defined $str_tmp && $str_tmp eq "f" && $strand != 1);
         if( defined $Config->get($row,'manager')) { 
+          warn "MANAGER $row @{[$Config->get($row,'manager')]}"; 
           $manager_cache{ $Config->get($row,'manager') } = 1; 
           next;
         }

@@ -14,7 +14,7 @@ sub features {
 
 sub href {
   my ($self, $f ) = @_;
-  return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_attribute('name')]}";
+  return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?mapfrag=@{[$f->get_scalar_attribute('name')]}";
 }
 
 sub colour {
@@ -27,14 +27,14 @@ sub colour {
 
 sub image_label {
   my ($self, $f ) = @_;
-  return (@{[$f-get_attribute('name')]},'overlaid');
+  return (@{[$f-get_scalar_attribute('name')]},'overlaid');
 }
 
 sub zmenu {
   my ($self, $f ) = @_;
   my $zmenu = { 
     'caption' =>
-        "FPC contig: @{[$f->get_attribute('name')]}",
+        "FPC contig: @{[$f->get_scalar_attribute('name')]}",
     "01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}" => 
         '',
     "02:length: @{[$f->length]} bps" =>

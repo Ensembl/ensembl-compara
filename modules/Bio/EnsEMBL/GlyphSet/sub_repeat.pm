@@ -18,7 +18,7 @@ sub check { return 'sub_repeat'; }
 
 sub features {
     my $self = shift;
-    my @repeats = sort { $a_->seq_region_start <=> $_b->seq_region_end } @{$self->{'container'}->get_all_RepeatFeatures( $self->{'extras'}->{'name'} )};
+    my @repeats = sort { $a->seq_region_start <=> $b->seq_region_end } @{$self->{'container'}->get_all_RepeatFeatures( undef, $self->{'extras'}->{'name'} )};
     return \@repeats;
 }
 

@@ -30,14 +30,14 @@ sub zmenu {
   my $page = ($ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ? 'contigview' : 'cytoview';
 
   my $zmenu = {
-    'caption'   => "BAC: @{[$f->get_attribute('name')]}",
+    'caption'   => "BAC: @{[$f->get_scalar_attribute('name')]}",
     "01:Jump to $page" => $self->href($f),
-    "02:Status: @{[$f->get_attribute('status')]}"   => '',
+    "02:Status: @{[$f->get_scalar_attribute('status')]}"   => '',
   };
-  foreach( $f->get_attribute('synonyms') ) {
+  foreach( @{$f->get_all_attribute_values('synonyms')} ) {
     $zmenu->{"04:BAC band: $_"} = '';
   }
-  foreach( $f->get_attribute('embl_accs') ) {
+  foreach(@{$f->get_all_attribute_values('embl_accs')}) {
     $zmenu->{"06:BAC end: $_"} = $self->ID_URL( 'EMBL', $_);
   }
   return $zmenu;
@@ -45,7 +45,7 @@ sub zmenu {
 
 sub colour {
     my ($self, $f) = @_;
-    my $state = $f->get_attribute('status');
+    my $state = $f->get_scalar_attribute('status');
     return $self->{'colours'}{"col_$state"},
            $self->{'colours'}{"lab_$state"},
            $f->length > $self->{'config'}->get( "bac_bands", 'outline_threshold' ) ? 'border' : '';
@@ -53,7 +53,7 @@ sub colour {
 
 sub image_label {
     my ($self, $f ) = @_;
-    return ($f->get_attribute('name'),'overlaid');
+    return ($f->get_scalar_attribute('name'),'overlaid');
 }
 
 1;
