@@ -92,11 +92,18 @@ sub _init {
     my $offset = $vc_start - 1;
     my @genes = ();
 
+    my %gene_objs;
+    foreach my $g (@{$vc->get_all_Genes('', 1)}) {
+      my $source = $g->analysis->logic_name;
+      $gene_objs{$source} ||= [];
+      push @{$gene_objs{$source}}, $g;
+    }
+
     #
     # Draw all of the Vega Genes
     #
     my $F = 0;
-    foreach my $g (@{$vc->get_all_Genes_by_source( "vega",1 )} ) {
+    foreach my $g (@{$gene_objs{ "vega"}}) {
       $F++;
       my $genelabel = $g->stable_id(); 
       my $high = exists $highlights{$genelabel};
@@ -135,7 +142,7 @@ sub _init {
     # Draw all of the Core (ensembl) genes
     #
     $F=0;
-    foreach my $g (@{$vc->get_all_Genes_by_source( "core",1 )} ) {
+    foreach my $g (@{$gene_objs{'ensembl'}}) {
       $F++;
       my $high = (exists $highlights{ $g->stable_id() }) 
               || (exists $highlights{ $g->external_name() });
@@ -175,51 +182,10 @@ sub _init {
     &eprof_start("gene-externalgene_start-get");
 
     #
-    # Draw all EMBL Genes
-    #
-    $F=0;
-    foreach my $g (@{$vc->get_all_Genes_by_source( "embl",1 )} ) {
-      $F++;
-      my $gene_label = $g->external_name() || $g->stable_id();
-      
-      my $high = exists $highlights{ $g->external_name() } ||
-	exists $highlights{ $g->stable_id() };
-
-      my $gene_col;
-      if($g->type() eq 'pseudo') {
-	$gene_col = $pseudo_col;
-      } else {
-	$gene_col = $ext_col;
-      }
-
-      push @genes, {
-		'chr_start' => $g->start + $offset,
-                'chr_end'   => $g->end + $offset,
-                'start'     => $g->start(),
-                'strand'    => $g->strand(),
-                'end'       => $g->end(),
-                'ens_ID'    => '', #$g->{'stable_id'},
-                'label'     => $gene_label,
-                'colour'    => $gene_col,
-                'ext_DB'    => $g->external_db(),
-                'high'      => $high,
-                'type'      => $g->type()
-            };
-        }
-
-    if($F>0) {
-      $Config->{'legend_features'}->{'embl_genes'} = {
-            'priority' => 800,
-            'legend'  => [
-                'EMBL curated genes' => $ext_col,
-                'EMBL pseudogenes'   => $pseudo_col ] };
-    }
-
-    #
     # Draw all RefSeq Genes
     #
     $F=0;
-    foreach my $g (@{$vc->get_all_Genes_by_source( "refseq",1 )} ) {
+    foreach my $g (@{$gene_objs{'refseq'}} ) {
       $F++;
       my $gene_label = $g->external_name() || $g->stable_id();
 

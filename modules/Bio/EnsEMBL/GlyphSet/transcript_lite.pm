@@ -25,7 +25,7 @@ sub colours {
 sub features {
   my ($self) = @_;
 
-  return $self->{'container'}->get_all_Genes_by_source('core');
+  return $self->{'container'}->get_all_Genes('ensembl');
 }
 
 

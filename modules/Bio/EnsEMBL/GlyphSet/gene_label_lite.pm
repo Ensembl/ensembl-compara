@@ -92,7 +92,14 @@ sub _init {
 ##############################################################################
     &eprof_start("gene-virtualgene_start-get");
 
-    foreach my $g (@{ $vc->get_all_Genes_by_source('sanger', 1) } ) { ## Hollow genes
+    my %gene_objs;
+    foreach my $g (@{$vc->get_all_Genes('', 1)}) {
+      my $source = $g->analysis->logic_name;
+      $gene_objs{$source} ||= [];
+      push @{$gene_objs{$source}}, $g;
+    }
+      
+    foreach my $g (@{$gene_objs{'sanger'}}) { 
       my $gene_label = $g->stable_id();  
       my $high = exists $highlights{ $gene_label }; 
       my $type = $g->type(); 
@@ -116,7 +123,7 @@ sub _init {
 ##############################################################################
 # Stage 2b: Retrieve all core (ensembl) genes                                #
 ##############################################################################
-    foreach my $g (@{ $vc->get_all_Genes_by_source('core', 1) } ) { ## Hollow genes
+    foreach my $g (@{$gene_objs{'ensembl'}} ) { 
         my( $gene_col, $gene_label, $high);
         $high = exists $highlights{$g->stable_id()} ? 1 : 0;
         my $gene_label = $g->external_name;
@@ -144,34 +151,9 @@ sub _init {
     &eprof_end("gene-virtualgene_start-get");
 
 ##############################################################################
-# Stage 2c: Retrieve all EMBL (external) genes                               #
-##############################################################################
-    &eprof_start("gene-externalgene_start-get");
-    foreach my $g (@{ $vc->get_all_Genes_by_source('embl', 1) } ) { ## Hollow genes
-       	my $gene_label = $g->external_name() || $g->stable_id();          
-	my $high = (exists $highlights{ $g->stable_id() }) || 
-	  exists ($highlights{$gene_label});
-        my $gene_col = ($g->type() eq 'pseudo') ? $pseudo_col : $ext_col;
-        push @genes, {
-                'chr_start' => $g->start() + $offset,
-                'chr_end'   => $g->end() + $offset,
-                'start'     => $g->start(),
-                'strand'    => $g->strand(),
-                'end'       => $g->end(),
-                'ens_ID'    => '', #$g->{'stable_id'},
-                'label'     => $gene_label,
-                'colour'    => $gene_col,
-                'ext_DB'    => $g->external_db(),
-                'high'      => $high,
-                'type'      => $g->type()
-        };
-    }
-    &eprof_end("gene-externalgene_start-get");
-
-##############################################################################
 # Stage 2d: Retrieve all RefSeq genes                                        #
 ##############################################################################
-    foreach my $g (@{ $vc->get_all_Genes_by_source('refseq', 1) } ) { ## Hollow genes
+    foreach my $g (@{$gene_objs{'refseq'}} ) { ## Hollow genes
         my $gene_label = $g->stable_id();
         my $high = (exists $highlights{ $g->stable_id() }) ||
           exists ($highlights{$gene_label});
