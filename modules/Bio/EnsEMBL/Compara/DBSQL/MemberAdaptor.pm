@@ -382,8 +382,11 @@ sub fetch_gene_for_peptide_member_id {
 
   my $join = [[['member_gene_peptide', 'mgp'], 'm.member_id = mgp.gene_member_id']];
 
-  my ($obj) = @{$self->_generic_fetch($constraint, $join)};
-  return $obj
+  my $obj = undef;
+  eval {
+    ($obj) = @{$self->_generic_fetch($constraint, $join)};
+  };
+  return $obj;
 }
 
 #
