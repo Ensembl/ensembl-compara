@@ -212,6 +212,26 @@ sub score{
 
 }
 
+=head2 cigar_string
+
+ Title   : cigar_string
+ Usage   : $obj->cigar_string($newval)
+ Function:
+ Example :
+ Returns : string (cigar_string representing the alignment)
+ Args    : newvalue (optional)
+
+
+=cut
+
+sub cigar_string {
+   my ($obj,$value) = @_;
+   if( defined $value) {
+      $obj->{'cigar_string'} = $value;
+    }
+    return $obj->{'cigar_string'};
+
+}
 
 =head2 dnafrag
 
