@@ -147,7 +147,7 @@ sub prepareGenomicAlignSystem
   my $createRulesAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateDnaRules',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateDnaRules',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateRules',
       -parameters      => ""
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createRulesAnalysis);
