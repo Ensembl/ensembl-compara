@@ -109,9 +109,9 @@ sub features {
 sub colour {
   my ($self, $f) = @_;
   if(($f->{'decipher_thang'}||"") eq "known") {
-    return ($f->{'decipher_strand'} < 0)?$DECIPHER_COLOURS->{'known_deletion'}:$DECIPHER_COLOURS->{'known_insertion'};
+    return $DECIPHER_COLOURS->{($f->{'decipher_strand'} < 0)?'known_deletion':'known_insertion'};
   }
-  return ($f->{'decipher_strand'} < 0)?$DECIPHER_COLOURS->{'novel_deletion'}:$DECIPHER_COLOURS->{'novel_insertion'};
+  return $DECIPHER_COLOURS->{($f->{'decipher_strand'} < 0)?'novel_deletion':'novel_insertion'};
 }
 
 sub href  { return undef; }
