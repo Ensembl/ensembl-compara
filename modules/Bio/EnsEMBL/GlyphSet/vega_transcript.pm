@@ -24,7 +24,7 @@ my %legend_map = (
 sub features {
     my ($self) = @_;
     my $author = $self->my_config('author');
-    my $gene_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('vega')->get_GeneAdaptor;
+	my $gene_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('vega')->get_GeneAdaptor;
     my $genes = [];
     if ($author) {
         # if author is defined in UserConfig, fetch only transcripts by this
@@ -35,7 +35,7 @@ sub features {
         my $avail = (split(/ /, $self->my_config('available')))[1]
                     . "." . $self->{'container'}->seq_region_name;
         return ([]) unless(EnsWeb::species_defs->get_config(
-                    EnsWeb::species_defs->name, 'DB_FEATURES')->{uc($avail)});
+                    $self->{'container'}{'_config_file_name_'}, 'DB_FEATURES')->{uc($avail)});
         
         $genes = $gene_adaptor->fetch_all_by_Slice_and_author($self->{'container'}, $author, 'otter');
     } else {
