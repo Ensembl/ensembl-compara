@@ -61,14 +61,17 @@ sub _init {
     @allgenes = $container->get_all_Genes_exononly();
     #&eprof_end('transcript - get_all_Genes_exononly()');
     #&eprof_start('transcript - get_all_ExternalGenes()');
-   # unless($target) { # Skip in single transcript mode
-   #     if ($type eq 'all'){
-   #         foreach my $vg ($container->get_all_ExternalGenes()) {
-   #             $vg->{'_is_external'} = 1;
-   #             push (@allgenes, $vg);
-   #         }
-   #     } 
-   # }                 # end of Skip in single transcript mode
+    unless($target) { # Skip in single transcript mode
+        if ($type eq 'all'){
+		    print STDERR "ALL TRANSCRIPTS\n";
+			print STDERR $container->_chr_name(), ' - ', $container->_global_start(), ' - ', $container->_global_end(),"\n";
+            foreach my $vg ( $container->get_all_ExternalGenes() ) {
+				print STDERR "EXT TRANSCRIPT: ".$vg->stable_id."\n";
+                $vg->{'_is_external'} = 1;
+                push (@allgenes, $vg);
+            }
+        } 
+    }                 # end of Skip in single transcript mode
     #&eprof_end('transcript - get_all_ExternalGenes()');
     $type = undef;
     
@@ -105,7 +108,6 @@ TRANSCRIPT:
             my $superhighlight = exists $highlights{$tid} ? 1 : 0;
             eval {
                 @dblinks = $transcript->each_DBLink();
-		print STDERR "DBLINKS: @dblinks\n";
                 unless( $target ) { #Skip in single transcript mode
                     ($id, $highlight) = $self->_label_highlight($tid, $highlight, \%highlights, \@dblinks)
                 }                   #end of Skip in single transcript mode
@@ -117,10 +119,10 @@ TRANSCRIPT:
                 if ($eg->{'_is_external'}) {
                     $colour = $type eq "pseudo" ? $pseudo_colour : $ext_colour;
                 }
-
+				my $PREFIX = "^".EnsWeb::species_defs->ENSEMBL_PREFIX."T";
                 if( $Config->{'_href_only'} eq '#tid' ) {
                     $Composite->{'href'} = qq(#$tid);
-                } elsif ($tid !~ /ENST/o){
+                } elsif ($tid !~ /$PREFIX/o){
 					my %zmenu = (
                             'caption'           => "EMBL: $tid",
 						    '01:EMBL curated '.($type eq 'pseudo' ? 'pseudogene' : 'transcript') => ''

@@ -23,7 +23,8 @@ sub _init {
 
     return unless ($self->strand() == -1);
     
-    my $length   		= $self->{'container'}->length();
+	my $vc              = $self->{'container'};
+    my $length   		= $vc->length();
     my $Config 			= $self->{'config'};
     my @bitmap         		= undef;
     my $pix_per_bp  		= $Config->transform->{'scalex'};
@@ -39,8 +40,11 @@ sub _init {
     my $col2                    = $Config->get('tilepath', 'col2');
     my $lab1                    = $Config->get('tilepath', 'lab1');
     my $lab2                    = $Config->get('tilepath', 'lab2');
+    my $threshold_navigation    = ($Config->get('tilepath', 'threshold_navigation') || 2e6)*1001;
+	my $show_navigation = $length < $threshold_navigation;
 	
-    my @asm_clones = $self->{'container'}->get_all_FPCClones();
+    my @asm_clones = $vc->get_all_FPCClones();
+	my $vc_start   = $vc->_global_start();
     if (@asm_clones){
 
 	foreach my $clone ( @asm_clones ) {
@@ -51,19 +55,21 @@ sub _init {
 	    my $end	= $clone->end();
 	    $end        = $length if ($end > $length);
 
-	    if ($i%2 == 0){
-		$col  = $col1;
-		$lab  = $lab1;
-	    } else {
-		$col  = $col2;
-		$lab  = $lab2;
-	    }
-			
+		($col,$lab) = $i ? ($col1,$lab1) : ($col2,$lab2);
+
 	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'y'            => 0,
-		'x'            => $start,
-		'absolutey'    => 1,
-	    });
+			'y'            => 0,
+			'x'            => $start,
+			'absolutey'    => 1
+		});
+		
+		$Composite->{'zmenu'} = {
+				'caption' => $id,
+				'EMBL id: '.$clone->embl_acc => '',
+				'Jump to Contigview' => "/$ENV{'ENSEMBL_SPECIES'}/contigview?cloneid=".$clone->embl_acc,
+				"loc: ".($clone->start()+$vc_start-1).'-'.($clone->end()+$vc_start-1) => '',
+				"length: ".($clone->length())
+	    } if $show_navigation;
 
 	    my $glyph = new Bio::EnsEMBL::Glyph::Rect({
 		'x'         => $start,
@@ -107,7 +113,7 @@ sub _init {
 	    }
 
 	    $self->push($Composite); 			
-	    $i++;
+	    $i = 1-$i;
     	}
 		
     }

@@ -13,9 +13,9 @@ sub init_label {
     my ($self) = @_;
     return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
-    'text'      => 'DNA(contigs)',
-    'font'      => 'Small',
-    'absolutey' => 1,
+	    'text'      => 'DNA(contigs)',
+    	'font'      => 'Small',
+	    'absolutey' => 1,
     });
     $self->label($label);
 }
@@ -37,8 +37,13 @@ sub _init {
 #                            -ensdb  => $ENSEMBL_DB,
 #                            );
 #    my $fpc_map = $mapdb->get_Map( 'FPC' );
-
+	my $vc = $self->{'container'};
+    my $length   = $vc->length() +1;
     my $Config   = $self->{'config'};
+	my $module = ref($self);
+	$module = $1 if $module=~/::([^:]+)$/;
+    my $threshold_navigation    = ($Config->get($module, 'threshold_navigation') || 2e6)*1001;
+	my $show_navigation = $length < $threshold_navigation;
     my $cmap     = $Config->colourmap();
     my $col1     = $cmap->id_by_name('contigblue1');
     my $col2     = $cmap->id_by_name('contigblue2');
@@ -49,7 +54,6 @@ sub _init {
     my $ystart   = 0;
     my $im_width = $Config->image_width();
     my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');
-    my $length   = $self->{'container'}->length() +1;
     $w *= $length/($length-1);
 
     my $gline = new Bio::EnsEMBL::Glyph::Rect({
@@ -63,7 +67,7 @@ sub _init {
     $self->push($gline);
 
     my @map_contigs = ();
-    @map_contigs = $self->{'container'}->_vmap->each_MapContig();
+    @map_contigs = $vc->_vmap->each_MapContig();
     if (@map_contigs) {
         my $start     = $map_contigs[0]->start() -1;
         my $end       = $map_contigs[-1]->end();
@@ -102,14 +106,15 @@ sub _init {
                 'height'    => 10,
                 'colour'    => $col,
                 'absolutey' => 1,
-                'zmenu'     => {
+			});
+			$glyph->{'zmenu'} = {
                     'caption' => $rid,
                     'Contig information'     => "/$ENV{'ENSEMBL_SPECIES'}/seqentryview?seqentry=$clone&contigid=$rid",
 #            "FPC ID: $fpc_id"  => "",
 #            "Request clone (FPC ID: $fpc_id)"  =>
 #            "http://www.sanger.ac.uk/cgi-bin/humace/CloneRequest?clone=$fpc_id&query=Requested%20via%20Ensembl",
-                },
-            });
+			} if $show_navigation;
+			
             $self->push($glyph);
 
             $clone = $strand > 0 ? $clone."->" : "<-$clone";
