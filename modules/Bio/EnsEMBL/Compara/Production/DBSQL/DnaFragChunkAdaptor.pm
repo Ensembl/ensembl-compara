@@ -48,7 +48,7 @@ sub store {
   
   my $addComma=0;
   foreach my $dfc (@out) {
-    if($dfc->isa('Bio::EnsEMBL::Compara::DnaFragChunk')) {
+    if($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
 
       $dfc->sequence_id($seqDBA->store($dfc->sequence));
       
@@ -74,7 +74,7 @@ sub update_sequence
   my $dfc  = shift;
 
   return 0 unless($dfc);
-  return 0 unless($dfc->isa('Bio::EnsEMBL::Compara::DnaFragChunk'));
+  return 0 unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
   return 0 unless($dfc->dbID);
   return 0 unless(defined($dfc->sequence));
   
@@ -102,7 +102,7 @@ sub update_sequence
   Example    : $dfc = $adaptor->fetch_by_dbID(1234);
   Description: Returns the DnaFragChunk created from the database defined by the
                the id $id.
-  Returntype : Bio::EnsEMBL::Compara::DnaFragChunk
+  Returntype : Bio::EnsEMBL::Compara::Production::DnaFragChunk
   Exceptions : thrown if $id is not defined
   Caller     : general
 =cut
@@ -132,7 +132,7 @@ sub fetch_by_dbID{
   Example    : $dfc = $adaptor->fetch_by_dbID(1234);
   Description: Returns an array of DnaFragChunk created from the database defined by the
                the id $id.
-  Returntype : listref of Bio::EnsEMBL::Compara::DnaFragChunk objects
+  Returntype : listref of Bio::EnsEMBL::Compara::Production::DnaFragChunk objects
   Exceptions : thrown if $id is not defined
   Caller     : general
 =cut
@@ -216,7 +216,7 @@ sub _objs_from_sth {
   while ($sth->fetch()) {
     my $dfc;
 
-    $dfc = Bio::EnsEMBL::Compara::DnaFragChunk->new();
+    $dfc = Bio::EnsEMBL::Compara::Production::DnaFragChunk->new();
 
     $dfc->adaptor($self);
     $dfc->dbID($column{'dnafrag_chunk_id'});
@@ -248,7 +248,7 @@ sub _objs_from_sth {
   Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
   Description: Performs a database fetch and returns feature objects in
                contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::DnaFragChunk in contig coordinates
+  Returntype : listref of Bio::EnsEMBL::Production::DnaFragChunk in contig coordinates
   Exceptions : none
   Caller     : internal
 

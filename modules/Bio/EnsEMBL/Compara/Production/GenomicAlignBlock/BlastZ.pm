@@ -241,7 +241,7 @@ sub store_featurePair_as_genomicAlignBlock
   if($self->{'debug'}) {
     print_simple_align($fp->get_SimpleAlign, 80);
 
-    my $testChunk = new Bio::EnsEMBL::Compara::DnaFragChunk();
+    my $testChunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
     $testChunk->dnafrag($qyChunk->dnafrag);
     $testChunk->seq_start($qyChunk->seq_start+$fp->start-1);
     $testChunk->seq_end($qyChunk->seq_start+$fp->end-1);
