@@ -397,7 +397,7 @@ sub check_BRHweb_is_unique
   } else {
     $query_member->{'RHpaf'} = $paf2;
   }
-  $self->store_paf_as_homology($query_member->{'RHpaf'}, 'BRH');
+  $self->store_paf_as_homology($query_member->{'RHpaf'}, 'UBRH');
   return 1;
 }
 
@@ -436,10 +436,10 @@ sub check_BRHweb_for_recent_duplicates
   }
 
   print("MULTIPLE BRHs are RECENT DUPLICATION\n");
-  my $type = "BRH1.$multiCount";
+  my $subtype = "DUP 1.$multiCount";
   foreach my $paf (@{$pafsArray}) {
     next if($paf->query_member->genome_db_id != $query_member->genome_db_id);
-    $self->store_paf_as_homology($paf, $type);
+    $self->store_paf_as_homology($paf, "MBRH", $subtype);
     $query_member->{'RHpaf'} = $paf;
   }
   print("\n");
@@ -460,7 +460,7 @@ sub tag_BRHweb_as_mess
 
   foreach my $paf (@{$pafsArray}) {
     next if($paf->query_member->genome_db_id != $query_member->genome_db_id);
-    $self->store_paf_as_homology($paf, 'BRH_MULTI');
+    $self->store_paf_as_homology($paf, 'MBRH', 'complex');
   }
   return 1;
 }
@@ -503,7 +503,7 @@ sub check_segment_BRH_synteny
 
   if($lastMember->{'RHpaf'}) {
     #print("PICK: "); $lastMember->{'RHpaf'}->display_short();
-    $self->store_paf_as_homology($lastMember->{'RHpaf'}, 'BRHS');
+    $self->store_paf_as_homology($lastMember->{'RHpaf'}, 'MBRH', 'SYN');
     print("\n");
     return 1;
   }
@@ -636,8 +636,11 @@ sub find_RHS
         $rank = $recip_paf->hit_rank if($rank < $recip_paf->hit_rank);
         $type .= $rank;
       }
-      $type = 'BRHS' if($paf->hit_rank==1 and $recip_paf->hit_rank==1);
-      $self->store_paf_as_homology($paf, $type);
+      if($paf->hit_rank==1 and $recip_paf->hit_rank==1) {
+        $self->store_paf_as_homology($paf, "MBRH", "SYN");
+      } else {
+        $self->store_paf_as_homology($paf, $type);
+      }
     }
   }
 }
@@ -731,8 +734,10 @@ sub store_paf_as_homology
   my $self = shift;
   my $paf  = shift;
   my $type = shift;
+  my $subtype = shift;
+  $subtype = '' unless($subtype);
 
-  if($self->{'verbose'}) { print("$type : "); $paf->display_short; }
+  if($self->{'verbose'}) { print("$type $subtype : "); $paf->display_short; }
 
   # load the genes for this PAF
   # member_gene values must be properly set before $paf->create_homology
@@ -745,14 +750,15 @@ sub store_paf_as_homology
 
   my $homology = $paf->create_homology();
   $homology->description($type);
+  $homology->subtype($subtype);
 
   my $key = $paf->hash_key;
   my $hashtype=$self->{'storedHomologies'}->{$key};
   if($hashtype) {
-    warn($paf->hash_key." homology already stored as $hashtype not $type\n") if($self->{'verbose'}>1);
+    warn($paf->hash_key." homology already stored as $hashtype not $type $subtype\n") if($self->{'verbose'}>1);
   } else {
     $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) if($self->{'store'});
-    $self->{'storedHomologies'}->{$key} = $type;
+    $self->{'storedHomologies'}->{$key} = $type." ".$subtype;
   }
 
   delete $self->{'membersToBeProcessed'}->{$paf->query_member->dbID};
