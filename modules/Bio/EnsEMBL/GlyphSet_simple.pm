@@ -500,8 +500,4 @@ sub _init {
     $self->error() if $flag; 
 }
 
-sub no_features { 
-  my $self = shift;
-  $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
-}
 1;
