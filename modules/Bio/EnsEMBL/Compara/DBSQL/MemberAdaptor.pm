@@ -767,7 +767,7 @@ sub store_gene_peptide_link {
   my ($self, $gene_member_id, $peptide_member_id) = @_;
 
   my $sth =
-    $self->prepare("INSERT INTO member_gene_peptide (gene_member_id, peptide_member_id)
+    $self->prepare("INSERT ignore INTO member_gene_peptide (gene_member_id, peptide_member_id)
                     VALUES (?,?)");
   $sth->execute($gene_member_id, $peptide_member_id);
   $sth->finish;
