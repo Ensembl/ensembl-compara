@@ -117,6 +117,7 @@ sub fasta_output {
   my ($gene, $fh, $tx) = @_;
 
   return 1 if (lc($gene->type) eq 'pseudogene');
+  return 1 if (lc($gene->type) eq 'bacterial_contaminant');
 
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
 
