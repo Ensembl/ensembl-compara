@@ -13,8 +13,12 @@ my $blast_executable = "/usr/local/ensembl/bin/wublastn";
 my $min_score = 300;
 my $qy_input_only = 0;
 my $p = "blastn";
+my $debug = 0;
+my $keeptmp = 0;
 
-GetOptions('i=s' => \$input,
+GetOptions('keeptmp' => \$keeptmp,
+	   'debug' => \$debug,
+	   'i=s' => \$input,
 	   'st=s' => \$subject_tag,
 	   'sf=s' => \$subject_fasta,
 	   'si=s' => \$subject_index,
@@ -104,7 +108,9 @@ foreach my $qy_seq (@query_seq) {
     unlink glob("/tmp/*$rand*");
     die "error in wublast, $!\n";
   }
-  unless (system("$FilterBlast_executable -p $p $subject_tag $min_score $blast_file >> $cigar_file") == 0) {
+  my $cmd_line = "$FilterBlast_executable -p $p";
+  $cmd_line .= " -debug" if ($debug);
+  unless (system("$cmd_line $subject_tag $min_score $blast_file >> $cigar_file") == 0) {
     unlink glob("/tmp/*$rand*");
     die "error in cigar, $!\n";
   }
@@ -116,6 +122,6 @@ unless (system("cp $cigar_file $final_file") == 0) {
   die "error in cp $cigar_file,$1\n";
 }
 
-unlink glob("/tmp/*$rand*");
+unlink glob("/tmp/*$rand*") unless ($keeptmp);
 
 exit 0;
