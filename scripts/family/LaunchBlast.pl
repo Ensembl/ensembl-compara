@@ -6,7 +6,7 @@ use File::Basename;
 
 my ($idqy,$fastadb,$fastaindex,$dir);
 
-my $blast_executable = "/usr/local/ensembl/bin/blastall-2.2.1"; 
+my $blast_executable = "/usr/local/ensembl/bin/blastall"; 
 my $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
 
 if (-e "/proc/version") {
@@ -16,11 +16,13 @@ if (-e "/proc/version") {
 
 print STDERR "fastafetch_executable: ",$fastafetch_executable,"\n";
 
-my $tribe_parse_executable = "/nfs/acari/abel/bin/tribe-parse";
+my $blast_parser_executable = "/nfs/acari/abel/bin/mcxdeblast";
+my $tab_file;
 
 GetOptions('idqy=s' => \$idqy,
 	   'fastadb=s' => \$fastadb,
 	   'fastaindex=s' => \$fastaindex,
+	   'tab=s' => \$tab_file,
 	   'dir=s' => \$dir);
 
 unless (-e $idqy) {
@@ -31,27 +33,28 @@ my $rand = time().rand(1000);
 
 my $qy_file = "/tmp/qy.$rand";
 my $blast_file = "/tmp/blast.$rand";
-my $blast_tribe_file = "/tmp/blast_tribe.$rand";
+my $raw_file = "/tmp/raw.$rand";
 
 unless(system("$fastafetch_executable $fastadb $fastaindex $idqy > $qy_file") == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in $fastafetch_executable, $!\n";
 } 
 
-my $status = system("$blast_executable -d $fastadb -i $qy_file -p blastp -e 0.00001 > $blast_file");
+my $status = system("$blast_executable -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 1000 -b 0 > $blast_file");
 unless ($status == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in $blast_executable, $!\n";
 }
-unless (system("$tribe_parse_executable $blast_file > $blast_tribe_file") == 0) {
+
+unless (system("$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tab_file --stdhandler $blast_file > $raw_file") == 0) {
   unlink glob("/tmp/*$rand*");
-  die "error in $tribe_parse_executable, $!\n";
+  die "error in $blast_parser_executable, $!\n";
 }
 
-my $final_file = $dir."/".basename($idqy).".blast_tribe";
-unless (system("gzip -c $blast_tribe_file > $final_file.gz") == 0) {
+my $final_raw_file = $dir."/".basename($idqy).".raw";
+unless (system("gzip -c $raw_file > $final_raw_file.gz") == 0) {
   unlink glob("/tmp/*$rand*");
-  die "error in cp $blast_tribe_file, $!\n";
+  die "error in cp $raw_file, $!\n";
 }
 
 unlink glob("/tmp/*$rand*");
