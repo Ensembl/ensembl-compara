@@ -9,11 +9,11 @@ use Bio::EnsEMBL::Glyph::Composite;
 
 sub init_label {
     my ($self) = @_;
-	return if( defined $self->{'config'}->{'_no_label'} );
+    return if( defined $self->{'config'}->{'_no_label'} );
     my $label = new Bio::EnsEMBL::Glyph::Text({
-	'text'      => 'pdb',
-	'font'      => 'Small',
-	'absolutey' => 1,
+        'text'      => 'pdb',
+        'font'      => 'Small',
+        'absolutey' => 1,
     });
     $self->label($label);
 }
@@ -33,15 +33,15 @@ sub _init {
     my $colour = $Config->get('pdb', 'col');
 
     my $rect = new Bio::EnsEMBL::Glyph::Rect({
-	'x'        => $xp,
-	'y'        => $y,
-	'width'    => $wp,
-	'height'   => $h,
-	'id'       => $protein->id(),
-	'colour'   => $colour,
-	'zmenu' => {
-	    'caption' => $protein->id(),
-	},
+        'x'        => $xp,
+        'y'        => $y,
+        'width'    => $wp,
+        'height'   => $h,
+        'id'       => $protein->id(),
+        'colour'   => $colour,
+        'zmenu' => {
+            'caption' => $protein->id(),
+        },
     });
     
     $self->push($rect);
