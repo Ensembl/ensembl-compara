@@ -29,7 +29,7 @@ sub _init {
 	my $flip = 0;
 	my @colours  = ($Config->get('Pprotein','col1'), $Config->get('Pprotein','col2'));
 	my $start_phase = 1;
-	
+	if ($pep_splice){
 	for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
 	   my $colour = $colours[$flip];
 	   my $exon_id = $pep_splice->{$exon_offset}{'exon'};
@@ -52,6 +52,18 @@ sub _init {
 	$x = $exon_offset ;
 	$start_phase = ($pep_splice->{$exon_offset}{'phase'} +1) ;
 	$flip = 1-$flip;
+	}
+	}else{
+	 my $rect = new Sanger::Graphics::Glyph::Rect({
+	'x'        => 0,
+	'y'        => $y,
+	'width'    => $protein->length(),
+	'height'   => $h,
+	'id'       => $protein->id(),
+	'colour'   => $colours[0],
+    });
+    
+    $self->push($rect);
 	}
 }
 1;
