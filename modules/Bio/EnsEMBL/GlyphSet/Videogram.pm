@@ -58,7 +58,7 @@ sub _init {
 
     # fetch the chromosome bands that cover this VC.
     my $kba         = $self->{'container'}->{'ka'};
-    my $bands       = $kba->fetch_by_chr_name($chr);
+    my $bands       = $kba->fetch_all_by_chr_name($chr);
     
     my $chr_length = 
       $self->{'container'}->{'ca'}->fetch_by_chr_name($chr)->length() || 1;
