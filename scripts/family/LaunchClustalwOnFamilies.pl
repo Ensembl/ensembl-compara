@@ -15,34 +15,16 @@ Options:
 -dbuser
 -dbpass
 -family_stable_id|-family_id
--fasta_file
--fasta_index
 -clustal_file
 -dir
 -store
 
 \n";
 
-my ($family_stable_id,$family_id,$fasta_file,$fasta_index);
+my ($family_stable_id,$family_id);
 
 my $dir = ".";
 my $store = 0;
-
-# There is a new version of fastafetch on the farm, /usr/local/ensembl/bin/fastafetch
-# We had problem previously with it, as sometimes the fasta files we use have IUPAC letter
-# that fastafetch was not aware of. If any problem with fall back to the compiled version in
-# /nfs/acari/abel/bin/alpha-dec-osf4.0 or /nfs/acari/abel/bin/i386/ and inform Guy Slater to fix
-# the potential bug
-
-my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
-
-unless (-e $fastafetch_executable) {
-  $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
-  if (-e "/proc/version") {
-    # it is a linux machine
-    $fastafetch_executable = "/nfs/acari/abel/bin/i386/fastafetch";
-  }
-}
 
 my $clustalw_executable = "/usr/local/ensembl/bin/clustalw";
 
@@ -62,8 +44,6 @@ GetOptions('help' => \$help,
 	   'dbpass=s' => \$dbpass,
 	   'family_stable_id=s' => \$family_stable_id,
 	   'family_id=i' => \$family_id,
-	   'fasta_file=s' => \$fasta_file,
-	   'fasta_index=s' => \$fasta_index,
 	   'dir=s' => \$dir,
            'clustal_file=s' => \$clustal_file,
 	   'store' => \$store);
@@ -100,6 +80,8 @@ if (defined $family_stable_id) {
   $family = $FamilyAdaptor->fetch_by_dbID($family_id);
 }
 
+my $sb_file = "/tmp/sb.$rand";
+
 unless (defined $clustal_file) {
 
   my @members_attributes;
@@ -108,26 +90,20 @@ unless (defined $clustal_file) {
   push @members_attributes,@{$family->get_Member_Attribute_by_source('SWISSPROT')};
   push @members_attributes,@{$family->get_Member_Attribute_by_source('SPTREMBL')};
 
-  my $sb_id = "/tmp/sb_id.$rand";
+  open S, ">$sb_file";
   
-  open S,">$sb_id";
-
   foreach my $member_attribute (@members_attributes) {
     my ($member,$attribute) = @{$member_attribute};
     my $member_stable_id = $member->stable_id;
     print STDERR $member_stable_id,"\n";
-    print S $member_stable_id,"\n";
+    print S ">$member_stable_id\n";
+    my $seq = $member->sequence;
+    $seq =~ s/(.{72})/$1\n/g;
+    print S $seq,"\n";
   }
 
   close S;
 
-  my $sb_file = "/tmp/sb.$rand";
-
-  unless (system("$fastafetch_executable $fasta_file $fasta_index $sb_id |grep -v \"^Message\" > $sb_file") == 0) {
-    unlink glob("/tmp/*$rand*");
-    die "error in fastafetch $sb_id, $!\n";
-  }
-  
   # If only one member no need for a multiple alignment.
   # Just load the sequence as it is in the family db
 
@@ -218,6 +194,7 @@ if ($store) {
     unlink glob("/tmp/*$rand*");
     die "error in cp $id.out,$1\n";
   }
+  system("cp $sb_file $dir/$id.pep");
 }
 
 unlink glob("/tmp/*$rand*");

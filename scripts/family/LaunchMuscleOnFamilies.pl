@@ -15,15 +15,13 @@ Options:
 -dbuser
 -dbpass
 -family_stable_id|-family_id
--fasta_file
--fasta_index
--clustal_file
+-muscle_file
 -dir
 -store
 
 \n";
 
-my ($family_stable_id,$family_id,$fasta_file,$fasta_index);
+my ($family_stable_id,$family_id);
 
 my $dir = ".";
 my $store = 0;
@@ -54,8 +52,6 @@ GetOptions('help' => \$help,
 	   'dbpass=s' => \$dbpass,
 	   'family_stable_id=s' => \$family_stable_id,
 	   'family_id=i' => \$family_id,
-	   'fasta_file=s' => \$fasta_file,
-	   'fasta_index=s' => \$fasta_index,
 	   'dir=s' => \$dir,
            'muscle_file=s' => \$muscle_file,
 	   'store' => \$store);
