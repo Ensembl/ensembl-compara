@@ -96,7 +96,7 @@ sub fetch_input {
   $self->throw("Unable to make bioseq for member_id=$member_id") unless defined($bioseq);
   $self->query($bioseq);
 
-  my ($thr, $thr_type);
+  my ($thr, $thr_type, $options);
   my %p = $self->parameter_hash;
 
   if (defined $p{-threshold} && defined $p{-threshold_type}) {
@@ -106,6 +106,13 @@ sub fetch_input {
   else {
       $thr_type = 'PVALUE';
       $thr      = 1e-10;
+  }
+  if (defined $p{options}) {
+    $options = $p{options};
+    # print("!!!found my options : $options\n");
+  }
+  else {
+    $options = '';
   }
 
 
@@ -132,10 +139,9 @@ sub fetch_input {
                      -query          => $self->query,
                      -database       => $self->analysis->db_file,
                      -program        => $self->analysis->program_file,
-                     #-options        => $self->analysis->parameters,
+                     -options        => $options,
                      -threshold      => $thr,
-                     -threshold_type => $thr_type,
-                     $self->parameter_hash,
+                     -threshold_type => $thr_type
                     );
   $runnable->add_regex($self->analysis->db_file, '^(\S+)\s*');
   $self->runnable($runnable);
