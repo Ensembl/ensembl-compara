@@ -105,7 +105,7 @@ sub generic_fetch_sth {
 
   my $sth = $self->prepare($sql);
 
-#  print STDERR $sql,"\n";
+#  warn $sql;
 
   $sth->execute;  
 
