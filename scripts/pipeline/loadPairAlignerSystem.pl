@@ -355,7 +355,7 @@ sub createPairAlignerAnalysis
              -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
       }
       
-      $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'},);
+      $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
 
       #
       # create CreateFilterDuplicatesJobs analysis
