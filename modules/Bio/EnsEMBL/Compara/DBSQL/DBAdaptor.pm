@@ -136,7 +136,7 @@ sub new {
 
 
 
-=head2 add_db_adaptor
+=head2 add_db_adaptor [DEPRECATED]
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::DBConnection
   Example    : $compara_db->add_db_adaptor($homo_sapiens_db);
@@ -146,6 +146,7 @@ sub new {
                adaptor argument must define the get_MetaContainer argument
                so that species name and assembly type information can be
                extracted from the database.
+               DEPRECATED: see Bio::EnsEMBL::Registry module.
   Returntype : 1 if success 0 otherwise
   Exceptions : Thrown if the argument is not a Bio::EnsEMBL::DBConnection
                or if the argument does not implement a get_MetaContainer
@@ -188,7 +189,7 @@ sub add_db_adaptor {
 
 
 
-=head2 get_db_adaptor
+=head2 get_db_adaptor [DEPRECATED]
 
   Arg [1]    : string $species
                the name of the species to obtain a genome DBAdaptor for.
@@ -200,6 +201,7 @@ sub add_db_adaptor {
                constructor, or subsequently added using the add_db_adaptor
                method.  If the DBAdaptor is not available (i.e. has not
                been specified by one of the abbove methods) undef is returned.
+               DEPRECATED: see Bio::EnsEMBL::Registry module.
   Returntype : Bio::EnsEMBL::DBSQL::DBConnection or undef
   Exceptions : none
   Caller     : Bio::EnsEMBL::Compara::GenomeDBAdaptor
