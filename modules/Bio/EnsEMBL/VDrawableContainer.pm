@@ -34,7 +34,7 @@ sub new {
 	    next unless ($Config->get($row, 'on') eq "on");
     	if( $row eq 'Videogram' && $Config->{'_all_chromomosomes'} eq 'yes') {
             my $pos = $tmp->{$Config->get($row, 'pos')};
-    	    foreach my $chr ( @{EnsWeb::species_defs->ENSEMBL_CHROMOSOMES} ) {
+    	    foreach my $chr ( @{$Config->{'chromomosomes'}||EnsWeb::species_defs->ENSEMBL_CHROMOSOMES} ) {
     		    my $GlyphSet;
                 eval {
     		        $GlyphSet = new Bio::EnsEMBL::GlyphSet::Videogram(
