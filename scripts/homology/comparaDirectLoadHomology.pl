@@ -117,7 +117,6 @@ sub load_orthos {
     my $stable_id = $gene1->taxon_id() . "_" . $gene2->taxon_id . "_";
     $stable_id .= sprintf ("%011.0d",$build_homology_idx++);
     $homology->stable_id($stable_id);
-    $homology->source_name("ENSEMBL_ORTHOLOGUES");
     $homology->description("DWGA");
     $homology->method_link_species_set($mlss);
     
