@@ -1,0 +1,474 @@
+package Bio::EnsEMBL::GlyphSet::Vsynteny;
+use strict;
+use vars qw(@ISA);
+use Bio::EnsEMBL::GlyphSet;
+@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use Bio::EnsEMBL::Glyph::Rect;
+use Bio::EnsEMBL::Glyph::Poly;
+use Bio::EnsEMBL::Glyph::Text;
+use Bio::EnsEMBL::Glyph::Line;
+use Bio::EnsEMBL::Glyph::Space;
+use SiteDefs;
+
+sub init_label {
+    my ($self) = @_;
+    my $SPECIES_T = $ENV{'ENSEMBL_SPECIES'};
+    $SPECIES_T =~ s/_/ /g;
+    my $label = new Bio::EnsEMBL::Glyph::Text({
+        'text'      => "$SPECIES_T chromosome ".uc($self->{'container'}->{'chr'}),
+        'font'      => 'Small',
+        'absolutey' => 1,
+    });
+    $self->label($label);
+}
+
+sub chr_sort {
+    my $self = shift;
+    my $large_value = 1e10;
+    return 
+        map { $_ == ($large_value+1) ? 'Y' : ( $_ == $large_value ? 'X' : $_ ) } 
+            sort { $a <=> $b }
+                map { $_ eq 'Y' ? ($large_value+1) : ( $_ eq 'X' ? $large_value : $_ ) } 
+                    @_;
+}
+
+sub _init {
+    my ($self) = @_;
+
+    my $Config = $self->{'config'};
+    return unless $Config->container_width()>0; # The container has zero width !!EXIT!!
+    
+## FIRSTLY LETS SORT OUT THE COLOURS!!
+    my $cmap   = $Config->colourmap();
+    my $white  = $cmap->id_by_name('white');
+    my $black  = $cmap->id_by_name('black');
+    my $grey   = $cmap->add_hex(999999);
+    my $red    = $cmap->id_by_name('red');
+    my $blue   = $cmap->id_by_name('blue');
+    my $brown  = $cmap->id_by_name('rust');
+
+    my @BORDERS = map { $cmap->add_hex($_) } qw(00cc00 ff66FF 3333ff 009999 ff9900 993399 cccc00);
+    my @COLOURS = map { $cmap->add_hex($_) } qw(99ff99 ffccff 9999ff 99ffff ffcc99 cc99ff ffff99);
+    @BORDERS = (@BORDERS,@BORDERS,@BORDERS);
+    @COLOURS = (@COLOURS,@COLOURS,@COLOURS);
+    my $bg     = $Config->get('_settings','bgcolor');
+
+## LETS GRAB THE DATA FROM THE CONTAINER
+    my $chr         = $self->{'container'}->{'chr'} || 1;
+    my $kba         = $self->{'container'}->{'ka_main'};
+    my $kba2        = $self->{'container'}->{'ka_secondary'};
+    my $synteny_data= $self->{'container'}->{'synteny'};
+    my $OTHER       = $self->{'container'}->{'other_species'};
+## This is the list of chromosomes we will be drawing     
+
+    my %other_chrs = map { ($_ , 1) } @{ EnsWeb::species_defs->other_species($self->{'container'}->{'other_species'},'ENSEMBL_CHROMOSOMES') };
+    
+## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
+
+    my $chr_length  = $kba->fetch_chromosome_length( $chr );
+    my @bands       = $kba->fetch_all_by_chromosome( $chr );
+
+## NOW LETS GRAB THE IMAGE PARAMETERS
+    my $im_width            = $Config->image_width();
+    my $length              = $Config->get('Vsynteny','_image_height');
+    my $top_margin          = $Config->get('Vsynteny','_top_margin');
+    my $main_width          = $Config->get('Vsynteny','_main_width');
+    my $padding             = $Config->get('Vsynteny','_padding');
+    my $outer_padding       = $Config->get('Vsynteny','_outer_padding');
+    my $inner_padding       = $Config->get('Vsynteny','_inner_padding');
+    my $secondary_width     = $Config->get('Vsynteny','_secondary_width');
+    my $spacing             = $Config->get('Vsynteny','_spacing');
+## LET us derive the next set of values....        
+    my $h_offset            = $im_width - $top_margin - $length;
+#    my $bpperpx             = $Config->container_width()/$length;
+#    my ($w,$h)              = $Config->texthelper->Vpx2bp('Tiny');
+    my $v_offset            = $Config->container_width(); # bottom align each chromosome!
+
+## Finally some parameters for the drawing code...
+    my $done_1_acen         = 0;        # flag for tracking place in chromsome
+    # max width of band label is 6 characters
+
+## Synteny drawing stage 1....
+##   Part 2: Draw the central karyotype
+
+##   Part 1: Draw a box behind the karyotype
+
+    my @chromosomes = ();
+    my $highlights_secondary = {};
+    my %colour;
+    my %side;
+    my %border;
+    my $side =1;
+    my $COL;
+    my $SIDE;
+    my $BORD;
+    my $this_chr = $synteny_data->[0]->{'chr_name'};
+    my $highlights_main      = { $this_chr => [] };
+    foreach my $box ( @$synteny_data ) {
+        my $other_chr = $box->{'hit_chr_name'};
+        if(!$other_chrs{$other_chr}) { ## We have a hit on another chromosome 
+            $COL = $grey;
+            $BORD = $black;
+            $SIDE = 0;
+        } elsif( exists $highlights_secondary->{$other_chr} ) { ## We have a hit which is on a chr... which we've already positioned
+            $COL  = $colour{$other_chr};
+            $SIDE = $side{$other_chr};
+            $BORD = $border{$other_chr};
+        } else { ## We have a hit which is on a chr... which we have already to position
+            $highlights_secondary->{$other_chr}=[];
+            $COL = shift @COLOURS;
+            $BORD = shift @BORDERS;
+            push @chromosomes, $other_chr;
+            $side *=-1;
+            $SIDE = $side;
+            $side{$other_chr} = $side;
+            $colour{$other_chr} = $COL;
+            $border{$other_chr} = $BORD;
+        }
+        push @{$highlights_main->{$this_chr}}, {
+            'id' => $box->{'synteny_id'},
+            'start'=> $box->{'chr_start'},
+            'end' => $box->{'chr_end'},
+            'col' => $COL,
+            'border' => $BORD,
+            'side' => $SIDE
+        };
+        if($SIDE) {
+            push @{$highlights_secondary->{$other_chr}}, {
+                'rel_ori' => $box->{'rel_ori'},
+                'id' => $box->{'synteny_id'},
+                'start'=> $box->{'hit_chr_start'},
+                'end' => $box->{'hit_chr_end'},
+                'col' => $COL,
+                'border' => $BORD,
+                'side' => 0
+            };
+        }
+    }
+    my %main_coords = $self->draw_chromosome( 
+        'bands'         => \@bands,
+        'h_offset'      => $outer_padding + $inner_padding + $secondary_width,
+        'v_offset'      => $h_offset,
+        'length'        => $length,
+        'chr_length'    => $chr_length,
+        'width'         => $main_width,
+        'white'         => $white,
+        'black'         => $black,
+        'grey'          => $grey,
+        'bg'            => $bg,
+        'highlights'    => $highlights_main->{$chr},
+        'font'          => 'Tiny',
+        'ruler'         => ( $chr_length> 10e7 ? 2e7 : 1e7 )
+    );
+
+    my %secondary_coords;
+    my $num_chr     = @chromosomes;
+    my $flag = 0;
+    my $N=0;
+    my $FLAG = $num_chr%2 == 0; ## FLAG MEANS THAT EVEN START AT 0...
+    my $secondary_length = int( 2 * ( $length + $spacing ) / ($num_chr+1-$FLAG) - $spacing );
+    foreach my $chr2 ( @chromosomes ) {
+        my $chr_length_2  = $kba2->fetch_chromosome_length( $chr2 ) || 0;
+        my @bands_2       = $kba2->fetch_all_by_chromosome( $chr2 );
+        my ($h_offset2, $v_offset2) = $flag==0 ?
+            ( $h_offset + $N/2 * ( $secondary_length + $spacing ),
+              $outer_padding) : # LHS
+            ( $h_offset + ($N-$FLAG)/2 * ( $secondary_length + $spacing ),
+              2 * $inner_padding + $secondary_width + $main_width + $outer_padding) ; # RHS
+        my %t = $self->draw_chromosome( 
+            'bands'         => \@bands_2,
+            'h_offset'      => $v_offset2,
+            'v_offset'      => $h_offset2,
+            'length'        => $secondary_length,
+            'chr_length'    => $chr_length_2,
+            'width'         => $secondary_width,
+            'white'         => $white,
+            'black'         => $black,
+            'grey'          => $grey,
+            'bg'            => $bg,
+            'chr_name'      => "Chr $chr2",
+            'font'          => 'Tiny',
+            'ruler'         => ( ($chr_length_2/$num_chr)> 10e7 ? 2e7*($num_chr>5 ? 5 : 1) : 1e7 *($num_chr>5 ? 5 : 1) ),
+            'ruler_offset'  => $flag == 0 ? 'l' : 'r',
+            'highlights'    => $highlights_secondary->{$chr2}
+        );      
+        while(my($k,$v)=each(%t)) {
+            $secondary_coords{$k}=$v;
+        }
+        $N++;
+        $flag = 1-$flag;
+    }        
+    foreach(keys %secondary_coords) {
+        my($Y1,$Y2);
+        my $X1 = ($secondary_coords{$_}->{'top'}+$secondary_coords{$_}->{'bottom'})/2;
+        my $X2 = ($main_coords{$_}->{'top'}+$main_coords{$_}->{'bottom'})/2;
+        if($secondary_coords{$_}->{'left'} > $main_coords{$_}->{'left'}) {
+            ($X1,$X2)=($X2,$X1);
+            $Y1 = $main_coords{$_}->{'right'};
+            $Y2 = $secondary_coords{$_}->{'left'};
+        } else {
+            $Y1 = $secondary_coords{$_}->{'right'};
+            $Y2 = $main_coords{$_}->{'left'};
+        }
+        my $COL = $secondary_coords{$_}->{'rel_ori'} == 1 ? $black : $brown;
+        $self->push(new Bio::EnsEMBL::Glyph::Line({
+            'x'       => $X1,
+            'y'       => $Y1,
+            'width'   => 0,
+            'height'  => ($Y2-$Y1)/10,
+            'colour'           =>  $COL,
+            'absolutey'        => 1, 'absolutex'        => 1
+        }));
+        $self->push(new Bio::EnsEMBL::Glyph::Line({
+            'x'       => $X1,
+            'y'       => $Y1 + ($Y2-$Y1)/10,
+            'width'   => $X2-$X1,
+            'height'  => 4*($Y2-$Y1)/5,
+            'colour'           => $COL,
+            'absolutey'        => 1, 'absolutex'        => 1
+        }));
+        $self->push(new Bio::EnsEMBL::Glyph::Line({
+            'x'       => $X2,
+            'y'       => $Y2 - ($Y2-$Y1)/10,
+            'width'   => 0,
+            'height'  => ($Y2-$Y1)/10,
+            'colour'           =>  $COL,
+            'absolutey'        => 1, 'absolutex'        => 1
+        }));
+    }
+    my $w = $self->{'config'}->texthelper->width('Tiny');
+    my $h = $self->{'config'}->texthelper->height('Tiny');
+    my $OTHER_T = $OTHER; $OTHER_T =~s/_/ /g;
+    $self->unshift(new Bio::EnsEMBL::Glyph::Text({
+            'x'          => $im_width - $h - 1,
+            'y'          => $outer_padding + $secondary_width/2 - $w * length($OTHER_T)/2,
+            'font'       => 'Tiny',
+            'colour'     => $black,
+            'text'       => $OTHER_T,
+            'absolutey'  => 1, 'absolutex' => 1
+    }));
+    $self->unshift(new Bio::EnsEMBL::Glyph::Text({
+            'x'          => $im_width - $h - 1  ,
+            'y'          => $outer_padding + $inner_padding*2 + $main_width + 3*$secondary_width/2 - $w * length($OTHER_T)/2,
+            'font'       => 'Tiny',
+            'colour'     => $black,
+            'text'       => $OTHER_T,
+            'absolutey'  => 1, 'absolutex' => 1
+    }));
+    $self->unshift(new Bio::EnsEMBL::Glyph::Rect({
+            'x'          => 0,
+            'y'          => 0,
+            'width'      => $im_width,
+            'height'     => ($outer_padding + $secondary_width + $inner_padding ) * 2 + $main_width,
+            'absolutey'  => 1,
+            'absolutex'  => 1
+    }));
+}
+
+sub draw_chromosome {
+    my $self = shift;
+    my %params = @_;
+    ## contains hash 'bands', 'h_offset', 'v_offset', 
+    ##               'length', 'chr_length', 'width',
+    ##               'grey', 'black', 'bg', 'white', 
+    ##               'chr_name', 'font' ## will be used for labelling in future
+    my $h_offset   = $params{'h_offset'};
+    my $v_offset   = $params{'v_offset'};
+    my $length     = $params{'length'};
+    my $chr_length = $params{'chr_length'};
+    my $scale      = $length / $chr_length;
+    my $wid        = $params{'width'};
+    my $h_wid      = $wid/2;
+    my $done_1_acen = 0;
+    my $highlights = $params{'highlights'} || [];
+    foreach my $band (@{$params{'bands'}}) {
+        my $bandname       = $band->name();
+        my $vc_band_start  = $band->start() * $scale + $v_offset;
+        my $vc_band_end    = $band->end()   * $scale + $v_offset;
+        my $stain          = $band->stain();
+
+        if ($stain eq "acen"){
+            my $gband;
+            if ($done_1_acen){
+                $self->push(new Bio::EnsEMBL::Glyph::Poly({
+                    'points'       => [ 
+                        $vc_band_start, $h_offset + $h_wid, 
+                        $vc_band_end,   $h_offset,
+                        $vc_band_end,   $h_offset + $wid,
+                    ],
+                    'colour'       => $params{'grey'},
+                    'absolutey'    => 1,    'absolutex'    => 1
+                }));
+            } else {
+                $self->push(new Bio::EnsEMBL::Glyph::Poly({
+                    'points'       => [ 
+                        $vc_band_start, $h_offset, 
+                        $vc_band_end,   $h_offset + $h_wid,
+                        $vc_band_start, $h_offset + $wid,
+                    ],
+                    'colour'       => $params{'grey'},
+                    'absolutey'    => 1,    'absolutex'    => 1
+                }));
+                $done_1_acen = 1;
+            }
+        } elsif ($stain eq "stalk"){
+            $self->push(new Bio::EnsEMBL::Glyph::Poly({
+                'points'           => [
+                    $vc_band_start, $h_offset, 
+                    $vc_band_end,   $h_offset + $wid,
+                    $vc_band_end,   $h_offset,
+                    $vc_band_start, $h_offset + $wid, 
+                ],
+                'colour'           => $params{'grey'},
+                'absolutey'    => 1,    'absolutex'    => 1
+            }));
+            $self->push(new Bio::EnsEMBL::Glyph::Rect({
+                'x'                => $vc_band_start,
+                'y'                => $h_offset + int($wid/4),
+                'width'            => $vc_band_end - $vc_band_start,
+                'height'           => $h_wid,
+                'colour'           => $params{'grey'},
+                'absolutey'    => 1,    'absolutex'    => 1
+            }));
+        } else {
+            $self->unshift(new Bio::EnsEMBL::Glyph::Rect({
+                'x'          => $vc_band_start,
+                'y'          => $h_offset,
+                'width'      => $vc_band_end - $vc_band_start,
+                'height'     => $wid,
+                'colour'     => $params{'white'},
+                'absolutey'  => 1,
+                'absolutex'  => 1
+            }));
+            $self->push(new Bio::EnsEMBL::Glyph::Line({
+                'x'                => $vc_band_start,
+                'y'                => $h_offset,
+                'width'            => $vc_band_end - $vc_band_start,
+                'height'           => 0,
+                'colour'           => $params{'black'},
+                'absolutey'        => 1, 'absolutex'        => 1
+            }));
+            $self->push(new Bio::EnsEMBL::Glyph::Line({
+                'x'                => $vc_band_start,
+                'y'                => $h_offset+$wid,
+                'width'            => $vc_band_end - $vc_band_start,
+                'height'           => 0,
+                'colour'           => $params{'black'},
+                'absolutey'        => 1, 'absolutex'        => 1
+            }));
+        }
+    }
+    
+    my @lines = $wid < 16 ? ( [8,6],[4,4],[2,2] ) :
+               ( $wid < 30 ? ( [8,5],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) :
+                ( [8,8],[5,3],[4,1],[3,1],[2,1],[1,1],[1,1],[1,1] ) );
+
+    my $divisor = $wid<30 ? 24 : 30;         
+## This is the end of the         
+    foreach my $end ( 1, -1 ) {
+        foreach my $I ( 0..$#lines ) {
+            my ( $bg_x, $black_x ) = @{$lines[$I]};
+            my $xx =  ($end==1 ? $v_offset : $v_offset + $length) + $end * $I;
+            $self->push(new Bio::EnsEMBL::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset,
+                    'width'     => 0,
+                    'height'    => $wid * $bg_x/$divisor -1,
+                    'colour'    => $params{'bg'},
+                    'absolutey' => 1,   'absolutex' => 1
+            }));
+            $self->push(new Bio::EnsEMBL::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset + 1 + $wid * (1-$bg_x/$divisor),
+                    'width'     => 0,
+                    'height'    => $wid * $bg_x/$divisor -1 ,
+                    'colour'    => $params{'bg'},
+                    'absolutey' => 1,   'absolutex' => 1
+            }));
+            $self->push(new Bio::EnsEMBL::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset + $wid * $bg_x/$divisor,
+                    'width'     => 0,
+                    'height'    => $wid * $black_x/$divisor -1 ,
+                    'colour'    => $params{'black'},
+                    'absolutey' => 1, 'absolutex' => 1
+            }));
+            $self->push(new Bio::EnsEMBL::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset + 1 + $wid * (1-$bg_x/$divisor-$black_x/$divisor),
+                    'width'     => 0,
+                    'height'    => $wid * $black_x/$divisor -1 ,
+                    'colour'    => $params{'black'},
+                    'absolutey' => 1, 'absolutex' => 1
+            }));
+        }
+    }
+    my ($w,$h);
+    if($params{'font'}) {
+        $w = $self->{'config'}->texthelper->width($params{'font'});
+        $h = $self->{'config'}->texthelper->height($params{'font'});
+    }
+    if($params{'ruler'}) {
+        my $X = $params{'ruler'};
+        my $flag = $params{'ruler_offset'};
+        while($X<$chr_length) {
+            my $xx = $X * $scale + $v_offset;
+            $self->push(new Bio::EnsEMBL::Glyph::Line({
+                    'x'         => $xx,
+                    'y'         => $h_offset + ($params{'ruler_offset'} eq 'r' ? $wid : ($params{'ruler_offset'} eq 'l' ? -3  : 0)),
+                    'width'     => 0,
+                    'height'    => 3,
+                    'colour'    => $params{'black'},
+                    'absolutey' => 1, 'absolutex' => 1
+            }));
+            if($params{'font'}) {
+                my $TEXT = int($X/1000000)."M";
+                $self->push(new Bio::EnsEMBL::Glyph::Text({
+                    'x'          => $xx-$h/2,
+                    'y'          => $h_offset + ($params{'ruler_offset'} eq 'r' ? $wid + 5 : ($params{'ruler_offset'} eq 'l' ? -5-length($TEXT)*$w : 5)), 
+                    'font'       => $params{'font'},
+                    'colour'     => $params{'black'},
+                    'text'       => $TEXT,
+                    'absolutey'  => 1, 'absolutex' => 1
+                }));
+            }
+            $X+=$params{'ruler'};
+        }
+    }
+    if($params{'font'} && $params{'chr_name'}) {
+        $self->push(new Bio::EnsEMBL::Glyph::Text({
+            'x'          => $v_offset + $length +3 ,
+            'y'          => $h_offset + $h_wid - $w * length($params{'chr_name'})/2,
+            'font'       => $params{'font'},
+            'colour'     => $params{'black'},
+            'text'       => $params{'chr_name'},
+            'absolutey'  => 1, 'absolutex' => 1
+        }));
+    }
+    
+    my %coords;
+    foreach my $box (@$highlights) {
+        my $vc_start  = $box->{'start'} * $scale + $v_offset;
+        my $vc_end    = $box->{'end'}   * $scale + $v_offset;
+        $coords{$box->{'id'}} = {
+            'left'  => $h_offset + $box->{'side'} * ($wid+4),
+            'right' => $h_offset + $box->{'side'} * ($wid+4) + $wid,
+            'top'   => $vc_start,
+            'bottom'=> $vc_end,
+            'rel_ori' => $box->{'rel_ori'}
+        };
+        $self->push(new Bio::EnsEMBL::Glyph::Rect({
+            'x'          => $vc_start,
+            'y'          => $h_offset + $box->{'side'} * ($wid+4),
+            'width'      => $vc_end - $vc_start,
+            'height'     => $wid,
+            'colour'     => $box->{'col'},
+            'bordercolour'     => $box->{'border'},
+            'absolutey'  => 1,
+            'absolutex'  => 1
+        }));
+    }
+    return %coords;
+}
+1;
