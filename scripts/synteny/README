@@ -81,5 +81,5 @@ cat *.BuildSynteny.out|grep cluster > Mm3Rn2.100000.100000.BuildSynteny
 
 5- Load in compara db
 
-ensembl-compara/scripts/synteny/LoadComparaDb.pl -host ecs2d -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_13_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -genome_db_id1 2 -genome_db_id2 3 Mm3Rn2.20000.5000.BuildSynteny
+ensembl-compara/scripts/synteny/LoadComparaDb.pl -host ecs2d -dbuser ecs2dadmin -dbpass xxxx -dbname ensembl_compara_13_1 -conf_file /nfs/acari/abel/src/ensembl_main/ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf -genome_db_id1 2 -genome_db_id2 3 Mm3Rn2.100000.100000.BuildSynteny
 
