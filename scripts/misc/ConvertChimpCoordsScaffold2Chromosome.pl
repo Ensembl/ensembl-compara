@@ -51,7 +51,7 @@ my $converted_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $dest_
                                                                -pass   => $dest_dbpass,
                                                                -dbname => $dest_dbname);
 
-my $chimp_agp_file = "/nfs/acari/mcvicker/scratch2/chimp/agp/pan_troglodytes_agp/all.agp";
+my $chimp_agp_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/misc/all.agp";
 
 open AGP, $chimp_agp_file ||
   die "$!\n";
