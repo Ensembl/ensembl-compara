@@ -33,4 +33,9 @@ sub colour {
     return 'gray50';
 }
 
+sub no_features {
+    ## don't show the track if there the whole region is annotated
+    return;
+}
+
 1;
