@@ -20,7 +20,11 @@ sub features {
 
 sub href {
     my ( $self, $id ) = @_;
-    return $id;
+    my @bits = split( ':', $id );
+    my( $ticket,$hsp_id,$use_date ) = split( '!!', $bits[1] );
+    $use_date || return $id;
+    my $htmpl = '/Multi/blastview?ticket=%s&hsp_id=%s!!%s&_display=ALIGN';
+    return sprintf($htmpl, $ticket, $hsp_id, $use_date);
     #   return $self->ID_URL( 'SRS_PROTEIN', $id );
 }
 
@@ -44,32 +48,24 @@ sub zmenu {
   my $feature   = $first_box->[2];
 
   if( $feature ){
+
     my $caption = '';
-    if( $feature->has_tag('qname') ){ 
-      my $qname  = ($feature->each_tag_value('qname'))[0] || 'UNKNOWN!';
-      my $qstart = ( $feature->has_tag('qstart') ? 
-		     ($feature->each_tag_value('qstart'))[0] : '' );
-      my $qend   = ( $feature->has_tag('qend') ? 
-		     ($feature->each_tag_value('qend'))[0] : '' );
-      my $qstrand= ( $feature->has_tag('qstrand') ? 
-		     ($feature->each_tag_value('qstrand'))[0] : '' );
+    my $ltmpl = "%s:%s-%s(%s)";
+    my $htmpl = '@/Multi/blastview?ticket=%s&hsp_id=%s&_display=ALIGN';
+    my( $qryname, $hsptoken ) = split( ':', $feature->hseqname );
+    my( $ticket, $hsp_id ) = split( "!!", $hsptoken, 2 );
+    $zmenu->{caption} = $qryname." vs. ". $feature->seqname;
+    $zmenu->{"00:Details..."} = sprintf($htmpl, $ticket, $hsp_id);
 
-      $caption .= $qname ." vs. ";
-      $zmenu->{ "00:Qry: $qstart-$qend(". ( $qstrand<1 ? '-)' : '+)' ) } = '';
-    }
-    if( $feature->has_tag('hname') ){ 
-      my $hname = ($feature->each_tag_value('hname'))[0] || 'UNKNOWN!';
-      my $hstart = ( $feature->has_tag('hstart') ? 
-		     ($feature->each_tag_value('hstart'))[0] : '' );
-      my $hend   = ( $feature->has_tag('hend') ? 
-		     ($feature->each_tag_value('hend'))[0] : '' );
-      my $hstrand= ( $feature->has_tag('hstrand') ? 
-		     ($feature->each_tag_value('hstrand'))[0] : '' );
-
-      $caption .= $hname;
-      $zmenu->{ "00:Hit: $hstart-$hend(". ( $hstrand<1 ? '-)' : '+)' ) } = '';
-    }
-    $zmenu->{caption} = $caption;
+#    $zmenu->{
+#	     "00:".sprintf($ltmpl, "Qry",
+#			   $feature->hstart, $feature->hend, 
+#			   ( $feature->hstrand<1 ? '-' : '+' ) ) 
+#	    } = sprintf($htmpl, $ticket, $hsp_id);
+#
+#    $zmenu->{"01:".sprintf($ltmpl, "Hit", , 
+#			   $feature->start, $feature->end, 
+#			   ( $feature->strand<1 ? '-' : '+' ) ) } = '';
     $zmenu->{"02:Score:     ". $feature->score} = '';
     $zmenu->{"03:PercentID: ". $feature->percent_id} ='';
     $zmenu->{"04:Length:    ". $feature->length } = '';
