@@ -367,7 +367,7 @@ sub starting_genomic_align_id {
   if ($starting_genomic_align_id !~ /^\d+$/) {
     throw "[$starting_genomic_align_id] should be a positive number.";
   }
-  $self->{'starting_genomic_align_id'} = $starting_genomic_align_id or undef;
+  $self->{'starting_genomic_align_id'} = ($starting_genomic_align_id or undef);
 }
 
 
@@ -643,7 +643,7 @@ sub requesting_slice_start {
   my ($self, $requesting_slice_start) = @_;
  
   if (defined($requesting_slice_start)) {
-    $self->{'requesting_slice_start'} = $requesting_slice_start or undef;
+    $self->{'requesting_slice_start'} = ($requesting_slice_start or undef);
   }
   
   return $self->{'requesting_slice_start'};
@@ -667,7 +667,7 @@ sub requesting_slice_end {
   my ($self, $requesting_slice_end) = @_;
  
   if (defined($requesting_slice_end)) {
-    $self->{'requesting_slice_end'} = $requesting_slice_end or undef;
+    $self->{'requesting_slice_end'} = ($requesting_slice_end or undef);
   }
   
   return $self->{'requesting_slice_end'};
