@@ -108,7 +108,8 @@ sub legend {
     return ('genes', 900, 
         [
             EnsWeb::species_defs->AUTHORITY.' predicted genes (known)' => $colours->{'_KNOWN'},
-            EnsWeb::species_defs->AUTHORITY.' predicted genes (novel)' => $colours->{'_'}
+            EnsWeb::species_defs->AUTHORITY.' predicted genes (novel)' => $colours->{'_'},
+            EnsWeb::species_defs->AUTHORITY.' pseudogenes' => $colours->{'_PSEUDO'},
         ]
     );
 }

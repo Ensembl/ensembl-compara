@@ -30,7 +30,7 @@ qq[javascript:X=window.open(\\\'/$ENV{'ENSEMBL_SPECIES'}/helpview?se=1&kw=$ENV{'
   $self->label($label);
 # $self->bumped( $self->{'config'}->get($HELP_LINK, 'dep')==0 ? 'no' : 'yes' );
 }
-
+#'
 sub my_label { return 'Missing label'; }
 sub colours { return {}; } 
 sub text_label { return {}; } 

@@ -148,6 +148,7 @@ sub _init {
      #   $authority.' predicted genes (pred)'  => $colours->{'_PRED'},
      #   $authority.' predicted genes (ortholog)'  => $colours->{'_ORTHO'},
         $authority.' predicted genes (novel)' => $colours->{'_'}
+        $authority.' pseudogenes)'  => $colours->{'_PSEUDO'},
     ]};
   }
 
