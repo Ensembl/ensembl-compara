@@ -114,25 +114,25 @@ my %undefined_combinaisons;
 
 my $ucsc_dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($ucsc_dbname, 'compara')->dbc;
 
-my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB');
-my $dfa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','DnaFrag');
-my $gaba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignBlock');
-my $gaga = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignGroup');
-my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet');
+my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB') or die "Can't get ($dbname,'compara','GenomeDB')\n";
+my $dfa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','DnaFrag') or die "Can't get ($dbname,'compara','DnaFrag')\n";
+my $gaba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignBlock') or die " Can't get ($dbname,'compara','GenomicAlignBlock')\n";
+my $gaga = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignGroup') or die " Can't get($dbname,'compara','GenomicAlignGroup')\n";
+my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet') or die " Can't($dbname,'compara','MethodLinkSpeciesSet')\n";
 
 # cache all tSpecies dnafrag from compara
-my $tBinomial = Bio::EnsEMBL::Registry->get_adaptor($tSpecies,'core','MetaContainer')->get_Species->binomial;
-my $tTaxon_id = Bio::EnsEMBL::Registry->get_adaptor($tSpecies,'core','MetaContainer')->get_taxonomy_id;
-my $tgdb = $gdba->fetch_by_name_assembly($tBinomial);
+my $tBinomial = Bio::EnsEMBL::Registry->get_adaptor($tSpecies,'core','MetaContainer')->get_Species->binomial or die " Can't get ($tSpecies,'core','MetaContainer')->get_Species->binomial\n";
+my $tTaxon_id = Bio::EnsEMBL::Registry->get_adaptor($tSpecies,'core','MetaContainer')->get_taxonomy_id or die "can't get $tSpecies taxon_id \n";
+my $tgdb = $gdba->fetch_by_name_assembly($tBinomial) or die " Can't get fetch_by_name_assembly($tBinomial)\n";
 my %tdnafrags;
 foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($tgdb)}) {
   $tdnafrags{$df->name} = $df;
 }
 
 # cache all qSpecies dnafrag from compara
-my $qBinomial = Bio::EnsEMBL::Registry->get_adaptor($qSpecies,'core','MetaContainer')->get_Species->binomial;
-my $qTaxon_id = Bio::EnsEMBL::Registry->get_adaptor($qSpecies,'core','MetaContainer')->get_taxonomy_id;
-my $qgdb = $gdba->fetch_by_name_assembly($qBinomial);
+my $qBinomial = Bio::EnsEMBL::Registry->get_adaptor($qSpecies,'core','MetaContainer')->get_Species->binomial or die " Can't get ($qSpecies,'core','MetaContainer')->get_Species->binomial\n";
+my $qTaxon_id = Bio::EnsEMBL::Registry->get_adaptor($qSpecies,'core','MetaContainer')->get_taxonomy_id or die "can't get $qSpecies taxon_id \n";
+my $qgdb = $gdba->fetch_by_name_assembly($qBinomial) or die " Can't get fetch_by_name_assembly($qBinomial)\n";
 my %qdnafrags;
 foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
   $qdnafrags{$df->name} = $df;
@@ -270,9 +270,11 @@ while( $sth->fetch() ) {
       exit 2;
     }
     unless ($qdnafrag->length == $c_qSize) {
-      print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
-      print STDERR "net_index is $net_index\n";
-      exit 3;
+      	print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
+      	print STDERR "net_index is $net_index\n";
+#    	unless ($c_qName =~/Un/){
+      		exit 3;
+#	}
     }
     
     $c_qStrand = 1 if ($c_qStrand eq "+");
