@@ -52,7 +52,7 @@ use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw info);
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
@@ -116,13 +116,20 @@ sub store {
   ## Stores data, all of them with the same id
   my $group_id = $genomic_align_group->dbID;
   my $sth = $self->prepare($genomic_align_block_sql);
-  foreach my $genomic_align (@{$genomic_align_group->genomic_align_array}) {
+  for (my $i = 0; $i < @{$genomic_align_group->genomic_align_array}; $i++) {
+    my $genomic_align  = $genomic_align_group->genomic_align_array->[$i];
     $sth->execute(
                   ($group_id or "NULL"),
                   $genomic_align_group->type,
                   $genomic_align->dbID
           );
     if (!$group_id) {$group_id = $sth->{'mysql_insertid'};}
+
+    info("Stored Bio::EnsEMBL::Compara::GenomicAlignGroup ".
+          "(".($i+1)."/".scalar(@{$genomic_align_group->genomic_align_array}).") ".
+          ($group_id or "NULL").", ".$genomic_align_group->type.", ".
+          $genomic_align->dbID, );
+
   }
   
   return $genomic_align_group;
