@@ -69,6 +69,7 @@ sub _init {
     $type = undef;
     
 GENE:
+    my $count = 0;
     for my $eg (@allgenes) {
         my $vgid = $eg->id();
         next if ($target_gene && ($vgid ne $target_gene));
@@ -113,14 +114,16 @@ TRANSCRIPT:
                 my $tid = $transcript->id();
                 my $pid = $tid;
 
-                if ($tid !~ /ENST/o){
-                    #print STDERR "EXT: ", join(" === ", @dblinks), "\n";
-                    #@dblinks = $transcript->each_DBLink();
-                    #if (@dblinks){
-                    #foreach my $DB_link ( @dblinks ){
-                         #print STDERR "EXT GENE: $id, ", $DB_link->database(), " ", $DB_link->display_id(), "\n";
-                    #}
-                    #}
+                if( $Config->{'_href_only'} eq '#tid' ) {
+                    $Composite->{'href'} = qq(#$tid);
+                } elsif ($tid !~ /ENST/o){
+                    @dblinks = $transcript->each_DBLink();
+                    print STDERR "EXT: ", join(" === ", @dblinks), "\n";
+                    if (@dblinks){
+                    	foreach my $DB_link ( @dblinks ){
+                        	print STDERR "EXT GENE: $id, ", $DB_link->database(), " ", $DB_link->display_id(), "\n";
+                    	}
+                    }
                     # if we have an EMBL external transcript we need different links...
                     if($tid !~ /dJ/o){
                         $Composite->{'zmenu'}  = {
