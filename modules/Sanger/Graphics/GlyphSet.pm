@@ -1,3 +1,8 @@
+#########
+# Author: rmp@sanger.ac.uk
+# Maintainer: webmaster@sanger.ac.uk
+# Created: 2001
+#
 package Sanger::Graphics::GlyphSet;
 use strict;
 use Exporter;
@@ -75,7 +80,7 @@ sub glyphs {
 # push either a Glyph or a GlyphSet on to our list
 #
 sub push {
-    my $self = shift;
+    my $self = CORE::shift;
     my ($gx, $gx1, $gy, $gy1);
     
     foreach my $Glyph (@_) {
@@ -98,7 +103,7 @@ sub push {
 # unshift a Glyph or GlyphSet onto our list
 #
 sub unshift {
-    my $self = shift;
+    my $self = CORE::shift;
 
     my ($gx, $gx1, $gy, $gy1);
     
@@ -247,5 +252,7 @@ sub errorTrack {
     
     return;
 }
+
+sub commify { CORE::shift; local $_ = reverse $_[0]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
 
 1;
