@@ -17,18 +17,19 @@ sub init_label {
     my $density_adapt = $self->{'container'}->{'da'};
     my $chr_slice = $slice_adapt->fetch_by_region('chromosome', $chr);
 
-    my $i;
+    my ($i, $last_max);
     foreach my $label (@labels) {
         my $logic_name = shift @logic_names;
         my $colour = shift @colours;
 	my $density;
         if ($logic_name) {
             $density = $density_adapt->fetch_Featureset_by_Slice($chr_slice, $logic_name, 150, 1);
+            $last_max = $density->max_value;
         }
 	
 	## draw label only if there is genes of this type or if we have
         ## a two-line label
-	if (!$logic_name || $density->max_value) { 
+	if ($last_max) { 
             my $text = new Sanger::Graphics::Glyph::Text({
                 'text'      => $label,
                 'font'      => 'Small',
