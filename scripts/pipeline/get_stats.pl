@@ -240,7 +240,7 @@ sub get_all_mlss_from_species_and_type {
   }
 
   if ($method_link_type and $method_link_species_sets) {
-    @$method_link_species_sets = grep {$_->method_link_type =~ /^$method_link_type$/} @$method_link_species_sets;
+    @$method_link_species_sets = grep {$_->method_link_type =~ /^$method_link_type$/i} @$method_link_species_sets;
   }
 
   return ($method_link_species_sets or []);
