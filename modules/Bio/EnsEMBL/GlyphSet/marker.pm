@@ -23,7 +23,7 @@ sub init_label {
     'caption'           => 'HELP',
     "01:Track information..."   => qq[javascript:X=hw(\'@{[$self->{container}{_config_file_name_}]}\',\'$ENV{'ENSEMBL_SCRIPT'}\',\'markers\')]
   }}));
-
+}
 
 sub _init {
   my $self = shift;
