@@ -76,7 +76,7 @@ $dbh->do( "CREATE DATABASE " . $destDB )
 
 my $rc = 0xffff & system(
   "mysqldump -p$pass -u $user -h $host -P $port --no-data $srcDB | " .
-  "mysql -p$pass -u $user -h $host -P port $destDB");
+  "mysql -p$pass -u $user -h $host -P $port $destDB");
 
 if($rc != 0) {
   $rc >>= 8;
