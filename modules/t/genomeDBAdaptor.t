@@ -23,10 +23,6 @@ my $mm_dba = $mus_musculus->get_DBAdaptor('core');
 my $rn_dba = $rattus_norvegicus->get_DBAdaptor('core');
 my $compara_dba = $multi->get_DBAdaptor('compara');
 
-$compara_dba->add_db_adaptor($hs_dba);
-$compara_dba->add_db_adaptor($mm_dba);
-$compara_dba->add_db_adaptor($rn_dba);
-
 my $mouse_name     = $mm_dba->get_MetaContainer->get_Species->binomial;
 my $mouse_assembly = $mm_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
@@ -39,6 +35,14 @@ my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 #######
 my $gdba = $compara_dba->get_GenomeDBAdaptor;
 ok($gdba);
+
+my $hs_gdb = $gdba->fetch_by_name_assembly($human_name,$human_assembly);
+$hs_gdb->db_adaptor($hs_dba);
+my $mm_gdb = $gdba->fetch_by_name_assembly($mouse_name,$mouse_assembly);
+$mm_gdb->db_adaptor($mm_dba);
+my $rn_gdb = $gdba->fetch_by_name_assembly($rat_name,$rat_assembly);
+$rn_gdb->db_adaptor($rn_dba);
+
 
 #######
 # 2-5 #
@@ -80,7 +84,7 @@ $gdb->{'dbID'} = undef;
 $gdb->{'adaptor'} = undef;
 $gdba->store($gdb);
 
-my $sth = $compara_dba->prepare('SELECT genome_db_id
+my $sth = $compara_dba->dbc->prepare('SELECT genome_db_id
                                 FROM genome_db
                                 WHERE name = ? AND assembly = ?');
 $sth->execute($gdb->name, $gdb->assembly);
@@ -97,5 +101,7 @@ debug("[$id] == [" . $gdb->dbID . "]?");
 
 $multi->restore('compara', 'genome_db');
 
-
-
+# 
+# 12
+# 
+$gdba->get_all_db_links($hs_gdb, 1);
