@@ -312,7 +312,7 @@ sub store {
      return $dnafrag->dbID();
    }
 
-   my $gdb = $dnafrag->genomedb();
+   my $gdb = $dnafrag->genome_db();
 
    if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
        $self->throw("Must have genomedb attached to the dnafrag to store the dnafrag [$gdb]");
@@ -370,7 +370,7 @@ sub is_already_stored {
      return $dnafrag->dbID();
    }
    
-   my $gdb = $dnafrag->genomedb();
+   my $gdb = $dnafrag->genome_db();
 
    if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
        $self->throw("Must have genomedb attached to the dnafrag to store the dnafrag [$gdb]");
