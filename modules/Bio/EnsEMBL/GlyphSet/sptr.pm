@@ -1,13 +1,12 @@
-package Bio::EnsEMBL::GlyphSet::transcript;
+package Bio::EnsEMBL::GlyphSet::sptr;
 use strict;
 use vars qw(@ISA);
 use lib "..";
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Bio::EnsEMBL::Glyph::Rect;
-use Bio::EnsEMBL::Glyph::Intron;
-use Bio::EnsEMBL::Glyph::Text;
 use Bio::EnsEMBL::Glyph::Composite;
+use Bio::EnsEMBL::Glyph::Poly;
 
 sub _init {
     my ($this, $VirtualContig, $Config) = @_;
@@ -16,7 +15,13 @@ sub _init {
     my $h          = 8;
     my $highlights = $this->highlights();
 
-    GENE: for my $vg ($VirtualContig->get_all_VirtualGenes()) {
+    #########
+    # set colour for transcripts and test if we're highlighted or not
+    # 
+    my $colour = $Config->get('transview','sptr','col');
+
+    GENE: for my $vg ($VirtualContig->get_all_VirtualGenes('evidence')) {
+
 	my $vgid = $vg->gene->id();
 
 	TRANSCRIPT: for my $transcript ($vg->gene->each_Transcript()) {
@@ -27,61 +32,35 @@ sub _init {
 	    my $tstrand = $transcript->start_exon()->strand();
 	    next TRANSCRIPT if($tstrand != $this->strand());
 
-	    my $Composite = new Bio::EnsEMBL::Glyph::Composite({
-		'id'    => $transcript->id(),
-		'zmenu' => {
-		    'caption'  => $transcript->id(),
-		    '01:kung'     => 'opt1',
-		    '02:foo'      => 'opt2',
-		    '03:fighting' => 'opt3'
-		},
-	    });
-
-	    #########
-	    # set colour for transcripts and test if we're highlighted or not
-	    # 
-	    my $colour = $Config->get('transview','transcript','col');
-	    $colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
-
-	    my $previous_endx = undef;
+print STDERR qq(finding $colour sptr features for $transcript on strand $tstrand\n);
 
 	    EXON: for my $exon ($transcript->each_Exon()) {
-		my $x = $exon->start();
-		my $w = $exon->end - $x;
 
-		my $rect = new Bio::EnsEMBL::Glyph::Rect({
-		    'x'        => $x,
-		    'y'        => $y,
-		    'width'    => $w,
-		    'height'   => $h,
-		    'id'       => $exon->id(),
-		    'colour'   => $colour,
-		    'zmenu' => {
-			'caption' => $exon->id(),
-		    },
-		});
+		FEATURE: for my $feature ($exon->each_Supporting_Feature()) {
 
-		my $intron = new Bio::EnsEMBL::Glyph::Intron({
-		    'x'        => $previous_endx,
-		    'y'        => $y,
-		    'width'    => ($x - $previous_endx),
-		    'height'   => $h,
-		    'id'       => $exon->id(),
-		    'colour'   => $colour,
-		    'zmenu' => {
-			'caption' => 'intron after' . $exon->id(),
-		    },
-		}) if(defined $previous_endx);
+print STDERR qq(found feature $feature\n);
 
-		$Composite->push($rect) if(defined $rect);
-		$Composite->push($intron) if(defined $intron);
+		    my $x = $feature->start();
+		    my $w = $feature->end() - $x;
 
-		$previous_endx = $x+$w;
+		    my $rect = new Bio::EnsEMBL::Glyph::Rect({
+			'x'        => $x,
+			'y'        => $y,
+			'width'    => $w,
+			'height'   => $h,
+			'id'       => $feature->id(),
+			'colour'   => $colour,
+			'zmenu' => {
+			    'caption' => qq(swissprot trEMBL),
+			},
+		    });
+
+		    $this->push($rect);
+		}
 	    }
 	    #########
 	    # replace this with bumping!
 	    #
-	    push @{$this->{'glyphs'}}, $Composite;
 	    $y+=$h;
 	}
     }

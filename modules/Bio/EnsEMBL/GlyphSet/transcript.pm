@@ -40,14 +40,14 @@ sub _init {
 	    #########
 	    # set colour for transcripts and test if we're highlighted or not
 	    # 
-	    my $colour = $Config->get('transview','transcript','col');
-	    $colour    = $Config->get('transview','transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
+	    my $colour = $Config->get($Config->script(),'transcript','col');
+	    $colour    = $Config->get($Config->script(),'transcript','hi') if(defined $highlights && $highlights =~ /\|$vgid\|/);
 
 	    my $previous_endx = undef;
 
 	    EXON: for my $exon ($transcript->each_Exon()) {
 		my $x = $exon->start();
-		my $w = $exon->end - $x;
+		my $w = $exon->end() - $x;
 
 		my $rect = new Bio::EnsEMBL::Glyph::Rect({
 		    'x'        => $x,
@@ -56,6 +56,7 @@ sub _init {
 		    'height'   => $h,
 		    'id'       => $exon->id(),
 		    'colour'   => $colour,
+		    'absolutey' => 1,
 		    'zmenu' => {
 			'caption' => $exon->id(),
 		    },
@@ -68,20 +69,21 @@ sub _init {
 		    'height'   => $h,
 		    'id'       => $exon->id(),
 		    'colour'   => $colour,
+		    'absolutey' => 1,
 		    'zmenu' => {
 			'caption' => 'intron after' . $exon->id(),
 		    },
 		}) if(defined $previous_endx);
 
-		$Composite->push($rect) if(defined $rect);
-		$Composite->push($intron) if(defined $intron);
+		$Composite->push($rect);
+		$Composite->push($intron);
 
 		$previous_endx = $x+$w;
 	    }
 	    #########
 	    # replace this with bumping!
 	    #
-	    push @{$this->{'glyphs'}}, $Composite;
+	    $this->push($Composite);
 	    $y+=$h;
 	}
     }

@@ -19,15 +19,10 @@ sub _init {
 	    #########
 	    # evil:
 	    #
-	    'col'    => $Config->get('contigviewtop', 'marker', 'col'),
+	    'colour'    => $Config->get('contigviewtop', 'marker', 'col'),
 	});
 
-	#########
-	# can either use access method:
-	# $this->push($glyph);
-	# or do the equivalent:
-	#
-	push @{$this->{'glyphs'}}, $glyph;
+	$this->push($glyph);
     }
 }
 1;
