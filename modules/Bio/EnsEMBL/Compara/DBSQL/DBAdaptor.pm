@@ -381,6 +381,23 @@ sub get_FamilyAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor" );
 }
 
+=head2 get_DomainAdaptor
+
+  Arg [1]    : none
+  Example    : $fa = $dba->get_DomainAdaptor
+  Description: Retrieves a DomainAdaptor for this compara database
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_DomainAdaptor {
+  my $self = shift;
+  
+  return $self->_get_adaptor("Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor" );
+}
+
 =head2 get_MemberAdaptor
 
   Arg [1]    : none
