@@ -95,28 +95,6 @@ sub get_synteny_for_chromosome {
           order by df.name, dfr.dnafrag_start          "
     );
    
-    warn 
-        "select sr.synteny_region_id,
-                df.coord_system_name as core_type,  df.name as core_name,
-                dfr.dnafrag_start as core_start,   dfr.dnafrag_end as core_end,
-                df_h.coord_system_name as hit_type, df_h.name as hit_name,
-                dfr_h.dnafrag_start as hit_start,  dfr_h.dnafrag_end as hit_end,
-                sr.rel_orientation
-           from genome_db as gd straight_join  
-                dnafrag as df straight_join       
-                dnafrag_region as dfr straight_join
-                synteny_region as sr straight_join
-                dnafrag_region as dfr_h straight_join
-                dnafrag as df_h straight_join
-                genome_db as gd_h
-          where gd.name = '$self->{'_species_main'}'   and gd.genome_db_id   = df.genome_db_id and
-                gd_h.name = '$self->{'_species_secondary'}' and gd_h.genome_db_id = df_h.genome_db_id and
-                df.dnafrag_id   = dfr.dnafrag_id and
-                df_h.dnafrag_id = dfr_h.dnafrag_id and
-                dfr.synteny_region_id   = sr.synteny_region_id and
-                dfr_h.synteny_region_id = sr.synteny_region_id $EX2
-          order by df.name, dfr.dnafrag_start";
-
     $sth->execute($self->{'_species_main'}, $self->{'_species_secondary'}, @parameters );
     while(my $Q = $sth->fetchrow_arrayref()) {
        push @data, new Bio::EnsEMBL::Compara::SyntenyRegion(
