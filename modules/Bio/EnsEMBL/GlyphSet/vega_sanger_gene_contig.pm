@@ -1,28 +1,23 @@
+=head1 NAME
+
+Bio::EnsEMBL::GlyphSet::vega_sanger_gene_contig -
+Glyphset for Vega genes with gene type 'sanger' in contigviewtop
+
+=cut
+
 package Bio::EnsEMBL::GlyphSet::vega_sanger_gene_contig;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::GlyphSet_gene;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_gene);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use  Sanger::Graphics::Bump;
-use EnsWeb;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
-
+use Bio::EnsEMBL::GlyphSet::gene_lite;
+@ISA = qw(Bio::EnsEMBL::GlyphSet::gene_lite);
 
 sub my_label {
-return 'Collins et al Genes';
+    return 'Collins et al Genes';
 }
 
 sub logic_name {
-return 'sanger';
+    return 'sanger';
 }
 
-sub my_depth {
- my ($self) = @_;
- my $Config  = $self->{'config'};
-return $Config->get('vega_sanger_gene_contig', 'dep') ;
-}
 1;
         

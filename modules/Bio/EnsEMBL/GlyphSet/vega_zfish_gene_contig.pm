@@ -1,21 +1,22 @@
+=head1 NAME
+
+Bio::EnsEMBL::GlyphSet::vega_zfish_gene_contig -
+Glyphset for Vega genes with gene type 'zfish' in contigviewtop
+
+=cut
+
 package Bio::EnsEMBL::GlyphSet::vega_zfish_gene_contig;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_gene;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_gene);
+use Bio::EnsEMBL::GlyphSet::gene_lite;
+@ISA = qw(Bio::EnsEMBL::GlyphSet::gene_lite);
 
 sub my_label {
-  return 'Zfish Genes';
+    return 'Zfish Genes';
 }
 
 sub logic_name {
-  return 'zfish';
-}
-
-sub my_depth {
-  my ($self) = @_;
-  my $Config  = $self->{'config'};
-  return $Config->get('vega_havana_gene_contig', 'dep') ;
+    return 'zfish';
 }
 
 1;
