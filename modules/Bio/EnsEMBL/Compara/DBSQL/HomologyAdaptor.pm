@@ -184,7 +184,7 @@ sub store {
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
-  foreach my $member_attribute (@{$hom->get_all_Member}) {   
+  foreach my $member_attribute (@{$hom->get_all_Member_Attribute}) {   
     $self->store_relation($member_attribute, $hom);
   }
 

@@ -148,7 +148,7 @@ sub add_Member_Attribute {
     push @{$self->{'_members_by_source_taxon'}{$member->source_name."_".$member->taxon_id}}, $member_attribute;
 }
 
-=head2 get_all_Member
+=head2 get_all_Member_Attribute
 
   Arg [1]    : None
   Example    : 
@@ -159,7 +159,7 @@ sub add_Member_Attribute {
 
 =cut
 
-sub get_all_Member {
+sub get_all_Member_Attribute {
   my ($self) = @_;
   
   unless (defined $self->{'_member_array'}) {
@@ -177,7 +177,7 @@ sub get_all_Member {
   return $self->{'_member_array'}; #should return also attributes
 }
 
-=head2 get_Member_by_source
+=head2 get_Member_Attribute_by_source
 
   Arg [1]    : string $source_name
                e.g. "ENSEMBLPEP"
@@ -189,7 +189,7 @@ sub get_all_Member {
 
 =cut
 
-sub get_Member_by_source {
+sub get_Member_Attribute_by_source {
   my ($self, $source_name) = @_;
 
   $self->throw("Should give defined source_name as arguments\n") unless (defined $source_name);
@@ -204,7 +204,7 @@ sub get_Member_by_source {
   return $self->{'_members_by_source'}->{$source_name};
 }
 
-=head2 get_Member_by_source_taxon
+=head2 get_Member_Attribute_by_source_taxon
 
   Arg [1]    : string $source_name
   Arg [2]    : int $taxon_id
@@ -216,7 +216,7 @@ sub get_Member_by_source {
 
 =cut
 
-sub get_Member_by_source_taxon {
+sub get_Member_Attribute_by_source_taxon {
   my ($self, $source_name, $taxon_id) = @_;
 
   $self->throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
@@ -248,7 +248,7 @@ sub Member_count_by_source {
   
   $self->throw("Should give a defined source_name as argument\n") unless (defined $source_name);
   
-  return scalar @{$self->get_Member_by_source($source_name)};
+  return scalar @{$self->get_Member_Attribute_by_source($source_name)};
 }
 
 =head2 Member_count_by_source_taxon
@@ -268,7 +268,7 @@ sub Member_count_by_source_taxon {
   
   $self->throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
 
-  return scalar @{$self->get_Member_by_source_taxon($source_name,$taxon_id)};
+  return scalar @{$self->get_Member_Attribute_by_source_taxon($source_name,$taxon_id)};
 }
 
 =head2 get_Taxon_by_source

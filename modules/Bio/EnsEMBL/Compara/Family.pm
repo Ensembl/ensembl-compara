@@ -87,7 +87,7 @@ sub read_clustalw {
 
   #place all member attributes in a hash on their member name
   my %attribute_hash;
-  foreach my $member_attribute (@{$self->get_all_Member}) {
+  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
     my ($member, $attribute) = @{$member_attribute};
     $attribute_hash{$member->stable_id} = $attribute;
   }
@@ -133,7 +133,7 @@ sub get_SimpleAlign {
     $bio07 = 1;
   }
 
-  foreach my $member_attribute (@{$self->get_all_Member}) {
+  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
     my ($member, $attribute) = @{$member_attribute};
     my $seqstr = $attribute->alignment_string($member);
     next if(!$seqstr);

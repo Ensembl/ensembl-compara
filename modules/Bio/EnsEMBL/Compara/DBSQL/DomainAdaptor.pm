@@ -226,7 +226,7 @@ sub store {
     $dom->dbID($sth->{'mysql_insertid'});
   }
   
-  foreach my $member_attribute (@{$dom->get_all_Member}) {
+  foreach my $member_attribute (@{$dom->get_all_Member_Attribute}) {
     $self->store_relation($member_attribute, $dom);
   }
 
