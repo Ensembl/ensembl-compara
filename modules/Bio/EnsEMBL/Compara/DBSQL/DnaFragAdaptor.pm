@@ -273,14 +273,18 @@ sub store{
        $self->throw("Must store $dnafrag object");
    }
 
+   if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
+       $self->throw("Must have dnafrag arg [$dnafrag]");
+   }
+
+   if( $dnafrag->adaptor() == $self ) {
+     return $dnafrag->dbID();
+   }
+
    my $gdb = $dnafrag->genomedb();
 
    if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
        $self->throw("Must have genomedb attached to the dnafrag to store the dnafrag [$gdb]");
-   }
-
-   if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
-       $self->throw("Must have dnafrag arg [$dnafrag]");
    }
 
    if( !defined $gdb->dbID ) {
@@ -296,11 +300,14 @@ sub store{
    my $type = 'NULL';
    $type = $dnafrag->type if (defined $dnafrag->type);
 
-   my $sth = $self->prepare("insert into dnafrag (name,genome_db_id,dnafrag_type) values (?,?,?)");
+   my $sth = $self->prepare("
+     INSERT INTO dnafrag ( genome_db_id, dnafrag_type,
+                           name, start, end )
+     VALUES (?,?,?,?,?)");
 
-   $sth->execute($name,$gid,$type);
+   $sth->execute($gid, $type. $name, $dnafrag->start(), $dnafrag->end() );
 
-   $dnafrag->dbID($sth->{'mysql_insertid'});
+   $dnafrag->dbID( $sth->{'mysql_insertid'} );
    $dnafrag->adaptor($self);
 
    return $dnafrag->dbID;
@@ -326,15 +333,20 @@ sub store_if_needed {
        $self->throw("Must store $dnafrag object");
    }
 
+   if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
+       $self->throw("Must have dnafrag arg [$dnafrag]");
+   }
+
+   if( $dnafrag->adaptor() == $self ) {
+     return $dnafrag->dbID();
+   }
+   
    my $gdb = $dnafrag->genomedb();
 
    if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
        $self->throw("Must have genomedb attached to the dnafrag to store the dnafrag [$gdb]");
    }
 
-   if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
-       $self->throw("Must have dnafrag arg [$dnafrag]");
-   }
 
    if( !defined $gdb->dbID ) {
        $self->throw("genomedb must be stored (no dbID). Store genomedb first");
@@ -346,9 +358,16 @@ sub store_if_needed {
    
    my $name = $dnafrag->name;
    my $gid =  $gdb->dbID;
-   my $sth = $self->prepare("select dnafrag_id from dnafrag where name='$name' and genome_db_id=$gid");
+   my $sth = $self->prepare("
+      SELECT dnafrag_id 
+        FROM dnafrag 
+       WHERE name= ?
+         AND genome_db_id= ?
+         AND start = ?
+         AND end = ?
+   ");
 
-   unless ($sth->execute()) {
+   unless ($sth->execute( $name, $gid, $dnafrag->start(), $dnafrag->end())) {
      $self->throw("Failed execution of a select query");
    }
 
@@ -357,10 +376,10 @@ sub store_if_needed {
    if (defined $dnafrag_id) {
      # $dnafrag already stored
      $dnafrag->dbID($dnafrag_id);
+     $dnafrag->adaptor( $self );
      return $dnafrag_id;
    } else {
-     my $dnafrag_id = $self->store($dnafrag);
-     return $dnafrag_id;
+     $self->store($dnafrag);
    }
 }
 
