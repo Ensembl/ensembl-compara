@@ -129,8 +129,12 @@ sub cdna_alignment_string {
       $member->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     
     my $ta = $genome_db->db_adaptor->get_TranscriptAdaptor;
-    my $transcript = $ta->fetch_by_translation_stable_id($member->stable_id);
-    
+    my $transcript;
+    if ($member->stable_id =~ /^\d+$/) {
+      $transcript = $ta->fetch_by_translation_id($member->stable_id);
+    } else {
+      $transcript = $ta->fetch_by_translation_stable_id($member->stable_id);
+    }
     if(!$transcript) {
       $self->warn("Could not retrieve transcript via peptide id [" .
                   $member->stable_id . "] from database [" .
@@ -150,20 +154,26 @@ sub cdna_alignment_string {
     }
 
     my $cdna_len = length($cdna);
-#    print STDERR "cdna length: ",$cdna_len,"\n";
     my $start = 0;
     my $cdna_align_string = '';
+
     foreach my $pep (split(//,$self->alignment_string($member))) {
       last if($start >= $cdna_len);
       
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
       } else {
-        $cdna_align_string .= substr($cdna, $start, 3) . ' ';
+        my $codon = substr($cdna, $start, 3);
+        unless (length($codon) == 3) {
+          # sometimes the last codon contains only 1 or 2 nucleotides.
+          # making sure that it has 3 by adding as many Ns as necessary
+          $codon .= 'N' x (3 - length($codon));
+        }
+        $cdna_align_string .= $codon . ' ';
         $start += 3;
       }
     }
-    
+    print STDERR "cdna_align_string: ",$cdna_align_string,"\n";
     $self->{'cdna_alignment_string'} = $cdna_align_string
   }
   
