@@ -55,61 +55,28 @@ sub fetch_homologues_of_gene_in_species{
 
 =cut
 
-sub fetch_by_relation {
-  my ($self, $relation) = @_;
+sub fetch_by_Member {
+  my ($self, $member) = @_;
 
-  my $join;
-  my $constraint;
-
-  $self->throw() 
-    unless (defined $relation && ref $relation);
-  
-  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
-    $join = [['homology_member', 'hm'], 'd.homology_id = hm.homology_id'];
-    my $member_id = $relation->dbID;
-    $constraint = "hm.member_id = $member_id";
-  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
-#    my $domain_id = $relation->dbID;
-#    $constraint = "df.domain_id = $domain_id";
-#  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-#  }
-  else {
-    $self->throw();
-  }
+  my $join = [['homology_member', 'hm'], 'h.homology_id = hm.homology_id'];
+  my $constraint = "hm.member_id = " .$member->dbID;;
 
   return $self->generic_fetch($constraint, $join);
 }
 
-sub fetch_by_relation_source {
-  my ($self, $relation, $source_name) = @_;
+sub fetch_by_Member_source {
+  my ($self, $member, $source_name) = @_;
 
-  my $join;
-  my $constraint = "s.source_name = $source_name";
+  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
+  }
 
-  $self->throw() 
-    unless (defined $relation && ref $relation);
-  
   $self->throw("source_name arg is required\n")
     unless ($source_name);
-
-  if ($relation->isa('Bio::EnsEMBL::Compara::Member')) {
-    $join = [['homology_member', 'hm'], 'h.homology_id = hm.homology_id'];
-    my $member_id = $relation->dbID;
-    $constraint .= " AND hm.member_id = $member_id";
-  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-#    $join = [['domain_family', 'df'], 'f.family_id = df.family_id'];
-#    my $domain_id = $relation->dbID;
-#    $constraint = " AND df.domain_id = $domain_id";
-#  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-#  }
-  else {
-    $self->throw();
-  }
+  
+  my $join = [['homology_member', 'hm'], 'h.homology_id = hm.homology_id'];
+  my $constraint = "s.source_name = $source_name";
+  $constraint .= " AND hm.member_id = " . $member->dbID;
 
   return $self->generic_fetch($constraint, $join);
 }
