@@ -194,9 +194,9 @@ sub store {
     $hom->dbID($rowhash->{homology_id});
   } else {
   
-    $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?,?,?)";
+    $sql = "INSERT INTO homology (stable_id, source_id, description) VALUES (?,?,?)";
     $sth = $self->prepare($sql);
-    $sth->execute($hom->stable_id,$hom->source_id,$hom->description, $hom->dn, $hom->ds);
+    $sth->execute($hom->stable_id,$hom->source_id,$hom->description);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
