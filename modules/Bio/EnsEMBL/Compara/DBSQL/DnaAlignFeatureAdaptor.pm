@@ -300,7 +300,7 @@ sub interpolate_best_location {
   my %name_strand_clusters;
   my $based_on_group_id = 1;
   foreach my $daf (@{$dafs}) {
-    if ($daf->group_id > 0) {
+    if ($daf->group_id > 0 && $alignment_type ne "TRANSLATED_BLAT") {
       push @{$name_strand_clusters{$daf->group_id}}, $daf;
     } else {
       $based_on_group_id = 0 if ($based_on_group_id);
