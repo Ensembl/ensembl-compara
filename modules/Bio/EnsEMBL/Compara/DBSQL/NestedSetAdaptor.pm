@@ -1,0 +1,412 @@
+=head1 NAME
+
+NestedSetAdaptor - DESCRIPTION of Object
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 CONTACT
+
+  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
+
+package Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
+
+use strict;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+
+our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+
+
+###########################
+# FETCH methods
+###########################
+
+sub fetch_node_by_nestedset_id {
+  my ($self, $node_id) = @_;
+
+  my $constraint = "WHERE nestedset_id = $node_id";
+  my ($node) = @{$self->_generic_fetch($constraint)};
+  return $node;
+}
+
+
+sub fetch_parent_for_node {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $constraint = "WHERE nestedset_id = " . $node->_parent_nestedset_id;
+  my ($parent) = @{$self->_generic_fetch($constraint)};
+  return $parent;
+}
+
+
+sub fetch_all_children_for_node {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $constraint = "WHERE parent_nestedset_id = " . $node->nestedset_id;
+  my $kids = $self->_generic_fetch($constraint);
+  foreach my $child (@{$kids}) { $node->add_child($child); }
+
+  return $node;
+}
+
+
+sub fetch_subtree_under_node {
+  my $self = shift;
+  my $node = shift;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $table = $self->tables->[0]->[0];
+
+  my $constraint = "INNER JOIN $table AS root_node ON ( ". $table .".left_index 
+                         BETWEEN root_node.left_index AND root_node.right_index)
+                    WHERE root_node.nestedset_id=". $node->nestedset_id;
+
+  my $all_nodes = $self->_generic_fetch($constraint);
+  my $root = $self->_build_tree_from_nodes($all_nodes);
+  return $root;
+}
+
+
+sub fetch_all_roots {
+  my $self = shift;
+
+  my $constraint = "WHERE root_nestedset_id = 0";
+  return $self->_generic_fetch($constraint);
+}
+
+
+###########################
+# STORE methods
+###########################
+
+sub update {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $parent_id = 0;
+  my $root_id = 0;
+  if($node->parent) {
+    $parent_id = $node->parent->nestedset_id ;
+    $root_id = $node->root->nestedset_id;
+  }
+
+  my $sql = "UPDATE " .  $self->tables->[0]->[0] . " SET ".
+               "parent_nestedset_id=$parent_id".
+               ",root_nestedset_id=$root_id".
+               ",left_index=" . $node->left_index .
+               ",right_index=" . $node->right_index .
+               ",distance_to_parent=" . $node->distance_to_parent.
+             "WHERE nestedset_id=". $node->nestedset_id;
+
+  $self->dbc->do($sql);
+}
+
+
+sub update_subtree {
+  my $self = shift;
+  my $node = shift;
+
+  $self->update($node);
+
+  foreach my $child ($node->children) {
+    $self->update_subtree($child);
+  }
+}
+
+=head2 store
+
+  Arg [1]    :
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub store {
+  my ($self, $node) = @_;
+
+  throw("must subclass and provide correct table names");
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $sth = $self->prepare("INSERT INTO tree_node (parent_id, name) VALUES (?,?)");
+  if(defined($node->parent_node)) {
+    $sth->execute($node->parent_node->dbID, $node->name);
+  } else {
+    $sth->execute(0, $node->name);
+  }
+  $node->dbID( $sth->{'mysql_insertid'} );
+  $node->adaptor($self);
+  $sth->finish;
+
+  #
+  #now recursively do all the children
+  #
+  my $children = $node->children_nodes;
+  foreach my $child_node (@$children) {  
+    $self->store($child_node);
+  }
+
+  return $node->dbID;
+}
+
+
+##################################
+#
+# Database related methods, sublcass overrides/inherits
+#
+##################################
+
+sub tables {
+  my $self = shift;
+  throw("must subclass and provide correct table names");
+}
+
+sub columns {
+  my $self = shift;
+  throw("must subclass and provide correct column names");
+}
+
+sub default_where_clause {
+  my $self = shift;
+  return '';
+}
+
+sub final_clause {
+  my $self = shift;
+  $self->{'final_clause'} = shift if(@_);
+  return $self->{'final_clause'};
+}
+
+
+sub create_instance_from_rowhash {
+  my $self = shift;
+  my $rowhash = shift;
+
+  #my $node = $self->cache_fetch_by_id($rowhash->{'nestedset_id'});
+  #return $node if($node);
+  
+  my $node = new Bio::EnsEMBL::Compara::NestedSet;
+  $self->init_instance_from_rowhash($node, $rowhash);
+  
+  #$self->cache_add_object($node);
+
+  return $node;
+}
+
+
+sub init_instance_from_rowhash {
+  my $self = shift;
+  my $node = shift;
+  my $rowhash = shift;
+
+  $node->adaptor($self);
+  $node->nestedset_id          ($rowhash->{'nestedset_id'});
+  $node->_parent_nestedset_id  ($rowhash->{'parent_nestedset_id'});
+  $node->_root_nestedset_id    ($rowhash->{'root_nestedset_id'});
+  $node->left_index            ($rowhash->{'left_index'});
+  $node->right_index           ($rowhash->{'right_index'});
+  $node->distance_to_parent    ($rowhash->{'distance_to_parent'});
+  
+  return $node;
+}
+
+
+##################################
+#
+# INTERNAL METHODS
+#
+##################################
+
+sub new {
+  my $class = shift;
+
+  my $self = $class->SUPER::new(@_);
+  
+  $self->{'_node_cache'} = [];
+  return $self;
+}
+
+sub DESTROY {
+  my $self = shift;
+  $self->clear_cache;
+  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+}
+
+sub cache_fetch_by_id {
+  my $self = shift;
+  my $nestedset_id = shift;
+  
+  for(my $index=0; $index<scalar(@{$self->{'_node_cache'}}); $index++) {
+    my $node = $self->{'_node_cache'}->[$index];
+    if($node->nestedset_id == $nestedset_id) {
+      splice(@{$self->{'_node_cache'}}, $index, 1); #removes from list
+      unshift @{$self->{'_node_cache'}}, $node; #put at front of list 
+      return $node;
+    }
+  }
+  return undef;
+}
+
+
+sub cache_add_object
+{
+  my $self = shift;
+  my $node = shift;
+
+  unshift @{$self->{'_node_cache'}}, $node; #put at front of list 
+  while(scalar(@{$self->{'_node_cache'}}) > 3000) {
+    my $old = pop @{$self->{'_node_cache'}};
+    #print("shrinking cache : "); $old->print_node;
+  }
+  return undef;
+}
+
+sub clear_cache {
+  my $self = shift;
+  
+  $self->{'_node_cache'} = [];
+  return undef;
+}
+
+sub _build_tree_from_nodes {
+  my $self = shift;
+  my $node_list = shift;
+  
+  #first hash all the nodes by id for fast access
+  my %node_hash;
+  my $root = undef;
+  foreach my $node (@{$node_list}) {
+    $node_hash{$node->nestedset_id} = $node;
+    if($node->root->equals($node)) {
+      throw("found more than one root!!") if(defined($root));
+      print("found ROOT\n");
+      $root = $node;
+    }
+  }
+
+  #next add children to their parents
+  foreach my $node (@{$node_list}) {
+    my $parent = $node_hash{$node->_parent_nestedset_id};  
+    $parent->add_child($node);
+  }
+  
+  unless($root) {
+    print("no root! progressively fetch until all are loaded\n");
+    my $root = $node_list->[0];
+  }
+  
+  return $root;
+}
+
+
+
+###################################
+#
+# _generic_fetch system
+#
+#####################################
+
+=head2 _generic_fetch
+
+  Arg [1]    : (optional) string $constraint
+               An SQL query constraint (i.e. part of the WHERE clause)
+  Arg [2]    : (optional) string $logic_name
+               the logic_name of the analysis of the features to obtain
+  Example    : $fts = $a->_generic_fetch('WHERE contig_id in (1234, 1235)', 'Swall');
+  Description: Performs a database fetch and returns feature objects in
+               contig coordinates.
+  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
+  Exceptions : none
+  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
+
+=cut
+  
+sub _generic_fetch {
+  my ($self, $constraint, $join) = @_;
+
+  my @tables = @{$self->tables};
+  my $columns = join(', ', @{$self->columns()});
+  
+  my $default_where = $self->default_where_clause;
+  if($default_where) {
+    if($constraint) { 
+      $constraint .= " AND $default_where ";
+    } else {
+      $constraint = " WHERE $default_where ";
+    }
+  }
+
+  if ($join) {
+    foreach my $single_join (@{$join}) {
+      my ($tablename, $condition, $extracolumns) = @{$single_join};
+      if ($tablename && $condition) {
+        push @tables, $tablename;
+        
+        if($constraint) {
+          $constraint .= " AND $condition";
+        } else {
+          $constraint = " WHERE $condition";
+        }
+      } 
+      if ($extracolumns) {
+        $columns .= ", " . join(', ', @{$extracolumns});
+      }
+    }
+  }
+      
+  #construct a nice table string like 'table1 t1, table2 t2'
+  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
+
+  my $sql = "SELECT $columns FROM $tablenames";
+  $sql .= " $constraint" if($constraint);
+
+  #append additional clauses which may have been defined
+  my $final_clause = $self->final_clause;
+  $sql .= " $final_clause" if($final_clause);
+
+  
+  #print STDERR $sql,"\n";
+  my @node_list = ();
+
+  my $sth = $self->prepare($sql);
+  $sth->execute;  
+  while(my $rowhash = $sth->fetchrow_hashref) {
+    my $node = $self->create_instance_from_rowhash($rowhash);        
+    push @node_list, $node;
+  }
+  $sth->finish;
+  
+  return \@node_list;
+}
+
+
+1;
