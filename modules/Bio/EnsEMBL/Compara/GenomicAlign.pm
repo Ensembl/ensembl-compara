@@ -1076,6 +1076,30 @@ sub _print {
 
 }
 
+=head2 display_id
+  Args       : none
+  Example    : my $id = $genomic_align->display_id;
+  Description: returns string describing this genomic_align which can be used
+               as display_id of a Bio::Seq object or in a fasta file.
+               Uses dnafrag information in addition to start and end.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+=cut
+sub display_id {
+  my $self = shift;
+
+  my $dnafrag = $self->dnafrag;
+  return "" unless($dnafrag);
+  my $id = $dnafrag->genome_db->taxon_id. ".".
+           $dnafrag->genome_db->dbID. ":".
+           $dnafrag->coord_system_name.":".
+           $dnafrag->name.".".
+           $self->dnafrag_start.".".
+           $self->dnafrag_end;
+  return $id;
+}
+
 
 #####################################################################
 #####################################################################
