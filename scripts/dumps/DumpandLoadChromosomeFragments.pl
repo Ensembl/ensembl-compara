@@ -20,6 +20,7 @@ DumpandLoadChromosomeFragments.pl
             -o 		output_filename ending
 	    -load 	1
 	    -dump 	1
+	    -all	1
 
 $0 [-help]
    -dbname ensembl_compara db name or alias
@@ -37,6 +38,7 @@ $0 [-help]
    -o output_filename ending eg fa
    -load 0/1 if true load Dnafrags into db 
    -dump 0/1 if true dump Dnafrags into flatfiles 
+   -all	0/1   if true then put all chunks into same file
    -conf	Registry.conf file
 
 
@@ -44,6 +46,7 @@ $0 [-help]
 
 $| = 1;
 
+my $all;
 my $host = 'localhost';
 my $dbname;
 my $assembly;
@@ -72,6 +75,7 @@ GetOptions('help' => \$help,
 	   'o=s' => \$output,
 	   'reg_conf=s' =>\$conf,
 	   'load=i' => \$load,
+	   'all=i'  => \$all,
 	   'dump=i' => \$dump);
 
 if ($help) {
@@ -117,10 +121,24 @@ my $filename='';
 CHR:foreach my $chr (@chromosomes) {
 	if(($chr->seq_region_name =~/[M|m][T|t]/)){next CHR;}
 	if (($dump>0) && (defined $output)) {
-	 	if ($phusion){$filename=$phusion."_".$chr->seq_region_name.".".$output;}
-	 	else{$filename=$chr->seq_region_name.".".$output;}
+	 	if ($phusion){
+			if ($all){
+				$filename=$phusion."_all.".$output;
+				}
+			else{
+				$filename=$phusion."_".$chr->seq_region_name.".".$output;
+				}
+			}
+	 	else{
+			if ($all){
+				$filename = "all.".$output;
+				}
+			else {
+				$filename=$chr->seq_region_name.".".$output;
+				}
+			}
 		print STDERR "opening $filename\n";
-  		open F, ">$filename";
+  		open F, ">>$filename";
   		$fh = \*F;
 		}    
  	
