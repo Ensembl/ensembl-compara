@@ -37,14 +37,13 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 
-package Bio::EnsEMBL::Compara::SyntenyRegionAdaptor;
+package Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor;
 use vars qw(@ISA);
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::SyntenyRegion;
 use strict;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
 
 =head2 fetch_by_dbID
 
