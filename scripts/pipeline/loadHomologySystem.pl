@@ -284,15 +284,64 @@ sub prepareGenomeAnalysis
       $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
     }
   }
-  
 
+  
+  #
+  # blast_template
+  #
   # create an unlinked analysis called blast_template
-  # it will not have rule goal/conditions so it will never execute
+  # it will not have rules so it will never execute
+  # used to store module,parameters... to be used as template for
+  # the dynamic creation of the analyses like blast_1_NCBI34
   my $blast_template = new Bio::EnsEMBL::Pipeline::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
   $blast_template->input_id_type('MemberPep');
   eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
 
+  #
+  # SubmitHomologyPair
+  #
+  my $submitHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'SubmitHomologyPair',
+      -input_id_type   => 'homology',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($submitHomology);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($submitHomology->dbID);
+    $stats->batch_size(7000);
+    $stats->hive_capacity(1);
+    $stats->status('BLOCKED');
+    $stats->update();
+  }
+
+
+  #
+  # BuildHomology
+  #
+  my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'BuildHomology',
+      -input_id_type   => 'homology',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($buildHomology);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($buildHomology->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(3);
+    $stats->update();
+    $dataflowRuleDBA->create_rule($submitHomology,$buildHomology);
+  }
+  if(defined($self->{'pipelineDBA'})) {
+    my $rule = Bio::EnsEMBL::Pipeline::Rule->new('-goalAnalysis'=>$buildHomology);
+    $rule->add_condition($submitHomology->logic_name());
+    $self->{'pipelineDBA'}->get_RuleAdaptor->store($rule);
+  }
+
+
+  
   return $submit_analysis;
 }
 
