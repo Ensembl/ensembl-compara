@@ -40,6 +40,7 @@ if(-e $compara_conf) {
   $host = $conf{'host'};
   $port = $conf{'port'};
   $dbuser = $conf{'user'};
+  $dbpass = $conf{'pass'};
   $dbname = $conf{'dbname'};
   #$adaptor = $conf{'adaptor'};
 }
@@ -106,9 +107,9 @@ SLICE: foreach my $slice (@slices) {
   #print(STDERR "slice " . $slice->name . "\n");
   foreach my $gene (@{$slice->get_all_Genes}) {
     $geneCount++;
-    if(lc($gene->type) ne 'pseudogene') {
+    if((lc($gene->type) ne 'pseudogene') and (lc($gene->type) ne 'bacterial_contaminant')) {
       $realGeneCount++;
-      store_gene_and_all_transcripts($gene);     
+      store_gene_and_all_transcripts($gene);
     }
     #if($transcriptCount >= 1000) { last SLICE; }
     #if($geneCount >= 1000) { last SLICE; }
