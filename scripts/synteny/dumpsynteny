@@ -1,117 +1,129 @@
-#!/usr/local/bin/perl
+#!/usr/local/ensembl/bin/perl
 
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::ExternalData::EXONERATESQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Analysis;
 use Getopt::Long;
 
-my $corehost = 'ecs1b';
-my $coreuser = 'ensro';
-my $corepass = '';
-my $corename;
-my $comphost = $corehost;
-my $compuser = $coreuser;
-my $comppass = $corepass;
-my $compname;
-my $corepath;
+my $usage = "
+dumpsynteny -host ecs1b.sanger.ac.uk 
+            -user ensro
+            -dbname ensembl_compara_10_1
+            -chr_names \"22\"
+            -species1 \"Homo sapiens\"
+            -assembly1 NCBI30
+            -species2 \"Mus musculus\"
+            -assembly2 MGSC3
+            -conf_file Compara.conf
 
-my $org1 = 'Homo_sapiens';
-my $org2 = 'Mus_musculus';
+$0 [-help]
+   -host compara_db_host_server
+   -user username (default = 'ensro')
+   -dbname compara_database_name
+   -chr_names \"20,21,22\" (default = \"all\")
+   -species1 (e.g. \"Homo sapiens\") from which alignments are queried and chr_names refer to
+   -assembly1 (e.g. NCBI30) assembly version of species1
+   -species2 (e.g. \"Mus musculus\") to which alignments are queried
+   -assembly2 (e.g. MGSC3) assembly version of species2
+   -conf_file comparadb_configuration_file
+              (see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example)
 
-my $chr;
+";
 
+my $help = 0;
+my $host = 'ecs2d.internal.sanger.ac.uk';
+my $user = 'ensro';
+my $pass = '';
+my $dbname = 'ensembl_compara_10_1';
+
+my $species1 = 'Homo sapiens';
+my $species1_assembly = 'NCBI30';
+my $species2 = 'Mus musculus';
+my $species2_assembly = 'MGSC3';
+
+my $chr_names = "all";
+my $conf_file = "/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/PhusionBlast/Compara.conf";
 
 $| = 1;
 
-&GetOptions('corehost:s' => \$corehost,
-						'coreuser:s' => \$coreuser,
-						'corename:s' => \$corename,
-						'corepass:s' => \$corepass,
-						'comphost:s' => \$comphost,
-						'compuser:s' => \$compuser,
-						'compname:s' => \$compname,
-						'comppass:s' => \$comppass,
-						'org1:s'     => \$org1,
-						'org2:s'     => \$org2,
-						'chr:s'      => \$chr,
-             );
+&GetOptions('help' => \$help,
+	    'host:s' => \$host,
+	    'user:s' => \$user,
+	    'dbname:s' => \$dbname,
+	    'pass:s' => \$pass,
+	    'species1:s' => \$species1,
+	    'assembly1:s' => \$species1_assembly,
+	    'species2:s' => \$species2,
+	    'assembly2:s' => \$species2_assembly,
+	    'chr_names=s' => \$chr_names,
+	    'conf_file=s' => \$conf_file);
+
+if ($help) {
+  print $usage;
+  exit 0;
+}
 
 print STDERR "Time in dumpgff " . time . "\n";
 
-my $coredb = new Bio::EnsEMBL::DBSQL::DBAdaptor(-host        => $corehost,
-																								 -user        => $coreuser,
-																								 -dbname      => $corename,
-																								 -pass        => $corepass,
-																								 -perlonlyfeatures => 0);
+my $compdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $host,
+							  -user        => $user,
+							  -dbname      => $dbname,
+							  -pass        => $pass,
+							  -conf_file   => $conf_file);
 
-my $compdb = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $comphost,
-																											 -user        => $compuser,
-																											 -dbname      => $compname,
-																											 -pass        => $comppass,
-																								 );
+my $coredb = $compdb->get_db_adaptor($species1,$species1_assembly);
 
+my $DnaAlignFeatureAdaptor = $compdb->get_DnaAlignFeatureAdaptor;
+my $SliceAdaptor = $coredb->get_SliceAdaptor;
+my $ChromosomeAdaptor = $coredb->get_ChromosomeAdaptor;
 
+my @chromosomes;
 
-$coredb->static_golden_path_type($corepath);
-
-my $gad    = $compdb->get_GenomicAlignAdaptor;
-my $sgpa   = $coredb->get_StaticGoldenPathAdaptor();
-
-
-my @chr;
-
-if (defined($chr) && $chr eq "all") {
-  @chr = $sgpa->get_all_chromosome_name;  @chr = $sgpa->get_all_chromosome_name;
-} elsif (defined($chr)) {
-  push(@chr,$chr);
+if (defined $chr_names and $chr_names ne "all") {
+  my @chr_names = split /,/, $chr_names;
+  foreach my $chr_name (@chr_names) {
+    push @chromosomes, $ChromosomeAdaptor->fetch_by_chr_name($chr_name);
+  }
 } else {
-  print "Must either specifiy a chromosome name with -chr <chrname>  or specify all chromosomes with -chr all\n";
-  exit(0);
+  @chromosomes = @{$ChromosomeAdaptor->fetch_all}
 }
 
-foreach my $chr (@chr) {
-  my $length = $sgpa->get_chromosome_length($chr);
+foreach my $chr (@chromosomes) {
+  my $length = $chr->length;
 
-	print STDERR "Got chr $chr length $length\n";
-	
-	my $start = 1;
-	my $chunk = 5000000;
-	
-	open(SYN,">$chr.syten.gff");
-	
-	while ($start <= $length) {
-		
-		my $end = $start + $chunk -1;
-		
-		if ($end > $length) {$end = $length;}
-		
-		my $vc = $sgpa->fetch_VirtualContig_by_chr_start_end( $chr,
-																													$start,
-																													$end,
-																												);
-		
-		my @synteny      = $gad->fetch_DnaDnaAlignFeature_by_species_chr_start_end($org1,
-																																							 $org2,
-																																							 $chr,
-																																							 $start,
-																																							 $end,
-																																							 "VirtualContig");
-		
-		print STDERR "Got features " . scalar(@synteny) . "\n";
-		
-		my %chr;
-		
-		foreach my $f (@synteny) {
-			$f->primary_tag('similarity');
-			$f->source_tag('synteny');
-			
-			print SYN $f->gffstring . "\n";
-		}
-		
-		$start += $chunk;
-	}
+  print STDERR "Got chr ".$chr->chr_name." length $length\n";
+  
+  my $start = 1;
+  my $chunk = 5000000;
+  
+  my $chr_name = $chr->chr_name;
+  open SYN,">$chr_name.syten.gff";
+  
+  while ($start <= $length) {
+    
+    my $end = $start + $chunk -1;
+    
+    if ($end > $length) {$end = $length;}
+    
+    my $Slice = $SliceAdaptor->fetch_by_chr_start_end( $chr->chr_name,
+						       $start,
+						       $end);
 
-	close(SYN);
+    my $synteny = $DnaAlignFeatureAdaptor->fetch_all_by_Slice($Slice,$species2,$species2_assembly);
+
+    print STDERR "Got features " . scalar(@{$synteny}) . "\n";
+    
+    foreach my $f (@{$synteny}) {
+      my $analysis = new Bio::EnsEMBL::Analysis(-gff_feature => 'similarity',
+						-gff_source => 'synteny');
+      $f->analysis($analysis);
+      
+      print SYN $f->gffstring . "\n";
+    }
+    
+    $start += $chunk;
+  }
+  close SYN;
 }
