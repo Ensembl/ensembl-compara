@@ -104,6 +104,31 @@ sub fetch_by_taxon_id {
 
 =cut
 
+sub fetch_by_family_Member_source {
+  my ($self, $family, $source_name) = @_;
+
+  my $sql = "SELECT distinct(t.taxon_id)
+             FROM family_member fm,member m, source s,taxon t
+             WHERE fm.family_id= ? AND
+                   s.source_name= ? AND
+                   fm.member_id=m.member_id AND
+                   m.source_id=s.source_id AND
+                   m.taxon_id=t.taxon_id";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($family->dbID, $source_name);
+
+  my @taxa;
+
+  while (my $rowhash = $sth->fetchrow_hashref) {
+    my $taxon_id = $rowhash->{taxon_id};
+    my $taxon = $self->fetch_by_dbID($taxon_id);
+    push @taxa, $taxon;
+  }
+
+  return \@taxa;
+}
+
 sub store {
   my ($self,$taxon) = @_;
 
