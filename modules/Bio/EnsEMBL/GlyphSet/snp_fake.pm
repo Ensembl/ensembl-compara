@@ -16,7 +16,7 @@ sub _init {
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target_gene   = $Config->{'geneid'};
     
-  my $h             = 16;
+  my $h             = 24;
     
   my @bitmap        = undef;
   my $colours       = $Config->get('snp_join','colours' );
@@ -55,14 +55,38 @@ sub _init {
                 'absolutey'  => 1,
       });
       $self->push( $textglyph );
+    } elsif( ($w < $E-$S+1) && $label =~ /^(-|\w)\/(-|\w)$/ ) {
+      my($X,$Y) = ($1,$2);
+      my $textglyph = new Sanger::Graphics::Glyph::Text({
+                'x'          => ( $E + $S - 1 - $w)/2,
+                'y'          => ($h-2*$th-2)/2,
+                'width'      => $w,
+                'height'     => $th,
+                'font'       => 'Tiny',
+                'colour'     => 'black',
+                'text'       => $X,
+                'absolutey'  => 1,
+      });
+      $self->push( $textglyph );
+      my $textglyph = new Sanger::Graphics::Glyph::Text({
+                'x'          => ( $E + $S - 1 - $w)/2,
+                'y'          => ($h+2)/2,
+                'width'      => $w,
+                'height'     => $th,
+                'font'       => 'Tiny',
+                'colour'     => 'black',
+                'text'       => $Y,
+                'absolutey'  => 1,
+      });
+      $self->push( $textglyph );
     }
     my $tglyph = new Sanger::Graphics::Glyph::Rect({
       'x' => $S-1,
       'y' => 0,
       'bordercolour' => $colour,
       'absolutey' => 1,
-      # 'href' => $self->href($snp),
-      # 'zmenu' => $self->zmenu($snp),
+      'href' => $self->href($snp),
+      'zmenu' => $self->zmenu($snp),
       'height' => $h,
       'width'  => $E-$S+1,
     });
