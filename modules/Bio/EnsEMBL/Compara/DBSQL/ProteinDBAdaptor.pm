@@ -152,7 +152,7 @@ sub store{
    my ($self,$pdb) = @_;
 
    if( !defined $pdb || !ref $pdb || !$pdb->isa('Bio::EnsEMBL::Compara::ProteinDB') ) {
-       $self->throw("Must have genomedb arg [$pdb]");
+       $self->throw("Must have proteindb arg [$pdb]");
    }
 
    if( !defined $pdb->name || !defined $pdb->locator ) {
@@ -161,9 +161,21 @@ sub store{
    my $name = $pdb->name;
    my $locator = $pdb->locator;
 
-   my $sth = $self->prepare("insert into genome_db (name,locator) values ('$name','$locator')");
+   my $query = "Select protein_db_id from protein_db where name = '$name' and locator = '$locator'";
+   my $sth = $self->prepare($query);
+   $sth->execute;
+ 
+   my $dbID = $sth->fetchrow_array();
 
-   $sth->execute();
+   if ($dbID) {
+      $pdb->dbID($dbID);
+   }else{
+      my $sth = $self->prepare("insert into protein_db(name,locator) values ('$name','$locator')");
+ 
+      $sth->execute();
+ 
+      $pdb->dbID($sth->{'mysql_insertid'});
+   }
 
    $pdb->dbID($sth->{'mysql_insertid'});
 
@@ -171,6 +183,42 @@ sub store{
 }
 
 
-1;
+=head2 store_DBAdaptor
+ 
+ Title   : store_DBAdaptor
+ Usage   :
+ Function:
+ Example :
+ Returns :
+ Args    :
+ 
+ 
+=cut
+ 
+sub store_DBAdaptor{
+   my ($self,$dba) = @_;
+
+ 
+   $self->throw("Trying to store DBAdaptor without valid arg") unless defined $dba;
+ 
+   my $name = $dba->dbname;
+   my $locator = ref($dba)."/host=".$dba->host.";port=;dbname=$name;user=".$dba->username.";pass=".$dba->password;
+ 
+    my $query = "Select protein_db_id from protein_db where name = '$name' and locator = '$locator'";
+   my $sth = $self->prepare($query);
+   $sth->execute;
+ 
+   my $dbID = $sth->fetchrow_array();
+ 
+   if ($dbID) {
+      return $dbID;
+   }else{
+      my $sth = $self->prepare("insert into protein_db(name,locator) values ('$name','$locator')");
+      $sth->execute();
+      return ($sth->{'mysql_insertid'});
+   }
+ 
+ 
+};
 
 

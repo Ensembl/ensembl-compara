@@ -42,6 +42,8 @@ use strict;
 
 use Bio::Root::RootI;
 use Bio::EnsEMBL::Compara::Protein;
+use Bio::Tools::Run::Alignment::Clustalw;
+
 @ISA = qw(Bio::Root::RootI);
 
 sub new {
@@ -51,6 +53,7 @@ sub new {
     my ($dbID,$stable_id,$threshold,$adaptor,$description) = $self->_rearrange([qw(
 									DBID
 									STABLEID
+									THRESHOLD
 									ADAPTOR
 									DESCRIPTION
 					     				)],@args);
@@ -70,7 +73,7 @@ sub new {
 	$self->description($description);
     }
 
-
+	return $self;
 
 }
 
@@ -195,7 +198,7 @@ sub add_member {
    	push @{$self->{_members}},$fam_protein;
    }
    else {
-	$self->warn($fam_protein->dbID." already exists!");
+	$self->warn("Protein with dbID:".$fam_protein->dbID." already exists!");
    }
    return $self->get_all_members;
    
@@ -213,10 +216,10 @@ sub add_member {
 
 sub exist {
 	my ($self,$famprot) = @_;
-	$self->throw("add_member currently only supports Bio::EnsEMBL::Compara::Protein") unless $fam_protein->isa('Bio::EnsEMBL::Compara::Protein');
+	$self->throw("add_member currently only supports Bio::EnsEMBL::Compara::Protein") unless $famprot->isa('Bio::EnsEMBL::Compara::Protein');
 
 	foreach my $mem ($self->get_all_members){
-		if ($mem->dbID eq $famprot->dbID){
+		if ($mem->external_id eq $famprot->external_id){
 			return 1;
 		}
 	}
@@ -235,7 +238,7 @@ sub exist {
 
 sub get_members_of_db {
 	my ($self,$dbname)=@_;
-	$self->throw("No database name specified for get_members_of_db ! ") unless defined($dbname):
+	$self->throw("No database name specified for get_members_of_db ! ") unless defined($dbname);
 
 	my @mems = ();
 	foreach my $mem ($self->get_all_members){
@@ -246,23 +249,146 @@ sub get_members_of_db {
 	return @mems;
 }	
 
-=head2 familyDB
+=head2 get_all_members
 
- Title   : familyDB
- Usage   : $obj->familyDB(val)
- Function:
- Returns : familyDB obj associated with this Family 
- Args    : newvalue (optional)
+ Title	 : get_all_members
+ Usage	 : $fam->get_all_members
+ Function: get all members of the family which belong to a specified db
+ Returns : an array of Bio::EnsEMBL::Compara::Protein
+ Args	 : a string specifying the database name
 
 =cut
 
-sub familyDB{
-   my $self = shift;
-   if( @_ ) {
-      my $value = shift;
-      $self->{'familyDB'} = $value;
+sub get_all_members {
+	my ($self)=@_;
+	if (!defined ($self->{'_members'})){
+		$self->{'_members'} = [];
+	}
+	return @{$self->{'_members'}};
+}	
+
+=head2 create_alignment
+
+ Title	 : create_alignment
+ Usage	 : $fam->create_alignment
+ Function: creates an multiple alignment object using TCoffee or ClustalW
+ Returns : a Bio::SimpleAlign 
+ Args	 : $type : "clustalw" or "tcoffee", 
+           @params of the form  @params = ('ktuple' => 2, 'matrix' => 'BLOSUM');  
+
+=cut
+
+sub create_alignment{
+	my ($self,$type,@params) = @_;
+	if (!defined(@params)){
+		@params = ('matrix' => 'BLOSUM');	
+	}
+	my $factory = Bio::Tools::Run::Alignment::Clustalw->new(@params);	
+	my @proteins = $self->get_all_members;
+	my @bioseq;
+	foreach my $prot (@proteins){
+		push @bioseq, $prot->seq();
+	}
+	my $aln = $factory->align(\@bioseq);
+	$self->alignment($type,$aln);
+	return $aln;
+	
+}
+
+=head2 alignment 
+
+ Title	 : alignment 
+ Usage	 : $fam->alignment
+ Function: store a SimpleAlign object 
+ Returns :
+ Args	 :$type (clustalw or tcoffee), Bio::SimpleAlign 
+
+=cut
+
+sub alignment {
+   my ($self,$type,$aln) = @_;
+   
+   if (defined ($aln)){
+	if ($aln->isa("Bio::SimpleAlign")){
+		$self->{'_alignment'}{"$type"} = $aln;
+		return $self->{'_alignment'}{"$type"};
+	}
+	else {
+		$self->throw("Require a Bio::SimpleAlign object");
+	}
    }
-   return $self->{'familyDB'};
+   elsif (defined ($type)){
+	return $self->{'_alignment'}{"$type"};
+   }
+   else {
+	return $self->{'_alignment'}{"clustalw"};
+   }
+}
+	
+=head2 store_alignment 
+
+ Title   : store_alignment
+ Usage   : $fam->store_alignment
+ Function: store a SimpleAlign object into the database 
+ Returns :  
+ Args    : Bio::SimpleAlign, string ("clustalw or tcoffee") 
+
+=cut
+
+sub store_alignment {
+	my ($self,$aln,$type) = @_;
+	$self->throw("[$aln] is not a Bio::SimpleAlign obj!") unless $aln->isa("Bio::SimpleAlign");
+	$type = "clustalw" unless defined ($type);
+	
+	$self->adaptor->store_alignment($self,$aln,$type);
+}
+	
+sub create_tree {
+}
+
+=head2 get_alignment_by_type 
+
+ Title	 : get_alignment_by_type 
+ Usage	 : $obj->get_alignment_by_type($type)
+ Function: retrieve a Bio::SimpleAlign object repsenting an alignment
+ Returns : Bio::SimpleAlign 
+ Args	 : type (string to specify type of alignment to get. e.g. clustalw,tcoffee)
+
+=cut
+sub get_alignment_by_type{
+	my ($self, $type) = @_;
+	return $self->adaptor->get_alignment_by_type($self,$type);
+}
+
+=head2 get_all_alignments
+
+ Title	 : get_all_alignments
+ Usage	 : $obj->get_all_alignments
+ Function: retrieve an array of Bio::SimpleAlign objects repsenting an alignment
+ Returns : array of Bio::SimpleAlign
+ Args	 : 
+
+=cut
+sub get_all_alignments {
+	 my ($self) = @_;
+	 return $self->adaptor->get_all_alignments($self);
+}
+
+=head2 alignment_types
+
+ Title   : alignment_types
+ Usage   : $obj->alignment_types
+ Function: retrieve an array of strings
+ Returns : 
+ Args    : 
+
+=cut
+
+sub alignment_types {
+
+  my ($self) =  @_;
+  return $self->adaptor->adaptor->get_alignment_types($self);
+  
 
 }
 
@@ -303,9 +429,9 @@ sub created{
    my $self = shift;
    if( @_ ) {
       my $value = shift;
-	$self->{'created'} = $value;
+	$self->{'_created'} = $value;
    }
-   return $self->{'created'};
+   return $self->{'_created'};
 
 }
 
@@ -323,10 +449,10 @@ sub modified{
 
    my $self = shift;
    if( @_ ) {
-      my $value = shift;
-	$self->{'modified'} = $value;
+      	my $value = shift;
+	$self->{'_modified'} = $value;
    }
-   return $self->{'modified'};
+   return $self->{'_modified'};
 
 }
 
@@ -345,9 +471,9 @@ sub version{
    my $self = shift;
    if( @_ ) {
       my $value = shift;
-	$self->{'version'} = $value;
+	$self->{'_version'} = $value;
    }
-   return $self->{'version'};
+   return $self->{'_version'};
 
 }
 

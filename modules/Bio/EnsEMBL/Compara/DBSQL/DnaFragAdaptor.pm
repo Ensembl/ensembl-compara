@@ -71,10 +71,10 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   my $sth = $self->prepare("select name,genome_db_id from dnafrag where dnafrag_id = $dbid");
+   my $sth = $self->prepare("select name,genome_db_id,dnafrag_type from dnafrag where dnafrag_id = $dbid");
    $sth->execute;
 
-   my ($name,$genome_db_id) = $sth->fetchrow_array();
+   my ($name,$genome_db_id,$type) = $sth->fetchrow_array();
 
    if( !defined $name) {
        $self->throw("No dnafrag with this dbID $dbid");
@@ -82,7 +82,9 @@ sub fetch_by_dbID{
 
    my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new();
 
+   $dnafrag->dbID($dbid);
    $dnafrag->name($name);
+   $dnafrag->type($type);
    $dnafrag->genomedb($self->db->get_GenomeDBAdaptor()->fetch_by_dbID($genome_db_id));
 
    return $dnafrag;

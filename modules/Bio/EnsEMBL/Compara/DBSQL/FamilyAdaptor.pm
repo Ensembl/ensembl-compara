@@ -1,5 +1,5 @@
 #
-# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor
+# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
 #
 # Cared for by Ewan Birney <birney@ebi.ac.uk>
 #
@@ -11,7 +11,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor - DESCRIPTION of Object
 
 =head1 SYNOPSIS
 
@@ -39,7 +39,7 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 
-package Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor;
+package Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor;
 use vars qw(@ISA);
 use strict;
 
@@ -47,6 +47,8 @@ use strict;
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::Protein;
+use Bio::EnsEMBL::Compara::Family;
+use Bio::AlignIO;
 
 @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -70,13 +72,10 @@ sub fetch_by_dbID{
        $self->throw("Must fetch by dbid");
    }
 
-   my $sth = $self->prepare("select family_id,threshold,description from family where family_id = $dbid");
+   my $sth = $self->prepare("select threshold,description from family where family_id = $dbid");
    $sth->execute;
-   my ($dbid,$threshold,$description) = $sth->fetchrow_array();
-
-   if( !defined $dbid) {
+   (my ($threshold,$description) = $sth->fetchrow_array()) or 
        $self->throw("No family with this dbID $dbid");
-   }
 
    my $family = Bio::EnsEMBL::Compara::Family->new( 	-dbid 	=> $dbid,
 							-threshold => $threshold,
@@ -87,11 +86,13 @@ sub fetch_by_dbID{
    $sth->execute;
    my ($protein_id, $rank);
 
-   while ($protein_id = $sth->fetchrow_array()){
-	my $protein = $self->db->get_ProteinAdaptor->fetch_by_dbID($protein_id);
-	$family->add_member($protein);
+   while (($protein_id,$rank) = $sth->fetchrow_array()){
+    my $protein = $self->db->get_ProteinAdaptor->fetch_by_dbID($protein_id);
+    $protein->family_rank($rank);
+    $protein->family_id($dbid);
+    $family->add_member($protein);
    }
-		
+
    $self->get_stable_entry_info($family);
 
    return $family;
@@ -112,8 +113,8 @@ sub fetch_by_dbID{
 sub get_stable_entry_info {
   my ($self,$fam) = @_;
 
-  if( !defined $fam || !ref $fam || !$gene->isa('Bio::EnsEMBL::Compara::Family') ) {
-     $self->throw("Needs a gene object, not a $gene");
+  if( !defined $fam || !ref $fam || !$fam->isa('Bio::EnsEMBL::Compara::Family') ) {
+     $self->throw("Needs a family bject, not a $fam");
   }
 
   my $sth = $self->prepare("select stable_id,UNIX_TIMESTAMP(created),UNIX_TIMESTAMP(modified),version from family_stable_id where family_id = ".$fam->dbID);
@@ -128,9 +129,33 @@ sub get_stable_entry_info {
   return 1;
 }
 
-=head2 fetch_by_external_id
+=head2 get_alignment_types
 
- Title   : fetch_by_external_id
+ Title	 : get_alignment_types
+ Usage	 : $famAdptor->get_alignment_types($fam)
+ Function: get the alignment types found for that family
+ Returns :array of strings
+ Args	 :
+
+
+=cut
+
+sub get_alignment_types{
+  my ($self,$fam) = @_;
+  my $sth = $self->prepare("select alignment_type from family_alignment where family_id=".$fam->dbID);
+  $sth->execute();
+  my @types;
+  while (my $type = $sth->fetchrow_array()){
+	push (@types, $type)
+  }
+ 
+  return @types;
+}	 
+  	
+
+=head2 fetch_by_stable_id
+
+ Title   : fetch_by_stable_id
  Usage   :
  Function:
  Example :
@@ -140,17 +165,17 @@ sub get_stable_entry_info {
 
 =cut
 
-sub fetch_by_external_id{
-  my ($self,$external_id) = @_;
+sub fetch_by_stable_id{
+  my ($self,$stable_id) = @_;
   
-  my $query= "Select protein_id from protein where protein_external_id = $external_id";
+  my $query= "Select family_id from family_stable_id where stable_id = $stable_id";
   my $sth = $self->prepare($query);
   $sth->execute;
 
   my $dbID = $sth->fetchrow_array;
 
   if (!defined $dbID){
-    $self->throw("Database does not contain protein with external_id: $external_id");
+    $self->throw("Database does not contain family with stable id : $stable_id");
   }else{
     return $self->fetch_by_dbID($dbID);
   } 
@@ -169,105 +194,222 @@ sub fetch_by_external_id{
 =cut
 
 sub store{
-   my ($self,$protein) = @_;
+   my ($self,$family) = @_;
 
-   if( !defined $protein) {
-       $self->throw("Must store $protein object");
+   if( !defined $family) {
+       $self->throw("Must provide a Bio::EnsEMBL::Compara::Family object");
    }
 
-   my $pdb = $protein->proteindb();
- 
-   if( !defined $pdb || !ref $pdb || !$pdb->isa('Bio::EnsEMBL::Compara::ProteinDB') ) {
-       $self->throw("Must have proteindb attached to the protein to store the protein [$pdb]");
+   if( !defined $family || !ref $family || !$family->isa('Bio::EnsEMBL::Compara::Family') ) {
+       $self->throw("Must have family arg [$family]");
    }
- 
-   if( !defined $protein || !ref $protein || !$protein->isa('Bio::EnsEMBL::Compara::Protein') ) {
-       $self->throw("Must have protein arg [$protein]");
+    
+   ###store family### 
+
+   my $sth = $self->prepare("INSERT INTO family(threshold,description) VALUES (?,?)");
+   $sth->execute($family->threshold,$family->description);
+   my $dbID = $sth->{'mysql_insertid'};
+
+   $family->dbID($dbID);
+   $family->adaptor($self);
+  
+   ###store family members###
+   my $sth = $self->prepare("INSERT INTO family_protein(family_id,protein_id,rank,score) VALUES(?,?,?,?)");
+   my $rank = 0;
+
+   my @members = sort {$b->family_score <=> $a->family_score} $family->get_all_members();
+
+   foreach my $mem (@members){
+
+	if (defined $mem->family_rank){
+		$rank = $mem->famliy_rank;
+	}
+	else {
+		$self->warn("rank not defined..giving one ");
+		$rank++;
+	}
+
+    ###store proteins into protein table if not there###
+    $self->db->get_ProteinAdaptor->store_if_needed($mem);
+#	$self->throw("Protein rank not defined!") unless defined($mem->family_rank);
+    $self->throw("Protein dbID not defined!") unless defined($mem->dbID);
+	$sth->execute($dbID,$mem->dbID,$rank,$mem->family_score);
    }
- 
-   if( !defined $pdb->dbID ) {
-       $self->throw("proteindb must be stored (no dbID). Store proteindb first");
-   }
-
-   if( !defined $protein || !ref $protein || !$protein->isa('Bio::EnsEMBL::Compara::Protein') ) {
-       $self->throw("Must have protein arg [$protein]");
-   }
-
-   if( !defined $protein->external_id) {
-       $self->throw("Protein must have a external id");
-   }
-
-
-   my $sth = $self->prepare("insert into protein (protein_external_id,protein_db_id,seq_start,seq_end,strand,dnafrag_id)
-                             values ('".$protein->external_id."',".
-									  $protein->proteinDB->dbID."',".
-                                      $protein->seq_start.",".
-                                      $protein->seq_end.",".
-                                      $protein->strand.",".
-                                      $protein->dnafrag->dbID.")");
-
-   $sth->execute();
-
-   $protein->dbID($sth->{'mysql_insertid'});
-   $protein->adaptor($self);
-
-   return $protein->dbID;
+   return $family->dbID;
 }
 
-=head2 store_if_needed
+=head2 get_alignment_by_type
 
- Title   : store_if_needed
- Usage   : $self->store_if_needed($protein)
- Function: store instance in the defined database if NOT
-           already present.
- Example :
- Returns : $protein->dbID
- Args    : Bio::EnsEMBL::Compara::Protein object
-
+ Title	 : get_alignment_by_type
+ Usage	 : $famAdptor->get_alignment_by_type
+ Function: 
+ Returns : a Bio::SimpleAlign obj
+ Args	 : Bio::EnsEMBL::Compara::Family, string 
 
 =cut
 
-sub store_if_needed {
-   my ($self,$protein) = @_;
-
-   if( !defined $protein ) {
-       $self->throw("Must store $protein object");
-   }
-
-   my $pdb = $protein->proteindb();
-
-   if( !defined $pdb || !ref $pdb || !$pdb->isa('Bio::EnsEMBL::Compara::ProteinDB') ) {
-       $self->throw("Must have proteindb attached to the protein to store the protein [$pdb]");
-   }
-
-   if( !defined $protein || !ref $protein || !$protein->isa('Bio::EnsEMBL::Compara::Protein') ) {
-       $self->throw("Must have protein arg [$protein]");
-   }
+sub get_alignment_by_type{
+	my ($self,$fam,$type)= @_;
+	if (!$self->_type_exists($fam,$type)){
+		$self->warn("alignment type $type for". $fam->dbID ." not found.");
+		return undef;
+	}
+	$self->throw("[$fam] is not a Bio::EnsEMBL::Compara::Family obj!") unless $fam->isa("Bio::EnsEMBL::Compara::Family");
 	
-   if( !defined $pdb->dbID ) {
-       $self->throw("proteindb must be stored (no dbID). Store proteindb first");
-   }
+	###get the alignment string###
+	my $dbID = $fam->dbID();
+	my $q = "SELECT alignment
+		FROM family_alignment 
+		WHERE family_id = $dbID 
+		AND alignment_type='$type'";
 
-   if( !defined $protein->external_id ) {
-       $self->throw("protein must have a external_id");
-   }
-   
-   my $sth = $self->prepare("select protein_id from protein where external_id = '".$protein->external_id."'");
+	$q = $self->prepare($q);
+	$q->execute();
 
-   unless ($sth->execute()) {
-     $self->throw("Failed execution of a select query");
-   }
+	###create the Bioperl AlignIO obj####
+	my @align = $q->fetchrow_array();
+	my $alignstr = $align[0];
+	open(ALN,"echo \'$alignstr\' |");
+	my $alnfh	= Bio::AlignIO->newFh('-format' => "$type",-fh => \*ALN);
+ 	my ($alignobj) = <$alnfh>;
+	return $alignobj;
 
-   my ($protein_id) = $sth->fetchrow_array();
-
-   if (defined $protein_id) {
-     # $protein already stored
-     $protein->dbID($protein_id);
-     return $protein_id;
-   } else {
-     my $protein_id = $self->store($protein);
-     return $protein_id;
-   }
 }
+
+=head2 _type_exists
+
+ Title	 : _type_exists 
+ Usage	 : _type_exists($fam,$type); 
+ Function:
+ Returns : true if family contains that an alignment type, false otherwise 
+ Args	 : Bio::EnsEMBL::Compara::Family, string 
+
+=cut
+
+sub _type_exists {
+  my ($self,$fam,$type) = @_;
+  $self->throw("[$fam] is not a Bio::EnsEMBL::Compara::Family obj!") unless $fam->isa("Bio::EnsEMBL::Compara::Family");
+  my @types = $self->get_alignment_types($fam);
+  foreach my $t(@types){
+	if ($t =~/$type/){
+		return 1;
+	}
+  }
+  return 0;
+}
+
+=head2 get_all_alignments
+
+ Title	 : get_all_alignments
+ Usage	 : $famAdptor->get_all_alignments
+ Function:
+ Returns : a array Bio::SimpleAlign obj
+ Args	 : Bio::EnsEMBL::Compara::Family
+
+=cut
+
+sub get_all_alignments{
+
+	 my ($self,$fam)= @_;
+	 $self->throw("[$fam] is not a Bio::EnsEMBL::Compara::Family obj!") unless $fam->isa("Bio::EnsEMBL::Compara::Family");
+	 
+	 ###get the alignment string###
+	 my $dbID = $fam->dbID();
+	 my $q = "SELECT alignment,alignment_type
+	 	FROM family_alignment 
+	 	WHERE family_id = $dbID"; 
+                
+
+	 $q = $self->prepare($q);
+	 $q->execute();
+
+	###create an array of SimpleAlign objects###
+	 my @alignarray;
+	 while (my @align = $q->fetchrow_array){
+		my $alignstr = $align[0];
+		my $aligntype = $align[1];
+	 	open(ALN,"echo \'$alignstr\' |");
+	 	my $alnfh     = Bio::AlignIO->newFh('-format' => "$aligntype",-fh => \*ALN);
+	 	my ($alignobj) = <$alnfh>;
+		push @alignarray, $alignobj;
+	}
+	 
+	 return @alignarray;
+}
+
+=head2 store_alignment 
+
+ Title	 : store_alignment 
+ Usage	 : $famAdptor->store_alignment($fam,$aln,$type);
+ Function: stores the alignment object into the database
+ Returns :
+ Args	 : Bio::EnsEMBL::Compara::Family, Bio::SimpleAlign, string
+
+=cut
+
+sub store_alignment{
+	my ($self,$fam,$aln,$type) = @_;
+	if ($type =~/clustalw/){ 
+		#not sure of a better way of doing this than to writing to a tmp file
+		#since SimpleAlign takes a file handle and prints the alignment in a clustalw
+		#format
+		open (ALN,">tmpfile");
+		$aln->write_clustalw(\*ALN);
+		close (ALN);
+	
+		open (ALN, "tmpfile");
+		my @alnstr = <ALN>;
+		close (ALN);
+		my $alnstr = $self->_process_clustalw(@alnstr);# need to process clustalw output for storage into mysql
+	        my $famid = $fam->dbID;	
+		my $q = "INSERT INTO family_alignment(family_id,alignment_type,alignment)
+			 VALUES ($famid ,'$type','$alnstr')";
+		$q = $self->prepare($q);
+		$q->execute();
+
+		
+	}
+	else {
+		$self->throw("Sorry storing alignment of type $type not functional yet!");
+	}
+}
+
+=head2 _process_clustalw
+
+ Title	 : _process_clustalw 
+ Usage	 : _process_clustalw(@alnstr) 
+ Function: process clustalw output for input into mysql db
+ Returns : a string
+ Args	 :
+
+=cut	   	 
+
+sub _process_clustalw {
+     	my ($self,@alnstr) = @_;
+	my $empty_lines = 0;
+	my $alignment;
+ 	foreach my $line (@alnstr){
+        	$line =~ s/\n/\\n/;
+        	$alignment.=$line;
+	}
+	return $alignment;
+}
+
+=head2 get_Tree
+
+ Title	 : get_Tree
+ Usage	 : $famAdptor->get_Tree($fam);
+ Function:
+ Returns :
+ Args	 :Bio::Tree::Tree
+
+sub get_Tree {
+	my ($self, $fam) = @_;
+}
+
+sub create_tree{
+	my ($self, $fam) = @_;
+=cut
+	
 
 1;

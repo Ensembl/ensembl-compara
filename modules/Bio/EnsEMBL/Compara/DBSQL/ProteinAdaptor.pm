@@ -1,9 +1,9 @@
 #
 # Ensembl module for Bio::EnsEMBL::Compara::DBSQL::ProteinAdaptor
 #
-# Cared for by Ewan Birney <birney@ebi.ac.uk>
+# Cared for by EnsEMBL <www.ensembl.org>
 #
-# Copyright Ewan Birney
+# Copyright GRL 
 #
 # You may distribute this module under the same terms as perl itself
 
@@ -21,11 +21,11 @@ Give standard usage here
 
 Describe the object here
 
-=head1 AUTHOR - Ewan Birney
+=head1 AUTHOR  
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
-Email birney@ebi.ac.uk
+Email ensembl-dev@ebi.ac.uk
 
 Describe contact details here
 
@@ -83,7 +83,7 @@ sub fetch_by_dbID{
 
    eval{
      $dnafrag= $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);
-   }; if ($@) { $self->warn ("Unable to fetch dnafrag associated with this protein.");}
+   }; if ($@) { $self->warn ("Unable to fetch dnafrag associated with this protein.\n$@");}
 
    my $proteinDB= $self->db->get_ProteinDBAdaptor->fetch_by_dbID($proteinDB_id);
 
@@ -114,6 +114,8 @@ sub fetch_by_dbID{
 
 sub fetch_by_external_id{
   my ($self,$external_id) = @_;
+
+  $self->throw("Trying to fetch protein by external id without supplying an arg") unless defined $external_id;
   
   my $query= "Select protein_id from protein where protein_external_id = '$external_id'";
   my $sth = $self->prepare($query);
@@ -127,6 +129,44 @@ sub fetch_by_external_id{
     return $self->fetch_by_dbID($dbID);
   } 
 }
+
+=head2 fetch_Proteins_by_family_id
+
+ Title   : fetch_Proteins_by_family_id
+ Usage   :
+ Function:
+ Example :
+ Returns : 
+ Args    :
+
+
+=cut
+
+sub fetch_Proteins_by_family_id{
+
+   my ($self,$family_id) = @_;
+
+   $self->throw("Trying to fetch proteins in family without supplying a family dbID") unless defined $family_id;
+ 
+   my $query= "Select protein_id from family_protein where family_id = $family_id";
+   my $sth = $self->prepare($query);
+   $sth->execute;
+
+   my @proteins; 
+   my $protein_dbID;
+
+
+   while ($protein_dbID = $sth->fetchrow_array){
+      my $prot = $self->fetch_by_dbID($protein_dbID); 
+      push (@proteins,$prot);
+   }
+
+ 
+   $self->throw("Family with dbID = $family_id does not exists") unless defined @proteins;
+   return @proteins;
+
+}
+
 
 =head2 store
 
@@ -147,7 +187,7 @@ sub store{
        $self->throw("Must store $protein object");
    }
 
-   my $pdb = $protein->proteindb();
+   my $pdb = $protein->proteinDB();
  
    if( !defined $pdb || !ref $pdb || !$pdb->isa('Bio::EnsEMBL::Compara::ProteinDB') ) {
        $self->throw("Must have proteindb attached to the protein to store the protein [$pdb]");
@@ -170,15 +210,9 @@ sub store{
    }
 
 
-   my $sth = $self->prepare("insert into protein (protein_external_id,protein_db_id,seq_start,seq_end,strand,dnafrag_id)
-                             values ('".$protein->external_id."',".
-									  $protein->proteinDB->dbID."',".
-                                      $protein->seq_start.",".
-                                      $protein->seq_end.",".
-                                      $protein->strand.",".
-                                      $protein->dnafrag->dbID.")");
+   my $sth = $self->prepare("insert into protein (protein_external_id,protein_db_id,seq_start,seq_end,strand,dnafrag_id) values (?,?,?,?,?,?)");
 
-   $sth->execute();
+   $sth->execute($protein->external_id,$protein->proteinDB->dbID,$protein->seq_start,$protein->seq_end,$protein->strand,$protein->dnafrag->dbID);
 
    $protein->dbID($sth->{'mysql_insertid'});
    $protein->adaptor($self);
@@ -206,7 +240,7 @@ sub store_if_needed {
        $self->throw("Must store $protein object");
    }
 
-   my $pdb = $protein->proteindb();
+   my $pdb = $protein->proteinDB();
 
    if( !defined $pdb || !ref $pdb || !$pdb->isa('Bio::EnsEMBL::Compara::ProteinDB') ) {
        $self->throw("Must have proteindb attached to the protein to store the protein [$pdb]");
@@ -224,7 +258,7 @@ sub store_if_needed {
        $self->throw("protein must have a external_id");
    }
    
-   my $sth = $self->prepare("select protein_id from protein where external_id = '".$protein->external_id."'");
+   my $sth = $self->prepare("select protein_id from protein where protein_external_id = '".$protein->external_id."'");
 
    unless ($sth->execute()) {
      $self->throw("Failed execution of a select query");

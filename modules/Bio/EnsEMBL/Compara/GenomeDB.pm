@@ -172,7 +172,7 @@ sub get_Contig{
    my $contig;
    if ($type eq 'RawContig'){
       $contig = $self->db_adaptor->get_Contig($name); 
-   }elsif ($type eq 'Chromosome){
+   }elsif ($type eq 'Chromosome'){
       #do we really want to be doing this.............
 	  $contig = $self->db_adaptor->get_StaticGoldenPathAdaptor->fetch_VirtualContig_by_chr_name($name);
    }else {

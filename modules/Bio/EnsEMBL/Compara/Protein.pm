@@ -273,3 +273,72 @@ sub adaptor{
 
 }
 
+# The following get/set methods store and fetches the protein's family properties
+
+
+=head2 family_id
+
+ Title   : family_id
+ Usage   : $obj->family_id($newval)
+ Function: Getset for protein's Family ID
+ Returns : int , family dbID
+ Args    : 
+
+
+=cut
+
+sub family_id{
+   my ($self,$value) = @_;
+
+   if(defined $value) {
+      $self->{'family_id'} = $value;
+    }
+    return $self->{'family_id'};
+
+}
+
+
+=head2 family_rank
+
+ Title   : family_rank
+ Usage   : $obj->family_rank($newval)
+ Function: Getset for protein's Family Rank
+ Returns : int  
+ Args    : 
+
+
+=cut
+
+sub family_rank{
+   my ($self,$value) = @_;
+
+   if(defined $value) {
+      $self->{'rank'} = $value;
+   } 
+    return $self->{'rank'};
+
+}
+
+=head2 family_score
+
+ Title   : family_score
+ Usage   : $obj->family_score($newval)
+ Function: Getset for protein's Family score
+ Returns : value
+ Args    : 
+
+
+=cut
+
+sub family_score{
+   my ($self,$value) = @_;
+
+   if(defined $value) {
+      $self->{'score'} = $value;
+   } 
+    return $self->{'score'};
+
+}
+
+
+1;

@@ -22,7 +22,7 @@ Give standard usage here
 
 Describe the object here
 
-=head1 AUTHOR - Ewan Birney
+=head1 AUTHOR  
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
