@@ -103,6 +103,7 @@ sub _init {
             $T+=@{$id{$i}}; ## Diagnostic report....
             my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
             my $bump_start = int($F[0][0] * $pix_per_bp);
+               $bump_start--; 
                $bump_start = 0 if $bump_start < 0;
             my $bump_end   = int($F[-1][1] * $pix_per_bp);
                $bump_end   = $bitmap_length if $bump_end > $bitmap_length;

@@ -142,6 +142,7 @@ $self->errorTrack( "No ".$self->my_label." in this region" )
 
         if ($dep > 0){ # we bump
             my $bump_start = int($Composite->x() * $pix_per_bp);
+            $bump_start--;
             $bump_start    = 0 if $bump_start < 0;
             
             my $bump_end = $bump_start + ($Composite->width() * $pix_per_bp);
