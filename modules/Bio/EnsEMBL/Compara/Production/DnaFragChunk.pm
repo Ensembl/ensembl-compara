@@ -149,12 +149,15 @@ sub fetch_masked_sequence {
 sub display_id {
   my $self = shift;
 
-  return "" unless($self->dnafrag);
-  return "" unless($self->dnafrag->genome_db);
+  my $id = "";
+
+  if($self->dbID) {
+    $id .= 'chunkID'.$self->dbID.":";
+  } elsif($self->dnafrag) {
+    $id .= $self->dnafrag->display_id.":";
+  }
+  $id .= $self->seq_start.".".$self->seq_end;
   
-  my $id = $self->dnafrag->display_id .".".
-           $self->seq_start.".".
-           $self->seq_end;
   return $id;
 }
 
@@ -172,13 +175,27 @@ sub display_id {
 sub bioseq {
   my $self = shift;
 
-  return undef unless defined($self->sequence_id());
-  return undef unless defined($self->sequence());
+  my $seq = undef;
 
-  my $seq = Bio::Seq->new(-seq        => $self->sequence(),
-                          -display_id => $self->display_id(),
-                          -primary_id => $self->sequence_id(),
-                         );
+  if(defined($self->sequence())) {
+    printf("using cached sequence for chunk %s\n", $self->display_id);
+    $seq = Bio::Seq->new(-seq        => $self->sequence(),
+                         -display_id => $self->display_id(),
+                         -primary_id => $self->sequence_id(),
+                        );
+  } else {                        
+    printf("fetching chunk %s on-the-fly\n", $self->display_id);
+    my $starttime = time();
+    $seq = $self->fetch_masked_sequence;
+    my $fetch_time = time()-$starttime;
+
+    $self->sequence($seq->seq);
+    #if($bioseq->length <= 5000000) {
+    #  #print "  writing sequence back to compara for chunk\n";
+    #  $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
+    #}
+  }
+                         
   return $seq;
 }
 
@@ -257,8 +274,11 @@ sub sequence_id {
 
 sub sequence {
   my $self = shift;
-  return $self->{'_sequence'} = shift if(@_);
-  return $self->{'_sequence'} if(defined($self->{'_sequence'}));	
+  if(@_) {
+    $self->{'_sequence'} = shift;
+    $self->sequence_id(0);
+  }
+  return $self->{'_sequence'} if(defined($self->{'_sequence'}));
 
   #lazy load the sequence if sequence_id is set
   if(defined($self->sequence_id()) and defined($self->adaptor())) {
