@@ -5,6 +5,7 @@ use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use POSIX;
 use Data::Dumper;
+use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump); 
 
 use Time::HiRes qw( time );
 
@@ -73,8 +74,6 @@ sub _init {
 		     2 + ($last_start - $first_start)/2 * $height_ppb + $yoffset,
 		    ],
 	'colour'  => 'grey',
-
-
 						    }));
 
   # Print info line with population details
@@ -97,6 +96,7 @@ sub _init {
       'absolutex' => 1,'absolutewidth'=>1,
 						  }));
 
+  #  &eprof_start('triangle');
   # Create triangle
   foreach my $m ( 0 .. ($number_of_snps-2) ) {
     my $snp_m1 = $snps[ $m+1 ];
@@ -121,10 +121,14 @@ sub _init {
 	  $flag_triangle < 0 ? (): ( $x+$d2,     $flag_triangle * $height_ppb + $yoffset ), 
 	  $x+$d1+$d2, ($y+$d1-$d2)   * $height_ppb + $yoffset , 
 	  $x+$d1,     ($y+$d1)       * $height_ppb + $yoffset   ],
-	'colour' => $colour
+	'colour' => $colour,
+	#'bordercolour' => 'grey90',
       }));
     }
   }
+  #&eprof_end('triangle');
+  #&eprof_dump(\*STDERR);
+
 }
 
 
