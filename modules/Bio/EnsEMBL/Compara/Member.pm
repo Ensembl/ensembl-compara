@@ -97,6 +97,13 @@ sub description {
 
 =head2 source_id
 
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
 =cut
 
 sub source_id {
@@ -106,6 +113,13 @@ sub source_id {
 }
 
 =head2 source_name
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
@@ -135,6 +149,13 @@ sub adaptor {
 
 =head2 chr_name
 
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
 =cut
 
 sub chr_name {
@@ -144,6 +165,13 @@ sub chr_name {
 }
 
 =head2 chr_start
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
@@ -155,6 +183,13 @@ sub chr_start {
 
 =head2 chr_end
 
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
 =cut
 
 sub chr_end {
@@ -163,7 +198,14 @@ sub chr_end {
   return $self->{'_chr_end'};
 }
 
-=head taxon_id
+=head2 taxon_id
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
@@ -174,6 +216,13 @@ sub taxon_id {
 }
 
 =head2 taxon
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
@@ -202,7 +251,14 @@ sub taxon {
   return $self->{'_taxon'};
 }
 
-=head genome_db_id
+=head2 genome_db_id
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
@@ -213,6 +269,13 @@ sub genome_db_id {
 }
 
 =head2 genome_db
+
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
 
 =cut
 
