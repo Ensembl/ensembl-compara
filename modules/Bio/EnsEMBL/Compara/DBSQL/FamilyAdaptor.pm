@@ -1,8 +1,7 @@
 # 
 # BioPerl module for Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
 # 
-# Initially cared for by Philip Lijnzaad <lijnzaad@ebi.ac.uk> and Elia Stupka <elia@tll.org.sg>
-# Now cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
+# Cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
 #
 # Copyright EnsEMBL
 #
@@ -12,9 +11,7 @@
 
 =head1 NAME
 
-FamilyAdaptor - DESCRIPTION of Object
-
-  This object represents a family coming from a database of protein families.
+Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor - MySQL Database queries to generate and store families.
 
 =head1 SYNOPSIS
 
@@ -36,23 +33,23 @@ FamilyAdaptor - DESCRIPTION of Object
 
 =head1 DESCRIPTION
 
-This module is an entry point into a database of protein families,
-clustering SWISSPROT/TREMBL and ensembl protein sets using the TRIBE MCL algorithm.
-The clustering neatly follows the SWISSPROT DE-lines, which are 
-taken as the description of the whole family.
+This object can be read from and write to a compara database, and allows to
+retrieve or store Bio::EnsEMBL::Compara::Family objects.
 
-The objects can be read from and write to a family database.
-
-For more info, see ensembl-doc/family.txt
+For more info, see ensembl-doc/family.txt or ensembl-compara/script/family/README
 
 =head1 CONTACT
 
- Able Ureta-Vidal <abel@ebi.ac.uk>
+ Ensembl-dev list <ensembl-dev@ebi.ac.uk>
+ Abel Ureta-Vidal <abel@ebi.ac.uk>
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
+
+The object inherites from Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor. Have a 
+look at it for inherited methods such as the basic ones, fetch_by_dbID or fetch_by_stable_id
 
 =cut
 
@@ -88,6 +85,19 @@ sub fetch_by_Member {
 
   return $self->generic_fetch($constraint, $join);
 }
+
+=head2 fetch_by_Member_source_stable_id
+
+  Arg [1]    : string $source_name
+  Arg [2]    : string $member_stable_id
+  Example    : $families = $FamilyAdaptor->fetch_by_Member_source_stable_id("ENSEMBLGENE", "ENSG00000011114");
+  Description: find the families to which the given member with its source and stable_id belongs to
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
+              (could be empty or contain more than one Family in the case of ENSEMBLGENE only)
+  Exceptions : when missing arguments
+  Caller     : general
+
+=cut
 
 sub fetch_by_Member_source_stable_id {
   my ($self, $source_name, $member_stable_id) = @_;
@@ -215,9 +225,9 @@ sub _default_where_clause {
 
 =head2 store
 
- Arg [1]    : Bio::EnsEMBL::ExternalData:Family::Family $fam
- Example    : $FamilyAdaptor->store($fam)
- Description: Stores a family object into a family  database
+ Arg [1]    : Bio::EnsEMBL::Compara::Family $family
+ Example    : $FamilyAdaptor->store($family)
+ Description: Stores a family object into a compara database
  Returntype : int 
               been the database family identifier, if family stored correctly
  Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Family

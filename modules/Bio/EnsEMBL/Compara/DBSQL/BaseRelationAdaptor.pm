@@ -54,7 +54,7 @@ sub generic_fetch {
   Description: Performs a database fetch and returns the SQL state handle
   Returntype : DBI::st
   Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::generic_fetch
+  Caller     : FamilyAdaptor, HomologyAdaptor, DomainAdaptor
 
 =cut
   
@@ -112,11 +112,37 @@ sub generic_fetch_sth {
   return $sth;
 }
 
+
+=head2 fetch_all
+
+  Arg [1]    : None
+  Example    : 
+  Description: 
+  Returntype : arrayref of Family, Homology or Domain objects depending
+               on the adaptor used.
+  Exceptions : 
+  Caller     : FamilyAdaptor, HomologyAdaptor, DomainAdaptor
+
+=cut
+
 sub fetch_all {
   my $self = shift;
 
   return $self->generic_fetch();
 }
+
+
+=head2 list_internal_ids
+
+  Arg [1]    : None
+  Example    : 
+  Description: 
+  Returntype : arrayref of int
+  Exceptions : 
+  Caller     : 
+
+=cut
+
 
 sub list_internal_ids {
   my $self = shift;
@@ -148,7 +174,8 @@ sub list_internal_ids {
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
   Description: Returns the feature created from the database defined by the
                the id $id.
-  Returntype : Bio::EnsEMBL::SeqFeature
+  Returntype : Family, Homology or Domain objects depending
+               on the adaptor used
   Exceptions : thrown if $id is not defined
   Caller     : general
 
@@ -180,8 +207,9 @@ sub fetch_by_dbID{
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
   Description: Returns the feature created from the database defined by the
                the id $id.
-  Returntype : Bio::EnsEMBL::SeqFeature
-  Exceptions : thrown if $id is not defined
+  Returntype : Family, Homology or Domain objects depending
+               on the adaptor used
+  Exceptions : thrown if $stable_id is not defined
   Caller     : general
 
 =cut
