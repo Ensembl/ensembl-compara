@@ -1,6 +1,6 @@
 # Copyright EnsEMBL 1999-2003
 #
-# Ensembl module for Bio::EnsEMBL::DBSQL::GenomicAlignAdaptor
+# Ensembl module for Bio::EnsEMBL::DBSQL::DnaAlignFeatureAdaptor
 #
 # You may distribute this module under the same terms as perl itself
 
@@ -90,7 +90,7 @@ sub new {
 
 sub fetch_all_by_species_region {
   my ($self, $sb_species, $qy_species, 
-      $dna_frag_type, $name, $start, $end) = @_;
+      $dnafrag_type, $name, $start, $end) = @_;
 
   $dnafrag_type ||= "Chromosome"; #default is Chromosome
   
@@ -104,9 +104,9 @@ sub fetch_all_by_species_region {
   my $dfa = $self->db->get_DnaFragAdaptor;
   my $dnafrags = $dfa->fetch_all_by_species_region($sb_species,
 						   $dnafrag_type, 
-						   $chr_name,
-						   $chr_start, 
-						   $chr_end);
+						   $name,
+						   $start, 
+						   $end);
   
   my $gaa = $self->db->get_GenomicAlignAdaptor;
 
@@ -114,12 +114,12 @@ sub fetch_all_by_species_region {
 
   foreach my $df (@$dnafrags) {
     #retreive subject/query alignments for each dna fragment
-    my $genomic_aligns = $gaa->fetch_all_by_dnafrag_genome_db($df, $qy_gdb);
+    my $genomic_aligns = $gaa->fetch_all_by_dnafrag_genomedb($df, $qy_gdb);
 
     #convert genomic aligns to dna align features
     foreach my $ga (@$genomic_aligns) {
       my $f = Bio::EnsEMBL::DnaDnaAlignFeature->new(
-				       '-cigar_string' => $ga->cigar_string);
+				       '-cigar_string' => $ga->cigar_line);
       my $cdf = $ga->consensus_dnafrag;
       my $qdf = $ga->query_dnafrag;
 
@@ -129,7 +129,7 @@ sub fetch_all_by_species_region {
       $f->strand(1);
       $f->species($sb_species);
       $f->score($ga->score);
-      $f->percent_id($ga->percent_id);
+      $f->percent_id($ga->perc_id);
 
       $f->hstart($qdf->start + $ga->query_start - 1);
       $f->hend($qdf->start + $ga->query_end -1);
@@ -152,7 +152,7 @@ sub fetch_all_by_species_region {
  Arg [1]    : Bio::EnsEMBL::Slice
  Arg [2]    : string query_species
               e.g. "Mus_musculus"
- Example    : $gaa->fetch_DnaDnaAlignFeature_by_Slice($slice, "Mus_musculus");
+ Example    : $gaa->fetch_all_by_Slice($slice, "Mus_musculus");
  Description: find matches of query_species in the region of a slice of a 
               subject species
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
@@ -161,7 +161,7 @@ sub fetch_all_by_species_region {
 
 =cut
 
-sub fetch_DnaDnaAlignFeatures_by_Slice {
+sub fetch_all_by_Slice {
   my ($self, $slice, $qy_species) = @_;
 
   unless($slice && ref $slice && $slice->isa('Bio::EnsEMBL::Slice')) {

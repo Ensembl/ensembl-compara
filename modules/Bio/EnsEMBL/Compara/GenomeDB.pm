@@ -73,11 +73,7 @@ sub new {
       
     $self->species($species);
       
-    my $locator = 
-      ref($dba)."/host=".$dba->host.";port=;dbname=".$dba->dbname.";user=".
-	$dba->username.";pass=".$dba->password;
-
-    $self->locator($locator);
+    $self->locator($dba->locator);
       
     # store the DBAdaptor
     $self->db_adaptor($dba);
@@ -100,19 +96,18 @@ sub new {
 =cut
 
 sub db_adaptor{
-   my ( $self, $arg ) = @_;
-
-   if( $arg ) {
-     $self->{'_db_adaptor'} = $arg;
-     return $arg;
+  my ( $self, $arg ) = @_;
+  
+  if( $arg ) {
+    $self->{'_db_adaptor'} = $arg;
+    #update locator string
+    $self->locator($arg->locator);
+  } elsif( !defined $self->{'_db_adaptor'} ) {
+    # this will throw if it can't build it
+    $self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator);
    }
-
-   if( !defined $self->{'_db_adaptor'} ) {
-       # this will throw if it can't build it
-       $self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator);
-   }
-
-   return $self->{'_db_adaptor'};
+  
+  return $self->{'_db_adaptor'};
 }
 
 
