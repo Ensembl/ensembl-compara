@@ -68,12 +68,22 @@ my %seqinfo;
 my %member_index;
 my %redun_hash;
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-                                                     -port   => $port,
-                                                     -user   => $dbuser,
-                                                     -dbname => $dbname,
-                                                     -pass => $dbpass,
-                                                     -conf_file => $conf_file);
+my $db;
+
+if (defined $conf_file) {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $port,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname,
+                                                    -conf_file => $conf_file);
+} else {
+  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
+                                                    -port   => $port,
+                                                    -user   => $dbuser,
+                                                    -pass   => $dbpass,
+                                                    -dbname => $dbname);
+}
 
 my $fa = $db->get_FamilyAdaptor;
 my $gdb = $db->get_GenomeDBAdaptor;

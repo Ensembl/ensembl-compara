@@ -103,6 +103,8 @@ my $GeneAdaptor = $db->get_GeneAdaptor;
 
 my @slices = @{$SliceAdaptor->fetch_all($coordinate_system)};
 
+# this way, we get all non ref slices like DR51 but not the PARs.
+# my @slices = @{$SliceAdaptor->fetch_all($coordinate_system,undef,1)};
 
 foreach my $slice (@slices) {
   foreach my $gene (@{$GeneAdaptor->fetch_all_by_Slice($slice)}) {

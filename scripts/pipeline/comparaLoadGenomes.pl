@@ -62,8 +62,8 @@ if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
 my $self = bless {};
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
-$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
-#$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
+$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+#$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
@@ -148,6 +148,7 @@ sub submitGenome
     $species->{pass}   && ($locator .= ";pass=".$species->{pass});
     $species->{dbname} && ($locator .= ";dbname=".$species->{dbname});
   }
+  $locator .= ";disconnect_when_inactive=1";
   print("    locator = $locator\n")  if($verbose);
 
   my $genomeDBA;
@@ -161,8 +162,14 @@ sub submitGenome
   }
 
   my $meta = $genomeDBA->get_MetaContainer;
-  my $taxon_id = $meta->get_taxonomy_id;
-  my $genome_name = $meta->get_Species->binomial;
+
+  my $taxon_id = $meta->get_taxonomy_id;  
+  my $taxon = $meta->get_Species;
+  $taxon->ncbi_taxid($taxon_id);
+  bless $taxon, "Bio::EnsEMBL::Compara::Taxon";
+  $self->{'comparaDBA'}->get_TaxonAdaptor->store($taxon);
+
+  my $genome_name = $taxon->binomial;
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
   my $genebuild = $meta->get_genebuild;  
@@ -196,7 +203,7 @@ sub submitGenome
   #
   eval {
     my ($sth, $sql);
-    $sth = $self->{'comparaDBA'}->prepare("SELECT genome_db_id FROM genome_db_extn
+    $sth = $self->{'comparaDBA'}->dbc->prepare("SELECT genome_db_id FROM genome_db_extn
         WHERE genome_db_id = ".$genome->dbID);
     $sth->execute;
     my $dbID = $sth->fetchrow_array();
@@ -215,7 +222,7 @@ sub submitGenome
                 ",locator='".$locator."'";
     }
     print("$sql\n") if($verbose);
-    $sth = $self->{'comparaDBA'}->prepare( $sql );
+    $sth = $self->{'comparaDBA'}->dbc->prepare( $sql );
     $sth->execute();
     $sth->finish();
     print("done SQL\n") if($verbose);

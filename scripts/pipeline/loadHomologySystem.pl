@@ -62,8 +62,8 @@ if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
 my $self = bless {};
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
-$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
-#$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
+$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+#$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
@@ -216,7 +216,7 @@ sub prepareGenomeAnalysis
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($dumpfasta_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($dumpfasta_analysis->dbID);
   $stats->batch_size(1);
-  $stats->hive_capacity(3);
+  $stats->hive_capacity(-1);
   $stats->update();
 
   $dataflowRuleDBA->create_rule($load_analysis, $dumpfasta_analysis);
@@ -242,7 +242,7 @@ sub prepareGenomeAnalysis
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($calcstats_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($calcstats_analysis->dbID);
   $stats->batch_size(1);
-  $stats->hive_capacity(3);
+  $stats->hive_capacity(-1);
   $stats->update();
 
   $dataflowRuleDBA->create_rule($load_analysis, $calcstats_analysis);
@@ -263,12 +263,13 @@ sub prepareGenomeAnalysis
       -logic_name      => 'CreateBlastRules',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules',
-      -parameters      => '{allToAll=>1}',
+      -parameters      => '{phylumBlast=>0, selfBlast=>1}',
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($blastrules_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(1);
+  $stats->status('BLOCKED');
   $stats->update();
 
   $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);

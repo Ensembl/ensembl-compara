@@ -46,7 +46,7 @@ in bash
 
   Pick a mysql instance and create a database
 
-mysqladmin -h ecs2 -P3361 -uensadmin -pxxxx create database ensembl_compara_jess_23_1
+mysqladmin -h ecs2 -P3361 -uensadmin -pxxxx -e "create database ensembl_compara_jess_23_1"
 
 cd ~/src/ensembl_main/ensembl-hive/sql
 mysql -h ecs2 -P3361 -uensadmin -pxxxx ensembl_compara_jess_23_1 < tables.sql
@@ -133,15 +133,17 @@ considered the same object (ie a network distributed object).  This is a way to 
 network distributed objects without using JavaBeans, CORBA, WebObjects, DCOM or other
 distributed object technologies.
 
-Each Worker created by the Queen is of a certain type (specific analysis or RunnableDB).  It lives
-on the compute resource for a limited lifetime (specified either by a job count limit, or a time
-limit).  While it's alive it grabs (pulls) jobs from the hive, runs those jobs (via it's
-RunnableDB object), and writes it's results back to the database.  Depending on the nature
-of the RunnableDB and the type of jobs a given worker may only live long enough to do one job
-or may sit on a machine long enough to process 1000's of jobs.  In this case a 'job' is refering to
-a 'hive job' which is specifically a single row from the analysis_job table which is accessed via
-the AnalysisJobAdaptor which returns AnalysisJob objects.  The details are handled internally by the
-Worker and are described here for design sake.
+Each Worker (in our system, a worker is a LSF job) created by the Queen is of a certain type
+(specific analysis or RunnableDB).  It lives on the compute resource for a limited lifetime 
+(specified either by a job count limit, or a time limit).  While it's alive it grabs (pulls) 
+jobs from the hive, runs those jobs (via it's RunnableDB object), and writes it's results back 
+to the database. The jobs we are now talking about are not LSF jobs but hive jobs. One worker (a LSF job)
+can run 1 or more hive jobs.
+Depending on the nature of the RunnableDB and the type of jobs a given worker may only live long
+enough to do one job or may sit on a machine long enough to process 1000's of jobs.  In this case 
+a 'job' is refering to a 'hive job' which is specifically a single row from the analysis_job table 
+which is accessed via the AnalysisJobAdaptor which returns AnalysisJob objects. The details are 
+handled internally by the Worker and are described here for design sake.
 
 (16 June,2004)
 At this point in time the beekeepers aren't complete enough to loop by themselves without
@@ -229,6 +231,13 @@ there are greater than 500 workers simultaneously working.
   This is a very crude version of this function.  Any worker which hasn't checked in when
   it finished is assumed to have died a horrible death.  So any jobs of this worker which
   didn't finish are reset so another worker can do it.
+
+NB: in case workers die systematically or very often, a way to send one worker to do one single hive job is
+to run it locally (outside LSF) with the following parameters -limit 1 -outdir '', e.g.
+./runWorker.pl -analysis_id 29 -url mysql://ensadmin:ensembl@ecs:3361/compara_hive_jess_23 -limit 1 -outdir ''
+
+-limit 1        will limit worker to run only one hive job then die
+-outdir ''      will print on the screen both STDOUT and STDERR.
 
 6.4- Run the beekeeper repeat
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

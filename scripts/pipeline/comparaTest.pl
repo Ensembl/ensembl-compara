@@ -9,6 +9,7 @@ use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Hive::URLFactory;
 
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -28,8 +29,10 @@ $self->{'noSplitSeqLines'} = undef;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
+my $url;
 
 GetOptions('help'     => \$help,
+           'url=s'    => \$url,
            'conf=s'   => \$conf_file,
            'dbhost=s' => \$host,
            'dbport=i' => \$port,
@@ -51,25 +54,38 @@ if($dbname) { $self->{'compara_conf'}->{'-dbname'} = $dbname; }
 if($user)   { $self->{'compara_conf'}->{'-user'}   = $user; }
 if($pass)   { $self->{'compara_conf'}->{'-pass'}   = $pass; }
 
-
-unless(defined($self->{'compara_conf'}->{'-host'})
-       and defined($self->{'compara_conf'}->{'-user'})
-       and defined($self->{'compara_conf'}->{'-dbname'}))
-{
-  print "\nERROR : must specify host, user, and database to connect to compara\n\n";
-  usage(); 
+$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
+if(defined($self->{'comparaDBA'})) {
+  print("URL OK!!!\n");
+} else {
+  unless(defined($self->{'compara_conf'}->{'-host'})
+         and defined($self->{'compara_conf'}->{'-user'})
+         and defined($self->{'compara_conf'}->{'-dbname'}))
+  {
+    print "\nERROR : must specify host, user, and database to connect to compara\n\n";
+    usage();
+  }
+  $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
 }
 
-$self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
-$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'});
+$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
-my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(1001);
+my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID(66454);
 $member->print_member() if($member);
 
-my $worker = $self->{'comparaDBA'}->get_HiveAdaptor->create_new_worker(16);
-$worker->print_worker;
+my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
+my $paf_list = $pafDBA->fetch_all_RH_by_member_genomedb(66454, 3);
+foreach my $paf (@{$paf_list}) {  
+  $paf->display_short() if($paf);
+  my $rpaf = $pafDBA->fetch_by_dbID($paf->rhit_dbID) if($paf->rhit_dbID);
+  $rpaf->display_short() if($rpaf);
+}
 
-sleep(1000000);
+
+my $coreDBA = $self->{'comparaDBA'}->get_db_adaptor("Mus musculus", "NCBIM32");
+$self->{'comparaDBA'}->add_db_adaptor($coreDBA);
+
+#sleep(1000000);
 
 exit(0);
 
