@@ -142,7 +142,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
   
   # Use cache whenever possible
-  my $key = $reference_slice->name.":".$method_link_species_set->dbID;
+  my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond");
   return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
 
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor;
