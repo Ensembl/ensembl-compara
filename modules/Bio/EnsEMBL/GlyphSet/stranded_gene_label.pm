@@ -70,7 +70,7 @@ sub _init {
 	$start = $coords[0];
 	$end   = $coords[-1];   
 
-	unless(defined $vg->{'_is_external'}) {
+	if($vg->isa("Bio::EnsEMBL::VirtualGene")) {
 
 	    #########
 	    # skip if this one isn't on the strand we're drawing
@@ -118,7 +118,6 @@ sub _init {
 	######################
 	# Make and bump label
 	######################
-	my $bp_textwidth = $w * length(" $label");
 	my $tglyph = new Bio::EnsEMBL::Glyph::Text({
 	    'x'	        => $start + $font_w_bp,
 	    'y'	        => $y,
