@@ -509,9 +509,9 @@ sub get_AnalysisStatsAdaptor {
   return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor" );
 }
 
-sub get_SimpleRuleAdaptor {
+sub get_DataflowRuleAdaptor {
   my $self = shift;
-  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::SimpleRuleAdaptor" );
+  return $self->_get_adaptor("Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor" );
 }
 
 
