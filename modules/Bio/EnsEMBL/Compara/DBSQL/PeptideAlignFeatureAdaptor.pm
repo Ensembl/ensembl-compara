@@ -17,91 +17,11 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 #use Bio::EnsEMBL::Compara::SyntenyPair;
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
-use Bio::EnsEMBL::GenePair::PeptidePair;
 
 use vars '@ISA';
 
 @ISA = ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
-=head2
-sub get_hits_by_qyid {
-  my ($self,$id) = @_;
-
-  my $idlength = $self->get_peptide_length($id);
-
-  my $command = "select peptide.length,feature.* from peptide,feature where feature.id1 = \'$id\' and feature.id2 = peptide.id";
-
-  my $sth = $self->db->prepare($command);
-  my $res = $sth->execute;
-
-  my @hits;
-
-  while (my $row = $sth->fetchrow_hashref) {
-
-    my $p = new Bio::EnsEMBL::GenePair::PeptidePair;
-
-    $p->queryid($row->{id1});
-    $p->hitid  ($row->{id2});
-    $p->qstart ($row->{qstart});
-    $p->qend   ($row->{qend});
-    $p->hstart ($row->{hstart});
-    $p->hend   ($row->{hend});
-    $p->score  ($row->{score});
-    $p->evalue ($row->{evalue});
-    $p->pid    ($row->{pid});
-    $p->qlength($idlength);
-    $p->hlength($row->{length});
-
-    $p->pos    ($row->{pos});
-    $p->identical_matches    ($row->{identical_matches});
-    $p->positive_matches    ($row->{positive_matches});
-    $p->cigar_line    ($row->{cigar_line});
-
-    push(@hits,$p);
-
-  }
-  return @hits;
-}
-
-sub get_hits_by_qyid_and_hitid {
-  my ($self,$id,$hitid) = @_;
-
-  my $idlength = $self->get_peptide_length($id);
-
-  my $command = "select peptide.length,feature.* from peptide,feature where feature.id1 = \'$id\' and feature.id2 = peptide.id and feature.id2 = \'$hitid\'";
-
-  my $sth = $self->db->prepare($command);
-  my $res = $sth->execute;
-
-  my @hits;
-
-  while (my $row = $sth->fetchrow_hashref) {
-
-    my $p = new Bio::EnsEMBL::GenePair::PeptidePair;
-
-    $p->queryid($row->{id1});
-    $p->hitid $self->{'comparaDBA'} ($row->{id2});
-    $p->qstart ($row->{qstart});
-    $p->qend   ($row->{qend});
-    $p->hstart ($row->{hstart});
-    $p->hend   ($row->{hend});
-    $p->score  ($row->{score});
-    $p->evalue ($row->{evalue});
-    $p->pid    ($row->{pid});
-    $p->qlength($idlength);
-    $p->hlength($row->{length});
-
-    $p->pos    ($row->{pos});
-    $p->identical_matches    ($row->{identical_matches});
-    $p->positive_matches    ($row->{positive_matches});
-    $p->cigar_line    ($row->{cigar_line});
-
-    push(@hits,$p);
-
-  }
-  return @hits;
-}
-=cut
 
 #############################
 #
@@ -154,11 +74,18 @@ sub _store_PAFS {
 
       unless($paf->query_member->dbID) {
         my $qy_member  = $memberDBA->fetch_by_source_stable_id('ENSEMBLPEP', $paf->query_member->stable_id);
-        $paf->query_member($qy_member);
+        if($qy_member) {
+          $paf->query_member($qy_member);
+          my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->query_member->dbID);
+          $qy_member->gene_member($gene);
       }
       unless($paf->hit_member->dbID) {
         my $hit_member = $memberDBA->fetch_by_source_stable_id('ENSEMBLPEP', $paf->hit_member->stable_id);
-        $paf->hit_member($hit_member);
+        if($hit_member) {
+          $paf->hit_member($hit_member);
+          my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->hit_member->dbID);
+          $hit_member->gene_member($gene);
+        }
       }
 
       $paf->display_short();
@@ -329,9 +256,13 @@ sub _objs_from_sth {
     my $memberDBA = $self->db->get_MemberAdaptor;
     if($column{'qmember_id'} and $memberDBA) {
       $paf->query_member($memberDBA->fetch_by_dbID($column{'qmember_id'}));
+      my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->query_member->dbID);
+      $paf->query_member->gene_member($gene);      
     }
     if($column{'hmember_id'} and $memberDBA) {
       $paf->hit_member($memberDBA->fetch_by_dbID($column{'hmember_id'}));
+      my $gene = $memberDBA->fetch_gene_for_peptide_member_id($paf->hit_member->dbID);
+      $paf->hit_member->gene_member($gene);
     }
   
     #$paf->display_short();
