@@ -498,7 +498,7 @@ sub genomic_align_array {
     # Fetch data from DB (allow lazy fetching of genomic_align_block objects)
     my $genomic_align_adaptor = $self->adaptor->db->get_GenomicAlignAdaptor();
     $self->{'genomic_align_array'} = 
-        $genomic_align_adaptor->fetch_all_by_genomic_align_block($self->{'dbID'});
+        $genomic_align_adaptor->fetch_all_by_genomic_align_block_id($self->{'dbID'});
   }
   
   return $self->{'genomic_align_array'};

@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor module.
 
-This script includes 64 tests.
+This script includes 106 tests.
 
 =head1 AUTHOR
 
@@ -69,7 +69,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 64
+    plan tests => 106;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -126,6 +126,22 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_by_dbID(2260
   ok($genomic_align->level_id, 2);
 
 
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_all_by_genomic_align_block_id(4018490) method");
+  $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block_id(4018490);
+  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(3639645) sould return 2 objects");
+  check_all_genomic_aligns($all_genomic_aligns);
+
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_GenomicAlignBlock(\$genomic_aling_block) method");
+  $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -dbID=>4018490,
+          -adaptor=>$compara_db->get_GenomicAlignBlockAdaptor
+      );
+  $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block);
+  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(\$genomic_aling_block) sould return 2 objects");
+  check_all_genomic_aligns($all_genomic_aligns);
+
+
+verbose(0);
 debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_all_by_genomic_align_block(4018490) method");
   $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block(4018490);
   ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(3639645) sould return 2 objects");
@@ -140,8 +156,8 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_geno
   ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(\$genomic_aling_block) sould return 2 objects");
   check_all_genomic_aligns($all_genomic_aligns);
 
+exit (0);
 
-exit 0;
 
 sub check_all_genomic_aligns {
   my ($all_genomic_aligns) = @_;

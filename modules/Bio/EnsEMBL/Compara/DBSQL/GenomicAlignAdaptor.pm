@@ -29,8 +29,8 @@ Bio::EnsEMBL::DBSQL::GenomicAlignAdaptor
   $genomic_align_adaptor->store($genomic_align);
 
   my $genomic_align = $genomic_align_adaptor->fetch_by_dbID(1);
-  my $genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block(23);
-  my $genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block($genomic_align_block);
+  my $genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block_id(23);
+  my $genomic_aligns = $genomic_align_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block);
 
 
 =head1 DESCRIPTION
@@ -235,15 +235,43 @@ sub fetch_by_dbID {
 }
 
 
-=head2 fetch_all_by_genomic_align_block
+# # =head2 fetch_all_by_genomic_align_block
+# # 
+# #   Arg  1     : integer $genomic_align_block_id
+# #                    - or -
+# #                Bio::EnsEMBL::Compara::GenomicAlignBlock object with a valid dbID
+# #   Example    : my $genomic_aligns =
+# #                     $genomic_align_adaptor->fetch_all_by_genomic_align_block(23134);
+# #   Example    : my $genomic_aligns =
+# #                     $genomic_align_adaptor->fetch_all_by_genomic_align_block($genomic_align_block);
+# #   Description: Retrieve the corresponding
+# #                Bio::EnsEMBL::Compara::GenomicAlign objects
+# #   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
+# #   Exceptions : Returns a ref. to an empty array if there are no matching entries
+# #   Exceptions : Thrown if $genomic_align_block is neither a number or a
+# #                Bio::EnsEMBL::Compara::GenomicAlignBlock object
+# #   Caller     : object::methodname
+# # 
+# # =cut
 
-  Arg  1     : integer $genomic_align_block_id
-                  - or -
-               Bio::EnsEMBL::Compara::GenomicAlignBlock object with a valid dbID
+sub fetch_all_by_genomic_align_block {
+  my ($self, $genomic_align_block) = @_;
+
+  deprecate("Use fetch_all_by_GenomicAlignBlock or fetch_all_by_genomic_align_block_id method instead");
+  
+  if ($genomic_align_block =~ /^\d+$/) {
+    return $self->fetch_all_by_genomic_align_block_id($genomic_align_block);
+  } else {
+    return $self->fetch_all_by_GenomicAlignBlock($genomic_align_block);
+  }
+}
+
+
+=head2 fetch_all_by_GenomicAlignBlock
+
+  Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock object with a valid dbID
   Example    : my $genomic_aligns =
-                    $genomic_align_adaptor->fetch_all_by_genomic_align_block(23134);
-  Example    : my $genomic_aligns =
-                    $genomic_align_adaptor->fetch_all_by_genomic_align_block($genomic_align_block);
+                    $genomic_align_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::GenomicAlign objects
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
@@ -254,15 +282,37 @@ sub fetch_by_dbID {
 
 =cut
 
-sub fetch_all_by_genomic_align_block {
+sub fetch_all_by_GenomicAlignBlock {
   my ($self, $genomic_align_block) = @_;
   my $genomic_aligns = [];
 
-  if ($genomic_align_block !~ /^\d+$/) {
-    throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
-        if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
-    $genomic_align_block = $genomic_align_block->dbID;
-  }
+  throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
+      if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+  my $genomic_align_block_id = $genomic_align_block->dbID;
+
+  return $self->fetch_all_by_genomic_align_block_id($genomic_align_block_id);
+}
+
+
+=head2 fetch_all_by_genomic_align_block_id
+
+  Arg  1     : integer $genomic_align_block_id
+  Example    : my $genomic_aligns =
+                    $genomic_align_adaptor->fetch_all_by_genomic_align_block_id(23134);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlign objects
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions : Returns a ref. to an empty array if there are no matching entries
+  Exceptions : Thrown if $genomic_align_block is neither a number or a
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object
+  Caller     : object::methodname
+
+=cut
+
+sub fetch_all_by_genomic_align_block_id {
+  my ($self, $genomic_align_block_id) = @_;
+  my $genomic_aligns = [];
+
   my $sql = qq{
           SELECT
               genomic_align_id,
@@ -281,7 +331,7 @@ sub fetch_all_by_genomic_align_block {
       };
 
   my $sth = $self->prepare($sql);
-  $sth->execute($genomic_align_block);
+  $sth->execute($genomic_align_block_id);
   while (my @values = $sth->fetchrow_array()) {
     my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
             -dbID => $values[0],
@@ -353,7 +403,7 @@ sub fetch_all_by_DnaFrag_GenomeDB {
             dnafrag_id = }.$dnafrag->dbID;
 
   my $method_link_species_set;
-  if (defined($target_genome)) {
+  if (defined($target_genome) and defined($alignment_type)) {
     $method_link_species_set = $mlssa->fetch_by_method_link_and_genome_db_ids(
             $alignment_type, [$dnafrag->genomedb->dbID, $target_genome->dbID]);
     return [] if (!$method_link_species_set);
