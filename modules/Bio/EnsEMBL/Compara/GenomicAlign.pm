@@ -324,7 +324,7 @@ sub genomic_align_block {
     throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
         if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
     weaken($self->{'genomic_align_block'} = $genomic_align_block);
-    if (defined($self->{'genomic_align_block_id'})) {
+    if ($self->{'genomic_align_block_id'}) {
       warning("Defining both genomic_align_block_id and genomic_align_block");
       throw("dbID of genomic_align_block object does not match previously defined genomic_align_block_id")
           if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
@@ -349,7 +349,7 @@ sub genomic_align_block {
   Description: Getter/Setter for the attribute genomic_align_block_id. If no
                argument is given, the genomic_align_block_id is not defined but
                the genomic_align_block is, it tries to get the data from the
-               genomic_align_block object.
+               genomic_align_block object. Use 0 as argument to clear this attribute.
   Returntype : integer
   Exceptions : thrown if $genomic_align_block_id does not match a previously defined
                genomic_align_block
@@ -362,13 +362,13 @@ sub genomic_align_block_id {
 
   if (defined($genomic_align_block_id)) {
     $self->{'genomic_align_block_id'} = $genomic_align_block_id;
-    if (defined($self->{'genomic_align_block'})) {
+    if (defined($self->{'genomic_align_block'}) and $self->{'genomic_align_block_id'}) {
       warning("Defining both genomic_align_block_id and genomic_align_block");
       throw("genomic_align_block_id does not match previously defined genomic_align_block object")
           if ($self->{'genomic_align_block'} and
               $self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
     }
-  } elsif (!defined($self->{'genomic_align_block_id'}) and defined($self->{'genomic_align_block'})) {
+  } elsif (!($self->{'genomic_align_block_id'}) and defined($self->{'genomic_align_block'})) {
     $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
   }
 
@@ -401,7 +401,7 @@ sub method_link_species_set {
     throw("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
         if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
     $self->{'method_link_species_set'} = $method_link_species_set;
-    if (defined($self->{'method_link_species_set_id'})) {
+    if ($self->{'method_link_species_set_id'}) {
       warning("Defining both method_link_species_set_id and method_link_species_set");
       throw("method_link_species_set object does not match previously defined method_link_species_set_id")
           if ($self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
@@ -430,7 +430,7 @@ sub method_link_species_set {
   Description: Getter/Setter for the attribute method_link_species_set_id. If no
                argument is given, the method_link_species_set_id is not defined but
                the method_link_species_set is, it tries to get the data from the
-               method_link_species_set object.
+               method_link_species_set object. Use 0 as argument to clear this attribute.
   Returntype : integer
   Exceptions : thrown if $method_link_species_set_id does not match a previously defined
                method_link_species_set
@@ -443,13 +443,13 @@ sub method_link_species_set_id {
 
   if (defined($method_link_species_set_id)) {
     $self->{'method_link_species_set_id'} = $method_link_species_set_id;
-    if (defined($self->{'method_link_species_set'})) {
+    if (defined($self->{'method_link_species_set'}) and $self->{'method_link_species_set_id'}) {
       warning("Defining both method_link_species_set_id and method_link_species_set");
       throw("method_link_species_set_id does not match previously defined method_link_species_set object")
           if ($self->{'method_link_species_set'} and
               $self->{'method_link_species_set'}->dbID != $self->{'method_link_species_set_id'});
     }
-  } elsif (!defined($self->{'method_link_species_set_id'}) and defined($self->{'method_link_species_set'})) {
+  } elsif (!($self->{'method_link_species_set_id'}) and defined($self->{'method_link_species_set'})) {
     $self->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
   }
 
@@ -481,7 +481,7 @@ sub dnafrag {
     throw("$dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag object")
         if (!$dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
     $self->{'dnafrag'} = $dnafrag;
-    if (defined($self->{'dnafrag_id'})) {
+    if ($self->{'dnafrag_id'}) {
       warning("Defining both dnafrag_id and dnafrag");
       throw("dnafrag object does not match previously defined dnafrag_id")
           if ($self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
@@ -504,7 +504,7 @@ sub dnafrag {
   Description: Getter/Setter for the attribute dnafrag_id. If no
                argument is given, the dnafrag_id is not defined but
                the dnafrag is, it tries to get the data from the
-               dnafrag object.
+               dnafrag object. Use 0 as argument to clear this attribute.
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
@@ -516,12 +516,13 @@ sub dnafrag_id {
   my ($self, $dnafrag_id) = @_;
 
   if (defined($dnafrag_id)) {
-    warning("Defining both dnafrag_id and dnafrag")
-        if (defined($self->{'dnafrag'}));
     $self->{'dnafrag_id'} = $dnafrag_id;
-    throw("dnafrag_id does not match previously defined dnafrag object")
-        if ($self->{'dnafrag'} and $self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
-  } elsif (!defined($self->{'dnafrag_id'}) and defined($self->{'dnafrag'})) {
+    if (defined($self->{'dnafrag'}) and $self->{'dnafrag_id'}) {
+      warning("Defining both dnafrag_id and dnafrag");
+      throw("dnafrag_id does not match previously defined dnafrag object")
+          if ($self->{'dnafrag'} and $self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
+    }
+  } elsif (!($self->{'dnafrag_id'}) and defined($self->{'dnafrag'})) {
     $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
   }
 
