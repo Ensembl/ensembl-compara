@@ -93,7 +93,7 @@ CREATE TABLE genomic_align_block (
   score double,
   perc_id int(10),
   cigar_line mediumtext,
-  PRIMARY KEY (consensus_dnafrag_id,consensus_start,consensus_end,query_dnafrag_id),
+  KEY consensus_idx( consensus_dnafrag_id,consensus_start,consensus_end,query_dnafrag_id),
   KEY query_dnafrag_id (query_dnafrag_id,query_start,query_end),
   KEY query_dnafrag_id_2 (query_dnafrag_id,query_end)
 );
