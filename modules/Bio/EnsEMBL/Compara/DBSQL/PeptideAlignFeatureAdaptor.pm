@@ -436,7 +436,7 @@ sub fetch_BRH_by_member_genomedb
   my $qmember_id        = shift;
   my $hit_genome_db_id = shift;
 
-  print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
+  #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
 
   my $extrajoin = [
                     [ ['peptide_align_feature', 'paf2'],
