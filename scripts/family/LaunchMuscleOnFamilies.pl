@@ -43,6 +43,7 @@ my $dbname;
 my $dbuser;
 my $dbpass;
 my $muscle_file;
+my $fast = 0;
 
 GetOptions('help' => \$help,
 	   'host=s' => \$host,
@@ -54,7 +55,8 @@ GetOptions('help' => \$help,
 	   'family_id=i' => \$family_id,
 	   'dir=s' => \$dir,
            'muscle_file=s' => \$muscle_file,
-	   'store' => \$store);
+	   'store' => \$store,
+           'fast' => \$fast);
 
 if ($help) {
   print $usage;
@@ -95,8 +97,8 @@ unless (defined $muscle_file) {
   my @members_attributes;
 
   push @members_attributes,@{$family->get_Member_Attribute_by_source('ENSEMBLPEP')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SWISSPROT')};
-  push @members_attributes,@{$family->get_Member_Attribute_by_source('SPTREMBL')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
+  push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
 
   open S, ">$sb_file";
   
@@ -107,6 +109,7 @@ unless (defined $muscle_file) {
     print S ">$member_stable_id\n";
     my $seq = $member->sequence;
     $seq =~ s/(.{72})/$1\n/g;
+    chomp $seq;
     print S $seq,"\n";
   }
 
@@ -179,8 +182,12 @@ EXIT 2\n";
 
 # The following muscle parameters are supposed to be used with huge alignments 
 # (several thousands of sequences)
-#  my $status = system("$muscle_executable -in $sb_file -out $muscle_file.msc -maxiters 1 -diags1 -sv -clw -nocore -verbose -quiet -log $muscle_file.msc.log");
-  my $status = system("$muscle_executable -in $sb_file -out $muscle_file.msc -maxiters 2 -clw -nocore -verbose -quiet -log $muscle_file.msc.log");
+  my $status;
+  if ($fast) {
+    $status = system("$muscle_executable -in $sb_file -out $muscle_file.msc -maxiters 1 -diags1 -sv -clw -nocore -verbose -quiet -log $muscle_file.msc.log");
+  } else {
+    $status = system("$muscle_executable -in $sb_file -out $muscle_file.msc -maxiters 2 -clw -nocore -verbose -quiet -log $muscle_file.msc.log");
+  }
   
   unless ($status == 0) {
     unlink glob("/tmp/*$rand*");
