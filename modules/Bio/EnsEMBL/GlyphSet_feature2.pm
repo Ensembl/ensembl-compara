@@ -78,11 +78,8 @@ sub _init {
     my $dep            = $Config->get($type, 'dep');
 
     foreach my $f ( $self->features ){
-        print STDERR "1-",$f->hstrand,"\n";
         next if $strand_flag eq 'b' && $strand != $f->hstrand ;
-        print STDERR "2\n";
         next if $f->start > $f->end || $f->end < 1 || $f->start > $LEN;
-        print STDERR "3\n";
         $id{$f->hseqname()} = [] unless $id{$f->hseqname()};
         push @{$id{$f->hseqname()}}, $f;
     }
