@@ -260,7 +260,6 @@ sub _final_clause {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  print("_objs_from_sth\n");
   my %column;
   $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
 
@@ -356,7 +355,7 @@ sub _generic_fetch {
   #append additional clauses which may have been defined
   $sql .= " $final_clause" if($final_clause);
 
-  print STDERR $sql,"\n";
+  #print STDERR $sql,"\n";
   my $sth = $self->prepare($sql);
   $sth->execute;
 
@@ -383,8 +382,7 @@ sub _fetch_MaskingOptions_by_dbID
   $self->{'_masking_cache'} = {} unless(defined($self->{'_masking_cache'}));
 
   if(!defined($self->{'_masking_cache'}->{$data_id})) {
-    print("FETCH masking_options for data_id = $data_id\n");
-    
+    #print("FETCH masking_options for data_id = $data_id\n");
     my $dataDBA = new Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor($self->dbc);
     $self->{'_masking_cache'}->{$data_id} = $dataDBA->fetch_by_dbID($data_id);
   }
