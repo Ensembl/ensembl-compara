@@ -16,6 +16,11 @@ use Getopt::Long;
 
 
 ######This version of parse_and_score is to be used for stats 
+# want file then get slice
+# from Slice -- sequence 
+# get t stats
+# each alignment gets 2 new stats: non_genic, genic_T, genic_Q and non_exonic, exonic_T or exonic_Q or both
+# use excel to combine them 
 
 my $usage="
 $0 [-help]
@@ -177,18 +182,34 @@ $matrix = $mp->next_matrix;
 #### Want to base the score on both id and BLOSUM matrices to see which is best -- ???stop codons??? To match or not to match???
 ################################################################################################################
 #####CREATE SCORE and IDENT and POSIT 
+
 my $Qst=$atrib[11]; if ($Qst eq '+'){$Qst= 1;}else {$Qst='-1';} 
 my $Hst=$atrib[10]; if ($Hst eq '+'){$Hst= 1;}else {$Hst='-1';}
 
 #print STDERR "Qst: $Qst\n";
 #print STDERR "Hst: $Hst\n";
 
+#print STDERR "$sliceadaptor1->fetch_by_region('toplevel', $chr1, $Qstart, $Qend, $Qst)\n";
+#print STDERR "$sliceadaptor2->fetch_by_region('toplevel', $chr2, $Hstart, $Hend, $Hst)\n";
 
 my $sliceQ = $sliceadaptor1->fetch_by_region('toplevel', $chr1, $Qstart, $Qend, $Qst);
 my $sliceT = $sliceadaptor2->fetch_by_region('toplevel', $chr2, $Hstart, $Hend, $Hst);
+# now get genes and exons NB don't care what they are just that they are coding.
+# need to do a check for numbers -- eg inclide number of genes and exons in the slice
 
-#print STDERR "$sliceadaptor1->fetch_by_region('toplevel', $chr1, $Qstart, $Qend, $Qst)\n";
-#print STDERR "$sliceadaptor2->fetch_by_region('toplevel', $chr2, $Hstart, $Hend, $Hst)\n";
+my $qy_genes=$sliceQ->get_all_Genes(); 
+my $cs_genes=$sliceT->get_all_Genes();
+my $qy_exons=$sliceQ->get_all_Exons(); 
+my $cs_exons=$sliceT->get_all_Exons();
+
+			
+my $qy_gene_no=scalar(@{$qy_genes});
+my $cs_gene_no=scalar(@{$cs_genes});
+my $qy_exon_no=scalar(@{$qy_exons});
+my $cs_exon_no=scalar(@{$cs_exons});
+
+
+Here*************************************************
 
 my $Qseq=$sliceQ->seq;
 my $Tseq=$sliceT->seq;
@@ -304,7 +325,11 @@ if ($score<=0){
 				t1	=> $t1,
 				t2	=> $t2,
 				sum_len	=> $sum_len,
-				base3	=> $base3period
+				base3	=> $base3period,
+                Q_gene_no =>  $qy_gene_no, 
+                T_gene_no =>  $cs_gene_no,
+                Q_exon_no =>  $qy_exon_no, 
+                T_exon_no =>  $cs_exon_no
 };
 				
 		$i++;#should start at 0 ##########Strands are the wrong way around
@@ -647,11 +672,13 @@ else{
 			}
 		else{
 			#print OUT "$array->{chr2}\t$array->{prog}\t$array->{feat}\t$array->{T_start}\t$array->{T_end}\t$array->{score}\t$array->{T_strand}\t.\t$x\t\n";	
-			}	
+			}
+
+	
 		print DATA "$ok($x)\t$array->{sps1}\t$array->{chr1}\t$array->{prog}\t$array->{feat}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\n";
 		
 		
-		#print TSTATS "$array->{sps1}\t$array->{chr1}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$array->{len}\t$array->{sum_len}\n"; 
+		print TSTATS "$array->{sps1}\t$array->{chr1}\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t$array->{posit}\t$array->{cigar}\t$array->{t0} $array->{t1} $array->{t2}\t$array->{base3}\t$array->{len}\t$array->{sum_len}\n"; 
 		
 		$prev{T_start}=$array->{T_start};
 		
