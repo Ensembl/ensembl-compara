@@ -94,7 +94,7 @@ sub _init {
     # Draw all of the Vega Genes
     #
     my $F = 0;
-    foreach my $g (@{$vc->get_all_Genes_by_source( "sanger",1 )} ) {
+    foreach my $g (@{$vc->get_all_Genes_by_source( "vega",1 )} ) {
       $F++;
       my $genelabel = $g->stable_id(); 
       my $high = exists $highlights{$genelabel};
