@@ -205,7 +205,7 @@ sub new {
     for my $glyphset (@glyphsets) {
       ## load everything from the database
       my $ref_glyphset = ref($glyphset);
-      $glyphset->_init();
+      $glyphset->__init();
       ## don't waste any more time on this row if there's nothing in it
       if(scalar @{$glyphset->{'glyphs'}} ==0) {
         $glyphset->_dump('rendered' => 'no');
