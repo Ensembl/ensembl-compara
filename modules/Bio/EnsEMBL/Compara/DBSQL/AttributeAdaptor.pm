@@ -43,3 +43,5 @@ sub fetch_by_Member_Relation {
   # than one attribute, repetition of the same domain in the protein...
   # not the case for Family and Homology
 }
+
+1;
