@@ -63,6 +63,7 @@ use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Subset;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use vars qw(@ISA);
 
@@ -126,7 +127,10 @@ sub run
   my( $self) = @_;
 
   if($self->input_id eq 'test'){
+    $self->{'verbose'} = 1;
     print("RUN TESTS!!!\n");
+    $self->test_best_paf_web('ENSP00000344183',2);
+
     $self->test_RHS;
     $self->test_best_paf_web('ENSP00000328644',2);
 
@@ -266,6 +270,18 @@ sub process_species_pair
   my $subset_id        = eval($analysis1->parameters)->{'subset_id'};
   my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
   my $hit_genome_db_id = eval($analysis2->parameters)->{'genome_db_id'};
+  
+  #
+  # create method_link_species_set
+  #
+  my $qGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($q_genome_db_id);
+  my $hGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id);
+  
+  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
+  $mlss->species_set([$qGDB, $hGDB]);
+  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  $self->{'method_link_species_set'} = $mlss;
 
   #
   # fetch the peptide members (via subset) ordered on chromosomes
@@ -751,7 +767,8 @@ sub store_paf_as_homology
   my $homology = $paf->create_homology();
   $homology->description($type);
   $homology->subtype($subtype);
-
+  $homology->method_link_species_set($self->{'method_link_species_set'});
+  
   my $key = $paf->hash_key;
   my $hashtype=$self->{'storedHomologies'}->{$key};
   if($hashtype) {
