@@ -38,9 +38,7 @@ package Bio::EnsEMBL::Compara::Protein;
 use vars qw(@ISA);
 use strict;
 
-# Object preamble - inheriets from Bio::Root::RootI
-
-use Bio::Root::RootI;
+# Object preamble
 
 @ISA = qw(Bio::PrimarySeq);
 
