@@ -169,7 +169,7 @@ while (<$FH>) {
           my $genomedb = $genome_db{$member->taxon_id};
           $member->genome_db_id($genomedb->dbID);
           #get chr_name, chr_start, chr_end
-          my $core_db = $db->get_db_adaptor($genomedb->name, $genomedb->assembly);
+          my $core_db = $genomedb->connect_to_genome_locator();
           my $TranscriptAdaptor = $core_db->get_TranscriptAdaptor;
           my $gene;
           my $transcript;
@@ -249,7 +249,7 @@ if (defined $member_stable_id && defined $member_seq) {
       my $genomedb = $genome_db{$member->taxon_id};
       $member->genome_db_id($genomedb->dbID);
       #get chr_name, chr_start, chr_end
-      my $core_db = $db->get_db_adaptor($genomedb->name, $genomedb->assembly);
+      my $core_db = $genomedb->connect_to_genome_locator();
       my $TranscriptAdaptor = $core_db->get_TranscriptAdaptor;
       my $gene;
       my $transcript;
