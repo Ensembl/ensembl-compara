@@ -31,5 +31,5 @@ mysql -h ecs4 -P3352 -u ensro -N -e "show tables" ucsc_chain_data_Mm33Rn3|awk -F
 
 WARNING: The only requirement here is that the registry alias name of the --qSpecies (in the example Rn3) has 
 to be the same as the name of the netRn3 table in the UCSC database.
-For example, if the net table from UCSC is named netGalGal2, the registry alias name of the corresponding chicken core
+For example, if the net table from UCSC is named netGalGal2, one of registry alias name of the corresponding chicken core
 database has to be GalGal2.
