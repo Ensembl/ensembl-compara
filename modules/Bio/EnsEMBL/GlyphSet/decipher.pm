@@ -9,14 +9,19 @@
 #
 package Bio::EnsEMBL::GlyphSet::decipher;
 use strict;
-use vars qw(@ISA);
+use vars qw(@ISA $DECIPHER_COLOURS);
 use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::SeqFeature;
 use EnsWeb;
 use Bio::Das;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
-
+$DECIPHER_COLOURS = {
+		     'novel_deletion'  => "b70000",
+		     'novel_insertion' => "00b700",
+		     'known_deletion'  => "f59787",
+		     'known_insertion' => "87f587",
+		    };
 sub my_label { "DECIPHER"; }
 
 sub features {
@@ -27,6 +32,7 @@ sub features {
   my $start        = $slice->start();
   my $end          = $slice->end();
   my $chr          = $slice->seq_region_name();
+  my $cmap         = $self->{'config'}->colourmap();
   my $offset       = -$start+1;
   my $species_defs = &EnsWeb::species_defs();
   my $dbname       = EnsWeb::species_defs->ENSEMBL_TRACK_DAS_SOURCES->{"das_DECIPHER"};
@@ -34,6 +40,11 @@ sub features {
   $dsn             = "http://$dsn" unless ($dsn =~ /^https?:\/\//i);
   my @features     = ();
   my $das          = Bio::Das->new(20);
+
+  for my $k (keys %$DECIPHER_COLOURS) {
+    $cmap->add_hex($DECIPHER_COLOURS->{$k});
+  }
+
   $das->proxy($species_defs->ENSEMBL_DAS_PROXY);
 
   $das->features(
@@ -55,9 +66,6 @@ sub features {
   my @novelfeatures = grep { $_->{'type'} =~ /novel/ } @features;
   my @knownfeatures = grep { $_->{'type'} =~ /known/ } @features;
 
-  print STDERR qq(DECIPHER: Saw @{[scalar @novelfeatures]} novel features\n);
-  print STDERR qq(DECIPHER: Saw @{[scalar @knownfeatures]} known features\n);
-
   while(@novelfeatures) {
     my @parts  = @novelfeatures[0..1];
     my ($hard) = grep { $_->{'type'} !~ /fuzzy/ } @parts;
@@ -76,6 +84,7 @@ sub features {
     $s->{'decipher_note'}      = $soft->note();
     $s->{'decipher_link'}      = $soft->link();
     $s->{'decipher_strand'}    = ($soft->orientation() eq "-")?-1:1;
+    $s->{'decipher_thang'}     = "novel";
 
     push @{$res}, $s;
   }
@@ -91,7 +100,7 @@ sub features {
     $s->{'decipher_note'}   = $known->note();
     $s->{'decipher_link'}   = $known->link();
     $s->{'decipher_strand'} = ($known->orientation() eq "-")?-1:1;
-
+    $s->{'decipher_thang'}  = "known";
     push @{$res}, $s;
   }
   return $res;
@@ -99,7 +108,10 @@ sub features {
 
 sub colour {
   my ($self, $f) = @_;
-  ($f->{'decipher_strand'} < 0)?"red":"green";
+  if(($f->{'decipher_thang'}||"") eq "known") {
+    return ($f->{'decipher_strand'} < 0)?$DECIPHER_COLOURS->{'known_deletion'}:$DECIPHER_COLOURS->{'known_insertion'};
+  }
+  return ($f->{'decipher_strand'} < 0)?$DECIPHER_COLOURS->{'novel_deletion'}:$DECIPHER_COLOURS->{'novel_insertion'};
 }
 
 sub href  { return undef; }
@@ -120,7 +132,7 @@ sub image_label {
 
 sub tag {
   my ($self, $f) = @_;
-  return if($f->{'decipher_type'} =~ /known/); # no tagging for known syndromes/polymorphisms
+  return unless($f->{'decipher_softstart'} && $f->{'decipher_softend'});
   return ({
 	   'start'  => $f->{'decipher_softstart'},
 	   'end'    => $f->start(),
