@@ -56,7 +56,7 @@ sub zmenu {
 	my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
-    my $type = $transcript->type();
+    my $type = $transcript->type() || $gene->type();
     $type =~ s/HUMACE-//g;
     
     my $zmenu = {
@@ -107,7 +107,6 @@ sub text_label {
 sub features {
   my ($self) = @_;
 
-  warn "GRABBING ALL GENES OF TYPE otter from VEGA";
   if( $self->{'config'}->{'fakecore'} ) {
     return $self->{'container'}->get_all_Genes('otter');
   } else {

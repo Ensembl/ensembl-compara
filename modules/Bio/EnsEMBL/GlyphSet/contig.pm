@@ -131,7 +131,7 @@ sub _init_non_assembled_contig {
     push @colours, shift @colours;
     
     if($navigation eq 'on') {
-      foreach( qw(chunk contig clone supercontig) ) {
+      foreach( qw(chunk supercontig clone scaffold contig) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
           $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?region=$Q->[0]);
         }
@@ -143,12 +143,12 @@ sub _init_non_assembled_contig {
         'caption' => $rid,
       };
       my $POS = 10;
-      foreach( qw(chunk contig clone supercontig) ) {
+      foreach( qw(scaffold contig clone supercontig chunk) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
           my $name =$Q->[0];
              $name =~ s/\.\d+$// if $_ eq 'clone';
           $label ||= $tile->{'locations'}->{$_}->[0];
-          (my $T=$_)=~tr/cs/CS/;
+          (my $T=ucfirst($_))=~s/contig/Contig/g;
           $glyph->{'zmenu'}{"$POS:$T $name"} ='' unless $_ eq 'contig';
           $POS++;
           $glyph->{'zmenu'}{"$POS:EMBL source file"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
@@ -275,7 +275,7 @@ sub _init_non_assembled_contig {
   if ($Config->get('_settings','draw_red_box') eq 'yes') { 
     # only draw focus box on the correct display...
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $rbs - $global_start + 1,
+      'x'            => $rbs - $global_start,
       'y'            => $ystart - 4 ,
       'width'        => $rbe-$rbs+1,
       'height'       => 23,
@@ -283,7 +283,7 @@ sub _init_non_assembled_contig {
       'absolutey'    => 1,
     }) );
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $rbs - $global_start + 1,
+      'x'            => $rbs - $global_start,
       'y'            => $ystart - 3 ,
       'width'        => $rbe-$rbs+1,
       'height'       => 21,

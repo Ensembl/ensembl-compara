@@ -112,7 +112,7 @@ sub _init {
 	"length: @{[$chr_end-$chr_start+1]}"  => ''
       }; 
       if( $ens_ID ne '' ) {
-        $rect->{'zmenu'}->{"Gene: $g->{'ens_ID'}"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database"; 
+        $rect->{'zmenu'}->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database"; 
         $rect->{'href'} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID&db=$database";
       }
     }

@@ -60,13 +60,13 @@ sub tag {
     if( $f->get_scalar_attribute('bac_start') && $f->get_scalar_attribute('bac_start') < $f->seq_region_start ) {
       push @result, {
         'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
-        'start' => $f->get_scalar_attribute('bac_start') - $offset, 'end'    => $f->seq_region_start
+        'start' => $f->get_scalar_attribute('bac_start') - $offset, 'end'    => $f->seq_region_start - $offset
       };
     }
-    if(  $f->get_scalar_attribute('bac_end') && $f->get_scalar_attribute('bac_end') > $f->seq_region_end ) {
+    if(  $f->get_scalar_attribute('bac_end') && $f->get_scalar_attribute('bac_end')> $f->seq_region_end ) {
       push @result, {
         'style' => 'underline',   'colour' => $self->{'colours'}{"seq_len"},
-        'start' => $f->seq_region_end,       'end'    => $f->get_scalar_attribute('bac_end') - $offset
+        'start' => $f->seq_region_end -$offset,       'end'    => $f->get_scalar_attribute('bac_end') - $offset
       };
     }
   }
@@ -93,7 +93,7 @@ sub zmenu {
     foreach(@{$f->get_all_attribute_values('synonyms')}) {
         $zmenu->{"11:Synonym: $_" } = '';
     }
-    foreach($f->get_all_attribute_values('embl_accs')) {
+    foreach(@{$f->get_all_attribute_values('embl_accs')}) {
         $zmenu->{"12:EMBL: $_" } = '';
     }
     (my $state = $f->get_scalar_attribute('state'))=~s/^\d\d://;
