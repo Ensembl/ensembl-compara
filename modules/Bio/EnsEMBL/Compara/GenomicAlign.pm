@@ -217,12 +217,6 @@ sub new {
       
       deprecate($warn_message);
 
-      $self->{_consensus_dnafrag} = new Bio::EnsEMBL::Compara::GenomicAlign(
-              -dnafrag => $consensus_dnafrag,
-          );
-      $self->{_query_dnafrag} = new Bio::EnsEMBL::Compara::GenomicAlign(
-              -dnafrag => $query_dnafrag,
-          );
       $self->consensus_dnafrag( $consensus_dnafrag ) if defined $consensus_dnafrag;
       $self->consensus_start( $consensus_start ) if defined $consensus_start;
       $self->consensus_end( $consensus_end ) if defined $consensus_end;
@@ -1236,22 +1230,9 @@ sub consensus_dnafrag {
   my ($self, $consensus_dnafrag) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [
-                $self->{_consensus_dnafrag},
-                $self->{_query_dnafrag}
-              ]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag($consensus_dnafrag)
-      if (defined($consensus_dnafrag));
-  return $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag;
+  return $self->{'_consensus_genomic_align'}->dnafrag($consensus_dnafrag);
 }
 
 
@@ -1270,19 +1251,9 @@ sub consensus_start {
   my ($self, $consensus_dnafrag_start) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_start($consensus_dnafrag_start)
-      if (defined($consensus_dnafrag_start));
-  return $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_start;
+  return $self->{'_consensus_genomic_align'}->dnafrag_start($consensus_dnafrag_start);
 }
 
 
@@ -1301,19 +1272,9 @@ sub consensus_end {
   my ($self, $consensus_dnafrag_end) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_end($consensus_dnafrag_end)
-      if (defined($consensus_dnafrag_end));
-  return $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_end;
+  return $self->{'_consensus_genomic_align'}->dnafrag_end($consensus_dnafrag_end);
 }
 
 
@@ -1332,22 +1293,9 @@ sub query_dnafrag {
   my ($self, $query_dnafrag) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [
-                $self->{_consensus_dnafrag},
-                $self->{_query_dnafrag}
-              ]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag($query_dnafrag)
-      if (defined($query_dnafrag));
-  return $self->genomic_align_block->get_old_query_genomic_align->dnafrag;
+  return $self->{'_query_genomic_align'}->dnafrag($query_dnafrag);
 }
 
 
@@ -1366,19 +1314,9 @@ sub query_start {
   my ($self, $query_dnafrag_start) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_start($query_dnafrag_start)
-      if (defined($query_dnafrag_start));
-  return $self->genomic_align_block->get_old_query_genomic_align->dnafrag_start;
+  return $self->{'_query_genomic_align'}->dnafrag_start($query_dnafrag_start);
 }
 
 
@@ -1397,19 +1335,9 @@ sub query_end {
   my ($self, $query_dnafrag_end) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_end($query_dnafrag_end)
-      if (defined($query_dnafrag_end));
-  return $self->genomic_align_block->get_old_query_genomic_align->dnafrag_end;
+  return $self->{'_query_genomic_align'}->dnafrag_end($query_dnafrag_end);
 }
 
 
@@ -1428,19 +1356,19 @@ sub query_strand {
   my ($self, $query_dnafrag_strand) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
+  if (defined($query_dnafrag_strand) and defined($self->{'_strands_reversed'})) {
+    ## strands_reversed has been defined before query_strand...
+    if ($self->{'_strands_reversed'}) {
+      $self->{'_consensus_genomic_align'}->dnafrag_strand(-$query_dnafrag_strand)
+    } else {
+      $self->{'_consensus_genomic_align'}->dnafrag_strand($query_dnafrag_strand)
+    }
+    $self->{'_strands_reversed'} = undef;
   }
 
-  $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand($query_dnafrag_strand)
-      if (defined($query_dnafrag_strand));
-  return $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand;
+  return $self->{'_query_genomic_align'}->dnafrag_strand($query_dnafrag_strand);
 }
 
 
@@ -1456,7 +1384,12 @@ sub query_strand {
 =cut
 
 sub alignment_type {
-  throw("NOT IMPLEMENTED!")
+  my ($self, $alignment_type) = @_;
+
+  deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
+
+  return $self->genomic_align_block->method_link_species_set->method_link_type($alignment_type);
 }
 
 
@@ -1475,18 +1408,9 @@ sub score {
   my ($self, $score) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self],
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->score($score) if (defined($score));
-  return $self->genomic_align_block->score;
+  return $self->genomic_align_block->score($score);
 }
 
 
@@ -1505,18 +1429,9 @@ sub perc_id {
   my ($self, $perc_id) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self],
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
-  }
-
-  $self->genomic_align_block->perc_id($perc_id) if (defined($perc_id));
-  return $self->genomic_align_block->perc_id;
+  return $self->genomic_align_block->perc_id($perc_id);
 }
 
 
@@ -1535,11 +1450,10 @@ sub group_id {
   my ($self, $group_id) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  my $genomic_align_group = $self->genomic_align_group_by_type("default");
-  return undef if (!$genomic_align_group);
-  
-  return $genomic_align_group->dbID;
+  $self->{'_consensus_genomic_align'}->genomic_align_group_id_by_type("default", $group_id);
+  return $self->{'_query_genomic_align'}->genomic_align_group_id_by_type("default", $group_id);
 }
 
 
@@ -1562,29 +1476,27 @@ sub strands_reversed {
   my ($self, $strands_reversed) = @_;
 
   deprecate($warn_message);
+  $self->_start_object_from_old_attributes();
 
-  ## For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention
-  if (!defined($self->genomic_align_block)) {
-    my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [$self, $self]
-        );
-    # Use attribute and not the setter method in order to get a regular reference instead of a weak one.
-    $self->{'genomic_align_block'} = $genomic_align_block;
+  my $query_strand = $self->{'_query_genomic_align'}->{'dnafrag_strand'};
+  if (!defined($query_strand)) {
+    ## No comparison is possible. Save result in an internal variable
+    $self->{'_strands_reversed'} = $strands_reversed if (defined($strands_reversed));
+    return $self->{'_strands_reversed'};
   }
-
+  
   if (defined($strands_reversed)) {
-    if ($strands_reversed == 1) {
-      $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_strand =
-          - $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand
-    } else {
-      $self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_strand =
-          $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand
-    }
+    ## Set $self->{'_consensus_genomic_align'}->dnafrag_strand according to strands_reversed
+    $self->{'_consensus_genomic_align'}->dnafrag_strand(
+          (($strands_reversed)?-$query_strand:$query_strand)
+        );
+  } elsif (!defined($self->{'_strands_reversed'})) {
+    $strands_reversed = ($self->{'_consensus_genomic_align'}->dnafrag_strand ==
+        $self->{'_query_genomic_align'}->dnafrag_strand)?0:1;
   } else {
-    $strands_reversed = ($self->genomic_align_block->get_old_consensus_genomic_align->dnafrag_strand ==
-          $self->genomic_align_block->get_old_query_genomic_align->dnafrag_strand);
+    $strands_reversed = $self->{'_strands_reversed'};
   }
-
+  
   return $strands_reversed;
 }
 
@@ -1729,6 +1641,22 @@ sub _select_genomic_aligns_index {
   }
 
   return $index;  
+}
+
+sub _start_object_from_old_attributes {
+  my ($self) = @_;
+
+  if (!defined($self->{'genomic_align_block'})) {
+    $self->{'_consensus_genomic_align'} = new Bio::EnsEMBL::Compara::GenomicAlign();
+    $self->{'_query_genomic_align'} = new Bio::EnsEMBL::Compara::GenomicAlign();
+    $self->{'genomic_align_block'} = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+            -genomic_align_array => [
+                    $self->{'_consensus_genomic_align'},
+                    $self->{'_query_genomic_align'}
+                ],
+            -method_link_species_set => new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet()
+        );
+  }
 }
 
 1;

@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlign module.
 
-This script includes 47 tests.
+This script includes XX tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 47;
+    plan tests => 100;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -569,5 +569,110 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_group_by_type met
     }
     ok($all_fails, undef);
   };
+
+
+#####################################################################
+## Tests for deprecated methods
+
+verbose("EXCEPTION");
+my $consensus_dnafrag_id = 19;
+my $consensus_start = 50044148;
+my $consensus_end = 50044227;
+my $query_dnafrag_id = 53;
+my $query_start = 82065037;
+my $query_end = 82065116;
+my $query_strand = 1;
+my $score = 4549;
+my $perc_id = 75;
+my $alignment_type = "BLASTZ_NET";
+my $strands_reversed = 0;
+my $group_id = 763961;
+
+$genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+        -consensus_dnafrag => $dnafrag_adaptor->fetch_by_dbID($consensus_dnafrag_id),
+        -consensus_start => $consensus_start,
+        -consensus_end => $consensus_end,
+        -query_dnafrag => $dnafrag_adaptor->fetch_by_dbID($query_dnafrag_id),
+        -query_start => $query_start,
+        -query_end => $query_end,
+        -query_strand => $query_strand,
+        -score => $score,
+        -perc_id => $perc_id,
+        -alignment_type => $alignment_type,
+    );
+$genomic_align->group_id($group_id);
+$genomic_align->strands_reversed($strands_reversed);
+
+ok($genomic_align->consensus_dnafrag->dbID, $consensus_dnafrag_id);
+ok($genomic_align->consensus_start, $consensus_start);
+ok($genomic_align->consensus_end, $consensus_end);
+ok($genomic_align->query_dnafrag->dbID, $query_dnafrag_id);
+ok($genomic_align->query_start, $query_start);
+ok($genomic_align->query_end, $query_end);
+ok($genomic_align->query_strand, $query_strand);
+ok($genomic_align->strands_reversed, $strands_reversed);
+ok($genomic_align->score, $score);
+ok($genomic_align->perc_id, $perc_id);
+ok($genomic_align->alignment_type, $alignment_type);
+ok($genomic_align->group_id, $group_id);
+
+$genomic_align_block = $genomic_align->genomic_align_block;
+my ($genomic_align_1, $genomic_align_2) = @{$genomic_align->genomic_align_block->genomic_align_array};
+ok($genomic_align_1, '/^Bio::EnsEMBL::Compara::GenomicAlign/');
+ok($genomic_align_1->dnafrag->dbID, $consensus_dnafrag_id);
+ok($genomic_align_1->dnafrag_start, $consensus_start);
+ok($genomic_align_1->dnafrag_end, $consensus_end);
+ok($genomic_align_2->dnafrag->dbID, $query_dnafrag_id);
+ok($genomic_align_2->dnafrag_start, $query_start);
+ok($genomic_align_2->dnafrag_end, $query_end);
+ok($genomic_align_2->dnafrag_strand, $query_strand);
+ok($genomic_align_1->dnafrag_strand, ($strands_reversed?-$query_strand:$query_strand));
+ok($genomic_align_block->score, $score);
+ok($genomic_align_block->perc_id, $perc_id);
+ok($genomic_align_block->method_link_species_set->method_link_type, $alignment_type);
+ok($genomic_align_1->method_link_species_set->method_link_type, $alignment_type);
+ok($genomic_align_2->method_link_species_set->method_link_type, $alignment_type);
+ok($genomic_align_1->genomic_align_group_id_by_type("default"), $group_id);
+ok($genomic_align_2->genomic_align_group_id_by_type("default"), $group_id);
+
+$strands_reversed = 0;
+$query_strand = 1;
+$genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
+ok($genomic_align->strands_reversed, undef);
+$genomic_align->strands_reversed($strands_reversed);
+ok($genomic_align->strands_reversed, $strands_reversed);
+$genomic_align->query_strand($query_strand);
+ok($genomic_align->query_strand, $query_strand);
+ok($genomic_align->strands_reversed, $strands_reversed);
+
+$strands_reversed = 0;
+$query_strand = -1;
+$genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
+ok($genomic_align->strands_reversed, undef);
+$genomic_align->strands_reversed($strands_reversed);
+ok($genomic_align->strands_reversed, $strands_reversed);
+$genomic_align->query_strand($query_strand);
+ok($genomic_align->query_strand, $query_strand);
+ok($genomic_align->strands_reversed, $strands_reversed);
+
+$strands_reversed = 1;
+$query_strand = 1;
+$genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
+ok($genomic_align->strands_reversed, undef);
+$genomic_align->strands_reversed($strands_reversed);
+ok($genomic_align->strands_reversed, $strands_reversed);
+$genomic_align->query_strand($query_strand);
+ok($genomic_align->query_strand, $query_strand);
+ok($genomic_align->strands_reversed, $strands_reversed);
+
+$strands_reversed = 1;
+$query_strand = -1;
+$genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign();
+ok($genomic_align->strands_reversed, undef);
+$genomic_align->strands_reversed($strands_reversed);
+ok($genomic_align->strands_reversed, $strands_reversed);
+$genomic_align->query_strand($query_strand);
+ok($genomic_align->query_strand, $query_strand);
+ok($genomic_align->strands_reversed, $strands_reversed);
 
 exit 0;
