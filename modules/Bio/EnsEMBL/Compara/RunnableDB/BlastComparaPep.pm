@@ -132,9 +132,10 @@ sub fetch_input {
                      -query          => $self->query,
                      -database       => $self->analysis->db_file,
                      -program        => $self->analysis->program_file,
-                     -options        => $self->analysis->parameters,
+                     #-options        => $self->analysis->parameters,
                      -threshold      => $thr,
-                     -threshold_type => $thr_type
+                     -threshold_type => $thr_type,
+                     $self->parameter_hash,
                     );
   $runnable->add_regex($self->analysis->db_file, '^(\S+)\s*');
   $self->runnable($runnable);

@@ -224,6 +224,12 @@ sub createBlastAnalysis
 
   my $logic_name = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
 
+  my $params = "subset_id=>" . $self->{'pepSubset'}->dbID . "," .
+               "genome_db_id=>" . $self->{'genome_db'}->dbID;
+  if($blast_template->parameters()) {
+    $params .= "," . $blast_template->parameters();
+  }
+
   my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
       -db              => $blastdb->dbname,
       -db_file         => $blastdb->dbfile,
@@ -234,7 +240,7 @@ sub createBlastAnalysis
       -program_file    => $blast_template->program_file(),
       -program_version => $blast_template->program_version(),
       -module          => $blast_template->module(),
-      -parameters      => $blast_template->parameters(),
+      -parameters      => $params,
     );
 
   $self->db->get_AnalysisAdaptor()->store($analysis);
