@@ -429,4 +429,33 @@ sub display_short {
         "\n");
 }
 
+
+=head2 hash_key
+  Args       : none
+  Example    : $somehash->{$paf->hash_key} = $someValue;
+  Description: used for keeping track of known/stored gene/gene relationships
+  Returntype : string $key
+  Exceptions : none
+  Caller     : general
+=cut
+
+sub hash_key
+{
+  my $self = shift;
+  my $key = '1';
+
+  return $key unless($self->query_member);
+  return $key unless($self->hit_member);
+  my $gene1 = $self->query_member->gene_member;
+  my $gene2 = $self->hit_member->gene_member;
+  return $key unless($gene1 and $gene2);
+  if($gene1->genome_db_id > $gene2->genome_db_id) {
+    my $temp = $gene1;
+    $gene1 = $gene2;
+    $gene2 = $temp;
+  }
+  $key = $gene1->stable_id . '_' . $gene2->stable_id;
+  return $key;
+}
+
 1;
