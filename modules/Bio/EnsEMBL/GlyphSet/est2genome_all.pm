@@ -17,6 +17,10 @@ sub features {
     push @features, @{$self->{'container'}->get_all_SimilarityFeatures("est2genome_mouse", 80)};
     push @features, @{$self->{'container'}->get_all_SimilarityFeatures("est2genome_other", 80)};
     return \@features;
+
+#	return $self->{'container'}->get_all_SimilarityFeatures("est2genome_human", 80),
+#		   $self->{'container'}->get_all_SimilarityFeatures("est2genome_mouse", 80),
+#		   $self->{'container'}->get_all_SimilarityFeatures("est2genome_other", 80);
 }
 
 sub href {
