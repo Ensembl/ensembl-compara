@@ -157,7 +157,7 @@ sub _init {
             my $marked =
                 ($box->{'chr_start'} <= $self->{'container'}->{'line'} && $self->{'container'}->{'line'} <= $box->{'chr_end'}) ? $SIDE : 0;
 
-            my %zmenu = {
+            my %zmenu = (
                 'caption' => sprintf("Chr %s %0.1fM-%0.1fM",
                     $other_chr,
                     $box->{'hit_chr_start'}/1e6,
@@ -180,7 +180,7 @@ sub _init {
                     $box->{'hit_chr_end'}/1e6
                 ) => 
                     ( $CANSEE_OTHER ? qq(/$OTHER/contigview?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' )
-            };
+            );
             my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?species=$ENV{'ENSEMBL_SPECIES'}&chr=$other_chr) : '' ;
             $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;
             push @{$highlights_secondary->{$other_chr}}, {
