@@ -14,5 +14,6 @@ genome_db_id	taxon_id	name	assembly	assembly_default	genebuild	locator
 14	9615	Canis familiaris	BROADD1	1	0411Ensembl	
 15	9913	Bos taurus	COW1	1	unkn	 
 16	8364	Xenopus tropicalis	JGI3	1	0502Ensembl	
-17	13616	Monodelphis domestica	BROAD0.5	1	ukn
-18	7719	Ciona intestinalis	CINT1.95	1	ukn
+17	4932	Saccharomyces cerevisiae	SGD1	1	ukn
+18	7719	Ciona intestinalis	CINT1.95	1	0502SGD
+19	13616	Monodelphis domestica	BROAD0.5	1	ukn
