@@ -153,10 +153,12 @@ sub store {
 
 
 sub _fetch_all_by_DnaFrag_GenomeDB_direct {
-   my ($self,$dnafrag, $target_genome, $start,$end, $method_link_id) = @_;
+   my ($self,$dnafrag, $target_genome, $start,$end, $method_link_id, $limit) = @_;
 
    $self->throw("Input $dnafrag not a Bio::EnsEMBL::Compara::DnaFrag\n")
     unless $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"); 
+   
+   $limit = 0 unless (defined $limit);
 
    #formating the $dnafrag
    my $dnafrag_id = $dnafrag->dbID;
@@ -186,6 +188,11 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
        $sql .= " AND gab.query_dnafrag_id = d.dnafrag_id
                  AND d.genome_db_id = ".$target_genome->dbID();
      }
+     if ($limit > 0) {
+       $sql .= " order by gab.consensus_start asc limit $limit";
+     } elsif ($limit < 0) {
+       $sql .= " order by gab.consensus_end desc limit " . abs($limit);
+     }
      $sth = $self->prepare( $sql );
      $sth->execute();
      $result = $self->_objs_from_sth( $sth );
@@ -204,6 +211,11 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
      if( defined $target_genome ) {
        $sql .= ( " AND gab.consensus_dnafrag_id = d.dnafrag_id
                  AND d.genome_db_id = ".$target_genome->dbID());
+     }
+     if ($limit > 0) {
+       $sql .= " order by gab.query_start asc limit $limit";
+     } elsif ($limit < 0) {
+       $sql .= " order by gab.query_end desc limit " . abs($limit);
      }
      $sth = $self->prepare( $sql );
      $sth->execute();
@@ -235,7 +247,7 @@ sub _fetch_all_by_DnaFrag_GenomeDB_direct {
 =cut
 
 sub fetch_all_by_DnaFrag_GenomeDB {
-  my ( $self, $dnafrag, $target_genome, $start, $end, $alignment_type ) = @_;
+  my ( $self, $dnafrag, $target_genome, $start, $end, $alignment_type, $limit) = @_;
 
   unless($dnafrag && ref $dnafrag && 
 	 $dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag')) {
@@ -243,15 +255,8 @@ sub fetch_all_by_DnaFrag_GenomeDB {
 		 " not a [$dnafrag]");
   }
 
-#  my $sth = $self->prepare("
-#     SELECT method_link_id
-#     FROM method_link
-#     WHERE type = ?
-#  ");
-
-#  $sth->execute($alignment_type);
-#  my ($method_link_id) = $sth->fetchrow_array();
-
+  $limit = 0 unless (defined $limit);
+  
   my $method_link_id = $self->_method_link_id_by_alignment_type($alignment_type);
 
   my $genome_cons = $dnafrag->genomedb();
@@ -261,7 +266,7 @@ sub fetch_all_by_DnaFrag_GenomeDB {
   if( $genome_cons->has_consensus( $genome_query ,$method_link_id) ||
       $genome_cons->has_query( $genome_query ,$method_link_id)) {
     return $self->_fetch_all_by_DnaFrag_GenomeDB_direct
-      ( $dnafrag, $target_genome, $start, $end,$method_link_id );
+      ( $dnafrag, $target_genome, $start, $end, $method_link_id, $limit );
     
   } else {
     # indirect checks
@@ -281,7 +286,7 @@ sub fetch_all_by_DnaFrag_GenomeDB {
     my $set1 = [];
     for my $g ( @$linked ) {
       my $g_res = $self->_fetch_all_by_DnaFrag_GenomeDB_direct
-	( $dnafrag, $g, $start, $end,$method_link_id );
+	( $dnafrag, $g, $start, $end, $method_link_id, $limit );
       push( @$set1, @$g_res );
     }
 
@@ -298,7 +303,7 @@ sub fetch_all_by_DnaFrag_GenomeDB {
       $end = $alignA->query_end();
 
       my $d_res = $self->_fetch_all_by_DnaFrag_GenomeDB_direct
-	( $frag, $genome_query, $start, $end ,$method_link_id);
+	( $frag, $genome_query, $start, $end , $method_link_id, $limit);
 
       for my $alignB ( @$d_res ) {
 	$self->_add_derived_alignments( $merged_aligns, $alignA, $alignB );
