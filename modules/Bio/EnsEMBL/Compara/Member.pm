@@ -503,7 +503,7 @@ sub bioseq {
   Example    : my $primaryseq = $member->primaryseq;
   Description: returns sequence this member as a Bio::Seq object
   Returntype : Bio::EnsEMBL::Compara::Member object
-  Exceptions : if arg[0] isn't a Bio::EnsEMBL::Compara::Member object
+  Exceptions : if arg[0] is not a Bio::EnsEMBL::Compara::Member object
   Caller     : MemberAdaptor(set), general
 
 =cut
