@@ -145,25 +145,25 @@ CREATE TABLE analysis_job (
 
 ------------------------------------------------------------------------------------
 --
--- Table structure for table 'analysis_job_files'
+-- Table structure for table 'analysis_job_file'
 --
 -- overview:
---   Parallel table to analysis_job table which holds paths to the STDOUT and STDERR
---   output from the RunnableDB used to do the job.
+--   Table which holds paths to files created by an analysis_job
+--   e.g. STDOUT STDERR, temp directory
+--   or output data files created by the RunnableDB
+--   There can only be one entry of a certain type for a given analysis_job
 --
 -- semantics:
---   analysis_job_id        - foreign key
---   stdout_file            - path to STDOUT file
---   stderr_file            - path to STDERR file
---   temp_dir               - path to directory where any temp files where created
+--   analysis_job_id    - foreign key
+--   type               - type of file e.g. STDOUT, STDERR, TMPDIR, ...
+--   path               - path to file or directory
 
-CREATE TABLE analysis_job_files (
-  analysis_job_id     int(10) NOT NULL,
-  stdout_file         varchar(255) NOT NULL,
-  stderr_file         varchar(255) NOT NULL,
-  temp_dir            varchar(255) DEFAULT ''
-
-  UNIQUE KEY (analysis_job_id)
+CREATE TABLE analysis_job_file (
+  analysis_job_id         int(10) NOT NULL,
+  type                    varchar(16) NOT NULL default '',
+  path                    varchar(255) NOT NULL,
+  
+  UNIQUE KEY   (analysis_job_id, type)
 );
 
 
