@@ -67,11 +67,26 @@ sub dealloc {
 sub DESTROY {
   my $self = shift;
   if(defined($self->{'_refcount'}) and $self->{'_refcount'}>0) {
-    printf("WARNING DESTROY refcount:%d  (%d)%s %s\n", $self->refcount, $self->node_id, $self->name, $self);
+    printf("WARNING DESTROY refcount:%d  (%s)%s %s\n", $self->refcount, $self->node_id, $self->name, $self);
   }    
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
 
+sub copy {
+  my $self = shift;
+  
+  my $mycopy = new Bio::EnsEMBL::Compara::NestedSet;
+
+  $mycopy->distance_to_parent($self->distance_to_parent);
+  $mycopy->left_index($self->left_index);
+  $mycopy->right_index($self->right_index);
+  $mycopy->name($self->name);
+
+  foreach my $child (@{$self->children}) {  
+    $mycopy->add_child($child->copy);
+  }
+  return $mycopy;
+}
 
 #######################################
 # reference counting system
@@ -225,7 +240,7 @@ sub remove_child {
   throw("child not defined") unless(defined($child));
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
      unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
-  throw("not my child")
+  throw($self->node_id. " not my child ". $child->node_id)
     unless($self->{'_children_id_hash'} and 
            $self->{'_children_id_hash'}->{$child->node_id});
   
@@ -428,8 +443,11 @@ sub print_tree {
   my $self  = shift;
   my $indent = shift;
   my $lastone = shift;
+  my $scale = 100; 
 
   $indent = '' unless(defined($indent));
+  print($indent);
+  for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { print('-'); }
 
   $self->print_node($indent);
 
@@ -437,8 +455,8 @@ sub print_tree {
     chop($indent);
     $indent .= " ";
   }
-  for(my $i=0; $i<$self->distance_to_parent()*30; $i++) { $indent .= ' '; }
-  $indent .= "   |";
+  for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $indent .= ' '; }
+  $indent .= "|";
 
 
   my $children = $self->children;
@@ -454,16 +472,9 @@ sub print_tree {
 
 sub print_node {
   my $self  = shift;
-  my $indent = shift;
 
-  $indent = '' unless(defined($indent));
-  print($indent);
-  #if($self->parent) {
-  #  for(my $i=0; $i<$self->parent->distance_to_root()*30; $i++) { print(' '); }
-  #}
-  for(my $i=0; $i<$self->distance_to_parent()*30; $i++) { print('-'); }
   printf("(%s)", $self->node_id);
-  printf("NS:%s\n", $self->name);
+  printf("%s\n", $self->name);
 }
 
 
@@ -571,6 +582,24 @@ sub flatten_tree {
   $self->release_children;
   foreach my $leaf (@{$leaves}) { $self->add_child($leaf); $leaf->release; }
   
+  return $self;
+}
+
+sub re_root {
+  my $self = shift;
+  return unless($self->parent);
+
+  $self->retain;
+  my $parent = $self->parent->retain;
+  $self->disavow_parent;
+
+  $parent->re_root;
+  
+  $self->add_child($parent);
+  $parent->distance_to_parent($self->distance_to_parent);
+  $self->distance_to_parent(0.0);
+  $self->release;
+  $parent->release;
   return $self;
 }
 
