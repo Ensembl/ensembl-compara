@@ -28,13 +28,14 @@ if (-e "/proc/version") {
     }
     
 GetOptions( 'idqy=s'   => \$idqy,
-    	    'fastaqy=s' => \$fastaqy,
+#    	    'fastaqy=s' => \$fastaqy,
 	    'indexqy=s' => \$indexqy,
 	    'fastadb=s' => \$fastadb,
 	    'dbname=s'   => \$dbname,
 	    'query_type:s'=>\$query_type,
 	    'target_type:s'=>\$target_type,
-	    'makefile:s'  => \$Nooc_file);
+	    'makefile:s'  => \$Nooc_file,
+	    'fastafetch=s'  => \$fastafetch_executable);
 	    
 unless (-e $idqy) {
 	 die "$idqy file does not exist\n";
@@ -59,9 +60,9 @@ my $qy_file = "/tmp/qy.$rand";
 
 # might be good to use /usr/local/ensembl/bin/fetchdb instead of fastafetch
 
-unless(system("$fastafetch_executable $fastaqy $indexqy $idqy > $qy_file") ==0) {
+unless(system("$fastafetch_executable $indexqy $idqy > $qy_file") ==0) {
   unlink glob("/tmp/*$rand*");
-  die "error in fastafetch $idqy, $!\n";
+  die "error in fastafetch $idqy, $!\n$fastafetch_executable $indexqy $idqy > $qy_file";
   } 
   
 print "$Nooc_file\n";
@@ -77,21 +78,25 @@ print "$Nooc_file\n";
 unless (-e $Nooc_file){#Fetch seqs and make makefile
 print "making make file\n";
 
-	my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(-query_seqs        => \@Qseqs,
-	 							-database       => $fastadb,
-								-query_type	=> $query_type,
+	my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(
+                -blat         => "blat-32",
+                -query_seqs   => \@Qseqs,
+	 							-database     => $fastadb,
+								-query_type	  => $query_type,
 								-target_type	=> $target_type,
-								-options         => "-ooc=$Nooc_file -tileSize=5 -makeOoc=$Nooc_file -mask=lower -qMask=lower ");
+								-options      => "-ooc=$Nooc_file -tileSize=5 -makeOoc=$Nooc_file -mask=lower -qMask=lower ");
 	$runnable->run;
 	
 #Run with querys
-	 $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(-query_seqs        => \@Qseqs,
-	 							-database       => $fastadb,
-								-query_type	=> $query_type,
-								-parse		=> 1,
+  $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(
+                -blat         => "blat-32",
+                -query_seqs   => \@Qseqs,
+	 							-database     => $fastadb,
+								-query_type	  => $query_type,
+								-parse		    => 1,
 								-target_type	=> $target_type,
-								-options         => "-ooc=$Nooc_file -mask=lower -qMask=lower ");
-	$runnable->run;
+								-options      => "-ooc=$Nooc_file -mask=lower -qMask=lower ");
+  $runnable->run;
 	
 	#my @top_hsps = $runnable->output;
 #foreach my $out (@top_hsps){
@@ -109,12 +114,14 @@ print "making make file\n";
 	}
 else{ #run blat using the Nooc file	 
 	
-	my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(-query_seqs        => \@Qseqs,
-	 							-database       => $fastadb,
-								-query_type	=> $query_type,
+	my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(
+                -blat         => "blat-32",
+                -query_seqs   => \@Qseqs,
+	 							-database     => $fastadb,
+								-query_type	  => $query_type,
 								-target_type	=> $target_type,
-								-parse		=> 1,
-								-options         => "-ooc=$Nooc_file -mask=lower -qMask=lower ");
+								-parse		    => 1,
+								-options      => "-ooc=$Nooc_file -mask=lower -qMask=lower ");
 	$runnable->run;
 	
 	my @top_hsps = $runnable->output;
