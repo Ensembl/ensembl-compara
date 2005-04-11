@@ -1354,6 +1354,112 @@ sub get_all_genotyped_VariationFeatures {
 }
 
 
+=head2 project (testing)
+
+  Arg [1]    : string $name
+               The name of the coordinate system to project this slice onto
+  Arg [2]    : string $version
+               The version of the coordinate system (such as 'NCBI34') to
+               project this slice onto
+  Example    :
+    my $clone_projection = $slice->project('clone');
+
+    foreach my $seg (@$clone_projection) {
+      my $clone = $segment->to_Slice();
+      print $slice->seq_region_name(), ':', $seg->from_start(), '-',
+            $seg->from_end(), ' -> ',
+            $clone->seq_region_name(), ':', $clone->start(), '-',$clone->end(),
+            $clone->strand(), "\n";
+    }
+  Description: This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
+               method go through all of them, porject them and maps the projections
+               on this Bio::EnsEMBL::Compara::AlignSlice::Slice object.
+               The original 'project' method returns the results of 'projecting'
+               a slice onto another coordinate system.  Projecting to a coordinate
+               system that the slice is assembled from is analagous to retrieving a tiling
+               path. The original method may also be used to 'project up' to a higher
+               level coordinate system, however.
+
+               This method returns a listref of triplets [start,end,slice]
+               which represents the projection.  The start and end defined the
+               region of this slice which is made up of the third value of
+               the triplet: a slice in the requested coordinate system.
+
+               Because of the gaps in the mapping of the Bio::EnsEMBL::Slices
+               the lenght of the slice returned in the tripet may be different
+               than the distance defined by the start and end of the
+               Bio::EnsEMBL::ProjectionSegment object.
+  Returntype : list reference of Bio::EnsEMBL::ProjectionSegment objects which
+               can also be used as [$start,$end,$slice] triplets
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub project {
+  my $self = shift;
+  my $cs_name = shift;
+  my $cs_version = shift;
+  my $projections;
+
+  throw('Coord_system name argument is required') if(!$cs_name);
+
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    my $this_slice = $pair->{slice};
+    my $this_mapper = $pair->{mapper};
+    my $this_projections = $this_slice->project($cs_name, $cs_version);
+    foreach my $this_projection (@$this_projections) {
+      my ($new_start, $new_end);
+      my @alignment_coords = $this_mapper->map_coordinates(
+              'sequence',
+              $this_slice->start + $this_projection->from_start - 1,
+              $this_slice->start + $this_projection->from_start - 1,
+              1,
+              'sequence'
+          );
+      foreach my $alignment_coord (@alignment_coords) {
+        if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+          $new_start = $alignment_coord->start;
+        } else {
+          throw("Cannot map the start of the projection!!");
+        }
+      }
+      @alignment_coords = $this_mapper->map_coordinates(
+              'sequence',
+              $this_slice->start + $this_projection->from_end - 1,
+              $this_slice->start + $this_projection->from_end - 1,
+              1,
+              'sequence'
+          );
+      foreach my $alignment_coord (@alignment_coords) {
+        if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+          $new_end = $alignment_coord->start;
+        } else {
+          throw("Cannot map the end of the projection!!");
+        }
+      }
+      my $new_projection = bless([$new_start, $new_end, $this_projection->to_Slice],
+                                "Bio::EnsEMBL::ProjectionSegment");
+      push(@$projections, $new_projection);
+    }
+  }
+
+  return $projections;
+}
+
+
+=head2 _method_returning_simple_features
+
+  Args[1]     : method_name
+  Description : This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
+                method go through all of them, calls method_name and maps teh result on
+                this Bio::EnsEMBL::Compara::AlignSlice::Slice object.
+  ReturnType  : listref of Bio::EnsEMBL::Variation::VariationFeature
+  Exceptions  : none
+  Caller      : contigview, snpview
+
+=cut
+
 sub _method_returning_simple_features {
   my $self = shift;
   my $method = shift;
