@@ -39,10 +39,8 @@ sub rank {
 
 sub print_node {
   my $self  = shift;
-  my $indent = shift;
-
-  $indent = '' unless(defined($indent));
-  printf("%s-%s(%d %s)\n", $indent, $self->name, $self->node_id, $self->rank);
+  printf("(%s %s)", $self->node_id, $self->rank);
+  printf("%s\n", $self->name);
 }
 
 1;
