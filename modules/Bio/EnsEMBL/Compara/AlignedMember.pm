@@ -1,0 +1,181 @@
+=head1 NAME
+
+AlignedMember - DESCRIPTION of Object
+
+=head1 DESCRIPTION
+
+A subclass of Member which extends it to allow it to be aligned with other
+AlignedMember objects.  General enough to allow for global, local, pair-wise and 
+multiple alignments.  To be used primarily in NestedSet Tree data-structure.
+
+=head1 CONTACT
+
+Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
+Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
+Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+=cut
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. 
+Internal methods are usually preceded with a _
+
+=cut
+
+package Bio::EnsEMBL::Compara::AlignedMember;
+
+use strict;
+
+use Bio::EnsEMBL::Compara::Member;
+our @ISA = qw(Bio::EnsEMBL::Compara::Member);
+
+
+sub cigar_line {
+  my $self = shift;
+  $self->{'_cigar_line'} = shift if(@_);
+  return $self->{'_cigar_line'};
+}
+
+sub cigar_start {
+  my $self = shift;
+  $self->{'_cigar_start'} = shift if(@_);
+  return $self->{'_cigar_start'};
+}
+
+sub cigar_end {
+  my $self = shift;
+  $self->{'_cigar_end'} = shift if(@_);
+  return $self->{'_cigar_end'};
+}
+
+
+sub perc_cov {
+  my $self = shift;
+  $self->{'perc_cov'} = shift if(@_);
+  return $self->{'perc_cov'};
+}
+
+sub perc_id {
+  my $self = shift;
+  $self->{'perc_id'} = shift if(@_);
+  return $self->{'perc_id'};
+}
+
+sub perc_pos {
+  my $self = shift;
+  $self->{'perc_pos'} = shift if(@_);
+  return $self->{'perc_pos'};
+}
+
+sub print_node {
+  my $self  = shift;
+  printf("(%s)", $self->node_id);
+  $self->print_member;
+}
+
+
+sub alignment_string {
+  my $self = shift;
+
+  unless (defined $self->cigar_line) {
+    throw("To get an alignment_string, the cigar_line needs to be define\n");
+  }
+  unless (defined $self->{'alignment_string'}) {
+    my $sequence = $self->sequence;
+    if (defined $self->cigar_start || defined $self->cigar_end) {
+      unless (defined $self->cigar_start && defined $self->cigar_end) {
+        throw("both cigar_start and cigar_end should be defined");
+      }
+      my $offset = $self->cigar_start - 1;
+      my $length = $self->cigar_end - $self->cigar_start + 1;
+      $sequence = substr($sequence, $offset, $length);
+    }
+
+    my $cigar_line = $self->cigar_line;
+    $cigar_line =~ s/([MD])/$1 /g;
+
+    my @cigar_segments = split " ",$cigar_line;
+    my $alignment_string = "";
+    my $seq_start = 0;
+    foreach my $segment (@cigar_segments) {
+      if ($segment =~ /^(\d*)D$/) {
+        my $length = $1;
+        $length = 1 if ($length eq "");
+        $alignment_string .= "-" x $length;
+      } elsif ($segment =~ /^(\d*)M$/) {
+        my $length = $1;
+        $length = 1 if ($length eq "");
+        $alignment_string .= substr($sequence,$seq_start,$length);
+        $seq_start += $length;
+      }
+    }
+    $self->{'alignment_string'} = $alignment_string;
+  }
+
+  return $self->{'alignment_string'};
+}
+
+
+=head2 cdna_alignment_string
+
+  Arg [1]    : none
+  Example    : my $cdna_alignment = $aligned_member->cdna_alignment_string();
+  Description: Converts the peptide alignment string to a cdna alignment
+               string.  This only works for EnsEMBL peptides whose cdna can
+               be retrieved from the attached EnsEMBL databse.
+               If the cdna cannot be retrieved undef is returned and a
+               warning is thrown.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub cdna_alignment_string {
+  my $self = shift;
+
+  throw("can't connect to CORE to get transcript and cdna")
+    unless($self->transcript);
+
+  unless (defined $self->{'cdna_alignment_string'}) {
+    
+    my $cdna = $self->transcript->translateable_seq;
+
+    if (defined $self->cigar_start || defined $self->cigar_end) {
+      unless (defined $self->cigar_start && defined $self->cigar_end) {
+        throw("both cigar_start and cigar_end should be defined");
+      }
+      my $offset = $self->cigar_start * 3 - 3;
+      my $length = ($self->cigar_end - $self->cigar_start + 1) * 3;
+      $cdna = substr($cdna, $offset, $length);
+    }
+
+    my $cdna_len = length($cdna);
+    my $start = 0;
+    my $cdna_align_string = '';
+
+    foreach my $pep (split(//, $self->alignment_string)) {
+      last if($start >= $cdna_len);
+      
+      if($pep eq '-') {
+        $cdna_align_string .= '--- ';
+      } else {
+        my $codon = substr($cdna, $start, 3);
+        unless (length($codon) == 3) {
+          # sometimes the last codon contains only 1 or 2 nucleotides.
+          # making sure that it has 3 by adding as many Ns as necessary
+          $codon .= 'N' x (3 - length($codon));
+        }
+        $cdna_align_string .= $codon . ' ';
+        $start += 3;
+      }
+    }
+    $self->{'cdna_alignment_string'} = $cdna_align_string
+  }
+  
+  return $self->{'cdna_alignment_string'};
+}
+
+
+1;
