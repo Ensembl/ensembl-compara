@@ -379,6 +379,23 @@ sub children {
   return \@kids;
 }
 
+sub get_all_subnodes {
+  my $self = shift;
+  my $node_hash = shift;
+  
+  my $toplevel = 0;
+  unless($node_hash) {
+   $node_hash = {};
+   $toplevel =1;
+  }
+
+  foreach my $child (@{$self->children}) {
+    $node_hash->{$child->node_id} = $child; 
+    $child->get_all_subnodes($node_hash);
+  }
+  return values(%$node_hash) if($toplevel);
+  return undef;
+}
 
 sub get_child_count {
   my $self = shift;
