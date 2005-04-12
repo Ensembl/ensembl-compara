@@ -21,7 +21,7 @@
 
 bioperl code;
 
-  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07  \
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-1-2  \
     bioperl-live
 
 core ensembl code
@@ -76,7 +76,7 @@ complete ;)
 
 Pick a mysql instance and create a database;
 
-  $ mysqladmin -hecs2 -P3361 -uensadmin -pxxxx \
+  $ mysql -hecs2 -P3361 -uensadmin -pxxxx \
     -e "create database ensembl_compara_jess_23_1"
 
 And load the schemas;
@@ -135,7 +135,7 @@ You may need to change the locations of BIN_DIR, DATA_DIR and LIB_DIR;
 These environment variables cannot be set in either ::Config::Blast or
 ::Config::General;
 
-in tsch:
+in tcsh:
   $ setenv PATH /path/to/wublast/binaries:$PATH
   $ setenv BLASTMAT /path/to/blast/matrix:$BLASTMAT
   $ setenv BLASTFILTER /path/to/blast/filter:$BLASTFILTER
@@ -147,7 +147,7 @@ in tsch:
 The loadHomologySystem script creates the analysis entries for the
 processing system, and creates both the dataflow rule and the analysis
 control rules.  It also initializes the analysis_stats row for each
-analysis.  These row hold information like batch_size, hive_capacity,
+analysis.  These rows hold information like batch_size, hive_capacity,
 and run-time stats that the Hive's Queen will update.
 
 The comparaLoadGenomes script use the information in the conf file to
@@ -189,6 +189,6 @@ Depending on system load this will usually complete in under 24 hours
 (most likely 8-12 hours).
 
 for more details on controling the hive system see 
-  $BASEDIR/ensemb./ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config/Blast.pm.examplel-hive/script/README-beekeeper
+  $BASEDIR/ensembl-hive/script/README-beekeeper
 
 
