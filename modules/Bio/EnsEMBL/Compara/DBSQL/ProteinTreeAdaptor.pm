@@ -48,7 +48,74 @@ sub fetch_AlignedMember_by_member_id_root_id {
 # STORE methods
 ###########################
 
-sub update {
+
+sub store {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+  
+  $self->store_node($node);
+  
+  # recursively do all the children
+  my $children = $node->children;
+  foreach my $child_node (@$children) {  
+    $self->store($child_node);
+  }
+  
+  return $node->node_id;
+}
+
+
+sub store_node {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+  
+  if($node->adaptor and 
+     $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor') and
+     $node->adaptor eq $self) 
+  {
+    #already stored so just update
+    return $self->update_node($node);
+  }
+  
+  my $parent_id = 0;
+  my $root_id = 0;
+  if($node->parent) {
+    $parent_id = $node->parent->node_id ;
+    $root_id = $node->root->node_id;
+  }
+
+  my $sth = $self->prepare("INSERT INTO protein_tree_nodes 
+                             (parent_id,
+                              root_id,
+                              left_index,
+                              right_index,
+                              distance_to_parent)  VALUES (?,?,?,?,?)");
+  $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
+
+  $node->node_id( $sth->{'mysql_insertid'} );
+  $node->adaptor($self);
+  $sth->finish;
+
+  if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+    $sth = $self->prepare("INSERT ignore INTO protein_tree_member 
+                               (node_id,
+                                member_id,
+                                cigar_line)  VALUES (?,?,?)");
+    $sth->execute($node->node_id, $node->member_id, $node->cigar_line);
+    $sth->finish;
+  }
+
+  return $node->node_id;
+}
+
+
+sub update_node {
   my ($self, $node) = @_;
 
   unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
@@ -87,73 +154,6 @@ sub update {
 }
 
 
-=head2 store
-
-  Arg [1]    :
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub store {
-  my ($self, $node) = @_;
-
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
-  
-  if($node->adaptor and 
-     $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor') and
-     $node->adaptor eq $self) 
-  {
-    #already stored so just update
-    return $self->update($node);
-  }
-  
-  my $parent_id = 0;
-  my $root_id = 0;
-  if($node->parent) {
-    $parent_id = $node->parent->node_id ;
-    $root_id = $node->root->node_id;
-  }
-
-  my $sth = $self->prepare("INSERT INTO protein_tree_nodes 
-                             (parent_id,
-                              root_id,
-                              left_index,
-                              right_index,
-                              distance_to_parent)  VALUES (?,?,?,?,?)");
-  $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
-
-  $node->node_id( $sth->{'mysql_insertid'} );
-  $node->adaptor($self);
-  $sth->finish;
-
-  if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-    $sth = $self->prepare("INSERT ignore INTO protein_tree_member 
-                               (node_id,
-                                member_id,
-                                cigar_line)  VALUES (?,?,?)");
-    $sth->execute($node->node_id, $node->member_id, $node->cigar_line);
-    $sth->finish;
-  }
-
-
-  #
-  #now recursively do all the children
-  #
-  my $children = $node->children;
-  foreach my $child_node (@$children) {  
-    $self->store($child_node);
-  }
-
-  return $node->node_id;
-}
-
-
 sub merge_nodes {
   my ($self, $node1, $node2) = @_;
 
@@ -173,6 +173,37 @@ sub merge_nodes {
   $sth = $self->prepare("DELETE from protein_tree_nodes WHERE node_id=?");
   $sth->execute($node2->node_id);
   $sth->finish;
+}
+
+
+sub delete_node {
+  my $self = shift;
+  my $node = shift;
+  
+  my $node_id = $node->node_id;
+  print("delete node $node_id\n");
+  $self->dbc->do("UPDATE protein_tree_nodes dn, protein_tree_nodes n SET ". 
+            "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
+  $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id=$node_id");
+}
+
+
+sub delete_nodes_not_in_tree
+{
+  my $self = shift;
+  my $tree = shift;
+
+  unless($tree->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $tree");
+  }
+  print("delete_nodes_not_present under ", $tree->node_id, "\n");
+  my $dbtree = $self->fetch_node_by_node_id($tree->node_id);
+  my @all_db_nodes = $dbtree->get_all_subnodes;
+  foreach my $dbnode (@all_db_nodes) {
+    next if($tree->find_node_by_node_id($dbnode->node_id));
+    $self->delete_node($dbnode);
+  }
+  $dbtree->release;
 }
 
 
@@ -255,18 +286,16 @@ sub parse_newick_into_tree
 {
   my $self = shift;
   my $newick = shift;
-  my $tree = shift;
-  
-  my $count=1;
-  my $root = new Bio::EnsEMBL::Compara::NestedSet;
-  $root->node_id($count++);
-  
-  my $state=1;
+
+  my $count=1;  
   $newick =~ s/\s//g;
   #print("$newick\n");
   my $token = next_token(\$newick, "(");
-  my $lastset = $root;
-  my $node = $root;
+  throw("newick format must start with a (") unless($token eq '(');
+  my $lastset = undef;
+  my $node = undef;
+  my $root = undef;
+  my $state=1;
 
   while($token) {
     #printf("state %d : '%s'\n", $state, $token);
@@ -274,7 +303,8 @@ sub parse_newick_into_tree
       case 1 { #new node
         $node = new Bio::EnsEMBL::Compara::NestedSet;
         $node->node_id($count++);
-        $lastset->add_child($node);
+        $lastset->add_child($node) if($lastset);
+        $root=$node unless($root);
         if($token eq '(') { #create new set
           #printf("    create set\n");
           $token = next_token(\$newick, "(:,");
@@ -313,18 +343,19 @@ sub parse_newick_into_tree
           $state=1;
         } elsif($token eq ';') {
           #done with tree
-          $state=1;
+          $state=13;
           $token = next_token(\$newick, "(");
         } else {
           throw("parse error: expected ; or ) or ,\n");
         }
       }
 
+      case 13 {
+        throw("parse error: nothing expected after ;");
+      }
     }
   }
-  
-  $root->print_tree;
-  $root->release;
+  return $root;
 }
 
 sub next_token {
