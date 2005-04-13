@@ -1097,6 +1097,88 @@ sub subseq {
 }
 
 
+=head2 get_cigar_line
+
+  Arg        : -none-
+  Description: returns a cigar_line describing the gaps in the mapped sequence
+               This Slice is made of several Bio::EnsEMBL::Slices mapped
+               on it with gaps inside and regions with no matching
+               sequence. The resulting cigar line corresponds to the mapping
+               of all the nucleotides that can be mapepd. If several Slices map
+               on the same positions, the behaviour is undefined
+  Returntype : txt
+  Exceptions :
+  Caller     : general
+
+=cut
+
+sub get_cigar_line {
+  my ($self, $start, $end, $strand) = @_;
+
+  $start = 1 if (!defined($start));
+  $end ||= $self->length;
+  $strand ||= 1;
+
+  my $length = ($end - $start + 1);
+  my $seq = "-" x $length;
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    my $this_slice = $pair->{slice};
+    my $mapper = $pair->{mapper};
+    my $slice_start = $pair->{start};
+    my $slice_end = $pair->{end};
+    next if ($slice_start > $end or $slice_end < $start);
+
+    # Set slice_start and slice_end in "subseq" coordinates (0 based, for compliance wiht substr() perl func) and trim them
+    $slice_start -= $start; # $slice_start is now in subseq coordinates
+    $slice_start = 0 if ($slice_start < 0);
+    $slice_end -= $start; # $slice_end is now in subseq coordinates
+    $slice_end = $length if ($slice_end > $length);
+
+    # Invert start and end for the reverse strand
+    if ($strand == -1) {
+      my $aux = $slice_end;
+      $slice_end = $length - $slice_start;
+      $slice_start = $length - $aux;
+    }
+
+    my @sequence_coords = $mapper->map_coordinates(
+            'alignment',
+            $start,
+            $end,
+            $strand,
+            'alignment'
+        );
+    my $this_pos = 0;
+    foreach my $sequence_coord (@sequence_coords) {
+      ## $sequence_coord refer to genomic_align (a slice in the [+] strand)
+
+      if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+        substr($seq, $this_pos, $sequence_coord->length, "N" x $sequence_coord->length);
+      }
+      $this_pos += $sequence_coord->length;
+    }
+  }
+  my $cigar_line = "";
+  
+  my @pieces = split(/(\-+)/, $seq);
+  foreach my $piece (@pieces) {
+    my $mode;
+    if ($piece =~ /\-/) {
+      $mode = "D"; # D for gaps (deletions)
+    } else {
+      $mode = "M"; # M for matches/mismatches
+    }
+    if (length($piece) == 1) {
+      $cigar_line .= $mode;
+    } elsif (length($piece) > 1) { #length can be 0 if the sequence starts with a gap
+      $cigar_line .= length($piece).$mode;
+    }
+  }
+
+  return $cigar_line;
+}
+
+
 =head2 get_all_underlying_Slices
 
   Arg  [1]   : int $startBasePair
@@ -1493,6 +1575,7 @@ sub _method_returning_simple_features {
       }
       my $new_object;
       %$new_object = %$this_object;
+      bless $new_object, ref($this_object);
       if (defined($start) and defined($end) and defined($strand)) {
         $new_object->{start} = $start;
         $new_object->{end} = $end;
