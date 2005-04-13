@@ -41,12 +41,9 @@ by Cara Woodwark.
 
 perl run_BLAT_pipeline.pl --help
 
-perl run_BLAT_pipeline.pl
+perl run_BLAT_pipeline.pl --species1 fly --species2 honeybee
 
-perl run_BLAT_pipeline.pl
-    [--reg_conf registry_configuration_file]
-
-=head1 OPTIONS
+=head1 ARGUMENTS
 
 =head2 GETTING HELP
 
@@ -62,12 +59,74 @@ perl run_BLAT_pipeline.pl
 
 =over
 
-=item B<>
+=item B<[--reg_conf registry_configuration_file]>
 
+the Bio::EnsEMBL::Registry configuration file. If none given,
+the one set in ENSEMBL_REGISTRY will be used if defined, if not
+~/.ensembl_init will be used.
 
+=item B<[--compara_cvs installation_directory]>
+
+This defines the path to the root of the ensembl-compara CVS
+copy to be used.
+
+Default is "/nfs/acari/jh7/src/ensembl_main/ensembl-compara"
+
+=item B<[--base_dir main_dir_for_results]>
+
+This defines the path to store all the results
+
+Default is "/ecs4/work1/jh7/BLAT"
+  
+=item B<[--queue queue_name]>
+
+You can specify the queue you want to use.
+
+Default is "normal".
+  
+=back
+
+=head2 SEQUENCES TO BE COMPARED
+
+=over
+
+=item B<--species1 species_registry_name>
+
+This is the name of the consensus species or any of its aliases
+
+=item B<--species2 species_registry_name>
+
+This is the name of the quey species or any of its aliases
+    
+=item B<[--chr1 list_of_chromosomes]>
+
+You can limit the comparisons to on or several chromosomes.
+The chromosome names must be separed by colons (:). For
+instance if you want to use chromosomes 1 and 3 only you can
+specify "--chr1 1:3"
+
+=item B<[--chr2 list_of_chromosomes]>
+
+The same for the query species.
+
+=item B<[--overlap overlap_size]>
+
+Default is 1000
+
+=item B<[--chunk_size chunk_size]>
+
+Default is 100000
+
+=item B<[--masked mask_option]>
+
+Default is 2 (soft-masking)
 
 =back
 
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the methods.
 
 =cut
 
@@ -87,12 +146,53 @@ perl run_BLAT_pipeline.pl
         the Bio::EnsEMBL::Registry configuration file. If none given,
         the one set in ENSEMBL_REGISTRY will be used if defined, if not
         ~/.ensembl_init will be used.
+
+    [--compara_cvs installation_directory]
+        This defines the path to the root of the ensembl-compara CVS
+        copy to be used.
+        Default is "/nfs/acari/jh7/src/ensembl_main/ensembl-compara"
+
+    [--base_dir main_dir_for_results]
+        This defines the path to store all the results
+        Default is "/ecs4/work1/jh7/BLAT"
+  
+    [--queue queue_name]
+        You can specify the queue you want to use.
+        Default is "normal".
+  
+  Sequences to be compared:
+    --species1 species_registry_name
+        This is the name of the consensus species or any of its aliases
+
+    --species2 species_registry_name
+        This is the name of the quey species or any of its aliases
+    
+    [--chr1 list_of_chromosomes]
+        You can limit the comparisons to on or several chromosomes.
+        The chromosome names must be separed by colons (:). For
+        instance if you want to use chromosomes 1 and 3 only you can
+        specify "--chr1 1:3"
+
+    [--chr2 list_of_chromosomes]
+        The same for the query species.
+
+    [--overlap overlap_size]
+        Default is 1000
+
+    [--chunk_size chunk_size]
+        Default is 100000
+
+    [--masked mask_option]
+        Default is 2 (soft-masking)
 };
 
 my $help;
 
 my $reg_conf;
 my $compara_cvs = "/nfs/acari/jh7/src/ensembl_main/ensembl-compara";
+
+## This is intended for clumping sequences when they are in thousands of
+## files but it has not been implemented yet...
 my $coord_systems = {
         "chromosome" => "separate_files",
         "group" => "separate_files",
@@ -273,7 +373,7 @@ sub dump_dna {
             AND sr.name not like "UNKN"
       };
   if (defined($seq_region_names) and @$seq_region_names) {
-    $sql .= "\n            AND sr.name IN (\"".join(\"", \"", @$seq_region_names) ."\")";
+    $sql .= "\n            AND sr.name IN (\"".join("\", \"", @$seq_region_names) ."\")";
   }
 
   my $sth = $db_adaptor->dbc->prepare($sql);
@@ -873,6 +973,9 @@ sub concat_BLAT_results {
   my ($dir, $prefix, @seq_regions) = @_;
 
   print LOG "Concatenating BLAT results ($prefix):\n";
+  if (!@seq_regions) {
+    throw("Nothing to concat!");
+  }
   my $last_mod = 0;
   my $concat_rstr = "cat";
   foreach my $seq_region (@seq_regions) {
