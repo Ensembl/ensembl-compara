@@ -39,17 +39,24 @@ sub image_label {
          ( $f->{'rel_ori'}<0 ? '' : '>' ) , 'under';
 }
 
-sub href { return undef; }
+sub href { 
+  my ($self, $f ) = @_;
+  my $ospecies = $self->my_config('species');
+  return "/$ospecies/cytoview?chr=$f->{'hit_chr_name'}&".
+      "vc_start=$f->{'hit_chr_start'}&vc_end=$f->{'hit_chr_end'}";
+}
 
 ## Create the zmenu...
 ## Include each accession id separately
 
 sub zmenu {
   my ($self, $f ) = @_;
+  my $ospecies = $self->my_config('species');
   my $zmenu = { 
     'caption' => "$f->{'hit_chr_name'} $f->{'hit_chr_start'}-$f->{'hit_chr_end'}",
-    '01:bps: '.$f->{'chr_start'}."-".$f->{'chr_end'} => '',
-    '02:Orientation:'.($f->{'rel_ori'}<0 ? ' reverse' : ' same')  => '',
+    "01:Jump to $ospecies" => $self->href($f),
+    '02:bps: '.$f->{'chr_start'}."-".$f->{'chr_end'} => '',
+    '03:Orientation:'.($f->{'rel_ori'}<0 ? ' reverse' : ' same')  => '',
   };
   return $zmenu;
 }
