@@ -114,12 +114,14 @@ sub RENDER_simple {
     # Special case for viewing summary non-positional features (i.e. gene
     # DAS features on contigview) Just display a gene-wide line with a link
     # to geneview where all annotations can be viewed
+
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
 	my $f     = shift @{$configuration->{'features'}};
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
 	# override to draw this as a span
+	my $oldglyph = $style->{'glyph'};
 	$style->{'glyph'} = 'span';
    
 	# Change zmenu to summary menu
@@ -128,6 +130,9 @@ sub RENDER_simple {
 
 	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
 	$self->push($symbol->draw);
+
+	# put the style back to how it was
+	$style->{'glyph'} = $oldglyph;
   } 
   else {
     unless ($glyph_symbol eq 'box'){
@@ -272,6 +277,13 @@ sub RENDER_grouped {
     my $colour = $groupstyle->{'attrs'}{'colour'};
     my $row_height = $configuration->{'h'};
 
+    # store a couple of style attributes that we might change.  We'll want to
+    # change these back later (remember styles are references to the original
+    # style data - change them, and they change for all features that use that
+    # style). 
+    my $orig_groupstyle_glyph = $groupstyle->{'glyph'};
+    my $orig_groupstyle_line = $groupstyle->{'attrs'}{'style'};
+
     # Draw label
     my $label_height =$self->feature_label( $Composite, 
 					    $label, 
@@ -283,7 +295,6 @@ sub RENDER_grouped {
 
     my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
 
-
     if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i) { 
 
 	# Special case for viewing summary non-positional features (i.e. gene
@@ -293,7 +304,8 @@ sub RENDER_grouped {
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
-	# override to draw this as a span
+	# override glyph to draw this as a span
+	my $oldglyph = $style->{'glyph'};
 	$style->{'glyph'} = 'span';
    
 	# Change zmenu to summary menu
@@ -302,6 +314,9 @@ sub RENDER_grouped {
 
 	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
 	$self->push($symbol->draw);
+
+	# put the style back to how it was
+	$style->{'glyph'} = $oldglyph;
 	next;
     }
     if ( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { 
@@ -345,6 +360,11 @@ sub RENDER_grouped {
     $Composite->y($Composite->y() + $y_offset);
  
     $self->push($Composite);
+
+    # put back original properties of the style, so it can be re-used:
+    $groupstyle->{'glyph'} = $orig_groupstyle_glyph;
+    $groupstyle->{'attrs'}{'style'} = $orig_groupstyle_line ;
+   
   }
 
     if($more_features) {
@@ -600,6 +620,7 @@ sub _init {
       my $name = $das_name || $url;
       foreach my $gene (@$genes) {
 #                      warn("GENE:$gene:".$gene->stable_id);       
+         next if ($gene->strand != $self->strand);
          my $dasf = $gene->get_all_DASFeatures;
          my %dhash = %{$dasf};
 
@@ -609,9 +630,11 @@ sub _init {
          my @aa = @{$dhash{$name}};
          foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{ $aa[1] || [] }) {
              if ($f->das_end) {
-                if ($f->das_start <= $configuration->{'length'}) {
-                    push(@das_features, $f);
-                    
+                if (($f->das_end + $gene->start) > 0 && ($f->das_start <= $configuration->{'length'})) {
+                   $f->das_orientation or $f->das_orientation($gene->strand);
+                   $f->das_start($f->das_start + $gene->start);
+                   $f->das_end($f->das_end + $gene->start);
+                   push(@das_features, $f);
                 }
              } else {
                 if (exists $fhash{$f->das_segment->ref}) {
@@ -721,13 +744,27 @@ sub get_groupstyle {
     if($configuration->{'use_style'}) {
 	$style = $configuration->{'styles'}{'group'}{$group};
 	$style ||= $configuration->{'styles'}{'group'}{'default'};
+	unless ($style){
+	    # Can't use this directly, as it is a feature style and we don't
+	    # want to change it.
+	    my $tempstyle = $configuration->{'styles'}{'default'}{'default'};
+	    if ($tempstyle){
+		my $colour = $tempstyle->{'attrs'}{'fgcolor'};
+		my $height = $style->{'attrs'}{'height'};
+
+		$style = {};
+		$style->{'attrs'}{'colour'} = $colour;
+		$style->{'attrs'}{'height'} = $height;
+	    }
+	}
     }
     $style ||= {};
     $style->{'attrs'} ||= {};
     
     # Set some defaults
     my $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'};
-
+    
+    $style->{'glyph'} ||= 'line';
     $style->{'attrs'}{'height'} ||= $configuration->{'h'};
     $style->{'attrs'}{'colour'} ||= $colour;
 
