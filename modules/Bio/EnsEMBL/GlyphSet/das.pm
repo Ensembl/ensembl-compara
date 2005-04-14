@@ -46,7 +46,6 @@ sub init_label {
 
 sub RENDER_simple {
   my( $self, $configuration ) = @_;
-  my $old_end = -1e9;
   my $empty_flag = 1;
 
   # flag to indicate if not all features have been displayed 
@@ -85,13 +84,8 @@ sub RENDER_simple {
 	  next;
       }
     } 
-    else {
-	## Skip the intron/exon if they will not be drawn...
-	next if ( $END - $old_end) < 0.5 / $self->{'pix_per_bp'}; 
-    }
 
     my ($href, $zmenu ) = $self->zmenu( $f );
-    $old_end = $START;
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'         => 0,
       'x'         => $START-1,
@@ -99,51 +93,13 @@ sub RENDER_simple {
       'zmenu'     => $zmenu,
     });
     $Composite->{'href'} = $href if $href;
-    my $glyph_symbol;
-    my $style;
-    my $colour;
-    my $glyph_height;
+
+    my $style = $self->get_featurestyle ($f, $configuration);
+    my $styledata = $style->{'attrs'};  # style attributes for this feature
+    my $glyph_height = $styledata->{'height'};
+    my $colour = $styledata->{'colour'};
     my $row_height = $configuration->{'h'};
-    my $styledata = {};  # style attributes for this feature
-
-    # Configure style for this feature
-    if($configuration->{'use_style'}) {
-	
-      #warn(Dumper($configuration->{'styles'}));
-      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
-      $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
-      $style ||= $configuration->{'styles'}{'default'}{'default'};
-      $glyph_symbol = $style->{'glyph'};
-     
-      $styledata = $style->{'attrs'} || {};
-      $colour = $styledata->{'fgcolor'} || $configuration->{'colour'};
-      $glyph_height = $styledata->{'height'};
-    } 
-    
-    # Load the glyph symbol module that we need to draw this style symbol
-    $glyph_symbol ||= 'box';
-    $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::'.$glyph_symbol;
-    unless ($self->dynamic_use($glyph_symbol)){
-	$glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
-    }
-    
-    # HACK BECAUSE THE DYNAMIC USE RETVAL IS WRONG:
-    unless ($glyph_symbol->can('draw')){
-	$glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
-    }
-     
-    # these are for non-symbol-using drawing code I want to remove later
-    $glyph_height   ||= $row_height;
-    $colour	    ||= $configuration->{'colour'};
-
-    # this is the way attribute passing should be done for the symbol stuff
-    $styledata->{'height'} ||= $glyph_height;
-    $styledata->{'colour'} ||= $colour;
-
-    # truncation flags
-    my $trunc_start = ($START ne $f->das_start()) ? 1 : 0;
-    my $trunc_end   = ($END ne $f->das_end())	    ? 1 : 0;
-    my $orientation = $f->das_orientation;
+    my $glyph_symbol = $style->{'glyph'};
 
     # Draw label first, so we can get the label_height to use in poly offsets
     my $label_height =$self->feature_label( $Composite, 
@@ -155,71 +111,23 @@ sub RENDER_simple {
 
     my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
     
-    # Vertically centre the feature in the row - this lets us group features
-    # by joining them with a line.  It also looks prettier.
-    $y_offset = $y_offset + ($row_height - $glyph_height)/2;
-    
-    # if the feature is a summary of non-positional features (i.e. genedas
-    # source viewed on contigview) 
-    # then just display a gene-wide line with a link to geneview where all 
-    # annotations can be viewed
-    # THIS SHOULD BE TURNED INTO A GLYPH SYMBOL MODULE
+    # Special case for viewing summary non-positional features (i.e. gene
+    # DAS features on contigview) Just display a gene-wide line with a link
+    # to geneview where all annotations can be viewed
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
-      my $f     = shift @{$configuration->{'features'}};
-      my $START = $f->das_start() < 1        ? 1       : $f->das_start();
-      my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+	my $f     = shift @{$configuration->{'features'}};
+	my $style = $self->get_featurestyle($f, $configuration);
+	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
-      my $smenu = $self->smenu($f);
-      $Composite->{zmenu} = $smenu;
-      use integer;
+	# override to draw this as a span
+	$style->{'glyph'} = 'span';
+   
+	# Change zmenu to summary menu
+	my $smenu = $self->smenu($f);
+	$Composite->{zmenu} = $smenu;
 
-      my $glyph = new Sanger::Graphics::Glyph::Line({
-        'x'          => $START-1,
-        'y'          => 0,
-        'width'      => 0,
-        'height'     => $glyph_height,
-        'colour'     => $colour,
-        'absolutey'  => 1
-      });
-
-      $Composite->push($glyph);
-      
-      $glyph = new Sanger::Graphics::Glyph::Line({
-        'x'          => $START,
-        'y'          => 0,
-        'width'      => 0,
-        'height'     => $glyph_height,
-        'colour'     => $colour,
-        'absolutey'  => 1,
-        'absolutex'  => 1
-      });
-
-      $Composite->push($glyph);
-
-      my $md = $glyph_height / 2; 
-
-      $glyph = new Sanger::Graphics::Glyph::Rect({
-        'x'          => $START-1,
-        'y'          => $md - 1,
-        'width'      => $END-$START+1,
-        'height'     => 2,
-        'colour'     => $colour,
-        'absolutey'  => 1
-      });
-
-      $Composite->push($glyph);
-
-      $glyph = new Sanger::Graphics::Glyph::Rect({
-        'x'          => $END-1,
-        'y'          => 0,
-        'width'      => 1,
-        'height'     => $glyph_height,
-        'colour'     => $colour,
-        'absolutey'  => 1
-      });
-
-      $Composite->push($glyph);
-
+	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+	$self->push($symbol->draw);
   } 
   else {
     unless ($glyph_symbol eq 'box'){
@@ -233,19 +141,11 @@ sub RENDER_simple {
 	  }) );
     }
 
-    my $featuredata = {
-			'row_height'    => $row_height, 
-			'start'		=> $START, 
-			'end'		=> $END , 
-			'pix_per_bp'    => $self->{'pix_per_bp'}, 
-			'y_offset'	=> $y_offset,
-			'trunc_start'   => $trunc_start,
-			'trunc_end'	=> $trunc_end,
-			'orientation'   => $orientation,
-			};
-			
+    my $style = $self->get_featurestyle($f, $configuration);
+    my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+
     # Draw feature symbol
-    my $symbol = $glyph_symbol->new($featuredata, $styledata);  
+    my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
     $self->push($symbol->draw);
   }
 
@@ -272,9 +172,11 @@ sub RENDER_simple {
 sub RENDER_grouped {
   my( $self, $configuration ) = @_; 
   my %grouped;
+
+  my $old_end = -1e9;
   my $empty_flag = 1;
 
-  ## GROUP THE FEATURES....
+  ## Loop over features and hash into groups
   foreach my $f(@{$configuration->{'features'}}){
 
     # Handle DAS errors first
@@ -295,7 +197,7 @@ sub RENDER_grouped {
     push @{$grouped{$fid}}, $f;
 
     $empty_flag &&= 0; # We have at least one feature
-  }
+  } # end group hashing
 
   if($empty_flag) {
     $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' );
@@ -307,25 +209,11 @@ sub RENDER_grouped {
   my $more_features = 0;
 
   # Loop over groups
-  foreach my $value (values %grouped) {
-    my $f = $value->[0];
+  foreach my $group (values %grouped) {
+    my $f = $group->[0];
 
-    # Sort features in a group, and hack overlaps
-    my @temp_features = sort { $a->das_start <=> $b->das_start } @$value;
-    my @feature_group = (shift @temp_features);
-    $_ = $feature_group[0];
-    # warn sprintf( ">> %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
-
-    # Nasty hacky bit that ensures we don't have duplicate/overlapping 
-    # das features....
-    foreach( @temp_features ) { 
-      # warn sprintf( "   %12d %12d %20s", $_->das_start, $_->das_end, $_->das_id );
-      if($_->das_start <= $feature_group[-1]->das_end ) {
-        $feature_group[-1]->das_end( $_->das_end ) if $_->das_end > $feature_group[-1]->das_end;
-      } else {
-        push @feature_group, $_;
-      } 
-    }
+    # Sort features in a group
+    my @feature_group = sort { $a->das_start <=> $b->das_start } @$group;
 
     # Get start and end of group
     my $start = $feature_group[0]->das_start;
@@ -338,6 +226,14 @@ sub RENDER_grouped {
     # Compute the length of the label...
     my $ID    = $f->das_group_id || $f->das_id;
     my $label = $f->das_group_label || $f->das_feature_label || $ID;
+
+    # append number of features in group
+
+    my $num_in_group = scalar @feature_group;
+    if ($num_in_group > 1){
+	$label .= "[$num_in_group]";
+    }
+    
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
     my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
 
@@ -348,195 +244,106 @@ sub RENDER_grouped {
 
     my( $href, $zmenu ) = $self->zmenu( $f );
 
+    # Hacklet to add the number of members of the group
+    if ((my $groupsize = scalar @feature_group) > 1){
+	$zmenu->{"02: &nbsp;&nbsp;$groupsize features in group"} = '';
+    }
+
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'            => 0,
       'x'            => $START-1,
       'absolutey'    => 1,
       'zmenu'        => $zmenu,
     });
+    $Composite->push( new Sanger::Graphics::Glyph::Space({
+	'x'         => $START-1,
+	'y'         => 0,
+	'width'     => $END-$START+1,
+	'height'    => $configuration->{'h'},
+	'absolutey' => 1
+    }) );
+
     $Composite->{'href'} = $href if $href;
-   
-    my $style;
-    my $colour;
-    my $group_height;
+
+    # fetch group style
+
+    my $groupstyle = $self->get_groupstyle ($f, $configuration);
+    my $group_height = $groupstyle->{'attrs'}{'height'};
+    my $colour = $groupstyle->{'attrs'}{'colour'};
     my $row_height = $configuration->{'h'};
-    
-    # Configure style for this feature
-    if($configuration->{'use_style'}) {
-      # NEED TO ADD GROUP STYLING
-      # Currently takes style from first feature in group.
-      $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
-      $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
-      $style ||= $configuration->{'styles'}{'default'}{'default'};
-      $style ||= $configuration->{'styles'}{'default'};
-
-      $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'};
-      if (exists $style->{'attrs'} && exists $style->{'attrs'}{'height'}){
-        $group_height = $style->{'attrs'}{'height'};
-      }
-    } 
-    else {
-      $colour = $configuration->{'colour'};
-      $group_height = $configuration->{'h'};
-    }
-
-    # if it is a summary of non-positional features then just display a 
-    # gene-wide line with a link to geneview where all annotations can be viewed
-    if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
-      my $f     = shift @feature_group;
-      my $START = $f->das_start() < 1        ? 1       : $f->das_start();
-      my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
-
-      my $smenu = $self->smenu($f);
-      $Composite->{zmenu} = $smenu;
-      use integer;
-
-      my $glyph = new Sanger::Graphics::Glyph::Line({
-        'x'          => $START-1,
-        'y'          => 0,
-        'width'      => 0,
-        'height'     => $group_height,
-        'colour'     => $colour,
-        'absolutey'  => 1
-      });
-
-      $Composite->push($glyph);
-      
-      $glyph = new Sanger::Graphics::Glyph::Line({
-        'x'          => $START,
-        'y'          => 0,
-        'width'      => 0,
-        'height'     => $group_height,
-        'colour'     => $colour,
-        'absolutey'  => 1,
-        'absolutex'  => 1
-      });
-
-      $Composite->push($glyph);
-
-      my $md = $group_height / 2; 
-
-      $glyph = new Sanger::Graphics::Glyph::Rect({
-        'x'          => $START-1,
-        'y'          => $md - 1,
-        'width'      => $END-$START+1,
-        'height'     => 2,
-        'colour'     => $colour,
-        'absolutey'  => 1
-      });
-
-      $Composite->push($glyph);
-
-      $glyph = new Sanger::Graphics::Glyph::Rect({
-        'x'          => $END-1,
-        'y'          => 0,
-        'width'      => 1,
-        'height'     => $group_height,
-        'colour'     => $colour,
-        'absolutey'  => 1
-      });
-
-      $Composite->push($glyph);
-
-
-
-    }
-    elsif ( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { 
-
-      ## TRANSCRIPT!
-
-      my $f     = shift @feature_group;
-      my $START = $f->das_start() < 1        ? 1       : $f->das_start();
-      my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
-      my $old_end   = $END;
-
-      # Draw first exon
-      my $glyph = new Sanger::Graphics::Glyph::Rect({
-        'x'          => $START-1,
-        'y'          => 0,
-        'width'      => $END-$START+1,
-        'height'     => $group_height,
-        'colour'     => $colour,
-        'absolutey'  => 1,
-        'zmenu'      => $zmenu
-      });
-
-      $end = $old_end if $end <= $old_end;
-      $Composite->push($glyph);
-
-      # Draw intron/exon pairs
-      foreach(@feature_group) {
-        my $END   = $_->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $_->das_end();
-        next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn...
-        my $f_start = $_->das_start;
-        $Composite->push( new Sanger::Graphics::Glyph::Intron({
-          'x'         => $old_end,
-          'y'         => 0,
-          'width'     => $f_start-$old_end,
-          'height'    => $group_height,
-          'colour'    => $colour,
-          'absolutey' => 1,
-          'strand'    => $configuration->{'STRAND'},
-        }) );
-        $Composite->push( new Sanger::Graphics::Glyph::Rect({
-          'x'         => $f_start-1,
-          'y'         => 0,
-          'width'     => $END-$f_start+1,
-          'height'    => $group_height,
-          'colour'    => $colour,
-          'absolutey' => 1,
-        }) );
-        $old_end = $END;
-      }
-    } 
-    else { ## GENERAL GROUPED FEATURE!
-      my $Composite2 = new Sanger::Graphics::Glyph::Composite({
-        'y'         => 0,
-        'x'         => $START-1,
-        'absolutey' => 1,
-        'zmenu'     => $zmenu,
-      });
-      $Composite2->bordercolour($colour);
-      my $old_end = -1e9;
-      foreach(@feature_group) {
-        my $START = $_->das_start() <  1       ? 1 : $_->das_start();
-        my $END   = $_->das_end()   > $configuration->{'length'} ? $configuration->{'length'} : $_->das_end();
-        next if ($END - $old_end) < 0.5 / $self->{'pix_per_bp'}; ## Skip the intron/exon if they will not be drawn... # only if NOT BUMPED!
-        $old_end = $END;
-
-	# Just draw a box
-        $Composite2->push( new Sanger::Graphics::Glyph::Rect({
-          'x'         => $START-1,
-          'y'         => 0,
-          'width'     => $END-$START+1,
-          'height'    => $group_height,
-          'colour'    => $colour,
-          'absolutey' => 1,
-          'zmenu'     => $zmenu
-        }) );
-      }
-      #$Composite2->{'href'} = $href if $href;
-      $Composite->push($Composite2);
-    }
 
     # Draw label
     my $label_height =$self->feature_label( $Composite, 
 					    $label, 
 					    $colour, 
-					    $group_height,
+					    $row_height,
 					    $START, 
 					    $END 
 					   );
 
     my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
 
-    # Vertically centre the feature in the row - this lets us group features
-    # by joining them with a line.  It also looks prettier.
-    $y_offset = $y_offset + ($row_height - $group_height)/2;
+
+    if( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(summary)/i) { 
+
+	# Special case for viewing summary non-positional features (i.e. gene
+	# DAS features on contigview) Just display a gene-wide line with a link
+	# to geneview where all annotations can be viewed
+	my $f = shift @feature_group;
+	my $style = $self->get_featurestyle($f, $configuration);
+	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+
+	# override to draw this as a span
+	$style->{'glyph'} = 'span';
+   
+	# Change zmenu to summary menu
+	my $smenu = $self->smenu($f);
+	$Composite->{zmenu} = $smenu;
+
+	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+	$self->push($symbol->draw);
+	next;
+    }
+    if ( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { 
+	# Special case for displaying transcripts in a transcript style
+	# without having group stylesheets, or provide intron features
+
+	$groupstyle->{'glyph'} = 'line';
+	$groupstyle->{'attrs'}{'style'} = 'intron';
+	
+    }
+    ## GENERAL GROUPED FEATURE!
+    # first feature of group
+    my $f = shift @feature_group;
+    my $style = $self->get_featurestyle($f, $configuration);
+    my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+    my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+    $self->push($symbol->draw);
+
+    my $from = $symbol->feature->{'end'};
+
+    # For each feature in the group, draw
+    # - the grouping line between the previous feature and this one
+    # - the feature itself
+    foreach my $f (@feature_group) {
+	my $style = $self->get_featurestyle($f, $configuration);
+	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+	my $to = $symbol->feature->{'start'};
+
+	$self->push($symbol->draw);
+	if ($to > $from){
+	    my $groupsymbol = $self->get_groupsymbol($groupstyle, $from, $to, $configuration, $y_offset);
+	    $self->push($groupsymbol->draw);
+	}
+	    
+	# update 'from' for next time around
+	$from = $symbol->feature->{'end'};
+    }
 
     # Offset y coords by which row we're on
     $Composite->y($Composite->y() + $y_offset);
-    
+ 
     $self->push($Composite);
   }
 
@@ -662,14 +469,14 @@ sub zmenu {
   my $zmenu = {
     'caption'         => $self->{'extras'}->{'label'},
   };
-  $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
-  $zmenu->{"03:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
-  $zmenu->{"04:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
-
-  $zmenu->{"05:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
-  $zmenu->{"06:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-  $zmenu->{"07:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
-  $zmenu->{"08:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
+  # Leave 02 to hold the number of features in the group
+  $zmenu->{"03:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
+  $zmenu->{"04:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
+  $zmenu->{"05:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
+  $zmenu->{"06:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
+  $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
+  $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+  $zmenu->{"09:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
 
   my $href = undef;
   if($self->{'extras'}->{'fasta'}) {
@@ -683,7 +490,7 @@ sub zmenu {
   if($id && uc($id) ne 'NULL') {
     $zmenu->{"01:ID: $id"} = '';
     if($self->{'extras'}->{'linkURL'}){
-      $href = $zmenu->{"08:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+      $href = $zmenu->{"10:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
     } 
   } 
   return( $href, $zmenu );
@@ -903,6 +710,138 @@ sub smenu {
     $zmenu->{"01:INFO: $note"} = '';
   } 
   return( $zmenu );
+}
+
+
+sub get_groupstyle {
+    my ($self, $f, $configuration) = @_;
+    my $group = $f->das_group_type;
+
+    my $style;
+    if($configuration->{'use_style'}) {
+	$style = $configuration->{'styles'}{'group'}{$group};
+	$style ||= $configuration->{'styles'}{'group'}{'default'};
+    }
+    $style ||= {};
+    $style->{'attrs'} ||= {};
+    
+    # Set some defaults
+    my $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'};
+
+    $style->{'attrs'}{'height'} ||= $configuration->{'h'};
+    $style->{'attrs'}{'colour'} ||= $colour;
+
+    return $style;
+}
+
+
+sub get_featurestyle {
+    my ($self, $f, $configuration) = @_;
+    my $style;
+    if($configuration->{'use_style'}) {
+	$style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
+	$style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
+	$style ||= $configuration->{'styles'}{'default'}{'default'};
+    }
+    $style ||= {};
+    $style->{'attrs'} ||= {};
+
+    # Set some defaults
+    my $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'};
+    $style->{'attrs'}{'height'} ||= $configuration->{'h'};
+    $style->{'attrs'}{'colour'} ||= $colour;
+
+    return $style;
+}
+
+
+sub get_featuredata {
+    my ($self, $f, $configuration, $y_offset) = @_;
+  
+    # keep within the window we're drawing
+    my $START = $f->das_start() < 1 ? 1 : $f->das_start();
+    my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+    my $row_height = $configuration->{'h'};
+
+    # truncation flags
+    my $trunc_start = ($START ne $f->das_start()) ? 1 : 0;
+    my $trunc_end   = ($END ne $f->das_end())	    ? 1 : 0;
+    my $orientation = $f->das_orientation;
+
+    my $featuredata = {
+		    'row_height'    => $row_height, 
+		    'start'	    => $START, 
+		    'end'	    => $END , 
+		    'pix_per_bp'    => $self->{'pix_per_bp'}, 
+		    'y_offset'	    => $y_offset,
+		    'trunc_start'   => $trunc_start,
+		    'trunc_end'	    => $trunc_end,
+		    'orientation'   => $orientation,
+		    };
+		    
+    return $featuredata;
+}
+
+sub get_symbol {
+    my ($self, $style, $featuredata, $y_offset) = @_;
+    my $styleattrs = $style->{'attrs'};
+    my $glyph_symbol = $style->{'glyph'} || 'box';
+
+    # Load the glyph symbol module that we need to draw this style
+    $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::'.$glyph_symbol;
+    unless ($self->dynamic_use($glyph_symbol)){
+	$glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
+    }
+    
+    # vertically centre symbol in centre of row
+    my $row_height = $featuredata->{'row_height'};
+    my $glyph_height = $style->{'attrs'}{'height'};
+    $y_offset = $y_offset + ($row_height - $glyph_height)/2;
+    $featuredata->{'y_offset'} = $y_offset;
+
+    return $glyph_symbol->new($featuredata, $styleattrs);  
+}
+
+
+sub get_groupsymbol{
+    my ($self, $style, $from, $to, $configuration, $y_offset) = @_;
+
+    my $styleattrs = $style->{'attrs'}; 
+
+    # keep within the window we're drawing
+    my $START = $from < 1 ? 1 : $from;
+    my $END   = $to > $configuration->{'length'}  ? $configuration->{'length'} : $to;
+    my $row_height = $configuration->{'h'};
+
+    # truncation flags
+    my $trunc_start = $START ne $from	? 1 : 0;
+    my $trunc_end   = $END ne $to	? 1 : 0;
+    my $orientation = $configuration->{'STRAND'};
+
+    # vertically centre symbol in centre of row
+    my $glyph_height = $styleattrs->{'height'};
+    $y_offset = $y_offset + ($row_height - $glyph_height)/2;
+
+    my $featuredata = {
+		    'row_height'    => $row_height, 
+		    'start'	    => $START, 
+		    'end'	    => $END , 
+		    'pix_per_bp'    => $self->{'pix_per_bp'}, 
+		    'y_offset'	    => $y_offset,
+		    'trunc_start'   => $trunc_start,
+		    'trunc_end'	    => $trunc_end,
+		    'orientation'   => $orientation,
+		    };
+		   
+    my $glyph_symbol = $style->{'glyph'} || 'line';
+
+    # Load the glyph symbol module that we need to draw this style
+    $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::'.$glyph_symbol;
+    unless ($self->dynamic_use($glyph_symbol)){
+	$glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
+    }
+
+    return $glyph_symbol->new($featuredata, $styleattrs);  
 }
 
 1;
