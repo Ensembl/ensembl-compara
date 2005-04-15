@@ -1416,16 +1416,17 @@ sub get_all_VariationFeatures {
 
 =head2 get_all_genotyped_VariationFeatures
 
-    Args       : none
-    Function   : returns all variation features on this slice that have been genotyped. This
-                 function will only work correctly if the variation database has been
-                 attached to the core database.
-                 This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
-                 method go through all of them, retrieves the data and maps them on this
-                 Bio::EnsEMBL::Compara::AlignSlice::Slice object.
-    ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
-    Exceptions : none
-    Caller     : contigview, snpview
+  Args       : none
+  Function   : returns all variation features on this slice that have been genotyped. This
+               function will only work correctly if the variation database has been
+               attached to the core database.
+               This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
+               method go through all of them, retrieves the data and maps them on this
+               Bio::EnsEMBL::Compara::AlignSlice::Slice object by changing start, end,
+               strand and slice attributes.
+  ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
+  Exceptions : none
+  Caller     : contigview, snpview
 
 =cut
 
@@ -1433,6 +1434,35 @@ sub get_all_genotyped_VariationFeatures {
   my $self = shift;
 
   return $self->_method_returning_simple_features("get_all_genotyped_VariationFeatures", @_)
+}
+
+
+=head2 get_all_RepeatFeatures
+
+  Arg [1]    : (optional) string $logic_name
+               The name of the analysis performed on the repeat features
+               to obtain.
+  Arg [2]    : (optional) string $repeat_type
+               Limits features returned to those of the specified repeat_type
+  Example    : @repeat_feats = @{$slice->get_all_RepeatFeatures(undef,'LTR')};
+  Description: Retrieves the RepeatFeatures which overlap  with
+               logic name $logic_name and with score above $score.  If 
+               $logic_name is not defined features of all logic names are 
+               retrieved.
+               This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
+               method go through all of them, retrieves the data and maps them on this
+               Bio::EnsEMBL::Compara::AlignSlice::Slice object by changing start, end,
+               strand and slice attributes.
+  Returntype : listref of Bio::EnsEMBL::RepeatFeatures
+  Exceptions : warning if slice does not have attached adaptor
+  Caller     : general
+
+=cut
+
+sub get_all_RepeatFeatures {
+  my $self = shift;
+
+  return $self->_method_returning_simple_features("get_all_RepeatFeatures", @_)
 }
 
 
