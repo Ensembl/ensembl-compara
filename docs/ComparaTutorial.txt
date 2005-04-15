@@ -1,24 +1,24 @@
 EnsEMBL Compara Perl API Tutorial
 By Cara Woodwark, Abel Ureta-Vidal and Javier Herrero
-Revisions: CW Jun 04, AUV Aug 04, Nov 04, JH Nov 04
-WARNING: this is a 'test' version. By now this tutorial is 'warranty' work with branch-ensembl-26, and with ensembl databases release 26. As it is a 'test' version, you may find errors. Please email ensembl-dev@ebi.ac.uk, so that we can correct them. We will be extending/completing this tutorial in the near future.
+Revisions: CW Jun 04, AUV Aug 04, Nov 04, JH Nov 04, Abr 05
+WARNING: this is a 'test' version. By now this tutorial is 'warranty' work with branch-ensembl-30, and with ensembl databases release 30. As it is a 'test' version, you may find errors. Please email ensembl-dev@ebi.ac.uk, so that we can correct them. We will be extending/completing this tutorial in the near future.
 Introduction
-This tutorial is an introduction to the ensembl compara API. A knowledge of the ensembl core API is presumed, it is assumed that concepts and conventions presented in the ensembl core API tutorial have been assimilated by the user. The ensembl core API tutorial can be found at http://www.ensembl.org/Docs/linked_docs/ensembl_tutorial.pdf (in cvs, in ensembl/docs/tutorial/ensembl_tutorial.pdf) and should be read first as it provides a comprehensive guide to the ensembl environment. 
-A documentation about the compara database schema is available http://www.ensembl.org/???? (in cvs ensembl-compara/docs/docs/schema_doc.html), and while not necessary for this tutorial, an understanding of the database tables may help, as many of the Adaptor modules are table specific.
+This tutorial is an introduction to the ensembl compara API. A knowledge of the ensembl core API is presumed, it is assumed that concepts and conventions presented in the ensembl core API tutorial have been assimilated by the user. The ensembl core API tutorial can be found at http://www.ensembl.org/Docs/linked_docs/ensembl_tutorial.pdf (in cvs, in ensembl/docs/tutorial/ensembltutorial.pdf) and should be read first as it provides a comprehensive guide to the ensembl environment. 
+A documentation about the compara database schema is available at http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensembl-compara/docs/ (or in cvs ensembl-compara/docs/docs/schema_doc.html), and while not necessary for this tutorial, an understanding of the database tables may help, as many of the Adaptor modules are table specific.
 Obtaining the code
 To use the ensembl compara API, you have the same requirement that when using the ensembl core API i.e. perl 5.6 or later, bioperl 1.2 or later, DBI, DBD::mysql and ensembl core code. Please refer to the ensembl core API tutorial that will tell you everything about these modules, how and where to get them.
 You may start by creating a directory for storing the API in your home directory:
 cd
 mkdir src
-mv src
+cd src
 
 In addition, you will need the ensembl compara code that is available by cvs from the ensembl cvs repository using the following cvs commands:
-cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl login
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
 
-When prompted the password is 'CVS'.
-cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-26 ensembl-compara
+When prompted the password is 'CVSUSER'.
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-30 ensembl-compara
 
-This will check out ensembl-compara code for stable branch 26. Make sure the ensembl core code you have already checked out is on the same branch. Note that the branch that is checked out should correspond to the database version being used. Thus ensembl_compara_26_1 and e.g. homo-sapiens_core_26_35 and mus_musculus_core_26_33b should be used with the above ensembl branch 26 code.
+This will check out ensembl-compara code for stable branch 30. Make sure the ensembl core code you have already checked out is on the same branch. Note that the branch that is checked out should correspond to the database version being used. Thus ensembl_compara_30 and e.g. homo_sapiens_core_30_35c and mus_musculus_core_30_33f should be used with the above ensembl branch 30 code.
 Environment Variables
 The following PERL5LIB environment variables should be set up:
 - under tcsh/csh shell with
@@ -40,7 +40,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
 
 my $host = 'ensembldb.ensembl.org';
 my $user = 'anonymous';
-my $dbname = 'ensembl_compara_26_1';
+my $dbname = 'ensembl_compara_30';
 
 my $comparadb= new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host	=> $host,
 								-user	=> $user,
@@ -65,7 +65,7 @@ new Bio::EnsEMBL::DBSQL::DBAdaptor(-host => 'ensembldb.ensembl.org',
                                    -port => 3306,
                                    -species => 'Homo sapiens',
                                    -group => 'core',
-                                   -dbname => 'homo_sapiens_core_26_35');
+                                   -dbname => 'homo_sapiens_core_30_35c');
 
 @aliases = ('H_Sapiens', 'homo sapiens', 'Homo_Sapiens','Homo_sapiens', 'Homo', 'homo', 'human');
 
@@ -78,7 +78,7 @@ new Bio::EnsEMBL::DBSQL::DBAdaptor(-host => 'ensembldb.ensembl.org',
                                    -port => 3306,
                                    -species => 'Mus musculus',
                                    -group => 'core',
-                                   -dbname => 'mus_musculus_core_26_33b');
+                                   -dbname => 'mus_musculus_core_30_33f');
 
 @aliases = ('M_Musculus', 'mus musculus', 'Mus_Musculus','Mus_musculus', 'Mus', 'mus', 'mouse');
 
@@ -90,7 +90,7 @@ new Bio::EnsEMBL::DBSQL::DBAdaptor(-host => 'ensembldb.ensembl.org',
                                    -port => 3306,
                                    -species => 'Fugu rubripes',
                                    -group => 'core',
-                                   -dbname => 'fugu_rubripes_core_26_2c');
+                                   -dbname => 'fugu_rubripes_core_30_2e');
 
 @aliases = ('F_Rubripes', 'fugu rubripes', 'Fugu_Rubripes','Fugu_rubripes', 'Fugu', 'fugu');
 
@@ -100,12 +100,12 @@ Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(-species => "Fugu rubripes",
 new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'ensembldb.ensembl.org',
                                             -user => 'anonymous',
                                             -port => 3306,
-                                            -species => 'Compara26',
-                                            -dbname => 'ensembl_compara_26_1');
+                                            -species => 'Compara30',
+                                            -dbname => 'ensembl_compara_30');
 
-@aliases = ('ensembl_compara_26_1', 'compara26');
+@aliases = ('ensembl_compara_30', 'compara30', 'compara');
 
-Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(-species => "Compara26",
+Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(-species => "Compara30",
                                                -alias => \@aliases);
 
 1;
@@ -295,7 +295,7 @@ foreach my $ddaf (sort {$a->start <=> $b->start
 exit 0;
 
 So to pull out BLASTZ_NET_TIGHT alignments, let's say on part of ENCODE region ENm004 on human chromosome 22, between position 30184430 and position 30184485, against the mouse genome in clustalw format, we can use know the following command line,
-% perl DumpAlignmentsLight.pl --dbname Compara23 --seq_region 22
+% perl DumpAlignmentsLight.pl --dbname Compara30 --seq_region 22
 --seq_region_start 30184430 --seq_region_end 30184485 --qy human --tg mouse
 --alignment_type BLASTZ_NET_TIGHT
 
@@ -303,36 +303,36 @@ CLUSTAL W(1.81) multiple sequence alignment
 
 
 22/30184223-30184547   tgaaacgcttgtccttgaagtccctctctcggtctctgtctctcaagtcccgcaggtcct
-11/3118113-3118437     tgaaacgtttgtccttgtagtccctctctctgtctcggtctctcaagtctcgcaggtcct
+11/3114992-3115316     tgaaacgtttgtccttgtagtccctctctctgtctcggtctctcaagtctcgcaggtcct
                        ******* ********* ************ ***** ************ **********
 
 
 22/30184223-30184547   tatcgctaagacggtgatccttctcaaaggtccgggcagagattatcctcccactgccaa
-11/3118113-3118437     tatcactgagacggtgatccttttcaaaggcccgggcagaaattatccttccactgccaa
+11/3114992-3115316     tatcactgagacggtgatccttttcaaaggcccgggcagaaattatccttccactgccaa
                        **** ** ************** ******* ********* ******** **********
 
 
 22/30184223-30184547   tcctacgtccaccaagcagacgaagcccatcactatctttctctaatggacttcctgagc
-11/3118113-3118437     ttcttcgtccaccaagcaggcgaagtccatcactgtctttctccaatggactgccagatc
+11/3114992-3115316     ttcttcgtccaccaagcaggcgaagtccatcactgtctttctccaatggactgccagatc
                        * ** ************** ***** ******** ******** ******** ** ** *
 
 
 22/30184223-30184547   gccgggagctaacagcggctgtcacgtggcagccccctccaaagctccgtctctgagggc
-11/3118113-3118437     gtcgggagctaacagcagctgtcacatggcagccacctccaaagcttcgtctctgtgggc
+11/3114992-3115316     gtcgggagctaacagcagctgtcacatggcagccacctccaaagcttcgtctctgtgggc
                        * ************** ******** ******** *********** ******** ****
 
 
 22/30184223-30184547   tgagaacaacatctaagtcatcttctttcacacgctctcgtggatctggaaggacgtggg
-11/3118113-3118437     tgagaacaacatctaagtcatcttctttcactcgctctcgtggatctgaaaagatgccag
+11/3114992-3115316     tgagaacaacatctaagtcatcttctttcactcgctctcgtggatctgaaaagatgccag
                        ******************************* **************** ** ** *   *
 
 
 22/30184223-30184547   aaagacaaagttaaacaaaccaaca
-11/3118113-3118437     aaagagaaaggtaagcaaaccaaca
+11/3114992-3115316     aaagagaaaggtaagcaaaccaaca
                        ***** **** *** **********
 
 Now on the same region, TRANSLATED_BLAT alignments against fugu in clustalw format, but at translation level now (-tsl) not nucleotide level, we can run the following command line,
-% perl DumpAlignments.pl --dbname Compara26 --seq_region 22 \
+% perl DumpAlignments.pl --dbname Compara30 --seq_region 22 \
 --seq_region_start 30184430 --seq_region_end 30184485 --qy human --tg fugu \
 --alignment_type TRANSLATED_BLAT --tsl
 
@@ -344,7 +344,7 @@ scaffold_2267/1347-1400 tspskaaplwa*yyi*ii
                         ::****..* *   **:*
 
 By default, the alignments will dump with --qy species sequence on forward strand. To make sure that the alignment, you got is on the strand on which it was originally generated using the --oo option will check that and restore the right strandness. See below the difference in the translation level alignment obtained.
-% perl DumpAlignments.pl --dbname Compara26 --seq_region 22 \
+% perl DumpAlignments.pl --dbname Compara30 --seq_region 22 \
 --seq_region_start 30184430 --seq_region_end 30184485 --qy human --tg fugu \
 --alignment_type TRANSLATED_BLAT --tsl --oo
 
@@ -592,7 +592,6 @@ respectively for these method calls and in the case of human species, you will o
 human; Homo; sapiens; Homo sapiens; sapiens Homo Hominidae Catarrhini Primates Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
 	 
 Homology objects
-
 # first you have to get a Member object. In case of homology is a gene, in 
 # case of family it can be a gene or a protein
 
