@@ -171,6 +171,8 @@ sub store {
   $method_link_species_set->adaptor($self);
 
   my $method_link_sql = qq{SELECT 1 FROM method_link WHERE method_link_id = ?};
+  my $method_link_type_sql   = qq{SELECT method_link_id from method_link where type = ?};
+  my $method_link_insert_sql = qq{INSERT INTO method_link (type) VALUES(?)};
   
   my $method_link_species_set_sql = qq{
 		INSERT INTO method_link_species_set (
@@ -180,8 +182,27 @@ sub store {
 		VALUES (?, ?, ?)
 	};
 
-  my $method_link_id = $method_link_species_set->method_link_id;
+  my $method_link_id   = $method_link_species_set->method_link_id;
+  my $method_link_type = $method_link_species_set->method_link_type;
   my $species_set = $method_link_species_set->species_set;
+
+  ## If we have method_link_type but no method_link_id
+  if( $method_link_type and ! $method_link_id ){
+    # Is the type in the DB?
+    my $sth = $self->prepare($method_link_type_sql);
+    $sth->execute( $method_link_type );
+    if( my $res = $sth->fetchrow_arrayref ){
+      # Found existing
+      $method_link_id = $res->[0];
+    } else {
+      # Insert new
+      my $sth = $self->prepare($method_link_insert_sql);
+      $sth->execute( $method_link_type );
+      $method_link_id = $sth->{'mysql_insertid'};      
+    }
+    # Update the object
+    $method_link_species_set->method_link_id($method_link_id);
+  }
 
   ## Checks if method_link_id already exists in the database
   $sth = $self->prepare($method_link_sql);
