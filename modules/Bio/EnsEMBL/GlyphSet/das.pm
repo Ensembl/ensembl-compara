@@ -745,12 +745,12 @@ sub get_groupstyle {
 	$style = $configuration->{'styles'}{'group'}{$group};
 	$style ||= $configuration->{'styles'}{'group'}{'default'};
 	unless ($style){
-	    # Can't use this directly, as it is a feature style and we don't
-	    # want to change it.
-	    my $tempstyle = $configuration->{'styles'}{'default'}{'default'};
+	    # OK, now we hack about a bit.
+	    # Try to use the colours/height of the feature passed in
+	    my $tempstyle = $self->get_featurestyle($f, $configuration);
 	    if ($tempstyle){
 		my $colour = $tempstyle->{'attrs'}{'fgcolor'};
-		my $height = $style->{'attrs'}{'height'};
+		my $height = $tempstyle->{'attrs'}{'height'};
 
 		$style = {};
 		$style->{'attrs'}{'colour'} = $colour;
