@@ -116,7 +116,7 @@ sub RENDER_simple {
     # to geneview where all annotations can be viewed
 
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
-	my $f     = shift @{$configuration->{'features'}};
+#	my $f     = shift @{$configuration->{'features'}};
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
