@@ -10,6 +10,7 @@ at one end and a vertical bar at the other:  |----->
 =head1 ATTRIBS
 
 - orientation: +/- force direction of arrow
+- no_anchor:  turn off anchor
 
 =cut
 
@@ -53,10 +54,12 @@ sub start_symbol {
 	       );
 	}
 	else {	# anchor at this end: |-
-	    push @$points, (
-	       $bar_start, $y_offset,
-	       $bar_start, $y_offset + $height
-	       );
+	    unless ($style->{'no_anchor'}){
+		push @$points, (
+		   $bar_start, $y_offset,
+		   $bar_start, $y_offset + $height
+		   );
+	    }
 	}
     }
     
@@ -94,10 +97,12 @@ sub end_symbol {
 	    );
 	}
 	else {	# anchor at this end: -|
-	    push @$points, (
-	       $bar_end, $y_offset + $height,
-	       $bar_end, $y_offset
-	       );
+	    unless ($style->{'no_anchor'}){
+		push @$points, (
+		   $bar_end, $y_offset + $height,
+		   $bar_end, $y_offset
+		   );
+	    }
 	}
     }
     
