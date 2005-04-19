@@ -10,15 +10,21 @@ use vars qw(@ISA);
 sub init {
   my ($self) = @_;
 
+
   my $Config = $self->{'config'};
   my $translation = $self->{'container'};
 
-  my @das_adaptors = map{$_->adaptor} @{$translation->get_all_DASFactories};
+#  warn($translation->dbID.'*'.$feat_container);
+  return  if (! $translation->dbID );
+
+  my @das_adaptors = map {$_->adaptor} @{$translation->get_all_DASFactories};
   my %authorities = map{$_->name => $_->authority} @das_adaptors;
 
   # Get features. The data structure returned is YUK!
   my $feat_container = $translation->get_all_DAS_Features();
 
+
+  
   ref( $feat_container ) ne 'HASH' and return; # Sanity check
 
   # Set the order flag. This ensures glyphsets are drawn in the order 
