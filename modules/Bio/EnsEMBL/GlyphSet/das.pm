@@ -106,6 +106,7 @@ sub RENDER_simple {
 					    $label, 
 					    $colour, 
 					    $glyph_height,
+					    $row_height,
 					    $START, 
 					    $END );
 
@@ -116,7 +117,7 @@ sub RENDER_simple {
     # to geneview where all annotations can be viewed
 
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
-#	my $f     = shift @{$configuration->{'features'}};
+	my $f     = shift @{$configuration->{'features'}};
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
@@ -183,7 +184,7 @@ sub RENDER_grouped {
 
   ## Loop over features and hash into groups
   foreach my $f(@{$configuration->{'features'}}){
-
+    
     # Handle DAS errors first
     if($f->das_type_id() eq '__ERROR__') {
       $self->errorTrack( 'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->id.')' );
@@ -247,12 +248,9 @@ sub RENDER_grouped {
 	next;
     }
 
-    my( $href, $zmenu ) = $self->zmenu( $f );
+    my $groupsize = scalar @feature_group;
+    my( $href, $zmenu ) = $self->gmenu( $f, $groupsize );
 
-    # Hacklet to add the number of members of the group
-    if ((my $groupsize = scalar @feature_group) > 1){
-	$zmenu->{"02: &nbsp;&nbsp;$groupsize features in group"} = '';
-    }
 
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'            => 0,
@@ -288,6 +286,7 @@ sub RENDER_grouped {
     my $label_height =$self->feature_label( $Composite, 
 					    $label, 
 					    $colour, 
+					    $row_height,
 					    $row_height,
 					    $START, 
 					    $END 
@@ -483,6 +482,29 @@ sub bump{
   return $row > $dep ? -1 : $row;
 }
 
+
+# Zmenu for Grouped features
+sub gmenu{
+  my( $self, $f, $groupsize ) = @_;
+  my $id = $f->das_group_label() || $f->das_group_id() || $f->das_feature_label() || $f->das_id();
+
+  my $zmenu = {
+    'caption'         => $self->{'extras'}->{'label'},
+  };
+  $zmenu->{"01:GROUP: ". $id } = '';
+  $zmenu->{"05:LABEL: ". $f->das_group_label} = '' if $f->das_group_label && uc($f->das_group_label()) ne 'NULL';
+  $zmenu->{"06: &nbsp;&nbsp;$groupsize features in group"} = '' if $groupsize > 1;
+  $zmenu->{"07:TYPE: ". $f->das_group_type() } = '' if $f->das_group_type() && uc($f->das_group_type()) ne 'NULL';
+  $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
+  $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+  $zmenu->{"09:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
+
+  my $href = undef;
+  #$href = $f->das_link() if $f->das_link() && !$href;
+  return( $href, $zmenu );
+}
+
+
 sub zmenu {
   my( $self, $f ) = @_;
   my $id = $f->das_feature_label() || $f->das_group_label() || $f->das_group_id() || $f->das_id();
@@ -521,14 +543,19 @@ sub zmenu {
 ## creates and pushes the label 
 ## and returns the height of the label created
 sub feature_label {
-  my( $self, $composite, $text, $feature_colour, $glyph_height, $start, $end ) = @_;
+  my( $self, $composite, $text, $feature_colour, $glyph_height, $row_height, $start, $end ) = @_;
+
+  # glyphs are vertically centred in the row, and we need to draw the labels
+  # relative to this.
 
   if( uc($self->{'extras'}->{'labelflag'}) eq 'O' ) { # draw On feature
     my $bp_textwidth = $self->{'textwidth'} * length($text) * 1.2; # add 10% for scaling text
     return unless $bp_textwidth < ($end - $start);
+
+    my $y_offset = ($row_height - $self->{'textheight'})/2;
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
-      'y'          => 1,
+      'y'          => $y_offset,
       'width'      => $bp_textwidth,
       'height'     => $self->{'textheight'},
       'font'       => 'Tiny',
@@ -541,9 +568,11 @@ sub feature_label {
   } 
   elsif( uc($self->{'extras'}->{'labelflag'}) eq 'U') {	# draw Under feature
     my $bp_textwidth = $self->{'textwidth'} * length($text) * 1.2; # add 10% for scaling text
+    my $y_offset = ($row_height + $glyph_height)/2;
+    $y_offset += 2; # give a couple of pixels gap under the glyph
     my $tglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => $start -1,
-      'y'          => $glyph_height + 2,
+      'y'          => $y_offset,
       'width'      => $bp_textwidth,
       'height'     => $self->{'textheight'},
       'font'       => 'Tiny',
@@ -720,6 +749,7 @@ sub _init {
   return $self->$renderer( $configuration );
 }
 
+# Summary Menu for genedas-style summary features
 sub smenu {
   my( $self, $f ) = @_;
   my $note = $f->das_note();
