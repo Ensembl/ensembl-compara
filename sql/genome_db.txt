@@ -1,19 +1,17 @@
 genome_db_id	taxon_id	name	assembly	assembly_default	genebuild	locator
-1	9606	Homo sapiens	NCBI35	1	0410Ensembl	
-2	10090	Mus musculus	NCBIM33	1	0409Ensembl	
-3	10116	Rattus norvegicus	RGSC3.1	1	0311Ensembl	
-4	31033	Fugu rubripes	FUGU2	1	0405Ensembl	
-5	7165	Anopheles gambiae	MOZ2A	1	0310Ensembl	
-6	7227	Drosophila melanogaster	BDGP3.2.1	1	0410FlyBase	
-7	6239	Caenorhabditis elegans	CEL130	1	0411Wormbase	
-9	7955	Danio rerio	ZFISH4	1	0407Ensembl	
-10	9598	Pan troglodytes	CHIMP1	1	0405Ensembl	
-11	9031	Gallus gallus	WASHUC1	1	0406Ensembl	
-12	7460	Apis mellifera	AMEL1.1	1	0409Ensembl		
-13	99883	Tetraodon nigroviridis	TETRAODON7	1	0409Genoscope
-14	9615	Canis familiaris	BROADD1	1	0411Ensembl	
-15	9913	Bos taurus	COW1	1	unkn	 
-16	8364	Xenopus tropicalis	JGI3	1	0502Ensembl	
-17	4932	Saccharomyces cerevisiae	SGD1	1	ukn
-18	7719	Ciona intestinalis	CINT1.95	1	0502SGD
-19	13616	Monodelphis domestica	BROAD0.5	1	ukn
+1	9606	Homo sapiens	NCBI35	1	0410Ensembl	NULL
+2	10090	Mus musculus	NCBIM33	1	0409Ensembl	NULL
+3	10116	Rattus norvegicus	RGSC3.4	1	0501Ensembl	NULL
+4	31033	Fugu rubripes	FUGU2	1	0405Ensembl	NULL
+5	7165	Anopheles gambiae	MOZ2a	1	0310Ensembl	NULL
+6	7227	Drosophila melanogaster	BDGP3.2.1	1	0410FlyBase	NULL
+7	6239	Caenorhabditis elegans	CEL140	1	0503Wormbase	NULL
+9	7955	Danio rerio	ZFISH4	1	0407Ensembl	NULL
+10	9598	Pan troglodytes	CHIMP1	1	0405Ensembl	NULL
+11	9031	Gallus gallus	WASHUC1	1	0406Ensembl	NULL
+12	7460	Apis mellifera	AMEL2.0	1	0505Ensembl	NULL
+13	99883	Tetraodon nigroviridis	TETRAODON7	1	0409Genoscope	NULL
+14	9615	Canis familiaris	BROADD1	1	0411Ensembl	NULL
+16	8364	Xenopus tropicalis	JGI3	1	0502Ensembl	NULL
+17	4932	Saccharomyces cerevisiae	SGD1	1	0502SGD	NULL
+18	7719	Ciona intestinalis	JGI1.95	1	0505Ensembl	NULL
