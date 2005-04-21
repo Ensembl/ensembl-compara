@@ -1,5 +1,6 @@
 
 March 30th 2005
+(reviewed on April 21st 2005)
 
 This document is a first attempt to describe the different steps that the compara
 release coordination has to overlook to hopefully have a successful production cycle.
@@ -21,10 +22,28 @@ production are done separately in 2 different databases, and even MySQL instance
 
 A lot of the WGA data released the month before is just "recycled". Have a database
 copy of the latest compara release on your chosen MySQL instance, and renamed for
-the new release (e.g. copy ensembl_compara_30 to ensembl_compara_31)
+the new release (e.g. copy ensembl_compara_30 to ensembl_compara_31). Take into account
+the possible schema changes from the previous release!
+
+  NB: It is possible to rename a database on a mysql instance without copying it again
+  | cd /mysql/data_3364/databases
+  | mkdir new_database
+  | cd old_database
+  | ln * ../new_database
+  |
+  | then in a mysql client
+  |
+  | drop database old_database
+
 
 Delete none WGA related data (e.g. homology, family, taxon...)
 Delete out of date WGA.
+
+  NB: You can use the script in ~ensembl-compara/scripts/pipeline/update_genome.pl for
+  this. This script also updates the genome_db and the dnafrags for a given species.
+  Make sure that the new assembly/genebuild is actually released before deleting the
+  data!
+
 
 4. IMPORTANT: making sure there is no conflict between protein and WGA production
 on
@@ -69,3 +88,18 @@ A potential check script to write should check that both genome_db tables are co
 6. Once the database is merge, run the heathchecks to spot potential conflicts
 see ensembl-compara/docs/healthchecks.txt
 
+Check the max_alignment_length in the meta table:
+  > SELECT MAX(dnafrag_end - dnafrag_start + 1) FROM genomic_align;
+  > SELECT * FROM meta;
+
+7. Optimize and flush all the tables
+
+8. Update the files in the ~ensembl-compara/sql directory:
+  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM genome_db" ensembl_compara_XX > \
+      ~ensembl-compara/sql/genome_db.txt
+  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM method_link" ensembl_compara_XX > \
+      ~ensembl-compara/sql/method_link.txt
+  $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM taxon" ensembl_compara_XX > \
+      ~ensembl-compara/sql/taxon.txt
+
+Don't forget to commit these changes into the repository!
