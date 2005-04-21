@@ -442,7 +442,9 @@ CREATE TABLE homology_member (
   FOREIGN KEY (peptide_align_feature_id) REFERENCES peptide_align_feature(peptide_align_feature_id),
 
   UNIQUE (member_id,homology_id),
-  UNIQUE (homology_id,member_id)
+  UNIQUE (homology_id,member_id),
+  KEY (peptide_member_id),
+  KEY (peptide_align_feature_id)
 );
 
 
