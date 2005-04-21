@@ -8,7 +8,7 @@ use Sanger::Graphics::Glyph::Text;
 
 my %SHORT = qw(
   chromosome Chr.
-  supercontig S'ctg
+  supercontig S'ctg #' 
 );
 
 sub init_label {
@@ -69,7 +69,7 @@ sub _init {
     my $min_start;
     my $max_end; 
     foreach my $band (reverse @$bands){
-	my $chr = $band->slice()->name();
+	my $chr = $band->slice()->seq_region_name();
 	my $bandname = $band->name();
 	   $bandname =~ /(\d+)\w?/;
 	my $band_no = $1;
@@ -115,9 +115,10 @@ sub _init {
 	    });
 	    $self->push($tglyph);
 	}
-		my $vc_ajust = 1 - $self->{'container'}->start ;
-		my $band_start = $band->{'start'} - $vc_ajust;
-		my $band_end = $band->{'end'} - $vc_ajust;
+
+        my $vc_ajust = 1 - $self->{'container'}->start ;
+        my $band_start = $band->{'start'} - $vc_ajust;
+        my $band_end = $band->{'end'} - $vc_ajust;
     	my $gband = new Sanger::Graphics::Glyph::Rect({
 	    'x'      => $min_start -1 ,
 	    'y'      => 0,
@@ -125,9 +126,9 @@ sub _init {
 	    'height' => 10,
 	    'bordercolour' => $black,
 	    'absolutey' => 1,
-		'zmenu' => {
-			'caption' => "Band $bandname",
-			"00:Zoom to width"  => "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?l=$chr:$band_start-$band_end",
+            'zmenu' => {
+              'caption' => "Band $bandname",
+              "00:Zoom to width"  => "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?l=$chr:$band_start-$band_end",
                 }
         });
         foreach my $script (qw(contigview cytoview)) {
