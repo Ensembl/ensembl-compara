@@ -29,3 +29,8 @@ e.g. ForeignKeyMemberId
 
  ./run-healthcheck.sh -d ensembl_compara_23_1 -output all ForeignKeyMemberId
 
+You can also run another set of healthchecks for checking the external references to
+the core databases:
+
+ ./run-healthcheck.sh -d ensembl_compara_.+ -d .+_core_\\d+.+ -output all \
+   compara_external_foreign_keys
