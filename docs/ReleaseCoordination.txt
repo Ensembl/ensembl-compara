@@ -92,6 +92,9 @@ Check the max_alignment_length in the meta table:
   > SELECT MAX(dnafrag_end - dnafrag_start + 1) FROM genomic_align;
   > SELECT * FROM meta;
 
+Check the collation of the tables as well:
+  > SHOW TABLE STATUS;
+
 7. Optimize and flush all the tables
 
 8. Update the files in the ~ensembl-compara/sql directory:
