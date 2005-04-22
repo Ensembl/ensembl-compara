@@ -24,8 +24,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub list_internal_ids {
   my $self = shift;
   
-  my @tables = $self->_tables;
-  my ($name, $syn) = @{$tables[0]};
+  my ($name, $syn) = @{$self->tables->[0]};
   my $sql = "SELECT ${syn}.${name}_id from ${name} ${syn}";
   
   my $sth = $self->prepare($sql);
@@ -64,9 +63,7 @@ sub fetch_by_dbID {
     $self->throw("fetch_by_dbID must have an id");
   }
 
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
+  my ($name, $syn) = @{$self->tables->[0]};
 
   #construct a constraint like 't1.table1_id = 1'
   my $constraint = "${syn}.${name}_id = $id";
@@ -494,8 +491,8 @@ sub fetch_longest_peptide_member_for_gene_member_id {
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
 
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
+  my @tables = @{$self->tables};
+  my $columns = join(', ', @{$self->columns()});
   
   if ($join) {
     foreach my $single_join (@{$join}) {
@@ -544,66 +541,77 @@ sub _generic_fetch {
   return $self->_objs_from_sth($sth);
 }
 
-sub _tables {
-  my $self = shift;
-
-  return (['member', 'm']);
+sub tables {
+  return [['member', 'm']];
 }
 
-sub _columns {
-  my $self = shift;
+sub columns {
+  return ['m.member_id',
+          'm.source_name',
+          'm.stable_id',
+          'm.version',
+          'm.taxon_id',
+          'm.genome_db_id',
+          'm.description',
+          'm.chr_name',
+          'm.chr_start',
+          'm.chr_end',
+          'm.chr_strand',
+          'm.sequence_id',
+          'm.gene_member_id'
+          ];
+}
 
-  return qw (m.member_id
-             m.source_name
-             m.stable_id
-             m.version
-             m.taxon_id
-             m.genome_db_id
-             m.description
-             m.chr_name
-             m.chr_start
-             m.chr_end
-             m.chr_strand
-             m.sequence_id
-             m.gene_member_id
-             );
+
+sub create_instance_from_rowhash {
+  my $self = shift;
+  my $rowhash = shift;
+
+  my $member = new Bio::EnsEMBL::Compara::Member;
+  $self->init_instance_from_rowhash($member, $rowhash);
+  return $member;
+}
+
+
+sub init_instance_from_rowhash {
+  my $self = shift;
+  my $member = shift;
+  my $rowhash = shift;
+
+  $member->member_id($rowhash->{'member_id'});
+  $member->stable_id($rowhash->{'stable_id'});
+  $member->version($rowhash->{'version'});
+  $member->taxon_id($rowhash->{'taxon_id'});
+  $member->genome_db_id($rowhash->{'genome_db_id'});
+  $member->description($rowhash->{'description'});
+  $member->chr_name($rowhash->{'chr_name'});
+  $member->chr_start($rowhash->{'chr_start'});
+  $member->chr_end($rowhash->{'chr_end'});
+  $member->chr_strand($rowhash->{'chr_strand'});
+  $member->sequence_id($rowhash->{'sequence_id'});
+  $member->gene_member_id($rowhash->{'gene_member_id'});
+  $member->source_name($rowhash->{'source_name'});
+  $member->adaptor($self);
+
+  return $member;
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
-
   my @members = ();
 
-  while ($sth->fetch()) {
+  while(my $rowhash = $sth->fetchrow_hashref) {
     my ($member,$attribute);
-    $member = Bio::EnsEMBL::Compara::Member->new_fast
-      ({'_dbID' => $column{'member_id'},
-        '_stable_id' => $column{'stable_id'},
-        '_version' => $column{'version'},
-        '_taxon_id' => $column{'taxon_id'},
-        '_genome_db_id' => $column{'genome_db_id'},
-        '_description' => $column{'description'},
-        '_chr_name' => $column{'chr_name'},
-        '_chr_start' => $column{'chr_start'},
-        '_chr_end' => $column{'chr_end'},
-        '_chr_strand' => $column{'chr_strand'},
-        '_sequence_id' => $column{'sequence_id'},
-        '_gene_member_id' => $column{'gene_member_id'},
-#        '_source_id' => $column{'source_id'},
-#        '_source_name' => $self->get_source_name_from_id($column{'source_id'}),
-        '_source_name' => $column{'source_name'},
-        '_adaptor' => $self});
-
-    my @_columns = $self->_columns;
-    if (scalar keys %column > scalar @_columns) {
+    $member = $self->create_instance_from_rowhash($rowhash);
+    
+    my @_columns = @{$self->columns};
+    if (scalar keys %{$rowhash} > scalar @_columns) {
       $attribute = new Bio::EnsEMBL::Compara::Attribute;
-      $attribute->member_id($column{'member_id'});
-      foreach my $autoload_method (keys %column) {
+      $attribute->member_id($rowhash->{'member_id'});
+      foreach my $autoload_method (keys %$rowhash) {
         next if (grep /$autoload_method/,  @_columns);
-        $attribute->$autoload_method($column{$autoload_method});
+        $attribute->$autoload_method($rowhash->{$autoload_method});
       }
     }
     if (defined $attribute) {
@@ -632,6 +640,25 @@ sub _fetch_sequence_by_id {
   my ($self, $sequence_id) = @_;
   return $self->db->get_SequenceAdaptor->fetch_by_dbID($sequence_id);
 }
+
+
+sub create_AlignedMember_from_member_attribute {
+  my $self = shift;
+  my $member_attribute = shift;
+
+  my ($gene_member, $attribute) = @{$member_attribute};
+  my $member = $self->fetch_by_dbID($attribute->peptide_member_id);
+
+  bless $member, "Bio::EnsEMBL::Compara::AlignedMember";
+  $member->cigar_line($attribute->cigar_line);
+  $member->cigar_start($attribute->cigar_start);
+  $member->cigar_end($attribute->cigar_end);
+  $member->adaptor(undef);
+
+  return $member;
+}
+
+
 
 #
 # STORE METHODS
