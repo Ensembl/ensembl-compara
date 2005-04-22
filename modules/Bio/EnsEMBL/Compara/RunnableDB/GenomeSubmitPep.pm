@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::GenomeSubmitPep->new (
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -27,11 +27,9 @@ $repmask->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
-functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
-required for databse access.
+Process module which takes the member peptides defined in a subset and genome_db
+passed in the input_id and creates an new analysis and fills it with these peptides
+as jobs to be flowed into the Blast analyses.
 
 =cut
 
@@ -54,17 +52,11 @@ use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Pipeline::Analysis;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 =head2 fetch_input
 
@@ -84,8 +76,7 @@ sub fetch_input {
   $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
   my $input_hash = eval($self->input_id);
   
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+  #create a Compara::DBAdaptor which shares the same DBConnection as $self->db
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
   $self->{'analysisStatsDBA'} = $self->db->get_AnalysisStatsAdaptor;
 
@@ -202,8 +193,6 @@ sub createSubmitPepAnalysis {
   my $subset  = shift;
 
   print("\ncreateSubmitPepAnalysis\n");
-
-  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
   
   my $logic_name = "SubmitPep_" . $self->{'reference_name'};
 
@@ -213,13 +202,13 @@ sub createSubmitPepAnalysis {
 
   unless($analysis) {
     print("  NOPE: go ahead and insert\n");
-    $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+    $analysis = Bio::EnsEMBL::Analysis->new(
         -db              => '',
         -db_file         => $subset->dump_loc(),
         -db_version      => '1',
         -parameters      => "{subset_id=>" . $subset->dbID()."}",
         -logic_name      => $logic_name,
-        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Dummy',
+        -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
       );
     $self->db->get_AnalysisAdaptor()->store($analysis);
 

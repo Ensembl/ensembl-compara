@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::GenomeDumpFasta->new (
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -52,15 +52,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
-use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 
 =head2 fetch_input
@@ -261,12 +257,11 @@ sub createBlastAnalysis
   
   print("createBlastAnalysis\n  params = $params\n");
   
-  my $analysis = Bio::EnsEMBL::Pipeline::Analysis->new(
+  my $analysis = Bio::EnsEMBL::Analysis->new(
       -db              => $blastdb->dbname,
       -db_file         => $blastdb->dbfile,
       -db_version      => '1',
       -logic_name      => $self->{'logic_name'},
-      -input_id_type   => 'MemberPep',
       -program         => $blast_template->program(),
       -program_file    => $blast_template->program_file(),
       -program_version => $blast_template->program_version(),

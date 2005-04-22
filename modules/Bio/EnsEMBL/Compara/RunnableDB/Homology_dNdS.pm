@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::Homology_dNdS->new ( 
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -58,10 +58,7 @@ use Bio::EnsEMBL::Compara::Member;
 
 use Bio::Tools::Run::Phylo::PAML::Codeml;
 
-
-use vars qw(@ISA);
-
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
   my( $self) = @_;

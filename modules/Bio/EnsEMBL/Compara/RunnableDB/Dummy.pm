@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::Dummy
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::Dummy->new ( 
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::Dummy->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -51,9 +51,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::Dummy;
 
 use strict;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 
 ##############################################################

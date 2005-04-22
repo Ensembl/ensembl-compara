@@ -53,9 +53,8 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 
-use vars qw(@ISA);
-
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
   my( $self) = @_;
@@ -208,7 +207,7 @@ sub phylumForGenomeDBID
 
   my $sql = "SELECT phylum FROM genome_db_extn " .
             "WHERE genome_db_id=$genome_db_id;";
-  my $sth = $self->db->prepare( $sql );
+  my $sth = $self->db->dbc->prepare( $sql );
   $sth->execute();
   $sth->bind_columns( undef, \$phylum );
   $sth->fetch();

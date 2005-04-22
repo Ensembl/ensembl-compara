@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::BlastComparaPep->new ( 
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -53,7 +53,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Pipeline::Runnable::Blast;
 use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
@@ -61,9 +60,8 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 
-use vars qw(@ISA);
+our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 my $g_BlastComparaPep_workdir;
 
 =head2 fetch_input
