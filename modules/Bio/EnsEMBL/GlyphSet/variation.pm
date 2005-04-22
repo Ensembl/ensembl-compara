@@ -52,6 +52,12 @@ sub href {
   my $source = $f->source;
   my $region = $self->{'container'}->seq_region_name();
   &eprof_end('href');
+
+  if ($view eq 'ldview' ){
+    my $Config   = $self->{'config'};
+    my $only_pop = $Config->{'_ld_population'};
+    $start .= "&pop=$only_pop" if $only_pop;
+  }
   return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id&source=$source&c=$region:$start";
 }
 
