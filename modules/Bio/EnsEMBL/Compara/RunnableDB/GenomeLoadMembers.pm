@@ -141,11 +141,9 @@ sub run
 sub write_output 
 {  
   my $self = shift;
-  #need to subclass otherwise it defaults to a version that fails
-  #just return 1 so success
 
-  my $output_id = "{gdb=>" . $self->{'genome_db'}->dbID .
-                  ",ss=>" . $self->{'pepSubset'}->dbID . "}";
+  my $output_id = "{'gdb'=>" . $self->{'genome_db'}->dbID .
+                  ",'ss'=>" . $self->{'pepSubset'}->dbID . "}";
   $self->input_job->input_id($output_id);                    
   return 1;
 }
@@ -175,6 +173,8 @@ sub loadMembersFromCoreSlices
   #and then all transcripts in gene to store as members in compara
   my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
   print("fetched ",scalar(@slices), " slices to load from\n");
+  throw("problem: no toplevel slices") unless(scalar(@slices));
+
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;
     #print("slice " . $slice->name . "\n");
