@@ -55,7 +55,7 @@ use Statistics::Descriptive;
 
 use vars qw(@ISA);
 
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+@ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
   my( $self) = @_;
@@ -146,6 +146,11 @@ sub calc_threshold_on_dS {
         if ($count) {
           my $median = $stats->median;
           print STDERR "method_link_species_set_id: ",$mlss->dbID,"; median: ",$median,"; 2\*median: ",2*$median;
+     
+          if($median >1.0) {
+            print STDERR "  threshold exceeds 2.0 - to distant -> clear values\n";
+            $median = 0.0;
+          }
           $sth2->execute(2*$median, $mlss->dbID);
           print STDERR " stored\n";
         }
