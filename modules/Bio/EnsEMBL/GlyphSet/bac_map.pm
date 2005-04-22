@@ -61,12 +61,14 @@ sub tag {
     my $bef = $f->get_scalar_attribute('BACend_flag');
     (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
     my ($s,$e) = $self->sr2slice( $f->get_scalar_attribute('inner_start'), $f->get_scalar_attribute('inner_end') );
-    push @result, {
-      'style'  => 'rect',
-      'colour' => $f->{'_colour_flag'} || $self->{'colours'}{"col_$state"},
-      'start'  => $s,
-      'end'    => $e
-    };
+    if( $s && $e ){
+      push @result, {
+        'style'  => 'rect',
+        'colour' => $f->{'_colour_flag'} || $self->{'colours'}{"col_$state"},
+        'start'  => $s,
+        'end'    => $e
+      };
+    }
     push @result, {
         'style'  => 'right-end',
         'colour' => $self->{'colours'}{"bacend"}
