@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::CreateBlastRules->new (
+my $repmask = Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -53,17 +53,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
-use Bio::EnsEMBL::Pipeline::Rule;
-use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
-use vars qw(@ISA);
-
-@ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
   my $self = shift;
@@ -79,8 +73,6 @@ sub fetch_input {
     if($paramHash) {
       $self->{'phylumBlast'}=1 if($paramHash->{'phylumBlast'}==1);
       $self->{'selfBlast'}=0 if($paramHash->{'selfBlast'}==0);
-      $self->{'no_homology_genome_db_ids'} = $paramHash->{'no_homology_genome_db_ids'}
-        if($paramHash->{'no_homology_genome_db_ids'});
     }
   }
   
