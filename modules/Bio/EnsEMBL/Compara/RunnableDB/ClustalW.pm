@@ -57,6 +57,7 @@ use strict;
 use Getopt::Long;
 use IO::File;
 use File::Basename;
+use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -87,7 +88,6 @@ sub fetch_input {
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -136,18 +136,8 @@ sub run
 sub write_output {
   my $self = shift;
 
-  if($self->{'family'}) {
-    $self->parse_and_store_alignment_into_family;
-  } 
-  elsif($self->{'protein_tree'}) {
-    $self->parse_alignment_into_proteintree;
-    $self->parse_newick_into_proteintree;
-    $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($self->{'protein_tree'});
-    $self->{'protein_tree'}->release;
-  } else {
-    throw("undefined family as input\n");
-  }
-  
+  if($self->{'family'}) { $self->parse_and_store_family; }
+  if($self->{'protein_tree'}) { $self->parse_and_store_proteintree; }
 }
 
 
@@ -209,9 +199,11 @@ sub run_clustalw
   $cmd .= " -infile=" . $input_fasta;
   
   print("$cmd\n") if($self->debug);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   unless(system($cmd) == 0) {
     throw("error running clustalw, $!\n");
   }
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 }
 
 ##############################################################
@@ -290,13 +282,15 @@ sub update_single_peptide_family
 }
 
 
-sub parse_and_store_alignment_into_family 
+sub parse_and_store_family 
 {
   my $self = shift;
   my $clustalw_output =  $self->{'file_root'} . ".aln";
   my $family = $self->{'family'};
     
-  $family->read_clustalw($clustalw_output);
+  if($clustalw_output and -e $clustalw_output) {
+    $family->read_clustalw($clustalw_output);
+  }
 
   my $familyDBA = $self->{'comparaDBA'}->get_FamilyAdaptor;
 
@@ -309,7 +303,10 @@ sub parse_and_store_alignment_into_family
   foreach my $familyMember (@{$familyMemberList}) {
     my ($member,$attribute) = @{$familyMember};
     next unless($member->sequence_id);
-    next unless(defined($attribute->cigar_line) and $attribute->cigar_line ne '');
+    next unless(defined($attribute->cigar_line));
+    next if($attribute->cigar_line eq '');
+    next if($attribute->cigar_line eq 'NULL');
+
     $cigar_hash->{$member->sequence_id} = $attribute->cigar_line;
   }
 
@@ -319,7 +316,6 @@ sub parse_and_store_alignment_into_family
     my ($member,$attribute) = @{$familyMember};
     next if($member->source_name eq 'ENSEMBLGENE');
     next unless($member->sequence_id);
-    next if(defined($attribute->cigar_line) and $attribute->cigar_line ne '');
 
     my $cigar_line = $cigar_hash->{$member->sequence_id};
     next unless($cigar_line);
@@ -356,6 +352,7 @@ sub dumpProteinTreeToWorkdir
   my $seq_id_hash = {};
   my $member_list = $tree->get_all_leaves;  
   foreach my $member (@{$member_list}) {
+    next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     next if($seq_id_hash->{$member->sequence_id});
     $seq_id_hash->{$member->sequence_id} = 1;
     
@@ -368,6 +365,23 @@ sub dumpProteinTreeToWorkdir
   close OUTSEQ;
   
   return $fastafile;
+}
+
+
+sub parse_and_store_proteintree
+{
+  my $self = shift;
+
+  return unless($self->{'protein_tree'});
+  
+  $self->parse_alignment_into_proteintree;
+  $self->parse_newick_into_proteintree;
+  
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $treeDBA->store($self->{'protein_tree'});
+  $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
+  $self->{'protein_tree'}->print_tree;
+  $self->{'protein_tree'}->release;
 }
 
 
@@ -421,9 +435,9 @@ sub parse_alignment_into_proteintree
   # align cigar_line to member and store
   #
   foreach my $member (@{$tree->get_all_leaves}) {
+    next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     $member->cigar_line($align_hash{$member->sequence_id});
   }
- 
 }
 
 
@@ -433,14 +447,20 @@ sub parse_newick_into_proteintree
   my $newick_file =  $self->{'file_root'} . ".dnd";
   my $tree = $self->{'protein_tree'};
   
-  my $newick = '';
-  print("load from file $newick_file\n");
-  open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
-  while(<FH>) {
-    $newick .= $_;
+  #cleanup old tree structure- 
+  #  flatten and reduce to only AlignedMember leaves
+  $tree->flatten_tree;
+  foreach my $node (@{$tree->get_all_leaves}) {
+    next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    $node->disavow_parent;
   }
 
   #parse newick into a new tree object structure
+  my $newick = '';
+  print("load from file $newick_file\n");
+  open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
+  while(<FH>) { $newick .= $_;  }
+  close(FH);
   my $newtree = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->parse_newick_into_tree($newick);
   
   #leaves of newick tree are named with sequence_id of members from input tree
@@ -461,16 +481,75 @@ sub parse_newick_into_proteintree
   $tree->merge_children($newtree);
 
   #newick tree is now empty so release it
-  #print("NEWICK\n"); $newtree->print_tree;
   $newtree->release;
 
-  #go through merged tree and remove 'sequence_id' leaves
+  #go through merged tree and remove 'sequence_id' place-holder leaves
   foreach my $node (@{$tree->get_all_leaves}) {
-    $node->disavow_parent 
-      unless($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    $node->disavow_parent;
   }
   $tree->print_tree;
+  
+  #apply mimized least-square-distance-to-root tree balancing algorithm
+  balance_tree($tree);
+  print("\BALANCED TREE\n");
+  $tree->print_tree;
 
+}
+
+
+
+###################################################
+#
+# tree balancing algorithm
+#   find new root which minimizes least sum of squares 
+#   distance to root
+#
+###################################################
+
+sub balance_tree
+{
+  my $tree = shift;
+  
+  my $starttime = time();
+  
+  my $last_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
+  $last_root->merge_children($tree);
+  
+  my $best_root = $last_root;
+  my $best_weight = calc_tree_weight($last_root);
+  
+  my @all_nodes = $last_root->get_all_subnodes;
+  
+  foreach my $node (@all_nodes) {
+    $node->retain->re_root;
+    $last_root->release;
+    $last_root = $node;
+    
+    my $new_weight = calc_tree_weight($node);
+    if($new_weight < $best_weight) {
+      $best_weight = $new_weight;
+      $best_root = $node;
+    }
+  }
+  printf("%1.3f secs to run balance_tree\n", (time()-$starttime));
+
+  $best_root->retain->re_root;
+  $last_root->release;
+  $tree->merge_children($best_root);
+  $best_root->release;
+}
+
+sub calc_tree_weight
+{
+  my $tree = shift;
+
+  my $weight=0.0;
+  foreach my $node (@{$tree->get_all_leaves}) {
+    my $dist = $node->distance_to_root;
+    $weight += $dist * $dist;
+  }
+  return $weight;  
 }
 
 

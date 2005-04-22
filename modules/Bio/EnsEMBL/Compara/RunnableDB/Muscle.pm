@@ -31,6 +31,11 @@ This Analysis/RunnableDB is designed to take a Family as input
 Run a MUSCLE multiple alignment on it, and store the resulting alignment
 back into the family_member table.
 
+input_id/parameters format eg: "{'family_id'=>1234,'options'=>'-maxiters 2'}"
+    family_id       : use family_id to run multiple alignment on its members
+    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
+    options         : commandline options to pass to the 'muscle' program
+
 =cut
 
 =head1 CONTACT
@@ -58,19 +63,8 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 
-use vars qw(@ISA);
-
-@ISA = qw(Bio::EnsEMBL::Hive::Process);
-my $g_Worker_workdir;
-
-sub workdir {
-  unless(defined($g_Worker_workdir) and (-e $g_Worker_workdir)) {
-    #create temp directory to hold fasta databases
-    $g_Worker_workdir = "/tmp/worker.$$/";
-    mkdir($g_Worker_workdir, 0777);
-  }
-  return $g_Worker_workdir;
-}
+use Bio::EnsEMBL::Hive;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 =head2 fetch_input
 
@@ -93,19 +87,18 @@ sub fetch_input {
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   $self->print_params if($self->debug);
 
-  throw("undefined family as input\n") unless($self->{'family'});
-
-  $self->{'input_fasta'} = $self->dumpFamilyPeptidesToWorkdir($self->{'family'});
-
-  if(!defined($self->{'input_fasta'})) {
-    $self->update_single_peptide_family($self->{'family'});
-  } 
+  if($self->{'family'}) {
+    $self->{'input_fasta'} = $self->dumpFamilyPeptidesToWorkdir($self->{'family'});
+  } elsif($self->{'protein_tree'}) {
+    $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'});
+  } else {
+    throw("undefined family as input\n");
+  }
 
   return 1;
 }
@@ -115,7 +108,7 @@ sub fetch_input {
 
     Title   :   run
     Usage   :   $self->run
-    Function:   runs MUSCLE and parses output into family
+    Function:   runs MUSCLE
     Returns :   none
     Args    :   none
     
@@ -125,7 +118,7 @@ sub run
 {
   my $self = shift;
   return unless($self->{'input_fasta'});  
-  $self->run_muscle;
+  $self->{'muscle_output'} = $self->run_muscle;
 }
 
 
@@ -142,29 +135,16 @@ sub run
 sub write_output {
   my $self = shift;
 
-  my $familyDBA = $self->{'comparaDBA'}->get_FamilyAdaptor;
-  my $familyMemberList = $self->{'family'}->get_all_Member_Attribute();
-  
-  foreach my $familyMember (@{$familyMemberList}) {
-    my ($member,$attribute) = @{$familyMember};
-    next if($member->source_name eq 'ENSEMBLGENE');
-    next unless($member->sequence_id);
-    
-    printf("update family_member %s : %s\n",$member->stable_id, $attribute->cigar_line) if($self->debug);
-    $familyDBA->update_relation([$member, $attribute]);
+  if($self->{'family'}) {
+    $self->parse_and_store_alignment_into_family;
+  } elsif($self->{'protein_tree'}) {
+    $self->parse_and_store_alignment_into_proteintree;
+  } else {
+    throw("undefined family as input\n");
   }
   
 }
 
-
-sub global_cleanup {
-  my $self = shift;
-  if($g_Worker_workdir) {
-    unlink(<$g_Worker_workdir/*>);
-    rmdir($g_Worker_workdir);
-  }
-  return 1;
-}
 
 ##########################################
 #
@@ -191,6 +171,11 @@ sub get_params {
   if(defined($params->{'family_id'})) {
     $self->{'family'} =  $self->{'comparaDBA'}->get_FamilyAdaptor->fetch_by_dbID($params->{'family_id'});
   }
+  if(defined($params->{'protein_tree_id'})) {
+    $self->{'protein_tree'} =  
+         $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
+         fetch_node_by_node_id($params->{'protein_tree_id'});
+  }
   $self->{'options'} = $params->{'options'} if(defined($params->{'options'}));
   return;
 
@@ -206,12 +191,53 @@ sub print_params {
 }
 
 
+sub run_muscle
+{
+  my $self = shift;
+  my $input_fasta = $self->{'input_fasta'};
+
+  my $muscle_output = $input_fasta .".msc";
+  $muscle_output =~ s/\/\//\//g;  # converts any // in path to /
+
+  my $muscle_executable = $self->analysis->program_file;
+  unless (-e $muscle_executable) {
+    $muscle_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/muscle";
+    if (-e "/proc/version") {
+      # it is a linux machine
+      $muscle_executable = "/nfs/acari/abel/bin/i386/muscle";
+    }
+  }
+  throw("can't find a muscle executable to run\n") unless(-e $muscle_executable);
+
+  my $cmd = $muscle_executable;
+  $cmd .= " ". $self->{'options'};
+  $cmd .= " -clw -nocore -verbose -quiet ";
+  $cmd .= " -in " . $input_fasta;
+  $cmd .= " -out $muscle_output -log $muscle_output.log";
+  
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  print("$cmd\n") if($self->debug);
+  unless(system($cmd) == 0) {
+    throw("error running muscle, $!\n");
+  }
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+
+  $self->{'muscle_output'} = $muscle_output;
+  return $muscle_output;
+}
+
+##############################################################
+#
+# Family input/output section
+#
+##############################################################
+
 sub dumpFamilyPeptidesToWorkdir
 {
   my $self = shift;
   my $family = shift;
 
-  my $fastafile = workdir(). "family_". $family->dbID. ".fasta";
+  my $fastafile = $self->worker_temp_directory. "family_". $family->dbID. ".fasta";
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
   print("fastafile = '$fastafile'\n") if($self->debug);
@@ -228,7 +254,10 @@ sub dumpFamilyPeptidesToWorkdir
   push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
   push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
 
-  return undef unless(scalar @members_attributes > 1);
+  if(scalar @members_attributes <= 1) {
+    $self->update_single_peptide_family($family);
+    return undef; #so muscle isn't run
+  }
   
   
   open(OUTSEQ, ">$fastafile")
@@ -265,61 +294,153 @@ sub update_single_peptide_family
     my ($member,$attribute) = @{$familyMember};
     next unless($member->sequence);
     next if($member->source_name eq 'ENSEMBLGENE');
-
     $attribute->cigar_line(length($member->sequence)."M");
+    printf("single_pepide_family %s : %s\n", $member->stable_id, $attribute->cigar_line) if($self->debug);
   }
 }
 
 
-sub run_muscle
+sub parse_and_store_alignment_into_family 
 {
   my $self = shift;
-
-  my $muscle_output = workdir(). "family_". $self->{'family'}->dbID. ".msc";
-  $muscle_output =~ s/\/\//\//g;  # converts any // in path to /
-
-  my $muscle_executable = $self->analysis->program_file;
-  unless (-e $muscle_executable) {
-    $muscle_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/muscle";
-    if (-e "/proc/version") {
-      # it is a linux machine
-      $muscle_executable = "/nfs/acari/abel/bin/i386/muscle";
-    }
+  my $muscle_output =  $self->{'muscle_output'};
+  my $family = $self->{'family'};
+    
+  if($muscle_output and -e $muscle_output) {
+    $family->read_clustalw($muscle_output);
   }
-  throw("can't find a muscle executable to run\n") unless(-e $muscle_executable);
 
-  my $cmd = $muscle_executable . " -clw -nocore -verbose -quiet ";
-  $cmd .= " ". $self->{'options'};
-  $cmd .= " -in " . $self->{'input_fasta'};
-  $cmd .= " -out $muscle_output -log $muscle_output.log";
-  
-  print("$cmd\n") if($self->debug);
-  unless(system($cmd) == 0) {
-    throw("error running muscle, $!\n");
-  }
-  
-  $self->{'family'}->read_clustalw($muscle_output);
+  my $familyDBA = $self->{'comparaDBA'}->get_FamilyAdaptor;
 
   # 
   # post process and copy cigar_line between duplicate sequences
   #  
   my $cigar_hash = {};
-  my $familyMemberList = $self->{'family'}->get_all_Member_Attribute();
+  my $familyMemberList = $family->get_all_Member_Attribute();
+  #first build up a hash of cigar_lines that are defined
   foreach my $familyMember (@{$familyMemberList}) {
     my ($member,$attribute) = @{$familyMember};
     next unless($member->sequence_id);
-    next unless(defined($attribute->cigar_line) and $attribute->cigar_line ne '');
+    next unless(defined($attribute->cigar_line));
+    next if($attribute->cigar_line eq '');
+    next if($attribute->cigar_line eq 'NULL');
+    
     $cigar_hash->{$member->sequence_id} = $attribute->cigar_line;
   }
+
+  #next loop again to copy (via sequence_id) into members 
+  #missing cigar_lines and then store them
   foreach my $familyMember (@{$familyMemberList}) {
     my ($member,$attribute) = @{$familyMember};
+    next if($member->source_name eq 'ENSEMBLGENE');
     next unless($member->sequence_id);
-    next if(defined($attribute->cigar_line) and $attribute->cigar_line ne '');
+
     my $cigar_line = $cigar_hash->{$member->sequence_id};
     next unless($cigar_line);
     $attribute->cigar_line($cigar_line);
+
+    printf("update family_member %s : %s\n",$member->stable_id, $attribute->cigar_line) if($self->debug);
+    $familyDBA->update_relation([$member, $attribute]);
   }
+
+}
+
+
+########################################################
+#
+# ProteinTree input/output section
+#
+########################################################
+
+sub dumpProteinTreeToWorkdir
+{
+  my $self = shift;
+  my $tree = shift;
+
+  my $fastafile = $self->worker_temp_directory. "proteintree_". $tree->node_id. ".fasta";
+  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
+  return $fastafile if(-e $fastafile);
+  print("fastafile = '$fastafile'\n") if($self->debug);
+
+  open(OUTSEQ, ">$fastafile")
+    or $self->throw("Error opening $fastafile for write");
+
+  my $seq_id_hash = {};
+  my $member_list = $tree->get_all_leaves;  
+  foreach my $member (@{$member_list}) {
+    next if($seq_id_hash->{$member->sequence_id});
+    $seq_id_hash->{$member->sequence_id} = 1;
+    
+    my $seq = $member->sequence;
+    $seq =~ s/(.{72})/$1\n/g;
+    chomp $seq;
+
+    print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
+  }
+  close OUTSEQ;
   
+  return $fastafile;
+}
+
+
+sub parse_and_store_alignment_into_proteintree
+{
+  my $self = shift;
+  my $muscle_output =  $self->{'muscle_output'};
+  my $tree = $self->{'protein_tree'};
+  
+  #
+  # parse alignment file into hash: combine alignment lines
+  #
+  my %align_hash;
+  my $FH = IO::File->new();
+  $FH->open($muscle_output) || throw("Could not open alignment file [$muscle_output]");
+
+  <$FH>; #skip header
+  while(<$FH>) {
+    next if($_ =~ /^\s+/);  #skip lines that start with space
+    
+    my ($id, $align) = split;
+    $align_hash{$id} ||= '';
+    $align_hash{$id} .= $align;
+  }
+  $FH->close;
+
+  #
+  # convert clustalw alignment string into a cigar_line
+  #
+  foreach my $id (keys %align_hash) {
+    my $alignment_string = $align_hash{$id};
+    $alignment_string =~ s/\-([A-Z])/\- $1/g;
+    $alignment_string =~ s/([A-Z])\-/$1 \-/g;
+
+    my @cigar_segments = split " ",$alignment_string;
+
+    my $cigar_line = "";
+    foreach my $segment (@cigar_segments) {
+      my $seglength = length($segment);
+      $seglength = "" if ($seglength == 1);
+      if ($segment =~ /^\-+$/) {
+        $cigar_line .= $seglength . "D";
+      } else {
+        $cigar_line .= $seglength . "M";
+      }
+    }
+    $align_hash{$id} = $cigar_line;
+  }
+
+  #
+  # align cigar_line to member and store
+  #
+  foreach my $member (@{$tree->get_all_leaves}) {
+    $member->cigar_line($align_hash{$member->sequence_id});
+    printf("update protein_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
+    $self->{'comparaDBA'}->get_ProteinTreeAdaptor->update($member);
+  }
+ 
+  #done so release the tree
+  $tree->release;
+
 }
 
 
