@@ -7,6 +7,9 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Gene;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
+use Bio::EnsEMBL::Compara::NestedSet;
+our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
+
 sub new {
   my ($class, @args) = @_;
 
@@ -190,6 +193,23 @@ sub new_from_transcript {
   #print("  taxon_id = '" . $self->taxon_id . "'\n");
   #print("  chr_name = '" . $self->chr_name . "'\n");
   return $self;
+}
+
+
+=head2 member_id
+
+  Arg [1]    : int $member_id (optional)
+  Example    :
+  Description:
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub member_id {
+  my $self = shift;
+  return $self->dbID(@_);
 }
 
 
@@ -651,6 +671,19 @@ sub get_Translation {
   my $self = shift;
   return $self->get_Transcript->translation if($self->get_Transcript);
   return undef;
+}
+
+sub gene {
+  my $self = shift;
+  return $self->get_Gene;
+}
+sub transcript {
+  my $self = shift;
+  return $self->get_Transcript;
+}
+sub translation {
+  my $self = shift;
+  return $self->get_Translation;
 }
 
 =head2 get_longest_peptide_Member
