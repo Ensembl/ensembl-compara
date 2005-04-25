@@ -274,7 +274,9 @@ CREATE TABLE member (
   FOREIGN KEY (gene_member_id) REFERENCES member(member_id),
 
   PRIMARY KEY (member_id),
-  UNIQUE (stable_id, source_name),
+  UNIQUE source_stable_id (stable_id, source_name),
+  KEY (stable_id),
+  KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id)
 );
@@ -441,8 +443,9 @@ CREATE TABLE homology_member (
   FOREIGN KEY (peptide_member_id) REFERENCES member(member_id),
   FOREIGN KEY (peptide_align_feature_id) REFERENCES peptide_align_feature(peptide_align_feature_id),
 
-  UNIQUE (member_id,homology_id),
-  UNIQUE (homology_id,member_id),
+  UNIQUE homology_member_id (homology_id,member_id),
+  KEY (homology_id),
+  KEY (member_id),
   KEY (peptide_member_id),
   KEY (peptide_align_feature_id)
 );
@@ -481,8 +484,9 @@ CREATE TABLE family_member (
   FOREIGN KEY (family_id) REFERENCES family(family_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
  
-  UNIQUE (family_id,member_id),
-  UNIQUE (member_id,family_id)
+  UNIQUE family_member_id (family_id,member_id),
+  KEY (family_id),
+  KEY (member_id)
 );
 
 
