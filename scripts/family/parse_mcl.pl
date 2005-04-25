@@ -216,7 +216,7 @@ foreach my $cluster (@clusters) {
       next;
     }
 
-    my $member_source =  uc $stable_id2source_name{$seqid};
+    my $member_source =  $stable_id2source_name{$seqid};
     my $member = $ma->fetch_by_source_stable_id($member_source, $seqid);
     unless($member) {
       die "member does not exist in the database";
