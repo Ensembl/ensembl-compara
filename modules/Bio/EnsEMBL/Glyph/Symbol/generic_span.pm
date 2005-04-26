@@ -97,7 +97,7 @@ sub draw_parallel{
 	$bar_top = $y_offset + $height;
     }
     elsif ($bar_style =~ /indent/i){
-	my $bar_indent = int($height/4) + 1;  # artistic choice - nothing magic
+	my $bar_indent = int($height/4);  # artistic choice - nothing magic
 	$bar_bottom = $y_offset + $bar_indent;
 	$bar_top = $y_offset + $height - $bar_indent;
     }
