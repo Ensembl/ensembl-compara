@@ -25,7 +25,7 @@ sub colour {
   my $highlight = undef;
   my $type = $transcript->type() || $gene->type();
   $type =~ s/HUMACE-//g;
-  my $colour = $colours->{$type}[0];
+  my $colour = $colours->{$type}[0] || 'black';
 
   if(exists $highlights{$transcript->stable_id()}) {
     $highlight = $colours->{'superhi'};
@@ -158,6 +158,7 @@ sub gene_text_label {
 sub features {
   my ($self) = @_;
   my $track = 'evega_transcript';
+
   if( my $alias = $self->{'config'}->get($track,'db_alias') ){
     return $self->{'container'}->get_all_Genes('otter',$alias);
   } elsif( $self->{'config'}->{'fakecore'} ) {
