@@ -140,9 +140,9 @@ sub fetch_input {
     $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->INPUT_METHOD_LINK_TYPE,
                                                         [$qy_gdb]);
   } else {
-    $mlssa->fetch_by_method_link_type_GenomeDBs($self->INPUT_METHOD_LINK_TYPE,
-                                                [$qy_gdb,
-                                                 $tg_gdb]);
+    $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->INPUT_METHOD_LINK_TYPE,
+                                                        [$qy_gdb,
+                                                         $tg_gdb]);
   }
 
   throw("No MethodLinkSpeciesSet for :\n" .
