@@ -248,9 +248,7 @@ sub RENDER_grouped {
 	next;
     }
 
-    my $groupsize = scalar @feature_group;
-    my( $href, $zmenu ) = $self->gmenu( $f, $groupsize );
-
+    my( $href, $zmenu ) = $self->gmenu( \@feature_group );
 
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'            => 0,
@@ -482,20 +480,28 @@ sub bump{
   return $row > $dep ? -1 : $row;
 }
 
+
 # Zmenu for Grouped features
 sub gmenu{
-  my( $self, $f, $groupsize ) = @_;
-  my $id = $f->das_group_id() || $f->das_group_label() || $f->das_feature_id() || $f->das_label();
+  my( $self, $features ) = @_;
+  my $f = @$features[0];
+  my $groupsize = scalar(@$features);
+  my $id = $f->das_group_id() || $f->das_group_label() || $f->das_feature_id() || $f->das_feature_label();
 
   my $zmenu = {
     'caption'         => $self->{'extras'}->{'label'},
   };
   $zmenu->{"01:GROUP: ". $id } = '';
   $zmenu->{"05:LABEL: ". $f->das_group_label} = '' if $f->das_group_label && uc($f->das_group_label()) ne 'NULL';
-  $zmenu->{"06: &nbsp;&nbsp;$groupsize features in group"} = '' if $groupsize > 1;
+  if ($groupsize > 1){
+    my $grouptext = "$groupsize features in group:";
+    foreach (@$features) {
+        $grouptext .= "<br>&nbsp;&nbsp;";
+        $grouptext .= $_->das_feature_label ||$_->das_feature_id;
+    }
+    $zmenu->{"08:$grouptext"} = '';
+  }
   $zmenu->{"07:TYPE: ". $f->das_group_type() } = '' if $f->das_group_type() && uc($f->das_group_type()) ne 'NULL';
-  $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-  $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
   $zmenu->{"09:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
 
   my $href = undef;
