@@ -482,11 +482,10 @@ sub bump{
   return $row > $dep ? -1 : $row;
 }
 
-
 # Zmenu for Grouped features
 sub gmenu{
   my( $self, $f, $groupsize ) = @_;
-  my $id = $f->das_group_label() || $f->das_group_id() || $f->das_feature_label() || $f->das_id();
+  my $id = $f->das_group_id() || $f->das_group_label() || $f->das_feature_id() || $f->das_label();
 
   my $zmenu = {
     'caption'         => $self->{'extras'}->{'label'},
