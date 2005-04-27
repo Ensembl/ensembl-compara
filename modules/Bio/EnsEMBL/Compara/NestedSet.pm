@@ -333,6 +333,20 @@ sub has_parent {
 }
 
 
+sub has_ancestor {
+  my $self = shift;
+  my $ancestor = shift;
+  throw "[$ancestor] must be a Bio::EnsEMBL::Compara::NestedSet object"
+       unless ($ancestor and $ancestor->isa("Bio::EnsEMBL::Compara::NestedSet"));
+  my $node = $self->parent;
+  while($node) {
+    return 1 if($node->equals($ancestor));
+    $node = $node->parent;
+  }
+  return 0;
+}
+
+
 =head2 root
 
   Overview   : returns the root NestedSet object for this node
@@ -490,7 +504,7 @@ sub print_tree {
 sub print_node {
   my $self  = shift;
 
-  printf("(%s)", $self->node_id);
+  printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
   printf("%s\n", $self->name);
 }
 
@@ -620,6 +634,20 @@ sub re_root {
   return $self;
 }
 
+sub build_leftright_indexing {
+  my $self = shift;
+  my $counter = shift;
+  
+  $counter = 1 unless($counter);
+  
+  $self->left_index($counter++);
+  foreach my $child_node (@{$self->children}) {
+    $counter = $child_node->build_leftright_indexing($counter);
+  }
+  $self->right_index($counter++);
+  return $counter;
+}
+
 ##################################
 #
 # search methods
@@ -713,6 +741,14 @@ sub max_depth {
   return $max_depth;  
 }
 
+
+sub find_first_shared_ancestor {
+  my $self = shift;
+  my $node = shift;
+
+  return $node if($self->has_ancestor($node));  
+  return $self->find_first_shared_ancestor($node->parent);
+}
 
 ##################################
 #
