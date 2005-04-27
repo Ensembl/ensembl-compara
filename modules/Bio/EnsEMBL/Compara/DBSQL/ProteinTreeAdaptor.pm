@@ -37,11 +37,20 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 sub fetch_AlignedMember_by_member_id_root_id {
   my ($self, $member_id, $root_id) = @_;
     
-  my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id and t.root_id = $root_id";
+  my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
+  $constraint .= " AND t.root_id = $root_id" if($root_id and $root_id>0);
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
 
+sub fetch_AlignedMember_by_member_id_mlssID {
+  my ($self, $member_id, $mlss_id) = @_;
+    
+  my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
+  $constraint .= " AND tm.method_link_species_set_id = $mlss_id" if($mlss_id and $mlss_id>0);
+  my ($node) = @{$self->_generic_fetch($constraint)};
+  return $node;
+}
 
 
 ###########################
@@ -106,8 +115,9 @@ sub store_node {
     $sth = $self->prepare("INSERT ignore INTO protein_tree_member 
                                (node_id,
                                 member_id,
-                                cigar_line)  VALUES (?,?,?)");
-    $sth->execute($node->node_id, $node->member_id, $node->cigar_line);
+                                method_link_species_set_id,
+                                cigar_line)  VALUES (?,?,?,?)");
+    $sth->execute($node->node_id, $node->member_id, $node->method_link_species_set_id, $node->cigar_line);
     $sth->finish;
   }
 
@@ -147,6 +157,7 @@ sub update_node {
               "cigar_line='". $node->cigar_line . "'";
     $sql .= " cigar_start=" . $node->cigar_start if($node->cigar_start);              
     $sql .= " cigar_end=" . $node->cigar_end if($node->cigar_end);              
+    $sql .= " method_link_species_set_id=" . $node->method_link_species_set_id if($node->method_link_species_set_id);              
     $sql .= " WHERE node_id=". $node->node_id;
     $self->dbc->do($sql);
   }
