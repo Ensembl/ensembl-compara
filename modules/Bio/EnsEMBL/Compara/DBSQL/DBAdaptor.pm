@@ -254,6 +254,8 @@ sub get_available_adaptors {
       "Taxon" => "Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor",
       "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
       "Sequence" => "Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor",
+      "NestedSet" => "Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor",
+      "ProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor",
       "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor"
         );
   return (\%pairs);
