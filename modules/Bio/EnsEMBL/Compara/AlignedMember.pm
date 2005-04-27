@@ -26,6 +26,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
+use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Member;
 our @ISA = qw(Bio::EnsEMBL::Compara::Member);
@@ -68,10 +69,26 @@ sub perc_pos {
   return $self->{'perc_pos'};
 }
 
+sub method_link_species_set_id {
+  my $self = shift;
+  $self->{'method_link_species_set_id'} = shift if(@_);
+  $self->{'method_link_species_set_id'} = 0 unless(defined($self->{'method_link_species_set_id'}));
+  return $self->{'method_link_species_set_id'};
+}
+
 sub print_node {
   my $self  = shift;
-  printf("(%s)", $self->node_id);
-  $self->print_member;
+  printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
+
+  printf(" %s", $self->genome_db->name) if($self->genome_db_id);
+  if($self->gene_member) {
+    printf("   %s:%d-%d\n",
+      $self->gene_member->stable_id, $self->gene_member->chr_name,
+      $self->gene_member->chr_start, $self->gene_member->chr_end);
+  } elsif($self->stable_id) {
+    printf(" (%d) %s", $self->member_id, $self->stable_id);
+  }
+  print("\n");
 }
 
 
@@ -177,5 +194,31 @@ sub cdna_alignment_string {
   return $self->{'cdna_alignment_string'};
 }
 
+
+#############################################################
+#
+# orthologue and paralogue searching
+#
+#############################################################
+
+
+sub orthologue_in_genome {
+  my $self = shift;
+  my $genomedb = shift;
+  
+  throw("[$genomedb] must be a Bio::EnsEMBL::Compara::GenomeDB object")
+       unless ($genomedb and $genomedb->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+
+  my $starttime = time();
+  my $all_leaves = $self->root->get_all_leaves;
+  foreach my $member (@{$all_leaves}) {
+  }
+  
+  printf("%1.3f secs to find orthologue\n", (time()-$starttime));
+}
+
+sub get_leaves_in_genome {
+  my $self = shift;
+}
 
 1;
