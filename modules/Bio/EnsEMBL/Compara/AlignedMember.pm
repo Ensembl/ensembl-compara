@@ -82,7 +82,7 @@ sub print_node {
 
   printf(" %s", $self->genome_db->name) if($self->genome_db_id);
   if($self->gene_member) {
-    printf("   %s:%d-%d\n",
+    printf(" %s %s:%d-%d",
       $self->gene_member->stable_id, $self->gene_member->chr_name,
       $self->gene_member->chr_start, $self->gene_member->chr_end);
   } elsif($self->stable_id) {
