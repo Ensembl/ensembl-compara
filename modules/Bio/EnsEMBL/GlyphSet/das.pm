@@ -147,16 +147,14 @@ sub RENDER_simple {
 	$style->{'glyph'} = $oldglyph;
   } 
   else {
-    unless ($glyph_symbol eq 'box'){
-	# make clickable box to anchor zmenu
-	  $Composite->push( new Sanger::Graphics::Glyph::Space({
-	    'x'         => $START-1,
-	    'y'         => 0,
-	    'width'     => $END-$START+1,
-	    'height'    => $glyph_height,
-	    'absolutey' => 1
-	  }) );
-    }
+    # make clickable box to anchor zmenu
+    $Composite->push( new Sanger::Graphics::Glyph::Space({
+    	'x'         => $START-1,
+    	'y'         => 0,
+	'width'     => $END-$START+1,
+	'height'    => $glyph_height,
+	'absolutey' => 1
+    }) );
 
     my $style = $self->get_featurestyle($f, $configuration);
     my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
@@ -259,7 +257,9 @@ sub RENDER_grouped {
 	next;
     }
 
-    my( $href, $zmenu ) = $self->gmenu( \@feature_group );
+    my $groupsize = scalar @feature_group;
+    my( $href, $zmenu ) = $self->gmenu( $f, $groupsize );
+
 
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'y'            => 0,
@@ -491,6 +491,7 @@ sub bump{
   return $row > $dep ? -1 : $row;
 }
 
+
 # Zmenu for Grouped features
 sub gmenu{
   my( $self, $f, $groupsize ) = @_;
@@ -507,8 +508,11 @@ sub gmenu{
   $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
   $zmenu->{"09:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
 
-  my $href = undef;
-  #$href = $f->das_link() if $f->das_link() && !$href;
+  my $href;
+  if($self->{'extras'}->{'linkURL'}){
+      $href = $zmenu->{"10:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+  } 
+ 
   return( $href, $zmenu );
 }
 
