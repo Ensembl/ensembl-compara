@@ -51,17 +51,18 @@ sub _init {
   my @features = @{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)};
   foreach my $f (@features){
     my $ms           = $f->marker->display_MarkerSynonym;
-    my $fid          = $ms->name;
+    my $fid          = $ms ? $ms->name : '--';
     my $bp_textwidth = $w * length("$fid ");
     my ($feature_colour, $label_colour, $part_to_colour) = $self->colour($f);
     my $href         = "/@{[$self->{container}{_config_file_name_}]}/markerview?marker=$fid";
 
-    my $S = $f->start()-1; $S = 0 if $S<0;
-    my $E = $f->end()    ; $E = $L if $E>$L;
+    my $S = $f->start()-1; next if $S>$L; $S = 0 if $S<0;
+    my $E = $f->end()    ; next if $E<0;  $E = $L if $E>$L;
+    warn ">$S,$E< $fid";
     $self->push( new Sanger::Graphics::Glyph::Rect({
       'x' => $S,        'y' => 0,         'height' => $row_height, 'width' => ($E-$S+1),
       'colour' => $feature_colour, 'absolutey' => 1,
-      'href'   => $href, 'zmenu' => { 'caption' => ($ms->source eq 'unists' ? "uniSTS:$fid" : $fid), 'Marker info' => $href }
+      'href'   => $href, 'zmenu' => { 'caption' => ($ms && $ms->source eq 'unists' ? "uniSTS:$fid" : $fid), 'Marker info' => $href }
     }));
     next unless $labels;
     my $glyph = new Sanger::Graphics::Glyph::Text({
