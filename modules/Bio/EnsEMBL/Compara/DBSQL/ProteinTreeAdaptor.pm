@@ -21,7 +21,7 @@ package Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor;
 
 use strict;
 use Switch;
-use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::ProteinTree;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
@@ -192,7 +192,7 @@ sub delete_node {
   my $node = shift;
   
   my $node_id = $node->node_id;
-  print("delete node $node_id\n");
+  #print("delete node $node_id\n");
   $self->dbc->do("UPDATE protein_tree_nodes dn, protein_tree_nodes n SET ". 
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
   $self->dbc->do("DELETE from protein_tree_nodes WHERE node_id=$node_id");
@@ -207,7 +207,7 @@ sub delete_nodes_not_in_tree
   unless($tree->isa('Bio::EnsEMBL::Compara::NestedSet')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $tree");
   }
-  print("delete_nodes_not_present under ", $tree->node_id, "\n");
+  #print("delete_nodes_not_present under ", $tree->node_id, "\n");
   my $dbtree = $self->fetch_node_by_node_id($tree->node_id);
   my @all_db_nodes = $dbtree->get_all_subnodes;
   foreach my $dbnode (@all_db_nodes) {
@@ -263,7 +263,7 @@ sub create_instance_from_rowhash {
   if($rowhash->{'member_id'}) {
     $node = new Bio::EnsEMBL::Compara::AlignedMember;    
   } else {
-    $node = new Bio::EnsEMBL::Compara::NestedSet;
+    $node = new Bio::EnsEMBL::Compara::ProteinTree;
   }
   
   $self->init_instance_from_rowhash($node, $rowhash);
@@ -312,7 +312,7 @@ sub parse_newick_into_tree
     #printf("state %d : '%s'\n", $state, $token);
     switch ($state) {
       case 1 { #new node
-        $node = new Bio::EnsEMBL::Compara::NestedSet;
+        $node = new Bio::EnsEMBL::Compara::ProteinTree;
         $node->node_id($count++);
         $lastset->add_child($node) if($lastset);
         $root=$node unless($root);
