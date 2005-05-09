@@ -178,7 +178,7 @@ sub get_params {
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   $self->{'options'} = $params->{'options'} if(defined($params->{'options'}));
-  $self->{'calc_alignment'} = 0 if(defined($params->{'no_align'}));
+  $self->{'calc_alignment'} = $params->{'align'} if(defined($params->{'align'}));
   
   return;
 
