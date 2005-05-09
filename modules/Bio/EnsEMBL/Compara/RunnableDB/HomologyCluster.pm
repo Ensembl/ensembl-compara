@@ -141,6 +141,7 @@ sub build_homology_clusters {
   my $root = new Bio::EnsEMBL::Compara::NestedSet;
   $root->name("ORTHO_CLUSTERS");
   $treeDBA->store($root);
+  printf("root_id %d\n", $root->node_id);
     
   #
   # create Cluster MLSS
