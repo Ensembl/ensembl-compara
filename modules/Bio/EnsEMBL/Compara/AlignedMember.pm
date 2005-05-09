@@ -27,6 +27,7 @@ package Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::Member;
 our @ISA = qw(Bio::EnsEMBL::Compara::Member);
