@@ -435,7 +435,7 @@ sub parse_and_store_alignment_into_proteintree
   foreach my $member (@{$tree->get_all_leaves}) {
     $member->cigar_line($align_hash{$member->sequence_id});
     printf("update protein_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
-    $self->{'comparaDBA'}->get_ProteinTreeAdaptor->update($member);
+    $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($member);
   }
  
   #done so release the tree
