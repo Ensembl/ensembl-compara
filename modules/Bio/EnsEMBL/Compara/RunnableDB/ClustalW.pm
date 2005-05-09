@@ -207,6 +207,7 @@ sub run_clustalw
     my $align_cmd = $clustalw_executable;
     $align_cmd .= " -align -infile=" . $self->{'input_fasta'};
     print("$align_cmd\n") if($self->debug);
+    $align_cmd .= " 2>&1 > /dev/null" unless($self->debug);
     unless(system($align_cmd) == 0) {
       throw("error running clustalw, $!\n");
     }
@@ -216,6 +217,7 @@ sub run_clustalw
     my $tree_cmd = $clustalw_executable;
     $tree_cmd .= " -tree -infile=" . $self->{'file_root'} . ".aln";
     print("$tree_cmd\n") if($self->debug);
+    $tree_cmd .= " 2>&1 > /dev/null" unless($self->debug);
     unless(system($tree_cmd) == 0) {
       throw("error running clustalw, $!\n");
     }
@@ -434,7 +436,7 @@ sub parse_and_store_proteintree
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $treeDBA->store($self->{'protein_tree'});
   $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
-  $self->{'protein_tree'}->print_tree;
+  $self->{'protein_tree'}->print_tree if($self->debug);
   $self->{'protein_tree'}->release;
 }
 
@@ -513,7 +515,7 @@ sub parse_newick_into_proteintree
 
   #parse newick into a new tree object structure
   my $newick = '';
-  print("load from file $newick_file\n");
+  print("load from file $newick_file\n") if($self->debug);
   open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
@@ -544,15 +546,17 @@ sub parse_newick_into_proteintree
     next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     $node->disavow_parent;
   }
-  $tree->print_tree;
+  $tree->print_tree if($self->debug);
   
   #apply mimized least-square-distance-to-root tree balancing algorithm
   balance_tree($tree);
 
   $tree->build_leftright_indexing;
 
-  print("\nBALANCED TREE\n");
-  $tree->print_tree;
+  if($self->debug) {
+    print("\nBALANCED TREE\n");
+    $tree->print_tree;
+  }
 }
 
 
@@ -590,7 +594,7 @@ sub balance_tree
       $best_root = $node;
     }
   }
-  printf("%1.3f secs to run balance_tree\n", (time()-$starttime));
+  #printf("%1.3f secs to run balance_tree\n", (time()-$starttime));
 
   $best_root->retain->re_root;
   $last_root->release;
