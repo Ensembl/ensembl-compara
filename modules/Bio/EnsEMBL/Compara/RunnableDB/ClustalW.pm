@@ -82,6 +82,8 @@ sub fetch_input {
 
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "-maxiters 2";
+  $self->{'calc_alignment'} = 1;
+  $self->{'calc_tree'} = undef;
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -96,7 +98,12 @@ sub fetch_input {
   if($self->{'family'}) {
     $self->{'input_fasta'} = $self->dumpFamilyPeptidesToWorkdir($self->{'family'});
   } elsif($self->{'protein_tree'}) {
-    $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'});
+    $self->{'calc_tree'} = 1;
+    if($self->{'calc_alignment'}) {
+      $self->dumpTreePeptidesToWorkdir($self->{'protein_tree'});
+    } else {
+      $self->dumpTreeMultipleAlignmentToWorkdir($self->{'protein_tree'});
+    }
   } else {
     throw("undefined family as input\n");
   }
@@ -118,7 +125,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  return unless($self->{'input_fasta'});  
   $self->run_clustalw;
 }
 
@@ -172,6 +178,8 @@ sub get_params {
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   $self->{'options'} = $params->{'options'} if(defined($params->{'options'}));
+  $self->{'calc_alignment'} = 0 if(defined($params->{'no_align'}));
+  
   return;
 
 }
@@ -189,20 +197,30 @@ sub print_params {
 sub run_clustalw
 {
   my $self = shift;
-  my $input_fasta = $self->{'input_fasta'};
 
   my $clustalw_executable = $self->analysis->program_file;
   throw("can't find a clustalw executable to run\n") unless(-e $clustalw_executable);
 
-  my $cmd = $clustalw_executable;
-  $cmd .= " -align";
-  $cmd .= " -infile=" . $input_fasta;
-  
-  print("$cmd\n") if($self->debug);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-  unless(system($cmd) == 0) {
-    throw("error running clustalw, $!\n");
+
+  if($self->{'calc_alignment'}) {
+    my $align_cmd = $clustalw_executable;
+    $align_cmd .= " -align -infile=" . $self->{'input_fasta'};
+    print("$align_cmd\n") if($self->debug);
+    unless(system($align_cmd) == 0) {
+      throw("error running clustalw, $!\n");
+    }
   }
+
+  if($self->{'calc_tree'}) {
+    my $tree_cmd = $clustalw_executable;
+    $tree_cmd .= " -tree -infile=" . $self->{'file_root'} . ".aln";
+    print("$tree_cmd\n") if($self->debug);
+    unless(system($tree_cmd) == 0) {
+      throw("error running clustalw, $!\n");
+    }
+  }
+
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 }
 
@@ -334,7 +352,7 @@ sub parse_and_store_family
 #
 ########################################################
 
-sub dumpProteinTreeToWorkdir
+sub dumpTreePeptidesToWorkdir
 {
   my $self = shift;
   my $tree = shift;
@@ -363,8 +381,44 @@ sub dumpProteinTreeToWorkdir
     print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
   }
   close OUTSEQ;
-  
+  $self->{'input_fasta'} = $fastafile;
   return $fastafile;
+}
+
+
+sub dumpTreeMultipleAlignmentToWorkdir
+{
+  my $self = shift;
+  my $tree = shift;
+  
+  $self->{'file_root'} = $self->worker_temp_directory. "proteintree_". $tree->node_id;
+  $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
+
+  my $clw_file = $self->{'file_root'} . ".aln";
+  return $clw_file if(-e $clw_file);
+  print("clw_file = '$clw_file'\n") if($self->debug);
+
+  open(OUTSEQ, ">$clw_file")
+    or $self->throw("Error opening $clw_file for write");
+
+
+  my $seq_id_hash = {};
+  foreach my $member (@{$tree->get_all_leaves}) {
+    next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next if($seq_id_hash->{$member->sequence_id});
+    $seq_id_hash->{$member->sequence_id} = 1;
+
+    my $seq = $member->alignment_string;
+    next if(!$seq);
+    $seq =~ s/(.{72})/$1\n/g;
+    chomp $seq;
+    print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
+  }
+
+  close OUTSEQ;
+  
+  $self->{'input_clw'} = $clw_file;
+  return $clw_file;
 }
 
 
@@ -374,7 +428,7 @@ sub parse_and_store_proteintree
 
   return unless($self->{'protein_tree'});
   
-  $self->parse_alignment_into_proteintree;
+  $self->parse_alignment_into_proteintree if($self->{'calc_alignment'});
   $self->parse_newick_into_proteintree;
   
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
@@ -390,6 +444,8 @@ sub parse_alignment_into_proteintree
   my $self = shift;
   my $clustalw_output =  $self->{'file_root'} . ".aln";
   my $tree = $self->{'protein_tree'};
+  
+  print("parse_alignment_into_proteintree from $clustalw_output\n") if($self->debug);
   
   #
   # parse alignment file into hash: combine alignment lines
@@ -444,7 +500,7 @@ sub parse_alignment_into_proteintree
 sub parse_newick_into_proteintree
 {
   my $self = shift;
-  my $newick_file =  $self->{'file_root'} . ".dnd";
+  my $newick_file =  $self->{'file_root'} . ".ph";
   my $tree = $self->{'protein_tree'};
   
   #cleanup old tree structure- 
@@ -492,9 +548,11 @@ sub parse_newick_into_proteintree
   
   #apply mimized least-square-distance-to-root tree balancing algorithm
   balance_tree($tree);
-  print("\BALANCED TREE\n");
-  $tree->print_tree;
 
+  $tree->build_leftright_indexing;
+
+  print("\nBALANCED TREE\n");
+  $tree->print_tree;
 }
 
 
