@@ -355,7 +355,7 @@ sub RENDER_grouped {
 	my $to = $symbol->feature->{'start'};
 
 	$self->push($symbol->draw);
-	if ($to > $from){
+	if ((($to - $from) * $self->{pix_per_bp}) > 1){ # i.e. if the gap is > 1pix
 	    my $groupsymbol = $self->get_groupsymbol($groupstyle, $from, $to, $configuration, $y_offset);
 	    $self->push($groupsymbol->draw);
 	}
