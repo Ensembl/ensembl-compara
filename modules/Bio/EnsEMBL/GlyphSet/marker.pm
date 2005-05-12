@@ -58,7 +58,6 @@ sub _init {
 
     my $S = $f->start()-1; next if $S>$L; $S = 0 if $S<0;
     my $E = $f->end()    ; next if $E<0;  $E = $L if $E>$L;
-    warn ">$S,$E< $fid";
     $self->push( new Sanger::Graphics::Glyph::Rect({
       'x' => $S,        'y' => 0,         'height' => $row_height, 'width' => ($E-$S+1),
       'colour' => $feature_colour, 'absolutey' => 1,

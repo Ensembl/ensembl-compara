@@ -14,6 +14,7 @@ sub my_label {
 sub check { return 'urlfeature'; }
 
 sub bumped { return undef; }
+
 sub managed_name {
   my ($self) = @_;
   return $self->{'extras'}{'name'};
@@ -42,4 +43,5 @@ sub zmenu {
   return { 'caption' => $id, 'details...' => $T } if $T;
   return { 'caption' => $id };
 }
+
 1;

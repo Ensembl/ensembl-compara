@@ -74,7 +74,7 @@ sub zmenu {
     'caption'         => "EST Gene",
     "01:Gene:$gid"    => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=est",
     "02:Transcr:$tid" => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=est",                	
-    '04:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cDNA&id=$tid"
+    '04:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cDNA&id=$tid",
   };
 
   if ($transcript->external_name()){

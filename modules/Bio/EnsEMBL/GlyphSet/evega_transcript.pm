@@ -23,8 +23,8 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $transcript->type() || $gene->type();
-  $type =~ s/HUMACE-//g;
+  my $type = $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->type.'_'.$gene->confidence;
+  # $type =~ s/HUMACE-//g;
   my $colour = $colours->{$type}[0] || 'black';
 
   if(exists $highlights{$transcript->stable_id()}) {
@@ -117,16 +117,16 @@ sub gene_zmenu {
   return $zmenu;
 }
 
-my %legend_map = ( 'Known'         => 'Curated known gene',
-  'Novel_CDS'       => 'Curated novel CDS',
-  'Putative'        => 'Curated putative',
-  'Novel_Transcript'    => 'Curated novel Trans' ,
-  'Pseudogene'      => 'Curated pseudogenes' ,
-  'Processed_pseudogene'  => 'Curated processed pseudogenes' ,
-  'Unprocessed_pseudogene'=> 'Curated unprocessed pseudogenes' ,
-  'Predicted_Gene'    => 'Curated predicted gene' ,
-  'Ig_Segment'      => 'Curated Immunoglobulin segment' ,
-  'Ig_Pseudogene_Segment' => 'Curated Immunoglobulin pseudogene' ,
+my %legend_map = ( 'protein_coding_KNOWN'         => 'Curated known gene',
+  'protein_coding_NOVEL'       => 'Curated novel CDS',
+  'unclassified_PUTATIVE'        => 'Curated putative',
+  'unclassified_PUTATIVE'    => 'Curated novel Trans' ,
+  'pseudogene_KNOWN'      => 'Curated pseudogenes' ,
+  'processed_pseudogene_KNOWN'  => 'Curated processed pseudogenes' ,
+  'unprocessed_pseudogene_KNOWN'=> 'Curated unprocessed pseudogenes' ,
+  'protein_coding_KNOWN'    => 'Curated predicted gene' ,
+  'Ig_Segment_KNOWN'      => 'Curated Immunoglobulin segment' ,
+  'Ig_Pseudogene_segment_KNOWN' => 'Curated Immunoglobulin pseudogene' ,
   'Polymorphic'       => 'Curated Polymorphic'  );
 
 sub text_label {

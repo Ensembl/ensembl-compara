@@ -64,18 +64,18 @@ sub new {
   $self->colourSet( 'vega_gene',
     'hi'                    => 'highlight1',
     'superhi'               => 'highlight2',
-    'Novel_CDS'             => [ 'blue', 'Curated novel CDS' ],
+    'protein_coding_NOVEL'  => [ 'blue', 'Curated novel CDS' ],
     'Novel_CDS_in_progress' => [ 'cornflowerblue', 'Curated novel CDS (in progress)'],
-    'Putative'              => [ 'lightslateblue', 'Curated putative' ],
-    'Known'                 => [ 'dodgerblue4', 'Curated known gene' ],
+    'unclassified_PUTATIVE' => [ 'lightslateblue', 'Curated putative' ],
+    'protein_coding_KNOWN'  => [ 'dodgerblue4', 'Curated known gene' ],
     'Known_in_progress'     => [ 'lightskyblue4', 'Curated known gene (in progress)'],
-    'Pseudogene'            => [ 'grey70', 'Curated pseudogene' ],
-    'Processed_pseudogene'  => [ 'grey38', 'Curated processed pseudogene' ],
-    'Unprocessed_pseudogene'=> [ 'grey27', 'Curated unprocessed pseudogene' ],
-    'Novel_Transcript'      => [ 'skyblue3', 'Curated novel transcript' ],
-    'Ig_Segment'            => [ 'midnightblue', 'Curated Ig segment' ],
-    'Ig_Pseudogene_Segment' => [ 'mediumpurple4', 'Curated Ig pseudogene' ],
-    'Predicted_Gene'        => [ 'steelblue4', 'Curated predicted gene'] ,
+    'pseudogene_KNOWN'      => [ 'grey70', 'Curated pseudogene' ],
+    'processed_pseudogene_KNOWN'  => [ 'grey38', 'Curated processed pseudogene' ],
+    'unprocessed_pseudogene_KNOWN'=> [ 'grey27', 'Curated unprocessed pseudogene' ],
+    'unclassified_NOVEL'    => [ 'skyblue3', 'Curated novel transcript' ],
+    'Ig_segment_KNOWN'            => [ 'midnightblue', 'Curated Ig segment' ],
+    'Ig_pseudogene_segment_KNOWN' => [ 'mediumpurple4', 'Curated Ig pseudogene' ],
+    'protein_coding_PREDICTED'        => [ 'steelblue4', 'Curated predicted gene'] ,
     'Transposon'            => [ 'steelblue', 'Curated transposon'] ,
     'Polymorphic'           => [ 'blue4', 'Curated Polymorhic' ]
   );
@@ -92,7 +92,8 @@ sub new {
     'genomewise' => [ 'purple1', 'EST gene' ],
     'est_genebuilder' => [ 'purple1', 'EST gene' ],
     'estgene'    => [ 'purple1', 'EST gene' ],
-    'est_gene'    => [ 'purple1', 'EST gnee' ]
+    'est_gene'    => [ 'purple1', 'EST gene' ],
+    'protein_coding' => [ 'purple1', 'EST gene' ]
   );
   $self->colourSet( 'prot_gene',
     'hi'         => 'highlight1',
@@ -181,6 +182,13 @@ sub new {
 		    'labelINTERGENIC'           => 'white',
 		    'label_'                    => 'white',
 		  );
+
+  $self->colourSet( 'bee_pre_gene',
+    'Homology_high'   => [ 'sienna4', 'Homology high' ],
+    'Homology_medium' => [ 'sienna3', 'Homology medium' ],
+    'Homology_low'    => [ 'sienna2', 'Homology low' ],
+    'BeeProtein'      => [ 'blue', 'Aligned Bee Protein' ]
+  );
 
   $self->colourSet( 'marker',
 		    ''               => 'magenta',

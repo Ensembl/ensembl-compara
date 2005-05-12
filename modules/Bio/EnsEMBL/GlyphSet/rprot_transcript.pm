@@ -22,7 +22,7 @@ sub transcript_type {
 
 sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
-    my $colour = $colours->{'_col'};
+    my $colour = $colours->{'_col'}[0];
     my $highlight;
     if( exists $highlights{$gene->stable_id()} ){
         $highlight = $colours->{'hi'};
