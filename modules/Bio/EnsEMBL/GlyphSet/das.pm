@@ -209,6 +209,7 @@ sub RENDER_grouped {
     my $fid = $f->das_id;
     next unless $fid;
     $fid  = "G:".$f->das_group_id if $f->das_group_id;
+#    delete($f->{das_link});
     push @{$grouped{$fid}}, $f;
 
     $empty_flag &&= 0; # We have at least one feature
@@ -255,6 +256,33 @@ sub RENDER_grouped {
     if( $row < 0 ) { ## SKIP IF BUMPED...
 	$more_features = 1;
 	next;
+    }
+
+# Very dirty hack to handle Next/Previous links between features when they are grouped
+# If there is Next or Previous label amongst the feature links, 
+# then get Previous link of the first feature in the group and Next link of the last feature in the group
+    if ( "@{$f->{das_link_label}}" =~ /Next|Previous/) {
+	my $fgroup = $feature_group[0];
+	my $lgroup = $feature_group[-1];
+	my @links = $fgroup->das_links;
+	my (%FLinks, %LLinks);
+	foreach ($fgroup->das_link_labels) {
+	    $FLinks{$_} = shift(@links);
+	}
+	@links = $lgroup->das_links;
+	foreach ($lgroup->das_link_labels) {
+	    $LLinks{$_} = shift(@links);
+	}
+	delete($f->{das_link_label});
+	delete($f->{das_link});
+	if (my $plink = $FLinks{Previous}) {
+	    push @{$f->{das_link_label}}, 'Previous';
+	    push @{$f->{das_link}}, $plink;
+	}
+	if (my $nlink = $LLinks{Next}) {
+	    push @{$f->{das_link_label}}, 'Next';
+	    push @{$f->{das_link}}, $nlink;
+	}
     }
 
     my $groupsize = scalar @feature_group;
@@ -495,22 +523,32 @@ sub bump{
 # Zmenu for Grouped features
 sub gmenu{
   my( $self, $f, $groupsize ) = @_;
-  my $id = $f->das_group_label() || $f->das_group_id() || $f->das_feature_label() || $f->das_id();
-
+ 
   my $zmenu = {
     'caption'         => $self->{'extras'}->{'label'},
   };
+
+  my $id = $f->das_group_label() || $f->das_group_id() || $f->das_feature_label() || $f->das_id();
   $zmenu->{"01:GROUP: ". $id } = '';
   $zmenu->{"05:LABEL: ". $f->das_group_label} = '' if $f->das_group_label && uc($f->das_group_label()) ne 'NULL';
   $zmenu->{"06: &nbsp;&nbsp;$groupsize features in group"} = '' if $groupsize > 1;
   $zmenu->{"07:TYPE: ". $f->das_group_type() } = '' if $f->das_group_type() && uc($f->das_group_type()) ne 'NULL';
   $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-  $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
-  $zmenu->{"09:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
+#  $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+
+
+  # Fix to handle features with multiple links.
+  my $ids = 8;
+  my @dlabels = $f->das_link_labels();
+  foreach my $dlink ($f->das_links) {
+      my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, shift @dlabels);
+      $zmenu->{$dlabel} = $dlink if uc($dlink) ne 'NULL';
+  }
+  $zmenu->{"20:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
 
   my $href;
   if($self->{'extras'}->{'linkURL'}){
-      $href = $zmenu->{"10:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+      $href = $zmenu->{"30:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
   } 
  
   return( $href, $zmenu );
@@ -523,28 +561,36 @@ sub zmenu {
   my $zmenu = {
     'caption'         => $self->{'extras'}->{'label'},
   };
+
+#  warn("Z: ".join('*', $f->das_links));
   # Leave 02 to hold the number of features in the group
   $zmenu->{"03:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
   $zmenu->{"04:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
   $zmenu->{"05:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
   $zmenu->{"06:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
   $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-  $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
-  $zmenu->{"09:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
+  my $ids = 8;
+  my @dlabels = $f->das_link_labels();
+  foreach my $dlink ($f->das_links) {
+      my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, shift @dlabels);
+      $zmenu->{$dlabel} = $dlink if uc($dlink) ne 'NULL';
+  }
+  $zmenu->{"20:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
 
   my $href = undef;
   if($self->{'extras'}->{'fasta'}) {
     foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
     my ($type, $db ) = split /_/, $string, 2;
-      $zmenu->{ "20:$type sequence" } = $self->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
+      $zmenu->{ "25:$type sequence" } = $self->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
       $href = $zmenu->{ "20:$type sequence" } unless defined($href);
     }
   }
+
   $href = $f->das_link() if $f->das_link() && !$href;
   if($id && uc($id) ne 'NULL') {
     $zmenu->{"01:ID: $id"} = '';
     if($self->{'extras'}->{'linkURL'}){
-      $href = $zmenu->{"10:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+      $href = $zmenu->{"22:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
     } 
   } 
   return( $href, $zmenu );
