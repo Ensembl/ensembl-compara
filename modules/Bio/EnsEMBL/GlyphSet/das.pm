@@ -562,7 +562,6 @@ sub zmenu {
     'caption'         => $self->{'extras'}->{'label'},
   };
 
-#  warn("Z: ".join('*', $f->das_links));
   # Leave 02 to hold the number of features in the group
   $zmenu->{"03:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
   $zmenu->{"04:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
