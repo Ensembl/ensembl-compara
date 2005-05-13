@@ -19,13 +19,12 @@ sub init_label {
     my $type = $self->{'container'}->coord_system->name();
 
     $type = $SHORT{lc($type)} || ucfirst( $type );
-    my $species = '';
-    if( $self->{'config'}->{'multi'} ) {
-       $species = join '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.',' '; 
-    }
     my $chr = $self->{'container'}->seq_region_name();
-    $chr = "$species$type $chr";
-	
+    $chr = "$type $chr" unless $chr =~ /^$type/i;
+    if( $self->{'config'}->{'multi'} ) {
+       $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.')." $chr";
+    }
+
     my $label = new Sanger::Graphics::Glyph::Text({
     	'text'      => ucfirst($chr),
     	'font'      => 'Small',
