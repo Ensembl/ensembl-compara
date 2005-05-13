@@ -298,18 +298,19 @@ sub parse_newick_into_tree
   my $self = shift;
   my $newick = shift;
 
-  my $count=1;  
-  $newick =~ s/\s//g;
-  #print("$newick\n");
-  my $token = next_token(\$newick, "(");
-  throw("newick format must start with a (") unless($token eq '(');
+  my $count=1;
+  my $debug = 0;
+  print("$newick\n") if($debug);
+  my $token = next_token(\$newick, "(;");
   my $lastset = undef;
   my $node = undef;
   my $root = undef;
   my $state=1;
+  my $bracket_level = 0;
 
   while($token) {
-    #printf("state %d : '%s'\n", $state, $token);
+    if($debug) { printf("state %d : '%s'\n", $state, $token); };
+    
     switch ($state) {
       case 1 { #new node
         $node = new Bio::EnsEMBL::Compara::ProteinTree;
@@ -317,9 +318,10 @@ sub parse_newick_into_tree
         $lastset->add_child($node) if($lastset);
         $root=$node unless($root);
         if($token eq '(') { #create new set
-          #printf("    create set\n");
-          $token = next_token(\$newick, "(:,");
+          printf("    create set\n")  if($debug);
+          $token = next_token(\$newick, "(:,)");
           $state = 1;
+          $bracket_level++;
           $lastset = $node;
         } else {
           $state = 2;
@@ -328,32 +330,34 @@ sub parse_newick_into_tree
       case 2 { #naming a node
         if(!($token =~ /[:,);]/)) { 
           $node->name($token);
-          #print("    naming leaf"); $node->print_node;
-          $token = next_token(\$newick, ":,)");
+          if($debug) { print("    naming leaf"); $node->print_node; }
+          $token = next_token(\$newick, ":,);");
         }
         $state = 3;
       }
       case 3 { # optional : and distance
         if($token eq ':') {
-          $token = next_token(\$newick, ",)");
+          $token = next_token(\$newick, ",);");
           $node->distance_to_parent($token);
-          #print("set distance: $token"); $node->print_node;
-          $token = next_token(\$newick, ",)"); #move to , or )
+          if($debug) { print("set distance: $token"); $node->print_node; }
+          $token = next_token(\$newick, ",);"); #move to , or )
         }
         $state = 4;
       }
       case 4 { # end node
         if($token eq ')') {
-          #print("end set : "); $lastset->print_node;
+          if($debug) { print("end set : "); $lastset->print_node; }
           $node = $lastset;        
           $lastset = $lastset->parent;
           $token = next_token(\$newick, ":,);");
           $state=2;
+          $bracket_level--;
         } elsif($token eq ',') {
-          $token = next_token(\$newick, "(:,");
+          $token = next_token(\$newick, "(:,)");
           $state=1;
         } elsif($token eq ';') {
           #done with tree
+          throw("parse error: unbalanced ()\n") if($bracket_level ne 0);
           $state=13;
           $token = next_token(\$newick, "(");
         } else {
@@ -373,6 +377,8 @@ sub next_token {
   my $string = shift;
   my $delim = shift;
   
+  $$string =~ s/^(\s)+//;
+
   return undef unless(length($$string));
   
   #print("input =>$$string\n");
