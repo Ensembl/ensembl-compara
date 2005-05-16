@@ -143,6 +143,7 @@ sub write_output {
     throw("undefined family as input\n");
   }
   
+  $self->cleanup_job_tmp_files;
 }
 
 
@@ -225,6 +226,16 @@ sub run_muscle
   $self->{'muscle_output'} = $muscle_output;
   return $muscle_output;
 }
+
+sub cleanup_job_tmp_files
+{
+  my $self = shift;
+  
+  unlink ($self->{'input_fasta'});
+  unlink ($self->{'muscle_output'});
+  unlink ($self->{'muscle_output'} . ".log");
+}
+
 
 ##############################################################
 #
