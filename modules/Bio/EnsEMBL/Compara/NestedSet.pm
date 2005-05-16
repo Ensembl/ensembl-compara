@@ -289,17 +289,17 @@ sub disavow_parent {
 sub release_children {
   my $self = shift;
   
-  return $self unless($self->{'_children_id_hash'});
-
-  my @kids = values(%{$self->{'_children_id_hash'}});
-  foreach my $child (@kids) {
-    #printf("  parent %d releasing child %d\n", $self->node_id, $child->node_id);
-    if($child) {
-      $child->release_children;
-      $child->release;
+  if($self->{'_children_id_hash'}) {
+    my @kids = values(%{$self->{'_children_id_hash'}});
+    foreach my $child (@kids) {
+      #printf("  parent %d releasing child %d\n", $self->node_id, $child->node_id);
+      if($child) {
+        $child->release_children;
+        $child->release;
+      }
     }
   }
-  $self->{'_children_id_hash'} = undef;
+  $self->{'_children_id_hash'} = {};
   return $self;
 }
 
@@ -362,6 +362,7 @@ sub root {
   my $self = shift;
 
   return $self unless(defined($self->parent));
+  return $self if($self->node_id eq $self->parent->node_id);
   return $self->parent->root;
 }
 
@@ -509,6 +510,57 @@ sub print_node {
 }
 
 
+sub newick_format {
+  my $self = shift;
+  my $newick = "";
+  
+  if($self->get_child_count() > 0) {
+    $newick .= "(";
+    my $first_child=1;
+    foreach my $child (@{$self->children}) {  
+      $newick .= "," unless($first_child);
+      $newick .= $child->newick_format;
+      $first_child = 0;
+    }
+    $newick .= ")";
+  }
+  
+  if($self->parent) {
+    $newick .= sprintf("\"%s\"", $self->name,);
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent) if($self->distance_to_parent > 0);
+  } else {
+    $newick .= ";";
+  }
+  return $newick;
+}
+
+sub newick_simple_format {
+  my $self = shift;
+  my $newick = "";
+  
+  if($self->get_child_count() > 0) {
+    $newick .= "(";
+    my $first_child=1;
+    foreach my $child (@{$self->children}) {  
+      $newick .= "," unless($first_child);
+      $newick .= $child->newick_simple_format;
+      $first_child = 0;
+    }
+    $newick .= ")";
+  }
+  
+  if($self->parent) {
+    $newick .= sprintf("\"%s\"", $self->name) if($self->is_leaf);
+    my $dist = $self->distance_to_parent;
+    $dist = 1 unless($dist);
+    $newick .= sprintf(":%1.4f", $dist);
+  } else {
+    $newick .= ";";
+  }
+  return $newick;
+}
+
+
 ##################################
 #
 # Set theory methods
@@ -584,7 +636,7 @@ sub merge_node_via_shared_ancestor {
 
   my $node_dup = $self->find_node_by_node_id($node->node_id);
   if($node_dup) {
-    warn("trying to merge in a node with already exists\n");
+    #warn("trying to merge in a node with already exists\n");
     return $node_dup;
   }
   return undef unless($node->parent);
@@ -592,7 +644,7 @@ sub merge_node_via_shared_ancestor {
   my $ancestor = $self->find_node_by_node_id($node->parent->node_id);
   if($ancestor) {
     $ancestor->add_child($node);
-    print("common ancestor at : "); $ancestor->print_node;
+    #print("common ancestor at : "); $ancestor->print_node;
     return $ancestor;
   }
   return $self->merge_node_via_shared_ancestor($node->parent);
@@ -647,6 +699,23 @@ sub build_leftright_indexing {
   $self->right_index($counter++);
   return $counter;
 }
+
+
+sub minimize_tree {
+  my $self = shift;
+  
+  my @all_nodes = $self->get_all_subnodes;
+  foreach my $node (@all_nodes) { 
+    if($node->parent and 
+       ($node->get_child_count() == 1)) 
+    {
+      $node->parent->merge_children($node);
+      $node->disavow_parent;
+    }
+  }
+}
+
+
 
 ##################################
 #
@@ -788,7 +857,6 @@ sub _root_id {
   $self->{'_root_id'} = shift if(@_);
   return $self->{'_root_id'};
 }
-
 
 1;
 
