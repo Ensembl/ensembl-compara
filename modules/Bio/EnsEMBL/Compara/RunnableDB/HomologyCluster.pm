@@ -159,11 +159,37 @@ sub build_homology_clusters {
   
   $self->{'member_leaves'} = {};
   
+  my $ug = new Data::UUID;
+
+  #  
+  # load all the Paralogue pairs, building clusters as we load
+  # get all homologies for each MLSS
+  #
+  
+  foreach my $gdb_id1 (@species_set) {
+    printf("\nfind MLSS for genome  %d\n", $gdb_id1);
+    my $mlss = $mlssDBA->fetch_by_method_link_type_genome_db_ids
+          ("ENSEMBL_PARALOGUES",[$gdb_id1]);
+    next unless(defined($mlss));
+
+    printf("fetch all paralogues for mlss_id=%d\n", $mlss->dbID);
+    $starttime = time();
+    my $homology_list = $self->fetch_homology_peptide_pairs_by_mlss($mlss);
+    printf("  %1.3f secs to fetch paralogues\n", (time()-$starttime));
+    printf("  %d paralogue pairs\n", scalar(@{$homology_list}));
+
+    $starttime = time();
+    while(@{$homology_list}) {
+      my $pep_pair = shift @{$homology_list};
+      $self->grow_memclusters_with_peppair($root, $pep_pair);
+    }
+    printf("  %1.3f secs to load/process homologies\n", (time()-$starttime));
+  }
+
   #  
   #get all MLSS for each homology pair in this species set
   #get all homologies for each MLSS
-  #
-  my $ug = new Data::UUID;
+  #  
   
   while (my $gdb_id1 = shift @species_set) {
     foreach my $gdb_id2 (@species_set) {
@@ -207,6 +233,8 @@ sub build_homology_clusters {
   if($build_mode eq 'direct') {
     $self->store_clusters($root);
   }
+  
+  $self->dataflow_clusters($root);
   
   $root->release;
 }
@@ -542,6 +570,17 @@ sub store_clusters {
   printf("  %1.3f secs to store clusters\n", (time()-$starttime));
 }
 
+
+sub dataflow_clusters {
+  my $self = shift;
+  my $root = shift;
+  
+  my $clusters = $root->children;
+  foreach my $cluster (@{$clusters}) {
+    my $output_id = sprintf("{'protein_tree_id'=>%d}", $cluster->node_id);
+    $self->dataflow_output_id($output_id, 2);
+  }
+}
 
 
 1;
