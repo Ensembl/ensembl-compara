@@ -54,7 +54,16 @@ sub description_score {
 
 
 sub get_SimpleAlign {
-  my $self = shift;
+  my ($self, @args) = @_;
+
+  my $id_type = 'STABLE';
+  my $unique_seqs = 0;
+  my $cdna = 0;
+  if (scalar @args) {
+    ($unique_seqs, $cdna, $id_type) = 
+       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE)], @args);
+  }
+  $id_type = 'STABLE' unless(defined($id_type));
 
   my $sa = Bio::SimpleAlign->new();
 
@@ -63,15 +72,29 @@ sub get_SimpleAlign {
   my $bio07 = 0;
   $bio07=1 if(!$sa->can('add_seq'));
 
-
+  my $seq_id_hash = {};
   foreach my $member (@{$self->get_all_leaves}) {
     next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
-    my $seqstr = $member->alignment_string;
+    next if($unique_seqs and $seq_id_hash->{$member->sequence_id});
+    $seq_id_hash->{$member->sequence_id} = 1;
+
+    my $seqstr;
+    if ($cdna) {
+      $seqstr = $member->cdna_alignment_string;
+      $seqstr =~ s/\s+//g;
+    } else {
+      $seqstr = $member->alignment_string;
+    }
     next if(!$seqstr);
+
+    my $seqID = $member->stable_id;
+    $seqID = $member->sequence_id if($id_type eq "SEQ");
+    $seqID = $member->member_id if($id_type eq "MEMBER");
+    
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
                                      -START  => 1,
                                      -END    => length($seqstr),
-                                     -ID     => $member->stable_id,
+                                     -ID     => $seqID,
                                      -STRAND => 0);
 
     if($bio07) {
