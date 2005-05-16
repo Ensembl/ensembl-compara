@@ -174,8 +174,6 @@ sub cdna_alignment_string {
     my $cdna_align_string = '';
 
     foreach my $pep (split(//, $self->alignment_string)) {
-      last if($start >= $cdna_len);
-      
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
       } else {
