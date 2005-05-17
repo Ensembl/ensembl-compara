@@ -139,11 +139,13 @@ sub write_output {
     $self->parse_and_store_alignment_into_family;
   } elsif($self->{'protein_tree'}) {
     $self->parse_and_store_alignment_into_proteintree;
+    #done so release the tree
+    $self->{'protein_tree'}->release;
   } else {
     throw("undefined family as input\n");
   }
   
-  $self->cleanup_job_tmp_files;
+  $self->cleanup_job_tmp_files unless($self->debug);
 }
 
 
@@ -231,9 +233,11 @@ sub cleanup_job_tmp_files
 {
   my $self = shift;
   
-  unlink ($self->{'input_fasta'});
-  unlink ($self->{'muscle_output'});
-  unlink ($self->{'muscle_output'} . ".log");
+  unlink ($self->{'input_fasta'}) if($self->{'input_fasta'});
+  if($self->{'muscle_output'}) {
+    unlink ($self->{'muscle_output'});
+    unlink ($self->{'muscle_output'} . ".log");
+  }
 }
 
 
@@ -363,6 +367,20 @@ sub parse_and_store_alignment_into_family
 #
 ########################################################
 
+sub update_single_peptide_tree
+{
+  my $self   = shift;
+  my $tree   = shift;
+  
+  foreach my $member (@{$tree->get_all_leaves}) {
+    next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next unless($member->sequence);
+    $member->cigar_line(length($member->sequence)."M");
+    $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($member);
+    printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
+  }
+}
+
 sub dumpProteinTreeToWorkdir
 {
   my $self = shift;
@@ -390,6 +408,11 @@ sub dumpProteinTreeToWorkdir
   }
   close OUTSEQ;
   
+  if(scalar keys (%{$seq_id_hash}) <= 1) {
+    $self->update_single_peptide_tree($tree);
+    return undef; #so muscle isn't run
+  }
+
   return $fastafile;
 }
 
@@ -399,6 +422,8 @@ sub parse_and_store_alignment_into_proteintree
   my $self = shift;
   my $muscle_output =  $self->{'muscle_output'};
   my $tree = $self->{'protein_tree'};
+  
+  return unless($muscle_output);
   
   #
   # parse alignment file into hash: combine alignment lines
@@ -449,9 +474,6 @@ sub parse_and_store_alignment_into_proteintree
     $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($member);
   }
  
-  #done so release the tree
-  $tree->release;
-
 }
 
 
