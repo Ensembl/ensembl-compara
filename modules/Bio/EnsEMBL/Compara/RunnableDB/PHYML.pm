@@ -184,8 +184,9 @@ sub run_phyml
 {
   my $self = shift;
 
-
   $self->{'input_aln'} = $self->dumpTreeMultipleAlignmentToWorkdir($self->{'protein_tree'});
+  return unless($self->{'input_aln'});
+  
   $self->{'newick_file'} = $self->{'input_aln'} . "_phyml_tree.txt ";
 
   my $phyml_executable = $self->analysis->program_file;
@@ -224,6 +225,23 @@ sub run_phyml
 }
 
 
+sub check_job_fail_options
+{
+  my $self = shift;
+  
+  printf("PHYML failed to execute on job\n");
+  $self->input_job->print_job;
+  
+  $self->dataflow_output_id($self->input_id, 2);
+  $self->input_job->update_status('FAILED');
+  
+  if($self->{'protein_tree'}) {
+    $self->{'protein_tree'}->release;
+    $self->{'protein_tree'} = undef;
+  }
+}
+
+
 
 ########################################################
 #
@@ -235,6 +253,12 @@ sub dumpTreeMultipleAlignmentToWorkdir
 {
   my $self = shift;
   my $tree = shift;
+  
+  if(scalar(@{$tree->get_all_leaves}) <3) {
+    printf(STDERR "tree cluster %d has <3 proteins - FAILED to build a tree\n", $tree->node_id);
+    $self->check_job_fail_options;
+    return undef;
+  }
   
   $self->{'file_root'} = $self->worker_temp_directory. "proteintree_". $tree->node_id;
   $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
@@ -266,12 +290,14 @@ sub parse_and_store_proteintree
   my $self = shift;
 
   return unless($self->{'protein_tree'});
+
+  if($self->{'newick_file'}) {  
+    $self->parse_newick_into_proteintree;
   
-  $self->parse_newick_into_proteintree;
-  
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  $treeDBA->store($self->{'protein_tree'});
-  $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
+    my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+    $treeDBA->store($self->{'protein_tree'});
+    $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
+  }
   $self->{'protein_tree'}->release;
 }
 
