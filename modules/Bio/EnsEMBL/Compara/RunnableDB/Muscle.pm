@@ -80,7 +80,7 @@ sub fetch_input {
   my( $self) = @_;
 
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
-  $self->{'options'} = "-maxiters 2";
+  $self->{'options'} = "";
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -221,6 +221,7 @@ sub run_muscle
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
+    $self->check_job_fail_options;
     throw("error running muscle, $!\n");
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
@@ -240,6 +241,26 @@ sub cleanup_job_tmp_files
   }
 }
 
+
+sub check_job_fail_options
+{
+  my $self = shift;
+  
+  printf("\nMUSCLE failed to execute on job\n");
+  $self->input_job->print_job;
+  printf("\n");
+  
+  if($self->input_job->retry_count >= 5) {
+    printf("  failed >5 times: try something else and FAIL it\n");
+    $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->update_status('FAILED');
+  }
+  
+  if($self->{'protein_tree'}) {
+    $self->{'protein_tree'}->release;
+    $self->{'protein_tree'} = undef;
+  }
+}
 
 ##############################################################
 #
