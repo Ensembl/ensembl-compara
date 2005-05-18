@@ -23,11 +23,7 @@ sub my_label {
 
 sub features {
   my ($self) = @_;
-  my $r = $self->{'container'}->get_all_AssemblyExceptionFeatures();
-#  warn scalar @$r;
-#  warn Data::Dumper::Dumper($r);
-  return $r;
-
+  return $self->{'container'}->get_all_AssemblyExceptionFeatures();
 }
 
 sub tag {

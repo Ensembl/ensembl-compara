@@ -7,8 +7,14 @@ use Bio::EnsEMBL::Gene;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
+sub analysis_logic_name{
+  my $self = shift;
+  return $self->my_config('LOGIC_NAME'); # E.g. 'Genscan, SNAP etc
+}
+
 sub my_label {
-    return 'Fgenesh';
+	my $self = shift;
+	return $self->my_config('track_label') || $self->analysis_logic_name;
 }
 
 sub colours {
@@ -24,8 +30,9 @@ sub colours {
 sub features {
   my $self = shift;
   my @genes = ();
-  #obtain genscan transcripts
-  foreach my $transcript (@{$self->{'container'}->get_all_PredictionTranscripts('Fgenesh')}) {
+  my $type = $self->analysis_logic_name;
+  #obtain fgenesh transcripts
+  foreach my $transcript (@{$self->{'container'}->get_all_PredictionTranscripts($type)}) {
     my $gene = new Bio::EnsEMBL::Gene();
        $gene->add_Transcript($transcript);
     push @genes, $gene;

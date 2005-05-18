@@ -1,20 +1,22 @@
 =head1 NAME
 
-Bio::EnsEMBL::GlyphSet::polyA_signal.pm
-GlyphSet to draw polyA sites
+Bio::EnsEMBL::GlyphSet::polyA.pm
+GlyphSet to draw polyA features
 
 =head1 DESCRIPTION
 
-Displays polyA sites stored as simple features
+Displays polyA features (polyA_signals, polyA_sites, pseudo_polyA) stored as
+imple features.
 
 =head1 LICENCE
 
 This code is distributed under an Apache style licence:
 Please see http://www.ensembl.org/code_licence.html for details
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Steve Trevanion <st3@sanger.ac.uk>
+Patrick Meidl <pm2@sanger.ac.uk>
 
 =head1 CONTACT
 
@@ -22,7 +24,7 @@ Post questions to the EnsEMBL development list ensembl-dev@ebi.ac.uk
 
 =cut
 
-package Bio::EnsEMBL::GlyphSet::polyA_signal;
+package Bio::EnsEMBL::GlyphSet::polyA;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
@@ -40,8 +42,10 @@ use Bio::EnsEMBL::GlyphSet_simple;
 
 =cut
 
-sub my_label { return "PolyA signals"; }
-
+sub my_label {
+    my $self = shift;
+    return $self->my_config('label');
+}
 
 =head2 features
 
@@ -56,7 +60,7 @@ sub my_label { return "PolyA signals"; }
 
 sub features {
     my ($self) = @_;
-    return $self->{'container'}->get_all_SimpleFeatures('polyA_signal', 0);
+    return $self->{'container'}->get_all_SimpleFeatures($self->my_config('logic_name'), 0);
 }
 
 
@@ -81,7 +85,7 @@ sub zmenu {
   my $end   = $self->{'container'}->start() + $f->end() - 1;
 
   return {
-        'caption' => 'polyA signal',
+        'caption' => $self->my_config('label'),
         "01:Score: $score" => '',
         "02:bp: $start-$end" => ''
     };

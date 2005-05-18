@@ -227,7 +227,6 @@ sub compact_init {
     }
   }
   $self->errorTrack( "No ".$self->my_label." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
-  warn $Config->get('_settings','opt_show_bumped'), "---$C1==$C"; 
 
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
