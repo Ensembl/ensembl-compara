@@ -32,6 +32,10 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Member;
 our @ISA = qw(Bio::EnsEMBL::Compara::Member);
 
+sub name {
+  my $self = shift;
+  return $self->stable_id(@_);
+}
 
 sub cigar_line {
   my $self = shift;
