@@ -473,9 +473,18 @@ sub right_index {
 
 sub print_tree {
   my $self  = shift;
+  my $scale = shift;
+  
+  $scale = 100 unless($scale);
+  $self->_internal_print_tree("", 0, $scale);
+}
+
+
+sub _internal_print_tree {
+  my $self  = shift;
   my $indent = shift;
   my $lastone = shift;
-  my $scale = 100; 
+  my $scale = shift; 
 
   $indent = '' unless(defined($indent));
   print($indent);
@@ -497,7 +506,7 @@ sub print_tree {
   foreach my $child_node (@$children) {  
     $count++;
     $lastone = 1 if($count == scalar(@$children));
-    $child_node->print_tree($indent,$lastone);
+    $child_node->_internal_print_tree($indent,$lastone,$scale);
   }
 }
 
