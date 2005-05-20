@@ -44,6 +44,12 @@ sub new {
     'superhi'    => 'highlight2',
     map { $_ => [ $core{$_}[0], "Bee predicted genes (@{[$core{$_}[1]]})" ] } keys %core
   );
+  $self->colourSet( 'bee_pre_gene',
+    'Homology_high'   => [ 'sienna4', 'Homology high' ],
+    'Homology_medium' => [ 'sienna3', 'Homology medium' ],
+    'Homology_low'    => [ 'sienna2', 'Homology low' ],
+    'BeeProtein'      => [ 'blue', 'Aligned Bee Protein' ]
+  );
   $self->colourSet( 'genoscope_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
