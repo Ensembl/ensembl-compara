@@ -28,7 +28,13 @@ package Bio::EnsEMBL::Compara::NestedSet;
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Data::UUID;
+
+unless(eval "require Data::UUID") {
+  throw("Cpan module Data::UUID is not installed on this system\n". 
+        "Please install from http://www.cpan.org/modules/by-module/Data/Data-UUID-0.11.tar.gz\n".
+        "If there are problems building on 64bit machines, please install patch at\n".
+        "http://www.ebi.ac.uk/~jessica/Data_UUID_64bit_patch.html\n"); 
+}
 
 #################################################
 # Factory methods
