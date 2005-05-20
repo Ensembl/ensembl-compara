@@ -103,6 +103,7 @@ sub draw_parallel{
     }
     else { # default default to line
 	$bar_top = $bar_bottom = $y_offset + $height/2;
+	$bar_bottom++;
     }
 	
     # 1) add left arrowhead
