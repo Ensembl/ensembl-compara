@@ -128,7 +128,7 @@ sub RENDER_simple {
     # to geneview where all annotations can be viewed
 
     if( ( "@{[$f->das_type_id()]}" ) =~ /(summary)/i ) { ## INFO Box
-	my $f     = shift @{$configuration->{'features'}};
+#	my $f     = shift @{$configuration->{'features'}};
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
@@ -141,8 +141,7 @@ sub RENDER_simple {
 	$Composite->{zmenu} = $smenu;
 
 	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
-	$self->push($symbol->draw);
-
+	$Composite->push($symbol->draw);
 	# put the style back to how it was
 	$style->{'glyph'} = $oldglyph;
   } 
@@ -223,7 +222,6 @@ sub RENDER_grouped {
 
   # Flag to indicate if not all features got displayed due to bumping
   my $more_features = 0;
-
   # Loop over groups
   foreach my $group (values %grouped) {
     my $f = $group->[0];
@@ -336,7 +334,7 @@ sub RENDER_grouped {
 	# Special case for viewing summary non-positional features (i.e. gene
 	# DAS features on contigview) Just display a gene-wide line with a link
 	# to geneview where all annotations can be viewed
-	my $f = shift @feature_group;
+#	my $f = shift @feature_group;
 	my $style = $self->get_featurestyle($f, $configuration);
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
@@ -349,12 +347,15 @@ sub RENDER_grouped {
 	$Composite->{zmenu} = $smenu;
 
 	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
-	$self->push($symbol->draw);
+#	$self->push($symbol->draw);
+	$Composite->push($symbol->draw);
 
 	# put the style back to how it was
 	$style->{'glyph'} = $oldglyph;
+	$self->push($Composite);
 	next;
-    }
+    } 
+
     if ( ( "@{[$f->das_group_type]} @{[$f->das_type_id()]}" ) =~ /(CDS|translation|transcript|exon)/i ) { 
 	# Special case for displaying transcripts in a transcript style
 	# without having group stylesheets, or provide intron features
@@ -362,7 +363,7 @@ sub RENDER_grouped {
 	$groupstyle->{'glyph'} = 'line';
 	$groupstyle->{'attrs'}{'style'} = 'intron';
 	
-    }
+    } 
     ## GENERAL GROUPED FEATURE!
     # first feature of group
     my $f = shift @feature_group;
@@ -400,8 +401,8 @@ sub RENDER_grouped {
     # put back original properties of the style, so it can be re-used:
     $groupstyle->{'glyph'} = $orig_groupstyle_glyph;
     $groupstyle->{'attrs'}{'style'} = $orig_groupstyle_line ;
-   
-  }
+}
+
 
     if($more_features) {
     # There are more features to display : show the note
@@ -739,8 +740,8 @@ sub _init {
                 $ft->{das_feature_label} = "$key/$count";
 
                 $ft->{das_note} = "Found $count annotations for $key";
-                $ft->{das_link_label}  = 'View annotations in geneview';
-                $ft->{das_link} = "/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&:DASselect_${srcname}=0&DASselect_${srcname}=1#$srcname";
+                $ft->{das_link_label}  = ['View annotations in geneview'];
+                $ft->{das_link} = ["/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&:DASselect_${srcname}=0&DASselect_${srcname}=1#$srcname"];
                 
              }
              $ft->{das_type_id}->{id} = 'summary';
@@ -765,8 +766,10 @@ sub _init {
     } @{ $features || [] };
   }
 
+  
   $configuration->{'features'} = \@das_features;
 
+#  warn(Dumper(\@das_features));
 
   # hash styles by type
   my %styles;
@@ -814,7 +817,15 @@ sub smenu {
     'caption'         => $self->{'extras'}->{'label'},
   };
   $zmenu->{"02:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
-  $zmenu->{"03:".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+
+  my $ids = 3;
+  my @dlabels = $f->das_link_labels();
+  foreach my $dlink ($f->das_links) {
+      my $dlabel = sprintf("%02d: %s", $ids++, shift @dlabels);
+      $zmenu->{$dlabel} = $dlink if uc($dlink) ne 'NULL';
+  }
+
+#  $zmenu->{"03:".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
 
   if($note && uc($note) ne 'NULL') {
     $zmenu->{"01:INFO: $note"} = '';
