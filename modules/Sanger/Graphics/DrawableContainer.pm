@@ -57,7 +57,7 @@ sub new {
   my $label_width  = $T->get('_settings','label_width')    || 100;
   my $margin       = $T->get('_settings','margin')         || 5;
   my $trackspacing = $T->get('_settings','spacing')        || 2;
-  my $inter_space  = $T->get('_settings','intercontainer') || $margin * 2;
+  my $inter_space  = defined($T->get('_settings','intercontainer')) ? $T->get('_settings','intercontainer') : $margin * 2;
   my $image_width  = $T->get('_settings','width')          || 700;
   my $label_start  = $margin      +
                      ( $show_buttons eq 'yes' ? $button_width + $margin : 0 );
