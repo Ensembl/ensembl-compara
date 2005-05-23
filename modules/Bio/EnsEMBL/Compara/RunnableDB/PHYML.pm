@@ -84,6 +84,7 @@ sub fetch_input {
   $self->{'transition_transversion_ratio'}           = 0.0;
   $self->{'number_of_substitution_rate_categories'}  = 4;
   $self->{'gamma_distribution_parameter'}            = 1;
+  $self->{'cdna'}                                    = 1;
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -165,6 +166,7 @@ sub get_params {
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   $self->{'substitution_model'} = $params->{'substitution_model'} if(defined($params->{'substitution_model'}));
+  $self->{'cnda'} = $params->{'cdna'} if(defined($params->{'cdna'}));
   
   return;
 
@@ -202,7 +204,7 @@ sub run_phyml
   #./phyml seqs2 1 i 1 0 JTT 0.0 4 1.0 BIONJ n n 
   my $cmd = $phyml_executable;
   $cmd .= " ". $self->{'input_aln'};  
-  if(1) {
+  if($self->{'cdna'}) {
     $cmd .= " 0 i 2 0 HKY 4.0 e 1 1.0 BIONJ y y";
   } else {
     $cmd .= " 0 i 1 0"; #AA, interleaved, 1 dataset, no bootstrap
@@ -229,7 +231,7 @@ sub check_job_fail_options
 {
   my $self = shift;
   
-  printf("PHYML failed to execute on job\n");
+  printf("PHYML failed : ");
   $self->input_job->print_job;
   
   $self->dataflow_output_id($self->input_id, 2);
@@ -270,7 +272,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   open(OUTSEQ, ">$clw_file")
     or $self->throw("Error opening $clw_file for write");
 
-  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>1);
+  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'});
   
   my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTSEQ,
                                     -interleaved => 1,
