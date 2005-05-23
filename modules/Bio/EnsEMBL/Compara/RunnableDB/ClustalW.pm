@@ -83,7 +83,7 @@ sub fetch_input {
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "-maxiters 2";
   $self->{'calc_alignment'} = 1;
-  $self->{'calc_tree'} = undef;
+  $self->{'calc_tree'} = 0;
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -98,7 +98,6 @@ sub fetch_input {
   if($self->{'family'}) {
     $self->{'input_fasta'} = $self->dumpFamilyPeptidesToWorkdir($self->{'family'});
   } elsif($self->{'protein_tree'}) {
-    $self->{'calc_tree'} = 1;
     if($self->{'calc_alignment'}) {
       $self->dumpTreePeptidesToWorkdir($self->{'protein_tree'});
     } else {
@@ -179,7 +178,8 @@ sub get_params {
   }
   $self->{'options'} = $params->{'options'} if(defined($params->{'options'}));
   $self->{'calc_alignment'} = $params->{'align'} if(defined($params->{'align'}));
-  
+  $self->{'calc_tree'} = $params->{'tree'} if(defined($params->{'tree'}));
+
   return;
 
 }
@@ -431,12 +431,12 @@ sub parse_and_store_proteintree
   return unless($self->{'protein_tree'});
   
   $self->parse_alignment_into_proteintree if($self->{'calc_alignment'});
-  $self->parse_newick_into_proteintree;
+  $self->parse_newick_into_proteintree if($self->{'calc_tree'});
   
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $treeDBA->store($self->{'protein_tree'});
   $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
-  $self->{'protein_tree'}->print_tree if($self->debug);
+  $self->{'protein_tree'}->print_tree if($self->debug and $self->{'calc_tree'});
   $self->{'protein_tree'}->release;
 }
 
