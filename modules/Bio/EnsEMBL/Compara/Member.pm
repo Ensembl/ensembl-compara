@@ -615,14 +615,21 @@ sub print_member
 sub get_Gene {
   my $self = shift;
   
-  unless($self->{'core_gene'}) {
-    my $coreDBA = $self->genome_db->db_adaptor;
-    if($self->source_name eq 'ENSEMBLGENE') {    
-      $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->stable_id);
-    }
-    if($self->source_name eq 'ENSEMBLPEP') {
-      $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->gene_member->stable_id);
-    }
+  return $self->{'core_gene'} if($self->{'core_gene'});
+  
+  unless($self->genome_db and 
+         $self->genome_db->db_adaptor and
+         $self->genome_db->db_adaptor->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) 
+  {
+    throw("unable to connect to core ensembl database: missing registry and genome_db.locator");
+  }
+
+  my $coreDBA = $self->genome_db->db_adaptor;
+  if($self->source_name eq 'ENSEMBLGENE') {    
+    $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->stable_id);
+  }
+  if($self->source_name eq 'ENSEMBLPEP') {
+    $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->gene_member->stable_id);
   }
   return $self->{'core_gene'};
 }
@@ -645,10 +652,16 @@ sub get_Transcript {
   my $self = shift;
   
   return undef unless($self->source_name eq 'ENSEMBLPEP');
-  unless($self->{'core_transcript'}) {
-    my $coreDBA = $self->genome_db->db_adaptor;
-    $self->{'core_transcript'} = $coreDBA->get_TranscriptAdaptor->fetch_by_translation_stable_id($self->stable_id);
+  return $self->{'core_transcript'} if($self->{'core_transcript'});
+  
+  unless($self->genome_db and 
+         $self->genome_db->db_adaptor and
+         $self->genome_db->db_adaptor->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) 
+  {
+    throw("unable to connect to core ensembl database: missing registry and genome_db.locator");
   }
+  my $coreDBA = $self->genome_db->db_adaptor;
+  $self->{'core_transcript'} = $coreDBA->get_TranscriptAdaptor->fetch_by_translation_stable_id($self->stable_id);
   return $self->{'core_transcript'};
 }
 
