@@ -181,6 +181,7 @@ sub _init_non_assembled_contig {
       foreach( qw( contig clone supercontig scaffold chunk) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
           my $name =$Q->[0];
+          my $full_name = $name;
 	  $name =~ s/\.\d+$// if $_ eq 'clone';
           $label ||= $tile->{'locations'}->{$_}->[0];
           (my $T=ucfirst($_))=~s/contig/Contig/g;
@@ -196,7 +197,9 @@ sub _init_non_assembled_contig {
 	    $glyph->{'zmenu'}{"$POS:View in WebFPC"} = $fpc_URL if $fpc_URL && $internal_clone_name;
 	    $POS++;
 	  }
-	  $glyph->{'zmenu'}{"$POS:EMBL source file"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
+	  $glyph->{'zmenu'}{"$POS:EMBL source (this version)"} = $self->ID_URL( 'EMBL', $full_name) if /clone/;	
+          $POS++;
+	  $glyph->{'zmenu'}{"$POS:EMBL source (latest version)"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
           $POS++;
           $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch&region=$name);
           $POS++;
