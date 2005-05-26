@@ -23,12 +23,20 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
+
+
 package Bio::EnsEMBL::Compara::NestedSet;
 
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Data::UUID;
+
+unless(eval "require Data::UUID") {
+  throw("Cpan module Data::UUID is not installed on this system\n". 
+        "Please install from http://www.cpan.org/modules/by-module/Data/Data-UUID-0.11.tar.gz\n".
+        "If there are problems building on 64bit machines, please install patch at\n".
+        "http://www.ebi.ac.uk/~jessica/Data_UUID_64bit_patch.html\n"); 
+}
 
 #################################################
 # Factory methods
@@ -394,6 +402,30 @@ sub children {
   return \@kids;
 }
 
+=head2 sorted_children
+
+  Overview   : returns a sorted list of NestedSet nodes directly under this parent node
+               sort so that internal nodes<leaves and then on distance
+  Example    : my @kids = @{$object->ordered_children()};
+  Returntype : array reference of Bio::EnsEMBL::Compara::NestedSet objects (could be empty)
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub sorted_children {
+  my $self = shift;
+  
+  my @sortedkids = 
+     sort { $a->is_leaf <=> $b->is_leaf
+                     ||
+            $a->distance_to_parent <=> $b->distance_to_parent
+          }  @{$self->children;};
+  return \@sortedkids;
+}
+
+
+
 sub get_all_subnodes {
   my $self = shift;
   my $node_hash = shift;
@@ -476,7 +508,7 @@ sub print_tree {
   my $scale = shift;
   
   $scale = 100 unless($scale);
-  $self->_internal_print_tree("", 0, $scale);
+  $self->_internal_print_tree(undef, 0, $scale);
 }
 
 
@@ -486,21 +518,24 @@ sub _internal_print_tree {
   my $lastone = shift;
   my $scale = shift; 
 
-  $indent = '' unless(defined($indent));
-  print($indent);
-  for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { print('-'); }
-
+  if(defined($indent)) {
+    print($indent);
+    for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { print('-'); }
+  }
+  
   $self->print_node($indent);
 
-  if($lastone) {
-    chop($indent);
-    $indent .= " ";
+  if(defined($indent)) {
+    if($lastone) {
+      chop($indent);
+      $indent .= " ";
+    }
+    for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $indent .= ' '; }
   }
-  for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $indent .= ' '; }
+  $indent = '' unless(defined($indent));
   $indent .= "|";
 
-
-  my $children = $self->children;
+  my $children = $self->sorted_children;
   my $count=0;
   $lastone = 0;
   foreach my $child_node (@$children) {  
@@ -526,7 +561,7 @@ sub newick_format {
   if($self->get_child_count() > 0) {
     $newick .= "(";
     my $first_child=1;
-    foreach my $child (@{$self->children}) {  
+    foreach my $child (@{$self->sorted_children}) {  
       $newick .= "," unless($first_child);
       $newick .= $child->newick_format;
       $first_child = 0;
@@ -550,7 +585,7 @@ sub newick_simple_format {
   if($self->get_child_count() > 0) {
     $newick .= "(";
     my $first_child=1;
-    foreach my $child (@{$self->children}) {  
+    foreach my $child (@{$self->sorted_children}) {  
       $newick .= "," unless($first_child);
       $newick .= $child->newick_simple_format;
       $first_child = 0;
@@ -702,7 +737,7 @@ sub build_leftright_indexing {
   $counter = 1 unless($counter);
   
   $self->left_index($counter++);
-  foreach my $child_node (@{$self->children}) {
+  foreach my $child_node (@{$self->sorted_children}) {
     $counter = $child_node->build_leftright_indexing($counter);
   }
   $self->right_index($counter++);
