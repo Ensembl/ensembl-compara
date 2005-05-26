@@ -99,9 +99,9 @@ sub new {
   my $self = {};
   bless $self,$class;
 
-  my ($length, $requesting_slice, $method_link_species_set, $name, $expanded) =
+  my ($length, $requesting_slice, $method_link_species_set, $genome_db, $expanded) =
       rearrange([qw(
-          LENGTH REQUESTING_SLICE METHOD_LINK_SPECIES_SET NAME EXPANDED
+          LENGTH REQUESTING_SLICE METHOD_LINK_SPECIES_SET GENOME_DB EXPANDED
       )], @args);
 
   my $version = "";
@@ -138,11 +138,42 @@ sub new {
   $self->{strand} = 1;
   $self->{adaptor} = undef;
   $self->{coord_system} = $coord_system;
-  $self->{seq_region_name} = ($name or "FakeAlignSlice");
+  $self->genome_db($genome_db) if (defined($genome_db));
+  $self->{seq_region_name} = (eval{$genome_db->name} or "FakeAlignSlice");
   $self->{seq_region_length} = $length;
   $self->{located_slices} = [];
 
+  if (!$self->genome_db) {
+    throw("You must specify a Bio::EnsEMBL::Compara::GenomeDB when\n".
+        "creating a Bio::EnsEMBL::Compara::AlignSlice::Slice object");
+  }
+
   return $self;
+}
+
+
+=head2 genome_db
+
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : $slice->genome_db($human_gdb);
+  Description: getter/setter for the attribute genome_db
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB object
+  Exceptions : This attribute should never be unset. Several methods
+               rely on this attribute.
+  Caller     : $object->methodname
+
+=cut
+
+sub genome_db {
+  my ($self, $genome_db) = @_;
+
+  if (defined($genome_db)) {
+    throw("[$genome_db] must bu a Bio::EnsEMBL::Compara::GenomeDB obejct")
+      unless ($genome_db and ref($genome_db) and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+    $self->{genome_db} = $genome_db;
+  }
+
+  return $self->{genome_db};
 }
 
 
