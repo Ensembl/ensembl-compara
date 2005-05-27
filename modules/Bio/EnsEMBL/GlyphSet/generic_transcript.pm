@@ -97,7 +97,7 @@ sub href {
 
   my $species = $self->{container}{_config_file_name_};
   my $db = $self->my_config('db_alias') || 'core';
-  return "/$species/$script_name?db=$db&gene=$gid";
+  return "/$species/$script_name?db=$db;gene=$gid";
 }
 
 sub gene_href {
@@ -115,9 +115,9 @@ sub zmenu {
   my $gid = $gene->stable_id();
   my $zmenu = {
     'caption'          => "$name Gene",
-    "01:Gene:$gid"     => "/$sp/geneview?gene=$gid&db=$db",
-    '04:Export Gene'   => "/$sp/exportview?tab=fasta&".
-                          "type=feature&ftype=gene&id=$gid",
+    "01:Gene:$gid"     => "/$sp/geneview?gene=$gid;db=$db",
+    '04:Export Gene'   => "/$sp/exportview?tab=fasta;".
+                          "type=feature;ftype=gene;id=$gid",
   };
 
   if( $transcript ){
@@ -126,15 +126,15 @@ sub zmenu {
     my $ext_db = $transcript->external_db   || '';
     $tname = $ext_db ? "$ext_db:$tname" : $tname;
     $zmenu->{"00:$tname"}       = '';
-    $zmenu->{"02:Transcr:$tid"} = "/$sp/transview?transcript=$tid&db=$db";
-    $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?tab=fasta&".
-                                  "type=feature&ftype=cdna&id=$tid";
+    $zmenu->{"02:Transcr:$tid"} = "/$sp/transview?transcript=$tid;db=$db";
+    $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?tab=fasta;".
+                                  "type=feature;ftype=cdna;id=$tid";
     my $translation = $transcript->translation;
     if( $translation ){
       my $pid = $translation->stable_id;
-      $zmenu->{"03:Peptide:$pid"}   = "/$sp/protview?transcript=$tid&db=$db";
-      $zmenu->{'06:Export Peptide'} = "/$sp/exportview?tab=fasta&".
-                                     "type=feature&ftype=peptide&id=$pid";
+      $zmenu->{"03:Peptide:$pid"}   = "/$sp/protview?transcript=$tid;db=$db";
+      $zmenu->{'06:Export Peptide'} = "/$sp/exportview?tab=fasta;".
+                                     "type=feature;ftype=peptide;id=$pid";
     }
   } else { # No transcript
     my $gname  = $gene->external_name || $gid;
@@ -144,7 +144,7 @@ sub zmenu {
   }
 
   if( $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/ ){
-    $zmenu->{'07:Gene SNP view'}= "/$sp/genesnpview?gene=$gid&db=$db";
+    $zmenu->{'07:Gene SNP view'}= "/$sp/genesnpview?gene=$gid;db=$db";
   }
   return $zmenu;
 }

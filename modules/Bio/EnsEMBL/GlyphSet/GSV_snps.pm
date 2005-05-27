@@ -112,7 +112,7 @@ sub _init {
     } elsif($chr_end > $chr_start ) {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
-    my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->variation_name]}&source=@{[$snp->source]}&chr=$seq_region_name&vc_start=$chr_start";
+    my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S - $font_w_bp / 2,
       'y'         => $h + 2,

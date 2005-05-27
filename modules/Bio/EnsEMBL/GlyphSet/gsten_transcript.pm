@@ -107,16 +107,16 @@ sub zmenu {
     'caption'             => "Genoscope Gene",
     "00:$tid"		  => "",
     "01:Genoscope gene"   => $gene->type eq 'Genoscope_predicted' ? $self->ID_URL( 'TETRAODON_PRED', $tid ) : $self->ID_URL( 'TETRAODON_ANNOT', $tid ),
-    "03:Gene:$gid"        => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core",
-    "04:Transcr:$tid"     => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=core",                	
-    '05:Export cDNA'      => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
+    "03:Gene:$gid"        => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
+    "04:Transcr:$tid"     => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
+    '05:Export cDNA'      => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$tid",
   };
     
   if($pid) {
-    $zmenu->{"03:Peptide:$pid"}   = qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid&db=core);
-    $zmenu->{'05:Export Peptide'} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
+    $zmenu->{"03:Peptide:$pid"}   = qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid;db=core);
+    $zmenu->{'05:Export Peptide'} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid);	
   }
-  $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid&db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
+  $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid;db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
   return $zmenu;
 }
 
@@ -126,9 +126,9 @@ sub gene_zmenu {
   my $zmenu = {
     'caption'                       => "Genoscope Gene",
     "01:Genescope"                  => $gene->type eq 'Genoscope_prediction' ? $self->ID_URL( 'TETRAODON_PRED', $gid ) : $self->ID_URL( 'TETRAODON_ANNOT', $gid ),
-    "02:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core",
+    "02:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
   };
-  $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid&db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
+  $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid;db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
   return $zmenu;
 }
 

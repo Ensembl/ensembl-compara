@@ -198,7 +198,7 @@ sub _init {
          $pos = "$start&nbsp;-&nbsp;$end";
       }
 
-     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->id]}&source=@{[$snp->source_tag]}&chr=$seq_region_name&vc_start=$start";
+     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->id]};source=@{[$snp->source_tag]};chr=$seq_region_name;vc_start=$start";
 
       my $bglyph = new Sanger::Graphics::Glyph::Rect({
        'x'         => $S - $font_w_bp / 2,
@@ -354,17 +354,17 @@ sub zmenu {
     my $zmenu = {
         'caption'                       => EnsWeb::species_defs->AUTHORITY." Gene",
         "00:$id"			=> "",
-	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core",
-        "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=core",                	
-        '04:Export cDNA'                => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
+	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
+        "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
+        '04:Export cDNA'                => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$tid",
         
     };
     
     if($pid) {
     $zmenu->{"03:Peptide:$pid"}=
-    	qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid&db=core);
+    	qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid;db=core);
     $zmenu->{'05:Export Peptide'}=
-    	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);	
+    	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid);	
     }
     return $zmenu;
 }
