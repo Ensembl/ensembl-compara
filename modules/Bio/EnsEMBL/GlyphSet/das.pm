@@ -259,7 +259,7 @@ sub RENDER_grouped {
 # Very dirty hack to handle Next/Previous links between features when they are grouped
 # If there is Next or Previous label amongst the feature links, 
 # then get Previous link of the first feature in the group and Next link of the last feature in the group
-    if ( "@{$f->{das_link_label}}" =~ /Next|Previous/) {
+    if ( defined($f->{das_link_label}) && "@{$f->{das_link_label}}" =~ /Next|Previous/) {
 	my $fgroup = $feature_group[0];
 	my $lgroup = $feature_group[-1];
 	my @links = $fgroup->das_links;
@@ -541,9 +541,9 @@ sub gmenu{
   # Fix to handle features with multiple links.
   my $ids = 8;
   my @dlabels = $f->das_link_labels();
-  foreach my $dlink ($f->das_links) {
+  foreach my $dlink ($f->das_links()) {
       my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, shift @dlabels);
-      $zmenu->{$dlabel} = $dlink if uc($dlink) ne 'NULL';
+      $zmenu->{$dlabel} = $dlink if (ref($dlink) ne 'ARRAY' && uc($dlink) ne 'NULL');
   }
   $zmenu->{"20:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
 
@@ -573,7 +573,7 @@ sub zmenu {
   my @dlabels = $f->das_link_labels();
   foreach my $dlink ($f->das_links) {
       my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, shift @dlabels);
-      $zmenu->{$dlabel} = $dlink if uc($dlink) ne 'NULL';
+      $zmenu->{$dlabel} = $dlink if (ref($dlink) ne 'ARRAY' && uc($dlink) ne 'NULL');
   }
   $zmenu->{"20:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
 

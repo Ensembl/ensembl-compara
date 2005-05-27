@@ -172,16 +172,16 @@ sub legend {
   my ($self, $colours) = @_;
   return ('vega_genes', 1000,
       [
-        'Curated known genes'  => $colours->{'Known'}[0],
-        'Curated novel CDS'    => $colours->{'Novel_CDS'}[0],
-        'Curated putative'     => $colours->{'Putative'}[0],
-        'Curated novel Trans'  => $colours->{'Novel_Transcript'}[0],
-        'Curated pseudogenes'  => $colours->{'Pseudogene'}[0],
-        'Curated processed pseudogenes'  => $colours->{'Processed_pseudogene'}[0],
-        'Curated unprocessed pseudogenes'  => $colours->{'Unprocessed_pseudogene'}[0],
-        'Curated predicted gene'     => $colours->{'Predicted_Gene'}[0],
-        'Curated Immunoglobulin segment' => $colours->{'Ig_Segment'}[0],
-        'Curated Immunoglobulin pseudogene' => $colours->{'Ig_Pseudogene_Segment'}[0],
+        'Curated known genes'  => $colours->{'protein_coding_KNOWN'}[0],
+        'Curated novel CDS'    => $colours->{'protein_coding_NOVEL'}[0],
+        'Curated putative'     => $colours->{'unclassified_PUTATIVE'}[0],
+        'Curated novel Trans'  => $colours->{'protein_coding_NOVEL'}[0],
+        'Curated pseudogenes'  => $colours->{'pseudogene_KNOWN'}[0],
+        'Curated processed pseudogenes'  => $colours->{'processed_pseudogene_KNOWN'}[0],
+        'Curated unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_KNOWN'}[0],
+        'Curated predicted gene'     => $colours->{'protein_coding_PREDICTED'}[0],
+        'Curated Immunoglobulin segment' => $colours->{'Ig_segment_KNOWN'}[0],
+        'Curated Immunoglobulin pseudogene' => $colours->{'Ig_pseudogene_segment_KNOWN'}[0],
         'Curated Polymorphic' => $colours->{'Polymorphic'}[0],
       ]
   );

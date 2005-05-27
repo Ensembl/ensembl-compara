@@ -39,6 +39,7 @@ sub features {
 
   my $db_alias = $self->my_config('db_alias') || '';
   my @analyses = ( $self->analysis_logic_name || '' );
+  warn ">>>> @analyses";
 
   my @genes;
   foreach my $analysis( @analyses ){
