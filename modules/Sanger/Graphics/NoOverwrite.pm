@@ -33,7 +33,7 @@ sub checkdrawable {
     
     LOOP:{
         if($$bit_array[$row]){
-            if (($bit_array->[$row] & $element)==0){
+            if (($bit_array->[$row] && $element)==0){
                 $bit_array->[$row]=($bit_array->[$row] | $element);
             } else {
                 $row++;
