@@ -66,7 +66,7 @@ sub _init {
             my $exonview_link = '';
             if( $prot_id ){
               $exonview_link = sprintf
-                ( "/%s/exonview?exon=%s&db=%s", 
+                ( "/%s/exonview?exon=%s;db=%s", 
                   $self->{container}{_config_file_name_}, $exon_id, $db );
             }
 

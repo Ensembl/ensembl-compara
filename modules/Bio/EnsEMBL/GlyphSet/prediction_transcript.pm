@@ -59,7 +59,7 @@ sub href {
   my ($self, $gene, $transcript) = @_;
   my $id = $transcript->stable_id();
   my( $tld ) = @{[$self->{container}{_config_file_name_}]};
-  return "/$tld/transview?transcript=$id&db=core";
+  return "/$tld/transview?transcript=$id;db=core";
 }
 
 sub zmenu {
@@ -67,13 +67,13 @@ sub zmenu {
   my $id = $transcript->stable_id();
   my( $tld )= @{[$self->{container}{_config_file_name_}]};
   my $ev_link = 
-    ( "/$tld/exportview?tab=fasta&type=feature&ftype=transcript&".
-      "fasta_option=%s&id=%s" );
+    ( "/$tld/exportview?tab=fasta;type=feature;ftype=transcript;".
+      "fasta_option=%s;id=%s" );
   my $zmenu = 
     {
      'caption' => $id,
      '01:Transcript'     =>$self->href( $gene, $transcript ),
-     '02:Peptide'        =>"/$tld/protview?transcript=$id&db=core",
+     '02:Peptide'        =>"/$tld/protview?transcript=$id;db=core",
      '03:Export cDNA'    =>sprintf( $ev_link, 'cdna', $id ),
      '04:Export peptide' =>sprintf( $ev_link, 'peptide', $id ),
     };

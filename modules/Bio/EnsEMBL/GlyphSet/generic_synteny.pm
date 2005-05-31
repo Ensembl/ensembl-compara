@@ -42,8 +42,8 @@ sub image_label {
 sub href { 
   my ($self, $f ) = @_;
   my $ospecies = $self->my_config('species');
-  return "/$ospecies/cytoview?chr=$f->{'hit_chr_name'}&".
-      "vc_start=$f->{'hit_chr_start'}&vc_end=$f->{'hit_chr_end'}";
+  return "/$ospecies/cytoview?chr=$f->{'hit_chr_name'};".
+      "vc_start=$f->{'hit_chr_start'};vc_end=$f->{'hit_chr_end'}";
 }
 
 ## Create the zmenu...

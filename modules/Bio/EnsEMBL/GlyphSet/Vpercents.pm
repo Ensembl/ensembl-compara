@@ -64,7 +64,7 @@ sub _init {
 			'y'      => 0,
 			'width'  => $_->end - $_->start,
 			'height' => $_->scaledvalue,
-			'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->start&vc_end=$_->end"
+			'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr;vc_start=$_->start;vc_end=$_->end"
 		});
 		$self->push($g_x);
 	    $g_x = new Sanger::Graphics::Glyph::Line({

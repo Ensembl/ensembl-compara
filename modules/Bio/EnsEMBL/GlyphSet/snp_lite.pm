@@ -34,7 +34,7 @@ sub href {
     my $source = $f->source_tag;
     my $chr_name = $self->{'container'}->seq_region_name();
 
-    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id&source=$source&chr=$chr_name&vc_start=$chr_start";
+    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id;source=$source;chr=$chr_name;vc_start=$chr_start";
 }
 
 sub image_label {

@@ -105,20 +105,20 @@ sub _init_non_assembled_contig {
   my $black    = 'black';
   my $red      = 'red';
   my $highlights = join('|', $self->highlights());
-     $highlights = $highlights ? "&highlight=$highlights" : '';
+     $highlights = $highlights ? ";highlight=$highlights" : '';
  if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
     my $C = 0;
     foreach( @{ $self->{'config'}{'other_slices'}} ) {
       if( $C!= $self->{'config'}->{'slice_number'} ) {
         if( $C ) {
           if( $_->{'location'} ) {
-            $highlights .= sprintf( "&s$C=%s&c$C=%s:%s:%s&w$C=%s", $_->{'location'}->species,
+            $highlights .= sprintf( ";s$C=%s;c$C=%s:%s:%s;w$C=%s", $_->{'location'}->species,
                          $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
           } else {
-            $highlights .= sprintf( "&s$C=%s", $_->{'species'} );
+            $highlights .= sprintf( ";s$C=%s", $_->{'species'} );
           }
         } else {
-          $highlights .= sprintf( "&c=%s:%s:1&w=%s",
+          $highlights .= sprintf( ";c=%s:%s:1;w=%s",
                        $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint,
                        $_->{'location'}->length );
         }
@@ -168,7 +168,7 @@ sub _init_non_assembled_contig {
     if($navigation eq 'on') {
       foreach( qw(chunk supercontig clone scaffold contig) ) {
         if( my $Q = $tile->{'locations'}->{$_} ) {
-          $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch&region=$Q->[0]);
+          $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch;region=$Q->[0]);
         }
       }
     }
@@ -201,9 +201,9 @@ sub _init_non_assembled_contig {
           $POS++;
 	  $glyph->{'zmenu'}{"$POS:EMBL source (latest version)"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
           $POS++;
-          $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch&region=$name);
+          $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch;region=$name);
           $POS++;
-          $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=$_&id=$name);
+          $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=$_;id=$name);
           $POS++;
         }
       }

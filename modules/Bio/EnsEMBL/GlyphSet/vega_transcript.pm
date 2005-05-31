@@ -66,7 +66,7 @@ sub href {
     my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
     return ( $self->{'config'}->get($self->check, '_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
         "#$tid" : 
-        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core);
+        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core);
 }
 
 sub gene_href {
@@ -74,7 +74,7 @@ sub gene_href {
     my $gid = $gene->stable_id();
     return ($self->{'config'}->get($self->check,'_href_only') eq '#gid' && exists $highlights{$gene->stable_id()} ) ?
         "#$gid" :
-        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=core&gene=$gid);
+        qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=core;gene=$gid);
 }
 
 sub zmenu {
@@ -92,17 +92,17 @@ sub zmenu {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
         '01:Type: ' . $type => "",
-	"02:Gene:$gid"      => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core",
-        "03:Transcr:$tid"   => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=core",                	
-        "04:Exon:$tid"	    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid&db=core",
-        '05:Supporting evidence'    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid&db=core#evidence",
+	"02:Gene:$gid"      => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
+        "03:Transcr:$tid"   => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
+        "04:Exon:$tid"	    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
+        '05:Supporting evidence'    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
 
-        '08:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
+        '08:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$tid",
     };
 
     if ($pid) {
         $zmenu->{"06:Peptide:$pid"} =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
-        $zmenu->{'09:Export Peptide'}	= "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid";
+        $zmenu->{'09:Export Peptide'}	= "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid";
     }
 
     return $zmenu;
@@ -119,7 +119,7 @@ sub gene_zmenu {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
         '01:Type: ' . $type => "",
-        "02:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=core),
+        "02:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core),
     };
     return $zmenu;
 }

@@ -56,9 +56,9 @@ sub href {
   if ($view eq 'ldview' ){
     my $Config   = $self->{'config'};
     my $only_pop = $Config->{'_ld_population'};
-    $start .= "&pop=$only_pop" if $only_pop;
+    $start .= ";pop=$only_pop" if $only_pop;
   }
-  return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id&source=$source&c=$region:$start";
+  return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id;source=$source;c=$region:$start";
 }
 
 sub image_label {

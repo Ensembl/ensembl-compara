@@ -71,8 +71,8 @@ sub zmenu {
         '03:Transcript information'     => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=".$gene->stable_id(),
         '04:Protein information'        => "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=" . $transcript->translation->stable_id(),
         '05:Supporting evidence'        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$vtid",
-        '07:Protein sequence (FASTA)'   => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid",
-        '08:cDNA sequence'              => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$vtid",
+        '07:Protein sequence (FASTA)'   => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid",
+        '08:cDNA sequence'              => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$vtid",
     };
     my $DB = EnsWeb::species_defs->databases;
     if($DB->{'ENSEMBL_EXPRESSION'}) {

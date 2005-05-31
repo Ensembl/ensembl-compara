@@ -131,7 +131,7 @@ sub href {
     my $ticket = $hsp->adaptor->ticket;
     my $hspid = $hsp->token;
     $type ||= 'ALIGN';
-    my $htmpl = '/Multi/blastview?ticket=%s&hsp_id=%s&_display=%s';
+    my $htmpl = '/Multi/blastview?ticket=%s;hsp_id=%s;_display=%s';
     return sprintf($htmpl, $ticket, $hspid, $type);
 }
 
@@ -143,7 +143,7 @@ sub zmenu {
   if( $hsp ){
     my $caption = '';
     my $ltmpl = "%s:%s-%s(%s)";
-    my $htmpl = '@/Multi/blastview?ticket=%s&hsp_id=%s&_display=ALIGN';
+    my $htmpl = '@/Multi/blastview?ticket=%s;hsp_id=%s;_display=ALIGN';
     $zmenu->{caption} = $hsp->query->seq_id." vs. ". $hsp->hit->seq_id;
     $zmenu->{"00:Alignment..."}        = "\@".$self->href($hsp,'ALIGN');
     $zmenu->{"01:Query Sequence..."}   = "\@".$self->href($hsp,'SEQUENCE');

@@ -70,20 +70,20 @@ sub _init {
     my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
-    $highlights        = $highlights ? "&highlight=$highlights" : '';
+    $highlights        = $highlights ? ";highlight=$highlights" : '';
  if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
     my $C = 0;
     foreach( @{ $self->{'config'}{'other_slices'}} ) {
       if( $C!= $self->{'config'}->{'slice_number'} ) {
         if( $C ) {
           if( $_->{'location'} ) {
-            $highlights .= sprintf( "&s$C=%s&c$C=%s:%s:%s&w$C=%s", $_->{'species'}, 
+            $highlights .= sprintf( ";s$C=%s;c$C=%s:%s:%s;w$C=%s", $_->{'species'}, 
                          $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
           } else {
-            $highlights .= sprintf( "&s$C=%s", $_->{'species'} ); 
+            $highlights .= sprintf( ";s$C=%s", $_->{'species'} ); 
           }
         } else {
-          $highlights .= sprintf( "&c=%s:%s:1&w=%s", 
+          $highlights .= sprintf( ";c=%s:%s:1;w=%s", 
                          $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'location'}->length );
         }
       }

@@ -61,7 +61,7 @@ sub href {
 
   return ($self->{'config'}->get('evega_transcript','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
      "#$tid" :
-     qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega&gene=$gid);
+     qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega;gene=$gid);
 }
 
 sub gene_href {
@@ -70,7 +70,7 @@ sub gene_href {
   my $gid = $gene->stable_id();
   return ($self->{'config'}->get('evega_transcript','_href_only') eq '#gid' && exists $highlights{$gene->stable_id()} ) ?
     "#$gid" :
-    qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega&gene=$gid);
+    qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega;gene=$gid);
 }
 
 
@@ -87,17 +87,17 @@ sub zmenu {
   my $zmenu = {
     'caption'             => "Vega Gene",
     "00:$id"    => "",
-  "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=vega",
-    "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid&db=vega",          
-    '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=cdna&id=$tid",
+  "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega",
+    "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=vega",          
+    '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$tid",
     "06:Vega curated ($type)"   => '',
   };
   
   if($pid) {
   $zmenu->{"03:Peptide:$pid"}=
-    qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid&db=vega);
+    qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid;db=vega);
   $zmenu->{'05:Export Peptide'}=
-    qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta&type=feature&ftype=peptide&id=$pid);  
+    qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid);  
   }
   
   return $zmenu;
@@ -111,7 +111,7 @@ sub gene_zmenu {
      $type =~ s/HUMACE-//g;
   my $zmenu = {
     'caption'             => "Vega Gene",
-    "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid&db=vega),
+    "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega),
     "06:Vega curated ($type)"   => '',
   };
   return $zmenu;

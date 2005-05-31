@@ -55,7 +55,7 @@ sub render_Poly {
 	my $href = $self->_getHref( $glyph );
 	return unless(defined $href);
     my $pointslist = join ' ',map { int } reverse @{$glyph->pixelpoints()};
-    $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href>\n).$self->{'canvas'} ; 
+    $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href />\n).$self->{'canvas'} ; 
 }
 
 sub render_Composite {

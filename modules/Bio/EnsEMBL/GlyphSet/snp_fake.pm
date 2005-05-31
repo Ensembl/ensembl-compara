@@ -144,7 +144,7 @@ sub href {
     my $source = $f->source;
     my $seq_region_name = $self->{'container'}->seq_region_name();
 
-    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id&source=$source&chr=$seq_region_name&vc_start=$start";
+    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id;source=$source;chr=$seq_region_name;vc_start=$start";
 }
 
 1;

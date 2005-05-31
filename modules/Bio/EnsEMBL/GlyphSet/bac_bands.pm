@@ -20,7 +20,7 @@ sub href {
 
   my $page = ($ENV{'ENSEMBL_SCRIPT'} eq 'cytoview') ? 'contigview' : 'cytoview';
 
-  return qq(/@{[$self->{container}{_config_file_name_}]}/$page?chr=$chr&chr_start=$chr_start&chr_end=$chr_end) ;
+  return qq(/@{[$self->{container}{_config_file_name_}]}/$page?chr=$chr;chr_start=$chr_start;chr_end=$chr_end) ;
 }
 
 sub zmenu {

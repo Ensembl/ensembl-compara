@@ -22,11 +22,11 @@ sub init_label {
   $params =~ s/\&/zzz/g;
   my $script = $ENV{ENSEMBL_SCRIPT};
 
-  my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  qq(/@{[$self->{container}{_config_file_name_}]}/helpview?se=1&kw=$ENV{'ENSEMBL_SCRIPT'}#das);
+  my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  qq(/@{[$self->{container}{_config_file_name_}]}/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das);
 
 my $URL = "";
 if ($self->das_name =~ /^managed_extdas_(.*)$/){
-    $URL = qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/dasconfview?_das_edit=$1&conf_script=$script&conf_script_params=$params\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0));
+    $URL = qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/dasconfview?_das_edit=$1;conf_script=$script;conf_script_params=$params\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0));
 }
 else {
     if ($self->{'extras'}{'homepage'}){
@@ -741,7 +741,7 @@ sub _init {
 
                 $ft->{das_note} = "Found $count annotations for $key";
                 $ft->{das_link_label}  = ['View annotations in geneview'];
-                $ft->{das_link} = ["/$ENV{ENSEMBL_SPECIES}/geneview?db=core&gene=$key&:DASselect_${srcname}=0&DASselect_${srcname}=1#$srcname"];
+                $ft->{das_link} = ["/$ENV{ENSEMBL_SPECIES}/geneview?db=core;gene=$key;:DASselect_${srcname}=0;DASselect_${srcname}=1#$srcname"];
                 
              }
              $ft->{das_type_id}->{id} = 'summary';

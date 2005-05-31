@@ -70,7 +70,7 @@ sub href {
     $C++;
   }
   $param{'s'}||= $ENV{'ENSEMBL_SPECIES'};
-  my $return = "/$param{'s'}/$ENV{'ENSEMBL_SCRIPT'}?". join '&', map { $_ eq 's' || !$param{$_} ? () : "$_=$param{$_}" } sort keys %param;
+  my $return = "/$param{'s'}/$ENV{'ENSEMBL_SCRIPT'}?". join ';', map { $_ eq 's' || !$param{$_} ? () : "$_=$param{$_}" } sort keys %param;
   return $return;
 }
 

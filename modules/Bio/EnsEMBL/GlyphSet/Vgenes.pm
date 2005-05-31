@@ -73,7 +73,7 @@ sub _init {
       'height' => $_->scaledvalue,
       'bordercolour' => $genes_col,
       'absolutey' => 1,
-      'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->start&vc_end=$_->end"
+      'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr;vc_start=$_->start;vc_end=$_->end"
     });
     $self->push($g_x);
   }

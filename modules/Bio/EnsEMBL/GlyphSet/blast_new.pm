@@ -29,7 +29,7 @@ sub href {
     if (!$type || (ref($type) eq 'ARRAY')){
         $type = 'ALIGN';
     };
-    my $htmpl = '/Multi/blastview?ticket=%s&hsp_id=%s!!%s&_display=%s';
+    my $htmpl = '/Multi/blastview?ticket=%s;hsp_id=%s!!%s;_display=%s';
     return sprintf($htmpl, $ticket, $hsp_id, $use_date, $type);
     #   return $self->ID_URL( 'SRS_PROTEIN', $id );
 }

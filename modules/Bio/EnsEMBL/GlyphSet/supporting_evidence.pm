@@ -26,7 +26,7 @@ sub href {
    
   if ( $Container->{'hits'}{$hit}{'datalib'} !~ /pfamfrag/i && $hit !~ /^WP.+[A-Z]$/i ) {
 	$alignment =
-        "/@{[$self->{container}{_config_file_name_}]}/alignview?transcript=".$Container->{'transcript'}{'ID'}."&exon=".@{$Container->{'hits'}{$hit}{'exon_ids'}}[$exon_count]."&sequence=".$hit."&seq_type=$seq_type&db=".
+        "/@{[$self->{container}{_config_file_name_}]}/alignview?transcript=".$Container->{'transcript'}{'ID'}.";exon=".@{$Container->{'hits'}{$hit}{'exon_ids'}}[$exon_count].";sequence=".$hit.";seq_type=$seq_type;db=".
 	$Container->{'transcript'}{'db'} ;
   }
  

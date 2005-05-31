@@ -22,8 +22,8 @@ sub zmenu {
     (my $stripped_id = $id) =~ s/(^[^\.]+)\..*/$1/;
     my $zmenu = { 'caption' => "EST $stripped_id", "$stripped_id" => $self->href( $stripped_id ) };
 
-    my $extra_URL  = "/@{[$self->{container}{_config_file_name_}]}/featureview?type=DnaAlignFeature&id=$id";
-    #$extra_URL .= "&db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
+    my $extra_URL  = "/@{[$self->{container}{_config_file_name_}]}/featureview?type=DnaAlignFeature;id=$id";
+    #$extra_URL .= ";db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
     $zmenu->{ 'View all hits' } = $extra_URL;
     return $zmenu;
 }

@@ -31,8 +31,8 @@ sub image_label {
 sub href {
   my ($self, $id, $fd ) = @_;
   my $f = $fd->[0][2];
-  my $tmpl = "/%s/featureview?type=AffyProbe&id=%s";
-  return sprintf( "/%s/featureview?type=AffyProbe&id=%s", $self->{container}{_config_file_name_}, $f->probeset );
+  my $tmpl = "/%s/featureview?type=AffyProbe;id=%s";
+  return sprintf( "/%s/featureview?type=AffyProbe;id=%s", $self->{container}{_config_file_name_}, $f->probeset );
 }
 
 ## Create the zmenu...

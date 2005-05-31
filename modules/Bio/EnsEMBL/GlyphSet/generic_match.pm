@@ -94,8 +94,8 @@ sub zmenu {
 
   my $extra_URL  = "/@{[$self->{container}{_config_file_name_}]}/featureview?type=";
      $extra_URL .= ( $self->my_config('CALL') eq 'get_all_ProteinAlignFeatures' ? 'ProteinAlignFeature' : 'DnaAlignFeature' );
-     $extra_URL .= "&id=$id";
-     $extra_URL .= "&db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
+     $extra_URL .= ";id=$id";
+     $extra_URL .= ";db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
   push @zmenus, 'View all hits',  $extra_URL;
   return {@zmenus};
 }

@@ -173,9 +173,9 @@ sub expanded_init {
     if($end-$start<$WIDTH) {
       my $X =int(( $start + $end - $WIDTH) /2);
       my $Y = $X + $WIDTH ;
-      $ZZ = "region=$seqregion&vc_start=$X&vc_end=$Y";
+      $ZZ = "region=$seqregion;vc_start=$X;vc_end=$Y";
     } else {
-      $ZZ = "region=$seqregion&vc_start=$start&vc_end=$end";
+      $ZZ = "region=$seqregion;vc_start=$start;vc_end=$end";
     }
     my $href = "$HREF?$ZZ";
     $Composite->href(  "$HREF?$ZZ" );
@@ -241,7 +241,7 @@ sub compact_init {
     foreach my $T ( @{$Config->{'other_slices'}||[]} ) {
       if( $T->{'species'} ne $self_species && $T->{'species'} ne $other_species ) {
         $C++;
-        $COMPARA_HTML_EXTRA.="&s$C=$T->{'species'}";
+        $COMPARA_HTML_EXTRA.=";s$C=$T->{'species'}";
       }
     }
     $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
@@ -249,10 +249,10 @@ sub compact_init {
 
   my( $T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
   my $domain = $Config->get( $type, 'linkto' );
-  my $HREF_TEMPLATE = "/$self_species/dotterview?ref=$self_species:$chr:%d&hom=$other_species:%s:%d";
+  my $HREF_TEMPLATE = "/$self_species/dotterview?ref=$self_species:$chr:%d;hom=$other_species:%s:%d";
   my $X = -1e8;
   my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
-  my $MCV_TEMPLATE  = "/$self_species/multicontigview?c=%s:%d&w=%d&s1=$other_species&c1=%s:%d&w1=%d$COMPARA_HTML_EXTRA";
+  my $MCV_TEMPLATE  = "/$self_species/multicontigview?c=%s:%d;w=%d;s1=$other_species;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
   
   my @T = sort { $a->[0] <=> $b->[0] }
     map { [$_->start, $_ ] }
@@ -290,7 +290,7 @@ sub compact_init {
     unless( $domain ) {
       $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
       $zmenu->{ 'Dotter' }    = $href;
-      $zmenu->{ 'Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature&l=$chr:$rs-$re&s1=$other_species&l1=$chr_2:$s_2-$e_2&type=$METHOD";
+      $zmenu->{ 'Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
       $zmenu->{ $MULTICONTIGVIEW_TEXT_LINK } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
     }
     $zmenu->{ 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) } = undef;

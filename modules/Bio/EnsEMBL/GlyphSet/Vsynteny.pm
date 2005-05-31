@@ -141,12 +141,12 @@ sub _init {
                 'caption' => "$OTHER_T chr $other_chr",
                 sprintf("01:%s Chr %s:%0.1fM-%0.1fM",$SPECIES_SHORT,
                         $this_chr,$box->{'chr_start'}/1e6,$box->{'chr_end'}/1e6) => 
-    qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
+    qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr;vc_start=$box->{'chr_start'};vc_end=$box->{'chr_end'}),                        
                 sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
                         $other_chr,$box->{'hit_chr_start'}/1e6,$box->{'hit_chr_end'}/1e6) => 
-		( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' ),
+		( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$box->{'hit_chr_start'};vc_end=$box->{'hit_chr_end'}) : '' ),
 
-	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?otherspecies=$OTHER&chr=$this_chr&loc=).int(($box->{'chr_end'}+$box->{'chr_start'})/2)
+	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?otherspecies=$OTHER;chr=$this_chr;loc=).int(($box->{'chr_end'}+$box->{'chr_start'})/2)
 
 	    };
 
@@ -157,7 +157,7 @@ sub _init {
             'col' => $COL,
             'border' => $BORD,
             'side' => $SIDE,
-            'href' => qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),
+            'href' => qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr;vc_start=$box->{'chr_start'};vc_end=$box->{'chr_end'}),
             'zmenu' => $ZMENU
         };
         if($SIDE) {
@@ -179,16 +179,16 @@ sub _init {
                     $box->{'chr_start'}/1e6,
                     $box->{'chr_end'}/1e6
                 ) => 
-                        qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr&vc_start=$box->{'chr_start'}&vc_end=$box->{'chr_end'}),                        
+                        qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr;vc_start=$box->{'chr_start'};vc_end=$box->{'chr_end'}),                        
                 sprintf("03:%s Chr %s:%0.1fM-%0.1fM",
                     $OTHER_SHORT,
                     $other_chr,
                     $box->{'hit_chr_start'}/1e6,
                     $box->{'hit_chr_end'}/1e6
                 ) => 
-                    ( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr&vc_start=$box->{'hit_chr_start'}&vc_end=$box->{'hit_chr_end'}) : '' )
+                    ( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$box->{'hit_chr_start'};vc_end=$box->{'hit_chr_end'}) : '' )
             );
-            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{_config_file_name_}]}&chr=$other_chr&loc=).int(($box->{'hit_chr_end'}+$box->{'hit_chr_start'})/2) : '' ;
+            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{_config_file_name_}]};chr=$other_chr;loc=).int(($box->{'hit_chr_end'}+$box->{'hit_chr_start'})/2) : '' ;
             $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;
             push @{$highlights_secondary->{$other_chr}}, {
                 'rel_ori' => $box->{'rel_ori'},
@@ -621,11 +621,11 @@ sub draw_chromosome {
             'bordercolour' => $params{'red'},
             'absolutey'  => 1,
             'absolutex'  => 1,'absolutewidth'=>1,
-            'href'       => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$params{'chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5),
+            'href'       => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5),
             'zmenu'       => {
                 'caption' => "Entry point",
                 "Jump to ContigView" =>
-                "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$params{'chr'}&vc_start=".($params{'line'}-5e5)."&vc_end=".($params{'line'}+5e5)
+                "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5)
             }
         }));
     }

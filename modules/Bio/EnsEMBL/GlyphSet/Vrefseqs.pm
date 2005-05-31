@@ -49,7 +49,7 @@ sub _init {
 		'height' => $_->{'scaledvalue'},
 		'bordercolour' => $refseqs_col,
 		'absolutey' => 1,
-		'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr&vc_start=$_->{'chromosomestart'}&vc_end=$_->{'chromosomeend'}"
+		'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr;vc_start=$_->{'chromosomestart'};vc_end=$_->{'chromosomeend'}"
 	}));
     }
 }

@@ -136,7 +136,7 @@ sub _init {
           $gband->{'zmenu'}{ "01:Display in $script" } = "/@{[$self->{container}{_config_file_name_}]}/$script?l=$chr:$band_start-$band_end";
         }	
 	if( @{[$self->{container}{_config_file_name_}]} =~ /Anopheles_gambiae/i ){
-          $gband->{'zmenu'}{ "02:View band diagram" } = "/@{[$self->{container}{_config_file_name_}]}/BACmap?chr=$chr&band=$band_no",
+          $gband->{'zmenu'}{ "02:View band diagram" } = "/@{[$self->{container}{_config_file_name_}]}/BACmap?chr=$chr;band=$band_no",
         }
     	$self->push($gband);
 	$i++;
