@@ -84,21 +84,21 @@ sub check {
 
 sub HASH_URL {
   my($self,$db,$hash) = @_;
-  return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&".join '&', map { "$_=$hash->{$_}" } keys %{$hash||{}};
+  return "/@{[$self->{container}{_config_file_name_}]}/r?d=$db;".join ';', map { "$_=$hash->{$_}" } keys %{$hash||{}};
 }
 
 sub ID_URL {
   my($self,$db,$id) = @_;
-  return exists( EnsWeb->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) ? "/@{[$self->{container}{_config_file_name_}]}/r?d=$db&ID=$id" : "";
+  return exists( EnsWeb->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) ? "/@{[$self->{container}{_config_file_name_}]}/r?d=$db;ID=$id" : "";
 }
 
 sub zoom_URL {
   my( $self, $PART, $interval_middle, $width, $factor, $highlights, $config_number, $ori) = @_;
   my $extra;
   if( $config_number ) {
-    $extra = "o$config_number=c$config_number=$PART:$interval_middle:$ori&w$config_number=$width"; 
+    $extra = "o$config_number=c$config_number=$PART:$interval_middle:$ori;w$config_number=$width"; 
   } else {
-    $extra = "c=$PART:$interval_middle&w=$width";
+    $extra = "c=$PART:$interval_middle;w=$width";
   }
   return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$extra$highlights);
 }
