@@ -43,7 +43,7 @@ sub render_Rect {
     $y2 += 1;
     $x2 += 1;
 
-    $self->{'canvas'} = qq(<area coords="$x1 $y1 $x2 $y2"$href>\n).$self->{'canvas'};
+    $self->{'canvas'} = qq(<area coords="$x1 $y1 $x2 $y2"$href alt="" />\n).$self->{'canvas'};
 }
 
 sub render_Text {
@@ -72,7 +72,7 @@ sub render_Circle {
   $y2 += 1;
   $x2 += 1;
   
-  $self->{'canvas'} = qq(<area coords="$x1 $y1 $x2 $y2"$href>\n).$self->{'canvas'}; 
+  $self->{'canvas'} = qq(<area coords="$x1 $y1 $x2 $y2"$href alt="" />\n).$self->{'canvas'}; 
 }
 
 sub render_Ellipse {
@@ -87,7 +87,7 @@ sub render_Poly {
   return unless(defined $href && $href);
 
   my $pointslist = join ' ',map { int } @{$glyph->pixelpoints()};
-  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href>\n).$self->{'canvas'} ; 
+  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href alt="" />\n).$self->{'canvas'} ; 
 }
 
 sub render_Space {
