@@ -1,5 +1,102 @@
 #!/usr/local/ensembl/bin/perl -w
 
+
+=head1 NAME
+
+LaunchBLAT.pl
+
+=head1 DESCRIPTION
+
+This script launches a BLAT comparison
+
+=head1 SYNOPSIS
+
+perl LaunchBLAT_pipeline.pl
+ -fastadb database.fa
+ -target_type dnax
+ -fastaqy query.fa
+ -target_type dnax
+
+perl LaunchBLAT_pipeline.pl
+ -fastadb database.fa
+ -target_type dnax
+ -idqy ids.txt
+ -indexqy query_index.txt
+ -fastafetch fastafetch.pl
+
+=head1 ARGUMENTS
+
+=head2 TARGET SEQUENCE
+
+=over
+
+=item B<-fastadb fasta_file>
+
+File name of the target sequence (FASTA format)
+
+=item B<-target_type type>
+
+Type of sequence: dna, prot, dnax
+    
+=item B<-Nooc Nooc_file>
+
+File containing overused N-mers. If none is specified, a temporary file will be used.
+    
+=back
+
+=head2 QUERY SEQUENCE
+
+=over
+
+There are two ways of specifying the query sequence. The first one
+is based on a single FASTA file while the second one is based on an
+index file and a file containing the list of IDs to be extracted
+using the index file. In the second case, a specific fastafetch
+program can be specified.
+
+=item B<-fastaqy fasta_file>
+
+File name of the query sequence (FASTA format)
+
+=item B<-idqy ids_file>
+
+File containing the IDs to be used (one per line)
+
+=item B<-indexqy index_file>
+
+File indexing the IDs
+
+=item B<-fastafetch fastafetch_exe>
+
+Program used to fetch the sequences in the ids_file using the index_file
+
+=item B<-query_type type>
+
+Type of sequence: dna, rna, prot, dnax, rnax
+    
+=back
+
+=head1 AUTHORS
+
+ Cara Woodwark (cara@ebi.ac.uk)
+ Javier Herrero (jherrero@ebi.ac.uk)
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004, 2005. EnsEMBL Team
+
+You may distribute this module under the same terms as perl itself
+
+=head1 CONTACT
+
+This script is part of the EnsEMBL project (http://www.ensembl.org)
+
+Questions can be posted to the ensembl-dev mailing list:
+ensembl-dev@ebi.ac.uk
+
+
+=cut
+
 $| = 1;
 
 use strict;
@@ -15,10 +112,9 @@ my $indexqy;
 my $fastaqy;
 my $fastadb;
 my $dbname;
-my $query_type="dna";
-my $target_type="dna";
-my $Nooc_file;
-my @Qseqs;
+my $query_type="dnax";
+my $target_type="dnax";
+my $Nooc_file = "/tmp/Nooc.$$";
 
 my $fastafetch_executable = "/nfs/acari/abel/bin/alpha-dec-osf4.0/fastafetch";
 
@@ -28,18 +124,20 @@ if (-e "/proc/version") {
     }
     
 GetOptions( 'idqy=s'   => \$idqy,
-#    	    'fastaqy=s' => \$fastaqy,
 	    'indexqy=s' => \$indexqy,
+ 	    'fastaqy=s' => \$fastaqy,
 	    'fastadb=s' => \$fastadb,
 	    'dbname=s'   => \$dbname,
 	    'query_type:s'=>\$query_type,
 	    'target_type:s'=>\$target_type,
 	    'makefile:s'  => \$Nooc_file,
+	    'Nooc:s'  => \$Nooc_file,
 	    'fastafetch=s'  => \$fastafetch_executable);
 	    
-unless (-e $idqy) {
-	 die "$idqy file does not exist\n";
-	 }
+if (!defined($fastaqy) and !(defined($idqy) and defined($indexqy))) {
+  die "No query sequences have been defined. Use either -fastaqy or ".
+    "both -idqy and -indexqy\n";
+}
 	 
 	 
 ######
@@ -56,31 +154,25 @@ unless (-e $idqy) {
 
 my $rand = time().rand(1000);
 
-my $qy_file = "/tmp/qy.$rand";
+if (!defined($fastaqy)) {
+  $fastaqy = "/tmp/qy.$rand";
 
-# might be good to use /usr/local/ensembl/bin/fetchdb instead of fastafetch
+  # might be good to use /usr/local/ensembl/bin/fetchdb instead of fastafetch
 
-unless(system("$fastafetch_executable $indexqy $idqy > $qy_file") ==0) {
-  unlink glob("/tmp/*$rand*");
-  die "error in fastafetch $idqy, $!\n$fastafetch_executable $indexqy $idqy > $qy_file";
-  } 
-  
+  unless(system("$fastafetch_executable $indexqy $idqy > $fastaqy") ==0) {
+    unlink glob("/tmp/*$rand*");
+    die "error in fastafetch $idqy, $!\n$fastafetch_executable $indexqy $idqy > $fastaqy";
+  }
+}
+
 print "$Nooc_file\n";
 
-	 	my $seqio = new Bio::SeqIO(-file => $qy_file,
-	                            -format => 'fasta');
-				    
- 		my $number_seq_treated = 0;
- 
-  		while (my $seq = $seqio->next_seq) {
-  			push @Qseqs, $seq;
-			}
 unless (-e $Nooc_file){#Fetch seqs and make makefile
 print "making make file\n";
 
 	my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(
                 -blat         => "blat-32",
-                -query_seqs   => \@Qseqs,
+                -query_file   => $fastaqy,
 	 							-database     => $fastadb,
 								-query_type	  => $query_type,
 								-target_type	=> $target_type,
@@ -90,13 +182,14 @@ print "making make file\n";
 #Run with querys
   $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(
                 -blat         => "blat-32",
-                -query_seqs   => \@Qseqs,
+                -query_file   => $fastaqy,
 	 							-database     => $fastadb,
 								-query_type	  => $query_type,
 								-parse		    => 1,
 								-target_type	=> $target_type,
 								-options      => "-ooc=$Nooc_file -mask=lower -qMask=lower ");
   $runnable->run;
+  unlink($Nooc_file) if ($Nooc_file =~ /^\/tmp/);
 	
 	#my @top_hsps = $runnable->output;
 #foreach my $out (@top_hsps){
@@ -116,7 +209,7 @@ else{ #run blat using the Nooc file
 	
 	my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat(
                 -blat         => "blat-32",
-                -query_seqs   => \@Qseqs,
+                -query_file   => $fastaqy,
 	 							-database     => $fastadb,
 								-query_type	  => $query_type,
 								-target_type	=> $target_type,
