@@ -40,7 +40,6 @@ my $conf_file;
 my @new_features=();
 my $matrix;
 my %prev;
-my $i=0;
 my @all=();
 my @sorted=();
 
@@ -102,246 +101,74 @@ if ($matrix_file){
   #print OUT "track name=$track description=\"BLAT of $sps1 with $sps2(GFF)\" useScore=1 color=333300\n";
   #print DATA "no(group)\tsps1\tchr1\tprog\tfeat\tQ_start\tQ_end\tQ_strand\tsps2\tchr2\tT_start\tT_end\tT_strand\tscore\tident\tposit\tcigar\n";
 
-  LINE:while (my $line=<FILE>)
-    {
-    
-    chomp $line; 
-    my @atrib=split /\t/,$line;
-    
-    
-################################################################################################
-## Need some sort of general reg expression here to cope with the weird honey bee groupings
-##But Havn't managed to work one out therefore at present here is a hard coded hackaround
+
+#####################################################################
+## Read & Parse data file
 ##
-################################################################################################    
+
+while (my $line=<FILE>) {
+  chomp $line; 
+  my @atrib=split /\t/,$line;
+  my $Q_id = $atrib[0];
+  my $Q_start = $atrib[3];
+  my $Q_end = $atrib[4];
+  my $Q_strand = $atrib[11];
+  my $T_id = $atrib[5];
+  my $T_start = $atrib[6];
+  my $T_end = $atrib[7];
+  my $T_strand = $atrib[10];
+  my $score = $atrib[8];
+  my $perc_id = $atrib[12];
+
+  next unless (defined($Q_id) && ($Q_id =~ /^$sps1/)
+      && defined($T_id) && ($T_id =~ /^$sps2/)
+      && ($Q_end - $Q_start >= 15));
+
+  my ($Q_seq_type, $Q_chr, $Q_offset) = $Q_id =~ /^$sps1\.(\S+):(\S+)\.(\d+)$/;
+  my ($T_seq_type, $T_chr, $T_offset) = $T_id =~ /^$sps2\.(\S+):(\S+)\.(\d+)$/;
+  $Q_start += $Q_offset - 1;
+  $Q_end += $Q_offset - 1;
+  $T_start += $T_offset - 1;
+  $T_end += $T_offset - 1;
+
+  my $Qst = $atrib[11]; if ($Qst eq '+'){$Qst= 1;}else {$Qst='-1';} 
+  my $Hst = $atrib[10]; if ($Hst eq '+'){$Hst= 1;}else {$Hst='-1';}
+
+  my $len = $Q_end - $Q_start + 1; # No gaps therefore same length for both
     
-    unless ((defined($atrib[9])) && ($atrib[0] =~ /$sps1/) && ($atrib[4]-$atrib[3] >=15)){ next LINE;}
-    my ($chr1, $chr1_2, $sp, $offset1, $seq_type1); my $chr2; my $offset2; my $seq_type2;
-##    if ($sps1 =~/Am/){
-##      ($sp, $chr1, $chr1_2, $offset1) = split /\./,$atrib[0];
-###Am.chromosome:Group6.13.1485001 just for BEE
-##      $chr1=~s/chromosome://;
-##      $chr1=$chr1.".".$chr1_2;#just for BEE
-##      }
-##    elsif($sps1 =~/Cb/){
-##      ($chr1_2, $chr1, $offset1) = split /\./,$atrib[0];
-##      $chr1= "cb25.".$chr1;
-##      $seq_type1="scaffold";
-##      }
-##    elsif($sps1 =~/Ag/){
-##      ($chr1, $offset1) = split /\./,$atrib[0];
-##      $chr1=~s/Ag2b//;
-##      $seq_type1="chromosome";
-##      }
-##    elsif($sps1 =~/Fr/){
-##      ($chr1, $offset1) = split /\./,$atrib[0];
-##      $chr1=~s/FrChr_//;
-##      $seq_type1="scaffold";
-##      }
-##    else{
-      $atrib[0] =~/$sps1\.(\S+):(\S+)\.(\d+)$/; #use for rest
-      $seq_type1= $1;
-       $chr1 = $2;
-      $offset1=$3;
-##      }
-        
-#    $chr1=~s/$sps1//;
-      
-    $atrib[5] =~/$sps2\.(\S+):(\S+)\.(\d+)$/;
-    $seq_type2=$1;
-     $chr2 = $2;
-    $offset2=$3;
-       
-    
-  
-  
-    
-    
-    
-    
-    if($chr2=~/\.\D+:(\S+)$/){
-      $chr2=$1; 
-    #print STDERR " $chr2, $offset2\n";
-      }
-    
-    $offset1--; $offset2--;
-    my $Qstart=$offset1+$atrib[3];
-    my $Qend=$offset1+$atrib[4];
-    my $Hstart=$offset2+$atrib[6];
-    my $Hend=$offset2+$atrib[7];
-    
-    #print STDERR " $sps1: chr1:$chr1\t$offset1\n $sps2: chr2:$chr2\t$offset2\n";
-
-##########################################################################################################
-#### Want to create/get a score, percent id, percent positive for each hsp rather 
-#### than using that based on the PSL line.
-#### NB both at amino acid and DNA level. Then sort the hsps according to aa_score, 
-#### aa_percent_positive etc using dna only as a fall back if the aa score etc is the same for two seqs
-####
-#### NB this involves recreating both the DNA and aa alignments -- and using ???? to get score etc
-####
-#### Want to base the score on both id and BLOSUM matrices to see which is best -- ???stop codons??? To match or not to match???
-################################################################################################################
-#####CREATE SCORE and IDENT and POSIT 
-my $Qst=$atrib[11]; if ($Qst eq '+'){$Qst= 1;}else {$Qst='-1';} 
-my $Hst=$atrib[10]; if ($Hst eq '+'){$Hst= 1;}else {$Hst='-1';}
-
-#print STDERR "Qst: $Qst\n";
-#print STDERR "Hst: $Hst\n";
-
-
-##############################################################################################
-##should move the chromosome check to here to reduce the memory requirement 
-##-- only a chromosome and scaffolds worth would be need to be held in memory
-################################################################################################
-
-
-
-
-
-
-
-
-
-  my $sliceQ = $sliceadaptor1->fetch_by_region('toplevel', $chr1, $Qstart, $Qend, $Qst);
-  throw("Cannot get toplevel seq_region $chr1, $Qstart, $Qend, $Qst") if (!$sliceQ);
-  my $sliceT = $sliceadaptor2->fetch_by_region('toplevel', $chr2, $Hstart, $Hend, $Hst);
-  throw("Cannot get toplevel seq_region $chr2, $Hstart, $Hend, $Hst") if (!$sliceT);
-
-  my $Qseq=$sliceQ->seq;
-  my $Tseq=$sliceT->seq;
-
-my @Qs=split //,$Qseq;
-my @Ts=split //,$Tseq;
-
-my$Qid=$sps1.".".$chr1.".".$Qstart.".".$Qend.".".$chr2;
-my $Q_Transseq=Bio::Seq->new( -seq => $Qseq,
-           -moltype => "dna",
-         -alphabet => 'dna',
-         -id =>$Qid);
-my$Tid=$sps2.".".$chr2.".".$Hstart.".".$Hend.".".$chr1;
-my $T_Transseq=Bio::Seq->new( -seq => $Tseq,
-           -moltype => "dna",
-         -alphabet => 'dna',
-         -id =>$Tid);
-         
-my $Q_aa=$Q_Transseq->translate->seq;
-my $T_aa=$T_Transseq->translate->seq;
-my $t0=0; my $t1=0; my $t2=0;
-my $base=0;
-
-for (my $i=0; $i<scalar(@Qs); $i++){
-  unless ($Qs[$i] eq $Ts[$i]){
-      if ($base%3==0){
-        $t0++;
-        }
-      elsif($base%3==1){
-        $t1++;
-        }
-      else {
-        $t2++;
-        }
-
-      }
-      $base++;
-    }
-
-
-
-#print STDERR "$Qseq\n$Tseq\n";
-#print STDERR "$Q_aa\n$T_aa\n";
-
-my $len  = ($Hend-$Hstart)+1; #No gaps therefore same length for both         
-my $score=0; #my $id=0;
-
-my @Qaa=split//, $Q_aa;
-my @Taa=split//, $T_aa;
-
-#print STDERR "len: $len\tscalar: ".scalar(@Taa)."\n"; 
-my $aa_len=int($len/3);
-#if ($matrix_file){         
-#  for (my $i=0; $i<$aa_len; $i++){
-#    $score += $matrix->entry($Qaa[$i], $Taa[$i]);
-#    $id++;
-#    }
-#  }
-#else {
-#  for (my $i=0; $i<$aa_len; $i++){
-#  
-#    if ($Qaa[$i] eq $Taa[$i]){
-#      $score+=2;
-#      $id++;
-#      
-#      }
-#    else {############# no differentiation for stop codons as sticking to BLAT matrix
-#      $score-=1;
-#      }
-#
-#    }
-#  
-#  }
-#    my ($i1, $i2, $i3);
-#    $i1 = ($t1 or $t2)? $t0/(($t1+$t2)/2) : $t0;
-#    $i2 = ($t0 or $t2)? $t1/(($t0+$t2)/2) : $t1;
-#    $i3 = ($t0 or $t1)? $t2/(($t1+$t0)/2) : $t2;
-#my @base3period=sort {$b<=>$a}($i1, $i2, $i3);  
-#my $base3period= $base3period[0];
-#my $sum_len=($t0+$t1+$t2)/$len;  
-
-  my ($new_score, $id, $best_frame) = get_best_score_in_all_frames($Q_Transseq, $T_Transseq, $matrix);
-  if ($best_frame > 2) {
-    $Q_Transseq = $Q_Transseq->revcom;
-    $Q_Transseq = $Q_Transseq->revcom;
-    $Q_aa=$Q_Transseq->translate('', '', ($best_frame-3))->seq;
-    $T_aa=$T_Transseq->translate('', '', ($best_frame-3))->seq;
-  } else {
-    $Q_aa=$Q_Transseq->translate('', '', $best_frame)->seq;
-    $T_aa=$T_Transseq->translate('', '', $best_frame)->seq;
-  }
-  $score = $new_score;
-
   if ($score<=0){
-    print STDERR " $score for $chr1, $Qstart, $Qend, $Qst, $chr2, $Hstart, $Hend, $Hst\n"; 
-    print STDERR "$Q_aa;\n$T_aa\n";
+    print STDERR " $score for $Q_chr, [$Q_start-$Q_end]($Q_strand),",
+        " $T_chr, [$T_start-$T_end]($T_strand)\n"; 
     $minus_count++;
-    $score=0;
-    next LINE;
+    next;
   }
-         
-    
-  $all[$i] = {
+
+  push(@all, {
         sps1  => $sps1,
-        chr1   => $chr1,
+        chr1   => $Q_chr,
         prog   => $atrib[1],
         feat   => $atrib[2],
-        Q_start => $Qstart,
-        Q_end   => $Qend,
+        Q_start => $Q_start,
+        Q_end   => $Q_end,
         sps2  => $sps2,
-        chr2   => $chr2,
-        T_start  => $Hstart,
-        T_end   => $Hend,
-        score_PSL   => $atrib[8],
+        chr2   => $T_chr,
+        T_start  => $T_start,
+        T_end   => $T_end,
         score   => $score,
-        pvalue  => $atrib[9],
-        Q_strand  => $atrib[11],
-        T_strand  => $atrib[10],
+        Q_strand  => $Q_strand,
+        T_strand  => $T_strand,
         Q_strand_no  => $Qst,
         T_strand_no  => $Hst,
         ident_old  => $atrib[12],
-        ident  => int(($id/$aa_len)*100),
+        ident  => $perc_id,
         posit  => $atrib[13],
         cigar  => $atrib[14],
         len  => $len,
-        t0  => $t0,
-        t1  => $t1,
-        t2  => $t2,
-#        sum_len  => $sum_len,
-#        base3  => $base3period
-      };
-        
-  $i++;#should start at 0 ##########Strands are the wrong way around
-    
-}#end of while file loop
+      });
+} #end of while file loop
+
+##
+#####################################################################
     
     
     
