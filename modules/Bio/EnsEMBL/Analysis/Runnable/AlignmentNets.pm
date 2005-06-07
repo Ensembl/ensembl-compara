@@ -49,26 +49,36 @@ sub new {
       $query_lengths,
       $target_lengths,
       $chain_net,
-
+      $simple_net,
+      $min_chain_score
       ) = $self->_rearrange([qw(
                                 CHAINS
                                 QUERY_LENGTHS
                                 TARGET_LENGTHS
                                 CHAINNET
+                                SIMPLE_NET
+                                MIN_CHAIN_SCORE
                                 )],
                                     @args);
 
-
+  throw("You must supply a ref to array of alignment chains") 
+      if not defined $chains;
   throw("You must supply a reference to an hash of query seq. lengths") 
       if not defined $query_lengths;
   throw("You must supply a reference to an hash of query seq. lengths") 
       if not defined $target_lengths;
-  throw("You must supply a ref to array of alignment chains") 
-      if not defined $chains;
 
   $self->query_length_hash($query_lengths);
   $self->target_length_hash($target_lengths);
-  $self->chainNet($chain_net) if defined $chain_net;
+    
+  if (not defined $simple_net or not $simple_net) {    
+    $self->chainNet($chain_net) if defined $chain_net;
+    $self->simple_net(0);
+  } else {
+    $self->simple_net($simple_net);
+  }
+
+  $self->min_chain_score($min_chain_score) if defined $min_chain_score;
   $self->chains($self->sort_chains_by_max_block_score($chains));
 
   return $self;
@@ -91,66 +101,80 @@ sub new {
 sub run {
   my ($self) = @_;
 
-  my ($query_name) = keys %{$self->query_length_hash};
+  my $nets;
 
-  my $work_dir = $self->workdir . "/$query_name.$$.ChainNet";
-  my $chain_file = "$work_dir/$query_name.chain";
-  
-  my $query_length_file  = "$work_dir/$query_name.query.lengths";
-  my $target_length_file = "$work_dir/$query_name.target.lengths";
-  my $query_net_file     = "$work_dir/$query_name.query.net";
-  my $target_net_file    = "$work_dir/$query_name.target.net";
-  my $fh;
-
-  mkdir $work_dir;
-
-  ##############################
-  # write the seq length files
-  ##############################
-  foreach my $el ([$query_length_file, $self->query_length_hash], 
-                  [$target_length_file, $self->target_length_hash]) {
-    my ($file, $hash) = @$el;
-
-    open $fh, ">$file" or
-        throw("Could not open seq length file '$file' for writing");
-    foreach my $k (keys %{$hash}) {
-      print $fh $k, "\t", $hash->{$k}, "\n";
+  if ($self->simple_net) {
+    $nets = $self->calculate_simple_net;
+  } else {   
+    my ($query_name) = keys %{$self->query_length_hash};
+    
+    my $work_dir = $self->workdir . "/$query_name.$$.ChainNet";
+    while (-e $work_dir) {
+      $work_dir .= ".$$";
     }
+    
+    my $chain_file = "$work_dir/$query_name.chain";
+    my $query_length_file  = "$work_dir/$query_name.query.lengths";
+    my $target_length_file = "$work_dir/$query_name.target.lengths";
+    my $query_net_file     = "$work_dir/$query_name.query.net";
+    my $target_net_file    = "$work_dir/$query_name.target.net";
+    my $fh;
+    
+    mkdir $work_dir;
+    
+    ##############################
+    # write the seq length files
+    ##############################
+    foreach my $el ([$query_length_file, $self->query_length_hash], 
+                    [$target_length_file, $self->target_length_hash]) {
+      my ($file, $hash) = @$el;
+      
+      open $fh, ">$file" or
+          throw("Could not open seq length file '$file' for writing");
+      foreach my $k (keys %{$hash}) {
+        print $fh $k, "\t", $hash->{$k}, "\n";
+      }
+      close($fh);
+    }
+    
+    
+    ##############################
+    # write chains
+    ############################## 
+    open $fh, ">$chain_file" or 
+        throw("could not open chain file '$chain_file' for writing\n");
+    $self->write_chains($fh);
     close($fh);
+    
+    ##################################
+    # Get the Nets from chainNet
+    ##################################
+    my @arg_list;
+    if (defined $self->min_chain_score) {
+      @arg_list = ("-minScore=" . $self->min_chain_score);
+    }
+    push @arg_list, ($chain_file, 
+                     $query_length_file, 
+                     $target_length_file, 
+                     $query_net_file,
+                     $target_net_file);
+
+    system($self->chainNet, @arg_list) 
+        and throw("Something went wrong with chainNet");
+    
+    ##################################
+    # read the Net file
+    ##################################
+    open $fh, $query_net_file or 
+        throw("Could not open net file '$query_net_file' for reading\n");
+    $nets = $self->parse_Net_file($fh);
+    close($fh);
+      
+    unlink $chain_file, $query_length_file, $target_length_file, $query_net_file, $target_net_file;
+    rmdir $work_dir;
   }
-
-
-  ##############################
-  # write chains
-  ############################## 
-  open $fh, ">$chain_file" or 
-      throw("could not open chain file '$chain_file' for writing\n");
-  $self->write_chains($fh);
-  close($fh);
-
-  ##################################
-  # Get the Nets from chainNet
-  ##################################
-  system($self->chainNet, 
-         $chain_file, 
-         $query_length_file, 
-         $target_length_file, 
-         $query_net_file,
-         $target_net_file)
-      and throw("Something went wrong with chainNet");
-
-  ##################################
-  # read the Net file
-  ##################################
-  open $fh, $query_net_file or 
-      throw("Could not open net file '$query_net_file' for reading\n");
-  my $nets = $self->parse_Net_file($fh);
-  close($fh);
-
-  $self->output($nets);  
-  
-  unlink $chain_file, $query_length_file, $target_length_file, $query_net_file, $target_net_file;
-  rmdir $work_dir;
+    
+  $self->output($nets);    
 
   return 1;
 }
@@ -170,13 +194,91 @@ sub sort_chains_by_max_block_score {
         $chain_hash->{score} = $block->score;
       }
     }
-    push @chain_hashes, $chain_hash;
+    if (not defined $self->min_chain_score or
+        $chain_hash->{score} > $self->min_chain_score) {
+      push @chain_hashes, $chain_hash;
+    }
   }
   
   my @sorted = map { $_->{chain}} sort {$b->{score} <=> $a->{score}} @chain_hashes;
 
   return \@sorted;
 }
+
+#####################################################
+
+sub calculate_simple_net {
+  my ($self) = @_;
+
+  my $sorted_chains = $self->chains;
+
+  my @net_chains;
+
+  if ($self->simple_net =~ /HIGH/) {
+    # VERY simple: just keep the best chain
+
+    if (@$sorted_chains) {
+      @net_chains = ($sorted_chains->[0]);
+    }
+
+  } elsif ($self->simple_net =~ /MEDIUM/) {
+    # Slightly less simple. Junk chains that have extent overlap
+    # with retained chains so far
+    foreach my $c (@$sorted_chains) {
+      my @b = sort { $a->start <=> $b->start } @$c; 
+      my $c_st = $b[0]->start;
+      my $c_en = $b[-1]->end;
+
+      my $keep_chain = 1;
+      foreach my $oc (@net_chains) {
+        my @ob = sort { $a->start <=> $b->start } @$oc; 
+
+        my $oc_st = $ob[0]->start;
+        my $oc_en = $ob[-1]->end;
+
+        if ($oc_st <= $c_en and $oc_en >= $c_st) {
+          # overlap; junk
+          $keep_chain = 0;
+          last;
+        }
+      }
+
+      if ($keep_chain) {
+        push @net_chains, $c;
+      }
+    }
+
+  } elsif ($self->simple_net =~ /LOW/) {
+    # not quite so simple. Junk chains that have BLOCK overlap
+    # with retained chains so far
+    my @retained_blocks;
+
+    foreach my $c (@$sorted_chains) {
+      my @b = sort { $a->start <=> $b->start } @$c; 
+
+      my $keep_chain = 1;
+      BLOCK: foreach my $b (@b) {
+        OTHER_BLOCK: foreach my $ob (@retained_blocks) {
+          if ($ob->start <= $b->end and $ob->end >= $b->start) {
+            $keep_chain = 0;
+            last BLOCK;
+          } elsif ($ob->start > $b->end) {
+            last OTHER_BLOCK;
+          }
+        }
+      }
+
+      if ($keep_chain) {
+        push @net_chains, $c;
+        push @retained_blocks, @$c;
+        @retained_blocks = sort { $a->start <=> $b->start } @retained_blocks;
+      }
+    }
+  }
+
+  return \@net_chains;
+}
+
 
 #####################################################
 
@@ -481,6 +583,33 @@ sub chains {
 
   return $self->{_chains};
 }
+
+
+sub min_chain_score {
+  my ($self, $val) = @_;
+
+  if (defined $val) {
+    $self->{_min_chain_score} = $val;
+  }
+
+  if (not exists $self->{_min_chain_score}) {
+    return undef;
+  } else {
+    return $self->{_min_chain_score};
+  }
+}
+
+
+sub simple_net {
+  my ($self, $val) = @_;
+
+  if (defined $val) {
+    $self->{_simple_net} = $val;
+  }
+
+  return $self->{_simple_net};
+}
+
 
 
 ##############
