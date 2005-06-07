@@ -84,7 +84,12 @@ sub zmenu {
     my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-    my $type = $transcript->type() || $gene->type();
+    my $type;
+    if ($gene->source eq 'vega') {
+      $type = $gene->type;
+    } else {
+      $type = $transcript->type() || $gene->type();
+    }
     $type =~ s/HUMACE-//g;
     $type = $legend_map{$type} || $type;
 
@@ -130,7 +135,12 @@ sub text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $tt = $transcript->type || $gene->type;
+        my $tt;
+        if ($gene->source eq 'vega') {
+            $tt = $gene->type;
+        } else {
+            $tt = $transcript->type || $gene->type;
+        }
         my $type = $legend_map{$tt} || $tt;
         $id .= " \n$type ";
     }
