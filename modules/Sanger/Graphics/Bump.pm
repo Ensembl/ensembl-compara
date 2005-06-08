@@ -20,33 +20,33 @@ package Sanger::Graphics::Bump;
 use strict;
 use Carp;
 sub bump_row {
-    my($start,$end,$bit_length,$bit_array,$max_row)=@_;
-    $max_row = 1e9 unless defined $max_row;
-    my $row=0;
-    my $len=$end-$start+1;
+  my($start,$end,$bit_length,$bit_array,$max_row)=@_;
+  $max_row = 1e9 unless defined $max_row;
+  my $row=0;
+  my $len=$end-$start+1;
 
-    if( $len <= 0 || $bit_length <= 0 ) {
-       carp("We've got a bad length of $len or $bit_length from $start-$end in Bump. Probably you haven't flipped on a strand");
-    }
+  if( $len <= 0 || $bit_length <= 0 ) {
+    carp("We've got a bad length of $len or $bit_length from $start-$end in Bump. Probably you haven't flipped on a strand");
+  }
 
-    my $element='0' x $bit_length;
-    
-    substr($element, $start,$len)='1' x $len;
-    
-    LOOP:{
-        if($$bit_array[$row]){
-            if (($bit_array->[$row] && $element)==0){
-                $bit_array->[$row]=($bit_array->[$row] | $element);
-            } else {
-                $row++;
-                return $max_row + 10 if $row > $max_row;
-                redo LOOP;
-            } 
-	} else{
-            $$bit_array[$row]=$element;
-        }
+  my $element='0' x $bit_length;
+   
+  substr($element, $start,$len)='1' x $len;
+  
+  LOOP:{
+    if($$bit_array[$row]) {
+      if( ($bit_array->[$row] & $element)==0 ) {
+        $bit_array->[$row]=($bit_array->[$row] | $element);
+      } else {
+        $row++;
+        return $max_row + 10 if $row > $max_row;
+        redo LOOP;
+      } 
+	} else {
+      $$bit_array[$row]=$element;
     }
-    return $row;
+  }
+  return $row;
 }
 
 1;
