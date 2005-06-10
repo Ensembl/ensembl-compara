@@ -79,14 +79,16 @@ sub fetch_subtree_under_node {
   }
 
   my $table = $self->tables->[0]->[0];
+  my $alias = $self->tables->[0]->[1];
 
-  my $constraint = "INNER JOIN $table AS root_node ON ( $table.left_index 
+  my $constraint = "INNER JOIN $table AS root_node ON ( $alias.left_index 
                          BETWEEN root_node.left_index AND root_node.right_index)
                     WHERE root_node.node_id=". $node->node_id;
 
   my $all_nodes = $self->_generic_fetch($constraint);
-  my $root = $self->_build_tree_from_nodes($all_nodes);
-  return $root;
+  push @{$all_nodes}, $node;
+  $self->_build_tree_from_nodes($all_nodes);
+  return $node;
 }
 
 
@@ -307,33 +309,23 @@ sub clear_cache {
 sub _build_tree_from_nodes {
   my $self = shift;
   my $node_list = shift;
-  
+
   #first hash all the nodes by id for fast access
   my %node_hash;
+  foreach my $node (@{$node_list}) {
+    $node->no_autoload_children;
+    $node_hash{$node->node_id} = $node;
+  }
+  
+  #next add children to their parents
   my $root = undef;
   foreach my $node (@{$node_list}) {
-    $node_hash{$node->node_id} = $node;
-    if($node->root->equals($node)) {
-      throw("found more than one root!!") if(defined($root));
-      print("found ROOT\n");
-      $root = $node;
-    }
+    my $parent = $node_hash{$node->_parent_id};
+    if($parent) { $parent->add_child($node); } 
+    else { $root = $node; }
   }
-
-  #next add children to their parents
-  foreach my $node (@{$node_list}) {
-    my $parent = $node_hash{$node->_parent_id};  
-    $parent->add_child($node);
-  }
-  
-  unless($root) {
-    print("no root! progressively fetch until all are loaded\n");
-    my $root = $node_list->[0];
-  }
-  
   return $root;
 }
-
 
 
 ###################################
