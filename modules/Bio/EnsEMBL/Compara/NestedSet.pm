@@ -417,7 +417,9 @@ sub sorted_children {
   my $self = shift;
   
   my @sortedkids = 
-     sort { $a->is_leaf <=> $b->is_leaf
+     sort { $a->is_leaf <=> $b->is_leaf     
+                     ||
+            $a->get_child_count <=> $b->get_child_count         
                      ||
             $a->distance_to_parent <=> $b->distance_to_parent
           }  @{$self->children;};
@@ -451,7 +453,7 @@ sub get_child_count {
 
 sub load_children_if_needed {
   my $self = shift;
-
+    
   if($self->adaptor and !defined($self->{'_children_id_hash'})) {
     #define _children_id_hash thereby signally that I've tried to load my children
     $self->{'_children_id_hash'} = {}; 
@@ -459,6 +461,13 @@ sub load_children_if_needed {
     $self->adaptor->fetch_all_children_for_node($self);
   }
   return $self;
+}
+
+sub no_autoload_children {
+  my $self = shift;
+  
+  return if($self->{'_children_id_hash'});
+  $self->{'_children_id_hash'} = {};
 }
 
 
