@@ -857,7 +857,7 @@ sub max_depth {
   my $max_depth = 0;
   
   foreach my $child (@{$self->children}) {
-    my $depth = $child->max_depth;
+    my $depth = $child->max_depth + 1;
     $max_depth=$depth if($depth>$max_depth);
   }
   return $max_depth;  
