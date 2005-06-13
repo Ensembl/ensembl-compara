@@ -128,6 +128,7 @@ sub create_analysis_jobs {
     while (my $genome_db_id1 = shift @{$species_set}) {
       foreach my $genome_db_id2 (@{$species_set}) {
         my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids("ENSEMBL_ORTHOLOGUES",[$genome_db_id1,$genome_db_id2]);
+	next unless($mlss);
         $sth->execute($mlss->dbID);
       }
     }
