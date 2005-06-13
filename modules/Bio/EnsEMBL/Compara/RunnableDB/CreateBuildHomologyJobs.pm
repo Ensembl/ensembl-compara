@@ -96,7 +96,6 @@ sub run
   my $self = shift;
   return 1 unless($self->{'species_sets_aref'});
   
-  $self->configureHomologyAnalysis();
   $self->create_analysis_jobs($self->{'species_sets_aref'});
   
   return 1;
@@ -113,39 +112,6 @@ sub write_output {
 #
 ##########################################
 
-sub configureHomologyAnalysis
-{
-  my $self = shift;
-
-  return if($self->{'buildHomology'});
-  
-  my $isHive = $self->db->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
-
-  #my $sicDBA = $self->db->get_StateInfoContainer;  # $self->db is a pipeline DBA
-  $self->{'buildHomology'} = $self->db->get_AnalysisAdaptor()
-                                  ->fetch_by_logic_name('BuildHomology');
-  return if($self->{'buildHomology'});
-  
-
-  my $buildHomology = Bio::EnsEMBL::Pipeline::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'BuildHomology',
-      -input_id_type   => 'homology',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
-    );
-  $self->db->get_AnalysisAdaptor->store($buildHomology);
-  $self->{'buildHomology'} = $buildHomology;
-  if($isHive) {
-    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($buildHomology->dbID);
-    $stats->batch_size(1);
-    $stats->hive_capacity(3);
-    $stats->status('BLOCKED');
-    $stats->update();
-  }
-
-}
-
-
 sub create_analysis_jobs {
   my $self = shift;
   my $species_sets_aref = shift;
@@ -153,8 +119,10 @@ sub create_analysis_jobs {
   foreach my $species_set (@{$species_sets_aref}) {
     while (my $gdb1 = shift @{$species_set}) {
       my $genome_db1 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb1);
+      next unless($genome_db1);
       foreach my $gdb2 (@{$species_set}) {
         my $genome_db2 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb2);
+        next unless($genome_db2);
         $self->createBuildHomologyJob($genome_db1, $genome_db2);
       }
     }
@@ -172,28 +140,27 @@ sub createBuildHomologyJob
   my $logic_name1 = 'blast_' .$genome_db1->dbID."_".$genome_db1->assembly;
   my $logic_name2 = 'blast_' .$genome_db2->dbID."_".$genome_db2->assembly;
 
-  return unless($self->{'buildHomology'});
-  
   my $phylum1 = $self->phylumForGenomeDBID($genome_db1->dbID);
   my $phylum2 = $self->phylumForGenomeDBID($genome_db2->dbID);
   $noRHS='noRHS' if(!defined($noRHS) and $phylum1 ne $phylum2);
 
-  my $input_id;
+  my $output_id;
 
   if($genome_db1->dbID < $genome_db2->dbID) {
-    $input_id = "{blasts=>['".$logic_name1 . "','". $logic_name2 . "']";
+    $output_id = "{blasts=>['".$logic_name1 . "','". $logic_name2 . "']";
   } else {
-    $input_id = "{blasts=>['".$logic_name2 . "','". $logic_name1 . "']";
+    $output_id = "{blasts=>['".$logic_name2 . "','". $logic_name1 . "']";
   }
-  if($noRHS and ($noRHS eq 'noRHS')) { $input_id .= ",noRHS=>1"; }
-  $input_id .= "}";
-  print("HOMOLOGY '$input_id'\n");
+  if($noRHS and ($noRHS eq 'noRHS')) { $output_id .= ",noRHS=>1"; }
+  $output_id .= "}";
+  print("HOMOLOGY '$output_id'\n");
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-      -input_id       => $input_id,
-      -analysis       => $self->{'buildHomology'},
-      -input_job_id   => 0,
-      );
+
+  # dataflow the output_id on branch_code 2, which will be configured in the graph
+  # to flow into BuildHomology
+
+  $self->dataflow_output_id($output_id, 2);
+
 }
 
 
