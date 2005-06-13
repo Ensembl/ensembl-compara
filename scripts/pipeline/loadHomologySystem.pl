@@ -284,6 +284,23 @@ sub prepareGenomeAnalysis
   $dataflowRuleDBA->create_rule($dumpfasta_analysis, $blastrules_analysis);
 
   #
+  # BuildHomology
+  #
+  my $buildHomology = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'BuildHomology',
+      -input_id_type   => 'homology',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($buildHomology);
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($buildHomology->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(3);
+    $stats->update();
+  }
+
+  #
   # CreateBuildHomologyJobs
   #
   my $createBuildHomologyJobs = Bio::EnsEMBL::Analysis->new(
@@ -298,6 +315,8 @@ sub prepareGenomeAnalysis
   $stats->update();
 
   $ctrlRuleDBA->create_rule($blastrules_analysis, $createBuildHomologyJobs);
+  #the jobs created by CreateBuildHomologyJobs are flowed on on branch=2
+  $dataflowRuleDBA->create_rule($createBuildHomologyJobs, $buildHomology, 2);
 
   if (defined $homology_params{'species_sets'}) {
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
@@ -318,23 +337,6 @@ sub prepareGenomeAnalysis
   $blast_template->logic_name("blast_template");
   eval { $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blast_template); };
 
-
-  #
-  # BuildHomology
-  #
-  my $buildHomology = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'BuildHomology',
-      -input_id_type   => 'homology',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHomology',
-    );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor->store($buildHomology);
-  if(defined($self->{'hiveDBA'})) {
-    my $stats = $analysisStatsDBA->fetch_by_analysis_id($buildHomology->dbID);
-    $stats->batch_size(1);
-    $stats->hive_capacity(3);
-    $stats->update();
-  }
 
   #
   # CreateHomology_dNdSJob
