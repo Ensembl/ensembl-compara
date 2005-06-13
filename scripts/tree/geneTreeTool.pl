@@ -14,6 +14,7 @@ use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Switch;
+use Time::HiRes qw(time gettimeofday tv_interval);
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -33,25 +34,27 @@ my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 my $url;
 
-GetOptions('help'           => \$help,
-           'url=s'          => \$url,
-           'h=s'            => \$compara_conf{'-host'},
-           'u=s'            => \$compara_conf{'-user'},
-           'p=s'            => \$compara_conf{'-pass'},
-           'port=s'         => \$compara_conf{'-port'},
-           'db=s'           => \$compara_conf{'-dbname'},
-           'file=s'         => \$self->{'newick_file'},
-           'tree_id=i'      => \$self->{'tree_id'},
-           'gene=s'         => \$self->{'gene_stable_id'},
-           'reroot=i'       => \$self->{'new_root_id'},
-           'align'          => \$self->{'print_align'},
-           'cdna'           => \$self->{'cdna'},
-           'dump'           => \$self->{'dump'},           
-           'align_format=s' => \$self->{'align_format'},
-           'scale=f'        => \$self->{'scale'},
-           'count'          => \$self->{'counts'},
-           'newick'         => \$self->{'print_newick'},
-           'print'          => \$self->{'print_tree'},
+GetOptions('help'             => \$help,
+           'url=s'            => \$url,
+           'h=s'              => \$compara_conf{'-host'},
+           'u=s'              => \$compara_conf{'-user'},
+           'p=s'              => \$compara_conf{'-pass'},
+           'port=s'           => \$compara_conf{'-port'},
+           'db=s'             => \$compara_conf{'-dbname'},
+           'file=s'           => \$self->{'newick_file'},
+           'tree_id=i'        => \$self->{'tree_id'},
+           'clusterset_id=i'  => \$self->{'clusterset_id'},
+           'gene=s'           => \$self->{'gene_stable_id'},
+           'reroot=i'         => \$self->{'new_root_id'},
+           'parent'           => \$self->{'parent'},
+           'align'            => \$self->{'print_align'},
+           'cdna'             => \$self->{'cdna'},
+           'dump'             => \$self->{'dump'},           
+           'align_format=s'   => \$self->{'align_format'},
+           'scale=f'          => \$self->{'scale'},
+           'count'            => \$self->{'counts'},
+           'newick'           => \$self->{'print_newick'},
+           'print'            => \$self->{'print_tree'},
           );
 
 if ($help) { usage(); }
@@ -77,6 +80,10 @@ elsif ($self->{'newick_file'}) {
   parse_newick($self); 
 }
 
+if($self->{'parent'} and $self->{'tree'} and $self->{'tree'}->parent) {
+  $self->{'tree'} = $self->{'tree'}->parent;
+}
+
 if($self->{'print_tree'}) {
   $self->{'tree'}->print_tree($self->{'scale'});
   printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
@@ -92,6 +99,10 @@ if($self->{'counts'}) {
 
 if($self->{'print_align'} or $self->{'cdna'}) {
   dumpTreeMultipleAlignment($self);
+}
+
+if($self->{'clusterset_id'}) {
+  analyzeClusters2($self);
 }
 
 
@@ -129,6 +140,7 @@ sub usage {
   print "  -scale <num>           : scale factor for printing tree (def: 100)\n";
   print "  -newick                : output tree in newick format\n";
   print "  -reroot <id>           : reroot genetree on node_id\n";
+  print "  -parent                : move up to the parent of the loaded node\n";
   print "  -dump                  : outputs to autonamed file, not STDOUT\n";
   print "geneTreeTool.pl v1.1\n";
   
@@ -298,5 +310,181 @@ sub dumpTreeAsNewick
 
   print OUTSEQ "$newick\n";
   close OUTSEQ;
+}
+
+
+sub analyzeClusters
+{
+  my $self = shift;
+  
+  printf("analyzeClusters root_id: %d\n", $self->{'clusterset_id'});
+  
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});  
+
+  printf("%d clusters\n", $clusterset->get_child_count);  
+  
+  my $pretty_cluster_count=0;
+  foreach my $cluster (@{$clusterset->children}) {
+    my $starttime = time();
+    $treeDBA->fetch_subtree_under_node($cluster);
+    
+    my $member_list = $cluster->get_all_leaves;
+    my %member_gdb_hash;
+    my $has_gdb_dups=0;
+    foreach my $member (@{$member_list}) {
+      $has_gdb_dups=1 if($member_gdb_hash{$member->genome_db_id});
+      $member_gdb_hash{$member->genome_db_id} = 1;
+    }
+    printf("%7d, %10d, %10d, %10.3f\n", $cluster->node_id, scalar(@{$member_list}), $has_gdb_dups, (time()-$starttime));
+    $pretty_cluster_count++ unless($has_gdb_dups);
+  }
+  print("%d clusters without duplciates (%d total)\n", $pretty_cluster_count, $clusterset->get_child_count);
+    
+  $clusterset->release;
+}
+
+
+sub analyzeClusters2
+{
+  my $self = shift;
+  #my $species_list = [1,2,3,4,9,11,13,14,16];
+  my $species_list = [1,2,3,14];
+  
+  $self->{'member_LSD_hash'} = {};
+  $self->{'gdb_member_hash'} = {};
+
+  my $ingroup = {};
+  foreach my $gdb (@{$species_list}) {
+    $ingroup->{$gdb} = 1;
+    $self->{'gdb_member_hash'}->{$gdb} = []
+  }
+  
+  printf("analyzeClusters root_id: %d\n", $self->{'clusterset_id'});
+  
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});  
+
+  printf("%d clusters\n", $clusterset->get_child_count);  
+    
+  my $total_members=0;
+  my $cluster_count=0;
+  my $rosette_count=0;
+  my $lsd_rosette_count=0;
+  foreach my $cluster (@{$clusterset->children}) {
+    $cluster_count++;
+    my $starttime = time();
+    $treeDBA->fetch_subtree_under_node($cluster);
+    $cluster->retain->disavow_parent;
+
+    my $member_list = $cluster->get_all_leaves;
+
+    #test for flat tree
+    my $max_depth = $cluster->max_depth;
+
+    my $cluster_has_lsd=0;
+
+    printf("%10s, %10d, %10d, %7d\n", 'cluster',
+       $cluster->node_id, scalar(@{$member_list}), $max_depth);
+
+    if($max_depth > 1) {
+      foreach my $member (@{$member_list}) {
+        
+        push @{$self->{'gdb_member_hash'}->{$member->genome_db_id}}, $member->member_id;
+      
+        next if(defined($self->{'member_LSD_hash'}->{$member->member_id})); #already analyzed
+        next unless($ingroup->{$member->genome_db_id});
+        
+        #print("\nFIND INGROUP from\n   ");
+        #$member->print_node;
+        
+        my $ingroup_cluster = find_ingroup_ancestor($self, $ingroup, $member);
+        #$ingroup_cluster->print_tree;
+        $rosette_count++;
+    
+        $total_members += scalar(@{$ingroup_cluster->get_all_leaves});
+
+        my $has_LSD = test_cluster_for_LSD($self,$ingroup_cluster);
+              
+        if($has_LSD) {
+          #print("LinearSpecificDuplication\n");
+          #$ingroup_cluster->print_tree;
+          $lsd_rosette_count++;
+        }
+        printf("%10s, %10d, %10d, %10d, %10d, %3d\n", 'rosette',
+               $cluster->node_id, scalar(@{$member_list}),
+               $ingroup_cluster->node_id, scalar(@{$ingroup_cluster->get_all_leaves}), 
+               $has_LSD);
+                 
+      }
+    }
+    printf("%10s, %10d, %10d, %10.3f\n", 'cluster_end',
+       $cluster->node_id, scalar(@{$member_list}), (time()-$starttime));
+    
+    $cluster->release;
+    
+    #last if($cluster_count >= 100);
+  }
+  printf("\n%d clusters analyzed\n", $cluster_count);
+  printf("%d ingroup rosettes found\n", $rosette_count);
+  printf("%d rosettes w/o LSD\n", $rosette_count - $lsd_rosette_count);
+  printf("%d ingroup members\n", $total_members);
+  printf("%d members in hash\n", scalar(keys(%{$self->{'member_LSD_hash'}})));
+
+  foreach my $gdbid (@$species_list) {
+    my $member_id_list = $self->{'gdb_member_hash'}->{$gdbid}; 
+
+    my $lsd_members=0;
+    foreach my $member_id (@{$member_id_list}) { 
+      $lsd_members++ if($self->{'member_LSD_hash'}->{$member_id});
+    }
+    my $mem_count = scalar(@$member_id_list);
+    printf("gdb(%2d), %7d members, %7d no_dup, %7d LSD,\n", $gdbid, $mem_count, $mem_count-$lsd_members, $lsd_members);
+  }
+              
+  $clusterset->release;
+}
+
+
+sub test_cluster_for_LSD
+{
+  my $self = shift;
+  my $cluster = shift;
+     
+  my $member_list = $cluster->get_all_leaves;
+  my %gdb_hash;
+  my $cluster_has_LSD = 0;
+  foreach my $member (@{$member_list}) {
+    $gdb_hash{$member->genome_db_id}=0 unless(defined($gdb_hash{$member->genome_db_id}));
+    $gdb_hash{$member->genome_db_id} += 1;
+  }
+  foreach my $member (@{$member_list}) {
+    my $gdb_has_LSD = $gdb_hash{$member->genome_db_id} - 1;
+    $cluster_has_LSD=1 if($gdb_has_LSD > 0);
+    $self->{'member_LSD_hash'}->{$member->member_id} = $gdb_has_LSD;
+  }
+  
+  return $cluster_has_LSD;
+}
+
+
+sub find_ingroup_ancestor
+{
+  my $self = shift;
+  my $ingroup = shift;
+  my $node = shift;
+  
+  my $ancestor = $node->parent;
+  return $node unless($ancestor); #reached root, so all members are 'ingroup'
+  
+  my $has_outgroup=0;
+  foreach my $member (@{$ancestor->get_all_leaves}) {
+    if(!($ingroup->{$member->genome_db_id})) {
+      $has_outgroup=1;
+      last;
+    }
+  }
+  return $node if($has_outgroup);
+  return find_ingroup_ancestor($self, $ingroup, $ancestor);  
 }
 
