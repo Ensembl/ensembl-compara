@@ -497,6 +497,19 @@ sub distance_to_root {
   return $dist;
 }
 
+sub distance_to_ancestor {
+  my $self = shift;
+  my $ancestor = shift;
+
+  if ($ancestor->node_id == $self->node_id) {
+    return 0;
+  }
+  unless (defined $self->parent) {
+    throw("Ancestor not found\n");
+  }
+  return $self->distance_to_parent + $self->parent->distance_to_ancestor($ancestor);
+}
+
 sub left_index {
   my $self = shift;
   $self->{'_left_index'} = shift if(@_);
