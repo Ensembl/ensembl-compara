@@ -11,7 +11,7 @@ sub init_label {
 sub _init {
     my ($self) = @_;
     return unless ($self->strand() == -1);
-    my $tracks        = $self->{'config'}->{'missing_tracks'};
+    my $tracks   = $self->{'config'}->{'missing_tracks'};
     my ($w,$h)   = $self->{'config'}->texthelper()->real_px2bp('Tiny');
     my ($w2,$h2) = $self->{'config'}->texthelper()->real_px2bp('Small');
     $self->push( new Sanger::Graphics::Glyph::Text({
