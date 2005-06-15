@@ -114,9 +114,10 @@ sub _init {
     foreach my $text_label ( $transcript->stable_id, $name ) {
       next unless $text_label;
       next if $text_label eq ' ';
-      my $width_of_label = $font_w_bp * ( $T+2 );
+      my $width_of_label = $font_w_bp * ( $T ) * 1.5;
       my $tglyph = new Sanger::Graphics::Glyph::Text({
-        'x'         => - $width_of_label,
+       # 'x'         => - $width_of_label,
+        'x'         => -100,
         'y'         => $H,
         'height'    => $font_h_bp,
         'width'     => $width_of_label,
@@ -124,6 +125,7 @@ sub _init {
         'colour'    => $colour,
         'text'      => $text_label,
         'absolutey' => 1,
+        'absolutex' => 1,
       });
       $H += $font_h_bp + 1;
       $self->push($tglyph);

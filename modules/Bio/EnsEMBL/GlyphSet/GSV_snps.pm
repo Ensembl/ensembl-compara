@@ -57,8 +57,8 @@ sub _init {
     my $snp = $snpref->[2];
     my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID()};
     next unless $cod_snp;
-    next if $snp->end < $transcript->start - $EXTENT;
-    next if $snp->start > $transcript->end + $EXTENT;
+    next if $snp->end < $transcript->start - $EXTENT - $offset;
+    next if $snp->start > $transcript->end + $EXTENT - $offset;
     my( $colour, $label );
 
     if( $cod_snp->consequence_type eq 'SYNONYMOUS_CODING' ) { ## Synonymous

@@ -38,13 +38,15 @@ sub _init {
       }
     }
   } else {
+    my $offset  = $container->start - 1;
     my $features =  $self->{'container'}->get_all_Genes(lc(EnsWeb::species_defs->AUTHORITY));
     foreach my $gene ( @$features ) { 
       next if $target_gene && ($gene->stable_id() ne $target_gene);
       foreach my $transcript (@{$gene->get_all_Transcripts()}) {
         foreach my $exon (@{$transcript->get_all_Exons()}) {
           my $tag = "@{[$exon->start]}:@{[$exon->end]}";
-          $exons{ "$tag:$tag" }++; 
+          my $tag2 = "@{[$exon->start+$offset]}:@{[$exon->end+$offset]}";
+          $exons{ "$tag:$tag2" }++; 
         }
       }
     } 
@@ -58,7 +60,7 @@ sub _init {
     my( $S,$E,$S2,$E2 ) = @$EXON;
     next if $E<1;
     next if $S>$length;
-    my $tag_root = "@{[$S2+$start]}:@{[$E2+$start]}";
+    my $tag_root = "@{[$S2]}:@{[$E2]}";
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
     my $tglyph = new Sanger::Graphics::Glyph::Space({

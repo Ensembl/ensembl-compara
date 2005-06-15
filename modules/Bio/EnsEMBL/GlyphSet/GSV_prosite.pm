@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::GSV_pfam;
+package Bio::EnsEMBL::GlyphSet::GSV_prosite;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
@@ -14,7 +14,7 @@ use Data::Dumper;
 sub init_label {
   my ($self) = @_;
   my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => 'PFam',
+    'text'      => 'Prosite',
     'font'      => 'Small',
     'absolutey' => 1,
     'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','domains')],
@@ -56,8 +56,9 @@ sub _init {
     my $transcript = $trans_ref->{'transcript'};
 
   my @bitmap = undef;
-  foreach my $domain_ref ( @{$trans_ref->{'pfam_hits'}||[]} ) {
+  foreach my $domain_ref ( @{$trans_ref->{'scanprosite_hits'}||[]} ) {
     my($domain,@pairs) = @$domain_ref;
+    warn ">>$domain<<>>@pairs";
     my $Composite3 = new Sanger::Graphics::Glyph::Composite({
       'y'         => 0,
       'height'    => $h
