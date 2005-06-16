@@ -154,8 +154,8 @@ sub y {
 }
 
 sub highlights {
-    my ($self) = @_;
-    return defined $self->{'highlights'} ? @{$self->{'highlights'}} : ();
+  my ($self) = @_;
+  return defined $self->{'highlights'} ? @{$self->{'highlights'}} : ();
 }
 
 ########## read-write get/setters...
