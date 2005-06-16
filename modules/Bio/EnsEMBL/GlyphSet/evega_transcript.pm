@@ -23,12 +23,7 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type;
-  if ($gene->source eq 'vega') {
-    $type = $gene->type;
-  } else {
-    $type = $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->type.'_'.$gene->confidence;
-  }
+  my $type = $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->type.'_'.$gene->confidence;
   # $type =~ s/HUMACE-//g;
   my $colour = $colours->{$type}[0] || 'black';
 
@@ -141,12 +136,7 @@ sub text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $tt;
-    if ($gene->source eq 'vega') {
-      $tt = $gene->type;
-    } else {
-      $tt = $transcript->type || $gene->type;
-    }
+    my $tt = $transcript->type || $gene->type;
     my $type = $legend_map{$tt} || $tt;
     $id .= " \n$type ";
   }
