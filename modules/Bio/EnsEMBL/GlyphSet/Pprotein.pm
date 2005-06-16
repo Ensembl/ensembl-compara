@@ -59,42 +59,40 @@ sub _init {
     my @colours  = ($Config->get('Pprotein','col1'), $Config->get('Pprotein','col2'));
     my $start_phase = 1;
     if ($pep_splice){
-        for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
-            my $colour = $colours[$flip];
-            my $exon_id = $pep_splice->{$exon_offset}{'exon'};
-
-            my $exonview_link = '';
-            if( $prot_id ){
-              $exonview_link = sprintf
-                ( "/%s/exonview?exon=%s;db=%s", 
-                  $self->{container}{_config_file_name_}, $exon_id, $db );
-            }
-
-            my $rect = new Sanger::Graphics::Glyph::Rect({
-                    'x'        => $x,
-                    'y'        => $y,
-                    'width'    => $exon_offset - $x,
-                    'height'   => $h,
-                    'colour'   => $colour,
-                    'zmenu' => {
-                    'caption' => "Splice Information",
-                    "00:Exon: $exon_id" => $exonview_link,
-                    "01:Start Phase: $start_phase" => "",
-                    '02:End Phase: '. ($pep_splice->{$exon_offset}{'phase'} +1) => "",
-                    '03:Length: '.($exon_offset - $x)  => "", },
-                    });
-
-            $self->push($rect);
-            $x = $exon_offset ;
-            $start_phase = ($pep_splice->{$exon_offset}{'phase'} +1) ;
-            $flip = 1-$flip;
+      for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
+        my $colour = $colours[$flip];
+        my $exon_id = $pep_splice->{$exon_offset}{'exon'};
+        next unless $exon_id;
+        my $exonview_link = '';
+        if( $prot_id ){
+          $exonview_link = sprintf( "/%s/exonview?exon=%s;db=%s", 
+          $self->{container}{_config_file_name_}, $exon_id, $db );
         }
-    } else {
+
         my $rect = new Sanger::Graphics::Glyph::Rect({
-                'x'        => 0,
-                'y'        => $y,
-                'width'    => $protein->length(),
-                'height'   => $h,
+          'x'        => $x,
+          'y'        => $y,
+          'width'    => $exon_offset - $x,
+          'height'   => $h,
+          'colour'   => $colour,
+          'zmenu' => {
+          'caption' => "Splice Information",
+          "00:Exon: $exon_id" => $exonview_link,
+          "01:Start Phase: $start_phase" => "",
+          '02:End Phase: '. ($pep_splice->{$exon_offset}{'phase'} +1) => "",
+          '03:Length: '.($exon_offset - $x)  => "", },
+        });
+        $self->push($rect);
+        $x = $exon_offset ;
+        $start_phase = ($pep_splice->{$exon_offset}{'phase'} +1) ;
+        $flip = 1-$flip;
+      }
+    } else {
+      my $rect = new Sanger::Graphics::Glyph::Rect({
+        'x'        => 0,
+        'y'        => $y,
+        'width'    => $protein->length(),
+        'height'   => $h,
                 'colour'   => $colours[0],
                 });
 
