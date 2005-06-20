@@ -5,7 +5,7 @@ use Bio::EnsEMBL::GlyphSet::variation_box;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet::variation_box);
 
-sub my_label { return "Genotyped variations"; }
+sub my_label { return "Genotyped SNPs"; }
 
 sub features {
   my ($self) = @_;
