@@ -485,6 +485,7 @@ sub _init {
     }
     ## Lets see if we can Show navigation ?...
     if($navigation) {
+      $composite->{'title'} = $self->title( $f ) if $self->can('title');
       $composite->{'zmenu'} = $self->zmenu( $f ) if $self->can('zmenu');
       $composite->{'href'}  = $self->href(  $f ) if $self->can('href');
     }

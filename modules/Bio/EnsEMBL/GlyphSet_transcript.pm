@@ -103,7 +103,7 @@ sub compact_init {
     my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } map { @{$_->get_all_Exons()} } @{$gene->get_all_Transcripts()};
     next unless @exons;
 
-    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h, 'title' => $gene->stable_id });
        $Composite->{'href'} = $self->gene_href( $gene, %highlights );
        $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
     my($colour, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
@@ -337,7 +337,8 @@ sub expanded_init {
       next if $target && ($transcript->stable_id() ne $target);
 
       $transcript_drawn=1;        
-      my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+      my $title = $transcript->stable_id.($gene->stable_id?" (@{[$gene->stable_id]})":'');
+      my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h,'title'=>$title});
          $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
          $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
       my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
