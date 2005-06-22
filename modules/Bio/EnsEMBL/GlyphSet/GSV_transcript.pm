@@ -99,6 +99,7 @@ sub _init {
         'height'    => $h,
         'bordercolour' => $colour,
         'absolutey' => 1,
+        'title'     => $exon->[2]->stable_id,
         'href'     => $self->href( $gene, $transcript, $exon->[2], %highlights ),
       });
       $G->{'zmenu'} = $self->zmenu( $gene, $transcript, $exon->[2] ) unless $Config->{'_href_only'};
@@ -171,15 +172,15 @@ sub href {
 }
 
 sub zmenu {
-    my ($self, $gene, $transcript, $exon, %highlights) = @_;
-    my $eid = $exon->stable_id();
-    my $tid = $transcript->stable_id();
-    my $pid = $transcript->translation->stable_id(),
-    my $gid = $gene->stable_id();
-    my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-    my $zmenu = {
-        'caption'                       => EnsWeb::species_defs->AUTHORITY." Gene",
-        "00:$id"			=> "",
+  my ($self, $gene, $transcript, $exon, %highlights) = @_;
+  my $eid = $exon->stable_id();
+  my $tid = $transcript->stable_id();
+  my $pid = $transcript->translation->stable_id(),
+  my $gid = $gene->stable_id();
+  my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
+  my $zmenu = {
+    'caption'                       => EnsWeb::species_defs->AUTHORITY." Gene",
+    "00:$id"			=> "",
 	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
         "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
         "04:Exon:$eid"    	        => "",

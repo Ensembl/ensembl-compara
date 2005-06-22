@@ -58,7 +58,6 @@ sub _init {
   my @bitmap = undef;
   foreach my $domain_ref ( @{$trans_ref->{'scanprosite_hits'}||[]} ) {
     my($domain,@pairs) = @$domain_ref;
-    warn ">>$domain<<>>@pairs";
     my $Composite3 = new Sanger::Graphics::Glyph::Composite({
       'y'         => 0,
       'height'    => $h
