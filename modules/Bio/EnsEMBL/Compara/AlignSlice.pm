@@ -251,18 +251,17 @@ sub _create_underlying_Slices {
       ## Truncate all the GenomicAligns
       foreach my $genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
         my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
-        my $this_truncated_seq = substr($aligned_sequence, 0, $length_of_truncated_seq);
-        substr($aligned_sequence, 0, $length_of_truncated_seq, "");
+        my $this_truncated_seq = substr($aligned_sequence, 0, $length_of_truncated_seq, "");
         $genomic_align->aligned_sequence($aligned_sequence);
         $genomic_align->original_sequence(0); # unset original_sequence
         $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
         $genomic_align->cigar_line(); # build cigar_line according to fake aligned_seq
         $genomic_align->aligned_sequence(0); # unset the *fake* aligned sequence
-        $this_truncated_seq =~ s/\-//g;
+        my $num_of_nucl = $this_truncated_seq =~ tr/A-Za-z/A-Za-z/;
         if ($genomic_align->dnafrag_strand == 1) {
-          $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+          $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $num_of_nucl);
         } else {
-          $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+          $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $num_of_nucl);
         }
         $genomic_align->dbID(0); # unset dbID
       }
@@ -297,11 +296,11 @@ sub _create_underlying_Slices {
         $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
         $genomic_align->cigar_line(); # build cigar_line according to fake aligned_seq
         $genomic_align->aligned_sequence(0); # unset the *fake* aligned sequence
-        $this_truncated_seq =~ s/\-//g;
+        my $num_of_nucl = $this_truncated_seq =~ tr/A-Za-z/A-Za-z/;
         if ($genomic_align->dnafrag_strand == 1) {
-          $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+          $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $num_of_nucl);
         } else {
-          $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+          $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $num_of_nucl);
         }
         $genomic_align->dbID(0); # unset dbID
       }
