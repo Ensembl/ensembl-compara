@@ -1111,14 +1111,15 @@ sub subseq {
           ## This is a gap
           my $start_position_of_gap_seq = $this_pos;
           my $end_position_of_gap_seq = $this_pos + $sequence_coord->length;
-          if ($start_position_of_gap_seq < $slice_start) {
-            $start_position_of_gap_seq = $slice_start;
+          if ($start_position_of_gap_seq < $slice_start - 1) {
+            $start_position_of_gap_seq = $slice_start - 1;
           }
-          if ($end_position_of_gap_seq > $slice_end) {
-            $end_position_of_gap_seq = $slice_end;
+          if ($end_position_of_gap_seq > $slice_end + 1) {
+            $end_position_of_gap_seq = $slice_end + 1;
           }
           my $length_of_gap_seq = $end_position_of_gap_seq - $start_position_of_gap_seq;
-          substr($seq, $start_position_of_gap_seq, $length_of_gap_seq, "-" x $length_of_gap_seq) if ($length_of_gap_seq > 0);
+          substr($seq, $start_position_of_gap_seq, $length_of_gap_seq, "-" x $length_of_gap_seq)
+              if ($length_of_gap_seq > 0);
         }
       }
       $this_pos += $sequence_coord->length;
