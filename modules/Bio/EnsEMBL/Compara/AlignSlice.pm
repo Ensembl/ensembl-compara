@@ -227,24 +227,32 @@ sub _create_underlying_Slices {
     my $this_gap_between_genomic_align_blocks = $this_pos - $last_start_pos;
     my $excess_at_the_start = $self->reference_Slice->start - $reference_genomic_align->dnafrag_start;
     my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $self->reference_Slice->end;
-    if ($excess_at_the_start > 0) {
-      ## First GAB. The slice start inside this GAB...
-      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
-      ## Memory optimization: start looking from $excess_at_the_end from the start
-      my $truncated_seq = substr($this_align_slice_seq, 0, $excess_at_the_start);
-      substr($this_align_slice_seq, 0, $excess_at_the_start, "");
-      my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
-      $excess_at_the_start -= $num_of_nucl;
+    if ($excess_at_the_start >= 0) {
+      ## First GAB. The slice start inside this GAB or just at the beginning...
+      # use *fake* aligned seq. This avoids to fetch the real sequence from core
+      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ");
+
+      ## Optimization: start looking from $excess_at_the_start from the start
+      my $length_of_truncated_seq = 0;
+      while ($excess_at_the_start > 100) {
+        # Extracts the last $excess_at_the_end characters from the aligned_seq
+        my $truncated_seq = substr($this_align_slice_seq, 0, $excess_at_the_start, "");
+        # Count the num of nucleotides in the last $excess_at_the_end characters
+        my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
+        # Substract $num_of_nucl from the $excess_at_the_end (the num of nucl. that have been reemoved
+        $excess_at_the_start -= $num_of_nucl;
+        $length_of_truncated_seq += length($truncated_seq);
+      }
       $this_align_slice_seq =~ s/(\-*([^\-]\-*){$excess_at_the_start})//;
-      $truncated_seq = ($1 or "").$truncated_seq;
+      $length_of_truncated_seq += length($1);
 
       ## Truncate GenomicAlignBlock
       $reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
       ## Truncate all the GenomicAligns
       foreach my $genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
         my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
-        my $this_truncated_seq = substr($aligned_sequence, 0, length($truncated_seq));
-        substr($aligned_sequence, 0, length($truncated_seq), "");
+        my $this_truncated_seq = substr($aligned_sequence, 0, $length_of_truncated_seq);
+        substr($aligned_sequence, 0, $length_of_truncated_seq, "");
         $genomic_align->aligned_sequence($aligned_sequence);
         $genomic_align->original_sequence(0); # unset original_sequence
         $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
@@ -259,24 +267,31 @@ sub _create_underlying_Slices {
         $genomic_align->dbID(0); # unset dbID
       }
     }
-    if ($excess_at_the_end > 0) {
-      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
+    if ($excess_at_the_end >= 0) {
+      # use *fake* aligned seq. This avoids to fetch the real sequence from core
+      my $this_align_slice_seq = $reference_genomic_align->aligned_sequence("+FAKE_SEQ");
       ## Optimization: start looking from $excess_at_the_end from the end because
       ## the pattern match at the end of the string could be very slow
-      my $truncated_seq = substr($this_align_slice_seq, -$excess_at_the_end);
-      substr($this_align_slice_seq, -$excess_at_the_end, $excess_at_the_end, "");
-      my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
-      $excess_at_the_end -= $num_of_nucl;
+      my $length_of_truncated_seq = 0;
+      while ($excess_at_the_end > 100) {
+        # Extracts the last $excess_at_the_end characters from the aligned_seq
+        my $truncated_seq = substr($this_align_slice_seq, -$excess_at_the_end, $excess_at_the_end, "");
+        # Count the num of nucleotides in the last $excess_at_the_end characters
+        my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
+        # Substract $num_of_nucl from the $excess_at_the_end (the num of nucl. that have been reemoved
+        $excess_at_the_end -= $num_of_nucl;
+        $length_of_truncated_seq += length($truncated_seq);
+      }
       $this_align_slice_seq =~ s/(\-*([^\-]\-*){$excess_at_the_end})$//;
-      $truncated_seq = $1.$truncated_seq;
+      $length_of_truncated_seq += length($1);
 
       ## Truncate GenomicAlignBlock
       $reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
       ## Truncate all the GenomicAligns
       foreach my $genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
         my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
-        my $this_truncated_seq = substr($aligned_sequence, - length($truncated_seq));
-        substr($aligned_sequence, - length($truncated_seq), length($truncated_seq), "");
+        my $this_truncated_seq = substr($aligned_sequence, - $length_of_truncated_seq,
+            $length_of_truncated_seq, "");
         $genomic_align->aligned_sequence($aligned_sequence);
         $genomic_align->original_sequence(0); # unset original_sequence
         $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
