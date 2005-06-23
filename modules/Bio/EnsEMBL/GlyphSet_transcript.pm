@@ -74,7 +74,6 @@ sub compact_init {
 
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
-
   my @bitmap        = undef;
   my $colours       = $self->colours();
 
