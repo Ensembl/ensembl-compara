@@ -51,23 +51,45 @@ sub js_menu_div {
 
 #########
 # hash with caption=>'menu title' and 'menu item'=>href
-#   Can produce a sorted menu by prepending dd: to the menu key.  These
-#   are then pruned off - e.g. "01:toast" as a key would be sorted first,
-#   and produce a menu item "toast".
+#   Can produce a sorted menu by prepending dd: (or any number of 
+#   zero-padded digits )to the menu key.  These are then pruned off - 
+#   e.g. "01:toast" as a key would be sorted first, and produce a 
+#   menu item "toast".
 #
 sub js_menu {
     my $items = shift;
     return "javascript:void($items);" unless ref($items) eq 'HASH';
     my $str = '\'' . ($items->{'caption'} || "options") . '\',';
+    my $caption = $items->{'caption'};
 
+    my (%check_hash, $skip);
     for my $i (sort keys %$items) {
         next if $i eq 'caption';
     	my $menu_line = $i || "";
-    	$menu_line    =~ s/^\d\d://;
-	my $item      = $items->{$i} || "";
-	$menu_line    =~ s/\'/\\\'/g;
-	$item         =~ s/\'/\\\'/g;
-	$str         .= qq('$item','$menu_line',);
+my $full_line = $menu_line;
+    	$menu_line    =~ s/^(\d+)://;
+	    my $item      = $items->{$i} || "";
+        # check we're not including duplicate entries in featureview
+        if ($caption eq 'feature') {
+            $check_hash{$menu_line}++;
+            $check_hash{$item}++;
+            if ($menu_line =~ /Jump to contigview/i) {
+                if ($skip) {
+                    $skip = 0;
+                    next;
+                }
+            }
+            else { # this is an unlinked 'subhead' line
+                if ($check_hash{$menu_line} > 1) {
+                    $skip = 1;
+                    next;
+                }
+            }
+        }
+
+	    $menu_line    =~ s/\'/\\\'/g;
+	    $item         =~ s/\'/\\\'/g;
+	    $str         .= qq('$item','$menu_line',);
     }
 
     $str =~ s/(.*),/$1/;
