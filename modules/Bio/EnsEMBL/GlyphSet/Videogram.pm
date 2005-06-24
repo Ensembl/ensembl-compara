@@ -422,7 +422,7 @@ sub _init {
                             next if $entry eq 'caption';
                             my $value = $_->{'zmenu'}->{$entry};
                             $entry=~s/\d\d+://;
-                            $highlights[$offset-1]->{'zmenu'}->{ sprintf("%02d:%s",$zmenu_length++,$entry) } = $value;
+                            $highlights[$offset-1]->{'zmenu'}->{ sprintf("%03d:%s",$zmenu_length++,$entry) } = $value;
                             $highlights[$offset-1]->{'start'} = $_->{'start'} if ($highlights[$offset-1]->{'start'} > $_->{'start'});
                             $highlights[$offset-1]->{'end'} = $_->{'end'} if ($highlights[$offset-1]->{'end'} < $_->{'end'});
                         }
