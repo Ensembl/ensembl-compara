@@ -11,23 +11,26 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Data::Dumper;
 
+my %SHORT = qw(
+  chromosome Chr.
+  supercontig S'ctg
+);
+
 sub init_label {
   my ($self) = @_;
-  my $chr = $self->{'config'}->get('scalebar','label');
-  if( $self->{'config'}->{'compara'} && $chr ) {
-    return if $self->strand < 0;
-    my $label = new Sanger::Graphics::Glyph::Sprite({
-      'z'             => 10,
-      'x'             => -110,
-      'y'             => 0,
-      'sprite'        => lc($chr),
-      'width'         => 100,
-      'height'        => 20,
-      'absolutex'     => 1,
-      'absolutewidth' => 1,
-      'absolutey'     => 1,
-    });
-    $self->push($label);
+  return unless $self->{'config'}->get('scalebar','label') eq 'on';
+  return if $self->strand < 0 ;
+  my $type = $self->{'container'}->coord_system->name();
+  my $chr = $self->{'container'}->seq_region_name(); 
+  unless( $chr =~ /^$type/i ) {
+    $type = $SHORT{lc($type)} || ucfirst( $type );
+    $chr = "$type $chr";
+  }
+  if( $self->{'config'}->{'multi'} ) {
+    $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.')." $chr";
+  }
+
+  if( $self->{'config'}->{'multi'}) {
     my $line = new Sanger::Graphics::Glyph::Rect({
       'z' => 11,
       'x' => -120,
@@ -45,14 +48,13 @@ sub init_label {
       $self->join_tag( $line, "bracket2", 0.9,0, 'rosybrown1', 'fill', -40 );
     }
     $self->push($line);
-  } elsif( $chr ) {
-    my $label = new Sanger::Graphics::Glyph::Text({
-      'text'      => "$chr",	
-      'font'      => 'Small',
-      'absolutey' => 1,
-    });
-    $self->label($label);
   }
+  my $label = new Sanger::Graphics::Glyph::Text({
+    'text'      => "$chr",	
+    'font'      => 'Small',
+    'absolutey' => 1,
+  });
+  $self->label($label);
 }
 
 
