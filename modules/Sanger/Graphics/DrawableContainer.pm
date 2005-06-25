@@ -32,7 +32,6 @@ sub _init {
     $Contents = $T;
   }
   my( $highlights, $strandedness, $Storage) = @_;
-  warn @{$highlights||[]};
   my $self = {
     'glyphsets'     => [],
     'config'        => $Contents->[0][1],
