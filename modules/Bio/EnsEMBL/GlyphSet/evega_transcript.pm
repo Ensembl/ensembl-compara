@@ -27,11 +27,11 @@ sub colour {
   # $type =~ s/HUMACE-//g;
   my $colour = $colours->{$type}[0] || 'black';
 
-  if(exists $highlights{$transcript->stable_id()}) {
+  if(exists $highlights{lc($transcript->stable_id)}) {
     $highlight = $colours->{'superhi'};
-  } elsif(exists $highlights{$transcript->external_name}) {
+  } elsif(exists $highlights{lc($transcript->external_name)}) {
     $highlight = $colours->{'superhi'};
-  } elsif(exists $highlights{$gene->stable_id()}) {
+  } elsif(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
   }
 
@@ -46,7 +46,7 @@ sub gene_colour {
   $type =~ s/HUMACE-//g;
   my $colour = $colours->{$type}[0];
 
-  if(exists $highlights{$gene->stable_id()}) {
+  if(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
   }
 
@@ -59,7 +59,7 @@ sub href {
   my $tid = $transcript->stable_id();
   my $gid = $gene->stable_id();
 
-  return ($self->{'config'}->get('evega_transcript','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
+  return ($self->{'config'}->get('evega_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id)} ) ?
      "#$tid" :
      qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega;gene=$gid);
 }
@@ -68,7 +68,7 @@ sub gene_href {
   my ($self, $gene,  %highlights ) = @_;
 
   my $gid = $gene->stable_id();
-  return ($self->{'config'}->get('evega_transcript','_href_only') eq '#gid' && exists $highlights{$gene->stable_id()} ) ?
+  return ($self->{'config'}->get('evega_transcript','_href_only') eq '#gid' && exists $highlights{lc($gene->stable_id)} ) ?
     "#$gid" :
     qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega;gene=$gid);
 }

@@ -45,11 +45,11 @@ sub colour {
   } elsif( $transcript->external_status eq '' and ! $translation_id ) {
     $genecol = $colours->{'_PSEUDO'}[0];
   }
-  if(exists $highlights{$transcript->stable_id()}) {
+  if(exists $highlights{lc($transcript->stable_id)}) {
     return ($genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{$transcript->external_name()}) {
+  } elsif(exists $highlights{lc($transcript->external_name)}) {
     return ($genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{$gene->stable_id()}) {
+  } elsif(exists $highlights{lc($gene->stable_id)}) {
     return ($genecol, $colours->{'hi'});
   }
     
@@ -63,7 +63,7 @@ sub gene_colour {
   if( $gene->type eq 'bacterial_contaminant' ) {
     $genecol = $colours->{'_BACCOM'}[0];
   }
-  if(exists $highlights{$gene->stable_id()}) {
+  if(exists $highlights{lc($gene->stable_id)}) {
     return ($genecol, $colours->{'hi'});
   }
 
@@ -77,7 +77,7 @@ sub href {
   my $tid = $transcript->stable_id();
   
   my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-  return ( $self->{'config'}->get('sgd_transcript','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
+  return ( $self->{'config'}->get('sgd_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id)} ) ?
     "#$tid" : 
     qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
 
@@ -89,7 +89,7 @@ sub gene_href {
   my $gid = $gene->stable_id();
 
   my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-  return ( $self->{'config'}->get('sgd_transcript','_href_only') eq '#gid' && exists $highlights{$gene->stable_id()} ) ?
+  return ( $self->{'config'}->get('sgd_transcript','_href_only') eq '#gid' && exists $highlights{lc($gene->stable_id)} ) ?
     "#$gid" :
     qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
 

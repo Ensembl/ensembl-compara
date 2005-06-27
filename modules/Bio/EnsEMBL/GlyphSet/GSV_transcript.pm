@@ -148,11 +148,11 @@ sub colour {
     if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
        $genecol = $colours->{'_pseudogene'}[0];
     }
-    if(exists $highlights{$transcript->stable_id()}) {
+    if(exists $highlights{lc($transcript->stable_id)}) {
       return ($genecol, $colours->{'superhi'}[0]);
-    } elsif(exists $highlights{$transcript->external_name()}) {
+    } elsif(exists $highlights{lc($transcript->external_name)}) {
       return ($genecol, $colours->{'superhi'}[0]);
-    } elsif(exists $highlights{$gene->stable_id()}) {
+    } elsif(exists $highlights{lc($gene->stable_id)}) {
       return ($genecol, $colours->{'hi'}[0]);
     }
       

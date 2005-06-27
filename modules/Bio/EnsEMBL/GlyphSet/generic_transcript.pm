@@ -58,11 +58,11 @@ sub colour {
   $colours ||= {};
   my $genecol = $colours->{$analysis} || $colours->{'col'} || 'black';
 
-  if(exists $highlights{$transcript->stable_id()}) {
+  if(exists $highlights{lc($transcript->stable_id)}) {
     return ($genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{$transcript->external_name()}) {
+  } elsif(exists $highlights{lc($transcript->external_name)}) {
     return ($genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{$gene->stable_id()}) {
+  } elsif(exists $highlights{lc($gene->stable_id)}) {
     return ($genecol, $colours->{'hi'});
   }    
   return ($genecol, undef);
@@ -91,9 +91,9 @@ sub href {
 
   # Check whether href is internal on gene_id or transcript_id
   if( $self->my_config('_href_only') eq '#gid' and
-      exists $highlights{$gid} ){ return( "#$gid" ) }
+      exists $highlights{lc($gid)} ){ return( "#$gid" ) }
   if( $self->my_config('_href_only') eq '#tid' and
-      exists $highlights{$gid} ){ return( "#$tid" ) }
+      exists $highlights{lc($gid)} ){ return( "#$tid" ) }
 
   my $species = $self->{container}{_config_file_name_};
   my $db = $self->my_config('db_alias') || 'core';

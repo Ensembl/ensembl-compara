@@ -24,7 +24,7 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
   my $colour = $colours->{$gene->analysis->logic_name}[0];
   my $highlight;
-  if( exists $highlights{$gene->stable_id()} ){
+  if( exists $highlights{lc($gene->stable_id)} ){
     $highlight = $colours->{'hi'};
   }
   return ( $colour, $highlight );
@@ -43,7 +43,7 @@ sub href {
   my $tid = $transcript->stable_id();
 
   my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-  return ( $self->{'config'}->get('homology_low_transcript','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
+  return ( $self->{'config'}->get('homology_low_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id)} ) ?
     "#$tid" :
     qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
 
@@ -62,7 +62,7 @@ sub gene_href {
   my $gid = $gene->stable_id();
 
   my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-  return ( $self->{'config'}->get('homology_low_transcript','_href_only') eq '#gid' && exists $highlights{$gene->stable_id()} ) ?
+  return ( $self->{'config'}->get('homology_low_transcript','_href_only') eq '#gid' && exists $highlights{lc($gene->stable_id)} ) ?
     "#$gid" :
     qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
 

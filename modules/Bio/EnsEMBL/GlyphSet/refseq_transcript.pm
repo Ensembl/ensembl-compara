@@ -24,7 +24,7 @@ sub colour {
     my ($self, $gene, $transcript, $colours, %highlights) = @_;
     my $colour = $colours->{'_refseq'}[0];
     my $highlight;
-    if( exists $highlights{$gene->stable_id()} ){
+    if( exists $highlights{lc($gene->stable_id)} ){
         $highlight = $colours->{'hi'};
     }
     return ( $colour, $highlight );

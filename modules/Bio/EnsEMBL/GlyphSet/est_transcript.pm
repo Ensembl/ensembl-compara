@@ -19,11 +19,11 @@ sub colour {
   my $highlight = undef;
   my $colour = $colours->{lc($transcript->type())||lc($gene->type())}[0];
 
-  if(exists $highlights{$transcript->stable_id()}) {
+  if(exists $highlights{lc($transcript->stable_id)}) {
     $highlight = $colours->{'superhi'};
-  } elsif(exists $highlights{$transcript->external_name}) {
+  } elsif(exists $highlights{lc($transcript->external_name)}) {
     $highlight = $colours->{'superhi'};
-  } elsif(exists $highlights{$gene->stable_id()}) {
+  } elsif(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
   }
 
@@ -35,9 +35,9 @@ sub gene_colour {
   my $highlight = undef;
   my $colour = $colours->{lc($gene->type())}[0];
 
-  if(exists $highlights{$gene->external_name}) {
+  if(exists $highlights{lc($gene->external_name)}) {
     $highlight = $colours->{'superhi'};
-  } elsif(exists $highlights{$gene->stable_id()}) {
+  } elsif(exists $highlights{lc($gene->stable_id)}) {
     $highlight = $colours->{'hi'};
   }
   return ($colour, $highlight);
@@ -48,7 +48,7 @@ sub href {
   my $gid = $gene->stable_id();
   my $tid = $transcript->stable_id();
 
-  return ( $self->{'config'}->get('est_transcript','_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
+  return ( $self->{'config'}->get('est_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id())} ) ?
         "#$tid" : 
         qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=est;gene=$gid);
 
@@ -57,7 +57,7 @@ sub href {
 sub gene_href {
   my ($self, $gene, %highlights) = @_;
   my $gid = $gene->stable_id();
-  return ( $self->{'config'}->get('est_transcript','_href_only') eq '#gid' && exists $highlights{$gid} ) ?
+  return ( $self->{'config'}->get('est_transcript','_href_only') eq '#gid' && exists $highlights{lc($gid)} ) ?
     "#$gid" : qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=est;gene=$gid);
 }
 

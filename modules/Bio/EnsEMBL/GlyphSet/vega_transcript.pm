@@ -64,7 +64,7 @@ sub href {
     my $gid = $gene->stable_id();
     my $tid = $transcript->stable_id();
     my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-    return ( $self->{'config'}->get($self->check, '_href_only') eq '#tid' && exists $highlights{$gene->stable_id()} ) ?
+    return ( $self->{'config'}->get($self->check, '_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id)} ) ?
         "#$tid" : 
         qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core);
 }
@@ -72,7 +72,7 @@ sub href {
 sub gene_href {
     my ($self, $gene, %highlights) = @_;
     my $gid = $gene->stable_id();
-    return ($self->{'config'}->get($self->check,'_href_only') eq '#gid' && exists $highlights{$gene->stable_id()} ) ?
+    return ($self->{'config'}->get($self->check,'_href_only') eq '#gid' && exists $highlights{lc($gene->stable_id)} ) ?
         "#$gid" :
         qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=core;gene=$gid);
 }
