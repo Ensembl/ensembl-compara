@@ -1,13 +1,12 @@
 package Bio::EnsEMBL::GlyphSet::ssaha;
 use strict;
-use EnsWeb;
+
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::ColourMap;
 
 sub init_label {
     my ($self) = @_;
@@ -41,7 +40,7 @@ sub _init {
     my @hits;
 
     foreach my $ticket (@ssaha_tickets) {
-        my $filename = EnsWeb::species_defs->ENSEMBL_TMP_DIR_BLAST."/$ticket.cache";
+        my $filename = $self->species_defs->ENSEMBL_TMP_DIR_BLAST."/$ticket.cache";
         if( -e $filename ) {
             open FH, $filename;
             while(<FH>) {

@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::prediction_transcript;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Bio::EnsEMBL::GlyphSet_transcript;
 use Bio::EnsEMBL::Gene;
 

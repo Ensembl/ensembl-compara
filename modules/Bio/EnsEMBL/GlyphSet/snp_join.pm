@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::snp_join;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 use Bio::EnsEMBL::Variation::VariationFeature;
@@ -44,7 +44,7 @@ sub _init {
             @{$self->{'container'}->get_all_VariationFeatures()};
     my $context = $Config->get( 'snp_join', 'context' );
     if( $context && @snps ) {
-      my $features = $self->{'container'}->get_all_Genes(lc(EnsWeb::species_defs->AUTHORITY));
+      my $features = $self->{'container'}->get_all_Genes(lc($self->species_defs->AUTHORITY));
       foreach my $gene ( @$features ) {
         next if $target_gene && ($gene->stable_id() ne $target_gene);
         foreach my $transcript (@{$gene->get_all_Transcripts()}) {

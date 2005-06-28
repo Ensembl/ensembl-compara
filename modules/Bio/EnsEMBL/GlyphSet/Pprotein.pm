@@ -1,15 +1,12 @@
 package Bio::EnsEMBL::GlyphSet::Pprotein;
 use strict;
 use vars qw(@ISA $SPECIES_DEFS);
-use SpeciesDefs;
 use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 #use EnsEMBL::Web::GeneTrans::support;u
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-$SPECIES_DEFS = SpeciesDefs->new();
 
 sub init_label {
     my ($self) = @_;
@@ -39,7 +36,7 @@ sub _init {
                  '' );
     $type = lc( $type );
 
-    my $authority = lc($SPECIES_DEFS->AUTHORITY);
+    my $authority = lc($self->species_defs->AUTHORITY);
 
     ## hack to fix flybase db type definition
     if ($authority eq $type || ($type eq 'gene' && $authority eq 'flybase')){
@@ -47,7 +44,7 @@ sub _init {
     } elsif ($type eq 'genomewise') {
       $db = 'est';
     } elsif( $type ){
-      ($SPECIES_DEFS->ENSEMBL_SITETYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
+      ($self->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ($db = 'core') : ($db = 'vega');
     } else {
       $db = 'core';
     }

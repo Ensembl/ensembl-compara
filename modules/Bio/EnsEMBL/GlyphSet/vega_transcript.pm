@@ -34,7 +34,7 @@ sub features {
         my $chr = $self->{'container'}->seq_region_name;
         my $avail = (split(/ /, $self->my_config('available')))[1]
                     . "." . $self->{'container'}->seq_region_name;
-        return ([]) unless(EnsWeb::species_defs->get_config(
+        return ([]) unless($self->species_defs->get_config(
                     $self->{'container'}{'_config_file_name_'}, 'DB_FEATURES')->{uc($avail)});
         
         $genes = $gene_adaptor->fetch_all_by_Slice_and_author($self->{'container'}, $author, 'otter');
@@ -162,7 +162,7 @@ sub gene_text_label {
 sub legend {
     my ($self, $colours) = @_;
     my @legend = ('genes', 1000, []);
-    foreach my $gene_type (sort keys %{ EnsWeb::species_defs->VEGA_GENE_TYPES || {}} ) {
+    foreach my $gene_type (sort keys %{ $self->species_defs->VEGA_GENE_TYPES || {}} ) {
         push(@{@legend[2]}, "$legend_map{$gene_type}" => $colours->{$gene_type}->[0] );
     }
     return @legend;

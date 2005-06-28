@@ -352,7 +352,7 @@ sub zmenu {
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
     my $zmenu = {
-        'caption'                       => EnsWeb::species_defs->AUTHORITY." Gene",
+        'caption'                       => $self->species_defs->AUTHORITY." Gene",
         "00:$id"			=> "",
 	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
         "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
@@ -369,6 +369,6 @@ sub zmenu {
     return $zmenu;
 }
 
-sub error_track_name { return EnsWeb::species_defs->AUTHORITY.' transcripts'; }
+sub error_track_name { return $self->species_defs->AUTHORITY.' transcripts'; }
 
 1;

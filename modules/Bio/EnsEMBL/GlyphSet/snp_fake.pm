@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::snp_fake;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 use Sanger::Graphics::Glyph::Text;

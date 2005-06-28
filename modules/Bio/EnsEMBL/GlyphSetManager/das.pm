@@ -5,8 +5,7 @@ use Sanger::Graphics::GlyphSetManager;
 use Bio::EnsEMBL::GlyphSet::das;
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::GlyphSetManager);
-use ExternalDAS;
-use EnsWeb;
+use EnsEMBL::Web::ExternalDAS;
 
 ##
 ## 2001/07/03	js5		Added external DAS source code
@@ -20,8 +19,8 @@ sub init {
 
     my $Config = $self->{'config'};
     my @das_source_names = 
-         ref( EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES ) eq 'HASH' ?
-	 keys %{EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES}          :
+         ref( $self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES ) eq 'HASH' ?
+	 keys %{$self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES}          :
 	 ();
 
     #########
@@ -31,11 +30,11 @@ sub init {
     for my $das_source_name (@das_source_names) {
         #warn( $das_source_name );
 	next unless( $Config->get("managed_${das_source_name}",'on') eq 'on' );
-	my $extra_config = EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$das_source_name};
+	my $extra_config = $self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$das_source_name};
 	$extra_config->{'name'} = "managed_${das_source_name}";
 	$self->add_glyphset( $extra_config );
     }
-    my $ext_das = new ExternalDAS();
+    my $ext_das = new EnsEMBL::Web::ExternalDAS();
     $ext_das->get_sources();
 
     for my $das_source_name ( keys %{$ext_das->{'data'}} ) {

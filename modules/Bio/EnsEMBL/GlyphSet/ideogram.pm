@@ -43,7 +43,6 @@ sub _init {
 
     my $Config = $self->{'config'};
     my $col    = undef;
-    my $cmap   = $Config->colourmap();
     my $white  = 'white';
     my $black  = 'black';
     my $red    = 'red';
@@ -239,7 +238,7 @@ sub _init {
     foreach my $end (qw(0 1)) {
         my $direction = $end ? 1 : -1;
         my %partials = map { uc($_) => 1 }
-                @{ EnsWeb::species_defs->PARTIAL_CHROMOSOMES || [] };
+                @{ $self->species_defs->PARTIAL_CHROMOSOMES || [] };
         if ($partials{uc($chr)}) {
         # draw jagged ends for partial chromosomes
             my $bpperpx = $chr_length/$im_width;

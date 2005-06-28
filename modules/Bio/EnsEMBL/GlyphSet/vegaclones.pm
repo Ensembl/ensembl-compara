@@ -6,7 +6,7 @@ use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Bio::Das; 
-use EnsWeb;
+
 use Data::Dumper;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
@@ -15,7 +15,7 @@ sub my_label { return "Vega Clones"; }
 
 sub features {
     my ($self)      = @_;
-    return unless ref(EnsWeb::species_defs->ENSEMBL_TRACK_DAS_SOURCES) eq 'HASH';
+    return unless ref($self->species_defs->ENSEMBL_TRACK_DAS_SOURCES) eq 'HASH';
     my $slice       = $self->{'container'};
     my @clones      = ();
 
@@ -26,9 +26,9 @@ sub features {
     }        
 
     ###### Get DAS source config for this track ######
-    my $species_defs    = &EnsWeb::species_defs();
+    my $species_defs    = $self->species_defs();
     my $source          = "das_VEGACLONES";
-    my $dbname          = EnsWeb::species_defs->ENSEMBL_TRACK_DAS_SOURCES->{$source};
+    my $dbname          = $self->species_defs->ENSEMBL_TRACK_DAS_SOURCES->{$source};
     my $URL             = $dbname->{'url'};
     my $dsn             = $dbname->{'dsn'};
     my $types           = $dbname->{'types'} || [];
@@ -49,7 +49,7 @@ sub features {
                                 -url        => $URL,
                                 -dsn        => $dsn,
                                 -types      => $types || [], 
-                                -proxy_url  => &EnsWeb::species_defs->ENSEMBL_DAS_PROXY,
+                                -proxy_url  => $self->species_defs->ENSEMBL_DAS_PROXY,
                                 );
     };
     if($@) {

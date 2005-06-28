@@ -12,7 +12,7 @@ use strict;
 use vars qw(@ISA $DECIPHER_COLOURS);
 use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::Feature;
-use EnsWeb;
+
 use Bio::Das;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
@@ -25,7 +25,7 @@ $DECIPHER_COLOURS = {
 sub my_label { "DECIPHER"; }
 
 sub features {
-  return unless ref(EnsWeb::species_defs->ENSEMBL_TRACK_DAS_SOURCES) eq 'HASH';
+  return unless ref($self->species_defs->ENSEMBL_TRACK_DAS_SOURCES) eq 'HASH';
 
   my $self         = shift;
   my $slice        = $self->{'container'};
@@ -34,8 +34,8 @@ sub features {
   my $chr          = $slice->seq_region_name();
   my $cmap         = $self->{'config'}->colourmap();
   my $offset       = -$start+1;
-  my $species_defs = &EnsWeb::species_defs();
-  my $dbname       = EnsWeb::species_defs->ENSEMBL_TRACK_DAS_SOURCES->{"das_DECIPHER"};
+  my $species_defs = $self->species_defs();
+  my $dbname       = $self->species_defs->ENSEMBL_TRACK_DAS_SOURCES->{"das_DECIPHER"};
   my $dsn          = $dbname->{'url'} . "/" . $dbname->{'dsn'};
   $dsn             = "http://$dsn" unless ($dsn =~ /^https?:\/\//i);
   my @features     = ();

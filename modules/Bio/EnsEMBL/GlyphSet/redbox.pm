@@ -3,7 +3,6 @@ use strict;
 use Bio::EnsEMBL::GlyphSet;
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::ColourMap;
 
 sub _init {
   my ($self) = @_;

@@ -7,7 +7,7 @@ use Bio::EnsEMBL::SimpleFeature;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Bio::Das; 
-use EnsWeb;
+
 use ExtURL;
 
 use vars qw(@ISA);
@@ -20,7 +20,7 @@ sub my_label {
 
 sub features {
     my $self = shift;
-    return unless ref(EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES) eq 'HASH';
+    return unless ref($self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES) eq 'HASH';
     
     my $slice = $self->{'container'};
     my @clones = ();
@@ -33,9 +33,9 @@ sub features {
     }
 
     # get DAS source config for this track
-    my $species_defs    = &EnsWeb::species_defs();
+    my $species_defs    = $self->species_defs();
     my $source          = $self->my_config('dsn');
-    my $dbname          = EnsWeb::species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$source};
+    my $dbname          = $self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$source};
     return unless $dbname;
     
     my $URL             = $dbname->{'url'};
@@ -59,7 +59,7 @@ sub features {
                         -url        => $URL,
                         -dsn        => $dsn,
                         -types      => $types || [], 
-                        -proxy_url  => &EnsWeb::species_defs->ENSEMBL_DAS_PROXY,
+                        -proxy_url  => $self->species_defs->ENSEMBL_DAS_PROXY,
         );
     };
     if ($@) {

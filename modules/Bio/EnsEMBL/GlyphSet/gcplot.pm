@@ -45,7 +45,6 @@ sub _init {
     my $highlights      = $self->highlights();
     my $feature_colour  = $Config->get('gcplot','hi');
     my $alt_colour      = $Config->get('gcplot','low');
-    my $cmap            = $Config->colourmap();
     my $black           = 'black';
     my $red             = 'red';
     my $rust            = 'rust';

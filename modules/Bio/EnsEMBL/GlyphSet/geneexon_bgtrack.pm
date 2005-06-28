@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::geneexon_bgtrack;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 use Sanger::Graphics::Glyph::Space;
@@ -39,7 +39,7 @@ sub _init {
     }
   } else {
     my $offset  = $container->start - 1;
-    my $features =  $self->{'container'}->get_all_Genes(lc(EnsWeb::species_defs->AUTHORITY));
+    my $features =  $self->{'container'}->get_all_Genes(lc($self->species_defs->AUTHORITY));
     foreach my $gene ( @$features ) { 
       next if $target_gene && ($gene->stable_id() ne $target_gene);
       foreach my $transcript (@{$gene->get_all_Transcripts()}) {

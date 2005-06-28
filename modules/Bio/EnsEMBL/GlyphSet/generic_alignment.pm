@@ -344,7 +344,7 @@ sub compact_init {
 sub features {
   my ($self, $species, $method ) = @_;
   (my $species_2 = $species) =~ s/_/ /; 
-  my $assembly = EnsWeb::species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH');
+  my $assembly = $self->species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH');
   return $self->{'container'}->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method );
 }
 

@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::restrict;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Composite;
@@ -20,7 +20,7 @@ sub init_label {
 
 sub _init {
   my ($self) = @_;
-  return unless EnsWeb::species_defs->ENSEMBL_EMBOSS_PATH;
+  return unless $self->species_defs->ENSEMBL_EMBOSS_PATH;
   return unless my $strand = $self->strand eq -1;
 
   my $vc   = $self->{'container'};
@@ -34,7 +34,6 @@ sub _init {
   }
   my $PADDING = 90;
   my $col  = undef;
-  my $cmap   = $config->colourmap();
   my $white  = 'white';
   my $black  = 'black';
   my $sequence = $vc->subseq(-$PADDING+1,$length+$PADDING-1);
@@ -43,7 +42,7 @@ sub _init {
   my $sticky_colour = 'lightskyblue2';
   my $text_colour = 'black';
   my $length = $vc->length;
-  my $filename = $EnsWeb::species_defs->ENSEMBL_TMP_DIR."/".&Digest::MD5::md5_hex(rand()).".restrict";
+  my $filename = $self->species_defs->ENSEMBL_TMP_DIR."/".&Digest::MD5::md5_hex(rand()).".restrict";
   my @bitmap; 
   my $pix_per_bp = $config->transform->{'scalex'};
   my $bitmap_length = int ($length * $pix_per_bp );
@@ -54,7 +53,7 @@ sub _init {
   print O $sequence;
   close O;
 ## CALL emboss "restrict"   
-  my $command = EnsWeb::species_defs->ENSEMBL_EMBOSS_PATH."/bin/restrict -enzymes all -sitelen 4 -seq $filename.in -outfile $filename.out";
+  my $command = $self->species_defs->ENSEMBL_EMBOSS_PATH."/bin/restrict -enzymes all -sitelen 4 -seq $filename.in -outfile $filename.out";
   `$command`; 
 ## CLEAN UP INPUT FILE...
   unlink "$filename.in";

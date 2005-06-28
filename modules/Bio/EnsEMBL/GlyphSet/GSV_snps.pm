@@ -143,6 +143,6 @@ sub _init {
   }
 }
 
-sub error_track_name { return EnsWeb::species_defs->AUTHORITY.' transcripts'; }
+sub error_track_name { return $self->species_defs->AUTHORITY.' transcripts'; }
 
 1;

@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::transcript_lite;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Bio::EnsEMBL::GlyphSet_transcript;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
@@ -9,7 +9,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 sub my_label {
   my $self = shift;
-  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "@{[EnsWeb::species_defs->AUTHORITY]} trans.";
+  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "@{[$self->species_defs->AUTHORITY]} trans.";
 }
 
 sub colours {
@@ -23,7 +23,7 @@ sub features {
   my $track = 'transcript_lite';
   my $slice = $self->{'container'};
   my $sp = $self->{'_config_file_name_'};
-  my @analyses = ( lc( EnsWeb::species_defs->get_config($sp,'AUTHORITY') ),
+  my @analyses = ( lc( $self->species_defs->get_config($sp,'AUTHORITY') ),
                    'pseudogene');
   my $db_alias = $self->{'config'}->get($track,'db_alias') || '';
   my @genes;
@@ -104,7 +104,7 @@ sub zmenu {
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
   my $zmenu = {
-    'caption'                       => EnsWeb::species_defs->AUTHORITY." Gene",
+    'caption'                       => $self->species_defs->AUTHORITY." Gene",
     "00:$id"			=> "",
     "01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
     "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
@@ -124,7 +124,7 @@ sub gene_zmenu {
   my $gid = $gene->stable_id();
   my $id   = $gene->external_name() eq '' ? $gid : ( $gene->external_db.": ".$gene->external_name() );
   my $zmenu = {
-    'caption'                       => EnsWeb::species_defs->AUTHORITY." Gene",
+    'caption'                       => $self->species_defs->AUTHORITY." Gene",
     "01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
   };
   $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid;db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
@@ -181,12 +181,12 @@ sub gene_text_label {
 sub legend {
   my ($self, $colours) = @_;
   return ('genes', 900, [
-    EnsWeb::species_defs->AUTHORITY.' predicted genes (known)' => $colours->{'_KNOWN'},
-    EnsWeb::species_defs->AUTHORITY.' predicted genes (novel)' => $colours->{'_'},
-    EnsWeb::species_defs->AUTHORITY.' pseudogenes' => $colours->{'_PSEUDO'},
+    $self->species_defs->AUTHORITY.' predicted genes (known)' => $colours->{'_KNOWN'},
+    $self->species_defs->AUTHORITY.' predicted genes (novel)' => $colours->{'_'},
+    $self->species_defs->AUTHORITY.' pseudogenes' => $colours->{'_PSEUDO'},
   ]);
 }
 
-sub error_track_name { return EnsWeb::species_defs->AUTHORITY.' transcripts'; }
+sub error_track_name { return $self->species_defs->AUTHORITY.' transcripts'; }
 
 1;

@@ -4,7 +4,6 @@ use Exporter;
 use Sanger::Graphics::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
-use EnsWeb;
 
 use vars qw(@ISA $AUTOLOAD);
 
@@ -13,6 +12,8 @@ use vars qw(@ISA $AUTOLOAD);
 #########
 # constructor
 #
+
+sub species_defs { return $_[0]->{'config'}->{'species_defs'}; }
 
 sub commify { local $_ = reverse $_[1]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
 sub slice2sr {
@@ -89,7 +90,7 @@ sub HASH_URL {
 
 sub ID_URL {
   my($self,$db,$id) = @_;
-  return exists( EnsWeb->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) ? "/@{[$self->{container}{_config_file_name_}]}/r?d=$db;ID=$id" : "";
+  return exists( $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) ? "/@{[$self->{container}{_config_file_name_}]}/r?d=$db;ID=$id" : "";
 }
 
 sub zoom_URL {

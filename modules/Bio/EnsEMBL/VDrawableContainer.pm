@@ -2,7 +2,6 @@ package Bio::EnsEMBL::VDrawableContainer;
 
 use strict;
 use Bio::EnsEMBL::GlyphSet::Videogram;
-use EnsWeb;
 
 sub new {
   my ($class, $Container, $Config, $highlights, $strandedness, $spacing) = @_;
@@ -28,7 +27,7 @@ sub new {
   ########## loop over all the glyphsets the user wants:
   my $tmp = {};
   my @chromosomes = $Config->{'_all_chromomosomes'} eq 'yes' ?
-                  (@{ $Config->{'chromomosomes'}||EnsWeb::species_defs->ENSEMBL_CHROMOSOMES||[] }) :
+                  (@{ $Config->{'chromomosomes'}||$Config->{species_defs}->ENSEMBL_CHROMOSOMES||[] }) :
                   ($Container->{'chr'}); 
   my $pos = 100000;
   my $row = '';

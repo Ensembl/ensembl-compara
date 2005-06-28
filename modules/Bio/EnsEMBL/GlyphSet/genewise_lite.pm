@@ -74,7 +74,7 @@ sub zmenu {
         '07:Protein sequence (FASTA)'   => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid",
         '08:cDNA sequence'              => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$vtid",
     };
-    my $DB = EnsWeb::species_defs->databases;
+    my $DB = $self->species_defs->databases;
     if($DB->{'ENSEMBL_EXPRESSION'}) {
       $zmenu->{'06:Expression information'}
         = "/@{[$self->{container}{_config_file_name_}]}/sageview?alias=".$gene->stable_id();

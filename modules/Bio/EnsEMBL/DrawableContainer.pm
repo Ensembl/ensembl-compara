@@ -1,9 +1,10 @@
 package Bio::EnsEMBL::DrawableContainer;
 use strict;
-use EnsWeb;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use Sanger::Graphics::DrawableContainer;
-@Bio::EnsEMBL::DrawableContainer::ISA=qw(Sanger::Graphics::DrawableContainer);
+our @ISA = qw(Sanger::Graphics::DrawableContainer);
+
+sub species_defs { return $_[0]->{'config'}->{'species_defs'}; }
 
 sub _init {
   my $class = shift;
@@ -13,12 +14,13 @@ sub _init {
 } 
  
 sub debug {
-  my( $class, $pos, $tag ) = @_;
+  my( $self, $pos, $tag ) = @_;
   $tag = "$ENV{'ENSEMBL_SCRIPT'}_$tag";
   if( $pos eq 'start' ) {
-    &eprof_start( $tag ) if $EnsWeb::species_defs->ENSEMBL_DEBUG_FLAGS & 32;
+    &eprof_start( $tag ) if $self->species_defs->ENSEMBL_DEBUG_FLAGS & 32;
   } else {
-    &eprof_end( $tag ) if $EnsWeb::species_defs->ENSEMBL_DEBUG_FLAGS & 32;
+    &eprof_end( $tag ) if $self->species_defs->ENSEMBL_DEBUG_FLAGS & 32;
   }
 }
+
 1;

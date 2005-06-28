@@ -1,6 +1,5 @@
 package Bio::EnsEMBL::Glyph;
 use strict;
-use Sanger::Graphics::ColourMap;
 use Exporter;
 use vars qw(@ISA $AUTOLOAD);
 @ISA = qw(Exporter);

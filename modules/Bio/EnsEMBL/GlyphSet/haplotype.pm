@@ -1,6 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::haplotype;
 use strict;
-use EnsWeb;
+
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;

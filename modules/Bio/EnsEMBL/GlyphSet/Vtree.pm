@@ -26,7 +26,6 @@ sub _init {
     
     return unless ($self->strand() == 1);
 ## FIRSTLY LETS SORT OUT THE COLOURS!!
-    my $cmap   = $Config->colourmap();
     my $white  = 'white';
     my $black  = 'black';
 

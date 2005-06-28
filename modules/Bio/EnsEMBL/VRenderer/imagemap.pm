@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::VRenderer::imagemap;
 use strict;
 use Bio::EnsEMBL::VRenderer;
+use Sanger::Graphics::JSTools;
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::VRenderer);
 

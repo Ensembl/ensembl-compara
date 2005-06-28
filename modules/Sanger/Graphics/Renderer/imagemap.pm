@@ -6,6 +6,7 @@
 package Sanger::Graphics::Renderer::imagemap;
 use strict;
 use Sanger::Graphics::Renderer;
+use Sanger::Graphics::JSTools;
 use vars qw(@ISA);
 @ISA = qw(Sanger::Graphics::Renderer);
 

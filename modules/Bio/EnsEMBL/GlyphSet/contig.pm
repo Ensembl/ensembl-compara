@@ -8,7 +8,6 @@ use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::ColourMap;
 use Data::Dumper;
 $Data::Dumper::Indent=2;
 use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
@@ -97,8 +96,6 @@ sub _init_non_assembled_contig {
   my $navigation     = $Config->get($module, 'navigation') || 'on';
   my $show_navigation = ($length < $threshold_navigation) && ($navigation eq 'on');
 
-  my $cmap     = $Config->colourmap();
- 
 ########
 # Vars used only for scale drawing
 #

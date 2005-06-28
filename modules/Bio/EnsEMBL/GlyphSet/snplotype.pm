@@ -45,7 +45,6 @@ sub create_multiple_haplotype_block {
     my $colour                  = $Config->get('snplotype','col');
     my $font                    = "Small";
     my ($fontwidth,$fontheight) = $Config->texthelper->px2bp($font);
-    my $cmap                    = $Config->colourmap();
     my $black                   = 'black';
     my $caption                 = "SNPlotype";
 
@@ -112,7 +111,7 @@ sub create_multiple_haplotype_block {
                     } else {
                         $type = 'snp';
                     }
-                    my @glyphs = draw_unlabelled_snp_block($cmap,$xstart,$ystart,$type,$b);
+                    my @glyphs = draw_unlabelled_snp_block($xstart,$ystart,$type,$b);
                     foreach (@glyphs){
                         $self->push($_);
                     }
@@ -138,7 +137,6 @@ sub create_haplotype_block {
     my $colour                  = $Config->get('snplotype','col');
     my $font                    = "Small";
     my ($fontwidth,$fontheight) = $Config->texthelper->px2bp($font);
-    my $cmap                    = $Config->colourmap();
     my $black                   = 'black';
     my $caption                 = "SNPlotype";
 
@@ -223,7 +221,7 @@ sub create_haplotype_block {
         my $type = "cons";
         if($showconsensus){
             foreach(split('',$pat->pattern())){
-                my @glyphs = draw_labelled_snp_block($cmap,$xstart,$ystart,$type,$_);
+                my @glyphs = draw_labelled_snp_block($xstart,$ystart,$type,$_);
                 foreach (@glyphs){
                     $self->push($_);
                 }
@@ -257,7 +255,7 @@ sub create_haplotype_block {
                 } else {
                     $type = 'snp';
                 }
-                my @glyphs = draw_labelled_snp_block($cmap,$xstart,$ystart,$type,$b);
+                my @glyphs = draw_labelled_snp_block($xstart,$ystart,$type,$b);
                 foreach (@glyphs){
                     $self->push($_);
                 }
@@ -334,7 +332,7 @@ sub create_haplotype_block {
 #########################################################################
 sub draw_labelled_snp_block {
 
-    my ($cmap, $x, $y, $type, $label) = @_;
+    my ($x, $y, $type, $label) = @_;
     
     my $white    = 'white';
     my $black    = 'black';
@@ -389,7 +387,7 @@ sub draw_labelled_snp_block {
 #########################################################################
 sub draw_unlabelled_snp_block {
 
-    my ($cmap, $x, $y, $type, $label) = @_;
+    my ($x, $y, $type, $label) = @_;
     
     my $white    = 'white';
     my $black    = 'black';

@@ -8,8 +8,7 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::ColourMap;
-use  Sanger::Graphics::Bump;
+use Sanger::Graphics::Bump;
 
 sub init_label {
     my ($self) = @_;
@@ -35,7 +34,6 @@ sub _init {
     my $bitmap_length = int($Config->container_width() * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
-    my $cmap          = new Sanger::Graphics::ColourMap;
     my $black         = 'black';
     my $red           = 'red';
     my $font          = "Small";

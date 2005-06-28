@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::genebuilderbeeflymosandswall_transcript;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Bio::EnsEMBL::GlyphSet_transcript;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 

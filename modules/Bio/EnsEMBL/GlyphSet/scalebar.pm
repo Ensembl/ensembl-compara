@@ -3,7 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use EnsWeb;
+
 use POSIX qw(ceil floor);
 use Sanger::Graphics::Glyph::Sprite;
 use Sanger::Graphics::Glyph::Rect;
@@ -170,7 +170,7 @@ sub _init {
             'colour'    => 'black',
             'absolutey' => 1,
         }));
-        my $LABEL = $minor_unit < 250 ? EnsWeb::commify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
+        my $LABEL = $minor_unit < 250 ? ->commify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
         if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
           $self->push(new Sanger::Graphics::Glyph::Text({
             'x'         => $box_start - $global_start,

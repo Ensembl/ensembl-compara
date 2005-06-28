@@ -11,7 +11,7 @@ sub init_label {
 sub _init {
     my ($self) = @_;
     return unless ($self->strand() == 1);
-    return unless my $mod = EnsWeb::species_defs->ENSEMBL_PRELIM;
+    return unless my $mod = $self->species_defs->ENSEMBL_PRELIM;
 
     my $FONT = 'MediumBold';
     my ($w,$h) = $self->{'config'}->texthelper()->real_px2bp($FONT);

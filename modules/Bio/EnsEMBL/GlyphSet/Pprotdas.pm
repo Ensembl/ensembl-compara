@@ -55,7 +55,6 @@ sub _init {
     my $bitmap_length = int( $prot_len * $pix_per_bp);
     my $y             = 0;
     my $h             = 4;
-    my $cmap          = new Sanger::Graphics::ColourMap;
     my $black         = 'black';
     my $red           = 'red';
     my $font          = "Small";

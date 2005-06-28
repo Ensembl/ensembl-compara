@@ -7,7 +7,6 @@ use Bio::EnsEMBL::GlyphSet;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use  Sanger::Graphics::Bump;
-use EnsWeb;
 use Data::Dumper;
 
 sub features {

@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::fgenesh;
 use strict;
 use vars qw(@ISA);
-use EnsWeb;
+
 use Bio::EnsEMBL::GlyphSet_transcript;
 use Bio::EnsEMBL::Gene;
 
@@ -49,7 +49,7 @@ sub colour {
 sub href {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->stable_id();
-    return undef unless my $gft = EnsWeb::species_defs->GENSCAN_FASTA_TABLE;
+    return undef unless my $gft = $self->species_defs->GENSCAN_FASTA_TABLE;
     return $self->{'config'}->{'exturl'}->get_url( 'FASTAVIEW', { 'FASTADB' => "Peptide_$gft" , 'ID' => $id } );
     
 }
@@ -57,7 +57,7 @@ sub href {
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $id = $transcript->stable_id();
-    return { 'caption' => $id } unless my $gft = EnsWeb::species_defs->GENSCAN_FASTA_TABLE;
+    return { 'caption' => $id } unless my $gft = $self->species_defs->GENSCAN_FASTA_TABLE;
     return {
 	'caption' => $id,
         '01:Peptide sequence' => $self->href( $gene, $transcript ),

@@ -43,7 +43,6 @@ sub _init {
 
     my $col    = undef;
     my $config = $self->{'config'};
-    my $cmap   = $config->colourmap();
     my $white  = 'white';
     my $black  = 'black';
  

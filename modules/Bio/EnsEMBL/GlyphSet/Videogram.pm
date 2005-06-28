@@ -15,10 +15,6 @@ use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Bump;
 
-use SpeciesDefs;
-my $species_defs = SpeciesDefs->new();
-
-
 sub init_label {
     my $self = shift;
     return if( $self->{'config'}->{'_label'} eq 'none'  );
@@ -58,7 +54,6 @@ sub _init {
     return unless $Config->container_width()>0; # The container has zero width !!EXIT!!
     
     my $col    = undef;
-    my $cmap   = $Config->colourmap();
     my $white  = 'white';
     my $black  = 'black';
     my $bg     = $Config->get('_settings','bgcolor');
@@ -279,9 +274,9 @@ sub _init {
         my $direction = $end ? -1 : 1;
         
         my %partials = map { uc($_) => 1 }
-        	@{ $species_defs->PARTIAL_CHROMOSOMES || [] };
+        	@{ $self->species_defs->PARTIAL_CHROMOSOMES || [] };
 	my %artificials = map { uc($_) => 1 }
-	        @{ $species_defs->ARTIFICIAL_CHROMOSOMES || [] };
+	        @{ $self->species_defs->ARTIFICIAL_CHROMOSOMES || [] };
         if ($partials{uc($chr)}) {
         # draw jagged ends for partial chromosomes
             # resolution dependent scaling
@@ -679,7 +674,6 @@ sub highlight_strandedbox {
   $bump_start          = 0 if ($bump_start < 0);
   my $bump_end         = $bump_start + int($draw_length * $self->{'pix_per_bp'}) +1;
   $bump_end            = $self->{'bitmap_length'} if ($bump_end > $self->{'bitmap_length'});
-  my $cmap             = $self->{'config'}->colourmap();
   my $ori              = ($strand eq "-")?-1:1;
   my $bitmap           = ($strand eq "-")?"reverse_bitmap":"forward_bitmap";
   my $row              = &Sanger::Graphics::Bump::bump_row(

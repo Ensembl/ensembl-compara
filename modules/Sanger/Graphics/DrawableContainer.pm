@@ -3,6 +3,7 @@
 # Maintainer: webmaster@sanger.ac.uk
 # Created: 2001
 #
+
 package Sanger::Graphics::DrawableContainer;
 use strict;
 
@@ -17,7 +18,7 @@ use Sanger::Graphics::Renderer::png;
 use Sanger::Graphics::Renderer::imagemap;
 use Sanger::Graphics::Root;
 
-@Sanger::Graphics::DrawableContainer::ISA = qw(Sanger::Graphics::Root);
+our @ISA = qw(Sanger::Graphics::Root);
 
 sub _init {
   my $class = shift;
@@ -46,7 +47,9 @@ sub _init {
   return $self;
 }
 
+
 sub new {
+  warn "Sanger::Graphics::DrawableContainer - new";
   my $class = shift;
   my $self = $class->_init( @_ ); 
   my $T = $self->{'config'};
