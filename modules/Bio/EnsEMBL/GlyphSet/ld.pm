@@ -36,8 +36,13 @@ sub _init {
 
   my $key = $self->_key();
   my $number_of_snps = scalar(@snps);
+  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  my $pop_obj     = $pop_adaptor->fetch_by_dbID($only_pop);
+  my $pop_name    = $pop_obj->name;
+  my $length      = ($self->{'container'}->length -1)/1000;
+
   unless( $number_of_snps > 1 ) {
-    $self->errorTrack( "No LD ($key) features for this population" );
+    $self->errorTrack( "No $key linkage data in $length kb window for population $pop_name" );
     return;
   }
 
@@ -79,10 +84,8 @@ sub _init {
 						    }));
 
   # Print info line with population details
-  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my $pop_obj     = $pop_adaptor->fetch_by_dbID($only_pop);
   my $parents = $pop_obj->get_all_super_Populations;
-  my $name    = "LD($key): ".$pop_obj->name;
+  my $name    = "LD($key): $pop_name";
   $name   .= '   ('.(join ', ', map { ucfirst(lc($_->name)) } @{$parents} ).')' if @$parents;
   $name   .= "   $number_of_snps SNPs";
   $self->push( Sanger::Graphics::Glyph::Text->new({
