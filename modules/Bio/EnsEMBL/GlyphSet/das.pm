@@ -15,41 +15,50 @@ use ExtURL;
 
 
 sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  my $params =  $ENV{QUERY_STRING};
-  $params =~ s/\&$//;
-  $params =~ s/\&/zzz/g;
-  my $script = $ENV{ENSEMBL_SCRIPT};
+    my ($self) = @_;
+    return if( defined $self->{'config'}->{'_no_label'} );
 
-  my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  qq(/@{[$self->{container}{_config_file_name_}]}/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das);
-
-my $URL = "";
-if ($self->das_name =~ /^managed_extdas_(.*)$/){
-    $URL = qq(javascript:X=window.open(\'/@{[$self->{container}{_config_file_name_}]}/dasconfview?_das_edit=$1;conf_script=$script;conf_script_params=$params\',\'dassources\',\'height=500,width=500,left=50,screenX=50,top=50,screenY=50,resizable,scrollbars=yes\');X.focus();void(0));
-}
-else {
-    if ($self->{'extras'}{'homepage'}){
-	$URL = $self->{'extras'}{'homepage'};
+    my $params;
+    foreach my $param (CGI::param()) {
+	if (defined(my $v = CGI::param($param))) {
+	    if (ref($v) eq 'ARRAY') {
+		foreach my $w (@$v) {
+		    $params .= ";$param=$w";
+		}
+	    } else {
+		$params .= ";$param=$v";
+	    }
+	}
     }
-    else {
-	$URL = qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'height=400,width=500,left=100,screenX=100,top=100,screenY=100,resizable,scrollbars=yes\');X.focus();void(0)) ;
+
+    my $script = $ENV{ENSEMBL_SCRIPT};
+    my $species = $ENV{ENSEMBL_SPECIES};
+    my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  "/$species/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das";
+    
+    my $URL = "";
+    if ($self->das_name =~ /^managed_extdas_(.*)$/){
+	$URL = qq(javascript:X=window.open(\'/$species/dasconfview?_das_edit=$1;conf_script=$script$params\',\'dassources\',\'left=10,top=10,resizable,scrollbars=yes\');X.focus();void(0));
+    } else {
+	if ($self->{'extras'}{'homepage'}){
+	    $URL = $self->{'extras'}{'homepage'};
+	} else {
+	    $URL = qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'left=20,top=20,resizable,scrollbars=yes\');X.focus();void(0)) ;
+	}
     }
-}
 
-  my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
-  $track_label =~ s/^(managed_|managed_extdas)//;
+    my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
+    $track_label =~ s/^(managed_|managed_extdas)//;
 
-  $self->label( new Sanger::Graphics::Glyph::Text({
-    'text'      => $track_label,
-    'font'      => 'Small',
-    'colour'    => 'contigblue2',
-    'absolutey' => 1,
-    'href'      => $URL,
-    'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
-      { 'caption' => 'Configure', '01:Advanced configuration...' => $URL } :
-      { 'caption' => 'HELP',      '01:Track information...'      => $URL }
-  }) );
+    $self->label( new Sanger::Graphics::Glyph::Text({
+	'text'      => $track_label,
+	'font'      => 'Small',
+	'colour'    => 'contigblue2',
+	'absolutey' => 1,
+	'href'      => $URL,
+	'zmenu'     => $self->das_name  =~/^managed_extdas/ ?
+	        { 'caption' => 'Configure', '01:Advanced configuration...' => $URL } :
+                { 'caption' => 'HELP',      '01:Track information...'      => $URL }
+    }) );
 }
 
 
@@ -652,6 +661,7 @@ sub managed_name { return $_[0]->{'extras'}->{'name'}; }
 sub _init {
   my ($self) = @_;
   ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
+
   $das_config_key =~ s/^managed_das/das/;
   my $Config = $self->{'config'};
   my $strand = $Config->get($das_config_key, 'str');
@@ -734,7 +744,6 @@ sub _init {
          }
          
          foreach my $key (keys %fhash) {
-#                              warn("FT:$key:".$fhash{$key}->{count});
              my $ft = $fhash{$key}->{feature}; 
              if ((my $count = $fhash{$key}->{count}) > 1) {
                 $ft->{das_feature_label} = "$key/$count";
@@ -750,26 +759,25 @@ sub _init {
              $ft->{das_orientation} = $gene->strand;
              $ft->{_gsf_strand} = $gene->strand;
              $ft->{das_strand} = $gene->strand;
-             
-             #         warn(Dumper($ft));
+
              push(@das_features, $ft);
          }
       }
   } else {
-    my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
-    $styles = $das_styles;
-    @das_features = grep {
-      $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
-      $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
-      $_->das_start <= $configuration->{'length'} &&
-      $_->das_end > 0
-    } @{ $features || [] };
+      my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
+      $styles = $das_styles;
+      @das_features = grep {
+	  $_->das_type_id() !~ /^(contig|component|karyotype)$/i && 
+	      $_->das_type_id() !~ /^(contig|component|karyotype):/i &&
+	      $_->das_start <= $configuration->{'length'} &&
+	      $_->das_end > 0
+	  } @{ $features || [] };
   }
 
   
   $configuration->{'features'} = \@das_features;
 
-#  warn(Dumper(\@das_features));
+#  warn(Data::Dumper::Dumper(\@das_features));
 
   # hash styles by type
   my %styles;
