@@ -1,10 +1,10 @@
 package Bio::EnsEMBL::GlyphSetManager::sub_repeat;
 
 use strict;
-use Sanger::Graphics::GlyphSetManager;
+use Bio::EnsEMBL::GlyphSetManager;
 use Bio::EnsEMBL::GlyphSet::sub_repeat;
 use vars qw(@ISA);
-@ISA = qw(Sanger::Graphics::GlyphSetManager);
+@ISA = qw(Bio::EnsEMBL::GlyphSetManager);
 
 ##
 ## 2001/07/03	js5		Added external DAS source code
