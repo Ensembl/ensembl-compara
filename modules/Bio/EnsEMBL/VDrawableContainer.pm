@@ -27,7 +27,7 @@ sub new {
   ########## loop over all the glyphsets the user wants:
   my $tmp = {};
   my @chromosomes = $Config->{'_all_chromosomes'} eq 'yes' ?
-                  ($Config->{species_defs}->ENSEMBL_CHROMOSOMES||[] }) :
+                  (@{$Config->{species_defs}->ENSEMBL_CHROMOSOMES||[] }) :
                   ($Container->{'chr'}); 
   my $pos = 100000;
   my $row = '';
