@@ -39,6 +39,7 @@ sub new {
       $Config->get($_, 'on') eq "on" ? [$Config->get($_,'pos')||$pos++,$_] : () ;
     } $Config->subsections;
   foreach my $chr ( @chromosomes ) {
+    $Container->{'chr'} = $chr;
     for my $row (@subsections) {
       ########## create a new glyphset for this row
       my $classname;
