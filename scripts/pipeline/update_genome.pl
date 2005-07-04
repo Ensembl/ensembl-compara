@@ -194,16 +194,22 @@ if ($help) {
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
-my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
+throw ("Cannot connect to database [$species]") if (!$species_db);
 
-my $genome_db = update_genome_db($species_db, $compara_db);
-print "Former Bio::EnsEMBL::Compara::GenomeDB->dbID: ", $genome_db->dbID, "\n\n";
+my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
+throw ("Cannot connect to database [$compara]") if (!$compara_db);
+
+my $genome_db = update_genome_db($species_db, $compara_db, $force);
+print "Former " if (!$force);
+print "Bio::EnsEMBL::Compara::GenomeDB->dbID: ", $genome_db->dbID, "\n\n";
 
 delete_genomic_align_data($compara_db, $genome_db);
 
 delete_syntenic_data($compara_db, $genome_db);
 
-update_dnafrags($compara_db, $genome_db, $species_db);
+if (!$force) {
+  update_dnafrags($compara_db, $genome_db, $species_db);
+}
 
 if ($clean_database) {
   print "Deleting non-genomic data from the database... ";
@@ -223,6 +229,7 @@ exit(0);
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
   Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[3]      : bool $force
   Description : This method takes all the information needed from the
                 species database in order to update the genome_db table
                 of the compara database
@@ -233,7 +240,7 @@ exit(0);
 =cut
 
 sub update_genome_db {
-  my ($species_dba, $compara_dba) = @_;
+  my ($species_dba, $compara_dba, $force) = @_;
   
   my $slice_adaptor = $species_dba->get_adaptor("Slice");
   my $primary_species_binomial_name = 
@@ -250,18 +257,30 @@ sub update_genome_db {
     throw "GenomeDB with this name [$primary_species_binomial_name] and assembly".
         " [$primary_species_assembly] is already in the compara DB [$compara]\n".
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
+  } elsif ($force) {
+    print "GenomeDB with this name [$primary_species_binomial_name] and assembly".
+        " [$primary_species_assembly] is not in the compara DB [$compara]\n".
+        "You don't need the --force option!!";
+    print "Press [Enter] to continue or Ctrl+C to cancel...";
+    <STDIN>;
   }
 
   $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
           $primary_species_binomial_name
       );
+  if (!$genome_db) {
+    throw "There is no GenomeDB with this name [$primary_species_binomial_name] in the compara DB [$compara]\n".
+        "You should add the entry manually!!";
+  }
 
   my $sql = "SELECT meta_value FROM meta where meta_key= ?";
   my $sth = $species_dba->dbc->prepare($sql);
   $sth->execute("assembly.default");
   my ($assembly) = $sth->fetchrow_array();
+  throw("Database [".$species_dba->species."] does not contain assembly data in the meta table") if (!$assembly);
   $sth->execute("genebuild.version");
   my ($genebuild) = $sth->fetchrow_array();
+  warning("Database [".$species_dba->species."] does not contain genebuild data in the meta table") if (!$genebuild);
   print join(" -- ", $assembly, $genebuild);
 
   $sql = "UPDATE genome_db SET assembly = \"$assembly\", genebuild = \"$genebuild\" WHERE genome_db_id = ".
