@@ -432,6 +432,7 @@ sub analyzeClusters2
   printf("%d members in hash\n", scalar(keys(%{$self->{'member_LSD_hash'}})));
 
   foreach my $gdbid (@$species_list) {
+    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbid);
     my $member_id_list = $self->{'gdb_member_hash'}->{$gdbid}; 
 
     my $lsd_members=0;
@@ -439,7 +440,8 @@ sub analyzeClusters2
       $lsd_members++ if($self->{'member_LSD_hash'}->{$member_id});
     }
     my $mem_count = scalar(@$member_id_list);
-    printf("gdb(%2d), %7d members, %7d no_dup, %7d LSD,\n", $gdbid, $mem_count, $mem_count-$lsd_members, $lsd_members);
+    printf("%30s(%2d), %7d members, %7d no_dup, %7d LSD,\n", 
+       $gdb->name, $gdbid, $mem_count, $mem_count-$lsd_members, $lsd_members);
   }
               
   $clusterset->release;
