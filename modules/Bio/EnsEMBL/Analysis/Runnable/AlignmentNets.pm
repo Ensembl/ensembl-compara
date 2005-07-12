@@ -49,14 +49,18 @@ sub new {
       $query_lengths,
       $target_lengths,
       $chain_net,
-      $simple_net,
+      $net_syntenic,
+      $net_filter,
+      $filter_non_syntenic,
       $min_chain_score
       ) = $self->_rearrange([qw(
                                 CHAINS
                                 QUERY_LENGTHS
                                 TARGET_LENGTHS
                                 CHAINNET
-                                SIMPLE_NET
+                                NETSYNTENIC
+                                NETFILTER
+                                FILTER_NON_SYNTENIC
                                 MIN_CHAIN_SCORE
                                 )],
                                     @args);
@@ -67,19 +71,27 @@ sub new {
       if not defined $query_lengths;
   throw("You must supply a reference to an hash of query seq. lengths") 
       if not defined $target_lengths;
+  throw("You must supply the chainNet executable") 
+      if not defined $chain_net;
+
+  if (defined $filter_non_syntenic) {
+    throw("You must supply the netSyntenic executable when doing synteny filtering") 
+        if not defined $net_syntenic;
+    throw("You must supply the netFilter executable when doing synteny filtering") 
+        if not defined $net_filter;    
+  }
 
   $self->query_length_hash($query_lengths);
   $self->target_length_hash($target_lengths);
     
-  if (not defined $simple_net or not $simple_net) {    
-    $self->chainNet($chain_net) if defined $chain_net;
-    $self->simple_net(0);
-  } else {
-    $self->simple_net($simple_net);
-  }
+  $self->chainNet($chain_net);
+
+  $self->filter_non_syntenic($filter_non_syntenic) if defined $filter_non_syntenic;
+  $self->netSyntenic($net_syntenic) if defined $net_syntenic;
+  $self->netFilter($net_filter) if defined $net_filter;
 
   $self->min_chain_score($min_chain_score) if defined $min_chain_score;
-  $self->chains($self->sort_chains_by_max_block_score($chains));
+  $self->chains($chains);
 
   return $self;
 }
@@ -101,182 +113,99 @@ sub new {
 sub run {
   my ($self) = @_;
 
-  my $nets;
+  my $res_chains;
 
-  if ($self->simple_net) {
-    $nets = $self->calculate_simple_net;
-  } else {   
-    my ($query_name) = keys %{$self->query_length_hash};
-    
-    my $work_dir = $self->workdir . "/$query_name.$$.ChainNet";
-    while (-e $work_dir) {
-      $work_dir .= ".$$";
-    }
-    
-    my $chain_file = "$work_dir/$query_name.chain";
-    my $query_length_file  = "$work_dir/$query_name.query.lengths";
-    my $target_length_file = "$work_dir/$query_name.target.lengths";
-    my $query_net_file     = "$work_dir/$query_name.query.net";
-    my $target_net_file    = "$work_dir/$query_name.target.net";
-    my $fh;
-    
-    mkdir $work_dir;
-    
-    ##############################
-    # write the seq length files
-    ##############################
-    foreach my $el ([$query_length_file, $self->query_length_hash], 
-                    [$target_length_file, $self->target_length_hash]) {
-      my ($file, $hash) = @$el;
-      
-      open $fh, ">$file" or
-          throw("Could not open seq length file '$file' for writing");
-      foreach my $k (keys %{$hash}) {
-        print $fh $k, "\t", $hash->{$k}, "\n";
-      }
-      close($fh);
-    }
-    
-    
-    ##############################
-    # write chains
-    ############################## 
-    open $fh, ">$chain_file" or 
-        throw("could not open chain file '$chain_file' for writing\n");
-    $self->write_chains($fh);
-    close($fh);
-    
-    ##################################
-    # Get the Nets from chainNet
-    ##################################
-    my @arg_list;
-    if (defined $self->min_chain_score) {
-      @arg_list = ("-minScore=" . $self->min_chain_score);
-    }
-    push @arg_list, ($chain_file, 
-                     $query_length_file, 
-                     $target_length_file, 
-                     $query_net_file,
-                     $target_net_file);
-
-    system($self->chainNet, @arg_list) 
-        and throw("Something went wrong with chainNet");
-    
-    ##################################
-    # read the Net file
-    ##################################
-    open $fh, $query_net_file or 
-        throw("Could not open net file '$query_net_file' for reading\n");
-    $nets = $self->parse_Net_file($fh);
-    close($fh);
-      
-    unlink $chain_file, $query_length_file, $target_length_file, $query_net_file, $target_net_file;
-    rmdir $work_dir;
-  }
-    
-  $self->output($nets);    
-
-  return 1;
-}
-
-
-#####################################################
-sub sort_chains_by_max_block_score {
-  my ($self, $chains) = @_;
-
-  # sort the chains by maximum score
-  my @chain_hashes;
-  foreach my $chain (@$chains) {
-    my $chain_hash = { chain => $chain };
-    foreach my $block (@$chain) {
-      if (not exists $chain_hash->{score} or
-          $block->score > $chain_hash->{score}) {
-        $chain_hash->{score} = $block->score;
-      }
-    }
-    if (not defined $self->min_chain_score or
-        $chain_hash->{score} > $self->min_chain_score) {
-      push @chain_hashes, $chain_hash;
-    }
+  my ($query_name) = keys %{$self->query_length_hash};
+  
+  my $work_dir = $self->workdir . "/$query_name.$$.ChainNet";
+  while (-e $work_dir) {
+    $work_dir .= ".$$";
   }
   
-  my @sorted = map { $_->{chain}} sort {$b->{score} <=> $a->{score}} @chain_hashes;
-
-  return \@sorted;
-}
-
-#####################################################
-
-sub calculate_simple_net {
-  my ($self) = @_;
-
-  my $sorted_chains = $self->chains;
-
-  my @net_chains;
-
-  if ($self->simple_net =~ /HIGH/) {
-    # VERY simple: just keep the best chain
-
-    if (@$sorted_chains) {
-      @net_chains = ($sorted_chains->[0]);
+  my $chain_file = "$work_dir/$query_name.chain";
+  my $query_length_file  = "$work_dir/$query_name.query.lengths";
+  my $target_length_file = "$work_dir/$query_name.target.lengths";
+  my $query_net_file     = "$work_dir/$query_name.query.net";
+  my $target_net_file    = "$work_dir/$query_name.target.net";
+  my $fh;
+  
+  mkdir $work_dir;
+  
+  ##############################
+  # write the seq length files
+  ##############################
+  foreach my $el ([$query_length_file, $self->query_length_hash], 
+                  [$target_length_file, $self->target_length_hash]) {
+    my ($file, $hash) = @$el;
+    
+    open $fh, ">$file" or
+        throw("Could not open seq length file '$file' for writing");
+    foreach my $k (keys %{$hash}) {
+      print $fh $k, "\t", $hash->{$k}, "\n";
     }
-
-  } elsif ($self->simple_net =~ /MEDIUM/) {
-    # Slightly less simple. Junk chains that have extent overlap
-    # with retained chains so far
-    foreach my $c (@$sorted_chains) {
-      my @b = sort { $a->start <=> $b->start } @$c; 
-      my $c_st = $b[0]->start;
-      my $c_en = $b[-1]->end;
-
-      my $keep_chain = 1;
-      foreach my $oc (@net_chains) {
-        my @ob = sort { $a->start <=> $b->start } @$oc; 
-
-        my $oc_st = $ob[0]->start;
-        my $oc_en = $ob[-1]->end;
-
-        if ($oc_st <= $c_en and $oc_en >= $c_st) {
-          # overlap; junk
-          $keep_chain = 0;
-          last;
-        }
-      }
-
-      if ($keep_chain) {
-        push @net_chains, $c;
-      }
-    }
-
-  } elsif ($self->simple_net =~ /LOW/) {
-    # not quite so simple. Junk chains that have BLOCK overlap
-    # with retained chains so far
-    my @retained_blocks;
-
-    foreach my $c (@$sorted_chains) {
-      my @b = sort { $a->start <=> $b->start } @$c; 
-
-      my $keep_chain = 1;
-      BLOCK: foreach my $b (@b) {
-        OTHER_BLOCK: foreach my $ob (@retained_blocks) {
-          if ($ob->start <= $b->end and $ob->end >= $b->start) {
-            $keep_chain = 0;
-            last BLOCK;
-          } elsif ($ob->start > $b->end) {
-            last OTHER_BLOCK;
-          }
-        }
-      }
-
-      if ($keep_chain) {
-        push @net_chains, $c;
-        push @retained_blocks, @$c;
-        @retained_blocks = sort { $a->start <=> $b->start } @retained_blocks;
-      }
-    }
+    close($fh);
   }
+  
+  
+  ##############################
+  # write chains
+  ############################## 
+  open $fh, ">$chain_file" or 
+      throw("could not open chain file '$chain_file' for writing\n");
+  $self->write_chains($fh);
+  close($fh);
+  
+  ##################################
+  # Get the Nets from chainNet
+  ##################################
+  my @arg_list;
+  if (defined $self->min_chain_score) {
+    @arg_list = ("-minScore=" . $self->min_chain_score);
+  }
+  push @arg_list, ($chain_file, 
+                   $query_length_file, 
+                   $target_length_file, 
+                   $query_net_file,
+                   $target_net_file);
+  
+  system($self->chainNet, @arg_list) 
+      and throw("Something went wrong with chainNet");
+  
+  ##################################
+  # Apply the synteny filter if requested
+  ##################################
+  if ($self->filter_non_syntenic) {
+    my $syntenic_net_file = "$work_dir/$query_name.query.synteny_annotated.net";
+    my $filtered_net_file = "$work_dir/$query_name.query.synteny.net";
+    
+    system($self->netSyntenic, $query_net_file, $syntenic_net_file) 
+        and throw("Something went wrong with netSyntenic");
+    open(FILTER, $self->netFilter . " -syn $syntenic_net_file |") or
+        throw("Could not run netFilter");
+    open(FILTERED,">$filtered_net_file")
+        or throw("Could not open filtered net file for writing");
+    while(<FILTER>) {
+      print FILTERED $_;
+    }
+    close(FILTERED);
+    close(FILTER) or throw("Something went wrong with netFilter");
 
-  return \@net_chains;
+    unlink $syntenic_net_file;
+    unlink $query_net_file;
+    $query_net_file = $filtered_net_file;
+  }
+  
+  open $fh, $query_net_file or 
+      throw("Could not open net file '$query_net_file' for reading\n");
+  $res_chains = $self->parse_Net_file($fh);
+  close($fh);
+  
+  unlink $chain_file, $query_length_file, $target_length_file, $query_net_file, $target_net_file;
+  rmdir $work_dir;
+  
+  $self->output($res_chains);    
+  
+  return 1;
 }
 
 
@@ -289,7 +218,7 @@ sub write_chains {
   # first block in the chain to be the score
 
   for(my $chain_id=1; $chain_id <= @{$self->chains}; $chain_id++) {
-    my $chain = $self->chains->[$chain_id];
+    my $chain = $self->chains->[$chain_id-1];
 
     my (@ungapped_features, 
         $chain_score,
@@ -409,10 +338,8 @@ sub write_chains {
     }
     print $fh "\n";
   }
-
 }
 
-#######################################
 
 sub parse_Net_file {
   my ($self, $fh) = @_;
@@ -434,7 +361,7 @@ sub parse_Net_file {
       $new_chain_scores{$chain_id} += $score;
       
       my $restricted_fps = 
-          $self->restrict_between_positions($self->chains->[$chain_id],
+          $self->restrict_between_positions($self->chains->[$chain_id-1],
                                             $q_start,
                                             $q_end);
 
@@ -585,6 +512,17 @@ sub chains {
 }
 
 
+sub filter_non_syntenic {
+  my ($self, $val) = @_;
+
+  if (defined $val) {
+    $self->{_filter_non_syntenic} = $val;
+  }
+
+  return $self->{_filter_non_syntenic};
+}
+
+
 sub min_chain_score {
   my ($self, $val) = @_;
 
@@ -600,18 +538,6 @@ sub min_chain_score {
 }
 
 
-sub simple_net {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_simple_net} = $val;
-  }
-
-  return $self->{_simple_net};
-}
-
-
-
 ##############
 #### programs
 ##############
@@ -620,12 +546,32 @@ sub chainNet {
   my ($self,$arg) = @_;
   
   if (defined($arg)) {
-    $self->{'_chainNet'} = $arg;
+    $self->{_chainNet} = $arg;
   }
   
-  return $self->{'_chainNet'};
+  return $self->{_chainNet};
 }
 
+sub netSyntenic {
+  my ($self,$arg) = @_;
+  
+  if (defined($arg)) {
+    $self->{_netSyntenic} = $arg;
+  }
+  
+  return $self->{_netSyntenic};
+}
+
+
+sub netFilter {
+  my ($self,$arg) = @_;
+  
+  if (defined($arg)) {
+    $self->{_netFilter} = $arg;
+  }
+  
+  return $self->{_netFilter};
+}
 
 
 1;
