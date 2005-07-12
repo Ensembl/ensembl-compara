@@ -288,7 +288,7 @@ sub write_chains {
   # in the absence of a chain score, we will take the score of the 
   # first block in the chain to be the score
 
-  for(my $chain_id=0; $chain_id < @{$self->chains}; $chain_id++) {
+  for(my $chain_id=1; $chain_id <= @{$self->chains}; $chain_id++) {
     my $chain = $self->chains->[$chain_id];
 
     my (@ungapped_features, 
