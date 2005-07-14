@@ -34,9 +34,6 @@ use strict;
 use Bio::Species;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Root;
-
-@Bio::EnsEMBL::Compara::Subset::ISA = qw(Bio::EnsEMBL::Root);
 
 
 sub new {
@@ -183,7 +180,7 @@ sub add_member {
   my ($self, $member) = @_;
 
   unless(defined($member) and $member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw(
+    throw(
     "gene arg must be a [Bio::EnsEMBL::Compara::Member] ".
     "not a [$member]");
   }
