@@ -9,7 +9,6 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 #use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Root;
 use Getopt::Long;
 
 

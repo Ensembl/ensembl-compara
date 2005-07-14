@@ -44,7 +44,6 @@ package Bio::EnsEMBL::Compara::GenomeDB;
 
 use strict;
 
-use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::DBLoader;
 
@@ -397,14 +396,4 @@ sub linked_genomes_by_method_link_id {
 }
 
 
-
 1;
-
-
-
-
-
-
-
-
-

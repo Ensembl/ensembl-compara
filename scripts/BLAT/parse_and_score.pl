@@ -4,7 +4,6 @@
 use strict;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
-use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Exon;
 use Bio::EnsEMBL::Translation;
 #use Bio::EnsEMBL::TranscriptI;
