@@ -195,6 +195,40 @@ sub new_from_transcript {
   return $self;
 }
 
+=head2 copy
+
+  Arg [1]    : int $member_id (optional)
+  Example    :
+  Description: returns copy of object, calling superclass copy method
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub copy {
+  my $self = shift;
+  
+  my $mycopy = $self->SUPER::copy;
+  bless $mycopy, "Bio::EnsEMBL::Compara::Member";
+  
+  $mycopy->dbID($self->dbID);
+  $mycopy->stable_id($self->stable_id);
+  $mycopy->version($self->version);
+  $mycopy->description($self->description);
+  $mycopy->source_name($self->source_name);
+  #$mycopy->adaptor($self->adaptor);
+  $mycopy->chr_name($self->chr_name);
+  $mycopy->chr_start($self->chr_start);
+  $mycopy->chr_end($self->chr_end);
+  $mycopy->chr_strand($self->chr_strand);
+  $mycopy->taxon_id($self->taxon_id);
+  $mycopy->genome_db_id($self->genome_db_id);
+  $mycopy->sequence_id($self->sequence_id);
+  $mycopy->gene_member_id($self->gene_member_id);
+  
+  return $mycopy;
+}
 
 =head2 member_id
 

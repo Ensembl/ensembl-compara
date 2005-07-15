@@ -32,6 +32,46 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Member;
 our @ISA = qw(Bio::EnsEMBL::Compara::Member);
 
+##################################
+# overrided superclass methods
+##################################
+
+sub copy {
+  my $self = shift;
+  
+  my $mycopy = $self->SUPER::copy;
+  bless $mycopy, "Bio::EnsEMBL::Compara::AlignedMember";
+  
+  $mycopy->cigar_line($self->cigar_line);
+  $mycopy->cigar_start($self->cigar_start);
+  $mycopy->cigar_end($self->cigar_end);
+  $mycopy->perc_cov($self->perc_cov);
+  $mycopy->perc_id($self->perc_id);
+  $mycopy->perc_pos($self->perc_pos);
+  $mycopy->method_link_species_set_id($self->method_link_species_set_id);
+  
+  return $mycopy;
+}
+
+sub print_node {
+  my $self  = shift;
+  printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
+
+  printf(" %s", $self->genome_db->name) if($self->genome_db_id);
+  if($self->gene_member) {
+    printf(" %s %s:%d-%d",
+      $self->gene_member->stable_id, $self->gene_member->chr_name,
+      $self->gene_member->chr_start, $self->gene_member->chr_end);
+  } elsif($self->stable_id) {
+    printf(" (%d) %s", $self->member_id, $self->stable_id);
+  }
+  print("\n");
+}
+
+
+
+#####################################################
+
 sub name {
   my $self = shift;
   return $self->stable_id(@_);
@@ -79,21 +119,6 @@ sub method_link_species_set_id {
   $self->{'method_link_species_set_id'} = shift if(@_);
   $self->{'method_link_species_set_id'} = 0 unless(defined($self->{'method_link_species_set_id'}));
   return $self->{'method_link_species_set_id'};
-}
-
-sub print_node {
-  my $self  = shift;
-  printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-
-  printf(" %s", $self->genome_db->name) if($self->genome_db_id);
-  if($self->gene_member) {
-    printf(" %s %s:%d-%d",
-      $self->gene_member->stable_id, $self->gene_member->chr_name,
-      $self->gene_member->chr_start, $self->gene_member->chr_end);
-  } elsif($self->stable_id) {
-    printf(" (%d) %s", $self->member_id, $self->stable_id);
-  }
-  print("\n");
 }
 
 
