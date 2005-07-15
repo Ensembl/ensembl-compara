@@ -25,10 +25,35 @@ use Bio::EnsEMBL::Compara::NestedSet;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
+=head2 copy
+
+  Arg [1]    : int $member_id (optional)
+  Example    :
+  Description: returns copy of object, calling superclass copy method
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub copy {
+  my $self = shift;
+  
+  my $mycopy = $self->SUPER::copy;
+  bless $mycopy, "Bio::EnsEMBL::Compara::NCBITaxon";
+  
+  $mycopy->ncbi_taxid($self->ncbi_taxid);
+  $mycopy->rank($self->rank);
+
+  return $mycopy;
+}
+
 
 sub ncbi_taxid {
-  my ($self,$value) = @_;
-  return $self->node_id($value);
+  my $self = shift;
+  my $value = shift;
+  $self->node_id($value) if($value); 
+  return $self->node_id;
 }
 
 sub rank {
@@ -39,8 +64,11 @@ sub rank {
 
 sub print_node {
   my $self  = shift;
-  printf("(%s %s)", $self->node_id, $self->rank);
-  printf("%s\n", $self->name);
+  printf("(%s", $self->node_id);
+  printf(" %s", $self->rank) if($self->rank);
+  print(")");
+  printf("%s", $self->name) if($self->name);
+  print("\n");
 }
 
 1;
