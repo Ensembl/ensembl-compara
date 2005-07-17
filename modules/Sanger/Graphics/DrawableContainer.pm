@@ -49,7 +49,6 @@ sub _init {
 
 
 sub new {
-  warn "Sanger::Graphics::DrawableContainer - new";
   my $class = shift;
   my $self = $class->_init( @_ ); 
   my $T = $self->{'config'};
