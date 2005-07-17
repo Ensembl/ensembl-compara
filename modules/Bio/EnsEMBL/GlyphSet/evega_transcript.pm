@@ -42,7 +42,7 @@ sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $gene->type();
+  my $type = $gene->type()."_".$gene->confidence;
   $type =~ s/HUMACE-//g;
   my $colour = $colours->{$type}[0];
 

@@ -369,6 +369,6 @@ sub zmenu {
     return $zmenu;
 }
 
-sub error_track_name { return $self->species_defs->AUTHORITY.' transcripts'; }
+sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
 
 1;

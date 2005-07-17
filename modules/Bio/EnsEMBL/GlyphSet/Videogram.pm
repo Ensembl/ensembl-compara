@@ -273,10 +273,8 @@ sub _init {
      ) {
         my $direction = $end ? -1 : 1;
         
-        my %partials = map { uc($_) => 1 }
-        	@{ $self->species_defs->PARTIAL_CHROMOSOMES || [] };
-	my %artificials = map { uc($_) => 1 }
-	        @{ $self->species_defs->ARTIFICIAL_CHROMOSOMES || [] };
+        my %partials    = map { uc($_) => 1 } @{ $self->species_defs->PARTIAL_CHROMOSOMES || [] };
+	my %artificials = map { uc($_) => 1 } @{ $self->species_defs->ARTIFICIAL_CHROMOSOMES || [] };
         if ($partials{uc($chr)}) {
         # draw jagged ends for partial chromosomes
             # resolution dependent scaling
@@ -395,7 +393,7 @@ sub _init {
     
     if(defined $self->{'highlights'}) {
 
-    foreach my $highlight_set (reverse @{$self->{'highlights'}}) {
+    foreach my $highlight_set (reverse @{$self->{'highlights'}||[]}) {
     my $highlight_style = $highlight_set->{'style'};
         my $type ="highlight_$highlight_style";
         
