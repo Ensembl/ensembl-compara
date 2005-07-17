@@ -18,6 +18,7 @@ sub init_label {
     'text'      => $self->{'config'}->get($code,'label')||'---',
     'font'      => 'Small',
     'absolutey' => 1,
+    'title'     => $self->{'config'}->get($code,'title')||$self->{'config'}->get($code,'label')||'',
     'href'      => qq[javascript:X=hw('@{[$self->{container}{_config_file_name_}]}','$ENV{'ENSEMBL_SCRIPT'}','$HELP_LINK')],
     'zmenu'     => {
       'caption'                 => 'HELP',
@@ -54,6 +55,7 @@ sub expanded_init {
   my $strand         = $self->strand();
   my $strand_flag    = $Config->get($type, 'str');
 
+  my $caption        = $Config->get($type,'title')||$Config->get($type,'label')||'Comparative alignment';
   my %highlights;
   @highlights{$self->highlights()} = ();
   my $length         = $container->length;
@@ -97,7 +99,9 @@ sub expanded_init {
 ## Now go through each feature in turn, drawing them
   my @glyphs;
   my $BLOCK = 0;
-  my $HREF  = $Config->get( $type, 'linkto' ).'/'.$Config->get( $type, 'species' ). '/'. $ENV{'ENSEMBL_SCRIPT'};
+  my $script = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? 'contigview' : $ENV{'ENSEMBL_SCRIPT'};
+  my $SHORT = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $Config->get( $type, 'species' ) };
+  my $HREF  = $Config->get( $type, 'linkto' )."/$SHORT/$script";
   foreach my $i (keys %id){
     my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
     $T+=@F; ## Diagnostic report....
@@ -173,16 +177,16 @@ sub expanded_init {
     if($end-$start<$WIDTH) {
       my $X =int(( $start + $end - $WIDTH) /2);
       my $Y = $X + $WIDTH ;
-      $ZZ = "region=$seqregion;vc_start=$X;vc_end=$Y";
+      $ZZ = "l=$seqregion:$X-$Y";
     } else {
-      $ZZ = "region=$seqregion;vc_start=$start;vc_end=$end";
+      $ZZ = "l=$seqregion:$start-$end";
     }
-    my $href = "$HREF?$ZZ";
     $Composite->href(  "$HREF?$ZZ" );
     $Composite->zmenu( {
-      'caption'  => "$seqregion: $start-$end",
-      "Jump to $species_2" => "$HREF?$ZZ",
-      "Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => ''
+      'caption' => $caption,
+      "$seqregion: $start-$end" => '',
+      "02:Jump to $species_2"        => "$HREF?$ZZ",
+      "03:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => ''
     } );
     $self->push( $Composite );
     if(exists $highlights{$i}) {
@@ -206,6 +210,7 @@ sub compact_init {
   my $WIDTH          = 1e5;
   my $container      = $self->{'container'};
   my $Config         = $self->{'config'};
+  my $caption        = $Config->get($type,'title')||$Config->get($type,'label')||'Comparative alignment';
   my $strand         = $self->strand();
   my $strand_flag    = $Config->get($type, 'str');
   my %highlights;
@@ -224,7 +229,9 @@ sub compact_init {
   my $chr       = $self->{'container'}->seq_region_name;
   my $other_species  = $Config->get($type, 'species' );
   ( my $species_2    = $other_species ) =~ s/_ / /g;
+  my $short_other    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
   my $self_species   = $container->{_config_file_name_};
+  my $short_self     = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
   my $compara        = $self->{'config'}{'compara'};
   my $link = 0;
   my $TAG_PREFIX;
@@ -241,7 +248,7 @@ sub compact_init {
     foreach my $T ( @{$Config->{'other_slices'}||[]} ) {
       if( $T->{'species'} ne $self_species && $T->{'species'} ne $other_species ) {
         $C++;
-        $COMPARA_HTML_EXTRA.=";s$C=$T->{'species'}";
+        $COMPARA_HTML_EXTRA.=";s$C=".$Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
       }
     }
     $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
@@ -249,10 +256,10 @@ sub compact_init {
 
   my( $T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
   my $domain = $Config->get( $type, 'linkto' );
-  my $HREF_TEMPLATE = "/$self_species/dotterview?ref=$self_species:$chr:%d;hom=$other_species:%s:%d";
+  my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
   my $X = -1e8;
   my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
-  my $MCV_TEMPLATE  = "/$self_species/multicontigview?c=%s:%d;w=%d;s1=$other_species;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
+  my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
   
   my @T = sort { $a->[0] <=> $b->[0] }
     map { [$_->start, $_ ] }
@@ -284,16 +291,17 @@ sub compact_init {
     my $s_2   = $f->hstart;
     my $e_2   = $f->hend;
     my $href  = '';
-    my $zmenu = { 'caption'              => "$chr_2:$s_2-$e_2",
-                  "Jump to $species_2"   => "$domain/$other_species/contigview?l=$chr_2:$s_2-$e_2",
-                  $CONTIGVIEW_TEXT_LINK  => "/$self_species/contigview?l=$chr:$rs-$re" };
+    my $zmenu = { 'caption'              => $caption,
+                  "01:$chr_2:$s_2-$e_2"     => '',
+                  "02:Jump to $species_2"   => "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2",
+                  "03:$CONTIGVIEW_TEXT_LINK"  => "/$short_self/contigview?l=$chr:$rs-$re" };
     unless( $domain ) {
       $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
-      $zmenu->{ 'Dotter' }    = $href;
-      $zmenu->{ 'Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
-      $zmenu->{ $MULTICONTIGVIEW_TEXT_LINK } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
+      $zmenu->{ '04:Dotter' }    = $href;
+      $zmenu->{ '05:Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
+      $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
     }
-    $zmenu->{ 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) } = undef;
+    $zmenu->{ '99:Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) } = undef;
     if($DRAW_CIGAR) {
       $TO_PUSH = new Sanger::Graphics::Glyph::Composite({
         'href'  => $href,
