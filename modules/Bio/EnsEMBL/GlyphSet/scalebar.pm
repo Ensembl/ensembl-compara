@@ -26,11 +26,8 @@ sub init_label {
     $type = $SHORT{lc($type)} || ucfirst( $type );
     $chr = "$type $chr";
   }
-  if( $self->{'config'}->{'multi'} ) {
+  if( $self->{'config'}->{'compara'} ) {
     $chr = join( '', map { substr($_,0,1) } split( /_/, $self->{'config'}->{'species'}),'.')." $chr";
-  }
-
-  if( $self->{'config'}->{'multi'}) {
     my $line = new Sanger::Graphics::Glyph::Rect({
       'z' => 11,
       'x' => -120,
@@ -72,7 +69,7 @@ sub _init {
     my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
-    $highlights        = $highlights ? ";highlight=$highlights" : '';
+    $highlights        = $highlights ? ";h=$highlights" : '';
  if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
     my $C = 0;
     foreach( @{ $self->{'config'}{'other_slices'}} ) {
