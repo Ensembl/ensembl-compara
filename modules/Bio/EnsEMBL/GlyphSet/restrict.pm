@@ -113,7 +113,7 @@ sub _init {
     };
   }
   close I;
-  # unlink "$filename.out";
+  unlink "$filename.out";
 
 ## Now we do the rendering of the features...
 
