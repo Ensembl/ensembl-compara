@@ -10,8 +10,6 @@ use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
 use Data::Dumper;
-use ExtURL;
-
 
 sub init_label {
   my ($self) = @_;

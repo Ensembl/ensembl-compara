@@ -40,7 +40,7 @@ sub _init {
     my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
-    $highlights        = $highlights ? ";highlight=$highlights" : '';
+    $highlights        = $highlights ? ";h=$highlights" : '';
     my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');

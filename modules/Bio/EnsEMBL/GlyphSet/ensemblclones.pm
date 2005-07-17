@@ -8,7 +8,7 @@ use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Bio::Das; 
 
-use ExtURL;
+use EnsEMBL::Web::ExtURL;
 
 use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
@@ -111,10 +111,10 @@ sub features {
 }
 
 sub href {
-    my ($self, $f) = @_;
-    my ($cloneid) = split /\./ ,  $f->display_id;
-    my $exturl = ExtURL->new;
-    return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
+  my ($self, $f) = @_;
+  my ($cloneid) = split /\./ ,  $f->display_id;
+  my $exturl = new EnsEMBL::Web::ExtURL( $self->{'config'}->{'species_defs'} );
+  return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
 }
 
 sub colour {

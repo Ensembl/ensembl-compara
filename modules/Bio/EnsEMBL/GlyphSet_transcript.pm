@@ -221,7 +221,9 @@ sub get_homologous_gene_ids {
 sub get_homologous_peptide_ids_from_gene {
   my( $self, $gene_id, $species ) = @_;
   my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+  return unless $compara_db;
   my $ma = $compara_db->get_MemberAdaptor;
+  return () unless $ma;
   my $qy_member = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
   return () unless (defined $qy_member);
   my $ha = $compara_db->get_HomologyAdaptor;
@@ -443,9 +445,10 @@ sub expanded_init {
       my $bump_height = 1.5 * $h;
       if( $Config->{'_add_labels'} ) {
         if(my $text_label = $self->text_label($gene, $transcript) ) {
-	  my @lines = split "\n", $text_label;
+	  my @lines = split "\n", $text_label; 
+          $lines[0] = "<- $lines[0]" if $strand < 1;
+          $lines[0] = $lines[0].' ->' if $strand >= 1;
           my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-          my @lines = split "\n", $text_label;
           for( my $i=0; $i<@lines; $i++ ){
             my $line = $lines[$i];
             $Composite->push( new Sanger::Graphics::Glyph::Text({

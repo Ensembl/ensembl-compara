@@ -32,7 +32,9 @@ sub _init {
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
   my $colours       = $self->colours();
-
+  foreach ( keys %$colours ) {
+    warn "$_ --> $colours->{$_}\n";
+  }
   my $fontname      = "Tiny";    
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
@@ -135,26 +137,32 @@ sub _init {
 }
 
 sub colours {
-    my $self = shift;
-    my $Config = $self->{'config'};
-    return $Config->get('GSV_transcript','colours');
+  my $self = shift;
+  my $Config = $self->{'config'};
+  return $Config->get('GSV_transcript','colours');
 }
 
 sub colour {
-    my ($self, $gene, $transcript, $colours, %highlights) = @_;
+  my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
-    my $genecol = $colours->{ "_".$transcript->external_status }[0] || 'black';
+  my $genecol = $colours->{ $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->type.'_'.$gene->confidence };
+  if( $colours->{ "_".$transcript->external_status } ) {
+    $genecol = $colours->{ "_".$transcript->external_status };
+  }
+  if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
+    $genecol = $colours->{'_pseudogene'};
+  }
+  $genecol ||= ['black'];
 
-    if( $transcript->external_status eq '' and ! $transcript->translation->stable_id ) {
-       $genecol = $colours->{'_pseudogene'}[0];
-    }
-    if(exists $highlights{lc($transcript->stable_id)}) {
-      return ($genecol, $colours->{'superhi'}[0]);
-    } elsif(exists $highlights{lc($transcript->external_name)}) {
-      return ($genecol, $colours->{'superhi'}[0]);
-    } elsif(exists $highlights{lc($gene->stable_id)}) {
-      return ($genecol, $colours->{'hi'}[0]);
-    }
+  $genecol = $genecol->[0];
+
+  if(exists $highlights{lc($transcript->stable_id)}) {
+    return ($genecol, $colours->{'superhi'}[0]);
+  } elsif(exists $highlights{lc($transcript->external_name)}) {
+    return ($genecol, $colours->{'superhi'}[0]);
+  } elsif(exists $highlights{lc($gene->stable_id)}) {
+    return ($genecol, $colours->{'hi'}[0]);
+  }
       
     return ($genecol, undef);
 }
@@ -175,7 +183,7 @@ sub zmenu {
   my ($self, $gene, $transcript, $exon, %highlights) = @_;
   my $eid = $exon->stable_id();
   my $tid = $transcript->stable_id();
-  my $pid = $transcript->translation->stable_id(),
+  my $pid = $transcript->translation ? $transcript->translation->stable_id() : '';
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
   my $zmenu = {
@@ -197,6 +205,6 @@ sub zmenu {
     return $zmenu;
 }
 
-sub error_track_name { return $self->species_defs->AUTHORITY.' transcripts'; }
+sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
 
 1;

@@ -93,7 +93,6 @@ sub _init {
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
-    warn ">>>>>>>>>>>>>>>>>>>>>>>>> $high <<<<<<<<<<<<<<<<<<<<<<<<<<<" if $high;
     my $type = $g->type();
     $type =~ s/HUMACE-//;
     my $start = $g->start;
@@ -154,7 +153,6 @@ sub _init {
     $rect->y($rect->y() + (6 * $row ));
     $rect->height(4);
     $self->push($rect);
-    warn "$start, $end.................. $colours->{'hi'} .... ",$rect->y," ",$rect->height," ",1/$pix_per_bp if $high;
     $self->unshift(new Sanger::Graphics::Glyph::Rect({
       'x'         => $start -1 - 1/$pix_per_bp,
       'y'         => $rect->y()-1,

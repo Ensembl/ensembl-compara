@@ -90,6 +90,7 @@ sub HASH_URL {
 
 sub ID_URL {
   my($self,$db,$id) = @_;
+  return "" unless $self->species_defs;
   return exists( $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) ? "/@{[$self->{container}{_config_file_name_}]}/r?d=$db;ID=$id" : "";
 }
 

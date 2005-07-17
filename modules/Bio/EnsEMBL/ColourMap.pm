@@ -13,11 +13,6 @@ sub new {
   }
 
   $self->{'colour_sets'} = {};
-  $self->{'colour_sets'}{'synteny'} = [qw(
-    red3 green4 cyan4 blue3 chocolate3 brown
-    chartreuse4 grey25 deeppink4 slateblue3
-    olivedrab4 gold4 blueviolet seagreen4 violetred3
-  )];
   my %core = (
     '_KNOWN'     => [ 'rust', 'known' ],
     '_KNOWNXREF' => [ 'rust', 'known' ],
@@ -111,7 +106,8 @@ sub new {
     'superhi'    => 'highlight2',
     '_refseq' => [ 'blue', 'Aligned RefSeq' ],
   );
-
+  $self->colourSet( 'all_genes', map { $self->colourSet($_) } keys %{$self->{'colour_sets'}} );
+    
   $self->colourSet( 'protein',
     'default'    => 'gold',
     'refseq'     => 'orange',
@@ -156,6 +152,11 @@ sub new {
     'label_'       => 'white',
   );
 
+  $self->{'colour_sets'}{'synteny'} = [qw(
+    red3 green4 cyan4 blue3 chocolate3 brown
+    chartreuse4 grey25 deeppink4 slateblue3
+    olivedrab4 gold4 blueviolet seagreen4 violetred3
+  )];
 
   # Allowed values are: 'INTRONIC','UPSTREAM','DOWNSTREAM',
   #             'SYNONYMOUS_CODING','NON_SYNONYMOUS_CODING','FRAMESHIFT_CODING',
