@@ -11,7 +11,6 @@ use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Glyph::Symbol::box;	# default symbol for features
 use Data::Dumper;
 use POSIX qw(floor);
-use EnsEMBL::Web::ExtURL;
 
 
 sub init_label {
@@ -558,7 +557,7 @@ sub gmenu{
 
   my $href;
   if($self->{'extras'}->{'linkURL'}){
-      $href = $zmenu->{"30:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+      $href = $zmenu->{"30:".$self->{'link_text'}} = $self->{'config'}{'exturl'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
   } elsif (my $url = $self->{'extras'}->{'linkurl'}){
       $url =~ s/###(\w+)###/CGI->escape( $id )/ge;
       $href = $zmenu->{"30:".$self->{'link_text'}} = $url;
@@ -593,7 +592,7 @@ sub zmenu {
   if($self->{'extras'}->{'fasta'}) {
     foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
     my ($type, $db ) = split /_/, $string, 2;
-      $zmenu->{ "25:$type sequence" } = $self->{'ext_url'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
+      $zmenu->{ "25:$type sequence" } = $self->{'config'}{'exturl'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
       $href = $zmenu->{ "20:$type sequence" } unless defined($href);
     }
   }
@@ -602,7 +601,7 @@ sub zmenu {
   if($id && uc($id) ne 'NULL') {
     $zmenu->{"01:ID: $id"} = '';
     if($self->{'extras'}->{'linkURL'}){
-      $href = $zmenu->{"22:".$self->{'link_text'}} = $self->{'ext_url'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+      $href = $zmenu->{"22:".$self->{'link_text'}} = $self->{'config'}{'exturl'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
     } elsif(my $url = $self->{'extras'}->{'linkurl'}){
 	$url =~ s/###(\w+)###/CGI->escape( $id )/ge;
 	$href = $zmenu->{"22:".$self->{'link_text'}} = $url;
@@ -807,7 +806,6 @@ sub _init {
   }
 
   $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
-  $self->{'ext_url'}      = EnsEMBL::Web::ExtURL->new( $ENV{ENSEMBL_SPECIES}, $self->species_defs, $Extra->{'name'} =~ /^managed_extdas/ ? ($Extra->{'linkURL'} => $Extra->{'linkURL'}) : () );
 
 
   $self->{helplink} = $Config->get($das_config_key, 'helplink');
