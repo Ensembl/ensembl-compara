@@ -13,6 +13,7 @@ use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::NCBITaxon;
 use Switch;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
@@ -29,6 +30,7 @@ $compara_conf{'-port'} = 3306;
 $self->{'cdna'} = 0;
 $self->{'scale'} = 100;
 $self->{'align_format'} = 'phylip';
+$self->{'debug'}=0;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
@@ -142,7 +144,9 @@ sub usage {
   print "  -reroot <id>           : reroot genetree on node_id\n";
   print "  -parent                : move up to the parent of the loaded node\n";
   print "  -dump                  : outputs to autonamed file, not STDOUT\n";
-  print "geneTreeTool.pl v1.1\n";
+  print "\n";  
+  print "  -clusertset_id <id>    : analyze clusters :)\n"; 
+  print "geneTreeTool.pl v1.2\n";
   
   exit(1);  
 }
@@ -366,13 +370,19 @@ sub analyzeClusters2
   my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});  
 
   printf("%d clusters\n", $clusterset->get_child_count);  
-    
+  
   my $total_members=0;
   my $cluster_count=0;
   my $rosette_count=0;
   my $lsd_rosette_count=0;
+  my $geneLoss_rosette_count=0;
+  my $match_species_tree_count=0;
+  my %rosette_taxon_hash;
+  my %rosette_newick_hash;
   foreach my $cluster (@{$clusterset->children}) {
+
     $cluster_count++;
+    printf("clustercount $cluster_count\n") if($cluster_count % 100 == 0);
     my $starttime = time();
     $treeDBA->fetch_subtree_under_node($cluster);
     $cluster->retain->disavow_parent;
@@ -383,9 +393,11 @@ sub analyzeClusters2
     my $max_depth = $cluster->max_depth;
 
     my $cluster_has_lsd=0;
-
-    printf("%10s, %10d, %10d, %7d\n", 'cluster',
-       $cluster->node_id, scalar(@{$member_list}), $max_depth);
+    
+    if($self->{'debug'}) {
+      printf("%s\t%10d, %10d, %7d\n", 'cluster',
+         $cluster->node_id, scalar(@{$member_list}), $max_depth);
+    }
 
     if($max_depth > 1) {
       foreach my $member (@{$member_list}) {
@@ -398,28 +410,56 @@ sub analyzeClusters2
         #print("\nFIND INGROUP from\n   ");
         #$member->print_node;
         
-        my $ingroup_cluster = find_ingroup_ancestor($self, $ingroup, $member);
-        #$ingroup_cluster->print_tree;
+        my $rosette = find_ingroup_ancestor($self, $ingroup, $member);
+        #$rosette->print_tree;
         $rosette_count++;
-    
-        $total_members += scalar(@{$ingroup_cluster->get_all_leaves});
+        if($self->{'debug'}) {
+          printf("    rosette: %10d, %10d, %10d, %10d\n",
+                 $rosette->node_id, scalar(@{$rosette->get_all_leaves}), 
+                 $cluster->node_id, scalar(@{$member_list}));
+        }
+        
+        #generate a taxon_id string
+        my @all_leaves = @{$rosette->get_all_leaves};
+        $total_members += scalar(@all_leaves);
+        my @taxon_list;
+        foreach my $leaf (@all_leaves) { push @taxon_list, $leaf->taxon_id;}
+        my $taxon_id_string = join("_", sort {$a <=> $b} @taxon_list);
+        $rosette_taxon_hash{$taxon_id_string} = 0 unless(defined($rosette_taxon_hash{$taxon_id_string}));
+        $rosette_taxon_hash{$taxon_id_string}++;
 
-        my $has_LSD = test_cluster_for_LSD($self,$ingroup_cluster);
+        my $has_LSD = test_rosette_for_LSD($self,$rosette);
               
         if($has_LSD) {
-          #print("LinearSpecificDuplication\n");
-          #$ingroup_cluster->print_tree;
+          print("    LinearSpecificDuplication\n") if($self->{'debug'});
+          #$rosette->print_tree;
           $lsd_rosette_count++;
+          $rosette->add_tag('rosette_LSDup');
+        } else {
+          if(test_rosette_matches_species_tree($self, $rosette)) {
+            $match_species_tree_count++;
+            $rosette->add_tag('rosette_species_topo_match');        
+          }
         }
-        printf("%10s, %10d, %10d, %10d, %10d, %3d\n", 'rosette',
-               $cluster->node_id, scalar(@{$member_list}),
-               $ingroup_cluster->node_id, scalar(@{$ingroup_cluster->get_all_leaves}), 
-               $has_LSD);
-                 
+        
+        if(test_rosette_for_gene_loss($self, $rosette, $species_list)) {
+          $geneLoss_rosette_count++;
+          $rosette->add_tag('rosette_geneLoss');        
+        }
+        
+        printf("rosette, %d, %d, %d, %d",
+           $rosette->node_id, scalar(@{$rosette->get_all_leaves}), 
+           $cluster->node_id, scalar(@{$member_list}));
+        if($rosette->has_tag("rosette_LSDup")) {print(", LSDup");} else{print(", OK");}
+        if($rosette->has_tag("rosette_geneLoss")) {print(", GeneLoss");} else{print(", OK");}
+        unless($rosette->has_tag("rosette_species_topo_match")) {print(", TopoFail");} else{print(", OK");}
+        print(", $taxon_id_string");
+        print("\n");
+
       }
     }
-    printf("%10s, %10d, %10d, %10.3f\n", 'cluster_end',
-       $cluster->node_id, scalar(@{$member_list}), (time()-$starttime));
+    
+    #printf("    %10.3f secs\n", '', (time()-$starttime));
     
     $cluster->release;
     
@@ -427,7 +467,10 @@ sub analyzeClusters2
   }
   printf("\n%d clusters analyzed\n", $cluster_count);
   printf("%d ingroup rosettes found\n", $rosette_count);
-  printf("%d rosettes w/o LSD\n", $rosette_count - $lsd_rosette_count);
+  printf("   %d rosettes w/o LSD\n", $rosette_count - $lsd_rosette_count);
+  printf("   %d rosettes with LSDups\n", $lsd_rosette_count);
+  printf("   %d rosettes with geneLoss\n", $geneLoss_rosette_count);
+  printf("   %d rosettes no_dups & match species tree\n", $match_species_tree_count);
   printf("%d ingroup members\n", $total_members);
   printf("%d members in hash\n", scalar(keys(%{$self->{'member_LSD_hash'}})));
 
@@ -443,30 +486,14 @@ sub analyzeClusters2
     printf("%30s(%2d), %7d members, %7d no_dup, %7d LSD,\n", 
        $gdb->name, $gdbid, $mem_count, $mem_count-$lsd_members, $lsd_members);
   }
-              
-  $clusterset->release;
-}
-
-
-sub test_cluster_for_LSD
-{
-  my $self = shift;
-  my $cluster = shift;
-     
-  my $member_list = $cluster->get_all_leaves;
-  my %gdb_hash;
-  my $cluster_has_LSD = 0;
-  foreach my $member (@{$member_list}) {
-    $gdb_hash{$member->genome_db_id}=0 unless(defined($gdb_hash{$member->genome_db_id}));
-    $gdb_hash{$member->genome_db_id} += 1;
-  }
-  foreach my $member (@{$member_list}) {
-    my $gdb_has_LSD = $gdb_hash{$member->genome_db_id} - 1;
-    $cluster_has_LSD=1 if($gdb_has_LSD > 0);
-    $self->{'member_LSD_hash'}->{$member->member_id} = $gdb_has_LSD;
+  
+  printf("\nrosette member dists\n");
+  foreach my $key (keys %rosette_taxon_hash) {
+    printf("   %7d : %s\n", $rosette_taxon_hash{$key}, $key);
   }
   
-  return $cluster_has_LSD;
+              
+  $clusterset->release;
 }
 
 
@@ -489,4 +516,141 @@ sub find_ingroup_ancestor
   return $node if($has_outgroup);
   return find_ingroup_ancestor($self, $ingroup, $ancestor);  
 }
+
+
+sub test_rosette_for_LSD
+{
+  my $self = shift;
+  my $rosette = shift;
+     
+  my $member_list = $rosette->get_all_leaves;
+  my %gdb_hash;
+  my $rosette_has_LSD = 0;
+  foreach my $member (@{$member_list}) {
+    $gdb_hash{$member->genome_db_id}=0 unless(defined($gdb_hash{$member->genome_db_id}));
+    $gdb_hash{$member->genome_db_id} += 1;
+  }
+  foreach my $member (@{$member_list}) {
+    my $gdb_has_LSD = $gdb_hash{$member->genome_db_id} - 1;
+    $rosette_has_LSD=1 if($gdb_has_LSD > 0);
+    $self->{'member_LSD_hash'}->{$member->member_id} = $gdb_has_LSD;
+  }
+  
+  return $rosette_has_LSD;
+}
+
+
+sub test_rosette_for_gene_loss
+{
+  my $self = shift;
+  my $rosette = shift;
+  my $species_list = shift;
+     
+  my $member_list = $rosette->get_all_leaves;
+  my %gdb_hash;
+  my $rosette_has_geneLoss = 0;
+  foreach my $member (@{$member_list}) {
+    $gdb_hash{$member->genome_db_id}=0 unless(defined($gdb_hash{$member->genome_db_id}));
+    $gdb_hash{$member->genome_db_id} += 1;
+  }
+  
+  foreach my $gdb (@{$species_list}) {
+    unless($gdb_hash{$gdb}) { $rosette_has_geneLoss=1;}
+  }
+  
+  return $rosette_has_geneLoss;
+}
+
+
+sub test_rosette_matches_species_tree
+{
+  my $self = shift;
+  my $rosette = shift;
+  
+  return 0 unless($rosette);
+  return 0 unless($rosette->get_child_count > 0);
+    
+  #$rosette->print_tree;
+
+  #copy the rosette and replace the peptide_member leaves with taxon leaves 
+  $rosette = $rosette->copy;
+  my $leaves = $rosette->get_all_leaves;
+  foreach my $member (@$leaves) {
+    my $gene_taxon = new Bio::EnsEMBL::Compara::NCBITaxon;
+    $gene_taxon->ncbi_taxid($member->taxon_id);
+    $gene_taxon->distance_to_parent($member->distance_to_parent);
+    $member->parent->add_child($gene_taxon);
+    $member->disavow_parent;
+  }
+  #$rosette->print_tree;  
+
+  #build real taxon tree from NCBI taxon database
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $species_tree = undef;
+  foreach my $member (@$leaves) {
+    my $ncbi_taxon = $taxonDBA->fetch_node_by_taxon_id($member->taxon_id);
+    $ncbi_taxon->no_autoload_children;
+    $species_tree = $ncbi_taxon->root unless($species_tree);
+    $species_tree->merge_node_via_shared_ancestor($ncbi_taxon);
+  }
+  $species_tree = $species_tree->minimize_tree;
+  #$species_tree->print_tree;
+
+  #use set theory to test tree topology
+  #foreach internal node of the tree, flatten all the leaves into sets.
+  #if two trees have the same topology, then all these internal flattened sets
+  #will be present.
+  #print("BUILD GENE topology sets\n");
+  my $gene_topo_sets = new Bio::EnsEMBL::Compara::NestedSet;
+  foreach my $node ($rosette->get_all_subnodes) {
+    next if($node->is_leaf);
+    my $topo_set = $node->copy->flatten_tree;
+    #$topo_set->print_tree;
+    $gene_topo_sets->add_child($topo_set); 
+    $topo_set->release;
+  }
+  
+  #print("BUILD TAXON topology sets\n");
+  my $taxon_topo_sets = new Bio::EnsEMBL::Compara::NestedSet;
+  foreach my $node ($species_tree->get_all_subnodes) {
+    next if($node->is_leaf);
+    my $topo_set = $node->copy->flatten_tree;
+    #$topo_set->print_tree;
+    $taxon_topo_sets->add_child($topo_set);
+    $topo_set->release;
+  }
+  
+  #printf("TEST TOPOLOGY\n");
+  my $topology_matches = 0;
+  foreach my $taxon_set (@{$taxon_topo_sets->children}) {
+    #$taxon_set->print_tree;
+    #print("test\n");
+    $topology_matches=0;
+    foreach my $gene_set (@{$gene_topo_sets->children}) {
+      #$gene_set->print_tree;
+      if($taxon_set->equals($gene_set)) {
+        #print "  MATCH\n";
+        $topology_matches=1;
+        $gene_set->disavow_parent;
+        last;
+      }
+    }
+    unless($topology_matches) {
+      #printf("FAILED to find a match -> topology doesn't match\n");
+      last;
+    }
+  }
+  if($topology_matches) {
+    #print("TREES MATCH!!!!");
+  }
+  
+  #cleanup copies
+  $rosette->release;  
+  $gene_topo_sets->release;
+  $taxon_topo_sets->release;
+  
+  #printf("\n\n");
+  return $topology_matches;
+}
+
 
