@@ -17,7 +17,7 @@ CREATE TABLE meta (
   PRIMARY KEY (meta_id),
   KEY meta_key_index (meta_key),
   KEY meta_value_index (meta_value)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -37,7 +37,7 @@ CREATE TABLE taxon (
   PRIMARY KEY (taxon_id),
   KEY (genus,species),
   KEY (common_name)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -58,7 +58,7 @@ CREATE TABLE genome_db (
   FOREIGN KEY (taxon_id) REFERENCES taxon(taxon_id),
   PRIMARY KEY (genome_db_id),
   UNIQUE name (name,assembly,genebuild)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -74,7 +74,7 @@ CREATE TABLE method_link (
   
   PRIMARY KEY (method_link_id),
   KEY type (type)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -93,7 +93,7 @@ CREATE TABLE method_link_species_set (
 
   KEY method_link_species_set (method_link_species_set_id),
   KEY method_link_id (method_link_id, method_link_species_set_id, genome_db_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -117,7 +117,7 @@ CREATE TABLE dnafrag (
 
   PRIMARY KEY (dnafrag_id),
   UNIQUE name (genome_db_id, name)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -142,7 +142,7 @@ CREATE TABLE genomic_align_block (
 
   PRIMARY KEY genomic_align_block_id (genomic_align_block_id),
   KEY method_link_species_set_id (method_link_species_set_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -173,7 +173,7 @@ CREATE TABLE genomic_align (
   PRIMARY KEY genomic_align_id (genomic_align_id),
   KEY genomic_align_block_id (genomic_align_block_id),
   KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
-) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60;
+) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60 COLLATE=latin1_swedish_ci;
 
 
 #
@@ -191,7 +191,7 @@ CREATE TABLE genomic_align_group (
 
   KEY group_id (group_id),
   KEY genomic_align_id (genomic_align_id, type)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -213,7 +213,7 @@ CREATE TABLE synteny_region (
 
   PRIMARY KEY (synteny_region_id),
   KEY (method_link_species_set_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -232,7 +232,7 @@ CREATE TABLE dnafrag_region (
 
   UNIQUE unique_synteny (synteny_region_id,dnafrag_id),
   UNIQUE unique_synteny_reversed (dnafrag_id,synteny_region_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -246,7 +246,7 @@ CREATE TABLE sequence (
 
   PRIMARY KEY (sequence_id),
   KEY sequence (sequence(18))
-) MAX_ROWS = 1000000 AVG_ROW_LENGTH = 19000;
+) MAX_ROWS = 1000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
 
 
 #
@@ -279,7 +279,7 @@ CREATE TABLE member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 ------------------------------------------------------------------------------------
@@ -324,7 +324,7 @@ CREATE TABLE analysis (
   KEY logic_name_idx( logic_name ),
   UNIQUE (logic_name)
 
-);
+) COLLATE=latin1_swedish_ci;
 
 CREATE TABLE analysis_description (
   analysis_id                int(10) unsigned NOT NULL,
@@ -332,7 +332,7 @@ CREATE TABLE analysis_description (
   display_label              varchar(255),
 
   KEY analysis_idx( analysis_id )
-);
+) COLLATE=latin1_swedish_ci;
 
 
 ------------------------------------------------------------------------------------
@@ -358,7 +358,7 @@ CREATE TABLE analysis_description (
 -- identical_matches         - blast HSP match score
 -- positive_matches          - blast HSP positive score
 -- perc_ident                - percent identical matches in the HSP length
--- perc_pos                  - precent positive matches in the HSP length
+-- perc_pos                  - percent positive matches in the HSP length
 -- cigar_line                - cigar string coding the actual alignment
 
 CREATE TABLE peptide_align_feature (
@@ -394,7 +394,7 @@ CREATE TABLE peptide_align_feature (
   KEY hmember_id  (hmember_id),
   KEY hmember_qgenome  (hmember_id, qgenome_db_id),
   KEY qmember_hgenome  (qmember_id, hgenome_db_id)
-) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133;
+) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci;
 
 
 #
@@ -419,7 +419,7 @@ CREATE TABLE homology (
 
   PRIMARY KEY (homology_id),
   KEY (method_link_species_set_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -448,7 +448,7 @@ CREATE TABLE homology_member (
   KEY (member_id),
   KEY (peptide_member_id),
   KEY (peptide_align_feature_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -469,7 +469,7 @@ CREATE TABLE family (
   UNIQUE (stable_id),
   KEY (method_link_species_set_id),
   KEY (description)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -487,7 +487,7 @@ CREATE TABLE family_member (
   UNIQUE family_member_id (family_id,member_id),
   KEY (family_id),
   KEY (member_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -506,7 +506,7 @@ CREATE TABLE domain (
 
   PRIMARY KEY (domain_id),
   UNIQUE (stable_id, method_link_species_set_id)
-);
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -524,5 +524,5 @@ CREATE TABLE domain_member (
 
   UNIQUE (domain_id,member_id,member_start,member_end),
   UNIQUE (member_id,domain_id,member_start,member_end)
-);
+) COLLATE=latin1_swedish_ci;
 
