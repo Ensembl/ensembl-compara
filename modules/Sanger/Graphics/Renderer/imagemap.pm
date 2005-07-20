@@ -130,6 +130,7 @@ sub _getHref {
       $actions{'href'} ||= qq"javascript:void(0)";   
     }
   }
+  $actions{'nohref'}='nohref' if keys %actions && !$actions{'href'};
   return join '', map { qq( $_="$actions{$_}") } keys %actions; 
 }
 

@@ -669,8 +669,9 @@ sub _init {
 
   $das_config_key =~ s/^managed_das/das/;
   my $Config = $self->{'config'};
-  my $strand = $Config->get($das_config_key, 'str');
   my $Extra  = $self->{'extras'};
+
+  my $strand = $Config->get($das_config_key, 'str') || $Extra->{'strand'};
 
 # If strand is 'r' or 'f' then we display everything on one strand (either
 # at the top or at the bottom!
@@ -685,11 +686,11 @@ sub _init {
     'tstrand'  => $self->strand,
     'STRAND'   => $self->strand(),
     'cmap'     => $Config->colourmap(),
-    'colour'   => $Config->get($das_config_key, 'col') || 'contigblue1',
-    'depth'    => $Config->get($das_config_key, 'dep') || 4,
-    'use_style'=> $Config->get($das_config_key, 'stylesheet') eq 'Y',
+    'colour'   => $Config->get($das_config_key, 'col') || $Extra->{'col'} || 'contigblue1',
+    'depth'    => $Config->get($das_config_key, 'dep') || $Extra->{'dep'} || 4,
+    'use_style'=> ( $Config->get($das_config_key, 'stylesheet') || $Extra->{'stylesheet'} ) eq 'Y',
     'labelling'=> $Extra->{'labelflag'} =~ /^[ou]$/i ? 1 : 0,
-
+    'length'   => $container_length
   };
 
   my $dsn = $Extra->{'dsn'};
@@ -699,12 +700,6 @@ sub _init {
   $srcname =~ s/^(managed_|mananged_extdas)//;
   my $dastype = $Extra->{'type'} || 'ensembl_location';
   my @das_features = ();
-
-  $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{color} || 'contigblue1';
-  $configuration->{depth} =  defined($Config->get($das_config_key, 'dep')) ? $Config->get($das_config_key, 'dep') : 4;
-  $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
-  $configuration->{labelling} = $Extra->{labelflag} =~ /^[ou]$/i ? 1 : 0;
-  $configuration->{length} = $container_length;
 
 #  warn("$das_config_key:".$Config->get($das_config_key, 'stylesheet'));
 #  warn(Dumper($Extra));
@@ -808,11 +803,13 @@ sub _init {
   $self->{'link_text'}    = $Extra->{'linktext'} || 'Additional info';
 
 
-  $self->{helplink} = $Config->get($das_config_key, 'helplink');
+  $self->{helplink} = $Config->get($das_config_key, 'helplink') || $Extra->{'group'};
   my $renderer = $Config->get($das_config_key, 'renderer');
 #  my $group = ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple';
 	       
-  my $group = uc($Config->get($das_config_key, 'group') || 'N');
+  my $group = uc($Config->get($das_config_key, 'group') || $Extra->{'group'} || 'N');
+
+  warn "GROUP $das_config_key -> $group";
   $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
 
   $renderer =~ s/RENDER_RENDER/RENDER/;
