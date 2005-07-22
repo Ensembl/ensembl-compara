@@ -37,7 +37,7 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 #  1  #
 #######
 
-my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000139926");
+my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000012983");
 
 ok($member);
 
@@ -52,12 +52,12 @@ $homologies = $ha->fetch_all_by_Member_method_link_type($member,"ENSEMBL_ORTHOLO
 my $homology = $ha->fetch_by_Member_paired_species($member,"Rattus norvegicus")->[0];
 
 ok( $homology );
-ok( $homology->dbID == 323915 );
-ok( $homology->stable_id eq "9606_10116_01092704852" );
-ok( $homology->description eq "UBRH" );
-ok( $homology->method_link_species_set_id == 28 );
-ok( $homology->method_link_type eq "ENSEMBL_ORTHOLOGUES" );
-ok( $homology->adaptor =~ /^Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor/ );
+ok( $homology->dbID, 119970 );
+ok( $homology->stable_id, "9606_10116_01119868733" );
+ok( $homology->description, "UBRH" );
+ok( $homology->method_link_species_set_id, 20001 );
+ok( $homology->method_link_type, "ENSEMBL_ORTHOLOGUES" );
+ok( $homology->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor") );
 
 $multi->hide('compara', 'homology');
 $multi->hide('compara', 'homology_member');
@@ -92,4 +92,4 @@ $homologies = $ha->fetch_all_by_method_link_type("ENSEMBL_ORTHOLOGUES");
 #$homologies = $ha->fetch_by_source("ENSEMBL_ORTHOLOGUES");
 
 ok($homologies);
-ok(scalar @{$homologies} == 2);
+ok(scalar @{$homologies}, 6);

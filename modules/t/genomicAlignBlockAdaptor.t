@@ -122,30 +122,53 @@ my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
 ##  DATA USED TO TEST API
 ##
 
-my $genomic_align_block;
 my $all_genomic_align_blocks;
-my $genomic_align_block_id = 5857270;
-my $method_link_species_set_id = 72;
-my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
-my $score = 4581;
-my $perc_id = 48;
-my $length = 283;
-my $genomic_algin_1_dbID = 11714534;
+
+my $sth = $compara_db_adaptor->dbc->prepare("
+    SELECT
+      ga1.genomic_align_id, ga2.genomic_align_id, gab.genomic_align_block_id,
+      gab.method_link_species_set_id, gab.score, gab.perc_id, gab.length
+    FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      and ga1.genomic_align_id != ga2.genomic_align_id
+      and ga1.genomic_align_block_id = gab.genomic_align_block_id
+      and ga1.cigar_line LIKE \"\%D\%\" and ga2.cigar_line LIKE \"\%D\%\" LIMIT 1");
+$sth->execute();
+my ($genomic_algin_1_dbID, $genomic_algin_2_dbID, $genomic_align_block_id,
+    $method_link_species_set_id, $score, $perc_id, $length) =
+    $sth->fetchrow_array();
+$sth->finish();
+
+my $genomic_align_blocks;
+my $genomic_align_block;
+my $method_link_species_set =
+  $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
 my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_1_dbID);
-my $genomic_algin_2_dbID = 11714544;
 my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_2_dbID);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
 
-my $dnafrag_id = 19;
-my $dnafrag_start = 50000000;
-my $dnafrag_end = 50001000;
-##select genomic_align_block_id from genomic_align where dnafrag_id = $dnafrag_id and dnafrag_start <= $dnafrag_end and dnafrag_end >= 50000000;
-my $all_genomic_align_block_ids = [5857270, 5857290];
 
 my $slice_coord_system_name = "chromosome";
 my $slice_seq_region_name = "14";
 my $slice_start = 50000000;
-my $slice_end = 50001000;
+my $slice_end = 50005000;
+my $dnafrag_id = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT dnafrag_id FROM dnafrag df, genome_db gdb
+    WHERE df.genome_db_id = gdb.genome_db_id
+      and gdb.name = \"Homo sapiens\"
+      and gdb.assembly_default = 1
+      and df.name = \"$slice_seq_region_name\"
+      and df.coord_system_name = \"$slice_coord_system_name\"");
+my $dnafrag_start = $slice_start;
+my $dnafrag_end = $slice_end;
+##select genomic_align_block_id from genomic_align where dnafrag_id = $dnafrag_id and dnafrag_start <= $dnafrag_end and dnafrag_end >= 50000000;
+my $all_genomic_align_block_ids = $compara_db_adaptor->dbc->db_handle->selectcol_arrayref("
+    SELECT genomic_align_block_id
+    FROM genomic_align ga
+    WHERE method_link_species_set_id = $method_link_species_set_id
+      and dnafrag_id = $dnafrag_id
+      and dnafrag_end >= $dnafrag_start
+      and dnafrag_start <= $dnafrag_end");
 
 ##
 #####################################################################

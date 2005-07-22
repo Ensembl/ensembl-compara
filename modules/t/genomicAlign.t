@@ -119,24 +119,34 @@ my $genomic_align_group_adaptor = $compara_db_adaptor->get_GenomicAlignGroupAdap
 my $genomeDB_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 my $fail;
 
-my $dbID = 11714534;
-my $genomic_align_block_id = 5857270;
+my $sth;
+$sth = $compara_db_adaptor->dbc->prepare("SELECT
+      genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
+      dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id
+    FROM genomic_align WHERE level_id = 1 and dnafrag_strand = 1 LIMIT 1");
+$sth->execute();
+my ($dbID, $genomic_align_block_id, $method_link_species_set_id, $dnafrag_id,
+    $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line, $level_id) =
+    $sth->fetchrow_array();
+$sth->finish();
+$sth = $compara_db_adaptor->dbc->prepare("SELECT
+      group_id, type
+    FROM genomic_align_group WHERE genomic_align_id = $dbID LIMIT 1");
+$sth->execute();
+my ($genomic_align_group_1_id, $genomic_align_group_1_type) =
+    $sth->fetchrow_array();
+$sth->finish();
+
+
 my $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
-my $method_link_species_set_id = 72;
-my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
-my $dnafrag_id = 19;
+my $method_link_species_set =
+    $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
 my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
-my $dnafrag_start = 49999812;
-my $dnafrag_end = 50000028;
-my $dnafrag_strand = 1;
-my $level_id = 1;
-my $genomic_align_group_1_id = 1;
-my $genomic_align_group_1_type = "default";
-my $genomic_align_group_1 = $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_1_id);
+my $genomic_align_group_1 =
+    $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_1_id);
 my $genomic_align_groups = [$genomic_align_group_1];
-my $cigar_line = "86M2D63MD34M7D6M12D15M44D13M";
-my $aligned_sequence = "TAGTATCCTTTGATGAACAAAAGTTTTTACTTTTGACAAAGTCTAATTTATCTGTTTTTTATTGCTTGCAGAAAGGCACCCAAGTT--GATTATGATTTTTATGACCATGATTATAGCAGTAAAACAACTAATCTTGCACTGACAGTATTA-CCAAGATCCTATCTGTTGAGGATAGTATATTTCT-------GATAGC------------TAGATTTGCTTTAGG--------------------------------------------TGTATATATGTAA";
-my $original_sequence = "TAGTATCCTTTGATGAACAAAAGTTTTTACTTTTGACAAAGTCTAATTTATCTGTTTTTTATTGCTTGCAGAAAGGCACCCAAGTTGATTATGATTTTTATGACCATGATTATAGCAGTAAAACAACTAATCTTGCACTGACAGTATTACCAAGATCCTATCTGTTGAGGATAGTATATTTCTGATAGCTAGATTTGCTTTAGGTGTATATATGTAA";
+my $aligned_sequence = "ATCCATAATTAC-----ACATTATATAAAACTGAAGAGCCTTTGTAGGGTAAATTTAGA---------AAGCAATTTCTTTTTGTGAAGTT-ATCTAATCCATATTAAGTTCTAAAATTAATATAGATTAGATATGGCTATACCAATGACATTCATTACTCATATCACTATACTGATGCAAATGAATACTGTGGTATGGTACATAATCACAATAAGA-AAAAAGCATGTATATCATATATCTGCATACATTTAATTCTGTAAAATTATGTTAATTTACAAAGACATATATAATTAAATATTGGCATGTCAGTAAAGCTTCTTAGGTTGTTGTAATCACTGACTA-TTTCTAACATAAAAGTGTTTTATACACACACATATGCAGAGTATTCTATAAATTTACATTAGAAGACAAGAAAAGCAATTTGTTTTAGCTGACAGCAACATTTT--AAAGTTTTCTCTAAGGCAGGGGTCAGCAAACTACAGCCCATGGGGAAAATCTAGTGCACTGCCTGCCTCTTTTTGTAAATA----TTTATTGAGTATTAAAACTATACCCACATATATACACTGTTTATGGCTGCTTCTGGGCTATAATGGCAGAACTCAGTAGTTGTGGCAGAGGCTGTATGGCCCACA";
+my $original_sequence = "ATCCATAATTACACATTATATAAAACTGAAGAGCCTTTGTAGGGTAAATTTAGAAAGCAATTTCTTTTTGTGAAGTTATCTAATCCATATTAAGTTCTAAAATTAATATAGATTAGATATGGCTATACCAATGACATTCATTACTCATATCACTATACTGATGCAAATGAATACTGTGGTATGGTACATAATCACAATAAGAAAAAAGCATGTATATCATATATCTGCATACATTTAATTCTGTAAAATTATGTTAATTTACAAAGACATATATAATTAAATATTGGCATGTCAGTAAAGCTTCTTAGGTTGTTGTAATCACTGACTATTTCTAACATAAAAGTGTTTTATACACACACATATGCAGAGTATTCTATAAATTTACATTAGAAGACAAGAAAAGCAATTTGTTTTAGCTGACAGCAACATTTTAAAGTTTTCTCTAAGGCAGGGGTCAGCAAACTACAGCCCATGGGGAAAATCTAGTGCACTGCCTGCCTCTTTTTGTAAATATTTATTGAGTATTAAAACTATACCCACATATATACACTGTTTATGGCTGCTTCTGGGCTATAATGGCAGAACTCAGTAGTTGTGGCAGAGGCTGTATGGCCCACA";
 
 # 
 # 1
@@ -575,13 +585,21 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlign::genomic_align_group_by_type met
 ## Tests for deprecated methods
 
 verbose("EXCEPTION");
-my $consensus_dnafrag_id = 19;
-my $consensus_start = 50044148;
-my $consensus_end = 50044227;
-my $query_dnafrag_id = 53;
-my $query_start = 82065037;
-my $query_end = 82065116;
-my $query_strand = 1;
+$sth = $compara_db_adaptor->dbc->prepare("
+    SELECT
+      ga1.genomic_align_id, ga1.genomic_align_block_id, ga1.method_link_species_set_id,
+      ga1.dnafrag_id, ga1.dnafrag_start, ga1.dnafrag_end, ga1.dnafrag_strand,
+      ga1.cigar_line, ga1.level_id,
+      ga2.genomic_align_id, ga2.genomic_align_block_id, ga2.method_link_species_set_id,
+      ga2.dnafrag_id, ga2.dnafrag_start, ga2.dnafrag_end, ga2.dnafrag_strand,
+      ga2.cigar_line, ga2.level_id
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id and ga1.genomic_align_id != ga2.genomic_align_id LIMIT 1");
+$sth->execute();
+my ($ga_id1, $gab_id1, $mlss_id1, $consensus_dnafrag_id, $consensus_start, $consensus_end, $dfst1, $cg1, $lvl1,
+ $ga_id2, $gab_id2, $mlss_id2, $query_dnafrag_id, $query_start, $query_end, $query_strand, $cg2, $lvl2) =
+    $sth->fetchrow_array();
+$sth->finish();
 my $score = 4549;
 my $perc_id = 75;
 my $alignment_type = "BLASTZ_NET";

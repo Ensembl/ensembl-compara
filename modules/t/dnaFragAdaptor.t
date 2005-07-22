@@ -72,7 +72,7 @@ use Bio::EnsEMBL::Test::TestUtils;
 BEGIN {
   $| = 1;
   use Test;
-  plan tests => 40;
+  plan tests => 41;
 }
 
 #####################################################################
@@ -111,37 +111,23 @@ ok($dnafrag_adaptor, '/^Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor/',
 #####################################################################
 ## Values matching entries in the test DB
 
-my $dnafrag;
-my $dnafrags;
-my $dnafrag_id = 19;
-my $dnafrag_length = 105311216;
-my $dnafrag_name = "14";
-my $genome_db_id = 1;
-my $coord_system_name = "chromosome";
-
-my $num_of_dnafrags = 12;
-
-my $genome_db_id_2 = 11;
-my $dnafrags_2 = {
-  23222 => {
-          length => 108638738,
-          name => 3,
-          coord_system_name => "chromosome"
-      },
-  23227 => {
-          length => 56310377,
-          name => 5,
-          coord_system_name => "chromosome"
-      },
-  23237 => {
-          length => 165033910,
-          name => "Un",
-          coord_system_name => "chromosome"
-      }
-  };
+my @species_names = ("Homo sapiens", "Rattus norvegicus", "Gallus gallus");
 
 ##
 #####################################################################
+
+my $sth;
+$sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
+      dnafrag_id, length, df.name, df.genome_db_id, coord_system_name
+    FROM dnafrag df left join genome_db gdb using (genome_db_id)
+    WHERE df.name = \"14\" and gdb.name = \"$species_names[0]\"");
+$sth->execute();
+my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) =
+    $sth->fetchrow_array();
+$sth->finish();
+
+my $dnafrag;
+my $dnafrags;
 
 
 
@@ -199,27 +185,25 @@ ok($dnafrags->[0]->name, $dnafrag_name, "Fetching all by GenomeDB and region. Ch
 ok($dnafrags->[0]->genome_db_id, $genome_db_id, "Fetching all by GenomeDB and region. Checking genome_db_id");
 ok($dnafrags->[0]->coord_system_name, $coord_system_name, "Fetching all by GenomeDB and region. Checking coord_system_name");
 
-$dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
-        $genome_db_adaptor->fetch_by_dbID($genome_db_id_2)
+my $num_of_dnafrags = 0;
+
+foreach my $this_species_name (@species_names) {
+  $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
+          $genome_db_adaptor->fetch_by_name_assembly($this_species_name)
     );
-ok(@$dnafrags, keys(%$dnafrags_2));
-do {
   my $fail = "";
+  if (!(@$dnafrags >= 1)) {
+    $fail .= "At least 1 DnaFrag was expected for species $this_species_name";
+  }
+  $num_of_dnafrags += @$dnafrags;
   foreach my $dnafrag (@$dnafrags) {
-    if (!defined($dnafrags_2->{$dnafrag->dbID})) {
-      $fail .= "Found unexpected Bio::EnsEMBL::Compara::DnaFrag(".$dnafrag->dbID.")";
+    if (!($dnafrag->dbID>0)) {
+      $fail .= "Found unexpected dnafrag_id (".$dnafrag->dbID.") for species $this_species_name";
       next;
     }
-    if (($dnafrags_2->{$dnafrag->dbID}->{length} != $dnafrag->length)) {
-      $fail .= "Unexpected length (".$dnafrag->length.") for DnaFrag(".$dnafrag->dbID.")";
+    if (!($dnafrag->length>0)) {
+      $fail .= "Found unexpected dnafrag_length (".$dnafrag->length.") for DnaFrag(".$dnafrag->dbID.")";
     }
-    if (($dnafrags_2->{$dnafrag->dbID}->{name} ne $dnafrag->name)) {
-      $fail .= "Unexpected name (".$dnafrag->name.") for DnaFrag(".$dnafrag->dbID.")";
-    }
-    if (($dnafrags_2->{$dnafrag->dbID}->{coord_system_name} ne $dnafrag->coord_system_name)) {
-      $fail .= "Unexpected name (".$dnafrag->coord_system_name.") for DnaFrag(".$dnafrag->dbID.")";
-    }
-    
   }
   ok($fail, "", "Fetching all by GenomeDB and region");
 };

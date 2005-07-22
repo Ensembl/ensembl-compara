@@ -95,11 +95,23 @@ my $genomic_align_group_adaptor = $compara_db->get_GenomicAlignGroupAdaptor;
 my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor;
 
 ## Data extracted from the database and used to check and test the API
-my $genomic_align_group_id = 251834;
 my $genomic_align_group_type = "default";
-my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID(10292464);
-my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID(10292450);
-my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
+my $genomic_align_group_id = $compara_db->dbc->db_handle->selectrow_array("
+    SELECT group_id
+    FROM genomic_align_group
+    WHERE type = \"$genomic_align_group_type\" LIMIT 1");
+die("No groups of type <$genomic_align_group_type> in the database. Cannot test!")
+  unless ($genomic_align_group_id);
+
+my $all_genomic_align_ids = $compara_db->dbc->db_handle->selectcol_arrayref("
+    SELECT genomic_align_id
+    FROM genomic_align_group
+    WHERE group_id = $genomic_align_group_id");
+my $genomic_align_array;
+foreach my $genomic_align_id (@$all_genomic_align_ids) {
+  my $genomic_align = $genomic_align_adaptor->fetch_by_dbID($genomic_align_id);
+  push(@$genomic_align_array, $genomic_align);
+}
 
 ##
 #####################################################################

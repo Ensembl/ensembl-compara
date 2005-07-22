@@ -41,8 +41,6 @@ This script uses a small compara database build following the specifitions given
 This script (as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::GenomicAlignBlock module.
 
-This script includes 81 tests.
-
 =head1 AUTHOR
 
 Javier Herrero (jherrero@ebi.ac.uk)
@@ -68,7 +66,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 81;
+    plan tests => 76;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -133,17 +131,26 @@ my $method_link_species_set_adaptor = $compara_db_adaptor->get_MethodLinkSpecies
 # my $aligned_sequence = "TCATTGGCTCATTTT-ATTGCATTCAATGAATTGTTGGAAATTAGAGCCAGCCAAAAATTGTATAAATATTGGGCTGTGTCTGCTTCTCTGACA-CTAGATGAAGATGGCATTTGTGCCTGTGTGTCTGTGGGGTCCTCAGGAAGCTCTTCTCCTTGA";
 # my $original_sequence = "TCATTGGCTCATTTTATTGCATTCAATGAATTGTTGGAAATTAGAGCCAGCCAAAAATTGTATAAATATTGGGCTGTGTCTGCTTCTCTGACACTAGATGAAGATGGCATTTGTGCCTGTGTGTCTGTGGGGTCCTCAGGAAGCTCTTCTCCTTGA";
 
+my $sth = $compara_db_adaptor->dbc->prepare("
+    SELECT
+      ga1.genomic_align_id, ga2.genomic_align_id, gab.genomic_align_block_id,
+      gab.method_link_species_set_id, gab.score, gab.perc_id, gab.length
+    FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      and ga1.genomic_align_id != ga2.genomic_align_id
+      and ga1.genomic_align_block_id = gab.genomic_align_block_id
+      and ga1.cigar_line LIKE \"\%D\%\" and ga2.cigar_line LIKE \"\%D\%\" LIMIT 1");
+$sth->execute();
+my ($genomic_algin_1_dbID, $genomic_algin_2_dbID, $genomic_align_block_id,
+    $method_link_species_set_id, $score, $perc_id, $length) =
+    $sth->fetchrow_array();
+$sth->finish();
+
 my $genomic_align_blocks;
 my $genomic_align_block;
-my $genomic_align_block_id = 5857270;
-my $method_link_species_set_id = 72;
-my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
-my $score = 4581;
-my $perc_id = 48;
-my $length = 283;
-my $genomic_algin_1_dbID = 11714534;
+my $method_link_species_set =
+  $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
 my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_1_dbID);
-my $genomic_algin_2_dbID = 11714544;
 my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_algin_2_dbID);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
 die if (!$species_db);
@@ -503,11 +510,11 @@ $genomic_align_block->reverse_complement;
 
 my $st = $genomic_align_block->reference_genomic_align;
 ok( $st->dnafrag_strand, -1 );
-ok( $st->cigar_line, "13M44D15M12D6M7D34MD63M2D86M");
+ok( $st->cigar_line, 'm/M/');
 
 my $res = $genomic_align_block->get_all_non_reference_genomic_aligns->[0];
-ok( $res->dnafrag_strand == -1 );
-ok( $res->cigar_line eq "142M14D127M");
+ok( $res->dnafrag_strand, -1 );
+ok( $res->cigar_line, 'm/M/');
 
 debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_ungapped_GenomicAlignBlocks method");
 $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice
@@ -518,7 +525,9 @@ $genomic_align_block = $genomic_align_blocks->[0];
 do {
   ## This test is only for pairwise alignments!
   my $sequences;
+  my $num_of_gaps = 0;
   foreach my $genomic_align (@{$genomic_align_block->genomic_align_array}) {
+    $num_of_gaps = $genomic_align->cigar_line =~ tr/IDG/IDG/;
     push(@$sequences, $genomic_align->aligned_sequence);
   }
   my $lengths;
@@ -537,7 +546,8 @@ do {
 
   my $ungapped_genomic_align_blocks = $genomic_align_block->get_all_ungapped_GenomicAlignBlocks();
   ## This GenomicAlignBlock contains 7 ungapped GenomicAlignBlocks
-  ok(scalar(@$ungapped_genomic_align_blocks), 7, "Number of ungapped GenomicAlignBlocks");
+  ok(scalar(@$ungapped_genomic_align_blocks), ($num_of_gaps+1),
+      "Number of ungapped GenomicAlignBlocks (assuming normal pairwise alignments)");
   foreach my $ungapped_gab (@$ungapped_genomic_align_blocks) {
     my $this_length = shift @$lengths;
     ## This ok() is executed 7 times!!
@@ -721,4 +731,5 @@ debug("Test Bio::EnsEMBL::Compara::GenomicAlignBlock->requesting_slice_end metho
 
 
 };
+
 exit 0;

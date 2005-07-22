@@ -36,39 +36,39 @@ my $ma = $compara_dba->get_MemberAdaptor;
 #  1  #
 #######
 
-my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000139926");
+my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","ENSG00000119787");
 
 ok($member);
-ok( $member->dbID ==  251282);
-ok( $member->stable_id eq "ENSG00000139926" );
-ok( $member->version == 6 );
-ok( $member->description eq "NULL" );
-ok( $member->source_name eq "ENSEMBLGENE" );
-ok( $member->adaptor =~ /^Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor/ );
-ok( $member->chr_name eq "14" );
-ok( $member->chr_start == 50108666 );
-ok( $member->chr_end == 50187480 );
-ok( $member->chr_strand == 1 );
-ok( $member->taxon_id == 9606 );
-ok( $member->genome_db_id == 1 );
+ok( $member->dbID,  493261);
+ok( $member->stable_id, "ENSG00000119787" );
+ok( $member->version, 3 );
+ok( $member->description, "NULL" );
+ok( $member->source_name, "ENSEMBLGENE" );
+ok( $member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor") );
+ok( $member->chr_name, "2" );
+ok( $member->chr_start, 38434775 );
+ok( $member->chr_end, 38516066 );
+ok( $member->chr_strand, -1 );
+ok( $member->taxon_id, 9606 );
+ok( $member->genome_db_id, 1 );
 ok( ! $member->sequence_id );
 
-$member = $ma->fetch_by_source_stable_id("ENSEMBLPEP","ENSP00000343934");
+$member = $ma->fetch_by_source_stable_id("ENSEMBLPEP","ENSP00000013125");
 
 ok($member);
-ok( $member->dbID ==  251377);
-ok( $member->stable_id eq "ENSP00000343934" );
-ok( $member->version == 1 );
-ok( $member->description eq "Transcript:ENST00000349825 Gene:ENSG00000139926 Chr:14 Start:50108666 End:50187480");
-ok( $member->source_name eq "ENSEMBLPEP" );
-ok( $member->adaptor =~ /^Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor/ );
-ok( $member->chr_name eq "14" );
-ok( $member->chr_start == 50146593 );
-ok( $member->chr_end == 50184785 );
-ok( $member->chr_strand == 1 );
-ok( $member->taxon_id == 9606 );
-ok( $member->genome_db_id == 1 );
-ok( $member->sequence_id == 143871 );
+ok( $member->dbID,  258517);
+ok( $member->stable_id, "ENSP00000013125" );
+ok( $member->version, 2 );
+ok( $member->description, "Transcript:ENST00000013125 Gene:ENSG00000012983 Chr:14 Start:49954999 End:50069126");
+ok( $member->source_name, "ENSEMBLPEP" );
+ok( $member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor") );
+ok( $member->chr_name, "14" );
+ok( $member->chr_start, 49956487 );
+ok( $member->chr_end, 50068517 );
+ok( $member->chr_strand, -1 );
+ok( $member->taxon_id, 9606 );
+ok( $member->genome_db_id, 1 );
+ok( $member->sequence_id, 150450 );
 
 $multi->hide('compara', 'member');
 $member->{'_dbID'} = undef;

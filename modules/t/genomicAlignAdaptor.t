@@ -69,7 +69,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 106;
+    plan tests => 64;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -96,64 +96,83 @@ my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor();
 my $dnafrag_adaptor = $compara_db->get_DnaFragAdaptor();
 my $genomeDB_adaptor = $compara_db->get_GenomeDBAdaptor();
 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_by_dbID(11714534) method");
-  $genomic_align = $genomic_align_adaptor->fetch_by_dbID(11714534);
+my $sth;
+my ($ga_id, $gab_id, $mlss_id, $df_id, $dfs, $dfe, $cg);
+
+$sth = $compara_db->dbc->prepare("SELECT
+      genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
+      dnafrag_start, dnafrag_end, cigar_line
+    FROM genomic_align WHERE level_id = 1 and dnafrag_strand = 1 LIMIT 1");
+$sth->execute();
+($ga_id, $gab_id, $mlss_id, $df_id, $dfs, $dfe, $cg) = $sth->fetchrow_array();
+$sth->finish();
+
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_by_dbID($ga_id) method");
+  $genomic_align = $genomic_align_adaptor->fetch_by_dbID($ga_id);
   ok($genomic_align);
   ok($genomic_align->adaptor, $genomic_align_adaptor);
-  ok($genomic_align->dbID, 11714534);
-  ok($genomic_align->genomic_align_block_id, 5857270);
-  ok($genomic_align->method_link_species_set_id, 72);
-  ok($genomic_align->dnafrag_id, 19);
-  ok($genomic_align->dnafrag_start, 49999812);
-  ok($genomic_align->dnafrag_end, 50000028);
+  ok($genomic_align->dbID, $ga_id);
+  ok($genomic_align->genomic_align_block_id, $gab_id);
+  ok($genomic_align->method_link_species_set_id, $mlss_id);
+  ok($genomic_align->dnafrag_id, $df_id);
+  ok($genomic_align->dnafrag_start, $dfs);
+  ok($genomic_align->dnafrag_end, $dfe);
   ok($genomic_align->dnafrag_strand, 1);
-  ok($genomic_align->cigar_line, "86M2D63MD34M7D6M12D15M44D13M");
+  ok($genomic_align->cigar_line, $cg);
   ok($genomic_align->level_id, 1);
 
 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_by_dbID(22609531) method");
-  $genomic_align = $genomic_align_adaptor->fetch_by_dbID(22609531);
+$sth = $compara_db->dbc->prepare("SELECT
+      genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
+      dnafrag_start, dnafrag_end, cigar_line
+    FROM genomic_align WHERE level_id = 2 and dnafrag_strand = -1 LIMIT 1");
+$sth->execute();
+($ga_id, $gab_id, $mlss_id, $df_id, $dfs, $dfe, $cg) = $sth->fetchrow_array();
+$sth->finish();
+
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_by_dbID($ga_id) method");
+  $genomic_align = $genomic_align_adaptor->fetch_by_dbID($ga_id);
   ok($genomic_align);
   ok($genomic_align->adaptor, $genomic_align_adaptor);
-  ok($genomic_align->dbID, 22609531);
-  ok($genomic_align->genomic_align_block_id, 11304765);
-  ok($genomic_align->method_link_species_set_id, 72);
-  ok($genomic_align->dnafrag_id, 58);
-  ok($genomic_align->dnafrag_start, 18153645);
-  ok($genomic_align->dnafrag_end, 18153690);
+  ok($genomic_align->dbID, $ga_id);
+  ok($genomic_align->genomic_align_block_id, $gab_id);
+  ok($genomic_align->method_link_species_set_id, $mlss_id);
+  ok($genomic_align->dnafrag_id, $df_id);
+  ok($genomic_align->dnafrag_start, $dfs);
+  ok($genomic_align->dnafrag_end, $dfe);
   ok($genomic_align->dnafrag_strand, -1);
-  ok($genomic_align->cigar_line, "46M");
+  ok($genomic_align->cigar_line, $cg);
   ok($genomic_align->level_id, 2);
 
 
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_all_by_genomic_align_block_id(4018490) method");
-  $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block_id(4018490);
-  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(3639645) sould return 2 objects");
+$sth = $compara_db->dbc->prepare("
+    SELECT
+      ga1.genomic_align_id, ga1.genomic_align_block_id, ga1.method_link_species_set_id,
+      ga1.dnafrag_id, ga1.dnafrag_start, ga1.dnafrag_end, ga1.dnafrag_strand,
+      ga1.cigar_line, ga1.level_id,
+      ga2.genomic_align_id, ga2.genomic_align_block_id, ga2.method_link_species_set_id,
+      ga2.dnafrag_id, ga2.dnafrag_start, ga2.dnafrag_end, ga2.dnafrag_strand,
+      ga2.cigar_line, ga2.level_id
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id and ga1.genomic_align_id != ga2.genomic_align_id LIMIT 1");
+$sth->execute();
+my ($ga_id1, $gab_id1, $mlss_id1, $df_id1, $dfs1, $dfe1, $dfst1, $cg1, $lvl1,
+ $ga_id2, $gab_id2, $mlss_id2, $df_id2, $dfs2, $dfe2, $dfst2, $cg2, $lvl2) =
+    $sth->fetchrow_array();
+$sth->finish();
+
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_all_by_genomic_align_block_id($gab_id1) method");
+  $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block_id($gab_id1);
+  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block($gab_id1) should return 2 objects");
   check_all_genomic_aligns($all_genomic_aligns);
 
 debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_GenomicAlignBlock(\$genomic_aling_block) method");
   $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-          -dbID=>4018490,
+          -dbID=>$gab_id1,
           -adaptor=>$compara_db->get_GenomicAlignBlockAdaptor
       );
   $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block);
-  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(\$genomic_aling_block) sould return 2 objects");
-  check_all_genomic_aligns($all_genomic_aligns);
-
-
-verbose(0);
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_all_by_genomic_align_block(4018490) method");
-  $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block(4018490);
-  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(3639645) sould return 2 objects");
-  check_all_genomic_aligns($all_genomic_aligns);
-
-debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_genomic_align_block(\$genomic_aling_block) method");
-  $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-          -dbID=>4018490,
-          -adaptor=>$compara_db->get_GenomicAlignBlockAdaptor
-      );
-  $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block($genomic_align_block);
-  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(\$genomic_aling_block) sould return 2 objects");
+  ok(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(\$genomic_aling_block) should return 2 objects");
   check_all_genomic_aligns($all_genomic_aligns);
 
 exit (0);
@@ -163,28 +182,28 @@ sub check_all_genomic_aligns {
   my ($all_genomic_aligns) = @_;
 
   foreach my $this_genomic_align (@{$all_genomic_aligns}) {
-    if ($this_genomic_align->dbID == 8036973) {
-      ok($this_genomic_align->dbID, 8036973);
-      ok($this_genomic_align->adaptor, $genomic_align_adaptor, "unexpected genomic_align_adapto");
-      ok($this_genomic_align->genomic_align_block_id, 4018490);
-      ok($this_genomic_align->method_link_species_set_id, 72);
-      ok($this_genomic_align->dnafrag_id, 19);
-      ok($this_genomic_align->dnafrag_start, 50044148);
-      ok($this_genomic_align->dnafrag_end, 50044227);
-      ok($this_genomic_align->dnafrag_strand, 1);
-      ok($this_genomic_align->level_id, 2);
-      ok($this_genomic_align->cigar_line, "80M");
-    } elsif ($this_genomic_align->dbID == 8036987) {
-      ok($this_genomic_align->dbID, 8036987);
-      ok($this_genomic_align->adaptor, $genomic_align_adaptor, "unexpected genomic_align_adapto");
-      ok($this_genomic_align->genomic_align_block_id, 4018490);
-      ok($this_genomic_align->method_link_species_set_id, 72);
-      ok($this_genomic_align->dnafrag_id, 53);
-      ok($this_genomic_align->dnafrag_start, 82065037);
-      ok($this_genomic_align->dnafrag_end, 82065116);
-      ok($this_genomic_align->dnafrag_strand, 1);
-      ok($this_genomic_align->level_id, 2);
-      ok($this_genomic_align->cigar_line, "80M");
+    if ($this_genomic_align->dbID == $ga_id1) {
+      ok($this_genomic_align->dbID, $ga_id1);
+      ok($this_genomic_align->adaptor, $genomic_align_adaptor, "unexpected genomic_align_adaptor");
+      ok($this_genomic_align->genomic_align_block_id, $gab_id1);
+      ok($this_genomic_align->method_link_species_set_id, $mlss_id1);
+      ok($this_genomic_align->dnafrag_id, $df_id1);
+      ok($this_genomic_align->dnafrag_start, $dfs1);
+      ok($this_genomic_align->dnafrag_end, $dfe1);
+      ok($this_genomic_align->dnafrag_strand, $dfst1);
+      ok($this_genomic_align->cigar_line, $cg1);
+      ok($this_genomic_align->level_id, $lvl1);
+    } elsif ($this_genomic_align->dbID == $ga_id2) {
+      ok($this_genomic_align->dbID, $ga_id2);
+      ok($this_genomic_align->adaptor, $genomic_align_adaptor, "unexpected genomic_align_adaptor");
+      ok($this_genomic_align->genomic_align_block_id, $gab_id2);
+      ok($this_genomic_align->method_link_species_set_id, $mlss_id2);
+      ok($this_genomic_align->dnafrag_id, $df_id2);
+      ok($this_genomic_align->dnafrag_start, $dfs2);
+      ok($this_genomic_align->dnafrag_end, $dfe2);
+      ok($this_genomic_align->dnafrag_strand, $dfst2);
+      ok($this_genomic_align->cigar_line, $cg2);
+      ok($this_genomic_align->level_id, $lvl2);
     } else {
       ok(0, 1, "unexpected genomic_align->dbID (".$this_genomic_align->dbID.")");
       ok($this_genomic_align->adaptor, $genomic_align_adaptor, "unexpected genomic_align_adaptor");

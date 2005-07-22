@@ -77,7 +77,7 @@ use Bio::EnsEMBL::Test::TestUtils qw(debug test_getter_setter);
 BEGIN {
   $| = 1;
   use Test;
-  plan tests => 22;
+  plan tests => 23;
 }
 
 #set to 1 to turn on debug prints
@@ -131,7 +131,7 @@ my $chicken_matches =
 
 
 my $num = scalar(@$chicken_matches);
-ok($num, 17);
+ok($num > 10, 1, "At least 10 BLASTZ_NET matches were expected against chicken");
 debug("\ngot $num human-chicken matches\n");
 
 #$verbose && &print_matches($chicken_matches);
@@ -145,7 +145,7 @@ my $rat_matches =
 
 
 $num = scalar(@$rat_matches);
-ok($num, 281);
+ok($num > 10, 1, "At least 10 BLASTZ_NET matches were expected against rat");
 debug("\ngot $num human-rat matches\n");
 
 $verbose && &print_matches($rat_matches);
@@ -165,23 +165,31 @@ $rat_matches = $dafa->fetch_all_by_species_region(
 
 $num = scalar(@$rat_matches);
 ok($num, 1);
-ok($rat_matches->[0]->{'seqname'}, "14");
-ok($rat_matches->[0]->{'start'}, 49999812);
-ok($rat_matches->[0]->{'end'}, 50000028);
-ok($rat_matches->[0]->{'strand'}, 1);
-ok($rat_matches->[0]->{'species'}, "Homo sapiens");
-ok($rat_matches->[0]->{'score'}, 4581);
-ok($rat_matches->[0]->{'percent_id'}, 48);
-ok($rat_matches->[0]->{'hstart'}, 92842620);
-ok($rat_matches->[0]->{'hend'}, 92842888);
-ok($rat_matches->[0]->{'hstrand'}, 1);
-ok($rat_matches->[0]->{'hseqname'}, "6");
+ok($rat_matches->[0]->{'seqname'}, "14",
+    "found an alignment outside of the searching region (unexpected name)!");
+ok($rat_matches->[0]->{'start'} < 50000020, 1,
+    "found an alignment outside of the searching region (unexpected start)!");
+ok($rat_matches->[0]->{'end'} > 50000010, 1,
+    "found an alignment outside of the searching region (unexpected end)!");
+ok($rat_matches->[0]->{'strand'}, 1, "Human should be in the +1 strand...");
+ok($rat_matches->[0]->{'species'}, "Homo sapiens",
+    "found an alignment outside of the searching region (unexpected species)!");
+ok($rat_matches->[0]->{'score'} > 0, 1, "Alignment score is not >0");
+ok($rat_matches->[0]->{'percent_id'}, 'm/\d+/', "\%id is not a number!");
+ok($rat_matches->[0]->{'percent_id'} >= 0, 1, "Negative \%id!");
+ok($rat_matches->[0]->{'percent_id'} <= 100, 1, "\%id > 100!");
+ok($rat_matches->[0]->{'hstart'} > 0, 1,
+    "Funny coordinates (start !> 0)");
+ok($rat_matches->[0]->{'hend'} >= $rat_matches->[0]->{'hstart'}, 1,
+    "Funny coordinates (end < start)");
+ok(($rat_matches->[0]->{'hstrand'} == 1 or $rat_matches->[0]->{'hstrand'} == -1), 1,
+    "Funny strand");
 ok($rat_matches->[0]->{'hspecies'}, "Rattus norvegicus");
 ok($rat_matches->[0]->{'alignment_type'}, "BLASTZ_NET");
-ok($rat_matches->[0]->{'group_id'}, 1);
+ok($rat_matches->[0]->{'group_id'} > 1, 1, "Funny group_id");
 ok($rat_matches->[0]->{'level_id'}, 1);
 ok($rat_matches->[0]->{'strands_reversed'}, 0);
-ok($rat_matches->[0]->{'cigar_string'}, "86M2D39M14I10MD34M7D6M12D15M44D13M");
+ok($rat_matches->[0]->{'cigar_string'}, 'm/M/', "Funny cigar_string");
 
 $verbose && &print_matches($rat_matches);
 
@@ -189,12 +197,15 @@ $verbose && &print_matches($rat_matches);
 #  3  #
 #######
 
-$slice = $gg_dba->get_SliceAdaptor->fetch_by_region('toplevel',5,54735035,54743580);
+$slice = $gg_dba->get_SliceAdaptor->fetch_by_region('toplevel',
+    $chicken_matches->[0]->hseqname,
+    $chicken_matches->[0]->hstart,
+    $chicken_matches->[0]->hend);
 my $human_matches = 
 	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly, "BLASTZ_NET");
 
 $num = scalar(@$human_matches);
-ok($num, 14);
+ok($num >= 1, 1, "At least 1 BLASTZ_NET match was expected against human");
 
 debug("\ngot $num chicken-human matches\n");
 $verbose && &print_matches($human_matches);
@@ -203,12 +214,15 @@ $verbose && &print_matches($human_matches);
 #  4  #
 #######
 
-$slice = $rn_dba->get_SliceAdaptor->fetch_by_region('toplevel',6,93002042,93038844);
+$slice = $rn_dba->get_SliceAdaptor->fetch_by_region('toplevel',
+    $rat_matches->[0]->hseqname,
+    $rat_matches->[0]->hstart,
+    $rat_matches->[0]->hend);
 $human_matches = 
 	$dafa->fetch_all_by_Slice($slice, $human_name, $human_assembly, "BLASTZ_NET");
 
 $num = scalar(@$human_matches);
-ok($num, 44);
+ok($num >= 1, 1, "At least 1 BLASTZ_NET match was expected against human");
 
 debug("\ngot $num rat-human matches\n");
 $verbose && &print_matches($human_matches);
