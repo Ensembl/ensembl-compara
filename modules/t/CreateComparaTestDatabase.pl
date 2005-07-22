@@ -14,9 +14,9 @@ use DBI;
 
 my ($help, $srcDB, $destDB, $host, $user, $pass, $port, $seq_region_file);
 
-my $ref_genome_db_id = 1;
-my @other_genome_db_ids = qw(3 11);
-my $method_link_id = 1;
+my $ref_genome_db_name = "Homo sapiens";
+my @other_genome_db_names = ("Rattus norvegicus", "Gallus gallus");
+my $method_link_type = "BLASTZ_NET";
 
 GetOptions('help' => \$help,
            's=s' => \$srcDB,
@@ -99,7 +99,20 @@ $dbh->do("insert into meta select * from $srcDB.meta");
 $array_ref = $dbh->selectcol_arrayref("select meta_value from meta where meta_key='max_alignment_length'");
 my $max_alignment_length = $array_ref->[0];
 
-foreach my $genome_db_id (@other_genome_db_ids) {
+my $method_link_id = $dbh->selectrow_array("
+    SELECT method_link_id FROM method_link
+    WHERE type = \"$method_link_type\"");
+
+my $ref_genome_db_id = $dbh->selectrow_array("
+    SELECT genome_db_id FROM genome_db
+    WHERE name = \"$ref_genome_db_name\" and assembly_default = 1");
+
+my $other_genome_db_ids = $dbh->selectcol_arrayref("
+    SELECT genome_db_id FROM genome_db
+    WHERE name IN (\"".join("\", \"", @other_genome_db_names)."\")
+        and assembly_default = 1");
+
+foreach my $genome_db_id (@$other_genome_db_ids) {
   foreach my $seq_region (@seq_regions) {
     my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
     my $lower_bound = $seq_region_start - $max_alignment_length;
@@ -125,7 +138,7 @@ foreach my $genome_db_id (@other_genome_db_ids) {
             genome_db_id=$ref_genome_db_id AND
             name=$seq_region_name
         });
-    print "Dumping data for dnafrag $dnafrag_id (genome=$ref_genome_db_id; seq=$seq_region_name)\n";
+    print "Dumping data for dnafrag $dnafrag_id (genome=$ref_genome_db_id; seq=$seq_region_name) vs. genome=$genome_db_id\n";
             
     # Get the list of genomic_align_block_ids corresponding the the reference region
     # Populate the genomic_align_block_id table
@@ -182,6 +195,7 @@ foreach my $genome_db_id (@other_genome_db_ids) {
           FROM
             $srcDB.genomic_align_group gag, genomic_align ga
           WHERE
+            method_link_species_set_id=$method_link_species_set_id AND
             gag.genomic_align_id=ga.genomic_align_id
         });
 
@@ -202,8 +216,9 @@ foreach my $genome_db_id (@other_genome_db_ids) {
 # populate dnafrag table
 $dbh->do("insert ignore into dnafrag select d.* from genomic_align ga, $srcDB.dnafrag d where ga.dnafrag_id=d.dnafrag_id");
 
-foreach my $genome_db_id (@other_genome_db_ids) {
+foreach my $genome_db_id (@$other_genome_db_ids) {
   # populate synteny_region table
+  print "Dumping synteny data (genome=$ref_genome_db_id vs. genome=$genome_db_id)\n";
   $dbh->do("insert into synteny_region select s.* from $srcDB.synteny_region s, $srcDB.dnafrag_region dr1, dnafrag d1, $srcDB.dnafrag_region dr2, dnafrag d2 where s.synteny_region_id=dr1.synteny_region_id and s.synteny_region_id=dr2.synteny_region_id and dr1.dnafrag_id=d1.dnafrag_id and dr2.dnafrag_id=d2.dnafrag_id and d1.genome_db_id=$ref_genome_db_id and d2.genome_db_id=$genome_db_id");
 }
 
@@ -222,7 +237,7 @@ $dbh->do("insert ignore into member select m.* from homology_member hm, $srcDB.m
 $dbh->do("insert ignore into member select m.* from homology_member hm, $srcDB.member m where hm.peptide_member_id=m.member_id");
 
 # populate sequence table
-$dbh->do("insert into sequence select s.* from member m, $srcDB.sequence s where m.sequence_id=s.sequence_id");
+$dbh->do("insert ignore into sequence select s.* from member m, $srcDB.sequence s where m.sequence_id=s.sequence_id");
 
 # populate taxon table
 $dbh->do("insert ignore into taxon select t.* from member m, $srcDB.taxon t where m.taxon_id=t.taxon_id");
@@ -242,10 +257,11 @@ $dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_l
 $dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, family f where f.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id, mlss.method_link_id, mlss.genome_db_id");
 
 # method_link_species_set entries from synteny_region/dnafrag_region
+$dbh->do("insert into method_link_species_set select mlss.* from $srcDB.method_link_species_set mlss, synteny_region sr where sr.method_link_species_set_id=mlss.method_link_species_set_id group by mlss.method_link_species_set_id, mlss.method_link_id, mlss.genome_db_id");
 
 
 # Now output the mouse and rat seq_region file needed to create the corresponding core databases
-foreach my $genome_db_id (@other_genome_db_ids) {
+foreach my $genome_db_id (@$other_genome_db_ids) {
   my $array_ref = $dbh->selectcol_arrayref("select name from genome_db where genome_db_id=$genome_db_id");
   my $species_name = lc($array_ref->[0]);
   $species_name =~ s/\s+/_/g;
