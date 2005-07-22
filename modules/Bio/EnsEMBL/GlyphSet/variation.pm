@@ -58,7 +58,7 @@ sub href {
     my $only_pop = $Config->{'_ld_population'};
     $start .= ";pop=$only_pop" if $only_pop;
   }
-  return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id;source=$source;c=$region:$start";
+  return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id;source=$source;c=$region:$start;w=20000";
 }
 
 sub image_label {
