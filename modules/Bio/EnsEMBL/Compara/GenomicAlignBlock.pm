@@ -1378,9 +1378,8 @@ sub reverse_complement {
   Arg[2]     : [optional] int $end, refers to the reference_dnafrag
   Arg[3]     : [optional] Bio::EnsEMBL::Compara::GenomicAlign $reference_GenomicAlign
   Example    : none
-  Description: restrict this GenomicAlignBlock. It does not create a new object, the
-               obejct tself is modified.
-  Returntype : none
+  Description: restrict this GenomicAlignBlock. It returns a new object.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : none
   Caller     : general
 
@@ -1455,8 +1454,6 @@ sub restrict_between_reference_positions {
         $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
       }
     }
-  } elsif ($excess_at_the_start < 0) {
-    warning("Start [$start] is lower than start position of the reference Bio::EnsEMBL::Compara::GenomicAlign");
   }
 
   if ($excess_at_the_end > 0) {
@@ -1488,8 +1485,6 @@ sub restrict_between_reference_positions {
         $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
       }
     }
-  } elsif ($excess_at_the_end < 0) {
-    warning("End [$end] is larger than end position of the reference Bio::EnsEMBL::Compara::GenomicAlign");
   }
 
   throw("Reference GenomicAlign not found!") if (!$genomic_align_block->get_all_GenomicAligns->[0]);
