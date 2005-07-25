@@ -497,7 +497,7 @@ sub _get_mapped_Gene {
         push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
       }
     }
-    if (grep {$_->start} @$these_exons) { ## if any of the exons has been mapped
+    if (grep {defined($_->start)} @$these_exons) { ## if any of the exons has been mapped
       my $new_transcript = $this_transcript->new(
               -stable_id => $this_transcript->stable_id,
               -version => $this_transcript->version,
@@ -616,7 +616,7 @@ sub _compile_mapped_Genes {
               $strict_order_of_exons
           );
 
-        my $old_transcript = $transcript_by_transcript_stable_id->{$transcript_stable_id};
+      my $old_transcript = $transcript_by_transcript_stable_id->{$transcript_stable_id};
 #       # Save first set of exons in the 
 #       my $first_set_of_compatible_exons = shift(@{$sets_of_compatible_exons});
 #       my $first_transcript = $transcript_by_transcript_stable_id->{$transcript_stable_id};
@@ -693,7 +693,7 @@ sub _merge_Exons {
   # Merge compatible pieces of exons
   foreach my $these_exons (values %$exon_by_stable_id) {
 
-    if (!grep {$_->start} @$these_exons) {
+    if (!grep {defined($_->start)} @$these_exons) {
       push(@$merged_exons, $these_exons->[0]);
       next;
     }
@@ -844,7 +844,8 @@ sub _separate_in_incompatible_sets_of_Exons {
       push(@$forward_stranded_set_of_exons, $exon);
       push(@$reverse_stranded_set_of_exons, $new_exon);
     }
-    push(@$sets_of_exons, @{_separate_in_incompatible_sets_of_Exons($reverse_stranded_set_of_exons)});
+    push(@$sets_of_exons, @{_separate_in_incompatible_sets_of_Exons($reverse_stranded_set_of_exons,
+        $max_repetition_length, $max_intron_length, $strict_order_of_exons)});
     $set_of_exons = $forward_stranded_set_of_exons;
   }
   ##
@@ -858,11 +859,16 @@ sub _separate_in_incompatible_sets_of_Exons {
     if (!defined($this_exon->start)) {
       if ($transcript_strand == -1) {
         ## Insert this exon in the right place
+        my $inserted = 0;
         for (my $i=0; $i<@$this_set_of_exons; $i++) {
           if ($this_set_of_exons->[$i]->original_rank == $this_exon->original_rank - 1) {
             splice(@$this_set_of_exons, $i, 0, $this_exon);
+            $inserted = 1;
             last;
           }
+        }
+        if (!$inserted) {
+          push(@$this_set_of_exons, $this_exon);
         }
       } else {
         ## Append this exon
@@ -914,6 +920,11 @@ sub _sort_Exons {
   my @exons = @_;
   my @sorted_exons = ();
 
+  my $transcript_strand = 1;
+  if (grep {$_->strand and $_->strand == -1} @exons) {
+    $transcript_strand = -1;
+  }
+
   my @mapped_exons = grep {defined($_->start)} @exons;
   my @unmapped_exons = grep {!defined($_->start)} @exons;
 
@@ -929,8 +940,16 @@ sub _sort_Exons {
   foreach my $unmapped_exon (@unmapped_exons) {
     my $rank = $unmapped_exon->original_rank;
     do {
-      if (defined($sorted_exons_by_rank->{$rank}) or $rank == 1) {
+      if (defined($sorted_exons_by_rank->{$rank})) {
         push(@{$sorted_exons_by_rank->{$rank}}, $unmapped_exon);
+        $rank = 0;
+      } elsif ($rank == 1) {
+        if ($transcript_strand == 1) {
+          push(@{$sorted_exons_by_rank->{$rank}}, $unmapped_exon);
+        } else {
+          $rank++ while(!defined($sorted_exons_by_rank->{$rank}));
+          splice(@{$sorted_exons_by_rank->{$rank}}, 1, 0, $unmapped_exon);
+        }
         $rank = 0;
       }
       $rank--;
@@ -1544,7 +1563,7 @@ sub project {
   my $self = shift;
   my $cs_name = shift;
   my $cs_version = shift;
-  my $projections;
+  my $projections = [];
 
   throw('Coord_system name argument is required') if(!$cs_name);
 
@@ -1564,10 +1583,9 @@ sub project {
       foreach my $alignment_coord (@alignment_coords) {
         if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
           $new_start = $alignment_coord->start;
-        } else {
-          throw("Cannot map the start of the projection!!");
         }
       }
+      next if (!defined($new_start));
       @alignment_coords = $this_mapper->map_coordinates(
               'sequence',
               $this_slice->start + $this_projection->from_end - 1,
@@ -1578,10 +1596,10 @@ sub project {
       foreach my $alignment_coord (@alignment_coords) {
         if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
           $new_end = $alignment_coord->start;
-        } else {
-          throw("Cannot map the end of the projection!!");
         }
       }
+      next if (!defined($new_end));
+      
       my $new_projection = bless([$new_start, $new_end, $this_projection->to_Slice],
                                 "Bio::EnsEMBL::ProjectionSegment");
       push(@$projections, $new_projection);
