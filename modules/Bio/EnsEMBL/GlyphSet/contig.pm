@@ -200,7 +200,7 @@ sub _init_non_assembled_contig {
           $POS++;
           $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch;region=$name);
           $POS++;
-          $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=$_;id=$name);
+          $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?action=select;option=fasta;type1=region;anchor1=$name);
           $POS++;
         }
       }
@@ -317,7 +317,7 @@ sub _init_non_assembled_contig {
   # detailed display
   my $rbs = $Config->get('_settings','red_box_start');
   my $rbe = $Config->get('_settings','red_box_end');
-  if ($Config->get('_settings','draw_red_box') eq 'yes') { 
+  if( 0 && $Config->get('_settings','draw_red_box') eq 'yes') { 
     # only draw focus box on the correct display...
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
       'x'            => $rbs - $global_start,

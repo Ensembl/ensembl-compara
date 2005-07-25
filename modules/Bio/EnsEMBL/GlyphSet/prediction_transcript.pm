@@ -66,9 +66,7 @@ sub zmenu {
   my ($self, $gene, $transcript) = @_;
   my $id = $transcript->stable_id();
   my( $tld )= @{[$self->{container}{_config_file_name_}]};
-  my $ev_link = 
-    ( "/$tld/exportview?tab=fasta;type=feature;ftype=transcript;".
-      "fasta_option=%s;id=%s" );
+  my $ev_link =  "/$tld/exportview?action=select;format=fasta;option=%s;type1=transcript;anchor1=%s";
   my $zmenu = 
     {
      'caption' => $id,

@@ -102,12 +102,12 @@ sub zmenu {
         "04:Exon:$tid"	    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
         '05:Supporting evidence'    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
 
-        '08:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$tid",
+        '08:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
     };
 
     if ($pid) {
         $zmenu->{"06:Peptide:$pid"} =  "/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid";
-        $zmenu->{'09:Export Peptide'}	= "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid";
+        $zmenu->{'09:Export Peptide'}	= "/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid";
     }
 
     return $zmenu;

@@ -23,7 +23,7 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->type.'_'.$gene->confidence;
+  my $type = $transcript->type() ? $transcript->type.'_'.$gene->confidence :  $gene->biotype.'_'.$gene->confidence;
   # $type =~ s/HUMACE-//g;
   my $colour = $colours->{$type}[0] || 'black';
 
@@ -42,8 +42,9 @@ sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $gene->type()."_".$gene->confidence;
+  my $type = $gene->biotype."_".$gene->confidence;
   $type =~ s/HUMACE-//g;
+  warn ">>> $type <<<";
   my $colour = $colours->{$type}[0];
 
   if(exists $highlights{lc($gene->stable_id)}) {
@@ -89,7 +90,7 @@ sub zmenu {
     "00:$id"    => "",
   "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega",
     "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=vega",          
-    '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=cdna;id=$tid",
+    '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
     "06:Vega curated ($type)"   => '',
   };
   
@@ -97,7 +98,7 @@ sub zmenu {
   $zmenu->{"03:Peptide:$pid"}=
     qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid;db=vega);
   $zmenu->{'05:Export Peptide'}=
-    qq(/@{[$self->{container}{_config_file_name_}]}/exportview?tab=fasta;type=feature;ftype=peptide;id=$pid);  
+    qq(/@{[$self->{container}{_config_file_name_}]}/exportview?option=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);  
   }
   
   return $zmenu;
@@ -136,7 +137,7 @@ sub text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $tt = $transcript->type || $gene->type;
+    my $tt = ( $transcript->biotype ? $transcript->biotype : $gene->biotype ) . '_'. $gene->confidence;
     my $type = $legend_map{$tt} || $tt;
     $id .= " \n$type ";
   }
@@ -149,7 +150,7 @@ sub gene_text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $type = $legend_map{$gene->type} || $gene->type;
+    my $type = $legend_map{ $gene->biotype.'_'.$gene->confidence } || $gene->type;
       $id .= " \n$type ";
   }
   return $id;

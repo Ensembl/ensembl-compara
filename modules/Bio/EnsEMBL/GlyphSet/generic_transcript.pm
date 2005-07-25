@@ -116,8 +116,7 @@ sub zmenu {
   my $zmenu = {
     'caption'          => "$name Gene",
     "01:Gene:$gid"     => "/$sp/geneview?gene=$gid;db=$db",
-    '04:Export Gene'   => "/$sp/exportview?tab=fasta;".
-                          "type=feature;ftype=gene;id=$gid",
+    '04:Export Gene'   => "/$sp/exportview?action=select;format=fasta;type1=gene;anchor1=$gid"
   };
 
   if( $transcript ){
@@ -127,14 +126,12 @@ sub zmenu {
     $tname = $ext_db ? "$ext_db:$tname" : $tname;
     $zmenu->{"00:$tname"}       = '';
     $zmenu->{"02:Transcr:$tid"} = "/$sp/transview?transcript=$tid;db=$db";
-    $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?tab=fasta;".
-                                  "type=feature;ftype=cdna;id=$tid";
+    $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?action=select;format=fasta;type1=transcript;anchor1=$tid;option=cdna";
     my $translation = $transcript->translation;
     if( $translation ){
       my $pid = $translation->stable_id;
       $zmenu->{"03:Peptide:$pid"}   = "/$sp/protview?transcript=$tid;db=$db";
-      $zmenu->{'06:Export Peptide'} = "/$sp/exportview?tab=fasta;".
-                                     "type=feature;ftype=peptide;id=$pid";
+      $zmenu->{'06:Export Peptide'} = "/$sp/exportview?action=select;format=fasta;type1=peptide;anchor1=$pid;option=peptide";
     }
   } else { # No transcript
     my $gname  = $gene->external_name || $gid;

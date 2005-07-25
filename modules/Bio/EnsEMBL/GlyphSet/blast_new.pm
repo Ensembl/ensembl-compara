@@ -13,8 +13,8 @@ sub features {
   foreach my $T ( $self->highlights ) {
     next unless /BLAST_NEW:(.*)/;
     eval { 
-        push @T, $self->{'container'}->get_all_SearchFeatures($1); 
-        }; 
+      push @T, $self->{'container'}->get_all_SearchFeatures($1); 
+    }; 
     warn $@ if $@;
   }
   return @T;

@@ -2,6 +2,7 @@ package Bio::EnsEMBL::GlyphSet_feature;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
+use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
@@ -100,7 +101,9 @@ sub expanded_init {
     foreach my $f ( @$features ){
       my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
       my $fgroup_name = $self->feature_group( $f );
+      warn "$hstrand, $fgroup_name ";
       next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
+      warn "PUSHED FEATURE...";
       push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
     }
   }
@@ -108,6 +111,7 @@ sub expanded_init {
 ## Now go through each feature in turn, drawing them
   my $y_pos;
   my $n_bumped = 0;
+  my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
   foreach my $i (keys %id){
     $T+=@{$id{$i}}; ## Diagnostic report....
     my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
@@ -139,7 +143,19 @@ sub expanded_init {
     foreach my $f ( @F ){
       next if int($f->[1] * $pix_per_bp) <= int( $X * $pix_per_bp );
       $C++;
-      if($DRAW_CIGAR) {
+      my $cigar;
+      eval { $cigar = $f->[2]->cigar_string; };
+      if($DRAW_CIGAR || $cigar =~ /$regexp/ ) {
+         my $START = $f->[0] < 1 ? 1 : $f->[0];
+         my $END   = $f->[1] > $length ? $length : $f->[1];
+         $X = $END;
+         $Composite->push(new Sanger::Graphics::Glyph::Space({
+           'x'          => $START-1,
+           'y'          => 0, # $y_pos,
+           'width'      => $END-$START+1,
+           'height'     => $h,
+           'absolutey'  => 1,
+        }));
         $self->draw_cigar_feature($Composite, $f->[2], $h, $feature_colour, 'black', $pix_per_bp );
       } else {
         my $START = $f->[0] < 1 ? 1 : $f->[0];
@@ -197,6 +213,7 @@ sub compact_init {
   my ($T,$C1,$C) = (0, 0, 0 );
 
   my $X = -1e8;
+  my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
   foreach my $f (
     sort { $a->[0] <=> $b->[0]      }
     map  { [$_->start, $_->end,$_ ] }
@@ -204,6 +221,7 @@ sub compact_init {
     map  { @$_                      }
     grep { ref($_) eq 'ARRAY'       } $self->features
   ) {
+    warn "FEATURE $f->[0] $f->[1] $f->[2]";
     my $START   = $f->[0];
     my $END     = $f->[1];
     ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
@@ -214,7 +232,9 @@ sub compact_init {
     next if( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
     $X = $START;
     $C++;
-    if($DRAW_CIGAR) {
+    my $cigar;
+    eval { $cigar = $f->[2]->cigar_string; };
+    if($DRAW_CIGAR || $cigar =~ /$regexp/ ) {
       $self->draw_cigar_feature($self, $f->[2], $h, $feature_colour, 'black', $pix_per_bp );
     } else {
       $self->push(new Sanger::Graphics::Glyph::Rect({

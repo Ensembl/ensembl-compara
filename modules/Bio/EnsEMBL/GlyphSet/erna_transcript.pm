@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::GlyphSet::rna_transcript;
+package Bio::EnsEMBL::GlyphSet::erna_transcript;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_transcript;
@@ -6,12 +6,12 @@ use Bio::EnsEMBL::GlyphSet_transcript;
 
 sub my_label {
   my $self = shift;
-  return $self->{'config'}->{'_draw_single_Transcript'} || 'ncRNA';
+  return $self->{'config'}->{'_draw_single_Transcript'} || 'e! ncRNA';
 }
 
 sub colours {
   my $self = shift;
-  return $self->{'config'}->get('rna_transcript','colours');
+  return $self->{'config'}->get('erna_transcript','colours');
 }
 
 sub transcript_type {
@@ -57,7 +57,7 @@ sub href {
   my $tid = $transcript->stable_id();
   my $gid = $gene->stable_id();
 
-  return ($self->{'config'}->get('rna_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id)} ) ?
+  return ($self->{'config'}->get('erna_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id)} ) ?
      "#$tid" :
      qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid);
 }
@@ -66,7 +66,7 @@ sub gene_href {
   my ($self, $gene,  %highlights ) = @_;
 
   my $gid = $gene->stable_id();
-  return ($self->{'config'}->get('rna_transcript','_href_only') eq '#gid' && exists $highlights{lc($gene->stable_id)} ) ?
+  return ($self->{'config'}->get('erna_transcript','_href_only') eq '#gid' && exists $highlights{lc($gene->stable_id)} ) ?
     "#$gid" :
     qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid);
 }
@@ -152,7 +152,7 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
-  return $self->{'container'}->get_all_Genes('ncRNA');
+  return $self->{'container'}->get_all_Genes('ensembl_ncRNA');
 }
 
 sub legend {

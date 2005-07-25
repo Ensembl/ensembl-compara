@@ -26,12 +26,13 @@ sub new {
 
   ########## loop over all the glyphsets the user wants:
   my $tmp = {};
+  $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
   my @chromosomes = $Config->{'_all_chromosomes'} eq 'yes' ?
-                  (@{$Config->{species_defs}->ENSEMBL_CHROMOSOMES||[] }) :
+                  (@{$Config->{species_defs}->other_species($Container->{'_config_file_name_'}, 'ENSEMBL_CHROMOSOMES')||[] }) :
                   ($Container->{'chr'}); 
+  warn  @chromosomes;
   my $pos = 100000;
   my $row = '';
-  $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
   my @subsections =
     map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
