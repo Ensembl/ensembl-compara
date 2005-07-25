@@ -55,6 +55,7 @@ perl DumpAlignSlice.pl
     --seq_region region_name
     --seq_region_start start
     --seq_region_end end
+    [--seq_region_strand strand]
     [--alignment_type method_link_name]
     [--set_of_species species1:species2:species3:...]
     [--[no]condensed]
@@ -113,6 +114,10 @@ Query region name, i.e. the chromosome name
 =item B<--seq_region_start start>
 
 =item B<--seq_region_end end>
+
+=item B<[--seq_region_strand strand]>
+
+The strand of the query. It can be either +1 or -1. Default is -1.
 
 =back
 
@@ -197,6 +202,8 @@ perl DumpAlignSlice.pl
         Query region name, i.e. the chromosome name
     --seq_region_start start
     --seq_region_end end
+    [--seq_region_strand strand]
+        Can be 1 or -1. Default is "+1"
 
   For the alignments:
     [--alignment_type method_link_name]
@@ -246,6 +253,7 @@ my $coord_system = "chromosome";
 my $seq_region = "7";
 my $seq_region_start = 73549956;
 my $seq_region_end = 73549966;
+my $seq_region_strand = 1;
 my $alignment_type = "MAVID";
 my $set_of_species = "mouse:rat";
 my $condensed = 0;
@@ -266,6 +274,7 @@ GetOptions(
     "seq_region=s" => \$seq_region,
     "seq_region_start=i" => \$seq_region_start,
     "seq_region_end=i" => \$seq_region_end,
+    "seq_region_strand=i" => \$seq_region_strand,
     "alignment_type=s" => \$alignment_type,
     "set_of_species=s" => \$set_of_species,
     "condensed!" => \$condensed,
@@ -296,7 +305,7 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($query_species, 'core', 'Slice');
 throw("Registry configuration file has no data for connecting to <$query_species>")
     if (!$slice_adaptor);
-my $query_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, $seq_region_start, $seq_region_end);
+my $query_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, $seq_region_start, $seq_region_end, $seq_region_strand);
 throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
     if (!$query_slice);
 
