@@ -13,24 +13,110 @@
 
 Bio::EnsEMBL::Compara::AlignSlice - An AlignSlice can be used to map genes and features from one species onto another one
 
+=head1 DESCRIPTION
+
+INTRODUCTION
+
+An AlignSlice is an object built with a reference Slice and the corresponding set of genomic alignments.
+The genomic alignments are used to map features from one species onto another and viceversa.
+
+STRUCTURE
+
+Every Bio::EnsEMBL::Compara::AlignSlice contains a set of Bio::EnsEMBL::Compara::AlignSlice::Slice
+objects, at least one by species involved in the alignments. For instance, if the reference Slice is a
+human slice and the set of alignments corresponds to human-mouse BLASTZ_NET alignments, there will be at
+least one Bio::EnsEMBL::Compara::AlignSlice::Slice for human and at least another one for mouse. The main
+Bio::EnsEMBL::Compara::AlignSlice::Slice for the reference species will contain a single genomic sequence
+whilst the other Bio::EnsEMBL::Compara::AlignSlice::Slice objects might be made of several pieces of
+genomic sequences, depending on the set of alignments. Here is a graphical representation:
+
+  ref.Slice    **************************************************************
+  
+  alignments    11111111111
+                               2222222222222222
+                                                     33333333333333333
+
+  resulting Bio::EnsEMBL::Compara::AlignSlice:
+  
+  AS::Slice 1  **************************************************************
+  AS::Slice 2  .11111111111....2222222222222222......33333333333333333.......
+
+MODES
+
+Two modes are currently available: condensed and expanded mode. The default mode is "condensed". In
+condensed mode, no gaps are allowed in the reference Slice which means that information about deletions
+in the reference species (i.e. insertions in the other species) are lost. On the other hand, the
+first Bio::EnsEMBL::Compara::AlignSlice::Slice obejct corresponds to the original Bio::EnsEMBL::Slice.
+
+In the expanded mode, the first Bio::EnsEMBL::Compara::AlignSlice::Slice is expanded in order to
+accomodate the gaps corresponding to the deletions (insertions). Bear in mind that in expanded mode, the
+length of the resulting AlignSlice will be most probably larger than the length of the reference
+Bio::EnsEMBL::Slice.
+
+
+OVERLAPPING ALIGNMENTS
+
+No overlapping alignments are allowed so far. This means that if an alignment overlaps another one, the
+second alignment is ignored. This is due to lack of information needed to reconciliate both alignment.
+Here is a graphical example showing this problem:
+
+  ALN 1:   Human (ref) CTGTGAAAA----CCCCATTAGG
+           Mouse (1)     CTGAAAATTTTCCCC
+  
+  ALN 2:   Human (ref) CTGTGAAAA---CCCCATTAGG
+           Mouse (1)         AAAGGGCCCCATTA
+
+  Possible solution 1:
+           Human (ref) CTGTGAAAA----CCCCATTAGG
+           Mouse (1)     CTGAAAATTTTCCCC----
+           Mouse (1)     ----AAA-GGGCCCCATTA
+
+  Possible solution 2:
+           Human (ref) CTGTGAAAA----CCCCATTAGG
+           Mouse (1)     CTGAAAATTTTCCCC----
+           Mouse (1)     ----AAAGGG-CCCCATTA
+
+  Possible solution 3:
+           Human (ref) CTGTGAAAA-------CCCCATTAGG
+           Mouse (1)     CTGAAAATTTT---CCCC
+           Mouse (1)         AAA----GGGCCCCATTA
+  
+There is no easy way to find which of these possible solution is the best without trying to realign the
+three sequences together and this is far beyond the aim of this module. The best solution is to start with
+multiple alignments instead of overlapping pairwise ones.
+
+RESULT
+
+The AlignSlice results in a set of Bio::EnsEMBL::Compara::AlignSlice::Slice which are objects really
+similar to the Bio::EnsEMBL::Slice. There are intended to be used just like the genuine
+Bio::EnsEMBL::Slice but some methods do not work though. Some examples of non-ported methods are: expand()
+and invert(). Some other methods work as expected (seq, subseq, get_all_Attributes,
+get_all_VariationFeatures, get_all_RepeatFeatures...). All these Bio::EnsEMBL::Compara::AlignSlice::Slice
+share the same fake coordinate system defined by the Bio::EnsEMBL::Compara::AlignSlice. This allows to
+map features from one species onto the others.
+  
 =head1 SYNOPSIS
   
   use Bio::EnsEMBL::Compara::AlignSlice;
   
+  ## You may create your own AlignSlice obejcts but if you are interested in
+  ## getting AlignSlice built with data from an EnsEMBL Compara database you
+  ## should consider using the Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
+  ## instead
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $align_slice_adaptor,
           -reference_Slice => $reference_Slice,
+          -method_link_species_set => $all_genomic_align_blocks,
           -genomicAlignBlocks => $all_genomic_align_blocks,
+          -expanded => 0
       );
 
-  my $mapped_genes =
-      $align_slice->get_all_Genes_by_genome_db_id($mouse_genome_db->dbID,
-              -MAX_REPETITION_LENGTH => 100,
-              -MAX_GAP_LENGTH => 100,
-              -MAX_INTRON_LENGTH => 100000,
-              -STRICT_ORDER_OF_EXON_PIECES => 1,
-              -STRICT_ORDER_OF_EXONS => 0);
-          );
+  my $all_slices = $aling_slice->get_all_Slices();
+  foreach my $this_slice (@$all_slices) {
+    ## See also Bio::EnsEMBL::Compara::AlignSlice::Slice
+    my $species_name = $this_slice->genome_db->name()
+    my $all_mapped_genes = $this_slice->get_all_Genes();
+  }
 
   my $simple_align = $align_slice->get_projected_SimpleAlign();
 
@@ -109,12 +195,15 @@ use Bio::SimpleAlign;
                  -adaptor
                  -reference_slice
                  -genomic_align_blocks
+                 -method_link_species_set
                  -expanded
   Example    : my $align_slice =
                    new Bio::EnsEMBL::Compara::AlignSlice(
                        -adaptor => $align_slice_adaptor,
                        -reference_slice => $reference_slice,
-                       -genomic_align_blocks => [$gab1, $gab2]
+                       -method_link_species_set => $method_link_species_set,
+                       -genomic_align_blocks => [$gab1, $gab2],
+                       -expanded => 1
                    );
   Description: Creates a new Bio::EnsEMBL::Compara::AlignSlice object
   Returntype : Bio::EnsEMBL::Compara::AlignSlice object
