@@ -1,0 +1,19 @@
+#!/usr/local/bin/perl
+
+BEGIN {
+  (my $ensembl_root=$0) =~ s#/dump.*##;
+  $ensembl_root = $ensembl_root eq '.' ? '..' : '.' unless $ensembl_root =~ s#/[^/]*$##;
+  my @paths = qw( conf modules ensembl/modules ensembl-external/modules ensembl-compara/modules ensembl-variation/modules);
+  foreach( @paths ) { unshift @INC, "$ensembl_root/$_"; }
+};
+
+use EnsEMBL::Web::SpeciesDefs;
+my $conf = EnsEMBL::Web::SpeciesDefs->new();
+$conf->retrieve();
+
+print "#"x78,"\n## _storage ","#"x66,"\n","#" x 78,"\n\n";
+$conf->dump(\*STDOUT, 0, $conf->{'_storage'});
+print "\n", "#"x78,"\n## _multi   ","#"x66,"\n","#" x 78,"\n\n";
+$conf->dump(\*STDOUT, 0, $conf->{'_multi'});
+print "\n", "#"x78,"\n\n";
+

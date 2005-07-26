@@ -1,0 +1,132 @@
+package EnsEMBL::Web::Factory::MartLink;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Factory;
+use EnsEMBL::Web::Proxy::Object;
+use CGI qw(escapeHTML);
+
+our @ISA = qw(  EnsEMBL::Web::Factory );
+
+sub _sufficies {
+  my $self = shift;
+  return if $self->__data->{'sufficies'}{ 'core' };
+  $self->__data->{'sufficies'}{ 'core' } = [ '_gene_ensembl', 'gene' ];
+  $self->__data->{'sufficies'}{ 'snp'  } = [ '_snp',          'snp'  ];
+  $self->__data->{'sufficies'}{ 'vega' } = [ '_gene_vega',    'gene' ];
+}
+
+sub _link {
+  my( $self, %param ) = @_;
+  my @E = ();
+  foreach my $key (keys %param) {
+    foreach (@{$param{$key}}) {
+      push @E, "$key=".CGI::escapeHTML($_);
+    }
+  } 
+  my $URL = "/Multi/martview?".join( ';',@E);
+  return $self->problem( 'redirect', $URL );
+}
+
+sub createObjects { 
+  my $self      = shift;    
+  my $option    = $self->param( 'type' );
+  my $method    = "_createObjects_$option";
+  $self->_sufficies;
+  if( $self->can( $method ) ) {
+    my $res = $self->$method;
+    if( $res ) {
+      $self->problem( 'redirect', $res );
+      return
+    }
+  }
+  return $self->problem( 'Fatal', 'Unknown Link type', "Could not redirect to mart." );
+}
+
+sub _createObjects_gene_region { return $_[0]->_createObjectsLocation( 'core' ); }
+sub _createObjects_snp_region  { return $_[0]->_createObjectsLocation( 'snp' ); }
+sub _createObjects_vega_region { return $_[0]->_createObjectsLocation( 'vega' ); }
+
+sub _dataset {
+  my( $self, $type ) = @_;
+  if( $type eq 'snp' && ! $self->species_defs->databases->{'ENSEMBL_VARIATION'} ||
+      $type eq 'vega' && ! $self->species_defs->databases->{'ENSEMBL_VEGA'} ) {
+    $self->problem( 'fatal', 'Unknown dataset', qq(Do not know about dataset of type "$type" for this species) );
+    return undef;
+  }
+  my $suffix = $self->__data->{'sufficies'}{$type}[0];
+  unless($suffix) {
+    $self->problem( 'fatal', 'Unknown dataset', qq(Do not know about dataset of type "$type" for this species) );
+    return undef;
+  }
+  (my $dataset = lc($self->species)) =~ s/^([a-z])[a-z]+_/$1/;
+  return "$dataset$suffix", $self->__data->{'sufficies'}{$type}[1];
+}
+
+sub _createObjectsLocation {
+  my( $self, $type ) = @_;
+  my( $DB, $TYPE ) = $self->_dataset( $type );
+  return unless $DB;
+  my($sr,$start,$end) = $self->param('l') =~ /^(\w+):(-?[.\w]+)-([.\w]+)$/;
+  return $self->_link(
+    'schema'            => [ 'defaultSchema' ],
+    'dataset'           => [ $DB ],
+    'stage_initialised' => [ 'start', 'filter' ],
+    'stage'             => [ 'output' ],
+    $DB.'_collection_chromosome' => [ 1 ],
+    $DB.'_chr_name'     => [ $sr ],
+    $DB.'_collection_chromosome_coordinates' => [ 1 ],
+    $DB.'_'.$TYPE.'_chrom_start' => [ $start ],
+    $DB.'_'.$TYPE.'_chrom_end'   => [ $end ]
+  );
+}
+
+sub _createObjects_family {
+  my $self = shift;
+  my( $DB, $TYPE ) = $self->_dataset( 'core' );
+  return unless $DB;
+  return $self->_link( 
+    'schema'            => [ 'defaultSchema' ],
+    'dataset'           => [ $DB ],
+    'stage_initialised' => [ 'start', 'filter' ],
+    'stage'             => [ 'output' ],
+    $DB.'_collection_family_domain_id_list' => [ 1 ],
+    $DB.'_protein_fam_id_filters'     => [ 'family_ids' ],
+    $DB.'_protein_fam_id_filters_list' => [ $self->param('family_id') ]
+  );
+}
+
+sub _createObjects_domain {
+  my $self = shift;
+  my( $DB, $TYPE ) = $self->_dataset( 'core' );
+  return unless $DB;
+  return $self->_link( 
+    'schema'            => [ 'defaultSchema' ],
+    'dataset'           => [ $DB ],
+    'stage_initialised' => [ 'start', 'filter' ],
+    'stage'             => [ 'output' ],
+    $DB.'_collection_family_domain_id_list' => [ 1 ],
+    $DB.'_protein_fam_id_filters'     => [ 'interpro_ids' ],
+    $DB.'_protein_fam_id_filters_list' => [ $self->param('domain_id') ]
+  );
+}
+
+sub _createObjects_xref {
+  my $self = shift;
+  my( $DB, $TYPE ) = $self->_dataset( 'core' );
+  return unless $DB;
+  return $self->_link( 
+    'schema'            => [ 'defaultSchema' ],
+    'dataset'           => [ $DB ],
+    'stage_initialised' => [ 'start', 'filter' ],
+    'stage'             => [ 'output' ],
+    $DB.'_collection_id_list_limit' => [ 1 ],
+    $DB.'_id_list_limit_filters' => [ lc($self->param('db')) ],
+    $DB.'_id_list_limit_filters_list'  => [ $self->param('id') ]
+  );
+}
+
+1;
+  

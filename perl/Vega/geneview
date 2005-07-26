@@ -1,0 +1,95 @@
+#!/usr/local/bin/perl
+package geneview;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Input::CGI;
+use EnsEMBL::Web::Output::HTML;
+use EnsEMBL::Web::DataFactory::GeneFactory;
+use EnsEMBL::DB::DBConnection;		
+
+$| = 1;
+
+my $input  = EnsEMBL::Web::Input::CGI->new('geneview'); 	
+my $output = EnsEMBL::Web::Output::HTML->new();  
+my $dbs    = EnsEMBL::DB::DBConnection->new($input->species);
+
+$input->retrieve_from_userdb();
+$input->initialise_from_cgi();
+$input->save_to_userdb();
+
+$input->param('show_vega_evidence_link',[1]);
+
+my $geneFactory = EnsEMBL::Web::DataFactory::GeneFactory->new(
+        $dbs, 
+        $input,
+        $output
+);
+$geneFactory->createObjects();	
+
+if ($geneFactory->has_a_problem) {	
+    if ($geneFactory->has_problem_type('mapped_id') || $geneFactory->has_problem_type('multiple_matches')){
+        my $gene = $geneFactory->featureIds->[0];
+        my $db = $input->param('db') || 'core';
+        $output->page_redirect("/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?gene=$gene&db=$db");
+    } else {
+        $output->error_page($geneFactory->problem->[0]) ; 
+        $output->ensembl_exit;
+    }
+} else {
+    $output->start;
+    for my $gene_data ( @{$geneFactory->DataObjects} ) {
+        my $gene_renderer = $gene_data->renderer;
+        $gene_renderer->Output->generic_table_title('Curated Locus Report');
+        if ($input->param('_gene_sequence')) { # Display sequence markup
+            $gene_renderer->Output->print_two_col_table(
+                    $gene_renderer->gene_display_ID('Curated Locus'),
+                    $gene_renderer->vega_stable_id,
+                    $gene_renderer->genomic_location,
+                    $gene_renderer->markup_options,
+                    $gene_renderer->markedup_geneseq,
+            );
+            $input->param('exon_display',[]); # Reset exon_display param;
+        } else {
+            $gene_renderer->Output->print_two_col_table(
+                    $gene_renderer->gene_display_ID('Curated Locus'),
+                    $gene_renderer->vega_stable_id,
+                    $gene_renderer->version,
+		    $gene_renderer->mod_date,
+                    $gene_renderer->synonyms,
+                    $gene_renderer->gene_type,
+                    $gene_renderer->genomic_location,
+                    $gene_renderer->gene_description,
+                    $gene_renderer->remarks,
+                    $gene_renderer->author,
+                    $gene_renderer->database_matches,
+                    $gene_renderer->genesequence_link,
+                    $gene_renderer->exportview_link,
+                    $gene_renderer->transcript_neighbourhood('Curated Transcripts'),
+					$gene_renderer->orthologue_matches,
+                    $gene_renderer->das_sources_selector,
+                    $gene_renderer->das_sources_annotation,
+            );
+            $gene_renderer->gene_transcript_table_title;
+            for my $transcript_data ( @{$gene_data->get_all_transcripts} ) {
+                my $transcript_renderer = $transcript_data->renderer;
+                $transcript_renderer->Output->print_two_col_table(
+                    $transcript_renderer->vega_transcript_summary,
+                    $transcript_renderer->similarity_matches('Database Matches'),
+                    $transcript_renderer->interpro_links,
+                    $transcript_renderer->geneview_transcript_image,
+                    $transcript_renderer->geneview_peptide_image,
+                    $transcript_renderer->remarks,
+                );
+            }
+        }
+    }
+    $output->end;
+}
+
+use Bio::EnsEMBL::Registry; Bio::EnsEMBL::Registry->disconnect_all();1;
+
+1;
+

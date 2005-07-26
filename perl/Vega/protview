@@ -1,0 +1,68 @@
+#!/usr/local/bin/perl
+package protview;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Input::CGI;
+use EnsEMBL::Web::Output::HTML;
+use EnsEMBL::Web::DataFactory::TranslationFactory;
+use EnsEMBL::DB::DBConnection;
+
+$|= 1 ;
+
+my $input  = EnsEMBL::Web::Input::CGI->new('protview');
+my $output = EnsEMBL::Web::Output::HTML->new();
+my $dbs    = EnsEMBL::DB::DBConnection->new($input->species);
+my $pepFactory = EnsEMBL::Web::DataFactory::TranslationFactory->new(
+        $dbs, 
+        $input,
+        $output
+);
+
+$input->retrieve_from_userdb();
+$input->initialise_from_cgi();
+$input->save_to_userdb();
+
+$input->param('show_vega_markup',[1]);
+$input->param('show_vega_evidence_link',[1]);
+
+$pepFactory->createObjects();
+
+if ( $pepFactory->has_a_problem ) { 
+    if ($pepFactory->has_problem_type('mapped_id') || $pepFactory->has_problem_type('multiple_matches')){
+        my $pepid = $pepFactory->featureIds->[0];
+        my $db = $input->param('db') || 'core';
+        $output->page_redirect("/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?transcript=$pepid&db=$db");
+    } else {
+        $output->error_page($pepFactory->problem->[0]);
+        $output->ensembl_exit;
+    }
+} else {
+    $output->start;
+    for my $pep_data (@{$pepFactory->DataObjects}) {
+        my $pep_renderer = $pep_data->renderer;
+        $pep_renderer->Output->generic_table_title('Vega Protein Report');
+        $pep_renderer->Output->print_two_col_table(
+                $pep_renderer->xref_display_ID,
+                $pep_renderer->stable_id('Vega Translation ID'),
+                $pep_renderer->version,
+                $pep_renderer->other_view_links('Translation Information'),
+                $pep_renderer->description,
+                $pep_renderer->author,
+		$pep_renderer->similarity_matches('Database Matches'),
+                $pep_renderer->interpro_links,
+                $pep_renderer->protview_peptide_image,
+                $pep_renderer->exportview_link,
+        );
+        $pep_renderer->outputprotviewSeqInfo();
+        $pep_renderer->outputprotviewBottomTables();        
+    }
+    $output->end;
+}
+
+use Bio::EnsEMBL::Registry; Bio::EnsEMBL::Registry->disconnect_all();1;
+
+1;
+

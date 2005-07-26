@@ -1,0 +1,214 @@
+<!-- $Id$ -->
+
+<html>
+<head>
+<meta name="author" content="DAS:AndreasKahari" />
+<meta name="navigation" content="DAS documentation" />
+<title>The use of DAS in Ensembl</title>
+</head>
+<body>
+
+<h2>The use of DAS in Ensembl</h2>
+
+
+<h3 class="boxed">The Ensembl DAS reference server</h3>
+
+<p>Ensembl provides a DAS reference server which
+gives access to genomic sequences, 
+the latest Ensembl gene predictions and repeats.  The
+Ensembl DAS reference server with a table of available sources may be found at:</p>
+
+<blockquote>
+<a href="http://servlet.sanger.ac.uk:8080/das/">http://servlet.sanger.ac.uk:8080/das/</a>
+</blockquote>
+
+<p>Here is a properly formatted XML document with the same information:</p>
+
+<blockquote>
+<a href="http://servlet.sanger.ac.uk:8080/das/dsn">http://servlet.sanger.ac.uk:8080/das/dsn</a>
+</blockquote>
+
+<h4>Example requests</h4>
+
+<p>DAS request URLs have a specific format:</p>
+
+<blockquote>
+<var>protocol</var>://<var>site-prefix</var>/das/<var>data-source</var>/<var>command</var>?<var>arguments</var>
+</blockquote>
+
+<p>For example:</p>
+
+<dl>
+<dt>
+<a href="http://servlet.sanger.ac.uk:8080/das/ensembl_Homo_sapiens_core_28_35a/features?segment=13:31787617,31871805">http://servlet.sanger.ac.uk:8080/das/ensembl_Homo_sapiens_core_28_35a/features?segment=13:31787617,31871805</a>
+</dt>
+<dd>
+Request all features in the region containing BRCA2 [31787617,31871805] on 
+human chromosome 13.
+</dd>
+<dt>
+<a href="http://servlet.sanger.ac.uk:8080/das/ensembl_Gallus_gallus_core_28_1d/sequence?segment=1:1,1000">http://servlet.sanger.ac.uk:8080/das/ensembl_Gallus_gallus_core_28_1d/sequence?segment=1:1,1000</a>
+</dt>
+<dd>
+Request the first 1000&nbsp;bp of the first chicken chromosome.
+</dd>
+</dl>
+
+<h3 class="boxed">DAS clients in Ensembl and semantic extensions to the DAS
+specification</h3>
+
+<p>DAS clients are built into several Ensembl  displays to enable 
+incorporation of third-party annotation data by "attaching a
+DAS source".  Ensembl uses DAS for showing
+external third-party data and data from in-house DAS sources.
+The 
+<a href="/Homo_sapiens/helpview?se=1&kw=dasconfview" target="_top">help pages for DASConfView</a> explain how to attach a DAS data source to an Ensembl display.</p>
+
+
+<p>Some Ensembl displays introduce semantic extensions to
+the DAS specification.  This is explained below.</p>
+
+
+<h4>ContigView and CytoView</h4>
+
+
+<p>A genomic DAS source serves data in the format specified in the <a
+href="http://biodas.org/documents/spec.html">DAS/1.5</a>
+specification.  
+
+In Ensembl, genomic DAS sources can be attached to 
+<a href="http://www.ensembl.org/Homo_sapiens/contigview?region=AC112492.3.1.116568&start=2015&end=116568">ContigView</a>
+and
+<a href="http://www.ensembl.org/Homo_sapiens/cytoview?region=AL592145.4.1.5885&start=2001&end=5885">CytoView</a> (see examples in human) 
+if the annotation is in chromosomal coordinates, 
+on contigs or on any basic assembly structure known to Ensembl 
+for that species.  For genomic DAS sources the assembly version is 
+important as otherwise features from a source annotation (e.g. 
+NCBI 34 human assembly) may be offset in ContigView.</p>
+
+<p>Please note in Ensembl chromosomes are named with the format "1", "2", "X", "Y" rather than "chr1", "chr2", "chrX", "chrY".</p>
+
+<h4>ProtView</h4>
+
+<p><em>Proteomic DAS sources</em> (or <em>ProteinDAS sources</em>) 
+can be attached to ProtView which displays protein information 
+(see <a href="/Homo_sapiens/protview?peptide=ENSP00000338013">example in human</a>).</p>
+
+
+<p>A proteomic DAS client and server exchange protein annotations
+ using the DAS protocol.  Genomic DAS sources annotate DNA sequence 
+from a genomic assembly in contrast to proteomic DAS sources
+which annotate proteins.  The extension of the
+DAS protocol to proteins is only semantic and the requests
+and replies between client and server uses the exact same
+specification as in the genomic case.  Sections of the XML reply 
+that are not relevant to proteomic data (e.g. "phase" and "strand"), 
+are simply ignored by the proteomic DAS client.</p>
+
+<p>In most cases, the UniProt peptide sequences are used as the
+common reference.</p>
+
+<p>Ensembl currently provides two proof-of-concept ProteinDAS
+annotation servers:</p>
+
+<ul>
+<li>
+<a href="http://das.ensembl.org/das/swissprot">http://das.ensembl.org/das/swissprot</a>
+<br>
+serving SwissProt annotations, and
+</li>
+<li>
+<a href="http://das.ensembl.org/das/interpro">http://das.ensembl.org/das/interpro</a>
+<br>
+serving InterPro annotations.
+</li>
+</ul>
+
+<p>There is also an official UniProt reference server.  This
+server is updated every second to serve data from
+the UniProt group at the EBI and also serves peptide
+sequences:</p>
+
+<ul>
+<li>
+<a href="http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle">http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle</a>
+</li>
+</ul>
+
+<p>Example requests would be:</p>
+
+<ul>
+<li>
+<a href="http://das.ensembl.org/das/swissprot/features?segment=MIP_MOUSE">http://das.ensembl.org/das/swissprot/features?segment=MIP_MOUSE</a>
+</li>
+<li>
+<a href="http://das.ensembl.org/das/interpro/features?segment=CLAT_HUMAN">http://das.ensembl.org/das/interpro/features?segment=CLAT_HUMAN</a>
+</li>
+<li>
+<a href="http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle/features?segment=P01591">http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle/features?segment=P01591</a>
+</li>
+<li>
+<a href="http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle/sequence?segment=P01591">http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle/sequence?segment=P01591</a>
+</li>
+</ul>
+
+<p>The UniProt DAS reference server is able to respond
+to any of the types of identifiers listed on the <a
+href="http://www.ebi.ac.uk/uniprot-das/">UniProt DAS information
+page</a>.
+
+<p>ProteinDAS annotations can be browsed from Ensembl ProtView
+pages, e.g.</p>
+
+<ul>
+<li>
+<a href="http://www.ensembl.org/Mus_musculus/protview?peptide=MIP_MOUSE&amp;db=core&amp;ENSEMBL_GENE_DAS_SOURCES!!SwissProt!!active=1">http://www.ensembl.org/Mus_musculus/protview?peptide=MIP_MOUSE</a>
+</li>
+<li>
+<a href="http://www.ensembl.org/Homo_sapiens/protview?peptide=CLAT_HUMAN&amp;db=core&amp;ENSEMBL_GENE_DAS_SOURCES!!SwissProt!!active=0&amp;ENSEMBL_GENE_DAS_SOURCES!!InterPro!!active=1">http://www.ensembl.org/Homo_sapiens/protview?peptide=CLAT_HUMAN</a>
+</li>
+<li>
+<a href="http://www.ensembl.org/Homo_sapiens/protview?peptide=P01591&amp;db=core&amp;ENSEMBL_GENE_DAS_SOURCES!!UniProt!!active=1">http://www.ensembl.org/Homo_sapiens/protview?peptide=P01591</a>
+</li>
+</ul>
+
+<p>The ProtView display of Ensembl is able to display
+non-positional features in the same way as GeneView (see
+below).</p>
+
+<h4>GeneView</h4>
+
+<p>DAS sources serving non-positional features
+(or GeneDAS sources) can be attached to GeneView
+<a href="/Homo_sapiens/geneview?gene=ENSG00000139618">(see example for human)</a> which displays gene information.
+
+Non-positional feature DAS is a semantic extension to
+the DAS protocol.  It allows exchange of annotations
+tied to identifiers, such as a HUGO gene name or an Ensembl
+gene ID, rather than to a segment of reference sequence.
+Positional data is irrelevant and the annotation applies to the
+entire entity referenced by the request.  GeneDAS annotations
+are defined as having 'start' and 'end' attributes set to 0
+(zero) and the annotation itself is carried in the 'note'
+attribute.</p>
+
+<p>Among others, Ensembl currently uses the UniProt ProteinDAS
+reference server (see above) in a GeneDAS capacity.  An example
+DAS request with both GeneDAS and ProteinDAS annotations is:</p>
+
+<ul>
+<li>
+<a href="http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle/features?segment=P51587">http://www.ebi.ac.uk/das-srv/uniprot/das/aristotle/features?segment=P51587</a>
+</li>
+</ul>
+
+<p>The corresponding Ensembl GeneView page is:</p>
+
+<ul>
+<li>
+<a href="http://www.ensembl.org/Homo_sapiens/geneview?DASselect_UniProt=1&amp;%3ADASselect_UniProt=0&amp;gene=P51587&amp;db=core">http://www.ensembl.org/Homo_sapiens/geneview?gene=P51587</a>
+</li>
+</ul>
+
+</body>
+</html>

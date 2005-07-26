@@ -1,0 +1,138 @@
+<html>
+<head>
+<meta name="author" content="helpdesk" />
+<meta name="navigation" content="Software" />
+<title>Software</title>
+</head>
+
+<body>
+
+<h2>Software</h2>
+
+<h3 class="boxed">Ensembl Versions</h3>
+
+<p>Releases are made approximately ten times a year.  
+Each release of Ensembl web code and databases is given its own 
+version number, which can be found in the top left
+hand corner of the horizontal blue bar.   <a href="versions.html">More...</a>
+</p>
+
+<h4>Archiv<em><span class="blue">e</span><span class="red">!</span></em> sites</h4>
+<p>From November 2004 old version sites are being 
+<a href="http://archive.ensembl.org">archived</a> for about 
+two years.  
+</p>
+
+<h3 class="boxed">Ensembl Website</h3>
+<p>
+The Ensembl website is written in Perl and can be installed locally.
+The code is modular and extensible so it can be customised for local demands.
+<a href="./website/index.html">More ...</a>
+</p>
+
+
+
+<h3 class="boxed">Ensembl Databases</h3>
+<p>
+Ensembl uses <a href="http://www.mysql.com">MySQL</a> relational databases to store its information.  
+
+There is a comprehensive set of Application Programme Interfaces (APIs) which serve as a middle-layer between underlying database schemas and more specific application programmes.  
+The APIs aim to encapsulate the database layout by providing efficient high-level access to data tables and isolate applications from data layout changes.  There is a  <a href="/info/software/Pdoc/">Perl API</a> and a 
+<a href="java">Java API</a> (Ensj) although the Java one is less complete.
+</p>
+
+<p>The main Ensembl databases are introduced below. <a href="/info/data/download.html">Data</a> releases for the databases can be obtained from the Ensembl
+<a href="ftp://ftp.ensembl.org/pub">FTP site</a>.  For installation of the Perl API see the <a href="/info/software/api_installation.html">installation</a> instructions.
+</p>
+
+
+<h4>Ensembl Core Databases and API</h4>
+
+<p>
+The set of species-specific Ensembl Core databases stores genome sequences and most of the annotation information.  This includes the gene, transcript and protein models  annotated by the Ensembl automated genome analysis and 
+<a href="/info/data/docs/genome_annotation.html">annotation</a> pipeline.
+Ensembl Core databases also store assembly information, cDNA and 
+protein alignments, external references, markers and repeat regions data sets. 
+<a href="./core/index.html">More ...</a>
+</p>
+
+
+<h4>Ensembl EST Databases and API</h4>
+
+<p>
+Species-specific Ensembl EST databases hold an independent EST gene set provided for all well-characterised species with a suitable amount of biological evidence.
+The layout of Ensembl EST Databases is identical to the Ensembl Core Database schema so that schema descriptions and API access are equally applicable.
+<a href="./core/index.html#est">More ...</a>
+</p>
+
+
+<h4>Ensembl Compara Database and API</h4>
+
+<p>
+The Ensembl Compara multi-species database stores the results of genome-wide species comparisons re-calculated for each release.
+The comparative genomics set includes pairwise whole genome alignments and synteny regions.  The comparative proteomics data set contains orthologue predictions and protein family clusters.
+<a href="./compara/index.html">More ...</a>
+</p>
+
+
+<h4>Ensembl Variation Databases and API</h4>
+
+<p>
+The large amount of genetic variation information is organised in a set of species-specific Ensembl Variation databases.
+<a href="./variation/index.html">More ...</a>
+</p>
+
+
+<h4>BioMart and EnsMart Datamining Tools</h4>
+
+<p>
+BioMart is a generic data management system, originally built for Ensembl, which offers a range of advanced query interfaces and administration tools. 
+The system comes with built-in support for query-optimisation and database fedaration.  </p>
+
+<p>Ensembl builds a BioMart database to provide users with the ability to 
+conduct fast, powerful queries using either the online
+<a href="/multi/martview">MartView</a> page, a graphical or text based application, or programatically using software libraries written in Perl and Java.
+For data providers, the system simplifies the task of integrating their own data with other Ensembl datasets.  
+<a href="http://www.ebi.ac.uk/biomart/" target="external">More ...</a>
+</p>
+
+<h3>Ensembl Registry</h3>
+
+<p>
+The Registry system allows to tell your programs where to find the EnsEMBL databases and how to connect to them.
+It has been implemented for the Ensembl Core and Compara Perl APIs as well as the Ensembl Java API.
+<a href="../software/registry/index.html">More ...</a>
+</p>
+
+<h3 class="boxed" id="information">Ensembl Tools</h3>
+
+
+<h4 id="exonerate">Exonerate</h4>
+
+<p>
+Exonerate is a generic tool for pairwise sequence comparison.
+It allows you to align sequences using many alignment models, using either exhaustive dynamic programming, or a variety of heuristics.
+<a href="http://www.ebi.ac.uk/~guy/exonerate" target="external">More ...</a>
+</p>
+
+
+<h4 id="wise2">Wise2</h4>
+
+<p>
+Wise2 is a package focused on comparisons of biopolymers, commonly DNA sequence and protein sequence.
+Algorithms in this package include <strong>genewise</strong> and <strong>estwise</strong>.
+<a href="http://www.ebi.ac.uk/Wise2/" target="external">More ...</a>
+</p>
+
+<h3 class="boxed" id="support">Ensembl Software Support</h3>
+
+<p>
+Ensembl is an open project and we would like to encourage correspondence and discussions on any subject on any aspect of Ensembl.
+Please see the
+<a href="../about/contact.html">Ensembl Contacts</a> page for suitable options for getting in touch with us.
+</p>
+
+
+
+</body>
+</html>

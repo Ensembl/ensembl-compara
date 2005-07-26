@@ -1,0 +1,56 @@
+#!/usr/local/bin/perl
+package snpview;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Input;
+use EnsEMBL::Web::Output::HTML;
+use EnsEMBL::Web::DataFactory::SNPFactory;
+use EnsEMBL::DB::DBConnection;
+
+$| = 1;
+
+my $input  = EnsEMBL::Web::Input->new('snpview');
+$input->initialise_from_cgi();
+my $output = EnsEMBL::Web::Output::HTML->new();
+my $dbs    = EnsEMBL::DB::DBConnection->new($input->species);
+my $snpFactory = EnsEMBL::Web::DataFactory::SNPFactory->new( $dbs, $input, $output );
+$snpFactory->createObjects();	
+
+if ($snpFactory->has_fatal_problem) {	
+    $output->error_page($snpFactory->get_problem_type('fatal'));
+    $output->ensembl_exit;
+} else {
+    $output->start;
+    for my $snp_data ( @{$snpFactory->DataObjects} ) {
+        my $snp_renderer = $snp_data->renderer;
+        $snp_renderer->vari_table_title;
+
+        # overview
+        $snp_renderer->Output->print_two_col_table(
+            $snp_renderer->vari_linked_name,
+            $snp_renderer->synonyms,
+            $snp_renderer->status,
+            $snp_renderer->alleles,
+        );
+
+        # population genotypes
+        # $snp_renderer->outputPopGenotypeTable;
+
+        # genomic location
+        $snp_renderer->outputVariationFeatureMappingTable(undef, 'Genomic location');
+
+        # SNP neighbourhood
+        $snp_renderer->Output->print_two_col_table(
+            $snp_renderer->neighbourhood,
+            $snp_renderer->seq_region,
+        );
+    }
+    $output->end;
+}
+
+use Bio::EnsEMBL::Registry; Bio::EnsEMBL::Registry->disconnect_all();1;
+
+1;

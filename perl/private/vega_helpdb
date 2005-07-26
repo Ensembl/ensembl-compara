@@ -1,0 +1,212 @@
+#!/usr/local/bin/perl
+#########
+# helpdb
+# editor for the helpview pages
+# rmp, Feb 2001
+
+use strict;
+use CGI;
+use DBI;
+use EnsWeb;
+
+my $DB = {
+	  'table1' => 'helpview',
+	  'table2' => 'category',
+	  'name' => EnsWeb::species_defs->databases->{'ENSEMBL_HELP'}->{'NAME'},
+	  'host' => EnsWeb::species_defs->databases->{'ENSEMBL_HELP'}->{'HOST'},
+	  'port' => EnsWeb::species_defs->databases->{'ENSEMBL_HELP'}->{'PORT'},
+	  'user' => 'ensadmin', #EnsWeb::species_defs->ENSEMBL_WRITE_USER,
+	  'pass' => 'ensembl',  #EnsWeb::species_defs->ENSEMBL_WRITE_PASS,
+	 };
+
+ 
+my $TMPDIR		= "/ensweb/shared/data/webtmp";
+
+$DB->{'handle'} = DBI->connect(
+  "DBI:mysql:database=$DB->{'name'};host=$DB->{'host'};port=$DB->{'port'}",
+  "$DB->{'user'}", "$DB->{'pass'}", { RaiseError => 1});
+
+# my $SCRIPTNAME = $ENV{'SCRIPT_NAME'};
+
+my $cgi = new CGI;
+
+use Data::Dumper;
+
+my $action = $cgi->param('action') || "";
+
+my $content = "";
+my $category = "";
+my $update = 1;
+
+if( $action eq "add" ) {
+  &add($cgi, \$content, $DB );
+} elsif( $action eq "delete" ) {
+  &delete($cgi, \$content, $DB );
+} elsif( $action eq "Preview" ) {
+  &preview( $cgi, $TMPDIR );
+  $update = 0;
+} elsif( $action eq "Preview ALL help pages" ){
+  &all( $DB, $TMPDIR );
+  $update = 0;
+}
+
+&get( $cgi, \$content, $DB, $update );
+
+$DB->{'handle'}->disconnect();
+print qq(Content-type: text/html \n\n $content);
+
+1;
+
+sub preview{ 
+  my $cgi     = shift;
+  my $TMPDIR  = shift;
+  my $kw      = $cgi->param('kw');
+  my $title   = $cgi->param('title');
+  my $content = $cgi->param('content');
+
+  open PREFILE, ">$TMPDIR/help_preview.tmp" or warn "error: $!";
+  print PREFILE qq(<title>Preview of: $title </title>
+    	</head>\n<body bgcolor="#f0f0f0" text="#000000">		
+	<h3 align="center">$title</h3>
+	$content);
+  close PREFILE;	
+}
+
+sub add {
+  my ($cgi, $content_ref, $DB ) = @_;
+
+  my $kw      = $DB->{'handle'}->quote($cgi->param('kw')      || "");
+  my $title   = $DB->{'handle'}->quote($cgi->param('title')   || "");
+  my $content = $DB->{'handle'}->quote($cgi->param('content') || "");
+#  my $category = $DB->{'handle'}->quote($cgi->param('category') || "");
+  my $priority = $DB->{'handle'}->quote($cgi->param('priority') || "");
+
+
+  my $sth = $DB->{'handle'}->prepare(qq(SELECT category 
+					    FROM $DB->{'table1'}
+					    WHERE kw=$kw));
+  $sth->execute();
+  my $category = $sth->fetchrow_array();
+
+  $DB->{'handle'}->do(qq(DELETE FROM $DB->{'table1'} WHERE kw=$kw));
+  $DB->{'handle'}->do(qq(INSERT INTO $DB->{'table1'} VALUES($kw, $title, $content, '$category'))) or die;
+}
+
+sub delete {
+  my ($cgi, $content_ref, $DB ) = @_;
+  my $kw      = $DB->{'handle'}->quote($cgi->param('kw')      || "");
+  $DB->{'handle'}->do(qq(DELETE FROM $DB->{'table1'} WHERE kw=$kw));
+}
+
+sub get {
+  my ($cgi, $content_ref, $DB, $update) = @_;
+
+  my $pkw = $cgi->param('kw') || "";
+
+  my $dkw = $DB->{'handle'}->quote($pkw);
+  my $onload = "";
+  my ($kw, $title, $content,$category,$priority);
+  if($update){
+    if($pkw ne qq('')) {
+      my $sth = $DB->{'handle'}->prepare(qq(SELECT hv.kw,hv.title,hv.content,hv.category,c.priority 
+					    FROM $DB->{'table1'} hv, $DB->{'table2'} c
+					    WHERE hv.category=c.category and kw=$dkw));
+      $sth->execute();
+      ($kw, $title, $content, $category, $priority) = $sth->fetchrow_array();
+      $sth->finish();
+    } else {
+      ($kw, $title, $content, $category, $priority) = ('','','','','');
+    }
+    $kw      ||= $pkw;
+    $title   ||= "";
+    $content ||= "";
+    $category ||= "";
+  } else{
+    $kw      = $cgi->param('kw') ;
+    $title   = $cgi->param('title') ;
+    $content = $cgi->param('content') ;
+    $category = $cgi->param('category') ;
+    $priority = $cgi->param('priority') ;
+    $onload  = qq(OnLoad="javascript:void(window.open('help_preview','help_preview','width=400,height=500,resizable,scrollbars'))");
+  }
+  $$content_ref .= qq(
+<html>
+  <head>
+    <title>The Amazing HelpView Editoralisationator</title>
+    <!--style type="text/css">
+      INPUT.text, INPUT.password, INPUT.submit, TEXTAREA {
+        border: solid 1px #000000;
+      }
+    </style-->
+  <link rel="stylesheet" type="text/css" href="/Homo_sapiens/cssfixerupper">
+  </head>
+  <body bgcolor="#f0f0f0" text="#000000" $onload >
+<h2>The Amazing HelpView Editoralisationator</h2>
+<b>ENSURE YOU'RE EDITING THE RIGHT DATABASE ($DB->{'name'} on $DB->{'name'})</b><br /><br />
+<form action="/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" method="POST">
+<table border="0">
+  <tr valign="top">
+    <th>Keyword</th>
+    <td>
+      <input class="text" type="text" name="kw" value="$kw" size="20">
+      <input class="submit" type="submit" name="action" value="get">
+      <input class="submit" type="submit" name="action" value="add">
+      <input class="submit" type="submit" name="action" value="delete">
+      <a href="/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}">clear</a><br />
+    </td>
+  </tr>
+  <tr valign="top">
+    <th>Title</th>
+    <td>
+      <input class="text" type="text" name="title" value="$title" size="50"> <b>Category:</b> $category &nbsp;&nbsp; <b>Priority:</b> $priority <br />
+    </td>
+  </tr>
+  <tr valign="top">
+    <th>Content</th>
+    <td>
+      <textarea name="content" cols="120" rows="40" wrap="virtual">$content</textarea><br />
+    <center><input class="submit" type="submit" name="action" value="Preview">
+    <br /><input class="submit" type="submit" name="action" value="Preview ALL help pages"></center></td>
+  </tr>
+</table>
+</form>
+Notes:
+<ul>
+  <li>
+    To link to other helpview entries, use &lt;a href=&quot;HELP_keyword_HELP&quot;&gt;title&lt;/a&gt;.
+  </li>
+  <li>
+    Link images as: &lt;img src=&quot;IMG_imagename.gif_IMG&quot; alt=&quot;comment&quot;&gt;.
+  </li>
+  <li>
+    Place images in /gfx/helpview under the Ensembl document root.
+  </li>
+</ul>
+  </body>
+</html>
+);#'
+}
+
+sub all {
+  my $DB = shift;
+  my $TMPDIR = shift;
+  my @list;
+
+  my $sth = $DB->{'handle'}->prepare("SELECT title,content FROM helpview");
+  $sth->execute();
+  while (my $hash = $sth->fetchrow_hashref()){
+    push (@list, $hash);
+  }
+  $sth->finish();
+  open ALLFILE, ">$TMPDIR/help_preview.tmp" or warn "Error: $!";
+  print ALLFILE qq(<title>All help pages</title>
+    </head>\n<body bgcolor="#f0f0f0" text="#000000">);		
+  for (@list){
+    print ALLFILE "<h3> $_->{'title'} </h3><br />";
+    print ALLFILE "<br /> $_->{'content'} <br /><hr />";
+  }
+  close ALLFILE;
+}
+
+1;
+

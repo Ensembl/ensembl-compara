@@ -1,0 +1,92 @@
+#!/usr/local/bin/perl
+
+use EnsEMBL::Web::Output::HTML;
+use ExaLead::Renderer::HTML;
+use ExaLead;
+use strict;
+use Time::HiRes qw(time);
+use Data::Dumper;
+use CGI
+$Data::Dumper::Indent = 1;
+
+my $exalead = new ExaLead;
+   $exalead->engineURL = 'http://blastsrv2:10000/cgi/search';
+   $exalead->rootURL   = '/perl/exasearch';
+my $q = CGI->new();
+
+( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g; 
+my $not_fresh = $q->param;
+if( $not_fresh ) {
+  if( $q->param('q') ) {
+    $q->param('_q',$q->param('q'));
+    my $CAT = '';
+    my $CAT2 = '';
+    if( $q->param('type') ) {
+      if( $q->param( 'type' ) eq 'All' ) {
+        $CAT = "Top/Species/".$SPECIES;
+      } else {
+        $CAT = "Top/Species/".$SPECIES."/".$q->param('type');
+        $CAT2 = "Top/Feature type/".$q->param('type').'/'.$SPECIES;
+      }
+
+    } elsif( $q->param('species') && $q->param('species') ne 'All' ) {
+      if( $q->param('idx') && $q->param('idx') ne 'All' ) {
+        $CAT = "Top/Species/".$q->param('species').'/'.$q->param('idx');
+        $CAT2 = "Top/Feature type/".$q->param('idx').'/'.$q->param('species');
+      } else {
+        $CAT = "Top/Species/".$q->param('species');
+      }
+    } elsif( $q->param('idx') && $q->param('idx') ne 'All' ) {
+      $CAT = "Top/Feature type/".$q->param('idx');
+    }
+    if( $CAT ) {
+      $CAT =~ s/_/ /g;
+      if( $CAT2 ) {
+        $CAT2 =~ s/_/ /g;
+        $q->param('_c', "+$CAT2", "+$CAT" );
+      } else {
+        $q->param('_c', "+$CAT" );
+      }
+    }
+  }
+  $exalead->parse( $q );
+}
+
+my $output = EnsEMBL::Web::Output::HTML->new();
+
+my $renderer = new ExaLead::Renderer::HTML( $exalead );
+$output->start();
+$output->printHTML(qq(
+<h3>Ensembl ExaSearch</h3>
+<table class="standard_two_col" width="100%"> 
+  <tr align="left" valign="top">
+    <th width="20%"><dl class="tree">
+    @{[ ( $renderer->render_tree.
+          ($renderer->exalead->keywords ? '<dt>Keywords</dt>'.$renderer->render_keywords : '' )
+        )||'&nbsp;' ]}
+<dt>Help</dt>
+<dd style="margin: 0em 1em 0.5em 1em">
+  To exclude a category click on the "<img align="top" src="/gfx/14-m.gif" height="14" width="14" alt="[-]" border="0" />".
+</dd>
+<dd style="margin: 0em 1em 0.5em 1em">
+  To restrict to a category click on the name of the category.
+</dd>
+<dd style="margin: 0em 1em 0.5em 1em">
+  To reset a category click on the "<img align="top" src="/gfx/14-r.gif" height="14" width="14" alt="[R]" border="0" />" or it's name.
+</dd>
+</dl></th>
+    <td width="80%">
+  @{[
+    $renderer->render_form,
+    $renderer->render_spelling,
+    $renderer->render_summary,
+    $renderer->render_navigation,
+    $renderer->render_hits
+  ]}
+</td>
+  </tr>
+</table>
+));
+$output->end();
+
+1;

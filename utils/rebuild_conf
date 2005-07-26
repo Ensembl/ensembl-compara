@@ -1,0 +1,14 @@
+#!/usr/local/bin/perl
+
+BEGIN {
+  (my $ensembl_root=$0) =~ s#/rebuild_conf.*##;
+  $ensembl_root = $ensembl_root eq '.' ? '..' : '.' unless $ensembl_root =~ s#/[^/]*$##;
+  my @paths = qw( conf modules ensembl/modules ensembl-external/modules ensembl-compara/modules ensembl-variation/modules);
+  foreach( @paths ) { unshift @INC, "$ensembl_root/$_"; }
+};
+
+use EnsEMBL::Web::SpeciesDefs;
+
+my $conf = EnsEMBL::Web::SpeciesDefs->new();
+   $conf->_parse();
+   $conf->store;

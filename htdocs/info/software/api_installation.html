@@ -1,0 +1,167 @@
+<html>
+<head>
+<meta name="author" content="helpdesk" />
+<meta name="navigation" content="Ensembl APIs" />
+<title>Perl API Installation</title>
+</head>
+
+<body>
+
+<h2>Perl API Installation</h2>
+
+
+<h3 class="boxed">Introduction</h3>
+
+<p>
+All data sets in the Ensembl system are stored in relational databases.
+For each of the <a href="../index.html">Ensembl databases</a> the project provides a specific Perl API.
+This document aims to explain the installation procedure for Ensembl Perl APIs.
+As Ensembl takes also advantage of code provided by the 
+<a href="http://www.bioperl.org/" target="external">Bioperl</a> project,
+installation of the Bioperl package is part of this description.
+</p>
+
+<p>
+Ensembl uses the 
+<a href="https://www.cvshome.org/" target="external">Concurrent Versions System</a> (CVS) for storing the source code to Ensembl.
+You will need CVS installed if you want to download Ensembl code through anonymous cvs access.  
+There is also a <a href="http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/?cvsroot=Ensembl">web-based CVS</a> repository.
+This system will help you keep up to date with any bug fixes.
+</p>
+
+
+<h3 class="boxed">Installation Procedure</h3>
+
+<ol>
+
+<li>
+<p>
+Create an installation directory
+</p>
+
+<pre>
+cd
+mkdir src
+cd src
+</pre>
+</li>
+
+<li>
+<p>
+Connect to the Bioperl CVS server
+</p>
+
+<pre>
+cvs -d :pserver:cvs@cvs.bioperl.org:/home/repository/bioperl login
+</pre>
+
+<p>
+When prompted the password is 'cvs'.
+</p>
+</li>
+
+<li>
+<p>
+Install <a href="http://www.bioperl.org/" target="external">Bioperl</a> (version 1.2)
+</p>
+
+<pre>
+cvs -d :pserver:cvs@cvs.bioperl.org:/home/repository/bioperl checkout -r branch-1-2 bioperl-live
+</pre>
+</li>
+
+<li>
+<p>
+Connect to the Ensembl CVS server
+</p>
+
+<pre>
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
+</pre>
+
+<p>
+When prompted the password is 'CVSUSER'.
+</p>
+</li>
+
+<li>
+<p>
+Install the <a href="./core/index.html">Ensembl Core</a> Perl API for version 31
+</p>
+
+<pre>
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch­-ensembl-31 ensembl
+</pre>
+</li>
+
+<li>
+<p>
+Install the <a href="./variation/index.html">Ensembl Variation</a> Perl API for version 31
+</p>
+
+<pre>
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch­-ensembl-31 ensembl-variation
+</pre>
+</li>
+
+<li>
+<p>
+Install the <a href="./compara/index.html">Ensembl Compara</a> Perl API for verion 31
+</p>
+
+<pre>
+cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-31 ensembl-compara
+</pre>
+
+<p>
+NB: You can install as many Ensembl APIs as you need in this way.
+</p>
+</li>
+
+<li>
+<p>
+Set up your environment
+</p>
+
+<p>
+You have to tell Perl where to find the modules you just installed.
+You can use the "use lib" clause in your script but if you want to make these modules available for all your scripts, 
+the best way is to add them into the PERL5LIB environment variable.
+</p>
+
+<ul>
+<li>
+<p>
+Under bash:
+</p>
+
+<pre>
+PERL5LIB=${PERL5LIB}:${HOME}/src/bioperl-live
+PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl/modules
+PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl-compara/modules
+export PERL5LIB
+</pre>
+</li>
+
+<li>
+<p>
+Under csh or tcsh:
+</p>
+
+<pre>
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/bioperl-live
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl/modules
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl-compara/modules
+</pre>
+</li>
+</ul>
+
+<p>
+NB: If you installed extra Ensembl APIs, don't forget to add their path to the PERL5LIB environment variable.
+</p>
+</li>
+
+</ol>
+
+</body>
+</html>

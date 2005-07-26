@@ -1,0 +1,3 @@
+#!/usr/local/bin/perl
+
+print "Location: /Anopheles_gambiae/submission\n\n";

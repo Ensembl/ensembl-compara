@@ -1,0 +1,105 @@
+
+======================================================================
+ENSEMBL INI FILES
+=================
+
+----------------------------------------------------------------------
+ENSEMBL CONFIGURATION OVERVIEW
+------------------------------
+
+The Ensembl distribution is usually stored within a filesystem
+directory (hereafter refered to as $ENSEMBL_ROOT), e.g.:
+
+  $ setenv ENSEMBL_ROOT /usr/local/ensembl
+
+Ensembl web site configuration data are stored in text files within
+$ENSEMBL_ROOT, in the following directory;
+
+  $ENSEMBL_ROOT/conf
+
+Several files in this directory have a '.ini' suffix, and are refered
+to as INI files. These are used to modify the Ensembl web site for a
+particular system, and tailor the way that it looks. This document
+describes the syntax and use of these files.
+
+
+----------------------------------------------------------------------
+INI FILE FORMAT
+---------------
+
+The Ensembl INI file format is based on the standard Microsoft INI
+file format as follows;
+
+  [SectionName]
+  # Whole-line comment
+  ParameterName = Value ; End-of-line comment
+  ParameterName = Value
+
+Sections such as [SectionName] are used to break parameters into
+logical groups. Parameter names consist of letters and digits,
+followed by an equal sign. Values can be of any scalar type (integer,
+string etc.) depending on the setting. Comments are preceeded by hash
+sign (at the start of a line), or a semicolon (anywhere in the line).
+
+For parameters that have multiple values, the INI format is;
+
+  [SectionName]
+  ParameterName = [ Value1 Value2 ]
+
+The format is hierarchical, and supports the concept of subsections;
+
+  [SectionName]
+  SubsectionName = SubsectionValue
+  [SubsectionName]
+  ParameterName = ParameterValue
+
+Alternatively, subsections are sometimes defined as follows;
+
+  [SectionName]
+  ParameterName = SubsectionName
+
+
+----------------------------------------------------------------------
+INI FILES IN THE CONF DIRECTORY
+-------------------------------
+
+There are three main types of INI file;
+
+- Tne 'defaults' file            ($ENSEMBL_ROOT/conf/DEFAULTS.ini),
+- The 'species-independent' file ($ENSEMBL_ROOT/conf/MULTI.ini),
+- The 'species-specific' files   ($ENSEMBL_ROOT/conf/<SPECIES>.ini),
+  where <SPECIES> refers to the species name, e.g. Homo_sapiens.ini.
+
+DEFAULTS.ini contains sections, parameters and values that can be
+incorperated into the configuration of any other INI file. Defaults
+will be used when a MULTI.ini or <SPECIES>.ini file contains a
+[SecionName] entry corresponding to one in DEFAULTS.ini. The
+configuration will, of course, use parameters/values set in the
+individual INI file in preference over those in DEFAULTS.ini.
+
+MULTI.ini contains settings that do not apply to a single species,
+e.g. the locations of multi-species databases or the layout of
+multi-species web pages.
+
+<SPECIES.ini> contains species-specific settings such as species
+meta-data.
+
+
+----------------------------------------------------------------------
+FURTHER DETAILS
+---------------
+
+Segestions for the INI configuration for an Ensembl mirror web site
+can be found at;
+
+  http://www.ensembl.org/Docs/wiki/html/EnsemblDocs/InstallEnsemblWebsite.html
+
+Specific details for the configuration of the Ensembl BlastView
+interface can be found at;
+
+  http://www.ensembl.org/Docs/wiki/html/EnsemblDocs/EnsemblBlastView.html
+
+For info on the use of the INI configuration data in perl scripts,
+consult the inline documentation;
+
+  perldoc $ENSEMBL_ROOT/modules/SpeciesDefs.pm

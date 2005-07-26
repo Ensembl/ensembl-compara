@@ -1,0 +1,13 @@
+#!/usr/local/bin/perl
+
+package submission;
+use EnsEMBL::Web::Submission;
+
+my $submission = new EnsEMBL::Web::Submission;
+
+my $action = "ACTION_".$submission->parameter('action');
+$action = "ACTION_main" unless $submission->can($action);
+
+$submission->$action;
+
+ use Bio::EnsEMBL::Registry; Bio::EnsEMBL::Registry->disconnect_all();1;

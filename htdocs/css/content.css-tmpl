@@ -1,0 +1,251 @@
+/* ADDITIONAL STYLES FOR ENSEMBL PAGE CONTENT */
+
+/* LAYOUT */
+
+.ch span { /*border: red 1px solid;*/ padding: 2px 2em 2px 2px; }
+li.ch { padding: 6px }
+
+/* Layout columns */
+div.img-plus-table {
+    width:90%;
+    clear:both;
+    border:none;
+    margin:auto; 
+}
+
+div.col-wrapper {
+    width:100%;
+    clear:both;
+    border:none; 
+}
+
+.col-wrapper:after    { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
+/* \*/
+* html .col-wrapper { height: 1%; }
+.col-wrapper { display: block; }
+/* */
+
+div.col2 { float:left; width:47%; margin:0 1%; }
+
+div.col3 { float:left; width:30%; margin:0 1%; }
+
+div.narrow3 { float:left; width:27%; margin:0 2.5%; }
+
+/* HEADINGS */
+h2 { margin-bottom:0.5em; }
+
+h3.boxed, div.panel h3 {
+  color:[[COLOR::heading]]; background-color:[[COLOR::backdark]];
+  margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; 
+  border:1px solid [[COLOR::edge]];
+}
+
+/* LISTS */
+#page ol li { list-style-type:decimal; list-style-image:none; }
+
+#page ul li { list-style-image:url(/img/red_bullet.gif); }
+
+#page ul.level2 li { list-style-image:url(/img/blue_bullet.gif); }
+
+#page ul.spaced li { margin-bottom:0.5em;}
+
+dt { font-weight:bold; }
+                                                                                
+dd { margin-bottom:1em; }
+
+
+/****************************** IMAGES ************************************/
+
+img.float-left { float:left; padding-right:10px; }
+
+img.float-right { float:right; padding-left:10px; }
+
+.screenshot { text-align:center; margin:auto; padding:10px; }
+
+.karyomap { text-align:center; margin:auto; }
+
+/* JavaScript dropdown menus on images*/
+                                                                                   
+table.ddmenu { border:1px solid [[COLOR::edge]]; background-color: [[COLOR::backlight]]}
+.ddmain, td.ddmain { background-color: [[COLOR::backlight]]; font-size: 8pt; font-family: Arial, helvetica, verdana, sans-serif; color: #000000; }
+td.ddmain a { background-color:[[COLOR::backlight]]; text-decoration:none; font-size:8pt; font-family: Arial, helvetica, verdana, sans-serif; color:[[COLOR::link]]; }
+.dddiv_button { background-color: [[COLOR::edge]]; }
+.dddiv { position: absolute; top:0px; left:0px; z-index: 100; visibility: hidden; }
+
+/* JavaScript popup menus on images*/
+
+div#zmenu { font-family:arial,sans-serif,helvetica; font-size:0.9em; border:1px #cccccc solid;}
+div#zmenu th { background-color:#cccccc; color:#000000; }
+div#zmenu td { color:#666666;}
+div#zmenu a { text-decoration:none; }
+
+/* TABLES */
+
+tr { vertical-align:top; }
+
+th, td { text-align:left; border:none; color:#333333; }
+
+table.two-column { border-collapse:collapse; width: 100% }
+
+th.two-column, td.two-column { vertical-align:top; padding:0px 0.5em 0.5em 0.5em; border:1px solid #cccccc; }
+
+th.two-column { width:15%; font-size:1.1em; color:#333333;
+    background-color:#e8e8e8; text-align:left; padding-top:0.5em; }
+
+td.two-column p {
+   /*border: dotted 1px red; */
+    margin-top: 0.5em; margin-bottom: 0.5em;
+}
+
+td.two-column dl, td.two-column ul, td.two-column ol {
+   /*border: dotted 1px green; */
+    margin-top: 0.5em; margin-bottom: 0.5em;
+}
+
+td.two-column dl ul { margin-top: 0px ; margin-bottom: 0.4em }
+
+td.two-column table {
+  /* border: dotted 1px blue;*/ 
+    margin-top: 0.5em; margin-bottom: 0.5em;
+}
+td.two-column table { margin: 0px }
+
+td.two-column th, td.two-column td { padding: 0px }
+td.two-column dt, td.two-column li, td.two-column dd, td.two-column td, td.two-column th {
+ margin-top: 0px; margin-bottom: 0.3em;
+}
+td.two-column tr { vertical-align: top }
+
+table.stacked tr { vertical-align: top }
+
+th.stacked { background-color:[[COLOR::backlight]]; border:1px solid [[COLOR::edge]]; 
+             color:[[COLOR::heading]]; text-align:center; padding:4px;}
+
+td.stacked { padding:4px; } 
+
+table.ss, table.spreadsheet { width: 100%; }
+
+table.ss tr.ss_header { background-color:#e8e8e8; border-size:1px 0px 0px 0px; border-color:[[COLOR::edge]]; border-style:solid; }
+
+table.ss th, table.spreadsheet th { background-color: [[COLOR::backdark]]; border-width:1px 0px 0px 0px; border-color:[[COLOR::edge]]; border-style:solid; padding:0.2em; vertical-align: top }
+table.ss th, table.spreadsheet th { background-color: #dddddd; border-width:1px 0px 0px 0px; border-color:#cccccc; border-style:solid; padding:0.2em; vertical-align: top }
+
+table.ss td, table.spreadsheet td { vertical-align: top; padding:0.2em; }
+
+table.ss .left-border {  border-left:1px #cccccc solid;  }
+
+table.ss .right-border {  border-right:1px #cccccc solid;  }
+
+table.ss .bottom-border {  border-bottom:1px #cccccc solid;  }
+
+table.ss tr.bg1, table.spreadsheet tr.bg1 { background-color:#ffffff; }
+
+table.ss tr.bg2, table.spreadsheet tr.bg2 { background-color:#f0f0f0; }
+
+table.spreadsheet tr.tint { background-color:[[COLOR::backlight]]; }
+
+table.info-image { width:100%; margin:10px 0px; }
+table.info-image td.image { text-align:center; padding-right:20px; }
+
+/****************************** FORMS **********************************/
+
+div.formpanel { padding:1em; margin:auto; border:1px solid #cccccc;}
+div.formpanel div { margin-top:5px; }
+
+.formblock { left: 0px; right: 0px; position: relative; }
+.formblock p { width: 100%; padding: 0px; margin 0px;  }
+.formblock .formpadding { width: 29%; height: 1px; padding: 0px; margin:0px; float: left; left 0px; top: 0px }
+.formblock h6 {
+  float: left; width: 29%; top: 0px; left: 0px; padding: 0px; padding-right: 10px; margin: 0px; text-align: right;
+  color: [[COLOR::link]]; font-size: 1em; font-weight: bold; margin-top: 0.8em;
+}
+.formwide h6, .forminline h6 {
+  top: 0px; left: 0px; padding: 0px; margin: 0px; 
+  color: [[COLOR::link]]; font-size: 1em; font-weight: bold;
+}
+.formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65% }
+.formwide  .formcontent { margin: 0px; font-size: 1em; padding: 2px; }
+
+.forminline, .forminline div { display:inline; }
+.forminline h6 { display:inline; margin-right:1em; }
+
+.radiocheck label, .radiocheck1col label { float: left; } /* width: 250px; } */
+
+.formblock textarea { width: 90%; height: 10em; }
+.formblock input.normal { width: 90% }
+.formblock .short  { width: 6em }
+/** bug fix to get floats within their bordered div.... */
+.infoblock:after, .radiocheck1col:after, .radiocheck:after, .formblock:after  { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
+.infoblock, .radiocheck, .radiocheck1col, .formblock              { display: inline-block; }
+/* Holly Hack Targets IE Win only \*/
+* html .infoblock, * html .radiocheck, * html .radiocheck1col, * html .formblock { height: 1%;}
+.infoblock, .radiocheck, .radiocheck1col, .formblock               { display: block; }
+/* end of Holly hack */
+.radiocheck { float: left; width: 12em; }
+.radiocheck1col .radio, .radiocheck .radio { display: inline; float: left }
+
+form#change_chr { margin:10px; }
+
+/**************************** MISCELLANEOUS *******************************/
+
+div.notice {
+    width:50%; margin:2em auto; padding: 1em;
+    background: [[COLOR::backlight]]; border:1px solid [[COLOR::heading]];
+}
+
+div.notice h4 { margin:0px; text-align:center; }
+
+p.error {
+  width:50%; margin:2em auto; padding: 1em;
+  color:#000000; border:2px solid [[COLOR::heading]];
+}
+
+.red { color:[[COLOR::heading]]; }
+
+.blue-bullet {
+    background-image:url(blue_bul.gif); background-repeat:no-repeat;
+    background-position:left center; padding-left:8px; }
+
+h2.breadcrumbs { color:#333333; }
+a.breadcrumb { text-decoration:none }
+
+/************************ PAGE-SPECIFIC STYLES *************************/
+
+/* Ensembl homepage */
+
+div#page div.col-wrapper div.narrow3 ul.species-list li {
+    font-size:115%; font-style:italic; font-weight:bold; margin:0em 0em 0.5em -1.5em; }
+
+ul.species-list li a:link, ul.species-list li a:visited { text-decoration:none; }
+
+
+div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul {
+    left:35px; width:150px; padding:0px; background-color:transparent; }
+
+div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul li.popup {
+    font-size:80%; font-weight:normal; font-style:normal; 
+    background-color:[[COLOR::backlight]]; margin:0px; list-style:none; }
+
+/* Species homepages */
+
+table#species-stats { width:100%; }
+
+table#species-stats td { padding:4px 0px; }
+
+table#species-stats td.data { font-weight:bold; }
+
+table#species-stats td.value { text-align:right;}
+
+/* Other pages */
+
+dl.sitemap a { text-decoration:none; }
+
+a.cv-button    { font-size: 0.9em; background-color:[[COLOR::heading]]; color:#ffffff; font-weight:bold; text-decoration:none; border: 2px outset [[COLOR::heading]]; padding:2px; margin: 3px; }
+a.cv_plusminus { font-family:'Arial Black'; font-size: 30px; font-weight:bold; color:[[COLOR::heading]]; padding:5px; vertical-align:super; text-decoration:none; }
+.cv-zoom   { height: 30px; width: 13px; border: 0px; margin: 10px 0px 0px 0px; }
+
+.short_id_list dt { float: left; width: 6em; padding: 0px; margin: 0.2em 1em 0.2em 0.2em; border; 0; }
+.long_id_list dt { float: left; width: 13em; padding: 0px; margin: 0.2em 1em 0.2em 0.2em; border; 0; }
+
+table.grid { border-collapse: collapse }
+.grid tr td, .grid tr th { border: solid 1px #999999; border-collapse: collapse; padding: 0.2em; }

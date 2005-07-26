@@ -1,0 +1,659 @@
+#!/usr/local/bin/perl -w
+###############################################################################
+#   
+#   Name:           SiteDefs.pm
+#   
+#   Description:    Localisation config for Ensembl website.
+#
+###############################################################################
+
+package SiteDefs;
+use strict;
+use Text::Wrap;
+$Text::Wrap::columns = 75;
+
+use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
+  $ENSEMBL_HELPDESK_EMAIL
+  $ENSEMBL_VERSION
+  $ENSEMBL_PLUGINS $ENSEMBL_PLUGIN_ROOTS
+  $ENSEMBL_TMPL_CSS
+  $ENSEMBL_PAGE_CSS
+  $ENSEMBL_REGISTRY
+  $ENSEMBL_DEBUG_FLAGS
+  $ENSEMBL_SERVERROOT
+  $ENSEMBL_SERVER
+  $ENSEMBL_PORT
+  $ENSEMBL_PROXY_PORT
+  $ENSEMBL_USER
+  $ENSEMBL_GROUP
+  $ENSEMBL_SERVERADMIN
+  $ENSEMBL_SERVERNAME $ENSEMBL_PROTOCOL
+  $ENSEMBL_MAIL_COMMAND
+  $ENSEMBL_MAIL_ERRORS
+  $ENSEMBL_ERRORS_TO
+  $ENSEMBL_PIDFILE
+  $ENSEMBL_ERRORLOG
+  $ENSEMBL_CUSTOMLOG
+  $ENSEMBL_TEMPLATE_ROOT
+  $ENSEMBL_TMP_CREATE
+  $ENSEMBL_TMP_DELETE
+  $ENSEMBL_TMP_DIR_BLAST
+  $ENSEMBL_TMP_DIR_BLAST_OLD
+  $ENSEMBL_BLASTSCRIPT
+  $ENSEMBL_TMP_DIR
+  $ENSEMBL_TMP_URL
+  $ENSEMBL_TMP_DIR_IMG
+  $ENSEMBL_TMP_DIR_DOTTER
+  $ENSEMBL_TMP_URL_IMG
+  $ENSEMBL_TMP_DIR_CACHE
+  $ENSEMBL_TMP_URL_CACHE
+  $ENSEMBL_SPECIES
+  $ENSEMBL_PERL_SPECIES
+  $ENSEMBL_SPECIES_ALIASES
+  $ENSEMBL_ENCRYPT_0
+  $ENSEMBL_ENCRYPT_1
+  $ENSEMBL_ENCRYPT_2
+  $ENSEMBL_ENCRYPT_3
+  $ENSEMBL_USERDB_PORT
+  $ENSEMBL_USERDB_NAME
+  $ENSEMBL_USERDB_HOST
+  $ENSEMBL_USERDB_USER
+  $ENSEMBL_USERDB_PASS
+  $ENSEMBL_COOKIEHOST
+  $ENSEMBL_USER_COOKIE
+  $ENSEMBL_SESSION_COOKIE
+  $ENSEMBL_FIRSTSESSION_COOKIE
+  $ENSEMBL_CONFIG_FILENAME
+  $ENSEMBL_CONFIG_BUILD
+  $ENSEMBL_HAS_C_EXTENSIONS
+  $ENSEMBL_LONGPROCESS_MINTIME
+  $ENSEMBL_APACHE_RELOAD
+  $ENSEMBL_SITETYPE
+  $ARCHIVE_VERSION
+  $BIOMART_URL
+  $MART_HELP_DESK
+  @ENSEMBL_CONF_DIRS
+  @ENSEMBL_PERL_DIRS
+  @ENSEMBL_HTDOCS_DIRS
+  @ENSEMBL_LIB_DIRS
+  $ENSEMBL_SHORTEST_ALIAS
+);
+use Sys::Hostname;
+use Exporter();
+@ISA=qw(Exporter);
+
+$VERSION=32;
+
+#### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
+
+###############################################################################
+####################### LOCAL CONFIGURATION VARIABLES #########################
+###############################################################################
+
+##########################################################################
+# You need to change the following server root setting.  It points to the
+# directory that contains htdocs, modules, perl, ensembl, etc
+# DO NOT LEAVE A TRAILING '/' ON ENSEMBL_SERVERROOT
+##########################################################################
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+
+$ENSEMBL_SERVERROOT     = dirname( $Bin );            # Local Ensembl dir
+
+## Define Plugin directories....
+(my $plugin_file = __FILE__) =~s/SiteDefs/Plugins/;
+eval "require '$plugin_file'";
+error( "Error requiring plugin file:\n$@" ) if $@;
+
+$ENSEMBL_SERVER         = Sys::Hostname::hostname();  # Local machine name
+
+$ENSEMBL_PORT           = 80;
+$ENSEMBL_PROXY_PORT     = undef; # Port used for self-referential URLs: 
+
+                                 # Set to undef if not using proxy-forwarding
+
+$ENSEMBL_SITETYPE       = "EnsEMBL";
+$ARCHIVE_VERSION        = "July2005";    # Change this to the archive site for this version
+
+$ENSEMBL_USER           = getpwuid($>); # Auto-set web serveruser
+$ENSEMBL_GROUP          = getgrgid($)); # Auto-set web server group
+
+$ENSEMBL_SERVERADMIN    = 'webmaster&#064;mydomain.org';
+$ENSEMBL_HELPDESK_EMAIL = $ENSEMBL_SERVERADMIN;
+$ENSEMBL_SERVERNAME     = 'www.mydomain.org';
+$ENSEMBL_PROTOCOL       = 'http';
+$ENSEMBL_MAIL_COMMAND   = '/usr/bin/Mail -s';     # Mail command
+$ENSEMBL_MAIL_ERRORS    = '0';                    # Do we want to email errors?
+$ENSEMBL_ERRORS_TO      = join ", ",              # ...and to whom?
+		            map { "$_\@sanger.ac.uk" } qw(js5 fc1 ek3 ap5);
+
+##  64 <- Time stamped logs...
+##  32 <- Enable eprof error diagnostics in web scripts
+##  16 <- Apache handler long process errors
+##   8 <- Apache handler error messages... 
+##   4 <- SpeciesDef autohandler errors...
+##   2 <- Drawing code errors...
+##   1 <- General error messages
+
+$ENSEMBL_DEBUG_FLAGS = 1;
+
+#####################
+# Apache files
+$ENSEMBL_PIDFILE = undef;
+$ENSEMBL_ERRORLOG = undef;
+$ENSEMBL_CUSTOMLOG = undef;
+
+$ENSEMBL_TMPL_CSS = '/css/ensembl.css';
+$ENSEMBL_PAGE_CSS = '/css/content.css';
+#####################
+# TMP dirs
+# ENSEMBL_TMP_DIR points to a filesystem dir
+# ENSEMBL_TMP_URL points to a URL location. 
+# httpd.conf creates an alias for ENSEMBL_TMP_URL to ENSEMBL_TMP_DIR
+# httpd.conf also validates the existence of ENSEMBL_TMP_DIR.
+
+$ENSEMBL_TMP_CREATE     = 1; # Create tmp dirs on server startup if not found?
+$ENSEMBL_TMP_DELETE     = 0; # Delete files from the tmp dir on server startup? 
+$ENSEMBL_TMP_DIR        = $ENSEMBL_SERVERROOT.'/tmp';
+$ENSEMBL_TMP_URL        = '/tmp';
+$ENSEMBL_TMP_DIR_IMG    = $ENSEMBL_SERVERROOT.'/img-tmp';
+$ENSEMBL_TMP_URL_IMG    = '/img-tmp';
+$ENSEMBL_TMP_DIR_CACHE = $ENSEMBL_SERVERROOT.'/img-cache';
+$ENSEMBL_TMP_URL_CACHE = '/img-cache';
+$ENSEMBL_TMP_DIR_DOTTER = $ENSEMBL_SERVERROOT.'/shared/data/dotter';
+
+
+#$ENSEMBL_TMP_DIR_BLAST  = '/ensemblweb/shared/data/blastqueue';
+$ENSEMBL_TMP_DIR_BLAST_OLD  = '/ensweb/shared/data/blastqueue';
+$ENSEMBL_TMP_DIR_BLAST  = $ENSEMBL_TMP_DIR;
+$ENSEMBL_BLASTSCRIPT    = undef;
+$ENSEMBL_REGISTRY       = undef;
+####
+# Content dirs
+# @ENSEMBL_CONF_DIRS   locates <species>.ini files
+# @ENSEMBL_PERL_DIRS   locates mod-perl scripts
+# @ENSEMBL_HTDOCS_DIRS locates static content
+# @ENSEMBL_LIB_DIRS    locates perl library modules. 
+#                      Array order is maintained in @INC
+@ENSEMBL_CONF_DIRS    = ($ENSEMBL_SERVERROOT.'/conf');
+@ENSEMBL_PERL_DIRS    = (
+  $ENSEMBL_SERVERROOT.'/perl',
+  $ENSEMBL_SERVERROOT.'/biomart-web/perl'
+);
+
+@ENSEMBL_HTDOCS_DIRS  = (
+  $ENSEMBL_SERVERROOT.'/htdocs',
+  $ENSEMBL_SERVERROOT.'/biomart-web/htdocs'
+);
+
+
+@ENSEMBL_LIB_DIRS     = (
+                         $ENSEMBL_SERVERROOT.'/modules',
+                         $ENSEMBL_SERVERROOT.'/ensembl/modules',
+                         $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
+                         $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
+                         $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
+                         $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
+                         $ENSEMBL_SERVERROOT.'/ensembl-mart/modules',
+                         $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
+                         $ENSEMBL_SERVERROOT.'/biomart-web/modules',
+                         $ENSEMBL_SERVERROOT.'/biomart-plib',
+                         $ENSEMBL_SERVERROOT.'/bioperl-live',
+                        );
+
+# Add perl-version specific lib from /ensemblweb/shared/lib for e.g. Storable.pm
+my @vers = split( /[\.0]+/, $] );
+my $ver  = join(".",$vers[0], $vers[1]||0, $vers[2]||0 ); # e.g. 5.8.0
+# push @ENSEMBL_LIB_DIRS, "/ensemblweb/shared/lib/perl5/$ver/alpha-dec_osf";
+
+
+###############################################################################
+######################### END OF LOCAL CONFIGURATION SECTION ##################
+###############################################################################
+
+###############################################################################
+## Choice of species...
+###############################################################################
+
+$ENSEMBL_PERL_SPECIES  = 'Homo_sapiens'; # Default species
+
+## This hash is used to configure the species available in this
+## copy of EnsEMBL - comment out any lines which are not relevant
+## If you add a new species MAKE sure that one of the values of the
+## array is the "SPECIES_CODE" defined in the species.ini file
+
+our %__species_aliases = (
+#-------------------- mammals
+  'Bos_taurus'              => [qw(bt cow moo)],
+  'Canis_familiaris'        => [qw(cf dog)], 
+  'Homo_sapiens'            => [qw(hs human man default)], 
+  'Mus_musculus'            => [qw(mm mouse mus)],
+  'Pan_troglodytes'         => [qw(pt chimp)],
+  'Rattus_norvegicus'       => [qw(rn rat)],
+#-------------------- birds
+  'Gallus_gallus'           => [qw(gg chicken)],
+#-------------------- fish
+  'Danio_rerio'  => [qw(dr zfish zebrafish)],
+  'Fugu_rubripes'           => [qw(fr ffish fugu)],
+  'Tetraodon_nigroviridis'  => [qw(tn tetraodon)],
+#-------------------- amphibians
+  'Xenopus_tropicalis'      => [qw(xt xenopus frog)],
+#-------------------- flies
+  'Anopheles_gambiae'       => [qw(ag mosquito mos anopheles)],
+  'Apis_mellifera'          => [qw(am honeybee bee)],
+  'Drosophila_melanogaster' => [qw(dm fly)],
+#-------------------- worms
+#  'Caenorhabditis_briggsae' => [qw(cb briggsae)],
+  'Caenorhabditis_elegans'   => [qw(ce worm elegans)],
+  'Ciona_intestinalis'       => [qw(ci seqsquirt ciona)],
+#-------------------- yeast
+  'Saccharomyces_cerevisiae' => [qw(sc yeast saccharomyces )],
+);
+
+###############################################################################
+## Web user datbase - used to store information about settings, e.g. DAS
+## contigview and cytoview options.
+###############################################################################
+
+$ENSEMBL_VERSION                = $VERSION;
+$ENSEMBL_USERDB_NAME            = 'ensembl_web_user_db';
+$ENSEMBL_USERDB_USER            = 'mysqluser';
+$ENSEMBL_USERDB_HOST            = 'localhost';
+$ENSEMBL_USERDB_PORT            =  3306;
+$ENSEMBL_USERDB_PASS            = '';
+
+$ENSEMBL_USER_COOKIE            = 'ENSEMBL_WWW_USER';
+$ENSEMBL_SESSION_COOKIE         = 'ENSEMBL_WWW_SESSION';
+$ENSEMBL_FIRSTSESSION_COOKIE    = 'ENSEMBL_WWW_FIRSTSESSION';
+$ENSEMBL_COOKIEHOST             = '';       #.ensembl.org';
+
+$ENSEMBL_ENCRYPT_0              = 0x16a3b3; # Encryption keys for session
+$ENSEMBL_ENCRYPT_1              = 'a9';     # Encryption keys for session
+$ENSEMBL_ENCRYPT_2              = 'xX';     # Encryption keys for session
+$ENSEMBL_ENCRYPT_3              = '2Q';     # Encryption keys for session
+
+###############################################################################
+## General systems bumf
+###############################################################################
+
+$ENSEMBL_CONFIG_FILENAME        = 'config.packed';
+$ENSEMBL_CONFIG_BUILD           = 0; # Build config on server startup?
+                                     # Setting to 0 will try to recover from
+                                     # $ENSEMBL_CONFIG_FILENAME on startup
+$ENSEMBL_APACHE_RELOAD          = 0; # Debug setting - set to 0 for release
+
+$ENSEMBL_HAS_C_EXTENSIONS       = 1;
+$ENSEMBL_LONGPROCESS_MINTIME    = 10;
+
+###############################################################################
+##
+## PLUGIN CODE.... We need to use the plugin modules
+## 
+## First of all look in "Plugins.pm" to get the definitions...
+##
+###############################################################################
+
+sub error {
+  my $message = join "\n", @_;
+  $message =~ s/\s+$//sm;
+  warn "=" x 78, "\n",
+       wrap("= ","= ", $message ),
+       "\n", "=" x 78, "\n";
+}
+
+my @T = reverse @{$ENSEMBL_PLUGINS||[]};
+while( my( $dir, $name ) = splice(@T,0,2)  ) {
+  my $plugin_conf = $name."::SiteDefs";
+  eval "require '$dir/conf/SiteDefs.pm'";
+  if($@) {
+    my $message = "Can't locate $dir/conf/SiteDefs.pm in";
+    error( "Error requiring $plugin_conf:\n$@" ) unless $@ =~ m:$message:;
+  } else {
+    my $FN = $plugin_conf.'::update_conf';
+    eval "$FN()";
+    if( $@ ) {
+      my $message = "Undefined subroutine &$FN called at ";
+      if( $@ =~ /$message/ ) {
+        error( "Function $FN not defined in $dir/conf/SiteDefs.pm" );
+      } else {       
+        error( "Error calling $FN in $dir/conf/SiteDefs.pm\n$@" );
+      }
+    }
+  }
+}
+
+
+#### END OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
+###############################################################################
+# You should not change anything below here
+###############################################################################
+
+my @T = reverse @{$ENSEMBL_PLUGINS||[]}; ## These have to go on in reverse order...
+$ENSEMBL_PLUGIN_ROOTS = ();
+while( my( $dir, $name ) = splice(@T,0,2)  ) {
+  unshift @ENSEMBL_PERL_DIRS,   $dir.'/perl'; 
+  unshift @ENSEMBL_HTDOCS_DIRS, $dir.'/htdocs'; 
+  unshift @$ENSEMBL_PLUGIN_ROOTS,   $name;
+}
+
+my @T = @{$ENSEMBL_PLUGINS||[]};         ## But these have to go on in normal order...
+while( my( $name, $dir ) = splice(@T,0,2)  ) {
+  push @ENSEMBL_CONF_DIRS,   $dir.'/conf'; 
+  push @ENSEMBL_LIB_DIRS,    $dir.'/modules';
+}
+
+@ENSEMBL_LIB_DIRS = reverse @ENSEMBL_LIB_DIRS; # Helps getting @inc into 
+                                               # right order
+
+my $DATESTAMP = '';
+if( $ENSEMBL_DEBUG_FLAGS & 64 ) { ##  Set to 0 - disables time stamped logs
+        ##  Set to 1 -  enables time stamped logs
+  my @TIME = gmtime();
+  $DATESTAMP = sprintf( ".%04d-%02d-%02d-%02d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, @TIME[3,2,1,0] );
+}
+$ENSEMBL_PIDFILE   = "$ENSEMBL_SERVERROOT/logs/$ENSEMBL_SERVER.httpd.pid"                             unless defined $ENSEMBL_PIDFILE;
+$ENSEMBL_ERRORLOG  = "$ENSEMBL_SERVERROOT/logs/$ENSEMBL_SERVER$DATESTAMP.error_log"                   unless defined $ENSEMBL_ERRORLOG;
+$ENSEMBL_CUSTOMLOG = "$ENSEMBL_SERVERROOT/logs/$ENSEMBL_SERVER$DATESTAMP.access_log ensembl_extended" unless defined $ENSEMBL_CUSTOMLOG;
+
+$ENSEMBL_PROXY_PORT = $ENSEMBL_PORT unless ( $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne "" );
+
+#-# Autogeneration stuff.... DO NOT TOUCH THIS - it does nasty stuff....
+
+## Add self refernetial elements to ENSEMBL_SPECIES_ALIASES
+## And one without the _ in...
+
+$ENSEMBL_SPECIES_ALIASES = {};
+$ENSEMBL_SPECIES = [ sort keys %__species_aliases ];
+
+foreach my $binomial ( @$ENSEMBL_SPECIES ) {
+  foreach my $alias ( @{$__species_aliases{$binomial}} ) {
+    $ENSEMBL_SPECIES_ALIASES->{lc($alias)} = $binomial;
+  }
+  my $key = lc($binomial);
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # homo_sapiens
+  $key =~s/_//g;
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # homosapiens
+  $key = lc($binomial);
+  $key =~s/^([a-z])[a-z]*_/$1_/g;
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # h_sapiens
+  $key =~s/_//g;
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # hsapiens
+}
+$ENSEMBL_SHORTEST_ALIAS = {};
+foreach my $key (keys %$ENSEMBL_SPECIES_ALIASES) {
+  my $bin = $ENSEMBL_SPECIES_ALIASES->{$key};
+  $ENSEMBL_SHORTEST_ALIAS->{$bin} = $key if !exists($ENSEMBL_SHORTEST_ALIAS->{$bin}) ||
+    length($key) < length($ENSEMBL_SHORTEST_ALIAS->{$bin});
+  
+}
+unless( $__species_aliases{$ENSEMBL_PERL_SPECIES} ) {
+  error( qq(Species "$ENSEMBL_PERL_SPECIES" not defined in ENSEMBL_SPECIES_ALIASES) );
+  $ENSEMBL_PERL_SPECIES = $ENSEMBL_SPECIES->[0];
+}
+
+## here we try and do the dynamic use stuff;
+$BIOMART_URL = 'Multi';
+$MART_HELP_DESK = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME".
+  ( $ENSEMBL_PROXY_PORT==80  && $ENSEMBL_PROTOCOL eq 'http' ||
+    $ENSEMBL_PROXY_PORT==443 && $ENSEMBL_PROTOCOL eq 'https' ?'' : ":$ENSEMBL_PROXY_PORT" ).
+    '/perl/helpdesk';
+$ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
+
+####################
+# Export by default
+####################
+@EXPORT = qw(
+  $ENSEMBL_PLUGIN_ROOTS
+  $ENSEMBL_TMPL_CSS 
+  $ENSEMBL_PAGE_CSS 
+  $ENSEMBL_PLUGINS
+  $ENSEMBL_REGISTRY
+  $ENSEMBL_DEBUG_FLAGS
+  $ENSEMBL_SERVERROOT
+  $ENSEMBL_SERVER
+  $ENSEMBL_PORT
+  $ENSEMBL_PROXY_PORT
+  $ENSEMBL_USER
+  $ENSEMBL_GROUP
+  $ENSEMBL_SERVERADMIN
+  $ENSEMBL_SERVERNAME $ENSEMBL_PROTOCOL
+  $ENSEMBL_MAIL_COMMAND
+  $ENSEMBL_MAIL_ERRORS
+  $ENSEMBL_ERRORS_TO
+  $ENSEMBL_TMP_CREATE
+  $ENSEMBL_TMP_DELETE
+  $ENSEMBL_TMP_DIR_BLAST
+  $ENSEMBL_TMP_DIR_BLAST_OLD
+  $ENSEMBL_BLASTSCRIPT
+  $ENSEMBL_TMP_DIR_DOTTER
+  $ENSEMBL_TMP_DIR
+  $ENSEMBL_TMP_URL
+  $ENSEMBL_TMP_DIR_IMG
+  $ENSEMBL_TMP_URL_IMG
+   $ENSEMBL_TMP_DIR_CACHE
+   $ENSEMBL_TMP_URL_CACHE
+  $ENSEMBL_SPECIES
+  $ENSEMBL_CONFIG_FILENAME
+  $ENSEMBL_CONFIG_BUILD
+  $ENSEMBL_HAS_C_EXTENSIONS
+  $ENSEMBL_VERSION
+  $ENSEMBL_HELPDESK_EMAIL
+  $ENSEMBL_SHORTEST_ALIAS
+);
+
+############################
+# Export anything asked for
+############################
+@EXPORT_OK = qw(
+  $ENSEMBL_HELPDESK_EMAIL
+  $ENSEMBL_VERSION
+  $ENSEMBL_PLUGIN_ROOTS
+  @ENSEMBL_CONF_DIRS
+  @ENSEMBL_PERL_DIRS
+  @ENSEMBL_HTDOCS_DIRS
+  @ENSEMBL_LIB_DIRS
+  $ENSEMBL_SHORTEST_ALIAS
+
+  $ENSEMBL_TMPL_CSS 
+  $ENSEMBL_PAGE_CSS 
+  $ENSEMBL_PLUGINS
+  $ENSEMBL_DEBUG_FLAGS
+  $ENSEMBL_REGISTRY
+  $ENSEMBL_SERVERROOT
+  $ENSEMBL_SERVER
+  $ENSEMBL_PORT
+  $ENSEMBL_PROXY_PORT
+  $ENSEMBL_USER
+  $ENSEMBL_GROUP
+  $ENSEMBL_SERVERADMIN
+  $ENSEMBL_SERVERNAME $ENSEMBL_PROTOCOL
+  $ENSEMBL_MAIL_COMMAND
+  $ENSEMBL_MAIL_ERRORS
+  $ENSEMBL_ERRORS_TO
+  $ENSEMBL_PIDFILE
+  $ENSEMBL_ERRORLOG
+  $ENSEMBL_CUSTOMLOG
+  $ENSEMBL_TMP_CREATE
+  $ENSEMBL_TMP_DELETE
+  $ENSEMBL_TMP_DIR_BLAST
+  $ENSEMBL_TMP_DIR_BLAST_OLD
+  $ENSEMBL_BLASTSCRIPT
+  $ENSEMBL_TMP_DIR_DOTTER
+  $ENSEMBL_TMP_DIR
+  $ENSEMBL_TMP_URL
+  $ENSEMBL_TMP_DIR_IMG
+  $ENSEMBL_TMP_URL_IMG
+   $ENSEMBL_TMP_DIR_CACHE
+   $ENSEMBL_TMP_URL_CACHE
+  $ENSEMBL_SPECIES
+  $ENSEMBL_PERL_SPECIES
+  $ENSEMBL_SPECIES_ALIASES
+  $ENSEMBL_ENCRYPT_0
+  $ENSEMBL_ENCRYPT_1
+  $ENSEMBL_ENCRYPT_2
+  $ENSEMBL_ENCRYPT_3
+  $ENSEMBL_USERDB_PORT
+  $ENSEMBL_USERDB_NAME
+  $ENSEMBL_USERDB_HOST
+  $ENSEMBL_USERDB_USER
+  $ENSEMBL_USERDB_PASS
+  $ENSEMBL_COOKIEHOST
+  $ENSEMBL_USER_COOKIE
+  $ENSEMBL_SESSION_COOKIE
+  $ENSEMBL_FIRSTSESSION_COOKIE
+  $ENSEMBL_CONFIG_FILENAME
+  $ENSEMBL_CONFIG_BUILD
+  $ENSEMBL_HAS_C_EXTENSIONS
+  $ENSEMBL_LONGPROCESS_MINTIME
+  $ENSEMBL_APACHE_RELOAD
+  $ENSEMBL_SITETYPE
+  $ARCHIVE_VERSION
+);
+
+###################################
+# Export groups asked for by name
+###################################
+%EXPORT_TAGS = (
+  ALL => [qw(
+  $ENSEMBL_SHORTEST_ALIAS
+    $ENSEMBL_PLUGINS $ENSEMBL_PLUGIN_ROOTS
+    $ENSEMBL_TMPL_CSS 
+    $ENSEMBL_PAGE_CSS 
+    $ENSEMBL_DEBUG_FLAGS
+    $ENSEMBL_SERVERROOT
+    $ENSEMBL_SERVER
+    $ENSEMBL_PORT
+    $ENSEMBL_PROXY_PORT
+    $ENSEMBL_USER
+    $ENSEMBL_GROUP
+    $ENSEMBL_SERVERADMIN
+    $ENSEMBL_SERVERNAME $ENSEMBL_PROTOCOL
+    $ENSEMBL_MAIL_COMMAND
+    $ENSEMBL_MAIL_ERRORS
+    $ENSEMBL_ERRORS_TO
+    $ENSEMBL_PIDFILE
+    $ENSEMBL_ERRORLOG
+    $ENSEMBL_CUSTOMLOG
+    $ENSEMBL_TMP_CREATE
+    $ENSEMBL_TMP_DELETE
+    $ENSEMBL_TMP_DIR_BLAST
+    $ENSEMBL_TMP_DIR_BLAST_OLD
+    $ENSEMBL_BLASTSCRIPT
+    $ENSEMBL_TMP_DIR_DOTTER
+    $ENSEMBL_TMP_DIR
+    $ENSEMBL_TMP_URL
+    $ENSEMBL_TMP_DIR_IMG
+    $ENSEMBL_TMP_URL_IMG
+    $ENSEMBL_TMP_DIR_CACHE
+    $ENSEMBL_TMP_URL_CACHE
+    $ENSEMBL_SPECIES
+    $ENSEMBL_PERL_SPECIES
+    $ENSEMBL_SPECIES_ALIASES
+    $ENSEMBL_ENCRYPT_0
+    $ENSEMBL_ENCRYPT_1
+    $ENSEMBL_ENCRYPT_2
+    $ENSEMBL_ENCRYPT_3
+    $ENSEMBL_USERDB_PORT
+    $ENSEMBL_USERDB_NAME
+    $ENSEMBL_USERDB_HOST
+    $ENSEMBL_USERDB_USER
+    $ENSEMBL_USERDB_PASS
+    $ENSEMBL_COOKIEHOST
+    $ENSEMBL_USER_COOKIE
+    $ENSEMBL_SESSION_COOKIE
+    $ENSEMBL_FIRSTSESSION_COOKIE
+    $ENSEMBL_CONFIG_FILENAME
+    $ENSEMBL_CONFIG_BUILD
+    $ENSEMBL_LONGPROCESS_MINTIME
+    $ENSEMBL_HAS_C_EXTENSIONS
+    $ENSEMBL_APACHE_RELOAD
+    $ENSEMBL_SITETYPE
+    $ARCHIVE_VERSION
+    $ENSEMBL_REGISTRY
+    $ENSEMBL_VERSION
+  $ENSEMBL_HELPDESK_EMAIL
+  @ENSEMBL_CONF_DIRS
+  @ENSEMBL_PERL_DIRS
+  @ENSEMBL_HTDOCS_DIRS
+  @ENSEMBL_LIB_DIRS
+  )],
+  WEB => [qw(
+  $ENSEMBL_PLUGIN_ROOTS
+  $ENSEMBL_HELPDESK_EMAIL
+    $ENSEMBL_VERSION
+    $ENSEMBL_TMPL_CSS 
+    $ENSEMBL_PAGE_CSS 
+    $ENSEMBL_PLUGINS
+    $ENSEMBL_REGISTRY
+    $ENSEMBL_DEBUG_FLAGS
+    $ENSEMBL_SERVERROOT
+    $ENSEMBL_TMP_DIR_BLAST
+    $ENSEMBL_TMP_DIR_BLAST_OLD
+    $ENSEMBL_BLASTSCRIPT
+    $ENSEMBL_TMP_DIR_DOTTER
+    $ENSEMBL_TMP_CREATE
+    $ENSEMBL_TMP_DELETE
+    $ENSEMBL_TMP_DIR
+    $ENSEMBL_TMP_URL
+    $ENSEMBL_TMP_DIR_IMG
+    $ENSEMBL_TMP_URL_IMG
+    $ENSEMBL_TMP_DIR_CACHE
+    $ENSEMBL_TMP_URL_CACHE
+    $ENSEMBL_SERVER
+    $ENSEMBL_PORT
+    $ENSEMBL_PROXY_PORT
+    $ENSEMBL_USER
+    $ENSEMBL_GROUP
+    $ENSEMBL_SERVERADMIN
+    $ENSEMBL_SERVERNAME $ENSEMBL_PROTOCOL
+    $ENSEMBL_MAIL_COMMAND
+    $ENSEMBL_MAIL_ERRORS
+    $ENSEMBL_ERRORS_TO
+    $ENSEMBL_PIDFILE
+    $ENSEMBL_ERRORLOG
+    $ENSEMBL_CUSTOMLOG
+    $ENSEMBL_HAS_C_EXTENSIONS
+    $ENSEMBL_APACHE_RELOAD
+    @ENSEMBL_HTDOCS_DIRS
+  $ENSEMBL_SHORTEST_ALIAS
+    @ENSEMBL_LIB_DIRS
+  )],
+  APACHE => [qw(
+    $ENSEMBL_PLUGIN_ROOTS
+  $ENSEMBL_HELPDESK_EMAIL
+    $ENSEMBL_VERSION
+    $ENSEMBL_TMPL_CSS 
+    $ENSEMBL_PAGE_CSS 
+    $ENSEMBL_PLUGINS
+    $ENSEMBL_REGISTRY
+    $ENSEMBL_DEBUG_FLAGS
+    $ENSEMBL_SERVERROOT 
+    $ENSEMBL_BLASTSCRIPT
+    $ENSEMBL_TMP_DIR_BLAST
+    $ENSEMBL_TMP_DIR_BLAST_OLD
+    $ENSEMBL_SPECIES
+    $ENSEMBL_PERL_SPECIES
+    $ENSEMBL_SPECIES_ALIASES
+    $ENSEMBL_ENCRYPT_0
+    $ENSEMBL_ENCRYPT_1
+    $ENSEMBL_ENCRYPT_2
+    $ENSEMBL_ENCRYPT_3
+    $ENSEMBL_USERDB_PORT
+    $ENSEMBL_USERDB_NAME
+    $ENSEMBL_USERDB_HOST
+    $ENSEMBL_USERDB_USER
+    $ENSEMBL_USERDB_PASS
+    $ENSEMBL_COOKIEHOST
+    $ENSEMBL_USER_COOKIE
+    $ENSEMBL_SESSION_COOKIE
+    $ENSEMBL_FIRSTSESSION_COOKIE
+    $ENSEMBL_CONFIG_FILENAME
+    $ENSEMBL_CONFIG_BUILD
+    $ENSEMBL_LONGPROCESS_MINTIME
+    $ENSEMBL_SITETYPE
+  $ENSEMBL_SHORTEST_ALIAS
+    $ARCHIVE_VERSION
+  )],
+);
+
+1;

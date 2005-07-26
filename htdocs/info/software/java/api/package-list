@@ -1,0 +1,7 @@
+org.ensembl.compara.datamodel
+org.ensembl.compara.driver
+org.ensembl.datamodel
+org.ensembl.driver
+org.ensembl.util
+org.ensembl.variation.datamodel
+org.ensembl.variation.driver

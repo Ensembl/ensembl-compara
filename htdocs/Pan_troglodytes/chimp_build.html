@@ -1,0 +1,47 @@
+<html>
+<head>
+<title>Chimp Build</title>
+</head>
+<body>
+
+
+<h2>Chimp Assembly</h2>
+     
+<p>The Chimpanzee genome is a 4x shotgun assembly from the Chimpanzee
+Genome Consoritum.</p>
+     
+<h3 class="boxed">Gene build</h3>
+ 
+<p>The genome was aligned to human by <a href="http://genome.ucsc.edu/">UCSC</a> using BLASTz. These alignments were used to transfer human gene structures (Human Build 34d) to chimpanzee.</p>
+
+<p>The 4x shotgun (i.e. only 2x on each haplotype) gives a relatively low coverage of the chimpanzee genome. There are missing areas of the genome, 
+misassemblies, misplacements, small insertions, deletions and substitutions.
+  These assembly issues give rise to problems in the alignment and therefore in the gene transfer process.
+With better data it is expected that nearly 
+every human gene has an almost identical chimpanzee gene. However, areas which are significantly different in the chimpanzee and human will naturally have the largest amount of uncertainty in the alignment.</p>
+
+<p>This gene build attempted to transfer across human genes wherever 
+possible.  The following algorithm was applied to the genes, transcripts 
+and exons which were transferred using the BLASTz alignment:</p>
+
+<ul>
+    <li>Exons with CDS insertion or deletion errors of length greater than 48 nucleotides were discarded.</li>
+
+    <li>Exons with frameshifting CDS insertion or deletion errors with length greater than 8 were discarded.</li>
+
+    <li>Exons which were aligned across separate chromosomes, crossed strands, or contained inversions were discarded.</li>
+
+    <li>If there was an insertion or deletion error which did not preserve frame up to (and including) 8 nucleotides then a small "intron" was added; in effect modelling a sequence insertion or deletion.</li>
+
+    <li>Transcripts were split into two parts where they contained a discarded exon, crossed strands, crossed chromosomes or contained inversions.</li>
+
+    <li>Transcripts with translations containing stop codons were retained but their translations were removed. </li>
+
+    <li>If, at the end of this process, the transcripts of a gene contained only a small number of nucleotides and a small number of amino acids in the corresponding translations, then the gene was discarded.</li>
+</ul>
+
+<p>Improvements to this system in the future will be driven by work on the Chimpanzee genome sequence.</p>
+
+</body>
+</html>
+

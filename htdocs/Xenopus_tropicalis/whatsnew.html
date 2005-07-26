@@ -1,0 +1,43 @@
+<html>
+<head>
+<title>What's New in Ensembl Xenopus tropicalis</title>
+</head>
+
+</body>
+
+            <div style="margin:2% 5%">
+<h2>What's New in Ensembl Xenopus tropicalis</h2>
+
+
+<h3 class="boxed" id="ncat-data">Data updates</h3>
+<h4>New variation databases</h4>
+<p>All species have new variation databases owing to schema changes.</p>
+
+<h3 class="boxed" id="ncat-feature">Web features</h3>
+<h4>New look'n'feel for the Ensembl website</h4>
+<p>www.ensembl.org has had a major redesign, both on the surface and 'under the bonnet'. Most of the dynamic pages (e.g. ContigView, GeneView) have only minor cosmetic changes - in addition to the new template and stylesheets, some links have been moved from the body of the view to the new side-bar.</p><p>The aim of the redesign was two-fold:</p><ol><li>To make the site easier to use and navigate around, by applying a common template across all pages</li><li>To make the code easier to extend and customise.</li></ol><p>More information and updated tutorials will be released over the nextfew months, and the new design will be rolled out across the other Ensembl websites, including Vega and pre.ensembl.org.</p>
+<h4>New 'subviews'</h4>
+<p>Three new views now display sections from some of our larger view pages.</p><ul><li><strong>GeneSeqView</strong> - displays the sequence section from GeneView</li><li><strong>GeneSpliceView</strong> - shows alternative splicing for a gene</li><li><strong>LDTableView</strong> - the table section from the bottom of LDView has been moved to its own page</li></ul></p>
+<h4>Changes to view names</h4>
+<p><ul><li>DiseaseView has been merged with FeatureView - and so DiseaseView has been removed from the site.</li><li>CytoDump has been renamed MiscSetView to better reflect what it does.</li></ul></p>
+<h4>Changes to DAS functionality</h4>
+<p>The following features have been added to DAS:<ol><li>Entrez Gene has been added to the list of DAS mapping types, so it is now possible to display features from DAS sources based on Entrez Gene IDs.</li><li>Multiple type DAS sources are supported, i.e if a source has a mixture of features, some of which are based on UniProt IDs and some on EnsEMBL Gene IDs, it is now possible to select both mapping types for the same source. This will result in a multiple segment DAS request, e.g features?segment=UNIPROT_ID;segment=ENSEMBL_GENE</li><li>You can now "link" DAS features, by providing "Previous" and "Next" fields, so that corresponding items are added to the feature's popup menu.</li>
+<li>Added functionality to add GeneDAS sources through URL. E.g. <kbd>/geneview?gene=BRCA2&add_das_source=(url=http://myhost:9999/das+dsn=mouse_ko_allele+type=markersymbol+name=MySource+active=1)</kbd>
+will attach the MySource DAS source to the Ensembl browser of whomever clicks on the link</li><li>The DAS Registry has become publicly available, and it possible to attach the Registry sources directly from Ensembl (Search Registry item in DasConfView)</li></ol></p>
+
+<h3 class="boxed" id="ncat-schema">Schema changes</h3>
+<h4>New table 'sample'</h4>
+<p>Provides a type of base class for Individual and Population; individual_id and population_id are thus replaced with a unique sample_id.</p>
+<h4>New table 'Sample_synonym'</h4>
+<p>The old Population_synonym table has been replaced with one for samples, in line with the introduction of the new 'sample' table.</p>
+<h4>New table 'Read_coverage'</h4>
+<p>Stores a sample of reads mapped to the assembly, for coverage levels 1 and 6 only. An entry for level 1 means that there is at least 1 read covering the region; a level 6 entry, that there are 6 reads covering the region. No read information is stored within the table.</p>
+<h4>Updated 'consequence_type'</h4>
+<p>Added 'STOP_GAINED' and 'STOP_LOST'</p>
+<h4>Changes to 'external_db' table</h4>
+<p>The following columns have been added:</p><ul><li>dbprimary_acc_linkable - BOOLEAN DEFAULT 1 NOT NULL</li><li>display_label_linkable - BOOLEAN DEFAULT 0 NOT NULL</li><li>priority - INT NOT NULL</li></ul><p>Several core-dependent applications, particularly BioMart, need to have a way of specifying a unique identifier for a particular xref. Usually the accession and display label are identical, but in cases where they are not (e.g. HUGO, SwissProt), the new columns allow us to specify which of the two to link from, on a per-source basis.</p><p>The priority column allows the xrefs to be ordered in a more informative way than simply alphabetically. Species-specific xrefs, e.g. HUGO, are given a higher priority and so appear at the top of the list in the web display.</p>
+</div>
+
+
+</body>
+</html>

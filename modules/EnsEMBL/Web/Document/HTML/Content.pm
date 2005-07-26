@@ -1,0 +1,99 @@
+package EnsEMBL::Web::Document::HTML::Content;
+use strict;
+use CGI qw(escapeHTML);
+use Data::Dumper qw(Dumper);
+
+use EnsEMBL::Web::Document::HTML;
+
+@EnsEMBL::Web::Document::HTML::Content::ISA = qw(EnsEMBL::Web::Document::HTML);
+
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new( 'panels' => [], 'first' => 1, 'form' => '' );
+  my $timer = shift;
+  $self->{'timer'} = $timer;  
+  return $self;
+}
+
+sub add_panel_first { $_[1]->renderer = $_[0]->renderer; unshift @{$_[0]{'panels'}}, $_[1]; }
+sub add_panel_last  { $_[1]->renderer = $_[0]->renderer;    push @{$_[0]{'panels'}}, $_[1]; }
+sub add_panel       { $_[1]->renderer = $_[0]->renderer;    push @{$_[0]{'panels'}}, $_[1]; }
+
+sub add_panel_after {
+  my( $self, $panel, $code ) = @_;
+  $panel->renderer = $self->renderer;
+  my $counter = 0;
+  foreach( @{$self->{'panels'}} ) {
+    $counter++;
+    last if $_->{'code'} eq $code;
+  }
+  splice @{$self->{'panels'}}, $counter,0, $panel;
+}
+
+sub add_panel_before {
+  my( $self, $panel, $code ) = @_;
+  $panel->renderer = $self->renderer;
+  my $counter = 0;
+  foreach( @{$self->{'panels'}} ) {
+    last if $_->{'code'} eq $code;
+    $counter++;
+  }
+  splice @{$self->{'panels'}}, $counter,0, $panel;
+}
+
+sub replace_panel {
+  my( $self, $panel, $code ) = @_;
+  $panel->renderer = $self->renderer;
+  my $counter = 0;
+  foreach( @{$self->{'panels'}} ) {
+    last if $_->{'code'} eq $code;
+    $counter++;
+  }
+  splice @{$self->{'panels'}}, $counter,1, $panel;
+}
+
+sub remove_panel {
+  my( $self, $code ) = @_;
+  my $counter = 0;
+  foreach( @{$self->{'panels'}} ) {
+    if( $_->{'code'} eq $code ) {
+      splice @{$self->{'panels'}}, $counter,1;
+      return;
+    }
+    $counter++;
+  }
+}
+
+sub _start { $_[0]->print( qq(\n<div id="page"><div id="i1"><div id="i2"><div class="sptop">&nbsp;</div>)); return 1; }
+sub _end {   $_[0]->print( qq(\n<hr />\n<div class="sp">&nbsp;</div></div></div></div>)); }
+
+sub panel {
+  my( $self, $code ) = @_;
+  foreach( @{$self->{'panels'}} ) {
+    return $_ if $code eq $_->{'code'};
+  }
+  return undef;
+}
+
+sub first :lvalue { $_[0]->{'first'}; }
+sub form  :lvalue { $_[0]->{'form'}; }
+
+
+sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 2 ); }
+
+sub render {
+  my $self = shift;
+  $self->_start;
+  $self->print( "\n$self->{'form'}" ) if $self->{'form'};
+  foreach my $panel ( @{$self->{'panels'}} ) { 
+    $panel->{'timer'} = $self->{'timer'};
+    $panel->render( $self->{'first'} );
+    $self->{'first'} = 0;
+    $self->_prof( "Rendered panel ".$panel->{'code'} );
+  }
+  $self->print( "\n</form>" ) if $self->{'form'};
+  $self->_end;
+}
+
+1;
+

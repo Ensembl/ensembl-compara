@@ -1,0 +1,160 @@
+<html>
+<head>
+<meta name="author" content="helpdesk" />
+<meta name="navigation" content="Data" />
+<meta name="update-period" content="2005-05-27" />
+<title>FTP Directory Structure</title>
+</head>
+
+<body>
+
+<h2>FTP Directory Structure</h2>
+
+
+<h3 class="boxed">Introduction</h3>
+
+<p>
+The Ensembl FTP site provides biological sequence databases suitable for large-scale local sequence similarity search approaches, as well as MySQL table dumps of all underlying Ensembl databases.
+These table dumps are suitable for import into relational database management systems and allow
+<a href="../software/website/installation/">installation</a> of complete Ensembl mirror sites.
+</p>
+
+<p>
+<b>Please note:</b> Ensembl supports downloading of many correlation tables via the highly customisable
+<a href="http://www.ebi.ac.uk/biomart/">BioMart</a> and
+<a href="/multi/martview">EnsMart</a> data mining tools.
+You may find exploring these web-based data mining tools easier than extracting information from our normalised database dumps.
+</p>
+
+<p>
+The URL
+<a href="ftp://ftp.ensembl.org/pub/" target="external">ftp://ftp.ensembl.org/pub/</a> is the basis of the directory structure outlined below.
+The structure is also described in the FTP site <a href="ftp://ftp.ensembl.org/pub/README">README</a>.
+The latest data sets for each species are available via directories prefixed '<b>current_</b>'.
+For example 'current_mouse' will always point to the latest data release for the mouse.
+</p>
+
+
+<h3 class="boxed">Species Directories</h3>
+
+<p>
+All species directories have the following basic structure, although not all information is neccessarily available for each species.
+</p>
+
+<pre>
+
+-- species
+   |
+   |-- data
+       |
+       |-- fasta          Gene predictions in FASTA database format
+       |   |
+       |   |-- cdna         * Transcript (cDNA) predictions
+       |   |-- dna          * Genomic DNA in assembled entities
+       |   |-- pep          * Translation (peptide) predictions
+       |   |-- rna          * Non-coding RNA predictions
+       |
+       |-- flat files     Gene predictions annotated on genomic DNA slices of 1 Mb.
+       |   |
+       |   |-- embl         * EMBL format
+       |   |-- genbank      * GenBank format
+       |
+       |-- mysql          MySQL database table text dumps
+           |
+           |-- core       General genome annotation information
+           |
+           |                * Genome sequence assembly
+           |                * Ensembl gene predictions
+           |                * Ab initio gene predictions
+           |                * Marker information
+           |                * ...
+           |
+           |-- est        Gene predictions based on EST information
+           |-- variation  Genetic variation information
+           |-- vega       Manually curated gene sets
+           |-- cdna       cDNA to genome alignments based on the latest EMBL database
+
+</pre>
+
+
+<h3 class="boxed">Multi-species Directories</h3>
+
+<p>
+The 'multi-species' directories contain databases not directly linked to single species data or which contain link data between species.
+</p>
+
+<pre>
+
+-- multi-species
+   |
+   |-- data
+       |
+       |-- mysql                    MySQL database table text dumps
+           |
+           |-- ensembl_compara      Cross-species comparative genomics data:
+           |
+           |                          * Orthologue predictions
+           |                          * Protein families
+           |                          * Whole genome alignments
+           |                          * Synteny information
+           |
+           |-- ensembl_help         Database storing context-sensitive help articles
+           |-- ensembl_web_user_db  SQL table defintion for server-side user config database
+           |-- ensembl_go           Gene Ontology database
+
+</pre>
+
+
+<h3 class="boxed">Mart Directory</h3>
+
+<p>
+The 'mart' directory contains table dumps of the databases underlying the
+<a href="http://www.ebi.ac.uk/biomart/">BioMart</a> and
+<a href="/multi/martview">EnsMart</a> data mining tools.
+</p>
+
+<pre>
+
+-- mart
+   |
+   |-- data
+       |
+       |-- mysql              MySQL database table text dumps
+           |
+           |-- ensembl_mart   Cross-species data mining tables
+           |-- sequence_mart  Genome sequences
+           |-- snp_mart       Genetic variation information
+           |-- vega_mart      Manually curated gene sets
+
+</pre>
+
+
+<!--
+<p>
+Please note that file name substitution or globbing has been turned off in the FTP server so that you cannot use meta characters or wildcards for pattern matching in your FTP requests.
+Smart clients like
+<a href="http://directory.fsf.org/wget.html" target="external">GNU wget</a> or mirroring software should be able to work around this.
+</p>
+-->
+
+<!--
+<p>
+Alternatively, the following C-shell script should help:
+</p>
+
+<pre>
+#!/bin/csh -f
+ncftp ftp.ensembl.org << ENDLIST | gawk '/^current_/{print "ftp://ftp.ensembl.org/pub/"$1"/data/mysql";}' > $$.list
+cd pub
+ls -1 current_*
+ENDLIST
+
+foreach url ( `cat $$.list` )
+    wget -m -passive-ftp $url
+end
+rm $$.list
+</pre>
+-->
+
+</body>
+</html>

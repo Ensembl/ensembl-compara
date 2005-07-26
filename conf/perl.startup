@@ -1,0 +1,109 @@
+#!/usr/local/bin/perl
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+warn "Loading perl startup file...\n\n";
+
+
+# for things in the /perl directory
+use Apache::Registry;
+# for things in the /cgi-perl directory
+use Apache::PerlRun;
+# for status info
+use Apache::Status;
+use Apache::SizeLimit;
+$Apache::SizeLimit::MAX_PROCESS_SIZE = 500000;  # Kill httpd over 500Mb
+
+use DBI ();
+use Storable qw(nfreeze freeze thaw ); ####
+use Data::Dumper;                      ####
+
+# for page handling
+use EnsEMBL::Web::Apache::SendDecPage;
+use EnsEMBL::Web::Apache::ServerError;
+
+use BioMart::Initializer;              ####
+use BioMart::Registry;                 ####
+use BioMart::Dataset::TableSet;        ####
+use BioMart::Dataset::GenomicSequence; ####
+
+# for making gifs
+use GD ();
+
+# Load CGI.pm and call it's compile method to precompile it's autoloaded routines
+use CGI qw(-compile :cgi);
+
+use EnsEMBL::Web::SpeciesDefs;
+#use EnsEMBL::Web::BlastView::MartDefs;
+
+if( $Apache::Server::Starting == 1 ){ # Only parse the config on first pass
+  warn( "\n" . ('=' x 78) . "\n" );
+  my $conf = EnsEMBL::Web::SpeciesDefs->new();
+  $conf->store;
+#--- dynamically build mart registry file...
+  my $MR_file = $SiteDefs::ENSEMBL_SERVERROOT.'/conf/martRegistry.xml'; ####
+  if(! -e $MR_file) {                                                   ####
+    open FH, ">$MR_file";                                               ####
+    print FH $conf->create_martRegistry;                                ####
+    close FH;                                                           ####
+  }                             
+
+  # Remove cached mart tmpl files
+  my @tmpl_files = glob( $conf->ENSEMBL_TMP_DIR."/*.html.tmpl" );
+  my $count = unlink( @tmpl_files );
+  $count and warn( "[MARTCONF][INFO] Removed $count HTML template files\n" );
+  $count == @tmpl_files 
+    or warn( "[MARTCONF][WARN] Some HTML template files not removed: $!" );
+
+  my $CONFFILE = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martconf.packed";          ####
+  my ($initializer,$registry);                                                    ####
+  if( -e $CONFFILE ) {                                                            ####
+    open FH, $CONFFILE || die ("Can't open $CONFFILE: $!" );                      ####
+    local $/ = undef;                                                             ####
+    $initializer = thaw(<FH>);                                                    ####
+    if(!$initializer){                                                            ####
+      warn("!!!!!!! THAWING FAILED - REMOVE $CONFFILE AND TRY AGAIN");            ####
+    }                                                                             ####
+    $initializer->reloadRegistry();                                               ####
+    warn( ( '-' x 78 ) ."\n" );                                                   ####
+    warn("[MARTCONF][INFO] Retrieving conf from $CONFFILE\n" );                   ####
+    warn("[MARTCONF][INFO] Remove this file before server startup if you need to update configuration\n" );  ####
+    warn( ( '-' x 78 ) ."\n" );                                                   ####
+  } else {                                                                        ####
+#--- Or by building it and storing it....
+    warn( "[INFO] Caching BioMart-MartView\n" );                                  ####
+    # my $martview_confdir  = $SiteDefs::ENSEMBL_SERVERROOT."/biomart-plib/conf";     ####
+    # my $martview_conffile = $martview_confdir."/defaultMartRegistry.xml";           ####
+    my $martview_conffile = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martRegistry.xml";  ####
+    $initializer = BioMart::Initializer->new($martview_conffile, 100, 10000);         ####
+    $registry = $initializer->getRegistry;                                        ####
+    $registry->getConfigurationTrees();                                           ####
+    # cache registry                                                              ####
+    warn("[MARTCONF][INFO] Writing Configuration to $CONFFILE");                  ####
+    warn( ( '-' x 78 ) ."\n" );                                                   ####
+    # Save away the conf                                                          ####
+    open( FH, "> $CONFFILE" ) || die ("Can't open $CONFFILE for writing: $!" );   ####
+    print FH ( nfreeze($initializer) );                                           ####
+    warn( ('=' x 78) . "\n\n" );                                                  ####
+  }                                                                               ####
+
+  # Remove cached image files
+  my @cached_images = map { glob($conf->ENSEMBL_TMP_DIR_CACHE."/$_.*") }
+    "mapview", "chromoview";
+  my $icount = unlink(@cached_images);
+  $icount and warn( "[CONF]    [INFO] Removed $icount cached image files\n" );
+  $icount == @cached_images 
+    or warn( "[CONF]    [WARN] Some cached image files not removed: $!" );
+
+  warn( ('=' x 78) . "\n\n" );
+}
+else{
+  warn( "\n" . ('=' x 78) . "\n" );
+  require EnsEMBL::Web::BlastView::MetaData; # Require at startup due to time taken to compile
+  require EnsEMBL::Web::BlastView::MetaDataBlast;
+  warn( ('=' x 78) . "\n\n" );
+}
+
+1;
