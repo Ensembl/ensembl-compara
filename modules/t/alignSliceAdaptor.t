@@ -38,8 +38,6 @@ perl -w ../../../ensembl-test/scripts/runtests.pl -c
 
 This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
 
-This script includes 257 tests.
-
 =head1 AUTHOR
 
 Javier Herrero (jherrero@ebi.ac.uk)
@@ -65,7 +63,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 272;
+    plan tests => 161;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -108,7 +106,7 @@ foreach my $this_species (reverse sort @$species) {
 ##
 #####################################################################
 
-our $verbose = 0;
+verbose(0);
 my $demo = 0;
 
 my $slice_adaptor = $species_db->{"homo_sapiens"}->get_DBAdaptor("core")->get_SliceAdaptor();
@@ -125,6 +123,12 @@ exit if (!$method_link_species_set_adaptor);
 
 my $slice_coord_system_name = "chromosome";
 my $slice_seq_region_name = "14";
+my $dnafrag_id = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT dnafrag_id FROM dnafrag df, genome_db gdb
+    WHERE df.genome_db_id = gdb.genome_db_id
+      AND df.name = \"$slice_seq_region_name\"
+      AND df.coord_system_name = \"$slice_coord_system_name\"
+      AND gdb.name = \"Homo sapiens\"");
 my $slice_start = 50170000;
 my $slice_end =   51170000;
 
@@ -157,9 +161,15 @@ my $all_genes = [];
 do {
   debug("coordinates without any excess at the end or start (no cutting any GAB)");
 
-  $slice_start = 50219800;
-  $slice_end =   50221295;
-  
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start, ga1.dnafrag_end
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      AND ga1.genomic_align_id != ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id
+      AND ga2.dnafrag_strand = 1
+      AND (ga1.dnafrag_end - ga1.dnafrag_start) > 1600");
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
         $slice_seq_region_name,
@@ -174,31 +184,38 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
-  $seq = $align_slice->{slices}->{'Rattus norvegicus'}->subseq(530, 1600, -1);
+  $seq = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(530, 1600, -1);
   $seq = reverse($seq);
   $seq =~ tr/acgtACGT/tgcaTGCA/;
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(530, 1600), $seq);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(530, 1600), $seq);
 
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
-      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
-  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, 100, -1)}),
-      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, 100, -1));
-  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
-      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, 100, -1)}),
+      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, 100, -1));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
 };
 
 do {
   debug("coordinates with an excess at the end and at the start (cutting GABs)");
 
-  $slice_start = 50219820;
-  $slice_end =   50221350;
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start + 1, ga1.dnafrag_end - 1
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      AND ga1.genomic_align_id != ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id
+      AND ga2.dnafrag_strand = 1
+      AND (ga1.dnafrag_end - ga1.dnafrag_start) > 1600");
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -214,35 +231,45 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
 
-  my $all_genomic_align_blocks = $align_slice->get_all_GenomicAlignBlocks();
-  @$all_genomic_align_blocks = sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start}
-          @$all_genomic_align_blocks;
-  
-  ok($all_genomic_align_blocks->[0]->reference_genomic_align->dnafrag_start, $slice_start,
-      "first GAB should have been truncated");
+###############################################################################
+# GAB restriction is not made in-situ anymore. A copy of the original GAB is
+#   used instead
+###############################################################################
+#   my $all_genomic_align_blocks = $align_slice->get_all_GenomicAlignBlocks();
+#   @$all_genomic_align_blocks = sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start}
+#           @$all_genomic_align_blocks;
+#   
+#   ok($all_genomic_align_blocks->[0]->reference_genomic_align->dnafrag_start, $slice_start,
+#       "first GAB should have been truncated");
+# 
+#   ok($all_genomic_align_blocks->[-1]->reference_genomic_align->dnafrag_end, $slice_end,
+#       "last GAB should have been truncated");
+###############################################################################
 
-  ok($all_genomic_align_blocks->[-1]->reference_genomic_align->dnafrag_end, $slice_end,
-      "last GAB should have been truncated");
-
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
-      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
-  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
-      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
 };
 
 do {
   debug("condensed mode: coordinates without any excess at the end or start (no cutting any GAB)");
 
-  $slice_start = 50219800;
-  $slice_end =   50221295;
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start, ga1.dnafrag_end
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      AND ga1.genomic_align_id != ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id");
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -258,25 +285,31 @@ do {
 
   ok($align_slice);
 
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   ok($seq, $slice->seq);
-ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "...........TACAAAGGATACAGAATAAATGCAGAGGTCCTGAAATTAGACTGTTTTTCTGAGGAGCCGCCACATGGCGCTCTTGATGTCCCGGTTTCTTAAGCTGTAGATAAAGGGGTTGAGCATAGGGGTGACCACAGTGTACACTATCGATGCTACTGCACCCTTCCTGGGAGACAAGGAGACAGCTGAACTGAGGTATACACCAAGGCCAGTTCCATAAAATAAGCAAACAACTGACAGGTGAGAGCCACAAGTAGAGAAGGCTTTATATTTCCCACCAGGTGATGGCATTCTAAGAATGGAGGAAACAATTTTATAGTAAGAGAAAAAAATCCCTGAAATAGGGAGAAAACCAGAGATGGCACCAACAAAATACATGACTATGTTATTGGTAAAGGTATCAGAACAGGCAAGGTTAAGAAGTTGAGATGGATCACAGAAGAAATGGGAAATGTCCACACTCTTGAAATAGGTAAGTTGTAATACCACTGAATTATGCAGCTGAGAAACCAAAAGGCTTATT-----AGAATAGATAGAAAAACCAACAAGCCACAAAGACGAGGGTTCATAATGACCTGGTAGTGCAGAGGATGGCAGATGGCCACAAACCTATCATAAGCCATGGCTGTTAGAAGCA-GACTA---TCCAAACACCCGAAAAGCATAAAAAAGGACATCTGAGTCAGGCATCCTGAATAGGAAATGGCTCTGTTGTTAGTCTGAATGTCCACTATCATTTTTGGTAGTGTGGTGGAAGTGAAACTTATGTCAGCCAAGGATAAGTTAGAGAGGAAAAAGTACATTGGACTGTGGAGGTGAGAATCAAAGCTGACTGTCAGGATGATGAGCAGGTTCCCAAGAATTGTGACCAAGTACATGAAAAGGAACAGTCCAAAGAGTATGGGCTGAAGCTGTAGATCATCTGAGATCCCATGAGGTGGAATTCTGAGATATGTGTTATATTTTGCTCTTCTATATTGCTTGGACACCTTTTGAAAACAAAAGAAGATTGAAAAAATTAAAACAAGTAA--------CCAATAGTGCCTCTGAGTTTTCAGTGAAGGCAGTTTACTGATAAAATCCACAAATTTAAGGGTTAGGCACAGATATCAGTATTTCTCAGTTTTTACAAACTTA---ATCCTAGAATAATTTTATCATTAATTTTTCTGTTATTTGC--CTCGTTCTACATGTGCACATTAGAGGATTTTAATT----AATCTT---AGGACAAAAGCAACCTAGAAAGGAAGCTTGTGATGATAGTCAAGTAGTGACCATTCTTAAGAGAAAATAGAGAATAACAGAA-------GTTCA-TTTAAGAAAAA---TATTATAGCAAAAGAAAATTAACAAGTCAAAAAATTTATTTTA-------AGAATATTATAAAATT-----AGTTTGAGGATTTGTACATATTGTATAACAATAAGAACTGCTTTGTTTAACAGT-ATATTAAAGTTGA....");
-
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
-      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
-  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
-      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
+  
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
 };
 
 do {
   debug("coordinates including a piece of mouse in the reverse strand");
 
-  $slice_start = 50199380;
-  $slice_end =   50199510;
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start - 100, ga1.dnafrag_end + 100
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      AND ga1.genomic_align_id != ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id
+      AND ga2.dnafrag_strand = -1
+      AND (ga1.dnafrag_end - ga1.dnafrag_start) < 1600");
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -292,32 +325,30 @@ do {
 
   ok($align_slice);
 
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "..TAATGTTAATTCTAAATAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGAGTTCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAATTA.......");
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss);
 
   ok($align_slice);
 
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   ok($seq, $slice->seq);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "..TAATGTTAATTCTAAAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGATCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAATTA.......");
 
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
-      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
-  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
-      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
 };
 
 do {
@@ -325,6 +356,15 @@ do {
 
   $slice_start = 50199390;
   $slice_end =   50199500;
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start + 1, ga1.dnafrag_end - 1
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      AND ga1.genomic_align_id != ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id
+      AND ga2.dnafrag_strand = -1
+      AND (ga1.dnafrag_end - ga1.dnafrag_start) < 1600");
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -340,39 +380,37 @@ do {
 
   ok($align_slice);
 
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "ATTCTAAATAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGAGTTCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAA");
   
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss);
 
   ok($align_slice);
 
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   ok($seq, $slice->seq);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq, "ATTCTAAAATTCTAGCTTCTATTAAAACTGATAATTAATGTATTAGAAAAATTAC--TGATGCCAATGATCTATATCACTTACCTCAAGAATTTCTTAAAACAATATTAAA");
 
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
-      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
-  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
-      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
 };
 
 do {
   debug("coordinates with an excess of 5 nucleotides surrounding a mapped rat exon");
 
-  $slice_start = 50219842;
-  $slice_end =   50220747;
+  $slice_start = 50171535;
+  $slice_end =   50171857;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -388,15 +426,15 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
-
-  my $rat_gene = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes->[0];
+  
+  my $rat_gene = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0];
   ok($rat_gene);
   my $rat_transcript = ($rat_gene->get_all_Transcripts)->[0];
   ok($rat_transcript);
@@ -408,22 +446,22 @@ do {
   } else {
     $seq1 = $rat_exon->seq->revcom->seq;
   }
-  my $seq2 = substr($align_slice->{slices}->{'Rattus norvegicus'}->seq, 5, -5);
+  my $seq2 = substr($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq, 5, -5);
   ok($seq1, $seq2);
 
   my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss);
-  my $condensed_rat_exon = $condensed_align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[0];
+  my $condensed_rat_exon = $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[0];
   my $c_seq1;
   if ($condensed_rat_exon->strand == 1) {
     $c_seq1 = $condensed_rat_exon->seq->seq;
   } else {
     $c_seq1 = $condensed_rat_exon->seq->revcom->seq;
   }
-  my $c_seq2 = substr($condensed_align_slice->{slices}->{'Rattus norvegicus'}->seq, 5, -5);
+  my $c_seq2 = substr($condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq, 5, -5);
   ok($c_seq1, $c_seq2);
   
-  $seq = $align_slice->{slices}->{'Homo sapiens'}->subseq($rat_exon->start, $rat_exon->end);
+  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($rat_exon->start, $rat_exon->end);
   $seq2 = "";
   foreach my $subseq ($seq =~ /([ACTG]+|\-+)/g) {
     if ($subseq =~ /\-/) {
@@ -434,16 +472,16 @@ do {
   }
   ok($seq2, $c_seq2);
 
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
-      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
-  ok(join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices(undef, undef, -1)}),
-      $align_slice->{slices}->{'Rattus norvegicus'}->subseq(undef, undef, -1));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
+  ok(join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices(undef, undef, -1)}),
+      $align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(undef, undef, -1));
 };
 
 do {
   debug("coordinates matching exactly a mapped rat exon");
-  $slice_start = 50219847;
-  $slice_end =   50220742;
+  $slice_start = 50171540;
+  $slice_end =   50171852;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -459,15 +497,15 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
 
-  my $rat_gene = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes->[0];
+  my $rat_gene = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0];
   ok($rat_gene);
   my $rat_transcript = ($rat_gene->get_all_Transcripts)->[0];
   ok($rat_transcript);
@@ -479,22 +517,22 @@ do {
   } else {
     $seq1 = $rat_exon->seq->revcom->seq;
   }
-  my $seq2 = $align_slice->{slices}->{'Rattus norvegicus'}->seq;
+  my $seq2 = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
   ok($seq1, $seq2);
 
   my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss);
-  my $condensed_rat_exon = $condensed_align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[0];
+  my $condensed_rat_exon = $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[0];
   my $c_seq1;
   if ($condensed_rat_exon->strand == 1) {
     $c_seq1 = $condensed_rat_exon->seq->seq;
   } else {
     $c_seq1 = $condensed_rat_exon->seq->revcom->seq;
   }
-  my $c_seq2 = $condensed_align_slice->{slices}->{'Rattus norvegicus'}->seq;
+  my $c_seq2 = $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
   ok($c_seq1, $c_seq2);
   
-  $seq = $align_slice->{slices}->{'Homo sapiens'}->subseq($rat_exon->start, $rat_exon->end);
+  $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($rat_exon->start, $rat_exon->end);
   $seq2 = "";
   foreach my $subseq ($seq =~ /([ACTG]+|\-+)/g) {
     if ($subseq =~ /\-/) {
@@ -507,9 +545,9 @@ do {
 };
 
 do {
-  debug("slice 1 nucleotide long at the beginnig of the mapped rat exon.");
-  $slice_start = 50219811;
-  $slice_end =   50219811;
+  debug("slice 1 nucleotide long at the beginnig of an non-consecutive alignment.");
+  $slice_start = 50241767;
+  $slice_end =   50241767;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -525,12 +563,12 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq), 1);
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 1);
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
 
@@ -550,19 +588,19 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq), 2);
-  $seq = $align_slice->{slices}->{'Rattus norvegicus'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 2);
+  $seq = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
   ok($seq, "/^\\.[ACTG]\$/");
 };
 
 do {
-  debug("slice 1 nucleotide long at the end of the mapped rat exon.");
-  $slice_start = 50221291;
-  $slice_end =   50221291;
+  debug("slice 1 nucleotide long at the end of an non-consecutive alignment.");
+  $slice_start = 50241763;
+  $slice_end =   50241763;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -578,12 +616,12 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq), 1);
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 1);
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
 
@@ -603,12 +641,12 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq), 2);
-  $seq = $align_slice->{slices}->{'Rattus norvegicus'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 2);
+  $seq = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
   ok($seq, "/^[ACTG]\\.\$/");
 };
 
@@ -616,6 +654,17 @@ do {
   debug("slice 2 nucleotide long including a gap in human");
   $slice_start = 50220736;
   $slice_end =   50220737;
+  my $cigar_line;
+  ($slice_start, $slice_end, $cigar_line) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start, ga1.dnafrag_end, ga1.cigar_line
+    FROM genomic_align ga1
+    WHERE ga1.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id
+      AND ga1.dnafrag_strand = 1
+      AND ga1.cigar_line like \"\%D\%\"");
+  my ($skip, $gap_length) = $cigar_line =~ /^(\d*)M(\d*)D/;
+  $slice_start += $skip - 1;
+  $slice_end = $slice_start + 1;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -631,12 +680,12 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq), 3);
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 2 + $gap_length);
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
 
@@ -644,19 +693,19 @@ do {
       $slice, $human_rat_blastznet_mlss);
   ok($condensed_align_slice);
   
-  ok($condensed_align_slice->{slices}->{'Homo sapiens'});
-  ok($condensed_align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($condensed_align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($condensed_align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  ok(length($condensed_align_slice->{slices}->{'Homo sapiens'}->seq), 2);
-  $seq = $condensed_align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($condensed_align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($condensed_align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  ok(length($condensed_align_slice->get_all_Slices('Homo sapiens')->[0]->seq), 2);
+  $seq = $condensed_align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   ok($seq, $slice->seq);
 };
 
 do {
-  debug("contains a duplicated rat gene on the reverse strand");
-  $slice_start = 50213000;
-  $slice_end =   50221000;
+  debug("contains a duplicated rat gene");
+  $slice_start = 50171500;
+  $slice_end =   50180000;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -672,62 +721,23 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices->[0]);
+  ok($align_slice->get_all_Slices->[1]);
+  ok(length($align_slice->get_all_Slices->[0]->seq),
+      length($align_slice->get_all_Slices->[1]->seq));
+  my $seq = $align_slice->get_all_Slices->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
-  my $rat_genes = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes;
+  my $rat_genes = $align_slice->get_all_Slices->[1]->get_all_Genes(
+          -MAX_INTRON_LENGTH => 1,
+          -MAX_REPETITION_LENGTH => 0
+      );
   ok(@$rat_genes, 1);
   ok(@{$rat_genes->[0]->get_all_Transcripts}, 2);
   ok(($rat_genes->[0]->get_all_Transcripts)->[0]->stable_id,
       ($rat_genes->[0]->get_all_Transcripts)->[1]->stable_id);
 
-  my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss);
-  my $condensed_rat_genes = $condensed_align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes;
-  ok(@$condensed_rat_genes, 1);
-  ok(@{$condensed_rat_genes->[0]->get_all_Transcripts}, 2);
-  ok(($condensed_rat_genes->[0]->get_all_Transcripts)->[0]->stable_id,
-      ($condensed_rat_genes->[0]->get_all_Transcripts)->[1]->stable_id);
-};
-
-do {
-  debug("contains a piece of duplicated rat gene");
-  $slice_start = 50215000;
-  $slice_end =   50230000;
-
-  $slice = $slice_adaptor->fetch_by_region(
-        $slice_coord_system_name,
-        $slice_seq_region_name,
-        $slice_start,
-        $slice_end,
-        1
-    );
-  ok($slice);
-  
-  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
-
-  ok($align_slice);
-  
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
-  $seq =~ s/\-//g;
-  ok($seq, $slice->seq);
-  my $rat_genes = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes;
-#   _print_genes($rat_genes, $align_slice);
-  ok(@$rat_genes, 1);
-  ok(@{$rat_genes->[0]->get_all_Transcripts}, 2);
-  ok(($rat_genes->[0]->get_all_Transcripts)->[0]->stable_id,
-      ($rat_genes->[0]->get_all_Transcripts)->[1]->stable_id);
-  
-  $rat_genes = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes(
+  $rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
           -MAX_INTRON_LENGTH => 10000,
           -MAX_REPETITION_LENGTH => 10000
       );
@@ -737,23 +747,16 @@ do {
 
   my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss);
-
-  ok($condensed_align_slice);
-  
-  ok($condensed_align_slice->{slices}->{'Homo sapiens'});
-  ok($condensed_align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($condensed_align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($condensed_align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  $seq = $condensed_align_slice->{slices}->{'Homo sapiens'}->seq;
-  ok($seq, $slice->seq);
-  my $condensed_rat_genes = $condensed_align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes;
-#   _print_genes($condensed_rat_genes, $condensed_align_slice);
+  my $condensed_rat_genes = $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
+          -MAX_INTRON_LENGTH => 1,
+          -MAX_REPETITION_LENGTH => 0
+      );
   ok(@$condensed_rat_genes, 1);
   ok(@{$condensed_rat_genes->[0]->get_all_Transcripts}, 2);
   ok(($condensed_rat_genes->[0]->get_all_Transcripts)->[0]->stable_id,
       ($condensed_rat_genes->[0]->get_all_Transcripts)->[1]->stable_id);
   
-  $condensed_rat_genes= $condensed_align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes(
+  $condensed_rat_genes= $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
           -MAX_INTRON_LENGTH => 10000,
           -MAX_REPETITION_LENGTH => 10000
       );
@@ -764,8 +767,8 @@ do {
 
 do {
   debug("contains a rat gene with unmapped exons");
-  $slice_start = 50172000;
-  $slice_end =   50190000;
+  $slice_start = 50000477;
+  $slice_end =   50068518;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -781,18 +784,19 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
 
-  my $rat_genes = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes();
+  my $rat_genes = $align_slice->get_all_Slices->[1]->get_all_Genes();
   ok(@$rat_genes, 1, "return 1 single gene");
   ok(@{$rat_genes->[0]->get_all_Transcripts}, 2, "gene contains 2 transcripts");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons}, 12, "transcript 1 contains 12 exons");
-  my @unmapped_genes = grep {!defined($_->start)} @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
-  ok(@unmapped_genes, 7, "transcript 1 contains 7 unmapped exons");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons}, 11, "transcript 2 contains 11 exons");
+  ok(@{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons}, 44, "transcript 1 contains 12 exons");
+  my @unmapped_genes = grep {!defined($_->start)}
+      @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
+  ok(@unmapped_genes, 36, "transcript 1 contains 7 unmapped exons");
+  ok(@{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons}, 31, "transcript 2 contains 11 exons");
   @unmapped_genes = grep {!defined($_->start)} @{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons};
-  ok(@unmapped_genes, 8, "transcript 2 contains 7 unmapped exons");
+  ok(@unmapped_genes, 20, "transcript 2 contains 7 unmapped exons");
 };
 
 do {
@@ -814,37 +818,23 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
 
-  my $rat_genes = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes(-MAX_INTRON_LENGTH => 4000);
+  my $rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes();
   ok(@$rat_genes, 1, "return 1 single gene");
-  ok(@{$rat_genes->[0]->get_all_Transcripts}, 4, "gene contains 4 transcripts");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons}, 8, "transcript 1 contains 8 exons");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[0]->start, undef,
-      "exon 1 of transcript 1 cannot be mapped");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[1]->start, undef,
-      "exon 2 of transcript 1 cannot be mapped");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[2]->start, undef,
-      "exon 3 of transcript 1 cannot be mapped");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[3]->start, undef,
-      "exon 4 of transcript 1 cannot be mapped");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[4]->start, undef,
-      "exon 5 of transcript 1 cannot be mapped");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[5]->start, undef,
-      "exon 6 of transcript 1 cannot be mapped");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[6]->start, undef,
-      "exon 7 of transcript 1 cannot be mapped");
-  ok($rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[7]->start);
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons}, 4, "transcript 2 contains 8 exons");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[2]->get_all_Exons}, 9, "transcript 9 contains 8 exons");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[3]->get_all_Exons}, 2, "transcript 2 contains 8 exons");
+  ok(@{$rat_genes->[0]->get_all_Transcripts}, 1, "gene contains 1 transcripts");
+  my @mapped_exons = grep {$_->start} @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
+  my $gap = $mapped_exons[1]->start - $mapped_exons[0]->end - 2;
+  my $gapped_rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
+      -MAX_INTRON_LENGTH => $gap);
+  ok(@{$gapped_rat_genes->[0]->get_all_Transcripts} > @{$rat_genes->[0]->get_all_Transcripts});
 };
 
 do {
   debug("contains a rat gene with missing exons: skip missing exons");
-  $slice_start = 50172000;
-  $slice_end =   50190000;
+  $slice_start = 50112000;
+  $slice_end =   50290000;
 
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -860,25 +850,32 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
 
-  my $rat_genes = $align_slice->{slices}->{'Rattus norvegicus'}->get_all_Genes(-RETURN_UNMAPPED_EXONS => 0);
-  ok(@$rat_genes, 1, "return 1 single gene");
-  ok(@{$rat_genes->[0]->get_all_Transcripts}, 2, "gene contains 2 transcripts");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons}, 5, "transcript 1 contains 5 mapped exons");
-  my @unmapped_genes = grep {!defined($_->start)} @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
-  ok(@unmapped_genes, 0, "transcript 1 contains no unmapped exons");
-  ok(@{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons}, 3, "transcript 2 contains 3 mapped exons");
-  @unmapped_genes = grep {!defined($_->start)} @{$rat_genes->[0]->get_all_Transcripts->[1]->get_all_Exons};
-  ok(@unmapped_genes, 0, "transcript 2 contains no unmapped exons");
+  my $rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes();
+  my $unmapped_exons = grep {!defined($_->start)}
+      @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
+  my $simple_rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(-RETURN_UNMAPPED_EXONS => 0);
+  skip($unmapped_exons == 0,
+      @{$simple_rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons} + $unmapped_exons,
+      @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons});
 };
 
 do {
-  debug("contains a chicken gene with an overlapping GenomicAlignBlock and a unmapped exon in the middle of the gene");
+  debug("contains an overlapping GenomicAlignBlock");
   $slice_start = 50150000;
   $slice_end =   50190000;
-
+  ($slice_start, $slice_end) = $compara_db_adaptor->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start - 100, ga2.dnafrag_end + 100
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga2.method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND ga1.dnafrag_id = $dnafrag_id
+      AND ga2.dnafrag_id = $dnafrag_id
+      AND ga1.dnafrag_start < ga2.dnafrag_start
+      AND ga1.dnafrag_end > ga2.dnafrag_start");
+  
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
         $slice_seq_region_name,
@@ -889,43 +886,41 @@ do {
   ok($slice);
   
   my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-          $human_chicken_blastznet_mlss, $slice
+          $human_rat_blastznet_mlss, $slice
       );
   # switch off the debug prints 
-  my $actual_verbosity = verbose();
-  verbose(0);
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_chicken_blastznet_mlss, "expanded");
-  verbose($actual_verbosity);
+      $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok(@{$align_slice->{slices}->{'Gallus gallus'}->get_all_Slice_Mapper_pairs}, @$genomic_align_blocks - 1);
-
-  my $chicken_genes = $align_slice->{slices}->{'Gallus gallus'}->get_all_Genes();
-  ok(@$chicken_genes, 1, "return 1 single gene");
-  ok(@{$chicken_genes->[0]->get_all_Transcripts}, 2, "gene contains 2 transcripts");
-  ok(@{$chicken_genes->[0]->get_all_Transcripts->[0]->get_all_Exons}, 14, "transcript 1 contains 14 exons");
-  my @unmapped_genes = grep {!defined($_->start)} @{$chicken_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
-  ok(@unmapped_genes, 2, "transcript 1 contains 2 unmapped exons");
-  ok($chicken_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[0]->start, undef,
-      "exon 1 of transcript 1 cannot be mapped");
-  ok($chicken_genes->[0]->get_all_Transcripts->[0]->get_all_Exons->[7]->start, undef,
-      "exon 8 of transcript 1 cannot be mapped");
-  ok(@{$chicken_genes->[0]->get_all_Transcripts->[1]->get_all_Exons}, 9, "transcript 2 contains 9 exons");
-  @unmapped_genes = grep {!defined($_->start)} @{$chicken_genes->[0]->get_all_Transcripts->[1]->get_all_Exons};
-  ok(@unmapped_genes, 2, "transcript 2 contains 2 unmapped exons");
-  ok($chicken_genes->[0]->get_all_Transcripts->[1]->get_all_Exons->[0]->start, undef,
-      "exon 1 of transcript 2 cannot be mapped");
-  ok($chicken_genes->[0]->get_all_Transcripts->[1]->get_all_Exons->[6]->start, undef,
-      "exon 7 of transcript 2 cannot be mapped");
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  skip(!defined($slice_start),
+    @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Slice_Mapper_pairs},
+    @$genomic_align_blocks - 1);
 };
-
+exit();
 do {
   debug("coordinates without any alignment");
 
   $slice_start = 50119800;
   $slice_end =   50120295;
+  my $all = $compara_db_adaptor->dbc->db_handle->selectall_arrayref("
+    SELECT dnafrag_start, dnafrag_end
+    FROM genomic_align
+    WHERE method_link_species_set_id = $human_rat_blastznet_mlss->{dbID}
+      AND dnafrag_id = $dnafrag_id
+    ORDER BY dnafrag_start");
+  my $last_end;
+  foreach my $this_row (@$all) {
+    if (defined($last_end)) {
+      if ($this_row->[0] - $last_end > 1) {
+        $slice_start = $last_end + 1;
+        $slice_end = $this_row->[0] - 1;
+        last;
+      }
+    }
+    $last_end = $this_row->[1];
+  }
   
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
@@ -941,17 +936,17 @@ do {
 
   ok($align_slice);
   
-  ok($align_slice->{slices}->{'Homo sapiens'});
-  ok($align_slice->{slices}->{'Rattus norvegicus'});
-  ok(length($align_slice->{slices}->{'Homo sapiens'}->seq),
-      length($align_slice->{slices}->{'Rattus norvegicus'}->seq));
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
+  ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
+      length($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq));
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   ok($seq, $slice->seq);
-  $seq = $align_slice->{slices}->{'Rattus norvegicus'}->seq;
+  $seq = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq;
   ok($seq, "/^\\.+\$/");
 
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->subseq(),
-      join("", map {$_->seq} @{$align_slice->{slices}->{'Rattus norvegicus'}->get_all_underlying_Slices()}));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->subseq(),
+      join("", map {$_->seq} @{$align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_underlying_Slices()}));
 };
 
 do {
@@ -973,68 +968,68 @@ do {
 
   debug("... coord_system->name");
   ok($align_slice->reference_Slice->coord_system->name, "chromosome");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->name, "align_slice");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->name, "align_slice");
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->name, "align_slice");
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->name, "align_slice");
 
   debug("... coord_system_name");
   ok($align_slice->reference_Slice->coord_system_name, "chromosome");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system_name, "align_slice");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system_name, "align_slice");
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system_name, "align_slice");
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system_name, "align_slice");
 
   debug("... coord_system->version");
   ok($align_slice->reference_Slice->coord_system->version, '/^NCBI\d+$/');
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
       "/^chromosome_NCBI\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
       "/\\+BLASTZ_NET\\(\"Homo sapiens\"\\+\"Rattus norvegicus\"\\)\\+/");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
       "/\\+expanded/");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
       "/^chromosome_NCBI\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
       "/\\+BLASTZ_NET\\(\"Homo sapiens\"\\+\"Rattus norvegicus\"\\)\\+/");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
       "/\\+expanded/");
 
   debug("... seq_region_name");
   ok($align_slice->reference_Slice->seq_region_name, $slice_seq_region_name);
-  ok($align_slice->{slices}->{'Homo sapiens'}->seq_region_name, "Homo sapiens");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq_region_name, "Rattus norvegicus");
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->seq_region_name, "Homo sapiens");
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq_region_name, "Rattus norvegicus");
 
   debug("... seq_region_length");
-  my $seq = $align_slice->{slices}->{'Homo sapiens'}->seq;
+  my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   my $gaps = $seq =~ tr/\-/\-/;
-  ok($align_slice->{slices}->{'Homo sapiens'}->seq_region_length, ($slice_end-$slice_start+1+$gaps));
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq_region_length, ($slice_end-$slice_start+1+$gaps));
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->seq_region_length, ($slice_end-$slice_start+1+$gaps));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq_region_length, ($slice_end-$slice_start+1+$gaps));
 
   debug("... start");
-  ok($align_slice->{slices}->{'Homo sapiens'}->start, 1);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->start, 1);
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->start, 1);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->start, 1);
 
   debug("... end");
-  ok($align_slice->{slices}->{'Homo sapiens'}->end, ($slice_end-$slice_start+1+$gaps));
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->end, ($slice_end-$slice_start+1+$gaps));
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->end, ($slice_end-$slice_start+1+$gaps));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->end, ($slice_end-$slice_start+1+$gaps));
 
   debug("... strand");
-  ok($align_slice->{slices}->{'Homo sapiens'}->strand, 1);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->strand, 1);
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->strand, 1);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->strand, 1);
 
   debug("... name");
-  ok($align_slice->{slices}->{'Homo sapiens'}->name, join(":",
-          $align_slice->{slices}->{'Homo sapiens'}->coord_system_name,
-          $align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
-          $align_slice->{slices}->{'Homo sapiens'}->seq_region_name,
-          $align_slice->{slices}->{'Homo sapiens'}->start,
-          $align_slice->{slices}->{'Homo sapiens'}->end,
-          $align_slice->{slices}->{'Homo sapiens'}->strand)
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->name, join(":",
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system_name,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->seq_region_name,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->start,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->end,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->strand)
       );
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->name, join(":",
-          $align_slice->{slices}->{'Rattus norvegicus'}->coord_system_name,
-          $align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
-          $align_slice->{slices}->{'Rattus norvegicus'}->seq_region_name,
-          $align_slice->{slices}->{'Rattus norvegicus'}->start,
-          $align_slice->{slices}->{'Rattus norvegicus'}->end,
-          $align_slice->{slices}->{'Rattus norvegicus'}->strand)
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->name, join(":",
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system_name,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq_region_name,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->start,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->end,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->strand)
       );
 
   
@@ -1042,64 +1037,64 @@ do {
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss);
   ok($align_slice->reference_Slice->coord_system->name, "chromosome");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->name, "align_slice");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->name, "align_slice");
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->name, "align_slice");
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->name, "align_slice");
 
   ok($align_slice->reference_Slice->coord_system_name, "chromosome");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system_name, "align_slice");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system_name, "align_slice");
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system_name, "align_slice");
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system_name, "align_slice");
 
   ok($align_slice->reference_Slice->coord_system->version, '/^NCBI\d+$/');
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
       "/^chromosome_NCBI\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
       "/\\+BLASTZ_NET\\(\"Homo sapiens\"\\+\"Rattus norvegicus\"\\)\\+/");
-  ok($align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
       "/\\+condensed/");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
       "/^chromosome_NCBI\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
       "/\\+BLASTZ_NET\\(\"Homo sapiens\"\\+\"Rattus norvegicus\"\\)\\+/");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
       "/\\+condensed/");
 
   debug("... seq_region_name");
   ok($align_slice->reference_Slice->seq_region_name, $slice_seq_region_name);
-  ok($align_slice->{slices}->{'Homo sapiens'}->seq_region_name, "Homo sapiens");
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq_region_name, "Rattus norvegicus");
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->seq_region_name, "Homo sapiens");
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq_region_name, "Rattus norvegicus");
 
   debug("... seq_region_length");
-  ok($align_slice->{slices}->{'Homo sapiens'}->seq_region_length, ($slice_end-$slice_start+1));
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->seq_region_length, ($slice_end-$slice_start+1));
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->seq_region_length, ($slice_end-$slice_start+1));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq_region_length, ($slice_end-$slice_start+1));
   
   debug("... start");
-  ok($align_slice->{slices}->{'Homo sapiens'}->start, 1);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->start, 1);
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->start, 1);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->start, 1);
 
   debug("... end");
-  ok($align_slice->{slices}->{'Homo sapiens'}->end, ($slice_end-$slice_start+1));
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->end, ($slice_end-$slice_start+1));
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->end, ($slice_end-$slice_start+1));
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->end, ($slice_end-$slice_start+1));
 
   debug("... strand");
-  ok($align_slice->{slices}->{'Homo sapiens'}->strand, 1);
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->strand, 1);
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->strand, 1);
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->strand, 1);
 
   debug("... name");
-  ok($align_slice->{slices}->{'Homo sapiens'}->name, join(":",
-          $align_slice->{slices}->{'Homo sapiens'}->coord_system_name,
-          $align_slice->{slices}->{'Homo sapiens'}->coord_system->version,
-          $align_slice->{slices}->{'Homo sapiens'}->seq_region_name,
-          $align_slice->{slices}->{'Homo sapiens'}->start,
-          $align_slice->{slices}->{'Homo sapiens'}->end,
-          $align_slice->{slices}->{'Homo sapiens'}->strand)
+  ok($align_slice->get_all_Slices('Homo sapiens')->[0]->name, join(":",
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system_name,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->coord_system->version,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->seq_region_name,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->start,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->end,
+          $align_slice->get_all_Slices('Homo sapiens')->[0]->strand)
       );
-  ok($align_slice->{slices}->{'Rattus norvegicus'}->name, join(":",
-          $align_slice->{slices}->{'Rattus norvegicus'}->coord_system_name,
-          $align_slice->{slices}->{'Rattus norvegicus'}->coord_system->version,
-          $align_slice->{slices}->{'Rattus norvegicus'}->seq_region_name,
-          $align_slice->{slices}->{'Rattus norvegicus'}->start,
-          $align_slice->{slices}->{'Rattus norvegicus'}->end,
-          $align_slice->{slices}->{'Rattus norvegicus'}->strand)
+  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]->name, join(":",
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system_name,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->coord_system->version,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->seq_region_name,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->start,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->end,
+          $align_slice->get_all_Slices('Rattus norvegicus')->[0]->strand)
       );
 };
 
@@ -1110,7 +1105,9 @@ sub _print_genes {
 
   print STDERR "\n\n";
   foreach my $gene (sort {$a->stable_id cmp $b->stable_id} @$all_genes) {
-    print STDERR "GENE: ", $gene->stable_id, " (", $gene->start, "-", $gene->end, ")\n";
+    print STDERR "GENE: ", $gene->stable_id, " (", $gene->start, "-", $gene->end, ") o[",
+        [$align_slice->get_all_Slices->[0]->get_original_seq_region_position($gene->start)]->[1], ",",
+        [$align_slice->get_all_Slices->[0]->get_original_seq_region_position($gene->end)]->[1] ,"]o\n";
     foreach my $transcript (sort {($a->stable_id cmp $b->stable_id)
         or ($b->strand <=> $a->strand)
         or ($a->start <=> $b->start)}
@@ -1119,7 +1116,7 @@ sub _print_genes {
 #       print STDERR " + TRANSLATION: (", ($transcript->cdna_coding_start or "***"), "-", ($transcript->cdna_coding_end or "***"), ")\n";
       foreach my $exon (@{$transcript->get_all_Exons}) {
         if ($exon->isa("Bio::EnsEMBL::Compara::AlignSlice::Exon") and defined($exon->start)) {
-          print STDERR "   + EXON: ", $exon->stable_id, " (", ($exon->start or "***"), "-", ($exon->end or "***"), ") [",
+          print STDERR "   + EXON: ", $exon->stable_id, " (", $exon->start, "-", $exon->end, ") [",
               $exon->strand, "] -- (", $exon->get_aligned_start, "-", $exon->get_aligned_end, ")  ",
               " -- (", $exon->exon->start, " - ", $exon->exon->end, " ", $exon->exon->strand, ")   -- ",
               ($exon->original_rank or "*"), " ",
@@ -1134,6 +1131,7 @@ sub _print_genes {
               $exon->strand, "]\n";
           next;
         }
+next;
         my $extra = 50;
         my $seq;
         if ($exon->strand == 1) {
@@ -1143,8 +1141,8 @@ sub _print_genes {
         }
 #         print STDERR substr($align_slice->seq, $exon->start-50, $exon->end+50);
 #         my $aseq = $align_slice->subseq($exon->start-50, $exon->end+50);
-        my $aseq = $align_slice->{slices}->{'Rattus norvegicus'}->subseq($exon->start-$extra, $exon->end+$extra, 1);
-        my $bseq = $align_slice->{slices}->{'Homo sapiens'}->subseq($exon->start-$extra, $exon->end+$extra, 1);
+        my $aseq = $align_slice->get_all_Slices->[1]->subseq($exon->start-$extra, $exon->end+$extra, 1);
+        my $bseq = $align_slice->get_all_Slices->[0]->subseq($exon->start-$extra, $exon->end+$extra, 1);
 # #         my $cseq = $align_slice->slice->subseq($exon->start-$extra, $exon->end+$extra, 1);
 #         $aseq = ("." x 50).$exon->exon->seq->seq.("." x 50);
         $seq =~ s/(.{100})/$1\n/g;
