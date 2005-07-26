@@ -1,0 +1,89 @@
+#!/usr/local/bin/perl
+
+=head1 NAME
+
+restart_server - script to restart an Ensembl server
+
+=head1 SYNOPSIS
+
+    ctrl_scripts/restart_server [-rXh] [-d N]
+
+=head1 DESCRIPTION
+
+This script calls ctrl_script/stop_server and ctrl_script/start_server
+consecutively. Available options are:
+
+    - delete conf/config.packed before restart
+    - delayed restart (to allow shutdown of heavy servers)
+    - start Apache in single server mode
+    - tail error logs
+
+Run 'ctrl_script/restart_server --help' for usage details.
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 AUTHOR
+
+Patrick Meidl <pm2@sanger.ac.uk>
+
+=head1 CONTACT
+
+Post questions to the EnsEMBL development list ensembl-dev@ebi.ac.uk
+
+=cut
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+use FindBin qw($Bin);
+use Getopt::Long;
+
+my ($help, $rmconfig, $delay, $single, $tail);
+&GetOptions(
+    "rmconfig"      => \$rmconfig,
+    "r"             => \$rmconfig,
+    "delay=i"       => \$delay,
+    "d=i"           => \$delay,
+    "X"             => \$single,
+    "single"        => \$single,
+    "help"          => \$help,
+    "h"             => \$help,
+    "t"             => \$tail,
+    "taillog"       => \$tail,
+);
+if ($help) {
+    print qq(Usage:
+    ctrl_scripts/restart_server
+        [-r|--rmconfig]
+        [-d|--delay N]
+        [-X|--single]
+        [-h|--help]
+        [-t|--taillog]
+        
+Options:
+    -r, --rmconfig  : remove conf/config.packed before restarting the server
+    -d N, --delay N : wait N seconds before restart \(to allow proper shutdown\)
+    -X, --single    : start Apache in single server mode
+    -h, --help      : print this help message
+    -t, --taillog   : end the command with ./ctrl/taillog
+);
+    exit;
+}
+
+my $stop_args = $delay ? "-d $delay" : "";
+my $start_args = join(" ", $rmconfig ? "-r" : "", $single ? "-X" : "");
+
+# stop and start the server
+system("$Bin/stop_server $stop_args") == 0 or exit;
+system("$Bin/start_server $start_args") == 0 or exit;
+warn "Restart OK.\n";
+
+if ($tail) {
+  system("$Bin/taillog") ==0 or exit;
+}
+
+exit;

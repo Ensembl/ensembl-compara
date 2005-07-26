@@ -1,0 +1,78 @@
+#!/usr/local/bin/perl
+
+=head1 NAME
+
+taillog - script to tail -f the current log
+
+=head1 SYNOPSIS
+
+    ctrl_scripts/taillog [--access] [--host=hostname]
+
+=head1 DESCRIPTION
+
+This script starts a "tail -f" on the current apache log.
+By default, it tails the latest error log for the current host, but
+specifying --access tails the access log instead, and --host=hostname 
+changes the host
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 AUTHOR
+
+Jim Stalker <jws@sanger.ac.uk>
+
+=cut
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+use FindBin qw($Bin);
+use File::Basename qw(dirname);
+use Sys::Hostname;
+use Getopt::Long;
+
+my ($help, $hostname, $do_access);
+&GetOptions(
+    "host=s"	=> \$hostname,
+    "H=s"	=> \$hostname,
+    "access"    => \$do_access,
+    "a"		=> \$do_access,
+    "help"      => \$help,
+    "h"         => \$help,
+);
+if ($help) {
+    print qq(Usage:
+    ctrl_scripts/taillog
+        [-a|--access]
+        [--host]
+        [-h|--help]
+        
+Options:
+    -a, --access    : Tails access log instead of error log
+        --host	    : Tail log for a different host to current host
+    -h, --help      : print this help message
+);
+    exit;
+}
+my $serverroot = dirname($Bin);
+my $logname = $do_access ? "access_log" : "error_log";
+$hostname ||= hostname();
+
+# get all matching logfiles and sort by mtime
+my @logs =  map { $_->[0] }
+            sort { $a->[1] <=> $b->[1] }
+            map { [ $_, (stat $_)[9] ] }
+            glob "$serverroot/logs/$hostname*$logname";
+
+# get the newest logfile
+my $latestlog = pop @logs;
+die "No matching logfile to tail\n" unless $latestlog;
+
+my $cmd = "tail -f $latestlog";
+warn "$cmd\n";
+exec($cmd) or die "Could not tail log: $!.\n";
+
