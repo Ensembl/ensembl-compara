@@ -269,6 +269,154 @@ sub adaptor {
 }
 
 
+=head2 get_all_Slices (experimental)
+
+  Arg[1]     : [optional] string $species_name1
+  Arg[2]     : [optional] string $species_name2
+  Arg[...]   : [optional] string $species_nameN
+  Example    : my $slices = $align_slice->get_all_Slices
+  Description: getter for all the Slices in this AlignSlice. If a list
+               of species is specified, returns only the slices for
+               these species. The slices are returned in a "smart"
+               order, i.e. the slice corresponding to the reference
+               species is returned first and then the remaining slices
+               depending on their phylogenetic distance to the first
+               one.
+  Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice
+               objects.
+  Exceptions : 
+  Caller     : $object->methodname
+
+=cut
+
+sub get_all_Slices {
+  my ($self, @species_names) = @_;
+  my $slices;
+
+  if (@species_names) {
+    foreach my $slice (@{$self->{_slices}}) {
+      foreach my $this_species_name (@species_names) {
+        push(@$slices, $slice) if ($this_species_name eq $slice->genome_db->name);
+      }
+    }
+  } else {
+    $slices = $self->{_slices};
+  }
+
+  return $slices;
+}
+
+
+=head2 reference_Slice
+
+  Arg[1]     : (optional) Bio::EnsEMBL::Slice $slice
+  Example    : my $reference_slice = $align_slice->reference_slice
+  Example    : $align_slice->reference_Slice($reference_slice)
+  Description: getter/setter for the attribute reference_slice
+  Returntype : Bio::EnsEMBL::Slice object
+  Exceptions : throw if arg is not a Bio::EnsEMBL::Slice object
+  Caller     : $object->methodname
+
+=cut
+
+sub reference_Slice {
+  my ($self, $reference_slice) = @_;
+
+  if (defined($reference_slice)) {
+    throw "[$reference_slice] must be a Bio::EnsEMBL::Slice object"
+        unless ($reference_slice and $reference_slice->isa("Bio::EnsEMBL::Slice"));
+    $self->{'reference_slice'} = $reference_slice;
+  }
+
+  return $self->{'reference_slice'};
+}
+
+
+=head2 add_GenomicAlignBlock
+
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomicAlignBlock
+  Example    : $align_slice->add_GenomicAlignBlock($genomicAlignBlock)
+  Description: add a Bio::EnsEMBL::Compara::GenomicAlignBlock object to the array
+               stored in the attribute all_genomic_align_blocks
+  Returntype : none
+  Exceptions : throw if arg is not a Bio::EnsEMBL::Compara::GenomicAlignBlock
+  Caller     : $object->methodname
+
+=cut
+
+sub add_GenomicAlignBlock {
+  my ($self, $genomic_align_block) = @_;
+
+  if (!defined($genomic_align_block)) {
+    throw "Too few arguments for Bio::EnsEMBL::Compara::AlignSlice->add_GenomicAlignBlock()";
+  }
+  if (!$genomic_align_block or !$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+    throw "[$genomic_align_block] must be a Bio::EnsEMBL::Compara::GenomicAlignBlock object";
+  }
+
+  push(@{$self->{'all_genomic_align_blocks'}}, $genomic_align_block);
+}
+
+
+=head2 get_all_GenomicAlignBlocks
+
+  Arg[1]     : none
+  Example    : my $all_genomic_align_blocks = $align_slice->get_all_GenomicAlignBlocks
+  Description: getter for the attribute all_genomic_align_blocks
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
+  Exceptions : none
+  Caller     : $object->methodname
+
+=cut
+
+sub get_all_GenomicAlignBlocks {
+  my ($self) = @_;
+
+  return ($self->{'all_genomic_align_blocks'} || []);
+}
+
+
+=head2 get_SimpleAlign
+
+  Arg[1]      : none
+  Example     : use Bio::AlignIO;
+                my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
+                print $out $align_slice->get_SimpleAlign();
+  Description : This method creates a Bio::SimpleAlign object using the
+                Bio::EnsEMBL::Compara::AlignSlice::Slices underlying this
+                Bio::EnsEMBL::Compara::AlignSlice object. The SimpleAlign
+                describes the alignment where the first sequence
+                corresponds to the reference Slice and the remaining
+                correspond to the other species.
+  Returntype  : Bio::SimpleAlign object
+  Exceptions  : 
+  Caller      : $object->methodname
+
+=cut
+
+sub get_SimpleAlign {
+  my ($self) = @_;
+  my $simple_align;
+
+  ## Create a single Bio::SimpleAlign for the projection  
+  $simple_align = Bio::SimpleAlign->new();
+  $simple_align->id("ProjectedMultiAlign");
+
+  foreach my $slice (@{$self->get_all_Slices}) {
+    my $seq = Bio::LocatableSeq->new(
+            -SEQ    => $slice->seq,
+            -START  => $slice->start,
+            -END    => $slice->end,
+            -ID     => $slice->genome_db->name,
+            -STRAND => $slice->strand
+        );
+    $simple_align->add_seq($seq);
+  }
+
+  return $simple_align;
+}
+
+
 =head2 _create_underlying_Slices (experimental)
 
   Arg[1]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks
@@ -459,154 +607,6 @@ sub _create_underlying_Slices {
 #   undef($self->{slices});
 
   return $self;
-}
-
-
-=head2 get_all_Slices (experimental)
-
-  Arg[1]     : [optional] string $species_name1
-  Arg[2]     : [optional] string $species_name2
-  Arg[...]   : [optional] string $species_nameN
-  Example    : my $slices = $align_slice->get_all_Slices
-  Description: getter for all the Slices in this AlignSlice. If a list
-               of species is specified, returns only the slices for
-               these species. The slices are returned in a "smart"
-               order, i.e. the slice corresponding to the reference
-               species is returned first and then the remaining slices
-               depending on their phylogenetic distance to the first
-               one.
-  Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice
-               objects.
-  Exceptions : 
-  Caller     : $object->methodname
-
-=cut
-
-sub get_all_Slices {
-  my ($self, @species_names) = @_;
-  my $slices;
-
-  if (@species_names) {
-    foreach my $slice (@{$self->{_slices}}) {
-      foreach my $this_species_name (@species_names) {
-        push(@$slices, $slice) if ($this_species_name eq $slice->genome_db->name);
-      }
-    }
-  } else {
-    $slices = $self->{_slices};
-  }
-
-  return $slices;
-}
-
-
-=head2 reference_Slice
-
-  Arg[1]     : (optional) Bio::EnsEMBL::Slice $slice
-  Example    : my $reference_slice = $align_slice->reference_slice
-  Example    : $align_slice->reference_Slice($reference_slice)
-  Description: getter/setter for the attribute reference_slice
-  Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : throw if arg is not a Bio::EnsEMBL::Slice object
-  Caller     : $object->methodname
-
-=cut
-
-sub reference_Slice {
-  my ($self, $reference_slice) = @_;
-
-  if (defined($reference_slice)) {
-    throw "[$reference_slice] must be a Bio::EnsEMBL::Slice object"
-        unless ($reference_slice and $reference_slice->isa("Bio::EnsEMBL::Slice"));
-    $self->{'reference_slice'} = $reference_slice;
-  }
-
-  return $self->{'reference_slice'};
-}
-
-
-=head2 add_GenomicAlignBlock
-
-  Arg[1]     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomicAlignBlock
-  Example    : $align_slice->add_GenomicAlignBlock($genomicAlignBlock)
-  Description: add a Bio::EnsEMBL::Compara::GenomicAlignBlock object to the array
-               stored in the attribute all_genomic_align_blocks
-  Returntype : none
-  Exceptions : throw if arg is not a Bio::EnsEMBL::Compara::GenomicAlignBlock
-  Caller     : $object->methodname
-
-=cut
-
-sub add_GenomicAlignBlock {
-  my ($self, $genomic_align_block) = @_;
-
-  if (!defined($genomic_align_block)) {
-    throw "Too few arguments for Bio::EnsEMBL::Compara::AlignSlice->add_GenomicAlignBlock()";
-  }
-  if (!$genomic_align_block or !$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
-    throw "[$genomic_align_block] must be a Bio::EnsEMBL::Compara::GenomicAlignBlock object";
-  }
-
-  push(@{$self->{'all_genomic_align_blocks'}}, $genomic_align_block);
-}
-
-
-=head2 get_all_GenomicAlignBlocks
-
-  Arg[1]     : none
-  Example    : my $all_genomic_align_blocks = $align_slice->get_all_GenomicAlignBlocks
-  Description: getter for the attribute all_genomic_align_blocks
-  Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
-  Exceptions : none
-  Caller     : $object->methodname
-
-=cut
-
-sub get_all_GenomicAlignBlocks {
-  my ($self) = @_;
-
-  return ($self->{'all_genomic_align_blocks'} || []);
-}
-
-
-=head2 get_SimpleAlign
-
-  Arg[1]      : none
-  Example     : use Bio::AlignIO;
-                my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
-                print $out $align_slice->get_SimpleAlign();
-  Description : This method creates a Bio::SimpleAlign object using the
-                Bio::EnsEMBL::Compara::AlignSlice::Slices underlying this
-                Bio::EnsEMBL::Compara::AlignSlice object. The SimpleAlign
-                describes the alignment where the first sequence
-                corresponds to the reference Slice and the remaining
-                correspond to the other species.
-  Returntype  : Bio::SimpleAlign object
-  Exceptions  : 
-  Caller      : $object->methodname
-
-=cut
-
-sub get_SimpleAlign {
-  my ($self) = @_;
-  my $simple_align;
-
-  ## Create a single Bio::SimpleAlign for the projection  
-  $simple_align = Bio::SimpleAlign->new();
-  $simple_align->id("ProjectedMultiAlign");
-
-  foreach my $slice (@{$self->get_all_Slices}) {
-    my $seq = Bio::LocatableSeq->new(
-            -SEQ    => $slice->seq,
-            -START  => $slice->start,
-            -END    => $slice->end,
-            -ID     => $slice->genome_db->name,
-            -STRAND => $slice->strand
-        );
-    $simple_align->add_seq($seq);
-  }
-
-  return $simple_align;
 }
 
 
