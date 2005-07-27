@@ -163,4 +163,22 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   return $align_slice;
 }
 
+
+=head2 flush_cache
+
+  Arg[1]     : none
+  Example    : $align_slice_adaptor->flush_cache()
+  Description: Destroy the cache
+  Returntype : none
+  Exceptions : none
+  Caller     : $obejct->methodname
+
+=cut
+
+sub flush_cache {
+  my ($self) = @_;
+
+  undef($self->{'_cache'});
+}
+
 1;
