@@ -119,6 +119,7 @@ sub new {
     'genoscope'  => 'green',
     'genoscope_ecotig'  => 'blue',
     'WZ'         => 'chartreuse3',
+    'EMBL'       => 'mediumspringgreen',
     'IMCB_HOME'  => 'olivedrab4',
   );
   $self->colourSet( 'mrna',

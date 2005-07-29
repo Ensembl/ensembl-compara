@@ -44,7 +44,6 @@ sub gene_colour {
   my $highlight = undef;
   my $type = $gene->biotype."_".$gene->confidence;
   $type =~ s/HUMACE-//g;
-  warn ">>> $type <<<";
   my $colour = $colours->{$type}[0];
 
   if(exists $highlights{lc($gene->stable_id)}) {

@@ -687,8 +687,8 @@ sub _init {
     'STRAND'   => $self->strand(),
     'cmap'     => $Config->colourmap(),
     'colour'   => $Config->get($das_config_key, 'col') || $Extra->{'col'} || 'contigblue1',
-    'depth'    => $Config->get($das_config_key, 'dep') || $Extra->{'dep'} || 4,
-    'use_style'=> ( $Config->get($das_config_key, 'stylesheet') || $Extra->{'stylesheet'} ) eq 'Y',
+    'depth'    => $Config->get($das_config_key, 'dep') || $Extra->{'depth'} || 4,
+    'use_style'=> uc( $Config->get($das_config_key, 'stylesheet') || $Extra->{'stylesheet'} ) eq 'Y',
     'labelling'=> $Extra->{'labelflag'} =~ /^[ou]$/i ? 1 : 0,
     'length'   => $container_length
   };
@@ -701,8 +701,6 @@ sub _init {
   my $dastype = $Extra->{'type'} || 'ensembl_location';
   my @das_features = ();
 
-#  warn("$das_config_key:".$Config->get($das_config_key, 'stylesheet'));
-#  warn(Dumper($Extra));
   $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
   $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
   ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
@@ -716,7 +714,6 @@ sub _init {
       my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
       my $name = $das_name || $url;
       foreach my $gene (@$genes) {
-#                      warn("GENE:$gene:".$gene->stable_id);       
          next if ($gene->strand != $self->strand);
          my $dasf = $gene->get_all_DASFeatures;
          my %dhash = %{$dasf};
@@ -777,8 +774,6 @@ sub _init {
   
   $configuration->{'features'} = \@das_features;
 
-#  warn(Data::Dumper::Dumper(\@das_features));
-
   # hash styles by type
   my %styles;
   if( $styles && @$styles && $configuration->{'use_style'} ) {
@@ -809,12 +804,10 @@ sub _init {
 	       
   my $group = uc($Config->get($das_config_key, 'group') || $Extra->{'group'} || 'N');
 
-  warn "GROUP $das_config_key -> $group";
   $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
 
   $renderer =~ s/RENDER_RENDER/RENDER/;
 
-  #warn("RENDER:[$das_config_key: $group] $renderer");
   return $self->$renderer( $configuration );
 }
 

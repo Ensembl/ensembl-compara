@@ -101,9 +101,7 @@ sub expanded_init {
     foreach my $f ( @$features ){
       my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
       my $fgroup_name = $self->feature_group( $f );
-      warn "$hstrand, $fgroup_name ";
       next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
-      warn "PUSHED FEATURE...";
       push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
     }
   }
@@ -221,7 +219,6 @@ sub compact_init {
     map  { @$_                      }
     grep { ref($_) eq 'ARRAY'       } $self->features
   ) {
-    warn "FEATURE $f->[0] $f->[1] $f->[2]";
     my $START   = $f->[0];
     my $END     = $f->[1];
     ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!

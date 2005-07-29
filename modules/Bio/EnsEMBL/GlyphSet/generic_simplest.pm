@@ -26,12 +26,10 @@ sub zmenu {
   my ($self, $f ) = @_;
   my $score = $f->score();
   my $name  = $f->display_label;
-  warn "$score -> $name";
   my ($start,$end) = $self->slice2sr( $f->start, $f->end );
   my $href = $self->href( $f );
   my $caption  = $self->my_label;
      $caption .= " - $name" if $name;
-  warn $caption ;
   return {
     'caption' => $caption,
     "01:Score: $score"   => '',

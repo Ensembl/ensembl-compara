@@ -1,10 +1,10 @@
-package Bio::EnsEMBL::GlyphSet::cloneset;
+package Bio::EnsEMBL::GlyphSet::fosmid_map;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return "1mb cloneset"; }
+sub my_label { return "Fosmid map"; }
 
 ## Retrieve all Fosmid clones - these are the clones in the
 
@@ -14,7 +14,8 @@ sub features {
         map { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
         map { [$_->seq_region_start , $_] }
-        @{$self->{'container'}->get_all_MiscFeatures( 'cloneset' )};
+        grep { $_->seq_region_end - $_->seq_region_start > 3e4 }
+        @{$self->{'container'}->get_all_MiscFeatures( 'fosmid_map' )};
     return \@sorted;
 }
 
@@ -55,10 +56,10 @@ sub zmenu {
   my ($self, $f ) = @_;
   return if $self->{'container'}->length() > ( $self->{'config'}->get( $self->check(), 'threshold_navigation' ) || 2e7) * 1000;
   return { 
-    qq(caption)                                            => qq(Clone: @{[$f->get_scalar_attribute('name')]}),
+    qq(caption)                                            => qq(Fosmid: @{[$f->get_scalar_attribute('name')]}),
     qq(01:bp: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}) => '',
     qq(02:length: @{[$f->length]} bps)                     => '',
-    qq(03:Centre on clone:)                                => $self->href($f),
+    qq(03:Centre on fosmid:)                                => $self->href($f),
   };
 }
 

@@ -18,7 +18,7 @@ sub colour {
    
   my $highlight = undef;
   my $colour = $colours->{lc($transcript->type())||lc($gene->type())}[0];
-
+  $colour = $colours->{'estgene'}[0] unless $colour;
   if(exists $highlights{lc($transcript->stable_id)}) {
     $highlight = $colours->{'superhi'};
   } elsif(exists $highlights{lc($transcript->external_name)}) {

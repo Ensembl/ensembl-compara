@@ -32,9 +32,6 @@ sub _init {
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
   my $colours       = $self->colours();
-  foreach ( keys %$colours ) {
-    warn "$_ --> $colours->{$_}\n";
-  }
   my $fontname      = "Tiny";    
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);

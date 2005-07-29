@@ -30,7 +30,6 @@ sub new {
   my @chromosomes = $Config->{'_all_chromosomes'} eq 'yes' ?
                   (@{$Config->{species_defs}->other_species($Container->{'_config_file_name_'}, 'ENSEMBL_CHROMOSOMES')||[] }) :
                   ($Container->{'chr'}); 
-  warn  @chromosomes;
   my $pos = 100000;
   my $row = '';
   my @subsections =
