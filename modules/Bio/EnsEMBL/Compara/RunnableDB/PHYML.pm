@@ -166,7 +166,7 @@ sub get_params {
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   $self->{'substitution_model'} = $params->{'substitution_model'} if(defined($params->{'substitution_model'}));
-  $self->{'cnda'} = $params->{'cdna'} if(defined($params->{'cdna'}));
+  $self->{'cdna'} = $params->{'cdna'} if(defined($params->{'cdna'}));
   
   return;
 
@@ -177,8 +177,8 @@ sub print_params {
   my $self = shift;
 
   print("params:\n");
-  print("  tree_id            : ", $self->{'protein_tree'}->node_id,"\n") if($self->{'protein_tree'});
-  print("  substitution_model : ", $self->{'substitution_model'},"\n");
+  print("  tree_id   : ", $self->{'protein_tree'}->node_id,"\n") if($self->{'protein_tree'});
+  print("  cdna      : ", $self->{'cdna'},"\n");
 }
 
 
@@ -205,14 +205,9 @@ sub run_phyml
   my $cmd = $phyml_executable;
   $cmd .= " ". $self->{'input_aln'};  
   if($self->{'cdna'}) {
-    $cmd .= " 0 i 2 0 HKY 4.0 e 1 1.0 BIONJ y y";
+    $cmd .= " 0 i 1 0 HKY e 0.0 4 e BIONJ y y";
   } else {
-    $cmd .= " 0 i 1 0"; #AA, interleaved, 1 dataset, no bootstrap
-    $cmd .= " ". $self->{'substitution_model'};
-    $cmd .= " ". $self->{'transition_transversion_ratio'};
-    $cmd .= " ". $self->{'number_of_substitution_rate_categories'};
-    $cmd .= " ". $self->{'gamma_distribution_parameter'};
-    $cmd .= " BIONJ n n";
+    $cmd .= " 1 i 1 0 WAG 0.0 4 e BIONJ y y "; #AA, interleaved, 1 dataset, no bootstrap
   }
   $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
@@ -256,8 +251,9 @@ sub dumpTreeMultipleAlignmentToWorkdir
   my $self = shift;
   my $tree = shift;
   
-  if(scalar(@{$tree->get_all_leaves}) <3) {
-    printf(STDERR "tree cluster %d has <3 proteins - FAILED to build a tree\n", $tree->node_id);
+  my $leafcount = scalar(@{$tree->get_all_leaves});  
+  if($leafcount<3) {
+    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $tree->node_id);
     $self->check_job_fail_options;
     return undef;
   }
@@ -267,7 +263,10 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   my $clw_file = $self->{'file_root'} . ".aln";
   return $clw_file if(-e $clw_file);
-  print("clw_file = '$clw_file'\n") if($self->debug);
+  if($self->debug) {
+    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
+    print("clw_file = '$clw_file'\n");
+  }
 
   open(OUTSEQ, ">$clw_file")
     or $self->throw("Error opening $clw_file for write");
