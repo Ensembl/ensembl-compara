@@ -10,6 +10,7 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub links {
   my $self = shift;
   my $species = $ENV{'ENSEMBL_SPECIES'};
+  my $species_2 = $species eq 'Multi' ? 'default' : $species;
   $self->add_block( 'whattodo', 'bulleted', 'Use Ensembl to...' );
  $self->add_entry( 'whattodo', 'href' => "/multi/blastview", 'text'=>'Run a BLAST search' );
   $self->add_entry( 'whattodo', 'href'=>"/default/textview", 'text'=>'Search Ensembl' );
@@ -17,7 +18,7 @@ sub links {
   $self->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/perl/helpview?se=1;kw=upload','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Upload your own data' );
   $self->add_entry( 'whattodo', 'href'=>"/info/data/download.html",
 			'text' => 'Download data');
-  $self->add_entry( 'whattodo', 'href'=>"/$species/exportview",
+  $self->add_entry( 'whattodo', 'href'=>"/$species_2/exportview",
 			'text' => 'Export data');
 
  # do species popups from config
@@ -60,11 +61,16 @@ sub links {
   $self->add_block( 'links', 'bulleted', 'Other links' );
   $self->add_entry( 'links', 'href' => '/', 'text' => 'Home' );
   my $map_link = '/sitemap.html';
-  if (my $species = $ENV{'ENSEMBL_SPECIES'}) {
+  if (my $species = $ENV{'ENSEMBL_SPECIES'} && !$species =~ /multi/i) {
     $map_link = '/'.$species.$map_link;
   }
   $self->add_entry( 'links', 'href' => $map_link, 'text' => 'Sitemap' );
   $self->add_entry( 'links', 'href' => 'http://archive.ensembl.org', 'text' => "Archive! sites" );
+  $self->add_entry( 'links', 'href' => 'http://vega.sanger.ac.uk/', 'text' => 'Vega', 'icon' => '/img/vegaicon.gif',
+        'title' => "Vertebrate Genome Annotation" );
+  $self->add_entry( 'links', 'href' => 'http://trace.ensembl.org/', 'text' => 'Trace server',
+        'title' => "trace.ensembl.org - trace server" );
+
   if ($SD->ENSEMBL_SITE_NAME eq 'Ensembl') { # only want archive link on live Ensembl!
     my $URL = sprintf "http://%s.archive.ensembl.org%s",
              CGI::escapeHTML($SD->ARCHIVE_VERSION),

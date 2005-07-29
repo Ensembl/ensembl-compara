@@ -2,6 +2,6 @@
 package status;
 
 use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::Simple( 'Server' );
+EnsEMBL::Web::Document::WebPage::simple( 'Server' );
 
 1;

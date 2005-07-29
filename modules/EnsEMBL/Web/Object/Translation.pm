@@ -282,7 +282,7 @@ sub analysis {
 
 sub stable_id{
   my $self = shift;
-  return $self->translation ? $self->translation->stable_id :undef;
+  return $self->translation ? $self->translation->stable_id : undef;
 }
 
 #----------------------------------------------------------------------
@@ -699,7 +699,6 @@ sub pep_snps{
     return [];
   }
   $self->database('variation');
-  warn "GETTING SNPS....";
   my $source = "variation";  # only defined if glovar
   if ($self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
     $source = "glovar";

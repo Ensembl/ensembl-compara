@@ -10,8 +10,8 @@ $self->{'_userdatatype_ID'} = 20;
 $self->{'_das_offset'} = '5080';
 
 $self->{'general'}->{'cytoview'} = {
- '_artefacts' => [qw(chr_band scalebar ruler stranded_contig gene_legend marker ntcontigs
-      bac_map supercontigs tilepath cloneset_37k cloneset_1mb cloneset_32k encode
+ '_artefacts' => [qw(chr_band scalebar ruler stranded_contig gene_legend marker ntcontigs fosmid_map
+      bac_map supercontigs tilepath cloneset_37k cloneset_1mb cloneset_32k encode cloneset
       bacends bacs nod_bacs bac_bands qtl
       repeat_lite  tilepath2 missing 
       haplotype_links gap 
@@ -42,9 +42,10 @@ $self->{'general'}->{'cytoview'} = {
     'features' => [
       [ 'marker'       =>  'Markers'      ],
       [ 'qtl'          =>  'QTLs'        ],
-      [ 'decipher'     =>  'DECIPHER'    ],
+      # [ 'decipher'     =>  'DECIPHER'    ],
     ],
     'options' => [
+      [ 'fosmid_map'     => 'Fosmid map' 		],
       [ 'bac_map'     => 'BAC map' 		],
       [ 'nod_bacs'    => 'Nod BACs'       ],
       [ 'bac_bands'     => 'Band BACs'       ],
@@ -57,6 +58,7 @@ $self->{'general'}->{'cytoview'} = {
       [ 'stranded_contig' => 'Contigs'       ],
       [ 'ruler'       => 'Ruler'       ],
       [ 'scalebar'    => 'Scale Bar'     ],
+      [ 'cloneset'     => '1Mb Cloneset'    ],
       [ 'cloneset_1mb' => '1Mb Cloneset'    ],
       [ 'cloneset_37k' => '37k Cloneset'    ],
       [ 'cloneset_32k' => '32k Cloneset'    ],
@@ -254,6 +256,39 @@ $self->{'general'}->{'cytoview'} = {
 	  'outline_threshold'  => '350000'
     },
 	 
+  'cloneset' => {
+    'on' => 'on',
+    'pos' => '993',
+    'col' => 'gold',
+    'lab' => 'black',
+    'available' => 'features mapset_cloneset',
+    'colours' => {
+      'col' => 'gold',
+      'lab' => 'black'
+    },
+    'str' => 'r',
+    'dep' => '9999999',
+    'threshold_navigation' => '100000',
+    'full_threshold'     => '50000',
+    'outline_threshold'  => '350000'
+  },
+  'fosmid_map' => {
+    'on' => 'on',
+    'height' => 5,
+    'pos' => '994',
+    'col' => 'purple2',
+    'lab' => 'black',
+    'available' => 'features mapset_fosmid_map',
+    'colours' => {
+      'col' => 'purple2',
+      'lab' => 'black'
+    },
+    'str' => 'r',
+    'dep' => '9999999',
+    'threshold_navigation' => '100000',
+    'full_threshold'     => '50000',
+    'outline_threshold'  => '350000'
+  },
   'bac_map' => {
     'on'  => "on",
     'pos' => '995',
@@ -486,12 +521,12 @@ $self->{'general'}->{'cytoview'} = {
     'str'       => 'r',
     'outline_threshold'  => '350000'
   },
-  'decipher' => {
-    'on'     => "on",
-    'pos'    => '4000',
-    'dep'    => 9999,
-    'str'    => 'r'
-  },
+  #'decipher' => {
+  #  'on'     => "on",
+  #  'pos'    => '4000',
+  #  'dep'    => 9999,
+  #  'str'    => 'r'
+  #},
     'assemblyexception' => {
       'on'      => "on",
       'pos'       => '9998',

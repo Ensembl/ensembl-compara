@@ -27,7 +27,7 @@ sub data         : lvalue { $_[0]->{'_data'         }; }
 sub retrieve_features {
   my $self = shift;
   my $method = "retrieve_".$self->feature_type;
-  return $self->$method();
+  return $self->$method() if defined &$method;
 }
 
 sub retrieve_Disease {

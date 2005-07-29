@@ -13,10 +13,13 @@ use EnsEMBL::Web::Configuration;
 sub protview {
   my $self   = shift;
   my $obj    = $self->{object};
-  my @common = (
-    'object' => $obj,
-    'params' => { 'db'     => $obj->get_db, 'peptide' => $obj->stable_id }
-  );
+  my $params =  { 'db'     => $obj->get_db };
+  if( $obj->stable_id ) {
+    $params->{'peptide'} = $obj->stable_id;
+  } else {
+    $params->{'transcript'} = $obj->transcript->stable_id;
+  }
+  my @common = ( 'object' => $obj, 'params' => $params );
 
   my $daspanel = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "dasinfo$self->{flag}",
@@ -54,27 +57,30 @@ sub protview {
 
   $self->{page}->content->add_panel( $daspanel );
 
+  if( $obj->stable_id ) {
   my $panel2 = new EnsEMBL::Web::Document::Panel::SpreadSheet( 
     'code'    => 'domain_panel',
-    'caption' => 'Domains on '.$obj->stable_id,
+    'caption' => 'Domains on '.($obj->stable_id || $obj->transcript->stable_id),
     @common,
-    'status'  => 'panel_domain'
+    'status'  => 'panel_domain',
+    'null_data' => "<p>No domains on this peptide</p>"
   );
   $panel2->add_components( qw(domains EnsEMBL::Web::Component::Translation::domain_list) );
   $self->{page}->content->add_panel( $panel2 );
 
   my $panel2a = new EnsEMBL::Web::Document::Panel::SpreadSheet(
     'code'    => 'other_panel',
-    'caption' => 'Other features on '.$obj->stable_id,
+    'caption' => 'Other features on '.($obj->stable_id || $obj->transcript->stable_id),
     @common,
-    'status'  => 'panel_other'
+    'status'  => 'panel_other',
+    'null_data' => "<p>No other features on this peptide</p>"
   );
   $panel2a->add_components( qw(others EnsEMBL::Web::Component::Translation::other_feature_list) );
   $self->{page}->content->add_panel( $panel2a );
-
+  }
   my $panel3 = new EnsEMBL::Web::Document::Panel::SpreadSheet( 
     'code'    => 'variation_panel',
-    'caption' => 'Variations on '.$obj->stable_id,
+    'caption' => 'Variations on '.($obj->stable_id || $obj->transcript->stable_id),
     @common,
     'status'  => 'panel_variation'
   );
@@ -88,10 +94,12 @@ sub context_menu {
   my $self = shift;
   my $obj      = $self->{object};
   my $species  = $obj->species;
-  my $q_string_g = sprintf( "db=%s;gene=%s" ,       $obj->get_db , $obj->gene->stable_id );
-  my $q_string   = sprintf( "db=%s;peptide=%s" , $obj->get_db , $obj->stable_id );
+  my $q_string_g = $obj->gene ? sprintf( "db=%s;gene=%s" ,       $obj->get_db , $obj->gene->stable_id ) : undef; 
+  my $q_string   = $obj->stable_id ?
+    sprintf( "db=%s;peptide=%s" , $obj->get_db , $obj->stable_id ) :
+    sprintf( "db=%s;transcript=%s", $obj->get_db, $obj->transcript->stable_id );
   my $flag     = "gene$self->{flag}";
-  $self->{page}->menu->add_block( $flag, 'bulleted', $obj->stable_id );
+  $self->{page}->menu->add_block( $flag, 'bulleted', $obj->stable_id || $obj->transcript->stable_id);
   if( $obj->get_db eq 'vega' ) {
     $self->add_entry( $flag,
       'text'  => "Jump to Vega",
@@ -101,20 +109,20 @@ sub context_menu {
   }
 
   $self->{page}->menu->add_entry( $flag, 'text' => "Gene info.",
-                                  'href' => "/$species/geneview?$q_string_g" );
+                                  'href' => "/$species/geneview?$q_string_g" ) if $q_string_g;
   $self->{page}->menu->add_entry( $flag, 'text' => "Gene splice site image",
-                                  'href' => "/$species/genespliceview?$q_string_g" );
+                                  'href' => "/$species/genespliceview?$q_string_g" ) if $q_string_g;
   $self->{page}->menu->add_entry( $flag, 'text' => "Gene variation info.",
-                                  'href' => "/$species/genesnpview?$q_string_g" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
+                                  'href' => "/$species/genesnpview?$q_string_g" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g;
 
   $self->{page}->menu->add_entry( $flag, 'text' => "Genomic sequence",
-                                  'href' => "/$species/geneseqview?$q_string_g" );
+                                  'href' => "/$species/geneseqview?$q_string_g" ) && $q_string_g;
   $self->{page}->menu->add_entry( $flag, 'text' => "Exon info.",
                                   'href' => "/$species/exonview?$q_string" );
   $self->{page}->menu->add_entry( $flag, 'text' => "Transcript info.",
                                   'href' => "/$species/transview?$q_string" );
   $self->{page}->menu->add_entry( $flag, 'text' => "Export data",
-                                  'href' => "/$species/exportview?type1=peptide;anchor1=@{[$obj->stable_id]}" );
+                                  'href' => "/$species/exportview?type1=peptide;anchor1=@{[$obj->stable_id]}" ) if $obj->stable_id;
   $self->{page}->menu->add_entry( $flag, 'text' => 'Peptide info.',
                                   'href' => "/$species/protview?$q_string" );
 }

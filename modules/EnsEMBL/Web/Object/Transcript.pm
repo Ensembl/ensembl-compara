@@ -22,6 +22,7 @@ sub default_track_by_gene {
   );
   my %mappings_logic_name = qw(
     genscan          genscan
+    fgenesh          fgenesh
     genefinder       genefinder
     snap             snap
     gsc              gsc
@@ -565,8 +566,7 @@ sub get_similarity_hash{
 sub get_go_list {
   my $self = shift ;
   my $trans = $self->transcript;
-  my $goadaptor = $self->database('go');# || return {};
-
+  my $goadaptor = $self->get_databases('go')->{'go'};# || return {};
   my @dblinks = @{$trans->get_all_DBLinks};
   my @goxrefs = grep{ $_->dbname eq 'GO' } @dblinks;
 
@@ -589,8 +589,7 @@ sub get_go_list {
       my $term;
       eval{ $term = $goadaptor->get_term({acc=>$go2}) };
       if($@){ warn( $@ ) }
-      next unless ($term);
-      $term_name = $term->name;
+      $term_name = $term ? $term->name : '';
     }
     $term_name ||= $goxref->description || '';
     $go_hash{$go} = [$evidence, $term_name];

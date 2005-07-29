@@ -18,12 +18,10 @@ sub createObjects {
   my $feature_type  = $self->param('type') || 'AffyProbe';
   my $create_method = "create_$feature_type";
 
-warn "Trying to use method $create_method";
-  
   my ($identifier, $fetch_call, $featureobj, $dataobject);
   my $db        = $self->param('db')  || 'core';
 
-  $featureobj    = $self->$create_method($db);
+  $featureobj    = defined &$create_method ? $self->$create_method($db) : undef;
   $dataobject    = EnsEMBL::Web::Proxy::Object->new( 'Feature', $featureobj, $self->__data );
 
   if( $dataobject ) {

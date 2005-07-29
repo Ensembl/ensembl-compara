@@ -267,6 +267,7 @@ sub stats {
 
   for my $stat (@orderlist){
     my $value = $chr->thousandify( $chr_stats{$stat} );
+    next if !$value;
     my $bps_label = ($stat eq "Length") ? 'bps' : '&nbsp;';
     $stat = "Genes (known and novel)" if $stat eq 'Gene Count';
     $stat =~ s/ Count$/s/;
@@ -490,7 +491,7 @@ sub synteny_map {
     );
     $image->imagemap           = 'yes';
     $image->cacheable          = 'yes';
-    $image->image_name         = 'syntenyview-'.$species.'-'.$chr;
+    $image->image_name         = 'syntenyview-'.$species.'-'.$chr.'-'.$other;
 
     $panel->add_image( $image->render, $image->{'width'} );
     return 1;

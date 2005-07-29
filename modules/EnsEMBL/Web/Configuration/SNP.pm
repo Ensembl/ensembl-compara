@@ -9,9 +9,14 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub snpview {
   my $self   = shift;
 
+  my $params = { 'snp' => $self->{object}->name };
+     $params->{'c'} =  $self->{object}->param('c') if  $self->{object}->param('c');
+     $params->{'w'} =  $self->{object}->param('w') if  $self->{object}->param('w');
+     $params->{'source'} =  $self->{object}->param('source') if  $self->{object}->param('source');
+     
   my @params = (
     'object' => $self->{object},
-    'params' => { 'snp' => $self->{object}->name }
+    'params' => $params
   );
 
   # Description : prints a two col table with info abou the SNP
@@ -118,6 +123,7 @@ sub context_menu {
   my $species = $obj->species;
   my $name = $obj->name;
   my $menu = $self->{page}->menu;
+  return unless $menu;
   $menu->add_block( "snp$self->{flag}", 'bulleted',
                                   $obj->source.': '.$name );
 

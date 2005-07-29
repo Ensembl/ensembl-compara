@@ -82,7 +82,7 @@ sub help_form_form {
   my( $panel, $object ) = @_;
   my $script = $object->script;
 
-  my $form = EnsEMBL::Web::Form->new( 'helpform', "/@{[$object->species]}/$script", 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'helpform', "/@{[$object->species]}/$script", 'post' );
 
   $form->add_element(
     'type'     => 'String',

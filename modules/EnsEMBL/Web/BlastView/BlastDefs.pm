@@ -62,8 +62,6 @@ sub _build_conf{
 
   my $method_conf = $SPECIES_DEFS->ENSEMBL_BLAST_METHODS;
 
-  warn ">>>", $ENV{'ENSEMBL_SPECIES'};
-  warn %{$SPECIES_DEFS->ENSEMBL_BLAST_METHODS||{}};
   if( ref( $method_conf ) ne 'HASH' or ! scalar( %$method_conf ) ){
     die( "ENSEMBL_BLAST_METHODS config unavailable" );
   }

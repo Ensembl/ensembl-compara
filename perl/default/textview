@@ -25,7 +25,7 @@ my $MODE = 'r';
 my $q    = new CGI();
 
 my $rend     = new EnsEMBL::Web::Document::Renderer::Apache( );
-my $document = new EnsEMBL::Web::Document::Dynamic( $rend );
+my $document = new EnsEMBL::Web::Document::Dynamic( $rend,undef, $SD);
 
 CGI::header;
 

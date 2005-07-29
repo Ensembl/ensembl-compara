@@ -43,6 +43,7 @@ sub add_form  { my($self,$panel,@T)=@_; $panel->add_form( $self->{page}, @T ); }
 sub add_block { 
   my $self = shift;
   return unless $self->{page}->can('menu');
+  return unless $self->{page}->menu;
   my $flag = shift;
      $flag =~s/#/$self->{flag}/g;
   $self->{page}->menu->add_block( $flag, @_ );
@@ -51,6 +52,7 @@ sub add_block {
 sub add_entry { 
   my $self = shift;
   return unless $self->{page}->can('menu');
+  return unless $self->{page}->menu;
   my $flag = shift;
      $flag =~s/#/$self->{flag}/g;
   $self->{page}->menu->add_entry( $flag, @_ );
@@ -107,14 +109,14 @@ sub mapview_possible {
 sub initialize_ddmenu_javascript {
   my $self = shift;
   $self->{page}->javascript->add_script( 'var LOADED = 0;' );
-  $self->{page}->javascript->add_source( '/js/dd_menus.js' );
+  $self->{page}->javascript->add_source( '/js/dd_menus_32.js' );
   $self->{page}->add_body_attr( 'onLoad' => 'LOADED = 1;' );
 }
 
 sub initialize_zmenu_javascript {
   my $self = shift;
   $self->{page}->javascript->add_script( 'var LOADED = 0;' );
-  $self->{page}->javascript->add_source( '/js/zmenu.js' );
+  $self->{page}->javascript->add_source( '/js/zmenu_32.js' );
   $self->{page}->javascript_div->add_div( 'jstooldiv', { 'style' => 'z-index: 200; position: absolute; visibility: hidden' } , '' );
   $self->{page}->add_body_attr( 'onLoad' => 'LOADED = 1;' );
 }

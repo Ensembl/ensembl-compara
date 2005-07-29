@@ -34,11 +34,13 @@ sub set_doc_type {
 }
 
 sub new {
-  my( $class ) = shift;
-  my $renderer = shift;
-  my $timer    = shift;
+  my( $class )     = shift;
+  my $renderer     = shift;
+  my $timer        = shift;
+  my $species_defs = shift;
   my $self = {
     'body_attr'         => {},
+    'species_defs'      => $species_defs,
     'doc_type'          => DEFAULT_DOCTYPE,
     'doc_type_version'  => DEFAULT_DOCTYPE_VERSION,
     'encoding'          => DEFAULT_ENCODING,
@@ -66,6 +68,7 @@ sub add_head_elements {
   }
 }
 
+sub species_defs { return $_[0]{'species_defs'}; }
 sub head_order :lvalue { $_[0]{'head_order'} }
 sub body_order :lvalue { $_[0]{'body_order'} }
 sub doc_type {

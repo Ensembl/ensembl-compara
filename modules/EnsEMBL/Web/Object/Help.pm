@@ -27,10 +27,10 @@ sub send_email {
     [ 'User agent',   $ENV{'HTTP_USER_AGENT'}],
     [ 'Request URI',  $ENV{'REQUEST_URI'}];
   my $message = '';
-  $message .= join "\n", map {sprintf("%16s %s","$_->[0]:",$_->[1])} @mail_attributes;
+  $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
   $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";
   my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
-  $mailer->open({ 'To' => $self->species_defs->ENSEMBL_HELPDESK_EMAIL, 'Subject' => "Helpdesk submission", });
+  $mailer->open({ 'To' => $self->species_defs->ENSEMBL_HELPDESK_EMAIL, 'Subject' => "Ensembl website Helpdesk", });
   print $mailer $message;
   $mailer->close();
   $self->problem( 'redirect',

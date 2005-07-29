@@ -11,6 +11,9 @@ use Text::Wrap;
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Static;
+use EnsEMBL::Web::SpeciesDefs;
+
+our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
 use Data::Dumper qw(Dumper);
 
@@ -29,7 +32,7 @@ sub handler {
     return OK if $r->header_only;
       
     my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( $r );
-    my $page     = new EnsEMBL::Web::Document::Static( $renderer );
+    my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
     $page->_initialize();
     $page->title->set( "500: Internal Server Error" );    
     # unless ($r->err_header_out('ensembl_headers_out')){  

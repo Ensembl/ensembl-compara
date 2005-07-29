@@ -13,6 +13,8 @@ use EnsEMBL::Web::Configuration;
 
 sub exonview {
   my $self   = shift;
+  $self->{object}->param( 'oexon', 'no' ) unless $self->{object}->input_param( 'oexon' ) eq 'yes';
+  $self->{object}->param( 'fullseq', 'no' ) unless $self->{object}->input_param( 'fullseq' ) eq 'yes';
   my @common = (
     'object' => $self->{object},
     'params' => { 'db' => $self->{object}->get_db, 'transcript' => $self->{object}->stable_id }
@@ -22,21 +24,28 @@ sub exonview {
     'caption' => 'Ensembl Exon Report', 
     'object'  => $self->{object}
   );
+  $self->add_form( $panel1,
+    qw(exonview_options EnsEMBL::Web::Component::Transcript::exonview_options_form)
+  );
   $panel1->add_components(qw(
     name        EnsEMBL::Web::Component::Gene::name
     stable_id   EnsEMBL::Web::Component::Gene::stable_id
     information EnsEMBL::Web::Component::Transcript::information
     location    EnsEMBL::Web::Component::Gene::location
     description EnsEMBL::Web::Component::Gene::description
+    opts        EnsEMBL::Web::Component::Transcript::exonview_options
   ));
   $self->{page}->content->add_panel( $panel1 );
+
   my $panel2 = new EnsEMBL::Web::Document::Panel::SpreadSheet(
     'code'    => "exons$self->{flag}",
     'caption' => 'Exon Information',
     @common,
     'status'  => 'panel_exons'
   );
-  $panel2->add_components(qw(exons       EnsEMBL::Web::Component::Transcript::spreadsheet_exons));
+  $panel2->add_components(qw(
+    exons       EnsEMBL::Web::Component::Transcript::spreadsheet_exons
+  ));
   $self->{page}->content->add_panel( $panel2 );
 
   my $panel3 = new EnsEMBL::Web::Document::Panel::Image(

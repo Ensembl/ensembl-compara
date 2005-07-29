@@ -11,7 +11,11 @@ use EnsEMBL::Web::Proxy::Factory;
 @EnsEMBL::Web::Object::Gene::ISA = qw(EnsEMBL::Web::Object);
 
 sub get_slice_object {
-  return new EnsEMBL::Web::Proxy::Object( 'Slice', $_[0]->Obj->feature_Slice, $_[0]->__data );
+  my $self = shift;
+  my $slice = $self->Obj->feature_Slice->expand( $self->param('flank5_display'), $self->param('flank3_display') );
+  my $T = new EnsEMBL::Web::Proxy::Object( 'Slice', $slice, $self->__data );
+  $T->highlight_display( $self->Obj->get_all_Exons );
+  return $T;
 }
 
 sub get_Slice {
@@ -138,7 +142,7 @@ sub date_format {
 
 sub location_string {
   my $self = shift;
-  return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start-5e3, $self->seq_region_end+5e3 );
+  return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
 }
 
 sub readable_location {

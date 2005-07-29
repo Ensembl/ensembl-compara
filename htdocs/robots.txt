@@ -1,0 +1,22 @@
+# robots.txt file to block indexing of some URLs
+
+User-agent: *
+Disallow: /cgi-bin/
+Disallow: /perl/
+Disallow: /Anopheles_gambiae/
+Disallow: /Apis_mellifera/
+Disallow: /Caenorhabditis_briggsae/
+Disallow: /Caenorhabditis_elegans/
+Disallow: /Canis_familiaris/
+Disallow: /Danio_rerio/
+Disallow: /Drosophila_melanogaster/
+Disallow: /Fugu_rubripes/
+Disallow: /Gallus_gallus/
+Disallow: /Homo_sapiens/
+Disallow: /Mus_musculus/
+Disallow: /Pan_troglodytes/
+Disallow: /Rattus_norvegicus/
+Disallow: /Tetraodon_nigroviridis/
+Disallow: /Xenopus_tropicalis/
+
+

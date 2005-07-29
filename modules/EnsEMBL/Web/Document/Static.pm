@@ -3,9 +3,6 @@ package EnsEMBL::Web::Document::Static;
 use strict;
 use EnsEMBL::Web::Document::Common;
 use CGI qw(escapeHTML);
-use EnsEMBL::Web::SpeciesDefs;
-
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
 our @ISA = qw(EnsEMBL::Web::Document::Common);
 
@@ -34,13 +31,13 @@ sub _initialize {
   $self->_common_HTML();
   
 ## Let us set up the search box...
-  $self->searchbox->sp_common  = $SD->SPECIES_COMMON_NAME;
+  $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 
   if( $ENV{'ENSEMBL_SPECIES'} ) { # If we are in static content for a species
-    foreach my $K ( sort @{($SD->ENSEMBL_SEARCH_IDXS)||[]} ) {
+    foreach my $K ( sort @{($self->species_defs->ENSEMBL_SEARCH_IDXS)||[]} ) {
       $self->searchbox->add_index( $K );
     }
-    my $T = $SD->SEARCH_LINKS || {};
+    my $T = $self->species_defs->SEARCH_LINKS || {};
     ## Now grab the default search links for the species
     foreach my $K ( sort keys %$T ) {
       if( $K =~ /DEFAULT(\d)_URL/ ) {
@@ -49,24 +46,26 @@ sub _initialize {
     }
   } else { # If we are in general static content...
     ## Grab all the search indexes...
-    foreach my $K ( $SD->all_search_indexes ) {
+    foreach my $K ( $self->species_defs->all_search_indexes ) {
       $self->searchbox->add_index( $K );
     }
     ## Note we have no example links here!!
   }
 
 ## Now the links on the left hand side....
+  my $species = $ENV{'ENSEMBL_SPECIES'} && $ENV{'ENSEMBL_SPECIES'} ne 'Multi' ? $ENV{'ENSEMBL_SPECIES'} : 'default';
+  my $species_m  = $species eq 'default' ? 'Multi' : $species;
   $self->menu->add_block( 'whattodo', 'bulleted', 'Use Ensembl to...' );
-  $self->menu->add_entry( 'whattodo', 'href' => "/multi/blastview", 'text'=>'Run a BLAST search' );
-  $self->menu->add_entry( 'whattodo', 'href'=>"/default/textview", 'text'=>'Search Ensembl' );
-  $self->menu->add_entry( 'whattodo', 'href'=>"/multi/martview", 'text'=>'Data mining [BioMart]', 'icon' => '/img/biomarticon.gif' );
-  $self->menu->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/perl/helpview?se=1;kw=upload','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Upload your own data' );
+  $self->menu->add_entry( 'whattodo', 'href' => "/$species_m/blastview", 'text'=>'Run a BLAST search' );
+  $self->menu->add_entry( 'whattodo', 'href'=>"/$species/".$self->species_defs->ENSEMBL_SEARCH, 'text'=>'Search Ensembl' );
+  $self->menu->add_entry( 'whattodo', 'href'=>"/$species_m/martview", 'text'=>'Data mining [BioMart]', 'icon' => '/img/biomarticon.gif' );
+  $self->menu->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/default/helpview?se=1;kw=upload','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Upload your own data' );
   $self->menu->add_entry( 'whattodo', 'href'=>"/info/data/download.html",
 			'text' => 'Download data');
+  if( $species ne 'default' ) {
+    $self->menu->add_entry( 'whattodo', 'href'=>"/$species/exportview", 'text' => 'Export data');
+  }
 #  $self->menu->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/perl/helpview?se=1;kw=karyoview','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Display your data on a karyotype diagram' );
-
-warn "This page is ".$ENV{'REQUEST_URI'};
-
 
   $self->menu->add_block( 'docs', 'bulleted', 'Docs and downloads' );
   $self->menu->add_entry( 'docs', 'href' => '/info/', 
@@ -98,10 +97,10 @@ warn "This page is ".$ENV{'REQUEST_URI'};
       'Chordates'=>[{'label'=>'Other chordates'}], 
       'Eukaryotes'=>[{'label'=>'Other eukaryotes'}]
     );
-    my @species_inconf = @{$SD->ENSEMBL_SPECIES};
+    my @species_inconf = @{$self->species_defs->ENSEMBL_SPECIES};
     foreach my $sp (@species_inconf) {
-      my $bio_name = $SD->other_species($sp, "SPECIES_BIO_NAME");
-      my $group = $SD->other_species($sp, "SPECIES_GROUP");
+      my $bio_name = $self->species_defs->other_species($sp, "SPECIES_BIO_NAME");
+      my $group = $self->species_defs->other_species($sp, "SPECIES_GROUP");
       my $hash_ref = {'href'=>"/$sp/", 'text'=>"<i>$bio_name</i>", 'raw'=>1};
       push (@{$spp_tree{$group}}, $hash_ref);
     }
@@ -119,13 +118,15 @@ warn "This page is ".$ENV{'REQUEST_URI'};
     $map_link = '/'.$species.$map_link;
   }
   $self->menu->add_entry( 'links', 'href' => $map_link, 'text' => 'Sitemap' );
-  $self->menu->add_entry( 'links', 'href' => 'http://vega.sanger.ac.uk', 'text' => 'Vega', 'icon' => '/img/vegaicon.gif', 
+  $self->menu->add_entry( 'links', 'href' => 'http://vega.sanger.ac.uk/', 'text' => 'Vega', 'icon' => '/img/vegaicon.gif', 
 	'title' => "Vertebrate Genome Annotation" );
+  $self->menu->add_entry( 'links', 'href' => 'http://trace.ensembl.org/', 'text' => 'Trace server', 
+	'title' => "trace.ensembl.org - trace server" );
 
-  if ($SD->ENSEMBL_SITE_NAME eq 'Ensembl') { # only want archive link on live Ensembl!
+  if ($self->species_defs->ENSEMBL_SITE_NAME eq 'Ensembl') { # only want archive link on live Ensembl!
   $self->menu->add_entry( 'links', 'href' => 'http://archive.ensembl.org', 'text' => 'Archive! sites' );
     my $URL = sprintf "http://%s.archive.ensembl.org%s",
-             CGI::escapeHTML($SD->ARCHIVE_VERSION),
+             CGI::escapeHTML($self->species_defs->ARCHIVE_VERSION),
              CGI::escapeHTML($ENV{'REQUEST_URI'});
     $self->menu->add_entry( 'links', 'href' => $URL, 'text' => 'Stable Archive! link for this page' );
   }

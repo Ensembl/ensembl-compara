@@ -14,7 +14,7 @@ sub new {
   my $class = shift;
   my $species_defs = shift;
   my $data = {
-    'proxy'     => $species_defs->ENSEMBL_WEB_PROXY,
+    'proxy'            => $species_defs->ENSEMBL_WWW_PROXY,
     'URLs'             => [@_],
     'browser_switches' => {},
     'tracks'           => {}
@@ -27,6 +27,7 @@ sub parse_URL {
   my $self = shift;
   my $ua = LWP::UserAgent->new();
   $ua->proxy( 'http', $self->{'proxy'} ) if $self->{'proxy'};
+  warn "SETTING PROXY...";
   foreach my $URL ( @{$self->{'URLs'}} ) {
     my $request = new HTTP::Request( 'GET', $URL );
     $request->header( 'Pragma' => 'no-cache' );

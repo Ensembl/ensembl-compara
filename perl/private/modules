@@ -1,0 +1,16 @@
+package modules;
+
+print "Content-type: text/plain\n\n";
+print "The following modules have been used\n";
+print "====================================\n\n";
+print modules( '::' );
+
+sub modules {
+  my( $module, $indent ) = @_;
+  return if length($indent)>30;
+  foreach my $mod ( sort grep /::$/, keys %$module ) {
+    print qq($indent$mod\n);
+    next if $mod eq 'main::';
+    &modules("$module$mod","$indent  ");
+  }
+}

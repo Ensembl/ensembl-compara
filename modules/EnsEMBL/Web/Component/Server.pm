@@ -19,6 +19,7 @@ Contact the EnsEMBL development mailing list for info <ensembl-dev@ebi.ac.uk>
 package EnsEMBL::Web::Component::Server;
 
 use EnsEMBL::Web::Component;
+use CGI qw(escapeHTML);
 our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
@@ -294,6 +295,10 @@ sub urlsource_form {
   my( $panel, $object ) = @_;
   my $script = $object->param( 'script' );
   my $form = EnsEMBL::Web::Form->new( 'urlsource', "/@{[$object->species]}/$script", 'get' );
+  $form->add_attribute( 'onSubmit', sprintf(
+    qq(if(on_submit(%s_vars)) { window.opener.location='/Homo_sapiens/contigview?l=%s&c=%s&w=%s&h=%s&data_URL='+this.data_URL.value; window.close(); return 1 } else { return 0 }),
+    'urlsource', $object->param('l'), $object->param('c'), $object->param('w'), CGI::escapeHTML( join('|',$object->param('h'),$object->param('highlight') ) )
+  ) );
   $form->add_element(
     'type'  => 'Information',
     'value' => '<p>This dialog allows you to attach a local web-based data-source to the Ensembl ContigView and CytoView displays</p>'
@@ -308,6 +313,7 @@ sub urlsource_form {
     'label' => "Date URL:",  'name' => 'data_URL',
     'value' => "http://",
   );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Add source' );
   return $form;
 }
 

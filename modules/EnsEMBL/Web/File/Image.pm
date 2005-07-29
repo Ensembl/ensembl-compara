@@ -2,7 +2,6 @@ package EnsEMBL::Web::File::Image;
 
 use strict;
 use Digest::MD5 qw(md5_hex);
-use EnsEMBL::Web::SpeciesDefs;
 use Image::Size;
 
 our $TMP_IMG_FORMAT     = 'XXX/X/X/XXXXXXXXXXXXXXX';
@@ -22,6 +21,7 @@ sub new {
   my $class = shift;
   my $self = {
     'cache'     => 0,
+    'species_defs' => shift,
     'token'     => '',
     'filename'  => '',
     'file_root' => '',
@@ -45,8 +45,8 @@ sub set_cache_filename {
   $self->{'token'}      = "$c1$c2$filename";
   $self->{'filename'}   = "$c1/$c2/$filename";
 
-  $self->{'file_root' } = EnsEMBL::Web::SpeciesDefs->ENSEMBL_TMP_DIR_CACHE;
-  $self->{'URL_root'}   = EnsEMBL::Web::SpeciesDefs->ENSEMBL_TMP_URL_CACHE;
+  $self->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR_CACHE;
+  $self->{'URL_root'}   = $self->{'species_defs'}->ENSEMBL_TMP_URL_CACHE;
 }
 
 sub set_tmp_filename {
@@ -55,8 +55,8 @@ sub set_tmp_filename {
   $self->{'cache'}      = 0;
   $self->{'token'}      = $filename;
   $self->{'filename'}   = $self->templatize( $filename, $TMP_IMG_FORMAT ); 
-  $self->{'file_root' } = EnsEMBL::Web::SpeciesDefs->ENSEMBL_TMP_DIR_IMG;
-  $self->{'URL_root'}   = EnsEMBL::Web::SpeciesDefs->ENSEMBL_TMP_URL_IMG;
+  $self->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR_IMG;
+  $self->{'URL_root'}   = $self->{'species_defs'}->ENSEMBL_TMP_URL_IMG;
 }
 
 sub extraHTML {

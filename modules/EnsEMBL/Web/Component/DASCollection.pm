@@ -294,7 +294,7 @@ sub das_wizard {
       $form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'post');
       $form->add_attribute('ENCTYPE', 'multipart/form-data');
     } else {
-      $form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'get'); 
+      $form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'post'); 
     }
 
     my @cparams = qw ( db gene transcript peptide conf_script c w h bottom);
@@ -693,7 +693,7 @@ sub das_wizard_3 {
     $form->add_element('select'=>'select',
                        'type'=>'DropDown',
                        'name'=>'DASdepth',
-                       'label'=>'Max raws to display:',
+                       'label'=>'Max rows to display:',
                        'values'=>\@dvalues,
                        'value' => $option
                        );

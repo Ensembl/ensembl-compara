@@ -33,6 +33,13 @@ use EnsEMBL::Web::BlastView::PanelMain;
 use EnsEMBL::Web::BlastView::PanelTop;
 use EnsEMBL::Web::BlastView::PanelStatus;
 
+use EnsEMBL::Web::Document::Renderer::Apache;
+use EnsEMBL::Web::Document::Static;
+use EnsEMBL::Web::Document::Dynamic;
+use EnsEMBL::Web::Configuration::Static;
+use EnsEMBL::Web::Document::Panel;
+
+use EnsEMBL::Web::File::Image;
 use vars qw( $SPECIES_DEFS $META_DATA $CGI $BLAST $PAGE $TICKET $DBCONNECTION );
 use vars qw( @JSCRIPT_EXTRA @ON_LOAD_EXTRA %CACHE_ON_LOAD_EXTRA); # Jscript 
 use vars qw( %ERRORS ); # Errors per-stage
@@ -79,7 +86,7 @@ MAIN:{
 
   # Create a new Page object
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
-  my $page     = new EnsEMBL::Web::Document::Dynamic( $renderer );
+  my $page     = new EnsEMBL::Web::Document::Dynamic( $renderer, undef, $SPECIES_DEFS );
   $page->_initialize_HTML;
   $page->masthead->sp_bio    ||= 'Multi';
   $page->masthead->sp_common ||= 'Multi';
@@ -148,7 +155,6 @@ MAIN:{
   $blast_adpt->ticket( $TICKET );
   use Apache;
   my $r = Apache->request();
-  warn "SETTING $TICKET";
   $ENV{'ticket'} = $TICKET;
   $r->subprocess_env->{'ticket'} = $TICKET;
   if( $CGI->param('format') eq 'raw' ){
@@ -176,11 +182,14 @@ MAIN:{
   foreach( $stage->get_javascript_onload ) {
     $page->add_body_attr( 'onload', $_ );
   }
+  $page->add_body_attr( 'onload', "LOADED = 1;"  );
   $page->stylesheet->add_sheet( 'all', '/css/blastview.css' );
-  $page->javascript->add_source( '/js/zmenu.js' );
+  $page->javascript->add_script( 'var LOADED = 0;' );
+  $page->javascript->add_source( '/js/zmenu_32.js' );
+  $page->javascript_div->add_div( 'jstooldiv', { 'style' => 'z-index: 200; position: absolute; visibility: hidden' } , '' );
+
 
   $| = 1;
-  warn "HEADER.................";
   CGI::header;
   $page->render_start;
 
@@ -268,8 +277,6 @@ MAIN:{
     }
     # Store
     if( $BLAST->modified or @run_list ){
-      warn( "STORING BLAST: $TICKET [PID=$$ TIME=".(time()-1060600000)."]" );
-      map{ warn( "STORING RUNER: ".ref($_)." to ".$_->token) } $BLAST->runnables;
       $BLAST->store;
     }
     # Run
@@ -350,16 +357,10 @@ sub is_script_suspended{
 #----------------------------------------------------------------------
 # 
 
-use EnsEMBL::Web::Document::Renderer::Apache;
-use EnsEMBL::Web::Document::Static;
-use EnsEMBL::Web::Document::Dynamic;
-use EnsEMBL::Web::Configuration::Static;
-use EnsEMBL::Web::Document::Panel;
-
 sub get_suspend_page{
   my $msg = shift;
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
-  my $page     = new EnsEMBL::Web::Document::Static( $renderer );
+  my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SPECIES_DEFS );
   my $T = new EnsEMBL::Web::Configuration::Static($page);
   $T->links();
   my $page->content->add_panel(
@@ -1157,7 +1158,7 @@ sub get_main_panel{
         if($status eq 'DISPATCHED'){ $status_label = "Job Queued" }
         if($status eq 'FAILED' ){
           $status_label = "System error; please <A href='/Multi/blastview'>resubmit</A> job. <BR>".
-            "If problem persists, file a <A href='/helpdesk'>report</A>";
+            "If problem persists, file a report using the help link above";
           my $token = $runnable->token;
           my $msg = "Blast job resulted in $failfile file:\n";
           open FAIL, $failfile;
@@ -1824,9 +1825,6 @@ sub populate_karyotype{
   );
   my $web_config   = $uca->getUserConfig('Vkaryotype');
 
-  warn "@{$chr_ref}";
-  warn "$chr_maxln";
-  warn ref $web_config;
   my $num_chrs = scalar( @$chrs_ref );
   $web_config->{'_rows'}                   = int( ($num_chrs-1)/12 ) + 1;
   $web_config->{'chromosomes'}             = $chrs_ref;
@@ -1836,22 +1834,17 @@ sub populate_karyotype{
   my $karyo_dc = Bio::EnsEMBL::VDrawableContainer->new(
     { '_config_file_name_' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
   );
-
-  my $img_type       = GD::Image->can( "png" ) ? "png" : "gif";
-  my $karyo_image    = $karyo_dc->render($img_type);
-  my $imagemap       = $karyo_dc->render('imagemap');
-  my $rand           = &Digest::MD5::md5_hex(rand());
-  my $karyo_filename = "$rand.karyo.$img_type";
-  my $karyo_href     = "$TMP_URL/$karyo_filename";
   
-  open(IMG_OUT, qq(>$TMP/$karyo_filename)) or
-    die qq(cannot open temporary karyogram image file: $!\n);
-  binmode IMG_OUT;
-  print IMG_OUT $karyo_image;
-  close(IMG_OUT);
+  my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
+     $fi->set_tmp_filename();
+     $fi->dc = $karyo_dc;
+     $fi->{'img_map'} = 1;
 
   $main_panel->add_entry();
-  my $html = sprintf( $karyo_tmpl, $karyo_href, $colour_key_str, $imagemap );
+  my $html = qq(<TABLE align="center" border="0" cellspacing="0" cellpadding="2">
+   <TR valign="top">
+     <TD nowrap align="center" colspan="2"
+       >).$fi->render_image_tag().qq(</TD></TR></TABLE>).$fi->render_image_map();
   $main_panel->add_form( $main_panel->get_form_label( $html ) );
   return 1;
 }
@@ -1895,23 +1888,12 @@ sub draw_hsp_vs_query{
     undef, undef, undef, undef, $SPECIES_DEFS );
   my $bucket = EnsEMBL::Web::Container::HSPContainer->new($result, $aligns);
   my $uconf  = $wuca->getUserConfig('hsp_query_plot');
-  #my $hsp_dc = Sanger::Graphics::DrawableContainer->new( $bucket, $uconf);
   my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $uconf);
 
-  my $TMP      = $SPECIES_DEFS->ENSEMBL_TMP_DIR_IMG;
-  my $TMP_URL  = $SPECIES_DEFS->ENSEMBL_TMP_URL_IMG;
-  my $img_type = GD::Image->can( "png" ) ? "png" : "gif";
-  my $hsp_img  = $hsp_dc->render($img_type);
-  my $hsp_map  = $hsp_dc->render('imagemap');
-  my $rand     = &Digest::MD5::md5_hex(rand());
-  my $hsp_file = "$rand.hsp.$img_type";
-  my $hsp_href = "$TMP_URL/$hsp_file";
-
-  open(IMG_OUT, qq(>$TMP/$hsp_file)) or
-    die qq(cannot open temporary hsp image file: $!\n);
-  binmode IMG_OUT;
-  print IMG_OUT $hsp_img;
-  close(IMG_OUT);
+  my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
+     $fi->set_tmp_filename();
+     $fi->dc = $hsp_dc;
+     $fi->{'img_map'} = 1;
 
   my @colours = qw( gold orange chocolate firebrick darkred );
   my @col_tds;
@@ -1921,9 +1903,12 @@ sub draw_hsp_vs_query{
   }
   my $colour_key_str = sprintf( $colours_tmpl,
                                 join( $colour_row_spacer, @col_tds ) );
+  my $html = qq(<TABLE align="center" border="0" cellspacing="0" cellpadding="2">
+   <TR valign="top">
+     <TD nowrap align="center" colspan="2"
+       >).$fi->render_image_tag().qq(</TD></TR></TABLE>).$fi->render_image_map();
 
   $main_panel->add_entry();
-  my $html = sprintf( $image_tmpl, $hsp_href, $colour_key_str, $hsp_map );
   $main_panel->add_form( $main_panel->get_form_label( $html ) );
   return 1;
 

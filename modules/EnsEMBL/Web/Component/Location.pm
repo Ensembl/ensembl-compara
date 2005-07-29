@@ -744,10 +744,10 @@ sub contigviewzoom_nav {
   my $wid = $panel->option('end') - $panel->option('start') + 1;
   my %additional_hidden_values = ( 'h' => $object->highlights_string );
   my $hidden_fields_string = join '', map { qq(<input type="input" name="$_" value="$additional_hidden_values{$_}" />) } keys %additional_hidden_values;
-  my $hidden_fields_URL    = join ';', map { qq($_=$additional_hidden_values{$_}) } keys %additional_hidden_values;
+  my $hidden_fields_URL    = join '', map { qq(;$_=$additional_hidden_values{$_}) } keys %additional_hidden_values;
 
-  my $zoom_ii = this_link( $object, ';zoom_width='.int($wid*2).";".$hidden_fields_URL );
-  my $zoom_h  = this_link( $object, ';zoom_width='.int($wid/2).";".$hidden_fields_URL );
+  my $zoom_ii = this_link( $object, ';zoom_width='.int($wid*2).$hidden_fields_URL );
+  my $zoom_h  = this_link( $object, ';zoom_width='.int($wid/2).$hidden_fields_URL );
   my $pan_left_1_win  = this_link_offset( $object, -0.8 * $wid, $hidden_fields_URL );
   my $pan_right_1_win = this_link_offset( $object,  0.8 * $wid, $hidden_fields_URL );
 
@@ -762,7 +762,7 @@ sub contigviewzoom_nav {
       $zoom .= "on";
       $selected = "1";
     }
-    my $zoomurl =  this_link( $object, ";zoom_width=$zoombp;$hidden_fields_URL" );
+    my $zoomurl =  this_link( $object, ";zoom_width=$zoombp$hidden_fields_URL" );
     my $unit_str = $zoombp;
     $zoom_HTML.=qq(<a href="$zoomurl"><img src="/img/buttons/$zoom.gif" 
      title="show $unit_str in zoom" alt="show $unit_str in zoom" class="cv_zoomimg" /></a>);
@@ -843,6 +843,7 @@ sub misc_set_form {
       { 'value' => 'acc_bac_map' , 'name' => 'Accessioned clones' },
       { 'value' => 'bac_map'     , 'name' => 'BAC clones'         },
       { 'value' => 'cloneset'    , 'name' => '1mb clone set'      },
+      { 'value' => 'fosmid_map'    , 'name' => 'Fosmid map'      },
     ];
   }
 

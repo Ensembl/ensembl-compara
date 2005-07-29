@@ -1,0 +1,145 @@
+<html>
+<head>
+<meta name="author" content="helpdesk" />
+<meta name="navigation" content="Ensembl Core and EST" />
+<title>Ensembl Core and EST</title>
+</head>
+
+<body>
+
+<h2>Ensembl Core</h2>
+
+
+<h3 class="boxed">Ensembl Core and EST Database</h3>
+
+<p>
+The database table layout is explained in the following document:
+</p>
+
+<ul>
+
+<li>
+<p>Core and EST database 
+<a href="./schema/">Schema Description</a>
+</p>
+</li>
+
+</ul>
+
+<h4>Core database</h4>
+<p>
+For each organism supported by Ensembl, a species-specific Ensembl Core database stores the genome sequences and the bulk of the annotation information.
+Some of the other features are:
+</p>
+
+<ul>
+
+<li>
+<p>
+The non-redundant set of Ensembl gene, transcript and protein models annotated by the automated genome analysis and <a href="/info/data/docs/genome_annotation.html">annotation pipeline</a>.
+</p>
+</li>
+
+<li>
+<p>
+Alignments of cDNAs and proteins to the genome sequence, which serve as source of biological evidence in the Ensembl annotation strategy.
+</p>
+</li>
+
+<li>
+<p>
+Sequence tagged sites (STS) marker information on physical sequence and genetic map locations.
+</p>
+</li>
+
+<li>
+<p>
+Cytogenetic banding patterns if a reliable banding pattern has been established for the organism.
+</p>
+</li>
+
+<li>
+<p>
+Microarray probe set annotation.
+</p>
+</li>
+
+<li>
+<p>
+External references to other databases of biological information.
+</p>
+</li>
+
+</ul>
+
+<h4><a id="est" name="est">EST database</a></h4>
+<p>
+For well-characterised species with a reasonable amount of biological sequence records as supporting evidence
+Ensembl provides an independent EST gene set, which is solely based on EST information.
+</p>
+
+<p>
+The layout of Ensembl EST Databases is identical to the Ensembl Core Database schema so that both schema descriptions and API access apply similarly.
+While EST genes are stored in gene, transcript, translation and exon tables like the Ensembl gene set, 
+the genome sequences are only stored in the corresponding Ensembl Core databases.
+This saves disk space and by connecting to the Core and the EST Database simultaneously, it is still possible to retrieve all sequence information.
+</p>
+
+
+<h3 class="boxed">Perl API for the Ensembl Core and EST databases</h3>
+
+<p>
+A comprehensive Perl Application Programme Interface (API) provides efficient access to tables within the Ensembl Core and EST databases.
+</p>
+
+<ul>
+
+<li>
+<p>
+<a href="../api_installation.html">Perl API Installation</a>: a step-by-step installation guide (for all Ensembl APIs)
+</p>
+</li>
+
+<li>
+<p>Core and EST database
+<a href="../Pdoc/ensembl/">API Documentation</a>: a complete reference to the object and methods used in the Core and EST database API (Pdoc)
+</p>
+</li>
+
+<li>
+<p>Core and EST database 
+<a href="./core_tutorial.html">API Tutorial</a>: an introduction to the underlying concepts of the API
+</p>
+</li>
+
+</ul>
+
+
+
+<h3 class="boxed">Java API</h3>
+<p>
+The Ensembl Java API (Ensj) is slightly less complete than the Perl APIs but implements access to Ensembl
+<a href="../core/index.html">Core</a>,
+<a href="../compara/index.html">Compara</a> and
+<a href="../variation/index.html">Variation</a> Databases simultaneously.
+</p>
+
+<ul>
+<li>
+<p>
+<a href="../java/index.html">Java API Documentation</a>
+</p>
+</li>
+</ul>
+
+
+<h3 class="boxed" id="support">Ensembl Software Support</h3>
+
+<p>
+Ensembl is an open project and we would like to encourage correspondence and discussions on any subject on any aspect of Ensembl.
+Please see the
+<a href="../../about/contact.html">Ensembl Contacts</a> page for suitable options getting in touch with us.
+</p>
+
+</body>
+</html>

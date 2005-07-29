@@ -161,7 +161,6 @@ sub exportview {
     'code'    => 'stage1_form',
     'caption' => qq(Select region/feature to Export)
   );
-  warn "@{$self->{object}->problem}";
   $self->add_form( $panel1, qw(stage1_form EnsEMBL::Web::Component::Export::stage1_form) );
   $panel1->add_components( qw(stage1 EnsEMBL::Web::Component::Export::stage1) );
   $self->add_panel( $panel1 );

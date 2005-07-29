@@ -12,10 +12,10 @@ our %formats = (qw(
 ));
 
 sub new {
-  my( $class, $panel_name ) = @_;
+  my( $class, $species_defs, $panel_name ) = @_;
   my $self = {
     'panel'              => $panel_name,
-
+    'species_defs'       => $species_defs,
     'drawable_container' => undef,
     'menu_container'     => undef,
     'imagemap'           => 'no',
@@ -118,7 +118,6 @@ sub do_chr_layout {
         $h_spacing += $max_label * 5;
         $h_padding = '4';
     }
-   warn "Rows now $rows!"; 
     $config->{'general'}->{$config_name}->{'_settings'}->{'width'} =
                 $chr_length + $v_padding;
     $config->{'general'}->{$config_name}->{'Videogram'}->{'padding'} =
@@ -376,7 +375,7 @@ sub add_image_format  { push @{$_[0]->{'image_formats'}}, $_[1]; }
 sub exists { 
   my $self = shift;
   return 0 unless $self->cacheable eq 'yes';
-  my $image = new EnsEMBL::Web::File::Image();
+  my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
   $image->set_cache_filename( $self->image_name );
   return $image->exists;
 }
@@ -385,7 +384,7 @@ sub render {
   my $self = shift;
   my $HTML = $self->introduction;
   ## Here we have to do the next bit which is to draw the image itself;
-  my $image = new EnsEMBL::Web::File::Image( );
+  my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
   $image->dc = $self->drawable_container;
   if( $self->imagemap eq 'yes' ) {
     $image->{'img_map'} = 1;

@@ -110,7 +110,6 @@ sub jalview_link_for {
   my $file      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN";
   $object->make_directory( $file );
   my $URL       = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
-  warn $file;
   if( open FASTA,   ">$file" ) {;
     foreach my $member_attribute (@$refs){
       my ($member, $attribute) = @$member_attribute;

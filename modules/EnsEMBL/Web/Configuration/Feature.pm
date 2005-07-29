@@ -19,8 +19,9 @@ sub featureview {
   my $self   = shift;
 
   # this is a two-step view, so we need 2 separate sections
-  if ($self->{'object'}->param('id')) {
-    # Step 2 - user has chosen feature
+  my %data = %{$self->{'object'}->__data};
+  if ($self->{'object'}->param('id') && $data{'_object'}) {
+    # Step 2 - user has chosen valid feature
     my $type = $self->{'object'}->param('type');
     my $id   = $self->{'object'}->param('id');
     if ($type eq 'Gene') {

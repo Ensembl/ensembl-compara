@@ -64,7 +64,7 @@ sub handler {
   #  $pageContent =~ s/<!--#include\s+virtual\s*=\s*\"(.*)\"\s*-->/template_INCLUDE($r, $1)/eg;
 
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( $r );
-  my $page     = new EnsEMBL::Web::Document::Static( $renderer );
+  my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
 
   $page->_initialize();
 
@@ -128,28 +128,21 @@ sub template_INCLUDE {
   my( $r, $include ) = @_;
   $include =~ s/\{\{([A-Z]+)::([^\}]+)\}\}/my $m = "template_$1"; no strict 'refs'; &$m($r,$2);/ge;
   my $content = "";
-  my $filename = $r->document_root . "/" .$include;
   #warn $filename;
     # Doh! Test file isn't a directory
-  foreach my $root ( @ENSEMBL_HTDOCS_DIRS ) {
-    my $filename = $r->document_root . "/" .$include;
-    if(-d $filename) {
-      $r->log->error("Cannot include virtual directory: ", $filename);
-      $content = "[Cannot include virtual directory]";
-    } elsif( ! -e $filename) {
-      $r->log->error("Cannot include virtual file: does not exist: ", $filename);
-      $content = "[Cannot include virtual file: does not exist]";
-    } else {
+  foreach my $root (  @ENSEMBL_HTDOCS_DIRS ) {
+    my $filename = "$root/$include";
+    if( -f $filename && -e $filename) {
       my $fh = Apache::File->new($filename);
-      if( $fh  ) {
+      if( $fh ) {
         local($/) = undef;
         $content = <$fh>;
-      } else { 
-        $content = "[Cannot include virtual file. Permissions deny server access]";
-        $r->log->error("Cannot include virtual file. Permissions deny server access: ", $filename);
+        return $content;
       }
     }
   }
+  $r->log->error("Cannot include virtual file: does not exist or permission denied ", $include);
+  $content = "[Cannot include virtual file: does not exist or permission denied]";
   return $content;
 }
 

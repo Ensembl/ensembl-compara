@@ -10,7 +10,7 @@ sub new {
   my $class = shift;
   my $self = { 'exists' => 'yes' };
   bless $self, $class;
-  my $filename = shift || EnsEMBL::Web::SpeciesDefs->ENSEMBL_TMP_DIR.$self->temp_file_name;
+  my $filename = shift || EnsEMBL::Web::SpeciesDefs->ENSEMBL_TMP_DIR.'/'.$self->temp_file_name;
   $filename .= '.gz';
   $self->{ 'filename' } =  $filename;
   return $self if $self->exists( $filename );

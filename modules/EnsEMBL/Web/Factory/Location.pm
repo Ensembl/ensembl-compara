@@ -315,7 +315,7 @@ sub createObjects {
                    $self->param( 'wvc_end' )   || $self->param( 'fpos_end' )   ||
                    $self->param( 'end' );
   if( defined $self->param('l') ) {
-    ($seq_region,$start,$end) = $self->param('l') =~ /^(\w+):(-?[.\w]+)-([.\w]+)$/;
+    ($seq_region,$start,$end) = $self->param('l') =~ /^([\w\.]+):(-?[.\w]+)-([.\w]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
   } 
@@ -360,7 +360,6 @@ sub createObjects {
   if( @anchorview ) {
     foreach my $O ( @anchorview ) {
       my( $ftype, $temp_id ) = @$O;
-      warn "{{{{ $ftype -- $temp_id }}}}";
       if( $ftype eq 'gene' ) {
         $location = $self->_location_from_Gene( $temp_id );
       } elsif( $ftype eq 'transcript' ) { 
@@ -531,6 +530,8 @@ sub merge {
     $start = $o->seq_region_start if $o->seq_region_start < $start;
     $end   = $o->seq_region_end   if $o->seq_region_end   > $end;
   }
+  $start -= $self->param('downstream') || 0;
+  $end   += $self->param('upstream') || 0;
   $self->clearDataObjects();
   $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Location', {
     'type'              => 'merge',

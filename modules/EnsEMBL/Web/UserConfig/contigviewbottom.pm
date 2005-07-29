@@ -31,7 +31,7 @@ sub init {
         matepairs   bacs  bac_bands  tilepath  tilepath2  bacends misc_bacends
         ruler     scalebar  stranded_contig
         sequence  codonseq  codons gap gcplot encode
-	encode_region
+	encode_region fosmid_map
 
         restrict redbox),
     # qw( zfish_est ),
@@ -141,6 +141,7 @@ sub init {
          [ 'matepairs'       => 'Matepairs' ],
          [ 'bacends'         => 'BACends' ],
          [ 'bacs'            => 'BACs' ],
+         [ 'fosmid_map'      => 'Fosmid map' ],
          [ 'bac_bands'	     =>	'BAC band' ],
 	 [ 'gap'             => 'Gaps' ],
          [ 'restrict'        => 'Rest.Enzymes' ],
@@ -592,6 +593,24 @@ sub init {
     'dep'       => '9999',
       'str'       => 'r',
     },
+  'fosmid_map' => {
+    'on' => 'on',
+    'height' => 5,
+    'pos' => '8028',
+    'col' => 'purple2',
+    'lab' => 'black',
+    'available' => 'features mapset_fosmid_map',
+    'colours' => {
+      'col' => 'purple2',
+      'lab' => 'black'
+    },
+    'str' => 'r',
+    'dep' => '9999999',
+    'threshold_navigation' => '100000',
+    'full_threshold'     => '50000',
+    'outline_threshold'  => '350000'
+  },
+
     'bacs' => {
       'on'      => "off",
       'pos'       => '8026',

@@ -75,7 +75,6 @@ sub run {
 
   # Do the deed
   my $command = $self->command;
-  warn ">>>> $command <<<<";
   $self->dispatch_bsub( $command );
 
   $self->debug( "BLAST COMMAND: "  .$command."\n" );
@@ -154,7 +153,6 @@ sub command_bsub{
 sub _repeatmask{
   my $self = shift;
   #TODO: expunge SpDefs
-  warn ".... repeat_masker_called";
   $ENV{BLASTREPEATMASKER} = $SPECIES_DEFS->ENSEMBL_REPEATMASKER;
   return $self->SUPER::_repeatmask(@_);
 }
@@ -202,8 +200,6 @@ sub command{
     else{ $param_str .= " $param" }
   }
 
-  warn ">>>>>>>>>>>> @{[$SPECIES_DEFS->ENSEMBL_BLAST_BIN_PATH]} <<<<<<<<<<<<";
-  warn ">>>>>>>>>>>> @{[$SPECIES_DEFS->ENSEMBL_BLAST_DATA_PATH]} <<<<<<<<<<<<";
   return join( ' ', $SPECIES_DEFS->ENSEMBL_BLAST_BIN_PATH."/".$self->program_path,
                     $SPECIES_DEFS->ENSEMBL_BLAST_DATA_PATH."/$database", '[[]]', $param_str);
 }
@@ -249,7 +245,6 @@ sub dispatch_bsub {
     my $pid;
     local *BSUB;
    
-   warn "#### dispatch_bsub_called";
    my $repeatmask_command = '/data/bin/RepeatMasker';
 
    if( open(BSUB, qq(|bsub -c 120 -q $queue -J $ticket -o /dev/null -f "$client_fasta_file > $server_fasta_file") )) {
@@ -280,7 +275,6 @@ sub dispatch_bsub {
                            qq(lsrcp "$server_flag_file" "$host:$client_flag_file") ); # Copy all files back...
       $self->_add_command( qq(rm -f /tmp/$ticket.*) );                         # Now tidy up the temporary files
       $self->_add_command( 'exit $status' );
-      warn $self->_command_string();
       print BSUB $self->_command_string();
       close BSUB;
       if ($? != 0) {
@@ -299,7 +293,6 @@ sub _init_command_string {
 
 sub _add_command {
   my $self = shift;
-  warn join "\n",@_,"";
   $self->{'command_string'} .= join "\n", @_, '';
 }
 

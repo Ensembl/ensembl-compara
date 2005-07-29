@@ -21,7 +21,6 @@ sub spreadsheet_markerMapLocations {
     { 'key' => 'lod', 'align'=>'center', 'title' => 'LOD Score'  },
   );
   foreach my $ml (@{$data->markerMapLocations($data)}) {
-    warn "... $ml";
     $panel->add_row( {
       'map' => $ml->map_name,
       'syn' => $ml->name || '-',

@@ -33,14 +33,14 @@ sub dotterview {
     'v_border'   => 160,
     'dotter_bin_file' => $dotter_bin_file
   });
-  my $img = new EnsEMBL::Web::File::Image();
+  my $img = new EnsEMBL::Web::File::Image( $object->species_defs );
      $img->set_tmp_filename();
      $img->{'img_map'} = 1;
      $img->dc = $dotter;
   my $T = $img->render_image_tag;
   $panel->print( $img->render_image_tag );
   $panel->print( $img->render_image_map );
-  warn( $dotter_bin_file );
+  unlink( $dotter_bin_file );
   return 1;
 }
 

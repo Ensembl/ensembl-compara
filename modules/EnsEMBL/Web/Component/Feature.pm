@@ -136,13 +136,14 @@ sub spreadsheet_featureTable {
       $object->species, $row->{'region'}, int( ($row->{'start'} + $row->{'end'} )/2 ), 
       $row->{'length'} + 1000, join( '|',split(/\s+/,$row->{'label'}),$row->{'extname'}), $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'strand'} 
     ) if $row->{'region'};
-    $names = sprintf('<a href="/%s/geneview?gene=%s">%s</a>',
-      $object->species, $row->{'label'}, $row->{'label'}) if $row->{'label'};
-    if( $data_type eq 'gene' ) {
-      $extname = $row->{'extname'}, 
-      $desc =  $row->{'extra'}[0];
-      $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names, };
+    if ($data_type eq 'gene') {
+        $names = sprintf('<a href="/%s/geneview?gene=%s">%s</a>',
+            $object->species, $row->{'label'}, $row->{'label'}) if $row->{'label'};
+        $extname = $row->{'extname'}, 
+        $desc =  $row->{'extra'}[0];
+        $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names, };
     } else {
+      $names = $row->{'label'} if $row->{'label'};
       $length = $row->{'length'},
       $data_row = { 'loc'  => $contig_link, 'length' => $length, 'names' => $names, };
     }
@@ -169,7 +170,8 @@ sub show_karyotype {
   my( $panel, $object ) = @_;
   # sanity check - does this species have chromosomes?
   my $SD = EnsEMBL::Web::SpeciesDefs->new();
-  my $status = $SD->user_config($object->species, 'ASSEMBLY_STATUS');
+  my $status = $SD->get_config($object->species, 'ASSEMBLY_STATUS');
+warn "Status $status";
   if ($status eq 'FULL') { 
     my $karyotype = create_karyotype($panel, $object);
     $panel->print($karyotype->render);

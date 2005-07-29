@@ -1,11 +1,10 @@
 /* Stylesheet for print version of site */
 body, h2, h4 { color:#000000; }
-body { background-image:url(/img/printlogos.png); 
-       background-position:top right; }
+body { background-image:url(/img/printlogos.png); background-position:top right; }
 
 #related, #search, #help, #release-t { display: none }
 
-#copy, #a1, #a2, #page, #i1, #i2, #related, #related-box { border:none !important; border-style:none; border-width:0px; border-left-width:0px; border-color:transparent; }
+#copy, #copy #a1, #copy #a2, #page, #page #i1, #page #i2 { border:none; border-style:none; border-width:0px; border-left-width:0px; border-color:transparent; }
 
 #release { position: absolute; right: 0.4em; top: 0.4em; z-index: 10; margin:0px; padding:0px; border: 0px; border-style:none; border-width:0px; border-color:transparent; background-color:transparent; text-align:right; color:#000000; }
 

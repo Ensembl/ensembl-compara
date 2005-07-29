@@ -13,8 +13,9 @@ sub new {
     'alt'         => 'Resize image'
   ); 
   my $LINK = sprintf qq(/%s/%s?%s), $self->{'species'}, $self->{'script'}, $self->{'LINK'};
-  foreach( qw(700 900 1200 1500 2000 ) ) {
-    $self->add_link( ($_==$self->{'scriptconfig'}->get('image_width') ? "* " : '' ). "Width $_".'px', $LINK."image_width=$_", '' );
+  foreach( 6..20 ) {
+    my $w = $_*100;
+    $self->add_link( ($w==$self->{'scriptconfig'}->get('image_width') ? "* " : '' ). "Width $w".'px', $LINK."image_width=$w", '' );
   }
   return $self;
 }

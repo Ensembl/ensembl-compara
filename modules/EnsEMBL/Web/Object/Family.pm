@@ -70,7 +70,6 @@ sub get_all_genes{
        $genefactory->createGenesByFamily( $self );
     $self->__data->{'_geneDataList'} = $genefactory->DataObjects;
   }
-  warn @{$self->__data->{'_geneDataList'}};
   return $self->__data->{'_geneDataList'};
 }
 

@@ -735,11 +735,11 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'zfish_cdna', 'D.rerio cDNAs', $POS++,
-        'SUBTYPE'    => sub { return $_[0] =~ /WZ/ ? 'WZ' : 'IMCB_HOME' },
+        'SUBTYPE'    => sub { return $_[0] =~ /WZ/ ? 'WZ' : ( $_[0] =~ /IMCB/ ? 'IMCB_HOME' : 'EMBL' ) },
         'ID'         => sub { return $_[0] =~ /WZ(.*)/ ? $1 : $_[0] },
         'LABEL'      => sub { return $_[0] },
         'ZMENU'      => [ 'EST cDNA', "EST: ###LABEL###" => '###HREF###' ],
-        'URL_KEY'    => { 'WZ' => 'WZ', 'IMCB_HOME' => 'IMCB_HOME' },
+        'URL_KEY'    => { 'WZ' => 'WZ', 'IMCB_HOME' => 'IMCB_HOME', 'EMBL' => 'EMBL' },
                              ,@_ );
   $self->add_new_track_cdna( 'Exonerate_cDNA', 'Ciona cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'Btaurus_Exonerate_cDNA',   'Cow cDNAs', $POS++, @_ );
@@ -791,7 +791,9 @@ sub ADD_ALL_EST_FEATURES {
   my @EST_DB_ESTS = (
     [ 'bee_est',               'Bee EST' ],
     [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
+    [ 'human_est_exonerate',   'Human EST (ex.)' ],
     [ 'ciona_est',             'Ciona EST' ],
+    [ 'drosophila_est',        'Fly EST' ],
     [ 'drosophila_est',        'Fly EST' ],
     [ 'fugu_est',              'Fugu EST' ],
     [ 'RNA',                   'Mosquito EST' ],
@@ -877,8 +879,7 @@ sub ADD_ALL_PREDICTIONTRANSCRIPTS {
   $self->add_new_track_predictiontranscript( 'gws_h','Genewise (Human)','orange',$POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
   $self->add_new_track_predictiontranscript( 'gws_s','Genewise (Mouse)','orange',$POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
 #for vega 
-  $self->add_new_track_predictiontranscript( 'fgenesh', 'Fgenesh', 'darkkhaki', $POS ++, {}, 
-											 'available' => 'features Fgenesh', 'glyphset'=>'fgenesh', @_);
+  $self->add_new_track_predictiontranscript( 'fgenesh', 'Fgenesh', 'darkkhaki', $POS ++, {}, @_ ); # 'available' => 'features Fgenesh', @_ ); # , 'glyphset'=>'fgenesh', @_);
   $self->add_new_track_predictiontranscript( 'vega_genscan', 'Genscan', 'lightseagreen', $POS ++, {}, 
 											 'glyphset'=>'genscan', @_);
   return $POS;

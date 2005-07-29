@@ -40,7 +40,6 @@ use vars qw( @ISA
              @PARAMETER_SENSITIVITIES );
 
 use Bio::Tools::Run::Search;
-use EnsEMBL::Web::SpeciesDefs;
 
 @ISA = qw( Bio::Tools::Run::Search );
 

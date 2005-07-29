@@ -134,7 +134,8 @@ sub stable_id {
   my $db        = $object->get_db;
   my $o_type    = $object->type_name;
   my $label     = "$db_type $o_type ID";
-  my $geneid    = $object->stable_id;
+  my $geneid    = $object->stable_id ;
+  return 1 unless $geneid;
   my $vega_link = '';
   if( $db_type eq 'Vega' ){
     $vega_link = sprintf qq(<span class="small">[%s]</span>),
@@ -204,6 +205,7 @@ sub description {
      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/EC_URL($object,$1)/e;
      $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
   my($edb, $acc) = ($1, $2);
+  return 1 unless $description;
   my $label = 'Description';
   my $html = sprintf qq(\n     <p>%s%s</p>), $description,
     $acc ? qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) : '' ;
@@ -221,7 +223,7 @@ sub method {
     $text = $gene->gene->analysis->description if $gene->gene->analysis->description;
   } else {
     my $o = $gene->Obj;
-    my $logic_name = $o->analysis ? $o->analysis->logic_name : '';
+    my $logic_name = $o->can('analysis') && $o->analysis ? $o->analysis->logic_name : '';
     if( $logic_name ){
       my $confkey = "ENSEMBL_PREDICTION_TEXT_".uc($logic_name);
       $text = $gene->species_defs->$confkey;
@@ -231,8 +233,7 @@ sub method {
       $text   = $gene->species_defs->$confkey;
     }
   }
-  $panel->add_row( $label, sprintf(qq(
-    <p>%s</p>), CGI::escapeHTML( $text ))
+  $panel->add_row( $label, sprintf(qq(<p>%s</p>), $text )
   );
   return 1;
 }
@@ -366,7 +367,7 @@ sub diseases {
     for my $omim (sort @{$omim_list->{$description}}){
       $html.= sprintf( qq(
           <li>[Omim ID: %d] - 
-            <a href="/@{[$gene->species]}/diseaseview?omimid=%d">View disease information</a>
+            <a href="/@{[$gene->species]}/featureview?type=Disease;id=%d">View disease information</a>
           </li>), $omim, $omim );
     }
     $html.= qq(
@@ -866,7 +867,6 @@ sub genesnpview {
       ]
     } sort { $a->[0] <=> $b->[0] } @{$object->__data->{'SNPS'}};
 ## Cache data so that it can be retrieved later...
-    warn "SIZE OF SNPS2 = ".@snps2." SIZE OF SNPS ".@{$object->__data->{'SNPS'}};
     $object->__data->{'gene_snps'} = \@snps2;
     foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
       $trans_obj->__data->{'transformed'}{'gene_snps'} = \@snps2;

@@ -8,6 +8,9 @@ use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Static;
 
+use EnsEMBL::Web::SpeciesDefs;
+our $SD = EnsEMBL::Web::SpeciesDefs->new();
+
 my %error_messages = (
   404 => [
     'Page not found' ,
@@ -45,7 +48,7 @@ sub handler {
   warn "$error_number ERROR: $error_subject $error_URL\n";
   
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( $r );
-  my $page     = new EnsEMBL::Web::Document::Static( $renderer );
+  my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
 
   $page->_initialize();
 

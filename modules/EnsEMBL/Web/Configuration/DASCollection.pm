@@ -22,7 +22,6 @@ sub dasconfview {
     my @cparams = qw ( db gene transcript peptide );
     my $confparams = '';
     foreach my $param (grep { !/^DAS|^_das/ } $obj->param()) {
-      warn ">>DAS $param > ",$obj->param($param);
       $confparams .= ";$param=".$obj->param($param) if defined $obj->param($param);
     }
 

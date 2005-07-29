@@ -275,7 +275,7 @@ sub render {
         return;
       }
     }
-    $self->renderer->print(qq(\n<div class="panel">));
+    my $HTML = qq(\n<div class="panel">);
     my $cap = '';
     if( exists $self->{'status'} ) {
       my $URL = sprintf '/%s/%s?%s=%s', $self->{'object'}->species, $self->{'object'}->script, $self->{'status'}, $status eq 'on' ? 'off' : 'on';
@@ -293,11 +293,12 @@ sub render {
       my $level = $first ? 'h2' : 'h2' ;
       $level .= ' class="print_hide"' if $status eq 'off';
       if( $self->{'link'} ) {
-        $self->renderer->printf(qq(\n  <%s><a href="%s">%s</a></%s>), $level, $self->{'link'}, $cap, $level );
+        $HTML .= sprintf( qq(\n  <%s><a href="%s">%s</a></%s>), $level, $self->{'link'}, $cap, $level );
       } else {
-        $self->renderer->printf(qq(\n  <%s>%s</%s>), $level, $cap, $level );
+        $HTML .= sprintf( qq(\n  <%s>%s</%s>), $level, $cap, $level )
       }
     }
+    $self->renderer->print($HTML);
     if( $status ne 'off' ) {
       if( $self->{'cacheable'} eq 'yes' ) { ### We can cache this panel - so switch the renderer!!!
         my $temp_renderer = $self->renderer;

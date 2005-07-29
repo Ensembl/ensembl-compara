@@ -1,0 +1,172 @@
+#!/usr/local/bin/perl
+
+=head1 NAME
+
+utils:Blastssaha - create list of blast and ssaha db in use
+
+=head1 SYNOPSIS
+
+This script outputs a list of files that are in use as blast and ssaha databases files according to the $SERVERROOT/conf/<species>.ini files.
+
+The databases for the species given with the --nospecies argument are omitted
+(as they are assumed to be those that are no longer in use)
+
+./list_blast_ssaha [options]
+
+Options:
+  --nospecies, --datasources
+
+Example:
+  Compile a list of species that have a new gene build (need new blast databases
+  only) and those that have assembly changes (new ssaha and blast db) from
+  release notes/emails.
+
+  Run this script with the species that need new blast/ssaha databases
+  in the species argument.
+
+  The output is a list of all currently configured databases for each species
+   
+   ./list_blast_ssaha --nospecies Caenorhabditis_elegans --datasources ssaha
+   ./list_blast_ssaha --nospecies Caenorhabditis_elegans --datasources blast
+
+  Delete all datasources that are not in use. Check the pre-site too.
+
+=head1 OPTIONS
+
+B<--nospecies>
+   Optional: if no species is specified, all species will be done
+   List the species THAT ARE DUE TO CHANGE IN THE RELEASE
+
+B<-- datasources>
+  Optional. Default is all datasources.  Use this to narrow your search.
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints all the help information.
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Produces a list for all species (excluding those listed in --nospecies) of 
+the blast files and ssaha server configured in the ini file (SERVERROOT/conf/$species.ini)
+
+More on --datasources: Valid options are:
+
+B<  all:> blast, ssaha
+
+B<  blast>; Lists all the files in use for these datasources: 
+  BLASTN_DATASOURCES 
+  TBLASTX_DATASOURCES 
+  TBLASTN_DATASOURCES 
+  BLASTP_DATASOURCES 
+  BLASTX_DATASOURCE
+
+B<  ssaha>; Lists all the ssaha servers in use: SSAHA_DATASOURCES
+
+
+=head1 LICENCE
+
+This code is distributed under an Apache style licence:
+Please see http://www.ensembl.org/code_licence.html for details
+
+=head1 CONTACT
+
+Fiona Cunningham <webmaster@sanger.ac.uk>
+
+=cut
+
+
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+use vars qw( $SERVERROOT );
+BEGIN{
+  $SERVERROOT = dirname( $Bin );
+  unshift @INC, "$SERVERROOT/conf";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+}
+
+use strict;
+use warnings;
+use EnsEMBL::Web::BlastView::Tool;
+use Pod::Usage;
+use Getopt::Long;
+  
+my $self = shift;
+my @SPECIES;
+my @datasources;
+my $inuse;
+my $info;
+my $help;
+
+&GetOptions(
+    'nospecies:s'  => \@SPECIES, ## species which can be deleted
+    'datasources:s' => \@datasources,
+    'help'          => \$help,
+    'info'          => \$info,
+) || pod2usage(2);
+pod2usage1(-verbose => 2) if $info;
+pod2usage(-verbose => 1) if $help;
+@datasources = qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES 
+		   TBLASTN_DATASOURCES BLASTP_DATASOURCES 
+		   BLASTX_DATASOURCES SSAHA_DATASOURCES) unless @datasources;
+
+
+my $search_db;
+my $count_spp;
+if (@SPECIES) {
+  my $input_spp = EnsEMBL::Web::BlastView::Tool::check_species(\@SPECIES);
+
+  # Create a list of all species that are the same 
+  # (i.e. diffce between $input_spp and all species)
+  my @ok_species;
+  my %bad_list;
+  map { $bad_list{$_} = 1 } @$input_spp;
+
+  foreach my $spp (@{ EnsEMBL::Web::BlastView::Tool::all_species() } ) {
+    push (@ok_species, $spp) unless $bad_list{$spp};
+    $count_spp++;
+  }
+  $search_db = db_in_use( \@ok_species, \@datasources);
+}
+else {
+  $search_db = db_in_use( EnsEMBL::Web::BlastView::Tool::all_species, \@datasources);
+  die "Need to list all species whose data will not change in --species argument" if $inuse;
+}
+print_dbs($search_db);
+print scalar @SPECIES, " species will be replaced with new data (total species: $count_spp):\n", join "\n", @SPECIES,"\n" if @SPECIES;
+
+
+sub db_in_use {
+  my $species = shift;
+  my $datasources = shift;
+  my %search_db;
+
+  foreach my $spp (sort @$species) {
+    foreach my $source (@$datasources) {
+      my %tmp = %{EnsEMBL::Web::BlastView::Tool::get_config(  { species=>$spp, 
+					      values => $source}   )};
+      map {$search_db{$spp}{ $tmp{$_} } = 1 unless $tmp{$_} eq 'dna' or $tmp{$_} eq 'peptide' } (keys %tmp);
+    }
+  }
+  return \%search_db;
+}
+
+
+sub print_dbs {
+  my $species_dbs = shift;
+  foreach my $species  (sort keys %$species_dbs) {
+    print "[Species] $species\n";
+    print join "\n", (sort keys %{ $species_dbs->{$species} } );
+    print "\n\n";
+  }
+  print "\nKEEP PRE DATABASES TOO\n\n";
+  return;
+}
+
+1;
+

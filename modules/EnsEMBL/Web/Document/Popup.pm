@@ -2,8 +2,6 @@ package EnsEMBL::Web::Document::Popup;
 
 use strict;
 use EnsEMBL::Web::Document::Common;
-use EnsEMBL::Web::SpeciesDefs;
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
 our @ISA = qw(EnsEMBL::Web::Document::Common);
 

@@ -8,6 +8,10 @@ sub init {
   $script_config->_set_defaults(qw(
     panel_exons      on
     panel_supporting on
+    sscon            25
+    flanking         50
+    fullseq          no
+    oexon            no
   ));
 }
 1;

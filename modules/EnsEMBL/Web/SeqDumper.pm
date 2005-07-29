@@ -33,7 +33,7 @@ This method overrides the parent class dump method so that
 it passes the $panel around rather than the file handle that
 the parent class passes around
 
-=
+=cut
 
 sub dump {
   my ($self, $slice, $format, $panel) = @_;

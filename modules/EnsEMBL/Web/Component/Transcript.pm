@@ -14,7 +14,6 @@ no warnings "uninitialized";
 
 sub tn_external {
   my( $panel, $object ) = @_;
-  warn "CALLED";
   my $DO = $object->Obj;
   my $data_type;
   my $URL_KEY;
@@ -29,8 +28,6 @@ sub tn_external {
     $data_type = 'Genewise';
     $URL_KEY   = 'TETRAODON_GENEWISE';
   }
-  warn "ADDED ROW...";
-  warn qq(<p>$data_type @{[$object->get_ExtURL_link( $DO->stable_id, $URL_KEY, $DO->stable_id )]}</p>);
   $panel->add_row( 'External links',
     qq(<p><strong>$data_type:</strong> @{[$object->get_ExtURL_link( $DO->stable_id, $URL_KEY, $DO->stable_id )]}</p>)
   );
@@ -389,6 +386,50 @@ sub protein_features {
   return 1;
 }
 
+sub exonview_options_form {
+  my( $panel, $object ) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'exonview_options', "/@{[$object->species]}/exonview", 'get' );
+
+  # make array of hashes for dropdown options
+  $form->add_element( 'type' => 'Hidden', 'name' => 'db',   'value' => $object->get_db    );
+  $form->add_element( 'type' => 'Hidden', 'name' => 'exon', 'value' => $object->param('exon') );
+  $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->stable_id );
+  $form->add_element(
+    'type' => 'NonNegInt', 'required' => 'no',
+    'label' => "Flanking sequence at either end of transcript",  'name' => 'flanking',
+    'value' => $object->param('flanking')
+  );
+  $form->add_element(
+    'type' => 'NonNegInt', 'required' => 'no',
+    'label' => "Intron base pairs to show at splice sites",  'name' => 'sscon',
+    'value' => $object->param('sscon')
+  );
+  $form->add_element(
+    'type' => 'CheckBox',
+    'label' => "Show full intronic sequence",  'name' => 'fullseq',
+    'value' => 'yes', 'checked' => $object->param('fullseq') eq 'yes'
+  );
+  $form->add_element(
+    'type' => 'CheckBox',
+    'label' => "Show exons only",  'name' => 'oexon',
+    'value' => 'yes', 'checked' => $object->param('oexon') eq 'yes'
+  );
+  $form->add_element( 'type' => 'Submit', 'value' => 'Go', 'spanning' => 'center' );
+  return $form ;
+}
+
+sub exonview_options {
+  my ( $panel, $object ) = @_;
+  my $label = 'Rendering options';
+  my $html = qq(
+   <div>
+     @{[ $panel->form( 'exonview_options' )->render() ]}
+  </div>);
+
+  $panel->add_row( $label, $html );
+  return 1;
+}
+
 sub spreadsheet_exons {
   my( $panel, $object ) = @_;
   $panel->add_columns(
@@ -402,10 +443,10 @@ sub spreadsheet_exons {
     {'key' => 'Sequence', 'title' => 'Sequence', 'width' => '20%', 'align' => 'left' } 
   );
   
-  my $sscon      = $object->param('sscon') ;         # no of bp to show either side of a splice site
-  my $flanking   = $object->param('flanking') || 50; # no of bp up/down stream of transcript
-  my $full_seq   = $object->param('fullseq');        # flag to display full sequence (introns and exons)
-  my $only_exon  = $object->param('oexon');
+  my $sscon      = $object->param('sscon') ;            # no of bp to show either side of a splice site
+  my $flanking   = $object->param('flanking') || 50;    # no of bp up/down stream of transcript
+  my $full_seq   = $object->param('fullseq') eq 'yes';  # flag to display full sequence (introns and exons)
+  my $only_exon  = $object->param('oexon')   eq 'yes';
   my $entry_exon = $object->param('exon');
 
   # display only exons flag
@@ -677,8 +718,8 @@ sub spreadsheet_exons {
     } else {
       $downstream = $exon->slice()->subseq( ($exon->start)-($flanking),   ($exon->start)-1 , $strand);
     }
-    $downstream =  lc(('.'x $flanking_dot_length).$downstream);
-    $upstream =~ s/([\.\w]{60})/$1<br \/>/g;
+    $downstream =  lc($downstream). ('.'x $flanking_dot_length);
+    $downstream =~ s/([\.\w]{60})/$1<br \/>/g;
     $exon_info = { 'exint'    => qq(3\' downstream sequence),
                    'Sequence' => qq(<font face="courier" color="green">$downstream</font>) };
     $panel->add_row( $exon_info );
@@ -793,7 +834,7 @@ sub do_markedup_pep_seq {
       $fasta ='';
     }
     my $bg = $bg_color{"$_->{'snp'}$_->{'bg'}"};
-    my $style = qq(style="color: #$_->{'fg'};). ( $bg ? qq( background-color: #$bg;) : '' ) .qq(");
+    my $style = qq(style="color: $_->{'fg'};). ( $bg ? qq( background-color: #$bg;) : '' ) .qq(");
     my $pep_style = '';
     if( $show eq 'snps') {
       if($_->{'snp'} ne '') {
@@ -826,7 +867,6 @@ sub do_markedup_pep_seq {
   if($number eq 'on') {
     $NUMBER = sprintf("%6d ",$pos);
     $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start-1)/3 +1) ) : $SPACER ;
-#       warn( $NUMBER, " - ", $PEPNUM );
     $pos += $wrap;
   }
   $output .= ($show eq 'snps' ? "$SPACER$ambiguities\n" : '' ).
@@ -864,7 +904,10 @@ sub supporting_evidence_image {
       <a href="/@{[$object->species]}/exonview?transcript=@{[$object->stable_id]};db=@{[$object->get_db]};showall=1">Click to view all $hits
       supporting evidence hits<a/>.
     </p>) );
-    return 1;
+    my @T = sort keys %{$evidence->{ 'hits' }};
+    for(my $i=10;$i<$hits;$i++) {
+      delete $evidence->{'hits'}{$T[$i]};
+    }  
   }
 
   my $wuc = $object->get_userconfig( 'exonview' );
@@ -887,7 +930,6 @@ sub spreadsheet_variationTable {
   my $tr_end   = $object->__data->{'transformed'}{'end'};
   my $extent   = $object->__data->{'transformed'}{'extent'};
   my $coding_start = $object->__data->{'transformed'}{'coding_start'};
-  warn "TRANS: @{[$object->stable_id]} START $tr_start END $tr_end EXTENT $extent cSTART $coding_start\m";
   return unless %snps;
   $panel->add_columns(
     { 'key' => 'ID', 'align' => 'center' },
@@ -904,7 +946,6 @@ sub spreadsheet_variationTable {
   foreach my $gs ( @gene_snps ) {
     my $raw_id = $gs->[2]->dbID;
     my $ts     = $snps{$raw_id};
-    warn "$ts $gs->[5] @{[$tr_start-$extent]} $gs->[4] @{[$tr_end+$extent]}\n";
     if( $ts && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
       my $ROW = {
         'ID'        =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$gs->[2]->variation_name]};source=@{[$gs->[2]->source]};chr=$gs->[3];vc_start=$gs->[4]">@{[$gs->[2]->variation_name]}</a>),
@@ -920,7 +961,6 @@ sub spreadsheet_variationTable {
            'aacoord'   => $ts->translation_start.' ('.(($ts->cdna_start-$coding_start)%3+1).')'
         ) : ( 'aachange' => '-', 'aacoord' => '-' )
       };
-      warn keys %{$ROW};
       $panel->add_row( $ROW );
     }
   }

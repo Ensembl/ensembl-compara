@@ -178,11 +178,6 @@ sub context_menu {
 
   $self->{page}->menu->add_entry( $flag, 'text' => "Map your data onto this chromosome",
                                   'href' => "/$species/karyoview?chr=$chr_name" );
-  # this should be dynamic, not hard-coded! 
-  if ($species eq 'Homo_sapiens') { 
-    $self->{page}->menu->add_entry( $flag, 'text' => "Browse OMIM diseases",
-                                  'href' => "/$species/diseaseview?chr=$chr_name" );
-  }
 }
 
 1;

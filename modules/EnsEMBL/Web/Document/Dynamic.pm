@@ -2,8 +2,6 @@ package EnsEMBL::Web::Document::Dynamic;
 
 use strict;
 use EnsEMBL::Web::Document::Common;
-use EnsEMBL::Web::SpeciesDefs;
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
 our @ISA = qw(EnsEMBL::Web::Document::Common);
 
@@ -12,7 +10,7 @@ use Data::Dumper qw(Dumper);
 sub set_title {
   my $self  = shift;
   my $title = shift;
-  $self->title->set( $SD->ENSEMBL_SITE_NAME.' v'.$SD->ENSEMBL_VERSION.': '.$SD->SPECIES_BIO_NAME.' '.$title );
+  $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' v'.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_NAME.' '.$title );
 }
 
 sub _initialize_TextGz {
@@ -60,15 +58,15 @@ sub _initialize_HTML {
   $self->_script_HTML();
   $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
 ## Let us set up the search box...
-  $self->searchbox->sp_common  = $SD->SPECIES_COMMON_NAME;
+  $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 #  --- First the search index drop down
   if( $ENV{'ENSEMBL_SPECIES'} ne 'Multi' ) { # If we are in static content for a species
-    foreach my $K ( sort @{($SD->ENSEMBL_SEARCH_IDXS)||[]} ) {
+    foreach my $K ( sort @{($self->species_defs->ENSEMBL_SEARCH_IDXS)||[]} ) {
       $self->searchbox->add_index( $K );
     }
-    my $T = $SD->SEARCH_LINKS || {};
+    my $T = $self->species_defs->SEARCH_LINKS || {};
     ## Now grab the default search links for the species
-    my $T = $SD->SEARCH_LINKS || {};
+    my $T = $self->species_defs->SEARCH_LINKS || {};
     my $flag = 0;
     my $regexp = '^('.$ENV{'ENSEMBL_SCRIPT'}.'\d+)_URL';
     foreach my $K ( sort keys %$T ) {
@@ -86,7 +84,7 @@ sub _initialize_HTML {
     }
   } else { # If we are in general static content...
     ## Grab all the search indexes...
-    foreach my $K ( $SD->all_search_indexes ) {
+    foreach my $K ( $self->species_defs->all_search_indexes ) {
       $self->searchbox->add_index( $K );
     }
     ## Note we have no example links here!!

@@ -35,7 +35,6 @@ sub spreadsheet_geneTable {
                              $object->species, $gene->stable_id, $gene->readable_location;
     $row->{'desc'} = $gene->gene_description;
     $panel->add_row( $row );
-    warn "ROW ADDED $row->{id}";
   }
   return 1;
 }
