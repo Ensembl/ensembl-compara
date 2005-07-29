@@ -224,30 +224,30 @@ $ENSEMBL_PERL_SPECIES  = 'Homo_sapiens'; # Default species
 
 our %__species_aliases = (
 #-------------------- mammals
-  'Bos_taurus'              => [qw(bt cow moo)],
-  'Canis_familiaris'        => [qw(cf dog)], 
-  'Homo_sapiens'            => [qw(hs human man default)], 
-  'Mus_musculus'            => [qw(mm mouse mus)],
-  'Pan_troglodytes'         => [qw(pt chimp)],
-  'Rattus_norvegicus'       => [qw(rn rat)],
+#  'Bos_taurus'              => [qw(bt cow moo)],
+#  'Canis_familiaris'        => [qw(cf dog)], 
+#  'Homo_sapiens'            => [qw(hs human man default)], 
+#  'Mus_musculus'            => [qw(mm mouse mus)],
+#  'Pan_troglodytes'         => [qw(pt chimp)],
+#  'Rattus_norvegicus'       => [qw(rn rat)],
 #-------------------- birds
-  'Gallus_gallus'           => [qw(gg chicken)],
+#  'Gallus_gallus'           => [qw(gg chicken)],
 #-------------------- fish
-  'Danio_rerio'  => [qw(dr zfish zebrafish)],
-  'Fugu_rubripes'           => [qw(fr ffish fugu)],
-  'Tetraodon_nigroviridis'  => [qw(tn tetraodon)],
+#  'Danio_rerio'  => [qw(dr zfish zebrafish)],
+#  'Fugu_rubripes'           => [qw(fr ffish fugu)],
+#  'Tetraodon_nigroviridis'  => [qw(tn tetraodon)],
 #-------------------- amphibians
-  'Xenopus_tropicalis'      => [qw(xt xenopus frog)],
+#  'Xenopus_tropicalis'      => [qw(xt xenopus frog)],
 #-------------------- flies
-  'Anopheles_gambiae'       => [qw(ag mosquito mos anopheles)],
-  'Apis_mellifera'          => [qw(am honeybee bee)],
-  'Drosophila_melanogaster' => [qw(dm fly)],
+#  'Anopheles_gambiae'       => [qw(ag mosquito mos anopheles)],
+#  'Apis_mellifera'          => [qw(am honeybee bee)],
+#  'Drosophila_melanogaster' => [qw(dm fly)],
 #-------------------- worms
 #  'Caenorhabditis_briggsae' => [qw(cb briggsae)],
-  'Caenorhabditis_elegans'   => [qw(ce worm elegans)],
-  'Ciona_intestinalis'       => [qw(ci seqsquirt ciona)],
+#  'Caenorhabditis_elegans'   => [qw(ce worm elegans)],
+#  'Ciona_intestinalis'       => [qw(ci seqsquirt ciona)],
 #-------------------- yeast
-  'Saccharomyces_cerevisiae' => [qw(sc yeast saccharomyces )],
+#  'Saccharomyces_cerevisiae' => [qw(sc yeast saccharomyces )],
 );
 
 ###############################################################################
