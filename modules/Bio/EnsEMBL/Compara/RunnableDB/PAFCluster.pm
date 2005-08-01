@@ -73,6 +73,7 @@ sub fetch_input {
   $self->{'selfhit_score_hash'} = {};
   $self->{'no_filters'} = 0;
   $self->{'all_bests'} = 0;
+  $self->{'include_brh'} = 1;
   $self->{'bsr_threshold'} = 0.25;
   
   $self->get_params($self->input_id);
@@ -108,12 +109,16 @@ sub get_params {
   if (defined $params->{'bsr_threshold'}) {
     $self->{'bsr_threshold'} = $params->{'bsr_threshold'};
   }
+  if (defined $params->{'brh'}) {
+    $self->{'include_brh'} = $params->{'brh'};
+  }
   
   print("parameters...\n");
   printf("  species_set    : (%s)\n", join(',', @{$self->{'species_set'}}));
+  printf("  BRH            : %d\n", $self->{'include_brh'});
   printf("  all_blast_hits : %d\n", $self->{'no_filters'});
   printf("  all_bests      : %d\n", $self->{'all_bests'});  
-  printf("  bsr_threshold  : %d\n", $self->{'bsr_threshold'});  
+  printf("  bsr_threshold  : %1.3f\n", $self->{'bsr_threshold'});  
   
   return;
 }
@@ -137,7 +142,6 @@ sub write_output {
 # internal methods
 #
 ##########################################
-
 
 sub build_paf_clusters {
   my $self = shift;
@@ -174,8 +178,6 @@ sub build_paf_clusters {
   
   $self->{'member_leaves'} = {};
   
-  my $ug = new Data::UUID;
-
   eval {
   #  
   # load all the self equal hits for each genome so we have our reference score
@@ -189,11 +191,12 @@ sub build_paf_clusters {
   
   while (my $gdb_id1 = shift @species_set) {
     #first get paralogues
-    $self->fetch_and_grow_for_species($gdb_id1);
+    $self->threshold_grow_for_species($gdb_id1);
     
     foreach my $gdb_id2 (@species_set) {
       $starttime = time();
-      $self->fetch_and_grow_for_species($gdb_id1, $gdb_id2);
+      $self->BRH_grow_for_species($gdb_id1, $gdb_id2);
+      $self->threshold_grow_for_species($gdb_id1, $gdb_id2);
     }
   }
   
@@ -244,7 +247,47 @@ sub fetch_selfhit_score {
 }
 
 
-sub fetch_and_grow_for_species
+sub BRH_grow_for_species
+{
+  my $self = shift;
+  my ($gdb1, $gdb2) = @_;
+  
+  return unless($self->{'include_brh'});
+  
+  my $starttime = time();
+  
+  my $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.hit_rank ".
+            "FROM peptide_align_feature paf1 ".
+            "JOIN peptide_align_feature paf2 ".
+            "  ON( paf1.qmember_id = paf2.hmember_id and paf1.hmember_id = paf2.qmember_id)  ".
+            "WHERE paf1.qgenome_db_id = $gdb1 AND paf1.hgenome_db_id = $gdb2 ".
+            "AND   paf2.qgenome_db_id = $gdb2 AND paf2.hgenome_db_id = $gdb1 ".
+            "AND paf1.hit_rank=1 and paf2.hit_rank =1";
+
+  print("$sql\n");
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute();
+  printf("  %1.3f secs to fetch BRHs via PAF\n", (time()-$starttime));
+
+  my $midtime = time();
+  my $paf_counter=0;
+  while( my $ref  = $sth->fetchrow_arrayref() ) {
+    my ($pep1_id, $pep2_id, $score, $hit_rank) = @$ref;
+    $paf_counter++;
+
+    my $pep_pair = [$pep1_id, $pep2_id];
+    $self->grow_memclusters_with_peppair($pep_pair);
+  }
+  
+  printf("  %d clusters so far\n", $self->{'tree_root'}->get_child_count);  
+  printf("  %d members in hash\n", scalar(keys(%{$self->{'member_leaves'}})));
+  printf("  %1.3f secs to process %d BRH PAFs\n", time()-$midtime, $paf_counter);
+  printf("  %1.3f secs to load/process\n", (time()-$starttime));
+}
+
+
+
+sub threshold_grow_for_species
 {
   my $self = shift;
   my @species_set = @_;
