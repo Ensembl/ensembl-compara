@@ -152,7 +152,7 @@ sub fasta_form {
   add_hidden_fields( $form, $object );
   $form->add_element( 'type' => 'Hidden', 'name' => '_format', 'value' => 'HTML' );
   $form->add_element( 'type' => 'SubHeader', 'value' => 'FASTA format options' );
-  if( ( $object->param('type1') eq 'transcript' || $object->param('type1') eq 'peptide' ) &&
+  if( ( $object->param('type1') eq 'transcript' || $object->param('type1') eq 'peptide' || $object->param('type1') eq 'gene') &&
       ( $object->param('type2') eq 'none' || $object->param('anchor2') eq '' ) ) {
     ## We have a transcript... lets give transcript options...
     my @options = (
@@ -163,11 +163,12 @@ sub fasta_form {
       [ 'utr5'    => "5' UTR"  ],
       [ 'utr3'    => "3' UTR"  ]
     );
-    $form->add_element( 'type' => 'DropDown',
-      'name'  => 'option',
+    my %checked = map { $_ => 'yes' } $object->param('options');
+    %checked = ( 'genomic' => 'yes' ) unless $object->param('options');
+    $form->add_element( 'type' => 'MultiSelect',
+      'name'  => 'options',
       'label' => 'Sequence type to export',
-      'value' => $object->param( 'option' ) || 'genomic',
-      'values' => [ map {{ 'value' => $_->[0], 'name' => $_->[1] }} @options ],
+      'values' => [ map {{ 'value' => $_->[0], 'name' => $_->[1], 'checked' => $checked{$_->[0]} }} @options ],
       'introduction' => '<p>As you have requested export of a single Transcript or Translation, you can select if
                   you want to select the whole Genomic region, or just the sequence of the Transcript,
                   Translation or part thereof.</p>'
@@ -433,54 +434,60 @@ sub flat {
   $panel->print( "</pre>" );
 }
 
+sub fasta_trans {
+  my( $transObj, $extra ) = @_;
+  my $transcript = $transObj->Obj;
+  my $id_type = '';
+  if( $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ) {
+    $id_type = $transcript->analysis->logic_name;
+  } elsif( 0 ) {
+    $id_type = 'externaldb';
+  } else {
+    $id_type = $transcript->type;
+  }
+  my $out = '';
+  my %options = map { $_=>1 } $transObj->param('options');
+  my $slice_name = '';
+  my $id = $transcript->stable_id;
+  $id = "$extra:$id" if $extra;
+  $out.= format_fasta( "$id cdna:$id_type $slice_name", $transcript->spliced_seq          ) if $options{'cdna'};
+  $out.= format_fasta( "$id cds:$id_type $slice_name",  $transcript->translateable_seq    ) if $options{'coding'}  && $transcript->translation;
+  $out.= format_fasta( "$id pep:$id_type $slice_name",  $transcript->translate->seq       ) if $options{'peptide'} && $transcript->translation;
+  $out.= format_fasta( "$id utr3:$id_type $slice_name", $transcript->three_prime_utr->seq ) if $options{'utr3'}    && $transcript->three_prime_utr;
+  $out.= format_fasta( "$id utr5:$id_type $slice_name", $transcript->five_prime_utr->seq  ) if $options{'utr3'}    && $transcript->five_prime_utr;
+  return $out;
+}
+
+sub format_fasta {
+  my( $line1, $seq ) = @_;
+  $seq  =~ s/(.{60})/$1\n/g;
+  return ">$line1\n$seq\n";
+}
+
 sub fasta {
   my( $panel, $object ) = @_;
   my $seq;
   my $id   = $object->seq_region_name;
   my $desc = "dna:@{[$object->seq_region_type]} @{[$object->slice->name]}";
   ## First of all what sort of object do we have?
-  if( @{$object->__data->{'transcript'}||[]} ) { # We have a transcript object....
-    my $transcript = $object->__data->{'transcript'}->[0]->Obj;
-    my $id_type = '';
-    if( $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ) {
-      $id_type = $transcript->analysis->logic_name;
-    } elsif( 0 ) { 
-      $id_type = 'externaldb';
-    } else {
-      $id_type = $transcript->type;
-    }
-    my $slice_name = '';
-    if( $object->param('option') eq 'cdna' ) {
-      $seq  = $transcript->spliced_seq();
-      warn ">>> $seq";
-      $desc = "cdna:$id_type $slice_name";
-    } elsif( $object->param('option') eq 'coding' && $transcript->translation ) {
-      $seq  = $transcript->translateable_seq();
-      $desc = "cds:$id_type $slice_name";
-    } elsif( $object->param('option') eq 'peptide' && $transcript->translation ) {
-      $seq  = $transcript->translate->seq;
-      $desc = "pep:$id_type $slice_name";
-    } elsif( $object->param('option') eq 'utr3' ) {
-      $seq = $transcript->three_prime_utr();
-      if( $seq ) {
-        $seq  = $seq->seq;
-        $desc = "utr3:$id_type $slice_name";
-      }
-    } elsif( $object->param('option') eq 'utr5' ) {
-      $seq = $transcript->five_prime_utr();
-      if( $seq ) {
-        $seq  = $seq->seq;
-        $desc = "utr5:$id_type $slice_name";
-      }
-    }
-    if( $seq ) {
-      $id = $transcript->stable_id;
+  my $genomic = 1;
+  my $output = '';
+  foreach my $transObj (@{$object->__data->{'transcript'}||[]}) {
+    $output .= fasta_trans( $transObj );
+    $genomic = 0;
+  }
+  foreach my $geneObj (@{$object->__data->{'gene'}||[]}) {
+    foreach my $transObj (@{$geneObj->get_all_transcripts}) {
+      $output .= fasta_trans( $transObj, $geneObj->stable_id );
+      $genomic = 0;
     }
   }
-  $seq = $object->slice->seq unless $seq;
-  $seq  =~ s/(.{60})/$1\n/g;
-
-  $panel->print( "<pre>", ">$id $desc\n", $seq, "</pre>" );
+  my %options = map { $_=>1 } $object->param('options');
+  if( $genomic || $options{'genomic'} ) {
+    $output .= format_fasta( "@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$object->slice->name]}",
+      $object->slice->seq );
+  }
+  $panel->print( "<pre>$output</pre>" );
 }
 
 sub features {

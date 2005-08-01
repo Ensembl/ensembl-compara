@@ -37,42 +37,46 @@ sub helpview {
       $object->send_email;
       $include_form = 0;
     }
-  } elsif( @{$object->results} ) {
-    if( @{$object->results} == 1 ) {
-      my $panel = $self->new_panel( '',
-        'code'    => 'panel',
-        'caption' => $object->results->[0]->{'title'},
-        'object'  => $object
-      );
-      $panel->add_components(qw(single_match EnsEMBL::Web::Component::Help::single_match));
-      $self->add_panel( $panel );
+  }
+  if( $include_form ) {
+    if( @{$object->results} ) {
+      warn ">HERE";
+      if( @{$object->results} == 1 ) {
+        my $panel = $self->new_panel( '',
+          'code'    => 'panel',
+          'caption' => $object->results->[0]->{'title'},
+          'object'  => $object
+        );
+        $panel->add_components(qw(single_match EnsEMBL::Web::Component::Help::single_match));
+        $self->add_panel( $panel );
+      } else {
+        my $panel = $self->new_panel( '',
+          'code'    => 'panel',
+          'caption' => qq(Search for "@{[$object->param('kw')]}"),
+          'object'  => $object
+        );
+        $panel->add_components(qw(multi_match EnsEMBL::Web::Component::Help::multi_match));
+        $self->add_panel( $panel );
+      }
+      $include_form = 0;
     } else {
-      my $panel = $self->new_panel( '',
-        'code'    => 'panel',
-        'caption' => qq(Search for "@{[$object->param('kw')]}"),
-        'object'  => $object
-      );
-      $panel->add_components(qw(multi_match EnsEMBL::Web::Component::Help::multi_match));
-      $self->add_panel( $panel );
-    }
-    $include_form = 0;
-  } else {
-    if( $object->param( 'kw' ) ) {
-      my $panel = $self->new_panel( '',
-        'code'    => 'panel',
-        'caption' => qq(No such help page),
-        'object'  => $object
-      );
-      $panel->add_components(qw(single_match_failure EnsEMBL::Web::Component::Help::single_match_failure));
-      $self->add_panel( $panel );
-    } else {
-      my $panel = $self->new_panel( '',
-        'code'    => 'panel',
-        'caption' => qq(Ensembl help),
-        'object'  => $object
-      );
-      $panel->add_components(qw(first_page EnsEMBL::Web::Component::Help::first_page));
-      $self->add_panel( $panel );
+      if( $object->param( 'kw' ) ) {
+        my $panel = $self->new_panel( '',
+          'code'    => 'panel',
+          'caption' => qq(No such help page),
+          'object'  => $object
+        );
+        $panel->add_components(qw(single_match_failure EnsEMBL::Web::Component::Help::single_match_failure));
+        $self->add_panel( $panel );
+      } else {
+        my $panel = $self->new_panel( '',
+          'code'    => 'panel',
+          'caption' => qq(Ensembl help),
+          'object'  => $object
+        );
+        $panel->add_components(qw(first_page EnsEMBL::Web::Component::Help::first_page));
+        $self->add_panel( $panel );
+      }
     }
   }
   if( $include_form ) {
