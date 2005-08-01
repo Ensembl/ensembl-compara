@@ -126,11 +126,18 @@ sub parse {
 #      print "2: $line<br>";
       last if ($line =~ /\[references\]/);
       $icount ++;
+
+# feature type and feature subtype can consist of multiple words - so we preserve single spaces, then split the line by tabs or multiple spaces then bring back the single spaces ..
+# we have to do that because sometimes people cut-and-paste the date from the web pages and tabs get subsituted with multiple spaces in the process .. 
+
+      $line =~ s/(\w)(\s)(\w)/$1_$3/g;
       $line =~ s/[\t\s]+/$BR/g;
+      $line =~ s/_/ /g;
 #      print "3: $line<br>";
       if ($line !~ /$EUF/) {
 	  return $self->error("ERROR: Invalid format. Line $lcount");
       }
+      
       my @data = split(/$BR/, $line);
 #      print("DATA: @data <hr>");
 
