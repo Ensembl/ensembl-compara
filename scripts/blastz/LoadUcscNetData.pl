@@ -143,57 +143,10 @@ foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
 
 check_length() if ($check_length);
 
-my $matrix_hash;
-
-if ($matrix_file) {
-  my $matrix_string = "";
-  open M, $matrix_file ||
-    die "Can not open $matrix_file file\n";
-  while (<M>) {
-    next if (/^\s*$/);
-    $matrix_string .= $_;
-  }
-  close M;
-  $matrix_hash = matrix_hash($matrix_string);
-  print STDERR "Using customed scoring matrix from $matrix_file file\n";
-  print STDERR "\n$matrix_string\n";
-} elsif ( grep(/^$tTaxon_id$/, (9606, 9598)) &&
-     grep(/^$qTaxon_id$/, (9606, 9598)) ) {
-  $matrix_hash = matrix_hash($primates_matrix_string);
-  print STDERR "Using primates scoring matrix\n";
-  print STDERR "\n$primates_matrix_string\n";
-} elsif ( grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
-          grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) ) {
-  $matrix_hash = matrix_hash($mammals_matrix_string);
-  print STDERR "Using mammals scoring matrix\n";
-  print STDERR "\n$mammals_matrix_string\n";
-} elsif ( (grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
-           grep(/^$qTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))
-          ||
-          (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
-           grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))) {
-  $matrix_hash = matrix_hash($mammals_vs_other_vertebrates_matrix_string);
-  print STDERR "Using mammals_vs_other_vertebrates scoring matrix\n";
-  print STDERR "\n$mammals_vs_other_vertebrates_matrix_string\n";
-}
-else {
-	die "taxon_id undefined or matrix not set up for this pair of species $tTaxon_id, $qTaxon_id)\n";
-	}
-
-
-print STDERR "Here is the matrix hash structure\n";
-foreach my $key1 (sort {$a cmp $b} keys %{$matrix_hash}) {
-  if ($key1 =~ /[ACGT]+/) {
-    foreach my $key2 (sort {$a cmp $b} keys %{$matrix_hash->{$key1}}) {
-      print STDERR "$key1 : $key2 ",$matrix_hash->{$key1}{$key2},"\n";
-    }
-  } else {
-    print STDERR $key1," : ",$matrix_hash->{$key1},"\n";
-  }
-}
-print STDERR "\n";
+my $matrix_hash = choose_matrix($matrix_file);
 
 if ($show_matrix_to_be_used) {
+  print_matrix($matrix_hash);
   exit 0;
 }
 
@@ -452,6 +405,16 @@ $sth->finish;
 
 print STDERR "\n";
 
+
+=head2 parse_daf_cigar_line
+
+  Arg[1]     : 
+  Example    : 
+  Description: 
+  Returntype : 
+
+=cut
+
 sub parse_daf_cigar_line {
   my ($daf) = @_;
   my ($cigar_line, $hcigar_line, $length);
@@ -492,7 +455,73 @@ sub parse_daf_cigar_line {
   return ($cigar_line, $hcigar_line, $length);
 }
 
-sub matrix_hash {
+
+=head2 choose_matrix
+
+  Arg[1]     : string $matrix_filename
+  Example    : $matrix_hash = choose_matrix();
+  Example    : $matrix_hash = choose_matrix("this_matrix.txt");
+  Description: reads the matrix from the file provided or get the right matrix
+               depending on the pair of species.
+  Returntype : ref. to a hash
+
+=cut
+
+sub choose_matrix {
+  my ($matrix_file) = @_;
+  my $matrix_hash;
+
+  if ($matrix_file) {
+    my $matrix_string = "";
+    open M, $matrix_file ||
+      die "Can not open $matrix_file file\n";
+    while (<M>) {
+      next if (/^\s*$/);
+      $matrix_string .= $_;
+    }
+    close M;
+    $matrix_hash = matrix_hash($matrix_string);
+    print STDERR "Using customed scoring matrix from $matrix_file file\n";
+    print STDERR "\n$matrix_string\n";
+  
+  } elsif ( grep(/^$tTaxon_id$/, (9606, 9598)) &&
+      grep(/^$qTaxon_id$/, (9606, 9598)) ) {
+    $matrix_hash = matrix_hash($primates_matrix_string);
+    print STDERR "Using primates scoring matrix\n";
+    print STDERR "\n$primates_matrix_string\n";
+  
+  } elsif ( grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
+            grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) ) {
+    $matrix_hash = matrix_hash($mammals_matrix_string);
+    print STDERR "Using mammals scoring matrix\n";
+    print STDERR "\n$mammals_matrix_string\n";
+  
+  } elsif ( (grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
+            grep(/^$qTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))
+            ||
+            (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
+            grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))) {
+    $matrix_hash = matrix_hash($mammals_vs_other_vertebrates_matrix_string);
+    print STDERR "Using mammals_vs_other_vertebrates scoring matrix\n";
+    print STDERR "\n$mammals_vs_other_vertebrates_matrix_string\n";
+  
+  } else {
+    die "taxon_id undefined or matrix not set up for this pair of species $tTaxon_id, $qTaxon_id)\n";
+  }
+
+  return $matrix_hash;
+}
+
+=head2 get_matrix_hash
+
+  Arg[1]     : string $matrix_string
+  Example    : $matrix_hash = get_matrix_hash($matrix_string);
+  Description: transform the matrix string into a hash
+  Returntype : ref. to a hash
+
+=cut
+
+sub get_matrix_hash {
   my ($matrix_string) = @_;
   
   my %matrix_hash;
@@ -526,6 +555,44 @@ sub matrix_hash {
 
   return \%matrix_hash;
 }
+
+
+=head2 print_matrix
+
+  Arg[1]     : hashref $matix_hash 
+  Example    : print_matrix($matrix_hash)
+  Description: print the weight matrix to the STDERR
+  Returntype : -none-
+
+=cut
+
+sub print_matrix {
+  my ($matrix_hash) = @_;
+
+  print STDERR "Here is the matrix hash structure\n";
+  foreach my $key1 (sort {$a cmp $b} keys %{$matrix_hash}) {
+    if ($key1 =~ /[ACGT]+/) {
+      print STDERR "$key1 :";
+      foreach my $key2 (sort {$a cmp $b} keys %{$matrix_hash->{$key1}}) {
+        printf STDERR "   $key2 %5d",$matrix_hash->{$key1}{$key2};
+      }
+      print STDERR "\n";
+    } else {
+      print STDERR $key1," : ",$matrix_hash->{$key1},"\n";
+    }
+  }
+  print STDERR "\n";
+}
+
+
+=head2 score_and_identity
+
+  Arg[1]     : 
+  Example    : 
+  Description: 
+  Returntype : 
+
+=cut
 
 sub score_and_identity {
   my ($qy_seq, $tg_seq, $matrix_hash) = @_;
@@ -573,6 +640,16 @@ exit 1\n";
 
   return ($score, int($number_identity/$length*100));
 }
+
+
+=head2 check_length
+
+  Arg[1]     : 
+  Example    : 
+  Description: 
+  Returntype : 
+
+=cut
 
 sub check_length {
 
