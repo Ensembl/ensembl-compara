@@ -17,7 +17,7 @@ my $tName;
 my $qSpecies;
 my $reg_conf;
 my $start_net_index = 0;
-my $method_link_type = "BLASTZ_GROUP";
+my $method_link_type = "BLASTZ_NET";
 my $max_gap_size = 50;
 my $matrix_file;
 my $show_matrix_to_be_used = 0;
@@ -117,11 +117,16 @@ my %undefined_combinaisons;
 print STDERR $ucsc_dbname,"\n";
 my $ucsc_dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($ucsc_dbname, 'compara')->dbc;
 
-my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB') or die "Can't get ($dbname,'compara','GenomeDB')\n";
-my $dfa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','DnaFrag') or die "Can't get ($dbname,'compara','DnaFrag')\n";
-my $gaba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignBlock') or die " Can't get ($dbname,'compara','GenomicAlignBlock')\n";
-my $gaga = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignGroup') or die " Can't get($dbname,'compara','GenomicAlignGroup')\n";
-my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet') or die " Can't($dbname,'compara','MethodLinkSpeciesSet')\n";
+my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB')
+    or die "Can't get ($dbname,'compara','GenomeDB')\n";
+my $dfa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','DnaFrag')
+    or die "Can't get ($dbname,'compara','DnaFrag')\n";
+my $gaba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignBlock')
+    or die " Can't get ($dbname,'compara','GenomicAlignBlock')\n";
+my $gaga = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignGroup')
+    or die " Can't get($dbname,'compara','GenomicAlignGroup')\n";
+my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet')
+    or die " Can't($dbname,'compara','MethodLinkSpeciesSet')\n";
 
 # cache all tSpecies dnafrag from compara
 my $tBinomial = get_binomial_name($tSpecies);
@@ -141,6 +146,12 @@ foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
   $qdnafrags{$df->name} = $df;
 }
 
+# Create and save (if needed) the MethodLinkSpeciesSet
+my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+$mlss->species_set([$tgdb, $qgdb]);
+$mlss->method_link_type($method_link_type);
+$mlssa->store($mlss); # Sets the dbID if already exists, creates and sets the dbID if not!
+
 check_length() if ($check_length);
 
 my $matrix_hash = choose_matrix($matrix_file);
@@ -150,58 +161,47 @@ if ($show_matrix_to_be_used) {
   exit 0;
 }
 
+
+my $chromosome_specific_chain_tables = get_chromosome_specificity_for_tables(
+    $ucsc_dbc, $qSpecies, "chain");
+
+
 my $sql;
 my $sth;
-
-my $chromosome_specific_chain_tables = 1;
-
-$sql = "show tables like 'chain$qSpecies%'";
-$sth = $ucsc_dbc->prepare($sql);
-$sth->execute;
-
-my ($table_name);
-
-$sth->bind_columns(\$table_name);
-
-my $table_count = 0;
-
-while( $sth->fetch() ) {
-  if ($table_name eq "chain$qSpecies") {
-    $table_count++;
-  }
-  if ($table_name eq "chain$qSpecies"."Link") {
-    $table_count++;
-  }
-}
-
-$chromosome_specific_chain_tables = 0 if ($table_count == 2);
-
-$sth->finish;
-
 if (defined $tName) {
-  $sql = "select bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score from net$qSpecies where type!=\"gap\" and  tName = ? order by tStart, chainId";
-  $sth = $ucsc_dbc->prepare($sql);
-  $sth->execute($tName);
+  $sql = "
+      SELECT
+        bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score
+      FROM net$qSpecies
+      WHERE type!=\"gap\" AND tName = $tName
+      ORDER BY tStart, chainId";
 } else {
-  $sql = "select bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score from net$qSpecies where type!=\"gap\" order by tStart, chainId";
-  $sth = $ucsc_dbc->prepare($sql);
-  $sth->execute();
+  $sql = "
+      SELECT
+        bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score
+      FROM net$qSpecies
+      WHERE type!=\"gap\"
+      ORDER BY tStart, chainId";
 }
+$sth = $ucsc_dbc->prepare($sql);
+$sth->execute();
 
-my ($n_bin, $n_level, $n_tName, $n_tStart, $n_tEnd, $n_strand, $n_qName, $n_qStart, $n_qEnd, $n_chainId, $n_ali, $n_score);
+my ($n_bin, $n_level, $n_tName, $n_tStart, $n_tEnd, $n_strand,
+    $n_qName, $n_qStart, $n_qEnd, $n_chainId, $n_ali, $n_score);
 
 $sth->bind_columns
-  (\$n_bin, \$n_level, \$n_tName, \$n_tStart, \$n_tEnd, \$n_strand, \$n_qName, \$n_qStart, \$n_qEnd, \$n_chainId, \$n_ali, \$n_score);
+  (\$n_bin, \$n_level, \$n_tName, \$n_tStart, \$n_tEnd, \$n_strand,
+   \$n_qName, \$n_qStart, \$n_qEnd, \$n_chainId, \$n_ali, \$n_score);
 
 my $nb_of_net = 0;
 my $nb_of_daf_loaded = 0;
 my $net_index = 0;
 
 
-
-while( $sth->fetch() ) {
+FETCH_NET: while( $sth->fetch() ) {
   $net_index++;
-  next if ($net_index < $start_net_index);
+  next if ($net_index < $start_net_index); # $start_net_index is used to resume the script
+
   print STDERR "net_index: $net_index, tStart: $n_tStart, chainId: $n_chainId\n";
   $nb_of_net++;
   $n_strand = 1 if ($n_strand eq "+");
@@ -250,10 +250,15 @@ while( $sth->fetch() ) {
   my $sth2 = $ucsc_dbc->prepare($sql);
   $sth2->execute($n_chainId);
 
-  my ($c_bin,$c_score,$c_tName,$c_tSize,$c_tStart,$c_tEnd,$c_qName,$c_qSize,$c_qStrand,$c_qStart,$c_qEnd,$cl_chainId,$cl_tStart,$cl_tEnd,$cl_qStart,$cl_qEnd);
+  my ($c_bin, $c_score,
+      $c_tName, $c_tSize, $c_tStart, $c_tEnd,
+      $c_qName, $c_qSize, $c_qStrand, $c_qStart, $c_qEnd,
+      $cl_chainId, $cl_tStart, $cl_tEnd, $cl_qStart, $cl_qEnd);
 
-  $sth2->bind_columns
-    (\$c_bin,\$c_score,\$c_tName,\$c_tSize,\$c_tStart,\$c_tEnd,\$c_qName,\$c_qSize,\$c_qStrand,\$c_qStart,\$c_qEnd,\$cl_chainId,\$cl_tStart,\$cl_tEnd,\$cl_qStart,\$cl_qEnd);
+  $sth2->bind_columns(\$c_bin,\$c_score,
+      \$c_tName,\$c_tSize,\$c_tStart,\$c_tEnd,
+      \$c_qName,\$c_qSize,\$c_qStrand,\$c_qStart,\$c_qEnd,
+      \$cl_chainId,\$cl_tStart,\$cl_tEnd,\$cl_qStart,\$cl_qEnd);
 
   my ($previous_cl_tEnd, $previous_cl_qStart, $previous_cl_qEnd);
   my @fps;
@@ -346,48 +351,9 @@ while( $sth->fetch() ) {
   }
   next unless (scalar @new_dafs);
 #  print STDERR "Loading ",scalar @new_dafs,"...\n";
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->species_set([$tgdb, $qgdb]);
-  $mlss->method_link_type($method_link_type);
-  $mlssa->store($mlss);
   
   foreach my $daf (@new_dafs) {
-    my ($tcigar_line, $qcigar_line, $length) = parse_daf_cigar_line($daf);
-
-    my $tga = new Bio::EnsEMBL::Compara::GenomicAlign;
-    $tga->dnafrag($tdnafrag);
-    $tga->dnafrag_start($daf->start);
-    $tga->dnafrag_end($daf->end);
-    $tga->dnafrag_strand($daf->strand);
-    $tga->cigar_line($tcigar_line);
-    $tga->level_id($daf->level_id);
-
-    my $qga = new Bio::EnsEMBL::Compara::GenomicAlign;
-    $qga->dnafrag($qdnafrag);
-    $qga->dnafrag_start($daf->hstart);
-    $qga->dnafrag_end($daf->hend);
-    $qga->dnafrag_strand($daf->hstrand);
-    $qga->cigar_line($qcigar_line);
-    $qga->level_id($daf->level_id);
-
-    my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
-    $gab->method_link_species_set($mlss);
-    # We need to add here something to rescore the gab.
-    # at the moment the score is the one from the whole chain, which is huge and not very sensible to put there.
-
-    my ($score, $percent_id) = score_and_identity($qga->aligned_sequence, $tga->aligned_sequence, $matrix_hash);
-    $gab->score($score);
-    $gab->perc_id($percent_id);
-    $gab->length($length);
-    $gab->genomic_align_array([$tga, $qga]);
-
-    my $gag = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
-    $gag->dbID($daf->group_id);
-    $gag->type("default");
-    $gag->genomic_align_array([$tga, $qga]);
-
-    $gaba->store($gab);
-    $gaga->store($gag);
+    save_daf_as_genomic_align_block($daf, $tdnafrag, $qdnafrag)
   }
 
   $nb_of_daf_loaded = $nb_of_daf_loaded + scalar @new_dafs;
@@ -461,6 +427,111 @@ sub get_taxon_id {
   return $taxon_id;
 }
 
+
+=head2 get_chromosome_specificity_for_tables
+
+  Arg[1]     : Bio::EnsEMBL::DBSQL::DBConnection $ucsc_compara_dbc
+  Arg[2]     : string $species_name
+  Arg[3]     : string $type ("chain" or "net")
+  Example    : $chromosome_specific_chain_table =
+                 get_chromosome_specificity_for_tables($ucsc_compara_dbc,
+                 "hg17", "chain");
+  Description: UCSC database may contain a pair of tables for all the
+               chromosomes or a pair per chromosome depending on the species.
+               This method tests whether the tables are chromosome
+               specific or not
+  Returntype : boolean
+
+=cut
+
+sub get_chromosome_specificity_for_tables {
+  my ($ucsc_dbc, $species, $type) = @_;
+  my $chromosome_specific_chain_tables = 1;
+  
+  $type = "chain" unless (defined($type) and $type eq "net");
+  
+  my $sql = "show tables like '$type$species\%'";
+  $sth = $ucsc_dbc->prepare($sql);
+  $sth->execute;
+  
+  my ($table_name);
+  
+  $sth->bind_columns(\$table_name);
+  
+  my $table_count = 0;
+  
+  while( $sth->fetch() ) {
+    if ($table_name eq "$type$species") {
+      $table_count++;
+    }
+    if ($table_name eq $type.$species."Link") {
+      $table_count++;
+    }
+  }
+  $sth->finish;
+
+  $chromosome_specific_chain_tables = 0 if ($table_count == 2);
+  
+  return $chromosome_specific_chain_tables;
+}
+
+
+=head2 save_daf_as_genomic_align_block
+
+  Arg[1]     : Bio::EnsEMBL::DnaDnaAlignFeature $daf
+  Arg[2]     : Bio::EnsEMBL::Compara::DnaFrag $target_dnafrag
+  Arg[3]     : Bio::EnsEMBL::Compara::DnaFrag $query_dnafrag
+  Example    : save_daf_as_genomic_align_block($daf, $target_dnafrag, $query_dnafrag)
+  Description: 
+  Returntype : -none-
+
+=cut
+
+sub save_daf_as_genomic_align_block {
+  my ($daf, $tdnafrag, $qdnafrag) = @_;
+    
+  # Get cigar_lines and length of the alignment from the daf object
+  my ($tcigar_line, $qcigar_line, $length) = parse_daf_cigar_line($daf);
+
+  # Create GenomicAlign for target sequence
+  my $tga = new Bio::EnsEMBL::Compara::GenomicAlign;
+  $tga->dnafrag($tdnafrag);
+  $tga->dnafrag_start($daf->start);
+  $tga->dnafrag_end($daf->end);
+  $tga->dnafrag_strand($daf->strand);
+  $tga->cigar_line($tcigar_line);
+  $tga->level_id($daf->level_id);
+
+  # Create GenomicAlign for query sequence
+  my $qga = new Bio::EnsEMBL::Compara::GenomicAlign;
+  $qga->dnafrag($qdnafrag);
+  $qga->dnafrag_start($daf->hstart);
+  $qga->dnafrag_end($daf->hend);
+  $qga->dnafrag_strand($daf->hstrand);
+  $qga->cigar_line($qcigar_line);
+  $qga->level_id($daf->level_id);
+
+  # Create the GenomicAlignBlock
+  my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
+  $gab->method_link_species_set($mlss);
+
+  # Re-score the GenomicAlignBlock (previous score was for the whole net)
+  my ($score, $percent_id) = score_and_identity($qga->aligned_sequence,
+      $tga->aligned_sequence, $matrix_hash);
+  $gab->score($score);
+  $gab->perc_id($percent_id);
+  $gab->length($length);
+  $gab->genomic_align_array([$tga, $qga]);
+
+  # Create the GenomicAlignGroup
+  my $gag = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
+  $gag->dbID($daf->group_id);
+  $gag->type("default");
+  $gag->genomic_align_array([$tga, $qga]);
+
+#   $gaba->store($gab); # This stores the Bio::EnsEMBL::Compara::GenomicAlign objects
+#   $gaga->store($gag);
+}
 
 =head2 parse_daf_cigar_line
 
@@ -590,7 +661,8 @@ sub get_matrix_hash {
     $line =~ s/^\s+//;
     $line =~ s/\s+$//;
     my @penalties = split /\s+/, $line;
-    die "Size of letters array and penalties array are different\n" unless (scalar @letters == scalar @penalties);
+    die "Size of letters array and penalties array are different\n"
+        unless (scalar @letters == scalar @penalties);
     for (my $i=0; $i < scalar @letters; $i++) {
       $matrix_hash{uc $letter}{uc $letters[$i]} = $penalties[$i];
       $matrix_hash{uc $letters[$i]}{uc $letter} = $penalties[$i];
