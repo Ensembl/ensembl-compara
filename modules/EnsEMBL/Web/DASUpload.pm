@@ -108,7 +108,7 @@ sub parse {
   my $self = shift;
 
   delete($self->{PARSED_DATA});
-  my @lines = split(/\r|\n/, $self->{DATA});
+  my @lines = split(/\r|\n/, $self->data);
   my @keys = ('groupname', 'featureid', 'featuretype', 'featuresubtype', 'seqmentid', 'start', 'end', 'strand', 'phase', 'score', 'alignment_start', 'alignment_end');
   my $icount = 0;
   my $lcount = 0;
@@ -130,10 +130,13 @@ sub parse {
 # feature type and feature subtype can consist of multiple words - so we preserve single spaces, then split the line by tabs or multiple spaces then bring back the single spaces ..
 # we have to do that because sometimes people cut-and-paste the date from the web pages and tabs get subsituted with multiple spaces in the process .. 
 
+      $line =~ s/\t/$BR/g;
       $line =~ s/(\w)(\s)(\w)/$1_$3/g;
-      $line =~ s/[\t\s]+/$BR/g;
+      $line =~ s/\s+/$BR/g;
+
+#      print "3b: $line<br>";
       $line =~ s/_/ /g;
-#      print "3: $line<br>";
+#      print "3c: $line<br>";
       if ($line !~ /$EUF/) {
 	  return $self->error("ERROR: Invalid format. Line $lcount");
       }
