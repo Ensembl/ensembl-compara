@@ -124,8 +124,8 @@ my $gaga = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomicAlignGr
 my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet') or die " Can't($dbname,'compara','MethodLinkSpeciesSet')\n";
 
 # cache all tSpecies dnafrag from compara
-my $tBinomial = Bio::EnsEMBL::Registry->get_adaptor($tSpecies,'core','MetaContainer')->get_Species->binomial or die " Can't get ($tSpecies,'core','MetaContainer')->get_Species->binomial\n";
-my $tTaxon_id = Bio::EnsEMBL::Registry->get_adaptor($tSpecies,'core','MetaContainer')->get_taxonomy_id or die "can't get $tSpecies taxon_id \n";
+my $tBinomial = get_binomial_name($tSpecies);
+my $tTaxon_id = get_taxon_id($tSpecies);
 my $tgdb = $gdba->fetch_by_name_assembly($tBinomial) or die " Can't get fetch_by_name_assembly($tBinomial)\n";
 my %tdnafrags;
 foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($tgdb)}) {
@@ -133,8 +133,8 @@ foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($tgdb)}) {
 }
 
 # cache all qSpecies dnafrag from compara
-my $qBinomial = Bio::EnsEMBL::Registry->get_adaptor($qSpecies,'core','MetaContainer')->get_Species->binomial or die " Can't get ($qSpecies,'core','MetaContainer')->get_Species->binomial\n";
-my $qTaxon_id = Bio::EnsEMBL::Registry->get_adaptor($qSpecies,'core','MetaContainer')->get_taxonomy_id or die "can't get $qSpecies taxon_id \n";
+my $qBinomial = get_binomial_name($qSpecies);
+my $qTaxon_id = get_taxon_id($qSpecies);
 my $qgdb = $gdba->fetch_by_name_assembly($qBinomial) or die " Can't get fetch_by_name_assembly($qBinomial)\n";
 my %qdnafrags;
 foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
@@ -406,6 +406,62 @@ $sth->finish;
 print STDERR "\n";
 
 
+=head2 get_binomial_name
+
+  Arg[1]     : string $species_name
+  Example    : $human_binomial_name = get_binomial_name("human");
+  Description: This method get the binomial name from the core database.
+               It takes a Registry alias as an input and return the
+               binomial name for that species.
+  Returntype : string
+
+=cut
+
+sub get_binomial_name {
+  my ($species) = @_;
+  my $binomial_name;
+
+  my $meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'MetaContainer');
+  if (!defined($meta_container_adaptor)) {
+    die("Cannot get the MetaContainerAdaptor for species <$species>\n");
+  }
+  $binomial_name = $meta_container_adaptor->get_Species->binomial;
+  if (!$binomial_name) {
+    die("Cannot get the binomial name for species <$species>\n");
+  }
+
+  return $binomial_name;
+}
+
+
+=head2 get_taxon_id
+
+  Arg[1]     : string $species_name
+  Example    : $human_taxon_id = get_taxon_id("human");
+  Description: This method get the taxon ID from the core database.
+               It takes a Registry alias as an input and return the
+               taxon ID for that species.
+  Returntype : int
+
+=cut
+
+sub get_taxon_id {
+  my ($species) = @_;
+  my $taxon_id;
+
+  my $meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'MetaContainer');
+  if (!defined($meta_container_adaptor)) {
+    die("Cannot get the MetaContainerAdaptor for species <$species>\n");
+  }
+  $taxon_id = $meta_container_adaptor->get_taxonomy_id;
+  if (!$taxon_id) {
+    die("Cannot get the taxon ID for species <$species>\n");
+  }
+
+  return $taxon_id;
+}
+
+
 =head2 parse_daf_cigar_line
 
   Arg[1]     : 
@@ -480,19 +536,19 @@ sub choose_matrix {
       $matrix_string .= $_;
     }
     close M;
-    $matrix_hash = matrix_hash($matrix_string);
+    $matrix_hash = get_matrix_hash($matrix_string);
     print STDERR "Using customed scoring matrix from $matrix_file file\n";
     print STDERR "\n$matrix_string\n";
   
   } elsif ( grep(/^$tTaxon_id$/, (9606, 9598)) &&
       grep(/^$qTaxon_id$/, (9606, 9598)) ) {
-    $matrix_hash = matrix_hash($primates_matrix_string);
+    $matrix_hash = get_matrix_hash($primates_matrix_string);
     print STDERR "Using primates scoring matrix\n";
     print STDERR "\n$primates_matrix_string\n";
   
   } elsif ( grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) &&
             grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913)) ) {
-    $matrix_hash = matrix_hash($mammals_matrix_string);
+    $matrix_hash = get_matrix_hash($mammals_matrix_string);
     print STDERR "Using mammals scoring matrix\n";
     print STDERR "\n$mammals_matrix_string\n";
   
@@ -501,7 +557,7 @@ sub choose_matrix {
             ||
             (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
             grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))) {
-    $matrix_hash = matrix_hash($mammals_vs_other_vertebrates_matrix_string);
+    $matrix_hash = get_matrix_hash($mammals_vs_other_vertebrates_matrix_string);
     print STDERR "Using mammals_vs_other_vertebrates scoring matrix\n";
     print STDERR "\n$mammals_vs_other_vertebrates_matrix_string\n";
   
