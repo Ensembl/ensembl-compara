@@ -85,7 +85,7 @@ sub _init {
       'colour'    => $label_colour,
       'absolutey' => 1,
       'text'      => $fid,
-      %HREF
+      %HREF, %ZMENU
     });
 
     my $bump_start = int($glyph->x() * $pix_per_bp);
