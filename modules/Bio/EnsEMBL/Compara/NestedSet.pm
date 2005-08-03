@@ -28,7 +28,7 @@ package Bio::EnsEMBL::Compara::NestedSet;
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Data::UUID;
+#use Data::UUID;
 
 #################################################
 # Factory methods
