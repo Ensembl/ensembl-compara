@@ -863,16 +863,23 @@ sub get_das_features_by_name {
   my %das_features;
 
   foreach my $dasfact( @{$self->get_das_factories} ){
-    next unless $dasfact->adaptor->type eq 'ensembl_location';
-    my $name = $dasfact->adaptor->name;
-    next unless $name;
-          
-    unless( $data->{_das_features}->{$name} ){ ## No cached values - so grab and store them!!
-      my @featref = $dasfact->fetch_all_by_ID($data->{_object}, $data);
-      $data->{_das_features}->{$name} = [@featref];
+	my $dsn  = $dasfact->adaptor->dsn;
+	my $name = $dasfact->adaptor->name;
+	my $type = $dasfact->adaptor->type;
+	next unless $name;
+	next if ($type eq 'ensembl_location');
+#    next unless $dasfact->adaptor->type eq 'ensembl_location';
+
+	if( $data->{_das_features}->{$name} ){ # Use cached
+	    $das_features{$name} = $data->{_das_features}->{$name};
+	    next;
+	}
+	else{ # Get fresh data
+	    my @featref = $dasfact->fetch_all_by_ID($data->{_object}, $data);
+	    $data->{_das_features}->{$name} = [@featref];
+	    $das_features{$name} = [@featref];
+	}
     }
-    $das_features{$name} = $data->{_das_features}->{$name};
-  }
 
   my $data_by_name = $das_features{$name} || return ();
   my @feats = @{ $data_by_name->[1] || [] };
