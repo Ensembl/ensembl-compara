@@ -580,7 +580,18 @@ sub zmenu {
   $zmenu->{"05:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
   $zmenu->{"06:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
   $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
+
   my $ids = 8;
+  if ($f->das_start && $f->das_end) {
+      my $strand = $f->das_strand ? 'Forward' : 'Reverse';
+      $zmenu->{"08:FEATURE LOCATION:"} = '';
+      $zmenu->{"09:   - Start: ".$f->das_start} = '';
+      $zmenu->{"10:   - End: ".$f->das_end} = '';
+      $zmenu->{"11:   - Strand: $strand"} = '';
+      $ids = 12;
+  }
+
+
   my @dlabels = $f->das_link_labels();
   foreach my $dlink ($f->das_links) {
       my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, shift @dlabels);
