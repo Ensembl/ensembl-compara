@@ -3,8 +3,6 @@
 use strict;
 use Getopt::Long;
 use Bio::EnsEMBL::Registry;
-#use Bio::EnsEMBL::Compara::Homology;
-#use Bio::EnsEMBL::Compara::Attribute;
 
 my $help = 0;
 my $usage = "usage\n";
@@ -14,7 +12,8 @@ my ($dbname,$reg_conf);
 
 my $informant_perc_cov = 20;
 my $targeted_perc_cov = 70;
-my $include_all = 0;
+my $no_chr_constraint = 0;
+my $html = 0;
 
 GetOptions('help' => \$help,
            'dbname=s' => \$dbname,
@@ -22,9 +21,10 @@ GetOptions('help' => \$help,
            'informant_perc_cov=s' => \$informant_perc_cov,
            'targeted=s' => \$targeted_species,
            'targeted_perc_cov=s' => \$targeted_perc_cov,
-           'include_all' => \$include_all,
+           'no_chr_constraint' => \$no_chr_constraint,
            'method_link_type=s' => \$method_link_type,
-           'reg_conf=s' => \$reg_conf);
+           'reg_conf=s' => \$reg_conf,
+           'html' => \$html);
 
 $! = 1;
 
@@ -76,6 +76,24 @@ $sth->bind_columns(\$stable_id);
 my $sth1 = $dbc->prepare($sql);
 
 my $targeted_split_genes = 0;
+my %stable_ids;
+my ($min_start, $max_end);
+
+if ($html) {
+  print qq(
+           <HTML>
+           <HEAD>
+           <TITLE>Split genes in Ensembl</TITLE>
+           </HEAD>
+           <P></P>
+           <H2 align=center>Possible split genes in <i>$targeted_species</i><br>using <i>$informant_species</i> as informant</H2>
+           <P></P>
+           <HR></HR>
+          );
+} else {
+  print "#Possible split genes in $targeted_species
+#using $informant_species as informant\n";
+}
 
 while ($sth->fetch) {
   $sth1->execute($mlss->dbID, $targeted_gdb->dbID, $informant_gdb->dbID, $stable_id);
@@ -97,32 +115,64 @@ while ($sth->fetch) {
       $split_gene_chr = undef;
       last;
     }
-    if (!$include_all && $split_gene_chr ne $tm_chr_name) {
+    if (!$no_chr_constraint && $split_gene_chr ne $tm_chr_name) {
       @split_gene_data = ();
       $split_gene_chr = undef;
       last;
     }
     push @split_gene_data, [$description,$im_stable_id,$im_chr_name,$im_chr_start,$im_chr_end,$im_chr_strand,$ihm_perc_cov,$tm_stable_id,$tm_chr_name,$tm_chr_start,$tm_chr_end,$tm_chr_strand,$thm_perc_cov];
-
+    $min_start = $tm_chr_start unless (defined $min_start);
+    $min_start = $tm_chr_start if ($min_start > $tm_chr_start);
+    $max_end = $tm_chr_end unless (defined $max_end);
+    $max_end = $tm_chr_end if ($max_end < $tm_chr_end);
+    $stable_ids{$im_stable_id} =1;
+    $stable_ids{$tm_stable_id} =1;
   }
   if (scalar @split_gene_data) {
+    print "<pre>\n" if ($html);
+    printf "#%-5s %20s %5s %9s %9s %6s %3s %20s %5s %9s %9s %6s %3s\n", qw(desc stable_id chr start end strand cov stable_id chr start end strand cov);
     foreach my $gene_piece (@split_gene_data) {
-      print join(" ",@{$gene_piece}),"\n";
+      printf " %-5s %20s %5s %9d %9d %6s %3d %20s %5s %9d %9d %6s %3d\n",@{$gene_piece};
     }
-    print "----\n";
+    print "</pre>\n" if ($html);
+    if ($html) {
+      $informant_species =~ s/\s+/_/;
+      my $c = $im_chr_name;
+      $c .= ":" . int($im_chr_start + ($im_chr_end - $im_chr_start + 1)/2);
+      $c .= ":" . 1;
+      my $w = $im_chr_end - $im_chr_start + 10000;
+      my $h = join("|", keys %stable_ids);
+      my $s1 = join("", map(lc substr($_,0,1), (split(/\s+/,$targeted_species))));
+      my $c1 = $tm_chr_name;
+      $c1 .= ":" . int($min_start + ($max_end - $min_start + 1)/2);
+      $c1 .= ":" . $im_chr_strand*$tm_chr_strand;
+      my $w1 = $max_end - $min_start + 10000;
+      print qq(
+See in <A HREF="http://www.ensembl.org/$informant_species/multicontigview?c=$c;w=$w;h=$h;s1=$s1;c1=$c1;w1=$w1">MultiContigView</A>
+              );
+      print "<hr></hr>\n";
+    } else {
+      print "#----\n";
+    }
     $targeted_split_genes++;
   }
+  %stable_ids = ();
+  $min_start = undef;
+  $max_end = undef;
+}
+if ($html) {
+print qq
+  (
+<p>#Potentially $targeted_split_genes $targeted_species split genes</p>
+</BODY>
+   </HTML>
+  );
+} else {
+  print "#Potentially $targeted_split_genes $targeted_species split genes\n";
 }
 
-print "Potentially $targeted_split_genes $targeted_species split genes\n";
+
 
 exit 0;
 
 __END__
-
-select m2.stable_id,count(*) as count from homology h, homology_member hm1, member m1, homology_member hm2, member m2 where h.homology_id=hm1.homology_id and hm1.member_id=m1.member_id and h.homology_id=hm2.homology_id and hm2.member_id=m2.member_id and h.method_link_species_set_id=20002 and m1.genome_db_id=2 and m2.genome_db_id=1 and hm2.perc_cov<20 and hm1.perc_cov>70 group by m2.stable_id having count>1 order by count desc;
-
-
-
-select h.description,m2.stable_id,hm2.perc_cov,m1.stable_id,hm1.perc_cov from homology h, homology_member hm1, member m1, homology_member hm2, member m2 where h.homology_id=hm1.homology_id and hm1.member_id=m1.member_id and h.homology_id=hm2.homology_id and hm2.member_id=m2.member_id and h.method_link_species_set_id=20002 and m1.genome_db_id=2 and m2.genome_db_id=1 and m2.stable_id in ('ENSG00000118997','ENSG00000132549','ENSG00000112159','ENSG00000155657','ENSG00000096696','ENSG00000102595','ENSG00000115850','ENSG00000129003','ENSG00000135899','ENSG00000167522','ENSG00000114841','ENSG00000158486','ENSG00000133401') order by m2.stable_id, h.description desc;
-
