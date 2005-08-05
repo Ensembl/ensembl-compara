@@ -3,6 +3,7 @@ package EnsEMBL::Web::Configuration::UniSearch;
 use strict;
 use EnsEMBL::Web::Configuration;
 our @ISA = qw( EnsEMBL::Web::Configuration );
+use EnsEMBL::Web::SpeciesDefs;
 
 sub unisearch {
   my $self  = shift;
@@ -35,9 +36,11 @@ sub unisearch {
 sub context_menu {
   my $self  = shift;
   my $obj   = $self->{'object'};
-
+  our $SD = EnsEMBL::Web::SpeciesDefs->new();
   $self->add_block( 'help' , 'bulleted', 'Searching' );
-  $self->add_entry( 'help',  'href'=>"/@{[$obj->species]}/blastview", 'text' => 'Sequence search' );
+  if ($SD->ENSEMBL_SITETYPE ne 'Archive EnsEMBL') {
+    $self->add_entry( 'help',  'href'=>"/@{[$obj->species]}/blastview", 'text' => 'Sequence search' );
+  }
   my $species = $obj->species =~ /^multi$/i ? $obj->species_defs->ENSEMBL_PERL_SPECIES : $obj->species;
   $self->add_entry( 'help',  'href'=>"/$species/unisearch",  'text' => 'Full text search' );
   $self->add_entry( 'help',  'href'=>"/Multi/martview",  'icon' => '/img/biomarticon.gif', 'text' => 'BioMart data mining' );

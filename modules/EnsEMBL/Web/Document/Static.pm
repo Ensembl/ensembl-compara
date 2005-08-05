@@ -56,7 +56,9 @@ sub _initialize {
   my $species = $ENV{'ENSEMBL_SPECIES'} && $ENV{'ENSEMBL_SPECIES'} ne 'Multi' ? $ENV{'ENSEMBL_SPECIES'} : 'default';
   my $species_m  = $species eq 'default' ? 'Multi' : $species;
   $self->menu->add_block( 'whattodo', 'bulleted', 'Use Ensembl to...' );
-  $self->menu->add_entry( 'whattodo', 'href' => "/$species_m/blastview", 'text'=>'Run a BLAST search' );
+  if ($self->species_defs->ENSEMBL_SITETYPE ne 'Archive EnsEMBL') {
+    $self->menu->add_entry( 'whattodo', 'href' => "/$species_m/blastview", 'text'=>'Run a BLAST search' );
+  }
   $self->menu->add_entry( 'whattodo', 'href'=>"/$species/".$self->species_defs->ENSEMBL_SEARCH, 'text'=>'Search Ensembl' );
   $self->menu->add_entry( 'whattodo', 'href'=>"/$species_m/martview", 'text'=>'Data mining [BioMart]', 'icon' => '/img/biomarticon.gif' );
   $self->menu->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/default/helpview?se=1;kw=upload','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Upload your own data' );
@@ -122,16 +124,39 @@ sub _initialize {
 	'title' => "Vertebrate Genome Annotation" );
   $self->menu->add_entry( 'links', 'href' => 'http://trace.ensembl.org/', 'text' => 'Trace server', 
 	'title' => "trace.ensembl.org - trace server" );
-
-  if ($self->species_defs->ENSEMBL_SITE_NAME eq 'Ensembl') { # only want archive link on live Ensembl!
-  $self->menu->add_entry( 'links', 'href' => 'http://archive.ensembl.org', 'text' => 'Archive! sites' );
+  
+  if ($self->species_defs->ENSEMBL_SITETYPE eq 'EnsEMBL') { # only on e!
+    $self->menu->add_entry( 'links', 
+			    'href' => 'http://archive.ensembl.org', 
+			    'text' => 'Archive! sites' );
     my $URL = sprintf "http://%s.archive.ensembl.org%s",
-             CGI::escapeHTML($self->species_defs->ARCHIVE_VERSION),
-             CGI::escapeHTML($ENV{'REQUEST_URI'});
-    $self->menu->add_entry( 'links', 'href' => $URL, 'text' => 'Stable Archive! link for this page' );
+      CGI::escapeHTML($self->species_defs->ARCHIVE_VERSION),
+	  CGI::escapeHTML($ENV{'REQUEST_URI'});
+    $self->menu->add_entry( 'links', 
+			    'href' => $URL, 
+			    'text' => 'Stable Archive! link for this page' );
   }
 
+  elsif ($self->species_defs->ENSEMBL_SITETYPE eq 'Archive EnsEMBL') {
+    $self->menu->add_entry( 'links', 
+			    'href' => "http://www.ensembl.org", 
+			    'text' => "Ensembl", 
+			    'icon' => '/img/ensemblicon.gif', 
+			    'title' => "Link to newest Ensembl data");
+    my $URL = sprintf "http://www.ensembl.org%s",
+             CGI::escapeHTML($ENV{'REQUEST_URI'});
+    $self->menu->add_entry( 'links', 
+			    'href' => $URL,
+			    'icon' => '/img/ensemblicon.gif', 
+			    'text' => 'View page in current e! release' );
+  }
   else {
-    $self->menu->add_entry( 'links', 'href' => "http://www.ensembl.org", 'text' => "Ensembl" );
+    $self->menu->add_entry( 'links', 'href' => "http://www.ensembl.org", 
+			    'text' => "Ensembl", 
+			    'icon' => '/img/ensemblicon.gif' );
+    $self->menu->add_entry ('links', 
+			    'href' => "/info/about/ensembl_powered.html",
+			    'text'=> 'Ensembl Empowererd',
+			    'icon' => '/img/ensemblicon.gif' );
   }
 }

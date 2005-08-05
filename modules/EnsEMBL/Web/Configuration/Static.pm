@@ -12,7 +12,9 @@ sub links {
   my $species = $ENV{'ENSEMBL_SPECIES'};
   my $species_2 = $species eq 'Multi' ? 'default' : $species;
   $self->add_block( 'whattodo', 'bulleted', 'Use Ensembl to...' );
- $self->add_entry( 'whattodo', 'href' => "/multi/blastview", 'text'=>'Run a BLAST search' );
+  if ($SD->ENSEMBL_SITETYPE ne 'Archive EnsEMBL') {
+    $self->add_entry( 'whattodo', 'href' => "/multi/blastview", 'text'=>'Run a BLAST search' );
+  }
   $self->add_entry( 'whattodo', 'href'=>"/default/textview", 'text'=>'Search Ensembl' );
   $self->add_entry( 'whattodo', 'href'=>"/multi/martview", 'text'=>'Data mining [BioMart]', 'icon' => '/img/biomarticon.gif' );
   $self->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/perl/helpview?se=1;kw=upload','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Upload your own data' );
@@ -71,13 +73,38 @@ sub links {
   $self->add_entry( 'links', 'href' => 'http://trace.ensembl.org/', 'text' => 'Trace server',
         'title' => "trace.ensembl.org - trace server" );
 
-  if ($SD->ENSEMBL_SITE_NAME eq 'Ensembl') { # only want archive link on live Ensembl!
+  if ($SD->ENSEMBL_SITETYPE eq 'EnsEMBL') { # only want archive link on e!
     my $URL = sprintf "http://%s.archive.ensembl.org%s",
-             CGI::escapeHTML($SD->ARCHIVE_VERSION),
-             CGI::escapeHTML($ENV{'REQUEST_URI'});
-    $self->add_entry( 'links', 'href' => $URL, 'text' => "Stable (archive) link for this page" );
+      CGI::escapeHTML($SD->ARCHIVE_VERSION),
+	  CGI::escapeHTML($ENV{'REQUEST_URI'});
+    $self->add_entry( 'links', 
+		      'href' => $URL, 
+		      'text' => "Stable (archive) link for this page" );
   }
-
+  elsif ($SD->ENSEMBL_SITETYPE eq 'Archive EnsEMBL') {
+    $self->add_entry( 'links', 
+		      'icon' => '/img/ensemblicon.gif', 
+		      'href' => "http://www.ensembl.org", 
+		      'text' => "Ensembl" );
+    my $URL = sprintf "http://www.ensembl.org%s",
+      CGI::escapeHTML($ENV{'REQUEST_URI'});
+    $self->add_entry( 'links', 
+		      'href' => $URL, 
+		      'icon' => '/img/ensemblicon.gif', 
+		      'title'=> "Link to newest Ensembl data",
+			    'text' => 'View page in current e! release' );
+  }
+  else {
+    $self->add_entry( 'links', 
+		      'href' => "http://www.ensembl.org", 
+		      'icon' => '/img/ensemblicon.gif', 
+		      'text' => "Ensembl" );
+  
+    $self->add_entry ('links', 
+		      'href' => "/info/about/ensembl_powered.html", 
+		      'icon' => '/img/ensemblicon.gif', 
+		      'text'=>'Ensembl Empowered');
+  }
 }
 
 1;
