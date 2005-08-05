@@ -24,14 +24,14 @@ SpeciesDefs - Ensembl web configuration accessor
   if( scalar( $species_defs->valid_species('Homo_sapiens') ){ }
 
   # Getting a setting (parameter value/section data) from the config
-  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_SHORT_NAME');
+  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_COMMON_NAME');
 
   # Alternative setting getter - uses autoloader
-  my $sp_bio_name = $speciesdefs->SPECIES_SHORT_NAME('Homo_sapiens');
+  my $sp_bio_name = $speciesdefs->SPECIES_COMMON_NAME('Homo_sapiens');
 
   # Can also use the ENSEMBL_SPECIES environment variable
   ENV{'ENSEMBL_SPECIES'} = 'Homo_sapiens';
-  my $sp_bio_name = $speciesdefs->SPECIES_SHORT_NAME;
+  my $sp_bio_name = $speciesdefs->SPECIES_COMMON_NAME;
 
   # Getting a parameter with multiple values
   my( @chromosomes ) = @{$speciesdefs->ENSEMBL_CHROMOSOMES};
@@ -292,9 +292,10 @@ sub get_config {
   my $self = shift;
   my $species = shift;
   my $var     = shift || $species;
+
   if(defined $CONF->{'_storage'}) {
     if (exists $CONF->{'_storage'}{$species} &&
-  exists $CONF->{'_storage'}{$species}{$var}){
+	exists $CONF->{'_storage'}{$species}{$var}){
       return $CONF->{'_storage'}{$species}{$var};
     } elsif (exists $CONF->{'_storage'}{$var}){
       return $CONF->{'_storage'}{$var};
