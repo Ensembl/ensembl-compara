@@ -100,8 +100,8 @@ sub get_params {
   if (defined $params->{'gene_stable_id'}) {
     $self->{'gene_stable_id'} = $params->{'gene_stable_id'};
   }
-  if (defined $params->{'all_bests'}) {
-    $self->{'all_bests'} = $params->{'all_bests'};
+  if (defined $params->{'all_best'}) {
+    $self->{'all_bests'} = $params->{'all_best'};
   }
   if (defined $params->{'no_filters'}) {
     $self->{'no_filters'} = $params->{'no_filters'};
@@ -328,7 +328,7 @@ sub threshold_grow_for_species
       $include_pair = 1;
     } 
     
-    if(!$include_pair) {
+    if(!$include_pair and ($self->{'bsr_threshold'} < 1.0)) {
       unless(defined($self->{'selfhit_score_hash'}->{$pep1_id})) {
         printf("member_pep %d missing self_hit\n", $pep1_id);
       }
@@ -384,8 +384,10 @@ sub grow_memclusters_with_peppair {
   my $self = shift;
   my $pep_pair = shift;
   my ($pep1_id, $pep2_id) = @{$pep_pair};
-   
-  #printf("homology peptide pair : %d - %d\n", $pep1_id, $pep2_id); 
+  
+  if(($pep1_id == 289964) or ($pep2_id == 289964)) {
+    printf("!!!!!! homology peptide pair : %d - %d\n", $pep1_id, $pep2_id);
+  }
   my $mlss_id = $self->{'cluster_mlss'}->dbID;
   
   my ($treeMember1, $treeMember2);
