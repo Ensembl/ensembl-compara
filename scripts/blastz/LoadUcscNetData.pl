@@ -282,6 +282,8 @@ my %tdnafrags;
 foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($tgdb)}) {
   $tdnafrags{$df->name} = $df;
 }
+# Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL
+$tdnafrags{"M"} = $tdnafrags{"MT"} if (defined $tdnafrags{"MT"});
 
 # cache all qSpecies dnafrag from compara
 my $qBinomial = get_binomial_name($qSpecies);
@@ -291,6 +293,8 @@ my %qdnafrags;
 foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
   $qdnafrags{$df->name} = $df;
 }
+# Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL
+$qdnafrags{"M"} = $qdnafrags{"MT"} if (defined $qdnafrags{"MT"});
 
 if ($check_length) {
   check_length(); # Check whether the length of the UCSC and the EnsEMBL chromosome match or not
@@ -311,7 +315,6 @@ $mlssa->store($mlss); # Sets the dbID if already exists, creates and sets the db
 
 my $chromosome_specific_chain_tables = get_chromosome_specificity_for_tables(
     $ucsc_dbc, $qSpecies, "chain");
-
 
 #####################################################################
 ##
@@ -366,6 +369,10 @@ my $nb_of_daf_loaded = 0;
 
 my $net_index = 0; # this counter is used to resume the script if needed
 
+my $simple = 0;
+my $direct = 0;
+my $gapped = 0;
+my $complex = 0;
 FETCH_NET: while( $sth->fetch() ) {
   $net_index++;
   next if ($net_index < $start_net_index); # $start_net_index is used to resume the script
@@ -385,21 +392,38 @@ FETCH_NET: while( $sth->fetch() ) {
   # Check whether the UCSC chromosome has its counterpart in EnsEMBL. Skip otherwise...
   #
   my $tdnafrag = $tdnafrags{$n_tName};
-  # Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL
-  $tdnafrag = $tdnafrags{"MT"} if ($n_tName eq "M");
-  unless (defined $tdnafrag) {
-    print STDERR "daf not stored because $tBinomial seqname ",$n_tName," not in dnafrag table\n";
+  if (!defined $tdnafrag) {
+#     print STDERR "daf not stored because $tBinomial seqname ",$n_tName," not in dnafrag table\n";
 #     print STDERR "NET: $tBinomial (target) $n_tName ($n_tStart - $n_tEnd); ",
 #         " $qBinomial (query) $n_qName ($n_qStart - $n_qEnd); rel.strand: $n_strand; chain #$n_chainId\n";
-    next;
+    next FETCH_NET;
   }
 
   my $qdnafrag = $qdnafrags{$n_qName};
-  unless (defined $qdnafrag) {
-    print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table\n";
-#     print STDERR "NET: $tBinomial (target) $n_tName ($n_tStart - $n_tEnd); ",
-#         " $qBinomial (query) $n_qName ($n_qStart - $n_qEnd); rel.strand: $n_strand; chain #$n_chainId\n";
-    next;
+  my $qdnafrag_length;
+  my $q_needs_mapping = 0;
+  if (!defined $qdnafrag) {
+    ## The alignment might be defined on a non-toplevel seq_region.
+    ## The first EnsEMBL cow assembly released included gene_scaffolds for instance
+    ## which were built on top of the original scaffolds.
+    my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
+        $n_qName, $n_qStart, $n_qEnd, 1);
+    if ($slice) {
+      foreach my $this_seq_region (@$seq_regions) {
+        if (!defined $qdnafrags{$this_seq_region}) {
+          print STDERR "daf not stored because $qBinomial seqname ",$n_qName,
+              " maps on $this_seq_region and it is not in dnafrag table\n";
+          next FETCH_NET;
+        }
+      }
+      $qdnafrag_length = $slice->length();
+      $q_needs_mapping = 1;
+    } else {
+      print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table\n";
+      next FETCH_NET;
+    }
+  } else {
+    $qdnafrag_length = $qdnafrag->length();
   }
   #
   ###########
@@ -419,7 +443,7 @@ FETCH_NET: while( $sth->fetch() ) {
       c.score, c.tName, c.tSize, c.tStart, c.tEnd, c.qName, c.qSize, c.qStrand, c.qStart, c.qEnd,
       cl.tStart, cl.tEnd, cl.qStart, cl.qStart+cl.tEnd-cl.tStart as qEnd
     FROM $c_table c, $cl_table cl
-    WHERE c.id = cl.chainId and cl.chainId = ? and c.tName = cl.tName and c.tName = \"$n_tName\"";
+    WHERE c.id = cl.chainId and cl.chainId = ? and c.tName = cl.tName and c.tName = \"chr$n_tName\"";
   my $sth2 = $ucsc_dbc->prepare($sql);
   $sth2->execute($n_chainId);
 
@@ -456,7 +480,7 @@ FETCH_NET: while( $sth->fetch() ) {
       print STDERR "net_index is $net_index\n";
       exit 2;
     }
-    unless ($qdnafrag->length == $c_qSize) {
+    unless ($qdnafrag_length == $c_qSize) {
       print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
       print STDERR "net_index is $net_index\n";
       exit 3;
@@ -479,20 +503,64 @@ FETCH_NET: while( $sth->fetch() ) {
       $cl_qEnd = $cl_qStart + $length;
     }
 
-#    print "$c_score,$c_tName,$c_tSize,$c_tStart,$c_tEnd,$c_qName,$c_qSize,$c_qStrand,$c_qStart,$c_qEnd,$cl_tStart,$cl_tEnd,$cl_qStart,$cl_qEnd\n";
-
-    my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
-        -seqname  => $c_tName,
-        -start    => $cl_tStart,
-        -end      => $cl_tEnd,
-        -strand   => 1,
-        -hseqname  => $c_qName,
-        -hstart   => $cl_qStart,
-        -hend     => $cl_qEnd,
-        -hstrand  => $c_qStrand,
-        -score    => $c_score);
-    push(@$all_feature_pairs, $this_feature_pair);
-
+    if ($q_needs_mapping) {
+      my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
+        $c_qName, $cl_qStart, $cl_qEnd, $c_qStrand);
+      my %seq_regions;
+#       print STDERR "$qBinomial $n_qName -> ", join(" - ", @seq_regions), "\n";
+      foreach my $seq_region (@$seq_regions) {
+        $seq_regions{$seq_region} = 1;
+        $qdnafrag = $qdnafrags{$seq_region};
+        if (!defined $qdnafrag) {
+          print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table, so not in core\n";
+          next FETCH_CHAIN;
+        }
+      }
+      if (scalar(@$coords) == 1) {
+        $direct++;
+      } else {
+        if (scalar(keys %seq_regions) == 1) {
+          $gapped++;
+#          print STDERR "net_index: $net_index, tStart: $n_tStart, chainId: $n_chainId\n",
+#              " $c_qName($seq_regions[0]), $cl_qStart, $cl_qEnd, $c_qStrand\n";
+        } else {
+          $complex++;
+          ## Not supported at the moment!!!
+          print STDERR "daf not stored because $qBinomial seqname ",$n_qName," maps on several seq_regions.\n";
+          next FETCH_CHAIN;
+        }
+      }
+      my $start = $cl_tStart;
+      foreach my $coord (@$coords) {
+        if ($coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+          my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
+              -seqname  => $c_tName,
+              -start    => $start,
+              -end      => $start + $coord->length - 1,
+              -strand   => 1,
+              -hseqname => shift @$seq_regions,
+              -hstart   => $coord->start,
+              -hend     => $coord->end,
+              -hstrand  => $coord->strand,
+              -score    => $c_score);
+          push(@$all_feature_pairs, $this_feature_pair);
+        }
+        $start += $coord->length;
+      }
+    } else {
+      $simple++;
+      my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
+          -seqname  => $c_tName,
+          -start    => $cl_tStart,
+          -end      => $cl_tEnd,
+          -strand   => 1,
+          -hseqname  => $c_qName,
+          -hstart   => $cl_qStart,
+          -hend     => $cl_qEnd,
+          -hstrand  => $c_qStrand,
+          -score    => $c_score);
+      push(@$all_feature_pairs, $this_feature_pair);
+    }
   } ### End while loop (FETCH_CHAIN)
 
   my $dna_align_features = get_DnaAlignFeatures_from_FeaturePairs($all_feature_pairs);
@@ -507,12 +575,13 @@ FETCH_NET: while( $sth->fetch() ) {
 #  print STDERR "Loading ",scalar @new_dafs,"...\n";
   
   foreach my $daf (@new_dafs) {
-    save_daf_as_genomic_align_block($daf, $tdnafrag, $qdnafrag)
+    save_daf_as_genomic_align_block($daf);
   }
 
   $nb_of_daf_loaded = $nb_of_daf_loaded + scalar @new_dafs;
 }
 
+print STDERR "simple = $simple; direct = $direct; gapped = $gapped and complex = $complex\n";
 print STDERR "nb_of_net: ", $nb_of_net,"\n";
 print STDERR "nb_of_daf_loaded: ", $nb_of_daf_loaded,"\n";
 
@@ -632,6 +701,51 @@ sub get_chromosome_specificity_for_tables {
 }
 
 
+=head2 map_non_toplevel_seqregion
+
+  Arg[1]     : string $species_name
+  Arg[2]     : string $seq_region_name
+  Arg[3]     : int $start
+  Arg[4]     : int $end
+  Arg[4]     : int $strand
+  Example    :
+  Description: 
+  Returntype : listref of Bio::EnsEMBL::Coordinate or Bio::EnsEMBL::Gap
+               objects and a listref of strings
+
+=cut
+
+sub map_non_toplevel_seqregion {
+  my ($species_name, $seq_region_name, $start, $end, $strand) = @_;
+
+  my $coord_system_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+      $species_name, "core", "CoordSystem");
+  return (undef, undef, undef) if (!$coord_system_adaptor);
+  my $other_coord_system;
+  
+  my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species_name, "core", "Slice");
+  my $slice;
+  if ($seq_region_name =~ /^SCAFFOLD/i) {
+    $slice = $slice_adaptor->fetch_by_region("scaffold", $seq_region_name);
+    $other_coord_system = $coord_system_adaptor->fetch_by_name("scaffold");
+  }
+  return (undef, undef, undef) if (!$slice or !$other_coord_system);
+
+  my $assembly_mapper_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+      $species_name, "core", "AssemblyMapper");
+  my $toplevel_coord_system = $coord_system_adaptor->fetch_by_name("toplevel");
+  my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems(
+      $other_coord_system, $toplevel_coord_system);
+
+  my @coords = $assembly_mapper->map($slice->seq_region_name,
+      $start, $end, $strand, $other_coord_system);
+  my @seq_regions = $assembly_mapper->list_seq_regions($slice->seq_region_name,
+      $start, $end, $other_coord_system);
+
+  return ($slice, \@coords, \@seq_regions);
+}
+
+
 =head2 get_DnaAlignFeatures_from_FeaturePairs
 
   Arg[1]     : arrayref of Bio::EnsEMBL::FeaturePair objects
@@ -710,23 +824,21 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
 =head2 save_daf_as_genomic_align_block
 
   Arg[1]     : Bio::EnsEMBL::DnaDnaAlignFeature $daf
-  Arg[2]     : Bio::EnsEMBL::Compara::DnaFrag $target_dnafrag
-  Arg[3]     : Bio::EnsEMBL::Compara::DnaFrag $query_dnafrag
-  Example    : save_daf_as_genomic_align_block($daf, $target_dnafrag, $query_dnafrag)
+  Example    : save_daf_as_genomic_align_block($daf)
   Description: 
   Returntype : -none-
 
 =cut
 
 sub save_daf_as_genomic_align_block {
-  my ($daf, $tdnafrag, $qdnafrag) = @_;
+  my ($daf) = @_;
     
   # Get cigar_lines and length of the alignment from the daf object
   my ($tcigar_line, $qcigar_line, $length) = parse_daf_cigar_line($daf);
 
   # Create GenomicAlign for target sequence
   my $tga = new Bio::EnsEMBL::Compara::GenomicAlign;
-  $tga->dnafrag($tdnafrag);
+  $tga->dnafrag($tdnafrags{$daf->seqname});
   $tga->dnafrag_start($daf->start);
   $tga->dnafrag_end($daf->end);
   $tga->dnafrag_strand($daf->strand);
@@ -735,7 +847,7 @@ sub save_daf_as_genomic_align_block {
 
   # Create GenomicAlign for query sequence
   my $qga = new Bio::EnsEMBL::Compara::GenomicAlign;
-  $qga->dnafrag($qdnafrag);
+  $qga->dnafrag($qdnafrags{$daf->hseqname});
   $qga->dnafrag_start($daf->hstart);
   $qga->dnafrag_end($daf->hend);
   $qga->dnafrag_strand($daf->hstrand);
@@ -760,8 +872,8 @@ sub save_daf_as_genomic_align_block {
   $gag->type("default");
   $gag->genomic_align_array([$tga, $qga]);
 
-  $gaba->store($gab); # This stores the Bio::EnsEMBL::Compara::GenomicAlign objects
-  $gaga->store($gag);
+#   $gaba->store($gab); # This stores the Bio::EnsEMBL::Compara::GenomicAlign objects
+#   $gaga->store($gag);
 }
 
 =head2 parse_daf_cigar_line
