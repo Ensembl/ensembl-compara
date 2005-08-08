@@ -118,6 +118,7 @@ sub spreadsheet_featureTable {
   $C = 0;
   for( @{$extra_columns||[]} ) {
     $panel->add_columns( {'key' => "extra$C", 'title' => $_, 'width' => '10%', 'align' => 'center' } );
+    $C++;
   }
 
   # spreadsheet rows
