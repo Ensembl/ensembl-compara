@@ -115,6 +115,7 @@ sub config_tracks {
         'label'  => $box->{'name'},
         'name'   => $box->{'value'},
         'id'     => $box->{'value'},
+        'value'  => 'on',
     );
   }
   $form->add_element(
@@ -652,7 +653,7 @@ sub show_karyotype {
         $config_name = 'Vmap2view';
         $max_length = $object->length;
     }
-    my $config = $object->get_userconfig($config_name);
+    my $config = $object->user_config_hash($config_name);
    warn "Configuration is $config_name"; 
     # PARSE DATA
     my $parser;
