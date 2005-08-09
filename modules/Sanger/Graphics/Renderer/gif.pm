@@ -65,15 +65,40 @@ sub colour {
 # should probably support different density hatching too
 #
 sub tile {
-    my ($self, $id) = @_;
-    $id ||= "darkgrey";
+    my ($self, $id, $pattern) = @_;
+    $id      ||= "darkgrey";
+    $pattern ||= "hatch_ne";
 
     unless($self->{'_GDTileCache'}->{$id}) {
-	my $tile  = GD::Image->new(5,5);
-	my $white = $tile->colorAllocate(255,255,255);
-	my $hatch = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
-	$tile->transparent($white);
-	$tile->line(0,4,4,0,$hatch);
+	my $tile = GD::Image->new(4,4);
+	my $bg   = $tile->colorAllocate(255,255,255);
+	my $fg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+	$tile->transparent($bg);
+
+	if($pattern eq "hatch_ne") {
+	    #########
+	    # stroke south-west:north-east
+	    #
+	    $tile->line(0,3,3,0,$fg);
+
+	} elsif($pattern eq "hatch_nw") {
+	    #########
+	    # stroke south-east:north-west
+	    #
+	    $tile->line(0,0,3,3, $fg);
+	} elsif($pattern eq "hatch_vert") {
+	    #########
+	    # stroke vertical
+	    #
+	    $tile->line(0,0,0,3, $fg);
+	    $tile->line(2,0,2,3, $fg);
+	} elsif($pattern eq "hatch_hori") {
+	    #########
+	    # stroke horizontal
+	    #
+	    $tile->line(0,0,3,0, $fg);
+	    $tile->line(0,2,3,2, $fg);
+	}
 	$self->{'_GDTileCache'}->{$id} = $tile;
     }
     return $self->{'_GDTileCache'}->{$id};
@@ -81,18 +106,16 @@ sub tile {
 
 sub render_Rect {
     my ($self, $glyph) = @_;
-
-    my $canvas = $self->{'canvas'};
-
-    my $gcolour       = $glyph->{'colour'};
-    my $gbordercolour = $glyph->{'bordercolour'};
+    my $canvas         = $self->{'canvas'};
+    my $gcolour        = $glyph->{'colour'};
+    my $gbordercolour  = $glyph->{'bordercolour'};
 
     # (avc)
     # this is a no-op to let us define transparent glyphs
     # and which can still have an imagemap area BUT make
     # sure it is smaller than the carrent largest glyph in
     # this glyphset because its height is not recorded!
-    if (defined $gcolour && $gcolour eq 'transparent'){
+    if (defined $gcolour && $gcolour eq 'transparent') {
       return;
     }
     
@@ -106,8 +129,8 @@ sub render_Rect {
 
     $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
 
-    if($glyph->{'hatched'}) {
-	$canvas->setTile($self->tile($glyph->{'hatchcolour'}));
+    if($glyph->{'pattern'}) {
+	$canvas->setTile($self->tile($glyph->{'patterncolour'}, $glyph->{'pattern'}));
 	$canvas->filledRectangle($x1, $y1, $x2, $y2, gdTiled);
     }
 
