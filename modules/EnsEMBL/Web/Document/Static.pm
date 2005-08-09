@@ -71,21 +71,26 @@ sub _initialize {
 
   $self->menu->add_block( 'docs', 'bulleted', 'Docs and downloads' );
   $self->menu->add_entry( 'docs', 'href' => '/info/', 
+			  'icon' => '/img/infoicon.gif', 
 			  'text'  => 'Information',
 			  'title' => 'Information homepage');
 
   $self->menu->add_entry( 'docs', 'href' => '/whatsnew.html', 
+			  'icon' => '/img/infoicon.gif', 
 			  'text'  => "What's New",
 			  'title' => "Latest changes in Ensembl");
 
   $self->menu->add_entry( 'docs', 'href' => '/info/about/', 
+			  'icon' => '/img/infoicon.gif', 
 			  'text'  => 'About Ensembl',
 			  'title' => 'Introduction, Goals, Commitments, Citing Ensembl, Archive sites');
   $self->menu->add_entry( 'docs', 'href' => '/info/data/', 
 			  'text'  => 'Ensembl data',
+			  'icon' => '/img/infoicon.gif', 
 			  'title' => 'Downloads, Data import/export, Data mining, Data searching');
   $self->menu->add_entry( 'docs', 'href' => '/info/software/', 
 			  'text'  => 'Software',
+			  'icon' => '/img/infoicon.gif', 
 			  'title' => 'API, Installation, CVS, Versions');
 
 # don't show species links on main home page
@@ -120,6 +125,11 @@ sub _initialize {
     $map_link = '/'.$species.$map_link;
   }
   $self->menu->add_entry( 'links', 'href' => $map_link, 'text' => 'Sitemap' );
+  $self->menu->add_entry( 'links', 
+			  'href' => 'http://pre.ensembl.org/', 
+			  'text' => 'Pre! Ensembl', 
+			  'icon' => '/img/ensemblicon.gif', 
+	'title' => "Ensembl Pre! sites (species in progress)" );
   $self->menu->add_entry( 'links', 'href' => 'http://vega.sanger.ac.uk/', 'text' => 'Vega', 'icon' => '/img/vegaicon.gif', 
 	'title' => "Vertebrate Genome Annotation" );
   $self->menu->add_entry( 'links', 'href' => 'http://trace.ensembl.org/', 'text' => 'Trace server', 

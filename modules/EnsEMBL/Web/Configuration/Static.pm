@@ -45,20 +45,25 @@ sub links {
 
   $self->add_block( 'docs', 'bulleted', 'Docs and downloads' );
   $self->add_entry( 'docs', 'href' => '/info/', 
-	'text' => 'Information',
-        'title'=> 'Information homepage' );
+		    'text' => 'Information',
+		    'icon' => '/img/infoicon.gif', 
+		    'title'=> 'Information homepage' );
   $self->add_entry( 'docs', 'href' => '/whatsnew.html', 
 	'text' => "What's New",
+		    'icon' => '/img/infoicon.gif', 
         'title'=> 'Changes in Ensembl' );
   $self->add_entry( 'docs', 'href' => '/info/about/', 
-	'text' => 'About Ensembl',
- 	'title'=> 'Introduction, Goals, Commitments, Citing Ensembl, Archive sites' );
+		    'icon' => '/img/infoicon.gif', 
+		    'text' => 'About Ensembl',
+		    'title'=> 'Introduction, Goals, Commitments, Citing Ensembl, Archive sites' );
   $self->add_entry( 'docs', 'href' => '/info/data/', 
-	'text' => 'Using Ensembl data',
-	'title'=> 'Downloads, Data import/export, Data mining, Data searches' );
+		    'text' => 'Using Ensembl data',
+		    'icon' => '/img/infoicon.gif', 
+		    'title'=> 'Downloads, Data import/export, Data mining, Data searches' );
   $self->add_entry( 'docs', 'href' => '/info/software/', 
-	'text' => 'Software',
-	'title'=> 'API, Installation, Website, Versions, CVS' );
+		    'text' => 'Software',
+		    'icon' => '/img/infoicon.gif', 
+		    'title'=> 'API, Installation, Website, Versions, CVS' );
                                                                                 
   $self->add_block( 'links', 'bulleted', 'Other links' );
   $self->add_entry( 'links', 'href' => '/', 'text' => 'Home' );
@@ -67,9 +72,15 @@ sub links {
     $map_link = '/'.$species.$map_link;
   }
   $self->add_entry( 'links', 'href' => $map_link, 'text' => 'Sitemap' );
-  $self->add_entry( 'links', 'href' => 'http://archive.ensembl.org', 'text' => "Archive! sites" );
+  $self->menu->add_entry( 'links', 
+			  'href' => 'http://pre.ensembl.org/', 
+			  'text' => 'Pre! Ensembl', 
+			  'icon' => '/img/ensemblicon.gif', 
+	'title' => "Ensembl Pre! sites (species in progress)" )
+
   $self->add_entry( 'links', 'href' => 'http://vega.sanger.ac.uk/', 'text' => 'Vega', 'icon' => '/img/vegaicon.gif',
         'title' => "Vertebrate Genome Annotation" );
+  $self->add_entry( 'links', 'href' => 'http://archive.ensembl.org', 'text' => "Archive! sites" );
   $self->add_entry( 'links', 'href' => 'http://trace.ensembl.org/', 'text' => 'Trace server',
         'title' => "trace.ensembl.org - trace server" );
 
