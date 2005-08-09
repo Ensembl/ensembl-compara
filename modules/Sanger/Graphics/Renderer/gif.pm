@@ -1,8 +1,9 @@
 #########
-# Author: rmp@sanger.ac.uk
-# Maintainer: webmaster@sanger.ac.uk
-# Created: 2001
-# Last Modified: rmp 2004-12-14 initial stringFT support
+# Author:        rmp@sanger.ac.uk
+# Maintainer:    webmaster@sanger.ac.uk
+# Created:       2001
+# Last Modified: rmp 2005-08-09 hatched fill-pattern support (subs tile and render_Rect): set $glyph->{'hatched'} = true|false and $glyph->{'hatchcolour'} = "darkgrey";
+#                rmp 2004-12-14 initial stringFT support
 #
 package Sanger::Graphics::Renderer::gif;
 use strict;
@@ -14,7 +15,7 @@ use vars qw(@ISA);
 
 sub init_canvas {
     my ($self, $config, $im_width, $im_height) = @_;
-    $self->{'im_width'} = $im_width;
+    $self->{'im_width'}  = $im_width;
     $self->{'im_height'} = $im_height;
     my $canvas = GD::Image->new($im_width, $im_height);
     $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
@@ -59,6 +60,25 @@ sub colour {
   return $self->{'_GDColourCache'}->{$id};
 }
 
+#########
+# build mini GD images which can be used as fill patterns
+# should probably support different density hatching too
+#
+sub tile {
+    my ($self, $id) = @_;
+    $id ||= "darkgrey";
+
+    unless($self->{'_GDTileCache'}->{$id}) {
+	my $tile  = GD::Image->new(5,5);
+	my $white = $tile->colorAllocate(255,255,255);
+	my $hatch = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+	$tile->transparent($white);
+	$tile->line(0,4,4,0,$hatch);
+	$self->{'_GDTileCache'}->{$id} = $tile;
+    }
+    return $self->{'_GDTileCache'}->{$id};
+}
+
 sub render_Rect {
     my ($self, $glyph) = @_;
 
@@ -85,8 +105,13 @@ sub render_Rect {
     my $y2 = $glyph->{'pixely'} + $glyph->{'pixelheight'};
 
     $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
+
+    if($glyph->{'hatched'}) {
+	$canvas->setTile($self->tile($glyph->{'hatchcolour'}));
+	$canvas->filledRectangle($x1, $y1, $x2, $y2, gdTiled);
+    }
+
     $canvas->rectangle($x1, $y1, $x2, $y2, $bordercolour) if(defined $gbordercolour);
-	
 }
 
 sub render_Text {
