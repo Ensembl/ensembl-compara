@@ -156,7 +156,15 @@ sub run
   my $self = shift;
   #call superclasses run method
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-  $self->SUPER::run();
+  eval { $self->SUPER::run(); };
+  if($@) {
+    printf(STDERR "Bio::EnsEMBL::Pipeline::Runnable::Blast threw exception:\n$@$_");
+    if($@ =~ /"VOID"/) {
+      printf(STDERR "this is OK: member_id=%d doesn't have sufficient structure for a search\n", $self->input_id);
+    } else {
+      die("$@$_");
+    }
+  }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   return 1;
 }
