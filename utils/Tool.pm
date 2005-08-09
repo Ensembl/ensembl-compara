@@ -21,6 +21,7 @@ BEGIN{
 }
 
 use EnsEMBL::Web::SpeciesDefs;
+our $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 
 #----------------------------------------------------------------------
 
@@ -75,8 +76,7 @@ sub check_species {
 
 sub get_config {
   my $args = shift;
-  my $species_defs = &species_defs;
-  my $values = $species_defs->get_config($args->{species}, $args->{values});
+  my $values = $SPECIES_DEFS->get_config($args->{species}, $args->{values});
   return $values || {};
 }
 
@@ -115,8 +115,7 @@ sub info{
 
 sub mysql_db {
   my $release = shift || "";
-  my $species_defs = &species_defs;
-  my $dsn = "DBI:mysql:host=". $species_defs->ENSEMBL_HOST .";port=" . $species_defs->ENSEMBL_HOST_PORT;
+  my $dsn = "DBI:mysql:host=". $SPECIES_DEFS->ENSEMBL_HOST .";port=" . $SPECIES_DEFS->ENSEMBL_HOST_PORT;
   my $dbh = DBI->connect($dsn, 'ensro') or die "\n[*DIE] Can't connect to database '$dsn'";
   my $mysql = $dbh->selectall_arrayref("show databases like '%$release%'");
   $dbh->disconnect;
@@ -191,30 +190,13 @@ sub release_month {
 =cut
 
 sub site_logo {
-  my $species_defs = &species_defs;
   return
-      { src    => $species_defs->SITE_LOGO,          
-        height => $species_defs->SITE_LOGO_HEIGHT,
-        width  => $species_defs->SITE_LOGO_WIDTH,
-        alt    => $species_defs->SITE_LOGO_ALT, 
-        href   => $species_defs->SITE_LOGO_HREF}
-  or die "no Site logo defined: $species_defs->SITE_LOGO";
-}
-
-#----------------------------------------------------------------------
-=head2 species_defs
-
-  Arg[1]      : none  
-  Example     : utils::Tool::species_defs
-  Description : 
-  Return type : $species_defs
-
-=cut
-
-our $SPECIES_DEFS;
-sub species_defs {
-  $SPECIES_DEFS ||= EnsEMBL::Web::SpeciesDefs->new();
-  return $SPECIES_DEFS;
+      { src    => $SPECIES_DEFS->SITE_LOGO,          
+        height => $SPECIES_DEFS->SITE_LOGO_HEIGHT,
+        width  => $SPECIES_DEFS->SITE_LOGO_WIDTH,
+        alt    => $SPECIES_DEFS->SITE_LOGO_ALT, 
+        href   => $SPECIES_DEFS->SITE_LOGO_HREF}
+  or die "no Site logo defined: $SPECIES_DEFS->SITE_LOGO";
 }
 
 #----------------------------------------------------------------------

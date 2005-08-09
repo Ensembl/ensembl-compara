@@ -187,12 +187,12 @@ our $FIRST_ARCHIVE = 26;   # Release number for oldest archive site
 my @species;
 my @UPDATES;
 &GetOptions( 
-	    'help'        => \$help,
-	    'info'        => \$info,
-	    'species=s'   => \@species,
-	    'update=s'    => \@UPDATES,
-            'site_type=s' => \$site_type,
-	   );
+  'help'        => \$help,
+  'info'        => \$info,
+  'species=s'   => \@species,
+  'update=s'    => \@UPDATES,
+  'site_type=s' => \$site_type,
+);
 
 pod2usage(-verbose => 2) if $info;
 pod2usage(1) if $help;
@@ -205,8 +205,7 @@ my %updates = %{ check_types(\@UPDATES) };
 # Test validity of species arg -----------------------------------------------
 if (@species) {
   @species = @{ utils::Tool::check_species(\@species) };
-}
-else {
+} else {
   @species = @{ utils::Tool::all_species()};
 }
 
@@ -214,16 +213,12 @@ else {
 
 # Find ENSEMBL_VERSION
 foreach my $sp (@species) {
-  my $version_ini = utils::Tool::get_config({species =>$sp,
-					      values => "ENSEMBL_FTP_BASEDIR"}
-					    )|| $sp;
-  my @chrs = utils::Tool::get_config({species =>$sp,
-					      values => "ENSEMBL_CHROMOSOMES"});
-  my @search = utils::Tool::get_config({species =>$sp,
-					      values => "ENSEMBL_SEARCH_IDXS"});
-  $version_ini =~ s/(\w+)-//;
+  my $version_ini = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_FTP_BASEDIR"})|| $sp;
+  my @chrs        = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_CHROMOSOMES"});
+  my @search      = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_SEARCH_IDXS"});
+  $version_ini    =~ s/(\w+)-//;
   my $common_name = $1;
-  $common_name =~ s/(\w)/\u\L$1/;
+  $common_name    =~ s/(\w)/\u\L$1/;
 
   info ("Using Ensembl root $SERVERROOT");
   info ("Using Ensembl species $sp");
@@ -278,9 +273,7 @@ foreach my $sp (@species) {
   }
 }
 
-my $release = utils::Tool::get_config({species => "Multi",
-					   values => "ENSEMBL_FTP_BASEDIR"}
-					 );
+my $release = utils::Tool::get_config({species => "Multi", values => "ENSEMBL_FTP_BASEDIR"});
 $release =~ s/\w+-\w*-(\d+).*/$1/;
 
 
@@ -639,16 +632,9 @@ sub do_downloads {
 );
 
   foreach my $spp (@{ utils::Tool::all_species()}) {
-    my $version_ini = utils::Tool::get_config({species =>$spp,
-					       values => "ENSEMBL_FTP_BASEDIR" }
-					     );
-    my $description = utils::Tool::get_config({species =>$spp,
-					  values => "SPECIES_DESCRIPTION" }
-					);   
-    my $common = utils::Tool::get_config({species =>$spp,
-					  values => "SPECIES_COMMON_NAME" }
-					);
-    warn Data::Dumper::Dumper($version_ini); 
+    my $version_ini = utils::Tool::get_config({species =>$spp, values => "ENSEMBL_FTP_BASEDIR" });
+    my $description = utils::Tool::get_config({species =>$spp, values => "SPECIES_DESCRIPTION" });   
+    my $common = utils::Tool::get_config({species =>$spp, values => "SPECIES_COMMON_NAME" });
     $common = 'mosquito' if $common eq 'Anopheles';
     $common = 'bee' if $common eq 'Honeybee';
     my $url = $archive ? $version_ini : "current_".$common;
