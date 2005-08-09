@@ -127,7 +127,7 @@ be divided in several GenomicAlignBlocks.
 If we aim to store nets, as they can be a portion of a chain only,
 the chains needs to be trimmed before being stored
 
-=head1 TRANSFORMING THE COORDINATES
+=head2 Transforming the coordinates
 
 UCSC stores the alignments as zero-based half-open intervals and uses the reverse-complemented coordinates
 for the reverse strand. EnsEMBL always uses inclusive coordinates, starting at 1 and always on the forward
@@ -140,6 +140,29 @@ strand. Therefore, some coordinates transformation need to be done.
  For the reverse strand:
  - ensembl_start = chromosome_length - ucsc_end + 1
  - ensembl_end = chromosome_length - ucsc_start
+
+=head2 Mapping UCSC random chromosomes
+
+UCSC database cannot cope with non-chromosomic sequence. The pieces of sequence that are not assembled yet
+appear in the fake chromosomes called chr1_random, chr2_random, etc. In order to map those alignments into
+the EnsEMBL seq_regions, this script uses the assembly data, map the alignments on the right clones and
+from them to the corresponding EnsEMBL toplevel seq_region. This process is expected to be quite simple as
+no gaps should appear in the alignment because of the mapping.
+
+This feature is only available for genomes with chromosome specific tables!
+
+As no examples of a clone on the reverse strand has been found to date, mapping these alignments if they
+fall into a clone on the reverse strand of the random chromosome is not supported at the moment.
+
+=head2 Mapping on EnsEMBL extra assemblies
+
+EnsEMBL might release an extra level of assembly for some low-coverage genomes like the first released cow
+genome. In this case this script maps the alignments on the right contigs and from them to the corresponding
+genescaffold (or any other toplevel seq_region). This process could be more complex as the EnsEMBL extra
+level of assembly may introduce some gaps within the contigs or even cut them.
+
+Mapping an alignment on two different req_regions (if the alignment end up broken in two pieces because of
+the new assembly) is not allowed at the moment. The alignment is skipped and a warning message is displayed.
 
 =head1 INTERNAL METHODS
 
@@ -330,7 +353,7 @@ if (defined $tName) {
       SELECT
         bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score
       FROM net$qSpecies
-      WHERE type!=\"gap\" AND tName = $tName
+      WHERE type!=\"gap\" AND tName = \"$tName\"
       ORDER BY tStart, chainId";
 } else {
   $sql = "
@@ -392,11 +415,29 @@ FETCH_NET: while( $sth->fetch() ) {
   # Check whether the UCSC chromosome has its counterpart in EnsEMBL. Skip otherwise...
   #
   my $tdnafrag = $tdnafrags{$n_tName};
+  my $tdnafrag_length;
+  my $t_needs_mapping = 0;
   if (!defined $tdnafrag) {
 #     print STDERR "daf not stored because $tBinomial seqname ",$n_tName," not in dnafrag table\n";
-#     print STDERR "NET: $tBinomial (target) $n_tName ($n_tStart - $n_tEnd); ",
-#         " $qBinomial (query) $n_qName ($n_qStart - $n_qEnd); rel.strand: $n_strand; chain #$n_chainId\n";
-    next FETCH_NET;
+    my $slice;
+    if ($chromosome_specific_chain_tables) {
+      $slice = map_random_chromosome($tSpecies, $n_tName, ($n_tStart + 1), $n_tEnd);
+    }
+    if (!defined($slice)) {
+      print STDERR "daf not stored because $tBinomial seqname ",$n_tName,
+          " not in dnafrag table\n";
+      next FETCH_NET;
+    } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
+      print STDERR "daf not stored because $tBinomial seqname ",$n_tName, " (", $slice->seq_region_name,
+          ") not in dnafrag table\n";
+      next FETCH_NET;
+    }
+    $t_needs_mapping = 1;
+    $tdnafrag = $tdnafrags{$n_tName};
+#     print STDERR "MAPPING  $tBinomial seqname ",$n_tName, " on ", $slice->seq_region_name,
+#         "!!\n";
+  } else {
+    $tdnafrag_length = $tdnafrag->length();
   }
 
   my $qdnafrag = $qdnafrags{$n_qName};
@@ -475,13 +516,15 @@ FETCH_NET: while( $sth->fetch() ) {
   my $all_feature_pairs;
   FETCH_CHAIN: while( $sth2->fetch() ) {
     # Checking the chromosome length from UCSC with Ensembl.
-    unless ($tdnafrag->length == $c_tSize) {
-      print STDERR "tSize = $c_tSize for tName = $c_tName and Ensembl has dnafrag length of ",$tdnafrag->length,"\n";
+    unless (!defined($tdnafrag_length) or $tdnafrag_length == $c_tSize) {
+      print STDERR "tSize = $c_tSize for tName = $c_tName and Ensembl has dnafrag",
+          " length of $tdnafrag_length\n";
       print STDERR "net_index is $net_index\n";
       exit 2;
     }
     unless ($qdnafrag_length == $c_qSize) {
-      print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag length of ",$qdnafrag->length,"\n";
+      print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag",
+          " length of $qdnafrag_length\n";
       print STDERR "net_index is $net_index\n";
       exit 3;
     }
@@ -501,6 +544,14 @@ FETCH_NET: while( $sth->fetch() ) {
       my $length = $cl_qEnd - $cl_qStart;
       $cl_qStart = $c_qSize - $cl_qEnd + 1;
       $cl_qEnd = $cl_qStart + $length;
+    }
+
+    if ($t_needs_mapping) {
+      my $slice = map_random_chromosome($tSpecies, $c_tName, $cl_tStart, $cl_tEnd);
+      next FETCH_CHAIN if (!$slice);
+      $c_tName = $slice->seq_region_name;
+      $cl_tStart = $slice->start;
+      $cl_tEnd = $slice->end;
     }
 
     if ($q_needs_mapping) {
@@ -701,6 +752,77 @@ sub get_chromosome_specificity_for_tables {
 }
 
 
+=head2 map_random_chromosome
+
+  Arg[1]     : string $species_name
+  Arg[2]     : string $seq_region_name
+  Arg[3]     : int $start (inclusive coordinates)
+  Arg[4]     : int $end (inclusive coordinates)
+  Example    :
+  Description: This method tries to match the EnsEMBL Slice corresponding
+               to the piece of UCSC random chromosome. The UCSC random
+               chromosomes are a hack used to refer to non-chromosome level
+               sequences in the UCSC genome DB.
+  Returntype : Bio::EnsEMBL::Slice object
+
+=cut
+
+sub map_random_chromosome {
+  my ($species_name, $seq_region_name, $start, $end) = @_;
+
+  my ($chrom_start, $chrom_end, $frag_name, $frag_start, $frag_end, $frag_strand);
+
+  if ($seq_region_name =~ /_random$/) {
+    ## Get mapping information from goldenpath table
+    my $random_sql = "SELECT chrom, chromStart, chromEnd, frag, fragStart, fragEnd, strand".
+    " FROM chr${seq_region_name}_gold where chromStart <= ? and chromEnd >= ?";
+    my $random_sth = $ucsc_dbc->prepare($random_sql);
+    $random_sth->execute($end, $start - 1);
+    my $all_data = $random_sth->fetchall_arrayref;
+    return undef if (scalar(@$all_data) != 1);
+
+    $chrom_start = $all_data->[0]->[1];
+    $chrom_end = $all_data->[0]->[2];
+    $frag_name = $all_data->[0]->[3];
+    $frag_start = $all_data->[0]->[4];
+    $frag_end = $all_data->[0]->[5];
+    $frag_strand = $all_data->[0]->[6];
+  } else {
+    return undef;
+  }
+
+  my ($slice_start, $slice_end, $slice_strand);
+  if ($frag_strand eq "+") {
+    $slice_start = $start - $chrom_start + $frag_start;
+    $slice_end = $end - $chrom_start + $frag_start;
+  } else {
+    print STDERR "random chromosome maps on a reversed fragent. Not supported at the moment!\n";
+    return undef;
+  }
+
+  my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species_name, "core", "Slice");
+  my $slice = $slice_adaptor->fetch_by_region(undef, $frag_name, $slice_start, $slice_end);
+  if (!defined($slice)) {
+    ## Fake slice. Used to give a more useful warning message!
+    $slice = new Bio::EnsEMBL::Slice(
+          -seq_region_name => $frag_name,
+          -start => $frag_start,
+          -end => $frag_end,
+          -strand => ($frag_strand eq "+")?1:-1,
+          -coord_system => new Bio::EnsEMBL::CoordSystem(-name => "unknown", -rank => 100),
+      );
+    return $slice;
+  }
+
+  my $projections = $slice->project("toplevel");
+  if (@$projections != 1) {
+    return $slice;
+  }
+
+  return $projections->[0]->to_Slice;
+}
+
+
 =head2 map_non_toplevel_seqregion
 
   Arg[1]     : string $species_name
@@ -709,7 +831,10 @@ sub get_chromosome_specificity_for_tables {
   Arg[4]     : int $end
   Arg[4]     : int $strand
   Example    :
-  Description: 
+  Description: This method tries to map UCSC coordinates on toplevel
+               EnsEMBL seq_regions. This is needed when EnsEMBL provides
+               an extra level of assembly like in the case of the first
+               release of the cow genome.
   Returntype : listref of Bio::EnsEMBL::Coordinate or Bio::EnsEMBL::Gap
                objects and a listref of strings
 
@@ -750,7 +875,7 @@ sub map_non_toplevel_seqregion {
 
   Arg[1]     : arrayref of Bio::EnsEMBL::FeaturePair objects
   Example    :
-  Description: trasnform a set of Bio::EnsEMBL::FeaturePair objects
+  Description: transform a set of Bio::EnsEMBL::FeaturePair objects
                into a set of Bio::EnsEMBL::DnaDnaAlignFeature objects
                made of compatible Bio::EnsEMBL::FeaturePair objects
   Returntype : arrayref of Bio::EnsEMBL::DnaDnaAlignFeature objects
@@ -872,8 +997,8 @@ sub save_daf_as_genomic_align_block {
   $gag->type("default");
   $gag->genomic_align_array([$tga, $qga]);
 
-#   $gaba->store($gab); # This stores the Bio::EnsEMBL::Compara::GenomicAlign objects
-#   $gaga->store($gag);
+  $gaba->store($gab); # This stores the Bio::EnsEMBL::Compara::GenomicAlign objects
+  $gaga->store($gag);
 }
 
 =head2 parse_daf_cigar_line
