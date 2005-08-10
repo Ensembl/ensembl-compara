@@ -1,0 +1,249 @@
+#!/usr/local/ensembl/bin/perl -w
+
+use strict;
+use DBI;
+use Getopt::Long;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Hive;
+use Bio::EnsEMBL::DBLoader;
+
+
+my $conf_file;
+my %analysis_template;
+my @speciesList = ();
+my %hive_params ;
+my %genetree_params;
+
+my %compara_conf = ();
+#$compara_conf{'-user'} = 'ensadmin';
+$compara_conf{'-port'} = 3306;
+
+my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
+my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
+
+GetOptions('help'     => \$help,
+           'conf=s'   => \$conf_file,
+           'dbhost=s' => \$host,
+           'dbport=i' => \$port,
+           'dbuser=s' => \$user,
+           'dbpass=s' => \$pass,
+           'dbname=s' => \$dbname,
+           'v' => \$verbose,
+          );
+
+if ($help) { usage(); }
+
+parse_conf($conf_file);
+
+if($host)   { $compara_conf{'-host'}   = $host; }
+if($port)   { $compara_conf{'-port'}   = $port; }
+if($dbname) { $compara_conf{'-dbname'} = $dbname; }
+if($user)   { $compara_conf{'-user'}   = $user; }
+if($pass)   { $compara_conf{'-pass'}   = $pass; }
+
+
+unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and defined($compara_conf{'-dbname'})) {
+  print "\nERROR : must specify host, user, and database to connect to compara\n\n";
+  usage(); 
+}
+
+# ok this is a hack, but I'm going to pretend I've got an object here
+# by creating a blessed hash ref and passing it around like an object
+# this is to avoid using global variables in functions, and to consolidate
+# the globals into a nice '$self' package
+my $self = bless {};
+
+$self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+
+if(%hive_params) {
+  if(defined($hive_params{'hive_output_dir'})) {
+    die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
+      if(($hive_params{'hive_output_dir'} ne "") and !(-d $hive_params{'hive_output_dir'}));
+    $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
+  }
+}
+
+
+$self->build_GeneTreeSystem();
+
+exit(0);
+
+
+#######################
+#
+# subroutines
+#
+#######################
+
+sub usage {
+  print "loadGeneTreeSystem.pl [options]\n";
+  print "  -help                  : print this help\n";
+  print "  -conf <path>           : config file describing compara, templates\n";
+  print "loadGeneTreeSystem.pl v1.2\n";
+  
+  exit(1);  
+}
+
+
+sub parse_conf {
+  my($conf_file) = shift;
+
+  if($conf_file and (-e $conf_file)) {
+    #read configuration file from disk
+    my @conf_list = @{do $conf_file};
+
+    foreach my $confPtr (@conf_list) {
+      print("HANDLE type " . $confPtr->{TYPE} . "\n") if($verbose);
+      if($confPtr->{TYPE} eq 'COMPARA') {
+        %compara_conf = %{$confPtr};
+      }
+      if(($confPtr->{TYPE} eq 'BLAST_TEMPLATE') or ($confPtr->{TYPE} eq 'BLASTP_TEMPLATE')) {
+        %analysis_template = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'HIVE') {
+        %hive_params = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'GENE_TREE') {
+        %genetree_params = %{$confPtr};
+      }
+    }
+  }
+}
+
+
+#
+# need to make sure analysis 'SubmitGenome' is in database
+# this is a generic analysis of type 'genome_db_id'
+# the input_id for this analysis will be a genome_db_id
+# the full information to access the genome will be in the compara database
+# also creates 'GenomeLoadMembers' analysis and
+# 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
+
+sub build_GeneTreeSystem
+{
+  #yes this should be done with a config file and a loop, but...
+  my $self = shift;
+
+  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
+  my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
+  my $analysisStatsDBA = $self->{'hiveDBA'}->get_AnalysisStatsAdaptor;
+  my $stats;
+
+
+  #
+  # PAFCluster
+  #
+  my $paf_cluster = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'PAFCluster',
+      -program_file    => '/usr/local/ensembl/bin/muscle',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PAFCluster',
+      -parameters      => "{'options'=>'-maxiters 2'}"
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($paf_cluster);
+  $stats = $paf_cluster->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+
+  #
+  # Muscle
+  #
+  my $muscle = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'Muscle',
+      -program_file    => '/usr/local/ensembl/bin/muscle',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
+      -parameters      => "{'options'=>'-maxiters 2'}"
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($muscle);
+  $stats = $muscle->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+
+  #
+  # Muscle_huge
+  #
+  my $muscle_huge = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'Muscle_huge',
+      -program_file    => '/usr/local/ensembl/bin/muscle',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
+      -parameters      => "{'options'=>'-maxiters 1 -diags1 -sv'}"
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($muscle_huge);
+  $stats = $muscle_huge->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+
+  #
+  # ClustalW
+  #
+  my $clustalw = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'ClustalW',
+      -program_file    => '/usr/local/ensembl/bin/clustalw',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($clustalw);
+  $stats = $clustalw->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+
+  #
+  # PHYML
+  #
+  my $phyml = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'PHYML',
+      -program_file    => '/nfs/acari/jessica/src/phyml_v2.4.4/exe/phyml_linux',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
+      -parameters      => "{cdna=>1}"
+    );
+  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($phyml);
+  $stats = $phyml->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+
+  #
+  # build graph
+  #
+  $dataflowRuleDBA->create_rule($paf_cluster, $muscle, 2);
+
+  $dataflowRuleDBA->create_rule($muscle, $phyml, 1);
+  $dataflowRuleDBA->create_rule($muscle, $muscle_huge, 2);
+
+  $dataflowRuleDBA->create_rule($muscle_huge, $phyml, 1);
+  $dataflowRuleDBA->create_rule($muscle_huge, $clustalw, 2);
+
+  $dataflowRuleDBA->create_rule($clustalw, $phyml, 1);
+
+
+  #$ctrlRuleDBA->create_rule($load_genome, $blastrules_analysis);
+
+
+  #
+  # create initial job
+  #
+
+  my $input_id = encode_hash($genetree_params->{'paf_cluster'});
+  if (defined $input_id) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+        (
+         -input_id       => $input_id;
+         -analysis       => $paf_cluster,
+        );
+  }
+
+
+  return 1;
+}
+
+
+
