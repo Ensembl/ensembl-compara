@@ -36,6 +36,8 @@ sub _init {
     ]
   };
  
+  if(! ($self->{'config'}->{'align_slice'})) { 
+# in case of AlignSlice - don't display navigation buttons
   push @{$SPRITES->{'nav'}}, 
     ['flip_strand'    => 'flip'],
     ['set_as_primary' => 'primary'] if $self->{'config'}->{'slice_number'};
@@ -61,7 +63,7 @@ sub _init {
       $pos += $step;
     }
   }
-
+}
   my $line = new Sanger::Graphics::Glyph::Rect({
     'z' => 11,
     'x' => -120,

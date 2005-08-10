@@ -52,25 +52,37 @@ sub _init {
   $self->push($gline);
   
   my @features = ();
-  foreach my $segment (@{$Container->project('seqlevel')||[]}) {
+  my @segments = ();
+
+  if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice")) {
+      foreach my $slice (@{$Container->get_all_Slices()}) {
+	  push @segments, @{$slice->project("contig")};
+      }
+  } else {
+      @segments = @{$Container->project('seqlevel')||[]};
+  }
+
+  foreach my $segment (@segments) {
       my $start      = $segment->from_start;
       my $end        = $segment->from_end;
       my $ctg_slice  = $segment->to_Slice;
       my $ORI        = $ctg_slice->strand;
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
-      foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
-	  my $path;
-	  eval { $path = $ctg_slice->project($_->name); };
-	  next unless(@$path == 1);
-	  $path = $path->[0]->to_Slice;
+      if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice") && ($Container->{__type__} ne 'alignslice')) {
+	  foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
+	      my $path;
+	      eval { $path = $ctg_slice->project($_->name); };
+	      next unless(@$path == 1);
+	      $path = $path->[0]->to_Slice;
 # get clone id out of seq_region_attrib for link to webFPC 
-	  if ($_->{'name'} eq 'clone') {
-	      my ($clone_name) = @{$path->get_all_Attributes('fpc_clone_id')};
-	      $feature->{'internal_name'} = $clone_name->{'value'} if $clone_name;;
+	      if ($_->{'name'} eq 'clone') {
+		  my ($clone_name) = @{$path->get_all_Attributes('fpc_clone_id')};
+		  $feature->{'internal_name'} = $clone_name->{'value'} if $clone_name;;
+	      }
+	      $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
 	  }
-	  $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
-    }
+      }
     $feature->{'ori'} = $ORI;
     push @features, $feature;
   }
@@ -317,20 +329,76 @@ sub _init_non_assembled_contig {
   # detailed display
   my $rbs = $Config->get('_settings','red_box_start');
   my $rbe = $Config->get('_settings','red_box_end');
-  if( 0 && $Config->get('_settings','draw_red_box') eq 'yes') { 
+
+ if ($Config->get('_settings','draw_red_box') eq 'yes') { 
+
+      my $global_start2 = $global_start;
+      my $gwidth = $rbe-$rbs+1;
+
+      if ($Container->{__type__} eq 'alignslice') {
+	  my $hs = $Container->{slice_mapper_pairs}->[0];
+	  $global_start2 = $hs->{slice}->{start};
+	  my $s1 = $rbs - $global_start2;
+	  my $cigar_line = $Container->get_cigar_line();
+	  my @inters = split (/[MD]/, $cigar_line);
+	  my $ms = 0;
+	  my $ds = 0;
+	  while (@inters) {
+	      $ms += (shift (@inters) || 1);
+	      last if ($ms > $s1);
+	      $ds += (shift (@inters) || 1);
+	  }
+	  $rbs += $ds;
+      }
+      
+      if ($Container->{__type__} eq 'alignslice2') {
+	  my $cigar_line = $Container->get_cigar_line();
+	  my $hs = $Container->{slice_mapper_pairs}->[0];
+	  use Data::Dumper;
+#	  warn("W: ".join('*', keys(%$hs)));
+	  $global_start2 = $hs->{slice}->{start};
+	  my $s1 = $rbs - $global_start2;
+	  my $s2 = $rbe - $global_start2;
+	  my @inters = split (/[MD]/, $cigar_line);
+#	  warn("T: $global_start2*$rbs*$rbe: ($s1): ($s2)");
+#	  warn("T2: @inters");
+	  my $ms = 0;
+	  my $ds = 0;
+	  while (@inters) {
+	      $ms += (shift (@inters) || 1);
+	      last if ($ms > $s1);
+	      $ds += (shift (@inters) || 1);
+	  }
+
+#	  warn("T3: $ms : $ds");
+	  $rbs += $ds;
+
+	  while (@inters) {
+	      $ds += (shift (@inters) || 1);
+	      $ms += (shift (@inters) || 1);
+	      last if ($ms > $s2);
+	  }
+
+#	  $ds -= 1 if ($cigar_line =~ /M$/);
+	  $rbe += $ds;
+	      
+      }
+
+  
+#  if( 0 && $Config->get('_settings','draw_red_box') eq 'yes') { 
     # only draw focus box on the correct display...
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $rbs - $global_start,
+      'x'            => $rbs - $global_start2,
       'y'            => $ystart - 4 ,
-      'width'        => $rbe-$rbs+1,
+      'width'        => $gwidth,
       'height'       => 23,
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $rbs - $global_start,
+      'x'            => $rbs - $global_start2,
       'y'            => $ystart - 3 ,
-      'width'        => $rbe-$rbs+1,
+      'width'        => $gwidth,
       'height'       => 21,
       'bordercolour' => $red,
       'absolutey'    => 1,
