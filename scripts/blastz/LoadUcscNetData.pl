@@ -68,6 +68,7 @@ perl LoadUcscNetData.pl
                               compulsory arguments
   [--max_gap_size integer]    default: 50
   [start_net_index integer]   default: 0
+  [--load_chains]             Load the chains instead of the nets. default: load the nets
 
 =head1 UCSC DATABASE TABLES
 
@@ -192,6 +193,7 @@ my $matrix_file;
 my $show_matrix_to_be_used = 0;
 my $help = 0;
 my $check_length = 0;
+my $load_chains = 0;
 
 my $usage = "
 $0
@@ -222,6 +224,7 @@ $0
                               arguments
   [--max_gap_size integer]    default: 50
   [start_net_index integer]   default: 0
+  [--load_chains]             Load the chains instead of the nets. default: load the nets
 
 \n";
 
@@ -237,7 +240,8 @@ GetOptions('help' => \$help,
            'start_net_index=i' => \$start_net_index,
            'max_gap_size=i' => \$max_gap_size,
            'matrix=s' => \$matrix_file,
-           'show_matrix' => \$show_matrix_to_be_used);
+           'show_matrix' => \$show_matrix_to_be_used,
+           'load_chains' => \$load_chains);
 
 $| = 1;
 
@@ -348,17 +352,39 @@ my $chromosome_specific_chain_tables = get_chromosome_specificity_for_tables(
 
 my $sql;
 my $sth;
-if (defined $tName) {
+if ($load_chains) {
+  ## This is a hack to fetch chains as they were nets. The rest of the code
+  ## uses this data as nets and the result is the loading of all the chains
+  my $tables;
+  if (defined $tName) {
+    $tables = [$tName."_chain$qSpecies"];
+  } else {
+    $sql = "show tables like \"\%chain$qSpecies\"";
+    $tables = $ucsc_dbc->db_handle->selectcol_arrayref($sql);
+  }
   $sql = "
       SELECT
-        bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score
+        1, tName, tStart, tEnd, qName, qSize, qStart, qEnd, qStrand, id
+      FROM ".shift(@$tables);
+  foreach my $this_table (@$tables) {
+    $sql .= "
+        UNION
+        SELECT
+          1, tName, tStart, tEnd, qName, qSize, qStart, qEnd, qStrand, id
+        FROM $this_table";
+  }
+  
+} elsif (defined $tName) {
+  $sql = "
+      SELECT
+        level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
       FROM net$qSpecies
       WHERE type!=\"gap\" AND tName = \"$tName\"
       ORDER BY tStart, chainId";
 } else {
   $sql = "
       SELECT
-        bin, level, tName, tStart, tEnd, strand, qName, qStart, qEnd, chainId, ali, score
+        level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
       FROM net$qSpecies
       WHERE type!=\"gap\"
       ORDER BY tStart, chainId";
@@ -366,24 +392,26 @@ if (defined $tName) {
 $sth = $ucsc_dbc->prepare($sql);
 $sth->execute();
 
-my ($n_bin,     # ?? [not used]
-    $n_level,   # level in genomic_align
-    $n_tName,   # name of the target chromosome (e.g. human); used to define the
-                # tDnafrag; used to define the chain table name if needed
+my ($n_level,   # level in genomic_align; set to 1 for the chains
+    $n_tName,   # name of the target chromosome (e.g. human); used to define the chain
+                # table name if needed
     $n_tStart,  # start position of this net (0-based); used to restrict the chains
     $n_tEnd,    # end position of this net; used to restrict the chains
-    $n_strand,  # strand of this net; + or - [not used]
-    $n_qName,   # name of the query chromosome (e.g. cow); used to define the
-                # qDnafrag
-    $n_qStart,  # start position of this net (0-based, always + strand) [not used]
-    $n_qEnd,    # end position of this net (always + strand) [not used]
+    $n_qName,   # name of the query chromosome (e.g. cow)
+    $n_qSize,   # size of the query chromosome; used to reverse the chain if needed
+    $n_qStart,  # start position of this net (0-based, always + strand); used while trying to map
+                # non-toplevel alignments
+    $n_qEnd,    # end position of this net (always + strand); used while trying to map
+                # non-toplevel alignments
+    $n_qStrand, # strand for the query coordinates (always "+" for the nets); + or -; used to know
+                # when a chain needs to be reversed. The nets are always defined on the forward
+                # strand
     $n_chainId, # chain ID; used to fetch chains; group_id in genomic_align_group
-    $n_ali,     # ?? [not used]
-    $n_score);  # score of the net [not used, we re-score every chain]
+  );
 
 $sth->bind_columns
-  (\$n_bin, \$n_level, \$n_tName, \$n_tStart, \$n_tEnd, \$n_strand,
-   \$n_qName, \$n_qStart, \$n_qEnd, \$n_chainId, \$n_ali, \$n_score);
+  (\$n_level, \$n_tName, \$n_tStart, \$n_tEnd, \$n_qName,
+   \$n_qSize, \$n_qStart, \$n_qEnd, \$n_qStrand, \$n_chainId);
 ##
 #####################################################################
 
@@ -402,10 +430,17 @@ FETCH_NET: while( $sth->fetch() ) {
 
 #   print STDERR "net_index: $net_index, tStart: $n_tStart, chainId: $n_chainId\n";
   $nb_of_net++;
-  $n_strand = 1 if ($n_strand eq "+");
-  $n_strand = -1 if ($n_strand eq "-");
+  $n_qStrand = 1 if ($n_qStrand eq "+");
+  $n_qStrand = -1 if ($n_qStrand eq "-");
   $n_tStart++;
-  $n_qStart++;
+  if ($n_qStrand == 1) {
+    $n_qStart++;
+  } else {
+    ## This happen when loading the chains. The nets are always defined on the forward strand...
+    my $aux = $n_qStart;
+    $n_qStart = $n_qSize - $n_qEnd + 1;
+    $n_qEnd = $n_qSize - $aux;
+  }
 
   $n_tName =~ s/^chr//;
   $n_qName =~ s/^chr//;
@@ -450,6 +485,8 @@ FETCH_NET: while( $sth->fetch() ) {
     my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
         $n_qName, $n_qStart, $n_qEnd, 1);
     if ($slice) {
+#       print STDERR " => $qBinomial seqname $n_qName ($n_qStart - $n_qEnd) maps on ",
+#           join(" -- ", @$seq_regions), "\n";
       foreach my $this_seq_region (@$seq_regions) {
         if (!defined $qdnafrags{$this_seq_region}) {
           print STDERR "daf not stored because $qBinomial seqname ",$n_qName,
@@ -636,13 +673,12 @@ print STDERR "simple = $simple; direct = $direct; gapped = $gapped and complex =
 print STDERR "nb_of_net: ", $nb_of_net,"\n";
 print STDERR "nb_of_daf_loaded: ", $nb_of_daf_loaded,"\n";
 
+$sth->finish;
+
 print STDERR "Here is a statistic summary of nucleotides matching not defined in the scoring matrix used\n";
 foreach my $key (sort {$a cmp $b} keys %undefined_combinaisons) {
   print STDERR $key," ",$undefined_combinaisons{$key},"\n";
 }
-
-$sth->finish;
-
 print STDERR "\n";
 
 exit();
