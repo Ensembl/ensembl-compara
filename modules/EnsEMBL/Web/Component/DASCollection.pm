@@ -87,7 +87,7 @@ sub get_das_domains {
     push( @domains, @{$object->species_defs->ENSEMBL_DAS_SERVERS || []});
     push( @domains, map{$_->adaptor->domain} @{$object->Obj} );
     push( @domains, $object->param("DASdomain") );
-    my %known_domains = ( map{ $_=~ s/(\/das)?\/?\s*$/\/das/; $_, 1 } grep{$_} @domains );
+    my %known_domains = ( map{ $_ =~ s/^http(s?)\:\/\///; $_=~ s/(\/das)?\/?\s*$/\/das/; $_, 1 } grep{$_} @domains );
     return  sort keys %known_domains;
 }
 
@@ -95,6 +95,7 @@ sub get_server_dsns {
     my ($object) = @_;
     my $domain = $object->param('DASdomain');
     $domain =~ s/^http(s?)\:\/\///;
+
     $object->param('DASdomain', $domain);
     my $protocol = $object->param('DASprotocol') || 'http';
 
@@ -156,7 +157,10 @@ sub add_das_server {
 
     } else {
     my @das_servers = &get_das_domains($object);
-    $object->param("DASdomain") || $object->param("DASdomain", $das_servers[0]);
+    $object->param("DASdomain") or $object->param("DASdomain", $das_servers[0]);
+    my $default = $object->param("DASdomain");
+    $default =~ s/^http(s?)\:\/\///;
+
     my @dvals;
     foreach my $dom (@das_servers) { push @dvals, {'name'=>$dom, 'value'=>$dom} ; }
 
@@ -165,7 +169,7 @@ sub add_das_server {
                'name'     => 'DASdomain',
                'label'    => 'Domain',
                'values'   => \@dvals,
-               'value'    => $object->param("DASdomain"),
+               'value'    => $default, 
                'on_change' => 'submit',
                );
     $form->add_element('type' => 'Image',
