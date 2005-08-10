@@ -368,14 +368,15 @@ sub init {
     },
   };
 
-  my $ini_confdata = $self->species_defs->COMPARA_PAIRWISE || {};
-#  warn(Data::Dumper::Dumper($ini_confdata));
-#  warn(join('*', @{$self->species_defs->ENSEMBL_SPECIES}));
-  my @species = grep { defined($ini_confdata->{$_})} @{$self->species_defs->ENSEMBL_SPECIES};
+
+  my $especies = $ENV{ENSEMBL_SPECIES};
+  my %shash = ( $self->species_defs->multi('BLASTZ_NET',$especies) );
+#  warn(Data::Dumper::Dumper(\%shash));
+
+  my @species = keys %shash;
 
   foreach my $SPECIES (@species) {
       (my $species = $SPECIES ) =~ s/_\d+//;
-#      (my $short = $species ) =~ s/^(\w)\w+_(\w)\w+$/\1\2/g;
       my $KEY = lc($SPECIES).'_compara_pairwise';
       $self->{'general'}->{'alignsliceviewbottom'}{$KEY} = {
 	  'species'  => $species,
