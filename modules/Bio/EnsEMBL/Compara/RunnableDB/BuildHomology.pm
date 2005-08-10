@@ -97,6 +97,8 @@ sub fetch_input
   $self->{'doRHS'} = 1;
   $self->{'onlyOneHomology'} = undef;  #filter to place member in only 1 homology
   
+  $self->{'comparaDBA'}->dbc->do("analyze table peptide_align_feature"); 
+
   if($self->debug) { print("input_id = " . $self->input_id . "\n"); }
   
   if($self->input_id =~ '^{') {
