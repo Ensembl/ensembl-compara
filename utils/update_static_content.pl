@@ -21,8 +21,8 @@ B<-s, --species>
   Species to dump
 
 B<--site_type>
-  Optional.  Default is main site.  Use this to set type to 'mirror' or 'archive' or 'pre'. NOT NEEDED WITH NEW PLUGIN CODE!
-  
+  Optional.  Default is main site.  Use this to set type to 'mirror' or 'archive' or 'pre'. 
+ 
 B<--update>
   What to update
 
@@ -54,7 +54,7 @@ B<  new_release:>
 B< new_archive_site:>
    Runs create_affili, create_links, SSIsearch, htdocs_nav, SSIhelp
    SSIdata_homepage, downloads, create_homepage_affili, 
-   homepage_ensembl_start homepage_current_version,   whatsnew_button
+   homepage_ensembl_start homepage_current_version,
 
 B < archive.org: >
    Runs assembly_table, archived_sites
@@ -65,12 +65,12 @@ B< new_mirror_release:>
 B< new_species:>
    Use the -site_type 'pre' flag if you are setting up pre.
 
-   Runs generic_homepage, stats_index, create_links, create_affili, 
+   Runs generic_species_homepage, stats_index, create_links, create_affili, 
    SSIspecies, SSIsearch, SSIhelp, homepage_current_version, downloads
-   whatsnew_button SSIentry
+   SSIentry
 
 B< new_mirror_species:>
-   Runs generic_homepage, create_affili, SSIspecies, SSIsearch, 
+   Runs generic_species_homepage, create_affili, SSIspecies, SSIsearch, 
    homepage_current_version
 
 B<  versions:>; 
@@ -230,9 +230,6 @@ foreach my $sp (@species) {
   if ($updates{homepage_current_version} ) {
     homepage_current_version($SERVERROOT, $version_ini, $sp);
   }
-  if ($updates{whatsnew_button} ) {
-    whatsnew_button($SERVERROOT, $sp);
-  }
   if ($updates{whatsnew} ) {
     whatsnew($SERVERROOT, $version_ini, $sp, $common_name);
   }
@@ -256,8 +253,8 @@ foreach my $sp (@species) {
   if ($updates{SSIhelp} ) {
     SSIhelp($SERVERROOT, $version_ini, $sp);
   }
-  if ($updates{generic_homepage} ) { # KEEP!
-    generic_species_homepage($SPECIES_ROOT, $common_name, $sp, @chrs);
+  if ($updates{generic_species_homepage} ) { # KEEP!
+    generic_species_homepage($SERVERROOT, $common_name, $sp, @chrs);
   }
   if ($updates{create_links} ) {
     create_links($SPECIES_ROOT."homepage_SSI/", $common_name, $sp);
@@ -297,9 +294,6 @@ if ( $updates{assembly_table} ) {
   assembly_table($SERVERROOT."/htdocs/Docs/",  $release );
 }
 
-#if ($updates{SSIhelp} ) {
-#  info ("For new species: don't forget to create one of these htdocs/gfx/sprites/species.png");
-#}
 exit;
 
 
@@ -309,11 +303,11 @@ exit;
 
    my %valid_types = map{ $_ => 1 }
      qw(
-	new_species      stats_index generic_homepage 
+	new_species      stats_index generic_species_homepage 
 	                 create_links create_affili SSIentry
                          SSIspecies SSIsearch SSIhelp downloads
 	new_release      versions homepage_current_version whatsnew 
-                         branch_versions whatsnew_button
+                         branch_versions
 	new_mirror_species   new_mirror_release 
         new_archive_site htdocs_nav SSIdata_homepage archived_sites 
                          create_homepage_affili homepage_ensembl_start
@@ -321,12 +315,13 @@ exit;
        );
 
    my %compound_types = 
-     (
-      new_species        => [ qw(stats_index generic_homepage 
+     ( new_species        => [ qw(generic_species_homepage downloads)],
+
+      new_species_oldsite        => [ qw(stats_index generic_species_homepage 
 				 create_links create_affili SSIentry
-                                 homepage_current_version  whatsnew_button
+                                 homepage_current_version  
 				 SSIspecies SSIsearch  SSIhelp downloads)],
-      new_mirror_species => [ qw( generic_homepage create_affili 
+      new_mirror_species => [ qw( generic_species_homepage create_affili 
                                   homepage_current_version
 		       	          SSIspecies SSIsearch  ) ],
       new_release        => [ qw( versions homepage_current_version whatsnew 
@@ -337,7 +332,7 @@ exit;
 				 htdocs_nav SSIhelp SSIdata_homepage
                                  downloads create_homepage_affili
                                  homepage_ensembl_start
-                                 homepage_current_version whatsnew_button ) ],
+                                 homepage_current_version) ],
       change_logo        => [ qw( create_affili create_homepage_affili) ],
       "archive.org"      => [ qw( archived_sites assembly_table) ],
      );
@@ -389,31 +384,6 @@ sub warning{
 }
 
 ##############################################################################
-
-sub homepage_current_version {
-
-  info('Skipping - homepage_current_version not needed by new template');
-
-return;
-
-}
-#---------------------------------------------------------------------------
-
-sub whatsnew_button {
-
-  info('Skipping - whatsnew_button not needed by new template');
-
-  return 1;
-}
-#----------------------------------------------------------------------------
-
-sub whatsnew {
-
-  info('Skipping - whatsnew not needed by new template');
-
-  return 1;
-}
-#----------------------------------------------------------------------
 sub branch_versions {
   my ($dir, $version_ini, $common_name,$species) = @_;
 
@@ -435,7 +405,7 @@ sub branch_versions {
 <body>
 
 <h2 class="boxed">Current Status</h2>
-          
+
 <h3>Versions in Ensembl $common_name v$version_ini</h3>
 
 <ul>
@@ -445,7 +415,6 @@ sub branch_versions {
     <li><p><strong>Data&nbsp;-&nbsp;v$version_ini </strong></p></li>
 
     <li><p><strong>BioPerl&nbsp;-&nbsp;v1.2.3</strong></p></li>
-                
     <li><p><strong>BioMart&nbsp;-&nbsp;v0.2</strong><br />
         cvs tag : release-0_2</p></li>
 </ul>
@@ -458,36 +427,20 @@ sub branch_versions {
   close CURR;
   return;
 }
-#---------------------------------------------------------------------
-sub whatsnew_index {
 
-
-  info('Skipping - whatsnew_index not needed by new template');
-
-  return;
-}
-
-############################################################################
-sub SSIspecies {
-
-  info('Skipping - SSIspecies not needed by new template');
-	    
-  info (1, "Copy over about.html from the presite. Revise about content.  Restart the server. Run stats script ./bin/make_ensembl_stats.pl");
-  return;
-}
-
-#------------------------------------------------------------------------------
-sub SSIhelp {
-
-  info('Skipping - SSIhelp not needed by new template');
-	    
-  return;
-}
 #---------------------------------------------------------------------------
 sub generic_species_homepage {
   my ($dir, $common_name, $species, @chrs) = @_;
 
-  my $file = $dir."index.html";
+  if ($site_type eq 'pre') {
+    $dir. = "/sanger-plugins/pre/htdocs/$species";
+    &check_dir($dir);
+  }
+  else {
+    $dir .= "/htdocs/$species";
+    &check_dir($dir);
+  }
+  my $file = $dir ."/index.html";
   open (my $fh, ">$file") or die "Cannot create $file: $!";
 
   # check for chromosomes
@@ -502,8 +455,9 @@ sub generic_species_homepage {
 <title>$common_name ($species)</title>
 </head>
 <body>
-<h2>Explore the $common_name genome</h2>
-                                                                                
+<h2>Explore the $common_name genome</h2>);
+
+print $fh qq(
 <div class="col-wrapper">
     <div class="col2">
     [[INCLUDE::$dir/ssi/$explore.html]]
@@ -511,9 +465,9 @@ sub generic_species_homepage {
     <div class="col2">
     [[INCLUDE::$dir/ssi/search.html]]
     </div>
-</div>
-                                                                                
-<div class="col-wrapper">
+</div>) unless $site_type eq 'pre';
+
+print $fh qq(<div class="col-wrapper">
     <div class="col2">
     [[INCLUDE::$dir/ssi/about.html]]
     </div>
@@ -531,77 +485,10 @@ sub generic_species_homepage {
   return;
 }
 
-#-----------------------------------------------------------------------------
-sub SSIentry {
-
-  info('Skipping - SSIentry not needed by new template');
-	    
-}
-
-#----------------------------------------------------------------------------
-sub create_links {
-
-  info('Skipping - create_links not needed by new template');
-	    
-  return;
-}
-#----------------------------------------------------------------------------
-sub create_affili {
-
-  info('Skipping - create_affili not needed by new template');
-	    
-  return;
-}
-#--------------------------------------------------------------------
-sub create_homepage_affili {
-
-  info('Skipping - create_homepage_affili not needed by new template');
-	    
- return;
-}
-#----------------------------------------------------------------------------  
-sub institute_collaborate_logos {
-
-  info('Skipping - institute_collaborate_logos not needed by new template');
-	    
-}
-
-#---------------------------------------------------------------------
-sub stats_index {
-  info('Skipping - stats_index not needed by new template');
-  return;
-}
-
-#----------------------------------------------------------------------------
-sub versions {
-  info('Skipping - species specific version page not needed by new template');
-}
-#-----------------------------------------------------------------------------
-sub SSIsearch {
-
-  info('Skipping - SSIsearch not needed by new template');
-	    
-return;
-}
-
-#----------------------------------------------------------------------------
-sub htdocs_nav {
-
-  info('Skipping - htdocs_nav not needed by new template');
-	    
-return;
-}
-
-#----------------------------------------------------------------------------
-sub SSIdata_homepage {
-
-  info('Skipping - SSIdata_homepage not needed by new template');
-	    
-return;
-}
 #----------------------------------------------------------------------------
 sub downloads {
   my $dir = shift;
+  return if $site_type eq 'pre';
   do_downloads("$dir/sanger-plugins/archive", "archive");
   do_downloads("$dir", 0);
   return;
@@ -875,5 +762,114 @@ sub assembly_table {
   print $fh $header, "</tr>\n";
   print $fh join "\n", @rows;
   print $fh qq(</table>);
+  return;
+}
+#-----------------------------------------------------------------------------
+sub SSIentry {
+
+  info('Skipping - SSIentry not needed by new template');
+	    
+}
+
+#----------------------------------------------------------------------------
+sub create_links {
+
+  info('Skipping - create_links not needed by new template');
+	    
+  return;
+}
+#----------------------------------------------------------------------------
+sub create_affili {
+
+  info('Skipping - create_affili not needed by new template');
+	    
+  return;
+}
+#--------------------------------------------------------------------
+sub create_homepage_affili {
+
+  info('Skipping - create_homepage_affili not needed by new template');
+	    
+ return;
+}
+#----------------------------------------------------------------------------  
+sub institute_collaborate_logos {
+
+  info('Skipping - institute_collaborate_logos not needed by new template');
+	    
+}
+
+#---------------------------------------------------------------------
+sub stats_index {
+  info('Skipping - stats_index not needed by new template');
+  return;
+}
+
+#----------------------------------------------------------------------------
+sub versions {
+  info('Skipping - species specific version page not needed by new template');
+}
+#-----------------------------------------------------------------------------
+sub SSIsearch {
+
+  info('Skipping - SSIsearch not needed by new template');
+	    
+return;
+}
+
+#----------------------------------------------------------------------------
+sub htdocs_nav {
+
+  info('Skipping - htdocs_nav not needed by new template');
+	    
+return;
+}
+
+#----------------------------------------------------------------------------
+sub SSIdata_homepage {
+
+  info('Skipping - SSIdata_homepage not needed by new template');
+	    
+return;
+}
+#-------------------------------------------------------------------------
+sub homepage_current_version {
+
+  info('Skipping - homepage_current_version not needed by new template');
+
+return;
+
+}
+#---------------------------------------------------------------------------
+
+sub whatsnew {
+
+  info('Skipping - whatsnew not needed by new template');
+
+  return 1;
+}
+#----------------------------------------------------------------------
+sub whatsnew_index {
+
+
+  info('Skipping - whatsnew_index not needed by new template');
+
+  return;
+}
+
+#---------------------------------------------------------------------
+sub SSIspecies {
+
+  info('Skipping - SSIspecies not needed by new template');
+	    
+  info (1, "Copy over about.html from the presite. Revise about content.  Restart the server. Run stats script ./bin/make_ensembl_stats.pl");
+  return;
+}
+
+#------------------------------------------------------------------------------
+sub SSIhelp {
+
+  info('Skipping - SSIhelp not needed by new template');
+	    
   return;
 }
