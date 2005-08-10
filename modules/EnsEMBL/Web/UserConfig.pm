@@ -1031,4 +1031,70 @@ sub ADD_GENE_TRACKS {
 
   return $POS;
 }
+
+sub ADD_ALL_AS_TRANSCRIPTS {
+    my $self = shift;
+    my $POS  = shift || 2000;
+    $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, @_ );
+    $self->add_new_track_transcript( 'evega',     'Vega genes',      'vega_gene',      $POS++, 'available' => 'databases ENSEMBL_VEGA',    @_ );
+    $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_ESTGENE', @_ );
+    
+    return $POS;
+}
+
+
+sub ADD_AS_GENE_TRACKS {
+    my $self = shift;
+    my $POS  = shift || 2000;
+    $self->add_new_track_gene( 'ensembl', 'Ensembl Genes', 'ensembl_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'logic_name'           => 'ensembl psuedogene', @_
+			       );
+    $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
+     'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+     'logic_name'           => 'flybase psuedogene', @_
+			       );
+    $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'logic_name'           => 'wormbase psuedogene', @_
+			       );
+    $self->add_new_track_gene( 'genebuilderbeeflymosandswall', 'Bee Genes', 'bee_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       @_
+			       );
+    $self->add_new_track_gene( 'SGD', 'SGD Genes', 'sgd_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       @_
+			       );
+    $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->stable_id },
+			       'gene_col'             => sub { return $_[0]->type eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
+			       'logic_name'           => 'gsten hox cyt', @_
+			       );
+    
+    #for genes in Vega
+    $self->add_new_track_gene( 'havana_gene', 'Havana Genes', 'vega_gene', $POS++,
+			       'available' => 'features LITE_TRANSCRIPT_HAVANA', 'glyphset' => 'vega_gene',
+			       'logic_name' => 'otter', 'author' => 'Havana', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene( 'genoscope_gene', 'Genoscope Genes', 'vega_gene', $POS++,
+			       'available' => 'features LITE_TRANSCRIPT_GENOSCOPE', 'glyphset' => 'vega_gene',
+			       'logic_name' => 'otter', 'author' => 'Genoscope', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene( 'sanger_gene', 'Sanger Genes', 'vega_gene', $POS++,
+			       'available' => 'features LITE_TRANSCRIPT_SANGER', 'glyphset' => 'vega_gene',
+			       'logic_name' => 'otter', 'author' => 'Sanger', 'gene_col' => 'vega_gene', @_);
+   $self->add_new_track_gene( 'wasu_gene', 'WashU Genes',  'vega_gene', $POS++,
+			      'available' => 'features LITE_TRANSCRIPT_WASHU', 'glyphset' => 'vega_gene',
+			      'logic_name' => 'otter', 'author' => 'WashU', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene( 'zfish_gene', 'Zfish Genes', 'vega_gene', $POS++,
+			       'available' => 'features LITE_TRANSCRIPT_ZFISH', 'glyphset' => 'vega_gene',
+			       'logic_name' => 'otter', 'author' => 'Zfish', 'gene_col' => 'vega_gene', @_);
+    return $POS;
+}
+
+
 1;

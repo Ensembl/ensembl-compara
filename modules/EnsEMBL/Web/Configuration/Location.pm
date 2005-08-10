@@ -378,6 +378,99 @@ sub contigview {
   $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
 }
 
+sub alignsliceview {
+    my $self   = shift;
+    my $obj    = $self->{object};
+    my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
+
+    my $config_name = 'alignsliceviewbottom';
+    if (defined (my $align = $obj->param('align'))) {
+	my $wuc = $obj->user_config_hash( $config_name );
+	$wuc->set( 'align_species',  $ENV{ENSEMBL_SPECIES}, $align, 1);
+	$wuc->save();
+    }
+
+    $self->update_configs_from_parameter( 'bottom', $config_name );
+    my $last_rendered_panel = undef;
+    my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
+
+    ## Initialize the ideogram image...
+    my $ideo = $self->new_panel( 'Image',
+				 'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name, 'status'  => 'panel_ideogram', @common
+                                );
+     $last_rendered_panel = $ideo if $obj->param('panel_ideogram') ne 'off';
+     $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram));
+     $self->{page}->content->add_panel( $ideo );
+
+    ## Now the overview panel...
+    my $over = $self->new_panel( 'Image',
+				 'code'    => "overview_#", 'caption' => 'Overview', 'status'  => 'panel_top', @common
+				 );
+    my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
+    if( $obj->param('panel_top') ne 'off' ) {
+	my($start,$end) = $self->top_start_end( $obj, $max_length );
+	$last_rendered_panel->add_option( 'red_box' , [ $start, $end ] ) if $last_rendered_panel;
+	$over->add_option( 'start', $start );
+	$over->add_option( 'end',   $end   );
+	$over->add_option( 'red_edge', 'yes' );
+	$last_rendered_panel = $over;
+    }
+    $over->add_components(qw(image EnsEMBL::Web::Component::Location::alignsliceviewtop));
+    $self->{page}->content->add_panel( $over );
+    
+    $self->initialize_zmenu_javascript;
+    $self->initialize_ddmenu_javascript;
+    
+    my $bottom = $self->new_panel( 'Image',
+				   'code'    => "bottom_#", 'caption' => 'Detailed view', 'status'  => 'panel_bottom', @common
+				   );
+
+    ## Big switch time....
+    if( $obj->length > $max_length ) {
+	$bottom->add_components(qw(
+                                  menu  EnsEMBL::Web::Component::Location::alignsliceviewbottom_menu
+                                  nav   EnsEMBL::Web::Component::Location::alignsliceviewbottom_nav
+                                  text  EnsEMBL::Web::Component::Location::alignsliceviewbottom_text
+				   ));
+       $self->{page}->content->add_panel( $bottom );
+    } else {
+	if( $obj->param('panel_bottom') ne 'off' ) {
+	    if( $last_rendered_panel ) {
+		$last_rendered_panel->add_option( 'red_box' , [ $obj->seq_region_start, $obj->seq_region_end ] );
+		$bottom->add_option( 'red_edge', 'yes' );
+	    }
+	    $last_rendered_panel = $bottom;
+	}
+	$bottom->add_components(qw(
+				   menu  EnsEMBL::Web::Component::Location::alignsliceviewbottom_menu
+				   nav   EnsEMBL::Web::Component::Location::alignsliceviewbottom_nav
+				   image EnsEMBL::Web::Component::Location::alignsliceviewbottom
+				   ));
+	$self->{page}->content->add_panel( $bottom );
+	my $base = $self->new_panel( 'Image',
+				     'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
+				     );
+       if( $obj->param('panel_zoom') ne 'off' ) {
+           my $zw = $obj->param('zoom_width');
+           my( $start, $end ) = $obj->length < $zw ? ( $obj->seq_region_start, $obj->seq_region_end ) : ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
+           $base->add_option( 'start', $start );
+           $base->add_option( 'end',   $end );
+           if( $last_rendered_panel ) {
+               $last_rendered_panel->add_option( 'red_box' , [ $start, $end ] );
+               $bottom->add_option( 'red_edge', 'yes' );
+           }
+           $last_rendered_panel = $base;
+       }
+       $base->add_components(qw(
+                                nav   EnsEMBL::Web::Component::Location::alignsliceviewzoom_nav
+                                image EnsEMBL::Web::Component::Location::alignsliceviewzoom
+                                ));
+       $self->{page}->content->add_panel( $base );
+     }
+    $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
+}
+
+
 ###############################################################################
 
 sub ldview {

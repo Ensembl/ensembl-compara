@@ -45,6 +45,15 @@ sub seq_region_strand  :lvalue { $_[0]->Obj->{'seq_region_strand'};  }
 sub seq_region_type    :lvalue { $_[0]->Obj->{'seq_region_type'};    }
 sub seq_region_length  :lvalue { $_[0]->Obj->{'seq_region_length'};  }
 
+sub align_species {
+    my $self = shift;
+    if (my $add_species = shift) {
+	$self->Obj->{'align_species'} = $add_species;
+    }
+    return $self->Obj->{'align_species'};
+}
+
+ 
 sub misc_set_code { 
   my $self = shift;
   if( @_ ) { 
