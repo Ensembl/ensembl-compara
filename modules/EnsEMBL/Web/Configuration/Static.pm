@@ -76,7 +76,7 @@ sub links {
 			  'href' => 'http://pre.ensembl.org/', 
 			  'text' => 'Pre! Ensembl', 
 			  'icon' => '/img/ensemblicon.gif', 
-	'title' => "Ensembl Pre! sites (species in progress)" )
+	'title' => "Ensembl Pre! sites (species in progress)" );
 
   $self->add_entry( 'links', 'href' => 'http://vega.sanger.ac.uk/', 'text' => 'Vega', 'icon' => '/img/vegaicon.gif',
         'title' => "Vertebrate Genome Annotation" );
