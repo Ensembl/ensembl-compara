@@ -82,6 +82,12 @@ sub fetch_input {
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "";
 
+  if($self->input_job->retry_count >= 3) {
+    $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->update_status('FAILED');
+    throw("Muscle job failed >3 times: try something else and FAIL it");
+  }
+  
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -250,8 +256,8 @@ sub check_job_fail_options
   $self->input_job->print_job;
   printf("\n");
   
-  if($self->input_job->retry_count >= 5) {
-    printf("  failed >5 times: try something else and FAIL it\n");
+  if($self->input_job->retry_count >= 3) {
+    printf("  failed >3 times: try something else and FAIL it\n");
     $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
   }
