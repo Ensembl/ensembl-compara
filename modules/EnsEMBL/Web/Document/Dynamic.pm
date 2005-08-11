@@ -91,25 +91,8 @@ sub _initialize_HTML {
   }
 #  --- and the search box links...
 
-  ## Lets try all the EnsEMBL::***::Document::Links modules;
-  foreach my $root( 'EnsEMBL::Web', @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS} ) {
-    my $class_name = $root. '::Document::Links';
-    foreach my $FN ( 'common_menu_items', 'dynamic_menu_items' ) {
-      if( $self->dynamic_use( $class_name ) ) {
-        my $function_name = $class_name.'::'.$FN;
-        no strict 'refs';
-        eval {
-          &$function_name( $self );
-        };
-        warn "MENU ERROR in $function_name ($@)" if $@;
-      } else {
-        (my $CS = $class_name ) =~ s/::/\\\//g;
-        my $error = $self->dynamic_use_failure( $class_name );
-        my $message = "^Can't locate $CS.pm in ";
-        warn "MENU ERROR: Can't compile $class_name due to $error" unless $error =~ /$message/;
-      }
-    }
-  }
+  $self->call_child_functions( 'extra_configuration' );
+  $self->call_child_functions( 'common_menu_items', 'dynamic_menu_items' );
 
 }
 
