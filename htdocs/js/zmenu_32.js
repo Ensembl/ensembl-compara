@@ -23,12 +23,12 @@ var window_width    = 800;
 var timeoutId = 0;
 var Z_MENU_XOFFSET    = 2;
 var Z_MENU_YOFFSET    = 2;
-var Z_MENU_CAPTIONBG    = "#e2e2ff";
-var Z_MENU_CAPTIONFG    = "#000000";
-var Z_MENU_TIPBG    = "#f5f5ff";
-var Z_MENU_BORDERBG    = "#aaaaaa";
-var Z_MENU        = true;
-var Z_MENU_WIDTH    = 200;
+var Z_MENU_CAPTIONBG  = "#aaaaaa";
+var Z_MENU_CAPTIONFG  = "#000000";
+var Z_MENU_TIPBG      = "#f5f5f5";
+var Z_MENU_BORDERBG   = "#aaaaaa";
+var Z_MENU            = true;
+var Z_MENU_WIDTH      = 200;
 
 var Z_MENU_TIMEIN     = 500;
 var Z_MENU_TIMEOUT    = 6000;
@@ -191,6 +191,8 @@ function zmenu() {
     l.style.border        = 1;
     l.style.border
     l.style.backgroundColor    = Z_MENU_TIPBG;
+    l.style.left = x;
+    l.style.top  = y;
     l.style.setProperty( 'left', x+'px', 'important' );
     l.style.setProperty( 'top',  y+'px', 'important' );
   }

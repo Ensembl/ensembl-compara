@@ -22,17 +22,17 @@ function dd_render_layer( i ) {
   extrarow      =
       '<tr><td colspan="2" class="dddiv_button center"><a '+
   'href="javascript:if(dd_hideItem()) { document.forms[\''+(dd_menus[i].URL)+'\'].submit(); } else { void(0); }"><img '+
-        'src="'+dd_imagepath+'close_menu.gif" height="8" width="98" /></a></td></tr>';
+        'src="'+dd_imagepath+'y-close_menu.gif" height="8" width="98" /></a></td></tr>';
     for( j=0; j<num_rows; j++) {
       entry = options_array[ j ];
       if( entry.type == 'checkbox' ) {
         rows +=
         '<tr class="bg2"><td class="center"><a href="javascript:void(0)" onclick="dd_flip('+ i +','+ j +
-  ');"><img id="x_'+ i +'_'+ j + '" src="'+dd_imagepath+'off.gif" border="0" height="'+ dd_checkheight +
+  ');"><img id="x_'+ i +'_'+ j + '" src="'+dd_imagepath+'y-off.gif" border="0" height="'+ dd_checkheight +
         '" width="'+ dd_checkwidth+ '" alt=""></a></td>\n<td class="nowrap ddmain"><a href="javascript:void(0)" onclick="dd_flip('+
   i +','+ j +');">'+ entry.name +'</a></td></tr>\n';
       } else {
-        rows += '<tr class="bg2"><td class="ddmain"><img src="'+ dd_imagepath +'b.gif" height="'+ dd_checkheight+ '" width="'+
+        rows += '<tr class="bg2"><td class="ddmain"><img src="'+ dd_imagepath +'y-b.gif" height="'+ dd_checkheight+ '" width="'+
               dd_checkwidth +'" alt=""></td><td class="nowrap ddmain">';
         if( entry.on == '' ) {
     rows += entry.name+ '</td></tr>\n';
@@ -107,7 +107,7 @@ function dd_showDetails( nDest, flag ) {
       for(j=0;j<M.length;j++) {
         if(M[j].type=='checkbox') {
           image_code = 'x_'+nDest+'_'+j;
-          document.images[ image_code ].src = dd_imagepath+(M[j].on==1?'on':'off')+'.gif';
+          document.images[ image_code ].src = dd_imagepath+(M[j].on==1?'y-on':'y-off')+'.gif';
         }
       }
     }  
