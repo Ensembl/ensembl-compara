@@ -137,7 +137,7 @@ sub munge_parameters {
   }
 
   my $parameters = {
-    'query'  => lc($q->param('q')),     'number' => $q->param('num')||20,
+    'query'  => lc($q->param('q')),     'number' => $q->param('num') || 0,
     'format' => $q->param('fmt')||'s',  'index'  => $q->param('idx') || 'ALL',
     'species'=> $species,
     'page'   => $q->param('page'),
@@ -279,7 +279,7 @@ sub single_index {
            }
        }
        if( $page < $max_page-1 ) { $ret .= qq([<a href="$URL&page=).($page+1).qq(">Next &gt;&gt;</a>] ); }
-       $ret .= qq(<div>);
+       $ret .= qq(</div>);
     }
     return $ret;
 }
