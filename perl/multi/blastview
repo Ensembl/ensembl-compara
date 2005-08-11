@@ -3017,9 +3017,15 @@ sub genome_markup_string{
   my $feature    = $hsp->genomic_hit($csystem);
   my $tlslice    = $tlfeature->feature_Slice();
   my $slice      = $feature->feature_Slice();
+  warn ">>> $slice <<<";
   $tlslice->adaptor( $sl_adaptor );
   $slice->adaptor( $sl_adaptor );
-
+  eval { 
+    my $T = $slice->get_seq_region_id;
+  };
+  if($@) {
+    return "<p><b>Ill defined slice</b> - this slice does not belong to the current assembly - perhaps you are using an old blast ticket</p>";
+  }
   # Apply orientation
   if( $orientation eq 'fwd' and $slice->strand < 0 ){
     $slice = $slice->invert;
@@ -3068,7 +3074,7 @@ sub genome_markup_string{
   # Get all exons for this slice
   my @exons = ();
   my @snps  = ();
-  #warn( $exontype );
+  warn( "$sp - $exontype ", $slice->name );
   if( $exontype eq 'core'){
     @exons = @{$slice->get_all_Exons};
   } elsif( $exontype eq 'prediction' ){
