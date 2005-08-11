@@ -25,6 +25,8 @@ div.col-wrapper {
 .col-wrapper { display: block; }
 /* */
 
+div.col1 { float:left; width:96%; margin:0 1%; }
+
 div.col2 { float:left; width:47%; margin:0 1%; }
 
 div.col3 { float:left; width:30%; margin:0 1%; }

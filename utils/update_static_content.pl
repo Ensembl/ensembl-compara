@@ -46,13 +46,42 @@ The output is written as html to files:
 
 More on --update: Valid options are:
 
+B< new_species:> UPDATED
+   Use the -site_type 'pre' flag if you are setting up pre.
+
+   Runs generic_species_homepage, SSI (SSIabout, SSIexample, SSIentry),
+   downloads, species_table
+
+
+B<  generic_species_homepage:>;
+    Creates a generic homepage as a first pass for the species.  
+    This file needs /$species/ssi/stats.html too.  
+    Run stats script separately.
+    You need to create a file: htdocs/$species/ssi/karyotype.html 
+    if the species has chromosomes
+
+B<  downloads:>; 
+    Creates a new FTP downloads section (htdocs/info/data/download_links.inc)
+    If the site-type is archive, the links are to the versionned directories.
+    If the site-type is main, the links are to current-species directories.
+
+B<  SSI:>; 
+    Creates a new ssi/about.html page template
+    Creates a new ssi/examples.html page template
+    Creates a new ssi/entry.html drop down form for entry points
+
+B<  species_table:>; 
+    Creates a first pass at the home page species table:
+    htdocs/ssi/species_table.html
+
+
 ####### TO DO - CHECK ALL THESE AS MOSTLY UNNEEDED WITH NEW CODE #######
 B<  new_release:>
    Runs versions, homepage_current_version, whatsnew, branch_versions
    archived_sites SSIdata_homepage assembly_table
 
 B< new_archive_site:>
-   Runs create_affili, create_links, SSIsearch, htdocs_nav, SSIhelp
+   Runs create_affili, create_links, SSIsearch, htdocs_nav
    SSIdata_homepage, downloads, create_homepage_affili, 
    homepage_ensembl_start homepage_current_version,
 
@@ -62,15 +91,8 @@ B < archive.org: >
 B< new_mirror_release:>
    Runs homepage_current_version
 
-B< new_species:>
-   Use the -site_type 'pre' flag if you are setting up pre.
-
-   Runs generic_species_homepage, stats_index, create_links, create_affili, 
-   SSIspecies, SSIsearch, SSIhelp, homepage_current_version, downloads
-   SSIentry
-
 B< new_mirror_species:>
-   Runs generic_species_homepage, create_affili, SSIspecies, SSIsearch, 
+   Runs generic_species_homepage, create_affili, species_table, SSIsearch, 
    homepage_current_version
 
 B<  versions:>; 
@@ -92,15 +114,6 @@ B<  stats_index:>;
     This file needs /$species/stats/stats.html too.  
     Run stats script separately
 
-B<  generic_homeapge:>;
-    Creates a generic homepage as a first pass for the species.  
-    You need to create a 'htdocs/$species/ssi/about.html' 
-    or copy it from pre.ensembl.org.
-    This file needs /$species/ssi/stats.html too.  
-    Run stats script separately.
-    You need to create a file: htdocs/$species/ssi/karyotype.html if the species
-    has chromosomes, or htdocs/$species/ssi/examples.html if not.
-
 B<  create_links:>;
     Creates a new page SSI_homepage/links.html with links to Blast, Help, EnsMart, SiteMap and Export.
     This is included in the species homepage (not mirror).  Excludes link
@@ -116,34 +129,12 @@ B<  create_homepage_affili:>;
     directory.  This makes sure the site homepage has the correct ebang
     logo (i.e. pre!, archive! or e!)
 
-B<  SSIentry:>;
-    Creates a template for a karyotype or other entry points
-    
-B<  SSIhelp:>; 
-    Creates a new help.html page by copying 
-    htdocs/Mus_musculus/homepage_SSI/help.html
-
-B<  SSIspecies:>; 
-    Creates a new species.tmpl file for the 
-    htdocs/$species/homepage_SSI directory.  Copies these files from 
-    mouse.
-
-B<  SSIsearch:>; 
-    Creates a new searchtable.tmpl file for the 
-    htdocs/$species/homepage_SSI directory. This has no blast link if 
-    site_type is 'archive'
-
 B<  htdocs_nav:>; 
     Creates a new def_nav.conf which is used for the static content directories. Links to Blast and ssaha are omitted if site_type is 'archive'
 
 B<  SSIdata_homepage:>; 
     Creates a new htdocs/homepage_SSI/data.html page with out blast link
     and with white buttons for the archive site.
-
-B<  downloads:>; 
-    Creates a new FTP downloads section for htdocs/Downloads/index.html
-    If the site-type is archive, the links are to the versionned directories.
-    If the site-type is main, the links are to current-species directories.
 
 B< homepage_ensembl_start>;
     Creates a new file for htdocs/homepage_SSI/ensemblstart.html for the
@@ -214,11 +205,11 @@ if (@species) {
 # Find ENSEMBL_VERSION
 foreach my $sp (@species) {
   my $version_ini = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_FTP_BASEDIR"})|| $sp;
-  my @chrs        = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_CHROMOSOMES"});
+  my $common_name = utils::Tool::get_config({species =>$sp, values => "SPECIES_COMMON_NAME"})|| $sp;
+  my $chrs        = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_CHROMOSOMES"});
+
   my @search      = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_SEARCH_IDXS"});
   $version_ini    =~ s/(\w+)-//;
-  my $common_name = $1;
-  $common_name    =~ s/(\w)/\u\L$1/;
 
   info ("Using Ensembl root $SERVERROOT");
   info ("Using Ensembl species $sp");
@@ -227,47 +218,40 @@ foreach my $sp (@species) {
   my $SPECIES_ROOT = $SERVERROOT ."/htdocs/$sp/";
   check_dir($SPECIES_ROOT);
 
-  if ($updates{homepage_current_version} ) {
-    homepage_current_version($SERVERROOT, $version_ini, $sp);
-  }
-  if ($updates{whatsnew} ) {
-    whatsnew($SERVERROOT, $version_ini, $sp, $common_name);
-  }
-  if ($updates{branch_versions} ) { # PROBABLY KEEP
-    branch_versions($SPECIES_ROOT, $version_ini, $common_name, $sp);
-  }
-  if ($updates{versions} ) {
-    versions($SPECIES_ROOT."whatsnew/", $common_name, $sp, $version_ini);
-  }
-
-  if ($updates{SSIentry} ) {
-    SSIentry($SPECIES_ROOT);
-  }
-
-  if ($updates{SSIspecies} ) {
-    SSIspecies($SERVERROOT, $sp);
-  }
-  if ($updates{SSIsearch} ) {
-    SSIsearch($SERVERROOT, $sp, @chrs, @search);
-  }
-  if ($updates{SSIhelp} ) {
-    SSIhelp($SERVERROOT, $version_ini, $sp);
-  }
   if ($updates{generic_species_homepage} ) { # KEEP!
-    generic_species_homepage($SERVERROOT, $common_name, $sp, @chrs);
+    generic_species_homepage($SERVERROOT, $common_name, $sp, $chrs);
   }
-  if ($updates{create_links} ) {
-    create_links($SPECIES_ROOT."homepage_SSI/", $common_name, $sp);
+  if ($updates{SSI} ) {
+    SSI($SERVERROOT, $common_name, $sp, $chrs);
   }
-  if ($updates{create_affili} ) {
-    create_affili($SPECIES_ROOT."/homepage_SSI/", $common_name, $sp);
-  }
-  if ($updates{stats_index} ) {
-    stats_index($SPECIES_ROOT."/stats/", $common_name, $sp, $version_ini);
-  }
-  if ($updates{htdocs_nav} ) {
-    htdocs_nav($SERVERROOT, $sp);
-  }
+ #  if ($updates{homepage_current_version} ) {
+#     homepage_current_version($SERVERROOT, $version_ini, $sp);
+#   }
+#   if ($updates{whatsnew} ) {
+#     whatsnew($SERVERROOT, $version_ini, $sp, $common_name);
+#   }
+#   if ($updates{branch_versions} ) { # PROBABLY KEEP
+#     branch_versions($SPECIES_ROOT, $version_ini, $common_name, $sp);
+#   }
+#   if ($updates{versions} ) {
+#     versions($SPECIES_ROOT."whatsnew/", $common_name, $sp, $version_ini);
+#   }
+
+#   if ($updates{SSIsearch} ) {
+#     SSIsearch($SERVERROOT, $sp, $chrs, @search);
+#   }
+#   if ($updates{create_links} ) {
+#     create_links($SPECIES_ROOT."homepage_SSI/", $common_name, $sp);
+#   }
+#   if ($updates{create_affili} ) {
+#     create_affili($SPECIES_ROOT."/homepage_SSI/", $common_name, $sp);
+#   }
+#   if ($updates{stats_index} ) {
+#     stats_index($SPECIES_ROOT."/stats/", $common_name, $sp, $version_ini);
+#   }
+#   if ($updates{htdocs_nav} ) {
+#     htdocs_nav($SERVERROOT, $sp);
+#   }
 }
 
 my $release = utils::Tool::get_config({species => "Multi", values => "ENSEMBL_FTP_BASEDIR"});
@@ -275,17 +259,11 @@ $release =~ s/\w+-\w*-(\d+).*/$1/;
 
 
 # Only do once
-if ($updates{SSIdata_homepage} ) {
-  SSIdata_homepage($SERVERROOT);
+if ($updates{species_table} ) {
+  species_table($SERVERROOT);
 }
 if ($updates{downloads} ) {
   downloads($SERVERROOT);
-}
-if ($updates{create_homepage_affili} ) {
-   create_homepage_affili($SERVERROOT."/htdocs/homepage_SSI/");
-}
-if ($updates{homepage_ensembl_start} ) {  # for archive only
-   homepage_ensembl_start($SERVERROOT."/htdocs/homepage_SSI/");
 }
 if ( $updates{archived_sites} ) {
    archived_sites($SERVERROOT."/htdocs/Docs/", $release);
@@ -303,27 +281,23 @@ exit;
 
    my %valid_types = map{ $_ => 1 }
      qw(
-	new_species      stats_index generic_species_homepage 
-	                 create_links create_affili SSIentry
-                         SSIspecies SSIsearch SSIhelp downloads
-	new_release      versions homepage_current_version whatsnew 
-                         branch_versions
-	new_mirror_species   new_mirror_release 
-        new_archive_site htdocs_nav SSIdata_homepage archived_sites 
-                         create_homepage_affili homepage_ensembl_start
-                         assembly_table 
+	new_species      generic_species_homepage downloads SSI
+                         species_table
+        new_archive_site archived_sites assembly_table 
        );
 
    my %compound_types = 
-     ( new_species        => [ qw(generic_species_homepage downloads)],
+     ( new_species        => [ qw(generic_species_homepage downloads
+				  SSI species_table
+				 )],
 
       new_species_oldsite        => [ qw(stats_index generic_species_homepage 
-				 create_links create_affili SSIentry
+				 create_links create_affili 
                                  homepage_current_version  
-				 SSIspecies SSIsearch  SSIhelp downloads)],
+				 species_table SSIsearch  SSIhelp downloads)],
       new_mirror_species => [ qw( generic_species_homepage create_affili 
                                   homepage_current_version
-		       	          SSIspecies SSIsearch  ) ],
+		       	          species_table SSIsearch  ) ],
       new_release        => [ qw( versions homepage_current_version whatsnew 
                                   branch_versions archived_sites assembly_table
                                   SSIdata_homepage) ],
@@ -333,7 +307,6 @@ exit;
                                  downloads create_homepage_affili
                                  homepage_ensembl_start
                                  homepage_current_version) ],
-      change_logo        => [ qw( create_affili create_homepage_affili) ],
       "archive.org"      => [ qw( archived_sites assembly_table) ],
      );
 
@@ -384,60 +357,85 @@ sub warning{
 }
 
 ##############################################################################
-sub branch_versions {
-  my ($dir, $version_ini, $common_name,$species) = @_;
 
-  $dir .= "whatsnew/";
-  &check_dir($dir);
+sub species_table {
+  return unless $site_type eq 'pre';
 
-  (my $api = $version_ini) =~ s/(\d+)\.(.*)/$1/;
-  my $date = &get_date;
-
-  my $file = $dir."current.html";
-  open (CURR, ">$file") or die "Cannot create $file: $! ";
-
-  print CURR qq(
-<html>
-<head>
-<meta name="navigation" content="Ensembl" />
-<title>Ensembl $common_name Current Version</title>
-</head>
-<body>
-
-<h2 class="boxed">Current Status</h2>
-
-<h3>Versions in Ensembl $common_name v$version_ini</h3>
-
-<ul>
-    <li><p><strong>Ensembl Release version&nbsp;-&nbsp;v$api</strong><br />
-        cvs tag : branch-ensembl-$api</p></li>
-
-    <li><p><strong>Data&nbsp;-&nbsp;v$version_ini </strong></p></li>
-
-    <li><p><strong>BioPerl&nbsp;-&nbsp;v1.2.3</strong></p></li>
-    <li><p><strong>BioMart&nbsp;-&nbsp;v0.2</strong><br />
-        cvs tag : release-0_2</p></li>
-</ul>
-
-<p><a href="/$species/whatsnew/versions.html">Further information about Ensembl versioning</a>.
-
-</body>
-</html> 
-		);
-  close CURR;
-  return;
-}
-
-#---------------------------------------------------------------------------
-sub generic_species_homepage {
-  my ($dir, $common_name, $species, @chrs) = @_;
-
+  my $dir = shift;
+  my $title;
   if ($site_type eq 'pre') {
-    $dir. = "/sanger-plugins/pre/htdocs/$species";
+    $dir .= "/sanger-plugins/pre/htdocs/ssi";
+    $title = "Browse a genome";
     &check_dir($dir);
   }
   else {
-    $dir .= "/htdocs/$species";
+    $dir .= "/htdocs/ssi";
+    $title = "Species";
+    &check_dir($dir);
+  }
+
+  my $file = $dir ."/species_table.html.new";
+  open (my $fh, ">$file") or die "Cannot create $file: $!";
+
+  my %vega_spp = ( Homo_sapiens     => 1,
+		   Mus_musculus     => 1,
+		   Canis_familiaris => 1,
+		   Danio_rerio      => 1 );
+
+  my @species = @{ utils::Tool::all_species() };
+
+  print $fh qq(
+
+   <h3 class="boxed">$title</h3>
+    <dl class="species-list">
+
+);
+
+  foreach my $spp ( @species ) {
+    my $bio_name = utils::Tool::get_config({species =>$spp,
+					  values => "SPECIES_BIO_NAME"});
+    my $assembly = utils::Tool::get_config({species =>$spp,
+					  values => "ASSEMBLY_ID"});
+
+    print $fh qq(
+ <dt>
+    <a href="/$spp">
+    <img src="/img/species/thumb_$spp.png" width="40" height="40" alt="" style="float:left;padding-right:4px;" /></a>$bio_name 
+ <span class="small normal">[$assembly]</span>
+ </dt>
+            <dd><a href="/$spp/">browse</a>
+);
+
+    if ( $vega_spp{$spp} ) {
+      print $fh qq( 
+          | <a href="http://vega.sanger.ac.uk/$spp/">Vega</a>
+    );
+    }
+      print $fh "</dd>";
+  }
+  print $fh qq(
+   </ul>
+
+);
+
+  if (-e "$dir/species_table.html") {
+    system ("cp $dir/species_table.html $dir/species_table.html.bck")==0 or die "Couldn't copy files";
+  }
+  system ("mv $dir/species_table.html.new $dir/species_table.html") ==0 or die "Couldn't copy files";
+
+return;
+}
+#---------------------------------------------------------------------
+
+sub generic_species_homepage {
+  my ($dir, $common_name, $species, $chrs) = @_;
+
+  if ($site_type eq 'pre') {
+    $dir .= "/sanger-plugins/pre/htdocs/$species";
+    &check_dir($dir);
+  }
+  else {
+    $dir .= "/public-plugins/ensembl/htdocs/$species";
     &check_dir($dir);
   }
   my $file = $dir ."/index.html";
@@ -445,47 +443,196 @@ sub generic_species_homepage {
 
   # check for chromosomes
   my $explore = 'examples';
-  if ( (my $chrs = scalar @chrs) > 0 ) {
+  if ( (scalar @$chrs) > 0 ) {
     $explore = 'karyomap';
   }
 
+  my $bio_name = utils::Tool::get_config({species =>$species,
+					  values => "SPECIES_BIO_NAME"});
   print $fh qq(
 <html>
 <head>
-<title>$common_name ($species)</title>
+<title>$common_name ($bio_name)</title>
 </head>
 <body>
-<h2>Explore the $common_name genome</h2>);
+<h2>Explore the <i>$bio_name</i> genome</h2>);
 
 print $fh qq(
 <div class="col-wrapper">
     <div class="col2">
-    [[INCLUDE::$dir/ssi/$explore.html]]
+    [[INCLUDE::/$species/ssi/$explore.html]]
+    [[INCLUDE::/$species/ssi/entry.html]]
     </div>
-    <div class="col2">
-    [[INCLUDE::$dir/ssi/search.html]]
-    </div>
-</div>) unless $site_type eq 'pre';
+);
 
-print $fh qq(<div class="col-wrapper">
+print $fh qq(
     <div class="col2">
-    [[INCLUDE::$dir/ssi/about.html]]
-    </div>
-                                                                                
-    <div class="col2">
-    [[INCLUDE::$dir/ssi/stats.html]]
+    [[INCLUDE::/$species/ssi/search.html]]
     </div>
 </div>
-                                                                                
+<div class="col-wrapper">
+) unless $site_type eq 'pre';
+
+print $fh qq(
+    <div class="col2">
+    [[INCLUDE::/$species/ssi/about.html]]
+    </div>
+);
+print $fh qq(
+    <div class="col2">
+    [[INCLUDE::/$species/ssi/stats.html]]
+    </div>
+) unless $site_type eq 'pre';
+
+print $fh qq(
+</div>
 </body>
 </html>
   );
 
-  system ("touch $dir/ssi/about.html");
   return;
 }
 
-#----------------------------------------------------------------------------
+##############################################################################
+sub SSI {
+  my ($dir, $common_name, $species, $chrs) = @_;
+
+  if ($site_type eq 'pre') {
+    $dir .= "/sanger-plugins/pre/htdocs/$species/ssi";
+    &check_dir($dir);
+  }
+  else {
+    $dir .= "/public-plugins/ensembl/htdocs/$species/ssi";
+    &check_dir($dir);
+  }
+
+  &SSIabout($dir, $common_name, $species);
+  if ( (scalar @$chrs) > 0 ) {
+    &SSIentry($dir, $species, $chrs);
+  }
+  else {
+    &SSIexamples($dir);
+    &SSIentry($dir, $species, 0);
+  }
+  return;
+}
+
+#---------------------------------------------------------------------------
+sub SSIentry {
+  my ($dir, $species, $chrs) = @_;
+  my $file = $dir ."/entry.html";
+
+  open (my $fh, ">$file") or die "Cannot create $file: $!";
+  if ($chrs) {
+    print $fh qq(
+<form action="/$species/contigview">
+<p>Jump directly to sequence position</p>
+<table align="center">
+<tr>
+  <td style="text-align:right">Chromosome:</td>
+  <td><select name="chr">
+    <option value="">==</option>
+);
+
+    foreach my $chr (@$chrs) {
+      warn $chr;
+      print $fh qq(
+    <option>$chr</option>
+);
+    }
+    print $fh qq(
+  </select> or region
+  <input type="text" value="" class="small" name="region" /></td>
+</tr>
+<tr>
+  <td style="text-align:right">From (bp):</td>
+  <td><input type="text" value="" class="small" name="start" /></td>
+</tr>
+<tr>
+  <td style="text-align:right">To (bp):</td>
+  <td><input type="text" value="" class="small" name="end" />
+      <input type="submit" value="Go" class="red-button" /></td>
+</tr>
+</table>
+</form>
+);
+  }
+  else {
+  print $fh qq(
+<form action="/$species/contigview">
+<p>Jump directly to sequence position</p>
+<table align="center">
+<tr>
+  <td style="text-align:right">Region:</td>
+  <td><input type="text" value="" class="small" name="region" /></td>
+</tr>
+<tr>
+  <td style="text-align:right">From (bp):</td>
+  <td><input type="text" value="" class="small" name="start" /></td>
+</tr>
+<tr>
+  <td style="text-align:right">To (bp):</td>
+  <td><input type="text" value="" class="small" name="end" />
+      <input type="submit" value="Go" class="red-button" /></td>
+</tr>
+</table>
+</form>
+);
+}
+  return;
+}
+
+#------------------------------------------------------------------------------
+sub SSIabout {
+  my ($dir, $common_name, $species) = @_;
+  my $file = $dir ."/about.html";
+  return if -e $file;
+  open (my $fh, ">$file") or die "Cannot create $file: $!";
+  print $fh qq(
+  <h3 class="boxed">About the $common_name genome</h3>
+
+<h4>Assembly</h4>
+
+<p><img src="/img/species/pic_$species.png" height="100" width="100" class="float-left" alt="$common_name" title="">
+
+</p>
+
+<h4>Annotation</h4>
+<p>
+
+</p>
+);
+  return;
+}
+
+#------------------------------------------------------------------------------
+
+sub SSIexamples {
+  my ($dir) = @_;
+  my $entry = $dir ."/examples.html";
+  return if -e $entry;
+  open (my $fh2, ">$entry") or die "Cannot create $entry: $!";
+  print $fh2 qq(
+<h3 class="boxed">Example Data Points</h3>
+
+<p>
+
+</p>
+
+<p>A few example data points :</p>
+<ul class="spaced">
+    <li>
+    </li>
+    <li>
+    </li>
+    <li>
+    </li>
+</ul>
+);  
+  return;
+}
+
+#############################################################################
 sub downloads {
   my $dir = shift;
   return if $site_type eq 'pre';
@@ -493,7 +640,7 @@ sub downloads {
   do_downloads("$dir", 0);
   return;
 }
-
+#----------------------------------------------------------------------------
 sub do_downloads {
   my $dir     = shift;
   my $archive = shift;
@@ -549,8 +696,7 @@ sub do_downloads {
   return;
 }
 
-
-#-----------------------------------  ARCHIVE ---------------------------------
+##############################--  ARCHIVE --################################
 sub homepage_ensembl_start {
  my ($dir) = @_;
   &check_dir($dir);
@@ -633,8 +779,8 @@ sub archived_sites {
   open (my $fh, ">$file") or die "Cannot create $file: $!";
   print $fh qq(<!-- VERSION LIST _ DO NOT MODIFY -->\n);
 
-  foreach my $api (sort {$b <=> $a} keys %versions ) {
-   print $fh qq(<!--\tVERSION\t$api\t$versions{$api}\t-->\n);
+  foreach my $api_num (sort {$b <=> $a} keys %versions ) {
+   print $fh qq(<!--\tVERSION\t$api_num\t$versions{$api_num}\t-->\n);
   }
   print $fh qq(<!-- END VERSION LIST-->\n);
 
@@ -764,14 +910,52 @@ sub assembly_table {
   print $fh qq(</table>);
   return;
 }
-#-----------------------------------------------------------------------------
-sub SSIentry {
 
-  info('Skipping - SSIentry not needed by new template');
-	    
+#############################################################################
+sub branch_versions {
+  my ($dir, $version_ini, $common_name,$species) = @_;
+
+  $dir .= "whatsnew/";
+  &check_dir($dir);
+
+  (my $api = $version_ini) =~ s/(\d+)\.(.*)/$1/;
+  my $date = &get_date;
+
+  my $file = $dir."current.html";
+  open (CURR, ">$file") or die "Cannot create $file: $! ";
+
+  print CURR qq(
+<html>
+<head>
+<meta name="navigation" content="Ensembl" />
+<title>Ensembl $common_name Current Version</title>
+</head>
+<body>
+
+<h2 class="boxed">Current Status</h2>
+
+<h3>Versions in Ensembl $common_name v$version_ini</h3>
+
+<ul>
+    <li><p><strong>Ensembl Release version&nbsp;-&nbsp;v$api</strong><br />
+        cvs tag : branch-ensembl-$api</p></li>
+
+    <li><p><strong>Data&nbsp;-&nbsp;v$version_ini </strong></p></li>
+
+    <li><p><strong>BioPerl&nbsp;-&nbsp;v1.2.3</strong></p></li>
+    <li><p><strong>BioMart&nbsp;-&nbsp;v0.2</strong><br />
+        cvs tag : release-0_2</p></li>
+</ul>
+
+<p><a href="/$species/whatsnew/versions.html">Further information about Ensembl versioning</a>.
+
+</body>
+</html> 
+		);
+  close CURR;
+  return;
 }
-
-#----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
 sub create_links {
 
   info('Skipping - create_links not needed by new template');
@@ -857,19 +1041,3 @@ sub whatsnew_index {
   return;
 }
 
-#---------------------------------------------------------------------
-sub SSIspecies {
-
-  info('Skipping - SSIspecies not needed by new template');
-	    
-  info (1, "Copy over about.html from the presite. Revise about content.  Restart the server. Run stats script ./bin/make_ensembl_stats.pl");
-  return;
-}
-
-#------------------------------------------------------------------------------
-sub SSIhelp {
-
-  info('Skipping - SSIhelp not needed by new template');
-	    
-  return;
-}
