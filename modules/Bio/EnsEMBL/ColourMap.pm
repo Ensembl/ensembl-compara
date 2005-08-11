@@ -8,8 +8,22 @@ sub new {
   my $class = shift;
   my $species_defs = shift;
   my $self = $class->SUPER::new( @_ );
-  while(my($k,$v) = each %{$species_defs->ENSEMBL_COLOURS||{}} ) {
-    $self->{$k} = $v;
+
+  my %new_colourmap = qw(
+    BACKGROUND1 background0
+    BACKGROUND4 background1
+    BACKGROUND3 background2
+    BACKGROUND2 background3
+    CONTIGBLUE1 contigblue1
+    CONTIGBLUE2 contigblue2
+    HIGHLIGHT1  highlight1
+    HIGHLIGHT2  highlight2
+  );
+  warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> COLOURMAP <<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
+  while(my($k,$v) = each %{$species_defs->ENSEMBL_STYLE||{}} ) {
+    my $k2 = $new_colourmap{ $k };
+    warn "$k - $k2 - $v";
+    $self->{$k2} = $v if $k2;
   }
 
   $self->{'colour_sets'} = {};

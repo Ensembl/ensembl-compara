@@ -233,7 +233,7 @@ sub bp_to_nearest_unit {
   my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
   my $unit = $units[$power_ranger];
 
-  my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
+  my $value = floor( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
     
   $value = sprintf( "%.${dp}f", $bp / ( 10 ** ( $power_ranger * 3 ) ) ) if ($unit ne 'bp');      
 

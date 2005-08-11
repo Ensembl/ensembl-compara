@@ -64,8 +64,8 @@ sub _init {
     my $OTHER       = $self->{'container'}->{'other_species'};
     my $OTHER_T     = $OTHER; $OTHER_T =~s/_/ /g;
     my $SPECIES_T   = $self->{container}{_config_file_name_}; $SPECIES_T =~s/_/ /g;
-    my $OTHER_SHORT = $self->species_defs->other_species($OTHER,'SPECIES_SHORT_NAME');
-    my $SPECIES_SHORT = $self->species_defs->SPECIES_SHORT_NAME;
+    my $OTHER_SHORT = $self->species_defs->other_species($OTHER,'SPECIES_COMMON_NAME');
+    my $SPECIES_SHORT = $self->species_defs->SPECIES_COMMON_NAME;
     $SPECIES_T =~ s/_/ /g;
 ## This is the list of chromosomes we will be drawing     
 
