@@ -77,6 +77,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   @ENSEMBL_HTDOCS_DIRS
   @ENSEMBL_LIB_DIRS
   $ENSEMBL_SHORTEST_ALIAS
+  $MART_ENSEMBL_LINKS
 );
 use Sys::Hostname;
 use Exporter();
@@ -95,10 +96,7 @@ $VERSION=32;
 # directory that contains htdocs, modules, perl, ensembl, etc
 # DO NOT LEAVE A TRAILING '/' ON ENSEMBL_SERVERROOT
 ##########################################################################
-use FindBin qw($Bin);
-use File::Basename qw( dirname );
-
-$ENSEMBL_SERVERROOT     = dirname( $Bin );            # Local Ensembl dir
+($ENSEMBL_SERVERROOT = __FILE__ ) =~ s/[\\\/]+conf[\\\/]+SiteDefs.pm$//;
 
 ## Define Plugin directories....
 (my $plugin_file = __FILE__) =~s/SiteDefs/Plugins/;
@@ -188,18 +186,18 @@ $ENSEMBL_REGISTRY       = undef;
 
 
 @ENSEMBL_LIB_DIRS     = (
-                         $ENSEMBL_SERVERROOT.'/modules',
-                         $ENSEMBL_SERVERROOT.'/ensembl/modules',
-                         $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
-                         $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
-                         $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
-                         $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
-                         $ENSEMBL_SERVERROOT.'/ensembl-mart/modules',
-                         $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
-                         $ENSEMBL_SERVERROOT.'/biomart-web/modules',
-                         $ENSEMBL_SERVERROOT.'/biomart-plib',
-                         $ENSEMBL_SERVERROOT.'/bioperl-live',
-                        );
+  $ENSEMBL_SERVERROOT.'/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-mart/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
+  $ENSEMBL_SERVERROOT.'/biomart-web/modules',
+  $ENSEMBL_SERVERROOT.'/biomart-plib',
+  $ENSEMBL_SERVERROOT.'/bioperl-live',
+);
 
 # Add perl-version specific lib from /ensemblweb/shared/lib for e.g. Storable.pm
 my @vers = split( /[\.0]+/, $] );
@@ -222,33 +220,7 @@ $ENSEMBL_PERL_SPECIES  = 'Homo_sapiens'; # Default species
 ## If you add a new species MAKE sure that one of the values of the
 ## array is the "SPECIES_CODE" defined in the species.ini file
 
-our %__species_aliases = (
-#-------------------- mammals
-#  'Bos_taurus'              => [qw(bt cow moo)],
-#  'Canis_familiaris'        => [qw(cf dog)], 
-#  'Homo_sapiens'            => [qw(hs human man default)], 
-#  'Mus_musculus'            => [qw(mm mouse mus)],
-#  'Pan_troglodytes'         => [qw(pt chimp)],
-#  'Rattus_norvegicus'       => [qw(rn rat)],
-#-------------------- birds
-#  'Gallus_gallus'           => [qw(gg chicken)],
-#-------------------- fish
-#  'Danio_rerio'  => [qw(dr zfish zebrafish)],
-#  'Fugu_rubripes'           => [qw(fr ffish fugu)],
-#  'Tetraodon_nigroviridis'  => [qw(tn tetraodon)],
-#-------------------- amphibians
-#  'Xenopus_tropicalis'      => [qw(xt xenopus frog)],
-#-------------------- flies
-#  'Anopheles_gambiae'       => [qw(ag mosquito mos anopheles)],
-#  'Apis_mellifera'          => [qw(am honeybee bee)],
-#  'Drosophila_melanogaster' => [qw(dm fly)],
-#-------------------- worms
-#  'Caenorhabditis_briggsae' => [qw(cb briggsae)],
-#  'Caenorhabditis_elegans'   => [qw(ce worm elegans)],
-#  'Ciona_intestinalis'       => [qw(ci seqsquirt ciona)],
-#-------------------- yeast
-#  'Saccharomyces_cerevisiae' => [qw(sc yeast saccharomyces )],
-);
+our %__species_aliases = ();
 
 ###############################################################################
 ## Web user datbase - used to store information about settings, e.g. DAS
@@ -334,12 +306,12 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
   unshift @ENSEMBL_PERL_DIRS,   $dir.'/perl'; 
   unshift @ENSEMBL_HTDOCS_DIRS, $dir.'/htdocs'; 
   unshift @$ENSEMBL_PLUGIN_ROOTS,   $name;
+  push    @ENSEMBL_CONF_DIRS,   $dir.'/conf'; 
 }
 
 my @T = @{$ENSEMBL_PLUGINS||[]};         ## But these have to go on in normal order...
 while( my( $name, $dir ) = splice(@T,0,2)  ) {
-  push @ENSEMBL_CONF_DIRS,   $dir.'/conf'; 
-  push @ENSEMBL_LIB_DIRS,    $dir.'/modules';
+  unshift @ENSEMBL_LIB_DIRS,    $dir.'/modules';
 }
 
 @ENSEMBL_LIB_DIRS = reverse @ENSEMBL_LIB_DIRS; # Helps getting @inc into 
@@ -398,6 +370,7 @@ $MART_HELP_DESK = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME".
     $ENSEMBL_PROXY_PORT==443 && $ENSEMBL_PROTOCOL eq 'https' ?'' : ":$ENSEMBL_PROXY_PORT" ).
     '/perl/helpview';
 $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
+$MART_ENSEMBL_LINKS = $ENSEMBL_SERVERNAME;
 
 ####################
 # Export by default
@@ -439,6 +412,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   $ENSEMBL_VERSION
   $ENSEMBL_HELPDESK_EMAIL
   $ENSEMBL_SHORTEST_ALIAS
+  $MART_ENSEMBL_LINKS
 );
 
 ############################
@@ -508,6 +482,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   $ENSEMBL_APACHE_RELOAD
   $ENSEMBL_SITETYPE
   $ARCHIVE_VERSION
+  $MART_ENSEMBL_LINKS
 );
 
 ###################################
@@ -576,6 +551,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
   @ENSEMBL_PERL_DIRS
   @ENSEMBL_HTDOCS_DIRS
   @ENSEMBL_LIB_DIRS
+  $MART_ENSEMBL_LINKS
   )],
   WEB => [qw(
   $ENSEMBL_PLUGIN_ROOTS
@@ -617,6 +593,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     @ENSEMBL_HTDOCS_DIRS
   $ENSEMBL_SHORTEST_ALIAS
     @ENSEMBL_LIB_DIRS
+    $MART_ENSEMBL_LINKS
   )],
   APACHE => [qw(
     $ENSEMBL_PLUGIN_ROOTS
@@ -653,6 +630,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
     $ENSEMBL_SITETYPE
   $ENSEMBL_SHORTEST_ALIAS
     $ARCHIVE_VERSION
+    $MART_ENSEMBL_LINKS
   )],
 );
 
