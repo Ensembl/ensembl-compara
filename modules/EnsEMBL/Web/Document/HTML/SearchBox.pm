@@ -34,14 +34,14 @@ sub render {
   my $script = $SD->ENSEMBL_SEARCH;
   $self->print( qq(
 <div id="search">
-  <form action="/@{[$species||'perl']}/$script" method="get" style="font-size: 0.9em">
+  <form action="/@{[$species||'perl']}/$script" method="get" style="font-size: 0.9em"><div>
     <input type="hidden" name="species" value="@{[$species||'all']}" />
     Search $site_section:
     <select name="idx" style="font-size: 0.9em">
       <option value="All">Anything</option>@{[ map {qq(\n      <option value="$_">$_</option>)} @{$self->{'indexes'}} ]}
     </select>
     <input name="q" size="20" value="" />
-    <input type="submit" value="Go" class="red-button" />
+    <input type="submit" value="Go" class="red-button" /></div>
     </form>));
   if( @{$self->{'links'}} ) {
     $self->print( qq(\n  <p class="right" style="margin-right:1em">e.g. ), join( ", ", @{$self->{'links'}} ), '</p>' );

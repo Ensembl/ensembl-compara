@@ -578,3 +578,5 @@ sub getSourceData {
 	$dasconf->{type} = scalar(@{$dasconf->{mapping}}) > 1 ? 'mixed' : $smap;
     }
 }
+
+1;

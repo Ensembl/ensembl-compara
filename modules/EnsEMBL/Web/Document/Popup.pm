@@ -17,7 +17,6 @@ sub _initialize_HTML {
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     javascript EnsEMBL::Web::Document::HTML::Javascript
     meta       EnsEMBL::Web::Document::HTML::Meta
-    iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
   );
 
   $self->add_body_elements qw(

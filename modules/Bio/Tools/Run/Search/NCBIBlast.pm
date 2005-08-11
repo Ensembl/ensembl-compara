@@ -41,12 +41,12 @@ use vars qw( @ISA
 	     $SPECIES_DEFS );
 
 use Bio::Tools::Run::Search;
-use EnsEMBL::Web::EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::SpeciesDefs;
 
 @ISA = qw( Bio::Tools::Run::Search );
 
 BEGIN{
-  $SPECIES_DEFS = EnsEMBL::Web::EnsEMBL::Web::SpeciesDefs->new();
+  $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 
   $SEARCHIO_FORMAT   = 'blast';
   $PROGRAM_NAME      = 'blastall';

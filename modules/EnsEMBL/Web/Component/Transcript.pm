@@ -738,6 +738,7 @@ sub marked_up_seq_form {
   if( $object->species_defs->databases->{'ENSEMBL_VARIATION'}||$object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
     push @$show, { 'value' => 'snps', 'name' => 'Codons, Exons and SNPs' };
   }
+  push @$show, { 'value'=>'rna', 'name' => 'Exons, RNA information' } if $object->Obj->biotype =~ /RNA/;
   $form->add_element(
     'type' => 'DropDown', 'name' => 'show', 'value' => $object->param('show') || 'plain',
     'values' => $show, 'label' => 'Show the following features:', 'select' => 'select'
@@ -786,14 +787,37 @@ sub marked_up_seq {
 sub do_markedup_pep_seq {
   my $object = shift;
   my $show = $object->param('show');
+  my $number = $object->param('number');
   if( $show eq 'plain' ) {
     my $fasta = $object->get_trans_seq;
     $fasta =~ s/([acgtn\*]+)/'<span style="color: blue">'.uc($1).'<\/span>'/eg;
     return $fasta;
+  } elsif( $show eq 'rna' ) {
+    my @strings = $object->rna_notation;
+    my @extra_array;
+    foreach( @strings ) {
+      s/(.{60})/$1\n/g;
+      my @extra = split /\n/;
+      if( $number eq 'on' ) {
+        @extra = map { "       $_\n" } @extra;
+      } else {
+        @extra = map { "$_\n" } @extra;
+      }
+      push @extra_array, \@extra;
+    }
+
+    my @fasta = split /\n/, $object->get_trans_seq;
+    my $out = '';
+    foreach( @fasta ) {
+      $out .= "$_\n";
+      foreach my $array_ref (@extra_array) {
+        $out .= shift @$array_ref; 
+      }
+    }
+    return $out; 
   }
   my( $cd_start, $cd_end, $trans_strand, $bps ) = $object->get_markedup_trans_seq;
   my $trans  = $object->transcript;
-  my $number = $object->param('number');
   my $wrap = 60;
   my $count = 0;
   my ($pep_previous, $ambiguities, $previous, $output, $fasta, $peptide)  = '';

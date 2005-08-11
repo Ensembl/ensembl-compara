@@ -731,6 +731,33 @@ sub get_supporting_evidence { ## USED!
   return $evidence;   
 }
 
+sub rna_notation {
+  my $self = shift;
+  my $obj  = $self->Obj;
+  my $T = $obj->get_all_Attributes('miRNA');
+  my @strings = ();
+  if(@$T) {
+    my $string = '-' x $obj->length;
+    foreach( @$T ) {
+      my( $start, $end ) = split /-/, $_->value;
+      substr( $string, $start-1, $end-$start+1 ) = '#' x ($end-$start);
+    }
+    push @strings, $string;
+  }
+  $T = $obj->get_all_Attributes('ncRNA');
+  if(@$T) {
+    my $string = '-' x $obj->length;
+    foreach( @$T ) {
+      my( $start,$end,$packed ) = $_->value =~ /^(\d+):(\d+)\s+(.*)/;
+      substr( $string, $start-1, $end-$start+1 ) =
+        join '', map { substr($_,0,1) x (substr($_,1)||1) } ( $packed=~/(\D\d*)/g );
+    }
+    push @strings, $string;
+  }
+  warn join "\n", @strings;
+  return @strings;
+}
+
 sub location_string {
   my $self = shift;
   return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );

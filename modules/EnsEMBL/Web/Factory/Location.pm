@@ -315,7 +315,7 @@ sub createObjects {
                    $self->param( 'wvc_end' )   || $self->param( 'fpos_end' )   ||
                    $self->param( 'end' );
   if( defined $self->param('l') ) {
-    ($seq_region,$start,$end) = $self->param('l') =~ /^([\w\.]+):(-?[.\w]+)-([.\w]+)$/;
+    ($seq_region,$start,$end) = $self->param('l') =~ /^([\w\.]+):(-?[\.\w]+)-([\.\w]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
   } 
@@ -370,6 +370,8 @@ sub createObjects {
         $location = $self->_location_from_Marker( $temp_id, $seq_region );
       } elsif( $ftype eq 'band' ) {
         $location = $self->_location_from_Band( $temp_id, $seq_region );
+      } elsif( $ftype eq 'region' ) {
+        $location = $self->_location_from_SeqRegion( $temp_id );
       } else {
         $location = $self->_location_from_SeqRegion( $seq_region, $temp_id, $temp_id );
       }

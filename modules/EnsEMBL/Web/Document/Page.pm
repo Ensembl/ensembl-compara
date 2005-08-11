@@ -9,6 +9,9 @@ use constant DEFAULT_DOCTYPE_VERSION => '4.01 Trans';
 use constant DEFAULT_ENCODING        => 'ISO-8859-1';
 use constant DEFAULT_LANGUAGE        => 'en-gb';
 
+use EnsEMBL::Web::Root;
+our @ISA = qw(EnsEMBL::Web::Root);
+
 our %DOCUMENT_TYPES = (
   'HTML' => {
     '2.0'         => '"-//IETF//DTD HTML 2.0 Level 2//EN"',
@@ -25,6 +28,37 @@ our %DOCUMENT_TYPES = (
     '1.1'        => '"-//W3C//DTD XHTML 1.1//EN"'
   }
 );
+
+sub child_objects {
+  my $self = shift;
+  unless( $self->{'children'} ) {
+    $self->{'children'} = [];
+    foreach my $root( 'EnsEMBL::Web', @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS} ) {
+      warn ">>>> $root";
+      my $class_name = $root. '::Document::Configure';
+      if( $self->dynamic_use( $class_name ) ) {
+        push @{$self->{'children'}}, new $class_name;
+      } else {
+        (my $CS = $class_name ) =~ s/::/\\\//g;
+        my $error = $self->dynamic_use_failure( $class_name );
+        my $message = "^Can't locate $CS.pm in ";
+        warn "MENU ERROR: Can't compile $class_name due to $error" unless $error =~ /$message/;
+      }
+    }
+  }
+  warn ">>> @{$self->{'children'}} <<<";
+  return @{$self->{'children'}};
+}
+
+sub call_child_functions {
+  my( $self, @fns ) = @_;
+  return unless @fns;
+  foreach my $child ( $self->child_objects ) {
+    foreach my $fn ( @fns ) {
+      $child->$fn( $self ) if $child->can( $fn );
+    }
+  }
+}
 
 sub set_doc_type {
   my( $self, $type, $V ) = @_;
@@ -116,26 +150,6 @@ sub clear_body_attr {
 sub add_body_attr {
   my( $self, $K, $V ) = @_;
   $self->{'body_attr'}{lc($K)}.=$V;
-}
-
-sub dynamic_use {
-  my( $self, $classname ) = @_;
-  if( $self->{'failed_tracks'}{$classname} ) {
-    warn "Sanger Graphics Root: tried to use $classname again - this has already failed";
-    return 0;
-  }
-  my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);
-  no strict 'refs';
-  return 1 if $parent_namespace->{$module.'::'}; # return if already used
-  eval "require $classname";
-  if($@) {
-    warn "Sanger Graphics Root: failed to use $classname\nSanger Graphics Root: $@";
-    delete( $parent_namespace->{$module.'::'} );
-    $self->{'failed_tracks'}{$classname} = 1;
-    return 0;
-  }
-  $classname->import();
-  return 1;
 }
 
 sub printf { my $self = shift; $self->renderer->printf( @_ ) if $self->{'_renderer'}; }

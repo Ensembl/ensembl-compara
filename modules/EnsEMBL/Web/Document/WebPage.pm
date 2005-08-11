@@ -139,8 +139,8 @@ sub configure {
 
 sub static_links {
   my $self = shift;
-  $self->configure( undef, 'links' );
-  $self->_prof("Static links added");
+#  $self->configure( undef, 'links' );
+#  $self->_prof("Static links added");
 }
 
 sub factory :lvalue { $_[0]->{'factory'}; }

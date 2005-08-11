@@ -75,7 +75,7 @@ use Bio::EnsEMBL::Utils::ConfigRegistry;
 
 use DBI;
 use SiteDefs qw(:ALL);
-use vars qw( $AUTOLOAD $CONF );
+our ( $AUTOLOAD, $CONF );
 
 #----------------------------------------------------------------------
 
@@ -97,14 +97,13 @@ sub new {
   my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/'.$ENSEMBL_CONFIG_FILENAME;
   $self->{'_filename'} = $conffile;
 
-  if( ! $CONF ){ 
-    $self->parse;
-    #$self->store;
-  };
+  $self->parse unless $CONF;
 
-  # The following two lines are probably a hack to allow the object to 
-  # be used as a container for direct conf access - BAD!
+  ## Diagnostic;
 
+  $self->{'_new_caller_array'} = [];
+  my $C = 0;
+  while(my @T = caller($C) ) { $self->{'_new_caller_array'}[$C] = \@T; $C++; }
   $self->{'_multi'}   = $CONF->{'_multi'};
   $self->{'_storage'} = $CONF->{'_storage'};
 
@@ -407,6 +406,9 @@ sub parse { # Called to create hash
   }
   $self->_parse();
   $self->configure_registry();
+  $self->{'_parse_caller_array'} = [];
+  my $C = 0;
+  while(my @T = caller($C) ) { $self->{'_parse_caller_array'}[$C] = \@T; $C++; }
 }
 
 sub _parse {
@@ -432,7 +434,7 @@ sub _parse {
           warn "$confdir/ini-files/$filename.ini is not readable\n" ;
           next;
         }
-        # warn "OPENING $inifile";
+        warn "OPENING $inifile";
         open FH, $inifile or die( "Problem with $inifile: $!" );
     ###### Loop for each line of <species>.ini
         my $current_section = undef;
@@ -1033,7 +1035,7 @@ sub create_martRegistry {
   my $multi = $CONF->{'_multi'};
   warn "@{[keys %{$multi->{'databases'}}]}";
   my $reg = '<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE MartRegistry SYSTEM "classpath:data/XML/MartRegistry.dtd">
+<!DOCTYPE MartRegistry>
 <MartRegistry>';
 
   foreach my $mart ( keys %{$multi->{'marts'}} ) {

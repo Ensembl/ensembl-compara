@@ -14,55 +14,126 @@ use warnings;
 no warnings "uninitialized";
 
 #----------------------------------------------------------------------
-sub change_Graphics_colours {
+sub change_ddmenu_colours {
   my $species_defs = shift;
-  my $colours = $species_defs->ENSEMBL_COLOURS;
-  my $map0 = quotemeta(pack('H6','ffdf27')); my $col0 = pack( 'H6', $colours->{'background0'});
-  my $map1 = quotemeta(pack('H6','ffffe7')); my $col1 = pack( 'H6', $colours->{'background1'});
-  my $map2 = quotemeta(pack('H6','ffffdd')); my $col2 = pack( 'H6', $colours->{'background2'});
-  my $map3 = quotemeta(pack('H6','ffffcc')); my $col3 = pack( 'H6', $colours->{'background3'});
-  my $map4 = quotemeta(pack('H6','999900')); my $col4 = pack( 'H6', $colours->{'background4'});
-
-  foreach my $dir (qw(buttons dd_menus) ) {
-    my $D = "@{[$species_defs->ENSEMBL_SERVERROOT]}/htdocs/img/$dir";
-    next unless opendir( DIR, "$D/templates" );
-    foreach my $img_name ( readdir(DIR) ) {
-      my $F = "$D/templates/$img_name";
-      next unless -f $F;
-      my $l = -s $F;
-      next unless open I,$F;
-      my $gif;
-      read I,$gif,$l;
+  my $colours = $species_defs->ENSEMBL_STYLE;
+  my $img_directory = $species_defs->ENSEMBL_SERVERROOT.'/htdocs/img';
+  my $C1 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND1'} );
+  my $C2 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND2'} );
+  my $C3 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND1'} );
+  my $C4 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND3'} );
+  if( opendir DH, "$img_directory/templates" ) {
+    while( my $file = readdir DH ) {
+      next if $file =~ /zoom\d\.gif/;
+      next unless $file =~ /\.gif/;
+      $/ = undef;
+      open I, "$img_directory/templates/$file";
+      my $X = <I>;
       close I;
-      $gif =~s/$map1/$col1/;
-      $gif =~s/$map2/$col2/;
-      $gif =~s/$map3/$col3/;
-      $gif =~s/$map4/$col4/;
-      $gif =~s/$map0/$col0/;
-      open( O, ">$D/$img_name" ) || next;
-      binmode(O);
-      print O $gif;
-      close O;
+      my $flags = ord(substr($X,10,1));
+      next unless $flags & 128; # No global colourmap arg!!
+      my $colourcount = 2<<($flags&7);
+      foreach my $N ( 1..$colourcount ) {
+        my $index = $N*3+10;
+        my $COL = ord(substr($X,$index,1));
+        if( $COL == 170 ) {
+          substr($X,$index,3) = $C1;
+        } elsif( $COL == 221 ) {
+          substr($X,$index,3) = $C2;
+        } elsif( $COL == 238 ) {
+          substr($X,$index,3) = $C4;
+        } elsif( $COL == 204 ) { 
+          substr($X,$index,3) = $C3;
+        }
+      }
+      my $dir = $file =~ /^y/ ? 'dd_menus/' : '';
+      if( open O, ">$img_directory/$dir$file" ) {
+        print O $X;
+        close O;
+      }
     }
   }
+} 
+
+sub hex2rgb {
+  my $hex = shift;
+  my( $r, $g, $b ) = $hex =~ /(..)(..)(..)/;
+  if( defined($r) ) {
+    return( hex($r),hex($g),hex($b) );
+  }
+}
+
+sub change_zoom_colours {
+  my $species_defs = shift;
+  my $colours = $species_defs->ENSEMBL_STYLE;
+  my $img_directory = $species_defs->ENSEMBL_SERVERROOT.'/htdocs/img';
+  my @C = hex2rgb( $colours->{'HEADING'} );
+  my @O = hex2rgb( $colours->{'SPECIESNAME'} );
+  my @B = hex2rgb( $colours->{'BACKGROUND4'} );
+  foreach my $i (1..8) {
+    $/=undef;
+    open I, "$img_directory/templates/zoom$i.gif" || next;
+    my $Y = my $X = <I>;
+    close I;
+    my $flags = ord(substr($X,10,1));
+    next unless $flags & 128; # No global colourmap arg!!
+    my $colourcount = 2<<($flags&7);
+    my $left  = 80;
+    my $right = 255-$left;
+    foreach my $N ( 1..$colourcount ) {
+      my $index = $N*3+10;
+      my $COL = (ord(substr($X,$index,1)) + ord(substr($X,$index+1,1)) + ord(substr($X,$index+2,1)))/3;
+      foreach my $P ( 0..2 ) {
+        my $N_COL = $COL < $left ? 
+          $COL * $C[$P] / $left :
+          $C[$P] + ($COL-$left)/$right * ($B[$P]-$C[$P]);
+        substr($X,$index+$P,1) = chr($N_COL);
+      }
+    }
+    if( open O, ">$img_directory/buttons/zoom$i.gif" ) {
+      print O $X;
+      close O;
+    }
+    foreach my $N ( 1..$colourcount ) {
+      my $index = $N*3+10;
+      my $COL = (ord(substr($Y,$index,1)) + ord(substr($Y,$index+1,1)) + ord(substr($Y,$index+2,1)))/3;
+      foreach my $P ( 0..2 ) {
+        my $N_COL = $COL < $left ?
+          $COL * $C[$P] / $left :
+          $O[$P] + ($COL-$left)/$right * ($B[$P]-$O[$P]);
+        substr($Y,$index+$P,1) = chr($N_COL);
+      }
+    }
+    if( open O, ">$img_directory/buttons/zoom${i}on.gif" ) {
+      print O $Y;
+      close O;
+    }
+    close I;
+  }
+
 }
 
 sub change_CSS_colours {
   my $species_defs = shift;
   local $/ = undef;
-  my $colours = $species_defs->ENSEMBL_COLOURS;
-  my @files = ('js/zmenu.js', $species_defs->ENSEMBL_TMPL_CSS, $species_defs->ENSEMBL_CONTENT_CSS );
-  foreach my $file ( @files ) {
-    my $filename = "@{[$species_defs->ENSEMBL_SERVERROOT]}/htdocs/$file";
-    my $TEMPLATE = '';
-    if( open( I, "$filename-tmpl" ) ) {
-      if( open( O, ">$filename" ) {
-        $TEMPLATE = <I>;
-        $TEMPLATE =~s/###(\w+)###/$colours->{$1}/eg;
-        print O  $TEMPLATE;
-        close O;
+  my %colours = %{$species_defs->ENSEMBL_STYLE||{}};
+  foreach (keys %colours) {
+    $colours{$_} =~ s/^([0-9A-F]{6})$/#$1/i;
+  }
+  my $css_directory = $species_defs->ENSEMBL_SERVERROOT.'/htdocs/css';
+  if( opendir DH, $css_directory ) {
+    while ( my $file = readdir DH ) {
+      if( $file =~ /^(.*)-tmpl/ ) {
+        open I, "$css_directory/$file" || next;
+        if( open O, ">$css_directory/$1" ) {
+          local( $/ ) = undef;
+          my $T = <I>;
+          $T =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
+          print O $T;
+          close O;
+        }
+        close I;
       }
-      close I;
     }
   }
 }

@@ -146,7 +146,7 @@ sub context_location {
       'href'=> "/$species/contigview?l=$q_string",
       'title'=> "ContigView - detailed sequence display of $header" );
     $self->add_entry( $flag, 'text' => 'Graphical overview',
-      'href'=> "/$species}/cytoview?l=$q_string",
+      'href'=> "/$species/cytoview?l=$q_string",
       'title' => "CytoView - sequence overview of $header" );
     $self->add_entry( $flag, 'text' => 'Export information about region',
       'title' => "ExportView - export information about $header",

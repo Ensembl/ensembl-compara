@@ -400,7 +400,7 @@ sub cytoview {
 sub contigviewbottom_text {
   my($panel, $object) = @_;
   my $width = $object->param('image_width') - 2;
-  $panel->print( qq(<div style="background-color: #ffffe7; width: ${width}px; border: solid 1px black;" class="print_hide autocenter">
+  $panel->print( qq(<div style="background-color: #ffffe7; width: ${width}px; border: solid 1px black;" class="print_hide_block autocenter">
     <p style="padding: 2px; margin: 0px;">
       The region you are trying to display is too large. To zoom into a
       viewable region use the zoom buttons above - or click on the top
@@ -524,7 +524,7 @@ sub nav_box_frame {
   my( $content, $width ) = @_;
   return sprintf
 qq(
-<div style="background-color: #ffffe7; width: %dpx; border: solid 1px black; border-width: 1px 1px 0px 1px; padding: 0px;" class="print_hide autocenter"><div style="padding: 2px; margin: 0px;">
+<div style="width: %dpx; border: solid 1px black; border-width: 1px 1px 0px 1px; padding: 0px;" class="bg5 print_hide_block autocenter"><div style="padding: 2px; margin: 0px;">
   $content
 </div></div>
  ), $width-2;
@@ -640,6 +640,7 @@ sub bottom_nav {
 
   my $selected;
   my $zoom_HTML = '';
+  my $zoom_HTML_2 = '';
   my @zoomgif_keys = sort keys %zoomgifs;
   my $lastkey = $zoomgif_keys[-1];
   for my $zoom (@zoomgif_keys) {
@@ -650,8 +651,16 @@ sub bottom_nav {
     }
     my $zoomurl = this_link_scale( $object, $zoombp, $hidden_fields_URL );
     my $unit_str = $zoombp;
-    $zoom_HTML.=qq(<a href="$zoomurl"><img src="/img/buttons/${zoom}.gif" alt="show $unit_str in detail" class="cv-zoom" /></a>);
+    if( $zoom lt 'zoom5' ) {
+      $zoom_HTML_2 .=qq(<a href="$zoomurl"><img src="/img/buttons/${zoom}.gif" alt="show $unit_str in detail" class="cv-zoom-2" /></a>);
+    } else {
+      $zoom_HTML .=qq(<a href="$zoomurl"><img src="/img/buttons/${zoom}.gif" alt="show $unit_str in detail" class="cv-zoom" /></a>);
+    }
   }
+  $zoom_HTML = qq(<table cellspacing="0" class="zoom">
+    <tr><td>Zoom</td><td rowspan="2" style="text-align:left">$zoom_HTML</td></tr>
+    <tr><td style="text-align:right">$zoom_HTML_2</td></tr>
+  </table>);
   
   $output .= qq(<table style="border:0; margin:0; padding: 0; width: @{[$width-12]}px">\n  <tr>\n    <td class="middle">);
 ############ Left 5mb/2mb/1mb/window

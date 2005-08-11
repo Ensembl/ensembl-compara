@@ -49,6 +49,10 @@ sub _createObjects_gene_region { return $_[0]->_createObjectsLocation( 'core' );
 sub _createObjects_snp_region  { return $_[0]->_createObjectsLocation( 'snp' ); }
 sub _createObjects_vega_region { return $_[0]->_createObjectsLocation( 'vega' ); }
 
+sub _createObjects_gene { return $_[0]->_createObjectsType( 'core' ); }
+sub _createObjects_snp  { return $_[0]->_createObjectsType( 'snp' ); }
+sub _createObjects_vega { return $_[0]->_createObjectsType( 'vega' ); }
+
 sub _dataset {
   my( $self, $type ) = @_;
   if( $type eq 'snp' && ! $self->species_defs->databases->{'ENSEMBL_VARIATION'} ||
@@ -63,6 +67,18 @@ sub _dataset {
   }
   (my $dataset = lc($self->species)) =~ s/^([a-z])[a-z]+_/$1/;
   return "$dataset$suffix", $self->__data->{'sufficies'}{$type}[1];
+}
+
+sub _createObjectsType {
+  my( $self, $type ) = @_;
+  my( $DB, $TYPE ) = $self->_dataset( $type );
+  return unless $DB;
+  return $self->_link(
+    'schema'            => [ 'defaultSchema' ],
+    'dataset'           => [ $DB ],
+    'stage_initialised' => [ 'start' ],
+    'stage'             => [ 'filter' ],
+  );
 }
 
 sub _createObjectsLocation {

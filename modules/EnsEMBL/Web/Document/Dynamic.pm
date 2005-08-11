@@ -39,8 +39,8 @@ sub _initialize_HTML {
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     javascript EnsEMBL::Web::Document::HTML::Javascript
     meta       EnsEMBL::Web::Document::HTML::Meta
-    iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
   );
+    #iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
   $self->add_body_elements qw(
     javascript_div EnsEMBL::Web::Document::HTML::JavascriptDiv
     masthead   EnsEMBL::Web::Document::HTML::MastHead
@@ -90,7 +90,27 @@ sub _initialize_HTML {
     ## Note we have no example links here!!
   }
 #  --- and the search box links...
-}
 
+  ## Lets try all the EnsEMBL::***::Document::Links modules;
+  foreach my $root( 'EnsEMBL::Web', @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS} ) {
+    my $class_name = $root. '::Document::Links';
+    foreach my $FN ( 'common_menu_items', 'dynamic_menu_items' ) {
+      if( $self->dynamic_use( $class_name ) ) {
+        my $function_name = $class_name.'::'.$FN;
+        no strict 'refs';
+        eval {
+          &$function_name( $self );
+        };
+        warn "MENU ERROR in $function_name ($@)" if $@;
+      } else {
+        (my $CS = $class_name ) =~ s/::/\\\//g;
+        my $error = $self->dynamic_use_failure( $class_name );
+        my $message = "^Can't locate $CS.pm in ";
+        warn "MENU ERROR: Can't compile $class_name due to $error" unless $error =~ /$message/;
+      }
+    }
+  }
+
+}
 
 1;

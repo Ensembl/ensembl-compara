@@ -38,7 +38,7 @@ sub helpview {
       $include_form = 0;
     }
   }
-  if( $include_form ) {
+  if( $include_form && $object->param('action') ne 'form' ) {
     if( @{$object->results} ) {
       warn ">HERE";
       if( @{$object->results} == 1 ) {

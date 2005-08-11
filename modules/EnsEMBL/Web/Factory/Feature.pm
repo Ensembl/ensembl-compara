@@ -55,14 +55,14 @@ sub create_Disease {
   my $sth = $disease_db->_db_handle->prepare(
     "select distinct d.id, d.disease, g.omim_id, g.chromosome, g.start_cyto, g.end_cyto, g.gene_symbol
        from gene as g, disease as d
-      where d.id = g.id $EXTRA"
+      where d.id = g.id and g.omim_id $EXTRA"
   );
   $sth->execute;
   my %T ;
   my %gene_symbols;
   foreach my $row ( @{$sth->fetchall_arrayref} ) {
-    push @{$T{$row->[6]}}, $row;
-    $gene_symbols{$row->[6]}=1;
+    push @{$T{$row->[2]}}, $row;
+    $gene_symbols{$row->[2]}=1;
   } 
   my $features = $self->_generic_create( 'Gene', 'fetch_all_by_external_name',
                                          'core' , join( ' ', keys %gene_symbols) );

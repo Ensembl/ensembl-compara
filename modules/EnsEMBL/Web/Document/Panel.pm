@@ -291,11 +291,12 @@ sub render {
     $cap .= exists( $self->{'caption'} ) ? CGI::escapeHTML($self->parse($self->{'caption'})) : '';
     if( $cap ) {
       my $level = $first ? 'h2' : 'h2' ;
+      my $levelend = $level;
       $level .= ' class="print_hide"' if $status eq 'off';
       if( $self->{'link'} ) {
-        $HTML .= sprintf( qq(\n  <%s><a href="%s">%s</a></%s>), $level, $self->{'link'}, $cap, $level );
+        $HTML .= sprintf( qq(\n  <%s><a href="%s">%s</a></%s>), $level, $self->{'link'}, $cap, $levelend );
       } else {
-        $HTML .= sprintf( qq(\n  <%s>%s</%s>), $level, $cap, $level )
+        $HTML .= sprintf( qq(\n  <%s>%s</%s>), $level, $cap, $levelend )
       }
     }
     $self->renderer->print($HTML);

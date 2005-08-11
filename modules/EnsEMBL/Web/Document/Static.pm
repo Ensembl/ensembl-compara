@@ -15,7 +15,6 @@ sub _initialize {
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     meta       EnsEMBL::Web::Document::HTML::Meta
-    iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
   );
 
   $self->add_body_elements qw(
@@ -29,7 +28,7 @@ sub _initialize {
   );
 
   $self->_common_HTML();
-  
+
 ## Let us set up the search box...
   $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 
@@ -52,121 +51,14 @@ sub _initialize {
     ## Note we have no example links here!!
   }
 
-## Now the links on the left hand side....
-  my $species = $ENV{'ENSEMBL_SPECIES'} && $ENV{'ENSEMBL_SPECIES'} ne 'Multi' ? $ENV{'ENSEMBL_SPECIES'} : 'default';
-  my $species_m  = $species eq 'default' ? 'Multi' : $species;
-  $self->menu->add_block( 'whattodo', 'bulleted', 'Use Ensembl to...' );
-  if ($self->species_defs->ENSEMBL_SITETYPE ne 'Archive EnsEMBL') {
-    $self->menu->add_entry( 'whattodo', 'href' => "/$species_m/blastview", 'text'=>'Run a BLAST search' );
-  }
-  $self->menu->add_entry( 'whattodo', 'href'=>"/$species/".$self->species_defs->ENSEMBL_SEARCH, 'text'=>'Search Ensembl' );
-  $self->menu->add_entry( 'whattodo', 'href'=>"/$species_m/martview", 'text'=>'Data mining [BioMart]', 'icon' => '/img/biomarticon.gif' );
-  $self->menu->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/default/helpview?se=1;kw=upload','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Upload your own data' );
-  $self->menu->add_entry( 'whattodo', 'href'=>"/info/data/download.html",
-			'text' => 'Download data');
-  if( $species ne 'default' ) {
-    $self->menu->add_entry( 'whattodo', 'href'=>"/$species/exportview", 'text' => 'Export data');
-  }
-#  $self->menu->add_entry( 'whattodo', 'href'=>"javascript:void(window.open('/perl/helpview?se=1;kw=karyoview','helpview','width=700,height=550,resizable,scrollbars'))", 'text'=>'Display your data on a karyotype diagram' );
+  $self->call_child_functions( 'extra_configuration' );
+  $self->call_child_functions( 'common_menu_items', 'static_menu_items' );
 
-  $self->menu->add_block( 'docs', 'bulleted', 'Docs and downloads' );
-  $self->menu->add_entry( 'docs', 'href' => '/info/', 
-			  'icon' => '/img/infoicon.gif', 
-			  'text'  => 'Information',
-			  'title' => 'Information homepage');
-
-  $self->menu->add_entry( 'docs', 'href' => '/whatsnew.html', 
-			  'icon' => '/img/infoicon.gif', 
-			  'text'  => "What's New",
-			  'title' => "Latest changes in Ensembl");
-
-  $self->menu->add_entry( 'docs', 'href' => '/info/about/', 
-			  'icon' => '/img/infoicon.gif', 
-			  'text'  => 'About Ensembl',
-			  'title' => 'Introduction, Goals, Commitments, Citing Ensembl, Archive sites');
-  $self->menu->add_entry( 'docs', 'href' => '/info/data/', 
-			  'text'  => 'Ensembl data',
-			  'icon' => '/img/infoicon.gif', 
-			  'title' => 'Downloads, Data import/export, Data mining, Data searching');
-  $self->menu->add_entry( 'docs', 'href' => '/info/software/', 
-			  'text'  => 'Software',
-			  'icon' => '/img/infoicon.gif', 
-			  'title' => 'API, Installation, CVS, Versions');
-
-# don't show species links on main home page
-  unless( $ENV{'REQUEST_URI'} eq '/index.html' ) {
-    $self->menu->add_block( 'species', 'bulleted', 'Select a species' );
-
-  # do species popups from config
-    my @group_order = ('Mammals', 'Chordates', 'Eukaryotes');
-    my %spp_tree = (
-      'Mammals'=>[{'label'=>'Mammals'}], 
-      'Chordates'=>[{'label'=>'Other chordates'}], 
-      'Eukaryotes'=>[{'label'=>'Other eukaryotes'}]
-    );
-    my @species_inconf = @{$self->species_defs->ENSEMBL_SPECIES};
-    foreach my $sp (@species_inconf) {
-      my $bio_name = $self->species_defs->other_species($sp, "SPECIES_BIO_NAME");
-      my $group = $self->species_defs->other_species($sp, "SPECIES_GROUP");
-      my $hash_ref = {'href'=>"/$sp/", 'text'=>"<i>$bio_name</i>", 'raw'=>1};
-      push (@{$spp_tree{$group}}, $hash_ref);
-    }
-    foreach my $group (@group_order) {
-      my $h_ref = shift(@{$spp_tree{$group}});
-      my $text = $$h_ref{'label'};
-      $self->menu->add_entry('species', 'href'=>'/', 'text'=>$text, 'options'=>$spp_tree{$group});
-    }
-  }
-
-  $self->menu->add_block( 'links', 'bulleted', 'Other links' );
-  $self->menu->add_entry( 'links', 'href' => '/', 'text' => 'Home' );
-  my $map_link = '/sitemap.html';
-  if (my $species = $ENV{'ENSEMBL_SPECIES'}) {
-    $map_link = '/'.$species.$map_link;
-  }
-  $self->menu->add_entry( 'links', 'href' => $map_link, 'text' => 'Sitemap' );
-  $self->menu->add_entry( 'links', 
-			  'href' => 'http://pre.ensembl.org/', 
-			  'text' => 'Pre! Ensembl', 
-			  'icon' => '/img/ensemblicon.gif', 
-	'title' => "Ensembl Pre! sites (species in progress)" );
-  $self->menu->add_entry( 'links', 'href' => 'http://vega.sanger.ac.uk/', 'text' => 'Vega', 'icon' => '/img/vegaicon.gif', 
-	'title' => "Vertebrate Genome Annotation" );
-  $self->menu->add_entry( 'links', 'href' => 'http://trace.ensembl.org/', 'text' => 'Trace server', 
-	'title' => "trace.ensembl.org - trace server" );
-  
-  if ($self->species_defs->ENSEMBL_SITETYPE eq 'EnsEMBL') { # only on e!
-    $self->menu->add_entry( 'links', 
-			    'href' => 'http://archive.ensembl.org', 
-			    'text' => 'Archive! sites' );
-    my $URL = sprintf "http://%s.archive.ensembl.org%s",
-      CGI::escapeHTML($self->species_defs->ARCHIVE_VERSION),
-	  CGI::escapeHTML($ENV{'REQUEST_URI'});
-    $self->menu->add_entry( 'links', 
-			    'href' => $URL, 
-			    'text' => 'Stable Archive! link for this page' );
-  }
-
-  elsif ($self->species_defs->ENSEMBL_SITETYPE eq 'Archive EnsEMBL') {
-    $self->menu->add_entry( 'links', 
-			    'href' => "http://www.ensembl.org", 
-			    'text' => "Ensembl", 
-			    'icon' => '/img/ensemblicon.gif', 
-			    'title' => "Link to newest Ensembl data");
-    my $URL = sprintf "http://www.ensembl.org%s",
-             CGI::escapeHTML($ENV{'REQUEST_URI'});
-    $self->menu->add_entry( 'links', 
-			    'href' => $URL,
-			    'icon' => '/img/ensemblicon.gif', 
-			    'text' => 'View page in current e! release' );
-  }
-  else {
-    $self->menu->add_entry( 'links', 'href' => "http://www.ensembl.org", 
-			    'text' => "Ensembl", 
-			    'icon' => '/img/ensemblicon.gif' );
-    $self->menu->add_entry ('links', 
-			    'href' => "/info/about/ensembl_powered.html",
-			    'text'=> 'Ensembl Empowererd',
-			    'icon' => '/img/ensemblicon.gif' );
-  }
+#  $self->menu->add_entry ('links',
+#   'href' => "/info/about/ensembl_powered.html",
+#   'text' => 'Ensembl Empowererd',
+#    'icon' => '/img/ensemblicon.gif'
+#  );
 }
+
+1;
