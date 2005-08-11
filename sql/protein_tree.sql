@@ -22,7 +22,9 @@ CREATE TABLE protein_tree_nodes (
   
   PRIMARY KEY (node_id),
   KEY (parent_id),
-  KEY (root_id)
+  KEY (root_id),
+  KEY (left_index),
+  KEY (right_index)
 );
 
 
@@ -63,13 +65,13 @@ CREATE TABLE protein_tree_member (
 --    name                -- name itself
 --    name_class          -- (synonym, common name, ...)
 
-CREATE TABLE protein_tree_names (
+CREATE TABLE protein_tree_tags (
   node_id                int(10) unsigned NOT NULL,
-  name                   varchar(255),
-  name_class             varchar(50),
+  tag                    varchar(50),
+  value                  mediumtext,
 
   KEY (node_id),
-  KEY (name)
+  KEY (tag)
 );
 
 
