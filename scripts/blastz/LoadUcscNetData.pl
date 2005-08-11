@@ -340,8 +340,15 @@ $mlss->species_set([$tgdb, $qgdb]);
 $mlss->method_link_type($method_link_type);
 $mlssa->store($mlss); # Sets the dbID if already exists, creates and sets the dbID if not!
 
-my $chromosome_specific_chain_tables = get_chromosome_specificity_for_tables(
-    $ucsc_dbc, $qSpecies, "chain");
+my $nb_of_net = 0;
+my $nb_of_daf_loaded = 0;
+
+my $net_index = 0; # this counter is used to resume the script if needed
+
+my $simple = 0;
+my $direct = 0;
+my $gapped = 0;
+my $complex = 0;
 
 #####################################################################
 ##
@@ -362,316 +369,43 @@ if ($load_chains) {
     $sql = "show tables like \"\%chain$qSpecies\"";
     $tables = $ucsc_dbc->db_handle->selectcol_arrayref($sql);
   }
-  $sql = "
-      SELECT
-        1, tName, tStart, tEnd, qName, qSize, qStart, qEnd, qStrand, id
-      FROM ".shift(@$tables);
   foreach my $this_table (@$tables) {
-    $sql .= "
-        UNION
+    $sql = "
         SELECT
           1, tName, tStart, tEnd, qName, qSize, qStart, qEnd, qStrand, id
         FROM $this_table";
+    $sth = $ucsc_dbc->prepare($sql);
+    fetch_and_load_nets($sth);
   }
   
-} elsif (defined $tName) {
-  $sql = "
-      SELECT
-        level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
-      FROM net$qSpecies
-      WHERE type!=\"gap\" AND tName = \"$tName\"
-      ORDER BY tStart, chainId";
 } else {
-  $sql = "
-      SELECT
-        level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
-      FROM net$qSpecies
-      WHERE type!=\"gap\"
-      ORDER BY tStart, chainId";
+  if (defined $tName) {
+    $sql = "
+        SELECT
+          level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
+        FROM net$qSpecies
+        WHERE type!=\"gap\" AND tName = \"$tName\"
+        ORDER BY tStart, chainId";
+  } else {
+    $sql = "
+        SELECT
+          level, tName, tStart, tEnd, qName, 1, qStart, qEnd, \"+\", chainId
+        FROM net$qSpecies
+        WHERE type!=\"gap\"
+        ORDER BY tStart, chainId";
+  }
+  $sth = $ucsc_dbc->prepare($sql);
+  fetch_and_load_nets($sth);
 }
-$sth = $ucsc_dbc->prepare($sql);
-$sth->execute();
-
-my ($n_level,   # level in genomic_align; set to 1 for the chains
-    $n_tName,   # name of the target chromosome (e.g. human); used to define the chain
-                # table name if needed
-    $n_tStart,  # start position of this net (0-based); used to restrict the chains
-    $n_tEnd,    # end position of this net; used to restrict the chains
-    $n_qName,   # name of the query chromosome (e.g. cow)
-    $n_qSize,   # size of the query chromosome; used to reverse the chain if needed
-    $n_qStart,  # start position of this net (0-based, always + strand); used while trying to map
-                # non-toplevel alignments
-    $n_qEnd,    # end position of this net (always + strand); used while trying to map
-                # non-toplevel alignments
-    $n_qStrand, # strand for the query coordinates (always "+" for the nets); + or -; used to know
-                # when a chain needs to be reversed. The nets are always defined on the forward
-                # strand
-    $n_chainId, # chain ID; used to fetch chains; group_id in genomic_align_group
-  );
-
-$sth->bind_columns
-  (\$n_level, \$n_tName, \$n_tStart, \$n_tEnd, \$n_qName,
-   \$n_qSize, \$n_qStart, \$n_qEnd, \$n_qStrand, \$n_chainId);
 ##
 #####################################################################
 
-my $nb_of_net = 0;
-my $nb_of_daf_loaded = 0;
 
-my $net_index = 0; # this counter is used to resume the script if needed
 
-my $simple = 0;
-my $direct = 0;
-my $gapped = 0;
-my $complex = 0;
-FETCH_NET: while( $sth->fetch() ) {
-  $net_index++;
-  next if ($net_index < $start_net_index); # $start_net_index is used to resume the script
-
-#   print STDERR "net_index: $net_index, tStart: $n_tStart, chainId: $n_chainId\n";
-  $nb_of_net++;
-  $n_qStrand = 1 if ($n_qStrand eq "+");
-  $n_qStrand = -1 if ($n_qStrand eq "-");
-  $n_tStart++;
-  if ($n_qStrand == 1) {
-    $n_qStart++;
-  } else {
-    ## This happen when loading the chains. The nets are always defined on the forward strand...
-    my $aux = $n_qStart;
-    $n_qStart = $n_qSize - $n_qEnd + 1;
-    $n_qEnd = $n_qSize - $aux;
-  }
-
-  $n_tName =~ s/^chr//;
-  $n_qName =~ s/^chr//;
-  $n_qName =~ s/^pt0\-//;
-
-  ###########
-  # Check whether the UCSC chromosome has its counterpart in EnsEMBL. Skip otherwise...
-  #
-  my $tdnafrag = $tdnafrags{$n_tName};
-  my $tdnafrag_length;
-  my $t_needs_mapping = 0;
-  if (!defined $tdnafrag) {
-#     print STDERR "daf not stored because $tBinomial seqname ",$n_tName," not in dnafrag table\n";
-    my $slice;
-    if ($chromosome_specific_chain_tables) {
-      $slice = map_random_chromosome($tSpecies, $n_tName, ($n_tStart + 1), $n_tEnd);
-    }
-    if (!defined($slice)) {
-      print STDERR "daf not stored because $tBinomial seqname ",$n_tName,
-          " not in dnafrag table\n";
-      next FETCH_NET;
-    } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
-      print STDERR "daf not stored because $tBinomial seqname ",$n_tName, " (", $slice->seq_region_name,
-          ") not in dnafrag table\n";
-      next FETCH_NET;
-    }
-    $t_needs_mapping = 1;
-    $tdnafrag = $tdnafrags{$n_tName};
-#     print STDERR "MAPPING  $tBinomial seqname ",$n_tName, " on ", $slice->seq_region_name,
-#         "!!\n";
-  } else {
-    $tdnafrag_length = $tdnafrag->length();
-  }
-
-  my $qdnafrag = $qdnafrags{$n_qName};
-  my $qdnafrag_length;
-  my $q_needs_mapping = 0;
-  if (!defined $qdnafrag) {
-    ## The alignment might be defined on a non-toplevel seq_region.
-    ## The first EnsEMBL cow assembly released included gene_scaffolds for instance
-    ## which were built on top of the original scaffolds.
-    my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
-        $n_qName, $n_qStart, $n_qEnd, 1);
-    if ($slice) {
-#       print STDERR " => $qBinomial seqname $n_qName ($n_qStart - $n_qEnd) maps on ",
-#           join(" -- ", @$seq_regions), "\n";
-      foreach my $this_seq_region (@$seq_regions) {
-        if (!defined $qdnafrags{$this_seq_region}) {
-          print STDERR "daf not stored because $qBinomial seqname ",$n_qName,
-              " maps on $this_seq_region and it is not in dnafrag table\n";
-          next FETCH_NET;
-        }
-      }
-      $qdnafrag_length = $slice->length();
-      $q_needs_mapping = 1;
-    } else {
-      print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table\n";
-      next FETCH_NET;
-    }
-  } else {
-    $qdnafrag_length = $qdnafrag->length();
-  }
-  #
-  ###########
-
-  my ($c_table, $cl_table); # Name of the tables where chain and chain-links are stored
-  if ($chromosome_specific_chain_tables) {
-    $c_table = "chr" . $n_tName . "_chain" . $qSpecies;
-    $cl_table = "chr" .$n_tName . "_chain" . $qSpecies . "Link";
-  } else {
-    $c_table = "chain" . $qSpecies;
-    $cl_table = "chain" . $qSpecies . "Link";
-  }
-  # as a chainId seems to be specific to a tName, it should be  no need to add an additional constraint
-  # on tName in the sql, but for safe keeping let's add it.
-  $sql = "
-    SELECT
-      c.score, c.tName, c.tSize, c.tStart, c.tEnd, c.qName, c.qSize, c.qStrand, c.qStart, c.qEnd,
-      cl.tStart, cl.tEnd, cl.qStart, cl.qStart+cl.tEnd-cl.tStart as qEnd
-    FROM $c_table c, $cl_table cl
-    WHERE c.id = cl.chainId and cl.chainId = ? and c.tName = cl.tName and c.tName = \"chr$n_tName\"";
-  my $sth2 = $ucsc_dbc->prepare($sql);
-  $sth2->execute($n_chainId);
-
-  my ($c_score,     # score for this chain [saved in the FeaturePair but overwritten afterwards]
-      $c_tName,     # name of the target (e.g. human) chromosome; used here to set
-                    # the seqname for the target seq but overwritten afterwards
-      $c_tSize,     # size of the target chromosome; used to check if UCSC and EnsEMBL
-                    # chrms. length match
-      $c_tStart,    # start of the chain in the target chr. [not used]
-      $c_tEnd,      # end of the chain in the target chr. [not used]
-      $c_qName,     # name of the query (e.g. mouse) chromosome; used here to set
-                    # the seqname for the query seq but overwritten afterwards
-      $c_qSize,     # size of the target chromosome; used to check if UCSC and EnsEMBL
-                    # chr. length match and to reverse the coordinates when needed
-      $c_qStrand,   # strand of the query chain; used to know when the coordinates
-                    # need to be reversed
-      $c_qStart,    # start of the chain in the query chr. [not used]
-      $c_qEnd,      # end of the chain in the query chr. [not used]
-      $cl_tStart,   # start of the link (ungapped feature) in the target chr.
-      $cl_tEnd,     # end of the link in the target chr.
-      $cl_qStart,   # startof the link in the query chr.
-      $cl_qEnd);    # end of the link in the query chr.
-
-  $sth2->bind_columns(\$c_score,
-      \$c_tName,\$c_tSize,\$c_tStart,\$c_tEnd,
-      \$c_qName,\$c_qSize,\$c_qStrand,\$c_qStart,\$c_qEnd,
-      \$cl_tStart,\$cl_tEnd,\$cl_qStart,\$cl_qEnd);
-
-  my $all_feature_pairs;
-  FETCH_CHAIN: while( $sth2->fetch() ) {
-    # Checking the chromosome length from UCSC with Ensembl.
-    unless (!defined($tdnafrag_length) or $tdnafrag_length == $c_tSize) {
-      print STDERR "tSize = $c_tSize for tName = $c_tName and Ensembl has dnafrag",
-          " length of $tdnafrag_length\n";
-      print STDERR "net_index is $net_index\n";
-      exit 2;
-    }
-    unless ($qdnafrag_length == $c_qSize) {
-      print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag",
-          " length of $qdnafrag_length\n";
-      print STDERR "net_index is $net_index\n";
-      exit 3;
-    }
-    
-    $c_qStrand = 1 if ($c_qStrand eq "+");
-    $c_qStrand = -1 if ($c_qStrand eq "-");
-    $c_tStart++;
-    $c_qStart++;
-    $cl_tStart++;
-    $cl_qStart++;
-    $c_tName =~ s/^chr//;
-    $c_qName =~ s/^chr//;
-    $c_qName =~ s/^pt0\-//;
-    
-
-    if ($c_qStrand < 0) {
-      my $length = $cl_qEnd - $cl_qStart;
-      $cl_qStart = $c_qSize - $cl_qEnd + 1;
-      $cl_qEnd = $cl_qStart + $length;
-    }
-
-    if ($t_needs_mapping) {
-      my $slice = map_random_chromosome($tSpecies, $c_tName, $cl_tStart, $cl_tEnd);
-      next FETCH_CHAIN if (!$slice);
-      $c_tName = $slice->seq_region_name;
-      $cl_tStart = $slice->start;
-      $cl_tEnd = $slice->end;
-    }
-
-    if ($q_needs_mapping) {
-      my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
-        $c_qName, $cl_qStart, $cl_qEnd, $c_qStrand);
-      my %seq_regions;
-#       print STDERR "$qBinomial $n_qName -> ", join(" - ", @seq_regions), "\n";
-      foreach my $seq_region (@$seq_regions) {
-        $seq_regions{$seq_region} = 1;
-        $qdnafrag = $qdnafrags{$seq_region};
-        if (!defined $qdnafrag) {
-          print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table, so not in core\n";
-          next FETCH_CHAIN;
-        }
-      }
-      if (scalar(@$coords) == 1) {
-        $direct++;
-      } else {
-        if (scalar(keys %seq_regions) == 1) {
-          $gapped++;
-#          print STDERR "net_index: $net_index, tStart: $n_tStart, chainId: $n_chainId\n",
-#              " $c_qName($seq_regions[0]), $cl_qStart, $cl_qEnd, $c_qStrand\n";
-        } else {
-          $complex++;
-          ## Not supported at the moment!!!
-          print STDERR "daf not stored because $qBinomial seqname ",$n_qName," maps on several seq_regions.\n";
-          next FETCH_CHAIN;
-        }
-      }
-      my $start = $cl_tStart;
-      foreach my $coord (@$coords) {
-        if ($coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
-          my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
-              -seqname  => $c_tName,
-              -start    => $start,
-              -end      => $start + $coord->length - 1,
-              -strand   => 1,
-              -hseqname => shift @$seq_regions,
-              -hstart   => $coord->start,
-              -hend     => $coord->end,
-              -hstrand  => $coord->strand,
-              -score    => $c_score);
-          push(@$all_feature_pairs, $this_feature_pair);
-        }
-        $start += $coord->length;
-      }
-    } else {
-      $simple++;
-      my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
-          -seqname  => $c_tName,
-          -start    => $cl_tStart,
-          -end      => $cl_tEnd,
-          -strand   => 1,
-          -hseqname  => $c_qName,
-          -hstart   => $cl_qStart,
-          -hend     => $cl_qEnd,
-          -hstrand  => $c_qStrand,
-          -score    => $c_score);
-      push(@$all_feature_pairs, $this_feature_pair);
-    }
-  } ### End while loop (FETCH_CHAIN)
-
-  my $dna_align_features = get_DnaAlignFeatures_from_FeaturePairs($all_feature_pairs);
-
-  my @new_dafs;
-  while (my $daf = shift @$dna_align_features) {
-    my $daf = $daf->restrict_between_positions($n_tStart,$n_tEnd,"SEQ");
-    next unless (defined $daf);
-    push @new_dafs, $daf;
-  }
-  next unless (scalar @new_dafs);
-#  print STDERR "Loading ",scalar @new_dafs,"...\n";
-  
-  foreach my $daf (@new_dafs) {
-    save_daf_as_genomic_align_block($daf);
-  }
-
-  $nb_of_daf_loaded = $nb_of_daf_loaded + scalar @new_dafs;
-}
-
-print STDERR "simple = $simple; direct = $direct; gapped = $gapped and complex = $complex\n";
-print STDERR "nb_of_net: ", $nb_of_net,"\n";
-print STDERR "nb_of_daf_loaded: ", $nb_of_daf_loaded,"\n";
+print STDERR "no_mapping = $simple; direct_mapping = $direct; gapped_mapping = $gapped",
+    " and complex_mapping (skipped) = $complex\n" if ($direct or $gapped or $complex);
+print STDERR "Total number of loaded nets: ", $nb_of_net,"\n";
+print STDERR "Total number of loaded GenomicAlignBlocks: ", $nb_of_daf_loaded,"\n";
 
 $sth->finish;
 
@@ -682,6 +416,292 @@ foreach my $key (sort {$a cmp $b} keys %undefined_combinaisons) {
 print STDERR "\n";
 
 exit();
+
+
+=head2 fetch_and_load_nets
+
+  Arg[1]     : 
+  Example    : 
+  Description: 
+  Returntype : 
+
+=cut
+
+sub fetch_and_load_nets {
+  my ($sth) = @_;
+
+  my $chromosome_specific_chain_tables = get_chromosome_specificity_for_tables(
+      $ucsc_dbc, $qSpecies, "chain");
+
+  $sth->execute();
+
+  my ($n_level,   # level in genomic_align; set to 1 for the chains
+      $n_tName,   # name of the target chromosome (e.g. human); used to define the chain
+                  # table name if needed
+      $n_tStart,  # start position of this net (0-based); used to restrict the chains
+      $n_tEnd,    # end position of this net; used to restrict the chains
+      $n_qName,   # name of the query chromosome (e.g. cow)
+      $n_qSize,   # size of the query chromosome; used to reverse the chain if needed
+      $n_qStart,  # start position of this net (0-based, always + strand); used while trying to map
+                  # non-toplevel alignments
+      $n_qEnd,    # end position of this net (always + strand); used while trying to map
+                  # non-toplevel alignments
+      $n_qStrand, # strand for the query coordinates (always "+" for the nets); + or -; used to know
+                  # when a chain needs to be reversed. The nets are always defined on the forward
+                  # strand
+      $n_chainId, # chain ID; used to fetch chains; group_id in genomic_align_group
+    );
+  
+  $sth->bind_columns
+    (\$n_level, \$n_tName, \$n_tStart, \$n_tEnd, \$n_qName,
+    \$n_qSize, \$n_qStart, \$n_qEnd, \$n_qStrand, \$n_chainId);
+  
+  FETCH_NET: while( $sth->fetch() ) {
+    $net_index++;
+    next if ($net_index < $start_net_index); # $start_net_index is used to resume the script
+#     print STDERR "$net_index: $n_tName ($n_tStart-$n_tEnd) <=> $n_qName ($n_qStart-$n_qEnd)\n";
+
+    $nb_of_net++;
+    $n_qStrand = 1 if ($n_qStrand eq "+");
+    $n_qStrand = -1 if ($n_qStrand eq "-");
+    $n_tStart++;
+    if ($n_qStrand == 1) {
+      $n_qStart++;
+    } else {
+      ## This happen when loading the chains. The nets are always defined on the forward strand...
+      my $aux = $n_qStart;
+      $n_qStart = $n_qSize - $n_qEnd + 1;
+      $n_qEnd = $n_qSize - $aux;
+    }
+  
+    $n_tName =~ s/^chr//;
+    $n_qName =~ s/^chr//;
+    $n_qName =~ s/^pt0\-//;
+  
+    ###########
+    # Check whether the UCSC chromosome has its counterpart in EnsEMBL. Skip otherwise...
+    #
+    my $tdnafrag = $tdnafrags{$n_tName};
+    my $tdnafrag_length;
+    my $t_needs_mapping = 0;
+    if (!defined $tdnafrag) {
+#       print STDERR "daf not stored because $tBinomial seqname ",$n_tName," not in dnafrag table\n";
+      my $slice;
+      if ($chromosome_specific_chain_tables) {
+        $slice = map_random_chromosome($tSpecies, $n_tName, ($n_tStart + 1), $n_tEnd);
+      }
+      if (!defined($slice)) {
+        print STDERR "daf not stored because $tBinomial seqname ",$n_tName,
+            " not in dnafrag table\n";
+        next FETCH_NET;
+      } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
+        print STDERR "daf not stored because $tBinomial seqname ",$n_tName, " (", $slice->seq_region_name,
+            ") not in dnafrag table\n";
+        next FETCH_NET;
+      }
+      $t_needs_mapping = 1;
+      $tdnafrag = $tdnafrags{$n_tName};
+#       print STDERR "MAPPING  $tBinomial seqname ",$n_tName, " on ", $slice->seq_region_name,
+#           "!!\n";
+    } else {
+      $tdnafrag_length = $tdnafrag->length();
+    }
+  
+    my $qdnafrag = $qdnafrags{$n_qName};
+    my $qdnafrag_length;
+    my $q_needs_mapping = 0;
+    if (!defined $qdnafrag) {
+      ## The alignment might be defined on a non-toplevel seq_region.
+      ## The first EnsEMBL cow assembly released included gene_scaffolds for instance
+      ## which were built on top of the original scaffolds.
+      my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
+          $n_qName, $n_qStart, $n_qEnd, 1);
+      if ($slice) {
+#         print STDERR " => $qBinomial seqname $n_qName ($n_qStart - $n_qEnd) maps on ",
+#             join(" -- ", @$seq_regions), "\n";
+        foreach my $this_seq_region (@$seq_regions) {
+          if (!defined $qdnafrags{$this_seq_region}) {
+            print STDERR "daf not stored because $qBinomial seqname ",$n_qName,
+                " maps on $this_seq_region and it is not in dnafrag table\n";
+            next FETCH_NET;
+          }
+        }
+        $qdnafrag_length = $slice->length();
+        $q_needs_mapping = 1;
+      } else {
+        print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table\n";
+        next FETCH_NET;
+      }
+    } else {
+      $qdnafrag_length = $qdnafrag->length();
+    }
+    #
+    ###########
+  
+    my ($c_table, $cl_table); # Name of the tables where chain and chain-links are stored
+    if ($chromosome_specific_chain_tables) {
+      $c_table = "chr" . $n_tName . "_chain" . $qSpecies;
+      $cl_table = "chr" .$n_tName . "_chain" . $qSpecies . "Link";
+    } else {
+      $c_table = "chain" . $qSpecies;
+      $cl_table = "chain" . $qSpecies . "Link";
+    }
+    # as a chainId seems to be specific to a tName, it should be  no need to add an additional constraint
+    # on tName in the sql, but for safe keeping let's add it.
+    $sql = "
+      SELECT
+        c.score, c.tName, c.tSize, c.tStart, c.tEnd, c.qName, c.qSize, c.qStrand, c.qStart, c.qEnd,
+        cl.tStart, cl.tEnd, cl.qStart, cl.qStart+cl.tEnd-cl.tStart as qEnd
+      FROM $c_table c, $cl_table cl
+      WHERE c.id = cl.chainId and cl.chainId = ? and c.tName = cl.tName and c.tName = \"chr$n_tName\"";
+    my $sth2 = $ucsc_dbc->prepare($sql);
+    $sth2->execute($n_chainId);
+  
+    my ($c_score,     # score for this chain [saved in the FeaturePair but overwritten afterwards]
+        $c_tName,     # name of the target (e.g. human) chromosome; used here to set
+                      # the seqname for the target seq but overwritten afterwards
+        $c_tSize,     # size of the target chromosome; used to check if UCSC and EnsEMBL
+                      # chrms. length match
+        $c_tStart,    # start of the chain in the target chr. [not used]
+        $c_tEnd,      # end of the chain in the target chr. [not used]
+        $c_qName,     # name of the query (e.g. mouse) chromosome; used here to set
+                      # the seqname for the query seq but overwritten afterwards
+        $c_qSize,     # size of the target chromosome; used to check if UCSC and EnsEMBL
+                      # chr. length match and to reverse the coordinates when needed
+        $c_qStrand,   # strand of the query chain; used to know when the coordinates
+                      # need to be reversed
+        $c_qStart,    # start of the chain in the query chr. [not used]
+        $c_qEnd,      # end of the chain in the query chr. [not used]
+        $cl_tStart,   # start of the link (ungapped feature) in the target chr.
+        $cl_tEnd,     # end of the link in the target chr.
+        $cl_qStart,   # startof the link in the query chr.
+        $cl_qEnd);    # end of the link in the query chr.
+  
+    $sth2->bind_columns(\$c_score,
+        \$c_tName,\$c_tSize,\$c_tStart,\$c_tEnd,
+        \$c_qName,\$c_qSize,\$c_qStrand,\$c_qStart,\$c_qEnd,
+        \$cl_tStart,\$cl_tEnd,\$cl_qStart,\$cl_qEnd);
+  
+    my $all_feature_pairs;
+    FETCH_CHAIN: while( $sth2->fetch() ) {
+      # Checking the chromosome length from UCSC with Ensembl.
+      unless (!defined($tdnafrag_length) or $tdnafrag_length == $c_tSize) {
+        print STDERR "tSize = $c_tSize for tName = $c_tName and Ensembl has dnafrag",
+            " length of $tdnafrag_length\n";
+        print STDERR "net_index is $net_index\n";
+        exit 2;
+      }
+      unless ($qdnafrag_length == $c_qSize) {
+        print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag",
+            " length of $qdnafrag_length\n";
+        print STDERR "net_index is $net_index\n";
+        exit 3;
+      }
+      
+      $c_qStrand = 1 if ($c_qStrand eq "+");
+      $c_qStrand = -1 if ($c_qStrand eq "-");
+      $c_tStart++;
+      $c_qStart++;
+      $cl_tStart++;
+      $cl_qStart++;
+      $c_tName =~ s/^chr//;
+      $c_qName =~ s/^chr//;
+      $c_qName =~ s/^pt0\-//;
+      
+  
+      if ($c_qStrand < 0) {
+        my $length = $cl_qEnd - $cl_qStart;
+        $cl_qStart = $c_qSize - $cl_qEnd + 1;
+        $cl_qEnd = $cl_qStart + $length;
+      }
+  
+      if ($t_needs_mapping) {
+        my $slice = map_random_chromosome($tSpecies, $c_tName, $cl_tStart, $cl_tEnd);
+        next FETCH_CHAIN if (!$slice);
+        $c_tName = $slice->seq_region_name;
+        $cl_tStart = $slice->start;
+        $cl_tEnd = $slice->end;
+      }
+  
+      if ($q_needs_mapping) {
+        my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
+          $c_qName, $cl_qStart, $cl_qEnd, $c_qStrand);
+        my %seq_regions;
+#         print STDERR "$qBinomial $n_qName -> ", join(" - ", @seq_regions), "\n";
+        foreach my $seq_region (@$seq_regions) {
+          $seq_regions{$seq_region} = 1;
+          $qdnafrag = $qdnafrags{$seq_region};
+          if (!defined $qdnafrag) {
+            print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table, so not in core\n";
+            next FETCH_CHAIN;
+          }
+        }
+        if (scalar(@$coords) == 1) {
+          $direct++;
+        } else {
+          if (scalar(keys %seq_regions) == 1) {
+            $gapped++;
+#            print STDERR "net_index: $net_index, tStart: $n_tStart, chainId: $n_chainId\n",
+#                " $c_qName($seq_regions[0]), $cl_qStart, $cl_qEnd, $c_qStrand\n";
+          } else {
+            $complex++;
+            ## Not supported at the moment!!!
+            print STDERR "daf not stored because $qBinomial seqname ",$n_qName," maps on several seq_regions.\n";
+            next FETCH_CHAIN;
+          }
+        }
+        my $start = $cl_tStart;
+        foreach my $coord (@$coords) {
+          if ($coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+            my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
+                -seqname  => $c_tName,
+                -start    => $start,
+                -end      => $start + $coord->length - 1,
+                -strand   => 1,
+                -hseqname => shift @$seq_regions,
+                -hstart   => $coord->start,
+                -hend     => $coord->end,
+                -hstrand  => $coord->strand,
+                -score    => $c_score);
+            push(@$all_feature_pairs, $this_feature_pair);
+          }
+          $start += $coord->length;
+        }
+      } else {
+        $simple++;
+        my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
+            -seqname  => $c_tName,
+            -start    => $cl_tStart,
+            -end      => $cl_tEnd,
+            -strand   => 1,
+            -hseqname  => $c_qName,
+            -hstart   => $cl_qStart,
+            -hend     => $cl_qEnd,
+            -hstrand  => $c_qStrand,
+            -score    => $c_score);
+        push(@$all_feature_pairs, $this_feature_pair);
+      }
+    } ### End while loop (FETCH_CHAIN)
+  
+    my $dna_align_features = get_DnaAlignFeatures_from_FeaturePairs(
+        $all_feature_pairs, $n_chainId, (($n_level+1)/2));
+  
+    my @new_dafs;
+    while (my $daf = shift @$dna_align_features) {
+      my $daf = $daf->restrict_between_positions($n_tStart,$n_tEnd,"SEQ");
+      next unless (defined $daf);
+      push @new_dafs, $daf;
+    }
+    next unless (scalar @new_dafs);
+#    print STDERR "Loading ",scalar @new_dafs,"...\n";
+    
+    foreach my $daf (@new_dafs) {
+      save_daf_as_genomic_align_block($daf);
+    }
+  
+    $nb_of_daf_loaded = $nb_of_daf_loaded + scalar @new_dafs;
+  }
+}
 
 
 =head2 get_binomial_name
@@ -919,7 +939,7 @@ sub map_non_toplevel_seqregion {
 =cut
 
 sub get_DnaAlignFeatures_from_FeaturePairs {
-  my ($all_feature_pairs) = @_;
+  my ($all_feature_pairs, $group_id, $level) = @_;
   my $dna_align_features;
 
   my $these_feature_pairs = [];
@@ -960,8 +980,8 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
       my $this_dna_align_feature = new Bio::EnsEMBL::DnaDnaAlignFeature(
           -features => \@$these_feature_pairs);
       $these_feature_pairs = [];
-      $this_dna_align_feature->group_id($n_chainId);
-      $this_dna_align_feature->level_id(($n_level + 1)/2);
+      $this_dna_align_feature->group_id($group_id);
+      $this_dna_align_feature->level_id($level);
       push @$dna_align_features, $this_dna_align_feature;
     }
     $previous_t_end = $t_end;
@@ -973,8 +993,8 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
     my $this_dna_align_feature = new Bio::EnsEMBL::DnaDnaAlignFeature(
         -features => \@$these_feature_pairs);
     $these_feature_pairs = [];
-    $this_dna_align_feature->group_id($n_chainId);
-    $this_dna_align_feature->level_id(($n_level + 1)/2);
+    $this_dna_align_feature->group_id($group_id);
+    $this_dna_align_feature->level_id($level);
     push @$dna_align_features, $this_dna_align_feature;
   }
 
