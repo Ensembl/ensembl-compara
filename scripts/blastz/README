@@ -23,6 +23,11 @@ grep Mm5 index.html |awk -F "\"" '{print $6}'|grep -e net -e chain|while read i;
 
 again remembering to replace hg17 with the relevent species abbreviation. Note they tend to be in the format of canFam1 or xenTro1 or galGal2 for more recently added species.
 
+You may also download the goldenpath data if you want to map alignments on the *_random genes:
+
+grep random_gold index.html | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
+http://hgdownload.cse.ucsc.edu/goldenPath/hg17/database/$i; done
+
 2- set up a mysql database
 
 mysql -h ecs2 -P3366 -u ensadmin -pensembl -e "create database abel_ucsc_chain_data_Hs35Mm33"
@@ -37,7 +42,7 @@ ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz;mysqlim
 
 mysqlimport didn not work on ia64e so use the following instead:
 
-ls *.gz | sed "s/\.txt.gz//" | while read i ; do echo "Loading $i..." ; gunzip $i.txt.gz ; mysql -h ia64e -pensembl -u ensadmin -e "load data infile '/ecs2/scratch3/cara/UCSC/Mm33Xt1/ucsc_sql/$i.txt' into table $i" cara_ucsc_chain_data_xenTro1mm5 ; gzip $i.txt ; echo $i loaded ; done
+ls *.gz | sed "s/\.txt.gz//" | while read i ; do echo "Loading $i..." ; gunzip $i.txt.gz ; mysql -h ia64e -pensembl -u ensadmin -e "load data local infile '/ecs2/scratch3/cara/UCSC/Mm33Xt1/ucsc_sql/$i.txt' into table $i" cara_ucsc_chain_data_xenTro1mm5 ; gzip $i.txt ; echo $i loaded ; done
 
 Load in compara
 
