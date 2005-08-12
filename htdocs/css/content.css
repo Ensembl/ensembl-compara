@@ -64,9 +64,9 @@ img.float-right { float:right; padding-left:10px; }
 
 /* JavaScript dropdown menus on images*/
                                                                                    
-table.ddmenu { border:1px solid #aaeecc; background-color: #ddffee}
-.ddmain, td.ddmain { background-color: #ddffee; font-size: 8pt; font-family: Arial, helvetica, verdana, sans-serif; color: #000; }
-td.ddmain a { background-color:#ddffee; text-decoration:none; font-size:8pt; font-family: Arial, helvetica, verdana, sans-serif; color:#3366bb; }
+table.ddmenu { border:1px solid #aaeecc; background-color: #eefff8}
+.ddmain, td.ddmain { background-color: #eefff8; font-size: 8pt; font-family: Arial, helvetica, verdana, sans-serif; color: #000; }
+td.ddmain a { background-color:#eefff8; text-decoration:none; font-size:8pt; font-family: Arial, helvetica, verdana, sans-serif; color:#3366bb; }
 .dddiv_button { background-color: #aaeecc; }
 .dddiv { position: absolute; top:0px; left:0px; z-index: 100; visibility: hidden; }
 
@@ -116,7 +116,7 @@ td.two-column tr { vertical-align: top }
 
 table.stacked tr { vertical-align: top }
 
-th.stacked { background-color:#ddffee; border:1px solid #aaeecc; 
+th.stacked { background-color:#eefff8; border:1px solid #aaeecc; 
              color:#993333; text-align:center; padding:4px;}
 
 td.stacked { padding:4px; } 
@@ -139,7 +139,7 @@ table.ss tr.bg1, table.spreadsheet tr.bg1 { background-color:#fff; }
 
 table.ss tr.bg2, table.spreadsheet tr.bg2 { background-color:#f0f0f0; }
 
-table.spreadsheet tr.tint { background-color:#ddffee; }
+table.spreadsheet tr.tint { background-color:#eefff8; }
 
 table.info-image { width:100%; margin:10px 0px; }
 table.info-image td.image { text-align:center; padding-right:20px; }
@@ -188,7 +188,7 @@ form#change_chr { margin:10px; }
 
 div.notice {
     width:50%; margin:2em auto; padding: 1em;
-    background: #ddffee; border:1px solid #993333;
+    background: #eefff8; border:1px solid #993333;
 }
 
 div.notice h4 { margin:0px; text-align:center; }
@@ -227,7 +227,7 @@ div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul {
 
 div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul li.popup {
     font-size:80%; font-weight:normal; font-style:normal; 
-    background-color:#ddffee; margin:0px; list-style:none; }
+    background-color:#eefff8; margin:0px; list-style:none; }
 
 /* Species homepages */
 
@@ -267,7 +267,7 @@ table.grid { border-collapse: collapse }
 table.bug td { border:solid 1px #666 }
 
 table.zoom { display: inline }
-table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-color:#eefff8; font-weight: bold; }
+table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-color:#f5fffb; font-weight: bold; }
 table.zoom tr td { vertical-align: bottom }
 table.zoom tr td img { margin-top: 0px }
 

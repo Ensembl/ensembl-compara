@@ -38,10 +38,10 @@ a.red-button:visited, a.blue-button:visited { color:#fff; text-decoration:none; 
 
 /* Miscellaneous text styles */
 .bg1 { background:#fff; }
-.bg2 { background:#ddffee; }
+.bg2 { background:#eefff8; }
 .bg3 { background:#ccffe8; }
 .bg4 { background:#aaeecc; }
-.bg5 { background:#eefff8; }
+.bg5 { background:#f5fffb; }
 
 .serif    { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
 .latin { font-style:italic; }
@@ -127,7 +127,7 @@ p.affil-link { text-align:center; margin-top:4em; }
                     display: none; }
 .dropdown:hover ul {display:block;}
 .dropdown ul li { border:1px solid #aaeecc; padding:2px; margin:0px;
-                    background-color:#ddffee; list-style:none; }
+                    background-color:#eefff8; list-style:none; }
 /* end hack */
 
 * html .dropdown { position: relative; top: auto; left: auto; z-index: auto; display: block }
