@@ -215,43 +215,12 @@ foreach my $sp (@species) {
   info ("Using Ensembl species $sp");
   info ("Version from ini file is $version_ini");
 
-  my $SPECIES_ROOT = $SERVERROOT ."/htdocs/$sp/";
-  check_dir($SPECIES_ROOT);
-
   if ($updates{generic_species_homepage} ) { # KEEP!
     generic_species_homepage($SERVERROOT, $common_name, $sp, $chrs);
   }
   if ($updates{SSI} ) {
     SSI($SERVERROOT, $common_name, $sp, $chrs);
   }
- #  if ($updates{homepage_current_version} ) {
-#     homepage_current_version($SERVERROOT, $version_ini, $sp);
-#   }
-#   if ($updates{whatsnew} ) {
-#     whatsnew($SERVERROOT, $version_ini, $sp, $common_name);
-#   }
-#   if ($updates{branch_versions} ) { # PROBABLY KEEP
-#     branch_versions($SPECIES_ROOT, $version_ini, $common_name, $sp);
-#   }
-#   if ($updates{versions} ) {
-#     versions($SPECIES_ROOT."whatsnew/", $common_name, $sp, $version_ini);
-#   }
-
-#   if ($updates{SSIsearch} ) {
-#     SSIsearch($SERVERROOT, $sp, $chrs, @search);
-#   }
-#   if ($updates{create_links} ) {
-#     create_links($SPECIES_ROOT."homepage_SSI/", $common_name, $sp);
-#   }
-#   if ($updates{create_affili} ) {
-#     create_affili($SPECIES_ROOT."/homepage_SSI/", $common_name, $sp);
-#   }
-#   if ($updates{stats_index} ) {
-#     stats_index($SPECIES_ROOT."/stats/", $common_name, $sp, $version_ini);
-#   }
-#   if ($updates{htdocs_nav} ) {
-#     htdocs_nav($SERVERROOT, $sp);
-#   }
 }
 
 my $release = utils::Tool::get_config({species => "Multi", values => "ENSEMBL_FTP_BASEDIR"});
@@ -290,22 +259,13 @@ exit;
      ( new_species        => [ qw(generic_species_homepage downloads
 				  SSI species_table
 				 )],
-
-      new_species_oldsite        => [ qw(stats_index generic_species_homepage 
-				 create_links create_affili 
-                                 homepage_current_version  
-				 species_table SSIsearch  SSIhelp downloads)],
-      new_mirror_species => [ qw( generic_species_homepage create_affili 
-                                  homepage_current_version
-		       	          species_table SSIsearch  ) ],
       new_release        => [ qw( versions homepage_current_version whatsnew 
                                   branch_versions archived_sites assembly_table
                                   SSIdata_homepage) ],
       new_mirror_release => [ qw (homepage_current_version ) ],
       new_archive_site   => [ qw (create_links create_affili SSIsearch 
 				 htdocs_nav SSIhelp SSIdata_homepage
-                                 downloads create_homepage_affili
-                                 homepage_ensembl_start
+                                 downloads homepage_ensembl_start
                                  homepage_current_version) ],
       "archive.org"      => [ qw( archived_sites assembly_table) ],
      );
@@ -414,7 +374,7 @@ sub species_table {
       print $fh "</dd>";
   }
   print $fh qq(
-   </ul>
+   </dl>
 
 );
 
@@ -439,6 +399,10 @@ sub generic_species_homepage {
     &check_dir($dir);
   }
   my $file = $dir ."/index.html";
+  if (-e $file) {
+    info (1, "File $file already exists");
+    return;
+  }
   open (my $fh, ">$file") or die "Cannot create $file: $!";
 
   # check for chromosomes
@@ -505,10 +469,11 @@ sub SSI {
     $dir .= "/public-plugins/ensembl/htdocs/$species/ssi";
     &check_dir($dir);
   }
-
   &SSIabout($dir, $common_name, $species);
+
   if ( (scalar @$chrs) > 0 ) {
     &SSIentry($dir, $species, $chrs);
+    &SSIkaryomap($dir, $species, $common_name);
   }
   else {
     &SSIexamples($dir);
@@ -521,7 +486,10 @@ sub SSI {
 sub SSIentry {
   my ($dir, $species, $chrs) = @_;
   my $file = $dir ."/entry.html";
+  
+  if (-e $file) {
 
+  }
   open (my $fh, ">$file") or die "Cannot create $file: $!";
   if ($chrs) {
     print $fh qq(
@@ -535,7 +503,6 @@ sub SSIentry {
 );
 
     foreach my $chr (@$chrs) {
-      warn $chr;
       print $fh qq(
     <option>$chr</option>
 );
@@ -629,6 +596,22 @@ sub SSIexamples {
     </li>
 </ul>
 );  
+  return;
+}
+#---------------------------------------------------------------------------
+
+sub SSIkaryomap {
+  my ($dir, $species, $common_name) = @_;
+  my $karyomap = $dir ."/karyomap.html";
+  return if -e $karyomap;
+  open (my $fh2, ">$karyomap") or die "Cannot create $karyomap: $!";
+  print $fh2 qq(
+<h3 class="boxed">Karyotype</h3>
+
+<p>Click on a chromosome for a closer view</p>
+
+<img src="/img/species/karyotype_$species.png" width="245" height="355" usemap="#karyotypes" alt="$common_name karyotype selector" />
+);
   return;
 }
 
