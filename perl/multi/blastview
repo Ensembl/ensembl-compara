@@ -36,7 +36,6 @@ use EnsEMBL::Web::BlastView::PanelStatus;
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::Document::Dynamic;
-use EnsEMBL::Web::Configuration::Static;
 use EnsEMBL::Web::Document::Panel;
 
 use EnsEMBL::Web::File::Image;
@@ -95,8 +94,6 @@ MAIN:{
   my $species = $ENV{'ENSEMBL_SPECIES'} =~ /^multi$/i ? $SPECIES_DEFS->ENSEMBL_PERL_SPECIES : $ENV{'ENSEMBL_SPECIES'};
   $page->menu->add_entry( 'help',  'href'=>"/$species/".$SPECIES_DEFS->ENSEMBL_SEARCH,  'text' => 'Full text search' );
   $page->menu->add_entry( 'help',  'href'=>"/Multi/martview",  'icon' => '/img/biomarticon.gif', 'text' => 'BioMart data mining' );
-  my $T = new EnsEMBL::Web::Configuration::Static($page);
-  $T->links();
 
   # Get BlastAdaptor object
   my $blast_adpt = &fetch_blast_adaptor( $page );
@@ -361,8 +358,6 @@ sub get_suspend_page{
   my $msg = shift;
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
   my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SPECIES_DEFS );
-  my $T = new EnsEMBL::Web::Configuration::Static($page);
-  $T->links();
   my $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 'caption' => 'Ensembl Web site message',
       content => "<p>Sorry, BlastView is unavailable at the moment due to essential maintenance work.</p><p>$msg</p><p>Normal service will be resumed shortly</p>"
@@ -1967,8 +1962,6 @@ sub populate_result_summary{
   my $alignments = shift;
 
   my $species   = $result->database_species;
-  my $assembly = $SPECIES_DEFS->get_config( $species, 
-                                            'ASSEMBLY_STATUS' );
 
   my( $run_id ) = $runnable->token =~ /([^\/]+)$/;
   my $result_id = $result->token;
