@@ -191,6 +191,7 @@ my $method_link_type = "BLASTZ_NET";
 my $max_gap_size = 50;
 my $matrix_file;
 my $show_matrix_to_be_used = 0;
+my $bin_size = 1000000;
 my $help = 0;
 my $check_length = 0;
 my $load_chains = 0;
@@ -223,6 +224,7 @@ $0
                               loading a compara database. **WARNING** can only be used with the other compulsory 
                               arguments
   [--max_gap_size integer]    default: 50
+  [--bin_size integer]        default: 1000000
   [start_net_index integer]   default: 0
   [--load_chains]             Load the chains instead of the nets. default: load the nets
 
@@ -239,6 +241,7 @@ GetOptions('help' => \$help,
 	   'reg_conf=s' => \$reg_conf,
            'start_net_index=i' => \$start_net_index,
            'max_gap_size=i' => \$max_gap_size,
+           'bin_size=i' => \$bin_size,
            'matrix=s' => \$matrix_file,
            'show_matrix' => \$show_matrix_to_be_used,
            'load_chains' => \$load_chains);
@@ -322,6 +325,7 @@ foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
 }
 # Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL
 $qdnafrags{"M"} = $qdnafrags{"MT"} if (defined $qdnafrags{"MT"});
+$qSpecies = "Self" if ($qSpecies eq $tSpecies);
 
 if ($check_length) {
   check_length(); # Check whether the length of the UCSC and the EnsEMBL chromosome match or not
@@ -336,7 +340,13 @@ if ($show_matrix_to_be_used) {
 
 # Create and save (if needed) the MethodLinkSpeciesSet
 my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-$mlss->species_set([$tgdb, $qgdb]);
+if ($tgdb->dbID == $qgdb->dbID) {
+  ## Self alignments
+  $mlss->species_set([$tgdb]);
+} else {
+  ## Pairwise alignments
+  $mlss->species_set([$tgdb, $qgdb]);
+}
 $mlss->method_link_type($method_link_type);
 $mlssa->store($mlss); # Sets the dbID if already exists, creates and sets the dbID if not!
 
@@ -363,20 +373,27 @@ if ($load_chains) {
   ## This is a hack to fetch chains as they were nets. The rest of the code
   ## uses this data as nets and the result is the loading of all the chains
   my $tables;
-  if (defined $tName) {
-    $tables = [$tName."_chain$qSpecies"];
-  } else {
-    $sql = "show tables like \"\%chain$qSpecies\"";
-    $tables = $ucsc_dbc->db_handle->selectcol_arrayref($sql);
-  }
-  foreach my $this_table (@$tables) {
-    $sql = "
-        SELECT
-          1, tName, tStart, tEnd, qName, qSize, qStart, qEnd, qStrand, id
-        FROM $this_table";
-    $sth = $ucsc_dbc->prepare($sql);
-    fetch_and_load_nets($sth);
-  }
+    if (defined $tName) {
+      $tables = [$tName."_chain$qSpecies"];
+    } else {
+      $sql = "show tables like \"\%chain$qSpecies\"";
+      $tables = $ucsc_dbc->db_handle->selectcol_arrayref($sql);
+    }
+    foreach my $this_table (@$tables) {
+      my $last_net_index = $net_index;
+      my $start_limit = 0;
+      do {
+        $last_net_index = $net_index;
+        $sql = "
+            SELECT
+              1, tName, tStart, tEnd, qName, qSize, qStart, qEnd, qStrand, id
+            FROM $this_table
+            LIMIT $start_limit, $bin_size";
+        $start_limit += $bin_size;
+        $sth = $ucsc_dbc->prepare($sql);
+        fetch_and_load_nets($sth);
+      } while ($net_index - $last_net_index == $bin_size);
+    }
   
 } else {
   if (defined $tName) {
@@ -459,9 +476,8 @@ sub fetch_and_load_nets {
   FETCH_NET: while( $sth->fetch() ) {
     $net_index++;
     next if ($net_index < $start_net_index); # $start_net_index is used to resume the script
-#     print STDERR "$net_index: $n_tName ($n_tStart-$n_tEnd) <=> $n_qName ($n_qStart-$n_qEnd)\n";
+#     print STDERR "$net_index: $n_tName ($n_tStart-$n_tEnd) <$n_qStrand> $n_qName ($n_qStart-$n_qEnd)\n";
 
-    $nb_of_net++;
     $n_qStrand = 1 if ($n_qStrand eq "+");
     $n_qStrand = -1 if ($n_qStrand eq "-");
     $n_tStart++;
@@ -488,19 +504,21 @@ sub fetch_and_load_nets {
 #       print STDERR "daf not stored because $tBinomial seqname ",$n_tName," not in dnafrag table\n";
       my $slice;
       if ($chromosome_specific_chain_tables) {
-        $slice = map_random_chromosome($tSpecies, $n_tName, ($n_tStart + 1), $n_tEnd);
+        $slice = map_random_chromosome($tSpecies, $n_tName, $n_tStart, $n_tEnd);
       }
       if (!defined($slice)) {
-        print STDERR "daf not stored because $tBinomial seqname ",$n_tName,
-            " not in dnafrag table\n";
+        print STDERR "$net_index (#$n_chainId): daf not stored because $tBinomial seqname ",
+            $n_tName, " (", $n_tStart, " - ", $n_tEnd, ") is not in dnafrag table (1)\n";
         next FETCH_NET;
       } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
-        print STDERR "daf not stored because $tBinomial seqname ",$n_tName, " (", $slice->seq_region_name,
-            ") not in dnafrag table\n";
+        print STDERR "$net_index (#$n_chainId): daf not stored because $tBinomial seqname ",
+            $n_tName, " (", $slice->seq_region_name, ") not in dnafrag table (2)\n";
         next FETCH_NET;
       }
       $t_needs_mapping = 1;
-      $tdnafrag = $tdnafrags{$n_tName};
+      $tdnafrag = $tdnafrags{$slice->seq_region_name};
+      $n_tStart = $slice->start; ## This is needed to restrict the chains properly
+      $n_tEnd = $slice->end; ## This is needed to restrict the chains properly
 #       print STDERR "MAPPING  $tBinomial seqname ",$n_tName, " on ", $slice->seq_region_name,
 #           "!!\n";
     } else {
@@ -521,15 +539,29 @@ sub fetch_and_load_nets {
 #             join(" -- ", @$seq_regions), "\n";
         foreach my $this_seq_region (@$seq_regions) {
           if (!defined $qdnafrags{$this_seq_region}) {
-            print STDERR "daf not stored because $qBinomial seqname ",$n_qName,
-                " maps on $this_seq_region and it is not in dnafrag table\n";
+            print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+                $n_qName, " maps on $this_seq_region and it is not in dnafrag table (3)\n";
             next FETCH_NET;
           }
         }
         $qdnafrag_length = $slice->length();
         $q_needs_mapping = 1;
+      } elsif ($chromosome_specific_chain_tables and $qSpecies eq "Self") {
+        $slice = map_random_chromosome($tSpecies, $n_qName, ($n_qStart + 1), $n_qEnd);
+        if (!defined($slice)) {
+          print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+              $n_qName, " (", ($n_qStart + 1), " - ", $n_qEnd, ") is not in dnafrag table (4)\n";
+          next FETCH_NET;
+        } elsif (!defined($qdnafrags{$slice->seq_region_name})) {
+          print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+              $n_qName, " (", $slice->seq_region_name, ") not in dnafrag table (5)\n";
+          next FETCH_NET;
+        }
+        $q_needs_mapping = 1;
+        $qdnafrag = $qdnafrags{$slice->seq_region_name};
       } else {
-        print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table\n";
+        print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+            $n_qName," not in dnafrag table (6)\n";
         next FETCH_NET;
       }
     } else {
@@ -591,7 +623,7 @@ sub fetch_and_load_nets {
         print STDERR "net_index is $net_index\n";
         exit 2;
       }
-      unless ($qdnafrag_length == $c_qSize) {
+      unless (!defined($qdnafrag_length) or $qdnafrag_length == $c_qSize) {
         print STDERR "qSize = $c_qSize for qName = $c_qName and Ensembl has dnafrag",
             " length of $qdnafrag_length\n";
         print STDERR "net_index is $net_index\n";
@@ -617,13 +649,21 @@ sub fetch_and_load_nets {
   
       if ($t_needs_mapping) {
         my $slice = map_random_chromosome($tSpecies, $c_tName, $cl_tStart, $cl_tEnd);
-        next FETCH_CHAIN if (!$slice);
+        if (!defined($slice)) {
+          print STDERR "$net_index (#$n_chainId): daf not stored because $tBinomial seqname ",
+              $c_tName, " (", ($cl_tStart), " - ", $cl_tEnd, ") is not in dnafrag table (7)\n";
+          next FETCH_CHAIN;
+        } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
+          print STDERR "$net_index (#$n_chainId): daf not stored because $tBinomial seqname ",
+              $c_tName, " (", $slice->seq_region_name, ") not in dnafrag table (8)\n";
+          next FETCH_CHAIN;
+        }
         $c_tName = $slice->seq_region_name;
         $cl_tStart = $slice->start;
         $cl_tEnd = $slice->end;
       }
-  
-      if ($q_needs_mapping) {
+
+      if ($q_needs_mapping and $qSpecies ne "Self") {
         my ($slice, $coords, $seq_regions) = map_non_toplevel_seqregion($qSpecies,
           $c_qName, $cl_qStart, $cl_qEnd, $c_qStrand);
         my %seq_regions;
@@ -632,7 +672,8 @@ sub fetch_and_load_nets {
           $seq_regions{$seq_region} = 1;
           $qdnafrag = $qdnafrags{$seq_region};
           if (!defined $qdnafrag) {
-            print STDERR "daf not stored because $qBinomial seqname ",$n_qName," not in dnafrag table, so not in core\n";
+            print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+                $n_qName," not in dnafrag table, so not in core (9)\n";
             next FETCH_CHAIN;
           }
         }
@@ -646,7 +687,8 @@ sub fetch_and_load_nets {
           } else {
             $complex++;
             ## Not supported at the moment!!!
-            print STDERR "daf not stored because $qBinomial seqname ",$n_qName," maps on several seq_regions.\n";
+            print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+                $n_qName," maps on several seq_regions. (10)\n";
             next FETCH_CHAIN;
           }
         }
@@ -668,6 +710,22 @@ sub fetch_and_load_nets {
           $start += $coord->length;
         }
       } else {
+        if ($q_needs_mapping and $qSpecies eq "Self") {
+          my $slice = map_random_chromosome($tSpecies, $c_qName, $cl_qStart, $cl_qEnd);
+          if (!defined($slice)) {
+            print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+                $c_qName, " (", ($c_qStart), " - ", $c_qEnd, ") is not in dnafrag table (11)\n";
+            next FETCH_CHAIN;
+          } elsif (!defined($tdnafrags{$slice->seq_region_name})) {
+            print STDERR "$net_index (#$n_chainId): daf not stored because $qBinomial seqname ",
+                $c_qName, " (", $slice->seq_region_name, ") not in dnafrag table (12)\n";
+            next FETCH_CHAIN;
+          }
+          $c_qName = $slice->seq_region_name;
+          $cl_qStart = $slice->start;
+          $cl_qEnd = $slice->end;
+        }
+
         $simple++;
         my $this_feature_pair = new  Bio::EnsEMBL::FeaturePair(
             -seqname  => $c_tName,
@@ -689,17 +747,21 @@ sub fetch_and_load_nets {
     my @new_dafs;
     while (my $daf = shift @$dna_align_features) {
       my $daf = $daf->restrict_between_positions($n_tStart,$n_tEnd,"SEQ");
-      next unless (defined $daf);
+      unless (defined $daf) {
+        print STDERR "DnaDnaAlignFeature lost during restriction...\n" if ($load_chains);
+        next;
+      }
       push @new_dafs, $daf;
     }
     next unless (scalar @new_dafs);
-#    print STDERR "Loading ",scalar @new_dafs,"...\n";
+#     print STDERR "Loading ",scalar @new_dafs,"...\n";
     
     foreach my $daf (@new_dafs) {
       save_daf_as_genomic_align_block($daf);
     }
-  
-    $nb_of_daf_loaded = $nb_of_daf_loaded + scalar @new_dafs;
+
+    $nb_of_net++;
+    $nb_of_daf_loaded += scalar @new_dafs;
   }
 }
 
@@ -835,7 +897,9 @@ sub map_random_chromosome {
     my $random_sth = $ucsc_dbc->prepare($random_sql);
     $random_sth->execute($end, $start - 1);
     my $all_data = $random_sth->fetchall_arrayref;
-    return undef if (scalar(@$all_data) != 1);
+    if (scalar(@$all_data) != 1) {
+      return undef;
+    }
 
     $chrom_start = $all_data->[0]->[1];
     $chrom_end = $all_data->[0]->[2];
@@ -844,6 +908,7 @@ sub map_random_chromosome {
     $frag_end = $all_data->[0]->[5];
     $frag_strand = $all_data->[0]->[6];
   } else {
+    print STDERR "ERROR 2\n";
     return undef;
   }
 
