@@ -38,10 +38,10 @@ a.red-button:visited, a.blue-button:visited { color:#fff; text-decoration:none; 
 
 /* Miscellaneous text styles */
 .bg1 { background:#fff; }
-.bg2 { background:[[BACKGROUND3]]; }
-.bg3 { background:[[BACKGROUND2]]; }
-.bg4 { background:[[BACKGROUND1]]; }
-.bg5 { background:[[BACKGROUND4]]; }
+.bg2 { background:[[BACKGROUND4]]; }
+.bg3 { background:[[BACKGROUND3]]; }
+.bg4 { background:[[BACKGROUND2]]; }
+.bg5 { background:[[BACKGROUND5]]; }
 
 .serif    { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
 .latin { font-style:italic; }

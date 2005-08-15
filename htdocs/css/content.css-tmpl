@@ -64,9 +64,9 @@ img.float-right { float:right; padding-left:10px; }
 
 /* JavaScript dropdown menus on images*/
                                                                                    
-table.ddmenu { border:1px solid [[BACKGROUND1]]; background-color: [[BACKGROUND3]]}
-.ddmain, td.ddmain { background-color: [[BACKGROUND3]]; font-size: 8pt; font-family: Arial, helvetica, verdana, sans-serif; color: #000; }
-td.ddmain a { background-color:[[BACKGROUND3]]; text-decoration:none; font-size:8pt; font-family: Arial, helvetica, verdana, sans-serif; color:[[LINK]]; }
+table.ddmenu { border:1px solid [[BACKGROUND1]]; background-color: [[BACKGROUND4]]}
+.ddmain, td.ddmain { background-color: [[BACKGROUND4]]; font-size: 8pt; font-family: Arial, helvetica, verdana, sans-serif; color: #000; }
+td.ddmain a { background-color:[[BACKGROUND4]]; text-decoration:none; font-size:8pt; font-family: Arial, helvetica, verdana, sans-serif; color:[[LINK]]; }
 .dddiv_button { background-color: [[BACKGROUND1]]; }
 .dddiv { position: absolute; top:0px; left:0px; z-index: 100; visibility: hidden; }
 
@@ -267,7 +267,7 @@ table.grid { border-collapse: collapse }
 table.bug td { border:solid 1px #666 }
 
 table.zoom { display: inline }
-table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-color:[[BACKGROUND4]]; font-weight: bold; }
+table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-color:[[BACKGROUND5]]; font-weight: bold; }
 table.zoom tr td { vertical-align: bottom }
 table.zoom tr td img { margin-top: 0px }
-
+.navbox { background-color: [[BACKGROUND5]] }

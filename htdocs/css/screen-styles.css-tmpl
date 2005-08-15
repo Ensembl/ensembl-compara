@@ -1,14 +1,14 @@
 body { color: #666; }
 body { background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; background-position: left; }
 #related, #search, #help, #release-t { display: block }
-#copy, #page { border: solid 0px #bbffe0; border-left-width: 190px; }
-#copy #a1, #page #i1 { border: solid 0px #aaeecc; border-left-width: 1px; }
+#copy, #page { border: solid 0px [[BACKGROUND2]]; border-left-width: 190px; }
+#copy #a1, #page #i1 { border: solid 0px [[BACKGROUND1]]; border-left-width: 1px; }
 #copy #a2, #page #i2 { border: solid 0px #ffffff; border-width: 0px 5px 0px 19px; border-left-width: 19px; }
 
 #release { width: 100%; top: 5em; margin: 1px 0px; text-align: left;
-           right: 0px; height:1.5em; background-color:#9bb9dd;
+           right: 0px; height:1.5em; background-color:[[RELEASE_BG]];
            padding:0.2em 0px 0.2em 0px; border-style:solid;
-           border-width:1px 0px 1px 0px; border-color:#3366bb;
+           border-width:1px 0px 1px 0px; border-color:[[RELEASE_EDGE]];
            z-index:20; left:0px; color:#fff; font-weight:bold; }
 
 #release div { padding-left: 0.5em; }
