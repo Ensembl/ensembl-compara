@@ -67,8 +67,13 @@ perl LoadUcscNetData.pl
                               loading a compara database. **WARNING** can only be used with the other
                               compulsory arguments
   [--max_gap_size integer]    default: 50
-  [start_net_index integer]   default: 0
+  [--start_net_index integer] default: 0
   [--load_chains]             Load the chains instead of the nets. default: load the nets
+  [--bin_size integer]        Used for loading chains in groups (this can save a lot of memory).
+                              default: 1000000
+  [--[no]filter_duplicate_alignments]
+                              UCSC self-chains are redundant. This option permits to filter out
+                              duplicated alignments. Default: filter duplicate alignments
 
 =head1 UCSC DATABASE TABLES
 
@@ -165,6 +170,53 @@ level of assembly may introduce some gaps within the contigs or even cut them.
 Mapping an alignment on two different req_regions (if the alignment end up broken in two pieces because of
 the new assembly) is not allowed at the moment. The alignment is skipped and a warning message is displayed.
 
+=head1 THINGS YOU HAVE TO DO BEFORE USING THIS SCRIPT
+
+=head2 Setting up the databases
+
+You have to set up a UCSC database and an EnsEMBL Compara database. Please read and
+follow the instructions in the accompanying README file for downloading the relevant files and creating the
+UCSC database. The EnsEMBL Compara Database can be created using the ~ensembl-compara/sql/table.sql file. You
+will have to fill in the meta, taxon, genome_db and dnafrag tables.
+
+=head2 Configure the Registry
+
+Obviously, you have to tell the Registry system where are these databases and how to access them. You will
+also need to set up an alias for the query species such as it matches the name used by UCSC. This script
+expects this alias as the qSpecies name as it needs it in order to know the table names.
+
+=head1 EXAMPLES
+
+=head2 Loading Human-mouse UCSC nets:
+
+  perl -w LoadUcscNetData.pl
+    --ucsc_dbname ucsc_human_mouse
+    --dbname jh7_compara_blastz_Hg17Mm5
+    --qSpecies Mm5
+    --tSpecies hg17
+    --method_link_type BLASTZ_NET
+
+=head2 Loading Human-mouse UCSC chains:
+
+  perl -w LoadUcscNetData.pl
+    --ucsc_dbname ucsc_human_mouse
+    --dbname jh7_compara_blastz_Hg17Mm5
+    --qSpecies Mm5
+    --tSpecies hg17
+    --method_link_type BLASTZ_CHAIN
+    --load_chains
+
+=head2 Loading Human UCSC self-chains:
+
+  perl -w LoadUcscNetData.pl
+    --ucsc_dbname ucsc_human_self
+    --dbname jh7_compara_blastz_Hg17Self
+    --qSpecies hg17
+    --tSpecies hg17
+    --method_link_type BLASTZ_CHAIN
+    --load_chains
+    --bin_size 1000000
+
 =head1 INTERNAL METHODS
 
 =cut
@@ -195,6 +247,7 @@ my $bin_size = 1000000;
 my $help = 0;
 my $check_length = 0;
 my $load_chains = 0;
+my $filter_duplicate_alignments = 1;
 
 my $usage = "
 $0
@@ -224,26 +277,31 @@ $0
                               loading a compara database. **WARNING** can only be used with the other compulsory 
                               arguments
   [--max_gap_size integer]    default: 50
-  [--bin_size integer]        default: 1000000
-  [start_net_index integer]   default: 0
+  [--start_net_index integer] default: 0
   [--load_chains]             Load the chains instead of the nets. default: load the nets
+  [--bin_size integer]        Used for loading chains in groups (this can save a lot of memory).
+                              default: 1000000
+  [--[no]filter_duplicate_alignments]
+                              UCSC self-chains are redundant. This option permits to filter out
+                              duplicated alignments. Default: filter duplicate alignments
 
 \n";
 
 GetOptions('help' => \$help,
            'ucsc_dbname=s' => \$ucsc_dbname,
-	   'dbname=s' => \$dbname,
+           'dbname=s' => \$dbname,
            'method_link_type=s' => \$method_link_type,
            'tSpecies=s' => \$tSpecies,
            'tName=s' => \$tName,
            'qSpecies=s' => \$qSpecies,
            'check_length' => \$check_length,
-	   'reg_conf=s' => \$reg_conf,
+           'reg_conf=s' => \$reg_conf,
            'start_net_index=i' => \$start_net_index,
            'max_gap_size=i' => \$max_gap_size,
            'bin_size=i' => \$bin_size,
            'matrix=s' => \$matrix_file,
            'show_matrix' => \$show_matrix_to_be_used,
+           'filter_duplicate_alignments!' => \$filter_duplicate_alignments,
            'load_chains' => \$load_chains);
 
 $| = 1;
@@ -316,16 +374,23 @@ foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($tgdb)}) {
 $tdnafrags{"M"} = $tdnafrags{"MT"} if (defined $tdnafrags{"MT"});
 
 # cache all qSpecies dnafrag from compara
-my $qBinomial = get_binomial_name($qSpecies);
-my $qTaxon_id = get_taxon_id($qSpecies);
-my $qgdb = $gdba->fetch_by_name_assembly($qBinomial) or die " Can't get fetch_by_name_assembly($qBinomial)\n";
-my %qdnafrags;
-foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
-  $qdnafrags{$df->name} = $df;
+my ($qBinomial, $qTaxon_id, $qgdb, %qdnafrags);
+if ($qSpecies eq $tSpecies) {
+  $qSpecies = "Self";
+  $qBinomial = $tBinomial;
+  $qTaxon_id = $tTaxon_id;
+  $qgdb = $tgdb;
+  %qdnafrags = %tdnafrags;
+} else {
+  $qBinomial = get_binomial_name($qSpecies);
+  $qTaxon_id = get_taxon_id($qSpecies);
+  $qgdb = $gdba->fetch_by_name_assembly($qBinomial) or die " Can't get fetch_by_name_assembly($qBinomial)\n";
+  foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
+    $qdnafrags{$df->name} = $df;
+  }
+  # Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL
+  $qdnafrags{"M"} = $qdnafrags{"MT"} if (defined $qdnafrags{"MT"});
 }
-# Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL
-$qdnafrags{"M"} = $qdnafrags{"MT"} if (defined $qdnafrags{"MT"});
-$qSpecies = "Self" if ($qSpecies eq $tSpecies);
 
 if ($check_length) {
   check_length(); # Check whether the length of the UCSC and the EnsEMBL chromosome match or not
@@ -613,7 +678,7 @@ sub fetch_and_load_nets {
         \$c_tName,\$c_tSize,\$c_tStart,\$c_tEnd,
         \$c_qName,\$c_qSize,\$c_qStrand,\$c_qStart,\$c_qEnd,
         \$cl_tStart,\$cl_tEnd,\$cl_qStart,\$cl_qEnd);
-  
+
     my $all_feature_pairs;
     FETCH_CHAIN: while( $sth2->fetch() ) {
       # Checking the chromosome length from UCSC with Ensembl.
@@ -757,11 +822,9 @@ sub fetch_and_load_nets {
 #     print STDERR "Loading ",scalar @new_dafs,"...\n";
     
     foreach my $daf (@new_dafs) {
-      save_daf_as_genomic_align_block($daf);
+      $nb_of_daf_loaded += save_daf_as_genomic_align_block($daf);
     }
-
     $nb_of_net++;
-    $nb_of_daf_loaded += scalar @new_dafs;
   }
 }
 
@@ -1072,7 +1135,7 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
   Arg[1]     : Bio::EnsEMBL::DnaDnaAlignFeature $daf
   Example    : save_daf_as_genomic_align_block($daf)
   Description: 
-  Returntype : -none-
+  Returntype : int (1 if loaded, 0 otherwise)
 
 =cut
 
@@ -1100,6 +1163,20 @@ sub save_daf_as_genomic_align_block {
   $qga->cigar_line($qcigar_line);
   $qga->level_id($daf->level_id);
 
+  # Self-chains. Every chain appears twice (except palindromic sequences) in UCSC...
+  if ($tga->dnafrag->genome_db->dbID == $qga->dnafrag->genome_db->dbID) {
+    ## Skip this alignment if 
+    if ($filter_duplicate_alignments and
+        (
+          ## ... first DnaFragID > second DnaFragID
+          ($tga->dnafrag->dbID > $qga->dnafrag->dbID) or
+          ## ... same DnaFrag and first block appears after the second one
+          ($tga->dnafrag->dbID == $qga->dnafrag->dbID and $tga->dnafrag_start > $qga->dnafrag_start)
+        )) {
+      return 0;
+    }
+  }
+
   # Create the GenomicAlignBlock
   my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
   $gab->method_link_species_set($mlss);
@@ -1120,6 +1197,8 @@ sub save_daf_as_genomic_align_block {
 
   $gaba->store($gab); # This stores the Bio::EnsEMBL::Compara::GenomicAlign objects
   $gaga->store($gag);
+
+  return 1;
 }
 
 =head2 parse_daf_cigar_line
