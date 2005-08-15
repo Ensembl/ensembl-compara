@@ -9,22 +9,18 @@ sub new {
   return shift->SUPER::new(
     'blocks'      => {},
     'block_order' => [],
-    'site_name'   => '??????' 
+    'site_name'   => '??????' ,
+    'logos'       => [],
   );
 }
 
 sub site_name          :lvalue { $_[0]{'site_name'}; }
 sub archive            :lvalue { $_[0]{'archive'}; }
-sub inst_logo          :lvalue { $_[0]{'inst_logo'}; }
-sub inst_logo_href     :lvalue { $_[0]{'inst_logo_href'}; }
-sub inst_logo_alt      :lvalue { $_[0]{'inst_logo_alt'}; }
-sub inst_logo_width    :lvalue { $_[0]{'inst_logo_width'}; }
-sub inst_logo_height   :lvalue { $_[0]{'inst_logo_height'}; }
-sub collab_logo        :lvalue { $_[0]{'collab_logo'}; }
-sub collab_logo_href   :lvalue { $_[0]{'collab_logo_href'}; }
-sub collab_logo_alt    :lvalue { $_[0]{'collab_logo_alt'}; }
-sub collab_logo_width  :lvalue { $_[0]{'collab_logo_width'}; }
-sub collab_logo_height :lvalue { $_[0]{'collab_logo_height'}; }
+
+sub push_logo {
+  my( $self, %conf ) = @_;
+  push @{$self->{'logos'}}, \%conf;
+}
 
 sub add_block {
   my( $self, $code, $type, $caption, %options ) = @_;
@@ -79,22 +75,12 @@ sub render {
   }
 
   # get appropriate affiliation logos from ini
-  if( $self->inst_logo || $self->collab_logo ) {
+  if( @{$self->{'logos'}} ) {
     $self->print( qq(\n<h2 style="padding:4px; margin-top: 2em">\n));
-    if( $self->inst_logo ) {
+    foreach my $logo ( @{$self->{'logos'}}) {
       $self->printf(
         qq(<a href="%s"><img style="padding-left:15px" src="%s" width="%s" height="%s" alt="%s" title="%s" /></a>),
-        $self->inst_logo_href,  $self->inst_logo,
-        $self->inst_logo_width, $self->inst_logo_height,
-        $self->inst_logo_alt,   $self->inst_logo_alt
-      );
-    }
-    if( $self->collab_logo ) {
-       $self->printf(
-         qq(<a href="%s"><img style="padding-left:15px" src="%s" width="%s" height="%s" alt="%s" title="%s" /></a>),
-         $self->collab_logo_href,  $self->collab_logo,
-         $self->collab_logo_width, $self->collab_logo_height,
-         $self->collab_logo_alt,   $self->collab_logo_alt
+        map { $logo->{$_}||'' } qw(href src width height alt alt)
       );
     }
     $self->print('</h2>');
