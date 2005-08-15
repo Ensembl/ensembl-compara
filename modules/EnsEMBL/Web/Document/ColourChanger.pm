@@ -18,10 +18,8 @@ sub change_ddmenu_colours {
   my $species_defs = shift;
   my $colours = $species_defs->ENSEMBL_STYLE;
   my $img_directory = $species_defs->ENSEMBL_SERVERROOT.'/htdocs/img';
-  my $C1 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND1'} );
-  my $C2 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND2'} );
-  my $C3 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND1'} );
-  my $C4 = join '', map { chr($_) } hex2rgb( $colours->{'BACKGROUND3'} );
+  my %colours = qw(170 BACKGROUND1 187 BACKGROUND2 204 BACKGROUND3 221 BACKGROUND4 238 BACKGROUND5);
+  my $replace = {map { $_ => join( '', map { chr($_) } hex2rgb( $colours->{$colours{$_}} ) ) } keys %colours};
   if( opendir DH, "$img_directory/templates" ) {
     while( my $file = readdir DH ) {
       next if $file =~ /zoom\d\.gif/;
@@ -36,15 +34,8 @@ sub change_ddmenu_colours {
       foreach my $N ( 1..$colourcount ) {
         my $index = $N*3+10;
         my $COL = ord(substr($X,$index,1));
-        if( $COL == 170 ) {
-          substr($X,$index,3) = $C1;
-        } elsif( $COL == 221 ) {
-          substr($X,$index,3) = $C2;
-        } elsif( $COL == 238 ) {
-          substr($X,$index,3) = $C4;
-        } elsif( $COL == 204 ) { 
-          substr($X,$index,3) = $C3;
-        }
+        my $NEWCOL = $replace->{$COL};
+        substr($X,$index,3) = $NEWCOL if $NEWCOL;
       }
       my $dir = $file =~ /^y/ ? 'dd_menus/' : '';
       if( open O, ">$img_directory/$dir$file" ) {
@@ -69,7 +60,7 @@ sub change_zoom_colours {
   my $img_directory = $species_defs->ENSEMBL_SERVERROOT.'/htdocs/img';
   my @C = hex2rgb( $colours->{'HEADING'} );
   my @O = hex2rgb( $colours->{'SPECIESNAME'} );
-  my @B = hex2rgb( $colours->{'BACKGROUND4'} );
+  my @B = hex2rgb( $colours->{'BACKGROUND5'} );
   foreach my $i (1..8) {
     $/=undef;
     open I, "$img_directory/templates/zoom$i.gif" || next;
@@ -120,15 +111,20 @@ sub change_CSS_colours {
   foreach (keys %colours) {
     $colours{$_} =~ s/^([0-9A-F]{6})$/#$1/i;
   }
+  warn $species_defs->ENSEMBL_SERVERROOT;
   my $css_directory = $species_defs->ENSEMBL_SERVERROOT.'/htdocs/css';
   if( opendir DH, $css_directory ) {
     while ( my $file = readdir DH ) {
-      if( $file =~ /^(.*)-tmpl/ ) {
+      if( $file =~ /^(.*)-tmpl$/ ) {
         open I, "$css_directory/$file" || next;
+        warn "READING $css_directory/$file";
         if( open O, ">$css_directory/$1" ) {
+          warn "WRITING $css_directory/$1";
           local( $/ ) = undef;
           my $T = <I>;
+          warn "< ",substr( $T,-100,100);
           $T =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
+          warn "> ",substr( $T,-100,100);
           print O $T;
           close O;
         }
