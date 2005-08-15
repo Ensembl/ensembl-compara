@@ -96,11 +96,28 @@ $VERSION=32;
 # directory that contains htdocs, modules, perl, ensembl, etc
 # DO NOT LEAVE A TRAILING '/' ON ENSEMBL_SERVERROOT
 ##########################################################################
-($ENSEMBL_SERVERROOT = __FILE__ ) =~ s/[\\\/]+conf[\\\/]+SiteDefs.pm$//;
+use File::Spec;
 
+my( $volume, $dir, $file ) = File::Spec->splitpath( __FILE__ );
+my @dir = File::Spec->splitdir( $dir );
+my @clean_directory = ();
+my $current_directory   = File::Spec->curdir();
+my $parent_directory    = File::Spec->updir();
+foreach( @dir ) {
+  next if $_ eq $current_directory; ## If we have a "." in the path ignore
+  if( $_ eq $parent_directory ) {
+    pop @clean_directory;           ## If we have a ".." in the path remove the parent directory
+  } else {
+    push @clean_directory, $_;      ## Otherwise add it!
+  }
+}
+while( pop @clean_directory ne 'conf') { 1; }     ## Remove up to the last "conf" directory...
+
+$ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_directory ) );
+
+warn "$ENSEMBL_SERVERROOT";
 ## Define Plugin directories....
-(my $plugin_file = __FILE__) =~s/SiteDefs/Plugins/;
-eval "require '$plugin_file'";
+eval qq(require '$ENSEMBL_SERVERROOT/conf/Plugins.pm');
 error( "Error requiring plugin file:\n$@" ) if $@;
 
 $ENSEMBL_SERVER         = Sys::Hostname::hostname();  # Local machine name
@@ -300,7 +317,7 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
 # You should not change anything below here
 ###############################################################################
 
-my @T = reverse @{$ENSEMBL_PLUGINS||[]}; ## These have to go on in reverse order...
+@T = reverse @{$ENSEMBL_PLUGINS||[]}; ## These have to go on in reverse order...
 $ENSEMBL_PLUGIN_ROOTS = ();
 while( my( $dir, $name ) = splice(@T,0,2)  ) {
   unshift @ENSEMBL_PERL_DIRS,   $dir.'/perl'; 
@@ -309,7 +326,7 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
   push    @ENSEMBL_CONF_DIRS,   $dir.'/conf'; 
 }
 
-my @T = @{$ENSEMBL_PLUGINS||[]};         ## But these have to go on in normal order...
+@T = @{$ENSEMBL_PLUGINS||[]};         ## But these have to go on in normal order...
 while( my( $name, $dir ) = splice(@T,0,2)  ) {
   unshift @ENSEMBL_LIB_DIRS,    $dir.'/modules';
 }
