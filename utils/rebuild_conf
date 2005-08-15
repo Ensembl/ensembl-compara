@@ -1,11 +1,17 @@
 #!/usr/local/bin/perl
 
-BEGIN {
-  (my $ensembl_root=$0) =~ s#/rebuild_conf.*##;
-  $ensembl_root = $ensembl_root eq '.' ? '..' : '.' unless $ensembl_root =~ s#/[^/]*$##;
-  my @paths = qw( conf modules ensembl/modules ensembl-external/modules ensembl-compara/modules ensembl-variation/modules);
-  foreach( @paths ) { unshift @INC, "$ensembl_root/$_"; }
-};
+use FindBin qw($Bin);
+use File::Basename qw(dirname);
+use strict;
+use warnings;
+
+BEGIN{
+  warn dirname( $Bin );
+  unshift @INC, "$Bin/../conf";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+}
 
 use EnsEMBL::Web::SpeciesDefs;
 
