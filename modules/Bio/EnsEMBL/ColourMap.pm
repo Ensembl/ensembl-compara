@@ -11,9 +11,9 @@ sub new {
 
   my %new_colourmap = qw(
     BACKGROUND1 background0
-    BACKGROUND4 background1
-    BACKGROUND3 background2
-    BACKGROUND2 background3
+    BACKGROUND3 background3
+    BACKGROUND4 background2
+    BACKGROUND5 background1
     CONTIGBLUE1 contigblue1
     CONTIGBLUE2 contigblue2
     HIGHLIGHT1  highlight1
