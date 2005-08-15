@@ -10,6 +10,13 @@ use POSIX qw(floor ceil);
 our $failed_modules;
 
 use Text::Wrap;
+sub new {
+  my $class = shift;
+  my $self  = {};
+  bless $self,$class;
+  return $class;
+}
+
 sub _format_error {
   my $self = shift;
   $Text::Wrap::columns = 120;
