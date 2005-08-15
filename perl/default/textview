@@ -8,7 +8,6 @@ use constant MULTI_PER_PAGE  => 20;
 use constant MAXDOCS_SINGLE  => 1000;
 
 use EnsEMBL::Web::Document::Dynamic;
-use EnsEMBL::Web::Configuration::Static;
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::SpeciesDefs;
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
@@ -30,13 +29,6 @@ my $document = new EnsEMBL::Web::Document::Dynamic( $rend,undef, $SD);
 CGI::header;
 
 $document->_initialize_HTML();
-$document->menu->add_block( 'help' , 'bulleted', 'Searching' );
-if ($SD->ENSEMBL_SITETYPE ne 'Archive EnsEMBL') {
-  $document->menu->add_entry( 'help',  'href'=>"/$ENV{'ENSEMBL_SPECIES'}/blastview", 'text' => 'Sequence search' );
-}
-my $species = $ENV{'ENSEMBL_SPECIES'} =~ /^multi$/i ? $SD->ENSEMBL_PERL_SPECIES : $ENV{'ENSEMBL_SPECIES'};
-$document->menu->add_entry( 'help',  'href'=>"/$species/".$SD->ENSEMBL_SEARCH,  'text' => 'Full text search' );
-$document->menu->add_entry( 'help',  'href'=>"/Multi/martview",  'icon' => '/img/biomarticon.gif', 'text' => 'BioMart data mining' );
 
 my( $parameters, $idx_hash, $idx_list, $idx_list2 ) = munge_parameters( $q );
 
@@ -67,8 +59,6 @@ my $panel = new EnsEMBL::Web::Document::Panel(
   'content' => $content
 );
 $document->content->add_panel($panel);
-my $T = new EnsEMBL::Web::Configuration::Static($document);
-$T->links();
 $document->render();
 
 ############# Functions #############
