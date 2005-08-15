@@ -153,11 +153,14 @@ UCSC database cannot cope with non-chromosomic sequence. The pieces of sequence 
 appear in the fake chromosomes called chr1_random, chr2_random, etc. In order to map those alignments into
 the EnsEMBL seq_regions, this script uses the assembly data, map the alignments on the right clones and
 from them to the corresponding EnsEMBL toplevel seq_region. This process is expected to be quite simple as
-no gaps should appear in the alignment because of the mapping.
+no gaps should appear in the alignment because of the mapping. Nevertheless it is possible to find an
+alignment spanning a gap between two contigs corresponding to the same clone. In this case, the mapping
+is a bit more complex but it is still possible.
 
-This feature is only available for genomes with chromosome specific tables!
+This feature is only available for genomes with chromosome specific tables and you need to have the relevant
+UCSC tables in your database (see below)!
 
-As no examples of a clone on the reverse strand has been found to date, mapping these alignments if they
+As no examples of a clone on the reverse strand have been found to date, mapping these alignments if they
 fall into a clone on the reverse strand of the random chromosome is not supported at the moment.
 
 =head2 Mapping on EnsEMBL extra assemblies
@@ -956,22 +959,51 @@ sub map_random_chromosome {
   if ($seq_region_name =~ /_random$/) {
     ## Get mapping information from goldenpath table
     my $random_sql = "SELECT chrom, chromStart, chromEnd, frag, fragStart, fragEnd, strand".
-    " FROM chr${seq_region_name}_gold where chromStart <= ? and chromEnd >= ?";
+    " FROM chr${seq_region_name}_gold where chromStart <= ? and chromEnd >= ? ORDER BY chromStart";
     my $random_sth = $ucsc_dbc->prepare($random_sql);
     $random_sth->execute($end, $start - 1);
     my $all_data = $random_sth->fetchall_arrayref;
     if (scalar(@$all_data) != 1) {
-      return undef;
+      ## This may happen if a chain span a gap in the assembly. We try to rescue the alignment
+      ## if the gap corresponds to a gap in the clone sequence.
+      my $data = shift(@$all_data);
+      $chrom_start = $data->[1];
+      $chrom_end = $data->[2];
+      $frag_name = $data->[3];
+      $frag_start = $data->[4];
+      $frag_end = $data->[5];
+      $frag_strand = $data->[6];
+      foreach my $data (@$all_data) {
+        my $this_chrom_start = $data->[1];
+        my $this_chrom_end = $data->[2];
+        my $this_frag_name = $data->[3];
+        my $this_frag_start = $data->[4];
+        my $this_frag_end = $data->[5];
+        my $this_frag_strand = $data->[6];
+        if ($frag_name ne $this_frag_name) {
+          return undef;
+        }
+        if ($frag_strand ne $this_frag_strand) {
+          return undef;
+        }
+        if ($chrom_start < $this_chrom_start
+            and $frag_start < $this_frag_start
+            and $chrom_end < $this_chrom_end
+            and $frag_end < $this_frag_end) {
+          $chrom_end = $this_chrom_end;
+          $frag_end = $this_frag_end;
+        }
+      }
+    } else {
+      $chrom_start = $all_data->[0]->[1];
+      $chrom_end = $all_data->[0]->[2];
+      $frag_name = $all_data->[0]->[3];
+      $frag_start = $all_data->[0]->[4];
+      $frag_end = $all_data->[0]->[5];
+      $frag_strand = $all_data->[0]->[6];
     }
 
-    $chrom_start = $all_data->[0]->[1];
-    $chrom_end = $all_data->[0]->[2];
-    $frag_name = $all_data->[0]->[3];
-    $frag_start = $all_data->[0]->[4];
-    $frag_end = $all_data->[0]->[5];
-    $frag_strand = $all_data->[0]->[6];
   } else {
-    print STDERR "ERROR 2\n";
     return undef;
   }
 
@@ -988,8 +1020,9 @@ sub map_random_chromosome {
   my $slice = $slice_adaptor->fetch_by_region(undef, $frag_name, $slice_start, $slice_end);
   if (!defined($slice)) {
     ## Fake slice. Used to give a more useful warning message!
+    print STDERR "Cannot find the slice!\n";
     $slice = new Bio::EnsEMBL::Slice(
-          -seq_region_name => $frag_name,
+          -seq_region_name => "--".$frag_name,
           -start => $frag_start,
           -end => $frag_end,
           -strand => ($frag_strand eq "+")?1:-1,
@@ -1000,6 +1033,30 @@ sub map_random_chromosome {
 
   my $projections = $slice->project("toplevel");
   if (@$projections != 1) {
+    ## This may happen if a chain span a gap in the assembly. We try to rescue the alignment
+    ## if the gap corresponds to a gap in the clone sequence.
+    my $gapped_seq_region_name;
+    my $gapped_start;
+    my $gapped_end;
+    my $gapped_strand;
+    foreach my $this_projection (@$projections) {
+      if (!defined($gapped_seq_region_name)) {
+        $gapped_seq_region_name = $this_projection->to_Slice->seq_region_name;
+        $gapped_start = $this_projection->to_Slice->start;
+        $gapped_end = $this_projection->to_Slice->end;
+        $gapped_strand = $this_projection->to_Slice->strand;
+      } elsif ($gapped_seq_region_name ne $this_projection->to_Slice->seq_region_name
+          or $gapped_strand != $this_projection->to_Slice->strand) {
+        return $slice;
+      } else {
+        $gapped_start = $this_projection->to_Slice->start
+            if ($gapped_start > $this_projection->to_Slice->start);
+        $gapped_end = $this_projection->to_Slice->end
+            if ($gapped_end < $this_projection->to_Slice->end);
+      }
+    }
+    $slice = $slice_adaptor->fetch_by_region(undef,
+        $gapped_seq_region_name, $gapped_start, $gapped_end);
     return $slice;
   }
 
