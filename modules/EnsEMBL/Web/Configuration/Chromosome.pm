@@ -155,7 +155,7 @@ sub context_menu {
 
   # create synteny form if relevant
   my %hash  = $obj->species_defs->multi('SYNTENY');
-  my @SPECIES = grep { $obj->species_defs->other_species( $_, 'ASSEMBLY_STATUS' ) eq 'FULL' } keys( %hash );
+  my @SPECIES = grep { @{ $obj->species_defs->other_species( $_, 'ENSEMBL_CHROMOSOMES' )||[]} } keys( %hash );
   
   if( $chr_name ) {
     $self->{page}->menu->add_entry( $flag, 'text' => "View @{[$obj->seq_region_type_and_name]}",

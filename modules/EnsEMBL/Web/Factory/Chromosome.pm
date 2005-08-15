@@ -52,7 +52,7 @@ sub createObjects {
 
 sub is_golden {
     my $self = shift ;
-    unless ($self->species_defs->ASSEMBLY_STATUS eq 'FULL'){
+    unless( @{ $self->species_defs->ENSEMBL_CHROMOSOMES || [] } ){
         $self->problem( 'non_fatal', 'No "Golden Path" assembly', "We do not yet have a full assembly for $@{[$self->species]}, and there is therefore no chromosomal display available." );
         return 0;
     }

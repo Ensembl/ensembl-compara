@@ -28,8 +28,8 @@ use Digest::MD5 ;
 =cut
 
 sub is_golden_path {
-	my $self = shift;
-	$self->species_defs->ASSEMBLY_STATUS eq 'FULL' ? 1 : 0;
+  my $self = shift;
+  @{ $self->species_defs->ENSEMBL_CHROMOSOMES || [] } ? 1 : 0;
 }
 
 #----------------------

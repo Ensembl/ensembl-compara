@@ -50,7 +50,7 @@ sub multi_ideogram {
   my @species = $object->species_list();
 ## Start the box containing the image
   $panel->printf(
-    qq(<div style="width: %dpx; border: solid 1px %s" class="autocenter bg5">),
+    qq(<div style="width: %dpx; border: solid 1px %s" class="autocenter navbox">),
     $object->param('image_width'), $panel->option( 'red_edge' ) ? 'red' : 'black'  
   );
   foreach my $loc ( $object->Locations ) {
@@ -96,7 +96,7 @@ sub multi_ideogram {
 sub multi_top {
   my( $panel, $object ) = @_;
   my $counter = 0;
-  $panel->printf( qq(<div style="width: %dpx; border: solid 1px %s" class="autocenter bg5">),
+  $panel->printf( qq(<div style="width: %dpx; border: solid 1px %s" class="autocenter navbox">),
                   $object->param('image_width'), $panel->option( 'red_edge' ) ? 'red' : 'black'  );
   my @species = $object->species_list();
   foreach my $loc ( $object->Locations ) {
@@ -524,7 +524,7 @@ sub nav_box_frame {
   my( $content, $width ) = @_;
   return sprintf
 qq(
-<div style="width: %dpx; border: solid 1px black; border-width: 1px 1px 0px 1px; padding: 0px;" class="bg5 print_hide_block autocenter"><div style="padding: 2px; margin: 0px;">
+<div style="width: %dpx; border: solid 1px black; border-width: 1px 1px 0px 1px; padding: 0px;" class="navbox print_hide_block autocenter"><div style="padding: 2px; margin: 0px;">
   $content
 </div></div>
  ), $width-2;

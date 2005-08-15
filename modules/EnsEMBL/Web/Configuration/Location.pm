@@ -71,7 +71,7 @@ sub context_menu {
       'options' => \@options, 'title' => "MultiContigView - side by side view of genomic sequence"
     );
   }
-  if( $obj->species_defs->other_species($species, 'ASSEMBLY_STATUS' ) eq 'FULL' ) {
+  if( @{ $obj->species_defs->other_species($species, 'ENSEMBL_CHROMOSOMES' ) || [] } ) {
     my %species = ( $obj->species_defs->multi('SYNTENY',$species) );
     my @options = ();
     foreach( sort keys %species ) {
@@ -79,8 +79,7 @@ sub context_menu {
       push @options, {
         'text' => "... with <em>$HR</em>", 'raw'=>1,
         'href' => sprintf( "/%s/syntenyview?otherspecies=%s;chr=%s;loc=%s", $species, $_, $obj->seq_region_name, $obj->centrepoint )
-
-      } if $obj->species_defs->other_species($_,'ASSEMBLY_STATUS') eq 'FULL';
+      } if @{ $obj->species_defs->other_species($_, 'ENSEMBL_CHROMOSOMES' ) || [] };
     }
     if( @options ) {
       $menu->add_entry( $flag, 'text' => 'View Syntenic regions ...',
