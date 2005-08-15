@@ -743,7 +743,9 @@ sub ADD_ALL_DNA_FEATURES {
                              ,@_ );
   $self->add_new_track_cdna( 'Exonerate_cDNA', 'Ciona cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'Btaurus_Exonerate_cDNA',   'Cow cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'Cow_cDNAs',   'Cow cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'chicken_cdna', 'G.gallus cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'macaque_cdna', 'Macaque cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'fugu_cdnas', 'F.rubripes cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'mouse_cdna', 'Mouse cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'other_cdna', 'Other cDNAs',   $POS++, @_ );
@@ -778,10 +780,12 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'cbriggsae_est', 'C. elegans ESTs', $POS++, @_ );
   $self->add_new_track_est( 'scerevisiae_est', 'S. cerevisiae ESTs', $POS++, @_ );
   $self->add_new_track_est( 'chicken_est',  'G.gallus ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'macaque_est',  'Macaque ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'mouse_est',    'Mouse ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'zfish_est',    'D.rerio ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Btaurus_Exonerate_EST',    'B.taurus ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'Cow_ESTs',    'B.taurus ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Exonerate_EST_083',    'Ciona ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'xlaevis_EST', 'X.laevis ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'xtrop_cluster','X.trop EST clust', 
@@ -855,6 +859,8 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'human_refseq',        'Human RefSeqs', $POS++, @_ );
   $self->add_new_track_protein( 'dog_protein',         'Dog proteins', $POS++, @_ );
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'Cow_Proteins',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'macaque_protein',     'Macaque proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_protein',       'Mouse proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_refseq',        'Mouse RefSeqs', $POS++, @_ );
   $self->add_new_track_protein( 'rodent_protein',      'Rodent proteins',$POS++, @_ );
