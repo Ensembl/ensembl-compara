@@ -129,7 +129,7 @@ sub search_SNP {
   $self->{'results'}{'SNP'} = [ $self->{_results}, $self->{_result_count} ];
 }
 
-sub search_GENOMICALIGNMENTS {
+sub search_GENOMICALIGNMENT {
   my $self = shift;
   $self->_fetch_results(
     [
@@ -159,7 +159,7 @@ sub search_GENOMICALIGNMENTS {
       'subtype' => "$_->[0] $_->[2] alignment feature",
       'ID'      => $_->[1],
       'URL'     => "/@{[$self->species]}/featureview?type=$_->[2]AlignFeature;db=$_->[3];id=$_->[1]",
-      'desc'    => 'This $_->[2] alignment feature hits the genome in $_[4] place(s).',
+      'desc'    => "This $_->[2] alignment feature hits the genome in $_->[4] place(s).",
       'species' => $self->species
     };
   }
