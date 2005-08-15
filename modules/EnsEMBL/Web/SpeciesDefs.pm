@@ -1106,7 +1106,9 @@ sub bread_crumb_creator {
           $nav   ||= $content =~ /<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"navigation"\s*\/?>/ism;
 #          warn ">>> $dir -> $nav";
           if( !$nav && $dir =~ /\/(\w+)\/$/ ) {
-            $nav = join ' ', map ucfirst( $_ ), split /_/, $1;
+            #$nav = join ' ', map ucfirst( $_ ), split /_/, $1;
+	    warn $1;
+            $nav = join ' ', split /_/, $1;
           }
           my($title) = $content =~ /<title>([^<]+)<\/title>/ism;
           if( $nav ) {
