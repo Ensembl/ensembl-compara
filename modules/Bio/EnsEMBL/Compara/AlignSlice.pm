@@ -402,14 +402,23 @@ sub get_SimpleAlign {
   $simple_align = Bio::SimpleAlign->new();
   $simple_align->id("ProjectedMultiAlign");
 
+  my $genome_db_name_counter;
   foreach my $slice (@{$self->get_all_Slices}) {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
             -END    => $slice->end,
-            -ID     => $slice->genome_db->name,
+            -ID     => $slice->genome_db->name.($genome_db_name_counter->{$slice->genome_db->name} or ""),
             -STRAND => $slice->strand
         );
+    ## This allows to have several sequences for the same species. Bio::SimpleAlign complains
+    ## about having the same ID, START and END for two sequences...
+    if (!defined($genome_db_name_counter->{$slice->genome_db->name})) {
+      $genome_db_name_counter->{$slice->genome_db->name} = 2;
+    } else {
+      $genome_db_name_counter->{$slice->genome_db->name}++;
+    }
+
     $simple_align->add_seq($seq);
   }
 
@@ -447,7 +456,6 @@ sub _create_underlying_Slices {
 
   my $sorted_genomic_align_blocks = _sort_GenomicAlignBlocks($genomic_align_blocks);
   @$sorted_genomic_align_blocks = reverse(@$sorted_genomic_align_blocks) if ($strand == -1);
-
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
     $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions(
         $self->reference_Slice->start, $self->reference_Slice->end);
@@ -540,17 +548,17 @@ sub _create_underlying_Slices {
   }
 
   foreach my $species (@{$self->{_method_link_species_set}->species_set}) {
-    $self->{slices}->{$species->name} = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+    $self->{slices}->{$species->name} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
             -length => $align_slice_length,
             -requesting_slice => $self->reference_Slice,
             -method_link_species_set => $self->{_method_link_species_set},
             -genome_db => $species,
             -expanded => $expanded,
-        );
+        )];
   }
   my $ref_species =
       $self->reference_Slice->adaptor->db->get_MetaContainer->get_Species->binomial;
-  $self->{slices}->{$ref_species}->add_Slice_Mapper_pair(
+  $self->{slices}->{$ref_species}->[0]->add_Slice_Mapper_pair(
           $self->reference_Slice,
           $big_mapper,
           1,
@@ -560,7 +568,7 @@ sub _create_underlying_Slices {
 
   my $slice_adaptors;
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
-    foreach my $this_genomic_align
+    GENOMIC_ALIGN: foreach my $this_genomic_align
             (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
       my $species = $this_genomic_align->dnafrag->genome_db->name;
       throw ("This species [$species] is not included in the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
@@ -577,32 +585,53 @@ sub _create_underlying_Slices {
               $this_genomic_align->dnafrag_strand
           );
 
-      if ($expanded) {
-        $self->{slices}->{$species}->add_Slice_Mapper_pair(
+      my $this_block_start = $this_genomic_align->genomic_align_block->reference_slice_start;
+      my $this_block_end = $this_genomic_align->genomic_align_block->reference_slice_end;
+        SLICE: foreach my $slice (@{$self->{slices}->{$species}}) {
+          my $slice_mapper_pairs = $slice->get_all_Slice_Mapper_pairs();
+          PAIRS: foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
+            my $block_start = $slice_mapper_pair->{start};
+            my $block_end = $slice_mapper_pair->{end};
+            if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
+              next SLICE; ## This block overlaps a previous block
+            }
+          }
+          $slice->add_Slice_Mapper_pair(
+                  $this_slice,
+                  $this_genomic_align->get_Mapper(0, !$expanded),
+                  $this_genomic_align->genomic_align_block->reference_slice_start,
+                  $this_genomic_align->genomic_align_block->reference_slice_end,
+                  $this_genomic_align->dnafrag_strand
+              );
+          next GENOMIC_ALIGN;
+
+        }
+        ## This block overlaps at least one block in every available slice. Create a new one!
+print STDERR "\n\nCREATING NEW SLICE!!!\n";
+        my $new_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+                -length => $align_slice_length,
+                -requesting_slice => $self->reference_Slice,
+                -method_link_species_set => $self->{_method_link_species_set},
+                -genome_db => $this_genomic_align->dnafrag->genome_db,
+                -expanded => $expanded,
+            );
+        $new_slice->add_Slice_Mapper_pair(
                 $this_slice,
-                $this_genomic_align->get_Mapper,
+                $this_genomic_align->get_Mapper(0, !$expanded),
                 $this_genomic_align->genomic_align_block->reference_slice_start,
                 $this_genomic_align->genomic_align_block->reference_slice_end,
                 $this_genomic_align->dnafrag_strand
             );
-      } else {
-        $self->{slices}->{$species}->add_Slice_Mapper_pair(
-                $this_slice,
-                $this_genomic_align->get_Mapper(0,1),
-                $this_genomic_align->genomic_align_block->reference_slice_start,
-                $this_genomic_align->genomic_align_block->reference_slice_end,
-                $this_genomic_align->dnafrag_strand
-            );
-      }
+        push(@{$self->{slices}->{$species}}, $new_slice);
       
 
     }
   }
 
-  $self->{_slices} = [$self->{slices}->{$ref_species}];
+  $self->{_slices} = [@{$self->{slices}->{$ref_species}}];
   foreach my $species (@{$self->{_method_link_species_set}->species_set}) {
     next if ($species->name eq $ref_species);
-    push(@{$self->{_slices}}, $self->{slices}->{$species->name});
+    push(@{$self->{_slices}}, @{$self->{slices}->{$species->name}});
   }
 #   undef($self->{slices});
 
@@ -618,7 +647,7 @@ sub _create_underlying_Slices {
                 Bio::EnsEMBL::Compara::GenomicAlignBlock objects in order
   Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
   Exceptions  : 
-  Caller      : $object->methodname
+  Caller      : methodname()
 
 =cut
 
