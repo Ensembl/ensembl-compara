@@ -1126,12 +1126,12 @@ sub subseq {
           $this_original_end = $length - $this_original_start;
           $this_original_start = $length - $aux;
         }
-        if ($this_original_start < $slice_end and $this_original_end > $slice_start) {
+        if ($this_original_start <= $slice_end and $this_original_end >= $slice_start) {
           ## This is a gap
           my $start_position_of_gap_seq = $this_pos;
           my $end_position_of_gap_seq = $this_pos + $sequence_coord->length;
-          if ($start_position_of_gap_seq < $slice_start - 1) {
-            $start_position_of_gap_seq = $slice_start - 1;
+          if ($start_position_of_gap_seq < $slice_start) {
+            $start_position_of_gap_seq = $slice_start;
           }
           if ($end_position_of_gap_seq > $slice_end + 1) {
             $end_position_of_gap_seq = $slice_end + 1;
