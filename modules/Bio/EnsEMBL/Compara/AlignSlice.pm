@@ -607,7 +607,6 @@ sub _create_underlying_Slices {
 
         }
         ## This block overlaps at least one block in every available slice. Create a new one!
-print STDERR "\n\nCREATING NEW SLICE!!!\n";
         my $new_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
                 -length => $align_slice_length,
                 -requesting_slice => $self->reference_Slice,
