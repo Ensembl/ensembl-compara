@@ -105,7 +105,7 @@ kbd.line { display:block; margin-left:20px; }
 #related form { padding-left:10px; }
 #related ul { padding-left: 0px; margin-left: 2.5em; border: 0px }
 #related li {   padding-top:4px; }
-#related li.bullet {   list-style: disc url([[DEFAULT_BULLET]]); }
+#related li.bullet {   list-style: disc url([[DEFAULT_ICON]]); }
 #related a {    font-weight:bold; text-decoration:none; }
 
 /* Hide complex stuff from IE5 for Mac with a backslashed comment  \*/

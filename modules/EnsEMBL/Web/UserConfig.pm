@@ -916,6 +916,7 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene',      $POS++, @_ );
   $self->add_new_track_transcript( 'refseq',    'Refseq proteins', 'refseq_gene',    $POS++, @_ );
 #trancripts for Vega
+  $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
   $self->add_new_track_transcript('vega_havana', 'Havana trans.', 'vega_gene', $POS++,
 								  'author'=>'Havana', 'glyph' => 'vega_transcript', 
 								  'available'=>'features LITE_TRANSCRIPT_HAVANA', @_);
@@ -1003,6 +1004,10 @@ sub ADD_GENE_TRACKS {
     'gene_label'           => sub { return $_[0]->stable_id },
     'gene_col'             => sub { return $_[0]->type eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
     'logic_name'           => 'gsten hox cyt', @_
+  );
+  $self->add_new_track_gene( 'Cow_proteins', 'Cow proteins', 'cow_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'cow_protein' 
   );
   $self->add_new_track_gene( 'ncrna', 'ncRNA Genes', 'rna_gene', $POS++,
                              'gene_col' => sub { return $_[0]->type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );

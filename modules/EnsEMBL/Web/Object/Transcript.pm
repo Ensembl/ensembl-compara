@@ -44,6 +44,7 @@ sub default_track_by_gene {
     homology_medium  homology_low_transcript
     homology_high    homology_low_transcript
     beeprotein       homology_low_transcript
+    cow_proteins     cow_proteins_transcript
   );
 
   return $mappings_db{ lc( $db ) } ||
