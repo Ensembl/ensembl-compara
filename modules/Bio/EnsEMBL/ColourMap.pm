@@ -38,6 +38,11 @@ sub new {
     '_'          => [ 'black',  'novel' ],
     '_PSEUDO'    => [ 'grey50', 'pseudogene' ],
   );
+  $self->colourSet( 'cow_protein',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'cow_protein' => [ 'blue', 'Cow protein' ]
+  );
   $self->colourSet( 'ensembl_gene',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
