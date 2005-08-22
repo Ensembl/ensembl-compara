@@ -19,10 +19,8 @@ sub new {
     HIGHLIGHT1  highlight1
     HIGHLIGHT2  highlight2
   );
-  warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> COLOURMAP <<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
   while(my($k,$v) = each %{$species_defs->ENSEMBL_STYLE||{}} ) {
     my $k2 = $new_colourmap{ $k };
-    warn "$k - $k2 - $v";
     $self->{$k2} = $v if $k2;
   }
 
