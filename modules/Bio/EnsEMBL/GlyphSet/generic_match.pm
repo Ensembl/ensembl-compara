@@ -97,6 +97,7 @@ sub zmenu {
      $extra_URL .= ";id=$id";
      $extra_URL .= ";db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
   push @zmenus, 'View all hits',  $extra_URL;
+  push @zmenus, '<pre id="pfetch"></pre>', 'pfetch:'.$id;
   return {@zmenus};
 }
 1;
