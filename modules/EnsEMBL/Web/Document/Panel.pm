@@ -130,9 +130,12 @@ sub add_components {
 }
 
 sub replace_component {
-  my( $self, $code, $function ) = @_;
-  return $self->add_component_last( $code, $function ) unless exists $self->{'components'}{$code};
-  $self->{'components'}{$code}, $function;
+  my( $self, $code, $function, $flag ) = @_;
+  if( $self->{'components'}{$code} ) {
+    $self->{'components'}{$code} = [$function ];
+  } elsif( $flag ne 'no' ) {
+    $self->add_component_last( $code, $function );
+  }
 }
 
 sub prepend_to_component {
