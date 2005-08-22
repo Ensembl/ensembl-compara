@@ -472,7 +472,7 @@ sub getEnsemblMapping {
     my $smap ='unknown';
 
 
-    if ($base =~ /Chromosome|Clone|Contig/) {
+    if ($base =~ /Chromosome|Clone|Contig|Scaffold/) {
 	$smap = 'ensembl_location';
     } elsif ($base eq 'Gene_ID') {
 	if ($realm eq 'Ensembl') {
@@ -495,6 +495,7 @@ sub getEnsemblMapping {
     }
 
     $species or $species = '.+';
+#    warn "B:$cs#".join('*', $realm, $base, $species)."#$smap";
     return wantarray ? ($smap, $species) : $smap;
 }
 
@@ -572,7 +573,7 @@ sub getSourceData {
 	my ($smap, $species);
 	foreach my $cs (@{$dassource->{coordinateSystem}}) {
 	    ($smap, $species) = $self->getEnsemblMapping($cs);
-	    push (@{$dasconf->{mapping}}, $smap) if ($smap ne 'unknown');
+	    push (@{$dasconf->{mapping}}, $smap) if ($smap ne 'unknown' && (! grep {$_ eq $smap} @{$dasconf->{mapping}}));
 	}
 	$dasconf->{name} = $dassource->{nickname};
 	$dasconf->{type} = scalar(@{$dasconf->{mapping}}) > 1 ? 'mixed' : $smap;

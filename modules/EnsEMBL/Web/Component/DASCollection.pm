@@ -237,7 +237,7 @@ sub das_wizard {
 # All parameters are set in &display_wizaard_status of Configuration/DASCollection.pm
 # Hence here we just go straight to the last stage of the wizard
         $step = 3;
-    $source_conf{sourcetype} = 'das_server';
+	$source_conf{sourcetype} = 'das_server';
     }
     if (! defined($step)) {
         $step = $object->param('DASWizardStep');
@@ -262,10 +262,12 @@ sub das_wizard {
     $source_conf{user_source} ||= $object->param("DASuser_source");
     @{$source_conf{enable}} = $object->param("DASenable");
 
-    if (my $scount = scalar(@{$source_conf{registry_selection}} = $object->param("DASregistry") || ())) {
-    my $dreg = $object->getRegistrySources();
-    my %das_list = ();
-    my ($prot, $url, $dsn, $dname);
+    @{$source_conf{registry_selection}} = $object->param("DASregistry") ? $object->param("DASregistry") : ();
+
+    if (my $scount = scalar(@{$source_conf{registry_selection}})) {
+	my $dreg = $object->getRegistrySources();
+	my %das_list = ();
+	my ($prot, $url, $dsn, $dname);
     foreach my $src (@{$source_conf{registry_selection}}) {
         my $dassource = $dreg->{$src};
         $dname = $dassource->{nickname};
@@ -303,7 +305,7 @@ sub das_wizard {
 
     my @cparams = qw ( db gene transcript peptide conf_script c w h bottom);
     foreach my $param (@cparams) {
-      warn "$param  ----------- ",$object->param($param);
+#      warn "$param  ----------- ",$object->param($param);
       if( defined(my $v = $object->param($param)) ) {
         $form->add_element('type'=>'Hidden', 'name' => $param, 'value' => $v );
       }
@@ -313,9 +315,9 @@ sub das_wizard {
     my $fname = "das_wizard_".$step;
 
     if (defined (my $error = &{$fname}($form, \%source_conf, $object, \$step))) {
-    $step --;
-    $fname = "das_wizard_".$step;
-    &{$fname}($form, \%source_conf, $object, \$step, $error);
+	$step --;
+	$fname = "das_wizard_".$step;
+	&{$fname}($form, \%source_conf, $object, \$step, $error);
     }
 
     &wizardTopPanel($form, $step, $source_conf{sourcetype});
@@ -623,15 +625,15 @@ sub das_wizard_3 {
     my $option;
 
     if ($das_conf->{scount} && $das_conf->{scount} > 1) {
-    $option = $das_conf->{name};
-    $form->add_element('type'=>'Information', 'label'=>'Name:', 'value'=> $option);
-    $option = $das_conf->{label} || $option;
-    $form->add_element('type'=>'Information', 'label'=>'Track label:', 'value'=> $option);
+	$option = $das_conf->{name};
+	$form->add_element('type'=>'Information', 'label'=>'Name:', 'value'=> $option);
+	$option = $das_conf->{label} || $option;
+	$form->add_element('type'=>'Information', 'label'=>'Track label:', 'value'=> $option);
     } else {
-    $option = $das_conf->{name} || $das_conf->{user_source} || $das_conf->{dsn};
-    $form->add_element('type'=>'String', 'name'=>'DASname', 'label'=>'Name:', 'value'=> $option);
-    $option = $das_conf->{label} || $option;
-    $form->add_element('type'=>'String', 'name'=>'DASlabel', 'label'=>'Track label:', 'value'=> $option);
+	$option = $das_conf->{name} || $das_conf->{user_source} || $das_conf->{dsn};
+	$form->add_element('type'=>'String', 'name'=>'DASname', 'label'=>'Name:', 'value'=> $option);
+	$option = $das_conf->{label} || $option;
+	$form->add_element('type'=>'String', 'name'=>'DASlabel', 'label'=>'Track label:', 'value'=> $option);
     }
 
     $option = $das_conf->{help} || '';
@@ -739,9 +741,9 @@ sub add_das_registry {
   my ($form, $source_conf, $object) = @_;
   my %selected_sources = ();
   if (defined($source_conf->{registry_selection})) {
-    foreach (@{$source_conf->{registry_selection}}) {
-      $selected_sources{$_} = 1;
-    }
+      foreach (@{$source_conf->{registry_selection}}) {
+	  $selected_sources{$_} = 1;
+      }
   }
 
   my $rurl = $object->species_defs->DAS_REGISTRY_URL;

@@ -88,13 +88,12 @@ sub get_DASSeqFeatures_by_source_name{
 
 sub getEnsemblMapping {
     my ($self, $cs) = @_;
-#    my ($realm, $base, $species) = split(/\,/, $cs);
 
     my ($realm, $base, $species) = ($cs->{name}, $cs->{category}, $cs->{organismName});
     my $smap ='unknown';
 
 
-    if ($base =~ /Chromosome|Clone|Contig/) {
+    if ($base =~ /Chromosome|Clone|Contig|Scaffold/) {
 	$smap = 'ensembl_location';
     } elsif ($base eq 'Gene_ID') {
 	if ($realm eq 'Ensembl') {
