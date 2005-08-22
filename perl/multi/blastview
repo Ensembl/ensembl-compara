@@ -82,6 +82,10 @@ MAIN:{
   # Create a new CGI object
   # TODO: Use EnsEMBL::Web::Input for CGI handling
   $CGI = CGI->new();
+  unless( $CGI->param ) {
+    my $tsp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PERL_SPECIES : $ENV{'ENSEMBL_SPECIES'};
+    $CGI->param( 'species', $tsp );
+  }
 
   # Create a new Page object
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
@@ -142,7 +146,7 @@ MAIN:{
 
   $BLAST = &create_blast( $blast_adpt ) unless $BLAST;
   $BLAST->verbose( $VERBOSE );
-
+  
   $CGI->param( 'ticket', $TICKET );
   $blast_adpt->ticket( $TICKET );
   use Apache;
