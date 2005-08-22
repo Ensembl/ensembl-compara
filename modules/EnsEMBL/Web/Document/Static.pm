@@ -15,6 +15,7 @@ sub _initialize {
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     meta       EnsEMBL::Web::Document::HTML::Meta
+    javascript EnsEMBL::Web::Document::HTML::Javascript
   );
 
   $self->add_body_elements qw(
