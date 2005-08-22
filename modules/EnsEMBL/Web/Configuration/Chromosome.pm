@@ -65,6 +65,7 @@ sub syntenyview {
     
     # finally, add the complete panel to the page object
     $self->add_panel( $panel1 );
+    $self->initialize_zmenu_javascript;
     $self->{page}->set_title('Synteny');
   }
 }
