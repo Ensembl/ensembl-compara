@@ -308,6 +308,7 @@ sub transHandler {
       next unless -r $filename;
       $r->filename( $filename );
       $r->uri( "/perl/$species/$script" );
+      $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
       warn sprintf( "SCRIPT:%-10d /%s/%s?%s\n", $$, $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8;
       return OK;
     }
