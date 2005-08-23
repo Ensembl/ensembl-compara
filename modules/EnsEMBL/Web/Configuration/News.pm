@@ -37,18 +37,26 @@ sub newsdbview {
         'code'    => "info$self->{flag}",
         'object'  => $self->{object}) 
     ) {
-        if ($self->{object}->param('preview')) { # previewing an edited article
+        if ($self->{object}->param('submit') eq 'Preview') {
             $panel->{'caption'} = 'News Preview';    
             $panel->add_components(qw(
-                edit_item     EnsEMBL::Web::Component::News::preview_item
+                preview_item     EnsEMBL::Web::Component::News::preview_item
             ));
+            $self->add_form( $panel, qw(preview_item     EnsEMBL::Web::Component::News::preview_item_form) );
         }
-        elsif ($self->{object}->param('edit')) { # have selected an article to edit
+        elsif ($self->{object}->param('submit') eq 'Edit') {
             $panel->{'caption'} = 'Edit this article';    
             $panel->add_components(qw(
                 edit_item     EnsEMBL::Web::Component::News::edit_item
             ));
             $self->add_form( $panel, qw(edit_item     EnsEMBL::Web::Component::News::edit_item_form) );
+        }
+        elsif ($self->{object}->param('submit') eq 'Add' || $self->{object}->param('action') eq 'add' ) { 
+            $panel->{'caption'} = 'Add a News article';    
+            $panel->add_components(qw(
+                add_item     EnsEMBL::Web::Component::News::add_item
+            ));
+            $self->add_form( $panel, qw(add_item     EnsEMBL::Web::Component::News::add_item_form) );
         }
         else {
             $panel->{'caption'} = 'Update the News Database';    

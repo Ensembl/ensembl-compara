@@ -10,40 +10,32 @@ use EnsEMBL::Web::Factory::News;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 
+
+#------------------- ACCESSOR FUNCTIONS -----------------------------
+
 sub items { return $_[0]->Obj->{'items'}; }
 sub releases   { return $_[0]->Obj->{'releases'};   }
-sub all_spp   { return $_[0]->Obj->{'all_spp'};   }
 sub all_cats   { return $_[0]->Obj->{'all_cats'};   }
+sub all_spp   { return $_[0]->Obj->{'all_spp'};   }
+sub valid_spp   { return $_[0]->Obj->{'valid_spp'};   }
 
-sub add_news_item {
+
+sub save_to_db {
     my $self = shift;
-    my @items = @{$self->items};
-    my $added = {
-        'release'       => $self->param('release'),
-        'title'         => $self->param('title'),
-        'content'       => $self->param('content'),
-        'news_cat_code' => $self->param('news_cat_code'),
-        'species_code'  => $self->param('species_code'),
-        'priority'      => $self->param('priority')
-    };
-    my $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->add_news_item($added);
+    my $itemref = $self->Obj->{'items'}[0];
+    my %item = %{$itemref};
+    my $result;
+
+    if ($item{'news_item_id'}) { # saving updates to an existing item
+warn "Updating database!";
+        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->update_news_item($itemref);
+    }
+    else { # inserting a new item into database
+warn "Inserting record into database!";
+        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->add_news_item($itemref);
+    }
     return $result;
 }
 
-sub update_news_item {
-    my $self = shift;
-    my @items = @{$self->items};
-    my $updated = {
-        'news_item_id'  => $self->param('news_item_id'),
-        'release'       => $self->param('release'),
-        'title'         => $self->param('title'),
-        'content'       => $self->param('content'),
-        'news_cat_code' => $self->param('news_cat_code'),
-        'species_code'  => $self->param('species_code'),
-        'priority'      => $self->param('priority')
-    };
-    my $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->update_news_item($updated);
-    return $result;
-}
 
 1;

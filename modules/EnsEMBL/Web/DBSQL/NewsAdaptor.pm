@@ -30,7 +30,7 @@ sub db {
 ############## QUERIES FOR NEWS_ITEM TABLE ################
 
 sub fetch_all_by_release {
-    my ($self, $release) = @_;
+    my ($self, $release_id) = @_;
     my $results = [];
 
     return [] unless $self->db;
@@ -39,8 +39,7 @@ sub fetch_all_by_release {
     my $sql = qq(
         SELECT
                 n.news_item_id   as news_item_id,
-                r.release_id     as release_id,
-                r.number         as release,
+                n.release_id     as release_id,
                 n.title          as title,
                 n.content        as content,
                 c.news_cat_id    as news_cat_id,
@@ -48,11 +47,9 @@ sub fetch_all_by_release {
                 n.priority       as priority
         FROM
                 news_item n,
-                news_cat c,
-                release r
+                news_cat c
         WHERE   n.news_cat_id = c.news_cat_id
-        AND     n.release_id = r.release_id
-        AND     r.number = $release
+        AND     n.release_id = $release_id
         GROUP BY news_item_id
     );
 
@@ -81,23 +78,18 @@ sub fetch_all_by_release {
         my $species = [];
         for (my $j=0; $j<scalar(@$X);$j++) {
             my @B = @{$X->[$j]};
-            push (@$species,
-                {
-                    'species_id'    => $B[0],
-                    'species_name'  => $B[1],
-                });
+            push (@$species, $B[0]);
         }
 
         push (@$results,
             {
                 'news_item_id'  => $A[0],
                 'release_id'    => $A[1],
-                'release'       => $A[2],
-                'title'         => $A[3],
-                'content'       => $A[4],
-                'news_cat_id'   => $A[5],
-                'news_cat_name' => $A[6],
-                'priority'      => $A[7],
+                'title'         => $A[2],
+                'content'       => $A[3],
+                'news_cat_id'   => $A[4],
+                'news_cat_name' => $A[5],
+                'priority'      => $A[6],
                 'species'       => $species
             });
     }
@@ -129,19 +121,14 @@ sub fetch_by_id {
     my $species = [];
     for (my $i=0; $i<scalar(@$T);$i++) {
         my @A = @{$T->[$i]};
-        push (@$species,
-            {
-                'species_id'    => $A[0],
-                'species_name'  => $A[1],
-            });
+        push (@$species, $A[0]);
     }
 
     # get item information
     $sql = qq(
         SELECT
                 n.news_item_id   as news_item_id,
-                r.release_id     as release_id,
-                r.number         as release,
+                n.release_id     as release_id,
                 n.title          as title,
                 n.content        as content,
                 c.news_cat_id    as news_cat_id,
@@ -149,10 +136,8 @@ sub fetch_by_id {
                 n.priority       as priority
         FROM
                 news_item n,
-                news_cat c,
-                release r
+                news_cat c
         WHERE   n.news_cat_id = c.news_cat_id
-        AND     n.release_id = r.release_id
         AND     n.news_item_id = $id
     );
  
@@ -165,12 +150,11 @@ sub fetch_by_id {
             {
                 'news_item_id'  => $A[0],
                 'release_id'    => $A[1],
-                'release'       => $A[2],
-                'title'         => $A[3],
-                'content'       => $A[4],
-                'news_cat_id'   => $A[5],
-                'news_cat_name' => $A[6],
-                'priority'      => $A[7],
+                'title'         => $A[2],
+                'content'       => $A[3],
+                'news_cat_id'   => $A[4],
+                'news_cat_name' => $A[5],
+                'priority'      => $A[6],
                 'species'       => $species
             });
     }
@@ -187,7 +171,7 @@ sub add_news_item {
     my $title           = $item{'title'};
     my $content         = $item{'content'};
     my $news_cat_id     = $item{'news_cat_id'};
-    my $species_id      = $item{'species_id'};
+    my $species         = $item{'species'};
     my $priority        = $item{'priority'};
 
     my $sql = qq(
@@ -199,19 +183,30 @@ sub add_news_item {
             title           = "$title",
             content         = "$content",
             news_cat_id     = "$news_cat_id",
-            species_id      = "$species_id",
             priority        = "$priority"
         );
     my $sth = $self->db->prepare($sql);
-#warn 'SQL: '.$sql;
     my $result = $sth->execute();
 
+    # get id for inserted record
+    $sql = "SELECT LAST_INSERT_ID()";
+    my $T = $self->db->selectall_arrayref($sql, {});
+    return [] unless $T;
+    my @A = @{$T->[0]}[0];
+    my $id = $A[0];
+
+    # don't forget species cross-referencing!
+    foreach my $sp (@$species) {
+        $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($id, $sp) ";
+        $sth = $self->db->prepare($sql);
+        $result = $sth->execute();
+    }
 }
 
 sub update_news_item {
     my ($self, $item_ref) = @_;
+    
     my %item = %{$item_ref};
-
     my $id              = $item{'news_item_id'};
     my $release_id      = $item{'release_id'};
     my $title           = $item{'title'};
@@ -219,7 +214,7 @@ sub update_news_item {
     $content =~ s/"/\\"/g;
     $content =~ s/'/\\'/g;
     my $news_cat_id     = $item{'news_cat_id'};
-    my $species_id      = $item{'species_id'};
+    my $species         = $item{'species'};
     my $priority        = $item{'priority'};
 
     my $sql = qq(
@@ -231,15 +226,23 @@ sub update_news_item {
             title           = "$title",
             content         = "$content",
             news_cat_id     = "$news_cat_id",
-            species_id      = "$species_id",
             priority        = "$priority"
         WHERE
             news_item_id = "$id"
         );
     my $sth = $self->db->prepare($sql);
-#warn 'SQL: '.$sql;
     my $result = $sth->execute();
 
+    # update species/article cross-referencing
+    $sql = qq(DELETE FROM item_species WHERE news_item_id = "$id");
+    $sth = $self->db->prepare($sql);
+    $result = $sth->execute();
+
+    foreach my $sp (@$species) {
+        $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($id, $sp) ";
+        $sth = $self->db->prepare($sql);
+        $result = $sth->execute();
+    }
 }
 
 ############## QUERIES FOR ADDITIONAL TABLES ################
@@ -277,35 +280,40 @@ sub fetch_release_list {
 }
 
 sub fetch_species_list {
-    my ($self, $release) = @_;
-    my $results = [];
+    my ($self, $release_id) = @_;
+    my $results = {};
 
-    return [] unless $self->db;
+    return {} unless $self->db;
 
-    my $sql = qq(
-        SELECT
+    my $sql;
+    if ($release_id) {
+        $sql = qq(
+            SELECT
                 s.species_id    as species_id,
                 s.name          as species_name
-        FROM
+            FROM
                 species s,
-                release r,
                 release_species x
-        WHERE   s.species_id = x.species_id
-        AND     r.release_id = x.release_id
-        AND     r.number = $release
-        ORDER BY species_name ASC
-    );
+            WHERE   s.species_id = x.species_id
+            AND     x.release_id = $release_id
+            ORDER BY species_name ASC
+        );
+    } else {
+        $sql = qq(
+            SELECT
+                s.species_id    as species_id,
+                s.name          as species_name
+            FROM
+                species s
+            ORDER BY species_name ASC
+        );
+    }
 
     my $T = $self->db->selectall_arrayref($sql);
-    return [] unless $T;
+    return {} unless $T;
     for (my $i=0; $i<scalar(@$T);$i++) {
         my @array = @{$T->[$i]};
-        push (@$results,
-            {
-            'species_id'        => $array[0],
-            'species_name'      => $array[1],
-            }
-        );
+        $$results{$array[0]} = $array[1];
     }
     return $results;
 }
