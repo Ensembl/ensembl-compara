@@ -18,10 +18,20 @@ my $webpage= new EnsEMBL::Web::Document::WebPage(
 if( $webpage->has_a_problem() ) {
   $webpage->render_error_page( $webpage->problem->[0] );
 } else {
-  foreach my $object( @{$webpage->dataObjects} ) {
-    $webpage->configure( $object, 'newsdbview', 'editor_menu');
+  my $object = $webpage->dataObjects->[0];
+  if ($object->param('submit') =~ /Save/) {
+    # do database save
+    $object->save_to_db;
+    # return to first page
+    my $URL = '/'.$object->species.'/newsdbview?action=saved';
+    $webpage->redirect( $URL );
   }
-  $webpage->render();
+  else {
+    foreach my $object( @{$webpage->dataObjects} ) {
+        $webpage->configure( $object, 'newsdbview', 'editor_menu');
+    }
+    $webpage->render();
+  }
 }
 
 
