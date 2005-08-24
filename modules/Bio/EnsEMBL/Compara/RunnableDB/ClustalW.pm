@@ -232,23 +232,24 @@ sub run_clustalw
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
-  my $clustalw_output =  $self->{'file_root'} . ".clw";
+  my $clustalw_output =  $self->{'file_root'} . ".aln";
   my $clustalw_log =  $self->{'file_root'} . ".log";
   
   if($self->{'calc_alignment'}) {
     if($self->{'mpi'} and not(-e $clustalw_output)) {
-      my $align_cmd = "bsub -o $clustalw_log -n32 -R\"type=LINUX86 span[ptile=2]\" -P ensembl-compara ";
-      $align_cmd .= $clustalw_executable . " " . $self->{'input_fasta'};
-      print("$align_cmd\n") if($self->debug);
-      unless(system($align_cmd) == 0) {
-        throw("error running clustalw, $!\n");
-      }
       #create parsing job
       my $outputHash = eval($self->input_id);
       $outputHash->{'outfile_prefix'} = $self->{'file_root'};
       my $output_id = $self->encode_hash($outputHash);  
-      $self->dataflow_output_id($output_id, 1, 'BLOCKED');      
-      
+      my ($job_url) = @{$self->dataflow_output_id($output_id, 1, 'BLOCKED')};
+      printf("created parse jobs: $job_url\n");
+
+      my $align_cmd = "bsub -o $clustalw_log -n32 -R\"type=LINUX86 span[ptile=2]\" -P ensembl-compara ";
+      $align_cmd .= $clustalw_executable . " " . $self->{'input_fasta'} . " ". $job_url;
+      print("$align_cmd\n") if($self->debug);
+      unless(system($align_cmd) == 0) {
+        throw("error running clustalw, $!\n");
+      }
     } else {
       my $align_cmd = $clustalw_executable;
       $align_cmd .= " -align -infile=" . $self->{'input_fasta'} . " -outfile=" . $clustalw_output;
@@ -262,7 +263,7 @@ sub run_clustalw
 
   if($self->{'calc_tree'}) {
     my $tree_cmd = $clustalw_executable;
-    $tree_cmd .= " -tree -infile=" . $self->{'file_root'} . ".clw";
+    $tree_cmd .= " -tree -infile=" . $self->{'file_root'} . ".aln";
     print("$tree_cmd\n") if($self->debug);
     $tree_cmd .= " 2>&1 > /dev/null" unless($self->debug);
     unless(system($tree_cmd) == 0) {
@@ -353,7 +354,7 @@ sub update_single_peptide_family
 sub parse_and_store_family 
 {
   my $self = shift;
-  my $clustalw_output =  $self->{'file_root'} . ".clw";
+  my $clustalw_output =  $self->{'file_root'} . ".aln";
   my $family = $self->{'family'};
     
   if($clustalw_output and -e $clustalw_output) {
@@ -452,7 +453,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   $self->{'file_root'} = $self->worker_temp_directory. "proteintree_". $tree->node_id;
   $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
 
-  my $clw_file = $self->{'file_root'} . ".clw";
+  my $clw_file = $self->{'file_root'} . ".aln";
   return $clw_file if(-e $clw_file);
   print("clw_file = '$clw_file'\n") if($self->debug);
 
@@ -475,7 +476,6 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   close OUTSEQ;
   
-  $self->{'input_clw'} = $clw_file;
   return $clw_file;
 }
 
@@ -499,12 +499,16 @@ sub parse_and_store_proteintree
 sub parse_alignment_into_proteintree
 {
   my $self = shift;
-  my $clustalw_output =  $self->{'file_root'} . ".clw";
+  my $clustalw_output =  $self->{'file_root'} . ".aln";
   my $tree = $self->{'protein_tree'};
   
-  return unless($tree and defined($clustalw_output) and (-e $clustalw_output));
- 
   print("parse_alignment_into_proteintree from $clustalw_output\n") if($self->debug);
+
+  unless($tree and defined($clustalw_output) and (-e $clustalw_output)) {
+    printf("Error! : file missing\n");
+    return;
+  }
+ 
   
   #
   # parse alignment file into hash: combine alignment lines
@@ -562,7 +566,12 @@ sub parse_newick_into_proteintree
   my $newick_file =  $self->{'newick_file'};
   my $tree = $self->{'protein_tree'};
   
-  return unless($tree and $newick_file and (-e $newick_file));
+  print("parse tree from newick_file $newick_file\n") if($self->debug);
+
+  unless($tree and $newick_file and (-e $newick_file)) {
+    printf("Error! : file missing\n");
+    return;
+  }
   
   #cleanup old tree structure- 
   #  flatten and reduce to only AlignedMember leaves
@@ -574,7 +583,6 @@ sub parse_newick_into_proteintree
 
   #parse newick into a new tree object structure
   my $newick = '';
-  print("parse tree from newick_file $newick_file\n") if($self->debug);
   open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
