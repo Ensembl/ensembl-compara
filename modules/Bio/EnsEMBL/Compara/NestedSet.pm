@@ -427,7 +427,6 @@ sub sorted_children {
 }
 
 
-
 sub get_all_subnodes {
   my $self = shift;
   my $node_hash = shift;
@@ -445,6 +444,7 @@ sub get_all_subnodes {
   return values(%$node_hash) if($toplevel);
   return undef;
 }
+
 
 sub get_child_count {
   my $self = shift;
@@ -617,9 +617,7 @@ sub newick_simple_format {
   
   if($self->parent) {
     $newick .= sprintf("\"%s\"", $self->name) if($self->is_leaf);
-    my $dist = $self->distance_to_parent;
-    $dist = 1 unless($dist);
-    $newick .= sprintf(":%1.4f", $dist);
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
   } else {
     $newick .= ";";
   }
@@ -639,7 +637,10 @@ sub equals {
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$other]")
         unless($other->isa('Bio::EnsEMBL::Compara::NestedSet'));
   return 1 if($self->node_id eq $other->node_id);
-  return 0;
+  foreach my $child (@{$self->children}) {
+    return 0 unless($other->has_child($child));
+  }
+  return 1;
 }
 
 sub has_child {
@@ -647,16 +648,10 @@ sub has_child {
   my $child = shift;
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
         unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
-  return 1 if($child->parent = $self);
-  return 0;
-}
-
-sub has_child_with_node_id {
-  my $self = shift;
-  my $node_id = shift;
   $self->load_children_if_needed;
-  return undef unless($self->{'_children_id_hash'});
-  return $self->{'_children_id_hash'}->{$node_id};
+  return 0 unless($self->{'_children_id_hash'});
+  return 1 if($self->{'_children_id_hash'}->{$child->node_id});
+  return 0;
 }
 
 sub is_member_of {
@@ -666,16 +661,12 @@ sub is_member_of {
   return 0; 
 }
 
-sub is_not_member_of {
-  my $A = shift;
-  my $B = shift;
-  return 0 if($B->has_child($A));
-  return 1; 
-}
-
 sub is_subset_of {
   my $A = shift;
   my $B = shift;
+  foreach my $child (@{$A->children}) {
+    return 0 unless($B->has_child($child));
+  }
   return 1; 
 }
 
@@ -775,10 +766,16 @@ sub minimize_tree {
     if($node->parent and 
        ($node->get_child_count() == 1)) 
     {
-      $node->parent->merge_children($node);
+      my $child = $node->children->[0];
+      $child->distance_to_parent($child->distance_to_parent + $node->distance_to_parent);
+      $node->parent->add_child($child);
       $node->disavow_parent;
     }
   }
+  if($self->get_child_count() == 1) {
+    return $self->children->[0];
+  } 
+  return $self;
 }
 
 
@@ -883,6 +880,69 @@ sub find_first_shared_ancestor {
 
   return $node if($self->has_ancestor($node));  
   return $self->find_first_shared_ancestor($node->parent);
+}
+
+##################################
+#
+# node tagging system
+#
+##################################
+
+=head2 add_tag
+
+  Description: adds metadata tags to a node.  Both tag and value are added as metdata with the
+               added ability to retreive the value given the tag (like a perl hash)
+  Arg [1]    : <string> tag
+  Arg [2]    : (optional)<string> value
+  Example    : $ns_node->add_tag('scientific name', 'Mammalia');
+               $ns_node->add_tag('mammals_rosette');
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub add_tag {
+  my $self = shift;
+  my $tag = shift;
+  my $value = shift;
+  
+  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+
+  if($value) { $self->{'_tags'}->{$value} = 1;}
+  else {$value=1;}
+  
+  $self->{'_tags'}->{$tag} = $value;
+}
+
+sub has_tag {
+  my $self = shift;
+  my $tag = shift;
+  my $value = shift;
+  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  return 1 if(defined($self->{'_tags'}->{$tag}));
+  return 0;
+}
+
+sub get_all_tags {
+  my $self = shift;
+  
+  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  return keys(%{$self->{'_tags'}});
+}
+
+sub get_all_tagged_values {
+  my $self = shift;
+  
+  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  return values(%{$self->{'_tags'}});
+}
+
+sub get_tag_hash {
+  my $self = shift;
+  
+  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  return $self->{'_tags'};
 }
 
 ##################################
