@@ -90,7 +90,7 @@ sub new_from_gene {
 
     $self->stable_id($gene->stable_id);
     $self->taxon_id($genome_db->taxon_id);
-    $self->description("NULL");
+    $self->description($gene->description);
     $self->genome_db_id($genome_db->dbID);
     $self->chr_name($gene->seq_region_name);
     $self->chr_start($gene->seq_region_start);
