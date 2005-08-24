@@ -59,7 +59,7 @@ GetOptions('help'             => \$help,
            'dump'             => \$self->{'dump'},           
            'align_format=s'   => \$self->{'align_format'},
            'scale=f'          => \$self->{'scale'},
-           'count'            => \$self->{'counts'},
+           'counts'           => \$self->{'counts'},
            'newick'           => \$self->{'print_newick'},
            'print'            => \$self->{'print_tree'},
            'list'             => \$self->{'print_leaves'},
@@ -87,8 +87,9 @@ if($self->{'tree_id'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $self->{'tree'} = $treeDBA->fetch_node_by_node_id($self->{'tree_id'});
 } 
-elsif ($self->{'gene_stable_id'}) {
+elsif ($self->{'gene_stable_id'} and $self->{'clusterset_id'}) {
   fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
+  $self->{'clusterset_id'} = undef;
 } 
 elsif ($self->{'newick_file'}) { 
   parse_newick($self); 
@@ -97,64 +98,84 @@ elsif ($self->{'newick_file'}) {
 if($self->{'parent'} and $self->{'tree'} and $self->{'tree'}->parent) {
   $self->{'tree'} = $self->{'tree'}->parent;
 }
-$self->{'tree'}->retain;
 
 # 
-# do stuff to it
+# do tree stuff to it
 #
-
-if($self->{'new_root_id'}) {
-  reroot($self);
-}
-
-if($self->{'print_tree'}) {
-  $self->{'tree'}->print_tree($self->{'scale'});
-  printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
-}
-
-if($self->{'print_leaves'}) {
-  my $leaves = $self->{'tree'}->get_all_leaves;
-  foreach my $leaf (@$leaves) {
-    my $gene = $leaf->gene_member;
-    my $desc = $gene->description;
-    $desc = "" unless($desc);
-    printf("%s : %s\n", $gene->stable_id, $desc);
-  }
-  printf("%d proteins\n", scalar(@$leaves));
-}
-
-if($self->{'print_newick'}) {
-  dumpTreeAsNewick($self);
-}
-
-if($self->{'counts'}) {
-  printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
-}
-
-if($self->{'print_align'}) {
-  dumpTreeMultipleAlignment($self);
-}
-
-if($self->{'output_fasta'}) {
-  dumpTreeFasta($self);
-}
-
-if($self->{'clusterset_id'} and $self->{'analyze'}) {
-  analyzeClusters2($self);
-}
-
-if($self->{'drawtree'}) {
-  drawPStree($self);
-}
-
-
-
-#cleanup memory
 if($self->{'tree'}) {
+
+  $self->{'tree'}->retain;
+
+  if($self->{'new_root_id'}) {
+    reroot($self);
+  }
+
+  if($self->{'print_tree'}) {
+    $self->{'tree'}->print_tree($self->{'scale'});
+    printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
+  }
+
+  if($self->{'print_leaves'}) {
+    my $leaves = $self->{'tree'}->get_all_leaves;
+    foreach my $leaf (@$leaves) {
+      my $gene = $leaf->gene_member;
+      my $desc = $gene->description;
+      $desc = "" unless($desc);
+      printf("%s : %s\n", $gene->stable_id, $desc);
+    }
+    printf("%d proteins\n", scalar(@$leaves));
+  }
+
+  if($self->{'print_newick'}) {
+    dumpTreeAsNewick($self, $self->{'tree'});
+  }
+
+  if($self->{'counts'}) {
+    print_cluster_counts($self);
+    print_cluster_counts($self, $self->{'tree'});
+  }
+
+  if($self->{'print_align'}) {
+    dumpTreeMultipleAlignment($self);
+  }
+
+  if($self->{'output_fasta'}) {
+    dumpTreeFasta($self);
+  }
+
+  if($self->{'drawtree'}) {
+    drawPStree($self);
+  }
+
+  #cleanup memory
   #print("ABOUT TO MANUALLY release tree\n");
   $self->{'tree'}->release;
   $self->{'tree'} = undef;
   #print("DONE\n");
+}
+
+#
+# clusterset stuff
+#
+if($self->{'clusterset_id'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});  
+  
+  printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
+
+  analyzeClusters2($self) if($self->{'analyze'});
+
+  dumpAllTreesToNewick($self) if($self->{'print_newick'});
+ 
+  if($self->{'counts'}) {
+    print_cluster_counts($self);
+    foreach my $cluster (@{$self->{'clusterset'}->children}) {
+      print_cluster_counts($self, $cluster);
+    }
+  }
+  
+  $self->{'clusterset'}->release;
+  $self->{'clusterset'} = undef;
 }
 
 exit(0);
@@ -181,14 +202,17 @@ sub usage {
   print "\n";  
   print "  -print_tree            : print ASCII formated tree\n";
   print "  -scale <num>           : scale factor for printing tree (def: 100)\n";
-  print "  -newick                : output tree in newick format\n";
+  print "  -newick                : output tree(s) in newick format\n";
   print "  -reroot <id>           : reroot genetree on node_id\n";
   print "  -parent                : move up to the parent of the loaded node\n";
   print "  -dump                  : outputs to autonamed file, not STDOUT\n";
   print "  -draw                  : use PHYLIP drawtree to create ps output\n";
-  print "  -count                 : return count of proteins within tree nestedset\n";
+  print "  -counts                : return counts of proteins within tree nestedset\n";
   print "\n";  
-  print "  -clusertset_id <id>    : analyze clusters :)\n"; 
+  print "  -clusterset_id <id>    : load all clusters\n"; 
+  print "  -analyze               : perform rosette analysis on all clusters\n"; 
+  print "  -newick                : combination of clusterset_id and newick dumps all\n"; 
+  print "  -counts                : return counts of each cluster\n";
   print "geneTreeTool.pl v1.2\n";
   
   exit(1);  
@@ -340,13 +364,14 @@ sub dumpTreeMultipleAlignment
 sub dumpTreeAsNewick 
 {
   my $self = shift;
+  my $tree = shift;
   
-  warn("missing tree\n") unless($self->{'tree'});
+  warn("missing tree\n") unless($tree);
 
-  my $newick = $self->{'tree'}->newick_simple_format;
+  my $newick = $tree->newick_simple_format;
 
   if($self->{'dump'}) {
-    my $aln_file = "proteintree_". $self->{'tree'}->node_id;
+    my $aln_file = "proteintree_". $tree->node_id;
     $aln_file =~ s/\/\//\//g;  # converts any // in path to /
     $aln_file .= ".newick";
     
@@ -369,7 +394,7 @@ sub drawPStree
   
   unless($self->{'newick_file'}) {
     $self->{'dump'} = 1;
-    dumpTreeAsNewick($self);
+    dumpTreeAsNewick($self, $self->{'tree'});
   }
   
   my $ps_file = "proteintree_". $self->{'tree'}->node_id;
@@ -416,12 +441,44 @@ sub dumpTreeFasta
 }
 
 
+sub print_cluster_counts
+{
+  my $self = shift;
+  my $tree = shift;
+  
+  unless($tree) {
+    printf("%10s %10s %20s\n", 'tree_id', 'proteins', 'residues');
+    return;
+  }
+  
+  my $proteins = $tree->get_all_leaves;
+  my $count = 0;
+  foreach my $member (@$proteins) {
+    $count += $member->seq_length;
+  }
+
+  printf("%10d %10d %20d\n",
+    $tree->node_id, 
+    scalar(@$proteins),
+    $count);
+}
+
+
 
 ##################################################
 #
 # tree analysis
 #
 ##################################################
+
+sub dumpAllTreesToNewick
+{
+  my $self = shift;
+
+  foreach my $cluster (@{$self->{'clusterset'}->children}) {
+    dumpTreeAsNewick($self, $cluster);
+  }
+}
 
 
 sub analyzeClusters
@@ -472,9 +529,9 @@ sub analyzeClusters2
   }
   
   printf("analyzeClusters root_id: %d\n", $self->{'clusterset_id'});
-  
+
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});  
+  my $clusterset = $self->{'clusterset'};  
 
   printf("%d clusters\n", $clusterset->get_child_count);  
   
