@@ -83,7 +83,7 @@ use Sys::Hostname;
 use Exporter();
 @ISA=qw(Exporter);
 
-$VERSION=32;
+$VERSION=33;
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -128,7 +128,7 @@ $ENSEMBL_PROXY_PORT     = undef; # Port used for self-referential URLs:
                                  # Set to undef if not using proxy-forwarding
 
 $ENSEMBL_SITETYPE       = "EnsEMBL";
-$ARCHIVE_VERSION        = "Jul2005";    # Change this to the archive site for this version
+$ARCHIVE_VERSION        = "Sep2005";    # Change this to the archive site for this version
 
 $ENSEMBL_USER           = getpwuid($>); # Auto-set web serveruser
 $ENSEMBL_GROUP          = getgrgid($)); # Auto-set web server group
@@ -137,10 +137,9 @@ $ENSEMBL_SERVERADMIN    = 'webmaster&#064;mydomain.org';
 $ENSEMBL_HELPDESK_EMAIL = $ENSEMBL_SERVERADMIN;
 $ENSEMBL_SERVERNAME     = 'www.mydomain.org';
 $ENSEMBL_PROTOCOL       = 'http';
-$ENSEMBL_MAIL_COMMAND   = '/usr/bin/Mail -s';     # Mail command
-$ENSEMBL_MAIL_ERRORS    = '0';                    # Do we want to email errors?
-$ENSEMBL_ERRORS_TO      = join ", ",              # ...and to whom?
-		            map { "$_\@sanger.ac.uk" } qw(js5 fc1 ek3 ap5);
+$ENSEMBL_MAIL_COMMAND   = '/usr/bin/Mail -s';               # Mail command
+$ENSEMBL_MAIL_ERRORS    = '0';                              # Do we want to email errors?
+$ENSEMBL_ERRORS_TO      = 'webmaster&#064;mydomain.org';    # ...and to whom?
 
 ##  64 <- Time stamped logs...
 ##  32 <- Enable eprof error diagnostics in web scripts
