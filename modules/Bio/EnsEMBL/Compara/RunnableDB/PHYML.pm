@@ -199,6 +199,10 @@ sub run_phyml
       $phyml_executable = "/nfs/acari/jessica/bin/i386/phyml";
     }
   }
+  unless (-e $phyml_executable) {
+    $phyml_executable = "/usr/local/ensembl/bin/phyml";
+  }
+
   throw("can't find a phyml executable to run\n") unless(-e $phyml_executable);
 
   #./phyml seqs2 1 i 1 0 JTT 0.0 4 1.0 BIONJ n n 
