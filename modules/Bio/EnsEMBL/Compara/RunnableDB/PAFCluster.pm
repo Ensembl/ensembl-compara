@@ -75,6 +75,7 @@ sub fetch_input {
   $self->{'all_bests'} = 0;
   $self->{'include_brh'} = 1;
   $self->{'bsr_threshold'} = 0.25;
+  $self->{'clusterset_id'} = undef;
   
   $self->get_params($self->input_id);
   return 1;
@@ -134,6 +135,13 @@ sub write_output {
   
   $self->build_paf_clusters();
   
+  # modify input_job so that it now contains the clusterset_id
+  my $outputHash = {};
+  $outputHash = eval($self->input_id) if(defined($self->input_id));
+  $outputHash{'clusterset_id'} = $self->{'clusterset_id'};
+  my $output_id = $self->encode_hash($outputHash);  
+  $self->input_job->input_id($output_id);
+
   return 1;
 }
 
@@ -161,7 +169,8 @@ sub build_paf_clusters {
   $self->{'tree_root'}->name("ORTHO_CLUSTERS");
   $treeDBA->store($self->{'tree_root'});
   printf("root_id %d\n", $self->{'tree_root'}->node_id);
-    
+  $self->{'clusterset_id'} = $self->{'tree_root'}->node_id;
+  
   #
   # create Cluster MLSS
   #
@@ -492,7 +501,8 @@ sub dataflow_clusters {
   
   my $clusters = $self->{'tree_root'}->children;
   foreach my $cluster (@{$clusters}) {
-    my $output_id = sprintf("{'protein_tree_id'=>%d}", $cluster->node_id);
+    my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
+       $cluster->node_id, $self->{'tree_root'}->node_id);
     $self->dataflow_output_id($output_id, 2);
   }
 }
