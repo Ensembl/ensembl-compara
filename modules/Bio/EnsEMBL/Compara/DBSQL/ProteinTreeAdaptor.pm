@@ -133,20 +133,17 @@ sub update_node {
   }
   
   my $parent_id = 0;
-  my $root_id = 0;
   if($node->parent) {
     $parent_id = $node->parent->node_id ;
-    $root_id = $node->root->node_id;
   }
 
   my $sth = $self->prepare("UPDATE protein_tree_nodes SET
                               parent_id=?,
-                              root_id=?,
                               left_index=?,
                               right_index=?,
                               distance_to_parent=? 
                             WHERE node_id=?");
-  $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, 
+  $sth->execute($parent_id, $node->left_index, $node->right_index, 
                 $node->distance_to_parent, $node->node_id);
 
   $node->adaptor($self);
@@ -176,9 +173,8 @@ sub merge_nodes {
   
   my $sth = $self->prepare("UPDATE protein_tree_nodes SET
                               parent_id=?,
-                              root_id=?
 			                     WHERE parent_id=?");
-  $sth->execute($node1->node_id, $node1->root->node_id, $node2->node_id);
+  $sth->execute($node1->node_id, $node2->node_id);
   $sth->finish;
   
   $sth = $self->prepare("DELETE from protein_tree_nodes WHERE node_id=?");
