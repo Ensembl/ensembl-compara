@@ -31,6 +31,10 @@ $self->{'cdna'} = 0;
 $self->{'scale'} = 100;
 $self->{'align_format'} = 'phylip';
 $self->{'debug'}=0;
+$self->{'run_topo_test'} = 1;
+$self->{'analyze'} = 0;
+$self->{'drawtree'} = 0;
+$self->{'print_leaves'} =0;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
@@ -51,12 +55,16 @@ GetOptions('help'             => \$help,
            'parent'           => \$self->{'parent'},
            'align'            => \$self->{'print_align'},
            'cdna'             => \$self->{'cdna'},
+           'fasta'            => \$self->{'output_fasta'},
            'dump'             => \$self->{'dump'},           
            'align_format=s'   => \$self->{'align_format'},
            'scale=f'          => \$self->{'scale'},
            'count'            => \$self->{'counts'},
            'newick'           => \$self->{'print_newick'},
            'print'            => \$self->{'print_tree'},
+           'list'             => \$self->{'print_leaves'},
+           'analyze'          => \$self->{'analyze'},
+           'draw'             => \$self->{'drawtree'},
           );
 
 if ($help) { usage(); }
@@ -70,6 +78,10 @@ unless(defined($self->{'comparaDBA'})) {
   print("couldn't connect to compara database\n\n");
   usage();
 } 
+
+#
+# load tree
+#
 
 if($self->{'tree_id'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
@@ -85,10 +97,30 @@ elsif ($self->{'newick_file'}) {
 if($self->{'parent'} and $self->{'tree'} and $self->{'tree'}->parent) {
   $self->{'tree'} = $self->{'tree'}->parent;
 }
+$self->{'tree'}->retain;
+
+# 
+# do stuff to it
+#
+
+if($self->{'new_root_id'}) {
+  reroot($self);
+}
 
 if($self->{'print_tree'}) {
   $self->{'tree'}->print_tree($self->{'scale'});
   printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
+}
+
+if($self->{'print_leaves'}) {
+  my $leaves = $self->{'tree'}->get_all_leaves;
+  foreach my $leaf (@$leaves) {
+    my $gene = $leaf->gene_member;
+    my $desc = $gene->description;
+    $desc = "" unless($desc);
+    printf("%s : %s\n", $gene->stable_id, $desc);
+  }
+  printf("%d proteins\n", scalar(@$leaves));
 }
 
 if($self->{'print_newick'}) {
@@ -99,13 +131,22 @@ if($self->{'counts'}) {
   printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
 }
 
-if($self->{'print_align'} or $self->{'cdna'}) {
+if($self->{'print_align'}) {
   dumpTreeMultipleAlignment($self);
 }
 
-if($self->{'clusterset_id'}) {
+if($self->{'output_fasta'}) {
+  dumpTreeFasta($self);
+}
+
+if($self->{'clusterset_id'} and $self->{'analyze'}) {
   analyzeClusters2($self);
 }
+
+if($self->{'drawtree'}) {
+  drawPStree($self);
+}
+
 
 
 #cleanup memory
@@ -144,6 +185,8 @@ sub usage {
   print "  -reroot <id>           : reroot genetree on node_id\n";
   print "  -parent                : move up to the parent of the loaded node\n";
   print "  -dump                  : outputs to autonamed file, not STDOUT\n";
+  print "  -draw                  : use PHYLIP drawtree to create ps output\n";
+  print "  -count                 : return count of proteins within tree nestedset\n";
   print "\n";  
   print "  -clusertset_id <id>    : analyze clusters :)\n"; 
   print "geneTreeTool.pl v1.2\n";
@@ -204,7 +247,8 @@ sub fetch_protein_tree_with_gene {
                fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
   my $aligned_member = $treeDBA->
                        fetch_AlignedMember_by_member_id_root_id(
-                          $member->get_longest_peptide_Member->member_id);
+                          $member->get_longest_peptide_Member->member_id,
+                          $self->{'clusterset_id'});
   $self->{'tree'} = $aligned_member->root;
 }
 
@@ -226,30 +270,30 @@ sub reroot {
   my $self = shift;
   my $node_id = $self->{'new_root_id'}; 
 
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  my $node = $treeDBA->fetch_node_by_node_id($node_id);  
-  printf("tree at %d\n", $node->subroot->node_id);
-  my $tree = $treeDBA->fetch_node_by_node_id($node->subroot->node_id);  
-  $tree->print_tree($self->{'scale'});
+  #my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  #my $node = $treeDBA->fetch_node_by_node_id($node_id);  
+  #printf("tree at %d\n", $node->subroot->node_id);
+  #my $tree = $treeDBA->fetch_node_by_node_id($node->subroot->node_id);  
   
+  my $tree = $self->{'tree'};
+  $tree->get_all_subnodes;  #make sure entire tree is loaded into memory
+
   my $new_root = $tree->find_node_by_node_id($node_id);
   return unless $new_root;
 
   my $tmp_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
   $tmp_root->merge_children($tree);
-
+  #$tmp_root->print_tree;
+  
   $new_root->retain->re_root;
-  $tmp_root->release;
   $tree->merge_children($new_root);
-
-  $tree->build_leftright_indexing;
-  $tree->print_tree($self->{'scale'});
-
-  $treeDBA->store($tree);
-  $treeDBA->delete_node($new_root);
-
-  $tree->release;
+  $tmp_root->release;
   $new_root->release;
+  
+  $self->{'tree'} = $tree;
+  
+  #$treeDBA->store($tree);
+  #$treeDBA->delete_node($new_root);
 }
 
 
@@ -262,7 +306,7 @@ sub dumpTreeMultipleAlignment
   
   my $tree = $self->{'tree'};
 
-  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'});
+  my $sa = $tree->get_SimpleAlign(-id_type => 'SEQ', -UNIQ_SEQ=>1, -cdna=>$self->{'cdna'});
 
   if($self->{'dump'}) {
     my $aln_file = "proteintree_". $tree->node_id;
@@ -284,7 +328,7 @@ sub dumpTreeMultipleAlignment
   }
 
   my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTSEQ,
-                                    -interleaved => 1,
+                                    -interleaved => 0,
                                     -format => $self->{'align_format'},
                                    );
   print $alignIO $sa;
@@ -306,15 +350,78 @@ sub dumpTreeAsNewick
     $aln_file =~ s/\/\//\//g;  # converts any // in path to /
     $aln_file .= ".newick";
     
+    $self->{'newick_file'} = $aln_file;
+    
     open(OUTSEQ, ">$aln_file")
       or $self->throw("Error opening $aln_file for write");
   } else {
     open OUTSEQ, ">&STDOUT";
   }
 
-  print OUTSEQ "$newick\n";
+  print OUTSEQ "$newick\n\n";
   close OUTSEQ;
 }
+
+
+sub drawPStree
+{
+  my $self = shift;
+  
+  unless($self->{'newick_file'}) {
+    $self->{'dump'} = 1;
+    dumpTreeAsNewick($self);
+  }
+  
+  my $ps_file = "proteintree_". $self->{'tree'}->node_id;
+  $ps_file =~ s/\/\//\//g;  # converts any // in path to /
+  $ps_file .= ".ps";
+  $self->{'plot_file'} = $ps_file;
+
+  my $cmd = sprintf("drawtree -auto -charht 0.1 -intree %s -fontfile /usr/local/ensembl/bin/font5 -plotfile %s", 
+                    $self->{'newick_file'}, $ps_file);
+  print("$cmd\n");
+  system($cmd);
+  system("open $ps_file");
+}
+
+
+sub dumpTreeFasta
+{
+  my $self = shift;
+  
+  if($self->{'dump'}) {
+    my $fastafile = "proteintree_". $self->{'tree'}->node_id. ".fasta";
+    $fastafile =~ s/\/\//\//g;  # converts any // in path to /
+    
+    open(OUTSEQ, ">$fastafile")
+      or $self->throw("Error opening $fastafile for write");
+  } else {
+    open OUTSEQ, ">&STDOUT";
+  }
+
+  my $seq_id_hash = {};
+  my $member_list = $self->{'tree'}->get_all_leaves;  
+  foreach my $member (@{$member_list}) {
+    next if($seq_id_hash->{$member->sequence_id});
+    $seq_id_hash->{$member->sequence_id} = 1;
+    
+    my $seq = $member->sequence;
+    $seq =~ s/(.{72})/$1\n/g;
+    chomp $seq;
+
+    printf OUTSEQ ">%d %s\n$seq\n", $member->sequence_id, $member->stable_id
+  }
+  close OUTSEQ;
+  
+}
+
+
+
+##################################################
+#
+# tree analysis
+#
+##################################################
 
 
 sub analyzeClusters
@@ -419,41 +526,62 @@ sub analyzeClusters2
                  $cluster->node_id, scalar(@{$member_list}));
         }
         
-        #generate a taxon_id string
-        my @all_leaves = @{$rosette->get_all_leaves};
-        $total_members += scalar(@all_leaves);
-        my @taxon_list;
-        foreach my $leaf (@all_leaves) { push @taxon_list, $leaf->taxon_id;}
-        my $taxon_id_string = join("_", sort {$a <=> $b} @taxon_list);
-        $rosette_taxon_hash{$taxon_id_string} = 0 unless(defined($rosette_taxon_hash{$taxon_id_string}));
-        $rosette_taxon_hash{$taxon_id_string}++;
 
-        my $has_LSD = test_rosette_for_LSD($self,$rosette);
+        my $has_LSDup = test_rosette_for_LSD($self,$rosette);
               
-        if($has_LSD) {
+        if($has_LSDup) {
           print("    LinearSpecificDuplication\n") if($self->{'debug'});
           #$rosette->print_tree;
           $lsd_rosette_count++;
           $rosette->add_tag('rosette_LSDup');
-        } else {
+        } 
+        
+        if(!$has_LSDup and $self->{'run_topo_test'}) {
           if(test_rosette_matches_species_tree($self, $rosette)) {
             $match_species_tree_count++;
             $rosette->add_tag('rosette_species_topo_match');        
+          } else {
+            $rosette->add_tag('rosette_species_topo_failed');
           }
+
         }
         
         if(test_rosette_for_gene_loss($self, $rosette, $species_list)) {
           $geneLoss_rosette_count++;
           $rosette->add_tag('rosette_geneLoss');        
         }
+
+        #generate a taxon_id string
+        my @all_leaves = @{$rosette->get_all_leaves};
+        $total_members += scalar(@all_leaves);
+        my @taxon_list;
+        foreach my $leaf (@all_leaves) { push @taxon_list, $leaf->taxon_id;}
+        my $taxon_id_string = join("_", sort {$a <=> $b} @taxon_list);
+
+        #generate taxon unique newick string
+        my $taxon_newick_string = taxon_ordered_newick($rosette);
+
+        if(!$rosette->has_tag('rosette_LSDup')) {
+          $rosette_taxon_hash{$taxon_id_string} = 0 unless(defined($rosette_taxon_hash{$taxon_id_string}));
+          $rosette_taxon_hash{$taxon_id_string}++;
+
+          $rosette_newick_hash{$taxon_newick_string} = 0 unless(defined($rosette_newick_hash{$taxon_newick_string}));
+          $rosette_newick_hash{$taxon_newick_string}++;
+        }
+        
         
         printf("rosette, %d, %d, %d, %d",
            $rosette->node_id, scalar(@{$rosette->get_all_leaves}), 
            $cluster->node_id, scalar(@{$member_list}));
         if($rosette->has_tag("rosette_LSDup")) {print(", LSDup");} else{print(", OK");}
         if($rosette->has_tag("rosette_geneLoss")) {print(", GeneLoss");} else{print(", OK");}
-        unless($rosette->has_tag("rosette_species_topo_match")) {print(", TopoFail");} else{print(", OK");}
+
+        if($rosette->has_tag("rosette_species_topo_match")) {print(", TopoMatch");} 
+        elsif($rosette->has_tag("rosette_species_topo_fail")) {print(", TopoFail");} 
+        else{print(", -");}
+        
         print(", $taxon_id_string");
+        print(",$taxon_newick_string");
         print("\n");
 
       }
@@ -488,14 +616,30 @@ sub analyzeClusters2
   }
   
   printf("\nrosette member dists\n");
-  foreach my $key (keys %rosette_taxon_hash) {
-    printf("   %7d : %s\n", $rosette_taxon_hash{$key}, $key);
-  }
+  print_hash_bins(\%rosette_taxon_hash);
   
+  printf("\n\n\nrosette newick dists\n");
+  print_hash_bins(\%rosette_newick_hash);
               
   $clusterset->release;
 }
 
+sub print_hash_bins
+{
+  my $hash_ref = shift;
+  
+  my @bins;
+  foreach my $key (keys %$hash_ref) {
+    my $bin = {};
+    $bin->{'count'} = $hash_ref->{$key};
+    $bin->{'name'} = $key; 
+    push @bins, $bin;
+  }
+  @bins = sort {$b->{'count'} <=> $a->{'count'}} @bins; 
+  foreach my $bin (@bins) {
+    printf("   %7d : %s\n", $bin->{'count'}, $bin->{'name'});
+  }
+}
 
 sub find_ingroup_ancestor
 {
@@ -653,4 +797,47 @@ sub test_rosette_matches_species_tree
   return $topology_matches;
 }
 
+
+###############################
+# taxon ordered newick
+###############################
+
+
+sub min_taxon_id {
+  my $node = shift;
+
+  return $node->taxon_id if($node->is_leaf);
+  return $node->{'_leaves_min_taxon_id'} if(defined($node->{'_leaves_min_taxon_id'}));
+
+  my $minID = undef;
+  foreach my $child (@{$node->children}) {
+    my $taxon_id = min_taxon_id($child);
+    $minID = $taxon_id unless(defined($minID) and $taxon_id>$minID);
+  }
+  $node->{'_leaves_min_taxon_id'} = $minID;
+  return $minID;
+}
+
+
+sub taxon_ordered_newick {
+  my $node = shift;
+  my $newick = "";
+  
+  if($node->get_child_count() > 0) {
+    $newick .= "(";
+
+    my @sorted_children = sort {min_taxon_id($a) <=> min_taxon_id($b)} @{$node->children};
+    
+    my $first_child=1;
+    foreach my $child (@sorted_children) {
+      $newick .= "," unless($first_child);
+      $newick .= taxon_ordered_newick($child);
+      $first_child = 0;
+    }
+    $newick .= ")";
+  }
+  
+  $newick .= sprintf("%d", $node->taxon_id) if($node->is_leaf);
+  return $newick;
+}
 
