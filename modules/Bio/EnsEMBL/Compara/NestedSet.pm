@@ -918,31 +918,41 @@ sub add_tag {
 sub has_tag {
   my $self = shift;
   my $tag = shift;
-  my $value = shift;
-  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
-  return 1 if(defined($self->{'_tags'}->{$tag}));
-  return 0;
+  
+  $self->_load_tags;
+  my $value = $self->{'_tags'}->{$tag};
+  $value=0 unless(defined($value));
+  return $value;
 }
 
 sub get_all_tags {
   my $self = shift;
   
-  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  $self->_load_tags;
   return keys(%{$self->{'_tags'}});
 }
 
 sub get_all_tagged_values {
-  my $self = shift;
+  my $self = shift;  
   
-  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  $self->_load_tags;
   return values(%{$self->{'_tags'}});
 }
 
 sub get_tag_hash {
   my $self = shift;
   
-  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  $self->_load_tags;
   return $self->{'_tags'};
+}
+
+sub _load_tags {
+  my $self = shift;
+  return if(defined($self->{'_tags'}));
+  $self->{'_tags'} = {};
+  if($self->adaptor) {
+    $self->adaptor->_node_load_tagvalues($self);
+  }
 }
 
 ##################################

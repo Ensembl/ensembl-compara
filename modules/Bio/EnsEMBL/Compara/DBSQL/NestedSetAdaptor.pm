@@ -328,6 +328,22 @@ sub _build_tree_from_nodes {
 }
 
 
+sub _node_load_tagvalues {
+  my $self = shift;
+  my $node = shift;
+  
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $sth = $self->prepare("SELECT tag,value from protein_tree_tags where node_id=?");
+  $sth->execute($node->node_id);  
+  while (my ($tag, $value) = $sth->fetchrow_array()) {
+    $node->add_tag($tag,$value);
+  }
+  $sth->finish;
+}
+
 ###################################
 #
 # _generic_fetch system
