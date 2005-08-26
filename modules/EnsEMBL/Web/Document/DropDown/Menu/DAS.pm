@@ -21,7 +21,74 @@ sub new {
   my $ext_das = new EnsEMBL::Web::ExternalDAS( $self->{'location'} );
   $ext_das->getConfigs($script, $script);
 
+  my %das_add    = map{$_,1} (CGI::param( "add_das_source" ) || ());
+  foreach my $dconf (keys %das_add) {
+      $dconf =~ s/[\(|\)]//g;
+      my @das_keys = split(/\s/, $dconf);
+      my %das_data = map { split (/\=/, $_,2) } @das_keys; 
+      my $das_name = $das_data{name} || $das_data{dsn} || 'NamelessSource';
+      
+      if ( ! exists $das_data{url} || ! exists $das_data{dsn} || ! exists $das_data{type}) {
+	  warn("WARNING: DAS source $das_name has not been added: Missing parameters");
+	  next;
+      }
+      
+      if( my $src = $ext_das->{'data'}->{$das_name}){ 
+
+	  if (join('*',$src->{url}, $src->{dsn}, $src->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
+	      warn("WARNING: DAS source $das_name has not been added: It is already attached");
+	      next;
+	  }
+	  
+	  my $das_name_ori = $das_name;
+	  for( my $i = 1; 1; $i++ ){
+	      $das_name = $das_name_ori ."_$i";
+	      if( ! exists($ext_das->{'data'}->{$das_name}  )){
+		  $das_data{name} =  $das_name;
+		  last;
+	      }
+	  }
+      }
+	
+      # Add to the conf list
+      $das_data{label} or $das_data{label} = $das_data{name};
+      $das_data{caption} or $das_data{caption} = $das_data{name};
+      $das_data{stylesheet} or $das_data{stylesheet} = 'n';
+      if (exists $das_data{enable}) {
+	  my @enable_on = split(/\,/, $das_data{enable});
+	  delete $das_data{enable};
+	  push @{$das_data{enable}}, @enable_on;
+      }
+      push @{$das_data{enable}}, $script;
+      push @{$das_data{mapping}} , split(/\,/, $das_data{type});
+      $das_data{conftype} = 'external';
+      $das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
+
+      warn("ADD DAS $das_name");
+      warn(Dumper(\%das_data));
+
+      if ($das_data{active}) {
+	  my $config = $self->{config};
+	  $config->set("managed_extdas_$das_name", 'on', 'on', 1);
+
+	  $das_data{depth} and $config->set( "managed_extdas_$das_name", "dep", $das_data{depth}, 1);
+	  $das_data{group} and $config->set( "managed_extdas_$das_name", "group", $das_data{group}, 1);
+	  $das_data{strand} and $config->set( "managed_extdas_$das_name", "str", $das_data{strand}, 1);
+	  $das_data{stylesheet} and $config->set( "managed_extdas_$das_name", "stylesheet", $das_data{stylesheet}, 1);
+	  $das_data{labelflag} and $config->set( "managed_extdas_$das_name", "lflag", $das_data{labelflag}, 1);
+	  $config->set( "managed_extdas_$das_name", "manager", 'das', 1);
+	  $das_data{color} and $config->set( "managed_extdas_$das_name", "col", $das_data{col}, 1);
+	  $das_data{linktext} and $config->set( "managed_extdas_$das_name", "linktext", $das_data{linktext}, 1);
+	  $das_data{linkurl} and $config->set( "managed_extdas_$das_name", "linkurl", $das_data{linkurl}, 1);
+	  $config->save;
+      }
+
+      $ext_das->add_das_source(\%das_data);
+  }
+
   my $ds2 = $ext_das->{'data'};
+
+
 
   my %das_list = map {(exists $ds2->{$_}->{'species'} && $ds2->{$_}->{'species'} ne $self->{'species'}) ? ():($_,$ds2->{$_}) } keys %$ds2;
   my $EXT = $self->{config}->{species_defs}->ENSEMBL_INTERNAL_DAS_SOURCES;
@@ -30,6 +97,7 @@ sub new {
 # skip those that not configured for this view      
       my @valid_views = defined ($EXT->{$source}->{enable}) ? @{$EXT->{$source}->{enable}} : (defined($EXT->{$source}->{on}) ? @{$EXT->{$source}->{on}} : []);
       next if (! grep {$_ eq $script} @valid_views);
+
       $self->add_checkbox( "managed_$source", $EXT->{$source}->{'label'} || $source );
 
   }
@@ -38,8 +106,11 @@ sub new {
 # skip those that not configured for this view      
       my @valid_views = defined ($das_list{$source}->{enable}) ? @{$das_list{$source}->{enable}} : (defined($das_list{$source}->{on}) ? @{$das_list{$source}->{on}} : []);
       next if (! grep {$_ eq $script} @valid_views);
+      my $c = $self->{config};
       $self->add_checkbox( "managed_extdas_$source", $das_list{$source}->{'label'} || $source );
+#      warn("$source:".$c->get("managed_extdas_$source", 'on').':'.Dumper($das_list{$source}));
   }
+
 
   my $URL = sprintf qq(/%s/dasconfview?conf_script=%s;%s), $self->{'species'}, $script, $self->{'LINK'};
   $self->add_link( "Manage sources...", qq(javascript:X=window.open('$URL','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()), '');
