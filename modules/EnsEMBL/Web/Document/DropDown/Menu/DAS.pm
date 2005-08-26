@@ -54,6 +54,8 @@ sub new {
       $das_data{label} or $das_data{label} = $das_data{name};
       $das_data{caption} or $das_data{caption} = $das_data{name};
       $das_data{stylesheet} or $das_data{stylesheet} = 'n';
+      $das_data{group} or $das_data{group} = 'y';
+      $das_data{strand} or $das_data{strand} = 'b';
       if (exists $das_data{enable}) {
 	  my @enable_on = split(/\,/, $das_data{enable});
 	  delete $das_data{enable};
@@ -64,8 +66,8 @@ sub new {
       $das_data{conftype} = 'external';
       $das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
 
-      warn("ADD DAS $das_name");
-      warn(Dumper(\%das_data));
+#      warn("ADD DAS $das_name");
+#      warn(Dumper(\%das_data));
 
       if ($das_data{active}) {
 	  my $config = $self->{config};
