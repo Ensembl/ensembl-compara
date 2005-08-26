@@ -948,22 +948,24 @@ sub alignsliceviewbottom {
        warn("SP :$vsp");
        my $CONF = $object->user_config_hash( 'alignsliceviewbottom' );
        $CONF->{'align_slice'}  = 1;
- #     (my $vsp = $sp) =~ s/\s/\_/g;
        (my $sp = $vsp) =~ s/\_/ /g;
        $CONF->set('scalebar', 'label', $vsp);
        $CONF->set_species($vsp);
-       $align_slice->{slices}->{$sp}->{_config_file_name_} = $vsp;
+
+       my $compara_slice =  $align_slice->{slices}->{$sp}->[0];
+       $compara_slice->{_config_file_name_} = $vsp;
        $CONF->set( 'sequence', 'on', 'on' );
-       $align_slice->{slices}->{$sp}->{__type__} = 'alignslice';
-       my $cigar_line = $align_slice->{slices}->{$sp}->get_cigar_line();
+
+       $compara_slice->{__type__} = 'alignslice';
+       my $cigar_line = $compara_slice->get_cigar_line();
 
        $CONF->set('_settings','URL',$url,1);
        $CONF->set('ensembl_transcript', 'compact', $t1, 1);
-      my $len = $align_slice->{slices}->{$sp}->length;
+       my $len = $compara_slice->length;
        $CONF->container_width( $len );
-       $align_slice->{slices}->{$sp}->{species} = $sp;
-       $align_slice->{slices}->{$sp}->{compara} = $cmpstr;
-       push @ARRAY, $align_slice->{slices}->{$sp}, $CONF;
+       $compara_slice->{species} = $sp;
+       $compara_slice->{compara} = $cmpstr;
+       push @ARRAY, $compara_slice, $CONF;
        $cmpstr = 'secondary';
      }
 
@@ -1052,7 +1054,7 @@ sub alignsliceviewzoom {
 
      my @SEQ = ();
      foreach my $sp (@species) {
-       my $seq = $align_slice->{slices}->{$sp}->seq();
+       my $seq = $align_slice->{slices}->{$sp}->[0]->seq();
 
        my $ind = 0;
        foreach (split(//, $seq)) {
@@ -1104,15 +1106,15 @@ sub alignsliceviewzoom {
        (my $vsp = $sp) =~ s/\s/\_/g;
        $wuc->set('scalebar', 'label', $vsp);
        $wuc->set_species($vsp);
+       my $compara_slice = $align_slice->{slices}->{$sp}->[0];
+       $compara_slice->{_config_file_name_} = $vsp;
+       $compara_slice->{__type__} = 'alignslice';
+       $compara_slice->{alignmatch} = \@SEQ;
+       $compara_slice->{exons_markup} = &exons_markup($compara_slice);
+       $compara_slice->{snps_markup} = &snps_markup($compara_slice);
+       $compara_slice->{species} = $sp;
 
-       $align_slice->{slices}->{$sp}->{_config_file_name_} = $vsp;
-       $align_slice->{slices}->{$sp}->{__type__} = 'alignslice';
-       $align_slice->{slices}->{$sp}->{alignmatch} = \@SEQ;
-       $align_slice->{slices}->{$sp}->{exons_markup} = &exons_markup($align_slice->{slices}->{$sp});
-       $align_slice->{slices}->{$sp}->{snps_markup} = &snps_markup($align_slice->{slices}->{$sp});
-       $align_slice->{slices}->{$sp}->{species} = $sp;
-
-       push @ARRAY, $align_slice->{slices}->{$sp}, $wuc;
+       push @ARRAY, $compara_slice, $wuc;
        $cmpstr = 'secondary';
      }
 
