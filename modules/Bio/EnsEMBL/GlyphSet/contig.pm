@@ -68,6 +68,7 @@ sub _init {
       my $ctg_slice  = $segment->to_Slice;
       my $ORI        = $ctg_slice->strand;
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
+
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
       if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice") && ($Container->{__type__} ne 'alignslice')) {
 	  foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
@@ -150,14 +151,23 @@ sub _init_non_assembled_contig {
   my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');    
   my $i = 1;
   my @colours  = qw(contigblue1 contigblue2);
+
   foreach my $tile ( sort { $a->{'start'} <=> $b->{'start'} } @{$contig_tiling_path} ) {
-    my $rend   = $tile->{'end'};
+      my $strand = $tile->{'ori'};
+      my $rend   = $tile->{'end'};
     my $rstart = $tile->{'start'};
+
+# AlignSlice segments can be on different strands - hence need to check if start & end need a swap
+
+      if ($rstart > $rend ) {
+	  ($rstart, $rend) = ($rend, $rstart);
+      }
     my $rid    = $tile->{'name'};
-    my $strand = $tile->{'ori'};
+    
        $rstart = 1 if $rstart < 1;
        $rend   = $length if $rend > $length;
-                
+
+    
     my $glyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $rstart - 1,
       'y'         => $ystart+2,
@@ -218,6 +228,7 @@ sub _init_non_assembled_contig {
       }
     }
     $self->push($glyph);
+
     $label = $strand > 0 ? "$label >" : "< $label";
     my $bp_textwidth = $w * length($label) * 1.2; # add 20% for scaling text
     if($bp_textwidth > ($rend - $rstart)) {
@@ -351,41 +362,9 @@ sub _init_non_assembled_contig {
 	  $rbs += $ds;
       }
       
-      if ($Container->{__type__} eq 'alignslice2') {
-	  my $cigar_line = $Container->get_cigar_line();
-	  my $hs = $Container->{slice_mapper_pairs}->[0];
-	  use Data::Dumper;
-#	  warn("W: ".join('*', keys(%$hs)));
-	  $global_start2 = $hs->{slice}->{start};
-	  my $s1 = $rbs - $global_start2;
-	  my $s2 = $rbe - $global_start2;
-	  my @inters = split (/[MD]/, $cigar_line);
-#	  warn("T: $global_start2*$rbs*$rbe: ($s1): ($s2)");
-#	  warn("T2: @inters");
-	  my $ms = 0;
-	  my $ds = 0;
-	  while (@inters) {
-	      $ms += (shift (@inters) || 1);
-	      last if ($ms > $s1);
-	      $ds += (shift (@inters) || 1);
-	  }
-
-#	  warn("T3: $ms : $ds");
-	  $rbs += $ds;
-
-	  while (@inters) {
-	      $ds += (shift (@inters) || 1);
-	      $ms += (shift (@inters) || 1);
-	      last if ($ms > $s2);
-	  }
-
-#	  $ds -= 1 if ($cigar_line =~ /M$/);
-	  $rbe += $ds;
-	      
-      }
-
+   
   
-#  if( 0 && $Config->get('_settings','draw_red_box') eq 'yes') { 
+
     # only draw focus box on the correct display...
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
       'x'            => $rbs - $global_start2,
