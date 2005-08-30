@@ -508,7 +508,12 @@ sub _get_mapped_Gene {
               -analysis => $this_transcript->analysis,
               -exons => $these_exons,
           );
-
+      $new_transcript->translation($this_transcript->translation->new(
+              stable_id => $this_transcript->translation->stable_id,
+              version => $this_transcript->translation->version,
+              created_date => ($this_transcript->translation->created_date or undef),
+              modified_date =>$this_transcript->translation->modified_date
+          )) if ($this_transcript->translation);
      push(@{$these_transcripts}, $new_transcript);
     }
   }
