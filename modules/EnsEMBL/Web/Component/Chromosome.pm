@@ -511,7 +511,7 @@ sub syn_matches {
 
     $table->add_columns(
         {'key' => 'genes', 'title' => "<i>$sp_tidy</i> Genes", 'width' => '40%', 'align' => 'left' },
-        {'key' => 'arrow', 'title' => "", 'width' => '20%', 'align' => 'center' },
+        {'key' => 'arrow', 'title' => "&nbsp;", 'width' => '20%', 'align' => 'center' },
         {'key' => 'homologues', 'title' => "<i>$other_tidy</i> Homologues", 'width' => '40%', 'align' => 'left' },
         );
     my $data = $object->get_synteny_matches;
