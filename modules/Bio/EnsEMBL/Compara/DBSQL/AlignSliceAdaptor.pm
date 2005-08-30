@@ -115,7 +115,8 @@ sub new {
 
   Arg[1]     : Bio::EnsEMBL::Slice $query_slice
   Arg[2]     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
-  Arg[3]     : [optional] boolean $expanded
+  Arg[3]     : [optional] boolean $expanded (def. FALSE)
+  Arg[4]     : [optional] boolean $solve_overlapping (def. FALSE)
   Example    :
       my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
               $query_slice, $method_link_species_set);
@@ -125,6 +126,9 @@ sub new {
                from 0 or "" will create an AlignSlice in "expanded" mode. This means
                that gaps are allowed in the reference species in order to allocate
                insertions from other species.
+               By default overlapping alignments are ignored. You can choose to
+               reconciliate the alignments by means of a fake alignment setting the
+               solve_overlapping option to TRUE.
   Returntype : Bio::EnsEMBL::Compara::AlignSlice
   Exceptions : thrown if wrong arguments are given
   Caller     : $obejct->methodname
@@ -132,7 +136,7 @@ sub new {
 =cut
 
 sub fetch_by_Slice_MethodLinkSpeciesSet {
-  my ($self, $reference_slice, $method_link_species_set, $expanded) = @_;
+  my ($self, $reference_slice, $method_link_species_set, $expanded, $solve_overlapping) = @_;
 
   throw("[$reference_slice] is not a Bio::EnsEMBL::Slice")
       unless ($reference_slice and ref($reference_slice) and
@@ -142,7 +146,8 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
   
   # Use cache whenever possible
-  my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond");
+  my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond").
+      ":".($solve_overlapping?"fake-overlap":"non-overlap");
   return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
 
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor;
@@ -157,6 +162,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
           -Genomic_Align_Blocks => $genomic_align_blocks,
           -method_link_species_set => $method_link_species_set,
           -expanded => $expanded,
+          -solve_overlapping => $solve_overlapping,
       );
   $self->{'_cache'}->{$key} = $align_slice;
 

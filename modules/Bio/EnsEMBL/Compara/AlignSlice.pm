@@ -56,7 +56,7 @@ Bio::EnsEMBL::Slice.
 
 OVERLAPPING ALIGNMENTS
 
-No overlapping alignments are allowed so far. This means that if an alignment overlaps another one, the
+No overlapping alignments are allowed by default. This means that if an alignment overlaps another one, the
 second alignment is ignored. This is due to lack of information needed to reconciliate both alignment.
 Here is a graphical example showing this problem:
 
@@ -85,6 +85,11 @@ There is no easy way to find which of these possible solution is the best withou
 three sequences together and this is far beyond the aim of this module. The best solution is to start with
 multiple alignments instead of overlapping pairwise ones.
 
+The third possibility is probably not the best alignment you can get although its implementation is
+systematic (insert as many gaps as needed in order to accommodate the insertions and never ever overlap
+them) and computationally cheap as no realignment is needed. You may ask this module to solve overlapping
+alignments in this way using the "solve_overlapping" option.
+
 RESULT
 
 The AlignSlice results in a set of Bio::EnsEMBL::Compara::AlignSlice::Slice which are objects really
@@ -108,7 +113,8 @@ map features from one species onto the others.
           -reference_Slice => $reference_Slice,
           -method_link_species_set => $all_genomic_align_blocks,
           -genomicAlignBlocks => $all_genomic_align_blocks,
-          -expanded => 0
+          -expanded => 1
+          -solve_overlapping => 1
       );
 
   my $all_slices = $aling_slice->get_all_Slices();
@@ -197,6 +203,7 @@ use Bio::SimpleAlign;
                  -genomic_align_blocks
                  -method_link_species_set
                  -expanded
+                 -solve_overlapping
   Example    : my $align_slice =
                    new Bio::EnsEMBL::Compara::AlignSlice(
                        -adaptor => $align_slice_adaptor,
@@ -219,10 +226,10 @@ sub new {
   bless $self,$class;
 
   my ($adaptor, $reference_slice, $genomic_align_blocks, $method_link_species_set,
-      $expanded) =
+      $expanded, $solve_overlapping) =
       rearrange([qw(
           ADAPTOR REFERENCE_SLICE GENOMIC_ALIGN_BLOCKS METHOD_LINK_SPECIES_SET
-          EXPANDED 
+          EXPANDED SOLVE_OVERLAPPING
       )], @args);
 
   $self->adaptor($adaptor) if (defined ($adaptor));
@@ -238,7 +245,14 @@ sub new {
   if ($expanded) {
     $self->{expanded} = 1;
   }
-  $self->_create_underlying_Slices($genomic_align_blocks, $expanded);
+
+  $self->{solve_overlapping} = 0;
+  if ($solve_overlapping) {
+    $self->{solve_overlapping} = 1;
+  }
+
+  $self->_create_underlying_Slices($genomic_align_blocks, $self->{expanded},
+      $self->{solve_overlapping});
 
   return $self;
 }
@@ -431,6 +445,7 @@ sub get_SimpleAlign {
   Arg[1]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks
                $genomic_align_blocks
   Arg[2]     : [optional] boolean $expanded (default = FALSE)
+  Arg[3]     : [optional] boolean $solve_overlapping (default = FALSE)
   Example    : 
   Description: Creates a set of Bio::EnsEMBL::Compara::AlignSlice::Slices
                and attach it to this object. 
@@ -441,7 +456,7 @@ sub get_SimpleAlign {
 =cut
 
 sub _create_underlying_Slices {
-  my ($self, $genomic_align_blocks, $expanded) = @_;
+  my ($self, $genomic_align_blocks, $expanded, $solve_overlapping) = @_;
 
   my $strand = $self->reference_Slice->strand;
   
@@ -454,7 +469,12 @@ sub _create_underlying_Slices {
   }
   my $big_mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
-  my $sorted_genomic_align_blocks = _sort_GenomicAlignBlocks($genomic_align_blocks);
+  my $sorted_genomic_align_blocks;
+  if ($solve_overlapping) {
+    $sorted_genomic_align_blocks = _sort_and_compile_GenomicAlignBlocks($genomic_align_blocks);
+  } else {
+    $sorted_genomic_align_blocks = _sort_GenomicAlignBlocks($genomic_align_blocks);
+  }
   @$sorted_genomic_align_blocks = reverse(@$sorted_genomic_align_blocks) if ($strand == -1);
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
     $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions(
@@ -672,5 +692,231 @@ sub _sort_GenomicAlignBlocks {
   return $sorted_genomic_align_blocks;
 }
 
+=head2 _sort_and_compile_GenomicAlignBlocks
+
+  Arg[1]      : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks $gabs
+  Example     : $sorted_fake_gabs = _sort_and_compile_GenomicAlignBlocks($gabs);
+  Description : This method returns a list of
+                Bio::EnsEMBL::Compara::GenomicAlignBlock objects sorted by
+                position on the reference Bio::EnsEMBL::Compara::DnaFrag. If two
+                or more Bio::EnsEMBL::Compara::GenomicAlignBlock objects
+                overlap, it compile them, using the _compile_GenomicAlignBlocks
+                method.
+  Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
+  Exceptions  : 
+  Caller      : methodname()
+
+=cut
+
+sub _sort_and_compile_GenomicAlignBlocks {
+  my ($genomic_align_blocks) = @_;
+  my $sorted_genomic_align_blocks;
+
+  ##############################################################################################
+  ##
+  ## Compile GenomicAlignBlocks in group of GenomicAlignBlocks based on reference coordinates
+  ##
+  my $sets_of_genomic_align_blocks = [];
+  my $start_pos;
+  my $end_pos;
+  my $this_set_of_genomic_align_blocks = [];
+  foreach my $this_genomic_align_block (sort {$a->reference_genomic_align->dnafrag_start <=>
+          $b->reference_genomic_align->dnafrag_start} @$genomic_align_blocks) {
+    my $this_start_pos = $this_genomic_align_block->reference_genomic_align->dnafrag_start;
+    my $this_end_pos = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
+    if (defined($end_pos) and ($this_start_pos <= $end_pos)) {
+      # this genomic_align_block overlaps previous one. Extend this set_of_coordinates
+      $end_pos = $this_end_pos if ($this_end_pos > $end_pos);
+    } else {
+      # there is a gap between this genomic_align_block and the previous one. Close and save
+      # this set_of_genomic_align_blocks (if it exists) and start a new one.
+      push(@{$sets_of_genomic_align_blocks}, [$start_pos, $end_pos, $this_set_of_genomic_align_blocks])
+          if (defined(@$this_set_of_genomic_align_blocks));
+      $start_pos = $this_start_pos;
+      $end_pos = $this_end_pos;
+      $this_set_of_genomic_align_blocks = [];
+    }
+    push(@$this_set_of_genomic_align_blocks, $this_genomic_align_block);
+  }
+  push(@{$sets_of_genomic_align_blocks}, [$start_pos, $end_pos, $this_set_of_genomic_align_blocks])
+        if (defined(@$this_set_of_genomic_align_blocks));
+  ##
+  ##############################################################################################
+
+  foreach my $this_set_of_genomic_align_blocks (@$sets_of_genomic_align_blocks) {
+    my $this_compiled_genomic_align_block =
+        _compile_GenomicAlignBlocks(@$this_set_of_genomic_align_blocks);
+    push(@{$sorted_genomic_align_blocks}, $this_compiled_genomic_align_block);
+  }
+
+  return $sorted_genomic_align_blocks;
+}
+
+=head2 _compile_GenomicAlignBlocks
+
+  Arg [1]     : integer $start_pos (the start of the fake genomic_align)
+  Arg [2]     : integer $end_pos (the end of the fake genomic_align)
+  Arg [3]     : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks $set_of_genomic_align_blocks
+                $all_genomic_align_blocks (the pairwise genomic_align_blocks used for
+                this fake multiple genomic_aling_block)
+  Example     : 
+  Description : 
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlignBlock object
+  Exceptions  : 
+  Caller      : methodname
+
+=cut
+
+sub _compile_GenomicAlignBlocks {
+  my ($start_pos, $end_pos, $all_genomic_align_blocks) = @_;
+
+  ############################################################################################
+  ##
+  ## Change strands in order to have all reference genomic aligns on the forward strand
+  ##
+  foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
+    my $this_genomic_align = $this_genomic_align_block->reference_genomic_align;
+    if ($this_genomic_align->dnafrag_strand == -1) {
+      foreach my $genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
+        $genomic_align->reverse_complement;
+      }
+    }
+  }
+  ##
+  ############################################################################################
+
+  ## Nothing has to be compiled if there is one single GenomicAlignBlock!
+  return $all_genomic_align_blocks->[0] if (scalar(@$all_genomic_align_blocks) == 1);
+
+  ############################################################################################
+  ##
+  ## Fix all sequences
+  ##
+  foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
+    my $this_genomic_align = $this_genomic_align_block->reference_genomic_align;
+    my $this_start_pos = $this_genomic_align->dnafrag_start;
+    my $this_end_pos = $this_genomic_align->dnafrag_end;
+    my $starting_gap = $this_start_pos - $start_pos;
+    my $ending_gap = $end_pos - $this_end_pos;
+
+    my $this_cigar_line = $this_genomic_align->cigar_line;
+    my $this_original_sequence = $this_genomic_align->original_sequence;
+    $this_genomic_align->aligned_sequence("");
+    if ($starting_gap) {
+      $this_cigar_line = $starting_gap."M".$this_cigar_line;
+      $this_original_sequence = ("N" x $starting_gap).$this_original_sequence;
+    }
+    if ($ending_gap) {
+      $this_cigar_line .= $ending_gap."M";
+      $this_original_sequence .= ("N" x $ending_gap);
+    }
+    $this_genomic_align->cigar_line($this_cigar_line);
+    $this_genomic_align->original_sequence($this_original_sequence);
+    
+    foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+      $this_genomic_align->aligned_sequence("");
+      my $this_cigar_line = $this_genomic_align->cigar_line;
+      $this_cigar_line = $starting_gap."D".$this_cigar_line if ($starting_gap);
+      $this_cigar_line .= $ending_gap."D" if ($ending_gap);
+      $this_genomic_align->cigar_line($this_cigar_line);
+      $this_genomic_align->aligned_sequence(); # compute aligned_sequence using cigar_line
+    }
+  }
+  ##
+  ############################################################################################
+
+  ############################################################################################
+  ##
+  ## Distribute gaps
+  ##
+  my $aln_pos = 0;
+  my $gap;
+  do {
+    my $gap_pos;
+    my $genomic_align_block;
+    $gap = undef;
+
+    ## Get the (next) first gap from all the alignments (sets: $gap_pos, $gap and $genomic_align_block_id)
+    foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
+      my $this_gap_pos = index($this_genomic_align_block->reference_genomic_align->aligned_sequence,
+          "-", $aln_pos);
+      if ($this_gap_pos > 0 and (!defined($gap_pos) or $this_gap_pos < $gap_pos)) {
+        $gap_pos = $this_gap_pos;
+        my $gap_string = substr($this_genomic_align_block->reference_genomic_align->aligned_sequence,
+            $gap_pos);
+        ($gap) = $gap_string =~ /^(\-+)/;
+        $genomic_align_block = $this_genomic_align_block;
+      }
+    }
+
+    ## If a gap has been found, apply it to the other GAB
+    if ($gap) {
+      $aln_pos = $gap_pos + length($gap);
+      foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
+        next if ($genomic_align_block eq $this_genomic_align_block); # Do not add gap to itself!!
+        foreach my $this_genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
+          # insert gap in the aligned_sequence
+          my $aligned_sequence = $this_genomic_align->aligned_sequence;
+          substr($aligned_sequence, $gap_pos, 0, $gap);
+          $this_genomic_align->aligned_sequence($aligned_sequence);
+        }
+      }
+    }
+    
+  } while ($gap); # exit loop if no gap has been found
+
+  ## Fix all cigar_lines in order to match new aligned_sequences
+  foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
+    foreach my $this_genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
+      $this_genomic_align->cigar_line(""); # undef old cigar_line
+      $this_genomic_align->cigar_line(); # compute cigar_line from aligned_sequence
+    }
+  }
+  ##
+  ############################################################################################
+
+  ############################################################################################
+  ##
+  ##  Create the reference_genomic_align for this fake genomic_align_block
+  ##
+  ##  All the blocks have been edited and all the reference genomic_aling
+  ##  should be equivalent. Here, we create a new one with no fixed sequence.
+  ##  This permits to retrieve the real sequence when needed
+  ##
+  my $reference_genomic_align;
+  if (@$all_genomic_align_blocks) {
+    my $this_genomic_align = $all_genomic_align_blocks->[0]->reference_genomic_align;
+    $reference_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+            -dbID => -1,
+            -dnafrag => $this_genomic_align->dnafrag,
+            -dnafrag_start => $start_pos,
+            -dnafrag_end => $end_pos,
+            -dnafrag_strand => 1,
+            -cigar_line => $this_genomic_align->cigar_line,
+            -method_link_species_set => $this_genomic_align->method_link_species_set,
+            -level_id => 0
+        );
+  }
+  ##
+  ############################################################################################
+
+  ## Create the genomic_align_array (the list of genomic_aling for this fake gab
+  my $genomic_align_array = [$reference_genomic_align];
+  foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
+    foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+      $this_genomic_align->genomic_align_block_id(0); # undef old genomic_align_block_id
+      push(@$genomic_align_array, $this_genomic_align);
+    }
+  }
+  
+  ## Create the fake multiple Bio::EnsEMBL::Compara::GenomicAlignBlock
+  my $fake_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -length => ($end_pos - $start_pos + 1),
+          -genomic_align_array => $genomic_align_array,
+          -reference_genomic_align => $reference_genomic_align,
+      );
+  
+  return $fake_genomic_align_block;
+}
 
 1;
