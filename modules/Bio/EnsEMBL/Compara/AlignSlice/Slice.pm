@@ -642,6 +642,9 @@ sub _compile_mapped_Genes {
                 -analysis => $old_transcript->analysis,
                 -EXONS => $this_set_of_compatible_exons
             );
+        ## $old_transcript->translation is already a fake Bio::EnsEMBL::Translation!
+        $new_transcript->translation($old_transcript->translation)
+            if ($old_transcript->translation);
         push(@$all_transcripts, $new_transcript);
       }
     }
