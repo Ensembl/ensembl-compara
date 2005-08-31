@@ -2,6 +2,7 @@ package Bio::EnsEMBL::GlyphSet::evega_transcript;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_transcript;
+use EnsEMBL::Web::ExtURL;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub my_label {
@@ -83,6 +84,7 @@ sub zmenu {
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
   my $type = $transcript->type() || $gene->type();
   $type =~ s/HUMACE-//g;
+  my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   
   my $zmenu = {
     'caption'             => "Vega Gene",
@@ -91,6 +93,7 @@ sub zmenu {
     "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=vega",          
     '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
     "06:Vega curated ($type)"   => '',
+    "07:View in Vega" => $ExtUrl->get_url('Vega_gene', $gid),
   };
   
   if($pid) {
@@ -109,10 +112,12 @@ sub gene_zmenu {
   my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
   my $type = $gene->type();
      $type =~ s/HUMACE-//g;
+  my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   my $zmenu = {
     'caption'             => "Vega Gene",
     "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega),
     "06:Vega curated ($type)"   => '',
+    "07:View in Vega" => $ExtUrl->get_url('Vega_gene', $gid),
   };
   return $zmenu;
 }
