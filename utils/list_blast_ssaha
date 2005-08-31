@@ -14,7 +14,7 @@ The databases for the species given with the --nospecies argument are omitted
 ./list_blast_ssaha [options]
 
 Options:
-  --nospecies, --datasources
+  --nospecies, --sources
 
 Example:
   Compile a list of species that have a new gene build (need new blast databases
@@ -26,10 +26,10 @@ Example:
 
   The output is a list of all currently configured databases for each species
    
-   ./list_blast_ssaha --nospecies Caenorhabditis_elegans --datasources ssaha
-   ./list_blast_ssaha --nospecies Caenorhabditis_elegans --datasources blast
+   ./list_blast_ssaha --nospecies Caenorhabditis_elegans --sources ssaha
+   ./list_blast_ssaha --nospecies Caenorhabditis_elegans --sources blast
 
-  Delete all datasources that are not in use. Check the pre-site too.
+  Delete all sources that are not in use. Check the pre-site too.
 
 =head1 OPTIONS
 
@@ -37,8 +37,8 @@ B<--nospecies>
    Optional: if no species is specified, all species will be done
    List the species THAT ARE DUE TO CHANGE IN THE RELEASE
 
-B<-- datasources>
-  Optional. Default is all datasources.  Use this to narrow your search.
+B<-- sources>
+  Optional. Default is all sources.  Use this to narrow your search.
 
 B<-h,--help>
   Prints a brief help message and exits.
@@ -53,11 +53,11 @@ B<This program:>
 Produces a list for all species (excluding those listed in --nospecies) of 
 the blast files and ssaha server configured in the ini file (SERVERROOT/conf/$species.ini)
 
-More on --datasources: Valid options are:
+More on --sources: Valid options are:
 
 B<  all:> blast, ssaha
 
-B<  blast>; Lists all the files in use for these datasources: 
+B<  blast>; Lists all the files in use for these sources: 
   BLASTN_DATASOURCES 
   TBLASTX_DATASOURCES 
   TBLASTN_DATASOURCES 
@@ -98,22 +98,22 @@ use Getopt::Long;
   
 my $self = shift;
 my @SPECIES;
-my @datasources;
+my @sources;
 my $inuse;
 my $info;
 my $help;
 
 &GetOptions(
     'nospecies:s'  => \@SPECIES, ## species which can be deleted
-    'datasources:s' => \@datasources,
+    'sources:s'     => \@sources,
     'help'          => \$help,
     'info'          => \$info,
 ) || pod2usage(2);
 pod2usage1(-verbose => 2) if $info;
 pod2usage(-verbose => 1) if $help;
-@datasources = qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES 
+@sources = qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES 
 		   TBLASTN_DATASOURCES BLASTP_DATASOURCES 
-		   BLASTX_DATASOURCES SSAHA_DATASOURCES) unless @datasources;
+		   BLASTX_DATASOURCES SSAHA_DATASOURCES) unless @sources;
 
 
 my $search_db;
@@ -131,10 +131,10 @@ if (@SPECIES) {
     push (@ok_species, $spp) unless $bad_list{$spp};
     $count_spp++;
   }
-  $search_db = db_in_use( \@ok_species, \@datasources);
+  $search_db = db_in_use( \@ok_species, \@sources);
 }
 else {
-  $search_db = db_in_use( EnsEMBL::Web::BlastView::Tool::all_species, \@datasources);
+  $search_db = db_in_use( EnsEMBL::Web::BlastView::Tool::all_species, \@sources);
   die "Need to list all species whose data will not change in --species argument" if $inuse;
 }
 print_dbs($search_db);
@@ -143,11 +143,11 @@ print scalar @SPECIES, " species will be replaced with new data (total species: 
 
 sub db_in_use {
   my $species = shift;
-  my $datasources = shift;
+  my $sources = shift;
   my %search_db;
 
   foreach my $spp (sort @$species) {
-    foreach my $source (@$datasources) {
+    foreach my $source (@$sources) {
       my %tmp = %{EnsEMBL::Web::BlastView::Tool::get_config(  { species=>$spp, 
 					      values => $source}   )};
       map {$search_db{$spp}{ $tmp{$_} } = 1 unless $tmp{$_} eq 'dna' or $tmp{$_} eq 'peptide' } (keys %tmp);
@@ -162,7 +162,7 @@ sub print_dbs {
   foreach my $species  (sort keys %$species_dbs) {
     print "[Species] $species\n";
     print join "\n", (sort keys %{ $species_dbs->{$species} } );
-    print "\n\n";
+    print "\n";
   }
   print "\nKEEP PRE DATABASES TOO\n\n";
   return;
