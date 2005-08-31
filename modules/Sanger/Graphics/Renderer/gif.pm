@@ -128,7 +128,6 @@ sub render_Rect {
     my $y2 = $glyph->{'pixely'} + $glyph->{'pixelheight'};
 
     $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
-
     if($glyph->{'pattern'}) {
 	$canvas->setTile($self->tile($glyph->{'patterncolour'}, $glyph->{'pattern'}));
 	$canvas->filledRectangle($x1, $y1, $x2, $y2, gdTiled);
@@ -237,6 +236,7 @@ sub render_Line {
 sub render_Poly {
     my ($self, $glyph) = @_;
 
+    my $canvas         = $self->{'canvas'};
     my $bordercolour = $self->colour($glyph->{'bordercolour'});
     my $colour       = $self->colour($glyph->{'colour'});
     my $poly         = new GD::Polygon;
@@ -252,8 +252,12 @@ sub render_Poly {
         $poly->addPt($x,$y);
     }
 
-    if($glyph->{colour})        { $self->{'canvas'}->filledPolygon($poly, $colour); }
-    if($glyph->{bordercolour})  { $self->{'canvas'}->polygon($poly, $bordercolour); }
+    if($glyph->{colour})        { $canvas->filledPolygon($poly, $colour); }
+    if($glyph->{'pattern'}) {
+	$canvas->setTile($self->tile($glyph->{'patterncolour'}, $glyph->{'pattern'}));
+	$canvas->filledPolygon($poly, gdTiled);
+    }
+    if($glyph->{bordercolour})  { $canvas->polygon($poly, $bordercolour); }
 }
 
 sub render_Composite {
