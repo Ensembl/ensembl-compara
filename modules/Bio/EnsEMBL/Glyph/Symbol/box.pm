@@ -40,7 +40,8 @@ sub draw {
 	'height'     => $height,
 	'colour'     => $fillcolour,
 	'bordercolour' => $linecolour,
-	'absolutey' => 1
+	'absolutey' => 1,
+	(exists($style->{pattern}) ? (pattern=>$style->{pattern}) : ()),
     });
 }
 
