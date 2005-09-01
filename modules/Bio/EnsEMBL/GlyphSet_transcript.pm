@@ -99,7 +99,8 @@ sub compact_init {
  
   my $compara = $Config->{'compara'};
   my $link    = $compara ? $Config->get('_settings','opt_join_transcript') : 0;
-  my $join_col = 'blue';
+  my $join_col1 = 'blue';
+  my $join_col2 = 'chocolate1';
   my $join_z   = -10;
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
@@ -144,20 +145,27 @@ sub compact_init {
         $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
       }
     }
+	my $tsid;
+	my @GENE_TAGS;
     if( $link && ( $compara eq 'primary' || $compara eq 'secondary' )) {
-      if( $gene_stable_id ) {
-        if( $Config->{'previous_species'} ) {
-          foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
-            $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
-          } 
-        }
-        if( $Config->{'next_species'} ) {
-          foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'next_species'} ) ) {
-            $self->join_tag( $Composite2, ($Config->{'slice_id'}+1)."#$msid#$gene_stable_id", 0.5, 0.5 , $join_col, 'line', $join_z ) 
-          } 
-        }
-      }
-    }
+		if( $gene_stable_id ) {
+			my $alt_alleles = $gene->get_all_alt_alleles();
+			if( $Config->{'previous_species'} ) {
+				foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
+					$self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col1, 'line', $join_z )}
+				push @GENE_TAGS, map { $Config->{'slice_id'}. "=@{[$_->stable_id]}=$gene_stable_id" } @{$alt_alleles};
+			}
+			if( $Config->{'next_species'} ) {
+				foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'next_species'} ) ) {
+					$self->join_tag( $Composite2, ($Config->{'slice_id'}+1)."#$msid#$gene_stable_id", 0.5, 0.5 , $join_col1, 'line', $join_z )}
+				push @GENE_TAGS, map { ($Config->{'slice_id'}+1). "=$gene_stable_id=@{[$_->stable_id]}" } @{$alt_alleles};
+			}
+		}
+	}
+	#join alt_alleles
+	foreach( @GENE_TAGS) {
+		$self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col2, 'line', $join_z ) ;
+	}
 
     $Composite->push($Composite2);
     my $bump_height = $h + 2;
@@ -316,23 +324,39 @@ sub expanded_init {
     next if $gene_strand != $strand and $strand_flag eq 'b'; # skip features on wrong strand....
     next if $target_gene && $gene_stable_id ne $target_gene;
     my %TAGS = (); my @GENE_TAGS;
+	my $tsid;
     if( $link && ( $compara eq 'primary' || $compara eq 'secondary' ) && $link ) {
       if( $gene_stable_id ) {
-        my $alt_alleles = $gene->get_all_alt_alleles();   
+        my $alt_alleles = $gene->get_all_alt_alleles();
+
+		#vega stuff to link alt-alleles on longest transcript
+		my $alltrans = $gene->get_all_Transcripts;
+		my @s_alltrans = sort {$a->length <=> $b->length} @{$alltrans};
+		my $long_trans = pop @s_alltrans;
+		$tsid = $long_trans->stable_id;
+		my @long_trans;
+		foreach my $gene (@{$alt_alleles}) {
+			my $vtranscripts = $gene->get_all_Transcripts;
+			my @sorted_trans = sort {$a->length <=> $b->length} @{$vtranscripts};
+			push @long_trans,(pop @sorted_trans);
+		}
+			
         if( $Config->{'previous_species'} ) {
           my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'previous_species'} );
           push @{$TAGS{$psid}}, map { $Config->{'slice_id'}. "#$_#$pid" } @{$href};
-          push @GENE_TAGS, map { $Config->{'slice_id'}. "=@{[$_->stable_id]}=$gene_stable_id" } @{$alt_alleles};
+		  push @GENE_TAGS, map { $Config->{'slice_id'}. "=@{[$_->stable_id]}=$tsid" } @long_trans;	
         }
         if( $Config->{'next_species'} ) {
           my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'next_species'} );
           push @{$TAGS{$psid}}, map { ($Config->{'slice_id'}+1). "#$pid#$_" } @{$href};
-          push @GENE_TAGS, map { ($Config->{'slice_id'}+1). "=$gene_stable_id=@{[$_->stable_id]}" } @{$alt_alleles};
+          push @GENE_TAGS, map { ($Config->{'slice_id'}+1). "=$tsid=@{[$_->stable_id]}" } @long_trans;
         }
       }
     }
-    my $join_col = 'blue';
+    my $join_col1 = 'blue';
+	my $join_col2 = 'chocolate1';
     my $join_z   = -10;
+
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
       next if $transcript->start > $length ||  $transcript->end < 1;
       my @exons = sort {$a->start <=> $b->start} grep { $_ } @{$transcript->get_all_Exons()};#sort exons on their start coordinate 
@@ -356,11 +380,13 @@ sub expanded_init {
       my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
       if( $transcript->translation ) { 
         foreach( @{$TAGS{$transcript->translation->stable_id}||[]} ) { 
-          $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col, 'line', $join_z ) ;
+          $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col1, 'line', $join_z ) ;
         }
       }
-      foreach( @GENE_TAGS) { 
-        $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col, 'line', $join_z ) ;
+      foreach( @GENE_TAGS) {
+		  if ($transcript->stable_id eq $tsid) {
+			  $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col2, 'line', $join_z ) ;
+		  }
       }
       for(my $i = 0; $i < @exons; $i++) {
         my $exon = @exons[$i];

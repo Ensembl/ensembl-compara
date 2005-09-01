@@ -77,8 +77,6 @@ sub expanded_init {
   my $self_species   = $container->{_config_file_name_};
   my $compara        = $self->{'config'}{'compara'};
   my $link = 0;
-  
-
   my $TAG_PREFIX;
   my $METHOD         = $Config->get($type, 'method' );
   if( $compara) {
@@ -102,7 +100,10 @@ sub expanded_init {
   my $script = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? 'contigview' : $ENV{'ENSEMBL_SCRIPT'};
   my $SHORT = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $Config->get( $type, 'species' ) };
   my $HREF  = $Config->get( $type, 'linkto' )."/$SHORT/$script";
-  foreach my $i (keys %id){
+
+  # sort alignments by size
+  my @s_i = sort {($id{$b}[0][1]->hend() - $id{$b}[0][1]->hstart()) <=> ($id{$a}[0][1]->hend() - $id{$a}[0][1]->hstart())} keys %id;
+  foreach my $i (@s_i){
     my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
     $T+=@F; ## Diagnostic report....
     my( $seqregion,$group ) = split /:/, $i;
@@ -147,6 +148,7 @@ sub expanded_init {
         if( $strand_flag eq 'z' && $join_col) {
           $self->join_tag( $BOX, "BLOCK_$type$BLOCK", $strand == -1 ? 0 : 1, 0 , $join_col, 'fill', $join_z ) ;
           $self->join_tag( $BOX, "BLOCK_$type$BLOCK", $strand == -1 ? 1 : 0, 0 , $join_col, 'fill', $join_z ) ;
+#warn "BLOCK_$type$BLOCK";
           $BLOCK++;
         }
         $Composite->push($BOX);
@@ -182,6 +184,10 @@ sub expanded_init {
       $ZZ = "l=$seqregion:$start-$end";
     }
     $Composite->href(  "$HREF?$ZZ" );
+
+	#decide whether to jump within or between species;
+	my $jump_type = $self_species eq $species_2 ? "chromosome $seqregion" : $species_2;
+
     $Composite->zmenu( {
       'caption' => $caption,
       "$seqregion: $start-$end" => '',
@@ -291,10 +297,29 @@ sub compact_init {
     my $s_2   = $f->hstart;
     my $e_2   = $f->hend;
     my $href  = '';
+    #z menu links depend on whether jumping within or between species;
+    my $jump_type;
+    if (EnsWeb::species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+            if ($self_species eq $species_2) {
+                    $jump_type = "chromosome $chr_2";
+                    if ($compara) {			
+                            $CONTIGVIEW_TEXT_LINK = "Go to chromosome $chr";
+                    }
+            } else {	
+                    $jump_type = "$other_species chr $chr_2";
+                    if ($compara) {			
+                            $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
+                    }
+            }
+    } else {
+            $jump_type = $species_2;
+    }
+
     my $zmenu = { 'caption'              => $caption,
                   "01:$chr_2:$s_2-$e_2"     => '',
-                  "02:Jump to $species_2"   => "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2",
+                  "02:Jump to $jump_type"   => "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2",
                   "03:$CONTIGVIEW_TEXT_LINK"  => "/$short_self/contigview?l=$chr:$rs-$re" };
+
     unless( $domain ) {
       $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
       $zmenu->{ '04:Dotter' }    = $href;

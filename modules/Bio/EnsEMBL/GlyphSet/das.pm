@@ -64,6 +64,7 @@ sub init_label {
 # Render ungrouped features
 
 sub RENDER_simple {
+
   my( $self, $configuration ) = @_;
   my $empty_flag = 1;
 
@@ -681,6 +682,7 @@ sub _init {
   $das_config_key =~ s/^managed_das/das/;
   my $Config = $self->{'config'};
   my $Extra  = $self->{'extras'};
+  my $strand = $Config->get($das_config_key, 'str') || $Extra->{'strand'};
 
   my $strand = $Config->get($das_config_key, 'str') || $Extra->{'strand'};
 
@@ -712,6 +714,14 @@ sub _init {
   my $dastype = $Extra->{'type'} || 'ensembl_location';
   my @das_features = ();
 
+  $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{col} || 'contigblue1';
+  $configuration->{depth} =  defined($Config->get($das_config_key, 'dep')) ? $Config->get($das_config_key, 'dep') : $Extra->{depth} || 4;
+  $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
+  $configuration->{labelling} = $Extra->{labelflag} =~ /^[ou]$/i ? 1 : 0;
+  $configuration->{length} = $container_length;
+
+#  warn("$das_config_key:".$Config->get($das_config_key, 'stylesheet'));
+#  warn(Dumper($Extra));
   $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
   $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
   ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
