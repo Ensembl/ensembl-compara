@@ -31,7 +31,7 @@ no warnings 'uninitialized';
 $| = 1;
 
 use CGI;
-use EnsEMBL::Web::DBSQL::HelpAdaptor;
+use EnsEMBL::Web::HelpView::HelpAdaptor;
 use EnsEMBL::Web::HelpView::HelpRenderer;
 use Data::Dumper;
 
@@ -39,7 +39,7 @@ my $cgi = CGI->new;
 my $action = $cgi->param('action') || 'list_articles';
 
 # get DBAdaptor and Renderer objects
-my $helpdb = EnsEMBL::Web::DBSQL::HelpAdaptor->new;
+my $helpdb = EnsEMBL::Web::HelpView::HelpAdaptor->new;
 my $renderer = EnsEMBL::Web::HelpView::HelpRenderer->new($helpdb);
 
 # print header and left menu
