@@ -271,3 +271,5 @@ table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-c
 table.zoom tr td { vertical-align: bottom }
 table.zoom tr td img { margin-top: 0px }
 .navbox { background-color: [[BACKGROUND5]] }
+
+.multicol { float: left; width: 12em; white-space: nowrap }
