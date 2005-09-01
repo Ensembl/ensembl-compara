@@ -426,7 +426,7 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding: 0px 10px">';
+    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px">';
     $HTML .= qq(<div style="text-align: center">$tag</div>);
     if( $self->imagemap eq 'yes' ) {
       $HTML .= $image->render_image_map

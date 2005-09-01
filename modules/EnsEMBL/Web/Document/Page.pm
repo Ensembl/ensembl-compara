@@ -34,7 +34,6 @@ sub child_objects {
   unless( $self->{'children'} ) {
     $self->{'children'} = [];
     foreach my $root( 'EnsEMBL::Web', @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS} ) {
-      warn ">>>> $root";
       my $class_name = $root. '::Document::Configure';
       if( $self->dynamic_use( $class_name ) ) {
         push @{$self->{'children'}}, new $class_name;
@@ -46,7 +45,6 @@ sub child_objects {
       }
     }
   }
-  warn ">>> @{$self->{'children'}} <<<";
   return @{$self->{'children'}};
 }
 

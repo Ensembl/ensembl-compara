@@ -406,6 +406,7 @@ sub parse { # Called to create hash
   }
   $self->_parse();
   $self->configure_registry();
+  $self->create_robots_txt();
   $self->{'_parse_caller_array'} = [];
   my $C = 0;
   while(my @T = caller($C) ) { $self->{'_parse_caller_array'}[$C] = \@T; $C++; }
@@ -1081,6 +1082,26 @@ sub translate {
   my( $self, $word ) = @_;
   return $word unless $self->ENSEMBL_DICTIONARY;  
   return $self->ENSEMBL_DICTIONARY->{$word}||$word;
+}
+
+sub create_robots_txt {
+  my $self = shift;
+  warn "ROBOT: @ENSEMBL_HTDOCS_DIRS";
+  my $root = $ENSEMBL_HTDOCS_DIRS[0];
+  warn "ROBOT:".$root;
+  if( open FH, ">$root/robots.txt" ) { 
+    print FH qq(
+User-agent: *
+Disallow: /Multi/
+Disallow: /BioMart/
+);
+    foreach( @$ENSEMBL_SPECIES ) { 
+      print FH qq(Disallow: /$_/\n);
+    }
+    close FH;
+  } else {
+    warn "ROBOT:.... $root-robots.txt";
+  }
 }
 
 sub all_search_indexes {

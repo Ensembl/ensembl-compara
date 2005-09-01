@@ -205,7 +205,7 @@ sub _get_databases_common {
   }
     
     ## Simple DBs; no dependence on core  
-    my @simple_dbs = grep { $databases{$_} } qw(go mart fasta family);
+    my @simple_dbs = grep { $databases{$_} } qw(go mart fasta family help);
     foreach (@simple_dbs) {
         my $getter = "_get_" . lc($_) . "_database";
     my $dbadaptor;
@@ -624,6 +624,14 @@ sub _get_compara_database{
 
 =cut
 
+sub _get_help_database{
+    my $self = shift;
+    my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_HELP} ||
+        die( "No go database for this species" );
+    return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
+}
+
+=head2 _get_family_database
 sub _get_go_database{
     my $self = shift;
     my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_GO} ||

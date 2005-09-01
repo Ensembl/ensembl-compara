@@ -56,14 +56,20 @@ sub _spreadsheet_miscset {
     foreach my $entry ( sort { $a->start <=> $b->start }
       @{$object->database('core')->get_MiscFeatureAdaptor->fetch_all_by_Slice_and_set_code(
         $region, $object->misc_set_code)} ) {
+      my $name = $entry->get_scalar_attribute( 'clone_name' );
+      my $well = $entry->get_scalar_attribute( 'name' );
+      unless( $name ) {
+        $name = $well;
+        $well = $entry->get_scalar_attribute('location');
+      }
       $panel->add_row( {
         'sr'     => $entry->seq_region_name,
         'start'  => $entry->seq_region_start,
         'end'    => $entry->seq_region_end,
-        'well  ' => $entry->get_scalar_attribute( 'clone_name') ? $entry->get_scalar_attribute('name') : $entry->get_scalar_attribute('location'),
+        'well'   => $well,
         'sanger' => join(';',@{$entry->get_all_attribute_values('synonym')},@{$entry->get_all_attribute_values('sanger_project')} ),
         'embl'   => join(';',@{$entry->get_all_attribute_values('embl_acc')} ),
-        'name'   => $entry->get_scalar_attribute( 'clone_name'   ) || $entry->get_scalar_attribute('name'),
+        'name'   => $name,
         'fish'   => $entry->get_scalar_attribute( 'FISHmap' )      || $entry->get_scalar_attribute('fish'),
         'centre' => $entry->get_scalar_attribute( 'organisation' ) || $entry->get_scalar_attribute('org'),
         'status' => $entry->get_scalar_attribute( 'state' ),

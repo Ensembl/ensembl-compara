@@ -155,8 +155,8 @@ sub similarity_matches {
     _sort_similarity_links($transcript, @similarity_links);
   }
 
-  my %links = %{$transcript->__data->{'similarity_links'}};
-  return unless %links;
+  my @links = @{$transcript->__data->{'similarity_links'}};
+  return unless @links;
 
   my $db = $transcript->get_db();
   my $entry = $transcript->gene_type || 'Ensembl';
@@ -167,32 +167,22 @@ sub similarity_matches {
     $html = qq(<p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
   }
   $html .= qq(<table cellpadding="4">);
-  foreach my $key (sort keys %links){
-    if(scalar (@{$links{$key}}) > 0) {
-      my @sorted_links = sort @{$links{$key}};
-      $html .= qq(<tr><th>$key:</th><td>);
-      if( $sorted_links[0] =~ /<br/i ){
-        $html .= join(' ', @sorted_links );
-      } else { # Need a BR each 5 entries
-        $html .= qq(<table><tr>);
-        my @sorted_lines;
-        for( my $i=0; $i<@sorted_links; $i++ ){
-          my $line_num = int($i/4);
-          if( ref(  $sorted_lines[$line_num] ) ne 'ARRAY' ) {
-            $sorted_lines[$line_num] = [];
-          }
-          push( @{$sorted_lines[$line_num]}, "<td>".$sorted_links[$i]."</td>" );
-        }
-        $html .= join( '</tr><tr>', map{ join( ' ', @$_ ) } @sorted_lines );
-        $html .= qq(</tr></table>);
+  my $old_key = '';
+  foreach my $link (@links) {
+    my ( $key, $text ) = @$link;
+    if( $key ne $old_key ) {
+      if($old_key eq "GO") {
+        $html .= qq(<div class="small">GO mapping is inherited from swissprot/sptrembl</div>);
       }
-      if($key eq "GO" && !$transcript->database('go')){
-        $html .= qq(<span class="small">GO mapping is inherited from swissprot/sptrembl</span>);
+      if( $old_key ne '' ) {
+        $html .= qq(</td></tr>);
       }
-      $html .= qq(</td></tr>);
-    }
+      $html .= qq(<tr><th style="white-space: nowrap; padding-right: 1em">$key:</th><td>);
+      $old_key = $key;
+    }    
+    $html .= $text;
   }
-   $html .= qq(</table>);
+  $html .= qq(</td></tr></table>);
   $panel->add_row( $label, $html );
 }
 
@@ -202,23 +192,13 @@ sub _sort_similarity_links{
   my $database = $object->database;
   my $db       = $object->get_db() ;
   my $urls     = $object->ExtURL;
-  my %links ;
-  my $ALIGN_LINK = qq( [<a href="/@{[$object->species]}/alignview?transcript=%s;sequence=%s;db=%s">align</a>] );
-  # Nice names    
-  my %nice_names = (  
-    'protein_id'            => 'Protein ID',             'drosophila_gene_id'    => 'Drosophila Gene',
-    'flybase_gene'          => 'Flybase Gene',           'flybase_symbol'        => 'Flybase Symbol',
-    'affy_hg_u133'          => 'Affymx Microarray U133', 'affy_hg_u95'           => 'Affymx Microarray U95',
-    'anopheles_symbol'      => 'Anopheles symbol',       'sanger_probe'          => 'Sanger Probe',
-    'wormbase_gene'         => 'Wormbase Gene',          'wormbase_transcript'   => 'Wormbase Transcript',
-    'wormpep_id'            => 'Wormpep ID',             'briggsae_hybrid'       => 'Briggsae Hybrid',
-    'sptrembl'              => 'SpTrEMBL',               'ens_hs_transcript'	 => 'Ensembl Human Transcript',
-    'ens_hs_translation'    => 'Ensembl Human Translation',
-    'uniprot/sptrembl'      => 'UniProt/TrEMBL',         'uniprot/swissprot'     => 'UniProt/Swiss-Prot',
-    'pubmed'                => 'Sequence Publications',  'ciona_int_jgi_proteins_v1' => 'Ciona V1',
-  );
-                       
-  foreach my $type (sort @similarity_links) { 
+  my @links ;
+  # @ice names    
+  foreach my $type (sort {
+    $b->priority        <=> $a->priority ||
+    $a->db_display_name cmp $b->db_display_name || 
+    $a->display_id      cmp $b->display_id
+  } @similarity_links ) { 
     my $link = "";
     my $join_links = 0;
     my $externalDB = $type->database();
@@ -239,54 +219,55 @@ sub _sort_similarity_links{
       my ($key, $primary_id) = split ':', $display_id;
       push @{$object->__data->{'GKB_links'}->{$key}} , $type ;
       next;
-    } elsif ($externalDB eq "REFSEQ") { 
-        # strip off version
-      $display_id =~ s/(.*)\.\d+$/$1/o;
-    } elsif ($externalDB eq "protein_id") { 
-         # Can't link to srs if there is an Version - so strip it off
-      $primary_id =~ s/(.*)\.\d+$/$1/o;
     }
-    # Build external links
-    if($urls and $urls->is_linked($externalDB)) {
-      $link = '<a href="'.$urls->get_url($externalDB, $primary_id).'">'. $display_id. '</a>';
-      if ( uc( $externalDB ) eq "REFSEQ" and $display_id =~ /^NP/) {
-        $link = '<a href="'.$urls->get_url('REFSEQPROTEIN',$primary_id).'">'. $display_id. '</a>';
-      } elsif ($externalDB eq "HUGO") {
-        $link = '<a href="' .$urls->get_url('GENECARD',$display_id) .'">Search GeneCards for '. $display_id. '</a>';
-      } elsif ($externalDB eq "MarkerSymbol") { # hack for mouse MGI IDs
-        $link = '<a href="' .$urls->get_url('MARKERSYMBOL',$primary_id) .'">'."$display_id ($primary_id)".'</a>';
-      } 
-      if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
-        $link .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';            
+    my $text = $display_id;
+    if( $urls and $urls->is_linked( $externalDB ) ) {
+      my $link;
+      if( $type->primary_id_linkable ) {
+        $link = $urls->get_url( $externalDB, $primary_id );
+      } elsif( $type->display_id_linkable ) {
+        $link = $urls->get_url( $externalDB, $display_id );
+      }
+      my $word = $display_id;
+      if( $externalDB eq 'HUGO' ) {
+        $word = "Search GeneCards for $display_id";
         $join_links = 1;    
+      } elsif( $externalDB eq 'MARKERSYMBOL' ) {
+        $word = "$display_id ($primary_id)";
       }
-      if( ( $object->species_defs->ENSEMBL_PFETCH_SERVER ) && 
-          ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {  
-        my $seq_arg = $display_id;
-           $seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
-           $link .= sprintf( $ALIGN_LINK,
-           $object->stable_id,
-           $seq_arg,
-           $db );
+      if( $link ) {
+        $text = qq(<a href="$link">$word</a>);
+      } else {
+        $text = qq($word);
       }
-      if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link            
-        $link .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'">Search GO</a>]';
-      }
-      if( $join_links  ) {
-        $link .= '<br />';
-      }
+    }
+    if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
+      $text .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';            
+      $join_links = 1;    
+    }
+    if( ( $object->species_defs->ENSEMBL_PFETCH_SERVER ) && 
+      ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {  
+      my $seq_arg = $display_id;
+      $seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
+      $text .= sprintf( ' [<a href="/%s/alignview?transcript=%s;db=%s">align</a>] ',
+                  $object->species, $object->stable_id, $seq_arg, $db );
+    }
+    if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link            
+      $text .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'">Search GO</a>]';
+    }
+    if( $join_links  ) {
+      $text = qq(\n  <div>$text</div>); 
     } else {
-      $link = " $display_id ";
+      $text = qq(\n  <div class="multicol">$text</div>); 
     }
     # override for Affys - we don't want to have to configure each type, and
     # this is an internal link anyway.
     if( $externalDB =~ /^AFFY_/i) {
-      $link = '<a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a>';
+      $text = "\n".'  <div class="multicol"><a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a></div>';
     }
-    my $display_name = $nice_names{lc($externalDB)} || ($externalDB =~ s/_/ /g, $externalDB)  ;
-    push (@{$links{$display_name}}, $link);         
+    push @links, [ $type->db_display_name, $text ] ;
   }
-  $object->__data->{'similarity_links'} = \%links ;
+  $object->__data->{'similarity_links'} = \@links ;
   return $object->__data->{'similarity_links'};
 }
 
@@ -734,9 +715,14 @@ sub marked_up_seq_form {
   my $form = EnsEMBL::Web::Form->new( 'marked_up_seq', "/@{[$object->species]}/transview", 'get' );
   $form->add_element( 'type' => 'Hidden', 'name' => 'db',         'value' => $object->get_db    );
   $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->stable_id );
-  my $show = [{ 'value' => 'plain', 'name' => 'None' }, { 'value' => 'codons', 'name' => 'Codons' }, {'value'=>'peptide', 'name'=>'Codons and Exons'} ];
-  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'}||$object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
-    push @$show, { 'value' => 'snps', 'name' => 'Codons, Exons and SNPs' };
+  my $show = [
+    { 'value' => 'plain',   'name' => 'Exons' },
+    { 'value' => 'codons',  'name' => 'Exons and Codons' },
+    { 'value' => 'peptide', 'name' => 'Exons, Codons and Translation'}
+  ];
+  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ||
+      $object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
+    push @$show, { 'value' => 'snps', 'name' => 'Exons, Codons, Translations and SNPs' };
   }
   push @$show, { 'value'=>'rna', 'name' => 'Exons, RNA information' } if $object->Obj->biotype =~ /RNA/;
   $form->add_element(
@@ -824,9 +810,9 @@ sub do_markedup_pep_seq {
   my $pos = 1;
   my $SPACER = $number eq 'on' ? '       ' : '';
   my %bg_color = (  # move to constant MARKUP_COLOUR
-    'utr'      => $object->species_defs->ENSEMBL_COLOURS->{'background0'},
-    'c0'       => $object->species_defs->ENSEMBL_COLOURS->{'white'},
-    'c1'       => $object->species_defs->ENSEMBL_COLOURS->{'background3'},
+    'utr'      => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND0'},
+    'c0'       => 'ffffff',
+    'c1'       => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND3'},
     'c99'      => 'ffcc99',
     'synutr'   => '00cc00',
     'sync0'    => '99ff99',

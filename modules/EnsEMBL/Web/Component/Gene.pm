@@ -226,11 +226,11 @@ sub method {
     my $logic_name = $o->can('analysis') && $o->analysis ? $o->analysis->logic_name : '';
     if( $logic_name ){
       my $confkey = "ENSEMBL_PREDICTION_TEXT_".uc($logic_name);
-      $text = $gene->species_defs->$confkey;
+      $text = "<strong>FROM CONFIG:</strong> ".$gene->species_defs->$confkey;
     }
     if( ! $text ){
       my $confkey = "ENSEMBL_PREDICTION_TEXT_".uc($db);
-      $text   = $gene->species_defs->$confkey;
+      $text   = "<strong>FROM DEFAULT CONFIG:</strong> ".$gene->species_defs->$confkey;
     }
   }
   $panel->add_row( $label, sprintf(qq(<p>%s</p>), $text )
