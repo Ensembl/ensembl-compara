@@ -1,8 +1,8 @@
 <html>
 <head>
 <meta name="author" content="helpdesk" />
-<meta name="navigation" content="Ensembl Core and EST" />
-<title>Ensembl Core and EST</title>
+<meta name="navigation" content="Ensembl Core" />
+<title>Ensembl Core</title>
 </head>
 
 <body>
@@ -10,33 +10,34 @@
 <h2>Ensembl Core</h2>
 
 
-<h3 class="boxed">Ensembl Core and EST Database</h3>
+<h3 class="boxed">Database Descriptions</h3>
+
+
+<h4>Core database</h4>
 
 <p>
-The database table layout is explained in the following document:
+For each organism supported by Ensembl, a species-specific Ensembl Core database stores the bulk of annotation information.
+Some of the key features are:
 </p>
 
 <ul>
 
 <li>
-<p>Core and EST database 
-<a href="./schema/">Schema Description</a>
+<p>
+The unmasked genome sequence is stored on the sequence-level i.e. in form of BAC clones or whole genome shotgun scaffolds.
 </p>
 </li>
 
-</ul>
-
-<h4>Core database</h4>
+<li>
 <p>
-For each organism supported by Ensembl, a species-specific Ensembl Core database stores the genome sequences and the bulk of the annotation information.
-Some of the other features are:
+Assembly information the generate top-level sequences like chromosomes from sequence-level entities.
 </p>
-
-<ul>
+</li>
 
 <li>
 <p>
-The non-redundant set of Ensembl gene, transcript and protein models annotated by the automated genome analysis and <a href="/info/data/docs/genome_annotation.html">annotation pipeline</a>.
+The non-redundant set of Ensembl gene, transcript and protein models annotated by the automated genome analysis and
+<a href="../../data/docs/genome_annotation.html">annotation pipeline</a>.
 </p>
 </li>
 
@@ -72,21 +73,57 @@ External references to other databases of biological information.
 
 </ul>
 
+
 <h4><a id="est" name="est">EST database</a></h4>
+
 <p>
 For well-characterised species with a reasonable amount of biological sequence records as supporting evidence
 Ensembl provides an independent EST gene set, which is solely based on EST information.
+The key features stored are:
 </p>
+
+<ul>
+
+<li>
+<p>
+The non-redundant Ensembl EST gene set.
+</p>
+</li>
+
+<li>
+<p>
+A pre-filtered set of EST sequences aligned to the genome sequence.
+This set seved as the biological evidence for EST gene annotation.
+</p>
+</li>
+
+</ul>
 
 <p>
-The layout of Ensembl EST Databases is identical to the Ensembl Core Database schema so that both schema descriptions and API access apply similarly.
-While EST genes are stored in gene, transcript, translation and exon tables like the Ensembl gene set, 
-the genome sequences are only stored in the corresponding Ensembl Core databases.
-This saves disk space and by connecting to the Core and the EST Database simultaneously, it is still possible to retrieve all sequence information.
+Please note that Ensembl EST databases do not contain genome sequences.
+This saves disk space and by connecting to Core and the EST databases simultaneously, it is still possible to retrieve sequence information.
 </p>
 
 
-<h3 class="boxed">Perl API for the Ensembl Core and EST databases</h3>
+<h3 class="boxed">Database Schema</h3>
+
+<p>
+The layout of Ensembl Core and EST Databases is identical so that schema descriptions and API access apply similarly.
+The database table layout is explained in the following document:
+</p>
+
+<ul>
+
+<li>
+<p>
+<a href="./schema/index.html">Core Schema Description</a>
+</p>
+</li>
+
+</ul>
+
+
+<h3 class="boxed">Perl API</h3>
 
 <p>
 A comprehensive Perl Application Programme Interface (API) provides efficient access to tables within the Ensembl Core and EST databases.
@@ -96,32 +133,32 @@ A comprehensive Perl Application Programme Interface (API) provides efficient ac
 
 <li>
 <p>
-<a href="../api_installation.html">Perl API Installation</a>: a step-by-step installation guide (for all Ensembl APIs)
+<a href="../api_installation.html">Core Perl API Installation</a>: A step-by-step installation guide for all Ensembl Perl APIs.
 </p>
 </li>
 
 <li>
-<p>Core and EST database
-<a href="../Pdoc/ensembl/">API Documentation</a>: a complete reference to the object and methods used in the Core and EST database API (Pdoc)
+<p>
+<a href="../Pdoc/ensembl/index.html">Core Perl API Documentation</a>: A complete reference to the objects and methods used in the Core and EST database API.
 </p>
 </li>
 
 <li>
-<p>Core and EST database 
-<a href="./core_tutorial.html">API Tutorial</a>: an introduction to the underlying concepts of the API
+<p>
+<a href="./core_tutorial.html">Core Perl API Tutorial</a>: An introduction to the underlying concepts of the Core and EST database API.
 </p>
 </li>
 
 </ul>
 
 
-
 <h3 class="boxed">Java API</h3>
+
 <p>
 The Ensembl Java API (Ensj) is slightly less complete than the Perl APIs but implements access to Ensembl
 <a href="../core/index.html">Core</a>,
 <a href="../compara/index.html">Compara</a> and
-<a href="../variation/index.html">Variation</a> Databases simultaneously.
+<a href="../variation/index.html">Variation</a> databases simultaneously.
 </p>
 
 <ul>
