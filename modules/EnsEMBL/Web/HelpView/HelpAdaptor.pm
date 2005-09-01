@@ -39,14 +39,18 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use SpeciesDefs;
-use EnsEMBL::DB::Core;
+use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::DBSQL::UserDB;
 use EnsEMBL::Web::HelpView::Article;
 use EnsEMBL::Web::HelpView::Category;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 our $USERDATATYPE_ID = 210;
+our $SPECIES_DEFS;
+BEGIN {
+  $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new;
+}
+
 
 =head2 new
 
@@ -82,18 +86,16 @@ sub new {
 
 =cut
 
+use DBI;
 sub dbh {
     my $self = shift;
     unless ($self->{'_dbh'}) {
-        my $species_defs = SpeciesDefs->new;
-        my $dbinfo = $species_defs->multidb->{'ENSEMBL_HELP'};
-        $dbinfo->{'USER'} = $species_defs->ENSEMBL_WRITE_USER;
-        $dbinfo->{'PASS'} = $species_defs->ENSEMBL_WRITE_PASS;
-        my $databases = EnsEMBL::DB::Core->get_databases('help');
-        if ($databases->{'error'}) {
-            throw("Could not connect to help database: $databases->{error}");
-        }
-        $self->{'_dbh'} = $databases->{'help'};
+        my $dbinfo = $SPECIES_DEFS->multidb->{'ENSEMBL_HELP'};
+        my $dbh = DBI->connect(
+		"DBI:mysql:database=$dbinfo->{NAME};host=$dbinfo->{HOST};port=$dbinfo->{PORT}",
+                $SPECIES_DEFS->ENSEMBL_WRITE_USER,
+                $SPECIES_DEFS->ENSEMBL_WRITE_PASS );
+        $self->{'_dbh'} = $dbh;
 
         # store database name, host and port
         $self->{'dbname'} = $dbinfo->{'NAME'};

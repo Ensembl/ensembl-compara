@@ -38,7 +38,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use SpeciesDefs;
+use EnsEMBL::Web::SpeciesDefs;
 
 =head2 new
 
@@ -57,7 +57,7 @@ sub new {
     my $dba = shift || throw('You must provide a EnsEMBL::Web::HelpView::HelpAdaptor')
     ;
     my $self = {
-        'species_defs'  => SpeciesDefs->new,
+        'species_defs'  => EnsEMBL::Web::SpeciesDefs->new,
         'dba'           => $dba,
     };
     bless($self, $class);
