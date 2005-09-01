@@ -52,6 +52,12 @@ my %queries = (
       where a.analysis_id = f.analysis_id
       group by name
       order by name),
+  'Prediction transcripts' => qq(
+     select a.logic_name as name, count(*) as n
+       from prediction_transcript as f, analysis as a
+      where a.analysis_id = f.analysis_id
+      group by name
+      order by name),
   'Transcript' => qq(
      select concat( ifnull(f.biotype,    '--'), ' : ',
                     ifnull(f.confidence, '--'), ' : ',
@@ -71,12 +77,15 @@ my %queries = (
       group by rc.repeat_type
       order by name)
 );
-foreach my $sp ( @{$SD->ENSEMBL_SPECIES} ) {
+
+my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
+
+foreach my $sp ( @species ) {
   my $tree = $SD->{_storage}{$sp};
   foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_EST ) ) {
     next unless $tree->{'databases'}->{$db_name}{'NAME'};
     my $dbh = $SD->db_connect( $tree, $db_name );
-    foreach my $K (sort keys %queries ) {
+    foreach my $K ( sort keys %queries ) {
       my $results = $dbh->selectall_arrayref( $queries{$K} );
       next unless $results;
       next unless @{$results};
