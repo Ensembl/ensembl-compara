@@ -419,6 +419,8 @@ sub fetch_all_by_Slice {
                e.g. "Mus musculus"
   Arg [3]    : string $alignment_type
                e.g. "BLASTZ_NET"
+  Arg [4]    : string $seq_region_name
+               e.g. "6-COX"
   Example    : 
   Description: 
   Returntype : array with 3 elements
@@ -428,14 +430,17 @@ sub fetch_all_by_Slice {
 =cut
 
 sub interpolate_best_location {
-  my ($self,$slice,$species,$alignment_type) = @_;
+  my ($self,$slice,$species,$alignment_type,$seq_region_name) = @_;
+
+#warn $slice->name,"\t$species\t$alignment_type\t$seq_region_name";
+
   $| =1 ;
   my $max_distance_for_clustering = 10000;
   my $dafs = $self->fetch_all_by_Slice($slice, $species, undef, $alignment_type);
-
   my %name_strand_clusters;
   my $based_on_group_id = 1;
   foreach my $daf (@{$dafs}) {
+    next if ($seq_region_name && $daf->hseqname ne $seq_region_name);
     if (defined $daf->group_id && $daf->group_id > 0 && $alignment_type ne "TRANSLATED_BLAT") {
       push @{$name_strand_clusters{$daf->group_id}}, $daf;
     } else {
