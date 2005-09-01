@@ -11,6 +11,7 @@ A collection of drawing-code glyphs to represent a line.
 STYLE	- 'solid' - normal line (default)
 	- 'hat'	  - intron style (up/down by strand)
 	- 'dashed'- broken line
+	- 'chevron'- line with multiple arrow heads
 
 =cut
 
@@ -73,7 +74,8 @@ sub draw {
 	    'width'      => $width,
 	    'height'     => 0,
 	    'colour'     => $linecolour,
-	    'absolutey' => 1
+	    'absolutey' => 1,
+            ($linestyle eq 'chevron' ? ('chevron'=>$height, 'strand'=>$orientation) : ()),
 	};
 	$params->{'dotted'} = 1 if $dotted;
 	

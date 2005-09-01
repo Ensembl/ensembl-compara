@@ -2,7 +2,9 @@
 # Author:        rmp@sanger.ac.uk
 # Maintainer:    webmaster@sanger.ac.uk
 # Created:       2001
-# Last Modified: rmp 2005-08-09 hatched fill-pattern support (subs tile and render_Rect): set $glyph->{'hatched'} = true|false and $glyph->{'hatchcolour'} = "darkgrey";
+# Last Modified: dj3 2005-09-01 add chevron line style a la UCSC (ticket 25769)
+#                dj3 2005-08-31 add tiling ability to Polys (was just Rects)
+#                rmp 2005-08-09 hatched fill-pattern support (subs tile and render_Rect): set $glyph->{'hatched'} = true|false and $glyph->{'hatchcolour'} = "darkgrey";
 #                rmp 2004-12-14 initial stringFT support
 #
 package Sanger::Graphics::Renderer::gif;
@@ -230,6 +232,25 @@ sub render_Line {
         $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
     } else {
         $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
+    }
+    if($glyph->chevron()) {
+        my $flip = ($glyph->{'strand'}<0);
+        my $len = $glyph->chevron(); $len=4 if $len<4;
+        my $n = int(($glyph->{'pixelwidth'} + $glyph->{'pixelheight'})/$len);
+        my $dx = $glyph->{'pixelwidth'} / $n;  $dx*=-1 if $flip;
+        my $dy = $glyph->{'pixelheight'} / $n; $dy*=-1 if $flip;
+        my $ix = int($dx);
+        my $iy = int($dy);
+        my $i1x = int(-0.5*($ix-$iy));
+        my $i1y = int(-0.5*($iy+$ix));
+        my $i2x = int(-0.5*($ix+$iy));
+        my $i2y = int(-0.5*($iy-$ix));
+        for (;$n;$n--){
+          my $tx = int($n*$dx)+($flip ? $x2 : $x1);
+          my $ty = int($n*$dy)+($flip ? $y2 : $y1);
+          $self->{'canvas'}->line($tx, $ty, $tx+$i1x, $ty+$i1y, $colour);
+          $self->{'canvas'}->line($tx, $ty, $tx+$i2x, $ty+$i2y, $colour);
+        }
     }
 }
 
