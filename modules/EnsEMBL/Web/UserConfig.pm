@@ -792,6 +792,11 @@ sub ADD_ALL_EST_FEATURES {
 							$POS++, 'URL_KEY' => 'XTROP_CLUSTER',
 							'SUBTYPE' => 'default',
 							@_);
+  $self->add_new_track_est( 'ciona_dbest_align',     'dbEST align', $POS++, @_ );
+  $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
+  $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
+  $self->add_new_track_est( 'ciona_cdna_align',      'cDNA-align. (Kyoto)', $POS++, @_ );
+
   my @EST_DB_ESTS = (
     [ 'bee_est',               'Bee EST' ],
     [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
@@ -870,6 +875,9 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'GenscanPeptidesUniprotBlast', 'Gen.Pep. UniP.BL.', $POS++, @_ );
   $self->add_new_track_protein( 'BeeProteinBlast',             'Bee Protein blast', $POS++, @_ );
   $self->add_new_track_protein( 'human_ensembl_peptides', 'Human e! peptides',  $POS++, 'URL_KEY' => 'HUMAN_PROTVIEW', @_ );
+  $self->add_new_track_protein( 'ciona_jgi_v1',            'JGI 1.0 model', $POS++, @_ );
+  $self->add_new_track_protein( 'ciona_kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
+  $self->add_new_track_protein( 'ciona_kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
   return $POS;
 }
 
@@ -879,6 +887,7 @@ sub ADD_ALL_PREDICTIONTRANSCRIPTS {
   $self->add_new_track_predictiontranscript( 'genscan',   'Genscan',    'lightseagreen',   $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'genefinder','Genefinder', 'darkolivegreen4', $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'snap',      'SNAP',       'darkseagreen4',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'snap_ciona','SNAP (Ciona)','darkseagreen4',   $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'slam',      'SLAM',       'darkgreen',       $POS ++, {}, @_ );
   $self->add_new_track_predictiontranscript( 'gsc',       'Genscan',    'lightseagreen',   $POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
   $self->add_new_track_predictiontranscript( 'gid',       'Gene id','red',$POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
@@ -1040,6 +1049,20 @@ sub ADD_GENE_TRACKS {
 							 'available' => 'features LITE_TRANSCRIPT_ZFISH', 'glyphset' => 'vega_gene',
 							 'logic_name' => 'otter', 'author' => 'Zfish', 'gene_col' => 'vega_gene', @_);
 
+  $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, 'on' => 'off',
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_est_seqn',   "5' EST genes (Kyoto)",  'estgene',$POS++, 'on' => 'off',
+                             'gene_label' => sub { return $_[0]->stable_id } , 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_est_seqs',   "full insert cDNA clone",  'estgene',$POS++, 'on' => 'off',
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_jgi_v1',     "JGI 1.0 models", 'ciona_gene',  $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_kyotograil_2004',  "Kyotograil '04 model", 'ciona_gene',  $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_kyotograil_2005',  "Kyotograil '05 model",  'ciona_gene', $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
   return $POS;
 }
 
