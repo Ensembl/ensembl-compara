@@ -116,7 +116,18 @@ sub new {
     'est_genebuilder' => [ 'purple1', 'EST gene' ],
     'estgene'    => [ 'purple1', 'EST gene' ],
     'est_gene'    => [ 'purple1', 'EST gene' ],
-    'protein_coding' => [ 'purple1', 'EST gene' ]
+    'protein_coding' => [ 'purple1', 'EST gene' ],
+    'est_seqc' => [ 'purple1', "3' EST (Kyoto)" ],
+    'est_seqn' => [ 'purple1', "5' EST (Kyoto)" ] ,
+    'est_seqs' => [ 'purple1', "full insert cDNA clone" ],
+    'dbest_ncbi' => [ 'purple1', "3/5' EST (dbEST)" ]
+  );
+  $self->colourSet( 'ciona_gene',
+    'hi'         => 'highlight1',
+    'superhi'    => 'highlight2',
+    'jgi_v1'              => [ 'blue', 'JGI v1 models' ],
+    'kyotograil_2004'     => [ 'dodgerblue4', 'Kyotograil 2004' ],
+    'kyotograil_2005'     => [ 'dodgerblue4', 'Kyotograil 2005' ],
   );
   $self->colourSet( 'prot_gene',
     'hi'         => 'highlight1',
