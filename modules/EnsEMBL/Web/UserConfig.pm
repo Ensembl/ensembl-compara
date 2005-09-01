@@ -48,6 +48,23 @@ sub add_track {
   ## Create configuration entry....
 }
 
+sub add_new_simple_track {
+  my( $self, $code, $text_label, $colour, $pos, %pars ) = @_;
+  warn "$code - $text_label - $colour - $pos";
+  $self->add_track( $code,
+    'on'         => 'off',
+    'pos'        => $pos,
+    'col'        => $colour,
+    'glyphset'   => 'generic_simplest',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'str'        => 'r',
+    'label'      => $text_label,
+    'caption'    => $text_label,
+    'code'       => $code,
+    %pars
+  );
+}
 sub add_new_synteny_track {
   my( $self, $species, $short, $pos ) = @_;
   $self->add_track( "synteny_$species",
@@ -353,14 +370,15 @@ sub _set {
 }
 
 sub load {
-    my ($self) = @_;
-    if($self->{'_db'}) {
-      my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'} );
-      eval {
-        $self->{'user'} = Storable::thaw( $TEMP ) if $TEMP;
-      };
-    }
-    return;
+  my ($self) = @_;
+  warn "LOADING.... ".$ENV{'ENSEMBL_FIRSTSESSION'}," ... $self->{'type'}";
+  if($self->{'_db'}) {
+    my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'} );
+    eval {
+      $self->{'user'} = Storable::thaw( $TEMP ) if $TEMP;
+    };
+  }
+  return;
 }
 
 sub save {
@@ -976,6 +994,24 @@ sub ADD_ALL_AFFY_TRACKS {
   return $POS;
 }
 
+sub ADD_SIMPLE_TRACKS {
+  my $self = shift;
+  my $POS  = shift || 7500;
+  $self->add_new_simple_track( 'abberation_junction',      'Abberation junction', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'enhancer',                 'Enhancer',            'red', $POS++, @_ ); 
+  $self->add_new_simple_track( 'transcription_start_site', 'Transcription start site', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'regulatory_region',        'Regularatory region', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'mature_peptide',           'Mature peptide',      'red', $POS++, @_ );
+  $self->add_new_simple_track( 'insertion_site',           'Insertion site',      'red', $POS++, @_ );
+  $self->add_new_simple_track( 'protein_binding_site',     'Protein binding site','red', $POS++, @_ );
+  $self->add_new_simple_track( 'scaffold',                 'Scaffold',            'red', $POS++, @_ );
+  $self->add_new_simple_track( 'allele',                   'Allele',              'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element_insertion_site', 'Transposable element insertion site', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element',     'Transposable element','red', $POS++, @_ );
+  $self->add_new_simple_track( 'rescue_fragment',          'Rescue fragment',     'red', $POS++, @_ );
+  $self->add_new_simple_track( 'signal_peptide',           'Signal peptide',      'red', $POS++, @_ );
+}
+
 sub ADD_GENE_TRACKS {
   my $self = shift;
   my $POS  = shift || 2000;
@@ -1075,7 +1111,6 @@ sub ADD_ALL_AS_TRANSCRIPTS {
     
     return $POS;
 }
-
 
 sub ADD_AS_GENE_TRACKS {
     my $self = shift;

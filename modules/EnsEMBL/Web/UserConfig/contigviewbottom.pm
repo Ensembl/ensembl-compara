@@ -712,7 +712,7 @@ sub init {
   $self->ADD_ALL_PROTEIN_FEATURES();
   $self->ADD_ALL_DNA_FEATURES();
   $self->ADD_ALL_EST_FEATURES();
-
+  $self->ADD_SIMPLE_TRACKS();
 ## Additional tracks... on the forward strand ( top );
   $self->add_track( 'preliminary', 'on' => 'on', 'pos' => 1, 'str' => 'f' );
   $self->add_track( 'mod',         'on' => 'off', 'pos' => 3000200, 'str' => 'f' );

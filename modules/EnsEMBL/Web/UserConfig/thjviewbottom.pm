@@ -655,6 +655,7 @@ sub init {
   $self->ADD_ALL_DNA_FEATURES( 0, 'on' => 'off' );
   $self->ADD_ALL_EST_FEATURES( 0, 'on' => 'off' );
   $self->ADD_ALL_AFFY_TRACKS( 0, 'on' => 'off' );
+  $self->ADD_SIMPLE_TRACKS( );
 }
 
 sub mult {
