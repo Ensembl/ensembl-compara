@@ -23,12 +23,12 @@ var window_width    = 800;
 var timeoutId = 0;
 var Z_MENU_XOFFSET    = 2;
 var Z_MENU_YOFFSET    = 2;
-var Z_MENU_CAPTIONBG  = "#aaaaaa";
-var Z_MENU_CAPTIONFG  = "#000000";
-var Z_MENU_TIPBG      = "#f5f5f5";
-var Z_MENU_BORDERBG   = "#aaaaaa";
-var Z_MENU            = true;
-var Z_MENU_WIDTH      = 200;
+var Z_MENU_CAPTIONBG    = "#e2e2ff";
+var Z_MENU_CAPTIONFG    = "#000000";
+var Z_MENU_TIPBG    = "#f5f5ff";
+var Z_MENU_BORDERBG    = "#aaaaaa";
+var Z_MENU        = true;
+var Z_MENU_WIDTH    = 200;
 
 var Z_MENU_TIMEIN     = 500;
 var Z_MENU_TIMEOUT    = 6000;
@@ -148,7 +148,12 @@ function zmenu() {
   for(i = 1; i < d.length; i+=2) {
     link = '<tr><td colspan="2">';
     url  = d[i];
-    if(url != "") {
+    var temp = new Array();
+    temp = url.split(':');
+    if( temp[0] == "pfetch") {
+      link += '<span id="pfetch">PFETCHING...</span>';
+      pfetch( temp[1] );
+    } else if(url != "") {
       target = '';
       if(url.substr(0,1)=='@') { url = url.substr(1); target = ' target="_blank"'; }
       link += '<a href="'+url+'"'+target+'>'+d[i+1]+'</a>';
@@ -191,8 +196,6 @@ function zmenu() {
     l.style.border        = 1;
     l.style.border
     l.style.backgroundColor    = Z_MENU_TIPBG;
-    l.style.left = x;
-    l.style.top  = y;
     l.style.setProperty( 'left', x+'px', 'important' );
     l.style.setProperty( 'top',  y+'px', 'important' );
   }
@@ -249,3 +252,116 @@ function zmenuoff() {
   else if(IE4) { document.all[divname].style.visibility            = "hidden"; }
   else if(NS6) { document.getElementById(divname).style.visibility = "hidden"; }
 }
+
+function encode( uri ) {
+ if( encodeURIComponent ) return encodeURIComponent(uri);
+ if( escape             ) return escape(uri);
+}
+
+function decode( uri ) {
+  uri = uri.replace(/\+/g, ' ');
+  if( decodeURIComponent ) return decodeURIComponent(uri);
+  if( unescape           ) return unescape(uri);
+  return uri;
+}
+
+function executeReturn( AJAX ) {
+  if( AJAX.readyState == 4 ) {
+    if( AJAX.status == 200 ) {
+      eval(AJAX.responseText);
+    }
+  }
+}
+
+var _ms_XMLHttpRequest_ActiveX = "";
+
+function AJAXRequest( method, url, data, process, async, dosend) {
+  // self = this; creates a pointer to the current function
+  // the pointer will be used to create a "closure". A closure
+  // allows a subordinate function to contain an object reference to the
+  // calling function. We can't just use "this" because in our anonymous
+  // function later, "this" will refer to the object that calls the function
+  // during runtime, not the AJAXRequest function that is declaring the function
+  // clear as mud, right?
+  // Java this ain't
+
+  var self = this;
+
+  // check the dom to see if this is IE or not
+  if( window.XMLHttpRequest ) { // Not IE
+    self.AJAX = new XMLHttpRequest();
+  } else if( window.ActiveXObject ) { // Hello IE! --
+
+    if( _ms_XMLHttpRequest_ActiveX ) { // Instantiate the latest MS ActiveX Objects
+      self.AJAX = new ActiveXObject( _ms_XMLHttpRequest_ActiveX );
+    } else { // loops through the various versions of XMLHTTP to ensure we're using the latest
+      var versions = [ "Msxml2.XMLHTTP.7.0", "Msxml2.XMLHTTP.6.0",
+                       "Msxml2.XMLHTTP.5.0", "Msxml2.XMLHTTP.4.0",
+                       "MSXML2.XMLHTTP.3.0", "MSXML2.XMLHTTP",
+                       "Microsoft.XMLHTTP" ];
+      for (var i = 0; i < versions.length ; i++) {
+        try { // try to create the object
+                          // if it doesn't work, we'll try again
+                          // if it does work, we'll save a reference to the proper one to speed up future instantiations
+          self.AJAX = new ActiveXObject(versions[i]);
+          if( self.AJAX ) {
+            _ms_XMLHttpRequest_ActiveX = versions[i];
+            break;
+          }
+        }
+        catch (objException) { // trap; try next one
+        };
+      };
+    }
+  }
+
+  // if no callback process is specified, then assing a default which executes the code returned by the server
+  if (typeof process == 'undefined' || process == null) {
+    process = executeReturn;
+  }
+
+  self.process = process;
+
+    // create an anonymous function to log state changes
+  self.AJAX.onreadystatechange = function( ) {
+    self.process(self.AJAX);
+  }
+
+  // if no method specified, then default to POST
+  if( !method ) { method = "POST"; }
+  method = method.toUpperCase();
+  if (typeof async == 'undefined' || async == null) { async = true; }
+  self.AJAX.open(method, url, async);
+  if (method == "POST") {
+    self.AJAX.setRequestHeader("Connection", "close");
+    self.AJAX.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    self.AJAX.setRequestHeader("Method", "POST " + url + "HTTP/1.1");
+  }
+  // if dosend is true or undefined, send the request
+  // only fails is dosend is false
+  // you'd do this to set special request headers
+  if ( dosend || typeof dosend == 'undefined' ) {
+          self.AJAX.send(data);
+  }
+  return self.AJAX;
+}
+
+function pfetch( ID ) {
+  // Instantiate an object
+  // Test to see if XMLHttpRequest is a defined object type for the user's browser
+  // If not, assume we're running IE and attempty to instantiate the MS XMLHTtp object
+  // Don't be confused by the ActiveXObject indicator. Use of this code will not trigger
+  // a security alert since the ActiveXObject is baked into IE and you aren't downloading it
+  // into the IE runtime engine
+  URL = "/Homo_sapiens/test";
+  fastaAJAX = new AJAXRequest( 'GET', URL+'?ID='+encode(ID), '', changePFETCH );
+}
+
+function changePFETCH( myAJAX ) {
+  if( myAJAX.readyState == 4 ) {
+    if( document.getElementById('pfetch') ) {
+      document.getElementById('pfetch').innerHTML = myAJAX.responseText
+    }
+  }
+}
+
