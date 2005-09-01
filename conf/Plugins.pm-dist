@@ -5,6 +5,7 @@
 
 $SiteDefs::ENSEMBL_PLUGINS = [
   'EnsEMBL::Mirror'    => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mirror',
+  'EnsEMBL::Ensembl'   => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
 ];
 
 1;
