@@ -14,7 +14,25 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 ## news items, by species, release, topic, etc.
 
 sub newsview {
+  my $self   = shift;
 
+  if (my $panel = $self->new_panel ('Image',
+        'code'    => "info$self->{flag}",
+        'object'  => $self->{object}) 
+    ) {
+    # this is a two-step view, so we need 2 separate sections
+    if ($self->{'object'}->param('submit')) {
+        # Step 2 - user has chosen a data range
+        $panel->add_components(qw(show_news EnsEMBL::Web::Component::News::show_news));
+    }
+    else {
+        # Step 1 - initial page display
+        $panel->{'caption'} = 'Select News to View';
+        $panel->add_components(qw(select_news EnsEMBL::Web::Component::News::select_news));
+        $panel->add_form( $self->{page}, qw(select_news  EnsEMBL::Web::Component::News::select_news_form) );
+    }
+    $self->{page}->content->add_panel($panel);
+  }
 }
 
 #-----------------------------------------------------------------------
@@ -51,18 +69,25 @@ sub newsdbview {
             ));
             $self->add_form( $panel, qw(edit_item     EnsEMBL::Web::Component::News::edit_item_form) );
         }
-        elsif ($self->{object}->param('submit') eq 'Add' || $self->{object}->param('action') eq 'add' ) { 
+        elsif ($self->{object}->param('release_id')) { 
             $panel->{'caption'} = 'Add a News article';    
             $panel->add_components(qw(
                 add_item     EnsEMBL::Web::Component::News::add_item
             ));
             $self->add_form( $panel, qw(add_item     EnsEMBL::Web::Component::News::add_item_form) );
         }
+        elsif ($self->{object}->param('submit') eq 'Add' || $self->{object}->param('action') eq 'add' ) { 
+            $panel->{'caption'} = 'Add a News article';    
+            $panel->add_components(qw(
+                select_to_add     EnsEMBL::Web::Component::News::select_to_add
+            ));
+            $self->add_form( $panel, qw(select_release  EnsEMBL::Web::Component::News::select_release_form) );
+        }
         else {
             $panel->{'caption'} = 'Update the News Database';    
 
             $panel->add_components(qw(
-                select_news     EnsEMBL::Web::Component::News::select_news
+                select_to_edit     EnsEMBL::Web::Component::News::select_to_edit
             ));
             $self->add_form( $panel, qw(select_item     EnsEMBL::Web::Component::News::select_item_form) );
             $self->add_form( $panel, qw(select_release  EnsEMBL::Web::Component::News::select_release_form) );

@@ -13,19 +13,137 @@ no warnings "uninitialized";
 # NEWSVIEW COMPONENTS    
 #-----------------------------------------------------------------
 
+sub select_news {
+  my ( $panel, $object ) = @_;
+  my $html = qq(<div class="formpanel" style="width:80%">);
+  $html .= $panel->form( 'select_news' )->render();
+  $html .= '</div>';
+  $panel->print($html);
+  return 1;
+}
+
+sub select_news_form {
+  my( $panel, $object ) = @_;
+  my $script = $object->script;
+  my $species = $object->species;
+  
+  my $form = EnsEMBL::Web::Form->new( 'select_news', "/$species/$script", 'post' );
+  my @releases = @{$object->valid_rels};
+  my @rel_values;
+  foreach my $rel (@releases) {
+    my $id = $$rel{'release_id'};
+    my $date = $$rel{'short_date'};
+    push (@rel_values, {'name'=>"Release $id ($date)",'value'=>$id});
+  }
+  $form->add_element(
+    'type'     => 'DropDown',
+    'select'   => 'yes',
+    'required' => 'yes',
+    'name'     => 'release_id',
+    'label'    => 'Release',
+    'values'   => \@rel_values,
+    'value'    => '0',
+  );
+
+  my @cats = @{$object->all_cats};
+  my @cat_values = ({'name'=>'All', 'value'=>'0'});
+  foreach my $cat (@cats) {
+    my $name = $$cat{'news_cat_name'};
+    my $id = $$cat{'news_cat_id'};
+    push(@cat_values, {'name'=>$name, 'value'=>$id});
+  }
+  $form->add_element(
+    'type'     => 'DropDown',
+    'required' => 'yes',
+    'name'     => 'news_cat_id',
+    'label'    => 'Category',
+    'values'   => \@cat_values,
+    'value'    => '0',
+  );
+
+  my %all_spp = reverse %{$object->all_spp};
+  my $sp_id = $all_spp{$species};
+  $form->add_element('type' => 'Hidden', 'name' => 'species', 'value' => $sp_id);
+  $form->add_element( 'type' => 'Submit', 'name' => 'submit', 'value' => 'Go');
+
+  return $form;
+}
+
+sub show_news {
+  my( $panel, $object ) = @_;
+  my $html;
+  my $prev_cat = 0;
+  my $prev_rel = 0;
+
+  my @items = @{$object->items};
+  my $releases = $object->releases;
+  my %rel_lookup;
+  foreach my $rel_array (@$releases) {
+    $rel_lookup{$$rel_array{'release_id'}} = $$rel_array{'full_date'};
+  }
+  my $cats = $object->all_cats;
+  my %cat_lookup;
+  foreach my $cat_array (@$cats) {
+    $cat_lookup{$$cat_array{'news_cat_id'}} = $$cat_array{'news_cat_name'};
+  }
+
+  for (my $i=0; $i<scalar(@items); $i++) {
+    my %item = %{${$object->items}[$i]};
+    my $title = $item{'title'};
+    my $content = $item{'content'};
+    my $release_id = $item{'release_id'};
+    my $rel_date = $rel_lookup{$release_id};
+    $rel_date =~ s/.*\(//g;
+    $rel_date =~ s/\)//g;
+    my $news_cat_id = $item{'news_cat_id'};
+    my $cat_name = $cat_lookup{$news_cat_id};
+
+    if ($prev_rel != $release_id) {
+        $html .= qq(<h3 class="boxed">Release $release_id ($rel_date)</h3>\n);
+        $prev_cat = '';
+    }
+    if ($prev_cat != $news_cat_id) {
+        $html .= qq(<h4>$cat_name</h4>\n);
+    }
+
+    $html .= "<p><strong>$title</strong><br />$content</p>";
+
+    $prev_rel = $release_id;
+    $prev_cat = $news_cat_id;
+  }
+
+  $panel->print($html);
+  return 1;
+}
+
 #-----------------------------------------------------------------
 # NEWSDBVIEW COMPONENTS    
 #-----------------------------------------------------------------
 
-sub select_news {
+sub select_to_edit {
   my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
 
-  if ($object->param('action') eq 'saved') {
+  if ($object->param('status') eq 'saved') {
     $html .= "<p>Thank you. Your changes have been saved to the database.</p>";
   }
 
   $html .= $panel->form( 'select_item' )->render();
+  $html .= $panel->form( 'select_release' )->render();
+  $html .= '</div>';
+  $panel->print($html);
+  return 1;
+
+}
+
+sub select_to_add {
+  my ( $panel, $object ) = @_;
+  my $html = qq(<div class="formpanel" style="width:80%">);
+
+  if ($object->param('status') eq 'saved') {
+    $html .= "<p>Thank you. The new article has been saved to the database.</p>";
+  }
+
   $html .= $panel->form( 'select_release' )->render();
   $html .= '</div>';
   $panel->print($html);
@@ -49,9 +167,12 @@ sub select_item_form {
     foreach my $item (@items) {
         my %item = %$item;
         my $code = $item{'news_item_id'};
-        my $species_count = scalar(@{$item{'species'}});
+        my $species_count = 0; 
+        if (ref($item{'species'})) {
+            $species_count = scalar(@{$item{'species'}});
+        }
         my $sp_name;
-        if ($species_count > 1) {
+        if ($species_count != 1) {
             $sp_name = 'multi-species';
         }
         else {
@@ -97,13 +218,13 @@ sub select_release_form {
   my @rel_values;
   foreach my $rel (@releases) {
     my $id = $$rel{'release_id'};
-    my $text = 'Release '.$$rel{'release_number'}.', '.$$rel{'date'};
+    my $text = 'Release '.$$rel{'release_number'}.', '.$$rel{'short_date'};
     push (@rel_values, {'name'=>$text,'value'=>$id});
   }
  
   my $form = EnsEMBL::Web::Form->new( 'select_item', "/$species/$script", 'post' );
   
-  $form->add_element( 'type' => 'SubHeader', 'value' => 'Select a previous release');
+  $form->add_element( 'type' => 'SubHeader', 'value' => 'Select a release');
   $form->add_element(
     'type'     => 'DropDown',
     'select'   => 'select',
@@ -112,9 +233,10 @@ sub select_release_form {
     'label'    => 'Release',
     'values'   => \@rel_values,
   );
+  $form->add_element( 'type' => 'Hidden', 'name' => 'action', 'value' => $object->param('action'));
 
   $form->add_element( 'type' => 'Submit', 'name' => 'submit', 'value' => 'Next');
-  return $form ;
+  return $form;
 }
 
 #-----------------------------------------------------------------
@@ -126,19 +248,18 @@ sub item_form {
                                                                                 
   # set default values for form
   my ($title, $content, $release_id);
-  my $release = $object->species_defs->ENSEMBL_VERSION;
+  $release_id = $object->param('release_id') || $object->species_defs->ENSEMBL_VERSION;
   my $news_cat_id = 2; # data
-  my $species = [1]; # human
+  my $species = []; # applies to all species
   my $priority = 0;
 
-  if (scalar(@{$object->items}) == 1) { # have already selected a single item
+  if (scalar(@{$object->items}) == 1 && $object->param('action') ne 'add') { # have already selected a single item to edit
     my %item = %{${$object->items}[0]};
     $title = $item{'title'};
     $content = $item{'content'};
     $release_id = $item{'release_id'};
     $news_cat_id = $item{'news_cat_id'};
     $species = $item{'species'};
-    $priority = $item{'priority'};
   }
 
   # create array of release names and values
@@ -146,16 +267,16 @@ sub item_form {
   my @rel_values;
   foreach my $release (@releases) {
     $id = $$release{'release_id'};
-    $date = $$release{'release_number'}.' ('.$$release{'date'}.')';
+    $date = $$release{'release_number'}.' ('.$$release{'short_date'}.')';
     push (@rel_values, {'name'=>$date,'value'=>$id});
   }
                                                                                 
-  # create array of species names and values
-  my %all_species = %{$object->all_spp};
-  my @sorted = sort {$all_species{$a} cmp $all_species{$b}} keys %all_species;
+  # create array of valid species names and values
+  my %valid_species = %{$object->valid_spp};
+  my @sorted = sort {$valid_species{$a} cmp $valid_species{$b}} keys %valid_species;
   my @spp_values;
   foreach my $id (@sorted) {
-    my $name = $all_species{$id};
+    my $name = $valid_species{$id};
     push (@spp_values, {'name'=>$name,'value'=>$id});
   }
 
@@ -177,7 +298,8 @@ sub item_form {
     'values'   => \@rel_values,
     'value'    => $release_id,
   );
-
+  $form->add_element('type'=>'Information', 'value'=>'For an item that applies to all current species,
+leave the checkboxes blank');
   $form->add_element(
     'type'     => 'MultiSelect',
     'required' => 'yes',
@@ -222,6 +344,10 @@ sub item_form {
 sub edit_item {
   my ( $panel, $object ) = @_;
   my $html = qq(<div class="formpanel" style="width:80%">);
+  $html .= qq(<p><strong>Important note</strong>: This form presents the available
+species for the release currently associated with this record. If you wish to change 
+this item to refer to a different release, you should do this first and save your changes, 
+then make any required changes to the associated species.</p>);
   $html .= $panel->form( 'edit_item' )->render();
   $html .= '</div>';
   $panel->print($html);
@@ -283,13 +409,19 @@ sub preview_item {
   my $news_cat_name = $item{'news_cat_name'};
   my $species = $item{'species'};
   my $priority = $item{'priority'};
-
-  my $species_list = '<ul>';
-  foreach my $sp (@$species) {
-    my $sp_name = $all_species{$sp};
-    $species_list .= "<li>$sp_name</li>";
+ 
+  my $species_list;
+  if (scalar(@$species) > 0) {
+    $species_list = '<ul>';
+    foreach my $sp (@$species) {
+        my $sp_name = $all_species{$sp};
+        $species_list .= "<li>$sp_name</li>";
+    }
+    $species_list .= '</ul>';
   }
-  $species_list .= '</ul>';
+  else {
+    $species_list = '<p><strong>All species</strong></p>';
+  }
 
   my $release_number;
   foreach my $rel (@releases) {
