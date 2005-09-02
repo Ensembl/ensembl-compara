@@ -42,9 +42,7 @@ sub fetch_items {
 
     my %modifiers = %{$options};
     my $crit_str = ' WHERE n.news_cat_id = c.news_cat_id ';
-    my $order_str = ' ORDER BY ';
-    my $sp_str = '';
-    my (%criteria, @order_by);
+    my ($order_str, $sp_str, %criteria, @order_by);
     if (ref($modifiers{'criteria'})) {
         %criteria = %{$modifiers{'criteria'}};
     }
@@ -54,12 +52,16 @@ sub fetch_items {
             @order_by = ('default');
         }
     }
+    else {
+        @order_by = ('default');
+    }
     
     # map option keywords to actual SQL
     my %crit_hash = (
         'item_id'=>'n.news_item_id = '.$criteria{'item_id'},
         'release'=>'n.release_id = '.$criteria{'release'},
         'category'=>'n.news_cat_id = '.$criteria{'category'},
+        'priority'=>'n.priority = '.$criteria{'priority'},
         'species'=>'n.news_item_id = i.news_item_id AND i.species_id = '.$criteria{'species'},
         );
     my %order_hash = (
@@ -75,6 +77,7 @@ sub fetch_items {
         }
     }
     if (@order_by) {
+        $order_str = ' ORDER BY ';
         my $count = 0;
         foreach my $order (@order_by) {
             $order_str .= $order_hash{$order};
