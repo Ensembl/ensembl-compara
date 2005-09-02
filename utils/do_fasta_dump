@@ -411,7 +411,6 @@ sub get_data {
   # Dump even non-reference region
   foreach my $slice( @{$sliceAdaptor->fetch_all('toplevel', undef, 1)} ){
     info( 1, "Start toplevel ". $slice->name );
-
     # Toplevel dumps ----------------------------------------------------------
     my $coord_system = $slice->coord_system->name;
     my $seqio;
@@ -452,7 +451,7 @@ sub get_data {
 	}
       }
     }
-    # End toplevel -----------------------------------------------------------
+    # End dna masked or dna_toplevel ----------------------------------------
 
     if(scalar( grep{$_ !~ /^dna|abinitio|\/dna\// } keys %types ))  {
       foreach my $gene( @{$slice->get_all_Genes(undef,undef,$load_exons)} ){
