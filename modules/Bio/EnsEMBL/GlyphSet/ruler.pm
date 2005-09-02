@@ -25,6 +25,7 @@ sub _init {
   return unless defined $type;
 
   my $strand = $self->strand;
+
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
 
@@ -62,6 +63,12 @@ sub _init {
     $left      = 'arrow';
     $righttext = $con_strand > 0 ? 'Reverse strand' : 'Forward strand';
     $lefttext  = '';
+  }
+
+# in AlignSlice strand does not really make sense as it can consist of multiple slices on different strands - hence we just remove the text
+  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+      $righttext = $lefttext = '';
+      $right = $left = 'bar';
   }
  #   unless( $Config->{'compara'} && $con_strand == 1 ) {
  #   unless( $Config->{'compara'} && $con_strand == -1 ) {
