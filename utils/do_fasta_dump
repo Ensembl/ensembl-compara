@@ -404,7 +404,8 @@ sub get_data {
 
     my %ok_logic_names = map { $_ => 1 } 
       qw( ensembl_ncrna ensembl ncrna gsten genebuilderbeeflymosandswall cyt rodent_protein rprot
-	  hoxrodent_refseq pseudogeneflybase wormbaseensembl sgd sgdmouse_refseq 
+	ciona_dbest_ncbi ciona_est_seqn  ciona_jgi_v1 ciona_est_seqc 
+          hoxrodent_refseq pseudogeneflybase wormbaseensembl sgd sgdmouse_refseq 
           mouse_protein homology_high homology_medium homology_low beeprotein
           refseq wormbase flybase pseudogene hox genomewise);
 
