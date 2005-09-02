@@ -1,9 +1,5 @@
 #!/usr/local/bin/perl
 
-=head1 NAME
-
-update_static_content.pl
-
 =head1 SYNOPSIS
 
 update_static_content.pl [options]
@@ -38,15 +34,11 @@ Updates the static content for the website
 The current version  is specified in Ensembl web config file:
   ../conf/<SPECIES>.ini in the ENSEMBL_FTP_BASEDIR variable
 
-The output is written as html to files:
-  ../htdocs/<SPECIES>/index.html
-  ../htdocs/<SPECIES>/ssi/search.html
-
 =head1 OPTIONS
 
 More on --update: Valid options are:
 
-B< new_species:> UPDATED
+B< new_species:>
    Use the -site_type 'pre' flag if you are setting up pre.
 
    Runs generic_species_homepage, SSI (SSIabout, SSIexample, SSIentry),
@@ -382,7 +374,7 @@ sub species_table {
     system ("cp $dir/species_table.html $dir/species_table.html.bck")==0 or die "Couldn't copy files";
   }
   system ("mv $dir/species_table.html.new $dir/species_table.html") ==0 or die "Couldn't copy files";
-
+  info (1, "Updated species table file $dir/species_table.html");
 return;
 }
 #---------------------------------------------------------------------
@@ -453,7 +445,7 @@ print $fh qq(
 </body>
 </html>
   );
-
+  info (1, "Created a generic $species homepage: $file");
   return;
 }
 
@@ -546,6 +538,7 @@ sub SSIentry {
 </form>
 );
 }
+  info (1, "Template for species entry page $file");
   return;
 }
 
@@ -569,6 +562,7 @@ sub SSIabout {
 
 </p>
 );
+  info (1, "Template for about page $file");
   return;
 }
 
@@ -596,6 +590,7 @@ sub SSIexamples {
     </li>
 </ul>
 );  
+  info (1, "Template for example page $entry ");
   return;
 }
 #---------------------------------------------------------------------------
@@ -612,6 +607,7 @@ sub SSIkaryomap {
 
 <img src="/img/species/karyotype_$species.png" width="245" height="355" usemap="#karyotypes" alt="$common_name karyotype selector" />
 );
+  info (1, "Template for karyomap page $karyomap");
   return;
 }
 
@@ -676,6 +672,7 @@ sub do_downloads {
     system ("cp $dir/download_links.inc $dir/download_links.inc.bck")==0 or die "Couldn't copy files";
   }
   system ("mv $dir/download_links.inc.new $dir/download_links.inc") ==0 or die "Couldn't copy files";
+  info (1, "Created downloads pages $dir ");
   return;
 }
 
