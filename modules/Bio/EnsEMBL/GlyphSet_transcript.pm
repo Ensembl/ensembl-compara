@@ -599,12 +599,6 @@ sub as_expanded_init {
   use Data::Dumper;
   my %ugenes = map {$_->stable_id, $_ } @{$self->features()};
 
-#  warn("UG: ".join('*', keys(%ugenes)));
-
-#  foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
-#      warn("***************************\n".join('*', keys(%$gene)));
-
-#  warn("GET STRAND : $strand : $strand_flag ");
   foreach my $gn (keys(%ugenes)) {
       my $gene = $ugenes{$gn};
 #      warn(join('##', $gene->{stable_id} , $gene->{start}, $gene->{end}, $gene->strand));
@@ -637,14 +631,9 @@ sub as_expanded_init {
 
 	      if ($f && !$ex->start) {
 		  $f = 0;
-#		  warn("EX END:".join('*', $ex->start, $ex->end, $ex->{exon}->start, $ex->{exon}->end));
 	      }
-
-
 	  }
 
-#	  warn("\t\t E0: @as_exons ");     
-#	  my @exons = sort {$a->start <=> $b->start} @as_exons;
 	  my @exons = ();
 	  my $f = -1;
 	  foreach my $ex (@as_exons) {
@@ -674,9 +663,15 @@ sub as_expanded_init {
 	  $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
 	  $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
 	  my($colour, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
-	  my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
-	  my $coding_end   = defined ( $transcript->coding_region_end() )   ? $transcript->coding_region_end :    -1e6;
+
+# AlignSlice translations don't have coordinates .. 
+
+	  my $coding_start = -1e6;
+	  my $coding_end   = -1e6;
+
 	  my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+
+
 	  if( $transcript->translation ) { 
 	      foreach( @{$TAGS{$transcript->translation->stable_id}||[]} ) { 
 		  $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col, 'line', $join_z ) ;
@@ -780,11 +775,14 @@ sub as_expanded_init {
 	  my $bump_height = 1.5 * $h;
 	  if( $Config->{'_add_labels'} ) {
 	      if(my $text_label = $self->text_label($gene, $transcript) ) {
+
+
 		  my @lines = split "\n", $text_label;
 		  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
 		  my @lines = split "\n", $text_label;
 		  for( my $i=0; $i<@lines; $i++ ){
 		      my $line = $lines[$i];
+
 		      $Composite->push( new Sanger::Graphics::Glyph::Text({
 			  'x'         => $Composite->x(),
 			  'y'         => $y + $h + ($i*$_h) + 2,
@@ -901,75 +899,69 @@ sub as_compact_init {
   my $join_col = 'blue';
   my $join_z   = -10;
 
-#  foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
-
-
-  use Data::Dumper;
   my %ugenes = map {$_->stable_id, $_ } @{$self->features()};
 
   foreach my $gn (keys(%ugenes)) {
       my $gene = $ugenes{$gn};
-     warn(join('##', $gene->{stable_id} , $gene->{start}, $gene->{end}, $gene->strand));
 
-
-
-#  foreach my $gn ( %ugenes) { # For alternate splicing diagram only draw transcripts in gene
-
-    my $gene_strand = $gene->strand;
-    my $gene_stable_id = $gene->stable_id;
-    next if $gene_strand != $strand and $strand_flag eq 'b';
-    $gene_drawn = 1;
+      my $gene_strand = $gene->strand;
+      my $gene_stable_id = $gene->stable_id;
+      next if $gene_strand != $strand and $strand_flag eq 'b';
+      $gene_drawn = 1;
 ## Get all the exons which overlap the region for this gene....
-    my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } map { @{$_->get_all_Exons()} } @{$gene->get_all_Transcripts()};
-    next unless @exons;
+      my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } map { @{$_->get_all_Exons()} } @{$gene->get_all_Transcripts()};
 
-    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
-       $Composite->{'href'} = $self->gene_href( $gene, %highlights );
-       $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
-    my($colour, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
+      next unless @exons;
 
-    $colour ||= 'black';
-    my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
-    foreach my $exon (@exons) {
-      my $s = $exon->start;
-      my $e = $exon->end;
-      $s = 1 if $s < 0;
-      $e = $length if $e>$length;
-      $transcript_drawn = 1;
+      my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+      $Composite->{'href'} = $self->gene_href( $gene, %highlights );
+      $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
+      my($colour, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
+
+      $colour ||= 'black';
+      my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
+      foreach my $exon (@exons) {
+	  my $s = $exon->start;
+	  my $e = $exon->end;
+	  $s = 1 if $s < 0;
+	  $e = $length if $e>$length;
+	  $transcript_drawn = 1;
+	  $Composite2->push(new Sanger::Graphics::Glyph::Rect({
+	      'x' => $s-1, 'y' => $y, 'width' => $e-$s+1,
+	      'height' => $h, 'colour'=>$colour, 'absolutey' => 1
+	      }));
+      }
+      my $start = $gene->start < 1 ? 1 : $gene->start;;
+      my $end   = $gene->end   > $length ? $length : $gene->end;
       $Composite2->push(new Sanger::Graphics::Glyph::Rect({
-        'x' => $s-1, 'y' => $y, 'width' => $e-$s+1,
-        'height' => $h, 'colour'=>$colour, 'absolutey' => 1
+	  'x' => $start, 'width' => $end-$start+1,
+	  'height' => 0, 'y' => int($y+$h/2), 'colour' => $colour, 'absolutey' =>1,
       }));
-    }
-    my $start = $gene->start < 1 ? 1 : $gene->start;;
-    my $end   = $gene->end   > $length ? $length : $gene->end;
-    $Composite2->push(new Sanger::Graphics::Glyph::Rect({
-      'x' => $start, 'width' => $end-$start+1,
-      'height' => 0, 'y' => int($y+$h/2), 'colour' => $colour, 'absolutey' =>1,
-    }));
+
     # Calculate and draw the coding region of the exon
     # only draw the coding region if there is such a region
-    if($self->can('join')) {
-      my @tags;
-         @tags = $self->join( $gene->stable_id ) if $gene && $gene->can( 'stable_id' );
-      foreach (@tags) {
-        $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
-        $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
+      if($self->can('join')) {
+	  my @tags;
+	  @tags = $self->join( $gene->stable_id ) if $gene && $gene->can( 'stable_id' );
+	  foreach (@tags) {
+	      $self->join_tag( $Composite2, $_, 0, $self->strand==-1 ? 0 : 1, 'grey60' );
+	      $self->join_tag( $Composite2, $_, 1, $self->strand==-1 ? 0 : 1, 'grey60' );
+	  }
       }
-    }
-    if( $link && ( $compara eq 'primary' || $compara eq 'secondary' )) {
-      if( $gene_stable_id ) {
-        if( $Config->{'previous_species'} ) {
-          foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
-            $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
-          } 
-        }
-        if( $Config->{'next_species'} ) {
-          foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'next_species'} ) ) {
-            $self->join_tag( $Composite2, ($Config->{'slice_id'}+1)."#$msid#$gene_stable_id", 0.5, 0.5 , $join_col, 'line', $join_z ) 
-          } 
-        }
-      }
+
+      if( $link && ( $compara eq 'primary' || $compara eq 'secondary' )) {
+	  if( $gene_stable_id ) {
+	      if( $Config->{'previous_species'} ) {
+		  foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'previous_species'} ) ) {
+		      $self->join_tag( $Composite2, $Config->{'slice_id'}."#$gene_stable_id#$msid", 0.5, 0.5 , $join_col, 'line', $join_z ) 
+		      } 
+	      }
+	      if( $Config->{'next_species'} ) {
+		  foreach my $msid ( $self->get_homologous_gene_ids( $gene_stable_id, $Config->{'next_species'} ) ) {
+		      $self->join_tag( $Composite2, ($Config->{'slice_id'}+1)."#$msid#$gene_stable_id", 0.5, 0.5 , $join_col, 'line', $join_z ) 
+		      } 
+	      }
+	  }
     }
 
     $Composite->push($Composite2);
