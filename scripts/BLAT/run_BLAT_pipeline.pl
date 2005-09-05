@@ -191,8 +191,8 @@ my $help;
 my $reg_conf;
 my $compara_cvs = "/nfs/acari/jh7/src/ensembl_main/ensembl-compara";
 
-## This is intended for clumping sequences when they are in thousands of
-## files but it has not been implemented yet...
+## This is intended for clumping sequences for some coordinate systems
+## in order to avoid dealing with thousands of files
 my $coord_systems = {
         "chromosome" => "separate_files",
         "group" => "separate_files",
@@ -231,7 +231,7 @@ GetOptions(
   );
 
 # Print Help and exit if help is requested
-if ($help) {
+if ($help or !$species1 or !$species2) {
   print $description, $usage;
   exit(0);
 }
@@ -248,6 +248,13 @@ my $DNA_DIR = "$base_dir/dna";
 my $RUN_DIR = "$base_dir/run";
 my $LOG_DIR = "$base_dir/log";
 
+foreach my $directory ($base_dir, $BIN_DIR, $DNA_DIR, $RUN_DIR, $LOG_DIR) {
+  if (!-e $directory) {
+    mkdir("$directory")
+        or throw("Directory $directory does not exist and cannot be created");
+  }
+}
+
 $| = 1; # Autoflush LOG
 open(LOG, ">>$LOG_DIR/${species1}_$species2--".((localtime)[5]+1900)."-".((localtime)[4]+1));
 select(LOG);
@@ -261,13 +268,6 @@ print LOG "
 ######################################################################
 ";
 
-foreach my $directory ($base_dir, $BIN_DIR, $DNA_DIR, $RUN_DIR) {
-  if (!-e $directory) {
-    mkdir("$directory")
-        or throw("Directory $directory does not exist and cannot be created");
-  }
-}
-
 foreach my $script (
         "$compara_cvs/scripts/dumps/DumpChromosomeFragments.pl",
         "$compara_cvs/scripts/BLAT/LaunchBLAT.pl",
@@ -276,6 +276,7 @@ foreach my $script (
     ) {
   qx"cp -f $script $base_dir/bin";
 }
+qx"chmod +x $base_dir/bin/*";
 
 # parse chr strings
 my $seq_regions1;
@@ -286,11 +287,26 @@ $seq_regions2 = [split(":", $chr2)] if (defined($chr2));
 my $species1_directory = make_species_directory($base_dir, $species1);
 my $species2_directory = make_species_directory($base_dir, $species2);
 
-dump_dna($base_dir, $species1, $species1_directory, $seq_regions1);
-dump_dna($base_dir, $species2, $species2_directory, $seq_regions2);
+my $lsf_jobs1 = dump_dna($base_dir, $species1, $species1_directory, $seq_regions1);
+my $lsf_jobs2 = dump_dna($base_dir, $species2, $species2_directory, $seq_regions2);
 
-my $results_dir = launch_BLAT($species1_directory, $species2_directory);
+my $results_dir;
+if (@$lsf_jobs1 > @$lsf_jobs2) {
+  # Swap species1 and species2 (for parse_and_score)
+  my $aux = $species1;
+  $species1 = $species2;
+  $species2 = $aux;
+  $results_dir = launch_BLAT($species2_directory, $species1_directory);
+} else {
+  $results_dir = launch_BLAT($species1_directory, $species2_directory);
+}
 
+
+print LOG "
+######################################################################
+  END: ", scalar(localtime()), "
+######################################################################
+";
 exit(0);
 
 
@@ -375,6 +391,7 @@ sub dump_dna {
   if (defined($seq_region_names) and @$seq_region_names) {
     $sql .= "\n            AND sr.name IN (\"".join("\", \"", @$seq_region_names) ."\")";
   }
+  $sql .= "\n            ORDER BY cs.name, sr.name";
 
   my $sth = $db_adaptor->dbc->prepare($sql);
   $sth->execute;
@@ -382,35 +399,18 @@ sub dump_dna {
       or throw("Cannot open $DNA_DIR/$species_directory/seq_regions for writting!");
   open(INDEX, ">$DNA_DIR/$species_directory/seq_regions.index")
       or throw("Cannot open seq_regions.index for writting!");
-#  my $size_by_coord_system;
-  while (my $values = $sth->fetchrow_arrayref) {
+
+  my $all_values = $sth->fetchall_arrayref;
+
+  while (my $values = shift(@$all_values)) {
     my $seq_region_name = $values->[0];
+    my @seq_region_names = ($seq_region_name);
     my $coordinate_system_name = $values->[1];
     my $length = $values->[2];
+
     throw "Coordinate system [$coordinate_system_name] has not been configured"
         if (!defined($coord_systems->{$coordinate_system_name}));
-#    if ($coord_systems->{$coordinate_system_name} eq "single_file") {
-#      my $size = ($size_by_coord_system->{$coordinate_system_name} or 0);
-#      my $seq_region_file = "$DNA_DIR/$species_directory/${coordinate_system_name}.fa";
-#      my $num_of_chunks = 0;
-#      my $base_id = $phusion.".".$coordinate_system_name.":".$seq_region_name;
-#      for (my $i=1;$i<=$length;$i+=$chunk_size-$overlap) {
-#        my $id = $base_id.".".$i;
-#        print INDEX $id, " ", $seq_region_file, " ", ($size+1), "\n"; 
-#        $size += 1 + length($id) + 1; ## ID line is: >$id\n
-#        $num_of_chunks++;
-#        if ($i+$chunk_size-1 > $length) {
-#          my $this_chunk = $length - $i + 1;
-#          $size += $this_chunk;
-#          $size += int($this_chunk/60) + (($this_chunk%60)?1:0);
-#        } else {
-#          $size += $chunk_size;
-#          $size += int($chunk_size/60) + (($chunk_size%60)?1:0);
-#        }
-#      }
-#      $size_by_coord_system->{$coordinate_system_name} = $size;
-#      next;
-#    }
+
     my $lsf_output_file = "$DNA_DIR/$species_directory/bsub_${coordinate_system_name}_${seq_region_name}.out";
     my $seq_region_file = "$DNA_DIR/$species_directory/${coordinate_system_name}_$seq_region_name.fa";
     my $this_lsf_job;
@@ -434,11 +434,43 @@ sub dump_dna {
     }
 
     my $job_name = "Dump.$phusion.${coordinate_system_name}_${seq_region_name}";
-    my $run_str = "bsub -q $queue -o $lsf_output_file -J\"$job_name\"".
+    print SEQ_REGIONS "${coordinate_system_name}_${seq_region_name}\n";
+
+
+    while ($size < 10000000 and @$all_values and @seq_region_names<1000 
+        and $all_values->[0]->[1] eq $coordinate_system_name and
+        $coord_systems->{$coordinate_system_name} eq "clump_files") {
+
+      $values = shift(@$all_values);
+      $seq_region_name = $values->[0];
+      push(@seq_region_names, $seq_region_name);
+      $length = $values->[2];
+
+      $base_id = $phusion.".".$coordinate_system_name.":".$seq_region_name;
+      for (my $i=1;$i<=$length;$i+=$chunk_size-$overlap) {
+        my $id = $base_id.".".$i;
+        print INDEX $id, " ", $seq_region_file, " ", ($size+1), "\n"; 
+        $size += 1 + length($id) + 1; ## ID line is: >$id\n
+        $num_of_chunks++;
+        if ($i+$chunk_size-1 > $length) {
+          my $this_chunk = $length - $i + 1;
+          $size += $this_chunk;
+          $size += int($this_chunk/60) + (($this_chunk%60)?1:0);
+        } else {
+          $size += $chunk_size;
+          $size += int($chunk_size/60) + (($chunk_size%60)?1:0);
+        }
+      }
+
+    }
+
+    $job_name .= "+" if (@seq_region_names > 1);
+    my $run_str = "bsub -q $queue -m ecs4_hosts -o $lsf_output_file".
+      " -J\"$job_name\"".
       " $base_dir/bin/DumpChromosomeFragments.pl".
       " -dbname $species".
-      " -chr_names $seq_region_name".
-      " -coord_system $coordinate_system_name".
+      " -chr_names \"". join(",", @seq_region_names)."\"".
+      " -coord_system \"$coordinate_system_name\"".
       " -overlap $overlap".
       " -chunk_size $chunk_size".
       " -masked $masked".
@@ -453,30 +485,28 @@ sub dump_dna {
             result_file => $seq_region_file,
             result_file_size => $size,
             check =>
-                    "grep=`fgrep -c '>$base_id' $seq_region_file`;".
+                    "grep=`fgrep -c -e '>$phusion.$coordinate_system_name' $seq_region_file`;".
                     " if (test \$grep -eq $num_of_chunks) then (echo 1) fi",
         };
 
     push(@$lsf_jobs, $this_lsf_job);
 
-    print SEQ_REGIONS "${coordinate_system_name}_${seq_region_name}\n";
-
     if (-e $seq_region_file) {
       my $current_size = -s $seq_region_file;
       if ($current_size == $size) {
-        print LOG "  [ok] ${coordinate_system_name}_${seq_region_name}:",
+        print LOG "  [ok] ${coordinate_system_name}_".$seq_region_names[0].":",
             " $length bp -- $num_of_chunks chunks -- $size bytes\n";
         $this_lsf_job->{action} = "none";
         $this_lsf_job->{ok} = 1;
         next;
       } else {
         unlink($seq_region_file);
-        print LOG "  [rerun] ${coordinate_system_name}_${seq_region_name}:",
+        print LOG "  [rerun] ${coordinate_system_name}_".$seq_region_names[0].":",
             " $length bp -- $num_of_chunks chunks -- $size bytes\n";
         $this_lsf_job->{action} = "rerun";
       }
     } else {
-      print LOG "  [run] ${coordinate_system_name}_${seq_region_name}:",
+      print LOG "  [run] ${coordinate_system_name}_".$seq_region_names[0].":",
             " $length bp -- $num_of_chunks chunks -- $size bytes\n";
       $this_lsf_job->{action} = "run";
     }
@@ -485,13 +515,13 @@ sub dump_dna {
 
     my $try = 1;
     while (($result !~ /^Job \<(\d+)\> is submitted to queue \<$queue\>.$/) and $try<=3) {
-      warning("Error while submitting job for dumping $species $coordinate_system_name $seq_region_name ($try/3)\n -- $result");
-      sleep(10);
+      warning("Error while submitting job for dumping $species $coordinate_system_name $seq_region_names[0] ($try/3)\n -- $result");
+      sleep(30);
       $try++;
       $result = qx"$run_str";
     }
     if ($result !~ /^Job \<(\d+)\> is submitted to queue \<$queue\>.$/) {
-      throw("Error while submitting job for dumping $species $coordinate_system_name $seq_region_name\n -- $result");
+      throw("Error while submitting job for dumping $species $coordinate_system_name $seq_region_names[0]\n -- $result -- $run_str");
     } else {
       $this_lsf_job->{job_ID} = $1;
     }
@@ -523,14 +553,7 @@ sub launch_BLAT {
   my ($species1_dir, $species2_dir) = @_;
 
   my $dir = "$RUN_DIR/${species1_dir}_vs_$species2_dir";
-  print LOG "Making directory for BLAT results:\n  ";
-  if (!-e "$dir") {
-    mkdir("$dir")
-        or throw("Directory $dir cannot be created");
-  } else {
-    print LOG "[already existing] ";
-  }
-  print LOG "$dir\n";
+  make_directory("$dir", "BLAT results");
 
   my $prefix1 = $species1_dir;
   my $prefix2 = $species2_dir;
@@ -558,19 +581,23 @@ sub launch_BLAT {
     my $lsf_error_file = "$dir/${prefix1}.$seq_region1/bsub.$job_name-\${LSB_JOBINDEX}.err";
     my $bsub_in = 
           ". /usr/local/lsf/conf/profile.lsf\n".
+          "lsrcp ecs4a:$DNA_DIR/$species1_dir/$seq_region1.fa /tmp/$job_name-\${LSB_JOBINDEX}.$$.tg.$seq_region1.fa\n".
+          "lsrcp ecs4b:$DNA_DIR/$species2_dir/seq_regions.sets/\${LSB_JOBINDEX}.fa /tmp/$job_name-\${LSB_JOBINDEX}.$$.qy.$seq_region1.fa\n".
           "$BIN_DIR/LaunchBLAT.pl".
-              " -idqy $DNA_DIR/$species2_dir/seq_regions.sets/\${LSB_JOBINDEX}".
-#               " -fastaqy $DNA_DIR/$species2_dir/$seq_region2.fa".
-              " -indexqy $DNA_DIR/$species2_dir/seq_regions.index".
-              " -fastadb $DNA_DIR/$species1_dir/$seq_region1.fa".
-              " -query_type dnax".
+              " -fastadb /tmp/$job_name-\${LSB_JOBINDEX}.$$.tg.$seq_region1.fa".
               " -target_type dnax".
-              " -makefile $ooc_file".
-              " -fastafetch $BIN_DIR/fastafetch.pl".
+              " -Nooc $ooc_file".
+#              " -idqy $DNA_DIR/$species2_dir/seq_regions.sets/\${LSB_JOBINDEX}".
+#              " -indexqy $DNA_DIR/$species2_dir/seq_regions.index".
+#              " -fastafetch $BIN_DIR/fastafetch.pl".
+              " -fastaqy /tmp/$job_name-\${LSB_JOBINDEX}.$$.qy.$seq_region1.fa".
+              " -query_type dnax".
               " 2> /tmp/$job_name-\${LSB_JOBINDEX}.err\n".
           "status=\$?\n".
-          "lsrcp /tmp/$job_name-\${LSB_JOBINDEX}.err ecs4b:$lsf_error_file\n".
+          "lsrcp /tmp/$job_name-\${LSB_JOBINDEX}.err ecs4c:$lsf_error_file\n".
           "rm -f /tmp/$job_name-\${LSB_JOBINDEX}.err\n".
+          "rm -f /tmp/$job_name-\${LSB_JOBINDEX}.$$.tg.$seq_region1.fa\n".
+          "rm -f /tmp/$job_name-\${LSB_JOBINDEX}.$$.qy.$seq_region1.fa\n".
           "exit \$status\n";
 
     my $count = 1;
@@ -633,11 +660,14 @@ sub launch_BLAT {
       } else {
         $job_array_string .= ",".$job_array_ids[$i];
       }
+      if (length($job_array_string) >= 200) {
+        last;
+      }
     }
     $job_array_string .= "]";
     
     my $bsub_pipe = "bsub -q $queue -J\"$job_name".
-        $job_array_string."\" -o $lsf_output_file";
+        $job_array_string."%200\" -o $lsf_output_file";
     my $pid = open2(*BSUB_OUT, *BSUB_IN, $bsub_pipe) or throw("Cannot pipe though bsub");
     print BSUB_IN $bsub_in;
     close(BSUB_IN);
@@ -647,7 +677,7 @@ sub launch_BLAT {
     my $try = 1;
     while (($result !~ /^Job \<(\d+)\> is submitted to queue \<$queue\>.$/) and $try<=3) {
       warning("Error while submitting job $job_name ($try/3)\n -- $result");
-      sleep(10);
+      sleep(30);
       $try++;
       my $pid = open2(*BSUB_OUT, *BSUB_IN, $bsub_pipe) or throw("Cannot pipe though bsub");
       print BSUB_IN $bsub_in;
@@ -733,7 +763,7 @@ sub launch_BLAT {
 #        my $try = 1;
 #        while (($result !~ /^Job \<(\d+)\> is submitted to queue \<$queue\>.$/) and $try<=3) {
 #          warning("Error while submitting job $job_name ($try/3)\n -- $result");
-#          sleep(10);
+#          sleep(30);
 #          $try++;
 #          my $pid = open2(*BSUB_OUT, *BSUB_IN, $bsub_pipe) or throw("Cannot pipe though bsub");
 #          print BSUB_IN $bsub_in;
@@ -754,17 +784,11 @@ sub launch_BLAT {
   print LOG scalar(grep {$_->{action} =~ /run/} @$BLAT_lsf_jobs)." LSF jobs submitted.\n";
   check_LSF_jobs($BLAT_lsf_jobs, "wait");
 
-  my $parsing_lsf_jobs;
   foreach my $seq_region1 (@seq_regions1) {
-
     # Compile results for this seq_region
     compile_BLAT_results($species1_dir, $species2_dir, $seq_region1);
-
-    my $this_parsing_lsf_job = parse_BLAT_results($dir, $prefix1, $seq_region1);
-    push(@$parsing_lsf_jobs, $this_parsing_lsf_job);
-    doze_instead_of_flooding_LSF_queue($parsing_lsf_jobs);
+    parse_BLAT_results($dir, $prefix1, $seq_region1);
   }
-  check_LSF_jobs($parsing_lsf_jobs, "wait");
 
   concat_BLAT_results($dir, $prefix1, @seq_regions1);
 
@@ -791,16 +815,17 @@ sub create_chunk_sets {
   map {s/ .+[\r\n]+$//} @chunks;
   my $count = 0;
   make_directory("$DNA_DIR/$species_dir/seq_regions.sets", "$prefix chunk sets");
-  while (my @set = splice(@chunks, 0, 40)) {
+  while (my @set = splice(@chunks, 0, 100)) {
     $count++;
     my $chunk_set_file = "$DNA_DIR/$species_dir/seq_regions.sets/$count";
-    next if (-e $chunk_set_file);
+    next if (-e $chunk_set_file and -e "$chunk_set_file.fa");
     open(CHUNK_SET, ">$chunk_set_file")
         or throw("Cannot open $chunk_set_file for writting");
     foreach my $chunk (@set) {
       print CHUNK_SET "$chunk\n";
     }
     close(CHUNK_SET);
+    system("$BIN_DIR/fastafetch.pl $DNA_DIR/$species_dir/seq_regions.index $chunk_set_file > $chunk_set_file.fa")
   }
   unlink("$DNA_DIR/$species_dir/seq_regions.sets/".($count+1)); # Just in case...
 }
@@ -915,57 +940,32 @@ sub parse_BLAT_results {
 
   print LOG "Parsing BLAT results ($prefix.$seq_region):\n";
   my $input_file = "$dir/$prefix.$seq_region.raw";
-  my $lsf_output_file = "$dir/$prefix.$seq_region.out";
   my $result_file = "$dir/$prefix.$seq_region";
   my $job_name = "Parse.BLAT.$prefix.${seq_region}_vs_$species2";
-  my $run_str = "bsub -q $queue -o $lsf_output_file -J $job_name".
-      " $BIN_DIR/parse_and_score.pl -F $input_file".
+  my $run_str = "$BIN_DIR/parse_and_score.pl -F $input_file".
       " -O $result_file -D 15000 -S1 $species2 -S2 $species1";
   $run_str .= " -CF $reg_conf" if ($reg_conf);
+  $run_str .= " 2>&1";
 
-  my $this_lsf_job = {
-          name => $job_name,
-          run_str => $run_str,
-          lsf_output_file => $lsf_output_file,
-          result_file => "$result_file.data",
-#          check => "grep=`fgrep Lost $lsf_output_file`;".
-#                  " if (test \"\$grep\" = \"Lost 0 bad seqs\") then (echo 1) fi",
-      };
-
+  my @result;
   if (-e "$result_file.data") {
     my $input_last_mod = (stat($input_file))[9];
     my $res_last_mod = (stat("$result_file.data"))[9];
     if ($input_last_mod < $res_last_mod) {
       print LOG "  [ok] $job_name\n";
-      $this_lsf_job->{action} = "none";
-      return $this_lsf_job;
+      return;
     } else {
-      unlink("$result_file.data", $lsf_output_file);
+      unlink("$result_file.data");
       print LOG "  [rerun] $job_name\n";
-      $this_lsf_job->{action} = "rerun";
+      @result = qx"$run_str";
     }
   } else {
-    unlink("$result_file.data", $lsf_output_file);
+    unlink("$result_file.data");
     print LOG "  [run] $job_name\n";
-    $this_lsf_job->{action} = "run";
+    @result = qx"$run_str";
   }
-
-  my $result = qx"$run_str";
-
-  my $try = 1;
-  while (($result !~ /^Job \<(\d+)\> is submitted to queue \<$queue\>.$/) and $try<=3) {
-    warning("Error while submitting job $job_name ($try/3)\n -- $result");
-    sleep(10);
-    $try++;
-    $result = qx"$run_str";
-  }
-  if ($result !~ /^Job \<(\d+)\> is submitted to queue \<$queue\>.$/) {
-    throw("Error while submitting job $job_name\n -- $result");
-  } else {
-    $this_lsf_job->{job_ID} = $1;
-  }
-
-  return $this_lsf_job;
+  map {$_ = "    ".$_} @result;
+  print LOG @result;
 }
 
 
@@ -1010,22 +1010,46 @@ sub check_LSF_jobs {
 
   my $done;
   my $persistent_error = 0;
-  print LOG "Waiting for completion" if ($wait);
+  my $cycle_count = 0;
+  if ($wait) {
+    my $unfinished_jobs = scalar(grep {!defined($_->{ok})} @$lsf_jobs);
+    print LOG "[", scalar(localtime()), "] Waiting ($unfinished_jobs unfinished jobs) ";
+  }
   do {
+    $cycle_count++;
     print LOG "." if ($wait);
     $done = 1;
-    foreach my $this_lsf_job (@$lsf_jobs) {
-      $this_lsf_job->{retry} = 0;
+
+    my $all_status;
+    my $bjobs = qx"bjobs -a 2>&1";
+    foreach my $line (split("\n", $bjobs)) {
+      my ($job_id, $uname, $this_status, $queue, $from, $rest)
+          = split(/\s+/, $line, 6);
+      if ($rest =~ /(\[\d+\])\s/) {
+        $job_id .= $1;
+      }
+      $all_status->{$job_id} = $this_status;
     }
     foreach my $this_lsf_job (@$lsf_jobs) {
-      next if ($this_lsf_job->{ok} or $this_lsf_job->{retry} >= 10);
+      next if ($this_lsf_job->{ok} or
+          (defined($this_lsf_job->{retry}) and ($this_lsf_job->{retry} >= 10)));
       my $status;
       if (defined($this_lsf_job->{job_ID})) {
-        my $bjobs = qx"bjobs \"$this_lsf_job->{job_ID}\" 2>&1";
-        $status = $bjobs;
-        $status =~ s/[^\n]+\n(.)/$1/;
-        ($status) = $status =~ /\d+ +\w+ +(\w+)/;
-        $status = $bjobs if (!defined($status));
+        if (defined($all_status->{$this_lsf_job->{job_ID}})) {
+          $status = $all_status->{$this_lsf_job->{job_ID}};
+        } else {
+          warning("Cant find job $this_lsf_job->{job_ID}");
+          my  $bjob = qx"bjobs \"$this_lsf_job->{job_ID}\" 2>&1";
+          if ($bjob and $bjob !~ /^Job <[^>]+> is not found/) {
+            $status = $bjobs;
+            $status =~ s/[^\n]+\n(.)/$1/;
+            ($status) = $status =~ /\d+ +\w+ +(\w+)/;
+            $status = $bjob if (!defined($status));
+          } else {
+            $status = "DONE";
+          }
+          sleep(1);
+        }
       } else {
         $status = "DONE";
       }
@@ -1033,30 +1057,30 @@ sub check_LSF_jobs {
       my $fail = 0;
       if ($status =~ /PEND/ or $status =~ /RUN/) {
         $done = 0;
-        $this_lsf_job->{funny_status} = undef;
+        $this_lsf_job->{funny_status} = 0;
       } elsif ($status =~ /EXIT/) {
-        $fail = 1;
-        $this_lsf_job->{funny_status} = undef;
+        $fail = "JOB EXITED";
+        $this_lsf_job->{funny_status} = 0;
       } elsif ($status =~ /DONE/) {
-        $this_lsf_job->{funny_status} = undef;
-        if (-e $this_lsf_job->{lsf_output_file} and -e $this_lsf_job->{result_file} ) {
+        $this_lsf_job->{funny_status} = 0;
+        if (-e $this_lsf_job->{result_file} ) {
           # Check LSF output file
-          if (!qx[fgrep "Successfully completed." $this_lsf_job->{lsf_output_file}]) {
-
-            $fail = 2;
+          if (-e $this_lsf_job->{lsf_output_file}
+              and !qx[fgrep "Successfully completed." $this_lsf_job->{lsf_output_file}]) {
+            $fail = "UNEXPECTED LSF OUTPUT FILE";
           }
 
           if (defined($this_lsf_job->{result_file_size})) {
             # Check size of result_file
             my $size = -s $this_lsf_job->{result_file};
             if ($size != $this_lsf_job->{result_file_size}) {
-              $fail = 3;
+              $fail = "WRONG OUTPUT FILE SIZE";
             }
           }
 
           if (defined($this_lsf_job->{result_file_match})) {
             if (!qx[fgrep \"$this_lsf_job->{result_file_match}\" $this_lsf_job->{result_file}]) {
-              $fail = 4;
+              $fail = "UNEXPECTED JOB OUTPUT FILE";
             }
           }
 
@@ -1065,25 +1089,27 @@ sub check_LSF_jobs {
             if (!qx"$this_lsf_job->{check}") {
 
 #print STDERR "\n<<<", qx"$this_lsf_job->{check}", ">>>\n";
-              $fail = 5;
+              $fail = "UNEXPECTED JOB OUTPUT FILE MATCH";
             }
           }
           $this_lsf_job->{ok} = 1 if (!$fail);
         } else {
           $done = 0;
-          $fail = 6;
+          $fail = "NO OUTPUT FILE";
         }
       } else {
         $done = 0;
-        if (defined($this_lsf_job->{funny_status})) {
+        if (defined($this_lsf_job->{funny_status})
+            and $this_lsf_job->{funny_status} > 10) {
           warning("Job $this_lsf_job->{name}($this_lsf_job->{job_ID}) is in a funny status ($status)\n".
               "  -- I will try to restart it");
-          qx"bkill $this_lsf_job->{job_ID}";
-          sleep(10); #Give some time to actually kill the job.
-          $fail = 7;
-          $this_lsf_job->{funny_status} = undef;
+          qx"bkill \"$this_lsf_job->{job_ID}\"";
+          sleep(30); #Give some time to actually kill the job.
+          $fail = "FUNNY STATUS";
+          $this_lsf_job->{funny_status} = 0;
         } else {
-          $this_lsf_job->{funny_status} = 1;
+          warning("Job $this_lsf_job->{name}($this_lsf_job->{job_ID}) is in a funny status ($status)");
+          $this_lsf_job->{funny_status}++;
         }
       }
 
@@ -1123,7 +1149,11 @@ sub check_LSF_jobs {
         }
       }
     }
-    sleep(10) if (!$done and $wait);
+    if (!($cycle_count % 10)) {
+      my $unfinished_jobs = scalar(grep {!defined($_->{ok})} @$lsf_jobs);
+      print LOG "\n[", scalar(localtime()), "] Waiting ($unfinished_jobs unfinished jobs) ";
+    }
+    sleep(30) if (!$done and $wait);
   } while (!$done and $wait);
   throw("Unrecoverable error. Check log!") if ($persistent_error);
   print LOG " ok.\n" if ($wait);
@@ -1136,13 +1166,20 @@ sub doze_instead_of_flooding_LSF_queue {
   my ($lsf_jobs) = @_;
 
   ## Wait if more than 200 jobs are running or pending
-  if ((grep {!defined($_->{ok})} @$lsf_jobs) > 200) {
-    print LOG "Dozing";
+  my $unfinished_jobs = scalar(grep {!defined($_->{ok})} @$lsf_jobs);
+  my $cycle_count = 0;
+  if ($unfinished_jobs > 200) {
+    print LOG "[", scalar(localtime()), "] Dozing ($unfinished_jobs unfinished jobs) ";
     do {
-      sleep(60); # wait for 1 minute
+      $cycle_count++;
+      sleep(300); # wait for 2 minute
       print LOG ".";
       check_LSF_jobs($lsf_jobs); #check LSF jobs. OK status will be updated
-    } while ((grep {!defined($_->{ok})} @$lsf_jobs) > 150);
+      $unfinished_jobs = scalar(grep {!defined($_->{ok})} @$lsf_jobs);
+      if (!($cycle_count % 10)) {
+        print LOG "\n[", scalar(localtime()), "] Dozing ($unfinished_jobs unfinished jobs) ";
+      }
+    } while ($unfinished_jobs > 150);
     print LOG "\n";
   }
 }
@@ -1164,4 +1201,3 @@ sub make_directory {
   }
   print LOG "$dir\n";
 }
-
