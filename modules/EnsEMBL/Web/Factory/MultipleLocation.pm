@@ -107,6 +107,12 @@ sub createObjectsLocation {
   } elsif( $temp_id = $self->param('region') ) {
     $location = $self->_location_from_SeqRegion( $temp_id, $self->param('vc_start'), $self->param('vc_end'), 1, 1 );
     $width = $self->param('vc_end') - $self->param('vc_start') + 1;
+  } elsif( $self->param('l') =~ /^([\w\.]+):(-?[\.\w]+)-([\.\w]+)$/ ) {
+    my($sr,$start,$end) = ($1,$2,$3);
+    $start = $self->evaluate_bp($start);
+    $end   = $self->evaluate_bp($end);
+      $width = $end - $start + 1;
+    $location = $self->_location_from_SeqRegion( $sr,$start,$end,1,1);
   } else {
     my( $seq_region,$cp,$t_strand ) =
       $self->param('c') =~ /^(\w+):(-?[.\w]+)(:-?1)?$/ ? ($1,$2,$3) : 
