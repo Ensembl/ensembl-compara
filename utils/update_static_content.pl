@@ -644,12 +644,16 @@ sub do_downloads {
 
 );
 
-  foreach my $spp (@{ utils::Tool::all_species()}) {
+  foreach my $spp (@{[@{ utils::Tool::all_species()}] }) {
     my $version_ini = utils::Tool::get_config({species =>$spp, values => "ENSEMBL_FTP_BASEDIR" });
     my $description = utils::Tool::get_config({species =>$spp, values => "SPECIES_DESCRIPTION" });   
-    my $common = utils::Tool::get_config({species =>$spp, values => "SPECIES_COMMON_NAME" });
-    $common = 'mosquito' if $common eq 'Anopheles';
-    $common = 'bee' if $common eq 'Honeybee';
+    my $common = lc(utils::Tool::get_config({species =>$spp, values => "SPECIES_COMMON_NAME" }));
+    $common = 'mosquito' if $common eq 'anopheles';
+    $common = 'bee' if $common eq 'honeybee';
+    $common = 'yeast' if $common eq 's.cerevisiae';
+    $common = 'ciona' if $common eq 'c.intestinalis';
+    $common =~ s/\.//;
+    $common =~ s/fruit//;
     my $url = $archive ? $version_ini : "current_".$common;
     $spp =~ s/_/ /;
     print NEW qq(
