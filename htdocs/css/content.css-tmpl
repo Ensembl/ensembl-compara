@@ -42,6 +42,7 @@ h3.boxed, div.panel h3 { color:[[HEADING]]; background-color:[[BACKGROUND2]]; ma
 #page ol li { list-style-type:decimal; list-style-image:none; }
 
 #page ul li { list-style-image:url(/img/red_bullet.gif); }
+#page ul.checklist li { list-style-image:url(/img/checkbox.gif) }
 
 #page ul.level2 li { list-style-image:url(/img/blue_bullet.gif); }
 
@@ -179,7 +180,7 @@ div.formpanel div { margin-top:5px; }
 * html .infoblock, * html .radiocheck, * html .radiocheck1col, * html .formblock { height: 1%;}
 .infoblock, .radiocheck, .radiocheck1col, .formblock               { display: block; }
 /* end of Holly hack */
-.radiocheck { float: left; width: 12em; }
+.radiocheck { float: left; width: 15em; }
 .radiocheck1col .radio, .radiocheck .radio { display: inline; float: left }
 
 form#change_chr { margin:10px; }
