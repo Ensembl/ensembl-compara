@@ -134,9 +134,10 @@ sub render_js {
   foreach my $element ( @{$self->{'_elements'}} ) {
     if($element->validate()) {
       if( $element->type eq 'DropDownAndString' ) {
+        (my $T = $element->name)=~s/'/\\'/g;
         push @entries, sprintf(
-          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},
-          $element->name, 'DropDown', $element->label, $element->required eq 'yes'?1:0
+          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$T,
+          'DropDown', $element->label, $element->required eq 'yes'?1:0
         );
         push @entries, sprintf(
           " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},
