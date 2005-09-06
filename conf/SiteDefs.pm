@@ -359,11 +359,13 @@ foreach my $binomial ( @$ENSEMBL_SPECIES ) {
   }
   my $key = lc($binomial);
   $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # homo_sapiens
-  $key =~s/_//g;
+  $key =~s/\.//g;
   $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # homosapiens
   $key = lc($binomial);
   $key =~s/^([a-z])[a-z]*_/$1_/g;
   $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # h_sapiens
+  $key =~s/_/\./g;
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # h.sapiens
   $key =~s/_//g;
   $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # hsapiens
 }
