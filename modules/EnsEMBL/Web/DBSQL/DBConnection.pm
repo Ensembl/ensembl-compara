@@ -631,7 +631,6 @@ sub _get_help_database{
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
 }
 
-=head2 _get_family_database
 sub _get_go_database{
     my $self = shift;
     my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_GO} ||

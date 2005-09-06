@@ -37,7 +37,7 @@ sub render {
     foreach my $V ( @{$self->values} ) {
         $checked = 'no';
         # check if we want to tick this box
-        foreach my $M ( @{$self->value} ) {
+        foreach my $M ( @{$self->value||[]} ) {
             if ($M eq $$V{'value'}) {
                 $checked = 'yes';
                 last;

@@ -928,7 +928,7 @@ sub alignsliceviewbottom {
      my ($spe, $type) = split('_compara_', $wuc->get('align_species',$ENV{ENSEMBL_SPECIES} ));
      push (@sarray, ucfirst($spe)) if $spe;
 
-     my $comparadb= &compara_db(); 
+     my $comparadb = $object->database('compara');
      my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
  #    warn("SA: @sarray");
 
@@ -1036,7 +1036,7 @@ sub alignsliceviewzoom {
      my ($spe, $type) = split('_compara_', $wuc2->get('align_species',$ENV{ENSEMBL_SPECIES} ));
      push (@sarray, ucfirst($spe)) if $spe;
 
-     my $comparadb= &compara_db(); 
+     my $comparadb = $object->database('compara');
      my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
      warn("SA: @sarray");
 
@@ -1251,10 +1251,10 @@ sub compara_db {
     #    my $dbname = 'abel_mavid_test2';
     #    my $port = 3306;
     
-    my $host = 'ecs3d';
+    my $host = 'ecs3';
     my $user = 'ensro';
-    my $dbname = 'ensembl_compara_32';
-    my $port = 3307;
+    my $dbname = 'ensembl_compara_33';
+    my $port = 3306;
 # For now just return a new db adaptor, later we can cache it .. 
     return new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host, -user => $user, -dbname => $dbname, -port=>$port);
 }

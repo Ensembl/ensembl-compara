@@ -21,7 +21,7 @@ sub add_row {
   if( $status_switch =~ /=on$/ ) {
     $button_image = qq(<img src="/img/dd_menus/plus-box.gif" width="16" height="16" alt="+" />);
     $content = '<p>To show this information click the + to the left</p>' if $status_switch =~ /=on$/;    
-    $class = ' class="print_hide"';
+    $class = ' class="print_hide_block"';
   } else {
     $button_image = qq(<img src="/img/dd_menus/min-box.gif" width="16" height="16" alt="-" />);
     $class = '';

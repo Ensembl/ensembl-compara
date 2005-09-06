@@ -91,8 +91,10 @@ sub sequence_display {
  # If the feature is on reverse strand - then count from the end
     my $fstrand = $feat->seq_region_strand;
     my $fstart  = $fstrand < 0 ? $send - $feat->seq_region_end + 1 : $feat->seq_region_start - $sstart + 1;
+#    my $fstart  = $feat->seq_region_start - $sstart + 1;
     $fstart = $slength+1   if $fstart > $slength+1;
     $all_locs{$fstart} = 1 if $fstart > 0;
+  warn "$fstart : $sstrand $fstrand -- $cigar";
     my @segs = ( $cigar =~ /(\d*\D)/g ); # Split cigar into segments
     @segs = reverse @segs if $fstrand < 1; # if -ve ori, invert cigar
     foreach my $seg( @segs ) {
