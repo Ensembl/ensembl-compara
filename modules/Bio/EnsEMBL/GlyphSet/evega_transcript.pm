@@ -122,17 +122,18 @@ sub gene_zmenu {
   return $zmenu;
 }
 
-my %legend_map = ( 'protein_coding_KNOWN'         => 'Curated known gene',
-  'protein_coding_NOVEL'       => 'Curated novel CDS',
-  'unclassified_PUTATIVE'        => 'Curated putative',
-  'unclassified_PUTATIVE'    => 'Curated novel Trans' ,
-  'pseudogene_KNOWN'      => 'Curated pseudogenes' ,
-  'processed_pseudogene_KNOWN'  => 'Curated processed pseudogenes' ,
-  'unprocessed_pseudogene_KNOWN'=> 'Curated unprocessed pseudogenes' ,
-  'protein_coding_KNOWN'    => 'Curated predicted gene' ,
-  'Ig_Segment_KNOWN'      => 'Curated Immunoglobulin segment' ,
-  'Ig_Pseudogene_segment_KNOWN' => 'Curated Immunoglobulin pseudogene' ,
-  'Polymorphic'       => 'Curated Polymorphic'  );
+my %legend_map = (
+  'protein_coding_KNOWN'    => 'Known gene',
+  'protein_coding_NOVEL'    => 'Novel CDS',
+  'unclassified_PUTATIVE'   => 'Putative',
+  'unclassified_PUTATIVE'   => 'Novel Trans' ,
+  'pseudogene_KNOWN'        => 'Pseudogenes' ,
+  'processed_pseudogene_KNOWN'  => 'Processed pseudogenes' ,
+  'unprocessed_pseudogene_KNOWN'=> 'Unprocessed pseudogenes' ,
+  'protein_coding_KNOWN'    => 'Predicted gene' ,
+  'Ig_Segment_KNOWN'      => 'Immunoglobulin segment' ,
+  'Ig_Pseudogene_segment_KNOWN' => 'Immunoglobulin pseudogene' ,
+  'Polymorphic'       => 'Polymorphic'  );
 
 sub text_label {
   my ($self, $gene, $transcript) = @_;
@@ -186,17 +187,17 @@ sub legend {
   my ($self, $colours) = @_;
   return ('vega_genes', 1000,
       [
-        'Curated known genes'  => $colours->{'protein_coding_KNOWN'}[0],
-        'Curated novel CDS'    => $colours->{'protein_coding_NOVEL'}[0],
-        'Curated putative'     => $colours->{'unclassified_PUTATIVE'}[0],
-        'Curated novel Trans'  => $colours->{'protein_coding_NOVEL'}[0],
-        'Curated pseudogenes'  => $colours->{'pseudogene_KNOWN'}[0],
-        'Curated processed pseudogenes'  => $colours->{'processed_pseudogene_KNOWN'}[0],
-        'Curated unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_KNOWN'}[0],
-        'Curated predicted gene'     => $colours->{'protein_coding_PREDICTED'}[0],
-        'Curated Immunoglobulin segment' => $colours->{'Ig_segment_KNOWN'}[0],
-        'Curated Immunoglobulin pseudogene' => $colours->{'Ig_pseudogene_segment_KNOWN'}[0],
-        'Curated Polymorphic' => $colours->{'Polymorphic'}[0],
+        'Known genes'  => $colours->{'protein_coding_KNOWN'}[0],
+        'Novel CDS'    => $colours->{'protein_coding_NOVEL'}[0],
+        'Putative'     => $colours->{'unclassified_PUTATIVE'}[0],
+        'Novel Trans'  => $colours->{'protein_coding_NOVEL'}[0],
+        'Pseudogenes'  => $colours->{'pseudogene_KNOWN'}[0],
+        'Processed pseudogenes'  => $colours->{'processed_pseudogene_KNOWN'}[0],
+        'Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_KNOWN'}[0],
+        'predicted gene'     => $colours->{'protein_coding_PREDICTED'}[0],
+        'Immunoglobulin segment' => $colours->{'Ig_segment_KNOWN'}[0],
+        'Immunoglobulin pseudogene' => $colours->{'Ig_pseudogene_segment_KNOWN'}[0],
+        'Polymorphic' => $colours->{'Polymorphic'}[0],
       ]
   );
 }
