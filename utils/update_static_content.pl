@@ -468,7 +468,7 @@ sub SSI {
     &SSIkaryomap($dir, $species, $common_name);
   }
   else {
-    &SSIexamples($dir);
+    &SSIexamples($dir, $species);
     &SSIentry($dir, $species, 0);
   }
   return;
@@ -569,7 +569,7 @@ sub SSIabout {
 #------------------------------------------------------------------------------
 
 sub SSIexamples {
-  my ($dir) = @_;
+  my ($dir, $species) = @_;
   my $entry = $dir ."/examples.html";
   return if -e $entry;
   open (my $fh2, ">$entry") or die "Cannot create $entry: $!";
@@ -577,7 +577,7 @@ sub SSIexamples {
 <h3 class="boxed">Example Data Points</h3>
 
 <p>
-
+This release of <i>$species</i> data is assembled into scaffolds, so there are no chromosomes available to browse.
 </p>
 
 <p>A few example data points :</p>
