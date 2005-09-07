@@ -168,17 +168,13 @@ sub fetch_all_by_species_region {
 
   #convert genomic align blocks to dna align features
   foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-    my $consensus_genomic_align;
-    my $query_genomic_align;
-    if ($this_genomic_align_block->genomic_align_array->[0]->dnafrag->dbID == $this_dnafrag->dbID) {
-      $consensus_genomic_align = $this_genomic_align_block->genomic_align_array->[0];
-      $query_genomic_align = $this_genomic_align_block->genomic_align_array->[1];
-    } elsif ($this_genomic_align_block->genomic_align_array->[1]->dnafrag->dbID == $this_dnafrag->dbID) {
-      $consensus_genomic_align = $this_genomic_align_block->genomic_align_array->[1];
-      $query_genomic_align = $this_genomic_align_block->genomic_align_array->[0];
-    } else {
-      throw "Cannot identify original Bio::EnsEMBL::Compara::DnaFrag object";
-    }
+
+    ## KNOWN BUG: This will ignore third and following parts of a multiple alignment...
+    ## This adaptor cannot deal with multiple alignments. Use the new
+    ## Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor instead.
+    my $consensus_genomic_align = $this_genomic_align_block->reference_genomic_align;
+    my $query_genomic_align = $this_genomic_align_block->get_all_non_reference_genomic_aligns->[0];
+
     my $top_slice;
     if ($query_slice_adaptor) {
       $top_slice = $query_slice_adaptor->fetch_by_region(
@@ -188,11 +184,12 @@ sub fetch_all_by_species_region {
     } else {
       $top_slice = undef;
     }
-    
-    #calculate chromosomal coords
-    ## Bio::EnsEMBL::Compara::Dnafrag::start is always 1.
-    #       my $cstart = $this_dnafrag->start + $consensus_genomic_align->dnafrag_start - 1;
-    #       my $cend   = $this_dnafrag->start + $consensus_genomic_align->dnafrag_end - 1;
+
+    ## The code for transforming GenomicAlignBlocks into DnaDnaAlignFeatures assumes that
+    ## reference_genomic_align is on the forward strand!
+    if ($consensus_genomic_align->dnafrag_strand == -1) {
+      $this_genomic_align_block->reverse_complement;
+    }
     my $cstart = $consensus_genomic_align->dnafrag_start;
     my $cend   = $consensus_genomic_align->dnafrag_end;
 
