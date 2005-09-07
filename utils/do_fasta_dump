@@ -333,7 +333,7 @@ sub create_dirs_for_dumps {
 
   my ($highest_cs) = @{$cs_adaptor->fetch_all()};
   my $assembly     = $highest_cs->version();
-  info( 1, "Dumping $sp $assembly" );
+  warning( 1, "Dumping $sp $assembly" );
 
   my $file_details = "$sp.$assembly.".utils::Tool::release_month();
   foreach my $type (keys %$types) {
@@ -635,6 +635,10 @@ sub dump_pep {
   $label .=" transcript:".$transcript->stable_id;
 
   my $seq = $transcript->translate;
+  unless ($seq) {
+    warning (1, "No seq for Transcript ".$transcript->stable_id);
+    return 1;
+  }
   $seq->display_id( $display_id );
   $seq->description( join( " ", $type, $location, $label, $ccds_id) );
   #info( 1, "PEP>type:$type ".$seq->display_id );
