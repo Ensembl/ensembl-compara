@@ -283,11 +283,11 @@ sub create_GenomeDBs {
   # Populate the hash array which cross-references the consensus
   # and query dbs
 
-  my $sth = $self->prepare("
-     SELECT consensus_genome_db_id, query_genome_db_id, method_link_id
-     FROM genomic_align_genome
-  ");
-
+#   my $sth = $self->prepare("
+#      SELECT consensus_genome_db_id, query_genome_db_id, method_link_id
+#      FROM genomic_align_genome
+#   ");
+# 
 #   $sth->execute;
 # 
 #   while ( my @db_row = $sth->fetchrow_array() ) {
@@ -301,7 +301,7 @@ sub create_GenomeDBs {
 #   }
 
   # grab all the possible species databases in the genome db table
-  $sth = $self->prepare("
+  my $sth = $self->prepare("
      SELECT genome_db_id, name, assembly, taxon_id, assembly_default, genebuild, locator
      FROM genome_db 
    ");
