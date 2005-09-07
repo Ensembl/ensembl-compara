@@ -1,0 +1,263 @@
+=head1 NAME
+
+CGObject - DESCRIPTION of Object
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+Abstract superclass to mimic some of the functionality of Foundation/NSObject
+Implements a 'reference count' system based on the OpenStep retain/release design. 
+Implements a metadata tagging system.
+Designed to be used as the Root class.
+
+=head1 CONTACT
+
+  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
+
+
+
+package Bio::EnsEMBL::Compara::Graph::CGObject;
+
+use strict;
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument;
+
+unless(eval "require Data::UUID") {
+  throw("Cpan module Data::UUID is not installed on this system\n". 
+        "Please install from http://www.cpan.org/modules/by-module/Data/Data-UUID-0.11.tar.gz\n".
+        "If there are problems building on 64bit machines, please install patch at\n".
+        "http://www.ebi.ac.uk/~jessica/Data_UUID_64bit_patch.html\n"); 
+}
+
+#################################################
+# Factory methods
+#################################################
+
+sub new {
+  my ($class, @args) = @_;
+  my $self = $class->alloc(@args);
+  $self->init;  
+  return $self;
+}
+
+sub alloc {
+  my ($class, @args) = @_;
+  my $self = {};
+  bless $self,$class;
+  #printf("%s   CREATE refcount:%d\n", $self->node_id, $self->refcount);  
+  return $self;
+}
+
+sub init {
+  my $self = shift;
+
+  #internal variables minimal allocation
+  $self->{'_node_id'} = undef;
+  $self->{'_adaptor'} = undef;
+  $self->{'_refcount'} = 0;
+
+  return $self;
+}
+
+sub dealloc {
+  my $self = shift;
+  #printf("DEALLOC refcount:%d ", $self->refcount); $self->print_node;
+}
+
+sub DESTROY {
+  my $self = shift;
+  if(defined($self->{'_refcount'}) and $self->{'_refcount'}>0) {
+    printf("WARNING DESTROY refcount:%d  (%s)%s %s\n", 
+       $self->refcount, $self->node_id, $self->get_tagvalue('name'), $self);
+  }    
+  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+}
+
+sub copy {
+  my $self = shift;
+  
+  my $mycopy = new Bio::EnsEMBL::Compara::Graph::CGObject;
+
+  #TODO add copy of metadata
+  
+  return $mycopy;
+}
+
+#######################################
+# reference counting system
+# DO NOT OVERRIDE
+#######################################
+
+sub retain {
+  my $self = shift;
+  $self->{'_refcount'}=0 unless(defined($self->{'_refcount'}));
+  $self->{'_refcount'}++;
+  #printf("RETAIN  refcount:%d (%s)%s %s\n", 
+  #     $self->refcount, $self->obj_id, $self->get_tagvalue('name'), $self);
+  return $self;
+}
+
+sub release {
+  my $self = shift;
+  throw("calling release on object which hasn't been retained") 
+    unless(defined($self->{'_refcount'}));
+  $self->{'_refcount'}--;
+  #printf("RELEASE refcount:%d (%s)%s %s\n", 
+  #     $self->refcount, $self->obj_id, $self->get_tagvalue('name'), $self);
+  return $self if($self->refcount > 0);
+  $self->dealloc;
+  return undef;
+}
+
+sub refcount {
+  my $self = shift;
+  return $self->{'_refcount'};
+}
+
+#################################################
+#
+# get/set variable methods
+#
+#################################################
+
+=head2 obj_id
+
+  Arg [1]    : (opt.) <string/integer> id
+  Example    : my $nsetID = $object->obj_id();
+  Example    : $object->dbID(12);
+  Description: Getter/Setter for a unique obj_id of this object.  
+               Will set to a UUID if called on uninitialized object 
+  Returntype : <string/integer> id
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub obj_id {
+  my $self = shift;
+  $self->{'_cgobject_dbID'} = shift if(@_);
+  unless(defined($self->{'_cgobject_dbID'})) {
+    $self->{'_cgobject_dbID'} = Data::UUID->new->create_str();
+  }
+  return $self->{'_cgobject_dbID'};
+}
+
+
+=head2 adaptor
+
+  Arg [1]    : (opt.) subcalss of Bio::EnsEMBL::DBSQL::BaseAdaptor
+  Example    : my $object_adaptor = $object->adaptor();
+  Example    : $object->adaptor($object_adaptor);
+  Description: Getter/Setter for the adaptor this object uses for database
+               interaction.
+  Returntype : subclass of Bio::EnsEMBL::DBSQL::BaseAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub adaptor {
+  my $self = shift;
+  $self->{'_adaptor'} = shift if(@_);
+  return $self->{'_adaptor'};
+}
+
+
+sub store {
+  my $self = shift;
+  throw("adaptor must be defined") unless($self->adaptor);
+  $self->adaptor->store($self);
+}
+
+
+##################################
+#
+# metadata tagging system
+#
+##################################
+
+=head2 add_tag
+
+  Description: adds metadata tags to a node.  Both tag and value are added as metdata with the
+               added ability to retreive the value given the tag (like a perl hash)
+  Arg [1]    : <string> tag
+  Arg [2]    : (optional)<string> value
+  Example    : $ns_node->add_tag('scientific name', 'Mammalia');
+               $ns_node->add_tag('mammals_rosette');
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub add_tag {
+  my $self = shift;
+  my $tag = shift;
+  my $value = shift;
+  
+  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+
+  if($value) { $self->{'_tags'}->{$value} = '';}
+  else {$value='';}
+  
+  $self->{'_tags'}->{$tag} = $value;
+}
+
+sub has_tag {
+  my $self = shift;
+  my $tag = shift;
+  
+  $self->_load_tags;
+  return $self->{'_tags'}->{$tag};
+}
+
+sub get_tagvalue {
+  my $self = shift;
+  my $tag = shift;
+  
+  my $value = $self->has_tag($tag);
+  $value='' unless(defined($value));
+  return $value;
+}
+
+sub get_all_tags {
+  my $self = shift;
+  
+  $self->_load_tags;
+  return keys(%{$self->{'_tags'}});
+}
+
+sub get_tagvalue_hash {
+  my $self = shift;
+  
+  $self->_load_tags;
+  return $self->{'_tags'};
+}
+
+sub _load_tags {
+  my $self = shift;
+  return if(defined($self->{'_tags'}));
+  $self->{'_tags'} = {};
+  if($self->adaptor) {
+    $self->adaptor->_load_tagvalues($self);
+  }
+}
+
+sub name {
+  my $self = shift;
+  my $value = shift;
+  if(defined($value)) { $self->add_tag('name', $value); }
+  else { $value = $self->get_tagvalue('name'); }
+  return $value;
+}
+
+1;
+

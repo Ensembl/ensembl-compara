@@ -31,6 +31,9 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
+use Bio::EnsEMBL::Compara::Graph::Node;
+our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
+
 unless(eval "require Data::UUID") {
   throw("Cpan module Data::UUID is not installed on this system\n". 
         "Please install from http://www.cpan.org/modules/by-module/Data/Data-UUID-0.11.tar.gz\n".
@@ -42,26 +45,9 @@ unless(eval "require Data::UUID") {
 # Factory methods
 #################################################
 
-sub new {
-  my ($class, @args) = @_;
-  my $self = {};
-
-  bless $self,$class;
-  $self->init;
-  #printf("%s   CREATE refcount:%d\n", $self->node_id, $self->refcount);
-  
-  return $self;
-}
-
 sub init {
   my $self = shift;
-
-  #internal variables minimal allocation
- # $self->{'_children_id_hash'} = {};
-  $self->{'_node_id'} = undef;
-  $self->{'_adaptor'} = undef;
-  $self->{'_refcount'} = 0;
-
+  $self->SUPER::init;
   return $self;
 }
 
@@ -69,44 +55,19 @@ sub dealloc {
   my $self = shift;
 
   $self->release_children;
-  #printf("DEALLOC refcount:%d ", $self->refcount); $self->print_node;
-}
-
-sub DESTROY {
-  my $self = shift;
-  if(defined($self->{'_refcount'}) and $self->{'_refcount'}>0) {
-    printf("WARNING DESTROY refcount:%d  (%s)%s %s\n", $self->refcount, $self->node_id, $self->name, $self);
-  }    
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+  #printf("DEALLOC NestedSet refcount:%d ", $self->refcount); $self->print_node;
+  return $self->SUPER::dealloc;
 }
 
 sub copy {
   my $self = shift;
   
-  my $mycopy = new Bio::EnsEMBL::Compara::NestedSet;
+  my $mycopy = $self->SUPER::copy;
 
-  $mycopy->distance_to_parent($self->distance_to_parent);
   $mycopy->left_index($self->left_index);
   $mycopy->right_index($self->right_index);
-  $mycopy->name($self->name);
 
-  foreach my $child (@{$self->children}) {  
-    $mycopy->add_child($child->copy);
-  }
   return $mycopy;
-}
-
-#######################################
-# reference counting system
-# DO NOT OVERRIDE
-#######################################
-
-sub retain {
-  my $self = shift;
-  $self->{'_refcount'}=0 unless(defined($self->{'_refcount'}));
-  $self->{'_refcount'}++;
-  #printf("RETAIN  refcount:%d ", $self->refcount); $self->print_node;
-  return $self;
 }
 
 sub release {
@@ -115,70 +76,28 @@ sub release {
     unless(defined($self->{'_refcount'}));
   $self->{'_refcount'}--;
   #printf("RELEASE refcount:%d ", $self->refcount); $self->print_node;
-  return $self if($self->refcount > 0);
+  return $self if($self->refcount > $self->link_count);
   $self->dealloc;
   return undef;
 }
 
-sub refcount {
-  my $self = shift;
-  return $self->{'_refcount'};
-}
-
 #################################################
-#
-# get/set variable methods
-#
+# Object variable methods
 #################################################
 
-=head2 node_id
-
-  Arg [1]    : (opt.) integer node_id
-  Example    : my $nsetID = $object->node_id();
-  Example    : $object->node_id(12);
-  Description: Getter/Setter for the node_id of this object in the database
-  Returntype : integer node_id
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub node_id {
+sub left_index {
   my $self = shift;
-  $self->{'_node_id'} = shift if(@_);
-  unless(defined($self->{'_node_id'})) {
-    $self->{'_node_id'} = Data::UUID->new->create_str();
-  }
-  return $self->{'_node_id'};
+  $self->{'_left_index'} = shift if(@_);
+  $self->{'_left_index'} = 0 unless(defined($self->{'_left_index'}));
+  return $self->{'_left_index'};
 }
 
-
-=head2 adaptor
-
-  Arg [1]    : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
-  Example    : my $object_adaptor = $object->adaptor();
-  Example    : $object->adaptor($object_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : subclass of Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub adaptor {
+sub right_index {
   my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
+  $self->{'_right_index'} = shift if(@_);
+  $self->{'_right_index'} = 0 unless(defined($self->{'_right_index'}));
+  return $self->{'_right_index'};
 }
-
-
-sub store {
-  my $self = shift;
-  throw("adaptor must be defined") unless($self->adaptor);
-  $self->adaptor->store($self);
-}
-
 
 
 #######################################
@@ -206,29 +125,21 @@ sub add_child {
   
   #print("add_child\n");  $self->print_node; $child->print_node;
   
-  return undef if($self->{'_children_id_hash'}->{$child->node_id});
+  return undef if($self->has_neighbor($child));
 
   #object linkage
   $child->retain->disavow_parent;
   $child->_set_parent($self);
-
-  $self->{'_children_id_hash'} = {} unless($self->{'_children_id_hash'});
-  $self->{'_children_id_hash'}->{$child->node_id} = $child;
+  $self->create_link_to_node($child);
+  $child->release;
+  $self->{'_children_loaded'} = 1; 
   return undef;
 }
 
-
 sub store_child {
   my ($self, $child) = @_;
-
-  throw("child not defined") 
-     unless(defined($child));
-  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
-     unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
-  throw("adaptor must be defined") unless($self->adaptor);
-
-  $child->_set_parent($self);
-  $self->adaptor->store($child);
+  throw("store_child has been deprecated. Highly inefficient.".
+        "Use add_child, build in memory and store in one go\n") 
 }
 
 =head2 remove_child
@@ -244,17 +155,8 @@ sub store_child {
 
 sub remove_child {
   my ($self, $child) = @_;
-
-  throw("child not defined") unless(defined($child));
-  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
-     unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
-  throw($self->node_id. " not my child ". $child->node_id)
-    unless($self->{'_children_id_hash'} and 
-           $self->{'_children_id_hash'}->{$child->node_id});
-  
-  delete $self->{'_children_id_hash'}->{$child->node_id};
+  $self->unlink_neighbor($child);
   $child->_set_parent(undef);
-  $child->release;
   return undef;
 }
 
@@ -275,7 +177,7 @@ sub disavow_parent {
   my $parent = $self->{'_parent_node'}; #use variable to bypass parent autoload
   $self->_set_parent(undef);
   if($parent) {
-    $parent->remove_child($self);
+    $self->unlink_neighbor($parent);
     #print("DISAVOW parent : "); $parent->print_node;
     #print("        child  : "); $self->print_node;
   }
@@ -297,17 +199,9 @@ sub disavow_parent {
 sub release_children {
   my $self = shift;
   
-  if($self->{'_children_id_hash'}) {
-    my @kids = values(%{$self->{'_children_id_hash'}});
-    foreach my $child (@kids) {
-      #printf("  parent %d releasing child %d\n", $self->node_id, $child->node_id);
-      if($child) {
-        $child->release_children;
-        $child->release;
-      }
-    }
-  }
-  $self->{'_children_id_hash'} = {};
+  # by calling with parent, this preserved the link to the parent
+  # and thus doesn't unlink self
+  $self->cascade_unlink($self->{'_parent_node'});
   return $self;
 }
 
@@ -327,7 +221,7 @@ sub parent {
   return $self->{'_parent_node'} if(defined($self->{'_parent_node'}));
   if($self->adaptor and $self->_parent_id) {
     my $parent = $self->adaptor->fetch_parent_for_node($self);
-    #print("fetched parent : "); $parent->print_node;
+    print("fetched parent : "); $parent->print_node;
     $parent->add_child($self);
   }
   return $self->{'_parent_node'};
@@ -397,8 +291,12 @@ sub children {
   my $self = shift;
 
   $self->load_children_if_needed;
-  return [] unless($self->{'_children_id_hash'});
-  my @kids = values(%{$self->{'_children_id_hash'}});
+  my @kids;
+  foreach my $neighbor (@{$self->neighbors}) {
+    next unless(defined($neighbor));
+    next if($self->{'_parent_node'} and $neighbor->equals($self->{'_parent_node'}));
+    push @kids, $neighbor;
+  }
   return \@kids;
 }
 
@@ -448,15 +346,16 @@ sub get_all_subnodes {
 
 sub get_child_count {
   my $self = shift;
-  return scalar(@{$self->children});
+  my $count = $self->link_count;
+  $count-- if($self->has_parent);
+  return $count;
 }
 
 sub load_children_if_needed {
   my $self = shift;
-    
-  if($self->adaptor and !defined($self->{'_children_id_hash'})) {
+  if($self->adaptor and !defined($self->{'_children_loaded'})) {
     #define _children_id_hash thereby signally that I've tried to load my children
-    $self->{'_children_id_hash'} = {}; 
+    $self->{'_children_loaded'} = 1; 
     #print("fetch_all_children_for_node : "); $self->print_node;
     $self->adaptor->fetch_all_children_for_node($self);
   }
@@ -466,8 +365,8 @@ sub load_children_if_needed {
 sub no_autoload_children {
   my $self = shift;
   
-  return if($self->{'_children_id_hash'});
-  $self->{'_children_id_hash'} = {};
+  return if($self->{'_children_loaded'});
+  $self->{'_children_loaded'} = 1;
 }
 
 
@@ -482,6 +381,14 @@ sub no_autoload_children {
   Caller     : general
 
 =cut
+
+#sub distance_to_parent {
+#  my $self = shift;
+#  my $value = shift;
+#  my $link = $self->link_for_neighbor($self->parent);
+#  if(defined($value)) { $link->distance_between($value); };
+#  return $link->distance_between;
+#}
 
 sub distance_to_parent {
   my $self = shift;
@@ -509,21 +416,6 @@ sub distance_to_ancestor {
   }
   return $self->distance_to_parent + $self->parent->distance_to_ancestor($ancestor);
 }
-
-sub left_index {
-  my $self = shift;
-  $self->{'_left_index'} = shift if(@_);
-  $self->{'_left_index'} = 0 unless(defined($self->{'_left_index'}));
-  return $self->{'_left_index'};
-}
-
-sub right_index {
-  my $self = shift;
-  $self->{'_right_index'} = shift if(@_);
-  $self->{'_right_index'} = 0 unless(defined($self->{'_right_index'}));
-  return $self->{'_right_index'};
-}
-
 
 sub print_tree {
   my $self  = shift;
@@ -631,17 +523,17 @@ sub newick_simple_format {
 #
 ##################################
 
-sub equals {
-  my $self = shift;
-  my $other = shift;
-  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$other]")
-        unless($other->isa('Bio::EnsEMBL::Compara::NestedSet'));
-  return 1 if($self->node_id eq $other->node_id);
-  foreach my $child (@{$self->children}) {
-    return 0 unless($other->has_child($child));
-  }
-  return 1;
-}
+#sub equals {
+#  my $self = shift;
+#  my $other = shift;
+#  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$other]")
+#        unless($other->isa('Bio::EnsEMBL::Compara::NestedSet'));
+#  return 1 if($self->node_id eq $other->node_id);
+#  foreach my $child (@{$self->children}) {
+#    return 0 unless($other->has_child($child));
+#  }
+#  return 1;
+#}
 
 sub has_child {
   my $self = shift;
@@ -649,9 +541,8 @@ sub has_child {
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
         unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
   $self->load_children_if_needed;
-  return 0 unless($self->{'_children_id_hash'});
-  return 1 if($self->{'_children_id_hash'}->{$child->node_id});
-  return 0;
+  return 0 if($self->{'_parent_node'}->node_id eq $self->node_id);
+  return $self->has_neighbor($child);
 }
 
 sub is_member_of {
@@ -882,91 +773,12 @@ sub find_first_shared_ancestor {
   return $self->find_first_shared_ancestor($node->parent);
 }
 
-##################################
-#
-# node tagging system
-#
-##################################
-
-=head2 add_tag
-
-  Description: adds metadata tags to a node.  Both tag and value are added as metdata with the
-               added ability to retreive the value given the tag (like a perl hash)
-  Arg [1]    : <string> tag
-  Arg [2]    : (optional)<string> value
-  Example    : $ns_node->add_tag('scientific name', 'Mammalia');
-               $ns_node->add_tag('mammals_rosette');
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub add_tag {
-  my $self = shift;
-  my $tag = shift;
-  my $value = shift;
-  
-  unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
-
-  if($value) { $self->{'_tags'}->{$value} = 1;}
-  else {$value=1;}
-  
-  $self->{'_tags'}->{$tag} = $value;
-}
-
-sub has_tag {
-  my $self = shift;
-  my $tag = shift;
-  
-  $self->_load_tags;
-  my $value = $self->{'_tags'}->{$tag};
-  $value=0 unless(defined($value));
-  return $value;
-}
-
-sub get_all_tags {
-  my $self = shift;
-  
-  $self->_load_tags;
-  return keys(%{$self->{'_tags'}});
-}
-
-sub get_all_tagged_values {
-  my $self = shift;  
-  
-  $self->_load_tags;
-  return values(%{$self->{'_tags'}});
-}
-
-sub get_tag_hash {
-  my $self = shift;
-  
-  $self->_load_tags;
-  return $self->{'_tags'};
-}
-
-sub _load_tags {
-  my $self = shift;
-  return if(defined($self->{'_tags'}));
-  $self->{'_tags'} = {};
-  if($self->adaptor) {
-    $self->adaptor->_node_load_tagvalues($self);
-  }
-}
 
 ##################################
 #
 # developer/adaptor API methods
 #
 ##################################
-
-sub name {
-  my $self = shift;
-  $self->{'_name'} = shift if(@_);
-  $self->{'_name'} = '' unless(defined($self->{'_name'}));
-  return $self->{'_name'};
-}
 
 
 # used for building tree from a DB fetch, want to restrict users to create trees
