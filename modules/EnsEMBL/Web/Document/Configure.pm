@@ -50,6 +50,7 @@ sub common_menu_items {
   );
 
   $doc->menu->add_entry( 'docs',
+    'code'  => "whatsnew",
     'href' => '/whatsnew.html',
     'text'  => "What's New",
     'title' => "Latest changes in Ensembl"
