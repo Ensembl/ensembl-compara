@@ -485,7 +485,7 @@ sub check_dir {
 sub check_mysql_sql {
   my ($file, $species) = @_;
 
-  info("Checking mysql dir $file");
+  info(1, "Checking mysql dir $file");
   my $twolines = `gzcat $file | head -10`;
   my @file_contents = (split /\n/, $twolines);
 
@@ -676,7 +676,7 @@ sub info{
   $msg || ( carp("Need a warning message" ) && return );
 
   if( $v > $VERBOSITY ){ return 1 }
-  warn( "[INFO] ".$msg."\n" );
+  print( "[INFO] ".$msg."\n" );
   return 1;
 }
 
@@ -688,7 +688,7 @@ sub warning{
   $msg || ( carp("Need a warning message" ) && return );
 
   if( $v > $VERBOSITY ){ return 1 }
-  warn( "[WARN] ".$msg."\n" );
+  print( "[WARN] ".$msg."\n" );
  return 1;
 }
 
