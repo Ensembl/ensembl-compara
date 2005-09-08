@@ -54,8 +54,8 @@ sub init {
 sub dealloc {
   my $self = shift;
 
-  $self->release_children;
   #printf("DEALLOC NestedSet refcount:%d ", $self->refcount); $self->print_node;
+  $self->release_children;
   return $self->SUPER::dealloc;
 }
 
@@ -70,15 +70,10 @@ sub copy {
   return $mycopy;
 }
 
-sub release {
+sub release_tree {
   my $self = shift;
-  throw("calling release on object which hasn't been retained") 
-    unless(defined($self->{'_refcount'}));
-  $self->{'_refcount'}--;
-  #printf("RELEASE refcount:%d ", $self->refcount); $self->print_node;
-  return $self if($self->refcount > $self->link_count);
-  $self->dealloc;
-  return undef;
+  $self->release;
+  $self->cascade_unlink($self->{'_parent_node'});
 }
 
 #################################################
@@ -129,8 +124,8 @@ sub add_child {
 
   #object linkage
   $child->retain->disavow_parent;
-  $child->_set_parent($self);
-  $self->create_link_to_node($child);
+  my $link = $self->create_link_to_node($child);
+  $child->_parent_link($link);
   $child->release;
   $self->{'_children_loaded'} = 1; 
   return undef;
@@ -156,7 +151,7 @@ sub store_child {
 sub remove_child {
   my ($self, $child) = @_;
   $self->unlink_neighbor($child);
-  $child->_set_parent(undef);
+  $child->_parent_link(undef);
   return undef;
 }
 
@@ -174,12 +169,12 @@ sub remove_child {
 sub disavow_parent {
   my $self = shift;
 
-  my $parent = $self->{'_parent_node'}; #use variable to bypass parent autoload
-  $self->_set_parent(undef);
-  if($parent) {
-    $self->unlink_neighbor($parent);
+  if($self->_parent_link) {
+    my $link = $self->_parent_link;
+    $self->_parent_link(undef);
     #print("DISAVOW parent : "); $parent->print_node;
     #print("        child  : "); $self->print_node;
+    $link->release;
   }
   return undef;
 }
@@ -201,7 +196,12 @@ sub release_children {
   
   # by calling with parent, this preserved the link to the parent
   # and thus doesn't unlink self
-  $self->cascade_unlink($self->{'_parent_node'});
+  foreach my $child (@{$self->children}) {
+    $child->retain->disavow_parent;
+    $child->release_children;
+    $child->release;
+  }
+  #$self->cascade_unlink($self->{'_parent_node'});
   return $self;
 }
 
@@ -218,19 +218,19 @@ sub release_children {
 
 sub parent {
   my $self = shift;
-  return $self->{'_parent_node'} if(defined($self->{'_parent_node'}));
-  if($self->adaptor and $self->_parent_id) {
+  if(!defined($self->_parent_link) and $self->adaptor and $self->_parent_id) {
     my $parent = $self->adaptor->fetch_parent_for_node($self);
-    print("fetched parent : "); $parent->print_node;
+    #print("fetched parent : "); $parent->print_node;
     $parent->add_child($self);
   }
-  return $self->{'_parent_node'};
+  return undef unless($self->_parent_link);
+  return $self->_parent_link->get_neighbor($self);
 }
 
 
 sub has_parent {
   my $self = shift;
-  return 1 if($self->{'_parent_node'} or $self->{'_parent_id'});
+  return 1 if($self->_parent_link or $self->_parent_id);
   return 0;
 }
 
@@ -292,10 +292,10 @@ sub children {
 
   $self->load_children_if_needed;
   my @kids;
-  foreach my $neighbor (@{$self->neighbors}) {
-    next unless(defined($neighbor));
-    next if($self->{'_parent_node'} and $neighbor->equals($self->{'_parent_node'}));
-    push @kids, $neighbor;
+  foreach my $link (@{$self->links}) {
+    next unless(defined($link));
+    next if($self->_parent_link and $link->equals($self->_parent_link));
+    push @kids, $link->get_neighbor($self);
   }
   return \@kids;
 }
@@ -541,8 +541,10 @@ sub has_child {
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
         unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
   $self->load_children_if_needed;
-  return 0 if($self->{'_parent_node'}->node_id eq $self->node_id);
-  return $self->has_neighbor($child);
+  my $link = $self->link_for_neighbor($child);
+  return 0 unless($link);
+  return 0 if($self->_parent_link and ($self->_parent_link->equals($link)));
+  return 1;
 }
 
 sub is_member_of {
@@ -783,7 +785,7 @@ sub find_first_shared_ancestor {
 
 # used for building tree from a DB fetch, want to restrict users to create trees
 # by only -add_child method
-sub _set_parent {
+sub _old_set_parent {
   my ($self, $parent) = @_;
   $self->{'_parent_id'} = 0;
   $self->{'_parent_node'} = $parent;
@@ -791,6 +793,11 @@ sub _set_parent {
   return $self;
 }
 
+sub _parent_link {
+  my $self = shift;
+  $self->{'_parent_link'} = shift if(@_);
+  return $self->{'_parent_link'};
+}
 
 # used for building tree from a DB fetch until all the objects are in memory
 sub _parent_id {
