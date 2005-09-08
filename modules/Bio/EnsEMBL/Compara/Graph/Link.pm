@@ -68,7 +68,7 @@ sub new {
   $node1->_add_neighbor_link_to_hash($node2, $self);
   $node2->_add_neighbor_link_to_hash($node1, $self);
   
-  return undef;
+  return $self;
 }
 
 
