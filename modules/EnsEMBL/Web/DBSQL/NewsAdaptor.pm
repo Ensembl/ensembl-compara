@@ -203,10 +203,12 @@ sub fetch_items {
 
 #--------------------- QUERIES FOR ADDITIONAL TABLES --------------------------
 
+# Input: optional species arg
+# Returns arrayref of results
+
 sub fetch_releases {
     my ($self, $species) = @_;
     my $results = [];
-
     return [] unless $self->db;
 
     my $sql = qq(
