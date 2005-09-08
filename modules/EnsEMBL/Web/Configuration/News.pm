@@ -69,6 +69,13 @@ sub newsdbview {
             ));
             $self->add_form( $panel, qw(edit_item     EnsEMBL::Web::Component::News::edit_item_form) );
         }
+        elsif ($self->{object}->param('submit') eq 'Next') { 
+            $panel->{'caption'} = 'Edit a News article';    
+            $panel->add_components(qw(
+                select_item_only     EnsEMBL::Web::Component::News::select_item_only
+            ));
+            $self->add_form( $panel, qw(select_item  EnsEMBL::Web::Component::News::select_item_form) );
+        }
         elsif ($self->{object}->param('release_id')) { 
             $panel->{'caption'} = 'Add a News article';    
             $panel->add_components(qw(

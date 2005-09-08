@@ -71,6 +71,7 @@ sub select_news_form {
 
 sub show_news {
   my( $panel, $object ) = @_;
+  my $sp_dir = $object->species;
   my $html;
   my $prev_cat = 0;
   my $prev_rel = 0;
@@ -86,9 +87,40 @@ sub show_news {
   foreach my $cat_array (@$cats) {
     $cat_lookup{$$cat_array{'news_cat_id'}} = $$cat_array{'news_cat_name'};
   }
+  my $spp = $object->all_spp;
+  my %sp_lookup = %$spp;
 
+  # Do custom sort of data news
+  # 1. Sort into data and non-data news
+  my (@sp_data, @other);
   for (my $i=0; $i<scalar(@items); $i++) {
-    my %item = %{${$object->items}[$i]};
+    my $item_ref = ${$object->items}[$i];
+    my %item = %$item_ref;
+    if ($item{'news_cat_id'} == 2) {
+        my $sp_count = $item{'sp_count'};
+        if ($sp_count && $sp_count < 2) {
+            push (@sp_data, $item_ref);
+        }
+        else {
+            push (@other, $item_ref);
+        }
+    }
+    else {
+        push (@other, $item_ref);
+    }
+  }
+  # 2. Sort single-species data by species
+  my @sorted_data = sort
+                    { $a->{'species'}[0] <=> $b->{'species'}[0] }
+                    @sp_data;
+  # 3. Merge news items back into single array
+  my @sorted_items = (@sorted_data, @other);
+
+  my $prev_sp = 0;
+  my $prev_count = 0;
+  for (my $i=0; $i<scalar(@sorted_items); $i++) {
+    my %item = %{$sorted_items[$i]};
+    my $item_id = $item{'news_item_id'};
     my $title = $item{'title'};
     my $content = $item{'content'};
     my $release_id = $item{'release_id'};
@@ -97,19 +129,50 @@ sub show_news {
     $rel_date =~ s/\)//g;
     my $news_cat_id = $item{'news_cat_id'};
     my $cat_name = $cat_lookup{$news_cat_id};
+    my $species = $item{'species'};
+    my $sp_count = $item{'sp_count'};
+    my $sp_id;
+    if (ref($species)) {
+        $sp_id = ${$species}[0];
+    }
+    elsif ($species) {
+        $sp_id = $species;
+    }
 
     if ($prev_rel != $release_id) {
-        $html .= qq(<h3 class="boxed">Release $release_id ($rel_date)</h3>\n);
+        $html .= qq(<h2>Release $release_id ($rel_date)</h2>\n);
         $prev_cat = '';
     }
-    if ($prev_cat != $news_cat_id) {
-        $html .= qq(<h4>$cat_name</h4>\n);
-    }
 
-    $html .= "<p><strong>$title</strong><br />$content</p>";
+    # separate data news into species and generic
+    if ($sp_dir eq 'Multi' && $prev_cat == 0) {
+        $html .= qq(<h3 class="boxed">Species News</h3>\n);
+    }
+    else {
+        if ( ($prev_cat != $news_cat_id) || ($sp_dir eq 'Multi' && $sp_count != 1 && $prev_count == 1) ) {
+            if ($news_cat_id == 2) {
+                $html .= "</ul>\n\n";
+            }
+            $html .= qq(<h3 class="boxed">$cat_name</h3>\n);
+        }
+    }
+    if ($sp_dir eq 'Multi' && $news_cat_id == 2 && $sp_count && $sp_count < 2) {
+        unless ($sp_id == $prev_sp) {
+            unless ($prev_sp == 0) { $html .= "</ul>\n\n" }
+            (my $sp_name = $sp_lookup{$sp_id}) =~ s/_/ /g;
+            $html .= qq(<h4 id="item$item_id"><i>$sp_name</i></h4>\n\n<ul class="spaced">\n);
+        }
+        $html .= qq(<li><strong>$title</strong><br />$content</li>\n);
+    }
+    else {
+        $html .= "<h4>$title</h4><p>$content</p>";
+    }
+    #$html .= qq(<p>Species count = $sp_count</p>);
 
     $prev_rel = $release_id;
     $prev_cat = $news_cat_id;
+    $prev_sp = $sp_id;
+    $prev_count = $sp_count;
   }
 
   $panel->print($html);
@@ -130,6 +193,17 @@ sub select_to_edit {
 
   $html .= $panel->form( 'select_item' )->render();
   $html .= $panel->form( 'select_release' )->render();
+  $html .= '</div>';
+  $panel->print($html);
+  return 1;
+
+}
+
+sub select_item_only {
+  my ( $panel, $object ) = @_;
+  my $html = qq(<div class="formpanel" style="width:80%">);
+
+  $html .= $panel->form( 'select_item' )->render();
   $html .= '</div>';
   $panel->print($html);
   return 1;
@@ -202,7 +276,7 @@ sub select_item_form {
     $form->add_element( 'type' => 'Submit', 'name' => 'submit', 'value' => 'Edit');
   }
   else {
-    $form->add_element( 'type' => 'SubHeader', 'value' => 'Release '.$object->param('release'));
+    $form->add_element( 'type' => 'SubHeader', 'value' => 'Release '.$object->param('release_id'));
     $form->add_element( 'type' => 'Information', 'value' => 'There are currently no news items for this release. Please try another one.');
   }  
   return $form ;
@@ -260,6 +334,7 @@ sub item_form {
     $release_id = $item{'release_id'};
     $news_cat_id = $item{'news_cat_id'};
     $species = $item{'species'};
+    $priority = $item{'priority'};
   }
 
   # create array of release names and values
@@ -457,11 +532,14 @@ sub preview_item_form {
   my $form = EnsEMBL::Web::Form->new( 'preview_item', "/$species/$script", 'post' );
   
   my %item = %{${$object->items}[0]};
+  my $content = $item{'content'};
+  $content =~ s/"/&quot;/g;
+
   $form->add_element( 'type' => 'Hidden', 'name' => 'update', 'value' => 'yes');
   $form->add_element( 'type' => 'Hidden', 'name' => 'news_item_id', 'value' => $item{'news_item_id'});
   $form->add_element( 'type' => 'Hidden', 'name' => 'release_id', 'value' => $item{'release_id'});
   $form->add_element( 'type' => 'Hidden', 'name' => 'title', 'value' => $item{'title'});
-  $form->add_element( 'type' => 'Hidden', 'name' => 'content', 'value' => $item{'content'});
+  $form->add_element( 'type' => 'Hidden', 'name' => 'content', 'value' => $content);
   $form->add_element( 'type' => 'Hidden', 'name' => 'news_cat_id', 'value' => $item{'news_cat_id'});
   $form->add_element( 'type' => 'Hidden', 'name' => 'news_cat_name', 'value' => $item{'news_cat_name'});
   $form->add_element( 'type' => 'Hidden', 'name' => 'priority', 'value' => $item{'priority'});

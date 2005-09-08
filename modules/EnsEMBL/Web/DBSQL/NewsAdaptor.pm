@@ -42,7 +42,7 @@ sub fetch_items {
 
     my %modifiers = %{$options};
     my $crit_str = ' WHERE n.news_cat_id = c.news_cat_id ';
-    my ($order_str, $sp_str, %criteria, @order_by);
+    my ($order_str, $sp_str, $group_str, %criteria, @order_by);
     if (ref($modifiers{'criteria'})) {
         %criteria = %{$modifiers{'criteria'}};
     }
@@ -55,6 +55,7 @@ sub fetch_items {
     else {
         @order_by = ('default');
     }
+    my $order_by_sp;
     
     # map option keywords to actual SQL
     my %crit_hash = (
@@ -67,6 +68,7 @@ sub fetch_items {
     my %order_hash = (
         'default'=>'n.priority DESC',
         'cat_desc'=>'c.priority DESC, n.priority DESC',
+        'species'=>'i.species_id ASC'
         );
 
     # add selected options to modifier strings
@@ -84,6 +86,12 @@ sub fetch_items {
             unless ($count == $#order_by) {
                 $order_str .= ', ';
             }
+            if ($order eq 'species') {
+                $order_by_sp = 1;
+                $crit_str .= ' AND n.news_item_id = i.news_item_id ';
+                $group_str = ' GROUP BY n.news_item_id ';
+            }
+            $count++;
         }
     }
 
@@ -93,28 +101,30 @@ sub fetch_items {
                 n.release_id     as release_id,
                 n.news_cat_id    as news_cat_id,
                 n.title          as title,
-                n.content        as content
+                n.content        as content,
+                n.priority       as priority
         FROM
                 news_item n,
                 news_cat c
     );
-    if ($criteria{'species'}) {
+    if ($criteria{'species'} || $order_by_sp) {
         $sql .= ', item_species i ';
     }
-    $sql .= " $crit_str $order_str";
+    $sql .= " $crit_str $group_str $order_str";
     my $T = $self->db->selectall_arrayref($sql, {});
     return [] unless $T;
 
     for (my $i=0; $i<scalar(@$T);$i++) {
         my @A = @{$T->[$i]};
         my $species = [];
+        my $sp_count = 0;
 
         unless ($criteria{'species'}) {
         # get species list for each item
             my $id = $A[0];
             $sql = qq(
                 SELECT
-                    s.species_id     as species_id
+                    s.species_id        as species_id
                 FROM
                     species s,
                     item_species i
@@ -125,7 +135,8 @@ sub fetch_items {
             my $X = $self->db->selectall_arrayref($sql, {});
 
             if ($X && $X->[0]) {
-                for (my $j=0; $j<scalar(@$X);$j++) {
+                $sp_count = scalar(@$X);
+                for (my $j=0; $j<$sp_count;$j++) {
                     my @B = @{$X->[$j]};
                     push (@$species, $B[0]);
                 }
@@ -138,11 +149,13 @@ sub fetch_items {
                 'news_cat_id'   => $A[2],
                 'title'         => $A[3],
                 'content'       => $A[4],
-                'species'       => $species
+                'priority'      => $A[5],
+                'species'       => $species,
+                'sp_count'      => $sp_count
             });
     }
         
-    if ($criteria{'species'}) {
+    if ($criteria{'species'} || $order_by_sp) {
     # also get stories that apply to all species
         $sql = qq(
             SELECT
@@ -150,7 +163,8 @@ sub fetch_items {
                 n.release_id     as release_id,
                 n.news_cat_id    as news_cat_id,
                 n.title          as title,
-                n.content        as content
+                n.content        as content,
+                n.priority       as priority
             FROM
                 news_item n,
                 news_cat c
@@ -176,7 +190,9 @@ sub fetch_items {
                 'news_cat_id'   => $A[2],
                 'title'         => $A[3],
                 'content'       => $A[4],
-                'species'       => ''
+                'priority'      => $A[5],
+                'species'       => '',
+                'sp_count'      => '0'
                 });
         }
     }
@@ -275,6 +291,7 @@ sub fetch_cats {
     my $sql = qq(
         SELECT
                 c.news_cat_id    as news_cat_id,
+                c.code           as news_cat_code,
                 c.name           as news_cat_name
         FROM
                 news_cat c
@@ -288,7 +305,8 @@ sub fetch_cats {
         push (@$results,
             {
             'news_cat_id'        => $array[0],
-            'news_cat_name'      => $array[1],
+            'news_cat_code'      => $array[1],
+            'news_cat_name'      => $array[2],
             }
         );
     }
@@ -309,6 +327,10 @@ sub add_news_item {
     my $news_cat_id     = $item{'news_cat_id'};
     my $species         = $item{'species'};
     my $priority        = $item{'priority'};
+
+    # escape double quotes in text items
+    $title =~ s/"/\\"/g;
+    $content =~ s/"/\\"/g;
 
     my $sql = qq(
         INSERT INTO

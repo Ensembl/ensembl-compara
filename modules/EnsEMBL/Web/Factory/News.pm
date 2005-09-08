@@ -31,6 +31,7 @@ sub createObjects {
   my $valid_rels = [];
 
   my $release_id       = $self->param( 'rel' ) || $self->param('release_id') || $self->species_defs->ENSEMBL_VERSION;
+warn "Release $release_id";
   my $id            = $self->param( 'id' ) || $self->param('news_item_id');
 
   # object always contains these handy lookups!
@@ -45,9 +46,14 @@ sub createObjects {
   }
   elsif ($self->script ne 'newsdbview') { # hack - must be a better way!
     my $sp_name = $self->species;
-    my %rev_hash = reverse %$all_spp;
-    my $sp_id = $rev_hash{$sp_name};
-    @sp_array = ($sp_id);
+    if ($sp_name eq 'Multi') {
+        @sp_array = sort { $a <=> $b } keys %$all_spp;
+    }
+    else {
+        my %rev_hash = reverse %$all_spp;
+        my $sp_id = $rev_hash{$sp_name};
+        @sp_array = ($sp_id);
+    }
   }
 
   # because this object can be updated through the website, news items may
@@ -77,6 +83,11 @@ sub createObjects {
             $criteria{'species'} = $sp_array[0];    
             # get valid releases for the chosen species
             $valid_rels = $self->news_adaptor->fetch_releases($sp_array[0]);
+        }
+        else {
+            # in multi-species mode, all releases are valid
+            $valid_rels = $self->news_adaptor->fetch_releases;
+            push @order_by, 'species';
         }
         if ($self->param('news_cat_id')) {
             $criteria{'category'} = $self->param('news_cat_id');    
