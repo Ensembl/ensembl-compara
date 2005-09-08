@@ -328,7 +328,7 @@ sub _build_tree_from_nodes {
 }
 
 
-sub _node_load_tagvalues {
+sub _load_tagvalues {
   my $self = shift;
   my $node = shift;
   
@@ -343,6 +343,18 @@ sub _node_load_tagvalues {
   }
   $sth->finish;
 }
+
+
+sub _store_tagvalue {
+  my $self = shift;
+  my $node_id = shift;
+  my $tag = shift;
+  my $value = shift;
+
+  my $sql = "INSERT ignore into protein_tree_tags (node_id,tag) values ($node_id,\'$tag\')";
+  print($sql);
+}
+
 
 ###################################
 #
