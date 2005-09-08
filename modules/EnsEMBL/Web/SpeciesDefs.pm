@@ -581,6 +581,81 @@ sub _parse {
         my $sth = $dbh->prepare( $q );
         my $rv  = $sth->execute || die( $sth->errstr );
         my $results = $sth->fetchall_arrayref();
+		
+		if ($SiteDefs::ENSEMBL_SITETYPE eq 'Vega') {
+			#add list of self compared species and genomic analyses for vega self compara.
+			$q = "select ml.type, gd.name, gd.name, count(*) as count
+                    from method_link_species_set as mls, method_link as ml, genome_db as gd 
+                   where mls.genome_db_id = gd.genome_db_id
+                     and mls.method_link_id = ml.method_link_id
+                group by mls.method_link_species_set_id, mls.method_link_id
+                  having count = 1";
+			$sth = $dbh->prepare( $q );
+			$rv  = $sth->execute || die( $sth->errstr );
+			my $v_results = $sth->fetchall_arrayref();
+			foreach my $config (@$v_results) {
+				pop @$config;
+				push @$results,$config;
+			}
+			#get details of all genomic alignments in Vega self compara 
+			$q = "select ga.genomic_align_block_id, ml.type,
+                         ga.method_link_species_set_id, df.name as chr,
+                         ga.dnafrag_start as start, ga.dnafrag_end as stop,
+                         gdb.name as species
+                    from genomic_align ga, dnafrag df, genome_db gdb,
+                         method_link_species_set mlss, method_link ml
+                   where ga.dnafrag_id = df.dnafrag_id
+                     and df.genome_db_id = gdb.genome_db_id 
+                     and ga.method_link_species_set_id = mlss.method_link_species_set_id
+                     and mlss.method_link_id = ml.method_link_id
+                order by genomic_align_block_id";
+			$sth = $dbh->prepare( $q );
+			$rv  = $sth->execute || die( $sth->errstr );
+
+			my ($gabid,$type,$mlssid,$chr,$start,$stop,$species);
+			my (%config);
+			my ($old_gabid,$old_species,$old_chr,$old_start,$old_stop,@old_ids);
+			#create data structure containing summary of all genomic analyses in a self-compara
+			while ( ($gabid,$type,$mlssid,$chr,$start,$stop,$species) = $sth->fetchrow_array) {
+				next unless ($type eq 'BLASTZ_RAW');
+				my $id = $gabid.$mlssid.$chr.$species;
+				next if (grep {$id eq $_ } @old_ids);
+				if ($old_gabid eq $gabid ) {
+					$species =~ s/ /_/;
+					push @{$config{$species}{$old_species}},[$chr,$old_chr] unless (grep {$_->[0] eq $chr && $_->[1] eq $old_chr} @{$config{$species}{$old_species}} );
+					push @{$config{$old_species}{$species}},[$old_chr,$chr] unless (grep {$_->[0] eq $old_chr && $_->[1] eq $chr} @{$config{$old_species}{$species}} );					
+					$config{$species}{'regions'}{$chr}{'last'}= $stop unless ($config{$species}{'regions'}{$chr}{'last'} > $stop);
+					$config{$old_species}{'regions'}{$old_chr}{'last'}= $old_stop unless ($config{$old_species}{'regions'}{$old_chr}{'last'} > $old_stop);
+					if (defined $config{$species}{'regions'}{$chr}{'first'}) { 
+						$config{$species}{'regions'}{$chr}{'first'}= $start unless ($config{$species}{'regions'}{$chr}{'first'} < $start);
+					} else {
+						$config{$species}{'regions'}{$chr}{'first'}= $start;
+					}
+					
+					if (defined $config{$old_species}{'regions'}{$old_chr}{'first'}) {
+						$config{$old_species}{'regions'}{$old_chr}{'first'}= $old_start unless ($config{$old_species}{'regions'}{$old_chr}{'first'} < $old_start);
+					} else {
+						$config{$old_species}{'regions'}{$old_chr}{'first'}= $old_start;
+					}
+					
+					push @old_ids, $id;
+				}
+				else {
+					@old_ids = ();
+					$species =~ s/ /_/;
+					$old_species = $species;
+					$old_gabid = $gabid;
+					$old_chr = $chr;
+					$old_stop = $stop;
+					$old_start = $start;
+				}
+				push @old_ids, $id;
+			}
+			$tree->{'VEGA_BLASTZ_CONF'}=\%config;
+#			print Dumper(\%config);			
+		}
+
+
         foreach my $row ( @$results ) {
           my ( $species1, $species2 ) = ( $row->[1], $row->[2] );
           $species1 =~ tr/ /_/;
