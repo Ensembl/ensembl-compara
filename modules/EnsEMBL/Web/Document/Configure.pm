@@ -5,6 +5,7 @@ use CGI qw(escapeHTML);
 sub common_menu_items {
   my( $self, $doc ) = @_;
 ## Now the links on the left hand side....
+  my $release = $doc->species_defs->ENSEMBL_VERSION;
   my $species = $ENV{'ENSEMBL_SPECIES'} && $ENV{'ENSEMBL_SPECIES'} ne 'Multi' ? $ENV{'ENSEMBL_SPECIES'} : 'default';
   my $species_m  = $species eq 'default' ? 'Multi'   : $species;
   my $species_d  = $species eq 'Multi'   ? 'default' : $species;
@@ -51,7 +52,7 @@ sub common_menu_items {
 
   $doc->menu->add_entry( 'docs',
     'code'  => "whatsnew",
-    'href' => '/whatsnew.html',
+    'href' => "/$species_m/newsview?rel=$release",
     'text'  => "What's New",
     'title' => "Latest changes in Ensembl"
   );
