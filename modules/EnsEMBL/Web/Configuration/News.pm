@@ -21,7 +21,7 @@ sub newsview {
         'object'  => $self->{object}) 
     ) {
     # this is a two-step view, so we need 2 separate sections
-    if ($self->{'object'}->param('submit')) {
+    if ($self->{'object'}->param('submit') || $self->{'object'}->param('rel')) {
         # Step 2 - user has chosen a data range
         $panel->add_components(qw(show_news EnsEMBL::Web::Component::News::show_news));
     }
