@@ -268,7 +268,6 @@ sub orthologues {
   my $STABLE_ID = $gene->stable_id; my $C = 1;
   my $FULL_URL  = qq(/@{[$gene->species]}/multicontigview?gene=$STABLE_ID);
   my $ALIGNVIEW = 0;
-# vega hack 1 to disable display of orthologues on non reference human sequence
   my $matching_orthologues = 0;
   my %SP = ();
   foreach my $species (keys %orthologue_list) {
@@ -281,16 +280,6 @@ sub orthologues {
       $html .= $start;
       $start = qq(
         <tr>);
-      if($gene->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-        if($gene->species eq 'Canis_familiaris') {
-          my( $x1,$x2,$chr,$start,$end ) = split /:/,$OBJ->{'location'};
-          next unless ($chr eq 6 && $start > 28000000 && $end < 34000000);
-        }
-        if( $gene->species eq 'Homo_sapiens') {
-          my($chr) = $gene->get_genomic_location(1);
-          return 1 unless ($chr eq 6);
-        }
-      }
       $matching_orthologues = 1;
 
       my $description = $OBJ->{'description'};
@@ -329,10 +318,7 @@ sub orthologues {
   $html .= qq(\n      </table>);
   if( keys %orthologue_list ) {
     # $html .= qq(\n      <p><a href="$FULL_URL">View all genes in MultiContigView</a>;);
-    # vega hack  to disable display of orthologues on non reference sequence
-    unless ($gene->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-      $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View alignments of homologies</a>.</p>) if $ALIGNVIEW;
-    }
+    $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View alignments of homologies</a>.</p>) if $ALIGNVIEW;
     $html .= qq(
       <p class="small">
         UBRH = (U)nique (B)est (R)eciprocal (H)it<br />
