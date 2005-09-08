@@ -119,14 +119,12 @@ sub create_link_to_node {
   #print("create_link_to_node\n");  $self->print_node; $node->print_node;
   
   return undef if($self->{'_node_id_to_link'}->{$node->node_id});
-
   #results in calls to _add_neighbor_link_to_hash on each node
   my $link = new Bio::EnsEMBL::Compara::Graph::Link($self, $node);
   if(defined($distance)) { 
     $link->distance_between($distance);
   }
-  
-  return undef;
+  return $link;
 }
 
 #
@@ -213,8 +211,8 @@ sub cascade_unlink {
   foreach my $link (@{$self->links}) {
     my $neighbor = $link->get_neighbor($self);
     next if($caller and $neighbor->equals($caller));
-    $neighbor->cascade_unlink($self);
     $link->release;
+    $neighbor->cascade_unlink($self);
   }
   
   return $self;
