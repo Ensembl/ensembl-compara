@@ -315,6 +315,46 @@ sub fetch_cats {
     return $results;
 }
 
+#------------------------- Select queries for archive.ensembl.org -------------
+
+
+# Input: release number
+# Output:
+
+sub fetch_assemblies {
+    my $self = shift;
+    my $release_num = shift;
+    my $results = [];
+
+    return [] unless $self->db;
+
+    my $sql = qq(
+        SELECT
+                s.name, 
+                rs.assembly_name
+        FROM
+                release_species rs, 
+                species s
+        WHERE
+                s.species_id = rs.species_id 
+                and release_id = $release_num
+
+        ORDER BY s.name
+    );
+
+    my $T = $self->db->selectall_arrayref($sql);
+    return [] unless $T;
+    for (my $i=0; $i<scalar(@$T);$i++) {
+        my @array = @{$T->[$i]};
+        push (@$results,
+            {
+            'species'        => $array[0],
+            'assembly_name'  => $array[1],
+            }
+        );
+    }
+    return $results;
+}
 #------------------------ DATABASE ADMIN QUERIES -------------------------------
 
 #---------------- 1) For use with web front end --------------------------------
@@ -543,6 +583,8 @@ sub add_release_species {
     }
     return $result;
 }
+
+
 
 1;
 
