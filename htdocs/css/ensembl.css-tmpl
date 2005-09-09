@@ -8,7 +8,8 @@ body { font-family: Luxi Sans, Geneva, Helvetica, Tahoma, Arial, sans-serif;
     font-size:76%; color:#666; background-color:#fff; 
     background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; 
     padding: 0px; margin: 0px; border: 0px;}
-div, p, span, li, dd, dt, th, td { font-size:1em; }
+pre, code, kbd {font-family:monospace; }
+div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
 p  { margin-top:0.6em; margin-bottom:0.6em; }
 h1 { font-size:2em;   color:[[SPECIESNAME]]; margin:1.2em 0px 0px 0px; padding:0px; }
 h2 { font-size:1.5em; color:#666; margin:0.5em 0px 0px 0px; padding:0px; }
@@ -46,7 +47,6 @@ a.red-button:visited, a.blue-button:visited { color:#fff; text-decoration:none; 
 .serif    { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
 .latin { font-style:italic; }
 .normal { font-style:normal; font-weight:normal; }
-pre, code, kbd {font-family:monospace; color:#333; font-size:110%; }
 
 kbd.line { display:block; margin-left:20px; }
 .nowrap { white-space:nowrap; }
