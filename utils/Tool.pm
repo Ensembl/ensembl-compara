@@ -22,6 +22,10 @@ BEGIN{
 
 use EnsEMBL::Web::SpeciesDefs;
 our $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
+sub species_defs {
+  my $query = shift;
+  return $SPECIES_DEFS->$query;
+}
 
 #----------------------------------------------------------------------
 

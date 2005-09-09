@@ -72,14 +72,6 @@ B<  new_release:>
    Runs versions, homepage_current_version, whatsnew, branch_versions
    archived_sites SSIdata_homepage assembly_table
 
-B< new_archive_site:>
-   Runs create_affili, create_links, SSIsearch, htdocs_nav
-   SSIdata_homepage, downloads, create_homepage_affili, 
-   homepage_ensembl_start homepage_current_version,
-
-B < archive.org: >
-   Runs assembly_table, archived_sites
-
 B< new_mirror_release:>
    Runs homepage_current_version
 
@@ -87,56 +79,10 @@ B< new_mirror_species:>
    Runs generic_species_homepage, create_affili, species_table, SSIsearch, 
    homepage_current_version
 
-B<  versions:>; 
-   Creates/updates the $species/whatsnew/versions.html file which explains 
-   the versioning system used in Ensembl
-
-B<  homepage_current_version:> 
-   Creates a new server-side include file to include this text 
-   'Current Version xx.x'  where xx is release version and x the assembly
-   The version is retrieved from the conf/$species.ini file
-   This file is included in the species specific homepage.
-
 B< branch_versions:>
    Creates a new page with updated versions for the current cvs branch
    (i.e. for the API, webcode etc)
 
-B<  stats_index:>; 
-    Creates a new, generic htdocs/$species/stats/index.html file.
-    This file needs /$species/stats/stats.html too.  
-    Run stats script separately
-
-B<  create_links:>;
-    Creates a new page SSI_homepage/links.html with links to Blast, Help, EnsMart, SiteMap and Export.
-    This is included in the species homepage (not mirror).  Excludes link
-    to blast/ssaha.
-
-B<  create_affili:>; 
-    Creates a new affiliations.html file for the htdocs/$species/homepage_SSI 
-    directory.  This makes sure the species homepage has the correct ebang
-    logo (i.e. pre!, archive! or e!)
-
-B<  create_homepage_affili:>;
-    Creates a new affiliations.html file for the htdocs/homepage_SSI
-    directory.  This makes sure the site homepage has the correct ebang
-    logo (i.e. pre!, archive! or e!)
-
-B<  htdocs_nav:>; 
-    Creates a new def_nav.conf which is used for the static content directories. Links to Blast and ssaha are omitted if site_type is 'archive'
-
-B<  SSIdata_homepage:>; 
-    Creates a new htdocs/homepage_SSI/data.html page with out blast link
-    and with white buttons for the archive site.
-
-B< homepage_ensembl_start>;
-    Creates a new file for htdocs/homepage_SSI/ensemblstart.html for the
-    archive site.
-
-B< archived_sites>;
-    Updates htdocs/Docs/archive/homepage_SSI/sites.html or creates new one.
-     This file is included in htdocs/Docs/index.html and lists all the
-    archived site URLs.
-    
 B< assembly_table>;
     Updates htdocs/Docs/archive/homepage_SSI/assembly_table.html or 
     creates new one.  This file is included in htdocs/Docs/assemblies.html 
@@ -151,6 +97,7 @@ use warnings;
 use Carp;
 use Data::Dumper qw( Dumper );
 use FindBin qw($Bin);
+use File::Path;
 use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
@@ -164,9 +111,19 @@ BEGIN{
 
 
 use utils::Tool;
+use EnsEMBL::Web::DBSQL::NewsAdaptor;
+use EnsEMBL::Web::SpeciesDefs;
+my $SD = EnsEMBL::Web::SpeciesDefs->new;
+
+# Connect to web database and get news adaptor
+my $web_db = $SD->databases->{'ENSEMBL_WEBSITE'};
+warning (1, "ENSEMBL_WEBSITE not defined in INI file") unless $web_db;
+my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
+
 our $VERBOSITY = 1;
 our $site_type = "main";
 our $FIRST_ARCHIVE = 26;   # Release number for oldest archive site
+
 my @species;
 my @UPDATES;
 &GetOptions( 
@@ -185,6 +142,22 @@ pod2usage(1) if $help;
 my %updates = %{ check_types(\@UPDATES) };
 
 
+# Only do once
+if ($updates{species_table} ) {
+  species_table($SERVERROOT);
+  delete $updates{species_table};
+}
+if ($updates{downloads} ) {
+  downloads($SERVERROOT);
+  delete $updates{downloads};
+}
+if ( $updates{assembly_table} ) {
+  assembly_table($SERVERROOT."/sanger-plugins/archive_central/htdocs/ssi");
+  delete $updates{assembly_table};
+}
+
+exit unless keys %updates;
+
 # Test validity of species arg -----------------------------------------------
 if (@species) {
   @species = @{ utils::Tool::check_species(\@species) };
@@ -192,9 +165,7 @@ if (@species) {
   @species = @{ utils::Tool::all_species()};
 }
 
-# Loop through species given--------------------------------------------------
-
-# Find ENSEMBL_VERSION
+# Species specific ones
 foreach my $sp (@species) {
   my $version_ini = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_FTP_BASEDIR"})|| $sp;
   my $common_name = utils::Tool::get_config({species =>$sp, values => "SPECIES_COMMON_NAME"})|| $sp;
@@ -215,24 +186,6 @@ foreach my $sp (@species) {
   }
 }
 
-my $release = utils::Tool::get_config({species => "Multi", values => "ENSEMBL_FTP_BASEDIR"});
-$release =~ s/\w+-\w*-(\d+).*/$1/;
-
-
-# Only do once
-if ($updates{species_table} ) {
-  species_table($SERVERROOT);
-}
-if ($updates{downloads} ) {
-  downloads($SERVERROOT);
-}
-if ( $updates{archived_sites} ) {
-   archived_sites($SERVERROOT."/htdocs/Docs/", $release);
-}
-if ( $updates{assembly_table} ) {
-  assembly_table($SERVERROOT."/htdocs/Docs/",  $release );
-}
-
 exit;
 
 
@@ -243,8 +196,7 @@ exit;
    my %valid_types = map{ $_ => 1 }
      qw(
 	new_species      generic_species_homepage downloads SSI
-                         species_table
-        new_archive_site archived_sites assembly_table 
+                         species_table assembly_table 
        );
 
    my %compound_types = 
@@ -255,11 +207,6 @@ exit;
                                   branch_versions archived_sites assembly_table
                                   SSIdata_homepage) ],
       new_mirror_release => [ qw (homepage_current_version ) ],
-      new_archive_site   => [ qw (create_links create_affili SSIsearch 
-				 htdocs_nav SSIhelp SSIdata_homepage
-                                 downloads homepage_ensembl_start
-                                 homepage_current_version) ],
-      "archive.org"      => [ qw( archived_sites assembly_table) ],
      );
 
    # Validate types
@@ -278,8 +225,10 @@ sub check_dir {
   my $dir = shift;
   if( ! -e $dir ){
     info(1, "Creating $dir" );
-    system("mkdir -p $dir") == 0 or
-      ( warning( 1, "Cannot create $dir: $!" ) && next );
+    eval { mkpath($dir) };
+    if ($@) {
+      print "Couldn't create $dir: $@";
+    }
   }
   return;
 }
@@ -681,217 +630,56 @@ sub do_downloads {
 }
 
 ##############################--  ARCHIVE --################################
-sub homepage_ensembl_start {
- my ($dir) = @_;
-  &check_dir($dir);
 
-  my $file = $dir."ensemblstart.html";
-  open (ABOUT, ">$file") or die "Cannot create $file: $!";
-
-  my $date_nospace = utils::Tool::species_defs->ARCHIVE_VERSION;
-  (my $date = $date_nospace) =~ s/(\d+)/ $1/;;
-  
-  print ABOUT qq(
-
-<table align="center" cellpadding="0" cellspacing="0" border="0" width="300">
- <tr class="background2">
-  <td align="center" class="h5" >Archive Ensembl: $date</td>
- </tr>
-
- <tr valign="top">
-  <td class="background1" ><img src="/gfx/blank.gif" height="5" width="300" alt=""></td>
- </tr>
-
- <tr class="background1" valign="top">
-  <td class="small"><img src="/gfx/header/archive/roundel$date_nospace.gif" width="120" height="120" align="left" vspace="5" hspace="10"  alt="Free Unrestricted Genome Access For All">
-
-   The $date Ensembl Archive site is a freeze of the live site 
-   (<a href="http://www.ensembl.org">www.ensembl.org</a>) from $date.
-   The links to this site will be stable for at two years making 
-   them suitable for use in publications.  More information about archive
-   sites is available <a href="http://archive.ensembl.org">here</a>.
-  <br><br>
-
-   The latest data will always be available at 
-   <a href="http://www.ensembl.org">www.ensembl.org</a>.  There are 
-   links at the bottom of each page in the 
-   Ensembl Archive site to the equivalent page in the Ensembl main 
-   site (and vice-versa).
-
-  <br><br> 
-
-   Please note BLAST is not available in the Ensembl Archive site.  
-
- </tr>
-</table>
-  );
-  close ABOUT;
-  return;
-}
-
-#----------------------------------------------------------------------------
-sub archived_sites {
-  my ($root_dir, $release) = @_;
-  my $dir = $root_dir."archive/";
-  &check_dir($dir);
-  $dir .= "homepage_SSI";
-  &check_dir($dir);
-
-  &create_homepage_affili("$dir/", 1 );
-
-  # Read the old file
-  my %versions;
-  my $file  = $dir."/sites.html";
-  if ( -e $file) {
-    open (SITES, "$file") or die "Cannot open $file: $!";
-    while (my $line = <SITES>) {
-        next if ($line =~/<!-- VERSION LIST _ DO NOT MODIFY -->/);
-        last if  ($line =~/<!-- END VERSION LIST-->/);
-
-      # Format of version lines
-      #<!--\tVERSION\t27.1\tDec2004\t-->
-      my @tmp = split /\s+/, $line;
-      $versions{ $tmp[2] } = $tmp[3]; 
-    }
-  }
-  close SITES;
-
-  # Update the file
-  my $date = utils::Tool::species_defs->ARCHIVE_VERSION;
-  warn $date;
-   $versions{$release} = $date unless $versions{$release};
-  open (my $fh, ">$file") or die "Cannot create $file: $!";
-  print $fh qq(<!-- VERSION LIST _ DO NOT MODIFY -->\n);
-
-  foreach my $api_num (sort {$b <=> $a} keys %versions ) {
-   print $fh qq(<!--\tVERSION\t$api_num\t$versions{$api_num}\t-->\n);
-  }
-  print $fh qq(<!-- END VERSION LIST-->\n);
-
-  foreach my $api (sort {$b <=> $a} keys %versions ) {
-    if ($api eq $release) {
-      print $fh qq(
-
-  <tr class="background1">
-   <td valign="center" align="center" class="h6" nowrap>
-     Ensembl version $api   
-   </td>
-   <td valign="center" align="center">
-       $versions{$api}
-   </td>   
-    <td colspan="2" valign="center" align="left" nowrap> 
-    <a href="http://$versions{$api}.archive.ensembl.org">http://$versions{$api}.archive.ensembl.org</a>
-    </td>
-<td>&nbsp;Currently <a href="http://www.ensembl.org">www.ensembl.org</a></td>
-  </tr>\n);
-    }
-    else {
-  print $fh qq(
-
-  <tr class="background1">
-   <td valign="center" align="center" class="h6" nowrap>
-     Ensembl version $api
-   </td>
-   <td valign="center" align="center">
-       $versions{$api}
-   </td>   
-    <td colspan="3" valign="center" align="left" nowrap>
-    <a href="http://$versions{$api}.archive.ensembl.org">http://$versions{$api}.archive.ensembl.org</a>
-    </td>
-  </tr>\n);
-}
-  }
-  print $fh qq( <tr><td align="center" colspan="5"><br />
-                 <img width="8" height="8" src="/gfx/bullet.blue.gif" alt="o">
-                 <b>Assemblies</b>: 
-                 &nbsp;<a href="http://archive.ensembl.org/assembly.html">Here</a> 
-                 is a table listing the assemblies in each archive site 
-                 for each species.</td></tr>
-   );
-  return;
-}
-
-#-----------------------------------------------------------------------------
 sub assembly_table {
-  my ( $root_dir, $release ) = @_;
-  my $dir = $root_dir."archive/";
+  my ( $dir ) = @_;
   &check_dir($dir);
-  $dir .= "homepage_SSI";
-  &check_dir($dir);
-  &create_homepage_affili("$dir/", 1 );
-  my $file  = $dir."/assembly_table.html";
+  my $file  = $dir."/assembly_table.inc";
+  my $this_release = utils::Tool::species_defs("ENSEMBL_VERSION");
 
-  # Read the old file
-  my %assemblies;
-  if ( -e $file) {
-    open (IN, "$file") or die "Cannot open $file: $!";
-    while (my $line = <IN>) {
-      next if ($line =~/<!-- DO NOT MODIFY -->/);
-      last if  ($line =~/<!-- END DO NOT MODIFY -->/);
+  my $header_row = qq(<th>Species</th>\n);
+  my %info;
 
-      # Format of version lines
-      #<!--UPDATED\t$species\tfirst_release\t$assembly\t$date-->
-      #<!--UPDATED   Homo_sapiens   23   NCBI35  Oct2004-->
-      my @tmp = split /\s+/, $line;
-      $assemblies{ $tmp[1] }{ $tmp[2] } = [ $tmp[3], $tmp[4] ];
+  foreach my $data ( @{$wa->fetch_releases()} ) {
+    my $release_id = $data->{release_id};
+    last if $release_id == 25;
+   (my $link = $data->{short_date}) =~ s/\s+//;
+
+    $header_row .=qq(<th><a href="http://$link.archive.ensembl.org">$data->{short_date}</a><br />v$release_id</th>);
+
+
+    # If the assembly name spans several releases,%info stores its first release only
+    # %info{species}{assembly name} = release num
+
+    foreach my $assembly_info ( @{ $wa->fetch_assemblies($release_id)  }  ) {
+      $info{ $assembly_info->{species} }{ $assembly_info->{assembly_name} } = $release_id;
     }
   }
-  close IN;
+
+  my $table;
+  my @tint = qw(class="bg4" class="bg2");
+  foreach my $species (sort keys %info) {
+    (my $display_spp = $species) =~ s/_/ /;
+    $table .=qq(<tr>\n   <th><a href="http://www.ensembl.org/$species">$display_spp</a></th>\n);
+
+    my %assemblies = reverse %{ $info{$species} };
+
+    my $release_counter = $this_release;
+    foreach my $release (sort {$b <=> $a} keys %assemblies  ) {
+
+      my $colspan = $release_counter - $release;
+      $colspan++;# if $release_counter == $this_release;
+      $release_counter -= $colspan;
+      $table .= qq(   <td $tint[0] colspan="$colspan">$assemblies{$release}</td>\n);
+      push ( @tint, shift @tint );
+    }
+    $table .= "</tr>\n\n";
+  }
 
   # Update the file ..
   open (my $fh, ">$file") or die "Cannot create $file: $!";
-  print $fh qq(<!-- DO NOT MODIFY -->\n);
-  my @rows;
-  my %header;
-  foreach my $species ( sort @{ utils::Tool::all_species()}  ) {
-    my $golden_path = utils::Tool::get_config({species =>$species,
-				       values => "ENSEMBL_GOLDEN_PATH"});
-    my $spp_name = utils::Tool::get_config({species =>$species,
-				       values => "SPECIES_COMMON_NAME"});
-
-    my @sorted_releases =  (sort {$b <=> $a} keys %{ $assemblies{$species} } );
-    # If this is a new golden path, updated the hash with this release number
-    my $last_update    = $sorted_releases[0];
-
-   if ( !$last_update or  $assemblies{$species}{$last_update}->[0] ne $golden_path ) {
-      my $archive_date = utils::Tool::species_defs->ARCHIVE_VERSION;
-      $assemblies{$species}{$release} = [$golden_path, $archive_date];	
-    }
-    # HTML stuff
-    my $row = qq(<tr><td class="h5" align="center"><a href="http://www.ensembl.org/$species"><i>$spp_name</i></a></td> );
-    my $release_counter = $release;
-    my @background = qw(class="background1" class="background3");
-    my $flag_first_time = 0;
-   foreach my $old_release ( sort {$b <=> $a} keys  %{ $assemblies{$species} } ) {
-     my ($assembly, $date ) = @{ $assemblies{$species}{$old_release} };
-
-     # For easy parsing print this at the start of the file
-     print $fh qq(<!--UPDATED\t$species\t$old_release\t$assembly\t$date\t-->\n);
-
-     # Prepare this for the HTML table
-     $header{$old_release} = $date;
-     my $colspan = $release_counter - $old_release;
-     $release_counter = $old_release - $colspan;
-     $colspan++ unless $flag_first_time;
-     $row .= qq(<td $background[0] colspan="$colspan" align="center"> $assembly</td>);
-     push ( @background, shift @background );
-     $flag_first_time++;
-   }
-    $row .= "</tr>";
-    push (@rows, $row );
-  }
-  print $fh qq(<!-- END DO NOT MODIFY -->\n);
-  print $fh qq(<table align="center" border="1" cellpadding="0" cellspacing="0" width="90%">\n);
-  $release++;
-  my $header = qq(<tr class="background2"><td class="h6" align="center">
-                      Latest species<br />assembly (v.$release)</td>);
-  foreach my $release_num (sort {$b <=> $a } keys %header ) {
-    $header .= qq(<td class="h6" align="center" ><a href="http://$header{$release_num}.archive.ensembl.org">$header{$release_num}<br /></a>v. $release_num</td>\n );
-  }
-
-  print $fh $header, "</tr>\n";
-  print $fh join "\n", @rows;
-  print $fh qq(</table>);
+  print $fh qq(\n<table border="1" class="spreadsheet archive">\n<tr>$header_row</tr>\n);
+  print $fh qq($table</table>\n);
   return;
 }
 
@@ -939,89 +727,5 @@ sub branch_versions {
   close CURR;
   return;
 }
-#-----------------------------------------------------------------------------
-sub create_links {
 
-  info('Skipping - create_links not needed by new template');
-	    
-  return;
-}
-#----------------------------------------------------------------------------
-sub create_affili {
-
-  info('Skipping - create_affili not needed by new template');
-	    
-  return;
-}
-#--------------------------------------------------------------------
-sub create_homepage_affili {
-
-  info('Skipping - create_homepage_affili not needed by new template');
-	    
- return;
-}
-#----------------------------------------------------------------------------  
-sub institute_collaborate_logos {
-
-  info('Skipping - institute_collaborate_logos not needed by new template');
-	    
-}
-
-#---------------------------------------------------------------------
-sub stats_index {
-  info('Skipping - stats_index not needed by new template');
-  return;
-}
-
-#----------------------------------------------------------------------------
-sub versions {
-  info('Skipping - species specific version page not needed by new template');
-}
-#-----------------------------------------------------------------------------
-sub SSIsearch {
-
-  info('Skipping - SSIsearch not needed by new template');
-	    
-return;
-}
-
-#----------------------------------------------------------------------------
-sub htdocs_nav {
-
-  info('Skipping - htdocs_nav not needed by new template');
-	    
-return;
-}
-
-#----------------------------------------------------------------------------
-sub SSIdata_homepage {
-
-  info('Skipping - SSIdata_homepage not needed by new template');
-	    
-return;
-}
-#-------------------------------------------------------------------------
-sub homepage_current_version {
-
-  info('Skipping - homepage_current_version not needed by new template');
-
-return;
-
-}
-#---------------------------------------------------------------------------
-
-sub whatsnew {
-
-  info('Skipping - whatsnew not needed by new template');
-
-  return 1;
-}
-#----------------------------------------------------------------------
-sub whatsnew_index {
-
-
-  info('Skipping - whatsnew_index not needed by new template');
-
-  return;
-}
 
