@@ -103,6 +103,7 @@ sub right_index {
 
   Overview   : attaches child nestedset node to this nested set
   Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $child
+  Arg [2]    : (opt.) distance between this node and child
   Example    : $self->add_child($child);
   Returntype : undef
   Exceptions : if child is undef or not a NestedSet subclass
@@ -111,24 +112,26 @@ sub right_index {
 =cut
 
 sub add_child {
-  my ($self, $child) = @_;
-
+  my $self = shift;
+  my $child = shift;
+  my $dist = shift;
+  
   throw("child not defined") 
      unless(defined($child));
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
      unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
   
-  #print("add_child\n");  $self->print_node; $child->print_node;
+  #printf("add_child: parent(%s) <-> child(%s)\n", $self->node_id, $child->node_id);
   
-  return undef if($self->has_child($child));
-
-  #object linkage
+  $self->retain;
   $child->retain->disavow_parent;
   my $link = $self->create_link_to_node($child);
   $child->_parent_link($link);
-  $child->release;
   $self->{'_children_loaded'} = 1; 
-  return undef;
+  $child->release;
+  $self->release;
+  $link->distance_between($dist) if(defined($dist));
+  return $link;
 }
 
 sub store_child {
@@ -357,7 +360,7 @@ sub load_children_if_needed {
   if($self->adaptor and !defined($self->{'_children_loaded'})) {
     #define _children_id_hash thereby signally that I've tried to load my children
     $self->{'_children_loaded'} = 1; 
-    #print("fetch_all_children_for_node : "); $self->print_node;
+    #print("load_children_if_needed : "); $self->print_node;
     $self->adaptor->fetch_all_children_for_node($self);
   }
   return $self;
@@ -619,23 +622,52 @@ sub flatten_tree {
   return $self;
 }
 
+=head2 re_root
+
+  Overview   : rearranges the tree structure so that a new root is created 
+               beetween this node and its parent.  The old root is deleted
+               and the new root is returned.
+  Example    : my $newroot = $node->re_root();
+  Returntype : undef or Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub re_root {
   my $self = shift;
   return unless($self->parent);
-
-  $self->retain;
-  my $parent = $self->parent->retain;
-  $self->disavow_parent;
-
-  $parent->re_root;
   
-  $self->add_child($parent);
+  my $old_root = $parent->invert_tree;
+  $old_root->minimize_node;
+  
+  my $new_root = new Bio::EnsEMBL::Compara::NestedSet;
+  $new_root->add_child($parent);
+  $new_root->add_child($self);
+  
   $parent->distance_to_parent($self->distance_to_parent);
   $self->distance_to_parent(0.0);
   $self->release;
   $parent->release;
-  return $self;
+  return $new_root;
 }
+
+
+sub invert_tree {
+  my $self = shift;
+  return $self unless($self->parent);
+  
+  my $old_root =  $self->parent->invert_tree;
+  #now my parent has been inverted so it is the new root
+  
+  #flip the direction of the link between myself and my parent
+  $self->parent->_parent_link($self->_parent_link);
+  $self->_parent_link(undef);
+  
+  #now I'm the new root and the old root might need to be deleted
+  return $old_root;
+}
+
 
 sub build_leftright_indexing {
   my $self = shift;
@@ -654,22 +686,25 @@ sub build_leftright_indexing {
 
 sub minimize_tree {
   my $self = shift;
+  return $self if($self->is_leaf);
   
-  my @all_nodes = $self->get_all_subnodes;
-  foreach my $node (@all_nodes) { 
-    if($node->parent and 
-       ($node->get_child_count() == 1)) 
-    {
-      my $child = $node->children->[0];
-      $child->distance_to_parent($child->distance_to_parent + $node->distance_to_parent);
-      $node->parent->add_child($child);
-      $node->disavow_parent;
-    }
+  foreach my $child (@{$self->children}) { 
+    $child->minimize_node;
   }
-  if($self->get_child_count() == 1) {
-    return $self->children->[0];
-  } 
-  return $self;
+  return $self->minimize_node;
+}
+
+
+sub minimize_node {
+  my $self = shift;
+  
+  return $self unless($self->get_child_count() == 1);
+  
+  my $child = $self->children->[0];
+  my $dist = $child->distance_to_parent + $self->distance_to_parent;
+  if($self->parent) { $self->parent->add_child($child, $dist); }
+  $self->disavow_parent;
+  return $child
 }
 
 
