@@ -11,6 +11,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::SimpleAlign;
+use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Switch;
 
@@ -28,7 +29,9 @@ $self->{'speciesList'} = ();
 $self->{'removeXedSeqs'} = undef;
 $self->{'outputFasta'} = undef;
 $self->{'noSplitSeqLines'} = undef;
-my $state = 0;
+$self->{'cdna'} = 0;
+$self->{'scale'} = 100;
+my $state = 4;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
@@ -39,20 +42,38 @@ GetOptions('help'        => \$help,
            'tre=s'       => \$self->{'newick_file'},
            'tree_id=i'   => \$self->{'tree_id'},
            'gene=s'      => \$self->{'gene_stable_id'},
+           'reroot=i'    => \$self->{'new_root_id'},
+           'align'       => \$self->{'print_align'},
+           'cdna'        => \$self->{'cdna'},
+           'scale=f'     => \$self->{'scale'},
+           'mini'        => \$self->{'minimize_tree'},
+           'count'       => \$self->{'stats'},
           );
 
 if($self->{'newick_file'}) { $state=6; }
 if($self->{'tree_id'}) { $state=1; }
 if($self->{'gene_stable_id'}) { $state=5; }
+if($self->{'new_root_id'}) { $state=7; }
+if($self->{'print_align'}) { $state=8; }
 
 if ($help or !$state) { usage(); }
-
 
 $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
 unless(defined($self->{'comparaDBA'})) {
   print("no url URL\n\n");
   usage();
 } 
+
+if($self->{'tree_id'}) {
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'root'} = $treeDBA->fetch_node_by_node_id($self->{'tree_id'});
+}
+
+if($self->{'stats'}) {
+  $state=0;
+  printf("%d proteins\n", scalar(@{$self->{'root'}->get_all_leaves}));
+}
+
 
 switch($state) {
   case 1 { fetch_protein_tree($self, $self->{'tree_id'}); }
@@ -62,13 +83,14 @@ switch($state) {
   case 5 { fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}); }
   case 6 { parse_newick($self); }
   case 7 { reroot($self); }
+  case 8 { dumpTreeMultipleAlignment($self); }
 }
 
 
 #cleanup memory
 if($self->{'root'}) {
   print("ABOUT TO MANUALLY release tree\n");
-  $self->{'root'}->release;
+  $self->{'root'}->release_tree;
   $self->{'root'} = undef;
   print("DONE\n");
 }
@@ -86,6 +108,11 @@ sub usage {
   print "testTaxonTree.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -url <url>             : connect to compara at url\n";
+  print "  -tree_id <id>          : print tree with node_id\n";
+  print "  -name <string>         : search for <name> and print tree from that node\n";
+  print "  -align                 : print multiple alignment\n";
+  print "  -scale <num>           : scale factor for printing tree (def: 100)\n";
+  print "  -mini                  : minimize tree\n";
   print "testTaxonTree.pl v1.1\n";
   
   exit(1);  
@@ -108,9 +135,9 @@ sub fetch_primate_ncbi_taxa {
   $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9598));
   $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9600));
   $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9581));
-  $root->print_tree;
+  $root->print_tree($self->{'scale'});
 
-  $root->flatten_tree->print_tree;
+  $root->flatten_tree->print_tree($self->{'scale'});
 
   $self->{'root'} = $root;
 }
@@ -118,7 +145,9 @@ sub fetch_primate_ncbi_taxa {
 
 sub fetch_compara_ncbi_taxa {
   my $self = shift;
-
+  
+  printf("fetch_compara_ncbi_taxa\n");
+  
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $root = $self->{'root'};
 
@@ -129,12 +158,22 @@ sub fetch_compara_ncbi_taxa {
 
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
-  }  
-  $root->print_tree;
+  }
+
+
+  #$root = $root->find_node_by_name('Mammalia');
+  
+  $root->minimize_tree if($self->{'minimize_tree'});
+  
+  $root->print_tree($self->{'scale'});
+  
+  my $newick = $root->newick_format;
+  print("$newick\n");
 
   $self->{'root'} = $root;
+  
+  drawPStree($self);
 }
-
 
 sub fetch_protein_tree {
   my $self = shift;
@@ -146,7 +185,7 @@ sub fetch_protein_tree {
   switch(1) {
     case 1 {
       $tree = $treeDBA->fetch_node_by_node_id($node_id);
-      $tree = $tree->root;
+      #$tree = $tree->parent if($tree->parent);
     }
 
     case 2 {
@@ -160,12 +199,16 @@ sub fetch_protein_tree {
     }
   }
 
-  $tree->print_tree;
+  $tree->print_tree($self->{'scale'});
   printf("%d proteins\n", scalar(@{$tree->get_all_leaves}));
+  
+  my $newick = $tree->newick_simple_format;
+  print("$newick\n");
+
   $tree->release;
   return;
 
-  $tree->flatten_tree->print_tree;
+  $tree->flatten_tree->print_tree($self->{'scale'});
 
   my $leaves = $tree->get_all_leaves;
   foreach my $node (@{$leaves}) {
@@ -192,11 +235,11 @@ sub fetch_protein_tree_with_gene {
   $tree = $aligned_member->root;
   $treeDBA->fetch_all_children_for_node($tree);
 
-  $tree->print_tree;
+  $tree->print_tree($self->{'scale'});
   $tree->release;
   return;
 
-  $tree->flatten_tree->print_tree;
+  $tree->flatten_tree->print_tree($self->{'scale'});
 
   my $leaves = $tree->get_all_leaves;
   foreach my $node (@{$leaves}) {
@@ -237,7 +280,7 @@ sub create_taxon_tree {
         $new_node->name($level_name);
         
         $parent->add_child($new_node);
-	$new_node->distance_to_parent(0.01);
+	      $new_node->distance_to_parent(0.01);
         $new_node->release;
       }
       $prev_level = $level_name;
@@ -245,13 +288,13 @@ sub create_taxon_tree {
     $root->find_node_by_name($taxon->species)->node_id($taxon->ncbi_taxid);
   }
   
-  $root->print_tree;
+  $root->print_tree($self->{'scale'});
 
 #  $self->{'comparaDBA'}->get_TreeNodeAdaptor->store($root);
 #  printf("store as node_id=%d\n", $root->node_id);
   
 #   my $fetchTree = $self->{'comparaDBA'}->get_TreeNodeAdaptor->fetch_tree_rooted_at_node_id($root->node_id);
-#   $fetchTree->print_tree;
+#   $fetchTree->print_tree($self->{'scale'});
 
   #cleanup memory
   print("ABOUT TO MANUALLY release tree\n");
@@ -269,44 +312,124 @@ sub parse_newick {
     $newick .= $_;
   }
 
-  my $newick1 = "(Mouse:0.76985,
-                  ((((Human:0.11449,Chimp:0.15471):0.03695,
-                   Gorilla:0.15680):0.02121,
-                    Orang:0.29209)Hominidae:0.04986,
-                        Gibbon:0.35537)Hominoidea:0.41983,
-                    Bovine:0.91675);";
-  my $newick2 = "((((((((((((((Pop_1:0.208139,Pop_16:0.131324)93:0.0233931,(Pop_17:0.119827,Pop_18:0.119014)86:0.0173544)81:0.0377892,Pop_19:0.126574)62:0.0201278,Pop_13:0.160825)33:0.00990783,Pop_22:0.137184)30:0.0128798,Pop_12:0.11605)43:0.0240093,((Pop_15:0.131205,((Pop_20:0.0849643,((Pop_21:0.0738889,Pop_28:0.158885)92:0.0244895,Pop_23:0.0927553)92:0.0729137)100:0.0710662,(Pop_25:0.297196,(Pop_26:0.155785,Pop_27:0.104557)100:0.23343)95:0.0755565)94:0.0552113)44:0.0121811,Pop_24:0.159212)23:0.0167188)36:0.0373877,(((Pop_2:0.0868662,Pop_3:0.0929943)100:0.0480943,Pop_4:0.11667)60:0.0103432,Pop_5:0.13734)60:0.0538027)25:0.00400269,Pop_14:0.142894)18:0.0136829,Pop_10:0.120408)11:0.0065733,Pop_8:0.0925163)6:0.00601288,(Pop_6:0.0827322,Pop_7:0.0881702)99:0.0305853)5:0.00478419,Pop_9:0.13834)40,Pop_11:0.0954593);";
-  my $kitsch="((((((Human:0.13460,Chimp:0.13460):0.02836,Gorilla:0.16296):0.07638,
-  Orang:0.23933):0.06639,Gibbon:0.30572):0.42923,Mouse:0.73495):0.07790,
-  Bovine:0.81285);";
-
   my $tree = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->parse_newick_into_tree($newick);
-  $tree->print_tree;
-  my $node = $tree->find_node_by_node_id(4);
-  $node->retain->re_root;
-  $node->print_tree;
-  $node->release;
+  $tree->print_tree($self->{'scale'});
+  $tree->release;
 
 }
 
 sub reroot {
   my $self = shift;
-  my $node_id = shift;
+  my $node_id = $self->{'new_root_id'}; 
 
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  my $tree = $treeDBA->fetch_node_by_node_id(68703);  
-  $tree->disavow_parent;
+  my $node = $treeDBA->fetch_node_by_node_id($node_id);  
+  printf("tree at %d\n", $node->subroot->node_id);
+  my $tree = $treeDBA->fetch_node_by_node_id($node->subroot->node_id);  
+  $tree->print_tree($self->{'scale'});
   
-  $tree->root->print_tree;
-
-  
-  my $new_root = $tree->find_node_by_node_id(174957);
+  my $new_root = $tree->find_node_by_node_id($node_id);
   return unless $new_root;
-  
+
+  my $tmp_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
+  $tmp_root->merge_children($tree);
+
   $new_root->retain->re_root;
-  $treeDBA->store($new_root);
-  $new_root->print_tree;
+  $tmp_root->release;
+  $tree->merge_children($new_root);
+
+  $tree->build_leftright_indexing;
+  $tree->print_tree($self->{'scale'});
+
+  $treeDBA->store($tree);
+  $treeDBA->delete_node($new_root);
+
+  $tree->release;
   $new_root->release;
+}
+
+
+
+sub dumpTreeMultipleAlignment
+{
+  my $self = shift;
+  
+  warn("missing tree\n") unless($self->{'root'});
+  
+  my $tree = $self->{'root'};
+    
+  $self->{'file_root'} = "proteintree_". $tree->node_id;
+  $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
+
+  my $clw_file = $self->{'file_root'} . ".aln";
+
+  if($self->{'debug'}) {
+    my $leafcount = scalar(@{$tree->get_all_leaves});  
+    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
+    print("clw_file = '$clw_file'\n");
+  }
+
+  open(OUTSEQ, ">$clw_file")
+    or $self->throw("Error opening $clw_file for write");
+
+  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'});
+  
+  my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTSEQ,
+                                    -interleaved => 1,
+                                    -format => "phylip"
+                                   );
+  print $alignIO $sa;
+
+  close OUTSEQ;
+}
+
+
+sub dumpTreeAsNewick 
+{
+  my $self = shift;
+  my $tree = shift;
+  
+  warn("missing tree\n") unless($tree);
+
+  my $newick = $tree->newick_simple_format;
+
+  if($self->{'dump'}) {
+    my $aln_file = "proteintree_". $tree->node_id;
+    $aln_file =~ s/\/\//\//g;  # converts any // in path to /
+    $aln_file .= ".newick";
+    
+    $self->{'newick_file'} = $aln_file;
+    
+    open(OUTSEQ, ">$aln_file")
+      or $self->throw("Error opening $aln_file for write");
+  } else {
+    open OUTSEQ, ">&STDOUT";
+  }
+
+  print OUTSEQ "$newick\n\n";
+  close OUTSEQ;
+}
+
+
+sub drawPStree
+{
+  my $self = shift;
+  
+  unless($self->{'newick_file'}) {
+    $self->{'dump'} = 1;
+    dumpTreeAsNewick($self, $self->{'root'});
+  }
+  
+  my $ps_file = "proteintree_". $self->{'root'}->taxon_id;
+  $ps_file =~ s/\/\//\//g;  # converts any // in path to /
+  $ps_file .= ".ps";
+  $self->{'plot_file'} = $ps_file;
+
+  my $cmd = sprintf("drawtree -auto -charht 0.1 -intree %s -fontfile /usr/local/ensembl/bin/font5 -plotfile %s", 
+                    $self->{'newick_file'}, $ps_file);
+  print("$cmd\n");
+  system($cmd);
+  system("open $ps_file");
 }
 
 
