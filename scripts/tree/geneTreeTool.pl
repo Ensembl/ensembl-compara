@@ -106,7 +106,7 @@ if($self->{'tree'}) {
 
   $self->{'tree'}->retain;
   $self->{'tree'}->get_all_leaves;
-  printf("get_all_leaves gives %d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
+  #printf("get_all_leaves gives %d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
   #$self->{'tree'}->flatten_tree;
   
   if($self->{'new_root_id'}) {
@@ -122,6 +122,7 @@ if($self->{'tree'}) {
     my $leaves = $self->{'tree'}->get_all_leaves;
     printf("fetched %d leaves\n", scalar(@$leaves));
     foreach my $leaf (@$leaves) {
+      #$leaf->print_node;
       my $gene = $leaf->gene_member;
       my $desc = $gene->description;
       $desc = "" unless($desc);
@@ -264,23 +265,21 @@ sub reroot {
   #my $tree = $treeDBA->fetch_node_by_node_id($node->subroot->node_id);  
   
   my $tree = $self->{'tree'};
-  $tree->get_all_subnodes;  #make sure entire tree is loaded into memory
-  $tree->print_tree;
+  $tree->get_all_leaves;  #make sure entire tree is loaded into memory
+  #$tree->print_tree($self->{'scale'});
 
-  my $new_root = $tree->find_node_by_node_id($node_id);
-  return unless $new_root;
-  print("new root : "); $new_root->print_node;
-  my $tmp_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
-  $tmp_root->merge_children($tree);
-  #$tmp_root->print_tree;
+  my $reroot_node = $tree->find_node_by_node_id($node_id);
+  return unless $reroot_node;
+
+  #print("unlink tree from clusterset\n");
+  my $parent = $tree->parent;
+  my $dist = $tree->distance_to_parent;
+  $tree->disavow_parent;
   
-  $new_root->retain->re_root;
-  $tree->merge_children($new_root);
-  $tmp_root->release;
-  $new_root->release;
+  $reroot_node->re_root;
   
-  $self->{'tree'} = $tree;
-  
+  $parent->add_child($tree, $dist);
+        
   #$treeDBA->store($tree);
   #$treeDBA->delete_node($new_root);
 }
