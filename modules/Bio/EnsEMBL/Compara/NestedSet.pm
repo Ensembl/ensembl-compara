@@ -120,7 +120,7 @@ sub add_child {
   
   #print("add_child\n");  $self->print_node; $child->print_node;
   
-  return undef if($self->has_neighbor($child));
+  return undef if($self->has_child($child));
 
   #object linkage
   $child->retain->disavow_parent;
@@ -346,6 +346,7 @@ sub get_all_subnodes {
 
 sub get_child_count {
   my $self = shift;
+  $self->load_children_if_needed;
   my $count = $self->link_count;
   $count-- if($self->has_parent);
   return $count;
