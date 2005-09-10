@@ -57,7 +57,7 @@ sub print_node {
   my $self  = shift;
   printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
 
-  printf(" %s", $self->genome_db->name) if($self->genome_db_id);
+  printf(" %s", $self->genome_db->name) if($self->genome_db_id and $self->adaptor);
   if($self->gene_member) {
     printf(" %s %s:%d-%d",
       $self->gene_member->stable_id, $self->gene_member->chr_name,

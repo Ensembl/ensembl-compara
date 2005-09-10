@@ -459,8 +459,8 @@ sub genome_db {
     $self->genome_db_id($genome_db->dbID);
   } else {
     unless (defined $self->{'_genome_db'}) {
-      unless (defined $self->genome_db_id) {
-        throw("can't fetch GenomeDB without a genome_db_id");
+      unless (defined $self->genome_db_id and defined $self->adaptor) {
+        throw("can't fetch GenomeDB without an adaptor and genome_db_id");
       }
       my $GenomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
       $self->{'_genome_db'} = $GenomeDBAdaptor->fetch_by_dbID($self->genome_db_id);
