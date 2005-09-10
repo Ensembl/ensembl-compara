@@ -52,17 +52,46 @@ sub dealloc {
   return $self->SUPER::dealloc;
 }
 
-sub shallow_copy {
+sub copy {
   my $self = shift;
   
   my $mycopy = $self->SUPER::copy;
   bless $mycopy, "Bio::EnsEMBL::Compara::Graph::Node";
+  return $mycopy;
+}
+
+sub copy_shallow_links {
+  my $self = shift;
   
-  #put local variable copies here
+  my $mycopy = $self->copy;
+  
+  #copies links to all my neighbors but does not recurse beyond
+  foreach my $link (@{$self->links}) {
+    $mycopy->create_link_to_node($link->get_neighbor($self), 
+                                 $link->distance_between);
+  }  
   
   return $mycopy;
 }
 
+sub copy_graph {
+  my $self = shift;
+  my $incoming_link = shift;
+  
+  my $mycopy = $self->copy;
+  
+  #printf("Graph::Node::copy %d", $self->obj_id);
+  #printf(" from link %s", $incoming_link->obj_id) if($incoming_link);
+  #print("\n");
+  
+  foreach my $link (@{$self->links}) {
+    next if($incoming_link and $link->equals($incoming_link));
+    my $newnode = $link->get_neighbor($self)->copy_graph($link);
+    $mycopy->create_link_to_node($newnode, $link->distance_between);
+  }  
+    
+  return $mycopy;
+}
 
 #################################################
 #
@@ -87,6 +116,16 @@ sub node_id {
   my $value = shift;
   return $self->obj_id($value) if($value);
   return $self->obj_id;
+}
+
+sub new_identity {
+  my $self = shift;
+  $self->obj_id(undef);
+  $self->adaptor(undef);
+  printf("new id = %s\n", $self->obj_id);
+  foreach my $link (@{$self->links}) {
+    $link->get_neighbor($self)->_rehash_node_ids();
+  }
 }
 
 
@@ -136,9 +175,6 @@ sub _add_neighbor_link_to_hash {
   
   $self->{'_node_id_to_link'} = {} unless($self->{'_node_id_to_link'});
   $self->{'_node_id_to_link'}->{$neighbor->node_id} = $link;
-
-  $self->{'_node_id_to_node'} = {} unless($self->{'_node_id_to_node'});
-  $self->{'_node_id_to_node'}->{$neighbor->node_id} = $neighbor;
 }
 
 sub _unlink_node_in_hash {
@@ -146,7 +182,6 @@ sub _unlink_node_in_hash {
   my $neighbor = shift;
   
   delete $self->{'_node_id_to_link'}->{$neighbor->node_id};
-  delete $self->{'_node_id_to_node'}->{$neighbor->node_id};
 }
 
 
@@ -175,15 +210,23 @@ sub unlink_neighbor {
   return undef;
 }
 
+
+sub unlink_all {
+  my $self = shift;
+
+  foreach my $link (@{$self->links}) {
+    $link->release;
+  }
+  return undef;
+}
+
 sub _rehash_node_ids {
   my $self = shift;
   my @links = $self->links;
   $self->{'_node_id_to_link'} = {};
-  $self->{'_node_id_to_node'} = {};
   foreach my $link (@links) {
     my $neighbor = $link->get_neighbor($self);
     $self->{'_node_id_to_link'}->{$neighbor->node_id} = $link;
-    $self->{'_node_id_to_node'}->{$neighbor->node_id} = $neighbor;
   }
 }
 
@@ -237,21 +280,13 @@ sub links {
   return \@links;
 }
 
-sub neighbors {
-  my $self = shift;
-
-  return [] unless($self->{'_node_id_to_node'});
-  my @nodes = values(%{$self->{'_node_id_to_node'}});
-  return \@nodes;
-}
-
 
 sub link_for_neighbor {
   my $self = shift;
   my $node = shift;
 
-  #throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
-  #   unless($node and $node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
+     unless($node and $node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
 
   return $self->{'_node_id_to_link'}->{$node->node_id};
 }
