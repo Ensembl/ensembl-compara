@@ -683,8 +683,6 @@ sub re_root {
   $self->release;
   $parent->release;
   
-  printf("rearranged tree\n");
-  $root->print_tree(20);  
   return $root;
 }
 
@@ -860,9 +858,6 @@ sub find_first_shared_ancestor {
 sub _set_parent_link {
   my ($self, $link) = @_;
   
-  print("set_parent_link : ");
-  if(defined($link)) { $link->print_link; } else { print "undef\n"; }
-
   $self->{'_parent_id'} = 0;
   $self->{'_parent_link'} = $link;
   $self->{'_parent_id'} = $link->get_neighbor($self)->node_id if($link);
