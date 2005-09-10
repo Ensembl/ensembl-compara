@@ -105,7 +105,10 @@ if($self->{'parent'} and $self->{'tree'} and $self->{'tree'}->parent) {
 if($self->{'tree'}) {
 
   $self->{'tree'}->retain;
-
+  $self->{'tree'}->get_all_leaves;
+  printf("get_all_leaves gives %d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
+  #$self->{'tree'}->flatten_tree;
+  
   if($self->{'new_root_id'}) {
     reroot($self);
   }
@@ -117,6 +120,7 @@ if($self->{'tree'}) {
 
   if($self->{'print_leaves'}) {
     my $leaves = $self->{'tree'}->get_all_leaves;
+    printf("fetched %d leaves\n", scalar(@$leaves));
     foreach my $leaf (@$leaves) {
       my $gene = $leaf->gene_member;
       my $desc = $gene->description;
@@ -149,7 +153,7 @@ if($self->{'tree'}) {
 
   #cleanup memory
   #print("ABOUT TO MANUALLY release tree\n");
-  $self->{'tree'}->release;
+  $self->{'tree'}->release_tree;
   $self->{'tree'} = undef;
   #print("DONE\n");
 }
@@ -219,46 +223,6 @@ sub usage {
 }
 
 
-sub fetch_protein_tree {
-  my $self = shift;
-  my $node_id = shift;
-
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  my $tree;
-
-  switch(1) {
-    case 1 {
-      $tree = $treeDBA->fetch_node_by_node_id($node_id);
-      #$tree = $tree->parent if($tree->parent);
-    }
-
-    case 2 {
-      my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', 'ENSP00000264731');
-      my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->member_id, 68537);
-      print $aligned_member, "\n";
-      $aligned_member->print_member;
-      $aligned_member->gene_member->print_member;
-      $tree = $aligned_member->subroot;
-      $treeDBA->fetch_all_children_for_node($tree);
-    }
-  }
-
-  $tree->print_tree($self->{'scale'});
-  printf("%d proteins\n", scalar(@{$tree->get_all_leaves}));
-  
-
-  $tree->release;
-  return;
-
-  $tree->flatten_tree->print_tree($self->{'scale'});
-
-  my $leaves = $tree->get_all_leaves;
-  foreach my $node (@{$leaves}) {
-    $node->print_member;
-  }
-  $tree->release;
-}
-
 
 sub fetch_protein_tree_with_gene {
   my $self = shift;
@@ -301,10 +265,11 @@ sub reroot {
   
   my $tree = $self->{'tree'};
   $tree->get_all_subnodes;  #make sure entire tree is loaded into memory
+  $tree->print_tree;
 
   my $new_root = $tree->find_node_by_node_id($node_id);
   return unless $new_root;
-
+  print("new root : "); $new_root->print_node;
   my $tmp_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
   $tmp_root->merge_children($tree);
   #$tmp_root->print_tree;
@@ -447,7 +412,7 @@ sub print_cluster_counts
   my $tree = shift;
   
   unless($tree) {
-    printf("%10s %10s %20s\n", 'tree_id', 'proteins', 'residues');
+    printf("%10s %10s %20s %20s\n", 'tree_id', 'proteins', 'residues', 'PHYML msecs');
     return;
   }
   
@@ -457,10 +422,14 @@ sub print_cluster_counts
     $count += $member->seq_length;
   }
 
-  printf("%10d %10d %20d\n",
+  my $phyml_msec =  $tree->has_tag('PHYML_runtime_msec');
+  $phyml_msec ='' unless(defined($phyml_msec));
+
+  printf("%10d %10d %20d %20d\n",
     $tree->node_id, 
     scalar(@$proteins),
-    $count);
+    $count, $phyml_msec
+    );
 }
 
 
