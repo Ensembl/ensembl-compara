@@ -81,12 +81,27 @@ sub DESTROY {
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
 
+=head2 copy
+
+  Overview   : copies object content but not identity
+               copies tags, but not objc_id and adaptor
+  Example    : my $clone = $self->copy;
+  Returntype : Bio::EnsEMBL::Compara::Graph::CGObject
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub copy {
   my $self = shift;
   
   my $mycopy = new Bio::EnsEMBL::Compara::Graph::CGObject;
 
-  #TODO add copy of metadata
+  #$mycopy->obj_id($self->obj_id);
+  #$mycopy->adaptor($self->adaptor);
+  if($self->{'_tags'}) {
+    %{$mycopy->{'_tags'}} = %{$self->{'_tags'}};
+  }
   
   return $mycopy;
 }
