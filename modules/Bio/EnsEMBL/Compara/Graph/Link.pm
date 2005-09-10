@@ -92,7 +92,7 @@ sub copy {
   
   my ($node1, $node2) = $self->get_nodes;
   my $mycopy = new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2);
-  $mycopy->distance_between($self->distance_to_parent);
+  $mycopy->distance_between($self->distance_between);
 
   return $mycopy;
 }
