@@ -152,8 +152,8 @@ sub distance_between {
 sub equals {
   my $self = shift;
   my $other = shift;
-  #throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Link] not a [$other]")
-  #      unless($other->isa('Bio::EnsEMBL::Compara::Graph::Link'));
+  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Link] not a [$other]")
+        unless($other and $other->isa('Bio::EnsEMBL::Compara::Graph::Link'));
   return 1 if($self->obj_id eq $other->obj_id);
   return 0;
 }
