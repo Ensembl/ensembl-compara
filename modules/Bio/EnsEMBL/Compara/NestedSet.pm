@@ -59,16 +59,32 @@ sub dealloc {
   return $self->SUPER::dealloc;
 }
 
+=head2 copy
+
+  Overview   : creates copy of tree starting at this node going down
+  Example    : my $clone = $self->copy;
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub copy {
   my $self = shift;
   
-  my $mycopy = $self->SUPER::copy;
+  my $mycopy = $self->SUPER::copy; 
+  bless $mycopy, "Bio::EnsEMBL::Compara::NestedSet";
 
+  $mycopy->distance_to_parent($self->distance_to_parent);
   $mycopy->left_index($self->left_index);
   $mycopy->right_index($self->right_index);
 
+  foreach my $child (@{$self->children}) {  
+    $mycopy->add_child($child->copy);
+  }
   return $mycopy;
 }
+
 
 sub release_tree {
   my $self = shift;
@@ -123,14 +139,16 @@ sub add_child {
   
   #printf("add_child: parent(%s) <-> child(%s)\n", $self->node_id, $child->node_id);
   
+  unless(defined($dist)) { $dist = $child->_distance; }
+
   $self->retain;
   $child->retain->disavow_parent;
   my $link = $self->create_link_to_node($child);
-  $child->_parent_link($link);
+  $child->_set_parent_link($link);
   $self->{'_children_loaded'} = 1; 
   $child->release;
   $self->release;
-  $link->distance_between($dist) if(defined($dist));
+  $link->distance_between($dist);
   return $link;
 }
 
@@ -154,7 +172,7 @@ sub store_child {
 sub remove_child {
   my ($self, $child) = @_;
   $self->unlink_neighbor($child);
-  $child->_parent_link(undef);
+  $child->_set_parent_link(undef);
   return undef;
 }
 
@@ -172,13 +190,13 @@ sub remove_child {
 sub disavow_parent {
   my $self = shift;
 
-  if($self->_parent_link) {
-    my $link = $self->_parent_link;
-    $self->_parent_link(undef);
+  if($self->{'_parent_link'}) {
+    my $link = $self->{'_parent_link'};
     #print("DISAVOW parent : "); $parent->print_node;
     #print("        child  : "); $self->print_node;
     $link->release;
   }
+  $self->_set_parent_link(undef);
   return undef;
 }
 
@@ -221,19 +239,19 @@ sub release_children {
 
 sub parent {
   my $self = shift;
-  if(!defined($self->_parent_link) and $self->adaptor and $self->_parent_id) {
+  if(!defined($self->{'_parent_link'}) and $self->adaptor and $self->_parent_id) {
     my $parent = $self->adaptor->fetch_parent_for_node($self);
     #print("fetched parent : "); $parent->print_node;
     $parent->add_child($self);
   }
-  return undef unless($self->_parent_link);
-  return $self->_parent_link->get_neighbor($self);
+  return undef unless($self->{'_parent_link'});
+  return $self->{'_parent_link'}->get_neighbor($self);
 }
 
 
 sub has_parent {
   my $self = shift;
-  return 1 if($self->_parent_link or $self->_parent_id);
+  return 1 if($self->{'_parent_link'} or $self->_parent_id);
   return 0;
 }
 
@@ -297,7 +315,7 @@ sub children {
   my @kids;
   foreach my $link (@{$self->links}) {
     next unless(defined($link));
-    next if($self->_parent_link and $link->equals($self->_parent_link));
+    next if($self->{'_parent_link'} and $link->equals($self->{'_parent_link'}));
     push @kids, $link->get_neighbor($self);
   }
   return \@kids;
@@ -386,15 +404,21 @@ sub no_autoload_children {
 
 =cut
 
-#sub distance_to_parent {
-#  my $self = shift;
-#  my $value = shift;
-#  my $link = $self->link_for_neighbor($self->parent);
-#  if(defined($value)) { $link->distance_between($value); };
-#  return $link->distance_between;
-#}
-
 sub distance_to_parent {
+  my $self = shift;
+  my $dist = shift;
+  
+  if($self->{'_parent_link'}) {
+    if(defined($dist)) { $self->{'_parent_link'}->distance_between($dist); }
+    else { $dist = $self->{'_parent_link'}->distance_between; }
+  } else {
+    if(defined($dist)) { $self->_distance($dist); }
+    else { $dist = $self->_distance; } 
+  }
+  return $dist;
+}
+
+sub _distance  {
   my $self = shift;
   $self->{'_distance_to_parent'} = shift if(@_);
   $self->{'_distance_to_parent'} = 0.0 unless(defined($self->{'_distance_to_parent'}));
@@ -547,7 +571,7 @@ sub has_child {
   $self->load_children_if_needed;
   my $link = $self->link_for_neighbor($child);
   return 0 unless($link);
-  return 0 if($self->_parent_link and ($self->_parent_link->equals($link)));
+  return 0 if($self->{'_parent_link'} and ($self->{'_parent_link'}->equals($link)));
   return 1;
 }
 
@@ -579,7 +603,7 @@ sub merge_children {
   throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$nset]")
         unless($nset->isa('Bio::EnsEMBL::Compara::NestedSet'));
   foreach my $child_node (@{$nset->children}) {
-    $self->add_child($child_node);
+    $self->add_child($child_node, $child_node->distance_to_parent);
   }
   return $self;
 }
@@ -617,17 +641,19 @@ sub flatten_tree {
   foreach my $leaf (@{$leaves}) { $leaf->retain->disavow_parent; }
 
   $self->release_children;
-  foreach my $leaf (@{$leaves}) { $self->add_child($leaf); $leaf->release; }
+  foreach my $leaf (@{$leaves}) { $self->add_child($leaf, 0.0); $leaf->release; }
   
   return $self;
 }
 
 =head2 re_root
 
-  Overview   : rearranges the tree structure so that a new root is created 
-               beetween this node and its parent.  The old root is deleted
-               and the new root is returned.
-  Example    : my $newroot = $node->re_root();
+  Overview   : rearranges the tree structure so that the root is moved to 
+               beetween this node and its parent.  If the old root was more than
+	       bifircated (2 children) a new node is created where it was to hold
+	       the multiple children that arises from the re-rooting.  
+	       The old root is returned.
+  Example    : $node->re_root();
   Returntype : undef or Bio::EnsEMBL::Compara::NestedSet
   Exceptions : none
   Caller     : general
@@ -636,35 +662,45 @@ sub flatten_tree {
 
 sub re_root {
   my $self = shift;
-  return unless($self->parent);
   
-  my $old_root = $parent->invert_tree;
+  return $self unless($self->parent); #I'm root so just return self
+
+  my $root = $self->root;
+  my $tmp_root = new Bio::EnsEMBL::Compara::NestedSet;
+  $tmp_root->merge_children($root);
+    
+  $self->retain;
+  my $parent = $self->parent->retain;
+  my $dist = $self->distance_to_parent;
+  $self->disavow_parent;
+
+  my $old_root = $parent->_invert_tree_above;
   $old_root->minimize_node;
   
-  my $new_root = new Bio::EnsEMBL::Compara::NestedSet;
-  $new_root->add_child($parent);
-  $new_root->add_child($self);
+  $root->add_child($parent, $dist / 2.0);
+  $root->add_child($self, $dist / 2.0);
   
-  $parent->distance_to_parent($self->distance_to_parent);
-  $self->distance_to_parent(0.0);
   $self->release;
   $parent->release;
-  return $new_root;
+  
+  printf("rearranged tree\n");
+  $root->print_tree(20);  
+  return $root;
 }
 
 
-sub invert_tree {
+sub _invert_tree_above {
   my $self = shift;
   return $self unless($self->parent);
   
-  my $old_root =  $self->parent->invert_tree;
+  my $old_root =  $self->parent->_invert_tree_above;
   #now my parent has been inverted so it is the new root
   
   #flip the direction of the link between myself and my parent
-  $self->parent->_parent_link($self->_parent_link);
-  $self->_parent_link(undef);
+  $self->parent->_set_parent_link($self->{'_parent_link'});
+  $self->_set_parent_link(undef);
   
-  #now I'm the new root and the old root might need to be deleted
+  #now I'm the new root and the old root might need to be modified
   return $old_root;
 }
 
@@ -821,19 +857,18 @@ sub find_first_shared_ancestor {
 
 # used for building tree from a DB fetch, want to restrict users to create trees
 # by only -add_child method
-sub _old_set_parent {
-  my ($self, $parent) = @_;
+sub _set_parent_link {
+  my ($self, $link) = @_;
+  
+  print("set_parent_link : ");
+  if(defined($link)) { $link->print_link; } else { print "undef\n"; }
+
   $self->{'_parent_id'} = 0;
-  $self->{'_parent_node'} = $parent;
-  $self->{'_parent_id'} = $parent->node_id if($parent);
+  $self->{'_parent_link'} = $link;
+  $self->{'_parent_id'} = $link->get_neighbor($self)->node_id if($link);
   return $self;
 }
 
-sub _parent_link {
-  my $self = shift;
-  $self->{'_parent_link'} = shift if(@_);
-  return $self->{'_parent_link'};
-}
 
 # used for building tree from a DB fetch until all the objects are in memory
 sub _parent_id {
