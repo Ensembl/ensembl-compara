@@ -678,7 +678,7 @@ sub assembly_table {
 
   # Update the file ..
   open (my $fh, ">$file") or die "Cannot create $file: $!";
-  print $fh qq(\n<table border="1" class="spreadsheet archive">\n<tr>$header_row</tr>\n);
+  print $fh qq(\n<table style="margin:auto; width:95%" border="1" class="spreadsheet archive">\n<tr>$header_row</tr>\n);
   print $fh qq($table</table>\n);
   return;
 }
