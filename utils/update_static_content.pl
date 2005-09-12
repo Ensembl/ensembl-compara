@@ -44,6 +44,8 @@ B< new_species:>
    Runs generic_species_homepage, SSI (SSIabout, SSIexample, SSIentry),
    downloads, species_table
 
+B< archive: >
+    Runs copy_species_table and assembly_table
 
 B<  generic_species_homepage:>;
     Creates a generic homepage as a first pass for the species.  
@@ -67,26 +69,17 @@ B<  species_table:>;
     htdocs/ssi/species_table.html
 
 
-####### TO DO - CHECK ALL THESE AS MOSTLY UNNEEDED WITH NEW CODE #######
-B<  new_release:>
-   Runs versions, homepage_current_version, whatsnew, branch_versions
-   archived_sites SSIdata_homepage assembly_table
-
-B< new_mirror_release:>
-   Runs homepage_current_version
-
-B< new_mirror_species:>
-   Runs generic_species_homepage, create_affili, species_table, SSIsearch, 
-   homepage_current_version
-
-B< branch_versions:>
-   Creates a new page with updated versions for the current cvs branch
-   (i.e. for the API, webcode etc)
+B< copy_species_table:>
+   simply copies: $SERVERROOT/public-plugins/ensembl/htdocs/ssi/species_table.html to $SERVERROOT/sanger-plugins/archive/htdocs/ssi/species_table.html
 
 B< assembly_table>;
     Updates htdocs/Docs/archive/homepage_SSI/assembly_table.html or 
     creates new one.  This file is included in htdocs/Docs/assemblies.html 
     and lists all the archived sites and which assemblies they show.
+
+B< branch_versions:>
+   Creates a new page with updated versions for the current cvs branch
+   (i.e. for the API, webcode etc)
 
     Maintained by Fiona Cunningham <fc1@sanger.ac.uk>
 
@@ -155,6 +148,10 @@ if ( $updates{assembly_table} ) {
   assembly_table($SERVERROOT."/sanger-plugins/archive_central/htdocs/ssi");
   delete $updates{assembly_table};
 }
+if ( $updates{copy_species_table} ) {
+  copy_species_table( $SERVERROOT );
+  delete $updates{copy_species_table};
+}
 
 exit unless keys %updates;
 
@@ -195,18 +192,15 @@ exit;
 
    my %valid_types = map{ $_ => 1 }
      qw(
-	new_species      generic_species_homepage downloads SSI
-                         species_table assembly_table 
+	new_species      generic_species_homepage downloads SSI archive
+                         species_table assembly_table copy_species_table 
        );
 
    my %compound_types = 
-     ( new_species        => [ qw(generic_species_homepage downloads
+     ( new_species       => [ qw(generic_species_homepage downloads
 				  SSI species_table
 				 )],
-      new_release        => [ qw( versions homepage_current_version whatsnew 
-                                  branch_versions archived_sites assembly_table
-                                  SSIdata_homepage) ],
-      new_mirror_release => [ qw (homepage_current_version ) ],
+      archive            => [ qw (assembly_table copy_species_table ) ],
      );
 
    # Validate types
@@ -683,6 +677,14 @@ sub assembly_table {
   return;
 }
 
+
+sub copy_species_table {
+  my ( $dir ) = @_;
+  my $dir2 = $dir."/sanger-plugins/archive/htdocs/ssi/";
+  &check_dir($dir2);
+  system("cp $dir/public-plugins/ensembl/htdocs/ssi/species_table.html $dir2");
+  return;
+}
 #############################################################################
 sub branch_versions {
   my ($dir, $version_ini, $common_name,$species) = @_;
