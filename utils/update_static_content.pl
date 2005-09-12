@@ -108,11 +108,6 @@ use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::SpeciesDefs;
 my $SD = EnsEMBL::Web::SpeciesDefs->new;
 
-# Connect to web database and get news adaptor
-my $web_db = $SD->databases->{'ENSEMBL_WEBSITE'};
-warning (1, "ENSEMBL_WEBSITE not defined in INI file") unless $web_db;
-my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
-
 our $VERBOSITY = 1;
 our $site_type = "main";
 our $FIRST_ARCHIVE = 26;   # Release number for oldest archive site
@@ -628,6 +623,12 @@ sub do_downloads {
 sub assembly_table {
   my ( $dir ) = @_;
   &check_dir($dir);
+
+  # Connect to web database and get news adaptor
+  my $web_db = $SD->databases->{'ENSEMBL_WEBSITE'};
+  warning (1, "ENSEMBL_WEBSITE not defined in INI file") unless $web_db;
+  my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
+
   my $file  = $dir."/assembly_table.inc";
   my $this_release = utils::Tool::species_defs("ENSEMBL_VERSION");
 
