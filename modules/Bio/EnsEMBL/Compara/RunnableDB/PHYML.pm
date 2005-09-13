@@ -60,6 +60,8 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::Graph::Algorithms;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use Bio::SimpleAlign;
 use Bio::AlignIO;
@@ -134,7 +136,20 @@ sub run
 sub write_output {
   my $self = shift;
 
-  $self->parse_and_store_proteintree;
+  $self->store_proteintree;
+}
+ 
+ 
+sub DESTROY {
+  my $self = shift;
+
+  if($self->{'protein_tree'}) {
+    printf("PHYML::DESTROY  releasing tree\n") if($self->debug);
+    $self->{'protein_tree'}->release_tree;
+    $self->{'protein_tree'} = undef;
+  }
+
+  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
 
 
@@ -186,6 +201,8 @@ sub run_phyml
 {
   my $self = shift;
 
+  my $starttime = time()*1000;
+
   $self->{'input_aln'} = $self->dumpTreeMultipleAlignmentToWorkdir($self->{'protein_tree'});
   return unless($self->{'input_aln'});
   
@@ -222,7 +239,14 @@ sub run_phyml
     throw("error running phyml, $!\n");
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-
+  
+  #parse the tree into the datastucture
+  $self->parse_newick_into_proteintree;
+  
+  my $runtime = time()*1000-$starttime;
+  
+  $self->{'protein_tree'}->store_tag('PHYML_runtime_msec', $runtime);
+  
 }
 
 
@@ -237,7 +261,7 @@ sub check_job_fail_options
   $self->input_job->update_status('FAILED');
   
   if($self->{'protein_tree'}) {
-    $self->{'protein_tree'}->release;
+    $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
   }
 }
@@ -258,7 +282,6 @@ sub dumpTreeMultipleAlignmentToWorkdir
   my $leafcount = scalar(@{$tree->get_all_leaves});  
   if($leafcount<3) {
     printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $tree->node_id);
-    $self->check_job_fail_options;
     return undef;
   }
   
@@ -290,20 +313,22 @@ sub dumpTreeMultipleAlignmentToWorkdir
 }
 
 
-sub parse_and_store_proteintree
+sub store_proteintree
 {
   my $self = shift;
 
   return unless($self->{'protein_tree'});
 
-  if($self->{'newick_file'}) {  
-    $self->parse_newick_into_proteintree;
-  
+  if($self->{'newick_file'}) {
+    printf("PHYML::store_proteintree\n") if($self->debug);
     my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
     $treeDBA->store($self->{'protein_tree'});
     $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
+    if($self->debug >1) {
+      print("done storing - now print\n");
+      $self->{'protein_tree'}->print_tree;
+    }
   }
-  $self->{'protein_tree'}->release;
 }
 
 
@@ -316,6 +341,7 @@ sub parse_newick_into_proteintree
   #cleanup old tree structure- 
   #  flatten and reduce to only AlignedMember leaves
   $tree->flatten_tree;
+  $tree->print_tree if($self->debug);
   foreach my $node (@{$tree->get_all_leaves}) {
     next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     $node->disavow_parent;
@@ -327,15 +353,16 @@ sub parse_newick_into_proteintree
   open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
-  my $newtree = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->parse_newick_into_tree($newick);
+  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  $newtree->print_tree if($self->debug > 1);
   
   #leaves of newick tree are named with member_id of members from input tree
   #move members (leaves) of input tree into newick tree to mirror the 'member_id' nodes
   foreach my $member (@{$tree->get_all_leaves}) {
     my $tmpnode = $newtree->find_node_by_name($member->member_id);
     if($tmpnode) {
-      $tmpnode->parent->add_child($member);
-      $member->distance_to_parent($tmpnode->distance_to_parent);
+      $tmpnode->add_child($member, 0.0);
+      $tmpnode->minimize_node; #tmpnode is now redundant so it is removed
     } else {
       print("unable to find node in newick for member"); 
       $member->print_member;
@@ -347,80 +374,12 @@ sub parse_newick_into_proteintree
   $tree->merge_children($newtree);
 
   #newick tree is now empty so release it
-  $newtree->release;
+  $newtree->release_tree;
 
-  #go through merged tree and remove place-holder leaves
-  foreach my $node (@{$tree->get_all_leaves}) {
-    next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
-    $node->disavow_parent;
-  }
   $tree->print_tree if($self->debug);
   
-  #apply mimized least-square-distance-to-root tree balancing algorithm
-  balance_tree($tree);
-
-  $tree->build_leftright_indexing;
-
-  if($self->debug) {
-    print("\nBALANCED TREE\n");
-    $tree->print_tree;
-  }
 }
 
-
-
-###################################################
-#
-# tree balancing algorithm
-#   find new root which minimizes least sum of squares 
-#   distance to root
-#
-###################################################
-
-sub balance_tree
-{
-  my $tree = shift;
-  
-  my $starttime = time();
-  
-  my $last_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
-  $last_root->merge_children($tree);
-  
-  my $best_root = $last_root;
-  my $best_weight = calc_tree_weight($last_root);
-  
-  my @all_nodes = $last_root->get_all_subnodes;
-  
-  foreach my $node (@all_nodes) {
-    $node->retain->re_root;
-    $last_root->release;
-    $last_root = $node;
-    
-    my $new_weight = calc_tree_weight($node);
-    if($new_weight < $best_weight) {
-      $best_weight = $new_weight;
-      $best_root = $node;
-    }
-  }
-  #printf("%1.3f secs to run balance_tree\n", (time()-$starttime));
-
-  $best_root->retain->re_root;
-  $last_root->release;
-  $tree->merge_children($best_root);
-  $best_root->release;
-}
-
-sub calc_tree_weight
-{
-  my $tree = shift;
-
-  my $weight=0.0;
-  foreach my $node (@{$tree->get_all_leaves}) {
-    my $dist = $node->distance_to_root;
-    $weight += $dist * $dist;
-  }
-  return $weight;  
-}
 
 
 1;
