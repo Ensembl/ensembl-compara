@@ -31,9 +31,6 @@ B<This program:>
 
 Updates the static content for the website
 
-The current version  is specified in Ensembl web config file:
-  ../conf/<SPECIES>.ini in the ENSEMBL_FTP_BASEDIR variable
-
 =head1 OPTIONS
 
 More on --update: Valid options are:
