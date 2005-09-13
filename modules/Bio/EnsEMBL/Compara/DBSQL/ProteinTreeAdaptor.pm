@@ -96,7 +96,8 @@ sub store_node {
     $parent_id = $node->parent->node_id ;
     $root_id = $node->root->node_id;
   }
-
+  #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
+  
   my $sth = $self->prepare("INSERT INTO protein_tree_nodes 
                              (parent_id,
                               root_id,
@@ -106,6 +107,7 @@ sub store_node {
   $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
 
   $node->node_id( $sth->{'mysql_insertid'} );
+  #printf("  new node_id %d\n", $node->node_id);
   $node->adaptor($self);
   $sth->finish;
 
@@ -208,7 +210,7 @@ sub delete_nodes_not_in_tree
     next if($tree->find_node_by_node_id($dbnode->node_id));
     $self->delete_node($dbnode);
   }
-  $dbtree->release;
+  $dbtree->release_tree;
 }
 
 
