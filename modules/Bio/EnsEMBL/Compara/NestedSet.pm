@@ -710,7 +710,7 @@ sub minimize_tree {
   return $self if($self->is_leaf);
   
   foreach my $child (@{$self->children}) { 
-    $child->minimize_node;
+    $child->minimize_tree;
   }
   return $self->minimize_node;
 }
