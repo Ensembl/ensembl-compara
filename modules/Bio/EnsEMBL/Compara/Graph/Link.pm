@@ -67,8 +67,8 @@ sub new {
   $self->{'_link_node1'} = $node1->retain;
   $self->{'_link_node2'} = $node2->retain;
   
-  $node1->_add_neighbor_link_to_hash($node2, $self);
-  $node2->_add_neighbor_link_to_hash($node1, $self);
+  $node1->_add_link_to_hash($self);
+  $node2->_add_link_to_hash($self);
   
   $self->distance_between($dist) if(defined($dist));
   return $self;
@@ -78,8 +78,8 @@ sub new {
 sub dealloc {
   my $self = shift;
   
-  $self->{'_link_node1'}->_unlink_node_in_hash($self->{'_link_node2'});
-  $self->{'_link_node2'}->_unlink_node_in_hash($self->{'_link_node1'});
+  $self->{'_link_node1'}->_unlink_from_hash($self);
+  $self->{'_link_node2'}->_unlink_from_hash($self);
 
   $self->{'_link_node1'}->release;
   $self->{'_link_node2'}->release;

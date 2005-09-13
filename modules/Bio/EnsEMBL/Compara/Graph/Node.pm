@@ -114,7 +114,7 @@ sub copy_graph {
 sub node_id {
   my $self = shift;
   my $value = shift;
-  return $self->obj_id($value) if($value);
+  if(defined($value)) { $self->obj_id($value); }
   return $self->obj_id;
 }
 
@@ -123,9 +123,6 @@ sub new_identity {
   $self->obj_id(undef);
   $self->adaptor(undef);
   printf("new id = %s\n", $self->obj_id);
-  foreach my $link (@{$self->links}) {
-    $link->get_neighbor($self)->_rehash_node_ids();
-  }
 }
 
 
@@ -157,9 +154,11 @@ sub create_link_to_node {
   
   #print("create_link_to_node\n");  $self->print_node; $node->print_node;
   
-  return undef if($self->{'_node_id_to_link'}->{$node->node_id});
+  my $link = $self->link_for_neighbor($node);
+  return $link if($link);
+  
   #results in calls to _add_neighbor_link_to_hash on each node
-  my $link = new Bio::EnsEMBL::Compara::Graph::Link($self, $node);
+  $link = new Bio::EnsEMBL::Compara::Graph::Link($self, $node);
   if(defined($distance)) { 
     $link->distance_between($distance);
   }
@@ -168,20 +167,19 @@ sub create_link_to_node {
 
 #
 # internal method called by Compara::Graph::Link
-sub _add_neighbor_link_to_hash {
+sub _add_link_to_hash {
   my $self = shift;
-  my $neighbor = shift;
   my $link = shift;
   
-  $self->{'_node_id_to_link'} = {} unless($self->{'_node_id_to_link'});
-  $self->{'_node_id_to_link'}->{$neighbor->node_id} = $link;
+  $self->{'_link_hash'} = {} unless($self->{'_link_hash'});
+  $self->{'_link_hash'}->{$link->obj_id} = $link;
 }
 
-sub _unlink_node_in_hash {
+sub _unlink_from_hash {
   my $self = shift;
-  my $neighbor = shift;
+  my $link = shift;
   
-  delete $self->{'_node_id_to_link'}->{$neighbor->node_id};
+  delete $self->{'_link_hash'}->{$link->obj_id};
 }
 
 
@@ -202,11 +200,12 @@ sub unlink_neighbor {
   throw("neighbor not defined") unless(defined($node));
   throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
      unless($node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
-  throw($self->node_id. " not my neighbor ". $node->node_id)
-    unless($self->{'_node_id_to_link'} and 
-           $self->{'_node_id_to_link'}->{$node->node_id});
+  
+  my $link = $self->link_for_neighbor($node);
+  
+  throw($self->node_id. " not my neighbor ". $node->node_id) unless($link);
 
-  $self->link_for_neighbor($node)->release;  
+  $link->release;  
   return undef;
 }
 
@@ -220,15 +219,6 @@ sub unlink_all {
   return undef;
 }
 
-sub _rehash_node_ids {
-  my $self = shift;
-  my @links = $self->links;
-  $self->{'_node_id_to_link'} = {};
-  foreach my $link (@links) {
-    my $neighbor = $link->get_neighbor($self);
-    $self->{'_node_id_to_link'}->{$neighbor->node_id} = $link;
-  }
-}
 
 =head2 cascade_unlink
 
@@ -245,7 +235,7 @@ sub cascade_unlink {
   my $self = shift;
   my $caller = shift;
   
-  #printf("cascade_unlink node %d\n", $self->node_id);
+  #printf("cascade_unlink : "); $self->print_node;
   if($self->refcount > $self->link_count) {
     printf("!!!! node is being retained - can't cascade_unlink\n");
     return undef;
@@ -294,8 +284,8 @@ sub minimize_node {
 sub links {
   my $self = shift;
 
-  return [] unless($self->{'_node_id_to_link'});
-  my @links = values(%{$self->{'_node_id_to_link'}});
+  return [] unless($self->{'_link_hash'});
+  my @links = values(%{$self->{'_link_hash'}});
   return \@links;
 }
 
@@ -306,8 +296,11 @@ sub link_for_neighbor {
 
   throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
      unless($node and $node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
-
-  return $self->{'_node_id_to_link'}->{$node->node_id};
+  
+  foreach my $link (@{$self->links}) {
+    my $next_node = $link->get_neighbor($self);
+    return $link if($node->equals($next_node));
+  }
 }
 
 
@@ -349,8 +342,9 @@ sub equals {
 sub like {
   my $self = shift;
   my $other = shift;
-  #throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$other]")
-  #      unless($other and $other->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  
+  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$other]")
+        unless($other and $other->isa('Bio::EnsEMBL::Compara::Graph::Node'));
   return 1 if($self->node_id eq $other->node_id);
   return 0 unless($self->link_count == $other->link_count);
   foreach my $link (@{$self->links}) {
@@ -363,10 +357,11 @@ sub like {
 sub has_neighbor {
   my $self = shift;
   my $node = shift;
-  #throw "[$node] must be a Bio::EnsEMBL::Compara::Graph::Node object"
-  #     unless ($node and $node->isa("Bio::EnsEMBL::Compara::Graph::Node"));
   
-  return 1 if(defined($self->{'_node_id_to_link'}->{$node->node_id}));
+  throw "[$node] must be a Bio::EnsEMBL::Compara::Graph::Node object"
+       unless ($node and $node->isa("Bio::EnsEMBL::Compara::Graph::Node"));
+  
+  return 1 if($self->link_for_neighbor($node));
   return 0;
 }
 
