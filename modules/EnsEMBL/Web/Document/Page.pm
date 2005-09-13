@@ -33,8 +33,9 @@ sub child_objects {
   my $self = shift;
   unless( $self->{'children'} ) {
     $self->{'children'} = [];
-    foreach my $root( 'EnsEMBL::Web', @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS} ) {
+    foreach my $root( 'EnsEMBL::Web', reverse @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS} ) {
       my $class_name = $root. '::Document::Configure';
+	warn $class_name;
       if( $self->dynamic_use( $class_name ) ) {
         push @{$self->{'children'}}, new $class_name;
       } else {
