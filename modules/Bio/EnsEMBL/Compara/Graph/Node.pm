@@ -262,6 +262,25 @@ sub cascade_unlink {
 }
 
 
+sub minimize_node {
+  my $self = shift;
+  
+  return $self unless($self->link_count() == 2);
+
+  #printf("Node::minimize_node "); $self->print_node;
+  my ($link1, $link2) = @{$self->links};
+  my $dist = $link1->distance_between + $link2->distance_between;
+  my $node1 = $link1->get_neighbor($self);
+  my $node2 = $link2->get_neighbor($self);
+  
+  $node1->create_link_to_node($node2, $dist);
+  
+  $link1->release;
+  $link2->release;  
+  
+  return undef;
+}
+
 =head2 links
 
   Overview   : returns a list of Compara::Graph::Link connected to this node
@@ -294,7 +313,7 @@ sub link_for_neighbor {
 
 sub print_node {
   my $self  = shift;
-  printf("(%s)%s\n", $self->node_id, $self->name);
+  printf("Node(%s)%s\n", $self->node_id, $self->name);
 }
 
 
