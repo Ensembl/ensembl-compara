@@ -273,7 +273,7 @@ sub minimize_node {
   my $node1 = $link1->get_neighbor($self);
   my $node2 = $link2->get_neighbor($self);
   
-  $node1->create_link_to_node($node2, $dist);
+  new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2, $dist);
   
   $link1->release;
   $link2->release;  
