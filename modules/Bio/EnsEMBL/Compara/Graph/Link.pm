@@ -160,7 +160,12 @@ sub equals {
 
 sub print_link {
   my $self  = shift;
-  printf("link(%s): %1.5f\n", $self->obj_id, $self->distance_between);
+  printf("link(%s): (%s)-- %1.5f --(%s)\n", 
+      $self->obj_id, 
+      $self->{'_link_node1'}->node_id,
+      $self->distance_between,
+      $self->{'_link_node2'}->node_id,
+    );
 }
 
 
