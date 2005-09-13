@@ -8,41 +8,41 @@ body { font-family: Luxi Sans, Geneva, Helvetica, Tahoma, Arial, sans-serif;
     font-size:76%; color:#666; background-color:#fff; 
     background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; 
     padding: 0px; margin: 0px; border: 0px;}
-pre, code, kbd {font-family:monospace;}
+pre, code, kbd {font-family:monospace; }
 div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
 p  { margin-top:0.6em; margin-bottom:0.6em; }
 h1 { font-size:2em;   color:#3366bb; margin:1.2em 0px 0px 0px; padding:0px; }
 h2 { font-size:1.5em; color:#666; margin:0.5em 0px 0px 0px; padding:0px; }
-h3 { font-size:1.2em; color:#993333; margin:1.5em 0px 0px 0px; padding:2px; }
+h3 { font-size:1.2em; color:#663399; margin:1.5em 0px 0px 0px; padding:2px; }
 h4 { font-size:1.1em; color:#000; margin:1em 0px 0px 0px; padding:0px;}
 h5 { font-size:1em;   color:#000; margin:0px; padding:0px;}
-.viewname { font-size:1em; font-style:italic; color:#993333; }
+.viewname { font-size:1em; font-style:italic; color:#663399; }
 img  { border: 0px }
 hr   { display: none; }
 /* ul li { list-style:none outside none; } */
 
 a { color:inherit; text-decoration:none; } /* neutral style for anchor target */
 a:link    { color:#3366bb; text-decoration:underline; }
-a:visited { color:#993333; text-decoration:underline; }
-a:hover   { color:#cc0000; text-decoration:underline; }
-a:active  { color:#cc0000; text-decoration:underline; }
+a:visited { color:#663399; text-decoration:underline; }
+a:hover   { color:#aa77dd; text-decoration:underline; }
+a:active  { color:#aa77dd; text-decoration:underline; }
 
 form { border:none; margin-top: 0px; margin-bottom: 0px; padding:0px; }
-.form-button { color:#993333; font-weight:bold;
+.form-button { color:#663399; font-weight:bold;
     font-style:italic; padding:2px;  }
-.red-button { background-color:#993333; color:#fff; font-weight:bold;
-    font-style:italic; padding:2px; border:1px outset #993333; }
-.blue-button { background-color:#3366bb; color:#fff; font-weight:bold;
-    font-style:italic; padding:2px; border:1px outset #3366bb; }
+.red-button { background-color:#663399; color:#fff; font-weight:bold;
+    font-style:italic; padding:2px; border:1px outset #663399; }
+.blue-button { background-color:#663399; color:#fff; font-weight:bold;
+    font-style:italic; padding:2px; border:1px outset #663399; }
 a.red-button, a.blue-button { padding:4px; color:#fff; text-decoration:none; } 
 a.red-button:visited, a.blue-button:visited { color:#fff; text-decoration:none; }
 
 /* Miscellaneous text styles */
 .bg1 { background:#fff; }
-.bg2 { background:#ffffdd; }
-.bg3 { background:#ffffcc; }
-.bg4 { background:#fff9af; }
-.bg5 { background:#ffffe7; }
+.bg2 { background:#fbf2ff; }
+.bg3 { background:#f4edf7; }
+.bg4 { background:#f3e1fb; }
+.bg5 { background:#fefcff; }
 
 .serif    { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
 .latin { font-style:italic; }
@@ -72,36 +72,36 @@ kbd.line { display:block; margin-left:20px; }
           
 #release, #release-t { top: 5em; position: absolute; }
 #release, #release-t {  margin: 1px 0px; 
-                       right: 0px; height:1.5em; background-color:#9bb9dd;
+                       right: 0px; height:1.5em; background-color:#d0afec;
                        padding:0.2em 0px 0.2em 0px; border-style:solid; 
-                       border-width:1px 0px 1px 0px; border-color:#3366bb; }
+                       border-width:1px 0px 1px 0px; border-color:#663399; }
               
 #release-t   { z-index: 19; right: 0px; }
 #release     { width:100%; z-index:20; left:0px; color:#fff; font-weight:bold; }
 #release div { padding-left: 0.5em; }
 #release a   { text-decoration:none; }
 #help        { z-index: 30; padding: 0.5em; height:1.5em; position:absolute; top:4.5em; right: 0px; margin: 0.5em 1em; }
-#help a      { background-color:#3366bb; color:#fff; font-weight:bold;
-               font-style:italic; padding:2px; border:1px outset #3366bb;
+#help a      { background-color:#663399; color:#fff; font-weight:bold;
+               font-style:italic; padding:2px; border:1px outset #663399;
                text-decoration:none; }
-#page       { right: 0px; left: 0px; border: solid 0px #fff9af; border-left-width: 190px; z-index: 1;
+#page       { right: 0px; left: 0px; border: solid 0px #f3e1fb; border-left-width: 190px; z-index: 1;
                margin: 0px; padding: 0px; top: 0em; background-color: #fff; }
-#copy #a1, #page #i1    { border: solid 0px #ffdf33; border-left-width: 1px;
+#copy #a1, #page #i1    { border: solid 0px #aa77dd; border-left-width: 1px;
                margin: 0px; padding: 0px }
 #copy #a2, #page #i2    { border: solid 0px #fff; border-width: 0px 5px 0px 19px;
                margin: 0px; padding: 0px }
 
-#copy { right: 0px; left: 0px; border: solid 0px #fff9af; border-left-width: 190px; z-index: 1;
+#copy { right: 0px; left: 0px; border: solid 0px #f3e1fb; border-left-width: 190px; z-index: 1;
               margin: 0px; padding: 0px; background-color: #fff }
 
 #page div.sptop { height: 7em; }
 #page div.sp { height: 1em; }
 
 #related { z-index: 15; position: absolute; left: 0px; top: 7em; padding: 0px; border: 0px; margin: 0px; width: 211px; }
-#related-box { background-color:#fff9af; color:#333; margin:0px 20px 0px 0px; padding:10px 0px 10px 0px; 
-    border-width:0px 1px 0px 0px; border-style:solid; border-color:#ffdf33; }
-#related h2 { background-color:#fff; color:#993333; font-size:1.2em; margin:0px -10px 0px 0px; padding:2px 0px 2px 10px; 
-  border-width:1px 1px 1px 0px; border-style:solid; border-color:#ffdf33; }
+#related-box { background-color:#f3e1fb; color:#333; margin:0px 20px 0px 0px; padding:10px 0px 10px 0px; 
+    border-width:0px 1px 0px 0px; border-style:solid; border-color:#aa77dd; }
+#related h2 { background-color:#fff; color:#663399; font-size:1.2em; margin:0px -10px 0px 0px; padding:2px 0px 2px 10px; 
+  border-width:1px 1px 1px 0px; border-style:solid; border-color:#aa77dd; }
 #related form { padding-left:10px; }
 #related ul { padding-left: 0px; margin-left: 2.5em; border: 0px }
 #related li {   padding-top:4px; }
@@ -109,8 +109,8 @@ kbd.line { display:block; margin-left:20px; }
 #related a {    font-weight:bold; text-decoration:none; }
 
 /* Hide complex stuff from IE5 for Mac with a backslashed comment  \*/
-#related h2 { background-color:#fff; color:#993333; font-size:1.2em; margin:0px -10px 0px 0px; padding:2px 0px 2px 10px; overflow:hidden;
-  border-width:1px 1px 1px 0px; border-style:solid; border-color:#ffdf33; }
+#related h2 { background-color:#fff; color:#663399; font-size:1.2em; margin:0px -10px 0px 0px; padding:2px 0px 2px 10px; overflow:hidden;
+  border-width:1px 1px 1px 0px; border-style:solid; border-color:#aa77dd; }
 /* end hack */
 
 p.archive-link { text-align:center; margin-top:2em; }
@@ -126,15 +126,15 @@ p.affil-link { text-align:center; margin-top:4em; }
 .dropdown ul {position:absolute; top:1em; left:5px; width:200px; z-index:1;
                     display: none; }
 .dropdown:hover ul {display:block;}
-.dropdown ul li { border:1px solid #ffdf33; padding:2px; margin:0px;
-                    background-color:#ffffcc; list-style:none; }
+.dropdown ul li { border:1px solid #aa77dd; padding:2px; margin:0px;
+                    background-color:#f4edf7; list-style:none; }
 /* end hack */
 
 * html .dropdown { position: relative; top: auto; left: auto; z-index: auto; display: block }
 * html .dropdown:hover  {z-index:1; }
 * html .dropdown ul { position: relative; top: auto; left: auto; width: auto; z-index: auto; display: block; list-style: none;}
 * html .dropdown:hover { display: block; }
-* html .dropdown ul li { border: 0px; padding: 2px; margin: 0em; margin-left: -1.75em; background-color: #fff9af; list-style: none; }
+* html .dropdown ul li { border: 0px; padding: 2px; margin: 0em; margin-left: -1.75em; background-color: #f3e1fb; list-style: none; }
 * html #related li.bullet ul li.m { list-style: none url(/img/blank.gif); }
 /* end funky menu styling */
 
