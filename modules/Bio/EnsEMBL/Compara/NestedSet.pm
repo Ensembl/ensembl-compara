@@ -147,6 +147,7 @@ sub add_child {
 
   $self->retain;
   $child->retain->disavow_parent;
+  #create_link_to_node is a safe method which checks if connection exists
   my $link = $self->create_link_to_node($child);
   $child->_set_parent_link($link);
   $self->{'_children_loaded'} = 1; 
