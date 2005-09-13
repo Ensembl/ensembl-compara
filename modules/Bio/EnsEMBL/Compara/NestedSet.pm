@@ -55,7 +55,7 @@ sub dealloc {
   my $self = shift;
 
   #printf("DEALLOC NestedSet refcount:%d ", $self->refcount); $self->print_node;
-  $self->release_children;
+  #$self->release_children;
   return $self->SUPER::dealloc;
 }
 
@@ -88,8 +88,8 @@ sub copy {
 
 sub release_tree {
   my $self = shift;
-  $self->release;
-  $self->cascade_unlink($self->{'_parent_node'});
+  $self->disavow_parent;
+  $self->cascade_unlink;
 }
 
 #################################################
