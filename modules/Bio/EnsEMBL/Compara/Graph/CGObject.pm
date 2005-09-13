@@ -189,7 +189,7 @@ sub adaptor {
 sub store {
   my $self = shift;
   throw("adaptor must be defined") unless($self->adaptor);
-  $self->adaptor->store($self);
+  $self->adaptor->store($self) if $self->adaptor->can("store");
 }
 
 
@@ -219,12 +219,25 @@ sub add_tag {
   my $value = shift;
   
   unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
+  return unless(defined($tag));
 
   if($value) { $self->{'_tags'}->{$value} = '';}
   else {$value='';}
   
   $self->{'_tags'}->{$tag} = $value;
 }
+
+sub store_tag {
+  my $self = shift;
+  my $tag = shift;
+  my $value = shift;
+  
+  $self->add_tag($tag, $value);
+  if($self->adaptor and $self->adaptor->can("_store_tagvalue")) {
+    $self->adaptor->_store_tagvalue($self->node_id, $tag, $value);
+  }
+}
+
 
 sub has_tag {
   my $self = shift;
@@ -261,7 +274,7 @@ sub _load_tags {
   my $self = shift;
   return if(defined($self->{'_tags'}));
   $self->{'_tags'} = {};
-  if($self->adaptor) {
+  if($self->adaptor and $self->adaptor->can("_load_tagvalues")) {
     $self->adaptor->_load_tagvalues($self);
   }
 }
