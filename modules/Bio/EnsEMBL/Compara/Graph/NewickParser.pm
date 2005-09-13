@@ -1,10 +1,14 @@
 =head1 NAME
 
-ProteinTreeAdaptor - DESCRIPTION of Object
+NewickParser - DESCRIPTION of Object
 
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
+
+Module which implements a newick string parser as a finite state machine which enables it
+to parse the full Newick specification.  Module does not need to be instantiated, the method
+can be called directly.
 
 =head1 CONTACT
 
@@ -28,6 +32,16 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 ###########################
 # NEWICK PARSING
 ###########################
+
+=head2 parse_newick_into_tree
+
+  Arg [1]    : <string> newick formated string
+  Example    : $link = new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2);
+  Description: parses newick string into a 
+  Returntype : Bio::EnsEMBL::Compara::NestedSet object which is the root of the tree
+  Exceptions : none
+
+=cut
 
 
 sub parse_newick_into_tree
