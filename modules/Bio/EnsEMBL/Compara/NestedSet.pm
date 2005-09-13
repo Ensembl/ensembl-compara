@@ -88,8 +88,12 @@ sub copy {
 
 sub release_tree {
   my $self = shift;
+  
+  my $child_count = $self->get_child_count;
   $self->disavow_parent;
-  $self->cascade_unlink;
+  $self->release;
+  $self->cascade_unlink if($child_count);
+  return undef;
 }
 
 #################################################
