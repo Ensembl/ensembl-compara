@@ -42,6 +42,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
 
   Arg [1]    : <Bio::EnsEMBL::Compara::Graph::Node> node1
   Arg [2]    : <Bio::EnsEMBL::Compara::Graph::Node> node2
+  Arg [3]    : (opt.) <float> length of link
   Example    : $link = new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2);
   Description: creates new link between nodes
   Returntype : Bio::EnsEMBL::Compara::Graph::Link
@@ -53,6 +54,7 @@ sub new {
   my $class = shift;
   my $node1 = shift;
   my $node2 = shift;
+  my $dist = shift;
 
   throw("arg1 must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node1]")
         unless(defined($node1) and $node1->isa('Bio::EnsEMBL::Compara::Graph::Node'));
@@ -68,6 +70,7 @@ sub new {
   $node1->_add_neighbor_link_to_hash($node2, $self);
   $node2->_add_neighbor_link_to_hash($node1, $self);
   
+  $self->distance_between($dist) if(defined($dist));
   return $self;
 }
 
