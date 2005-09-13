@@ -214,6 +214,48 @@ sub delete_nodes_not_in_tree
 }
 
 
+###################################
+#
+# tagging 
+#
+###################################
+
+sub _load_tagvalues {
+  my $self = shift;
+  my $node = shift;
+  
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $sth = $self->prepare("SELECT tag,value from protein_tree_tags where node_id=?");
+  $sth->execute($node->node_id);  
+  while (my ($tag, $value) = $sth->fetchrow_array()) {
+    $node->add_tag($tag,$value);
+  }
+  $sth->finish;
+}
+
+
+sub _store_tagvalue {
+  my $self = shift;
+  my $node_id = shift;
+  my $tag = shift;
+  my $value = shift;
+  
+  $value="" unless(defined($value));
+
+  my $sql = "INSERT ignore into protein_tree_tags (node_id,tag) values (\'$node_id\',\'$tag\')";
+  #print("$sql\n");
+  $self->dbc->do($sql);
+
+  $sql = "UPDATE protein_tree_tags set value=\'$value\' where node_id=\'$node_id\' and tag=\'$tag\'";
+  #print("$sql\n");
+  $self->dbc->do($sql);
+
+}
+
+
 ##################################
 #
 # subclass override methods
