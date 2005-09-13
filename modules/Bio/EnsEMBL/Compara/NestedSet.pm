@@ -162,24 +162,6 @@ sub store_child {
         "Use add_child, build in memory and store in one go\n") 
 }
 
-=head2 remove_child
-
-  Overview   : unlink and release child from self if its mine
-               might cause child to delete if refcount reaches Zero.
-  Arg [1]    : $child Bio::EnsEMBL::Compara::NestedSet instance
-  Example    : $self->remove_child($child);
-  Returntype : undef
-  Caller     : general
-
-=cut
-
-sub remove_child {
-  my ($self, $child) = @_;
-  $self->unlink_neighbor($child);
-  $child->_set_parent_link(undef);
-  return undef;
-}
-
 
 =head2 disavow_parent
 
