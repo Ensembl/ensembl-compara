@@ -113,7 +113,8 @@ sub copy_graph {
 
 sub node_id {
   my $self = shift;
-  return $self->{'_node_id'} = shift if(@_);
+  $self->{'_node_id'} = shift if(@_);
+  return $self->obj_id unless(defined($self->{'_node_id'}));
   return $self->{'_node_id'};
 }
 
