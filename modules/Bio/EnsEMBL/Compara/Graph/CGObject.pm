@@ -97,8 +97,6 @@ sub copy {
   
   my $mycopy = new Bio::EnsEMBL::Compara::Graph::CGObject;
 
-  #$mycopy->obj_id($self->obj_id);
-  #$mycopy->adaptor($self->adaptor);
   if($self->{'_tags'}) {
     %{$mycopy->{'_tags'}} = %{$self->{'_tags'}};
   }
@@ -145,12 +143,10 @@ sub refcount {
 
 =head2 obj_id
 
-  Arg [1]    : (opt.) <string/integer> id
   Example    : my $nsetID = $object->obj_id();
-  Example    : $object->dbID(12);
-  Description: Getter/Setter for a unique obj_id of this object.  
+  Description: Getter for a unique obj_id of this object.  
                Will set to a UUID if called on uninitialized object 
-  Returntype : <string/integer> id
+  Returntype : <string> uuid
   Exceptions : none
   Caller     : general
 
@@ -158,7 +154,6 @@ sub refcount {
 
 sub obj_id {
   my $self = shift;
-  $self->{'_cgobject_dbID'} = shift if(@_);
   unless(defined($self->{'_cgobject_dbID'})) {
     $self->{'_cgobject_dbID'} = Data::UUID->new->create_str();
   }
