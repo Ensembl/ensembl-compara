@@ -19,10 +19,37 @@ if( $webpage->has_a_problem() ) {
   $webpage->render_error_page( $webpage->problem->[0] );
 } else {
   my $object = $webpage->dataObjects->[0];
-  foreach my $object( @{$webpage->dataObjects} ) {
-    $webpage->configure( $object, 'newsview', 'context_menu');
+
+  # is this a db search query from Multi to an individual species?
+  my $species_id = $object->param('species_id');
+  my $curr_spp = $object->current_spp;
+
+  # if so, redirect to the species directory before generating the data
+  if ($object->species eq 'Multi' && $species_id && !$object->param('error'))  {
+    my $spp = $object->valid_spp;
+    my $sp_dir = $$spp{$species_id};
+    my $URL;
+    if ($sp_dir) {
+        # species is still configured in Ensembl
+        if ($$curr_spp{$species_id}) {
+            $URL = "/$sp_dir/newsview?release_id=".$object->param('release_id').";species_id=$species_id;news_cat_id=".$object->param('news_cat_id').";submit=Go";
+        }
+        # discontinued species
+        else {
+            $URL = "/Multi/newsview?release_id=".$object->param('release_id').";species_id=$species_id;news_cat_id=".$object->param('news_cat_id').";submit=Go";
+        }
+    }
+    else {
+        $URL = "/Multi/newsview?error=not_present;release_id=".$object->param('release_id').";species_id=$species_id";
+    }
+    $webpage->redirect($URL);
   }
-  $webpage->render();
+  else {
+    foreach my $object( @{$webpage->dataObjects} ) {
+        $webpage->configure( $object, 'newsview', 'context_menu');
+    }
+    $webpage->render();
+  }
 }
 
 
