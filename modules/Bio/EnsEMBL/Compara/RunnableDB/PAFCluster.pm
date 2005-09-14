@@ -138,7 +138,7 @@ sub write_output {
   # modify input_job so that it now contains the clusterset_id
   my $outputHash = {};
   $outputHash = eval($self->input_id) if(defined($self->input_id));
-  $outputHash{'clusterset_id'} = $self->{'clusterset_id'};
+  $outputHash->{'clusterset_id'} = $self->{'clusterset_id'};
   my $output_id = $self->encode_hash($outputHash);  
   $self->input_job->input_id($output_id);
 
@@ -216,7 +216,7 @@ sub build_paf_clusters {
   }; #eval
   
   
-  $self->{'tree_root'}->release;
+  $self->{'tree_root'}->release_tree;
   $self->{'tree_root'} = undef;
 }
 
@@ -489,6 +489,11 @@ sub store_clusters {
   my $counter=1; 
   foreach my $cluster (@{$clusters}) {    
     $treeDBA->store($cluster);
+
+    #calc residue count total
+    my $leafcount = scalar(@{$cluster->get_all_leaves});
+    $cluster->store_tag('gene_count', $leafcount);
+
     if($counter++ % 200 == 0) { printf("%10d clusters stored\n", $counter); }
   }
   printf("  %1.3f secs to store clusters\n", (time()-$starttime));
