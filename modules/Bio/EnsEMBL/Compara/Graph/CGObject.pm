@@ -30,12 +30,6 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
-unless(eval "require Data::UUID") {
-  throw("Cpan module Data::UUID is not installed on this system\n". 
-        "Please install from http://www.cpan.org/modules/by-module/Data/Data-UUID-0.11.tar.gz\n".
-        "If there are problems building on 64bit machines, please install patch at\n".
-        "http://www.ebi.ac.uk/~jessica/Data_UUID_64bit_patch.html\n"); 
-}
 
 #################################################
 # Factory methods
@@ -144,8 +138,7 @@ sub refcount {
 =head2 obj_id
 
   Example    : my $nsetID = $object->obj_id();
-  Description: Getter for a unique obj_id of this object.  
-               Will set to a UUID if called on uninitialized object 
+  Description: returns the unique identifier of this object.  
   Returntype : <string> uuid
   Exceptions : none
   Caller     : general
@@ -154,10 +147,10 @@ sub refcount {
 
 sub obj_id {
   my $self = shift;
-  unless(defined($self->{'_cgobject_dbID'})) {
-    $self->{'_cgobject_dbID'} = Data::UUID->new->create_str();
+  unless(defined($self->{'_cgobject_id'})) {
+    $self->{'_cgobject_id'} = $self;
   }
-  return $self->{'_cgobject_dbID'};
+  return $self->{'_cgobject_id'};
 }
 
 
