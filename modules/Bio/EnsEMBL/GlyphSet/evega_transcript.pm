@@ -74,6 +74,24 @@ sub gene_href {
     qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega;gene=$gid);
 }
 
+my %legend_map = (
+  'protein_coding_KNOWN'    => 'Known gene',
+  'protein_coding_NOVEL'    => 'Novel CDS',
+  'unclassified_PUTATIVE'   => 'Putative',
+  'unclassified_NOVEL'   => 'Novel Trans' ,
+  'pseudogene_KNOWN'        => 'Pseudogene' ,
+  'pseudogene_NOVEL'        => 'Pseudogene' ,
+  'processed_pseudogene_KNOWN'  => 'Processed pseudogene' ,
+  'processed_pseudogene_NOVEL'  => 'Processed pseudogene' ,
+  'unprocessed_pseudogene_KNOWN'=> 'Unprocessed pseudogene' ,
+  'unprocessed_pseudogene_NOVEL'=> 'Unprocessed pseudogene' ,
+  'protein_coding_PREDICTED'    => 'Predicted gene' ,
+  'Ig_Segment_KNOWN'      => 'Immunoglobulin segment' ,
+  'Ig_Segment_NOVEL'      => 'Immunoglobulin segment' ,
+  'Ig_Pseudogene_segment_KNOWN' => 'Immunoglobulin pseudogene' ,
+  'Ig_Pseudogene_segment_NOVEL' => 'Immunoglobulin pseudogene'
+ );
+
 
 sub zmenu {
   my ($self, $gene, $transcript) = @_;
@@ -82,7 +100,8 @@ sub zmenu {
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
-  my $type = $transcript->type() || $gene->type();
+  my $tt = ( $transcript->biotype ? $transcript->biotype : $gene->biotype ) . '_'. $gene->confidence;
+  my $type = $legend_map{$tt} || $tt;
   $type =~ s/HUMACE-//g;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   
@@ -106,11 +125,12 @@ sub zmenu {
   return $zmenu;
 }
 
+
 sub gene_zmenu {
   my ($self, $gene ) = @_;
   my $gid = $gene->stable_id();
   my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
-  my $type = $gene->type();
+  my $type = $legend_map{ $gene->biotype.'_'.$gene->confidence } || $gene->type;
      $type =~ s/HUMACE-//g;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   my $zmenu = {
@@ -121,19 +141,6 @@ sub gene_zmenu {
   };
   return $zmenu;
 }
-
-my %legend_map = (
-  'protein_coding_KNOWN'    => 'Known gene',
-  'protein_coding_NOVEL'    => 'Novel CDS',
-  'unclassified_PUTATIVE'   => 'Putative',
-  'unclassified_PUTATIVE'   => 'Novel Trans' ,
-  'pseudogene_KNOWN'        => 'Pseudogenes' ,
-  'processed_pseudogene_KNOWN'  => 'Processed pseudogenes' ,
-  'unprocessed_pseudogene_KNOWN'=> 'Unprocessed pseudogenes' ,
-  'protein_coding_KNOWN'    => 'Predicted gene' ,
-  'Ig_Segment_KNOWN'      => 'Immunoglobulin segment' ,
-  'Ig_Pseudogene_segment_KNOWN' => 'Immunoglobulin pseudogene' ,
-  'Polymorphic'       => 'Polymorphic'  );
 
 sub text_label {
   my ($self, $gene, $transcript) = @_;
