@@ -14,6 +14,9 @@ use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::NCBITaxon;
+use Bio::EnsEMBL::Compara::Graph::Algorithms;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+
 use Switch;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
@@ -95,24 +98,30 @@ elsif ($self->{'newick_file'}) {
   parse_newick($self); 
 }
 
-if($self->{'parent'} and $self->{'tree'} and $self->{'tree'}->parent) {
-  $self->{'tree'} = $self->{'tree'}->parent;
-}
-
 # 
 # do tree stuff to it
 #
 if($self->{'tree'}) {
+  if($self->{'parent'} and $self->{'tree'}->parent) {
+    $self->{'tree'} = $self->{'tree'}->parent;
+  }
 
   $self->{'tree'}->retain;
+  $self->{'tree'}->disavow_parent;
   $self->{'tree'}->get_all_leaves;
   #printf("get_all_leaves gives %d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
   #$self->{'tree'}->flatten_tree;
-  
+    
   if($self->{'new_root_id'}) {
     reroot($self);
   }
+  
+  #test7($self);
+  balance_tree($self);
 
+  #
+  # display and statistics routines
+  #
   if($self->{'print_tree'}) {
     $self->{'tree'}->print_tree($self->{'scale'});
     printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
@@ -251,7 +260,8 @@ sub parse_newick {
   while(<FH>) {
     $newick .= $_;
   }
-  $self->{'tree'} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->parse_newick_into_tree($newick);
+  printf("newick string: $newick\n");
+  $self->{'tree'} = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
 }
 
 
@@ -431,6 +441,32 @@ sub print_cluster_counts
     );
 }
 
+
+sub balance_tree
+{
+  my $self = shift;
+  
+  $self->{'tree'}->print_tree($self->{'scale'});
+  
+  my $node = new Bio::EnsEMBL::Compara::NestedSet;
+  $node->merge_children($self->{'tree'});
+
+  my ($link) = @{$node->links};
+  $link->print_link;
+  
+  $link = Bio::EnsEMBL::Compara::Graph::Algorithms::find_balanced_link($link);
+  my $root = Bio::EnsEMBL::Compara::Graph::Algorithms::root_tree_on_link($link);
+
+  $root->print_tree($self->{'scale'});
+  bless $node, "Bio::EnsEMBL::Compara::Graph::Node";
+  $node->minimize_node;
+  Bio::EnsEMBL::Compara::Graph::Algorithms::parent_graph($root);
+  $root->print_tree($self->{'scale'});
+  
+  $self->{'tree'}->merge_children($root);
+  $node->minimize_node;
+  $root->release;
+}
 
 
 ##################################################
@@ -866,3 +902,18 @@ sub taxon_ordered_newick {
   return $newick;
 }
 
+
+sub test7
+{
+  my $self = shift;
+  
+  my $tree = $self->{'tree'};
+  $tree->print_tree;
+  my $node = $tree->find_node_by_name('3');
+  $node->print_node;
+  $node->disavow_parent;
+  $tree->print_tree;
+  
+  $tree->minimize_tree;
+  $tree->print_tree;
+}
