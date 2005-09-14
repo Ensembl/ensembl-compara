@@ -202,7 +202,7 @@ sub show_news {
     }
 
     # separate data news into species and generic
-    if ($sp_dir eq 'Multi' && $news_cat_id == 2 && $prev_cat == 0) {
+    if ($sp_dir eq 'Multi' && $news_cat_id == 2 && $prev_cat == 0 && $sp_count == 1 ) {
         if ($ul_open) {
             $html .= "</ul>\n\n";
             $ul_open = 0;
