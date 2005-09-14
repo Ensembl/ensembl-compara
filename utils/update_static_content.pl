@@ -107,7 +107,7 @@ my $SD = EnsEMBL::Web::SpeciesDefs->new;
 
 our $VERBOSITY = 1;
 our $site_type = "main";
-our $FIRST_ARCHIVE = 26;   # Release number for oldest archive site
+our $FIRST_ARCHIVE = 25;   # Release number for oldest archive site
 
 my @species;
 my @UPDATES;
@@ -634,7 +634,7 @@ sub assembly_table {
 
   foreach my $data ( @{$wa->fetch_releases()} ) {
     my $release_id = $data->{release_id};
-    last if $release_id == 25;
+    last if $release_id == ($FIRST_ARCHIVE - 1 );
    (my $link = $data->{short_date}) =~ s/\s+//;
 
     $header_row .=qq(<th><a href="http://$link.archive.ensembl.org">$data->{short_date}</a><br />v$release_id</th>);
