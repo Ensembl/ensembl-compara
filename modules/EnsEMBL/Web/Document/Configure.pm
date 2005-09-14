@@ -33,7 +33,7 @@ sub common_menu_items {
     );
   }
   $doc->menu->add_entry( 'whattodo',
-    'href'=>"javascript:void(window.open('/$species_d/helpview?se=1;kw=upload','helpview','width=700,height=550,resizable,scrollbars'))",
+    'href'=>"/info/data/external_data/index.html",
     'text'=>'Upload your own data'
   );
   $doc->menu->add_entry(
