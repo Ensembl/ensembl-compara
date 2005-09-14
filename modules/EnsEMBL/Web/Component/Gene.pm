@@ -181,11 +181,11 @@ sub location {
       my ($altchr, $altstart, $altend, $altseqregion) = @$loc;
       $html .= sprintf( qq(
         <li>
-          <a href="/%s/contigview?l=%s:%s-%s">%s %s-%s</a>
+          <a href="/%s/contigview?l=%s:%s-%s">%s : %s-%s</a>
         </li>), $object->species, $altchr, $altstart, $altend, $altchr,
-                EnsEMBL::Web::Root::thousandify( $altstart ),
-                EnsEMBL::Web::Root::thousandify( $altend ) );
-    }
+             $object->thousandify( $altstart ),
+             $object->thousandify( $altend ));
+  }
     $html .= "\n    </ul>";
   }
   $panel->add_row( $label, $html );
