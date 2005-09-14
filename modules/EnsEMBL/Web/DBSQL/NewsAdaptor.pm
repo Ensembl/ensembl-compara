@@ -68,7 +68,8 @@ sub fetch_items {
     my %order_hash = (
         'default'=>'n.priority DESC',
         'cat_desc'=>'c.priority DESC, n.priority DESC',
-        'species'=>'i.species_id ASC'
+        'species'=>'i.species_id ASC',
+        'release'=>'n.release_id DESC'
         );
 
     # add selected options to modifier strings
@@ -108,12 +109,12 @@ sub fetch_items {
                 news_cat c
     );
     if ($criteria{'species'} || $order_by_sp) {
+        
         $sql .= ', item_species i ';
     }
     $sql .= " $crit_str $group_str $order_str";
     my $T = $self->db->selectall_arrayref($sql, {});
     return [] unless $T;
-
     for (my $i=0; $i<scalar(@$T);$i++) {
         my @A = @{$T->[$i]};
         my $species = [];
@@ -252,7 +253,7 @@ sub fetch_species {
     return {} unless $self->db;
 
     my $sql;
-    if ($release_id) {
+    if ($release_id && $release_id ne 'all') {
         $sql = qq(
             SELECT
                 s.species_id    as species_id,
@@ -396,10 +397,14 @@ sub add_news_item {
     my $id = $A[0];
 
     # don't forget species cross-referencing!
-    foreach my $sp (@$species) {
-        $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($id, $sp) ";
-        $sth = $self->db->prepare($sql);
-        $result = $sth->execute();
+    if (scalar(@$species)) {
+        foreach my $sp (@$species) {
+            next unless $sp > 0;
+            $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($id, $sp) ";
+            print $sql;
+            $sth = $self->db->prepare($sql);
+            $result = $sth->execute();
+        }
     }
 }
 

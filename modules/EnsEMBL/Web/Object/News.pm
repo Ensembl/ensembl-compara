@@ -18,6 +18,7 @@ sub releases   { return $_[0]->Obj->{'releases'};   }
 sub all_cats   { return $_[0]->Obj->{'all_cats'};   }
 sub all_spp   { return $_[0]->Obj->{'all_spp'};   }
 sub valid_spp   { return $_[0]->Obj->{'valid_spp'};   }
+sub current_spp   { return $_[0]->Obj->{'current_spp'};   }
 sub valid_rels   { return $_[0]->Obj->{'valid_rels'};   }
 
 
@@ -28,11 +29,9 @@ sub save_to_db {
     my $result;
 
     if ($item{'news_item_id'}) { # saving updates to an existing item
-warn "Updating database!";
         $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->update_news_item($itemref);
     }
     else { # inserting a new item into database
-warn "Inserting record into database!";
         $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->add_news_item($itemref);
     }
     return $result;

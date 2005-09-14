@@ -26,15 +26,18 @@ sub createObjects {
   my $items    = [];
   my $all_spp = {};
   my $valid_spp = {};
+  my $current_spp = {};
   my $all_cats = [];
   my $all_rels = [];
   my $valid_rels = [];
 
-  my $release_id       = $self->param( 'rel' ) || $self->param('release_id') || $self->species_defs->ENSEMBL_VERSION;
-warn "Release $release_id";
+  my $current_release =  $self->species_defs->ENSEMBL_VERSION;
+  my $release_id       = $self->param( 'rel' ) || $self->param('release_id') || $current_release;
+
   my $id            = $self->param( 'id' ) || $self->param('news_item_id');
 
   # object always contains these handy lookups!
+  $current_spp = $self->news_adaptor->fetch_species($current_release);
   $all_spp = $self->news_adaptor->fetch_species;
   $all_cats = $self->news_adaptor->fetch_cats;
   $all_rels = $self->news_adaptor->fetch_releases;
@@ -77,8 +80,13 @@ warn "Release $release_id";
     if ($id && $self->param('action') ne 'saved') { # check we're not redirecting from a database save
         %criteria = ('item_id'=>$id);    
     }
-    else { 
-        $criteria{'release'} = $release_id;    
+    else {
+        if ($release_id eq 'all') {
+            @order_by = ('release', 'cat_desc');
+        }
+        else { 
+            $criteria{'release'} = $release_id;
+        }    
         if (scalar(@sp_array) == 1 && $sp_array[0]) {
             $criteria{'species'} = $sp_array[0];    
             # get valid releases for the chosen species
@@ -87,7 +95,9 @@ warn "Release $release_id";
         else {
             # in multi-species mode, all releases are valid
             $valid_rels = $self->news_adaptor->fetch_releases;
-            push @order_by, 'species';
+            if ($self->script ne 'newsdbview') {
+                push @order_by, 'species';
+            }
         }
         if ($self->param('news_cat_id')) {
             $criteria{'category'} = $self->param('news_cat_id');    
@@ -102,10 +112,11 @@ warn "Release $release_id";
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'News', {
       'releases'    => $all_rels,
-      'valid_rels' => $valid_rels,
+      'valid_rels'  => $valid_rels,
       'all_spp'     => $all_spp,
-      'valid_spp'     => $valid_spp,
-      'all_cats'     => $all_cats,
+      'valid_spp'   => $valid_spp,
+      'current_spp' => $current_spp,
+      'all_cats'    => $all_cats,
       'items'       => $items,
     }, $self->__data
   ) ); 

@@ -15,13 +15,19 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub newsview {
   my $self   = shift;
-
+warn "Parameter ".$self->{object}->param('error');
   if (my $panel = $self->new_panel ('Image',
         'code'    => "info$self->{flag}",
         'object'  => $self->{object}) 
     ) {
     # this is a two-step view, so we need 2 separate sections
-    if ($self->{'object'}->param('submit') || $self->{'object'}->param('rel')) {
+    if ($self->{object}->param('error') eq 'not_present') {
+        $panel->{'caption'} = 'Not Present';
+        $panel->add_components(qw(
+                no_data     EnsEMBL::Web::Component::News::no_data
+            ));
+    }
+    elsif ($self->{'object'}->param('submit') || $self->{'object'}->param('rel')) {
         # Step 2 - user has chosen a data range
         $panel->add_components(qw(show_news EnsEMBL::Web::Component::News::show_news));
     }
@@ -38,7 +44,13 @@ sub newsview {
 #-----------------------------------------------------------------------
 
 sub context_menu {
+    my $self = shift;
+    my $species  = $self->{object}->species;
+    my $flag     = "";
+    $self->{page}->menu->add_block( $flag, 'bulleted', "News Archive" );
 
+    $self->{page}->menu->add_entry( $flag, 'text' => "Select news to view",
+                                  'href' => "/$species/newsview" );
 }
 
 #-----------------------------------------------------------------------
@@ -69,7 +81,7 @@ sub newsdbview {
             ));
             $self->add_form( $panel, qw(edit_item     EnsEMBL::Web::Component::News::edit_item_form) );
         }
-        elsif ($self->{object}->param('submit') eq 'Next') { 
+        elsif ($self->{object}->param('step2') && $self->{object}->param('action') ne 'add') { 
             $panel->{'caption'} = 'Edit a News article';    
             $panel->add_components(qw(
                 select_item_only     EnsEMBL::Web::Component::News::select_item_only
