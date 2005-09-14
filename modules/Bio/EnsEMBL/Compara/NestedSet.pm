@@ -272,7 +272,7 @@ sub root {
   my $self = shift;
 
   return $self unless(defined($self->parent));
-  return $self if($self->node_id eq $self->parent->node_id);
+ #  return $self if($self->node_id eq $self->parent->node_id);
   return $self->parent->root;
 }
 
@@ -344,7 +344,7 @@ sub get_all_subnodes {
   }
 
   foreach my $child (@{$self->children}) {
-    $node_hash->{$child->node_id} = $child; 
+    $node_hash->{$child->obj_id} = $child; 
     $child->get_all_subnodes($node_hash);
   }
   return values(%$node_hash) if($toplevel);
@@ -423,7 +423,7 @@ sub distance_to_ancestor {
   my $self = shift;
   my $ancestor = shift;
 
-  if ($ancestor->node_id == $self->node_id) {
+  if ($ancestor->node_id eq $self->node_id) {
     return 0;
   }
   unless (defined $self->parent) {
@@ -792,7 +792,7 @@ sub _recursive_get_all_leaves {
   my $self = shift;
   my $leaves = shift;
     
-  $leaves->{$self->node_id} = $self if($self->is_leaf);
+  $leaves->{$self->obj_id} = $self if($self->is_leaf);
 
   foreach my $child (@{$self->children}) {
     $child->_recursive_get_all_leaves($leaves);
