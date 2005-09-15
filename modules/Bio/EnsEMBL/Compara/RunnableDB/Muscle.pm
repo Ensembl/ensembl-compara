@@ -146,7 +146,7 @@ sub write_output {
   } elsif($self->{'protein_tree'}) {
     $self->parse_and_store_alignment_into_proteintree;
     #done so release the tree
-    $self->{'protein_tree'}->release;
+    $self->{'protein_tree'}->release_tree;
   } else {
     throw("undefined family as input\n");
   }
@@ -422,12 +422,14 @@ sub dumpProteinTreeToWorkdir
     or $self->throw("Error opening $fastafile for write");
 
   my $seq_id_hash = {};
+  my $residues = 0;
   my $member_list = $tree->get_all_leaves;  
   foreach my $member (@{$member_list}) {
     next if($seq_id_hash->{$member->sequence_id});
     $seq_id_hash->{$member->sequence_id} = 1;
     
     my $seq = $member->sequence;
+    $residues += $member->seq_length;
     $seq =~ s/(.{72})/$1\n/g;
     chomp $seq;
 
@@ -439,6 +441,8 @@ sub dumpProteinTreeToWorkdir
     $self->update_single_peptide_tree($tree);
     return undef; #so muscle isn't run
   }
+
+  $tree->store_tag('cluster_residue_count', $residues);
 
   return $fastafile;
 }
