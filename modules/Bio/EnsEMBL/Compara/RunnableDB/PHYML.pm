@@ -60,7 +60,6 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Graph::Algorithms;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use Bio::SimpleAlign;
