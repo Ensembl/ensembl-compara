@@ -68,9 +68,13 @@ GetOptions('help'             => \$help,
            'list'             => \$self->{'print_leaves'},
            'analyze'          => \$self->{'analyze'},
            'draw'             => \$self->{'drawtree'},
+           'balance'          => \$self->{'balance_tree'},
+           'chop'             => \$self->{'chop_tree'},
           );
 
 if ($help) { usage(); }
+
+#test7($self);
 
 if($url) {
   $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
@@ -117,7 +121,13 @@ if($self->{'tree'}) {
   }
   
   #test7($self);
-  balance_tree($self);
+  if($self->{'balance_tree'}) {
+    balance_tree($self);
+  }
+  
+  if($self->{'chop_tree'}) {
+    Bio::EnsEMBL::Compara::Graph::Algorithms::chop_tree($self->{'tree'});
+  }
 
   #
   # display and statistics routines
@@ -247,7 +257,10 @@ sub fetch_protein_tree_with_gene {
                        fetch_AlignedMember_by_member_id_root_id(
                           $member->get_longest_peptide_Member->member_id,
                           $self->{'clusterset_id'});
-  $self->{'tree'} = $aligned_member->root;
+  my $node = $aligned_member->subroot;
+  
+  $self->{'tree'} = $treeDBA->fetch_node_by_node_id($node->node_id);
+  $node->release_tree;  
 }
 
 
@@ -428,6 +441,13 @@ sub print_cluster_counts
   my $proteins = $tree->get_all_leaves;
   my $count = 0;
   foreach my $member (@$proteins) {
+    if(!($member->isa("Bio::EnsEMBL::Compara::Member"))) {
+      printf("FOUND NOT MEMBER LEAF\n");
+      $member->print_node;
+      $member->print_tree;
+      $member->parent->print_tree;
+      next;
+    }
     $count += $member->seq_length;
   }
 
@@ -439,33 +459,6 @@ sub print_cluster_counts
     scalar(@$proteins),
     $count, $phyml_msec
     );
-}
-
-
-sub balance_tree
-{
-  my $self = shift;
-  
-  $self->{'tree'}->print_tree($self->{'scale'});
-  
-  my $node = new Bio::EnsEMBL::Compara::NestedSet;
-  $node->merge_children($self->{'tree'});
-
-  my ($link) = @{$node->links};
-  $link->print_link;
-  
-  $link = Bio::EnsEMBL::Compara::Graph::Algorithms::find_balanced_link($link);
-  my $root = Bio::EnsEMBL::Compara::Graph::Algorithms::root_tree_on_link($link);
-
-  $root->print_tree($self->{'scale'});
-  bless $node, "Bio::EnsEMBL::Compara::Graph::Node";
-  $node->minimize_node;
-  Bio::EnsEMBL::Compara::Graph::Algorithms::parent_graph($root);
-  $root->print_tree($self->{'scale'});
-  
-  $self->{'tree'}->merge_children($root);
-  $node->minimize_node;
-  $root->release;
 }
 
 
@@ -903,11 +896,51 @@ sub taxon_ordered_newick {
 }
 
 
+#################################################
+#
+# tree manipulation algorithms
+#
+#################################################
+
+
+sub balance_tree
+{
+  my $self = shift;
+  
+  #$self->{'tree'}->print_tree($self->{'scale'});
+  
+  my $node = new Bio::EnsEMBL::Compara::NestedSet;
+  $node->merge_children($self->{'tree'});
+  $node->node_id($self->{'tree'}->node_id);
+  
+  # get a link
+  my ($link) = @{$node->links};  
+  $link = Bio::EnsEMBL::Compara::Graph::Algorithms::find_balanced_link($link);
+  print("balanced link is\n    ");
+  $link->print_link;
+  my $root = Bio::EnsEMBL::Compara::Graph::Algorithms::root_tree_on_link($link);
+  #$root->print_tree($self->{'scale'});
+
+  #remove old root if it has become a redundant internal node
+  $node->minimize_node;
+  #$root->print_tree($self->{'scale'});
+  
+  #move tree back to original root node  
+  $self->{'tree'}->merge_children($root);
+  $root->release;
+}
+
+
 sub test7
 {
   my $self = shift;
   
-  my $tree = $self->{'tree'};
+  my $newick ="((1:0.110302,(3:0.104867,2:0.078911):0.265676):0.019461, 14:0.205267);";
+  printf("newick string: $newick\n");
+  my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  print "tree_string1: ",$tree->newick_simple_format,"\n";
+  $tree->print_tree;
+
   $tree->print_tree;
   my $node = $tree->find_node_by_name('3');
   $node->print_node;
@@ -916,4 +949,36 @@ sub test7
   
   $tree->minimize_tree;
   $tree->print_tree;
+  
+  $tree->release_tree;
+  exit(1);
 }
+
+
+
+sub chop_tree
+{
+  my $self = shift;
+  
+  $self->{'tree'}->print_tree($self->{'scale'});
+  
+  my $node = new Bio::EnsEMBL::Compara::NestedSet;
+  $node->merge_children($self->{'tree'});
+
+  my ($link) = @{$node->links};
+  $link->print_link;
+  
+  $link = Bio::EnsEMBL::Compara::Graph::Algorithms::find_balanced_link($link);
+  my $root = Bio::EnsEMBL::Compara::Graph::Algorithms::root_tree_on_link($link);
+
+  $root->print_tree($self->{'scale'});
+  bless $node, "Bio::EnsEMBL::Compara::Graph::Node";
+  $node->minimize_node;
+  Bio::EnsEMBL::Compara::Graph::Algorithms::parent_graph($root);
+  $root->print_tree($self->{'scale'});
+  
+  $self->{'tree'}->merge_children($root);
+  $node->minimize_node;
+  $root->release;
+}
+
