@@ -79,6 +79,7 @@ sub new {
     'superhi'    => 'highlight2',
     map { $_ => [ $core{$_}[0], "Flybase predicted genes (@{[$core{$_}[1]]})" ] } keys %core
   );
+  #currently has both old and new definitions of vega genes
   $self->colourSet( 'vega_gene',
     'hi'                    => 'highlight1',
     'superhi'               => 'highlight2',
@@ -100,7 +101,21 @@ sub new {
     'Ig_pseudogene_segment_NOVEL' => [ 'mediumpurple4', 'Ig pseudogene' ],
     'protein_coding_PREDICTED'        => [ 'steelblue4', 'Predicted gene'] ,
     'Transposon'            => [ 'steelblue', 'Transposon'] ,
-    'Polymorphic'           => [ 'blue4', 'Polymorhic' ]
+    'Polymorphic'           => [ 'blue4', 'Polymorhic' ],
+    'Novel_CDS'  => [ 'blue', 'Curated novel CDS' ],
+    'Novel_CDS_in_progress' => [ 'cornflowerblue', 'Curated novel CDS (in progress)'],
+    'Putative' => [ 'lightslateblue', 'Curated putative' ],
+    'Known'  => [ 'dodgerblue4', 'Curated known gene' ],
+    'Known_in_progress'     => [ 'lightskyblue4', 'Curated known gene (in progress)'],
+    'Pseudogene'      => [ 'grey70', 'Curated pseudogene' ],
+    'Processed_pseudogene'  => [ 'grey38', 'Curated processed pseudogene' ],
+    'Unprocessed_pseudogene'=> [ 'grey27', 'Curated unprocessed pseudogene' ],
+    'Novel_Transcript'    => [ 'skyblue3', 'Curated novel transcript' ],
+    'Ig_Segment'            => [ 'midnightblue', 'Curated Ig segment' ],
+    'Ig_Pseudogene_Segment' => [ 'mediumpurple4', 'Curated Ig pseudogene' ],
+    'Predicted_Gene'        => [ 'steelblue4', 'Curated predicted gene'] ,
+    'Transposon'            => [ 'steelblue', 'Curated transposon'] ,
+    'Polymorphic'           => [ 'blue4', 'Curated Polymorhic' ]
   );
   $self->colourSet( 'rna_gene',
     'hi'         => 'highlight1',
