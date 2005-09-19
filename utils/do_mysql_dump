@@ -1,0 +1,476 @@
+#!/usr/local/bin/perl
+
+=head1 NAME
+
+do_mysql_dump - Dump Ensembl databases to flatfiles
+
+=head1 SYNOPSIS
+
+do_mysql_dump [options]
+
+Options:
+  --help, --info, --species, --database, --verbose, --logfile --dumpdir
+  --no_data  --no_zip
+
+=head1 OPTIONS
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<-v,--verbose>
+  Prints verbose debug output to stdout or logfile.
+
+B<--species>
+  One or more species to dump.
+
+B<--database>
+  One or more databases to dump (ENSEMBL_DB, ENSEMBL_EST etc)
+  All DBs in config (not in kill list) will be dumped if omitted.
+
+B<--dumpdir>
+  Specifies directory to dump into (default /mysql/dumps/FTP). 
+  The directory must be the full path (i.e. start with "/")
+
+B<--logfile>
+  Specifies a log file to output to (default STDOUT)
+
+B<--no_data>
+   Only dump the sql files.  No data
+
+B<--no_zip>
+   Default is to gzip all files.  This options turns it off.
+
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Dumps Ensembl databases to flatfiles.  
+
+Maintained by Ensembl web team <webmaster@ensembl.org>
+
+=cut
+
+use strict;
+use warnings;
+
+package do_mysql_dump;
+
+use FindBin qw($Bin);
+use Cwd;
+use File::Basename;
+use Time::localtime;
+use Getopt::Long;
+use Pod::Usage;
+use DBI;
+
+# --- load libraries needed for reading config ---
+use vars qw( $SERVERROOT );
+BEGIN{
+  $SERVERROOT = dirname( $Bin );
+  unshift @INC, "$SERVERROOT/conf";
+  unshift @INC, "$SERVERROOT";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+}
+
+use utils::Tool;
+
+my $dumpdir ;
+our $VERBOSITY ;
+our $MYSQL_BIN = "/mysqld/current/bin";   # this should be a cluster-wide CDSL
+
+my $logfile;
+my ($help,$info);
+my @SPECIES ;
+my @DATABASES ;
+my $no_data;
+my $no_zip;
+
+&GetOptions(
+	    'species:s'      => \@SPECIES,
+	    'database:s'     => \@DATABASES,
+	    'verbose|v:s'    => \$VERBOSITY,			
+	    'logfile:s'      => \$logfile,
+	    'dumpdir:s'      => \$dumpdir,
+	    'help'           => \$help,
+	    'info'           => \$info,
+	    'no_data'        => \$no_data,
+	    'no_zip'        => \$no_zip,
+	   ) || pod2usage(2); ;
+
+pod2usage(-verbose => 2) if $info;
+pod2usage(1) if $help;
+exit(0) if ($help) ;
+my $time1 = time;
+
+defined($VERBOSITY) or $VERBOSITY = 1;
+if ($logfile){
+  open(STDERR, "> $logfile") || die "Can't create file:$!\n";
+}
+
+
+
+# Sort out dumpdir ----------------------------------------------------------
+$dumpdir ||= "/mysql/dumps/FTP";  #should be cluster CDSL "/mysqld/current/var"
+
+info(1, "Dumping data to $dumpdir" );
+if( $dumpdir !~/^\// ){
+  pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
+}
+elsif( ! -e $dumpdir ){
+  info(1, "$dumpdir does not exist, creating" );
+  system("mkdir -p $dumpdir") == 0 or
+    pod2usage( "Cannot create $dumpdir: $!" );
+}
+elsif( ! -d $dumpdir ){ pod2usage("[*DIE] $dumpdir is not a directory" ) }
+elsif( ! -w $dumpdir ){ pod2usage("[*DIE] $dumpdir is not writable" ) }
+
+
+# Load modules needed for reading config -------------------------------------
+info(1, "Using config in $SERVERROOT/conf" );
+tie *STDERR, __PACKAGE__;
+require EnsEMBL::Web::SpeciesDefs; 
+my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+untie *STDERR;
+$species_defs || pod2usage("$0: SpeciesDefs config not found");
+
+
+# Web user db conf -----------------------------------------------------------
+my %web_userdb = (
+	   USER => $species_defs->ENSEMBL_USERDB_USER,
+	   PASS => $species_defs->ENSEMBL_USERDB_PASS,
+	   HOST => $species_defs->ENSEMBL_USERDB_HOST,
+	   PORT => $species_defs->ENSEMBL_USERDB_PORT,
+	   NAME => $species_defs->ENSEMBL_USERDB_NAME,
+	   DRIVER => 'mysql',
+	  );
+
+
+
+# Check species -------------------------------------------------------------
+if (@SPECIES) {
+  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
+}
+else {  
+  @SPECIES = @{ utils::Tool::all_species()};
+}
+
+
+# Sort out data to dump for each species --------------------------------------
+my %DATA_TO_DUMP;
+foreach my $sp( @SPECIES ){
+  my $write_user = $species_defs->get_config($sp, 'ENSEMBL_WRITE_USER');
+  my $write_pass = $species_defs->get_config($sp, 'ENSEMBL_WRITE_PASS');
+
+  my %all_db_info = %{ $species_defs->get_config($sp,'databases')||{}};
+  my @all_db_names = grep{ $all_db_info{$_} } keys %all_db_info;
+  my @dbs = @DATABASES;  # Do all db if user hasn't defined any
+  if( ! @dbs ){ 
+    @dbs = @all_db_names;
+    push (@dbs, 'ensembl_web_user_db') if $sp eq 'Multi';
+  }
+
+  my %databases;
+  foreach my $db( @dbs ){
+    next if $db eq "ENSEMBL_HELP" && $sp ne "Multi"; # HACK cos it dumps help
+
+    if ($db eq 'ensembl_web_user_db') {
+      next unless $sp eq 'Multi';
+      $all_db_info{$db} = {%web_userdb} if $sp eq 'Multi';
+    }
+
+    if( ! $all_db_info{$db} ){
+      warning( 1, "DB $db is not valid for $sp" );
+      next;
+    }
+    my %db_meta = %{$all_db_info{$db}};
+    if( ! $db_meta{NAME} ){
+      warning( 1, "DB $db has no NAME, skipping" );
+      next;
+    }
+    # Hard-code all databases _never_ to dump
+    my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST
+				    ENSEMBL_BLAST_LOG
+				    ENSEMBL_FASTA
+				    ENSEMBL_GLOVAR );
+    if( $kill_list{$db} ){
+      info( 1, "Skipping $db (kill list)" );
+      next;
+    }
+    $write_user and $db_meta{USER} = $write_user;
+    $write_pass and $db_meta{PASS} = $write_pass;
+
+    info( 1, "Adding to $sp, $db" );
+    info( 2, "($db_meta{USER}:$db_meta{PASS}\@".
+	  "$db_meta{HOST}:$db_meta{PORT}/$db_meta{NAME})" );
+    $databases{$db} = {%db_meta};
+  }
+
+  if( ! scalar( %databases ) ){
+    warning( 1, "No valid DBs found for $sp; select from:\n ".
+	     join( "\n       ", sort keys %all_db_info ) );
+    next;
+  }
+  #  warn Data::Dumper::Dumper(%databases);
+  info( 1, "Valid databases found for $sp" );
+  $DATA_TO_DUMP{$sp} = {%databases};
+}
+
+if( ! scalar( %DATA_TO_DUMP ) ){
+  pod2usage("[*DIE] No valid species+DB found; select from:\n       ".
+	    join ("\n", @{ utils::Tool::all_species()} ));
+}
+
+
+
+# Dump the data in DATA_TO_DUMP -----------------------------------------------
+foreach my $sp( sort keys %DATA_TO_DUMP ){
+ # warn Data::Dumper::Dumper(%DATA_TO_DUMP);
+  info( 1, "Starting dumps for $sp" );
+
+  # Work out dumpdir ---------------------------------------------------------
+  my $sp_dir =$species_defs->get_config($sp,"ENSEMBL_FTP_BASEDIR") || $sp;
+  my @sp_dumpdirs  = "$dumpdir/$sp_dir/data/mysql";
+  my $version;
+
+ if ($sp eq 'Multi') {
+     ($version = $sp_dir )=~ s/.*-(\d+)/$1/;
+     push (@sp_dumpdirs, "$dumpdir/mart-$version/data/mysql") if $DATA_TO_DUMP{Multi}{ENSEMBL_MART_ENSEMBL};
+   }
+
+  foreach my $sp_dumpdir (@sp_dumpdirs) {
+    if( ! -e $sp_dumpdir ){
+      info(1, "Creating $sp_dumpdir" );
+      system("mkdir -p $sp_dumpdir") == 0 or
+	( warning( 1, "Cannot create $sp_dumpdir: $!" ) && next );
+    }
+    if( ! -d $sp_dumpdir ){ 
+      warning("$sp_dumpdir is not a directory" ) && next;
+    }
+    if( ! -w $sp_dumpdir ){ 
+      warning("$sp_dumpdir is not writable" ) && next;
+    }
+  }
+
+  # Dump data ----------------------------------------------------------------
+  my %databases = %{$DATA_TO_DUMP{$sp}};
+  foreach my $db( keys %databases ){
+    my %db_meta = %{$databases{$db}};
+    my $db_name = $db_meta{NAME};
+    my $sp_dumpdir = $db=~ /ENSEMBL_MART_/ ? $sp_dumpdirs[1] : $sp_dumpdirs[0];
+    my $db_dumpdir = "$sp_dumpdir/$db_name";
+
+    if ($db_name =~ /ensembl_help/) {
+      $version =~ s/\./_/;
+      $db_dumpdir = "$sp_dumpdir/ensembl_help"."_$version";
+    }
+    elsif ($db_name eq 'ensembl_web_user_db') {
+      $version =~ s/\./_/;
+      $db_dumpdir = "$sp_dumpdir/$db_name"."_$version";
+    }
+    if( ! -e $db_dumpdir ){
+      info(1, "Creating $db_dumpdir" );
+      system("mkdir -p $db_dumpdir") == 0 or
+	( warning( 1, "Cannot create $db_dumpdir: $!" ) && next );
+    }
+     else{
+       info( 1, "Cleaning $db_dumpdir" );
+       system("rm -Rf $db_dumpdir/*.gz");
+       system("rm -Rf $db_dumpdir/*.txt");
+       system("rm -Rf $db_dumpdir/*.sql");
+     }
+    if( ! -d $db_dumpdir ){ 
+      warning("$db_dumpdir is not a directory" ) && next;
+    }
+    if( ! -w $db_dumpdir ){ 
+      warning("$db_dumpdir is not writable" ) && next;
+    }
+    system("chmod 777 $db_dumpdir");
+
+
+
+  info( 1, "Dumping $db ($db_name)..." );
+    $db_meta{dumpdir} = $db_dumpdir;
+    $db_meta{NODATA} = " --nodata" if $db_name eq 'ensembl_web_user_db' or  $no_data;
+    dump_mysql(\%db_meta, $no_zip);
+
+    if ($db_name =~ /ensembl_help/) {
+      system ("mv $sp_dumpdir/ensembl_help_$version/ensembl_help_32.sql.gz $sp_dumpdir/ensembl_help_$version/ensembl_help_$version.sql.gz" );
+    }
+
+  }
+  info( 1, "Dumps for $sp completed" );
+}
+info( 1, "All dumps completed" );
+
+
+
+# Work out timings ---------------------------------------------------------
+my $time_taken = time - $time1;
+my $hours      = localtime($time_taken)->hour -1;
+print STDERR "Time taken: $hours:", localtime($time_taken)->min,"mins\n";
+
+
+exit;
+
+##############################################################################
+##############################################################################
+sub dump_mysql {
+  my $db_meta = shift;
+  my $no_zip  = shift;
+  $| = 1;
+  $ENV{'CMD_ENV'} = "xpg4";
+
+  my $DB      = $db_meta->{NAME} or die ("Need a db to dump!");
+  my $dumpdir = $db_meta->{dumpdir} || '.';
+  chdir( $dumpdir ) or die( "Cannot chdir to $dumpdir: $!" );
+
+  system("rm -f ./*.gz");
+  system("rm -f ./*.txt");
+  system("rm -f ./*.table");
+  system("rm -f ./CHECKSUMS*");
+
+  my $dump_command = "$MYSQL_BIN/mysqldump";
+  $db_meta->{USER}   and $dump_command .= " -u$db_meta->{USER}";
+  $db_meta->{PASS}   and $dump_command .= " -p$db_meta->{PASS}";
+  $db_meta->{HOST}   and $dump_command .= " -h$db_meta->{HOST}";
+  $db_meta->{PORT}   and $dump_command .= " -P$db_meta->{PORT}";
+  $db_meta->{NODATA} and $dump_command .= " --no_data";
+
+
+  ### NOTE #################################################################
+  # If you get a funny error message saying permission is denied etc.
+  # "Got error: 1045: Access denied for user: 'ensadmin@%' (Using password: YES) when executing 'SELECT INTO OUTFILE'"
+  # Note that you can only dump on the localhost machine (e.g. port 3307
+  # if you are on ecs3d) if you use -T switch
+  ###########################################################################
+
+  my $dump_command_T = $dump_command . " -T . $DB";
+  system( $dump_command_T ) and die( "Cannot $dump_command_T: $!" );
+  system("rm -f ./*.sql");
+  #warn $dump_command_T;
+
+  # Create a mysql 4.0 compatible sql file
+  # DON'T USE THE -T OPTION COS IT STOPS IT WORKING
+  my $compatible_file = $DB."_mysql40_compatible.sql";
+  my $compatible = "$dump_command --no_data --compatible=mysql40 $DB ";
+  system( "$compatible > $compatible_file" ) and die( "Cannot create compatible file: $compatible: $!" );
+
+
+  unless ( $no_zip ) {
+    my $dump_command_d = $dump_command . " -d $DB | gzip -c > $DB.sql.gz";
+    system( $dump_command_d ) and die( "Cannot $dump_command_d: $!" );
+    system( "gzip $compatible_file" ) and die( "Cannot gzip $compatible_file: $!");
+  }
+
+  # Divide files up ------------------------------------------
+  foreach my $f (<*.txt>){
+    my $file_size = -s $f;
+
+    # Split file if size is greater than 4G (size before gzip)
+    if ($file_size > 3500000000 ){
+      split_data($DB, $f);
+      next;
+    }
+
+    # Otherwise just zip it
+    unless ( $no_zip ) {
+      info( 1, "Starting gzip for $f");
+
+      my $ret_value = system ("cat $f | gzip -c > $f.table.gz");
+      info( 1, "finished gzip for $DB.$f");
+      unlink($f) unless $ret_value;
+    }
+  }
+
+  foreach my $h (<*.gz>){
+    system("/bin/sum $h >> CHECKSUMS");
+  }
+  system("gzip CHECKSUMS");
+
+  return 1;
+}
+
+#-----------------------------------------------------------------------------
+sub split_data {
+  my ($DB, $file) = @_;
+  my $chunk = 0;
+  my $bytes = 0;
+  my $name = $file;
+  $name =~ s/\.txt//;
+
+
+  open (IN, "$file") or die "Can't open infile $file: $!\n";
+  open (OUT, ">$name.$chunk.txt.table") 
+    or die "Can't create ${name}.${chunk}.txt.table: $!\n";
+
+  # Core dna file compression ~66%, RefSNP table = 75%
+  # Feature dna compression = 88 %
+  info("Creating ${name}.${chunk}.txt.table"); 
+  while(<IN>){
+    $bytes += length $_;
+    if ($bytes > 3500000000){
+      print OUT $_;
+      close (OUT);
+      system ("gzip $name.$chunk.txt.table"); # gzip file
+
+      # Prepare and open next file
+      $chunk++;
+      open (OUT, ">$name.$chunk.txt.table") or die "Can't create ${name}.${chunk}.txt.table: $!\n";
+
+      info ("Creating $DB ${name}.${chunk}.txt.table"); 
+      $bytes = 0;
+    }
+    else{
+      print OUT $_;
+    }
+  }
+  system ("gzip $name.$chunk.txt.table"); # gzip file
+  close(IN);
+  close OUT;
+  unlink $file;
+}
+
+#----------------------------------------------------------------------------
+sub info{
+  my $v   = shift;
+  my $msg = shift;
+  if( ! defined($msg) ){ $msg = $v; $v = 0 }
+  $msg || ( carp("Need a warning message" ) && return );
+
+  if( $v > $VERBOSITY ){ return 1 }
+  warn( "[INFO] ".$msg."\n" );
+  return 1;
+}
+
+#----------------------------------------------------------------------
+sub warning{
+  my $v   = shift;
+  my $msg = shift;
+  if( ! defined($msg) ){ $msg = $v; $v = 0 }
+  $msg || ( carp("Need a warning message" ) && return );
+
+  if( $v > $VERBOSITY ){ return 1 }
+  warn( "[WARN] ".$msg."\n" );
+  return 1;
+}
+
+#----------------------------------------------------------------------
+# Quick+dirty method of trapping STDERR
+sub TIEHANDLE{
+  my $class = shift;
+  bless {}, $class;
+}
+sub PRINT {
+  my $self = shift;
+  # Do nothing!;
+}
+
+
+1;
+
