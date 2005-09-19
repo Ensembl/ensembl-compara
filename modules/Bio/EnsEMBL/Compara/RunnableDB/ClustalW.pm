@@ -62,6 +62,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use Bio::EnsEMBL::Hive;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -170,7 +171,7 @@ sub write_output {
     if($self->{'protein_tree'}) { $self->parse_and_store_proteintree; }
   }
   
-  $self->{'protein_tree'}->release if($self->{'protein_tree'});
+  $self->{'protein_tree'}->release_tree if($self->{'protein_tree'});
 }
 
 
@@ -586,7 +587,7 @@ sub parse_newick_into_proteintree
   open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
-  my $newtree = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->parse_newick_into_tree($newick);
+  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   
   #leaves of newick tree are named with sequence_id of members from input tree
   #move members (leaves) of input tree into newick tree to mirror the 'sequence_id' nodes
@@ -606,7 +607,7 @@ sub parse_newick_into_proteintree
   $tree->merge_children($newtree);
 
   #newick tree is now empty so release it
-  $newtree->release;
+  $newtree->release_tree;
 
   #go through merged tree and remove 'sequence_id' place-holder leaves
   foreach my $node (@{$tree->get_all_leaves}) {
