@@ -263,7 +263,7 @@ sub check_job_fail_options
   }
   
   if($self->{'protein_tree'}) {
-    $self->{'protein_tree'}->release;
+    $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
   }
 }
