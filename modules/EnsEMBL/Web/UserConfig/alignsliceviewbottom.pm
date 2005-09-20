@@ -118,7 +118,7 @@ sub init {
 ## These get put beside the central track and so are numbered 4 and 6
 
     'blast_new' => {
-      'on'  => "on",
+      'on'  => "off",
       'pos' => '7',
       'col' => 'red',
       'dep' => '6',
@@ -150,6 +150,7 @@ sub init {
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
       'available'=> 'databases ENSEMBL_VARIATION', 
     },
+
 
 ## Repeats 
     'codonseq' => {
@@ -271,7 +272,7 @@ sub init {
       'str' => 'f'
     },
     'scalebar' => {
-      'on'      => "on",
+      'on'      => "off",
       'pos'       => '7010',
       'col'       => 'black',
       'max_division'  => '12',
@@ -324,19 +325,19 @@ sub init {
     
 ## and legend....    
     'gene_legend' => {
-      'on'      => "on",
+      'on'      => "off",
       'str'       => 'r',
       'pos'       => '9999',
     },
     'snp_legend' => {
-      'on'      => "on",
+      'on'      => "off",
       'str'       => 'r',
       'type'      => 'square',
       'pos'       => '10000',
       'available'   => 'database_tables EMSEMBL_LITE.snp'
     },
     'missing' => {
-      'on'      => "on",
+      'on'      => "off",
       'str'       => 'r',
       'pos'       => '10001',
     },
@@ -346,12 +347,12 @@ sub init {
       'pos'       => '10003',
     },
     'mod' => {
-      'on'      => "on",
+      'on'      => "off",
       'str'       => 'f',
       'pos'       => '10002',
     },
     'preliminary' => {
-      'on'      => "on",
+      'on'      => "off",
       'str'       => 'f',
       'pos'       => '1',
     },
@@ -362,7 +363,7 @@ sub init {
       'pos' => 1e9
     },
     'quote' => {
-      'on' => 'on',
+      'on' => 'off',
       'str' => 'r',
       'pos' => 1.1e9
     },
@@ -370,9 +371,10 @@ sub init {
 
 
   my $especies = $ENV{ENSEMBL_SPECIES};
-  my %shash = ( $self->species_defs->multi('BLASTZ_NET',$especies) );
-#  warn(Data::Dumper::Dumper(\%shash));
+  my $type = 'BLASTZ_NET';
+  my %shash = ( $self->species_defs->multi($type,$especies) );
 
+#  warn("$especies:$type:".Data::Dumper::Dumper(\%shash));
   my @species = keys %shash;
 
   foreach my $SPECIES (@species) {
@@ -388,6 +390,27 @@ sub init {
       push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , "$species" ];
   }
 
+# Add multiple multiple alignment
+
+  $type = 'MLAGAN'; # 'MAVID';
+  my %shash2 = ( $self->species_defs->multi($type, $especies) );
+#  warn("$especies:$type:".Data::Dumper::Dumper(\%shash2));
+
+  if (%shash2) {
+      my $KEY = lc($especies).'_compara_'.lc($type);
+      my $label = sprintf("$type (+%d species)", scalar(keys(%shash2)));
+
+      $self->{'general'}->{'alignsliceviewbottom'}{$KEY} = {
+	  'species'  => $especies,
+	  'on'       => 'off',
+	  'label'    => $label
+      };
+  
+      push @{ $self->{'general'}->{'alignsliceviewbottom'}{ '_artefacts'} }, $KEY;
+      push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , $label ];
+  
+ }
+ 
   my $POS = $self->ADD_ALL_AS_TRANSCRIPTS( 0 );
 }
 
