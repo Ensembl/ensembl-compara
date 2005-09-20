@@ -166,6 +166,11 @@ sub getRegistrySources {
     while(ref $source_arr->[$i]){
 	my $dassource = $source_arr->[$i++];
 	next if ("@{$dassource->{capabilities}}" !~ /features/);
+        if ($dassource->{url} !~ /(https?:\/\/)(.+das)\/(.+)/) {
+	    warn("Invalid URL : $dassource->{url}");
+	    next;
+	}
+
 	foreach my $cs (@{$dassource->{coordinateSystem}}) {
 	    my ($smap, $sp) = $self->getEnsemblMapping($cs);
 	    if ($smap ne 'unknown' && ($spec =~ /$sp/) && $filterT->($dassource) && $filterM->($dassource)) {
