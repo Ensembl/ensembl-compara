@@ -928,7 +928,7 @@ sub alignsliceviewbottom {
 
      my ($spe, $type) = split('_compara_', $wuc->get('align_species',$ENV{ENSEMBL_SPECIES} ));
      
-     warn("SRE : $spe :: $type");
+#     warn("SRE : $spe :: $type");
 
      my $comparadb;
 
@@ -945,7 +945,7 @@ sub alignsliceviewbottom {
      }
 
      my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-     warn("SA: @sarray");
+#     warn("SA: @sarray");
 
      my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
 
@@ -959,7 +959,7 @@ sub alignsliceviewbottom {
      my $t1 = $wuc->get('ensembl_transcript','compact');
 
      foreach my $vsp (@sarray) {
-       warn("SP :$vsp");
+#       warn("SP :$vsp");
        my $CONF = $object->user_config_hash( 'alignsliceviewbottom' );
        $CONF->{'align_slice'}  = 1;
        (my $sp = $vsp) =~ s/\_/ /g;
@@ -1059,7 +1059,7 @@ sub alignsliceviewzoom {
 
      my ($spe, $type) = split('_compara_', $wuc2->get('align_species',$ENV{ENSEMBL_SPECIES} ));
      
-     warn("SRE : $spe :: $type");
+#     warn("SRE : $spe :: $type");
 
      my $comparadb;
 
@@ -1077,7 +1077,7 @@ sub alignsliceviewzoom {
      }
 
      my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-     warn("SA2: @sarray");
+#     warn("SA2: @sarray");
 
      my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
 
@@ -1278,7 +1278,9 @@ sub alignsliceviewzoom {
     return 1;
  }
 
+# Should not need this function - need to ask James how to get the required info from the config
 sub compara_db {
+
 
     my $user = 'ensro';
 #    my $host = 'ia64g';
