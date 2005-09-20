@@ -9,13 +9,19 @@ use Sanger::Graphics::Glyph::Poly;
 
 sub init_label {
   my ($self) = @_;
+
   return if defined $self->{'config'}->{'_no_label'};
+
+  return if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice"));
 
   $self->label( new Sanger::Graphics::Glyph::Text({
     'text' => 'Length',
     'font' => 'Small',
     'absolutey' => 1,
   }));
+
+
+
 }
 
 sub _init {
@@ -25,6 +31,10 @@ sub _init {
   return unless defined $type;
 
   my $strand = $self->strand;
+
+  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+      return if ($self->{'container'}->{'compara'} ne 'primary');
+  }
 
   my $Config = $self->{'config'};
   my $strand_flag    = $Config->get($type, 'str');
