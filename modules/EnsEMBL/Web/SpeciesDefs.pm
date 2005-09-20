@@ -435,7 +435,7 @@ sub _parse {
           warn "$confdir/ini-files/$filename.ini is not readable\n" ;
           next;
         }
-        warn "OPENING $inifile";
+        warn "OPENING $inifile\n";
         open FH, $inifile or die( "Problem with $inifile: $!" );
     ###### Loop for each line of <species>.ini
         my $current_section = undef;
@@ -502,12 +502,15 @@ sub _parse {
     # For each database look for non-default config..
     if(exists $tree->{'databases'}) { 
       foreach my $key ( keys %{$tree->{'databases'}} ) {
+        my $DB_NAME = $tree->{'databases'}{$key} =~ /%_(\w+)_%/ ?
+          lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} )) :
+          $tree->{'databases'}{$key};
         if($tree->{'databases'}{$key} eq '') {
           delete $tree->{'databases'}{$key};
         } elsif(exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
           my %cnf = %{$tree->{$key}};
           $tree->{'databases'}{$key} = {
-            'NAME'   => $tree->{'databases'}{$key},
+            'NAME'   => $DB_NAME,
             'HOST'   => exists( $cnf{'HOST'}  ) ? $cnf{'HOST'}   : $HOST,
             'USER'   => exists( $cnf{'USER'}  ) ? $cnf{'USER'}   : $USER,
             'PORT'   => exists( $cnf{'PORT'}  ) ? $cnf{'PORT'}   : $PORT,
@@ -517,7 +520,7 @@ sub _parse {
           delete $tree->{$key};
         } else {
           $tree->{'databases'}{$key} = {
-            'NAME'   => $tree->{'databases'}{$key},
+            'NAME'   => $DB_NAME,
             'HOST'   => $HOST,
             'USER'   => $USER,
             'PORT'   => $PORT,
@@ -1206,9 +1209,7 @@ sub translate {
 
 sub create_robots_txt {
   my $self = shift;
-  warn "ROBOT: @ENSEMBL_HTDOCS_DIRS";
   my $root = $ENSEMBL_HTDOCS_DIRS[0];
-  warn "ROBOT:".$root;
   if( open FH, ">$root/robots.txt" ) { 
     print FH qq(
 User-agent: *
@@ -1248,7 +1249,6 @@ sub bread_crumb_creator {
 #          warn ">>> $dir -> $nav";
           if( !$nav && $dir =~ /\/(\w+)\/$/ ) {
             #$nav = join ' ', map ucfirst( $_ ), split /_/, $1;
-	    warn $1;
             $nav = join ' ', split /_/, $1;
           }
           my($title) = $content =~ /<title>([^<]+)<\/title>/ism;
