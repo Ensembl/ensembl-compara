@@ -7,9 +7,23 @@ use Bio::EnsEMBL::Feature;
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
-sub my_label { 
-    my ($self) = @_;
-    return $self->{'container'}->{'species'}; 
+sub init_label {
+  my ($self) = @_;
+
+  my $text =  $self->{'container'}->{_config_file_name_};
+
+  my $label = new Sanger::Graphics::Glyph::Text({
+      'z'             => 10,
+      'x'             => -110,
+      'y'             => -1,
+      'text'      => "$text",	
+      'font'      => 'Small',
+      'absolutex'     => 1,
+      'absolutey' => 1,
+  });
+  $self->push($label);
+  return;
+
 }
 
 sub features {
