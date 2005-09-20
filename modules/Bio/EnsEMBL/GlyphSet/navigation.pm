@@ -12,6 +12,25 @@ sub init_label {
 
 sub _init {
   my ($self) = @_;
+
+  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+      my $line = new Sanger::Graphics::Glyph::Rect({
+	  'z' => 11,
+	  'x' => -120,
+	  'y' => 4, # 22,
+	  'colour' => 'black',
+	  'width' => 20000,
+	  'height' => 0,
+	  'absolutex'     => 1,
+	  'absolutewidth' => 1,
+	  'absolutey'     => 1,
+      });
+      
+      $self->push($line);
+
+      return;
+  }
+
   # return unless ($self->strand() == 1);
   my $base_href = $self->{'config'}->{'base_url'};
   my $im_width       = $self->{'config'}->image_width();
