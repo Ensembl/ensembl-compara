@@ -198,7 +198,7 @@ sub show_news {
 
     if ($prev_rel != $release_id) {
         $html .= qq(<h2>Release $release_id ($rel_date)</h2>\n);
-        $prev_cat = '';
+        $prev_cat = 0;
     }
 
     # separate data news into species and generic
