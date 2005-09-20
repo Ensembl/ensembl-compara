@@ -13,6 +13,37 @@ use Data::Dumper;
 sub init_label {
     my ($self) = @_;
 
+    return if ($self->{strand} < 1);
+
+    my $text =  $self->{'container'}->{_config_file_name_};
+
+      my $label = new Sanger::Graphics::Glyph::Text({
+	  'z'             => 10,
+	  'x'             => -110,
+	  'y'             => 2,
+	  'text'      => "$text",	
+	  'font'      => 'Small',
+	  'absolutex'     => 1,
+	  'absolutey' => 1,
+      });
+
+
+      $self->push($label);
+      my $line = new Sanger::Graphics::Glyph::Rect({
+	  'z' => 9,
+	  'x' => -120,
+	  'y' => 2,
+	  'colour' => 'white', #'black',
+	  'width' => 118,
+	  'height' => 15,
+	  'absolutex'     => 1,
+	  'absolutewidth' => 1,
+	  'absolutey'     => 1,
+      });
+      $self->push($line);
+      return;
+
+    return;
     my $compara = $self->{container}->{'compara'};
     my $species = $self->{container}->{'species'};
     if( $compara && $species ) {
@@ -70,6 +101,7 @@ sub _init {
     #return unless ($self->strand() == -1);
 
     my $Config         = $self->{'config'};
+
     my $Container      = $self->{'container'};
     my $contig_strand  = $Container->can('strand') ? $Container->strand : 1;
     my $h              = 0;
@@ -108,31 +140,33 @@ sub _init {
     my $abbrev         = $Config->get('scalebar', 'abbrev');
     (my $param_string   = $Container->seq_region_name()) =~ s/\s/\_/g;
 
+    
     my $species =  $Container->{_config_file_name_};
-#    warn("PARAM : $param_string");
+
+    my $aslink = $Config->get('align_species',$ENV{ENSEMBL_SPECIES});
+    my ($spe, $type) = split('_compara_', $aslink);
+    my ($psp, $ssp) = (lc($ENV{ENSEMBL_SPECIES}), lc($species));
+
+    if ($type eq 'pairwise') {
+	if ($ssp ne $psp) {
+	    $aslink =~ s/^.+_compara/${psp}_compara/;
+	}
+    } else {
+	$aslink =~ s/^.+_compara/${ssp}_compara/;
+    }
+
+#    warn(join('*', 'A',$species, $Container->{'compara'}, $aslink, $ssp, $psp));
 
     my $main_width     = $Config->get('_settings', 'main_vc_width');
     my $len            = $Container->length();
-
-#    warn(join('*', $main_width, $len, $Config->container_width()));
 
     my $global_start   = $contig_strand < 0 ? -$Container->end() : $Container->start();
     my $global_end     = $contig_strand < 0 ? -$Container->start() : $Container->end();
 
     my $mp = $Container->{slice_mapper_pairs};
-#    warn("C0: $Container->{strand}:");
-#    warn("c:$self:$self->{strand}".join('*', keys(%$self)));
-#    warn("c1:$Container->{_config_file_name_}:".join('*', keys(%$Container)));
-#    warn("c2:".join('*', keys(%$mp)));
-#    my @sa = @$mp;
-#    my $slt = shift(@sa);
-#    warn("c13:".join('*', keys(%$slt)));
-#    foreach my $k ( keys(%$slt)) {
-#	warn("B: $k => ".$slt->{$k});
-#    }
 
-#    warn("Q: $contig_strand: $global_start : $global_end");
-    $self->align_interval($mp, $global_start, $global_end, 3) if($self->{strand} < 0);
+    $self->align_interval($mp, $global_start, $global_end, 5) if($self->{strand} < 0);
+    $self->align_interval($mp, $global_start, $global_end, 5) if($self->{strand} > 0);
 
     my( $major_unit, $minor_unit );
 
@@ -164,7 +198,7 @@ sub _init {
     my $start = floor( $global_start / $minor_unit ) * $minor_unit;
     my $filled = 1;
     my $last_text_X = -1e20;
-    my $yc = $self->{strand} > 0 ? 10 : 17;
+    my $yc = $self->{strand} > 0 ? 0 : 17;
     if ($param_string eq $ENV{ENSEMBL_SPECIES}) {
 	if ($self->{strand} < 0) {
 	    $start = $global_end  +1;
@@ -174,8 +208,6 @@ sub _init {
 	    $start = $global_end  +1;
 	}
     }
-
-
 
 
     while( $start <= $global_end ) { 
@@ -197,19 +229,17 @@ sub _init {
       });
 #      if ($navigation eq 'on' && $Config->{'compara'} ne 'secondary' ){
       if ($navigation eq 'on'){
-        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $species, $mp, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
-      } elsif( $navigation eq 'zoom' ) {
-        ($t->{'href'},$t->{'zmenu'}) = $self->zoom_interval( $species, $mp, $start, $end, $contig_strand, $global_start, $main_width, $highlights, $global_end-$global_start);
+        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $species, $aslink, $mp, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
       }
 
 #      warn("T^($self->{strand} * $navigation * $Config->{'compara'}): $t->{'href'} *** $t->{'zmenu'}");
 
       $self->push($t);
       if($start == $box_start ) { # This is the end of the box!
-        $self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE);
+        $self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE && $Container->{compara} ne 'secondary');
       }
       if( ( $box_end==$global_end ) && !( ( $box_end+1) % $minor_unit ) ) {
-        $self->join_tag( $t, "ruler_end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE);
+        $self->join_tag( $t, "ruler_$end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE &&  $Container->{compara} ne 'secondary');
       }
 
       unless( $box_start % $major_unit ) { ## Draw the major unit tick 
@@ -248,18 +278,28 @@ sub _init {
       }));
   }
 
-    
-    my $global_start   = $contig_strand < 0 ? -$Container->end() : $Container->start();
-    my $global_end     = $contig_strand < 0 ? -$Container->start() : $Container->end();
 
-#    warn("G: $global_start : $global_end");
-    $self->align_interval($mp, $global_start, $global_end, 20) if($self->{strand} > 0);
+    if ($self->{strand} > 0 && $Container->{compara} ne 'primary') {
+	my $line = new Sanger::Graphics::Glyph::Rect({
+	    'x' => -120,
+	    'y' => 0, # 22,
+	    'colour' => 'black',
+	    'width' => 20000,
+	    'height' => 0,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	    'absolutey'     => 1,
+	});
+      
+	$self->push($line);
+    }
 
 }
 
 sub align_interval {
     my $self = shift;
     my ($mp, $global_start, $global_end, $yc) = @_;
+
     my $Config          = $self->{'config'};
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $last_end = -1;
@@ -382,35 +422,46 @@ sub real_location {
 }
 sub interval {
   # Add the recentering imagemap-only glyphs
-  my ( $self, $species, $mpairs, $start, $end, $contig_strand, $global_offset, $width, $highlights) = @_;
+  my ( $self, $species, $aslink, $mpairs, $start, $end, $contig_strand, $global_offset, $width, $highlights) = @_;
   my ($chr, $interval_middle) = $self->real_location($mpairs, $contig_strand * ($start+1));
  
-  return( $self->zoom_URL($species, $chr, $interval_middle, $width,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
-          $self->zoom_zmenu( $chr, $interval_middle, $width, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ) );
+  return if (!$chr);
+
+  return( $self->zoom_URL($species, $aslink, $chr, $interval_middle, $width,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand),
+          $self->zoom_zmenu( $species, $aslink, $chr, $interval_middle, $width, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ) );
+}
+
+sub zoom_zmenu {
+    my ($self, $species, $aslink, $chr, $interval_middle, $width, $highlights, $config_number, $ori ) = @_;
+    $chr =~s/.*=//;
+
+    $config_number or $config_number = 1;
+
+    my $link = qq{/$species/$ENV{'ENSEMBL_SCRIPT'}?c=$chr:$interval_middle&w=$width&align=$aslink};
+    my $zmenu = {
+	'caption' => "Navigation",
+	"10:Centre on this scale interval" => "$link", 
+
+    };
+		  
+    return $zmenu;
+
+    return qq(zn('/$species/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights','$ori','$config_number', '@{[$self->{container}{_config_file_name_}]}' ));
 }
 
 sub zoom_URL {
-  my( $self, $species, $PART, $interval_middle, $width, $factor, $highlights, $config_number, $ori) = @_;
-  my $extra;
+  my( $self, $species, $aslink, $PART, $interval_middle, $width, $factor, $highlights, $config_number, $ori) = @_;
+  my $extra = "";
 #  warn("URL: $species, $PART");
   if( $config_number ) {
     $extra = "o$config_number=c$config_number=$PART:$interval_middle:$ori&w$config_number=$width"; 
   } else {
     $extra = "c=$PART:$interval_middle&w=$width";
   }
-  return qq(/$species/$ENV{'ENSEMBL_SCRIPT'}?$extra$highlights);
-}
 
-sub zoom_interval {
-  # Add the recentering imagemap-only glyphs
-  my ( $self, $species, $aslice, $start, $end, $contig_strand, $global_offset, $width, $highlights, $zoom_width ) = @_;
-  my ($chr, $interval_middle) = $self->real_location($aslice, $contig_strand * $start);
-#  my $interval_middle = $contig_strand * ($start + $end)/2;
-  
-  return(
-    $self->zoom_URL($species, $chr, $interval_middle, $width,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
-    $self->zoom_zoom_zmenu( $chr, $interval_middle, $width, $highlights, $zoom_width, $self->{'config'}->{'slice_number'}, $contig_strand )
-  );
+  $extra .= "&align=$aslink";
+
+  return qq(/$species/$ENV{'ENSEMBL_SCRIPT'}?$extra$highlights);
 }
 
 sub bp_to_nearest_unit_by_divs {
