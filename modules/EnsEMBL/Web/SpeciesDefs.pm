@@ -502,9 +502,12 @@ sub _parse {
     # For each database look for non-default config..
     if(exists $tree->{'databases'}) { 
       foreach my $key ( keys %{$tree->{'databases'}} ) {
-        my $DB_NAME = $tree->{'databases'}{$key} =~ /%_(\w+)_%/ ?
-          lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} )) :
-          $tree->{'databases'}{$key};
+        my $DB_NAME = $tree->{'databases'}{$key};
+        if( $DB_NAME =~ /%_(\w+)_%/ ) {
+          $DB_NAME = lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} ));
+        } elsif( $DB_NAME =~/%_(\w+)/ ) {
+          $DB_NAME = lc(sprintf( '%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION ));
+        }
         if($tree->{'databases'}{$key} eq '') {
           delete $tree->{'databases'}{$key};
         } elsif(exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
