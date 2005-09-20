@@ -251,6 +251,24 @@ sub new {
 		    'est'            => 'magenta',
 		    'microsatellite' => 'plum4',
 		  );
+
+  $self->colourSet( 'alignment',
+		    'INTRONIC'                  => 'limegreen',
+		    'UPSTREAM'                  => 'mediumspringgreen',  
+		    'DOWNSTREAM'                => 'mediumspringgreen',
+		    '5PRIME_UTR'                => 'darkorchid1',
+		    '3PRIME_UTR'                => 'darkorchid1',
+		    'UTR'                       => 'darkorchid1',
+		    'NON_SYNONYMOUS_CODING'     => 'red',
+		    'FRAMESHIFT_CODING'         => 'orange',
+		    'SYNONYMOUS_CODING'         => 'chartreuse3',
+                    'STOP_GAINED'               => 'magenta',
+                    'STOP_LOST'                 => 'magenta',
+		    'INTERGENIC'                => 'gray50',
+		    '_'                         => 'gray50',
+		    );
+
+
   return $self;
 }
 
