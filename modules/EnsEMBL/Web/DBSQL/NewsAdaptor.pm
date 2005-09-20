@@ -103,7 +103,8 @@ sub fetch_items {
                 n.news_cat_id    as news_cat_id,
                 n.title          as title,
                 n.content        as content,
-                n.priority       as priority
+                n.priority       as priority,
+                c.priority       as cat_order
         FROM
                 news_item n,
                 news_cat c
@@ -113,6 +114,7 @@ sub fetch_items {
         $sql .= ', item_species i ';
     }
     $sql .= " $crit_str $group_str $order_str";
+warn $sql;
     my $T = $self->db->selectall_arrayref($sql, {});
     return [] unless $T;
     for (my $i=0; $i<scalar(@$T);$i++) {
@@ -151,6 +153,7 @@ sub fetch_items {
                 'title'         => $A[3],
                 'content'       => $A[4],
                 'priority'      => $A[5],
+                'cat_order'     => $A[6],
                 'species'       => $species,
                 'sp_count'      => $sp_count
             });
@@ -165,7 +168,8 @@ sub fetch_items {
                 n.news_cat_id    as news_cat_id,
                 n.title          as title,
                 n.content        as content,
-                n.priority       as priority
+                n.priority       as priority,
+                c.priority       as cat_order
             FROM
                 news_item n,
                 news_cat c
@@ -192,9 +196,18 @@ sub fetch_items {
                 'title'         => $A[3],
                 'content'       => $A[4],
                 'priority'      => $A[5],
+                'cat_order'     => $A[6],
                 'species'       => '',
                 'sp_count'      => '0'
                 });
+        }
+        if ($criteria{'species'}) {
+            # re-sort records by release and then news category
+            @$results = sort 
+                        { $b->{'release_id'} <=> $a->{'release_id'} 
+                          || $b->{'cat_order'} <=> $a->{'cat_order'}
+                        } 
+                        @$results;
         }
     }
 
