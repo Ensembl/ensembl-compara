@@ -459,6 +459,7 @@ sub add_das_tracks {
   }
 
   my $EXT = $object->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES;
+
   foreach my $source ( sort { $EXT->{$a}->{'label'} cmp $EXT->{$b}->{'label'} }  keys %$EXT ) {
       if ($wuc->get("managed_$source",'on') eq 'on') {
 	  push @internal_das, "managed_$source" ;
@@ -727,7 +728,7 @@ sub alignsliceviewbottom_menu {
     my($panel, $object ) = @_;
     my $configname = 'alignsliceviewbottom';
 
-    my @menu_items = qw(Features AlignCompara Options THExport ImageSize);
+    my @menu_items = qw(Features AlignCompara Options Export ImageSize);
     my $mc = $object->new_menu_container(
 					 'configname' => $configname,
 					 'panel'      => 'bottom',
@@ -926,18 +927,31 @@ sub alignsliceviewbottom {
      my @sarray = ($ENV{ENSEMBL_SPECIES});
 
      my ($spe, $type) = split('_compara_', $wuc->get('align_species',$ENV{ENSEMBL_SPECIES} ));
-     push (@sarray, ucfirst($spe)) if $spe;
+     
+     warn("SRE : $spe :: $type");
 
-     my $comparadb = $object->database('compara');
+     my $comparadb;
+
+     if ($type eq 'pairwise') {
+	 push (@sarray, ucfirst($spe)) if $spe;
+	 $type = 'BLASTZ_NET';
+	 $comparadb = $object->database('compara');
+     } else {
+	 $type = uc($type);
+	 my %shash = ($object->species_defs->multi($type, ucfirst($spe)));
+	 push @sarray, keys %shash;
+
+	 $comparadb= &compara_db(); 
+     }
+
      my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
- #    warn("SA: @sarray");
+     warn("SA: @sarray");
 
- #    my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases("MAVID", \@sarray);
-     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases("BLASTZ_NET", \@sarray);
+     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
 
      my $asa = $comparadb->get_adaptor("AlignSlice" );
      my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
- #    warn("AS: $align_slice : ".join('*', sort keys(%$align_slice)));
+#     warn("AS: $align_slice : ".join('*', sort keys(%$align_slice)));
 
      my @ARRAY;
      my $url = $wuc->get('_settings','URL');
@@ -955,6 +969,9 @@ sub alignsliceviewbottom {
        my $compara_slice =  $align_slice->{slices}->{$sp}->[0];
        $compara_slice->{_config_file_name_} = $vsp;
        $CONF->set( 'sequence', 'on', 'on' );
+       $CONF->set( 'blast_new', 'on', 'off' );
+       $CONF->set( 'est_transcript', 'on', 'off' );
+       $CONF->set( 'navigation', 'on', 'off' );
 
        $compara_slice->{__type__} = 'alignslice';
        my $cigar_line = $compara_slice->get_cigar_line();
@@ -964,7 +981,13 @@ sub alignsliceviewbottom {
        my $len = $compara_slice->length;
        $CONF->container_width( $len );
        $compara_slice->{species} = $sp;
+
        $compara_slice->{compara} = $cmpstr;
+
+       if ($vsp eq $sarray[-1]) {
+	   $compara_slice->{compara} = 'final' if ($cmpstr ne 'primary');
+       }
+
        push @ARRAY, $compara_slice, $CONF;
        $cmpstr = 'secondary';
      }
@@ -983,8 +1006,9 @@ sub alignsliceviewbottom {
      my $hidden_fields_string = join '', map { qq(<input type="input" name="$_" value="$additional_hidden_values{$_}" />) } keys %additional_hidden_values;
      my $hidden_fields_URL    = join ';', map { qq($_=$additional_hidden_values{$_}) } keys %additional_hidden_values;
 
-     my $zoom_ii = this_link( $object, ';zoom_width='.($wid-25), $hidden_fields_URL );
-     my $zoom_h  = this_link( $object, ';zoom_width='.($wid+25), $hidden_fields_URL );
+
+     my $zoom_ii = $wid > 25 ? this_link( $object, ';zoom_width='.($wid-25), $hidden_fields_URL ) : '#';
+     my $zoom_h  = $wid < 150 ? this_link( $object, ';zoom_width='.($wid+25), $hidden_fields_URL ): '#';
      my $pan_left_1_win  = this_link_offset( $object, -0.8 * $wid );
      my $pan_right_1_win = this_link_offset( $object,  0.8 * $wid );
 
@@ -1034,18 +1058,32 @@ sub alignsliceviewzoom {
      my $wuc2 = $object->user_config_hash( 'alignsliceviewbottom' );
 
      my ($spe, $type) = split('_compara_', $wuc2->get('align_species',$ENV{ENSEMBL_SPECIES} ));
-     push (@sarray, ucfirst($spe)) if $spe;
+     
+     warn("SRE : $spe :: $type");
 
-     my $comparadb = $object->database('compara');
+     my $comparadb;
+
+     $type or $type = 'pairwise';
+
+     if ($type eq 'pairwise') {
+	 push (@sarray, ucfirst($spe)) if $spe;
+	 $type = 'BLASTZ_NET';
+	 $comparadb = $object->database('compara');
+     } else {
+	 $type = uc($type);
+	 my %shash = ($object->species_defs->multi($type, ucfirst($spe)));
+	 push @sarray, keys %shash;
+	 $comparadb= &compara_db(); 
+     }
+
      my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-     warn("SA: @sarray");
+     warn("SA2: @sarray");
 
- #    my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases("MAVID", \@sarray);
-     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases("BLASTZ_NET", \@sarray);
+     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
 
      my $asa = $comparadb->get_adaptor("AlignSlice" );
      my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
- #    warn("AS: $align_slice : ".join('*', sort keys(%$align_slice)));
+#    warn("AS: $align_slice : ".join('*', sort keys(%$align_slice)));
 
      my @ARRAY;
      my $cmpstr = 'primary';
@@ -1176,12 +1214,8 @@ sub alignsliceviewzoom {
      my ($slice) = @_;
      my $vf_ref = $slice->get_all_VariationFeatures();
      my @snps;
-     use Data::Dumper;
- #    warn(Dumper($vf_ref));
-
 
      foreach (@$vf_ref) {
- #     warn ("KEYS: ".join('*', keys %{$_}));
        push @snps, {
            'start' => $_->start,
            'end' => $_->end,
@@ -1246,15 +1280,16 @@ sub alignsliceviewzoom {
 
 sub compara_db {
 
-    #    my $host = 'ia64g';
-    #    my $user = 'ensro';
-    #    my $dbname = 'abel_mavid_test2';
-    #    my $port = 3306;
-    
-    my $host = 'ecs3';
     my $user = 'ensro';
-    my $dbname = 'ensembl_compara_33';
-    my $port = 3306;
+#    my $host = 'ia64g';
+#    my $dbname = 'abel_mavid_test2';
+#    my $port = 3306;
+    
+
+    my $host = 'ecs2';
+    my $dbname = 'ensembl_compara_34';
+    my $port = 3364;
+
 # For now just return a new db adaptor, later we can cache it .. 
     return new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host, -user => $user, -dbname => $dbname, -port=>$port);
 }

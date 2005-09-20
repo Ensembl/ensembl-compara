@@ -556,10 +556,51 @@ sub _parse {
     }                      
     delete $tree->{'general'};
     if( $filename eq 'MULTI' ) { ## This is the multispecies hash...
-      my $dbh;
+	my $dbh;
+	
+	if( $tree->{'databases'}->{'ENSEMBL_COMPARA_MULTIPLE'} ){
+	    $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA_MULTIPLE' );
+	}
+	if($dbh) {
+	    my %sections = (
+			    'SYNTENY' => 'GENE_MULTIPLE',
+			    );
+	    # We've done the DB hash...
+	    # So lets get on with the multiple alignment hash;
+	    my $q = qq{ SELECT ml.type, gd.name 
+			FROM method_link ml, method_link_species_set mlss, genome_db gd
+			WHERE mlss.method_link_id = ml.method_link_id and mlss.genome_db_id=gd.genome_db_id AND ml.type = 'MLAGAN'};
+
+	    my $sth = $dbh->prepare( $q );
+	    my $rv  = $sth->execute || die( $sth->errstr );
+	    my $results = $sth->fetchall_arrayref();
+
+	    my $thash;
+
+	    foreach my $row ( @$results ) {
+		my ($type, $species) = (uc($row->[0]), $row->[1]);
+		$species =~ tr/ /_/;
+		my $KEY = $sections{$type} || $type;
+		push @{$thash->{$KEY}}, $species;
+	    }
+
+	    foreach my $KEY (keys %$thash) {
+		my @species = @{$thash->{$KEY}};
+		foreach my $p (@species) {
+		    foreach my $s (@species) {
+			$tree->{$KEY}->{$p}->{$s} = 1 if ($s ne $p);
+		    }
+		}
+	    }
+		    
+	    $sth->finish();
+	    $dbh->disconnect();
+	}
+    
       if( $tree->{'databases'}->{'ENSEMBL_COMPARA'} ){
         $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA' );
       }
+
       if($dbh) {
         my %sections = (
           'ENSEMBL_ORTHOLOGUES' => 'GENE',
@@ -653,7 +694,7 @@ sub _parse {
 			}
 			$tree->{'VEGA_BLASTZ_CONF'}=\%config;
 #			print Dumper(\%config);			
-		}
+		    }
 
 
         foreach my $row ( @$results ) {
@@ -661,6 +702,8 @@ sub _parse {
           $species1 =~ tr/ /_/;
           $species2 =~ tr/ /_/;
           my $KEY = $sections{uc($row->[0])} || uc( $row->[0] );
+
+	  
           $tree->{$KEY}{$species1}{$species2} = 
             exists( $CONF->{'_storage'}{$species1}) ? 1 : 0;
         }
@@ -671,6 +714,9 @@ sub _parse {
       delete $tree->{'general'};
       $CONF->{'_multi'} = $tree;
       $CONF->{'_storage'}{'Multi'} = $tree;
+#      warn(Dumper($tree->{BLASTZ_NET}));
+#      warn(Dumper($tree->{MLAGAN}));
+
       next;
     }
 
@@ -679,7 +725,6 @@ sub _parse {
       # For each trace database look for non-default config..
 
   # For each das source get its contact information.
-#    my @das_keys = qw( ENSEMBL_INTERNAL_DAS_SOURCES ENSEMBL_TRACK_DAS_SOURCES ENSEMBL_GENE_DAS_SOURCES );
     my @das_keys = qw( ENSEMBL_INTERNAL_DAS_SOURCES ENSEMBL_TRACK_DAS_SOURCES );
     my $key_count = {};
     foreach my $das_key( @das_keys ){

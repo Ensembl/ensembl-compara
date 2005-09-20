@@ -396,7 +396,7 @@ sub do_markedup_pep_seq {
   my $pep_seq    = $peptide->seq;
   my @exon_colours = qw(black blue red);
   my %bg_color = (
-    'c0'      => $object->species_defs->ENSEMBL_COLOURS->{'white'},
+    'c0'      => '#ffffff',
     'syn'     => '#99ff99',
     'insert'  => '#99ccff',
     'delete'  => '#99ccff',
