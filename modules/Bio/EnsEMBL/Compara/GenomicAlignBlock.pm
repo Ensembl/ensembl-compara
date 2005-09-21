@@ -1378,7 +1378,9 @@ sub reverse_complement {
   Arg[2]     : [optional] int $end, refers to the reference_dnafrag
   Arg[3]     : [optional] Bio::EnsEMBL::Compara::GenomicAlign $reference_GenomicAlign
   Example    : none
-  Description: restrict this GenomicAlignBlock. It returns a new object.
+  Description: restrict this GenomicAlignBlock. It returns a new object unless no
+               restriction is needed. In that case, it returns the original unchanged
+               object
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : none
   Caller     : general
@@ -1396,6 +1398,11 @@ sub restrict_between_reference_positions {
   throw("A reference Bio::EnsEMBL::Compara::GenomicAlign must be given") if (!$reference_genomic_align);
   $start = $reference_genomic_align->dnafrag_start if (!defined($start));
   $end = $reference_genomic_align->dnafrag_end if (!defined($end));
+
+  my $excess_at_the_start = $start - $reference_genomic_align->dnafrag_start;
+  my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $end;
+  ## Skip if no restriction is needed. Return original object!
+  return $self if ($excess_at_the_start < 0 and $excess_at_the_end < 0);
 
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
     my $new_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -1421,8 +1428,6 @@ sub restrict_between_reference_positions {
   throw("Reference GenomicAlign not found!") if (!$genomic_align_block->reference_genomic_align);
 
   my $this_pos = $new_reference_genomic_align->dnafrag_start;
-  my $excess_at_the_start = $start - $new_reference_genomic_align->dnafrag_start;
-  my $excess_at_the_end  = $new_reference_genomic_align->dnafrag_end - $end;
 
   if ($excess_at_the_start >= 0) {
     my $this_ref_align_seq = $new_reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq (N's and gaps).
