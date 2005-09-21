@@ -300,7 +300,7 @@ $_->{'start'}] }
                 my ($text, $key, $value);
                 if ($entry eq 'contigview') {
                     $text = "Jump to $entry";
-                    $value = sprintf("/$species/contigview?c=%s:%d&w=%d", $row->{'chr'}, int(($row->{'start'}+$row->{'end'})/2), $row->{'length'}+1000);
+                    $value = sprintf("/$species/contigview?c=%s:%d;w=%d", $row->{'chr'}, int(($row->{'start'}+$row->{'end'})/2), $row->{'length'}+1000);
                     # add AffyProbe name(s) to URL to turn on tracks
                     if ($object->param('type') eq 'AffyProbe') {
                         my @affy_list = split(';', $row->{'label'});
