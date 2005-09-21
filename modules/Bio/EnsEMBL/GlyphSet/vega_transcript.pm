@@ -4,23 +4,6 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::evega_transcript;
 @ISA = qw(Bio::EnsEMBL::GlyphSet::evega_transcript);
 
-my %legend_map = (
-    'Known'                 => 'Known gene',
-    'Known_in_progress'     => 'Known gene (in progress)',
-    'Novel_CDS'             => 'Novel CDS',
-    'Novel_CDS_in_progress' => 'Novel CDS (in progress)',
-    'Putative'              => 'Putative',
-    'Novel_Transcript'      => 'Novel transcript',
-    'Pseudogene'            => 'Pseudogene',
-    'Processed_pseudogene'  => 'Processed pseudogene',
-    'Unprocessed_pseudogene'=> 'Unprocessed pseudogene',
-    'Predicted_Gene'        => 'Predicted gene',
-    'Ig_Segment'            => 'Immunoglobulin segment',
-    'Ig_Pseudogene_Segment' => 'Immunoglobulin pseudogene',
-    'Transposon'	    => 'Transposon',
-    'Polymorphic'           => 'Polymorphic',
-);
-    
 sub features {
     my ($self) = @_;
     my $author = $self->my_config('author');
@@ -77,6 +60,7 @@ sub gene_href {
         qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=core;gene=$gid);
 }
 
+
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $tid = $transcript->stable_id();
@@ -84,24 +68,15 @@ sub zmenu {
     my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-    my $type;
-    if ($gene->source eq 'vega') {
-      $type = $gene->type;
-    } else {
-      $type = $transcript->type() || $gene->type();
-    }
-    $type =~ s/HUMACE-//g;
-    $type = $legend_map{$type} || $type;
-
+	my $type = $self->format_obj_type($gene,$transcript);
     my $zmenu = {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
-        '01:Type: ' . $type => "",
-	"02:Gene:$gid"      => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
-        "03:Transcr:$tid"   => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
-        "04:Exon:$tid"	    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
+        '01:Type: '.$type => "",
+    	"02:Gene:$gid"   => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
+        "03:Transcr:$tid"=> "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",
+        "04:Exon:$tid"	 => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core",
         '05:Supporting evidence'    => "/@{[$self->{container}{_config_file_name_}]}/exonview?transcript=$tid;db=core#evidence",
-
         '08:Export cDNA'  => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
     };
 
@@ -117,14 +92,12 @@ sub gene_zmenu {
     my ($self, $gene) = @_;
     my $gid = $gene->stable_id();
     my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
-    my $type = $gene->type();
-    $type =~ s/HUMACE-//g;
-    $type = $legend_map{$type} || $type;
+	my $type = $self->format_obj_type($gene);
     my $zmenu = {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
         '01:Type: ' . $type => "",
-        "02:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core),
+        "02:Gene:$gid"  => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core),
     };
     return $zmenu;
 }
@@ -135,13 +108,7 @@ sub text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $tt;
-        if ($gene->source eq 'vega') {
-            $tt = $gene->type;
-        } else {
-            $tt = $transcript->type || $gene->type;
-        }
-        my $type = $legend_map{$tt} || $tt;
+        my $type = $self->format_obj_type($gene,$transcript);
         $id .= " \n$type ";
     }
     return $id;
@@ -153,7 +120,7 @@ sub gene_text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $type = $legend_map{$gene->type} || $gene->type;
+        my $type = $self->format_obj_type($gene);
         $id .= " \n$type ";
     }
     return $id;
@@ -161,14 +128,55 @@ sub gene_text_label {
 
 sub legend {
     my ($self, $colours) = @_;
-    my @legend = ('genes', 1000, []);
-    foreach my $gene_type (sort keys %{ $self->species_defs->VEGA_GENE_TYPES || {}} ) {
-        push(@{@legend[2]}, "$legend_map{$gene_type}" => $colours->{$gene_type}->[0] );
-    }
-    return @legend;
+	# species defs doesn't hold details of gene types any more, so do it manually
+	return ('genes', 1000,
+		[
+        'Known Protein coding'           => $colours->{'protein_coding_KNOWN'}[0],
+        'Novel Protein coding'           => $colours->{'protein_coding_NOVEL'}[0],
+        'Novel Processed transcript'     => $colours->{'processed_transcript_NOVEL'}[0],
+        'Putative Processed transcript'  => $colours->{'processed_transcript_PUTATIVE'}[0],
+        'Novel Pseudogene'               => $colours->{'pseudogene_NOVEL'}[0],
+        'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
+        'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
+        'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
+        'Novel Immunoglobulin segment'   => $colours->{'Ig_segment_NOVEL'}[0],
+        'Novel Immunoglobulin pseudogene'=> $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
+		]
+	  );
 }
 
+
 sub error_track_name { return 'Vega transcripts'; }
+
+
+=head2 format_obj_type
+
+  Arg [1]    : $self
+  Arg [2]    : transcript object
+  Arg [3]    : gene object
+  Example    : my $type = $self->format_obj_type($g,$t);
+  Description: retrieves status and biotype of a transcript, or failing that the parent gene, and formats it for display
+  Returntype : string
+
+=cut
+
+sub format_obj_type {
+	my ($self,$gene,$trans) = @_;
+	my ($status,$biotype);
+	if ($trans) {
+		$status = $trans->confidence()||$gene->confidence;
+		$biotype = $trans->biotype()||$gene->biotype();
+	} else {
+		$status = $gene->confidence;
+		$biotype = $gene->biotype();
+	}
+	$status = ucfirst(lc($status));
+	$biotype = ucfirst($biotype);
+	$biotype =~ s/_/ /g;
+	my $type = $status.' '.$biotype;
+    $type =~ s/HUMACE-//g;
+	return $type;
+}
 
 1;
 
