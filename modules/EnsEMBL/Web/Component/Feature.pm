@@ -133,7 +133,7 @@ sub spreadsheet_featureTable {
   foreach my $row ( @$data ) {
     my $contig_link = 'Unmapped';
     my $names       = '';
-    $contig_link = sprintf('<a href="/%s/contigview?c=%s:%d;w=%d;h=%s">%s:%d-%d(%d)',
+    $contig_link = sprintf('<a href="/%s/contigview?c=%s:%d;w=%d;h=%s">%s:%d-%d(%d)</a>',
       $object->species, $row->{'region'}, int( ($row->{'start'} + $row->{'end'} )/2 ), 
       $row->{'length'} + 1000, join( '|',split(/\s+/,$row->{'label'}),$row->{'extname'}), $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'strand'} 
     ) if $row->{'region'};
