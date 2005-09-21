@@ -1428,7 +1428,7 @@ sub restrict_between_reference_positions {
     my $this_ref_align_seq = $new_reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq (N's and gaps).
     ## Optimization: start looking from $excess_at_the_start from the start
     my $length_of_truncated_seq = 0;
-    while ($excess_at_the_start > 100) {
+    while ($excess_at_the_start > 0) {
       # Extracts the last $excess_at_the_end characters from the aligned_seq
       my $truncated_seq = substr($this_ref_align_seq, 0, $excess_at_the_start, "");
       # Count the num of nucleotides in the last $excess_at_the_end characters
@@ -1437,8 +1437,8 @@ sub restrict_between_reference_positions {
       $excess_at_the_start -= $num_of_nucl;
       $length_of_truncated_seq += CORE::length($truncated_seq);
     }
-    $this_ref_align_seq =~ s/(\-*([^\-]\-*){$excess_at_the_start})//;
-    $length_of_truncated_seq += CORE::length($1);
+#     $this_ref_align_seq =~ m/(\-*([^\-]\-*){$excess_at_the_start})/;
+#     $length_of_truncated_seq += CORE::length($1);
 
       
       
@@ -1452,11 +1452,13 @@ sub restrict_between_reference_positions {
       $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
       $genomic_align->cigar_line(); # build cigar_line according to fake aligned_seq
       $genomic_align->aligned_sequence(0); # unset the *fake* aligned sequence
-      $this_truncated_seq =~ s/\-//g;
+      my $this_length = ($this_truncated_seq =~ tr/\-/\-/);
+      $this_length = CORE::length($this_truncated_seq) - $this_length;
+#       $this_truncated_seq =~ s/\-//g;
       if ($genomic_align->dnafrag_strand == 1) {
-        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $this_length);
       } else {
-        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $this_length);
       }
     }
   }
@@ -1466,7 +1468,7 @@ sub restrict_between_reference_positions {
     ## Optimization: start looking from $excess_at_the_end from the end because
     ## the pattern match at the end of the string could be very slow
     my $length_of_truncated_seq = 0;
-    while ($excess_at_the_end > 100) {
+    while ($excess_at_the_end > 0) {
       # Extracts the last $excess_at_the_end characters from the aligned_seq
       my $truncated_seq = substr($this_ref_align_seq, -$excess_at_the_end, $excess_at_the_end, "");
       # Count the num of nucleotides in the last $excess_at_the_end characters
@@ -1475,8 +1477,8 @@ sub restrict_between_reference_positions {
       $excess_at_the_end -= $num_of_nucl;
       $length_of_truncated_seq += CORE::length($truncated_seq);
     }
-    $this_ref_align_seq =~ s/(\-*([^\-]\-*){$excess_at_the_end})$//;
-    $length_of_truncated_seq += CORE::length($1);
+#     $this_ref_align_seq =~ m/(\-*([^\-]\-*){$excess_at_the_end})$/;
+#     $length_of_truncated_seq += CORE::length($1);
 
     ## Truncate GenomicAlignBlock
     $new_reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
@@ -1490,11 +1492,12 @@ sub restrict_between_reference_positions {
       $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
       $genomic_align->cigar_line(); # build cigar_line according to fake aligned_seq
       $genomic_align->aligned_sequence(0); # unset the *fake* aligned sequence
-      $this_truncated_seq =~ s/\-//g;
+      my $this_length = ($this_truncated_seq =~ tr/\-/\-/);
+      $this_length = CORE::length($this_truncated_seq) - $this_length;
       if ($genomic_align->dnafrag_strand == 1) {
-        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - CORE::length($this_truncated_seq));
+        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $this_length);
       } else {
-        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + CORE::length($this_truncated_seq));
+        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $this_length);
       }
     }
   }
