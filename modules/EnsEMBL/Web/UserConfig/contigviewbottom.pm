@@ -9,7 +9,6 @@ my $reg = "Bio::EnsEMBL::Registry";
 
 sub init {
   my ($self ) = @_;
-
   $self->{'_das_offset'} = '5800';
 
   $self->{'_userdatatype_ID'} = 1;
@@ -31,7 +30,7 @@ sub init {
         matepairs   bacs  bac_bands  tilepath  tilepath2  bacends misc_bacends
         ruler     scalebar  stranded_contig
         sequence  codonseq  codons gap gcplot encode
-	encode_region fosmid_map
+	encode_region fosmid_map regulatory_regions
 
         restrict redbox),
     # qw( zfish_est ),
@@ -107,6 +106,7 @@ sub init {
          [ 'marker'          => 'Markers'       ],
          [ 'qtl'             => 'QTLs'     ],
          [ 'operon'          => 'Operon'      ],
+         [ 'regulatory_regions' => 'Regulatory Regions'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
 ### Other ###
@@ -246,6 +246,13 @@ sub init {
       'str' => 'b',
       'col' => 'darkgreen',
       'available'=> 'features ep1_s', 
+    },
+   'regulatory_regions' => {
+      'on'  => "off",
+      'pos' => '12',
+      'str' => 'b',
+      'col' => 'red',
+      'available'=> 'database_tables ENSEMBL_DB.regulatory_feature', 
     },
 
     'first_ef'   => {
@@ -544,7 +551,8 @@ sub init {
       'threshold_navigation' => '10000000',
       'outline_threshold'  => '350000'
     },
-    'encode' => {
+
+   'encode' => {
       'on' => 'on',
       'pos' => '8040',
       'colour' => 'salmon',
