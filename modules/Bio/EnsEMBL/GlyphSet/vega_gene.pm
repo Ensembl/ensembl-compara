@@ -44,7 +44,8 @@ sub gene_label {
 
 sub gene_col {
   my( $self, $g ) = @_;
-  ( my $type =  $g->type() ) =~ s/HUMACE-//;
+  my $type = $g->biotype.'_'.$g->confidence;
+  $type =~ s/HUMACE-//;
   return $type;
 }
 
