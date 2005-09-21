@@ -178,7 +178,7 @@ sub config_data {
 
   $form->add_element(
     'type'   => 'Information',
-    'value'  => qq(Accepted <a href="javascript:window.open('/Homo_sapiens/helpview?se=1&kw=karyoview#FileFormats', 'helpview', 'width=400,height=500,resizable,scrollbars'); void(0);">file formats</a>),
+    'value'  => qq(Accepted <a href="javascript:window.open('/Homo_sapiens/helpview?se=1;kw=karyoview#FileFormats', 'helpview', 'width=400,height=500,resizable,scrollbars'); void(0);">file formats</a>),
   );
   $form->add_element(
     'type'   => 'Text',
