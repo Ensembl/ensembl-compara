@@ -1,141 +1,4 @@
 #!/usr/local/bin/perl
-# date 10.5.04
-# check that the transcripts have stable ids in pep and cdna files
-
-=head1 NAME
-
-check_dump - health checks on dump directories
-
-=head1 SYNOPSIS
-
-check_dumps.pl --release <release_version_number> [options]
-
-Options:
-  --help, --info, --dumpdir --species, --database, --type
-
-Example:
- ./check_dump --release 29
-
-
-=head1 OPTIONS
-
-B<-h,--help>
-  Prints a brief help message and exits.
-
-B<-i,--info>
-  Prints man page and exits.
-
-B<--verbose>
-  Set verbosity level for debug output to stdout or logfile. Default 1
-
-B<--dumpdir>
-  Optional: Specifies root dumping directory. 
-  DEFAULT: /mysql/dumps/FTP
-
-B<--logfile>
-  Optional: Specify a log file for output
-  DEFAULT: Output to STDOUT
-
-B<--species>
-  Optional: One or more species to dump. 
-  DEFAULT: All.
-
-B<--mysql_dir>
-  Optional: Where the mysql databases are.  
-  DEFAULT: /mysql/current/var/
-
-B<--type>
-  Optional: Use if you only want to check a specific type of dump. 
-  DEFAULT: all types. See --info for more details
-
-B<--warn>
-  Optional: Print a warning on errors rather than die 
-  DEFAULT: Script dies on erros
-
-B<--size>
-  Optional: Print out of how much size (in Gigabytes) the fasta, mysql and flatfiles use
-  DEFAULT: No size evaluation
-
-
-=head1 DESCRIPTION
-
-B<This program:>
-
-Checks the mysql, fasta and flatfile dumps.
-
-Output may include the following:
-
-B<  [DIE*]:> Program critical error, dumps have halted.
-
-B<  [WARN]:> Program has encountered an error but is still running, 
-          dumps may have been affected.
-
-B<  [INFO]>: Non-critical message, dumping should continue as normal
-
-More on --type: Valid options are:
-
-If you want to check all the dumps (pep, cdna, dna, rna), mysql, and flatfile dumps, leave this option out.
-
-B<  fasta:> Check the fasta DNA, peptide, cDNA, and RNA files.
-
-B<  mysql:> Check the mysql dumps.
-
-B<  flatfiles:> Check the flatfile (embl/genbank) dumps.
-
-Maintained by Ensembl web team <webmaster@ensembl.org>
-
-=head1 CHECKS
-.Check there is a directory for every spp + multi+mart in /mysql/dumps/FTP
-
-B< Per species checks:>
-.Check there is an FTP BASE directory configured in the conf/species.ini file
-.Check the FTP BASE directory name matches the release version given with --release option
-.Check there is at least one file in each directories listed in ok_dirs (i.e. cdna, dna, pep, rna, genbank, embl directories)
-.Check files in the dir are not zero size
-.Check files are gzipped and have correct names
-.Check there are no files in the dir unless the directory is in $ok_files
-
-B< FASTA dumps:>
-.Check README is there
-.Check cdna dir has not more than 5 files
-.Check pep dir has not more than 4 files
-.Check rna dir has not more than 1 file
-.Check cdna contain DNA sequences [check first line has only ACGTN]
-.Check pep contain pep sequences [check first line has amino acid letters]
-
-DNA
-.check one file per chr [given chr in the species.ini file] 
-.check each chr has file for dna and dna_rm
-.Check seq level is there
-
-B< Flatfile dumps:>
-.Check EMBL and GENBANK dirs have same number of files
-.Check README is there
-.Check all files in the embl or genbank end in .dat.gz
-
-B< MySQL dumps:>
-.Check the num of dirs under mysql is the same as number configured
-.Check there is a core db configured for this species
-.Check mysql files are all gzipped [ file name matches .gz]
-.Check the *.sql.gz file contains the correct host and release version
-.Check the mysql dirs have checksum files and sql files
-
-Check there are 3 directories in /mysql/dumps/FTP/<species>/data
-Check there are 3 directories in /mysql/dumps/FTP/<species>/data/fasta
-Check there is 'embl' and 'genbank' under mysql/dumps/FTP/<species>/data/fasta/flatfile
-
-
-TODO: MYSQL
-contains only directories in /mysql/dumps/FTP/<species>/data/mysql
--list of db stored in /mysql/current/var
-ls | grep _22 >/ensweb/wwwdev/server/databases_22.txt
-- list of dumped files:
-find . | grep mysql/ | grep -v .gz > mysql_files
-
-
-=cut
-
-
 
 use strict;
 use warnings;
@@ -244,15 +107,21 @@ $mysql_db{"ensembl_web_user_db_$release"} = 1;
 $mysql_db{"ensembl_help_$release"} = 1;
 
 # Check each species ---------------------------------------------------------
+my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
+if ($sitedefs_release ne $release) {
+ die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
+}
+
 my @dir_list;
 foreach my $species (@SPECIES) {
   info (1, "Species: $species");
-  my $species_folder   = $SPECIES_DEFS->get_config($species,"ENSEMBL_FTP_BASEDIR");
+  my $base_dir = $SPECIES_DEFS->get_config($species,"ENSEMBL_FTP_BASEDIR");
+  my $sp_release = $SPECIES_DEFS->get_config($species,"SPECIES_RELEASE_VERSION") || "";
+  $sp_release =~ s/\.//g;
+  my $species_folder = "$base_dir-$release.$sp_release";
 
   # Checking FTP BASEDIR is configured correctly in $species.ini file
-  error("FTP_BASEDIR is not configured in conf/$species.ini. There is no species folder name.") unless $species_folder;
-  (my $ini_version = $species_folder ) =~ s/.+-(\d+).*/$1/;
-  error("Release version is $release. Folder name version is $ini_version ($species_folder).\n  Release numbers must be the same.") if $release != $ini_version;
+  error("FTP_BASEDIR is not configured in conf/$species.ini. There is no species folder name.") unless $base_dir;
 
   # Checking there is a directory for this species
   info(1, "Checking directory for this species exists");
@@ -730,3 +599,145 @@ sub calculate_size {
   }
   exit;
 }
+
+
+__END__
+
+# date 10.5.04
+# check that the transcripts have stable ids in pep and cdna files
+
+=head1 NAME
+
+check_dump - health checks on dump directories
+
+=head1 SYNOPSIS
+
+check_dumps.pl --release <release_version_number> [options]
+
+Options:
+  --help, --info, --dumpdir --species, --database, --type
+
+Example:
+ ./check_dump --release 29
+
+
+=head1 OPTIONS
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<--verbose>
+  Set verbosity level for debug output to stdout or logfile. Default 1
+
+B<--dumpdir>
+  Optional: Specifies root dumping directory. 
+  DEFAULT: /mysql/dumps/FTP
+
+B<--logfile>
+  Optional: Specify a log file for output
+  DEFAULT: Output to STDOUT
+
+B<--species>
+  Optional: One or more species to dump. 
+  DEFAULT: All.
+
+B<--mysql_dir>
+  Optional: Where the mysql databases are.  
+  DEFAULT: /mysql/current/var/
+
+B<--type>
+  Optional: Use if you only want to check a specific type of dump. 
+  DEFAULT: all types. See --info for more details
+
+B<--warn>
+  Optional: Print a warning on errors rather than die 
+  DEFAULT: Script dies on erros
+
+B<--size>
+  Optional: Print out of how much size (in Gigabytes) the fasta, mysql and flatfiles use
+  DEFAULT: No size evaluation
+
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Checks the mysql, fasta and flatfile dumps.
+
+Output may include the following:
+
+B<  [DIE*]:> Program critical error, dumps have halted.
+
+B<  [WARN]:> Program has encountered an error but is still running, 
+          dumps may have been affected.
+
+B<  [INFO]>: Non-critical message, dumping should continue as normal
+
+More on --type: Valid options are:
+
+If you want to check all the dumps (pep, cdna, dna, rna), mysql, and flatfile dumps, leave this option out.
+
+B<  fasta:> Check the fasta DNA, peptide, cDNA, and RNA files.
+
+B<  mysql:> Check the mysql dumps.
+
+B<  flatfiles:> Check the flatfile (embl/genbank) dumps.
+
+Maintained by Ensembl web team <webmaster@ensembl.org>
+
+=head1 CHECKS
+.Check there is a directory for every spp + multi+mart in /mysql/dumps/FTP
+
+B< Per species checks:>
+.Check there is an FTP BASE directory configured in the conf/species.ini file
+.Check the FTP BASE directory name matches the release version given with --release option
+.Check there is at least one file in each directories listed in ok_dirs (i.e. cdna, dna, pep, rna, genbank, embl directories)
+.Check files in the dir are not zero size
+.Check files are gzipped and have correct names
+.Check there are no files in the dir unless the directory is in $ok_files
+
+B< FASTA dumps:>
+.Check README is there
+.Check cdna dir has not more than 5 files
+.Check pep dir has not more than 4 files
+.Check rna dir has not more than 1 file
+.Check cdna contain DNA sequences [check first line has only ACGTN]
+.Check pep contain pep sequences [check first line has amino acid letters]
+
+DNA
+.check one file per chr [given chr in the species.ini file] 
+.check each chr has file for dna and dna_rm
+.Check seq level is there
+
+B< Flatfile dumps:>
+.Check EMBL and GENBANK dirs have same number of files
+.Check README is there
+.Check all files in the embl or genbank end in .dat.gz
+
+B< MySQL dumps:>
+.Check the num of dirs under mysql is the same as number configured
+.Check there is a core db configured for this species
+.Check mysql files are all gzipped [ file name matches .gz]
+.Check the *.sql.gz file contains the correct host and release version
+.Check the mysql dirs have checksum files and sql files
+
+Check there are 3 directories in /mysql/dumps/FTP/<species>/data
+Check there are 3 directories in /mysql/dumps/FTP/<species>/data/fasta
+Check there is 'embl' and 'genbank' under mysql/dumps/FTP/<species>/data/fasta/flatfile
+
+
+TODO: MYSQL
+contains only directories in /mysql/dumps/FTP/<species>/data/mysql
+-list of db stored in /mysql/current/var
+ls | grep _22 >/ensweb/wwwdev/server/databases_22.txt
+- list of dumped files:
+find . | grep mysql/ | grep -v .gz > mysql_files
+
+
+=cut
+
+
+

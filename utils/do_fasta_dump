@@ -1,123 +1,5 @@
 #!/usr/local/bin/perl
-# date 10.5.04
 
-=head1 NAME
-
-fasta_dumps.pl - Dump Ensembl databases to flatfiles and gzip them
-
-=head1 SYNOPSIS
-
-fasta_dumps.pl [options]
-
-Options:
-  --help, --info, --verbose, --dumpdir, --logfile,
-  --species, --database, --type
-
-Example:
- nohup time ./do_fasta_dump --species Caenorhabditis_briggsae --type all --release 23
-
-
-=head1 OPTIONS
-
-B<-h,--help>
-  Prints a brief help message and exits.
-
-B<-i,--info>
-  Prints man page and exits.
-
-B<-v,--verbose>
-  Set verbosity level for debug output to stdout or logfile. Default 1
-
-B<--dumpdir>
-  Specifies directory to dump into (def /mysql/dumps/FTP)
-
-B<--logfile>
-  Specifies a log file to output to (def STDOUT)
-
-B<-s, --species>
-  One or more species to dump.  Default: All species
-
-B<-d, --database>
-  One or more databases to dump (ENSEMBL_DB, ENSEMBL_VEGA etc.). 
-  Defaults to ENSEMBL_DB.
-
-B<--type>
-  One or more feature type to dump. See --info for more details
-
-B<--release>
-  The current Ensembl release number.  This is used to check the species ini file configufation.
-
-B<--nocompress>
-  Specify no gzip compression of dumped files.
-
-
-=head1 DESCRIPTION
-
-B<This program:>
-
-Dumps Ensembl databases to flatfiles.
-
-Output may include the following:
-
-B<  [DIE*]:> Program critical error, dumps have halted.
-
-B<  [WARN]:> Program has encountered an error but is still running, 
-          dumps may have been affected.
-
-B<  [INFO]>: Non-critical message, dumping should continue as normal.
-
-More on --type: Valid options are:
-
-B<  all:> dna_all, cdna_all, pep_all and rna_all
-
-B<  rna_all>; DNA sequences that give non-coding RNA (ncRNA) in the specified DB.
-
-B<  blast_all>; dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
-
-B<  dna_all:> dna_seqlevel, dna_seqlevel_masked, dna_toplevel and dna_toplevel__masked.
-
-B<  dna_seqlevel:> All DNA sequences at the 'seqlevel' coordinate system.
-
-B<  dna_seqlevel_masked:> The above, but repeatmasked.
-
-B<  dna_toplevel:> All DNA sequences at the 'toplevel' coordinate system.
-
-B<  dna_toplevel_masked:> The above, but repeatmasked.
-
-B<  cdna_all>; cdna, cdna_known, cdna_novel, cdna_psuedogenes, cdna_abinitio.
-
-B<  cdna>; cDNA sequences for Transcripts in the specified DB.
-
-B<  cdna_known>; cDNA sequences for Transcripts flagged as 'known'.
-
-B<  cdna_novel>; cDNA sequences for Transcripts flagged as 'novel'.
-
-B<  cdna_pseudo>; cDNA sequences for Transcripts flagged as 'pseudogene'.
-
-B<  cdna_known-ccds>; known cDNA sequences for Transcripts with an xref of 'CCDS'
-
-B<  cdna_abinitio>;  cDNA sequences for 'ab-initio' PredictionTranscripts.
-
-B<  pep_all>; pep_known, pep_novel and pep_abinitio
-
-B<  pep>; Peptide sequences for Transcripts in the specified DB.
-
-B<  pep_known>; Peptide sequences for Transcripts flagged as 'known'.
-
-B<  pep_novel>; Peptide sequences for Transcripts flagged as 'novel'.
-
-B<  pep_known-ccds>; Known peptide sequences for Transcripts with an xref of 'CCDS'
-
-B<  pep_abinitio>; Peptide sequences for 'ab-initio' PredictionTranscripts.
-
-
-
-Maintained by Ensembl web team <webmaster@ensembl.org>
-
-=cut
-
-
-####################### START #################################################
 use strict;
 use warnings;
 
@@ -154,7 +36,7 @@ $| = 1; # unbuffers STDOUT (issues print commands immediately)
 
 our $DUMPDIR;
 our $VERBOSITY;
-use constant DONT_DUMP => 0;
+use constant DONT_DUMP => 1;
 
 my $nocompress;
 my $quiet;
@@ -189,7 +71,7 @@ if ($logfile){
 
 $VERBOSITY = defined($VERBOSITY) ? $VERBOSITY: 1;
 $DUMPDIR   ||= "/mysql/dumps/FTP";
-
+if( ! @DATABASES ){ @DATABASES = "ENSEMBL_DB"; }
 
 # Check user chose valid types to dump (cdna_all, rna etc)
 my $types = check_types(\@TYPES);
@@ -207,29 +89,33 @@ $SPECIES_DEFS || pod2usage("$0: SpeciesDefs config not found");
 if (@SPECIES) {
   @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
 }
-else {  
+else {
   @SPECIES = @{ utils::Tool::all_species()};
 }
 
-# Collect and validate from config; DATA_TO_DUMP -----------------------------
-my %all_databases = ( 'ENSEMBL_DB'      => 'core',
-                            'ENSEMBL_ESTGENE' => 'estgene',
-                            'ENSEMBL_VEGA'    => 'vega', );
+# Check the ENSEMBL_VERSION is up to date and matchs user's request
+my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
+if ($sitedefs_release ne $release) {
+ die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
+}
 
-my %DATA_TO_DUMP;
+# Validate DUMPDIR
+info(1, "Dumping data to $DUMPDIR" );
+utils::Tool::check_dir($DUMPDIR);
+
+
+my %db_names = ( 'ENSEMBL_DB'      => 'core',
+                 'ENSEMBL_ESTGENE' => 'estgene',
+                 'ENSEMBL_VEGA'    => 'vega', );
+
+
+# For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
-  my %spp_databases = %{ $SPECIES_DEFS->get_config($sp,'databases') || {} };
-  # Find which ones of the 'all databases' are valid for that spp
-  my @all_databases = grep{ $all_databases{$_} } keys %spp_databases;
-
-  my @dbs = @DATABASES;  # user select databases or empty
-  if( ! @dbs ){ @dbs = "ENSEMBL_DB" }
-
   my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($sp, $SPECIES_DEFS);
-  my %databases;
-  foreach my $db( @dbs ){
-    my $db_key = $all_databases{$db};
-    my $db_adapt = $dbConnection->get_DBAdaptor($db_key) ||
+
+  my %DBAdaptors;
+  foreach my $db( @DATABASES ){
+    my $db_adapt = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
       ( warning( 1, "DB $db is not valid for $sp" ) && next );
 
     # Check the correct database version is being dumped
@@ -237,36 +123,18 @@ for my $sp( sort @SPECIES ){  # users selected spp
     die "[*DIE] You asked for Ensembl release $release but the species ini file is configured to use $dbname.\n" unless $dbname =~ /$release/;
 
     info( 1, "Adding $db to $sp" );
-    $DATA_TO_DUMP{$sp} ||= {};
-    $DATA_TO_DUMP{$sp}{$db} = $db_adapt;
+    $DBAdaptors{$db} = $db_adapt;
   }
-}
 
-# Validate DUMPDIR ------------------------------------------------------------
-info(1, "Dumping data to $DUMPDIR" );
-if( ! -e $DUMPDIR ){
-  info(1, "$DUMPDIR does not exist, creating" );
-  system("mkdir -p $DUMPDIR") == 0 or
-    pod2usage( "[*DIE] Cannot create $DUMPDIR: $!" );
-}
-if( ! -d $DUMPDIR ){ pod2usage("[*DIE] $DUMPDIR is not a directory" ) }
-if( ! -w $DUMPDIR ){ pod2usage("[*DIE] $DUMPDIR is not writable" ) }
+  foreach my $db( keys %DBAdaptors ){
 
-
-
-# Dump the data in DATA_TO_DUMP ----------------------------------------------
-foreach my $sp( sort keys %DATA_TO_DUMP ){
-  info( 1, "Starting dumps for $sp" );
-
-  my %databases = %{$DATA_TO_DUMP{$sp}};
-  foreach my $db( keys %databases ){
-    my $db_adaptor   = $databases{$db};
+    # Create directories and filehandles for dumps
+    my $db_adaptor   = $DBAdaptors{$db};
     my $cs_adaptor   = $db_adaptor->get_CoordSystemAdaptor;
-
-    # Create directories and filehandles for dumps --------------------------
     my $dna_dir;
     ($dna_dir, $types) = create_dirs_for_dumps($sp, $SPECIES_DEFS, $release,
 					       $types, $DUMPDIR, $cs_adaptor);
+
     # Do dumps
     my $created_files = &get_data($db_adaptor, $sp, $types, $dna_dir);
 
@@ -323,13 +191,11 @@ sub create_dirs_for_dumps {
   my ($sp, $SPECIES_DEFS, $release, $types, $DUMPDIR, $cs_adaptor) = @_;
 
   my %dumpdirs;
-  my $sp_folder = $SPECIES_DEFS->get_config($sp,"ENSEMBL_FTP_BASEDIR")|| $sp;
-
-  # Check the species folder is configured to dump the current API version
-  if ($sp_folder ne $sp) {
-    die "Database release version requested is $release but the species ini file is configured to use $sp_folder" if $sp_folder !~ /$release/;
-  }
-
+  my $base_dir = $SPECIES_DEFS->get_config($sp,"ENSEMBL_FTP_BASEDIR")||
+ $SPECIES_DEFS->get_config($sp,"SPECIES_COMMON_NAME");
+  my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
+  $sp_release =~ s/\.//g;
+  my $sp_folder = "$base_dir-$release.$sp_release";
 
   my ($highest_cs) = @{$cs_adaptor->fetch_all()};
   my $assembly     = $highest_cs->version();
@@ -1093,3 +959,124 @@ return ($warning .$text{$key});
 
 
 1;
+
+
+__END__
+
+# date 10.5.05
+
+=head1 NAME
+
+do_fasta_dumps - Dump Ensembl databases to text files and gzip them
+
+=head1 SYNOPSIS
+
+do_fasta_dumps [options]
+
+Options:
+  --help, --info, --verbose, --dumpdir, --logfile,
+  --species, --database, --type
+
+Example:
+ nohup time ./do_fasta_dump --type all --release 23
+
+
+=head1 OPTIONS
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<-v,--verbose>
+  Set verbosity level for debug output to stdout or logfile. Default 1
+
+B<--dumpdir>
+  Specifies directory to dump into (def /mysql/dumps/FTP)
+
+B<--logfile>
+  Specifies a log file to output to (def STDOUT)
+
+B<-s, --species>
+  One or more species to dump.  Default: All species
+
+B<-d, --database>
+  One or more databases to dump (ENSEMBL_DB, ENSEMBL_VEGA etc.). 
+  Defaults to ENSEMBL_DB.
+
+B<--type>
+  One or more feature type to dump. See --info for more details
+
+B<--release>
+  The current Ensembl release number.  This is used to check the species ini file configufation.
+
+B<--nocompress>
+  Specify no gzip compression of dumped files.
+
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Dumps Ensembl databases to flatfiles.
+
+Output may include the following:
+
+B<  [DIE*]:> Program critical error, dumps have halted.
+
+B<  [WARN]:> Program has encountered an error but is still running, 
+          dumps may have been affected.
+
+B<  [INFO]>: Non-critical message, dumping should continue as normal.
+
+More on --type: Valid options are:
+
+B<  all:> dna_all, cdna_all, pep_all and rna_all
+
+B<  rna_all>; DNA sequences that give non-coding RNA (ncRNA) in the specified DB.
+
+B<  blast_all>; dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
+
+B<  dna_all:> dna_seqlevel, dna_seqlevel_masked, dna_toplevel and dna_toplevel__masked.
+
+B<  dna_seqlevel:> All DNA sequences at the 'seqlevel' coordinate system.
+
+B<  dna_seqlevel_masked:> The above, but repeatmasked.
+
+B<  dna_toplevel:> All DNA sequences at the 'toplevel' coordinate system.
+
+B<  dna_toplevel_masked:> The above, but repeatmasked.
+
+B<  cdna_all>; cdna, cdna_known, cdna_novel, cdna_psuedogenes, cdna_abinitio.
+
+B<  cdna>; cDNA sequences for Transcripts in the specified DB.
+
+B<  cdna_known>; cDNA sequences for Transcripts flagged as 'known'.
+
+B<  cdna_novel>; cDNA sequences for Transcripts flagged as 'novel'.
+
+B<  cdna_pseudo>; cDNA sequences for Transcripts flagged as 'pseudogene'.
+
+B<  cdna_known-ccds>; known cDNA sequences for Transcripts with an xref of 'CCDS'
+
+B<  cdna_abinitio>;  cDNA sequences for 'ab-initio' PredictionTranscripts.
+
+B<  pep_all>; pep_known, pep_novel and pep_abinitio
+
+B<  pep>; Peptide sequences for Transcripts in the specified DB.
+
+B<  pep_known>; Peptide sequences for Transcripts flagged as 'known'.
+
+B<  pep_novel>; Peptide sequences for Transcripts flagged as 'novel'.
+
+B<  pep_known-ccds>; Known peptide sequences for Transcripts with an xref of 'CCDS'
+
+B<  pep_abinitio>; Peptide sequences for 'ab-initio' PredictionTranscripts.
+
+
+
+Maintained by Ensembl web team <webmaster@ensembl.org>
+
+=cut
+

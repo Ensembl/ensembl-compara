@@ -7,6 +7,7 @@ use FindBin qw($Bin);
 use File::Basename qw( dirname );
 use DBI;
 use Time::localtime;
+use File::Path;
 
 use vars qw( $SERVERROOT );
 our $VERBOSITY = 1;
@@ -18,7 +19,7 @@ BEGIN {
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;  
 }
-require SpeciesDefs;
+require EnsEMBL::Web::SpeciesDefs; 
 
 #----------------------------------------------------------------------
 
@@ -37,6 +38,32 @@ sub all_species {
 }
 
 #----------------------------------------------------------------------
+
+=head 2 check_dir
+
+  Arg[1]     : directory name and path
+  Example    : utils::Tool::check_dir($dir);
+  Description: checks to see if directory exists. If yes, returns, if no, 
+               it creates all the necessary directories in the path for the 
+               directory to exist
+  Return type: 1
+
+=cut
+
+sub check_dir {
+  my $dir = shift;
+  if( ! -e $dir ){
+    info(1, "Creating $dir" );
+    eval { mkpath($dir) };
+    if ($@) {
+      print "Couldn't create $dir: $@";
+    }
+  }
+  return 1;
+}
+
+#------------------------------------------------------------------------
+
 =head2 check_species
 
   Arg1        : arrayref of species to check
@@ -209,7 +236,7 @@ sub site_logo {
 =cut
 
 sub species_defs {
-  my $SPECIES_DEFS = SpeciesDefs->new;
+  my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); 
   $SPECIES_DEFS || pod2usage("$0: SpeciesDefs config not found");
   return $SPECIES_DEFS;
 }

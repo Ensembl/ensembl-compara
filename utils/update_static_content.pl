@@ -1,87 +1,5 @@
 #!/usr/local/bin/perl
 
-=head1 SYNOPSIS
-
-update_static_content.pl [options]
-
-Options:
-  --help, --info, --species --update
-
-B<-h,--help>
-  Prints a brief help message and exits.
-
-B<-i,--info>
-  Prints man page and exits.
-
-B<-s, --species>
-  Species to dump
-
-B<--site_type>
-  Optional.  Default is main site.  Use this to set type to 'mirror' or 'archive' or 'pre'. 
- 
-B<--update>
-  What to update
-
-e.g.
-   ./update_static_content.pl --species Tetraodon_nigroviridis --update new_release --site_type mirror
-
-=head1 DESCRIPTION
-
-B<This program:>
-
-Updates the static content for the website
-
-=head1 OPTIONS
-
-More on --update: Valid options are:
-
-B< new_species:>
-   Use the -site_type 'pre' flag if you are setting up pre.
-
-   Runs generic_species_homepage, SSI (SSIabout, SSIexample, SSIentry),
-   downloads, species_table
-
-B< archive: >
-    Runs copy_species_table and assembly_table
-
-B<  generic_species_homepage:>;
-    Creates a generic homepage as a first pass for the species.  
-    This file needs /$species/ssi/stats.html too.  
-    Run stats script separately.
-    You need to create a file: htdocs/$species/ssi/karyotype.html 
-    if the species has chromosomes
-
-B<  downloads:>; 
-    Creates a new FTP downloads section (htdocs/info/data/download_links.inc)
-    If the site-type is archive, the links are to the versionned directories.
-    If the site-type is main, the links are to current-species directories.
-
-B<  SSI:>; 
-    Creates a new ssi/about.html page template
-    Creates a new ssi/examples.html page template
-    Creates a new ssi/entry.html drop down form for entry points
-
-B<  species_table:>; 
-    Creates a first pass at the home page species table:
-    htdocs/ssi/species_table.html
-
-
-B< copy_species_table:>
-   simply copies: $SERVERROOT/public-plugins/ensembl/htdocs/ssi/species_table.html to $SERVERROOT/sanger-plugins/archive/htdocs/ssi/species_table.html
-
-B< assembly_table>;
-    Updates htdocs/Docs/archive/homepage_SSI/assembly_table.html or 
-    creates new one.  This file is included in htdocs/Docs/assemblies.html 
-    and lists all the archived sites and which assemblies they show.
-
-B< branch_versions:>
-   Creates a new page with updated versions for the current cvs branch
-   (i.e. for the API, webcode etc)
-
-    Maintained by Fiona Cunningham <fc1@sanger.ac.uk>
-
-=cut
-
 use strict;
 use warnings;
 use Carp;
@@ -103,6 +21,7 @@ BEGIN{
 use utils::Tool;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::SpeciesDefs;
+require SiteDefs;
 my $SD = EnsEMBL::Web::SpeciesDefs->new;
 
 our $VERBOSITY = 1;
@@ -122,10 +41,12 @@ my @UPDATES;
 pod2usage(-verbose => 2) if $info;
 pod2usage(1) if $help;
 
+
 # Test validity of update requests ------------------------------------------
 @UPDATES or  pod2usage("[*DIE] Need an update argument" );
 my %updates = %{ check_types(\@UPDATES) };
 
+my $version =   $SiteDefs::ENSEMBL_VERSION;
 
 # Only do once
 if ($updates{species_table} ) {
@@ -133,7 +54,7 @@ if ($updates{species_table} ) {
   delete $updates{species_table};
 }
 if ($updates{downloads} ) {
-  downloads($SERVERROOT);
+  downloads($SERVERROOT, $version);
   delete $updates{downloads};
 }
 if ( $updates{assembly_table} ) {
@@ -154,18 +75,14 @@ if (@species) {
   @species = @{ utils::Tool::all_species()};
 }
 
+info ("Using Ensembl root $SERVERROOT");
+info ("Version from ini file is $version");
+
 # Species specific ones
 foreach my $sp (@species) {
-  my $version_ini = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_FTP_BASEDIR"})|| $sp;
+  info ("Using Ensembl species $sp");
   my $common_name = utils::Tool::get_config({species =>$sp, values => "SPECIES_COMMON_NAME"})|| $sp;
   my $chrs        = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_CHROMOSOMES"});
-
-  my @search      = utils::Tool::get_config({species =>$sp, values => "ENSEMBL_SEARCH_IDXS"});
-  $version_ini    =~ s/(\w+)-//;
-
-  info ("Using Ensembl root $SERVERROOT");
-  info ("Using Ensembl species $sp");
-  info ("Version from ini file is $version_ini");
 
   if ($updates{generic_species_homepage} ) { # KEEP!
     generic_species_homepage($SERVERROOT, $common_name, $sp, $chrs);
@@ -549,14 +466,16 @@ sub SSIkaryomap {
 #############################################################################
 sub downloads {
   my $dir = shift;
+  my $version = shift;
   return if $site_type eq 'pre';
-  do_downloads("$dir/sanger-plugins/archive", "archive");
-  do_downloads("$dir", 0);
+  do_downloads("$dir/sanger-plugins/archive", $version, "archive");
+  do_downloads("$dir", $version, 0);
   return;
 }
 #----------------------------------------------------------------------------
 sub do_downloads {
   my $dir     = shift;
+  my $version = shift;
   my $archive = shift;
   &check_dir($dir);
   $dir .= "/htdocs/info/data";
@@ -580,7 +499,10 @@ sub do_downloads {
 );
 
   foreach my $spp (@{[@{ utils::Tool::all_species()}] }) {
-    my $version_ini = utils::Tool::get_config({species =>$spp, values => "ENSEMBL_FTP_BASEDIR" });
+    my $base_dir = utils::Tool::get_config({ species=>$spp, values => "ENSEMBL_FTP_BASEDIR"}) || lc(utils::Tool::get_config({ species=>$spp, values => "SPECIES_COMMON_NAME"})) ;
+    my $sp_release = utils::Tool::get_config( { species=>$spp, values => "SPECIES_RELEASE_VERSION" });
+    $sp_release =~ s/\.//g;
+    my $sp_dir = "$base_dir-$version.$sp_release";
     my $description = utils::Tool::get_config({species =>$spp, values => "SPECIES_DESCRIPTION" });   
     my $common = lc(utils::Tool::get_config({species =>$spp, values => "SPECIES_COMMON_NAME" }));
     $common = 'mosquito' if $common eq 'anopheles';
@@ -589,7 +511,7 @@ sub do_downloads {
     $common = 'ciona' if $common eq 'c.intestinalis';
     $common =~ s/\.//;
     $common =~ s/fruit//;
-    my $url = $archive ? $version_ini : "current_".$common;
+    my $url = $archive ? $sp_dir : "current_".$common;
     $spp =~ s/_/ /;
     print NEW qq(
 <tr>
@@ -728,4 +650,88 @@ sub branch_versions {
   return;
 }
 
+
+__END__
+
+=head1 SYNOPSIS
+
+update_static_content.pl [options]
+
+Options:
+  --help, --info, --species --update
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<-s, --species>
+  Species to dump
+
+B<--site_type>
+  Optional.  Default is main site.  Use this to set type to 'mirror' or 'archive' or 'pre'. 
+ 
+B<--update>
+  What to update
+
+e.g.
+   ./update_static_content.pl --species Tetraodon_nigroviridis --update new_release --site_type mirror
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Updates the static content for the website
+
+=head1 OPTIONS
+
+More on --update: Valid options are:
+
+B< new_species:>
+   Use the -site_type 'pre' flag if you are setting up pre.
+
+   Runs generic_species_homepage, SSI (SSIabout, SSIexample, SSIentry),
+   downloads, species_table
+
+B< archive: >
+    Runs copy_species_table and assembly_table
+
+B<  generic_species_homepage:>;
+    Creates a generic homepage as a first pass for the species.  
+    This file needs /$species/ssi/stats.html too.  
+    Run stats script separately.
+    You need to create a file: htdocs/$species/ssi/karyotype.html 
+    if the species has chromosomes
+
+B<  downloads:>; 
+    Creates a new FTP downloads section (htdocs/info/data/download_links.inc)
+    If the site-type is archive, the links are to the versionned directories.
+    If the site-type is main, the links are to current-species directories.
+
+B<  SSI:>; 
+    Creates a new ssi/about.html page template
+    Creates a new ssi/examples.html page template
+    Creates a new ssi/entry.html drop down form for entry points
+
+B<  species_table:>; 
+    Creates a first pass at the home page species table:
+    htdocs/ssi/species_table.html
+
+
+B< copy_species_table:>
+   simply copies: $SERVERROOT/public-plugins/ensembl/htdocs/ssi/species_table.html to $SERVERROOT/sanger-plugins/archive/htdocs/ssi/species_table.html
+
+B< assembly_table>;
+    Updates htdocs/Docs/archive/homepage_SSI/assembly_table.html or 
+    creates new one.  This file is included in htdocs/Docs/assemblies.html 
+    and lists all the archived sites and which assemblies they show.
+
+B< branch_versions:>
+   Creates a new page with updated versions for the current cvs branch
+   (i.e. for the API, webcode etc)
+
+    Maintained by Fiona Cunningham <fc1@sanger.ac.uk>
+
+=cut
 

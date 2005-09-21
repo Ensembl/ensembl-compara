@@ -1,59 +1,5 @@
 #!/usr/local/bin/perl
 
-=head1 NAME
-
-do_mysql_dump - Dump Ensembl databases to flatfiles
-
-=head1 SYNOPSIS
-
-do_mysql_dump [options]
-
-Options:
-  --help, --info, --species, --database, --verbose, --logfile --dumpdir
-  --no_data  --no_zip
-
-=head1 OPTIONS
-
-B<-h,--help>
-  Prints a brief help message and exits.
-
-B<-i,--info>
-  Prints man page and exits.
-
-B<-v,--verbose>
-  Prints verbose debug output to stdout or logfile.
-
-B<--species>
-  One or more species to dump.
-
-B<--database>
-  One or more databases to dump (ENSEMBL_DB, ENSEMBL_EST etc)
-  All DBs in config (not in kill list) will be dumped if omitted.
-
-B<--dumpdir>
-  Specifies directory to dump into (default /mysql/dumps/FTP). 
-  The directory must be the full path (i.e. start with "/")
-
-B<--logfile>
-  Specifies a log file to output to (default STDOUT)
-
-B<--no_data>
-   Only dump the sql files.  No data
-
-B<--no_zip>
-   Default is to gzip all files.  This options turns it off.
-
-
-=head1 DESCRIPTION
-
-B<This program:>
-
-Dumps Ensembl databases to flatfiles.  
-
-Maintained by Ensembl web team <webmaster@ensembl.org>
-
-=cut
-
 use strict;
 use warnings;
 
@@ -229,12 +175,18 @@ if( ! scalar( %DATA_TO_DUMP ) ){
 
 
 # Dump the data in DATA_TO_DUMP -----------------------------------------------
+my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
+
 foreach my $sp( sort keys %DATA_TO_DUMP ){
  # warn Data::Dumper::Dumper(%DATA_TO_DUMP);
   info( 1, "Starting dumps for $sp" );
 
   # Work out dumpdir ---------------------------------------------------------
-  my $sp_dir =$species_defs->get_config($sp,"ENSEMBL_FTP_BASEDIR") || $sp;
+  my $base_dir = utils::Tool::get_config({ species=>$sp, values => "ENSEMBL_FTP_BASEDIR"} )|| $sp;
+  my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
+  $sp_release =~ s/\.//g;
+  my $sp_dir = "$base_dir-$sitedefs_release.$sp_release";
+  #  my $sp_dir =$species_defs->get_config($sp,"ENSEMBL_FTP_BASEDIR") || $sp;
   my @sp_dumpdirs  = "$dumpdir/$sp_dir/data/mysql";
   my $version;
 
@@ -244,11 +196,7 @@ foreach my $sp( sort keys %DATA_TO_DUMP ){
    }
 
   foreach my $sp_dumpdir (@sp_dumpdirs) {
-    if( ! -e $sp_dumpdir ){
-      info(1, "Creating $sp_dumpdir" );
-      system("mkdir -p $sp_dumpdir") == 0 or
-	( warning( 1, "Cannot create $sp_dumpdir: $!" ) && next );
-    }
+    utils::Tool::check_dir($sp_dumpdir );
     if( ! -d $sp_dumpdir ){ 
       warning("$sp_dumpdir is not a directory" ) && next;
     }
@@ -473,4 +421,60 @@ sub PRINT {
 
 
 1;
+
+__END__
+
+=head1 NAME
+
+do_mysql_dump - Dump Ensembl databases to flatfiles
+
+=head1 SYNOPSIS
+
+do_mysql_dump [options]
+
+Options:
+  --help, --info, --species, --database, --verbose, --logfile --dumpdir
+  --no_data  --no_zip
+
+=head1 OPTIONS
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<-v,--verbose>
+  Prints verbose debug output to stdout or logfile.
+
+B<--species>
+  One or more species to dump.
+
+B<--database>
+  One or more databases to dump (ENSEMBL_DB, ENSEMBL_EST etc)
+  All DBs in config (not in kill list) will be dumped if omitted.
+
+B<--dumpdir>
+  Specifies directory to dump into (default /mysql/dumps/FTP). 
+  The directory must be the full path (i.e. start with "/")
+
+B<--logfile>
+  Specifies a log file to output to (default STDOUT)
+
+B<--no_data>
+   Only dump the sql files.  No data
+
+B<--no_zip>
+   Default is to gzip all files.  This options turns it off.
+
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Dumps Ensembl databases to flatfiles.  
+
+Maintained by Ensembl web team <webmaster@ensembl.org>
+
+=cut
 

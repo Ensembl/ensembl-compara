@@ -1,91 +1,5 @@
 #!/usr/local/bin/perl 
 
-# this script should dump the sequence and features of the genome in chunks less than  $maxsize. It tries not to break genes.
-# It gets gene positions from lite database
-
-=head1 NAME
-
-chunkdump.pl - Dump Ensembl genes to embl or genbank flatfiles
-
-=head1 SYNOPSIS
-
-chunkdump.pl [options]
-
-Options:
-  --help, --info, --verbose, --species, --format, --maxsize,
-  --logfile, --dumpdir, --nobundle --readme_only
-
-E.g.: time ./chunkdump.pl --species Anopheles_gambiae --logfile anopheles_chunk.log
-
-If no species are specified, all species are done.
-
-=head1 OPTIONS
-
-B<-h,--help>
-  Prints a brief help message and exits.
-
-B<-i,--info>
-  Prints man page and exits.
-
-B<-v,--verbose>
-  Prints verbose debug output to stdout or logfile.
-
-B<-s, --species>
- Optional: Species to dump. 
- DEFAULT: All configured species
-
-B<--format>
-  Optional: Specifies the format to dump the flatfiles.(EMBL or Genbank)
-  Default: Both
-
-B<--maxsize>
-  Optional: Specifies the max size of the FTP files and splits them 
-  if there are too large. 
-  Default is '1000000'
-
-B<--logfile>
-  Optional: Specifies a logfile to print output to.  
-  DEFAULT: print to STDOUT.
-
-B<--dumpdir>
-  Optional: Specifies the dump directory. 
-  DEFAULT /mysql/dumps/FTP/<species>.
-
-B<--nobundle>
-  Optional: Flag to _prevent_ bundling dumps into gzipped FTP site files.
-
-B<--readme_only>
-  Optional: Flag to generate the README files but not actually run the dumps
-
-=head1 DESCRIPTION
-
-B<This program:>
-
-Dumps Ensembl genes to embl or genbank flatfiles.  
-
- This program dumps the transcript to embl or genbank files and bundles them
- into file(s) for the FTP directory.  Does not dump repeats.
- 
- Program logs contain 3 main error/waringings:
-
-Output may include the following:
-
-B<  [DIE*]:> Program critical error, dumps have halted.
-
-B<  [WARN]:> Program has encountered an error but is still running, 
-          dumps may have been affected.
-
-B<  [INFO]>: Non-critical message, dumping should continue as normal.
-
- Any other messages with out the above prefixes is verbose information.
- If a error log file is not requested these messages are output to stdout.
-
-Maintained by Ensembl web team <webmaster@ensembl.org>
-
-=cut
-
-
-####################### START #################################
 use strict;
 use Carp ();
 use Compress::Zlib;
@@ -148,7 +62,6 @@ my $time1 = time;
 $dumpdir ||= "/mysql/dumps/FTP";
 $VERBOSITY ||= 1;
 require SiteDefs;
-#require EnsWeb;
 require EnsEMBL::Web::SpeciesDefs;
 require Bio::EnsEMBL::Utils::SeqDumper;
 require EnsEMBL::Web::DBSQL::DBConnection;
@@ -161,16 +74,18 @@ if ($logfile){
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 
-
+my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 foreach my $spp (@species){
   foreach my $format (@formats){
     $spp = ucfirst(lc($spp));
     $ENV{'ENSEMBL_SPECIES'} = $spp;
+    info(1, "species = $spp $format");
 
-    info(1, "species = $spp");
-    print STDERR join ', ', @formats ,"formats \n";
-
-    my $spp_dir =$SPECIES_DEFS->get_config($spp,"ENSEMBL_FTP_BASEDIR") or $spp;
+    my $base_dir = $SPECIES_DEFS->get_config($spp,"ENSEMBL_FTP_BASEDIR")|| $spp;
+    my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
+    $sp_release =~ s/\.//g;
+    my $spp_dir = "$base_dir-$sitedefs_release.$sp_release";
+    #my $spp_dir =$SPECIES_DEFS->get_config($spp,"ENSEMBL_FTP_BASEDIR") or $spp;
     my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
 
     unless (-d "$spp_dumpdir"){
@@ -616,3 +531,91 @@ access if you want to do something serious with the data.
 }
 #----------------------------------------------------------------------------
 1;
+
+__END__
+
+# this script should dump the sequence and features of the genome in chunks less than  $maxsize. It tries not to break genes.
+# It gets gene positions from lite database
+
+=head1 NAME
+
+chunkdump.pl - Dump Ensembl genes to embl or genbank flatfiles
+
+=head1 SYNOPSIS
+
+chunkdump.pl [options]
+
+Options:
+  --help, --info, --verbose, --species, --format, --maxsize,
+  --logfile, --dumpdir, --nobundle --readme_only
+
+E.g.: time ./chunkdump.pl --species Anopheles_gambiae --logfile anopheles_chunk.log
+
+If no species are specified, all species are done.
+
+=head1 OPTIONS
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<-v,--verbose>
+  Prints verbose debug output to stdout or logfile.
+
+B<-s, --species>
+ Optional: Species to dump. 
+ DEFAULT: All configured species
+
+B<--format>
+  Optional: Specifies the format to dump the flatfiles.(EMBL or Genbank)
+  Default: Both
+
+B<--maxsize>
+  Optional: Specifies the max size of the FTP files and splits them 
+  if there are too large. 
+  Default is '1000000'
+
+B<--logfile>
+  Optional: Specifies a logfile to print output to.  
+  DEFAULT: print to STDOUT.
+
+B<--dumpdir>
+  Optional: Specifies the dump directory. 
+  DEFAULT /mysql/dumps/FTP/<species>.
+
+B<--nobundle>
+  Optional: Flag to _prevent_ bundling dumps into gzipped FTP site files.
+
+B<--readme_only>
+  Optional: Flag to generate the README files but not actually run the dumps
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Dumps Ensembl genes to embl or genbank flatfiles.  
+
+ This program dumps the transcript to embl or genbank files and bundles them
+ into file(s) for the FTP directory.  Does not dump repeats.
+ 
+ Program logs contain 3 main error/waringings:
+
+Output may include the following:
+
+B<  [DIE*]:> Program critical error, dumps have halted.
+
+B<  [WARN]:> Program has encountered an error but is still running, 
+          dumps may have been affected.
+
+B<  [INFO]>: Non-critical message, dumping should continue as normal.
+
+ Any other messages with out the above prefixes is verbose information.
+ If a error log file is not requested these messages are output to stdout.
+
+Maintained by Ensembl web team <webmaster@ensembl.org>
+
+=cut
+
+
