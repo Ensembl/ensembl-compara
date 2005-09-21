@@ -1449,21 +1449,35 @@ sub restrict_between_reference_positions {
       
     ## Truncate all the GenomicAligns
     foreach my $genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
-      my $aligned_sequence = $genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
-      my $this_truncated_seq = substr($aligned_sequence, 0, $length_of_truncated_seq);
-      substr($aligned_sequence, 0, $length_of_truncated_seq, "");
-      $genomic_align->aligned_sequence($aligned_sequence);
-      $genomic_align->original_sequence(0); # unset original_sequence
-      $genomic_align->cigar_line(0); # unset cigar_line (will be build using the new fake aligned_sequence)
-      $genomic_align->cigar_line(); # build cigar_line according to fake aligned_seq
-      $genomic_align->aligned_sequence(0); # unset the *fake* aligned sequence
-      my $this_length = ($this_truncated_seq =~ tr/\-/\-/);
-      $this_length = CORE::length($this_truncated_seq) - $this_length;
-#       $this_truncated_seq =~ s/\-//g;
+      my $aligned_seq_length = 0;
+      my $original_seq_length = 0;
+      my $new_cigar_line = "";
+      my @cigar = grep {$_} split(/(\d*[DIGM])/, $genomic_align->cigar_line);
+      while (my $cigar = shift(@cigar)) {
+        my ($num, $type) = ($cigar =~ /^(\d*)([DIGM])/);
+        $num = 1 if ($num eq "");
+        $aligned_seq_length += $num;
+        if ($aligned_seq_length >= $length_of_truncated_seq) {
+          my $length = $aligned_seq_length - $length_of_truncated_seq;
+          if ($length > 1) {
+            $new_cigar_line = $length.$type;
+          } elsif ($length == 1) {
+            $new_cigar_line = $type;
+          }
+          $new_cigar_line .= join("", @cigar);
+          if ($type eq "M") {
+            $original_seq_length += $length_of_truncated_seq - ($aligned_seq_length - $num);
+          }
+          last;
+        }
+        $original_seq_length += $num if ($type eq "M");
+      }
+      $genomic_align->aligned_sequence(0);
+      $genomic_align->cigar_line($new_cigar_line);
       if ($genomic_align->dnafrag_strand == 1) {
-        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $this_length);
+        $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $original_seq_length);
       } else {
-        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $this_length);
+        $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $original_seq_length);
       }
     }
   }
