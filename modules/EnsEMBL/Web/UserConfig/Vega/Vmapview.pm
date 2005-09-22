@@ -12,7 +12,7 @@ sub init {
     $self->{'_band_labels'}     = 'on';
     $self->{'_image_height'}    = 450;
     $self->{'_top_margin'}      = 40;
-    $self->{'_spacing'}		= 8; # spacing between lanes in ideogram
+    $self->{'_spacing'}		= 6; # spacing between lanes in ideogram
     $self->{'_band_links'}      = 'yes';
     $self->{'_userdatatype_ID'} = 109;
 
@@ -20,15 +20,16 @@ sub init {
 	'_artefacts'   => [qw(
             Vannotation_status_left
             Vannotation_status_right
-	    Vannot_known 
-	    Vannot_cds 
-	    Vannot_novel_trans 
-	    Vannot_ig_and_ig_pseudo 
-	    Vannot_predicted_and_putative
-	    Vannot_pseudo_and_poly
+    	    Vannot_known 
+    	    Vannot_cds 
+	        Vannot_novel_trans 
+    	    Vannot_ig_and_ig_pseudo 
+	        Vannot_predicted
+			Vannot_putative
+	        Vannot_pseudo_and_poly
             Vsnps
-	    Vpercents
-	    Videogram
+	        Vpercents
+    	    Videogram
 	)],
 
 	'_options'   => [],
@@ -83,9 +84,9 @@ sub init {
 	    'pos' => '11',
 	    'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => [qw(Known)],
-            'colour' => [qw(Known)],
-	    'logicname' => [qw(knownGeneDensity)],
+            'label' => ["Known","Prot. cod."],
+            'colour' => [qw(protein_coding_KNOWN protein_coding_KNOWN)],
+    	    'logicname' => [qw(knownGeneDensity)],
 	},
 
 	'Vannot_cds' => {
@@ -93,9 +94,9 @@ sub init {
 	    'pos' => '12',
 	    'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => [qw(Novel CDS)],
-            'colour' => [qw(Novel_CDS Novel_CDS)],
-	    'logicname' => [qw(novelCDSDensity)],
+            'label' => ["Novel","Prot. cod."],
+            'colour' => [qw(protein_coding_NOVEL protein_coding_NOVEL)],
+    	    'logicname' => [qw(novelCDSDensity)],
 	},
 
 	'Vannot_novel_trans' => {
@@ -103,9 +104,9 @@ sub init {
 	    'pos' => '13',
 	    'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => [qw(Novel trans.)],
-            'colour' => [qw(Novel_Transcript Novel_Transcript)],
-	    'logicname' => [qw(novelTransDensity)],
+            'label' => ["Novel","Proc. trans."],
+            'colour' => [qw(processed_transcript_NOVEL processed_transcript_NOVEL)],
+    	    'logicname' => [qw(novelTransDensity)],
 	},	
 		     
 	'Vannot_ig_and_ig_pseudo' => {
@@ -114,28 +115,37 @@ sub init {
 	    'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
             'label' => ["Ig Segment", "Ig Pseudo Seg."],
-            'colour' => [qw(Ig_Segment Ig_Pseudogene_Segment)],
-	    'logicname' => [qw(IgSegDensity IgPseudoSegDensity)],
+            'colour' => [qw(Ig_segment_NOVEL Ig_pseudogene_segment_NOVEL)],
+    	    'logicname' => [qw(IgSegDensity IgPseudoSegDensity)],
 	},
       
-	'Vannot_predicted_and_putative' => {
+	'Vannot_predicted' => {
 	    'on' => 'on',
 	    'pos' => '15',
 	    'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => [qw(Putative Predicted)],
-            'colour' => [qw(Putative Predicted_Gene)],
-	    'logicname' => [qw(putativeTransDensity predictedTransDensity)],
+            'label' => ["Put.","Proc. trans."],
+            'colour' => [qw(processed_transcript_PUTATIVE processed_transcript_PUTATIVE)],
+    	    'logicname' => [qw(putativeTransDensity)],
 	},
 
-	'Vannot_pseudo_and_poly' => {
+	'Vannot_putative' => {
 	    'on' => 'on',
 	    'pos' => '16',
 	    'width' => 40,
             'glyphset' => 'Vgenedensity_vega',
-            'label' => [qw(Pseudo)],
-            'colour' => [qw(Pseudogene)],
-	    'logicname' => [qw(pseudoGeneDensity)],
+            'label' => ["Pred.","Prot. cod."],
+            'colour' => [qw(protein_coding_PREDICTED protein_coding_PREDICTED)],
+    	    'logicname' => [qw(predictedTransDensity)],
+	},
+	'Vannot_pseudo_and_poly' => {
+	    'on' => 'on',
+	    'pos' => '17',
+	    'width' => 40,
+            'glyphset' => 'Vgenedensity_vega',
+            'label' => [qw(Pseudos)],
+            'colour' => [qw(pseudogene_NOVEL)],
+    	    'logicname' => [qw(pseudoGeneDensity)],
 	},
 
 	'Vpercents' => {
