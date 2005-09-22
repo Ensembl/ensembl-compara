@@ -2,7 +2,6 @@ package EnsEMBL::Web::UserConfig::Vega::contigviewbottom;
 use strict;
 no strict 'refs';
 use EnsEMBL::Web::UserConfig;
-use EnsWeb;
 use vars qw(@ISA);
 use  Bio::EnsEMBL::Registry;
 my $reg = "Bio::EnsEMBL::Registry";
@@ -23,13 +22,13 @@ sub init {
 ## Only features whose key is in this array gets displayed as a track....
            qw( blast blast_new ssaha ),
            qw( mod preliminary info tp32k assemblyexception annotation_status
-             polyA_site polyA_signal
+             polyA_site polyA_signal pseudo_polyA
              
              repeat_lite snp_lite haplotype 
-             trna   cpg eponine marker operon rnai ex_profile qtl
+             refseq_mouse trna   cpg eponine marker operon rnai ex_profile qtl
              first_ef
 
-             ensemblclones
+             ensemblclones assembly_tag
              matepairs   bacs  bac_bands  tilepath  tilepath2  bacends
              ruler     scalebar  stranded_contig  
              sequence  codonseq  codons gap gcplot    
@@ -116,7 +115,9 @@ sub init {
                  [ 'ex_profile'      => 'Exp. profile'    ],
                  [ 'polyA_site'          => 'PolyA sites'        ],
                  [ 'polyA_signal'        => 'PolyA signals'        ],
+                 [ 'pseudo_polyA'        => 'Pseudo PolyA'        ],
                  [ 'ensemblclones'       => 'Ensembl clones' ],
+                 [ 'assembly_tag'        => 'Assembly tags' ],
     ## Matches ##
                 ],
           'compara' => [ ],
@@ -209,15 +210,30 @@ sub init {
         'pos' => '1027',
         'str' => 'b',
         'col' => 'red3',
+        'label' => 'PolyA site',
+        'logic_name' => 'polyA_site',
+        'glyphset' => 'polyA',
         'available' => 'features polyA_site',
     },
-
     'polyA_signal' => {
         'on' => "on",
         'pos' => '1028',
         'str' => 'b',
         'col' => 'red4',
+        'label' => 'PolyA signal',
+        'logic_name' => 'polyA_signal',
+        'glyphset' => 'polyA',
         'available' => 'features polyA_signal',
+    },
+    'pseudo_polyA' => {
+        'on' => "on",
+        'pos' => '1029',
+        'str' => 'b',
+        'col' => 'red2',
+        'label' => 'Pseudo PolyA',
+        'logic_name' => 'pseudo_polyA',
+        'glyphset' => 'polyA',
+        'available' => 'features polyA_site',
     },
 
 ## Markers and other features...
@@ -395,12 +411,13 @@ sub init {
 
     'assemblyexception' => {
         'on'      => "on",
+        'dep'       => 6,
         'pos'       => '9997',
-        'str'       => 'f',
-        'dep'       => '10000',
+        'str'       => 'x',
         'lab'       => 'black',
         'navigation'  => 'on',
     },
+
     'sequence' => {
         'on'            => "off",
         'pos'           => '3',
@@ -478,6 +495,15 @@ sub init {
         },
         'dsn'       => 'das_ENSEMBLCLONES',
         'available'     => 'das_source das_ENSEMBLCLONES',
+    },
+    
+    'assembly_tag' => {
+        'on'        => "off",
+        'pos'       => '6',
+        'dep'       => '6',
+        'str'       => 'b',
+        'col'       => 'hotpink2',
+        'available' => 'features mapset_assemblytag',
     },
     
     'annotation_status' => {
@@ -680,6 +706,19 @@ sub init {
            'caption' => 'Variation legend'
           );
   
+  $self->add_new_track_cdna(
+    'refseq_mouse',
+    'RefSeqs',
+    2510,
+    'on'  => "off",
+    'pos' => '2510',
+    'str'     => 'b',
+    'caption'     => 'RefSeqs',
+    'TEXT_LABEL'  => 'RefSeqs',
+    'SUBTYPE'     => 'refseq',
+    'available'=> 'features refseq_mouse', 
+  );
+
   my $POS = $self->ADD_ALL_TRANSCRIPTS();
   ## Loop through registry for additional transcript tracks...
   $reg->add_new_tracks($self,$POS);
@@ -690,7 +729,7 @@ sub init {
 
 
   ## And finally the multispecies tracks....
-  my @species = @{EnsWeb::species_defs->ENSEMBL_SPECIES};
+  my @species = @{$self->{'species_defs'}->ENSEMBL_SPECIES};
   my $compara = 3000;
   my @methods = (
          [ 'BLASTZ_RAW'           ,'pink',  'cons bz' ],
