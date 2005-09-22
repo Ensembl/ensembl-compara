@@ -9,7 +9,6 @@ use Bio::EnsEMBL::ColourMap;
 
 sub new {
   my( $class, $site, $user_db, $r, $ext_url, $species_defs ) = @_;
-  my $site  = shift;
   my $self  = {
     'colourmap'  => new Bio::EnsEMBL::ColourMap( $species_defs ),
     'exturl'     => $ext_url,
@@ -29,16 +28,15 @@ sub getUserConfig {
 ## If a site is degined in the configuration look for
 ## an the user congig object in the namespace EnsEMBL::Web::UserConfig::{$site}::{$type}
 ## Otherwise fall back on the module EnsEMBL::Web::UserConfig::{$type} 
-
+  if ($type eq 'contigview') { # since there is no contigview config use contigviewbottom 
+	$type = 'contigviewbottom';
+    }
   if( $self->{'site'} ) {
     $classname = "EnsEMBL::Web::UserConfig::$self->{'site'}::$type";
     eval "require $classname";
   }
   if($@ || !$self->{'site'}) {
     my $classname_old = $classname;
-    if ($type eq 'contigview') { # since there is no contigview config use contigviewbottom 
-	$type = 'contigviewbottom';
-    }
     $classname = "EnsEMBL::Web::UserConfig::$type";
     eval "require $classname";
 ## If the module can't be required throw and error and return undef;
