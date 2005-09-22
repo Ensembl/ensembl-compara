@@ -90,6 +90,7 @@ sub zmenu {
 
 sub gene_zmenu {
     my ($self, $gene) = @_;
+
     my $gid = $gene->stable_id();
     my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
 	my $type = $self->format_obj_type($gene);
@@ -152,10 +153,10 @@ sub error_track_name { return 'Vega transcripts'; }
 =head2 format_obj_type
 
   Arg [1]    : $self
-  Arg [2]    : transcript object
-  Arg [3]    : gene object
+  Arg [2]    : gene object
+  Arg [3]    : transcript object (optional)
   Example    : my $type = $self->format_obj_type($g,$t);
-  Description: retrieves status and biotype of a transcript, or failing that the parent gene, and formats it for display
+  Description: retrieves status and biotype of a transcript, or failing that the parent gene, and formats it for display using the Colourmap
   Returntype : string
 
 =cut
@@ -163,6 +164,7 @@ sub error_track_name { return 'Vega transcripts'; }
 sub format_obj_type {
 	my ($self,$gene,$trans) = @_;
 	my ($status,$biotype);
+	my %gm = $self->{'config'}->colourmap()->colourSet('vega_gene');
 	if ($trans) {
 		$status = $trans->confidence()||$gene->confidence;
 		$biotype = $trans->biotype()||$gene->biotype();
@@ -170,12 +172,9 @@ sub format_obj_type {
 		$status = $gene->confidence;
 		$biotype = $gene->biotype();
 	}
-	$status = ucfirst(lc($status));
-	$biotype = ucfirst($biotype);
-	$biotype =~ s/_/ /g;
-	my $type = $status.' '.$biotype;
-    $type =~ s/HUMACE-//g;
-	return $type;
+	my $t = $biotype.'_'.$status;
+	my $label = $gm{$t}[1];
+	return $label;
 }
 
 1;
