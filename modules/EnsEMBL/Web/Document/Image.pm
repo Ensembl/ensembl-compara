@@ -62,7 +62,8 @@ sub karyotype {
     my $total_chrs = @{$data->species_defs->ENSEMBL_CHROMOSOMES};
     # accept user input or set a sensible default
     $wuc->{'_rows'} ||= ceil($total_chrs / 13 ); 
-  } else {
+  } 
+  else {
     $chr_name = $data->chr_name;
     $wuc->container_width( $data->length );
     $wuc->{'_rows'} = 1;
@@ -86,7 +87,6 @@ sub karyotype {
 sub do_chr_layout {
                                                                                 
     my ($self, $object, $config_name, $max_label) = @_;
-                                                                                
     # CONFIGURE IMAGE SIZE AND LAYOUT
     my $chr;
     my $config  = $object->user_config_hash( $config_name );
@@ -216,10 +216,13 @@ sub add_tracks {
                                                          
 sub add_pointers {
                                                                                 
-    my ($self, $object, $config_name, $zmenu_config, $parser) = @_;
-    my $config   = $object->user_config_hash( $config_name );
-    
+    my ($self, $object, $extra) = @_;
+    #my ($self, $object, $config_name, $zmenu_config, $parser) = @_;
+    my $config_name = $extra->{'config_name'};
+    my $config   = $object->user_config_hash($config_name);
+
     # CREATE DATA ARRAY FROM APPROPRIATE FEATURE SET
+    my $parser = $extra->{'parser'};
     my ($data, @data, $max_label, %chrs);
     if ($parser) { # use parsed userdata
         my $max_label = 0;
@@ -248,7 +251,8 @@ sub add_pointers {
         }
     }
     else { # get features for this object
-        $data = $object->retrieve_features;
+        my $ftype = $extra->{'feature_type'};
+        $data = $object->retrieve_features($ftype);
         foreach my $row (
             map { $_->[0] }
             sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
@@ -272,16 +276,17 @@ $_->{'start'}] }
                                                                                 
     # set sensible defaults
     my $zmenu   = lc($object->param('zmenu'))    || 'on';
-    my $color   = lc($object->param('col'))      || 'red';
-    my $style   = lc($object->param('style'))    || 'rharrow'; # set this before doing chromosome layout, as layout may need tweaking for some pointer styles
-               
+    my $color   = lc($object->param('col'))  || lc($extra->{'color'}) || 'red';
+    # set style before doing chromosome layout, as layout may need 
+    # tweaking for some pointer styles
+    my $style   = lc($object->param('style')) || lc($extra->{'style'}) || 'rharrow'; 
+
     if ($config->{'_all_chromosomes'} eq 'yes') {
         $self->do_chr_layout($object, $config_name, $max_label);
     }
-    $config->{'general'}->{$config_name}->{'Videogram'}->{'style'} = $style;
 
     # CREATE POINTERS ('highlights')
-    my %high;
+    my %high = ('style' => $style);
     my $species = $object->species;
     foreach my $row ( @data ) {
         my $chr = $row->{'chr'};
@@ -289,9 +294,10 @@ $_->{'start'}] }
         my $point = {
             'start' => $row->{'start'},
             'end'   => $row->{'end'},
-            'col'   => $color
+            'col'   => $color,
             };
         if ($zmenu eq 'on') {
+            $zmenu_config = $extra->{'zmenu_config'};
             $point->{'zmenu'} = {
                 'caption'   => $zmenu_config->{'caption'},
                 };
@@ -301,7 +307,7 @@ $_->{'start'}] }
                 if ($entry eq 'contigview') {
                     $text = "Jump to $entry";
                     $value = sprintf("/$species/contigview?c=%s:%d;w=%d", $row->{'chr'}, int(($row->{'start'}+$row->{'end'})/2), $row->{'length'}+1000);
-                    # add AffyProbe name(s) to URL to turn on tracks
+                    # AffyProbe name(s) in URL turn on tracks in contigview
                     if ($object->param('type') eq 'AffyProbe') {
                         my @affy_list = split(';', $row->{'label'});
                         foreach my $affy (@affy_list) {
