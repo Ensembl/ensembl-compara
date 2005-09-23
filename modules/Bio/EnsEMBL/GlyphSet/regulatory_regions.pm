@@ -27,14 +27,14 @@ sub zmenu {
     my ($self, $f ) = @_;
     my $name = $f->name();
     if (length($name) >24) { $name = "<br />$name"; }
-
+    my $seq_region = $f->slice->seq_region_name;
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
     my $factor = $f->factor->name;
     my $return = {
-        'caption'                         => 'regulatory_regions',
+        'caption'                    => 'regulatory_regions',
         "01:Feature: $name"          => '',
-        "02:Factor: $factor"               => '',
-        "03:bp: $start-$end"              => '',
+        "02:Factor: $factor"         => '',
+        "03:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
     };
 
     foreach ( @{ $f->regulated_genes } ) {
