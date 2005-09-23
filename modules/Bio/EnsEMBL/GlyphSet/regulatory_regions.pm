@@ -26,17 +26,53 @@ sub href {
 sub zmenu {
     my ($self, $f ) = @_;
     my $name = $f->name();
-    $name =~ s/(.*):.*/$1/;
+    if (length($name) >24) { $name = "<br />$name"; }
+
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
     my $factor = $f->factor->name;
-    my $regulated_transcripts = $f->regulated_transcripts;
-    warn $regulated_transcripts->[0];
-
-    return {
+    my $return = {
         'caption'                         => 'regulatory_regions',
-        "02:Gene:$name"                        => "geneview?gene=$name",
+        "01:Feature: $name"          => '',
+        "02:Factor: $factor"               => '',
         "03:bp: $start-$end"              => '',
-        "01:Factor: $factor"              => ''
     };
+
+    foreach ( @{ $f->regulated_genes } ) {
+      my $stable_id = $_->stable_id;
+      if (length($stable_id) >18) { $stable_id = "<br />$stable_id"; }
+      $return->{"04:Regulates gene: $stable_id"} = "geneview?gene=$stable_id";
+    }
+
+    foreach (@{ $f->regulated_transcripts  }) {
+      my $stable_id = $_->stable_id;
+      if (length($stable_id) >15) { $stable_id = "<br />$stable_id"; }
+      $return->{"05:Regulates transcript: $stable_id"} = "transview?transcript=$stable_id";
+    }
+
+    return $return;
 }
+
+
+
+# Features associated with the same factor should be in the same colour
+# Choose a colour from the pool
+
+sub colour {
+  my ($self, $f) = @_;
+  my $name = $f->factor->name;
+  unless ( exists $self->{'config'}{'pool'} ) {
+    $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
+    $self->{'config'}{'ptr'}  = 0;
+  }
+  $self->{'config'}{'_factor_colours'}||={};
+  my $return = $self->{'config'}{'_factor_colours'}{ "$name" };
+
+  unless( $return ) {
+    $return = $self->{'config'}{'_factor_colours'}{"$name"} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)  %@{$self->{'config'}{'pool'}} ];
+  } 
+  return $return, $return;
+}
+
+
+
 1;
