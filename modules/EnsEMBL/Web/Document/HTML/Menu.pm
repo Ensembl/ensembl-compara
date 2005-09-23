@@ -25,7 +25,7 @@ sub push_logo {
 sub add_block {
   my( $self, $code, $type, $caption, %options ) = @_;
   my @C = caller(0);
-  warn "ADDING BLOCK $code $C[0]";
+  #warn "ADDING BLOCK $code $C[0]";
   return if exists $self->{'blocks'}{$code};
   $self->{'blocks'}{$code} = { 
     'caption' => $caption,
@@ -46,7 +46,7 @@ sub block {
 sub add_entry {
   my( $self, $code, %options ) = @_;
   my @C = caller(0);
-  warn "ADDING BLOCK $code $options{'caption'} $C[0]";
+  #warn "ADDING BLOCK $code $options{'caption'} $C[0]";
   return unless exists $self->{'blocks'}{$code};
   push @{$self->{'blocks'}{$code}{'entries'}}, \%options;
 }
@@ -58,8 +58,6 @@ sub delete_entry {
 }
 sub delete_block {
   my( $self, $code ) = @_;
-	warn "code is $code";
-	warn "blocks are ", %{$self->{'blocks'}};
   delete $self->{'blocks'}{$code};
 }
 

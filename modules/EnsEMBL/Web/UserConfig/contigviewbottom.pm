@@ -98,15 +98,15 @@ sub init {
          [ 'glovar_snp'      => 'Glovar SNPs' ], ## not ready for prime time yet
         #[ 'glovar_trace'   => 'Glovar traces'], ## not ready for prime time yet
          [ 'trna'            => 'tRNA'        ],
-         [ 'cpg'             => 'CpG Islands'     ],
-         [ 'eponine'         => 'Eponine Regions'   ],
+         [ 'cpg'             => 'CpG islands'     ],
+         [ 'eponine'         => 'Eponine regions'   ],
          [ 'ep1_h'         => 'Ecore (Human)'   ],
          [ 'ep1_s'         => 'Ecore (Mouse)'   ],
          [ 'first_ef'        => 'First EF'    ],
          [ 'marker'          => 'Markers'       ],
          [ 'qtl'             => 'QTLs'     ],
          [ 'operon'          => 'Operon'      ],
-         [ 'regulatory_regions' => 'Regulatory Regions'  ],
+         [ 'regulatory_regions' => 'Regulatory regions'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
 ### Other ###
@@ -122,13 +122,13 @@ sub init {
          # [ 'assemblyexception' => 'Assembly exceptions' ],
          [ 'sequence'        => 'Sequence'      ],
          [ 'codonseq'        => 'Codons'      ],
-         [ 'codons'          => 'Start/Stop Codons' ],
+         [ 'codons'          => 'Start/Stop codons' ],
          [ 'stranded_contig' => 'Contigs'       ],
          [ 'ruler'           => 'Ruler'       ],
          [ 'scalebar'        => 'Scale Bar'     ],
          [ 'tp32k'           => '32K Tilepath'      ],
          [ 'tilepath'        => 'Tilepath'      ],
-         [ 'tilepath2'       => 'Acc. Clones'     ],
+         [ 'tilepath2'       => 'Acc. clones'     ],
          [ 'encode'          => 'Encode regions' ],
          [ 'gcplot'          => '%GC'         ],
          [ 'opt_lines'       => 'Show register lines' ],
@@ -145,7 +145,7 @@ sub init {
          [ 'bac_bands'	     =>	'BAC band' ],
 	 [ 'gap'             => 'Gaps' ],
          [ 'restrict'        => 'Rest.Enzymes' ],
-         [ 'opt_restrict_zoom'   => 'Rest.Enzymes on Zoom' ],
+         [ 'opt_restrict_zoom'   => 'Rest.Enzymes on zoom' ],
       #   [ 'vegaclones'     => 'Vega clones' ],
       ],
       'menus' => [ qw( features DAS options repeats export jumpto resize )]
@@ -247,11 +247,12 @@ sub init {
       'col' => 'darkgreen',
       'available'=> 'features ep1_s', 
     },
+
+  # col is for colours. Not needed here as overwritten in Glyphset
    'regulatory_regions' => {
       'on'  => "off",
       'pos' => '12',
       'str' => 'b',
-      'col' => 'red',
       'available'=> 'database_tables ENSEMBL_DB.regulatory_feature', 
     },
 

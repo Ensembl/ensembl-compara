@@ -11,11 +11,14 @@ sub init {
 
   $self->{'_transcript_names_'} = 'yes';
   $self->{'general'}->{'altsplice'} = {
-    '_artefacts'    => [ qw(ruler scalebar contig variation ) ],
+    '_artefacts'    => [ qw(ruler scalebar contig variation regulatory_regions ) ],
     '_options'      => [qw(pos col known unknown)],
     'fakecore' => 1,
     '_settings'     => {
-      'features' => [ [ 'variation' => "SNPs" ] ],
+      'features' => [ 
+		     [ 'variation' => "SNPs" ],
+                     [ 'regulatory_regions' => 'Regulatory regions'  ],
+		    ],
       'show_labels'  => 'yes',
       'show_buttons' => 'no',
       'opt_zclick'   => 1,
@@ -25,11 +28,7 @@ sub init {
       'bgcolour1'    => 'background1',
       'bgcolour2'    => 'background1',
     },
-    'snp' => {
-      'on'  => "on",
-      'pos' => '31',
-      'colours' => {$self->{'_colourmap'}->colourSet( 'snp' )},
-    },
+
     'scalebar' => {
       'on' => 'on',
       'pos' => '100000',
@@ -60,7 +59,15 @@ sub init {
       'col' => 'blue',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
       'available'=> 'databases ENSEMBL_VARIATION',
+    }, 
+    # col is for colours. Not needed here as overwritten in Glyphset
+    'regulatory_regions' => {
+      'on'  => "off",
+      'pos' => '12',
+      'str' => 'b',
+      'available'=> 'database_tables ENSEMBL_DB.regulatory_feature', 
     },
+
   };
   $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'off' );
   $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 0, 'on' => 'off' );
