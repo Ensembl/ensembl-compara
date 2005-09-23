@@ -717,6 +717,52 @@ sub transcripts {
 }
 
 
+# Example: http://ensarc-1-14.internal.sanger.ac.uk:7033/Homo_sapiens/contigview?c=14:104257974.4;w=1093
+
+sub regulation_factors {
+ my($panel, $object) = @_;
+  my $feature_objs = $object->features;
+  return unless @$feature_objs;
+
+  $panel->add_columns(
+    {'key' =>'Factor',  },
+    {'key' =>'Feature', },
+    {'key' =>'Start',   },
+    {'key' =>'End',     },
+    {'key' =>'Length',  },
+    {'key' =>'Sequence',},
+    {'key' =>'Feature Analysis',},
+  );
+
+  $panel->add_option( 'triangular', 1 );
+  my @sorted_features = sort { $a->factor->name cmp $b->factor->name } @$feature_objs;
+
+
+  foreach my $feature_obj ( @sorted_features ) {
+
+    my $row;
+    my $factor_name = $feature_obj->factor->name;
+    my $feature_name = $feature_obj->name;
+    my $seq = $feature_obj->seq();
+    $seq =~ s/([\.\w]{60})/$1<br \/>/g;
+
+    $row = {
+	    'Factor'      =>  qq($factor_name),#<a href="/@{[$object->species]}/featureview?feature=$factor_name">$factor_name</a>),
+	    'Feature'     => "$feature_name",
+	    'Feature Analysis'   =>  $feature_obj->analysis->description,
+	    'Start'       => $object->thousandify( $feature_obj->start ),
+	    'End'         => $object->thousandify( $feature_obj->end ),
+	    'Length'      => $object->thousandify( length($seq) ).' bp',
+            'Sequence'    => qq(<font face="courier" color="black">$seq</font>),
+	   };
+
+     $panel->add_row( $row );
+  }
+  return 1;
+}
+
+
+
 sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',
    [qw( Features SNPContext ImageSize THExport )], ['GeneSpliceHelp'] ); }
 sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript', 

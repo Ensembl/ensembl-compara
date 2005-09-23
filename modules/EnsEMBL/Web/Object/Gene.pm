@@ -8,6 +8,7 @@ use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Proxy::Factory;
 
+
 @EnsEMBL::Web::Object::Gene::ISA = qw(EnsEMBL::Web::Object);
 
 sub get_slice_object {
@@ -574,5 +575,24 @@ sub generate_query_hash {
   };
 
 }
+
+
+# Calls for GeneRegulationView 
+
+sub features {
+  my $self = shift;
+  return $self->gene->get_all_regulatory_features(1) || [];
+}
+
+
+
 1;
+
+__END__
+
+
+sub features
+  Input:       EnsEMBL::Web::Gene object
+  Description:  Returns all the features that regulate this gene
+  Output:      Array ref
 

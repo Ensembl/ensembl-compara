@@ -69,6 +69,46 @@ sub genesnpview {
   }
 }
 
+## Function to configure gene regulation view
+
+sub generegulationview {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+  $self->set_title( 'Gene Regulation Report for '.$obj->stable_id );
+  my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
+
+  ## Panel 1 - the gene information table at the top of the page...
+
+  if( my $panel1 = $self->new_panel( 'Information',
+    'code'    => "info#",
+    'caption' => 'Ensembl Gene Regulation Report for '.$obj->stable_id,
+    'params' => $params
+  )) {
+    $panel1->add_components(qw(
+      name          EnsEMBL::Web::Component::Gene::name
+      stable_id     EnsEMBL::Web::Component::Gene::stable_id
+      location      EnsEMBL::Web::Component::Gene::location
+      description   EnsEMBL::Web::Component::Gene::description
+    ));
+    $self->add_panel( $panel1 );
+  }
+
+  # Regulatory factor info panel
+  if( my $panel2 = $self->new_panel( 'SpreadSheet',
+    'code'    => "factors#",
+    'status'  => 'panel_regulation_factors',
+    'caption' => 'Regulatory factors for '.$obj->stable_id,
+    'params' => $params
+  )) {
+    $panel2->add_components(qw(
+      description   EnsEMBL::Web::Component::Gene::regulation_factors
+    ));
+    $self->add_panel( $panel2 );
+  }
+}
+
+
+
 ## Function to configure gene splice view
 
 sub genespliceview {
@@ -221,6 +261,12 @@ sub context_menu {
     'text'  => "Gene splice site image",
     'title' => 'GeneSpliceView - Graphical diagram of alternative splicing of '.$obj->stable_id,
     'href'  => "/$species/genespliceview?$q_string" );
+
+ $self->add_entry( $flag,
+    'text'  => "Gene regulation info.",
+    'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
+    'href'  => "/$species/generegulationview?$q_string" );
+
   $self->add_entry( $flag,
     'text'  => "Gene variation info.",
     'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
