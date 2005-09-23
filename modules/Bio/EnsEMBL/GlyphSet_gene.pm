@@ -90,7 +90,7 @@ sub _init {
     my $gene_label = $self->gene_label( $g );
     my $GT         = $self->gene_col( $g );
        $GT =~ s/XREF//g;
-    warn "$gene_label -> $GT";
+    #warn "$gene_label -> $GT";
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
