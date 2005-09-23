@@ -390,6 +390,25 @@ sub get_all_GenomicAlignBlocks {
 }
 
 
+=head2 get_MethodLinkSpeciesSet
+
+  Arg[1]     : none
+  Example    : my $method_link_species_set = $align_slice->get_MethodLinkSpeciesSet
+  Description: getter for the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+               used to create this object
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions : none
+  Caller     : $object->methodname
+
+=cut
+
+sub get_MethodLinkSpeciesSet {
+  my ($self) = @_;
+
+  return $self->{'_method_link_species_set'};
+}
+
+
 =head2 get_SimpleAlign
 
   Arg[1]      : none
