@@ -21,9 +21,10 @@ sub colour {
     $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
     $self->{'config'}{'ptr'}  = 0;
   }
-  my $return = $self->{'config'}{ $f->{'hit_chr_name'} };
+  $self->{'config'}{'_synteny_colours'}||={};
+  my $return = $self->{'config'}{'_synteny_colours'}{ $f->{'hit_chr_name'} };
   unless( $return ) {
-    $return = $self->{'config'}{$f->{'hit_chr_name'}} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)%@{$self->{'config'}{'pool'}} ];
+    $return = $self->{'config'}{'_synteny_colours'}{$f->{'hit_chr_name'}} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)%@{$self->{'config'}{'pool'}} ];
   } 
   return $return, $return;
 }
