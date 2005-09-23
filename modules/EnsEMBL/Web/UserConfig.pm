@@ -942,8 +942,9 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_EST', @_ );
   $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene',      $POS++, @_ );
   $self->add_new_track_transcript( 'refseq',    'Refseq proteins', 'refseq_gene',    $POS++, @_ );
-#trancripts for Vega
   $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
+  $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
+#trancripts for Vega
   $self->add_new_track_transcript('vega_havana', 'Havana trans.', 'vega_gene', $POS++,
 								  'author'=>'Havana', 'glyph' => 'vega_transcript', 
 								  'available'=>'features LITE_TRANSCRIPT_HAVANA', @_);
@@ -956,10 +957,15 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript('vega_washu', 'WashU trans.', 'vega_gene', $POS++,
 								  'author'=>'WashU', 'glyph' => 'vega_transcript',
 								  'available'=>'features LITE_TRANSCRIPT_WASHU', @_ );
+  $self->add_new_track_transcript('vega_broad', 'Broad trans.', 'vega_gene', $POS++,
+								  'author'=>'Broad', 'glyph' => 'vega_transcript',
+								  'available'=>'features LITE_TRANSCRIPT_BROAD', @_ );
+  $self->add_new_track_transcript('vega_jgi', 'JGI trans.', 'vega_gene', $POS++,
+								  'author'=>'JGI', 'glyph' => 'vega_transcript',
+								  'available'=>'features LITE_TRANSCRIPT_JGI', @_ );
   $self->add_new_track_transcript('vega_zfish', 'Zfish trans.', 'vega_gene', $POS++, 
 								  'author'=>'Zfish', 'glyph' => 'vega_transcript',
 								  'available'=>'features LITE_TRANSCRIPT_ZFISH', @_ );
-  $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
   return $POS;
 }
 
@@ -1081,9 +1087,15 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'wasu_gene', 'WashU Genes',  'vega_gene', $POS++,
 							 'available' => 'features LITE_TRANSCRIPT_WASHU', 'glyphset' => 'vega_gene',
 							 'logic_name' => 'otter', 'author' => 'WashU', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_broad', 'Broad trans.', 'vega_gene', $POS++,
+ 			                 'available'=>'features LITE_TRANSCRIPT_BROAD', 'glyphset' => 'vega_gene',
+			                 'logic_name' =>'otter', 'author'=>'Broad', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_jgi', 'JGI trans.', 'vega_gene', $POS++,
+	             		     'available'=>'features LITE_TRANSCRIPT_JGI', 'glyphset' => 'vega_gene',
+			                 'logic_name' => 'otter', 'author'=>'JGI', 'gene_col' => 'vega_gene', @_ );
   $self->add_new_track_gene( 'zfish_gene', 'Zfish Genes', 'vega_gene', $POS++, 
-							 'available' => 'features LITE_TRANSCRIPT_ZFISH', 'glyphset' => 'vega_gene',
-							 'logic_name' => 'otter', 'author' => 'Zfish', 'gene_col' => 'vega_gene', @_);
+		             	     'available' => 'features LITE_TRANSCRIPT_ZFISH', 'glyphset' => 'vega_gene',
+			                'logic_name' => 'otter', 'author' => 'Zfish', 'gene_col' => 'vega_gene', @_);
 
   $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
