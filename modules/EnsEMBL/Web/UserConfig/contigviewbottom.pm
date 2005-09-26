@@ -106,7 +106,7 @@ sub init {
          [ 'marker'          => 'Markers'       ],
          [ 'qtl'             => 'QTLs'     ],
          [ 'operon'          => 'Operon'      ],
-         [ 'regulatory_regions' => 'Regulatory regions'  ],
+         [ 'regulatory_regions' => 'Regulatory features'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
 ### Other ###

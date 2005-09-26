@@ -717,6 +717,7 @@ sub transcripts {
 }
 
 
+# Gene Regulation View -------------------------------------
 # Example: http://ensarc-1-14.internal.sanger.ac.uk:7033/Homo_sapiens/contigview?c=14:104257974.4;w=1093
 
 sub regulation_factors {
@@ -727,11 +728,10 @@ sub regulation_factors {
   $panel->add_columns(
     {'key' =>'Factor',  },
     {'key' =>'Feature', },
-    {'key' =>'Start',   },
-    {'key' =>'End',     },
+    {'key' =>'Feature location',   },
     {'key' =>'Length',  },
     {'key' =>'Sequence',},
-    {'key' =>'Feature Analysis',},
+    {'key' =>'Feature analysis',},
   );
 
   $panel->add_option( 'triangular', 1 );
@@ -739,19 +739,22 @@ sub regulation_factors {
 
 
   foreach my $feature_obj ( @sorted_features ) {
-
     my $row;
     my $factor_name = $feature_obj->factor->name;
     my $feature_name = $feature_obj->name;
     my $seq = $feature_obj->seq();
     $seq =~ s/([\.\w]{60})/$1<br \/>/g;
+    my $seq_name = $feature_obj->slice->seq_region_name;
+    my $position =  $object->thousandify( $feature_obj->start ). "-" .
+      $object->thousandify( $feature_obj->end );
+    $position = qq(<a href="/@{[$object->species]}/contigview?c=$seq_name:).$feature_obj->start.qq(;w=100">$seq_name:$position</a>);
+
 
     $row = {
 	    'Factor'      =>  qq($factor_name),#<a href="/@{[$object->species]}/featureview?feature=$factor_name">$factor_name</a>),
 	    'Feature'     => "$feature_name",
-	    'Feature Analysis'   =>  $feature_obj->analysis->description,
-	    'Start'       => $object->thousandify( $feature_obj->start ),
-	    'End'         => $object->thousandify( $feature_obj->end ),
+	    'Feature analysis'   =>  $feature_obj->analysis->description,
+	    'Feature location'    => $position,
 	    'Length'      => $object->thousandify( length($seq) ).' bp',
             'Sequence'    => qq(<font face="courier" color="black">$seq</font>),
 	   };
@@ -761,6 +764,27 @@ sub regulation_factors {
   return 1;
 }
 
+sub gene_structure {
+  my( $panel, $object ) = @_;
+  my $label    = 'Gene structure';
+  my $object_slice = $object->Obj->feature_Slice;
+     $object_slice = $object_slice->invert if $object_slice->strand < 1; ## Put back onto correct strand!
+
+  my $wuc = $object->get_userconfig( 'geneview' );
+  $wuc->{'geneid'} = $object->Obj->stable_id;
+  #  $wuc->{'_no_label'} = 'true';
+  $wuc->set( '_settings', 'width', 900);
+  $wuc->set( '_settings', 'show_labels', 'yes');
+  $wuc->set( 'ruler', 'str', $object->Obj->strand > 0 ? 'f' : 'r' );
+
+  my $trans = $object->get_all_transcripts;
+  $wuc->set( $trans->[0]->default_track_by_gene, 'on','on');
+  $wuc->set( 'regulatory_regions', 'on', 'on');
+
+  my $image    = $object->new_image( $object_slice, $wuc, [] );
+  $panel->print( $image->render );
+}
+#-------- end gene regulation view ---------------------
 
 
 sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',

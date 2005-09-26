@@ -93,12 +93,26 @@ sub generegulationview {
     $self->add_panel( $panel1 );
   }
 
+  # Structure panel
+  if ( my $structure_panel = $self->new_panel( 'Image',
+     'code'    => "image_#",
+     'caption' => "Gene structure",
+     'status'  => 'panel_image',
+     'params'  => $params,
+                                        )) {
+      $structure_panel->add_components(qw(
+      structure   EnsEMBL::Web::Component::Gene::gene_structure
+				     ));
+      $self->{page}->content->add_panel( $structure_panel );
+    }
+
+
   # Regulatory factor info panel
   if( my $panel2 = $self->new_panel( 'SpreadSheet',
     'code'    => "factors#",
     'status'  => 'panel_regulation_factors',
     'caption' => 'Regulatory factors for '.$obj->stable_id,
-    'params' => $params
+    'params' => $params,
   )) {
     $panel2->add_components(qw(
       description   EnsEMBL::Web::Component::Gene::regulation_factors
