@@ -1,22 +1,26 @@
 package EnsEMBL::Web::Component::Feature;
 
-# outputs chunks of XHTML for feature-based displays
+#------------------------------------------------------------------
+# outputs chunks of XHTML for displays of miscellaneous features
+# - karyotypes, spreadsheets of data, etc.
+#-------------------------------------------------------------------
 
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Component::Chromosome;
+use Bio::EnsEMBL::GlyphSet::Videogram;
 our @ISA = qw( EnsEMBL::Web::Component);
 
 use strict;
 use warnings;
 no warnings "uninitialized";
 
-sub error {
-  my( $panel, $feature ) = @_;
-  my $T = undef;
-  $panel->add_row( "T", $T->X() );
-  return 1;
-}
+our %pointer_defaults = ( 
+            'Gene'      => ['blue', 'lharrow'],
+            'AffyProbe' => ['red', 'rharrow'],
+            'Disease'   => ['red', 'rhbox'],
+  );
+
 
 #---------------------------------------------------------------------------
 
@@ -71,8 +75,13 @@ sub select_feature_form {
     'value' => 'Configure Display Options'
     );
   
+  $form->add_element(
+    'type' => 'Information',
+    'value' => 'Some feature displays now include additional data, so two sets of pointers can be configured'
+    );
+
   # use image config widgets from Chromosome module
-  &EnsEMBL::Web::Component::Chromosome::config_hilites($form, $object);
+  &EnsEMBL::Web::Component::Chromosome::config_hilites($form, $object, 2);
   &EnsEMBL::Web::Component::Chromosome::config_karyotype($form, $object);
 
   $form->add_element( 'type' => 'Submit', 'value' => 'Go');
@@ -167,6 +176,62 @@ sub spreadsheet_featureTable {
 
 #-----------------------------------------------------------------------------
 
+sub key_to_pointers {
+  my( $panel, $object ) = @_;
+  # sanity check - does this species have chromosomes?
+  my $SD = EnsEMBL::Web::SpeciesDefs->new();
+  my $species = $object->species;
+  my @chr = @{ $SD->get_config($species, 'ENSEMBL_CHROMOSOMES') || [] };
+
+  if (@chr) { 
+    my $html = "<h4>Key to data pointers</h4>\n<table>";
+    my $i = 0;
+
+    # configure pointer dimensions
+    my $start = 1;
+    my $end = 100;
+    my $wid = 12;
+    my $h_offset = 3;
+    my $padding = 6;
+    my $bpperpx = 1;
+    my $zmenu = 'off';
+
+    # draw each pointer and label it
+    foreach my $ftype (keys %{$object->Obj}) {
+        $html .= "<tr><td>";
+
+        # image of pointer
+        my $colour = $object->param("col_$i") || $pointer_defaults{$ftype}[0]; 
+        my $style = $object->param("style_$i") || $pointer_defaults{$ftype}[1];
+        my $details = {
+                        'col'       => $colour, 
+                        'style'     => $style,
+                        'start'     => $start,
+                        'end'       => $end,
+                        'mid'       => ($start+$end)/2,
+                        'h_offset'  => $h_offset,
+                        'wid'       => $wid,
+                        'padding'   => $padding,
+                        'padding2'  => $padding * $bpperpx * sqrt(3)/2,
+                        'zmenu'     => $zmenu,
+        };
+        my $wuc = $object->user_config_hash("key_$i", 'highlight');
+        $wuc->container_width(25);
+        my $image    = $object->new_image($details, $wuc);
+        $image->cacheable  = 'no';
+        $image->image_name = "pointer-$ftype";
+        $html .= $image->render;
+
+        $html .= "</td><td>$ftype</td></tr>\n";
+        $i++;
+    }
+    $html .= "</table>\n\n";
+    $panel->print($html);
+  }
+  return 1;
+
+}
+
 sub show_karyotype {
   my( $panel, $object ) = @_;
   # sanity check - does this species have chromosomes?
@@ -185,7 +250,7 @@ sub create_karyotype {
   # CREATE IMAGE OBJECT
   my $species = $object->species;
     
-  my $wuc = $object->get_userconfig( 'Vkaryotype' );
+  #my $wuc = $object->get_userconfig( 'Vkaryotype' );
   my $image    = $object->new_karyotype_image();
   $image->cacheable  = 'no';
   $image->image_name = "feature-$species";
@@ -213,14 +278,119 @@ sub create_karyotype {
   }
 
   # do final rendering stages
-  my $pointers = $image->add_pointers($object, 'Vkaryotype', $zmenu_config);
-  $image->karyotype( $object, [$pointers], 'Vkaryotype' );
+  my @pointers = ();
+  my $i = 0;
+  foreach my $ftype (keys %{$object->Obj}) {
+    my $pointer_ref = $image->add_pointers(
+                            $object, 
+                            {'config_name'  => 'Vkaryotype', 
+                             'zmenu_config' => $zmenu_config,
+                             'feature_type' => $ftype,
+                             'color'        => $object->param("col_$i") 
+                                            || $pointer_defaults{$ftype}[0],
+                             'style'        => $object->param("style_$i") 
+                                            || $pointer_defaults{$ftype}[1]}
+    );
+    push(@pointers, $pointer_ref);
+    $i++;
+  }
+  $image->karyotype( $object, \@pointers, 'Vkaryotype' );
 
   return $image;
 }     
 
-                                                 
-
 1;
+                                                 
+__END__
+                                                                                
+=head1 NAME
+                                                                                
+Component::Feature
+                                                                                
+=head1 SYNOPSIS
 
+This object is called from a Configuration object
+                                                                                
+    use EnsEMBL::Web::Component::Feature;
+
+For each component to be displayed, you need to create an appropriate panel object and then add the component. The description of each component indicates the usual Panel subtype, e.g. Panel::Image.
+
+    my $panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
+        'code'    => "info$self->{flag}",
+        'caption' => '',
+        'object'  => $self->{object},
+    );
+    $panel->add_components( qw(features
+      EnsEMBL::Web::Component::Feature::spreadsheet_featureTable));
+
+                                                                                
+=head1 DESCRIPTION
+                                                                                
+This class consists of methods for displaying miscellaneous feature data as XHTML. Current components include a karyotype with pointers indicating feature location, a spreadsheet with information about each feature, and a user input form to control the data being displayed.
+
+
+=head1 METHODS
+                                                                                
+=head2 B<select_feature>
+
+Description:    Wraps the select_feature_form (see below) in a DIV and passes the HTML back to the Panel::Image object for rendering
+
+Arguments:      Document::Panel object, Proxy::Object (data)
+
+Returns:        true
+
+=head2 B<select_feature_form>
+
+Description:    Creates a Form object and populates it with widgets for selecting data and configuring the karyotype image
+
+Arguments:      Document::Panel object, Proxy::Object (data)
+
+Returns:        Form object
+
+=head2 B<spreadsheet_featureTable>
+
+Description:    Adds columns and rows of feature data to a Panel::Spreadsheet object
+
+Arguments:      Document::Panel object, Proxy::Object (data)
+
+Returns:        true
+
+=head2 B<key_to_pointers>
+
+Description:    Creates a simple table of pointers and the feature type each one refers to, then passes the XHTML back to the parent Panel::Image for rendering
+
+Arguments:      Document::Panel object, Proxy::Object (data)
+
+Returns:        true
+
+=head2 B<show_karyotype>
+
+Description:    Checks if the chosen species has chromosomes, and if so, calls the create_karyotype method and passes it back to the parent Panel::Image for rendering
+
+Arguments:      Document::Panel object, Proxy::Object (data)
+
+Returns:        true
+
+=head2 B<create_karyotype>
+
+Description:    Creates and renders a karyotype image with location pointers
+
+Arguments:      Document::Panel object, Proxy::Object (data)
+
+Returns:        Document::Image
+
+=head1 BUGS AND LIMITATIONS
+                                                                                
+None known at present.                                                                               
+ 
+=head1 AUTHOR
+                                                                                
+Anne Parker, Ensembl Web Team
+Support enquiries: helpdesk\@ensembl.org
+                                                                                
+=head1 COPYRIGHT
+                                                                                
+See http://www.ensembl.org/info/about/code_licence.html
+
+=cut
 

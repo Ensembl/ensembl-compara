@@ -9,10 +9,6 @@ use EnsEMBL::Web::Proxy::Object;
                                                                                    
 our @ISA = qw(  EnsEMBL::Web::Factory );
 
-#use Bio::SeqIO;
-#use Bio::Seq;
-#use IO::String;
-
 sub createObjects { 
   my $self   = shift;
   my $feature_type  = $self->param('type') || 'AffyProbe';
@@ -35,16 +31,25 @@ sub createObjects {
 #---------------------------------------------------------------------------
 
 sub create_AffyProbe {
-  return $_[0]->_generic_create( 'AffyProbe', 'fetch_all_by_probeset', $_[1] );
+    # get Affy hits plus corresponding genes
+    my $affy = $_[0]->_generic_create( 'AffyProbe', 'fetch_all_by_probeset', $_[1] );
+    my $affy_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] );
+    my $features = {'AffyProbe'=>$affy};
+    $$features{'Gene'} = $affy_genes if $affy_genes;
+    return $features;
 }
+
 sub create_DnaAlignFeature {
-  return $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ); 
+  my $features =  {'AlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
+  return $features;
 }
 sub create_ProteinAlignFeature {
-  return $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] );
+  my $features = {'AlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  return $features;
 }
 sub create_Gene {
-  return $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] ); 
+  my $features = {'Gene' => $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] ) }; 
+  return $features;
 }
 sub create_Disease {
   my( $self, $db ) = @_; # Don't need db...
@@ -94,7 +99,8 @@ sub create_Disease {
     }
   }
   warn @dis_features;
-  return \@dis_features;
+  my $feature_set = {'Disease' => \@dis_features, 'Gene' => $features};
+  return $feature_set;
 }
 
 sub _generic_create {
