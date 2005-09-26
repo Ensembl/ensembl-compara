@@ -36,7 +36,7 @@ $| = 1; # unbuffers STDOUT (issues print commands immediately)
 
 our $DUMPDIR;
 our $VERBOSITY;
-use constant DONT_DUMP => 1;
+our $NODUMP;
 
 my $nocompress;
 my $quiet;
@@ -60,6 +60,7 @@ my $release;
 	    'logfile:s'  => \$logfile,
 	    'help'       => \$help,
 	    'info'       => \$info,
+	    'nodump'     => \$NODUMP,
 	   ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -425,7 +426,7 @@ ciona_kyotograil_2004
 	}
       }
     }
-    info( 1, "End toplevel ". $slice->name ) unless  DONT_DUMP;
+    info( 1, "End toplevel ". $slice->name ) unless  $NODUMP;
   }
 
   # Close all file handles ----------------------------------------------------
@@ -452,7 +453,7 @@ ciona_kyotograil_2004
 
 sub dump_cdna_rna {
   my( $seqio, $transcript, $type, $gene, $ccds_id) = @_;
-  return if DONT_DUMP;
+  return if $NODUMP;
   $ccds_id ||= " ";
   my $coord_system = $transcript->slice->coord_system;
   my $location = join( ':', 
@@ -476,7 +477,7 @@ sub dump_cdna_rna {
 #>gene:ENSG00000158815:transcript:ENST00000328693
 sub dump_pep {
   my ($seqio, $transcript, $type, $gene, $ccds_id) = @_;
-  return if DONT_DUMP;
+  return if $NODUMP;
   $ccds_id ||= " ";
   my $translation = $transcript->translation;
   if( ! $translation ){
@@ -515,7 +516,7 @@ sub dump_pep {
 #----------------------------------------------------------------------
 sub dump_dna{
   my ($seqio, $slice, $type_str, $location) = @_;
-  return if DONT_DUMP;
+  return if $NODUMP;
 
   # Force slice onto forward strand
   if( $slice->strand < 1 ){ $slice = $slice->invert }
@@ -988,6 +989,9 @@ B<-h,--help>
 
 B<-i,--info>
   Prints man page and exits.
+
+B<-- nodump>
+  Runs the script without dumping the data (i.e. goes through each top level, creates and zips the files but with no data in them)
 
 B<-v,--verbose>
   Set verbosity level for debug output to stdout or logfile. Default 1
