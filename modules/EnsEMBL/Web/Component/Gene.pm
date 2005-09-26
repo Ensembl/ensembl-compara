@@ -100,8 +100,9 @@ sub markup_options_form {
 
 sub name {
   my( $panel, $object ) = @_;
-  my( $display_name, $dbname,$ext_id) = $object->display_xref();
+  my( $display_name, $dbname, $ext_id, $dbname_disp ) = $object->display_xref();
   return 1 unless defined $display_name;
+  $dbname_disp;
   my $label = $object->type_name();
   my $lc_type = lc($label);
   # link to external database
@@ -109,11 +110,10 @@ sub name {
   if( $ext_id ) {
     $linked_display_name = $object->get_ExtURL_link( $display_name, $dbname, $ext_id );
   }
-
   my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
   my $html = qq(
   <p>
-    <strong>$linked_display_name</strong> <span class="small">($dbname ID)</span>
+    <strong>$linked_display_name</strong> <span class="small">($dbname_disp ID)</span>
     <span class="small"> (to view all $site_type genes linked to the name <a href="/@{[$object->species]}/featureview?type=Gene;id=$display_name">click here</a>)</span>
   </p>);
   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
@@ -769,19 +769,27 @@ sub gene_structure {
   my $label    = 'Gene structure';
   my $object_slice = $object->Obj->feature_Slice;
      $object_slice = $object_slice->invert if $object_slice->strand < 1; ## Put back onto correct strand!
-
-  my $wuc = $object->get_userconfig( 'geneview' );
-  $wuc->{'geneid'} = $object->Obj->stable_id;
-  #  $wuc->{'_no_label'} = 'true';
-  $wuc->set( '_settings', 'width', 900);
-  $wuc->set( '_settings', 'show_labels', 'yes');
-  $wuc->set( 'ruler', 'str', $object->Obj->strand > 0 ? 'f' : 'r' );
+## Now we need to extend the slice!!
+  my $start = $object->Obj->start;
+  my $end   = $object->Obj->end;
+  foreach my $grf ( @{ $object->Obj->get_all_regulatory_features(1)||[] } ) {
+    $start = $grf->start if $grf->start < $start;    
+    $end   = $grf->end   if $grf->end   > $end;
+  } 
+  my $gr_slice = $object_slice->expand( $object->Obj->start - $start, $end - $object->Obj->end ); 
 
   my $trans = $object->get_all_transcripts;
-  $wuc->set( $trans->[0]->default_track_by_gene, 'on','on');
-  $wuc->set( 'regulatory_regions', 'on', 'on');
+  my $gene_track_name =$trans->[0]->default_track_by_gene;
 
-  my $image    = $object->new_image( $object_slice, $wuc, [] );
+  my $wuc = $object->get_userconfig( 'geneview' );
+     $wuc->{'geneid'} = $object->Obj->stable_id;
+     $wuc->set( '_settings',          'width',       900);
+     $wuc->set( '_settings',          'show_labels', 'yes');
+     $wuc->set( 'ruler',              'str',         $object->Obj->strand > 0 ? 'f' : 'r' );
+     $wuc->set( $gene_track_name,     'on',          'on');
+     $wuc->set( 'regulatory_regions', 'on',          'on');
+
+  my $image    = $object->new_image( $gr_slice, $wuc, [] );
   $panel->print( $image->render );
 }
 #-------- end gene regulation view ---------------------
