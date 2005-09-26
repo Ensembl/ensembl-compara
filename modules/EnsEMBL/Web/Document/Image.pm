@@ -47,8 +47,6 @@ sub set_extra {
 # FUNCTIONS FOR CONFIGURING AND CREATING KARYOTYPE IMAGES
 #----------------------------------------------------------------------------
                                                                                 
-use Bio::EnsEMBL::VDrawableContainer;
-                                                                                
 sub karyotype {
   my( $self, $data, $highs, $config ) = @_;
   

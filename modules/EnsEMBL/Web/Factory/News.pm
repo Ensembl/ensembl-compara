@@ -33,6 +33,10 @@ sub createObjects {
 
   my $current_release =  $self->species_defs->ENSEMBL_VERSION;
   my $release_id       = $self->param( 'rel' ) || $self->param('release_id') || $current_release;
+  # hack so we don't need to edit the species table every month!
+  if ($self->param('rel') && $self->param('rel') eq 'current') {
+    $release_id = $current_release;
+  }
 
   my $id            = $self->param( 'id' ) || $self->param('news_item_id');
 

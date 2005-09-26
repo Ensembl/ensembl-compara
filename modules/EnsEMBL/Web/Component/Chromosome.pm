@@ -70,24 +70,32 @@ my @rows = (
 
 sub config_hilites {
                                                                                 
-  my ($form, $object) = @_;
-                                                                                
-  $form->add_element(
-    'type'   => 'DropDown',
-    'select' => 'select',
-    'name'   => 'style',
-    'label'  => 'Display data points in the following style:',
-    'values' => \@pointer_styles,
-    'value'  => $object->param( 'style' ) || 'rharrow',
+  my ($form, $object, $sets) = @_;
+  $sets = 1 if !$sets;
+  my @defaults = ( 
+                ['first',   'rharrow',  'red'],
+                ['second',  'lharrow',  'blue'],
+                ['third',   'box',      'green'],
   );
-  $form->add_element(
-    'type'   => 'DropDown',
-    'select' => 'select',
-    'name'   => 'col',
-    'label'  => 'Display data points in the following colour:',
-    'values' => \@pointer_cols,
-    'value'  => $object->param( 'col' ) || 'red',
-  );
+                      
+  for (my $i=0; $i<$sets; $i++) {                                                  
+    $form->add_element(
+        'type'   => 'DropDown',
+        'select' => 'select',
+        'name'   => "style_$i",
+        'label'  => "Style for $defaults[$i][0] pointer set:",
+        'values' => \@pointer_styles,
+        'value'  => $object->param( "style_$i" ) || $defaults[$i][1],
+    );
+    $form->add_element(
+        'type'   => 'DropDown',
+        'select' => 'select',
+        'name'   => "col_$i",
+        'label'  => "Colour for $defaults[$i][0] pointer set:",
+        'values' => \@pointer_cols,
+        'value'  => $object->param( "col_$i" ) || $defaults[$i][2],
+    );
+  }
   $form->add_element(
     'type'   => 'DropDown',
     'select' => 'select',
