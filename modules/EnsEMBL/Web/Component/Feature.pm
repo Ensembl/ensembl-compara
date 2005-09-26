@@ -48,6 +48,7 @@ sub select_feature_form {
     { 'value' => 'AffyProbe',           'name' => 'AffyProbe' },
     { 'value' => 'DnaAlignFeature',     'name' => 'Sequence Feature' },
     { 'value' => 'ProteinAlignFeature', 'name' => 'Protein Feature' },
+    { 'value' => 'RegulatoryFactor',   'name' => 'Regulatory Factor' },
   );
   unshift @types, { 'value' => 'Disease', 'name' => 'OMIM Disease' }
     if $object->species_defs->databases->{'ENSEMBL_DISEASE'};
@@ -259,11 +260,11 @@ sub create_karyotype {
   # configure the JS popup menus (aka 'zmenus')
   my $zmenu = $object->param('zmenu') || 'on';
   my $zmenu_config;
-  my $data_type = $object->param('type') eq 'Gene' ? 'gene' : 'feature';
+  my $data_type = $object->param('type');# eq 'Gene' ? 'gene' : 'feature';
   if ($zmenu eq 'on') {
     # simple zmenu configuration - add_pointers (see below) now does 
     # all the messy output :)
-    if ($data_type eq 'gene') {
+    if ($data_type eq 'Gene') {
         $zmenu_config = {
             'caption' => 'Genes',
             'entries' => ['label', 'contigview', 'geneview'],

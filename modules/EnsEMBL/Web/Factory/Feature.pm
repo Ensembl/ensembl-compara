@@ -47,6 +47,7 @@ sub create_ProteinAlignFeature {
   my $features = {'AlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
   return $features;
 }
+
 sub create_Gene {
   my $features = {'Gene' => $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] ) }; 
   return $features;
@@ -140,5 +141,39 @@ sub _generic_create {
 
 }
 
+# For a Regulatory Factor ID display all the RegulatoryFeatures
+sub create_RegulatoryFactor {
+  my ( $self, $db, $id ) = @_;
+  $id ||= $self->param( 'id' );
+
+  my $db_adaptor  = $self->database(lc($db));
+  unless( $db_adaptor ){
+    $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+    return undef;
+  }
+  my $reg_feature_adaptor = $db_adaptor->get_RegulatoryFeatureAdaptor;
+  my $reg_factor_adaptor = $db_adaptor->get_RegulatoryFactorAdaptor;
+
+  my $features = [];
+  foreach my $fid ( split /\s+/, $id ) {
+    my $t_features;
+    eval {
+      $t_features = $reg_feature_adaptor->fetch_all_by_factor(
+				   $reg_factor_adaptor->fetch_by_name($fid)
+							     );
+    };
+    if( $t_features ) {
+      foreach( @$t_features ) { $_->{'_id_'} = $fid; }
+      push @$features, @$t_features;
+    }
+  }
+  my $feature_set = {'RegulatoryFactor' => $features};
+  return $feature_set;
+
+  return $features if $features && @$features; # Return if we have at least one feature
+  # We have no features so return an error....
+  $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
+  return undef;
+}
 1;
 

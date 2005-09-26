@@ -162,4 +162,23 @@ sub retrieve_ProteinAlignFeature {
   return $_[0]->retrieve_DnaAlignFeature();
 }
 
+sub retrieve_RegulatoryFactor {
+  my $self = shift;
+  
+  my $results = [];
+  foreach my $ap (@{$self->Obj->{'RegulatoryFactor'}}) {
+    push @$results, {
+      'region'   => $ap->seq_region_name,
+      'start'    => $ap->start,
+      'end'      => $ap->end,
+      'strand'   => $ap->strand,
+      'length'   => $ap->end-$ap->start+1,
+      'label'    => $ap->name,
+      'extra'    => [ $ap->analysis->description ]
+    }
+  }
+  
+  return ( $results, ['Feature analysis'] );
+}
+
 1;

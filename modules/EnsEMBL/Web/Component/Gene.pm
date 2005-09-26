@@ -751,7 +751,7 @@ sub regulation_factors {
 
 
     $row = {
-	    'Factor'      =>  qq($factor_name),#<a href="/@{[$object->species]}/featureview?feature=$factor_name">$factor_name</a>),
+	    'Factor'      =>  qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor">$factor_name</a>),
 	    'Feature'     => "$feature_name",
 	    'Feature analysis'   =>  $feature_obj->analysis->description,
 	    'Feature location'    => $position,
