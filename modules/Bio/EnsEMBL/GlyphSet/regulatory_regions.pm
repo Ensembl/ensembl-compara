@@ -5,9 +5,9 @@ use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish { return 1; }
-sub my_label { return "Regulatory regions"; }
+sub my_label { return "Regulatory features"; }
 
-sub my_description { return "Regulatory regions"; }
+sub my_description { return "Regulatory features"; }
 
 # This for 
 sub my_helplink { return "markers"; }
@@ -15,7 +15,8 @@ sub my_helplink { return "markers"; }
 sub features {
     my ($self) = @_;
     my $slice = $self->{'container'};
-    return $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
+    my $features =  $slice->adaptor->db->get_RegulatoryFeatureAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
+    return $features;
 }
 
 sub href {
