@@ -1,53 +1,5 @@
 #!/usr/local/bin/perl
 
-=head1 NAME
-
-update_webdb.pl
-
-=head1 SYNOPSIS
-
-update_webdb.pl [options]
-
-Options:
-  --help, --info, --date
-
-B<-h,--help>
-  Prints a brief help message and exits.
-
-B<-i,--info>
-  Prints man page and exits.
-
-B<-d,--date>
-  Release date (optional). If this is the first time you have run this script for a release,
-  you should specify a release date in the format yyyy-mm-dd - otherwise it will default to
-  the first day of next month!
-
-=head1 DESCRIPTION
-
-B<This program:>
-
-Updates the ensembl_website database by inserting records from the current release's ini files.
-
-It will add information about the release itself (if not already present), based on variables in
-the SiteDefs.pm module, and also prompts the user for a release date. If the release record is
-present, it asks the user if the release date is still correct.
-
-It then either adds a cross-reference record between the release and the species configured for 
-that release, or reports on existing cross-reference records. If a new species has been added to 
-this release, a species record will be added to the database provided there is an ini file for it 
-in the correct location.
-
-The database location is specified in Ensembl web config file:
-  ../conf/ini-files/DEFAULTS.ini
-
-=head1 AUTHOR
-
-Anne Parker, Ensembl Web Team
-
-Enquiries about this script should be addressed to helpdesk@ensembl.org
-
-=cut
-
 use strict;
 use warnings;
 use Carp;
@@ -90,7 +42,7 @@ my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
 
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
-my $release_details = $wa->fetch_releases($release_id);
+my $release_details = $wa->fetch_releases({'release'=>$release_id});
 
 if ($release_details && $$release_details[0]) {
 
@@ -181,3 +133,53 @@ foreach my $sp (sort @species) {
         print "Sorry, unable to add record for $sp as no species ID found\n";
     }
 }
+
+
+
+=head1 NAME
+
+update_webdb.pl
+
+=head1 SYNOPSIS
+
+update_webdb.pl [options]
+
+Options:
+  --help, --info, --date
+
+B<-h,--help>
+  Prints a brief help message and exits.
+
+B<-i,--info>
+  Prints man page and exits.
+
+B<-d,--date>
+  Release date (optional). If this is the first time you have run this script for a release,
+  you should specify a release date in the format yyyy-mm-dd - otherwise it will default to
+  the first day of next month!
+
+=head1 DESCRIPTION
+
+B<This program:>
+
+Updates the ensembl_website database by inserting records from the current release's ini files.
+
+It will add information about the release itself (if not already present), based on variables in
+the SiteDefs.pm module, and also prompts the user for a release date. If the release record is
+present, it asks the user if the release date is still correct.
+
+It then either adds a cross-reference record between the release and the species configured for 
+that release, or reports on existing cross-reference records. If a new species has been added to 
+this release, a species record will be added to the database provided there is an ini file for it 
+in the correct location.
+
+The database location is specified in Ensembl web config file:
+  ../conf/ini-files/DEFAULTS.ini
+
+=head1 AUTHOR
+
+Anne Parker, Ensembl Web Team
+
+Enquiries about this script should be addressed to helpdesk@ensembl.org
+
+=cut
