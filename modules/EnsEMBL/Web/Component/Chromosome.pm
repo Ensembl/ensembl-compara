@@ -576,6 +576,7 @@ sub image_choice {
   my ($panel, $object) = @_;
 
   my $chr_name = $object->param('chr');
+  my $species = $object->species;
 
   my $html = qq(<h2>Karyoview</h2>
     <p>This page enables you to display your own data on a customisable karyotype image.</p>
@@ -586,8 +587,8 @@ sub image_choice {
     <th class="center">Show density of features</th>
     </tr>
     <tr>
-    <td class="center"><a href="/Homo_sapiens/karyoview?display=location;chr=$chr_name"><img src="/img/misc/display_location.png" alt="Chromosome with location pointers" width="332" height="495" /></a></td>
-    <td class="center"><a href="/Homo_sapiens/karyoview?display=density;chr=$chr_name"><img src="/img/misc/display_density.png" alt="Chromosome with density tracks" width="388" height="500" /></a></td>
+    <td class="center"><a href="/$species/karyoview?display=location;chr=$chr_name"><img src="/img/misc/display_location.png" alt="Chromosome with location pointers" width="332" height="495" /></a></td>
+    <td class="center"><a href="/$species/karyoview?display=density;chr=$chr_name"><img src="/img/misc/display_density.png" alt="Chromosome with density tracks" width="388" height="500" /></a></td>
     </tr>
     </table>);
   
