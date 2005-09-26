@@ -25,8 +25,14 @@ sub feature_id : lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_feature_id'} 
 sub data         : lvalue { $_[0]->{'_data'         }; }
 
 sub retrieve_features {
-  my $self = shift;
-  my $method = "retrieve_".$self->feature_type;
+  my ($self, $feature_type) = @_;
+  my $method;
+  if ($feature_type) {
+    $method = "retrieve_$feature_type";
+  }
+  else {
+    $method = "retrieve_".$self->feature_type;
+  }
   return $self->$method() if defined &$method;
 }
 
@@ -40,7 +46,7 @@ sub retrieve_Disease {
     lc($a->{'cyto'})     cmp lc($b->{'cyto'})     ||
     lc($a->{'gsi'})      cmp lc($b->{'gsi'})      || 
     lc($a->{'genename'}) cmp lc($b->{'genename'}) 
-  } @{$self->Obj}) {
+  } @{$self->Obj->{'Disease'}}) {
     if( lc($ap->{'disease'}) eq $P[0] && $ap->{'OMIM'} eq $P[1] && lc($ap->{'gsi'}) eq $P[2] && lc($ap->{'cyto'}) eq $P[3] ) {
       $results->[-1]->{'extname'}.=" $ap->{'genename'}";
       next;
@@ -79,7 +85,7 @@ sub retrieve_Gene {
   my $self = shift;
   
   my $results = [];
-  foreach my $ap (@{$self->Obj}) {
+  foreach my $ap (@{$self->Obj->{'Gene'}}) {
     push @$results, {
       'region'   => $ap->seq_region_name,
       'start'    => $ap->start,
@@ -99,7 +105,7 @@ sub retrieve_AffyProbe {
   my $self = shift;
   
   my $results = [];
-  foreach my $ap (@{$self->Obj}) {
+  foreach my $ap (@{$self->Obj->{'AffyProbe'}}) {
     my $names = join ' ', sort @{$ap->get_all_complete_names()};
     foreach my $f (@{$ap->get_all_AffyFeatures()}) {
       push @$results, {
@@ -125,7 +131,7 @@ sub retrieve_DnaAlignFeature {
   my $self = shift;
   my $results = [];
   my $coord_systems = $self->coord_systems();
-  foreach my $f ( @{$self->Obj} ) { 
+  foreach my $f ( @{$self->Obj->{'AlignFeature'}} ) { 
 	next unless ($f->score > 80);
     my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
     if( $f->coord_system_name ne $coord_systems->[0] ) {
