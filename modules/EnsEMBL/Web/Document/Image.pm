@@ -327,7 +327,12 @@ $_->{'start'}] }
                 }
                 elsif ($entry eq 'geneview') {
                     foreach my $gene (@{$row->{'gene_id'}}) {
-                        $text = "Jump to $entry: $gene";
+                        if (scalar(@{$row->{'gene_id'}}) > 1) {
+                            $text = "$entry: $gene";
+                        }
+                        else {
+                            $text = "Jump to $entry";
+                        }
                         $value = "/$species/geneview?gene=$gene";
                         $key = sprintf('%03d', $order).':'.$text;
                         $point->{'zmenu'}->{$key} = $value;
