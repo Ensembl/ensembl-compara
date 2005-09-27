@@ -17,92 +17,41 @@ sub init_label {
 
     my $text =  $self->{'container'}->{_config_file_name_};
 
-      my $label = new Sanger::Graphics::Glyph::Text({
-	  'z'             => 10,
-	  'x'             => -110,
-	  'y'             => 2,
-	  'text'      => "$text",	
-	  'font'      => 'Small',
-	  'absolutex'     => 1,
-	  'absolutey' => 1,
-      });
+    my $label = new Sanger::Graphics::Glyph::Text({
+	'z'             => 10,
+	'x'             => -110,
+	'y'             => 2,
+	'text'      => "$text",	
+	'font'      => 'Small',
+	'absolutex'     => 1,
+	'absolutey' => 1,
+    });
 
 
-      $self->push($label);
-      my $line = new Sanger::Graphics::Glyph::Rect({
-	  'z' => 9,
-	  'x' => -120,
-	  'y' => 2,
-	  'colour' => 'white', #'black',
-	  'width' => 118,
-	  'height' => 15,
-	  'absolutex'     => 1,
-	  'absolutewidth' => 1,
-	  'absolutey'     => 1,
-      });
-      $self->push($line);
-      return;
-
+    $self->push($label);
+    my $line = new Sanger::Graphics::Glyph::Rect({
+	'z' => 9,
+	'x' => -120,
+	'y' => 2,
+	'colour' => 'white', 
+	'width' => 118,
+	'height' => 15,
+	'absolutex'     => 1,
+	'absolutewidth' => 1,
+	'absolutey'     => 1,
+    });
+    $self->push($line);
     return;
-    my $compara = $self->{container}->{'compara'};
-    my $species = $self->{container}->{'species'};
-    if( $compara && $species ) {
-	return if $self->strand < 0;
-	if (0){
-	my $label = new Sanger::Graphics::Glyph::Sprite({
-	    'z'             => 10,
-	    'x'             => -110,
-	    'y'             => 0,
-	    'sprite'        => lc($species),
-	    'width'         => 100,
-	    'height'        => 20,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	    'absolutey'     => 1,
-	});
-    }
-	my $label = new Sanger::Graphics::Glyph::Text({
-	    'z'             => 10,
-	    'x'             => -110,
-	    'y'             => 0,
-	    'text'      => "$species",	
-	    'font'      => 'Small',
-	    'absolutex'     => 1,
-	    'absolutey' => 1,
-	});
-
-
-	$self->push($label);
-	my $line = new Sanger::Graphics::Glyph::Rect({
-	    'z' => 9,
-	    'x' => -120,
-	    'y' => 0,
-	    'colour' => 'white', #'black',
-	    'width' => 118,
-	    'height' => 15,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	    'absolutey'     => 1,
-	});
-	$self->push($line);
-    } elsif( $species ) {
-	my $label = new Sanger::Graphics::Glyph::Text({
-	    'text'      => "$species",	
-	    'font'      => 'Small',
-	    'absolutey' => 1,
-	});
-	$self->label($label);
-    }
 }
 
 
 sub _init {
     my ($self) = @_;
     #return unless ($self->strand() == -1);
-
+    
     my $Config         = $self->{'config'};
-
     my $Container      = $self->{'container'};
+
     my $contig_strand  = $Container->can('strand') ? $Container->strand : 1;
     my $h              = 0;
     my $highlights     = $self->highlights();
@@ -113,50 +62,39 @@ sub _init {
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? "&highlight=$highlights" : '';
     my $object = $Config->{_object};
-    if( $self->{'config'}->{'compara'} ) { ## this is where we have to add in the other species....
-	my $C = 0;
-	foreach( @{ $self->{'config'}{'other_slices'}} ) {
-	    if( $C!= $self->{'config'}->{'slice_number'} ) {
-		if( $C ) {
-		    if( $_->{'location'} ) {
-			$highlights .= sprintf( "&s$C=%s&c$C=%s:%s:%s&w$C=%s", $_->{'species'}, 
-						$_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
-		    } else {
-			$highlights .= sprintf( "&s$C=%s", $_->{'species'} ); 
-		    }
-		} else {
-		    $highlights .= sprintf( "&c=%s:%s:1&w=%s", 
-					    $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'location'}->length );
-		}
-	    }
-	    $C++;
-	}
-    }
     my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
     my $navigation     = $Config->get('scalebar', 'navigation');
     my $abbrev         = $Config->get('scalebar', 'abbrev');
+    
     (my $param_string   = $Container->seq_region_name()) =~ s/\s/\_/g;
-
+    
     
     my $species =  $Container->{_config_file_name_};
+
+# Get the compara species selection    
+# Menu items for compare are of the following form:
+# SPECIES_compara_TYPE, e.g
+#    homo_sapiens_compara_pairwise
+#    homo_sapiens_compara_mlagan
+# This is a temporary solution whilst we are figuring out what will go into Compara menu 
+# at the moment there are several pairwise alignments (use BLASTZ_NET) and one multiple using MLAGAN (human+rat+mouse+dog)
 
     my $aslink = $Config->get('align_species',$ENV{ENSEMBL_SPECIES});
     my ($spe, $type) = split('_compara_', $aslink);
     my ($psp, $ssp) = (lc($ENV{ENSEMBL_SPECIES}), lc($species));
-
+    
     if ($type eq 'pairwise') {
 	if ($ssp ne $psp) {
 	    $aslink =~ s/^.+_compara/${psp}_compara/;
 	}
-    } else {
+	
+    } else {	
 	$aslink =~ s/^.+_compara/${ssp}_compara/;
     }
-
-#    warn(join('*', 'A',$species, $Container->{'compara'}, $aslink, $ssp, $psp));
-
+    
     my $main_width     = $Config->get('_settings', 'main_vc_width');
     my $len            = $Container->length();
 
@@ -165,8 +103,12 @@ sub _init {
 
     my $mp = $Container->{slice_mapper_pairs};
 
-    $self->align_interval($mp, $global_start, $global_end, 5) if($self->{strand} < 0);
-    $self->align_interval($mp, $global_start, $global_end, 5) if($self->{strand} > 0);
+# Display gaps in AlignSlices
+    $self->align_gap($Container, $global_start, $global_end, 8) if ($self->{strand} > 0);
+    $self->align_gap($Container, $global_start, $global_end, 2) if ($self->{strand} < 0);
+
+# Display AlignSlice bars
+    $self->align_interval($mp, $global_start, $global_end, 5);
 
     my( $major_unit, $minor_unit );
 
@@ -189,11 +131,9 @@ sub _init {
           $major_unit = $exponent;
           $minor_unit = $major_unit / 5 ;
        }
-#    warn("T:".join('*', $len, $exponent, $mantissa, $major_unit, $minor_unit));
     }
 
     ## Now lets draw these....
-
     
     my $start = floor( $global_start / $minor_unit ) * $minor_unit;
     my $filled = 1;
@@ -208,75 +148,70 @@ sub _init {
 	    $start = $global_end  +1;
 	}
     }
-
-
+    
     while( $start <= $global_end ) { 
-      my $end       = $start + $minor_unit - 1;
-      $filled = 1 - $filled;
-      my $box_start = $start < $global_start ? $global_start -1 : $start;
-      my $box_end   = $end   > $global_end   ? $global_end      : $end;
-#      warn("Z:".join('*', $start, $box_start, $box_end));
+	my $end       = $start + $minor_unit - 1;
+	$filled = 1 - $filled;
+	my $box_start = $start < $global_start ? $global_start -1 : $start;
+	my $box_end   = $end   > $global_end   ? $global_end      : $end;
 
       ## Draw the glyph for this box!
-      my $t = new Sanger::Graphics::Glyph::Rect({
-         'x'         => $box_start - $global_start, 
-         'y'         => $yc,
-         'width'     => abs( $box_end - $box_start + 1 ),
-         'height'    => 3,
-         ( $filled == 1 ? 'colour' : 'bordercolour' )  => 'black',
-         'absolutey' => 1,
-         'alt'       => 'xxx'
-      });
-#      if ($navigation eq 'on' && $Config->{'compara'} ne 'secondary' ){
-      if ($navigation eq 'on'){
-        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $species, $aslink, $mp, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
-      }
+	my $t = new Sanger::Graphics::Glyph::Rect({
+	    'x'         => $box_start - $global_start, 
+	    'y'         => $yc,
+	    'width'     => abs( $box_end - $box_start + 1 ),
+	    'height'    => 3,
+	    ( $filled == 1 ? 'colour' : 'bordercolour' )  => 'black',
+	    'absolutey' => 1,
+	    'alt'       => 'xxx'
+	    });
+	if ($navigation eq 'on'){
+	    ($t->{'href'},$t->{'zmenu'}) = $self->interval( $species, $aslink, $Container, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
+	}
 
-#      warn("T^($self->{strand} * $navigation * $Config->{'compara'}): $t->{'href'} *** $t->{'zmenu'}");
+	$self->push($t);
+	if($start == $box_start ) { # This is the end of the box!
+	    $self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE && $Container->{compara} ne 'secondary');
+	}
+	if( ( $box_end==$global_end ) && !( ( $box_end+1) % $minor_unit ) ) {
+	    $self->join_tag( $t, "ruler_$end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE &&  $Container->{compara} ne 'secondary');
+	}
 
-      $self->push($t);
-      if($start == $box_start ) { # This is the end of the box!
-        $self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE && $Container->{compara} ne 'secondary');
-      }
-      if( ( $box_end==$global_end ) && !( ( $box_end+1) % $minor_unit ) ) {
-        $self->join_tag( $t, "ruler_$end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE &&  $Container->{compara} ne 'secondary');
-      }
-
-      unless( $box_start % $major_unit ) { ## Draw the major unit tick 
-        $self->push(new Sanger::Graphics::Glyph::Rect({
-            'x'         => $box_start - $global_start,
-            'y'         => $yc, 
-            'width'     => 0,
-            'height'    => 5,
-            'colour'    => 'black',
-            'absolutey' => 1,
-        }));
-        my $LABEL = $minor_unit < 250 ? $object->thousandify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
-        if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
-          $self->push(new Sanger::Graphics::Glyph::Text({
-            'x'         => $box_start - $global_start,
-            'y'         => $yc - 9,
-            'height'    => $fontheight,
-            'font'      => $fontname,
-            'colour'    => $feature_colour,
-            'text'      => $LABEL,
-            'absolutey' => 1,
-          }));
-          $last_text_X = $box_start;
-        }
-      } 
-      $start += $minor_unit;
+	unless( $box_start % $major_unit ) { ## Draw the major unit tick 
+	    $self->push(new Sanger::Graphics::Glyph::Rect({
+		'x'         => $box_start - $global_start,
+		'y'         => $yc, 
+		'width'     => 0,
+		'height'    => 5,
+		'colour'    => 'black',
+		'absolutey' => 1,
+	    }));
+	    my $LABEL = $minor_unit < 250 ? $object->thousandify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
+	    if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
+		$self->push(new Sanger::Graphics::Glyph::Text({
+		    'x'         => $box_start - $global_start,
+		    'y'         => $yc - 9,
+		    'height'    => $fontheight,
+		    'font'      => $fontname,
+		    'colour'    => $feature_colour,
+		    'text'      => $LABEL,
+		    'absolutey' => 1,
+		}));
+		$last_text_X = $box_start;
+	    }
+	} 
+	$start += $minor_unit;
     }
     unless( ($global_end+1) % $major_unit ) { ## Draw the major unit tick 
-      $self->push(new Sanger::Graphics::Glyph::Rect({
-        'x'         => $global_end - $global_start + 1,
-        'y'         => $yc,
-        'width'     => 0,
-        'height'    => 5,
-        'colour'    => 'black',
-        'absolutey' => 1,
-      }));
-  }
+	$self->push(new Sanger::Graphics::Glyph::Rect({
+	    'x'         => $global_end - $global_start + 1,
+	    'y'         => $yc,
+	    'width'     => 0,
+	    'height'    => 5,
+	    'colour'    => 'black',
+	    'absolutey' => 1,
+	}));
+    }
 
 
     if ($self->{strand} > 0 && $Container->{compara} ne 'primary') {
@@ -293,7 +228,6 @@ sub _init {
       
 	$self->push($line);
     }
-
 }
 
 sub align_interval {
@@ -304,16 +238,15 @@ sub align_interval {
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $last_end = -1;
     my $last_chr = -1;
+    my $zc = -20;
     my $last_s2e = -1;
+
     my %colour_map = ();
     my %colour_map2 = ();
     my @colours2 = qw(antiquewhite3 brown gray rosybrown1 blue green red gray yellow);
-#    my @colours = qw(seashell1 bisque1 azure1 );
-
     my @colours = qw(antiquewhite1 mistyrose1 burlywood1 khaki1 cornsilk1 lavenderblush1 lemonchiffon2 darkseagreen2  lightcyan1 papayawhip seashell1);
 
     foreach my $s (@$mp) {
-#	warn("c2:".join('*', keys(%$s)));	
 	my $s2 = $s->{slice};
 
 	my $ss = $s->{start};
@@ -325,7 +258,6 @@ sub align_interval {
 	my $s2st = $s2->{strand};
 	my $s2t = $s2->{seq_region_name};
 
-#	warn("S:". join('*', $ss, $se, $sst, $s2s, $s2e, $s2t, $s2st, $last_end));
 	my $box_start = $ss;
 	my $box_end   = $se;
 	my $filled = $sst;
@@ -348,7 +280,6 @@ sub align_interval {
 	$colour_map{$s2t} or $colour_map{$s2t} = shift (@colours) || 'grey';
 	$colour_map2{$s2t} or $colour_map2{$s2t} =  'darksalmon' ;#shift (@colours2) || 'grey';
 
-#	warn("$box_start : $box_end");
 	my $col2 = $colour_map2{$s2t};
 	my $t = new Sanger::Graphics::Glyph::Rect({
 	    'x'         => $box_start - $global_start, 
@@ -366,11 +297,11 @@ sub align_interval {
 	my $col = $colour_map{$s2t};
 
 	if ($self->{strand} < 0) {
-	    $self->join_tag( $t, "alignslice_${box_start}", 0,0, $col, 'fill', -40 );
-	    $self->join_tag( $t, "alignslice_${box_start}", 1,0, $col, 'fill', -40 );
+	    $self->join_tag( $t, "alignslice_${box_start}", 0,0, $col, 'fill', $zc );
+	    $self->join_tag( $t, "alignslice_${box_start}", 1,0, $col, 'fill', $zc );
 	} else {
-	    $self->join_tag( $t, "alignslice_${box_start}", 1,1, $col, 'fill', -40 );
-	    $self->join_tag( $t, "alignslice_${box_start}", 0,1, $col, 'fill', -40 );
+	    $self->join_tag( $t, "alignslice_${box_start}", 1,1, $col, 'fill', $zc );
+	    $self->join_tag( $t, "alignslice_${box_start}", 0,1, $col, 'fill', $zc );
 	}
 
 	if (($last_chr == $s2t) && ($last_end == $ss - 1)) {
@@ -401,34 +332,101 @@ sub align_interval {
 
 }
 
+sub align_gap {
+    my $self = shift;
+    my ($Container, $global_start, $global_end, $yc) = @_;
+
+    my $mp = $Container->{slice_mapper_pairs};
+    my $si = 0;
+    my $hs = $mp->[$si];
+    my $gs = $hs->{start} - 1;
+    my $ge = $hs->{end};
+
+    my $cigar_line = $Container->get_cigar_line();
+    my $Config          = $self->{'config'};
+
+# Display only those gaps that amount to more than 1 pixel on screen, otherwise screen gets white when you zoom out too much .. 
+    my $pix_per_bp     = $Config->transform()->{'scalex'};
+    my $min_length = 1 / $pix_per_bp;
+
+    my @inters = split (/[MD]/, $cigar_line);
+    my $ms = 0;
+    my $ds = 0;
+    my $box_start = 0;
+    my $box_end = 0;
+    my $colour = 'white';
+    my $zc = -10;
+    if ($cigar_line =~ /^\d+M/) {
+	$ms = (shift (@inters) || 1);
+	$box_end = $box_start + $ms -1;
+	$box_start = $box_end + 1;
+    }
+
+    while (@inters) {
+	$ms = (shift (@inters) || 1);
+	$box_end = $box_start + $ms -1;
+
+	if ($box_start > $ge) {
+	    $si++;
+	    $hs = $mp->[$si] or return;
+	    $gs = $hs->{start} - 1;
+	    $ge = $hs->{end};
+	}
+
+	if ($ms > $min_length && $box_start >=  $gs && $box_end < $ge) { 
+	    my $t = new Sanger::Graphics::Glyph::Rect({
+		'x'         => $box_start,
+		'y'         => $yc,
+		'z'         => $zc,
+		'width'     => abs( $box_end - $box_start + 1 ),
+		'height'    => 3,
+		'colour' => $colour, 
+		'absolutey' => 1,
+	    });
+
+	    $self->push($t);
+	    
+	    if ($self->{strand} < 0) {
+		$self->join_tag( $t, "alignsliceG_${box_start}", 0,0, $colour, 'fill', $zc );
+		$self->join_tag( $t, "alignsliceG_${box_start}", 1,0, $colour, 'fill', $zc );
+	    } else {
+		$self->join_tag( $t, "alignsliceG_${box_start}", 1,1, $colour, 'fill', $zc );
+		$self->join_tag( $t, "alignsliceG_${box_start}", 0,1, $colour, 'fill', $zc );
+	    }
+	}
+
+	$box_start = $box_end + 1;
+	$ms = (shift (@inters) || 1);
+	$box_end = $box_start + $ms -1;
+	$box_start = $box_end + 1;
+    }
+}
+
 sub real_location {
-    my ($self, $mpairs, $coord) = @_;
-#    warn("FIND $coord");
+    my ($self, $as, $coord) = @_;
+    my ($slice, $pos) = $as->get_original_seq_region_position($coord);
     my ($chr, $x) = (0, 0);
 
-    foreach my $region (@$mpairs) {
-	if ($region->{start} <= $coord && $region->{end} >= $coord) {
-	    my $slice = $region->{slice};
-	    my $offset = ($slice->end - $slice->start) * $coord / ($region->{end} - $region->{start});
-	    $x = $slice->start + int($offset);
-	    $chr =  $slice->seq_region_name;
-#	    warn("FOUND: ".join('*', $region->{start}, $region->{end}, $slice->seq_region_name, $slice->start, $slice->end, $slice->seq_region_length,  $offset, $x));
-	    last;
-
-	}
+    if ($pos != $coord) {
+	$chr = $slice->seq_region_name();
+	$x = $pos;
     }
-    
+
     return ($chr, $x);
 }
-sub interval {
-  # Add the recentering imagemap-only glyphs
-  my ( $self, $species, $aslink, $mpairs, $start, $end, $contig_strand, $global_offset, $width, $highlights) = @_;
-  my ($chr, $interval_middle) = $self->real_location($mpairs, $contig_strand * ($start+1));
- 
-  return if (!$chr);
 
-  return( $self->zoom_URL($species, $aslink, $chr, $interval_middle, $width,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand),
-          $self->zoom_zmenu( $species, $aslink, $chr, $interval_middle, $width, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ) );
+
+sub interval {
+    # Add the recentering imagemap-only glyphs
+    my ( $self, $species, $aslink, $as, $start, $end, $contig_strand, $global_offset, $width, $highlights) = @_;
+    my ($chr, $interval_middle) = $self->real_location($as, $contig_strand * ($start+1));
+    
+    return if (!$chr);
+    
+    $width = $self->{config}->{_object}->length;
+
+    return( $self->zoom_URL($species, $aslink, $chr, $interval_middle, $width,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand),
+	    $self->zoom_zmenu( $species, $aslink, $chr, $interval_middle, $width, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ) );
 }
 
 sub zoom_zmenu {
