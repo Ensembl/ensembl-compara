@@ -235,6 +235,7 @@ sub add_pointers {
                                 'start' => $feature->rawstart(),
                                 'end'   => $feature->rawend(),
                                 'label' => $feature->id(),
+                                'gene_id' => $feature->id(),
                                 };
                         push (@data, $data_row);
                         $chrs{$feature->seqname()}++;                                         
@@ -259,11 +260,12 @@ $_->{'start'}] }
             @$data
             ) {
             my $data_row = {
-                'chr'    => $row->{'region'},
-                'start'  => $row->{'start'},
-                'end'    => $row->{'end'},
-                'length' => $row->{'length'},
-                'label'  => $row->{'label'},
+                'chr'       => $row->{'region'},
+                'start'     => $row->{'start'},
+                'end'       => $row->{'end'},
+                'length'    => $row->{'length'},
+                'label'     => $row->{'label'},
+                'gene_id'   => $row->{'gene_id'},
                 };
             push (@data, $data_row);
             $chrs{$row->{'region'}}++;                                         
