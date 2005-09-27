@@ -111,20 +111,15 @@ sub change_CSS_colours {
   foreach (keys %colours) {
     $colours{$_} =~ s/^([0-9A-F]{6})$/#$1/i;
   }
-  warn $species_defs->ENSEMBL_SERVERROOT;
   my $css_directory = $species_defs->ENSEMBL_SERVERROOT.'/htdocs/css';
   if( opendir DH, $css_directory ) {
     while ( my $file = readdir DH ) {
       if( $file =~ /^(.*)-tmpl$/ ) {
         open I, "$css_directory/$file" || next;
-        warn "READING $css_directory/$file";
         if( open O, ">$css_directory/$1" ) {
-          warn "WRITING $css_directory/$1";
           local( $/ ) = undef;
           my $T = <I>;
-          warn "< ",substr( $T,-100,100);
           $T =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
-          warn "> ",substr( $T,-100,100);
           print O $T;
           close O;
         }
