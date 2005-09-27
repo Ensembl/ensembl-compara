@@ -19,8 +19,8 @@ sub init {
     '_artefacts' => [
 ## The following are the extra fugu bits... 
 ## Only features whose key is in this array gets displayed as a track....
-       qw( blast_new repeat_lite ),
-       qw( alignment variation stranded_contig ruler alignscalebar navigation ),
+       qw( repeat_lite ),
+       qw( alignment variation stranded_contig ruler alignscalebar),
     ],
     '_options'  => [qw(on pos col hi low dep str src known unknown ext)],
     '_names'   => {
@@ -357,11 +357,6 @@ sub init {
       'pos'       => '1',
     },
 
-    'navigation' => {
-      'on' => 'on',
-      'str' => 'r',
-      'pos' => 1e9
-    },
     'quote' => {
       'on' => 'off',
       'str' => 'r',
