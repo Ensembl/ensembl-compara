@@ -327,7 +327,7 @@ $_->{'start'}] }
                 }
                 elsif ($entry eq 'geneview') {
                     foreach my $gene (@{$row->{'gene_id'}}) {
-                        $text = "Jump to $entry";
+                        $text = "Jump to $entry: $gene";
                         $value = "/$species/geneview?gene=$gene";
                         $key = sprintf('%03d', $order).':'.$text;
                         $point->{'zmenu'}->{$key} = $value;
