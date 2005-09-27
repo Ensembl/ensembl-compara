@@ -25,7 +25,6 @@ sub push_logo {
 sub add_block {
   my( $self, $code, $type, $caption, %options ) = @_;
   my @C = caller(0);
-  #warn "ADDING BLOCK $code $C[0]";
   return if exists $self->{'blocks'}{$code};
   $self->{'blocks'}{$code} = { 
     'caption' => $caption,
@@ -38,6 +37,23 @@ sub add_block {
   push @{$self->{'block_order'}[$priority]}, $code;
 }
 
+sub change_block_attribute { 
+  my( $self, $code, $attr, $new_value ) = @_;
+  return unless $self->{'blocks'}{$code};
+  if( $attr eq 'priority' ) {
+    $new_value ||= 0;
+    my $old_priority = $self->{'blocks'}{$code}{'options'}{'priority'};
+    return if $new_value == $old_priority;
+    $self->{'block_order'}[$old_priority] = [grep{$_ ne $code} @{$self->{'block_order'}[$old_priority]}];
+    push @{$self->{'block_order'}[$new_value]}, $code;
+  }
+  if( exists($self->{'blocks'}{$code}{$attr}) ) {
+    $self->{'blocks'}{$code}{$attr} = $new_value;
+  } else {
+    $self->{'blocks'}{$code}{'options'}{$attr} = $new_value;
+  }
+}
+
 sub block {
   my( $self, $code ) = @_;
   return exists $self->{'blocks'}{$code};
@@ -45,10 +61,36 @@ sub block {
 
 sub add_entry {
   my( $self, $code, %options ) = @_;
-  my @C = caller(0);
-  #warn "ADDING BLOCK $code $options{'caption'} $C[0]";
   return unless exists $self->{'blocks'}{$code};
   push @{$self->{'blocks'}{$code}{'entries'}}, \%options;
+}
+
+sub add_entry_first {
+  my( $self, $code, %options ) = @_;
+  return unless exists $self->{'blocks'}{$code};
+  unshift @{$self->{'blocks'}{$code}{'entries'}}, \%options;
+}
+
+sub add_entry_after {
+  my( $self, $code, $entry, %options ) = @_;
+  return unless exists $self->{'blocks'}{$code};
+  my $C = 0;
+  foreach( @{$self->{'blocks'}{$code}{'entries'}} ) {
+    $C++;
+    last if $_->{'code'} eq $entry; 
+  }
+  splice @{$self->{'blocks'}{$code}{'entries'}}, $C, 0, \%options; 
+}
+
+sub add_entry_before {
+  my( $self, $code, $entry, %options ) = @_;
+  return unless exists $self->{'blocks'}{$code};
+  my $C = 0;
+  foreach( @{$self->{'blocks'}{$code}{'entries'}} ) {
+    last if $_->{'code'} eq $entry;
+    $C++;
+  }
+  splice @{$self->{'blocks'}{$code}{'entries'}}, $C, 0, \%options;
 }
 
 sub delete_entry {
@@ -56,6 +98,7 @@ sub delete_entry {
   return unless exists $self->{'blocks'}{$code};
   $self->{'blocks'}{$code}{'entries'} = [ grep { $_->{'code'} ne $entry } @{$self->{'blocks'}{$code}{'entries'}} ];
 }
+
 sub delete_block {
   my( $self, $code ) = @_;
   delete $self->{'blocks'}{$code};
@@ -66,6 +109,7 @@ sub render {
   $self->print( qq(\n<div id="related"><div id="related-box">) );
   foreach my $block_key (map {@$_} grep {$_} @{$self->{'block_order'}}) {
     my $block = $self->{'blocks'}{$block_key};
+    next unless $block;
     $self->printf(
       qq(\n  <h2>%s</h2>),
       $block->{'options'}{'raw'} ? $block->{'caption'} : CGI::escapeHTML( $block->{'caption'} )
