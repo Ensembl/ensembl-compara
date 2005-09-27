@@ -91,7 +91,7 @@ sub _URL {
 sub seq_region_type_human_readable {
   my $self = shift;
   unless( $self->can('seq_region_type') ) {
-    $self->{'data'}->{'drop_through'} = 1;
+    $self->{'data'}->{'_drop_through_'} = 1;
     return;
   }
   return ucfirst( $self->seq_region_type );
@@ -100,7 +100,7 @@ sub seq_region_type_human_readable {
 sub seq_region_type_and_name {
   my $self = shift;
   unless( $self->can('seq_region_name') ) {
-    $self->{'data'}->{'drop_through'} = 1;
+    $self->{'data'}->{'_drop_through_'} = 1;
     return;
   }
   my $coord = $self->seq_region_type_human_readable;
