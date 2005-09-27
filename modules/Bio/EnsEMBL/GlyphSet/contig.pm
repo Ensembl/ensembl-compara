@@ -90,7 +90,12 @@ sub _init {
   if( @features) {
     $self->_init_non_assembled_contig($ystart, \@features);
   } else {
-    $self->errorTrack("Golden path gap - no contigs to display!");
+      my $msg = "Golden path gap - no contigs to display!";
+      if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && $Container->{compara} ne 'primary') {
+	  $msg = "Alignment gap - no contigs to display!";
+      }
+      $self->errorTrack($msg);
+
   }
 }
 
