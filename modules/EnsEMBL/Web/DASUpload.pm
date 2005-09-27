@@ -118,13 +118,24 @@ sub parse {
 
   my $lnum = scalar(@lines);
 
+  my $fa = 1; # By default we have annotations at the beginning of the file
+
   while ($lcount < $lnum) {
       my $line = shift @lines;
       $lcount ++;
+      if ($line =~ /\[annotation(s?)\]/) {
+	  $fa = 1;
+	  next;
+      } elsif ($line =~ /\[.+\]/) { # Start of some other section [ references or assembly ]
+	  $fa = 0;
+      }
+
+# we ignore references and assembly ( at least for the time being ). according to js5 they were required by LDAS server. Proserver works fine without them.
+      next if (! $fa);
+
 #      print "1: $line<br>";
       next if ($line =~ /^\#|^$|^\s+$/);
 #      print "2: $line<br>";
-      last if ($line =~ /\[references\]/);
       $icount ++;
 
 # feature type and feature subtype can consist of multiple words - so we preserve single spaces, then split the line by tabs or multiple spaces then bring back the single spaces ..
@@ -147,8 +158,6 @@ sub parse {
       %{$self->{PARSED_DATA}->{$icount}} = map { $_ => shift(@data) } @keys;
   }
 
-# Ignore references ( at least for the time being ). according to js5 they were required by LDAS server. Proserver works fine without them.
-#  print "REFS<br>";
 
 # now read the references
 #  my @refkeys = ('clone', 'clonetype', 'size');
