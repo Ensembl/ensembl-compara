@@ -341,6 +341,18 @@ sub _get_databases_common {
         } 
         delete $databases{'compara'};
     } 
+
+    if( $databases{'compara_multiple'} ) {
+        eval{ $default_species_db->{'compara_multiple'} =  $self->_get_compara_multiple_database($species); };
+        if( $@ ){ 
+            $self->{'error'} .= "\ncompara multiple database: $@";
+        } elsif ( my $core_db = $default_species_db->{core}) {
+            my $comp_db = $default_species_db->{compara_multiple};
+            $core_db->add_db_adaptor( 'compara_multiple', $comp_db );
+        } 
+        delete $databases{'compara_multiple'};
+    } 
+
   
     # Check all requested db's exist
     if (%databases) {
@@ -610,6 +622,17 @@ sub _get_compara_database{
       return $dba;
     }
     my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_COMPARA} ||
+        die( "No compara database for this species" );
+    return  $self->_get_database( $db_info, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor' );
+}
+
+sub _get_compara_multiple_database{
+    my $self = shift;
+    my $dba =  $reg->get_DBAdaptor('Multi','compara_multiple');
+    if(defined($dba)){
+      return $dba;
+    }
+    my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_COMPARA_MULTIPLE} ||
         die( "No compara database for this species" );
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor' );
 }
