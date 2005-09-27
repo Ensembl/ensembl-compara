@@ -226,7 +226,7 @@ sub das_wizard {
     my %source_conf = ();        
     my $step;
 
-    my @confkeys = qw( stylesheet strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
+    my @confkeys = qw( stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
 
     if (defined(my $new_das = $object->param('_das_add'))) {
         $step = 1;
@@ -327,9 +327,9 @@ sub das_wizard {
     
     my @sparams; 
     if ($step == 1) {
-    @sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet/} $object->param();
+    @sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score/} $object->param();
     } elsif ($step == 2) {
-    @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet/} $object->param();
+    @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score/} $object->param();
     } elsif ($step == 3) {
     @sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|paste_data|enable|type/} $object->param();
     }
@@ -734,6 +734,20 @@ sub das_wizard_3 {
                        'values'=>\@stvalues,
                        'value' => $option
                        );
+
+    $option = $das_conf->{score} || 'n';
+    my @scvalues;
+    foreach ( 'No', 'Histogram' ) {
+        my $id          = lc(substr($_,0,1));
+        push @scvalues, {'name'=>$_, 'value'=>$id};
+    }
+    $form->add_element('select'=>'select',
+                       'type'=>'DropDown',
+                       'name'=>'DASscore',
+                       'label'=>'Use score:',
+                       'values'=>\@scvalues,
+                       'value' => $option
+		       );
     return;
 }
 

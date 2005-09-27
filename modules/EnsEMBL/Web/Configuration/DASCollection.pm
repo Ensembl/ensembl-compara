@@ -69,7 +69,7 @@ sub display_wizard_status {
     return if (defined($object->param('_das_submit')));
     my %source_conf = ();        
 
-    my @confkeys = qw( stylesheet strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
+    my @confkeys = qw( stylesheet score strand label dsn caption type depth domain group name protocol labelflag color help url linktext linkurl);
     my $step;
 
     if (defined(my $new_das = $object->param('_das_add'))) {
@@ -168,6 +168,10 @@ sub display_wizard_status {
 		     'f' => 'Forward strand',
 		     'r' => 'Reverse strand' );
 
+    my %ScoreStr = (
+		    'n' => 'No',
+		    'h' => 'Histogram' );
+
     if (defined (my $dsw_name = $source_conf{name})) {
 	my $dsw_label = $source_conf{label};
 	my @dsw_enable = @{$source_conf{enable}};
@@ -180,12 +184,13 @@ sub display_wizard_status {
 	my $dsw_depth = $source_conf{depth} || '4';
 	my $dsw_labelflag = $LabelStr{$source_conf{labelflag}} || 'b';
 	my $dsw_stylesheet = $source_conf{stylesheet} eq 'y' ? 'Yes' : 'No';
+	my $dsw_score = $ScoreStr{$source_conf{score}} || 'No';
 
 	push @display_config, {"text"=>"Name: $dsw_name"}, {"text"=>"Enable on: @dsw_enable"}, {"text"=>"Track label: $dsw_label"},
 	{"text"=>"Help: $dsw_help"}, 	{"text"=>"LinkText: $dsw_linktext"}, 	{"text"=>"LinkURL: $dsw_linkurl"}, 	
 	{"text"=>"Colour: $dsw_col"}, 	{"text"=>"Group: $dsw_group"}, 	
 	{"text"=>"Display on: $dsw_strand"}, {"text"=>"Depth: $dsw_depth rows"}, {"text"=>"Label: $dsw_labelflag"},
- 	{"text"=>"Stylesheet: $dsw_stylesheet"} ;
+ 	{"text"=>"Stylesheet: $dsw_stylesheet"}, {"text"=>"Use score: $dsw_score"} ;
     } else {
 	push  @display_config, { "text"=>"Not yet initialised" };
     }

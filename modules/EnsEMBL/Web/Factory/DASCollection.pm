@@ -92,6 +92,9 @@ sub createObjects {
 	$source_confdata->{description} ||= $source_confdata->{label} ;
 	$source_confdata->{stylesheet} ||= 'N';
 	$source_confdata->{stylesheet} = 'Y' if ($source_confdata->{stylesheet} eq '1'); # 
+	$source_confdata->{score} ||= 'N';
+	$source_confdata->{score} = 'Y' if ($source_confdata->{score} eq '1'); # 
+
 	$source_confdata->{name} ||= $source;
 	$source_confdata->{group} ||= 'N';
 	$source_confdata->{group} = 'Y' if ($source_confdata->{group} eq '1'); # 
@@ -257,6 +260,7 @@ sub createObjects {
 	$das_data{label} or $das_data{label} = $das_data{name};
 	$das_data{caption} or $das_data{caption} = $das_data{name};
 	$das_data{stylesheet} or $das_data{stylesheet} = 'n';
+	$das_data{score} or $das_data{score} = 'n';
 	if (exists $das_data{enable}) {
 	    my @enable_on = split(/\,/, $das_data{enable});
 	    delete $das_data{enable};
@@ -267,7 +271,7 @@ sub createObjects {
 	$das_data{conftype} = 'external';
 	$das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
 	$sources_conf{$das_name} ||= {};
-	foreach my $key( @confkeys, 'label', 'url', 'conftype', 'group', 'stylesheet', 'enable', 'mapping', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' ) {
+	foreach my $key( @confkeys, 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'enable', 'mapping', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' ) {
 	    if (defined $das_data{$key}) {
 		$sources_conf{$das_name}->{$key} = $das_data{$key};
 	    }
@@ -326,6 +330,7 @@ sub createObjects {
 		$das_data{caption} = $das_data{name};
 		
 		$das_data{stylesheet} = $self->param('DASstylesheet');
+		$das_data{score} = $self->param('DASscore');
 		$das_data{group} = $self->param('DASgroup');
 		$das_data{url} = $das_data{protocol}.'://'.$das_data{domain};
 		@{$das_data{enable}} = $self->param('DASenable');
@@ -336,7 +341,7 @@ sub createObjects {
 		$das_data{linktext} = $self->param("DASlinktext");
 		$das_data{linkurl} = $self->param("DASlinkurl");
 		$das_data{active} = 1; # Enable by default
-		foreach my $key( @confkeys, 'label', 'url', 'conftype', 'group', 'stylesheet', 'enable', 'mapping', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' ) {
+		foreach my $key( @confkeys, 'label', 'url', 'conftype', 'group', 'stylesheet', 'score', 'enable', 'mapping', 'caption', 'active', 'color', 'depth', 'help', 'linktext', 'linkurl' ) {
 		    $sources_conf{$das_name} ||= {};
 		    $sources_conf{$das_name}->{$key} = $das_data{$key};
 		}
@@ -377,6 +382,7 @@ sub createObjects {
 		$das_data{caption} = $das_data{name};
 		
 		$das_data{stylesheet} = $self->param('DASstylesheet');
+		$das_data{score} = $self->param('DASscore');
 		$das_data{group} = $self->param('DASgroup');
 		$das_data{url} = $das_data{protocol}.'://'.$das_data{domain};
 		@{$das_data{enable}} = $self->param('DASenable');
@@ -389,7 +395,7 @@ sub createObjects {
 		$das_data{linkurl} = $self->param("DASlinkurl");
 		$das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
 		$das_data{active} = 1; # Enable by default
-		foreach my $key( @confkeys, 'label', 'url', 'linktext', 'linkurl', 'conftype', 'group', 'stylesheet', 'enable', 'caption', 'active', 'color', 'depth', 'help', 'mapping' ) {
+		foreach my $key( @confkeys, 'label', 'url', 'linktext', 'linkurl', 'conftype', 'group', 'stylesheet', 'score', 'enable', 'caption', 'active', 'color', 'depth', 'help', 'mapping' ) {
 		    $sources_conf{$das_name} ||= {};
 		    $sources_conf{$das_name}->{$key} = $das_data{$key};
 		}
@@ -437,6 +443,7 @@ sub createObjects {
 	      -depth      => $source_conf->{depth},
 	      -group      => $source_conf->{group}     || '',
 	      -stylesheet => $source_conf->{stylesheet}|| '',
+	      -score      => $source_conf->{score} || '',
 	      -conftype   => $source_conf->{conftype}  || 'external',
 	      -active     => $source_conf->{active}    || 0, 
 	      -description => $source_conf->{description}    || '', 

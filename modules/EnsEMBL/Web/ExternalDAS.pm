@@ -15,7 +15,8 @@ sub new {
       'DEPTH'          => '4',
       'GROUP'          => '1',
       'DEFAULT_COLOUR' => 'grey50',
-      'STYLESHEET'     => 'Y'
+      'STYLESHEET'     => 'Y',
+      'SCORE' => 'N'
     },
   };
   bless($self,$class);
@@ -32,6 +33,7 @@ sub getConfigs {
 
 sub add_das_source {
   my( $self, $href ) = @_;
+
   $self->amend_source( {
     'enable'     => $href->{enable},
     'mapping'    => $href->{mapping},
@@ -58,6 +60,7 @@ sub add_das_source {
     'group'      => $href->{group},
     'depth'      => $href->{depth},
     'stylesheet' => $href->{stylesheet},
+    'score' => $href->{score},
     'species'    => $self->{'proxiable'}->species,
   } );
 
@@ -75,6 +78,7 @@ sub add_das_source {
     $config->set( "managed_extdas_$key", "group",      $href->{group} ? $href->{group} : $self->{'defaults'}{'GROUP'},                1);
     $config->set( "managed_extdas_$key", "str",        $href->{strand} ? $href->{strand} : $self->{'defaults'}{'STRAND'},             1);
     $config->set( "managed_extdas_$key", "stylesheet", $href->{stylesheet} ? $href->{stylesheet} : $self->{'defaults'}{'STYLESHEET'}, 1);
+    $config->set( "managed_extdas_$key", "score", $href->{score} ? $href->{score} : $self->{'defaults'}{'SCORE'}, 1);
     $config->set( "managed_extdas_$key", "lflag",      $href->{labelflag} ? $href->{labelflag} : $self->{'defaults'}{'LABELFLAG'},    1);
     $config->set( "managed_extdas_$key", "manager",    'das',                                                                         1);
     $config->set( "managed_extdas_$key", "col",        $href->{col} || $href->{color} ,                                               1);
