@@ -261,35 +261,42 @@ sub context_menu {
   my $flag     = "gene#";
   $self->add_block( $flag, 'bulleted', $obj->stable_id );
   if( $obj->get_db eq 'vega' ) {
-    $self->add_entry( $flag, 
+    $self->add_entry( $flag,
+	  'code'  => 'vega_link',
       'text'  => "Jump to Vega",
       'icon'  => '/img/vegaicon.gif',
       'title' => 'Vega - Information about gene '.$obj->stable_id.' in Vega',
       'href' => "http://vega.sanger.ac.uk/$species/geneview?gene=".$obj->stable_id );
   }
-  $self->add_entry( $flag, 
+  $self->add_entry( $flag,
+	'code'  => "gene_info",
     'text'  => "Gene information",
     'title' => 'GeneView - Information about gene '.$obj->stable_id,
     'href'  => "/$species/geneview?$q_string" );
   $self->add_entry( $flag,
+    'code'  => 'gene_splice_info',
     'text'  => "Gene splice site image",
     'title' => 'GeneSpliceView - Graphical diagram of alternative splicing of '.$obj->stable_id,
     'href'  => "/$species/genespliceview?$q_string" );
 
  $self->add_entry( $flag,
+    'code'  => 'gene_reg_info',
     'text'  => "Gene regulation info.",
     'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
     'href'  => "/$species/generegulationview?$q_string" );
 
   $self->add_entry( $flag,
+    'code'  => 'gene_var_info',
     'text'  => "Gene variation info.",
     'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
     'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
   $self->add_entry( $flag,
+    'code'  => 'genomic_seq',
     'text'  => "Genomic sequence",
     'title' => 'GeneSeqView - View marked up sequence of gene '.$obj->stable_id,
     'href'  => "/$species/geneseqview?$q_string" );
   $self->add_entry( $flag,
+    'code'  => 'exp_data',
     'text'  => "Export data",
     'title' => "ExportView - Export information about gene ".$obj->stable_id,
     'href'  => "/$species/exportview?type1=gene;anchor1=@{[$obj->stable_id]}" );
@@ -301,6 +308,7 @@ sub context_menu {
       } } sort{ $a->stable_id cmp $b->stable_id } @{ $obj->get_all_transcripts };
   if( @transcripts ) {
     $self->add_entry( $flag,
+      'code'  => 'trans_info',
       'text'  => "Transcript information",
       'title' => "TransView - Detailed transcript information",
       'href'  => $transcripts[0]{'href'},
@@ -314,6 +322,7 @@ sub context_menu {
         'text'  => $_->{'text'} };
     }
     $self->add_entry( $flag,
+      'code'  => 'exon_info',
       'text'  => "Exon information",
       'href'  => $exons[0]{'href'},
       'title' => "ExonView - Detailed exon information",
@@ -329,7 +338,8 @@ sub context_menu {
       map  { $_->translation_object ? $_->translation_object : () }
         @{ $obj->get_all_transcripts };
     if( @peptides ) {
-      $self->add_entry( $flag, 
+      $self->add_entry( $flag,
+        'code'  => 'pep_info', 
         'text'  => "Peptide information",
         'href'  => $peptides[0]{'href'},
         'title' => 'ProtView - Detailed peptide information',
