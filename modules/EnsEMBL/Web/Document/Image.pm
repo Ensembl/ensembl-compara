@@ -53,12 +53,12 @@ sub karyotype {
   $config ||= 'Vkaryotype';
   my $chr_name;
   my $wuc = $data->user_config_hash( $config );
-        
+    
+  # set some dimensions based on number and size of chromosomes    
   if( $wuc->{'_all_chromosomes'} eq 'yes' ) {
     $chr_name = 'ALL';
     $wuc->container_width( $data->species_defs->MAX_CHR_LENGTH );
     my $total_chrs = @{$data->species_defs->ENSEMBL_CHROMOSOMES};
-    # accept user input or set a sensible default
     $wuc->{'_rows'} ||= ceil($total_chrs / 13 ); 
   } 
   else {
@@ -67,6 +67,7 @@ sub karyotype {
     $wuc->{'_rows'} = 1;
   }
   
+  # get some adaptors for chromosome data
   my( $sa, $ka, $da);
   eval {
     $sa = $data->database('core')->get_SliceAdaptor,
@@ -74,64 +75,14 @@ sub karyotype {
     $da = $data->database('core')->get_DensityFeatureAdaptor
   };
   return $@ if $@;
+
+  # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer(
     { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $wuc, $highs
   );
   return undef; ## successful...
 }
-
-# Adds chromosome row and spacing parameters to image configuration
-                                                                                
-sub do_chr_layout {
-                                                                                
-    my ($self, $object, $config_name, $max_label) = @_;
-    # CONFIGURE IMAGE SIZE AND LAYOUT
-    my $chr;
-    my $config  = $object->user_config_hash( $config_name );
-    if ($config->{'_all_chromosomes'} eq 'yes') {
-        $chr = 'ALL';
-    }
-    else {
-        $chr = $self->chr_name;
-    }
-    my ($v_padding, $rows);
-    # only allow user to override these if showing multiple chromosomes
-    if ($chr eq 'ALL') {
-        $v_padding = $object->param('v_padding')    || 50;
-        $v_padding      = 20 unless $v_padding >= 20;
-    }
-                                                                                
-    my $chr_length  = $object->param('chr_length')   || 300;
-    $chr_length     = 100 unless $chr_length >= 100;
-    my $h_padding   = $object->param('h_padding')    || 4;
-    $h_padding      = 1 unless $h_padding >= 1;
-    my $h_spacing   = $object->param('h_spacing')    || 6;
-    $h_spacing      = 1 unless $h_spacing >= 1;
-                                                                                
-    # hack for text labels on feature pointers
-    if ($object->param('style_0') eq 'text') {
-        # don't show stain labels AND pointers!
-        $config->{'_band_labels'} = 'off';
-        # make space for pointer + text
-        $h_spacing += $max_label * 5;
-        $h_padding = '4';
-    }
-    $config->{'general'}->{$config_name}->{'_settings'}->{'width'} =
-                $chr_length + $v_padding;
-    $config->{'general'}->{$config_name}->{'Videogram'}->{'padding'} =
-                $h_padding;
-    $config->{'_rows'} = $rows;
-    $config->{'_image_height'} = $chr_length;
-    $config->container_width( $object->species_defs->MAX_CHR_LENGTH );
-    
-    return 1;
-}
-                                                                                
-#----------------------
-                                                                                
-# Sets the chromosome layout in the image configuration (via do_chr_layout),
-# then adds feature density tracks to the image's configuration
-                                                                                
+                                          
 sub add_tracks {
                                                                                 
     my ($self, $object, $config_name, $parser) = @_;
@@ -143,7 +94,7 @@ sub add_tracks {
     
     # SELECT APPROPRIATE FEATURE SET(S)
     my $data;
-    if ($parser) {
+    if ($parser) { # we have use data
         # CREATE TRACKS
         my $pos = 10000;
         my $max_values = $parser->max_values();
@@ -183,9 +134,7 @@ sub add_tracks {
             }
         }
     } 
-    else {
-
-        # ADD STANDARD DATA TRACKS
+    else { # display standard tracks
         my %features = map { ($_->analysis->logic_name() , 1) } @{
             $object->database('core')->get_DensityTypeAdaptor->fetch_all
             };
@@ -202,26 +151,16 @@ sub add_tracks {
     return 1;
 }
                                                                                 
-#----------------------
                                                                                 
-# Sets the chromosome layout in the image configuration (via do_chr_layout),
-# then creates a hash defining feature location pointers and returns a
-# reference to that hash
-                       
-# N.B. This function does all the messy configuration of pointers and
-# zmenus for you!
-
-                                                         
 sub add_pointers {
                                                                                 
     my ($self, $object, $extra) = @_;
-    #my ($self, $object, $config_name, $zmenu_config, $parser) = @_;
     my $config_name = $extra->{'config_name'};
     my $config   = $object->user_config_hash($config_name);
 
     # CREATE DATA ARRAY FROM APPROPRIATE FEATURE SET
-    my $parser = $extra->{'parser'};
     my ($data, @data, $max_label, %chrs);
+    my $parser = $extra->{'parser'};
     if ($parser) { # use parsed userdata
         my $max_label = 0;
         foreach my $track ($parser->{'tracks'}) {
@@ -290,12 +229,11 @@ $_->{'start'}] }
     my $species = $object->species;
     foreach my $row ( @data ) {
         my $chr = $row->{'chr'};
-        my $id  = $row->{'label'};
         my $point = {
             'start' => $row->{'start'},
             'end'   => $row->{'end'},
+            'id'    => $row->{'label'},
             'col'   => $color,
-            'id'    => $id,
             };
         if ($zmenu eq 'on') {
             $zmenu_config = $extra->{'zmenu_config'};
@@ -348,6 +286,8 @@ $_->{'start'}] }
                 }
             }
         }
+
+        # OK, we now have a complete pointer, so add it to the hash of arrays
         if(exists $high{$chr}) {
             push @{$high{$chr}}, $point;
         } else {
@@ -357,7 +297,55 @@ $_->{'start'}] }
                                                                                 
     return \%high;
 }
+
+# common code used by add_tracks and add_pointers (not private because presumably you might want a 'bare' karyotype with no additional data)
                                                                             
+sub do_chr_layout {
+    my ($self, $object, $config_name, $max_label) = @_;
+
+    # CONFIGURE IMAGE SIZE AND LAYOUT
+    my $chr;
+    my $config  = $object->user_config_hash( $config_name );
+    if ($config->{'_all_chromosomes'} eq 'yes') {
+        $chr = 'ALL';
+    }
+    else {
+        $chr = $self->chr_name;
+    }
+    my ($v_padding, $rows);
+    # only allow user to override these if showing multiple chromosomes
+    if ($chr eq 'ALL') {
+        $v_padding = $object->param('v_padding')    || 50;
+        $v_padding      = 20 unless $v_padding >= 20;
+    }
+    my $chr_length  = $object->param('chr_length')   || 300;
+    $chr_length     = 100 unless $chr_length >= 100;
+    my $h_padding   = $object->param('h_padding')    || 4;
+    $h_padding      = 1 unless $h_padding >= 1;
+    my $h_spacing   = $object->param('h_spacing')    || 6;
+    $h_spacing      = 1 unless $h_spacing >= 1;
+                                                                                
+    # hack for text labels on feature pointers
+    if ($object->param('style_0') eq 'text') {
+        # don't show stain labels AND pointers!
+        $config->{'_band_labels'} = 'off';
+        # make space for pointer + text
+        $h_spacing += $max_label * 5;
+        $h_padding = '4';
+    }
+
+    # use these figures to calculate and set image dimensions
+    $config->{'general'}->{$config_name}->{'_settings'}->{'width'} =
+                $chr_length + $v_padding;
+    $config->{'general'}->{$config_name}->{'Videogram'}->{'padding'} =
+                $h_padding;
+    $config->{'_rows'} = $rows;
+    $config->{'_image_height'} = $chr_length;
+    $config->container_width( $object->species_defs->MAX_CHR_LENGTH );
+    
+    return 1;
+}
+
 #############################################################################
 
 
@@ -473,3 +461,170 @@ sub render {
 }
 
 1;
+
+__END__
+                                                                                
+=head1 NAME
+                                                                                
+Document:Image
+                                                                                
+=head1 SYNOPSIS
+
+This object creates and renders a dynamically-generated image using modules from ensembl-draw. It is called via one of the image methods in the Object module, thus:
+
+  my $image          = $object->new_karyotype_image();
+
+The image's parameters can then be set using the accessor methods (see below for a full list), e.g.
+
+  $image->cacheable  = 'no';
+  $image->image_name = "feature-$species";
+  $image->imagemap   = 'yes';
+
+Finally, additional features can be added to the image where appropriate:
+
+  my $pointers = $image->add_pointers( $object,
+                            {'config_name'  => 'Vkaryotype',
+                             'zmenu_config' => $zmenu_config,
+                             'feature_type' => 'Gene',
+                             'color'        => $object->param("color")
+                             'style'        => $object->param("style"),
+                            }
+                        );
+  $image->karyotype($object, [$pointers], 'Vkaryotype');
+
+
+=head1 DESCRIPTION
+                                                                                
+                                                                                
+=head1 METHODS
+                                                                                
+=head2 B<new>
+                                                                                
+Description:    Constructor method for the Document::Image object
+                                                                                
+Arguments:      [1] class name, [2] a SpeciesDefs object, [3] the name of the Panel object the image belongs to
+                                                                                
+Returns:        a Document::Image object
+
+=head2 B<set_extra>
+                                                                                
+Description:    
+                                                                                
+Arguments:     
+                                                                                
+Returns:        
+
+=head2 B<karyotype>
+                                                                                
+Description:    Creates a VDrawableContainer object configured to display a karyotype, and assigns it to the 'drawable_container' property of the Image object
+                                                                                
+Arguments:      [1] A Document::Image object, [2] a ref to an array of sequence features, [3] a ref to an array of "highlights", i.e. tracks or pointers, [4] a configuration name for retrieving the user's configuration
+                                                                                
+Returns:        undef on success
+
+=head2 B<do_chr_layout>
+                                                                                
+Description:    Adds chromosome row and spacing parameters to image configuration. This method is called by both C<add_tracks> and C<add_pointers>, so does not need to be called separately for images that display feature highlights.
+                                                                                
+Arguments:     [1] a Document::Image object, [2] a Proxy::Object (i.e. sequence data), [3] a configuration name (see C<karyotype>), [4] a maximum label size (optional, for use mainly with text-based highlights) 
+                                                                                
+Returns:        true
+
+=head2 B<add_tracks>
+                                                                                
+Description:    Adds feature density tracks to a karyotype image, from the user's own data and/or the user's selection from some standard Ensembl data
+                                                                                
+Arguments:     [1] a Document::Image object, [2] a Proxy::Object (i.e. sequence
+data), [3] a configuration name (see C<karyotype>), [4] a parser object containing user data (optional)
+                                                                                
+Returns:        true
+
+=head2 B<add_pointers>
+                                                                                
+Description:   Creates a hash of feature location pointers  from the user's own data and/or the user's selection from some standard Ensembl data. Note that this method does all the messy configuration of pointers and zmenus so you don't have to! 
+                                                                                
+Arguments:     [1] a Document::Image object, [2] a Proxy::Object (i.e. sequence
+data), [3] a ref to a hash of other options: config_name, zmenu_config, parser, color, style (the latter two for the appearance of the pointers). Color, style and zmenu_config can be set via this hash or via a web form; if neither is used, sensible defaults are provided by the method.
+                                                                                
+Returns:        a reference to the hash of pointers
+
+=head2 B<accessor methods>
+
+=over 4
+
+=item object
+
+=item drawable_container
+
+=item menu_container
+
+=item imagemap
+
+=item set_button
+
+=item button             
+
+=item button_id         
+
+=item button_name      
+
+=item button_title   
+
+=item image_name     
+
+=item cacheable     
+
+=item image_width  
+
+=item introduction   
+
+=item tailnote      
+
+=item caption      
+
+=item format      
+
+=item panel      
+
+=back
+                                                                            
+=head2 B<add_image_format>
+                                                                                
+Description:    
+                                                                                
+Arguments:     
+                                                                                
+Returns:        
+
+=head2 B<exists>
+                                                                                
+Description:    
+                                                                                
+Arguments:     
+                                                                                
+Returns:        
+
+=head2 B<render>
+                                                                                
+Description:    
+                                                                                
+Arguments:     
+                                                                                
+Returns:        
+
+=head1 BUGS AND LIMITATIONS
+                                                                                
+None known at present.
+                                                                                
+                                                                                
+=head1 AUTHOR
+                                                                                
+Anne Parker, Ensembl Web Team
+Support enquiries: helpdesk\@ensembl.org
+                                                                                
+=head1 COPYRIGHT
+                                                                                
+See http://www.ensembl.org/info/about/code_licence.html
+                                                                                
+=cut
+
