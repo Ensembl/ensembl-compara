@@ -89,6 +89,7 @@ sub generegulationview {
       stable_id     EnsEMBL::Web::Component::Gene::stable_id
       location      EnsEMBL::Web::Component::Gene::location
       description   EnsEMBL::Web::Component::Gene::description
+      factor        EnsEMBL::Web::Component::Gene::factor
     ));
     $self->add_panel( $panel1 );
   }

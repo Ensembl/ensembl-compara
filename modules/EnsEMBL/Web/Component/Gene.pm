@@ -205,6 +205,7 @@ sub description {
      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/EC_URL($object,$1)/e;
      $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
   my($edb, $acc) = ($1, $2);
+
   return 1 unless $description;
   my $label = 'Description';
   my $html = sprintf qq(\n     <p>%s%s</p>), $description,
@@ -726,11 +727,11 @@ sub regulation_factors {
   return unless @$feature_objs;
 
   $panel->add_columns(
-    {'key' =>'Factor',  },
-    {'key' =>'Feature', },
-    {'key' =>'Feature location',   },
+    {'key' =>'Location',   },
     {'key' =>'Length',  },
     {'key' =>'Sequence',},
+    {'key' =>'Reg. factor',  },
+    {'key' =>'Reg. feature', },
     {'key' =>'Feature analysis',},
   );
 
@@ -751,10 +752,10 @@ sub regulation_factors {
 
 
     $row = {
-	    'Factor'      =>  qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor">$factor_name</a>),
-	    'Feature'     => "$feature_name",
+	    'Location'    => $position,
+	    'Reg. factor'      =>  qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor">$factor_name</a>),
+	    'Reg. feature'     => "$feature_name",
 	    'Feature analysis'   =>  $feature_obj->analysis->description,
-	    'Feature location'    => $position,
 	    'Length'      => $object->thousandify( length($seq) ).' bp',
             'Sequence'    => qq(<font face="courier" color="black">$seq</font>),
 	   };
@@ -792,6 +793,23 @@ sub gene_structure {
   my $image    = $object->new_image( $gr_slice, $wuc, [] );
   $image->imagemap           = 'yes';
   $panel->print( $image->render );
+}
+
+sub factor {
+  my( $panel, $object ) = @_;
+  my $factors = $object->Obj->fetch_coded_for_regulatory_factors;
+  return 1 unless @$factors;
+
+  my $gene = $object->Obj->stable_id;
+  my $html = "$gene codes for regulation factor: ";
+  foreach my $factor (@$factors) {
+    my $factor_name = $factor->name;
+    $html .= qq(<a href="featureview?type=RegulatoryFactor;id=$factor_name">$factor_name</a><br />);
+  }
+
+  my $label = "Regulation factor: ";
+  $panel->add_row( $label, $html );
+  return 1;
 }
 #-------- end gene regulation view ---------------------
 

@@ -118,7 +118,14 @@ sub context_menu {
                                   'href' => "/$species/geneview?$q_string_g" ) if $q_string_g;
   $self->add_entry( $flag, 'text' => "Gene splice site image",
                                   'href' => "/$species/genespliceview?$q_string_g" ) if $q_string_g;
-  $self->add_entry( $flag, 'text' => "Gene variation info.",
+
+  $self->add_entry( $flag,
+    'code'  => 'gene_reg_info',
+    'text'  => "Gene regulation info.",
+    'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
+    'href'  => "/$species/generegulationview?$q_string" );
+
+ $self->add_entry( $flag, 'text' => "Gene variation info.",
                                   'href' => "/$species/genesnpview?$q_string_g" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
   $self->add_entry( $flag, 'text' => "Genomic sequence",
                                   'href' => "/$species/geneseqview?$q_string_g" ) if $q_string_g;

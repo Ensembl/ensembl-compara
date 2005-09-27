@@ -170,12 +170,19 @@ sub retrieve_ProteinAlignFeature {
 sub retrieve_RegulatoryFactor {
   my $self = shift;
   my $results = [];
+  my $flag = 0;
+
   foreach my $ap (@{$self->Obj->{'RegulatoryFactor'}}) {
     my @stable_ids;
+    my $gene_links;
+
     foreach ( @{ $ap->regulated_genes } ) {
-      warn $_;
       push @stable_ids, $_->stable_id;
+      $gene_links .= qq(<a href="geneview?gene=$stable_ids[-1]">$stable_ids[-1]</a>);
+      $flag = 1;
     }
+    my $extra_results = [ $ap->analysis->description ];
+    unshift (@$extra_results, $gene_links) if $gene_links;
 
     push @$results, {
       'region'   => $ap->seq_region_name,
@@ -185,11 +192,13 @@ sub retrieve_RegulatoryFactor {
       'length'   => $ap->end-$ap->start+1,
       'label'    => $ap->name,
       'gene_id'  => \@stable_ids,
-      'extra'    => [ $ap->analysis->description ]
+      'extra'    => $extra_results,
     }
   }
+  my $extras = ["Feature analysis"];
+  unshift @$extras, "Regulates gene" if $flag;
   
-  return ( $results, ['Feature analysis'] );
+  return ( $results, $extras );
 }
 
 1;

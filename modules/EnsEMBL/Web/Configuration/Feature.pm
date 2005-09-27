@@ -87,6 +87,7 @@ sub context_menu {
         {'text'=>"AffyProbe", 'href'=>"/$species/featureview?type=AffyProbe", 'raw'=>1},
         {'text'=>"Sequence Feature", 'href'=>"/$species/featureview?type=DnaAlignFeature", 'raw'=>1},
         {'text'=>"Protein Feature", 'href'=>"/$species/featureview?type=ProteinAlignFeature", 'raw'=>1},
+        {'text'=>"Regulatory Factor", 'href'=>"/$species/featureview?type=RegulatoryFactor", 'raw'=>1},
     ];
 
   if ($species eq 'Homo_sapiens') {
