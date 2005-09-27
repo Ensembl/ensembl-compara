@@ -118,7 +118,8 @@ sub href {
   my $f    = shift;
 
   return undef unless $f->{type} =~ /_snp/;
-  my $view = shift || 'alignsliceview';
+
+  my $view = shift || 'snpview';
   my $slice = $self->{'container'};
   my $start  = $slice->get_original_seq_region_position( $f->{start} );
   my $id     = $f->{variation_name};
@@ -130,25 +131,25 @@ sub href {
     my $only_pop = $Config->{'_ld_population'};
     $start .= "&pop=$only_pop" if $only_pop;
   }
+
   return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id&source=$source&c=$region:$start";
 }
 
 sub zmenu {
   my ($self, $f ) = @_;
   return undef unless $f->{type} =~ /_snp/;
+
   my( $start, $end ) = ( $f->start, $f->end );
   my $allele = $f->{allele_string};
 
   my $slice = $self->{'container'};
-  &eprof_start('href'); 
   my $rpos  = $slice->get_original_seq_region_position( $f->{start} );
 
   my $pos =  $start;
 
   if($f->start > $f->end  ) {
     $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
-  }
-  elsif($f->start < $f->end ) {
+  } elsif($f->start < $f->end ) {
     $pos = "$start&nbsp;-&nbsp;$end";
   }
 
