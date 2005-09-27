@@ -76,9 +76,9 @@ sub generegulationview {
   my $obj    = $self->{'object'};
   $self->set_title( 'Gene Regulation Report for '.$obj->stable_id );
   my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
+  $self->initialize_zmenu_javascript;
 
   ## Panel 1 - the gene information table at the top of the page...
-
   if( my $panel1 = $self->new_panel( 'Information',
     'code'    => "info#",
     'caption' => 'Ensembl Gene Regulation Report for '.$obj->stable_id,

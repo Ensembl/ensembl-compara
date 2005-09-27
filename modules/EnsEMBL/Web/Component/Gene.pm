@@ -790,6 +790,7 @@ sub gene_structure {
      $wuc->set( 'regulatory_regions', 'on',          'on');
 
   my $image    = $object->new_image( $gr_slice, $wuc, [] );
+  $image->imagemap           = 'yes';
   $panel->print( $image->render );
 }
 #-------- end gene regulation view ---------------------

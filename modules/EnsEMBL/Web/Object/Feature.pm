@@ -173,9 +173,9 @@ sub retrieve_RegulatoryFactor {
   foreach my $ap (@{$self->Obj->{'RegulatoryFactor'}}) {
     my @stable_ids;
     foreach ( @{ $ap->regulated_genes } ) {
+      warn $_;
       push @stable_ids, $_->stable_id;
     }
-
 
     push @$results, {
       'region'   => $ap->seq_region_name,
@@ -184,7 +184,7 @@ sub retrieve_RegulatoryFactor {
       'strand'   => $ap->strand,
       'length'   => $ap->end-$ap->start+1,
       'label'    => $ap->name,
-      'gene_id'  => \@stable_id,
+      'gene_id'  => \@stable_ids,
       'extra'    => [ $ap->analysis->description ]
     }
   }
