@@ -78,7 +78,7 @@ sub common_menu_items {
   if( my $species = $ENV{'ENSEMBL_SPECIES'} ) {
     $map_link = "/$species$map_link";
   }
-  $doc->menu->add_entry( 'links', 'href' => $map_link, 'text' => 'Sitemap' );
+  $doc->menu->add_entry( 'links', 'href' => $map_link, 'text' => 'Sitemap', 'code' => 'sitemap' );
 
 }
 
