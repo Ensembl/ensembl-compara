@@ -37,6 +37,7 @@ sub param_list {
   my $T = {
     'Family'   => [qw(family_stable_id)],
     'Homology' => [qw(gene g1)],
+    'AlignSlice' => [qw(chr bp_start bp_end as)],
   };
   return @{$T->{$class}||[]};
 }
@@ -148,6 +149,49 @@ sub output_Homology {
       $panel->print("<pre>$var</pre>\n");
     }
   }
+}
+
+sub output_AlignSlice {
+    my( $panel, $object ) = @_;
+
+    my $hash = $object->[1];
+    my $as = $hash->{_object};
+    my $sa = $as->get_SimpleAlign( 'cdna');
+    
+    (my $sp = $ENV{ENSEMBL_SPECIES}) =~ s/_/ /g;
+    
+    my @species = grep { $_ !~ /$sp/ } keys %{$as->{slices}};
+    
+    my $type = $as->get_MethodLinkSpeciesSet->method_link_type;
+
+    $type or $type = $object->param('method');
+
+    my $info = qq{
+<table>
+  <tr>
+    <td> Secondary species: </td>
+    <td> %s </td>
+  </tr>
+  <tr>
+    <td> Method: </td>
+    <td> %s </td>
+  </tr>
+
+</table>
+    };
+
+    $panel->print(sprintf($info, join(", ", @species), $type));
+
+    my $alignio = Bio::AlignIO->newFh(
+				      -fh     => IO::String->new(my $var),
+				      -format => renderer_type($object->param('format'))
+			
+				     );
+
+    print $alignio $sa;
+    $panel->print("<pre>$var</pre>\n");
+    
+    return ;
 }
 
 use EnsEMBL::Web::Document::SpreadSheet;

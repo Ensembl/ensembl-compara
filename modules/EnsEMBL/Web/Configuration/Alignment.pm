@@ -98,6 +98,35 @@ sub alignview_Homology {
   }
 }
 
+sub alignview_AlignSlice {
+    my $self = shift;
+    my $object = $self->{object};
+
+    my $caption = sprintf("Alignment of Genomic location %s:%s:%ld-%ld", 
+			  $ENV{ENSEMBL_SPECIES}, 
+			  $object->param('chr'),
+			  $object->param('bp_start'),
+			  $object->param('bp_end'));
+
+    if( my $panel1 = $self->new_panel( '',
+				       'code'    => "info",
+				       'caption' => $caption
+				       )) {
+
+
+	$self->add_form( $panel1,
+			 qw(format EnsEMBL::Web::Component::Alignment::format_form)
+			 );
+	$panel1->add_components(qw(
+				   format EnsEMBL::Web::Component::Alignment::format
+				   output EnsEMBL::Web::Component::Alignment::output_AlignSlice
+				   ));
+	$self->add_panel( $panel1 );
+    }
+
+
+}
+
 sub alignview_DnaDnaAlignFeature {
   my $self = shift;
   my $object = $self->{object};

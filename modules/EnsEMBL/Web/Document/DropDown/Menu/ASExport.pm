@@ -19,6 +19,10 @@ sub new {
 
     my $exportURL = sprintf "/%s/alignview?class=AlignSlice&chr=%s&bp_start=%s&bp_end=%s", $self->{'species'}, $location->seq_region_name, $location->seq_region_start, $location->seq_region_end;
 
+    my $rt = $location->seq_region_type;
+    if ($rt ne 'chromosome') {
+	$exportURL .= "&region=$rt";
+    }
     my $wuc = $self->{config}; 
     if (my $opt = $wuc->get('align_species',$self->{'species'})) {
 	my ($sp, $method) = split(/_compara_/, $opt);

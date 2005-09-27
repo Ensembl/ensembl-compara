@@ -29,6 +29,7 @@ sub _prob {
 sub _createObjects {
   my( $self, $objects, $class ) = @_;
   my $obj  = EnsEMBL::Web::Proxy::Object->new( 'Alignment', $objects, $self->__data );
+
   $obj->class( $class );
   $self->DataObjects( $obj );
 }
@@ -77,6 +78,67 @@ sub createObjects {
 }
 
 #---------
+
+sub usage_AlignSlice {
+  return 
+    'AlignSlice Comparative',
+    [ ['chr' => 'Name of the region' ]],
+    [ ['bp_start' => 'Start of AlignSlice' ]],
+    [ ['bp_end' => 'End of AlignSlice' ]],
+    [ ['region' => 'Type of the region (scaffold etc, default - chromosome)']],
+    [ ['method' => 'Compara method to get AlignSlice' ]],
+    [ ['s'   => 'Secondary species'],
+      ['format' => 'SimpleAlign renderer name'] ]
+}
+
+sub createObjects_AlignSlice {
+  my $self            = shift;
+  my $databases       = $self->DBConnection->get_databases( 'core', 'compara', 'compara_multiple' );
+
+  my ($seq_region_name, $start, $end) = ($self->param('chr'), $self->param('bp_start'), $self->param('bp_end'));
+
+  
+  my $species = $ENV{ENSEMBL_SPECIES};
+  my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
+
+  my $cs = $self->param('region') || 'chromosome';
+
+  my $query_slice= $query_slice_adaptor->fetch_by_region($cs, $seq_region_name, $start, $end);
+
+  my @sarray = ($species);
+
+  my ($spe, $type) = ($self->param('s'), $self->param('method'));
+  $type or $type = 'BLASTZ_NET';     
+
+  my $comparadb;
+
+
+  if ($type eq 'BLASTZ_NET') {
+      push (@sarray, ucfirst($spe)) if $spe;
+      $comparadb = $databases->{'compara'};
+  } else {
+      $type = uc($type);
+      my %shash = ($self->species_defs->multi($type, ucfirst($spe)));
+      push @sarray, keys %shash;
+      $comparadb = $databases->{'compara_multiple'};
+  }
+
+  my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
+
+  my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
+
+
+  return $self->_prob( 'Unable to get Method Link' ) unless $method_link_species_set;
+  eval {
+      my $asa = $comparadb->get_adaptor("AlignSlice" );
+      my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
+
+      $self->_createObjects( $align_slice, 'AlignSlice' );
+  };
+
+
+  return $self->_prob( 'Unable to get AlignSlice', "<pre>$@</pre>" ) if $@;
+}
 
 sub usage_Homology {
   return 
