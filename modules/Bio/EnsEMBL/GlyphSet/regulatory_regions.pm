@@ -5,9 +5,9 @@ use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish { return 1; }
-sub my_label { return "Regulatory features"; }
+sub my_label { return "Reg. features"; }
 
-sub my_description { return "Regulatory features"; }
+sub my_description { return "Reg. features"; }
 
 # This for 
 sub my_helplink { return "markers"; }
@@ -34,7 +34,7 @@ sub zmenu {
     my $return = {
         'caption'                    => 'regulatory_regions',
         "01:Feature: $name"          => '',
-        "02:Factor: $factor"         => '',
+        "02:Factor: $factor"         => "featureview?type=RegulatoryFactor;id=$factor",
         "03:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
     };
 
