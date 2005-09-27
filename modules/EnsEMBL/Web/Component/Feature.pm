@@ -270,6 +270,12 @@ sub create_karyotype {
             'entries' => ['label', 'contigview', 'geneview'],
         };
     }
+    elsif ($data_type eq 'RegulatoryFactor' ){
+      $zmenu_config = {
+		       'caption' => 'Genes',
+		       'entries' => ['label', 'contigview', 'geneview'],
+		      };
+    }
     else {
         $zmenu_config = {
             'caption' => ucfirst($data_type),

@@ -62,6 +62,7 @@ sub retrieve_Disease {
         'length'   => $gene->end-$ap->{'gene'}->start+1,
         'extname'  => $ap->{'genename'}, #$gene->external_name,
         'label'    => $gene->stable_id,
+        'gene_id'  => [ $gene->stable_id ],
         'extra'    => [],
         'initial'  => [ $ap->{'disease'}, $ap->{'omim_id'}, $ap->{'cyto'} ]
       };
@@ -73,6 +74,7 @@ sub retrieve_Disease {
         'length'   => '',
         'extname'  => $ap->{'genename'},
         'label'    => '',
+        'gene_id'  => [],
         'extra'    => [],
         'initial'  => [ $ap->{'disease'}, $ap->{'omim_id'}, $ap->{'cyto'} ]
       };
@@ -94,6 +96,7 @@ sub retrieve_Gene {
       'length'   => $ap->end-$ap->start+1,
       'extname'  => $ap->external_name, 
       'label'    => $ap->stable_id,
+      'gene_id'  => [ $ap->stable_id ],
       'extra'    => [ $ap->description ]
     }
   }
@@ -115,6 +118,7 @@ sub retrieve_AffyProbe {
         'strand'   => $f->strand,
         'length'   => $f->end-$f->start+1,
         'label'    => $names,
+        'gene_id'  => [$names],
         'extra'    => [ $f->mismatchcount ]
       }
     }
@@ -152,6 +156,7 @@ sub retrieve_DnaAlignFeature {
       'strand'   => $strand,
       'length'   => $f->end-$f->start+1,
       'label'    => "@{[$f->hstart]}-@{[$f->hend]}",
+      'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
       'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
     };
   }
@@ -164,9 +169,14 @@ sub retrieve_ProteinAlignFeature {
 
 sub retrieve_RegulatoryFactor {
   my $self = shift;
-  
   my $results = [];
   foreach my $ap (@{$self->Obj->{'RegulatoryFactor'}}) {
+    my @stable_ids;
+    foreach ( @{ $ap->regulated_genes } ) {
+      push @stable_ids, $_->stable_id;
+    }
+
+
     push @$results, {
       'region'   => $ap->seq_region_name,
       'start'    => $ap->start,
@@ -174,6 +184,7 @@ sub retrieve_RegulatoryFactor {
       'strand'   => $ap->strand,
       'length'   => $ap->end-$ap->start+1,
       'label'    => $ap->name,
+      'gene_id'  => \@stable_id,
       'extra'    => [ $ap->analysis->description ]
     }
   }
