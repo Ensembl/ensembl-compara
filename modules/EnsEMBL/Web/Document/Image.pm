@@ -321,18 +321,26 @@ $_->{'start'}] }
                             $value .= ';'.$affy_id.'=on';
                         }
                     }
+                    $key = sprintf('%03d', $order).':'.$text;
+                    $point->{'zmenu'}->{$key} = $value;
+                    $order++;
                 }
                 elsif ($entry eq 'geneview') {
-                    $text = "Jump to $entry";
-                    $value = sprintf("/$species/geneview?gene=%s", $row->{'gene_id'});
+                    foreach my $gene (@{$row->{'gene_id'}}) {
+                        $text = "Jump to $entry";
+                        $value = "/$species/geneview?gene=$gene";
+                        $key = sprintf('%03d', $order).':'.$text;
+                        $point->{'zmenu'}->{$key} = $value;
+                        $order++;
+                    }
                 }
                 elsif ($entry eq 'label') {
                     $text = length( $row->{'label'} ) > 25 ? ( substr($row->{'label'}, 0, 22).'...') : $row->{'label'};
                     $value = '';
+                    $key = sprintf('%03d', $order).':'.$text;
+                    $point->{'zmenu'}->{$key} = $value;
+                    $order++;
                 }
-                $key = sprintf('%03d', $order).':'.$text;
-                $point->{'zmenu'}->{$key} = $value;
-                $order++;
             }
         }
         if(exists $high{$chr}) {
