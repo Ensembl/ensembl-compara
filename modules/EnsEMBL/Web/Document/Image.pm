@@ -109,7 +109,7 @@ sub do_chr_layout {
     $h_spacing      = 1 unless $h_spacing >= 1;
                                                                                 
     # hack for text labels on feature pointers
-    if ($object->param('style') eq 'text') {
+    if ($object->param('style_0') eq 'text') {
         # don't show stain labels AND pointers!
         $config->{'_band_labels'} = 'off';
         # make space for pointer + text
@@ -288,11 +288,12 @@ $_->{'start'}] }
     my $species = $object->species;
     foreach my $row ( @data ) {
         my $chr = $row->{'chr'};
-        my $id  = $row->{'id'};
+        my $id  = $row->{'label'};
         my $point = {
             'start' => $row->{'start'},
             'end'   => $row->{'end'},
             'col'   => $color,
+            'id'    => $id,
             };
         if ($zmenu eq 'on') {
             $zmenu_config = $extra->{'zmenu_config'};
@@ -321,7 +322,7 @@ $_->{'start'}] }
                 }
                 elsif ($entry eq 'geneview') {
                     $text = "Jump to $entry";
-                    $value = sprintf("/$species/geneview?gene=%s", $row->{'label'});
+                    $value = sprintf("/$species/geneview?gene=%s", $row->{'gene_id'});
                 }
                 elsif ($entry eq 'label') {
                     $text = length( $row->{'label'} ) > 25 ? ( substr($row->{'label'}, 0, 22).'...') : $row->{'label'};
