@@ -68,7 +68,7 @@ sub zmenu {
     my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
     my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-	my $type = $self->format_obj_type($gene,$transcript);
+	my $type = $self->format_vega_name($gene,$transcript);
     my $zmenu = {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
@@ -93,7 +93,7 @@ sub gene_zmenu {
 
     my $gid = $gene->stable_id();
     my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
-	my $type = $self->format_obj_type($gene);
+	my $type = $self->format_vega_name($gene);
     my $zmenu = {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
@@ -109,7 +109,7 @@ sub text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $type = $self->format_obj_type($gene,$transcript);
+        my $type = $self->format_vega_name($gene,$transcript);
         $id .= " \n$type ";
     }
     return $id;
@@ -121,7 +121,7 @@ sub gene_text_label {
     my $Config = $self->{config};
     my $short_labels = $Config->get('_settings','opt_shortlabels');
     unless( $short_labels ){
-        my $type = $self->format_obj_type($gene);
+        my $type = $self->format_vega_name($gene);
         $id .= " \n$type ";
     }
     return $id;
@@ -140,42 +140,14 @@ sub legend {
         'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
         'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
         'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
-        'Novel Immunoglobulin segment'   => $colours->{'Ig_segment_NOVEL'}[0],
-        'Novel Immunoglobulin pseudogene'=> $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
+        'Novel Ig segment'   => $colours->{'Ig_segment_NOVEL'}[0],
+        'Novel Ig pseudogene'=> $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
 		]
 	  );
 }
 
 
 sub error_track_name { return 'Vega transcripts'; }
-
-
-=head2 format_obj_type
-
-  Arg [1]    : $self
-  Arg [2]    : gene object
-  Arg [3]    : transcript object (optional)
-  Example    : my $type = $self->format_obj_type($g,$t);
-  Description: retrieves status and biotype of a transcript, or failing that the parent gene, and formats it for display using the Colourmap
-  Returntype : string
-
-=cut
-
-sub format_obj_type {
-	my ($self,$gene,$trans) = @_;
-	my ($status,$biotype);
-	my %gm = $self->{'config'}->colourmap()->colourSet('vega_gene');
-	if ($trans) {
-		$status = $trans->confidence()||$gene->confidence;
-		$biotype = $trans->biotype()||$gene->biotype();
-	} else {
-		$status = $gene->confidence;
-		$biotype = $gene->biotype();
-	}
-	my $t = $biotype.'_'.$status;
-	my $label = $gm{$t}[1];
-	return $label;
-}
 
 1;
 
