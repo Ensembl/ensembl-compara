@@ -189,12 +189,13 @@ foreach my $sp( sort keys %DATA_TO_DUMP ){
   my $base_dir = utils::Tool::get_config({ species=>$sp, values => "ENSEMBL_FTP_BASEDIR"} )|| $sp;
   my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
   $sp_release =~ s/\.//g;
-  $sp_release = "" if $sp eq 'Multi';
+
   my @sp_dumpdirs  = "$dumpdir/$base_dir-$sitedefs_release.$sp_release/data/mysql";
 
- if ($sp eq 'Multi') {
-     push (@sp_dumpdirs, "$dumpdir/mart-$sitedefs_release/data/mysql") if $DATA_TO_DUMP{Multi}{ENSEMBL_MART_ENSEMBL};
-   }
+  if ($sp eq 'Multi') {
+    @sp_dumpdirs  = "$dumpdir/$base_dir-$sitedefs_release/data/mysql";
+    push (@sp_dumpdirs, "$dumpdir/mart-$sitedefs_release/data/mysql") if $DATA_TO_DUMP{Multi}{ENSEMBL_MART_ENSEMBL};
+  }
 
   foreach my $sp_dumpdir (@sp_dumpdirs) {
     utils::Tool::check_dir($sp_dumpdir );
