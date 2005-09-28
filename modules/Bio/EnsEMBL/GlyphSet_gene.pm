@@ -94,8 +94,9 @@ sub _init {
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
-    my $type = $g->type();
-    $type =~ s/HUMACE-//;
+
+	my $type = $g->source eq 'vega' ? $self->format_vega_name($g) : $g->biotype;
+	$type =~ s/HUMACE-//;
     my $start = $g->start;
     my $end   = $g->end;
     my ($chr_start, $chr_end) = $self->slice2sr( $start, $end );
@@ -125,7 +126,7 @@ sub _init {
       $Z = {
         'caption' 		              => $gene_label,
         "bp: $chr_start-$chr_end"             => '',
-        "type: @{[$g->type]}"                 => '',
+        "type: $type"                 => '',
 	"length: @{[$chr_end-$chr_start+1]}"  => ''
       }; 
       if( $ens_ID ne '' ) {
@@ -234,5 +235,7 @@ sub legend {
   my @legend = %X;
   return \@legend;
 }
+
+
 
 1;
