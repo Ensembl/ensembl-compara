@@ -194,4 +194,31 @@ sub no_features {
   $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get('_settings','opt_empty_tracks')==1;
 }
 
+=head2 format_vega_name
+
+  Arg [1]    : $self
+  Arg [2]    : gene object
+  Arg [3]    : transcript object (optional)
+  Example    : my $type = $self->format_vega_name($g,$t);
+  Description: retrieves status and biotype of a transcript, or failing that the parent gene, and formats it for display using the Colourmap 
+  Returntype : string
+
+=cut
+
+sub format_vega_name {
+	my ($self,$gene,$trans) = @_;
+	my ($status,$biotype);
+	my %gm = $self->{'config'}->colourmap()->colourSet('vega_gene');
+	if ($trans) {
+		$status = $trans->confidence()||$gene->confidence;
+		$biotype = $trans->biotype()||$gene->biotype();
+	} else {
+		$status = $gene->confidence;
+		$biotype = $gene->biotype();
+	}
+	my $t = $biotype.'_'.$status;
+	my $label = $gm{$t}[1];
+	return $label;
+}
+
 1;
