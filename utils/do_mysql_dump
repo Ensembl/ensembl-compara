@@ -189,13 +189,11 @@ foreach my $sp( sort keys %DATA_TO_DUMP ){
   my $base_dir = utils::Tool::get_config({ species=>$sp, values => "ENSEMBL_FTP_BASEDIR"} )|| $sp;
   my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
   $sp_release =~ s/\.//g;
-  my $sp_dir = "$base_dir-$sitedefs_release.$sp_release";
-  my @sp_dumpdirs  = "$dumpdir/$sp_dir/data/mysql";
-  my $version;
+  $sp_release = "" if $sp eq 'Multi';
+  my @sp_dumpdirs  = "$dumpdir/$base_dir-$sitedefs_release.$sp_release/data/mysql";
 
  if ($sp eq 'Multi') {
-     ($version = $sp_dir )= "$base_dir-$sitedefs_release";
-     push (@sp_dumpdirs, "$dumpdir/mart-$version/data/mysql") if $DATA_TO_DUMP{Multi}{ENSEMBL_MART_ENSEMBL};
+     push (@sp_dumpdirs, "$dumpdir/mart-$sitedefs_release/data/mysql") if $DATA_TO_DUMP{Multi}{ENSEMBL_MART_ENSEMBL};
    }
 
   foreach my $sp_dumpdir (@sp_dumpdirs) {
@@ -217,12 +215,10 @@ foreach my $sp( sort keys %DATA_TO_DUMP ){
     my $db_dumpdir = "$sp_dumpdir/$db_name";
 
     if ($db_name =~ /ensembl_help/) {
-      $version =~ s/\./_/;
-      $db_dumpdir = "$sp_dumpdir/ensembl_help"."_$version";
+      $db_dumpdir = "$sp_dumpdir/ensembl_help"."_$sitedefs_release";
     }
     elsif ($db_name eq 'ensembl_web_user_db') {
-      $version =~ s/\./_/;
-      $db_dumpdir = "$sp_dumpdir/$db_name"."_$version";
+      $db_dumpdir = "$sp_dumpdir/$db_name"."_$sitedefs_release";
     }
     if( ! -e $db_dumpdir ){
       info(1, "Creating $db_dumpdir" );
@@ -251,7 +247,7 @@ foreach my $sp( sort keys %DATA_TO_DUMP ){
     dump_mysql(\%db_meta, $no_zip);
 
     if ($db_name =~ /ensembl_help/) {
-      system ("mv $sp_dumpdir/ensembl_help_$version/ensembl_help_32.sql.gz $sp_dumpdir/ensembl_help_$version/ensembl_help_$version.sql.gz" );
+      system ("mv $sp_dumpdir/ensembl_help_$sitedefs_release/ensembl_help_32.sql.gz $sp_dumpdir/ensembl_help_$sitedefs_release/ensembl_help_$sitedefs_release.sql.gz" );
     }
 
   }
