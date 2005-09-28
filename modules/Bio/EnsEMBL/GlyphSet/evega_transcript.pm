@@ -74,25 +74,6 @@ sub gene_href {
     qq(/@{[$self->{container}{_config_file_name_}]}/geneview?db=vega;gene=$gid);
 }
 
-my %legend_map = (
-  'protein_coding_KNOWN'    => 'Known gene',
-  'protein_coding_NOVEL'    => 'Novel CDS',
-  'unclassified_PUTATIVE'   => 'Putative',
-  'unclassified_NOVEL'   => 'Novel Trans' ,
-  'pseudogene_KNOWN'        => 'Pseudogene' ,
-  'pseudogene_NOVEL'        => 'Pseudogene' ,
-  'processed_pseudogene_KNOWN'  => 'Processed pseudogene' ,
-  'processed_pseudogene_NOVEL'  => 'Processed pseudogene' ,
-  'unprocessed_pseudogene_KNOWN'=> 'Unprocessed pseudogene' ,
-  'unprocessed_pseudogene_NOVEL'=> 'Unprocessed pseudogene' ,
-  'protein_coding_PREDICTED'    => 'Predicted gene' ,
-  'Ig_Segment_KNOWN'      => 'Immunoglobulin segment' ,
-  'Ig_Segment_NOVEL'      => 'Immunoglobulin segment' ,
-  'Ig_Pseudogene_segment_KNOWN' => 'Immunoglobulin pseudogene' ,
-  'Ig_Pseudogene_segment_NOVEL' => 'Immunoglobulin pseudogene'
- );
-
-
 sub zmenu {
   my ($self, $gene, $transcript) = @_;
   my $tid = $transcript->stable_id();
@@ -100,8 +81,7 @@ sub zmenu {
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
-  my $tt = ( $transcript->biotype ? $transcript->biotype : $gene->biotype ) . '_'. $gene->confidence;
-  my $type = $legend_map{$tt} || $tt;
+  my $type = $self->format_vega_name($gene,$transcript);
   $type =~ s/HUMACE-//g;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   
@@ -111,7 +91,7 @@ sub zmenu {
   "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega",
     "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=vega",          
     '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
-    "06:Vega curated ($type)"   => '',
+    "06:$type"   => '',
     "07:View in Vega" => $ExtUrl->get_url('Vega_gene', $gid),
   };
   
@@ -130,13 +110,13 @@ sub gene_zmenu {
   my ($self, $gene ) = @_;
   my $gid = $gene->stable_id();
   my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
-  my $type = $legend_map{ $gene->biotype.'_'.$gene->confidence } || $gene->type;
-     $type =~ s/HUMACE-//g;
+  my $type = $self->format_vega_name($gene);
+  $type =~ s/HUMACE-//g;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   my $zmenu = {
     'caption'             => "Vega Gene",
     "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega),
-    "06:Vega curated ($type)"   => '',
+    "06:$type"   => '',
     "07:View in Vega" => $ExtUrl->get_url('Vega_gene', $gid),
   };
   return $zmenu;
@@ -149,8 +129,7 @@ sub text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $tt = ( $transcript->biotype ? $transcript->biotype : $gene->biotype ) . '_'. $gene->confidence;
-    my $type = $legend_map{$tt} || $tt;
+    my $type = $self->format_vega_name($gene,$transcript);
     $id .= " \n$type ";
   }
   return $id;
@@ -162,8 +141,8 @@ sub gene_text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $type = $legend_map{ $gene->biotype.'_'.$gene->confidence } || $gene->type;
-      $id .= " \n$type ";
+   my $type = $self->format_vega_name($gene);
+   $id .= " \n$type ";
   }
   return $id;
 }
@@ -192,23 +171,24 @@ sub features {
 
 sub legend {
   my ($self, $colours) = @_;
-  return ('vega_genes', 1000,
-      [
-        'Known genes'  => $colours->{'protein_coding_KNOWN'}[0],
-        'Novel CDS'    => $colours->{'protein_coding_NOVEL'}[0],
-        'Putative'     => $colours->{'unclassified_PUTATIVE'}[0],
-        'Novel Trans'  => $colours->{'protein_coding_NOVEL'}[0],
-        'Pseudogenes'  => $colours->{'pseudogene_KNOWN'}[0],
-        'Processed pseudogenes'  => $colours->{'processed_pseudogene_KNOWN'}[0],
-        'Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_KNOWN'}[0],
-        'predicted gene'     => $colours->{'protein_coding_PREDICTED'}[0],
-        'Immunoglobulin segment' => $colours->{'Ig_segment_KNOWN'}[0],
-        'Immunoglobulin pseudogene' => $colours->{'Ig_pseudogene_segment_KNOWN'}[0],
-        'Polymorphic' => $colours->{'Polymorphic'}[0],
-      ]
-  );
+	return ('vega_genes', 1000,
+		[
+        'Known Protein coding'           => $colours->{'protein_coding_KNOWN'}[0],
+        'Novel Protein coding'           => $colours->{'protein_coding_NOVEL'}[0],
+        'Novel Processed transcript'     => $colours->{'processed_transcript_NOVEL'}[0],
+        'Putative Processed transcript'  => $colours->{'processed_transcript_PUTATIVE'}[0],
+        'Novel Pseudogene'               => $colours->{'pseudogene_NOVEL'}[0],
+        'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
+        'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
+        'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
+        'Novel Ig segment'               => $colours->{'Ig_segment_NOVEL'}[0],
+        'Novel Ig pseudogene'            => $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
+		]
+	  );
+ 
 }
 
 sub error_track_name { return 'Vega transcripts'; }
+
 
 1;
