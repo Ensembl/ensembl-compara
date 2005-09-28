@@ -58,7 +58,9 @@ defined($VERBOSITY) or $VERBOSITY = 1;
 if ($logfile){
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
-
+else {
+  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n****\n\n");
+}
 
 
 # Sort out dumpdir ----------------------------------------------------------
@@ -124,6 +126,7 @@ foreach my $sp( @SPECIES ){
   my %databases;
   foreach my $db( @dbs ){
     next if $db eq "ENSEMBL_HELP" && $sp ne "Multi"; # HACK cos it dumps help
+    next if $db eq "ENSEMBL_WEBSITE" && $sp ne "Multi"; # HACK cos it dumps website
 
     if ($db eq 'ensembl_web_user_db') {
       next unless $sp eq 'Multi';
@@ -141,9 +144,10 @@ foreach my $sp( @SPECIES ){
     }
     # Hard-code all databases _never_ to dump
     my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST
-				    ENSEMBL_BLAST_LOG
-				    ENSEMBL_FASTA
-				    ENSEMBL_GLOVAR );
+				  ENSEMBL_BLAST_LOG
+				  ENSEMBL_FASTA
+                                  ENSEMBL_WEBSITE
+				  ENSEMBL_GLOVAR );
     if( $kill_list{$db} ){
       info( 1, "Skipping $db (kill list)" );
       next;
@@ -186,12 +190,11 @@ foreach my $sp( sort keys %DATA_TO_DUMP ){
   my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
   $sp_release =~ s/\.//g;
   my $sp_dir = "$base_dir-$sitedefs_release.$sp_release";
-  #  my $sp_dir =$species_defs->get_config($sp,"ENSEMBL_FTP_BASEDIR") || $sp;
   my @sp_dumpdirs  = "$dumpdir/$sp_dir/data/mysql";
   my $version;
 
  if ($sp eq 'Multi') {
-     ($version = $sp_dir )=~ s/.*-(\d+)/$1/;
+     ($version = $sp_dir )= "$base_dir-$sitedefs_release";
      push (@sp_dumpdirs, "$dumpdir/mart-$version/data/mysql") if $DATA_TO_DUMP{Multi}{ENSEMBL_MART_ENSEMBL};
    }
 
@@ -296,12 +299,13 @@ sub dump_mysql {
   # "Got error: 1045: Access denied for user: 'ensadmin@%' (Using password: YES) when executing 'SELECT INTO OUTFILE'"
   # Note that you can only dump on the localhost machine (e.g. port 3307
   # if you are on ecs3d) if you use -T switch
+  # The port number can't have a ";" after it so check errors for this
   ###########################################################################
 
   my $dump_command_T = $dump_command . " -T . $DB";
+  #warn $dump_command_T;
   system( $dump_command_T ) and die( "Cannot $dump_command_T: $!" );
   system("rm -f ./*.sql");
-  #warn $dump_command_T;
 
   # Create a mysql 4.0 compatible sql file
   # DON'T USE THE -T OPTION COS IT STOPS IT WORKING

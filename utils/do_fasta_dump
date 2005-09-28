@@ -69,6 +69,9 @@ pod2usage(-verbose => 1) if $help;
 if ($logfile){
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
+else {
+  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n****\n\n");
+}
 
 $VERBOSITY = defined($VERBOSITY) ? $VERBOSITY: 1;
 $DUMPDIR   ||= "/mysql/dumps/FTP";

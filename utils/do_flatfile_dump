@@ -60,7 +60,7 @@ else {
 my $time1 = time;
 @formats = qw(embl genbank) if (!$formats[0]);
 $dumpdir ||= "/mysql/dumps/FTP";
-$VERBOSITY ||= 1;
+$VERBOSITY ||= 2;
 require SiteDefs;
 require EnsEMBL::Web::SpeciesDefs;
 require Bio::EnsEMBL::Utils::SeqDumper;
@@ -73,13 +73,16 @@ my @too_long;
 if ($logfile){
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
+else {
+  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n****\n\n");
+}
 
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 foreach my $spp (@species){
   foreach my $format (@formats){
     $spp = ucfirst(lc($spp));
     $ENV{'ENSEMBL_SPECIES'} = $spp;
-    info(1, "species = $spp $format");
+    warning(1, "species = $spp $format");
 
     my $base_dir = $SPECIES_DEFS->get_config($spp,"ENSEMBL_FTP_BASEDIR")|| $spp;
     my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
@@ -334,7 +337,7 @@ sub dump_format {
 
     my $outfile;
 
-    info (1, "Dumping $format to file");
+    info (2, "..$format..");
     my $filename =  "$spp_dumpdir/$name.$format";
     $seq_dumper->dump($slice, $format, $filename);
   };
@@ -434,7 +437,9 @@ sub info{
   $msg || ( carp("Need a warning message" ) && return );
 
   if( $v > $VERBOSITY ){ return 1 }
-  warn( "[INFO] ".$msg."\n" );
+  my $new_line = $v == 2 ? "" : "\n";
+  my $importance = $v > 1 ? "" : "\n[INFO] ";
+  print( $importance.$msg.$new_line );
   return 1;
 }
 
