@@ -121,6 +121,7 @@ sub RENDER_simple {
     my $row_height = $configuration->{'h'};
     my $glyph_symbol = $style->{'glyph'};
 
+
     # Draw label first, so we can get the label_height to use in poly offsets
     my $label_height =$self->feature_label( $Composite, 
 					    $label, 
@@ -717,11 +718,10 @@ sub _init {
   $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{col} || 'contigblue1';
   $configuration->{depth} =  defined($Config->get($das_config_key, 'dep')) ? $Config->get($das_config_key, 'dep') : $Extra->{depth} || 4;
   $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
+  $configuration->{use_score} = $Extra->{score} ? uc($Extra->{score}) eq 'Y' : uc($Config->get($das_config_key, 'score')) eq 'Y';
   $configuration->{labelling} = $Extra->{labelflag} =~ /^[ou]$/i ? 1 : 0;
   $configuration->{length} = $container_length;
 
-#  warn("$das_config_key:".$Config->get($das_config_key, 'stylesheet'));
-#  warn(Dumper($Extra));
   $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
   $self->{'bitmap_length'} = int(($configuration->{'length'}+1) * $self->{'pix_per_bp'});
   ($self->{'textwidth'},$self->{'textheight'}) = $Config->texthelper()->real_px2bp('Tiny');
@@ -821,12 +821,15 @@ sub _init {
 
   $self->{helplink} = $Config->get($das_config_key, 'helplink') || $Extra->{'group'};
   my $renderer = $Config->get($das_config_key, 'renderer');
-#  my $group = ($Config->get($das_config_key, 'group') ? 'RENDER_grouped' : 'RENDER_simple';
 	       
   my $group = uc($Config->get($das_config_key, 'group') || $Extra->{'group'} || 'N');
+  my $score = uc($Config->get($das_config_key, 'score') || $Extra->{'score'} || 'N');
 
-  $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
-
+  if ($score ne 'N') {
+      $renderer = "RENDER_histogram_simple";
+  } else {
+      $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
+  }
   $renderer =~ s/RENDER_RENDER/RENDER/;
 
   return $self->$renderer( $configuration );
@@ -954,7 +957,7 @@ sub get_symbol {
     # vertically centre symbol in centre of row
     my $row_height = $featuredata->{'row_height'};
     my $glyph_height = $style->{'attrs'}{'height'};
-    $y_offset = $y_offset + ($row_height - $glyph_height)/2;
+    $y_offset = $style->{'attrs'}{'y_offset'} || ($y_offset + ($row_height - $glyph_height)/2);
     $featuredata->{'y_offset'} = $y_offset;
 
     return $glyph_symbol->new($featuredata, $styleattrs);  
@@ -1001,5 +1004,146 @@ sub get_groupsymbol{
 
     return $glyph_symbol->new($featuredata, $styleattrs);  
 }
+
+# Function will display DAS features with variable height depending on SCORE attribute
+sub RENDER_histogram_simple {
+    my( $self, $configuration ) = @_;
+
+# Display histogram only on a reverse strand
+    return if ($configuration->{'STRAND'} == 1);
+
+    my $empty_flag = 1;
+
+# Should come from a stylesheet in future
+    my ($max_score, $min_score, $row_height) = (100, 0, 20);
+    my $pix_per_score = ($max_score - $min_score) / $row_height;
+    my $bp_per_pix = 1 / $self->{pix_per_bp};
+
+    $configuration->{h} = $row_height;
+
+    # flag to indicate if not all features have been displayed 
+    my $more_features = 0;
+    my ($gScore, $gWidth, $fCount, $gStart) = (0, 0, 0, 0);
+    my @features = sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'}};
+
+    for (my $i = 0; $i< @features; $i++) { 
+	my $f = $features[$i];
+
+	# Handle DAS errors first
+	if($f->das_type_id() eq '__ERROR__') {
+	    $self->errorTrack(
+			      'Error retrieving '.$self->{'extras'}->{'caption'}.' features ('.$f->das_id.')'
+			      );
+	    return -1 ;   # indicates no features drawn because of DAS error
+	}
+    
+	$empty_flag &&= 0; # We have a feature (its on one of the strands!)
+
+	# Skip features that aren't on the current strand, if we're doing both
+	# strands
+	my $row = 0; # bumping row
+
+	# keep within the window we're drawing
+	my $START = $f->das_start() < 1 ? 1 : $f->das_start();
+	my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+
+	my $width = ($END - $START +1);
+
+	my $score = $f->das_score;
+	$score = $max_score if ($score > $max_score);
+	$score = $min_score if ($score < $min_score);
+	
+# Here we "group" features if they are too small and located very close to each other .. 
+
+	$gWidth += $width;
+	$gScore += $score;
+	$fCount ++;
+	$gStart = $START if ($fCount == 1);
+
+# If feature is smaller than 1px and next feature is close than 1px then we merge features .. 
+# 1px value depend on the zoom .. 
+	if ($gWidth < $bp_per_pix) { 
+	    my $nf = $features[$i+1];
+	    if ($nf) {
+		my $distance = $nf->das_start() - $END;
+		next if ($distance < $bp_per_pix);
+	    }
+	}
+
+	my $height = ($score / $fCount - $min_score) / $pix_per_score;
+
+	my ($href, $zmenu );
+	my $Composite = new Sanger::Graphics::Glyph::Composite({
+	    'y'         => 0,
+	    'x'         => $START-1,
+	    'absolutey' => 1,
+	});
+
+	if ($fCount > 1) {
+	    $zmenu = {
+		'caption'         => $self->{'extras'}->{'label'},
+	    };
+
+	    $zmenu->{"03:$fCount features merged"} = '';
+	    $zmenu->{"05:Average SCORE: ".($gScore/$fCount)} = '';
+	    $zmenu->{"10:START: $gStart"} = '';
+	    $zmenu->{"20:END: $END"} = '';
+	} else {
+	    ($href, $zmenu ) = $self->zmenu( $f );
+	    $Composite->{'href'} = $href if $href;
+	}
+
+	$Composite->{'zmenu'} = $zmenu;
+	my $style = $self->get_featurestyle ($f, $configuration);
+	my $styledata = $style->{'attrs'};  # style attributes for this feature
+	my $glyph_height = $styledata->{'height'};
+	my $colour = $styledata->{'colour'};
+	my $glyph_symbol = $style->{'glyph'};
+	
+	my $y_offset = - $configuration->{'tstrand'}*($row_height+2) * $row;
+	
+	# Special case for viewing summary non-positional features (i.e. gene
+	# DAS features on contigview) Just display a gene-wide line with a link
+	# to geneview where all annotations can be viewed
+	
+	# make clickable box to anchor zmenu
+	$Composite->push( new Sanger::Graphics::Glyph::Space({
+	    'x'         => $gStart,
+	    'y'         => 0,
+	    'width'     => $gWidth,
+	    'height'    => $glyph_height,
+	    'absolutey' => 1
+	    }) );
+
+	my $style = $self->get_featurestyle($f, $configuration);
+	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+	
+	my $sm = new Sanger::Graphics::Glyph::Rect({
+	    'x'          => $f->start - 1,
+	    'y'          => $row_height - $height, 
+	    'width'      => $f->end - $f->start +1,
+	    'height'     => $height,
+	    'colour'     => $colour,
+	    'absolutey' => 1,
+	});
+
+    # Draw feature symbol
+#    my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+#    $self->push($symbol->draw);
+
+	$self->push($sm);
+	# Offset label coords by which row we're on
+	$Composite->y($Composite->y() + $y_offset);
+
+	$self->push( $Composite );
+
+	$gWidth = $gScore = $fCount = 0;
+    } # END loop over features
+
+    $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
+    return $empty_flag ? 0 : 1 ;
+
+}   # END RENDER_simple
+
 
 1;
