@@ -157,7 +157,7 @@ sub context_menu {
   my %hash  = $obj->species_defs->multi('SYNTENY');
   my @SPECIES = grep { @{ $obj->species_defs->other_species( $_, 'ENSEMBL_CHROMOSOMES' )||[]} } keys( %hash );
   if( $chr_name ) {
-    $self->{page}->menu->add_entry( $flag, 'text' => "View @{[$obj->seq_region_type_and_name]}",
+    $self->{page}->menu->add_entry( $flag, code => 'name', 'text' => "View @{[$obj->seq_region_type_and_name]}",
                                     'href' => "/$species/mapview?chr=$chr_name" );
   }
   if( @SPECIES ){
@@ -169,12 +169,12 @@ sub context_menu {
         push (@$array_ref, $hash_ref);
     }
 
-    $self->{page}->menu->add_entry($flag, 'href' => $array_ref->[0]->{'href'}, 'text'=>"View Chr $chr_name Synteny",
+    $self->{page}->menu->add_entry($flag, code => 'syntview', 'href' => $array_ref->[0]->{'href'}, 'text'=>"View Chr $chr_name Synteny",
     'options' => $array_ref,
     );
 
   }
-  $self->{page}->menu->add_entry( $flag, 'text' => "Map your data onto this chromosome",
+  $self->{page}->menu->add_entry( $flag, code => 'karview', 'text' => "Map your data onto this chromosome",
                                   'href' => "/$species/karyoview?chr=$chr_name" );
 }
 
