@@ -1108,7 +1108,7 @@ sub RENDER_histogram_simple {
 	
 	# make clickable box to anchor zmenu
 	$Composite->push( new Sanger::Graphics::Glyph::Space({
-	    'x'         => $gStart,
+	    'x'         => $gStart - 1,
 	    'y'         => 0,
 	    'width'     => $gWidth,
 	    'height'    => $glyph_height,
@@ -1119,9 +1119,9 @@ sub RENDER_histogram_simple {
 	my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 	
 	my $sm = new Sanger::Graphics::Glyph::Rect({
-	    'x'          => $f->start - 1,
+	    'x'          => $gStart - 1,
 	    'y'          => $row_height - $height, 
-	    'width'      => $f->end - $f->start +1,
+	    'width'      => $gWidth,
 	    'height'     => $height,
 	    'colour'     => $colour,
 	    'absolutey' => 1,
