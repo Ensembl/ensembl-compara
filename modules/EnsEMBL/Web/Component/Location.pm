@@ -912,13 +912,8 @@ sub alignsliceviewbottom {
     my $max_length = $scaling * 1e6;
     my $slice = $object->database('core')->get_SliceAdaptor()
 	->fetch_by_region( $object->seq_region_type, $object->seq_region_name, $object->seq_region_start, $object->seq_region_end, 1 );
-    my $wuc = $object->user_config_hash( 'alignsliceviewbottom' );
-    $wuc->container_width( $object->length );
-    $wuc->set_width(       $object->param('image_width') );
-    $wuc->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
-    $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
+    my $wuc = $object->user_config_hash( 'alignsliceviewbottom_0', 'alignsliceviewbottom' );
 
-    red_box( $wuc, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
     my $zwa = $object->param('zoom_width');
 
     my $species = $ENV{ENSEMBL_SPECIES};
@@ -955,20 +950,24 @@ sub alignsliceviewbottom {
     my $url = $wuc->get('_settings','URL');
     my $cmpstr = 'primary';
     my $t1 = $wuc->get('ensembl_transcript','compact');
-
+    my $t2 = $wuc->get('evega_transcript','compact');
+    my $t3 = $wuc->get('variation','on');
+    my $id = 0;
     foreach my $vsp (@sarray) {
-	my $CONF = $object->user_config_hash( 'alignsliceviewbottom' );
+	$id ++;
+	my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
 	$CONF->{'align_slice'}  = 1;
 	(my $sp = $vsp) =~ s/\_/ /g;
 	$CONF->set('scalebar', 'label', $vsp);
 	$CONF->set_species($vsp);
-
 	my $compara_slice =  $align_slice->{slices}->{$sp}->[0];
 	$compara_slice->{_config_file_name_} = $vsp;
 	$compara_slice->{__type__} = 'alignslice';
 
 	$CONF->set('_settings','URL',$url,1);
 	$CONF->set('ensembl_transcript', 'compact', $t1, 1);
+	$CONF->set('evega_transcript', 'compact', $t2, 1);
+	$CONF->set('variation', 'on', $t3, 1 );
 	my $len = $compara_slice->length;
 	$CONF->container_width( $len );
 	$compara_slice->{species} = $sp;
@@ -978,12 +977,19 @@ sub alignsliceviewbottom {
 	if ($vsp eq $sarray[-1]) {
 	    $compara_slice->{compara} = 'final' if ($cmpstr ne 'primary');
 	}
+	$CONF->{_object} = $object;
+
+	$CONF->container_width( $object->length );
+	$CONF->set_width(       $object->param('image_width') );
+	$CONF->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
+	$CONF->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
+
+	red_box( $CONF, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
 
 	push @ARRAY, $compara_slice, $CONF;
 	$cmpstr = 'secondary';
     }
 
-    $wuc->{_object} = $object;
     my $image = $object->new_image( \@ARRAY, $object->highlights );
     $image->imagemap = 'yes';
     $panel->print( $image->render );
@@ -998,8 +1004,8 @@ sub alignsliceviewbottom {
      my $hidden_fields_URL    = join ';', map { qq($_=$additional_hidden_values{$_}) } keys %additional_hidden_values;
 
 
-     my $zoom_ii = $wid > 25 ? this_link( $object, ';zoom_width='.($wid-25), $hidden_fields_URL ) : '#';
-     my $zoom_h  = $wid < 150 ? this_link( $object, ';zoom_width='.($wid+25), $hidden_fields_URL ): '#';
+     my $zoom_h = $wid > 25 ? this_link( $object, ';zoom_width='.($wid-25), $hidden_fields_URL ) : '#';
+     my $zoom_ii  = $wid < 150 ? this_link( $object, ';zoom_width='.($wid+25), $hidden_fields_URL ): '#';
      my $pan_left_1_win  = this_link_offset( $object, -0.8 * $wid );
      my $pan_right_1_win = this_link_offset( $object,  0.8 * $wid );
 
@@ -1068,7 +1074,7 @@ sub alignsliceviewzoom {
      }
 
     my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-#     warn("SA2: @sarray");
+#    warn("SA2: @sarray");
 
     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
 
@@ -1096,8 +1102,10 @@ sub alignsliceviewzoom {
 	$nt->{S} = join('', grep {$nt->{$_} >= $num} keys(%{$nt}));
     }
 
+    my $id = 0;
     foreach my $sp (@species) {
-	my $wuc = $object->user_config_hash( 'alignsliceviewzoom', 'alignsliceviewbottom' );
+	$id ++;
+	my $wuc = $object->user_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
 	$wuc->container_width( $panel->option('end') - $panel->option('start') + 1 );
 	$wuc->set_width( $object->param('image_width') );
 	$wuc->set( '_settings', 'opt_empty_tracks', 'off' );
@@ -1127,8 +1135,6 @@ sub alignsliceviewzoom {
 	if ($vsp eq $sarray[-1]) {
 	    $compara_slice->{compara} = 'final' if ($cmpstr ne 'primary');
 	}
-
-
 	push @ARRAY, $compara_slice, $wuc;
 	$cmpstr = 'secondary';
     }
@@ -1187,6 +1193,8 @@ sub exons_markup {
 sub snps_markup {
      my ($slice) = @_;
      my $vf_ref = $slice->get_all_VariationFeatures();
+     warn("$vf_ref");
+
      my @snps;
 
      foreach (@$vf_ref) {
@@ -1252,26 +1260,5 @@ sub alignsliceviewtop {
     return 1;
  }
 
-# Should not need this function - need to ask James how to get the required info from the config
-sub compara_db {
-
-
-    my $user = 'ensro';
-#    my $host = 'ia64g';
-#    my $dbname = 'abel_mavid_test2';
-#    my $port = 3306;
-    
-
-    my $host = 'ecs2';
-    my $dbname = 'ensembl_compara_34';
-    my $port = 3364;
-
-#    my $host = 'ia64e';
-#    my $dbname = 'abel_mlagan_test2';
-#    my $port = 3306;
-
-# For now just return a new db adaptor, later we can cache it .. 
-    return new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host, -user => $user, -dbname => $dbname, -port=>$port);
-}
 
 1;    
