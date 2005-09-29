@@ -93,79 +93,75 @@ sub next_result{
 
   $self->start_document();
 
+  my $qname_old = '';
+  my $hname_old = '';
   my $hits = {};
+
   while( defined( my $line = $self->_readline )) { 
     next if( /^\s+$/); # skip empty lines
 
-    if( $line =~ /Query\s*=\s*(\S+)/ ){ # Got a new RESULT
-      $self->start_result;
-      $self->element({ Name=>'query_name',     Data=>$1 });
-      $self->element({ Name=>'algorithm_name', Data=>'FASTN' }); # for strand
-    }
+    if( $line =~ /^\d+/ ) { #Got a new result
+      my( $score, $qname, $hname, $qstart, $qend, $hstart, $hend, $dir, $ident, $percent, $length ) = split /\s+/, $line;
+      warn "SSAHA2: $score, $qname, $hname, $qstart, $qend, $hstart, $hend, $dir, $ident, $percent, $length\n"; 
+      if( substr( $dir, 0, 1 ) eq 'C' ) { ($qstart,$qend)=($qend,$qstart) }
+      if( $qname ne $qname_old ){ # New result
+        if( $self->in_element('result') &&
+            $self->end_result( $hits ) ){
+          # End this result!
+          $self->_pushback( $_ );
+          last;
+        }
 
-    if( $line =~ /^>(\S*)\s*(.*)/ ){ # Got a new HSP
-      my $hname = $1;
-      my $hdesc = $2;
-
+        $qname_old = $qname;
+        $self->start_result;
+        $self->element({ Name => 'query_name',     Data => $qname });
+        $self->element({ Name => 'algorithm_name', Data => 'FASTN' });
+      }
       # Create and populate new hsp
       $hits->{$hname} ||= {};
       $hits->{$hname}->{hit_name} ||= $hname;
-      $hits->{$hname}->{hit_desc} ||= $hdesc;
       my $hsp = {};
-      my $qstrand;
-      my $hstrand;
-      my @qoffsets;
-      my @hoffsets;
+      $hsp->{hsp_identical}   = $ident;
+      $hsp->{hsp_length}      = $length;
+      $hsp->{hsp_conserved}   = $ident;
+      $hsp->{hsp_query_start} = $qstart;
+      $hsp->{hsp_query_end}   = $qend;
+      $hsp->{hsp_hit_start}   = $hstart;
+      $hsp->{hsp_hit_end}     = $hend;
 
-      while( my $aline = $self->_readline() ){
-        next if( /^\s+$/); # skip empty lines
+      my $oscore = $hits->{$hname}->{hit_score} || 0;
+      $hits->{$hname}->{hit_score} = $score > $oscore ? $score : $oscore;
+      $hsp->{hsp_score} = $score;
 
-        if( $aline =~ /^>/ ){ # next HSP
-          $self->_pushback($aline);
+      my $len;
+      while( $_=$self->_readline() ){
+        next if /^\s+$/;
+
+        if( /^(Query\s+\d+\s+)(\S+)\s+(\d+)/ ) {
+          $len = length( $1 );
+          $hsp->{hsp_query_seq} .= $2;
+          $_=$self->_readline();
+        } else {
+          $self->_pushback($_);
           last;
         }
-        if( $aline =~ /Length\s*=\s*(\d+)/ ){
-          $hits->{$hname}->{hit_length} ||= $1;
+        if( defined( $_ ) && defined( $len ) ) {
+          chomp;
+          $hsp->{hsp_homology_seq} .= substr( $_, $len );
+          $_ = $self->_readline();
+        } else {
+          $self->throw("no data for midline $_");
         }
-        if( $aline =~ /Score\s*=\s*(\d+)/ ){
-          my $score  = $1;
-          my $oscore = $hits->{$hname}->{hit_score} || 0;
-          $hits->{$hname}->{hit_score} = $score > $oscore ? $score : $oscore;
-          $hsp->{hsp_score} = $score;
-        }
-        if( $aline =~ /Identities\s*=\s*(\d+)\/(\d+)/ ){
-          $hsp->{hsp_identical} = $1;
-          $hsp->{hsp_length}    = $2;
-          $hsp->{hsp_conserved} = $2;
-        }
-        if( $aline =~ /Strand\s*=\s*(\w+)\s*\/\s*(\w+)/ ){
-          $qstrand = $1 eq 'Minus' ? -1 : 1;
-          $hstrand = $2 eq 'Minus' ? -1 : 1;
-        }
-
-        if( $aline =~ /^(Query:\s*(\d+)\s*)(\S+)\s*(\d+)/ ){
-          my $textlen = length($1);
-          my $datalen = length($3);
-          my $xline = $self->_readline();
-          my $hline = $self->_readline();
-          push @qoffsets, $2, $4;
-          $hsp->{hsp_query_seq}    .= $3;
-          $hsp->{hsp_homology_seq} .= substr($xline,$textlen,$datalen);
-          if( $hline =~ /^(Sbjct:\s*(\d+)\s*)(\S+)\s*(\d+)/ ){
-            push @hoffsets, $2, $4;
-            $hsp->{hsp_hit_seq} .= $3;
-          }
-          else{ $self->throw( "Cannot parse alignment - No hit string found" )}
+        if( /^(Sbjct\s+\d+)\s+(\S+)\s+(\d+)/ ) {
+          $hsp->{hsp_hit_seq} .= $2;
+          $_=$self->_readline();
+        } else {
+          $self->throw("no data for hitline $_");
         }
       }
-      @qoffsets = sort{ $qstrand>0 ? $a<=>$b : $b<=>$a } @qoffsets;
-      @hoffsets = sort{ $hstrand>0 ? $a<=>$b : $b<=>$a } @hoffsets;
-      $hsp->{hsp_query_start} = $qoffsets[0];
-      $hsp->{hsp_query_end}   = $qoffsets[-1];
-      $hsp->{hsp_hit_start}   = $hoffsets[0];
-      $hsp->{hsp_hit_end}     = $hoffsets[-1];
       $hits->{$hname}->{hsps} ||= [];
       push( @{$hits->{$hname}->{hsps}}, $hsp );
+
     }
   } # while
 

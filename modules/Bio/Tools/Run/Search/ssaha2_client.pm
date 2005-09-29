@@ -41,7 +41,7 @@ BEGIN{
   $SEARCHIO_FORMAT   = 'ssaha2';
   $ALGORITHM  = 'SSAHA';
   $VERSION    = 'Unknown';
-  $PROGRAM_NAME  = 'ssaha2Client';
+  $PROGRAM_NAME  = 'ssaha2Client.pl';
   $PARAMETER_OPTIONS = 
     {
      '-depth' =>
@@ -119,7 +119,7 @@ sub command {
     $param_str .= " $param $val";
   }
   my $command = 
-    join( ' ',  $exe, -server, $host, -port, $port, $param_str );
+    join( ' ',  $exe, -server, $host, -port, $port, -align, 1, $param_str );
 
   my $fastafile   = $self->fastafile;
   my $reportfile  = $self->reportfile;
