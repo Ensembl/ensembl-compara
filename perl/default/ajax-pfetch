@@ -1,0 +1,16 @@
+use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::ExtIndex;
+use Data::Dumper;
+use CGI;
+
+my $T = new CGI;
+my $indexer = new EnsEMBL::Web::ExtIndex( new EnsEMBL::Web::SpeciesDefs );
+my $result_ref;
+eval {
+  $result_ref = $indexer->get_seq_by_id({ DB  => 'EMBL', ID  => $T->param('ID'), OPTIONS => 'desc' });
+};
+
+print "Content-type: text/plain\n\n";
+print @{$result_ref||['NO DATA']};
+
+1;
