@@ -114,7 +114,7 @@ foreach( @dir ) {
 while( pop @clean_directory ne 'conf') { 1; }     ## Remove up to the last "conf" directory...
 
 $ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_directory ) );
-
+$ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
 warn "$ENSEMBL_SERVERROOT";
 ## Define Plugin directories....
 eval qq(require '$ENSEMBL_SERVERROOT/conf/Plugins.pm');

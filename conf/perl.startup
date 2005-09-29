@@ -105,8 +105,11 @@ if( keys %{$conf->{'_multi'}{'marts'}} ) { ### NOMARTS
   $icount and warn( "[CONF]    [INFO] Removed $icount cached image files\n" );
   $icount == @cached_images 
     or warn( "[CONF]    [WARN] Some cached image files not removed: $!" );
-
   warn( ('=' x 78) . "\n\n" );
+
+  warn "Server information:\n";
+  warn "Name: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
+  warn "Real: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVER.":".$conf->ENSEMBL_PORT,"\n";
 }
 else{
   warn( "\n" . ('=' x 78) . "\n" );
