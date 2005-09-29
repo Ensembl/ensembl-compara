@@ -151,15 +151,6 @@ sub features {
   my ($self) = @_;
   my $track = 'evega_transcript';
 
-  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice")) {
-      my $all_slices = $self->{'container'}->get_all_Slices;
-      my @all_genes;
-      foreach my $this_slice (@{$all_slices}) {
-	  push @all_genes, @{$this_slice->get_all_Genes()};
-      }
-      return \@all_genes;
-  }
-
   if( my $alias = $self->{'config'}->get($track,'db_alias') ){
     return $self->{'container'}->get_all_Genes('otter',$alias);
   } elsif( $self->{'config'}->{'fakecore'} ) {

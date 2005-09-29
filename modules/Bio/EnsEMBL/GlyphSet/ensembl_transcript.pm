@@ -27,21 +27,12 @@ sub features {
   my $db_alias = 'core'; # $self->{'config'}->get($track,'db_alias') || '';
   my @genes;
 
-  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice")) {
-      my $all_slices = $self->{'container'}->get_all_Slices;
-      my @all_genes;
-      foreach my $this_slice (@{$all_slices}) {
-	  push @all_genes, @{$this_slice->get_all_Genes()};
-      }
-      return \@all_genes;
-  }
 
   foreach my $analysis( @analyses ){
     push @genes, @{ $slice->get_all_Genes( $analysis, $db_alias||() ) }
   }
   return [@genes];
 }
-
 
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
