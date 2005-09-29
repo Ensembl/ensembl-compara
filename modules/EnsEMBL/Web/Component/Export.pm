@@ -443,7 +443,7 @@ sub fasta_trans {
   } elsif( 0 ) {
     $id_type = 'externaldb';
   } else {
-    $id_type = $transcript->type;
+    $id_type = $transcript->status.'_'.$transcript->biotype;
   }
   my $out = '';
   my %options = map { $_=>1 } $transObj->param('options');
@@ -554,7 +554,7 @@ sub features {
               'exon_id' => $f->stable_id,
               'transcript_id' => $t->stable_id,
               'gene_id' => $g->stable_id,
-              'gene_type' => $g->type
+              'gene_type' => $g->status.'_'.$g->biotype
             },
             $DB eq 'vega' ? 'Vega' : 'Ensembl'
           ) );
