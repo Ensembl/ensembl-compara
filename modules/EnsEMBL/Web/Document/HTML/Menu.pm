@@ -22,6 +22,14 @@ sub push_logo {
   push @{$self->{'logos'}}, \%conf;
 }
 
+##############################################################################
+# Functions to manage menu blocks on the webpage on the LHS menu
+#   $menu->add_block(              $code, $type, $caption,   %options   )
+#   $menu->change_block_attribute( $code, $type, $attribute, $new_value )
+#   $menu->delete_block(           $code )
+#   $menu->block(                  $code )
+##############################################################################
+
 sub add_block {
   my( $self, $code, $type, $caption, %options ) = @_;
   my @C = caller(0);
@@ -54,10 +62,25 @@ sub change_block_attribute {
   }
 }
 
+sub delete_block {
+  my( $self, $code ) = @_;
+  delete $self->{'blocks'}{$code};
+}
+
 sub block {
   my( $self, $code ) = @_;
   return exists $self->{'blocks'}{$code};
 }
+
+##############################################################################
+# Functions to manage menu entries on the webpage on the LHS menu
+#   $menu->add_entry(        $code, %options )
+#   $menu->add_entry_first(  $code, %options )
+#   $menu->add_entry_after(  $code, $key,  %options )
+#   $menu->add_entry_before( $code, $key,  %options )
+#   $menu->delete_entry(     $code, $key )
+#   $menu->entry(            $code, $key )
+##############################################################################
 
 sub add_entry {
   my( $self, $code, %options ) = @_;
@@ -72,36 +95,40 @@ sub add_entry_first {
 }
 
 sub add_entry_after {
-  my( $self, $code, $entry, %options ) = @_;
+  my( $self, $code, $key, %options ) = @_;
   return unless exists $self->{'blocks'}{$code};
   my $C = 0;
   foreach( @{$self->{'blocks'}{$code}{'entries'}} ) {
     $C++;
-    last if $_->{'code'} eq $entry; 
+    last if $_->{'code'} eq $key; 
   }
   splice @{$self->{'blocks'}{$code}{'entries'}}, $C, 0, \%options; 
 }
 
 sub add_entry_before {
-  my( $self, $code, $entry, %options ) = @_;
+  my( $self, $code, $key, %options ) = @_;
   return unless exists $self->{'blocks'}{$code};
   my $C = 0;
   foreach( @{$self->{'blocks'}{$code}{'entries'}} ) {
-    last if $_->{'code'} eq $entry;
+    last if $_->{'code'} eq $key;
     $C++;
   }
   splice @{$self->{'blocks'}{$code}{'entries'}}, $C, 0, \%options;
 }
 
 sub delete_entry {
-  my( $self, $code, $entry ) = @_;
+  my( $self, $code, $key ) = @_;
   return unless exists $self->{'blocks'}{$code};
-  $self->{'blocks'}{$code}{'entries'} = [ grep { $_->{'code'} ne $entry } @{$self->{'blocks'}{$code}{'entries'}} ];
+  $self->{'blocks'}{$code}{'entries'} = [ grep { $_->{'code'} ne $key } @{$self->{'blocks'}{$code}{'entries'}} ];
 }
 
-sub delete_block {
-  my( $self, $code ) = @_;
-  delete $self->{'blocks'}{$code};
+sub entry {
+  my( $self, $code, $key ) = @_;
+  return unless exists $self->{'blocks'}{$code};
+  foreach( @{$self->{'blocks'}{$code}{'entries'}} ) {
+    return $_ if $_->{'code'} eq $key;
+  }
+  return undef;
 }
 
 sub render {
@@ -198,4 +225,7 @@ sub render_type_form {
 }
 
 1;
+
+__END__
+
 
