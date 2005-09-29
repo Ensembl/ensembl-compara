@@ -2,7 +2,10 @@ package Bio::EnsEMBL::GlyphSet::vega_transcript;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::evega_transcript;
+
 @ISA = qw(Bio::EnsEMBL::GlyphSet::evega_transcript);
+
+our %VEGA_TO_SHOW_ON_VEGA;
 
 sub features {
     my ($self) = @_;
@@ -25,11 +28,18 @@ sub features {
         # else fetch all otter transcripts
         $genes = $self->{'container'}->get_all_Genes('otter');
     }
-
     # determine transcript type
     # $gene_adaptor->set_transcript_type($genes);
 
-    return $genes;
+	#make a list of gene types for the legend
+	foreach my $g (@$genes) {
+		my $status = $g->status;
+		my $biotype = $g->biotype;
+		$VEGA_TO_SHOW_ON_VEGA{"$biotype".'_'."$status"}++;
+	}
+
+ 
+   return $genes;
 }
 
 sub my_label {
@@ -129,21 +139,33 @@ sub gene_text_label {
 
 sub legend {
     my ($self, $colours) = @_;
-	# species defs doesn't hold details of gene types any more, so do it manually
-	return ('genes', 1000,
-		[
-        'Known Protein coding'           => $colours->{'protein_coding_KNOWN'}[0],
-        'Novel Protein coding'           => $colours->{'protein_coding_NOVEL'}[0],
-        'Novel Processed transcript'     => $colours->{'processed_transcript_NOVEL'}[0],
-        'Putative Processed transcript'  => $colours->{'processed_transcript_PUTATIVE'}[0],
-        'Novel Pseudogene'               => $colours->{'pseudogene_NOVEL'}[0],
-        'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
-        'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
-        'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
-        'Novel Ig segment'   => $colours->{'Ig_segment_NOVEL'}[0],
-        'Novel Ig pseudogene'=> $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
-		]
-	  );
+	my $labels;
+	if (%VEGA_TO_SHOW_ON_VEGA) {
+		foreach my $k (keys %VEGA_TO_SHOW_ON_VEGA) {
+			if (@{$colours->{$k}}) {
+				push @$labels,$colours->{$k}[1]; 
+				push @$labels,$colours->{$k}[0]; 
+			} else {
+				warn "WARNING - no colour map entry for $k";
+			}
+		}
+		return ('genes',1000,$labels);
+	} else {
+		warn "WARNING - using default colour map";
+		return ('genes',1000,
+				['Known Protein coding'           => $colours->{'protein_coding_KNOWN'}[0],
+				 'Novel Protein coding'           => $colours->{'protein_coding_NOVEL'}[0],
+				 'Novel Processed transcript'     => $colours->{'processed_transcript_NOVEL'}[0],
+				 'Putative Processed transcript'  => $colours->{'processed_transcript_PUTATIVE'}[0],
+				 'Novel Pseudogene'               => $colours->{'pseudogene_NOVEL'}[0],
+				 'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
+				 'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
+				 'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
+				 'Novel Ig segment'               => $colours->{'Ig_segment_NOVEL'}[0],
+				 'Novel Ig pseudogene'            => $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
+				]
+			   );
+	}
 }
 
 

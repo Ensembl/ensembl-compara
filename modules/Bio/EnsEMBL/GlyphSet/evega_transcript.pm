@@ -147,36 +147,65 @@ sub gene_text_label {
   return $id;
 }
 
+our $VEGA_TO_SHOW_ON_ENS;
+
 sub features {
   my ($self) = @_;
   my $track = 'evega_transcript';
 
   if( my $alias = $self->{'config'}->get($track,'db_alias') ){
-    return $self->{'container'}->get_all_Genes('otter',$alias);
+	  my $genes = $self->{'container'}->get_all_Genes('otter',$alias);
+	  $VEGA_TO_SHOW_ON_ENS = [@$genes];
+	  return $genes;
   } elsif( $self->{'config'}->{'fakecore'} ) {
-    return $self->{'container'}->get_all_Genes('otter');
+	  my $genes = $self->{'container'}->get_all_Genes('otter');
+	  $VEGA_TO_SHOW_ON_ENS = [@$genes];
+	  return $genes;
   } else {
-    return $self->{'container'}->get_all_Genes('otter','vega');
+	  my $genes = $self->{'container'}->get_all_Genes('otter','vega');
+	  $VEGA_TO_SHOW_ON_ENS = [@$genes];
+	  return $genes;
   }
 }
 
 sub legend {
-  my ($self, $colours) = @_;
-	return ('vega_genes', 1000,
-		[
-        'Known Protein coding'           => $colours->{'protein_coding_KNOWN'}[0],
-        'Novel Protein coding'           => $colours->{'protein_coding_NOVEL'}[0],
-        'Novel Processed transcript'     => $colours->{'processed_transcript_NOVEL'}[0],
-        'Putative Processed transcript'  => $colours->{'processed_transcript_PUTATIVE'}[0],
-        'Novel Pseudogene'               => $colours->{'pseudogene_NOVEL'}[0],
-        'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
-        'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
-        'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
-        'Novel Ig segment'               => $colours->{'Ig_segment_NOVEL'}[0],
-        'Novel Ig pseudogene'            => $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
-		]
-	  );
- 
+	my ($self, $colours) = @_;
+	my %gtypes;
+
+	if (defined $VEGA_TO_SHOW_ON_ENS) {
+		foreach my $gene (@$VEGA_TO_SHOW_ON_ENS){
+			my $type = $gene->biotype.'_'.$gene->status;
+			$gtypes{$type}++;
+		}
+		my $labels;
+		foreach my $k (keys %gtypes) {
+			if (@{$colours->{$k}}) {
+				push @$labels,$colours->{$k}[1]; 
+				push @$labels,$colours->{$k}[0];
+			} else {
+				warn "WARNING - no colour map entry for $k";
+			}
+		}
+		return ('vega_genes', 1000, $labels);
+	} else {
+		warn "WARNING - using default colour map";
+		return ('vega_genes', 1000,
+				[
+				 'Known Protein coding'           => $colours->{'protein_coding_KNOWN'}[0],
+				 'Novel Protein coding'           => $colours->{'protein_coding_NOVEL'}[0],
+				 'Novel Processed transcript'     => $colours->{'processed_transcript_NOVEL'}[0],
+				 'Putative Processed transcript'  => $colours->{'processed_transcript_PUTATIVE'}[0],
+				 'Novel Pseudogene'               => $colours->{'pseudogene_NOVEL'}[0],
+				 'Novel Processed pseudogenes'    => $colours->{'processed_pseudogene_NOVEL'}[0],
+				 'Novel Unprocessed pseudogenes'  => $colours->{'unprocessed_pseudogene_NOVEL'}[0],
+				 'Predicted Protein coding'       => $colours->{'protein_coding_PREDICTED'}[0],
+				 'Novel Ig segment'               => $colours->{'Ig_segment_NOVEL'}[0],
+				 'Novel Ig pseudogene'            => $colours->{'Ig_pseudogene_segment_NOVEL'}[0],
+				]
+			   );
+		
+	}
+	
 }
 
 sub error_track_name { return 'Vega transcripts'; }
