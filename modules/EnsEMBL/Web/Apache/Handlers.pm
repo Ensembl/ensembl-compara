@@ -216,7 +216,7 @@ sub _process_blast {
         (my $FILE3 = $file) =~ s/pending/sent/;
         unlink $FILE3;
         flock FH, LOCK_UN;
-        my $COMMAND = "$ENSEMBL_SERVERROOT/utils/parse_blast.pl $blast_file $FILE2";
+        my $COMMAND = "$ENSEMBL_BLASTSCRIPT $blast_file $FILE2";
       ## NOW WE PARSE THE BLAST FILE.....
         `$COMMAND`;
         if( $ticket && ( $_process_blast_called_at + 30>time() )) {
@@ -309,7 +309,7 @@ sub transHandler {
       $r->filename( $filename );
       $r->uri( "/perl/$species/$script" );
       $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-      warn sprintf( "SCRIPT:%-10d /%s/%s?%s\n", $$, $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8;
+      warn sprintf( "SCRIPT:%-10d /%s/%s?%s\n", $$, $species, $script, $querystring ) if $ENSEMBL_DEBUG_FLAGS | 8 && ($script ne 'ladist' && $script ne 'la' );
       return OK;
     }
   } else {
@@ -322,6 +322,7 @@ sub transHandler {
   $r->uri( "/$path" );
   foreach my $dir( @HTDOCS_TRANS_DIRS ){
     my $filename = sprintf( $dir, $path );
+    warn "$filename.....";
     if( -d $filename ) {
       $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
       $r->filename( $filename . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
