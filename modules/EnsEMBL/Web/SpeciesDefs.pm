@@ -99,11 +99,17 @@ sub new {
 
   $self->parse unless $CONF;
 
-  ## Diagnostic;
+  ## Diagnostic - sets up back trace of point at which new was
+  ## called - useful for trying to track down where the cacheing
+  ## is taking place
 
   $self->{'_new_caller_array'} = [];
-  my $C = 0;
-  while(my @T = caller($C) ) { $self->{'_new_caller_array'}[$C] = \@T; $C++; }
+  if( 1 ) {
+    my $C = 0;
+    while( my @T = caller($C) ) {
+      $self->{'_new_caller_array'}[$C] = \@T; $C++;
+    }
+  }
   $self->{'_multi'}   = $CONF->{'_multi'};
   $self->{'_storage'} = $CONF->{'_storage'};
 
@@ -148,7 +154,7 @@ sub valid_species(){
   my %test_species = map{ $_=>1 } @_;
 
   #my $species_ref = $CONF->{'_storage'}; # This includes 'Multi'
-  my %species = map{ $_=>1 } values %{$SiteDefs::ENSEMBL_SPECIES_ALIASES};
+  my %species       = map{ $_=>1 } values %{$SiteDefs::ENSEMBL_SPECIES_ALIASES};
   my @valid_species = keys %species;
 
   if( %test_species ){ # Test arg list if required
@@ -179,7 +185,6 @@ sub AUTOLOAD {
 }
 
 #----------------------------------------------------------------------
-#----------------------------------------------------------------------
 # uses $CONF to load the registry
 
 =head2 configure_registry
@@ -205,7 +210,7 @@ sub configure_registry {
     'VEGA'      => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'DB'        => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'COMPARA'   => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
-	'ENSEMBL_VEGA'  => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    'ENSEMBL_VEGA'  => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'HELP'      => undef,
     'DISEASE'   => undef,
     'BLAST'     => undef,
@@ -261,17 +266,17 @@ sub configure_registry {
 }
 
 sub dynamic_use {
-    my( $self, $classname ) = @_;
-    my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);
-    no strict 'refs';
-    return 1 if $parent_namespace->{$module.'::'}; # return if already used
-    eval "require $classname";
-    if($@) {
-        warn "EnsEMBL::Web::SpeciesDefs: failed to use $classname\nEnsEMBL::Web::SpeciesDefs: $@";
-        return 0;
-    }
-    $classname->import();
-    return 1;
+  my( $self, $classname ) = @_;
+  my( $parent_namespace, $module ) = $classname =~/^(.*::)(.*)$/ ? ($1,$2) : ('::',$classname);
+  no strict 'refs';
+  return 1 if $parent_namespace->{$module.'::'}; # return if already used
+  eval "require $classname";
+  if($@) {
+    warn "EnsEMBL::Web::SpeciesDefs: failed to use $classname\nEnsEMBL::Web::SpeciesDefs: $@";
+    return 0;
+  }
+  $classname->import();
+  return 1;
 }
 
 =head2 get_config
@@ -293,18 +298,13 @@ sub get_config {
   my $var     = shift || $species;
 
   if(defined $CONF->{'_storage'}) {
-    if (exists $CONF->{'_storage'}{$species} &&
-	exists $CONF->{'_storage'}{$species}{$var}){
-      return $CONF->{'_storage'}{$species}{$var};
-    } elsif (exists $CONF->{'_storage'}{$var}){
-      return $CONF->{'_storage'}{$var};
-    }
+    return $CONF->{'_storage'}{$species}{$var} if exists $CONF->{'_storage'}{$species} &&
+                                                  exists $CONF->{'_storage'}{$species}{$var};
+    return $CONF->{'_storage'}{$var}           if exists $CONF->{'_storage'}{$var};
   }
   no strict 'refs';
   my $S = "SiteDefs::".$var;
-  if( defined ${$S} ) {
-     return ${$S};
-  }
+  return ${$S} if defined ${$S};
 
   warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $ENSEMBL_DEBUG_FLAGS & 4;
   return undef;
@@ -330,11 +330,8 @@ sub set_config {
   my $species = shift;
   my $key = shift;
   my $value = shift || undef;
-  if(defined $CONF->{'_storage'}) {
-    if( exists $CONF->{'_storage'}{$species} ){
-      $CONF->{'_storage'}{$species}{$key} = $value;
-    }
-  }
+  $CONF->{'_storage'}{$species}{$key} = $value if defined $CONF->{'_storage'} &&
+                                                   exists $CONF->{'_storage'}{$species};
   return 1;
 }
 
@@ -352,12 +349,10 @@ sub set_config {
 =cut
 
 sub retrieve {
-    my $self = shift;
-    my $Q = lock_retrieve( $self->{'_filename'} ) or die( "Can't open $self->{'_filename'}: $!" ); 
-    if(ref($Q) eq 'ARRAY') {
-      ( $CONF->{'_storage'}, $CONF->{'_multi'} ) = @$Q;
-    }
-    return 1;
+  my $self = shift;
+  my $Q = lock_retrieve( $self->{'_filename'} ) or die( "Can't open $self->{'_filename'}: $!" ); 
+  ( $CONF->{'_storage'}, $CONF->{'_multi'} ) = @$Q if ref($Q) eq 'ARRAY';
+  return 1;
 }
 
 #----------------------------------------------------------------------
@@ -375,7 +370,8 @@ sub retrieve {
 
 sub store {
   my $self = shift;
-  lock_nstore( [$CONF->{'_storage'},$CONF->{'_multi'}], $self->{_filename} ) or die( "[CONF]    [FATAL] Could not write to $self->{'_filename'}: $!" );
+  die "[CONF]    [FATAL] Could not write to $self->{'_filename'}: $!" unless
+    lock_nstore( [ $CONF->{'_storage'}, $CONF->{'_multi'} ], $self->{_filename} );
   return 1;
 }
 
@@ -419,13 +415,13 @@ sub _parse {
   my $BC = $self->bread_crumb_creator();
   my $defaults;
 
-  ###### Loop for each species exported from SiteDefs
+###### Loop for each species exported from SiteDefs
   
   foreach my $filename ( 'DEFAULTS', @$ENSEMBL_SPECIES, 'MULTI' ) {
     warn "-" x 78, "\n[SPECIES] [INFO] Starting $filename\n";
     my $tree            = {%$BC};
     
-    ###### Read and parse the <species>.ini file
+###### Read and parse the <species>.ini file
     my $inifile;
     foreach my $confdir( @SiteDefs::ENSEMBL_CONF_DIRS ){
       if( -e "$confdir/ini-files/$filename.ini" ){
@@ -437,7 +433,7 @@ sub _parse {
         }
         warn "OPENING $inifile\n";
         open FH, $inifile or die( "Problem with $inifile: $!" );
-    ###### Loop for each line of <species>.ini
+###### Loop for each line of <species>.ini
         my $current_section = undef;
         my $line_number     = 0;
         while(<FH>) {
@@ -464,10 +460,10 @@ sub _parse {
           }
           $line_number++;
         }
-	    close FH;
+        close FH;
       }
     }
-    if( ! $inifile ){
+    if( ! $inifile ) {
       warn "could not find $filename.ini in @{[@SiteDefs::ENSEMBL_CONF_DIRS]}";
       next;
     }
@@ -475,18 +471,15 @@ sub _parse {
 ######### Deal with DEFAULTS.ini -- store the information collected in a separate tree...
 #########                           and skip the remainder of this code...
     if( $filename eq 'DEFAULTS' ) { 
-	  unless( ref( $tree->{'general'}{'ENSEMBL_COLOURS'} ) eq 'HASH') {
-	    $tree->{'general'}{'ENSEMBL_COLOURS'} = $tree->{$tree->{'general'}{'ENSEMBL_COLOURS'}};
-	  }
-	  if( $tree->{'general'}{'SITE_LOGO_KEY'} ) {
-	    for( keys %{$tree->{$tree->{'general'}{'SITE_LOGO_KEY'}}} ) {
-	      $tree->{'general'}{$_} = $tree->{$tree->{'general'}{'SITE_LOGO_KEY'}}{$_};
-	    }
-	  }
+      if( $tree->{'general'}{'SITE_LOGO_KEY'} ) {
+        for( keys %{$tree->{$tree->{'general'}{'SITE_LOGO_KEY'}}} ) {
+          $tree->{'general'}{$_} = $tree->{$tree->{'general'}{'SITE_LOGO_KEY'}}{$_};
+        }
+      }
 
-	  print STDERR ( "\t  [INFO] Defaults file successfully stored\n" );
-	  $defaults = $tree;
-	  next;
+      print STDERR ( "\t  [INFO] Defaults file successfully stored\n" );
+      $defaults = $tree;
+      next;
     }
 
 ############### <species>.ini read and parsed 
@@ -499,8 +492,8 @@ sub _parse {
     my $PASS   = $tree->{'general'}{'ENSEMBL_DBPASS'};    
     my $DRIVER = $tree->{'general'}{'ENSEMBL_DRIVER'} || 'mysql';    
     
-    # For each database look for non-default config..
-    if(exists $tree->{'databases'}) { 
+## For each database look for non-default config..
+    if( exists $tree->{'databases'} ) {
       foreach my $key ( keys %{$tree->{'databases'}} ) {
         my $DB_NAME = $tree->{'databases'}{$key};
         if( $DB_NAME =~ /%_(\w+)_%/ ) {
@@ -562,46 +555,43 @@ sub _parse {
     }                      
     delete $tree->{'general'};
     if( $filename eq 'MULTI' ) { ## This is the multispecies hash...
-	my $dbh;
-	
-	if( $tree->{'databases'}->{'ENSEMBL_COMPARA_MULTIPLE'} ){
-	    $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA_MULTIPLE' );
-	}
-	if($dbh) {
-	    my %sections = (
-			    'SYNTENY' => 'GENE_MULTIPLE',
-			    );
-	    # We've done the DB hash...
-	    # So lets get on with the multiple alignment hash;
-	    my $q = qq{ SELECT ml.type, gd.name 
-			FROM method_link ml, method_link_species_set mlss, genome_db gd
-			WHERE mlss.method_link_id = ml.method_link_id and mlss.genome_db_id=gd.genome_db_id AND ml.type = 'MLAGAN'};
-
-	    my $sth = $dbh->prepare( $q );
-	    my $rv  = $sth->execute || die( $sth->errstr );
-	    my $results = $sth->fetchall_arrayref();
-
-	    my $thash;
-
-	    foreach my $row ( @$results ) {
-		my ($type, $species) = (uc($row->[0]), $row->[1]);
-		$species =~ tr/ /_/;
-		my $KEY = $sections{$type} || $type;
-		push @{$thash->{$KEY}}, $species;
-	    }
-
-	    foreach my $KEY (keys %$thash) {
-		my @species = @{$thash->{$KEY}};
-		foreach my $p (@species) {
-		    foreach my $s (@species) {
-			$tree->{$KEY}->{$p}->{$s} = 1 if ($s ne $p);
-		    }
-		}
-	    }
-		    
-	    $sth->finish();
-	    $dbh->disconnect();
-	}
+      my $dbh;
+  
+      if( $tree->{'databases'}->{'ENSEMBL_COMPARA_MULTIPLE'} ){
+        $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA_MULTIPLE' );
+      }
+      if($dbh) {
+        my %sections = (
+          'SYNTENY' => 'GENE_MULTIPLE',
+        );
+ ## We've done the DB hash...
+ ## So lets get on with the multiple alignment hash;
+        my $q = qq{
+          SELECT ml.type, gd.name 
+            FROM method_link ml, method_link_species_set mlss, genome_db gd
+           WHERE mlss.method_link_id = ml.method_link_id and
+                 mlss.genome_db_id=gd.genome_db_id AND ml.type = 'MLAGAN'};
+        my $sth = $dbh->prepare( $q );
+        my $rv  = $sth->execute || die( $sth->errstr );
+        my $results = $sth->fetchall_arrayref();
+        my $thash;
+        foreach my $row ( @$results ) {
+          my ($type, $species) = (uc($row->[0]), $row->[1]);
+          $species =~ tr/ /_/;
+          my $KEY = $sections{$type} || $type;
+          push @{$thash->{$KEY}}, $species;
+        }
+        foreach my $KEY (keys %$thash) {
+          my @species = @{$thash->{$KEY}};
+          foreach my $p (@species) {
+            foreach my $s (@species) {
+              $tree->{$KEY}->{$p}->{$s} = 1 unless $s eq $p;
+            }
+          }
+        }
+        $sth->finish();
+        $dbh->disconnect();
+      }
     
       if( $tree->{'databases'}->{'ENSEMBL_COMPARA'} ){
         $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA' );
@@ -628,90 +618,82 @@ sub _parse {
         my $sth = $dbh->prepare( $q );
         my $rv  = $sth->execute || die( $sth->errstr );
         my $results = $sth->fetchall_arrayref();
-		
-		if ($SiteDefs::ENSEMBL_SITETYPE eq 'Vega') {
-			#add list of self compared species and genomic analyses for vega self compara.
-			$q = "select ml.type, gd.name, gd.name, count(*) as count
-                    from method_link_species_set as mls, method_link as ml, genome_db as gd 
-                   where mls.genome_db_id = gd.genome_db_id
-                     and mls.method_link_id = ml.method_link_id
-                group by mls.method_link_species_set_id, mls.method_link_id
-                  having count = 1";
-			$sth = $dbh->prepare( $q );
-			$rv  = $sth->execute || die( $sth->errstr );
-			my $v_results = $sth->fetchall_arrayref();
-			foreach my $config (@$v_results) {
-				pop @$config;
-				push @$results,$config;
-			}
-			#get details of all genomic alignments in Vega self compara 
-			$q = "select ga.genomic_align_block_id, ml.type,
-                         ga.method_link_species_set_id, df.name as chr,
-                         ga.dnafrag_start as start, ga.dnafrag_end as stop,
-                         gdb.name as species
-                    from genomic_align ga, dnafrag df, genome_db gdb,
-                         method_link_species_set mlss, method_link ml
-                   where ga.dnafrag_id = df.dnafrag_id
-                     and df.genome_db_id = gdb.genome_db_id 
-                     and ga.method_link_species_set_id = mlss.method_link_species_set_id
-                     and mlss.method_link_id = ml.method_link_id
-                order by genomic_align_block_id";
-			$sth = $dbh->prepare( $q );
-			$rv  = $sth->execute || die( $sth->errstr );
-
-			my ($gabid,$type,$mlssid,$chr,$start,$stop,$species);
-			my (%config);
-			my ($old_gabid,$old_species,$old_chr,$old_start,$old_stop,@old_ids);
-			#create data structure containing summary of all genomic analyses in a self-compara
-			while ( ($gabid,$type,$mlssid,$chr,$start,$stop,$species) = $sth->fetchrow_array) {
-				next unless ($type eq 'BLASTZ_RAW');
-				my $id = $gabid.$mlssid.$chr.$species;
-				next if (grep {$id eq $_ } @old_ids);
-				if ($old_gabid eq $gabid ) {
-					$species =~ s/ /_/;
-					push @{$config{$species}{$old_species}},[$chr,$old_chr] unless (grep {$_->[0] eq $chr && $_->[1] eq $old_chr} @{$config{$species}{$old_species}} );
-					push @{$config{$old_species}{$species}},[$old_chr,$chr] unless (grep {$_->[0] eq $old_chr && $_->[1] eq $chr} @{$config{$old_species}{$species}} );					
-					$config{$species}{'regions'}{$chr}{'last'}= $stop unless ($config{$species}{'regions'}{$chr}{'last'} > $stop);
-					$config{$old_species}{'regions'}{$old_chr}{'last'}= $old_stop unless ($config{$old_species}{'regions'}{$old_chr}{'last'} > $old_stop);
-					if (defined $config{$species}{'regions'}{$chr}{'first'}) { 
-						$config{$species}{'regions'}{$chr}{'first'}= $start unless ($config{$species}{'regions'}{$chr}{'first'} < $start);
-					} else {
-						$config{$species}{'regions'}{$chr}{'first'}= $start;
-					}
-					
-					if (defined $config{$old_species}{'regions'}{$old_chr}{'first'}) {
-						$config{$old_species}{'regions'}{$old_chr}{'first'}= $old_start unless ($config{$old_species}{'regions'}{$old_chr}{'first'} < $old_start);
-					} else {
-						$config{$old_species}{'regions'}{$old_chr}{'first'}= $old_start;
-					}
-					
-					push @old_ids, $id;
-				}
-				else {
-					@old_ids = ();
-					$species =~ s/ /_/;
-					$old_species = $species;
-					$old_gabid = $gabid;
-					$old_chr = $chr;
-					$old_stop = $stop;
-					$old_start = $start;
-				}
-				push @old_ids, $id;
-			}
-			$tree->{'VEGA_BLASTZ_CONF'}=\%config;
-#			print Dumper(\%config);			
-		    }
-
+    
+        if( $SiteDefs::ENSEMBL_SITETYPE eq 'Vega' ) {
+## add list of self compared species and genomic analyses for vega self compara.
+          $q = "select ml.type, gd.name, gd.name, count(*) as count
+                  from method_link_species_set as mls, method_link as ml, genome_db as gd 
+                 where mls.genome_db_id = gd.genome_db_id and 
+                       mls.method_link_id = ml.method_link_id
+                 group by mls.method_link_species_set_id, mls.method_link_id
+                having count = 1";
+          $sth = $dbh->prepare( $q );
+          $rv  = $sth->execute || die( $sth->errstr );
+          my $v_results = $sth->fetchall_arrayref();
+          foreach my $config (@$v_results) {
+            pop @$config;
+            push @$results,$config;
+          }
+## get details of all genomic alignments in Vega self compara 
+          $q = "select ga.genomic_align_block_id, ml.type,
+                       ga.method_link_species_set_id, df.name as chr,
+                       ga.dnafrag_start as start, ga.dnafrag_end as stop,
+                       gdb.name as species
+                  from genomic_align ga, dnafrag df, genome_db gdb,
+                       method_link_species_set mlss, method_link ml
+                 where ga.dnafrag_id = df.dnafrag_id and 
+                       df.genome_db_id = gdb.genome_db_id and
+                       ga.method_link_species_set_id = mlss.method_link_species_set_id and
+                       mlss.method_link_id = ml.method_link_id
+                 order by genomic_align_block_id";
+          $sth = $dbh->prepare( $q );
+          $rv  = $sth->execute || die( $sth->errstr );
+          my ($gabid,$type,$mlssid,$chr,$start,$stop,$species);
+          my (%config);
+          my ($old_gabid,$old_species,$old_chr,$old_start,$old_stop,@old_ids);
+## create data structure containing summary of all genomic analyses in a self-compara
+          while( ($gabid,$type,$mlssid,$chr,$start,$stop,$species) = $sth->fetchrow_array ) {
+            next unless $type eq 'BLASTZ_RAW';
+            my $id = $gabid.$mlssid.$chr.$species;
+            next if (grep {$id eq $_ } @old_ids);
+            if( $old_gabid eq $gabid ) {
+              $species =~ s/ /_/;
+              push @{$config{$species}{$old_species}},[$chr,$old_chr]       unless grep {$_->[0] eq $chr && $_->[1] eq $old_chr} @{$config{$species}{$old_species}};
+              push @{$config{$old_species}{$species}},[$old_chr,$chr]       unless grep {$_->[0] eq $old_chr && $_->[1] eq $chr} @{$config{$old_species}{$species}};          
+              $config{$species}{'regions'}{$chr}{'last'}= $stop             unless $config{$species}{'regions'}{$chr}{'last'} > $stop;
+              $config{$old_species}{'regions'}{$old_chr}{'last'}= $old_stop unless $config{$old_species}{'regions'}{$old_chr}{'last'} > $old_stop;
+              if( defined $config{$species}{'regions'}{$chr}{'first'} ) { 
+                $config{$species}{'regions'}{$chr}{'first'}= $start unless ($config{$species}{'regions'}{$chr}{'first'} < $start);
+              } else {
+                $config{$species}{'regions'}{$chr}{'first'}= $start;
+              }
+              if( defined $config{$old_species}{'regions'}{$old_chr}{'first'} ) {
+                $config{$old_species}{'regions'}{$old_chr}{'first'}= $old_start unless ($config{$old_species}{'regions'}{$old_chr}{'first'} < $old_start);
+              } else {
+                $config{$old_species}{'regions'}{$old_chr}{'first'}= $old_start;
+              }
+              push @old_ids, $id;
+            } else {
+              @old_ids     = ();
+              $species     =~ s/ /_/;
+              $old_species = $species;
+              $old_gabid   = $gabid;
+              $old_chr     = $chr;
+              $old_stop    = $stop;
+              $old_start   = $start;
+            }
+            push @old_ids, $id;
+          }
+          $tree->{'VEGA_BLASTZ_CONF'} = \%config;
+#         print Dumper(\%config);      
+        }
 
         foreach my $row ( @$results ) {
           my ( $species1, $species2 ) = ( $row->[1], $row->[2] );
           $species1 =~ tr/ /_/;
           $species2 =~ tr/ /_/;
           my $KEY = $sections{uc($row->[0])} || uc( $row->[0] );
-
-	  
-          $tree->{$KEY}{$species1}{$species2} = 
-            exists( $CONF->{'_storage'}{$species1}) ? 1 : 0;
+          $tree->{$KEY}{$species1}{$species2} = exists( $CONF->{'_storage'}{$species1}) ? 1 : 0;
         }
         $sth->finish();
         $dbh->disconnect();
@@ -725,12 +707,9 @@ sub _parse {
 
       next;
     }
-
-        # Move anything in the general section over up to the top level
-    
-      # For each trace database look for non-default config..
-
-  # For each das source get its contact information.
+## Move anything in the general section over up to the top level
+## For each trace database look for non-default config..
+## For each das source get its contact information.
     my @das_keys = qw( ENSEMBL_INTERNAL_DAS_SOURCES ENSEMBL_TRACK_DAS_SOURCES );
     my $key_count = {};
     foreach my $das_key( @das_keys ){
@@ -753,7 +732,7 @@ sub _parse {
 ######### Store the table sizes for each database
     my @databases = keys( %{$tree->{'databases'}} );
 
-         ####### Connect and store database sizes...
+####### Connect and store database sizes...
     foreach my $database( @databases ){
       if($tree->{'databases'}->{$database}{'DRIVER'} ne "mysql"){ 
         print STDERR "\t  [WARN] Omitting table scans for ",
@@ -781,28 +760,27 @@ sub _parse {
 
       $dbh->disconnect();
     }
-      
-            ###### Additional implicit data #
-
-            ## CORE DATABASE....
+###### Additional implicit data #
+## CORE DATABASE....
     $tree->{'REPEAT_TYPES'} = {};
     if( $tree->{'databases'}->{'ENSEMBL_DB'} ){ 
       if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_DB' ) ) {
 
-  # Query the analysis table to provide feature switches
+## Query the analysis table to provide feature switches
         my $sql = qq(SELECT logic_name FROM analysis);
         my $query = $dbh->prepare($sql);
         $query->execute;
           while (my $row = $query->fetchrow_arrayref) {
             $tree->{'DB_FEATURES'}{uc($row->[0])}=1;
           }
-  # Compute the length of the maximum chromosome. 
-  # Used to scale figures
-          $sql   = qq(SELECT sr.name, sr.length 
-              FROM seq_region AS sr, coord_system AS cs 
-              WHERE cs.name = 'chromosome' 
-              AND cs.coord_system_id = sr.coord_system_id 
-              ORDER BY sr.length DESC LIMIT 1);
+## Compute the length of the maximum chromosome. 
+## Used to scale figures
+          $sql   = qq(
+          select sr.name, sr.length 
+            from seq_region as sr, coord_system as cs 
+           where cs.name = 'chromosome' and cs.coord_system_id = sr.coord_system_id 
+           order by sr.length
+            desc limit 1);
           $query = $dbh->prepare($sql);
           if($query->execute()>0) {
             my @T = $query->fetchrow_array;
@@ -813,11 +791,11 @@ sub _parse {
             $tree->{'MAX_CHR_LENGTH'} = 0;
           }  
                     
-    # Mapsets....
+## Misc feature sets....
           $sql   = qq(
-                    SELECT DISTINCT(ms.code)
-          FROM misc_set AS ms, misc_feature_misc_set AS mfms 
-          WHERE ms.misc_set_id = mfms.misc_set_id    
+            select distinct(ms.code)
+              from misc_set as ms, misc_feature_misc_set as mfms 
+             where ms.misc_set_id = mfms.misc_set_id    
           );
           $query = $dbh->prepare($sql);
           eval {
@@ -826,8 +804,11 @@ sub _parse {
               $tree->{'DB_FEATURES'}{"MAPSET_".uc($row->[0])}=1;
             }
           };
+## Affy probe sets...
           $sql   = qq(
-           SELECT DISTINCT(aa.name) FROM affy_array AS aa, affy_probe AS ap WHERE aa.affy_array_id = ap.affy_array_id
+            select distinct(aa.name)
+              from affy_array as aa, affy_probe as ap
+             where aa.affy_array_id = ap.affy_array_id
           );
           $query = $dbh->prepare($sql);
           eval {
@@ -838,20 +819,21 @@ sub _parse {
               $tree->{'DB_FEATURES'}{$key} = 1;
             }
           };
+## Regulatory features...
 
-  # Interpro switch
+## Interpro switch
           $sql   = qq(SELECT id FROM interpro LIMIT 1);
           $query = $dbh->prepare($sql);
           $tree->{'DB_FEATURES'}{INTERPRO} = 1 if $query->execute() > 0;
           $query->finish();
-   #Marker features 
+## Marker features 
           $sql   = qq(SELECT * FROM marker_feature LIMIT 1);
           eval{
             $query = $dbh->prepare($sql);
             $tree->{'DB_FEATURES'}{MARKERS} = 1 if $query->execute() > 0;
             $query->finish();
           };
-
+## Repeat classifications
           $sql   = qq(SELECT distinct repeat_type FROM repeat_consensus );
           eval {
             $query = $dbh->prepare($sql);
@@ -862,84 +844,81 @@ sub _parse {
             } 
             $query->finish();
           };
-            ## for annotated datasets (e.g. Vega)
-          if ($tree->{'TABLE_SIZE'}->{'ENSEMBL_DB'}->{'author'}) {
-                # authors by chromosome
-                $sql = qq(
-                    SELECT  au.author_name, sr.name, count(*)
-                    FROM    gene g, gene_stable_id gsi, gene_info gi,
-                            author au, seq_region sr
-                    WHERE   g.gene_id = gsi.gene_id
-                        AND gi.gene_stable_id = gsi.stable_id
-                        AND gi.author_id = au.author_id
-                        AND g.seq_region_id = sr.seq_region_id
-                    GROUP BY sr.name, au.author_name
-                );
-                $query = $dbh->prepare($sql);
-                eval { 
-                  $query->execute; 
-                  while( my $row = $query->fetchrow_arrayref) {
-                    $tree->{'DB_FEATURES'}{uc("LITE_TRANSCRIPT_$row->[0].$row->[1]")}=$row->[2];
-                    $tree->{'DB_FEATURES'}{uc("LITE_TRANSCRIPT_$row->[0]")}=1;
-                  }
-                };
-
-                # gene types (for gene legend)
-                $sql   = qq(SELECT DISTINCT(type) FROM gene);
-                eval {
-                  $query = $dbh->prepare($sql);
-                  if($query->execute()>0) {
-                     foreach(@{$query->fetchall_arrayref}) {
-                       $tree->{'VEGA_GENE_TYPES'}{$_->[0]}=1;
-                     }
-                  }
-                };
-            }
-
-      $dbh->disconnect();
-
-            print STDERR ( "\t  [INFO] Species $filename OK\n" );
-     }
-        }
-
-     foreach my $T_DB (qw(ENSEMBL_VEGA ENSEMBL_EST)) {
-       if( $tree->{'databases'}->{$T_DB} ) {
-         if( my $dbh = $self->db_connect( $tree, $T_DB ) ) {
-         my $sql = qq(select distinct(logic_name) from analysis);
-         my $query = $dbh->prepare($sql);
-         eval {
-           $query->execute;
-           while( my $row = $query->fetchrow_arrayref) {
-             $tree->{'DB_FEATURES'}{uc("$T_DB.$row->[0]")} = 1;
-           }
-         };
-        }
-       }
-    }
-        ## SNPS DATABASE....
-        if( $tree->{'databases'}->{'ENSEMBL_SNP'} ){ # Then SNP is configured
-          if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_SNP' ) ){
-              my $sql = qq(SELECT id FROM SubSNP WHERE  handle like ? LIMIT 1 );
-              my $sth = $dbh->prepare( $sql );
-              foreach( 'TSCSNP', 'HGBASESNP' ){
-                  my $subs;
-                    $subs = 'TSC-CSHL' if $_ eq 'TSCSNP';
-                  $subs = 'HGBASE'   if $_ eq 'HGBASESNP';
-                  my $rv = $sth->execute($subs) or warn( $sth->errstr() );
-                  $tree->{'DB_FEATURES'}{$_} = 1 if $rv > 0;
+## for annotated datasets (e.g. Vega)
+          if( $tree->{'TABLE_SIZE'}->{'ENSEMBL_DB'}->{'author'} ) {
+## authors by chromosome
+            $sql = qq(
+              select au.author_name, sr.name, count(*)
+                from gene as g, gene_stable_id as gsi, gene_info as gi,
+                     author as au, seq_region as sr
+               where g.gene_id = gsi.gene_id and
+                     gi.gene_stable_id = gsi.stable_id and
+                     gi.author_id = au.author_id and
+                     g.seq_region_id = sr.seq_region_id
+               group by sr.name, au.author_name
+            );
+            $query = $dbh->prepare($sql);
+            eval { 
+              $query->execute; 
+              while( my $row = $query->fetchrow_arrayref) {
+                $tree->{'DB_FEATURES'}{uc("LITE_TRANSCRIPT_$row->[0].$row->[1]")}=$row->[2];
+                $tree->{'DB_FEATURES'}{uc("LITE_TRANSCRIPT_$row->[0]")}=1;
               }
+            };
+## gene types (for gene legend)
+            $sql   = qq(select distinct(type) from gene);
+            eval {
+              $query = $dbh->prepare($sql);
+              if($query->execute()>0) {
+                foreach(@{$query->fetchall_arrayref}) {
+                  $tree->{'VEGA_GENE_TYPES'}{$_->[0]}=1;
+                }
+              }
+            };
+          }
+          $dbh->disconnect();
+
+          print STDERR ( "\t  [INFO] Species $filename OK\n" );
+        }
+      }
+
+      foreach my $T_DB (qw(ENSEMBL_VEGA ENSEMBL_EST)) {
+        if( $tree->{'databases'}->{$T_DB} ) {
+          if( my $dbh = $self->db_connect( $tree, $T_DB ) ) {
+          my $sql = qq(select distinct(logic_name) from analysis);
+          my $query = $dbh->prepare($sql);
+          eval {
+            $query->execute;
+            while( my $row = $query->fetchrow_arrayref) {
+              $tree->{'DB_FEATURES'}{uc("$T_DB.$row->[0]")} = 1;
+            }
+          };
+        }
+      }
+    }
+## SNPS DATABASE....
+    if( $tree->{'databases'}->{'ENSEMBL_SNP'} ){ # Then SNP is configured
+      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_SNP' ) ){
+        my $sql = qq(SELECT id FROM SubSNP WHERE  handle like ? LIMIT 1 );
+        my $sth = $dbh->prepare( $sql );
+        foreach( 'TSCSNP', 'HGBASESNP' ){
+          my $subs;
+          $subs = 'TSC-CSHL' if $_ eq 'TSCSNP';
+          $subs = 'HGBASE'   if $_ eq 'HGBASESNP';
+          my $rv = $sth->execute($subs) or warn( $sth->errstr() );
+          $tree->{'DB_FEATURES'}{$_} = 1 if $rv > 0;
+        }
         $sth->finish();
         $dbh->disconnect();
+      }
     }
-        }
 
 ############### Implicit data retrieved
-
-        ###### Update object with species config
-        $CONF->{'_storage'}{$filename} = $tree;
-    }
-    print STDERR ( "-" x 78, "\n" );
-    return 1;
+###### Update object with species config
+    $CONF->{'_storage'}{$filename} = $tree;
+  }
+  print STDERR "-" x 78, "\n";
+  return 1;
 }
 
 #----------------------------------------------------------------------
@@ -971,21 +950,19 @@ sub DESTROY { }
 =cut
 
 sub other_species {
-    my ($self, $species, $var) = @_;
-    return $self->get_config( $species, $var );
+  my ($self, $species, $var) = @_;
+  return $self->get_config( $species, $var );
 }
 
 sub multidb {
-    my( $self, $type ) = @_;
-    return $CONF->{'_multi'} && $CONF->{'_multi'}{'databases'};
+  my( $self, $type ) = @_;
+  return $CONF->{'_multi'} && $CONF->{'_multi'}{'databases'};
 }
 
 sub multi {
-    my( $self, $type, $species ) = @_;
-
-    $species ||= $ENV{'ENSEMBL_SPECIES'};
- 
-    return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} && $CONF->{'_multi'}{$type}{$species} ? %{$CONF->{'_multi'}{$type}{$species}} : ();
+  my( $self, $type, $species ) = @_;
+  $species ||= $ENV{'ENSEMBL_SPECIES'};
+  return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} && $CONF->{'_multi'}{$type}{$species} ? %{$CONF->{'_multi'}{$type}{$species}} : ();
 }
 
 
@@ -1010,8 +987,8 @@ sub db_connect {
 
   my $dbname  = $tree->{'databases'}->{$db_name}{'NAME'};
   if($dbname eq '') {
-        warn( "No database name supplied for $db_name." );
-        return undef;
+    warn( "No database name supplied for $db_name." );
+    return undef;
   }
 
   my $dbhost  = $tree->{'databases'}->{$db_name}{'HOST'};
@@ -1021,30 +998,26 @@ sub db_connect {
   my $dbdriver= $tree->{'databases'}->{$db_name}{'DRIVER'};
   my ($dsn, $dbh);
   eval {
-    if ( $dbdriver eq "mysql" ){
-        $dsn = "DBI:$dbdriver:database=$dbname;host=$dbhost;port=$dbport";
-        $dbh = DBI->connect($dsn,$dbuser,$dbpass, { 
-                                                    'RaiseError' => 1,
-                                        'PrintError' => 0 
-                                                  });
-        
+    if( $dbdriver eq "mysql" ) {
+      $dsn = "DBI:$dbdriver:database=$dbname;host=$dbhost;port=$dbport";
+      $dbh = DBI->connect(
+        $dsn,$dbuser,$dbpass, { 'RaiseError' => 1, 'PrintError' => 0 }
+      );
     } elsif ( $dbdriver eq "Oracle") {
-        $dsn = "DBI:$dbdriver:";
-        my  $userstring = $dbuser . "\@" . $dbname;
-        $dbh = DBI->connect($dsn,$userstring,$dbpass, { 
-                                                    'RaiseError' => 1,
-                                        'PrintError' => 0 
-                                                  }); 
+      $dsn = "DBI:$dbdriver:";
+      my  $userstring = $dbuser . "\@" . $dbname;
+      $dbh = DBI->connect(
+        $dsn,$userstring,$dbpass, { 'RaiseError' => 1, 'PrintError' => 0 }
+      ); 
     } else {
-        print STDERR ( "\t  [WARN] Can't connect using unsupported DBI driver type: $dbdriver\n");
+      print STDERR "\t  [WARN] Can't connect using unsupported DBI driver type: $dbdriver\n";
     }
   };
 
-  if($@) {
-    print STDERR ( "\t  [WARN] Can't connect to $db_name\n", "\t  [WARN] $@" );
+  if( $@ ) {
+    print STDERR "\t  [WARN] Can't connect to $db_name\n", "\t  [WARN] $@";
     return undef();
-  } 
-  elsif(!$dbh) {
+  } elsif( !$dbh ) {
     print STDERR ( "\t  [WARN] $db_name database handle undefined\n" );
     return undef();
   }
@@ -1088,13 +1061,14 @@ sub db_connect_multi_species {
                                                    -table=>'feature' });
 
 =cut
-# Accessor function for table size,
-# Input - hashref: -db    = database   (e.g. 'ENSEMBL_DB'), 
-#                  -table = table name (e.g. 'feature' )
-# Returns - Number of rows in the table
+## Accessor function for table size,
+## Input - hashref: -db    = database   (e.g. 'ENSEMBL_DB'), 
+##                  -table = table name (e.g. 'feature' )
+## Returns - Number of rows in the table
+
 sub get_table_size{
 
-  # Get/check args
+## Get/check args
   my $self    = shift;
   my $hashref = shift;
   my $species = shift;
@@ -1104,23 +1078,22 @@ sub get_table_size{
     return undef();
   }
   my $database = $hashref->{-db};
-  if( ! $database ){
+  unless( $database ){
     warn( "Usage: { -db=>'database', -table=>'table name' }" );
     return undef();
   }
   my $table = $hashref->{-table};
-  if( ! $table ){
+  unless( $table ){
     warn( "Usage: { -db=>'database', -table=>'table name' }" );
     return undef();    
   }
 
-  # Got the correct args, send back what we find in the configuration
-  my $table_size = $self->other_species( $species||$ENV{'ENSEMBL_SPECIES'}, 'TABLE_SIZE' )|| return undef();
-  
-  if( exists( $table_size->{$database} ) ){
-    return $table_size->{$database}->{$table};
-  }
-  return undef();
+## Got the correct args, send back what we find in the configuration
+  my $table_size = $self->other_species( $species||$ENV{'ENSEMBL_SPECIES'}, 'TABLE_SIZE' );
+
+  return undef unless $table_size;
+  return undef unless exists( $table_size->{$database} );
+  return $table_size->{$database}->{$table};
 } 
 
 #----------------------------------------------------------------------
@@ -1139,22 +1112,23 @@ sub get_table_size{
 =cut
 
 sub set_write_access {
-    my $self = shift;
-    my $type = shift;
-    my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PERL_SPECIES;
-    if( $type =~ /ENSEMBL_(\w+)/ ) {
-	## If the value is defined then we will create the adaptor here...
-	my $key = $1;
-	## Hack because we map ENSEMBL_DB to 'core' not 'DB'....
-	my $group = $key eq 'DB' ? 'core' : lc( $key );
-	my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($species,$group)->dbc;
-	my $db_ref = $self->databases;
-	$db_ref->{$type}{'USER'} = $self->ENSEMBL_WRITE_USER;
-	$db_ref->{$type}{'PASS'} = $self->ENSEMBL_WRITE_PASS;
-	Bio::EnsEMBL::Registry->change_access(
-					      $dbc->host,$dbc->port,$dbc->username,$dbc->dbname,
-					      $db_ref->{$type}{'USER'},$db_ref->{$type}{'PASS'});
-    }
+  my $self = shift;
+  my $type = shift;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PERL_SPECIES;
+  if( $type =~ /ENSEMBL_(\w+)/ ) {
+## If the value is defined then we will create the adaptor here...
+    my $key = $1;
+## Hack because we map ENSEMBL_DB to 'core' not 'DB'....
+    my $group = $key eq 'DB' ? 'core' : lc( $key );
+    my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($species,$group)->dbc;
+    my $db_ref = $self->databases;
+    $db_ref->{$type}{'USER'} = $self->ENSEMBL_WRITE_USER;
+    $db_ref->{$type}{'PASS'} = $self->ENSEMBL_WRITE_PASS;
+    Bio::EnsEMBL::Registry->change_access(
+      $dbc->host,$dbc->port,$dbc->username,$dbc->dbname,
+      $db_ref->{$type}{'USER'},$db_ref->{$type}{'PASS'}
+    );
+  }
 }
 
 sub create_martRegistry {
@@ -1179,15 +1153,13 @@ sub create_martRegistry {
     }
   }
   $reg .= "\n</MartRegistry>\n";
-  warn $reg;
+#  warn $reg;
   return $reg;
 }
 
-###############################
-###############################
-#### Diagnostic function!! ####
-###############################
-###############################
+##############################################################################
+## Diagnostic function!! 
+##############################################################################
 
 sub dump {
   my ($self, $FH, $level, $Q) = @_;
@@ -1204,13 +1176,29 @@ sub dump {
   }
 }
 
+##############################################################################
+## Dictionary functionality... to be expanded....
+
 sub translate {
   my( $self, $word ) = @_;
   return $word unless $self->ENSEMBL_DICTIONARY;  
   return $self->ENSEMBL_DICTIONARY->{$word}||$word;
 }
 
+##############################################################################
+
+sub all_search_indexes {
+  my %A = map { $_, 1 } map { @{ $CONF->{_storage}{$_}{ENSEMBL_SEARCH_IDXS}||[] } } keys %{$CONF->{_storage}};
+  return sort keys %A;
+}
+
+##############################################################################
+## Additional parsing / creation codes...
+
 sub create_robots_txt {
+## This is to try and stop search engines killing e! - it gets created each
+## time on server startup and gets placed in the first directory in the htdocs
+## tree.
   my $self = shift;
   my $root = $ENSEMBL_HTDOCS_DIRS[0];
   if( open FH, ">$root/robots.txt" ) { 
@@ -1224,16 +1212,14 @@ Disallow: /BioMart/
     }
     close FH;
   } else {
-    warn "ROBOT:.... $root-robots.txt";
+    warn "Unable to creates robots.txt file in $root-robots";
   }
 }
 
-sub all_search_indexes {
-  my %A = map { $_, 1 } map { @{ $CONF->{_storage}{$_}{ENSEMBL_SEARCH_IDXS}||[] } } keys %{$CONF->{_storage}};
-  return sort keys %A;
-}
-
 sub bread_crumb_creator {
+## Create the bread-crumbs hash to speed up rendering of bread-crumbs in web-pages
+## loops through all htdocs trees looking for index files to grab the "navigation"
+## meta tag from...
   my $self = shift;
   my @dirs = ( '/' );
   my $ENSEMBL_BREADCRUMBS = {};
@@ -1242,7 +1228,7 @@ sub bread_crumb_creator {
     my %dirs2 = ();
     foreach my $dir ( @dirs ) {
       foreach my $root ( @ENSEMBL_HTDOCS_DIRS ) {
- #       warn "$root - $dir - index.html";
+#       warn "$root - $dir - index.html";
         my $fn = $root.$dir.'index.html';
         if( -e $fn ) {
           open I, $fn;
@@ -1291,7 +1277,6 @@ sub bread_crumb_creator {
     'ENSEMBL_PARENTS'     => $ENSEMBL_PARENTS, 
     'ENSEMBL_CHILDREN'    => $ENSEMBL_CHILDREN
   } );
-
 }
 
 1;
