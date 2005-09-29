@@ -134,19 +134,24 @@ sub render_js {
   foreach my $element ( @{$self->{'_elements'}} ) {
     if($element->validate()) {
       if( $element->type eq 'DropDownAndString' ) {
-        (my $T = $element->name)=~s/'/\\'/g;
+        (my $T_name = $element->name)=~s/'/\\'/g;
+        (my $T_label = $element->label)=~s/'/\\'/g;
+        (my $TS_name = $element->string_name)=~s/'/\\'/g;
+        (my $TS_label = $element->string_label)=~s/'/\\'/g;
         push @entries, sprintf(
-          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$T,
-          'DropDown', $element->label, $element->required eq 'yes'?1:0
+          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$T_name,
+          'DropDown', $T_label, $element->required eq 'yes'?1:0
         );
         push @entries, sprintf(
-          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},
-          $element->string_name, 'String', $element->string_label, $element->required eq 'yes'?1:0
+          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$TS_name,
+          'String', $TS_label, $element->required eq 'yes'?1:0
         );
       } else { 
+        (my $T_name = $element->name)=~s/'/\\'/g;
+        (my $T_label = $element->label)=~s/'/\\'/g;
         push @entries, sprintf(
-          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},
-          $element->name, $element->type, $element->label, $element->required eq 'yes'?1:0
+          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$T_name,
+          $element->name, $element->type, $T_label, $element->required eq 'yes'?1:0
         );
       }
     }
