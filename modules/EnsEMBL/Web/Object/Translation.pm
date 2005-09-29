@@ -399,7 +399,7 @@ sub get_author_email {
 sub display_xref{
     my $self = shift;
     my $trans_xref = $self->transcript->display_xref;
-    return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id) if $trans_xref;
+    return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;
 }
 
 #----------------------------------------------------------------------

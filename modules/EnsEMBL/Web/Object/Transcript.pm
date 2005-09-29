@@ -370,7 +370,7 @@ sub get_prediction_method {
 
 sub display_xref{
   my $trans_xref = $_[0]->transcript->display_xref();    
-  return ( $trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id ) if $trans_xref;    
+  return ( $trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;    
 }
 
 =head2 get_contig_location
