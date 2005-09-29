@@ -50,8 +50,8 @@ if( $Apache::Server::Starting == 1 ){ # Only parse the config on first pass
 #--- dynamically build mart registry file...
   EnsEMBL::Web::Document::ColourChanger::change_ddmenu_colours( $conf ); 
   EnsEMBL::Web::Document::ColourChanger::change_zoom_colours(   $conf ); 
-  EnsEMBL::Web::Document::ColourChanger::change_CSS_colours(    $conf ); 
-if( keys %{$conf->{'_multi'}{'marts'}} ) { ### NOMARTS
+  EnsEMBL::Web::Document::ColourChanger::change_CSS_colours(    $conf );
+if( keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { ### NOMARTS
   my $MR_file = $SiteDefs::ENSEMBL_SERVERROOT.'/conf/martRegistry.xml'; ####
   if(! -e $MR_file) {                                                   ####
     open FH, ">$MR_file";                                               ####
