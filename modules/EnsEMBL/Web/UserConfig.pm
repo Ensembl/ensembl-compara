@@ -1117,7 +1117,6 @@ sub ADD_ALL_AS_TRANSCRIPTS {
     my $POS  = shift || 2000;
     $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, @_ );
     $self->add_new_track_transcript( 'evega',     'Vega genes',      'vega_gene',      $POS++, 'available' => 'databases ENSEMBL_VEGA',    @_ );
-    $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_ESTGENE', @_ );
     
     return $POS;
 }
@@ -1156,6 +1155,11 @@ sub ADD_AS_GENE_TRACKS {
 			       'logic_name'           => 'gsten hox cyt', @_
 			       );
     
+    $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
+			       'database' => 'vega', 'available' => 'databases ENSEMBL_VEGA',
+			       'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->confidence; },
+			       'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
+
     #for genes in Vega
     $self->add_new_track_gene( 'havana_gene', 'Havana Genes', 'vega_gene', $POS++,
 			       'available' => 'features LITE_TRANSCRIPT_HAVANA', 'glyphset' => 'vega_gene',
