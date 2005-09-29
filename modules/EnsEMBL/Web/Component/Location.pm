@@ -979,7 +979,6 @@ sub alignsliceviewbottom {
 	}
 	$CONF->{_object} = $object;
 
-	$CONF->container_width( $object->length );
 	$CONF->set_width(       $object->param('image_width') );
 	$CONF->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
 	$CONF->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
@@ -1193,8 +1192,6 @@ sub exons_markup {
 sub snps_markup {
      my ($slice) = @_;
      my $vf_ref = $slice->get_all_VariationFeatures();
-     warn("$vf_ref");
-
      my @snps;
 
      foreach (@$vf_ref) {
