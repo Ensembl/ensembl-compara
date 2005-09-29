@@ -88,6 +88,7 @@ sub expanded_init {
   my ($T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
   my $K = 0;
 
+  warn ">>>>> $other_species $METHOD <<<<<";
   foreach my $f ( @{$self->features( $other_species, $METHOD )} ){
     next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length ;
     push @{$id{$f->hseqname().':'. ($f->group_id||("00".$K++)) }}, [$f->start,$f];
@@ -267,6 +268,7 @@ sub compact_init {
   my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
   my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
   
+  warn "!>>>>> $other_species $METHOD <<<<<";
   my @T = sort { $a->[0] <=> $b->[0] }
     map { [$_->start, $_ ] }
     grep { !( ($strand_flag eq 'b' && $strand != $_->hstrand) ||
@@ -299,20 +301,20 @@ sub compact_init {
     my $href  = '';
     #z menu links depend on whether jumping within or between species;
     my $jump_type;
-    if (EnsWeb::species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-            if ($self_species eq $species_2) {
-                    $jump_type = "chromosome $chr_2";
-                    if ($compara) {			
-                            $CONTIGVIEW_TEXT_LINK = "Go to chromosome $chr";
-                    }
-            } else {	
-                    $jump_type = "$other_species chr $chr_2";
-                    if ($compara) {			
-                            $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
-                    }
-            }
+    if( $self->species_defs->ENSEMBL_SITETYPE eq 'Vega' ) {
+      if( $self_species eq $species_2 ) {
+        $jump_type = "chromosome $chr_2";
+        if( $compara ) {			
+          $CONTIGVIEW_TEXT_LINK = "Go to chromosome $chr";
+        }
+      } else {	
+        $jump_type = "$other_species chr $chr_2";
+        if( $compara) {			
+          $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
+        }
+      }
     } else {
-            $jump_type = $species_2;
+      $jump_type = $species_2;
     }
 
     my $zmenu = { 'caption'              => $caption,
