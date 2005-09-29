@@ -309,12 +309,10 @@ sub create_karyotype {
 1;
                                                  
 __END__
-                                                                                
-=head1 NAME
-                                                                                
-Component::Feature
-                                                                                
-=head1 SYNOPSIS
+
+=head1 Component::Feature
+
+=head2 SYNOPSIS
 
 This object is called from a Configuration object
                                                                                 
@@ -330,15 +328,13 @@ For each component to be displayed, you need to create an appropriate panel obje
     $panel->add_components( qw(features
       EnsEMBL::Web::Component::Feature::spreadsheet_featureTable));
 
-                                                                                
-=head1 DESCRIPTION
-                                                                                
+=head2 DESCRIPTION
+
 This class consists of methods for displaying miscellaneous feature data as XHTML. Current components include a karyotype with pointers indicating feature location, a spreadsheet with information about each feature, and a user input form to control the data being displayed.
 
+=head2 METHODS
 
-=head1 METHODS
-                                                                                
-=head2 B<select_feature>
+=head3 B<select_feature>
 
 Description:    Wraps the select_feature_form (see below) in a DIV and passes the HTML back to the Panel::Image object for rendering
 
@@ -346,7 +342,7 @@ Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        true
 
-=head2 B<select_feature_form>
+=head3 B<select_feature_form>
 
 Description:    Creates a Form object and populates it with widgets for selecting data and configuring the karyotype image
 
@@ -354,7 +350,7 @@ Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        Form object
 
-=head2 B<spreadsheet_featureTable>
+=head3 B<spreadsheet_featureTable>
 
 Description:    Adds columns and rows of feature data to a Panel::Spreadsheet object
 
@@ -362,7 +358,7 @@ Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        true
 
-=head2 B<key_to_pointers>
+=head3 B<key_to_pointers>
 
 Description:    Creates a simple table of pointers and the feature type each one refers to, then passes the XHTML back to the parent Panel::Image for rendering
 
@@ -370,7 +366,7 @@ Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        true
 
-=head2 B<show_karyotype>
+=head3 B<show_karyotype>
 
 Description:    Checks if the chosen species has chromosomes, and if so, calls the create_karyotype method and passes it back to the parent Panel::Image for rendering
 
@@ -378,7 +374,7 @@ Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        true
 
-=head2 B<create_karyotype>
+=head3 B<create_karyotype>
 
 Description:    Creates and renders a karyotype image with location pointers
 
@@ -386,17 +382,17 @@ Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        Document::Image
 
-=head1 BUGS AND LIMITATIONS
-                                                                                
+=head2 BUGS AND LIMITATIONS
+
 None known at present.                                                                               
- 
-=head1 AUTHOR
-                                                                                
+
+=head2 AUTHOR
+
 Anne Parker, Ensembl Web Team
 Support enquiries: helpdesk\@ensembl.org
                                                                                 
-=head1 COPYRIGHT
-                                                                                
+=head2 COPYRIGHT
+
 See http://www.ensembl.org/info/about/code_licence.html
 
 =cut
