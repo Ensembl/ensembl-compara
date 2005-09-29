@@ -50,7 +50,6 @@ sub add_track {
 
 sub add_new_simple_track {
   my( $self, $code, $text_label, $colour, $pos, %pars ) = @_;
-  #warn "$code - $text_label - $colour - $pos";
   $self->add_track( $code,
     'on'         => 'off',
     'pos'        => $pos,
@@ -371,7 +370,6 @@ sub _set {
 
 sub load {
   my ($self) = @_;
-  #warn "LOADING.... ".$ENV{'ENSEMBL_FIRSTSESSION'}," ... $self->{'type'}";
   if($self->{'_db'}) {
     my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'} );
     eval {
