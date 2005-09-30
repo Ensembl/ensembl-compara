@@ -25,7 +25,7 @@ sub push_logo {
 ##############################################################################
 # Functions to manage menu blocks on the webpage on the LHS menu
 #   $menu->add_block(              $code, $type, $caption,   %options   )
-#   $menu->change_block_attribute( $code, $type, $attribute, $new_value )
+#   $menu->change_block_attribute( $code, $attribute, $new_value )
 #   $menu->delete_block(           $code )
 #   $menu->block(                  $code )
 ##############################################################################
@@ -115,6 +115,11 @@ sub add_entry_before {
   }
   splice @{$self->{'blocks'}{$code}{'entries'}}, $C, 0, \%options;
 }
+
+sub change_entry_attribute {
+
+}
+
 
 sub delete_entry {
   my( $self, $code, $key ) = @_;

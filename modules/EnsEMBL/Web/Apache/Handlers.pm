@@ -322,7 +322,7 @@ sub transHandler {
   $r->uri( "/$path" );
   foreach my $dir( @HTDOCS_TRANS_DIRS ){
     my $filename = sprintf( $dir, $path );
-    warn "$filename.....";
+    #warn "$filename.....";
     if( -d $filename ) {
       $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
       $r->filename( $filename . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );

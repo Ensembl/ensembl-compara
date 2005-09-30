@@ -47,29 +47,34 @@ sub common_menu_items {
   $doc->menu->add_entry( 'docs',
     'href' => '/info/',
     'text'  => 'Information',
-    'title' => 'Information homepage'
+    'title' => 'Information homepage',
+    'icon' => '/img/infoicon.gif',
   );
 
   $doc->menu->add_entry( 'docs',
     'code'  => "whatsnew",
     'href' => "/$species_m/newsview?rel=$release",
     'text'  => "What's New",
-    'title' => "Latest changes in Ensembl"
+    'title' => "Latest changes in Ensembl",
+    'icon' => '/img/infoicon.gif',
   );
   $doc->menu->add_entry( 'docs',
     'href' => '/info/about/',
     'text'  => 'About Ensembl',
-    'title' => 'Introduction, Goals, Commitments, Citing Ensembl, Archive sites'
+    'title' => 'Introduction, Goals, Commitments, Citing Ensembl, Archive sites',
+    'icon' => '/img/infoicon.gif',
   );
   $doc->menu->add_entry( 'docs',
     'href' => '/info/data/',
     'text'  => 'Ensembl data',
-    'title' => 'Downloads, Data import/export, Data mining, Data searching'
+    'title' => 'Downloads, Data import/export, Data mining, Data searching',
+    'icon' => '/img/infoicon.gif',
   );
   $doc->menu->add_entry( 'docs',
     'href' => '/info/software/',
     'text'  => 'Software',
-    'title' => 'API, Installation, CVS, Versions'
+    'title' => 'API, Installation, CVS, Versions',
+    'icon' => '/img/infoicon.gif',
   );
 
   $doc->menu->add_block( 'links', 'bulleted', 'Other links', 'priority' => 30 );
