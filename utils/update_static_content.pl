@@ -549,7 +549,7 @@ sub assembly_table {
   my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
 
   my $file  = $dir."/assembly_table.inc";
-  my $this_release = utils::Tool::species_defs("ENSEMBL_VERSION");
+  my $this_release = $SD->ENSEMBL_VERSION;
 
   my $header_row = qq(<th>Species</th>\n);
   my %info;
@@ -571,13 +571,12 @@ sub assembly_table {
   }
 
   my $table;
-  my @tint = qw(class="bg4" class="bg2");
   foreach my $species (sort keys %info) {
+    my @tint = qw(class="bg4" class="bg2");
     (my $display_spp = $species) =~ s/_/ /;
     $table .=qq(<tr>\n   <th><a href="http://www.ensembl.org/$species">$display_spp</a></th>\n);
 
     my %assemblies = reverse %{ $info{$species} };
-
     my $release_counter = $this_release;
     foreach my $release (sort {$b <=> $a} keys %assemblies  ) {
 
@@ -592,7 +591,7 @@ sub assembly_table {
 
   # Update the file ..
   open (my $fh, ">$file") or die "Cannot create $file: $!";
-  print $fh qq(\n<table style="margin:auto; width:95%" border="1" class="spreadsheet archive">\n<tr>$header_row</tr>\n);
+  print $fh qq(\n<table style="margin:auto; width:95%" border="1" class="spreadsheet">\n<tr>$header_row</tr>\n);
   print $fh qq($table</table>\n);
   return;
 }
