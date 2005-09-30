@@ -105,6 +105,7 @@ There are $count_dirs directories but there should be $#SPECIES + 2.") if $count
 our %mysql_db =  %{ utils::Tool::mysql_db($release) }; 
 $mysql_db{"ensembl_web_user_db_$release"} = 1;
 $mysql_db{"ensembl_help_$release"} = 1;
+$mysql_db{"ensembl_website_$release"} = 1;
 
 # Check each species ---------------------------------------------------------
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
@@ -147,6 +148,7 @@ foreach my $species (@SPECIES) {
   my @search_dirs = "$DUMPDIR/$species_folder";
   foreach my $db (keys %$databases) {
     next if $db eq 'ENSEMBL_HELP' and $species ne "Multi";
+    next if $db eq 'ENSEMBL_WEBSITE' and $species ne "Multi";
     next if $db eq "ENSEMBL_BLAST"     or $db eq "ENSEMBL_GLOVAR" or
             $db eq "ENSEMBL_BLAST_LOG" or $db eq "ENSEMBL_FASTA";
 
@@ -163,6 +165,9 @@ foreach my $species (@SPECIES) {
     $mysql_conf++;
     if ($name =~ /ensembl_help/) {
       $name = "ensembl_help"."_$release";
+    }
+    elsif ($name =~ /ensembl_website/) {
+      $name = "ensembl_website"."_$release";
     }
     $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$name"} = [1];
   }

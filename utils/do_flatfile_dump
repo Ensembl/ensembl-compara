@@ -437,9 +437,8 @@ sub info{
   $msg || ( carp("Need a warning message" ) && return );
 
   if( $v > $VERBOSITY ){ return 1 }
-  my $new_line = $v == 2 ? "" : "\n";
-  my $importance = $v > 1 ? "" : "\n[INFO] ";
-  print( $importance.$msg.$new_line );
+  my $importance = $v > 1 ? "" : "[INFO] ";
+  warn( $importance.$msg."\n" );
   return 1;
 }
 
