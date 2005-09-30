@@ -21,7 +21,7 @@ sub init {
 	'_settings' => {
             'show_labels'  => 'no',
             'show_buttons' => 'no',
-	    'width'     => 320,
+	    'width'     => 500,
 	    'opt_lines' => 1,
             'opt_zclick'     => 1,
 	    'bgcolor'   => 'background1',
