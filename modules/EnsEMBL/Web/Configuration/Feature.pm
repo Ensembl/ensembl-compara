@@ -17,36 +17,46 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub featureview {
   my $self   = shift;
+  my $object = $self->{'object'};
 
   # this is a two-step view, so we need 2 separate sections
-  my %data = %{$self->{'object'}->__data};
-  if ($self->{'object'}->param('id') && $data{'_object'}) {
+  my %data = %{$object->__data};
+  if ($object->param('id') && $data{'_object'}) {
     # Step 2 - user has chosen valid feature
-    my $type = $self->{'object'}->param('type');
-    my $id   = $self->{'object'}->param('id');
+    my $type = $object->param('type');
+    my $id   = $object->param('id');
     if ($type eq 'Gene') {
         $id = uc($id);
     }
+
     $self->{page}->set_title( "FeatureView: $type $id");
-    # do karytype
-    my $panel2a = new EnsEMBL::Web::Document::Panel::Image(
+    # do key
+    my $key_panel = new EnsEMBL::Web::Document::Panel::Image(
         'code'    => "info$self->{flag}",
         'caption' => "$type: $id",
         'object'  => $self->{object},
     );
-    $panel2a->add_components(qw(image EnsEMBL::Web::Component::Feature::show_karyotype));
+    $key_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::key_to_pointers));
+    # do karytype
+    my $karyo_panel = new EnsEMBL::Web::Document::Panel::Image(
+        'code'    => "info$self->{flag}",
+        'caption' => "",
+        'object'  => $self->{object},
+    );
+    $karyo_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::show_karyotype));
     # do feature information table
-    my $panel2b = new EnsEMBL::Web::Document::Panel::SpreadSheet(
+    my $ss_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
         'code'    => "info$self->{flag}",
         'caption' => '', 
         'object'  => $self->{object},
     );
-    $panel2b->add_components( qw(features
+    $ss_panel->add_components( qw(features
       EnsEMBL::Web::Component::Feature::spreadsheet_featureTable));
 
     $self->initialize_zmenu_javascript;
-    $self->{page}->content->add_panel($panel2a);
-    $self->{page}->content->add_panel($panel2b);
+    #$self->{page}->content->add_panel($key_panel);
+    $self->{page}->content->add_panel($karyo_panel);
+    $self->{page}->content->add_panel($ss_panel);
   }
   else {
     # Step 1 - initial page display
