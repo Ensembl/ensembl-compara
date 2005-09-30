@@ -17,9 +17,11 @@ print($comparaDBA, "\n");
 
 my $genomes = $comparaDBA->get_GenomeDBAdaptor->fetch_all;
 foreach my $genomeDB (@{$genomes}) {
+  my $compara_class = join(" ", $genomeDB->taxon->classification);
   printf("genome_db(%d)\n", $genomeDB->dbID);
-  printf("  compara(%d) %s : %s : %s\n",
+  printf(" compara(%d) %s : %s : %s\n",
      $genomeDB->taxon_id, $genomeDB->name, $genomeDB->assembly, $genomeDB->genebuild);
+
 
   die("ERROR::  db_adaptor not connected to an ensembl-core") unless($genomeDB->db_adaptor);
 
@@ -32,14 +34,21 @@ foreach my $genomeDB (@{$genomes}) {
   my ($cs) = @{$genomeDB->db_adaptor->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
   my $genebuild = $meta->get_genebuild;
+  my $core_class = join(" ", $taxon->classification);
 
-  printf("  core   (%d) %s : %s : %s\n", $taxon_id, $genome_name, $assembly, $genebuild);
+  printf(" core   (%d) %s : %s : %s\n", 
+     $taxon_id, $genome_name, $assembly, $genebuild);
 
-  print("=== MISMATCH ===\n\n")
   unless(($genomeDB->taxon_id == $taxon_id) and
          ($genomeDB->name eq $genome_name) and
          ($genomeDB->assembly eq $assembly) and
-         ($genomeDB->genebuild eq $genebuild));
+         ($genomeDB->genebuild eq $genebuild) 
+#	 and ($compara_class eq $core_class)
+	 )
+  {
+    print("=== MISMATCH ===\n\n");
+    printf("%s\n%s\n", $compara_class, $core_class);
+  }
 
 }
 

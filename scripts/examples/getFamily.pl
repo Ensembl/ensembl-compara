@@ -21,7 +21,7 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 
 my $MA = $comparaDBA->get_MemberAdaptor;
-my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
+my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000014138");
 
 # get all family predictions for the gene member should return 1
 my $families = $comparaDBA-> get_FamilyAdaptor-> fetch_by_Member($gene_member);

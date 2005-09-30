@@ -15,6 +15,7 @@ my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 my $ma = $comparaDBA->get_MemberAdaptor;
 my $gene_member = $ma->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
 $gene_member->print_member;
+printf("  description: %s\n", $gene_member->gene->description);
 
 my $members = $gene_member->get_all_peptide_Members;
 printf("fetched %d peptides (translated transcripts) for gene\n", scalar(@$members));

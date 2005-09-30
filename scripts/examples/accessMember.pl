@@ -13,7 +13,7 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 
 # get GenomeDB for human
-my $humanGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human");
+my $humanGDB = undef; #$comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human");
 
 # simple example of getting members, back referencing to core,
 # and then back reference again to compara
@@ -23,6 +23,7 @@ my $humanGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human"
 my $ma = $comparaDBA->get_MemberAdaptor;
 my $m1 = $ma->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
 $m1->print_member;
+$m1->get_Gene;
 
 my $members = $ma->fetch_by_source_taxon("ENSEMBLPEP", $humanGDB->taxon_id);
 printf("fetched %d members\n", scalar(@$members));

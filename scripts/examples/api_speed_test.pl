@@ -28,7 +28,8 @@ my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000014138
 
 my $count=0;
 my $sum=0;
-while($count++ <10) {
+while($count <10) {
+  $count++;
   my $load_starttime = time();
 
   switch(2) {
