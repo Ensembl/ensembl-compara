@@ -36,7 +36,7 @@ div.narrow3 { float:left; width:27%; margin: 0 2.5% }
 /* HEADINGS */
 h2 { margin-bottom:0.5em; }
 
-h3.boxed, div.panel h3 { color:#663399; background-color:#f3e1fb; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; border:1px solid #aa77dd; }
+h3.boxed, div.panel h3 { color:#993333; background-color:#fff9af; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; border:1px solid #ffdf33; }
 
 /* LISTS */
 #page ol li { list-style-type:decimal; list-style-image:none; }
@@ -65,10 +65,10 @@ img.float-right { float:right; padding-left:10px; }
 
 /* JavaScript dropdown menus on images*/
                                                                                    
-table.ddmenu { border:1px solid #aa77dd; background-color: #fbf2ff}
-.ddmain, td.ddmain { background-color: #fbf2ff; font-size: 8pt; font-family: Arial, helvetica, verdana, sans-serif; color: #000; }
-td.ddmain a { background-color:#fbf2ff; text-decoration:none; font-size:8pt; font-family: Arial, helvetica, verdana, sans-serif; color:#3366bb; }
-.dddiv_button { background-color: #aa77dd; }
+table.ddmenu { border:1px solid #ffdf33; background-color: #ffffdd}
+.ddmain, td.ddmain { background-color: #ffffdd; font-size: 8pt; font-family: Arial, helvetica, verdana, sans-serif; color: #000; }
+td.ddmain a { background-color:#ffffdd; text-decoration:none; font-size:8pt; font-family: Arial, helvetica, verdana, sans-serif; color:#3366bb; }
+.dddiv_button { background-color: #ffdf33; }
 .dddiv { position: absolute; top:0px; left:0px; z-index: 100; visibility: hidden; }
 
 /* JavaScript popup menus on images*/
@@ -117,8 +117,8 @@ td.two-column tr { vertical-align: top }
 
 table.stacked tr { vertical-align: top }
 
-th.stacked { background-color:#f4edf7; border:1px solid #aa77dd; 
-             color:#663399; text-align:center; padding:4px;}
+th.stacked { background-color:#ffffcc; border:1px solid #ffdf33; 
+             color:#993333; text-align:center; padding:4px;}
 
 td.stacked { padding:4px; } 
 
@@ -140,7 +140,7 @@ table.ss tr.bg1, table.spreadsheet tr.bg1 { background-color:#fff; }
 
 table.ss tr.bg2, table.spreadsheet tr.bg2 { background-color:#f0f0f0; }
 
-table.spreadsheet tr.tint { background-color:#f4edf7; }
+table.spreadsheet tr.tint { background-color:#ffffcc; }
 
 table.info-image { width:100%; margin:10px 0px; }
 table.info-image td.image { text-align:center; padding-right:20px; }
@@ -156,11 +156,11 @@ div.formpanel div { margin-top:5px; }
 .formblock .formpadding { width: 29%; height: 1px; padding: 0px; margin:0px; float: left; left 0px; top: 0px }
 .formblock h6 {
   float: left; width: 29%; top: 0px; left: 0px; padding: 0px; padding-right: 10px; margin: 0px; text-align: right;
-  color: #663399; font-size: 1em; font-weight: bold; margin-top: 0.8em;
+  color: #993333; font-size: 1em; font-weight: bold; margin-top: 0.8em;
 }
 .formwide h6, .forminline h6 {
   top: 0px; left: 0px; padding: 0px; margin: 0px; 
-  color: #663399; font-size: 1em; font-weight: bold;
+  color: #993333; font-size: 1em; font-weight: bold;
 }
 .formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65%; margin-bottom: 0.8em }
 .formcenter, .formcenter div { display:block; text-align:center; margin-botton: 0.8em;}
@@ -189,14 +189,14 @@ form#change_chr { margin:10px; }
 
 div.notice {
     width:50%; margin:2em auto; padding: 1em;
-    background: #f4edf7; border:1px solid #663399;
+    background: #ffffcc; border:1px solid #993333;
 }
 
 div.notice h4 { margin:0px; text-align:center; }
 
 p.error {
     width:50%; margin:2em auto; padding: 1em;
-    background: #fcc; color:#000; border:2px solid #663399;
+    background: #fcc; color:#000; border:2px solid #993333;
 }
 
 .red { color:#933; }
@@ -228,7 +228,7 @@ div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul {
 
 div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul li.popup {
     font-size:80%; font-weight:normal; font-style:normal; 
-    background-color:#f4edf7; margin:0px; list-style:none; }
+    background-color:#ffffcc; margin:0px; list-style:none; }
 
 /* Species homepages */
 
@@ -248,13 +248,15 @@ a.info { text-decoration: none; font-weight:bold; }
 
 /* Other pages */
 
+div#page table.sitemap td ul.sitemap li.toggle { list-style:none; margin-left:-15px; }
+img.toggle-box { padding-right:4px; }
 dl.sitemap a, ul.sitemap a { text-decoration:none; }
 dl.sitemap dt { font-size:115%; }
 dl.sitemap dd { padding-bottom:0.5em; }
 table.sitemap td { padding:0px 40px; }
 
-a.cv-button    { font-size: 0.9em; background-color:#663399; color:#fff; font-weight:bold; text-decoration:none; border: 2px outset #663399; padding:2px; margin: 3px; }
-a.cv_plusminus { font-family:'Arial Black'; font-size: 30px; font-weight:bold; color:#663399; padding:5px; vertical-align:super; text-decoration:none; }
+a.cv-button    { font-size: 0.9em; background-color:#993333; color:#fff; font-weight:bold; text-decoration:none; border: 2px outset #993333; padding:2px; margin: 3px; }
+a.cv_plusminus { font-family:'Arial Black'; font-size: 30px; font-weight:bold; color:#993333; padding:5px; vertical-align:super; text-decoration:none; }
 .cv-zoom   { height: 30px; width: 13px; border: 0px; margin: 10px 0px 0px 0px; }
 .cv-zoom-2 { height: 16px; width: 13px; border: 0px; margin: 10px 0px 0px 0px; }
 
@@ -268,9 +270,9 @@ table.grid { border-collapse: collapse }
 table.bug td { border:solid 1px #666 }
 
 table.zoom { display: inline }
-table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-color:#fefcff; font-weight: bold; }
+table.zoom, table.zoom tr td { border:0px; margin:0px; padding:0px; background-color:#ffffe7; font-weight: bold; }
 table.zoom tr td { vertical-align: bottom }
 table.zoom tr td img { margin-top: 0px }
-.navbox { background-color: #fefcff }
+.navbox { background-color: #ffffe7 }
 
 .multicol { float: left; width: 12em; white-space: nowrap }
