@@ -118,7 +118,7 @@ __all__ = ["CS_CHROMOSOME", "CS_CONTIG",
 
 _prefix_2_driver_group_facade = {}
 _prefix_2_adaptors = {} 
-_driver_groups = {}
+drivers = {}
 
 #### constant helper functions
 
@@ -437,9 +437,9 @@ def fetch(ensid):
 def _format_driver_name(driver_name, driver):
     return driver_name
 
-def print_drivers(drivers=_driver_groups):
+def print_drivers(drivers=drivers):
     """
-    print the loaded _driver_groups
+    print the loaded drivers
     """
     print "\n".join([_format_driver_name(driver_name, driver) for driver_name, driver in _sorted(drivers.items())])
 
@@ -447,7 +447,7 @@ def load_registry(registry):
     for name in registry.groupNames:
         r = DriverGroupFacade(registry.getGroup(name))
         setattr(sys.modules[__name__], name, r) # add facade as an attribute of the current module (ensembl)
-        _driver_groups[name]=r
+        drivers[name]=r
         # Note: use r.driver_group.getXXXCoreConfig() instead of r.getXXXCoreConfig() because (a) it's much faster,
         # and (b) the former prevents reload(ensembl) from working for some reason.
         for conf in [r.driver_group.getCoreConfig(), r.driver_group.getVariationConfig(), r.driver_group.getComparaConfig()]:

@@ -1,11 +1,91 @@
-<html>
-<head>
-  <title>ENSJ RELEASE NOTES</title>
-  </head>
-  <body>
-  <h2>RELEASE NOTES</h2>
-  <pre>
 Release notes for ensj.jar.
+
+
+Version XX.Y
+============
+
+BUG FIX:
+ - Features returned by fetchIterator(Location loc,...) now guaranteed to be in the same
+   coordinate system to loc.
+
+
+Version 33.2
+============
+
+CHANGES
+ - Rename status column back to confidence for schema version 33.
+
+
+Version 33.1
+============
+
+CHANGES
+ - Gene.confidence renamed to Gene.status to reflect schema change.
+ - Transcript.confidence renamed to Transcript.status to reflect schema change.
+ - Documentation tweaked for compatibility with ensembl website.
+
+NEW:
+ - Added mechanism for automatically creating ensembl drivers for databases
+   on a database server. See org.ensembl.registry.RegistryLoaderIni.
+
+
+
+
+Version 32.5
+============
+
+NEW:
+ - Added ProteinFeature.interproDisplayName attribute.
+
+CHANGES:
+ - Optimisation: reduced numbers of connections required by some methods.
+ 
+ 
+
+Version 32.4
+============
+
+BUG FIX:
+ - End of translations was wrong for single exon translations with 5' and 3' UTRs.
+  
+NEW:
+ - added interproAccession and interproDescription attributes to ProteinFeature.
+
+CHANGES:
+ - Optimisation: reduced numbers of db connections ensj uses by enabling drivers which connect 
+   to the same database server to share connections.
+
+
+
+Version 32.3
+============
+
+BUG FIX:
+ - Additional changes to support version 32 variation database missed from last release.
+  
+CHANGES:
+ - Optimised fetching LD data from variation database.
+
+Version 32.2
+============
+
+BUG FIX:
+ - Preload gene child data optimisation was broken. Fetching genes with child transcripts and exons should now be faster.
+ - Added bos taurus as driver group in default registry.
+
+NEW:
+ - Added convenience methods, containsGapNodes() and removeGapNodes(), to Location for handling "gap" nodes.
+
+CHANGES:
+ - Updated to support version 32 variation databases.
+
+
+Version 32.1
+============
+
+BUG FIX:
+ - Location conversion was broken for new zebrafish database.
+
 
 Version 32.0
 ============
@@ -593,6 +673,3 @@ FIXED
 Version: 1.0b
 ==============
 No information available.
-</pre>
-</body>
-</html>

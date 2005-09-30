@@ -118,7 +118,7 @@ If you have a problem
 </font>
 <font color="#000000">_prefix_2_driver_group_facade</font> <font color="#0000C0">=</font> <font color="#0000C0">{</font><font color="#0000C0">}</font>
 <font color="#000000">_prefix_2_adaptors</font> <font color="#0000C0">=</font> <font color="#0000C0">{</font><font color="#0000C0">}</font>
-<font color="#000000">_driver_groups</font> <font color="#0000C0">=</font> <font color="#0000C0">{</font><font color="#0000C0">}</font>
+<font color="#000000">drivers</font> <font color="#0000C0">=</font> <font color="#0000C0">{</font><font color="#0000C0">}</font>
 
 <font color="#008000">#### constant helper functions
 </font>
@@ -437,9 +437,9 @@ If you have a problem
 <font color="#C00000">def</font> <font color="#000000">_format_driver_name</font><font color="#0000C0">(</font><font color="#000000">driver_name</font><font color="#0000C0">,</font> <font color="#000000">driver</font><font color="#0000C0">)</font><font color="#0000C0">:</font>
     <font color="#C00000">return</font> <font color="#000000">driver_name</font>
 
-<font color="#C00000">def</font> <font color="#000000">print_drivers</font><font color="#0000C0">(</font><font color="#000000">drivers</font><font color="#0000C0">=</font><font color="#000000">_driver_groups</font><font color="#0000C0">)</font><font color="#0000C0">:</font>
+<font color="#C00000">def</font> <font color="#000000">print_drivers</font><font color="#0000C0">(</font><font color="#000000">drivers</font><font color="#0000C0">=</font><font color="#000000">drivers</font><font color="#0000C0">)</font><font color="#0000C0">:</font>
     <font color="#004080">"""
-    print the loaded _driver_groups
+    print the loaded drivers
     """</font>
     <font color="#C00000">print</font> <font color="#004080">"\n"</font><font color="#0000C0">.</font><font color="#000000">join</font><font color="#0000C0">(</font><font color="#0000C0">[</font><font color="#000000">_format_driver_name</font><font color="#0000C0">(</font><font color="#000000">driver_name</font><font color="#0000C0">,</font> <font color="#000000">driver</font><font color="#0000C0">)</font> <font color="#C00000">for</font> <font color="#000000">driver_name</font><font color="#0000C0">,</font> <font color="#000000">driver</font> <font color="#C00000">in</font> <font color="#000000">_sorted</font><font color="#0000C0">(</font><font color="#000000">drivers</font><font color="#0000C0">.</font><font color="#000000">items</font><font color="#0000C0">(</font><font color="#0000C0">)</font><font color="#0000C0">)</font><font color="#0000C0">]</font><font color="#0000C0">)</font>
 
@@ -447,7 +447,7 @@ If you have a problem
     <font color="#C00000">for</font> <font color="#000000">name</font> <font color="#C00000">in</font> <font color="#000000">registry</font><font color="#0000C0">.</font><font color="#000000">groupNames</font><font color="#0000C0">:</font>
         <font color="#000000">r</font> <font color="#0000C0">=</font> <font color="#000000">DriverGroupFacade</font><font color="#0000C0">(</font><font color="#000000">registry</font><font color="#0000C0">.</font><font color="#000000">getGroup</font><font color="#0000C0">(</font><font color="#000000">name</font><font color="#0000C0">)</font><font color="#0000C0">)</font>
         <font color="#000000">setattr</font><font color="#0000C0">(</font><font color="#000000">sys</font><font color="#0000C0">.</font><font color="#000000">modules</font><font color="#0000C0">[</font><font color="#000000">__name__</font><font color="#0000C0">]</font><font color="#0000C0">,</font> <font color="#000000">name</font><font color="#0000C0">,</font> <font color="#000000">r</font><font color="#0000C0">)</font> <font color="#008000"># add facade as an attribute of the current module (ensembl)</font>
-        <font color="#000000">_driver_groups</font><font color="#0000C0">[</font><font color="#000000">name</font><font color="#0000C0">]</font><font color="#0000C0">=</font><font color="#000000">r</font>
+        <font color="#000000">drivers</font><font color="#0000C0">[</font><font color="#000000">name</font><font color="#0000C0">]</font><font color="#0000C0">=</font><font color="#000000">r</font>
         <font color="#008000"># Note: use r.driver_group.getXXXCoreConfig() instead of r.getXXXCoreConfig() because (a) it's much faster,
 </font>        <font color="#008000"># and (b) the former prevents reload(ensembl) from working for some reason.
 </font>        <font color="#C00000">for</font> <font color="#000000">conf</font> <font color="#C00000">in</font> <font color="#0000C0">[</font><font color="#000000">r</font><font color="#0000C0">.</font><font color="#000000">driver_group</font><font color="#0000C0">.</font><font color="#000000">getCoreConfig</font><font color="#0000C0">(</font><font color="#0000C0">)</font><font color="#0000C0">,</font> <font color="#000000">r</font><font color="#0000C0">.</font><font color="#000000">driver_group</font><font color="#0000C0">.</font><font color="#000000">getVariationConfig</font><font color="#0000C0">(</font><font color="#0000C0">)</font><font color="#0000C0">,</font> <font color="#000000">r</font><font color="#0000C0">.</font><font color="#000000">driver_group</font><font color="#0000C0">.</font><font color="#000000">getComparaConfig</font><font color="#0000C0">(</font><font color="#0000C0">)</font><font color="#0000C0">]</font><font color="#0000C0">:</font>

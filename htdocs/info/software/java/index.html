@@ -1,212 +1,76 @@
-<html>
 <head>
-<meta name="author" content="helpdesk" />
+<meta name="author" content="craig" />
 <meta name="navigation" content="Ensj" />
 <title>Ensj</title>
 </head>
 
 <body>
+
 <h2>Ensj</h2>
-<h3 class="boxed">Index</h3>
+
 <ul>
-<li><a href="#over">Overview</a></li>
-<li><a href="#download">Downloading Ensj</a></li>
-<li><a href="#quickstart">Quickstart</a></li>
-<li><a href="#links">Links</a></li>
-<li><a href="#contacts">Contacts</a></li>
-<li><a href="jython.html">Ensj Jython</a></li>
-<li><a href="faq.html">Ensj FAQ</a></li>
-<li><a href="howto.html">Ensj How-to</a></li>
-<li><a href="release.html">Release notes</a></li>
-<li><a href="license.html">License</a></li>
-<li><a target="javaapi" href="api/index.html" target="javaapi">Jdoc documentation for API</a>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="download.html">Download</a></li>
+<li><a href="quickstart.html">Quickstart</a></li>
+<li><a href="api/index.html">API (Javadoc)</a>
+<li><a href="api/org/ensembl/Example.java.html">Examples</a> 
+<li><a href="faq.html">FAQ</a></li>
+<li><a href="howto.html">How-to</a></li>
+<li><a href="jython.html">Jython</a></li>
+<li><a href="LICENSE">License</a></li>
+<li><a href="contact.html">Contacts</a></li>
+<li><a href="RELEASE_NOTES">Release notes</a></li>
+<li><a href="links.html">Offsite Links</a></li>
 </ul>
-<a name="over" /><h3 class="boxed">Overview</h3>
-<p>
-Ensj is a java library that provides a Java (and Jython) API for
-Ensembl's core, compara and variation (SNP) databases.
-</p>
 
-<h4>Core databases</h4>
+<a name="introduction"/><h3 class="boxed">Introduction</h3>
+<p>Ensj is an open source (<a href="LICENSE">LGPL</a>) java library
+that provides convenient acccess to Ensembl databases.</p>
 
 <p>
-The ensembl core database types such as Gene and Sequence are defined
-in <a
-target="javaapi" href="api/org/ensembl/datamodel/package-summary.html">org.ensembl.datamodel</a>
-and are retrieved via CoreDriver instances and adaptors defined in <a
-target="javaapi" href="api/org/ensembl/driver/package-summary.html">org.ensembl.driver</a>.
-This code snippet shows how to retrieve some genes from the latest
-human data set published on ensembldb.ensembl.org.
-</p>
-<pre><code>
-import org.ensembl.driver.CoreDriver;
-import org.ensembl.driver.CoreDriverFactory;
-...
-CoreDriver humanCoreDriver = CoreDriverFactory.createCoreDriverUsingDatabasePrefix("ensembldb.ensembl.org",3306, "homo_sapiens_core", "anonymous", null);
-List genes = humanCoreDriver.getGeneAdaptor().fetch(new Location("chromosome:22:21m-22m"))
-</code></pre>
-
-<h4>Variation (SNP) databases</h4>
-<p>Ensembl variation (SNP) databases are accessed via the
-org.ensembl.variation package. Variation datatypes such as
-VariationFeature and Allele are defined in <a
-target="javaapi" href="api/org/ensembl/variation/datamodel/package-summary.html">org.ensembl.variation.datamodel</a>
-and are retrieved via VariationDriver instances and adaptors defined
-in <a
-target="javaapi" href="api/org/ensembl/variation/driver/package-summary.html">org.ensembl.variation.driver</a>.
-This code snippet shows how to retrieve some variation features (where
-variations appear on the genome) from the latest human data set
-published on ensembldb.ensembl.org.
+There is a <a href="quickstart.html">quickstart</a> showing how
+to get up and running quickly and some <a
+href="api/org/ensembl/Example.java.html">examples</a>. For more
+detailed information have a look at the <a
+href="api/index.html">Javadoc API</a>, <a href="faq.html">FAQ</a> and
+<a href="howto.html">How-to</a>.
 </p>
 
-<pre><code>
-import org.ensembl.variation.driver.VariationDriver;
-import org.ensembl.variation.driver.VariationDriverFactory;
-...
-VariationDriver humanVariationDriver = VariationDriverFactory.createVariationDriverUsingDatabasePrefix("ensembldb.ensembl.org",3306, "homo_sapiens_variation", "anonymous", null);
-List variationFeatures = humanVariationDriver.getVariationFeatureAdaptor().fetch(new Location("chromosome:22:21m-22m"))
-</code></pre>
 
-<h4>Compara databases</h4>
-<p>Ensembl compara databases are accessed via the org.ensembl.compara
-package. Compara datatypes such as Homology and DnaFragment are
+<p>
+The organisation of the library reflects the way Ensembl publishes
+it's data in various database schemas. The common datatypes and those
+specific to <b>core</b> databases are defined in <a
+href="api/org/ensembl/datamodel/package-summary.html">org.ensembl.datamodel</a>
+. Drivers and adaptors for retrieving data from the core database are
 defined in <a
-target="javaapi" href="api/org/ensembl/compara/datamodel/package-summary.html">org.ensembl.compara.datamodel</a>
-and are retrieved via ComparaDriver instances and adaptors defined in
-<a
-target="javaapi" href="api/org/ensembl/compara/driver/package-summary.html">org.ensembl.compara.driver</a>.</p>
-
-<h4>Examples</h4>
-<p>
-For more examples see <a
-target="javaapi" href="api/org/ensembl/Example.java.html">Example.java</a> <a
-target="javaapi" href="api/org/ensembl/Example.java">(txt)</a> which demonstrates how to
-connect to a ensembl databases with drivers and retrieve data via
-adaptors.</p>
-
-<h4>License</h4>
-<p>
-The code is free and made available under the <a href="license.html">GNU lesser general public license</a>.
+href="api/org/ensembl/driver/package-summary.html">org.ensembl.driver</a>.
 </p>
 
-<a name="download" /><h3 class="boxed">Downloading ensj</h3>
-<h4>Recent builds</h4>
 <p>
-  The recent build has been tested and is available here:
-</p> 
-<ul>
-  <li>The complete recent build <a
-  href="http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensj-web/build.tar.gz?view=tar">
-  (build.tar.gz)</a>. <b>Note: Use GNU tar (or a compatible version) to
-  untar otherwise some long file names might be mangled when you open
-  this file.</b></li>
-  <li>Individual files from the latest build <a
-  href="http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensj-web/build/">download
-  directory</a> . Click "Rev." for the file you want then "(download)"
-  at the top of the next page.</li>
-</ul>
-<h4>CVS</h4>
-<p>
-The current version of Ensj's source code and resources is available
-via anonymous cvs. It is not tested to the same extent as the recent
-build.</p>
+Analagous packages exist for the <b>variation</b> (SNP) databases (<a
+href="api/org/ensembl/variation/datamodel/package-summary.html">org.ensembl.variation.datamodel</a>
+and <a
+href="api/org/ensembl/variation/driver/package-summary.html">org.ensembl.variation.driver</a>) 
 
-<p>It can be retrieved using a cvs client or viewed using a web
-browser from CVSWeb. Ensj development typically happens on the
-head.</p>
-
-<p>CVS client:</p>
-<ul>
-   <li><code>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl login</code> (password is CVSUSER)</li>
-   <li><code>cvs -d :pserver:cvsuser@cvsro.sanger.ac.uk:/cvsroot/ensembl -q export -D tomorrow ensj-core</code></li>
-</ul>
-<p>CVSweb:</p>
-<ul>
-   <li><a href="http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensj-core/">http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensj-core/</a></li>
-</ul>
-
-<p>The code can be built using the ant build.xml file. Run <code>ant -projecthelp</code> for a list of available ant targets.</p>
-
-<a name="quickstart" /><h3 class="boxed">Quickstart</h3>
-<ul>
-
-<li>Install ensj.XX-Y.jar and mysql-*.jar in your classpath.</li>
-
-<li>Create a driver connected to an ensembl database. e.g.
-<pre><code>
-import org.ensembl.driver.CoreDriver;
-import org.ensembl.driver.CoreDriverFactory;
-...
-// Connect to db specified in config file
-CoreDriver coreDriver = CoreDriverFactory.createCoreDriver("my_database.properties");
-...
-
-#my_database.properties:
-host ensembldb.ensembl.org
-port 3306
-user anonymous
-database_prefix homo_sapiens_core
-</code></pre>
-
-OR
-
-<pre><code>
-// Connect to latest human database
-CoreDriver coreDriver =
-CoreDriverFactory.createCoreDriverUsingDatabasePrefix("ensembldb.ensembl.org",
-3306, "homo_sapiens_core", "anonymous", null);
-</code></pre>
-
-OR
-
-<pre><code>
-// Connect to a particular human database
-CoreDriver coreDriver =
-DriverManager.createCoreDriver("ensembldb.ensembl.org",
-3306, "homo_sapiens_core_25_34e", "anonymous", null);
-</code></pre>
-
-</li>
-
-<li>Use an adaptor from the driver to retrieve data of interest. e.g.
-<pre><code>
-List genes = coreDriver.getGeneAdaptor().fetch(new Location("chromosome:2:20m-21m:1"))
-for (int j = 0; j < genes.size(); j++) {
-  Gene g = (Gene) genes.get(j);
-  System.out.println(g.getAccessionID());
-}
-</code></pre>
-</li>
-</ul>
-
-<a name="links" /><h3 class="boxed">Links</h3>
-<ul>
-<li><a
-  href="http://www.java.com/en/download/">JVM</a> - Download a new Java
-  Virtual Machine from www.java.com.</li>
-<li><a
-href="http://www.fruitfly.org/annot/apollo">Apollo</a> - genome browser and editor
-which uses ensj library to access ensembl databases.</li>
-<li><a href="http://jakarta.apache.org/ant/">Ant</a> - used to compile
-project, build jars and do other generally useful project related
-tasks. Ant is basically "make" for java.</li>
-<li><a href="http://junit.org/">JUnit</a> - test framework used throughout ensj.</li>
-<li><a href="http://www.jython.org/">Jython</a> - Java implementation of the Python interpreter.</li>
-</ul>
-<h3 class="boxed">Contacts</h3>
-<h4>Bugs</h4>
-<p>
-  Before submitting a bug report read the <a href="faq.html#bug_report">how do I submit a bug report</a>
-  sections in the FAQ. Send bug reports to the
-  <a href="mailto:ensembl-dev@ebi.ac.uk?subject=[ENSJ%20BUG]">ensembl-dev@ebi.ac.uk</a> mailing list with [ENSJ BUG]
-  in the subject line.
+and <b>compara</b> (comparative genomics) databases (<a
+href="api/org/ensembl/compara/datamodel/package-summary.html">org.ensembl.compara.datmodel</a>
+and <a
+href="api/org/ensembl/compara/driver/package-summary.html">org.ensembl.compara.driver</a>).
 </p>
-<h4>Comments, suggestions, feature requests and general ensj discussion</h4>
+
+
 <p>
-  Discussion about ensj are held on the ensembl developers
-  list ensembl-dev@ebi.ac.uk. <a href="/info/about/contact.html">How to subscribe</a>.
+The <a
+href="api/org/ensembl/registry/package-summary.html">org.ensembl.registry</a>
+package makes it very simple to access all of our databases with
+little or no configuration.
 </p>
+
+<p>
+Ensj also comes with a <a href="jython.html">jython module</a> that
+makes it even easier to use from jython.
+</p>
+
 </body>
-
-
-
+</html>

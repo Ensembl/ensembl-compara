@@ -1,9 +1,14 @@
+<!--#set var="decor" value="none"--><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+            "http://www.w3.org/TR/html4/strict.dtd">
+
 <html>
+
 <head>
 <title>Ensj FAQ</title>
 </head>
 
 <body>
+
 <h2>Frequently asked questions</h2>
 
 <ol>
@@ -49,13 +54,13 @@ for a gene?</a></li>
 
 
 <li>
-<a name="example.java" /><b>Why doesn't Example.java work?</b>
+<a name="example.java"/><b>Why doesn't Example.java work?</b>
 
 <p>
 This is usually caused by the Example program trying to connect to a
 database that has been removed from the mysql server
 ensembldb.ensembl.org:3306. This bug only happens in old version of
-ensj and upgrading to the <a href="download/index.html">latest build</a> of
+ensj and upgrading to the <a href="download.html">latest build</a> of
 ensj.jar will fix this problem.  </p> </li>
 
 
@@ -68,7 +73,7 @@ removed. This sometimes happens if you are using an old configuration
 file that refers to an obsolete database.  A list of current databases
 on ensembldb.ensembl.org is available in the file
 ensembldb.ensembl.org-databases.txt in the <a
-href="download/index.html">latest build</a>. </p> </li>
+href="download.html">latest build</a>. </p> </li>
 
 
 <li>
@@ -100,9 +105,17 @@ Iterator iter = geneAdaptor.fetchIterator(location);
 <a name="bug"/><b>I think I've found a bug in ensj, or at least I am getting
 stack traces from it, what should I do?</b>
 
-<p>Firstly, the bug may already have been fixed in the <a
-  href="http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensj-core/snapshot/">latest
-  ensj-XX.Y.jar or mysql-ZZZZ.jar</a> so make sure you are using them.
+<p>It is possible that your bug has been fixed or is due to an
+  incompatiblity between the versions of ensj.jar, mysql.jar (MySQL
+  JDBC driver) or the MySQL database you are using. The first thing to
+  do therefore is to make sure you are using the right jars. You can
+  download the latest ensj release and a compatible mysql driver from
+  the <a
+  href="http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/ensj-core/snapshot/">download</a>
+  section. Note that some users have experienced problems with both
+  <b>older</b> and, surprisingly, <b>newer</b> mysql.jars so ensuring
+  you are using the version we distribute is an important step in the
+  debugging process.
 </p>
 
 
@@ -160,8 +173,7 @@ web site?</b>
 
 <p>
 This is usually because the ensj driver is pointing at a different
-database to the website. <a
-href="api/org/ensembl/driver/plugin/standard/MySQLDriver.html">Configuring</a>
+database to the website. Configuring
 the driver to point at the same database as the website (the latest)
 usually solves this problem.</p>
 </li>
@@ -180,7 +192,7 @@ to find out: <code>prompt&gt;java org.ensembl.Version</code>.  </p>
 
 <p>The source code for the latest release is included in the latest
 distribution. Other versions of the source code corresponding to other
-builds are available from <a href="download/index.html#cvs">CVS</a>
+builds are available from <a href="download.html#cvs">CVS</a>
 using the appropriatte tag. For example, after checking out ensj-core
 ,<code>cvs up -r release-ensembl-25-0</code> would retrieve all the
 files in the 25.0 build (release or snapshot).</p>
@@ -284,6 +296,20 @@ the latest ensembl databases.
       System.out.println();
     }
 </pre></code>
+
+Here is similar code in jython:
+
+<code><pre>
+    genomes = ensembl.ensembl_compara.genomeDBAdaptor.fetch()
+    for speciesName in [g.name for g in genomes]:
+        orthologues = ensembl.ensembl_compara.memberAdaptor.fetch("Homo Sapiens", ["ENSG00000118961"], speciesName)
+        geneNames = [o.hitDisplayName for o in orthologues]
+        print geneNames
+</pre></code>
+
 </ol>
+
+
+
 </body>
 </html>
