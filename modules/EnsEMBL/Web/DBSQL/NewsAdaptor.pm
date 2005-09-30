@@ -9,7 +9,8 @@ use warnings;
 no warnings 'uninitialized';
 
 use DBI;
-                                                                                
+use EnsEMBL::Web::SpeciesDefs;
+                              
 sub new {
   my( $class, $DB ) = @_;
   my $dbh;
@@ -17,7 +18,7 @@ sub new {
   bless $self, $class;
   return $self;
 }
-                                                                                
+
 sub db {
   my $self = shift;
   $self->{'dbh'} ||= DBI->connect(
@@ -25,6 +26,18 @@ sub db {
     $self->{'USER'}, "$self->{'PASS'}", { RaiseError => 1}
   );
   return $self->{'dbh'};
+}
+                                                                                
+sub db_write {
+  my $self = shift;
+  my $SD = EnsEMBL::Web::SpeciesDefs->new;
+  my $user = $SD->ENSEMBL_WRITE_USER;
+  my $pass = $SD->ENSEMBL_WRITE_PASS;
+  $self->{'dbh_write'} ||= DBI->connect(
+    "DBI:mysql:database=$self->{'NAME'};host=$self->{'HOST'};port=$self->{'PORT'}",
+    "$user", "$pass", { RaiseError => 1}
+  );
+  return $self->{'dbh_write'};
 }
 
 ############################## SELECT QUERIES #################################
@@ -42,7 +55,7 @@ sub fetch_items {
 
     my %modifiers = %{$options};
     my $crit_str = ' WHERE n.news_cat_id = c.news_cat_id ';
-    my ($order_str, $sp_str, $group_str, %criteria, @order_by);
+    my ($order_str, $sp_str, $group_str, $limit_str, %criteria, @order_by);
     if (ref($modifiers{'criteria'})) {
         %criteria = %{$modifiers{'criteria'}};
     }
@@ -57,6 +70,12 @@ sub fetch_items {
     }
     my $order_by_sp;
     
+    my $limit = 0;
+    if ($modifiers{'limit'}) {
+        $limit = $modifiers{'limit'};
+        $limit_str = " LIMIT $limit ";
+    }
+
     # map option keywords to actual SQL
     my %crit_hash = (
         'item_id'=>'n.news_item_id = '.$criteria{'item_id'},
@@ -113,11 +132,12 @@ sub fetch_items {
         
         $sql .= ', item_species i ';
     }
-    $sql .= " $crit_str $group_str $order_str";
-warn $sql;
+    $sql .= " $crit_str $group_str $order_str $limit_str";
     my $T = $self->db->selectall_arrayref($sql, {});
     return [] unless $T;
-    for (my $i=0; $i<scalar(@$T);$i++) {
+
+    my $running_total = scalar(@$T);
+    for (my $i=0; $i<$running_total;$i++) {
         my @A = @{$T->[$i]};
         my $species = [];
         my $sp_count = 0;
@@ -161,53 +181,65 @@ warn $sql;
         
     if ($criteria{'species'} || $order_by_sp) {
     # also get stories that apply to all species
-        $sql = qq(
-            SELECT
-                n.news_item_id   as news_item_id,
-                n.release_id     as release_id,
-                n.news_cat_id    as news_cat_id,
-                n.title          as title,
-                n.content        as content,
-                n.priority       as priority,
-                c.priority       as cat_order
-            FROM
-                news_item n,
-                news_cat c
-            LEFT JOIN
-                item_species i
-            ON
-                n.news_item_id = i.news_item_id
-            WHERE
-                i.news_item_id IS NULL
-            AND 
-                n.news_cat_id = c.news_cat_id 
-            );
-        $sql .= " $sp_str $order_str";
-        $T = $self->db->selectall_arrayref($sql, {});
-        return [] unless $T;
-
-        for (my $i=0; $i<scalar(@$T);$i++) {
-            my @A = @{$T->[$i]};
-            push (@$results,
-                {
-                'news_item_id'  => $A[0],
-                'release_id'    => $A[1],
-                'news_cat_id'   => $A[2],
-                'title'         => $A[3],
-                'content'       => $A[4],
-                'priority'      => $A[5],
-                'cat_order'     => $A[6],
-                'species'       => '',
-                'sp_count'      => '0'
-                });
+        my $continue = 1;        
+        if ($limit) {
+            my $running_limit = $limit - $running_total;
+            if ($running_limit > 0) {
+                $limit_str = " LIMIT $running_limit ";
+            }
+            else {
+                $continue = 0;
+            }
         }
-        if ($criteria{'species'}) {
-            # re-sort records by release and then news category
-            @$results = sort 
+        if ($continue) {
+            $sql = qq(
+                SELECT
+                    n.news_item_id   as news_item_id,
+                    n.release_id     as release_id,
+                    n.news_cat_id    as news_cat_id,
+                    n.title          as title,
+                    n.content        as content,
+                    n.priority       as priority,
+                    c.priority       as cat_order
+                FROM
+                    news_item n,
+                    news_cat c
+                LEFT JOIN
+                    item_species i
+                ON
+                    n.news_item_id = i.news_item_id
+                WHERE
+                    i.news_item_id IS NULL
+                AND 
+                    n.news_cat_id = c.news_cat_id 
+                );
+            $sql .= " $sp_str $order_str $limit_str ";
+            $T = $self->db->selectall_arrayref($sql, {});
+            return [] unless $T;
+
+            for (my $i=0; $i<scalar(@$T);$i++) {
+                my @A = @{$T->[$i]};
+                push (@$results,
+                    {
+                    'news_item_id'  => $A[0],
+                    'release_id'    => $A[1],
+                    'news_cat_id'   => $A[2],
+                    'title'         => $A[3],
+                    'content'       => $A[4],
+                    'priority'      => $A[5],
+                    'cat_order'     => $A[6],
+                    'species'       => '',
+                    'sp_count'      => '0'
+                    });
+            }
+            if ($criteria{'species'}) {
+                # re-sort records by release and then news category
+                @$results = sort 
                         { $b->{'release_id'} <=> $a->{'release_id'} 
                           || $b->{'cat_order'} <=> $a->{'cat_order'}
                         } 
                         @$results;
+            }
         }
     }
 
@@ -221,9 +253,12 @@ warn $sql;
 # Returns arrayref of results
 
 sub fetch_releases {
-    my ($self, $species) = @_;
+    my ($self, $extra) = @_;
     my $results = [];
     return [] unless $self->db;
+    my %option = %$extra if $extra;
+    my $release = $option{'release'};
+    my $species = $option{'species'};
 
     my $sql = qq(
         SELECT
@@ -234,13 +269,17 @@ sub fetch_releases {
         FROM
                 release r);
 
-    if ($species) {
+    if ($release) {
+        $sql .= qq( WHERE r.release_id = "$release" );
+    }
+    elsif ($species) {
         $sql .= qq(, release_species s 
                 WHERE
                     r.release_id = s.release_id 
                 AND 
                     s.species_id = "$species");
     }
+  
     $sql .= qq( ORDER BY release_id DESC);
     my $T = $self->db->selectall_arrayref($sql, {});
 
@@ -399,12 +438,12 @@ sub add_news_item {
             news_cat_id     = "$news_cat_id",
             priority        = "$priority"
         );
-    my $sth = $self->db->prepare($sql);
+    my $sth = $self->db_write->prepare($sql);
     my $result = $sth->execute();
 
     # get id for inserted record
     $sql = "SELECT LAST_INSERT_ID()";
-    my $T = $self->db->selectall_arrayref($sql, {});
+    my $T = $self->db_write->selectall_arrayref($sql, {});
     return [] unless $T;
     my @A = @{$T->[0]}[0];
     my $id = $A[0];
@@ -415,7 +454,7 @@ sub add_news_item {
             next unless $sp > 0;
             $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($id, $sp) ";
             print $sql;
-            $sth = $self->db->prepare($sql);
+            $sth = $self->db_write->prepare($sql);
             $result = $sth->execute();
         }
     }
@@ -448,17 +487,17 @@ sub update_news_item {
         WHERE
             news_item_id = "$id"
         );
-    my $sth = $self->db->prepare($sql);
+    my $sth = $self->db_write->prepare($sql);
     my $result = $sth->execute();
 
     # update species/article cross-referencing
     $sql = qq(DELETE FROM item_species WHERE news_item_id = "$id");
-    $sth = $self->db->prepare($sql);
+    $sth = $self->db_write->prepare($sql);
     $result = $sth->execute();
 
     foreach my $sp (@$species) {
         $sql = "INSERT INTO item_species (news_item_id, species_id) VALUES($id, $sp) ";
-        $sth = $self->db->prepare($sql);
+        $sth = $self->db_write->prepare($sql);
         $result = $sth->execute();
     }
 }
@@ -471,7 +510,7 @@ sub add_release {
     my ($self, $record) = @_;
     my $result = '';
 
-    return unless $self->db;
+    return unless $self->db_write;
 
     # check if record is already added
     my $release_id  = $$record{'release_id'};
@@ -481,7 +520,7 @@ sub add_release {
 
     my $sql = qq(SELECT release_id FROM release WHERE number = "$number");
 
-    my $T = $self->db->selectall_arrayref($sql);
+    my $T = $self->db_write->selectall_arrayref($sql);
 
     unless ($T && @{$T->[0]}[0]) {
         # insert the new record
@@ -494,7 +533,7 @@ sub add_release {
                 archive     = "$archive"
         );
 
-        my $sth = $self->db->prepare($sql);
+        my $sth = $self->db_write->prepare($sql);
         $result = $sth->execute();
     }
     return $result;
@@ -506,7 +545,7 @@ sub set_release_date {
     my ($self, $release, $date) = @_;
     my $result = '';
 
-    return unless $self->db;
+    return unless $self->db_write;
 
     my $sql = qq(
         UPDATE release
@@ -514,7 +553,7 @@ sub set_release_date {
         WHERE release_id = "$release"
         );
         
-    my $sth = $self->db->prepare($sql);
+    my $sth = $self->db_write->prepare($sql);
     $result = $sth->execute();
     return $result;
 }
@@ -525,7 +564,7 @@ sub add_species {
     my ($self, $record) = @_;
     my $result = '';
 
-    return unless $self->db;
+    return unless $self->db_write;
 
     # check if record is already added
     my $name        = $$record{'name'};
@@ -534,7 +573,7 @@ sub add_species {
 
     my $sql = qq(SELECT species_id FROM species WHERE name = "$name" );
 
-    my $T = $self->db->selectall_arrayref($sql);
+    my $T = $self->db_write->selectall_arrayref($sql);
 
     unless ($T && @{$T->[0]}[0]) {
         # insert the new record
@@ -546,12 +585,12 @@ sub add_species {
                 code = "$code"
         );
 
-        my $sth = $self->db->prepare($sql);
+        my $sth = $self->db_write->prepare($sql);
         $result = $sth->execute();
         if ($result) {
             # get id for inserted record
             $sql = "SELECT LAST_INSERT_ID()";
-            $T = $self->db->selectall_arrayref($sql, {});
+            $T = $self->db_write->selectall_arrayref($sql, {});
             return '' unless $T;
             my @A = @{$T->[0]}[0];
             $result = $A[0];
@@ -566,7 +605,7 @@ sub add_release_species {
     my ($self, $record) = @_;
     my $result = '';
 
-    return unless $self->db;
+    return unless $self->db_write;
 
     # check if record is already added
     my $release_id      = $$record{'release_id'};
@@ -577,7 +616,7 @@ sub add_release_species {
     my $sql = qq(SELECT release_id, species_id FROM release_species 
                 WHERE release_id = "$release_id" AND species_id = "$species_id");    
 
-    my $T = $self->db->selectall_arrayref($sql);
+    my $T = $self->db_write->selectall_arrayref($sql);
 
     if ($T && @{$T->[0]}[0]) {
         $result = "This species is already logged for release $release_id";
@@ -593,7 +632,7 @@ sub add_release_species {
                 assembly_name = "$assembly_name"
         );
 
-        my $sth = $self->db->prepare($sql);
+        my $sth = $self->db_write->prepare($sql);
         $result = $sth->execute();
         if ($result) {
             $result = "Record added";
