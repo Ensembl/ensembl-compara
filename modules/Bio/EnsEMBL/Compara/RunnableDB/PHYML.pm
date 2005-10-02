@@ -81,7 +81,6 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'substitution_model'}                      = 'WAG';
   $self->{'transition_transversion_ratio'}           = 0.0;
   $self->{'number_of_substitution_rate_categories'}  = 4;
   $self->{'gamma_distribution_parameter'}            = 1;
@@ -179,7 +178,6 @@ sub get_params {
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
-  $self->{'substitution_model'} = $params->{'substitution_model'} if(defined($params->{'substitution_model'}));
   $self->{'cdna'} = $params->{'cdna'} if(defined($params->{'cdna'}));
   
   return;
@@ -318,16 +316,25 @@ sub store_proteintree
 
   return unless($self->{'protein_tree'});
 
-  if($self->{'newick_file'}) {
-    printf("PHYML::store_proteintree\n") if($self->debug);
-    my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-    $treeDBA->store($self->{'protein_tree'});
-    $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
-    if($self->debug >1) {
-      print("done storing - now print\n");
-      $self->{'protein_tree'}->print_tree;
-    }
+  printf("PHYML::store_proteintree\n") if($self->debug);
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  
+  $treeDBA->sync_tree_leftright_index($self->{'protein_tree'});
+  $treeDBA->store($self->{'protein_tree'});
+  $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
+  
+  if($self->debug >1) {
+    print("done storing - now print\n");
+    $self->{'protein_tree'}->print_tree;
   }
+  
+  if($self->{'cdna'}) {
+    $self->{'protein_tree'}->store_tag('PHYML_alignment', 'cdna');
+  } else {
+    $self->{'protein_tree'}->store_tag('PHYML_alignment', 'aa');
+  }
+  $self->{'protein_tree'}->store_tag('tree_method', 'PHYML');
+  return undef;
 }
 
 
@@ -376,7 +383,7 @@ sub parse_newick_into_proteintree
   $newtree->release_tree;
 
   $tree->print_tree if($self->debug);
-  
+  return undef;
 }
 
 
