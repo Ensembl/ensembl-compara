@@ -100,6 +100,7 @@ sub fetch_all_roots {
 }
 
 
+
 ###########################
 # STORE methods
 ###########################
@@ -181,6 +182,38 @@ sub store {
   }
 
   return $node->dbID;
+}
+
+
+sub sync_tree_leftright_index {
+  my $self= shift;
+  my $tree_root = shift;
+
+  my $table = $self->tables->[0]->[0];
+  
+  my $dc = $self->dbc->disconnect_when_inactive;
+  $self->dbc->disconnect_when_inactive(0);
+
+  $self->dbc->do("LOCK TABLES $table WRITE");
+
+  my $sql = "SELECT max(right_index) FROM $table;";
+  my $sth = $self->dbc->prepare($sql);
+  $sth->execute();
+  my ($max_counter) = $sth->fetchrow_array();
+  $sth->finish;
+  
+  $tree_root->build_leftright_indexing($max_counter+1);
+
+  $sql = "UPDATE $table SET ".
+            "left_index=" . $tree_root->left_index .
+            ",right_index=" . $tree_root->right_index .
+         " WHERE $table.node_id=". $tree_root->node_id;
+  $self->dbc->do($sql);
+
+  $self->dbc->do("UNLOCK TABLES");
+  $self->dbc->disconnect_when_inactive($dc);
+
+  return undef;
 }
 
 
