@@ -492,13 +492,15 @@ sub _get_mapped_Gene {
               -external_status => $this_transcript->external_status,
               -display_xref => $this_transcript->display_xref,
               -analysis => $this_transcript->analysis,
+              -status => $this_transcript->status,
+              -biotype => $this_transcript->biotype,
               -exons => $these_exons,
           );
       $new_transcript->translation($this_transcript->translation->new(
               -stable_id => $this_transcript->translation->stable_id,
               -version => $this_transcript->translation->version,
               -created_date => ($this_transcript->translation->created_date or undef),
-              -modified_date =>$this_transcript->translation->modified_date
+              -modified_date =>$this_transcript->translation->modified_date,
           )) if ($this_transcript->translation);
       push(@{$these_transcripts}, $new_transcript);
     }
@@ -626,6 +628,8 @@ sub _compile_mapped_Genes {
                 -external_status => $old_transcript->external_status,
                 -display_xref => $old_transcript->display_xref,
                 -analysis => $old_transcript->analysis,
+                -status => $old_transcript->status,
+                -biotype => $old_transcript->biotype,
                 -EXONS => $this_set_of_compatible_exons
             );
         ## $old_transcript->translation is already a fake Bio::EnsEMBL::Translation!
