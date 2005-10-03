@@ -1,112 +1,106 @@
-<!-- $Id$ -->
-
 <html>
 <head>
-<meta name="author" content="DAS:AndreasKahari" />
+<meta name="author" content="helpdesk" />
 <meta name="navigation" content="External Data" />
-<title>User Data in Ensembl</title>
+<title>Custom Annotation</title>
 </head>
 
 <body>
 
-<h2>How to incorporate external data into Ensembl</h2>
+<h2>Custom Annotation</h2>
 
-<p>Depending on the amount and type of data that you have,
-Ensembl allows you to display it as features or as user-defined
-regions in some of its displays (e.g. in KaryoView, ContigView,
-CytoView, ProtView, or in GeneView).  You may also share your
-data source with others if you wish to do so.</p>
 
-<h3 class="boxed">KaryoView</h3>
+<h3 class="boxed">External Data Sets in Ensembl</h3>
 
-<p>KaryoView allows you to upload your data into Ensembl.  The
-display is ideal for presentations or publications. </p>
+<p>
+Depending on the amount and type of data that you have, Ensembl allows you to display it as features or as user-defined regions in some of its displays
+(e.g. in KaryoView, ContigView, CytoView, ProtView, or in GeneView).
+You may also share your data source with others if you wish to do so.
+</p>
 
-<p>KaryoView can be configured to display a series of
-data points along a chromosome, such as those displayed on
-MapView.  Visualising sets of genomic data with discrete positions
- can be extremely useful to get an overview of your data distribution
- and to identify any hot or cold spots that might not be
-immediately obvious.  The data is specified as a list of chromosome, 
-start base, end base, feature name values.  It can be shown against the
-chromosomes as a variety of boxes, lines and arrows.</p>
 
-<p>The display is available for any species with
-an assembly mapped to chromosomes, e.g. for <a
-href="/Homo_sapiens/karyoview"><em>Homo sapiens</em>
-</a>.  KaryoView is linked to from the MapView pages in the left-hand menu under the "Map your data onto this chromosome" heading e.g. for  <a
-href="/Homo_sapiens/mapview"><em>Homo sapiens</em></a>.</p>
+<h3 class="boxed">Ensembl KaryoView</h3>
 
-<h3 class="boxed">Other Ensembl displays</h3>
+<p>
+Ensembl KaryoView can be configured to display a series of user-defined data points either along a single chromosome ideogram, such as those displayed on Ensembl MapView, or along an entire karyotype ideogram.
+Visualising sets of genomic data with discrete positions can be extremely useful to get an overview of your data distribution and to identify any hot or cold spots that might not be immediately obvious.
+</p>
 
-<p>There are a few different ways of attaching your own data to
-the ContigView, CytoView, ProtView, or GeneView displays.  They
-differ in flexibility, efficiency, and data persistence, i.e.
-how easy it is to keep the data tracks up to date, how the speed
-of the loading of an Ensembl display is affected, and for how
-long the data will be available.</p>
+<p>
+Generally, KaryoView is linked from MapView pages via the navigation column option "Map your data onto this chromosome", and is available for any species with an assembly mapped to chromosomes.
+(e.g. <i>Homo sapiens</i> <a href="/Homo_sapiens/mapview">MapView</a> and <a href="/Homo_sapiens/karyoview">KaryoView</a>)
+</p>
 
-<h4>URL-based data</h4>
+<p>
+The data set is specified as a list of chromosome, start base, end base and feature name values.
+It can be shown against the chromosomes as a variety of boxes, lines and arrows.
+</p>
 
-<p>Both ContigView and CytoView are able to attach URL-based
-data.  These displays show features in a genomic context.  If 
-you want to attach data to ProtView (proteomic annotations
-or non-positional annotations on proteins), or GeneView
-(non-positional annotations on genes) however,
-  you will have to either use user-uploaded data or set 
-up a DAS server (see below for a description of these methods).</p>
 
-<p>For URL-based data, use the pop-up help on
-<a href="javascript:void(window.open('/perl/helpview?se=1;kw=urlsource','helpview','width=700,height=550,resizable,scrollbars'))">URL-based data</a>
-to get an explanation of how to view genomic features from
-a file on your own web server.  Ensembl reads this file and
-displays the features as graphical boxes on the ContigView or
-CytoView displays.  As the URL-based data is compatible with the
-UCSC <em>Custom Track</em> format, the same file can be used for
-both the UCSC genome browser and the Ensembl genome browser.</p>
+<h3 class="boxed">Other Ensembl Displays</h3>
 
-<p>URL-based data is only really suitable for a small number of
-features, as they have to be read by the Ensembl server for each
-reload of the display, which slows down the responsiveness of
-the browser.  The data is private, but you can share URLs with
-collaborators, and are as permanent as you make them.</p>
+<p>
+There are a few different ways of attaching your own data to the ContigView, CytoView, ProtView, or GeneView displays.
+They differ in flexibility, efficiency, and data persistence, i.e. how easy it is to keep the data tracks up to date, how the speed of the loading of an Ensembl display is affected, and for how long the data will be available.
+</p>
 
-<h4>User-uploaded data</h4>
 
-<p>Use the instructions on the
-<a href="/Homo_sapiens/helpview?se=1&kw=dasconfview" target="_top">the online Ensembl help section for DASConfView</a>
-about how to upload your data into Ensembl.</p>
+<h4>URL-based Data Sets</h4>
 
-<h4>Data served through an external Distributed Annotation
-System (DAS) server</h4>
+<p>
+Both ContigView and CytoView are able to attach URL-based data.
+These displays show features in a genomic context.
+If you want to attach data to ProtView (proteomic annotations or non-positional annotations on proteins), or GeneView (non-positional annotations on genes) however,
+you will have to either use user-uploaded data or set up a DAS server (see below for a description of these methods).
+</p>
 
-<p>The Distributed Annotation System (<a
-href="http://www.biodas.org/">DAS</a>) is a protocol for
-providing genomic and proteomic annotations over the Internet.
-A DAS client can connect to several annotation servers
-simultaneously, allowing users to see and compare annotations
-from different sources. <a href="das/index.html">[More about
-DAS]</a>.</p>
+<p>
+For URL-based data, use the pop-up help on
+<a href="javascript:void(window.open('/perl/helpview?se=1;kw=urlsource', 'helpview', 'width=700, height=550, resizable, scrollbars'))">URL-based data</a>
+to get an explanation of how to view genomic features from a file on your own web server.
+Ensembl reads this file and displays the features as graphical boxes on the ContigView or CytoView displays.
+As the URL-based data is compatible with the UCSC <em>Custom Track</em> format, the same file can be used for both the UCSC genome browser and the Ensembl genome browser.
+</p>
 
-<p>DAS is widely used by Ensembl to include external
-annotations on its ContigView, CytoView, ProtView,
-and GeneView displays.  Ensembl also has its own <a
-href="das/ensembl_das.html">Ensembl-DAS reference
-server</a>.</p>
+<p>
+URL-based data is only really suitable for a small number of features, as they have to be read by the Ensembl server for each reload of the display, which slows down the responsiveness of the browser.
+The data is private, but you can share URLs with collaborators, and are as permanent as you make them.
+</p>
 
-<h4>Set-up your own DAS server</h4>
 
-<p>You may also <a href="das/das_server.html">set up and run
-your own DAS server</a> to display your data in Ensembl.
-Ensembl ContigView, CytoView, GeneView and ProtView displays can
-all act as full DAS clients, integrating your data with Ensembl.
-This data can be much more complex than is possible with the
-upload data method, and you have far more control over the way
-you store the data and keep it up to date.  This is typically
-what you would want to do if you would like a more permanent
-data source attached to Ensembl, or if the data source contains
-<em>a lot</em> of annotations (e.g. dense annotations for a
-chromosome or annotations for a whole genome).</p>
+<h4>Uploaded Data Sets</h4>
+
+<p>
+Use the instructions on the the Ensembl help page for
+<a href="javascript:void(window.open('/perl/helpview?se=1;kw=dasconfview', 'helpview', 'width=700, height=550, resizable, scrollbars'))">DASConfView</a> about how to upload your data into Ensembl.
+</p>
+
+
+<h4>External Distributed Annotation System (DAS) Server</h4>
+
+<p>
+The Distributed Annotation System (<a href="http://www.biodas.org/" target="external">DAS</a>) is a protocol for providing genomic and proteomic annotations over the Internet.
+A DAS client can connect to several annotation servers simultaneously, allowing users to see and compare annotations from different sources.
+</p>
+
+<p>
+DAS is widely used by Ensembl to include external annotations on its ContigView, CytoView, ProtView, and GeneView displays.
+Ensembl also has its own <a href="./das/ensembl_das.html">Ensembl-DAS reference server</a>.
+</p>
+
+<div align="right"><a href="./das/index.html">More about DAS...</a></div>
+
+
+<h4>DAS Server Installation</h4>
+
+<p>
+You may also
+<a href="./das/das_server.html">set up and run your own DAS server</a> to display your data in Ensembl.
+Ensembl ContigView, CytoView, GeneView and ProtView displays can all act as full DAS clients, integrating your data with Ensembl.
+This data can be much more complex than is possible with the upload data method, and you have far more control over the way you store the data and keep it up to date.
+This is typically what you would want to do if you would like a more permanent data source attached to Ensembl, or if the data source contains <em>a lot</em> of annotations
+(e.g. dense annotations for a chromosome or annotations for a whole genome).
+</p>
 
 </body>
 </html>
