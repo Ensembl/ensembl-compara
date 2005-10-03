@@ -307,6 +307,8 @@ sub get_all_GenomicAligns {
 sub get_all_Genes {
   my ($self, $logic_name, $dbtype, $load_transcripts, @parameters) = @_;
 
+  $logic_name ||= "";
+  $dbtype ||= "core";
   my ($max_repetition_length,
       $max_gap_length,
       $max_intron_length,
@@ -328,6 +330,8 @@ sub get_all_Genes {
   $return_unmapped_exons = 1 if (!defined($return_unmapped_exons));
 
   my $key = 'key_'.
+      $dbtype.":".
+      $logic_name.":".
       $max_repetition_length.":".
       $max_gap_length.":".
       $max_intron_length.":".
