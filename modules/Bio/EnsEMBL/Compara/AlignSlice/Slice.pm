@@ -294,10 +294,8 @@ sub get_all_GenomicAligns {
                been added to the DBAdaptor under this name (using the
                DBConnection::add_db_adaptor method).
   Arg [3]    : (optional) boolean $load_transcripts
-               If set to true, transcripts will be loaded immediately rather
-               than being lazy-loaded on request.  This will result in a
-               significant speed up if the Transcripts and Exons are going to
-               be used (but a slow down if they are not).
+               This option is always disabled for AlingSlices. It only exists for
+               compatibility with the Bio::EnsEMBL::Slice objects.
   Example    : @genes = @{$slice->get_all_Genes};
   Description: Retrieves all genes that overlap this slice.
   Returntype : listref of Bio::EnsEMBL::Genes
@@ -307,8 +305,7 @@ sub get_all_GenomicAligns {
 =cut
 
 sub get_all_Genes {
-#  my ($self, $logic_name, $dbtype, $load_transcripts) = @_;
-  my ($self, @parameters) = @_;
+  my ($self, $logic_name, $dbtype, $load_transcripts, @parameters) = @_;
 
   my ($max_repetition_length,
       $max_gap_length,
@@ -343,21 +340,6 @@ sub get_all_Genes {
 
     my $all_pairs = $self->get_all_Slice_Mapper_pairs;
     return [] if (!$all_pairs or !@$all_pairs);
-
-#     my $these_genomic_aligns = [];
-#     foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks}) {
-#       # print STDERR "GenomicAlignBlock: $this_genomic_align_block->{dbID}\n";
-#       my $all_genomic_aligns = $this_genomic_align_block->genomic_align_array;
-#       foreach my $this_genomic_align (@$all_genomic_aligns) {
-#         my $this_genome_db = $this_genomic_align->dnafrag->genome_db;
-#         # print STDERR "GenomicAlign: ($this_genome_db->{dbID}:$this_genomic_align->{dnafrag}->{name}) [$this_genomic_align->{dnafrag_start} - $this_genomic_align->{dnafrag_end}]\n";
-#         push(@$these_genomic_aligns, $this_genomic_align);
-#       }
-#     }
-#     if (!@$these_genomic_aligns) {
-#       $self->{$key} = [];
-#       return [];
-#     }
 
     ## Create larger Slices in order to speed up fetching of genes
     my $all_slices_coordinates;
@@ -409,7 +391,7 @@ sub get_all_Genes {
       ## Do not load transcripts immediately or the cache could produce
       ## some troubles in some special cases! Moreover, in this way we will have
       ## the genes, the transcripts and the exons in the same slice!!
-      my $these_genes = $this_slice->get_all_Genes();
+      my $these_genes = $this_slice->get_all_Genes($logic_name, $dbtype);
       foreach my $pair (@{$this_slice_coordinates->{pairs}}) {
 # print STDERR "Foreach pair ($pair)...\n";
         foreach my $this_gene (@$these_genes) {
