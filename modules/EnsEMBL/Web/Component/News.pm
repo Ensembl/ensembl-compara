@@ -326,7 +326,9 @@ sub select_item_form {
                 $release_number = $$rel{'release_number'};
             }
         }
+        my $status = $item{'status'};
         my $name = 'Rel '.$release_number.' - '.$item{'title'}." ($sp_name)";
+        $name .= ' ['.uc($status).']' if $status ne 'live';
         push (@item_values, {'name'=>$name,'value'=>$code});
     }
  
