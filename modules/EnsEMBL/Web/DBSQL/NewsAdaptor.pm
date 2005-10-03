@@ -83,6 +83,7 @@ sub fetch_items {
         'category'=>'n.news_cat_id = '.$criteria{'category'},
         'priority'=>'n.priority = '.$criteria{'priority'},
         'species'=>'n.news_item_id = i.news_item_id AND i.species_id = '.$criteria{'species'},
+        'status'=>'n.status = "'.$criteria{'status'}.'"',
         );
     my %order_hash = (
         'default'=>'n.priority DESC',

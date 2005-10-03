@@ -94,7 +94,7 @@ sub createObjects {
         if (scalar(@sp_array) == 1 && $sp_array[0]) {
             $criteria{'species'} = $sp_array[0];    
             # get valid releases for the chosen species
-            $valid_rels = $self->news_adaptor->fetch_releases($sp_array[0]);
+            $valid_rels = $self->news_adaptor->fetch_releases({'species'=>$sp_array[0]});
         }
         else {
             # in multi-species mode, all releases are valid
@@ -107,6 +107,12 @@ sub createObjects {
             $criteria{'category'} = $self->param('news_cat_id');    
         }
     }
+
+    ## don't show draft or dead items in public news page
+    if ($self->script eq 'newsview') { 
+        $criteria{'status'} = 'live';
+    }
+
     my %options = ('criteria'=>\%criteria, 'order_by'=>\@order_by);
     $items = $self->news_adaptor->fetch_items(\%options);
   }
