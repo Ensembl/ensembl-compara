@@ -517,6 +517,8 @@ sub _get_mapped_Gene {
           -VERSION => $gene->version,
           -EXTERNAL_NAME => $gene->external_name,
           -TYPE => $gene->type,
+          -BIOTYPE => $gene->biotype,
+          -STATUS => $gene->status,
           -EXTERNAL_DB => $gene->external_db,
           -EXTERNAL_STATUS => $gene->external_status,
           -DISPLAY_XREF => $gene->display_xref,
