@@ -296,7 +296,7 @@ sub select_item_form {
   my( $panel, $object ) = @_;
   my $script = $object->script;
   my $species = $object->species;
-  my $form = EnsEMBL::Web::Form->new( 'select_item', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'select_item', "/Multi/$script", 'post' );
   
   # create array of release numbers, species and story titles
   my @items = @{$object->items};
@@ -363,7 +363,7 @@ sub select_release_form {
     push (@rel_values, {'name'=>$text,'value'=>$id});
   }
  
-  my $form = EnsEMBL::Web::Form->new( 'select_release', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'select_release', "/Multi/$script", 'post' );
   
   $form->add_element( 'type' => 'SubHeader', 'value' => 'Select a release');
   $form->add_element(
@@ -523,7 +523,7 @@ sub edit_item_form {
   my $script = $object->script;
   my $id = $object->param('news_item_id');
                                                                                 
-  my $form = EnsEMBL::Web::Form->new( 'edit_item', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'edit_item', "/Multi/$script", 'post' );
   $form->add_element( 'type' => 'SubHeader', 'value' => 'Edit a news item');
   item_form($form, $object);
   $form->add_element( 'type' => 'Hidden', 'name' => 'news_item_id', 'value' => $id);
@@ -548,7 +548,7 @@ sub add_item_form {
   my $species = $object->species;
   my $script = $object->script;
                                                                                 
-  my $form = EnsEMBL::Web::Form->new( 'add_item', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'add_item', "/Multi/$script", 'post' );
   $form->add_element( 'type' => 'SubHeader', 'value' => 'Add a news item');
   item_form($form, $object);
   $form->add_element( 'type' => 'Submit', 'name' => 'submit', 'value' => 'Preview');
@@ -627,7 +627,7 @@ sub preview_item_form {
   my $script = $object->script;
   my $species = $object->species;
 
-  my $form = EnsEMBL::Web::Form->new( 'preview_item', "/$species/$script", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'preview_item', "/Multi/$script", 'post' );
   
   my %item = %{${$object->items}[0]};
   my $title = $item{'title'};
