@@ -394,15 +394,17 @@ sub item_form {
   my $news_cat_id = 2; # data
   my $species = []; # applies to all species
   my $priority = 0;
+  my $status = 'live';
 
   if (scalar(@{$object->items}) == 1 && $object->param('action') ne 'add') { # have already selected a single item to edit
-    my %item = %{${$object->items}[0]};
-    $title = $item{'title'};
-    $content = $item{'content'};
-    $release_id = $item{'release_id'};
-    $news_cat_id = $item{'news_cat_id'};
-    $species = $item{'species'};
-    $priority = $item{'priority'};
+    my %item        = %{${$object->items}[0]};
+    $title          = $item{'title'};
+    $content        = $item{'content'};
+    $release_id     = $item{'release_id'};
+    $news_cat_id    = $item{'news_cat_id'};
+    $species        = $item{'species'};
+    $priority       = $item{'priority'};
+    $status         = $item{'status'};
   }
 
   # create array of release names and values
@@ -431,7 +433,14 @@ sub item_form {
     $name = $$cat{'news_cat_name'};
     push (@cat_values, {'name'=>$name,'value'=>$id});
   }
-                                                                                
+
+  ## array of status names and values
+  my @status_values = (
+                        {'name'=>'Draft', 'value'=>'draft'}, 
+                        {'name'=>'Live',  'value'=>'live'}, 
+                        {'name'=>'Dead',  'value'=>'dead'},
+  );
+
   $form->add_element(
     'type'     => 'DropDown',
     'select'   => 'select',
@@ -459,6 +468,15 @@ leave the checkboxes blank');
     'label'    => 'News Category',
     'values'   => \@cat_values,
     'value'    => $news_cat_id,
+  );
+  $form->add_element(
+    'type'     => 'DropDown',
+    'select'   => 'select',
+    'required' => 'yes',
+    'name'     => 'status',
+    'label'    => 'Publication Status',
+    'values'   => \@status_values,
+    'value'    => $status,
   );
   $form->add_element(
     'type'     => 'Int',
@@ -545,13 +563,14 @@ sub preview_item {
   my %all_species = %{$object->all_spp};
   my @releases = @{$object->releases};
                                                                                 
-  my %item = %{@{$object->items}[0]};
-  my $title = $item{'title'};
-  my $content = $item{'content'};
-  my $release_id = $item{'release_id'};
+  my %item          = %{@{$object->items}[0]};
+  my $title         = $item{'title'};
+  my $content       = $item{'content'};
+  my $release_id    = $item{'release_id'};
   my $news_cat_name = $item{'news_cat_name'};
-  my $species = $item{'species'};
-  my $priority = $item{'priority'};
+  my $species       = $item{'species'};
+  my $priority      = $item{'priority'};
+  my $status        = $item{'status'};
 
   my $species_list;
   if (scalar(@$species) > 0) {
@@ -580,9 +599,20 @@ sub preview_item {
 <p>$content</p>
 <p class="center">* * * * *</p>
 <p><strong>Priority: $priority</strong></p>
-<p>This item will be included in the news for:</p>
-$species_list
 );
+  my $status_msg;
+  if ($status eq 'dead') {
+    $status_msg = qq(<p><strong>This item has been marked 'dead' and will not appear on NewsView</strong>.</p>);
+  }
+  elsif ($status eq 'draft') {
+    $status_msg = qq(<p><strong>This item will not appear on NewsView until its status is updated to 'live'</strong>. Listed species:</p>\n$species_list);
+  }
+  else { 
+    $status_msg = qq(<p>This item will be included in the news for:</p>
+$species_list);
+  }
+  $html .= $status_msg; 
+
 
   $html .= $panel->form( 'preview_item' )->render();
   $html .= '</div>';
@@ -617,6 +647,7 @@ sub preview_item_form {
   $form->add_element( 'type' => 'Hidden', 'name' => 'news_cat_id', 'value' => $item{'news_cat_id'});
   $form->add_element( 'type' => 'Hidden', 'name' => 'news_cat_name', 'value' => $item{'news_cat_name'});
   $form->add_element( 'type' => 'Hidden', 'name' => 'priority', 'value' => $item{'priority'});
+  $form->add_element( 'type' => 'Hidden', 'name' => 'status', 'value' => $item{'status'});
   foreach my $sp (@{$item{'species'}}) {
     $form->add_element( 'type' => 'Hidden', 'name' => 'species', 'value' => $sp);
   }

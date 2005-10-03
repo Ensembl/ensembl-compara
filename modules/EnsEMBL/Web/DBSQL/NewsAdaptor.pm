@@ -124,7 +124,8 @@ sub fetch_items {
                 n.title          as title,
                 n.content        as content,
                 n.priority       as priority,
-                c.priority       as cat_order
+                c.priority       as cat_order,
+                n.status         as status
         FROM
                 news_item n,
                 news_cat c
@@ -175,6 +176,7 @@ sub fetch_items {
                 'content'       => $A[4],
                 'priority'      => $A[5],
                 'cat_order'     => $A[6],
+                'status'        => $A[7],
                 'species'       => $species,
                 'sp_count'      => $sp_count
             });
@@ -201,7 +203,8 @@ sub fetch_items {
                     n.title          as title,
                     n.content        as content,
                     n.priority       as priority,
-                    c.priority       as cat_order
+                    c.priority       as cat_order,
+                    n.status         as status
                 FROM
                     news_item n,
                     news_cat c
@@ -229,6 +232,7 @@ sub fetch_items {
                     'content'       => $A[4],
                     'priority'      => $A[5],
                     'cat_order'     => $A[6],
+                    'status'        => $A[7],
                     'species'       => '',
                     'sp_count'      => '0'
                     });
@@ -423,6 +427,7 @@ sub add_news_item {
     my $news_cat_id     = $item{'news_cat_id'};
     my $species         = $item{'species'};
     my $priority        = $item{'priority'};
+    my $status          = $item{'status'};
 
     # escape double quotes in text items
     $title =~ s/"/\\"/g;
@@ -437,7 +442,8 @@ sub add_news_item {
             title           = "$title",
             content         = "$content",
             news_cat_id     = "$news_cat_id",
-            priority        = "$priority"
+            priority        = "$priority",
+            status          = "$status"
         );
     my $sth = $self->db_write->prepare($sql);
     my $result = $sth->execute();
@@ -474,6 +480,7 @@ sub update_news_item {
     my $news_cat_id     = $item{'news_cat_id'};
     my $species         = $item{'species'};
     my $priority        = $item{'priority'};
+    my $status          = $item{'status'};
 
     my $sql = qq(
         UPDATE
@@ -484,7 +491,8 @@ sub update_news_item {
             title           = "$title",
             content         = "$content",
             news_cat_id     = "$news_cat_id",
-            priority        = "$priority"
+            priority        = "$priority",
+            status          = "$status"
         WHERE
             news_item_id = "$id"
         );

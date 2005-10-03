@@ -69,12 +69,13 @@ sub createObjects {
 
     my $form_item = {
         'news_item_id' => $self->param('news_item_id'),
-        'release_id' => $self->param('release_id'),
-        'title' => $self->param('title'),
-        'content' => $self->param('content'),
-        'news_cat_id' => $self->param('news_cat_id'),
-        'priority' => $self->param('priority'),
-        'species' => \@sp_array,
+        'release_id'   => $self->param('release_id'),
+        'title'        => $self->param('title'),
+        'content'      => $self->param('content'),
+        'news_cat_id'  => $self->param('news_cat_id'),
+        'priority'     => $self->param('priority'),
+        'status'       => $self->param('status'),
+        'species'      => \@sp_array,
         };
     push @$items, $form_item;
   }
