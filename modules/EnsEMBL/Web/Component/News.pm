@@ -124,6 +124,8 @@ sub show_news {
   my $prev_rel = 0;
 
   my @items = @{$object->items};
+
+  ## Get lookup hashes
   my $releases = $object->releases;
   my %rel_lookup;
   foreach my $rel_array (@$releases) {
@@ -145,8 +147,8 @@ sub show_news {
     @sorted_items = @items;
   }
   else {
-  # Do custom sort of data news
-  # 1. Sort into data and non-data news
+  ## Do custom sort of data news
+  ## 1. Sort into data and non-data news
   my (@sp_data, @other);
   for (my $i=0; $i<scalar(@items); $i++) {
     my $item_ref = ${$object->items}[$i];
@@ -164,14 +166,15 @@ sub show_news {
         push (@other, $item_ref);
     }
   }
-  # 2. Sort single-species data by species
+  ## 2. Sort single-species data by species
   my @sorted_data = sort
                     { $a->{'species'}[0] <=> $b->{'species'}[0] }
                     @sp_data;
-  # 3. Merge news items back into single array
+  ## 3. Merge news items back into single array
   @sorted_items = (@sorted_data, @other);
   }
 
+  ## output sorted news
   my $prev_sp = 0;
   my $prev_count = 0;
   my $ul_open = 0;
@@ -188,64 +191,59 @@ sub show_news {
     my $cat_name = $cat_lookup{$news_cat_id};
     my $species = $item{'species'};
     my $sp_count = $item{'sp_count'};
-    my $sp_id;
-    if (ref($species)) {
-        $sp_id = ${$species}[0];
-    }
-    elsif ($species) {
-        $sp_id = $species;
-    }
 
     if ($prev_rel != $release_id) {
         $html .= qq(<h2>Release $release_id ($rel_date)</h2>\n);
         $prev_cat = 0;
     }
 
-    # separate data news into species and generic
-    if ($sp_dir eq 'Multi' && $news_cat_id == 2 && $prev_cat == 0 && $sp_count == 1 ) {
-        if ($ul_open) {
-            $html .= "</ul>\n\n";
-            $ul_open = 0;
-        }
-        $html .= qq(<h3 class="boxed">Species News</h3>\n);
+    ## is it a new category?
+    if ($prev_cat != $news_cat_id) {
+        $html .= _output_cat_heading($news_cat_id, $cat_name);
     }
-    else {
-        if ( ($prev_cat != $news_cat_id) || ($sp_dir eq 'Multi' && $sp_count != 1 && $prev_count == 1) ) {
-            if ($ul_open) {
-                $html .= "</ul>\n\n";
-                $ul_open = 0;
+
+    if ($sp_dir eq 'Multi' && $news_cat_id == 2) {
+        my $sp_str = '';
+        if (ref($species) eq 'ARRAY') {
+            my $sp_count = scalar(@$species);
+            for (my $j=0; $j<$sp_count; $j++) {
+                $sp_str .= ', ' unless $j == 0;
+                (my $sp_name = $sp_lookup{$$species[$j]}) =~ s/_/ /g;
+                $sp_str .= "<i>$sp_name</i>";
             }
-            $html .= qq(<h3 class="boxed">$cat_name</h3>\n);
         }
-    }
-    if ($sp_dir eq 'Multi' && $news_cat_id == 2 && $sp_count && $sp_count < 2) {
-        unless ($sp_id == $prev_sp) {
-            if ($ul_open) {
-                $html .= "</ul>\n\n";
-                $ul_open = 0;
-            }
-            (my $sp_name = $sp_lookup{$sp_id}) =~ s/_/ /g;
-            $html .= qq(<h4 id="item$item_id"><i>$sp_name</i></h4>\n\n<ul class="spaced">\n);
-            $ul_open = 1;
+        else {
+            $sp_str = 'all species';
         }
-        $html .= qq(<li><strong>$title</strong><br />$content</li>\n);
+        $title .= qq# <span style="font-weight:normal">($sp_str)</span>#;
     }
-    else {
-        if ($ul_open) {
-            $html .= "</ul>\n\n";
-            $ul_open = 0;
-        }
-        $html .= "<h4>$title</h4><p>$content</p>";
-    }
+    
+    $html .= _output_story($title, $content);
 
     $prev_rel = $release_id;
     $prev_cat = $news_cat_id;
-    $prev_sp = $sp_id;
-    $prev_count = $sp_count;
   }
 
   $panel->print($html);
   return 1;
+}
+
+sub _output_cat_heading {
+    my ($cat_id, $cat_name) = @_;
+    my $html = qq(<h3 class="boxed" id="cat$cat_id">$cat_name</h3>\n);
+    return $html;
+}
+
+sub _output_story {
+    my ($title, $content) = @_;
+    
+    my $html = "<h4>$title</h4>\n";
+    if ($content !~ /^<p>/) { ## wrap bare content in a <p> tag
+        $content = "<p>$content</p>";
+    }
+    $html .= $content."\n\n";
+    
+    return $html;
 }
 
 #-----------------------------------------------------------------
