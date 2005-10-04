@@ -260,7 +260,7 @@ sub validate_types {
    my $compound_types = shift;
    my $user_types     = shift;
 
-   my %types;
+   my @types;
    foreach my $type( @$user_types ){  # user's input types
      # If it is a compound type, add the individual types to @$user_types array
      if( $compound_types->{$type} ){
@@ -269,12 +269,12 @@ sub validate_types {
      }
      $valid_types->{$type} or pod2usage("[*DIE] Invalid update type: $type\n\n" ) 
 && next;
-     $types{$type} = 1;  # add to %types if valid update
+     push @types, $type;
    }
 
-   scalar( keys %types ) or pod2usage("[*DIE] Need a valid type to dump" );
-   info (1, "Dumping types: ".(join  " ", keys %types));
-   return \%types;
+   scalar( @types ) or pod2usage("[*DIE] Need a valid type to dump" );
+   info (1, "Dumping types: ".(join  " ", @types));
+   return \@types;
  }
 #-------------------------------------------------------------------------
 

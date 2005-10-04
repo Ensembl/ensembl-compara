@@ -113,7 +113,10 @@ exit;
      );
 
    # Validate types
-   return utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
+   my $tmp = utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
+   my %return;
+   map { $return{$_} = 1} @$tmp;
+   return \%return;
  }
 
 #----------------------------------------------------------------------
