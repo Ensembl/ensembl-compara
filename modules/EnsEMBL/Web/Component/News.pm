@@ -570,7 +570,7 @@ leave the checkboxes blank');
   );
   $form->add_element( 'type' => 'Hidden', 'name' => 'update', 'value' => 'yes');
 
-  return true;
+  return 1;
 }
 
 #-----------------------------------------------------------------
