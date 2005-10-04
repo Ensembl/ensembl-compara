@@ -559,6 +559,8 @@ sub _parse {
   
       if( $tree->{'databases'}->{'ENSEMBL_COMPARA_MULTIPLE'} ){
         $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA_MULTIPLE' );
+      } elsif(  $tree->{'databases'}->{'ENSEMBL_COMPARA'} ) {
+        $dbh = $self->db_connect( $tree, 'ENSEMBL_COMPARA' );
       }
       if($dbh) {
         my %sections = (
