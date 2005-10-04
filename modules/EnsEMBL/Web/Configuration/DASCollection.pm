@@ -111,6 +111,7 @@ sub display_wizard_status {
     } elsif ($sd eq 'Back') {
         $step --;
     }
+
     my %DASTypeLabel = (
                         'das_url'  => 'URL based source',
                         'das_file' => 'Data upload', 
@@ -124,6 +125,7 @@ sub display_wizard_status {
         my $hkey = "DAS$key";
         $source_conf{$key} = $object->param($hkey);
     }
+    push @{$source_conf{enable}} , $object->param("DASenable");
 
     if (defined( my $usersrc = $object->param("DASuser_source") || undef)) {
 	$source_conf{domain} = $object->species_defs->ENSEMBL_DAS_UPLOAD_SERVER.'/das';
@@ -171,6 +173,8 @@ sub display_wizard_status {
     my %ScoreStr = (
 		    'n' => 'No',
 		    'h' => 'Histogram' );
+
+
 
     if (defined (my $dsw_name = $source_conf{name})) {
 	my $dsw_label = $source_conf{label};
