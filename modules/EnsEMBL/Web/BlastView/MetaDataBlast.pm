@@ -626,6 +626,7 @@ sub query_processing_callback{
   my $method = $cgi->param('method');
 
   my %max_lengths = ( SSAHA   => 50000,
+		      SSAHA2  => 50000,
 		      DEFAULT => 200000 );
   my $max_length=$max_lengths{$method} || $max_lengths{DEFAULT};
   my $max_number=30;
@@ -1050,6 +1051,7 @@ sensitivityConf[\"%s\"][\"%s\"] = 1;";
       push @sensitivities, 'SHORT';
     }
     elsif( uc($me) eq 'SSAHA' ){ @sensitivities = qw( LOW EXACT ) }
+    elsif( uc($me) eq 'SSAHA2' ){ @sensitivities = qw( LOW EXACT ) }
     foreach my $sens( @sensitivities ){
       $js_sensitivity_conf .=sprintf( $js_sens_ary2, $me, $sens )
     }
