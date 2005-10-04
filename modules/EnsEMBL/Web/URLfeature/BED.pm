@@ -6,15 +6,15 @@ use vars qw(@ISA);
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
 sub hstrand  { my $self = shift; return @{$self->{'__raw__'}}>5 ? $self->_strand( $self->{'__raw__'}[5] ) : -1 ; }
-sub rawstart{ my $self = shift; return $self->{'__raw__'}[1]; }
-sub rawend  { my $self = shift; return $self->{'__raw__'}[2]; }
+sub rawstart{ my $self = shift; return $self->{'__raw__'}[1] + 1; }
+sub rawend  { my $self = shift; return $self->{'__raw__'}[2] + 1; }
 
 sub id      { my $self = shift; return $self->{'__raw__'}[3]; }
 
 sub slide   {
   my $self = shift; my $offset = shift;
-  $self->{'start'} = $self->{'__raw__'}[1]+ $offset;
-  $self->{'end'}   = $self->{'__raw__'}[2]+ $offset;
+  $self->{'start'} = $self->{'__raw__'}[1]+ $offset + 1;
+  $self->{'end'}   = $self->{'__raw__'}[2]+ $offset + 1;
 }
 
 sub cigar_string {
