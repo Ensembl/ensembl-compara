@@ -2069,7 +2069,7 @@ sub populate_result_summary{
         $CGI->param( -name=>"view_$type", 
                      -value=>[@defaults] );
       }
-      if( $CGI->param('method') eq 'SSAHA' ){
+      if( $CGI->param('method') eq 'SSAHA' || $CGI->param('method') eq 'SSAHA2' ){
         $CGI->param( -name=>'view_stats',  
                      -value=>[ qw( score identity length ) ] );
       }
