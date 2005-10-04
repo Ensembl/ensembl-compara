@@ -49,7 +49,11 @@ sub init {
         [ 'opt_intronic'              => 'Intronic variations' ],
         [ 'opt_downstream'            => 'Downstream variations' ],
         [ 'opt_upstream'              => 'Upstream variations' ],
-        [ 'opt_intergenic'            => 'Intergenic variations' ]
+        [ 'opt_intergenic'            => 'Intergenic variations' ],
+        [ 'opt_essential_splice_site' => 'Essential splice site' ],
+        [ 'opt_splice_site'           => 'Splice site' ],
+        [ 'opt_stop_lost',            => 'Stop lost' ],
+        [ 'opt_stop_gained',          => 'Stop gained' ],
       ],
       'features' => [
         [ 'GSV_pfam'    => 'Pfam domains' ],

@@ -37,6 +37,10 @@ sub init {
     opt_downstream             on
     opt_upstream               on
     opt_intergenic             on
+    opt_essential_splice_site  on
+    opt_splice_site            on
+    opt_stop_gained            on
+    opt_stop_lost              on
   ));
 }
 1;
