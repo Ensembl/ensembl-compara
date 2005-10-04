@@ -93,6 +93,16 @@ sub file_type {
     return $self->{_file_type};
 }
 
+# Sets / returns  the mapping type of the uploaded data. So far only ensembl_location is supported
+sub mapping {
+    my $self = shift;
+    if (defined( my $value = shift)) {
+	$self->{_mapping} = $value;
+    }
+    return $self->{_mapping};
+}
+
+
 # Sets / returns  DAS source domain
 sub domain {
     my $self = shift;
@@ -141,9 +151,10 @@ sub parse {
 # feature type and feature subtype can consist of multiple words - so we preserve single spaces, then split the line by tabs or multiple spaces then bring back the single spaces ..
 # we have to do that because sometimes people cut-and-paste the date from the web pages and tabs get subsituted with multiple spaces in the process .. 
 
-      $line =~ s/\t/$BR/g;
+      $line =~ s/\t\s*/$BR/g;
       $line =~ s/(\w)(\s)(\w)/$1_$3/g;
       $line =~ s/\s+/$BR/g;
+      $line =~ s/$BR$BR/$BR/g;
 
 #      print "3b: $line<br>";
       $line =~ s/_/ /g;
@@ -179,6 +190,7 @@ sub parse {
 #  }
 
   $self->file_type('EUF');
+  $self->mapping('ensembl_location');
   return;
 }
   
