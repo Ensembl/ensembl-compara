@@ -106,8 +106,10 @@ sub getEnsemblMapping {
 	    $smap = 'markersymbol';
 	} elsif ($realm eq 'EntrezGene') {
 	    $smap = 'entrezgene';
-	} elsif ($realm eq 'IPI') {
-	    $smap = 'ipi';
+	} elsif ($realm eq 'IPI_Accession') {
+	    $smap = 'ipi_acc';
+	} elsif ($realm eq 'IPI_ID') {
+	    $smap = 'ipi_id';
 	} 
     } elsif ($base eq 'Protein Sequence') {
 	if ($realm eq 'UniProt') {

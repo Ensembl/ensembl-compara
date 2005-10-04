@@ -22,7 +22,8 @@ my %DASMappingType = (
   'markersymbol'          => "MarkerSymbol ID",
   'mgi'                   => 'MGI Accession ID',
   'entrezgene'            => 'EntrezGene',
-  'ipi'                   => 'IPI'
+  'ipi_acc'               => 'IPI Accession',
+  'ipi_id'                => 'IPI ID',
 );
 
 
@@ -554,7 +555,8 @@ sub das_wizard_2 {
          'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
          'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
          'entrezgene'            => 'Entrez Gene ID',
-	 'ipi'                   => 'IPI',
+	 'ipi_acc'               => 'IPI Accession',
+	 'ipi_id'                => 'IPI ID',
          );
 
 
@@ -797,7 +799,9 @@ sub add_das_registry {
     'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
     'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
     'entrezgene'            => "Entrez Gene",
-    'ipi'                   => 'IPI',
+    'ipi_acc'               => 'IPI Accession',
+    'ipi_id'                => 'IPI ID',
+
   );
     
   if (defined($SpeciesID{$ENV{'ENSEMBL_SPECIES'}})) {
