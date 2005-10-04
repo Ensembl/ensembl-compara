@@ -420,6 +420,8 @@ sub spreadsheet_exons {
     {'key' => 'Strand',     'title' => 'Strand', 'width' => '10%', 'align' => 'center' },
     {'key' => 'Start', 'title' => 'Start', 'width' => '15%', 'align' => 'right' },
     {'key' => 'End', 'title' => 'End', 'width' => '15%', 'align' => 'right' },
+    {'key' => 'StartPhase', 'title' => 'Start Phase', 'width' => '15%', 'align' => 'center' },
+    {'key' => 'EndPhase', 'title' => 'End Phase', 'width' => '15%', 'align' => 'center' },
     {'key' => 'Length', 'title' => 'Length', 'width' => '10%', 'align' => 'right' },
     {'key' => 'Sequence', 'title' => 'Sequence', 'width' => '20%', 'align' => 'left' } 
   );
@@ -648,7 +650,9 @@ sub spreadsheet_exons {
                         'Strand'    => $strand,
                         'Start'     => $object->thousandify( $exonA_start ),
                         'End'       => $object->thousandify( $exonA_end ),
-                        'Length'    => $object->thousandify( $seqlen ).' bp',
+                        'StartPhase' => $exonA->phase    >= 0 ? $exonA->phase     : '-',
+                        'EndPhase'  => $exonA->end_phase >= 0 ? $exonA->end_phase : '-',
+                        'Length'    => $object->thousandify( $seqlen ),
                         'Sequence'  => qq(<font face="courier" color="black">$seq</font>) };
     $panel->add_row( $exon_info );
     if( !$only_exon && $exonB ) {
@@ -686,7 +690,7 @@ sub spreadsheet_exons {
                          'Strand'    => $strand,
                          'Start'     => $object->thousandify( $intron_start ),
                          'End'       => $object->thousandify( $intron_end ),
-                         'Length'    => $object->thousandify( $intron_len ).' bp',
+                         'Length'    => $object->thousandify( $intron_len ),
                          'Sequence'  => qq(<font face="courier" color="blue">$intron_seq</font>)};
       $panel->add_row( $intron_info );
     }
