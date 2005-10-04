@@ -61,7 +61,7 @@ sub render {
     foreach my $cell ( @{$row->{'cols'}} ) {
       my $extra = ( $cell->{'class'} ? qq( class="$cell->{class}") : '' ).
                   ( $cell->{'style'} ? qq( style="$cell->{style}") : '' );
-      $output .= qq(\n    <$tag$extra>@{[$cell->{'value'}||'&nbsp;']}</$tag>);
+      $output .= qq(\n    <$tag$extra>@{[ (defined($cell->{'value'}) && $cell->{'value'}ne'' ) ? $cell->{'value'}:'&nbsp;']}</$tag>);
     }
 
     $output .= qq(\n  </tr>);
