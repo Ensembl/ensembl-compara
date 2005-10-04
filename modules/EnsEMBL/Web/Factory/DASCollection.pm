@@ -353,6 +353,11 @@ sub createObjects {
 	} else {
 	    my $err = 0;
 	    my %das_data;
+
+	    if ($self->param("DASsourcetype") eq 'das_file') {
+		$self->param("DAStype", "ensembl_location");
+	    }
+
 	    foreach my $key( @confkeys ){
 		$das_data{$key} = $self->param("DAS${key}") || ( warn( "_error_das_$key: Need a $key!") &&  $self->param( "_error_das_$key", "Need a $key!" ) && $err++ );
 	    }
@@ -492,6 +497,8 @@ sub getEnsemblMapping {
 	    $smap = 'markersymbol';
 	} elsif ($realm eq 'EntrezGene') {
 	    $smap = 'entrezgene';
+	} elsif ($realm eq 'IPI') {
+	    $smap = 'ipi';
 	} 
     } elsif ($base eq 'Protein Sequence') {
 	if ($realm eq 'UniProt') {

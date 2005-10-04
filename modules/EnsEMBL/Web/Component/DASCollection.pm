@@ -21,7 +21,8 @@ my %DASMappingType = (
   'hugo'                  => "HUGO ID",
   'markersymbol'          => "MarkerSymbol ID",
   'mgi'                   => 'MGI Accession ID',
-  'entrezgene'            => 'EntrezGene'
+  'entrezgene'            => 'EntrezGene',
+  'ipi'                   => 'IPI'
 );
 
 
@@ -242,7 +243,6 @@ sub das_wizard {
     if (! defined($step)) {
         $step = $object->param('DASWizardStep');
     }
-
     return unless (defined ($step));
     if (defined(my $sd = $object->param('_das_Step'))) {
     if ($sd eq 'Next') {
@@ -341,7 +341,7 @@ sub das_wizard {
     }
  
     $panel->add_columns({ 'key' => 'info', 'title' => ' '    });
-#    $panel->add_row( {"info"=>$html} );
+    $panel->add_row( {"info"=>$html} );
     $panel->add_row( {"info"=> $form->render()} );
 
     return 1;
@@ -448,7 +448,7 @@ sub das_wizard_2 {
     my ($form, $source_conf, $object, $step_ref, $error) = @_;
 
     my $error_section;
-    if ($source_conf->{sourcetype} eq 'das_file') {
+    if ($source_conf->{sourcetype} eq 'das_file' && (! $object->param("DASdsn"))) {
     my $user_email = $object->param('DASuser_email');
     my $user_password = $object->param('DASuser_password');
     my $user_pastedata = $object->param('DASpaste_data');
@@ -462,6 +462,8 @@ sub das_wizard_2 {
 
     use EnsEMBL::Web::DASUpload;
     my $du  = EnsEMBL::Web::DASUpload->new($object);
+    my $set_mapping;
+
     if (length($user_pastedata) > 0) {
         $du->data($user_pastedata);
     } else {
@@ -478,10 +480,12 @@ sub das_wizard_2 {
             if ( (my $enum = $du->update_dsn($user_dsn, $user_password, $user_action)) > 0) {
                 my $domain = $du->domain;
                 my $dsn = $du->dsn;
+		$set_mapping = $du->mapping;
                 $source_conf->{protocol} = 'http';
                 $source_conf->{domain} = $domain;
                 $source_conf->{dsn} = $dsn;
-                
+		push @{$source_conf->{mapping}} , $set_mapping;
+		$object->param('DAStype', $set_mapping);
                 $object->param('DASprotocol', 'http');
                 $object->param('DASdomain', $domain);
                 $object->param('DASdsn', $dsn);
@@ -507,7 +511,9 @@ sub das_wizard_2 {
             $source_conf->{protocol} = 'http';
             $source_conf->{domain} = $domain;
             $source_conf->{dsn} = $dsn;
-            
+	    $set_mapping = $du->mapping;
+            push @{$source_conf->{mapping}} , $set_mapping;
+	    $object->param('DAStype', $set_mapping);
             $object->param('DASprotocol', 'http');
             $object->param('DASdomain', $domain);
             $object->param('DASdsn', $dsn);
@@ -547,7 +553,8 @@ sub das_wizard_2 {
          'ensembl_transcript'    => "Ensembl Transcript ID",
          'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
          'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
-         'entrezgene' => 'Entrez Gene ID'
+         'entrezgene'            => 'Entrez Gene ID',
+	 'ipi'                   => 'IPI',
          );
 
 
@@ -568,6 +575,10 @@ sub das_wizard_2 {
 
     if ($source_conf->{sourcetype} eq 'das_registry') {
         $form->add_element('type'=>'Information', "label"=> 'Mapping type:', "value"=> 'Provided by Registry');
+
+    } elsif ($source_conf->{sourcetype} eq 'das_file') {
+	my $p = $source_conf->{mapping}->[0]; # ATM in case of upload the mapping type is always ensembl_location
+        $form->add_element('type'=>'Information', "label"=> 'Mapping type:', "value"=> $DASMapping{$p});
     } else {
         my @mvalues;
 # grep is to filter out undef elements
@@ -785,7 +796,8 @@ sub add_das_registry {
     'ensembl_transcript'    => "Ensembl Transcript ID",
     'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
     'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
-    'entrezgene' => "Entrez Gene"
+    'entrezgene'            => "Entrez Gene",
+    'ipi'                   => 'IPI',
   );
     
   if (defined($SpeciesID{$ENV{'ENSEMBL_SPECIES'}})) {
