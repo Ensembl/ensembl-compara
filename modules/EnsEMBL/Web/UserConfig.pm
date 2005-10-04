@@ -812,7 +812,7 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_cdna_align',      'cDNA-align. (Kyoto)', $POS++, @_ );
-  $self->add_new_track_est( 'expression_pattern', 'Expression pattern', $POS++, 'URL_KEY' => 'DR_EXPRESSION_PATTERN', 'SUBTYPE' => 'default', @_ );
+  $self->add_new_track_est( 'expression_pattern', 'Expression pattern', $POS++, 'URL_KEY' => 'EXPRESSION_PATTERN', 'SUBTYPE' => 'default', @_ );
   my @EST_DB_ESTS = (
     [ 'bee_est',               'Bee EST' ],
     [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
