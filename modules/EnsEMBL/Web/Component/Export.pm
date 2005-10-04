@@ -191,11 +191,11 @@ sub flat_form {
     [ 'genscan'    => 'Prediction features (genscan)' ],
     [ 'contig'     => 'Contig Information' ],
   );
-  push @options, [ 'variation'  => 'Variation features' ] if 1;
-  push @options, [ 'marker'     => 'Marker features' ] if 1;
+  push @options, [ 'variation'  => 'Variation features' ]     if $object->species_defs->databases->{'ENSEMBL_VARIATION'};
+  push @options, [ 'marker'     => 'Marker features' ]        if $object->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'marker' });
   push @options, [ 'gene'       => 'Gene Information' ];
-  push @options, [ 'vegagene'   => 'Vega Gene Information' ] if 1;
-  push @options, [ 'estgene'    => 'EST Gene Information' ] if 1;
+  push @options, [ 'vegagene'   => 'Vega Gene Information' ]  if $object->species_defs->databases->{'ENSEMBL_VEGA'};
+  push @options, [ 'estgene'    => 'EST Gene Information' ]   if $object->species_defs->get_table_size({ -db => 'ENSEMBL_EST', -table => 'gene' });
   my %checked = map { $_ => 'yes' } $object->param('options');
   $form->add_element( 'type' => 'MultiSelect',
     'class'  => 'radiocheck1col',

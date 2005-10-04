@@ -58,13 +58,15 @@ use vars qw( $PAGE_COLOR $BORDER_COLOR $MAIN_BG_COLOR
 	     $DARK_BG_COLOR $VDARK_BG_COLOR );
 
 my $palette_ref = $SPECIES_DEFS->ENSEMBL_COLOURS || {};
+my $palette_ref = $SPECIES_DEFS->ENSEMBL_STYLE || {};
+
 my %palette = %{$palette_ref};
 map{ $palette{$_} = "#".$palette{$_} } keys %palette;
 $PAGE_COLOR     = '#FFFFFF';
 $BORDER_COLOR   = '#999999';
-$MAIN_BG_COLOR  = $palette{background1} || '#FFFFFF';
-$DARK_BG_COLOR  = $palette{background0} || '#FFFFFF';
-$VDARK_BG_COLOR = $palette{background0} || '#FFFFFF';
+$MAIN_BG_COLOR  = $palette{BACKGROUND3} || '#FFFFFF';
+$DARK_BG_COLOR  = $palette{BACKGROUND1} || '#FFFFFF';
+$VDARK_BG_COLOR = $palette{BACKGROUND1} || '#FFFFFF';
 
 use constant TABLE => qq(
 <TABLE cellspacing=0 cellpadding=0 border=0>%s
