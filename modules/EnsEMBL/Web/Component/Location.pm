@@ -935,7 +935,7 @@ sub alignsliceviewbottom {
 	$type = uc($type);
 	my %shash = ($object->species_defs->multi($type, ucfirst($spe)));
 	push @sarray, keys %shash;
-	$comparadb = $object->database('compara_multiple');
+	$comparadb = $object->database('compara'); # 'compara_multiple');
     }
 
     my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
@@ -1069,7 +1069,7 @@ sub alignsliceviewzoom {
 	 $type = uc($type);
 	 my %shash = ($object->species_defs->multi($type, ucfirst($spe)));
 	 push @sarray, keys %shash;
-	 $comparadb = $object->database('compara_multiple');
+	 $comparadb = $object->database('compara'); #('compara_multiple');
      }
 
     my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");

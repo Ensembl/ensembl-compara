@@ -93,7 +93,7 @@ sub usage_AlignSlice {
 
 sub createObjects_AlignSlice {
   my $self            = shift;
-  my $databases       = $self->DBConnection->get_databases( 'core', 'compara', 'compara_multiple' );
+  my $databases       = $self->DBConnection->get_databases( 'core', 'compara' ); #, 'compara_multiple' );
 
   my ($seq_region_name, $start, $end) = ($self->param('chr'), $self->param('bp_start'), $self->param('bp_end'));
 
@@ -120,7 +120,7 @@ sub createObjects_AlignSlice {
       $type = uc($type);
       my %shash = ($self->species_defs->multi($type, ucfirst($spe)));
       push @sarray, keys %shash;
-      $comparadb = $databases->{'compara_multiple'};
+      $comparadb = $databases->{'compara'}; # $databases->{'compara_multiple'};
   }
 
   my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");

@@ -57,6 +57,33 @@ sub context_menu {
     'title' => "BioMart - export Vega gene features in $header",
     'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
 
+  my %shash = ( $obj->species_defs->multi('BLASTZ_NET',$species) );
+  my @species = keys %shash;
+  my @options_as = ();
+  foreach my $SPECIES (@species) {
+    (my $sp = $SPECIES ) =~ s/_\d+//;
+    my $KEY = lc($SPECIES).'_compara_pairwise';
+    push @options_as, {
+      'text' => "... <em>$sp</em>", 'raw' => 1,
+      'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species, $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
+    };
+  }
+  foreach my $type (qw(MLAGAN) ) {
+    my %shash2 = ( $obj->species_defs->multi($type, $species) );
+    if (%shash2) {
+      my $KEY = lc($species).'_compara_'.lc($type);
+      my $label = sprintf("$type (+%d species)", scalar(keys(%shash2)));
+      push @options_as, {
+        'text' => "... $label", 'raw' => 1,
+        'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
+      };
+    }
+  }
+  if( @options_as ) {
+    $menu->add_entry( $flag, 'text' => "View alignment with ...", 'href' => $options_as[0]{'href'},
+      'options' => \@options_as, 'title' => "AlignSliceView - graphical view of alignment"
+    );
+  }
   my %species = ( map { $obj->species_defs->multi($_,$species) } qw(BLASTZ_RAW BLASTZ_NET BLASTZ_RECIP_NET PHUSION_BLASTN TRANSLATED_BLAT BLASTZ_GROUP) );
   my @options = ();
   foreach( sort keys %species ) {
