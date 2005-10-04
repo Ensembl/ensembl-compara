@@ -49,7 +49,8 @@ sub init {
       # Skip protein-wide features (GeneDAS - tabulated elsewhere )
       # GeneDAS Identified by DAS segment id eq DAS feature id
 #      if( $feat->das_segment->ref() eq $feat->das_id() ) { next; }	
-		  my $type = $feat->das_type_id() || 'UNKNOWN';
+#		  my $type = $feat->das_type_id() || 'UNKNOWN';
+		  my $type = $feat->das_type->label || 'UNKNOWN';
 
 		  if ( ($feat->das_type_id() =~ /^(contig|component|karyotype)$/i) || ( $feat->das_type_id() =~ /^(contig|component|karyotype):/i) || (! $feat->das_end() )) {
 				$skipped_features = 1;

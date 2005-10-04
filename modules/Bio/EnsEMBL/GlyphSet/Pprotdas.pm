@@ -25,6 +25,7 @@ sub init_label {
   my $print_label = ( length($text) > ( $numchars - $indent ) ? 
 		      substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
 		      $text );
+
   $print_label =  ' ' x $indent . $print_label;
   my $label = new Sanger::Graphics::Glyph::Text
     ( { 'text'      => $print_label,
@@ -72,9 +73,9 @@ sub _init {
     foreach my $key (keys %hash) {
 	my @row  = @{$hash{$key}};
 	my $desc = $row[0]->das_feature_label();
-		
+
 	# Zmenu
-	my $zmenu = { 'caption' => $row[0]->das_type(),
+	my $zmenu = { 'caption' => $row[0]->das_type->label,
 		      "01:".$key      => $row[0]->das_link() || undef };
 	if( my $m = $row[0]->das_method ){ $zmenu->{"02:Method: $m"} = undef }
 	if( my $n = $row[0]->das_note   ){ $zmenu->{"03:Note: $n"  } = undef }
