@@ -500,7 +500,7 @@ $self->{'general'}->{'cytoview'} = {
       'dep'       => 9999,
       'navigation'  => 'on',
       'navigation_threshold' => '2000',
-      'threshold'   => '2000',
+      'threshold'   => '200000',
     },
 
   'bacs' => {
