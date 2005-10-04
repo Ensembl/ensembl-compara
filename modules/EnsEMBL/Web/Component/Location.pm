@@ -309,7 +309,6 @@ sub ideogram {
      $wuc->set_width( $object->param('image_width') );
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
   red_box( $wuc, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
-
   my $image    = $object->new_image( $slice, $wuc );
      $image->set_button( 'form',
        'name'   => 'click',
@@ -352,6 +351,7 @@ sub contigviewtop {
      $wuc->set_width(       $object->param('image_width') );
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
   red_box( $wuc, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
+
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->set_button( 'form',
        'name'   => 'click',
@@ -1238,13 +1238,16 @@ sub alignsliceviewtop {
     }
 
      my $image    = $object->new_image( $slice, $wuc, $object->highlights );
+ 
      $image->set_button( 'form',
                       'name'   => 'click',
                        'id'     => 'click_top',
                        'URL'    => "/@{[$object->species]}/@{[$object->script]}",
                        'hidden' => {
           'click_left'        => int( $wuc->transform->{'translatex'} ),
-          'click_right'       => int( $wuc->transform->{'scalex'} * $object->seq_region_length + int( $wuc->transform->{'translatex'} ) ),
+          'click_right'       => int( $wuc->transform->{'scalex'} *
+($panel->option('end')-$panel->option('start')+1)
+ + int( $wuc->transform->{'translatex'} ) ),
           'seq_region_strand' => $object->seq_region_strand,
           'seq_region_left'   => $panel->option('start'),
           'seq_region_right'  => $panel->option('end'),
