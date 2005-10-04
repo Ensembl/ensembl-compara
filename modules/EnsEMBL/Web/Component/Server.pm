@@ -296,8 +296,8 @@ sub urlsource_form {
   my $script = $object->param( 'script' );
   my $form = EnsEMBL::Web::Form->new( 'urlsource', "/@{[$object->species]}/$script", 'get' );
   $form->add_attribute( 'onSubmit', sprintf(
-    qq(if(on_submit(%s_vars)) { window.opener.location='/%s/contigview?l=%s&c=%s&w=%s&h=%s&data_URL='+this.data_URL.value; window.close(); return 1 } else { return 0 }),
-    'urlsource', $object->species, $object->param('l'), $object->param('c'), $object->param('w'), CGI::escapeHTML( join('|',$object->param('h'),$object->param('highlight') ) )
+    qq(if(on_submit(%s_vars)) { window.opener.location='/%s/%s?l=%s&c=%s&w=%s&h=%s&data_URL='+this.data_URL.value; window.close(); return 1 } else { return 0 }),
+    'urlsource', $object->species, $script, $object->param('l'), $object->param('c'), $object->param('w'), CGI::escapeHTML( join('|',$object->param('h'),$object->param('highlight') ) )
   ) );
   $form->add_element(
     'type'  => 'Information',
