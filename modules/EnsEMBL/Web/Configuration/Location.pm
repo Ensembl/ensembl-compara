@@ -235,11 +235,18 @@ sub cytoview {
     $bottom->add_option( 'red_edge', 'yes' );
     $ideo->add_option(   'red_box' , [ $obj->seq_region_start, $obj->seq_region_end ] );
   }
+  my @URL_configs;
+  my $URL    = $obj->param('data_URL');
+  my @H = map { /^URL:(.*)/ ? $1 : () } @{ $obj->highlights( $URL ? "URL:$URL" : () ) };
+
   $bottom->add_components(qw(
     menu  EnsEMBL::Web::Component::Location::cytoview_menu
     nav   EnsEMBL::Web::Component::Location::cytoview_nav
     image EnsEMBL::Web::Component::Location::cytoview
   ));
+  if( $obj->param('panel_bottom') ne 'off' ) {
+    push @URL_configs, $obj->user_config_hash( 'cytoview' ) if @H;
+  }
   $self->add_panel( $bottom );
   if( $obj->species eq 'Homo_sapiens' || $obj->species eq 'Mus_musculus' ) {
     my $panel_form = $self->new_panel( '',
@@ -249,6 +256,19 @@ sub cytoview {
     $self->add_form( $panel_form, qw(misc_set EnsEMBL::Web::Component::Location::misc_set_form) );
     $panel_form->add_components(qw(misc_set EnsEMBL::Web::Component::Location::misc_set));
     $self->add_panel( $panel_form );
+  }
+  if( @URL_configs ) { ## We have to draw on URL tracks...?
+    foreach my $entry ( @H ) {
+      my $P = new EnsEMBL::Web::URLfeatureParser( $obj->species_defs, $entry );
+      $P->parse_URL;
+      foreach my $K ( keys %{$P->{'tracks'}} ) {
+        foreach( @URL_configs ) {
+          warn "pushed $_ $K";
+          push @{$_->{'_managers'}->{'urlfeature'}} , $K;
+          $_->{'__url_source_data__'}{$K} = $P->{'tracks'}{$K};
+        }
+      }
+    }
   }
   $self->{page}->set_title( "Overview of features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
 }
