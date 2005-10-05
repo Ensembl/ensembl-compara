@@ -967,6 +967,10 @@ sub multi {
   return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} && $CONF->{'_multi'}{$type}{$species} ? %{$CONF->{'_multi'}{$type}{$species}} : ();
 }
 
+sub multiX {
+  my( $self, $type ) = @_;
+  return $CONF->{'_multi'} && $CONF->{'_multi'}{$type} ? %{$CONF->{'_multi'}{$type}} : ();
+}
 
 #----------------------------------------------------------------------
 

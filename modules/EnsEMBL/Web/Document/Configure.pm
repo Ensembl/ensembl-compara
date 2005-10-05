@@ -26,7 +26,7 @@ sub common_menu_items {
     );
   }
 ## Check martview is available...
-  if( $doc->species_defs->multi('marts') ) {
+  if( $doc->species_defs->multiX('marts') ) {
     $doc->menu->add_entry( 'whattodo',
       'href'=>"/$species_m/martview",
       'text'=>'Data mining [BioMart]',

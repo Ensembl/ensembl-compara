@@ -11,9 +11,9 @@ $self->{'_das_offset'} = '5080';
 
 $self->{'general'}->{'cytoview'} = {
  '_artefacts' => [qw(chr_band scalebar ruler stranded_contig gene_legend marker ntcontigs fosmid_map
-      bac_map supercontigs tilepath cloneset_37k cloneset_1mb cloneset_32k encode cloneset
+      supercontigs tilepath cloneset_37k cloneset_1mb cloneset_32k encode 
       bacends bacs nod_bacs bac_bands qtl
-      repeat_lite  tilepath2 missing 
+      repeat_lite missing 
       haplotype_links gap 
       assemblyexception
       blast_new redbox ) ],
@@ -46,7 +46,7 @@ $self->{'general'}->{'cytoview'} = {
     ],
     'options' => [
       [ 'fosmid_map'     => 'Fosmid map' 		],
-      [ 'bac_map'     => 'BAC map' 		],
+#      [ 'bac_map'     => 'BAC map' 		],
       [ 'nod_bacs'    => 'Nod BACs'       ],
       [ 'bac_bands'     => 'Band BACs'       ],
       [ 'haplotype_links'    => 'Haplotype blocks'       ],
@@ -58,13 +58,13 @@ $self->{'general'}->{'cytoview'} = {
       [ 'stranded_contig' => 'Contigs'       ],
       [ 'ruler'       => 'Ruler'       ],
       [ 'scalebar'    => 'Scale Bar'     ],
-      [ 'cloneset'     => '1Mb Cloneset'    ],
+#      [ 'cloneset'     => '1Mb Cloneset'    ],
       [ 'cloneset_1mb' => '1Mb Cloneset'    ],
       [ 'cloneset_37k' => '37k Cloneset'    ],
       [ 'cloneset_32k' => '32k Cloneset'    ],
       [ 'encode'       => 'Encode regions'  ],
       [ 'tilepath'    => 'Tilepath'      ],
-      [ 'tilepath2'     => 'Acc. BAC clones'     ],
+#      [ 'tilepath2'     => 'Acc. BAC clones'     ],
       [ 'opt_lines'     => 'Show register lines' ],
       [ 'opt_empty_tracks'=> 'Show empty tracks' ],
       [ 'opt_zmenus'    => 'Show popup menus'  ],

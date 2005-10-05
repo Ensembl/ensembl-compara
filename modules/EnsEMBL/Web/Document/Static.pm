@@ -37,6 +37,8 @@ sub _initialize {
     foreach my $K ( sort @{($self->species_defs->ENSEMBL_SEARCH_IDXS)||[]} ) {
       $self->searchbox->add_index( $K );
     }
+ use Data::Dumper;
+ warn Data::Dumper::Dumper( $self->species_defs->SEARCH_LINKS );
     my $T = $self->species_defs->SEARCH_LINKS || {};
     ## Now grab the default search links for the species
     foreach my $K ( sort keys %$T ) {
