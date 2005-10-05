@@ -2,7 +2,6 @@ package EnsEMBL::Web::UserConfig::Vega::thjviewbottom;
 use strict;
 no strict 'refs';
 use EnsEMBL::Web::UserConfig;
-use EnsWeb;
 use vars qw(@ISA);
 my $reg = "Bio::EnsEMBL::Registry";
 @ISA = qw(EnsEMBL::Web::UserConfig);
@@ -22,7 +21,7 @@ sub init {
 ## Only features whose key is in this array gets displayed as a track....
        qw( blast_new ssaha ),
        qw( stranded_contig ruler scalebar navigation assemblyexception 
-		   annotation_status polyA_site polyA_signal
+		   annotation_status polyA_site polyA_signal pseudo_polyA
 		   repeat_lite snp_lite haplotype 
 		   trna   cpg eponine marker operon rnai ex_profile qtl
 		   first_ef
@@ -52,7 +51,7 @@ sub init {
     },
     '_settings' => {
 ## Image size configuration...
-      'spritelib' => { 'default' => EnsWeb::species_defs->ENSEMBL_SERVERROOT.'/htdocs/gfx/sprites' },
+      'spritelib' => { 'default' => $self->{'species_defs'}->ENSEMBL_SERVERROOT.'/htdocs/img/sprites' },
       'width'         => 900,
       'spacing'       => 2,
       'margin'        => 5,
@@ -126,6 +125,7 @@ sub init {
                  [ 'ex_profile'      => 'Exp. profile'    ],
                  [ 'polyA_site'          => 'PolyA sites'        ],
                  [ 'polyA_signal'        => 'PolyA signals'        ],
+                 [ 'pseudo_polyA'        => 'Pseudo PolyA'        ],
                  [ 'ensemblclones'       => 'Ensembl clones' ],
       ],
       'compara' => [ 
@@ -206,20 +206,36 @@ sub init {
       'col'      => 'red',
       'available'=> 'features FirstEF', 
     },
+
     'polyA_site' => {
         'on' => "on",
         'pos' => '1027',
         'str' => 'b',
         'col' => 'red3',
+        'label' => 'PolyA site',
+        'logic_name' => 'polyA_site',
+        'glyphset' => 'polyA',
         'available' => 'features polyA_site',
     },
-
     'polyA_signal' => {
         'on' => "on",
         'pos' => '1028',
         'str' => 'b',
         'col' => 'red4',
+        'label' => 'PolyA signal',
+        'logic_name' => 'polyA_signal',
+        'glyphset' => 'polyA',
         'available' => 'features polyA_signal',
+    },
+    'pseudo_polyA' => {
+        'on' => "on",
+        'pos' => '1029',
+        'str' => 'b',
+        'col' => 'red2',
+        'label' => 'Pseudo PolyA',
+        'logic_name' => 'pseudo_polyA',
+        'glyphset' => 'polyA',
+        'available' => 'features polyA_site',
     },
 
 ## Markers and other features...
@@ -457,7 +473,7 @@ sub init {
       'pos'       => '7010',
       'col'       => 'black',
       'max_division'  => '12',
-      'label'     => '',
+      'label'     => 'on',
       'str'       => 'b',
       'subdivs'     => 'on',
       'abbrev'    => 'on',
@@ -693,7 +709,7 @@ sub init {
 
 sub mult {
   my $self = shift;
-  my @species = @{EnsWeb::species_defs->ENSEMBL_SPECIES};
+  my @species = @{$self->species_defs->ENSEMBL_SPECIES};
   my $compara = 3000;
   my @methods = (
 #    [ 'BLASTZ_NET'           ,'pink',  'cons',  'darkseagreen1', -20  ],
