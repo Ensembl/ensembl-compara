@@ -366,7 +366,30 @@ sub init {
 
 
   my $especies = $ENV{ENSEMBL_SPECIES};
-  my $type = 'BLASTZ_NET';
+# Add multiple multiple alignment
+
+  my $type = 'MLAGAN'; # 'MAVID';
+  my %shash2 = ( $self->species_defs->multi($type, $especies) );
+#  warn("$especies:$type:".Data::Dumper::Dumper(\%shash2));
+
+  if (%shash2) {
+      my $KEY = lc($especies).'_compara_'.lc($type);
+      my $label = sprintf("%d Mammals ($type)", scalar(keys(%shash2)) + 1);
+
+      $self->{'general'}->{'alignsliceviewbottom'}{$KEY} = {
+	  'species'  => $especies,
+	  'on'       => 'off',
+	  'label'    => $label
+      };
+  
+      push @{ $self->{'general'}->{'alignsliceviewbottom'}{ '_artefacts'} }, $KEY;
+      push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , $label ];
+  
+ }
+
+
+
+  $type = 'BLASTZ_NET';
   my %shash = ( $self->species_defs->multi($type,$especies) );
 
 #  warn("$especies:$type:".Data::Dumper::Dumper(\%shash));
@@ -385,26 +408,6 @@ sub init {
       push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , "$species" ];
   }
 
-# Add multiple multiple alignment
-
-  $type = 'MLAGAN'; # 'MAVID';
-  my %shash2 = ( $self->species_defs->multi($type, $especies) );
-#  warn("$especies:$type:".Data::Dumper::Dumper(\%shash2));
-
-  if (%shash2) {
-      my $KEY = lc($especies).'_compara_'.lc($type);
-      my $label = sprintf("$type (+%d species)", scalar(keys(%shash2)));
-
-      $self->{'general'}->{'alignsliceviewbottom'}{$KEY} = {
-	  'species'  => $especies,
-	  'on'       => 'off',
-	  'label'    => $label
-      };
-  
-      push @{ $self->{'general'}->{'alignsliceviewbottom'}{ '_artefacts'} }, $KEY;
-      push @{ $self->{'general'}->{'alignsliceviewbottom'}{'_settings'}{'aligncompara'} },  [ $KEY , $label ];
-  
- }
  
   my $POS = $self->ADD_ALL_AS_TRANSCRIPTS( 0 );
 }
