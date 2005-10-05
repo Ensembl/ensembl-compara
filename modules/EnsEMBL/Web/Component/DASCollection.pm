@@ -342,7 +342,7 @@ sub das_wizard {
     }
  
     $panel->add_columns({ 'key' => 'info', 'title' => ' '    });
-    $panel->add_row( {"info"=>$html} );
+#    $panel->add_row( {"info"=>$html} );
     $panel->add_row( {"info"=> $form->render()} );
 
     return 1;
