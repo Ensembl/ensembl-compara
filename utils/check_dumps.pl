@@ -120,7 +120,7 @@ foreach my $species (@SPECIES) {
   my $sp_release = $SPECIES_DEFS->get_config($species,"SPECIES_RELEASE_VERSION") || "";
   $sp_release =~ s/\.//g;
   my $species_folder = "$base_dir-$release.$sp_release";
-
+  $species_folder = "$base_dir-$release" if $species eq 'Multi';
   # Checking FTP BASEDIR is configured correctly in $species.ini file
   error("FTP_BASEDIR is not configured in conf/$species.ini. There is no species folder name.") unless $base_dir;
 
@@ -154,7 +154,7 @@ foreach my $species (@SPECIES) {
 
     my $name = $databases->{$db}->{'NAME'};
     #print "Added $name db\n";
-    if ($species eq 'Multi' and $name =~ /ensembl_mart/) {
+    if ($species eq 'Multi' and $name =~ /_mart_/) {
       $ok_dirs->{"$DUMPDIR/mart-$release/data/mysql/$name"} = [1];
       push (@search_dirs, "$DUMPDIR/mart-$release");
       $mysql_conf++;
@@ -303,7 +303,7 @@ sub check_dir {
       $mysql_count ++;
     }
     else{
-     error("Should '$file' be here in $path_dir?") unless (-d "$path_dir/$file");
+     error("Should '$file' be here in $path_dir? (It isn't a directory)") unless (-d "$path_dir/$file");
     }
     push (@files, $file) if $return;
 
@@ -415,10 +415,11 @@ sub check_mysql_sql {
 
   # Check that the sql and mysql40_compatible.sql are different sizes
   my $compatible_size = -s $file;
-  (my $sql_file = $file) =~ s/_mysql40_compatible//;
+  (my $sql_file = $file) =~ s/.{1}mysql40_compatible//;
   error ("$file doesn't exist") unless -e $file;
+  error ("$sql_file doesn't exist") unless -e $sql_file;
   my $sql_size = -s $sql_file;
-  error ("Error with compatibility file. It is the same size as the sql file") if $compatible_size == $sql_size;
+  error ("Error with compatibility file ($compatible_size). It is the same size as the sql file ($sql_size)") if $compatible_size == $sql_size;
   return 1;
 }
 #------------------------------------------------------------------------------

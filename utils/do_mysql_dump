@@ -26,21 +26,14 @@ BEGIN{
 
 use utils::Tool;
 
-my $dumpdir ;
-our $VERBOSITY ;
 our $MYSQL_BIN = "/mysqld/current/bin";   # this should be a cluster-wide CDSL
-
-my $logfile;
-my ($help,$info);
+my ($dumpdir, $help, $info, $logfile, $no_data, $no_zip);
 my @SPECIES ;
-my @DATABASES ;
-my $no_data;
-my $no_zip;
+my @dbs;
 
 &GetOptions(
 	    'species:s'      => \@SPECIES,
-	    'database:s'     => \@DATABASES,
-	    'verbose|v:s'    => \$VERBOSITY,			
+	    'database:s'     => \@dbs,
 	    'logfile:s'      => \$logfile,
 	    'dumpdir:s'      => \$dumpdir,
 	    'help'           => \$help,
@@ -52,39 +45,21 @@ my $no_zip;
 pod2usage(-verbose => 2) if $info;
 pod2usage(1) if $help;
 exit(0) if ($help) ;
-my $time1 = time;
 
-defined($VERBOSITY) or $VERBOSITY = 1;
+
+# Log file -------------------------------------------------------------------
+my $time1 = time;
 if ($logfile){
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
 else {
-  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n****\n\n");
+  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n***\n");
 }
-
-
-# Sort out dumpdir ----------------------------------------------------------
-$dumpdir ||= "/mysql/dumps/FTP";  #should be cluster CDSL "/mysqld/current/var"
-
-info(1, "Dumping data to $dumpdir" );
-if( $dumpdir !~/^\// ){
-  pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
-}
-elsif( ! -e $dumpdir ){
-  info(1, "$dumpdir does not exist, creating" );
-  system("mkdir -p $dumpdir") == 0 or
-    pod2usage( "Cannot create $dumpdir: $!" );
-}
-elsif( ! -d $dumpdir ){ pod2usage("[*DIE] $dumpdir is not a directory" ) }
-elsif( ! -w $dumpdir ){ pod2usage("[*DIE] $dumpdir is not writable" ) }
 
 
 # Load modules needed for reading config -------------------------------------
-info(1, "Using config in $SERVERROOT/conf" );
-tie *STDERR, __PACKAGE__;
 require EnsEMBL::Web::SpeciesDefs; 
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
-untie *STDERR;
 $species_defs || pod2usage("$0: SpeciesDefs config not found");
 
 
@@ -99,158 +74,95 @@ my %web_userdb = (
 	  );
 
 
-
-# Check species -------------------------------------------------------------
-if (@SPECIES) {
-  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };
-}
-else {  
-  @SPECIES = @{ utils::Tool::all_species()};
-}
+# Hard-code all databases _never_ to dump
+my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST 
+				ENSEMBL_COMPARA_MULTIPLE
+				ENSEMBL_BLAST_LOG
+				ENSEMBL_FASTA
+				ENSEMBL_GLOVAR );
 
 
-# Sort out data to dump for each species --------------------------------------
-my %DATA_TO_DUMP;
-foreach my $sp( @SPECIES ){
-  my $write_user = $species_defs->get_config($sp, 'ENSEMBL_WRITE_USER');
-  my $write_pass = $species_defs->get_config($sp, 'ENSEMBL_WRITE_PASS');
-
-  my %all_db_info = %{ $species_defs->get_config($sp,'databases')||{}};
-  my @all_db_names = grep{ $all_db_info{$_} } keys %all_db_info;
-  my @dbs = @DATABASES;  # Do all db if user hasn't defined any
-  if( ! @dbs ){ 
-    @dbs = @all_db_names;
-    push (@dbs, 'ensembl_web_user_db') if $sp eq 'Multi';
-  }
-
-  my %databases;
-  foreach my $db( @dbs ){
-    next if $db eq "ENSEMBL_HELP" && $sp ne "Multi"; # HACK cos it dumps help
-    next if $db eq "ENSEMBL_WEBSITE" && $sp ne "Multi"; # HACK cos it dumps website
-
-    if ($db eq 'ensembl_web_user_db') {
-      next unless $sp eq 'Multi';
-      $all_db_info{$db} = {%web_userdb} if $sp eq 'Multi';
-    }
-
-    if( ! $all_db_info{$db} ){
-      warning( 1, "DB $db is not valid for $sp" );
-      next;
-    }
-    my %db_meta = %{$all_db_info{$db}};
-    if( ! $db_meta{NAME} ){
-      warning( 1, "DB $db has no NAME, skipping" );
-      next;
-    }
-    # Hard-code all databases _never_ to dump
-    my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST
-				  ENSEMBL_BLAST_LOG
-				  ENSEMBL_FASTA
-                                  ENSEMBL_WEBSITE
-				  ENSEMBL_GLOVAR );
-    if( $kill_list{$db} ){
-      info( 1, "Skipping $db (kill list)" );
-      next;
-    }
-    $write_user and $db_meta{USER} = $write_user;
-    $write_pass and $db_meta{PASS} = $write_pass;
-
-    info( 1, "Adding to $sp, $db" );
-    info( 2, "($db_meta{USER}:$db_meta{PASS}\@".
-	  "$db_meta{HOST}:$db_meta{PORT}/$db_meta{NAME})" );
-    $databases{$db} = {%db_meta};
-  }
-
-  if( ! scalar( %databases ) ){
-    warning( 1, "No valid DBs found for $sp; select from:\n ".
-	     join( "\n       ", sort keys %all_db_info ) );
-    next;
-  }
-  #  warn Data::Dumper::Dumper(%databases);
-  info( 1, "Valid databases found for $sp" );
-  $DATA_TO_DUMP{$sp} = {%databases};
+# Sort out dumpdir ----------------------------------------------------------
+$dumpdir ||= "/mysql/dumps/FTP";  #should be cluster CDSL "/mysqld/current/var"
+info(1, "Dumping data to $dumpdir" );
+if( $dumpdir !~/^\// ){
+  pod2usage("[*DIE] Must provide the full path to dumpdir: $dumpdir" ) 
 }
 
-if( ! scalar( %DATA_TO_DUMP ) ){
-  pod2usage("[*DIE] No valid species+DB found; select from:\n       ".
-	    join ("\n", @{ utils::Tool::all_species()} ));
-}
-
-
-
-# Dump the data in DATA_TO_DUMP -----------------------------------------------
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 
-foreach my $sp( sort keys %DATA_TO_DUMP ){
- # warn Data::Dumper::Dumper(%DATA_TO_DUMP);
-  info( 1, "Starting dumps for $sp" );
+# Check species -------------------------------------------------------------
+if ( @SPECIES ) {
+  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) }; 
+} else {
+  @SPECIES = @{ utils::Tool::all_species()};  
+}
+
+foreach my $sp( @SPECIES ){
 
   # Work out dumpdir ---------------------------------------------------------
   my $base_dir = utils::Tool::get_config({ species=>$sp, values => "ENSEMBL_FTP_BASEDIR"} )|| $sp;
   my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
   $sp_release =~ s/\.//g;
 
-  my @sp_dumpdirs  = "$dumpdir/$base_dir-$sitedefs_release.$sp_release/data/mysql";
-
+  my @sp_dumpdirs;
   if ($sp eq 'Multi') {
     @sp_dumpdirs  = "$dumpdir/$base_dir-$sitedefs_release/data/mysql";
-    push (@sp_dumpdirs, "$dumpdir/mart-$sitedefs_release/data/mysql") if $DATA_TO_DUMP{Multi}{ENSEMBL_MART_ENSEMBL};
+  }
+  else {
+    @sp_dumpdirs="$dumpdir/$base_dir-$sitedefs_release.$sp_release/data/mysql";
+    $kill_list{"ENSEMBL_HELP"}    = 1;
+    $kill_list{"ENSEMBL_WEBSITE"} = 1;
+    $kill_list{"ensembl_web_user_db"} = 1;
   }
 
-  foreach my $sp_dumpdir (@sp_dumpdirs) {
-    utils::Tool::check_dir($sp_dumpdir );
-    if( ! -d $sp_dumpdir ){ 
-      warning("$sp_dumpdir is not a directory" ) && next;
-    }
-    if( ! -w $sp_dumpdir ){ 
-      warning("$sp_dumpdir is not writable" ) && next;
-    }
-  }
+  # Work out db ------------------------------------------------------------
+  my %all_db_info = %{ $species_defs->get_config($sp,'databases') || {} };
+  $all_db_info{"ensembl_web_user_db"} = {%web_userdb};
+  @dbs = ( keys %all_db_info ) unless @dbs;
+  push (@dbs, 'ensembl_web_user_db') if $sp eq 'Multi';
 
-  # Dump data ----------------------------------------------------------------
-  my %databases = %{$DATA_TO_DUMP{$sp}};
-  foreach my $db( keys %databases ){
-    my %db_meta = %{$databases{$db}};
-    my $db_name = $db_meta{NAME};
-    my $sp_dumpdir = $db=~ /ENSEMBL_MART_/ ? $sp_dumpdirs[1] : $sp_dumpdirs[0];
-    my $db_dumpdir = "$sp_dumpdir/$db_name";
+  my $write_user = $species_defs->get_config($sp, 'ENSEMBL_WRITE_USER');
+  my $write_pass = $species_defs->get_config($sp, 'ENSEMBL_WRITE_PASS');
+  my $flag_mart = 0;
 
-    if ($db_name =~ /ensembl_help/) {
-      $db_dumpdir = "$sp_dumpdir/ensembl_help"."_$sitedefs_release";
+  foreach my $db( @dbs ){
+    if( $kill_list{$db} ){
+      info( 1, "Skipping $db (kill list)" );
+      next;
     }
-    elsif ($db_name eq 'ensembl_web_user_db') {
-      $db_dumpdir = "$sp_dumpdir/$db_name"."_$sitedefs_release";
-    }
-    if( ! -e $db_dumpdir ){
-      info(1, "Creating $db_dumpdir" );
-      system("mkdir -p $db_dumpdir") == 0 or
-	( warning( 1, "Cannot create $db_dumpdir: $!" ) && next );
-    }
-     else{
-       info( 1, "Cleaning $db_dumpdir" );
-       system("rm -Rf $db_dumpdir/*.gz");
-       system("rm -Rf $db_dumpdir/*.txt");
-       system("rm -Rf $db_dumpdir/*.sql");
-     }
-    if( ! -d $db_dumpdir ){ 
-      warning("$db_dumpdir is not a directory" ) && next;
-    }
-    if( ! -w $db_dumpdir ){ 
-      warning("$db_dumpdir is not writable" ) && next;
-    }
-    system("chmod 777 $db_dumpdir");
-
-
-
-  info( 1, "Dumping $db ($db_name)..." );
-    $db_meta{dumpdir} = $db_dumpdir;
-    $db_meta{NODATA} = " --nodata" if $db_name eq 'ensembl_web_user_db' or  $no_data;
-    dump_mysql(\%db_meta, $no_zip);
-
-    if ($db_name =~ /ensembl_help/) {
-      system ("mv $sp_dumpdir/ensembl_help_$sitedefs_release/ensembl_help_32.sql.gz $sp_dumpdir/ensembl_help_$sitedefs_release/ensembl_help_$sitedefs_release.sql.gz" );
+    unless ( $all_db_info{$db} ){
+      warning( 1, "Not a valid DB for $sp; select from:\n ".
+	     join( "\n       ", sort keys %all_db_info ) );
+      next;
     }
 
+    if ( $db =~ /_MART_/ ) {
+      push (@sp_dumpdirs, "$dumpdir/mart-$sitedefs_release/data/mysql");
+      $flag_mart = 1;
+    }
+
+    unless ( $all_db_info{$db}{NAME} ){
+      warning( 1, "DB $db has no NAME, skipping" );
+      next;
+    }
+
+    $all_db_info{$db}{USER}  = $write_user if $write_user;
+    $all_db_info{$db}{PASS}  = $write_pass if $write_pass;
+    $all_db_info{$db}{dumpdir} = create_dumpdir( $all_db_info{$db}{NAME},
+					       \@sp_dumpdirs, 
+						 $sitedefs_release) ||"";
+    if ( $db eq 'ensembl_web_user_db' or $no_data ) {
+      $all_db_info{$db}{NODATA} = " --nodata";
+    }
+
+    info( 1, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
+    dump_mysql( \%{ $all_db_info{$db} }, $no_zip);
+
+    # Rename help and website so they include the release number
+    if ( $db =~ /ENSEMBL_HELP|ENSEMBL_WEBSITE|ensembl_web_user_db/ ){
+      rename_files( $all_db_info{$db}{NAME}, $sp_dumpdirs[0] );
+    }
   }
   info( 1, "Dumps for $sp completed" );
 }
@@ -266,7 +178,7 @@ print STDERR "Time taken: $hours:", localtime($time_taken)->min,"mins\n";
 
 exit;
 
-##############################################################################
+
 ##############################################################################
 sub dump_mysql {
   my $db_meta = shift;
@@ -302,11 +214,16 @@ sub dump_mysql {
   my $dump_command_T = $dump_command . " -T . $DB";
   #warn $dump_command_T;
   system( $dump_command_T ) and die( "Cannot $dump_command_T: $!" );
+  system("rm -f ./[a-c]*.sql");
+  system("rm -f ./[d-g]*.sql");
+  system("rm -f ./[h]*.sql");
+  system("rm -f ./[i-p]*.sql");
+  system("rm -f ./[r-z]*.sql");
   system("rm -f ./*.sql");
 
   # Create a mysql 4.0 compatible sql file
   # DON'T USE THE -T OPTION COS IT STOPS IT WORKING
-  my $compatible_file = $DB."_mysql40_compatible.sql";
+  my $compatible_file = $DB.".mysql40_compatible.sql";
   my $compatible = "$dump_command --no_data --compatible=mysql40 $DB ";
   system( "$compatible > $compatible_file" ) and die( "Cannot create compatible file: $compatible: $!" );
 
@@ -386,13 +303,63 @@ sub split_data {
 }
 
 #----------------------------------------------------------------------------
+sub create_dumpdir {
+
+  my ( $db_name, $sp_dumpdirs, $release ) = @_;
+  my $db_dumpdir;
+
+  if ($db_name =~ /ensembl_help/) {
+    $db_dumpdir = "$sp_dumpdirs->[0]/ensembl_help"."_$sitedefs_release";
+  }
+
+  elsif ($db_name =~ /ensembl_website|ensembl_web_user_db/) {
+    $db_dumpdir = "$sp_dumpdirs->[0]/$db_name"."_$sitedefs_release";
+  }
+
+  else {
+    $db_dumpdir = $db_name =~ /_mart_/ ? $sp_dumpdirs->[1] : $sp_dumpdirs->[0];
+    $db_dumpdir .= "/$db_name";
+  }
+
+
+  if( -e $db_dumpdir ){
+    info( 1, "Removing existing copy of $db_dumpdir" );
+    system("rm -Rf $db_dumpdir");
+  }
+
+  utils::Tool::check_dir( $db_dumpdir );
+  system("chmod 777 $db_dumpdir");
+  unless ( -d $db_dumpdir && -w $db_dumpdir ){ 
+    warning("$db_dumpdir is not a directory or is not writable" ) && next;
+  }
+  return $db_dumpdir;
+}
+#------------------------------------------------------------------------------
+sub rename_files {
+  my $db_name    = shift;
+  my $sp_dumpdir = shift;
+
+  if ($db_name =~ /ensembl_help/) {
+    my $new_db = "ensembl_help_$sitedefs_release";
+    system ("mv $sp_dumpdir/$new_db/ensembl_help_32.sql.gz $sp_dumpdir/$new_db/$new_db.sql.gz" );
+    system ("mv $sp_dumpdir/$new_db/ensembl_help_32.mysql40_compatible.sql.gz $sp_dumpdir/$new_db/$new_db.mysql40_compatible.sql.gz" );
+  }
+
+  else {
+    my $new_db = "$db_name"."_$sitedefs_release";
+    system ("mv $sp_dumpdir/$new_db/$db_name.sql.gz $sp_dumpdir/$new_db/$new_db.sql.gz" );
+    system ("mv $sp_dumpdir/$new_db/$db_name.mysql40_compatible.sql.gz $sp_dumpdir/$new_db/$new_db.mysql40_compatible.sql.gz" );
+    }
+
+  return;
+}
+#-----------------------------------------------------------------------------
 sub info{
   my $v   = shift;
   my $msg = shift;
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
 
-  if( $v > $VERBOSITY ){ return 1 }
   warn( "[INFO] ".$msg."\n" );
   return 1;
 }
@@ -404,20 +371,8 @@ sub warning{
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
 
-  if( $v > $VERBOSITY ){ return 1 }
   warn( "[WARN] ".$msg."\n" );
   return 1;
-}
-
-#----------------------------------------------------------------------
-# Quick+dirty method of trapping STDERR
-sub TIEHANDLE{
-  my $class = shift;
-  bless {}, $class;
-}
-sub PRINT {
-  my $self = shift;
-  # Do nothing!;
 }
 
 
@@ -434,7 +389,7 @@ do_mysql_dump - Dump Ensembl databases to flatfiles
 do_mysql_dump [options]
 
 Options:
-  --help, --info, --species, --database, --verbose, --logfile --dumpdir
+  --help, --info, --species, --database, --logfile --dumpdir
   --no_data  --no_zip
 
 =head1 OPTIONS
@@ -444,9 +399,6 @@ B<-h,--help>
 
 B<-i,--info>
   Prints man page and exits.
-
-B<-v,--verbose>
-  Prints verbose debug output to stdout or logfile.
 
 B<--species>
   One or more species to dump.
