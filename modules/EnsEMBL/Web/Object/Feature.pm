@@ -182,7 +182,7 @@ sub retrieve_RegulatoryFactor {
       $flag = 1;
     }
     my $extra_results = [ $ap->analysis->description ];
-    unshift (@$extra_results, $gene_links) if $gene_links;
+    unshift (@$extra_results, $gene_links);# if $gene_links;
 
     push @$results, {
       'region'   => $ap->seq_region_name,
@@ -196,7 +196,7 @@ sub retrieve_RegulatoryFactor {
     }
   }
   my $extras = ["Feature analysis"];
-  unshift @$extras, "Regulates gene" if $flag;
+  unshift @$extras, "Regulates gene";# if $flag;
   
   return ( $results, $extras );
 }
