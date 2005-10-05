@@ -94,7 +94,6 @@ sub sequence_display {
 #    my $fstart  = $feat->seq_region_start - $sstart + 1;
     $fstart = $slength+1   if $fstart > $slength+1;
     $all_locs{$fstart} = 1 if $fstart > 0;
-  warn "$fstart : $sstrand $fstrand -- $cigar";
     my @segs = ( $cigar =~ /(\d*\D)/g ); # Split cigar into segments
     @segs = reverse @segs if $fstrand < 1; # if -ve ori, invert cigar
     foreach my $seg( @segs ) {

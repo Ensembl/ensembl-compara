@@ -2,8 +2,6 @@ package EnsEMBL::Web::Document::Dynamic;
 
 use strict;
 use EnsEMBL::Web::Document::Common;
-warn ">EWDD -> @INC";
-warn __FILE__;
 
 our @ISA = qw(EnsEMBL::Web::Document::Common);
 
