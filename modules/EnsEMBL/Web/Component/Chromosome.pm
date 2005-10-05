@@ -663,7 +663,7 @@ sub show_karyotype {
         $max_length = $object->length;
     }
     my $config = $object->user_config_hash($config_name);
-   warn "Configuration is $config_name"; 
+   #warn "Configuration is $config_name"; 
     # PARSE DATA
     my $parser;
     if ($object->param('display') eq 'density') {
@@ -691,7 +691,7 @@ warn "Parsing location data";
         $image->add_tracks($object, $config_name, $parser);
     }
     else {
-        $pointers = $image->add_pointers($object, $config_name, '', $parser);
+        $pointers = $image->add_pointers($object, {'config_name'=>$config_name, 'parser'=>$parser, 'color' => $object->param("col_0"), 'style' => $object->param("style_0")});
     }
     # create image file and render HTML
     $image->karyotype($object, [$pointers], $config_name);
