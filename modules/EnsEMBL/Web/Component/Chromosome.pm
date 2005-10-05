@@ -583,8 +583,8 @@ sub image_choice {
     <p>Click on one of the images below to select a display type:</p>
     <table cellspacing="20" style="width:100%">
     <tr>
-    <th class="center">Show location of features</th>
-    <th class="center">Show density of features</th>
+    <th class="center"><a href="/$species/karyoview?display=location;chr=$chr_name">Show location of features</a></th>
+    <th class="center"><a href="/$species/karyoview?display=density;chr=$chr_name">Show density of features</a></th>
     </tr>
     <tr>
     <td class="center"><a href="/$species/karyoview?display=location;chr=$chr_name"><img src="/img/misc/display_location.png" alt="Chromosome with location pointers" width="332" height="495" /></a></td>
