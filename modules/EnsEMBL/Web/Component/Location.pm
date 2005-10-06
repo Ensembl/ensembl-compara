@@ -551,19 +551,33 @@ sub this_link_scale {
   return cp_link( $object, $object->centrepoint, $scale, $extra );
 }
 
-
 sub multi_species_list { 
-  my( $object,$species ) = @_;
-  $species ||= $object->species;
-  my %species_flag = ( $species => 1 );
-  my %species_hash = ();
-  my $C = 1;
-  foreach( $object->species_list() ) {
-    next if $species_flag{$_};
-    $species_flag{ $_       } = 1;
-    $species_hash{ 's'.$C++ } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$_};
-  }
-  return %species_hash;
+	my( $object,$species ) = @_;
+	$species ||= $object->species;
+	my %species_hash;
+	my %dup_species;
+	foreach( $object->species_list() ) {
+		$dup_species{$_}++;
+	}
+	if (grep {$dup_species{$_} > 1} keys %dup_species) {
+		my @details = $object->species_and_seq_region_list;
+		my $C = 1;
+		foreach my $assoc (@details) {
+			my ($sp,$sr) = split /:/, $assoc;
+			$species_hash{ 's'.$C } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$sp};
+			$species_hash{ 'sr'.$C++ } = $sr;
+		}
+		return %species_hash;
+	} else {
+		my %species_flag = ( $species => 1 );
+		my $C = 1;
+		foreach ($object->species_list()) {
+			next if $species_flag{$_};
+			$species_flag{ $_       } = 1;
+			$species_hash{ 's'.$C++ } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$_};
+		}
+		return %species_hash;
+	}
 }
 
 sub contigviewbottom_nav { return bottom_nav( @_, 'contigviewbottom', {} ); }
