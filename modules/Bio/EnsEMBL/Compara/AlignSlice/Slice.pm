@@ -1572,11 +1572,19 @@ sub project {
     my $this_mapper = $pair->{mapper};
     my $this_projections = $this_slice->project($cs_name, $cs_version);
     foreach my $this_projection (@$this_projections) {
+      my ($this_start, $this_end);
+      if ($this_slice->strand == 1) {
+        $this_start = $this_slice->start + $this_projection->from_start - 1;
+        $this_end = $this_slice->start + $this_projection->from_end - 1;
+      } else {
+        $this_start = $this_slice->start + ($this_slice->length - $this_projection->from_start);
+        $this_end = $this_slice->start + ($this_slice->length - $this_projection->from_end);
+      }
       my ($new_start, $new_end);
       my @alignment_coords = $this_mapper->map_coordinates(
               'sequence',
-              $this_slice->start + $this_projection->from_start - 1,
-              $this_slice->start + $this_projection->from_start - 1,
+              $this_start,
+              $this_start,
               1,
               'sequence'
           );
@@ -1588,8 +1596,8 @@ sub project {
       next if (!defined($new_start));
       @alignment_coords = $this_mapper->map_coordinates(
               'sequence',
-              $this_slice->start + $this_projection->from_end - 1,
-              $this_slice->start + $this_projection->from_end - 1,
+              $this_end,
+              $this_end,
               1,
               'sequence'
           );
@@ -1599,7 +1607,7 @@ sub project {
         }
       }
       next if (!defined($new_end));
-      
+
       my $new_projection = bless([$new_start, $new_end, $this_projection->to_Slice],
                                 "Bio::EnsEMBL::ProjectionSegment");
       push(@$projections, $new_projection);
