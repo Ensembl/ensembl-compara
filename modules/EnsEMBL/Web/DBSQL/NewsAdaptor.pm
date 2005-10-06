@@ -438,7 +438,7 @@ sub add_news_item {
             news_item
         SET
             release_id      = "$release_id",
-            date            = NOW(),
+            creation_date   = NOW(),
             title           = "$title",
             content         = "$content",
             news_cat_id     = "$news_cat_id",
@@ -486,8 +486,8 @@ sub update_news_item {
         UPDATE
             news_item
         SET
-            release_id    = "$release_id",
-            date            = NOW(),
+            release_id      = "$release_id",
+            last_updated    = NOW(),
             title           = "$title",
             content         = "$content",
             news_cat_id     = "$news_cat_id",
