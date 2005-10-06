@@ -14,12 +14,12 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
 
 # get GenomeDB for human and mouse
-my $ratGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("rat");
+my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
 my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
 
 # get MethodLinkSpeciesSet for BLASTZ_NET alignments between human and mouse
 my $blastz_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-     fetch_by_method_link_type_GenomeDBs("BLASTZ_NET", [$ratGDB, $mouseGDB]);
+     fetch_by_method_link_type_GenomeDBs("BLASTZ_NET", [$humanGDB, $mouseGDB]);
 
 my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
     fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[2,3]);
