@@ -83,12 +83,12 @@ info(1, "Checking these species:\n".join "\n", @SPECIES);
 
 
 # Check the dumpdir directory has the correct number of directories ----------
-my %dumped_check;
+my %dumped_check;          # All folders present in dumpdir
 my $count_dirs = 0;
 opendir(DUMP_DIR, $DUMPDIR) || die ("Can't open dir $DUMPDIR: $!\n");
 while (defined(my $file = readdir(DUMP_DIR))) {
-  next if $file =~ /^\.+$/;
-  $dumped_check{$file} = "not dumped";
+  next if $file =~ /^\.+$/;         #skip filenames starting with "."
+  $dumped_check{$file} = "not checked";
   $count_dirs++;
 }
 close DUMP_DIR;
@@ -113,16 +113,74 @@ if ($sitedefs_release ne $release) {
  die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
 }
 
+my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST ENSEMBL_HELP
+				ENSEMBL_WEBSITE
+                                ENSEMBL_COMPARA_MULTIPLE
+                                ENSEMBL_BLAST_LOG
+                                ENSEMBL_FASTA
+                                ENSEMBL_GLOVAR );
+
 my @dir_list;
+
 foreach my $species (@SPECIES) {
   info (1, "Species: $species");
+
+  my $ok_dirs;
+  my $mysql_conf;
+  my $species_folder;
+  my @search_dirs;          # list of folders to search according to config
+
   my $base_dir = $SPECIES_DEFS->get_config($species,"ENSEMBL_FTP_BASEDIR");
-  my $sp_release = $SPECIES_DEFS->get_config($species,"SPECIES_RELEASE_VERSION") || "";
-  $sp_release =~ s/\.//g;
-  my $species_folder = "$base_dir-$release.$sp_release";
-  $species_folder = "$base_dir-$release" if $species eq 'Multi';
-  # Checking FTP BASEDIR is configured correctly in $species.ini file
   error("FTP_BASEDIR is not configured in conf/$species.ini. There is no species folder name.") unless $base_dir;
+
+  if ($species eq 'Multi') {
+    $species_folder = "$base_dir-$release";
+
+    foreach my $x qw( ensembl_help ensembl_website ensembl_web_user_db ) {
+      $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$x"."_$release"} = [1];
+      $mysql_conf++; 
+    }
+    $dumped_check{"mart-$release"} = 1;  # indicates this dir will be checked
+    push (@search_dirs, "$DUMPDIR/mart-$release"); # search this
+  }
+
+  else {
+    my $sp_release = $SPECIES_DEFS->get_config($species,"SPECIES_RELEASE_VERSION") || "";
+    $sp_release =~ s/\.//g;
+    $species_folder = "$base_dir-$release.$sp_release";
+
+    $ok_dirs = {
+		 "$DUMPDIR/$species_folder/data/fasta/cdna"        => [1],
+		 "$DUMPDIR/$species_folder/data/fasta/dna"         => [1],
+		 "$DUMPDIR/$species_folder/data/fasta/pep"         => [1],
+		 "$DUMPDIR/$species_folder/data/fasta/rna"         => [1],
+		 "$DUMPDIR/$species_folder/data/flatfiles/genbank" => [1],
+		 "$DUMPDIR/$species_folder/data/flatfiles/embl"    => [1],
+		};
+  }
+  push @search_dirs,  "$DUMPDIR/$species_folder";  # all folders to search
+
+  # Put directories for mysql databases in $ok_dirs
+  # Check there is a core db configured for this species
+  my $databases  = $SPECIES_DEFS->get_config($species, "databases");
+  error("No core database configured for this species $species") unless $databases->{'ENSEMBL_DB'}->{'NAME'} or $species eq 'Multi';
+
+  foreach my $db (keys %$databases) {
+    next if $kill_list{$db};
+
+    my $name = $databases->{$db}->{'NAME'};
+    next unless $name;
+
+    $mysql_conf++;
+
+    if ( $name =~ /_mart_/ ) {
+      $ok_dirs->{"$DUMPDIR/mart-$release/data/mysql/$name"} = [1];
+    }
+    else {
+      $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$name"} = [1];
+    }
+  }
+
 
   # Checking there is a directory for this species
   info(1, "Checking directory for this species exists");
@@ -130,80 +188,32 @@ foreach my $species (@SPECIES) {
     error("No folder for this species. (Searching for $species_folder)");
     next;
   }
-  $dumped_check{$species_folder}= 1;
-  my $ok_dirs;
-  $ok_dirs = {
-		 "$DUMPDIR/$species_folder/data/fasta/cdna"        => [1],
-		 "$DUMPDIR/$species_folder/data/fasta/dna"         => [1],
-		 "$DUMPDIR/$species_folder/data/fasta/pep"         => [1],
-		 "$DUMPDIR/$species_folder/data/fasta/rna"         => [1],
-		 "$DUMPDIR/$species_folder/data/flatfiles/genbank" => [1],
-		 "$DUMPDIR/$species_folder/data/flatfiles/embl"    => [1],
-		} unless $species eq 'Multi';
+  $dumped_check{$species_folder} = 1;
 
-  # Add valid mysql directories
-  my $mysql_conf;  
-  my $databases  = $SPECIES_DEFS->get_config($species, "databases");
-
-  my @search_dirs = "$DUMPDIR/$species_folder";
-  foreach my $db (keys %$databases) {
-    next if $db eq 'ENSEMBL_HELP' and $species ne "Multi";
-    next if $db eq 'ENSEMBL_WEBSITE' and $species ne "Multi";
-    next if $db eq "ENSEMBL_BLAST"     or $db eq "ENSEMBL_GLOVAR" or
-            $db eq "ENSEMBL_BLAST_LOG" or $db eq "ENSEMBL_FASTA";
-
-    my $name = $databases->{$db}->{'NAME'};
-    #print "Added $name db\n";
-    if ($species eq 'Multi' and $name =~ /_mart_/) {
-      $ok_dirs->{"$DUMPDIR/mart-$release/data/mysql/$name"} = [1];
-      push (@search_dirs, "$DUMPDIR/mart-$release");
-      $mysql_conf++;
-      $dumped_check{"mart-$release"}= 1;
-      next;
-    }
-
-    $mysql_conf++;
-    if ($name =~ /ensembl_help/) {
-      $name = "ensembl_help"."_$release";
-    }
-    elsif ($name =~ /ensembl_website/) {
-      $name = "ensembl_website"."_$release";
-    }
-    $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$name"} = [1];
-  }
-
-  if ($species eq 'Multi') {
-    $mysql_conf++;
-    my $name ="ensembl_web_user_db_$release";
-    $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$name"} = [1];
-  }
-
-   # Check there is a core db configured for this species
-  error("No core database configured for this species $species") unless $databases->{'ENSEMBL_DB'}->{'NAME'} or $species eq 'Multi';
 
   my $genbank_files = 0;
   my $embl_files    = 0;
   my $mysql_count   = 0;
-  my $mysql;
+  my $sp_mysql;
 
 
   # Recursively search each spp directory
   find sub {
     my $path_dir  = $File::Find::name;
     my $dir       = $_;
-    ($ok_dirs, $mysql) = check_dir($path_dir, $dir, $ok_dirs, $species) if (-d $dir);
+    ($ok_dirs, $sp_mysql) = check_dir($path_dir, $dir, $ok_dirs, $species) if (-d $dir);
+    $mysql_count += $sp_mysql;
 
     # Store the number files in embl and genbank dirs
     if ($ok_dirs->{$path_dir}) {
       $genbank_files = scalar( @{$ok_dirs->{$path_dir}} ) if $dir eq 'genbank';
       $embl_files    = scalar( @{$ok_dirs->{$path_dir} } ) if $dir eq 'embl';
     }
-    $mysql_count += $mysql if $dir eq 'mysql';
   }, @search_dirs;
 
   # Check there are files for each of the directories listed in ok_dirs
   if (keys %types ==3 ) { # i.e. if you are checking all directories
-    info (1, "Check all directories (pep, rna, cdna, dna, embl, genbank, mysql for files ");
+    info (1, "Check all directories (pep, rna, cdna, dna, embl, genbank, mysql for files )");
     foreach my $dir (keys %$ok_dirs) {
       next if $dir =~ /rna$/;
       error("No files in $dir directory") if $ok_dirs->{$dir}->[0] eq '1' ;
@@ -247,10 +257,11 @@ sub check_dir {
   my @files;         # number of files in dir
 
   # Check the files in the directory
-  my $mysql_count = 0;
+  my $sp_mysql_count = 0;
   opendir(DIR, $path_dir) or die ("can't open dir $path_dir: $!\n");
+
   while (defined(my $file = readdir(DIR))) {
-    next if $file =~ /^\.+$/;
+    next if $file =~ /^\.+$/;  # ignore files that start w/ "."
 
     # Check file isn't zero size
     error("$path_dir/$file has zero size") if -z "$path_dir/$file";
@@ -264,10 +275,11 @@ sub check_dir {
     # Check files contain correct type of sequence 
     # Check files are gzipped and have correct names
     my $return;
-    if ($dir eq 'pep'  or $dir eq 'cdna' or $dir eq 'rna'){
+    if ($dir eq 'pep'  or $dir eq 'cdna' or $dir eq 'rna' or $dir eq 'dna'){
       $return = check_fasta_dir ($species, $dir, $path_dir, $file);
     }
 
+    # embl/genbank
     elsif ($dir eq 'embl' or $dir eq 'genbank') {
       if ($file !~ /$species\.\d+\.dat\.gz/){ # Check file ends in dat.gz
 	error("Should $path_dir/$file be here?");
@@ -275,12 +287,12 @@ sub check_dir {
       $return = 1;
     }
 
-    elsif ($dir eq 'dna') {
-      $return = check_fasta_dir ($species, $dir, $path_dir, $file);
+    # mysql db folder
+    elsif ($dir eq 'mysql') {
+      $sp_mysql_count ++;
     }
 
-    # mysql files
-    elsif ($path_dir =~ m!.+/data/mysql/(\w+_\w+_\d+.*)!) {
+    elsif ($path_dir =~ m!.+/data/mysql/(\w+_\w+.+\d+.*)!) {
 
       # Change the values of the databases in $mysql_db if they're dumped
       my $db = $1;
@@ -296,12 +308,9 @@ sub check_dir {
 
       # Check mysql files are all gzipped
       elsif ($file !~ /\.gz/) { error("Mysql $file is not gzipped");}
-      else {$return = 1; }
+      else { $return = 1; }
     }
 
-    elsif ($dir eq 'mysql') {
-      $mysql_count ++;
-    }
     else{
      error("Should '$file' be here in $path_dir? (It isn't a directory)") unless (-d "$path_dir/$file");
     }
@@ -348,11 +357,10 @@ sub check_dir {
       $ok_dirs->{$path_dir} = \@files;
      }
     else {
-      error("Are there supposed to be files '@files' here $path_dir?");
+      error("I'm not configured to have files '@files' in this dir $path_dir?");
     }
   }
-
-  return ($ok_dirs, $mysql_count);
+  return ($ok_dirs, $sp_mysql_count);
 }
 
 #-----------------------------------------------------------------------------
