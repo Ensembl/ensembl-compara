@@ -25,9 +25,9 @@ tmp_prefix=$file_prefix.\$\$
 lsrcp $subhost:$pwd/$file_prefix.tab \$tmp_prefix.tab
 lsrcp $subhost:$pwd/$file_prefix.hdr \$tmp_prefix.hdr
 lsrcp $subhost:$pwd/$file_prefix.raw \$tmp_prefix.raw
-/nfs/acari/abel/bin/mcxassemble -b \$tmp_prefix -r max
+/nfs/acari/abel/bin/mcxassemble -b \$tmp_prefix -r max -xo bin --write-binary
 status=\$?
-lsrcp \$tmp_prefix.sym $subhost:$pwd/$file_prefix.sym
+lsrcp \$tmp_prefix.bin $subhost:$pwd/$file_prefix.bin
 /bin/rm -f \$tmp_prefix.*
 popd
 exit \$status
