@@ -55,6 +55,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
+use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -62,17 +63,18 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my $self = shift;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  throw("Improper formated input_id") unless ($self->input_id =~ /\s*\{/);
 
   $self->{'selfBlast'} = 1;
   $self->{'phylumBlast'} = 0;
-  if($self->analysis->parameters =~ /{/) {
+  if($self->analysis->parameters =~ /\s*\{/) {
     my $paramHash = eval($self->analysis->parameters);
     if($paramHash) {
       $self->{'phylumBlast'}=1 if($paramHash->{'phylumBlast'}==1);
       $self->{'selfBlast'}=0 if($paramHash->{'selfBlast'}==0);
+      $self->{'cr_analysis_logic_name'} = $paramHash->{'cr_analysis_logic_name'} if(defined $paramHash->{'cr_analysis_logic_name'});
     }
   }
   
@@ -82,11 +84,12 @@ sub fetch_input {
   #variable DBConnection to create the new connection (in essence a copy)
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
+  if (defined $self->{'cr_analysis_logic_name'}) {
+    $self->{'cr_analysis'} = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'cr_analysis_logic_name'});
+    throw($self->{'cr_analysis_logic_name'} . " analysis is missing, can't proceed\n")
+      unless(defined($self->{'cr_analysis'}));
 
-  $self->{'buildHomology'} = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('BuildHomology');
-  throw("BuildHomology analysis is missing, can't proceed\n")
-    unless(defined($self->{'buildHomology'}));
-
+  }
   return 1;
 }
 
@@ -141,12 +144,12 @@ sub createAllBlastRules
     my $blast_name = "blast_".$1;
     printf("found submit %s\n", $submitAnalysis->logic_name);
     push @submitList, $submitAnalysis;
-    $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($submitAnalysis, $self->{'buildHomology'});
+    $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($submitAnalysis, $self->{'cr_analysis'});
   
     my $blastAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($blast_name);
     if($blastAnalysis) {
       push @blastList, $blastAnalysis;
-      $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blastAnalysis, $self->{'buildHomology'});
+      $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blastAnalysis, $self->{'cr_analysis'});
     }
   }
   
