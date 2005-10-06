@@ -449,19 +449,6 @@ sub grow_memclusters_with_peppair {
       $parent2->disavow_parent; #releases from root
     }
   }
-
-}
-
-
-sub fetch_max_leftright_index {
-  my $self= shift;
-
-  my $sql = "SELECT max(right_index) FROM protein_tree_nodes;";
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
-  my ($max_counter) = $sth->fetchrow_array();
-  $sth->finish;
-  return $max_counter + 1;
 }
 
 
@@ -480,11 +467,7 @@ sub store_clusters {
   printf("    loaded %d leaves which are members\n", $count);
   printf("    loaded %d members in hash\n", scalar(keys(%{$self->{'member_leaves'}})));
   printf("    %d clusters generated\n", $self->{'tree_root'}->get_child_count);  
-  
-  #printf("  building the leftright_index\n");
-  #$self->{'tree_root'}->build_leftright_indexing(fetch_max_leftright_index($self));
-  #printf("  store\n");
-  
+    
   my $clusters = $self->{'tree_root'}->children;
   my $counter=1; 
   foreach my $cluster (@{$clusters}) {    
