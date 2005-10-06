@@ -22,7 +22,7 @@ my $blastz_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
      fetch_by_method_link_type_GenomeDBs("BLASTZ_NET", [$humanGDB, $mouseGDB]);
 
 my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[2,3]);
+    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[1,2]);
 
 my $homology_list = $comparaDBA->get_HomologyAdaptor->
     fetch_all_by_MethodLinkSpeciesSet($homology_mlss);
