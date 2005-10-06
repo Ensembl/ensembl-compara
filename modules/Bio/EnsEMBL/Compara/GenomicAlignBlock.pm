@@ -813,8 +813,8 @@ sub length {
     if (defined($self->{'adaptor'}) and defined($self->dbID)) {
       # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
       $self->adaptor->retrieve_all_direct_attributes($self);
-    } elsif (@{$self->get_all_GenomicAligns} and $self->get_all_GenomicAligns->[0]->aligned_sequence) {
-      $self->{'length'} = CORE::length($self->get_all_GenomicAligns->[0]->aligned_sequence);
+    } elsif (@{$self->get_all_GenomicAligns} and $self->get_all_GenomicAligns->[0]->aligned_sequence("+FAKE_SEQ")) {
+      $self->{'length'} = CORE::length($self->get_all_GenomicAligns->[0]->aligned_sequence("+FAKE_SEQ"));
     }
   }
   
