@@ -469,6 +469,12 @@ sub seq {
         $self->cigar_line,
         "ref"
     );
+    if ($self->strand == -$self->exon->strand) {
+      ## This happens when the slice in which this exon has been found
+      ## appears on the reverse strand in the alignment!
+      $seq = reverse($seq);
+      $seq =~ tr/ACGTacgt/TGCAtgca/;
+    }
     $self->{'_seq_cache'} = $seq;
   }
 
