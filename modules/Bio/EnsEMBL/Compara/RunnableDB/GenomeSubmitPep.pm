@@ -73,7 +73,7 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /\{/);
   my $input_hash = eval($self->input_id);
   
   #create a Compara::DBAdaptor which shares the same DBConnection as $self->db
