@@ -271,20 +271,22 @@ sub species_set {
  
   if ($arg && @$arg) {
     ## Check content
-    my $genome;
-    foreach my $genome_db (@$arg) {
-      throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($genome_db));
-      throw("$genome_db must be a Bio::EnsEMBL::Compara::GenomeDB\n")
-        unless $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB");
-      throw("GenomeDB (".$genome_db->name."; dbID=".$genome_db->dbID.
-          ") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
-        if $genome->{$genome_db->dbID};
+    my $genome_dbs;
+    foreach my $gdb (@$arg) {
+      throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n")
+        if (!defined($gdb));
+      throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n")
+        unless $gdb->isa("Bio::EnsEMBL::Compara::GenomeDB");
 
-      $genome->{$genome_db->dbID} = 1;
+      unless (defined $genome_dbs->{$gdb->dbID}) {
+        $genome_dbs->{$gdb->dbID} = $gdb;
+      } else {
+        warn("GenomeDB (".$gdb->name."; dbID=".$gdb->dbID .
+             ") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n");
+      }
     }
-    $self->{'species_set'} = $arg ;
+    $self->{'species_set'} = [ values %{$genome_dbs} ] ;
   }
-  
   return $self->{'species_set'};
 }
 
