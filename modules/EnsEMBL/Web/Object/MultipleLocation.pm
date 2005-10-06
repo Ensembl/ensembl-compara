@@ -15,6 +15,8 @@ sub Obj {
 
 sub species_list { return map { $_->real_species } $_[0]->Locations; }
 
+sub species_and_seq_region_list { return map {$_->real_species.':'.$_->seq_region_name } $_[0]->Locations; }	
+
 sub Locations { return @{$_[0]{data}{_object}}; }
 
 sub PrimaryLocation {
