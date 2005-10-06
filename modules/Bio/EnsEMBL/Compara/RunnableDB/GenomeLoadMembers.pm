@@ -180,9 +180,7 @@ sub loadMembersFromCoreSlices
     #print("slice " . $slice->name . "\n");
     foreach my $gene (@{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
-      if((lc($gene->type) ne 'pseudogene') and 
-         (lc($gene->type) ne 'bacterial_contaminant') and
-         ($gene->type !~ /RNA/i)) {
+      if (lc($gene->biotype) eq 'protein_coding') {
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
       }
@@ -222,6 +220,15 @@ sub store_gene_and_all_transcripts
       warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
       next;
     }
+#    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
+#    my $next = 0;
+#    try {
+#      $transcript->translate;
+#    } catch {
+#      warn("COREDB error: transcript does not translate", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
+#      $next = 1;
+#    };
+#    next if ($next);
     my $translation = $transcript->translation;
     
     if(defined($self->{'pseudo_stableID_prefix'})) {
@@ -239,6 +246,7 @@ sub store_gene_and_all_transcripts
     }
 
     my $description = $self->fasta_description($gene, $transcript);
+ 
     my $pep_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
          -transcript=>$transcript,
          -genome_db=>$self->{'genome_db'},
