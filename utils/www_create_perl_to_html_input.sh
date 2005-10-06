@@ -27,6 +27,7 @@
 #
 # jws 2002-01-08
 #
+# mkdir bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-draw ensembl-external ensembl-pipeline ensembl-variation perl biomart-web biomart-plib public-plugins modules conf
 
 . /etc/profile
 
