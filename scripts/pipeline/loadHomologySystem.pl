@@ -262,12 +262,13 @@ sub prepareGenomeAnalysis
   #
   # CreateBlastRules
   #
+  my $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'BuildHomology'}";
   my $blastrules_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateBlastRules',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastRules',
-      -parameters      => '{phylumBlast=>0, selfBlast=>1}',
+      -parameters      => $parameters
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($blastrules_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($blastrules_analysis->dbID);
