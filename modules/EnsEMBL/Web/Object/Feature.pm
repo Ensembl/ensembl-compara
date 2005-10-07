@@ -128,15 +128,18 @@ sub retrieve_AffyProbe {
 
 sub coord_systems {
   my $self = shift;
-  return [ map { $_->name } @{ $self->Obj->[0]->adaptor->db->get_CoordSystemAdaptor()->fetch_all() } ];
+  my ($exemplar) = keys(%{$self->Obj});
+#warn $self->Obj->{$exemplar}->[0];
+  return [ map { $_->name } @{ $self->Obj->{$exemplar}->[0]->adaptor->db->get_CoordSystemAdaptor()->fetch_all() } ];
 }
 
 sub retrieve_DnaAlignFeature {
-  my $self = shift;
+  my ($self, $ftype) = @_;
+  $ftype = 'Dna' unless $ftype;
   my $results = [];
   my $coord_systems = $self->coord_systems();
-  foreach my $f ( @{$self->Obj->{'AlignFeature'}} ) { 
-	next unless ($f->score > 80);
+  foreach my $f ( @{$self->Obj->{$ftype.'AlignFeature'}} ) { 
+	  next unless ($f->score > 80);
     my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
     if( $f->coord_system_name ne $coord_systems->[0] ) {
       foreach my $system ( @{$coord_systems} ) {
@@ -164,7 +167,7 @@ sub retrieve_DnaAlignFeature {
 }
 
 sub retrieve_ProteinAlignFeature {
-  return $_[0]->retrieve_DnaAlignFeature();
+  return $_[0]->retrieve_DnaAlignFeature('Protein');
 }
 
 sub retrieve_RegulatoryFactor {

@@ -40,11 +40,11 @@ sub create_AffyProbe {
 }
 
 sub create_DnaAlignFeature {
-  my $features =  {'AlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
+  my $features =  {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
   return $features;
 }
 sub create_ProteinAlignFeature {
-  my $features = {'AlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  my $features = {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
   return $features;
 }
 
