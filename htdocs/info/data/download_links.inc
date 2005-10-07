@@ -168,13 +168,13 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_yeast/"><i>Saccharomyces cerevisiae</i></a> (baker's yeast)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_yeast/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_yeast/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_yeast/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_yeast/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_yeast/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_yeast/data/mysql/">FTP</a></td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_scerevisiae/"><i>Saccharomyces cerevisiae</i></a> (baker's yeast)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_scerevisiae/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_scerevisiae/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_scerevisiae/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_scerevisiae/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_scerevisiae/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_scerevisiae/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
