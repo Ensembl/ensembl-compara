@@ -510,7 +510,6 @@ sub do_downloads {
     my $common = lc(utils::Tool::get_config({species =>$spp, values => "SPECIES_COMMON_NAME" }));
     $common = 'mosquito' if $common eq 'anopheles';
     $common = 'bee' if $common eq 'honeybee';
-    $common = 'yeast' if $common eq 's.cerevisiae';
     $common = 'ciona' if $common eq 'c.intestinalis';
     $common =~ s/\.//;
     $common =~ s/fruit//;

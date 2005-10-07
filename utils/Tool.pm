@@ -299,4 +299,88 @@ sub warning{
   return 1;
 }
 #----------------------------------------------------------------------
+
+
+__END__
+           
+=head1 NAME
+                                                                                
+Tool
+
+=head1 SYNOPSIS
+
+    use <path>::Tool;
+    # Brief but working code example(s) here showing the most common usage
+
+    # This section will be as far as many users bother reading,
+    # so make it as educational and exemplary as possible!
+
+=head1 DESCRIPTION
+
+A full description of the module and its features.
+May include numerous subsections (i.e. =head2, =head3, etc).
+
+=head1 METHODS
+
+An object of this class represents...
+
+Below is a list of all public methods:
+
+
+
+=head1 BUGS AND LIMITATIONS
+
+A list of known problems with the module, together with some indication of 
+whether they are likely to be fixed in an upcoming release.
+
+=head1 AUTHOR
+                                                                                
+[name], Ensembl Web Team
+Support enquiries: helpdesk@ensembl.org
+                                                                                
+=head1 COPYRIGHT
+                                                                                
+See http://www.ensembl.org/info/about/code_licence.html
+
+
+__END__
+           
+=head1 NAME
+                                                                                
+Tool
+
+=head1 SYNOPSIS
+
+    use <path>::Tool;
+    # Brief but working code example(s) here showing the most common usage
+
+    # This section will be as far as many users bother reading,
+    # so make it as educational and exemplary as possible!
+
+=head1 DESCRIPTION
+
+A full description of the module and its features.
+May include numerous subsections (i.e. =head2, =head3, etc).
+
+=head1 METHODS
+
+An object of this class represents...
+
+Below is a list of all public methods:
+
+
+
+=head1 BUGS AND LIMITATIONS
+
+A list of known problems with the module, together with some indication of 
+whether they are likely to be fixed in an upcoming release.
+
+=head1 AUTHOR
+                                                                                
+[name], Ensembl Web Team
+Support enquiries: helpdesk@ensembl.org
+                                                                                
+=head1 COPYRIGHT
+                                                                                
+See http://www.ensembl.org/info/about/code_licence.html
 1;
