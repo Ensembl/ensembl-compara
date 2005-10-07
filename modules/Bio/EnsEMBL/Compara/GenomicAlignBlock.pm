@@ -1404,6 +1404,10 @@ sub restrict_between_reference_positions {
   ## Skip if no restriction is needed. Return original object!
   return $self if ($excess_at_the_start < 0 and $excess_at_the_end < 0);
 
+  my $negative_strand = ($reference_genomic_align->dnafrag_strand == -1);
+  $self->reverse_complement() if ($negative_strand);
+
+  ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
     my $new_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
           -method_link_species_set => $this_genomic_align->method_link_species_set,
@@ -1535,6 +1539,8 @@ sub restrict_between_reference_positions {
       }
     }
   }
+
+  $self->reverse_complement() if ($negative_strand);
 
   throw("Reference GenomicAlign not found!") if (!$genomic_align_block->get_all_GenomicAligns->[0]);
   return $genomic_align_block;
