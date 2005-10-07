@@ -351,7 +351,8 @@ sub fetch_all_by_Slice {
                   $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
                       $method_link_species_set, $original_slice);
   Description: Retrieve the corresponding
-               Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
+               Bio::EnsEMBL::Compara::GenomicAlignBlock objects. The alignments may be
+               reverse-complemented in order to match the strand of the original slice.
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
                adaptor and method_link_species_set are actually stored in the objects. The remaining
                attributes are only retrieved when required.
@@ -430,6 +431,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reference_slice_start($feature->start);
         $this_genomic_align_block->reference_slice_end($feature->end);
         $this_genomic_align_block->reference_slice_strand($reference_slice->strand);
+        $this_genomic_align_block->reverse_complement()
+            if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
       }
     } else {
@@ -440,6 +443,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reference_slice_end(
             $this_genomic_align_block->reference_genomic_align->dnafrag_end);
         $this_genomic_align_block->reference_slice_strand($reference_slice->strand);
+        $this_genomic_align_block->reverse_complement()
+            if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
       }
     }
