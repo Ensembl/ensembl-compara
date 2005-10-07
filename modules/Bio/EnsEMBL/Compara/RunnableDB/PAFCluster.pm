@@ -57,6 +57,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Homology;
+use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -80,6 +81,7 @@ sub fetch_input {
   $self->get_params($self->input_id);
   return 1;
 }
+
 
 sub get_params {
   my $self         = shift;
@@ -127,14 +129,17 @@ sub get_params {
 sub run
 {
   my $self = shift;  
+  $self->build_paf_clusters();
   return 1;
 }
 
 sub write_output {
   my $self = shift;
+    
+  $self->store_clusters;
   
-  $self->build_paf_clusters();
-  
+  $self->dataflow_clusters;
+
   # modify input_job so that it now contains the clusterset_id
   my $outputHash = {};
   $outputHash = eval($self->input_id) if(defined($self->input_id));
@@ -153,47 +158,22 @@ sub write_output {
 
 sub build_paf_clusters {
   my $self = shift;
-  
-  my $build_mode = 'direct';
-  
+    
   return unless($self->{'species_set'});
   my @species_set = @{$self->{'species_set'}};
   return unless @species_set;
 
-  my $mlssDBA = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
-  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $starttime = time();
+
+  # create ConnectedComponents cluster building engine
+  $self->{'ccEngine'} = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
    
-  $self->{'tree_root'} = new Bio::EnsEMBL::Compara::NestedSet;
-  $self->{'tree_root'}->name("ORTHO_CLUSTERS");
-  $treeDBA->store($self->{'tree_root'});
-  printf("root_id %d\n", $self->{'tree_root'}->node_id);
-  $self->{'clusterset_id'} = $self->{'tree_root'}->node_id;
-  
-  #
-  # create Cluster MLSS
-  #
-  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
-  my @genomeDB_set;
-  foreach my $gdb_id (@species_set) {
-    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    push @genomeDB_set, $gdb;
-  }
-  $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
-  $mlssDBA->store($self->{'cluster_mlss'});
-  printf("MLSS %d\n", $self->{'cluster_mlss'}->dbID);
-  
-  $self->{'member_leaves'} = {};
-  
-  eval {
   #  
   # load all the self equal hits for each genome so we have our reference score
   #
   
   $self->fetch_selfhit_score;
-
+  
   #  
   # for each species pair, get all 'high scoring' hits and build clusters
   # 
@@ -208,16 +188,8 @@ sub build_paf_clusters {
       $self->threshold_grow_for_species($gdb_id1, $gdb_id2);
     }
   }
+    
   
-  $self->store_clusters;
-  
-  $self->dataflow_clusters;
-  
-  }; #eval
-  
-  
-  $self->{'tree_root'}->release_tree;
-  $self->{'tree_root'} = undef;
 }
 
 
@@ -283,13 +255,13 @@ sub BRH_grow_for_species
   while( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($pep1_id, $pep2_id, $score, $hit_rank) = @$ref;
     $paf_counter++;
-
-    my $pep_pair = [$pep1_id, $pep2_id];
-    $self->grow_memclusters_with_peppair($pep_pair);
+    #my $pep_pair = [$pep1_id, $pep2_id];
+    #$self->grow_memclusters_with_peppair($pep_pair);
+    $self->{'ccEngine'}->add_connection($pep1_id, $pep2_id);
   }
   
-  printf("  %d clusters so far\n", $self->{'tree_root'}->get_child_count);  
-  printf("  %d members in hash\n", scalar(keys(%{$self->{'member_leaves'}})));
+  printf("  %d clusters so far\n", $self->{'ccEngine'}->get_cluster_count);  
+  printf("  %d members in hash\n", $self->{'ccEngine'}->get_component_count);
   printf("  %1.3f secs to process %d BRH PAFs\n", time()-$midtime, $paf_counter);
   printf("  %1.3f secs to load/process\n", (time()-$starttime));
 }
@@ -362,13 +334,12 @@ sub threshold_grow_for_species
     
     if($include_pair) {
       $included_pair_count++;
-      my $pep_pair = [$pep1_id, $pep2_id];
-      $self->grow_memclusters_with_peppair($pep_pair);
+      $self->{'ccEngine'}->add_connection($pep1_id, $pep2_id);
     }
   }
   
-  printf("  %d clusters so far\n", $self->{'tree_root'}->get_child_count);  
-  printf("  %d members in hash\n", scalar(keys(%{$self->{'member_leaves'}})));
+  printf("  %d clusters so far\n", $self->{'ccEngine'}->get_cluster_count);  
+  printf("  %d members in hash\n", $self->{'ccEngine'}->get_component_count);
   printf("  %1.3f secs to process %d PAFs => %d picked (%d best + %d threshold)\n", 
          time()-$midtime, $paf_counter, $included_pair_count, $included_bests_count, 
          $included_pair_count- $included_bests_count);
@@ -376,99 +347,67 @@ sub threshold_grow_for_species
 }
 
 
-=head2 grow_memclusters_with_peppair
-
-  Description: Takes a pair of peptide_member_id and uses the NestedSet objects
-     to build a 3 layer tree in memory.  There is a single root for the entire build
-     process, and each cluster is a child of this root.  The members are children of
-     the clusters. During the build process the member leaves are assigned a node_id
-     equal to the peptide_member_id so they can be found via 'find_node_by_node_id'.
-     After the process is completed, each cluster can then be stored in a faster 
-     bulk insert process.
-    
-=cut
-
-
-sub grow_memclusters_with_peppair {
-  my $self = shift;
-  my $pep_pair = shift;
-  my ($pep1_id, $pep2_id) = @{$pep_pair};
-  
-  if(($pep1_id == 289964) or ($pep2_id == 289964)) {
-    printf("!!!!!! homology peptide pair : %d - %d\n", $pep1_id, $pep2_id);
-  }
-  my $mlss_id = $self->{'cluster_mlss'}->dbID;
-  
-  my ($treeMember1, $treeMember2);
-  $treeMember1 = $self->{'member_leaves'}->{$pep1_id};
-  $treeMember2 = $self->{'member_leaves'}->{$pep2_id};
-
-  if(!defined($treeMember1)) {
-    $treeMember1 = new Bio::EnsEMBL::Compara::AlignedMember;
-    $treeMember1->method_link_species_set_id($mlss_id);
-    $treeMember1->member_id($pep1_id);
-    $treeMember1->node_id($pep1_id);
-    $self->{'member_leaves'}->{$pep1_id} = $treeMember1;
-  }
-  if(!defined($treeMember2)) {
-    $treeMember2 = new Bio::EnsEMBL::Compara::AlignedMember;
-    $treeMember2->method_link_species_set_id($mlss_id);
-    $treeMember2->member_id($pep2_id);
-    $treeMember2->node_id($pep2_id);
-    $self->{'member_leaves'}->{$pep2_id} = $treeMember2;
-  }
-  
-  my $parent1 = $treeMember1->parent;
-  my $parent2 = $treeMember2->parent;
-        
-  if(!defined($parent1) and !defined($parent2)) {
-    #neither member is in a cluster so create new cluster with just these 2 members
-    # printf("create new cluster\n");
-    my $cluster = new Bio::EnsEMBL::Compara::NestedSet;
-    $self->{'tree_root'}->add_child($cluster);
-    $cluster->add_child($treeMember1);
-    $cluster->add_child($treeMember2);
-  }
-  elsif(defined($parent1) and !defined($parent2)) {
-    # printf("add member to cluster %d\n", $parent1->node_id);
-    # $treeMember2->print_member; 
-    $parent1->add_child($treeMember2);
-  }
-  elsif(!defined($parent1) and defined($parent2)) {
-    # printf("add member to cluster %d\n", $parent2->node_id);
-    # $treeMember1->print_member; 
-    $parent2->add_child($treeMember1);
-  }
-  elsif(defined($parent1) and defined($parent2)) {
-    if($parent1->equals($parent2)) {
-      # printf("both members already in same cluster %d\n", $parent1->node_id);
-    } else {
-      #this member already belongs to a different cluster -> need to merge clusters
-      # print("MERGE clusters\n");
-      $parent1->merge_children($parent2);
-      $parent2->disavow_parent; #releases from root
-    }
-  }
-}
-
-
 sub store_clusters {
   my $self = shift;
   
+  return unless($self->{'species_set'});
+  my @species_set = @{$self->{'species_set'}};
+  return unless @species_set;
+
+  my $mlssDBA = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
+  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $starttime = time();
 
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $clusterset = $self->{'ccEngine'}->clusterset;
+  throw("no clusters generated") unless($clusterset);
+  
+  $clusterset->name("ORTHO_CLUSTERS");
+  $treeDBA->store_node($clusterset);
+  printf("root_id %d\n", $clusterset->node_id);
+  $self->{'clusterset_id'} = $clusterset->node_id;
+  
+  #
+  # create Cluster MLSS
+  #
+  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  $self->{'cluster_mlss'}->method_link_type('ORTHO_CLUSTERS'); 
+  my @genomeDB_set;
+  foreach my $gdb_id (@species_set) {
+    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+    push @genomeDB_set, $gdb;
+  }
+  $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
+  $mlssDBA->store($self->{'cluster_mlss'});
+  printf("MLSS %d\n", $self->{'cluster_mlss'}->dbID);
+  
+  #
+  # Go through all the leaves which were generated by ConnectedComponents
+  # and convert them into AlignedMember objects with additional data
+  # to allow them to be stored correctly
+  #  
+  my $mlss_id = $self->{'cluster_mlss'}->dbID;
+  my $leaves = $clusterset->get_all_leaves;
+  foreach my $leaf (@$leaves) {
+    #leaves are NestedSet objects, bless to make into AlignedMember objects
+    bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+    
+    #the building method uses member_id's to reference unique nodes
+    #which are stored in the node_id value, copy to member_id
+    $leaf->member_id($leaf->node_id);
+    $leaf->method_link_species_set_id($mlss_id);
+  }
 
+  
   printf("storing the clusters\n");
-  my $leaves = $self->{'tree_root'}->get_all_leaves;
   printf("    loaded %d leaves\n", scalar(@$leaves));
   my $count=0;
   foreach my $mem (@$leaves) { $count++ if($mem->isa('Bio::EnsEMBL::Compara::AlignedMember'));}
   printf("    loaded %d leaves which are members\n", $count);
-  printf("    loaded %d members in hash\n", scalar(keys(%{$self->{'member_leaves'}})));
-  printf("    %d clusters generated\n", $self->{'tree_root'}->get_child_count);  
+  printf("    loaded %d members in hash\n", $self->{'ccEngine'}->get_component_count);
+  printf("    %d clusters generated\n", $self->{'ccEngine'}->get_cluster_count);  
     
-  my $clusters = $self->{'tree_root'}->children;
+  my $clusters = $clusterset->children;
   my $counter=1; 
   foreach my $cluster (@{$clusters}) {    
     $treeDBA->store($cluster);
@@ -480,17 +419,18 @@ sub store_clusters {
     if($counter++ % 200 == 0) { printf("%10d clusters stored\n", $counter); }
   }
   printf("  %1.3f secs to store clusters\n", (time()-$starttime));
-  printf("tree_root : %d\n", $self->{'tree_root'}->node_id);
+  printf("tree_root : %d\n", $clusterset->node_id);
 }
 
 
 sub dataflow_clusters {
   my $self = shift;
   
-  my $clusters = $self->{'tree_root'}->children;
+  my $clusterset = $self->{'ccEngine'}->clusterset;
+  my $clusters = $clusterset->children;
   foreach my $cluster (@{$clusters}) {
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
-       $cluster->node_id, $self->{'tree_root'}->node_id);
+       $cluster->node_id, $clusterset->node_id);
     $self->dataflow_output_id($output_id, 2);
   }
 }
