@@ -1640,10 +1640,18 @@ sub _method_returning_simple_features {
     my $this_mapper = $pair->{mapper};
     my $this_ret = $this_slice->$method(@_);
     foreach my $this_object (@$this_ret) {
+      my ($this_start, $this_end);
+      if ($this_slice->strand == 1) {
+        $this_start = $this_object->slice->start + $this_object->start - 1;
+        $this_end = $this_object->slice->start + $this_object->end - 1;
+      } else {
+        $this_start = $this_object->slice->start + ($this_slice->length - $this_object->start);
+        $this_end = $this_object->slice->start + ($this_slice->length - $this_object->end);
+      }
       my @alignment_coords = $this_mapper->map_coordinates(
               'sequence',
-              $this_object->slice->start + $this_object->start - 1,
-              $this_object->slice->start + $this_object->end - 1,
+              $this_start,
+              $this_end,
               $this_object->strand,
               'sequence'
           );
