@@ -208,6 +208,9 @@ p.error {
 h2.breadcrumbs { color:#333; }
 a.breadcrumb { text-decoration:none }
 
+p.footnote { font-size:85%; }
+a.fnlink { text-decoration:none; } 
+
 /************************ PAGE-SPECIFIC STYLES *************************/
 
 /* Ensembl homepage */
@@ -276,3 +279,7 @@ table.zoom tr td img { margin-top: 0px }
 .navbox { background-color: #ffffe7 }
 
 .multicol { float: left; width: 12em; white-space: nowrap }
+
+/* Vega styles */
+
+vh4 { font-size:1.1em; color:#993333; }
