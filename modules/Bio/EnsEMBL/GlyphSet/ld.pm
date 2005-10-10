@@ -38,7 +38,7 @@ sub _init {
   my $number_of_snps = scalar(@snps);
   my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
   my $pop_obj     = $pop_adaptor->fetch_by_dbID($only_pop);
-  my $pop_name    = $pop_obj->name;
+  my $pop_name    = $pop_obj->name if $pop_obj;
   my $length      = ($self->{'container'}->length -1)/1000;
 
   unless( $number_of_snps > 1 ) {
