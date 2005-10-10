@@ -54,14 +54,20 @@ sub _init {
   my @features = ();
   my @segments = ();
 
-  if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice")) {
-      foreach my $slice (@{$Container->get_all_Slices()}) {
-	  push @segments, @{$slice->project("contig")};
-      }
+  if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+#      foreach my $key (%$Container) {
+##	  warn(join('=>', $key, $Container->{$key}));
+#      }
+      my $slice = $Container;
+      push @segments, @{$slice->project("contig")};
+#      foreach my $slice (@{$Container->get_all_Slices()}) {
+#	  push @segments, @{$slice->project("contig")};
+#      }
   } else {
       @segments = @{$Container->project('seqlevel')||[]};
   }
 
+#  warn("*****************************");
   foreach my $segment (@segments) {
       my $start      = $segment->from_start;
       my $end        = $segment->from_end;
@@ -69,8 +75,9 @@ sub _init {
       my $ORI        = $ctg_slice->strand;
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
 
+#      warn(Data::Dumper::Dumper($feature));
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
-      if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice") && ($Container->{__type__} ne 'alignslice')) {
+      if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
 	  foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
 	      my $path;
 	      eval { $path = $ctg_slice->project($_->name); };
