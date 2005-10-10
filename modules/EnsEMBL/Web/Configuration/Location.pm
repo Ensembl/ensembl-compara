@@ -541,6 +541,7 @@ sub ldview {
     'c'      => $object->seq_region_name.':'.$object->centrepoint,
     'source' => $object->param('source') || "dbSNP",
     'h'      => $object->highlights_string,
+	       #'strain' => $object->strain,
   } ;
 
   # Description : prints a two col table with info abou the LD ---------------
