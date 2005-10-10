@@ -15,7 +15,6 @@ sub init {
 			ruler
 			snp_triangle_glovar
 			variation
-			variation_strain
 			genotyped_variation
 			tagged_snp
 			ld_r2
@@ -33,27 +32,26 @@ sub init {
       'navigation_options' => [ '500k', '200k', '100k', 'window', 'half', 'zoom' ],
 
      'features' => [
-                     [ 'variation'             => "SNPs"          ],
-                     [ 'variation_legend'      => "SNP legend"    ],
-                     [ 'genotyped_variation'   => "Genotyped SNPs"],
-                     [ 'tagged_snp'            => "Tagged SNPs"],
-                     [ 'variation_strain'      => "SNPs in strain"],
-                     [ 'ld_r2'                 => "LD (r2)"],
-                     [ 'ld_d_prime'            => "LD (d')"],
+                     [ 'variation'            => "SNPs"          ],
+                     [ 'variation_legend'         => "SNP legend"    ],
+                     [ 'genotyped_variation'      => "Genotyped SNPs"],
+                     [ 'tagged_snp'              => "Tagged SNPs"],
+                     [ 'ld_r2'      => "LD (r2)"],
+                     [ 'ld_d_prime' => "LD (d')"],
                     ],
       'options' => [
                  [ 'opt_empty_tracks' => 'Show empty tracks' ],
-                 [ 'opt_zmenus'       => 'Show popup menus'  ],
-                 [ 'opt_zclick'       => '... popup on click'  ],
+                 [ 'opt_zmenus'      => 'Show popup menus'  ],
+                 [ 'opt_zclick'      => '... popup on click'  ],
                    ],
       'opt_empty_tracks' => 1,
-      'opt_zmenus'       => 1,
-      'opt_zclick'       => 1,
+      'opt_zmenus'     => 1,
+      'opt_zclick'     => 1,
       'show_labels'      => 'yes',
-      'width'            => 900,
-      'bgcolor'          => 'background1',
-      'bgcolour1'        => 'background3',
-      'bgcolour2'        => 'background1',
+      'width'     => 900,
+      'bgcolor'   => 'background1',
+      'bgcolour1' => 'background3',
+      'bgcolour2' => 'background1',
  },
     'ruler' => {
       'on'          => "on",
@@ -118,20 +116,7 @@ sub init {
       'str'         => 'r',
       'dep'         => '0.1',
       'col'         => 'blue',
-      'track_label' => "SNPs",
-      'track_height'=> 7,
-      'hi'          => 'black',
-      'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION', 
-    },
-
-   'variation_strain' => {
-      'on'          => "on",
-      'pos'         => '4509',
-      'str'         => 'r',
-      'dep'         => '0.1',
-      'col'         => 'blue',
-      'track_label' => "SNPs in strain",
+      'track_label' => "Variations",
       'track_height'=> 7,
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
