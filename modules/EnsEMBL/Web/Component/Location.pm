@@ -560,15 +560,17 @@ sub multi_species_list {
 		$dup_species{$_}++;
 	}
 	if (grep {$dup_species{$_} > 1} keys %dup_species) {
+		#if we have a self-compara then get seq_regions as well as species names
 		my @details = $object->species_and_seq_region_list;
 		my $C = 1;
+		my ($type,$srname) = split / / , $object->seq_region_type_and_name;
 		foreach my $assoc (@details) {
 			my ($sp,$sr) = split /:/, $assoc;
 			$species_hash{ 's'.$C } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$sp};
 			$species_hash{ 'sr'.$C++ } = $sr;
 		}
-		return %species_hash;
 	} else {
+		#other wise just get species names
 		my %species_flag = ( $species => 1 );
 		my $C = 1;
 		foreach ($object->species_list()) {
@@ -576,8 +578,8 @@ sub multi_species_list {
 			$species_flag{ $_       } = 1;
 			$species_hash{ 's'.$C++ } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$_};
 		}
-		return %species_hash;
 	}
+	return %species_hash;
 }
 
 sub contigviewbottom_nav { return bottom_nav( @_, 'contigviewbottom', {} ); }
