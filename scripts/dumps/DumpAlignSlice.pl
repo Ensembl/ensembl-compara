@@ -349,7 +349,7 @@ if ($print_genomic) {
 
 if ($print_contigs) {
   foreach my $slice (@{$align_slice->get_all_Slices()}) {
-    foreach my $projection_segment (@{$slice->project("contig")}) {
+    foreach my $projection_segment (@{($slice->project("contig") or [])}) {
       my $this_seq = "." x $slice->length;
       my $start = $projection_segment->from_start;
       my $end = $projection_segment->from_end;
