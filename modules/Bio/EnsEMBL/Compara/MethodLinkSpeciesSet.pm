@@ -126,16 +126,16 @@ sub new {
   my $self = {};
   bless $self,$class;
     
-  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set) =
+  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set, $max_size ) =
       rearrange([qw(
-          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET)], @args);
+          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET MAX_SIZE)], @args);
 
   $self->dbID($dbID) if (defined ($dbID));
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->method_link_id($method_link_id) if (defined ($method_link_id));
   $self->method_link_type($method_link_type) if (defined ($method_link_type));
   $self->species_set($species_set) if (defined ($species_set));
-
+  $self->max_size( $max_size )     if defined $max_size;
   return $self;
 }
 
@@ -194,6 +194,27 @@ sub adaptor {
   return $obj->{'adaptor'};
 }
 
+
+sub max_size {
+  my $self = shift;
+  $self->{'max_size'} = shift if @_;
+  if(
+    !defined($self->{'max_size'})         &&
+     defined($self->{'method_link_type'}) &&
+     defined($self->{'adaptor'})
+  ) {
+    $self->{'max_size'} = $self->adaptor->_get_max_size_from_type($self->{'method_link_type'});
+  }
+  if(
+    !defined($self->{'max_size'})         &&
+     defined($self->{'method_link_id'}) &&
+     defined($self->{'adaptor'})
+  ) {
+    $self->{'max_size'} = $self->adaptor->_get_max_size_from_id($self->{'method_link_id'});
+  }
+
+  return $self->{'max_size'};
+}
 
 =head2 method_link_id
  

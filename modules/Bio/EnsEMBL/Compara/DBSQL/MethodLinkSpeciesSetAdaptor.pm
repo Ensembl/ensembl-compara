@@ -1190,5 +1190,50 @@ sub _get_method_link_id_from_type {
   return $dbID;
 }
 
+sub _get_max_size_from_type {
+  my ($self, $method_link_type) = @_;
+  my $max_size; # returned integer
+
+  my $sql = qq{
+                SELECT max_size
+                FROM method_link
+                WHERE type = ?
+        };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($method_link_type);
+
+  ($max_size) = $sth->fetchrow_array();
+  $sth->finish;
+
+  if (!$max_size) {
+    warning("No method_link matches <$method_link_type>");
+  }
+
+  return $max_size;
+}
+
+sub _get_max_size_from_id {
+  my ($self, $method_link_id) = @_;
+  my $max_size; # returned integer
+
+  my $sql = qq{
+                SELECT max_size
+                FROM method_link
+                WHERE method_link_id = ?
+        };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($method_link_id);
+
+  ($max_size) = $sth->fetchrow_array();
+  $sth->finish;
+
+  if (!$max_size) {
+    warning("No method_link matches <$method_link_id>");
+  }
+
+  return $max_size;
+}
 
 1;

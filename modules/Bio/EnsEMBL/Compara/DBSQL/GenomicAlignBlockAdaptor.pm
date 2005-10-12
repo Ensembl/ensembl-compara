@@ -563,7 +563,10 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               AND ga2.dnafrag_id = $dnafrag_id
       };
   if (defined($start) and defined($end)) {
-    my $lower_bound = $start - $self->{'max_alignment_length'};
+    my $max_feature_length = $method_link_species_set->max_size() || $self->{'max_alignment_length'};
+    # $max_feature_length = $self->{'max_alignment_length'};
+    warn ">MFL - $max_feature_length";
+    my $lower_bound = $start - $max_feature_length;
     $sql .= qq{
             AND ga2.dnafrag_start <= $end
             AND ga2.dnafrag_start >= $lower_bound
