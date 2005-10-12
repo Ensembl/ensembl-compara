@@ -130,11 +130,9 @@ foreach my $species (@SPECIES) {
   my $species_folder;
   my @search_dirs;          # list of folders to search according to config
 
-  my $base_dir = $SPECIES_DEFS->get_config($species,"ENSEMBL_FTP_BASEDIR");
-  error("FTP_BASEDIR is not configured in conf/$species.ini. There is no species folder name.") unless $base_dir;
 
   if ($species eq 'Multi') {
-    $species_folder = "$base_dir-$release";
+    $species_folder = "multi-species-$release";
 
     foreach my $x qw( ensembl_help ensembl_website ensembl_web_user_db ) {
       $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$x"."_$release"} = [1];
@@ -145,6 +143,9 @@ foreach my $species (@SPECIES) {
   }
 
   else {
+    my $base_dir = lc($SPECIES_DEFS->get_config($species,"SPECIES_COMMON_NAME"));
+    error("Species common name is not configured in conf/$species.ini. There is no species folder name.") unless $base_dir;
+    $base_dir =~ s/\.//;
     my $sp_release = $SPECIES_DEFS->get_config($species,"SPECIES_RELEASE_VERSION") || "";
     $sp_release =~ s/\.//g;
     $species_folder = "$base_dir-$release.$sp_release";

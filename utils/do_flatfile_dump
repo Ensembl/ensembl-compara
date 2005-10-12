@@ -84,11 +84,12 @@ foreach my $spp (@species){
     $ENV{'ENSEMBL_SPECIES'} = $spp;
     warning(1, "species = $spp $format");
 
-    my $base_dir = $SPECIES_DEFS->get_config($spp,"ENSEMBL_FTP_BASEDIR")|| $spp;
+    my $base_dir = lc(utils::Tool::get_config({ species=>$sp, values => "SPECIES_COMMON_NAME"} ));
+    die "[*Error] Species common name not configured in INI file" unless $base_dir;
+    $base_dir =~ s/\.//;
     my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
     $sp_release =~ s/\.//g;
     my $spp_dir = "$base_dir-$sitedefs_release.$sp_release";
-    #my $spp_dir =$SPECIES_DEFS->get_config($spp,"ENSEMBL_FTP_BASEDIR") or $spp;
     my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
 
     unless (-d "$spp_dumpdir"){

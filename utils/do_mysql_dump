@@ -101,15 +101,17 @@ if ( @SPECIES ) {
 foreach my $sp( @SPECIES ){
 
   # Work out dumpdir ---------------------------------------------------------
-  my $base_dir = utils::Tool::get_config({ species=>$sp, values => "ENSEMBL_FTP_BASEDIR"} )|| $sp;
-  my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
-  $sp_release =~ s/\.//g;
-
   my @sp_dumpdirs;
   if ($sp eq 'Multi') {
-    @sp_dumpdirs  = "$dumpdir/$base_dir-$sitedefs_release/data/mysql";
+    @sp_dumpdirs  = "$dumpdir/multi-species-$sitedefs_release/data/mysql";
   }
   else {
+    my $base_dir = lc(utils::Tool::get_config({ species=>$sp, values => "SPECIES_COMMON_NAME"} ));
+    die "[*Error] Species common name not configured in INI file" unless $base_dir;
+    $base_dir =~ s/\.//;
+    my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
+    $sp_release =~ s/\.//g;
+
     @sp_dumpdirs="$dumpdir/$base_dir-$sitedefs_release.$sp_release/data/mysql";
     $kill_list{"ENSEMBL_HELP"}    = 1;
     $kill_list{"ENSEMBL_WEBSITE"} = 1;

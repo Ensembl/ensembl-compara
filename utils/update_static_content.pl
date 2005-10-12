@@ -502,14 +502,15 @@ sub do_downloads {
 );
 
   foreach my $spp (@{[@{ utils::Tool::all_species()}] }) {
-    my $base_dir = utils::Tool::get_config({ species=>$spp, values => "ENSEMBL_FTP_BASEDIR"}) || lc(utils::Tool::get_config({ species=>$spp, values => "SPECIES_COMMON_NAME"})) ;
+    my $base_dir = lc(utils::Tool::get_config({ species=>$spp, values => "SPECIES_COMMON_NAME"})) ;
+    die "[*Error] Species common name not configured in INI file" unless $base_dir;
+    $base_dir =~ s/\.//;
     my $sp_release = utils::Tool::get_config( { species=>$spp, values => "SPECIES_RELEASE_VERSION" });
     $sp_release =~ s/\.//g;
     my $sp_dir = "$base_dir-$version.$sp_release";
     my $description = utils::Tool::get_config({species =>$spp, values => "SPECIES_DESCRIPTION" });   
-    my $common = lc(utils::Tool::get_config({species =>$spp, values => "SPECIES_COMMON_NAME" }));
-    $common =~ s/\.//;
-    my $url = $archive ? $sp_dir : "current_".$common;
+
+    my $url = $archive ? $sp_dir : "current_".$base_dir;
     $spp =~ s/_/ /;
     print NEW qq(
 <tr>

@@ -35,7 +35,7 @@ use utils::Tool;
 $| = 1; # unbuffers STDOUT (issues print commands immediately)
 
 our $DUMPDIR;
-our $NODUMP;
+our $NODATA;
 
 my $nocompress;
 my $logfile;
@@ -57,7 +57,7 @@ my $release;
 	    'logfile:s'  => \$logfile,
 	    'help'       => \$help,
 	    'info'       => \$info,
-	    'nodump'     => \$NODUMP,
+	    'no_data'     => \$NODATA,
 	   ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -175,8 +175,9 @@ sub create_dirs_for_dumps {
   my ($sp, $SPECIES_DEFS, $release, $types, $DUMPDIR, $cs_adaptor) = @_;
 
   # Calls to get file name and dir names
-  my $base_dir = $SPECIES_DEFS->get_config($sp,"ENSEMBL_FTP_BASEDIR")||
-    $SPECIES_DEFS->get_config($sp,"SPECIES_COMMON_NAME");
+  my $base_dir =  lc($SPECIES_DEFS->get_config($sp,"SPECIES_COMMON_NAME"));
+  die "[*Error] Species common name not configured in INI file" unless $base_dir;
+  $base_dir =~ s/\.//g;
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
   $sp_release =~ s/\.//g;
   my $sp_folder = "$base_dir-$release.$sp_release";
@@ -414,7 +415,7 @@ sub get_data {
 
 sub dump_cdna_rna {
   my( $seqio, $transcript, $type, $gene, $ccds_id) = @_;
-  return if $NODUMP;
+  return if $NODATA;
   $ccds_id ||= " ";
   my $coord_system = $transcript->slice->coord_system;
   my $location = join( ':', 
@@ -438,7 +439,7 @@ sub dump_cdna_rna {
 #>gene:ENSG00000158815:transcript:ENST00000328693
 sub dump_pep {
   my ($seqio, $transcript, $type, $gene, $ccds_id) = @_;
-  return if $NODUMP;
+  return if $NODATA;
   $ccds_id ||= " ";
   my $translation = $transcript->translation;
   if( ! $translation ){
@@ -477,7 +478,7 @@ sub dump_pep {
 #----------------------------------------------------------------------
 sub dump_dna{
   my ($seqio, $slice, $type_str, $location) = @_;
-  return if $NODUMP;
+  return if $NODATA;
 
   # Force slice onto forward strand
   if( $slice->strand < 1 ){ $slice = $slice->invert }
@@ -940,7 +941,7 @@ do_fasta_dumps [options]
 
 Options:
   --help, --info, --verbose, --dumpdir, --logfile,
-  --species, --database, --type --nodump
+  --species, --database, --type --no_data
 
 Example:
  nohup time ./do_fasta_dump --type all --release 23
@@ -954,7 +955,7 @@ B<-h,--help>
 B<-i,--info>
   Prints man page and exits.
 
-B<-- nodump>
+B<-- no_data>
   Runs the script without dumping the data (i.e. goes through each top level, creates and zips the files but with no data in them)
 
 B<-v,--verbose>
