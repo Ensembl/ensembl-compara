@@ -508,11 +508,7 @@ sub do_downloads {
     my $sp_dir = "$base_dir-$version.$sp_release";
     my $description = utils::Tool::get_config({species =>$spp, values => "SPECIES_DESCRIPTION" });   
     my $common = lc(utils::Tool::get_config({species =>$spp, values => "SPECIES_COMMON_NAME" }));
-    $common = 'mosquito' if $common eq 'anopheles';
-    $common = 'bee' if $common eq 'honeybee';
-    $common = 'ciona' if $common eq 'c.intestinalis';
     $common =~ s/\.//;
-    $common =~ s/fruit//;
     my $url = $archive ? $sp_dir : "current_".$common;
     $spp =~ s/_/ /;
     print NEW qq(

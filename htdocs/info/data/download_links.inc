@@ -25,13 +25,13 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bee/"><i>Apis mellifera</i></a> (honey bee)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bee/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bee/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bee/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bee/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bee/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_bee/data/mysql/">FTP</a></td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_honeybee/"><i>Apis mellifera</i></a> (honey bee)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_honeybee/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_honeybee/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_honeybee/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_honeybee/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_honeybee/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_honeybee/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
@@ -69,13 +69,13 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona/"><i>Ciona intestinalis</i></a> (transparent sea squirt)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_ciona/data/mysql/">FTP</a></td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cintestinalis/"><i>Ciona intestinalis</i></a> (transparent sea squirt)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cintestinalis/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cintestinalis/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cintestinalis/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cintestinalis/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cintestinalis/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_cintestinalis/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
@@ -91,13 +91,13 @@
 	    
 <tr>
 <td>
-<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fly/"><i>Drosophila melanogaster</i></a> (fruit fly)</td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fly/data/fasta/dna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fly/data/fasta/cdna/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fly/data/fasta/pep/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fly/data/flatfiles/embl/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fly/data/flatfiles/genbank/">FTP</a></td>
-<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fly/data/mysql/">FTP</a></td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fruitfly/"><i>Drosophila melanogaster</i></a> (fruit fly)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fruitfly/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fruitfly/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fruitfly/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fruitfly/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fruitfly/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_fruitfly/data/mysql/">FTP</a></td>
 </tr>
 	    
 <tr>
