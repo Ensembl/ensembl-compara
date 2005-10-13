@@ -19,7 +19,7 @@ use Bio::EnsEMBL::Glyph::Symbol;
 sub draw {
     my $self       = shift;
     my $style      = $self->style;
-    my $featur e   = $self->feature;
+    my $feature    = $self->feature;
 
     my $rowheight  = $feature->{'row_height'};
     my $start      = $feature->{'start'};
