@@ -69,11 +69,20 @@ my $EUF_TPREFIX = 'euf_'; # This is the basename field in the section
 # hydra         = dbi
 # transport     = dbi
 # basename      = euf
-# dbname        = ens_upload
-# host          = das1.internal.sanger.ac.uk
-# port          = 3308
-# username      = ensrw
+# dbname        = upload_db
+# host          = upload.sanger.ac.uk
+# port          = 3306
+# username      = uplaod_user
 # password      =
+
+# Sets / returns  DAS source CSS
+sub css {
+    my $self = shift;
+    if (defined(my $value = shift)) {
+	$self->{_css} = $value;
+    }
+    return $self->{_css};
+}
 
 # Sets / returns  DAS source DSN 
 sub dsn {
@@ -130,14 +139,24 @@ sub parse {
 
   my $fa = 1; # By default we have annotations at the beginning of the file
 
+  my @css = ();
+
   while ($lcount < $lnum) {
       my $line = shift @lines;
       $lcount ++;
       if ($line =~ /\[annotation(s?)\]/) {
 	  $fa = 1;
 	  next;
+      } elsif ($line =~ /\[(\s?)stylesheet(\s?)\]/) {
+	  $fa = 2;
+	  next;
       } elsif ($line =~ /\[.+\]/) { # Start of some other section [ references or assembly ]
 	  $fa = 0;
+      }
+
+      if ($fa == 2) {
+	  push @css , $line;
+	  next;
       }
 
 # we ignore references and assembly ( at least for the time being ). according to js5 they were required by LDAS server. Proserver works fine without them.
@@ -168,6 +187,8 @@ sub parse {
 
       %{$self->{PARSED_DATA}->{$icount}} = map { $_ => shift(@data) } @keys;
   }
+
+  $self->css(join("\n", @css));
 
 
 # now read the references
@@ -245,6 +266,7 @@ sub _db_connect {
 # | access_date | date        | YES  | MUL | NULL    |                |
 # | email       | varchar(64) | YES  | MUL | NULL    |                |
 # | passw       | varchar(32) | YES  |     | NULL    |                |
+# | css         | text        | YES  |     | NULL    |                
 # +-------------+-------------+------+-----+---------+----------------+
 #
 # there we keep records about all datasources. ftype defines the type of the uploaded data. So far only EUF (Ensembl Upload Format) is upported.
@@ -276,8 +298,8 @@ sub _create_table {
 
     my $dsnid;
     my $ftype = $self->file_type || 'NONE';
-
-    my $sql = qq{insert into hydra_journal (create_date, email, passw, ftype) values (curdate(), '$email', '$password', '$ftype')};
+    my $css = $self->css || '';
+    my $sql = qq{insert into hydra_journal (create_date, email, passw, ftype, css) values (curdate(), '$email', '$password', '$ftype', '$css')};
     
     eval {
 	$self->{_dbh}->do($sql);
@@ -445,9 +467,10 @@ sub update_dsn {
     
     my $sql = qq{select id from hydra_journal where id = '$dsnid' and passw = '$password'};
     my $jid;
+    my $sth;
 
     eval {
-	my $sth = $self->{_dbh}->prepare($sql);
+	$sth = $self->{_dbh}->prepare($sql);
 	$sth->execute();
 	$jid = $sth->fetchrow;
     };
@@ -456,6 +479,7 @@ sub update_dsn {
 	warn("DB Error: $@");
 	$self->error($DB_Error) and return -2;
     }
+    $sth->finish;
 
     if (! defined($jid)) {
 	$self->error("Error: no such data source or invalid password");
@@ -475,7 +499,17 @@ sub update_dsn {
 	    $self->error($DB_Error) and return -4;
 	}
     }
+    if (my $css = $self->css) {
+	$sql = qq{ UPDATE hydra_journal SET css = '$css' WHERE id = $jid};
+	eval {
+	    $self->{_dbh}->do($sql);
+	};
 
+	if ($@) {
+	    warn("DB Error: $@");
+	    $self->error($DB_Error) and return -5;
+	}
+    }
     my $icount = $self->_save_data();
     $self->domain($self->species_defs->ENSEMBL_DAS_UPLOAD_SERVER);
     return $icount;
