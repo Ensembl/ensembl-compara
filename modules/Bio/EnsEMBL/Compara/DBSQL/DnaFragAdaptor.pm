@@ -164,13 +164,13 @@ sub fetch_by_GenomeDB_and_name {
 =head2 fetch_all_by_GenomeDB_region
 
   Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomeDB
-  Arg [2]    : (optional) string $dna_frag_type
+  Arg [2]    : (optional) string $coord_system_name
   Arg [3]    : (optional) string $name
-  Arg [4]    : (optional) int $start
-  Arg [5]    : (optional) int $end
-  Example    : 
+  Example    : my $human_chr_dnafrags = $dnafrag_adaptor->
+                   fetch_all_by_GenomeDB_region(
+                     $human_genome_db, 'chromosome')
   Description: 
-  Returntype : 
+  Returntype : listref of Bio::EnsEMBL::Compara::DnaFrag objects
   Exceptions : 
   Caller     : 
 
