@@ -71,7 +71,7 @@ sub tile {
     $id      ||= "darkgrey";
     $pattern ||= "hatch_ne";
 
-    unless($self->{'_GDTileCache'}->{$id}) {
+    unless($self->{'_GDTileCache'}->{"$id:$pattern"}) {
 	my $tile = GD::Image->new(4,4);
 	my $bg   = $tile->colorAllocate(255,255,255);
 	my $fg   = $tile->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
@@ -88,12 +88,14 @@ sub tile {
 	    # stroke south-east:north-west
 	    #
 	    $tile->line(0,0,3,3, $fg);
+
 	} elsif($pattern eq "hatch_vert") {
 	    #########
 	    # stroke vertical
 	    #
 	    $tile->line(0,0,0,3, $fg);
 	    $tile->line(2,0,2,3, $fg);
+
 	} elsif($pattern eq "hatch_hori") {
 	    #########
 	    # stroke horizontal
@@ -101,9 +103,10 @@ sub tile {
 	    $tile->line(0,0,3,0, $fg);
 	    $tile->line(0,2,3,2, $fg);
 	}
-	$self->{'_GDTileCache'}->{$id} = $tile;
+
+	$self->{'_GDTileCache'}->{"$id:$pattern"} = $tile;
     }
-    return $self->{'_GDTileCache'}->{$id};
+    return $self->{'_GDTileCache'}->{"$id:$pattern"};
 }
 
 sub render_Rect {
