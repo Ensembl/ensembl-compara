@@ -122,7 +122,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
 							$DUMPDIR, $cs_adaptor);
 
     # Do dumps, then compress
-    my $created_files = &get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
+    my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
     compress( $created_files ) unless $nocompress;
   }
 }
@@ -175,12 +175,9 @@ sub create_dirs_for_dumps {
   my ($sp, $SPECIES_DEFS, $release, $types, $DUMPDIR, $cs_adaptor) = @_;
 
   # Calls to get file name and dir names
-  my $base_dir =  lc($SPECIES_DEFS->get_config($sp,"SPECIES_COMMON_NAME"));
-  die "[*Error] Species common name not configured in INI file" unless $base_dir;
-  $base_dir =~ s/\.//g;
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
   $sp_release =~ s/\.//g;
-  my $sp_folder = "$base_dir-$release.$sp_release";
+  my $sp_folder = join "_", (lc($sp), $release, $sp_release);
 
   my ($highest_cs) = @{$cs_adaptor->fetch_all()};
   my $assembly     = $highest_cs->version();
@@ -256,10 +253,10 @@ sub get_data {
 						 |_NT_
 						 /x)  ) {
 	if ( my $seqio = $fhs->{'dna_toplevel'} ){
-	  &dump_dna( $seqio, $slice, 'dna' );
+	  dump_dna( $seqio, $slice, 'dna' );
 	}
 	if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
-	  &dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
 	}
       }
 
@@ -270,7 +267,7 @@ sub get_data {
 	if($fhs->{'dna_toplevel'} ){
 	  my $seqio = Bio::SeqIO->new('-format' => 'Fasta', 
 				   '-file'   =>  sprintf ($file, "dna"));
-	  &dump_dna( $seqio, $slice, 'dna' );
+	  dump_dna( $seqio, $slice, 'dna' );
 
 	  # Need to add these so they are closed and gzipped
 	  $fhs->{"$chr_toplevel.dna.chromosome.$seq_name.fa"} = $seqio;
@@ -279,7 +276,7 @@ sub get_data {
 	if($fhs->{'dna_toplevel_masked'} ){
 	  my $seqio_masked = Bio::SeqIO->new('-format' => 'Fasta', 
 					  '-file' => sprintf ($file,"dna_rm"));
-	  &dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
+	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
 
 	  # Need to add these so they are closed and gzipped
 	  $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
@@ -309,41 +306,41 @@ sub get_data {
 		$subtype = "known-ccds";
 		$ccds =   $xref->primary_id . '.' . $xref->version;
 		if( my $seqio = $fhs->{'cdna_known-ccds'} ){
-		  &dump_cdna_rna($seqio, $transcript, "cdna:$subtype", $gene, $ccds);
+		  dump_cdna_rna($seqio, $transcript, "cdna:$subtype", $gene, $ccds);
 		}
 		if( my $seqio = $fhs->{'pep_known-ccds'} and $subtype eq 'known-ccds' ){
-		  &dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
+		  dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
 		}
 	      }
 	    }
 	  }
 	  if( ( my $seqio = $fhs->{'cdna'} and $subtype ne 'ncrna') ) {
-	    &dump_cdna_rna( $seqio, $transcript, "cdna:$subtype", $gene, $ccds);
+	    dump_cdna_rna( $seqio, $transcript, "cdna:$subtype", $gene, $ccds);
 	  }
 	  if( my $seqio = $fhs->{'cdna_known'} and $subtype eq 'known' ){
-	    &dump_cdna_rna( $seqio, $transcript, 'cdna:known', $gene);
+	    dump_cdna_rna( $seqio, $transcript, 'cdna:known', $gene);
 	  }
 	  if( my $seqio = $fhs->{'cdna_pseudo'} and $subtype eq 'pseudogene' ){
-	    &dump_cdna_rna( $seqio, $transcript, 'cdna:pseudogene', $gene);
+	    dump_cdna_rna( $seqio, $transcript, 'cdna:pseudogene', $gene);
 	  }
 	  if( my $seqio = $fhs->{'cdna_novel'} and $subtype eq 'novel' ){
-	    &dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
+	    dump_cdna_rna( $seqio, $transcript, 'cdna:novel', $gene);
 	  }
 	
 	  if( my $seqio = $fhs->{'pep'} and $subtype ne 'pseudogene'
 	      and $subtype ne 'ncrna'){
-	    &dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
+	    dump_pep( $seqio, $transcript, "pep:$subtype", $gene, $ccds);
 	  }
 	  if( my $seqio = $fhs->{'pep_known'} and $subtype eq 'known' ){
-	    &dump_pep( $seqio, $transcript, 'pep:known', $gene);
+	    dump_pep( $seqio, $transcript, 'pep:known', $gene);
 	  }
 	  if( my $seqio = $fhs->{'pep_novel'} and $subtype eq 'novel' ){
-	    &dump_pep( $seqio, $transcript, 'pep:novel', $gene);
+	    dump_pep( $seqio, $transcript, 'pep:novel', $gene);
 	  }
 
 	  if( ( my $seqio = $fhs->{'rna'} and $subtype eq 'ncrna' ) ) {
 	    $subtype = $gene->type;
-	    &dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
+	    dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
 	  }
 
 	}
@@ -356,12 +353,12 @@ sub get_data {
       foreach my $transcript( @{$slice->get_all_PredictionTranscripts(undef,$load_exons)} ){
 	my $subtype = $transcript->analysis->logic_name;
 	if( my $seqio = $fhs->{'cdna_abinitio'} ){
-	  &dump_cdna_rna( $seqio, $transcript, "cdna:$subtype" );
+	  dump_cdna_rna( $seqio, $transcript, "cdna:$subtype" );
 	}
 	if( my $seqio = $fhs->{'pep_abinitio'} ){
 	  warning(1, "No translation for transcript:". $transcript->stable_id )
 	    && next unless $transcript->translation;
-	  &dump_pep( $seqio, $transcript, "pep:$subtype" );
+	  dump_pep( $seqio, $transcript, "pep:$subtype" );
 	}
       }
     }
@@ -380,10 +377,10 @@ sub get_data {
 			     $segment->to_Slice->strand );
 	
 	if( my $seqio = $fhs->{'dna_seqlevel'} ){
-	  &dump_dna( $seqio, $segment->to_Slice, 'dna:seqlevel', $location );
+	  dump_dna( $seqio, $segment->to_Slice, 'dna:seqlevel', $location );
 	}
 	if( my $seqio = $fhs->{'dna_seqlevel_masked'} ){
-	  &dump_dna( $seqio, $segment->to_Slice->get_repeatmasked_seq,
+	  dump_dna( $seqio, $segment->to_Slice->get_repeatmasked_seq,
 		     'dna_rm:seqlevel', $location );
 	}
       }

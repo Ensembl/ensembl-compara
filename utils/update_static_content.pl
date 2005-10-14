@@ -169,19 +169,20 @@ sub species_table {
   return unless $site_type eq 'pre';
 
   my $dir = shift;
+
+  my $ssi_dir = $dir;
   my $title;
   if ($site_type eq 'pre') {
-    $dir .= "/sanger-plugins/pre/htdocs/ssi";
+    $ssi_dir .= "/sanger-plugins/pre/htdocs/ssi";
     $title = "Browse a genome";
-    &check_dir($dir);
   }
   else {
-    $dir .= "/htdocs/ssi";
+    $ssi_dir .= "/htdocs/ssi";
     $title = "Species";
-    &check_dir($dir);
   }
+  &check_dir($ssi_dir);
 
-  my $file = $dir ."/species_table.html.new";
+  my $file = $ssi_dir ."/species_table.html.new";
   open (my $fh, ">$file") or die "Cannot create $file: $!";
 
   my %vega_spp = ( Homo_sapiens     => 1,
@@ -204,6 +205,9 @@ sub species_table {
     my $assembly = utils::Tool::get_config({species =>$spp,
 					  values => "ASSEMBLY_ID"});
 
+    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/thumb_$spp.png $dir/sanger-plugins/pre/htdocs/img/species/");
+    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/pic_$spp.png $dir/sanger-plugins/pre/htdocs/img/species/");
+
     print $fh qq(
  <dt>
     <a href="/$spp">
@@ -225,11 +229,11 @@ sub species_table {
 
 );
 
-  if (-e "$dir/species_table.html") {
-    system ("cp $dir/species_table.html $dir/species_table.html.bck")==0 or die "Couldn't copy files";
+  if (-e "$ssi_dir/species_table.html") {
+    system ("cp $ssi_dir/species_table.html $ssi_dir/species_table.html.bck")==0 or die "Couldn't copy files";
   }
-  system ("mv $dir/species_table.html.new $dir/species_table.html") ==0 or die "Couldn't copy files";
-  info (1, "Updated species table file $dir/species_table.html");
+  system ("mv $ssi_dir/species_table.html.new $ssi_dir/species_table.html") ==0 or die "Couldn't copy files";
+  info (1, "Updated species table file $ssi_dir/species_table.html");
 return;
 }
 #---------------------------------------------------------------------
@@ -307,24 +311,24 @@ print $fh qq(
 ##############################################################################
 sub SSI {
   my ($dir, $common_name, $species, $chrs) = @_;
+  my $ssi_dir = $dir;
 
   if ($site_type eq 'pre') {
-    $dir .= "/sanger-plugins/pre/htdocs/$species/ssi";
-    &check_dir($dir);
+    $ssi_dir .= "/sanger-plugins/pre/htdocs/$species/ssi";
   }
   else {
-    $dir .= "/public-plugins/ensembl/htdocs/$species/ssi";
-    &check_dir($dir);
+    $ssi_dir .= "/public-plugins/ensembl/htdocs/$species/ssi";
   }
-  &SSIabout($dir, $common_name, $species);
+  &check_dir($ssi_dir);
+  &SSIabout($ssi_dir, $common_name, $species);
 
   if ( (scalar @$chrs) > 0 ) {
-    &SSIentry($dir, $species, $chrs);
-    &SSIkaryomap($dir, $species, $common_name);
+    &SSIentry($ssi_dir, $species, $chrs);
+    &SSIkaryomap($ssi_dir, $species, $common_name, $dir);
   }
   else {
-    &SSIexamples($dir, $species);
-    &SSIentry($dir, $species, 0);
+    &SSIexamples($ssi_dir, $species);
+    &SSIentry($ssi_dir, $species, 0);
   }
   return;
 }
@@ -451,9 +455,24 @@ This release of <i>$species</i> data is assembled into scaffolds, so there are n
 #---------------------------------------------------------------------------
 
 sub SSIkaryomap {
-  my ($dir, $species, $common_name) = @_;
-  my $karyomap = $dir ."/karyomap.html";
+  my ( $ssi_dir, $species, $common_name, $dir ) = @_;
+  my $karyomap = $ssi_dir ."/karyomap.html";
   return if -e $karyomap;
+
+  info (1, "Template for karyomap page $karyomap");
+
+  if ( $site_type eq 'pre' ) { # check to see if already karyotype for this sp
+    my $exists_karyomap = "$dir/public-plugins/ensembl/htdocs/$species/ssi/karyomap.html";
+    if ( -e $exists_karyomap ) {
+      info (1, "Copying existing karyomap from public-plugins file");
+      system ("cp $dir/public-plugins/ensembl/htdocs/img/species/karyotype_$species.png $dir/sanger-plugins/pre/htdocs/img/species/");
+      system ("cp $exists_karyomap $karyomap");
+      return;
+    }
+    else {
+      warning (1, "Need to create a karyomap for the karyotype image");
+    }
+  }
   open (my $fh2, ">$karyomap") or die "Cannot create $karyomap: $!";
   print $fh2 qq(
 <h3 class="boxed">Karyotype</h3>
@@ -462,7 +481,6 @@ sub SSIkaryomap {
 
 <img src="/img/species/karyotype_$species.png" width="245" height="355" usemap="#karyotypes" alt="$common_name karyotype selector" />
 );
-  info (1, "Template for karyomap page $karyomap");
   return;
 }
 
@@ -502,15 +520,12 @@ sub do_downloads {
 );
 
   foreach my $spp (@{[@{ utils::Tool::all_species()}] }) {
-    my $base_dir = lc(utils::Tool::get_config({ species=>$spp, values => "SPECIES_COMMON_NAME"})) ;
-    die "[*Error] Species common name not configured in INI file" unless $base_dir;
-    $base_dir =~ s/\.//;
     my $sp_release = utils::Tool::get_config( { species=>$spp, values => "SPECIES_RELEASE_VERSION" });
     $sp_release =~ s/\.//g;
-    my $sp_dir = "$base_dir-$version.$sp_release";
+    my $sp_dir = join "_", ( lc($spp), $version, $sp_release);
     my $description = utils::Tool::get_config({species =>$spp, values => "SPECIES_DESCRIPTION" });   
 
-    my $url = $archive ? $sp_dir : "current_".$base_dir;
+    my $url = $archive ? $sp_dir : "current_".lc($spp);
     $spp =~ s/_/ /;
     print NEW qq(
 <tr>

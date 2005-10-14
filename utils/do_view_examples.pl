@@ -107,7 +107,6 @@ if(defined $help) {
 if (!@species) {  @species = @species_inconf; }
 $VERBOSITY = defined($VERBOSITY) ? $VERBOSITY: 1;
 
-
 ####### List of all view pages and their parameters ##########################
 # Define 'table', 'select' to use the generic sql "Select $select from $table'.
 #  Otherwise need to define specific sql statement in select query array
@@ -238,6 +237,9 @@ foreach (keys %cp_views) {
 
 
 ################# Loop through all spp and get examples ######################
+$site_type = "main" unless $site_type;
+warning (1, "******Site type is $site_type");
+
 foreach my $spp (@species) {
   info (1, "---------------Processing $spp ----------------------");
 

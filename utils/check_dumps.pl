@@ -132,7 +132,7 @@ foreach my $species (@SPECIES) {
 
 
   if ($species eq 'Multi') {
-    $species_folder = "multi-species-$release";
+    $species_folder = "multi-species_$release";
 
     foreach my $x qw( ensembl_help ensembl_website ensembl_web_user_db ) {
       $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$x"."_$release"} = [1];
@@ -143,12 +143,9 @@ foreach my $species (@SPECIES) {
   }
 
   else {
-    my $base_dir = lc($SPECIES_DEFS->get_config($species,"SPECIES_COMMON_NAME"));
-    error("Species common name is not configured in conf/$species.ini. There is no species folder name.") unless $base_dir;
-    $base_dir =~ s/\.//;
     my $sp_release = $SPECIES_DEFS->get_config($species,"SPECIES_RELEASE_VERSION") || "";
     $sp_release =~ s/\.//g;
-    $species_folder = "$base_dir-$release.$sp_release";
+    $species_folder = join "_", (lc($species), $release, $sp_release);
 
     $ok_dirs = {
 		 "$DUMPDIR/$species_folder/data/fasta/cdna"        => [1],
