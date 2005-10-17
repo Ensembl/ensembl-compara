@@ -511,7 +511,7 @@ sub compress{
     next unless (-e "$fh");
 
     my $size = -s $fh;
-    if ($size > 3500000000 ){
+    if ($size > 900000000 ){
       split_data($fh);
     }
     else {
