@@ -229,6 +229,35 @@ sub render_type_form {
   $self->print($html);
 }
 
+#######################################################################
+# Returns a list of codes for each block in the menu, sorted into 
+# priority order
+sub blocks{
+  my $self = shift;
+  return( map {@$_} grep {$_} @{$self->{'block_order'}} );
+}
+
+#######################################################################
+# Returns a list of codes for each entry in the menu, sorted into      
+# priority order
+# Can specify one or more block codes
+sub entries{
+  my $self = shift;
+  my @blocks = @_;
+  unless( @blocks ){ @blocks = $self->blocks }
+
+  my @entries;
+  foreach my $block( @blocks ){
+    push( @entries, 
+          map{ $_->{'code'}}
+          @{$self->{'blocks'}{$block}{'entries'}} );
+  }
+  return @entries;
+}
+
+
+
+
 1;
 
 __END__
