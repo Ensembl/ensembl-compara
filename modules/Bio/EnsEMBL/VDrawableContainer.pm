@@ -69,7 +69,7 @@ sub new {
   }
 
   ########## sort out the resulting mess
-  my $spacing = $self->{'spacing'};
+  $spacing = $self->{'spacing'};
   my $scalex = $Config->{'_image_height'} / $Config->container_width();
   $Config->{'transform'}->{'scalex'} = $scalex;
   $Config->{'transform'}->{'absolutescalex'} = 1; # $Config->{'_image_height'} / $Config->image_width();
