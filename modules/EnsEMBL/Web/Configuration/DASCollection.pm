@@ -105,11 +105,12 @@ sub display_wizard_status {
     }
 
     return unless (defined ($step));
-    my $sd = $object->param('_das_Step');
-    if ($sd eq 'Next') {
-        $step ++;
-    } elsif ($sd eq 'Back') {
-        $step --;
+    if (my $sd = $object->param('_das_Step')) {
+	if ($sd eq 'Next') {
+	    $step ++;
+	} elsif ($sd eq 'Back') {
+	    $step --;
+	}
     }
 
     my %DASTypeLabel = (

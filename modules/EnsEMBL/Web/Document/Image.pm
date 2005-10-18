@@ -251,7 +251,7 @@ $_->{'start'}] }
                         my @affy_list = split(';', $row->{'label'});
                         foreach my $affy (@affy_list) {
                             my @affy_bits = split (':', $affy);
-                            my $affy_id = @affy_bits[0];
+                            my $affy_id = $affy_bits[0];
                             $affy_id =~ s/\s//g;
                             $affy_id = lc($affy_id);
                             $affy_id =~ s/\W/_/g;

@@ -127,7 +127,7 @@ sub context_location {
   return unless $obj->can( 'location_string' );
   my $species = $obj->species;
   my( $q_string, $header ) = $obj->location_string;
-  my $header = "@{[$obj->seq_region_type_and_name]}<br />@{[$obj->thousandify(floor($obj->seq_region_start))]}";
+  $header = "@{[$obj->seq_region_type_and_name]}<br />@{[$obj->thousandify(floor($obj->seq_region_start))]}";
   if( floor($obj->seq_region_start) != ceil($obj->seq_region_end) ) {
     $header .= " - @{[$obj->thousandify(ceil($obj->seq_region_end))]}";
   }
