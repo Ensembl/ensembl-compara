@@ -587,8 +587,8 @@ sub zmenu {
   if ($f->das_start && $f->das_end) {
       my $strand = $f->das_strand ? 'Forward' : 'Reverse';
       $zmenu->{"08:FEATURE LOCATION:"} = '';
-      $zmenu->{"09:   - Start: ".$f->das_start} = '';
-      $zmenu->{"10:   - End: ".$f->das_end} = '';
+      $zmenu->{"09:   - Start: ".$f->das_segment->start} = '';
+      $zmenu->{"10:   - End: ".$f->das_segment->end} = '';
       $zmenu->{"11:   - Strand: $strand"} = '';
       $ids = 12;
   }
