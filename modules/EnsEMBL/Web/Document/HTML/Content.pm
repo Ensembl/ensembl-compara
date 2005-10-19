@@ -64,6 +64,12 @@ sub remove_panel {
   }
 }
 
+sub panels{
+  # Lists the codes for each panel in this page content
+  my( $self ) = @_;
+  return map{ $_->{'code'} } @{ $self->{'panels'} || [] };
+}
+
 sub _start { $_[0]->print( qq(\n<div id="page"><div id="i1"><div id="i2"><div class="sptop">&nbsp;</div>)); return 1; }
 sub _end {   $_[0]->print( qq(\n<hr />\n<div class="sp">&nbsp;</div></div></div></div>)); }
 
