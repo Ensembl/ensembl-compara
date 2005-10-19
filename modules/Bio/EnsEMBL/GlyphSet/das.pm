@@ -88,7 +88,7 @@ sub RENDER_simple {
     next if $configuration->{'strand'} eq 'b' && ( $f->strand() !=1 && $configuration->{'STRAND'}==1 || $f->strand() ==1 && $configuration->{'STRAND'}==-1);
 
     my $ID    = $f->das_id;
-    my $label = $f->das_group_label || $f->das_feature_label || $ID;
+    my $label = $f->das_feature_label || $ID;
     my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $ID ") * 1.1; # add 10% for scaling text
     my $row = 0; # bumping row
 
