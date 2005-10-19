@@ -52,8 +52,8 @@ ensembl-dev@ebi.ac.uk
 use strict;
 
 BEGIN { $| = 1;  
-	use Test;
-	plan tests => 80;
+  use Test;
+  plan tests => 83;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -88,6 +88,7 @@ my $all_rows = $compara_db->dbc->db_handle->selectall_arrayref("
     WHERE mlss.method_link_id = ml.method_link_id
       AND mlss.genome_db_id = gdb.genome_db_id
     GROUP BY mlss.method_link_species_set_id");
+
 foreach my $row (@$all_rows) {
   $all_mlss->{$row->[0]} = {
           method_link_id => $row->[1],
@@ -439,21 +440,21 @@ debug( "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method [2]" );
         -species_set => [
             $genome_db_adaptor->fetch_by_name_assembly("Gallus gallus"),
             $genome_db_adaptor->fetch_by_name_assembly("Mus musculus")],
+        -max_alignment_length => 1000,
     );
   $is_test_ok = 1;
-  $is_test_ok = 0 if (!$method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  $is_test_ok = 0 if ($method_link_species_set->method_link_id != 1);
-  $is_test_ok = 0 if ($method_link_species_set->method_link_type ne "BLASTZ_NET");
-  $species = join(" - ", map {$_->name} @{$method_link_species_set->species_set});
-  $is_test_ok = 0 if ($species ne "Gallus gallus - Mus musculus");
-  ok($is_test_ok);
+  ok($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  ok($method_link_species_set->method_link_id, 1);
+  ok($method_link_species_set->method_link_type,"BLASTZ_NET");
+  $species = join(" - ", sort map {$_->name} @{$method_link_species_set->species_set});
+  ok($species, "Gallus gallus - Mus musculus");
 
 
 # 
 # 38. Check store method with a new entry
 # 
 debug( "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method [2]" );
-  $multi->save("compara", "method_link_species_set");
+  $multi->save("compara", "method_link_species_set", "meta");
   $method_link_species_set_adaptor->store($method_link_species_set);
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss) + 1);
 
@@ -466,7 +467,7 @@ debug( "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method"
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss));
   $method_link_species_set_adaptor->store($method_link_species_set);
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss) + 1);
-  $multi->restore("compara", "method_link_species_set");
+  $multi->restore("compara", "method_link_species_set", "meta");
   ok(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss));
 
   

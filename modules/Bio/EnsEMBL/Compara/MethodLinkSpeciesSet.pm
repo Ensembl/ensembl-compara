@@ -20,7 +20,8 @@ Relates every method_link with the species_set for which it has been used
   my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
                        -adaptor => $method_link_species_set_adaptor,
                        -method_link_type => "MULTIZ",
-                       -species_set => [$gdb1, $gdb2, $gdb3]
+                       -species_set => [$gdb1, $gdb2, $gdb3],
+                       -max_alignment_length => 10000,
                    );
 
 SET VALUES
@@ -29,6 +30,7 @@ SET VALUES
   $method_link_species_set->method_link_id(23);
   $method_link_species_set->method_link_type("MULTIZ");
   $method_link_species_set->species_set([$gdb1, $gdb2, $gdb3]);
+  $method_link_species_set->max_alignment_length(10000);
 
 GET VALUES
   my $dbID = $method_link_species_set->dbID();
@@ -36,6 +38,7 @@ GET VALUES
   my $meth_lnk_id = $method_link_species_set->method_link_id();
   my $meth_lnk_type = $method_link_species_set->method_link_type();
   my $meth_lnk_species_set = $method_link_species_set->species_set();
+  my $max_alignment_length = $method_link_species_set->max_alignment_length();
 
 
 =head1 OBJECT ATTRIBUTES
@@ -63,6 +66,12 @@ corresponds to method_link.type, accessed through method_link_id (external ref.)
 
 listref of Bio::EnsEMBL::Compara::GenomeDB objects. Each of them corresponds to
 a method_link_species_set.genome_db_id
+
+=item max_alignment_length (experimental)
+
+Integer. This value is used to speed up the fetching of genomic_align_blocks.
+It corresponds to an entry in the meta table where the key is "max_align_$dbID"
+where $dbID id the method_link_species_set.method_link_species_set_id.
 
 =back
 
@@ -107,11 +116,15 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
   Arg [-SPECIES_SET]
               : (opt.) arrayref $genome_dbs (a reference to an array of
                 Bio::EnsEMBL::Compara::GenomeDB objects)
+  Arg [-MAX_ALGINMENT_LENGTH]
+              : (opt.) int $max_alignment_length (the length of the largest alignment
+                for this MethodLinkSpeciesSet (only used for genomic alignments)
   Example     : my $method_link_species_set =
                    new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
                        -adaptor => $method_link_species_set_adaptor,
                        -method_link_type => "MULTIZ",
-                       -species_set => [$gdb1, $gdb2, $gdb3]
+                       -species_set => [$gdb1, $gdb2, $gdb3],
+                       -max_alignment_length => 10000,
                    );
   Description : Creates a new MethodLinkSpeciesSet object
   Returntype  : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
@@ -126,15 +139,18 @@ sub new {
   my $self = {};
   bless $self,$class;
     
-  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set) =
+  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set,
+      $max_alignment_length) =
       rearrange([qw(
-          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET)], @args);
+          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET
+          MAX_ALIGNMENT_LENGTH)], @args);
 
   $self->dbID($dbID) if (defined ($dbID));
   $self->adaptor($adaptor) if (defined ($adaptor));
   $self->method_link_id($method_link_id) if (defined ($method_link_id));
   $self->method_link_type($method_link_type) if (defined ($method_link_type));
   $self->species_set($species_set) if (defined ($species_set));
+  $self->max_alignment_length($max_alignment_length) if (defined ($max_alignment_length));
 
   return $self;
 }
@@ -288,6 +304,32 @@ sub species_set {
     $self->{'species_set'} = [ values %{$genome_dbs} ] ;
   }
   return $self->{'species_set'};
+}
+
+
+=head2 max_alignment_length
+ 
+  Arg [1]    : (opt.) int $max_alignment_length
+  Example    : my $max_alignment_length = $method_link_species_set->
+                   max_alignment_length();
+  Example    : $method_link_species_set->max_alignment_length(1000);
+  Description: get/set for attribute max_alignment_length
+  Returntype : integer
+  Exceptions : 
+  Caller     : general
+ 
+=cut
+
+sub max_alignment_length {
+  my ($self, $arg) = @_;
+
+  if (defined($arg)) {
+    $self->{'max_alignment_length'} = int($arg);
+  } elsif (!defined($self->{'max_alignment_length'}) and defined($self->adaptor)) {
+    $self->adaptor->get_max_alignment_length($self);
+  }
+
+  return $self->{'max_alignment_length'};
 }
 
 1;

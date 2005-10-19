@@ -135,6 +135,7 @@ use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+my $DEFAULT_MAX_ALIGNMENT = 20000;
 
 sub new {
   my $class = shift;
@@ -150,7 +151,9 @@ sub new {
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Example    : $mlssa->store($method_link_species_set)
   Description: Stores a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object into
-               the database if it does not exist yet.
+               the database if it does not exist yet. It also stores or updates
+               accordingly the meta table if this object has a
+               max_alignment_length attribute.
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exception  : Thrown if the argument is not a
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
@@ -165,7 +168,7 @@ sub store {
   my $sth;  
 
   throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
-    unless ($method_link_species_set &&
+    unless ($method_link_species_set && ref $method_link_species_set &&
         $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
   $method_link_species_set->adaptor($self);
@@ -175,12 +178,12 @@ sub store {
   my $method_link_insert_sql = qq{INSERT INTO method_link (type) VALUES(?)};
   
   my $method_link_species_set_sql = qq{
-		INSERT INTO method_link_species_set (
-			method_link_species_set_id,
-			method_link_id,
-			genome_db_id)
-		VALUES (?, ?, ?)
-	};
+        INSERT INTO method_link_species_set (
+          method_link_species_set_id,
+          method_link_id,
+          genome_db_id)
+        VALUES (?, ?, ?)
+    };
 
   my $method_link_id   = $method_link_species_set->method_link_id;
   my $method_link_type = $method_link_species_set->method_link_type;
@@ -265,6 +268,28 @@ sub store {
     ## Unlock tables
     $self->dbc->do("UNLOCK TABLES");
   }
+
+  ## If this MethodLinkSpeciesSet object has a max_alignment_length attribute.
+  ## We have to use the attribute and not the method here as the method is used
+  ## for lazy-loading data from the meta table and could use default values if
+  ## none has been specified. As some method_link_species_sets do not have any
+  ## max_alignment_length, using the method here would result in adding a default
+  ## max_alignment_length to those method_link_species_sets!
+  if (defined($method_link_species_set->{max_alignment_length})) {
+    my $values = $self->db->get_MetaContainer->list_value_by_key("max_align_$dbID");
+    if (@$values) {
+      if ($values->[0] != $method_link_species_set->max_alignment_length){
+        #... update it if it was already defined and it is different from current one
+        $self->db->get_MetaContainer->update_key_value("max_align_$dbID",
+            $method_link_species_set->max_alignment_length);
+      }
+    } else {
+        #... store it if it was not defined yet
+      $self->db->get_MetaContainer->store_key_value("max_align_$dbID",
+          $method_link_species_set->max_alignment_length)
+    }
+  }
+
   $sth->finish;
   
   $method_link_species_set->dbID($dbID);
@@ -297,6 +322,9 @@ sub delete {
       };
   $sth = $self->prepare($method_link_species_set_sql);
   $sth->execute($method_link_species_set_id);
+
+  ## Delete corresponding entry in meta table
+  $self->db->get_MetaContainer->delete_key("max_align_$method_link_species_set_id");
 }
 
 
@@ -1036,6 +1064,7 @@ sub fetch_by_method_link_type_genome_db_ids {
   return $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids)
 }
 
+
 =head2 fetch_by_method_link_type_registry_aliases
 
   Arg  1     : string $method_link_type
@@ -1076,6 +1105,43 @@ sub fetch_by_method_link_type_registry_aliases {
   }
 
   return $self->fetch_by_method_link_type_GenomeDBs($method_link_type,\@genome_dbs);
+}
+
+
+=head2 get_max_alignment_length
+
+  Arg 1      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
+  Example    : 
+  Description: Retrieve the maximum length for this type of alignments.
+               This method is used for genomic (dna/dna) alignments only.
+               This method sets and returns this attribute for this object
+  Returntype : integer
+  Exceptions : 
+  Caller     : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor
+
+=cut
+
+sub get_max_alignment_length {
+  my ($self, $method_link_species_set) = @_;
+
+  my $method_link_species_set_id = ($method_link_species_set->dbID or 0);
+  my $values = $self->db->get_MetaContainer->list_value_by_key(
+      "max_align_$method_link_species_set_id");
+  if ($values && @$values) {
+    return $method_link_species_set->max_alignment_length($values->[0]);
+  } else {
+    $values = $self->db->get_MetaContainer->list_value_by_key("max_alignment_length");
+    if($values && @$values) {
+      warning("Meta table key 'max_align_$method_link_species_set_id' not defined\n" .
+          " -> using old meta table key 'max_alignment_length' [".$values->[0]."]");
+      return $method_link_species_set->max_alignment_length($values->[0]);
+    } else {
+      warning("Meta table key 'max_align_$method_link_species_set_id' not defined and\n" .
+          "old meta table key 'max_alignment_length' not defined\n" .
+          " -> using default value [$DEFAULT_MAX_ALIGNMENT]");
+      return $method_link_species_set->max_alignment_length($DEFAULT_MAX_ALIGNMENT);
+    }
+  }
 }
 
 

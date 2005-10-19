@@ -115,23 +115,10 @@ use Bio::EnsEMBL::Utils::Exception qw(throw info deprecate);
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-my $DEFAULT_MAX_ALIGNMENT = 20000;
-
 sub new {
   my $class = shift;
 
   my $self = $class->SUPER::new(@_);
-
-  my $vals =
-    $self->db->get_MetaContainer->list_value_by_key('max_alignment_length');
-
-  if(@$vals) {
-    $self->{'max_alignment_length'} = $vals->[0];
-  } else {
-    $self->warn("Meta table key 'max_alignment_length' not defined\n" .
-        "using default value [$DEFAULT_MAX_ALIGNMENT]");
-    $self->{'max_alignment_length'} = $DEFAULT_MAX_ALIGNMENT;
-  }
 
   $self->{_lazy_loading} = 0;
 
@@ -563,7 +550,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               AND ga2.dnafrag_id = $dnafrag_id
       };
   if (defined($start) and defined($end)) {
-    my $lower_bound = $start - $self->{'max_alignment_length'};
+    my $max_alignment_length = $method_link_species_set->max_alignment_length;
+    my $lower_bound = $start - $max_alignment_length;
     $sql .= qq{
             AND ga2.dnafrag_start <= $end
             AND ga2.dnafrag_start >= $lower_bound
@@ -616,6 +604,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   
   return $genomic_align_blocks;
 }
+
 
 =head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag
 
@@ -689,7 +678,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
               AND ga1.dnafrag_id = $dnafrag_id1 AND ga2.dnafrag_id = $dnafrag_id2;
       };
   if (defined($start) and defined($end)) {
-    my $lower_bound = $start - $self->{'max_alignment_length'};
+    my $max_alignment_length = $method_link_species_set->max_alignment_length;
+    my $lower_bound = $start - $max_alignment_length;
     $sql .= qq{
             AND ga1.dnafrag_start <= $end
             AND ga1.dnafrag_start >= $lower_bound
