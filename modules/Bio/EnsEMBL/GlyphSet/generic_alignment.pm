@@ -192,7 +192,7 @@ sub expanded_init {
     $Composite->zmenu( {
       'caption' => $caption,
       "$seqregion: $start-$end" => '',
-      "02:Jump to $species_2"        => "$HREF?$ZZ",
+      "02:Jump to $jump_type"        => "$HREF?$ZZ",
       "03:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => ''
     } );
     $self->push( $Composite );
@@ -301,7 +301,7 @@ sub compact_init {
     my $href  = '';
     #z menu links depend on whether jumping within or between species;
     my $jump_type;
-    if( $self->species_defs->ENSEMBL_SITETYPE eq 'Vega' ) {
+    if( $self->species_defs->ENSEMBL_SITETYPE eq 'Vega' ) { #st3 - checked and OK
       if( $self_species eq $species_2 ) {
         $jump_type = "chromosome $chr_2";
         if( $compara ) {			
