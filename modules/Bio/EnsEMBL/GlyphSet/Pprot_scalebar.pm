@@ -100,7 +100,6 @@ sub _init {
     $self->push($endglyph);
     
     # add last tick
-    my $im_width = $Config->image_width();
     my $tick = new Sanger::Graphics::Glyph::Rect({
 	'x'          => $im_width,
 	'y'          => 4,

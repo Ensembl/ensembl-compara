@@ -26,8 +26,8 @@ sub _init {
   my $h      = 4;
   my $highlights = $self->highlights();
 
-  my $protein = $self->{'container'};
-  my $Config  = $self->{'config'}; 
+  $protein = $self->{'container'};
+  $Config  = $self->{'config'}; 
 
   $protein->dbID || return; # Non-database translation  
 

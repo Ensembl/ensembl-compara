@@ -1,5 +1,6 @@
 package Bio::EnsEMBL::GlyphSet_transcript;
 use strict;
+no warnings "uninitialized";
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -291,7 +292,7 @@ sub expanded_init {
   return unless defined $type;
 
   my $Config        = $self->{'config'};
-  my $strand_flag   = $Config->{'str'};
+  my $strand_flag   = $Config->{'str'} || 'b';
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target        = $Config->{'_draw_single_Transcript'};
   my $target_gene   = $Config->{'geneid'};

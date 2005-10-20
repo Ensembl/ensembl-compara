@@ -1,5 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::ensembl_transcript;
 use strict;
+no warnings "uninitialized";
 use vars qw(@ISA);
 
 use Bio::EnsEMBL::GlyphSet_transcript;

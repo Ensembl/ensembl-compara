@@ -53,8 +53,6 @@ sub _init {
         'zmenu' => { "SCOP: $KK" => $self->ID_URL('SUPERFAMILY',$KK) },
 	});
 
-	my @row = @{$hash{$key}};
-
 	my $prsave;
 	my ($minx, $maxx);
 
@@ -93,7 +91,7 @@ sub _init {
 	#########
 	# add a label
 	#
-	my $desc = "SCOP: $KK";
+	$desc = "SCOP: $KK";
 	my $text = new Sanger::Graphics::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,

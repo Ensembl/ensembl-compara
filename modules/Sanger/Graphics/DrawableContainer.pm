@@ -6,7 +6,7 @@
 
 package Sanger::Graphics::DrawableContainer;
 use strict;
-
+no warnings "uninitialized";
 use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;

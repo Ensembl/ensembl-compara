@@ -94,7 +94,7 @@ sub _init {
 	#########
 	# add a label
 	#
-	my $desc = $prsave->idesc() || $key;
+	$desc = $prsave->idesc() || $key;
 	my $text = new Sanger::Graphics::Glyph::Text({
 	    'font'   => $font,
 	    'text'   => $desc,

@@ -1,5 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::Ppfam;
 use strict;
+no warnings "uninitialized";
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
