@@ -23,6 +23,14 @@ sub new {
 sub clear_components { $_[0]{'components'} = {}; $_[0]->{'component_order'} = []; }
 sub components       { return @{$_[0]{'component_order'}}; }
 
+sub component{
+  # Given a component code, returns the component itself
+  my $self = shift;
+  my $code = shift;
+  return $self->{'components'}->{$code};
+}
+
+
 =head2 Panel options.
 
 There are five functions which set, clear and read the options for the panel
