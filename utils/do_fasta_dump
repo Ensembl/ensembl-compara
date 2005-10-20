@@ -142,7 +142,7 @@ sub check_types {
   my $types = shift;
   my %valid_types = map{ $_ => 1 }
     qw(
-       blast_all
+       pre blast_all
        rna  cdna_known-ccds
        cdna cdna_known cdna_novel cdna_pseudo cdna_abinitio
        pep  pep_known  pep_novel  pep_abinitio pep_known-ccds
@@ -159,7 +159,8 @@ sub check_types {
                         cdna_known-ccds)],
      pep_all   => [ qw( pep pep_known pep_novel pep_abinitio pep_known-ccds) ],
      rna_all   => [ qw( rna ) ],
-     blast_all => [ qw( dna_toplevel rna_all cdna_all pep_all dna_seqlevel dna_seqlevel_masked ) ],
+     blast_all => [ qw( rna_all cdna_all pep_all dna_seqlevel dna_seqlevel_masked ) ],
+     pre       => [ qw( dna_toplevel rna_all cdna_all pep_all dna_seqlevel dna_seqlevel_masked ) ],
      all       => [ qw( cdna_all pep_all dna_all rna_all) ],
     );
 
@@ -1003,7 +1004,9 @@ B<  all:> dna_all, cdna_all, pep_all and rna_all
 
 B<  rna_all>; DNA sequences that give non-coding RNA (ncRNA) in the specified DB.
 
-B<  blast_all>; dna_toplevel, dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
+B<  blast_all>; dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
+
+B<  pre>; dna_toplevel, dna_seqlevel, dna_seqlevel_masked, cdna_all, rna_all and pep_all
 
 B<  dna_all:> dna_seqlevel, dna_seqlevel_masked, dna_toplevel and dna_toplevel__masked.
 

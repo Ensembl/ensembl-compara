@@ -136,8 +136,8 @@ our %views = (
 				#ref=Pan_troglodytes:5:5150903&hom=
 	                        #Homo_sapiens:6:5057037
  	     exonview       => {db     => ["ENSEMBL_DB"], 
- 				param  => ["exon"], 
- 				table  => "exon_stable_id", 
+ 				param  => ["transcript"], 
+ 				table  => "transcript_stable_id", 
  				select => "stable_id"},
  	     exportview     => {nolink => 1},
  	     fastaview      => {nolink => 1,
@@ -154,6 +154,10 @@ our %views = (
 				param  => ["gene"], 
 				table  => "gene_stable_id", 
  				select => "stable_id"}, #ENSG00000139618 BRCA2
+	      generegulationview   => {db     => ["ENSEMBL_DB"], 
+				param  => ["gene"], 
+				table  => "gene_stable_id", 
+ 				select => "stable_id"},
 	      geneseqview   => {db     => ["ENSEMBL_DB"], 
 				param  => ["gene"], 
 				table  => "gene_stable_id", 
@@ -302,6 +306,10 @@ foreach my $spp (@species) {
 
   foreach my $view (sort keys %views) {
     info (1, "$view ...");
+    if ($view eq 'generegulationview'and ($spp ne 'Homo_sapiens' or $spp ne 'Drosophila_melanogater')) {
+      info (1, "Configured to skip generegulation view in $spp");
+      next;
+    }
     next if $views{$view}{nolink};
     if ($site_type eq 'pre') {
       my @check_db = @{$views{$view}{db}};
@@ -440,9 +448,7 @@ sub get_examples {
     return unless $pop->[0];
     @mysql = select_query( 'snpview', $db_ref, $spp, $views{snpview} );
     my $snps   = execute_query( @mysql, 2 );
-    warn @$snps;
     foreach my $each_snp ( @$snps ) {
-      warn "SNPs $each_snp";
       push (@$each_snp, @{ $pop->[0] } ) ;
     }
     push (@values, $snps->[0], $snps->[1]);

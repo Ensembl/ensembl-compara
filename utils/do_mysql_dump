@@ -164,9 +164,12 @@ foreach my $sp( @SPECIES ){
     }
   }
   info( 1, "Dumps for $sp completed" );
+  if ($sp eq 'Multi') {
+    info( 1, "Running file to update Encode regions");
+   system ("$SERVERROOT/sanger-plugins/sanger/utils/make_encode_table.pl") && die "Can't run make_encode table $SERVERROOT/sanger-plugins/sanger/utils/make_encode_table.pl";
+  }
 }
 info( 1, "All dumps completed" );
-
 
 
 # Work out timings ---------------------------------------------------------

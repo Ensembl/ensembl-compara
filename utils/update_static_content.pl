@@ -407,8 +407,10 @@ sub SSIabout {
   my $file = $dir ."/about.html";
   return if -e $file;
   open (my $fh, ">$file") or die "Cannot create $file: $!";
+  (my $nice_species = $species) =~ s/_/ /;
+
   print $fh qq(
-  <h3 class="boxed">About the $common_name genome</h3>
+  <h3 class="boxed">About the <i>$nice_species</i> genome</h3>
 
 <h4>Assembly</h4>
 
@@ -420,6 +422,9 @@ sub SSIabout {
 <p>
 
 </p>
+
+<h4>Full gene build</h4>
+<p>A full Ensembl gene build for <i>$nice_species</i> [VERSION!!!!] is available on the main <a href="http://www.ensembl.org/$species">Ensembl <i>$nice_species</i></a> site.</p>
 );
   info (1, "Template for about page $file");
   return;
@@ -432,11 +437,12 @@ sub SSIexamples {
   my $entry = $dir ."/examples.html";
   return if -e $entry;
   open (my $fh2, ">$entry") or die "Cannot create $entry: $!";
+  (my $nice_species = $species) =~ s/_/ /;
   print $fh2 qq(
 <h3 class="boxed">Example Data Points</h3>
 
 <p>
-This release of <i>$species</i> data is assembled into scaffolds, so there are no chromosomes available to browse.
+This release of <i>$nice_species</i> data is assembled into scaffolds, so there are no chromosomes available to browse.
 </p>
 
 <p>A few example data points :</p>
