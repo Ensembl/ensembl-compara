@@ -55,19 +55,11 @@ sub _init {
   my @segments = ();
 
   if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-#      foreach my $key (%$Container) {
-##	  warn(join('=>', $key, $Container->{$key}));
-#      }
-      my $slice = $Container;
-      push @segments, @{$slice->project("contig")};
-#      foreach my $slice (@{$Container->get_all_Slices()}) {
-#	  push @segments, @{$slice->project("contig")};
-#      }
+      @segments = @{$Container->project("contig")  ||[]};
   } else {
       @segments = @{$Container->project('seqlevel')||[]};
   }
 
-#  warn("*****************************");
   foreach my $segment (@segments) {
       my $start      = $segment->from_start;
       my $end        = $segment->from_end;
@@ -75,7 +67,6 @@ sub _init {
       my $ORI        = $ctg_slice->strand;
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
 
-#      warn(Data::Dumper::Dumper($feature));
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
       if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
 	  foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
@@ -395,6 +386,11 @@ sub _init_non_assembled_contig {
       'absolutey'    => 1,
     }) );
   } 
+
+# In case of AlignSlice don't display the navigation popup menu for the contig intervals - the same functionality can be found in alignscalebar.
+# Anyway a better way for navigation is on its way (at least we hope :)
+
+  return if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice"));
 
   my $width = $interval * ($length / $im_width) ;
   my $interval_middle = $width/2;
