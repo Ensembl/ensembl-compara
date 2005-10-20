@@ -304,69 +304,69 @@ sub get_das_factories {
 }
 
 sub get_das_features_by_name {
-    my $self = shift;
-    my $name  = shift || die( "Need a source name" );
-    my $scope = shift || '';
-    my $data = $self->__data;	 
+  my $self = shift;
+  my $name  = shift || die( "Need a source name" );
+  my $scope = shift || '';
+  my $data = $self->__data;     
+  my $cache = $self->Obj;
 
-    $data->{_das_features} ||= {}; # Cache
-    my %das_features;
+  $cache->{_das_features} ||= {}; # Cache
+  my %das_features;
 
-    foreach my $dasfact( @{$self->get_das_factories} ){
-	my $dsn  = $dasfact->adaptor->dsn;
-	my $name = $dasfact->adaptor->name;
-	my $type = $dasfact->adaptor->type;
-	next if ($type eq 'ensembl_location');
-	$name ||= $dasfact->adaptor->url .'/'. $dsn;
-		  
-	if( $data->{_das_features}->{$name} ){ # Use cached
-	    $das_features{$name} = $data->{_das_features}->{$name};
-	    next;
-	}
-	else{ # Get fresh data
-	    my @featref = $dasfact->fetch_all_by_ID($data->{_object}, $data);
-	    $data->{_das_features}->{$name} = [@featref];
-	    $das_features{$name} = [@featref];
-	}
+  foreach my $dasfact( @{$self->get_das_factories} ){
+    my $type = $dasfact->adaptor->type;
+    next if $dasfact->adaptor->type eq 'ensembl_location';
+    my $name = $dasfact->adaptor->name;
+    next unless $name;
+    my $dsn = $dasfact->adaptor->dsn;
+    my $url = $dasfact->adaptor->url;
+
+# Construct a cache key : SOURCE_URL/TYPE
+# Need the type to handle sources that serve multiple types of features
+
+    my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
+    $key .= "/$dsn/$type";
+
+    unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
+      my $featref = ($dasfact->fetch_all_by_ID($data->{_object}, $data ))[1];
+      $cache->{_das_features}->{$key} = $featref;
     }
+    $das_features{$name} = $cache->{_das_features}->{$key};
+  }
 
-    my $data_by_name = $das_features{$name} || return ();
-    my @feats = @{ $data_by_name->[1] || [] };
-
-    return @feats;
 }
 
 sub get_das_features_by_slice {
-    my $self = shift;
-    my $name  = shift || die( "Need a source name" );
-    my $slice = shift || die( "Need a slice" );
-    my $data = $self->__data;	 
+  my $self = shift;
+  my $name  = shift || die( "Need a source name" );
+  my $slice = shift || die( "Need a slice" );
+  my $cache = $self->Obj;     
 
-    $data->{_das_features} ||= {}; # Cache
-	 
-    my %das_features;
+  $cache->{_das_features} ||= {}; # Cache
+  my %das_features;
     
-    foreach my $dasfact( @{$self->get_das_factories} ){
-	my $dsn  = $dasfact->adaptor->dsn;
-	my $name = $dasfact->adaptor->name;
-	my $type = $dasfact->adaptor->type;
-	next if ($type ne 'ensembl_location');
-	$name ||= $dasfact->adaptor->url .'/'. $dsn;
-	
-	if( $data->{_das_features}->{$name} ){ # Use cached
-	    $das_features{$name} = $data->{_das_features}->{$name};
-	    next;
-	}
-	else{ # Get fresh data
-	    my @featref = ($name, ($dasfact->fetch_all_by_Slice( $slice ))[0]);
-	    $data->{_das_features}->{$name} = [@featref];
-	    $das_features{$name} = [@featref];
-	}
-    }
+  foreach my $dasfact( @{$self->get_das_factories} ){
+    my $type = $dasfact->adaptor->type;
+    next unless $dasfact->adaptor->type eq 'ensembl_location';
+    my $name = $dasfact->adaptor->name;
+    next unless $name;
+    my $dsn = $dasfact->adaptor->dsn;
+    my $url = $dasfact->adaptor->url;
 
-    my $data_by_name = $das_features{$name} || return ();
-    my @feats = @{ $data_by_name->[1] || [] };
-    return @feats;
+# Construct a cache key : SOURCE_URL/TYPE
+# Need the type to handle sources that serve multiple types of features
+
+    my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
+    $key .= "/$dsn/$type";
+
+    unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
+      my $featref = ($dasfact->fetch_all_by_Slice( $slice ))[0];
+      $cache->{_das_features}->{$key} = $featref;
+    }
+    $das_features{$name} = $cache->{_das_features}->{$key};
+  }
+
+  return @{ $das_features{$name} || [] };
 }
 
 sub get_gene_slices {
