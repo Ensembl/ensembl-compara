@@ -179,9 +179,9 @@ sub add_das_server {
                'name' => '_das_add_domain',
                'value' => 1
                );
-
+    
     my @server_dsns = &get_server_dsns($object);
-
+    
     my @dsn_values;
     foreach my $dsn ( sort{$a->{dsn} cmp $b->{dsn}} @server_dsns ){
         push @dsn_values, {"name"=>$dsn->{dsn}, "value"=>$dsn->{dsn}};
@@ -491,8 +491,9 @@ sub das_wizard_2 {
                 $object->param('DASdomain', $domain);
                 $object->param('DASdsn', $dsn);
                 $$step_ref = 10;
-                
+                my $css = $du->css ? 'Successfully uploaded stylesheet <br>' : '';
                 $form->add_element('type' => 'Information', 'value'=> qq{
+		$css
                 Successfully uploaded $enum entries <br>
                 DAS source at http://$domain/das/$dsn has been updated<hr>
                 });
@@ -518,8 +519,9 @@ sub das_wizard_2 {
             $object->param('DASprotocol', 'http');
             $object->param('DASdomain', $domain);
             $object->param('DASdsn', $dsn);
-            
+	    my $css = $du->css ? 'Successfully uploaded stylesheet <br>' : '';
             $form->add_element('type' => 'Information', 'value'=> qq{
+		$css
                 Successfully uploaded $enum entries <br>
                 A new DAS source has been created at http://$domain/das/$dsn<hr>
             });
