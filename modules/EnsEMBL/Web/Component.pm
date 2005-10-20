@@ -226,7 +226,7 @@ sub format_das_panel {
 
   ###### Collapse/expand switch for the DAS sources panel 
   my $label = 'DAS Sources';
-  if( $object->param( $status ) eq 'off' ) { 
+  if( ($object->param( $status ) || ' ' ) eq 'off' ) { 
     $panel->add_row( $label, '', "$URL=on" );
     return 0;
   }
