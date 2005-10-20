@@ -9,7 +9,6 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
-use Data::Dumper;
 
 sub init_label {
   my ($self) = @_;
@@ -67,25 +66,29 @@ sub _init {
     ref( $das_feat_ref ) eq 'ARRAY' || ( warn("No feature array for ProteinDAS track") &&  return );
 
     foreach my $feat (@$das_feat_ref) {
-#      push(@{$hash{$feat->das_feature_id}},$feat); # if defined $feat->start;
-		  push(@{$hash{$feat->das_feature_id}},$feat)  if ($feat->end); # Draw only features that have location
+	push(@{$hash{$feat->das_feature_id}},$feat)  if ($feat->end); # Draw only features that have location
     }
+
     foreach my $key (keys %hash) {
-	my @row  = @{$hash{$key}};
-	my $desc = $row[0]->das_feature_label();
+	my @row = @{$hash{$key}};
+	my $f = $row[0];
+	my $desc = $f->das_feature_label() || $f->das_feature_id;
 
 	# Zmenu
-	my $zmenu = { 'caption' => $row[0]->das_type->label,
-		      "01:".$key      => $row[0]->das_link() || undef };
-	if( my $m = $row[0]->das_method ){ $zmenu->{"02:Method: $m"} = undef }
-	if( my $n = $row[0]->das_note   ){ $zmenu->{"03:Note: $n"  } = undef }
+	my $zmenu = { 'caption' => $desc };
+
+	if( my $m = $f->das_feature_id ){ $zmenu->{"03:ID: $m"}     = undef }
+	if( my $m = $f->das_type       ){ $zmenu->{"05:TYPE: $m"}   = undef }
+	if( my $m = $f->das_method     ){ $zmenu->{"10:METHOD: $m"} = undef }
+	if( my $m = $f->das_link       ){ $zmenu->{"15:LINK: "}     = $m    }
+	if( my $m = $f->das_note       ){ $zmenu->{"20:NOTE: $m"}   = undef }
 		      
 
 	my $Composite = new Sanger::Graphics::Glyph::Composite
 	  ({
-	    'x'     => $row[0]->start(),
+	    'x'     => $f->start(),
 	    'y'     => $y,
-	    'href'  => $row[0]->das_link(),
+	    'href'  => $f->das_link(),
 	    'zmenu' => $zmenu,
 	   });
 
@@ -94,9 +97,9 @@ sub _init {
 	my ($minx, $maxx);
 	foreach my $pf (@row) {
 	    my $x  = $pf->start();
-	    $minx  = $x if ($x < $minx || !defined($minx));
+	    $minx  = $x if (! defined($minx) || $x < $minx);
 	    my $w  = $pf->end() - $x;
-	    $maxx  = $pf->end() if ($pf->das_end() > $maxx || !defined($maxx));
+	    $maxx  = $pf->end() if (! defined($maxx) || $pf->das_end() > $maxx);
 	    my $id = $pf->das_feature_id();
 
 	    my $rect = new Sanger::Graphics::Glyph::Rect({
