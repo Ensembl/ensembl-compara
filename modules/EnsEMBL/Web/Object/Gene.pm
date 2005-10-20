@@ -333,7 +333,7 @@ sub get_das_features_by_name {
     }
     $das_features{$name} = $cache->{_das_features}->{$key};
   }
-
+  return @{ $das_features{$name} || [] };
 }
 
 sub get_das_features_by_slice {
