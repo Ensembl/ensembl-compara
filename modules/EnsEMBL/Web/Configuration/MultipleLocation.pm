@@ -108,18 +108,29 @@ sub context_menu {
   next unless @sec;
   my @options;
   my $flag = "contig$self->{'flag'}";
-  foreach ( @sec ) {
+
+  #remove 'normal' link to contigview for primary species
+  my $menu = $self->{'page'}->menu;
+  $menu->delete_entry($flag,'cv_link');
+
+  foreach ( $p, @sec ) {
     (my $HR = $_->real_species ) =~s/_/ /;
-    my $title = "@{[$_->seq_region_type_and_name]} @{[$_->thousandify(floor($_->seq_region_start))]}";
+	my $srtn = $_->seq_region_type_and_name;
+    my $title = "@{[$srtn]} @{[$_->thousandify(floor($_->seq_region_start))]}";
     if( floor($_->seq_region_start) != ceil($_->seq_region_end) ) {
       $title .= " - @{[$_->thousandify(ceil($_->seq_region_end))]}";
     }
     push @options, {
-      'text' => "... <em>$HR</em>", 'raw'=>1,
+      'text' => "... <em>$HR $srtn </em>", 'raw'=>1,
       'href' => sprintf( "/%s/contigview?c=%s:%s;w=%s", $_->real_species, $_->seq_region_name, $_->centrepoint, $_->length ),
-      'title' => "(Genome browser) ContigView of $HR $title"
+      'title' => "$HR $title"
     };
   }
-  $self->add_entry( $flag, 'text' => 'Graphical view of...', 'title' => 'View secondary slice in ContigView', 'href' => $options[0]{'href'}, 'options'=> \@options );
+
+  #add new link to contigview for primary and secondary slices
+  $menu->add_entry_after($flag, 'mv_link', 'code' => 'cv',
+					'text' => 'Graphical view of...',
+					'title' => 'ContigView - genome browser view of primary and secondary slices', 
+					'href' => $options[0]{'href'}, 'options'=> \@options );
 }
 1;
