@@ -24,7 +24,7 @@ sub new {
 ##                     srr = ?; cr = ?; cl = ?; srs = ?; srn = ?; srl = ?; srw = ?; c.x = ?
 ## (2) Alternate slices:
 ##                     s{n} = species; [c{n} = sr:start:ori; w{n};] 
-##               -or-  s{n} = species; [sr = sr;]
+##               -or-  s{n} = species; [sr{n} = sr;]
 ## OR
 ##
 ## (1) Primary slice: gene = gene;
@@ -77,8 +77,38 @@ sub _dna_align_feature_adaptor {
     $self->database('compara')->get_DnaAlignFeatureAdaptor();
 }
 
+sub self_compara {
+	my $self = shift;
+	my $p_sp = $self->{'data'}{'__location'}{'species'};
+	my %sp;
+	$sp{$p_sp}++;
+	foreach my $ip ($self->param) {
+		if ($ip =~ /^s(\d+)$/) {
+			my $s = $self->param($ip);
+			my $s_sp = $self->map_alias_to_species($s);
+			$sp{$s_sp}++;
+		}
+		if ($ip eq 'flip') {
+			my $s_sr = $self->param($ip);
+			my ($s,$sr) = split /:/, $s_sr;
+			next unless $sr;
+			my $s_sp = $self->map_alias_to_species($s);
+			$sp{$s_sp}++;
+		}
+	}
+	my $sc = (grep {$sp{$_} > 1 } keys %sp) ? 1 : 0;
+	return $sc;
+}
+
+
 sub createObjectsLocation {
   my $self = shift;
+
+#show input parameters
+#  foreach ($self->param) {	  
+#	  warn "$_ = ",$self->param($_),"\n";
+#  }
+
   my $location;
   my $width = 1;
   my @slice_defaults = ();
@@ -89,7 +119,7 @@ sub createObjectsLocation {
       push @slice_defaults, \@T;
     } 
   }
-  
+
   if( my $temp_id = $self->param( 'click.x' ) + $self->param( 'vclick.y' ) ) {
     $location = $self->_location_from_SeqRegion( $self->param( 'seq_region_name' ) );
     if( $location ) {
@@ -107,7 +137,7 @@ sub createObjectsLocation {
   } elsif( $temp_id = $self->param('region') ) {
     $location = $self->_location_from_SeqRegion( $temp_id, $self->param('vc_start'), $self->param('vc_end'), 1, 1 );
     $width = $self->param('vc_end') - $self->param('vc_start') + 1;
-  } elsif( $self->param('l') =~ /^([\w\.]+):(-?[\.\w]+)-([\.\w]+)$/ ) {
+  } elsif( $self->param('l') =~ /^([-\w\.]+):(-?[\.\w]+)-([\.\w]+)$/ ) {
     my($sr,$start,$end) = ($1,$2,$3);
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
@@ -115,7 +145,7 @@ sub createObjectsLocation {
     $location = $self->_location_from_SeqRegion( $sr,$start,$end,1,1);
   } else {
     my( $seq_region,$cp,$t_strand ) =
-      $self->param('c') =~ /^(\w+):(-?[.\w]+)(:-?1)?$/ ? ($1,$2,$3) : 
+      $self->param('c') =~ /^([-\w\.]+):(-?[.\w]+)(:-?1)?$/ ? ($1,$2,$3) : 
         ($slice_defaults[0][0], $slice_defaults[0][1], $slice_defaults[0][2] );
     my $strand = $t_strand =~ /^:?-1$/ ? -1 : 1;
     $cp    = $self->evaluate_bp( $cp );
@@ -143,19 +173,40 @@ sub createObjectsLocation {
       $width = $end - $start + 1;
     }
   }
-                                                                                   
+
   my @locations = ($location);
   my $primary_slice = undef;
   my $dafad         = undef;
-  my $flip        = $self->map_alias_to_species( $self->param('flip') );
+  my ($flip_species,$flip_sr) = split /:/, $self->param('flip');
+  my $flip        = $self->map_alias_to_species($flip_species);
   my $add_best_to = $flip;
+  my $sc = $self->self_compara;
   foreach my $par ( $self->param ) {
-    if( $par =~ /^s(\d+)$/ ) { 
+    if( $par =~ /^s(\d+)$/ ) {
       my $ID = $1;
+	  #don't do anything further with the primary strand in a self-compara
+	  next if ($sc && ($self->param("sr$ID")) && ($self->param("sr$ID") eq $self->param('seq_region_name')));
+	  #get chr argument for self compara
+	  my $chrom = '';
+	  if ($self->param("sr$ID")) {
+		  warn "1----";
+		  $chrom = $self->param("sr$ID");
+	  } elsif ($sc) {
+		  warn "2----";
+		  ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
+	  }
+#	  warn "CHROM = $chrom";
+#	  warn "sc = $sc";
       my $species = $self->map_alias_to_species( $self->param($par) );
-      if( $species eq $flip ) { ## Skip if we've said flip an active species....
-        $add_best_to = undef;
-        next;
+	  ## Skip if we've said flip an active species....
+	  if ($sc) {
+		  if ($flip_sr eq $chrom) {
+			  $add_best_to = undef;
+			  next;
+		  }
+      } elsif( $species eq $flip_species ) {
+		  $add_best_to = undef;
+		  next;
       }
       $self->__set_species( $species );
       $self->databases_species( $species, 'core', 'compara' );
@@ -163,7 +214,7 @@ sub createObjectsLocation {
          !( $self->param('action') eq 'realign' && $self->param('id')==0 )
       ) { ## We have a centre point (and optional width specified);
         my( $seq_region,$cp,$t_strand ) = 
-          $self->param("c$ID" ) =~ /^(\w+):(-?[.\w]+)(:-?1)?$/ ? 
+          $self->param("c$ID" ) =~ /^([-\w\.]+):(-?[.\w]+)(:-?1)?$/ ? 
           ($1,$2,$3) : ($slice_defaults[$ID][0], $slice_defaults[$ID][1], $slice_defaults[$ID][2] );
         my $strand = $t_strand =~ /^:?-1$/ ? -1 : 1;
         my $w = defined $self->param("w$ID") ? $self->param("w$ID") :
@@ -173,21 +224,25 @@ sub createObjectsLocation {
         my $start = $cp - ($w-1)/2;
         my $end   = $cp + ($w-1)/2;
         if( $self->param('id')==$ID ) {
+			warn "**10";
              if( $self->param('action') eq 'left'   ) { $start -= $w/10 * $strand; $end -= $w/10 * $strand; }
           elsif( $self->param('action') eq 'left2'  ) { $start -= $w/2  * $strand; $end -= $w/2  * $strand; }
           elsif( $self->param('action') eq 'right'  ) { $start += $w/10 * $strand; $end += $w/10 * $strand; }
           elsif( $self->param('action') eq 'right2' ) { $start += $w/2  * $strand; $end += $w/2  * $strand; }
-          elsif( $self->param('action') eq 'flip'   ) { $strand = -$strand; }
+          elsif( $self->param('action') eq 'flip'   ) { warn "what!!!!";$strand = -$strand; }
           elsif( $self->param('action') eq 'in'     ) { $start += $w/4;  $end -= $w/4;  }
           elsif( $self->param('action') eq 'out'    ) { $start -= $w/2;  $end += $w/2;  }
         }
         if( $self->param('id')==$ID && $self->param('action') eq 'realign' ) {
-          $locations[$ID] = $self->_best_guess( $location->slice, $species, $width );
+          $locations[$ID] = $self->_best_guess( $location->slice, $species, $width, $chrom );
         } else {
           $locations[$ID] = $self->_location_from_SeqRegion( $seq_region, $start, $end, $strand, 1 );
         }
+	  } elsif ($self->param("sr$ID")) {
+		  #we are working with a self-compara
+		  $locations[$ID] = $self->_best_guess( $location->slice, $species, $width, $chrom );
       } else {
-        $locations[$ID] = $self->_best_guess( $location->slice, $species, $width );
+        $locations[$ID] = $self->_best_guess( $location->slice, $species, $width, $chrom );
       }
       if( $self->param('action') eq 'primary' && $self->param('id') == $ID ) {
         @locations[$ID,0]=@locations[0,$ID];
@@ -195,7 +250,7 @@ sub createObjectsLocation {
     }
   }
   if( $add_best_to ) { ## If we are flipping an inactive species...
-    push @locations, $self->_best_guess( $location->slice, $add_best_to, $width );
+    push @locations, $self->_best_guess( $location->slice, $add_best_to, $width, $flip_sr);
   }
   $self->DataObjects( $self->new_MultipleLocation( grep {$_} @locations ) );
 }
@@ -208,11 +263,11 @@ sub map_alias_to_species {
 }
 
 sub _best_guess {
-  my( $self, $slice, $species, $width ) = @_;
+  my( $self, $slice, $species, $width, $chrom ) = @_;
   ( my $S2 = $species ) =~ s/_/ /g;
   ## foreach my $method ( @{$self->species_defs->COMPARATIVE_METHODS} ) {
   foreach my $method ( qw(BLASTZ_RAW BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET PHUSION_BLASTN TRANSLATED_BLAT) ) {
-    my( $seq_region, $cp, $strand ) = $self->_dna_align_feature_adaptor->interpolate_best_location( $slice, $S2, $method );
+    my( $seq_region, $cp, $strand ) = $self->_dna_align_feature_adaptor->interpolate_best_location( $slice, $S2, $method, $chrom );
     if( $seq_region ) {
       warn ">> $method <<";
       my $start = $cp - ($width-1)/2;
