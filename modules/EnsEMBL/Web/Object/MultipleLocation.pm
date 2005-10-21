@@ -55,7 +55,8 @@ sub location {
   my $self = shift;
   my $region = $self->seq_region_name;  
   my $start = $self->seq_region_start;
-  return "$region:$start";
+  my $end = $self->seq_region_end;
+  return "$region:$start:$end";
 }
 
 sub generate_query_hash {
