@@ -24,12 +24,12 @@ sub context_menu {
 
   $menu->add_block( $flag, 'bulleted', $header, 'raw' => 1 );
   if( $self->mapview_possible( $obj->seq_region_name ) ) {
-    $menu->add_entry( $flag, 'text' => "View of @{[$obj->seq_region_type_and_name]}",
+    $menu->add_entry( $flag, 'code' => 'mv_link', 'text' => "View of @{[$obj->seq_region_type_and_name]}",
        'title' => "MapView - Overview of @{[$obj->seq_region_type_and_name]} including feature sumarries",
        'href' => "/$species/mapview?chr=".$obj->seq_region_name );
   }
   $header =~s/<br \/>/ /;
-  $menu->add_entry( $flag, 'text' => 'Graphical view',
+  $menu->add_entry( $flag, 'code' => 'cv_link', 'text' => 'Graphical view',
        'title' => "ContigView - genome browser view of $header",
                                   'href' => "/$species/contigview?l=$q_string" );
   $menu->add_entry( $flag, 'text' => 'Graphical overview',
@@ -84,6 +84,7 @@ sub context_menu {
       'options' => \@options_as, 'title' => "AlignSliceView - graphical view of alignment"
     );
   }
+
   my %species = ( map { $obj->species_defs->multi($_,$species) } qw(BLASTZ_RAW BLASTZ_NET BLASTZ_RECIP_NET PHUSION_BLASTN TRANSLATED_BLAT BLASTZ_GROUP) );
   my @options = ();
   foreach( sort keys %species ) {
@@ -94,10 +95,11 @@ sub context_menu {
     };
   }
   if(@options) {
-    $menu->add_entry( $flag, 'text' => "View alongside ...", 'href' => $options[0]{'href'}, 
+    $menu->add_entry( $flag, 'code' => "mcv_link", 'text' => "View alongside ...", 'href' => $options[0]{'href'}, 
       'options' => \@options, 'title' => "MultiContigView - side by side view of genomic sequence"
     );
   }
+
   if( @{ $obj->species_defs->other_species($species, 'ENSEMBL_CHROMOSOMES' ) || [] } ) {
     my %species = ( $obj->species_defs->multi('SYNTENY',$species) );
     my @options = ();
