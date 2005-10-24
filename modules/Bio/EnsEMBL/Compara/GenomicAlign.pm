@@ -62,6 +62,7 @@ GET VALUES
   $original_sequence = $genomic_align->original_sequence;
   $cigar_line = $genomic_align->cigar_line;
   $level_id = $genomic_align->level_id;
+  $slice = $genomic_align->get_Slice();
 
 
 =head1 OBJECT ATTRIBUTES
@@ -1554,6 +1555,30 @@ sub _get_Mapper_from_cigar_line {
   }
 
   return $mapper;
+}
+
+
+=head2 get_Slice
+
+  Arg[1]     : -none-
+  Example    : $slice = $genomic_align->get_Slice();
+  Description: creates and returns a Bio::EnsEMBL::Slice which corresponds to
+               this Bio::EnsEMBL::Compara::GenomicAlign
+  Returntype : Bio::EnsEMBL::Slice object
+  Exceptions :
+
+=cut
+
+sub get_Slice {
+  my ($self) = @_;
+
+  my $slice = $self->dnafrag->slice->sub_Slice(
+              $self->dnafrag_start,
+              $self->dnafrag_end,
+              $self->dnafrag_strand
+          );
+
+  return $slice;
 }
 
 
