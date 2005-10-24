@@ -169,7 +169,6 @@ sub add_DnaFragChunk {
     unless(defined($self->{'_cached_chunk_list'}));
   
   push @{$self->{'_cached_chunk_list'}}, $chunk;
-  $self->{'_total_basepairs'} += $chunk->length;
 
   return $count;
 }
