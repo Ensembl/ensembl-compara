@@ -164,10 +164,6 @@ foreach my $sp( @SPECIES ){
     }
   }
   info( 1, "Dumps for $sp completed" );
-  if ($sp eq 'Multi') {
-    info( 1, "Running file to update Encode regions");
-   system ("$SERVERROOT/sanger-plugins/sanger/utils/make_encode_table.pl") && die "Can't run make_encode table $SERVERROOT/sanger-plugins/sanger/utils/make_encode_table.pl";
-  }
 }
 info( 1, "All dumps completed" );
 
@@ -192,11 +188,6 @@ sub dump_mysql {
   my $dumpdir = $db_meta->{dumpdir} || '.';
   chdir( $dumpdir ) or die( "Cannot chdir to $dumpdir: $!" );
 
-  system("rm -f ./*.gz");
-  system("rm -f ./*.txt");
-  system("rm -f ./*.table");
-  system("rm -f ./CHECKSUMS*");
-
   my $dump_command = "$MYSQL_BIN/mysqldump";
   $db_meta->{USER}   and $dump_command .= " -u$db_meta->{USER}";
   $db_meta->{PASS}   and $dump_command .= " -p$db_meta->{PASS}";
@@ -216,6 +207,7 @@ sub dump_mysql {
   my $dump_command_T = $dump_command . " -T . $DB";
   #warn $dump_command_T;
   system( $dump_command_T ) and die( "Cannot $dump_command_T: $!" );
+
   system("rm -f ./[a-c]*.sql");
   system("rm -f ./[d-g]*.sql");
   system("rm -f ./[h]*.sql");
@@ -231,6 +223,7 @@ sub dump_mysql {
 
 
   unless ( $no_zip ) {
+    warning(1, "in here");
     my $dump_command_d = $dump_command . " -d $DB | gzip -c > $DB.sql.gz";
     system( $dump_command_d ) and die( "Cannot $dump_command_d: $!" );
     system( "gzip $compatible_file" ) and die( "Cannot gzip $compatible_file: $!");
@@ -326,7 +319,7 @@ sub create_dumpdir {
 
   if( -e $db_dumpdir ){
     info( 1, "Removing existing copy of $db_dumpdir" );
-    system("rm -Rf $db_dumpdir");
+    system("rm -Rf $db_dumpdir") && die "Couldn't delete $db_dumpdir";
   }
 
   utils::Tool::check_dir( $db_dumpdir );
