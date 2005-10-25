@@ -122,14 +122,24 @@ sub update_meta_table {
   $dba->dbc->do("analyze table genomic_align");
   $dba->dbc->do("analyze table genomic_align_group");
 
-  my $sth = $dba->dbc->prepare("SELECT max(dnafrag_end - dnafrag_start + 1) FROM genomic_align");
+  my $sth = $dba->dbc->prepare("SELECT method_link_species_set_id,max(dnafrag_end - dnafrag_start + 1) FROM genomic_align group by method_link_species_set_id");
   $sth->execute();
-  my ($max_alignment_length) = $sth->fetchrow_array();
-  $sth->finish;
+  my $max_alignment_length = 0;
+  my ($method_link_species_set_id,$max_align);
+  $sth->bind_columns(\$method_link_species_set_id,\$max_align);
 
-  $mc->delete_key("max_alignment_length");
+  while ($sth->fetch()) {
+    my $key = "max_align_".$method_link_species_set_id;
+    $mc->delete_key($key);
+    $mc->store_key_value($key, $max_align + 1);
+    $max_alignment_length = $max_align if ($max_align > $max_alignment_length);
+    print STDERR "Stored key:$key value:",$max_align + 1," in meta table\n";
+  }
+
   $mc->store_key_value("max_alignment_length", $max_alignment_length + 1);
-  print STDERR "Stored max_alignment_length value ",$max_alignment_length + 1," in meta table\n";
+  print STDERR "Stored key:max_alignment_length value:",$max_alignment_length + 1," in meta table\n";
+
+  $sth->finish;
 
 }
 
