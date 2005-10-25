@@ -382,7 +382,7 @@ sub prepareGenomeAnalysis
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
     $stats->batch_size(10);
-    $stats->hive_capacity(-1);
+    $stats->hive_capacity(200);
     $stats->status('BLOCKED');
     $stats->update();
     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
