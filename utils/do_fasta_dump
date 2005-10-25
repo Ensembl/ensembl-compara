@@ -238,10 +238,11 @@ sub get_data {
 
   # Dump even non-reference region
   my $sliceAdaptor = $dbAdaptor->get_SliceAdaptor;
+  $sliceAdaptor->cache_toplevel_seq_mappings();
 
   foreach my $slice( @{$sliceAdaptor->fetch_all('toplevel', undef, 1)} ){
     info( 1, "Start toplevel ". $slice->name );
-    my $coord_system = $slice->coord_system->name;
+     my $coord_system = $slice->coord_system->name;
 
     # Toplevel DNA dumps ------------------------------------------------------
     if ($fhs->{'dna_toplevel_masked'} or $fhs->{'dna_toplevel'}) {
@@ -286,7 +287,7 @@ sub get_data {
       }
     }
     # End dna_toplevel (masked and not masked) ------------------------------
-    info (1, "cdna/pep prep section");
+    #info (1, "cdna/pep prep section");
     if(scalar( grep{$_ !~ /^dna|abinitio|\/dna\// } keys %$fhs ))  {
       foreach my $gene( @{$slice->get_all_Genes(undef,undef,$load_exons)} ){
 	foreach my $transcript( @{$gene->get_all_Transcripts} ){
@@ -428,7 +429,7 @@ sub dump_cdna_rna {
   my $label = $gene ? "gene:".$gene->stable_id : " ";
   my $seq = $transcript->seq();
   $seq->description( join( " ", $type, $location, $label, $ccds_id) );
-  #info( 1, "CDNA>".$seq->display_id );
+  info( 1, "CDNA>".$seq->display_id );
   $seqio->write_seq($seq);
   return 1;
 }

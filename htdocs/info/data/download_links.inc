@@ -135,6 +135,17 @@
 	    
 <tr>
 <td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/"><i>Monodelphis domestica</i></a> (opossum)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
 <a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/"><i>Mus musculus</i></a> (house mouse)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_mus_musculus/data/fasta/cdna/">FTP</a></td>

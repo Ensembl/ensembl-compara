@@ -110,7 +110,7 @@ foreach my $spp (@species){
     die( "Could not retrieve core database for $spp" ); 
     
     my $slice_adaptor = $db->get_SliceAdaptor();
-
+    $slice_adaptor->cache_toplevel_seq_mappings();
     # loop through every non-redundant region in the DB
     my $inc_dupes  = 1; # include duplicate regions like PARs?
     my $inc_nonref = 1; # include non-reference regions like haplotypes?
