@@ -13,8 +13,7 @@ use EnsEMBL::Web::SpeciesDefs;
                               
 sub new {
   my( $class, $DB ) = @_;
-  my $dbh;
-  my $self = $DB;
+  my $self = ref($DB) ? $DB : {}; ## don't crash site if no news db!
   bless $self, $class;
   return $self;
 }
@@ -22,8 +21,8 @@ sub new {
 sub db {
   my $self = shift;
   $self->{'dbh'} ||= DBI->connect(
-    "DBI:mysql:database=$self->{'NAME'};host=$self->{'HOST'};port=$self->{'PORT'}",
-    $self->{'USER'}, "$self->{'PASS'}", { RaiseError => 1}
+      "DBI:mysql:database=$self->{'NAME'};host=$self->{'HOST'};port=$self->{'PORT'}",
+      $self->{'USER'}, "$self->{'PASS'}"
   );
   return $self->{'dbh'};
 }
