@@ -71,7 +71,13 @@ sub RENDER_simple {
   # flag to indicate if not all features have been displayed 
   my $more_features = 0;
 
-  foreach my $f( sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'}} ){
+  foreach my $f( sort { 
+    my $c=0;
+    my $astyle = $self->get_featurestyle ($a, $configuration);
+    my $bstyle = $self->get_featurestyle ($b, $configuration);
+    $c = ($astyle->{'attrs'}{'zindex'}||0) <=> ($bstyle->{'attrs'}{'zindex'}||0) if exists(${$astyle}{'attrs'}{'zindex'}) or exists(${$bstyle}{'attrs'}{'zindex'});
+    $c==0 ? $a->das_start() <=> $b->das_start()  : $c;
+  } @{$configuration->{'features'}} ){
 
     # Handle DAS errors first
     if($f->das_type_id() eq '__ERROR__') {
@@ -242,6 +248,7 @@ sub RENDER_grouped {
     # Get start and end of group
     my $start = $feature_group[0]->das_start;
     my $end   = $feature_group[-1]->das_end;
+    for my $ftmp (@feature_group){$end = $ftmp->das_end if $ftmp->das_end > $end} #in case of overlapping features
     
     # constrain to image window
     my $START = $start < 1 ? 1 : $start;
@@ -380,7 +387,8 @@ sub RENDER_grouped {
     my $style = $self->get_featurestyle($f, $configuration);
     my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
     my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
-    $self->push($symbol->draw);
+    my @tmpsymbolstack=();
+    push(@tmpsymbolstack, $symbol);
 
     my $from = $symbol->feature->{'end'};
 
@@ -393,15 +401,24 @@ sub RENDER_grouped {
 	my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
 	my $to = $symbol->feature->{'start'};
 
-	$self->push($symbol->draw);
+	#$self->push($symbol->draw);
+	push(@tmpsymbolstack, $symbol);
 	if ((($to - $from) * $self->{pix_per_bp}) > 1){ # i.e. if the gap is > 1pix
 	    my $groupsymbol = $self->get_groupsymbol($groupstyle, $from, $to, $configuration, $y_offset);
-	    $self->push($groupsymbol->draw);
+	    push(@tmpsymbolstack, $groupsymbol);
 	}
-	    
+
 	# update 'from' for next time around
-	$from = $symbol->feature->{'end'};
+	$from = $symbol->feature->{'end'} unless $from > $symbol->feature->{'end'};
     }
+
+    #now take symols from the temporary stack to draw in order of their zindex....
+    @tmpsymbolstack = sort{ 
+      my $c=0;
+      $c = ($a->style->{'zindex'}||0) <=> ($b->style->{'zindex'}||0) if exists(${$a->style}{'zindex'}) or exists(${$b->style}{'zindex'});
+      $c==0 ? $a->feature->{'start'} <=> $b->feature->{'start'}  : $c;
+    } map {warn Dumper $_; $_} @tmpsymbolstack;
+    while (my $s=shift @tmpsymbolstack){$self->push($s->draw);}
 
     # Offset y coords by which row we're on
     $Composite->y($Composite->y() + $y_offset);
