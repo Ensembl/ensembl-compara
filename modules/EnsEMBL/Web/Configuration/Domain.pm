@@ -41,10 +41,10 @@ sub context_menu {
   my $self = shift;
   $self->{page}->menu->add_block( "domain$self->{flag}", 'bulleted',
                                   $self->{object}->domainAcc );
-  $self->add_entry( "domain$self->{flag}", 'text' => $self->{object}->domainDesc );
-  $self->add_entry( "domain$self->{flag}", 'text' => "Domain info.",
+  $self->add_entry( "domain$self->{flag}", 'code' => 'domaindesc', 'text' => $self->{object}->domainDesc );
+  $self->add_entry( "domain$self->{flag}", 'code' => 'domaininfo', 'text' => "Domain info.",
                                   'href' => "/@{[$self->{object}->species]}/domainview?domainview=".$self->{object}->domainAcc );
-  $self->add_entry( "domain$self->{flag}", 'icon' => '/img/biomarticon.gif' ,
+  $self->add_entry( "domain$self->{flag}", 'code' => 'mart', 'icon' => '/img/biomarticon.gif' ,
     'text' => 'Gene List', 'title' => 'BioMart: Gene list',
     'href' => "/@{[$self->{object}->species]}/martlink?type=domain;domain_id=".$self->{object}->domainAcc );
 
