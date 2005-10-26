@@ -765,7 +765,29 @@ sub _parse {
 
       $dbh->disconnect();
     }
-###### Additional implicit data #
+    ###### Additional implicit data #
+    ## ENSEMBL WEBSITE
+    if( $tree->{'databases'}->{'ENSEMBL_WEBSITE'} ){
+      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_WEBSITE' ) ) {
+	my $sql = qq(
+          SELECT
+                r.release_id    as release_id,
+                DATE_FORMAT(r.date, '%b %Y') as short_date
+          FROM
+                release r order by r.release_id desc);
+
+	# Store in conf.packed
+	$tree->{RELEASE_INFO} = [];
+	my $query = $dbh->prepare($sql);
+        $query->execute;
+	while (my $row = $query->fetchrow_hashref) {
+	  push @{ $tree->{'RELEASE_INFO'} }, $row ;
+	}
+
+      }
+    }
+
+
 ## CORE DATABASE....
     $tree->{'REPEAT_TYPES'} = {};
     if( $tree->{'databases'}->{'ENSEMBL_DB'} ){ 
