@@ -240,9 +240,8 @@ sub get_tagvalue {
   my $self = shift;
   my $tag = shift;
   
-  my $value = $self->has_tag($tag);
-  $value='' unless(defined($value));
-  return $value;
+  return '' unless($self->has_tag($tag));
+  return $self->{'_tags'}->{$tag};
 }
 
 sub get_all_tags {
