@@ -34,6 +34,82 @@ use Bio::EnsEMBL::Compara::Graph::Link;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
 
+###################################################
+#
+# basic directed graphs stats routines
+#  
+###################################################
+
+=head2 calc_link_sum
+
+  Arg [1]    : <Bio::EnsEMBL::Compara::Graph::Link> $link
+  Arg [2]    : <Bio::EnsEMBL::Compara::Graph::Node> $node
+  Example    : $sum = Bio::EnsEMBL::Compara::Graph::Algorithms::calc_link_sum($link, $next_node);
+  Description: returns the sum of all the lengths of the links starting from node
+  Returntype : Bio::EnsEMBL::Compara::Graph::Link
+  Exceptions : none
+
+=cut
+
+
+sub calc_link_sum
+{
+  my $link = shift;
+  my $to_node = shift;
+  
+  throw("node not part of link") unless($link and $to_node and $link->get_neighbor($to_node));
+  return 0.0 if($to_node->is_leaf);
+  my $link_sum = $link->distance_between;
+  
+  foreach my $next_link (@{$to_node->links}) {
+    throw("failure: node has an undefined link") unless(defined($next_link));
+    next if($link->equals($next_link));
+    my $next_node = $next_link->get_neighbor($to_node);
+    $link_sum += calc_link_sum($next_link, $next_node);
+  }
+  return $link_sum;
+}
+
+
+sub calc_node_count
+{
+  my $link = shift;
+  my $to_node = shift;
+  
+  throw("node not part of link") unless($link and $to_node and $link->get_neighbor($to_node));
+  return 1 if($to_node->is_leaf);
+  
+  my $node_count = 1; # for mylink;
+  
+  foreach my $next_link (@{$to_node->links}) {
+    throw("failure: node has an undefined link") unless(defined($next_link));
+    next if($link->equals($next_link));
+    my $next_node = $next_link->get_neighbor($to_node);
+    $node_count += calc_node_count($next_link, $next_node);
+  }
+  return $node_count;
+}
+
+
+sub calc_leaf_count
+{
+  my $link = shift;
+  my $to_node = shift;
+  
+  throw("node not part of link") unless($link and $to_node and $link->get_neighbor($to_node));
+  return 1 if($to_node->is_leaf);
+  
+  my $node_count = 0;
+  
+  foreach my $next_link (@{$to_node->links}) {
+    throw("failure: node has an undefined link") unless(defined($next_link));
+    next if($link->equals($next_link));
+    my $next_node = $next_link->get_neighbor($to_node);
+    $node_count += calc_leaf_count($next_link, $next_node);
+  }
+  return $node_count;
+}
+
 
 
 ###################################################
@@ -77,8 +153,8 @@ sub _internal_find_balanced_link
   
   my ($node1, $node2) = $link->get_nodes;
   
-  my $weight1 = $link->calc_link_sum($node1);
-  my $weight2 = $link->calc_link_sum($node2);
+  my $weight1 = calc_link_sum($link, $node1);
+  my $weight2 = calc_link_sum($link, $node2);
   my $balance = abs($weight1 - $weight2);
   
   if(1) {
@@ -90,8 +166,8 @@ sub _internal_find_balanced_link
     $stats->{'best_balance'} = $balance;
     $stats->{'weight1'} = $weight1;
     $stats->{'weight2'} = $weight2;
-    $stats->{'leaves1'} = $link->calc_leaf_count($node1);
-    $stats->{'leaves2'} = $link->calc_leaf_count($node2);
+    $stats->{'leaves1'} = calc_leaf_count($link, $node1);
+    $stats->{'leaves2'} = calc_leaf_count($link, $node2);
     $stats->{'best_link'} = $link;
   }
   
@@ -235,10 +311,10 @@ sub chop_tree
     $link->print_link;
     
     my ($node1, $node2) = $link->get_nodes;
-    my $weight1 = $link->calc_link_sum($node1);
-    my $weight2 = $link->calc_link_sum($node2);
-    my $leafcount1 = $link->calc_leaf_count($node1);
-    my $leafcount2 = $link->calc_leaf_count($node2);
+    my $weight1 = calc_link_sum($link, $node1);
+    my $weight2 = calc_link_sum($link, $node2);
+    my $leafcount1 = calc_leaf_count($link, $node1);
+    my $leafcount2 = calc_leaf_count($link, $node2);
 
     printf("  link dist balance (%7.5f --- %7.5f)\n", $weight1, $weight2);
     printf("  leaf counts       (%8d --- %8d)\n", $leafcount1, $leafcount2);
