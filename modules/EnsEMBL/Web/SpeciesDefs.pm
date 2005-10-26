@@ -263,6 +263,9 @@ sub configure_registry {
     }
   }
   Bio::EnsEMBL::Registry->load_all($SiteDefs::ENSEMBL_REGISTRY);
+  if ($SiteDefs::ENSEMBL_NOVERSIONCHECK) {
+    Bio::EnsEMBL::Registry->no_version_check(1);
+  }
 }
 
 sub dynamic_use {
@@ -431,7 +434,7 @@ sub _parse {
           warn "$confdir/ini-files/$filename.ini is not readable\n" ;
           next;
         }
-        warn "OPENING $inifile\n";
+        #warn "OPENING $inifile\n";
         open FH, $inifile or die( "Problem with $inifile: $!" );
 ###### Loop for each line of <species>.ini
         my $current_section = undef;
