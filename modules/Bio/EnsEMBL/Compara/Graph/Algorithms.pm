@@ -124,19 +124,23 @@ sub calc_leaf_count
 sub find_balanced_link
 {
   my $link = shift;
+  my $debug = shift;
   
   my $stats = {};
   my $visited_links = {};
   
   my $starttime = time();
-  _internal_find_balanced_link($link, $visited_links, $stats);
-  printf("%1.3f secs to run find_balanced_link\n", (time()-$starttime));
+  _internal_find_balanced_link($link, $visited_links, $stats, $debug);
   
-  printf("best balanced (%f - %f = %f) : ", 
-     $stats->{'weight1'}, $stats->{'weight2'}, $stats->{'best_balance'}); 
-   $stats->{'best_link'}->print_link;
-  printf("  %d --- %d leaves\n",  $stats->{'leaves1'}, $stats->{'leaves2'});
-  
+  if($debug) {
+    printf("%1.3f secs to run find_balanced_link\n", (time()-$starttime));
+    
+    printf("best balanced (%f - %f = %f) : ", 
+       $stats->{'weight1'}, $stats->{'weight2'}, $stats->{'best_balance'}); 
+     $stats->{'best_link'}->print_link;
+    printf("  %d --- %d leaves\n",  $stats->{'leaves1'}, $stats->{'leaves2'});
+  }
+    
   return $stats->{'best_link'};
 }
 
@@ -146,6 +150,7 @@ sub _internal_find_balanced_link
   my $link = shift;
   my $visited_links = shift;
   my $stats = shift;
+  my $debug = shift;
     
   return if(defined($visited_links->{$link->obj_id}));
 
@@ -157,7 +162,7 @@ sub _internal_find_balanced_link
   my $weight2 = calc_link_sum($link, $node2);
   my $balance = abs($weight1 - $weight2);
   
-  if(1) {
+  if($debug) {
     printf("balance (%f - %f = %f) : ", $weight1, $weight2, $balance); 
     $link->print_link;
   }
@@ -177,7 +182,7 @@ sub _internal_find_balanced_link
   foreach my $next_link (@{$heavier_node->links}) {
     throw("failure: node has an undefined link") unless(defined($next_link));
     next if($link->equals($next_link));
-    _internal_find_balanced_link($next_link, $visited_links, $stats);
+    _internal_find_balanced_link($next_link, $visited_links, $stats, $debug);
   }
   return undef;
 }
