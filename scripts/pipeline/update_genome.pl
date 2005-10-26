@@ -131,7 +131,7 @@ DOING!
 =cut
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Getopt::Long;
 
 my $usage = qq{
@@ -265,31 +265,50 @@ sub update_genome_db {
     <STDIN>;
   }
 
-  $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_binomial_name
-      );
-  if (!$genome_db) {
-    throw "There is no GenomeDB with this name [$primary_species_binomial_name] in the compara DB [$compara]\n".
-        "You should add the entry manually!!";
-  }
-
   my $sql = "SELECT meta_value FROM meta where meta_key= ?";
   my $sth = $species_dba->dbc->prepare($sql);
   $sth->execute("assembly.default");
   my ($assembly) = $sth->fetchrow_array();
-  throw("Database [".$species_dba->species."] does not contain assembly data in the meta table") if (!$assembly);
+  if (!defined($assembly)) {
+    warning "Cannot find assembly.default in meta table for $primary_species_binomial_name";
+    $assembly = $primary_species_assembly;
+  }
   $sth->execute("genebuild.version");
   my ($genebuild) = $sth->fetchrow_array();
-  warning("Database [".$species_dba->species."] does not contain genebuild data in the meta table") if (!$genebuild);
-  print join(" -- ", $assembly, $genebuild);
+  if (!defined($genebuild)) {
+    warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
+    $genebuild = "";
+  }
+  print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
 
-  $sql = "UPDATE genome_db SET assembly = \"$assembly\", genebuild = \"$genebuild\" WHERE genome_db_id = ".
-      $genome_db->dbID;
-  $sth = $compara_dba->dbc->do($sql); 
-  $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_binomial_name,
-          $primary_species_assembly
-      );
+  $genome_db = eval{$genome_db_adaptor->fetch_by_name_assembly(
+          $primary_species_binomial_name
+      )};
+  if ($genome_db) {
+    $sql = "UPDATE genome_db SET assembly = \"$assembly\", genebuild = \"$genebuild\" WHERE genome_db_id = ".
+        $genome_db->dbID;
+    $sth = $compara_dba->dbc->do($sql); 
+    $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
+            $primary_species_binomial_name,
+            $primary_species_assembly
+        );
+
+  } else { ## New genome!!
+    $sth->execute("species.taxonomy_id");
+    my ($taxon_id) = $sth->fetchrow_array();
+    if (!defined($taxon_id)) {
+      throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name";
+    }
+    print "New genome in compara. Taxon #$taxon_id\n\n";
+    $sql = "INSERT INTO genome_db (taxon_id, name, assembly, genebuild)".
+        " VALUES (\"$taxon_id\", \"$primary_species_binomial_name\",".
+        " \"$assembly\", \"$genebuild\")";
+    $sth = $compara_dba->dbc->do($sql); 
+    $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
+            $primary_species_binomial_name,
+            $primary_species_assembly
+        );
+  }
   return $genome_db;
 }
 
@@ -412,6 +431,8 @@ sub update_dnafrags {
     };
   my $sth1 = $species_dba->dbc->prepare($sql1);
   $sth1->execute();
+  my $current_verbose = verbose();
+  verbose('EXCEPTION');
   while (my ($coordinate_system_name, $name, $length) = $sth1->fetchrow_array) {
     my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
             -genome_db => $genome_db,
@@ -423,10 +444,12 @@ sub update_dnafrags {
     delete($old_dnafrags_by_id->{$dnafrag_id});
     throw() if ($old_dnafrags_by_id->{$dnafrag_id});
   }
+  verbose($current_verbose);
+  print "Deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
   foreach my $deprecated_dnafrag_id (keys %$old_dnafrags_by_id) {
-    print STDERR "Deleting former DnaFrag #$deprecated_dnafrag_id\n";
     $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
   }
+  print "  ok!\n\n";
 }
 
 =head2 print_method_link_species_sets_to_update
