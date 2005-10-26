@@ -47,7 +47,7 @@ in bash
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Pick a mysql instance and create a database
 
-mysqladmin -h ia64g -P3306 -uensadmin -pxxxx -e "create database abel_compara_human_cow_blastz_27"
+mysql -h ia64g -P3306 -uensadmin -pxxxx -e "create database abel_compara_human_cow_blastz_27"
 
 cd ~/src/ensembl_main/ensembl-hive/sql
 mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < tables.sql
