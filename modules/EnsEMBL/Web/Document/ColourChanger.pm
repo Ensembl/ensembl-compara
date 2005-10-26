@@ -24,7 +24,7 @@ sub change_ddmenu_colours {
     while( my $file = readdir DH ) {
       next if $file =~ /zoom\d\.gif/;
       next unless $file =~ /\.gif/;
-      $/ = undef;
+      local $/ = undef;
       open I, "$img_directory/templates/$file";
       my $X = <I>;
       close I;
@@ -62,7 +62,7 @@ sub change_zoom_colours {
   my @O = hex2rgb( $colours->{'SPECIESNAME'} );
   my @B = hex2rgb( $colours->{'BACKGROUND5'} );
   foreach my $i (1..8) {
-    $/=undef;
+    local $/ = undef;
     open I, "$img_directory/templates/zoom$i.gif" || next;
     my $Y = my $X = <I>;
     close I;
