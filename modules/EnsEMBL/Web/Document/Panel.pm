@@ -67,6 +67,12 @@ sub add_option    { $_[0]{_options}{$_[1]} = $_[2];  }
 sub option        { return $_[0]{_options}{$_[1]};   }
 sub options       { return keys %{$_[0]{_options}};  }
 
+sub caption {
+    my $self = shift;
+    $self->{'caption'} = shift if (@_);
+    return $self->{'caption'};
+}
+
 =head2 Panel components.
 
 There are a number of functions which set, clear, modify the list of 
