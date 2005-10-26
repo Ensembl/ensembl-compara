@@ -134,6 +134,21 @@ sub preparePairAlignerSystem
   my $stats;
 
   #
+  # SubmitGenome
+  #
+  my $submit_analysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'SubmitGenome',
+      -input_id_type   => 'genome_db_id',
+      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
+  $stats = $submit_analysis->stats;
+  $stats->batch_size(100);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+  #
   # creating ChunkAndGroupDna analysis
   #
   my $chunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
@@ -148,7 +163,9 @@ sub preparePairAlignerSystem
   $stats->hive_capacity(-1); #unlimited
   $stats->update();
   $self->{'chunkAndGroupDnaAnalysis'} = $chunkAndGroupDnaAnalysis;
-  
+
+  $ctrlRuleDBA->create_rule($submit_analysis, $chunkAndGroupDnaAnalysis);
+
   #
   # creating CreatePairAlignerJobs analysis
   #
@@ -508,21 +525,21 @@ sub storeMaskingOptions
     exit(5);
   }
 
-  my $options_hash_ref;
+  my $options_string = "";
   if (defined $masking_options_file) {
-    $options_hash_ref = do($masking_options_file);
+    my $options_hash_ref = do($masking_options_file);
+
+    return unless($options_hash_ref);
+
+    my @keys = keys %{$options_hash_ref};
+    my $options_string = "{\n";
+    foreach my $key (@keys) {
+      $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
+    }
+    $options_string .= "}";
   } else {
-    $options_hash_ref = $dnaCollectionConf->{'masking_options'};
+    $options_string = $dnaCollectionConf->{'masking_options'};
   }
-
-  return unless($options_hash_ref);
-
-  my @keys = keys %{$options_hash_ref};
-  my $options_string = "{\n";
-  foreach my $key (@keys) {
-    $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
-  }
-  $options_string .= "}";
 
   $dnaCollectionConf->{'masking_analysis_data_id'} =
     $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
