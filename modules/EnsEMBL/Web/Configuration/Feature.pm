@@ -30,6 +30,15 @@ sub featureview {
     }
 
     $self->{page}->set_title( "FeatureView: $type $id");
+    my $gene_panel;
+    if ($object->Obj->{'Gene'}) {  ## data includes one or more gene objects
+      $gene_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
+        'code'    => "info$self->{flag}",
+        'caption' => "Gene Information",
+        'object'  => $self->{object},
+      );
+      $gene_panel->add_components(qw(genes    EnsEMBL::Web::Component::Feature::genes))
+    }
     # do key
     my $key_panel = new EnsEMBL::Web::Document::Panel::Image(
         'code'    => "info$self->{flag}",
@@ -40,20 +49,23 @@ sub featureview {
     # do karytype
     my $karyo_panel = new EnsEMBL::Web::Document::Panel::Image(
         'code'    => "info$self->{flag}",
-        'caption' => "",
+        'caption' => "Feature Location(s)",
         'object'  => $self->{object},
     );
     $karyo_panel->add_components(qw(image EnsEMBL::Web::Component::Feature::show_karyotype));
     # do feature information table
     my $ss_panel = new EnsEMBL::Web::Document::Panel::SpreadSheet(
         'code'    => "info$self->{flag}",
-        'caption' => '', 
+        'caption' => 'Feature Information', 
         'object'  => $self->{object},
     );
     $ss_panel->add_components( qw(features
       EnsEMBL::Web::Component::Feature::spreadsheet_featureTable));
 
     $self->initialize_zmenu_javascript;
+    if ($gene_panel) {
+      $self->{page}->content->add_panel($gene_panel);
+    }
     #$self->{page}->content->add_panel($key_panel);
     $self->{page}->content->add_panel($karyo_panel);
     $self->{page}->content->add_panel($ss_panel);
