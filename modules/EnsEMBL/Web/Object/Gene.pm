@@ -93,7 +93,7 @@ sub display_xref {
 sub gene_description {
   my $self = shift;
   my %description_by_type = ( 'bacterial_contaminant' => "Probable bacterial contaminant" );
-  return $self->Obj->description() || $description_by_type{ $self->Obj->type } || 'No description';
+  return $self->Obj->description() || $description_by_type{ $self->Obj->biotype } || 'No description';
 }
 
 sub mod_date {
