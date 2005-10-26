@@ -35,11 +35,11 @@ sub information {
   my( $panel, $object ) = @_;
   my $label = "Translation information";
   my $transcript_id = $object->transcript->stable_id;
-  my $HTML = qq(<p>This peptide is a translation of transcript: <a href="/@{[$object->species]}/transview?transcript=$transcript_id;db=@{[$object->get_db]}">$transcript_id</a>);
+  my $HTML = qq(<p>This protein is a translation of transcript <a href="/@{[$object->species]}/transview?transcript=$transcript_id;db=@{[$object->get_db]}">$transcript_id</a>);
   if( $object->gene ) {
   my $gene_id   = $object->gene->stable_id;
   if( $gene_id ) {
-    $HTML .= qq(, which is a product of gene: <a href="/@{[$object->species]}/geneview?gene=$gene_id;db=@{[$object->get_db]}">$gene_id</a>\n);
+    $HTML .= qq(, which is a product of gene <a href="/@{[$object->species]}/geneview?gene=$gene_id;db=@{[$object->get_db]}">$gene_id</a>);
   }
   }
   $HTML .= '.</p>';
@@ -133,7 +133,7 @@ sub marked_up_seq_form {
 
 sub marked_up_seq {
   my( $panel, $object ) = @_;
-  my $label = "Peptide Sequence";
+  my $label = "Protein Sequence";
   my $HTML = "<pre>@{[ do_markedup_pep_seq( $object ) ]}</pre>";
   my $db        = $object->get_db() ;
   my $stable_id = $object->stable_id;

@@ -101,7 +101,6 @@ sub name {
   my( $panel, $object ) = @_;
   my( $display_name, $dbname, $ext_id, $dbname_disp ) = $object->display_xref();
   return 1 unless defined $display_name;
-  $dbname_disp;
   my $label = $object->type_name();
   my $lc_type = lc($label);
   # link to external database
@@ -159,7 +158,7 @@ sub location {
   } else {
     $html .= sprintf( qq(
       <p>
-        This $lc_type can be found on %s at location: <a href="/%s/contigview?l=%s:%s-%s">%s-%s</a>
+        This $lc_type can be found on %s at location <a href="/%s/contigview?l=%s:%s-%s">%s-%s</a>.
       </p>
       <p>
         This start of this $lc_type is located in <a href="/%s/contigview?region=%s">%s</a>.
