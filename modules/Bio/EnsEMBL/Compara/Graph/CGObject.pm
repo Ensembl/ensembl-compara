@@ -208,8 +208,8 @@ sub add_tag {
   
   unless(defined($self->{'_tags'})) { $self->{'_tags'} = {}; }
   return unless(defined($tag));
-
-  if($value) { $self->{'_tags'}->{$value} = '';}
+  
+  if(defined($value)) { $self->{'_tags'}->{$value} = '';}
   else {$value='';}
   
   $self->{'_tags'}->{$tag} = $value;
@@ -232,7 +232,8 @@ sub has_tag {
   my $tag = shift;
   
   $self->_load_tags;
-  return $self->{'_tags'}->{$tag};
+  return 1 if(defined($self->{'_tags'}->{$tag}));
+  return 0
 }
 
 sub get_tagvalue {
