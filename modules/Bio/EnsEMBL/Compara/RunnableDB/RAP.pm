@@ -108,7 +108,7 @@ sub run
 
 sub write_output {
   my $self = shift;
-  #$self->store_proteintree;
+  $self->store_proteintree;
 }
  
  
@@ -200,7 +200,7 @@ sub run_rap
   
   #input tree is un-rooted
   #it appears as though RAP is looking for a rooted tree as input
-  #pick longest branch off 'root' and create a starting root
+  #so pre-root the tree with my 'tree balancing' algorithm
   $self->pre_root_tree($self->{'protein_tree'});
   
 
@@ -366,13 +366,16 @@ sub parse_RAP_output
   
   #cleanup old tree structure- 
   #  flatten and reduce to only AlignedMember leaves
+  #  unset duplication tags
   $tree->flatten_tree;
   $tree->print_tree($self->{'tree_scale'}) if($self->debug>2);
   foreach my $node (@{$tree->get_all_leaves}) {
+    $node->add_tag("Duplication", 0);
     unless($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
       $node->disavow_parent;
     }
   }
+  $tree->add_tag("Duplication", 0);
 
   #parse newick into a new tree object structure
   print("load from file $rap_outfile\n") if($self->debug);
@@ -446,7 +449,7 @@ sub parse_rap_newick_into_tree
         $root=$node unless($root);
         if($token eq '#') {
           if($debug) { printf("   Duplication node\n"); };
-          $node->add_tag("Duplication");
+          $node->add_tag("Duplication", 1);
           $token = next_token(\$newick, "(");  
           if($debug) { printf("state %d : '%s'\n", $state, $token); };
           if($token ne "(") { throw("parse error: expected ( after #\n"); }
@@ -592,8 +595,28 @@ sub store_proteintree
   }
   
   $self->{'protein_tree'}->store_tag('reconciliation_method', 'RAP');
+  
+  $self->store_duplication_tags($self->{'protein_tree'});
+
   return undef;
 }
 
+sub store_duplication_tags
+{
+  my $self = shift;
+  my $node = shift;
+
+  if($node->get_tagvalue("Duplication") eq '1') {
+    if($self->debug) { printf("store duplication : "); $node->print_node; }
+    $node->store_tag('Duplication', 1);
+  } else {
+    $node->store_tag('Duplication', 0);
+  }
+    
+  foreach my $child (@{$node->children}) {
+    $self->store_duplication_tags($child);
+  }
+  return undef;
+}
 
 1;
