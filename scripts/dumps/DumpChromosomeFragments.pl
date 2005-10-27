@@ -80,7 +80,7 @@ GetOptions('help' => \$help,
 	   'phusion=s' => \$phusion,
 	   'coord_system=s' => \$coordinate_system,
 	   'top_level' => \$top_level,
-	   'conf'	=> \$conf,
+	   'conf=s'	=> \$conf,
 	   'o=s' => \$output);
 
 if ($help) {
