@@ -476,7 +476,7 @@ sub dump_dna {
       " -masked $masked".
       " -phusion $phusion".
       " -o $seq_region_file";
-    $run_str .= " -reg_conf=$reg_conf" if (defined($reg_conf));
+    $run_str .= " -conf=$reg_conf" if (defined($reg_conf));
  
     $this_lsf_job = {
             name => $job_name,
