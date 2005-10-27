@@ -405,6 +405,14 @@ Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        Document::Image
 
+=head3 B<genes>
+
+Description:     Adds columns and rows of gene data to a Panel::Spreadsheet object (make sure your Configuration module checks for the existence of Gene objects before calling this method!)
+
+Arguments:      Document::Panel object, Proxy::Object (data)
+
+Returns:        true
+
 =head2 BUGS AND LIMITATIONS
 
 None known at present.                                                                               
