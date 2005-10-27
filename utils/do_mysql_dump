@@ -74,12 +74,6 @@ my %web_userdb = (
 	  );
 
 
-# Hard-code all databases _never_ to dump
-my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST 
-				ENSEMBL_COMPARA_MULTIPLE
-				ENSEMBL_BLAST_LOG
-				ENSEMBL_FASTA
-				ENSEMBL_GLOVAR );
 
 
 # Sort out dumpdir ----------------------------------------------------------
@@ -99,7 +93,12 @@ if ( @SPECIES ) {
 }
 
 foreach my $sp( @SPECIES ){
-
+  # Hard-code all databases _never_ to dump
+  my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST 
+				ENSEMBL_COMPARA_MULTIPLE
+				ENSEMBL_BLAST_LOG
+				ENSEMBL_FASTA
+				ENSEMBL_GLOVAR );
   # Work out dumpdir ---------------------------------------------------------
   my @sp_dumpdirs;
   if ($sp eq 'Multi') {
@@ -120,7 +119,6 @@ foreach my $sp( @SPECIES ){
   $all_db_info{"ensembl_web_user_db"} = {%web_userdb};
   @dbs = ( keys %all_db_info ) unless @dbs;
   push (@dbs, 'ensembl_web_user_db') if $sp eq 'Multi';
-
   my $write_user = $species_defs->get_config($sp, 'ENSEMBL_WRITE_USER');
   my $write_pass = $species_defs->get_config($sp, 'ENSEMBL_WRITE_PASS');
   my $flag_mart = 0;
@@ -131,7 +129,7 @@ foreach my $sp( @SPECIES ){
       next;
     }
     unless ( $all_db_info{$db} ){
-      warning( 1, "Not a valid DB for $sp; select from:\n ".
+      warning( 1, "$db is not a valid DB for $sp; select from:\n ".
 	     join( "\n       ", sort keys %all_db_info ) );
       next;
     }
@@ -162,6 +160,7 @@ foreach my $sp( @SPECIES ){
     if ( $db =~ /ENSEMBL_HELP|ENSEMBL_WEBSITE|ensembl_web_user_db/ ){
       rename_files( $all_db_info{$db}{NAME}, $sp_dumpdirs[0] );
     }
+    @dbs = ();
   }
   info( 1, "Dumps for $sp completed" );
 }
@@ -223,7 +222,6 @@ sub dump_mysql {
 
 
   unless ( $no_zip ) {
-    warning(1, "in here");
     my $dump_command_d = $dump_command . " -d $DB | gzip -c > $DB.sql.gz";
     system( $dump_command_d ) and die( "Cannot $dump_command_d: $!" );
     system( "gzip $compatible_file" ) and die( "Cannot gzip $compatible_file: $!");

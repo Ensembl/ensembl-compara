@@ -335,7 +335,7 @@ sub dump_format {
 
     my $outfile;
 
-    info (2, "..$format..");
+    info (1, "..$format..");
     my $filename =  "$spp_dumpdir/$name.$format";
     $seq_dumper->dump($slice, $format, $filename);
   };
@@ -382,16 +382,16 @@ sub ftp_bundle{
     }
 
     if($count == 0){
-      info (2, "Making $spp_dumpdir/FTP/$spp.${batch}.dat.gz..");
+      #info (1, "Making $spp_dumpdir/FTP/$spp.${batch}.dat.gz..");
       $gz = gzopen("$spp_dumpdir/FTP/$spp.${batch}.dat.gz","wb") || die $!;
     }
 
     if($count > 0 && $count%$chunk == 0){
       $batch++;
-      info (2, "Closing $spp_dumpdir/FTP/$spp.${batch}.dat.gz...");
+      #info (1, "Closing $spp_dumpdir/FTP/$spp.${batch}.dat.gz...");
       $gz->gzclose();
       my $inc = $batch*$chunk;
-      info (2, "Making $spp_dumpdir/FTP/$spp.${inc}.dat.gz...");
+      #info (1, "Making $spp_dumpdir/FTP/$spp.${inc}.dat.gz...");
       $gz = gzopen("$spp_dumpdir/FTP/$spp.${inc}.dat.gz","wb") || die $!;
     }
 
