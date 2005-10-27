@@ -53,6 +53,7 @@ sub init {
         [ 'opt_essential_splice_site' => 'Essential splice site' ],
         [ 'opt_splice_site'           => 'Splice site' ],
         [ 'opt_stop_lost',            => 'Stop lost' ],
+        [ 'opt_regulatory_region',    => 'Regulatory region variation' ],
         [ 'opt_stop_gained',          => 'Stop gained' ],
       ],
       'features' => [

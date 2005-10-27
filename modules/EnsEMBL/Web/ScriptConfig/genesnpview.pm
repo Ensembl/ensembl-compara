@@ -39,6 +39,7 @@ sub init {
     opt_intergenic             on
     opt_essential_splice_site  on
     opt_splice_site            on
+    opt_regulatory_region      on
     opt_stop_gained            on
     opt_stop_lost              on
   ));
