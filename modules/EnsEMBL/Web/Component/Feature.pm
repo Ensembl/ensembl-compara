@@ -320,42 +320,13 @@ sub genes {
   my @genes = @{$genearray[0]};
   foreach my $gene (@genes) {
     my $stable_id = $$gene{'label'};
+    my $id_link = qq(<a href="/$species/geneview?gene=$stable_id">$stable_id</a>);
     my $extname = $$gene{'extname'} || '-';
     my $desc = ${$$gene{'extra'}}[0] || '-';
     $panel->add_row(
-      {'id'=>$stable_id, 'name'=>$extname, 'desc'=>$desc}
+      {'id'=>$id_link, 'name'=>$extname, 'desc'=>$desc}
     );
   }
-}
-
-sub genename {
-  my( $panel, $object ) = @_;
-  my $species = $object->species;
-  my @genes = $object->retrieve_features('Gene');
-  my %gene = %{$genes[0][0]};
-
-  my $label = 'Gene';
-  my $stable_id = $gene{'label'};
-  my $extname = $gene{'extname'};
-  my $html = qq(<p><strong>$extname</strong><br />
-      [Ensembl Gene <a href="/$species/geneview?gene=$stable_id">$stable_id</a>]</p>);
-
-  $panel->add_row( $label, $html );
-  return 1;
-}
-
-
-sub genedesc {
-  my( $panel, $object ) = @_;
-  my @genes = $object->retrieve_features('Gene');
-  my %gene = %{$genes[0][0]};
- 
-  my $label = 'Description';
-  my $desc = ${$gene{'extra'}}[0];
-  my $html = qq(<p>$desc</p>);
-
-  $panel->add_row( $label, $html );
-  return 1;                                    
 }
 
 1;
