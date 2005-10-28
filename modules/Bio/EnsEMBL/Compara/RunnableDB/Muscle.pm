@@ -220,7 +220,7 @@ sub run_muscle
 
   my $cmd = $muscle_executable;
   $cmd .= " ". $self->{'options'};
-  $cmd .= " -clw -nocore -verbose -quiet -maxmb 32000";
+  $cmd .= " -clw -nocore -verbose -quiet ";
   $cmd .= " -in " . $input_fasta;
   $cmd .= " -out $muscle_output -log $muscle_output.log";
   
