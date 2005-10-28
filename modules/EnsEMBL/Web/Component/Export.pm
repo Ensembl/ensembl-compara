@@ -273,7 +273,7 @@ sub features_form {
     [ 'repeat'     => 'Repeat features' ],
     [ 'genscan'    => 'Prediction features (genscan)' ],
   );
-  push @options, [ 'variation'  => 'Variation features' ] if 1;
+  push @options, [ 'variation'  => 'Variation features' ]     if $object->species_defs->databases->{'ENSEMBL_VARIATION'};
   push @options, [ 'gene'       => 'Gene Information' ];
   my %checked = map { $_ => 'yes' } $object->param('options');
   $form->add_element( 'type' => 'MultiSelect',
@@ -454,7 +454,7 @@ sub fasta_trans {
   $out.= format_fasta( "$id cds:$id_type $slice_name",  $transcript->translateable_seq    ) if $options{'coding'}  && $transcript->translation;
   $out.= format_fasta( "$id pep:$id_type $slice_name",  $transcript->translate->seq       ) if $options{'peptide'} && $transcript->translation;
   $out.= format_fasta( "$id utr3:$id_type $slice_name", $transcript->three_prime_utr->seq ) if $options{'utr3'}    && $transcript->three_prime_utr;
-  $out.= format_fasta( "$id utr5:$id_type $slice_name", $transcript->five_prime_utr->seq  ) if $options{'utr3'}    && $transcript->five_prime_utr;
+  $out.= format_fasta( "$id utr5:$id_type $slice_name", $transcript->five_prime_utr->seq  ) if $options{'utr5'}    && $transcript->five_prime_utr;
   return $out;
 }
 
