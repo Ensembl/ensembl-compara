@@ -127,18 +127,36 @@ sub context_menu {
   $menu->add_block( "snp$self->{flag}", 'bulleted',
                                   $obj->source.': '.$name );
 
-  my @genes = @{$obj->get_genes};
+  my @genes = @{ $obj->get_genes };
   foreach my $gene (@genes) {
-    $menu->add_entry( "snp$self->{flag}", 'text' => "Gene SNP info",
-		      "title" => "GeneSNPView - SNPs and their coding consequences",
-		      'href' => "/$species/genesnpview?gene=".$gene->stable_id );
+    $menu->add_entry(
+        "snp$self->{flag}", 
+        'code' => 'gene_snp_info',
+        'text' => "Gene SNP info",
+	"title" => "GeneSNPView - SNPs and their coding consequences",
+	'href' => "/$species/genesnpview?gene=".$gene->stable_id
+    );
   }
-  $menu->add_entry( "snp$self->{flag}", 'text' => "$name - SNP info",
-		    "title" => "SNPView",
-		    'href' => "/$species/snpview?snp=$name" );
-  $menu->add_entry( "snp$self->{flag}", 'text' => "$name - LD info",
-		    "title" => "Linkage disequilibrium data",
-                    'href' => "/$species/ldview?snp=$name" );
+  
+  my $snpview_href = "/$species/snpview?snp=$name";
+  if ($self->{object}->param('source')) {
+    $snpview_href .= ';source='.$self->{object}->param('source');
+  }
+  $menu->add_entry(
+        "snp$self->{flag}",
+        'code' => 'snp_info',
+        'text' => "$name - SNP info",
+	"title" => "SNPView",
+	'href' => $snpview_href
+  );
+  
+  $menu->add_entry(
+        "snp$self->{flag}",
+        'code' => 'ld_info',
+        'text' => "$name - LD info",
+	"title" => "Linkage disequilibrium data",
+        'href' => "/$species/ldview?snp=$name"
+  );
 
 }
 
