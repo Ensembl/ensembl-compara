@@ -160,7 +160,7 @@ sub context_location {
       'title' => "ExportView - export sequence of $header as EMBL",
       'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
     );
-    if( $obj->species_defs->multidb( 'ENSEMBL_MART_ENSEMBL' ) ) {
+    if( $obj->species_defs->multidb('ENSEMBL_MART_ENSEMBL') && !$obj->species_defs->ENSEMBL_NOMART ) {
       $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
         'title' => "BioMart - export Gene information in $header",
         'href' => "/$species/martlink?l=$q_string;type=gene_region" );
