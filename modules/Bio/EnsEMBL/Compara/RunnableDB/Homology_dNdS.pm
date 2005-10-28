@@ -138,6 +138,8 @@ sub calc_genetic_distance
   #$homology->print_homology;
   
   my $aln = $homology->get_SimpleAlign("cdna");
+
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
   if (defined $self->{'codeml_parameters_href'}) {
@@ -169,6 +171,8 @@ sub calc_genetic_distance
   $homology->dn($MLmatrix->[0]->[1]->{'dN'});
   $homology->ds($MLmatrix->[0]->[1]->{'dS'});
   $homology->lnl($MLmatrix->[0]->[1]->{'lnL'});
+
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   return $homology;
 }
