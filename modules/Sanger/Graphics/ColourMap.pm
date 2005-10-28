@@ -709,7 +709,10 @@ sub hex_by_name {
 
 sub rgb_by_name {
     my ($self, $name) = @_;
-    return $self->rgb_by_hex($self->{$name});
+    $name = lc($name);
+    my $hex=$self->{$name};
+    $hex=$name if (! $hex) and $name=~/^[0-9a-f]{6}$/;
+    return $self->rgb_by_hex($hex);
 }
 
 sub names {
