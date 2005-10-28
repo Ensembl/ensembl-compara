@@ -456,6 +456,9 @@ if ($load_chains) {
             SELECT
               1, tName, tStart, tEnd, qName, qSize, qStart, qEnd, qStrand, id
             FROM $this_table
+            WHERE
+              (tEnd - tStart) * 2 < (qEnd - qStart)
+              OR (tEnd - tStart) > 2 * (qEnd - qStart)
             LIMIT $start_limit, $bin_size";
         $start_limit += $bin_size;
         $sth = $ucsc_dbc->prepare($sql);
@@ -1127,6 +1130,7 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
   my ($all_feature_pairs, $group_id, $level) = @_;
   my $dna_align_features;
 
+print "Parsing ", scalar(@$all_feature_pairs), " FeaurePairs...\n";
   my $these_feature_pairs = [];
   my ($previous_t_end, $previous_q_seqname, $previous_q_start, $previous_q_end);
   foreach my $this_feature_pair (@$all_feature_pairs) {
@@ -1136,6 +1140,7 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
     my $q_start = $this_feature_pair->hstart;
     my $q_end = $this_feature_pair->hend;
     my $q_strand = $this_feature_pair->hstrand;
+print " FP: ($t_start-$t_end) <=> $q_seqname ($q_start-$q_end)[$q_strand]\n";
     
     unless (defined $previous_t_end && defined $previous_q_end) {
       $previous_t_end = $t_end;
@@ -1170,6 +1175,7 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
       push @$dna_align_features, $this_dna_align_feature;
     }
     $previous_t_end = $t_end;
+    $previous_q_seqname = $q_seqname;
     $previous_q_start = $q_start;
     $previous_q_end = $q_end;
     push @$these_feature_pairs, $this_feature_pair;
@@ -1336,8 +1342,8 @@ sub choose_matrix {
     print STDERR "Using customed scoring matrix from $matrix_file file\n";
 #     print STDERR "\n$matrix_string\n";
   
-  } elsif ( grep(/^$tTaxon_id$/, (9606, 9598)) &&
-      grep(/^$qTaxon_id$/, (9606, 9598)) ) {
+  } elsif ( grep(/^$tTaxon_id$/, (9606, 9598, 9554)) &&
+      grep(/^$qTaxon_id$/, (9606, 9598, 9554)) ) {
     $matrix_hash = get_matrix_hash($primates_matrix_string);
     print STDERR "Using primates scoring matrix\n";
 #     print STDERR "\n$primates_matrix_string\n";
