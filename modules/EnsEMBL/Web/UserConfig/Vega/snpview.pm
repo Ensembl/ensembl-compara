@@ -7,6 +7,7 @@ use vars qw(@ISA);
 sub init {
     my ($self) = @_;
     $self->{'_userdatatype_ID'} = 30;
+    $self->{'_add_labels'} = 'yes';
     $self->{'_transcript_names_'} = 'yes';
     $self->{'general'}->{'snpview'} = {
         '_artefacts' => [qw(
@@ -27,6 +28,7 @@ sub init {
             'opt_empty_tracks' => 1,
             'opt_zclick'     => 1,
             'show_labels'      => 'yes',
+            'opt_shortlabels'  => 1,
             'width'   => 600,
             'bgcolor'   => 'background1',
             'bgcolour1' => 'background3',
