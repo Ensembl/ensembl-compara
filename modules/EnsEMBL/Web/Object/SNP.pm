@@ -819,9 +819,9 @@ sub get_variation_features {
 sub add_variation_feature {
     my ($self, $vari_feature) = @_;
     
-    unless ($vari_feature->isa('Bio::EnsEBML::Variation::VariationFeature')) {
+    unless ($vari_feature->isa('Bio::EnsEMBL::Variation::VariationFeature')) {
         # throw
-        $self->problem('fatal', 'EnsEMBL::Web::Data::SNP->add_variation_feature expects a Bio::EnsEBML::Variation::VariationFeature as argument');
+        $self->problem('fatal', 'EnsEMBL::Web::Data::SNP->add_variation_feature expects a Bio::EnsEMBL::Variation::VariationFeature as argument');
     }
 
     push @{ $self->{'_variation_features'} }, $vari_feature;
