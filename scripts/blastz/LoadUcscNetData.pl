@@ -326,6 +326,14 @@ my $primates_matrix_string = "A C G T
 O = 400, E = 30
 ";
 
+my $human_macaca_matrix_string = "A C G T
+ 100 -200 -100 -200
+-200  100 -200 -100
+-100 -200  100 -200
+-200 -100 -200  100
+O = 400, E = 30
+";
+
 my $mammals_matrix_string = "A C G T
   91 -114  -31 -123
 -114  100 -125  -31
@@ -1130,30 +1138,44 @@ sub get_DnaAlignFeatures_from_FeaturePairs {
   my ($all_feature_pairs, $group_id, $level) = @_;
   my $dna_align_features;
 
-print "Parsing ", scalar(@$all_feature_pairs), " FeaurePairs...\n";
   my $these_feature_pairs = [];
-  my ($previous_t_end, $previous_q_seqname, $previous_q_start, $previous_q_end);
+  my ($previous_t_seqname, $previous_t_end, $previous_t_strand,
+      $previous_q_seqname, $previous_q_start, $previous_q_end,
+      $previous_q_strand);
   foreach my $this_feature_pair (@$all_feature_pairs) {
+    my $t_seqname = $this_feature_pair->seqname;
     my $t_start = $this_feature_pair->start;
     my $t_end = $this_feature_pair->end;
+    my $t_strand = $this_feature_pair->strand;
     my $q_seqname = $this_feature_pair->hseqname;
     my $q_start = $this_feature_pair->hstart;
     my $q_end = $this_feature_pair->hend;
     my $q_strand = $this_feature_pair->hstrand;
-print " FP: ($t_start-$t_end) <=> $q_seqname ($q_start-$q_end)[$q_strand]\n";
     
     unless (defined $previous_t_end && defined $previous_q_end) {
+      $previous_t_seqname = $t_seqname;
       $previous_t_end = $t_end;
+      $previous_t_strand = $t_strand;
       $previous_q_seqname = $q_seqname;
       $previous_q_start = $q_start;
       $previous_q_end = $q_end;
+      $previous_q_strand = $q_strand;
       push @$these_feature_pairs, $this_feature_pair;
       next;
     }
 
     if (
       # if target seqname changed (may happen because of the mapping)
+      ($t_seqname ne $previous_t_seqname) or
+
+      # if query seqname changed (may happen because of the mapping)
       ($q_seqname ne $previous_q_seqname) or
+
+      # if target strand changed
+      ($t_strand != $previous_t_strand) or
+
+      # if query strand changed
+      ($q_strand ne $previous_q_strand) or
 
       # if there are insertions in both sequences (non-equivalent regions)
       (($t_start - $previous_t_end > 1) && 
@@ -1174,10 +1196,13 @@ print " FP: ($t_start-$t_end) <=> $q_seqname ($q_start-$q_end)[$q_strand]\n";
       $this_dna_align_feature->level_id($level);
       push @$dna_align_features, $this_dna_align_feature;
     }
+    $previous_t_seqname = $t_seqname;
     $previous_t_end = $t_end;
+    $previous_t_strand = $t_strand;
     $previous_q_seqname = $q_seqname;
     $previous_q_start = $q_start;
     $previous_q_end = $q_end;
+    $previous_q_strand = $q_strand;
     push @$these_feature_pairs, $this_feature_pair;
   }
   if (@$these_feature_pairs) {
@@ -1342,8 +1367,14 @@ sub choose_matrix {
     print STDERR "Using customed scoring matrix from $matrix_file file\n";
 #     print STDERR "\n$matrix_string\n";
   
-  } elsif ( grep(/^$tTaxon_id$/, (9606, 9598, 9554)) &&
-      grep(/^$qTaxon_id$/, (9606, 9598, 9554)) ) {
+  } elsif ( grep(/^$tTaxon_id$/, (9606, 9554)) &&
+      grep(/^$qTaxon_id$/, (9606, 9554)) ) {
+    $matrix_hash = get_matrix_hash($human_macaca_matrix_string);
+    print STDERR "Using human-macaque scoring matrix\n";
+#     print STDERR "\n$human_macaca_matrix_string\n";
+  
+  } elsif ( grep(/^$tTaxon_id$/, (9606, 9598)) &&
+      grep(/^$qTaxon_id$/, (9606, 9598)) ) {
     $matrix_hash = get_matrix_hash($primates_matrix_string);
     print STDERR "Using primates scoring matrix\n";
 #     print STDERR "\n$primates_matrix_string\n";
