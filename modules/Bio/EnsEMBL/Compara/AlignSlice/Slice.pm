@@ -1156,7 +1156,10 @@ sub subseq {
                on it with gaps inside and regions with no matching
                sequence. The resulting cigar line corresponds to the mapping
                of all the nucleotides that can be mapepd. If several Slices map
-               on the same positions, the behaviour is undefined
+               on the same positions, the behaviour is undefined.
+               The cigar_line includes 3 types of regions: M for matches/mismatches,
+               D for alignment gaps (formerly known as deletions) and G for
+               gaps between alignment blocks.
   Returntype : txt
   Exceptions :
   Caller     : general
@@ -1171,7 +1174,7 @@ sub get_cigar_line {
   $strand ||= 1;
 
   my $length = ($end - $start + 1);
-  my $seq = "-" x $length;
+  my $seq = "." x $length;
   foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
     my $this_slice = $pair->{slice};
     my $mapper = $pair->{mapper};
@@ -1199,22 +1202,69 @@ sub get_cigar_line {
             $strand,
             'alignment'
         );
+    #####################
+    # $this_pos refers to the starting position of the subseq if requesting the forward strand
+    # or the ending position of the subseq if the reverse strand has been requested:
+    #
+    # FORWARD STRAND (1)
+    # $this_pos = 0
+    #      |
+    #      ---------------------------------------------------------------------->
+    #      <----------------------------------------------------------------------
+    #
+    # REVERSE STRAND (-1)
+    #      ---------------------------------------------------------------------->
+    #      <----------------------------------------------------------------------
+    #                                                                            |
+    #                                                                      $this_pos = 0
+    #
+    # All remaining coordinates work in the same way except the start and end position
+    # of the gaps which correspond to the coordinates in the original Slice...
+    #
     my $this_pos = 0;
     foreach my $sequence_coord (@sequence_coords) {
       ## $sequence_coord refer to genomic_align (a slice in the [+] strand)
 
       if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
-        substr($seq, $this_pos, $sequence_coord->length, "N" x $sequence_coord->length);
+        my $subseq = "N" x ($sequence_coord->length);
+        substr($seq, $this_pos, $sequence_coord->length, $subseq);
+
+      } else {  ## Gap or sequence outside of any alignment
+        ############
+        # Get the start and end positions of this gap in "subseq" coordinates
+        my $this_original_start = $sequence_coord->start - $start;
+        my $this_original_end = $sequence_coord->end - $start;
+        if ($strand == -1) {
+          my $aux = $this_original_end;
+          $this_original_end = $length - $this_original_start;
+          $this_original_start = $length - $aux;
+        }
+        if ($this_original_start <= $slice_end and $this_original_end >= $slice_start) {
+          ## This is a gap
+          my $start_position_of_gap_seq = $this_pos;
+          my $end_position_of_gap_seq = $this_pos + $sequence_coord->length;
+          if ($start_position_of_gap_seq < $slice_start) {
+            $start_position_of_gap_seq = $slice_start;
+          }
+          if ($end_position_of_gap_seq > $slice_end + 1) {
+            $end_position_of_gap_seq = $slice_end + 1;
+          }
+          my $length_of_gap_seq = $end_position_of_gap_seq - $start_position_of_gap_seq;
+          substr($seq, $start_position_of_gap_seq, $length_of_gap_seq, "-" x $length_of_gap_seq)
+              if ($length_of_gap_seq > 0);
+        }
       }
       $this_pos += $sequence_coord->length;
     }
   }
   my $cigar_line = "";
-  
-  my @pieces = split(/(\-+)/, $seq);
+
+  my @pieces = split(/(\-+|\.+)/, $seq);
   foreach my $piece (@pieces) {
     my $mode;
-    if ($piece =~ /\-/) {
+    if ($piece =~ /\./) {
+      $mode = "G"; # D for gaps (deletions)
+    } elsif ($piece =~ /\-/) {
       $mode = "D"; # D for gaps (deletions)
     } else {
       $mode = "M"; # M for matches/mismatches
