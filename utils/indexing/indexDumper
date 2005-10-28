@@ -9,15 +9,20 @@ BEGIN {
   use File::Basename qw( dirname );
   $ENSEMBL_ROOT = dirname( $Bin );
   $ENSEMBL_ROOT =~ s/\/utils$//;
+  unshift @INC, "$ENSEMBL_ROOT/conf";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use lib "$ENSEMBL_ROOT/modules";
-
+use EnsEMBL::Web::SpeciesDefs;
+use Data::Dumper;
 package indexDumper;
 
 use constant INC_SPECIES => 0;
 use CGI;
-use EnsEMBL::Web::IndexSupport;
+
+our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
 my ( $SPECIES_STRING, @indexes) = @ARGV;
 
@@ -25,19 +30,33 @@ my ( $SPECIES_STRING, @indexes) = @ARGV;
 @indexes = map { /dump(\w+)/?$1:() } keys %indexDumper:: if $indexes[0] eq 'ALL';
 
 ## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
-$SPECIES_STRING = join ':', keys %{EnsEMBL::Web::IndexSupport->new()->short_codes} if $SPECIES_STRING eq 'ALL';
+
+my @species;
+my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
+
+if( $SPECIES_STRING ) {
+  @species = map { $X{lc($_)} } split /:/, $SPECIES_STRING;
+} else {
+  @species = @{$SD->ENSEMBL_SPECIES}
+}
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
-my $conf;
+my $conf = {};
 mkdir 'input', 0777 unless -e 'input';
 
-foreach my $SPECIES ( split /:/,$SPECIES_STRING) {
-  $conf = EnsEMBL::Web::IndexSupport->new( "$ENSEMBL_ROOT/conf", "input", $SPECIES );
-  mkdir $conf->{'directory'}, 0777 unless -e $conf->{'directory'};
-  warn( "Species: $SPECIES - $conf->{'directory'}" );
-  foreach my $INDEX (@indexes) {
-    warn "  Index: $INDEX";
-    my $function = "dump$INDEX";
+foreach my $species ( @species ) {
+  $conf->{'directory'} = "input/$species";
+  mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
+  $conf->{'species'}   = $species;
+  my %dbs = %{$SD->get_config($species,'databases')||{}};
+  $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
+  my $core = $dbs{'ENSEMBL_DB'};
+  $conf->{'dbh'}       = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
+	$core->{'USER'}, $core->{'PASS'} );
+  warn join ' ', $species, Data::Dumper::Dumper $conf;
+  foreach my $index (@indexes) {
+    warn "  Index: $species $index";
+    my $function = "dump$index";
     no strict "refs";
     &$function( $conf );
   }
