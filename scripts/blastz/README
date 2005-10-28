@@ -46,20 +46,48 @@ ls *.gz | sed "s/\.txt.gz//" | while read i ; do echo "Loading $i..." ; gunzip $
 
 Load in compara
 
-cd ../load
+cd ..; mkdir load; cd ../load
 
-
-NB at the moment the "random" chromosomal bits are not used for some species -- check this and if nessary remove the grep in the command line
+NB: You need to have an ensembl_compara database with method_links, dnafrags and genome_dbs!!
 
 Run the script first with the --check_length option first to see if the chromosomes lengths match between ensembl and UCSC 
+/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
+ --ucsc_dbname ucscHs35Mm33 --dbname abelcompara26 --tSpecies human --qSpecies Mm5 \
+ --reg_conf /nfs/acari/abel/.Registry.conf --check_length
 
-  
-mysql -h ecs2 -P3366 -u ensro -N -e "show tables" abel_ucsc_chain_data_Hs35Mm33|grep -v random |awk -F "_chain" '/^chr/ {print $1}'|sort -u|while read i;do bsub -o $i.out /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl --ucsc_dbname ucscHs35Mm33 --dbname abelcompara26 --tSpecies human --tName $i --qSpecies Mm5 --method_link_type BLASTZ_NET --reg_conf /nfs/acari/abel/.Registry.conf ;done
+Then load the data: 
+mysql -h ecs2 -P3366 -u ensro -N -e "show tables" abel_ucsc_chain_data_Hs35Mm33 |\
+ grep -v gold |awk -F "_chain" '/^chr/ {print $1}'| sort -u |\
+ while read i; do bsub -o $i.out \
+   /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
+   --ucsc_dbname ucscHs35Mm33 \
+   --dbname abelcompara26 \
+   --tSpecies human \
+   --tName $i \
+   --qSpecies Mm5 \
+   --method_link_type BLASTZ_NET \
+   --reg_conf /nfs/acari/abel/.Registry.conf \
+ ;done
+
+Here is another example:
+mysql -h ia64f -u ensro -N -e "show tables" jh7_ucsc_chain_net_Hg17RheMac1 | \
+  grep -v gold | awk -F "_chain" '/^chr/ {print $1}'| sort -u | \
+  while read i; do bsub -o $i.out -J hg17-RheMac1-$i -q basement \
+    /nfs/acari/jh7/src/ensembl_main/ensembl-compara/scripts/blastz/LoadUcscNetData.pl \
+    --ucsc_dbname ucsc_compara \
+    --dbname ensembl_compara \
+    --tSpecies hg17 \
+    --tName $i \
+    --qSpecies RheMac1 \
+    --method_link_type BLASTZ_NET \
+    --reg_conf /ecs4/work1/jh7/data/BlastZ/Homo_sapiens_NCBI35.vs.Macaca_mulata_Mmul0.1/load/registry.conf \
+  ; done
 
 WARNING:
 
-The taxon_id is hard coded into the loading script so that it knows which matrix to use. THis needs to be added each time a new species is added. 
+1. The taxon_id is hard coded into the loading script so that it knows which matrix to use. This needs to be added each time a new species is added. 
 
+2. The method_link_species_set_id is automatically set if it does not exist before. You probably want to create one with a specific dbID!
 
  The only requirement here is that the registry alias name of the --qSpecies (in the example Mm5) has 
 to be the same as the name of the netMm5 table in the UCSC database.
