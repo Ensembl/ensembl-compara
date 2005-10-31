@@ -81,31 +81,25 @@ sub _init {
     my $das_confkey   = $self->{'extras'}->{'confkey'};
 
     my $colour        = $Config->get($das_confkey,'col') || 'black';
-    my ($fontwidth,
-	$fontheight)  = $Config->texthelper->px2bp($font);
-    use Data::Dumper;
+    my ($fontwidth,$fontheight)  = $Config->texthelper->px2bp($font);
+
     my $das_feat_ref = $self->{extras}->{features};
     ref( $das_feat_ref ) eq 'ARRAY' || ( warn("No feature array for ProteinDAS track") &&  return );
 
     my @features;
 
-    warn("SOURCE:".$self->{'extras'}->{'source_type'});
-
-#    warn ("PSE :$pstart : $pend : $bitmap_length :".int($prot_len * $pix_per_bp));
     foreach my $feat (@$das_feat_ref) {
 	next if ( ! $feat->end); # Draw only features that have location	
-
 	if ($self->{'extras'}->{'source_type'} ne 'ensembl_location') {
 	    push(@{$hash{$feat->das_feature_id}},$feat);
 	    next;
 	}
 
-	warn("F:".join('*', $feat->das_segment->start, $feat->das_segment->end));
 	my @coords;
 	foreach my $transcript (@{$gene->get_all_Transcripts()}) {
 	    @coords = grep { $_->isa('Bio::EnsEMBL::Mapper::Coordinate') } $transcript->genomic2pep($feat->das_segment->start, $feat->das_segment->end, $feat->strand);
 	}
-#	warn(Dumper(\@coords));
+
 	if (@coords) {
 	    my $c = $coords[0];
 	    my $end = ($c->end > $prot_len) ? $prot_len : $c->end; 
@@ -242,8 +236,6 @@ sub _init {
 	    $pfsave = $pf;
 	}
 
-#	warn("MX: $minx :$maxx");
-
 	my $rect = new Sanger::Graphics::Glyph::Rect({
 	    'x'         => $minx,
 	    'y'         => $y + 2,
@@ -270,25 +262,19 @@ sub _init {
 	    #$Composite->push($text);
 	}
 
-	#if ($Config->get('Pprotdas', 'dep') > 0){ # we bump
-#	warn("CP:".join('*', $pix_per_bp, $bitmap_length, $Composite->x, $Composite->width));
-            my $bump_start = floor($Composite->x() * $pix_per_bp);
-            $bump_start = 0 if ($bump_start < 0);
+	my $bump_start = floor($Composite->x() * $pix_per_bp);
+	$bump_start = 0 if ($bump_start < 0);
 	next if ($bump_start > $bitmap_length);
 
-            my $bump_end = $bump_start + floor($Composite->width()*$pix_per_bp);
-#	warn("BE :$bump_start : $bump_end");
-            if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-#	warn("BE2 :$bump_start : $bump_end");
-            my $row = Sanger::Graphics::Bump::bump_row(
+	my $bump_end = $bump_start + floor($Composite->width()*$pix_per_bp);
+	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
+	my $row = Sanger::Graphics::Bump::bump_row(
 				      $bump_start,
 				      $bump_end,
 				      $bitmap_length,
 				      \@bitmap
 				      );
-            $Composite->y($Composite->y() + $row * ($h + 2) );
-        #}
-	
+	$Composite->y($Composite->y() + $row * ($h + 2) );
 	$self->push($Composite);
     }
     if( ! scalar %hash ){ # Add a spacer glyph to force an empty track
