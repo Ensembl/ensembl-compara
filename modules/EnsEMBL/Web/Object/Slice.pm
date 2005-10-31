@@ -15,8 +15,8 @@ sub snp_display {
     my $slice = $self->Obj();
     eval {
       if( $self->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
-        $SNPS = $self->database('glovar');
-        return $slice->get_all_ExternalFeatures('GlovarSNP');
+        $self->database('glovar');
+        $SNPS = $slice->get_all_ExternalFeatures('GlovarSNP');
       } elsif( $self->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
         $SNPS = $slice->get_all_VariationFeatures;
       }
