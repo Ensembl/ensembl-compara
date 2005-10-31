@@ -204,9 +204,7 @@ sub createObjects {
     my %das_del    = map{$_,1} ($self->param( "_das_delete" ) || ());
     my %urldas_del = map{$_,1} ($self->param( "_urldas_delete" ) || ());
     my %das_edit   = map{$_,1} ($self->param( "_das_edit" ) || ());
-    
-    my %das_add    = $self->script ne 'dasconfview' ? map{$_,1} ($self->param( "add_das_source" ) || ()) : ();
-#    warn("SCRIPT:".join('*', $self->param('conf_script'), $ENV{ENSEMBL_SCRIPT}));
+    my %das_add    = map{$_,1} ($self->param( "add_das_source" ) || ());
 
     if( %das_add ) {
 	# Clean up any add_das parameters
@@ -234,7 +232,6 @@ sub createObjects {
 # /geneview?gene=BRCA2&add_das_source=(url=http://das1:9999/das+dsn=mouse_ko_allele+type=markersymbol+name=MySource+active=1)
 # other parameters also can be specified, but the those are optional .. 
 
-    warn("CHECK FOR ADD");
     foreach my $dconf (keys %das_add){
 	$dconf =~ s/[\(|\)]//g;
 	my @das_keys = split(/\s/, $dconf);
@@ -251,8 +248,8 @@ sub createObjects {
 		}
 	    }
 	}
-	warn("ADD DAS $das_name");
-	warn(Dumper(\%das_data));
+#	warn("ADD DAS $das_name");
+#	warn(Dumper(\%das_data));
 
 	if ( ! exists $das_data{url} || ! exists $das_data{dsn} || ! exists $das_data{type}) {
 	    warn("WARNING: DAS source $das_name has not been added: Missing parameters");
