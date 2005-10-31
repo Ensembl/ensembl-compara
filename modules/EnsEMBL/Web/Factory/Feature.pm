@@ -32,8 +32,9 @@ sub createObjects {
 
 sub create_AffyProbe {
     # get Affy hits plus corresponding genes
+
     my $affy = $_[0]->_generic_create( 'AffyProbe', 'fetch_all_by_probeset', $_[1] );
-    my $affy_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1] );
+    my $affy_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_error' );
     my $features = {'AffyProbe'=>$affy};
     $$features{'Gene'} = $affy_genes if $affy_genes;
     return $features;
@@ -105,7 +106,7 @@ sub create_Disease {
 }
 
 sub _generic_create {
-  my( $self, $object_type, $accessor, $db, $id ) = @_;
+  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
   $db ||= 'core';
                                                                                    
   $id ||= $self->param( 'id' );
@@ -135,7 +136,9 @@ sub _generic_create {
                                                                                    
     return $features if $features && @$features; # Return if we have at least one feature
     # We have no features so return an error....
-    $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
+    if( $flag ne 'no_error' ) {
+      $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
+    }
     return undef;
   }
 
