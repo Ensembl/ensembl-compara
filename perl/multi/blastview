@@ -826,7 +826,7 @@ sub get_status_panel{
                              VALUE => $CGI->param( 'stage' ),
                              SRC   => gen_button_src('refresh', 'on') },
 
-                           { HREF  => qq(javascript:void(window.open(\'/perl/helpview?se=1&kw=$VIEW_SCRIPT\',\'$VIEW_SCRIPT\',\'width=400,height="5"00,resizable,scrollbars\'));),
+                           { HREF  => qq(javascript:void(window.open(\'/perl/helpview?se=1&kw=$VIEW_SCRIPT\',\'$VIEW_SCRIPT\',\'width=750,height=550,resizable,scrollbars\'));),
                              SRC   => gen_button_src('help', 'on') }
                           );
 
