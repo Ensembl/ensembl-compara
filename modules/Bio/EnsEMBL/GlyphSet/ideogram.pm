@@ -142,9 +142,9 @@ sub _init {
 	    
 	    $gband = new Sanger::Graphics::Glyph::Rect({
 		'x'      => $vc_band_start-1,
-		'y'      => 5,
+		'y'      => ($h+2)/4 + 2,
 		'width'  => $vc_band_end - $vc_band_start + 1,
-		'height' => 4,
+		'height' => ($h+2)/2 - 1,
 		'colour' => $COL{$stain},
 		'absolutey' => 1,
 		});

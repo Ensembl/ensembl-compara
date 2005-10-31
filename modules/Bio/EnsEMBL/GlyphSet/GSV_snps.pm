@@ -31,7 +31,6 @@ sub _init {
     
   my @transcripts   = $Config->{'transcripts'};
   my $y             = 0;
-  my $h             = 8;   #Single transcript mode - set height to 30 - width to 8!
     
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
@@ -45,6 +44,9 @@ sub _init {
     
   my $voffset = 0;
   my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
+  
+  my $h             = $font_h_bp + 4;   #Single transcript mode - set height to 30 - width to 8!
+
   my $trans_ref = $Config->{'transcript'};
   my $strand = $trans_ref->{'exons'}[0][2]->strand;
   my $transcript = $trans_ref->{'transcript'};
