@@ -53,6 +53,9 @@ sub createObjects {
     $fetch_call = 'fetch_by_Peptide_id';
   } elsif( $identifier = $self->param( 'transcript' ) ){ 
     $fetch_call = 'fetch_by_transcript_stable_id';
+  } elsif( $identifier = $self->param( 'exon' ) ){ 
+    $fetch_call = 'fetch_by_exon_stable_id';
+warn "FETCH BY EXON";
   } elsif( $identifier = $self->param( 'gene' ) || $self->param( 'anchor1' ) ){
     $KEY = 'anchor1' unless $self->param('gene');
     $fetch_call = 'fetch_by_stable_id';
