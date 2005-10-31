@@ -41,10 +41,10 @@ sub _init {
     my $BOX_HEIGHT    = 4;
     my $BOX_WIDTH     = 20;
     my $NO_OF_COLUMNS = 3;
-    my $FONTNAME      = "Tiny";
 
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
+    my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
     my $im_width      = $Config->image_width();
     my $type          = $Config->get('gene_legend', 'src');
 

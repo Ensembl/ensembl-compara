@@ -190,7 +190,7 @@ sub expanded_init {
     if( $strand < 0 ) {
       $y_pos = ($dep+1) * int( 1.5 * $h ) + 2;
     } else {
-      $y_pos  = 2 + $self->{'config'}->texthelper()->height('Tiny');
+      $y_pos  = 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
     }
     $self->errorTrack( "$n_bumped ".$self->my_label." omitted", undef, $y_pos );
   }

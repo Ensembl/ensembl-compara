@@ -64,7 +64,7 @@ sub _init {
     my $contig_strand  = $Container->can('strand') ? $Container->strand : 1;
     my $h              = 0;
     my $highlights     = $self->highlights();
-    my $fontname       = "Tiny";
+    my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
     my $fontwidth_bp   = $Config->texthelper->width($fontname),
     my ($fontwidth, $fontheight)       = $Config->texthelper->px2bp($fontname),
     my $black          = 'black';

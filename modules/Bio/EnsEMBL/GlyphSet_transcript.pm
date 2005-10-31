@@ -87,7 +87,7 @@ sub compact_init {
   my @bitmap        = undef;
   my $colours       = $self->colours();
 
-  my $fontname      = "Tiny";
+  my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
   my $_h            = $Config->texthelper->height($fontname);
@@ -306,7 +306,7 @@ sub expanded_init {
   my @bitmap        = undef;
   my $colours       = $self->colours();
 
-  my $fontname      = "Tiny";    
+  my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -656,7 +656,7 @@ sub as_expanded_init {
     my @bitmap        = undef;
     my $colours       = $self->colours();
 
-    my $fontname      = "Tiny";    
+    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -935,7 +935,7 @@ sub as_compact_init {
     my @bitmap        = undef;
     my $colours       = $self->colours();
 
-    my $fontname      = "Tiny";
+    my $fontname      =  $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; 
     my $pix_per_bp    = $Config->transform->{'scalex'};
     my $_w            = $Config->texthelper->width($fontname) / $pix_per_bp;
     my $_h            = $Config->texthelper->height($fontname);

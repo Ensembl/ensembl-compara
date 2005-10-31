@@ -36,7 +36,7 @@ sub _init {
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  my $fontname      = "Tiny";    
+  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 

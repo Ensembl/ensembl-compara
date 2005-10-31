@@ -47,7 +47,7 @@ sub _init {
   my $highlights     = $self->highlights();
   my $im_width       = $Config->image_width();
   my $feature_colour = $Config->get('ruler','col');
-  my $fontname       = "Tiny";
+  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my $fontheight     = $Config->texthelper->height($fontname),
   my $fontwidth      = $Config->texthelper->width($fontname),
 

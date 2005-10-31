@@ -28,7 +28,7 @@ sub zmenu {
   return { 
     'caption' => "BAC end ".$id,
 #   'Clone report' => $self->href( $truncated_id ),
-    'Trace' => $self->ID_URL( 'TRACEVIEW', $id )
+    'Trace' => $self->ID_URL( 'TRACE', "$id*" )
   };
 }
 1;

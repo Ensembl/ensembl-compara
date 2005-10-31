@@ -75,7 +75,7 @@ sub _init {
 
   my $F = 0;
 
-  my $fontname       = "Tiny";
+  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'}; # "Small";
   my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
   my $database = $Config->get($type,'database');
 
@@ -90,7 +90,6 @@ sub _init {
     my $gene_label = $self->gene_label( $g );
     my $GT         = $self->gene_col( $g );
        $GT =~ s/XREF//g;
-    #warn "$gene_label -> $GT";
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
     my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };

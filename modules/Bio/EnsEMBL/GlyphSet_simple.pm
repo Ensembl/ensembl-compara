@@ -102,13 +102,13 @@ sub _init {
   $self->{'part_to_colour'} = '';
 
   my $dep               = $Config->get($type, 'dep');
-  my $h    = $Config->get($type,'height') || 9;
+
+  my $flag           = 1;
+  my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
+  my $h    = $Config->get($type,'height') || $th+4;
   if( $dep>0 && $Config->get( '_settings', 'squishable_features' ) eq 'yes' && $self->can('squish') )  {
     $h = 4;
   }
-
-  my $flag           = 1;
-  my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
   
   my $previous_start = $vc_length + 1e9;
   my $previous_end   = -1e9 ;
@@ -367,7 +367,7 @@ sub _init {
                     'y'          => 1,
                     'width'      => $w,
                     'height'     => $th,
-                    'font'       => 'Tiny',
+                    'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
                     'colour'     => $tag->{'label_colour'},
                     'text'       => $tag->{'letter'},
                     'absolutey'  => 1,
@@ -569,7 +569,7 @@ sub _init {
 		'z' => 5,
 		'width'      => $bp_textwidth,
 		'height'     => $th,
-		'font'       => 'Tiny',
+		'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
 		'colour'     => $label_colour,
 		'text'       => $label,
 		'absolutey'  => 1,
@@ -586,7 +586,7 @@ sub _init {
 		    'y'          => 1,
 		    'width'      => $bp_textwidth,
 		    'height'     => $th,
-		    'font'       => 'Tiny',
+		    'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
 		    'colour'     => $label_colour,
 		    'text'       => $label,
 		    'absolutey'  => 1,
@@ -601,7 +601,7 @@ sub _init {
 		    'y'          => 1,
 		    'width'      => $bp_textwidth,
 		    'height'     => $th,
-		    'font'       => 'Tiny',
+		    'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
 		    'colour'     => $label_colour,
 		    'text'       => $label,
 		    'absolutey'  => 1,
@@ -615,7 +615,7 @@ sub _init {
 		'y'          => $strand < 0 ? $h+2 : 2+$h,
 		'width'      => $bp_textwidth,
 		'height'     => $th,
-		'font'       => 'Tiny',
+		'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
 		'colour'     => $label_colour,
 		'text'       => $label,
 		'absolutey'  => 1,

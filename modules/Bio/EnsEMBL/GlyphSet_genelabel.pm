@@ -36,7 +36,7 @@ sub _init {
   my $Config         = $self->{'config'};
 #  my $parent_track   = $Config->get($type,'parent') || $type;
   my $pix_per_bp     = $Config->transform->{'scalex'};
-  my $fontname       = "Tiny";
+  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my ($font_w_bp,$h) = $Config->texthelper->px2bp($fontname);
   my $w              = $Config->texthelper->width($fontname);
      $h              = $Config->texthelper->height($fontname);

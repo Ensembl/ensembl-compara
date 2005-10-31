@@ -46,7 +46,7 @@ sub _init {
   my @bitmap; 
   my $pix_per_bp = $config->transform->{'scalex'};
   my $bitmap_length = int ($length * $pix_per_bp );
-  my ($w,$th) = $config->texthelper()->px2bp('Tiny');
+  my ($w,$th) = $config->texthelper()->px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
 
 ## CREATE THE emboss in file...
   open O, ">$filename.in";
@@ -147,7 +147,7 @@ sub _init {
             'y'      => 1,
             'width'    => $w,
             'height'   => $th,
-            'font'     => 'Tiny',
+            'font'     => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
             'colour'   => $text_colour,
             'text'     => $_,
             'absolutey'  => 1,

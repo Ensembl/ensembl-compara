@@ -28,7 +28,7 @@ sub _init {
     
   my %exons = ();
   
-  my ($w,$th) = $Config->texthelper()->px2bp('Tiny');
+  my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
   my @snps = @{$Config->{'snps'}};
   my $tag = $Config->get( 'snp_fake', 'tag' );
   my $tag2 = $tag + ($strand == -1 ? 1 : 0);
@@ -49,7 +49,7 @@ sub _init {
                 'y'          => ($h-$th)/2,
                 'width'      => $bp_textwidth,
                 'height'     => $th,
-                'font'       => 'Tiny',
+                'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
                 'colour'     => 'black',
                 'text'       => $label,
                 'absolutey'  => 1,
@@ -62,7 +62,7 @@ sub _init {
                 'y'          => ($h-2*$th-2)/2,
                 'width'      => $w,
                 'height'     => $th,
-                'font'       => 'Tiny',
+                'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
                 'colour'     => 'black',
                 'text'       => $X,
                 'absolutey'  => 1,
@@ -73,7 +73,7 @@ sub _init {
                 'y'          => ($h+2)/2,
                 'width'      => $w,
                 'height'     => $th,
-                'font'       => 'Tiny',
+                'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
                 'colour'     => 'black',
                 'text'       => $Y,
                 'absolutey'  => 1,

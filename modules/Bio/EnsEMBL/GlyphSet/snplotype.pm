@@ -374,7 +374,7 @@ sub draw_labelled_snp_block {
         my $tglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => $x+7,
             'y'          => $y+4,
-            'font'       => 'Tiny',
+            'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
             'colour'     => $fg,
             'text'       => uc($label),
             'absolutex'  => 1,'absolutewidth'=>1,

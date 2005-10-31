@@ -25,7 +25,7 @@ sub _init {
     my $BOX_HEIGHT    = 4;
     my $BOX_WIDTH     = 20;
     my $NO_OF_COLUMNS = 5;
-    my $FONTNAME      = "Tiny";
+    my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
 
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
