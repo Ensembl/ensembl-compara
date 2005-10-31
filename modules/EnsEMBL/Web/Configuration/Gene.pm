@@ -297,11 +297,6 @@ sub context_menu {
     'text'  => "Genomic sequence",
     'title' => 'GeneSeqView - View marked up sequence of gene '.$obj->stable_id,
     'href'  => "/$species/geneseqview?$q_string" );
-  $self->add_entry( $flag,
-    'code'  => 'exp_data',
-    'text'  => "Export data",
-    'title' => "ExportView - Export information about gene ".$obj->stable_id,
-    'href'  => "/$species/exportview?type1=gene;anchor1=@{[$obj->stable_id]}" );
   my @transcripts = 
       map { {
         'href'  => sprintf( '/%s/transview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
@@ -342,13 +337,19 @@ sub context_menu {
     if( @peptides ) {
       $self->add_entry( $flag,
         'code'  => 'pep_info', 
-        'text'  => "Peptide information",
+        'text'  => "Protein information",
         'href'  => $peptides[0]{'href'},
         'title' => 'ProtView - Detailed peptide information',
         'options' => \@peptides
       );
     }
   }
+  $self->add_entry( $flag,
+    'code'  => 'exp_data',
+    'text'  => "Export data",
+    'title' => "ExportView - Export information about gene ".$obj->stable_id,
+    'href'  => "/$species/exportview?type1=gene;anchor1=@{[$obj->stable_id]}"
+  );
 }
 
 1;

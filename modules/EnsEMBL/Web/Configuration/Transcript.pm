@@ -109,15 +109,22 @@ sub context_menu {
   $self->add_block( $flag, 'bulleted', $obj->stable_id );
   if( $obj->get_db eq 'vega' ) {
     $self->add_entry( $flag,
+      'code' => 'vega_link',
       'text'  => "Jump to Vega",
       'icon'  => '/img/vegaicon.gif',
       'title' => 'Vega - Information about transcript '.$obj->stable_id.' in Vega',
       'href' => "http://vega.sanger.ac.uk/$species/transview?transcript=".$obj->stable_id );
   }
-  $self->add_entry( $flag, 'text' => "Gene info.",
-                                  'href' => "/$species/geneview?$q_string_g" ) if $q_string_g;
-  $self->add_entry( $flag, 'text' => "Gene splice site image",
-                                  'href' => "/$species/genespliceview?$q_string_g" ) if $q_string_g;
+  $self->add_entry( $flag,
+    'code' => 'gene_info',
+    'text' => "Gene information",
+    'href' => "/$species/geneview?$q_string_g"
+  ) if $q_string_g;
+  $self->add_entry( $flag,
+    'code' => 'gene_splice_info',
+    'text' => "Gene splice site image",
+    'href' => "/$species/genespliceview?$q_string_g"
+  ) if $q_string_g;
 
   $self->add_entry( $flag,
     'code'  => 'gene_reg_info',
@@ -127,20 +134,36 @@ sub context_menu {
   ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'});
 
   $self->add_entry( $flag,
+    'coed' => 'gene_var_info',
     'text' => "Gene variation info.",
     'href' => "/$species/genesnpview?$q_string_g"
   ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
 
-  $self->add_entry( $flag, 'text' => "Genomic sequence",
-                                  'href' => "/$species/geneseqview?$q_string_g" ) if $q_string_g;
-  $self->add_entry( $flag, 'text' => "Exon info.",
-                                  'href' => "/$species/exonview?$q_string" );
-  $self->add_entry( $flag, 'text' => "Transcript info.",
-                                  'href' => "/$species/transview?$q_string" );
-  $self->add_entry( $flag, 'text' => "Export data",
-                                  'href' => "/$species/exportview?type1=transcript;anchor1=@{[$obj->stable_id]}" );
-  $self->add_entry( $flag, 'text' => 'Peptide info.',
-                                  'href' => "/$species/protview?$q_string" ) if $obj->translation_object;
+  $self->add_entry( $flag,
+    'code' => 'genomic_seq',
+    'text' => "Genomic sequence",
+    'href' => "/$species/geneseqview?$q_string_g"
+  ) if $q_string_g;
+  $self->add_entry( $flag,
+    'code' => 'trans_info',
+    'text' => "Transcript information",
+    'href' => "/$species/transview?$q_string"
+  );
+  $self->add_entry( $flag,
+    'code' => 'exon_info',
+    'text' => "Exon information",
+    'href' => "/$species/exonview?$q_string"
+  );
+  $self->add_entry( $flag,
+    'code' => 'pep_info',
+    'text' => 'Protein information',
+    'href' => "/$species/protview?$q_string"
+  ) if $obj->translation_object;
+  $self->add_entry( $flag,
+    'code' => 'exp_data',
+    'text' => "Export data",
+    'href' => "/$species/exportview?type1=transcript;anchor1=@{[$obj->stable_id]}"
+  );
 }
 
 1;
