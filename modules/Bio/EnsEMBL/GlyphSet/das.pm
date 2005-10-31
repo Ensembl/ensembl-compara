@@ -19,6 +19,7 @@ sub init_label {
 
     my $params;
     foreach my $param (CGI::param()) {
+	next if ($param eq 'add_das_source');
 	if (defined(my $v = CGI::param($param))) {
 	    if (ref($v) eq 'ARRAY') {
 		foreach my $w (@$v) {
@@ -221,11 +222,17 @@ sub RENDER_grouped {
 
     # build a hash of features, keyed by id if ungrouped, or G:group_id if
     # grouped
-    my $fid = $f->das_id;
-    next unless $fid;
-    $fid  = "G:".$f->das_group_id if $f->das_group_id;
-#    delete($f->{das_link});
-    push @{$grouped{$fid}}, $f;
+
+    if ($f->das_groups) {
+	foreach my $group ($f->das_groups) {
+	    my $key  = $group->{'group_label'} || $group->{'group_id'};
+	    push @{$grouped{$key}}, $f;
+	}
+    } else {
+	my $key = $f->das_id;
+	next unless $key;
+	push @{$grouped{$key}}, $f;
+    }
 
     $empty_flag &&= 0; # We have at least one feature
   } # end group hashing
@@ -239,7 +246,174 @@ sub RENDER_grouped {
   # Flag to indicate if not all features got displayed due to bumping
   my $more_features = 0;
   # Loop over groups
-  foreach my $group (values %grouped) {
+  my $idg = 0;
+  foreach my $group (keys %grouped) {
+      my @feature_group = sort { $a->das_start <=> $b->das_start } @{$grouped{$group}};
+
+## Get start and end of group
+      my $start = $feature_group[0]->das_start;
+      my $end   = $feature_group[-1]->das_end;
+
+## constrain to image window
+      my $START = $start < 1 ? 1 : $start;
+      my $END   = $end > $configuration->{'length'} ? $configuration->{'length'} : $end;
+
+## Compute the length of the label...
+      my $label = $group;
+
+## append number of features in group
+
+      my $num_in_group = scalar @feature_group;
+      if ($num_in_group > 1){
+	  $label .= "[$num_in_group]";
+      }
+    
+      my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
+      my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
+
+      if( $row < 0 ) { ## SKIP IF BUMPED...
+	  $more_features = 1;
+	  next;
+      }
+
+      my $f = $feature_group[0];
+# Very dirty hack to handle Next/Previous links between features when they are grouped
+# If there is Next or Previous label amongst the feature links, 
+# then get Previous link of the first feature in the group and Next link of the last feature in the group
+
+# 
+#      my @next_links = grep { $_->{'txt'} =~ /Next/ } map {$_->das_links} @feature_group;
+#      my @previous_links = grep { $_->{'txt'} =~ /Previous/ } map {$_->das_links} @feature_group;
+#      if (@previous_links) {
+#	  push @{$f->{navigation_links}} , $previous_links[0];
+#      }
+#      if (@next_links) {
+#	  push @{$f->{navigation_links}} , $next_links[0];
+#      }
+
+
+      my $groupsize = scalar @feature_group;
+      $f->{grouped_by} = $group;
+      my( $href, $zmenu ) = $self->gmenu( $f, $groupsize );
+
+
+      my $Composite = new Sanger::Graphics::Glyph::Composite({
+	  'y'            => 0,
+	  'x'            => $START-1,
+	  'absolutey'    => 1,
+	  'zmenu'        => $zmenu,
+      });
+      $Composite->push( new Sanger::Graphics::Glyph::Space({
+	  'x'         => $START-1,
+	  'y'         => 0,
+	  'width'     => $END-$START+1,
+	  'height'    => $configuration->{'h'},
+	  'absolutey' => 1
+	  }) );
+
+      $Composite->{'href'} = $href if $href;
+
+      # fetch group style
+
+      my $groupstyle = $self->get_groupstyle ($f, $configuration);
+      my $group_height = $groupstyle->{'attrs'}{'height'};
+      my $colour = $groupstyle->{'attrs'}{'colour'};
+      my $row_height = $configuration->{'h'};
+
+      # store a couple of style attributes that we might change.  We'll want to
+      # change these back later (remember styles are references to the original
+      # style data - change them, and they change for all features that use that
+      # style). 
+      my $orig_groupstyle_glyph = $groupstyle->{'glyph'};
+      my $orig_groupstyle_line = $groupstyle->{'attrs'}{'style'};
+      
+      # Draw label
+      my $label_height =$self->feature_label( $Composite, 
+					      $label, 
+					      $colour, 
+					      $row_height,
+					      $row_height,
+					      $START, 
+					      $END 
+					      );
+
+      my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
+
+      if( $f->das_type_id =~ /(summary)/i) { 
+## Special case for viewing summary non-positional features (i.e. gene
+## DAS features on contigview) Just display a gene-wide line with a link
+## to geneview where all annotations can be viewed
+	  my $style = $self->get_featurestyle($f, $configuration);
+	  my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+
+	  # override glyph to draw this as a span
+	  my $oldglyph = $style->{'glyph'};
+	  $style->{'glyph'} = 'span';
+	  
+	  # Change zmenu to summary menu
+	  my $smenu = $self->smenu($f);
+	  $Composite->{zmenu} = $smenu;
+
+	  my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+#	$self->push($symbol->draw);
+	  $Composite->push($symbol->draw);
+
+	  # put the style back to how it was
+	  $style->{'glyph'} = $oldglyph;
+	  $self->push($Composite);
+	  next;
+      } else {
+	  if ( (grep { $_ =~ /(CDS|translation|transcript|exon)/i} map {$_->{group_type}} $f->das_groups) || $f->das_type_id =~ /(CDS|translation|transcript|exon)/i ) { 
+	      # Special case for displaying transcripts in a transcript style
+	      # without having group stylesheets, or provide intron features
+	      $groupstyle->{'glyph'} = 'line';
+	      $groupstyle->{'attrs'}{'style'} = 'intron';
+	
+	  }
+      } 
+      ## GENERAL GROUPED FEATURE!
+      # first feature of group
+      my $style = $self->get_featurestyle($f, $configuration);
+      my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
+      my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+      $self->push($symbol->draw);
+
+      my $from = $symbol->feature->{'end'};
+
+      # For each feature in the group, draw
+      # - the grouping line between the previous feature and this one
+      # - the feature itself
+      foreach my $fg (@feature_group) {
+	  my $style = $self->get_featurestyle($fg, $configuration);
+	  my $fdata = $self->get_featuredata($fg, $configuration, $y_offset);
+	  my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
+	  my $to = $symbol->feature->{'start'};
+	  my $fdid = $fg->das_feature_id;
+
+	  if ((($to - $from) * $self->{pix_per_bp}) > 1){ # i.e. if the gap is > 1pix
+	      my $groupsymbol = $self->get_groupsymbol($groupstyle, $from, $to, $configuration, $y_offset);
+	      $self->push($groupsymbol->draw);
+	  }
+	    
+	  # update 'from' for next time around
+	  $from = $symbol->feature->{'end'};
+
+      }
+
+      # Offset y coords by which row we're on
+      $Composite->y($Composite->y() + $y_offset);
+ 
+      $self->push($Composite);
+
+      # put back original properties of the style, so it can be re-used:
+      $groupstyle->{'glyph'} = $orig_groupstyle_glyph;
+      $groupstyle->{'attrs'}{'style'} = $orig_groupstyle_line ;
+      $idg ++;
+  }
+
+  my %grouped2;
+
+  foreach my $group (values %grouped2) {
     my $f = $group->[0];
 
     # Sort features in a group
@@ -271,33 +445,6 @@ sub RENDER_grouped {
     if( $row < 0 ) { ## SKIP IF BUMPED...
 	$more_features = 1;
 	next;
-    }
-
-# Very dirty hack to handle Next/Previous links between features when they are grouped
-# If there is Next or Previous label amongst the feature links, 
-# then get Previous link of the first feature in the group and Next link of the last feature in the group
-    if ( defined($f->{das_link_label}) && "@{$f->{das_link_label}}" =~ /Next|Previous/) {
-	my $fgroup = $feature_group[0];
-	my $lgroup = $feature_group[-1];
-	my @links = $fgroup->das_links;
-	my (%FLinks, %LLinks);
-	foreach ($fgroup->das_link_labels) {
-	    $FLinks{$_} = shift(@links);
-	}
-	@links = $lgroup->das_links;
-	foreach ($lgroup->das_link_labels) {
-	    $LLinks{$_} = shift(@links);
-	}
-	delete($f->{das_link_label});
-	delete($f->{das_link});
-	if (my $plink = $FLinks{Previous}) {
-	    push @{$f->{das_link_label}}, 'Previous';
-	    push @{$f->{das_link}}, $plink;
-	}
-	if (my $nlink = $LLinks{Next}) {
-	    push @{$f->{das_link_label}}, 'Next';
-	    push @{$f->{das_link}}, $nlink;
-	}
     }
 
     my $groupsize = scalar @feature_group;
@@ -551,35 +698,59 @@ sub bump{
 # Zmenu for Grouped features
 sub gmenu{
   my( $self, $f, $groupsize ) = @_;
- 
+
   my $zmenu = {
-    'caption'         => $self->{'extras'}->{'label'},
   };
 
-  my $id = $f->das_group_label() || $f->das_group_id() || $f->das_feature_label() || $f->das_id();
-  $zmenu->{"01:GROUP: ". $id } = '';
-  $zmenu->{"05:LABEL: ". $f->das_group_label} = '' if $f->das_group_label && uc($f->das_group_label()) ne 'NULL';
-  $zmenu->{"06: &nbsp;&nbsp;$groupsize features in group"} = '' if $groupsize > 1;
-  $zmenu->{"07:TYPE: ". $f->das_group_type() } = '' if $f->das_group_type() && uc($f->das_group_type()) ne 'NULL';
-  $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
-#  $zmenu->{"08:DAS LINK: ".$f->das_link_label()     } = $f->das_link() if $f->das_link() && uc($f->das_link()) ne 'NULL';
+  my $id;
+  my $ids = 10;
 
+  foreach my $group ($f->das_groups) {
+      my $txt = $group->{'group_label'} || $group->{'group_id'};
 
-  # Fix to handle features with multiple links.
-  my $ids = 8;
-  my @dlabels = $f->das_link_labels();
-  foreach my $dlink ($f->das_links()) {
-      my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, shift @dlabels);
-      $zmenu->{$dlabel} = $dlink if (ref($dlink) ne 'ARRAY' && uc($dlink) ne 'NULL');
+      next if ($txt !~ $f->{'grouped_by'});
+      $id = $txt if (! $id);
+      my $dlabel = sprintf("%02d:GROUP : %s", $ids++, $txt);
+      $zmenu->{$dlabel} = '';
+
+      if ($groupsize) {
+	  $dlabel = sprintf("%02d:&nbsp;&nbsp;%d features in group", $ids++, $groupsize);
+	  $zmenu->{$dlabel} = '';
+      }
+
+      if ($group->{'group_id'}) {
+	  $dlabel = sprintf("%02d:&nbsp;&nbsp;ID : %s", $ids++, $group->{'group_id'});
+	  $zmenu->{$dlabel} = '';
+      }
+      if ($group->{'group_type'}) {
+	  $dlabel = sprintf("%02d:&nbsp;&nbsp;TYPE : %s", $ids++, $group->{'group_id'});
+	  $zmenu->{$dlabel} = '';
+      }
+
+      foreach my $dlink (@{$group->{'link'}}, @{$f->{navigation_links}} ) {
+	  my $txt = $dlink->{'txt'} || $dlink->{'href'};
+	  my $dlabel = sprintf("%02d:&nbsp;&nbsp;DAS LINK: %s", $ids++, $txt);
+	  $zmenu->{$dlabel} = $dlink->{'href'};
+      }
+      
+      $zmenu->{"$ids:&nbsp;&nbsp;NOTES:  ". join('<br />', @{$group->{'note'}}) } = '' if ($group->{'note'});
+      $ids ++;
   }
-  $zmenu->{"20:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
+
+  if ($id) {
+      $zmenu->{'caption'} = $id;
+  } else {
+      $zmenu->{'caption'} = $f->das_feature_label || $f->das_feature_id;
+      $zmenu->{"20: No group info"} = '';
+  }
+
 
   my $href;
   if($self->{'extras'}->{'linkURL'}){
-      $href = $zmenu->{"30:".$self->{'link_text'}} = $self->{'config'}{'exturl'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+      $href = $zmenu->{"80:".$self->{'link_text'}} = $self->{'config'}{'exturl'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
   } elsif (my $url = $self->{'extras'}->{'linkurl'}){
       $url =~ s/###(\w+)###/CGI->escape( $id )/ge;
-      $href = $zmenu->{"30:".$self->{'link_text'}} = $url;
+      $href = $zmenu->{"80:".$self->{'link_text'}} = $url;
   } 
  
   return( $href, $zmenu );
@@ -588,53 +759,61 @@ sub gmenu{
 
 sub zmenu {
   my( $self, $f ) = @_;
-  my $id = $f->das_feature_label() || $f->das_group_label() || $f->das_group_id() || $f->das_id();
+  my $id = $f->das_feature_id || $f->das_feature_label;
   my $zmenu = {
-    'caption'         => $self->{'extras'}->{'label'},
+    'caption'         => $f->das_feature_label || $f->das_feature_id,
   };
 
-  # Leave 02 to hold the number of features in the group
-  $zmenu->{"03:TYPE: ". $f->das_type_id()           } = '' if $f->das_type_id() && uc($f->das_type_id()) ne 'NULL';
-  $zmenu->{"04:SCORE: ". $f->das_score()            } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
-  $zmenu->{"05:GROUP: ". $f->das_group_id()         } = '' if $f->das_group_id() && uc($f->das_group_id()) ne 'NULL' && $f->das_group_id ne $id;
-  $zmenu->{"06:METHOD: ". $f->das_method_id()       } = '' if $f->das_method_id() && uc($f->das_method_id()) ne 'NULL';
-  $zmenu->{"07:CATEGORY: ". $f->das_type_category() } = '' if $f->das_type_category() && uc($f->das_type_category()) ne 'NULL';
+  # Leave 10 to hold the number of features in the group
+  my $type = $f->das_type || $f->das_type_id;
+  $zmenu->{"20:TYPE: ". $type           } = '' if $type && uc($type) ne 'NULL';
+  my $method = $f->das_method || $f->das_method_id;
+  $zmenu->{"25:METHOD: ". $method       } = '' if $method && uc($method) ne 'NULL';
+  $zmenu->{"30:SCORE: ". $f->das_score  } = '' if $f->das_score() && uc($f->das_score()) ne 'NULL';
+  $zmenu->{"35:CATEGORY: ". $f->das_type_category } = '' if $f->das_type_category && uc($f->das_type_category) ne 'NULL';
 
-  my $ids = 8;
+  my $ids = 40;
+  foreach my $group ($f->das_groups) {
+      my $txt = $group->{'group_label'} || $group->{'group_id'};
+      my $dlabel = sprintf("%02d:GROUP : %s", $ids++, $txt);
+      $zmenu->{$dlabel} = '';
+  }
+  
+  $ids = 50;
   if ($f->das_start && $f->das_end) {
       my $strand = $f->das_strand ? 'Forward' : 'Reverse';
-      $zmenu->{"08:FEATURE LOCATION:"} = '';
-      $zmenu->{"09:   - Start: ".$f->das_segment->start} = '';
-      $zmenu->{"10:   - End: ".$f->das_segment->end} = '';
-      $zmenu->{"11:   - Strand: $strand"} = '';
-      $ids = 12;
+      $zmenu->{"50:FEATURE LOCATION:"} = '';
+      $zmenu->{"51:   - Start: ".$f->das_segment->start} = '';
+      $zmenu->{"52:   - End: ".$f->das_segment->end} = '';
+      $zmenu->{"53:   - Strand: $strand"} = '';
+      $ids = 54;
   }
 
-
-  my @dlabels = $f->das_link_labels();
   foreach my $dlink ($f->das_links) {
-      my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, shift @dlabels);
-      $zmenu->{$dlabel} = $dlink if (ref($dlink) ne 'ARRAY' && uc($dlink) ne 'NULL');
+      my $txt = $dlink->{'txt'} || $dlink->{'href'};
+      my $dlabel = sprintf("%02d:DAS LINK: %s", $ids++, $txt);
+      $zmenu->{$dlabel} = $dlink->{'href'};
   }
-  $zmenu->{"20:".$f->das_note()     } = '' if $f->das_note() && uc($f->das_note()) ne 'NULL';
+
+  $zmenu->{"70:NOTES:  ".$f->das_note()     } = '' if $f->das_note();
 
   my $href = undef;
+
   if($self->{'extras'}->{'fasta'}) {
     foreach my $string ( @{$self->{'extras'}->{'fasta'}}) {
     my ($type, $db ) = split /_/, $string, 2;
-      $zmenu->{ "25:$type sequence" } = $self->{'config'}{'exturl'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
+      $zmenu->{ "80:$type sequence" } = $self->{'config'}{'exturl'}->get_url( 'FASTAVIEW', { 'FASTADB' => $string, 'ID' => $id } );
       $href = $zmenu->{ "20:$type sequence" } unless defined($href);
     }
   }
 
-  $href = $f->das_link() if $f->das_link() && !$href;
   if($id && uc($id) ne 'NULL') {
     $zmenu->{"01:ID: $id"} = '';
     if($self->{'extras'}->{'linkURL'}){
-      $href = $zmenu->{"22:".$self->{'link_text'}} = $self->{'config'}{'exturl'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
+      $href = $zmenu->{"85:".$self->{'link_text'}} = $self->{'config'}{'exturl'}->get_url( $self->{'extras'}->{'linkURL'}, $id );
     } elsif(my $url = $self->{'extras'}->{'linkurl'}){
 	$url =~ s/###(\w+)###/CGI->escape( $id )/ge;
-	$href = $zmenu->{"22:".$self->{'link_text'}} = $url;
+	$href = $zmenu->{"85:".$self->{'link_text'}} = $url;
     } 
   } 
   return( $href, $zmenu );
@@ -720,7 +899,7 @@ sub _init {
     'colour'   => $Config->get($das_config_key, 'col') || $Extra->{'col'} || 'contigblue1',
     'depth'    => $Config->get($das_config_key, 'dep') || $Extra->{'depth'} || 4,
     'use_style'=> uc( $Config->get($das_config_key, 'stylesheet') || $Extra->{'stylesheet'} ) eq 'Y',
-    'labelling'=> $Extra->{'labelflag'} =~ /^[ou]$/i ? 1 : 0,
+    'labelling'=> ($Config->get($das_config_key, 'lflag') || $Extra->{'labelflag'}) =~ /^n$/i ? 0 : 1,
     'length'   => $container_length
   };
 
@@ -736,7 +915,8 @@ sub _init {
   $configuration->{depth} =  defined($Config->get($das_config_key, 'dep')) ? $Config->get($das_config_key, 'dep') : $Extra->{depth} || 4;
   $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
   $configuration->{use_score} = $Extra->{score} ? uc($Extra->{score}) eq 'Y' : uc($Config->get($das_config_key, 'score')) eq 'Y';
-  $configuration->{labelling} = $Extra->{labelflag} =~ /^[ou]$/i ? 1 : 0;
+
+  $configuration->{'labelling'} =($Config->get($das_config_key, 'lflag') || $Extra->{'labelflag'}) =~ /^n$/i ? 0 : 1,
   $configuration->{length} = $container_length;
 
   $self->{'pix_per_bp'}    = $Config->transform->{'scalex'};
@@ -753,21 +933,29 @@ sub _init {
       my $name = $das_name || $url;
       foreach my $gene (@$genes) {
          next if ($gene->strand != $self->strand);
-         my $dasf = $gene->get_all_DASFeatures;
-         my %dhash = %{$dasf};
+	 my ($features, $style) = $gene->get_all_DAS_Features->{$name}; # First element is aref to features, second - style
 
-        
+#	 warn(Dumper($features));
          my $fcount = 0;
          my %fhash = ();
-         my @aa = @{$dhash{$name}};
-         foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } @{ $aa[1] || [] }) {
+
+         foreach my $f (grep { $_->das_type_id() !~ /^(contig|component|karyotype)$/i &&  $_->das_type_id() !~ /^(contig|component|karyotype):/i } (@{$features || []})) {
              if ($f->das_end) {
-                if (($f->das_end + $gene->start) > 0 && ($f->das_start <= $configuration->{'length'})) {
-                   $f->das_orientation or $f->das_orientation($gene->strand);
-                   $f->das_start($f->das_start + $gene->start);
-                   $f->das_end($f->das_end + $gene->start);
-                   push(@das_features, $f);
-                }
+		 my @coords;
+		 foreach my $transcript (@{$gene->get_all_Transcripts()}) {
+		     @coords = grep { $_->isa('Bio::EnsEMBL::Mapper::Coordinate') } $transcript->pep2genomic($f->start, $f->end, $f->strand);
+		 }
+
+		 if (@coords) {
+		     my $c = $coords[0];
+		     my $end = ($c->end > $configuration->{'length'}) ? $configuration->{'length'} : $c->end; 
+		     my $start = ($c->start < $end) ? $c->start : $end;
+		     $f->das_orientation or $f->das_orientation($gene->strand);
+		     $f->das_start($start);
+		     $f->das_end($end);
+		 }
+
+		 push(@das_features, $f);
              } else {
                 if (exists $fhash{$f->das_segment->ref}) {
                     $fhash{$f->das_segment->ref}->{count} ++;
@@ -783,20 +971,22 @@ sub _init {
              if ((my $count = $fhash{$key}->{count}) > 1) {
                 $ft->{das_feature_label} = "$key/$count";
 
-                $ft->{das_note} = "Found $count annotations for $key";
-                $ft->{das_link_label}  = ['View annotations in geneview'];
-                $ft->{das_link} = ["/$ENV{ENSEMBL_SPECIES}/geneview?db=core;gene=$key;:DASselect_${srcname}=0;DASselect_${srcname}=1#$srcname"];
-                
+                $ft->das_note("Found $count annotations for $key");
+		my $link = {
+		    'href' => "/$ENV{ENSEMBL_SPECIES}/geneview?db=core;gene=$key;:DASselect_${srcname}=0;DASselect_${srcname}=1#$srcname",
+		    'txt' => 'View annotations in geneview'
+		    };
+		$ft->das_link([$link]);
              }
-             $ft->{das_type_id}->{id} = 'summary';
-             $ft->{das_start} = $gene->start;
-             $ft->{das_end} = $gene->end;
-             $ft->{das_orientation} = $gene->strand;
-             $ft->{_gsf_strand} = $gene->strand;
-             $ft->{das_strand} = $gene->strand;
+             $ft->das_type_id('summary');
+             $ft->das_type('summary');
+             $ft->das_start($gene->start);
+             $ft->das_end($gene->end);
+             $ft->das_strand($gene->strand);
 
              push(@das_features, $ft);
          }
+
       }
   } else {
       my( $features, $das_styles ) = @{$self->{'container'}->get_all_DASFeatures->{$dsn}||[]};
@@ -840,6 +1030,8 @@ sub _init {
   my $renderer = $Config->get($das_config_key, 'renderer');
 	       
   my $group = uc($Config->get($das_config_key, 'group') || $Extra->{'group'} || 'N');
+
+
   my $score = uc($Config->get($das_config_key, 'score') || $Extra->{'score'} || 'N');
 
   if ($score ne 'N') {

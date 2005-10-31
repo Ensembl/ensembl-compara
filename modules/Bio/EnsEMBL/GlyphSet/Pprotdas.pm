@@ -9,6 +9,7 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
+use POSIX; #floor
 
 sub init_label {
   my ($self) = @_;
@@ -50,7 +51,28 @@ sub _init {
     my $Config        = $self->{'config'};  
     my $prot_len      = $self->{'container'}->length;
     my $pix_per_bp    = $Config->transform->{'scalex'};
-    my $bitmap_length = int( $prot_len * $pix_per_bp);
+
+    my $bml = floor( $prot_len * $pix_per_bp);
+    my $bitmap_length = floor( $prot_len * $pix_per_bp);
+
+    my $gene = $self->{'container'}->adaptor->db->get_GeneAdaptor->fetch_by_translation_stable_id($self->{'container'}->stable_id);	
+
+#    warn("GENE : $gene");
+    my $tr = $gene->get_all_Transcripts->[0];
+#    foreach my $transcript (@{$gene->get_all_Transcripts()}) {
+#	warn("T:".$transcript->stable_id);
+#	my @exons = sort {$a->start <=> $b->start} grep { $_ } @{$transcript->get_all_Exons()};
+#	my $gS = 1;
+#	foreach my $e (@exons) {
+#	    my $w = $e->end - $e->start + 1;
+#	    $e->{translation_start} = $gS;
+#	    $e->{width} = $w;
+#
+#	    warn("\tE:".join('*', $gS, $w, $e->stable_id, $e->start, $e->end));
+#	    $gS += $w;
+#	}
+#    }
+
     my $y             = 0;
     my $h             = 4;
     my $black         = 'black';
@@ -61,13 +83,113 @@ sub _init {
     my $colour        = $Config->get($das_confkey,'col') || 'black';
     my ($fontwidth,
 	$fontheight)  = $Config->texthelper->px2bp($font);
-
+    use Data::Dumper;
     my $das_feat_ref = $self->{extras}->{features};
     ref( $das_feat_ref ) eq 'ARRAY' || ( warn("No feature array for ProteinDAS track") &&  return );
 
+    my @features;
+
+    warn("SOURCE:".$self->{'extras'}->{'source_type'});
+
+#    warn ("PSE :$pstart : $pend : $bitmap_length :".int($prot_len * $pix_per_bp));
     foreach my $feat (@$das_feat_ref) {
-	push(@{$hash{$feat->das_feature_id}},$feat)  if ($feat->end); # Draw only features that have location
+	next if ( ! $feat->end); # Draw only features that have location	
+
+	if ($self->{'extras'}->{'source_type'} ne 'ensembl_location') {
+	    push(@{$hash{$feat->das_feature_id}},$feat);
+	    next;
+	}
+
+	warn("F:".join('*', $feat->das_segment->start, $feat->das_segment->end));
+	my @coords;
+	foreach my $transcript (@{$gene->get_all_Transcripts()}) {
+	    @coords = grep { $_->isa('Bio::EnsEMBL::Mapper::Coordinate') } $transcript->genomic2pep($feat->das_segment->start, $feat->das_segment->end, $feat->strand);
+	}
+#	warn(Dumper(\@coords));
+	if (@coords) {
+	    my $c = $coords[0];
+	    my $end = ($c->end > $prot_len) ? $prot_len : $c->end; 
+	    $feat->{translation_end} =  $end;
+
+	    my $start = ($c->start < $end) ? $c->start : $end;
+	    $feat->{translation_start} =  $start;
+	    push (@features, $feat);
+	}
     }
+
+    foreach my $f (@features) {
+	my $desc = $f->das_feature_label() || $f->das_feature_id;
+
+	# Zmenu
+	my $zmenu = { 'caption' => $desc };
+
+	if( my $m = $f->das_feature_id ){ $zmenu->{"03:ID: $m"}     = undef }
+	if( my $m = $f->das_type       ){ $zmenu->{"05:TYPE: $m"}   = undef }
+	if( my $m = $f->das_method     ){ $zmenu->{"10:METHOD: $m"} = undef }
+	my $ids = 15;
+	my $href;
+	foreach my $dlink ($f->das_links) {
+	    my $txt = $dlink->{'txt'} || $dlink->{'href'};
+	    my $dlabel = sprintf("%02d:LINK: %s", $ids++, $txt);
+	    $zmenu->{$dlabel} = $dlink->{'href'};
+	    $href =  $dlink->{'href'} if (! $href);
+	}
+	if( my $m = $f->das_note       ){ $zmenu->{"40:NOTE: $m"}   = undef }
+		      
+
+	my $Composite = new Sanger::Graphics::Glyph::Composite
+	  ({
+	    'x'     => $f->{translation_start},
+	    'y'     => $y,
+	    'href'  => $href,
+	    'zmenu' => $zmenu,
+	   });
+
+	# Boxes
+	my $pfsave;
+	my ($minx, $maxx);
+
+	my $x  = $f->{translation_start};
+	my $w  = $f->{translation_end} - $x;
+	my $id = $f->das_feature_id();
+
+	my $rect = new Sanger::Graphics::Glyph::Rect({
+	    'x'        => $x,
+	    'y'        => $y,
+	    'width'    => $w,
+	    'height'   => $h,
+	    'colour'   => $colour,
+	});
+	$Composite->push($rect);
+
+
+#	my $rect = new Sanger::Graphics::Glyph::Rect({
+#	    'x'         => $x,
+#	    'y'         => $y + 2,
+#	    'width'     => $maxx - $minx,
+#	    'height'    => 0,
+#	    'colour'    => $colour,
+#	    'absolutey' => 1,
+#	});
+#	$Composite->push($rect);
+
+	my $bump_start = floor($Composite->x() * $pix_per_bp);
+	$bump_start = 0 if ($bump_start < 0);
+	next if ($bump_start > $bitmap_length);
+
+	my $bump_end = $bump_start + floor($Composite->width()*$pix_per_bp);
+
+	if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
+	my $row = Sanger::Graphics::Bump::bump_row(
+						   $bump_start,
+						   $bump_end,
+						   $bitmap_length,
+						   \@bitmap
+						   );
+	$Composite->y($Composite->y() + $row * ($h + 2) );
+	$self->push($Composite);
+    }
+
 
     foreach my $key (keys %hash) {
 	my @row = @{$hash{$key}};
@@ -80,15 +202,22 @@ sub _init {
 	if( my $m = $f->das_feature_id ){ $zmenu->{"03:ID: $m"}     = undef }
 	if( my $m = $f->das_type       ){ $zmenu->{"05:TYPE: $m"}   = undef }
 	if( my $m = $f->das_method     ){ $zmenu->{"10:METHOD: $m"} = undef }
-	if( my $m = $f->das_link       ){ $zmenu->{"15:LINK: "}     = $m    }
-	if( my $m = $f->das_note       ){ $zmenu->{"20:NOTE: $m"}   = undef }
+	my $ids = 15;
+	my $href;
+	foreach my $dlink ($f->das_links) {
+	    my $txt = $dlink->{'txt'} || $dlink->{'href'};
+	    my $dlabel = sprintf("%02d:LINK: %s", $ids++, $txt);
+	    $zmenu->{$dlabel} = $dlink->{'href'};
+	    $href =  $dlink->{'href'} if (! $href);
+	}
+	if( my $m = $f->das_note       ){ $zmenu->{"40:NOTE: $m"}   = undef }
 		      
 
 	my $Composite = new Sanger::Graphics::Glyph::Composite
 	  ({
-	    'x'     => $f->start(),
+	    'x'     => floor($f->start),
 	    'y'     => $y,
-	    'href'  => $f->das_link(),
+	    'href'  => $href,
 	    'zmenu' => $zmenu,
 	   });
 
@@ -96,10 +225,10 @@ sub _init {
 	my $pfsave;
 	my ($minx, $maxx);
 	foreach my $pf (@row) {
-	    my $x  = $pf->start();
+	    my $x  = floor($pf->start );
 	    $minx  = $x if (! defined($minx) || $x < $minx);
-	    my $w  = $pf->end() - $x;
-	    $maxx  = $pf->end() if (! defined($maxx) || $pf->das_end() > $maxx);
+	    my $w  = floor($pf->end ) - $x;
+	    $maxx  = floor($pf->end) if (! defined($maxx) || (floor($pf->das_end)) > $maxx);
 	    my $id = $pf->das_feature_id();
 
 	    my $rect = new Sanger::Graphics::Glyph::Rect({
@@ -112,6 +241,8 @@ sub _init {
 	    $Composite->push($rect);
 	    $pfsave = $pf;
 	}
+
+#	warn("MX: $minx :$maxx");
 
 	my $rect = new Sanger::Graphics::Glyph::Rect({
 	    'x'         => $minx,
@@ -140,12 +271,16 @@ sub _init {
 	}
 
 	#if ($Config->get('Pprotdas', 'dep') > 0){ # we bump
-            my $bump_start = int($Composite->x() * $pix_per_bp);
+#	warn("CP:".join('*', $pix_per_bp, $bitmap_length, $Composite->x, $Composite->width));
+            my $bump_start = floor($Composite->x() * $pix_per_bp);
             $bump_start = 0 if ($bump_start < 0);
-	    
-            my $bump_end = $bump_start + int($Composite->width()*$pix_per_bp);
+	next if ($bump_start > $bitmap_length);
+
+            my $bump_end = $bump_start + floor($Composite->width()*$pix_per_bp);
+#	warn("BE :$bump_start : $bump_end");
             if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-            my $row = & Sanger::Graphics::Bump::bump_row(
+#	warn("BE2 :$bump_start : $bump_end");
+            my $row = Sanger::Graphics::Bump::bump_row(
 				      $bump_start,
 				      $bump_end,
 				      $bitmap_length,

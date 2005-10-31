@@ -20,6 +20,7 @@ sub init {
 
   my @das_adaptors = map{$_->adaptor} @{$translation->get_all_DASFactories};
   my %authorities = map{$_->name => $_->authority} @das_adaptors;
+  my %stypes = map{$_->name => $_->type} @das_adaptors;
 
   my $user_confkey;
   foreach my $source ( keys( %$feat_container ) ){
@@ -33,7 +34,7 @@ sub init {
     foreach my $feat( @features ){
       my $type = $feat->das_type || $feat->das_type_id || 'UNKNOWN';
 
-      if ( ($feat->das_type_id() =~ /^(contig|component|karyotype)$/i) || ( $feat->das_type_id() =~ /^(contig|component|karyotype):/i) || (! $feat->das_end() )) {
+      if ( ($feat->das_type_id =~ /^(contig|component|karyotype)$/i) || ($feat->das_type_id =~ /^(contig|component|karyotype):/i) || (! $feat->das_end )) {
 	  $skipped_features = 1;
 	  next;
       }
@@ -46,8 +47,8 @@ sub init {
     }
 
     if (! scalar keys %feats_by_glyphset) {
-		  next if ($skipped_features);
-		  $feats_by_glyphset{'No annotation'} = [] 
+	next if ($skipped_features);
+	$feats_by_glyphset{'No annotation'} = [] 
     };
 
    # Add a separator (top)
@@ -62,6 +63,7 @@ sub init {
     foreach my $das_track( keys %feats_by_glyphset ) {
       my $extra_config = {};
       $extra_config->{'name'}     = $das_track;
+      $extra_config->{'source_type'} = $stypes{$source},
       $extra_config->{'confkey'}  = $user_confkey;
       $extra_config->{'features'} = $feats_by_glyphset{$das_track};
       $extra_config->{'order'}    = sprintf( "%05d", $self->{order} -- );

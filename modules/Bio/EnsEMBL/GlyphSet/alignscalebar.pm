@@ -349,22 +349,26 @@ sub align_gap {
     my $pix_per_bp     = $Config->transform()->{'scalex'};
     my $min_length = 1 / $pix_per_bp;
 
-    my @inters = split (/[MD]/, $cigar_line);
+    my @inters = split (/([MDG])/, $cigar_line);
+
     my $ms = 0;
     my $ds = 0;
     my $box_start = 0;
     my $box_end = 0;
     my $colour = 'white';
     my $zc = -10;
-    if ($cigar_line =~ /^\d+M/) {
-	$ms = (shift (@inters) || 1);
-	$box_end = $box_start + $ms -1;
-	$box_start = $box_end + 1;
-    }
 
     while (@inters) {
 	$ms = (shift (@inters) || 1);
+	my $mtype = shift (@inters);
+
 	$box_end = $box_start + $ms -1;
+
+	if ($mtype =~ /G|M/) {
+# Skip normal alignment and gaps in alignments
+	    $box_start = $box_end + 1;
+	    next;
+	}
 
 	if ($box_start > $ge) {
 	    $si++;
@@ -372,7 +376,6 @@ sub align_gap {
 	    $gs = $hs->{start} - 1;
 	    $ge = $hs->{end};
 	}
-
 	if ($ms > $min_length && $box_start >=  $gs && $box_end < $ge) { 
 	    my $t = new Sanger::Graphics::Glyph::Rect({
 		'x'         => $box_start,
@@ -396,9 +399,7 @@ sub align_gap {
 	}
 
 	$box_start = $box_end + 1;
-	$ms = (shift (@inters) || 1);
-	$box_end = $box_start + $ms -1;
-	$box_start = $box_end + 1;
+
     }
 }
 
