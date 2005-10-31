@@ -154,6 +154,8 @@ sub show_news {
     @sorted_items = @items;
   }
   else {
+    @sorted_items = @items;
+=pod
 ## Do custom sort of data news
 ## 1. Sort into data and non-data news
   my (@sp_data, @other);
@@ -179,6 +181,7 @@ sub show_news {
                     @sp_data;
 ## 3. Merge news items back into single array
   @sorted_items = (@sorted_data, @other);
+=cut
   }
 
 ## output sorted news
