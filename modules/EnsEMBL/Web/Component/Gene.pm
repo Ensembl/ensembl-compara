@@ -40,8 +40,10 @@ sub markup_options_form {
     'value' => $object->param('flank3_display')
   );
 
+  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) ||
+    'Ensembl';
   my $exon_display = [
-    { 'value' => 'core'       , 'name' => 'Ensembl exons' },
+    { 'value' => 'core'       , 'name' => "$sitetype exons" },
     $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'       , 'name' => 'Vega exons' } : (),
     $object->species_defs->databases->{'ENSEMBL_EST'}  ? { 'value' => 'est'        , 'name' => 'EST-gene exons' } : (),
     { 'value' => 'prediction' , 'name' => 'Ab-initio exons' },
