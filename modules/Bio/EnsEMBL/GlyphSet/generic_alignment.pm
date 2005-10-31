@@ -191,7 +191,7 @@ sub expanded_init {
 
     $Composite->zmenu( {
       'caption' => $caption,
-      "$seqregion: $start-$end" => '',
+      "01:$seqregion: $start-$end" => '',
       "02:Jump to $jump_type"        => "$HREF?$ZZ",
       "03:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => ''
     } );
