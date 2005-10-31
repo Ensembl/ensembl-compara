@@ -170,11 +170,13 @@ sub _init {
 	}
 
 	$self->push($t);
-	if($start == $box_start ) { # This is the end of the box!
-	    $self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE && $Container->{compara} ne 'secondary');
-	}
-	if( ( $box_end==$global_end ) && !( ( $box_end+1) % $minor_unit ) ) {
-	    $self->join_tag( $t, "ruler_$end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE &&  $Container->{compara} ne 'secondary');
+
+        if($REGISTER_LINE && $Container->{compara} ne 'secondary') {
+	    if($start == $box_start ) { # This is the end of the box!
+		$self->join_tag( $t, "ruler_$start", 0, 0 , $start%$major_unit ? 'grey90' : 'grey80'  );
+	    } elsif( ( $box_end==$global_end ) && !(( $box_end+1) % $minor_unit ) ) {
+		$self->join_tag( $t, "ruler_$end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  );
+	    }
 	}
 
 	unless( $box_start % $major_unit ) { ## Draw the major unit tick 
