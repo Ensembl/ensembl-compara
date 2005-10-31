@@ -117,8 +117,10 @@ sub format_das_panel {
 	  $uhash{$id}->{score}  = $feature->das_score;
 
           my $segment = $feature->das_segment->ref;
-          if( my $href = $feature->das_link ) {
-            $uhash{$id}->{label} = sprintf( $link_tmpl, $href, $segment, $feature->das_feature_label )
+
+	  if (my $flink = $feature->das_link) {
+	      my $href = $flink->{'href'};
+	      $uhash{$id}->{label} = sprintf( $link_tmpl, $href, $segment, $feature->das_feature_label )
           } else {
             $uhash{$id}->{label} = $feature->das_feature_label;
           }

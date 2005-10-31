@@ -304,7 +304,7 @@ sub das_wizard {
       $form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'post'); 
     }
 
-    my @cparams = qw ( db gene transcript peptide conf_script c w h bottom);
+    my @cparams = qw ( db gene transcript peptide c w h l vc_start vc_end region);
     foreach my $param (@cparams) {
 #      warn "$param  ----------- ",$object->param($param);
       if( defined(my $v = $object->param($param)) ) {
@@ -320,6 +320,9 @@ sub das_wizard {
 	$fname = "das_wizard_".$step;
 	&{$fname}($form, \%source_conf, $object, \$step, $error);
     }
+
+    warn("EDIT:");
+    warn(Dumper(\%source_conf));
 
     &wizardTopPanel($form, $step, $source_conf{sourcetype});
 
@@ -373,6 +376,51 @@ sub added_sources {
             $das_action = $edit_link.$delete_link;
         }
 
+	my @cparams = qw ( db gene transcript peptide c w h l vc_start vc_end region);
+	my $url = sprintf("http://%s%s/%s/%s?",
+			  $ENV{'SERVER_NAME'},
+			  $ENV{'SERVER_PORT'} == 80 ? '' : ":$ENV{'SERVER_PORT'}",
+			  $ENV{'ENSEMBL_SPECIES'},
+			  $object->param('conf_script'));
+	foreach my $param (@cparams) {
+	    if( defined(my $v = $object->param($param)) ) {
+		$url .= "$param=$v;";
+	    }
+	}
+
+	my $add_link = sprintf("%sadd_das_source=(name=%s+url=%s+dsn=%s+type=%s+color=%s+strand=%s+labelflag=%s+stylesheet=%s+group=%s+depth=%d+score=%s+active=1)",
+			       $url, 
+			       $das_name,
+			       $das_adapt->url,
+			       $das_adapt->dsn,
+			       $das_adapt->type,
+			       $das_adapt->color,
+			       $das_adapt->strand,
+			       $das_adapt->labelflag,
+			       $das_adapt->stylesheet,
+			       $das_adapt->group,
+			       $das_adapt->depth,
+			       $das_adapt->score
+);
+	my $js = qq{javascript:X=window.open('','helpview','left=20,top=20,height=200,width=600,resizable');
+	  X.document.write('
+<html><title>Send DAS Source!</title>
+<body onblur=window.close()>
+<h3>If you want to share your source with someone send them the link below
+</h3>
+<br />
+<small>
+$add_link
+</small>
+</body>
+</html>
+');
+          X.focus();
+	  void(0)
+} ;
+
+	my $das_send = qq{<a href="$js"><image src="/img/buttons/mail.png" alt="Send source to a friend"/></a>};
+
         my $das_url = $das_adapt->url;
         my $das_dsn = $das_adapt->dsn || '&nbsp;';
         my $das_type = $das_adapt->type ? $DASMappingType{$das_adapt->type} || $das_adapt->type : '&nbsp';
@@ -391,13 +439,14 @@ sub added_sources {
   </tr>
 };
         } else {
-        push @das_form, {'action'=>$das_action, 'name'=> $das_name, 'url'=>$das_url, 'dsn'=>$das_dsn, 'type'=>$das_type};
+        push @das_form, {'action'=>$das_action, 'name'=> $das_name, 'url'=>$das_url, 'dsn'=>$das_dsn, 'type'=>$das_type, 'sendurl' => $das_send};
         }
             
     }
     
     $panel->add_columns(
                         { 'key' => 'action', 'title' => ' '    },
+                        { 'key' => 'sendurl', 'title' => ' '    },
                         { 'key' => 'name', 'title' => 'Name'    },
                         { 'key' => 'location', 'title' => 'Location' },
                         { 'key' => 'source', 'title' => 'Data source'   },
@@ -407,6 +456,7 @@ sub added_sources {
     foreach my $src (@das_form) {
         $panel->add_row( {
             'action' => $src->{action},
+            'sendurl' => $src->{sendurl},
             'name' => $src->{name},
             'location' => $src->{url}, 
             'source' => $src->{dsn},
@@ -658,7 +708,7 @@ sub das_wizard_3 {
     $option = $das_conf->{linkurl} || '';
     $form->add_element('type'=>'String', 'name'=>'DASlinkurl', 'label'=>'Link URL:', 'value'=> $option);
 
-    $option = $das_conf->{color} || 'black';
+    $option = $das_conf->{color} || 'blue';
 
     use Bio::EnsEMBL::ColourMap;
     my $cm = new Bio::EnsEMBL::ColourMap($object->species_defs);
@@ -675,7 +725,7 @@ sub das_wizard_3 {
                        'value' => $option
                        );
 
-    $option = $das_conf->{group} || 'y';
+    $option = lc($das_conf->{group} || 'y');
     my @gvalues;
     foreach ( 'Yes', 'No' ) {
         my $id          = lc(substr($_,0,1));
@@ -689,7 +739,7 @@ sub das_wizard_3 {
                        'value' => $option
                        );
 
-    $option = $das_conf->{strand} || 'b';
+    $option = lc($das_conf->{strand} || 'b');
     my @svalues;
     foreach ( 'Forward strand', 'Reverse strand', 'Both strands' ) {
         my $id          = lc(substr($_,0,1));
@@ -720,7 +770,7 @@ sub das_wizard_3 {
                        );
 
   ## OPTIONS IN DROP DOWN FOR LABELLING
-    $option = $das_conf->{labelflag} || 'u';
+    $option = lc($das_conf->{labelflag}|| 'u');
     my @lbvalues;
     foreach ( 'No label', 'On feature', 'Under feature' ) {
         my $id          = lc(substr($_,0,1));
@@ -736,7 +786,7 @@ sub das_wizard_3 {
                        );
 
 
-    $option = $das_conf->{stylesheet} || 'n';
+    $option = lc($das_conf->{stylesheet} || 'n');
     my @stvalues;
     foreach ( 'Yes', 'No' ) {
         my $id          = lc(substr($_,0,1));
@@ -750,7 +800,7 @@ sub das_wizard_3 {
                        'value' => $option
                        );
 
-    $option = $das_conf->{score} || 'n';
+    $option = lc($das_conf->{score} || 'n');
     my @scvalues;
     foreach ( 'No', 'Histogram' ) {
         my $id          = lc(substr($_,0,1));

@@ -178,7 +178,7 @@ $ENSEMBL_TMP_DIR_DOTTER = $ENSEMBL_SERVERROOT.'/shared/data/dotter';
 
 
 #$ENSEMBL_TMP_DIR_BLAST  = '/ensemblweb/shared/data/blastqueue';
-$ENSEMBL_TMP_DIR_BLAST_OLD  = '/ensweb/shared/data/blastqueue';
+#$ENSEMBL_TMP_DIR_BLAST_OLD  = '/ensweb/shared/data/blastqueue';
 $ENSEMBL_TMP_DIR_BLAST  = $ENSEMBL_TMP_DIR;
 $ENSEMBL_BLASTSCRIPT    = undef;
 $ENSEMBL_REGISTRY       = undef;
@@ -208,6 +208,7 @@ $ENSEMBL_REGISTRY       = undef;
   $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-extra/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-mart/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
   $ENSEMBL_SERVERROOT.'/biomart-web/modules',

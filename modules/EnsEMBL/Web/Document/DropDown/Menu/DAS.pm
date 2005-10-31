@@ -33,6 +33,7 @@ sub new {
 	  next;
       }
       
+
       if( my $src = $ext_das->{'data'}->{$das_name}){ 
 
 	  if (join('*',$src->{url}, $src->{dsn}, $src->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
@@ -66,9 +67,6 @@ sub new {
       $das_data{conftype} = 'external';
       $das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
 
-#      warn("ADD DAS $das_name");
-#      warn(Dumper(\%das_data));
-
       if ($das_data{active}) {
 	  my $config = $self->{config};
 	  $config->set("managed_extdas_$das_name", 'on', 'on', 1);
@@ -77,7 +75,8 @@ sub new {
 	  $das_data{group} and $config->set( "managed_extdas_$das_name", "group", $das_data{group}, 1);
 	  $das_data{strand} and $config->set( "managed_extdas_$das_name", "str", $das_data{strand}, 1);
 	  $das_data{stylesheet} and $config->set( "managed_extdas_$das_name", "stylesheet", $das_data{stylesheet}, 1);
-	  $das_data{labelflag} and $config->set( "managed_extdas_$das_name", "lflag", $das_data{labelflag}, 1);
+	  $das_data{labelflag} or $das_data{labelflag} = 'u';
+	  $config->set( "managed_extdas_$das_name", "lflag", $das_data{labelflag}, 1);
 	  $config->set( "managed_extdas_$das_name", "manager", 'das', 1);
 	  $das_data{color} and $config->set( "managed_extdas_$das_name", "col", $das_data{col}, 1);
 	  $das_data{linktext} and $config->set( "managed_extdas_$das_name", "linktext", $das_data{linktext}, 1);
@@ -89,8 +88,6 @@ sub new {
   }
 
   my $ds2 = $ext_das->{'data'};
-
-
 
   my %das_list = map {(exists $ds2->{$_}->{'species'} && $ds2->{$_}->{'species'} ne $self->{'species'}) ? ():($_,$ds2->{$_}) } keys %$ds2;
   my $EXT = $self->{config}->{species_defs}->ENSEMBL_INTERNAL_DAS_SOURCES;

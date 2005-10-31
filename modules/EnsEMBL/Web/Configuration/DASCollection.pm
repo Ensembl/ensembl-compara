@@ -83,13 +83,16 @@ sub display_wizard_status {
 	my @das_objs = @{$das_collection};
 
 	my $das_adapt;
+	warn("EDIT $src");
 	foreach my $das_obj (@das_objs) {
 	    $das_adapt = $das_obj->adaptor;
 	    last if ($das_adapt->name eq $src);
 	} 
-
+	use Data::Dumper;
+#	warn(Dumper($das_adapt));
 	foreach my $key (@confkeys) {
 	    my $hkey ="DAS${key}";
+	    warn("SET $hkey :".$das_adapt->$key);
 	    $object->param( "$hkey", $das_adapt->$key);
 	}
 	$object->param("DASenable", @{$das_adapt->enable});
