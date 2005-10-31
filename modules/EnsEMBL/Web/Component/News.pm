@@ -150,8 +150,9 @@ sub show_news {
 
   my @sorted_items;
   if ($object->param('release_id') eq 'all') {
-## multiple releases, so don't re-sort or will mess up output!
-    @sorted_items = @items;
+    @sorted_items = sort
+                    { $b->{'release_id'} <=> $a->{'release_id'} }
+                    @items;
   }
   else {
     @sorted_items = @items;
