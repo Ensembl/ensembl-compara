@@ -1,0 +1,32 @@
+use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::DBSQL::NewsAdaptor;
+
+my $SD = EnsEMBL::Web::SpeciesDefs->new;
+my $release_id = $SiteDefs::VERSION;
+
+# Connect to web database and get news adaptor
+my $web_db = $SD->databases->{'ENSEMBL_WEBSITE'};
+my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
+
+my $results = $wa->fetch_items({ 'criteria' => { 'release' => 33 } });
+
+print "Content-type: text/plain\n\n";
+
+print qq(
+<rss version="2.0">
+  <channel>
+  <language>en</language>
+  <copyright>Copyright 2005 The Ensembl webteam</copyright>
+  <managingEditor>webmaster@ensembl.org</managingEditor>
+  <webMaster>webmaster@ensembl.org</webMaster>);
+
+foreach my $E ( @$results ) {
+  print qq(
+    <item>
+      <title>$E->{'title'}</title>
+      <description>$E->{'content'}</description>
+    </item>);
+}
+print "
+  </channel>
+</rss>";
