@@ -360,7 +360,7 @@ STAGE_SETUP:{
         my $sitetype = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 	$entry->set_label( qq(
 <SMALL>BlastView provides an integrated platform for sequence similarity searches against $sitetype databases, offering access to both BLAST and SSAHA programs. <A href='/Homo_sapiens/helpview?se=1&kw=blastview' target='onlinehelp'>[More]</A><BR /><IMG src="/img/blank.gif" height=5 /><BR />
-We would like to hear your impressions of BlastView, especially regarding functionality that you would like to see provided in the future. Many thanks for your time. <A href='/helpdesk/index.html' target='feedback'>[Feedback&nbsp;Form]</SMALL></A>) );
+We would like to hear your impressions of BlastView, especially regarding functionality that you would like to see provided in the future. Many thanks for your time. <A href='/info/about/contact.html'>[Feedback]</SMALL></A>) );
       }
     }
   }
