@@ -208,7 +208,6 @@ $ENSEMBL_REGISTRY       = undef;
   $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-extra/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-mart/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
   $ENSEMBL_SERVERROOT.'/biomart-web/modules',
