@@ -13,6 +13,8 @@ sub add_arrows {
     my ($self, $im_width, $black, $ystart) = @_;
     my $gtriag;    
     
+  my ($w,$h)   = $self->{'config'}->texthelper()->real_px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
+
     $gtriag = new Sanger::Graphics::Glyph::Poly({
     	'points'       => [$im_width-10,$ystart-4, $im_width-10,$ystart, $im_width,$ystart],
 	    'colour'       => $black,
@@ -22,7 +24,7 @@ sub add_arrows {
     
     $self->push($gtriag);
     $gtriag = new Sanger::Graphics::Glyph::Poly({
-	    'points'       => [0,$ystart+14, 10,$ystart+14, 10,$ystart+18],
+	    'points'       => [0,$ystart+$h+8, 10,$ystart+$h+8, 10,$ystart+$h+12],
     	'colour'       => $black,
     	'absolutex'    => 1,'absolutewidth'=>1,
     	'absolutey'    => 1,

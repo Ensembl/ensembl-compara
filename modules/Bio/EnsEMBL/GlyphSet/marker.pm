@@ -38,7 +38,7 @@ sub _init {
   return unless $self->strand() == -1;
 
   $self->{'colours'} = $Config->get('marker','colours');
-  my $fontname       = "Tiny";
+  my $fontname       = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my $row_height     = 8;
   my ($w,$h)         = $Config->texthelper->px2bp($fontname);
       $w             = $Config->texthelper->width($fontname);

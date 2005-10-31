@@ -19,13 +19,14 @@ sub init_label {
 sub _init {
   my ($self) = @_;
   return unless ($self->strand() == -1);
-  my $BOX_HEIGHT    = 4;
-  my $BOX_WIDTH     = 10;
+  my $BOX_WIDTH     = 20;
   my $NO_OF_COLUMNS = 4;
-  my $FONTNAME      = "Tiny";
+
 
   my $vc            = $self->{'container'};
   my $Config        = $self->{'config'};
+  my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+  my ($w,$th)       = $Config->texthelper()->px2bp($FONTNAME);
   my $im_width      = $Config->image_width();
   my $type          = $Config->get('variation_legend', 'src');
 
@@ -43,16 +44,16 @@ sub _init {
     while( my ($legend, $colour) = splice @colours, 0, 2 ) {
       $self->push(new Sanger::Graphics::Glyph::Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * $BOX_HEIGHT * 2 + 6,
+        'y'         => $y * ($th+3) + 6,
         'width'     => $BOX_WIDTH, 
-        'height'    => $BOX_HEIGHT,
+        'height'    => $th - 2, 
         'colour'    => $colour,
         'absolutey' => 1,
         'absolutex' => 1,'absolutewidth'=>1,
       }));
       $self->push(new Sanger::Graphics::Glyph::Text({
         'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
-        'y'         => $y * $BOX_HEIGHT * 2 + 4,
+        'y'         => $y * ($th+3) + 4,
         'height'    => $Config->texthelper->height($FONTNAME),
         'font'      => $FONTNAME,
         'colour'    => $colour,

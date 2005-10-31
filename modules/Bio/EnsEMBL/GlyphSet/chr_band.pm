@@ -59,7 +59,7 @@ sub _init {
     $COL{'stalk'}   = 'slategrey';
     
     my $im_width = $self->{'config'}->image_width();
-    my ($w,$h) = $self->{'config'}->texthelper->px2bp('Tiny');
+    my ($w,$h) = $self->{'config'}->texthelper->px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
     
     my $prev_end = 0;
     my $i = 0;
@@ -87,7 +87,7 @@ sub _init {
 	    'x'      => $vc_band_start -1 ,
 	    'y'      => 0,
 	    'width'  => $vc_band_end - $vc_band_start +1 ,
-	    'height' => 10,
+	    'height' => $h + 4,
 	    'colour' => $COL{$stain},
 #    		'bordercolour' => $black,
 	    'absolutey' => 1,
@@ -107,7 +107,7 @@ sub _init {
 	    my $tglyph = new Sanger::Graphics::Glyph::Text({
 		'x'      => $vc_band_start + int(($vc_band_end - $vc_band_start)/2 - ($bp_textwidth)/2),
 		'y'      => 2,
-		'font'   => 'Tiny',
+		'font'   => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
 		'colour' => $fontcolour,
 		'text'   => $bandname,
 		'absolutey'  => 1,
@@ -122,7 +122,7 @@ sub _init {
 	    'x'      => $min_start -1 ,
 	    'y'      => 0,
 	    'width'  => $max_end - $min_start + 1,
-	    'height' => 10,
+	    'height' => $h + 4 ,
 	    'bordercolour' => $black,
 	    'absolutey' => 1,
             'zmenu' => {

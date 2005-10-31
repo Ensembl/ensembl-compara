@@ -135,7 +135,7 @@ sub _init {
         'x'    => $start -1 ,
         'y'    => 0,
         'width'  => $end - $start +1 ,
-        'height' => 10,
+        'height' => $th+4,
         'colour' => $colour,
         'absolutey' => 1,
       }));
@@ -212,15 +212,15 @@ sub _init {
     if( $Composite->width * 2 > 1.2 * $w / $pix_per_bp * length( $f->{'name'} ) ) {
       $Composite->push( new Sanger::Graphics::Glyph::Text({
         'x'         => $Composite->x,
-        'y'         => 12 ,
+        'y'         => $th+4 ,
         'width'     => $pix_per_bp * $w * length( $f->{'name'} ),
         'height'    => $th,
-        'font'      => 'Tiny',
+        'font'      => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
         'colour'    => $text_colour,
         'text'      => $f->{'name'},
         'absolutey' => 1,
       }));
-      $H = $th+2;
+      $H = $th+4;
     }
     my $bump_start = int($Composite->x * $pix_per_bp);
     my $bump_end   = $bump_start + int( ($Composite->width) * $pix_per_bp);

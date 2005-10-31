@@ -61,7 +61,7 @@ sub _init {
     $COL{'mark'}    = 'blue'; # marks start/end of annotated sequence
 
     my $im_width = $Config->image_width();
-    my ($w,$h)   = $Config->texthelper->px2bp('Tiny');
+    my ($w,$h)   = $Config->texthelper->px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
     my $chr      = $self->{'container'}->seq_region_name();
     my $len      = $self->{'container'}->length();
 
@@ -105,9 +105,9 @@ sub _init {
 	    my $gband;
 	    if ($done_one_acen){
 		$gband = new Sanger::Graphics::Glyph::Poly({
-		    'points'       => [	$vc_band_start-1,7, 
+		    'points'       => [	$vc_band_start-1,2+($h+2)/2, 
 					$vc_band_end,2,
-					$vc_band_end,12,
+					$vc_band_end,2+($h+2),
 				      ],
 		    'colour'       => $COL{$stain},
 		    'absolutey'    => 1,
@@ -115,8 +115,8 @@ sub _init {
 	    } else {
 		$gband = new Sanger::Graphics::Glyph::Poly({
 		    'points'       => [	$vc_band_start-1,2, 
-					$vc_band_end,7,
-					$vc_band_start,12,
+					$vc_band_end, 2+($h+2)/2,
+					$vc_band_start,2+$h+2,
 					],
 		    'colour'       => $COL{$stain},
 		    'absolutey'    => 1,
@@ -130,9 +130,9 @@ sub _init {
 	elsif ($stain eq "stalk"){
 	    my $gband = new Sanger::Graphics::Glyph::Poly({
 		'points'       => [ $vc_band_start-1,2, 
-				    $vc_band_end,12,
+				    $vc_band_end,4+$h,
 				    $vc_band_end,2,
-				    $vc_band_start-1,12, 
+				    $vc_band_start-1,4+$h, 
 				  ],
 		'colour'       => $COL{$stain},
 		'absolutey'    => 1,
@@ -157,7 +157,7 @@ sub _init {
 		'x'      => $vc_band_start -1,
 		'y'      => 2,
 		'width'  => $vc_band_end - $vc_band_start + 1,
-		'height' => 10,
+		'height' => $h+2,
 		'colour' => $COL{$stain},
 		'absolutey' => 1,
 		});
@@ -175,7 +175,7 @@ sub _init {
 	    
 	    $gband = new Sanger::Graphics::Glyph::Line({
 		'x'      => $vc_band_start,
-		'y'      => 12,
+		'y'      => $h+4,
 		'width'  => $vc_band_end - $vc_band_start + 1,
 		'height' => 0,
 		'colour' => $black,
@@ -202,7 +202,7 @@ sub _init {
 		my $tglyph = new Sanger::Graphics::Glyph::Text({
 		'x'      => ($vc_band_end + $vc_band_start - 1 - $bp_textwidth)/2,
 		'y'      => 4,
-		'font'   => 'Tiny',
+		'font'   => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
 		'colour' => $fontcolour,
 		'text'   => $bandname,
 		'absolutey'  => 1,
@@ -223,7 +223,7 @@ sub _init {
 
             $gband = new Sanger::Graphics::Glyph::Line({
                 'x'      => 0,
-                'y'      => 12,
+                'y'      => $h + 6,
                 'width'  => $chr_length,
                 'height' => 0,
                 'colour' => $black,
@@ -244,9 +244,9 @@ sub _init {
             my $bpperpx = $chr_length/$im_width;
             foreach my $i (1..4) {
                 my $x = $chr_length * $end + 4 * (($i % 2) - 1) * $direction * $bpperpx;
-                my $y = 2 + 10/4 * ($i - 1);
+                my $y = 2 + ($h+2)/4 * ($i - 1);
                 my $width = 4 * (1 - 2 * ($i % 2)) * $direction * $bpperpx;
-                my $height = 10/4;
+                my $height = ($h+2)/4;
                 # overwrite karyotype bands with appropriate triangles to
                 # produce jags
                 my $triangle = new Sanger::Graphics::Glyph::Poly({
@@ -290,7 +290,7 @@ sub _init {
                 'x'      => $chr_length * $end,
                 'y'      => 2,
                 'width'  => 0,
-                'height' => 10,
+                'height' => $h+2,
                 'colour' => $black,
                 'absolutey' => 1,
                 });
@@ -309,7 +309,7 @@ sub _init {
       'x'            => $rbs,
       'y'            => 0,
       'width'        => $rbe-$rbs+1,
-      'height'       => 14,
+      'height'       => $h+8,
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );
@@ -317,7 +317,7 @@ sub _init {
       'x'            => $rbs,
       'y'            => 1,
       'width'        => $rbe-$rbs+1,
-      'height'       => 12,
+      'height'       => $h+6,
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );

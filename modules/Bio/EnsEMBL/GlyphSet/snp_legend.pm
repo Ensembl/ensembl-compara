@@ -26,6 +26,7 @@ sub _init {
     my $BOX_WIDTH     = 20;
     my $NO_OF_COLUMNS = 5;
     my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+    my ($w,$th)       = $Config->texthelper()->px2bp($FONTNAME);
 
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
@@ -57,7 +58,7 @@ sub _init {
         while( my ($legend, $colour) = splice @colours, 0, 2 ) {
             $self->push(new Sanger::Graphics::Glyph::Rect({
                 'x'         => $im_width * $x/$NO_OF_COLUMNS,
-                'y'         => $y * $BOX_HEIGHT * 2 + 6,
+                'y'         => $y * ( $th + 3 ) + 6,
                 'width'     => $BOX_WIDTH, 
                 'height'    => $BOX_HEIGHT,
                 'colour'    => $colour,
@@ -66,7 +67,7 @@ sub _init {
             }));
             $self->push(new Sanger::Graphics::Glyph::Text({
                 'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
-                'y'         => $y * $BOX_HEIGHT * 2 + 4,
+                'y'         => $y * ( $th + 3 ) + 4,
                 'height'    => $Config->texthelper->height($FONTNAME),
                 'font'      => $FONTNAME,
                 'colour'    => $colour,

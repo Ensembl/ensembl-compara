@@ -151,7 +151,7 @@ sub _init_non_assembled_contig {
 #######
 # Draw the Contig Tiling Path
 #
-  my ($w,$h)   = $Config->texthelper()->real_px2bp('Tiny');    
+  my ($w,$h)   = $Config->texthelper()->real_px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});    
   my $i = 1;
   my @colours  = qw(contigblue1 contigblue2);
 
@@ -175,7 +175,7 @@ sub _init_non_assembled_contig {
       'x'         => $rstart - 1,
       'y'         => $ystart+2,
       'width'     => $rend - $rstart+1,
-      'height'    => 11,
+      'height'    => $h+4,
       'colour'    => $colours[0],
       'absolutey' => 1, 
     });
@@ -241,7 +241,7 @@ sub _init_non_assembled_contig {
         my $tglyph = new Sanger::Graphics::Glyph::Text({
           'x'          => ($rend + $rstart - $bp_textwidth)/2,
           'y'          => $ystart+4,
-          'font'       => 'Tiny',
+          'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
           'colour'     => 'white',
           'text'       => $pointer,
           'absolutey'  => 1,
@@ -252,7 +252,7 @@ sub _init_non_assembled_contig {
       my $tglyph = new Sanger::Graphics::Glyph::Text({
         'x'          => ($rend + $rstart - 1 - $bp_textwidth)/2,
         'y'          => $ystart+5,
-        'font'       => 'Tiny',
+        'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
         'colour'     => 'white',
         'text'       => $label,
         'absolutey'  => 1,
@@ -276,7 +276,7 @@ sub _init_non_assembled_contig {
   $self->unshift($gline);
   $gline = new Sanger::Graphics::Glyph::Rect({
     'x'         => 0,
-    'y'         => $ystart+15,
+    'y'         => $ystart + $h + 8,
     'width'     => $im_width,
     'height'    => 0,
     'colour'    => $black,
@@ -307,7 +307,7 @@ sub _init_non_assembled_contig {
     }) );
     $self->unshift( new Sanger::Graphics::Glyph::Rect({# the reverse strand ticks 
       'x'         => 0 + $pos,
-      'y'         => $ystart+16,
+      'y'         => $ystart + $h + 8,
       'width'     => 0,
       'height'    => 3,
       'colour'    => $black,
@@ -330,7 +330,7 @@ sub _init_non_assembled_contig {
   # the reverse strand ticks
   $self->unshift( new Sanger::Graphics::Glyph::Rect({
     'x'         => $im_width - 1 - $corr,
-    'y'         => $ystart+16,
+    'y'         => $ystart + $h + 8,
     'width'     => 0,
     'height'    => 1,
     'colour'    => $black,
@@ -373,7 +373,7 @@ sub _init_non_assembled_contig {
       'x'            => $rbs - $global_start2,
       'y'            => $ystart - 4 ,
       'width'        => $gwidth,
-      'height'       => 23,
+      'height'       => $h + 16,
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );
@@ -381,7 +381,7 @@ sub _init_non_assembled_contig {
       'x'            => $rbs - $global_start2,
       'y'            => $ystart - 3 ,
       'width'        => $gwidth,
-      'height'       => 21,
+      'height'       => $h + 14,
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );
@@ -412,7 +412,7 @@ sub _init_non_assembled_contig {
       # the reverse strand ticks
       $self->unshift( new Sanger::Graphics::Glyph::Space({
         'x'         => $im_width - $pos - $interval,
-        'y'         => $ystart+16,
+        'y'         => $ystart + $h + 8,
         'width'     => $interval,
         'height'    => 3,
         'absolutey' => 1,
