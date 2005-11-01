@@ -34,6 +34,7 @@ sub parse_URL {
     $request->header( 'Cache-control' => 'no-cache' );
     my $response = $ua->request($request);
     if( $response->is_success ) {
+warn $response->content;
       $self->parse( $response->content );
     } else {
        warn( "Failed to parse: $URL" );
@@ -86,6 +87,7 @@ sub parse {
           warn "Adding PSL feature";
           push @{$self->{'tracks'}{ $current_key }{'features'}}, EnsEMBL::Web::URLfeature::PSL->new( \@ws_delimited );
         } else {
+warn "BED...";
           push @{$self->{'tracks'}{ $current_key }{'features'}}, EnsEMBL::Web::URLfeature::BED->new( \@ws_delimited );
         }
       }

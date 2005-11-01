@@ -12,16 +12,18 @@ sub rawend  { my $self = shift; return $self->{'__raw__'}[2] + 1; }
 sub id      { my $self = shift; return $self->{'__raw__'}[3]; }
 
 sub slide   {
-  my $self = shift; my $offset = shift;
-  $self->{'start'} = $self->{'__raw__'}[1]+ $offset + 1;
-  $self->{'end'}   = $self->{'__raw__'}[2]+ $offset + 1;
+  my $self = shift;
+  my $offset = shift;
+  my $extra = $self->hstrand >= 0 ? 1 : 0;
+  $self->{'start'} = $self->{'__raw__'}[1]+ $offset + $extra;
+  $self->{'end'}   = $self->{'__raw__'}[2]+ $offset + $extra;
 }
 
 sub cigar_string {
   my $self = shift;
   return $self->{'_cigar'} if $self->{'_cigar'};
   if($self->{'__raw__'}[9]) {
-    my $strand = $self->strand();
+    my $strand = $self->hstrand();
     my $cigar;
     my @block_starts  = split /,/,$self->{'__raw__'}[11];
     my @block_lengths = split /,/,$self->{'__raw__'}[10];

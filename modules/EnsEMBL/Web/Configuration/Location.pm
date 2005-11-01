@@ -294,9 +294,12 @@ sub cytoview {
       $P->parse_URL;
       foreach my $K ( keys %{$P->{'tracks'}} ) {
         foreach( @URL_configs ) {
-          warn "pushed $_ $K";
           push @{$_->{'_managers'}->{'urlfeature'}} , $K;
-          $_->{'__url_source_data__'}{$K} = $P->{'tracks'}{$K};
+          if( exists( $_->{'__url_source_data__'}{$K}) ) {
+            push @{ $_->{'__url_source_data__'}{$K}{'features'} }, @{ $P->{'tracks'}{$K}{'features'} };
+          } else {
+            $_->{'__url_source_data__'}{$K} = $P->{'tracks'}{$K};
+          }
         }
       }
     }
@@ -420,7 +423,11 @@ sub contigview {
       foreach my $K ( keys %{$P->{'tracks'}} ) {
         foreach( @URL_configs ) {
           push @{$_->{'_managers'}->{'urlfeature'}} , $K;
-          $_->{'__url_source_data__'}{$K} = $P->{'tracks'}{$K};
+          if( exists( $_->{'__url_source_data__'}{$K}) ) {
+            push @{ $_->{'__url_source_data__'}{$K}{'features'} }, @{ $P->{'tracks'}{$K}{'features'} };
+          } else {
+            $_->{'__url_source_data__'}{$K} = $P->{'tracks'}{$K};
+          }
         }
       }
     }
