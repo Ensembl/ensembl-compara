@@ -70,6 +70,7 @@ CREATE TABLE protein_tree_tags (
   tag                    varchar(50),
   value                  mediumtext,
 
+  UNIQUE tag_node_id (node_id, tag_id);
   KEY (node_id),
   KEY (tag)
 );
