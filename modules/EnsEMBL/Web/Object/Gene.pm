@@ -285,7 +285,7 @@ sub get_DASCollection{
 	$dasfact->createObjects;
 	if( $dasfact->has_a_problem ){
 	    my $prob = $dasfact->problem->[0];
-#	    warn join( ':', $prob->type, $prob->name, $prob->description );
+	    warn join( ':', $prob->type, $prob->name, $prob->description );
 	    return;
 	}else{
 	    my $das_collection = $dasfact->DataObjects->[0];
