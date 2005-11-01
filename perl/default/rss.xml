@@ -8,9 +8,9 @@ my $release_id = $SiteDefs::VERSION;
 my $web_db = $SD->databases->{'ENSEMBL_WEBSITE'};
 my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($web_db);
 
-my $results = $wa->fetch_items({ 'criteria' => { 'release' => 33 } });
+my $results = $wa->fetch_items({ 'criteria' => { 'release' => 35 } });
 
-print "Content-type: text/plain\n\n";
+print "Content-type: xml/rss\n\n";
 
 print qq(
 <rss version="2.0">
