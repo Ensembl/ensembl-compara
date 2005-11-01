@@ -62,7 +62,7 @@ incorporation of third-party annotation data by "attaching a
 DAS source".  Ensembl uses DAS for showing
 external third-party data and data from in-house DAS sources.
 The 
-<a href="/Homo_sapiens/helpview?se=1&kw=dasconfview" target="_top">help pages for DASConfView</a> explain how to attach a DAS data source to an Ensembl display.</p>
+<a href="/Homo_sapiens/helpview?se=1;kw=dasconfview" target="_top">help pages for DASConfView</a> explain how to attach a DAS data source to an Ensembl display.</p>
 
 
 <p>Some Ensembl displays introduce semantic extensions to
@@ -77,9 +77,9 @@ href="http://biodas.org/documents/spec.html">DAS/1.5</a>
 specification.  
 
 In Ensembl, genomic DAS sources can be attached to 
-<a href="http://www.ensembl.org/Homo_sapiens/contigview?region=AC112492.3.1.116568&start=2015&end=116568">ContigView</a>
+<a href="http://www.ensembl.org/Homo_sapiens/contigview?region=AC112492.3.1.116568;start=2015;end=116568">ContigView</a>
 and
-<a href="http://www.ensembl.org/Homo_sapiens/cytoview?region=AL592145.4.1.5885&start=2001&end=5885">CytoView</a> (see examples in human) 
+<a href="http://www.ensembl.org/Homo_sapiens/cytoview?region=AL592145.4.1.5885;start=2001;end=5885">CytoView</a> (see examples in human)
 if the annotation is in chromosomal coordinates, 
 on contigs or on any basic assembly structure known to Ensembl 
 for that species.  For genomic DAS sources the assembly version is 
@@ -166,13 +166,13 @@ pages, e.g.</p>
 
 <ul>
 <li>
-<a href="http://www.ensembl.org/Mus_musculus/protview?peptide=MIP_MOUSE&amp;db=core&amp;ENSEMBL_GENE_DAS_SOURCES!!SwissProt!!active=1">http://www.ensembl.org/Mus_musculus/protview?peptide=MIP_MOUSE</a>
+<a href="http://www.ensembl.org/Mus_musculus/protview?peptide=MIP_MOUSE;db=core;ENSEMBL_GENE_DAS_SOURCES!!SwissProt!!active=1">http://www.ensembl.org/Mus_musculus/protview?peptide=MIP_MOUSE</a>
 </li>
 <li>
-<a href="http://www.ensembl.org/Homo_sapiens/protview?peptide=CLAT_HUMAN&amp;db=core&amp;ENSEMBL_GENE_DAS_SOURCES!!SwissProt!!active=0&amp;ENSEMBL_GENE_DAS_SOURCES!!InterPro!!active=1">http://www.ensembl.org/Homo_sapiens/protview?peptide=CLAT_HUMAN</a>
+<a href="http://www.ensembl.org/Homo_sapiens/protview?peptide=CLAT_HUMAN;db=core;ENSEMBL_GENE_DAS_SOURCES!!SwissProt!!active=0;ENSEMBL_GENE_DAS_SOURCES!!InterPro!!active=1">http://www.ensembl.org/Homo_sapiens/protview?peptide=CLAT_HUMAN</a>
 </li>
 <li>
-<a href="http://www.ensembl.org/Homo_sapiens/protview?peptide=P01591&amp;db=core&amp;ENSEMBL_GENE_DAS_SOURCES!!UniProt!!active=1">http://www.ensembl.org/Homo_sapiens/protview?peptide=P01591</a>
+<a href="http://www.ensembl.org/Homo_sapiens/protview?peptide=P01591;db=core;ENSEMBL_GENE_DAS_SOURCES!!UniProt!!active=1">http://www.ensembl.org/Homo_sapiens/protview?peptide=P01591</a>
 </li>
 </ul>
 
@@ -210,9 +210,198 @@ DAS request with both GeneDAS and ProteinDAS annotations is:</p>
 
 <ul>
 <li>
-<a href="http://www.ensembl.org/Homo_sapiens/geneview?DASselect_UniProt=1&amp;%3ADASselect_UniProt=0&amp;gene=P51587&amp;db=core">http://www.ensembl.org/Homo_sapiens/geneview?gene=P51587</a>
+<a href="http://www.ensembl.org/Homo_sapiens/geneview?DASselect_UniProt=1;%3ADASselect_UniProt=0;gene=P51587;db=core">http://www.ensembl.org/Homo_sapiens/geneview?gene=P51587</a>
 </li>
 </ul>
+
+
+<h3 class="boxed">URL Auto-Configuration</h3>
+
+<p>
+DAS sources can be automatically attached and configured while following links to Ensembl data displays.
+</p>
+
+<h4>Mandatory Parameters</h4>
+
+<p>
+URLs for automatic DAS source attachment must contain the following parameters:
+</p>
+
+
+<ul>
+
+<li>
+<p>
+<strong>url</strong> -
+The URL to the DAS server ending with '/das'.
+</p>
+</li>
+
+<li>
+<p>
+<strong>dsn</strong> -
+The DAS source name as defined in the DAS server.
+</p>
+</li>
+
+<li>
+<p>
+<strong>type</strong> -
+The mapping type, which defines the coordinate sytem to use for fetching features.
+</p>
+
+<p>
+Possible values are:
+</p>
+
+<dl>
+
+<dt>hugo</dt>
+<dd>
+The gene symbol as assigned by the Human Genome Nomencalture Committee
+(<a href="http://www.gene.ucl.ac.uk/nomenclature/" target="external">HGNC</a>) <i>e.g. BRCA2</i>
+</dd>
+
+<dt>markersymbol</dt>
+<dd>The gene symbol as assigned by Mouse Genome Informatics
+(<a href="http://www.informatics.jax.org/" target="external">MGI</a>) <i>e.g. Brca2</i>
+</dd>
+
+<dt>mgi</dt>
+<dd>MGI IDs corresponding to the Mouse Genome Informatics database <i>e.g. MGI:109337</i></dd>
+
+<dt>ensembl_gene</dt>
+<dd>Ensembl Gene ID <i>e.g. ENSG00000139618</i></dd>
+
+<dt>ensembl_location</dt>
+<dd>Ensembl Location <i>e.g. 13:31787617-31871805</i></dd>
+
+<dt>ensembl_peptide</dt>
+<dd>Ensembl Peptide ID <i>e.g. ENSP00000267071</i></dd>
+
+<dt>ensembl_transcript</dt>
+<dd>Ensembl Transcript ID <i>e.g. ENST00000267071</i></dd>
+
+<dt>uniprot/swissprot</dt>
+<dd><a href="http://www.ebi.ac.uk/swissprot/" target="external">Uniprot/Swiss-Prot</a> Name <i>e.g. BRCA2_HUMAN</i></dd>
+
+<dt>uniprot/swissprot_acc</dt>
+<dd><a href="http://www.ebi.ac.uk/swissprot/" target="external">Uniprot/Swiss-Prot</a> Accession number <i>P51587</i></dd>
+
+<dt>entrezgene</dt>
+<dd><a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=gene" target="external">Entrez Gene</a> ID <i>e.g. 675</dd>
+
+<dt>ipi_acc</dt>
+<dd>
+International Protein Index
+(<a href="http://www.ebi.ac.uk/ipi/" target="external">IPI</a>) accession number <i>e.g. IPI00015171</i>
+</dd>
+
+<dt>ipi_id</dt>
+<dd>
+International Protein Index
+(<a href="http://www.ebi.ac.uk/ipi/" target="external">IPI</a>) name <i>e.g. IPI00015171.4</i>
+</dd>
+
+</dl>
+</li>
+
+<li>
+<p>
+<strong>name</strong> -
+The DAS source name as it will appear on Ensembl data displays.
+</p>
+</li>
+
+</ul>
+
+<h4>Optional Parameters</h4>
+
+<ul>
+
+<li>
+<p>
+<strong>active</strong> -
+Set active=1 to not only attach the DAS source but also automatically switch it on for display.
+</p>
+</li>
+
+<li>
+<p>
+<strong>stylesheet</strong> -
+Set stylesheet=y to use a source stylesheet to display features.
+</p>
+</li>
+
+<li>
+<p>
+<strong>score</strong> -
+Set score=h to display data as a histogram.
+</p>
+</li>
+
+<li>
+<p>
+<strong>label</strong> -
+Set label=TEXT to define a name for the DAS track in ContigView and CytoView.
+</p>
+</li>
+
+<li>
+<p>
+<strong>caption</strong> -
+Set caption=TEXT to define a name of the DAS source as it will appear in the DAS menu.
+</p>
+</li>
+
+<li>
+<p>
+<strong>group</strong> -
+Set group=y to group features.
+</p>
+</li>
+
+<li>
+<p>
+<strong>color</strong> -
+Set color=COLOUR to use this colour for feature display.
+</p>
+</li>
+
+
+<li>
+<p>
+<strong>strand</strong> -
+Set strand=b|f|r to display features on both, forward or reverse strand, respectively.
+</p>
+</li>
+
+<li>
+<p>
+<strong>depth</strong> -
+Set depth=INT for the number of rows to be used by this DAS track in ContigView.
+Set to 10000 for unlimited.
+</p>
+</li>
+
+<li>
+<p>
+<strong>labelflag</strong> -
+Set labelflag=n|o|u to display no feature labels at all or to display them over or under the feature, respectively.
+</p>
+</li>
+
+</ul>
+
+<h4>Example URL</h4>
+
+<p>
+The following example URL activates a DAS track in Ensembl ContigView, which annotates the results of Ensembl Pepetide ID to PDB protein structure mapping.
+</p>
+
+<pre>
+<a href="http://www.ensembl.org/Homo_sapiens/contigview?peptide=ENSP00000354398&add_das_source=(url=http://das.sanger.ac.uk/das+dsn=ensppdbmapping+type=ensembl_peptide+name=ENSP_PDB_mapping+active=1)" target="external">http://www.ensembl.org/Homo_sapiens/contigview?peptide=ENSP00000354398&add_das_source=(url=http://das.sanger.ac.uk/das+dsn=ensppdbmapping+type=ensembl_peptide+name=ENSP_PDB_mapping+active=1)</a>
+</pre>
 
 </body>
 </html>
