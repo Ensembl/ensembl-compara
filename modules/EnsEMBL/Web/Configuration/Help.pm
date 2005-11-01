@@ -21,7 +21,8 @@ sub helpview {
   $self->{'page'}->menu->add_block( '___', 'bulleted', 'Help with help!' );
   $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( 'helpview' ), 'text' => 'General' ) ;
   $self->{'page'}->menu->add_entry( '___', 'href' => $object->_help_URL( 'helpview#searching' ), 'text' => 'Full text search' );
-  $self->set_title( 'Ensembl HelpView' );
+  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
+  $self->set_title( "$sitetype HelpView" );
   my $include_form = 1;
   if( $object->param( 'action' ) ) { ## Actually this is the old helpdesk page...
     if( $object->param( 'action' ) eq 'thank_you' ) {
@@ -71,7 +72,7 @@ sub helpview {
       } else {
         my $panel = $self->new_panel( '',
           'code'    => 'panel',
-          'caption' => qq(Ensembl help),
+          'caption' => "$sitetype help",
           'object'  => $object
         );
         $panel->add_components(qw(first_page EnsEMBL::Web::Component::Help::first_page));

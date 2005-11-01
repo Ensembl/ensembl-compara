@@ -30,7 +30,8 @@ sub send_email {
   $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
   $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";
   my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
-  $mailer->open({ 'To' => $self->species_defs->ENSEMBL_HELPDESK_EMAIL, 'Subject' => "Ensembl website Helpdesk", });
+  my $sitetype = ucfirst(lc($self->species_defs->ENSEMBL_SITETYPE))||'Ensembl';
+  $mailer->open({ 'To' => $self->species_defs->ENSEMBL_HELPDESK_EMAIL, 'Subject' => "$sitetype website Helpdesk", });
   print $mailer $message;
   $mailer->close();
   $self->problem( 'redirect',

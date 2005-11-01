@@ -13,9 +13,10 @@ use constant 'HELPVIEW_IMAGE_DIR'   => "/img/help";
 
 sub form_thankyou {
   my($panel,$object) = @_;
+  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
   $panel->print(qq(
 <p>
- Your message was successfully sent to the Ensembl Site Helpdesk Administration Team. They will get back to you in due course.
+ Your message was successfully sent to the $sitetype Site Helpdesk Administration Team. They will get back to you in due course.
 </p>
 <p>
  Helpdesk
