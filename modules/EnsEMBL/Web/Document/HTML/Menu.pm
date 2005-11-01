@@ -194,11 +194,13 @@ sub block_render_bulleted {
     my $extra = $entry->{'icon'} ? qq( style="list-style: url($entry->{'icon'})") : "";
     if( exists( $entry->{'options'} ) ) {
       my $style = $entry->{'popup'} ne 'no' ? " dropdown" : '';
-      $self->printf( qq(\n    <li class="bullet$style"$extra>%s\n      <ul>), $self->_atag($entry) );
+      $self->printf( qq(\n    <li class="bullet$style"$extra>%s\n), $self->_atag($entry) );
+      $self->print( qq(    <ul>) ) unless scalar(@{$entry->{'options'}}) < 1;
       foreach( @{$entry->{'options'}} ) {
           $self->printf( qq(\n      <li class="m">%s</li>), $self->_atag( $_ ) ); 
       }
-      $self->print( qq(\n    </ul>\n</li>));
+      $self->print( qq(\n    </ul>) ) unless scalar(@{$entry->{'options'}}) < 1;
+      $self->print( qq(\n</li>));
     } else {
       $self->printf( qq(\n     <li class="bullet"$extra>%s</li>), $self->_atag( $entry ));
     }
