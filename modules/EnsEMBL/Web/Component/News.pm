@@ -148,8 +148,9 @@ sub show_news {
     $sp_dir = $sp_lookup{$object->param('species')};
   }
 
+  my $rel_selected = $object->param('release_id') || $object->param('rel');
   my @sorted_items;
-  if ($object->param('release_id') eq 'all' || $object->param('rel') eq 'all') {
+  if ($rel_selected eq 'all') {
     @sorted_items = sort
                     { $b->{'release_id'} <=> $a->{'release_id'} }
                     @items;
@@ -210,7 +211,7 @@ sub show_news {
 
 ## is it a new category?
     if ($prev_cat != $news_cat_id) {
-        $html .= _output_cat_heading($news_cat_id, $cat_name, $object->param('release_id'));
+        $html .= _output_cat_heading($news_cat_id, $cat_name, $rel_selected);
     }
 
 ## show list of affected species (data updates only) on main news page 
