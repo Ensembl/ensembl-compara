@@ -120,7 +120,7 @@ sub format_das_panel {
 
 	  if (my $flink = $feature->das_link) {
 	      my $href = $flink->{'href'};
-	      $uhash{$id}->{label} = sprintf( $link_tmpl, $href, $segment, $feature->das_feature_label )
+	      $uhash{$id}->{label} = sprintf( $link_tmpl, $href, $segment, $feature->das_feature_label );
           } else {
             $uhash{$id}->{label} = $feature->das_feature_label;
           }
@@ -174,6 +174,7 @@ sub format_das_panel {
         ) );
       }
     } else {
+	
       my @features = $object->get_das_features_by_name($source_nm);
       foreach my $feature( sort{ $a->das_type_id    cmp $b->das_type_id ||
                                  $a->das_feature_id cmp $b->das_feature_id ||
@@ -182,10 +183,12 @@ sub format_das_panel {
                  $feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET):/i);
         next if ($feature->start && $feature->end);
         my $segment = $feature->das_segment->ref;
-        my $id = $feature->das_feature_label;
-        if( my $href = $feature->das_link ){
-          $id = sprintf( $link_tmpl, $href, $segment, $id );
-        }
+	my $label = $feature->das_feature_label;
+	if (my $flink = $feature->das_link) {
+	    my $href = $flink->{'href'};
+	    $label = sprintf( $link_tmpl, $href, $segment, $label );
+	}
+
 	my $score  = ($feature->das_score > 0) ? sprintf("%.02f",$feature->das_score) : '&nbsp;';
         my $note;
         if( $note = $feature->das_note ) {
@@ -202,7 +205,7 @@ sub format_das_panel {
           $feature->das_type || '&nbsp;',
           ($feature->das_type_id eq $feature->das_type) ? '&nbsp;' :
 	      "(".$feature->das_type_id.")",
-          $id                || '&nbsp;',
+          $label                || '&nbsp;',
 	  ($feature->das_feature_id eq $feature->das_feature_label) ? '&nbsp;':
 	      "(".$feature->das_feature_id.")",
 	  $feature->das_method,
