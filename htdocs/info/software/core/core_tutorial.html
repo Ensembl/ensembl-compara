@@ -7,7 +7,6 @@
 
 <body>
 
-
 <h2>Perl API Tutorial</h2>
 
 <p>
@@ -61,7 +60,7 @@ perldoc Bio::EnsEMBL::Slice
 </pre>
 
 <p>
-For additional information you can contact 
+For additional information you can contact
 <a href="../../about/contact.html">ensembl-dev</a>, the Ensembl development mailing list:
 (see [[LINK::info/about/contact.html]]).
 </p>
@@ -919,7 +918,7 @@ my $clones = $mfa->fetch_all_by_attribute_type_value('Name',
 
 foreach my $clone (@$clones) {
   my $slice = $clone->slice();
-  print $slice->coord_system->name(), ' ', 
+  print $slice->coord_system->name(), ' ',
         $slice->seq_region_name(), ' ',
         $clone->start(), '-', $clone->end(), "\n";
 
@@ -1441,3 +1440,6 @@ my $gene = $gadap->fetch_by_stable_id("ENSESTG00000015126");
 
 print $gene->seq."\n";
 </pre>
+
+</body>
+</html>
