@@ -304,7 +304,7 @@ sub das_wizard {
       $form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'post'); 
     }
 
-    my @cparams = qw ( db gene transcript peptide c w h l vc_start vc_end region);
+    my @cparams = qw ( conf_script db gene transcript peptide c w h l vc_start vc_end region);
     foreach my $param (@cparams) {
 #      warn "$param  ----------- ",$object->param($param);
       if( defined(my $v = $object->param($param)) ) {
@@ -320,9 +320,6 @@ sub das_wizard {
 	$fname = "das_wizard_".$step;
 	&{$fname}($form, \%source_conf, $object, \$step, $error);
     }
-
-    warn("EDIT:");
-    warn(Dumper(\%source_conf));
 
     &wizardTopPanel($form, $step, $source_conf{sourcetype});
 
@@ -376,7 +373,7 @@ sub added_sources {
             $das_action = $edit_link.$delete_link;
         }
 
-	my @cparams = qw ( db gene transcript peptide c w h l vc_start vc_end region);
+	my @cparams = qw ( conf_script db gene transcript peptide c w h l vc_start vc_end region);
 	my $url = sprintf("http://%s%s/%s/%s?",
 			  $ENV{'SERVER_NAME'},
 			  $ENV{'SERVER_PORT'} == 80 ? '' : ":$ENV{'SERVER_PORT'}",
