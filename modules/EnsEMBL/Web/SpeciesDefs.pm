@@ -1022,6 +1022,7 @@ sub db_connect {
     return undef;
   }
 
+  warn "Connecting to $db_name";
   my $dbhost  = $tree->{'databases'}->{$db_name}{'HOST'};
   my $dbport  = $tree->{'databases'}->{$db_name}{'PORT'};
   my $dbuser  = $tree->{'databases'}->{$db_name}{'USER'};
@@ -1241,6 +1242,11 @@ Disallow: /BioMart/
     foreach( @$ENSEMBL_SPECIES ) { 
       print FH qq(Disallow: /$_/\n);
     }
+print FH qq(
+
+User-Agent: W3C-checklink
+Disallow:
+);
     close FH;
   } else {
     warn "Unable to creates robots.txt file in $root-robots";
