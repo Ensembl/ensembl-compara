@@ -149,7 +149,7 @@ sub show_news {
   }
 
   my @sorted_items;
-  if ($object->param('release_id') eq 'all') {
+  if ($object->param('release_id') eq 'all' || $object->param('rel') eq 'all') {
     @sorted_items = sort
                     { $b->{'release_id'} <=> $a->{'release_id'} }
                     @items;
@@ -210,7 +210,7 @@ sub show_news {
 
 ## is it a new category?
     if ($prev_cat != $news_cat_id) {
-        $html .= _output_cat_heading($news_cat_id, $cat_name);
+        $html .= _output_cat_heading($news_cat_id, $cat_name, $object->param('release_id'));
     }
 
 ## show list of affected species (data updates only) on main news page 
@@ -243,8 +243,9 @@ sub show_news {
 }
 
 sub _output_cat_heading {
-    my ($cat_id, $cat_name) = @_;
-    my $html = qq(<h3 class="boxed" id="cat$cat_id">$cat_name</h3>\n);
+    my ($cat_id, $cat_name, $release) = @_;
+    my $anchor = $release eq 'all' ? '' : qq( id="cat$cat_id") ;
+    my $html = qq(<h3 class="boxed"$anchor>$cat_name</h3>\n);
     return $html;
 }
 
