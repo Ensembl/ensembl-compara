@@ -37,7 +37,7 @@ sub param_list {
   my $T = {
     'Family'   => [qw(family_stable_id)],
     'Homology' => [qw(gene g1)],
-    'AlignSlice' => [qw(chr bp_start bp_end as)],
+    'AlignSlice' => [qw(chr bp_start bp_end as method s)],
   };
   return @{$T->{$class}||[]};
 }
