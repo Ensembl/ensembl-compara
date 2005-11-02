@@ -376,7 +376,7 @@ sub added_sources {
 	my @cparams = qw ( conf_script db gene transcript peptide c w h l vc_start vc_end region);
 	my $url = sprintf("http://%s%s/%s/%s?",
 			  $ENV{'SERVER_NAME'},
-			  $ENV{'SERVER_PORT'} == 80 ? '' : ":$ENV{'SERVER_PORT'}",
+			  $ENV{'ENSEMBL_PORT'} ? ($ENV{'ENSEMBL_PORT'} == 80 ? '' : ":$ENV{'ENSEMBL_PORT'}") : '',
 			  $ENV{'ENSEMBL_SPECIES'},
 			  $object->param('conf_script'));
 	foreach my $param (@cparams) {
