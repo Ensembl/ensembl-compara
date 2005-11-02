@@ -896,7 +896,6 @@ sub _init {
     'tstrand'  => $self->strand,
     'STRAND'   => $self->strand(),
     'cmap'     => $Config->colourmap(),
-    'colour'   => $Config->get($das_config_key, 'col') || $Extra->{'col'} || 'contigblue1',
     'depth'    => $Config->get($das_config_key, 'dep') || $Extra->{'depth'} || 4,
     'use_style'=> uc( $Config->get($das_config_key, 'stylesheet') || $Extra->{'stylesheet'} ) eq 'Y',
     'labelling'=> ($Config->get($das_config_key, 'lflag') || $Extra->{'labelflag'}) =~ /^n$/i ? 0 : 1,
@@ -911,7 +910,7 @@ sub _init {
   my $dastype = $Extra->{'type'} || 'ensembl_location';
   my @das_features = ();
 
-  $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{col} || 'contigblue1';
+  $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{color} || 'contigblue1';
   $configuration->{depth} =  defined($Config->get($das_config_key, 'dep')) ? $Config->get($das_config_key, 'dep') : $Extra->{depth} || 4;
   $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
   $configuration->{use_score} = $Extra->{score} ? uc($Extra->{score}) eq 'Y' : uc($Config->get($das_config_key, 'score')) eq 'Y';
