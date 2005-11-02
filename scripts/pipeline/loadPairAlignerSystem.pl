@@ -33,6 +33,8 @@ my %hive_params;
 my %compara_conf;
 $compara_conf{'-port'} = 3306;
 
+Bio::EnsEMBL::Registry->no_version_check(1);
+
 $self->parse_conf($conf_file);
 
 unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and defined($compara_conf{'-dbname'})) {

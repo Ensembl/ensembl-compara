@@ -36,6 +36,8 @@ GetOptions('help'     => \$help,
 
 if ($help) { usage(); }
 
+Bio::EnsEMBL::Registry->no_version_check(1);
+
 parse_conf($conf_file);
 
 if($host)   { $compara_conf{'-host'}   = $host; }
