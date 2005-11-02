@@ -45,6 +45,7 @@ sub init {
 					  'labels'    => 'on',
 					  'available' => 'features markers'),
 	$self->add_track( 'chr_band', 'on'=>'on', 'pos' => $POS++ );
+	$self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'zindex' => -20, 'pos' => 1000100 );
 
 	$POS = 100000;
 	$self->add_track( 'gene_legend', 'str' => 'r', 'on'=>'on', 'pos' => $POS++ );

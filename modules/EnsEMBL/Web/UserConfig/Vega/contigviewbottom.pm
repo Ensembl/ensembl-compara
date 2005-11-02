@@ -34,7 +34,7 @@ sub init {
              sequence  codonseq  codons gap gcplot    
 
              gene_legend missing
-             restrict ),
+             restrict redbox ),
 
            qw(glovar_snp glovar_haplotype glovar_sts)
           ],
@@ -158,6 +158,14 @@ sub init {
       'navigation' => 'on',
       'pos' => '0',
     },
+
+    'redbox' => {
+      'on' => 'off',
+      'pos' => '1000000',
+      'col' => 'red',
+      'zindex' => -20,
+    },
+
 
 ## Blast and SSAHA tracks displayed if linked to from Blast/SSAHA...
 ## These get put beside the central track and so are numbered 5 and 7
