@@ -10,7 +10,6 @@ sub features {
     # check data availability
     my $chr = $self->{'container'}->seq_region_name;
 	my $species = $self->{'config'}{'species'} || $self->{'container'}{'_config_file_name_'};
-warn $species;	
     my $avail = (split(/ /, $self->my_config('available')))[1]
                 . "." . $self->{'container'}->seq_region_name;
     return ([]) unless($self->species_defs->get_config($species, 'DB_FEATURES')->{uc($avail)});
