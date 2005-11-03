@@ -89,6 +89,7 @@ sub new {
     'protein_coding_PREDICTED'         => [ 'steelblue4', 'Predicted Protein coding'] ,
     'processed_transcript_NOVEL'       => [ 'skyblue3', 'Novel Processed transcript' ],
     'processed_transcript_PUTATIVE'    => [ 'lightslateblue', 'Putative Processed transcript' ],
+    'total_pseudogene_NOVEL'           => [ 'grey70', 'Total Pseudogenes' ],
     'pseudogene_NOVEL'                 => [ 'grey70', 'Novel Pseudogene' ],
     'processed_pseudogene_NOVEL'       => [ 'grey38', 'Novel Processed pseudogene' ],
     'unprocessed_pseudogene_NOVEL'     => [ 'grey27', 'Novel Unprocessed pseudogene' ],
