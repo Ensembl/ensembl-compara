@@ -533,9 +533,8 @@ sub storeMaskingOptions
 
     return unless($options_hash_ref);
 
-    my @keys = keys %{$options_hash_ref};
-    my $options_string = "{\n";
-    foreach my $key (@keys) {
+    $options_string = "{\n";
+    foreach my $key (keys %{$options_hash_ref}) {
       $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
     }
     $options_string .= "}";
@@ -547,6 +546,7 @@ sub storeMaskingOptions
     $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
 
   $dnaCollectionConf->{'masking_options'} = undef;
+  $dnaCollectionConf->{'masking_options_file'} = undef;
 }
 
 
