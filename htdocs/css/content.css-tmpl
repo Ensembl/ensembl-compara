@@ -59,6 +59,10 @@ img.float-left { float:left; padding-right:10px; }
 
 img.float-right { float:right; padding-left:10px; }
 
+.sp-thumb { float:left; padding-right:4px; clear:left; }
+dl.species-list dt { margin:0px; padding:0px; min-height:15px; }
+dl.species-list dd { margin:0px 0px 2px 0px; padding:0px; min-height:25px; }
+
 .screenshot { text-align:center; margin:auto; padding:10px; }
 
 .karyomap { text-align:center; margin:auto; }
