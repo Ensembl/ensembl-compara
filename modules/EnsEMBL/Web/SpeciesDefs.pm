@@ -1281,6 +1281,7 @@ sub bread_crumb_creator {
           if( $nav ) {
             $ENSEMBL_BREADCRUMBS->{ $dir } = [ $nav , $title ] if $nav;
             $dirs2{$dir} = 1;
+			last;
           }
         }
       }
