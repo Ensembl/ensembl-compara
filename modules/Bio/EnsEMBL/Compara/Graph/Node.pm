@@ -301,6 +301,14 @@ sub print_node {
 }
 
 
+sub print_links {
+  my $self  = shift;
+  foreach my $link (@{$self->links}) {
+    $link->print_link;
+  }
+}
+
+
 sub link_count {
   my $self = shift;
   return scalar(@{$self->links});
