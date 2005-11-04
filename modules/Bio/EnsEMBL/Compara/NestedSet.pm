@@ -190,7 +190,7 @@ sub disavow_parent {
 
 =head2 release_children
 
-  Overview   : release all children and clear arrays and hashes
+  Overview   : recursive releases all children
                will cause potential deletion of children if refcount reaches Zero.
   Example    : $self->release_children
   Returntype : $self
@@ -235,6 +235,10 @@ sub parent {
   return $self->{'_parent_link'}->get_neighbor($self);
 }
 
+sub parent_link {
+  my $self = shift;
+  return $self->{'_parent_link'};
+}
 
 sub has_parent {
   my $self = shift;
@@ -478,37 +482,27 @@ sub _internal_print_tree {
 sub print_node {
   my $self  = shift;
 
-  printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
+  print("(");
+  if($self->get_tagvalue("Duplication") eq '1') { print("DUP "); }
+  printf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
   printf("%s\n", $self->name);
 }
 
 
 sub newick_format {
   my $self = shift;
-  my $newick = "";
+  my $format_mode = shift;
   
-  if($self->get_child_count() > 0) {
-    $newick .= "(";
-    my $first_child=1;
-    foreach my $child (@{$self->sorted_children}) {  
-      $newick .= "," unless($first_child);
-      $newick .= $child->newick_format;
-      $first_child = 0;
-    }
-    $newick .= ")";
-  }
-  
-  if($self->parent) {
-    $newick .= sprintf("\"%s\"", $self->name,);
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent) if($self->distance_to_parent > 0);
-  } else {
-    $newick .= ";";
-  }
+  $format_mode="full" unless(defined($format_mode));
+  my $newick = $self->_internal_newick_format($format_mode); 
+  $newick .= ";";
   return $newick;
 }
 
-sub newick_simple_format {
+
+sub _internal_newick_format {
   my $self = shift;
+  my $format_mode = shift;
   my $newick = "";
   
   if($self->get_child_count() > 0) {
@@ -516,19 +510,46 @@ sub newick_simple_format {
     my $first_child=1;
     foreach my $child (@{$self->sorted_children}) {  
       $newick .= "," unless($first_child);
-      $newick .= $child->newick_simple_format;
+      $newick .= $child->_internal_newick_format($format_mode);
       $first_child = 0;
     }
     $newick .= ")";
   }
   
-  if($self->parent) {
-    $newick .= sprintf("\"%s\"", $self->name) if($self->is_leaf);
+  if($format_mode eq "full") { 
+    #full: name and distance on all nodes
+    $newick .= sprintf("%s", $self->name,);
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  } else {
-    $newick .= ";";
   }
+  if($format_mode eq 'simple') { 
+    #simplified: name only on leaves, dist only if has parent
+    if($self->parent) {
+      if($self->is_leaf) {
+        $newick .= sprintf("\"%s\"", $self->name);
+      }
+      $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+    }
+  }
+  if($format_mode eq 'phylip') { 
+    #phylip: restrict names to 21 characters
+    if($self->parent) {
+      if($self->is_leaf) {
+        my $name = $self->name;
+        $name =~ s/[,(:)]//g;
+        $name = substr($name, 0 , 21);
+        $newick .= sprintf("%s", $name);
+      }
+      $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+    }
+  }
+
   return $newick;
+}
+
+
+sub newick_simple_format {
+  my $self = shift;
+  return $self->newick_format('simple'); 
 }
 
 
