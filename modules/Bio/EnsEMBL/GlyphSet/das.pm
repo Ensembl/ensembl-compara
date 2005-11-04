@@ -80,6 +80,8 @@ sub RENDER_simple {
     $c==0 ? $a->das_start() <=> $b->das_start()  : $c;
   } @{$configuration->{'features'}} ){
 
+
+
     # Handle DAS errors first
     if($f->das_type_id() eq '__ERROR__') {
       $self->errorTrack(
@@ -127,7 +129,6 @@ sub RENDER_simple {
     my $colour = $styledata->{'colour'};
     my $row_height = $configuration->{'h'};
     my $glyph_symbol = $style->{'glyph'};
-
 
     # Draw label first, so we can get the label_height to use in poly offsets
     my $label_height =$self->feature_label( $Composite, 
@@ -208,7 +209,7 @@ sub RENDER_grouped {
   my $empty_flag = 1;
 
   ## Loop over features and hash into groups
-  foreach my $f(@{$configuration->{'features'}}){
+  foreach my $f (@{$configuration->{'features'}}){
     
     # Handle DAS errors first
     if($f->das_type_id() eq '__ERROR__') {
@@ -242,178 +243,11 @@ sub RENDER_grouped {
     return 0;	# indicates no features drawn, because no features there
   }
 
-
   # Flag to indicate if not all features got displayed due to bumping
   my $more_features = 0;
+
   # Loop over groups
-  my $idg = 0;
-  foreach my $group (keys %grouped) {
-      my @feature_group = sort { $a->das_start <=> $b->das_start } @{$grouped{$group}};
-
-## Get start and end of group
-      my $start = $feature_group[0]->das_start;
-      my $end   = $feature_group[-1]->das_end;
-
-## constrain to image window
-      my $START = $start < 1 ? 1 : $start;
-      my $END   = $end > $configuration->{'length'} ? $configuration->{'length'} : $end;
-
-## Compute the length of the label...
-      my $label = $group;
-
-## append number of features in group
-
-      my $num_in_group = scalar @feature_group;
-      if ($num_in_group > 1){
-	  $label .= "[$num_in_group]";
-      }
-    
-      my $label_length = $configuration->{'labelling'} * $self->{'textwidth'} * length(" $label ") * 1.1; # add 10% for scaling text
-      my $row = $configuration->{'depth'} > 0 ? $self->bump( $START, $end, $label_length, $configuration->{'depth'} ) : 0;
-
-      if( $row < 0 ) { ## SKIP IF BUMPED...
-	  $more_features = 1;
-	  next;
-      }
-
-      my $f = $feature_group[0];
-# Very dirty hack to handle Next/Previous links between features when they are grouped
-# If there is Next or Previous label amongst the feature links, 
-# then get Previous link of the first feature in the group and Next link of the last feature in the group
-
-# 
-#      my @next_links = grep { $_->{'txt'} =~ /Next/ } map {$_->das_links} @feature_group;
-#      my @previous_links = grep { $_->{'txt'} =~ /Previous/ } map {$_->das_links} @feature_group;
-#      if (@previous_links) {
-#	  push @{$f->{navigation_links}} , $previous_links[0];
-#      }
-#      if (@next_links) {
-#	  push @{$f->{navigation_links}} , $next_links[0];
-#      }
-
-
-      my $groupsize = scalar @feature_group;
-      $f->{grouped_by} = $group;
-      my( $href, $zmenu ) = $self->gmenu( $f, $groupsize );
-
-
-      my $Composite = new Sanger::Graphics::Glyph::Composite({
-	  'y'            => 0,
-	  'x'            => $START-1,
-	  'absolutey'    => 1,
-	  'zmenu'        => $zmenu,
-      });
-      $Composite->push( new Sanger::Graphics::Glyph::Space({
-	  'x'         => $START-1,
-	  'y'         => 0,
-	  'width'     => $END-$START+1,
-	  'height'    => $configuration->{'h'},
-	  'absolutey' => 1
-	  }) );
-
-      $Composite->{'href'} = $href if $href;
-
-      # fetch group style
-
-      my $groupstyle = $self->get_groupstyle ($f, $configuration);
-      my $group_height = $groupstyle->{'attrs'}{'height'};
-      my $colour = $groupstyle->{'attrs'}{'colour'};
-      my $row_height = $configuration->{'h'};
-
-      # store a couple of style attributes that we might change.  We'll want to
-      # change these back later (remember styles are references to the original
-      # style data - change them, and they change for all features that use that
-      # style). 
-      my $orig_groupstyle_glyph = $groupstyle->{'glyph'};
-      my $orig_groupstyle_line = $groupstyle->{'attrs'}{'style'};
-      
-      # Draw label
-      my $label_height =$self->feature_label( $Composite, 
-					      $label, 
-					      $colour, 
-					      $row_height,
-					      $row_height,
-					      $START, 
-					      $END 
-					      );
-
-      my $y_offset = - $configuration->{'tstrand'}*($row_height+2+$label_height) * $row;
-
-      if( $f->das_type_id =~ /(summary)/i) { 
-## Special case for viewing summary non-positional features (i.e. gene
-## DAS features on contigview) Just display a gene-wide line with a link
-## to geneview where all annotations can be viewed
-	  my $style = $self->get_featurestyle($f, $configuration);
-	  my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
-
-	  # override glyph to draw this as a span
-	  my $oldglyph = $style->{'glyph'};
-	  $style->{'glyph'} = 'span';
-	  
-	  # Change zmenu to summary menu
-	  my $smenu = $self->smenu($f);
-	  $Composite->{zmenu} = $smenu;
-
-	  my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
-#	$self->push($symbol->draw);
-	  $Composite->push($symbol->draw);
-
-	  # put the style back to how it was
-	  $style->{'glyph'} = $oldglyph;
-	  $self->push($Composite);
-	  next;
-      } else {
-	  if ( (grep { $_ =~ /(CDS|translation|transcript|exon)/i} map {$_->{group_type}} $f->das_groups) || $f->das_type_id =~ /(CDS|translation|transcript|exon)/i ) { 
-	      # Special case for displaying transcripts in a transcript style
-	      # without having group stylesheets, or provide intron features
-	      $groupstyle->{'glyph'} = 'line';
-	      $groupstyle->{'attrs'}{'style'} = 'intron';
-	
-	  }
-      } 
-      ## GENERAL GROUPED FEATURE!
-      # first feature of group
-      my $style = $self->get_featurestyle($f, $configuration);
-      my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
-      my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
-      $self->push($symbol->draw);
-
-      my $from = $symbol->feature->{'end'};
-
-      # For each feature in the group, draw
-      # - the grouping line between the previous feature and this one
-      # - the feature itself
-      foreach my $fg (@feature_group) {
-	  my $style = $self->get_featurestyle($fg, $configuration);
-	  my $fdata = $self->get_featuredata($fg, $configuration, $y_offset);
-	  my $symbol = $self->get_symbol ($style, $fdata, $y_offset);
-	  my $to = $symbol->feature->{'start'};
-	  my $fdid = $fg->das_feature_id;
-
-	  if ((($to - $from) * $self->{pix_per_bp}) > 1){ # i.e. if the gap is > 1pix
-	      my $groupsymbol = $self->get_groupsymbol($groupstyle, $from, $to, $configuration, $y_offset);
-	      $self->push($groupsymbol->draw);
-	  }
-	    
-	  # update 'from' for next time around
-	  $from = $symbol->feature->{'end'};
-
-      }
-
-      # Offset y coords by which row we're on
-      $Composite->y($Composite->y() + $y_offset);
- 
-      $self->push($Composite);
-
-      # put back original properties of the style, so it can be re-used:
-      $groupstyle->{'glyph'} = $orig_groupstyle_glyph;
-      $groupstyle->{'attrs'}{'style'} = $orig_groupstyle_line ;
-      $idg ++;
-  }
-
-  my %grouped2;
-
-  foreach my $group (values %grouped2) {
+  foreach my $group (values %grouped) {
     my $f = $group->[0];
 
     # Sort features in a group
@@ -430,8 +264,8 @@ sub RENDER_grouped {
 
     # Compute the length of the label...
     my $ID    = $f->das_group_id || $f->das_id;
-    my $label = $f->das_group_label || $f->das_feature_label || $ID;
-
+    my $label = $f->das_group_label || $ID;
+    $f->{grouped_by} = $label;
     # append number of features in group
 
     my $num_in_group = scalar @feature_group;
@@ -448,6 +282,7 @@ sub RENDER_grouped {
     }
 
     my $groupsize = scalar @feature_group;
+
     my( $href, $zmenu ) = $self->gmenu( $f, $groupsize );
 
 
@@ -564,7 +399,7 @@ sub RENDER_grouped {
       my $c=0;
       $c = ($a->style->{'zindex'}||0) <=> ($b->style->{'zindex'}||0) if exists(${$a->style}{'zindex'}) or exists(${$b->style}{'zindex'});
       $c==0 ? $a->feature->{'start'} <=> $b->feature->{'start'}  : $c;
-    } map {warn Dumper $_; $_} @tmpsymbolstack;
+    } map {$_} @tmpsymbolstack;
     while (my $s=shift @tmpsymbolstack){$self->push($s->draw);}
 
     # Offset y coords by which row we're on
@@ -704,7 +539,6 @@ sub gmenu{
 
   my $id;
   my $ids = 10;
-
   foreach my $group ($f->das_groups) {
       my $txt = $group->{'group_label'} || $group->{'group_id'};
 
@@ -723,7 +557,7 @@ sub gmenu{
 	  $zmenu->{$dlabel} = '';
       }
       if ($group->{'group_type'}) {
-	  $dlabel = sprintf("%02d:&nbsp;&nbsp;TYPE : %s", $ids++, $group->{'group_id'});
+	  $dlabel = sprintf("%02d:&nbsp;&nbsp;TYPE : %s", $ids++, $group->{'group_type'});
 	  $zmenu->{$dlabel} = '';
       }
 
@@ -1070,12 +904,14 @@ sub smenu {
 
 sub get_groupstyle {
     my ($self, $f, $configuration) = @_;
-    my $group = $f->das_group_type;
+    my $group = $f->das_group_type || $f->das_type_id;
 
     my $style;
     if($configuration->{'use_style'}) {
 	$style = $configuration->{'styles'}{'group'}{$group};
 	$style ||= $configuration->{'styles'}{'group'}{'default'};
+
+	$style->{'type'} ||= 'default';
 	unless ($style){
 	    # OK, now we hack about a bit.
 	    # Try to use the colours/height of the feature passed in
