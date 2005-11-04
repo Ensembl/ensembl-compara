@@ -9,7 +9,8 @@ CGObject - DESCRIPTION of Object
 Abstract superclass to mimic some of the functionality of Foundation/NSObject
 Implements a 'reference count' system based on the OpenStep retain/release design. 
 Implements a metadata tagging system.
-Designed to be used as the Root class.
+Is used as the Root class for the Compara::Graph system (Node and Link) which is 
+the foundation on which Compara::Graph (Node/Link) and Compara::NestedSet are built 
 
 =head1 CONTACT
 

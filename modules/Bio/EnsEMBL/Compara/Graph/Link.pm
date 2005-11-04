@@ -6,12 +6,29 @@ Link - DESCRIPTION of Object
 
 =head1 DESCRIPTION
 
-Abstract superclass to encapsulate the process of storing and manipulating a
-nested-set representation tree.  Also implements a 'reference count' system 
-based on the ObjectiveC retain/release design. 
-Designed to be used as the Root class for all Compara 'proxy' classes 
-(Member, GenomeDB, DnaFrag, NCBITaxon) to allow them to be made into sets and trees.
+Object oriented graph system which is based on Node and Link objects.  There is
+no 'graph' object, the graph is constructed out of Nodes and Links, and the
+graph is 'walked' from Node to Link to Node.  Can be used to represent any graph
+structure from DAGs (directed acyclic graph) to Trees to undirected cyclic Graphs.
 
+The system is fully connected so from any object in the graph one can 'walk' to
+any other.  Links contain pointers to the nodes on either side (called neighbors),
+and each Node contains a list of the links it is connected to.  
+Nodes also keep hashes of their neighbors for fast 'set theory' operations.  
+This graph system is used as the foundation for the Nested-set 
+(Compara::NestedSet) system for storing trees in the compara database.
+
+System has a simple API based on creating Nodes and then linking them together:
+  my $node1 = new Bio::EnsEMBL::Compara::Graph::Node;
+  my $node2 = new Bio::EnsEMBL::Compara::Graph::Node;
+  new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2, $distance_between);
+And to 'disconnect' nodes, one just breaks a link;
+  my $link = $node1->link_for_neighbor($node2);
+  $link->release;
+Convenience methods to simplify this process
+  $node1->create_link_to_node($node2, $distance_between);
+  $node2->unlink_neighbor($node1);
+  
 =head1 CONTACT
 
   Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
