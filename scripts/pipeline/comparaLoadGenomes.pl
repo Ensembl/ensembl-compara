@@ -206,7 +206,7 @@ sub submitGenome
 
   $self->{'comparaDBA'}->get_GenomeDBAdaptor->store($genome);
   $species->{'genome_db'} = $genome;
-  print("  STORED as genome_db id=".$genome->dbID."\n");
+  print "  ", $genome->name, " STORED as genome_db id = ", $genome->dbID, "\n";
 
   #
   # now fill table genome_db_extra
