@@ -14,6 +14,7 @@
   },
 
   { TYPE => SPECIES,
+    'species'        => 'Homo sapiens',
     'abrev'          => 'Hs35b',
     'genome_db_id'   => 1,
     'taxon_id'       => 9606,
@@ -26,6 +27,7 @@
   },
 
   { TYPE => SPECIES,
+    'species'        => 'Mus musculus',
     'abrev'          => 'Mm33e',
     'genome_db_id'   => 2,
     'taxon_id'       => 10090,
