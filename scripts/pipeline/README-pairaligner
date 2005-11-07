@@ -40,7 +40,7 @@ in tcsh
 in bash
     BASEDIR=/some/path/to/modules
     PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive
-    PATH=$PATH:${BASEDIR}/ensembl-compara/script/pipeline:${BASEDIR}/ensembl-hive/scripts
+    PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
 
 
 2- Create a hive/compara database
@@ -71,7 +71,7 @@ configuration file. See below. If not set, all STDOUT/STDERR goes to /dev/null. 
 
 cd /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27
 
-cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-hive-pair_aligner.conf.example compara_human_cow_27.conf
+cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-hive-pairaligner.conf.example compara_human_cow_27.conf
 <editor> compara_human_cow_27.conf
 
 you may need to change the database names, port, dbnames, and the
@@ -90,7 +90,7 @@ The comparaLoadGenomes script use the information in the conf file to connect to
 the core databases, queries for things like taxon_id, assembly, gene_build, and names
 to create entries in the genome_db table.  It also sets the genome_db.locator column to
 allow the system to know where the respective core databases are located. This script 
-will also 'seed' the pipeline/hive system by creating the first jobs in the analysis_job 
+will also 'seed' the pipeline/hive system by creating the first jobs in the analysis_job
 table for the analysis 'SubmitGenome'.
 
 The loadPairAlingerSystem script creates the analysis entries for the processing
