@@ -327,7 +327,7 @@ sub create_dnafrag_chunks {
   my $lasttime = time();
 
   #all seq in inclusive coordinates so need to +1
-  for ($i; $i<=$length; $i=$i+$self->{'chunk_size'}-$self->{'overlap'}) {
+  for ( ; $i <= $length; $i += $self->{'chunk_size'}-$self->{'overlap'}) {
 
     my $chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
     $chunk->dnafrag($dnafrag);
