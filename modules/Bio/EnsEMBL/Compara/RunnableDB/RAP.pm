@@ -210,13 +210,18 @@ sub run_rap
   $self->{'newick_file'} = $self->{'rap_infile'} . "_rap_tree.txt ";
 
   my $rap_executable = $self->analysis->program_file;
-  unless (-e $rap_executable) {
-    $rap_executable = "/usr/local/ensembl/bin/rap.jar";
-  }
-
-  throw("can't find a RAP executable to run\n") unless(-e $rap_executable);
+  #unless (-e $rap_executable) {
+  #  $rap_executable = "/usr/local/ensembl/bin/rap.jar";
+  #}
+  #throw("can't find a RAP executable to run\n") unless(-e $rap_executable);
 
   my $cmd = "java -jar " . $rap_executable;
+  $cmd .= " 80";    #Max bootstrap for reduction
+  $cmd .= " 50.0";  #Max relative rate ratio before duplication
+  $cmd .= " 30";    #Gene Tree Max depth for best root research 
+  $cmd .= " 0.15";  #Maximum length for polymorphism
+  $cmd .= " 0.03";  #Maximum length for reduction - Species Tree (was 10.0)
+  $cmd .= " 0.15";  #Maximum length for reduction - Gene tree  
   $cmd .= " ". $self->{'species_tree_file'};  
   $cmd .= " ". $self->{'rap_infile'};  
   $cmd .= " ". $self->{'rap_outfile'};  
