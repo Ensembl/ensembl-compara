@@ -540,6 +540,11 @@ sub storeMaskingOptions
     $options_string .= "}";
   } else {
     $options_string = $dnaCollectionConf->{'masking_options'};
+    if (!eval($options_string) or $options_string !~ /^\{/) {
+      throw("DNA_COLLECTION (".$dnaCollectionConf->{'collection_name'}.
+          ") -> masking_options is not properly configured\n".
+          "This value must be a string representing a hash!");
+    }
   }
 
   $dnaCollectionConf->{'masking_analysis_data_id'} =
