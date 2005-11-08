@@ -296,6 +296,14 @@ sub subroot {
   Returntype : array reference of Bio::EnsEMBL::Compara::NestedSet objects (could be empty)
   Exceptions : none
   Caller     : general
+  Algorithm  : new algorithm for fetching children:
+                for each link connected to this NestedsSet node, a child is defined if
+                  old: the link is not my parent_link
+                  new: the link's neighbors' parent_link is the link
+               This allows one (with a carefully coded algorithm) to overlay a tree on top
+               of a fully connected graph and use the parent/children methods of NestedSet
+               to walk the 'tree' substructure of the graph.  
+               Trees that are really just trees are still trees.
 
 =cut
 
@@ -306,8 +314,10 @@ sub children {
   my @kids;
   foreach my $link (@{$self->links}) {
     next unless(defined($link));
-    next if($self->{'_parent_link'} and $link->equals($self->{'_parent_link'}));
-    push @kids, $link->get_neighbor($self);
+    my $neighbor = $link->get_neighbor($self);
+    next unless($neighbor->parent_link);
+    next unless($neighbor->parent_link->equals($link));
+    push @kids, $neighbor;
   }
   return \@kids;
 }
