@@ -168,8 +168,6 @@ sub species_table {
     my $assembly = utils::Tool::get_config({species =>$spp,
 					  values => "ASSEMBLY_ID"});
 
-    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/thumb_$spp.png $dir/sanger-plugins/pre/htdocs/img/species/");
-    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/pic_$spp.png $dir/sanger-plugins/pre/htdocs/img/species/");
 
     print $fh qq(
  <dt>
@@ -203,6 +201,8 @@ return;
 
 sub generic_species_homepage {
   my ($dir, $common_name, $species, $chrs) = @_;
+    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/thumb_$species.png $dir/sanger-plugins/pre/htdocs/img/species/");
+    system ("cp $dir/public-plugins/ensembl/htdocs/img/species/pic_$species.png $dir/sanger-plugins/pre/htdocs/img/species/");
 
   if ($site_type eq 'pre') {
     $dir .= "/sanger-plugins/pre/htdocs/$species";
@@ -459,6 +459,7 @@ sub downloads {
   my $version = shift;
   return if $site_type eq 'pre';
   do_downloads("$dir/sanger-plugins/archive", $version, "archive");
+  do_downloads("$dir/sanger-plugins/pre", $version);
   do_downloads("$dir", $version, 0);
   return;
 }

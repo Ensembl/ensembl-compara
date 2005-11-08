@@ -304,7 +304,6 @@ sub get_data {
 	   }
 	  # If it is a ccds, $subtype = ccds instead
 	  if( $transcript->translation ) {
-	    warn "$subtype, ",$transcript->stable_id;
 	    foreach my $xref ( @{$transcript->translation->get_all_DBEntries} ) {
 	      if ($xref->database eq 'CCDS') {
 		$subtype = "known-ccds";

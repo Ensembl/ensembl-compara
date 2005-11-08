@@ -102,7 +102,7 @@ foreach my $sp( @SPECIES ){
   # Work out dumpdir ---------------------------------------------------------
   my @sp_dumpdirs;
   if ($sp eq 'Multi') {
-    @sp_dumpdirs  = "$dumpdir/multi-species_$sitedefs_release/data/mysql";
+    @sp_dumpdirs  = "$dumpdir/multi_species_$sitedefs_release/data/mysql";
   }
   else {
     my $sp_release = utils::Tool::get_config( { species=>$sp, values => "SPECIES_RELEASE_VERSION" }) || "";
@@ -135,7 +135,7 @@ foreach my $sp( @SPECIES ){
     }
 
     if ( $db =~ /_MART_/ ) {
-      push (@sp_dumpdirs, "$dumpdir/mart-$sitedefs_release/data/mysql");
+      push (@sp_dumpdirs, "$dumpdir/mart_$sitedefs_release/data/mysql");
       $flag_mart = 1;
     }
 
@@ -156,8 +156,8 @@ foreach my $sp( @SPECIES ){
     info( 1, "Dumping $sp $db: ".$all_db_info{$db}{NAME} );
     dump_mysql( \%{ $all_db_info{$db} }, $no_zip);
 
-    # Rename help and website so they include the release number
-    if ( $db =~ /ENSEMBL_HELP|ENSEMBL_WEBSITE|ensembl_web_user_db/ ){
+    # Rename ensembl_web_user_db so they include the release number
+    if ( $db =~ /ensembl_web_user_db/ ){
       rename_files( $all_db_info{$db}{NAME}, $sp_dumpdirs[0] );
     }
     @dbs = ();

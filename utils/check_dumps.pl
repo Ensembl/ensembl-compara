@@ -132,14 +132,14 @@ foreach my $species (@SPECIES) {
 
 
   if ($species eq 'Multi') {
-    $species_folder = "multi-species_$release";
+    $species_folder = "multi_species_$release";
 
     foreach my $x qw( ensembl_help ensembl_website ensembl_web_user_db ) {
       $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$x"."_$release"} = [1];
       $mysql_conf++; 
     }
-    $dumped_check{"mart-$release"} = 1;  # indicates this dir will be checked
-    push (@search_dirs, "$DUMPDIR/mart-$release"); # search this
+    $dumped_check{"mart_$release"} = 1;  # indicates this dir will be checked
+    push (@search_dirs, "$DUMPDIR/mart_$release"); # search this
   }
 
   else {
@@ -172,7 +172,7 @@ foreach my $species (@SPECIES) {
     $mysql_conf++;
 
     if ( $name =~ /_mart_/ ) {
-      $ok_dirs->{"$DUMPDIR/mart-$release/data/mysql/$name"} = [1];
+      $ok_dirs->{"$DUMPDIR/mart_$release/data/mysql/$name"} = [1];
     }
     else {
       $ok_dirs->{"$DUMPDIR/$species_folder/data/mysql/$name"} = [1];
