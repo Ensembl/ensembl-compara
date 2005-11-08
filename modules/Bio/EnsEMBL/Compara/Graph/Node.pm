@@ -252,13 +252,17 @@ sub cascade_unlink {
     return undef;
   }
   
+  my @neighbors;
   foreach my $link (@{$self->links}) {
     my $neighbor = $link->get_neighbor($self);
     next if($caller and $neighbor->equals($caller));
     $link->release;
+    push @neighbors, $neighbor;
+  }
+ 
+  foreach my $neighbor (@neighbors) {
     $neighbor->cascade_unlink($self);
   }
-  
   return $self;
 }
 
