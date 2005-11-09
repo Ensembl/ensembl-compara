@@ -1409,17 +1409,22 @@ sub restrict_between_reference_positions {
   return $self if ($excess_at_the_start < 0 and $excess_at_the_end < 0);
 
   my $negative_strand = ($reference_genomic_align->dnafrag_strand == -1);
-  $self->reverse_complement() if ($negative_strand);
 
   ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
+    my $dnafrag_strand = $this_genomic_align->dnafrag_strand;
+    my $cigar_line = $this_genomic_align->cigar_line;
+    if ($negative_strand) {
+      $dnafrag_strand *= -1;
+      $cigar_line = join("", reverse grep {$_} split(/(\d*[GDMI])/, $cigar_line));
+    }
     my $new_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
           -method_link_species_set => $this_genomic_align->method_link_species_set,
           -dnafrag => $this_genomic_align->dnafrag,
           -dnafrag_start => $this_genomic_align->dnafrag_start,
           -dnafrag_end => $this_genomic_align->dnafrag_end,
-          -dnafrag_strand => $this_genomic_align->dnafrag_strand,
-          -cigar_line => $this_genomic_align->cigar_line,
+          -dnafrag_strand => $dnafrag_strand,
+          -cigar_line => $cigar_line,
           -level_id => $this_genomic_align->level_id
       );
     if ($this_genomic_align == $reference_genomic_align) {
@@ -1577,8 +1582,6 @@ sub restrict_between_reference_positions {
     $genomic_align->aligned_sequence(0);
     $genomic_align->cigar_line(join("", @cigar));
   }
-
-  $self->reverse_complement() if ($negative_strand);
 
   return $genomic_align_block;
 }
