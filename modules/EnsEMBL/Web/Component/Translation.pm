@@ -113,7 +113,11 @@ sub marked_up_seq_form {
   my( $panel, $object ) = @_;
   my $form = EnsEMBL::Web::Form->new( 'marked_up_seq', "/@{[$object->species]}/protview", 'get' );
   $form->add_element( 'type' => 'Hidden', 'name' => 'db',      'value' => $object->get_db    );
-  $form->add_element( 'type' => 'Hidden', 'name' => 'peptide', 'value' => $object->stable_id );
+  if ($object->stable_id) {
+	$form->add_element( 'type' => 'Hidden', 'name' => 'peptide', 'value' => $object->stable_id );
+  } else {
+	$form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->transcript->stable_id);
+  }
   my $show = [{ 'value' => 'plain', 'name' => 'None' }, {'value'=>'exons', 'name'=>'Exons'} ];
   if( $object->species_defs->databases->{'ENSEMBL_VARIATION'}||$object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
     push @$show, { 'value' => 'snps', 'name' => 'Exons and SNPs' };
