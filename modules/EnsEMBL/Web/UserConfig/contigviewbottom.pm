@@ -30,7 +30,7 @@ sub init {
         matepairs   bacs  bac_bands  tilepath  tilepath2  bacends misc_bacends
         ruler     scalebar  stranded_contig
         sequence  codonseq  codons gap gcplot encode
-	encode_region fosmid_map regulatory_regions
+	encode_region fosmid_map regulatory_search_regions regulatory_regions
 
         restrict redbox),
     # qw( zfish_est ),
@@ -107,6 +107,7 @@ sub init {
          [ 'qtl'             => 'QTLs'     ],
          [ 'operon'          => 'Operon'      ],
          [ 'regulatory_regions' => 'Regulatory features'  ],
+         [ 'regulatory_search_regions' => 'Regulatory search regions'  ],
          [ 'rnai'            => 'RNAi'        ],
          [ 'ex_profile'      => 'Exp. profile'    ],
 ### Other ###
@@ -254,6 +255,13 @@ sub init {
       'pos' => '12',
       'str' => 'b',
       'available'=> 'database_tables ENSEMBL_DB.regulatory_feature', 
+    },
+
+   'regulatory_search_regions' => {
+      'on'  => "off",
+      'pos' => '13',
+      'str' => 'b',
+      'available'=> 'database_tables ENSEMBL_DB.regulatory_feature',
     },
 
     'first_ef'   => {

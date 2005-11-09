@@ -11,7 +11,8 @@ sub init {
 
   $self->{'_transcript_names_'} = 'yes';
   $self->{'general'}->{'altsplice'} = {
-    '_artefacts'    => [ qw(ruler scalebar contig variation regulatory_regions ) ],
+    '_artefacts'    => [ qw(ruler scalebar contig variation regulatory_regions 
+                            regulatory_search_regions ) ],
     '_options'      => [qw(pos col known unknown)],
     'fakecore' => 1,
     '_settings'     => {
@@ -66,6 +67,12 @@ sub init {
       'pos' => '12',
       'str' => 'b',
       'available'=> 'database_tables ENSEMBL_DB.regulatory_feature', 
+    },
+   'regulatory_search_regions' => {
+      'on'  => "off",
+      'pos' => '13',
+      'str' => 'b',
+      'available'=> 'database_tables ENSEMBL_DB.regulatory_feature',
     },
 
   };

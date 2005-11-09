@@ -10,7 +10,7 @@ sub init {
   $self->{'fakecore'} = 1;
 
   $self->{'general'}->{'geneview'} = {
-    '_artefacts' => [qw(ruler regulatory_regions)],
+    '_artefacts' => [qw(ruler regulatory_search_regions regulatory_regions)],
     '_options'  => [qw(pos col known unknown)],
  'fakecore' => 1,
     '_settings' => {
@@ -38,6 +38,15 @@ sub init {
       'str' => 'b',
       'available'=> 'database_tables ENSEMBL_DB.regulatory_feature', 
     },
+
+ 'regulatory_search_regions' => {
+      'on'  => "off",
+      'pos' => '13',
+       'str' => 'b',
+      'available'=> 'database_tables ENSEMBL_DB.regulatory_feature',
+    },
+
+
   };
   $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'off' );
   $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 0, 'on' => 'off' );

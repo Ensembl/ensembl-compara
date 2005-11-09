@@ -1005,6 +1005,7 @@ sub ADD_SIMPLE_TRACKS {
   $self->add_new_simple_track( 'enhancer',                 'Enhancer',            'red', $POS++, @_ ); 
   $self->add_new_simple_track( 'transcription_start_site', 'Transcription start site', 'red', $POS++, @_ );
   $self->add_new_simple_track( 'regulatory_region',        'Regulatory region', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'regulatory_search_region',  'Regulatory search region', 'red', $POS++, @_ );
   $self->add_new_simple_track( 'mature_peptide',           'Mature peptide',      'red', $POS++, @_ );
   $self->add_new_simple_track( 'insertion_site',           'Insertion site',      'red', $POS++, @_ );
   $self->add_new_simple_track( 'protein_binding_site',     'Protein binding site','red', $POS++, @_ );
