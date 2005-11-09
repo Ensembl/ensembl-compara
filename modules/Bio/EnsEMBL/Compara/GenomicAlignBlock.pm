@@ -1393,7 +1393,7 @@ sub restrict_between_reference_positions {
   my $genomic_align_block;
   my $new_reference_genomic_align;
   my $new_genomic_aligns;
-
+  
   $reference_genomic_align ||= $self->reference_genomic_align;
   throw("A reference Bio::EnsEMBL::Compara::GenomicAlign must be given") if (!$reference_genomic_align);
   $start = $reference_genomic_align->dnafrag_start if (!defined($start));
@@ -1401,7 +1401,11 @@ sub restrict_between_reference_positions {
 
   my $excess_at_the_start = $start - $reference_genomic_align->dnafrag_start;
   my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $end;
-  ## Skip if no restriction is needed. Return original object!
+
+  ## Skip if no restriction is needed. Return original object! We are still going on with the
+  ## restriction when either excess_at_the_start or excess_at_the_end are 0 as a (multiple)
+  ## alignment may start or end with gaps in the reference species. In that case, we want to
+  ## trim these gaps from the alignment as they fall just outside of the region of interest
   return $self if ($excess_at_the_start < 0 and $excess_at_the_end < 0);
 
   my $negative_strand = ($reference_genomic_align->dnafrag_strand == -1);
@@ -1429,120 +1433,153 @@ sub restrict_between_reference_positions {
           -genomic_align_array => $new_genomic_aligns,
           -reference_genomic_align => $new_reference_genomic_align
       );
+  $genomic_align_block->reference_slice($self->reference_slice);
   throw("Reference GenomicAlign not found!") if (!$genomic_align_block->reference_genomic_align);
 
-  my $this_pos = $new_reference_genomic_align->dnafrag_start;
-
+  my @reference_cigar = grep {$_} split(/(\d*[DM])/, $new_reference_genomic_align->cigar_line);
+  ## Parse start of cigar_line for the reference GenomicAlign
+  my $length_of_truncated_seq_at_the_start = 0; # num. of bp in the alignment to be trimmed
   if ($excess_at_the_start >= 0) {
-    my $this_ref_align_seq = $new_reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq (N's and gaps).
-    ## Optimization: start looking from $excess_at_the_start from the start
-    my $length_of_truncated_seq = 0;
-    while ($excess_at_the_start > 0) {
-      # Extracts the last $excess_at_the_end characters from the aligned_seq
-      my $truncated_seq = substr($this_ref_align_seq, 0, $excess_at_the_start, "");
-      # Count the num of nucleotides in the last $excess_at_the_end characters
-      my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
-      # Substract $num_of_nucl from the $excess_at_the_start (the num of nucl. that have been reemoved
-      $excess_at_the_start -= $num_of_nucl;
-      $length_of_truncated_seq += CORE::length($truncated_seq);
-    }
-#     $this_ref_align_seq =~ m/(\-*([^\-]\-*){$excess_at_the_start})/;
-#     $length_of_truncated_seq += CORE::length($1);
+    $length_of_truncated_seq_at_the_start = 0;
+    my $original_seq_length = 0;
+    my $new_cigar_piece = "";
+    while (my $cigar = shift(@reference_cigar)) {
+      my ($num, $type) = ($cigar =~ /^(\d*)([DM])/);
+      $num = 1 if ($num eq "");
+      $length_of_truncated_seq_at_the_start += $num;
+      if ($type eq "M") {
+        $original_seq_length += $num;
+        if ($original_seq_length > $excess_at_the_start) {
+          my $length = $original_seq_length - $excess_at_the_start;
+          if ($length > 1) {
+            $new_cigar_piece = $length.$type;
+          } elsif ($length == 1) {
+            $new_cigar_piece = $type;
+          }
+          unshift(@reference_cigar, $new_cigar_piece) if ($new_cigar_piece);
 
-      
-      
-    ## Truncate all the GenomicAligns
-    foreach my $genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
+          $length_of_truncated_seq_at_the_start -= ($original_seq_length - $excess_at_the_start);
+          last;
+        }
+      }
+    }
+    $new_reference_genomic_align->dnafrag_start($start);
+  }
+
+  ## Parse end of cigar_line for the reference GenomicAlign
+  my $length_of_truncated_seq_at_the_end = 0; # num. of bp in the alignment to be trimmed
+  if ($excess_at_the_end >= 0) {
+    $length_of_truncated_seq_at_the_end = 0;
+    my $original_seq_length = 0;
+    my $new_cigar_piece = "";
+    while (my $cigar = pop(@reference_cigar)) {
+      my ($num, $type) = ($cigar =~ /^(\d*)([DIGM])/);
+      $num = 1 if ($num eq "");
+      $length_of_truncated_seq_at_the_end += $num;
+      if ($type eq "M") {
+        $original_seq_length += $num;
+        if ($original_seq_length > $excess_at_the_end) {
+          my $length = $original_seq_length - $excess_at_the_end;
+          if ($length > 1) {
+            $new_cigar_piece = $length.$type;
+          } elsif ($length == 1) {
+            $new_cigar_piece = $type;
+          }
+          push(@reference_cigar, $new_cigar_piece) if ($new_cigar_piece);
+
+          $length_of_truncated_seq_at_the_end -= ($original_seq_length - $excess_at_the_end);
+          last;
+        }
+      }
+    }
+    $new_reference_genomic_align->dnafrag_end($end);
+  }
+
+  ## Skip if no restriction is needed. Return original object! This may happen when
+  ## either excess_at_the_start or excess_at_the_end are 0 but the alignment does not
+  ## start or end with gaps in the reference species.
+  return $self if ($length_of_truncated_seq_at_the_start <= 0 and
+      $length_of_truncated_seq_at_the_end <= 0);
+
+  $new_reference_genomic_align->aligned_sequence(0);
+  $new_reference_genomic_align->cigar_line(join("", @reference_cigar));
+  $genomic_align_block->reference_slice_start($new_reference_genomic_align->dnafrag_start - $self->reference_slice->start + 1);
+  $genomic_align_block->reference_slice_end($new_reference_genomic_align->dnafrag_end - $self->reference_slice->start + 1);
+
+  ## Trim all remaining the GenomicAligns
+  foreach my $genomic_align (@{$genomic_align_block->get_all_non_reference_genomic_aligns}) {
+    my @cigar = grep {$_} split(/(\d*[DM])/, $genomic_align->cigar_line);
+
+    ## Trim start of cigar_line if needed
+    if ($length_of_truncated_seq_at_the_start >= 0) {
       my $aligned_seq_length = 0;
       my $original_seq_length = 0;
-      my $new_cigar_line = "";
-      my @cigar = grep {$_} split(/(\d*[DIGM])/, $genomic_align->cigar_line);
+      my $new_cigar_piece = "";
       while (my $cigar = shift(@cigar)) {
-        my ($num, $type) = ($cigar =~ /^(\d*)([DIGM])/);
+        my ($num, $type) = ($cigar =~ /^(\d*)([DM])/);
         $num = 1 if ($num eq "");
         $aligned_seq_length += $num;
-        if ($aligned_seq_length >= $length_of_truncated_seq) {
-          my $length = $aligned_seq_length - $length_of_truncated_seq;
+        if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
+          my $length = $aligned_seq_length - $length_of_truncated_seq_at_the_start;
           if ($length > 1) {
-            $new_cigar_line = $length.$type;
+            $new_cigar_piece = $length.$type;
           } elsif ($length == 1) {
-            $new_cigar_line = $type;
+            $new_cigar_piece = $type;
           }
-          $new_cigar_line .= join("", @cigar);
+          unshift(@cigar, $new_cigar_piece) if ($new_cigar_piece);
           if ($type eq "M") {
-            $original_seq_length += $length_of_truncated_seq - ($aligned_seq_length - $num);
+            $original_seq_length += $length_of_truncated_seq_at_the_start - ($aligned_seq_length - $num);
           }
           last;
         }
         $original_seq_length += $num if ($type eq "M");
       }
-      $genomic_align->aligned_sequence(0);
-      $genomic_align->cigar_line($new_cigar_line);
       if ($genomic_align->dnafrag_strand == 1) {
         $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $original_seq_length);
       } else {
         $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $original_seq_length);
       }
     }
-  }
 
-  if ($excess_at_the_end >= 0) {
-    my $this_ref_align_seq = $new_reference_genomic_align->aligned_sequence("+FAKE_SEQ"); # use *fake* aligned seq.
-    ## Optimization: start looking from $excess_at_the_end from the end because
-    ## the pattern match at the end of the string could be very slow
-    my $length_of_truncated_seq = 0;
-    while ($excess_at_the_end > 0) {
-      # Extracts the last $excess_at_the_end characters from the aligned_seq
-      my $truncated_seq = substr($this_ref_align_seq, -$excess_at_the_end, $excess_at_the_end, "");
-      # Count the num of nucleotides in the last $excess_at_the_end characters
-      my $num_of_nucl = $truncated_seq =~ tr/A-Za-z/A-Za-z/;
-      # Substract $num_of_nucl from the $excess_at_the_end (the num of nucl. that have been reemoved
-      $excess_at_the_end -= $num_of_nucl;
-      $length_of_truncated_seq += CORE::length($truncated_seq);
-    }
-#     $this_ref_align_seq =~ m/(\-*([^\-]\-*){$excess_at_the_end})$/;
-#     $length_of_truncated_seq += CORE::length($1);
-
-    ## Truncate GenomicAlignBlock
-    $new_reference_genomic_align->genomic_align_block->dbID(0); # unset dbID
+    ## Trim end of cigar_line if needed
+    if ($length_of_truncated_seq_at_the_end >= 0) {
     ## Truncate all the GenomicAligns
-    foreach my $genomic_align (@{$genomic_align_block->get_all_GenomicAligns}) {
       my $aligned_seq_length = 0;
       my $original_seq_length = 0;
-      my $new_cigar_line = "";
-      my @cigar = grep {$_} split(/(\d*[DIGM])/, $genomic_align->cigar_line);
+      my $new_cigar_piece = "";
       while (my $cigar = pop(@cigar)) {
         my ($num, $type) = ($cigar =~ /^(\d*)([DIGM])/);
         $num = 1 if ($num eq "");
         $aligned_seq_length += $num;
-        if ($aligned_seq_length >= $length_of_truncated_seq) {
-          my $length = $aligned_seq_length - $length_of_truncated_seq;
-          $new_cigar_line = join("", @cigar);
+        if ($aligned_seq_length >= $length_of_truncated_seq_at_the_end) {
+          my $length = $aligned_seq_length - $length_of_truncated_seq_at_the_end;
           if ($length > 1) {
-            $new_cigar_line .= $length.$type;
+            $new_cigar_piece .= $length.$type;
           } elsif ($length == 1) {
-            $new_cigar_line .= $type;
+            $new_cigar_piece .= $type;
           }
+          push(@cigar, $new_cigar_piece) if ($new_cigar_piece);
           if ($type eq "M") {
-            $original_seq_length += $length_of_truncated_seq - ($aligned_seq_length - $num);
+            $original_seq_length += $length_of_truncated_seq_at_the_end - ($aligned_seq_length - $num);
           }
           last;
         }
         $original_seq_length += $num if ($type eq "M");
       }
-      $genomic_align->aligned_sequence(0);
-      $genomic_align->cigar_line($new_cigar_line);
       if ($genomic_align->dnafrag_strand == 1) {
         $genomic_align->dnafrag_end($genomic_align->dnafrag_end - $original_seq_length);
       } else {
         $genomic_align->dnafrag_start($genomic_align->dnafrag_start + $original_seq_length);
       }
     }
+
+    ## Save genomic_align's cigar_line
+    $genomic_align->aligned_sequence(0);
+    $genomic_align->cigar_line(join("", @cigar));
   }
 
   $self->reverse_complement() if ($negative_strand);
 
-  throw("Reference GenomicAlign not found!") if (!$genomic_align_block->get_all_GenomicAligns->[0]);
   return $genomic_align_block;
 }
 
@@ -1566,21 +1603,25 @@ sub _print {
   $FILEH ||= \*STDOUT;
   print $FILEH
 "Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
-  dbID = ".($self->dbID or "-undef-")."
-  adaptor = ".($self->adaptor or "-undef-")."
-  method_link_species_set = ".($self->method_link_species_set or "-undef-")."
-  method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
-  genomic_aligns = ".($self->genomic_align_array or "-undef-")."
-  reference_genomic_align = ".($self->reference_genomic_align or "-undef-")."
-  all_non_reference_genomic_aligns = ".($self->get_all_non_reference_genomic_aligns or "-undef-")."
-  reference_slice = ".($self->reference_slice or "-undef-")."
-  reference_slice_start = ".($self->reference_slice_start or "-undef-")."
-  reference_slice_end = ".($self->reference_slice_end or "-undef-")."
-  score = ".($self->score or "-undef-")."
-  length = ".($self->length or "-undef-")."
-  alignment_strings = \n  ".(join("\n  ", @{$self->alignment_strings}))."
-  
-";
+  dbID = ", ($self->dbID or "-undef-"), "
+  adaptor = ", ($self->adaptor or "-undef-"), "
+  method_link_species_set = ", ($self->method_link_species_set or "-undef-"), "
+  method_link_species_set_id = ", ($self->method_link_species_set_id or "-undef-"), "
+  genomic_aligns = ", ($self->genomic_align_array or "-undef-"), "
+  reference_genomic_align = ", ($self->reference_genomic_align or "-undef-"), "
+  all_non_reference_genomic_aligns = ", ($self->get_all_non_reference_genomic_aligns or "-undef-"), "
+  reference_slice = ", ($self->reference_slice or "-undef-"), "
+  reference_slice_start = ", ($self->reference_slice_start or defined($self->reference_slice_start)?"0":"-undef-"), "
+  reference_slice_end = ", ($self->reference_slice_end or "-undef-"), "
+  score = ", ($self->score or "-undef-"), "
+  length = ", ($self->length or "-undef-"), "
+  alignments: \n";
+  foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
+    print $FILEH "  ", $this_genomic_align->dnafrag->genome_db->name, " ",
+        $this_genomic_align->dnafrag->name, ":", $this_genomic_align->dnafrag_start,
+        "-", $this_genomic_align->dnafrag_end, ($this_genomic_align->dnafrag_strand==1)?"[+]\n":"[-]\n",
+"\n\n";
+  }
   verbose($verbose);
 
 }
