@@ -744,7 +744,7 @@ sub _init {
   my $dastype = $Extra->{'type'} || 'ensembl_location';
   my @das_features = ();
 
-  $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{color} || 'contigblue1';
+  $configuration->{colour} = $Config->get($das_config_key, 'col') || $Extra->{color} || $Extra->{col} || 'contigblue1';
   $configuration->{depth} =  defined($Config->get($das_config_key, 'dep')) ? $Config->get($das_config_key, 'dep') : $Extra->{depth} || 4;
   $configuration->{use_style} = $Extra->{stylesheet} ? uc($Extra->{stylesheet}) eq 'Y' : uc($Config->get($das_config_key, 'stylesheet')) eq 'Y';
   $configuration->{use_score} = $Extra->{score} ? uc($Extra->{score}) eq 'Y' : uc($Config->get($das_config_key, 'score')) eq 'Y';
