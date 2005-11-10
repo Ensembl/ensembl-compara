@@ -207,6 +207,7 @@ sub run_analysis
   my @all_protein_leaves = @{$tree->get_all_leaves};
   printf("%d proteins in tree\n", scalar(@all_protein_leaves));
   
+  #precalculate the ancestor species_hash (caches into the metadata)
   $self->calc_ancestor_species_hash($tree);
   
   #compare every gene in the tree with every other
@@ -250,15 +251,20 @@ sub analyze_genelink
   my $self = shift;
   my $link = shift;
 
+  #run feature detectors
   $self->genelink_check_dups($link);
   $self->genelink_fetch_homology($link);
 
-  #display analysis
+  #do classification analysis
+  if($self->inspecies_paralogue_test($link)) { }
+  elsif($self->simple_orthologue_test($link)) { } 
+
+  #display raw feature analysis
   my ($protein1, $protein2) = $link->get_nodes;
   my $ancestor = $link->get_tagvalue('ancestor');
   printf("%21s(%7d) - %21s(%7d) : %10.3f dist : %3d hops : ", 
-    $protein1->stable_id, $protein1->member_id,
-    $protein2->stable_id, $protein2->member_id,
+    $protein1->gene_member->stable_id, $protein1->gene_member->member_id,
+    $protein2->gene_member->stable_id, $protein2->gene_member->member_id,
     $link->distance_between, $link->get_tagvalue('hops'));
   
   if($link->get_tagvalue('has_dups')) { printf("%5s ", 'DUP');
@@ -268,8 +274,14 @@ sub analyze_genelink
   if($homology) { printf("%5s ", $homology->description);
   } else { printf("%5s ", ""); }
 
-  print("ancestor: "); $ancestor->print_node;
-    
+  
+  printf("%20s ", $link->get_tagvalue('orthotree_type'));
+
+  print("ancestor:(");
+  if($ancestor->get_tagvalue("Duplication") eq '1') { print("DUP "); }
+  printf("%s)", $ancestor->node_id);
+  
+  printf("\n");
   return undef;
 }
 
@@ -377,18 +389,69 @@ sub genelink_check_dups
 }
 
 
+########################################################
+#
+# Classification analysis
+#
+########################################################
+
+
 sub simple_orthologue_test
 {
   my $self = shift;
   my $link = shift;
+    
+  #simplest orthologue test: no duplication events in the
+  #direct ancestory between these two genes
+  #and genes are from different species
+
+  return undef if($link->get_tagvalue('has_dups'));
   
   my ($pep1, $pep2) = $link->get_nodes;
+  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
+
+  my $ancestor = $link->get_tagvalue('ancestor');
+  my $species_hash = $self->calc_ancestor_species_hash($ancestor);
   
-  #simplest orthologue test: no duplication events in the
-  #ancestory between these two genes
+  #RAP seems to miss some duplication events so check the species 
+  #counts for these two species to make sure they are the only
+  #representatives of these species under the ancestor
+  my $count1 = $species_hash->{$pep1->genome_db_id};
+  my $count2 = $species_hash->{$pep2->genome_db_id};
   
-  return undef;
+  return undef if($count1>1);
+  return undef if($count2>1);
+  
+  #passed all the test -> it's a simple orthologue
+  $link->add_tag("orthotree_type", 'simple_orthologue');
+  return 1;
 }
+
+
+sub inspecies_paralogue_test
+{
+  my $self = shift;
+  my $link = shift;
+    
+  #simplest paralogue test: 
+  #  both genes are from the same species
+  #  all the genes under the common ancestor are from this same species
+
+  my ($pep1, $pep2) = $link->get_nodes;
+  return undef unless($pep1->genome_db_id == $pep2->genome_db_id);
+
+  my $ancestor = $link->get_tagvalue('ancestor');
+  my $species_hash = $self->calc_ancestor_species_hash($ancestor);
+
+  foreach my $gdbID (keys(%$species_hash)) {
+    return undef unless($gdbID == $pep1->genome_db_id);
+  }
+  
+  #passed all the test -> it's an inspecies_paralogue
+  $link->add_tag("orthotree_type", 'inspecies_paralogue');
+  return 1;
+}
+
 
 ########################################################
 #
