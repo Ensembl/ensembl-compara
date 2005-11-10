@@ -78,7 +78,7 @@ sub tag {
     
     my $consequence_type = $f->get_consequence_type;
     $so_that_I_can_eprof_tag = ( { 'style' => 'insertion', 
-	       'colour' => $self->{'colours'}{"$consequence_type"} } );
+	       'colour' => $self->{'colours'}{"$consequence_type"}[0] } );
   }
   else {
      $so_that_I_can_eprof_tag = undef;
@@ -95,28 +95,14 @@ sub colour {
   &eprof_start( 'colour' );
   my $consequence_type = $f->get_consequence_type();
   unless($self->{'config'}->{'variation_types'}{$consequence_type}) {
-    my %labels = (
-         	  '_'                    => 'Other SNPs',
-		  'INTRONIC'             => 'Intronic SNPs',
-		  'UPSTREAM'             => 'Upstream',
-		  'DOWNSTREAM'           => 'Downstream',
-		  'SYNONYMOUS_CODING'    => 'Synonymous coding',
-		  'NON_SYNONYMOUS_CODING'=> 'Non-synonymous coding',
-		  'FRAMESHIFT_CODING'    => 'Frameshift coding SNP',
-		  '5PRIME_UTR'           => '5\' UTR',
-		  '3PRIME_UTR'           => '3\' UTR',
-                  'UTR'                  => 'UTR',
-		  'INTERGENIC'           => 'Intergenic SNPs',
-                  'STOP_GAINED'          => 'Stop gained',
-                  'STOP_LOST'            => 'Stop lost',
-		 );
     push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
-     $labels{$consequence_type} => $self->{'colours'}{$consequence_type};
+      $self->{'colours'}{$consequence_type}[1],  $self->{'colours'}{$consequence_type}[0];
+
     $self->{'config'}->{'variation_types'}{$consequence_type} = 1;
   }
   &eprof_end( 'colour' );
-  return $self->{'colours'}{$consequence_type},
-    $self->{'colours'}{"label$consequence_type"}, 
+  return $self->{'colours'}{$consequence_type}[0],
+    $self->{'colours'}{$consequence_type}[2],
       $f->start > $f->end ? 'invisible' : '';
 }
 
@@ -157,7 +143,8 @@ sub zmenu {
     $self->ID_URL("dbSNP", $f->variation_name) if $f->source eq 'dbSNP';
 
   my $consequence_type = $f->get_consequence_type;
-  $zmenu{"57:Type: $consequence_type"} = "" unless $consequence_type eq '';  
+  my $label = $self->{'colours'}{$consequence_type}[1]; 
+  $zmenu{"57:Type: $label"} = "" unless $consequence_type eq '';  
   eprof_end( 'zmenu' );
   return \%zmenu;
 }

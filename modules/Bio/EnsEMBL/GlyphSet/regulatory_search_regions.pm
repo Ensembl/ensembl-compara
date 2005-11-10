@@ -38,12 +38,37 @@ sub zmenu {
     $return->{"02:Analysis: $analysis"} = "" if $analysis;
 
     if  ( my $type = lc($f->ensembl_object_type) ) {
-      my $id = $f->ensembl_object_id;
-      $return->{"04:Regulates $type: $id"} = "$type"."view?$type=$id";
+      my $id = $f->ensembl_object()->stable_id();
+      my $link = "geneview";
+      if ($type eq 'translation') {
+	$link = "protview";
+	$type = "peptide";
+      }
+      elsif ($type eq 'transcript') {
+	$link = "transview";
+      }
+      $return->{"04:Search $type: $id"} = "$link?$type=$id";
     }
     return $return;
 }
 
+# Search regions with similar analyses should be in the same colour
+# Choose a colour from the pool
+
+sub colour {
+  my ($self, $f) = @_;
+  my $name = $f->analysis->logic_name;
+  unless ( exists $self->{'config'}{'pool'} ) {
+    $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
+    $self->{'config'}{'ptr'}  = 0;
+  }
+  $self->{'config'}{'_regulatory_search_region_colours'}||={};
+  my $return = $self->{'config'}{'_regulatory_search_region_colours'}{ "$name" };
+  unless( $return ) {
+    $return = $self->{'config'}{'_regulatory_search_region_colours'}{"$name"} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)  %@{$self->{'config'}{'pool'}} ];
+  }
+  return $return, $return;
+}
 
 
 1;
