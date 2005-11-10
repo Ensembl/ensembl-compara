@@ -230,6 +230,9 @@ sub run_analysis
   
   #sort the gene/gene links by distance and then analyze
   my @links = sort {$a->distance_between <=> $b->distance_between} @pair_links;
+  $self->{'old_homology_count'} = 0;
+  $self->{'orthotree_homology_count'} = 0;
+  $self->{'lost_homology_count'} = 0;
   foreach my $link (@links) {
     $self->analyze_genelink($link);
   }
@@ -238,7 +241,10 @@ sub run_analysis
   $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime);
   printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
   printf("%d pairings\n", scalar(@pair_links));
-    
+  printf("%d old homologies\n", $self->{'old_homology_count'});
+  printf("%d orthotree homologies\n", $self->{'orthotree_homology_count'});
+  printf("%d lost homologies\n", $self->{'lost_homology_count'});
+   
   $tree->disavow_parent;
   $tree->cascade_unlink;
   $self->{'protein_tree'} = undef;
@@ -258,7 +264,27 @@ sub analyze_genelink
   #do classification analysis
   if($self->inspecies_paralogue_test($link)) { }
   elsif($self->simple_orthologue_test($link)) { } 
+  elsif($self->ancient_residual_orthologue_test($link)) { } 
 
+  $self->{'old_homology_count'}++ if($link->get_tagvalue('old_homology'));
+  $self->{'orthotree_homology_count'}++ if($link->get_tagvalue('orthotree_type')); 
+
+  if($link->get_tagvalue('old_homology') and
+     !($link->get_tagvalue('orthotree_type'))) 
+  {
+    $self->display_link_analysis($link);
+    $self->{'lost_homology_count'}++;
+  }
+  
+  return undef;
+}
+
+
+sub display_link_analysis
+{
+  my $self = shift;
+  my $link = shift;
+  
   #display raw feature analysis
   my ($protein1, $protein2) = $link->get_nodes;
   my $ancestor = $link->get_tagvalue('ancestor');
@@ -273,15 +299,12 @@ sub analyze_genelink
   my $homology = $link->get_tagvalue('old_homology');
   if($homology) { printf("%5s ", $homology->description);
   } else { printf("%5s ", ""); }
-
   
-  printf("%20s ", $link->get_tagvalue('orthotree_type'));
-
   print("ancestor:(");
-  if($ancestor->get_tagvalue("Duplication") eq '1') { print("DUP "); }
-  printf("%s)", $ancestor->node_id);
-  
-  printf("\n");
+  if($ancestor->get_tagvalue("Duplication") eq '1'){print("DUP ");} else{print"    ";}
+  printf("%9s)", $ancestor->node_id);
+
+  printf(" %s\n", $link->get_tagvalue('orthotree_type'));  
   return undef;
 }
 
@@ -452,6 +475,38 @@ sub inspecies_paralogue_test
   return 1;
 }
 
+
+sub ancient_residual_orthologue_test
+{
+  my $self = shift;
+  my $link = shift;
+    
+  #getting a bit more complex:
+  #  - genes are from different species
+  #  - common ancestor node is not a duplication event
+  #  - but there is evidence for duplication events elsewhere in the history
+  #  - but these two genes are the only remaining representative of the ancestor
+
+  my ($pep1, $pep2) = $link->get_nodes;
+  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
+
+  my $ancestor = $link->get_tagvalue('ancestor');
+  my $species_hash = $self->calc_ancestor_species_hash($ancestor);
+  
+  #check last common ancestor
+  return undef if($ancestor->get_tagvalue("Duplication") eq '1');
+
+  #check these are the only representatives of the ancestor
+  my $count1 = $species_hash->{$pep1->genome_db_id};
+  my $count2 = $species_hash->{$pep2->genome_db_id};
+  
+  return undef if($count1>1);
+  return undef if($count2>1);
+  
+  #passed all the test -> it's a simple orthologue
+  $link->add_tag("orthotree_type", 'ancient_residual_orthologue');
+  return 1;
+}
 
 ########################################################
 #
