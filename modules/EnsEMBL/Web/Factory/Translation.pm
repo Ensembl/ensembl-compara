@@ -73,7 +73,7 @@ sub createObjects {
       "The identifier $identifier does not translate or has no translation." );
 
   # Set transcript param to Ensembl Stable ID
-  $self->param( 'transcript',[ $transobj->stable_id ] );
+  $self->param( 'transcript',$transobj->stable_id  );
   my $dataobject = EnsEMBL::Web::Proxy::Object->new( 'Translation', $peptide_Obj, $self->__data );
      $dataobject->transcript( $transobj );
   $self->DataObjects( $dataobject );
