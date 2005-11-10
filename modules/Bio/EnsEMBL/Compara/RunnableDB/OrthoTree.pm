@@ -262,17 +262,20 @@ sub analyze_genelink
   $self->genelink_fetch_homology($link);
 
   #do classification analysis
-  if($self->inspecies_paralogue_test($link)) { }
-  elsif($self->simple_orthologue_test($link)) { } 
+  if($self->simple_orthologue_test($link)) { } 
+  elsif($self->inspecies_paralogue_test($link)) { }
   elsif($self->ancient_residual_orthologue_test($link)) { } 
+  elsif($self->one2many_orthologue_test($link)) { } 
 
   $self->{'old_homology_count'}++ if($link->get_tagvalue('old_homology'));
   $self->{'orthotree_homology_count'}++ if($link->get_tagvalue('orthotree_type')); 
 
+  $self->display_link_analysis($link);
+
   if($link->get_tagvalue('old_homology') and
      !($link->get_tagvalue('orthotree_type'))) 
   {
-    $self->display_link_analysis($link);
+    #$self->display_link_analysis($link);
     $self->{'lost_homology_count'}++;
   }
   
@@ -424,7 +427,7 @@ sub simple_orthologue_test
   my $self = shift;
   my $link = shift;
     
-  #simplest orthologue test: no duplication events in the
+  #test 1: simplest orthologue test: no duplication events in the
   #direct ancestory between these two genes
   #and genes are from different species
 
@@ -445,7 +448,7 @@ sub simple_orthologue_test
   return undef if($count1>1);
   return undef if($count2>1);
   
-  #passed all the test -> it's a simple orthologue
+  #passed all the tests -> it's a simple orthologue
   $link->add_tag("orthotree_type", 'simple_orthologue');
   return 1;
 }
@@ -456,7 +459,7 @@ sub inspecies_paralogue_test
   my $self = shift;
   my $link = shift;
     
-  #simplest paralogue test: 
+  #test 2: simplest paralogue test: 
   #  both genes are from the same species
   #  all the genes under the common ancestor are from this same species
 
@@ -470,7 +473,7 @@ sub inspecies_paralogue_test
     return undef unless($gdbID == $pep1->genome_db_id);
   }
   
-  #passed all the test -> it's an inspecies_paralogue
+  #passed all the tests -> it's an inspecies_paralogue
   $link->add_tag("orthotree_type", 'inspecies_paralogue');
   return 1;
 }
@@ -481,7 +484,7 @@ sub ancient_residual_orthologue_test
   my $self = shift;
   my $link = shift;
     
-  #getting a bit more complex:
+  #test 3: getting a bit more complex:
   #  - genes are from different species
   #  - common ancestor node is not a duplication event
   #  - but there is evidence for duplication events elsewhere in the history
@@ -503,8 +506,38 @@ sub ancient_residual_orthologue_test
   return undef if($count1>1);
   return undef if($count2>1);
   
-  #passed all the test -> it's a simple orthologue
+  #passed all the tests -> it's a simple orthologue
   $link->add_tag("orthotree_type", 'ancient_residual_orthologue');
+  return 1;
+}
+
+
+sub one2many_orthologue_test
+{
+  my $self = shift;
+  my $link = shift;
+    
+  #test 4: getting a bit more complex yet again:
+  #  - genes are from different species
+  #  - but there is evidence for duplication events in the history
+  #  - one of the genes is the only remaining representative of the ancestor in its species
+  #  - but the other gene has multiple copies in it's species 
+  #  (first level of orthogroup analysis)
+
+  my ($pep1, $pep2) = $link->get_nodes;
+  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
+
+  my $ancestor = $link->get_tagvalue('ancestor');
+  my $species_hash = $self->calc_ancestor_species_hash($ancestor);
+  
+  my $count1 = $species_hash->{$pep1->genome_db_id};
+  my $count2 = $species_hash->{$pep2->genome_db_id};
+  
+  #one of the genes must be the only copy of the gene
+  return undef unless($count1==1 or $count2==1);
+  
+  #passed all the tests -> it's a one2many orthologue
+  $link->add_tag("orthotree_type", 'one2many_orthologue');
   return 1;
 }
 
