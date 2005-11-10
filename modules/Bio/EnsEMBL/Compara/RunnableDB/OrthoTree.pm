@@ -203,51 +203,39 @@ sub run_analysis
 
   my $starttime = time()*1000;
   my $tree = $self->{'protein_tree'};
-  
-  #$tree->print_tree($self->{'tree_scale'}) if($self->debug);
-  
+    
   my @all_protein_leaves = @{$tree->get_all_leaves};
   printf("%d proteins in tree\n", scalar(@all_protein_leaves));
   
-  my $count=0;
+  $self->calc_ancestor_species_hash($tree);
+  
+  #compare every gene in the tree with every other
+  #each gene/gene pairing is a potential orthologue/paralogue
+  #and thus we need to analyze every possibility
+  #accomplish by creating a fully connected graph between all the genes
+  #under the tree (hybrid graph structure) and then analyze each gene/gene link
   my @pair_links;
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
       my $ancestor = $protein1->find_first_shared_ancestor($protein2);
       my $distance = $protein1->distance_to_ancestor($ancestor) +
                      $protein2->distance_to_ancestor($ancestor);
-      $count++;      
       my $link = new Bio::EnsEMBL::Compara::Graph::Link($protein1, $protein2, $distance);
-      push @pair_links, $link;
       $link->add_tag("hops", 0);
+      $link->add_tag("ancestor", $ancestor);
+      push @pair_links, $link;
     }
   }
   
+  #sort the gene/gene links by distance and then analyze
   my @links = sort {$a->distance_between <=> $b->distance_between} @pair_links;
   foreach my $link (@links) {
-    $self->check_dups_between($link);
-    my ($protein1, $protein2) = $link->get_nodes;
-    my $ancestor = $protein1->find_first_shared_ancestor($protein2);
-    printf("%21s(%7d) - %21s(%7d) : %10.3f dist : %3d hops : ", 
-      $protein1->stable_id, $protein1->member_id,
-      $protein2->stable_id, $protein2->member_id,
-      $link->distance_between, $link->get_tagvalue('hops'));
-    
-    if($link->get_tagvalue('has_dups')) { printf("%5s ", 'DUP');
-    } else { printf("%5s ", ""); }
-
-    my $homology = $self->fetch_homology_for_pair($protein1, $protein2);
-    if($homology) { printf("%5s ", $homology->description);
-    } else { printf("%5s ", ""); }
-
-    print("ancestor: "); $ancestor->print_node;
-    
+    $self->analyze_genelink($link);
   }
-  
+
   my $runtime = time()*1000-$starttime;  
   $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime);
   printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
-  printf("%d pairings\n", $count);
   printf("%d pairings\n", scalar(@pair_links));
     
   $tree->disavow_parent;
@@ -257,11 +245,82 @@ sub run_analysis
 }
 
 
-sub fetch_homology_for_pair
+sub analyze_genelink
 {
   my $self = shift;
-  my $member1 = shift;
-  my $member2 = shift;
+  my $link = shift;
+
+  $self->genelink_check_dups($link);
+  $self->genelink_fetch_homology($link);
+
+  #display analysis
+  my ($protein1, $protein2) = $link->get_nodes;
+  my $ancestor = $link->get_tagvalue('ancestor');
+  printf("%21s(%7d) - %21s(%7d) : %10.3f dist : %3d hops : ", 
+    $protein1->stable_id, $protein1->member_id,
+    $protein2->stable_id, $protein2->member_id,
+    $link->distance_between, $link->get_tagvalue('hops'));
+  
+  if($link->get_tagvalue('has_dups')) { printf("%5s ", 'DUP');
+  } else { printf("%5s ", ""); }
+
+  my $homology = $link->get_tagvalue('old_homology');
+  if($homology) { printf("%5s ", $homology->description);
+  } else { printf("%5s ", ""); }
+
+  print("ancestor: "); $ancestor->print_node;
+    
+  return undef;
+}
+
+#############################################
+#
+# individual feature detectors
+#
+#############################################
+
+sub calc_ancestor_species_hash
+{
+  my $self = shift;
+  my $node = shift;
+
+  my $species_hash = $node->get_tagvalue('species_hash');
+  return $species_hash if($species_hash);
+  
+  $species_hash = {};
+
+  if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+    $species_hash->{$node->genome_db_id} = 1;
+    $node->add_tag('species_hash', $species_hash);
+    return $species_hash;
+  }
+ 
+  foreach my $child (@{$node->children}) {
+    my $t_species_hash = $self->calc_ancestor_species_hash($child);
+    next unless(defined($t_species_hash)); #shouldn't happen
+    foreach my $genome_db_id (keys(%$t_species_hash)) {
+      unless(defined($species_hash->{$genome_db_id})) {
+        $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id};
+      } else {
+        $species_hash->{$genome_db_id} += $t_species_hash->{$genome_db_id};
+      }    
+    }
+  }
+  
+  #printf("\ncalc_ancestor_species_hash : %s\n", $self->encode_hash($species_hash));
+  #$node->print_tree(20);
+  
+  $node->add_tag("species_hash", $species_hash);
+  return $species_hash;
+}
+
+
+sub genelink_fetch_homology
+{
+  my $self = shift;
+  my $link = shift;
+  
+  my ($member1, $member2) = $link->get_nodes;
   
   my $sql = "select homology.homology_id from homology ".
             "join homology_member hm1 using(homology_id) ".
@@ -277,17 +336,20 @@ sub fetch_homology_for_pair
   return undef unless($homology_id);
   
   my $homology = $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_dbID($homology_id);
+  $link->add_tag("old_homology", $homology);
+
   return $homology;
 }
 
-sub check_dups_between
+
+sub genelink_check_dups
 {
   my $self = shift;
   my $link = shift;
   
   my ($pep1, $pep2) = $link->get_nodes;
   
-  my $ancestor = $pep1->find_first_shared_ancestor($pep2);
+  my $ancestor = $link->get_tagvalue('ancestor');
   #printf("ancestor : "); $ancestor->print_node;
   my $has_dup=0;
   my %nodes_between;
@@ -311,6 +373,20 @@ sub check_dups_between
 
   $link->add_tag("hops", scalar(keys(%nodes_between)));
   $link->add_tag("has_dups", $has_dup);
+  return undef;
+}
+
+
+sub simple_orthologue_test
+{
+  my $self = shift;
+  my $link = shift;
+  
+  my ($pep1, $pep2) = $link->get_nodes;
+  
+  #simplest orthologue test: no duplication events in the
+  #ancestory between these two genes
+  
   return undef;
 }
 
