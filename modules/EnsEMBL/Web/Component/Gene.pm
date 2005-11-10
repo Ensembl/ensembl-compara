@@ -589,6 +589,7 @@ sub gene_structure {
      $wuc->set( 'ruler',              'str',         $object->Obj->strand > 0 ? 'f' : 'r' );
      $wuc->set( $gene_track_name,     'on',          'on');
      $wuc->set( 'regulatory_regions', 'on',          'on');
+     $wuc->set( 'regulatory_search_regions', 'on',   'on');
 
   my $image    = $object->new_image( $gr_slice, $wuc, [] );
   $image->imagemap           = 'yes';

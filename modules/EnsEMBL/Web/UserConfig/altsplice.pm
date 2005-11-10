@@ -19,6 +19,7 @@ sub init {
       'features' => [ 
 		     [ 'variation' => "SNPs" ],
                      [ 'regulatory_regions' => 'Regulatory regions'  ],
+                     [ 'regulatory_search_regions' => 'Regulatory search regions'  ],
 		    ],
       'show_labels'  => 'yes',
       'show_buttons' => 'no',
@@ -72,7 +73,7 @@ sub init {
       'on'  => "off",
       'pos' => '13',
       'str' => 'b',
-      'available'=> 'database_tables ENSEMBL_DB.regulatory_feature',
+      'available'=> 'database_tables ENSEMBL_DB.regulatory_search_region',
     },
 
   };
