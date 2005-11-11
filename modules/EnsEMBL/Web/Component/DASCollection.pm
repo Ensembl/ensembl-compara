@@ -164,12 +164,6 @@ sub add_das_server {
 			   'label'    => 'Domain',
 			   'notes' => $btnList
 			   );
-
-	$form->add_element('type' => 'Image',
-			   'src' => "/img/buttons/dsnlist_small.gif",
-			   'name' => '_das_list_dsn',
-			   'value' => 1
-			   );
     } else {
 	my $rurl = $object->species_defs->DAS_REGISTRY_URL;
 	if (defined (my $url = $object->param("DASdomain"))) {
@@ -410,7 +404,7 @@ sub das_wizard {
 	    var warning = 'You must select a source to proceed!';
 	    if (s == 1) {
 		rc = false;
-		if (f.submitButton == '_das_filter') {
+		if (f.submitButton != '_das_Step') {
 		    rc = true;
 		} else {
 		    if (f.DASuser_source.value != '') {
