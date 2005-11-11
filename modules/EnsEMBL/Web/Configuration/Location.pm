@@ -59,9 +59,23 @@ sub context_menu {
         'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
   }
 
+  my @options_as = ();
+
+  foreach my $type (qw(MLAGAN) ) {
+    my %shash2 = ( $obj->species_defs->multi($type, $species) );
+    if (%shash2) {
+      my $KEY = lc($species).'_compara_'.lc($type);
+      my $label = sprintf("%d Mammals ($type)", scalar(keys(%shash2)));
+      push @options_as, {
+        'text' => "... $label", 'raw' => 1,
+        'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
+      };
+    }
+  }
+
   my %shash = ( $obj->species_defs->multi('BLASTZ_NET',$species) );
   my @species = keys %shash;
-  my @options_as = ();
+
   foreach my $SPECIES (@species) {
     (my $sp = $SPECIES ) =~ s/_\d+//;
     my $KEY = lc($SPECIES).'_compara_pairwise';
@@ -69,17 +83,6 @@ sub context_menu {
       'text' => "... <em>$sp</em>", 'raw' => 1,
       'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species, $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
     };
-  }
-  foreach my $type (qw(MLAGAN) ) {
-    my %shash2 = ( $obj->species_defs->multi($type, $species) );
-    if (%shash2) {
-      my $KEY = lc($species).'_compara_'.lc($type);
-      my $label = sprintf("$type (+%d species)", scalar(keys(%shash2)));
-      push @options_as, {
-        'text' => "... $label", 'raw' => 1,
-        'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )
-      };
-    }
   }
   if( @options_as ) {
     $menu->add_entry( $flag, 'text' => "View alignment with ...", 'href' => $options_as[0]{'href'},
