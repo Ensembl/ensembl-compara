@@ -926,8 +926,6 @@ sub misc_set_form {
 
 sub alignsliceviewbottom {
     my($panel, $object) = @_;
-    my @stats;
-    my $ts1 = time;
     my $scaling = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
     my $max_length = $scaling * 1e6;
     my $slice = $object->database('core')->get_SliceAdaptor()
@@ -965,9 +963,7 @@ sub alignsliceviewbottom {
 
     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
     my $asa = $comparadb->get_adaptor("AlignSlice" );
-    push @stats, (time - $ts1);
     my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
-    push @stats, (time - $ts1);
     my @ARRAY;
     my $url = $wuc->get('_settings','URL');
     my $cmpstr = 'primary';
@@ -1010,13 +1006,9 @@ sub alignsliceviewbottom {
 	push @ARRAY, $compara_slice, $CONF;
 	$cmpstr = 'secondary';
     }
-    push @stats, (time - $ts1);
     my $image = $object->new_image( \@ARRAY, $object->highlights );
     $image->imagemap = 'yes';
     $panel->print( $image->render );
-    push @stats, (time - $ts1);
-    
-    warn("Comp:".join('*', @stats));
     return 0;
 }
 
@@ -1068,8 +1060,6 @@ sub alignsliceviewbottom {
 
 sub alignsliceviewzoom {
     my($panel, $object) = @_;
-    my @stats;
-    my $ts1 = time;
     my $slice = $object->database('core')->get_SliceAdaptor()
 	->fetch_by_region($object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1 );
 
@@ -1100,9 +1090,7 @@ sub alignsliceviewzoom {
 #    warn("SA2: @sarray");
     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
     my $asa = $comparadb->get_adaptor("AlignSlice" );
-    push @stats, (time - $ts1);
     my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
-    push @stats, (time - $ts1);
     my @ARRAY;
     my $cmpstr = 'primary';
     (my $psp =  $species) =~ s/\_/ /g;
@@ -1164,8 +1152,6 @@ sub alignsliceviewzoom {
     $image->imagemap = 'yes';
     my $T = $image->render;
     $panel->print( $T );
-    push @stats, (time - $ts1);
-    warn("Zoom:".join('*', @stats));
     return 1;
 }
 
