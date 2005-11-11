@@ -119,10 +119,13 @@ sub createObjects {
 	next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
 	
 	my $source_confdata = $daslist{$source};
-	
+	if ($source_confdata->{url} =~ m!/das!) {
+	   $source_confdata->{url} .= "/$source_confdata->{dsn}";
+        }
 #	warn("ADD EXTERNAL: $source");
 #	warn(Dumper($source_confdata));
 	$source_confdata->{conftype} ||= 'external';
+	
 	$sources_conf{$source} = $source_confdata;
     }
 

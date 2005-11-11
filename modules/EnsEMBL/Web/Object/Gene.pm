@@ -194,7 +194,10 @@ sub get_homology_matches{
       $homology_list{$displayspp}{$homologue_id}{'description'} = $homologue->description ;
       if ($self->species_defs->valid_species($spp)){
         my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
-        next unless $database_spp->{'core'};
+        unless( $database_spp->{'core'} ) {
+          warn "NO CORE DB CONNECTION ($spp)";
+          next;
+        }
         my $geneadaptor_spp = $database_spp->{'core'}->$adaptor_call;
                 my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $homologue->stable_id, 1 );
         unless ( $gene_spp ) {
@@ -309,10 +312,8 @@ sub get_das_features_by_name {
   my $scope = shift || '';
   my $data = $self->__data;     
   my $cache = $self->Obj;
-
   $cache->{_das_features} ||= {}; # Cache
   my %das_features;
-
   foreach my $dasfact( @{$self->get_das_factories} ){
     my $type = $dasfact->adaptor->type;
     next if $dasfact->adaptor->type eq 'ensembl_location';
@@ -325,8 +326,10 @@ sub get_das_features_by_name {
 # Need the type to handle sources that serve multiple types of features
 
     my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
-    $key .= "/$dsn/$type";
-
+    if ($key =~ m!/das$!) {
+	$key .= "/$dsn";
+    }
+    $key .= "/$type";
     unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
       my $featref = ($dasfact->fetch_all_by_ID($data->{_object}, $data ))[1];
       $cache->{_das_features}->{$key} = $featref;
