@@ -1217,7 +1217,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   my ($original_sequence, $cigar_line, $fix_seq) = @_;
   my $aligned_sequence = "";
 
-  return undef if (!$original_sequence or !$cigar_line);
+  return undef if (!defined($original_sequence) or !$cigar_line);
 
   my $seq_pos = 0;
   
