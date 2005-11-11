@@ -197,4 +197,57 @@ sub _help_link {
   return qq(<a href="javascript:open('@{[$self->_help_URL($kw)]}','helpview','width=750,height=550,resizable,scrollbars')">@{[ CGI::escapeHTML( $text )]}</a>);
 }
 
+sub getCoordinateSystem{
+    my ($self, $cs) = @_;
+
+    my $species = $self->species || $ENV{'ENSEMBL_SPECIES'};
+
+    my %SpeciesID = 
+        (
+         'Homo_sapiens' => ['hugo'],
+         'Mus_musculus' => ['markersymbol', 'mgi']
+         );
+
+    my %ExternalIDs = (
+                       'hugo'                  => "HUGO ID",
+                       'markersymbol'          => "MarkerSymbol ID",
+                       'mgi'                => 'MGI Accession ID'
+                       );
+
+    my %DASMapping = 
+        (
+         'ensembl_gene'          => "Ensembl Gene ID",
+         'ensembl_location'      => "Ensembl Location",
+         'ensembl_peptide'       => "Ensembl Peptide ID",
+         'ensembl_transcript'    => "Ensembl Transcript ID",
+         'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
+         'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
+         'entrezgene'            => 'Entrez Gene ID',
+	 'ipi_acc'               => 'IPI Accession',
+	 'ipi_id'                => 'IPI ID',
+         );
+
+
+    my %DefaultMapping =  (
+                           'geneview' => 'ensembl_gene',
+                           'protview' => 'ensembl_peptide',
+                           'transview' => 'ensembl_gene', # Coz there is no ensembl_transcript source around at the moment
+                           'contigview' => 'ensembl_location',
+                           'cytoview' => 'ensembl_location'
+                           );
+
+       
+    if (defined($SpeciesID{$species})) {
+        foreach my $tid (@{$SpeciesID{$species}}) {
+            $DASMapping{$tid} = $ExternalIDs{$tid};
+        }
+    }
+    if ($cs) {
+	return ($DASMapping{$cs} || $cs);
+    }
+
+    return \%DASMapping;
+
+}
+
 1;

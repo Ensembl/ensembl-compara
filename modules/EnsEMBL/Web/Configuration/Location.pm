@@ -438,6 +438,7 @@ sub contigview {
 sub alignsliceview {
     my $self   = shift;
     my $obj    = $self->{object};
+    my $t1 = time;
     my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
 
     my $config_name = 'alignsliceviewbottom';
@@ -525,6 +526,7 @@ sub alignsliceview {
        $self->{page}->content->add_panel( $base );
      }
     $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
+    warn("Conf:".(time - $t1));
 }
 
 

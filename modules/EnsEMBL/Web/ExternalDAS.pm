@@ -2,7 +2,7 @@
 
 package EnsEMBL::Web::ExternalDAS;
 use strict;
-
+use Data::Dumper;
 sub new {
   my( $class, $proxiable ) = @_;
   my $self = { 
@@ -96,9 +96,8 @@ sub add_das_source {
 
 sub amend_source {
   my( $self, $hashref ) = @_;
-  my $key = $hashref->{name} || "$hashref->{'URL'}/das/$hashref->{'dsn'}";
-     $key =~ s/http:\/\///i;
-     $key =~ s/\W/-/g;
+#  my $key = join('/', $hashref->{'url'}, $hashref->{'dsn'}, $hashref->{'type'});
+  my $key = $hashref->{'name'};
   $self->{'data'}->{ $key } = $hashref;
   return $key;
 }

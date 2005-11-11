@@ -116,6 +116,8 @@ sub mapping {
 sub domain {
     my $self = shift;
     if (defined(my $value = shift)) {
+	$value = "http://$value" if ($value !~ m!^\w+://!);
+	$value .= '/das' if ($value !~ m!/das$!);
 	$self->{_domain} = $value;
     }
     return $self->{_domain};
@@ -465,10 +467,11 @@ sub update_dsn {
     $self->error($self->_db_connect()) and  return -1;
     (my $dsnid = $dsn) =~ s/^$EUF_DPREFIX(0)*//;
     
+    warn("UPDATE!");
     my $sql = qq{select id from hydra_journal where id = '$dsnid' and passw = '$password'};
     my $jid;
     my $sth;
-
+    warn("$sql");
     eval {
 	$sth = $self->{_dbh}->prepare($sql);
 	$sth->execute();
@@ -489,7 +492,8 @@ sub update_dsn {
     $self->dsn($dsn);
     
     if ($action eq 'overwrite') {
-	$sql = qq{delete from $dsn};
+	(my $tname = $dsn) =~ s/hydraeuf_/euf_/;
+	$sql = qq{delete from $tname};
 	eval {
 	    $self->{_dbh}->do($sql);
 	};

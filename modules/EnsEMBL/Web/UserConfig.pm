@@ -1021,28 +1021,28 @@ sub ADD_GENE_TRACKS {
   my $self = shift;
   my $POS  = shift || 2000;
   $self->add_new_track_gene( 'ensembl', 'Ensembl Genes', 'ensembl_gene', $POS++,
-   'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-   'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+   'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+   'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
    'logic_name'           => 'ensembl psuedogene', @_
   );
   $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
-    'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
     'logic_name'           => 'flybase psuedogene', @_
   );
   $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
-    'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
     'logic_name'           => 'wormbase psuedogene', @_
   );
   $self->add_new_track_gene( 'genebuilderbeeflymosandswall', 'Bee Genes', 'bee_gene', $POS++,
-    'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
     @_
   );
   $self->add_new_track_gene( 'SGD', 'SGD Genes', 'sgd_gene', $POS++,
-    'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-    'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
     @_
   );
   $self->add_new_track_gene( 'Homology_low', 'Bee Genes', 'bee_pre_gene', $POS++,
@@ -1052,7 +1052,7 @@ sub ADD_GENE_TRACKS {
   );
   $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
-    'gene_col'             => sub { return $_[0]->type eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
+    'gene_col'             => sub { return $_[0]->biotype eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
     'logic_name'           => 'gsten hox cyt', @_
   );
   $self->add_new_track_gene( 'Cow_proteins', 'Cow proteins', 'cow_protein', $POS++,
@@ -1060,9 +1060,9 @@ sub ADD_GENE_TRACKS {
     'gene_col'             => 'cow_protein' 
   );
   $self->add_new_track_gene( 'ncrna', 'ncRNA Genes', 'rna_gene', $POS++,
-                             'gene_col' => sub { return $_[0]->type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
+                             'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
   $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++,
-                             'gene_col' => sub { return $_[0]->type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
+                             'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
   $self->add_new_track_gene( 'refseq', 'RefSeq Genes', 'refseq_gene', $POS++, 'gene_col' => '_refseq',  @_ );
   $self->add_new_track_gene( 'estgene', 'EST Genes', 'est_gene', $POS++,
                              'database' => 'est', 'available' => 'databases ENSEMBL_EST',
@@ -1070,7 +1070,7 @@ sub ADD_GENE_TRACKS {
                              'gene_col' => 'estgene', @_ );
   $self->add_new_track_gene( 'otter', 'Vega Genes', 'vega_gene', $POS++,
                              'database' => 'vega', 'available' => 'databases ENSEMBL_VEGA',
-                            # 'gene_col'             => sub { ( my $T = $_[0]->type ) =~s/HUMACE-//; return $T; },
+                            # 'gene_col'             => sub { ( my $T = $_[0]->biotype ) =~s/HUMACE-//; return $T; },
                              'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->confidence; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
 #for genes in Vega
@@ -1126,33 +1126,33 @@ sub ADD_AS_GENE_TRACKS {
     my $self = shift;
     my $POS  = shift || 2000;
     $self->add_new_track_gene( 'ensembl', 'Ensembl Genes', 'ensembl_gene', $POS++,
-			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
 			       'logic_name'           => 'ensembl psuedogene', @_
 			       );
     $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
-     'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
      'logic_name'           => 'flybase psuedogene', @_
 			       );
     $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
-			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
 			       'logic_name'           => 'wormbase psuedogene', @_
 			       );
     $self->add_new_track_gene( 'genebuilderbeeflymosandswall', 'Bee Genes', 'bee_gene', $POS++,
-			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
 			       @_
 			       );
     $self->add_new_track_gene( 'SGD', 'SGD Genes', 'sgd_gene', $POS++,
-			       'gene_label'           => sub { return $_[0]->type eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->type eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
-			       'gene_col'             => sub { return $_[0]->type eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->type eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
 			       @_
 			       );
     $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
 			       'gene_label'           => sub { return $_[0]->stable_id },
-			       'gene_col'             => sub { return $_[0]->type eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
 			       'logic_name'           => 'gsten hox cyt', @_
 			       );
     

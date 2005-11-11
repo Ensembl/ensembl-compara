@@ -926,10 +926,13 @@ sub misc_set_form {
 
 sub alignsliceviewbottom {
     my($panel, $object) = @_;
+    my @stats;
+    my $ts1 = time;
     my $scaling = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
     my $max_length = $scaling * 1e6;
     my $slice = $object->database('core')->get_SliceAdaptor()
 	->fetch_by_region( $object->seq_region_type, $object->seq_region_name, $object->seq_region_start, $object->seq_region_end, 1 );
+
     my $wuc = $object->user_config_hash( 'alignsliceviewbottom_0', 'alignsliceviewbottom' );
 
     my $zwa = $object->param('zoom_width');
@@ -938,6 +941,7 @@ sub alignsliceviewbottom {
     my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
 
     my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
+
     my @sarray = ($species);
 
     my ($spe, $type) = split('_compara_', $wuc->get('align_species',$species));
@@ -960,10 +964,10 @@ sub alignsliceviewbottom {
 #     warn("SA: @sarray");
 
     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
-
     my $asa = $comparadb->get_adaptor("AlignSlice" );
+    push @stats, (time - $ts1);
     my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
-
+    push @stats, (time - $ts1);
     my @ARRAY;
     my $url = $wuc->get('_settings','URL');
     my $cmpstr = 'primary';
@@ -1006,10 +1010,13 @@ sub alignsliceviewbottom {
 	push @ARRAY, $compara_slice, $CONF;
 	$cmpstr = 'secondary';
     }
-
+    push @stats, (time - $ts1);
     my $image = $object->new_image( \@ARRAY, $object->highlights );
     $image->imagemap = 'yes';
     $panel->print( $image->render );
+    push @stats, (time - $ts1);
+    
+    warn("Comp:".join('*', @stats));
     return 0;
 }
 
@@ -1061,6 +1068,8 @@ sub alignsliceviewbottom {
 
 sub alignsliceviewzoom {
     my($panel, $object) = @_;
+    my @stats;
+    my $ts1 = time;
     my $slice = $object->database('core')->get_SliceAdaptor()
 	->fetch_by_region($object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1 );
 
@@ -1069,11 +1078,9 @@ sub alignsliceviewzoom {
     my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
     
     my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
-
     my @sarray = ($species);
 
     my $wuc2 = $object->user_config_hash( 'alignsliceviewbottom' );
-
     my ($spe, $type) = split('_compara_', $wuc2->get('align_species',$species));
     my $comparadb;
 
@@ -1089,15 +1096,13 @@ sub alignsliceviewzoom {
 	 push @sarray, keys %shash;
 	 $comparadb = $object->database('compara'); #('compara_multiple');
      }
-
     my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
 #    warn("SA2: @sarray");
-
     my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
-
     my $asa = $comparadb->get_adaptor("AlignSlice" );
+    push @stats, (time - $ts1);
     my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
-    
+    push @stats, (time - $ts1);
     my @ARRAY;
     my $cmpstr = 'primary';
     (my $psp =  $species) =~ s/\_/ /g;
@@ -1112,7 +1117,6 @@ sub alignsliceviewzoom {
 	    $SEQ[$ind++]->{uc($_)} ++;
 	}
     }
-
     my $num = scalar(@species);
 
     foreach my $nt (@SEQ) {
@@ -1160,6 +1164,8 @@ sub alignsliceviewzoom {
     $image->imagemap = 'yes';
     my $T = $image->render;
     $panel->print( $T );
+    push @stats, (time - $ts1);
+    warn("Zoom:".join('*', @stats));
     return 1;
 }
 

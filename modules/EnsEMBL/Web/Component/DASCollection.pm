@@ -11,20 +11,9 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-my %DASMappingType = (
-  'ensembl_gene'          => "Ensembl Gene ID",
-  'ensembl_location'      => "Ensembl Location",
-  'ensembl_peptide'       => "Ensembl Peptide ID",
-  'ensembl_transcript'    => "Ensembl Transcript ID",
-  'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
-  'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
-  'hugo'                  => "HUGO ID",
-  'markersymbol'          => "MarkerSymbol ID",
-  'mgi'                   => 'MGI Accession ID',
-  'entrezgene'            => 'EntrezGene',
-  'ipi_acc'               => 'IPI Accession',
-  'ipi_id'                => 'IPI ID',
-);
+my $btnNext = 'Next';
+my $btnBack = 'Back';
+my $btnFinish = 'Finish';
 
 
 my %DASWizard = (
@@ -44,13 +33,6 @@ my %DASWizard = (
     HELP => 'data provided by DAS server',
     ENSEMBL_HELP => "javascript:void(window.open('/perl/helpview?se=1&kw=dasconfview#DSN','dasconfview','width=400,height=500,resizable,scrollbars'));"
   },
-  'das_registry' => {
-    TITLE => 'Please select <a href="javascript:X=window.open(\'http://das.sanger.ac.uk/registry\', \' \', \'resizable,scrollbars\');X.focus();void(0)">Registry</a> DAS sources to attach:', 
-    TEXT => 'DAS Registry server',
-    FUNC => \&add_das_registry,
-    HELP => 'data provided by DAS server',
-    ENSEMBL_HELP => "javascript:void(window.open('/perl/helpview?se=1&kw=dasconfview#DSN','dasconfview','width=400,height=500,resizable,scrollbars'));"
-  }
 );
 
 my $_select_tmpl = qq(
@@ -86,118 +68,84 @@ sub _formelement_select {
 sub get_das_domains {
     my ($object) = @_;
     my @domains = ();    
+    
     push( @domains, @{$object->species_defs->ENSEMBL_DAS_SERVERS || []});
     push( @domains, map{$_->adaptor->domain} @{$object->Obj} );
-    push( @domains, $object->param("DASdomain") );
-    my %known_domains = ( map{ $_ =~ s/^http(s?)\:\/\///; $_=~ s/(\/das)?\/?\s*$/\/das/; $_, 1 } grep{$_} @domains );
-    return  sort keys %known_domains;
+    push( @domains, $object->param("DASdomain")) if ($object->param("DASdomain") ne $object->species_defs->DAS_REGISTRY_URL);
+    my %known_domains = map { $_ => 1} grep{$_} @domains ;
+    my @urls;
+    foreach my $url (sort keys %known_domains) {
+	$url = "http://$url" if ($url !~ m!^\w+://!);
+	$url .= "/das" if ($url !~ m!/das$!);
+	push @urls, $url;
+    }
+    return  @urls;
 }
 
 sub get_server_dsns {
     my ($object) = @_;
-    my $domain = $object->param('DASdomain');
-    $domain =~ s/^http(s?)\:\/\///;
+    if (my $url = $object->param('DASdomain')) {
+	my $filterT = sub {
+	    return 1;
+	};
+	my $filterM = sub {
+	    return 1;
+	};
 
-    $object->param('DASdomain', $domain);
-    my $protocol = $object->param('DASprotocol') || 'http';
+	my $keyText = $object->param('keyText');
+	my $keyMapping = $object->param('keyMapping');
+	
+	if (defined (my $dd = $object->param('_das_filter'))) {
+	    if ($keyText) {
+		$filterT = sub { 
+		    my $src = shift; 
+		    return 1 if ($src->{url} =~ /$keyText/); 
+		    return 1 if ($src->{name} =~ /$keyText/); 
+		    return 1 if ($src->{description} =~ /$keyText/); 
+		    return 0; };
+	    }
+	
+	    if ($keyMapping ne 'any') {
+		$filterM = sub { 
+		    my $src = shift; 
+		    foreach my $cs (@{$src->{mapping_type}}) {
+			return 1 if ($cs eq $keyMapping);
+		    }
+		    return 0; 
+		};
+	    }
+	}
 
-    if( $domain && $protocol ){
+
+
         use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
         my $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new
-        ( -protocol  => $protocol,
-          -domain    => $domain,
-          -timeout   => 5,
-          -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
-          );
+	    ( 
+	      -url  => $url,
+	      -timeout   => 5,
+	      -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY 
+	      );
 
         use Bio::EnsEMBL::ExternalData::DAS::DAS;
         my $das = Bio::EnsEMBL::ExternalData::DAS::DAS->new ( $adaptor );
-        my @dsns = @{ $das->fetch_dsn_info };
-        if( @dsns ){
-            return @dsns;
+        my %dsnhash = map {$_->{id}, $_} grep {$filterT->($_)} @{ $das->fetch_dsn_info };
+        if( %dsnhash ){
+            return \%dsnhash;
         } else{
             $object->param('_error_das_domain', 'No DSNs for domain');
         }
     } else{
-        $protocol || $object->param('_error_das_protocol', 'Need a protocol');
-        $domain   || $object->param('_error_das_domain',   'Need a domain');
+	$object->param('_error_das_domain',   'Need a domain');
     }
     return;
 }
 
-
 sub add_das_server {
-    my ($form, $source_conf, $object) = @_;
-    my @protocols = ( 'http','https' );
-    $object->param("DASprotocol") || $object->param("DASprotocol", $protocols[0]);
+    my ($form, $source_conf, $object, $step_ref) = @_;
 
-    $form->add_element( 'type'     => 'Information', 'value'    => 'Please configure your Annotation server' );
-    
-    my @pvals;
-    foreach my $p (@protocols) { push @pvals , {"name"=>"$p://", "value"=>$p}; }
-    $form->add_element('type'     => 'DropDown',
-                       'select'   => 'select',
-                       'name'     => 'DASprotocol',
-                       'label'    => 'Protocol',
-                       'values'   => \@pvals,
-                       'value'    => $object->param("DASprotocol")
-                       );
+    $form->add_element( 'type'     => 'Information', 'value'    => 'Please select DAS sources to attach and click <b>Next</b>:' );
 
-
-
-    if (defined($object->param('_das_add_domain.x'))) {
-    $form->add_element('type' => 'String',
-               'name'     => 'DASdomain',
-               'label'    => 'Domain',
-               );
-
-    $form->add_element('type' => 'Image',
-               'src' => "/img/buttons/dsnlist_small.gif",
-               'name' => '_das_list_dsn',
-               'value' => 1
-               );
-
-    } else {
-    my @das_servers = &get_das_domains($object);
-    $object->param("DASdomain") or $object->param("DASdomain", $das_servers[0]);
-    my $default = $object->param("DASdomain");
-    $default =~ s/^http(s?)\:\/\///;
-
-    my @dvals;
-    foreach my $dom (@das_servers) { push @dvals, {'name'=>$dom, 'value'=>$dom} ; }
-
-    $form->add_element('type'     => 'DropDown',
-               'select'   => 'select',
-               'name'     => 'DASdomain',
-               'label'    => 'Domain',
-               'values'   => \@dvals,
-               'value'    => $default, 
-               'on_change' => 'submit',
-               );
-    $form->add_element('type' => 'Image',
-               'src' => "/img/buttons/more_small.gif",
-               'name' => '_das_add_domain',
-               'value' => 1
-               );
-    
-    my @server_dsns = &get_server_dsns($object);
-    
-    my @dsn_values;
-    foreach my $dsn ( sort{$a->{dsn} cmp $b->{dsn}} @server_dsns ){
-        push @dsn_values, {"name"=>$dsn->{dsn}, "value"=>$dsn->{dsn}};
-    }
-    $form->add_element(
-               'type'     => 'DropDown',
-               'select'   => 'select',
-               'name'     => 'DASdsn',
-               'label'    => 'Data source',
-               'values'   => \@dsn_values,
-               'value'    => $source_conf->{dsn}
-                       );
-
-    }
-
-
+    &wizardTopPanel($form, $$step_ref, $source_conf->{sourcetype});
 
     $form->add_element(
                        'type'     => 'String',
@@ -205,6 +153,93 @@ sub add_das_server {
                        'label'    => '(for user uploaded sources enter DSN here)',
                        'value'    => $source_conf->{userdsn}
                        );
+
+    
+
+    if (defined($object->param('_das_add_domain.x'))) {
+	my $btnList = qq{  <input type="image" name="_das_list_dsn" src="/img/buttons/dsnlist_small.gif" class="form-button" /> };
+
+	$form->add_element('type' => 'String',
+			   'name'     => 'DASdomain',
+			   'label'    => 'Domain',
+			   'notes' => $btnList
+			   );
+
+	$form->add_element('type' => 'Image',
+			   'src' => "/img/buttons/dsnlist_small.gif",
+			   'name' => '_das_list_dsn',
+			   'value' => 1
+			   );
+    } else {
+	my $rurl = $object->species_defs->DAS_REGISTRY_URL;
+	if (defined (my $url = $object->param("DASdomain"))) {
+	    $url = "http://$url" if ($url !~ m!^\w+://!);
+	    $url .= '/das' if ($url !~ m!/das$! && $url ne $rurl);
+	    $object->param('DASdomain', $url);
+	}
+	my @das_servers = &get_das_domains($object);
+
+
+	$object->param("DASdomain") or $object->param("DASdomain", $rurl);
+	my $default = $object->param("DASdomain");
+
+#	warn("SERVERS:".Dumper(\@das_servers));
+#	warn("DEFAULT: $default");
+	my @dvals = ({'name' => 'DAS Registry', 'value'=>$rurl});
+	foreach my $dom (@das_servers) { push @dvals, {'name'=>$dom, 'value'=>$dom} ; }
+
+
+	my $btnMore = qq{  <input type="image" name="_das_add_domain" src="/img/buttons/more_small.gif" class="form-button" /> };
+
+
+	$form->add_element('type'     => 'DropDown',
+			   'select'   => 'select',
+			   'name'     => 'DASdomain',
+			   'label'    => 'DAS Server:',
+			   'values'   => \@dvals,
+			   'value'    => $default, 
+			   'notes' => $btnMore,
+			   'on_change' => 'submit',
+			   );
+    
+	if ($object->param("DASdomain") =~ m!^$rurl!) {
+	    &add_das_registry($form, $source_conf, $object);
+	} else {
+	    wizard_search_box ($form, $source_conf, $object, 0);
+
+	    my $dsns = &get_server_dsns($object);
+
+	    my %selected_sources = ();
+	    if (defined($source_conf->{dsns_selection})) {
+		foreach (@{$source_conf->{dsns_selection}}) {
+		    $selected_sources{$_} = 1;
+		}
+	    }
+
+	    my $dwidth = 120;
+	    
+	    my $html = qq{<table>};
+
+	    foreach my $id (sort {$dsns->{$a}->{name} cmp $dsns->{$b}->{name} } keys (%{$dsns})) {
+		my $dassource = $dsns->{$id};
+		my ($id, $name, $url, $desc) = ($dassource->{id}, $dassource->{name}, $dassource->{url}, substr($dassource->{description}, 0, $dwidth));
+		my $cs = qq{<a href="javascript:X=window.open(\'$url\', \'DAS source details\', \'left=50,top=50,resizable,scrollbars=yes\');X.focus();void(0);">details about \`$name\`</a>};
+		my $selected = $selected_sources{$id} ? 'checked' : '';
+    
+		if( length($desc) == $dwidth ) {
+# find the last space character in the line and replace the tail with ...        
+		    $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./;
+		}
+		$html .= qq{\n  <tr><td><input type="checkbox" name="DASdsns" value="$id" $selected ></td><td>$name</td><td><b>$url</b><br>$desc<br>$cs</td></tr>};
+	    }
+
+	    $html .= qq{\n</table>\n};
+	    $form->add_element( 'type'=>'Information', 'value'=> $html );
+	}
+    }
+
+
+
 
     return;
 }
@@ -246,9 +281,9 @@ sub das_wizard {
     }
     return unless (defined ($step));
     if (defined(my $sd = $object->param('_das_Step'))) {
-    if ($sd eq 'Next') {
+    if ($sd eq $btnNext) {
         $step ++;
-    } elsif ($sd eq 'Back') {
+    } elsif ($sd eq $btnBack) {
         $step --;
     }
     }
@@ -259,54 +294,149 @@ sub das_wizard {
     }
 
     $source_conf{sourcetype} ||= $object->param("DASsourcetype");
-    $source_conf{group} ||= 'y';
+    $source_conf{group} ||= 'n';
     $source_conf{user_source} ||= $object->param("DASuser_source");
     @{$source_conf{enable}} = $object->param("DASenable");
 
     @{$source_conf{registry_selection}} = $object->param("DASregistry") ? $object->param("DASregistry") : ();
 
+    @{$source_conf{dsns_selection}} = $object->param("DASdsns") ? $object->param("DASdsns") : ();
+
     if (my $scount = scalar(@{$source_conf{registry_selection}})) {
 	my $dreg = $object->getRegistrySources();
 	my %das_list = ();
 	my ($prot, $url, $dsn, $dname);
-    foreach my $src (@{$source_conf{registry_selection}}) {
-        my $dassource = $dreg->{$src};
-        $dname = $dassource->{nickname};
-        if ($dassource->{url} =~ /(https?:\/\/)(.+das)\/(.+)/) {
-        ($prot, $url, $dsn) = ($1, $2, $3);
-        $dsn =~ s/\///;
-        $das_list{$url}->{$dsn} = $dname;
-        }
+	foreach my $src (@{$source_conf{registry_selection}}) {
+	    my $dassource = $dreg->{$src};
+	    $dname = $dassource->{nickname};
+	    if ($dassource->{url} =~ /(https?:\/\/)(.+das)\/(.+)/) {
+		($prot, $url, $dsn) = ($1, $2, $3);
+		$dsn =~ s/\///;
+		$das_list{$url}->{$dsn} = $dname;
+	    }
+	}
+
+
+	$source_conf{shash} = \%das_list;
+	$source_conf{scount} = $scount;
+	if ($scount > 1) {
+	    $source_conf{name} = 'As nickname in registry';
+	    $source_conf{label} = 'As nickname in registry';
+	} else {
+	    $source_conf{name} ||= $dname;
+	    $source_conf{label} ||= $dname;
+	}
     }
-    $source_conf{shash} = \%das_list;
-    $source_conf{scount} = $scount;
-    if ($scount > 1) {
-        $source_conf{name} = 'As nickname in registry';
-        $source_conf{label} = 'As nickname in registry';
-    } else {
-        $source_conf{name} ||= $dname;
-        $source_conf{label} ||= $dname;
-    }
+
+    if (my $scount = scalar(@{$source_conf{dsns_selection}})) {
+	my %das_list = ();
+	my $dname;
+	foreach my $src (@{$source_conf{dsns_selection}}) {
+	    my $url = $object->param("DASdomain");
+	    $dname = $src;
+	    $das_list{$url}->{$dname} = $src;
+	}
+
+
+	$source_conf{shash} = \%das_list;
+	$source_conf{scount} = $scount;
+	if ($scount > 1) {
+	    $source_conf{name} = 'As DSN';
+	    $source_conf{label} = 'As DSN';
+	} else {
+	    $source_conf{name} ||= $dname;
+	    $source_conf{label} ||= $dname;
+	}
     }
 
     @{$source_conf{mapping}} = $object->param("DAStype");
 
 # If there are more than 1 mapping selected set the source type to mixed 
     if (scalar(@{$source_conf{mapping}}) > 1) {
-    $source_conf{type} = 'mixed';
+	$source_conf{type} = 'mixed';
     }
     my $form;
+    my $onSubmit;
 
     if ($source_conf{sourcetype} eq 'das_file')  { 
       $form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'post');
       $form->add_attribute('ENCTYPE', 'multipart/form-data');
-    } else {
-      $form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'post'); 
-    }
+      $onSubmit = qq{
+	  var rc = true;
+	  var s = document.das_wizard.DASWizardStep.value;
+	  var f = document.das_wizard;
+	  var warning = '';
+	  if (s == 1) {
+	      var e = f.DASuser_email.value;
+	      var ff = /^\\w+@\\w+\\.[\\w\\.]+/.test(e);
+	      if (ff == 0) {
+		  warning = 'You need to provide a valid email.';
+		  rc = false;
+	      }
+	      var p = f.DASuser_password.value;
+	      var fa = /^.+/.test(p);
+	      if (fa == 0) {
+		  warning = warning + 'You need to provide a password.';
+		  rc = false;
+	      }
+	      var d = f.DASpaste_data.value;
+	      var fb = /^.+/.test(d);
+	      if (fb == 0) {
+		  var f = f.DASfilename.value;
+		  var fe = /^.+/.test(f);
+		  if (fe == 0) {
+		      warning = warning + 'You need to select data to upload.';
+		      rc = false;
+		  }
+	      }
 
-    my @cparams = qw ( conf_script db gene transcript peptide c w h l vc_start vc_end region);
+	  }
+
+	  if (rc == false) {
+	      alert(warning);
+	  }
+	  return rc;
+      };
+
+    } else {
+	$form = EnsEMBL::Web::Form->new( 'das_wizard', "/$ENV{ENSEMBL_SPECIES}/dasconfview", 'post'); 
+    
+
+# Check that a user has selected at least one source. 
+	$onSubmit = qq{
+	    var rc = true;
+	    var s = document.das_wizard.DASWizardStep.value;
+	    var f = document.das_wizard;
+	    var warning = 'You must select a source to proceed!';
+	    if (s == 1) {
+		rc = false;
+		if (f.submitButton == '_das_filter') {
+		    rc = true;
+		} else {
+		    if (f.DASuser_source.value != '') {
+			rc = true;
+		    } else {
+			for (var i= 0; i < f.length; i++) {
+			    var e = f.elements[i];
+			    if (e.checked) {
+				rc = true;
+				break;
+			    }
+			}
+		    }
+		}
+	    }
+	
+	    if (rc == false) {
+		alert(warning);
+	    }
+	    return rc;
+	};
+    }
+    $form->{_attributes}->{onSubmit} = $onSubmit;
+
+    my @cparams = qw ( conf_script db gene peptide transcript c w h l vc_start vc_end region);
     foreach my $param (@cparams) {
-#      warn "$param  ----------- ",$object->param($param);
       if( defined(my $v = $object->param($param)) ) {
         $form->add_element('type'=>'Hidden', 'name' => $param, 'value' => $v );
       }
@@ -330,9 +460,9 @@ sub das_wizard {
     if ($step == 1) {
     @sparams = grep { /^DAS/ && /edit|link|enable|type|name|label|help|color|group|strand|depth|labelflag|stylesheet|score/} $object->param();
     } elsif ($step == 2) {
-    @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score/} $object->param();
+    @sparams = grep { /^DAS/ && /edit|link|user_|sourcetype|protocol|domain|dsn|registry|dsns|paste_data|name|label|help|color|group|strand|depth|labelflag|stylesheet|score/} $object->param();
     } elsif ($step == 3) {
-    @sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|paste_data|enable|type/} $object->param();
+    @sparams = grep { /^DAS/ && /edit|user_|protocol|domain|dsn|registry|dsns|paste_data|enable|type/} $object->param();
     }
     foreach my $param (@sparams) {
         my @v = $object->param($param);
@@ -373,14 +503,15 @@ sub added_sources {
             $das_action = $edit_link.$delete_link;
         }
 
-	my @cparams = qw ( conf_script db gene transcript peptide c w h l vc_start vc_end region);
+	my @cparams = qw ( conf_script db gene peptide transcript c w h l vc_start vc_end region);
 	my $url = sprintf("http://%s%s/%s/%s?",
 			  $ENV{'SERVER_NAME'},
 			  $ENV{'ENSEMBL_PORT'} ? ($ENV{'ENSEMBL_PORT'} == 80 ? '' : ":$ENV{'ENSEMBL_PORT'}") : '',
 			  $ENV{'ENSEMBL_SPECIES'},
 			  $object->param('conf_script'));
+
 	foreach my $param (@cparams) {
-	    if( defined(my $v = $object->param($param)) ) {
+	    if (defined(my $v = $object->param($param))) {
 		$url .= "$param=$v;";
 	    }
 	}
@@ -388,7 +519,7 @@ sub added_sources {
 	my $add_link = sprintf("%sadd_das_source=(name=%s+url=%s+dsn=%s+type=%s+color=%s+strand=%s+labelflag=%s+stylesheet=%s+group=%s+depth=%d+score=%s+active=1)",
 			       $url, 
 			       $das_name,
-			       $das_adapt->url,
+			       $das_adapt->domain,
 			       $das_adapt->dsn,
 			       $das_adapt->type,
 			       $das_adapt->color,
@@ -399,6 +530,7 @@ sub added_sources {
 			       $das_adapt->depth,
 			       $das_adapt->score
 );
+
 	my $js = qq{javascript:X=window.open('','helpview','left=20,top=20,height=200,width=600,resizable');
 	  X.document.write('
 <html><title>Send DAS Source!</title>
@@ -418,13 +550,13 @@ $add_link
 
 	my $das_send = qq{<a href="$js"><image src="/img/buttons/mail.png" alt="Send source to a friend"/></a>};
 
-        my $das_url = $das_adapt->url;
+        my $das_url = $das_adapt->domain;
         my $das_dsn = $das_adapt->dsn || '&nbsp;';
-        my $das_type = $das_adapt->type ? $DASMappingType{$das_adapt->type} || $das_adapt->type : '&nbsp';
+        my $das_type = $das_adapt->type ? $object->getCoordinateSystem($das_adapt->type) : '&nbsp';
 
 # If type is 'mixed' then it is mixed mapping source
         if ($das_type eq 'mixed') {
-            $das_type = join('+', map {$DASMappingType{$_}} @{$das_adapt->mapping});
+            $das_type = join('+', map {$object->getCoordinateSystem($_)} @{$das_adapt->mapping});
         }
 
         if ($das_adapt->conftype eq 'url') {
@@ -445,9 +577,9 @@ $add_link
                         { 'key' => 'action', 'title' => ' '    },
                         { 'key' => 'sendurl', 'title' => ' '    },
                         { 'key' => 'name', 'title' => 'Name'    },
-                        { 'key' => 'location', 'title' => 'Location' },
-                        { 'key' => 'source', 'title' => 'Data source'   },
-                        { 'key' => 'mapping', 'title' => 'Mapping type'  },
+                        { 'key' => 'location', 'title' => 'DAS Server' },
+                        { 'key' => 'source', 'title' => 'Data Source'   },
+                        { 'key' => 'mapping', 'title' => 'Coordinate System'  },
                         );
 
     foreach my $src (@das_form) {
@@ -473,22 +605,33 @@ sub wizardTopPanel {
 
   my ($pstage, $nstage) = ();
 
-  if( $step == 10 ) { # Finish
-    $form->add_element('type' => 'Submit', 'name'=>'_das_finish', 'value' => 'Finish');
-  } elsif ($step == 11) { # Cancel
-    $form->add_element('type' => 'Submit', 'name'=>'_das_cancel', 'value' => 'Cancel');
-  } elsif ($stype eq 'das_url') {
-    $form->add_element('type' => 'Submit', 'name'=>'_das_submit', 'value' => 'Finish');
+  my $navigation = qq{
+<div class="formblock">
+  <div class="formpadding"></div>
+  <div class="formpadding"></div>
+    <div class="formcontent">
+};
+
+  if ($stype eq 'das_url') {
+      $navigation .= qq{<input type="submit" name="_das_submit" value="$btnFinish" class="red-button" onClick="this.form.submitButton = this.name"/>};
   } else {
     if( $step > 1 ) {
-      $form->add_element('type' => 'Submit', 'name'=>'_das_Step', 'value' => 'Back');
+	$navigation .= qq{<input type="submit" name="_das_Step" value="$btnBack" class="red-button" onClick="this.form.submitButton = this.name" /> &nbsp; &nbsp; &nbsp;};
     }
     if( $step < $snum ) {
-      $form->add_element('type' => 'Submit', 'name'=>'_das_Step', 'value' => 'Next');
+	$navigation .= qq{<input type="submit" name="_das_Step" value="$btnNext" class="red-button" onClick="this.form.submitButton = this.name"  />};
     } else {
-      $form->add_element('type' => 'Submit', 'name'=>'_das_submit', 'value' => 'Finish');
+	$navigation .= qq{<input type="submit" name="_das_submit" value="$btnFinish" class="red-button" onClick="this.form.submitButton = this.name"  />};
     }
   }
+
+  $navigation .= qq{
+</div>
+</div>
+};
+
+     $form->add_element('type' => 'Information', 'value' => $navigation);
+
   return 1;
 }
 
@@ -496,6 +639,13 @@ sub das_wizard_2 {
     my ($form, $source_conf, $object, $step_ref, $error) = @_;
 
     my $error_section;
+
+    my $source_type = $source_conf->{sourcetype};
+
+#    &wizardTopPanel($form, $$step_ref, $source_conf->{sourcetype});
+
+    $source_type  = 'das_registry' if ($object->param('DASdomain') eq $object->species_defs->DAS_REGISTRY_URL);
+
     if ($source_conf->{sourcetype} eq 'das_file' && (! $object->param("DASdsn"))) {
     my $user_email = $object->param('DASuser_email');
     my $user_password = $object->param('DASuser_password');
@@ -529,20 +679,20 @@ sub das_wizard_2 {
                 my $domain = $du->domain;
                 my $dsn = $du->dsn;
 		$set_mapping = $du->mapping;
-                $source_conf->{protocol} = 'http';
                 $source_conf->{domain} = $domain;
                 $source_conf->{dsn} = $dsn;
+		$source_conf->{url} = join('/',$domain, $dsn);
 		push @{$source_conf->{mapping}} , $set_mapping;
 		$object->param('DAStype', $set_mapping);
-                $object->param('DASprotocol', 'http');
                 $object->param('DASdomain', $domain);
-                $object->param('DASdsn', $dsn);
+                $object->param('DASdsns', $dsn);
                 $$step_ref = 10;
                 my $css = $du->css ? 'Successfully uploaded stylesheet <br>' : '';
                 $form->add_element('type' => 'Information', 'value'=> qq{
 		$css
-                Successfully uploaded $enum entries <br>
-                DAS source at http://$domain/das/$dsn has been updated<hr>
+                Successfully uploaded $enum entries <br />
+                DAS source at $domain/$dsn has been updated<hr/>
+		<br/> <br />
                 });
 
             }
@@ -557,20 +707,25 @@ sub das_wizard_2 {
             if ( (my $enum = $du->create_dsn($user_email, $user_password)) > 0) {
             my $domain = $du->domain;
             my $dsn = $du->dsn;
-            $source_conf->{protocol} = 'http';
+
             $source_conf->{domain} = $domain;
             $source_conf->{dsn} = $dsn;
+
+            $source_conf->{url} = join('/',$domain, $dsn);
+
 	    $set_mapping = $du->mapping;
             push @{$source_conf->{mapping}} , $set_mapping;
 	    $object->param('DAStype', $set_mapping);
             $object->param('DASprotocol', 'http');
             $object->param('DASdomain', $domain);
-            $object->param('DASdsn', $dsn);
+            $object->param('DASdsns', $dsn);
 	    my $css = $du->css ? 'Successfully uploaded stylesheet <br>' : '';
             $form->add_element('type' => 'Information', 'value'=> qq{
 		$css
-                Successfully uploaded $enum entries <br>
-                A new DAS source has been created at http://$domain/das/$dsn<hr>
+                Successfully uploaded $enum entries <br/>
+                A new DAS source has been created at $domain/$dsn<hr/>
+		<br/>
+		<br/>
             });
             }
             if (defined (my $err = $du->error)) {
@@ -582,32 +737,6 @@ sub das_wizard_2 {
     return $error_section if ($error_section);
     }
     my $script = $object->param('conf_script');
-    
-    my %SpeciesID = 
-        (
-         'Homo_sapiens' => ['hugo'],
-         'Mus_musculus' => ['markersymbol', 'mgi']
-         );
-
-    my %ExternalIDs = (
-                       'hugo'                  => "HUGO ID",
-                       'markersymbol'          => "MarkerSymbol ID",
-                       'mgi'                => 'MGI Accession ID'
-                       );
-
-    my %DASMapping = 
-        (
-         'ensembl_gene'          => "Ensembl Gene ID",
-         'ensembl_location'      => "Ensembl Location",
-         'ensembl_peptide'       => "Ensembl Peptide ID",
-         'ensembl_transcript'    => "Ensembl Transcript ID",
-         'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
-         'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
-         'entrezgene'            => 'Entrez Gene ID',
-	 'ipi_acc'               => 'IPI Accession',
-	 'ipi_id'                => 'IPI ID',
-         );
-
 
     my %DefaultMapping =  (
                            'geneview' => 'ensembl_gene',
@@ -616,20 +745,28 @@ sub das_wizard_2 {
                            'contigview' => 'ensembl_location',
                            'cytoview' => 'ensembl_location'
                            );
-
        
-    if (defined($SpeciesID{$ENV{'ENSEMBL_SPECIES'}})) {
-        foreach my $tid (@{$SpeciesID{$ENV{'ENSEMBL_SPECIES'}}}) {
-            $DASMapping{$tid} = $ExternalIDs{$tid};
-        }
-    }
-
-    if ($source_conf->{sourcetype} eq 'das_registry') {
-        $form->add_element('type'=>'Information', "label"=> 'Mapping type:', "value"=> 'Provided by Registry');
-
+    if ($source_type eq 'das_registry') {
+	my $cs_html = qq{
+<div class="formblock">
+  <h6><label>Coordinate System</label></h6>
+    <div class="formcontent">
+    &nbsp;&nbsp;&nbsp;Provided by Registry
+    </div>
+  </div>
+};
+        $form->add_element('type'=>'Information', 'value'=> $cs_html);
     } elsif ($source_conf->{sourcetype} eq 'das_file') {
-	my $p = $source_conf->{mapping}->[0]; # ATM in case of upload the mapping type is always ensembl_location
-        $form->add_element('type'=>'Information', "label"=> 'Mapping type:', "value"=> $DASMapping{$p});
+	my $cs = join('<br/>', map {$object->getCoordinateSystem($_)} grep {$_} @{$source_conf->{mapping}}) ;
+	my $cs_html = qq{
+<div class="formblock">
+  <h6><label>Coordinate System </label></h6>
+    <div class="formcontent">
+    &nbsp;&nbsp;&nbsp;$cs
+    </div>
+  </div>
+};
+        $form->add_element('type'=>'Information', 'value'=> $cs_html);
     } else {
         my @mvalues;
 # grep is to filter out undef elements
@@ -638,6 +775,7 @@ sub das_wizard_2 {
             push @seltypes, $DefaultMapping{$script};
         }
 
+	my %DASMapping = %{$object->getCoordinateSystem};
         my $ptest = join('*', @seltypes).'*';
         foreach my $p (sort keys (%DASMapping)) {
             if ($ptest =~ /$p\*/){
@@ -649,7 +787,7 @@ sub das_wizard_2 {
         $form->add_element('type' => 'MultiSelect',
                            'class' => 'radiocheck1col',
                            'name'=>'DAStype',
-                           'label'=>'Mapping type',
+                           'label'=>'Coordinate System',
                            'values' => \@mvalues
                            );
     }
@@ -672,7 +810,8 @@ sub das_wizard_2 {
             push @vvalues, {"value"=>$v, "name"=>$v};
         }
     }
-    $form->add_element('type' => 'MultiSelect',
+    $form->add_element(
+		       'type' => 'MultiSelect',
                        'name'=>'DASenable',
                        'label'=>'Enable on',
                        'values' => \@vvalues
@@ -683,14 +822,35 @@ sub das_wizard_2 {
 sub das_wizard_3 {
     my ($form, $das_conf, $object, $step_ref, $error) = @_;
 
+#    &wizardTopPanel($form, $$step_ref, $das_conf->{sourcetype});
+
     my $html = qq{<table id="display_config">\n};
     my $option;
 
     if ($das_conf->{scount} && $das_conf->{scount} > 1) {
+
 	$option = $das_conf->{name};
-	$form->add_element('type'=>'Information', 'label'=>'Name:', 'value'=> $option);
+	my $ht = qq{
+<div class="formblock">
+  <h6><label>Name:</label></h6>
+    <div class="formcontent">
+    &nbsp;&nbsp;&nbsp;$option
+    </div>
+  </div>
+};
+
 	$option = $das_conf->{label} || $option;
-	$form->add_element('type'=>'Information', 'label'=>'Track label:', 'value'=> $option);
+
+	$ht .= qq{
+<div class="formblock">
+  <h6><label>Label:</label></h6>
+    <div class="formcontent">
+    &nbsp;&nbsp;&nbsp;$option
+    </div>
+  </div>
+};
+
+	$form->add_element('type'=>'Information', 'value'=> $ht);
     } else {
 	$option = $das_conf->{name} || $das_conf->{user_source} || $das_conf->{dsn};
 	$form->add_element('type'=>'String', 'name'=>'DASname', 'label'=>'Name:', 'value'=> $option);
@@ -722,7 +882,8 @@ sub das_wizard_3 {
                        'value' => $option
                        );
 
-    $option = lc($das_conf->{group} || 'y');
+
+    $option = lc($das_conf->{group} || 'n');
     my @gvalues;
     foreach ( 'Yes', 'No' ) {
         my $id          = lc(substr($_,0,1));
@@ -751,7 +912,7 @@ sub das_wizard_3 {
                        );
 
     ## OPTIONS IN DROP DOWN FOR BUMPEDNESS
-    $option = defined($das_conf->{depth}) ?  $das_conf->{depth} : 4;
+    $option = defined($das_conf->{depth}) ?  $das_conf->{depth} : 10;
     my @dvalues;
     foreach  ( 0..6,10,20,10000 ) {
         my $id          = $_==0 ? 'Collapse display' : ($_==10000 ? 'Unlimited' : "$_ rows" );
@@ -813,8 +974,50 @@ sub das_wizard_3 {
     return;
 }
 
+sub wizard_search_box {
+    my ($form, $source_conf, $object, $cs_box) = @_;
+
+    my %DASMapping = %{$object->getCoordinateSystem};
+    $DASMapping{any} = 'Any';
+
+# Decide whether to display Coordinate System filter.
+# ATM the registry can provide this info but the sources themselves can not - hence we display the drop-down only for the registry 
+
+
+    my $mapping_form = $cs_box ? sprintf("
+       <tr> <td nowrap><b>Coordinate System:</b></td><td>%s</td> </tr>", 
+       _formelement_select($object, "keyMapping", [ sort keys (%DASMapping) ], {%DASMapping})) : '';
+    my $das_action = qq{<input type="submit" name="_das_filter" value="Apply" class="red-button" onClick="this.form.submitButton = this.name"/>};
+
+
+    my $search_box = qq{
+<div class="formblock">
+
+  <h6><label>(use the filter to narrow the list of sources)</label></h6>
+    <div class="formcontent">
+
+<table style="border:0">
+  <tr>
+    <td nowrap><b>Name/URL/Description:</b></td><td><input type="text" name="keyText"/></td>
+    <td rowspan="2" valign="middle">$das_action</td>
+  </tr>
+  $mapping_form
+</table>
+    </div>
+</div>
+};
+
+    $form->add_element( 'type'=>'Information', 'value'=> $search_box );
+    
+}
+
 sub add_das_registry {
   my ($form, $source_conf, $object) = @_;
+
+  my $rurl = $object->species_defs->DAS_REGISTRY_URL;
+
+  wizard_search_box ($form, $source_conf, $object, 1);
+
   my %selected_sources = ();
   if (defined($source_conf->{registry_selection})) {
       foreach (@{$source_conf->{registry_selection}}) {
@@ -822,44 +1025,8 @@ sub add_das_registry {
       }
   }
 
-  my $rurl = $object->species_defs->DAS_REGISTRY_URL;
 
-  $form->add_element(
-    'type'  => 'Information', 
-    'value' => qq{Please select <a href="javascript:X=window.open(\'$rurl\'',\' \', \'resizable,scrollbars\');X.focus();void(0)">Registry</a> DAS sources to attach:}
-  );
 
-  my %SpeciesID = (
-    'Homo_sapiens' => ['hugo'],
-    'Mus_musculus' => ['markersymbol', 'mgi']
-  );
-    
-  my %ExternalIDs = (
-    'hugo'                  => "HUGO ID",
-    'markersymbol'          => "MarkerSymbol ID",
-    'mgi'                => 'MGI Accession ID'
-  );
-    
-  my %DASMapping = (
-    'ensembl_gene'          => "Ensembl Gene ID",
-    'ensembl_location'      => "Ensembl Location",
-    'ensembl_peptide'       => "Ensembl Peptide ID",
-    'ensembl_transcript'    => "Ensembl Transcript ID",
-    'uniprot/swissprot'     => "Uniprot/Swiss-Prot Name",
-    'uniprot/swissprot_acc' => "Uniprot/Swiss-Prot Acc",
-    'entrezgene'            => "Entrez Gene",
-    'ipi_acc'               => 'IPI Accession',
-    'ipi_id'                => 'IPI ID',
-
-  );
-    
-  if (defined($SpeciesID{$ENV{'ENSEMBL_SPECIES'}})) {
-    foreach my $tid (@{$SpeciesID{$ENV{'ENSEMBL_SPECIES'}}}) {
-      $DASMapping{$tid} = $ExternalIDs{$tid};
-    }
-  }
-
-  $DASMapping{any} = 'Any';
   my $registry = $object->getRegistrySources();
 
   $rurl .= "/showdetails.jsp?auto_id=";
@@ -882,21 +1049,8 @@ sub add_das_registry {
 
   $html .= qq{\n</table>\n};
 
-  my $mapping_form = &_formelement_select($object, "keyMapping", [ sort keys (%DASMapping) ], {%DASMapping});
-  my $das_action = qq{<input type="submit" name="_das_filter" value="Apply" class="red-button" />};
-
-  my $search_box = qq{
-<table style="border:0">
-  <tr>
-    <td nowrap>Name/URL/Description: <input type="text" name="keyText"/></td>
-    <td nowrap>Mapping:$mapping_form</td>
-    <td valign="top">$das_action</td>
-  </tr>
-</table>
-};
-    $html = "$search_box<br>$html";
-    $form->add_element( 'type'=>'Information', 'value'=> $html );
-    return;
+  $form->add_element( 'type'=>'Information', 'value'=> $html );
+  return;
 }
 
 sub add_das_file {
@@ -924,6 +1078,7 @@ sub add_das_file {
   <hr />
 });
   $form->add_element(
+    'required' => 'yes',
     'type'  => 'Email',
     'name'  => 'DASuser_email',
     'label' => 'Email',
@@ -945,13 +1100,14 @@ sub add_das_file {
     'value' => $object->param('DASuser_dsn'),
     'notes' => '<small>If you want to update an existing annotation on Ensembl Server enter <a href="#">its DSN</a> and select your action</small>'
   );
+
   $form->add_element(
     'type'   => 'DropDown',
     'name'   => 'DASuser_action',
     'label'  => 'Action',
     'values' => [
-      { 'name' => 'Overwrite', 'value' => 'Overwrite' },
-      { 'name' => 'Append',    'name'  => 'Append'    }
+      { 'name' => 'Overwrite', 'value' => 'overwrite' },
+      { 'name' => 'Append',    'name'  => 'append'    }
     ]
   );
   $form->add_element(
