@@ -42,7 +42,7 @@ sub colour {
 
   my $genecol = $colours->{ "_".$transcript->external_status }[0];
 
-  if( $gene->type eq 'bacterial_contaminant' ) {
+  if( $gene->biotype eq 'bacterial_contaminant' ) {
     $genecol = $colours->{'_BACCOM'}[0];
   } elsif( $transcript->external_status eq '' and ! $translation_id ) {
     $genecol = $colours->{'_PSEUDO'}[0];
@@ -149,7 +149,7 @@ sub text_label {
   }
   unless( $short_labels ){
     $id .= "\n";
-    if( $gene->type eq 'bacterial_contaminant' ) {
+    if( $gene->biotype eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
     } elsif( $transcript->translation ) {
       $id.= $eid ? "Ensembl known trans" : "Ensembl novel trans";
