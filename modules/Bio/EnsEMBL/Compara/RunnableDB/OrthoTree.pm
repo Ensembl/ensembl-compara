@@ -63,6 +63,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use Bio::SimpleAlign;
 use Bio::AlignIO;
@@ -84,7 +85,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'tree_scale'} = 20;
-  $self->{'store_homologies'} = 0;
+  $self->{'store_homologies'} = 1;
  
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -565,6 +566,7 @@ sub store_homologies
   my $self = shift;
 
   foreach my $link (@{$self->{'homology_links'}}) {
+    $self->display_link_analysis($link) if($self->debug);
     $self->store_gene_link_as_homology($link);
   }
 
@@ -579,11 +581,11 @@ sub store_gene_link_as_homology
   my $link  = shift;
 
   my $type = $link->get_tagvalue('orthotree_type');
+  return unless($type);
   my $subtype = '';
 
   if($self->debug) { 
-    print("$type $subtype : ");
-    $self->display_link_analysis($link);
+    print("  store as homology : $type - $subtype\n");
   }
 
   my ($protein1, $protein2) = $link->get_nodes;
