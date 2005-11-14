@@ -1758,8 +1758,8 @@ sub _method_returning_simple_features {
         $this_start = $this_object->slice->start + $this_object->start - 1;
         $this_end = $this_object->slice->start + $this_object->end - 1;
       } else {
-        $this_start = $this_object->slice->start + ($this_slice->length - $this_object->start);
-        $this_end = $this_object->slice->start + ($this_slice->length - $this_object->end);
+        $this_start = $this_object->slice->start + ($this_object->slice->length - $this_object->end);
+        $this_end = $this_object->slice->start + ($this_object->slice->length - $this_object->start);
       }
       my @alignment_coords = $this_mapper->map_coordinates(
               'sequence',
