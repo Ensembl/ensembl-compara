@@ -1065,13 +1065,13 @@ sub sub_Slice {
 
 sub seq {
   my $self = shift;
-  my $start = $self->start;
-  my $end = $self->end;
+  my $start = 1;
+  my $end = $self->length;
   my $strand = 1;
 
   return $self->{seq} if (defined($self->{seq}));
 
-  $self->{seq} = $self->subseq($start, $end, 1);
+  $self->{seq} = $self->subseq($start, $end, $strand);
   
   return $self->{seq};
 }
@@ -1105,6 +1105,10 @@ sub subseq {
   $start = 1 if (!defined($start));
   $end ||= $self->length;
   $strand ||= 1;
+
+  ## Fix coordinates (needed for sub_Slices)
+  $start += $self->start - 1;
+  $end += $self->start - 1;
 
   my $length = ($end - $start + 1);
   my $seq = "." x $length;
