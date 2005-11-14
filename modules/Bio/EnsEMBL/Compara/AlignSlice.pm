@@ -258,6 +258,51 @@ sub new {
 }
 
 
+=head2 sub_AlignSlice
+
+  Arg 1      : int $start
+  Arg 2      : int $end
+  Example    : my $sub_align_slice = $align_slice->sub_AlignSlice(10, 50);
+  Description: Creates a new Bio::EnsEMBL::Compara::AlignSlice object
+               corresponding to a sub region of this one
+  Returntype : Bio::EnsEMBL::Compara::AlignSlice object
+  Exceptions : return undef if no internal slices can be created (see
+               Bio::EnsEMBL::Compara::AlignSlice::Slice->sub_Slice)
+  Caller     : $align_slice
+  Status     : Testing
+
+=cut
+
+sub sub_AlignSlice {
+  my ($self, $start, $end) = @_;
+  my $sub_align_slice = {};
+
+  throw("Must provide START argument") if (!defined($start));
+  throw("Must provide END argument") if (!defined($end));
+
+  bless $sub_align_slice, ref($self);
+
+  $sub_align_slice->adaptor($self->adaptor);
+  $sub_align_slice->reference_Slice($self->reference_Slice);
+  foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
+    $sub_align_slice->add_GenomicAlignBlock($this_genomic_align_block);
+  }
+  $sub_align_slice->{_method_link_species_set} = $self->{_method_link_species_set};
+
+  $sub_align_slice->{expanded} = $self->{expanded};
+
+  $sub_align_slice->{solve_overlapping} = $self->{solve_overlapping};
+
+  foreach my $this_slice (@{$self->get_all_Slices}) {
+    my $new_slice = $this_slice->sub_Slice($start, $end);
+    push(@{$sub_align_slice->{_slices}}, $new_slice) if ($new_slice);
+  }
+  return undef if (!$sub_align_slice->{_slices});
+
+  return $sub_align_slice;
+}
+
+
 =head2 adaptor
 
   Arg[1]     : (optional) Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor $align_slice_adaptor
@@ -305,7 +350,7 @@ sub adaptor {
 
 sub get_all_Slices {
   my ($self, @species_names) = @_;
-  my $slices;
+  my $slices = [];
 
   if (@species_names) {
     foreach my $slice (@{$self->{_slices}}) {
@@ -691,7 +736,7 @@ sub _create_underlying_Slices {
 
 sub _sort_GenomicAlignBlocks {
   my ($genomic_align_blocks) = @_;
-  my $sorted_genomic_align_blocks;
+  my $sorted_genomic_align_blocks = [];
   my $last_end;
   foreach my $this_genomic_align_block (sort
           {$a->reference_genomic_align->dnafrag_start <=>
@@ -729,7 +774,7 @@ sub _sort_GenomicAlignBlocks {
 
 sub _sort_and_compile_GenomicAlignBlocks {
   my ($genomic_align_blocks) = @_;
-  my $sorted_genomic_align_blocks;
+  my $sorted_genomic_align_blocks = [];
 
   ##############################################################################################
   ##
