@@ -387,7 +387,7 @@ sub SSIabout {
 </p>
 
 <h4>Full gene build</h4>
-<p>A full Ensembl gene build for <i>$nice_species</i> [VERSION!!!!] is available on the main <a href="http://www.ensembl.org/$species">Ensembl <i>$nice_species</i></a> site.</p>
+<p>The release date for a full Ensembl gene build on this assembly is estimated for [DATE!!!].  The gene build for <i>$nice_species</i> [VERSION!!!!] is available on the main <a href="http://www.ensembl.org/$species">Ensembl <i>$nice_species</i></a> site.</p>
 );
   utils::Tool::info (1, "Template for about page $file");
   return;
