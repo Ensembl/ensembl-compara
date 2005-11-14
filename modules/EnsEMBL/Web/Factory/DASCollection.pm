@@ -119,7 +119,7 @@ sub createObjects {
 	next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
 	
 	my $source_confdata = $daslist{$source};
-	if ($source_confdata->{url} =~ m!/das!) {
+	if ($source_confdata->{url} =~ m!/das$!) {
 	   $source_confdata->{url} .= "/$source_confdata->{dsn}";
         }
 #	warn("ADD EXTERNAL: $source");
@@ -424,6 +424,9 @@ sub createObjects {
 		foreach my $key( @confkeys, @allkeys, 'dsn', 'enable', 'mapping') {
 		    $sources_conf{$das_name}->{$key} = $das_data->{$key};
 		}
+
+		
+
 		$extdas->add_das_source($das_data);
 		$DASsel{$das_name} = 1;
 
@@ -511,6 +514,8 @@ sub getEnsemblMapping {
 	} elsif ($realm eq 'MGI') {
 	    $smap = 'mgi';
 	} elsif ($realm eq 'MarkerSymbol') {
+	    $smap = 'markersymbol';
+	} elsif ($realm eq 'MGISymbol') {
 	    $smap = 'markersymbol';
 	} elsif ($realm eq 'EntrezGene') {
 	    $smap = 'entrezgene';

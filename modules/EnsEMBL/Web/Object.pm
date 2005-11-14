@@ -210,7 +210,7 @@ sub getCoordinateSystem{
 
     my %ExternalIDs = (
                        'hugo'                  => "HUGO ID",
-                       'markersymbol'          => "MarkerSymbol ID",
+                       'markersymbol'          => "MGI Symbol",
                        'mgi'                => 'MGI Accession ID'
                        );
 

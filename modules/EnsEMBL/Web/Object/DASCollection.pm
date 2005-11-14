@@ -104,6 +104,8 @@ sub getEnsemblMapping {
 	    $smap = 'mgi';
 	} elsif ($realm eq 'MarkerSymbol') {
 	    $smap = 'markersymbol';
+	} elsif ($realm eq 'MGISymbol') {
+	    $smap = 'markersymbol';
 	} elsif ($realm eq 'EntrezGene') {
 	    $smap = 'entrezgene';
 	} elsif ($realm eq 'IPI_Accession') {
