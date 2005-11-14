@@ -92,6 +92,23 @@ sub fetch_subtree_under_node {
 }
 
 
+sub fetch_tree_at_node_id {
+  my $self = shift;
+  my $node_id = shift;
+
+  my $table = $self->tables->[0]->[0];
+  my $alias = $self->tables->[0]->[1];
+
+  my $constraint = "INNER JOIN $table AS root_node ON ( $alias.left_index 
+                         BETWEEN root_node.left_index AND root_node.right_index)
+                    WHERE root_node.node_id=". $node_id;
+
+  my $all_nodes = $self->_generic_fetch($constraint);
+  my $root = $self->_build_tree_from_nodes($all_nodes);
+  return $root;
+}
+
+
 sub fetch_all_roots {
   my $self = shift;
 
