@@ -141,7 +141,7 @@ sub new {
   $self->genome_db($genome_db) if (defined($genome_db));
   $self->{seq_region_name} = (eval{$genome_db->name} or "FakeAlignSlice");
   $self->{seq_region_length} = $length;
-  $self->{located_slices} = [];
+#   $self->{located_slices} = [];
 
   if (!$self->genome_db) {
     throw("You must specify a Bio::EnsEMBL::Compara::GenomeDB when\n".
@@ -987,6 +987,65 @@ sub invert {
 }
 
 
+=head2 sub_Slice
+
+  Arg   1    : int $start
+  Arg   2    : int $end
+  Arge [3]   : int $strand
+  Example    : none
+  Description: Makes another Slice that covers only part of this slice
+               If a slice is requested which lies outside of the boundaries
+               of this function will return undef.  This means that
+               behaviour will be consistant whether or not the slice is
+               attached to the database (i.e. if there is attached sequence
+               to the slice).  Alternatively the expand() method or the
+               SliceAdaptor::fetch_by_region method can be used instead.
+  Returntype : Bio::EnsEMBL::Slice or undef if arguments are wrong
+  Exceptions : return undef if $start and $end define a region outside
+               of actual Slice.
+  Caller     : general
+  Status     : Testing
+
+=cut
+
+sub sub_Slice {
+  my ( $self, $start, $end, $strand ) = @_;
+
+  if( $start < 1 || $start > $self->{'end'} ) {
+    # throw( "start argument not valid" );
+    return undef;
+  }
+
+  if( $end < $start || $end > $self->{'end'} ) {
+    # throw( "end argument not valid" )
+    return undef;
+  }
+
+  my ($new_start, $new_end, $new_strand);
+  if (!defined($strand)) {
+    $strand = 1;
+  }
+
+  if( $self->{'strand'} == 1 ) {
+    $new_start = $self->{'start'} + $start - 1;
+    $new_end = $self->{'start'} + $end - 1;
+    $new_strand = $strand;
+  } else {
+    $new_start = $self->{'end'} - $end + 1;;
+    $new_end = $self->{'end'} - $start + 1;
+    $new_strand = -$strand;
+  }
+
+  #fastest way to copy a slice is to do a shallow hash copy
+  my %new_slice = %$self;
+  $new_slice{'seq'} = undef;
+  $new_slice{'start'} = int($new_start);
+  $new_slice{'end'}   = int($new_end);
+  $new_slice{'strand'} = $new_strand;
+
+  return bless \%new_slice, ref($self);
+}
+
 =head2 seq
 
   Arg [1]    : none
@@ -1006,14 +1065,14 @@ sub invert {
 
 sub seq {
   my $self = shift;
-  my $start = 1;
-  my $end = $self->length;
+  my $start = $self->start;
+  my $end = $self->end;
   my $strand = 1;
 
   return $self->{seq} if (defined($self->{seq}));
 
-  $self->{seq} = $self->subseq(1, $self->length, 1);
-
+  $self->{seq} = $self->subseq($start, $end, 1);
+  
   return $self->{seq};
 }
 
