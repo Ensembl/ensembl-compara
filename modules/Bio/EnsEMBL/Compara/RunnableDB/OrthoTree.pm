@@ -84,7 +84,8 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'tree_scale'} = 20;
-
+  $self->{'store_homologies'} = 0;
+ 
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -140,7 +141,7 @@ sub run
 sub write_output {
   my $self = shift;
 
-  #$self->store_proteintree;
+  $self->store_homologies;
 }
  
  
@@ -202,6 +203,7 @@ sub run_analysis
   my $self = shift;
 
   my $starttime = time()*1000;
+  my $tmp_time = time();
   my $tree = $self->{'protein_tree'};
     
   my @all_protein_leaves = @{$tree->get_all_leaves};
@@ -210,6 +212,8 @@ sub run_analysis
   #precalculate the ancestor species_hash (caches into the metadata)
   $self->calc_ancestor_species_hash($tree);
   
+  $tmp_time = time();
+  printf("build fully linked graph\n");
   #compare every gene in the tree with every other
   #each gene/gene pairing is a potential orthologue/paralogue
   #and thus we need to analyze every possibility
@@ -227,16 +231,27 @@ sub run_analysis
       push @pair_links, $link;
     }
   }
+  printf("%1.3f secs build links and features\n", time()-$tmp_time);  
   
+  $tmp_time = time();
+  printf("sort links\n");
   #sort the gene/gene links by distance and then analyze
   my @links = sort {$a->distance_between <=> $b->distance_between} @pair_links;
+  printf("%1.3f secs to sort links\n", time()-$tmp_time);  
+
+  $tmp_time = time();
   $self->{'old_homology_count'} = 0;
   $self->{'orthotree_homology_count'} = 0;
   $self->{'lost_homology_count'} = 0;
   foreach my $link (@links) {
     $self->analyze_genelink($link);
   }
-
+  printf("%1.3f secs to analyze links\n", time()-$tmp_time);  
+  
+  #foreach my $link (@links) {
+  #  $self->display_link_analysis($link);
+  #}
+  
   my $runtime = time()*1000-$starttime;  
   $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime);
   printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
@@ -244,10 +259,8 @@ sub run_analysis
   printf("%d old homologies\n", $self->{'old_homology_count'});
   printf("%d orthotree homologies\n", $self->{'orthotree_homology_count'});
   printf("%d lost homologies\n", $self->{'lost_homology_count'});
-   
-  $tree->disavow_parent;
-  $tree->cascade_unlink;
-  $self->{'protein_tree'} = undef;
+
+  $self->{'homology_links'} = \@links;
   return undef;
 }
 
@@ -270,7 +283,7 @@ sub analyze_genelink
   $self->{'old_homology_count'}++ if($link->get_tagvalue('old_homology'));
   $self->{'orthotree_homology_count'}++ if($link->get_tagvalue('orthotree_type')); 
 
-  $self->display_link_analysis($link);
+  #$self->display_link_analysis($link);
 
   if($link->get_tagvalue('old_homology') and
      !($link->get_tagvalue('orthotree_type'))) 
@@ -547,31 +560,112 @@ sub one2many_orthologue_test
 #
 ########################################################
 
-sub store_proteintree
+sub store_homologies
 {
   my $self = shift;
 
-  return unless($self->{'protein_tree'});
+  foreach my $link (@{$self->{'homology_links'}}) {
+    $self->store_gene_link_as_homology($link);
+  }
 
-  printf("OrthoTree::store_proteintree\n") if($self->debug);
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  
-  $treeDBA->sync_tree_leftright_index($self->{'protein_tree'});
-  $treeDBA->store($self->{'protein_tree'});
-  $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
-  
-  if($self->debug >1) {
-    print("done storing - now print\n");
-    $self->{'protein_tree'}->print_tree;
-  }
-  
-  if($self->{'cdna'}) {
-    $self->{'protein_tree'}->store_tag('OrthoTree_alignment', 'cdna');
-  } else {
-    $self->{'protein_tree'}->store_tag('OrthoTree_alignment', 'aa');
-  }
-  $self->{'protein_tree'}->store_tag('tree_method', 'OrthoTree');
+  $self->{'protein_tree'}->store_tag('OrthoTree_homology_count', scalar($self->{'homology_links'}));
   return undef;
+}
+
+
+sub store_gene_link_as_homology
+{
+  my $self = shift;
+  my $link  = shift;
+
+  my $type = $link->get_tagvalue('orthotree_type');
+  my $subtype = '';
+
+  if($self->debug) { 
+    print("$type $subtype : ");
+    $self->display_link_analysis($link);
+  }
+
+  my ($protein1, $protein2) = $link->get_nodes;
+
+  #
+  # create method_link_species_set
+  #
+  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  $mlss->method_link_type("TREE_HOMOLOGIES");
+  $mlss->species_set([$protein1->genome_db, $protein2->genome_db]);
+  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+
+  # create an Homology object
+  my $homology = new Bio::EnsEMBL::Compara::Homology;
+  $homology->description($type);
+  $homology->subtype($subtype);
+  $homology->method_link_type("TREE_HOMOLOGIES");
+  $homology->method_link_species_set($mlss);
+
+  # NEED TO BUILD THE Attributes (ie homology_members)
+  #
+  # QUERY member
+  #
+  my $attribute;
+  $attribute = new Bio::EnsEMBL::Compara::Attribute;
+  $attribute->peptide_member_id($protein1->dbID);
+  #$attribute->cigar_start($self->qstart);
+  #$attribute->cigar_end($self->qend);
+  #my $qlen = ($self->qend - $self->qstart + 1);
+  #$attribute->perc_cov(int($qlen*100/$protein1->seq_length));
+  #$attribute->perc_id(int($self->identical_matches*100.0/$qlen));
+  #$attribute->perc_pos(int($self->positive_matches*100/$qlen));
+  #$attribute->peptide_align_feature_id($self->dbID);
+
+  #my $cigar_line = $self->cigar_line;
+  #print("original cigar_line '$cigar_line'\n");
+  #$cigar_line =~ s/I/M/g;
+  #$cigar_line = compact_cigar_line($cigar_line);
+  #$attribute->cigar_line($cigar_line);
+  #print("   '$cigar_line'\n");
+
+  #print("add query member gene : ", $protein1->gene_member->stable_id, "\n");
+  $homology->add_Member_Attribute([$protein1->gene_member, $attribute]);
+
+  #
+  # HIT member
+  #
+  $attribute = new Bio::EnsEMBL::Compara::Attribute;
+  $attribute->peptide_member_id($protein2->dbID);
+  #$attribute->cigar_start($self->hstart);
+  #$attribute->cigar_end($self->hend);
+  #my $hlen = ($self->hend - $self->hstart + 1);
+  #$attribute->perc_cov(int($hlen*100/$protein2->seq_length));
+  #$attribute->perc_id(int($self->identical_matches*100.0/$hlen));
+  #$attribute->perc_pos(int($self->positive_matches*100/$hlen));
+  #$attribute->peptide_align_feature_id($self->rhit_dbID);
+
+  #$cigar_line = $self->cigar_line;
+  #print("original cigar_line\n    '$cigar_line'\n");
+  #$cigar_line =~ s/D/M/g;
+  #$cigar_line =~ s/I/D/g;
+  #$cigar_line = compact_cigar_line($cigar_line);
+  #$attribute->cigar_line($cigar_line);
+  #print("   '$cigar_line'\n");
+  
+  #print("add hit member gene : ", $protein2->gene_member->stable_id, "\n");
+  $homology->add_Member_Attribute([$protein2->gene_member, $attribute]);
+  
+  
+  $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) if($self->{'store_homologies'});
+  
+  my $stable_id;  
+  if($protein1->taxon_id < $protein2->taxon_id) {
+    $stable_id = $protein1->taxon_id() . "_" . $protein2->taxon_id . "_";
+  } else {
+    $stable_id = $protein2->taxon_id . "_" . $protein1->taxon_id . "_";
+  }
+  $stable_id .= sprintf ("%011.0d",$homology->dbID);
+  $homology->stable_id($stable_id);
+  #TODO: update the stable_id of the homology
+
+  return undef;  
 }
 
 
