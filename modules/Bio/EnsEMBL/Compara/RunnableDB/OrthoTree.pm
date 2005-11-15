@@ -101,8 +101,10 @@ sub fetch_input {
   $self->{'protein_tree'} =  $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_tree_at_node_id($self->{'protein_tree_id'});
          
-  $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
-  printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);  
+  if($self->debug) {
+    $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
+    printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
+  }
 
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
@@ -207,12 +209,13 @@ sub run_analysis
   my $tree = $self->{'protein_tree'};
     
   my @all_protein_leaves = @{$tree->get_all_leaves};
-  printf("%d proteins in tree\n", scalar(@all_protein_leaves));
+  printf("%d proteins in tree\n", scalar(@all_protein_leaves)) if($self->debug);
   
   #precalculate the ancestor species_hash (caches into the metadata of nodes)
+  #also augments the Duplication tagging
   $self->get_ancestor_species_hash($tree);
   
-  $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
+  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) if($self->debug);
   
   #compare every gene in the tree with every other
   #each gene/gene pairing is a potential orthologue/paralogue
@@ -220,7 +223,7 @@ sub run_analysis
   #accomplish by creating a fully connected graph between all the genes
   #under the tree (hybrid graph structure) and then analyze each gene/gene link
   $tmp_time = time();
-  printf("build fully linked graph\n");
+  printf("build fully linked graph\n") if($self->debug);
   my @genepairlinks;
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
@@ -233,14 +236,14 @@ sub run_analysis
       push @genepairlinks, $genepairlink;
     }
   }
-  printf("%1.3f secs build links and features\n", time()-$tmp_time);  
+  printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
   
   #sort the gene/gene links by distance
   #   makes debug display easier to read, not required by algorithm
   $tmp_time = time();
-  printf("sort links\n");
+  printf("sort links\n") if($self->debug);
   my @sorted_genepairlinks = sort {$a->distance_between <=> $b->distance_between} @genepairlinks;
-  printf("%1.3f secs to sort links\n", time()-$tmp_time);  
+  printf("%1.3f secs to sort links\n", time()-$tmp_time) if($self->debug > 1);
 
   #analyze every gene pair (genepairlink) to get its classification
   $tmp_time = time();
@@ -250,16 +253,18 @@ sub run_analysis
   foreach my $genepairlink (@sorted_genepairlinks) {
     $self->analyze_genepairlink($genepairlink);
   }
-  printf("%1.3f secs to analyze links\n", time()-$tmp_time);  
+  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) if($self->debug > 1);
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
   $self->{'protein_tree'}->store_tag('OrthoTree_runtime_msec', $runtime);
-  printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
-  printf("%d pairings\n", scalar(@genepairlinks));
-  printf("%d old homologies\n", $self->{'old_homology_count'});
-  printf("%d orthotree homologies\n", $self->{'orthotree_homology_count'});
-  printf("%d lost homologies\n", $self->{'lost_homology_count'});
+  if($self->debug) {
+    printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
+    printf("%d pairings\n", scalar(@genepairlinks));
+    printf("%d old homologies\n", $self->{'old_homology_count'});
+    printf("%d orthotree homologies\n", $self->{'orthotree_homology_count'});
+    printf("%d lost homologies\n", $self->{'lost_homology_count'});
+  }
 
   $self->{'homology_links'} = \@sorted_genepairlinks;
   return undef;
@@ -295,7 +300,7 @@ sub analyze_genepairlink
   $self->{'old_homology_count'}++ if($genepairlink->get_tagvalue('old_homology'));
   $self->{'orthotree_homology_count'}++ if($genepairlink->get_tagvalue('orthotree_subtype')); 
 
-  $self->display_link_analysis($genepairlink);
+  $self->display_link_analysis($genepairlink) if($self->debug);
 
   if($genepairlink->get_tagvalue('old_homology') and
      !($genepairlink->get_tagvalue('orthotree_subtype'))) 
@@ -568,12 +573,25 @@ sub one2many_orthologue_test
   my $count2 = $species_hash->{$pep2->genome_db_id};
   
   #one of the genes must be the only copy of the gene
+  #and the other must appear more than once in the ancestry
   return undef unless(($count1==1 and $count2>1) or ($count1>1 and $count2==1));
   
   #passed all the tests -> it's a one2many orthologue
   $genepairlink->add_tag("orthotree_subtype", 'one2many_orthologue');
   return 1;
 }
+
+
+sub classify_ancestor_level
+{
+  my $self = shift;
+  my $ancestor = shift;
+  
+  my $species_hash = $self->get_ancestor_species_hash($ancestor);
+  
+  return undef;
+}
+
 
 ########################################################
 #
