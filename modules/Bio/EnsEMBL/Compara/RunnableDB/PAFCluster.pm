@@ -209,6 +209,8 @@ sub build_paf_clusters {
 sub fetch_selfhit_score {
   my $self= shift;
   
+  return undef unless(($self->{'bsr_threshold'} >0.0) and ($self->{'bsr_threshold'} < 1.0));
+
   my $starttime = time();
 
   my $sql = "SELECT qmember_id, score ".
@@ -272,6 +274,9 @@ sub threshold_grow_for_species
 {
   my $self = shift;
   my @species_set = @_;
+  
+  return undef unless($self->{'all_bests'} or 
+                      (($self->{'bsr_threshold'} >0.0) and ($self->{'bsr_threshold'} < 1.0)));
   
   my $starttime = time();
   my $species_string = "(" . join(',', @species_set) . ")";
