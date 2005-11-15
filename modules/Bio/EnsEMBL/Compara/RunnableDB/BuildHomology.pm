@@ -22,6 +22,7 @@ $repmask->run();
 $repmask->write_output(); #writes to DB
 
 =cut
+
 =head1 DESCRIPTION
 
 This object interfaces with a Compara schema database.  It works from a
@@ -33,11 +34,15 @@ Since the object can do all analysis in perl, there is no Runnable, and
 all work is to be done here and with loaded perl modules
 
 =cut
+
 =head1 CONTACT
 
-  Jessica Severin : jessica@ebi.ac.uk
+  Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
+  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

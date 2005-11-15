@@ -37,7 +37,9 @@ required for databse access.
 
 =head1 CONTACT
 
-Describe contact details here
+  Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
+  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
 

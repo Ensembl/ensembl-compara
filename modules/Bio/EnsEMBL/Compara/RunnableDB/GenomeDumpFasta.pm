@@ -27,17 +27,18 @@ $repmask->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
-functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
-required for databse access.
+This RunnableDB takes a genome_db as input and creates a blast database in a shared directory
+and creates a corresponding blast_<genome> analysis off of the blast_template analysis.
+The new genome specific analysis is given a logic name like blast_1_NCBI35.
 
 =cut
 
 =head1 CONTACT
 
-Describe contact details here
+  Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
+  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
 =cut
 
 =head1 APPENDIX
