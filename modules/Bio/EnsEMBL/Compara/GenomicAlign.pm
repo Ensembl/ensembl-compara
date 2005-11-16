@@ -816,6 +816,7 @@ sub dnafrag_strand {
   Example    : $genomic_align->aligned_sequence("ACTAGTTAGCT---TATCT--TTAAA")
   Description: With no arguments, rebuilds the alignment string for this sequence
                using the cigar_line information and the original sequence if needed.
+               This sequence depends on the strand defined by the dnafrag_strand attribute.
   Flags      : +FIX_SEQ
                    With this flag, the method will return a sequence that could be
                    directly aligned with the original_sequence of the reference
@@ -905,6 +906,8 @@ sub aligned_sequence {
                the direct attributes from the database using the dbID of the
                Bio::EnsEMBL::Compara::GenomicAlign object. You can reset this
                attribute using an empty string as argument.
+               The cigar_line depends on the strand defined by the dnafrag_strand
+               attribute.
   Returntype : string
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
@@ -1121,6 +1124,7 @@ sub genomic_align_group_id_by_type {
                is not defined, it tries to fetch the data from other sources like the
                aligned sequence or the the Bio::EnsEMBL::Compara:DnaFrag object. You can
                reset this attribute using an empty string as argument.
+               This sequence depends on the strand defined by the dnafrag_strand attribute.
   Returntype : string $original_sequence
   Exceptions : 
   Caller     : object->methodname
@@ -1509,7 +1513,7 @@ sub _get_Mapper_from_cigar_line {
       next if ($cigar_count < 1);
   
       if( $cigar_type eq "M" ) {
-      $mapper->add_map_coordinates(
+        $mapper->add_map_coordinates(
                 "sequence", #$self->dbID,
                 $sequence_position,
                 $sequence_position + $cigar_count - 1,
@@ -1532,7 +1536,7 @@ sub _get_Mapper_from_cigar_line {
       next if ($cigar_count < 1);
   
       if( $cigar_type eq "M" ) {
-      $mapper->add_map_coordinates(
+        $mapper->add_map_coordinates(
                 "sequence", #$self->dbID,
                 $sequence_position - $cigar_count + 1,
                 $sequence_position,
