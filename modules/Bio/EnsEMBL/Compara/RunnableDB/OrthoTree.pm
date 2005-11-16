@@ -84,7 +84,7 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'tree_scale'} = 20;
+  $self->{'tree_scale'} = 30;
   $self->{'store_homologies'} = 1;
  
   $self->throw("No input_id") unless defined($self->input_id);
@@ -109,7 +109,9 @@ sub fetch_input {
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
   }
-
+  
+  $self->load_species_tree();
+  
   return 1;
 }
 
@@ -152,9 +154,14 @@ sub DESTROY {
   my $self = shift;
 
   if($self->{'protein_tree'}) {
-    printf("OrthoTree::DESTROY  releasing tree\n") if($self->debug);
+    printf("OrthoTree::DESTROY  releasing protein_tree\n") if($self->debug);
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
+  }
+  if($self->{'taxon_tree'}) {
+    printf("OrthoTree::DESTROY  releasing taxon_tree\n") if($self->debug);
+    $self->{'taxon_tree'}->release_tree;
+    $self->{'taxon_tree'} = undef;
   }
 
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
@@ -228,6 +235,7 @@ sub run_analysis
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
       my $ancestor = $protein1->find_first_shared_ancestor($protein2);
+      $self->get_ancestor_taxon_level($ancestor);
       my $distance = $protein1->distance_to_ancestor($ancestor) +
                      $protein2->distance_to_ancestor($ancestor);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($protein1, $protein2, $distance);
@@ -238,6 +246,8 @@ sub run_analysis
   }
   printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
   
+  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) if($self->debug);
+
   #sort the gene/gene links by distance
   #   makes debug display easier to read, not required by algorithm
   $tmp_time = time();
@@ -288,7 +298,6 @@ sub analyze_genepairlink
     $genepairlink->add_tag("orthotree_type", 'ortholog');
   }
 
-
   #do classification analysis : as filter stack
   if($self->simple_orthologue_test($genepairlink)) { } 
   elsif($self->inspecies_paralogue_test($genepairlink)) { }
@@ -300,7 +309,6 @@ sub analyze_genepairlink
   $self->{'old_homology_count'}++ if($genepairlink->get_tagvalue('old_homology'));
   $self->{'orthotree_homology_count'}++ if($genepairlink->get_tagvalue('orthotree_subtype')); 
 
-  $self->display_link_analysis($genepairlink) if($self->debug);
 
   if($genepairlink->get_tagvalue('old_homology') and
      !($genepairlink->get_tagvalue('orthotree_subtype'))) 
@@ -309,6 +317,9 @@ sub analyze_genepairlink
     $self->{'lost_homology_count'}++;
   }
   
+  #display results
+  $self->display_link_analysis($genepairlink) if($self->debug);
+
   return undef;
 }
 
@@ -342,6 +353,34 @@ sub display_link_analysis
          $genepairlink->get_tagvalue('orthotree_subtype'));  
   return undef;
 }
+
+
+sub load_species_tree
+{
+  my $self = shift;
+  
+  printf("load_species_tree\n");
+  my $starttime = time();
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+
+  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
+  my $root=undef;
+  foreach my $gdb (@$gdb_list) {
+    my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
+    $taxon->no_autoload_children;
+
+    $root = $taxon->root unless($root);
+    $root->merge_node_via_shared_ancestor($taxon);
+  }
+  $root->minimize_tree;  
+  
+  $self->{'taxon_tree'} = $root;
+  $root->print_tree(10);
+  printf("%1.3f secs for load species tree\n", time()-$starttime);
+  return undef;
+}
+
+
 
 #############################################
 #
@@ -393,6 +432,39 @@ sub get_ancestor_species_hash
     $node->add_tag("Duplication_alg", 'species_count');
   }
   return $species_hash;
+}
+
+
+sub get_ancestor_taxon_level
+{
+  my $self = shift;
+  my $ancestor = shift;
+  
+  my $taxon_level = $ancestor->get_tagvalue('taxon_level');
+  return $taxon_level if($taxon_level);
+
+  #printf("\ncalculate ancestor taxon level\n");
+  my $taxon_tree = $self->{'taxon_tree'};
+  my $species_hash = $self->get_ancestor_species_hash($ancestor);    
+  
+  foreach my $gdbID (keys(%$species_hash)) {
+    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
+    my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
+    throw("oops missing taxon") unless($taxon);
+
+    if($taxon_level) { 
+      $taxon_level = $taxon_level->find_first_shared_ancestor($taxon);
+    } else {
+      $taxon_level = $taxon; 
+    }
+  }
+  $ancestor->add_tag("taxon_level", $taxon_level);
+  $ancestor->name($taxon_level->name);
+
+  #$ancestor->print_tree($self->{'tree_scale'});
+  #$taxon_level->print_tree(10);
+       
+  return undef;
 }
 
 
@@ -579,17 +651,6 @@ sub one2many_orthologue_test
   #passed all the tests -> it's a one2many orthologue
   $genepairlink->add_tag("orthotree_subtype", 'one2many_orthologue');
   return 1;
-}
-
-
-sub classify_ancestor_level
-{
-  my $self = shift;
-  my $ancestor = shift;
-  
-  my $species_hash = $self->get_ancestor_species_hash($ancestor);
-  
-  return undef;
 }
 
 
