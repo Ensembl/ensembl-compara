@@ -449,8 +449,8 @@ sub get_all_Genes {
 sub _get_mapped_Gene {
   my ($self, $gene, $pair, $return_unmapped_exons) = @_;
   
-  my $range_start = $pair->{slice}->start - $gene->slice->start + 1;
-  my $range_end = $pair->{slice}->end - $gene->slice->start + 1;
+  my $range_start = $pair->{slice}->start - $gene->slice->start + $self->start;
+  my $range_end = $pair->{slice}->end - $gene->slice->end + $self->end;
   return undef if (($gene->start > $range_end) or ($gene->end < $range_start));
   my $slice_length = $gene->slice->end - $gene->slice->start + 1;
 
@@ -956,8 +956,13 @@ sub _sort_Exons {
     } while ($rank > 0);
   }
 
-  foreach my $exons (sort {($a->[0]->start or 0) <=> 
-      ($b->[0]->start or 0)} values %$sorted_exons_by_rank) {
+  foreach my $exons (sort {
+            if (defined($a->[0]->start) and defined($b->[0]->start)) {
+              $a->[0]->start <=> $b->[0]->start;
+            } else {
+              $a->[0]->original_rank <=> $b->[0]->original_rank;
+            }
+        } values %$sorted_exons_by_rank) {
     push(@sorted_exons, @{$exons});
   }
 
@@ -1038,6 +1043,11 @@ sub sub_Slice {
 
   #fastest way to copy a slice is to do a shallow hash copy
   my %new_slice = %$self;
+
+  ## Delete cached genes
+  foreach my $key (grep {/^key_/} keys %new_slice) {
+    delete($new_slice{$key});
+  }
   $new_slice{'seq'} = undef;
   $new_slice{'start'} = int($new_start);
   $new_slice{'end'}   = int($new_end);
@@ -1232,8 +1242,16 @@ sub subseq {
 sub get_cigar_line {
   my ($self, $start, $end, $strand) = @_;
 
-  $start = 1 if (!defined($start));
-  $end ||= $self->length;
+  if (!defined($start)) {
+    $start = $self->start;
+  } else {
+    $start += $self->start - 1;
+  }
+  if (!defined($end)) {
+    $end = $self->end;
+  } else {
+    $end += $self->start - 1;
+  }
   $strand ||= 1;
 
   my $length = ($end - $start + 1);
@@ -1465,6 +1483,7 @@ sub get_all_underlying_Slices {
     my $this_underlying_slice = new Bio::EnsEMBL::Slice(
           -coord_system => $gap_coord_system,
           -seq_region_name => "GAP",
+          -seq_region_length => ($end - $current_position + 1),
           -start => $current_position,
           -end => $end,
           -strand => 0
@@ -1693,6 +1712,7 @@ sub project {
         $this_start = $this_slice->start + ($this_slice->length - $this_projection->from_start);
         $this_end = $this_slice->start + ($this_slice->length - $this_projection->from_end);
       }
+      my $new_slice = $this_projection->to_Slice;
       my ($new_start, $new_end);
       my @alignment_coords = $this_mapper->map_coordinates(
               'sequence',
@@ -1721,7 +1741,33 @@ sub project {
       }
       next if (!defined($new_end));
 
-      my $new_projection = bless([$new_start, $new_end, $this_projection->to_Slice],
+      ## Truncate projection in order to fit into this AlignSlice
+      if ($new_start > $self->end) {
+        next; ## Maps outside of sub_AlignSlice
+      } elsif ($new_start < $self->start) {
+        if ($new_slice->strand == -1) {
+          $new_slice = $new_slice->sub_Slice(1, $new_slice->length - ($self->start - $new_start));
+        } else {
+          $new_slice = $new_slice->sub_Slice($self->start - $new_start + 1, $new_slice->length);
+        }
+        $new_start = 1;
+        $new_end = $new_slice->length;
+      }
+
+      ## Truncate projection in order to fit into this AlignSlice
+      if ($new_end < $self->start) {
+        next; ## Maps outside of sub_AlignSlice
+      } elsif ($new_end > $self->length) {
+        # We have to truncate this projection
+        if ($new_slice->strand == -1) {
+          $new_slice = $new_slice->sub_Slice(1 + $new_end - $self->length, $new_slice->length);
+        } else {
+          $new_slice = $new_slice->sub_Slice(1, $new_slice->length - ($new_end - $self->length));
+        }
+        $new_end = $self->length;
+      }
+
+      my $new_projection = bless([$new_start, $new_end, $new_slice],
                                 "Bio::EnsEMBL::ProjectionSegment");
       push(@$projections, $new_projection);
     }
@@ -1786,8 +1832,8 @@ sub _method_returning_simple_features {
       %$new_object = %$this_object;
       bless $new_object, ref($this_object);
       if (defined($start) and defined($end) and defined($strand)) {
-        $new_object->{start} = $start;
-        $new_object->{end} = $end;
+        $new_object->{start} = $start - $self->start + 1;
+        $new_object->{end} = $end - $self->start + 1;
         $new_object->{strand} = $strand;
         $new_object->{slice} = $self;
         push(@$ret, $new_object);
