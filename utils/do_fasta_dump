@@ -342,7 +342,7 @@ sub get_data {
 	  }
 
 	  if( ( my $seqio = $fhs->{'rna'} and $subtype eq 'ncrna' ) ) {
-	    $subtype = $gene->type;
+	    $subtype = $gene->biotype;
 	    dump_cdna_rna( $seqio, $transcript, "$logic_name:$subtype",$gene);
 	  }
 

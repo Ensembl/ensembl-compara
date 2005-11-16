@@ -21,6 +21,8 @@ BEGIN{
 use utils::Tool;
 use EnsEMBL::Web::DBSQL::NewsAdaptor;
 use EnsEMBL::Web::SpeciesDefs;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::DBSQL::MetaContainer;
 require SiteDefs;
 my $SD = EnsEMBL::Web::SpeciesDefs->new;
 
@@ -65,7 +67,6 @@ if ( $updates{copy_species_table} ) {
   copy_species_table( $SERVERROOT );
   delete $updates{copy_species_table};
 }
-
 exit unless keys %updates;
 
 # Test validity of species arg -----------------------------------------------
@@ -93,6 +94,9 @@ foreach my $sp (@species) {
   if ($updates{blast_db} ) {
     blast_db($SERVERROOT, $sp);
   }
+  if ( $updates{gene_build } ) {
+    gene_build( $sp );
+  }
 }
 
 exit;
@@ -105,17 +109,17 @@ exit;
    my %valid_types = map{ $_ => 1 }
      qw(
 	new_species      generic_species_homepage downloads SSI 
-                         species_table 
+                         species_table gene_build
 	archive          assembly_table copy_species_table
         release          blast_db
        );
 
    my %compound_types = 
-     ( new_species       => [ qw(generic_species_homepage downloads
-				  SSI species_table
+     ( new_species       => [ qw( generic_species_homepage downloads
+				  SSI species_table gene_build
 				 )],
-      release            => [ qw ( blast_db ) ],
-      archive            => [ qw (assembly_table copy_species_table ) ],
+      release            => [ qw ( blast_db gene_build ) ],
+      archive            => [ qw ( assembly_table copy_species_table ) ],
      );
 
    # Validate types
@@ -127,6 +131,27 @@ exit;
 
 
 ##############################################################################
+sub gene_build {
+  my $species = shift;
+  my $db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
+  my $meta_container = $db_adaptor->get_MetaContainer();
+  my $gene_build =  $meta_container->get_genebuild();
+  my ($highest_cs) = @{$db_adaptor->get_CoordSystemAdaptor->fetch_all()};
+  my $assembly = $highest_cs->version();
+
+  $gene_build =~ /(\d{2})(\d{2})(.*)/;
+  my $date = "20".$1."-$2";
+  my $builder = $3;
+  my $ini_date = utils::Tool::get_config({species =>$species,
+					  values => "GENEBUILD_DATE"});
+  my $ini_builder = utils::Tool::get_config({species =>$species,
+					     values => "GENEBUILD_BY"});
+  my $ini_assembly = utils::Tool::get_config({species =>$species,
+					     values => "ENSEMBL_GOLDEN_PATH"});
+  utils::Tool::warning(1, "GENEBUILD_BY INI file: $ini_builder, db: $builder") if $builder ne $ini_builder;
+  utils::Tool::warning(1, "GENEBUILD_DATE INI file: $ini_date, db: $date") if $date ne $ini_date;
+  utils::Tool::warning(1, "GOLDEN PATH INI file: $ini_assembly, db: $assembly") if $assembly ne $ini_assembly;
+}
 
 sub species_table {
   return unless $site_type eq 'pre';
@@ -721,6 +746,9 @@ B< assembly_table>;
 B< branch_versions:>
    Creates a new page with updated versions for the current cvs branch
    (i.e. for the API, webcode etc)
+
+B< gene_build:>
+   Just checks the database meta table v.s. the ini file to see if the Genebuild date, assembly name and author match. Prints out warning message if these are out of sync.
 
     Maintained by Fiona Cunningham <fc1@sanger.ac.uk>
 
