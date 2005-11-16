@@ -321,26 +321,11 @@ sub map_Exon_on_Slice {
     return undef;
   }
 
-  if (defined($to_mapper)) {
-    ## Set coordinates on "slice" coordinates
-    if ($slice->strand == 1) {
-      $aligned_start += 1 - $slice->start;
-      $aligned_end += 1 - $slice->start;
-      $self->start($aligned_start);
-      $self->end($aligned_end);
-      $self->strand($aligned_strand);
-    } else {
-      $self->start($slice->end - $aligned_end + 1);
-      $self->end($slice->end - $aligned_start + 1);
-      $self->strand(-$aligned_strand);
-    }
-    $self->cigar_line($aligned_cigar);
-  } else {
-    $self->start($aligned_start);
-    $self->end($aligned_end);
-    $self->strand($aligned_strand);
-    $self->cigar_line($aligned_cigar);
-  }
+  ## Set coordinates on "slice" coordinates
+  $self->start($aligned_start - $slice->start + 1);
+  $self->end($aligned_end - $slice->start + 1);
+  $self->strand($aligned_strand);
+  $self->cigar_line($aligned_cigar);
 
   return $self;
 }
