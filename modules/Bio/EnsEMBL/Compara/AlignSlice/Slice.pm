@@ -1836,6 +1836,8 @@ sub _method_returning_simple_features {
         $new_object->{end} = $end - $self->start + 1;
         $new_object->{strand} = $strand;
         $new_object->{slice} = $self;
+        # Skip this object if it maps outside of this AlignSlice
+        next if ($new_object->{start} > $self->length or $new_object->{end} < 1);
         push(@$ret, $new_object);
       }
     }
