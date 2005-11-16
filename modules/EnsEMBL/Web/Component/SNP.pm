@@ -169,6 +169,9 @@ sub status {
     }
     $html .= ' (<i>SNP tested and validated by a non-computational method</i>).<br />';
   }
+  else {
+    $html = "Undefined";
+  }
   $html .= $hapmap_html;
   $panel->add_row($label, $html);
   return 1;

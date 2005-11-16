@@ -30,29 +30,8 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 
-#use Bio::Das;
-
 
 #### Variation object calls ###################################################
-
-# =head2 get_popID_by_name
-
-#   Arg[1]      : name of population (string)
-#   Example     : $object->get_pop_by_name('PERLEGEN:AFD_CHN_PANEL');
-#   Description : Gets the pop object dbID
-#   Return type : Bio::EnsEmbl::Variation::Population
-
-# =cut
-
-# sub get_popID_by_name {
-#   my $self  = shift;
-#   my $name  = shift;
-#   my $dbs = $self->DBConnection->get_DBAdaptor('variation');
-#   my $pop_adaptor =  $dbs->get_PopulationAdaptor;
-#   my $pop_obj = $pop_adaptor->fetch_by_name($name);
-#   return unless $pop_obj;
-#   return $self->pop_id($pop_obj);
-# }
 
 
 =head2 location_string
@@ -254,8 +233,13 @@ sub status {
 
 sub alleles {
  my @alleles = @{$_[0]->vari->get_all_Alleles};
- my %alleles = map{$_->allele => 1} @alleles;
- return (join "/", keys %alleles);
+ my $return;
+ foreach (@alleles) {
+   $return .= $_->allele."/";
+   warn $_->allele;
+  }
+ chop $return;
+ return $return;
 }
 
 

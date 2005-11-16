@@ -184,8 +184,10 @@ sub retrieve_RegulatoryFactor {
       $gene_links .= qq(<a href="geneview?gene=$stable_ids[-1]">$stable_ids[-1]</a>);
       $flag = 1;
     }
-    my $extra_results = [ $ap->analysis->description ];
-    unshift (@$extra_results, $gene_links);# if $gene_links;
+
+    my @extra_results = $ap->analysis->description;
+    $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
+  unshift (@extra_results, $gene_links);# if $gene_links;
 
     push @$results, {
       'region'   => $ap->seq_region_name,
@@ -195,12 +197,12 @@ sub retrieve_RegulatoryFactor {
       'length'   => $ap->end-$ap->start+1,
       'label'    => $ap->name,
       'gene_id'  => \@stable_ids,
-      'extra'    => $extra_results,
+      'extra'    => \@extra_results,
     }
   }
   my $extras = ["Feature analysis"];
   unshift @$extras, "Regulates gene";# if $flag;
-  
+
   return ( $results, $extras );
 }
 

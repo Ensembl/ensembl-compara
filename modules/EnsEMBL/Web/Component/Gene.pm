@@ -542,6 +542,7 @@ sub regulation_factors {
   foreach my $feature_obj ( @sorted_features ) {
     my $row;
     my $factor_name = $feature_obj->factor->name;
+    my $factor_link = $factor_name? qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor">$factor_name</a>) : "unknown";
     my $feature_name = $feature_obj->name;
     my $seq = $feature_obj->seq();
     $seq =~ s/([\.\w]{60})/$1<br \/>/g;
@@ -549,15 +550,15 @@ sub regulation_factors {
     my $position =  $object->thousandify( $feature_obj->start ). "-" .
       $object->thousandify( $feature_obj->end );
     $position = qq(<a href="/@{[$object->species]}/contigview?c=$seq_name:).$feature_obj->start.qq(;w=100">$seq_name:$position</a>);
-
-
+    my $analysis = $feature_obj->analysis->description;
+    $analysis =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
     $row = {
-	    'Location'    => $position,
-	    'Reg. factor'      =>  qq(<a href="/@{[$object->species]}/featureview?id=$factor_name;type=RegulatoryFactor">$factor_name</a>),
+	    'Location'         => $position,
+	    'Reg. factor'      => $factor_link,
 	    'Reg. feature'     => "$feature_name",
-	    'Feature analysis'   =>  $feature_obj->analysis->description,
-	    'Length'      => $object->thousandify( length($seq) ).' bp',
-            'Sequence'    => qq(<font face="courier" color="black">$seq</font>),
+	    'Feature analysis' =>  $analysis,
+	    'Length'           => $object->thousandify( length($seq) ).' bp',
+            'Sequence'         => qq(<font face="courier" color="black">$seq</font>),
 	   };
 
      $panel->add_row( $row );
