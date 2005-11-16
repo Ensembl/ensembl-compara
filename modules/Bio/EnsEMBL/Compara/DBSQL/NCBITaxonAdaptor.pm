@@ -34,6 +34,21 @@ sub fetch_node_by_taxon_id {
   return $node;
 }
 
+sub fetch_node_by_name {
+  my ($self, $name) = @_;
+  my $constraint = "WHERE n.name = $name";
+  my ($node) = @{$self->_generic_fetch($constraint)};
+  return $node;
+}
+
+sub fetch_node_by_genome_db_id {
+  my ($self, $gdbID) = @_;
+  my $constraint = "JOIN genome_db gdb ON ( t.taxon_id = gdb.taxon_id) 
+                    WHERE gdb.genome_db_id=$gdbID";
+  my ($node) = @{$self->_generic_fetch($constraint)};
+  return $node;
+}
+
 
 sub fetch_parent_for_node {
   my ($self, $node) = @_;
@@ -90,8 +105,9 @@ sub create_instance_from_rowhash {
   
   $node = new Bio::EnsEMBL::Compara::NCBITaxon;
   $self->init_instance_from_rowhash($node, $rowhash);
+  $self->_load_tagvalues($node);
   
-  $self->cache_add_object($node);
+  #$self->cache_add_object($node);
 
   return $node;
 }
@@ -105,12 +121,28 @@ sub init_instance_from_rowhash {
   $self->SUPER::init_instance_from_rowhash($node, $rowhash);
 
   $node->name($rowhash->{'name'});
-  $node->rank($rowhash->{'rank'});  
+  $node->rank($rowhash->{'rank'});
+  $node->distance_to_parent(0.1);  
   # print("  create node : ", $node, " : "); $node->print_node;
   
   return $node;
 }
 
+sub _load_tagvalues {
+  my $self = shift;
+  my $node = shift;
+  
+  unless($node->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NCBITaxon] not a $node");
+  }
+
+  my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_names where taxon_id=?");
+  $sth->execute($node->node_id);  
+  while (my ($tag, $value) = $sth->fetchrow_array()) {
+    $node->add_tag($tag,$value);
+  }
+  $sth->finish;
+}
 
 
 1;
