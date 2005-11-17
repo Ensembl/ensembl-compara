@@ -61,29 +61,23 @@ sub zmenu {
 }
 
 # Search regions with similar analyses should be in the same colour
-# Choose a colour from the pool
 
-sub colour2 {
+sub colour {
   my ($self, $f) = @_;
   my $name = $f->analysis->logic_name;
-
-  return $self->{'colours'}{$name}[0],
-    $self->{'colours'}{$name}[2],
-      $f->start > $f->end ? 'invisible' : '';
-#}
-###
+  my $colour =  $self->{'config'}->colourmap->{'colour_sets'}->{'regulatory_search_regions'}{$name}[0];
+  return $colour if $colour;
 
   unless ( exists $self->{'config'}{'pool'} ) {
     $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
     $self->{'config'}{'ptr'}  = 0;
   }
-  $self->{'config'}{'_regulatory_search_region_colours'}||={};
-  my $return = $self->{'config'}{'_regulatory_search_region_colours'}{ "$name" };
-  unless( $return ) {
-    $return = $self->{'config'}{'_regulatory_search_region_colours'}{"$name"} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)  %@{$self->{'config'}{'pool'}} ];
+  unless( $colour ) {
+    $colour = $self->{'config'}{'_regulatory_search_region_colours'}{"$name"} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)  %@{$self->{'config'}{'pool'}} ];
   }
-  return $return, $return;
+  return $colour;
 }
+
 
 
 1;

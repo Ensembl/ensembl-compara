@@ -213,6 +213,10 @@ sub new {
 		  );
 
 
+  $self->colourSet('regulatory_search_regions',
+    'cisred_search'   => [ "plum4" ],
+		  );
+
   $self->colourSet( 'bee_pre_gene',
     'Homology_high'   => [ 'sienna4', 'Homology high' ],
     'Homology_medium' => [ 'sienna3', 'Homology medium' ],
