@@ -286,25 +286,21 @@ sub analyze_genepairlink
   my $self = shift;
   my $genepairlink = shift;
 
+  my ($protein1, $protein2) = $genepairlink->get_nodes;
+
   #run feature detectors: precalcs and caches into metadata
   $self->genepairlink_check_dups($genepairlink);
   $self->genepairlink_fetch_homology($genepairlink);
 
-  #ultra simple ortho/paralog classification
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  if($ancestor->get_tagvalue("Duplication") eq '1') {
-    $genepairlink->add_tag("orthotree_type", 'paralog');
-  } else {
-    $genepairlink->add_tag("orthotree_type", 'ortholog');
-  }
-
   #do classification analysis : as filter stack
-  if($self->simple_orthologue_test($genepairlink)) { } 
-  elsif($self->inspecies_paralogue_test($genepairlink)) { }
+  if($self->inspecies_paralogue_test($genepairlink)) { }
+  elsif($self->direct_orthologue_test($genepairlink)) { } 
   elsif($self->ancient_residual_orthologue_test($genepairlink)) { } 
-  elsif($self->one2many_orthologue_test($genepairlink)) { } ;
-  #elsif($self->many2many($genepairlink)) { }
-  #else { printf("OOPS\n"); }
+  elsif($self->one2many_orthologue_test($genepairlink)) { } 
+  elsif($self->outspecies_test($genepairlink)) { }
+  else {
+    printf("OOPS!!!! %s - %s\n", $protein1->gene_member->stable_id, $protein2->gene_member->stable_id);
+  }
   
   $self->{'old_homology_count'}++ if($genepairlink->get_tagvalue('old_homology'));
   $self->{'orthotree_homology_count'}++ if($genepairlink->get_tagvalue('orthotree_subtype')); 
@@ -350,7 +346,9 @@ sub display_link_analysis
 
   printf(" %s / %s\n", 
          $genepairlink->get_tagvalue('orthotree_type'), 
-         $genepairlink->get_tagvalue('orthotree_subtype'));  
+         $genepairlink->get_tagvalue('orthotree_subtype'),
+        );
+         
   return undef;
 }
 
@@ -459,12 +457,13 @@ sub get_ancestor_taxon_level
     }
   }
   $ancestor->add_tag("taxon_level", $taxon_level);
-  $ancestor->name($taxon_level->name);
+  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id);
+  $ancestor->store_tag("name", $taxon_level->name);
 
   #$ancestor->print_tree($self->{'tree_scale'});
   #$taxon_level->print_tree(10);
        
-  return undef;
+  return $taxon_level;
 }
 
 
@@ -537,14 +536,15 @@ sub genepairlink_check_dups
 ########################################################
 
 
-sub simple_orthologue_test
+sub direct_orthologue_test
 {
   my $self = shift;
   my $genepairlink = shift;
     
-  #test 1: simplest orthologue test: no duplication events in the
-  #direct ancestory between these two genes
-  #and genes are from different species
+  #strictest orthologue test: 
+  #  - genes are from different species
+  #  - no ancestral duplication events
+  #  - these genes are only copies of the ancestor for thier species
 
   return undef if($genepairlink->get_tagvalue('has_dups'));
   
@@ -564,7 +564,8 @@ sub simple_orthologue_test
   return undef if($count2>1);
   
   #passed all the tests -> it's a simple orthologue
-  $genepairlink->add_tag("orthotree_subtype", 'simple_orthologue');
+  $genepairlink->add_tag("orthotree_type", 'orthologue');
+  $genepairlink->add_tag("orthotree_subtype", 'direct');
   return 1;
 }
 
@@ -574,22 +575,24 @@ sub inspecies_paralogue_test
   my $self = shift;
   my $genepairlink = shift;
     
-  #test 2: simplest paralogue test: 
-  #  both genes are from the same species
-  #  all the genes under the common ancestor are from this same species
+  #simplest paralogue test: 
+  #  - both genes are from the same species
+  #  - and just label with taxonomic level
 
   my ($pep1, $pep2) = $genepairlink->get_nodes;
   return undef unless($pep1->genome_db_id == $pep2->genome_db_id);
 
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $species_hash = $self->get_ancestor_species_hash($ancestor);
+  my $taxon = $self->get_ancestor_taxon_level($ancestor);
 
-  foreach my $gdbID (keys(%$species_hash)) {
-    return undef unless($gdbID == $pep1->genome_db_id);
-  }
+  #my $species_hash = $self->get_ancestor_species_hash($ancestor);
+  #foreach my $gdbID (keys(%$species_hash)) {
+  #  return undef unless($gdbID == $pep1->genome_db_id);
+  #}
   
   #passed all the tests -> it's an inspecies_paralogue
-  $genepairlink->add_tag("orthotree_subtype", 'inspecies_paralogue');
+  $genepairlink->add_tag("orthotree_type", 'inspecies_paralogue');
+  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
 
@@ -618,7 +621,8 @@ sub ancient_residual_orthologue_test
   return undef if($count2>1);
   
   #passed all the tests -> it's a simple orthologue
-  $genepairlink->add_tag("orthotree_subtype", 'ancient_residual_orthologue');
+  $genepairlink->add_tag("orthotree_type", 'orthologue');
+  $genepairlink->add_tag("orthotree_subtype", 'ancient_residual');
   return 1;
 }
 
@@ -649,7 +653,34 @@ sub one2many_orthologue_test
   return undef unless(($count1==1 and $count2>1) or ($count1>1 and $count2==1));
   
   #passed all the tests -> it's a one2many orthologue
-  $genepairlink->add_tag("orthotree_subtype", 'one2many_orthologue');
+  $genepairlink->add_tag("orthotree_type", 'orthologue');
+  $genepairlink->add_tag("orthotree_subtype", 'one2many');
+  return 1;
+}
+
+
+sub outspecies_test
+{
+  my $self = shift;
+  my $genepairlink = shift;
+    
+  #last test: left over pairs:  
+  #  - genes are from different species
+  #  - if ancestor is 'DUP' -> paralog else 'ortholog'
+
+  my ($pep1, $pep2) = $genepairlink->get_nodes;
+  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
+
+  my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  my $taxon = $self->get_ancestor_taxon_level($ancestor);
+  
+  #ultra simple ortho/paralog classification
+  if($ancestor->get_tagvalue("Duplication") eq '1') {
+    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
+  } else {
+    $genepairlink->add_tag("orthotree_type", 'ortholog');
+  }
+  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
 
