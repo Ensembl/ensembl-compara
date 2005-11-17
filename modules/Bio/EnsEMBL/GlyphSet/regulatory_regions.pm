@@ -30,24 +30,45 @@ sub zmenu {
     if (length($name) >24) { $name = "<br />$name"; }
     my $seq_region = $f->slice->seq_region_name;
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
-    my $factor = $f->factor->name;
+
     my $return = {
         'caption'                    => 'regulatory_regions',
-        "01:Feature: $name"          => '',
-        "02:Factor: $factor"         => "featureview?type=RegulatoryFactor;id=$factor",
-        "03:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
+        "06:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
     };
 
+    # Feature
+    my $analysis = $f->analysis->logic_name;
+    my $feature_link;
+    if ($analysis =~ /cisred/i ) {
+      $name =~/\w+(\d+)/;
+      $feature_link = "http://www.cisred.org/human2/siteseq?fid=$1";
+    }
+    $return->{"01:Feature: $name"} = $feature_link;
+
+    # Factor
+    if (my $factor = $f->factor->name ) {
+      $return->{"02:Factor: $factor"} = "featureview?type=RegulatoryFactor;id=$factor";
+    }
+    else {
+      $return->{"02:Factor: Unknown"} = "";
+    }
+
+    # Associated xxx
     foreach ( @{ $f->regulated_genes } ) {
       my $stable_id = $_->stable_id;
       if (length($stable_id) >18) { $stable_id = "<br />$stable_id"; }
-      $return->{"04:Regulates gene: $stable_id"} = "geneview?gene=$stable_id";
+      $return->{"03:Associated gene: $stable_id"} = "geneview?gene=$stable_id";
+
+      if ($analysis) {
+	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human2/gene_view?ensembl_id=$stable_id" : "";
+	$return->{"04:Analysis: $analysis"} = "$cisred";
+      }
     }
 
     foreach (@{ $f->regulated_transcripts  }) {
       my $stable_id = $_->stable_id;
       if (length($stable_id) >15) { $stable_id = "<br />$stable_id"; }
-      $return->{"05:Regulates transcript: $stable_id"} = "transview?transcript=$stable_id";
+      $return->{"05:Associated transcript: $stable_id"} = "transview?transcript=$stable_id";
     }
 
     return $return;

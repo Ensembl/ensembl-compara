@@ -34,12 +34,11 @@ sub zmenu {
     my $return = {
         'caption'                    => 'regulatory_search_regions',
         "01:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
-    };
-    $return->{"02:Analysis: $analysis"} = "" if $analysis;
+		 };
 
     if  ( my $type = lc($f->ensembl_object_type) ) {
       my $id = $f->ensembl_object()->stable_id();
-      my $link = "geneview";
+      my $link;
       if ($type eq 'translation') {
 	$link = "protview";
 	$type = "peptide";
@@ -47,7 +46,16 @@ sub zmenu {
       elsif ($type eq 'transcript') {
 	$link = "transview";
       }
-      $return->{"04:Search $type: $id"} = "$link?$type=$id";
+      else {
+	$link = "geneview";
+
+#	$return->{"04: [CisRed]"} = "$cisred" if $analysis =~/cisred/i;
+      }
+      if ($analysis) {
+	my $cisred = $analysis =~/cisred/i ? "http://www.cisred.org/human2/gene_view?ensembl_id=$id" : "";
+	$return->{"02:Analysis: $analysis"} = "$cisred";
+      }
+      $return->{"04:Associated $type: $id"} = "$link?$type=$id";
     }
     return $return;
 }
@@ -55,9 +63,16 @@ sub zmenu {
 # Search regions with similar analyses should be in the same colour
 # Choose a colour from the pool
 
-sub colour {
+sub colour2 {
   my ($self, $f) = @_;
   my $name = $f->analysis->logic_name;
+
+  return $self->{'colours'}{$name}[0],
+    $self->{'colours'}{$name}[2],
+      $f->start > $f->end ? 'invisible' : '';
+#}
+###
+
   unless ( exists $self->{'config'}{'pool'} ) {
     $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
     $self->{'config'}{'ptr'}  = 0;
