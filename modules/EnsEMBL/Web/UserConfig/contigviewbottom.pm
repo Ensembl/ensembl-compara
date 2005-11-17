@@ -261,7 +261,7 @@ sub init {
       'on'  => "off",
       'pos' => '13',
       'str' => 'b',
-      'available'=> 'database_tables ENSEMBL_DB.regulatory_search_regions',
+      'available'=> 'database_tables ENSEMBL_DB.regulatory_search_region',
     },
 
     'first_ef'   => {
