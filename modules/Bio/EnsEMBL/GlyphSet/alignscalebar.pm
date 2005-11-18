@@ -108,7 +108,7 @@ sub _init {
     $self->align_gap($Container, $global_start, $global_end, 2) if ($self->{strand} < 0);
 
 # Display AlignSlice bars
-    $self->align_interval($mp, $global_start, $global_end, 5);
+    $self->align_interval($species, $mp, $global_start, $global_end, 5);
 
     my( $major_unit, $minor_unit );
 
@@ -234,7 +234,7 @@ sub _init {
 
 sub align_interval {
     my $self = shift;
-    my ($mp, $global_start, $global_end, $yc) = @_;
+    my ($species, $mp, $global_start, $global_end, $yc) = @_;
 
     my $Config          = $self->{'config'};
     my $pix_per_bp     = $Config->transform()->{'scalex'};
@@ -266,6 +266,7 @@ sub align_interval {
 	my $s2l = abs($s2e - $s2s)+1;
 	my $sl = abs($se - $ss)+1;
 
+	my $cview = sprintf("/%s/contigview?l=%s:%ld-%ld", $species, $s2t, $s2s, $s2e);
 	my $zmenu = {
 	    'caption' => "AlignSlice",
 	    "01:Chromosome: $s2t" => "",
@@ -273,6 +274,7 @@ sub align_interval {
 	    "10:Start: $s2s" => "", 
 	    "15:End: $s2e" => "", 
 	    "20:Length: $s2l" => '', 
+	    "23:View in contigveiw" => $cview,
 	    "25:----------------" => '',
 	    "30:Interval Start:$ss" => '', 
 	    "35:Interval End: $se" => '', 
