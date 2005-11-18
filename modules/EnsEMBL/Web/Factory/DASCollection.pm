@@ -277,7 +277,7 @@ sub createObjects {
 	$das_data{conftype} = 'external';
 	$das_data{type} = 'mixed' if (scalar(@{$das_data{mapping}} > 1));
 
-	$das_data{url} .= "/$das_data{$dsn}";
+	$das_data{url} .= "/$das_data{dsn}";
 	$sources_conf{$das_name} ||= {};
 	foreach my $key( @confkeys, @allkeys) { 
 	    if (defined $das_data{$key}) {
