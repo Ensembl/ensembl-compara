@@ -95,7 +95,8 @@ our @ISA = qw(Bio::EnsEMBL::Exon);
                    );
   Description: Creates a new Bio::EnsEMBL::AlignSlice::Exon object
   Returntype : Bio::EnsEMBL::Compara::AlignSlice::Exon object
-  Exceptions : return undef if the exon cannot be mapped on the reference Slice
+  Exceptions : return an object with no start, end nor strand if the
+               exon cannot be mapped on the reference Slice.
 
 =cut
 
@@ -213,7 +214,7 @@ sub map_Exon_on_Slice {
   my $slice = $self->slice;
 
   if (!defined($slice) or !defined($original_exon) or !defined($from_mapper)) {
-    return undef;
+    return $self;
   }
 
   my @alignment_coords = $from_mapper->map_coordinates(
@@ -317,7 +318,10 @@ sub map_Exon_on_Slice {
 
   if ($aligned_strand == 0) {
     ## the whole sequence maps on a gap
-    return undef;
+    $self->{start} = undef;
+    $self->{end} = undef;
+    $self->{strand} = undef;
+    return $self;
   }
 
   ## Set coordinates on "slice" coordinates
@@ -326,7 +330,12 @@ sub map_Exon_on_Slice {
   $self->strand($aligned_strand);
   $self->cigar_line($aligned_cigar);
 
-  return undef if ($self->start > $slice->length or $self->end < 1);
+  if ($self->start > $slice->length or $self->end < 1) {
+    $self->{start} = undef;
+    $self->{end} = undef;
+    $self->{strand} = undef;
+    return $self;
+  }
 
   return $self;
 }
