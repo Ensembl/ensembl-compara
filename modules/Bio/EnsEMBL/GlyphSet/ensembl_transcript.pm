@@ -62,7 +62,7 @@ sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
   my $genecol = $colours->{ "_".$gene->external_status }[0];
 
-  if( $gene->type eq 'bacterial_contaminant' ) {
+  if( $gene->biotype eq 'bacterial_contaminant' ) {
     $genecol = $colours->{'_BACCOM'}[0];
   }
   if(exists $highlights{lc($gene->stable_id)}) {
@@ -173,7 +173,7 @@ sub gene_text_label {
   }
   unless( $short_labels ){
     $id .= "\n";
-    if( $gene->type eq 'bacterial_contaminant' ) {
+    if( $gene->biotype eq 'bacterial_contaminant' ) {
       $id.= 'Bacterial cont.';
     } else {
       $id.= $eid ? "Ensembl known trans" : "Ensembl novel trans";
