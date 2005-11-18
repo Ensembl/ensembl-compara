@@ -295,7 +295,7 @@ sub analyze_genepairlink
   #do classification analysis : as filter stack
   if($self->inspecies_paralogue_test($genepairlink)) { }
   elsif($self->direct_orthologue_test($genepairlink)) { } 
-  elsif($self->ancient_residual_orthologue_test($genepairlink)) { } 
+  elsif($self->ancient_residual_test($genepairlink)) { } 
   elsif($self->one2many_orthologue_test($genepairlink)) { } 
   elsif($self->outspecies_test($genepairlink)) { }
   else {
@@ -303,7 +303,7 @@ sub analyze_genepairlink
   }
   
   $self->{'old_homology_count'}++ if($genepairlink->get_tagvalue('old_homology'));
-  $self->{'orthotree_homology_count'}++ if($genepairlink->get_tagvalue('orthotree_subtype')); 
+  $self->{'orthotree_homology_count'}++ if($genepairlink->get_tagvalue('orthotree_type')); 
 
 
   if($genepairlink->get_tagvalue('old_homology') and
@@ -344,9 +344,11 @@ sub display_link_analysis
   if($ancestor->get_tagvalue("Duplication") eq '1'){print("DUP ");} else{print"    ";}
   printf("%9s)", $ancestor->node_id);
 
-  printf(" %s / %s\n", 
+  my $taxon_level = $ancestor->get_tagvalue('taxon_level');
+  printf(" %s_%s %s\n", 
          $genepairlink->get_tagvalue('orthotree_type'), 
          $genepairlink->get_tagvalue('orthotree_subtype'),
+         $taxon_level->name
         );
          
   return undef;
@@ -597,7 +599,7 @@ sub inspecies_paralogue_test
 }
 
 
-sub ancient_residual_orthologue_test
+sub ancient_residual_test
 {
   my $self = shift;
   my $genepairlink = shift;
@@ -619,9 +621,13 @@ sub ancient_residual_orthologue_test
   
   return undef if($count1>1);
   return undef if($count2>1);
-  
+
   #passed all the tests -> it's a simple orthologue
-  $genepairlink->add_tag("orthotree_type", 'orthologue');
+  if($ancestor->get_tagvalue("Duplication") eq '1') {
+    $genepairlink->add_tag("orthotree_type", 'paralog');
+  } else {
+    $genepairlink->add_tag("orthotree_type", 'orthologue');
+  }
   $genepairlink->add_tag("orthotree_subtype", 'ancient_residual');
   return 1;
 }
@@ -678,9 +684,8 @@ sub outspecies_test
   if($ancestor->get_tagvalue("Duplication") eq '1') {
     $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
   } else {
-    $genepairlink->add_tag("orthotree_type", 'ortholog');
+    $genepairlink->add_tag("orthotree_type", 'outspecies_ortholog');
   }
-  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
 
