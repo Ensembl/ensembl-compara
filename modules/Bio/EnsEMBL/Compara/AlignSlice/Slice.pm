@@ -190,7 +190,10 @@ sub genome_db {
                object. The Mapper contains the information for
                mapping coordinates from (to) the Slice to (from) the
                Bio::EnsEMBL::Compara::AlignSlice. Start, end and strand
-               locates the $slice in the AlignSlice
+               locates the $slice in the AlignSlice::Slice.
+               $start and $end refer to the Coordinate System. If you are using
+               a sub_Slice, this method will be using the coordinates of the
+               original Bio::EnsEMBL::Compara::AlignSlice::Slice object!
   Returntype : 
   Exceptions : throws if $slice is not a Bio::EnsEMBL::Slice object
   Exceptions : throws if $mapper is not a Bio::EnsEMBL::Mapper object
@@ -228,7 +231,10 @@ sub add_Slice_Mapper_pair {
   Returntype : list ref of hashes which keys are "slice", "mapper", "start",
                "end" and "strand". Each hash corresponds to a pair of Slice
                and Mapper and the coordintes needed to locate the Slice in
-               the AlignSlice.
+               the AlignSlice::Slice.
+               start and end refer to the Coordinate System. If you are using
+               a sub_Slice, this method will be using the coordinates of the
+               original Bio::EnsEMBL::Compara::AlignSlice::Slice object!
   Exceptions : return a ref to an empty list if no pairs have been attached
                so far.
 
@@ -1091,7 +1097,7 @@ sub seq {
   my $self = shift;
   my $start = 1;
   my $end = $self->length;
-  my $strand = 1;
+  my $strand = 1; # strand is reversed in the subseq method if needed
 
   return $self->{seq} if (defined($self->{seq}));
 
@@ -1131,8 +1137,15 @@ sub subseq {
   $strand ||= 1;
 
   ## Fix coordinates (needed for sub_Slices)
-  $start += $self->start - 1;
-  $end += $self->start - 1;
+  if ($self->strand == -1) {
+    $strand = -$strand;
+    my $aux = $start;
+    $start = $self->start + ($self->length - $end);
+    $end = $self->start + ($self->length - $aux);
+  } else {
+    $start += $self->start - 1;
+    $end += $self->start - 1;
+  }
 
   my $length = ($end - $start + 1);
   my $seq = "." x $length;
@@ -1256,17 +1269,20 @@ sub subseq {
 sub get_cigar_line {
   my ($self, $start, $end, $strand) = @_;
 
-  if (!defined($start)) {
-    $start = $self->start;
+  $start = $self->start;
+  $end = $self->end;
+  $strand ||= 1;
+
+  ## Fix coordinates (needed for sub_Slices)
+  if ($self->strand == -1) {
+    $strand = -$strand;
+    my $aux = $start;
+    $start = $self->start + ($self->length - $end);
+    $end = $self->start + ($self->length - $aux);
   } else {
     $start += $self->start - 1;
-  }
-  if (!defined($end)) {
-    $end = $self->end;
-  } else {
     $end += $self->start - 1;
   }
-  $strand ||= 1;
 
   my $length = ($end - $start + 1);
   my $seq = "." x $length;
@@ -1404,6 +1420,17 @@ sub get_all_underlying_Slices {
   $start = 1 if (!defined($start));
   $end ||= $self->length;
   $strand ||= 1;
+
+  ## Fix coordinates (needed for sub_Slices)
+  if ($self->strand == -1) {
+    $strand = -$strand;
+    my $aux = $start;
+    $start = $self->start + ($self->length - $end);
+    $end = $self->start + ($self->length - $aux);
+  } else {
+    $start += $self->start - 1;
+    $end += $self->start - 1;
+  }
 
   my $current_position;
 #   if ($strand == 1) {
