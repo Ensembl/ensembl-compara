@@ -95,7 +95,7 @@ our @ISA = qw(Bio::EnsEMBL::Exon);
                    );
   Description: Creates a new Bio::EnsEMBL::AlignSlice::Exon object
   Returntype : Bio::EnsEMBL::Compara::AlignSlice::Exon object
-  Exceptions : 
+  Exceptions : return undef if the exon cannot be mapped on the reference Slice
 
 =cut
 
@@ -117,8 +117,7 @@ sub new {
   $self->slice($align_slice) if (defined($align_slice));
   $self->original_rank($original_rank) if (defined($original_rank));
 
-  $self->map_Exon_on_Slice($from_mapper, $to_mapper);
-  return $self;
+  return $self->map_Exon_on_Slice($from_mapper, $to_mapper);
 }
 
 
@@ -326,6 +325,8 @@ sub map_Exon_on_Slice {
   $self->end($aligned_end - $slice->start + 1);
   $self->strand($aligned_strand);
   $self->cigar_line($aligned_cigar);
+
+  return undef if ($self->start > $slice->length or $self->end < 1);
 
   return $self;
 }
