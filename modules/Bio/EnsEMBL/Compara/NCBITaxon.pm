@@ -6,6 +6,20 @@ NCBITaxon - DESCRIPTION of Object
   
   An object that hold a node within a taxonomic tree.  Inherits from NestedSet.
 
+  From Bio::Species
+   classification
+   common_name
+   binomial
+
+  Here are also the additional methods in Bio::Species that "might" be useful, but let us
+  forget about these for now.
+   genus
+   species
+   sub_species
+   variant
+   organelle
+   division
+
 =head1 CONTACT
 
   Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
@@ -56,11 +70,56 @@ sub ncbi_taxid {
   return $self->node_id;
 }
 
+sub taxon_id {
+  my $self = shift;
+  my $value = shift;
+  $self->node_id($value) if($value); 
+  return $self->node_id;
+}
+
 sub rank {
   my $self = shift;
   $self->{'_rank'} = shift if(@_);
   return $self->{'_rank'};
 }
+
+sub classification {
+  my $self = shift;
+}
+
+sub common_name {
+  my $self = shift;
+}
+
+sub binomial {
+  my $self = shift;
+}
+
+
+sub RAP_species_format {
+  my $self = shift;
+  my $newick = "";
+  
+  if($self->get_child_count() > 0) {
+    $newick .= "(";
+    my $first_child=1;
+    foreach my $child (@{$self->sorted_children}) {  
+      $newick .= "," unless($first_child);
+      $newick .= $child->newick_format;
+      $first_child = 0;
+    }
+    $newick .= ")";
+  }
+  
+  $newick .= sprintf("\"%s\"", $self->name,);
+  $newick .= sprintf(":%1.4f", $self->distance_to_parent) if($self->distance_to_parent > 0);
+
+  if(!($self->has_parent)) {
+    $newick .= ";";
+  }
+  return $newick;
+}
+
 
 sub print_node {
   my $self  = shift;
