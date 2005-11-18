@@ -859,6 +859,7 @@ sub find_first_shared_ancestor {
   my $self = shift;
   my $node = shift;
 
+  return $self if($self->equals($node));
   return $node if($self->has_ancestor($node));  
   return $self->find_first_shared_ancestor($node->parent);
 }
