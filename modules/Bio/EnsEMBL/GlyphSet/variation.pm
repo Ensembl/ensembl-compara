@@ -46,19 +46,28 @@ sub href {
   my $f    = shift;
   my $view = shift || 'snpview';
 
-  &eprof_start('href'); 
-  my $start  = $self->slice2sr( $f->start, $f->end );
   my $id     = $f->variation_name;
   my $source = $f->source;
-  my $region = $self->{'container'}->seq_region_name();
-  &eprof_end('href');
+  my ($species, $start, $region, $oslice);
+
+  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+      ($oslice, $start)  = $self->{'container'}->get_original_seq_region_position( $f->{start} );
+      $region = $oslice->seq_region_name();
+      ($species = $self->{container}->genome_db->name) =~ s/ /_/g;
+      
+  } else {
+      $start  = $self->slice2sr( $f->start, $f->end );
+      $region = $self->{'container'}->seq_region_name();
+      $species = "@{[$self->{container}{_config_file_name_}]}";
+  }
 
   if ($view eq 'ldview' ){
     my $Config   = $self->{'config'};
     my $only_pop = $Config->{'_ld_population'};
     $start .= ";pop=$only_pop" if $only_pop;
   }
-  return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id;source=$source;c=$region:$start;w=20000";
+
+  return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000";
 }
 
 sub image_label {
@@ -110,8 +119,17 @@ sub colour {
 sub zmenu {
   my ($self, $f ) = @_;
   &eprof_start('zmenu');
-  my( $start, $end ) = $self->slice2sr( $f->start, $f->end );
+  my( $start, $end );
   my $allele = $f->allele_string;
+
+
+  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+      $start  = $self->{'container'}->get_original_seq_region_position( $f->start );
+      $end  = $self->{'container'}->get_original_seq_region_position( $f->end );
+  } else {
+      ($start, $end) = $self->slice2sr( $f->start, $f->end );
+  }
+
   my $pos =  $start;
 
   if($f->start > $f->end  ) {
