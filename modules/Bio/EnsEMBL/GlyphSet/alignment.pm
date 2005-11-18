@@ -10,7 +10,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 sub init_label {
   my ($self) = @_;
 
-  my $text =  $self->{'container'}->{_config_file_name_};
+  my $text =  $self->{'container'}->genome_db->name;
 
   my $label = new Sanger::Graphics::Glyph::Text({
       'z'             => 10,
@@ -34,9 +34,11 @@ sub features {
     my $emark = $self->{'container'}->{exons_markup};
     my $smark = $self->{'container'}->{snps_markup};
 
+
 # Convert the sequence to the lower case and replace '-' with '_' so later we can distinguish between 
 #  '-' that are in the middle of exon and those that are outside.
     my $seq = lc($self->{'container'}->seq);
+#    warn(join('*','AAA:',$self->{'container'}, $seq));
     $seq =~ s/-/_/g;
 
 # Reverse sequence if it is on the reverse strand
@@ -45,9 +47,12 @@ sub features {
 
 # now apply exon marking to the sequence: the exon bases are uppercased and _ symbols inside exons replaced with -
     foreach my $e (@$emark) {
-	my $s1 = uc(substr($seq, $e->{start} -1, $e->{end}-$e->{start}+1));
-	$s1 =~ s/_/-/g;
-	substr($seq, $e->{start} -1, $e->{end} - $e->{start}+1) = $s1, 
+#	warn(Data::Dumper::Dumper($e));
+	my $estart = $e->{start};
+	$estart = 1 if ($estart < 1) ;
+	my $s2 = uc(substr($seq, $estart -1, $e->{end}-$estart+1));
+	$s2 =~ s/_/-/g;
+	substr($seq, $estart -1, $e->{end} - $estart+1) = $s2; 
     }
 
     my @features = map { 
@@ -59,6 +64,7 @@ sub features {
        )
     } split //, $seq;
 
+#    warn(join('*','BBB:', $seq));
 # bases that are inside exons (i.e - and A..Z) coloured in shades of blue and those that are outside (i.e _ and a .. z)  in pink.
     my $ind = 0;
 
@@ -87,6 +93,7 @@ sub features {
 
 # mark up SNPs
     foreach my $e (@$smark) {
+#	warn(Data::Dumper::Dumper($e));
 	my $f = $features[$e->{start}-1];
 	$f->{type} = ($f->{type} || 'mark').'_snp';
 	$f->{source} = $e->{source}; 
@@ -121,10 +128,11 @@ sub href {
 
   my $view = shift || 'snpview';
   my $slice = $self->{'container'};
-  my $start  = $slice->get_original_seq_region_position( $f->{start} );
+#  my $start  = $slice->get_original_seq_region_position( $f->{start} );
+  my ($oslice, $start)  = $slice->get_original_seq_region_position( $f->{start} );
   my $id     = $f->{variation_name};
   my $source = $f->{source};
-  my $region = $self->{'container'}->seq_region_name();
+  my $region = $oslice->seq_region_name();
 
   if ($view eq 'ldview' ){
     my $Config   = $self->{'config'};
@@ -132,7 +140,8 @@ sub href {
     $start .= "&pop=$only_pop" if $only_pop;
   }
 
-  return "/@{[$self->{container}{_config_file_name_}]}/$view?snp=$id&source=$source&c=$region:$start";
+  (my $species = $self->{container}->genome_db->name) =~ s/ /_/g;
+  return "/$species/$view?snp=$id&source=$source&c=$region:$start";
 }
 
 sub zmenu {

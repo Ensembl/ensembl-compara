@@ -345,32 +345,39 @@ sub _init_non_assembled_contig {
   my $rbe = $Config->get('_settings','red_box_end');
 
  if ($Config->get('_settings','draw_red_box') eq 'yes') { 
-
-      my $global_start2 = $global_start;
       my $gwidth = $rbe-$rbs+1;
+      my $xc = $rbs - $global_start;
 
-      if ($Container->{__type__} eq 'alignslice') {
+# In case of AlignSlice calculate the fake AlignSlice coordinates to be used for drawing .. 
+      if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
 	  my $hs = $Container->{slice_mapper_pairs}->[0];
-	  $global_start2 = $hs->{slice}->{start};
-	  my $s1 = $rbs - $global_start2;
+	  my $start_offset = $rbs - $hs->{slice}->{start};
+	  my $end_offset = $rbe - $hs->{slice}->{start};
 	  my $cigar_line = $Container->get_cigar_line();
-	  my @inters = split (/[MD]/, $cigar_line);
+	  my @inters = split (/([MDG])/, $cigar_line);
+
 	  my $ms = 0;
 	  my $ds = 0;
 	  while (@inters) {
-	      $ms += (shift (@inters) || 1);
-	      last if ($ms > $s1);
-	      $ds += (shift (@inters) || 1);
+	      my $dist = (shift (@inters) || 1);
+	      my $mtype = shift (@inters);
+
+	      $ds += $dist;
+
+	      if ($mtype =~ /M/) {
+		  $ms += $dist;
+		  last if ($ms > $start_offset);
+	      }
+# Skip normal alignment and gaps in alignments
+
 	  }
-	  $rbs += $ds;
+
+	  $xc = $ds - ($ms - $start_offset);
       }
       
-   
-  
-
     # only draw focus box on the correct display...
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $rbs - $global_start2,
+      'x'            => $xc,
       'y'            => $ystart - 4 ,
       'width'        => $gwidth,
       'height'       => $h + 16,
@@ -378,7 +385,7 @@ sub _init_non_assembled_contig {
       'absolutey'    => 1,
     }) );
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-      'x'            => $rbs - $global_start2,
+      'x'            => $xc,
       'y'            => $ystart - 3 ,
       'width'        => $gwidth,
       'height'       => $h + 14,
