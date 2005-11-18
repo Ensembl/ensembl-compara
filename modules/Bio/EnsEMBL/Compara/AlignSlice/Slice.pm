@@ -448,11 +448,17 @@ sub get_all_Genes {
 
 sub _get_mapped_Gene {
   my ($self, $gene, $pair, $return_unmapped_exons) = @_;
-  
-  my $range_start = $pair->{slice}->start - $gene->slice->start + $self->start;
-  my $range_end = $pair->{slice}->end - $gene->slice->end + $self->end;
+
+  ## $range_start and $range_end are used to get rid of extra genes fetched because of the
+  ## previous speed improvement where several slices are merged in order to access the DB
+  ## a minimum number of times. $pair->{slice} correspond to the actual alignment while
+  ## $gene->slice might be much larger and include several alignments. $range_start and
+  ## $range_end are the coordinates (using $gene->slice as a ref.) where the alignment is.
+  ## If the gene (or later on, the exon) falls outside of this range, it can be discarded
+  ## as it will be impossible to map it with using $pair->mapper!
+  my $range_start = $pair->{slice}->start - $gene->slice->start + 1;
+  my $range_end = $pair->{slice}->end - $gene->slice->start + 1;
   return undef if (($gene->start > $range_end) or ($gene->end < $range_start));
-  my $slice_length = $gene->slice->end - $gene->slice->start + 1;
 
   my $from_mapper = $pair->{mapper};
   my $to_mapper = $self->{to_mapper};
@@ -474,7 +480,15 @@ sub _get_mapped_Gene {
                 -TO_MAPPER => $to_mapper,
                 -ORIGINAL_RANK => $i + 1
             );
-        push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
+        if ($this_align_exon) {
+          push(@{$these_exons}, $this_align_exon);
+        } elsif ($return_unmapped_exons) {
+          $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
+                  -EXON => $this_exon,
+                  -ORIGINAL_RANK => $i + 1
+              );
+          push(@{$these_exons}, $this_align_exon) if ($this_align_exon);
+        }
       } elsif ($return_unmapped_exons) {
         my $this_align_exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(
                 -EXON => $this_exon,
