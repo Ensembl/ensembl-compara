@@ -235,12 +235,13 @@ sub run_analysis
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
       my $ancestor = $protein1->find_first_shared_ancestor($protein2);
-      $self->get_ancestor_taxon_level($ancestor);
+      my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
       my $distance = $protein1->distance_to_ancestor($ancestor) +
                      $protein2->distance_to_ancestor($ancestor);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($protein1, $protein2, $distance);
       $genepairlink->add_tag("hops", 0);
       $genepairlink->add_tag("ancestor", $ancestor);
+      $genepairlink->add_tag("taxon_name", $taxon_level->name);
       push @genepairlinks, $genepairlink;
     }
   }
@@ -314,7 +315,7 @@ sub analyze_genepairlink
   }
   
   #display results
-  $self->display_link_analysis($genepairlink) if($self->debug);
+  $self->display_link_analysis($genepairlink) if($self->debug >1);
 
   return undef;
 }
@@ -359,7 +360,7 @@ sub load_species_tree
 {
   my $self = shift;
   
-  printf("load_species_tree\n");
+  printf("load_species_tree\n") if($self->debug);
   my $starttime = time();
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
 
@@ -375,8 +376,10 @@ sub load_species_tree
   $root->minimize_tree;  
   
   $self->{'taxon_tree'} = $root;
-  $root->print_tree(10);
-  printf("%1.3f secs for load species tree\n", time()-$starttime);
+  if($self->debug) {
+    $root->print_tree(10);
+    printf("%1.3f secs for load species tree\n", time()-$starttime);
+  }
   return undef;
 }
 
@@ -566,8 +569,7 @@ sub direct_orthologue_test
   return undef if($count2>1);
   
   #passed all the tests -> it's a simple orthologue
-  $genepairlink->add_tag("orthotree_type", 'orthologue');
-  $genepairlink->add_tag("orthotree_subtype", 'direct');
+  $genepairlink->add_tag("orthotree_type", 'orthologue_direct');
   return 1;
 }
 
@@ -624,11 +626,10 @@ sub ancient_residual_test
 
   #passed all the tests -> it's a simple orthologue
   if($ancestor->get_tagvalue("Duplication") eq '1') {
-    $genepairlink->add_tag("orthotree_type", 'paralog');
+    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one');
   } else {
-    $genepairlink->add_tag("orthotree_type", 'orthologue');
+    $genepairlink->add_tag("orthotree_type", 'orthologue_ancient_residual');
   }
-  $genepairlink->add_tag("orthotree_subtype", 'ancient_residual');
   return 1;
 }
 
@@ -659,8 +660,7 @@ sub one2many_orthologue_test
   return undef unless(($count1==1 and $count2>1) or ($count1>1 and $count2==1));
   
   #passed all the tests -> it's a one2many orthologue
-  $genepairlink->add_tag("orthotree_type", 'orthologue');
-  $genepairlink->add_tag("orthotree_subtype", 'one2many');
+  $genepairlink->add_tag("orthotree_type", 'orthologue_one2many');
   return 1;
 }
 
@@ -701,7 +701,7 @@ sub store_homologies
   my $self = shift;
 
   foreach my $genepairlink (@{$self->{'homology_links'}}) {
-    $self->display_link_analysis($genepairlink) if($self->debug);
+    $self->display_link_analysis($genepairlink) if($self->debug>2);
     $self->store_gene_link_as_homology($genepairlink);
   }
 
@@ -715,14 +715,10 @@ sub store_gene_link_as_homology
   my $self = shift;
   my $genepairlink  = shift;
 
-  my $type = $genepairlink->get_tagvalue('orthotree_subtype');
+  my $type = $genepairlink->get_tagvalue('orthotree_type');
   return unless($type);
-  my $subtype = '';
-
-  if($self->debug) { 
-    print("  store as homology : $type - $subtype\n");
-  }
-
+  my $subtype = $genepairlink->get_tagvalue('taxon_name');
+  
   my ($protein1, $protein2) = $genepairlink->get_nodes;
 
   #
@@ -739,6 +735,7 @@ sub store_gene_link_as_homology
   $homology->subtype($subtype);
   $homology->method_link_type("TREE_HOMOLOGIES");
   $homology->method_link_species_set($mlss);
+  #$homology->dbID(-1);
 
   # NEED TO BUILD THE Attributes (ie homology_members)
   #
@@ -798,9 +795,14 @@ sub store_gene_link_as_homology
   } else {
     $stable_id = $protein2->taxon_id . "_" . $protein1->taxon_id . "_";
   }
-  $stable_id .= sprintf ("%011.0d",$homology->dbID);
+  $stable_id .= sprintf ("%011.0d",$homology->dbID) if($homology->dbID);
   $homology->stable_id($stable_id);
   #TODO: update the stable_id of the homology
+  
+  if($self->debug) { 
+    print("store: ");
+    $homology->print_homology;
+  }
 
   return undef;  
 }
