@@ -484,7 +484,8 @@ sub add_das_tracks {
 	  eval {
 	      my $URL = $dbname->{'url'};
 	      $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
-	      $URL .= "$URL/das" unless $URL =~ m!/das!;
+	      $URL .= "/das" unless $URL =~ m!/das!;
+	      $URL .= "/$dbname->{'dsn'}" if ($dbname->{'dsn'});
 	      my $stype = $dbname->{'type'} || 'ensembl_location';
 	      $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
 									  -url   => $URL,
