@@ -204,14 +204,12 @@ sub _sort_similarity_links{
     my $externalDB = $type->database();
     my $display_id = $type->display_id();
     my $primary_id = $type->primary_id();
-    
     next if ($type->status() eq 'ORTH');               # remove all orthologs   
     next if lc($externalDB) eq "medline";              # ditch medline entries - redundant as we also have pubmed
     next if ($externalDB =~ /^flybase/i && $display_id =~ /^CG/ ); # Ditch celera genes from FlyBase
     next if $externalDB eq "Vega_gene";                # remove internal links to self and transcripts
     next if $externalDB eq "Vega_transcript";
     next if $externalDB eq "Vega_translation";
-
     if( $externalDB eq "GO" ){ #&& $object->database('go')){
       push @{$object->__data->{'go_links'}} , $display_id;
       next;   
@@ -220,7 +218,7 @@ sub _sort_similarity_links{
       push @{$object->__data->{'GKB_links'}->{$key}} , $type ;
       next;
     }
-    my $text = $display_id;
+   my $text = $display_id;
     if( $urls and $urls->is_linked( $externalDB ) ) {
       my $link;
       if( $type->primary_id_linkable ) {
@@ -960,13 +958,14 @@ sub spreadsheet_variationTable {
   foreach my $gs ( @gene_snps ) {
     my $raw_id = $gs->[2]->dbID;
     my $ts     = $snps{$raw_id};
+    my @validation =  @{ $gs->[2]->get_all_validation_states || [] };
     if( $ts && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
       my $ROW = {
         'ID'        =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$gs->[2]->variation_name]};source=@{[$gs->[2]->source]};chr=$gs->[3];vc_start=$gs->[4]">@{[$gs->[2]->variation_name]}</a>),
         'class'     => $gs->[2]->var_class() eq 'in-del' ? ( $gs->[4] > $gs->[5] ? 'insertion' : 'deletion' ) : $gs->[2]->var_class(),
         'alleles'   => $gs->[2]->allele_string(),
         'ambiguity' => $gs->[2]->ambig_code(),
-        'status'    => join( ', ',  @{$gs->[2]->get_all_validation_states ||[]} ),
+        'status'    => (join( ', ',  @validation ) || "-"),
         'chr'       => $gs->[3],
         'pos'       => $gs->[4]==$gs->[5] ? $gs->[4] :  "$gs->[4]-$gs->[5]",
         'snptype'   => $ts->consequence_type,
