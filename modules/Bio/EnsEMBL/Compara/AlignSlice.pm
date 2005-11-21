@@ -738,10 +738,7 @@ sub _sort_GenomicAlignBlocks {
   my ($genomic_align_blocks) = @_;
   my $sorted_genomic_align_blocks = [];
   my $last_end;
-  foreach my $this_genomic_align_block (sort
-          {$a->reference_genomic_align->dnafrag_start <=>
-          $b->reference_genomic_align->dnafrag_start}
-          @{$genomic_align_blocks}) {
+  foreach my $this_genomic_align_block (sort _sort_gabs @{$genomic_align_blocks}) {
     if (!defined($last_end) or
         $this_genomic_align_block->reference_genomic_align->dnafrag_start > $last_end) {
       push(@$sorted_genomic_align_blocks, $this_genomic_align_block);
@@ -754,6 +751,36 @@ sub _sort_GenomicAlignBlocks {
   }
 
   return $sorted_genomic_align_blocks;
+}
+
+sub _sort_gabs {
+
+  if ($a->reference_genomic_align->dnafrag_start == $b->reference_genomic_align->dnafrag_start) {
+    ## This may happen when a block has been splitted into small pieces and some of them contain
+    ## gaps only for the reference species. In this case, use another species for sorting these
+    ## genomic_align_blocks
+    for (my $i = 0; $i<@{$a->get_all_non_reference_genomic_aligns()}; $i++) {
+      for (my $j = 0; $j<@{$b->get_all_non_reference_genomic_aligns()}; $j++) {
+        next if ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_id !=
+            $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_id);
+        if (($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start !=
+                $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start) and
+            ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_strand ==
+                $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_strand)) {
+          ## This other genomic_align is not a full gap and ca be used to sort these blocks
+          if ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_strand == 1) {
+            return $a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start <=> 
+                $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start
+          } else {
+            return $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start <=> 
+                $a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start
+          }
+        }
+      }
+    }
+  } else {
+    return $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start
+  }
 }
 
 =head2 _sort_and_compile_GenomicAlignBlocks
@@ -784,8 +811,7 @@ sub _sort_and_compile_GenomicAlignBlocks {
   my $start_pos;
   my $end_pos;
   my $this_set_of_genomic_align_blocks = [];
-  foreach my $this_genomic_align_block (sort {$a->reference_genomic_align->dnafrag_start <=>
-          $b->reference_genomic_align->dnafrag_start} @$genomic_align_blocks) {
+  foreach my $this_genomic_align_block (sort _sort_gabs @$genomic_align_blocks) {
     my $this_start_pos = $this_genomic_align_block->reference_genomic_align->dnafrag_start;
     my $this_end_pos = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
     if (defined($end_pos) and ($this_start_pos <= $end_pos)) {
