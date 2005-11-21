@@ -62,8 +62,11 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::Graph::Link;
+use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Homology;
 
 use Bio::SimpleAlign;
 use Bio::AlignIO;
@@ -292,7 +295,7 @@ sub analyze_genepairlink
 
   #run feature detectors: precalcs and caches into metadata
   $self->genepairlink_check_dups($genepairlink);
-  $self->genepairlink_fetch_homology($genepairlink);
+  $self->genepairlink_fetch_homology($genepairlink) if($self->debug);
 
   #do classification analysis : as filter stack
   if($self->inspecies_paralog_test($genepairlink)) { }
