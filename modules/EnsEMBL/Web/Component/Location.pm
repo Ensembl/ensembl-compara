@@ -411,6 +411,20 @@ sub contigviewbottom_text {
   return 0;
 }
 
+sub alignsliceviewbottom_text {
+  my($panel, $object) = @_;
+  my $width = $object->param('image_width') - 2;
+  $panel->print( qq(<div style="background-color: #ffffe7; width: ${width}px; border: solid 1px black;" class="print_hide_block autocenter">
+    <p style="padding: 2px; margin: 0px;">
+      The region you are trying to display is too large. To zoom into a
+      viewable region use the zoom buttons above - or click on the top
+      display to centre and zoom the image
+    </p>
+  </div>) 
+  );
+  return 0;
+}
+
 sub add_repeat_tracks {
   my( $object, $wuc ) = @_;
   my @T = ();
