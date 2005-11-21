@@ -225,7 +225,7 @@ sub run_analysis
   $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) if($self->debug);
   
   #compare every gene in the tree with every other
-  #each gene/gene pairing is a potential orthologue/paralogue
+  #each gene/gene pairing is a potential ortholog/paralog
   #and thus we need to analyze every possibility
   #accomplish by creating a fully connected graph between all the genes
   #under the tree (hybrid graph structure) and then analyze each gene/gene link
@@ -257,6 +257,7 @@ sub run_analysis
   printf("%1.3f secs to sort links\n", time()-$tmp_time) if($self->debug > 1);
 
   #analyze every gene pair (genepairlink) to get its classification
+  printf("analyze links\n") if($self->debug);
   $tmp_time = time();
   $self->{'old_homology_count'} = 0;
   $self->{'orthotree_homology_count'} = 0;
@@ -294,10 +295,10 @@ sub analyze_genepairlink
   $self->genepairlink_fetch_homology($genepairlink);
 
   #do classification analysis : as filter stack
-  if($self->inspecies_paralogue_test($genepairlink)) { }
-  elsif($self->direct_orthologue_test($genepairlink)) { } 
+  if($self->inspecies_paralog_test($genepairlink)) { }
+  elsif($self->direct_ortholog_test($genepairlink)) { } 
   elsif($self->ancient_residual_test($genepairlink)) { } 
-  elsif($self->one2many_orthologue_test($genepairlink)) { } 
+  elsif($self->one2many_ortholog_test($genepairlink)) { } 
   elsif($self->outspecies_test($genepairlink)) { }
   else {
     printf("OOPS!!!! %s - %s\n", $protein1->gene_member->stable_id, $protein2->gene_member->stable_id);
@@ -346,7 +347,7 @@ sub display_link_analysis
   printf("%9s)", $ancestor->node_id);
 
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
-  printf(" %s_%s %s\n", 
+  printf(" %s %s %s\n", 
          $genepairlink->get_tagvalue('orthotree_type'), 
          $genepairlink->get_tagvalue('orthotree_subtype'),
          $taxon_level->name
@@ -541,12 +542,12 @@ sub genepairlink_check_dups
 ########################################################
 
 
-sub direct_orthologue_test
+sub direct_ortholog_test
 {
   my $self = shift;
   my $genepairlink = shift;
     
-  #strictest orthologue test: 
+  #strictest ortholog test: 
   #  - genes are from different species
   #  - no ancestral duplication events
   #  - these genes are only copies of the ancestor for thier species
@@ -568,18 +569,18 @@ sub direct_orthologue_test
   return undef if($count1>1);
   return undef if($count2>1);
   
-  #passed all the tests -> it's a simple orthologue
-  $genepairlink->add_tag("orthotree_type", 'orthologue_direct');
+  #passed all the tests -> it's a simple ortholog
+  $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
   return 1;
 }
 
 
-sub inspecies_paralogue_test
+sub inspecies_paralog_test
 {
   my $self = shift;
   my $genepairlink = shift;
     
-  #simplest paralogue test: 
+  #simplest paralog test: 
   #  - both genes are from the same species
   #  - and just label with taxonomic level
 
@@ -594,8 +595,8 @@ sub inspecies_paralogue_test
   #  return undef unless($gdbID == $pep1->genome_db_id);
   #}
   
-  #passed all the tests -> it's an inspecies_paralogue
-  $genepairlink->add_tag("orthotree_type", 'inspecies_paralogue');
+  #passed all the tests -> it's an inspecies_paralog
+  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
@@ -624,17 +625,17 @@ sub ancient_residual_test
   return undef if($count1>1);
   return undef if($count2>1);
 
-  #passed all the tests -> it's a simple orthologue
+  #passed all the tests -> it's a simple ortholog
   if($ancestor->get_tagvalue("Duplication") eq '1') {
-    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one');
+    $genepairlink->add_tag("orthotree_type", 'outspecies_paralog_one2one_geneloss');
   } else {
-    $genepairlink->add_tag("orthotree_type", 'orthologue_ancient_residual');
+    $genepairlink->add_tag("orthotree_type", 'ortholog_one2one_geneloss');
   }
   return 1;
 }
 
 
-sub one2many_orthologue_test
+sub one2many_ortholog_test
 {
   my $self = shift;
   my $genepairlink = shift;
@@ -659,8 +660,8 @@ sub one2many_orthologue_test
   #and the other must appear more than once in the ancestry
   return undef unless(($count1==1 and $count2>1) or ($count1>1 and $count2==1));
   
-  #passed all the tests -> it's a one2many orthologue
-  $genepairlink->add_tag("orthotree_type", 'orthologue_one2many');
+  #passed all the tests -> it's a one2many ortholog
+  $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
   return 1;
 }
 
@@ -684,7 +685,7 @@ sub outspecies_test
   if($ancestor->get_tagvalue("Duplication") eq '1') {
     $genepairlink->add_tag("orthotree_type", 'outspecies_paralog');
   } else {
-    $genepairlink->add_tag("orthotree_type", 'outspecies_ortholog');
+    $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
   }
   return 1;
 }
