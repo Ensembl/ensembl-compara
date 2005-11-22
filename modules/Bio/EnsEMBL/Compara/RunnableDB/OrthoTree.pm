@@ -219,13 +219,15 @@ sub run_analysis
   my $tree = $self->{'protein_tree'};
     
   my @all_protein_leaves = @{$tree->get_all_leaves};
-  printf("%d proteins in tree\n", scalar(@all_protein_leaves)) if($self->debug);
   
   #precalculate the ancestor species_hash (caches into the metadata of nodes)
   #also augments the Duplication tagging
   $self->get_ancestor_species_hash($tree);
   
-  $self->{'protein_tree'}->print_tree($self->{'tree_scale'}) if($self->debug);
+  if($self->debug) {
+    $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
+    printf("%d proteins in tree\n", scalar(@all_protein_leaves));
+  }
   
   #compare every gene in the tree with every other
   #each gene/gene pairing is a potential ortholog/paralog
@@ -263,8 +265,7 @@ sub run_analysis
   printf("analyze links\n") if($self->debug);
   $tmp_time = time();
   $self->{'old_homology_count'} = 0;
-  $self->{'orthotree_homology_count'} = 0;
-  $self->{'lost_homology_count'} = 0;
+  $self->{'orthotree_homology_counts'} = {};
   foreach my $genepairlink (@sorted_genepairlinks) {
     $self->analyze_genepairlink($genepairlink);
   }
@@ -277,8 +278,10 @@ sub run_analysis
     printf("%d proteins in tree\n", scalar(@{$tree->get_all_leaves}));
     printf("%d pairings\n", scalar(@genepairlinks));
     printf("%d old homologies\n", $self->{'old_homology_count'});
-    printf("%d orthotree homologies\n", $self->{'orthotree_homology_count'});
-    printf("%d lost homologies\n", $self->{'lost_homology_count'});
+    printf("orthotree homologies\n");
+    foreach my $type (keys(%{$self->{'orthotree_homology_counts'}})) {
+      printf("  %13s : %d\n", $type, $self->{'orthotree_homology_counts'}->{$type});
+    }
   }
 
   $self->{'homology_links'} = \@sorted_genepairlinks;
@@ -308,14 +311,14 @@ sub analyze_genepairlink
   }
   
   $self->{'old_homology_count'}++ if($genepairlink->get_tagvalue('old_homology'));
-  $self->{'orthotree_homology_count'}++ if($genepairlink->get_tagvalue('orthotree_type')); 
 
-
-  if($genepairlink->get_tagvalue('old_homology') and
-     !($genepairlink->get_tagvalue('orthotree_subtype'))) 
-  {
-    #$self->display_link_analysis($genepairlink);
-    $self->{'lost_homology_count'}++;
+  my $type = $genepairlink->get_tagvalue('orthotree_type');
+  if($type) {
+    if(!defined($self->{'orthotree_homology_counts'}->{$type})) {
+      $self->{'orthotree_homology_counts'}->{$type} = 1;
+    } else {
+      $self->{'orthotree_homology_counts'}->{$type}++;
+    }
   }
   
   #display results
@@ -709,7 +712,13 @@ sub store_homologies
     $self->store_gene_link_as_homology($genepairlink);
   }
 
-  $self->{'protein_tree'}->store_tag('OrthoTree_homology_count', scalar($self->{'homology_links'}));
+  my $counts_str = $self->encode_hash($self->{'orthotree_homology_counts'});
+  printf("$counts_str\n");
+
+  $self->{'protein_tree'}->store_tag(
+      'OrthoTree_types_hashstr', 
+      $self->encode_hash($self->{'orthotree_homology_counts'}));
+
   return undef;
 }
 
