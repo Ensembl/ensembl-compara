@@ -245,14 +245,13 @@ sub _store_tagvalue {
   
   $value="" unless(defined($value));
 
-  my $sql = "INSERT ignore into protein_tree_tags (node_id,tag) values (\'$node_id\',\'$tag\')";
+  my $sql = "INSERT ignore into protein_tree_tags (node_id,tag) values ($node_id,\"$tag\")";
   #print("$sql\n");
   $self->dbc->do($sql);
 
-  $sql = "UPDATE protein_tree_tags set value=\'$value\' where node_id=\'$node_id\' and tag=\'$tag\'";
+  $sql = "UPDATE protein_tree_tags set value=\"$value\" where node_id=$node_id and tag=\"$tag\"";
   #print("$sql\n");
   $self->dbc->do($sql);
-
 }
 
 
