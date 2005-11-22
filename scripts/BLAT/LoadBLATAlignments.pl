@@ -180,7 +180,7 @@ my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
 $mlss_adaptor->store($method_link_species_set);
 
 ##set genomic_align_block_id and genomic_align_id from method_link_
-my $method_link_species_set_id = $method_link_species_set->dbID;
+$method_link_species_set_id = $method_link_species_set->dbID;
 my $GAB_id = $method_link_species_set_id * 10000000000;
 my $qy_GA_id = $GAB_id;
 my $cs_GA_id = $qy_GA_id+1;
@@ -198,7 +198,7 @@ print STDERR "Reading BLAT--gff alignments in progress...\n";
 
 $group = $GAB_id; ## Start with $GAB_id to follow the same numbering convention
 my $previous_group = 0;
-my $prev_cs_chr = 'a'; my $prev_qy_chr = 'a';  
+my $prev_cs_chr = ''; my $prev_qy_chr = '';  
 my ($cs_dnafrag, $qy_dnafrag, $cs_dnafrag_id, $qy_dnafrag_id);
 
 LINE:while (my $line =<FILE>) {
@@ -212,7 +212,7 @@ LINE:while (my $line =<FILE>) {
   ## Assign group_id accroding to the previous qy_chr, cs_chr and group_id
   $no=~/\d+\((\d+)\)/;
   my $this_group = $1;
-  if ($previous_qy_chr ne $qy_chr or $previous_cs_chr ne $cs_chr or $previous_group != $this_group) {
+  if ($prev_qy_chr ne $qy_chr or $prev_cs_chr ne $cs_chr or $previous_group != $this_group) {
     $group++;
     $previous_group = $this_group;
   }
