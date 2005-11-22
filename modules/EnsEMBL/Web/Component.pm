@@ -41,7 +41,6 @@ sub format_das_panel {
   my $das_attribute_data = $das_collection->get_DASAdaptor_attributes_by_method(qw(
     name authority description conftype active type
   ));
-    return if (! defined($das_attribute_data) || scalar(@$das_attribute_data) < 1); # the DataObj we are rendering does not have dbID - we can not attach DAS sources to it
 
 # Now display the annotation from the selected sources
 
