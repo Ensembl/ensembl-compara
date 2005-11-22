@@ -40,6 +40,12 @@ sub update_configs_from_parameter {
 sub add_panel { $_[0]{page}->content->add_panel( $_[1] ); }
 sub set_title { $_[0]{page}->set_title( $_[1] ); }
 sub add_form  { my($self,$panel,@T)=@_; $panel->add_form( $self->{page}, @T ); }
+
+sub add_wizard { 
+  my ($self, $wizard) = @_;
+  $self->{wizard} = $wizard; 
+}
+
 sub add_block { 
   my $self = shift;
   return unless $self->{page}->can('menu');
@@ -178,5 +184,118 @@ sub context_location {
   }
 }
 
+sub wizard_panel {
+  my ($self, $caption) = @_;
+  my $object = $self->{object};
+  my $wizard = $self->{wizard};
+
+  ## call the relevant configuration method
+  my $node = $wizard->current_node($object);
+  if ($wizard->isa_page($node)) { ## create panel(s)
+    if ($object->param('error')) { ## check for error messages
+      my $message = $wizard->get_error($object->param('error'));
+      $self->wizard_error($message);
+    }
+    ## create generic panel
+    if (my $panel = $self->new_panel('Image',
+        'code'    => "info$self->{flag}",
+        'caption' => $caption,
+        'object'  => $self->{object},
+        'wizard'  => $self->{wizard})
+    ) {
+      $panel->add_components($node, "EnsEMBL::Web::Component::User::$node");
+      if ($wizard->isa_form($node)) {
+        $panel->add_form($self->{page}, $node,  "EnsEMBL::Web::Wizard::User::$node");
+      }
+      $self->{page}->content->add_panel($panel);
+    }
+
+  }
+
+}
+
+sub wizard_error {
+  my ($self, $message) = @_;
+
+  $self->{page}->content->add_panel(
+    new EnsEMBL::Web::Document::Panel(
+      'object'  => $self->{'object'},
+      'code'    => "",
+      'caption' => "Error",
+      'content' => $message,
+    )
+  );
+
+}
 
 1;
+
+__END__
+                                                                                
+=head1 EnsEMBL::Web::Configuration
+                                                                                
+=head2 SYNOPSIS
+
+Children of this base class are called from the EnsEMBL::Web::Document::WebPage object, according to parameters passed in from the controller script. There are two ways of configuring the object:
+
+1) A simple view 'myview' uses a generic WebPage method and only needs to define its data object type, thus
+
+    EnsEMBL::Web::Document::WebPage::simple_with_redirect( 'Gene' );
+
+2) A more complex view (e.g. one that uses a form to collect additional user configuration settings) needs to call the configure method and pass more parameters, thus   
+
+    foreach my $object( @{$webpage->dataObjects} ) {
+        $webpage->configure( $object, 'myview', 'context_menu');
+    }
+    $webpage->render(); 
+
+=head2 DESCRIPTION
+                                                                                
+This class consists of methods for configuring views to display [module] data. There are two types of method in a Configuration module, views and context menus, and every Configuration module should contain at least one example of each. 
+
+'View' methods create the main content of a typical Ensembl dynamic page. Each creates one or more EnsEMBL::Web::Panel objects and adds one or more components to each panel.
+
+'Context menu' methods create a menu of links to content related to that in the view. A generic menu method may be shared between similar views, or each view can have its own custom menu.
+
+                                                                                
+=head2 METHODS
+
+All methods take an EnsEMBL::Web::Configuration::[module] object as their only argument (having already been instantiated by the WebPage object)
+                                                                                
+=head3 B<method_name>
+                                                                                
+Description:
+
+[only include next two if different from standard]    
+                                                                                
+Arguments:     
+                                                                                
+Returns:  
+
+=head3 B<Accessor methods>      
+
+=over 4
+
+=item B<method_name>          Sets/returns a hash of doodah values
+
+=item B<another_method>       Returns a reference to an array of Whatsits
+
+=back
+
+=head2 BUGS AND LIMITATIONS
+                                                                                
+None known at present.
+                                                                                                                                                              
+=head2 AUTHOR
+                                                                                
+James Smith, Ensembl Web Team
+Support enquiries: helpdesk\@ensembl.org
+                                                                                
+=head2 COPYRIGHT
+                                                                                
+See http://www.ensembl.org/info/about/code_licence.html
+                                                                                
+=cut
+
+
+

@@ -100,6 +100,7 @@ sub configure {
                            # If this configuration module can perform this
                            # function do so...
           eval { $CONF->$FN(); };
+          $self->{wizard} = $CONF->{wizard};
           if( $@ ) { 
                            # Catch any errors and display as a "configuration runtime error"
             $self->page->content->add_panel( 
@@ -152,6 +153,38 @@ sub has_a_problem     { my $self = shift; return $self->factory->has_a_problem(@
 sub has_problem_type  { my $self = shift; return $self->factory->has_problem_type( @_ );  }
 sub problem           { my $self = shift; return $self->factory->problem(@_);             }
 sub dataObjects       { my $self = shift; return $self->factory->DataObjects;             }
+
+## wrapper around redirect and render, so wizard can choose
+sub action {
+  my $self = shift;
+
+  if ($self->{wizard}) {
+    my $object = ${$self->dataObjects}[0];
+    my $node = $self->{wizard}->current_node($object);
+    if (!$self->{wizard}->isa_page($node)) { ## isn't a web page
+      ## do whatever processing is required by this node
+      my %parameter = %{$self->{wizard}->$node($object)};
+      ## unpack returned parameters into a URL
+      my $URL = '/'.$object->species.'/'.$object->script.'?';
+      my $count = 0;
+      foreach my $param (keys %parameter) {
+        $URL .= ';' if $count > 0;
+        $URL .= $param.'='.$parameter{$param};    
+        $count++;
+      }
+      warn "Redirecting to $URL";
+      $self->redirect($URL);
+    }
+    else {
+      warn "Rendering page $node";
+      $self->render;
+    }
+  }
+  else { ## not a wizard page after all!
+    warn "Rendering non-wizard page";
+    $self->render;
+  }
+}
 
 sub redirect {
   my( $self, $URL ) = @_;
