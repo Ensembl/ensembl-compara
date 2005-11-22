@@ -158,18 +158,20 @@ sub add_buttons {
       'type'  => 'Submit',
       'name'  => 'submit_'.$object->param('previous'),
       'value' => '< Back',
-      'spanning' => 'buttons',
+      'spanning' => 'inline',
     );
   }
 
   my @edges = @{ $self->get_outgoing_edges($node) };
+  my $edge_count = scalar(@edges);
+  warn "$edge_count outgoing edges";
   foreach my $edge (@edges) {
     my $text = $self->{'_nodes'}{$edge}{'button'} || 'Next';
     $form->add_element(
       'type'  => 'Submit',
       'name'  => 'submit_'.$edge,
       'value' => $text.' >',
-      'spanning' => 'buttons',
+      'spanning' => 'inline',
     );
   }
 
