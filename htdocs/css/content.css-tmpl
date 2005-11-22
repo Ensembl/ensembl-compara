@@ -162,6 +162,7 @@ div.formpanel div { margin-top:5px; }
   float: left; width: 29%; top: 0px; left: 0px; padding: 0px; padding-right: 10px; margin: 0px; text-align: right;
   color: [[HEADING]]; font-size: 1em; font-weight: bold; margin-top: 0.8em;
 }
+.formwide { margin-bottom:0.5em; }
 .formwide h6, .forminline h6 {
   top: 0px; left: 0px; padding: 0px; margin: 0px; 
   color: [[HEADING]]; font-size: 1em; font-weight: bold;
