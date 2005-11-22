@@ -58,31 +58,48 @@ sub _archive {
     $output .= "</ul>\n";
   } else {
     $probtype= 'removed';
-    $caption = 'Identifier Removed from Database';
+    $caption = 'Identifier removed from database';
     $output  = "<p>The feature <strong>$name</strong> has been removed from the current database.</p>";
   }
+
+  # Give peptide sequence or link to current protview
   my $trans_id = $archiveStableID->get_translation_archive_id();
-  my %trans = map { $_->stable_id, $_ } @$trans_id;
-  my @trans = values %trans;
-  if( @trans ) {
-    if (@trans >1){
-      $output .= "<p>The peptides related to <strong>$name</strong> are:</p><table border=\"0\">";
-    } else {
-      $output .= "<p>The peptide related to <strong>$name</strong> is:</p><table border=\"0\">";
-    }
-    for (@trans) {
-      my $tmp = $_->get_peptide;
-      if( $tmp ) {
-        $tmp =~ s/(\w{60})/$1<br \/>/g ;
-        $tmp =~ s/<br \/>$//;
-        $output .= "<tr valign=\"top\"><th>".$_->stable_id."&nbsp;</th><td><tt>$tmp</tt></td></tr>\n";
-      } else {
-        $output .= sprintf( '<tr valign="top"><th><a href="/%s/protview?peptide=%s">%s</a>&nbsp;</th><td>Is still in Ensembl</td></tr>',
-          $ENV{'ENSEMBL_SPECIES'}, $_->stable_id, $_->stable_id );
+  my %tmp = map { $_->stable_id, $_ } @$trans_id; #rm duplicates
+  my @trans = values %tmp;
+
+  unless ( @trans ) {
+    $self->problem( $probtype, $caption, $output );
+    return undef ;
+  }
+  if ( $archiveStableID->type eq 'Translation' ) {
+    $output .= qq(<p>This peptide's sequence was:</p>
+                 <table border="0">);
+  }  elsif (@trans >1){
+    $output .= qq(<p>The peptides related to ).lc($archiveStableID->type).
+      qq( <strong>$name</strong> are:</p> <table border="0">);
+  } else {
+    $output .= qq(<p>The peptide related to).lc($archiveStableID->type).
+      qq( <strong>$name</strong> is:</p><table border="0">);
+  }
+  for (@trans) {
+    if( my $seq = $_->get_peptide ) { # there is seq in archive db
+      $seq =~ s/(\w{60})/$1<br \/>/g ;
+      $seq =~ s/<br \/>$//;
+      $output .= qq(<tr valign="top"><th>).$_->stable_id."&nbsp;</th><td><tt>$seq</tt></td></tr>\n";
+    } else { # it must still be in Ensembl, but check..
+      my $adaptor = $self->database($db)->get_TranslationAdaptor();
+      my $peptide = $adaptor->fetch_by_stable_id($name);
+      if ($peptide) {
+	$output .= sprintf( '<tr valign="top"><th><a href="/%s/protview?peptide=%s">%s</a>&nbsp;</th><td>is still in Ensembl</td></tr>',
+			    $ENV{'ENSEMBL_SPECIES'}, $_->stable_id, $_->stable_id );
+      }
+      else {
+	$output .= "<tr><th>unknown</th></tr>";
+	warn "***********ERROR: $name is not in Ensembl or Archive database!!";
       }
     }
-    $output .= "</table>";
   }
+  $output .= "</table>";
   $self->problem( $probtype, $caption, $output );
   return undef ;
 }
