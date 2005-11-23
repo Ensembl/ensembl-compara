@@ -38,6 +38,8 @@ h2 { margin-bottom:0.5em; }
 
 h3.boxed, div.panel h3 { color:[[HEADING]]; background-color:[[BACKGROUND2]]; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; border:1px solid [[BACKGROUND1]]; }
 
+div.panel h3.plain { border:none; background-color:transparent; }
+
 /* LISTS */
 #page ol li { list-style-type:decimal; list-style-image:none; }
 
