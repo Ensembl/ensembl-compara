@@ -79,7 +79,7 @@ sub format_das_panel {
     $source->{active} || next;
     my $source_nm = $source->{name};
     my $label = "<a name=$source_nm></a>$source_nm";
-
+    my $location_features = 0;
     my @rhs_rows = ();
 # Check the source type, if it is 'ensembl_location' then we need to query the DAS source using the chromosome coordinates of the gene rather than its ID
     if( $source->{type} eq 'ensembl_location' ) { 
@@ -173,14 +173,16 @@ sub format_das_panel {
         ) );
       }
     } else {
-	
       my @features = $object->get_das_features_by_name($source_nm);
       foreach my $feature( sort{ $a->das_type_id    cmp $b->das_type_id ||
                                  $a->das_feature_id cmp $b->das_feature_id ||
                                  $a->das_note cmp $b->das_note } @features ) {
         next if ($feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET)$/i ||
                  $feature->das_type_id() =~ /^(contig|component|karyotype|INIT_MET):/i);
-        next if ($feature->start && $feature->end);
+        if ($feature->start && $feature->end) {
+	    $location_features ++;
+	    next;
+	}
         my $segment = $feature->das_segment->ref;
 	my $label = $feature->das_feature_label;
 	if (my $flink = $feature->das_link) {
@@ -199,7 +201,6 @@ sub format_das_panel {
             <a href="$script?gene=$3" >[$2]</a>|ig;
           $note=~s|([^:])//\s+|$1<br \/>|ig;
         }
-
         push( @rhs_rows, sprintf( $row_tmpl, 
           $feature->das_type || '&nbsp;',
           ($feature->das_type_id eq $feature->das_type) ? '&nbsp;' :
@@ -217,8 +218,14 @@ sub format_das_panel {
       }  
     }
 
+
     if( scalar( @rhs_rows ) == 0 ){
-      $panel->add_row( $label, qq(<p>No annotation</p>) );
+	my $msg = "No annotation";
+	if ($location_features > 0) {
+	    $msg = "There are $location_features location based features that are not displayed here. See Protein Features panel";
+	}
+
+	$panel->add_row( $label, qq(<p>$msg</p>) );
     } else {
       $panel->add_row($label, qq(
 <table class="hidden">
