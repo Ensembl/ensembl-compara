@@ -65,6 +65,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use POSIX qw(ceil floor);
 
 use Bio::EnsEMBL::Hive;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -511,7 +512,7 @@ sub parse_and_store_alignment_into_proteintree
   }
 
   $tree->store_tag('alignment_method', 'Muscle');
-  my $runtime = time()*1000-$self->{'muscle_starttime'};  
+  my $runtime = floor(time()*1000-$self->{'muscle_starttime'});  
   $tree->store_tag('MUSCLE_runtime_msec', $runtime);
 
   return undef;
