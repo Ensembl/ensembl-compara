@@ -425,7 +425,8 @@ sub dumpProteinTreeToWorkdir
 
   my $seq_id_hash = {};
   my $residues = 0;
-  my $member_list = $tree->get_all_leaves;  
+  my $member_list = $tree->get_all_leaves;
+  $tree->store_tag('gene_count', scalar(@$member_list));
   foreach my $member (@{$member_list}) {
     next if($seq_id_hash->{$member->sequence_id});
     $seq_id_hash->{$member->sequence_id} = 1;
