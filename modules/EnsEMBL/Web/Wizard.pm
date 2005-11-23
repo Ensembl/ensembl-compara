@@ -92,7 +92,13 @@ sub add_outgoing_edges {
 
 sub get_outgoing_edges {
   my ($self, $node) = @_;
-  return $self->{'_nodes'}{$node}{'_outgoing_edges'};
+  ## this function seems to returning duplicate values, so weed them out!
+  my %check_hash;
+  foreach my $edge (@{$self->{'_nodes'}{$node}{'_outgoing_edges'}}) {
+    $check_hash{$edge}++;
+  }
+  my @edges = keys %check_hash; 
+  return \@edges;
 }
 
 ##---------------- FORM ASSEMBLY FUNCTIONS --------------------------------
@@ -166,6 +172,7 @@ sub add_buttons {
   my $edge_count = scalar(@edges);
   warn "$edge_count outgoing edges";
   foreach my $edge (@edges) {
+    warn "Adding button from edge $edge";
     my $text = $self->{'_nodes'}{$edge}{'button'} || 'Next';
     $form->add_element(
       'type'  => 'Submit',
@@ -276,6 +283,12 @@ Arguments:  node name (string), EnsEMBL::Web::Form object, data object
 Returns: none
 
 =head2 BUGS AND LIMITATIONS
+
+=head3 Bugs
+
+There is some kind of bug on the setting and getting of edges, whereby a duplicate edge is sometimes returned. A workaround has been placed in get_outgoing_edges to eliminate these duplicates on retrieval, so they are not rendered.
+
+=head3 Limitations
 
 Currently only implements passing of data between nodes via HTML forms (e.g. using hidden fields).
 
