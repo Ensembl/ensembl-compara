@@ -1170,15 +1170,17 @@ sub _run_query_from_method_link_id_genome_db_ids {
    
   my $sql = qq{
           SELECT
-            method_link_species_set_id,
+            a.method_link_species_set_id,
             COUNT(*) as count
           FROM
-            method_link_species_set
+            method_link_species_set a,
+            method_link_species_set b
           WHERE
-            genome_db_id in (}.join(",", @$genome_db_ids).qq{)
-            AND method_link_id = \"$method_link_id\"
-          GROUP BY method_link_species_set_id
-          HAVING count = }.scalar(@$genome_db_ids);
+            a.method_link_species_set_id = b.method_link_species_set_id
+            AND a.genome_db_id in (}.join(",", @$genome_db_ids).qq{)
+            AND a.method_link_id = \"$method_link_id\"
+          GROUP BY a.method_link_species_set_id
+          HAVING count = }.(scalar(@$genome_db_ids)**2);
   my $sth = $self->prepare($sql);
   $sth->execute();
 
