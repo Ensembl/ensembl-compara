@@ -285,7 +285,7 @@ sub context_menu {
     'text'  => "Gene regulation info.",
     'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
     'href'  => "/$species/generegulationview?$q_string"
-  ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'});
+  ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'}) && $obj->gene;
 
   $self->add_entry( $flag,
     'code'  => 'gene_var_info',

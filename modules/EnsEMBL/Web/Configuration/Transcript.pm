@@ -126,12 +126,15 @@ sub context_menu {
     'href' => "/$species/genespliceview?$q_string_g"
   ) if $q_string_g;
 
-  $self->add_entry( $flag,
-    'code'  => 'gene_reg_info',
-    'text'  => "Gene regulation info.",
-    'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
-    'href'  => "/$species/generegulationview?$q_string_g" 
-  ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'});
+
+  if ( $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'}) && $obj->gene ) {
+    $self->add_entry( $flag,
+		      'code'  => 'gene_reg_info',
+		      'text'  => "Gene regulation info.",
+		      'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
+		      'href'  => "/$species/generegulationview?$q_string_g" 
+		    );
+  }
 
   $self->add_entry( $flag,
     'coed' => 'gene_var_info',
