@@ -183,7 +183,7 @@ CREATE TABLE genomic_align (
 #
 
 CREATE TABLE genomic_align_group (
-  group_id                    int(10) unsigned NOT NULL AUTO_INCREMENT, # internal id, groups genomic_align_ids
+  group_id                    bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, groups genomic_align_ids
   type                        varchar(40) NOT NULL,
   genomic_align_id            bigint unsigned NOT NULL, # FK genomic_align.genomic_align_id
 
