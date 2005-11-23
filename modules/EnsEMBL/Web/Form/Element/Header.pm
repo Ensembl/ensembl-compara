@@ -8,6 +8,6 @@ sub new {
   return $class->SUPER::new( @_, 'spanning' => 'yes' );
 }
 
-sub render { return '<h3>'.$_[0]->value.'</h3>'; }
+sub render { return '<h3 class="plain">'.$_[0]->value.'</h3>'; }
 
 1;
