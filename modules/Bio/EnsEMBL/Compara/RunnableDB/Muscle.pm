@@ -64,6 +64,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
+use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Hive;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -83,7 +84,8 @@ sub fetch_input {
 
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "";
-
+  $self->{'muscle_starttime'} = time()*1000;
+  
   if($self->input_job->retry_count >= 3) {
     $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
@@ -509,6 +511,9 @@ sub parse_and_store_alignment_into_proteintree
   }
 
   $tree->store_tag('alignment_method', 'Muscle');
+  my $runtime = time()*1000-$self->{'muscle_starttime'};  
+  $tree->store_tag('MUSCLE_runtime_msec', $runtime);
+
   return undef;
 }
 
