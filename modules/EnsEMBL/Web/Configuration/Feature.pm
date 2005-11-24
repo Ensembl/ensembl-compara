@@ -39,6 +39,17 @@ sub featureview {
       );
       $gene_panel->add_components(qw(genes    EnsEMBL::Web::Component::Feature::genes))
     }
+    elsif ($object->Obj->{'RegulatoryFactor'}) {
+      $gene_panel = $self->new_panel('Information',
+         'code'    => "info$self->{flag}",
+         'caption' => "Regulatory Factor $id",
+				       );
+
+      $gene_panel->add_components(qw(
+    regulatory_factor EnsEMBL::Web::Component::Feature::regulatory_factor
+				    ));
+    }
+
     # do key
     my $key_panel = new EnsEMBL::Web::Document::Panel::Image(
         'code'    => "info$self->{flag}",

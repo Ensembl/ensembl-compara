@@ -201,7 +201,7 @@ sub retrieve_RegulatoryFactor {
     }
   }
   my $extras = ["Feature analysis"];
-  unshift @$extras, "Regulates gene";# if $flag;
+  unshift @$extras, "Associated gene";# if $flag;
 
   return ( $results, $extras );
 }

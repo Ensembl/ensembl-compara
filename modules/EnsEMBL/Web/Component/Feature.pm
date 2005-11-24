@@ -8,7 +8,7 @@ package EnsEMBL::Web::Component::Feature;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Component::Chromosome;
-
+use Data::Dumper;
 use Bio::EnsEMBL::GlyphSet::Videogram;
 our @ISA = qw( EnsEMBL::Web::Component);
 
@@ -319,14 +319,40 @@ sub genes {
   my @genearray = $object->retrieve_features('Gene');
   my @genes = @{$genearray[0]};
   foreach my $gene (@genes) {
-    my $stable_id = $$gene{'label'};
+    my $stable_id = $gene->{'label'};
     my $id_link = qq(<a href="/$species/geneview?gene=$stable_id">$stable_id</a>);
-    my $extname = $$gene{'extname'} || '-';
-    my $desc = ${$$gene{'extra'}}[0] || '-';
+    my $extname = $gene->{'extname'} || '-';
+    my $desc = ${$gene->{'extra'}}[0] || '-';
     $panel->add_row(
       {'id'=>$id_link, 'name'=>$extname, 'desc'=>$desc}
     );
   }
+}
+
+
+sub regulatory_factor {
+  my( $panel, $object ) = @_;
+  my @features =  @{ $object->Obj->{'RegulatoryFactor'} };
+  my %factors;
+
+  foreach my $feature ( @features ) {  # unique-ify
+    my $gene = $feature->{'coding_gene'} ? $feature->{'coding_gene'}->stable_id : "unknown";
+    $factors{ $gene } = $feature->{'factor_name'};
+  }
+
+  foreach my $gene (keys %factors) {
+    my $factor = $factors{$gene};
+    my $gene_link = $gene;
+
+    if ( $gene ne 'unknown') {
+      $gene_link =  qq(<a href="geneview?gene=$gene">$gene</a>);
+    }
+    $gene_link .= " ($factor)" if (keys %factors) > 1;
+    $panel->add_row("Product of gene", "$gene_link");
+  }
+
+  $panel->print("<p>The karyotype shows where this regulatory factor binds. The table below lists the regulatory features to which it binds.</p>");
+  return 1;
 }
 
 1;
@@ -412,6 +438,11 @@ Description:     Adds columns and rows of gene data to a Panel::Spreadsheet obje
 Arguments:      Document::Panel object, Proxy::Object (data)
 
 Returns:        true
+
+
+= head3 B<regulatory_factor>
+
+Description:    Adds text describing the information on the page.  Adds Panel::Information for the gene that encodes this regulatory factor
 
 =head2 BUGS AND LIMITATIONS
 
