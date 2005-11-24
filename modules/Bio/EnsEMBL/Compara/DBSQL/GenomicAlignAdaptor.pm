@@ -128,6 +128,19 @@ sub store {
       throw( "method_link_species_set in GenomicAlign is not in DB" );
     }
 
+    if (!$ga->dbID) {
+      my $sql = 
+              "SELECT MAX(genomic_align_id) FROM genomic_align WHERE".
+              " genomic_align_block_id > ".$ga->method_link_species_set->dbID.
+              "0000000000 AND genomic_align_block_id < ".
+              ($ga->method_link_species_set->dbID + 1)."0000000000";
+      my $sth = $self->prepare($sql);
+      $sth->execute();
+      my $genomic_align_id = ($sth->fetchrow_array() or
+          ($ga->method_link_species_set->dbID * 10000000000));
+      $ga->dbID($genomic_align_id + 1);
+    }
+
     $genomic_align_sth->execute(
             ($ga->dbID or "NULL"),
             $ga->genomic_align_block->dbID,
