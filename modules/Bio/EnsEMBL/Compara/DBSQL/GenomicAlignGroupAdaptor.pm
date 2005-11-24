@@ -121,8 +121,38 @@ sub store {
     }
   }
   
-  ## Stores data, all of them with the same id
   my $group_id = $genomic_align_group->dbID;
+  if (!$group_id) {
+    my $method_link_species_set_id;
+    # Get common method_link_species_set_id
+    foreach my $genomic_align (@{$genomic_align_group->genomic_align_array}) {
+      if (!$genomic_align->method_link_species_set_id()) {
+        ## undef value and exit loop if method_link_species_set_id does not match
+        $method_link_species_set_id = undef;
+        last;
+      } elsif (!$method_link_species_set_id) {
+        $method_link_species_set_id = $genomic_align->method_link_species_set_id();
+      } elsif ($method_link_species_set_id != $genomic_align->method_link_species_set_id()) {
+        ## undef value and exit loop if method_link_species_set_id does not match
+        $method_link_species_set_id = undef;
+        last;
+      }
+    }
+    if ($method_link_species_set_id) {
+      ## Only if method_link_species_set_id is the same for all the GenomicAligns
+      my $sql = 
+              "SELECT MAX(group_id) FROM genomic_align_group WHERE".
+              " group_id > ".$method_link_species_set_id.
+              "0000000000 AND group_id < ".
+              ($method_link_species_set_id + 1)."0000000000";
+      my $sth = $self->prepare($sql);
+      $sth->execute();
+      $group_id = ($sth->fetchrow_array() or
+          ($method_link_species_set_id * 10000000000 + 1));
+    }
+  }
+
+  ## Stores data, all of them with the same id
   my $sth = $self->prepare($genomic_align_block_sql);
   for (my $i = 0; $i < @{$genomic_align_group->genomic_align_array}; $i++) {
     my $genomic_align  = $genomic_align_group->genomic_align_array->[$i];
@@ -139,6 +169,7 @@ sub store {
           $genomic_align->dbID, );
 
   }
+  $genomic_align_group->dbID($group_id);
   
   return $genomic_align_group;
 }

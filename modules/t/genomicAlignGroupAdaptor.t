@@ -41,7 +41,7 @@ This script uses a small compara database build following the specifitions given
 This script (hopefully and as far as possible) tests all the methods defined in the
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor module.
 
-This script includes 47 tests.
+This script includes 48 tests.
 
 =head1 AUTHOR
 
@@ -68,7 +68,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 47;
+    plan tests => 48;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -348,5 +348,15 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor::fetch_by_Gen
     $all_fails .= " Cannot retrieve original GenomicAlign object! " if (!$has_original_GA_been_found);
     ok($all_fails, undef);
   };
+
+debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor::store");
+  $genomic_align_group = $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_id);
+  $multi->hide("compara", "genomic_align_group");
+  $genomic_align_group->dbID(0);
+  $genomic_align_group_adaptor->store($genomic_align_group);
+  ok($genomic_align_group->dbID,
+      $genomic_align_group->genomic_align_array->[0]->method_link_species_set_id*10000000000+1,
+      "Assignation of a group_id based on the method_link_species_set_id * 10^10");
+  $multi->restore("compara", "genomic_align_group");
 
 exit 0;
