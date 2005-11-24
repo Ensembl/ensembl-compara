@@ -41,6 +41,7 @@ sub zmenu {
     my $feature_link;
     if ($analysis =~ /cisred/i ) {
       $name =~/\w+(\d+)/;
+      $name .= "  [CisRed]";
       $feature_link = "http://www.cisred.org/human2/siteseq?fid=$1";
     }
     $return->{"01:Feature: $name"} = $feature_link;
