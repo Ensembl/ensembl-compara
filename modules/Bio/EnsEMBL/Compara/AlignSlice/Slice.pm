@@ -536,7 +536,7 @@ sub _get_mapped_Gene {
           -STABLE_ID => $gene->stable_id,
           -VERSION => $gene->version,
           -EXTERNAL_NAME => $gene->external_name,
-          -TYPE => $gene->type,
+          -TYPE => $gene->biotype,
           -BIOTYPE => $gene->biotype,
           -STATUS => $gene->status,
           -EXTERNAL_DB => $gene->external_db,
