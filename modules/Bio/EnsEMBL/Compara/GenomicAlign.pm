@@ -1564,14 +1564,18 @@ sub _get_Mapper_from_cigar_line {
   Description: creates and returns a Bio::EnsEMBL::Slice which corresponds to
                this Bio::EnsEMBL::Compara::GenomicAlign
   Returntype : Bio::EnsEMBL::Slice object
-  Exceptions :
+  Exceptions : return -undef- if slice cannot be created (this is likely to
+               happen if the Registry is misconfigured)
 
 =cut
 
 sub get_Slice {
   my ($self) = @_;
 
-  my $slice = $self->dnafrag->slice->sub_Slice(
+  my $slice = $self->dnafrag->slice;
+  return undef if (!defined($slice));
+
+  $slice = $slice->sub_Slice(
               $self->dnafrag_start,
               $self->dnafrag_end,
               $self->dnafrag_strand
