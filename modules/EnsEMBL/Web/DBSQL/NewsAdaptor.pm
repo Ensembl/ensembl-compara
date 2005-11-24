@@ -464,6 +464,7 @@ sub add_news_item {
             $result = $sth->execute();
         }
     }
+  return $result;
 }
 
 sub update_news_item {
@@ -508,6 +509,7 @@ sub update_news_item {
         $sth = $self->db_write->prepare($sql);
         $result = $sth->execute();
     }
+  return $result;
 }
 
 #---------------- 2) Mostly used by the update_webdb.pl script ----------------
