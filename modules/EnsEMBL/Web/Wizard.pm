@@ -95,8 +95,8 @@ sub add_outgoing_edges {
 sub remove_outgoing_edge {
   my ($self, $start, $end) = @_;
   my $edge_ref = $self->{'_nodes'}{$start}{'_outgoing_edges'};
-  my $edges = scalar(@edges);
-  for ($i=0; $i<$edges; $i++) {
+  my $edges = scalar(@$edge_ref);
+  for (my $i=0; $i<$edges; $i++) {
     my $edge = @{$edge_ref}[$i];
     splice(@{$edge_ref}, $i) if $edge eq $end;
   }
@@ -162,7 +162,8 @@ sub show_fields {
       $output = '******';
     }
     else {
-      $output = _HTMLize($object->param($field));
+      my $text = $object->param($field);
+      $output = _HTMLize($text);
     }
     $parameter{'value'} = $output;
     $form->add_element(%parameter);
@@ -188,7 +189,7 @@ sub show_fields {
 }
 
 sub _HTMLize {
-  my $string = $_;
+  my $string = shift;
   $string =~ s/"/&quot;/g;
   return $string;
 }
@@ -202,7 +203,8 @@ sub pass_fields {
 
   foreach my $field (@$fields) {
     ## include a hidden element for passing data
-    if (@values) {
+    my @values = $object->param($field);
+    if (scalar(@values) > 1) {
       foreach my $element (@values) {
         $form->add_element(
           'type'      => 'Hidden',
@@ -230,17 +232,30 @@ sub add_widgets {
   my %form_fields = $self->form_fields;
   foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
+
+    ## set basic parameters
     my %parameter = (
       'type'      => $field_info{'type'},
       'name'      => $field,
       'label'     => $field_info{'label'},
       'required'  => $field_info{'required'},
-      'value'     => $object->param($field) || $field_info{'value'},
     );
+
+    ## deal with multi-value fields
+    my @values = $object->param($field);
+    if (scalar(@values) > 1) {
+      $parameter{'value'} = \@values;
+    }
+    else {
+      $parameter{'value'} = $object->param($field) || $field_info{'value'};
+    }
+
+    ## extra parameters for multi-value fields
     if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
       $parameter{'values'} = $self->{'_data'}{$field_info{'values'}};
       $parameter{'select'} = $field_info{'select'};
     }
+
     $form->add_element(%parameter);
   }
 }
@@ -265,9 +280,7 @@ sub add_buttons {
 
   my @edges = @{ $self->get_outgoing_edges($node) };
   my $edge_count = scalar(@edges);
-  warn "$edge_count outgoing edges";
   foreach my $edge (@edges) {
-    warn "Adding button from edge $edge";
     my $text = $self->{'_nodes'}{$edge}{'button'} || 'Next';
     $form->add_element(
       'type'  => 'Submit',
