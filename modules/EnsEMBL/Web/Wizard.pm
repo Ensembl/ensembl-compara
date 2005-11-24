@@ -10,9 +10,14 @@ our @ISA = qw(EnsEMBL::Web::Root);
 
 
 sub new {
-  my $class = shift;
+  my ($class, $object) = @_;
   my $self = {'_nodes' => {}};
   bless $self, $class;
+  my $init = $class.'::_init';
+  if ($self->can($init)) { 
+    my $data = $self->$init($object);
+    $self->{'_data'} = $data;
+  }
   return $self;
 }
 
@@ -69,85 +74,175 @@ sub current_node {
 
 sub isa_page {
   my ($self, $node) = @_;
-  return $self->{'_nodes'}{$node}{'page'};
+  my $page = $self->{'_nodes'}{$node}{'form'} || $self->{'_nodes'}{$node}{'page'};
+  return $page;
 }
 
 sub isa_form {
   my ($self, $node) = @_;
-  my $form = 0;
-  if ($self->{'_nodes'}{$node}{'input_fields'} || $self->{'_nodes'}{$node}{'show_fields'}) {
-    $form = 1;
-  }
-  return $form;
+  return $self->{'_nodes'}{$node}{'form'};
 }
 
 sub add_outgoing_edges {
   my ($self, $edge_ref) = @_;
   foreach my $edge (@$edge_ref) {
-    my $source = $$edge[0];
-    my $target = $$edge[1];
-    push(@{$self->{'_nodes'}{$source}{'_outgoing_edges'}}, $target);
+    my $start = $$edge[0];
+    my $end = $$edge[1];
+    push(@{$self->{'_nodes'}{$start}{'_outgoing_edges'}}, $end);
+  }
+}
+
+sub remove_outgoing_edge {
+  my ($self, $start, $end) = @_;
+  my $edge_ref = $self->{'_nodes'}{$start}{'_outgoing_edges'};
+  my $edges = scalar(@edges);
+  for ($i=0; $i<$edges; $i++) {
+    my $edge = @{$edge_ref}[$i];
+    splice(@{$edge_ref}, $i) if $edge eq $end;
   }
 }
 
 sub get_outgoing_edges {
   my ($self, $node) = @_;
   ## this function seems to returning duplicate values, so weed them out!
-  my %check_hash;
+  my (%check_hash, @edges);
   foreach my $edge (@{$self->{'_nodes'}{$node}{'_outgoing_edges'}}) {
     $check_hash{$edge}++;
+    push @edges, $edge if $check_hash{$edge} < 2;
   }
-  my @edges = keys %check_hash; 
   return \@edges;
 }
 
 ##---------------- FORM ASSEMBLY FUNCTIONS --------------------------------
 
-sub show_fields {
-  my ($self, $node, $form, $object) = @_;
+sub add_title {
+  my ($self, $node, $form) = @_;
 
-  my @fields = @{ $self->{'_nodes'}{$node}{'show_fields'} };
+  my $title = $self->{'_nodes'}{$node}{'title'};
+
+  $form->add_element( 
+    'type' => 'Header', 
+    'value' => $title,
+  );                                                                            
+}
+
+sub show_fields {
+  my ($self, $node, $form, $object, $fields) = @_;
+
+  if (!$fields) {
+    $fields = $self->{'_nodes'}{$node}{'show_fields'} || $self->default_order;
+  } 
   my %form_fields = $self->form_fields;
 
-  $form->add_element( 'type' => 'SubHeader', 'value' => 'Please check your input');
-                                                                                
-  foreach my $field (@fields) {
+  foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
-    ## show the input to the user (masking passwords for security)
-    my $value = $field_info{'type'} eq 'Password' 
-                    ? '******' : $object->param($field);
-    $form->add_element(
+    ## show the input to the user
+    my %parameter = (
       'type'      => 'Information',
       'label'     => $field_info{'label'},
-      'value'     => $value,
     );
+    
+    my ($output, @values);
+    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') { ## look up 'visible' value(s) of multi-value fields
+      @values = $object->param($field);
+      my ($lookup, $count);
+      foreach my $value (@values) {
+        foreach my $element (@{$self->{'_data'}{$field_info{'values'}}}) {
+          if ($$element{'value'} eq $value) {
+            $lookup = $$element{'name'};
+            last;
+          }
+        }
+        $output .= ', ' if $count > 0;
+        $output .= $lookup;
+        $count++;
+      }
+    }
+    elsif ($field_info{'type'} eq 'Password') { ## mask passwords
+      $output = '******';
+    }
+    else {
+      $output = _HTMLize($object->param($field));
+    }
+    $parameter{'value'} = $output;
+    $form->add_element(%parameter);
     ## include a hidden element for passing data
-    $form->add_element(
-      'type'      => 'Hidden',
-      'name'      => $field,
-      'value'     => $object->param($field),
-    );
+    if (@values) {
+      foreach my $element (@values) {
+        $form->add_element(
+          'type'      => 'Hidden',
+          'name'      => $field,
+          'value'     => $element,
+        );
+      }
+    }
+    else {
+      $form->add_element(
+        'type'      => 'Hidden',
+        'name'      => $field,
+        'value'     => $object->param($field),
+      );
+    }
   }
 
 }
 
-sub add_widgets {
-  my ($self, $node, $form, $object) = @_;
+sub _HTMLize {
+  my $string = $_;
+  $string =~ s/"/&quot;/g;
+  return $string;
+}
 
-  my @inputs = @{ $self->{'_nodes'}{$node}{'input_fields'} };
+sub pass_fields {
+  my ($self, $node, $form, $object, $fields) = @_;
+
+  if (!$fields) {
+    $fields = $self->{'_nodes'}{$node}{'pass_fields'} || $self->default_order;
+  } 
+
+  foreach my $field (@$fields) {
+    ## include a hidden element for passing data
+    if (@values) {
+      foreach my $element (@values) {
+        $form->add_element(
+          'type'      => 'Hidden',
+          'name'      => $field,
+          'value'     => $element,
+        );
+      }
+    }
+    else {
+      $form->add_element(
+        'type'      => 'Hidden',
+        'name'      => $field,
+        'value'     => $object->param($field),
+      );
+    }
+  }
+}
+
+sub add_widgets {
+  my ($self, $node, $form, $object, $fields) = @_;
+
+  if (!$fields) {
+    $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
+  } 
   my %form_fields = $self->form_fields;
-                                                                                
-  foreach my $field (@inputs) {
+  foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
-    $form->add_element(
+    my %parameter = (
       'type'      => $field_info{'type'},
       'name'      => $field,
       'label'     => $field_info{'label'},
       'required'  => $field_info{'required'},
-      'value'     => $object->param($field),
+      'value'     => $object->param($field) || $field_info{'value'},
     );
+    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
+      $parameter{'values'} = $self->{'_data'}{$field_info{'values'}};
+      $parameter{'select'} = $field_info{'select'};
+    }
+    $form->add_element(%parameter);
   }
-
 }
 
 sub add_buttons {
@@ -247,6 +342,14 @@ Returns: Boolean
 Description: Adds uni-directional links between pairs of nodes in a wizard flowchart
 
 Arguments: a reference to an array of arrays - each subarray consists of the name of the start node and the name of the end node
+                                                                                
+Returns: none
+
+=head3 B<remove_outgoing_edges>
+                                                                                
+Description: Removes a given uni-directional links between pairs of nodes. Useful for dynamically changing the flow control of a wizard
+
+Arguments: the names of the start and end nodes defining the edge
                                                                                 
 Returns: none
 
