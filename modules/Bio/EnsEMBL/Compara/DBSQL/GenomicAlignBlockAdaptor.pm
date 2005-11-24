@@ -44,6 +44,9 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
   
   $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID(12);
 
+  $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet(
+      $method_link_species_set);
+
   $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
       $method_link_species_set, $human_slice);
 
@@ -178,6 +181,19 @@ sub store {
     }
   }
   
+  if (!$genomic_align_block->dbID) {
+    my $sql = 
+            "SELECT MAX(genomic_align_block_id) FROM genomic_align_block WHERE".
+            " genomic_align_block_id > ".$genomic_align_block->method_link_species_set->dbID.
+            "0000000000 AND genomic_align_block_id < ".
+            ($genomic_align_block->method_link_species_set->dbID + 1)."0000000000";
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    my $genomic_align_block_id = ($sth->fetchrow_array() or
+        ($genomic_align_block->method_link_species_set->dbID * 10000000000));
+    $genomic_align_block->dbID($genomic_align_block_id+1);
+  }
+
   ## Stores data, all of them with the same id
   my $sth = $self->prepare($genomic_align_block_sql);
   #print $align_block_id, "\n";
@@ -283,6 +299,74 @@ sub fetch_by_dbID {
   }
 
   return $genomic_align_block;
+}
+
+
+=head2 fetch_all_by_MethodLinkSpeciesSet
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : integer $limit_number [optional]
+  Arg  3     : integer $limit_index_start [optional]
+  Example    : my $genomic_align_blocks =
+                  $genomic_align_block_adaptor->
+                      fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
+               Corresponding Bio::EnsEMBL::Compara::GenomicAlign are only retrieved
+               when requiered.
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
+  Caller     : none
+
+=cut
+
+sub fetch_all_by_MethodLinkSpeciesSet {
+  my ($self, $method_link_species_set, $limit_number, $limit_index_start) = @_;
+
+  my $genomic_align_blocks = []; # returned object
+
+  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+      unless ($method_link_species_set and ref $method_link_species_set and
+          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  my $method_link_species_set_id = $method_link_species_set->dbID;
+  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
+
+  my $sql = qq{
+          SELECT
+              gab.genomic_align_block_id,
+              gab.score,
+              gab.perc_id,
+              gab.length
+          FROM
+              genomic_align_block gab
+          WHERE 
+              gab.method_link_species_set_id = $method_link_species_set_id
+      };
+  if ($limit_number && $limit_index_start) {
+    $sql .= qq{ LIMIT $limit_index_start , $limit_number };
+  } elsif ($limit_number) {
+    $sql .= qq{ LIMIT $limit_number };
+  }
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  my ($genomic_align_block_id, $score, $perc_id, $length);
+  $sth->bind_columns(\$genomic_align_block_id, \$score, \$perc_id, \$length);
+  
+  while ($sth->fetch) {
+    my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+            -adaptor => $self,
+            -dbID => $genomic_align_block_id,
+            -method_link_species_set_id => $method_link_species_set_id,
+            -score => $score,
+            -perc_id => $perc_id,
+            -length => $length
+        );
+    push(@$genomic_align_blocks, $this_genomic_align_block);
+  }
+  
+  return $genomic_align_blocks;
 }
 
 
