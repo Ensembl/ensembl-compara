@@ -115,6 +115,20 @@ sub get_outgoing_edges {
 
 ##---------------- FORM ASSEMBLY FUNCTIONS --------------------------------
 
+sub simple_form {
+  my ($self, $node, $form, $object, $display) = @_;
+
+  $self->add_title($node, $form);
+  if ($display eq 'output') {
+    $self->show_fields($node, $form, $object);
+  }
+  else {
+    $self->add_widgets($node, $form, $object);
+  }
+  $self->pass_fields($node, $form, $object);
+  $self->add_buttons($node, $form, $object);
+}
+
 sub add_title {
   my ($self, $node, $form) = @_;
 
