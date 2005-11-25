@@ -771,7 +771,7 @@ sub alignsliceviewbottom_menu {
     my($panel, $object ) = @_;
     my $configname = 'alignsliceviewbottom';
 
-    my @menu_items = qw(Features MultipleCompara Repeats Options ASExport ImageSize);
+    my @menu_items = qw(Features AlignCompara Repeats Options ASExport ImageSize);
     my $mc = $object->new_menu_container(
 					 'configname' => $configname,
 					 'panel'      => 'bottom',
