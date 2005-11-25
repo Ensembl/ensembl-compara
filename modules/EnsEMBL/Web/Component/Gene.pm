@@ -278,6 +278,7 @@ sub orthologues {
     my $start = '';
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $OBJ = $orthologue_list{$species}{$stable_id};
+      warn( "$species -> $stable_id ", join ' : ', keys %$OBJ );
       $html .= $start;
       $start = qq(
         <tr>);
@@ -289,7 +290,7 @@ sub orthologues {
       my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
          $orthologue_dnds_ratio = '&nbsp;' unless (defined $orthologue_dnds_ratio);
       my $last_col;
-      if($OBJ->{'display_id'}) {
+      if(exists( $OBJ->{'display_id'} )) {
         (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
         my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
         if( $orthologue_desc ne 'DWGA' ) {
