@@ -50,6 +50,13 @@ sub set_extra {
 sub karyotype {
   my( $self, $data, $highs, $config ) = @_;
   
+  if( $self->cacheable eq 'yes' ) {
+    my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
+    $image->set_cache_filename( $self->image_name );
+    warn "CACHE.... ",$image->filename;
+    return if -e $image->filename."png" && -f $image->filename."png";
+  }
+
   $config ||= 'Vkaryotype';
   my $chr_name;
   my $wuc = $data->user_config_hash( $config );
