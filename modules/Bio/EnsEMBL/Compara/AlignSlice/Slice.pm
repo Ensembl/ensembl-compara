@@ -316,21 +316,18 @@ sub get_all_Genes {
   $logic_name ||= "";
   $dbtype ||= "core";
   my ($max_repetition_length,
-      $max_gap_length,
-      $max_intron_length,
       $strict_order_of_exon_pieces,
       $strict_order_of_exons,
       $return_unmapped_exons) = rearrange([qw(
           MAX_REPETITION_LENGTH
-          MAX_GAP_LENGTH
-          MAX_INTRON_LENGTH
           STRICT_ORDER_OF_EXON_PIECES
           STRICT_ORDER_OF_EXONS
           RETURN_UNMAPPED_EXONS
       )], @parameters);
+  my $max_gap_length = 0;
+  my $max_intron_length = 0;
+
   $max_repetition_length = 100 if (!defined($max_repetition_length));
-  $max_gap_length = 1000 if (!defined($max_gap_length));
-  $max_intron_length = 100000 if (!defined($max_intron_length));
   $strict_order_of_exon_pieces = 1 if (!defined($strict_order_of_exon_pieces));
   $strict_order_of_exons = 0 if (!defined($strict_order_of_exons));
   $return_unmapped_exons = 1 if (!defined($return_unmapped_exons));
@@ -339,8 +336,6 @@ sub get_all_Genes {
       $dbtype.":".
       $logic_name.":".
       $max_repetition_length.":".
-      $max_gap_length.":".
-      $max_intron_length.":".
       $strict_order_of_exon_pieces.":".
       $strict_order_of_exons.":".
       $return_unmapped_exons;
@@ -736,7 +731,7 @@ sub _merge_Exons {
         next if ($gap_between_pieces_of_exon < 0);
 
         # Check maximum gap between both pieces of exon
-        next if ($gap_between_pieces_of_exon > $max_gap_length);
+        next if ($max_gap_length and $gap_between_pieces_of_exon > $max_gap_length);
 
         # Check whether both mapped parts are in the right order
         if ($strict_order_of_exon_pieces) {
@@ -919,7 +914,7 @@ sub _separate_in_incompatible_sets_of_Exons {
 
       if (($last_exon->strand != $this_exon->strand) or
           ($intron_length < 0) or
-          ($intron_length > $max_intron_length) or
+          ($max_intron_length and ($intron_length > $max_intron_length)) or
           (!$order_is_ok) or
           ($repetition_length > $max_repetition_length)) {
         # this_exon and last_exon should be in separate sets. Save current
