@@ -3,6 +3,8 @@ package EnsEMBL::Web::Document::DropDown::Menu;
 use strict;
 use EnsEMBL::Web::Document::DropDown::MenuItem::Checkbox;
 use EnsEMBL::Web::Document::DropDown::MenuItem::Link;
+use EnsEMBL::Web::Document::DropDown::MenuItem::Text;
+use EnsEMBL::Web::Document::DropDown::MenuItem::Radiobutton;
 use Data::Dumper;
 
 sub new {
@@ -44,10 +46,16 @@ sub add_link {
   $self->add_item( new EnsEMBL::Web::Document::DropDown::MenuItem::Link( @_ ) );
 }
 
+sub add_text {
+  my $self = shift;
+  $self->add_item( new EnsEMBL::Web::Document::DropDown::MenuItem::Text( @_ ) );
+}
+
 sub add_checkbox {
   my( $self, $name, $label, $c ) = @_;
     $c ||= $self->{'config'};
   my $sc = $self->{'scriptconfig'};
+
   if( $name eq 'imagemap' || $name =~ /^format_/ || $name =~/^opt_/ ) { ## Display option setting
     $self->add_item( new EnsEMBL::Web::Document::DropDown::MenuItem::Checkbox(
       $label, $name, ( $sc && defined $sc->get($name) ) ? ($sc->get($name) eq 'on'?1:0) : $c->get('_settings', $name) 
@@ -59,6 +67,15 @@ sub add_checkbox {
     ) );
     $self->{'missing_tracks'}++ if $value==0;
   }
+}
+sub add_radiobutton {
+  my( $self, $name, $label, $c ) = @_;
+  $c ||= $self->{'config'};
+  my $sc = $self->{'scriptconfig'};
+  my $value = ( $sc && defined $sc->get($name) ) ? ($sc->get($name) eq 'on' ? 1 : 0) : ( $c->get($name, 'on') eq 'on' ) ? 1 : 0;
+
+  $self->add_item( new EnsEMBL::Web::Document::DropDown::MenuItem::Radiobutton(	$label, $name, $value ) );
+
 }
 
 sub render_html {
