@@ -444,13 +444,43 @@ sub alignsliceview {
     my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
 
     my $config_name = 'alignsliceviewbottom';
-    if (defined (my $align = $obj->param('align'))) {
-	my $wuc = $obj->user_config_hash( $config_name );
-	$wuc->set( 'align_species',  $ENV{ENSEMBL_SPECIES}, $align, 1);
-	$wuc->save();
-    }
-
     $self->update_configs_from_parameter( 'bottom', $config_name );
+
+    my $wsc = $self->{object}->get_scriptconfig();
+    my $wuc = $obj->user_config_hash( $config_name );
+
+    my @align_modes = grep { /opt_align/ }keys (%{$wsc->{_options}});
+    foreach my $opt (@align_modes) {
+	if ($wsc->get($opt, "on") eq 'on') {
+	    my ($atype, $id);
+	    my @selected_species;
+
+	    if ($opt =~ /^opt_alignp_(.*)_(\w+_\w+)$/) {
+#		warn("REXP: $1 * $2");
+		$id = $atype = $1;
+		push @selected_species, $2;
+	    } else {
+		($atype = $opt) =~ s!opt_alignm_|-.+$!!g;
+		($id = $opt) =~ s!opt_alignm_!!;
+		my @align_species = grep { /opt_${id}_/ } keys (%{$wsc->{_options}});
+
+	        foreach my $sp (@align_species) {
+		    if ($wsc->get($sp, "on") eq 'on') {
+			$sp =~ s/opt_${id}_//;
+			push @selected_species, $sp;
+		    }
+	        }
+	    }
+
+#	    warn("STEP1: ($opt :$atype, $id : @selected_species )");
+	    $wuc->set( 'alignslice',  'type', $atype, 1);
+	    $wuc->set( 'alignslice',  'id', $id, 1);
+            $wuc->set( 'alignslice',  'species', \@selected_species, 1);
+	    last;
+	}
+    }
+    $wuc->save();
+
     my $last_rendered_panel = undef;
     my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
 

@@ -450,10 +450,20 @@ sub add_das_tracks {
 
 	  my $adaptor = undef;
 	  my $dbname = $das_list{$source};
+#	  warn("ADD:");
+#	  warn(Data::Dumper::Dumper($dbname));
+
 	  eval {
 	      my $URL = $dbname->{'URL'};
 	      $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
-	      $URL .= "$URL/das" unless $URL =~ m!/das!;
+	      if (my $dsn = $dbname->{'dsn'}) {
+		  if ($URL !~ m!/das/$dsn!) {
+		      $URL .= "$URL/das" unless $URL =~ m!/das!;
+		      $URL .= "/$dbname->{'dsn'}";
+		  }
+	      } else {
+		  $URL .= "$URL/das" unless $URL =~ m!/das!;
+	      }
 	      my $stype = $dbname->{'type'} || 'ensembl_location';
 	      $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
 									  -url   => $URL,
@@ -761,8 +771,7 @@ sub alignsliceviewbottom_menu {
     my($panel, $object ) = @_;
     my $configname = 'alignsliceviewbottom';
 
-    my @menu_items = qw(Features AlignCompara Repeats Options ASExport ImageSize);
-### MULTI    my @menu_items = qw(Features AlignCompara MultipleCompara Repeats Options ASExport ImageSize);
+    my @menu_items = qw(Features MultipleCompara Repeats Options ASExport ImageSize);
     my $mc = $object->new_menu_container(
 					 'configname' => $configname,
 					 'panel'      => 'bottom',
@@ -956,36 +965,28 @@ sub alignsliceviewbottom {
 
     my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
 
-    my @sarray = ($species);
+    my %aSpecies = ( $species => 1 );
+    my $aType = $wuc->get("alignslice", "type");
+    my $aID = $wuc->get("alignslice", "id");
 
-    my %mAlign = (
-		  $species => 1 
-		  );
-
-    my ($spe, $type) = split('_compara_', $wuc->get('align_species',$species));
-     
-    my $comparadb;
-    $type or $type = 'pairwise';
-
-
-    if ($type eq 'pairwise') {
-	push (@sarray, ucfirst($spe)) if $spe;
-	$type = 'BLASTZ_NET';
-	$comparadb = $object->database('compara');
-    } else {
-	$type = uc($type);
-	my %shash = ($object->species_defs->multi($type, ucfirst($spe)));
-	push @sarray, keys %shash;
-
-	foreach my $sp (keys %shash) {
-	    $mAlign{$sp} = 1 if ($wuc->get("managed_align_$sp",'on') eq 'on');
-	}
-
-	$comparadb = $object->database('compara'); # 'compara_multiple');
+    foreach my $sp (@{$wuc->get("alignslice", "species")}) {
+	$aSpecies{$sp} = 1;
     }
 
+    my %shash = ($object->species_defs->multi($aID, ucfirst($species)));
+
+    my $comparadb = $object->database('compara');
+    my @sarray;
+    foreach my $s (keys %aSpecies) {
+	$s =~ s/_/ /;
+	push @sarray, $s;
+    }
+    my @larray = ($species, keys %shash);
+
     my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
-    my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
+#    warn ("SA: @sarray ");
+#    warn ("LA: @larray ");
+    my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($aType, $aType eq 'BLASTZ_NET' ? \@sarray : \@larray);
     my $asa = $comparadb->get_adaptor("AlignSlice" );
     my $align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
 
@@ -998,13 +999,16 @@ sub alignsliceviewbottom {
     my $t2 = $wuc->get('evega_transcript','compact');
     my $t3 = $wuc->get('variation','on');
     my $id = 0;
-    my $num = scalar(@{$align_slice->get_all_Slices});
+    my $num = scalar(@sarray);
 
     add_repeat_tracks( $object, $wuc );
 
-    foreach my $as (@{$align_slice->get_all_Slices}) {
+    foreach my $as (@{$align_slice->get_all_Slices(@sarray)}) {
+
 	(my $vsp = $as->genome_db->name) =~ s/ /_/g;
-### MULTI	next if (!$mAlign{$vsp});
+#	warn("VSP: $vsp !!!");
+#	next if (! $aSpecies{$vsp});
+
 	$id ++;
 	my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
 	$CONF->{'align_slice'}  = 1;
@@ -1036,50 +1040,6 @@ sub alignsliceviewbottom {
 	$cmpstr = 'secondary';
 	
     }
-
-    if (0){
-    foreach my $vsp (@sarray) {
-	$id ++;
-	my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
-	$CONF->{'align_slice'}  = 1;
-	(my $sp = $vsp) =~ s/\_/ /g;
-	$CONF->set('scalebar', 'label', $vsp);
-	$CONF->set_species($vsp);
-	my $compara_slice =  $align_slice->{slices}->{$sp}->[0];
-	$compara_slice->{_config_file_name_} = $vsp;
-	$compara_slice->{__type__} = 'alignslice';
-
-	$CONF->set('_settings','URL',$url,1);
-	$CONF->set('ensembl_transcript', 'compact', $t1, 1);
-	$CONF->set('evega_transcript', 'compact', $t2, 1);
-	$CONF->set('variation', 'on', $t3, 1 );
-	my $len = $compara_slice->length;
-	$CONF->container_width( $len );
-
-	$CONF->{'_managers'}{'sub_repeat'} = $wuc->{'_managers'}{'sub_repeat'};
-
-
-	$compara_slice->{species} = $sp;
-
-	$compara_slice->{compara} = $cmpstr;
-
-	if ($vsp eq $sarray[-1]) {
-	    $compara_slice->{compara} = 'final' if ($cmpstr ne 'primary');
-	}
-	$CONF->{_object} = $object;
-
-	$CONF->set_width(       $object->param('image_width') );
-	$CONF->set( '_settings', 'URL',   this_link($object).";bottom=%7Cbump_", 1);
-	$CONF->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
-
-	red_box( $CONF, @{$panel->option('red_box')} ) if $panel->option( 'red_box' );
-
-	push @ARRAY, $compara_slice, $CONF;
-	$cmpstr = 'secondary';
-    }
-}
-
-
 
     my $image = $object->new_image( \@ARRAY, $object->highlights );
     $image->imagemap = 'yes';
@@ -1142,13 +1102,25 @@ sub alignsliceviewzoom {
     my $align_slice;
     my $fcstart = 0;
     my $fcend = $gend;
-    my %mAlign = (
-		  $species => 1 
-		  );
 
+    my $wuc = $object->user_config_hash( 'alignsliceviewbottom' );
+    my %aSpecies = ( $species => 1 );
+    my $aType = $wuc->get("alignslice", "type");
+    my $aID = $wuc->get("alignslice", "id");
+
+    foreach my $sp (@{$wuc->get("alignslice", "species")}) {
+	$aSpecies{$sp} = 1;
+    }
+
+    my @sarray;
+    foreach my $s (keys %aSpecies) {
+	$s =~ s/_/ /;
+	push @sarray, $s;
+    }
 
     if ($object->Obj->{_align_slice}) {
 	(my $psp = $species) =~ s/_/ /g;
+
 	my $pAlignSlice = $object->Obj->{_align_slice}->get_all_Slices($psp)->[0];
 	my $gc = $object->Obj->{_align_slice}->reference_Slice->start;
 	my $cigar_line = $pAlignSlice->get_cigar_line();
@@ -1192,39 +1164,23 @@ sub alignsliceviewzoom {
 	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
     
 	my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
-	my @sarray = ($species);
 
-	my $wuc2 = $object->user_config_hash( 'alignsliceviewbottom' );
-	my ($spe, $type) = split('_compara_', $wuc2->get('align_species',$species));
-	my $comparadb;
+	my %shash = ($object->species_defs->multi($aID, ucfirst($species)));
+	my @larray = ($species, keys %shash);
 
-	$type or $type = 'pairwise';
-	
-	if ($type eq 'pairwise') {
-	    push (@sarray, ucfirst($spe)) if $spe;
-	    $type = 'BLASTZ_NET';
-	    $comparadb = $object->database('compara');
-	} else {
-	    $type = uc($type);
-	    my %shash = ($object->species_defs->multi($type, ucfirst($spe)));
-	    push @sarray, keys %shash;
-	    $comparadb = $object->database('compara'); #('compara_multiple');
-	    foreach my $sp (keys %shash) {
-		$mAlign{$sp} = 1 if ($wuc2->get("managed_align_$sp",'on') eq 'on');
-	    }
+	my $comparadb = $object->database('compara');
 
-	}
 	my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
 
-	my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
+	my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($aType, $aType eq 'BLASTZ_NET' ? \@sarray : \@larray);
+
 	my $asa = $comparadb->get_adaptor("AlignSlice" );
 	$align_slice = $asa->fetch_by_Slice_MethodLinkSpeciesSet($query_slice, $method_link_species_set, "expanded" );
 
     }
 
     my @SEQ = ();
-    foreach my $as (@{$align_slice->get_all_Slices}) {
-### MULTI 	next if (!$mAlign{$vsp});
+    foreach my $as (@{$align_slice->get_all_Slices(@sarray)}) {
 	my $seq = $as->seq;
 	my $ind = 0;
 	foreach (split(//, $seq)) {
@@ -1232,20 +1188,18 @@ sub alignsliceviewzoom {
 	}
     }
 
-    my $num = scalar(@{$align_slice->get_all_Slices});
-### MULTI    my $num = scalar( keys %mAlign);
+    my $num = scalar(@sarray);
 
     foreach my $nt (@SEQ) {
 	$nt->{S} = join('', grep {$nt->{$_} >= $num} keys(%{$nt}));
     }
 
-
     my @ARRAY;
     my $cmpstr = 'primary';
     my $id = 0;
 
-    foreach my $as (@{$align_slice->get_all_Slices}) {
-### MULTI 	next if (!$mAlign{$vsp});
+    foreach my $as (@{$align_slice->get_all_Slices(@sarray)}) {
+	(my $vsp = $as->genome_db->name) =~ s/ /_/g;
 	$id ++;
 	my $wuc = $object->user_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
 	$wuc->container_width( $panel->option('end') - $panel->option('start') + 1 );
@@ -1265,8 +1219,8 @@ sub alignsliceviewzoom {
 	$wuc->set( 'variation', 'on', 'off' );
 	$wuc->{_object} = $object;
 	$wuc->{'align_slice'}  = 1;
-	$wuc->set('scalebar', 'label', $as->{_config_file_name_});
-	$wuc->set_species($as->{_config_file_name_});
+	$wuc->set('scalebar', 'label', $vsp);
+	$wuc->set_species($vsp);
 
 	$as->{alignmatch} = \@SEQ;
 	$as->{exons_markup} = &exons_markup($as);
@@ -1294,7 +1248,7 @@ sub exons_markup {
    foreach my $analysis( @analyses ){
        push @genes, @{ $slice->get_all_Genes() };
    }
-
+   my $slice_length = length($slice->seq);
    my @exons;
    foreach (@genes) {
        my $tlist = $_->get_all_Transcripts();
@@ -1305,7 +1259,7 @@ sub exons_markup {
              next if (!$ex->start);
 
              my ($active_start, $active_end)  = (0, 0);
-             if ($ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end ) {
+             if ($ex->end <= $slice_length && $ex->exon->end - $ex->exon->start + 1  == $ex->get_aligned_end  ) {
                  $active_end = 1;
              }
              if ($ex->get_aligned_start == 1 && $ex->start > 0) {

@@ -572,7 +572,7 @@ sub _parse {
  ## We've done the DB hash...
  ## So lets get on with the multiple alignment hash;
         my $q = qq{
-          SELECT ml.type, gd.name 
+          SELECT ml.type, gd.name, CONCAT(ml.type,'-', mlss.method_link_species_set_id) as id 
             FROM method_link ml, method_link_species_set mlss, genome_db gd
            WHERE mlss.method_link_id = ml.method_link_id and
                  mlss.genome_db_id=gd.genome_db_id AND ml.type = 'MLAGAN'};
@@ -581,9 +581,10 @@ sub _parse {
         my $results = $sth->fetchall_arrayref();
         my $thash;
         foreach my $row ( @$results ) {
-          my ($type, $species) = (uc($row->[0]), $row->[1]);
+          my ($type, $species, $id) = (uc($row->[0]), $row->[1], $row->[2]);
           $species =~ tr/ /_/;
-          my $KEY = $sections{$type} || $type;
+#          my $KEY = $sections{$type} || $type;
+          my $KEY = $id;
           push @{$thash->{$KEY}}, $species;
         }
         foreach my $KEY (keys %$thash) {
@@ -593,7 +594,10 @@ sub _parse {
               $tree->{$KEY}->{$p}->{$s} = 1 unless $s eq $p;
             }
           }
+
+#	  warn("$KEY: ". Data::Dumper::Dumper($tree->{$KEY}));
         }
+
         $sth->finish();
         $dbh->disconnect();
       }
