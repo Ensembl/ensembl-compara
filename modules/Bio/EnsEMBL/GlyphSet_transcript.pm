@@ -691,10 +691,6 @@ sub as_expanded_init {
 	    my @exons = $self->map_AS_Exons($transcript, $length);
 	    next if (@exons == 0);
 
-	  foreach my $ex (@exons) {
-	      warn("EX2:".join('*', $ex->{exon}->{etype}, $ex->start, $ex->end, $ex->{exon}->start, $ex->{exon}->end, $ex->{exon}->{fstart}, $ex->{exon}->{fend}));
-	  }
-
 	    # For exon_structure diagram only given transcript
 	    next if $target && ($transcript->stable_id() ne $target);
 
