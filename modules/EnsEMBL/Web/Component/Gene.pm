@@ -251,6 +251,44 @@ sub orthologues {
   my $URL = _flip_URL( $gene, $status );
   if( $gene->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
 
+
+# Find the selected method_link_set
+  my $especies = $ENV{ENSEMBL_SPECIES};
+  my $aID = 'MLAGAN-167'; 
+
+  my $as_html = qq{<br/> <b>This gene can be viewed in genomic alignment with other species<b><br/><br/>} ;
+
+  my %shash = ( $gene->species_defs->multi($aID,$especies) );
+  if (%shash) {
+      my $KEY = "opt_alignm_${aID}";
+      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s\&align=%s">view genomic alignment with %s Mammals ($aID)</a> <br/>), 
+			  $gene->species,
+			  $gene->seq_region_name, 
+			  $gene->seq_region_start, 
+			  $gene->seq_region_end, 
+			  $KEY,
+			  scalar(keys(%shash))
+			  );
+  }
+
+  $aID = 'BLASTZ_NET';
+  my %shash2 = ( $gene->species_defs->multi($aID,$especies) );
+  my @species = keys %shash2;
+
+  foreach my $sp (@species) {
+      my $KEY = "opt_alignp_${aID}_$sp";
+
+      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s\&align=%s">view genomic alignment with %s</a> <br/>), 
+			  $especies,
+			  $gene->seq_region_name, 
+			  $gene->seq_region_start, 
+			  $gene->seq_region_end, 
+			  $KEY, 
+			   $sp
+			  );
+  }
+
+
   my $html = qq(
       <p>
         The following gene(s) have been identified as putative
@@ -330,7 +368,7 @@ sub orthologues {
       </p>);
   }
   return 1 unless($matching_orthologues);
-  $panel->add_row( $label, $html, "$URL=off" );
+  $panel->add_row( $label, $html.$as_html, "$URL=off" );
   return 1;
 }
 

@@ -450,6 +450,14 @@ sub alignsliceview {
     my $wuc = $obj->user_config_hash( $config_name );
 
     my @align_modes = grep { /opt_align/ }keys (%{$wsc->{_options}});
+    if (my $set_align = $obj->param('align')) {
+	foreach my $opt (@align_modes) {
+	    $wsc->set($opt, "off", 1);
+	}
+	$wsc->set($set_align, "on", 1);
+	$wsc->save();
+    }
+
     foreach my $opt (@align_modes) {
 	if ($wsc->get($opt, "on") eq 'on') {
 	    my ($atype, $id);
