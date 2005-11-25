@@ -765,6 +765,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'fugu_cdnas', 'F.rubripes cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'mouse_cdna', 'Mouse cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'other_cdna', 'Other cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'opossum_cdna', 'Opossum cDNAs',   $POS++, @_ );
 ## now the tetraodon tracks...
   $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', 'on' => 'off', @_ );
   $self->add_new_track_cdna( 'xlaevis_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
@@ -884,6 +885,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'macaque_protein',     'Macaque proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_protein',       'Mouse proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_refseq',        'Mouse RefSeqs', $POS++, @_ );
+  $self->add_new_track_protein( 'opossum_protein',      'Opossum proteins',$POS++, @_ );
   $self->add_new_track_protein( 'rodent_protein',      'Rodent proteins',$POS++, @_ );
   $self->add_new_track_protein( 'mammal_protein',      'Mammal proteins', $POS++, @_ );
   $self->add_new_track_protein( 'other_protein',       'Other proteins', $POS++, @_ );
