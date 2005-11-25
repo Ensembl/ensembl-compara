@@ -22,7 +22,9 @@ sub managed_name {
 
 sub features {
   my ($self) = @_;
+  warn "BED!";
   my @data = map { $_->map( $self->{'container'} ) } @{ $self->{'extras'}{'data'} };
+  warn @data;
   return \@data;
 }
 

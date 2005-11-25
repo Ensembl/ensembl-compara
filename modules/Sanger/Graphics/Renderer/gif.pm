@@ -146,36 +146,24 @@ sub render_Text {
 
     my $colour = $self->colour($glyph->{'colour'});
     
-    #########
-    # Stock GD fonts
-    #
+    ########## Stock GD fonts
     my $font = $glyph->font();
     if($font eq "Tiny") {
         $self->{'canvas'}->string(gdTinyFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-
     } elsif($font eq "Small") {
         $self->{'canvas'}->string(gdSmallFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-
     } elsif($font eq "MediumBold") {
         $self->{'canvas'}->string(gdMediumBoldFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-
     } elsif($font eq "Large") {
         $self->{'canvas'}->string(gdLargeFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-
     } elsif($font eq "Giant") {
         $self->{'canvas'}->string(gdGiantFont, $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text(), $colour);
-
     } elsif($font) {
-	#########
-	# If we didn't recognise it already, assume it's a TrueType font
-	#
-	$self->{'canvas'}->stringFT($colour,
-				    $font,
-				    $glyph->ptsize(),
-				    $glyph->angle()||0,
-				    $glyph->{'pixelx'},
-				    $glyph->{'pixely'},
-				    $glyph->text());
+	########## If we didn't recognise it already, assume it's a TrueType font
+	$self->{'canvas'}->stringFT(
+          $colour, $font, $glyph->ptsize(), $glyph->angle()||0,
+          $glyph->{'pixelx'}, $glyph->{'pixely'}, $glyph->text()
+        );
     }
 }
 
