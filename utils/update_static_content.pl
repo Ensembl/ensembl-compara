@@ -520,7 +520,7 @@ sub do_downloads {
     my $sp_dir = join "_", ( lc($spp), $version, $sp_release);
     my $description = utils::Tool::get_config({species =>$spp, values => "SPECIES_DESCRIPTION" });   
 
-    my $url = $archive ? $sp_dir : "current_".lc($spp);
+    my $url = $archive ? "release-$version/".$sp_dir : "current_".lc($spp);
     $spp =~ s/_/ /;
     print NEW qq(
 <tr>
