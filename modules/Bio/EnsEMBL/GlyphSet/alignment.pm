@@ -11,7 +11,10 @@ sub init_label {
   my ($self) = @_;
 
   my $text =  $self->{'container'}->genome_db->name;
-
+  my $max_length = 18;
+  if (length($text) > $max_length) {
+      $text = substr($text, 0, 14). " ...";
+  }
   my $label = new Sanger::Graphics::Glyph::Text({
       'z'             => 10,
       'x'             => -110,
