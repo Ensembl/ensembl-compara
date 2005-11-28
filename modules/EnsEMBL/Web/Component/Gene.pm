@@ -254,31 +254,31 @@ sub orthologues {
 
 # Find the selected method_link_set
   my $especies = $ENV{ENSEMBL_SPECIES};
-  my $aID = 'MLAGAN-167'; 
 
   my $as_html = qq{<br/> <b>This gene can be viewed in genomic alignment with other species<b><br/><br/>} ;
-
-  my %shash = ( $gene->species_defs->multi($aID,$especies) );
-  if (%shash) {
-      my $KEY = "opt_alignm_${aID}";
-      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s\&align=%s">view genomic alignment with %s Mammals ($aID)</a> <br/>), 
-			  $gene->species,
-			  $gene->seq_region_name, 
-			  $gene->seq_region_start, 
-			  $gene->seq_region_end, 
-			  $KEY,
-			  scalar(keys(%shash))
-			  );
+  foreach my $id ( qw(MLAGAN-167 MLAGAN-170) ) {
+      my %shash = ( $gene->species_defs->multi($id,$especies) );
+      if (%shash) {
+	  my $KEY = "opt_alignm_$id";
+	  $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with %s Mammals ($id)</a> <br/>), 
+			       $gene->species,
+			       $gene->seq_region_name, 
+			       $gene->seq_region_start, 
+			       $gene->seq_region_end, 
+			       $KEY,
+			       scalar(keys(%shash))
+			       );
+      }
   }
 
-  $aID = 'BLASTZ_NET';
+  my $aID = 'BLASTZ_NET';
   my %shash2 = ( $gene->species_defs->multi($aID,$especies) );
   my @species = keys %shash2;
 
   foreach my $sp (@species) {
       my $KEY = "opt_alignp_${aID}_$sp";
 
-      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s\&align=%s">view genomic alignment with %s</a> <br/>), 
+      $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with %s</a> <br/>), 
 			  $especies,
 			  $gene->seq_region_name, 
 			  $gene->seq_region_start, 

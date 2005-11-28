@@ -18,21 +18,21 @@ sub init {
     opt_MLAGAN-167_Canis_familiaris on
     opt_MLAGAN-167_Mus_musculus on
     opt_MLAGAN-167_Rattus_norvegicus on
-    opt_MLAGAN-190_Homo_sapiens on
-    opt_MLAGAN-190_Canis_familiaris on
-    opt_MLAGAN-190_Mus_musculus on
-    opt_MLAGAN-190_Rattus_norvegicus on
-    opt_MLAGAN-190_Gallus_gallus on
-    opt_MLAGAN-190_Bos_taurus on
-    opt_MLAGAN-190_Monodelphis_domestica on
+    opt_MLAGAN-170_Homo_sapiens on
+    opt_MLAGAN-170_Canis_familiaris on
+    opt_MLAGAN-170_Mus_musculus on
+    opt_MLAGAN-170_Rattus_norvegicus on
+    opt_MLAGAN-170_Gallus_gallus on
+    opt_MLAGAN-170_Macaca_mulata on
+    opt_MLAGAN-170_Monodelphis_domestica on
     opt_alignm_MLAGAN-167 on
-    opt_alignm_MLAGAN-190 off
+    opt_alignm_MLAGAN-170 off
     opt_alignp_BLASTZ_NET_Homo_sapiens off
     opt_alignp_BLASTZ_NET_Canis_familiaris off
     opt_alignp_BLASTZ_NET_Mus_musculus off
     opt_alignp_BLASTZ_NET_Rattus_norvegicus off
     opt_alignp_BLASTZ_NET_Gallus_gallus off
-    opt_alignp_BLASTZ_NET_Bos_taurus off
+    opt_alignp_BLASTZ_NET_Macaca_mulatta off
     opt_alignp_BLASTZ_NET_Pan_troglodytes off
 
   ));
