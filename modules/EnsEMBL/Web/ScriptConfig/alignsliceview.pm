@@ -23,7 +23,7 @@ sub init {
     opt_MLAGAN-170_Mus_musculus on
     opt_MLAGAN-170_Rattus_norvegicus on
     opt_MLAGAN-170_Gallus_gallus on
-    opt_MLAGAN-170_Macaca_mulata on
+    opt_MLAGAN-170_Bos_taurus on
     opt_MLAGAN-170_Monodelphis_domestica on
     opt_alignm_MLAGAN-167 on
     opt_alignm_MLAGAN-170 off
