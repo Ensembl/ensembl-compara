@@ -135,6 +135,17 @@
 	    
 <tr>
 <td>
+<a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/"><i>Macaca mulatta</i></a> (rhesus macaque)</td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/fasta/dna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/fasta/cdna/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/fasta/pep/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/flatfiles/embl/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/flatfiles/genbank/">FTP</a></td>
+<td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_macaca_mulatta/data/mysql/">FTP</a></td>
+</tr>
+	    
+<tr>
+<td>
 <a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/"><i>Monodelphis domestica</i></a> (opossum)</td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/dna/">FTP</a></td>
 <td><a target="ftp" href="ftp://ftp.ensembl.org/pub/current_monodelphis_domestica/data/fasta/cdna/">FTP</a></td>
