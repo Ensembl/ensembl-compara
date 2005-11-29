@@ -301,7 +301,7 @@ sub stats {
     $html .= qq(<tr><td><strong>Could not load chromosome stats</strong><td></tr>);
   }          
   $html .= qq(  </table>
-  <p>For more information on gene statistics, see the <a href="/$species/helpview">Help</a> page</p>  );
+  <p>For more information on gene statistics, see the <a href="javascript:void(window.open('/$species/helpview?kw=mapview;se=1','helpview','width=700,height=550,resizable,scrollbars'))">MapView help</a> page</p>  );
 
   $panel->add_row( $label, $html );
   return 1;
