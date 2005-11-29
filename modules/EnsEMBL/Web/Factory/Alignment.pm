@@ -105,28 +105,24 @@ sub createObjects_AlignSlice {
 
   my $query_slice= $query_slice_adaptor->fetch_by_region($cs, $seq_region_name, $start, $end);
 
-  my @sarray = ($species);
+  my @sarray;
+  my $id = $self->param('method') || 'BLASTZ_NET';     
 
-  my ($spe, $type) = ($self->param('s'), $self->param('method'));
-  $type or $type = 'BLASTZ_NET';     
+  my $comparadb = $databases->{'compara'};
 
-  my $comparadb;
-
-
-  if ($type eq 'BLASTZ_NET') {
-      push (@sarray, ucfirst($spe)) if $spe;
-      $comparadb = $databases->{'compara'};
+  if ($id eq 'BLASTZ_NET') {
+      push @sarray, split (/,/, $self->param('s')), $species;
   } else {
-      $type = uc($type);
-      my %shash = ($self->species_defs->multi($type, ucfirst($spe)));
-      push @sarray, keys %shash;
-      $comparadb = $databases->{'compara'}; # $databases->{'compara_multiple'};
+      my %shash = $self->species_defs->multi($id, $species);
+      push @sarray, $species, keys %shash;
   }
 
+# ID is like MLAGAN-170, and type is MLAGAN
+  (my $type = $id) =~ s!-.*$!!;
+  
   my $mlss_adaptor = $comparadb->get_adaptor("MethodLinkSpeciesSet");
 
   my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases($type, \@sarray);
-
 
   return $self->_prob( 'Unable to get Method Link' ) unless $method_link_species_set;
   eval {

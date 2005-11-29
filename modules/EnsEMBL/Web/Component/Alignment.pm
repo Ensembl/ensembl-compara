@@ -154,17 +154,21 @@ sub output_Homology {
 sub output_AlignSlice {
     my( $panel, $object ) = @_;
 
-    my $hash = $object->[1];
-    my $as = $hash->{_object};
-    my $sa = $as->get_SimpleAlign( 'cdna');
+    my $as = $object->Obj;
+    my $esp = $ENV{ENSEMBL_SPECIES};
     
-    (my $sp = $ENV{ENSEMBL_SPECIES}) =~ s/_/ /g;
-    
-    my @species = grep { $_ !~ /$sp/ } keys %{$as->{slices}};
+
+    my @species;
+    foreach my $sp  (split(/,/, $object->param('s'))) {
+	next if ( $sp eq $esp);
+    	$sp =~ s!_! !g;
+	push @species, $sp;
+    }
+
+    $esp =~ s!_! !g;
+    my $sa = $as->get_SimpleAlign( $esp, @species);
     
     my $type = $as->get_MethodLinkSpeciesSet->method_link_type;
-
-    $type or $type = $object->param('method');
 
     my $info = qq{
 <table>

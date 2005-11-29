@@ -17,18 +17,19 @@ sub new {
 
     my $location = $self->{'location'};
 
-    my $exportURL = sprintf "/%s/alignview?class=AlignSlice&chr=%s&bp_start=%s&bp_end=%s", $self->{'species'}, $location->seq_region_name, $location->seq_region_start, $location->seq_region_end;
+    my $exportURL = sprintf "/%s/alignview?class=AlignSlice;chr=%s;bp_start=%s;bp_end=%s", $self->{'species'}, $location->seq_region_name, $location->seq_region_start, $location->seq_region_end;
 
     my $rt = $location->seq_region_type;
     if ($rt ne 'chromosome') {
 	$exportURL .= "&region=$rt";
     }
     my $wuc = $self->{config}; 
-    if (my $opt = $wuc->get('align_species',$self->{'species'})) {
-	my ($sp, $method) = split(/_compara_/, $opt);
-	$method = 'BLASTZ_NET' if ($method  eq 'pairwise');
-	$exportURL .= "&s=$sp&method=$method";
-    }
+
+    my @species = @{$wuc->get('alignslice', 'species')};
+    my $aID = $wuc->get('alignslice', 'id');
+    my $aType = $wuc->get('alignslice', 'type');
+
+    $exportURL .= ";method=$aID;s=".join(',', @species);
 
     my $exports = { 
 		    fasta  => { text  => 'FASTA',
