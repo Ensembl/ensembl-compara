@@ -473,7 +473,7 @@ sub get_MethodLinkSpeciesSet {
 =cut
 
 sub get_SimpleAlign {
-  my ($self) = @_;
+  my ($self, @species) = @_;
   my $simple_align;
 
   ## Create a single Bio::SimpleAlign for the projection  
@@ -481,7 +481,7 @@ sub get_SimpleAlign {
   $simple_align->id("ProjectedMultiAlign");
 
   my $genome_db_name_counter;
-  foreach my $slice (@{$self->get_all_Slices}) {
+  foreach my $slice (@{$self->get_all_Slices(@species)}) {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
