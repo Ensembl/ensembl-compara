@@ -254,14 +254,23 @@ sub chr_map {
 sub stats {
   my( $panel, $chr ) = @_;
    
+  my $species = $chr->species;
+
   my $chr_name = $chr->chr_name;
   my $label = "Chromosome $chr_name";
  
   my @orderlist = (    
            'Length',
-           'Gene Count',
-           'Known Gene Count',
-           'PseudoGene Count',
+           'known protein_coding Gene Count',
+           'novel protein_coding Gene Count',
+           'pseudogene Gene Count',
+           'miRNA Gene Count',
+           'ncRNA Gene Count',
+           'rRNA Gene Count',
+           'snRNA Gene Count',
+           'snoRNA Gene Count',
+           'tRNA Gene Count',
+           'misc_RNA Gene Count',
            'SNP Count');
   my $html = qq(<br /><table cellpadding="4">);
   my $stats;
@@ -278,9 +287,11 @@ sub stats {
     my $value = $chr->thousandify( $chr_stats{$stat} );
     next if !$value;
     my $bps_label = ($stat eq "Length") ? 'bps' : '&nbsp;';
-    $stat = "Genes (known and novel)" if $stat eq 'Gene Count';
+    $stat =~ s/protein_coding/Protein-coding/; 
+    $stat =~ s/_/ /g; 
     $stat =~ s/ Count$/s/;
-    $html .= qq(<tr><td><strong>@{[ ucfirst($stat) ]}:</strong></td>
+    $stat = ucfirst($stat) unless $stat =~ /^[a-z]+RNA/;
+    $html .= qq(<tr><td><strong>$stat:</strong></td>
                         <td style="text-align:right">$value</td>
                         <td>$bps_label</td>
                     </tr>);
@@ -289,7 +300,8 @@ sub stats {
   unless ($stats) {
     $html .= qq(<tr><td><strong>Could not load chromosome stats</strong><td></tr>);
   }          
-  $html .= qq(  </table>  );
+  $html .= qq(  </table>
+  <p>For more information on gene statistics, see the <a href="/$species/helpview">Help</a> page</p>  );
 
   $panel->add_row( $label, $html );
   return 1;
@@ -663,7 +675,6 @@ sub show_karyotype {
         $max_length = $object->length;
     }
     my $config = $object->user_config_hash($config_name);
-   #warn "Configuration is $config_name"; 
     # PARSE DATA
     my $parser;
     if ($object->param('display') eq 'density') {
@@ -676,7 +687,6 @@ sub show_karyotype {
     }
     else {
         $parser = Data::Bio::Text::FeatureParser->new();
-warn "Parsing location data";
     }
     $object->parse_user_data($parser);
 
