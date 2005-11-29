@@ -846,7 +846,9 @@ sub _init {
       # but should really use the greatest height in the current featureset
       
       if (exists $_->{'attrs'} && exists $_->{'attrs'}{'height'}){
-	$styleheight = $_->{'attrs'}{'height'} if $_->{'attrs'}{'height'} > $styleheight;
+	my $tmpheight = $_->{'attrs'}{'height'};
+	$tmpheight += abs $_->{'attrs'}{'yoffset'} if $_->{'attrs'}{'yoffset'} ;
+	$styleheight = $tmpheight if $tmpheight > $styleheight;
       }
     } 
     $configuration->{'h'} = $styleheight if $styleheight;
@@ -990,6 +992,7 @@ sub get_symbol {
     my ($self, $style, $featuredata, $y_offset) = @_;
     my $styleattrs = $style->{'attrs'};
     my $glyph_symbol = $style->{'glyph'} || 'box';
+    $y_offset -= $styleattrs->{'yoffset'}||0;
 
     # Load the glyph symbol module that we need to draw this style
     $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::'.$glyph_symbol;
