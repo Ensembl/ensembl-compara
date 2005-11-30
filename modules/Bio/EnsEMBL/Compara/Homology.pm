@@ -515,6 +515,16 @@ sub has_species_by_name {
 }
 
 
+sub gene_list {
+  my $self = shift;
+  my @genes;
+  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
+    my ($member, $attribute) = @{$member_attribute};
+    push @genes, $member;
+  }
+  return \@genes;
+}
+
 =head2 homology_key
 
   Example    : my $key = $homology->homology_key;

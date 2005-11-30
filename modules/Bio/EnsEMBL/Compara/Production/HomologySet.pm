@@ -156,7 +156,6 @@ sub homology_list {
 sub has_homology {
   my $self = shift;
   my $homology = shift;
-
   return 1 if(defined($self->{'homology_hash'}->{$homology->homology_key}));
   return 0;
 }
@@ -164,9 +163,23 @@ sub has_homology {
 sub find_homology_like {
   my $self = shift;
   my $homology = shift;
-
   return $self->{'homology_hash'}->{$homology->homology_key};
 }
+
+sub subset_containing_genes {
+  my $self = shift;
+  my $gene_set = shift;
+  my $newset = new Bio::EnsEMBL::Compara::Production::HomologySet;
+  foreach my $homology (@{$self->homology_list}) {
+    foreach my $gene (@{$homology->gene_list}) {
+      if($gene_set->includes($gene)) {
+        $newset->add($homology);
+      }
+    }
+  }
+  return $newset;
+}
+
 
 ### gene ###
 
