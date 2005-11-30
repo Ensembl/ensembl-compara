@@ -185,6 +185,7 @@ sub status {
  Arg2        : data object
  Example     : $panel1->add_rows(qw(alleles EnsEMBL::Web::Component::SNP::alleles) );
  Description : adds a label and html for the Variations alleles
+               adds a line describing the ancestor allele if this exists
  Return type : 1
 
 =cut
@@ -209,6 +210,17 @@ sub status {
    return 1;
  }
 
+
+
+=head2 moltype
+
+ Arg1        : panel
+ Arg2        : data object
+ Description : adds a label and its value to the panel:
+               which describes the molecular type e.g. 'Genomic'
+ Return type : 1
+
+=cut
 
 sub moltype {
   my ( $panel, $object ) = @_;
@@ -372,7 +384,8 @@ sub format_frequencies {
     # Add a name, size and description if it exists ---------------------------
     $pop_row{pop}= _pop_url( $object, $freq_data{$pop_id}{pop_info}{Name}, $freq_data{$pop_id}{pop_info}{PopLink})."&nbsp;";
     $pop_row{Size} = $freq_data{$pop_id}{pop_info}{Size};
-    $pop_row{Description} = "<small>".($freq_data{$pop_id}{pop_info}{Description}||'-')."</small>";
+    (my $description = $freq_data{$pop_id}{pop_info}{Description}) =~ s/\.\s+.*//;
+    $pop_row{Description} = "<small>".$description||"-"."</small>";
 
 
     # Super and sub populations ----------------------------------------------

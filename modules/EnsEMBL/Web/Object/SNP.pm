@@ -253,10 +253,31 @@ sub alleles {
 
 sub vari_class{ $_[0]->vari->var_class }
 
+
+
+=head2 moltype
+
+  Arg[1]      : none
+  Example     : $object->moltype;
+  Description : returns the molecular type of the variation
+  Return type : String
+
+=cut
+
 sub moltype {
   my $self = shift;
   return $self->vari->moltype;
 }
+
+
+=head2 ancestor
+
+  Arg[1]      : none
+  Example     : $object->ancestral_allele;
+  Description : returns the ancestral allele for the variation
+  Return type : String
+
+=cut
 
 sub ancestor {
   my $self = shift;
