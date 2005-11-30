@@ -459,13 +459,10 @@ sub TwoD_codon {
 sub print_homology {
   my $self = shift;
   
-  print("Homology : ");
-  foreach my $RefArrayOfMemberAttributeArrayRef ($self->get_all_Member_Attribute) {
-    foreach my $memAttributeArrayRef (@{$RefArrayOfMemberAttributeArrayRef}) {
-      my $member = $memAttributeArrayRef->[0];
-      my $attribute = $memAttributeArrayRef->[1];
-      print $member->stable_id,"\t";
-    }
+  printf("Homology %s(%d) %s/%s : ", $self->stable_id, $self->dbID, $self->description, $self->subtype);
+  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
+    my ($member, $attribute) = @{$member_attribute};
+    printf("%s(%d)\t", $member->stable_id, $member->dbID);
   }
   print("\n");
 }
@@ -475,7 +472,7 @@ sub print_homology {
 
   Example    : my ($paf) = @{$homology->get_all_PeptideAlignFeature};
                my ($paf, $recipPaf) = @{$homology->get_all_PeptideAlignFeature};
-  Description: return the peptide_align_feature object (and it's reciprocal hit)
+  Description: return the peptide_align_feature object (and its reciprocal hit)
                used to create this homology
   Returntype : array ref of peptide_align_feature objects
   Exceptions :
@@ -504,6 +501,48 @@ sub get_all_PeptideAlignFeature {
   }
   return \@pafs;
 }
+
+
+sub has_species_by_name {
+  my $self = shift;
+  my $species_name = shift;
+  
+  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
+    my ($member, $attribute) = @{$member_attribute};
+    return 1 if($member->genome_db->name eq $species_name);
+  }
+  return 0;
+}
+
+
+=head2 homology_key
+
+  Example    : my $key = $homology->homology_key;
+  Description: returns a string uniquely identifying this homology in world space.
+               uses the gene_stable_ids of the members and orders them by taxon_id
+               and concatonates them together.  
+  Returntype : string
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub homology_key {
+  my $self = shift;
+  return $self->{'_homology_key'} if(defined($self->{'_homology_key'}));
+  
+  my @genes;
+  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
+    my ($member, $attribute) = @{$member_attribute};
+    push @genes, $member;
+  }
+  @genes = sort {$a->taxon_id <=> $b->taxon_id} @genes;
+  @genes = map ($_->stable_id, @genes);
+
+  my $homology_key = join('_', @genes);
+  return $homology_key;
+}
+
 
 1;
 
