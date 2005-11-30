@@ -38,8 +38,8 @@ General use is like:
   $homology_set2 = new Bio::EnsEMBL::Compara::Production::HomologySet;
   $homology_set2->add(@{$homologyDBA->fetch_all_by_MethodLinkSpeciesSet($mlss2));
 
-  $missing1 = $homology_set1->crossref_missing_genes($homology_set2);
-  printf("%d genes in set1 not in set2\n", scalar(@$missing1));
+  $crossref = $homology_set1->crossref_homologies_by_type($homology_set2);
+  $homology_set1->print_conversion_stats($homology_set2,$crossref);
 
 
 =cut
@@ -63,12 +63,8 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::HomologySet;
 
 use strict;
-use Switch;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive;
-use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::Production::GeneSet;
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Hive::URLFactory;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Graph::CGObject;
@@ -93,7 +89,7 @@ sub clear {
   my $self = shift;
     
   $self->{'conversion_hash'} = {};
-  $self->{'gene_hash'} = {};
+  $self->{'gene_set'} = new Bio::EnsEMBL::Compara::Production::GeneSet;
   $self->{'homology_hash'} = {};
   $self->{'types'} = {};
 }
@@ -110,12 +106,24 @@ sub add {
     my $geneMember1 = $ma1->[0];
     my $geneMember2 = $ma2->[0];
     $self->{'homology_hash'}->{$homology->homology_key} = $homology;
-    $self->{'gene_hash'}->{$geneMember1->stable_id} = $geneMember1;
-    $self->{'gene_hash'}->{$geneMember2->stable_id} = $geneMember2;
+    $self->{'gene_set'}->add($geneMember1);
+    $self->{'gene_set'}->add($geneMember2);
     $self->{'types'}->{$homology->description}++;    
   }  
+  return $self;
 }
 
+
+sub merge {
+  my $self = shift;
+  my $other_set = shift;
+  
+  $self->add(@{$other_set->homology_list});
+  return $self;
+}
+
+
+### homology types ie description ###
 
 sub types {
   my $self = shift;
@@ -134,7 +142,7 @@ sub count_for_type {
 
 ### homology ###
 
-sub unique_homology_count {
+sub homology_count {
   my $self = shift;
   return scalar(keys(%{$self->{'homology_hash'}}));
 }
@@ -162,32 +170,18 @@ sub find_homology_like {
 
 ### gene ###
 
-sub unique_gene_count {
+sub gene_set {
   my $self = shift;
-  return scalar(@{$self->gene_list});
+  return $self->{'gene_set'};
 }
-
-sub gene_list {
-  my $self = shift;
-  my @genes = values(%{$self->{'gene_hash'}});
-  return \@genes;
-}
-
-sub has_gene {
-  my $self = shift;
-  my $gene = shift;
-  return 1 if(defined($self->{'gene_hash'}->{$gene->stable_id}));
-  return 0;
-}
-
 
 ### debug printing ###
 
 sub print_stats {
   my $self = shift;
   
-  printf("%d unique genes\n", $self->unique_gene_count);
-  printf("%d unique homologies\n", $self->unique_homology_count);
+  printf("%d unique genes\n", $self->gene_set->count);
+  printf("%d unique homologies\n", $self->homology_count);
   foreach my $type (@{$self->types}) {
     printf("%10d : %s\n", $self->count_for_type($type), $type);
   }
@@ -200,23 +194,8 @@ sub print_stats {
 #
 ############################################
 
-sub crossref_missing_genes {
-  my $self = shift;
-  my $other_set = shift;
-  
-  #genes in my set that are missing from the 'other' set
-  my @missing_genes;
-  
-  foreach my $gene (@{$self->gene_list}) {
-    unless($other_set->has_gene($gene)) {
-      push @missing_genes, $gene;
-    }
-  }
-  return \@missing_genes;
-}
 
-
-sub crossref_homology_types {
+sub crossref_homologies_by_type {
   my $self = shift;
   my $other_set = shift;
   
@@ -227,8 +206,8 @@ sub crossref_homology_types {
   $conversion_hash->{'_missing'} = {};
 
   foreach my $type1 (@{$self->types}, '_missing') {
-    foreach my $type2 (@{$other_set->types}, '_missing') { 
-      $conversion_hash->{$type1}->{$type2} = 0;
+    foreach my $type2 (@{$other_set->types}, '_new') { 
+      $conversion_hash->{$type1}->{$type2} = new Bio::EnsEMBL::Compara::Production::HomologySet;
     }
   }
   
@@ -237,16 +216,16 @@ sub crossref_homology_types {
     $other_homology = $other_set->find_homology_like($homology);
     if($other_homology) {
       my $other_type = $other_homology->description;
-      $conversion_hash->{$ref_type}->{$other_type}++;
+      $conversion_hash->{$ref_type}->{$other_type}->add($homology);
     } else {
-      $conversion_hash->{$ref_type}->{'_missing'}++;
+      $conversion_hash->{$ref_type}->{'_new'}->add($homology);
     }
   }
   
   foreach my $homology (@{$other_set->homology_list}) {
     my $type = $homology->description;
     unless($self->has_homology($homology)) {
-      $conversion_hash->{'_missing'}->{$type}++;    
+      $conversion_hash->{'_missing'}->{$type}->add($homology);
     }
   }
   
@@ -263,9 +242,9 @@ sub print_conversion_stats
   my @refTypes = sort(@{$self->types});
   my @newTypes = sort(@{$set2->types});
   push @refTypes, '_missing';
-  push @newTypes, '_missing';
+  push @newTypes, '_new';
 
-  printf("%35s ", "old/new");
+  printf("\n%35s ", "");
   foreach my $new_type (@newTypes) {
     printf("%10s ", $new_type);
   }
@@ -275,8 +254,7 @@ sub print_conversion_stats
     my $convHash = $conversion_hash->{$ref_type};
     printf("%35s ", $ref_type);
     foreach my $new_type (@newTypes) {
-      my $count = $conversion_hash->{$ref_type}->{$new_type};
-      $count=0 unless($count);
+      my $count = $conversion_hash->{$ref_type}->{$new_type}->homology_count;
       printf("%10d ", $count);
     }
     print("\n");
