@@ -203,9 +203,21 @@ sub status {
      my $ambig_code = $object->vari->ambig_code;
      $html = qq(<b>$alleles</b> (ambiguity code: <b><font color="red">$ambig_code</font></b>));
    }
+   my $ancestor  = $object->ancestor;
+   $html .= qq(<br /><em>Ancestral allele</em>: $ancestor) if $ancestor;
    $panel->add_row($label, $html);
    return 1;
  }
+
+
+sub moltype {
+  my ( $panel, $object ) = @_;
+  my $label = 'Molecular type';
+  my $snp_data  = $object->moltype;
+  return 1 unless $snp_data;
+  $panel->add_row($label,  $snp_data );
+  return 1;
+}
 
 
 =head2 ld_data

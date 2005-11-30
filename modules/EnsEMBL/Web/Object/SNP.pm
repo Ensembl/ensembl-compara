@@ -253,6 +253,15 @@ sub alleles {
 
 sub vari_class{ $_[0]->vari->var_class }
 
+sub moltype {
+  my $self = shift;
+  return $self->vari->moltype;
+}
+
+sub ancestor {
+  my $self = shift;
+  return $self->vari->ancestral_allele;
+}
 
 =head2 tagged_snp
 
