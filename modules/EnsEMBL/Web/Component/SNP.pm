@@ -384,6 +384,8 @@ sub format_frequencies {
     # Add a name, size and description if it exists ---------------------------
     $pop_row{pop}= _pop_url( $object, $freq_data{$pop_id}{pop_info}{Name}, $freq_data{$pop_id}{pop_info}{PopLink})."&nbsp;";
     $pop_row{Size} = $freq_data{$pop_id}{pop_info}{Size};
+
+    # Descriptions too long. Only display first sentence
     (my $description = $freq_data{$pop_id}{pop_info}{Description}) =~ s/\.\s+.*//;
     $pop_row{Description} = "<small>".$description||"-"."</small>";
 
@@ -834,13 +836,11 @@ sub link_to_ldview {
 
 sub _ld_populations {
   my $object = shift;
-  my $pop_data = $object->ld_for_slice("", 100000); # all pops, slice width
-  return {} unless %$pop_data;
-  my @pop_ids = (keys %{ $pop_data->{'_pop_ids'} } );
-  return {} if scalar @pop_ids < 1 ;
+  my $pop_ids = $object->ld_pops_for_snp;
+  return {} unless @$pop_ids;
 
   my %pops;
-  foreach (@pop_ids) {
+  foreach (@$pop_ids) {
     my $pop_obj = $object->pop_obj_from_id($_);
     my $name = $pop_obj->{$_}{Name};
     $pops{$_} = $name;

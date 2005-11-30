@@ -915,27 +915,28 @@ sub transcript_variation {
 
 # LD stuff ###################################################################
 
-=head2 ld_for_slice
+=head2 ld_pops_for_snp
 
-  Arg[1]      : 
-  Example     : my $data = $object->ld_for_slice;
-  Description : returns population name for the given population dbID
-  Return type : hash of data
+  Arg         : none
+  Description : gets an LDfeature container for this SNP and calls all the populations on this
+  Return type : array ref of population IDs
 
 =cut
 
-sub ld_for_slice {
+sub ld_pops_for_snp {
   my $self = shift;
-  my $pop  = shift  || "";
-  my $width = shift || $self->param('w') || 50000;
-  unless ( $self->{'_slice'} ) {
-    $self->_get_slice($width);
-  }
+  my  @vari_mappings = @{ $self->get_variation_features };
+  return {} unless @vari_mappings;
 
-  my $slice = $self->{'_slice'};
-  return {} unless $slice;
-  return $slice->get_all_LD_values($pop);
+  my @pops;
+  foreach ( @vari_mappings ) {
+    my $ldcontainer = $_->get_all_LD_values;
+    push @pops, @{$ldcontainer->get_all_populations};
+
+  }
+  return \@pops;
 }
+
 
 =head2 find_location
 

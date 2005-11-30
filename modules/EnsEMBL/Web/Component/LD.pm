@@ -313,10 +313,9 @@ sub print_pop_info {
   foreach my $pop_id (keys %$pop) {
     my $display_pop = _pop_url($object,  $pop->{$pop_id}{Name}, 
 				       $pop->{$pop_id}{PopLink});
-    ######## TEMPORARY HACK FOR TRUNCATED POP DESCRIPTIONS IN DB ##
+
     my $description = $pop->{$pop_id}{Description} || "Unknown";
-    $description =~s/<[^>]+>//g;
-    $description =~s/<[^>]*$+//g;
+    $description =~ s/\.\s+.*//; # descriptions are v. long. Stop after 1st "."
 
     if ($label eq 'Population') {
       $return .= "<th>Name:</th><td>$display_pop</td></tr>";
