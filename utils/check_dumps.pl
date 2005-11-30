@@ -76,11 +76,6 @@ if (@TYPES) {
 else {%types = %ok_types};
 info(1, "Checking these dumps: ". join ", ", keys %types);
 
-# Sort out species ------------------------------------------------------------
-if (@SPECIES) {  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };  }
-else {  @SPECIES = @{ utils::Tool::all_species()};  }
-info(1, "Checking these species:\n".join "\n", @SPECIES);
-
 
 # Check the dumpdir directory has the correct number of directories ----------
 my %dumped_check;          # All folders present in dumpdir
@@ -94,18 +89,11 @@ while (defined(my $file = readdir(DUMP_DIR))) {
 close DUMP_DIR;
 
 
-# Check there are the right number of directories in $DUMPDIR
-if ( !@SPECIES ) { # If the user is checking all species
-  error("Need a directory for each species + multi + mart in $DUMPDIR.  
-There are $count_dirs directories but there should be $#SPECIES + 2.") if $count_dirs != 2+ $#SPECIES;
-}
+# Sort out species ------------------------------------------------------------
+if (@SPECIES) {  @SPECIES = @{ utils::Tool::check_species(\@SPECIES) };  }
+else {  @SPECIES = @{ utils::Tool::all_species()};  }
+info(1, "Checking these species:\n".join "\n", @SPECIES);
 
-
-# Compile a list of all mysql db from the database
-our %mysql_db =  %{ utils::Tool::mysql_db($release) }; 
-$mysql_db{"ensembl_web_user_db_$release"} = 1;
-$mysql_db{"ensembl_help_$release"} = 1;
-$mysql_db{"ensembl_website_$release"} = 1;
 
 # Check each species ---------------------------------------------------------
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
@@ -113,6 +101,8 @@ if ($sitedefs_release ne $release) {
  die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
 }
 
+
+# Mysql stuff -------------------------------------------
 my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST ENSEMBL_HELP
 				ENSEMBL_WEBSITE
                                 ENSEMBL_COMPARA_MULTIPLE
@@ -120,7 +110,12 @@ my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST ENSEMBL_HELP
                                 ENSEMBL_FASTA
                                 ENSEMBL_GLOVAR );
 
-my @dir_list;
+# Compile a list of all mysql db from the database
+our %mysql_db =  %{ utils::Tool::mysql_db($release) }; 
+$mysql_db{"ensembl_web_user_db_$release"} = 1;
+$mysql_db{"ensembl_help_$release"} = 1;
+$mysql_db{"ensembl_website_$release"} = 1;
+
 
 foreach my $species (@SPECIES) {
   info (1, "Species: $species");
@@ -131,7 +126,7 @@ foreach my $species (@SPECIES) {
   my @search_dirs;          # list of folders to search according to config
 
 
-  if ($species eq 'Multi') {
+  if ($species eq 'Multi' && $types{mysql} ) {
     $species_folder = "multi_species_$release";
 
     foreach my $x qw( ensembl_help ensembl_website ensembl_web_user_db ) {
@@ -181,7 +176,7 @@ foreach my $species (@SPECIES) {
 
 
   # Checking there is a directory for this species
-  info(1, "Checking directory for this species exists");
+  #info(1, "Checking directory for this species exists");
   if ( !$dumped_check{$species_folder} ) {
     error("No folder for this species. (Searching for $species_folder)");
     next;
@@ -242,6 +237,13 @@ unless (@SPECIES) {
     print "Directories in $DUMPDIR not checked: $_ \n" unless $dumped_check{$_} eq '1' ;
   }
 }
+
+# Check there are the right number of directories in $DUMPDIR
+if ( !@SPECIES ) { # If the user is checking all species
+  info("Need a directory for each species + multi + mart in $DUMPDIR.  
+There are $count_dirs directories but there should be $#SPECIES + 2.") if $count_dirs != 2+ $#SPECIES;
+}
+
 
 exit;
 
@@ -497,7 +499,7 @@ sub check_toplevel {
   my ($files, $species) = @_;
   return (error("No files sent to check_toplevel")) unless @$files;
 
-  info("Checking DNA files");
+  #info("Checking DNA files");
   my %chr;
   map{ $chr{$_} = 1 } @{$SPECIES_DEFS->get_config($species,"ENSEMBL_CHROMOSOMES")};
   my %dna_files;
@@ -541,7 +543,7 @@ sub check_toplevel {
       $flag_seqlevel++;
     }
     elsif ($file =~ /chromosome/ ) {
-      error("Extra chromosome file $file.  Is this an old month's file? Current month: $month") unless $file =~ /\.MT|\.DR\d+/;
+      error("Extra chromosome file $file.  Is this an old month's file? Current month: $month. Is this chr configured in INI file?") unless $file =~ /\.MT|\.DR\d+/;
     }
     elsif ($file =~ /nonchromosomal\.fa\.gz/) { $flag_nonchrom++;  }
     elsif ($file =~ /clone|scaffold|contig|chunk/i)  { $flag_seqlevel++;  }

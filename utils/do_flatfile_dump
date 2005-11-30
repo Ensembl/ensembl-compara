@@ -21,24 +21,27 @@ BEGIN{
 
 use utils::Tool;
 
-$| = 1;
+#$| = 1;
 
 my @formats ;
 my $MAX_SIZE = 1000000;
 my $GENE_MAX = 3000000;
 #my $GENE_MAX = 1500000;
-my @species ;
-my $logfile ;
+my @species;
+my $logfile;
+my $no_log;
 my $dumpdir;
 my $nobundle;
 my $VERBOSITY;
 my $readme_only;
-my ($help,$info);
+my ($help, $info, $email);
 
 &GetOptions( 'maxsize:s' => \$MAX_SIZE,
              'format:s'	 => \@formats,
              'species:s' => \@species,
              'logfile:s' => \$logfile,
+	     'email:s'   => \$email,
+	     'no_log'    => \$no_log,
              'dumpdir:s' => \$dumpdir,
              'nobundle'	 => \$nobundle,
              'readme_only'=> \$readme_only,
@@ -54,7 +57,7 @@ if (@species) {
   @species = @{ utils::Tool::check_species(\@species) };
 } 
 else {
-  @species = @{ utils::Tool::all_species()}; 
+  @species = @{ utils::Tool::all_species() };
 }
 
 my $time1 = time;
@@ -70,12 +73,13 @@ my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
 
 my @too_long;
-if ($logfile){
+unless ($no_log) {
+  (my $time = gmtime(time)) =~ s/\s+/\./g;
+  $logfile ||= "logs/flat"."_$time.log";
+  print STDERR "Using logfile $logfile\n";
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
-else {
-  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n****\n\n");
-}
+
 
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 foreach my $spp (@species){
@@ -103,12 +107,12 @@ foreach my $spp (@species){
     unless (lc($format) eq "embl" || lc($format) eq "genbank"){
       die "[*DIE] unrecognized dump format - use embl or genbank\n";
     }
-    
-    
+
+
     my $databases = $dbconnection->get_databases_species($spp, "core");
     my $db =  $databases->{'core'} ||
     die( "Could not retrieve core database for $spp" ); 
-    
+
     my $slice_adaptor = $db->get_SliceAdaptor();
     $slice_adaptor->cache_toplevel_seq_mappings();
     # loop through every non-redundant region in the DB
@@ -146,8 +150,10 @@ foreach (@too_long){
 # Work out timings -----------------------------------------------
 my $time_taken = time - $time1;
 my $hours      = localtime($time_taken)->hour -1;
-print STDERR "Time taken: $hours:", localtime($time_taken)->min,"mins\n";
+warning (1, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
 
+$email ||= 'fc1@sanger.ac.uk';
+utils::Tool::mail_log( $logfile, $email ) if $logfile;
 
 exit;
 
@@ -557,6 +563,9 @@ If no species are specified, all species are done.
 
 =head1 OPTIONS
 
+B<--email>
+  Emails all lines in the logfile except the 'INFO' lines to this address
+
 B<-h,--help>
   Prints a brief help message and exits.
 
@@ -581,7 +590,10 @@ B<--maxsize>
 
 B<--logfile>
   Optional: Specifies a logfile to print output to.  
-  DEFAULT: print to STDOUT.
+  DEFAULT filename is logs/flat.<timestamp>.log
+
+B<--no_log>
+  Optional: The default is to use a log file with name logs/flat.<timestamp>.log
 
 B<--dumpdir>
   Optional: Specifies the dump directory. 

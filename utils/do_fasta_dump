@@ -6,15 +6,13 @@ use warnings;
 package do_fasta_dump;
 
 use Carp;
-use Data::Dumper qw( Dumper );
-
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
-
-use Pod::Usage;
 use Time::localtime;
+use Time::HiRes qw(time);
 use Getopt::Long;
-
+use Pod::Usage;
+use Data::Dumper qw( Dumper );
 
 # Load libraries needed for reading config -----------------------------------
 use vars qw( $SERVERROOT );
@@ -32,20 +30,21 @@ use Bio::EnsEMBL::DBLoader;
 use Bio::SeqIO;
 use utils::Tool;
 
-$| = 1; # unbuffers STDOUT (issues print commands immediately)
+#$| = 1; # unbuffers STDOUT (issues print commands immediately)
 
 our $DUMPDIR;
 our $NODATA;
 
 my $nocompress;
+my $no_log;
 my $logfile;
 my $help;
 my $info;
 my @SPECIES;
 my @DATABASES;
 my @TYPES;
-my $time1 = time;
 my $release;
+my $email;
 
 &GetOptions(
 	    'species:s'  => \@SPECIES,
@@ -54,44 +53,45 @@ my $release;
 	    'release:s'  => \$release,
 	    'dumpdir:s'  => \$DUMPDIR,
 	    'nocompress' => \$nocompress,
+	    'no_log'     => \$no_log,
 	    'logfile:s'  => \$logfile,
 	    'help'       => \$help,
 	    'info'       => \$info,
-	    'no_data'     => \$NODATA,
+	    'email:s'    => \$email,
+	    'no_data'    => \$NODATA,
 	   ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
 pod2usage(-verbose => 1) if $help;
 
-if ($logfile){
-  open(STDERR, "> $logfile") || die "Can't create file:$!\n";
-}
-else {
-  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n****\n\n");
-}
-
-# Validate DUMPDIR
-$DUMPDIR   ||= "/mysql/dumps/FTP";
-info(1, "Dumping data to $DUMPDIR" );
-utils::Tool::check_dir($DUMPDIR);
-
 my $types = check_types(\@TYPES);
 die "\n\n[DIE] You must provide an ensembl release number e.g. --release 30" unless $release;
 
 # Load modules needed for reading config -------------------------------------
-info(1, "Using config in $SERVERROOT/conf" );
+#info(1, "Using config in $SERVERROOT/conf" );
 require EnsEMBL::Web::SpeciesDefs;      # Loaded at run time
 require EnsEMBL::Web::DBSQL::DBConnection;
 
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); 
-$SPECIES_DEFS || pod2usage("$0: SpeciesDefs config not found");
+$SPECIES_DEFS || die "$0: SpeciesDefs config not found";
 
 # Check the ENSEMBL_VERSION is up to date and matchs user's request
-my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
-if ($sitedefs_release ne $release) {
+if ( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
  die "[*DIE] Ensembl release version requested is $release but site defs is configured to use $sitedefs_release";
 }
 
+# Times and log file
+our $script_start_time = time();
+unless ($no_log) {
+  (my $time = gmtime(time)) =~ s/\s+/\./g;
+  $logfile ||= "logs/fasta$release"."_$time.log";
+  print STDERR "Using logfile $logfile\n";
+  open(STDERR, "> $logfile") || die "Can't create file:$!\n";
+}
+
+# Validate DUMPDIR
+$DUMPDIR   ||= "/mysql/dumps/FTP";
+utils::Tool::check_dir($DUMPDIR);
 
 my %db_names = ( 'ENSEMBL_DB'      => 'core',
                'ENSEMBL_ESTGENE' => 'estgene',
@@ -108,33 +108,46 @@ else {
 
 # For each species ----------------------------------------------------------
 for my $sp( sort @SPECIES ){  # users selected spp
+
+  # Work out species folder name and empty if you are dumping --type all
+  my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
+  $sp_release =~ s/\.//g;
+  my $sp_folder = "$DUMPDIR/".(join "_", lc($sp), $release, $sp_release)."/data/fasta";
+
+  if ( -e $sp_folder && $TYPES[0] eq 'all') {
+    info( 1, "Removing existing copies of $sp_folder" );
+    system("rm -rf $sp_folder") && die "Couldn't delete $sp_folder";
+  }
+
   my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($sp, $SPECIES_DEFS);
 
   foreach my $db( @DATABASES || "ENSEMBL_DB"){
     my $db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
       ( warning( 1, "DB $db is not valid for $sp" ) && next );
-    warning( 1, "Dumping: $db $sp" );
+    warning( 1, "Dumping @TYPES from $db $sp - $DUMPDIR" );
 
     # Create directories and filehandles for dumps
-    my $cs_adaptor   = $db_adaptor->get_CoordSystemAdaptor;
     my ($chr_toplevel, $fhs) = create_dirs_for_dumps($sp, $SPECIES_DEFS, 
-							$release, $types, 
-							$DUMPDIR, $cs_adaptor);
+						     $sp_folder,
+						     $types,  $db_adaptor);
 
     # Do dumps, then compress
     my $created_files = get_data($db_adaptor, $sp, $fhs, $chr_toplevel);
     compress( $created_files ) unless $nocompress;
   }
 }
-close STDOUT;
+
 
 # Work out timings -----------------------------------------------------------
-my $time_taken = time - $time1;
+my $time_taken = time - $script_start_time;
 my $hours      = localtime($time_taken)->hour -1;
-print STDERR "Time taken: $hours:", localtime($time_taken)->min,"mins\n";
+warning (1, "Used $logfile.");
+warning (1, " Time taken: $hours:". localtime($time_taken)->min."mins");
+close STDERR;
+
+$email ||= 'fc1@sanger.ac.uk';
+utils::Tool::mail_log( $logfile, $email ) if $logfile;
 exit;
-
-
 
 ######################### END OF PROGRAM ######################################
 
@@ -165,42 +178,39 @@ sub check_types {
     );
 
 
-  # Validate types 
-  my $return = utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
-  return $return;
+  # Validate types  and return hashref
+  return utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
 }
 
 
 #-----------------------------------------------------------------------------
+
 sub create_dirs_for_dumps {
-  my ($sp, $SPECIES_DEFS, $release, $types, $DUMPDIR, $cs_adaptor) = @_;
+  my ($sp, $SPECIES_DEFS, $sp_folder, $types, $db_adaptor) = @_;
 
-  # Calls to get file name and dir names
-  my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
-  $sp_release =~ s/\.//g;
-  my $sp_folder = join "_", (lc($sp), $release, $sp_release);
-
+  # Get assembly and check against ini file -------------
+  my $cs_adaptor   = $db_adaptor->get_CoordSystemAdaptor;
   my ($highest_cs) = @{$cs_adaptor->fetch_all()};
   my $assembly     = $highest_cs->version();
   my $ini_assembly = $SPECIES_DEFS->get_config($sp,"ENSEMBL_GOLDEN_PATH");
   warning(1, "Error: INI file GOLDEN_PATH is $ini_assembly. Database assembly is $assembly") unless $ini_assembly eq $assembly;
   my $file_details = "$sp.$assembly.".utils::Tool::release_month();
 
-  # Create dirs
+
+  # Create dirs ------------------------------------------
   my $filehandles;
   foreach my $type ( @$types) {
     my( $master_type ) = split( '_', $type );
-    my $thisdir = "$DUMPDIR/$sp_folder/data/fasta/$master_type";
+    my $thisdir = $sp_folder."/$master_type";
 
-    # Check directory is ok ---------------------------------------------------
-    if( ! -e $thisdir ){
+    unless ( -e $thisdir ) {
       utils::Tool::check_dir( $thisdir );
       open(README, '>'."$thisdir/README") or die "Couldn't open file $thisdir/README: $!\n";
       print README readme($master_type);
       close README;
     }
 
-    # Work out types of directories needed ------------------------------------
+    # Work out types of directories needed ------------------------
     my ($seqtype, $idtype);
     if ($type =~ /toplevel/) {
       $seqtype = "dna";
@@ -224,7 +234,7 @@ sub create_dirs_for_dumps {
 					    '-file'   => '>'.$tmp_file);
   }
 
-  my $chr_toplevel = "$DUMPDIR/$sp_folder/data/fasta/dna/$file_details";
+  my $chr_toplevel = "$sp_folder/dna/$file_details";
   return ( $chr_toplevel, $filehandles );
 }
 
@@ -248,7 +258,7 @@ sub get_data {
     if ($fhs->{'dna_toplevel_masked'} or $fhs->{'dna_toplevel'}) {
 
       my $seq_name = $slice->seq_region_name;
-
+      #info (1, "M1: $seq_name");
       # If not chr based toplevel, use predefined filehandle
       if ( ($coord_system !~ /^chromosome$/i) or  ( $seq_name =~/random
 						 |E\d\d\w*$
@@ -266,8 +276,10 @@ sub get_data {
       # chromosome based system, need to make new files for each chr
       else  {
 	my $file = ">$chr_toplevel.%s.chromosome.$seq_name.fa";
+	#info( 1, "M2: Dump into $file");
 	
 	if($fhs->{'dna_toplevel'} ){
+	  #info(1, "M3: DNA");
 	  my $seqio = Bio::SeqIO->new('-format' => 'Fasta', 
 				   '-file'   =>  sprintf ($file, "dna"));
 	  dump_dna( $seqio, $slice, 'dna' );
@@ -277,6 +289,7 @@ sub get_data {
 	}
 
 	if($fhs->{'dna_toplevel_masked'} ){
+	  #info (1, "M4: DNA");
 	  my $seqio_masked = Bio::SeqIO->new('-format' => 'Fasta', 
 					  '-file' => sprintf ($file,"dna_rm"));
 	  dump_dna( $seqio_masked, $slice->get_repeatmasked_seq, 'dna_rm' );
@@ -287,7 +300,6 @@ sub get_data {
       }
     }
     # End dna_toplevel (masked and not masked) ------------------------------
-    #info (1, "cdna/pep prep section");
     if(scalar( grep{$_ !~ /^dna|abinitio|\/dna\// } keys %$fhs ))  {
       foreach my $gene( @{$slice->get_all_Genes(undef,undef,$load_exons)} ){
 	foreach my $transcript( @{$gene->get_all_Transcripts} ){
@@ -351,7 +363,7 @@ sub get_data {
     }
 
     # Abinitio dumps ----------------------------------------------------------
-    info (1, "Abinitio section");
+    #info (1, "Abinitio section");
     if ( scalar (grep {$_ =~ /_abinitio/ } keys %$fhs ))  {
       foreach my $transcript( @{$slice->get_all_PredictionTranscripts(undef,$load_exons)} ){
 	my $subtype = $transcript->analysis->logic_name;
@@ -367,7 +379,7 @@ sub get_data {
     }
 
     # DNA seqlevel dumps -----------------------------------------------------
-    info (1, "DNA seq level section");
+    #info (1, "DNA seq level section");
     if ( scalar( grep {$_ =~ /^dna_seqlevel/ } keys %$fhs ) ) {
       foreach my $segment( @{$slice->project('seqlevel')} ){
 	my $coord_system = $slice->coord_system;
@@ -388,7 +400,7 @@ sub get_data {
 	}
       }
     }
-    info( 1, "End toplevel ". $slice->name );
+    #info( 1, "End toplevel ". $slice->name );
   }
 
   # Close all file handles ----------------------------------------------------
@@ -429,7 +441,7 @@ sub dump_cdna_rna {
   my $label = $gene ? "gene:".$gene->stable_id : " ";
   my $seq = $transcript->seq();
   $seq->description( join( " ", $type, $location, $label, $ccds_id) );
-  info( 1, "CDNA>".$seq->display_id );
+  #info( 1, "CDNA>".$seq->display_id );
   $seqio->write_seq($seq);
   return 1;
 }
@@ -529,7 +541,8 @@ sub info{
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
 
-  warn( "[INFO] ".$msg."\n" );
+  warn( sprintf "[INFO] %s [%0.3fs]\n", $msg, time()- $script_start_time );
+  # warn( sprintf "[INFO] %s [%0.3fs %d]\n", $msg, time()- $script_start_time, &process_size );
   return 1;
 }
 
@@ -540,7 +553,8 @@ sub warning{
   if( ! defined($msg) ){ $msg = $v; $v = 0 }
   $msg || ( carp("Need a warning message" ) && return );
 
-  warn( "[WARN] ".$msg."\n" );
+  warn( sprintf "[WARN] %s [%0.3fs]\n", $msg, time()- $script_start_time );
+  # warn( sprintf "[WARN] %s [%0.3fs %d]\n", $msg, time()- $script_start_time, &process_size );
   return 1;
 }
 
@@ -923,6 +937,19 @@ http://www.ebi.ac.uk/biomart/ for more information.
 return ($warning .$text{$key});
 }
 
+sub process_size {
+  my $size = `ps $$ -o vsz |tail -1`;
+  chomp $size;
+  my $unit = chop $size;
+  #if ($unit eq "K") do nothing, we want size in Kb
+  if ($unit eq "M"){
+    $size *= 1024;
+  } elsif ($unit eq "G"){
+    $size *= 1048576;   # 1024*1024
+  }
+  return $size;
+}
+
 
 1;
 
@@ -940,11 +967,20 @@ do_fasta_dumps - Dump Ensembl databases to text files and gzip them
 do_fasta_dumps [options]
 
 Options:
-  --help, --info, --verbose, --dumpdir, --logfile,
-  --species, --database, --type --no_data
+  --help, --info, --verbose, --dumpdir, --no_log, --email
+  --species, --database, --type --no_data --logfile
 
 Example:
- nohup time ./do_fasta_dump --type all --release 23
+ nohup time ./do_fasta_dump --type all --release 23 --email ek3@sanger.ac.uk
+
+
+=head1 REQUIRED ARGUMENTS
+
+B<--type>
+  One or more feature type to dump. See --info for more details
+
+B<--release>
+  The current Ensembl release number.  This is used to check the species ini file configufation.
 
 
 =head1 OPTIONS
@@ -955,17 +991,23 @@ B<-h,--help>
 B<-i,--info>
   Prints man page and exits.
 
-B<-- no_data>
+B<--no_data>
   Runs the script without dumping the data (i.e. goes through each top level, creates and zips the files but with no data in them)
 
+B<--email>
+   Sends an email to this address if you use a log file
+
 B<-v,--verbose>
-  Set verbosity level for debug output to stdout or logfile. Default 1
+  Set verbosity level for debug output to stdout or no_log. Default 1
 
 B<--dumpdir>
   Specifies directory to dump into (def /mysql/dumps/FTP)
 
-B<--logfile>
-  Specifies a log file to output to (def STDOUT)
+b<--logfile>
+  Choose the name of your logfile. The default is "fasta<release_number>timestamp.log".
+
+B<--no_log>
+  Output to standard out (STDOUT). Default is to use a log file.
 
 B<-s, --species>
   One or more species to dump.  Default: All species
@@ -973,12 +1015,6 @@ B<-s, --species>
 B<-d, --database>
   One or more databases to dump (ENSEMBL_DB, ENSEMBL_VEGA etc.). 
   Defaults to ENSEMBL_DB.
-
-B<--type>
-  One or more feature type to dump. See --info for more details
-
-B<--release>
-  The current Ensembl release number.  This is used to check the species ini file configufation.
 
 B<--nocompress>
   Specify no gzip compression of dumped files.

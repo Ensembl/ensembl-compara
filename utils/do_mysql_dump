@@ -27,7 +27,7 @@ BEGIN{
 use utils::Tool;
 
 our $MYSQL_BIN = "/mysqld/current/bin";   # this should be a cluster-wide CDSL
-my ($dumpdir, $help, $info, $logfile, $no_data, $no_zip);
+my ($dumpdir, $help, $info, $logfile, $email, $no_data, $no_zip, $no_log);
 my @SPECIES ;
 my @dbs;
 
@@ -35,6 +35,8 @@ my @dbs;
 	    'species:s'      => \@SPECIES,
 	    'database:s'     => \@dbs,
 	    'logfile:s'      => \$logfile,
+	    'no_log'         => \$no_log,
+	    'email:s'        => \$email,
 	    'dumpdir:s'      => \$dumpdir,
 	    'help'           => \$help,
 	    'info'           => \$info,
@@ -49,13 +51,13 @@ exit(0) if ($help) ;
 
 # Log file -------------------------------------------------------------------
 my $time1 = time;
-if ($logfile){
+
+unless ($no_log) {
+  (my $time = gmtime(time)) =~ s/\s+/\./g;
+  $logfile ||= "logs/mysql"."_$time.log";
+  print STDERR "Using logfile $logfile\n";
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
-else {
-  info(1,"\n\n****\nARE YOU SURE YOU DON'T WANT TO USE A LOG FILE????\n***\n");
-}
-
 
 # Load modules needed for reading config -------------------------------------
 require EnsEMBL::Web::SpeciesDefs; 
@@ -173,6 +175,8 @@ my $hours      = localtime($time_taken)->hour -1;
 print STDERR "Time taken: $hours:", localtime($time_taken)->min,"mins\n";
 
 
+$email ||= 'fc1@sanger.ac.uk';
+utils::Tool::mail_log( $logfile, $email ) if $logfile;
 exit;
 
 
@@ -383,7 +387,7 @@ do_mysql_dump [options]
 
 Options:
   --help, --info, --species, --database, --logfile --dumpdir
-  --no_data  --no_zip
+  --no_data  --no_zip --email
 
 =head1 OPTIONS
 
@@ -404,8 +408,14 @@ B<--dumpdir>
   Specifies directory to dump into (default /mysql/dumps/FTP). 
   The directory must be the full path (i.e. start with "/")
 
-B<--logfile>
-  Specifies a log file to output to (default STDOUT)
+B<--no_log>
+  Output to standard out (STDOUT). Default is to use a log file.
+
+b<--logfile>
+  Choose the name of your logfile. The default is "fasta<release_number>timestamp.log".
+
+B<--email>
+   Sends an email to this address if you use a log file
 
 B<--no_data>
    Only dump the sql files.  No data

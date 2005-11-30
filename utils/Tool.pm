@@ -60,9 +60,42 @@ sub check_dir {
     }
   }
   return 1;
+
 }
 
+  
 #------------------------------------------------------------------------
+
+=head2 mail_log
+
+ Arg[1]: log to check
+ Arg[2]: email address
+ Description: checks log and emails you the results
+
+=cut
+
+sub mail_log {
+  my ($file, $email_address) = @_;
+  open IN, "< $file" or die "Can't open $file : $!";
+  my $content;
+  while (<IN>) {
+    $content .= $_  unless $_=~ /^\[INFO\]/;
+  }
+
+  my $sendmail = "/usr/sbin/sendmail -t";
+  my $subject  = "Subject: Dumping error report\n";
+
+  open(SENDMAIL, "|$sendmail") or die "Cannot open $sendmail: $!";
+  print SENDMAIL $subject;
+  print SENDMAIL "To: $email_address\n";
+  print SENDMAIL "Content-type: text/plain\n\n";
+  print SENDMAIL $content;
+  close(SENDMAIL);
+  print "[INFO] Sent report to $email_address\n";
+}
+
+
+#-----------------------------------------------------------------------
 
 =head2 check_species
 
@@ -80,7 +113,7 @@ sub check_species {
   my $species = shift;
   my $error   = shift || "[*DIE] Invalid species. Select from:\n";
   my %all_species = map{$_=>1} ( @{&all_species}, "Multi");
-
+  
   foreach my $spp (@$species) {
     next if $all_species{$spp};
     pod2usage("$spp: $error". join( "\n  ", sort keys %all_species ) );
@@ -190,7 +223,7 @@ sub print_next {
   Example     : my $mth =  utils::Tool::release_month();
   Description : Returns the first 3 letters (lowercase) of 
                 either the current month if today's ' date is within the 
-                first 15 days of the month 
+                first 10 days of the month 
                 or the next month if today's ' date is after the 15th.
                 This is a rough hack to estimate the month of the next Ensembl release
   Return type : three letter string
@@ -202,7 +235,7 @@ sub release_month {
   my @months = qw (jan feb mar apr may jun jul aug sep oct nov dec);
   my $day      = localtime->mday;
   my $curr_mth = localtime->mon;
-  return  $day <15 ? $months[$curr_mth] : $months[$curr_mth +1];
+  return  $day <10 ? $months[$curr_mth] : $months[$curr_mth +1];
 }
 #--------------------------------------------------------------------
 =head2 site_logo
