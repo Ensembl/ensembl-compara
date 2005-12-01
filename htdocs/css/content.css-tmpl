@@ -170,6 +170,7 @@ div.formpanel div { margin-top:5px; }
   color: [[HEADING]]; font-size: 1em; font-weight: bold;
 }
 .formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65%; margin-bottom: 0.8em }
+.formcontent p { margin-top:0.3em; }
 .formcenter, .formcenter div { display:block; text-align:center; margin-botton: 0.8em;}
 .forminline, .forminline div { display:inline; }
 .forminline h6 { display:inline; margin-right:1em; }
