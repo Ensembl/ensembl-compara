@@ -960,7 +960,7 @@ sub alignsliceviewbottom {
 
     my $zwa = $object->param('zoom_width');
 
-    my $species = $ENV{ENSEMBL_SPECIES};
+    my $species = $object->species;
     my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
 
     my $query_slice= $query_slice_adaptor->fetch_by_region($slice->coord_system_name, $slice->seq_region_name, $slice->start, $slice->end);
@@ -973,7 +973,7 @@ sub alignsliceviewbottom {
 	$aSpecies{$sp} = 1;
     }
 
-    my %shash = ($object->species_defs->multi($aID, ucfirst($species)));
+    my %shash = $object->species_defs->multi($aID, $species);
 
     my $comparadb = $object->database('compara');
     my @sarray;
@@ -1243,12 +1243,14 @@ sub exons_markup {
    my ($slice) = @_;
 
    my @analyses = ( 'ensembl', 'pseudogene');
+
    my $db_alias = 'core';
    my @genes;
    foreach my $analysis( @analyses ){
-       push @genes, @{ $slice->get_all_Genes() };
+       push @genes, @{ $slice->get_all_Genes($analysis, $db_alias) };
    }
    my $slice_length = length($slice->seq);
+   
    my @exons;
    foreach (@genes) {
        my $tlist = $_->get_all_Transcripts();
