@@ -87,6 +87,7 @@ if( keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { ### NOMA
     # my $martview_conffile = $martview_confdir."/defaultMartRegistry.xml";           ####
     my $martview_conffile = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martRegistry.xml";  ####
     $initializer = BioMart::Initializer->new($martview_conffile, 100, 10000);         ####
+    $initializer->generate_evoc_ontology_picker_tool( $martview_conffile );
     $registry = $initializer->getRegistry;                                        ####
     $registry->getConfigurationTrees();                                           ####
     # cache registry                                                              ####

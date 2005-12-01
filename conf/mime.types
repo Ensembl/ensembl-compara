@@ -9,7 +9,7 @@
 # is important so they know how to handle the content of the file.
 # please read RFC 2045, 2046, 2047, 2048, and 2077.  The Internet media type
 # registry is at <ftp://ftp.iana.org/in-notes/iana/assignments/media-types/>.
-xml/svg svg
+image/svg+xml svg
 application/java-archive          jar
 application/x-ns-proxy-autoconfig pac
 application/EDI-Consent
