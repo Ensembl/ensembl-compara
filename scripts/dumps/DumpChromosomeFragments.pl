@@ -104,7 +104,7 @@ my %not_default_masking_cases;
 if (defined $mask_restriction_file) {
   %not_default_masking_cases = %{do $mask_restriction_file};
 }
-my $SliceAdaptor = $db->get_adaptor($dbname, 'core', 'Slice') or die "can't get Adaptor for $dbname, 'core', 'Slice'\n";
+my $slice_adaptor = $db->get_adaptor($dbname, 'core', 'Slice') or die "can't get Adaptor for $dbname, 'core', 'Slice'\n";
 
 my $chromosomes;
 
@@ -112,17 +112,17 @@ if (defined $chr_names and $chr_names ne "all") {
   my @chr_names = split /,/, $chr_names;
   foreach my $chr_name (@chr_names) {
     print STDERR "chr_name=$chr_name\n";
-    push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coordinate_system , $chr_name);
+    push @{$chromosomes}, $slice_adaptor->fetch_by_region($coordinate_system , $chr_name);
   }
 } else {
   if($coordinate_system){
     if ($top_level) {
-      $chromosomes = [grep {@{$_->get_all_Attributes('toplevel')}} @{$SliceAdaptor->fetch_all($coordinate_system)}];
+      $chromosomes = [grep {@{$_->get_all_Attributes('toplevel')}} @{$slice_adaptor->fetch_all($coordinate_system)}];
     } else {
-      $chromosomes = $SliceAdaptor->fetch_all($coordinate_system);
+      $chromosomes = $slice_adaptor->fetch_all($coordinate_system);
     }
   } else {
-    $chromosomes = $SliceAdaptor->fetch_all('toplevel');
+    $chromosomes = $slice_adaptor->fetch_all('toplevel');
   }
 }
  
@@ -177,9 +177,9 @@ setting chr_end=chr_length\n";
   
   my $slice;
   if ($chr_start && $chr_end) {
-    $slice = $SliceAdaptor->fetch_by_region($coordinate_system, $chr->seq_region_name,$chr_start,$chr_end) or die "$coordinate_system, ".$chr->seq_region_name.",$chr_start,$chr_end\n";
+    $slice = $slice_adaptor->fetch_by_region($coordinate_system, $chr->seq_region_name,$chr_start,$chr_end) or die "$coordinate_system, ".$chr->seq_region_name.",$chr_start,$chr_end\n";
   } else {
-    $slice = $SliceAdaptor->fetch_by_region($coordinate_system, $chr->seq_region_name);
+    $slice = $slice_adaptor->fetch_by_region($coordinate_system, $chr->seq_region_name);
   }
   
   print STDERR "..fetched slice for $coordinate_system ",$slice->seq_region_name," from position ",$slice->start," to position ",$slice->end,"\n";
@@ -193,76 +193,88 @@ close $fh;
 
 sub printout_by_overlapping_chunks {
   my ($slice,$overlap,$chunk_size,$output_seq) = @_;
-  my $seq;
+  my $this_slice;
 
   if ($masked == 1) {
 
     print STDERR "getting masked sequence...\n";
     if (%not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,0,\%not_default_masking_cases);
+      $this_slice = $slice->get_repeatmasked_seq(undef,0,\%not_default_masking_cases);
     } else {
-      $seq = $slice->get_repeatmasked_seq;
+      $this_slice = $slice->get_repeatmasked_seq;
     }
-    $seq->name($slice->seq_region_name);
+    $this_slice->name($slice->seq_region_name);
     print STDERR "...got masked sequence\n";
 
   } elsif ($masked == 2) {
 
     print STDERR "getting soft masked sequence...\n";
     if (%not_default_masking_cases) {
-      $seq = $slice->get_repeatmasked_seq(undef,1,\%not_default_masking_cases);
+      $this_slice = $slice->get_repeatmasked_seq(undef,1,\%not_default_masking_cases);
     } else {
-      $seq = $slice->get_repeatmasked_seq(undef,1);
+      $this_slice = $slice->get_repeatmasked_seq(undef,1);
     }
-    $seq->name($slice->seq_region_name);
+    $this_slice->name($slice->seq_region_name);
     print STDERR "...got soft masked sequence\n";
 
   } else {
 
     print STDERR "getting unmasked sequence...\n";
-    $seq = Bio::PrimarySeq->new( -id => $slice->seq_region_name, -seq => $slice->seq);
+    $this_slice = Bio::PrimarySeq->new( -id => $slice->seq_region_name, -seq => $slice->seq);
     print STDERR "...got unmasked sequence\n";
 
   }
 
-  print STDERR "sequence length : ",$seq->length,"\n";
+  print STDERR "sequence length : ",$this_slice->length,"\n";
   print STDERR "printing out the sequences chunks...";
 
-  for (my $i=1;$i<=$seq->length;$i=$i+$chunk_size-$overlap) {
-    
+  for (my $i=1;$i<=$this_slice->length;$i=$i+$chunk_size-$overlap) {
+
     my $chunk;
-    if ($i+$chunk_size-1 > $seq->length) {
+    if ($i+$chunk_size-1 > $this_slice->length) {
       
+      ## This is the last bit we have to dump
       my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = $phusion.".".$coordinate_system.":".$slice->seq_region_name.".".$chr_start;
+        $id = $phusion.".".$coordinate_system.":".$slice->seq_region_name.".".$chr_start;
       } else {
-	$id = $coordinate_system.":".$slice->seq_region_name.".".$chr_start.".".$slice->end;
+        $id = $coordinate_system.":".$slice->seq_region_name.".".$chr_start.".".$slice->end;
       }
-      $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$seq->length),
-				     -id  => $id,
-				     -moltype => 'dna'
-				    );
-      
+      ## Uses sub_Slice and not the subseq method of the original slice as the subseq
+      ## is fetching the RepeatFeautes for the whole slice every time.
+      my $sub_slice = $this_slice->sub_Slice($i,$this_slice->length);
+      $chunk = Bio::PrimarySeq->new (
+              -seq => $sub_slice->seq,
+              -id  => $id,
+              -moltype => 'dna'
+          );
+
     } else {
 
       my $chr_start = $i+$slice->start-1;
       my $id;
       if (defined $phusion) {
-	$id = $phusion.".".$coordinate_system.":".$slice->seq_region_name.".".$chr_start;
+        $id = $phusion.".".$coordinate_system.":".$slice->seq_region_name.".".$chr_start;
       } else {
-	$id = $coordinate_system . ":" . 
+        $id = $coordinate_system . ":" . 
           $slice->seq_region_name . "." . 
             $chr_start . "." . 
               ($chr_start + $chunk_size - 1);
       }
-      $chunk = Bio::PrimarySeq->new (-seq => $seq->subseq($i,$i+$chunk_size-1),
-				     -id  => $id,
-				     -moltype => 'dna'
-				    );
+      ## Uses sub_Slice and not the subseq method of the original slice as the subseq
+      ## is fetching the RepeatFeautes for the whole slice every time.
+      my $sub_slice = $this_slice->sub_Slice($i,$i+$chunk_size-1);
+      $chunk = Bio::PrimarySeq->new (
+              -seq => $sub_slice->seq,
+              -id  => $id,
+              -moltype => 'dna'
+          );
+
     }
+
     $output_seq->write_seq($chunk);
+
   }
   print STDERR "Done\n";
 }
