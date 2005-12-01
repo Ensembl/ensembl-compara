@@ -60,7 +60,7 @@ sub _init {
       'y'         => $yoffset - $TAG_LENGTH,
       'width'     => 1,
       'absolutey' => 1,
-      'colour'    => $colours->{$snp->[1]->get_consequence_type},
+      'colour'    => $colours->{$snp->[1]->get_consequence_type}->[0],
     })); 
   }
 

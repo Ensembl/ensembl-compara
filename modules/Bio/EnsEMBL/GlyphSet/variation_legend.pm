@@ -20,7 +20,7 @@ sub _init {
   my ($self) = @_;
   return unless ($self->strand() == -1);
   my $BOX_WIDTH     = 20;
-  my $NO_OF_COLUMNS = 4;
+  my $NO_OF_COLUMNS = 3;
 
 
   my $vc            = $self->{'container'};

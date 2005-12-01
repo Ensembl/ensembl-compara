@@ -78,7 +78,7 @@ sub _init {
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
     my $type = $snp->get_consequence_type();
-    my $colour = $colours->{$type};
+    my $colour = $colours->{$type}->[0];
     my $tglyph = new Sanger::Graphics::Glyph::Space({
       'x' => $S-1,
       'y' => 0,

@@ -40,7 +40,7 @@ sub _init {
     $E = $length if $E > $length;
     my $tag_root = $snp->dbID;
     my $type = $snp->get_consequence_type();
-    my $colour = $colours->{$type};
+    my $colour = $colours->{$type}->[0];
     my $label = $snp->allele_string;
     my $bp_textwidth = $w * length("$label");
     if( $bp_textwidth < $E-$S+1 ) {

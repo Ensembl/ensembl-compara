@@ -24,7 +24,7 @@ sub _init {
 
     my $BOX_HEIGHT    = 4;
     my $BOX_WIDTH     = 20;
-    my $NO_OF_COLUMNS = 5;
+    my $NO_OF_COLUMNS = 3;
     my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
     my ($w,$th)       = $Config->texthelper()->px2bp($FONTNAME);
 
