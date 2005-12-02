@@ -101,7 +101,7 @@ sub merge {
 
 ### gene ###
 
-sub count {
+sub size {
   my $self = shift;
   return scalar(@{$self->list});
 }
@@ -131,7 +131,7 @@ sub find_gene_like {
 sub print_stats {
   my $self = shift;
   
-  printf("%d unique genes\n", $self->count);
+  printf("%d unique genes\n", $self->size);
 }
 
 
