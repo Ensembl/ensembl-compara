@@ -1039,7 +1039,7 @@ sub check_LSF_jobs {
           $status = $all_status->{$this_lsf_job->{job_ID}};
         } else {
           warning("Cant find job $this_lsf_job->{job_ID}");
-          my  $bjob = qx"bjobs \"$this_lsf_job->{job_ID}\" 2>&1";
+          my  $bjob = qx[bjobs "$this_lsf_job->{job_ID}" 2>&1];
           if ($bjob and $bjob !~ /^Job <[^>]+> is not found/) {
             $status = $bjobs;
             $status =~ s/[^\n]+\n(.)/$1/;
@@ -1055,7 +1055,7 @@ sub check_LSF_jobs {
       }
 
       my $fail = 0;
-      if ($status =~ /PEND/ or $status =~ /RUN/) {
+      if ($status =~ /PEND/ or $status =~ /RUN/ or $status =~ /SUSP/) {
         $done = 0;
         $this_lsf_job->{funny_status} = 0;
       } elsif ($status =~ /EXIT/) {
@@ -1103,12 +1103,12 @@ sub check_LSF_jobs {
             and $this_lsf_job->{funny_status} > 10) {
           warning("Job $this_lsf_job->{name}($this_lsf_job->{job_ID}) is in a funny status ($status)\n".
               "  -- I will try to restart it");
-          qx"bkill \"$this_lsf_job->{job_ID}\"";
+          qx[bkill "$this_lsf_job->{job_ID}"];
           sleep(30); #Give some time to actually kill the job.
           $fail = "FUNNY STATUS";
           $this_lsf_job->{funny_status} = 0;
         } else {
-          warning("Job $this_lsf_job->{name}($this_lsf_job->{job_ID}) is in a funny status ($status)");
+#           warning("Job $this_lsf_job->{name}($this_lsf_job->{job_ID}) is in a funny status ($status)");
           $this_lsf_job->{funny_status}++;
         }
       }
