@@ -1153,7 +1153,7 @@ sub check_LSF_jobs {
       my $unfinished_jobs = scalar(grep {!defined($_->{ok})} @$lsf_jobs);
       print LOG "\n[", scalar(localtime()), "] Waiting ($unfinished_jobs unfinished jobs) ";
     }
-    sleep(30) if (!$done and $wait);
+    sleep(300) if (!$done and $wait);
   } while (!$done and $wait);
   throw("Unrecoverable error. Check log!") if ($persistent_error);
   print LOG " ok.\n" if ($wait);
