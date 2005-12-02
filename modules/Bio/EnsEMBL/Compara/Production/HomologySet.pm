@@ -91,6 +91,7 @@ sub clear {
   $self->{'conversion_hash'} = {};
   $self->{'gene_set'} = new Bio::EnsEMBL::Compara::Production::GeneSet;
   $self->{'homology_hash'} = {};
+  $self->{'gene_to_homologies'} = {};
   $self->{'types'} = {};
 }
 
@@ -101,14 +102,20 @@ sub add {
   
   foreach my $homology (@homology_list) {
     next if(defined($self->{'homology_hash'}->{$homology->homology_key}));
-    #printf("HomologySet add: %s\n", $homology->homology_key);    
-    my ($ma1, $ma2) = @{$homology->get_all_Member_Attribute};
-    my $geneMember1 = $ma1->[0];
-    my $geneMember2 = $ma2->[0];
+    #printf("HomologySet add: %s\n", $homology->homology_key);
+    my ($gene1, $gene2) = @{$homology->gene_list};
     $self->{'homology_hash'}->{$homology->homology_key} = $homology;
-    $self->{'gene_set'}->add($geneMember1);
-    $self->{'gene_set'}->add($geneMember2);
-    $self->{'types'}->{$homology->description}++;    
+    $self->{'gene_set'}->add($gene1);
+    $self->{'gene_set'}->add($gene2);
+    $self->{'types'}->{$homology->description}++;
+
+    $self->{'gene_to_homologies'}->{$gene1->stable_id} = []
+      unless(defined($self->{'gene_to_homologies'}->{$gene1->stable_id}));
+    $self->{'gene_to_homologies'}->{$gene2->stable_id} = []
+      unless(defined($self->{'gene_to_homologies'}->{$gene2->stable_id}));      
+
+    push @{$self->{'gene_to_homologies'}->{$gene1->stable_id}}, $homology;
+    push @{$self->{'gene_to_homologies'}->{$gene2->stable_id}}, $homology;
   }  
   return $self;
 }
@@ -118,7 +125,7 @@ sub merge {
   my $self = shift;
   my $other_set = shift;
   
-  $self->add(@{$other_set->homology_list});
+  $self->add(@{$other_set->list});
   return $self;
 }
 
@@ -142,12 +149,12 @@ sub count_for_type {
 
 ### homology ###
 
-sub homology_count {
+sub size {
   my $self = shift;
   return scalar(keys(%{$self->{'homology_hash'}}));
 }
 
-sub homology_list {
+sub list {
   my $self = shift;
   my @homologies = values(%{$self->{'homology_hash'}});
   return \@homologies;
@@ -170,7 +177,7 @@ sub subset_containing_genes {
   my $self = shift;
   my $gene_set = shift;
   my $newset = new Bio::EnsEMBL::Compara::Production::HomologySet;
-  foreach my $homology (@{$self->homology_list}) {
+  foreach my $homology (@{$self->list}) {
     foreach my $gene (@{$homology->gene_list}) {
       if($gene_set->includes($gene)) {
         $newset->add($homology);
@@ -180,6 +187,34 @@ sub subset_containing_genes {
   return $newset;
 }
 
+sub homologies_for_gene {
+  my $self = shift;
+  my $gene = shift;
+  my $homologies = $self->{'gene_to_homologies'}->{$gene->stable_id};
+  return $homologies if($homologies);
+  return [];
+}
+
+sub best_homology_for_gene {
+  my $self = shift;
+  my $gene = shift;
+  my $ordered_types = shift; #hashref type=>rank
+    
+  my $best_homology = undef;
+  my $best_rank = undef;
+  
+  #$gene->print_member;
+  foreach my $homology (@{$self->homologies_for_gene($gene)}) {
+    #$homology->print_homology;
+    my $rank = $ordered_types->{$homology->description};
+    if(!defined($best_rank) or ($rank and ($rank<$best_rank))) {
+      $best_homology = $homology;
+      $best_rank = $rank;
+    }
+  }
+  #if($best_homology) { printf("BEST: "); $best_homology->print_homology; }
+  return $best_homology;
+}
 
 ### gene ###
 
@@ -193,86 +228,13 @@ sub gene_set {
 sub print_stats {
   my $self = shift;
   
-  printf("%d unique genes\n", $self->gene_set->count);
-  printf("%d unique homologies\n", $self->homology_count);
+  printf("%d unique genes\n", $self->gene_set->size);
+  printf("%d unique homologies\n", $self->size);
   foreach my $type (@{$self->types}) {
     printf("%10d : %s\n", $self->count_for_type($type), $type);
   }
 }
 
-
-############################################
-#
-# HomologySet cross-referencing operations
-#
-############################################
-
-
-sub crossref_homologies_by_type {
-  my $self = shift;
-  my $other_set = shift;
-  
-  my $conversion_hash = {};
-  my $other_homology;
-  
-  foreach my $type (@{$self->types}) { $conversion_hash->{$type} = {} };
-  $conversion_hash->{'_missing'} = {};
-
-  foreach my $type1 (@{$self->types}, '_missing') {
-    foreach my $type2 (@{$other_set->types}, '_new') { 
-      $conversion_hash->{$type1}->{$type2} = new Bio::EnsEMBL::Compara::Production::HomologySet;
-    }
-  }
-  
-  foreach my $homology (@{$self->homology_list}) {
-    my $ref_type = $homology->description;
-    $other_homology = $other_set->find_homology_like($homology);
-    if($other_homology) {
-      my $other_type = $other_homology->description;
-      $conversion_hash->{$ref_type}->{$other_type}->add($homology);
-    } else {
-      $conversion_hash->{$ref_type}->{'_new'}->add($homology);
-    }
-  }
-  
-  foreach my $homology (@{$other_set->homology_list}) {
-    my $type = $homology->description;
-    unless($self->has_homology($homology)) {
-      $conversion_hash->{'_missing'}->{$type}->add($homology);
-    }
-  }
-  
-  return $conversion_hash;
-}
-
-
-sub print_conversion_stats
-{
-  my $self = shift;
-  my $set2 = shift;
-  my $conversion_hash = shift;
-  
-  my @refTypes = sort(@{$self->types});
-  my @newTypes = sort(@{$set2->types});
-  push @refTypes, '_missing';
-  push @newTypes, '_new';
-
-  printf("\n%35s ", "");
-  foreach my $new_type (@newTypes) {
-    printf("%10s ", $new_type);
-  }
-  print("\n");
-  
-  foreach my $ref_type (@refTypes) {
-    my $convHash = $conversion_hash->{$ref_type};
-    printf("%35s ", $ref_type);
-    foreach my $new_type (@newTypes) {
-      my $count = $conversion_hash->{$ref_type}->{$new_type}->homology_count;
-      printf("%10d ", $count);
-    }
-    print("\n");
-  }
-}
 
 
 1;
