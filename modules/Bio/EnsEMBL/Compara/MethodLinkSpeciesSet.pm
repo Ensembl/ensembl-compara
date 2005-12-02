@@ -177,10 +177,10 @@ sub new_fast {
 =cut
 
 sub dbID {
-  my ($obj, $value) = @_;
+  my $obj = shift;
   
-  if (defined($value)) {
-    $obj->{'dbID'} = $value;
+  if (@_) {
+    $obj->{'dbID'} = shift;
   }
   
   return $obj->{'dbID'};
@@ -201,10 +201,10 @@ sub dbID {
 =cut
 
 sub adaptor {
-  my ($obj,$value) = @_;
+  my $obj = shift;
   
-  if (defined($value)) {
-    $obj->{'adaptor'} = $value;
+  if (@_) {
+    $obj->{'adaptor'} = shift;
   }
   
   return $obj->{'adaptor'};
