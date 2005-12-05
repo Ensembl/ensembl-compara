@@ -31,8 +31,9 @@ my $source_mlssa =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compar
 my $source_ha =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Homology');
 my $source_ma =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Member');
 
+my $destination_mlssa =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara','compara','MethodLinkSpeciesSet');
+my $destination_ha =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara','compara','Homology');
 my $destination_ma =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara','compara','Member');
-my $destination_source_ha =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara','compara','Homology');
 
 my $mlss_aref;
 
@@ -49,8 +50,14 @@ my $nb_homologies_loaded = 0;
 
 foreach my $mlss (@{$mlss_aref}) {
   my $homologies = $source_ha->fetch_all_by_MethodLinkSpeciesSet($mlss);
+
+  $mlss->adaptor(undef);
+  $mlss->dbID(undef);
+  $destination_mlssa->store($mlss);
+
   $nb_homologies += scalar @{$homologies};
   foreach my $homology (@{$homologies}) {
+    $homology->method_link_species_set($mlss);
     print "fetching old homology ",$homology->dbID,"\n";
     my $store = 1;
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
@@ -72,9 +79,9 @@ foreach my $mlss (@{$mlss_aref}) {
       $nb_homologies_loaded++;
       $homology->adaptor(undef);
       $homology->dbID(undef);
-      $destination_source_ha->store($homology);
+      $destination_ha->store($homology);
       if (defined $homology->n) {
-        $destination_source_ha->update_genetic_distance($homology);
+        $destination_ha->update_genetic_distance($homology);
       }
     } else {
       print "Homology not loaded ",$homology->dbID,"\n";
