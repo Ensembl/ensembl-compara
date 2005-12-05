@@ -61,7 +61,6 @@ use Bio::EnsEMBL::Hive::Process;
 
 our @ISA = qw( Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Pipeline::RunnableDB );
 
-my $g_compara_PairAlign_workdir;  # a global directory location for the process using this module
 
 ##########################################
 #
@@ -120,7 +119,8 @@ sub get_params {
 ##########################################
 
 sub worker_temp_directory {
-  return $g_compara_PairAlign_workdir;
+  my $self = shift;
+  return $self->worker->worker_process_temp_directory;
 }
 
 sub options {
@@ -230,11 +230,6 @@ sub run
   }
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->method_link_type);}
 
-  #cleanup tmp files that can be deleted right away
-  if($g_compara_PairAlign_workdir) {
-    unlink(<$g_compara_PairAlign_workdir/*.del>);
-  }
-
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   return 1;
 }
@@ -261,15 +256,6 @@ sub write_output {
   #print STDERR (time()-$starttime), " secs to write_output\n";
 }
 
-
-sub global_cleanup {
-  if($g_compara_PairAlign_workdir) {
-    unlink(<$g_compara_PairAlign_workdir/*>);
-    rmdir($g_compara_PairAlign_workdir);
-  }
-  return 1;
-}
-
 ##########################################
 #
 # internal methods
@@ -283,13 +269,8 @@ sub dumpChunkSetToWorkdir
 
   my $starttime = time();
 
-  unless(defined($g_compara_PairAlign_workdir) and (-e $g_compara_PairAlign_workdir)) {
-    #create temp directory to hold fasta databases
-    $g_compara_PairAlign_workdir = "/tmp/worker.$$/";
-    mkdir($g_compara_PairAlign_workdir, 0777);
-  }
+  my $fastafile = $self->worker_temp_directory. "chunk_set_". $chunkSet->dbID .".fasta";
 
-  my $fastafile = $g_compara_PairAlign_workdir. "chunk_set_". $chunkSet->dbID .".fasta";
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
   #print("fastafile = '$fastafile'\n");
@@ -324,13 +305,7 @@ sub dumpChunkToWorkdir
 
   my $starttime = time();
 
-  unless(defined($g_compara_PairAlign_workdir) and (-e $g_compara_PairAlign_workdir)) {
-    #create temp directory to hold fasta databases
-    $g_compara_PairAlign_workdir = "/tmp/worker.$$/";
-    mkdir($g_compara_PairAlign_workdir, 0777);
-  }
-
-  my $fastafile = $g_compara_PairAlign_workdir.
+  my $fastafile = $self->worker_temp_directory .
                   "chunk_" . $chunk->dbID . ".fasta";
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
