@@ -68,7 +68,7 @@ sub gene_description {
   my $self = shift;
   my %description_by_type = ( 'bacterial_contaminant' => "Probable bacterial contaminant" );
   if( $self->gene ) {
-    return $self->gene->description() || $description_by_type{ $self->gene->type } || 'No description';
+    return $self->gene->description() || $description_by_type{ $self->gene->biotype } || 'No description';
   } else {
     return 'No description';
   }
@@ -328,7 +328,7 @@ sub trans_description {
   my $gene = $_[0]->gene;
   my %description_by_type = ( 'bacterial_contaminant' => "Probable bacterial contaminant" );
   if( $gene ){
-    return $gene->description() || $description_by_type{ $gene->type } || 'No description';
+    return $gene->description() || $description_by_type{ $gene->biotype } || 'No description';
   }
   return 'No description';
 }

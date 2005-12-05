@@ -163,7 +163,7 @@ sub location {
         This $lc_type can be found on %s at location <a href="/%s/contigview?l=%s:%s-%s">%s-%s</a>.
       </p>
       <p>
-        This start of this $lc_type is located in <a href="/%s/contigview?region=%s">%s</a>.
+        The start of this $lc_type is located in <a href="/%s/contigview?region=%s">%s</a>.
       </p>), $object->neat_sr_name( $object->coord_system, $object->seq_region_name ),
              $object->species,
              $object->seq_region_name, $object->seq_region_start, $object->seq_region_end,
