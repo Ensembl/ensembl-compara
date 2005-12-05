@@ -35,7 +35,7 @@ sub genesnpview {
 
   if( my $panel2 = $self->new_panel( 'Image',
     'code'    => "image#",
-    'caption' => 'Variations in region of gene '.$obj->stable_id,
+    'caption' => 'SNPs and variations in region of gene '.$obj->stable_id,
     # 'status'  => 'panel_image',
     'params'  => $params
   )) {
