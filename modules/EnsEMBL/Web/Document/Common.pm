@@ -26,7 +26,7 @@ sub script_name {
   ## LDView LDTableVies
   $scriptname =~ s/(Ld.)/uc($1)/eg;
   ## MultiContigView, GeneSpliceView
-  $scriptname =~ s/(Gene|Multi)(.)/$1.uc($2)/eg;
+  $scriptname =~ s/(Gene|Multi|Transcript)(.)/$1.uc($2)/eg;
   return $scriptname;
 }
 
