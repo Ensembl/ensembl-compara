@@ -53,7 +53,7 @@ sub canvas {
         my $styleHTML = join "\n", map { '.'.($self->{'style_cache'}->{$_})." { $_ }" } keys %{$self->{'style_cache'}};
 	return qq(<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20001102//EN" "http://www.w3.org/TR/2000/CR-SVG-20001102/DTD/svg-20001102.dtd">
-<svg width="$self->{'image_width'}" height="$self->{'image_height'}">
+<svg width="$self->{'image_width'}" height="$self->{'image_height'}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <defs><style type="text/css">
 poly { stroke-linecap: round }
 line, rect, poly { stroke-width: 0.5; }
