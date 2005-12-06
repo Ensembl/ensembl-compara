@@ -123,14 +123,12 @@ sub context_menu {
   my $obj  = $self->{object};
   my $species = $obj->species;
   my $name = $obj->name;
-  my $menu = $self->{page}->menu;
-  return unless $menu;
-  $menu->add_block( "snp$self->{flag}", 'bulleted',
+  $self->add_block( "snp$self->{flag}", 'bulleted',
                                   $obj->source.': '.$name );
 
   my @genes = @{ $obj->get_genes };
   foreach my $gene (@genes) {
-    $menu->add_entry(
+    $self->add_entry(
         "snp$self->{flag}", 
         'code' => 'gene_snp_info',
         'text' => "Gene SNP info",
@@ -143,7 +141,7 @@ sub context_menu {
   if ($self->{object}->param('source')) {
     $snpview_href .= ';source='.$self->{object}->param('source');
   }
-  $menu->add_entry(
+  $self->add_entry(
         "snp$self->{flag}",
         'code' => 'snp_info',
         'text' => "$name - SNP info",
@@ -151,7 +149,7 @@ sub context_menu {
 	'href' => $snpview_href
   );
   
-  $menu->add_entry(
+  $self->add_entry(
         "snp$self->{flag}",
         'code' => 'ld_info',
         'text' => "$name - LD info",
