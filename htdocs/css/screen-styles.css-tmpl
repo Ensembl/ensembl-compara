@@ -15,5 +15,7 @@ body { background-image: url(/img/nav-bg.gif); background-repeat: repeat-y; back
 
 .print_hide { display: inline }
 .print_hide_block { display: block }
+.print_hide_table { display: table }
+.print_hide_tr { display: table-row }
 
 #page div.sptop { height: 7em }

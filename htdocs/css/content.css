@@ -38,6 +38,8 @@ h2 { margin-bottom:0.5em; }
 
 h3.boxed, div.panel h3 { color:#993333; background-color:#fff9af; margin-top: 0.7em; margin-bottom:1em; padding:2px 4px 2px 4px; border:1px solid #ffdf33; }
 
+div.panel h3.plain { border:none; background-color:transparent; }
+
 /* LISTS */
 #page ol li { list-style-type:decimal; list-style-image:none; }
 
@@ -58,6 +60,10 @@ dd { margin-bottom:1em; }
 img.float-left { float:left; padding-right:10px; }
 
 img.float-right { float:right; padding-left:10px; }
+
+.sp-thumb { float:left; padding-right:4px; clear:left; }
+dl.species-list dt { margin:0px; padding:0px; min-height:15px; }
+dl.species-list dd { margin:0px 0px 2px 0px; padding:0px; min-height:25px; }
 
 .screenshot { text-align:center; margin:auto; padding:10px; }
 
@@ -124,7 +130,7 @@ td.stacked { padding:4px; }
 
 table.ss, table.spreadsheet { width: 100%; }
 
-table.ss tr.ss_header { background-color:#ccc; border-size:1px 0px 0px 0px; border-color:#ccc; border-style:solid; }
+table.ss tr.ss_header { background-color:#ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; }
 
 table.ss th, table.spreadsheet th { background-color: #ccc; border-width:1px 0px 0px 0px; border-color:#ccc; border-style:solid; padding:0.2em; vertical-align: top }
 
@@ -152,18 +158,20 @@ div.formpanel { padding:1em; margin:auto; border:1px solid #ccc;}
 div.formpanel div { margin-top:5px; }
 
 .formblock { left: 0px; right: 0px; position: relative; }
-.formblock p { width: 100%; padding: 0px; margin 0px;  }
-.formblock .formpadding { width: 29%; height: 1px; padding: 0px; margin:0px; float: left; left 0px; top: 0px }
+.formblock p { width: 100%; padding: 0px; margin: 0px;  }
+.formblock .formpadding { width: 29%; height: 1px; padding: 0px; margin:0px; float: left; left: 0px; top: 0px }
 .formblock h6 {
   float: left; width: 29%; top: 0px; left: 0px; padding: 0px; padding-right: 10px; margin: 0px; text-align: right;
   color: #993333; font-size: 1em; font-weight: bold; margin-top: 0.8em;
 }
+.formwide { margin-bottom: 0.5em; }
 .formwide h6, .forminline h6 {
   top: 0px; left: 0px; padding: 0px; margin: 0px; 
   color: #993333; font-size: 1em; font-weight: bold;
 }
 .formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65%; margin-bottom: 0.8em }
-.formcenter, .formcenter div { display:block; text-align:center; margin-botton: 0.8em;}
+.formcenter, .formcenter div { display:block; text-align:center; margin-bottom: 0.8em;}
+.formcontent p { margin-top:0.3em; }
 .forminline, .forminline div { display:inline; }
 .forminline h6 { display:inline; margin-right:1em; }
 
@@ -175,7 +183,7 @@ div.formpanel div { margin-top:5px; }
 .formblock .medium  { width: 12em }
 /** bug fix to get floats within their bordered div.... */
 .infoblock:after, .radiocheck1col:after, .radiocheck:after, .formblock:after  { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
-.infoblock, .radiocheck, .radiocheck1col, .formblock              { display: inline-block; }
+.infoblock, .radiocheck, .radiocheck1col, .formblock { display: inline-block; }
 /* Holly Hack Targets IE Win only \*/
 * html .infoblock, * html .radiocheck, * html .radiocheck1col, * html .formblock { height: 1%;}
 .infoblock, .radiocheck, .radiocheck1col, .formblock               { display: block; }
@@ -264,8 +272,8 @@ a.cv_plusminus { font-family:'Arial Black'; font-size: 30px; font-weight:bold; c
 .cv-zoom   { height: 30px; width: 13px; border: 0px; margin: 10px 0px 0px 0px; }
 .cv-zoom-2 { height: 16px; width: 13px; border: 0px; margin: 10px 0px 0px 0px; }
 
-.short_id_list dt { float: left; width: 6em; padding: 0px; margin: 0.2em 1em 0.2em 0.2em; border; 0; }
-.long_id_list dt { float: left; width: 13em; padding: 0px; margin: 0.2em 1em 0.2em 0.2em; border; 0; }
+.short_id_list dt { float: left; width: 6em; padding: 0px; margin: 0.2em 1em 0.2em 0.2em; border: 0; }
+.long_id_list dt { float: left; width: 13em; padding: 0px; margin: 0.2em 1em 0.2em 0.2em; border: 0; }
 
 table.grid { border-collapse: collapse }
 .grid tr td, .grid tr th { border: solid 1px #666; border-collapse: collapse; padding: 0.2em; }

@@ -39,27 +39,27 @@ TD.panel_text{
   align:            left; }
 
 TD.status_panel_head{ 
-  background-color: ffdf27;
+  background-color: #ffdf33;
   color:            #5A85D6;
   font-size:        large;
   font-weight:      bold;   
   align:            left; }
 
 TD.status_block_head{ 
-  background-color: ffdf27;
+  background-color: #ffdf33;
   color:            #5A85D6;
   font-size:        medium;
   font-weight:      bold;   
   align:            left; }
 
 TD.status_entry{ 
-  background-color: ffdf27;
+  background-color: #ffdf33;
   color:            #5A85D6;
   font-size:        medium;
   align:            left; }
 
 TD.status_warning { 
-  background-color: ffdf27;
+  background-color: #ffdf33;
   color:            #990000;
   font-size:        small;
   font-style:       italic;
