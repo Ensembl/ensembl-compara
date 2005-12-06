@@ -124,6 +124,7 @@ sub new {
   my $self = $class->SUPER::new(@_);
 
   $self->{_lazy_loading} = 0;
+  $self->{_use_autoincrement} = 1;
 
   return $self;
 }
@@ -181,7 +182,7 @@ sub store {
     }
   }
   
-  if (!$genomic_align_block->dbID) {
+  if (!$genomic_align_block->dbID and !$self->use_autoincrement()) {
     my $sql = 
             "SELECT MAX(genomic_align_block_id) FROM genomic_align_block WHERE".
             " genomic_align_block_id > ".$genomic_align_block->method_link_species_set->dbID.
@@ -881,6 +882,33 @@ sub lazy_loading {
   }
 
   return $self->{_lazy_loading};
+}
+
+=head2 use_autoincrement
+
+  [Arg  1]   : (optional)int value
+  Example    : $genomic_align_block_adaptor->use_autoincrement(0);
+  Description: Getter/setter for the _use_autoincrement flag. This flag
+               is used when storing new objects with no dbID in the
+               database. If the flag is ON (default), the adaptor will
+               let the DB set the dbID using the AUTO_INCREMENT ability.
+               If you unset the flag, then the adaptor will look for the
+               first available dbID after 10^10 times the
+               method_link_species_set_id.
+  Returntype : integer
+  Exceptions : 
+  Caller     : none
+
+=cut
+
+sub use_autoincrement {
+  my ($self, $value) = @_;
+
+  if (defined $value) {
+    $self->{_use_autoincrement} = $value;
+  }
+
+  return $self->{_use_autoincrement};
 }
 
 1;
