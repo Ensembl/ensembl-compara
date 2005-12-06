@@ -994,6 +994,7 @@ sub alignsliceviewbottom {
 
     my @ARRAY;
     my $url = $wuc->get('_settings','URL');
+    my $align = $wuc->get('alignslice','align');
     my $cmpstr = 'primary';
     my $t1 = $wuc->get('ensembl_transcript','compact');
     my $t2 = $wuc->get('evega_transcript','compact');
@@ -1013,6 +1014,7 @@ sub alignsliceviewbottom {
 	my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
 	$CONF->{'align_slice'}  = 1;
 	$CONF->set('scalebar', 'label', $vsp);
+	$CONF->set('alignslice', 'align', $align);
 	$CONF->set_species($vsp);
 	$CONF->set('_settings','URL',$url,1);
 	$CONF->set('ensembl_transcript', 'compact', $t1, 1);

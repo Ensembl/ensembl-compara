@@ -26,6 +26,7 @@ sub new {
 
   foreach my $align (@mlagan_alignments) {
       my $h = $self->{'config'}->{'species_defs'}->{'_multi'}->{$align};
+      next if (! defined($h->{$species}));
       $self->add_radiobutton( "opt_alignm_$align", $align );
 
       foreach my $sp (sort keys %$h ) { 

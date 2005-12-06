@@ -455,6 +455,7 @@ sub alignsliceview {
 	    $wsc->set($opt, "off", 1);
 	}
 	$wsc->set($set_align, "on", 1);
+	$wuc->set('alignslice', 'align', $set_align, 1);
 	$wsc->save();
     }
 
@@ -484,6 +485,7 @@ sub alignsliceview {
 	    $wuc->set( 'alignslice',  'type', $atype, 1);
 	    $wuc->set( 'alignslice',  'id', $id, 1);
             $wuc->set( 'alignslice',  'species', \@selected_species, 1);
+            $wuc->set( 'alignslice',  'align', $opt, 1);
 	    last;
 	}
     }
