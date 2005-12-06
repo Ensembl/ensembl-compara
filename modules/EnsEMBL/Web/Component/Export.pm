@@ -107,21 +107,21 @@ sub stage1_form {
   $form->add_element('type' => 'SubHeader', 'value' => 'Context');
   $form->add_element(
     'type'     => 'String',
-    'required' => 'no',
-    'value'    => '',
-    'style'    => 'short',
-    'name'     => 'downstream',
-    'label'    => 'Bp downstream'
-  );
-  $form->add_element(
-    'type'     => 'String',
     'style'    => 'short',
     'required' => 'no',
     'value'    => '', 
     'name'     => 'upstream',
-    'label'    => 'Bp upstream'
+    'label'    => 'Bp upstream (to the left)'
   );
 
+  $form->add_element(
+    'type'     => 'String',
+    'required' => 'no',
+    'value'    => '',
+    'style'    => 'short',
+    'name'     => 'downstream',
+    'label'    => 'Bp downstream (to the right)'
+  );
   $form->add_element( 'type' => 'SubHeader', 'value' => 'Output format' );
 
   my $formats = $object->__data->{'formats'};
