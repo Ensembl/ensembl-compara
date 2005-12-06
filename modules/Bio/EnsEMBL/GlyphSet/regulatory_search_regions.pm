@@ -15,8 +15,22 @@ sub my_helplink { return "markers"; }
 sub features {
     my ($self) = @_;
     my $slice = $self->{'container'};
-    my $features =  $slice->adaptor->db->get_RegulatorySearchRegionAdaptor()->fetch_all_by_Slice( $slice );  # $logic name is second param
-    return $features;
+#    my $features =  $slice->adaptor->db->get_RegulatorySearchRegionAdaptor()->fetch_all_by_Slice( $slice );  # $logic name is second param
+  my $gene = $self->{'config'}->{'_draw_single_Gene'};
+  warn ">>> $gene <<<";
+  if( $gene ) {
+    my $data = $slice->adaptor->db->get_RegulatorySearchRegionAdaptor->fetch_all_by_gene( $gene, 1 );
+    my $offset = 1 - $slice->start;
+    foreach( @$data ) {
+      $_->{'start'} += $offset;
+      $_->{'end'}   += $offset;
+    }
+    warn join " ", map {$_->seq_region_start} @$data;
+    return $data;
+  } else {
+    return $slice->adaptor->db->get_RegulatorySearchRegionAdaptor->fetch_all_by_Slice_constraint( $slice );  # $logic name is second param
+  }
+#    return $features;
 }
 
 sub href {
