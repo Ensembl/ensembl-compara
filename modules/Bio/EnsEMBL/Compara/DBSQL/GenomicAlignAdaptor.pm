@@ -82,6 +82,7 @@ sub new {
 	       "using default value [$DEFAULT_MAX_ALIGNMENT]");
     $self->{'max_alignment_length'} = $DEFAULT_MAX_ALIGNMENT;
   }
+  $self->{_use_autoincrement} = 1;
 
   return $self;
 }
@@ -128,7 +129,7 @@ sub store {
       throw( "method_link_species_set in GenomicAlign is not in DB" );
     }
 
-    if (!$ga->dbID) {
+    if (!$ga->dbID and !$self->use_autoincrement()) {
       my $sql = 
               "SELECT MAX(genomic_align_id) FROM genomic_align WHERE".
               " genomic_align_block_id > ".$ga->method_link_species_set->dbID.
@@ -548,5 +549,32 @@ sub retrieve_all_direct_attributes {
   return $genomic_align;
 }
 
+
+=head2 use_autoincrement
+
+  [Arg  1]   : (optional)int value
+  Example    : $genomic_align_adaptor->use_autoincrement(0);
+  Description: Getter/setter for the _use_autoincrement flag. This flag
+               is used when storing new objects with no dbID in the
+               database. If the flag is ON (default), the adaptor will
+               let the DB set the dbID using the AUTO_INCREMENT ability.
+               If you unset the flag, then the adaptor will look for the
+               first available dbID after 10^10 times the
+               method_link_species_set_id.
+  Returntype : integer
+  Exceptions : 
+  Caller     : none
+
+=cut
+
+sub use_autoincrement {
+  my ($self, $value) = @_;
+
+  if (defined $value) {
+    $self->{_use_autoincrement} = $value;
+  }
+
+  return $self->{_use_autoincrement};
+}
 
 1;
