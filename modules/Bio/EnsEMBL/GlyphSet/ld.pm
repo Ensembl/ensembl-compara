@@ -40,6 +40,7 @@ sub _init {
   my $pop_obj     = $pop_adaptor->fetch_by_dbID($only_pop);
   my $pop_name    = $pop_obj->name if $pop_obj;
   my $length      = ($self->{'container'}->length -1)/1000;
+  my $max_ld_range = 100000;
 
   unless( $number_of_snps > 1 ) {
     $self->errorTrack( "No $key linkage data in $length kb window for population $pop_name" );
@@ -71,15 +72,17 @@ sub _init {
   #   but not on the y.  This means y coords need to be scaled by $height_ppb
   my $first_start = $snps[  0 ]->[1]->start;
   my $last_start  = $snps[ -1 ]->[1]->start;
+  my @points = (  $last_start + 4 / $height_ppb - $offset,  $yoffset -2 ,
+                     $first_start - 4 / $height_ppb - $offset, $yoffset -2 );
+  if( $max_ld_range < ($last_start-$first_start)) {
+    push @points,  $first_start + $max_ld_range/2 - $offset, 2 + $max_ld_range/2 * $height_ppb + $yoffset;
+    push @points,  $last_start - $max_ld_range/2 - $offset, 2 + $max_ld_range/2 * $height_ppb + $yoffset;
+  } else {
+    push @points,  ($first_start + $last_start)/2 - $offset,
+                     2 + ($last_start - $first_start)/2 * $height_ppb + $yoffset
+  }
   $self->push( Sanger::Graphics::Glyph::Poly->new({
-	'points' => [
-		     $last_start + 4 / $height_ppb - $offset, 
-		     $yoffset -2 ,
-		     $first_start - 4 / $height_ppb - $offset, 
-		     $yoffset -2 , 
-		     ($first_start + $last_start)/2 - $offset, 
-		     2 + ($last_start - $first_start)/2 * $height_ppb + $yoffset,
-		    ],
+	'points' => \@points,
 	'colour'  => 'grey',
 						    }));
 
@@ -109,9 +112,16 @@ sub _init {
     foreach my $n ( reverse( ($m+1) .. ($number_of_snps-1) ) ) {
       my $snp_n1 = $snps[ $n-1 ];  # SNP m
       my $snp_n  = $snps[ $n   ];
-      my $x  = ( $snp_m->[1]->start  + $snp_n1->[1]->start )/2 - $offset ; 
-      my $y  = ( $snp_n1->[1]->start - $snp_m->[1]->start )/2           ; 
+      my $x  = ( $snp_m->[1]->start  + $snp_n1->[1]->start )/2 - $offset ;
+      my $y  = ( $snp_n1->[1]->start - $snp_m->[1]->start )/2           ;
       my $d1 = ( $snp_n->[1]->start  - $snp_n1->[1]->start )/2           ;
+      my @points = ( [$x, $y ] , [$x + $d2, $y - $d2 ] , [$x + $d1 + $d2, $y + $d1 - $d2 ] , [$x + $d1, $y + $d1 ] );
+      next if $points[1][1] >= $max_ld_range / 2; # Off the top!!
+      if( $points[1][1]<=0 || $points[3][1]>= $max_ld_range / 2 ) {
+        @points = $self->intersect( $max_ld_range/2, @points );
+      }
+      next unless @points > 2; 
+      my @p2 = map { $_->[0], $_->[1]*$height_ppb +$yoffset } @points;
       my $flag_triangle = $y-$d2;  # top box is a triangle
       my $value = $data->{'ldContainer'}{$snp_m->[0].'-'.$snp_n->[0]}{ $only_pop }{$key};
       my $colour = defined($value) ? $colour_gradient[POSIX::floor(40 * $value)] : "white";
@@ -120,12 +130,7 @@ sub _init {
 
       $self->push( Sanger::Graphics::Glyph::Poly->new({
         'title'  => "$snp_names: ". ($value || "n/a"),
-        'points' => [ 
-	  $x,   $y   * $height_ppb + $yoffset , 
-	  $flag_triangle < 0 ?     (): 
-		     ( $x+$d2,  $flag_triangle * $height_ppb + $yoffset ), 
-	  $x+$d1+$d2, ($y+$d1-$d2)   * $height_ppb + $yoffset , 
-	  $x+$d1,     ($y+$d1)       * $height_ppb + $yoffset   ],
+        'points' => \@p2,
 	'colour' => $colour,
 	#'bordercolour' => 'grey90',
       }));
@@ -136,6 +141,35 @@ sub _init {
 
 }
 
+sub intersect {
+  my( $self, $height, @points ) = @_;
+  ## cut off less than X
+  my @PP = @points;
+  if( $points[1][1]<0 ) {
+    my $old = $points[-1];
+       @points = ();
+    my $edge = 0;
+    foreach my $point ( @PP ) {
+      next if $point->[1] < 0;
+      push @points, $point;
+    }
+    return () unless @points > 2;
+  }
+  if( $PP[3][1] > $height ) {
+    my @PP = @points;
+    my $old = $points[-1];
+       @points = ();
+    my $edge = $height;
+    foreach my $point ( @PP ) {
+      push @points, [ $old->[0] + ( $edge - $old->[1] ) / ( $point->[1] - $old->[1] ) * ( $point->[0] - $old->[0] ) , $edge ]
+        if ( $old->[1] < $edge && $point->[1] > $edge ) || ( $old->[1] > $edge && $point->[1] < $edge );
+      push @points, $point if $point->[1] <= $edge;
+      $old = $point;
+    }
+    return () unless @points > 2;
+  }
+  return @points;
+}
 
 
 1;
