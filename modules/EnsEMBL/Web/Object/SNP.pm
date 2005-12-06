@@ -233,12 +233,7 @@ sub status {
 
 sub alleles {
  my @alleles = @{$_[0]->vari->get_all_Alleles};
- my $return;
- foreach (@alleles) {
-   $return .= $_->allele."/";
-  }
- chop $return;
- return $return;
+ return join '/', map { $_->allele } @alleles;
 }
 
 
