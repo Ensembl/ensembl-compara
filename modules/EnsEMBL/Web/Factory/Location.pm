@@ -106,6 +106,16 @@ sub _location_from_Transcript {
       }
     }
   }
+  foreach my $db ( @dbs ) {
+    eval {
+      my $TF = $self->_predtranscript_adaptor( $db )->fetch_by_stable_id( $ID );
+      $TS = $self->_slice_adaptor->fetch_by_Feature( $TF );
+    };
+    if( $TS ) {
+      $self->param('db', $db );
+      return $self->_create_from_slice( 'Transcript', $ID, $self->expand($TS), $ID );
+    }
+  }
 
   $self->problem( "fatal", "Unknown transcript", "Could not find transcript $ID" );
   return undef;
@@ -532,8 +542,8 @@ sub merge {
     $start = $o->seq_region_start if $o->seq_region_start < $start;
     $end   = $o->seq_region_end   if $o->seq_region_end   > $end;
   }
-  $start -= $self->param('downstream') || 0;
-  $end   += $self->param('upstream') || 0;
+  $start -= $self->param('upstream') || 0;
+  $end   += $self->param('downstream') || 0;
   $self->clearDataObjects();
   $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Location', {
     'type'              => 'merge',
@@ -594,6 +604,13 @@ sub _marker_adaptor {
   my $self = shift;
   return $self->__species_hash->{'adaptors'}{'marker'} ||=
     $self->database('core',$self->__species)->get_MarkerAdaptor();
+}
+
+sub _predtranscript_adaptor {
+  my $self = shift;
+  my $db   = shift || 'core';
+  return $self->__species_hash->{'adaptors'}{"predtranscript_$db"} ||=
+    $self->database($db,$self->__species)->get_PredictionTranscriptAdaptor();
 }
 
 1;
