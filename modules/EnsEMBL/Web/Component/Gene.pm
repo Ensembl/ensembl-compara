@@ -682,27 +682,22 @@ sub genespliceview {
 sub genesnpview {
   my( $panel, $object, $no_snps, $do_not_render ) = @_;
 
-  my @domain_logic_names = qw(Pfam scanprosite Prints pfscan);
-  #my $db             = $object->get_db();
-  my $gene           = $object->Obj;
-  my $gene_stable_id = $object->stable_id;
-
-  #my $ANALYSIS = $db eq 'core' ? lc($object->species_defs->AUTHORITY) : 'otter';
-
-## -- Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT) - ##
-## -- Get 5 configs - and set width to width of context config ---------- ##
+  #my $ANALYSIS = $object->get_db() eq 'core' ? lc($object->species_defs->AUTHORITY) : 'otter';
 
   my $image_width  = $object->param( 'image_width' );
   my $context      = $object->param( 'context' );
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
-
   my $uca           = $object->get_userconfig_adaptor();
   my $master_config = $uca->getUserConfig( "genesnpview_transcript" );
      $master_config->set( '_settings', 'width',  $image_width );
+
+  ## -- Get 5 configs - and set width to width of context config ---------- ##
+  ## -- Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT) - ##
   my $Configs;
   my @confs = qw(context gene transcripts_top transcripts_bottom);
   push @confs, 'snps' unless $no_snps;
+
   foreach( @confs ) {
     $Configs->{$_} = $uca->getUserConfig( "genesnpview_$_" );
     $Configs->{$_}->set( '_settings', 'width',  $image_width );
@@ -732,6 +727,8 @@ sub genesnpview {
 ## Get the SNPS....
   $object->getVariationsOnSlice( $object->Obj, 'transcripts', \%valids ) unless $no_snps;; ## Stores in $object->__data->{'SNPS'} ## Written
   $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
+
+  my @domain_logic_names = qw(Pfam scanprosite Prints pfscan);
   foreach( @domain_logic_names ) {
     $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'} 
   }
@@ -799,6 +796,7 @@ sub genesnpview {
 
 ## -- Tweak the configurations for the five sub images ------------------ ##
 ## Gene context block;
+  my $gene_stable_id = $object->stable_id;
   $Configs->{'context'}->{'geneid2'} = $gene_stable_id; ## Only skip background stripes...
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
