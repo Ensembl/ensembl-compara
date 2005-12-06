@@ -74,27 +74,15 @@ sub _init {
     
     my $species =  $Container->{_config_file_name_};
 
-# Get the compara species selection    
-# Menu items for compare are of the following form:
-# SPECIES_compara_TYPE, e.g
-#    homo_sapiens_compara_pairwise
-#    homo_sapiens_compara_mlagan
-# This is a temporary solution whilst we are figuring out what will go into Compara menu 
-# at the moment there are several pairwise alignments (use BLASTZ_NET) and one multiple using MLAGAN (human+rat+mouse+dog)
+# The compara option that activates the current AlignSlice alignment is stored in Config - alignslice -align
+# The option looks like opt_alignm_MLAGAN-170 or opt_alignp_BLASTZ_NET_Canis_familiaris
+# When we create links for secondary species we need to replace the secondary species with the primary species
 
-    my $aslink = $Config->get('align_species',$ENV{ENSEMBL_SPECIES});
-    my ($spe, $type) = split('_compara_', $aslink);
-    my ($psp, $ssp) = (lc($ENV{ENSEMBL_SPECIES}), lc($species));
-    
-    if ($type eq 'pairwise') {
-	if ($ssp ne $psp) {
-	    $aslink =~ s/^.+_compara/${psp}_compara/;
-	}
-	
-    } else {	
-	$aslink =~ s/^.+_compara/${ssp}_compara/;
+    my $aslink = $Config->get('alignslice', 'align');
+    if ($aslink =~ /BLASTZ_NET/ && $species ne $ENV{ENSEMBL_SPECIES}) {
+	$aslink =~ s/$species$/$ENV{ENSEMBL_SPECIES}/;
     }
-    
+
     my $main_width     = $Config->get('_settings', 'main_vc_width');
     my $len            = $Container->length();
 
