@@ -22,9 +22,11 @@ sub managed_name {
 
 sub features {
   my ($self) = @_;
-  warn "BED!";
-  my @data = map { $_->map( $self->{'container'} ) } @{ $self->{'extras'}{'data'} };
-  warn @data;
+  my @data =
+    map { $_->[1] }
+    sort { $a->[0] <=> $b->[0] }
+    map { [ $_->start, $_ ] }
+    map { $_->map( $self->{'container'} ) } @{ $self->{'extras'}{'data'} };
   return \@data;
 }
 
