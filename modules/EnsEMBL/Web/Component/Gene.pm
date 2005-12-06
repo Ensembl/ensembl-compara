@@ -683,11 +683,11 @@ sub genesnpview {
   my( $panel, $object, $no_snps, $do_not_render ) = @_;
 
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan);
-  my $db             = $object->get_db();
+  #my $db             = $object->get_db();
   my $gene           = $object->Obj;
   my $gene_stable_id = $object->stable_id;
 
-  my $ANALYSIS = $db eq 'core' ? lc($object->species_defs->AUTHORITY) : 'otter';
+  #my $ANALYSIS = $db eq 'core' ? lc($object->species_defs->AUTHORITY) : 'otter';
 
 ## -- Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT) - ##
 ## -- Get 5 configs - and set width to width of context config ---------- ##
@@ -707,7 +707,7 @@ sub genesnpview {
     $Configs->{$_} = $uca->getUserConfig( "genesnpview_$_" );
     $Configs->{$_}->set( '_settings', 'width',  $image_width );
   }
-  my $slices = $object->get_gene_slices( ## Written...
+   $object->get_gene_slices( ## Written...
     $master_config,
     [ 'context',     'normal', '500%'  ],
     [ 'gene',        'normal', '133%'  ],
