@@ -94,6 +94,11 @@ sub expanded_init {
   my %id             = ();
   my $dep            = $Config->get(  $type, 'dep' );
   my $h              = $Config->get('_settings','opt_halfheight') ? 4 : 8;
+  if( $self->{'extras'} && $self->{'extras'}{'height'} ) {
+    warn
+    $h = $self->{'extras'}{'height'};
+  }
+
   my ($T,$C1,$C) = (0, 0, 0 );
 
 ## Get array of features and push them into the id hash...
@@ -124,7 +129,7 @@ sub expanded_init {
       $n_bumped++;
       next;
     }
-    $y_pos = $row * int( -1.5 * $h ) * $strand;
+    $y_pos = $row * int( - $h - 2 ) * $strand;
     $C1 += @{$id{$i}}; ## Diagnostic report....
     my $Composite = new Sanger::Graphics::Glyph::Composite({
       'href'  => $self->href( $i, $id{$i} ),
@@ -188,7 +193,7 @@ sub expanded_init {
   if( $Config->get('_settings','opt_show_bumped') && $n_bumped ) {
     my $ypos = 0;
     if( $strand < 0 ) {
-      $y_pos = ($dep+1) * int( 1.5 * $h ) + 2;
+      $y_pos = ($dep+1) * ( $h + 2 ) + 2;
     } else {
       $y_pos  = 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
     }
