@@ -760,9 +760,12 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'Exonerate_cDNA', 'Ciona cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'Btaurus_Exonerate_cDNA',   'Cow cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'Cow_cDNAs',   'Cow cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'cow_cdna',   'Cow cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'chicken_cdna', 'G.gallus cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'macaque_cdna', 'Macaque cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'fugu_cdnas', 'F.rubripes cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'fugu_cdna', 'F.rubripes cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'duck_cdna', 'Duck cDNAs', $POS++, @_ );
   $self->add_new_track_cdna( 'mouse_cdna', 'Mouse cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'other_cdna', 'Other cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'opossum_cdna', 'Opossum cDNAs',   $POS++, @_ );
@@ -798,6 +801,7 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'scerevisiae_est', 'S. cerevisiae ESTs', $POS++, @_ );
   $self->add_new_track_est( 'chicken_est',  'G.gallus ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'macaque_est',  'Macaque ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'yeast_est',  'Macaque ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'mouse_est',    'Mouse ESTs',      $POS++, @_ );
   $self->add_new_track_est( 'zfish_est',    'D.rerio ESTs',    $POS++, @_ );
@@ -821,6 +825,7 @@ sub ADD_ALL_EST_FEATURES {
     [ 'ciona_est',             'Ciona EST' ],
     [ 'drosophila_est',        'Fly EST' ],
     [ 'drosophila_est',        'Fly EST' ],
+    [ 'cow_est',               'Cow EST' ],
     [ 'fugu_est',              'Fugu EST' ],
     [ 'RNA',                   'Mosquito EST' ],
     [ 'mouse_est',             'Mouse EST' ],
@@ -864,11 +869,12 @@ sub ADD_ALL_PROTEIN_FEATURES {
   my $POS  = shift || 2200;
   $self->add_new_track_protein( 'swall',               'Proteins',       $POS++, @_ );
   $self->add_new_track_protein( 'swall_blastx',        'Proteins',       $POS++, @_ );
-  $self->add_new_track_protein( 'uniprot',             'UniProt',       $POS++, @_ );
-  $self->add_new_track_protein( 'Uniprot_mammal',      'UniProt (mammal)',       $POS++, @_ );
-  $self->add_new_track_protein( 'Uniprot_non_mammal',  'UniProt (non-mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot',             'UniProtKB',       $POS++, @_ );
+  $self->add_new_track_protein( 'Uniprot_wublastx',    'UniProtKB (v. genscans)',       $POS++, @_ );
+  $self->add_new_track_protein( 'Uniprot_mammal',      'UniProtKB (mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'Uniprot_non_mammal',  'UniProtKB (non-mammal)',       $POS++, @_ );
   $self->add_new_track_protein( 'drosophila-peptides', 'Dros. peptides', $POS++, @_ );
-  $self->add_new_track_protein( 'swall_high_sens',     'UniProt', $POS++, @_ );
+  $self->add_new_track_protein( 'swall_high_sens',     'UniProtKB', $POS++, @_ );
   $self->add_new_track_protein( 'anopheles_peptides',  'Mos. peptides',  $POS++,
     'SUBTYPE'     => 'default' ,
     'URL_KEY'     => 'ENSEMBL_ANOPHELES_ESTTRANS', 'ID' => TRIM, 'LABEL' => TRIM,
@@ -882,6 +888,9 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'dog_protein',         'Dog proteins', $POS++, @_ );
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'Cow_Proteins',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'fugu_protein',         'Fugu proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'fish_protein',         'Fish proteins', $POS++, @_ );
   $self->add_new_track_protein( 'macaque_protein',     'Macaque proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_protein',       'Mouse proteins', $POS++, @_ );
   $self->add_new_track_protein( 'mouse_refseq',        'Mouse RefSeqs', $POS++, @_ );
@@ -896,6 +905,8 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'ciona_jgi_v1',            'JGI 1.0 model', $POS++, @_ );
   $self->add_new_track_protein( 'ciona_kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
   $self->add_new_track_protein( 'ciona_kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
+  $self->add_new_track_protein( 'blastx',            'BLASTx', $POS++, @_ );
+  $self->add_new_track_protein( 'blastp',            'BLASTp', $POS++, @_ );
   return $POS;
 }
 
