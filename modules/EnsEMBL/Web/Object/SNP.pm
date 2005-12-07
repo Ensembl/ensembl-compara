@@ -537,11 +537,11 @@ sub extra_pop {
 
 sub individual_table {
   my $self = shift;
-  my @individual_genotypes = $self->individual_genotypes_obj;
-  return {} unless @individual_genotypes; 
+  my $individual_genotypes = $self->individual_genotypes_obj;
+  return {} unless @$individual_genotypes; 
 
   my %data;
-  foreach my $ind_gt_obj ( @individual_genotypes ) { 
+  foreach my $ind_gt_obj ( @$individual_genotypes ) { 
     my $ind_obj   = $ind_gt_obj->individual;
     next unless $ind_obj;
     my $ind_id    = $ind_obj->dbID;
