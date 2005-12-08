@@ -419,6 +419,7 @@ sub parse_RAP_output
   # merge the trees so that the children of the newick tree are now attached to the 
   # input tree's root node
   $tree->merge_children($newtree);
+  $tree->add_tag("Duplication", $newtree->get_tagvalue('Duplication'));
 
   #newick tree is now empty so release it
   $newtree->release_tree;
