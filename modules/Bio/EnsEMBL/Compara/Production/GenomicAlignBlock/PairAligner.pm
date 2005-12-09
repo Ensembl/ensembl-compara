@@ -118,11 +118,6 @@ sub get_params {
 # 
 ##########################################
 
-sub worker_temp_directory {
-  my $self = shift;
-  return $self->worker->worker_process_temp_directory;
-}
-
 sub options {
   my $self = shift;
   $self->{'_options'} = shift if(@_);
