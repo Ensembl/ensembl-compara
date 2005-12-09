@@ -1,9 +1,7 @@
-
-
 #
 # Ensembl module for Bio::EnsEMBL::Compara::SyntenyRegionAdaptor
 #
-# Cared for by Ewan Birney <birney@ebi.ac.uk>
+# Cared for by Abel Ureta-Vidal <abel@ebi.ac.uk>
 #
 # Copyright GRL and EBI
 #
@@ -13,7 +11,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::SyntenyRegionAdaptor - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor - DESCRIPTION of Object
 
 =head1 SYNOPSIS
 
@@ -33,138 +31,59 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-
-# Let the code begin...
-
-
 package Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor;
-use vars qw(@ISA);
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::SyntenyRegion;
+
 use strict;
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Compara::SyntenyRegion;
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
-=head2 fetch_by_dbID
-
- Title   : fetch_by_dbID
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 sub fetch_by_dbID{
-   my ($self,$dbid) = @_;
+   my ($self,$dbID) = @_;
 
-   if( !defined $dbid ) {
-       $self->throw("fetch_by_dbID with no dbID!");
+   if( !defined $dbID ) {
+     throw("fetch_by_dbID with no dbID!");
    }
 
-   my $sth = $self->prepare("select synteny_cluster_id,dnafrag_id,seq_start,seq_end from synteny_region where synteny_region_id = $dbid");
+   my $sth = $self->prepare("select synteny_region_id, method_link_species_set_id from synteny_region where synteny_region_id = $dbID");
+   $sth->execute;
+   my ($synteny_region_id, $method_link_species_set_id) = $sth->fetchrow_array();
 
-   my ($cluster,$dnafrag,$start,$end) = $sth->fetchrow_array();
+   my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion;
+   $sr->dbID($synteny_region_id);
+   $sr->method_link_species_set_id($method_link_species_set_id);
 
-   return $self->_new_region_from_array($dbid,$cluster,$dnafrag,$start,$end);
+   my $dfra = $self->db->get_DnaFragRegionAdaptor;
+   my $dfrs = $dfra->fetch_by_synteny_region_id($dbID);
+   while (my $dfr = shift @{$dfrs}) {
+     $sr->add_child($dfr);
+   }
+   return $sr;
 }
-
-=head2 fetch_by_cluster_id
-
- Title   : fetch_by_cluster_id
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub fetch_by_cluster_id{
-   my ($self,$cluster_id) = @_;
-
-   if( !defined $cluster_id ) {
-       $self->throw("fetch_by_cluster_id with no cluster_id!");
-   }
-
-   my $sth = $self->prepare("select synteny_region_id,dnafrag_id,seq_start,seq_end from synteny_region where synteny_cluster_id = $cluster_id");
-
-   my @out;
-   while( my $ref  = $sth->fetchrow_arrayref() ) {
-       my ($dbid,$dnafrag,$start,$end) = @$ref;
-       push(@out,$self->_new_region_from_array($dbid,$cluster_id,$dnafrag,$start,$end));
-   }
-   
-   return @out;
-}
-
-
-=head2 _new_region_from_array
-
- Title   : _new_region_from_array
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
-
-sub _new_region_from_array{
-   my ($self,$dbID,$cluster,$dnafrag,$start,$end) = @_;
-
-   if( !defined $end ) {
-       $self->throw("internal error - not enough args");
-   }
-
-   my $region = Bio::EnsEMBL::Compara::SyntenyRegion->new();
-   $region->cluster_id($cluster);
-   $region->dnafrag_id($dnafrag);
-   $region->start($start);
-   $region->end($end);
-   $region->adaptor($self);
-   $region->dbID($dbID);
-
-   return $region;
-}
-
-
-=head2 store
-
- Title   : store
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
-
-
-=cut
 
 sub store{
-   my ($self,$cluster_id,$region) = @_;
+   my ($self,$sr) = @_;
 
-   if( !defined $region ) {
-       $self->throw("store(cluster_id,region_object)");
+   if( !ref $sr || !$sr->isa("Bio::EnsEMBL::Compara::SyntenyRegion") ) {
+       throw("$sr is not a SyntenyRegion object");
    }
 
-   if( !ref $region || !$region->isa("Bio::EnsEMBL::Compara::SyntenyRegion") ) {
-       $self->throw("$region is not a SyntenyRegion");
+   my $sth = $self->prepare("insert into synteny_region (method_link_species_set_id) VALUES (?)");
+   
+   $sth->execute($sr->method_link_species_set_id);
+   my $synteny_region_id = $sth->{'mysql_insertid'};
+   
+   $sr->dbID($synteny_region_id);
+   $sr->adaptor($self);
+   
+   my $dfra = $self->db->get_DnaFragRegionAdaptor;
+   foreach my $dfr (@{$sr->children}) {
+     $dfr->synteny_region_id($synteny_region_id);
+     $dfra->store($dfr);
    }
-
-   my $sth = $self->prepare("insert into synteny_region (synteny_cluster_id,dnafrag_id,seq_start,seq_end) VALUES (?,?,?,?)");
-   
-   $sth->execute($cluster_id,$region->dnafrag_id,$region->seq_start,$region->seq_end);
-   my $region_id = $sth->{'mysql_insertid'};
-   
-   $region->dbID($region_id);
-   $region->adaptor($self);
-   
-   return $region_id;
+   return $sr->dbID;
 }
 
 1;

@@ -1,5 +1,3 @@
-
-
 #
 # Ensembl module for Bio::EnsEMBL::Compara::SyntenyRegion
 #
@@ -40,103 +38,91 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::SyntenyRegion;
 
 use strict;
+use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
+use Bio::EnsEMBL::Compara::NestedSet;
+our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
+
 sub new {
-    my( $class, $hash ) = @_;
-    
-    my $self = $hash||{};
-    bless $self,$class;
-    
-    return $self;
+  my ($class, @args) = @_;
+
+  my $self = $class->SUPER::new(@args);
+
+#  my $self = bless {}, $class;
+  
+  if (scalar @args) {
+    #do this explicitly.
+    my ($dbid, $stable_id, $method_link_species_set_id, $adaptor) = rearrange([qw(DBID STABLE_ID METHOD_LINK_SPECIES_SET_ID ADAPTOR)], @args);
+
+    $dbid && $self->dbID($dbid);
+    $stable_id && $self->stable_id($stable_id);
+    $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
+    $adaptor && $self->adaptor($adaptor);
+  }
+
+  return $self;
 }
 
-=head2 start
+=head2 new_fast
 
- Title   : start
- Usage   : $obj->start($newval)
+  Arg [1]    : hash reference $hashref
+  Example    : none
+  Description: This is an ultra fast constructor which requires knowledge of
+               the objects internals to be used.
+  Returntype :
+  Exceptions : none
+  Caller     :
+
+=cut
+
+sub new_fast {
+  my ($class, $hashref) = @_;
+
+  return bless $hashref, $class;
+}
+
+
+=head2 stable_id
+
+ Title   : stable_id
+ Usage   : $obj->stable_id($newval)
  Function: 
- Returns : value of start
+ Returns : value of stable_id
  Args    : newvalue (optional)
 
 
 =cut
 
-sub start{
+sub stable_id{
    my $obj = shift;
    if( @_ ) {
       my $value = shift;
-      $obj->{'start'} = $value;
+      $obj->{'stable_id'} = $value;
     }
-    return $obj->{'start'};
+    return $obj->{'stable_id'};
 
 }
 
-sub id { my $self = shift; return "$self->{'hit_chr_name'}:$self->{'hit_chr_start'}-$self->{'hit_chr_end'}"; }
+=head2 method_link_species_set_id
 
-=head2 end
-
- Title   : end
- Usage   : $obj->end($newval)
+ Title   : method_link_species_set_id
+ Usage   : $obj->method_link_species_set_id($newval)
  Function: 
- Returns : value of end
+ Returns : value of method_link_species_set_id
  Args    : newvalue (optional)
 
 
 =cut
 
-sub end{
-   my $obj = shift;
-   if( @_ ) {
-      my $value = shift;
-      $obj->{'end'} = $value;
-    }
-    return $obj->{'end'};
-
+sub method_link_species_set_id{
+  my $obj = shift;
+  if( @_ ) {
+    my $value = shift;
+    $obj->{'method_link_species_set_id'} = $value;
+  }
+  return $obj->{'method_link_species_set_id'};
 }
-
-=head2 cluster_id
-
- Title   : cluster_id
- Usage   : $obj->cluster_id($newval)
- Function: 
- Returns : value of cluster_id
- Args    : newvalue (optional)
-
-
-=cut
-
-sub cluster_id{
-   my $obj = shift;
-   if( @_ ) {
-      my $value = shift;
-      $obj->{'cluster_id'} = $value;
-    }
-    return $obj->{'cluster_id'};
-
-}
-
-=head2 dnafrag_id
-
- Title   : dnafrag_id
- Usage   : $obj->dnafrag_id($newval)
- Function: 
- Returns : value of dnafrag_id
- Args    : newvalue (optional)
-
-
-=cut
-
-sub dnafrag_id{
-   my $obj = shift;
-   if( @_ ) {
-      my $value = shift;
-      $obj->{'dnafrag_id'} = $value;
-    }
-    return $obj->{'dnafrag_id'};
-
-}
-
 
 =head2 dbID
 
