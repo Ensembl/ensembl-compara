@@ -262,6 +262,7 @@ a.info { text-decoration: none; font-weight:bold; }
 
 div#page table.sitemap td ul.sitemap li.toggle { list-style:none; margin-left:-15px; }
 img.toggle-box { padding-right:4px; }
+dl.sitemap, ul.sitemap { margin:-0.5em -2em; }
 dl.sitemap a, ul.sitemap a { text-decoration:none; }
 dl.sitemap dt { font-size:115%; }
 dl.sitemap dd { padding-bottom:0.5em; }

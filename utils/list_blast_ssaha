@@ -30,6 +30,8 @@ Example:
    ./list_blast_ssaha --nospecies Caenorhabditis_elegans --sources blast
 
   Delete all sources that are not in use. Check the pre-site too.
+  WARNING: bug  - for some reason it doesn't accept the first argument?!?!
+
 
 =head1 OPTIONS
 
@@ -64,7 +66,7 @@ B<  blast>; Lists all the files in use for these sources:
   BLASTP_DATASOURCES 
   BLASTX_DATASOURCE
 
-B<  ssaha>; Lists all the ssaha servers in use: SSAHA_DATASOURCES
+B<  ssaha>; Lists all the ssaha servers in use: SSAHA2_DATASOURCES
 
 
 =head1 LICENCE
@@ -105,15 +107,17 @@ my $help;
 
 &GetOptions(
     'nospecies:s'  => \@SPECIES, ## species which can be deleted
-    'sources:s'     => \@sources,
-    'help'          => \$help,
-    'info'          => \$info,
-) || pod2usage(2);
+    'sources:s'    => \@sources,
+    'help'         => \$help,
+    'info'         => \$info,
+);
 pod2usage1(-verbose => 2) if $info;
 pod2usage(-verbose => 1) if $help;
+
+
 @sources = qw(BLASTN_DATASOURCES TBLASTX_DATASOURCES 
 		   TBLASTN_DATASOURCES BLASTP_DATASOURCES 
-		   BLASTX_DATASOURCES SSAHA_DATASOURCES) unless @sources;
+		   BLASTX_DATASOURCES SSAHA2_DATASOURCES) unless @sources;
 
 
 my $search_db;
