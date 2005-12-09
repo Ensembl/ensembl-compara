@@ -189,12 +189,16 @@ sub wizard_panel {
   my $object = $self->{object};
   my $wizard = $self->{wizard};
 
+  ## determine object type
+  my @module_bits = split('::', ref($wizard));
+  my $type = $module_bits[-1];
+
   ## call the relevant configuration method
   my $node = $wizard->current_node($object);
   if ($wizard->isa_page($node)) { ## create panel(s)
-    if ($object->param('error')) { ## check for error messages
-      my $message = $wizard->get_error($object->param('error'));
-      $self->wizard_error($message);
+    if ($object->param('feedback')) { ## check for error messages
+      my $message = $wizard->get_message($object->param('feedback'));
+      $self->wizard_feedback($message, $object->param('feedback'), $object->param('error'));
     }
     ## create generic panel
     if (my $panel = $self->new_panel('Image',
@@ -203,9 +207,10 @@ sub wizard_panel {
         'object'  => $self->{object},
         'wizard'  => $self->{wizard})
     ) {
-      $panel->add_components($node, "EnsEMBL::Web::Component::User::$node");
+      my $method = $type.'::'.$node;
+      $panel->add_components($node, 'EnsEMBL::Web::Component::'.$method);
       if ($wizard->isa_form($node)) {
-        $panel->add_form($self->{page}, $node,  "EnsEMBL::Web::Wizard::User::$node");
+        $panel->add_form($self->{page}, $node, 'EnsEMBL::Web::Wizard::'.$method);
       }
       $self->{page}->content->add_panel($panel);
     }
@@ -214,15 +219,21 @@ sub wizard_panel {
 
 }
 
-sub wizard_error {
-  my ($self, $message) = @_;
+sub wizard_feedback {
+  my ($self, $feedback, $error) = @_;
+  my $caption;
+
+  if ($error) {
+    $feedback = '<span class="red"><strong>'.$feedback.'</strong></span>';
+    $caption = 'Error';
+  }
 
   $self->{page}->content->add_panel(
     new EnsEMBL::Web::Document::Panel(
       'object'  => $self->{'object'},
       'code'    => "",
-      'caption' => "Error",
-      'content' => $message,
+      'caption' => $caption,
+      'content' => qq(<p>$feedback</p>),
     )
   );
 

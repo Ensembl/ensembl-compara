@@ -119,10 +119,10 @@ sub simple_form {
   my ($self, $node, $form, $object, $display) = @_;
 
   $self->add_title($node, $form);
-  if ($display eq 'output') {
+  if ($display ne 'input') {
     $self->show_fields($node, $form, $object);
   }
-  else {
+  if ($display ne 'output') {
     $self->add_widgets($node, $form, $object);
   }
   $self->pass_fields($node, $form, $object);
@@ -152,13 +152,13 @@ sub show_fields {
     my %field_info = %{$form_fields{$field}};
     ## show the input to the user
     my %parameter = (
-      'type'      => 'Information',
+      'type'      => 'NoEdit',
       'label'     => $field_info{'label'},
     );
     
     my ($output, @values);
     if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') { ## look up 'visible' value(s) of multi-value fields
-      @values = $object->param($field);
+      @values = $object->param($field) || $self->{'_data'}{'record'}{$field};
       my ($lookup, $count);
       foreach my $value (@values) {
         foreach my $element (@{$self->{'_data'}{$field_info{'values'}}}) {
@@ -176,7 +176,10 @@ sub show_fields {
       $output = '******';
     }
     else {
-      my $text = $object->param($field);
+      my $text = $object->param($field) || $self->{'_data'}{'record'}{$field};
+      if (!$text && ($field_info{'type'} eq 'Int' || $field_info{'type'} eq 'NonNegInt')) {
+        $text = '0';
+      }
       $output = _HTMLize($text);
     }
     $parameter{'value'} = $output;
@@ -254,20 +257,28 @@ sub add_widgets {
       'label'     => $field_info{'label'},
       'required'  => $field_info{'required'},
     );
-
-    ## deal with multi-value fields
-    my @values = $object->param($field);
-    if (scalar(@values) > 1) {
-      $parameter{'value'} = \@values;
-    }
-    else {
-      $parameter{'value'} = $object->param($field) || $field_info{'value'};
-    }
-
-    ## extra parameters for multi-value fields
+    
+    ## NB form parameters get precedence over existing database records
+    ## and database records get precedence over node defaults
     if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
+      if ($object->param($field)) {
+        $parameter{'value'}  = [$object->param($field)]; 
+      }
+      else {
+        $parameter{'value'}  =  $self->{'_data'}{'record'}{$field} 
+                                || $field_info{'value'};
+      }
+      ## extra parameters for multi-value fields
       $parameter{'values'} = $self->{'_data'}{$field_info{'values'}};
       $parameter{'select'} = $field_info{'select'};
+    }
+    else {
+      $parameter{'value'} = $object->param($field) 
+                              || $self->{'_data'}{'record'}{$field} 
+                              || $field_info{'value'};
+      if (!$parameter{'value'} && ($field_info{'type'} eq 'Int' || $field_info{'type'} eq 'NonNegInt')) {
+        $parameter{'value'} = '0';
+      }
     }
 
     $form->add_element(%parameter);
@@ -288,7 +299,7 @@ sub add_buttons {
       'type'  => 'Submit',
       'name'  => 'submit_'.$object->param('previous'),
       'value' => '< Back',
-      'spanning' => 'inline',
+      'spanning' => 'button',
     );
   }
 
@@ -300,7 +311,7 @@ sub add_buttons {
       'type'  => 'Submit',
       'name'  => 'submit_'.$edge,
       'value' => $text.' >',
-      'spanning' => 'inline',
+      'spanning' => 'button',
     );
   }
 

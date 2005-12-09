@@ -4,6 +4,7 @@ use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
+use Apache::Constants qw(:common :response);
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
@@ -173,7 +174,11 @@ sub action {
         $count++;
       }
       warn "Redirecting to $URL";
-      $self->redirect($URL);
+      $URL = "http://ensarc-1-14.internal.sanger.ac.uk:10000$URL";
+      my $r = $self->page->renderer->{'r'};
+      $r->headers_out->add( "Location" => $URL );
+      $r->err_headers_out->add( "Location" => $URL );
+      $r->status( REDIRECT );
     }
     else {
       warn "Rendering page $node";

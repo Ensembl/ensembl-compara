@@ -3,6 +3,7 @@ package EnsEMBL::Web::Configuration::News;
 use strict;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Wizard::News;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -53,81 +54,118 @@ sub context_menu {
                                   'href' => "/$species/newsview" );
 }
 
-#-----------------------------------------------------------------------
+#---------------------------------------------------------------------------
 
-## Function to configure newsdb view
+sub add_news {
+  my $self   = shift;
+  my $object = $self->{'object'};
+                                                                                
+  ## the "add news" wizard uses 3 nodes: enter record, preview record,
+  ## and save data
+  my $wizard = EnsEMBL::Web::Wizard::News->new($object);
+  $wizard->add_nodes([qw(enter preview save)]);
+  $wizard->default_node('enter');
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['enter'=>'preview'],
+          ['enter'=>'save'],
+          ['preview'=>'save'],
+  ]);
+                                                                                
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Add a Current News Item');
+}
 
-## This is a "wizard" view that steps the user through a series of forms
-## in order to add and edit news items
+sub edit_news {
+  my $self   = shift;
+  my $object = $self->{'object'};
+                                                                                
+  ## the "edit news" wizard uses 4 nodes: select record, enter record, 
+  ## preview record, and save data
+  my $wizard = EnsEMBL::Web::Wizard::News->new($object);
+  $wizard->add_nodes([qw(select enter preview save)]);
+  $wizard->default_node('select');
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['select'=>'enter'],
+          ['enter'=>'preview'],
+          ['enter'=>'save'],
+          ['preview'=>'save'],
+  ]);
+                                                                                
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Edit a Current News Item');
+}
 
-sub newsdbview {
-    my $self   = shift;
+sub add_old_news {
+  my $self   = shift;
+  my $object = $self->{'object'};
+                                                                                
+  ## the "add news" wizard uses 4 nodes: select release, enter record,
+  ## preview record, and save data
+  my $wizard = EnsEMBL::Web::Wizard::News->new($object);
+  $wizard->add_nodes([qw(which_rel enter preview save)]);
+  $wizard->default_node('which_rel');
+                                                                                
+  ## chain the nodes together 
+  $wizard->add_outgoing_edges([
+          ['which_rel'=>'enter'],
+          ['enter'=>'preview'],
+          ['enter'=>'save'],
+          ['preview'=>'save'],
+  ]);
+                                                                                
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Add an Item to the News Archive');
+}
 
-    if (my $panel = $self->new_panel ('Image',
-        'code'    => "info$self->{flag}",
-        'object'  => $self->{object}) 
-    ) {
-        if ($self->{object}->param('submit') eq 'Preview') {
-            $panel->{'caption'} = 'News Preview';    
-            $panel->add_components(qw(
-                preview_item     EnsEMBL::Web::Component::News::preview_item
-            ));
-            $self->add_form( $panel, qw(preview_item     EnsEMBL::Web::Component::News::preview_item_form) );
-        }
-        elsif ($self->{object}->param('submit') eq 'Edit') {
-            $panel->{'caption'} = 'Edit this article';    
-            $panel->add_components(qw(
-                edit_item     EnsEMBL::Web::Component::News::edit_item
-            ));
-            $self->add_form( $panel, qw(edit_item     EnsEMBL::Web::Component::News::edit_item_form) );
-        }
-        elsif ($self->{object}->param('step2') && $self->{object}->param('action') ne 'add') { 
-            $panel->{'caption'} = 'Edit a News article';    
-            $panel->add_components(qw(
-                select_item_only     EnsEMBL::Web::Component::News::select_item_only
-            ));
-            $self->add_form( $panel, qw(select_item  EnsEMBL::Web::Component::News::select_item_form) );
-        }
-        elsif ($self->{object}->param('release_id')) { 
-            $panel->{'caption'} = 'Add a News article';    
-            $panel->add_components(qw(
-                add_item     EnsEMBL::Web::Component::News::add_item
-            ));
-            $self->add_form( $panel, qw(add_item     EnsEMBL::Web::Component::News::add_item_form) );
-        }
-        elsif ($self->{object}->param('submit') eq 'Add' || $self->{object}->param('action') eq 'add' ) { 
-            $panel->{'caption'} = 'Add a News article';    
-            $panel->add_components(qw(
-                select_to_add     EnsEMBL::Web::Component::News::select_to_add
-            ));
-            $self->add_form( $panel, qw(select_release  EnsEMBL::Web::Component::News::select_release_form) );
-        }
-        else {
-            $panel->{'caption'} = 'Update the News Database';    
-
-            $panel->add_components(qw(
-                select_to_edit     EnsEMBL::Web::Component::News::select_to_edit
-            ));
-            $self->add_form( $panel, qw(select_item     EnsEMBL::Web::Component::News::select_item_form) );
-            $self->add_form( $panel, qw(select_release  EnsEMBL::Web::Component::News::select_release_form) );
-        }
-        $self->add_panel($panel);
-
-    }
+sub edit_old_news {
+  my $self   = shift;
+  my $object = $self->{'object'};
+                                                                                
+  ## the "edit news" wizard uses 5 nodes: select release, select record, 
+  ## enter record, preview record, and save data
+  my $wizard = EnsEMBL::Web::Wizard::News->new($object);
+  $wizard->add_nodes([qw(which_rel select enter preview save)]);
+  $wizard->default_node('which_rel');
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['which_rel'=>'select'],
+          ['select'=>'enter'],
+          ['enter'=>'preview'],
+          ['enter'=>'save'],
+          ['preview'=>'save'],
+  ]);
+                                                                                
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Edit an Item in the News Archive');
 }
 
 #---------------------------------------------------------------------------
 
 sub editor_menu {
-    my $self = shift;
+  my $self = shift;
 
-    my $flag     = "";
-    $self->{page}->menu->add_block( $flag, 'bulleted', "Update News Database" );
+  my $flag     = "";
+  $self->{page}->menu->add_block( $flag, 'bulleted', "Update Current News" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Add Current News",
+                                    'href' => "/Multi/add_news" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Edit Current News",
+                                    'href' => "/Multi/edit_news" );
+}
+    
+sub archive_menu {
+  my $self = shift;
 
-    $self->{page}->menu->add_entry( $flag, 'text' => "Add News",
-                                    'href' => "/default/newsdbview?action=add" );
-    $self->{page}->menu->add_entry( $flag, 'text' => "Edit News",
-                                    'href' => "/default/newsdbview?action=edit" );
+  my $flag     = "";
+  $self->{page}->menu->add_block( $flag, 'bulleted', "Update News Archive" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Add News to Archive",
+                                    'href' => "/Multi/add_old_news" );
+  $self->{page}->menu->add_entry( $flag, 'text' => "Edit News Archive",
+                                    'href' => "/Multi/edit_old_news" );
 
 }
 
