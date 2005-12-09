@@ -206,7 +206,6 @@ CREATE TABLE genomic_align_group (
 CREATE TABLE synteny_region (
   synteny_region_id           int(10) unsigned NOT NULL auto_increment, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  rel_orientation             tinyint(1) DEFAULT '1' NOT NULL,
 
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
   # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -223,10 +222,9 @@ CREATE TABLE synteny_region (
 CREATE TABLE dnafrag_region (
   synteny_region_id           int(10) unsigned DEFAULT '0' NOT NULL, # unique internal id
   dnafrag_id                  int(10) unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
-#  seq_start                   int(10) unsigned DEFAULT '0' NOT NULL,
-#  seq_end                     int(10) unsigned DEFAULT '0' NOT NULL,
   dnafrag_start               int(10) unsigned DEFAULT '0' NOT NULL,
   dnafrag_end                 int(10) unsigned DEFAULT '0' NOT NULL,
+  dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
   
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
