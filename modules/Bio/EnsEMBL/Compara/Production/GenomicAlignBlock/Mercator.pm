@@ -45,7 +45,6 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
-my $WORKDIR; # global variable holding the path to the working directory where output will be written
 
 =head2 fetch_input
 
@@ -78,27 +77,21 @@ sub run
 {
   my $self = shift;
   $self->dumpMercatorFiles;
-#  return 1;
-  print "genome_db_ids: ",$self->genome_db_ids,"\n";
 
   unless (defined $self->output_dir) {
-    $WORKDIR = $self->worker_temp_directory;
-    mkdir("$WORKDIR/output_dir", 0777);
-    $self->output_dir("$WORKDIR/output_dir");
-  } else {
-    if (! -e $self->output_dir) {
-      mkdir($self->output_dir, 0777);
-    }
+    my $output_dir = $self->worker_temp_directory . "/output_dir";
+    $self->output_dir($output_dir);
+  }
+  if (! -e $self->output_dir) {
+    mkdir($self->output_dir, 0777);
   }
 
-  print "output_dir: ",$self->output_dir,"\n";
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mercator
     (-input_dir => $self->input_dir,
      -output_dir => $self->output_dir,
      -genome_names => $self->genome_db_ids,
      -analysis => $self->analysis);
   $self->{'_runnable'} = $runnable;
-  print "sr1 #: ",scalar @{$self->{'_runnable'}->output},"\n";
   $runnable->run_analysis;
 #  $self->output($runnable->output);
 #  rmdir($runnable->workdir) if (defined $runnable->workdir);
@@ -109,10 +102,8 @@ sub write_output {
 
   my %run_ids2synteny_and_constraints;
   my $synteny_region_ids = $self->store_synteny(\%run_ids2synteny_and_constraints);
-  my $output_id = "{method_link_species_set_id=>".$self->method_link_species_set->dbID;
-  $output_id .= ",tree_file=>\'" . $self->tree_file . "\'";
   foreach my $sr_id (@{$synteny_region_ids}) {
-    $self->dataflow_output_id($output_id . ",synteny_region_id=>$sr_id}");
+    $self->dataflow_output_id("{synteny_region_id=>$sr_id}");
   }
 
 #  if ($self->mavid_constraints) {
@@ -300,7 +291,6 @@ sub get_params {
     $self->input_dir($params->{'output_dir'});
   }
   if(defined($params->{'gdb_ids'})) {
-    print "gdb_ids :",$params->{'gdb_ids'},"\n";
     $self->genome_db_ids($params->{'gdb_ids'});
   }
   if(defined($params->{'cutoff_score'})) {
@@ -327,14 +317,13 @@ sub dumpMercatorFiles {
 #  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   
   my $starttime = time();
+
   unless (defined $self->input_dir) {
-    $WORKDIR = $self->worker_temp_directory;
-    mkdir("$WORKDIR/input_dir", 0777);
-    $self->input_dir("$WORKDIR/input_dir");
-  } else {
-    if (! -e $self->input_dir) {
-      mkdir($self->input_dir, 0777);
-    }
+    my $input_dir = $self->worker_temp_directory . "/input_dir";
+    $self->input_dir($input_dir);
+  }
+  if (! -e $self->input_dir) {
+    mkdir($self->input_dir, 0777);
   }
 
   my $dfa = $self->{'comparaDBA'}->get_DnaFragAdaptor;
@@ -344,7 +333,6 @@ sub dumpMercatorFiles {
 
   foreach my $gdb_id (@{$self->genome_db_ids}) {
     my $gdb = $gdba->fetch_by_dbID($gdb_id);
-    print "gdb id: ",$gdb->dbID,"\n";
     my $file = $self->input_dir . "/$gdb_id.chroms";
     open F, ">$file";
     foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($gdb)}) {
@@ -352,7 +340,6 @@ sub dumpMercatorFiles {
     }
     close F;
     my $ss = $ssa->fetch_by_set_description("gdb:".$gdb->dbID ." ". $gdb->name . ' coding exons');
-    print $ss," :",$ss->dbID,"\n";
     $file = $self->input_dir . "/$gdb_id.anchors";
     open F, ">$file";
     foreach my $member (@{$ma->fetch_by_subset_id($ss->dbID)}) {
@@ -370,10 +357,8 @@ sub dumpMercatorFiles {
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
   my ($qmember_id,$hmember_id,$score,$evalue);
   my @genome_db_ids = @{$self->genome_db_ids};
-  print "old genome_db array: ",$self->genome_db_ids,"\n";
-  print "new genome_db array: ",\@genome_db_ids,"\n";
+
   while (my $gdb_id1 = shift @genome_db_ids) {
-    print "old genome_db array after shift: ",$self->genome_db_ids,"\n";
     foreach my $gdb_id2 (@genome_db_ids) {
       my $file = $self->input_dir . "/$gdb_id1" . "-$gdb_id2.hits";
       open F, ">$file";
