@@ -49,7 +49,6 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 $| = 1;
 
-my $WORKDIR; # global variable holding the path to the working directory where output will be written
 
 =head2 fetch_input
 
@@ -65,7 +64,6 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
@@ -79,13 +77,12 @@ sub run
   $self->dumpFasta;
 
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mlagan
-    (-workdir => $WORKDIR,
+    (-workdir => $self->worker_temp_directory,
      -fasta_files => $self->fasta_files,
      -tree_string => $self->tree_string,
      -analysis => $self->analysis);
   $self->{'_runnable'} = $runnable;
   $runnable->run_analysis;
-#  $self->global_cleanup;
 }
 
 sub write_output {
@@ -96,7 +93,6 @@ sub write_output {
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
   foreach my $gab (@{$self->{'_runnable'}->output}) {
     foreach my $ga (@{$gab->genomic_align_array}) {
-#      $ga->method_link_species_set_id($self->method_link_species_set_id);
       $ga->method_link_species_set($mlss);
       my $dfr = $self->{'_dnafrag_regions'}{$ga->dnafrag_id};
       $ga->dnafrag_id($dfr->dnafrag_id);
@@ -110,7 +106,6 @@ sub write_output {
         $gab->length(length($ga->aligned_sequence));
       }
     }
-#    $gab->method_link_species_set_id($self->method_link_species_set_id);
     $gab->method_link_species_set($mlss);
     $gaba->store($gab);
   }
@@ -160,12 +155,6 @@ sub tree_string {
   return $self->{'_tree_string'};
 }
 
-sub parameters {
-  my $self = shift;
-  $self->{'_parameters'} = shift if(@_);
-  return $self->{'_parameters'};
-}
-
 sub method_link_species_set_id {
   my $self = shift;
   $self->{'_method_link_species_set_id'} = shift if(@_);
@@ -206,24 +195,23 @@ sub dumpFasta {
 
 #  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
-  $WORKDIR = $self->worker_temp_directory;
-
   my $sra = $self->{'comparaDBA'}->get_SyntenyRegionAdaptor;
 
   my $sr = $sra->fetch_by_dbID($self->synteny_region_id);
 
   my $idx = 1;
-#  print "Dumping1\n";
+
   foreach my $dfr (@{$sr->children}) {  
-#    print "Dumping2\n";
-    my $file = $WORKDIR . "/seq" . $idx . ".fa";
-    my $masked_file = $WORKDIR . "/seq" . $idx . ".fa.masked";
+    my $file = $self->worker_temp_directory . "/seq" . $idx . ".fa";
+    my $masked_file = $self->worker_temp_directory . "/seq" . $idx . ".fa.masked";
     $idx++;
 
     open F, ">$file" || throw("Couldn't open $file");
     open MF, ">$masked_file" || throw("Couldn't open $masked_file");
 
     # WARNING this is a hack. It won't work at all on self comparisons!!!
+    # This will be more generic and fixed when the retain/release call will be
+    # cleaned from the Node/Link/NestedSet code.
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     $self->{'_dnafrag_regions'}{$dfr->dnafrag_id} = $dfr;
     $dfr->retain;
@@ -245,17 +233,18 @@ sub dumpFasta {
 
     push @{$self->fasta_files}, $file;
   }
-#  print "Dumping3\n";
 #  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+
   $sr->release_tree;
-#  print "Dumping4\n";
+
   if ($self->tree_file) {
-    $self->dumpTreeFile;
+    my $tree_string = $self->build_tree_string;
+    $self->tree_string($tree_string);
   }
   return 1;
 }
 
-sub dumpTreeFile {
+sub build_tree_string {
   my $self = shift;
   my $tree_file = $self->tree_file;
   open F, $tree_file || throw("Can not open $tree_file");
@@ -267,26 +256,20 @@ sub dumpTreeFile {
     }
   }
   close F;
-  print "newick: ",$newick,"\n";
+
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
-  print "tree_string1: ",$tree->newick_simple_format,"\n";
-  $tree->print_tree;
+
   $self->update_node_names($tree);
-  $tree_file = $WORKDIR . "/tree_file";
-  open F, ">$tree_file";
-  print F $tree->newick_simple_format,"\n";
-  close F;
-  $tree->print_tree;
+
   my $tree_string = $tree->newick_simple_format;
-  print "tree_string2: $tree_string\n";
+
   $tree_string =~ s/:\d+\.\d+//g;
   $tree_string =~ s/[,;]/ /g;
-  print "tree_string3: $tree_string\n";
-  $self->tree_string($tree_string);
+  $tree_string =~ s/\"//g;
+
   $tree->release_tree;
-  $self->tree_file($tree_file);
-#  die;
-  return $tree_file;
+
+  return $tree_string;
 }
 
 sub update_node_names {
@@ -301,13 +284,10 @@ sub update_node_names {
     if (defined $gdb_id2dfr{$leaf->name}) {
       $leaf->name($gdb_id2dfr{$leaf->name});
     } else {
-#      $leaf->parent->remove_child($leaf);
-#      $leaf->parent->retain->remove_child($leaf);
       $leaf->disavow_parent;
       $tree->minimize_tree;
     }
   }
-#  $tree->minimize_tree;
   if ($tree->get_child_count == 1) {
     my $child = $tree->children->[0];
     $child->parent->merge_children($child);
