@@ -70,6 +70,7 @@ GetOptions('help'             => \$help,
            'draw'             => \$self->{'drawtree'},
            'balance'          => \$self->{'balance_tree'},
            'chop'             => \$self->{'chop_tree'},
+           'keep_leaves=s'    => \$self->{'keep_leaves'},
           );
 
 if ($help) { usage(); }
@@ -81,8 +82,8 @@ if($url) {
 } else {
   eval { $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
 }
-unless(defined($self->{'comparaDBA'})) {
-  print("couldn't connect to compara database\n\n");
+unless(defined $self->{'newick_file'} || defined($self->{'comparaDBA'})) {
+  print("couldn't connect to compara database or get a newick file\n\n");
   usage();
 } 
 
@@ -100,6 +101,10 @@ elsif ($self->{'gene_stable_id'} and $self->{'clusterset_id'}) {
 } 
 elsif ($self->{'newick_file'}) { 
   parse_newick($self); 
+}
+
+if ($self->{'keep_leaves'}) {
+  keep_leaves($self);
 }
 
 # 
@@ -237,6 +242,7 @@ sub usage {
   print "  -analyze               : perform rosette analysis on all clusters\n"; 
   print "  -newick                : combination of clusterset_id and newick dumps all\n"; 
   print "  -counts                : return counts of each cluster\n";
+  print "  -keep_leaves <string>  : if you want to trim your tree and keep a list of leaves (by \$leaf->name) e.g. \"human,mouse,rat\"\n";
   print "geneTreeTool.pl v1.2\n";
   
   exit(1);  
@@ -277,6 +283,33 @@ sub parse_newick {
   $self->{'tree'} = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
 }
 
+sub keep_leaves {
+  my $self = shift;
+
+  my %leaves_names;
+  foreach my $name (split(",",$self->{'keep_leaves'})) {
+    $leaves_names{$name} = 1;
+  }
+
+  print join(" ",keys %leaves_names),"\n";
+
+  my $tree = $self->{'tree'};
+  
+  foreach my $leaf (@{$tree->get_all_leaves}) {
+    unless (defined $leaves_names{$leaf->name}) {
+      print $leaf->name," leaf disavowing parent\n";
+      $leaf->disavow_parent;
+      $tree->minimize_tree;
+    } else {
+      print $leaf->name," leaf did not disavow parent\n";
+    }
+  }
+  if ($tree->get_child_count == 1) {
+    my $child = $tree->children->[0];
+    $child->parent->merge_children($child);
+    $child->disavow_parent;
+  }
+}
 
 sub reroot {
   my $self = shift;
