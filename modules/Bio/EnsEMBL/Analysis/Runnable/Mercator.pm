@@ -62,7 +62,7 @@ sub new {
   my ($input_dir, $output_dir, $genome_names, $strict_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'STRICT_MAP'], @args);
 
   unless (defined $self->program) {
-    $self->program('/nfs/acari/abel/ftp/mavid_mercator/mercator/cndsrc-2005-01-18/apps/mercator/mercator');
+    $self->program('/usr/local/ensembl/bin/mercator');
   }
   $self->input_dir($input_dir) if (defined $input_dir);
   $self->output_dir($output_dir) if (defined $output_dir);
