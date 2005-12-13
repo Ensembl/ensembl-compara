@@ -5,6 +5,9 @@ use Getopt::Long;
 use IO::File;
 use File::Basename;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Registry;
+
+Bio::EnsEMBL::Registry->no_version_check(1);
 
 my $usage = "
 Usage: $0 options
