@@ -300,8 +300,6 @@ sub keep_leaves {
       print $leaf->name," leaf disavowing parent\n";
       $leaf->disavow_parent;
       $tree->minimize_tree;
-    } else {
-      print $leaf->name," leaf did not disavow parent\n";
     }
   }
   if ($tree->get_child_count == 1) {
