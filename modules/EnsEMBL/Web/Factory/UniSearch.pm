@@ -47,7 +47,8 @@ sub count {
   (my $t = $sql ) =~ s/\[\[KEY\]\]/$kw/g;
                $t =~ s/\[\[COMP\]\]/$comp/g;
   #warn $t;
-  my( $res ) = $dbh->db_handle->selectrow_array( $t );
+  #my( $res ) = $dbh->db_handle->selectrow_array( $t );
+  my( $res ) = $dbh->dbc->db_handle->selectrow_array( $t );
   return $res;
 }
 
@@ -57,8 +58,9 @@ sub _fetch {
   return unless $dbh;
   (my $t = $search_SQL ) =~ s/\[\[KEY\]\]/$keyword/g;
   $t =~ s/\[\[COMP\]\]/$comparator/g;
-  warn "$t limit $limit";
-  my $res = $dbh->db_handle->selectall_arrayref( "$t limit $limit" );
+  #warn "$t limit $limit";
+  #my $res = $dbh->db_handle->selectall_arrayref( "$t limit $limit" );
+  my $res = $dbh->dbc->db_handle->selectall_arrayref( "$t limit $limit" );
   push @{$self->{_results}}, @$res;
 }
 
