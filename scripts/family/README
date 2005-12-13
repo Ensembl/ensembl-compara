@@ -115,7 +115,7 @@ ls|wc -l
  It is better to place the output files in a different directory to reduce the burden on the filesystem.
  (The fewer files per directory the better).
 
-echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_32.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_32.index -tab /acari/work7a/abel/family_32/fasta/metazoa_32.tab -dir /acari/work7a/abel/family_32/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_32/pre_exec.sh" -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /data/blastdb/Ensembl/family/metazoa_32.pep -fastaindex /data/blastdb/Ensembl/family/metazoa_32.index -tab /acari/work7a/abel/family_32/fasta/metazoa_32.tab -dir /acari/work7a/abel/family_32/blast_raw/' | bsub -q normal -E "/acari/work7a/abel/family_32/pre_exec.pl" -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
 
 The /acari/work7a/abel/family_32/pre_exec has to be updated and look like. In %file, you have respectively the file path and byte size of each file you want to check for.
 
@@ -253,7 +253,26 @@ You'll need a compara database set up, with genome_db, taxon, and method_link ta
 
 This can take a while, several hours (~8 hours), and you can not do anything else before the loading is completed.
 
-nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname abelcompara32 family_32.tab family_32.mcl > family_32.description 2> family_32.description.err &
+IMPORTANT: Look in this script an change the way description and cigar_line are set to "NULL"
+the string, not the undefined value NULL.
+
+nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname abelcompara32 --reg_conf reg_conf.pl family_32.tab family_32.mcl > family_32.description 2> family_32.description.err &
+
+Your reg_conf.pl should be something like
+
+use strict;
+use Bio::EnsEMBL::Utils::ConfigRegistry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'ia64e',
+                                            -user => 'xxxxx',
+                                            -pass => 'xxxxxx',
+                                            -port => 3306,
+                                            -species => 'abelcompara32',
+                                            -dbname => 'abel_ensembl_compara_32');
+1;
+
+
 
 12- Run muscle or clustalw over all the families
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -355,6 +374,9 @@ mysql -h ecs2 -u ensro -P3362 -N -e "select family_id,count(*) as count from fam
 mysql -h ecs2 -u ensadmin -pxxxx -P3364 ensembl_compara_32 < update_singletons_cigar_line.sql
 
 ~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --dbname abelcompara32 > Redundancy_and_Genes_load.err 2>&1 &
+
+IMPORTANT: add healthcheck about NULL cigar_line
+select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line="NULL" group by m.source_name;
 
 14- Generates the family descriptions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
