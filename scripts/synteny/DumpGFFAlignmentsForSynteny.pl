@@ -80,7 +80,7 @@ while ($start <= $seq_region_length) {
     $hstrand = "-" if ($daf->hstrand < 0);
     
     # keep on the basis of level_id
-    next if ($daf->level_id > $level);
+    next if ($daf->level_id != $level);
     
     # print out a in gff format
     print SYN  
