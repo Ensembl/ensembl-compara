@@ -241,6 +241,7 @@ sub get_available_adaptors {
       "Synteny"         => "Bio::EnsEMBL::Compara::DBSQL::SyntenyAdaptor",
       "GenomeDB"        => "Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor",
       "DnaFrag" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor",
+      "DnaFragRegion" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor",
       "GenomicAlignBlock" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor",
       "GenomicAlign" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor",
       "GenomicAlignGroup" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor",
