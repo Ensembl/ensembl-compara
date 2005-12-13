@@ -46,7 +46,7 @@ sub count {
   return 0 unless $dbh;
   (my $t = $sql ) =~ s/\[\[KEY\]\]/$kw/g;
                $t =~ s/\[\[COMP\]\]/$comp/g;
-  warn $t;
+  #warn $t;
   my( $res ) = $dbh->db_handle->selectrow_array( $t );
   return $res;
 }
@@ -342,7 +342,7 @@ sub search_GENE {
       "SELECT gsi.stable_id, g.description, '$db', 'transview', 'transcript' FROM transcript_stable_id as gsi, transcript as g WHERE gsi.transcript_id = g.transcript_id and gsi.stable_id [[COMP]] '[[KEY]]'" ],
     [ $db, 'Gene',
       "select count(*) from translation_stable_id WHERE stable_id [[COMP]] '[[KEY]]'",
-      "SELECT gsi.stable_id, g.description, '$db', 'protview', 'peptide' FROM translation_stable_id as gsi, translation as g WHERE gsi.translation_id = g.translation_id and gsi.stable_id [[COMP]] '[[KEY]]'" ],
+      "SELECT gsi.stable_id, g.description, '$db', 'protview', 'peptide' FROM translation_stable_id as gsi, translation as p, transcript g WHERE g.transcript_id=p.transcript_id and gsi.translation_id = p.translation_id and gsi.stable_id [[COMP]] '[[KEY]]'" ],
 
     [ $db, 'Gene',
       "select count( * ) from object_xref as ox, xref as x
