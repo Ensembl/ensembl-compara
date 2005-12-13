@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::SimpleAlign;
 use IO::File;
 
+use Bio::EnsEMBL::Compara::NestedSet;
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 =head2 description_score
