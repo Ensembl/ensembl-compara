@@ -1064,10 +1064,10 @@ sub add_das_file {
     'type'  => 'Information',
     'value' => qq{
   <p>
-   Please <strong><a href="javascript:X=window.open('/Homo_sapiens/helpview?se=1&kw=dasconfview#Upload','helpview','left=50,top=50,resizable,scrollbars=yes');X.focus();void(0)">READ THE UPLOAD INSTRUCTIONS CAREFULLY</a></strong> before uploading any data. Your data must be <a href="javascript:X=window.open('/Homo_sapiens/helpview?se=1&kw=dasconfview#UploadFormat','helpview','left=50,top=50,resizable,scrollbars=yes');X.focus();void(0)">formatted correctly</a> before uploads will work properly. The instructions page has detailed information about the data formats.
+   Please <strong><a href="javascript:X=window.open('/$ENV{ENSEMBL_SPECIES}/helpview?se=1&kw=dasconfview#Upload','helpview','left=50,top=50,resizable,scrollbars=yes');X.focus();void(0)">READ THE UPLOAD INSTRUCTIONS CAREFULLY</a></strong> before uploading any data. Your data must be <a href="javascript:X=window.open('/$ENV{ENSEMBL_SPECIES}/helpview?se=1&kw=dasconfview#UploadFormat','helpview','left=50,top=50,resizable,scrollbars=yes');X.focus();void(0)">formatted correctly</a> before uploads will work properly. The instructions page has detailed information about the data formats.
   </p>
   <p>
-    Please read and understand the <a href="javascript:X=window.open('/Homo_sapiens/helpview?se=1&kw=dasconfview#Disclaimer','helpview','left=50,top=50,resizable,scrollbars=yes');X.focus();void(0)">Ensembl policy on uploaded data</a>
+    Please read and understand the <a href="javascript:X=window.open('/$ENV{ENSEMBL_SPECIES}/helpview?se=1&kw=dasconfview#Disclaimer','helpview','left=50,top=50,resizable,scrollbars=yes');X.focus();void(0)">Ensembl policy on uploaded data</a>
   </p>
   <hr />
 });
