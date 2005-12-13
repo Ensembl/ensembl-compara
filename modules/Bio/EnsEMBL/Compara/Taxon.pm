@@ -136,6 +136,7 @@ sub ncbi_taxid {
 
 
 =head2 validate_species_name
+
  Title   : validate_species_name
  Usage   :
  Function: override the inherited method to disable all
@@ -146,7 +147,9 @@ sub ncbi_taxid {
  Example :
  Returns : 1
  Args    :
+
 =cut
+
 sub validate_species_name{
   my( $self, $string ) = @_;
   return 1;
