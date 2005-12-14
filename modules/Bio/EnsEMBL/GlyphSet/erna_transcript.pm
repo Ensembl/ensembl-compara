@@ -23,7 +23,7 @@ sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $transcript->type() || $gene->type();
+  my $type = $transcript->type() || $gene->biotype();
   my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }[0];
 
   if(exists $highlights{lc($transcript->stable_id)}) {
@@ -41,7 +41,7 @@ sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
 
   my $highlight = undef;
-  my $type = $gene->type();
+  my $type = $gene->biotype();
   my $colour = $colours->{ $type =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }[0];
 
   if(exists $highlights{lc($gene->stable_id)}) {
@@ -79,7 +79,7 @@ sub zmenu {
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
-  my $type = $transcript->type() || $gene->type();
+  my $type = $transcript->type() || $gene->biotype();
   
   my $zmenu = {
     'caption'             => "ncRNA",
@@ -104,7 +104,7 @@ sub gene_zmenu {
   my ($self, $gene ) = @_;
   my $gid = $gene->stable_id();
   my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
-  my $type = $gene->type();
+  my $type = $gene->biotype();
   my $zmenu = {
     'caption'             => "ncRNA",
     "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid),
@@ -144,7 +144,7 @@ sub gene_text_label {
   my $Config = $self->{config};
   my $short_labels = $Config->get('_settings','opt_shortlabels');
   unless( $short_labels ){
-    my $type = $legend_map{$gene->type} || $gene->type;
+    my $type = $legend_map{$gene->biotype} || $gene->biotype;
       $id .= " \n$type ";
   }
   return $id;

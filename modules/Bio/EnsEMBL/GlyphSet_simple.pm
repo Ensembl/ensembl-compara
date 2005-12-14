@@ -109,12 +109,12 @@ sub _init {
   if( $dep>0 && $Config->get( '_settings', 'squishable_features' ) eq 'yes' && $self->can('squish') )  {
     $h = 4;
   }
-  warn "$type -> @{[ keys %{$self->{'extras'}||{}} ]}";
+  #warn "$type -> @{[ keys %{$self->{'extras'}||{}} ]}";
   if( $self->{'extras'} && $self->{'extras'}{'height'} ) {
-    warn 
+    #warn 
     $h = $self->{'extras'}{'height'};
   }
-  warn ">>> HEIGHT $h";
+  #warn ">>> HEIGHT $h";
   my $previous_start = $vc_length + 1e9;
   my $previous_end   = -1e9 ;
   my ($T,$C,$C1) = 0;

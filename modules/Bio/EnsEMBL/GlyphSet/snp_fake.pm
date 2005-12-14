@@ -20,14 +20,13 @@ sub _init {
     
   my @bitmap        = undef;
   my $colours       = $Config->get('snp_fake','colours' );
-
   my $pix_per_bp    = $Config->transform->{'scalex'};
 
   my $strand  = $self->strand();
   my $length  = $container->length;
     
   my %exons = ();
-  
+
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
   my @snps = @{$Config->{'snps'}};
   my $tag = $Config->get( 'snp_fake', 'tag' );
@@ -38,9 +37,7 @@ sub _init {
     my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
-    my $tag_root = $snp->dbID;
-    my $type = $snp->get_consequence_type();
-    my $colour = $colours->{$type}->[0];
+
     my $label = $snp->allele_string;
     my $bp_textwidth = $w * length("$label");
     if( $bp_textwidth < $E-$S+1 ) {
@@ -80,6 +77,8 @@ sub _init {
       });
       $self->push( $textglyph );
     }
+    my $type = $snp->get_consequence_type();
+    my $colour = $colours->{$type}->[0];
     my $tglyph = new Sanger::Graphics::Glyph::Rect({
       'x' => $S-1,
       'y' => 0,
@@ -90,20 +89,17 @@ sub _init {
       'height' => $h,
       'width'  => $E-$S+1,
     });
+
+    my $tag_root = $snp->dbID;
     $self->join_tag( $tglyph, "X:$tag_root=$tag2", .5, 0, $colour,'',-3 );
     $self->push( $tglyph );
+    unless($self->{'config'}->{'variation_types'}{$type}) {
+      push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
+	$colours->{$type}[1],  $colours->{$type}[0];
+
+      $self->{'config'}->{'variation_types'}{$type} = 1;
+    }
   }
-  my %labels = (
-         '_coding' => 'Coding SNPs',
-         '_utr'    => 'UTR SNPs',
-         '_intron' => 'Intronic SNPs',
-         '_local'  => 'Flanking SNPs',
-         '_'       => 'Other SNPs' );
- # $self->{'config'}->{'snp_legend_features'} = {};
- # $self->{'config'}->{'snp_legend_features'}->{'snps'} = {}
-  $self->{'config'}->{'snp_legend_features'}->{'snps'}->{'legend'} = [
-    map { $labels{"$_"} => $colours->{"$_"} } keys %labels
-  ];
 }
 
 sub zmenu {
