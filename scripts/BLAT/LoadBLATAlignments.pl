@@ -341,7 +341,7 @@ LINE:while (my $line =<FILE>) {
 
 ######Again only store if not creating tab file-- otherwise store in DB
 if ($tab) {
-  open (META, ">meta.data") or die "can't open meta.data:$!\n";
+  open (META, ">meta.$file") or die "can't open meta.$file:$!\n";
   if (!defined $stored_max_alignment_length) {
     print META "max_alignment_length\t", ($max_alignment_length + 1), "\n";
   } elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
