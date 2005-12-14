@@ -56,6 +56,7 @@ This will produce the following files
 genomic_align_block.Gg1Hs35.data
 genomic_align.Gg1Hs35.data
 genomic_align_group.Gg1Hs35.data
+meta.Gg1Hs35.data
 
 logon to the machine that has the db on it. (eg. caa-stat mysql_3364 on ecs2 will tell you which machine ecs2:3364 is currently on). These are loaded into the db using :
 
@@ -67,7 +68,7 @@ database changed
 
 mysql> load data infile /ecs2/scratch3/cara/BLAT/Gg1Hs35/genomic_align_block.Gg1Hs35.data into table genomic_align_block ;
 
-repeat for the other two files and you're done!
+repeat for the other three files and you're done!
 
 NB: You can also load the data directly into the DB using the -tab 0 option but this uses to be slower!
 

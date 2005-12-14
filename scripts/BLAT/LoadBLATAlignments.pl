@@ -341,7 +341,14 @@ LINE:while (my $line =<FILE>) {
 
 ######Again only store if not creating tab file-- otherwise store in DB
 if ($tab) {
-  print STDERR "max alignment length = ".($max_alignment_length + 1)."\n";
+  open (META, ">meta.data") or die "can't open meta.data:$!\n";
+  if (!defined $stored_max_alignment_length) {
+    print META "max_alignment_length\t", ($max_alignment_length + 1), "\n";
+  } elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
+    print META "max_alignment_length\t", ($max_alignment_length + 1), "\n";
+  }
+  print META "max_align_".$method_link_species_set->dbID, "\t", $max_alignment_length + 1, "\n";
+  close META;
   close GAB;
   close GA;
   close GAG;
