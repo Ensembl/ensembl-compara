@@ -68,11 +68,16 @@ my $self = bless {};
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
-if(%hive_params) {
-  if(defined($hive_params{'hive_output_dir'})) {
+if (%hive_params) {
+  if (defined($hive_params{'hive_output_dir'})) {
     die("\nERROR!! hive_output_dir doesn't exist, can't configure\n  ", $hive_params{'hive_output_dir'} , "\n")
-      unless(-d $hive_params{'hive_output_dir'});
+      if(($hive_params{'hive_output_dir'} ne "") and !(-d $hive_params{'hive_output_dir'}));
+    $self->{'comparaDBA'}->get_MetaContainer->delete_key('hive_output_dir');
     $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
+  }
+  if (defined($hive_params{'name'})) {
+    $self->{'comparaDBA'}->get_MetaContainer->delete_key('name');
+    $self->{'comparaDBA'}->get_MetaContainer->store_key_value('name', $hive_params{'name'});
   }
 }
 

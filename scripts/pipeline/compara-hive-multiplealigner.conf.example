@@ -9,7 +9,9 @@
   '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
  },
  { TYPE => HIVE,
-   'hive_output_dir'      => "/ecs2/work3/abel/hive/abel_mlagan_final_test/workers",
+   'hive_output_dir' => "/ecs2/work3/abel/hive/abel_mlagan_final_test/workers",
+   'name'            => "mlagan",
+   # name is used to make this pipeline independent from other ones
  },
  { TYPE => MEMBER_LOADING,
    'exon_min_length' => 20
