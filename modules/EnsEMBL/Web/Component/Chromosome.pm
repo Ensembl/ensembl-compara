@@ -583,83 +583,19 @@ qq(<a href="/$species/syntenyview?otherspecies=$other;chr=$chr;loc=).$data[1].'"
 # KARYOVIEW COMPONENTS  
 #-----------------------------------------------------------------
 
-sub image_choice {
+sub kv_layout   { _wrap_form($_[0], $_[1], 'kv_layout'); }
+sub kv_add      { _wrap_form($_[0], $_[1], 'kv_add'); }
 
-  my ($panel, $object) = @_;
-
-  my $chr_name = $object->param('chr');
-  my $species = $object->species;
-
-  my $html = qq(<h2>Karyoview</h2>
-    <p>This page enables you to display your own data on a customisable karyotype image.</p>
-    <p>Click on one of the images below to select a display type:</p>
-    <table cellspacing="20" style="width:100%">
-    <tr>
-    <th class="center"><a href="/$species/karyoview?display=location;chr=$chr_name">Show location of features</a></th>
-    <th class="center"><a href="/$species/karyoview?display=density;chr=$chr_name">Show density of features</a></th>
-    </tr>
-    <tr>
-    <td class="center"><a href="/$species/karyoview?display=location;chr=$chr_name"><img src="/img/misc/display_location.png" alt="Chromosome with location pointers" width="332" height="495" /></a></td>
-    <td class="center"><a href="/$species/karyoview?display=density;chr=$chr_name"><img src="/img/misc/display_density.png" alt="Chromosome with density tracks" width="388" height="500" /></a></td>
-    </tr>
-    </table>);
-  
-  $panel->{'raw'} = $html;
+sub _wrap_form {
+  my ( $panel, $object, $node ) = @_;
+  my $html = qq(<div class="formpanel" style="width:80%">);
+  $html .= $panel->form($node)->render();
+  $html .= '</div>';
+  $panel->print($html);
   return 1;
 }
 
-#--------------------------------------------------------------------------
-
-sub image_config {
-  my ( $panel, $object ) = @_;
-
-  my $html = qq(
-   <div class="formpanel" style="width:95%">
-     @{[ $panel->form( 'image_config' )->render() ]}
-  </div>);
-
-  $panel->print( $html );
-  return 1;
-}
-
-sub image_config_form {
-  my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'image_config', "/@{[$object->species]}/karyoview", 'post' );
-
-  $form->add_element('type' => 'SubHeader', 'value' => 'Chromosome(s) to display');
-  my @chrs = chr_list($object);
-  push @chrs, {'name'=>'ALL', 'value'=>'ALL'} ;
-  my $chr_name = $object->param('chr') || 'ALL';
-  $form->add_element(
-    'type'     => 'DropDown',
-    'select'   => 'select',
-    'required' => 'yes',
-    'name'     => 'chr',
-    'label'    => 'Chromosome',
-    'values'   => \@chrs,
-    'value'    => $chr_name,
-  );
-
-  $form->add_element('type' => 'SubHeader', 'value' => 'Configure Display Options');
-  if ($object->param('display') eq 'location') {
-    config_hilites($form, $object);   
-  }
-  else {
-    config_tracks($form, $object);
-  }
-  config_karyotype($form, $object);   
-
-  $form->add_element('type' => 'SubHeader', 'value' => 'Upload data set');
-  config_data($form, $object);   
-  $form->add_element('type' => 'Hidden', 'name' => 'display', 'value' => $object->param('display'));
-
-  $form->add_element( 'type' => 'Submit', 'value' => 'Go', 'spanning'=>'inline' );
-  return $form ;
-}
-
-#----------------------------------------------------------------------------
-
-sub show_karyotype {
+sub kv_display {
 
     my( $panel, $object ) = @_;
   
@@ -675,36 +611,54 @@ sub show_karyotype {
         $max_length = $object->length;
     }
     my $config = $object->user_config_hash($config_name);
-    # PARSE DATA
-    my $parser;
-    if ($object->param('display') eq 'density') {
-        $parser = Data::Bio::Text::DensityFeatureParser->new();
-        $parser->set_filter($chr);  # filter chromosomes that aren't used
-        $parser->current_key($object->param('defaultlabel') || 'default'); #add in default label
-        my $bins   = 150;
-        $parser->no_of_bins($bins);
-        $parser->bin_size(int($max_length/$bins));
-    }
-    else {
-        $parser = Data::Bio::Text::FeatureParser->new();
-    }
-    $object->parse_user_data($parser);
 
     # CREATE IMAGE OBJECT
     my $image    = $object->new_karyotype_image();
     $image->imagemap           = 'no';
     $image->cacheable          = 'no';
     $image->image_name         = 'karyoview-'.$object->species.'-'.$object->chr_name;
-    # Add features
-    my $pointers;
-    if ($object->param('display') eq 'density') {
-        $image->add_tracks($object, $config_name, $parser);
+    ## Add features
+
+    my @params = $object->param;
+    my $track_no = 0;
+    foreach my $param (@params) {
+      $track_no++ if $param =~ /^track_name_/;
     }
-    else {
-        $pointers = $image->add_pointers($object, {'config_name'=>$config_name, 'parser'=>$parser, 'color' => $object->param("col_0"), 'style' => $object->param("style_0")});
+    $track_no = 1 if !$track_no; ## default in case no track name provided!
+    $config->{'_group_size'} = 1;
+
+    my $all_pointers;
+    for (my $i = 0; $i < $track_no; $i++) {
+      my $pointers = [];
+      my $track_id = $i+1;
+      my $parser;
+
+      if ($object->param('display') eq 'density') {
+        ## parse data
+        $parser = Data::Bio::Text::DensityFeatureParser->new();
+        $parser->set_filter($chr);  # filter chromosomes that aren't used
+        $parser->current_key($object->param('defaultlabel') || 'default'); #add in default label
+        my $bins   = 150;
+        $parser->no_of_bins($bins);
+        $parser->bin_size(int($max_length/$bins));
+        $object->parse_user_data($parser, $track_id);
+        $config->{'_group_size'} += scalar(keys %{$parser->counts});
+        
+        ## create image with parsed data
+        $image->add_tracks($object, $config_name, $parser, $track_id);
+      }
+      else {
+        ## parse data
+        $parser = Data::Bio::Text::FeatureParser->new();
+        $object->parse_user_data($parser, $track_id);
+
+        ## create image with parsed data
+        $pointers = $image->add_pointers($object, {'config_name'=>$config_name, 'parser'=>$parser, 'color' => $object->param("col_$track_id"), 'style' => $object->param("style_$track_id")});
+        push @$all_pointers, $pointers;
+      }
     }
+    $image->karyotype($object, $all_pointers, $config_name);
     # create image file and render HTML
-    $image->karyotype($object, [$pointers], $config_name);
     $panel->print($image->render);
     return 1;
 

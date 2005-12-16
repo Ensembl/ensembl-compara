@@ -21,6 +21,14 @@ sub new {
   return $self;
 }
 
+sub attrib { 
+  my ($self, $name, $value) = @_;
+  if ($value) {
+    $self->{'_data'}{$name} = $value;
+  }
+  return $self->{'_data'}{$name}; 
+}
+
 ## 'FLOWCHART' FUNCTIONS
 
 sub add_nodes {
@@ -72,6 +80,15 @@ sub current_node {
   return $node;
 }
 
+sub node_value {
+  my ($self, $node, $key, $value) = @_;
+  if ($value) {
+    $self->{'_nodes'}{$node}{$key} = $value;
+  }
+  $value = $self->{'_nodes'}{$node}{$key};
+  return $value;
+}
+
 sub isa_page {
   my ($self, $node) = @_;
   my $page = $self->{'_nodes'}{$node}{'form'} || $self->{'_nodes'}{$node}{'page'};
@@ -119,13 +136,13 @@ sub simple_form {
   my ($self, $node, $form, $object, $display) = @_;
 
   $self->add_title($node, $form);
-  if ($display ne 'input') {
-    $self->show_fields($node, $form, $object);
-  }
-  if ($display ne 'output') {
+  if ($display eq 'input') { 
     $self->add_widgets($node, $form, $object);
   }
-  $self->pass_fields($node, $form, $object);
+  elsif ($display eq 'output') { 
+    $self->show_fields($node, $form, $object);
+    $self->pass_fields($node, $form, $object);
+  }
   $self->add_buttons($node, $form, $object);
 }
 
@@ -184,23 +201,6 @@ sub show_fields {
     }
     $parameter{'value'} = $output;
     $form->add_element(%parameter);
-    ## include a hidden element for passing data
-    if (@values) {
-      foreach my $element (@values) {
-        $form->add_element(
-          'type'      => 'Hidden',
-          'name'      => $field,
-          'value'     => $element,
-        );
-      }
-    }
-    else {
-      $form->add_element(
-        'type'      => 'Hidden',
-        'name'      => $field,
-        'value'     => $object->param($field),
-      );
-    }
   }
 
 }
@@ -214,15 +214,22 @@ sub _HTMLize {
 sub pass_fields {
   my ($self, $node, $form, $object, $fields) = @_;
 
-  if (!$fields) {
-    $fields = $self->{'_nodes'}{$node}{'pass_fields'} || $self->default_order;
+  my @fields;
+  if ($fields) {
+    @fields = @$fields;
+  }
+  else { ## default behaviour is to pass all CGI parameters
+    @fields = $object->param;
   } 
 
-  foreach my $field (@$fields) {
+  foreach my $field (@fields) {
+    next if $field =~ /submit/;    
+
     ## include a hidden element for passing data
     my @values = $object->param($field);
     if (scalar(@values) > 1) {
       foreach my $element (@values) {
+        next unless $element;
         $form->add_element(
           'type'      => 'Hidden',
           'name'      => $field,
@@ -231,6 +238,7 @@ sub pass_fields {
       }
     }
     else {
+      next unless $field;
       $form->add_element(
         'type'      => 'Hidden',
         'name'      => $field,
@@ -249,17 +257,32 @@ sub add_widgets {
   my %form_fields = $self->form_fields;
   foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
+    my $field_name = $field;
+
+    ## Is this field involved in looping through multiple records?
+    if ($field_info{'loop'}) {
+      my $count = $self->{'_data'}{'loops'};
+      $field_name .= "_$count"; 
+    }
 
     ## set basic parameters
     my %parameter = (
       'type'      => $field_info{'type'},
-      'name'      => $field,
+      'name'      => $field_name,
       'label'     => $field_info{'label'},
       'required'  => $field_info{'required'},
     );
-    
-    ## NB form parameters get precedence over existing database records
-    ## and database records get precedence over node defaults
+
+    ## deal with multi-value fields
+    my @values = $object->param($field_name);
+    if (scalar(@values) > 1) {
+      $parameter{'value'} = \@values;
+    }
+    else {
+      $parameter{'value'} = $object->param($field_name) || $field_info{'value'};
+    }
+
+    ## extra parameters for multi-value fields
     if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
       if ($object->param($field)) {
         $parameter{'value'}  = [$object->param($field)]; 

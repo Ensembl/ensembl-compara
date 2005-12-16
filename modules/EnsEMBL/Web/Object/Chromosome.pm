@@ -263,13 +263,13 @@ sub get_synteny_nav {
   
 sub parse_user_data {
 
-    my ($self, $parser) = @_;
+    my ($self, $parser, $track_id) = @_;
 
-    if (my $data = $self->param('upload_file')) {
-        warn "Trying to upload file ".$self->param('upload_file');
+    if (my $data = $self->param("upload_file_$track_id")) {
+        warn "Trying to upload file ".$self->param("upload_file_$track_id");
         # parse data, not file name!
         my $du = EnsEMBL::Web::DataUpload->new();
-        if (defined(my $error = $du->upload_data('upload_file'))) {
+        if (defined(my $error = $du->upload_data("upload_file_$track_id"))) {
             $self->problem('fatal', "Sorry, unable to upload your file at this time. Please try again later.");
             warn "File didn't upload :(";
             #$self->Output->error_page($self->problem->[0]);
@@ -278,11 +278,11 @@ sub parse_user_data {
         my $file_data = $du->data;
         $parser->parse($file_data);
     }
-    elsif ($data = $self->param('url_file')) {
+    elsif ($data = $self->param("url_file_$track_id")) {
         $parser->parse_URL($data);
     }
     else {
-        $parser->parse($self->param('paste_file'));
+        $parser->parse($self->param("paste_file_$track_id"));
     }
 
 }

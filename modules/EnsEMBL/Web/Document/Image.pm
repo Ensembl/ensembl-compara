@@ -56,7 +56,6 @@ sub karyotype {
     warn "CACHE.... ",$image->filename;
     return if -e $image->filename."png" && -f $image->filename."png";
   }
-
   $config ||= 'Vkaryotype';
   my $chr_name;
   my $wuc = $data->user_config_hash( $config );
@@ -94,70 +93,79 @@ sub karyotype {
                                           
 sub add_tracks {
                                                                                 
-    my ($self, $object, $config_name, $parser) = @_;
+  my ($self, $object, $config_name, $parser, $track_id) = @_;
                                                                                 
-    if ($object->chr_name eq 'ALL') {
-        $self->do_chr_layout($object, $config_name);
-    }
-    my $config   = $object->user_config_hash( $config_name );
+  if ($object->chr_name eq 'ALL') {
+    $self->do_chr_layout($object, $config_name);
+  }
+  my $config   = $object->user_config_hash( $config_name );
     
-    # SELECT APPROPRIATE FEATURE SET(S)
-    my $data;
-    if ($parser) { # we have use data
-        # CREATE TRACKS
-        my $pos = 10000;
-        my $max_values = $parser->max_values();
-        my $colour = $object->param('col') || 'purple';
-        foreach my $track ( $parser->feature_types ) {
-            push @{$config->{'general'}{$config_name}{'_artefacts'}}, "track_$track";
-            $config->{'general'}{$config_name}{"track_$track"} = 
-                {
-                'on'            => 'on',
-                'pos'           => ++$pos,
-                'width'         => 50,
-                'col'           => $colour,
-                'manager'       => 'Vbinned',
-                'label'         => $track,
-                'bins'          => $parser->no_of_bins,
-                'max_value'     => $max_values->{$track},
-                'data'          => $parser->features_of_type( $track ),
-                'maxmin'        => $object->param('maxmin'),
-                },
-        }
-        if ($chr  eq 'ALL') {
-            $config->{'_group_size'} = 1 + $parser->feature_types();
-        } 
-        # add selected standard tracks
-        my @params = $object->param();
-        my $box_value;
-        foreach my $param (@params) {
-            if ($param =~ /^track_/) {
-                if ($object->param($param) ne 'on') {
-                    $box_value = 'off';
-                }
-                else {
-                    $box_value = 'on';
-                }
-                $param =~ s/^track_//;
-                $config->set($param, 'on', $box_value);
-            }
-        }
-    } 
-    else { # display standard tracks
-        my %features = map { ($_->analysis->logic_name() , 1) } @{
-            $object->database('core')->get_DensityTypeAdaptor->fetch_all
-            };
-        foreach my $art ( $config->artefacts() ) {
-            my @logicnames = ( split /\s+/,
-                             $config->get( $art, 'logicname' ) );
-            my @good_lnames = grep{$features{$_}} @logicnames;
-            scalar( @good_lnames ) || next;
-            $config->set( $art, 'on', 'on' );
-            $config->set( $art, 'logicname', join( " ", @good_lnames ) );
-        }
+  # SELECT APPROPRIATE FEATURE SET(S)
+  my $data;
+  if ($parser) { # we have use data
+    # CREATE TRACKS
+    my $pos = 10000;
+    my $max_values = $parser->max_values();
+    foreach my $track ( $parser->feature_types ) {
+      push @{$config->{'general'}{$config_name}{'_artefacts'}}, "track_$track";
+      my $colour; 
+      my $manager = 'Vbinned';
+      if ($track_id) {
+        $colour = $object->param("col_$track_id");
+        my $style = $object->param("style_$track_id");
+        $manager .= '_'.$style unless $style eq 'line';
+      }
+      else {
+        $colour = $object->param('col') || 'purple';
+      }
+      $config->{'general'}{$config_name}{"track_$track"} = 
+         {
+          'on'            => 'on',
+          'pos'           => ++$pos,
+          'width'         => 50,
+          'col'           => $colour,
+          'manager'       => $manager,
+          'label'         => $track,
+          'bins'          => $parser->no_of_bins,
+          'max_value'     => $max_values->{$track},
+          'data'          => $parser->features_of_type( $track ),
+          'maxmin'        => $object->param('maxmin'),
+          },
     }
+    if ($chr  eq 'ALL') {
+      $config->{'_group_size'} = 1 + $parser->feature_types();
+    } 
+    # add selected standard tracks
+    my @params = $object->param();
+    my $box_value;
+    foreach my $param (@params) {
+      if ($param =~ /^track_/) {
+        if ($object->param($param) ne 'on') {
+          $box_value = 'off';
+        }
+        else {
+          $box_value = 'on';
+        }
+        $param =~ s/^track_//;
+        $config->set($param, 'on', $box_value);
+      }
+    } 
+  } 
+  else { # display standard tracks
+    my %features = map { ($_->analysis->logic_name() , 1) } @{
+        $object->database('core')->get_DensityTypeAdaptor->fetch_all
+    };
+    foreach my $art ( $config->artefacts() ) {
+      my @logicnames = ( split /\s+/,
+                          $config->get( $art, 'logicname' ) );
+      my @good_lnames = grep{$features{$_}} @logicnames;
+      scalar( @good_lnames ) || next;
+      $config->set( $art, 'on', 'on' );
+      $config->set( $art, 'logicname', join( " ", @good_lnames ) );
+    }
+  }
                                                                                 
-    return 1;
+  return 1;
 }
                                                                                 
                                                                                 

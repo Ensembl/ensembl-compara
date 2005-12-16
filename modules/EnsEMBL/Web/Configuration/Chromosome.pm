@@ -3,6 +3,7 @@ package EnsEMBL::Web::Configuration::Chromosome;
 use strict;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::Wizard::Chromosome;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
@@ -78,6 +79,7 @@ sub syntenyview {
 
 ## This is a complex view that steps the user through two configuration
 ## pages before displaying the user's data on a karyotype
+=pod
 
 sub karyoview {
   my $self   = shift;
@@ -123,6 +125,32 @@ sub karyoview {
         $self->add_panel($panel1);
     }
   }
+}
+=cut
+#---------------------------------------------------------------------------
+
+## Configuration for karyoview wizard
+
+sub karyoview {
+  my $self   = shift;
+  my $object = $self->{'object'};
+                                                                                
+  ## the "karyoview" wizard uses 3 nodes: configure karyotype, add track
+  ## and display karyotype
+  my $wizard = EnsEMBL::Web::Wizard::Chromosome->new($object);
+  $wizard->add_nodes([qw(kv_layout kv_add kv_display)]);
+  $wizard->default_node('kv_layout');
+                                                                                
+  ## chain the nodes together
+  ## note that, since you can add multiple tracks, node 2 is recursive
+  $wizard->add_outgoing_edges([
+          ['kv_layout'=>'kv_add'],
+          ['kv_add'=>'kv_add'],
+          ['kv_add'=>'kv_display'],
+  ]);
+                                                                                
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Karyoview');
 }
 
 #---------------------------------------------------------------------------
