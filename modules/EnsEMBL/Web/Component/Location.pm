@@ -1270,9 +1270,9 @@ sub exons_markup {
                  $active_start = 1;
              }
 
-             if ($_->strand < 0) {
-                 ($active_start, $active_end) = ($active_end, $active_start);
-             }
+#             if ($_->strand < 0) {
+#                 ($active_start, $active_end) = ($active_end, $active_start);
+#             }
 
 #warn("EXON:".join('*', $ex->start, $ex->end, $ex->get_aligned_start, $ex->get_aligned_end, $ex->exon->start, $ex->exon->end, $active_start, $active_end)); 
             push @exons, {
