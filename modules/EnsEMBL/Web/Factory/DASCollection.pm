@@ -129,7 +129,6 @@ sub createObjects {
 	$sources_conf{$source} = $source_confdata;
     }
 
-
 # Get parameters of the view that has called upon dasconfview
     my %script_params = ();
     my @udas = ();
@@ -302,7 +301,7 @@ sub createObjects {
     }
     
     # Have we got new DAS? If so, validate, and add to Input
-    
+
     my $source_type = $self->param("DASsourcetype");
     $source_type = 'das_registry' if ( $self->param("DASdomain") eq $self->species_defs->DAS_REGISTRY_URL);
 
@@ -372,6 +371,7 @@ sub createObjects {
 	    my @das_sources;
 
 	    if (defined( my $usersrc = $self->param("DASuser_source") || undef)) {
+		
 		push @das_sources, {
 		    'url' => join('/','http:/',$self->species_defs->ENSEMBL_DAS_UPLOAD_SERVER,'das', $usersrc),
 		    'id' => $usersrc,
@@ -388,7 +388,7 @@ sub createObjects {
 	    }
 
 	    foreach my $das_data (@das_sources) {
-		my $das_name = $das_data->{'id'};
+		my $das_name = $das_data->{'id'} or next;
 
 		if( exists( $sources_conf{$das_name} ) and  (! defined($sources_conf{$das_name}->{conftype}) or $sources_conf{$das_name}->{conftype} ne 'external_editing' )){ 
 		    my $das_name_ori = $das_name;
