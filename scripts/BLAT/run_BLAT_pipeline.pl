@@ -1141,7 +1141,8 @@ sub check_LSF_jobs {
           if ($result !~ /^Job \<(\d+)\> is submitted to queue \<$queue\>.$/) {
             throw("Error while re-submitting job  $this_lsf_job->{name}\n -- $result");
           }
-          $this_lsf_job->{job_ID} = $1;
+          my $new_job_id = $1;
+          $this_lsf_job->{job_ID} =~ s/^\d+/$new_job_id/;
         } else {
           qx"mv $this_lsf_job->{lsf_output_file} $this_lsf_job->{lsf_output_file}.$$.$this_lsf_job->{retry}";
           qx"mv $this_lsf_job->{result_file} $this_lsf_job->{result_file}.$$.$this_lsf_job->{retry}";
