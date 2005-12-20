@@ -99,6 +99,49 @@ sub transview {
   $self->initialize_zmenu_javascript;
   $self->set_title( 'Transcript Report for '.$self->{object}->stable_id )
 }
+
+
+sub transcriptstrainview {
+ my $self   = shift;
+  my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
+    'code'    => "info$self->{flag}",
+    'caption' => 'Ensembl Transcript Strain Report',
+    'object'  => $self->{object}
+  );
+  $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
+  $panel1->add_components(qw(
+    name        EnsEMBL::Web::Component::Gene::name
+    stable_id   EnsEMBL::Web::Component::Gene::stable_id
+    location    EnsEMBL::Web::Component::Gene::location
+    description EnsEMBL::Web::Component::Gene::description
+  ));
+  $self->add_panel( $panel1 );
+  $self->initialize_zmenu_javascript;
+  $self->set_title( 'Transcript strain Report for '.$self->{object}->stable_id );
+
+## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
+
+  if( my $panel2 = $self->new_panel( 'Image',
+    'code'    => "image#",
+    'caption' => 'SNPs and variations in region of transcript '.$self->{object}->stable_id,
+    # 'status'  => 'panel_image',
+    #'params'  => $params
+  )) {
+    $self->initialize_zmenu_javascript;
+    $self->initialize_ddmenu_javascript;
+#      menu   EnsEMBL::Web::Component::Gene::genesnpview_menu
+
+    $panel2->add_components(qw(
+       image  EnsEMBL::Web::Component::Transcript::transcriptstrainview
+      legend EnsEMBL::Web::Component::Gene::genesnpview_legend
+
+     ));
+    $self->add_panel( $panel2 );
+  }
+
+}
+
+
 sub context_menu {
   my $self = shift;
   my $obj      = $self->{object};
