@@ -3,12 +3,12 @@ package EnsEMBL::Web::Object::Transcript;
 use strict;
 use warnings;
 no warnings "uninitialized";
-
+use Bio::EnsEMBL::Utils::TranscriptAlleles;
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::ExtIndex;
 use POSIX qw(floor ceil);
-
+use Data::Dumper;
 our @ISA = qw(EnsEMBL::Web::Object);
 
 sub default_track_by_gene {
@@ -86,7 +86,7 @@ sub get_Slice {
   my( $self, $context, $ori ) = @_;
 
   my $db  = $self->get_db ;
-  my $gene = $self->gene;
+  my $gene = $self->gene;   ### should this be called on gene?
   my $slice = $gene->feature_Slice;
   if( $context =~ /(\d+)%/ ) {
     $context = $slice->length * $1 / 100;
@@ -96,6 +96,248 @@ sub get_Slice {
   }
   return $slice->expand( $context, $context );
 }
+
+#-- Transcript strain view -----------------------------------------------
+
+sub get_transcript_Slice {
+  my( $self, $context, $ori ) = @_;
+
+  my $db  = $self->get_db ;
+  my $slice = $self->Obj->feature_Slice;
+  if( $context =~ /(\d+)%/ ) {
+    $context = $slice->length * $1 / 100;
+  }
+  if( $ori && $slice->strand != $ori ) {
+    $slice = $slice->invert();
+  }
+  return $slice->expand( $context, $context );
+}
+
+
+# Copied from EnsEMBL/Web/Object/Gene.pm for Transcript Strain View
+
+=head2 transcript
+
+ Args        : Web user config, arrayref of slices (see example)
+ Example     : my $slice = $object->get_Slice(
+		  $wuc,  [ 'context',      'normal', '500%'  ],
+				 );
+ Description : Gets slices for transcript strain view
+ Return type : hash ref of slices
+
+=cut
+
+sub get_transcript_slices {
+  my( $self, $master_config, $slice_config ) = @_;
+  if( $slice_config->[1] eq 'normal') {
+    my $slice= $self->get_transcript_Slice( $slice_config->[2], 1 );
+    return [ 'normal', $slice, [], $slice->length ];
+  }
+  else {
+    return $self->get_munged_slice( $master_config, $slice_config->[2], 1 );
+  }
+}
+
+
+sub get_munged_slice {
+  my $self = shift;
+  my $master_config = shift;
+  my $slice = $self->get_transcript_Slice( @_ );
+  my $length = $slice->length();
+  my $munged  = '0' x $length;  # Munged is string of 0, length of slice
+
+  # Context is the padding around the exons in the fake slice
+  my $extent = $self->param( 'context' );
+
+  my @lengths;
+  if( $extent eq 'FULL' ) {
+    $extent = 1000;
+    @lengths = ( $length );
+  }
+  else {
+    foreach my $exon (@{$self->Obj->get_all_Exons()}) {
+      my $START    = $exon->start - $slice->start + 1 - $extent;
+      my $EXON_LEN = $exon->end-$exon->start + 1 + 2 * $extent;
+
+      # Change munged to 1 where there is exon or extent (i.e. flank)
+      substr( $munged, $START-1, $EXON_LEN ) = '1' x $EXON_LEN;
+    }
+    @lengths = map { length($_) } split /(0+)/, $munged;
+  }
+  ## @lengths contains the sizes of gaps and exons(+- context)
+
+  $munged = undef;
+
+  my $collapsed_length = 0;
+  my $flag = 0;
+  my $subslices = [];
+  my $pos = 0;
+  foreach( @lengths , 0) {
+    if ( $flag = 1-$flag ) {
+      push @$subslices, [ $pos+1, 0, 0 ] ;
+      $collapsed_length += $_;
+    } else {
+      $subslices->[-1][1] = $pos;
+    }
+    $pos+=$_;
+  }
+
+## compute the width of the slice image within the display
+  my $PIXEL_WIDTH =
+    $self->param('image_width') -
+        ( $master_config->get( '_settings', 'label_width' ) || 100 ) -
+    3 * ( $master_config->get( '_settings', 'margin' )      ||   5 );
+
+## Work out the best size for the gaps between the "exons"
+  my $fake_intron_gap_size = 11;
+  my $intron_gaps  = ((@lengths-1)/2);
+  if( $intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75 ) {
+     $fake_intron_gap_size = int( $PIXEL_WIDTH * 0.75 / $intron_gaps );
+  }
+## Compute how big this is in base-pairs
+  my $exon_pixels  = $PIXEL_WIDTH - $intron_gaps * $fake_intron_gap_size;
+  my $scale_factor = $collapsed_length / $exon_pixels;
+  my $padding      = int($scale_factor * $fake_intron_gap_size) + 1;
+  $collapsed_length += $padding * $intron_gaps;
+
+## Compute offset for each subslice
+  my $start = 0;
+  foreach(@$subslices) {
+    $_->[2] = $start - $_->[0];
+    $start += $_->[1]-$_->[0]-1 + $padding;
+  }
+
+  return [ 'munged', $slice, $subslices, $collapsed_length+2*$extent ];
+
+}
+
+
+sub getVariationsOnSlice {
+  my( $self, $key, $valids, $slice ) = @_;
+
+  my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+  my @snps =
+# [fake_s, fake_e, SNP]              Remove the schwartzian index
+    map  { $_->[1] }
+# [ index, [fake_s, fake_e, SNP] ]   Sort snps on schwartzian index
+    sort { $a->[0] <=> $b->[0] }
+# [ index, [fake_s, fake_e, SNP] ]   Compute schwartzian index [ consequence type priority, fake SNP ]
+    map  { [ $_->[1] - $ct{$_->[2]->get_consequence_type()} *1e9, $_ ] }
+# [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
+    grep { ( @{$_->[2]->get_all_validation_states()} ?
+           (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states()} ) :
+           $valids->{'opt_noinfo'} ) }
+# [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
+    grep { $valids->{'opt_'.lc($_->[2]->get_consequence_type()) } }
+# [ fake_s, fake_e, SNP ]   Filter our unwanted classes
+    grep { $valids->{'opt_'.$_->[2]->var_class} }
+# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
+# [ SNP, offset ]           Create a munged version of the SNPS
+    map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }    # Map to "fake coordinates"
+# [ SNP ]                   Filter out all the multiply hitting SNPs
+    grep { $_->map_weight < 4 }
+# [ SNP ]                   Get all features on slice
+    @{ $slice->get_all_VariationFeatures() };
+  return \@snps;
+}
+
+
+
+sub getAllelesOnSlice {
+  my( $self, $key, $valids, $strain_slice ) = @_;
+
+  # Get all features on slice
+  my $allele_features = $strain_slice->get_all_differences_Slice();
+  return [] unless ref $allele_features eq 'ARRAY'; 
+
+  my @genomic_af =
+  # Rm many filters as not applicable to Allele Features
+  # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
+     # [ AF, offset ]   Map to fake coords.   Create a munged version AF
+      map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
+	@$allele_features;
+  return \@genomic_af ;
+}
+
+sub transcript_alleles {
+  my ($self, $valids, $allele_info ) = @_;
+  return [] unless @$allele_info;
+
+  # consequences of AlleleFeatures on the transcript
+  my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @$allele_info;
+
+  my $consequences =  Bio::EnsEMBL::Utils::TranscriptAlleles::get_all_ConsequenceType($self->Obj, \@slice_alleles);
+  return [] unless @$consequences;
+
+  my @valid_conseq;
+  foreach ( @$consequences ){  # conseq on our transcript
+    push @valid_conseq, $_ if $valids->{'opt_'.lc($_->type)} ;
+  }
+  return  \@valid_conseq;
+}
+
+sub transcript_SNPS_old {
+  my ($self, $valids, $slice ) = @_;
+
+  my $our_transcript = $self->stable_id;
+  my $transcript_snps = {};
+
+  #slice_snps have vf on strain slice for all transcripts. Grep for ones on our transcript
+  my $slice_snps = $self->getAllelesOnSlice("straintranscripts", $valids, $slice);
+  foreach my $snp ( @$slice_snps ) {
+    foreach( @{$snp->[2]->get_all_TranscriptVariations ||[]} ) {
+      next unless $our_transcript eq $_->transcript->stable_id;
+      $transcript_snps->{ $snp->[2]->dbID } = [$_ , $snp ] if $valids->{'opt_'.lc($_->consequence_type)};
+    }
+  }
+  return $transcript_snps;
+}
+
+sub getAllelesOnSlice2 {
+  my( $self, $key, $valids, $slice ) = @_;
+
+  my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+  my @snps =
+# [fake_s, fake_e, AlleleFeature]              Remove the schwartzian index
+    map  { $_->[1] }
+# [ index, [fake_s, fake_e, AlleleFeature] ]   Sort snps on schwartzian index
+    sort { $a->[0] <=> $b->[0] }
+# [ index, [fake_s, fake_e, AlleleFeature] ]   Compute schwartzian index [ consequence type priority, fake AlleleFeature ]
+    map  { [ $_->[1] - $ct{$_->[2]->get_consequence_type()} *1e9, $_ ] }
+
+
+# Rm many filters as they arcan we do this?  Consequence unknown unless take other AF into account
+
+# [ fake_s, fake_e, AlleleFeature ]   Filter out any AFs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
+# [ AF, offset ]         Create a munged version of the AlleleFeatures
+    map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }    # Map to "fake coordinates"
+# [ AlleleFeatures ]                   Get all features on slice
+    @{ $slice->get_all_differences_Slice() };
+ return \@snps;
+}
+
+
+sub munge_gaps {
+  my( $self, $slice_code, $bp, $bp2  ) = @_;
+  my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
+   # warn "bp 2 $bp2, bp $bp";
+  foreach( @$subslices ) {
+
+    if( $bp >= $_->[0] && $bp <= $_->[1] ) {
+      my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2] ;
+   #   warn $return;
+      return $return;
+    }
+  }
+  return undef;
+}
+
+
+#-- end transcript strain view ----------------------------------------------
+
 
 =head2 transcript
 
