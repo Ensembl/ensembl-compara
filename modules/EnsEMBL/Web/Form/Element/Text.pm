@@ -11,13 +11,19 @@ sub new {
 
 sub render {
   my $self = shift;
+  my $style;
+  if ( CGI::escapeHTML( $self->rows ) ) {
+    my $height = CGI::escapeHTML( $self->rows ) * 1.2;
+    $style = 'style="height:'.$height.'em"';
+  }
   return sprintf(
-    qq(<textarea name="%s" id="%s" rows="%s" cols="%s" onKeyUp="check('text',this,%d)" onChange="check( 'text', this, %d )">%s</textarea>),
+    qq(<textarea name="%s" id="%s" rows="%s" cols="%s" onKeyUp="check('text',this,%d)" onChange="check( 'text', this, %d )" %s>%s</textarea>),
     CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
     CGI::escapeHTML( $self->rows ) ? CGI::escapeHTML( $self->rows ) : '10', 
-    CGI::escapeHTML( $self->cols ) ? CGI::escapeHTML( $self->rows ) : '40',
+    CGI::escapeHTML( $self->cols ) ? 'style="'.CGI::escapeHTML( $self->rows ) * 1.2 : '',
     $self->required eq 'yes' ? 1 : 0,
     $self->required eq 'yes' ? 1 : 0,
+    $style,
     CGI::escapeHTML( $self->value )
   );
 }
