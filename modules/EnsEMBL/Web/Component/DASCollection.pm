@@ -1071,6 +1071,7 @@ sub add_das_file {
   </p>
   <hr />
 });
+
   $form->add_element(
     'required' => 'yes',
     'type'  => 'Email',
@@ -1088,23 +1089,6 @@ sub add_das_file {
   );
 
   $form->add_element(
-    'type'  => 'String',
-    'name'  => 'DASuser_dsn',
-    'label' => 'Data source',
-    'value' => $object->param('DASuser_dsn'),
-    'notes' => '<small>If you want to update an existing annotation on Ensembl Server enter <a href="#">its DSN</a> and select your action</small>'
-  );
-
-  $form->add_element(
-    'type'   => 'DropDown',
-    'name'   => 'DASuser_action',
-    'label'  => 'Action',
-    'values' => [
-      { 'name' => 'Overwrite', 'value' => 'overwrite' },
-      { 'name' => 'Append',    'name'  => 'append'    }
-    ]
-  );
-  $form->add_element(
     'type'  => 'Text',
     'name'  => 'DASpaste_data',
     'label' => 'Paste your data'
@@ -1118,6 +1102,36 @@ sub add_das_file {
     'name'  => 'DASfilename',
     'label' => "Upload File:"
   );
+
+  $form->add_element(
+    'type'  => 'Information',
+    'value' => qq{
+  <p>
+   <br/>
+   <b>If you want to update an existing annotation on Ensembl DAS Server enter its Data Source Name and select your action
+  </b>
+  </p>
+  <hr/>
+});
+
+  $form->add_element(
+    'type'  => 'String',
+    'name'  => 'DASuser_dsn',
+    'label' => 'Data source',
+    'value' => $object->param('DASuser_dsn'),
+  );
+
+  $form->add_element(
+    'type'   => 'DropDown',
+    'name'   => 'DASuser_action',
+    'label'  => 'Action',
+    'values' => [
+      { 'name' => 'Overwrite', 'value' => 'overwrite' },
+      { 'name' => 'Append',    'name'  => 'append'    }
+    ]
+  );
+
+
   return;
 }
 
