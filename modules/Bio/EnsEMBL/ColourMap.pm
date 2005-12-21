@@ -198,21 +198,22 @@ sub new {
 
   # key => [colour, text, labelcolour]
   $self->colourSet( 'variation',
+    'INTERGENIC'             => ['gray50',         'Intergenic SNPs',       'black',],
     'INTRONIC'               => ['contigblue2',    'Intronic SNPs',         'white',],
-    'UPSTREAM'               => ['lightsteelblue2','Upstream',              'black',],
-    'DOWNSTREAM'             => ['lightsteelblue2','Downstream',            'black',],
-    '5PRIME_UTR'             => ['lightpink2',     "5' UTR",                'white',],
-    '3PRIME_UTR'             => ['lightpink2',     "3' UTR",                'white',],
-    'UTR'                    => ['lightpink2',     'UTR',                   'white',],
-    'NON_SYNONYMOUS_CODING'  => ['red',            'Non-synonymous coding', 'white',],
-    'FRAMESHIFT_CODING'      => ['orange',         'Frameshift coding SNP', 'white',],
-    'SYNONYMOUS_CODING'      => ['chartreuse3',    'Synonymous coding',     'white',],
-    'STOP_GAINED'            => ['magenta',        'Stop gained',           'white',],
-    'STOP_LOST'              => ['magenta',        'Stop lost',             'white',],
-    'INTERGENIC'             => ['gray50',         'Intergenic SNPs',       'white',],
-    'REG_REGION'             => ['hotpink',        'Regulatory region SNP', 'black',],
-    'SPLICE_SITE'            => ['orange',         'Splice site SNP',       'white',],
-    'ESS_SPLICE'             => ['orange',         'Essential splice site', 'white',],
+    'UPSTREAM'               => ['lightsteelblue', 'Upstream',              'black',],
+    'DOWNSTREAM'             => ['lightsteelblue', 'Downstream',            'black',],
+    'REG_REGION'             => ['aquamarine1',    'Regulatory region SNP', 'black',],
+    '5PRIME_UTR'             => ['cadetblue3',     "5' UTR",                'black',],
+    '3PRIME_UTR'             => ['cadetblue3',     "3' UTR",                'black',],
+    'UTR'                    => ['cadetblue3',     'UTR',                   'black',],
+    'SPLICE_SITE'            => ['hotpink',        'Splice site SNP',       'black',],
+    'ESS_SPLICE'             => ['hotpink',        'Essential splice site', 'black',],
+    'FRAMESHIFT_CODING'      => ['gold',           'Frameshift coding SNP', 'black',],
+    'SYNONYMOUS_CODING'      => ['chartreuse',     'Synonymous coding',     'black',],
+    'NON_SYNONYMOUS_CODING'  => ['coral',          'Non-synonymous coding', 'black',],
+    'STOP_GAINED'            => ['red',            'Stop gained',           'black',],
+    'STOP_LOST'              => ['red',            'Stop lost',             'black',],
+
 		  );
 
 

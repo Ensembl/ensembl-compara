@@ -20,8 +20,11 @@ sub _init {
     
   my @bitmap        = undef;
   my $colours       = $Config->get('snp_fake','colours' );
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  foreach my $type ( sort { $colours->{$a}->[0] cmp $colours->{$b}->[0]} keys %$colours ) {
+    push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->[1],   $colours->{$type}->[0];
+  }
 
+  my $pix_per_bp    = $Config->transform->{'scalex'};
   my $strand  = $self->strand();
   my $length  = $container->length;
     
@@ -93,12 +96,7 @@ sub _init {
     my $tag_root = $snp->dbID;
     $self->join_tag( $tglyph, "X:$tag_root=$tag2", .5, 0, $colour,'',-3 );
     $self->push( $tglyph );
-    unless($self->{'config'}->{'variation_types'}{$type}) {
-      push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
-	$colours->{$type}[1],  $colours->{$type}[0];
 
-      $self->{'config'}->{'variation_types'}{$type} = 1;
-    }
   }
 }
 
