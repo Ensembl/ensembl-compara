@@ -295,30 +295,6 @@ sub transcript_SNPS_old {
   return $transcript_snps;
 }
 
-sub getAllelesOnSlice2 {
-  my( $self, $key, $valids, $slice ) = @_;
-
-  my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
-  my @snps =
-# [fake_s, fake_e, AlleleFeature]              Remove the schwartzian index
-    map  { $_->[1] }
-# [ index, [fake_s, fake_e, AlleleFeature] ]   Sort snps on schwartzian index
-    sort { $a->[0] <=> $b->[0] }
-# [ index, [fake_s, fake_e, AlleleFeature] ]   Compute schwartzian index [ consequence type priority, fake AlleleFeature ]
-    map  { [ $_->[1] - $ct{$_->[2]->get_consequence_type()} *1e9, $_ ] }
-
-
-# Rm many filters as they arcan we do this?  Consequence unknown unless take other AF into account
-
-# [ fake_s, fake_e, AlleleFeature ]   Filter out any AFs not on munged slice...
-    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
-# [ AF, offset ]         Create a munged version of the AlleleFeatures
-    map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }    # Map to "fake coordinates"
-# [ AlleleFeatures ]                   Get all features on slice
-    @{ $slice->get_all_differences_Slice() };
- return \@snps;
-}
-
 
 sub munge_gaps {
   my( $self, $slice_code, $bp, $bp2  ) = @_;

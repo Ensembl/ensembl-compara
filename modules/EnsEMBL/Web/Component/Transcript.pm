@@ -1065,7 +1065,7 @@ sub transcriptstrainview {
           'coding_start' => $coding_start,
           'coding_end'   => $coding_end,
           'transcript'   => $transcript,
-          'allele_info'      => $allele_info,
+          'allele_info'  => $allele_info,
 	  'consequences' => $consequences,
 				  };
         $CONFIG->container_width( $fake_length );
@@ -1143,8 +1143,8 @@ sub transcriptstrainview {
   # Gene context block;
   #   my $gene_stable_id = $object->stable_id;
   #   $Configs->{'context'}->{'geneid2'} = $gene_stable_id; ## Only skip background stripes...
-  #$Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
- # $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
+  $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
+  $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
   # ## Transcript block
   #   $Configs->{'gene'}->{'geneid'}      = $gene_stable_id;
   #   $Configs->{'gene'}->container_width( $object->__data->{'slices'}{'gene'}[1]->length() );
