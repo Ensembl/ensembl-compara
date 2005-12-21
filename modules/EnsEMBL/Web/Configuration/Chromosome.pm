@@ -73,60 +73,6 @@ sub syntenyview {
 
 
 
-#-----------------------------------------------------------------------
-
-## Function to configure karyoview
-
-## This is a complex view that steps the user through two configuration
-## pages before displaying the user's data on a karyotype
-=pod
-
-sub karyoview {
-  my $self   = shift;
-
-  # this is a three-step view, so we need 3 separate sections
-  if (
-    ($self->{object}->param('paste_file') || $self->{object}->param('upload_file') || $self->{object}->param('url_file') ) # user input present
-    && $self->{object}->param('repeat') ne 'y') 
-    { # Step 3 - display user data in required format
-    if (my $panel3 = $self->new_panel ('InformationImage',
-            'code'    => "info$self->{flag}",
-            'caption' => '', 
-            'object'  => $self->{object},
-        ) ) {
-        # do stuff here
-        $panel3->add_components(qw(
-            image           EnsEMBL::Web::Component::Chromosome::show_karyotype
-        ));
-        $self->add_panel($panel3);
-    }
-  }
-  elsif ($self->{object}->param('display')) {
-    # Step 2 - user has chosen display type
-    if (my $panel2 = $self->new_panel ('Image',
-        'code'    => "info$self->{flag}",
-        'caption' => 'Select display options and data', 
-        'object'  => $self->{object},
-        ) ) {
-        $panel2->add_components(qw(
-            image_config           EnsEMBL::Web::Component::Chromosome::image_config
-        ));
-        ## Add the forms here so we can include JS validation in the page
-        $self->add_form( $panel2, qw(image_config     EnsEMBL::Web::Component::Chromosome::image_config_form) );
-        $self->add_panel($panel2);
-    }
-  }
-  else {
-    # Step 1 - initial page display
-    if (my $panel1 =  $self->new_panel('Image',
-        'caption' => 'Select a display type', 
-        ) ) {
-        $panel1->raw_component('EnsEMBL::Web::Component::Chromosome::image_choice');
-        $self->add_panel($panel1);
-    }
-  }
-}
-=cut
 #---------------------------------------------------------------------------
 
 ## Configuration for karyoview wizard
@@ -134,19 +80,22 @@ sub karyoview {
 sub karyoview {
   my $self   = shift;
   my $object = $self->{'object'};
+
+  $self->initialize_zmenu_javascript;
                                                                                 
   ## the "karyoview" wizard uses 3 nodes: configure karyotype, add track
   ## and display karyotype
   my $wizard = EnsEMBL::Web::Wizard::Chromosome->new($object);
-  $wizard->add_nodes([qw(kv_layout kv_add kv_display)]);
-  $wizard->default_node('kv_layout');
+  $wizard->add_nodes([qw(kv_add kv_extras kv_layout kv_display)]);
+  $wizard->default_node('kv_add');
                                                                                 
   ## chain the nodes together
   ## note that, since you can add multiple tracks, node 2 is recursive
   $wizard->add_outgoing_edges([
-          ['kv_layout'=>'kv_add'],
           ['kv_add'=>'kv_add'],
-          ['kv_add'=>'kv_display'],
+          ['kv_add'=>'kv_extras'],
+          ['kv_extras'=>'kv_layout'],
+          ['kv_layout'=>'kv_display'],
   ]);
                                                                                 
   $self->add_wizard($wizard);

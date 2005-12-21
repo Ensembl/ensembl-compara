@@ -301,6 +301,12 @@ $_->{'start'}] }
                     $point->{'zmenu'}->{$key} = $value;
                     $order++;
                 }
+                elsif ($entry eq 'userdata') {
+                    $id = $row->{'label'};
+                    $key = sprintf('%03d', $order).':'.$id;
+                    $point->{'zmenu'}->{$key} = '';
+                    $order++;
+                }
             }
         }
 

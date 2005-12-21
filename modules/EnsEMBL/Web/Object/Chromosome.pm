@@ -271,7 +271,6 @@ sub parse_user_data {
         my $du = EnsEMBL::Web::DataUpload->new();
         if (defined(my $error = $du->upload_data("upload_file_$track_id"))) {
             $self->problem('fatal', "Sorry, unable to upload your file at this time. Please try again later.");
-            warn "File didn't upload :(";
             #$self->Output->error_page($self->problem->[0]);
             #$self->Output->ensembl_exit;
         }

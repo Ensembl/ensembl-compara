@@ -26,6 +26,8 @@ sub new {
     'render_as'    => $array{ 'render_as'    },
     'src'          => $array{ 'src'    },
     'alt'          => $array{ 'alt'    },
+    'width'        => $array{ 'width' },
+    'height'       => $array{ 'height' },
     'in_error'     => 'no'
   };
   bless $self, $class;
@@ -54,6 +56,8 @@ sub in_error     :lvalue { $_[0]{'in_error'}; }
 sub render_as    :lvalue { $_[0]{'render_as'}; }
 sub src           :lvalue { $_[0]{'src'};   }
 sub alt           :lvalue { $_[0]{'alt'};   }
+sub width         :lvalue { $_[0]{'width'};   }
+sub height        :lvalue { $_[0]{'height'};   }
 
 sub _is_valid { return 1; }
 sub validate  { return $_[0]->required eq 'yes'; }

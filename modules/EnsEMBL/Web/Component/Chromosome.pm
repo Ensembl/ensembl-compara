@@ -241,9 +241,7 @@ sub chr_map {
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/contigview", 'hidden'=> $hidden);
   $image->add_tracks($object, $config_name);
   $image->karyotype($object, '', $config_name);
-  warn ">>";
   $image->caption = 'Click on the image above to zoom into that point';
-  warn ">>";
   $panel->add_image( $image->render, $image->{'width'} );
   return 1;
 }
@@ -583,8 +581,9 @@ qq(<a href="/$species/syntenyview?otherspecies=$other;chr=$chr;loc=).$data[1].'"
 # KARYOVIEW COMPONENTS  
 #-----------------------------------------------------------------
 
-sub kv_layout   { _wrap_form($_[0], $_[1], 'kv_layout'); }
 sub kv_add      { _wrap_form($_[0], $_[1], 'kv_add'); }
+sub kv_extras   { _wrap_form($_[0], $_[1], 'kv_extras'); }
+sub kv_layout   { _wrap_form($_[0], $_[1], 'kv_layout'); }
 
 sub _wrap_form {
   my ( $panel, $object, $node ) = @_;
@@ -614,18 +613,20 @@ sub kv_display {
 
     # CREATE IMAGE OBJECT
     my $image    = $object->new_karyotype_image();
-    $image->imagemap           = 'no';
+    $image->imagemap           = 'yes';
     $image->cacheable          = 'no';
     $image->image_name         = 'karyoview-'.$object->species.'-'.$object->chr_name;
     ## Add features
 
     my @params = $object->param;
     my $track_no = 0;
+    $config->{'_group_size'} = 1;
     foreach my $param (@params) {
       $track_no++ if $param =~ /^track_name_/;
+      ## make sure extra Ensembl tracks get grouped with chromosome
+      $config->{'_group_size'}++ if $param =~ /^track_V/;
     }
     $track_no = 1 if !$track_no; ## default in case no track name provided!
-    $config->{'_group_size'} = 1;
 
     my $all_pointers;
     for (my $i = 0; $i < $track_no; $i++) {
@@ -633,7 +634,7 @@ sub kv_display {
       my $track_id = $i+1;
       my $parser;
 
-      if ($object->param('display') eq 'density') {
+      if ($object->param("style_$track_id") =~ /line|bar|outline/) {
         ## parse data
         $parser = Data::Bio::Text::DensityFeatureParser->new();
         $parser->set_filter($chr);  # filter chromosomes that aren't used
@@ -643,7 +644,7 @@ sub kv_display {
         $parser->bin_size(int($max_length/$bins));
         $object->parse_user_data($parser, $track_id);
         $config->{'_group_size'} += scalar(keys %{$parser->counts});
-        
+ 
         ## create image with parsed data
         $image->add_tracks($object, $config_name, $parser, $track_id);
       }
@@ -652,8 +653,22 @@ sub kv_display {
         $parser = Data::Bio::Text::FeatureParser->new();
         $object->parse_user_data($parser, $track_id);
 
+        my $zmenu_config = {
+            'caption' => 'features',
+            'entries' => ['userdata'],
+        };
+
         ## create image with parsed data
-        $pointers = $image->add_pointers($object, {'config_name'=>$config_name, 'parser'=>$parser, 'color' => $object->param("col_$track_id"), 'style' => $object->param("style_$track_id")});
+        $pointers = $image->add_pointers(
+            $object, 
+            {
+              'config_name'=>$config_name, 
+              'zmenu_config' => $zmenu_config,
+              'parser'=>$parser, 
+              'color' => $object->param("col_$track_id"), 
+              'style' => $object->param("style_$track_id")
+              }
+        );
         push @$all_pointers, $pointers;
       }
     }

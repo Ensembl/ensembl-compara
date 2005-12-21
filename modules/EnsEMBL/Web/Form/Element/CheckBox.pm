@@ -4,10 +4,10 @@ use EnsEMBL::Web::Form::Element;
 use CGI qw(escapeHTML);
 our @ISA = qw( EnsEMBL::Web::Form::Element );
 
-sub new {
-  my $class = shift;
-  return $class->SUPER::new( @_ );
-}
+#sub new {
+#  my $class = shift;
+#  return $class->SUPER::new( @_ );
+#}
                                                                                 
 sub new {
   my $class = shift;

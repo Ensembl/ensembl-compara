@@ -205,6 +205,16 @@ sub show_fields {
 
 }
 
+sub _uniquify {
+  my $a_ref = shift;
+  my %unique;
+  foreach my $value (@$a_ref) {
+    $unique{$value}++;
+  }
+  my @uniques = (keys %unique);
+  return \@uniques;
+}
+
 sub _HTMLize {
   my $string = shift;
   $string =~ s/"/&quot;/g;
@@ -225,10 +235,18 @@ sub pass_fields {
   foreach my $field (@fields) {
     next if $field =~ /submit/;    
 
+    ## Debug form fields
+    #$form->add_element(
+    #  'type'      => 'NoEdit',
+    #  'label'     => $field,
+    #  'value'     => $object->param($field),
+    #);
+
     ## include a hidden element for passing data
     my @values = $object->param($field);
     if (scalar(@values) > 1) {
-      foreach my $element (@values) {
+      my $unique = _uniquify(\@values);
+      foreach my $element (@$unique) {
         next unless $element;
         $form->add_element(
           'type'      => 'Hidden',
@@ -276,7 +294,8 @@ sub add_widgets {
     ## deal with multi-value fields
     my @values = $object->param($field_name);
     if (scalar(@values) > 1) {
-      $parameter{'value'} = \@values;
+      my $unique = _uniquify(\@values);
+      $parameter{'value'} = $unique;
     }
     else {
       $parameter{'value'} = $object->param($field_name) || $field_info{'value'};
@@ -322,7 +341,16 @@ sub add_buttons {
       'type'  => 'Submit',
       'name'  => 'submit_'.$object->param('previous'),
       'value' => '< Back',
-      'spanning' => 'button',
+      'spanning' => 'inline',
+    );
+    $form->add_element(
+      'type'      => 'StaticImage',
+      'name'      => 'spacer',
+      'src'       => '/img/blank.gif',
+      'alt'       => ' ',
+      'width'     => 200,
+      'height'    => 25,
+      'spanning'  => 'inline',
     );
   }
 
@@ -334,7 +362,7 @@ sub add_buttons {
       'type'  => 'Submit',
       'name'  => 'submit_'.$edge,
       'value' => $text.' >',
-      'spanning' => 'button',
+      'spanning' => 'inline',
     );
   }
 
