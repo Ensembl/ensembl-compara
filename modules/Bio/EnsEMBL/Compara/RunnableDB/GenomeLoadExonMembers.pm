@@ -128,7 +128,7 @@ sub write_output
 
   my $output_id = "{gdb=>" . $self->{'genome_db'}->dbID .
                    ",ss=>" . $self->{'exonSubset'}->dbID . "}";
-  $self->input_job->input_id($output_id);
+  $self->dataflow_output_id($output_id);
   return 1;
 }
 
