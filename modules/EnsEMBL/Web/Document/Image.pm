@@ -104,22 +104,62 @@ sub add_tracks {
   my $data;
   if ($parser) { # we have use data
     # CREATE TRACKS
+    my $track_data;
     my $pos = 10000;
     my $max_values = $parser->max_values();
-    foreach my $track ( $parser->feature_types ) {
-      push @{$config->{'general'}{$config_name}{'_artefacts'}}, "track_$track";
-      my $colour; 
-      my $manager = 'Vbinned';
-      if ($track_id) {
-        $colour = $object->param("col_$track_id");
-        my $style = $object->param("style_$track_id");
-        $manager .= '_'.$style unless $style eq 'line';
+
+    ## get basic configuration
+    my ($colour, $track_name); 
+    my $manager = 'Vbinned';
+    if ($track_id) {
+      $track_name = $object->param("track_name_$track_id");
+      $colour = $object->param("col_$track_id");
+      my $style = $object->param("style_$track_id");
+      $manager .= '_'.$style unless $style eq 'line';
+    }
+    else {
+      $track_name = "track_$track_id";
+      $colour = $object->param('col') || 'purple';
+    }
+
+    if ($object->param("merge_$track_id")) { ## put all data in one track
+      my %all_features;
+      my $max;
+      push @{$config->{'general'}{$config_name}{'_artefacts'}}, "$track_name";
+      my @types = $parser->feature_types;
+      my $bins = $parser->no_of_bins;
+      foreach my $type (@types) {
+        my %features = %{$parser->features_of_type($type)};
+        foreach my $chr (keys %features) {
+          my @results = @{$features{$chr}};
+          for (my $i=0; $i < $bins; $i++) {
+            my $score = $results[$i];
+            $all_features{$chr}[$i] += $score;
+          }
+        }
+        my $current_max = $max_values->{$type};
+        $max = $current_max if $max < $current_max;
       }
-      else {
-        $colour = $object->param('col') || 'purple';
-      }
-      $config->{'general'}{$config_name}{"track_$track"} = 
-         {
+      $config->{'general'}{$config_name}{$track_name} = 
+        {
+          'on'            => 'on',
+          'pos'           => ++$pos,
+          'width'         => 50,
+          'col'           => $colour,
+          'manager'       => $manager,
+          'label'         => $track_name,
+          'bins'          => $parser->no_of_bins,
+          'max_value'     => $max,
+          'data'          => \%all_features,
+          'maxmin'        => $object->param('maxmin'),
+          };
+      $config->{'_group_size'} = 2;
+    }
+    else {
+      foreach my $track ( $parser->feature_types ) {
+        push @{$config->{'general'}{$config_name}{'_artefacts'}}, "track_$track";
+        $config->{'general'}{$config_name}{"track_$track"} = 
+        {
           'on'            => 'on',
           'pos'           => ++$pos,
           'width'         => 50,
@@ -130,11 +170,11 @@ sub add_tracks {
           'max_value'     => $max_values->{$track},
           'data'          => $parser->features_of_type( $track ),
           'maxmin'        => $object->param('maxmin'),
-          },
-    }
-    if ($chr  eq 'ALL') {
+          };
+      }
       $config->{'_group_size'} = 1 + $parser->feature_types();
-    } 
+    }
+
     # add selected standard tracks
     my @params = $object->param();
     my $box_value;
