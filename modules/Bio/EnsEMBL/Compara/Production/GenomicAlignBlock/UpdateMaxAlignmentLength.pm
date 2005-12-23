@@ -135,7 +135,7 @@ sub update_meta_table {
     $max_alignment_length = $max_align if ($max_align > $max_alignment_length);
     print STDERR "Stored key:$key value:",$max_align + 1," in meta table\n";
   }
-
+  $mc->delete_key("max_alignment_length");
   $mc->store_key_value("max_alignment_length", $max_alignment_length + 1);
   print STDERR "Stored key:max_alignment_length value:",$max_alignment_length + 1," in meta table\n";
 
