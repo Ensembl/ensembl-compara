@@ -179,7 +179,8 @@ sub add_tracks {
     my @params = $object->param();
     my $box_value;
     foreach my $param (@params) {
-      if ($param =~ /^track_/) {
+      if ($param =~ /^track_/ && !($param =~ /^track_name/)) {
+        $config->{'_group_size'}++;
         if ($object->param($param) ne 'on') {
           $box_value = 'off';
         }
@@ -204,6 +205,7 @@ sub add_tracks {
       $config->set( $art, 'logicname', join( " ", @good_lnames ) );
     }
   }
+warn $config->{'_group_size'};
                                                                                 
   return 1;
 }
