@@ -201,7 +201,7 @@ our %all_nodes = (
   'kv_add' => {
       'form' => 1,
       'title' => 'Add your data',
-      'input_fields'  => [qw(blurb track_name style col paste_file upload_file url_file merge)],
+      'input_fields'  => [qw(blurb track_name style col merge paste_file upload_file url_file)],
       'button'  => 'Add more data',
   },
   'kv_extras' => {
