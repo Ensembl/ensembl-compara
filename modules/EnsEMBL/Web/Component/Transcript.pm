@@ -1092,30 +1092,7 @@ sub transcriptstrainview {
     push @ens_exons, [ $es + $munge, $ee + $munge, $exon ];
   }
 
-
-  # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
-  my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
-  my $snp_fake_length = -1; ## end of last drawn snp on bottom display...
   my $snps = $object->getVariationsOnSlice( "straintranscripts", \%valids, $transcript_slice );
-
-  # @snps: array of arrays containing [fake_start, fake_end, B:E:Variation obj]
-  my @snps2;
-  @snps2 = map {
-    $snp_fake_length +=$SNP_REL+1;
-    [ $snp_fake_length - $SNP_REL+1, $snp_fake_length, $_->[2], $transcript_slice->seq_region_name,
-      $transcript_slice->strand > 0 ?
-      ( $transcript_slice->start + $_->[2]->start - 1,
-	$transcript_slice->start + $_->[2]->end   - 1 ) :
-      ( $transcript_slice->end - $_->[2]->end     + 1,
-	$transcript_slice->end - $_->[2]->start   + 1 )
-    ]
-  } sort { $a->[0] <=> $b->[0] } @$snps;
-
-  ## Cache data so that it can be retrieved later...
-  #     foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
-  #       $trans_obj->__data->{'transformed'}{'gene_snps'} = \@snps2;
-  #     }
-
 
   foreach(qw(transcripts_top transcripts_bottom)) {
     $Configs->{$_}->{'extent'}      = $extent;
@@ -1137,8 +1114,24 @@ sub transcriptstrainview {
   #   $Configs->{'gene'}->{'geneid'}      = $gene_stable_id;
   #   $Configs->{'gene'}->container_width( $object->__data->{'slices'}{'gene'}[1]->length() );
 
+  # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
+  # @snps: array of arrays containing [fake_start, fake_end, B:E:Variation obj]
+  my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
+  my $snp_fake_length = -1; ## end of last drawn snp on bottom display...
+  my @snps;
+  @snps = map {
+    $snp_fake_length +=$SNP_REL+1;
+    [ $snp_fake_length - $SNP_REL+1, $snp_fake_length, $_->[2], $transcript_slice->seq_region_name,
+      $transcript_slice->strand > 0 ?
+      ( $transcript_slice->start + $_->[2]->start - 1,
+	$transcript_slice->start + $_->[2]->end   - 1 ) :
+      ( $transcript_slice->end - $_->[2]->end     + 1,
+	$transcript_slice->end - $_->[2]->start   + 1 )
+    ]
+  } sort { $a->[0] <=> $b->[0] } @$snps;
+
+  $Configs->{'snps'}->{'snps'}        = \@snps;
   $Configs->{'snps'}->{'fakeslice'}   = 1;
-  $Configs->{'snps'}->{'snps'}        = \@snps2;
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
   return if $do_not_render;
 
