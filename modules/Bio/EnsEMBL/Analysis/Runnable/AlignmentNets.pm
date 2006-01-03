@@ -53,17 +53,17 @@ sub new {
       $net_filter,
       $filter_non_syntenic,
       $min_chain_score
-      ) = $self->_rearrange([qw(
-                                CHAINS
-                                QUERY_LENGTHS
-                                TARGET_LENGTHS
-                                CHAINNET
-                                NETSYNTENIC
-                                NETFILTER
-                                FILTER_NON_SYNTENIC
-                                MIN_CHAIN_SCORE
-                                )],
-                                    @args);
+      ) = rearrange([qw(
+                        CHAINS
+                        QUERY_LENGTHS
+                        TARGET_LENGTHS
+                        CHAINNET
+                        NETSYNTENIC
+                        NETFILTER
+                        FILTER_NON_SYNTENIC
+                        MIN_CHAIN_SCORE
+                        )],
+                    @args);
 
   throw("You must supply a ref to array of alignment chains") 
       if not defined $chains;
