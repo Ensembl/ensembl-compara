@@ -11,7 +11,6 @@ sub init {
     $self->{'_transcript_names_'} = 'yes';
     $self->{'general'}->{'transview'} = {
 	'_artefacts' => [qw(
-	    vega_transcript
 	    ruler
 	    scalebar
 	)],
@@ -29,26 +28,16 @@ sub init {
 	    'bgcolour2' => 'background1',
 	},
 
-	'vega_transcript' => {
-	    'on'      => "on",
-	    'pos'     => '1020',
-	    'str'     => 'b',
-	    'src'     => 'all', # 'ens' or 'all',
-            'colours' => {$self->{'_colourmap'}->colourSet( 'vega_gene' )},
-            'label'   => "Vega trans.",
-            'zmenu_caption' => "Vega Gene",
-	},
-        
         'ruler' => {
             'on'  => "on",
-            'pos' => '11',
+            'pos' => '99999',
             'col' => 'black',
             'str' => 'r',
         },
 
 	'scalebar' => {
             'on'  => "on",
-            'pos' => '1041',
+            'pos' => '100000',
             'col' => 'black',
             'max_divisions' => '6',
             'str' => 'b',
@@ -56,6 +45,9 @@ sub init {
             'abbrev' => 'on',
 	},
     };
+    
+    $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'on' );
+    $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 1000, 'on' => 'off' );
 
 }
 1;

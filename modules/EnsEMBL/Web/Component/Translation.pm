@@ -114,9 +114,9 @@ sub marked_up_seq_form {
   my $form = EnsEMBL::Web::Form->new( 'marked_up_seq', "/@{[$object->species]}/protview", 'get' );
   $form->add_element( 'type' => 'Hidden', 'name' => 'db',      'value' => $object->get_db    );
   if ($object->stable_id) {
-	$form->add_element( 'type' => 'Hidden', 'name' => 'peptide', 'value' => $object->stable_id );
+	  $form->add_element( 'type' => 'Hidden', 'name' => 'peptide', 'value' => $object->stable_id );
   } else {
-	$form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->transcript->stable_id);
+	  $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->transcript->stable_id);
   }
   my $show = [{ 'value' => 'plain', 'name' => 'None' }, {'value'=>'exons', 'name'=>'Exons'} ];
   if( $object->species_defs->databases->{'ENSEMBL_VARIATION'}||$object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
@@ -145,16 +145,8 @@ sub marked_up_seq {
   my $show      = $object->param('show');
   
   my $image_key;
-  if( $object->param('show_vega_markup') ) {
-    if($show eq 'exons') {
-      $HTML .= qq(<p><img src="/img/help/protview_key1.png" alt="[Key]" border="0" /></p>);
-    } elsif ($show eq 'snps') {
-      $HTML .= qq(<p><img src="/img/help/protview_key2.png" alt="[Key]" border="0" /></p>);
-    }
-  } else {
-    if( $show eq 'exons' || $show eq 'snps' ) {
+  if( $show eq 'exons' || $show eq 'snps' ) {
       $HTML .= qq(<img src="/img/help/protview_key1.gif" alt="[Key]" border="0" />);
-    }
   }
   $HTML .= "<div>@{[ $panel->form( 'markup_up_seq' )->render ]}</div>";
   $panel->add_row( $label, $HTML );

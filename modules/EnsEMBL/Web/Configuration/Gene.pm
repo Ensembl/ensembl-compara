@@ -346,7 +346,7 @@ sub context_menu {
   }
   $self->add_entry( $flag,
     'code'  => 'exp_data',
-    'text'  => "Export data",
+    'text'  => "Export gene data",
     'title' => "ExportView - Export information about gene ".$obj->stable_id,
     'href'  => "/$species/exportview?type1=gene;anchor1=@{[$obj->stable_id]}"
   );

@@ -12,17 +12,15 @@ sub init {
 	'_artefacts' => [qw(
 	    ruler
             contig
-            vega_transcript
             glovar_snp
 	)],
 	
 	'_options' => [qw(pos col known unknown)],
         '_settings'     => {
             'features' => [
-                [ 'vega_transcript'      => "Vega Trans."      ],
                 [ 'glovar_snp'                  => 'SNPs'               ],
             ],
-            'show_labels' => 'no',
+            'show_labels' => 'yes',
 	    'show_buttons'=> 'no',
 	    'opt_shortlabels'     => 1,
             'opt_zclick'     => 1,
@@ -32,21 +30,11 @@ sub init {
 	    'bgcolour2'   => 'background1',
 	},  
 
-	'vega_transcript' => {
-	    'on'      => "on",
-	    'pos'     => '23',
-	    'str'     => 'b',
-	    'src'     => 'all', # 'ens' or 'all
-            'colours' => {$self->{'_colourmap'}->colourSet( 'vega_gene' )},
-            'label'   => "Vega trans.",
-            'zmenu_caption' => "Vega Gene",
-	},
-
         'glovar_snp' => {
             'on'  => "on",
             'bump_width' => 0,
             'dep' => 0.1,
-            'pos' => '100',
+            'pos' => '90000',
             'str' => 'r',
             'col' => 'blue',
             'colours' => {$self->{'_colourmap'}->colourSet('snp')},
@@ -66,6 +54,8 @@ sub init {
 	    'navigation'  => 'off',
         }
     };
+    
+    $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'on' );
 }
 
 1;

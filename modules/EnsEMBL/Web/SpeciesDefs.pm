@@ -879,31 +879,15 @@ sub _parse {
           if( $tree->{'TABLE_SIZE'}->{'ENSEMBL_DB'}->{'author'} ) {
 ## authors by chromosome
             $sql = qq(
-              select au.author_name, sr.name, count(*)
-                from gene as g, gene_stable_id as gsi, gene_info as gi,
-                     author as au, seq_region as sr
-               where g.gene_id = gsi.gene_id and
-                     gi.gene_stable_id = gsi.stable_id and
-                     gi.author_id = au.author_id and
-                     g.seq_region_id = sr.seq_region_id
-               group by sr.name, au.author_name
+                SELECT distinct(a.logic_name)
+                FROM gene g, analysis a
+                WHERE g.analysis_id = a.analysis_id
             );
             $query = $dbh->prepare($sql);
             eval { 
-              $query->execute; 
+              $query->execute;
               while( my $row = $query->fetchrow_arrayref) {
-                $tree->{'DB_FEATURES'}{uc("LITE_TRANSCRIPT_$row->[0].$row->[1]")}=$row->[2];
-                $tree->{'DB_FEATURES'}{uc("LITE_TRANSCRIPT_$row->[0]")}=1;
-              }
-            };
-## gene types (for gene legend)
-            $sql   = qq(select distinct(type) from gene);
-            eval {
-              $query = $dbh->prepare($sql);
-              if($query->execute()>0) {
-                foreach(@{$query->fetchall_arrayref}) {
-                  $tree->{'VEGA_GENE_TYPES'}{$_->[0]}=1;
-                }
+                $tree->{'DB_FEATURES'}->{uc("VEGA_GENES_$row->[0]")} = 1;
               }
             };
           }
@@ -1026,7 +1010,7 @@ sub db_connect {
     return undef;
   }
 
-  warn "Connecting to $db_name";
+  #warn "Connecting to $db_name";
   my $dbhost  = $tree->{'databases'}->{$db_name}{'HOST'};
   my $dbport  = $tree->{'databases'}->{$db_name}{'PORT'};
   my $dbuser  = $tree->{'databases'}->{$db_name}{'USER'};

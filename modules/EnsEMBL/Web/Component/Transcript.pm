@@ -310,7 +310,6 @@ sub transcript_structure {
   my $label    = 'Transcript structure';
   my $transcript_slice = $transcript->Obj->feature_Slice;
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
-
   my $wuc = $transcript->get_userconfig( 'geneview' );
      $wuc->{'_draw_single_Transcript'} = $transcript->Obj->stable_id;
      $wuc->{'_no_label'} = 'true';
@@ -742,23 +741,12 @@ sub marked_up_seq {
   my $trans_id  = $object->transcript->stable_id;
   my $show      = $object->param('show');
 
-  my $image_key;
-  if( $object->param('show_vega_markup') ) {
-    if( $show eq 'codons'){
-      $HTML .= qq(<img src="/img/help/transview-key1.png" height="200" width="200" alt="[Key]" border="0" />);
-    } elsif( $show eq 'peptide' ) {
-      $HTML .= qq(<img src="/img/help/transview-key2.png" height="200" width="200" alt="[Key]" border="0" />);
-    } elsif( $show eq 'snps' ){
-      $HTML .= qq(<img src="/img/help/transview-key3.png" height="350" width="300" alt="[Key]" border="0" />); 
-    }
-  } else {
-    if( $show eq 'codons' ) {
+  if( $show eq 'codons' ) {
       $HTML .= qq(<img src="/img/help/transview-key1.gif" height="200" width="200" alt="[Key]" border="0" />);
-    } elsif( $show eq 'peptide' ) { 
+  } elsif( $show eq 'peptide' ) { 
       $HTML .= qq(<img src="/img/help/transview-key2.gif" height="200" width="200" alt="[Key]" border="0" />);
-    } elsif( $show eq 'snps' ) {
+  } elsif( $show eq 'snps' ) {
       $HTML .= qq(<img src="/img/help/transview-key3.gif" height="350" width="300" alt="[Key]" border="0" />);
-    }
   }
   $HTML .= "<div>@{[ $panel->form( 'markup_up_seq' )->render ]}</div>";
   $panel->add_row( $label, $HTML );

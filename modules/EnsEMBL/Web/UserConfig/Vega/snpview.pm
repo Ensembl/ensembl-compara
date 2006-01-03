@@ -54,16 +54,6 @@ sub init {
             'abbrev'      => 'on',
             'navigation'  => 'off'
         },
-	'vega_transcript' => {
-	    'on'      => "on",
-	    'pos'     => '2000',
-	    'str'     => 'b',
-	    'src'     => 'all', # 'ens' or 'all
-            'colours' => {$self->{'_colourmap'}->colourSet( 'vega_gene' )},
-            '_href_only' => '#tid',
-            'label'   => "Vega trans.",
-            'zmenu_caption' => "Vega Gene",
-	},
         'snp_triangle_glovar' => {
             'on'          => "on",
             'pos'         => '4521',
@@ -81,5 +71,7 @@ sub init {
             'pos'         => '9999',
         },
     };
+
+    $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'on' );
 }
 1;

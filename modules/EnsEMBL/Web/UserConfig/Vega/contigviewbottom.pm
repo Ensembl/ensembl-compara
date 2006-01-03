@@ -32,7 +32,7 @@ sub init {
              matepairs   bacs  bac_bands  tilepath  tilepath2  bacends
              ruler     scalebar  stranded_contig  
              sequence  codonseq  codons gap gcplot    
-
+             encode
              gene_legend missing
              restrict redbox ),
 
@@ -118,11 +118,14 @@ sub init {
                  [ 'pseudo_polyA'        => 'Pseudo PolyA'        ],
                  [ 'ensemblclones'       => 'Ensembl clones' ],
                  [ 'assembly_tag'        => 'Assembly tags' ],
+  
+
     ## Matches ##
                 ],
           'compara' => [ ],
           'options' => [
                 # 'name'            => 'caption'
+    			[ 'encode'              => 'Encode regions' ],
                 [ 'assemblyexception' => 'Assembly exceptions' ],
                 [ 'sequence'            => 'Sequence'           ],
                 [ 'codonseq'            => 'Codons'             ],
@@ -130,7 +133,7 @@ sub init {
                 [ 'stranded_contig'     => 'Contigs'            ],
                 [ 'ruler'               => 'Ruler'              ],
                 [ 'scalebar'            => 'Scale Bar'          ],
-                [ 'tp32k'           => '32K Tilepath'      ],
+                [ 'tp32k'               => '32K Tilepath'      ],
                 [ 'tilepath'            => 'Tilepath'           ],
                 [ 'tilepath2'           => 'Acc. Clones'        ],
                 [ 'gcplot'              => '%GC'                ],
@@ -148,7 +151,7 @@ sub init {
                 [ 'gap'                 => 'Gaps'               ],
                 [ 'restrict'            => 'Rest.Enzymes'       ],
                 [ 'info'                => 'Information track'  ],
-                 ],
+	                 ],
           'menus' => [ qw( features DAS options repeats export jumpto resize )]
          },
 
@@ -163,7 +166,6 @@ sub init {
       'on' => 'off',
       'pos' => '1000000',
       'col' => 'red',
-      'zindex' => -20,
     },
 
 
@@ -559,6 +561,18 @@ sub init {
         'threshold_navigation' => '10000000',
         'outline_threshold'    => '350000'
     },
+
+   'encode' => {
+      'on' => 'on',
+      'pos' => '8040',
+      'colour' => 'salmon',
+      'label'  => 'black',
+      'str' => 'r',
+      'dep' => '9999',
+      'threshold_navigation' => '10000000',
+      'available' => 'features mapset_encode'
+    },
+
     'tilepath' => {
         'on'  => "on",
         'pos' => '8016',
@@ -734,7 +748,6 @@ sub init {
   $self->ADD_ALL_PROTEIN_FEATURES();
   $self->ADD_ALL_DNA_FEATURES();
   $self->ADD_ALL_EST_FEATURES();
-
 
   ## And finally the multispecies tracks....
   my @species = @{$self->{'species_defs'}->ENSEMBL_SPECIES};

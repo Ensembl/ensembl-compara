@@ -83,6 +83,7 @@ sub featureview {
   }
   else {
     # Step 1 - initial page display
+
     my $panel1 =  new EnsEMBL::Web::Document::Panel::Image( 
         'code'    => "info$self->{flag}",
         'caption' => 'FeatureView',
@@ -101,7 +102,7 @@ sub context_menu {
   my $obj      = $self->{object};
   my $species = $self->{object}->species;
   
-  my $flag     = "";
+  my $flag     = "feat";
   $self->{page}->menu->add_block( $flag, 'bulleted', "Display Feature" );
 
   # pass configuration options in URL
@@ -127,7 +128,7 @@ sub context_menu {
         unshift (@$feature_types,  {'text'=>"OMIM Disease", 'href'=>"/$species/featureview?type=Disease", 'raw'=>1});
   }
 
-  $self->add_entry( $flag, 'text' => "Select another feature to display",
+  $self->add_entry( $flag, code=>'other_feat', 'text' => "Select another feature to display",
                                   'href' => "/@{[$obj->species]}/featureview?$config", 'options' => $feature_types );
   $self->add_entry( $flag, 'text' => "Display your own features on a karyotype",
                                   'href' => "/@{[$obj->species]}/karyoview" );

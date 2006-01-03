@@ -232,8 +232,6 @@ sub output_DnaDnaAlignFeature {
 
 sub output_External {
   my( $panel, $object ) = @_;
-  use Data::Dumper;
-  warn Data::Dumper::Dumper( $object->Obj );
   foreach my $align ( @{$object->Obj||[]} ) {
     $panel->print(
       "<pre>",

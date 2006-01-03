@@ -666,7 +666,7 @@ sub container_width {
         $self->{'_containerlength'} = $val;
 	
 	my $width = $self->image_width();
-	$self->scalex($width/$val);
+	$self->scalex($width/$val) if $val;
     }
     return $self->{'_containerlength'};
 }
@@ -924,8 +924,6 @@ sub ADD_ALL_PREDICTIONTRANSCRIPTS {
   $self->add_new_track_predictiontranscript( 'gws_s','Genewise (Mouse)','orange',$POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
 #for vega 
   $self->add_new_track_predictiontranscript( 'fgenesh', 'Fgenesh', 'darkkhaki', $POS ++, {}, @_ ); # 'available' => 'features Fgenesh', @_ ); # , 'glyphset'=>'fgenesh', @_);
-  $self->add_new_track_predictiontranscript( 'vega_genscan', 'Genscan', 'lightseagreen', $POS ++, {}, 
-											 'glyphset'=>'genscan', @_);
   return $POS;
 }
 
@@ -955,28 +953,14 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'refseq',    'Refseq proteins', 'refseq_gene',    $POS++, @_ );
   $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
   $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
-#trancripts for Vega
-  $self->add_new_track_transcript('vega_havana', 'Havana trans.', 'vega_gene', $POS++,
-								  'author'=>'Havana', 'glyph' => 'vega_transcript', 
-								  'available'=>'features LITE_TRANSCRIPT_HAVANA', @_);
-  $self->add_new_track_transcript('vega_genoscope', 'Genoscope trans.', 'vega_gene', $POS++,
-								  'author'=>'Genoscope','glyph' => 'vega_transcript',
-								  'available'=>'features LITE_TRANSCRIPT_GENOSCOPE', @_);
-  $self->add_new_track_transcript('vega_collins', 'Sanger trans.', 'vega_gene', $POS++,
-								  'author'=>'Sanger', 'glyph' => 'vega_transcript',
-								  'available'=>'features LITE_TRANSCRIPT_SANGER', @_);
-  $self->add_new_track_transcript('vega_washu', 'WashU trans.', 'vega_gene', $POS++,
-								  'author'=>'WashU', 'glyph' => 'vega_transcript',
-								  'available'=>'features LITE_TRANSCRIPT_WASHU', @_ );
-  $self->add_new_track_transcript('vega_broad', 'Broad trans.', 'vega_gene', $POS++,
-								  'author'=>'Broad', 'glyph' => 'vega_transcript',
-								  'available'=>'features LITE_TRANSCRIPT_BROAD', @_ );
-  $self->add_new_track_transcript('vega_jgi', 'JGI trans.', 'vega_gene', $POS++,
-								  'author'=>'JGI', 'glyph' => 'vega_transcript',
-								  'available'=>'features LITE_TRANSCRIPT_JGI', @_ );
-  $self->add_new_track_transcript('vega_zfish', 'Zfish trans.', 'vega_gene', $POS++, 
-								  'author'=>'Zfish', 'glyph' => 'vega_transcript',
-								  'available'=>'features LITE_TRANSCRIPT_ZFISH', @_ );
+  # trancripts for Vega
+  $self->add_new_track_transcript('vega', 'Vega genes', 'vega_gene',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter',
+    'available'=>'features VEGA_GENES_OTTER', @_);
+  $self->add_new_track_transcript('vega_corf', 'CORF genes', 'vega_gene',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_corf',
+    'available'=>'features VEGA_GENES_OTTER_CORF', @_);
+    
   return $POS;
 }
 
@@ -1087,27 +1071,12 @@ sub ADD_GENE_TRACKS {
                              'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->confidence; },
                              'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
 #for genes in Vega
-  $self->add_new_track_gene( 'havana_gene', 'Havana Genes', 'vega_gene', $POS++,
-							 'available' => 'features LITE_TRANSCRIPT_HAVANA', 'glyphset' => 'vega_gene',
-							 'logic_name' => 'otter', 'author' => 'Havana', 'gene_col' => 'vega_gene', @_);
-  $self->add_new_track_gene( 'genoscope_gene', 'Genoscope Genes', 'vega_gene', $POS++, 
-							 'available' => 'features LITE_TRANSCRIPT_GENOSCOPE', 'glyphset' => 'vega_gene',
-							 'logic_name' => 'otter', 'author' => 'Genoscope', 'gene_col' => 'vega_gene', @_);
-  $self->add_new_track_gene( 'sanger_gene', 'Sanger Genes', 'vega_gene', $POS++,
-							 'available' => 'features LITE_TRANSCRIPT_SANGER', 'glyphset' => 'vega_gene',
-							 'logic_name' => 'otter', 'author' => 'Sanger', 'gene_col' => 'vega_gene', @_);
-  $self->add_new_track_gene( 'wasu_gene', 'WashU Genes',  'vega_gene', $POS++,
-							 'available' => 'features LITE_TRANSCRIPT_WASHU', 'glyphset' => 'vega_gene',
-							 'logic_name' => 'otter', 'author' => 'WashU', 'gene_col' => 'vega_gene', @_);
-  $self->add_new_track_gene( 'vega_broad', 'Broad trans.', 'vega_gene', $POS++,
- 			                 'available'=>'features LITE_TRANSCRIPT_BROAD', 'glyphset' => 'vega_gene',
-			                 'logic_name' =>'otter', 'author'=>'Broad', 'gene_col' => 'vega_gene', @_);
-  $self->add_new_track_gene( 'vega_jgi', 'JGI trans.', 'vega_gene', $POS++,
-	             		     'available'=>'features LITE_TRANSCRIPT_JGI', 'glyphset' => 'vega_gene',
-			                 'logic_name' => 'otter', 'author'=>'JGI', 'gene_col' => 'vega_gene', @_ );
-  $self->add_new_track_gene( 'zfish_gene', 'Zfish Genes', 'vega_gene', $POS++, 
-		             	     'available' => 'features LITE_TRANSCRIPT_ZFISH', 'glyphset' => 'vega_gene',
-			                'logic_name' => 'otter', 'author' => 'Zfish', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
+    'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
 
   $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
@@ -1175,21 +1144,13 @@ sub ADD_AS_GENE_TRACKS {
 			       'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; }, @_ );
 
     #for genes in Vega
-    $self->add_new_track_gene( 'havana_gene', 'Havana Genes', 'vega_gene', $POS++,
-			       'available' => 'features LITE_TRANSCRIPT_HAVANA', 'glyphset' => 'vega_gene',
-			       'logic_name' => 'otter', 'author' => 'Havana', 'gene_col' => 'vega_gene', @_);
-    $self->add_new_track_gene( 'genoscope_gene', 'Genoscope Genes', 'vega_gene', $POS++,
-			       'available' => 'features LITE_TRANSCRIPT_GENOSCOPE', 'glyphset' => 'vega_gene',
-			       'logic_name' => 'otter', 'author' => 'Genoscope', 'gene_col' => 'vega_gene', @_);
-    $self->add_new_track_gene( 'sanger_gene', 'Sanger Genes', 'vega_gene', $POS++,
-			       'available' => 'features LITE_TRANSCRIPT_SANGER', 'glyphset' => 'vega_gene',
-			       'logic_name' => 'otter', 'author' => 'Sanger', 'gene_col' => 'vega_gene', @_);
-   $self->add_new_track_gene( 'wasu_gene', 'WashU Genes',  'vega_gene', $POS++,
-			      'available' => 'features LITE_TRANSCRIPT_WASHU', 'glyphset' => 'vega_gene',
-			      'logic_name' => 'otter', 'author' => 'WashU', 'gene_col' => 'vega_gene', @_);
-    $self->add_new_track_gene( 'zfish_gene', 'Zfish Genes', 'vega_gene', $POS++,
-			       'available' => 'features LITE_TRANSCRIPT_ZFISH', 'glyphset' => 'vega_gene',
-			       'logic_name' => 'otter', 'author' => 'Zfish', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
+	'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
+	'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
+	'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
+	'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
+
     return $POS;
 }
 
