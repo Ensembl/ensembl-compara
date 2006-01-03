@@ -14,6 +14,7 @@ use vars qw(@ISA);
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label {
+
     my $self = shift;
     return $self->my_config('other') . " clones";
 }
@@ -37,7 +38,6 @@ sub features {
     my $source          = $self->my_config('dsn');
     my $dbname          = $self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES->{$source};
     return unless $dbname;
-    
     my $URL             = $dbname->{'url'};
     my $dsn             = $dbname->{'dsn'};
     my $types           = $dbname->{'types'} || [];
@@ -48,8 +48,7 @@ sub features {
     # called whenever the DAS XML parser finds a feature
     my $feature_callback =  sub {
         my $f = shift;
-        my $s = $f->segment;
-        $SEGMENTS{join(".", $s->ref, $s->version)}++;
+        $SEGMENTS{join(".", $f->{'segment_id'},$f->{'segment_version'})}++;
     };
 
     # create a new DAS adaptor
@@ -64,21 +63,15 @@ sub features {
     };
     if ($@) {
         warn "Ensembl Clones DASAdaptor creation error: $@\n";
-    } 
-       
+    }
+
     my $dbh = $adaptor->_db_handle();
     my $response;
-    
-    # warn "clones:" , join "\n", @clones;
 
+#	warn "clones:" , join "\n", @clones;
     # DAS fetches happen here
-    $response = $dbh->features(
-            -dsn         =>  "$URL/$dsn",
-            -segment     =>  \@clones,
-            -callback    =>  $feature_callback,
-            -type        =>  $types,
-    );
-  
+    $response = $dbh->features(\@clones,$feature_callback);
+
     my $res = [];
     foreach my $seg (keys %SEGMENTS){
         my ($seg_name, $seg_version) = split(/\./, $seg);
@@ -102,7 +95,6 @@ sub features {
                 } else {
                     $f->{'status'} = 'older';
                 }
-
                 push(@{$res}, $f);
             }
         }
@@ -113,7 +105,7 @@ sub features {
 sub href {
   my ($self, $f) = @_;
   my ($cloneid) = split /\./ ,  $f->display_id;
-  my $exturl = new EnsEMBL::Web::ExtURL( $self->{'config'}->{'species_defs'} );
+  my $exturl = new EnsEMBL::Web::ExtURL( $self->species_defs->name,$self->species_defs );
   return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
 }
 

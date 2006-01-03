@@ -80,14 +80,12 @@ sub features {
 sub zmenu {
   my ($self, $f ) = @_;
   
-  my $score = $f->score();
   my $start = $self->{'container'}->start() + $f->start() - 1;
   my $end   = $self->{'container'}->start() + $f->end() - 1;
 
   return {
         'caption' => $self->my_config('label'),
-        "01:Score: $score" => '',
-        "02:bp: $start-$end" => ''
+        "01:bp: $start-$end" => ''
     };
 }
 1;
