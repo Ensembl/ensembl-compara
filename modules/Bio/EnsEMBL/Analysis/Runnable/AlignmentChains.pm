@@ -54,16 +54,16 @@ sub new {
       $lav_to_axt,
       $axt_chain,
 
-      ) = $self->_rearrange([qw(FEATURES
-                                QUERY_SLICE
-                                QUERY_NIB_DIR
-                                TARGET_SLICES
-                                TARGET_NIB_DIR
-                                FATONIB
-                                LAVTOAXT
-                                AXTCHAIN
-                                )],
-                                    @args);
+      ) = rearrange([qw(FEATURES
+                        QUERY_SLICE
+                        QUERY_NIB_DIR
+                        TARGET_SLICES
+                        TARGET_NIB_DIR
+                        FATONIB
+                        LAVTOAXT
+                        AXTCHAIN
+                       )],
+                    @args);
 
 
   throw("You must supply a reference to an array of features with -features\n") 
