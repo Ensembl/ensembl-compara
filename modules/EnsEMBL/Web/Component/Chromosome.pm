@@ -366,7 +366,7 @@ sub jump_to_contig_form {
     qq(Sorry, your chosen anchor points appear to be on different sequence regions. Please check your choices and try again.)
     );
 
-  my $form = EnsEMBL::Web::Form->new( 'jump_to_contig', "/@{[$object->species]}/anchorview", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'jump_to_contig', "/@{[$object->species]}/jump_to_contig", 'post' );
   my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)); 
   $form->add_element(
         'type' => 'Information',
