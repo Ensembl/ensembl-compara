@@ -50,6 +50,7 @@ sub new {
       $query_nib_dir,
       $target_slices,
       $target_nib_dir,
+      $min_chain_score,
       $fa_to_nib,
       $lav_to_axt,
       $axt_chain,
@@ -59,12 +60,12 @@ sub new {
                         QUERY_NIB_DIR
                         TARGET_SLICES
                         TARGET_NIB_DIR
+                        MIN_CHAIN_SCORE
                         FATONIB
                         LAVTOAXT
                         AXTCHAIN
-                       )],
+                                )],
                     @args);
-
 
   throw("You must supply a reference to an array of features with -features\n") 
       if not defined $features;
@@ -82,6 +83,7 @@ sub new {
 
   $self->query_slice($query_slice);
   $self->target_slices($target_slices);
+  $self->min_chain_score($min_chain_score) if defined $min_chain_score;
   $self->features($features);
   
   return $self;
@@ -189,7 +191,15 @@ sub run {
   ##################################
   # convert the lav file to axtChain
   ##################################
-  system($self->axtChain, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
+  my $min_parameter = "-minScore=";
+  if (defined $self->min_chain_score) {
+    $min_parameter .= $self->min_chain_score;
+  } else {
+    # default to the built-in default
+    $min_parameter .= 1000;
+  }
+
+  system($self->axtChain, $min_parameter, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
         and throw("Something went wrong with axtChain\n");
   unlink $axt_file;
 
@@ -453,6 +463,20 @@ sub features {
   }
 
   return $self->{_features};
+}
+
+sub min_chain_score {
+  my ($self, $val) = @_;
+
+  if (defined $val) {
+    $self->{_min_chain_score} = $val;
+  }
+
+  if (not exists $self->{_min_chain_score}) {
+    return undef;
+  } else {
+    return $self->{_min_chain_score};
+  }
 }
 
 
