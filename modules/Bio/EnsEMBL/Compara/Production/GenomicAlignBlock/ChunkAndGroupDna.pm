@@ -251,7 +251,9 @@ sub create_chunks
     print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
     push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
   } else {
-    $chromosomes = $SliceAdaptor->fetch_all('toplevel');
+    # use of ('toplevel', undef,0,1) to include all duplicate reference sequences such as the PAR in
+    # Y chromosome
+    $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef,0,1);
   }
 
   $self->{'chunkset_counter'} = 1;
