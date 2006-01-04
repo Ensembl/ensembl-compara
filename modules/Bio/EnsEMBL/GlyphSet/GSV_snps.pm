@@ -23,24 +23,22 @@ sub _init {
 
   return unless $self->strand() == -1;
   my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
-  my $dir    = $self->{'container'}->strand > 0 ? 1 : -1;
+  #my $dir    = $self->{'container'}->strand > 0 ? 1 : -1;
   my $Config        = $self->{'config'};
   my $EXTENT        = $Config->get('_settings','context');
      $EXTENT        = 1e6 if $EXTENT eq 'FULL';
   my $seq_region_name = $self->{'container'}->seq_region_name();
     
-  my @transcripts   = $Config->{'transcripts'};
-  my $y             = 0;
-    
-  my %highlights;
-  @highlights{$self->highlights} = ();    # build hashkeys of highlight list
+  #my @transcripts   = $Config->{'transcripts'};
+  #my %highlights;
+  #@highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
   my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
-  my $length  = $Config->container_width();
-  my $transcript_drawn = 0;
+  #my $length  = $Config->container_width();
+  #my $transcript_drawn = 0;
     
   my $voffset = 0;
   my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
@@ -48,14 +46,14 @@ sub _init {
   my $h             = $font_h_bp + 4;   #Single transcript mode - set height to 30 - width to 8!
 
   my $trans_ref = $Config->{'transcript'};
-  my $strand = $trans_ref->{'exons'}[0][2]->strand;
+  #my $strand = $trans_ref->{'exons'}[0][2]->strand;
   my $transcript = $trans_ref->{'transcript'};
 
   my @bitmap;
   my $max_row = -1;
   my @tmp;
   foreach my $snpref ( @{$Config->{'snps'}} ) {
-    my $location = int( ($snpref->[0]+$snpref->[1])/2 );
+    #my $location = int( ($snpref->[0]+$snpref->[1])/2 );
     my $snp = $snpref->[2];
     my $cod_snp = $trans_ref->{'snps'}->{$snp->dbID()};
     next unless $cod_snp;

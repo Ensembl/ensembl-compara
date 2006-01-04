@@ -54,9 +54,11 @@ sub _init {
     next if $allele->end < $transcript->start - $EXTENT;
     next if $allele->start > $transcript->end + $EXTENT;
 
-    my $tmp = join "", @{$conseq_type->alleles};
-    warn "ERROR: Allele call on alleles ", $allele->allele_string, " Allele call on ConsequenceType is different: $tmp" if $allele->allele_string ne $tmp && $allele->strand ==1;
-
+    if( $transcript->strand != $allele->strand ) {
+      my $tmp = join "", @{$conseq_type->alleles};
+      $tmp =~tr/ACGT/TGCA/;
+      warn "ERROR: Allele call on alleles ", $allele->allele_string, " Allele call on ConsequenceType is different: $tmp" if $allele->allele_string ne $tmp;
+    }
 
     # Type and colour -------------------------------------------
     my $type = $conseq_type->type;
@@ -68,6 +70,7 @@ sub _init {
       #$aa_change->[1] = lc( $aa2 ) if $type eq 'SYNONYMOUS_CODING';
       push @tmp, ("02:Amino acid: $aa_change->[0] to $aa_change->[1]", '' );
     }
+    push @tmp, ("03:Codon: ".$conseq_type->codon => '') if $conseq_type->codon;
 
     my $label  = join "/", @$aa_change;
     if ($conseq_type->splice_site) {
@@ -115,11 +118,13 @@ sub _init {
         'caption' => 'SNP '.$allele->variation_name,
         "01:".$type => '',
         @tmp,
+        "04:Strain allele: ".(length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..') => '',
+
        '11:SNP properties' => $href,
         "12:bp $pos" => '',
        # "13:class: ".$allele->var_class => '',
        # "14:ambiguity code: ".$allele->ambig_code => '',
-        "15:Strain allele: ".(length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..') => ''
+
       }
     });
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
