@@ -195,6 +195,16 @@ sub context_menu {
     'text' => "Transcript information",
     'href' => "/$species/transview?$q_string"
   );
+
+  if ( $obj->species_defs->get_table_size({ -db => 'ENSEMBL_VARIATION', -table => 'allele'}) ) {
+    $self->add_entry( $flag,
+		      'code'  => 'TSV',
+		      'text'  => "Compare strain variation",
+		      'title' => 'TranscriptStrainView - Compare variation in different strains for this transcript '.$obj->stable_id,
+		      'href'  => "/$species/transcriptstrainview?$q_string" 
+		    );
+  }
+
   $self->add_entry( $flag,
     'code' => 'exon_info',
     'text' => "Exon information",
