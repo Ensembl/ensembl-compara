@@ -38,7 +38,7 @@ sub tag {
         'style' => 'join',
         'tag' => $f->{'start'}.'-'.$f->{'end'},
         'colour' => $defs{ $f->{'_miscset_code'} },
-        'zindex' => -1,
+        'zindex' => -20,
     };
 }
 
