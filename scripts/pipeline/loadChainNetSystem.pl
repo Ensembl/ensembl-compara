@@ -9,6 +9,9 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Registry;
+
+Bio::EnsEMBL::Registry->no_version_check(1);
 
 srand();
 
@@ -239,7 +242,7 @@ sub prepareChainSystem
      -parameters      => "");
   
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterChainAnalysis);
-  my $stats = $updateMaxAlignmentLengthAfterChainAnalysis->stats;
+  $stats = $updateMaxAlignmentLengthAfterChainAnalysis->stats;
   $stats->hive_capacity(1);
   $stats->update();
   $self->{'updateMaxAlignmentLengthAfterChainAnalysis'} = $updateMaxAlignmentLengthAfterChainAnalysis;
@@ -459,7 +462,6 @@ sub prepCreateAlignmentNetsJobs {
   my $target_collection_name = $netConf->{'target_collection_name'};
   my $gdb_id1 = $self->{'chunkCollectionHash'}->{$query_collection_name}->{'genome_db_id'};
   my $gdb_id2 = $self->{'chunkCollectionHash'}->{$target_collection_name}->{'genome_db_id'};
-
   my ($input_method_link_id, $input_method_link_type) = @{$netConf->{'input_method_link'}};
 
   my $input_id = "{\'method_link\'=>\'$input_method_link_type\'";
