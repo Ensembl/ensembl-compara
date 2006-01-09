@@ -10,6 +10,7 @@ use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 sub init_label {
   my ($self) = @_;
@@ -34,14 +35,15 @@ sub _init {
   my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
   my $height = $font_h_bp + 4;  #Single transcript mode: height= 30, width=8
 
-  my $trans_ref  = $Config->{'transcript'};
-  my $transcript = $trans_ref->{'transcript'};
+  my $transcript = $Config->{'transcript'}->{'transcript'};
   my $colour_map = $Config->get('TSV_snps','colours' );
 
   my @bitmap;
   my $max_row = -1;
   my @tmp;
 
+  return unless $Config->{'transcript'}->{'consequences'};
+  return unless $Config->{'transcript'}->{'allele_info'};
 
   my @alleles = sort {$a->[2]->start <=> $b->[2]->start} @{ $Config->{'transcript'}->{'allele_info'} };#@(arrayref)
   my @consequences = sort {$a->start <=> $b->start} @{  $Config->{'transcript'}->{'consequences'} };
@@ -68,13 +70,13 @@ sub _init {
     my @tmp;
     if ( my $aa2 = $aa_change->[1] ) {
       #$aa_change->[1] = lc( $aa2 ) if $type eq 'SYNONYMOUS_CODING';
-      push @tmp, ("02:Amino acid: $aa_change->[0] to $aa_change->[1]", '' );
+      push @tmp, ("05:Amino acid: $aa_change->[0] to $aa_change->[1]", '' );
     }
-    push @tmp, ("03:Codon: ".$conseq_type->codon => '') if $conseq_type->codon;
+    push @tmp, ("04:Codon: ".$conseq_type->codon => '') if $conseq_type->codon;
 
     my $label  = join "/", @$aa_change;
-    if ($conseq_type->splice_site) {
-      $type .= "- Splice site SNP";
+    if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
+      $type .= "- $splice";
       $colour = $colour_map->{'SPLICE_SITE'}->[0] if $conseq_type->type eq "INTRONIC";
     }
     if ($conseq_type->regulatory_region()) {
@@ -107,6 +109,7 @@ sub _init {
     }
 
     my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
+    my $ref_allele = $allele->ref_allele_string();
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S - $font_w_bp / 2,
       'y'         => $height + 2,
@@ -118,11 +121,12 @@ sub _init {
         'caption' => 'SNP '.$allele->variation_name,
         "01:".$type => '',
         @tmp,
-        "04:Strain allele: ".(length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..') => '',
+        "03:Strain allele: ".(length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..') => '',
+        "02:Reference allele: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..') => '',
 
        '11:SNP properties' => $href,
-        "12:bp $pos" => '',
-       # "13:class: ".$allele->var_class => '',
+       "12:bp $pos" => '',
+       "13:class: ".&variation_class(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
        # "14:ambiguity code: ".$allele->ambig_code => '',
 
       }
