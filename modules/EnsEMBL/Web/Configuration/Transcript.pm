@@ -103,10 +103,14 @@ sub transview {
 
 sub transcriptstrainview {
  my $self   = shift;
+ my $obj    = $self->{'object'};
+ my $params = { 'transcript' => $obj->stable_id, 'db' => $obj->get_db  };
+
+# $self->update_configs_from_parameter( 'TSV_context', 'TSV_context' );
   my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "info$self->{flag}",
     'caption' => 'Ensembl Transcript Strain Report',
-    'object'  => $self->{object}
+    'object'  => $obj,
   );
   $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
   $panel1->add_components(qw(
@@ -117,28 +121,44 @@ sub transcriptstrainview {
   ));
   $self->add_panel( $panel1 );
   $self->initialize_zmenu_javascript;
-  $self->set_title( 'Transcript strain Report for '.$self->{object}->stable_id );
+  $self->set_title( 'Transcript strain Report for '.$obj->stable_id );
 
 ## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
 
   if( my $panel2 = $self->new_panel( 'Image',
     'code'    => "image#",
-    'caption' => 'SNPs and variations in region of transcript '.$self->{object}->stable_id,
-    # 'status'  => 'panel_image',
-    #'params'  => $params
+    'caption' => 'SNPs and variations in region of transcript '.$obj->stable_id,
+    'status'  => 'panel_image',
+    'params'  => $params
   )) {
     $self->initialize_zmenu_javascript;
     $self->initialize_ddmenu_javascript;
-#      menu   EnsEMBL::Web::Component::Gene::genesnpview_menu
+
 
     $panel2->add_components(qw(
-       image  EnsEMBL::Web::Component::Transcript::transcriptstrainview
-      legend EnsEMBL::Web::Component::Gene::genesnpview_legend
-
+      menu   EnsEMBL::Web::Component::Transcript::transcriptstrainview_menu
+      image  EnsEMBL::Web::Component::Transcript::transcriptstrainview
      ));
     $self->add_panel( $panel2 );
   }
 
+## Panel 3 - finally a set of spreadsheet tables showing the information from the image..
+ my $I = 0;
+ foreach my $strain ( $obj->get_strains ) { #e.g. DBA/2J
+   last unless $strain;
+   if( my $panel_table = $self->new_panel( 'SpreadSheet',
+      'code' => "variation#-$strain",
+      'caption' => "Variations and consequences for $strain",
+      'status'  => 'panel_strain',
+      'object'  => $obj,
+      'params'  => $params,
+      'strain' =>  $strain,
+    )) {
+     $panel_table->add_components( qw(TSVvariations
+        EnsEMBL::Web::Component::Transcript::spreadsheet_TSVtable));
+     $self->add_panel( $panel_table );
+   }
+ }
 }
 
 

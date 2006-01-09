@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use Bio::EnsEMBL::Utils::TranscriptAlleles;
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::ExtIndex;
@@ -211,9 +212,19 @@ sub get_munged_slice {
 
 }
 
+# Valid user selections
+sub valids {
+  my $self = shift;
+  my %valids = ();    ## Now we have to create the snp filter....
+  foreach( $self->param() ) {
+    $valids{$_} = 1 if $_=~/opt_/ && $self->param( $_ ) eq 'on';
+  }
+  return \%valids;
+}
 
 sub getVariationsOnSlice {
-  my( $self, $key, $valids, $slice ) = @_;
+  my( $self, $key, $slice ) = @_;
+  my $valids = $self->valids;
 
   my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
   my @snps =
@@ -243,9 +254,9 @@ sub getVariationsOnSlice {
 }
 
 
-
 sub getAllelesOnSlice {
-  my( $self, $key, $valids, $strain_slice ) = @_;
+  my( $self, $key, $strain_slice ) = @_;
+  my $valids = $self->valids;
 
   # Get all features on slice
   my $allele_features = $strain_slice->get_all_differences_Slice();
@@ -253,16 +264,46 @@ sub getAllelesOnSlice {
 
   my @genomic_af =
   # Rm many filters as not applicable to Allele Features
-  # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
-    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
-     # [ AF, offset ]   Map to fake coords.   Create a munged version AF
-      map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
-	@$allele_features;
-  return \@genomic_af ;
+# [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
+# [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
+    # [ fake_s, fake_e, SNP ]   Filter our unwanted classes
+    grep { $valids->{'opt_'.$self->var_class($_->[2])} }
+
+      # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
+      map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
+	# [ AF, offset ]   Map to fake coords.   Create a munged version AF
+	map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
+	  @$allele_features;
+  return \@genomic_af || [];
 }
 
+sub var_class {
+  my ($self, $allele) = @_;
+  my $allele_string = join "|", $allele->ref_allele_string(), $allele->allele_string;
+
+ return &variation_class($allele_string);
+}
+
+sub ambig_code {
+  my ($self, $allele) = @_;
+  my $allele_string = join "|", $allele->ref_allele_string(), $allele->allele_string;
+
+ return &ambiguity_code($allele_string);
+}
+
+#return type list
+sub get_strains {
+  my $self = shift;
+  return sort($self->param('strain')) if  $self->param('strain');
+
+  my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };
+  return sort @strains;
+}
+
+
 sub transcript_alleles {
-  my ($self, $valids, $allele_info ) = @_;
+  my ($self, $allele_info ) = @_;
   return [] unless @$allele_info;
 
   # consequences of AlleleFeatures on the transcript
@@ -272,27 +313,11 @@ sub transcript_alleles {
   return [] unless @$consequences;
 
   my @valid_conseq;
+  my $valids = $self->valids;
   foreach ( @$consequences ){  # conseq on our transcript
     push @valid_conseq, $_ if $valids->{'opt_'.lc($_->type)} ;
   }
-  return  \@valid_conseq;
-}
-
-sub transcript_SNPS_old {
-  my ($self, $valids, $slice ) = @_;
-
-  my $our_transcript = $self->stable_id;
-  my $transcript_snps = {};
-
-  #slice_snps have vf on strain slice for all transcripts. Grep for ones on our transcript
-  my $slice_snps = $self->getAllelesOnSlice("straintranscripts", $valids, $slice);
-  foreach my $snp ( @$slice_snps ) {
-    foreach( @{$snp->[2]->get_all_TranscriptVariations ||[]} ) {
-      next unless $our_transcript eq $_->transcript->stable_id;
-      $transcript_snps->{ $snp->[2]->dbID } = [$_ , $snp ] if $valids->{'opt_'.lc($_->consequence_type)};
-    }
-  }
-  return $transcript_snps;
+  return  \@valid_conseq || [];
 }
 
 

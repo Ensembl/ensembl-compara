@@ -3,6 +3,7 @@ package EnsEMBL::Web::Component::Transcript;
 use EnsEMBL::Web::Component;
 our @ISA = qw( EnsEMBL::Web::Component);
 
+use Data::Dumper;
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -964,90 +965,72 @@ sub spreadsheet_variationTable {
 # Transcript Strain View ###################
 sub transcriptstrainview { 
   my( $panel, $object, $do_not_render ) = @_;
-  my $trans_stable_id = $object->stable_id;
-
-  # Get 4 configs (one for each section) set width to width of context config
-  my $image_width  = $object->param( 'image_width' );
-  my $wuc          = $object->user_config_hash( 'TSV_transcript' );
-  $wuc->{'_draw_single_Transcript'} = $trans_stable_id;
-
-  my $Configs;
-  foreach (qw(context transcript transcripts_bottom transcripts_top ) ) {
-    $Configs->{$_} = $object->user_config_hash( "TSV_$_" );
-    $Configs->{$_}->set( '_settings', 'width',  $image_width );
-    $Configs->{$_}->{'id'} = $trans_stable_id;
-  }
-
-    $Configs->{"snps"} = $object->user_config_hash( "genesnpview_snps" );
-    $Configs->{"snps"}->set( '_settings', 'width',  $image_width );
 
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
-  my $context      = $object->param( 'context' );
-  my $extent       = $context eq 'FULL' ? 1000 : $context;
+  my $wuc          = $object->user_config_hash( 'TSV_transcript' );
+  $wuc->{'_draw_single_Transcript'} = $object->stable_id;
 
-  foreach my $slice (
+  my $extent = $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
+
+  foreach my $slice_type (
     [ 'context',           'normal', '500%'  ],
     [ 'transcript',        'normal', '133%'  ],
     [ 'straintranscripts', 'munged', $extent ],
   ) {
-    $object->__data->{'slices'}{ $slice->[0] } =  $object->get_transcript_slices( $wuc, $slice ) || warn "Couldn't get slice";
+    $object->__data->{'slices'}{ $slice_type->[0] } =  $object->get_transcript_slices( $wuc, $slice_type ) || warn "Couldn't get slice";
   }
-
 
   my $transcript_slice = $object->__data->{'slices'}{'straintranscripts'}[1];
   my $sub_slices       = $object->__data->{'slices'}{'straintranscripts'}[2];
   my $fake_length      = $object->__data->{'slices'}{'straintranscripts'}[3];
 
-
-  my %valids = ();    ## Now we have to create the snp filter....
-  foreach( $object->param() ) {
-    $valids{$_} = 1 if $_=~/opt_/ && $object->param( $_ ) eq 'on';
-  }
-
-  my $pop_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };
   my @containers_and_configs = (); ## array of containers and configs
+  my $strain_information = {};  # needed for table at end of page
 
-  #my $strain_information = {};
-
-  foreach my $strain ( $object->param('strain') || @strains ) { #e.g. DBA/2J
+  foreach my $strain (  $object->get_strains ) { #e.g. DBA/2J
     my $strain_slice = $transcript_slice->get_by_strain( $strain );
-    $object->__data->{'slices'}{ $strain }= [ 'munged', $strain_slice , $sub_slices, $fake_length ];
+    # needed?? $object->__data->{'slices'}{ $strain }= [ 'munged', $strain_slice , $sub_slices, $fake_length ];
 
     ## Initialize content...
-    my $CONFIG = $object->get_userconfig( "TSV_straintranscript" );
-    $CONFIG->{'id'}         = $object->stable_id;
-    $CONFIG->{'subslices'}  = $sub_slices;
-    $CONFIG->{'extent'}     = $extent;
-    #$CONFIG->{'snps'}     = $snps;
+    my $strain_config = $object->get_userconfig( "TSV_straintranscript" );
+    $strain_config->{'id'}         = $object->stable_id;
+    $strain_config->{'subslices'}  = $sub_slices;
+    $strain_config->{'extent'}     = $extent;
 
-    ## Now we need to map the transcript...
+    ## Get this transcript only, on the strain slice
+    my $transcript;
+    foreach my $test_transcript ( @{$strain_slice->get_all_Transcripts} ) {
+      next unless $test_transcript->stable_id eq $object->stable_id;
+      $transcript = $test_transcript;  # Only display on e transcripts...
+      last;
+    }
+    my $raw_coding_start = defined( $transcript->coding_region_start ) ? $transcript->coding_region_start : $transcript->start;
+    my $raw_coding_end   = defined( $transcript->coding_region_end )   ? $transcript->coding_region_end : $transcript->end;
+    my $coding_start = $raw_coding_start + $object->munge_gaps( 'straintranscripts', $raw_coding_start );
+    my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'straintranscripts', $raw_coding_end );
+    my $raw_start = $transcript->start;
+    my $raw_end   = $transcript->end  ;
+    my @exons = ();
+    foreach my $exon (@{$transcript->get_all_Exons()}) {
+      my $es = $exon->start;
+      my $offset = $object->munge_gaps( 'straintranscripts', $es );
+      push @exons, [ $es + $offset, $exon->end + $offset, $exon ];
+    }
 
-################################# THIS IS THE SAME TRANSCRIPT SO SIMPLIFY!!! ##
-    foreach my $transcript ( @{$strain_slice->get_all_Transcripts} ) {
-      if( $transcript->stable_id eq $trans_stable_id ) { ## This is our transcripts...
-        my $raw_coding_start = defined( $transcript->coding_region_start ) ? $transcript->coding_region_start : $transcript->start;
-        my $raw_coding_end   = defined( $transcript->coding_region_end )   ? $transcript->coding_region_end : $transcript->end;
-        my $coding_start = $raw_coding_start + $object->munge_gaps( 'straintranscripts', $raw_coding_start );
-        my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'straintranscripts', $raw_coding_end );
-        my $raw_start = $transcript->start;
-        my $raw_end   = $transcript->end  ;
-        my @exons = ();
-        foreach my $exon (@{$transcript->get_all_Exons()}) {
-          my $es = $exon->start;
-          my $offset = $object->munge_gaps( 'straintranscripts', $es );
-          push @exons, [ $es + $offset, $exon->end + $offset, $exon ];
-        }
-        #$strain_information->{$strain}->{'exons'}        = \@exons;
-        #$strain_information->{$strain}->{'coding_start'} = $coding_start;
-        #$strain_information->{$strain}->{'coding_end'}   = $coding_end;
-        #$strain_information->{$strain}->{'start'}        = $raw_start;
-        #$strain_information->{$strain}->{'end'}          = $raw_end;
 
-	my $allele_info = $object->getAllelesOnSlice("straintranscripts", \%valids, $strain_slice);
+    my $allele_info = $object->getAllelesOnSlice("straintranscripts", $strain_slice);
+    my $consequences = $object->transcript_alleles( $allele_info );
 
-	my $consequences = $object->transcript_alleles(\%valids, $allele_info);
-	$CONFIG->{'transcript'} = {
+#    $strain_information->{$strain}->{'extent'}        = $extent;
+#    $strain_information->{$strain}->{'coding_start'} = $coding_start;
+#    $strain_information->{$strain}->{'coding_end'}   = $coding_end;
+ #   $strain_information->{$strain}->{'start'}        = $raw_start;
+ #   $strain_information->{$strain}->{'end'}          = $raw_end;
+    $strain_information->{$strain}->{'strainslice'}  = $strain_slice;
+    $strain_information->{$strain}->{'allele_info'}  = $allele_info;
+    $strain_information->{$strain}->{'consequences'} = $consequences;
+
+    $strain_config->{'transcript'} = {
 	  'strain'       => $strain,
           'exons'        => \@exons,  
           'coding_start' => $coding_start,
@@ -1056,28 +1039,21 @@ sub transcriptstrainview {
           'allele_info'  => $allele_info,
 	  'consequences' => $consequences,
 				  };
-        $CONFIG->container_width( $fake_length );
-        last;
-      }
-      ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
-    }
+    $strain_config->container_width( $fake_length );
+
+    ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
+
     ## Now push onto config hash...
     if( $object->seq_region_strand < 0 ) {
 
-      push @containers_and_configs,    $strain_slice, $CONFIG;
+      push @containers_and_configs,    $strain_slice, $strain_config;
     } else { ## If forward strand we have to draw these in reverse order (as forced on -ve strand)
-      unshift @containers_and_configs, $strain_slice, $CONFIG;
+      unshift @containers_and_configs, $strain_slice, $strain_config;
     }
   }
 
-  #$Configs->{'context'}->{'transcriptid2'} = $trans_stable_id;     ## Only skip background stripes...
-  #$Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
- # $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
-
-  ## Transcript block in normal co-ordinates....
-  #$Configs->{'transcript'}->{'transcriptid'}      = $trans_stable_id;
-  #$Configs->{'transcript'}->container_width( $object->__data->{'slices'}{'transcript'}[1]->length() );
-
+  # Push strain info onto here so can build table 
+  $object->__data->{'strain'} = $strain_information;
 
   # Taken out domains (prosite, pfam)
 
@@ -1092,11 +1068,24 @@ sub transcriptstrainview {
     push @ens_exons, [ $es + $munge, $ee + $munge, $exon ];
   }
 
-  my $snps = $object->getVariationsOnSlice( "straintranscripts", \%valids, $transcript_slice );
+  my $snps = $object->getVariationsOnSlice( "straintranscripts", $transcript_slice );
+
+  # General page configs -------------------------------------
+  # Get 4 configs (one for each section) set width to width of context config
+  my $Configs;
+  my $image_width  = $object->param( 'image_width' );
+  foreach (qw(context transcript transcripts_bottom transcripts_top ) ) {
+    $Configs->{$_} = $object->user_config_hash( "TSV_$_" );
+    $Configs->{$_}->set( '_settings', 'width',  $image_width );
+    $Configs->{$_}->{'id'} = $object->stable_id;
+  }
+
+    $Configs->{"snps"} = $object->user_config_hash( "genesnpview_snps" );
+    $Configs->{"snps"}->set( '_settings', 'width',  $image_width );
 
   foreach(qw(transcripts_top transcripts_bottom)) {
     $Configs->{$_}->{'extent'}      = $extent;
-    $Configs->{$_}->{'transid'}     = $trans_stable_id;
+    $Configs->{$_}->{'transid'}     = $object->stable_id;
     $Configs->{$_}->{'transcripts'} = [{ 'exons' => \@ens_exons }];
     $Configs->{$_}->{'snps'}        = $snps;
     $Configs->{$_}->{'subslices'}   = $sub_slices;
@@ -1104,15 +1093,14 @@ sub transcriptstrainview {
     $Configs->{$_}->container_width( $fake_length );
   }
 
+  #$Configs->{'context'}->{'transcriptid2'} = $object->stable_id;     ## Only skip background stripes...
 
-  # Gene context block;
-  #   my $gene_stable_id = $object->stable_id;
-  #   $Configs->{'context'}->{'geneid2'} = $gene_stable_id; ## Only skip background stripes...
+  ## Transcript block in normal co-ordinates....
+  #$Configs->{'transcript'}->{'transcriptid'}      = $object->stable_id;
+  #$Configs->{'transcript'}->container_width( $object->__data->{'slices'}{'transcript'}[1]->length() );
+
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
-  # ## Transcript block
-  #   $Configs->{'gene'}->{'geneid'}      = $gene_stable_id;
-  #   $Configs->{'gene'}->container_width( $object->__data->{'slices'}{'gene'}[1]->length() );
 
   # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
   # @snps: array of arrays containing [fake_start, fake_end, B:E:Variation obj]
@@ -1155,5 +1143,131 @@ sub transcriptstrainview {
   return 0;
 }
 
+sub spreadsheet_TSVtable {
+  my( $panel, $object ) = @_;
+  my $strain =  $panel->{'strain'};
+  my @alleles = sort {$a->[2]->start <=> $b->[2]->start} @{ $object->__data->{'strain'}->{$strain}->{'allele_info'}  };
+  my @consequences = sort {$a->start <=> $b->start} @{$object->__data->{'strain'}->{$strain}->{'consequences'} };
+  my $slice = $object->__data->{'strain'}->{$strain}->{'strainslice'} ;
+
+  unless( @consequences && @alleles) {
+    $panel->print("<p>All alleles are the same as the reference in strain $strain</p>");
+    return 1;
+  }
+
+  $panel->add_columns(
+    { 'key' => 'ID',  },
+    { 'key' => 'consequence', 'title' => 'Consequence', },
+    { 'key' => 'chr' ,  "title" => "Chr: position" },
+    { 'key' => 'Alleles', },
+    { 'key' => 'Ambiguity',  },
+    { 'key' => 'Codon' ,  },
+    { 'key' => 'cdscoord',  'title' => 'CDS co-ordinate',  },
+    { 'key' => 'aachange', 'title' => 'AA change',  },
+    { 'key' => 'aacoord',  'title' => 'AA co-ordinate',  },
+    { 'key' => 'Class', },
+    { 'key' => 'Source', },
+    { 'key' => 'Status',  },
+		     );
+#   my $tr_start = $object->__data->{'strain'}->{$strain}->{'start'};
+#   my $tr_end   = $object->__data->{'strain'}->{$strain}->{'end'};
+#   my $extent   = $object->__data->{'strain'}->{$strain}->{'extent'};
+#   my $coding_start = $object->__data->{'strain'}->{$strain}->{'coding_start'};
+#   my $coding_end = $object->__data->{'strain'}->{$strain}->{'coding_end'};
+
+
+  foreach my $allele_ref (  @alleles ) {
+    my $allele = $allele_ref->[2];
+    my $conseq_type = shift @consequences;
+    next unless $conseq_type;
+    next unless $allele;
+
+    # Type
+    my $type = $conseq_type->type;
+    if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
+      $type .= "- $splice";
+    }
+    if ($conseq_type->regulatory_region()) {
+      $type .= "- Regulatory region SNP";
+    }
+
+    # Position
+    my $offset = $slice->strand > 0 ? $slice->start - 1 :  $slice->end + 1;
+    my $chr_start = $allele->start() + $offset;
+    my $chr_end   = $allele->end() + $offset;
+    my $pos =  $chr_start;
+    if( $chr_end < $chr_start ) {
+      $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+    } elsif($chr_end > $chr_start ) {
+      $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+    }
+
+    # Class
+    my $class = $object->var_class($allele);
+    if ($class eq 'in-del') {
+      $class = $chr_start > $chr_end ? 'insertion' : 'deletion';
+    }
+
+    # Other
+    my $chr = $slice->seq_region_name;
+    my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
+    my $aa_alleles = $conseq_type->aa_alleles || [];
+    my $aa_coord = $conseq_type->aa_start;
+    $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
+    my $cds_coord = $conseq_type->cds_start;
+    $cds_coord .= $cds_coord == $conseq_type->cds_end ? "" : $conseq_type->cds_end;
+
+    my @validation =  @{ $allele->variation->get_all_validation_states || [] };
+#     if( $ts && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
+    my $row = {
+	       'ID'        =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
+	       'Class'     => $class || "-",
+	       'Source'     => $allele->source || "-",
+	       'Alleles'   => $snp_alleles || "-",
+	       'Ambiguity' => $object->ambig_code($allele),
+	       'Status'    => (join( ', ',  @validation ) || "-"),
+	       'chr'       => "$chr:$pos",
+	       'Codon'     => $conseq_type->codon || "-",
+	       'consequence'   => $type,
+	       #         $ts->translation_start ? (
+	       'aachange' => (join "/", @{$aa_alleles}) || "",
+	       'cdscoord' => $cds_coord,
+	       'aacoord'  => $aa_coord, #$ts->translation_start.' ('.(($ts->cdna_start-$coding_start)%3+1).')'
+	       #         ) : ( 'aachange' => '-', 'aacoord' => '-' )
+	      };
+    $panel->add_row( $row );
+  }
+  return 1;
+}
+
+ sub transcriptstrainview_menu    {  
+#   return tsv_menu( @_, 'TSV_straintranscript',
+
+#    [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); 
+# #   [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); 
+
+ }
+
+# sub tsv_menu { 
+#   my($panel, $object, $configname, $left, $right ) = @_;
+#   my $mc = $object->new_menu_container(
+#     'configname'  => $configname,
+#     'panel'       => $configname,
+#     'configs'     => [ $object->user_config_hash( 'TSV_context' ) ],
+#     'leftmenus'  => $left,
+#     'rightmenus' => $right
+#   );
+#   $panel->print( $mc->render_html );
+#   $panel->print( $mc->render_js );
+#   return 0;
+# }
+
+# sub generate_query_hash {
+#   my $self = shift;
+#   return {
+#     'transcript' => $self->stable_id,
+#     'db'         => $self->get_db,
+#   };
+# }
 
 1;
