@@ -1,0 +1,72 @@
+
+The chain/net process assumes that you have already run a pairwise comparison pipeline
+between 2 genomes (whole or partial) usuallu using blastz aligner. Please start reading
+README-pairlaigner first
+
+1- Choose a working directory with some disk space
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can decice to use the same directory that was used for the pair aligner pipeline.
+But sometimes the workers output can get huge, so we'd recommend that you create/use
+a new directory.
+
+mkdir -p /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27cn/workers
+
+This directory needs to be set in 'hive_output_dir' variable in the hive
+configuration file. See below. If not set, all STDOUT/STDERR goes to /dev/null. :)
+
+4- Copy and modify your hive config file
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+cd /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27cn
+
+cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-hive-chain-net.conf.example hive.conf
+<editor> hive.conf
+
+you may need to change the database names, port, dbnames, and the
+paths to the 'hive_output_dir' to
+/acari/work7a/abel/hive/abel_compara_human_cow_blastz_27cn/workers
+
+5- Run the configure scripts
+   ~~~~~~~~~~~~~~~~~~~~~~~~~
+The following script is in ensembl-compara/scripts/pipeline (should be in your PATH)
+
+loadChainNetSystem.pl -conf hive.conf
+
+The loadPairAlingerSystem script creates the analysis entries for the processing
+system, and creates both the dataflow rule and the analysis control rules.
+It also initializes the analysis_stats row for each analysis.  These row hold
+information like batch_size, hive_capacity, and run-time stats that the Hive's
+Queen will update.
+
+These scripts may give you warnings if the output directories are not available or if
+it's unable to connect to core databases.
+
+At this point the system is ready to run
+
+IMPORTANT NOTES:
+Few points on specific analysis (logic_name provided here)
+- DumpLargeNibForChains dumps each chromosome as a whole in a specific format (.nib files)
+  This analysis needs a lot of memory. So you will need to either run it locally on the ecs
+  machine you're logged in or specify -lsf_options in the beekeeper to set some resource
+  requirements
+- AlignmentNets-xxxx in cases where the genomic region to net is very large can take a lot
+  of memory. This happens usually when comparing very close species (mouse/rat). Apply the same
+  approach as for DumpLargeNibForChains.
+
+For the above specific problems, avoid running the beekeeper.pl with -loop alone. Prefer
+the addition of -logic_name as well to restrict the loop to particular analysis. This will
+allow to stop the pipeline at specific stages, where you can then restart it with customized
+resource requirements for the next step.
+
+6- Run the beekeeper
+   ~~~~~~~~~~~~~~~~~
+The following scripts are in ensembl-hive/scripts (should be in your PATH)
+beekeeper.pl -url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_human_cow_blastz_27 -loop
+
+where xxxx is the password for write access to the database
+
+for more details on controling/monitoring the hive system see 
+beekeeper -help
+
+
+
