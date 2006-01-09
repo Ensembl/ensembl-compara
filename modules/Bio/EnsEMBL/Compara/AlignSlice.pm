@@ -650,63 +650,57 @@ sub _create_underlying_Slices {
           $self->reference_Slice->strand
       );
 
-  my $slice_adaptors;
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
     GENOMIC_ALIGN: foreach my $this_genomic_align
             (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
       my $species = $this_genomic_align->dnafrag->genome_db->name;
       throw ("This species [$species] is not included in the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
           if (!defined($self->{slices}->{$species}));
-      if (!defined($slice_adaptors->{$species})) {
-        $slice_adaptors->{$species} =
-            $this_genomic_align->dnafrag->genome_db->db_adaptor->get_SliceAdaptor;
-      }
-      my $this_slice = $slice_adaptors->{$species}->fetch_by_region(
-              $this_genomic_align->dnafrag->coord_system_name,
-              $this_genomic_align->dnafrag->name,
-              $this_genomic_align->dnafrag_start,
-              $this_genomic_align->dnafrag_end,
-              $this_genomic_align->dnafrag_strand
-          );
 
+      my $this_core_slice = $this_genomic_align->get_Slice();
       my $this_block_start = $this_genomic_align->genomic_align_block->reference_slice_start;
       my $this_block_end = $this_genomic_align->genomic_align_block->reference_slice_end;
-        SLICE: foreach my $slice (@{$self->{slices}->{$species}}) {
-          my $slice_mapper_pairs = $slice->get_all_Slice_Mapper_pairs();
-          PAIRS: foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
-            my $block_start = $slice_mapper_pair->{start};
-            my $block_end = $slice_mapper_pair->{end};
-            if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
-              next SLICE; ## This block overlaps a previous block
-            }
-          }
-          $slice->add_Slice_Mapper_pair(
-                  $this_slice,
-                  $this_genomic_align->get_Mapper(0, !$expanded),
-                  $this_genomic_align->genomic_align_block->reference_slice_start,
-                  $this_genomic_align->genomic_align_block->reference_slice_end,
-                  $this_genomic_align->dnafrag_strand
-              );
-          next GENOMIC_ALIGN;
 
+      ## Try to add this alignment to an existing underlying Bio::EnsEMBL::Compara::AlignSlice::Slice
+      SLICE: foreach my $this_underlying_slice (@{$self->{slices}->{$species}}) {
+        my $slice_mapper_pairs = $this_underlying_slice->get_all_Slice_Mapper_pairs();
+        PAIRS: foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
+          my $block_start = $slice_mapper_pair->{start};
+          my $block_end = $slice_mapper_pair->{end};
+          if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
+            next SLICE; ## This block overlaps a previous block
+          }
         }
-        ## This block overlaps at least one block in every available slice. Create a new one!
-        my $new_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
-                -length => $align_slice_length,
-                -requesting_slice => $self->reference_Slice,
-                -method_link_species_set => $self->{_method_link_species_set},
-                -genome_db => $this_genomic_align->dnafrag->genome_db,
-                -expanded => $expanded,
-            );
-        $new_slice->add_Slice_Mapper_pair(
-                $this_slice,
+        ## This block does not overlap any previous block: add it!
+        $this_underlying_slice->add_Slice_Mapper_pair(
+                $this_core_slice,
                 $this_genomic_align->get_Mapper(0, !$expanded),
                 $this_genomic_align->genomic_align_block->reference_slice_start,
                 $this_genomic_align->genomic_align_block->reference_slice_end,
                 $this_genomic_align->dnafrag_strand
             );
-        push(@{$self->{slices}->{$species}}, $new_slice);
-      
+        ## Once this block has been added, go to the next block
+        next GENOMIC_ALIGN;
+
+      }
+
+      ## This block overlaps at least one block in every available underlying
+      ## Bio::EnsEMBL::Compara::AlignSlice::Slice. Create a new one!
+      my $new_underlying_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+              -length => $align_slice_length,
+              -requesting_slice => $self->reference_Slice,
+              -method_link_species_set => $self->{_method_link_species_set},
+              -genome_db => $this_genomic_align->dnafrag->genome_db,
+              -expanded => $expanded,
+          );
+      $new_underlying_slice->add_Slice_Mapper_pair(
+              $this_core_slice,
+              $this_genomic_align->get_Mapper(0, !$expanded),
+              $this_genomic_align->genomic_align_block->reference_slice_start,
+              $this_genomic_align->genomic_align_block->reference_slice_end,
+              $this_genomic_align->dnafrag_strand
+          );
+      push(@{$self->{slices}->{$species}}, $new_underlying_slice);
 
     }
   }
