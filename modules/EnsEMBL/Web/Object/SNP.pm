@@ -232,10 +232,16 @@ sub status {
 =cut
 
 sub alleles {
- my @alleles = @{$_[0]->vari->get_all_Alleles};
- return join '/', map { $_->allele } @alleles;
+ my @allele_obj = @{$_[0]->vari->get_all_Alleles};
+ my %tmp;
+ my @uniq_alleles;
+ foreach (@allele_obj) {
+   next if $tmp{$_->allele};
+   push @uniq_alleles, $_->allele;
+   $tmp{$_->allele} = 1;
+ }
+ return join '/', @uniq_alleles;
 }
-
 
 =head2 vari_class
 
