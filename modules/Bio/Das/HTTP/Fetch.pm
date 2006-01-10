@@ -437,6 +437,7 @@ On the end of the transaction read() will return numeric 0.
 sub read {
   my $self = shift;
   my $stat = $self->status;
+warn "READ $stat";
   return $self->read_header if $stat eq 'reading header';
   return $self->read_body   if $stat eq 'reading body'
                             or $stat eq 'parsing body';

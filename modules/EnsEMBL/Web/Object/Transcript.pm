@@ -17,36 +17,36 @@ sub default_track_by_gene {
   my $db    = $self->get_db;
   my $logic = $self->logic_name;
 
+  warn "$db - $logic";
   my %mappings_db = qw(
     vega evega_transcript
     est est_transcript
   );
-  my %mappings_logic_name = qw(
-    genscan          genscan
-    fgenesh          fgenesh
-    genefinder       genefinder
-    snap             snap
-    gsc              gsc
-    gid              gid
-    slam             slam
-    gws_h            gws_h
-    gws_s            gws_s
-    genebuilderbeeflymosandswall genebuilderbeeflymosandswall_transcript
-    gsten            gsten_transcript
-    hox              gsten_transcript
-    cyt              gsten_transcript
-    flybase          flybase_transcript
-    wormbase         wormbase_transcript
-    ensembl          ensembl_transcript
-    ncrna            rna_transcript
-    ensembl_ncrna    erna_transcript
-    sgd              sgd_transcript
-    homology_low     homology_low_transcript
-    homology_medium  homology_low_transcript
-    homology_high    homology_low_transcript
-    beeprotein       homology_low_transcript
-    cow_proteins     cow_proteins_transcript
-    otter            vega_transcript						   
+  my %mappings_logic_name = (
+    map( {( $_, $_ )} qw( 
+      genscan fgenesh genefinder snap ciona_snap
+      gsc gid slam gws_h gws_s )
+    ),
+    map( {($_, $_.'_transcript')} qw(
+      vectorbase_0_5 tigr_0_5
+      cdna_all targettedgenewise
+      genebuilderbeeflymosandswall gsten flybase wormbase
+      ensembl sgd homology_low cow_proteins refseq mouse_protein dog_protein
+      jamboree_cdnas ciona_dbest_ncbi ciona_est_seqc ciona_est_seqn
+      ciona_est_seqs ciona_jgi_v1 ciona_kyotograil_2004
+      ciona_kyotograil_2005 )
+    ),
+    qw(
+      rodent_protein   rprot_transcript
+      hox              gsten_transcript
+      cyt              gsten_transcript
+      ncrna            rna_transcript
+      ensembl_ncrna    erna_transcript
+      homology_medium  homology_low_transcript
+      homology_high    homology_low_transcript
+      beeprotein       homology_low_transcript
+      otter            vega_transcript
+    )
   );
   return $mappings_db{ lc( $db ) } ||
          $mappings_logic_name{ lc( $logic ) } || 'ensembl_transcript';

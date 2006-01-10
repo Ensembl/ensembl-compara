@@ -86,6 +86,7 @@ requests, such as -segments.
 # -callback code ref to be invoked when each "object" is finished parsing
 sub new {
   my $package = shift;
+  warn ">>>> @_";
   my ($dsn,$args,$callback) = rearrange(['dsn',
 					 'args',
 					 'callback'

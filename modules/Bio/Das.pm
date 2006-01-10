@@ -207,10 +207,12 @@ sub make_fetcher {
 
 sub dsn_js5 {
   my $self = shift;
-    my @requests = $_[0]=~/^-/ ? Bio::Das::Request::Dsn->new(@_)
-                                 : map { Bio::Das::Request::Dsn->new($_) } @_;
-                                   $self->run_requests(\@requests);
-                                   }
+warn "DSN JS5: @_";
+  my @requests = $_[0]=~/^-/ ? Bio::Das::Request::Dsn->new(@_) : map { Bio::Das::Request::Dsn->new($_) } @_;
+warn ">>>";
+  $self->run_requests(\@requests);
+warn "<<<";
+}
 
 
 sub dsn {
@@ -459,6 +461,7 @@ sub run_requests {
   my $self     = shift;
   my $requests = shift;
 
+warn ">>>rr1";
   for my $request (@$requests) {
     my $fetcher = $self->make_fetcher($request) or next;
     $fetcher->debug(1) if $self->debug;
@@ -476,8 +479,10 @@ sub run_requests {
     $writers->add($socket);
   }
 
+warn ">>>rr2";
   my $timed_out;
   while ($readers->count or $writers->count) {
+warn ">>>a";
     my ($readable,$writable) = IO::Select->select($readers,$writers,undef,$timeout);
 
     ++$timed_out && last unless $readable || $writable;
@@ -495,10 +500,16 @@ sub run_requests {
 	$writers->remove($_);                              # and remove from list monitored for writing
       }
     }
-
+warn ">>>b";
     foreach (@$readable) {                      # handle is ready for reading
+warn ">>>sock";
       my $fetcher = $self->{sockets}{$_};       # recover the HTTP object
+warn ">>>fetch";
+warn ref($fetcher);
+warn $fetcher->can('can_read') ? $fetcher->can_read( 1 ) : '';
+warn $fetcher->can('read') ? 'YYYY' : 'XXXX';
       my $result = $fetcher->read;              # read some data
+warn ">>>d";
       if($fetcher->error
 	     && $fetcher->error =~ /^401\s/
 	     && $self->auth_callback()) {       # Don't give up if given authentication challenge
@@ -510,14 +521,18 @@ sub run_requests {
 	  $writers->add($new_sock);
 	}
       }
+warn ">>>e";
       unless ($result) {                        # remove if some error occurred
 	$fetcher->request->error($fetcher->error) unless defined $result;
 	$readers->remove($_);
 	delete $self->{sockets}{$_};
       }
+warn ">>>f";
     }
+warn ">>>c";
   }
 
+warn ">>>rr3";
   # handle timeouts
   if ($timed_out) {
     while (my ($sock,$f) = each %{$self->{sockets}}) { # list of still-pending requests
@@ -528,6 +543,7 @@ sub run_requests {
     }
   }
 
+warn ">>>rr4";
   delete $self->{sockets};
   if ($self->oldstyle_api()) {
     unless ($requests->[0]->is_success) {
@@ -536,6 +552,7 @@ sub run_requests {
     }
     return wantarray ? $requests->[0]->results : ($requests->[0]->results)[0];
   }
+warn ">>>rr5";
   return wantarray ? @$requests : $requests->[0];
 }
 
