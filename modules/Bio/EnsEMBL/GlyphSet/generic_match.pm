@@ -32,6 +32,7 @@ sub features {
   foreach my $nm( @logic_names ){
     push( @feats, @{$self->{'container'}->$method($nm,$threshold,$database)} );
   }
+  warn "@logic_names, ".@feats;
   return [@feats];
 }
 
