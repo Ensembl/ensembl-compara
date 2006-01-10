@@ -107,6 +107,7 @@ sub new {
   my $version = "";
   if ($requesting_slice and ref($requesting_slice) and
       $requesting_slice->isa("Bio::EnsEMBL::Slice")) {
+    $self->{'requesting_slice'} = $requesting_slice;
     my $name = $requesting_slice->name;
     $name =~ s/\:/_/g;
     $version .= $name;
@@ -411,7 +412,7 @@ sub get_all_Genes {
       }
     }
 
-    $all_genes = _compile_mapped_Genes(
+    $all_genes = $self->_compile_mapped_Genes(
             $all_genes,
             $max_repetition_length,
             $max_gap_length,
@@ -511,12 +512,9 @@ sub _get_mapped_Gene {
               -biotype => $this_transcript->biotype,
               -exons => $these_exons,
           );
-      $new_transcript->translation($this_transcript->translation->new(
-              -stable_id => $this_transcript->translation->stable_id,
-              -version => $this_transcript->translation->version,
-              -created_date => ($this_transcript->translation->created_date or undef),
-              -modified_date =>$this_transcript->translation->modified_date,
-          )) if ($this_transcript->translation);
+      if ($this_transcript->translation) {
+        $new_transcript->translation($this_transcript->translation);
+      }
       push(@{$these_transcripts}, $new_transcript);
     }
   }
@@ -571,7 +569,7 @@ sub _get_mapped_Gene {
 =cut
 
 sub _compile_mapped_Genes {
-  my ($mapped_genes, $max_repetition_length, $max_gap_length, $max_intron_length, 
+  my ($self, $mapped_genes, $max_repetition_length, $max_gap_length, $max_intron_length, 
       $strict_order_of_exon_pieces, $strict_order_of_exons) = @_;
 
   my $verbose = verbose();
@@ -649,13 +647,104 @@ sub _compile_mapped_Genes {
                 -biotype => $old_transcript->biotype,
                 -EXONS => $this_set_of_compatible_exons
             );
-        ## $old_transcript->translation is already a fake Bio::EnsEMBL::Translation!
-        $new_transcript->translation($old_transcript->translation)
-            if ($old_transcript->translation);
+        ## $old_transcript->translation is the original Bio::EnsEMBL::Translation!
+        if ($old_transcript->translation) {
+          my $start_exon;
+          my $seq_start;
+          my $end_exon;
+          my $seq_end;
+          if ($new_transcript->strand == 1) {
+            foreach my $this_exon (@{$new_transcript->get_all_Exons}) {
+              $this_exon->strand($new_transcript->strand);
+              if ($old_transcript->translation->start_Exon->stable_id eq $this_exon->stable_id) {
+                $start_exon = $this_exon;
+                $seq_start = $old_transcript->translation->start;
+                if ($this_exon->start) {
+                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->start);
+                  $seq_start += $diff;
+                } elsif ($this_exon->exon->start < 0) {
+                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_start
+                    $new_transcript->coding_region_start($start_exon->exon->start +
+                        $old_transcript->translation->start - 1);
+                } else {
+                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_start
+                  my $diff = $self->length - $self->{'requesting_slice'}->length;
+                  $new_transcript->coding_region_start($start_exon->exon->start + $diff +
+                      $old_transcript->translation->start - 1);
+                }
+              }
+              if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
+                $end_exon = $this_exon;
+                $seq_end = $old_transcript->translation->end;
+                if ($this_exon->start) {
+                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->end);
+                  $seq_end += $diff;
+                } elsif ($this_exon->exon->end < 0) {
+                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_end
+                  $new_transcript->coding_region_end($end_exon->exon->start +
+                        $old_transcript->translation->end - 1);
+                } else {
+                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_end
+                  my $diff = $self->length - $self->{'requesting_slice'}->length;
+                  $new_transcript->coding_region_end($end_exon->exon->start + $diff +
+                        $old_transcript->translation->end - 1);
+                }
+              }
+            }
+          } else {
+            foreach my $this_exon (@{$new_transcript->get_all_Exons}) {
+              $this_exon->strand($new_transcript->strand);
+              if ($old_transcript->translation->start_Exon->stable_id eq $this_exon->stable_id) {
+                $start_exon = $this_exon;
+                $seq_start = $old_transcript->translation->start;
+                if ($this_exon->start) {
+                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->start);
+                  $seq_start += $diff;
+                } elsif ($this_exon->exon->start < 0) {
+                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_end
+                    $new_transcript->coding_region_end($start_exon->exon->end -
+                        $old_transcript->translation->start + 1);
+                } else {
+                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_end
+                  my $diff = $this_exon->slice->length - $this_exon->slice->{'requesting_slice'}->length;
+                  $new_transcript->coding_region_end($start_exon->exon->end + $diff -
+                      $old_transcript->translation->start + 1);
+                }
+              }
+              if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
+                $end_exon = $this_exon;
+                $seq_end = $old_transcript->translation->end;
+                if ($this_exon->start) {
+                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->end);
+                  $seq_end += $diff;
+                } elsif ($this_exon->exon->end < 0) {
+                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_start
+                  $new_transcript->coding_region_start($end_exon->exon->end -
+                        $old_transcript->translation->end + 1);
+                } else {
+                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_start
+                  my $diff = $self->length - $self->{'requesting_slice'}->length;
+                  $new_transcript->coding_region_start($end_exon->exon->end + $diff -
+                        $old_transcript->translation->end + 1);
+                }
+              }
+            }
+          }
+          $new_transcript->translation($old_transcript->translation->new(
+                  -start_exon => $start_exon,
+                  -end_exon => $end_exon,
+                  -seq_start => $seq_start,
+                  -seq_end => $seq_end,
+                  -stable_id => $old_transcript->translation->stable_id,
+                  -version => $old_transcript->translation->version,
+                  -created_date => ($old_transcript->translation->created_date or undef),
+                  -modified_date =>$old_transcript->translation->modified_date,
+              ));
+        }
         push(@$all_transcripts, $new_transcript);
       }
     }
-    
+
     $gene_by_gene_stable_id->{$gene_stable_id}->{'_transcript_array'} = $all_transcripts;
     # adjust start, end, strand and slice
     $gene_by_gene_stable_id->{$gene_stable_id}->recalculate_coordinates;
@@ -663,6 +752,36 @@ sub _compile_mapped_Genes {
   verbose($verbose);
 
   return [values %$gene_by_gene_stable_id];
+}
+
+
+sub _get_diff_from_cigar {
+  my ($cigar_line, $pos) = @_;
+  my $diff = 0;
+
+  my @cigar = grep {$_} split(/(\d*[IDM])/, $cigar_line);
+  my $count = 0;
+
+  ## If the beginning of the exon is not mapped
+  if ($cigar[0] =~ /(\d*)I/) {
+    my $num = $1;
+    $num = 1 if ($num eq "");
+    $diff -= $num;
+  }
+
+  ## Add gaps to $diff until $pos is reached
+  foreach my $cigar_piece (@cigar) {
+    my ($num, $mode) = $cigar_piece =~ /(\d*)([IDM])/;
+    $num = 1 if ($num eq "");
+    if ($mode eq "D") {
+      $diff += $num;
+    } else {
+      $count += $num;
+    }
+    last if ($count >= $pos);
+  }
+
+  return $diff;
 }
 
 
