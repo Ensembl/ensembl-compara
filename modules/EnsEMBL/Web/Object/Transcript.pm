@@ -277,6 +277,26 @@ sub getAllelesOnSlice {
   return \@genomic_af || [];
 }
 
+
+sub transcript_alleles {
+  my ($self, $allele_info ) = @_;
+  return [] unless @$allele_info;
+
+  # consequences of AlleleFeatures on the transcript
+  my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @$allele_info;
+
+  my $consequences =  Bio::EnsEMBL::Utils::TranscriptAlleles::get_all_ConsequenceType($self->Obj, \@slice_alleles);
+  return [] unless @$consequences;
+
+  my @valid_conseq;
+  my $valids = $self->valids;
+  foreach ( @$consequences ){  # conseq on our transcript
+    push @valid_conseq, $_ if $valids->{'opt_'.lc($_->type)} ;
+  }
+  return  \@valid_conseq || [];
+}
+
+
 sub var_class {
   my ($self, $allele) = @_;
   my $allele_string = join "|", $allele->ref_allele_string(), $allele->allele_string;
@@ -299,25 +319,6 @@ sub get_strains {
   my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
   my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };
   return sort @strains;
-}
-
-
-sub transcript_alleles {
-  my ($self, $allele_info ) = @_;
-  return [] unless @$allele_info;
-
-  # consequences of AlleleFeatures on the transcript
-  my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @$allele_info;
-
-  my $consequences =  Bio::EnsEMBL::Utils::TranscriptAlleles::get_all_ConsequenceType($self->Obj, \@slice_alleles);
-  return [] unless @$consequences;
-
-  my @valid_conseq;
-  my $valids = $self->valids;
-  foreach ( @$consequences ){  # conseq on our transcript
-    push @valid_conseq, $_ if $valids->{'opt_'.lc($_->type)} ;
-  }
-  return  \@valid_conseq || [];
 }
 
 

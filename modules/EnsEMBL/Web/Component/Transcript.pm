@@ -939,9 +939,9 @@ sub spreadsheet_variationTable {
   );
   foreach my $gs ( @gene_snps ) {
     my $raw_id = $gs->[2]->dbID;
-    my $ts     = $snps{$raw_id};
+    my $transcript_variation     = $snps{$raw_id};
     my @validation =  @{ $gs->[2]->get_all_validation_states || [] };
-    if( $ts && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
+    if( $transcript_variation && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
       my $ROW = {
         'ID'        =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$gs->[2]->variation_name]};source=@{[$gs->[2]->source]};chr=$gs->[3];vc_start=$gs->[4]">@{[$gs->[2]->variation_name]}</a>),
         'class'     => $gs->[2]->var_class() eq 'in-del' ? ( $gs->[4] > $gs->[5] ? 'insertion' : 'deletion' ) : $gs->[2]->var_class(),
@@ -950,10 +950,10 @@ sub spreadsheet_variationTable {
         'status'    => (join( ', ',  @validation ) || "-"),
         'chr'       => $gs->[3],
         'pos'       => $gs->[4]==$gs->[5] ? $gs->[4] :  "$gs->[4]-$gs->[5]",
-        'snptype'   => $ts->consequence_type,
-        $ts->translation_start ? (
-           'aachange' => $ts->pep_allele_string,
-           'aacoord'   => $ts->translation_start.' ('.(($ts->cdna_start-$coding_start)%3+1).')'
+        'snptype'   => $transcript_variation->consequence_type,
+        $transcript_variation->translation_start ? (
+           'aachange' => $transcript_variation->pep_allele_string,
+           'aacoord'   => $transcript_variation->translation_start.' ('.(($transcript_variation->cdna_start-$coding_start)%3+1).')'
         ) : ( 'aachange' => '-', 'aacoord' => '-' )
       };
       $panel->add_row( $ROW );
@@ -1021,11 +1021,6 @@ sub transcriptstrainview {
     my $allele_info = $object->getAllelesOnSlice("straintranscripts", $strain_slice);
     my $consequences = $object->transcript_alleles( $allele_info );
 
-#    $strain_information->{$strain}->{'extent'}        = $extent;
-#    $strain_information->{$strain}->{'coding_start'} = $coding_start;
-#    $strain_information->{$strain}->{'coding_end'}   = $coding_end;
- #   $strain_information->{$strain}->{'start'}        = $raw_start;
- #   $strain_information->{$strain}->{'end'}          = $raw_end;
     $strain_information->{$strain}->{'strainslice'}  = $strain_slice;
     $strain_information->{$strain}->{'allele_info'}  = $allele_info;
     $strain_information->{$strain}->{'consequences'} = $consequences;
@@ -1158,7 +1153,7 @@ sub spreadsheet_TSVtable {
   $panel->add_columns(
     { 'key' => 'ID',  },
     { 'key' => 'consequence', 'title' => 'Consequence', },
-    { 'key' => 'chr' ,  "title" => "Chr: position" },
+    { 'key' => 'chr' ,  "title" => "Chr: bp" },
     { 'key' => 'Alleles', },
     { 'key' => 'Ambiguity',  },
     { 'key' => 'Codon' ,  },
@@ -1169,12 +1164,6 @@ sub spreadsheet_TSVtable {
     { 'key' => 'Source', },
     { 'key' => 'Status',  },
 		     );
-#   my $tr_start = $object->__data->{'strain'}->{$strain}->{'start'};
-#   my $tr_end   = $object->__data->{'strain'}->{$strain}->{'end'};
-#   my $extent   = $object->__data->{'strain'}->{$strain}->{'extent'};
-#   my $coding_start = $object->__data->{'strain'}->{$strain}->{'coding_start'};
-#   my $coding_end = $object->__data->{'strain'}->{$strain}->{'coding_end'};
-
 
   foreach my $allele_ref (  @alleles ) {
     my $allele = $allele_ref->[2];
@@ -1208,6 +1197,19 @@ sub spreadsheet_TSVtable {
       $class = $chr_start > $chr_end ? 'insertion' : 'deletion';
     }
 
+    # Codon and position within
+    my $codon = $conseq_type->codon;
+    if ( $codon ) {
+      my $codon_position;
+      if ($object->Obj->strand > 0 ) {
+	$codon_position = $conseq_type->cds_start % 3;
+      }
+      else {
+	$codon_position = ( $conseq_type->cds_start +1 ) % 3;
+      }
+      $codon .= " (". ($codon_position || 3) . ")";
+    }
+
     # Other
     my $chr = $slice->seq_region_name;
     my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
@@ -1215,26 +1217,30 @@ sub spreadsheet_TSVtable {
     my $aa_coord = $conseq_type->aa_start;
     $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
     my $cds_coord = $conseq_type->cds_start;
-    $cds_coord .= $cds_coord == $conseq_type->cds_end ? "" : $conseq_type->cds_end;
+    $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
 
     my @validation =  @{ $allele->variation->get_all_validation_states || [] };
-#     if( $ts && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
     my $row = {
-	       'ID'        =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
-	       'Class'     => $class || "-",
-	       'Source'     => $allele->source || "-",
-	       'Alleles'   => $snp_alleles || "-",
-	       'Ambiguity' => $object->ambig_code($allele),
-	       'Status'    => (join( ', ',  @validation ) || "-"),
-	       'chr'       => "$chr:$pos",
-	       'Codon'     => $conseq_type->codon || "-",
-	       'consequence'   => $type,
-	       #         $ts->translation_start ? (
-	       'aachange' => (join "/", @{$aa_alleles}) || "",
-	       'cdscoord' => $cds_coord,
-	       'aacoord'  => $aa_coord, #$ts->translation_start.' ('.(($ts->cdna_start-$coding_start)%3+1).')'
-	       #         ) : ( 'aachange' => '-', 'aacoord' => '-' )
+	       'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
+	       'Class'       => $class || "-",
+	       'Source'      => $allele->source || "-",
+	       'Alleles'     => $snp_alleles || "-",
+	       'Ambiguity'   => $object->ambig_code($allele),
+	       'Status'      => (join( ', ',  @validation ) || "-"),
+	       'chr'         => "$chr:$pos",
+	       'Codon'       => $codon || "-",
+	       'consequence' => $type,
+	       'cdscoord'    => $cds_coord || "-",
 	      };
+    if ($conseq_type->aa_alleles){
+      $row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";
+      $row->{'aacoord'}  = $aa_coord;
+    }
+    else {
+      $row->{'aachange'} = '-';
+      $row->{'aacoord'}  = '-';
+      }
+
     $panel->add_row( $row );
   }
   return 1;
