@@ -745,6 +745,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'cbriggsae_mrna', 'C.briggsae mRNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'jgi_v1',            'JGI 1.0 model', $POS++, @_ );
 
   $POS = shift || 2400;
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
@@ -772,6 +773,7 @@ sub ADD_ALL_DNA_FEATURES {
 ## now the tetraodon tracks...
   $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', 'on' => 'off', @_ );
   $self->add_new_track_cdna( 'xlaevis_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'xlaev_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'xtrop_cDNA', 'X.trop cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'ep3_h', 'Ecotig (Human prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
   $self->add_new_track_cdna( 'ep3_s', 'Ecotig (Mouse prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', 'on' => 'off', @_ );
@@ -787,6 +789,7 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_cdna( 'fly_cdna_all',  'All Fly CDNAs', $POS++,
                             'FEATURES'  => 'drosophila_cdna_all', 'available' => 'database_features ENSEMBL_EST.drosophila_cdna_all',
                             'THRESHOLD' => 0, 'DATABASE' => 'est', @_ );
+  $self->add_new_track_cdna( 'cdna_all',  'All CDNAs', $POS++, 'SUBTYPE' => { return 'cdna_all' }, @_ );
   return $POS;
 }
 
@@ -809,10 +812,17 @@ sub ADD_ALL_EST_FEATURES {
   $self->add_new_track_est( 'Cow_ESTs',    'B.taurus ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'Exonerate_EST_083',    'Ciona ESTs',    $POS++, @_ );
   $self->add_new_track_est( 'xlaevis_EST', 'X.laevis ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'xlaev_EST', 'X.laevis ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'xtrop_EST', 'X.tropicalis ESTs',   $POS++, @_ );
   $self->add_new_track_est( 'xtrop_cluster','X.trop EST clust', 
 							$POS++, 'URL_KEY' => 'XTROP_CLUSTER',
 							'SUBTYPE' => 'default',
 							@_);
+  $self->add_new_track_est( 'xtrop_EST_clusters','X.trop EST clust',
+                                                        $POS++, 'URL_KEY' => 'XTROP_CLUSTER',
+                                                        'SUBTYPE' => 'default',
+                                                        @_);
+
   $self->add_new_track_est( 'ciona_dbest_align',     'dbEST align', $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
   $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
@@ -854,6 +864,7 @@ sub ADD_ALL_EST_FEATURES {
 							'FEATURES' => 'Est2genome_human Est2genome_mouse Est2genome_other Est2genome_fish',
                             'src' => 'all', 
 							@_);
+  $self->add_new_track_est( 'cDNA_exonerate',    'ESTs',      $POS++, @_ );
   return $POS;
 }
 
@@ -907,6 +918,22 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'ciona_kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
   $self->add_new_track_protein( 'blastx',            'BLASTx', $POS++, @_ );
   $self->add_new_track_protein( 'blastp',            'BLASTp', $POS++, @_ );
+  $self->add_new_track_protein( 'kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
+  $self->add_new_track_protein( 'kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
+#/* aedes additions */
+  $self->add_new_track_protein( 'Similarity_Diptera',   "Similarity Diptera", $POS++, @_ );
+  $self->add_new_track_protein( 'Similarity_Arthropoda',"Similarity Arthropoda", $POS++, @_ );
+  $self->add_new_track_protein( 'Similarity_Metazoa',   "Similarity Metazoa", $POS++, @_ );
+  $self->add_new_track_protein( 'Similarity_Eukaryota', "Similarity Eukaryota", $POS++, @_ );
+
+  $self->add_new_track_protein( 'DrosophilaBlast', "BLAST Drosophila", $POS++, @_ );
+  $self->add_new_track_protein( 'UniprotBlast',    "BLAST Uniprot", $POS++, @_ );
+
+  $self->add_new_track_protein( 'DipteraBlast',    "BLAST Diptera", $POS++, @_ );
+  $self->add_new_track_protein( 'ArthropodaBlast', "BLAST Arthropoda", $POS++, @_ );
+  $self->add_new_track_protein( 'MetazoaBlast',    "BLAST Metazoa", $POS++, @_ );
+  $self->add_new_track_protein( 'EukaryotaBlast',  "BLAST Eukaryota", $POS++, @_ );
+  $self->add_new_track_protein( 'EverythingBlast', "BLAST All", $POS++, @_ );
   return $POS;
 }
 
@@ -949,9 +976,26 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA',            @_ );
   $self->add_new_track_transcript( 'erna',       'e! ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features ensembl_ncRNA',            @_ );
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_EST', @_ );
-  $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene',      $POS++, @_ );
+  $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_est_seqn',   "5' EST genes (Kyoto)",  'estgene',$POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_est_seqs',   "full insert cDNA clone",  'estgene',$POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_jgi_v1',     "JGI 1.0 models", 'ciona_gene',  $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_kyotograil_2004',  "Kyotograil '04 model", 'ciona_gene',  $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_kyotograil_2005',  "Kyotograil '05 model",  'ciona_gene', $POS++, @_) ;
+
+  $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene', $POS++, 'available' => 'features rodent_protein', @_ );
+  $self->add_new_track_transcript( 'mouse_protein',    'Refseq proteins', 'prot_gene',    $POS++, @_ );
+  $self->add_new_track_transcript( 'targettedgenewise',    'Targetted genewise genes', 'prot_gene',    $POS++, @_ );
+  $self->add_new_track_transcript( 'cdna_all',             'cNDA genes', 'prot_gene',    $POS++, @_ );
   $self->add_new_track_transcript( 'refseq',    'Refseq proteins', 'refseq_gene',    $POS++, @_ );
+  $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene',      $POS++, @_ );
+  $self->add_new_track_transcript( 'jamboree_cdnas',   'X.trop. jambo. genes',   'prot_gene',   $POS++, @_ );
+
+  $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
   $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
+  $self->add_new_track_transcript( 'vectorbase_0_5',   'VectorBase genes',   'vectorbase_0_5',   $POS++, @_ );
+  $self->add_new_track_transcript( 'tigr_0_5',   'TIGR genes',   'tigr_0_5',   $POS++, @_ );
   $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
   # trancripts for Vega
   $self->add_new_track_transcript('vega', 'Vega genes', 'vega_gene',
@@ -1052,15 +1096,36 @@ sub ADD_GENE_TRACKS {
     'gene_col'             => sub { return $_[0]->biotype eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
     'logic_name'           => 'gsten hox cyt', @_
   );
+  $self->add_new_track_gene( 'dog_protein', 'Dog proteins', 'dog_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'dog_protein' , @_
+  );
   $self->add_new_track_gene( 'Cow_proteins', 'Cow proteins', 'cow_protein', $POS++,
     'gene_label'           => sub { return $_[0]->stable_id },
-    'gene_col'             => 'cow_protein' 
+    'gene_col'             => 'cow_protein', @_
   );
+
+  $self->add_new_track_gene( 'VectorBase_0_5', 'VectorBase proteins', 'vectorbase_0_5', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'vectorbase_0_5', @_
+  );
+
+  $self->add_new_track_gene( 'TIGR_0_5', 'TIGR proteins', 'tigr_0_5', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'tigr_0_5', @_
+  );
+
+  $self->add_new_track_gene( 'jamboree_cdnas',  "X.trop. Jambo",  'prot_gene', $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+
   $self->add_new_track_gene( 'ncrna', 'ncRNA Genes', 'rna_gene', $POS++,
                              'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
   $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++,
                              'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
   $self->add_new_track_gene( 'refseq', 'RefSeq Genes', 'refseq_gene', $POS++, 'gene_col' => '_refseq',  @_ );
+  $self->add_new_track_gene( 'mouse_protein', 'Mouse Protein Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
+  $self->add_new_track_gene( 'targettedgenewise', 'Targetted Genewise Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
+  $self->add_new_track_gene( 'cdna_all', 'cDNA Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
   $self->add_new_track_gene( 'estgene', 'EST Genes', 'est_gene', $POS++,
                              'database' => 'est', 'available' => 'databases ENSEMBL_EST',
                              'logic_name' => 'genomewise estgene', 'on' => 'off',
@@ -1077,6 +1142,11 @@ sub ADD_GENE_TRACKS {
   $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
     'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
     'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
+
+  $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'targettedgenewise', "Targetted genewise", 'prot_gene', $POS++, 'available' => 'features TargettedGenewise', 'logic_name' => 'TargettedGenewise', 'gene_col' => '_col', @_ );
+  $self->add_new_track_gene( 'cdna_all', "Aligned genes", 'prot_gene', $POS++, 'gene_col' => 'cdna_all', @_ );
 
   $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
