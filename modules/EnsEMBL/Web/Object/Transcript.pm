@@ -329,7 +329,7 @@ sub get_strains {
 
   my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
   my @strains = @{$pop_adaptor->get_default_strains};
-  #my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };
+  #my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };#all strains
   return sort @strains;
 }
 
