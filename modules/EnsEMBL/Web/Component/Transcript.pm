@@ -963,29 +963,29 @@ sub spreadsheet_variationTable {
 }
 
 # Transcript Strain View ###################
+sub tsv_extent {
+  my $object = shift;
+  return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
+}
+
 sub transcriptstrainview { 
   my( $panel, $object, $do_not_render ) = @_;
 
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
-  my $wuc          = $object->user_config_hash( 'TSV_transcript' );
-  $wuc->{'_draw_single_Transcript'} = $object->stable_id;
-
-  my $extent = $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
-
+  my $extent = tsv_extent($object);
   foreach my $slice_type (
     [ 'context',           'normal', '500%'  ],
     [ 'transcript',        'normal', '133%'  ],
-    [ 'straintranscripts', 'munged', $extent ],
+    [ 'TSV_transcript',    'munged', $extent ],
   ) {
-    $object->__data->{'slices'}{ $slice_type->[0] } =  $object->get_transcript_slices( $wuc, $slice_type ) || warn "Couldn't get slice";
+    $object->__data->{'slices'}{ $slice_type->[0] } =  $object->get_transcript_slices( $slice_type ) || warn "Couldn't get slice";
   }
 
-  my $transcript_slice = $object->__data->{'slices'}{'straintranscripts'}[1];
-  my $sub_slices       = $object->__data->{'slices'}{'straintranscripts'}[2];
-  my $fake_length      = $object->__data->{'slices'}{'straintranscripts'}[3];
+  my $transcript_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
+  my $sub_slices       = $object->__data->{'slices'}{'TSV_transcript'}[2];
+  my $fake_length      = $object->__data->{'slices'}{'TSV_transcript'}[3];
 
   my @containers_and_configs = (); ## array of containers and configs
-  my $strain_information = {};  # needed for table at end of page
 
   foreach my $strain (  $object->get_strains ) { #e.g. DBA/2J
     my $strain_slice = $transcript_slice->get_by_strain( $strain );
@@ -1006,24 +1006,17 @@ sub transcriptstrainview {
     }
     my $raw_coding_start = defined( $transcript->coding_region_start ) ? $transcript->coding_region_start : $transcript->start;
     my $raw_coding_end   = defined( $transcript->coding_region_end )   ? $transcript->coding_region_end : $transcript->end;
-    my $coding_start = $raw_coding_start + $object->munge_gaps( 'straintranscripts', $raw_coding_start );
-    my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'straintranscripts', $raw_coding_end );
-    my $raw_start = $transcript->start;
-    my $raw_end   = $transcript->end  ;
+    my $coding_start = $raw_coding_start + $object->munge_gaps( 'TSV_transcript', $raw_coding_start );
+    my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'TSV_transcript', $raw_coding_end );
+
     my @exons = ();
     foreach my $exon (@{$transcript->get_all_Exons()}) {
       my $es = $exon->start;
-      my $offset = $object->munge_gaps( 'straintranscripts', $es );
+      my $offset = $object->munge_gaps( 'TSV_transcript', $es );
       push @exons, [ $es + $offset, $exon->end + $offset, $exon ];
     }
 
-
-    my $allele_info = $object->getAllelesOnSlice("straintranscripts", $strain_slice);
-    my $consequences = $object->transcript_alleles( $allele_info );
-
-    $strain_information->{$strain}->{'strainslice'}  = $strain_slice;
-    $strain_information->{$strain}->{'allele_info'}  = $allele_info;
-    $strain_information->{$strain}->{'consequences'} = $consequences;
+    my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($strain, "TSV_transcript", $strain_slice);
 
     $strain_config->{'transcript'} = {
 	  'strain'       => $strain,
@@ -1034,6 +1027,7 @@ sub transcriptstrainview {
           'allele_info'  => $allele_info,
 	  'consequences' => $consequences,
 				  };
+
     $strain_config->container_width( $fake_length );
 
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
@@ -1047,9 +1041,6 @@ sub transcriptstrainview {
     }
   }
 
-  # Push strain info onto here so can build table 
-  $object->__data->{'strain'} = $strain_information;
-
   # Taken out domains (prosite, pfam)
 
   ## -- Tweak the configurations for the five sub images ------------------ 
@@ -1059,11 +1050,11 @@ sub transcriptstrainview {
     my $offset = $transcript_slice->start -1;
     my $es     = $exon->start - $offset;
     my $ee     = $exon->end   - $offset;
-    my $munge  = $object->munge_gaps( 'straintranscripts', $es );
+    my $munge  = $object->munge_gaps( 'TSV_transcript', $es );
     push @ens_exons, [ $es + $munge, $ee + $munge, $exon ];
   }
 
-  my $snps = $object->getVariationsOnSlice( "straintranscripts", $transcript_slice );
+  my $snps = $object->getVariationsOnSlice( "TSV_transcript", $transcript_slice );
 
   # General page configs -------------------------------------
   # Get 4 configs (one for each section) set width to width of context config
@@ -1141,12 +1132,17 @@ sub transcriptstrainview {
 sub spreadsheet_TSVtable {
   my( $panel, $object ) = @_;
   my $strain =  $panel->{'strain'};
-  my @alleles = sort {$a->[2]->start <=> $b->[2]->start} @{ $object->__data->{'strain'}->{$strain}->{'allele_info'}  };
-  my @consequences = sort {$a->start <=> $b->start} @{$object->__data->{'strain'}->{$strain}->{'consequences'} };
-  my $slice = $object->__data->{'strain'}->{$strain}->{'strainslice'} ;
+  my $strain_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
 
-  unless( @consequences && @alleles) {
-    $panel->print("<p>All alleles observed in strain $strain are the same as the reference</p>");
+  unless ($strain_slice) {
+    my $extent = tsv_extent($object);
+    my $munged_transcript = $object->get_munged_slice("TSV_transcript", $extent, 1 ) || warn "Couldn't get munged transcript";
+    $strain_slice = $munged_transcript->[1]->get_by_strain( $strain );
+  }
+
+  my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($strain, "TSV_transcript", $strain_slice);
+
+  unless( @$consequences && @$allele_info) {
     return 1;
   }
 
@@ -1165,9 +1161,9 @@ sub spreadsheet_TSVtable {
     { 'key' => 'Status',  },
 		     );
 
-  foreach my $allele_ref (  @alleles ) {
+  foreach my $allele_ref (  @$allele_info ) {
     my $allele = $allele_ref->[2];
-    my $conseq_type = shift @consequences;
+    my $conseq_type = shift @$consequences;
     next unless $conseq_type;
     next unless $allele;
 
@@ -1181,7 +1177,7 @@ sub spreadsheet_TSVtable {
     }
 
     # Position
-    my $offset = $slice->strand > 0 ? $slice->start - 1 :  $slice->end + 1;
+    my $offset = $strain_slice->strand > 0 ? $strain_slice->start - 1 :  $strain_slice->end + 1;
     my $chr_start = $allele->start() + $offset;
     my $chr_end   = $allele->end() + $offset;
     my $pos =  $chr_start;
@@ -1211,7 +1207,7 @@ sub spreadsheet_TSVtable {
     }
 
     # Other
-    my $chr = $slice->seq_region_name;
+    my $chr = $strain_slice->seq_region_name;
     my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
     my $aa_alleles = $conseq_type->aa_alleles || [];
     my $aa_coord = $conseq_type->aa_start;

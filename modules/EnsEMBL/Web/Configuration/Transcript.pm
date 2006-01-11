@@ -153,7 +153,8 @@ sub transcriptstrainview {
       'object'  => $obj,
       'params'  => $params,
       'strain' =>  $strain,
-    )) {
+      'null_data' => "<p>All alleles <em>observed</em> in strain $strain are the same as the reference</p>",
+ )) {
      $panel_table->add_components( qw(TSVvariations
         EnsEMBL::Web::Component::Transcript::spreadsheet_TSVtable));
      $self->add_panel( $panel_table );

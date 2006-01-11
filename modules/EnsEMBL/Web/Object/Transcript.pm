@@ -129,20 +129,23 @@ sub get_transcript_Slice {
 =cut
 
 sub get_transcript_slices {
-  my( $self, $master_config, $slice_config ) = @_;
+  my( $self, $slice_config ) = @_;
   if( $slice_config->[1] eq 'normal') {
     my $slice= $self->get_transcript_Slice( $slice_config->[2], 1 );
     return [ 'normal', $slice, [], $slice->length ];
   }
   else {
-    return $self->get_munged_slice( $master_config, $slice_config->[2], 1 );
+    return $self->get_munged_slice( $slice_config->[0], $slice_config->[2], 1 );
   }
 }
 
 
 sub get_munged_slice {
   my $self = shift;
-  my $master_config = shift;
+  my $config_name = shift;
+  my $master_config = $self->user_config_hash( $config_name );
+  $master_config->{'_draw_single_Transcript'} = $self->stable_id;
+
   my $slice = $self->get_transcript_Slice( @_ );
   my $length = $slice->length();
   my $munged  = '0' x $length;  # Munged is string of 0, length of slice
@@ -254,15 +257,25 @@ sub getVariationsOnSlice {
 }
 
 
-sub getAllelesOnSlice {
-  my( $self, $key, $strain_slice ) = @_;
+sub getAllelesConsequencesOnSlice {
+  my( $self, $strain, $key, $strain_slice ) = @_;
+
+  # If data already calculated, return
+  my $allele_info = $self->__data->{'strain'}{$strain}->{'allele_info'};
+  my $consequences = $self->__data->{'strain'}{$strain}->{'consequences'};
+  return ($allele_info, $consequences) if $allele_info && $consequences;
+
+  # Else
   my $valids = $self->valids;
 
   # Get all features on slice
   my $allele_features = $strain_slice->get_all_differences_Slice();
+  warn scalar (@$allele_features);
   return [] unless ref $allele_features eq 'ARRAY'; 
 
-  my @genomic_af =
+  my @filtered_af =
+    sort {$a->[2]->start <=> $b->[2]->start}
+
   # Rm many filters as not applicable to Allele Features
 # [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
 # [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
@@ -274,26 +287,24 @@ sub getAllelesOnSlice {
 	# [ AF, offset ]   Map to fake coords.   Create a munged version AF
 	map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
 	  @$allele_features;
-  return \@genomic_af || [];
-}
 
+  $self->__data->{'strain'}{$strain}->{'allele_info'}  = \@filtered_af || [];
+  return [] unless @filtered_af;
 
-sub transcript_alleles {
-  my ($self, $allele_info ) = @_;
-  return [] unless @$allele_info;
 
   # consequences of AlleleFeatures on the transcript
-  my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @$allele_info;
+  my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @filtered_af;
 
-  my $consequences =  Bio::EnsEMBL::Utils::TranscriptAlleles::get_all_ConsequenceType($self->Obj, \@slice_alleles);
+  $consequences =  Bio::EnsEMBL::Utils::TranscriptAlleles::get_all_ConsequenceType($self->Obj, \@slice_alleles);
   return [] unless @$consequences;
 
   my @valid_conseq;
-  my $valids = $self->valids;
-  foreach ( @$consequences ){  # conseq on our transcript
+  foreach (sort {$a->start <=> $b->start} @$consequences ){  # conseq on our transcript
     push @valid_conseq, $_ if $valids->{'opt_'.lc($_->type)} ;
   }
-  return  \@valid_conseq || [];
+  $self->__data->{'strain'}{$strain}->{'consequences'} = \@valid_conseq || [];
+
+  return (\@filtered_af, \@valid_conseq);
 }
 
 
@@ -325,7 +336,7 @@ sub get_strains {
 sub munge_gaps {
   my( $self, $slice_code, $bp, $bp2  ) = @_;
   my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
-   # warn "bp 2 $bp2, bp $bp";
+   # warn "bp 2 , $slice_code, $bp2, bp $bp";
   foreach( @$subslices ) {
 
     if( $bp >= $_->[0] && $bp <= $_->[1] ) {
