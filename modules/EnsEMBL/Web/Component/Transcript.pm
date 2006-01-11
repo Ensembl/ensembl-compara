@@ -125,7 +125,7 @@ sub go {
 
   return unless ($go_hash);
   my $html =  qq(<dl>
-  <dt><strong>The following GO terms have been mapped to this entry via UniProt:</strong></dt>);
+  <dt><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></dt>);
 
   foreach my $go (sort keys %{$go_hash}){
     my @go_data = @{$go_hash->{$go}||[]};
