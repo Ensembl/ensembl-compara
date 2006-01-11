@@ -1146,7 +1146,7 @@ sub spreadsheet_TSVtable {
   my $slice = $object->__data->{'strain'}->{$strain}->{'strainslice'} ;
 
   unless( @consequences && @alleles) {
-    $panel->print("<p>All alleles are the same as the reference in strain $strain</p>");
+    $panel->print("<p>All alleles observed in strain $strain are the same as the reference</p>");
     return 1;
   }
 
