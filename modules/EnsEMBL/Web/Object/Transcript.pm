@@ -328,7 +328,8 @@ sub get_strains {
   return sort($self->param('strain')) if  $self->param('strain');
 
   my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };
+  my @strains = @{$pop_adaptor->get_default_strains};
+  #my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };
   return sort @strains;
 }
 
