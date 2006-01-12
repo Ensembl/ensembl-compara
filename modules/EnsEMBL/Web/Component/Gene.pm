@@ -11,7 +11,8 @@ use EnsEMBL::Web::Component::Slice;
 sub sequence {
   my( $panel, $object ) = @_;
   return EnsEMBL::Web::Component::Slice::sequence_display(
-    $panel, $object->get_slice_object()
+#    $panel, $object->get_slice_object()
+    $panel, $object
   );
 }
 
@@ -24,7 +25,7 @@ sub markup_options {
 
 sub markup_options_form {
   my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'post' );
 
   # make array of hashes for dropdown options
   $form->add_element( 'type' => 'Hidden', 'name' => 'db',   'value' => $object->get_db    );
@@ -38,6 +39,11 @@ sub markup_options_form {
     'type' => 'NonNegInt', 'required' => 'yes',
     'label' => "3' Flanking sequence",  'name' => 'flank3_display',
     'value' => $object->param('flank3_display')
+  );
+  $form->add_element(
+    'type' => 'NonNegInt', 'required' => 'yes',
+    'label' => "Display width",  'name' => 'display_width',
+    'value' => $object->param('display_width')
   );
 
   my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) ||
@@ -93,9 +99,97 @@ sub markup_options_form {
     'values'   => $line_numbering,
     'value'    => $object->param('line_numbering')
   );
+
+#    { 'value' =>'exon', 'name' => 'Conserved regions within exons' },
+  my $conservation = [
+    { 'value' =>'all' , 'name' => 'All conserved regions' },
+
+    { 'value' =>'off' , 'name' => 'None' },
+  ];
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'conservation',
+    'label'    => 'Conservation regions',
+    'values'   => $conservation,
+    'value'    => $object->param('conservation')
+  );
+
+  my $codons_display = [
+    { 'value' =>'all' , 'name' => 'START/STOP codons' },
+
+    { 'value' =>'off' , 'name' => "Do not show codons" },
+  ];
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'codons_display',
+    'label'    => 'Codons',
+    'values'   => $codons_display,
+    'value'    => $object->param('codons_display')
+  );
+
+
+  my $id = 'BLASTZ_NET';
+  my @dvals;
+
+  my %shash = $object->species_defs->multi($id, $object->species);
+  my $aselect = $object->param("RGselect") || "NONE";
+
+  foreach my $sp (sort keys %shash) {
+      push @dvals, {'name'=> "$sp", 'value' => "${id}_$sp", checked=>$aselect eq "${id}_$sp" ? "yes" : undef};
+  }
+
+  $form->add_element('type' => 'RadioGroup',
+		     'name' => 'RGselect',
+		     'values' =>[{name=> "No alignments", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
+		     'label' => 'View in alignment with',
+		     );
+
+
+  foreach my $id (qw(MLAGAN-167 MLAGAN-170)) {
+      if ( my %shash = $object->species_defs->multi($id, $object->species)) {
+	  my @vvalues;
+	  foreach my $s ($object->param("ms_$id")) {
+	      $shash{$s} = 2 if ($shash{$s});
+	  }
+	  foreach my $v (sort keys %shash) {
+	      next if ($v eq $object->species);
+	      if ($shash{$v} == 2) {
+		  push @vvalues, {"value"=>$v, "name"=>$v, "checked"=>"yes"};
+	      } else {
+		  push @vvalues, {"value"=>$v, "name"=>$v};
+	      }
+	  }
+	  $form->add_element('type' => 'RadioGroup',
+			     'name' => 'RGselect',
+			     'values' =>[{name=>sprintf("%d Mammals (%s)", scalar(keys %shash), $id), value => $id, checked=> $aselect eq $id ? "yes" : undef}],
+			     'label' => '    ',
+			     );
+
+
+	  my @ava = $object->param("ms_$id");
+
+	  $form->add_element(
+			     'type' => 'MultiSelect',
+			     'name'=> "ms_$id",
+			     'label'=>'     ',
+			     'values' => \@vvalues,
+			     'value' => $object->param("ms_$id")
+			     );
+      }
+  }
+
+  
+  $form->add_element('type' => 'RadioGroup',
+		     'name' => 'RGselect',
+		     'values' => \@dvals,
+		     'label' => '     ',
+		     );
+
+
   $form->add_element(
     'type'  => 'Submit', 'value' => 'Update' 
   );
+
   return $form;
 }
 
@@ -316,7 +410,6 @@ sub orthologues {
     my $start = '';
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $OBJ = $orthologue_list{$species}{$stable_id};
-      warn( "$species -> $stable_id ", join ' : ', keys %$OBJ );
       $html .= $start;
       $start = qq(
         <tr>);
