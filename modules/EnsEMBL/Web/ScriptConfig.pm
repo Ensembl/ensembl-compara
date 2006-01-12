@@ -57,7 +57,13 @@ sub update_from_input {
   foreach my $key ( $self->options ) {
     if( defined $input->param($key) && $input->param( $key ) ne $self->{'_options'}{$key}{'user'} ) {
       $flag = 1;
-      $self->set( $key, $input->param( $key ) );
+
+      my @values = $input->param( $key );
+      if (scalar(@values) > 1) {
+	  $self->set( $key, \@values );
+      } else {
+	  $self->set( $key, $input->param( $key ) );
+      }
     }
   }
   if( $flag ) {
@@ -75,7 +81,12 @@ sub set {
 sub get {
   my( $self, $key ) = @_;
   return undef unless exists $self->{'_options'}{$key};
-  return $self->{'_options'}{$key}{'user'} if exists $self->{'_options'}{$key}{'user'};
+  if (exists ($self->{'_options'}{$key}{'user'})) {
+      if (ref($self->{'_options'}{$key}{'user'}) eq 'ARRAYREF') {
+	  return @{$self->{'_options'}->{$key}->{'user'}};
+      }
+      return $self->{'_options'}{$key}{'user'};
+  }
   return $self->{'_options'}{$key}{'default'};
 }
 
