@@ -1,4 +1,4 @@
-package EnsEMBL::Web::UserConfig::TSV_straintranscript;
+package EnsEMBL::Web::UserConfig::TSV_sampletranscript;
 use strict;
 use EnsEMBL::Web::UserConfig;
 use vars qw(@ISA);
@@ -10,8 +10,8 @@ sub init {
   $self->{'_transcript_names_'} = 'yes';
   $self->{'_add_labels' }  = 1;
 
-  $self->{'general'}->{'TSV_straintranscript'} = {
-    '_artefacts' => [qw(TSV_transcript TSV_snps )],# GSV_pfam GSV_prints GSV_prosite GSV_pfscan)],
+  $self->{'general'}->{'TSV_sampletranscript'} = {
+    '_artefacts' => [qw(TSV_transcript TSV_snps GSV_pfam GSV_prints GSV_prosite GSV_pfscan)],
     '_options'  => [qw(pos col known unknown)],
     '_settings' => {
       'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,

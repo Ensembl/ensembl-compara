@@ -44,8 +44,8 @@ sub genesnpview {
     $panel2->add_components(qw(
       menu   EnsEMBL::Web::Component::Gene::genesnpview_menu
       image  EnsEMBL::Web::Component::Gene::genesnpview
-      legend EnsEMBL::Web::Component::Gene::genesnpview_legend
     ));
+#     legend EnsEMBL::Web::Component::Gene::genesnpview_legend
     $self->add_panel( $panel2 );
   }
 
@@ -288,22 +288,42 @@ sub context_menu {
   ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'}) && $obj->gene;
 
   $self->add_entry( $flag,
-    'code'  => 'gene_var_info',
-    'text'  => "Gene variation info.",
-    'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
-    'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
-  $self->add_entry( $flag,
     'code'  => 'genomic_seq',
     'text'  => "Genomic sequence",
     'title' => 'GeneSeqView - View marked up sequence of gene '.$obj->stable_id,
     'href'  => "/$species/geneseqview?$q_string" );
+
+  $self->add_entry( $flag,
+    'code'  => 'gene_var_info',
+    'text'  => "Gene variation info.",
+    'title' => 'GeneSNPView - View of consequences of variations on gene '.$obj->stable_id,
+    'href'  => "/$species/genesnpview?$q_string" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
+
   my @transcripts = 
       map { {
         'href'  => sprintf( '/%s/transview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
         'title' => "TransView - Detailed information about transcript ".$_->stable_id,
         'text'  => $_->stable_id
       } } sort{ $a->stable_id cmp $b->stable_id } @{ $obj->get_all_transcripts };
+
   if( @transcripts ) {
+
+    # Transcript Sample View
+    my @sample_links =
+      map { {
+        'href'    => sprintf( '/%s/transcriptsampleview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
+	  'text'  => $_->stable_id,
+	}} sort{ $a->stable_id cmp $b->stable_id } @{ $obj->get_all_transcripts };
+
+    $self->add_entry( $flag,
+       'code'  => 'compare_samples',
+       'text'  => "Compare sample variation",
+       'title' => "TranscriptSample View - Compare transcript variation in different individuals or samples",
+       'href'  => $sample_links[0]{'href'},
+       'options' => \@sample_links,
+     )  if $obj->species_defs->databases->{'ENSEMBL_VARIATION'}; 
+
+
     $self->add_entry( $flag,
       'code'  => 'trans_info',
       'text'  => "Transcript information",
@@ -311,6 +331,8 @@ sub context_menu {
       'href'  => $transcripts[0]{'href'},
       'options' => \@transcripts
     );
+
+
     my @exons = ();
     foreach( @transcripts ) { 
       push @exons, {

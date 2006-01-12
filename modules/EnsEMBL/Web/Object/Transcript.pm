@@ -98,7 +98,7 @@ sub get_Slice {
   return $slice->expand( $context, $context );
 }
 
-#-- Transcript strain view -----------------------------------------------
+#-- Transcript sample view -----------------------------------------------
 
 sub get_transcript_Slice {
   my( $self, $context, $ori ) = @_;
@@ -115,7 +115,7 @@ sub get_transcript_Slice {
 }
 
 
-# Copied from EnsEMBL/Web/Object/Gene.pm for Transcript Strain View
+# Copied from EnsEMBL/Web/Object/Gene.pm for Transcript sample View
 
 =head2 transcript
 
@@ -123,7 +123,7 @@ sub get_transcript_Slice {
  Example     : my $slice = $object->get_Slice(
 		  $wuc,  [ 'context',      'normal', '500%'  ],
 				 );
- Description : Gets slices for transcript strain view
+ Description : Gets slices for transcript sample view
  Return type : hash ref of slices
 
 =cut
@@ -258,19 +258,19 @@ sub getVariationsOnSlice {
 
 
 sub getAllelesConsequencesOnSlice {
-  my( $self, $strain, $key, $strain_slice ) = @_;
+  my( $self, $sample, $key, $sample_slice ) = @_;
 
   # If data already calculated, return
-  my $allele_info = $self->__data->{'strain'}{$strain}->{'allele_info'};
-  my $consequences = $self->__data->{'strain'}{$strain}->{'consequences'};
+  my $allele_info = $self->__data->{'sample'}{$sample}->{'allele_info'};
+  my $consequences = $self->__data->{'sample'}{$sample}->{'consequences'};
   return ($allele_info, $consequences) if $allele_info && $consequences;
 
   # Else
   my $valids = $self->valids;
 
   # Get all features on slice
-  my $allele_features = $strain_slice->get_all_differences_Slice();
-  warn scalar (@$allele_features);
+  my $allele_features = $sample_slice->get_all_differences_Slice();
+  #warn scalar (@$allele_features);
   return [] unless ref $allele_features eq 'ARRAY'; 
 
   my @filtered_af =
@@ -288,7 +288,7 @@ sub getAllelesConsequencesOnSlice {
 	map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
 	  @$allele_features;
 
-  $self->__data->{'strain'}{$strain}->{'allele_info'}  = \@filtered_af || [];
+  $self->__data->{'sample'}{$sample}->{'allele_info'}  = \@filtered_af || [];
   return [] unless @filtered_af;
 
 
@@ -302,7 +302,7 @@ sub getAllelesConsequencesOnSlice {
   foreach (sort {$a->start <=> $b->start} @$consequences ){  # conseq on our transcript
     push @valid_conseq, $_ if $valids->{'opt_'.lc($_->type)} ;
   }
-  $self->__data->{'strain'}{$strain}->{'consequences'} = \@valid_conseq || [];
+  $self->__data->{'sample'}{$sample}->{'consequences'} = \@valid_conseq || [];
 
   return (\@filtered_af, \@valid_conseq);
 }
@@ -323,14 +323,14 @@ sub ambig_code {
 }
 
 #return type list
-sub get_strains {
+sub get_samples {
   my $self = shift;
-  return sort($self->param('strain')) if  $self->param('strain');
+  return sort($self->param('sample')) if  $self->param('sample');
 
   my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my @strains = @{$pop_adaptor->get_default_strains};
-  #my @strains = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };#all strains
-  return sort @strains;
+  my @samples = @{$pop_adaptor->get_default_strains};
+  #my @samples = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };#all strains
+  return sort @samples;
 }
 
 
@@ -350,7 +350,7 @@ sub munge_gaps {
 }
 
 
-#-- end transcript strain view ----------------------------------------------
+#-- end transcript sample view ----------------------------------------------
 
 
 =head2 transcript

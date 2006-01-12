@@ -1,4 +1,4 @@
-package EnsEMBL::Web::ScriptConfig::transcriptstrainview;
+package EnsEMBL::Web::ScriptConfig::transcriptsampleview;
 
 use strict;
 

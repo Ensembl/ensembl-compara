@@ -101,7 +101,7 @@ sub transview {
 }
 
 
-sub transcriptstrainview {
+sub transcriptsampleview {
  my $self   = shift;
  my $obj    = $self->{'object'};
  my $params = { 'transcript' => $obj->stable_id, 'db' => $obj->get_db  };
@@ -109,7 +109,7 @@ sub transcriptstrainview {
 # $self->update_configs_from_parameter( 'TSV_context', 'TSV_context' );
   my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "info$self->{flag}",
-    'caption' => 'Ensembl Transcript Strain Report',
+    'caption' => 'Ensembl transcript sample variation report',
     'object'  => $obj,
   );
   $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
@@ -121,7 +121,7 @@ sub transcriptstrainview {
   ));
   $self->add_panel( $panel1 );
   $self->initialize_zmenu_javascript;
-  $self->set_title( 'Transcript strain Report for '.$obj->stable_id );
+  $self->set_title( 'Transcript sample Report for '.$obj->stable_id );
 
 ## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
 
@@ -136,24 +136,24 @@ sub transcriptstrainview {
 
 
     $panel2->add_components(qw(
-      menu   EnsEMBL::Web::Component::Transcript::transcriptstrainview_menu
-      image  EnsEMBL::Web::Component::Transcript::transcriptstrainview
+      menu   EnsEMBL::Web::Component::Transcript::transcriptsampleview_menu
+      image  EnsEMBL::Web::Component::Transcript::transcriptsampleview
      ));
     $self->add_panel( $panel2 );
   }
 
 ## Panel 3 - finally a set of spreadsheet tables showing the information from the image..
  my $I = 0;
- foreach my $strain ( $obj->get_strains ) { #e.g. DBA/2J
-   last unless $strain;
+ foreach my $sample ( $obj->get_samples ) { #e.g. DBA/2J
+   last unless $sample;
    if( my $panel_table = $self->new_panel( 'SpreadSheet',
-      'code' => "variation#-$strain",
-      'caption' => "Variations and consequences for $strain",
-      'status'  => 'panel_strain',
+      'code' => "variation#-$sample",
+      'caption' => "Variations and consequences for $sample",
+      'status'  => 'panel_sample',
       'object'  => $obj,
       'params'  => $params,
-      'strain' =>  $strain,
-      'null_data' => "<p>All alleles <em>observed</em> in strain $strain are the same as the reference</p>",
+      'sample' =>  $sample,
+      'null_data' => "<p>All alleles <em>observed</em> in sample $sample are the same as the reference</p>",
  )) {
      $panel_table->add_components( qw(TSVvariations
         EnsEMBL::Web::Component::Transcript::spreadsheet_TSVtable));
@@ -201,30 +201,35 @@ sub context_menu {
   }
 
   $self->add_entry( $flag,
+    'code' => 'genomic_seq',
+    'text' => "Genomic sequence",
+    'href' => "/$species/geneseqview?$q_string_g"
+  ) if $q_string_g;
+
+  # Variation: GeneSNPView
+  $self->add_entry( $flag,
     'coed' => 'gene_var_info',
     'text' => "Gene variation info.",
     'href' => "/$species/genesnpview?$q_string_g"
   ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
 
-  $self->add_entry( $flag,
-    'code' => 'genomic_seq',
-    'text' => "Genomic sequence",
-    'href' => "/$species/geneseqview?$q_string_g"
-  ) if $q_string_g;
+  # Variation: Transcript sample view
+  if ( $obj->species_defs->get_table_size({ -db => 'ENSEMBL_VARIATION', -table => 'allele'}) ) {
+    $self->add_entry( $flag,
+		      'code'  => 'TSV',
+		      'text'  => "Compare sample variation",
+		      'title' => 'TranscriptSampleView - Compare variation in different sample for this transcript '.$obj->stable_id,
+		      'href'  => "/$species/transcriptsampleview?$q_string" 
+		    );
+  }
+
+
   $self->add_entry( $flag,
     'code' => 'trans_info',
     'text' => "Transcript information",
     'href' => "/$species/transview?$q_string"
   );
 
-  if ( $obj->species_defs->get_table_size({ -db => 'ENSEMBL_VARIATION', -table => 'allele'}) ) {
-    $self->add_entry( $flag,
-		      'code'  => 'TSV',
-		      'text'  => "Compare strain variation",
-		      'title' => 'TranscriptStrainView - Compare variation in different strains for this transcript '.$obj->stable_id,
-		      'href'  => "/$species/transcriptstrainview?$q_string" 
-		    );
-  }
 
   $self->add_entry( $flag,
     'code' => 'exon_info',

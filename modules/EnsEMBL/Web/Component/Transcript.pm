@@ -962,13 +962,13 @@ sub spreadsheet_variationTable {
   return 1;
 }
 
-# Transcript Strain View ###################
+# Transcript Sample View ###################
 sub tsv_extent {
   my $object = shift;
   return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
 }
 
-sub transcriptstrainview { 
+sub transcriptsampleview { 
   my( $panel, $object, $do_not_render ) = @_;
 
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
@@ -987,19 +987,19 @@ sub transcriptstrainview {
 
   my @containers_and_configs = (); ## array of containers and configs
 
-  foreach my $strain (  $object->get_strains ) { #e.g. DBA/2J
-    my $strain_slice = $transcript_slice->get_by_strain( $strain );
-    # needed?? $object->__data->{'slices'}{ $strain }= [ 'munged', $strain_slice , $sub_slices, $fake_length ];
+  foreach my $sample (  $object->get_samples ) { #e.g. DBA/2J
+    my $sample_slice = $transcript_slice->get_by_strain( $sample );
+    # needed?? $object->__data->{'slices'}{ $sample }= [ 'munged', $sample_slice , $sub_slices, $fake_length ];
 
     ## Initialize content...
-    my $strain_config = $object->get_userconfig( "TSV_straintranscript" );
-    $strain_config->{'id'}         = $object->stable_id;
-    $strain_config->{'subslices'}  = $sub_slices;
-    $strain_config->{'extent'}     = $extent;
+    my $sample_config = $object->get_userconfig( "TSV_sampletranscript" );
+    $sample_config->{'id'}         = $object->stable_id;
+    $sample_config->{'subslices'}  = $sub_slices;
+    $sample_config->{'extent'}     = $extent;
 
-    ## Get this transcript only, on the strain slice
+    ## Get this transcript only, on the sample slice
     my $transcript;
-    foreach my $test_transcript ( @{$strain_slice->get_all_Transcripts} ) {
+    foreach my $test_transcript ( @{$sample_slice->get_all_Transcripts} ) {
       next unless $test_transcript->stable_id eq $object->stable_id;
       $transcript = $test_transcript;  # Only display on e transcripts...
       last;
@@ -1016,10 +1016,10 @@ sub transcriptstrainview {
       push @exons, [ $es + $offset, $exon->end + $offset, $exon ];
     }
 
-    my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($strain, "TSV_transcript", $strain_slice);
+    my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
 
-    $strain_config->{'transcript'} = {
-	  'strain'       => $strain,
+    $sample_config->{'transcript'} = {
+	  'sample'       => $sample,
           'exons'        => \@exons,  
           'coding_start' => $coding_start,
           'coding_end'   => $coding_end,
@@ -1028,16 +1028,16 @@ sub transcriptstrainview {
 	  'consequences' => $consequences,
 				  };
 
-    $strain_config->container_width( $fake_length );
+    $sample_config->container_width( $fake_length );
 
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
 
     ## Now push onto config hash...
     if( $object->seq_region_strand < 0 ) {
 
-      push @containers_and_configs,    $strain_slice, $strain_config;
+      push @containers_and_configs,    $sample_slice, $sample_config;
     } else { ## If forward strand we have to draw these in reverse order (as forced on -ve strand)
-      unshift @containers_and_configs, $strain_slice, $strain_config;
+      unshift @containers_and_configs, $sample_slice, $sample_config;
     }
   }
 
@@ -1131,28 +1131,31 @@ sub transcriptstrainview {
 
 sub spreadsheet_TSVtable {
   my( $panel, $object ) = @_;
-  my $strain =  $panel->{'strain'};
-  my $strain_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
+  my $sample =  $panel->{'sample'};
+  my $sample_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
 
-  unless ($strain_slice) {
+  unless ($sample_slice) {
     my $extent = tsv_extent($object);
     my $munged_transcript = $object->get_munged_slice("TSV_transcript", $extent, 1 ) || warn "Couldn't get munged transcript";
-    $strain_slice = $munged_transcript->[1]->get_by_strain( $strain );
+    $sample_slice = $munged_transcript->[1]->get_by_strain( $sample );
   }
 
-  my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($strain, "TSV_transcript", $strain_slice);
+  my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
 
   unless( @$consequences && @$allele_info) {
     return 1;
   }
 
+  my $strand = $object->Obj->strand > 0 ? "+" : "-";
+
   $panel->add_columns(
     { 'key' => 'ID',  },
     { 'key' => 'consequence', 'title' => 'Consequence', },
-    { 'key' => 'chr' ,  "title" => "Chr: bp" },
-    { 'key' => 'Alleles', },
-    { 'key' => 'Ambiguity',  },
-    { 'key' => 'Codon' ,  },
+    { 'key' => 'chr' ,        'title' => "Chr: bp" },
+    { 'key' => 'Alleles',     'title' => 'SNP alleles (+)', },
+    { 'key' => 'Ambiguity',   'title' => 'Ambiguity (+)',  },
+    { 'key' => 'Codon',       'title' => "Codon($strand)" ,  },
+ #   { 'key' => 'Pos',         'title' => 'SNP pos. in codon' ,},
     { 'key' => 'cdscoord',  'title' => 'CDS co-ordinate',  },
     { 'key' => 'aachange', 'title' => 'AA change',  },
     { 'key' => 'aacoord',  'title' => 'AA co-ordinate',  },
@@ -1177,7 +1180,7 @@ sub spreadsheet_TSVtable {
     }
 
     # Position
-    my $offset = $strain_slice->strand > 0 ? $strain_slice->start - 1 :  $strain_slice->end + 1;
+    my $offset = $sample_slice->strand > 0 ? $sample_slice->start - 1 :  $sample_slice->end + 1;
     my $chr_start = $allele->start() + $offset;
     my $chr_end   = $allele->end() + $offset;
     my $pos =  $chr_start;
@@ -1193,21 +1196,15 @@ sub spreadsheet_TSVtable {
       $class = $chr_start > $chr_end ? 'insertion' : 'deletion';
     }
 
-    # Codon and position within
+    # Codon - make the letter for the SNP position in the codon bold
     my $codon = $conseq_type->codon;
     if ( $codon ) {
-      my $codon_position;
-      if ($object->Obj->strand > 0 ) {
-	$codon_position = $conseq_type->cds_start % 3;
-      }
-      else {
-	$codon_position = ( $conseq_type->cds_start +1 ) % 3;
-      }
-      $codon .= " (". ($codon_position || 3) . ")";
+      my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
+      $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/; 
     }
 
     # Other
-    my $chr = $strain_slice->seq_region_name;
+    my $chr = $sample_slice->seq_region_name;
     my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
     my $aa_alleles = $conseq_type->aa_alleles || [];
     my $aa_coord = $conseq_type->aa_start;
@@ -1242,8 +1239,8 @@ sub spreadsheet_TSVtable {
   return 1;
 }
 
- sub transcriptstrainview_menu    {  
-#   return tsv_menu( @_, 'TSV_straintranscript',
+ sub transcriptsampleview_menu    {  
+#   return tsv_menu( @_, 'TSV_sampletranscript',
 
 #    [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); 
 # #   [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); 
