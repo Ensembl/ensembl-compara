@@ -42,14 +42,14 @@ sub _init {
   my $max_row = -1;
   my @tmp;
 
-  return unless $Config->{'transcript'}->{'consequences'};
-  return unless $Config->{'transcript'}->{'allele_info'};
+  my $consequences_ref = $Config->{'transcript'}->{'consequences'};
+  my $alleles      = $Config->{'transcript'}->{'allele_info'};
+  return unless $alleles && $consequences_ref;
 
-  my @alleles =  @{ $Config->{'transcript'}->{'allele_info'} };#@(arrayref)
-  my @consequences =  @{  $Config->{'transcript'}->{'consequences'} };
-  warn "######## ERROR arrays should be same length" unless length @alleles == length @consequences;
+  my @consequences =  @$consequences_ref;
+  warn "######## ERROR arrays should be same length" unless length @$alleles == length @$consequences_ref;
 
-  foreach my $allele_ref (  @alleles ) {
+  foreach my $allele_ref (  @$alleles ) {
     my $allele = $allele_ref->[2];
     my $conseq_type = shift @consequences;
     next unless $conseq_type;
@@ -72,7 +72,15 @@ sub _init {
       #$aa_change->[1] = lc( $aa2 ) if $type eq 'SYNONYMOUS_CODING';
       push @tmp, ("05:Amino acid: $aa_change->[0] to $aa_change->[1]", '' );
     }
-    push @tmp, ("04:Codon: ".$conseq_type->codon => '') if $conseq_type->codon;
+
+    # Codon - make the letter for the SNP position in the codon bold
+    my $codon = $conseq_type->codon;
+    if ( $codon ) {
+      my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
+      $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/;
+      my $strand = $transcript->strand > 0 ? "+" : "-";
+      push @tmp, ("04:Codon ($strand strand) ".$codon => '');
+    }
 
     my $label  = join "/", @$aa_change;
     if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
@@ -121,9 +129,10 @@ sub _init {
         'caption' => 'SNP '.$allele->variation_name,
         "01:".$type => '',
         @tmp,
-        "03:Sample allele: ".(length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..') => '',
-        "02:Reference allele: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..') => '',
-
+        "02:Ref/sample allele: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..')."/".
+		  (length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..')
+		  => '',
+	"03:Ambiguity code: ".&ambiguity_code(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
        '11:SNP properties' => $href,
        "12:bp $pos" => '',
        "13:class: ".&variation_class(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
