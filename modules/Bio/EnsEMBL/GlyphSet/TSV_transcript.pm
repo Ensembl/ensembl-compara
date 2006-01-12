@@ -13,10 +13,10 @@ use Data::Dumper;
 
 sub init_label {
   my ($self) = @_;
-  my $strain = $self->{'config'}->{'transcript'}->{'strain'};
+  my $sample = $self->{'config'}->{'transcript'}->{'sample'};
 
   $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => "$strain",
+    'text'      => "$sample",
     'font'      => 'Small',
     'absolutey' => 1,
   }));

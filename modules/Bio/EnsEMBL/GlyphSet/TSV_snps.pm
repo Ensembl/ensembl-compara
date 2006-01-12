@@ -45,8 +45,8 @@ sub _init {
   return unless $Config->{'transcript'}->{'consequences'};
   return unless $Config->{'transcript'}->{'allele_info'};
 
-  my @alleles = sort {$a->[2]->start <=> $b->[2]->start} @{ $Config->{'transcript'}->{'allele_info'} };#@(arrayref)
-  my @consequences = sort {$a->start <=> $b->start} @{  $Config->{'transcript'}->{'consequences'} };
+  my @alleles =  @{ $Config->{'transcript'}->{'allele_info'} };#@(arrayref)
+  my @consequences =  @{  $Config->{'transcript'}->{'consequences'} };
   warn "######## ERROR arrays should be same length" unless length @alleles == length @consequences;
 
   foreach my $allele_ref (  @alleles ) {
@@ -121,7 +121,7 @@ sub _init {
         'caption' => 'SNP '.$allele->variation_name,
         "01:".$type => '',
         @tmp,
-        "03:Strain allele: ".(length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..') => '',
+        "03:Sample allele: ".(length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..') => '',
         "02:Reference allele: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..') => '',
 
        '11:SNP properties' => $href,

@@ -142,7 +142,7 @@ sub zmenu {
 
   if( $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/ ){
     $zmenu->{'07:Gene SNP view'}= "/$sp/genesnpview?gene=$gid;db=$db";
-    $zmenu->{'07:Transcript Strain view'}= "/$sp/transcriptstrainview?transcript=$tid;db=$db";
+    $zmenu->{'07:Transcript Sample view'}= "/$sp/transcriptsampleview?transcript=$tid;db=$db";
   }
   return $zmenu;
 }
