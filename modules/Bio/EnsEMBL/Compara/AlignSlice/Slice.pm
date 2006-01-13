@@ -653,93 +653,73 @@ sub _compile_mapped_Genes {
           my $seq_start;
           my $end_exon;
           my $seq_end;
+          my @sorted_exons;
           if ($new_transcript->strand == 1) {
-            foreach my $this_exon (@{$new_transcript->get_all_Exons}) {
-              $this_exon->strand($new_transcript->strand);
-              if ($old_transcript->translation->start_Exon->stable_id eq $this_exon->stable_id) {
-                $start_exon = $this_exon;
-                $seq_start = $old_transcript->translation->start;
-                if ($this_exon->start) {
-                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->start);
-                  $seq_start += $diff;
-                } elsif ($this_exon->exon->start < 0) {
-                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_start
-                    $new_transcript->coding_region_start($start_exon->exon->start +
-                        $old_transcript->translation->start - 1);
+            @sorted_exons = @{$new_transcript->get_all_Exons};
+          } else {
+            @sorted_exons = reverse @{$new_transcript->get_all_Exons};
+          }
+          my $coding = 0;
+          foreach my $this_exon (@sorted_exons) {
+            if ($old_transcript->translation->start_Exon->stable_id eq $this_exon->stable_id) {
+              $coding = 1;
+            }
+            if ($coding and $this_exon->start) {
+              if (!$start_exon) {
+                if ($old_transcript->translation->start_Exon->stable_id eq $this_exon->stable_id) {
+                  $seq_start = _map_position_using_cigar_line($this_exon->cigar_line,
+                      $old_transcript->translation->start, $this_exon->exon->length, 1);
+                  if ($seq_start <= $this_exon->length) {
+                    $start_exon = $this_exon;
+                  }
                 } else {
-                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_start
-                  my $diff = $self->length - $self->{'requesting_slice'}->length;
-                  $new_transcript->coding_region_start($start_exon->exon->start + $diff +
-                      $old_transcript->translation->start - 1);
+                  $seq_start = 1;
+                  $start_exon = $this_exon;
                 }
               }
               if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
-                $end_exon = $this_exon;
-                $seq_end = $old_transcript->translation->end;
-                if ($this_exon->start) {
-                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->end);
-                  $seq_end += $diff;
-                } elsif ($this_exon->exon->end < 0) {
-                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_end
-                  $new_transcript->coding_region_end($end_exon->exon->start +
-                        $old_transcript->translation->end - 1);
+                $seq_end = _map_position_using_cigar_line($this_exon->cigar_line,
+                    $old_transcript->translation->end, $this_exon->exon->length, 0);
+                $seq_end = $this_exon->length if ($seq_end > $this_exon->length);
+                if ($seq_end >= 1) {
+                  $end_exon = $this_exon;
                 } else {
-                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_end
-                  my $diff = $self->length - $self->{'requesting_slice'}->length;
-                  $new_transcript->coding_region_end($end_exon->exon->start + $diff +
-                        $old_transcript->translation->end - 1);
+                  ## Set $seq_end to previous value
+                  $seq_end = $end_exon->length if ($end_exon);
                 }
+              } else {
+                $end_exon = $this_exon;
+                $seq_end = $end_exon->length;
               }
             }
-          } else {
-            foreach my $this_exon (@{$new_transcript->get_all_Exons}) {
-              $this_exon->strand($new_transcript->strand);
-              if ($old_transcript->translation->start_Exon->stable_id eq $this_exon->stable_id) {
-                $start_exon = $this_exon;
-                $seq_start = $old_transcript->translation->start;
-                if ($this_exon->start) {
-                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->start);
-                  $seq_start += $diff;
-                } elsif ($this_exon->exon->start < 0) {
-                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_end
-                    $new_transcript->coding_region_end($start_exon->exon->end -
-                        $old_transcript->translation->start + 1);
-                } else {
-                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_end
-                  my $diff = $this_exon->slice->length - $this_exon->slice->{'requesting_slice'}->length;
-                  $new_transcript->coding_region_end($start_exon->exon->end + $diff -
-                      $old_transcript->translation->start + 1);
-                }
-              }
-              if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
-                $end_exon = $this_exon;
-                $seq_end = $old_transcript->translation->end;
-                if ($this_exon->start) {
-                  my $diff = _get_diff_from_cigar($this_exon->cigar_line, $old_transcript->translation->end);
-                  $seq_end += $diff;
-                } elsif ($this_exon->exon->end < 0) {
-                  ## This exon appears before the beginning of the AlignSlice. Hard set the coding_region_start
-                  $new_transcript->coding_region_start($end_exon->exon->end -
-                        $old_transcript->translation->end + 1);
-                } else {
-                  ## This exon appears after the end of the AlignSlice. Hard set the coding_region_start
-                  my $diff = $self->length - $self->{'requesting_slice'}->length;
-                  $new_transcript->coding_region_start($end_exon->exon->end + $diff -
-                        $old_transcript->translation->end + 1);
-                }
-              }
+            if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
+              $coding = 0;
+              last;
             }
           }
-          $new_transcript->translation($old_transcript->translation->new(
-                  -start_exon => $start_exon,
-                  -end_exon => $end_exon,
-                  -seq_start => $seq_start,
-                  -seq_end => $seq_end,
-                  -stable_id => $old_transcript->translation->stable_id,
-                  -version => $old_transcript->translation->version,
-                  -created_date => ($old_transcript->translation->created_date or undef),
-                  -modified_date =>$old_transcript->translation->modified_date,
-              ));
+          if ($start_exon and $end_exon) {
+            $new_transcript->translation($old_transcript->translation->new(
+                    -start_exon => $start_exon,
+                    -end_exon => $end_exon,
+                    -seq_start => $seq_start,
+                    -seq_end => $seq_end,
+                    -stable_id => $old_transcript->translation->stable_id,
+                    -version => $old_transcript->translation->version,
+                    -created_date => ($old_transcript->translation->created_date or undef),
+                    -modified_date =>$old_transcript->translation->modified_date,
+                ));
+          } else {
+            ## Translation cannot be mapped. In this case we should return a translation outside
+            ## of the coordinate system (negative coding_region_start and coding_region_end).
+            $new_transcript->translation($old_transcript->translation->new(
+                    -stable_id => $old_transcript->translation->stable_id,
+                    -version => $old_transcript->translation->version,
+                    -created_date => ($old_transcript->translation->created_date or undef),
+                    -modified_date =>$old_transcript->translation->modified_date,
+                ));
+            $new_transcript->coding_region_start(-10000000000);
+            $new_transcript->coding_region_end(-10000000000);
+          }
         }
         push(@$all_transcripts, $new_transcript);
       }
@@ -755,33 +735,90 @@ sub _compile_mapped_Genes {
 }
 
 
-sub _get_diff_from_cigar {
-  my ($cigar_line, $pos) = @_;
-  my $diff = 0;
+=head2 _map_position_using_cigar_line
+
+  Arg[1]     : string $cigar_line
+  Arg[2]     : int $original_position
+  Arg[3]     : int $original_length
+  Arg[4]     : bool $start
+  Example    : my $mapped_start_position = _map_position_using_cigar_line(
+                   "16M4I", 10, 20, 1);
+  Example    : my $mapped_end_position = _map_position_using_cigar_line(
+                   "16M4I", 10, 20, 1);
+  Description: This method is used to locate the start or the end position of
+               a Translation on the Bio::EnsEMBL::Compara::AlignSlice::Exon object
+               using the cigar_line of the object. As the Bio::EnsEMBL::Compara::
+               AlignSlice::Exon object may result from the fusion of the same
+               Bio::EnsEMBL::Exon object several times, this method returns the
+               best mapping among all the available possibilities. When the original
+               position maps on an insertion in the Bio::EnsEMBL::Compara::
+               AlignSlice::Exon object, the resulting mapped start position is the
+               next one to the latest mapped one.
+  Returntype : int $mapped_position
+  Exceptions : returns 0 when the end position cannot be mapped.
+  Exceptions : returns a number larger than the length of the Bio::EnsEMBL::Compara::
+               AlignSlice::Exon when the start position cannot be mapped.
+
+=cut
+
+sub _map_position_using_cigar_line {
+  my ($cigar_line, $original_pos, $original_length, $start) = @_;
+  my $mapped_pos = 0;
+
 
   my @cigar = grep {$_} split(/(\d*[IDM])/, $cigar_line);
-  my $count = 0;
+  my $original_count = 0;
+  my $mapped_count = 0;
+  my $pending_count = 0;
 
-  ## If the beginning of the exon is not mapped
-  if ($cigar[0] =~ /(\d*)I/) {
-    my $num = $1;
-    $num = 1 if ($num eq "");
-    $diff -= $num;
-  }
-
-  ## Add gaps to $diff until $pos is reached
   foreach my $cigar_piece (@cigar) {
     my ($num, $mode) = $cigar_piece =~ /(\d*)([IDM])/;
     $num = 1 if ($num eq "");
     if ($mode eq "D") {
-      $diff += $num;
-    } else {
-      $count += $num;
+      $pending_count += $num;
+    } elsif ($mode eq "I") {
+      $original_count += $num;
+    } elsif ($mode eq "M") {
+      if ($pending_count) {
+        $mapped_count += $pending_count;
+        $pending_count = 0;
+      }
+      if ($original_count + $num < $original_pos) {
+        $original_count += $num;
+        $mapped_count += $num;
+      } else {
+        $mapped_count += ($original_pos - $original_count);
+        $original_count += ($original_pos - $original_count);
+        $mapped_pos = $mapped_count;
+        last;
+      }
     }
-    last if ($count >= $pos);
+    if ($original_count >= $original_pos and $mode eq "I") {
+      ## This position matches in an insertion.
+      ## If we are mapping the end position we will prefer the first match in an insertion
+      ## rather than the following ones (except if the following matches in a "M" region).
+      ## On the other hand, if we are mapping the start position, we will prefer the last
+      ## match in an insertion
+      if ($start or !$mapped_pos) {
+        if ($start and $pending_count) {
+          ## $pending_count corresponds to deletion and needs to be added when mapping the
+          ## start position (we will want the position AFTER the deletion) but not when
+          ## mapping the end position (we will want the position BEFORE the deletion)
+          $mapped_count += $pending_count;
+          $pending_count = 0;
+        }
+        $mapped_pos = $mapped_count;
+        ## When matching the start position, add 1 as the mapped start will be just after
+        ## this position. If this position appears after the end of the mapped exon, this
+        ## means we fail to map the start position
+        $mapped_pos ++ if ($start);
+      }
+      ## Try to look further. A second match may happen if this exon is the result of a fusion process
+      $original_pos += $original_length;
+    }
   }
 
-  return $diff;
+  return $mapped_pos;
 }
 
 
@@ -870,7 +907,7 @@ sub _merge_Exons {
           $repetition_length = $second_exon->get_aligned_end - $first_exon->get_aligned_start + 1;
         }
         next if ($repetition_length > $max_repetition_length);
-  
+
         ## Merge exons!!
         $second_exon = splice(@$these_exons, $count, 1); # remove exon from the list
         $count-- if (@$these_exons);
