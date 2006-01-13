@@ -1720,6 +1720,78 @@ sub get_original_seq_region_position {
 }
 
 
+=head2 map_original_Slice
+
+  Arg  [1]   : Bio::EnsEMBL::Slice $original_slice
+  Description: This Slice is made of several Bio::EnsEMBL::Slices mapped
+               on it with gaps inside and regions with no matching
+               sequence. This method tries to map on this Slice the
+               region(s) corresponding to the provided $original_slice
+               NB: This method does not know how to project Slices onto
+               other coordinate systems. It is your responsability to
+               provide an original Slice on the same coordinate system
+               as the underlying Bio::EnsEMBL::Slices
+  Example    : my $slices = $as_slice->map_original_Slice($orginal_slice);
+  Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice objects
+               which are the sub_Slices of this Bio::EnsEMBL::Compara::
+               AlignSlice::Slice where the $original_slice maps
+  Exceptions : if the position corresponds to a gap, the slice will be a fake GAP
+               slice and the position will be the requested one (in AlignSlice
+               coordinates)
+
+=cut
+
+sub map_original_Slice {
+  my ($self, $original_slice) = @_;
+  my $mapped_slices = [];
+
+  foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    my $this_slice = $pair->{slice};
+    my $mapper = $pair->{mapper};
+    my $slice_start = $pair->{start};
+    my $slice_end = $pair->{end};
+    next if (!$this_slice->coord_system->equals($original_slice->coord_system));
+    next if ($this_slice->seq_region_name ne $original_slice->seq_region_name);
+    next if ($this_slice->start > $original_slice->end or $this_slice->end < $original_slice->start);
+
+    my @sequence_coords = $mapper->map_coordinates(
+            'sequence',
+            $original_slice->start,
+            $original_slice->end,
+            $original_slice->strand,
+            'sequence'
+        );
+    my $mapped_start;
+    my $mapped_end;
+    my $mapped_strand;
+    foreach my $sequence_coord (@sequence_coords) {
+      if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
+        if (!defined($mapped_start) or ($mapped_start > $sequence_coord->start)) {
+          $mapped_start = $sequence_coord->start;
+        }
+        if (!defined($mapped_end) or ($mapped_end < $sequence_coord->end)) {
+          $mapped_end = $sequence_coord->end;
+        }
+        if (!defined($mapped_strand)) {
+          $mapped_strand = $sequence_coord->strand;
+        } elsif ($mapped_strand != $sequence_coord->strand) {
+          warning("strand inversion within a Slice-Mapper pair!");
+          $mapped_start = undef;
+          $mapped_end = undef;
+          $mapped_strand = undef;
+          last;
+        }
+      }
+    }
+    if (defined($mapped_start) and defined($mapped_end) and defined($mapped_strand)) {
+      push(@$mapped_slices, $self->sub_Slice($mapped_start, $mapped_end, $mapped_strand));
+    }
+  }
+
+  return $mapped_slices;
+}
+
+
 =head2 expand (not supported)
 
 Expanding a Bio::EnsEMBL::Compara::AlignSlice::Slice object is not supported at the moment.
