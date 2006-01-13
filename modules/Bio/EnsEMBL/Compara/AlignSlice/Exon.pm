@@ -464,12 +464,6 @@ sub seq {
         $self->cigar_line,
         "ref"
     );
-    if ($self->strand == -1) {
-      ## This happens when the slice in which this exon has been found
-      ## appears on the reverse strand in the alignment!
-      $seq = reverse($seq);
-      $seq =~ tr/ACGTacgt/TGCAtgca/;
-    }
     $self->{'_seq_cache'} = $seq;
   }
 
@@ -589,7 +583,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   return undef if (!$original_sequence or !$cigar_line);
 
   my $seq_pos = 0;
-  
+
   my @cig = ( $cigar_line =~ /(\d*[GMDI])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
