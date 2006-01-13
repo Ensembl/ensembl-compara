@@ -46,6 +46,7 @@ sub new {
   my $self = $class->SUPER::new(@args);
   
   my ($chains,
+      $chains_sorted,
       $query_lengths,
       $target_lengths,
       $chain_net,
@@ -55,6 +56,7 @@ sub new {
       $min_chain_score
       ) = rearrange([qw(
                         CHAINS
+                        CHAINS_SORTED
                         QUERY_LENGTHS
                         TARGET_LENGTHS
                         CHAINNET
@@ -92,6 +94,7 @@ sub new {
 
   $self->min_chain_score($min_chain_score) if defined $min_chain_score;
   $self->chains($chains);
+  $self->chains_sorted(defined $chains_sorted ? $chains_sorted : 0 );
 
   return $self;
 }
@@ -146,6 +149,26 @@ sub run {
     close($fh);
   }
   
+  ##############################
+  # sort chains, if necessary
+  ##############################
+  if (not $self->chains_sorted) {
+    for(my $i=0; $i < @{$self->chains}; $i++) {
+      if ($self->chains->[$i]->[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+        $self->chains->[$i] = [
+                               sort {
+                                 $a->reference_genomic_align->dnafrag_start <=> 
+                                 $a->reference_genomic_align->dnafrag_end 
+                               } @{$self->chains->[$i]}
+                               ];
+      } else {
+        $self->chains->[$i] = [
+                               sort { $a->start <=> $b->start } @{$self->chains->[$i]}
+                               ];
+      }
+    }
+  }
+
   
   ##############################
   # write chains
@@ -360,8 +383,8 @@ sub parse_Net_file {
       
       $new_chain_scores{$chain_id} += $score;
       
-      my $restricted_fps = 
-          $self->restrict_between_positions($self->chains->[$chain_id-1],
+      my ($restricted_fps)
+         = $self->restrict_between_positions($self->chains->[$chain_id-1],
                                             $q_start,
                                             $q_end);
 
@@ -400,10 +423,10 @@ sub parse_Net_file {
             $right_end = $parent_chain->[-1]->end;
           }
 
-          my $chain1 = $self->restrict_between_positions($parent_chain, 
+          my ($chain1) = $self->restrict_between_positions($parent_chain, 
                                                          $left_start,
                                                          $insert_start - 1);
-          my $chain2 = $self->restrict_between_positions($parent_chain, 
+          my ($chain2) = $self->restrict_between_positions($parent_chain, 
                                                          $insert_end + 1,
                                                          $right_end);
           
@@ -438,44 +461,168 @@ sub parse_Net_file {
 sub restrict_between_positions {
   my ($self, $chain, $q_start, $q_end) = @_;
 
+  #my @blocks = @$chain;
+
   my @new_chain;
+  #my $chain_left = [];
+  #my $chain_right = [];
 
-  my @blocks = @$chain;
+  my $first_idx = $self->_bin_search_start($chain, $q_start);
+  my $last_idx = $self->_bin_search_end($chain, $q_end);
 
-  if ($blocks[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
-    foreach my $block (sort { $a->reference_genomic_align->dnafrag_start <=> 
-                                  $b->reference_genomic_align->dnafrag_start} @blocks) {
+  if ($first_idx < 0) {
+    # all blocks to left of range
 
+    #$chain_left = $chain;
+    #$chain_right = [];
+  } elsif ($last_idx < 0) {
+    # all blocks to right of range
 
-      next if $block->reference_genomic_align->dnafrag_end < $q_start;
-      last if $block->reference_genomic_align->dnafrag_start > $q_end;
-      
-      my $ref_start = $block->reference_genomic_align->dnafrag_start;
-      my $ref_end   = $block->reference_genomic_align->dnafrag_end;
-      
-      $ref_start = $q_start if $q_start > $ref_start;
-      $ref_end   = $q_end   if $q_end  < $ref_end;
-
-      my $new_block = $block->restrict_between_reference_positions($ref_start, $ref_end);
-      if (defined $new_block) {
-        push @new_chain, $new_block;
-      }
-      
-    }
+    #$chain_left = [];
+    #$chain_right = $chain;
   } else {
-    foreach my $block (sort {$a->start <=> $b->start} @blocks) {
-      next if $block->end < $q_start;
-      last if $block->start > $q_end;
- 
-      my $new_block = $block->restrict_between_positions($q_start, $q_end, "SEQ");
-      if (defined $new_block) {
-        push @new_chain, $new_block;
-      }
+    if ($first_idx > 0) {
+      #@$chain_left = @{@$chain}[0..$first_idx-1];
     }
+    if ($last_idx < scalar(@$chain) - 1) {
+      #@$chain_right = @{@$chain}[$last_idx+1..scalar(@$chain)-1];
+    }
+
+    if ($first_idx <= $last_idx) {
+      @new_chain = @{@$chain}[$first_idx..$last_idx];
+    }
+    
+    # may be necessary to cut the boundary blocks
+
+    if (@new_chain) {
+      my $block = shift @new_chain;
+      my $b_start = $block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")
+          ? $block->reference_genomic_align->dnafrag_start
+          : $block->start;
+      my $b_end = $block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")
+          ? $block->reference_genomic_align->dnafrag_end
+          : $block->end;
+      
+      if ($b_start < $q_start) {
+        # need to cut the block;
+        my $inside;
+        # my $outside
+        
+        if ($block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+          #$outside = $block->restrict_between_reference_positions($b_start, $q_start - 1);
+          $inside  = $block->restrict_between_reference_positions($q_start, $b_end);
+        } else {
+          #$outside = $block->restrict_between_positions($b_start, $q_start - 1, "SEQ");
+          $inside = $block->restrict_between_positions($q_start, $b_end, "SEQ");
+        }
+        
+        #push @$chain_left, $outside;
+        unshift @new_chain, $inside;
+      } else {
+        unshift @new_chain, $block;
+      }
+      
+      $block = pop @new_chain;
+      $b_start = $block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")
+          ? $block->reference_genomic_align->dnafrag_start
+          : $block->start;
+      $b_end = $block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")
+          ? $block->reference_genomic_align->dnafrag_end
+          : $block->end;
+      
+      if ($b_end > $q_end) {
+        # need to cut the block;
+        my $inside;
+        #my $outside;
+        
+        if ($block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+          $inside  = $block->restrict_between_reference_positions($b_start, $q_end);
+          #$outside = $block->restrict_between_reference_positions($q_end + 1, $b_end);
+        } else {
+          $inside  = $block->restrict_between_positions($b_start, $q_end, "SEQ");
+          #$outside = $block->restrict_between_positions($q_end + 1, $b_end, "SEQ");
+        }
+
+        #unshift @$chain_right, $outside;        
+        push @new_chain, $inside;
+      } else {
+        push @new_chain, $block;
+      }
+    }    
   }
 
-  return \@new_chain;
+  #return (\@new_chain,
+  #        $chain_left,
+  #        $chain_right);
+  return (\@new_chain);
+
 }
+
+sub _bin_search_start {
+  my ($self, $blocks, $position) = @_; 
+
+  # if direction is "reverse", returns index of latest block with start <= $position
+  # if direction is something else returns index of earliest block with end >= $position
+
+  # binary search the block list
+  my ($left, $right) = (0, scalar(@$blocks));
+  while ($right - $left > 0) {
+    my $mid = int(($left + $right) / 2);
+
+    my ($block_end, $block_start);
+    if ($blocks->[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+      $block_end   = $blocks->[$mid]->reference_genomic_align->dnafrag_end;
+    } else {
+      $block_end   = $blocks->[$mid]->end;
+    }
+
+    if ($block_end < $position) {
+      $left = $mid + 1;
+    } else { 
+      $right = $mid;
+    }
+
+  }
+  
+  if ($right > scalar(@$blocks)-1) {
+    return -1;
+  } else {
+    return $right;
+  }
+}
+
+
+sub _bin_search_end {
+  my ($self, $blocks, $position) = @_; 
+
+  # if direction is "reverse", returns index of latest block with start <= $position
+  # if direction is something else returns index of earliest block with end >= $position
+
+  # binary search the block list
+  my ($left, $right) = (-1, scalar(@$blocks)-1);
+  while ($right - $left > 0) {
+    my $mid = int(($left + $right + 1) / 2);
+
+    my ($block_end, $block_start);
+    if ($blocks->[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+      $block_start = $blocks->[$mid]->reference_genomic_align->dnafrag_start;
+    } else {
+      $block_start = $blocks->[$mid]->end;
+    }
+
+    if ($block_start > $position) {
+      $right = $mid - 1;
+    } else { 
+      $left = $mid;
+    }
+
+  }
+  
+  # returns -1 if all blocks to right of $position
+  return $right;
+}
+
+
 
 
 
@@ -509,6 +656,16 @@ sub chains {
   }
 
   return $self->{_chains};
+}
+
+sub chains_sorted {
+  my ($self, $val) = @_;
+
+  if (defined $val) {
+    $self->{_chains_sorted} = $val;
+  }
+
+  return $self->{_chains_sorted};
 }
 
 
