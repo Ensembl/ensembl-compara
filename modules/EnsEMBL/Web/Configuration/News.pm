@@ -56,7 +56,7 @@ sub context_menu {
 
 #---------------------------------------------------------------------------
 
-sub add_news {
+sub news_add {
   my $self   = shift;
   my $object = $self->{'object'};
                                                                                 
@@ -77,7 +77,7 @@ sub add_news {
   $self->wizard_panel('Add a Current News Item');
 }
 
-sub edit_news {
+sub news_edit {
   my $self   = shift;
   my $object = $self->{'object'};
                                                                                 
@@ -99,7 +99,7 @@ sub edit_news {
   $self->wizard_panel('Edit a Current News Item');
 }
 
-sub add_old_news {
+sub news_add_old {
   my $self   = shift;
   my $object = $self->{'object'};
                                                                                 
@@ -121,7 +121,7 @@ sub add_old_news {
   $self->wizard_panel('Add an Item to the News Archive');
 }
 
-sub edit_old_news {
+sub news_edit_old {
   my $self   = shift;
   my $object = $self->{'object'};
                                                                                 
@@ -149,18 +149,14 @@ sub edit_old_news {
 sub editor_menu {
   my $self = shift;
 
-  my $flag     = "";
+  my $flag     = "current";
   $self->{page}->menu->add_block( $flag, 'bulleted', "Update Current News" );
   $self->{page}->menu->add_entry( $flag, 'text' => "Add Current News",
                                     'href' => "/Multi/add_news" );
   $self->{page}->menu->add_entry( $flag, 'text' => "Edit Current News",
                                     'href' => "/Multi/edit_news" );
-}
-    
-sub archive_menu {
-  my $self = shift;
 
-  my $flag     = "";
+  my $flag     = "archive";
   $self->{page}->menu->add_block( $flag, 'bulleted', "Update News Archive" );
   $self->{page}->menu->add_entry( $flag, 'text' => "Add News to Archive",
                                     'href' => "/Multi/add_old_news" );
