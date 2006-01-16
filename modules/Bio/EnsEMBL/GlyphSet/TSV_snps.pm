@@ -24,28 +24,29 @@ sub _init {
   return unless $self->strand() == -1;
 
   my $Config        = $self->{'config'};
-  my $EXTENT        = $Config->get('_settings','context');
-     $EXTENT        = 1e6 if $EXTENT eq 'FULL';
-  my $seq_region_name = $self->{'container'}->seq_region_name();
-
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
-  my $pix_per_bp    = $Config->transform->{'scalex'};
-  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
-  my $voffset = 0;
-  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-  my $height = $font_h_bp + 4;  #Single transcript mode: height= 30, width=8
-
   my $transcript = $Config->{'transcript'}->{'transcript'};
-  my $colour_map = $Config->get('TSV_snps','colours' );
-
-  my @bitmap;
-  my $max_row = -1;
-  my @tmp;
-
   my $consequences_ref = $Config->{'transcript'}->{'consequences'};
   my $alleles      = $Config->{'transcript'}->{'allele_info'};
   return unless $alleles && $consequences_ref;
 
+
+  # Drawing params
+  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
+  my $height = $font_h_bp + 4;  #Single transcript mode: height= 30, width=8
+
+  # Bumping params
+  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
+  my $voffset = 0;
+  my @bitmap;
+  my $max_row = -1;
+
+  # Data stuff
+  my $colour_map = $Config->get('TSV_snps','colours' );
+  my $EXTENT        = $Config->get('_settings','context');
+     $EXTENT        = 1e6 if $EXTENT eq 'FULL';
+  my $seq_region_name = $self->{'container'}->seq_region_name();
   my @consequences =  @$consequences_ref;
   warn "######## ERROR arrays should be same length" unless length @$alleles == length @$consequences_ref;
 
@@ -79,7 +80,7 @@ sub _init {
       my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
       $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/;
       my $strand = $transcript->strand > 0 ? "+" : "-";
-      push @tmp, ("04:Codon ($strand strand) ".$codon => '');
+      push @tmp, ("04:Transcript codon ($strand strand) ".$codon => '');
     }
 
     my $label  = join "/", @$aa_change;
