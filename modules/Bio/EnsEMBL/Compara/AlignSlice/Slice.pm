@@ -1333,6 +1333,7 @@ sub subseq {
     my $slice_start = $pair->{start};
     my $slice_end = $pair->{end};
     next if ($slice_start > $end or $slice_end < $start);
+    my $this_slice_seq = $this_slice->seq();
 
     # Set slice_start and slice_end in "subseq" coordinates (0 based, for compliance wiht substr() perl func) and trim them
     $slice_start -= $start; # $slice_start is now in subseq coordinates
@@ -1380,17 +1381,21 @@ sub subseq {
       if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
         my $subseq;
         if ($this_slice->strand == 1) {
-          $subseq = $this_slice->subseq(
-                  $sequence_coord->start - $this_slice->start + 1,
-                  $sequence_coord->end - $this_slice->start + 1,
-                  $sequence_coord->strand * $pair->{strand}
-              );
+          $subseq = substr($this_slice_seq,
+              $sequence_coord->start - $this_slice->start,
+              $sequence_coord->length);
+          if ($sequence_coord->strand * $pair->{strand} == -1) {
+            $subseq = reverse($subseq);
+            $subseq =~ tr/ACGTacgt/TGCAtgca/;
+          }
         } else {
-          $subseq = $this_slice->subseq(
-                  $this_slice->end - $sequence_coord->end + 1,
-                  $this_slice->end - $sequence_coord->start + 1,
-                  $sequence_coord->strand * $pair->{strand}
-              );
+          $subseq = substr($this_slice_seq,
+              $this_slice->end - $sequence_coord->end,
+              $sequence_coord->length);
+          if ($sequence_coord->strand * $pair->{strand} == -1) {
+            $subseq = reverse($subseq);
+            $subseq =~ tr/ACGTacgt/TGCAtgca/;
+          }
         }
         substr($seq, $this_pos, $sequence_coord->length, $subseq);
 
