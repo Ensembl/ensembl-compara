@@ -67,6 +67,7 @@ package Bio::EnsEMBL::Compara::AlignSlice::Slice;
 use strict;
 use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::CoordSystem;
+use Bio::EnsEMBL::Compara::AlignSlice::Translation;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 
@@ -653,6 +654,8 @@ sub _compile_mapped_Genes {
           my $seq_start;
           my $end_exon;
           my $seq_end;
+          my $all_start_codon_mappings;
+          my $all_end_codon_mappings;
           my @sorted_exons;
           if ($new_transcript->strand == 1) {
             @sorted_exons = @{$new_transcript->get_all_Exons};
@@ -667,6 +670,17 @@ sub _compile_mapped_Genes {
             if ($coding and $this_exon->start) {
               if (!$start_exon) {
                 if ($old_transcript->translation->start_Exon->stable_id eq $this_exon->stable_id) {
+                  if ($old_transcript->translation->start_Exon->strand == 1) {
+                    $all_start_codon_mappings = $self->map_original_Slice(
+                        $this_exon->exon->slice->sub_Slice(
+                          $old_transcript->coding_region_start,
+                          $old_transcript->coding_region_start + 2));
+                  } else {
+                    $all_end_codon_mappings = $self->map_original_Slice(
+                        $this_exon->exon->slice->sub_Slice(
+                          $old_transcript->coding_region_start,
+                          $old_transcript->coding_region_start + 2));
+                  }
                   $seq_start = _map_position_using_cigar_line($this_exon->cigar_line,
                       $old_transcript->translation->start, $this_exon->exon->length, 1);
                   if ($seq_start <= $this_exon->length) {
@@ -678,6 +692,17 @@ sub _compile_mapped_Genes {
                 }
               }
               if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
+                if ($old_transcript->translation->end_Exon->strand == 1) {
+                  $all_end_codon_mappings = $self->map_original_Slice(
+                      $this_exon->exon->slice->sub_Slice(
+                        $old_transcript->coding_region_end - 2,
+                        $old_transcript->coding_region_end));
+                } else {
+                  $all_start_codon_mappings = $self->map_original_Slice(
+                      $this_exon->exon->slice->sub_Slice(
+                        $old_transcript->coding_region_end - 2,
+                        $old_transcript->coding_region_end));
+                }
                 $seq_end = _map_position_using_cigar_line($this_exon->cigar_line,
                     $old_transcript->translation->end, $this_exon->exon->length, 0);
                 $seq_end = $this_exon->length if ($seq_end > $this_exon->length);
@@ -698,7 +723,7 @@ sub _compile_mapped_Genes {
             }
           }
           if ($start_exon and $end_exon) {
-            $new_transcript->translation($old_transcript->translation->new(
+            $new_transcript->translation(new Bio::EnsEMBL::Compara::AlignSlice::Translation(
                     -start_exon => $start_exon,
                     -end_exon => $end_exon,
                     -seq_start => $seq_start,
@@ -711,7 +736,7 @@ sub _compile_mapped_Genes {
           } else {
             ## Translation cannot be mapped. In this case we should return a translation outside
             ## of the coordinate system (negative coding_region_start and coding_region_end).
-            $new_transcript->translation($old_transcript->translation->new(
+            $new_transcript->translation(new Bio::EnsEMBL::Compara::AlignSlice::Translation(
                     -stable_id => $old_transcript->translation->stable_id,
                     -version => $old_transcript->translation->version,
                     -created_date => ($old_transcript->translation->created_date or undef),
@@ -720,6 +745,8 @@ sub _compile_mapped_Genes {
             $new_transcript->coding_region_start(-10000000000);
             $new_transcript->coding_region_end(-10000000000);
           }
+          $new_transcript->translation->all_start_codon_mappings($all_start_codon_mappings);
+          $new_transcript->translation->all_end_codon_mappings($all_end_codon_mappings);
         }
         push(@$all_transcripts, $new_transcript);
       }
@@ -1735,15 +1762,15 @@ sub get_original_seq_region_position {
   Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice objects
                which are the sub_Slices of this Bio::EnsEMBL::Compara::
                AlignSlice::Slice where the $original_slice maps
-  Exceptions : if the position corresponds to a gap, the slice will be a fake GAP
-               slice and the position will be the requested one (in AlignSlice
-               coordinates)
+  Exceptions :
 
 =cut
 
 sub map_original_Slice {
   my ($self, $original_slice) = @_;
   my $mapped_slices = [];
+
+  return $mapped_slices if (!defined($original_slice));
 
   foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
     my $this_slice = $pair->{slice};
