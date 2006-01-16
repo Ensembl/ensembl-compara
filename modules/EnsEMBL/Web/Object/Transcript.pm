@@ -349,29 +349,6 @@ sub munge_gaps {
   return undef;
 }
 
-sub read_coverage2 {
-  my ( $self, $sample, $sample_slice) = @_;
-  my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-  my $sample_obj = $pop_adaptor->fetch_by_name($sample); 
-
-  my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor;
-  my @coverage_levels = @{$rc_adaptor->get_coverage_levels};
-
-  my $coverage_obj = $rc_adaptor->fetch_all_by_Slice_Sample_depth($sample_slice, $sample_obj); 
-  return ([], []) unless @$coverage_obj && @coverage_levels;
-
-  warn "NUMBER OF COVERAGE ",scalar (@$coverage_obj);
- my @filtered_obj =
-    sort {$a->[2]->start <=> $b->[2]->start}
-      # [ fake_s, fake_e, coverage_obj ]   Filter out obj not on munged slice...
-       map  { $_->[1] ? [ $_->[0]->start + $_->[1],
-			  $_->[0]->end   + $_->[1], $_->[0] ]:() } 
-	# [ AF, offset ]   Map to fake coords.   Create a munged version AF
-	map  { [$_, $self->munge_gaps( "TSV_transcript", $_->start, $_->end)] }
-	  @$coverage_obj;
-  warn "NUMBER COVERAGE", scalar @filtered_obj;
-  return (\@coverage_levels, \@filtered_obj);
-}
 
 sub read_coverage {
   my ( $self, $sample, $sample_slice) = @_;
