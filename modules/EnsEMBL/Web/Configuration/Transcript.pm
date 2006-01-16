@@ -101,7 +101,7 @@ sub transview {
 }
 
 
-sub transcriptsampleview {
+sub transcriptsnpview {
  my $self   = shift;
  my $obj    = $self->{'object'};
  my $params = { 'transcript' => $obj->stable_id, 'db' => $obj->get_db  };
@@ -109,7 +109,7 @@ sub transcriptsampleview {
 # $self->update_configs_from_parameter( 'TSV_context', 'TSV_context' );
   my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "info$self->{flag}",
-    'caption' => 'Ensembl transcript sample variation report',
+    'caption' => 'Compare SNPs from different transcripts',
     'object'  => $obj,
   );
   $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
@@ -121,7 +121,7 @@ sub transcriptsampleview {
   ));
   $self->add_panel( $panel1 );
   $self->initialize_zmenu_javascript;
-  $self->set_title( 'Transcript sample Report for '.$obj->stable_id );
+  $self->set_title( 'Transcript SNP Report for '.$obj->stable_id );
 
 ## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
 
@@ -136,8 +136,8 @@ sub transcriptsampleview {
 
 
     $panel2->add_components(qw(
-      menu   EnsEMBL::Web::Component::Transcript::transcriptsampleview_menu
-      image  EnsEMBL::Web::Component::Transcript::transcriptsampleview
+      menu   EnsEMBL::Web::Component::Transcript::transcriptsnpview_menu
+      image  EnsEMBL::Web::Component::Transcript::transcriptsnpview
      ));
     $self->add_panel( $panel2 );
   }
@@ -213,13 +213,13 @@ sub context_menu {
     'href' => "/$species/genesnpview?$q_string_g"
   ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'} && $q_string_g; 
 
-  # Variation: Transcript sample view
+  # Variation: TranscriptSNP view
   if ( $obj->species_defs->get_table_size({ -db => 'ENSEMBL_VARIATION', -table => 'allele'}) ) {
     $self->add_entry( $flag,
 		      'code'  => 'TSV',
-		      'text'  => "Compare sample variation",
-		      'title' => 'TranscriptSampleView - Compare variation in different sample for this transcript '.$obj->stable_id,
-		      'href'  => "/$species/transcriptsampleview?$q_string" 
+		      'text'  => "Compare transcript SNPs",
+		      'title' => 'TranscriptSNPView - Compare variation in different individuals or strains for this transcript '.$obj->stable_id,
+		      'href'  => "/$species/transcriptsnpview?$q_string" 
 		    );
   }
 

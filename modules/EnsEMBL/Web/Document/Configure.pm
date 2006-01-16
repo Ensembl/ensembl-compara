@@ -52,8 +52,8 @@ sub common_menu_items {
     'icon' => '/img/infoicon.gif',
   );
 
-  warn $doc->species_defs;
-  warn $doc->species_defs->databases;
+  #warn $doc->species_defs;
+  #warn $doc->species_defs->databases;
   if( $doc->species_defs->databases->{'ENSEMBL_WEBSITE'} ) { 
     $doc->menu->add_entry( 'docs',
       'code'  => "whatsnew",

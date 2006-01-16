@@ -962,13 +962,13 @@ sub spreadsheet_variationTable {
   return 1;
 }
 
-# Transcript Sample View ###################
+# Transcript SNP View ###################
 sub tsv_extent {
   my $object = shift;
   return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
 }
 
-sub transcriptsampleview { 
+sub transcriptsnpview { 
   my( $panel, $object, $do_not_render ) = @_;
 
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
@@ -1017,15 +1017,19 @@ sub transcriptsampleview {
     }
 
     my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
+    my ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
+    my $munged_coverage = $object->munge_read_coverage($raw_coverage_obj);
 
     $sample_config->{'transcript'} = {
-	  'sample'       => $sample,
-          'exons'        => \@exons,  
-          'coding_start' => $coding_start,
-          'coding_end'   => $coding_end,
-          'transcript'   => $transcript,
-          'allele_info'  => $allele_info,
-	  'consequences' => $consequences,
+	  'sample'          => $sample,
+          'exons'           => \@exons,  
+          'coding_start'    => $coding_start,
+          'coding_end'      => $coding_end,
+          'transcript'      => $transcript,
+          'allele_info'     => $allele_info,
+	  'consequences'    => $consequences,
+          'coverage_level'  => $coverage_level,
+          'coverage_obj'    => $munged_coverage,
 				  };
 
     $sample_config->container_width( $fake_length );
@@ -1125,6 +1129,7 @@ sub transcriptsampleview {
   $image->set_extra( $object );
   $image->imagemap = 'yes';
   my $T = $image->render;
+  $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript.</p>");
   $panel->print( $T );
   return 0;
 }
@@ -1146,19 +1151,24 @@ sub spreadsheet_TSVtable {
     return 1;
   }
 
-  my $strand = $object->Obj->strand > 0 ? "+" : "-";
+  my ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
+
+  my @coverage_obj;
+  if ( @$raw_coverage_obj ){
+    @coverage_obj = sort {$a->start <=> $b->start} @$raw_coverage_obj;
+  }
 
   $panel->add_columns(
     { 'key' => 'ID',  },
     { 'key' => 'consequence', 'title' => 'Consequence', },
     { 'key' => 'chr' ,        'title' => "Chr: bp" },
-    { 'key' => 'Alleles',     'title' => 'SNP alleles (+)', },
-    { 'key' => 'Ambiguity',   'title' => 'Ambiguity (+)',  },
-    { 'key' => 'Codon',       'title' => "Codon($strand)" ,  },
- #   { 'key' => 'Pos',         'title' => 'SNP pos. in codon' ,},
+    { 'key' => 'Alleles',     'title' => 'SNP alleles', },
+    { 'key' => 'Ambiguity',   'title' => 'Ambiguity',  },
+    { 'key' => 'Codon',       'title' => "Transcript codon" ,  },
     { 'key' => 'cdscoord',  'title' => 'CDS co-ordinate',  },
     { 'key' => 'aachange', 'title' => 'AA change',  },
     { 'key' => 'aacoord',  'title' => 'AA co-ordinate',  },
+    { 'key' => 'coverage',  'title' => 'Read coverage',  },
     { 'key' => 'Class', },
     { 'key' => 'Source', },
     { 'key' => 'Status',  },
@@ -1203,6 +1213,16 @@ sub spreadsheet_TSVtable {
       $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/; 
     }
 
+    # Read coverage
+    my $allele_start = $allele->start;
+    my @coverage;
+    foreach ( @coverage_obj ) {
+      next if $allele_start <  $_->start;
+      next if $allele_start > $_->end;
+      push @coverage, $_->level;
+    }
+    sort @coverage;
+
     # Other
     my $chr = $sample_slice->seq_region_name;
     my $snp_alleles = join "/", ($allele->ref_allele_string, $allele->allele_string);
@@ -1224,6 +1244,7 @@ sub spreadsheet_TSVtable {
 	       'Codon'       => $codon || "-",
 	       'consequence' => $type,
 	       'cdscoord'    => $cds_coord || "-",
+	       'coverage'    => $coverage[-1] || "0",
 	      };
     if ($conseq_type->aa_alleles){
       $row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";
@@ -1239,7 +1260,7 @@ sub spreadsheet_TSVtable {
   return 1;
 }
 
- sub transcriptsampleview_menu    {  
+ sub transcriptsnpview_menu    {  
 #   return tsv_menu( @_, 'TSV_sampletranscript',
 
 #    [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); 

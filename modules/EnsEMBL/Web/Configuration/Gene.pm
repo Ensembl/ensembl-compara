@@ -308,17 +308,17 @@ sub context_menu {
 
   if( @transcripts ) {
 
-    # Transcript Sample View
+    # Transcript SNP View
     my @sample_links =
       map { {
-        'href'    => sprintf( '/%s/transcriptsampleview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
+        'href'    => sprintf( '/%s/transcriptsnpview?db=%s;transcript=%s', $species, $obj->get_db, $_->stable_id ),
 	  'text'  => $_->stable_id,
 	}} sort{ $a->stable_id cmp $b->stable_id } @{ $obj->get_all_transcripts };
 
     $self->add_entry( $flag,
        'code'  => 'compare_samples',
-       'text'  => "Compare sample variation",
-       'title' => "TranscriptSample View - Compare transcript variation in different individuals or samples",
+       'text'  => "Compare SNPs in transcript",
+       'title' => "TranscriptSNP View - Compare transcript variation in different individuals or strains",
        'href'  => $sample_links[0]{'href'},
        'options' => \@sample_links,
      )  if $obj->species_defs->databases->{'ENSEMBL_VARIATION'}; 
