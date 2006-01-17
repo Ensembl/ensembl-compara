@@ -11,7 +11,7 @@ sub init {
   $self->{'_add_labels' }  = 1;
 
   $self->{'general'}->{'TSV_sampletranscript'} = {
-    '_artefacts' => [qw(TSV_transcript TSV_snps coverage )],#GSV_pfam GSV_prints GSV_prosite GSV_pfscan)],
+    '_artefacts' => [qw(coverage_top TSV_transcript TSV_snps coverage_bottom)],#GSV_pfam GSV_prints GSV_prosite GSV_pfscan)],
     '_options'  => [qw(pos col known unknown)],
     '_settings' => {
       'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
@@ -62,6 +62,13 @@ sub init {
         [ 'GSV_pfscan'  => 'PFScan domains' ],
       ],
     },
+    'coverage_top' => {
+      'on'          => "on",
+      'pos'         => '90',
+      'str'         => 'r',
+      'type'        => 'top',
+      'glyphset'    => 'coverage'
+    },
     'TSV_transcript' => {
       'on'          => "on",
       'pos'         => '100',
@@ -75,10 +82,12 @@ sub init {
       'str'         => 'r',
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')},
     },
-    'coverage' => {
+    'coverage_bottom' => {
       'on'          => "on",
-      'pos'         => '150',
+      'pos'         => '950',
       'str'         => 'r',
+      'type'        => 'bottom',
+      'glyphset'    => 'coverage'
      },
     'GSV_pfam' => {
       'on'          => "on",
