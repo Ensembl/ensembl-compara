@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::ld;
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet);
+use Bio::EnsEMBL::GlyphSet;
+our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Glyph::Text;
 use POSIX;
