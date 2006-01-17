@@ -144,7 +144,7 @@ sub transcriptsnpview {
 
 ## Panel 3 - finally a set of spreadsheet tables showing the information from the image..
  my $I = 0;
- foreach my $sample ( $obj->get_samples ) { #e.g. DBA/2J
+ foreach my $sample ( reverse $obj->get_samples ) { #e.g. DBA/2J
    last unless $sample;
    if( my $panel_table = $self->new_panel( 'SpreadSheet',
       'code' => "variation#-$sample",
