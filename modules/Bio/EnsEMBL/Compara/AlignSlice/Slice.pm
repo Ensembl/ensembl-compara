@@ -2120,7 +2120,7 @@ sub _method_returning_simple_features {
             $end = $alignment_coord->end;
           }
           if (!defined($strand)) {
-            $strand = $alignment_coord->strand;
+            $strand = $alignment_coord->strand * $this_slice->strand;
           }
         }
       }
