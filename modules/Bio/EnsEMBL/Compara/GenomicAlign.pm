@@ -1442,10 +1442,8 @@ sub get_Mapper {
   if (!defined($self->{$mode.'_mapper'})) {
     if ($mode eq "condensed") {
       $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
-      my $rel_strand = $self->dnafrag_strand * $self->genomic_align_block->reference_genomic_align->dnafrag_strand;
+      my $rel_strand = $self->dnafrag_strand;
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
-      throw "1" if ($self->genomic_align_block->reference_genomic_align->dnafrag_strand != 1);
-#       throw "2: (".$self->genomic_align_block->reference_genomic_align->dnafrag_end." - ". $self->genomic_align_block->reference_genomic_align->dnafrag_start.")" if ($self->dnafrag_strand != 1);
       my $this_aligned_seq = $self->aligned_sequence("+FAKE_SEQ");
 
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);

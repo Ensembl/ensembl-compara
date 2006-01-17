@@ -578,9 +578,6 @@ sub _create_underlying_Slices {
       $align_slice_length += $this_gap_between_genomic_align_blocks;
     }
     $reference_genomic_align->genomic_align_block->reference_slice_start($align_slice_length + 1);
-    if ($strand == -1) {
-      $this_genomic_align_block->reverse_complement();
-    }
     if ($expanded) {
       $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence("+FAKE_SEQ"));
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper);
@@ -651,6 +648,7 @@ sub _create_underlying_Slices {
       );
 
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
+
     GENOMIC_ALIGN: foreach my $this_genomic_align
             (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
       my $species = $this_genomic_align->dnafrag->genome_db->name;
@@ -658,6 +656,7 @@ sub _create_underlying_Slices {
           if (!defined($self->{slices}->{$species}));
 
       my $this_core_slice = $this_genomic_align->get_Slice();
+      next if (!$this_core_slice); ## The restriction of the GenomicAlignBlock may return a void GenomicAlign
       my $this_block_start = $this_genomic_align->genomic_align_block->reference_slice_start;
       my $this_block_end = $this_genomic_align->genomic_align_block->reference_slice_end;
 
