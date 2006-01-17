@@ -337,18 +337,41 @@ sub get_samples {
 sub munge_gaps {
   my( $self, $slice_code, $bp, $bp2  ) = @_;
   my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
-   # warn "bp 2 , $slice_code, $bp2, bp $bp";
   foreach( @$subslices ) {
-
     if( $bp >= $_->[0] && $bp <= $_->[1] ) {
       my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2] ;
-   #   warn $return;
       return $return;
     }
   }
   return undef;
 }
 
+sub munge_gaps_split {
+  my( $self, $slice_code, $bp, $bp2, $obj_ref  ) = @_;
+  my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
+  my @return = ();
+  foreach( @$subslices ) {
+    my($st,$en);
+    if( $bp < $_->[0] ) {
+      $st = $_->[0];
+    } elsif( $bp <= $_->[1] ) {
+      $st = $bp;
+    } else {
+      next;
+    }
+    if( $bp2 > $_->[1] ) {
+      $en = $_->[1];
+    } elsif( $bp2 >= $_->[0] ) {
+      $en = $bp2;
+    } else {
+      last;
+    }
+    if( defined( $st ) && defined( $en ) ) {
+      push @return, [$st+$_->[2],$en+$_->[2], $obj_ref ];
+    }
+  }
+  return @return;
+}
 
 sub read_coverage {
   my ( $self, $sample, $sample_slice) = @_;
@@ -363,16 +386,10 @@ sub read_coverage {
 
 sub munge_read_coverage {
   my ($self, $coverage_obj ) = @_;
-  warn "NUMBER OF COVERAGE ",scalar (@$coverage_obj);
- my @filtered_obj =
-    sort {$a->[2]->start <=> $b->[2]->start}
-      # [ fake_s, fake_e, coverage_obj ]   Filter out obj not on munged slice...
-       map  { $_->[1] ? [ $_->[0]->start + $_->[1],
-			  $_->[0]->end   + $_->[1], $_->[0] ]:() } 
-	# [ AF, offset ]   Map to fake coords.   Create a munged version AF
-	map  { [$_, $self->munge_gaps( "TSV_transcript", $_->start, $_->end)] }
-	  @$coverage_obj;
-  warn "NUMBER COVERAGE", scalar @filtered_obj;
+  my @filtered_obj =
+    sort { $a->[2]->start <=> $b->[2]->start }
+    map  { $self->munge_gaps_split( "TSV_transcript", $_->start, $_->end, $_ ) }
+    @$coverage_obj;
   return  \@filtered_obj;
 }
 #-- end transcript SNP view ----------------------------------------------
