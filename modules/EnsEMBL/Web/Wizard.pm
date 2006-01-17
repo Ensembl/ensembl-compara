@@ -233,7 +233,10 @@ sub pass_fields {
   } 
 
   foreach my $field (@fields) {
-    next if $field =~ /submit/;    
+    next if $field =~ /submit/;  
+
+    ## don't pass 'previous' field or it screws up back buttons!  
+    next if $field =~ /previous/;    
 
     ## Debug form fields
     #$form->add_element(
@@ -269,6 +272,7 @@ sub pass_fields {
 sub add_widgets {
   my ($self, $node, $form, $object, $fields) = @_;
 
+warn 'Record = ', $self->{'_data'}{'record'};
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
   } 
@@ -276,7 +280,7 @@ sub add_widgets {
   foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
     my $field_name = $field;
-
+warn uc($field_name);
     ## Is this field involved in looping through multiple records?
     if ($field_info{'loop'}) {
       my $count = $self->{'_data'}{'loops'};
@@ -289,6 +293,7 @@ sub add_widgets {
       'name'      => $field_name,
       'label'     => $field_info{'label'},
       'required'  => $field_info{'required'},
+      'rows'      => $field_info{'rows'},
     );
 
     ## deal with multi-value fields
@@ -298,7 +303,9 @@ sub add_widgets {
       $parameter{'value'} = $unique;
     }
     else {
-      $parameter{'value'} = $object->param($field_name) || $field_info{'value'};
+      $parameter{'value'} = $object->param($field_name) 
+                              || $self->{'_data'}{'record'}{$field}
+                              || $field_info{'value'};
     }
 
     ## extra parameters for multi-value fields
@@ -322,7 +329,7 @@ sub add_widgets {
         $parameter{'value'} = '0';
       }
     }
-
+warn 'Value = ', $parameter{'value'};
     $form->add_element(%parameter);
   }
 }
