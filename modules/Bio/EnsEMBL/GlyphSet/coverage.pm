@@ -14,7 +14,7 @@ use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 sub init_label {
   my $self = shift;
-  return undef;
+#  return undef;
   $self->label(new Sanger::Graphics::Glyph::Text({
     'text'      => "Read coverage",
     'font'      => 'Small',
@@ -39,8 +39,8 @@ sub _init {
   my $A = $Config->get( $type, 'type' ) eq 'bottom' ? 0 : 1;
 
   my %level = (
-    $coverage_levels[0] => [0, "grey96"],
-    $coverage_levels[1] => [1, "grey83"],
+    $coverage_levels[0] => [0, "grey70"],
+    $coverage_levels[1] => [1, "grey40"],
   );
 
   # my $type = $self->check();
@@ -65,9 +65,10 @@ sub _init {
   foreach my $coverage ( sort { $a->[2]->level <=> $b->[2]->level } @$coverage_obj  ) {
     my $level  = $coverage->[2]->level;
     my $y =  $level{$level}[0];
-    my $z =  -19+$y;
+    my $z = 2+$y;# -19+$y;
        $y =  1 - $y if $A; 
        $y *= 4;
+    my $h = 8 - $y;
        $y = 0;
     # Draw ------------------------------------------------
     my $S =  $coverage->[0];
@@ -78,11 +79,10 @@ sub _init {
     my $end   = $coverage->[2]->end() + $offset;
     my $pos   = "$start-$end";
 
-    warn "$S,$E,$y,$level";
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S,
-      'y'         => $y,
-      'height'    => 1,                            #$y,
+      'y'         => 8-$h,
+      'height'    => $h,                            #$y,
       'width'     => $E-$S+1,
       'colour'    => $level{$level}->[1],
       'absolutey' => 1,
@@ -93,8 +93,8 @@ sub _init {
       },
       'z'    => $z
     });
-    $self->join_tag( $bglyph, "$S:$E:$level", $A,$A, $level{$level}->[1], 'fill',  $z );
-    $self->join_tag( $bglyph, "$S:$E:$level", 1-$A,$A, $level{$level}->[1], 'fill',  $z );
+    #$self->join_tag( $bglyph, "$S:$E:$level", $A,$A, $level{$level}->[1], 'fill',  $z );
+    #$self->join_tag( $bglyph, "$S:$E:$level", 1-$A,$A, $level{$level}->[1], 'fill',  $z );
     $self->push( $bglyph );
   }
 }
