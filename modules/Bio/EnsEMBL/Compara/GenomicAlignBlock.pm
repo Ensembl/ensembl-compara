@@ -1584,6 +1584,10 @@ sub restrict_between_reference_positions {
     $genomic_align->cigar_line(join("", @cigar));
   }
 
+  if ($negative_strand) {
+    $genomic_align_block->reverse_complement();
+  }
+
   return $genomic_align_block;
 }
 
@@ -1611,20 +1615,21 @@ sub _print {
   adaptor = ", ($self->adaptor or "-undef-"), "
   method_link_species_set = ", ($self->method_link_species_set or "-undef-"), "
   method_link_species_set_id = ", ($self->method_link_species_set_id or "-undef-"), "
-  genomic_aligns = ", ($self->genomic_align_array or "-undef-"), "
-  reference_genomic_align = ", ($self->reference_genomic_align or "-undef-"), "
-  all_non_reference_genomic_aligns = ", ($self->get_all_non_reference_genomic_aligns or "-undef-"), "
-  reference_slice = ", ($self->reference_slice or "-undef-"), "
+  genomic_aligns = ", (scalar(@{$self->genomic_align_array}) or "-undef-"), "
+  reference_genomic_align = ", ($self->reference_genomic_align->dnafrag->genome_db->name or "-undef-"), "
+  all_non_reference_genomic_aligns = ", (join(":", map {$_->dnafrag->genome_db->name or "-undef-"}
+          @{$self->get_all_non_reference_genomic_aligns}) or "-undef-"), "
+  reference_slice = ", (eval{$self->reference_slice->name} or "-undef-"), "
   reference_slice_start = ", ($self->reference_slice_start or defined($self->reference_slice_start)?"0":"-undef-"), "
   reference_slice_end = ", ($self->reference_slice_end or "-undef-"), "
+  reference_slice_strand = ", ($self->reference_slice_strand or "-undef-"), "
   score = ", ($self->score or "-undef-"), "
   length = ", ($self->length or "-undef-"), "
   alignments: \n";
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns()}) {
-    print $FILEH "  ", $this_genomic_align->dnafrag->genome_db->name, " ",
+    print $FILEH "    - ", $this_genomic_align->dnafrag->genome_db->name, " ",
         $this_genomic_align->dnafrag->name, ":", $this_genomic_align->dnafrag_start,
-        "-", $this_genomic_align->dnafrag_end, ($this_genomic_align->dnafrag_strand==1)?"[+]\n":"[-]\n",
-"\n\n";
+        "-", $this_genomic_align->dnafrag_end, ($this_genomic_align->dnafrag_strand==1)?"[+]\n":"[-]\n";
   }
   verbose($verbose);
 
