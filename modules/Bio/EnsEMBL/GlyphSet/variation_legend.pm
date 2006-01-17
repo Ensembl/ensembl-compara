@@ -25,7 +25,7 @@ sub _init {
 
   my $vc            = $self->{'container'};
   my $Config        = $self->{'config'};
-  my $FONTNAME      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+  my $FONTNAME      = "Small"; #$Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my ($w,$th)       = $Config->texthelper()->px2bp($FONTNAME);
   my $im_width      = $Config->image_width();
   my $type          = $Config->get('variation_legend', 'src');
@@ -56,8 +56,8 @@ sub _init {
         'y'         => $y * ($th+3) + 4,
         'height'    => $Config->texthelper->height($FONTNAME),
         'font'      => $FONTNAME,
-        'colour'    => $colour,
-        'text'      => uc(" $legend"),
+        'colour'    => "black", #$colour,
+        'text'      => " $legend",
         'absolutey' => 1,
         'absolutex' => 1,'absolutewidth'=>1,
       }));

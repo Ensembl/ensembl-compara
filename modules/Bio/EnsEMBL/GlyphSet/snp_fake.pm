@@ -15,9 +15,6 @@ sub _init {
   my $Config        = $self->{'config'};
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target_gene   = $Config->{'geneid'};
-    
-  my $h             = 24;
-    
   my @bitmap        = undef;
   my $colours       = $Config->get('snp_fake','colours' );
   foreach my $type ( sort { $colours->{$a}->[0] cmp $colours->{$b}->[0]} keys %$colours ) {
@@ -31,6 +28,7 @@ sub _init {
   my %exons = ();
 
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
+
   my @snps = @{$Config->{'snps'}};
   my $tag = $Config->get( 'snp_fake', 'tag' );
   my $tag2 = $tag + ($strand == -1 ? 1 : 0);
@@ -42,6 +40,9 @@ sub _init {
     $E = $length if $E > $length;
 
     my $label = $snp->allele_string;
+    my @alleles = split "\/", $label;
+    my  $h = 4 + 10 * scalar @alleles;
+
     my $bp_textwidth = $w * length("$label");
     if( $bp_textwidth < $E-$S+1 ) {
       my $textglyph = new Sanger::Graphics::Glyph::Text({
@@ -55,30 +56,21 @@ sub _init {
                 'absolutey'  => 1,
       });
       $self->push( $textglyph );
-    } elsif( ($w < $E-$S+1) && $label =~ /^(-|\w)\/(-|\w)$/ ) {
-      my($X,$Y) = ($1,$2);
-      my $textglyph = new Sanger::Graphics::Glyph::Text({
+    } elsif( ($w < $E-$S+1) && $label =~ /^(-|\w)\/?(-|\w?)\/?(-|\w)?$/ ) {
+      #my @position = ( $h-2*$th-2, $h +2 ) ;
+      for (my $i = 0; $i < 3; $i ++ ) {
+	my $textglyph = new Sanger::Graphics::Glyph::Text({
                 'x'          => ( $E + $S - 1 - $w)/2,
-                'y'          => ($h-2*$th-2)/2,
+                'y'          => 3 + 10 * $i, # $position[$i]/2
                 'width'      => $w,
                 'height'     => $th,
                 'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
                 'colour'     => 'black',
-                'text'       => $X,
+                'text'       => $alleles[$i],
                 'absolutey'  => 1,
-      });
-      $self->push( $textglyph );
-      my $textglyph = new Sanger::Graphics::Glyph::Text({
-                'x'          => ( $E + $S - 1 - $w)/2,
-                'y'          => ($h+2)/2,
-                'width'      => $w,
-                'height'     => $th,
-                'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
-                'colour'     => 'black',
-                'text'       => $Y,
-                'absolutey'  => 1,
-      });
-      $self->push( $textglyph );
+							  });
+	$self->push( $textglyph );
+      }
     }
     my $type = $snp->get_consequence_type();
     my $colour = $colours->{$type}->[0];
