@@ -248,7 +248,10 @@ sub enter {
   
   my $form = EnsEMBL::Web::Form->new( 'enter', "/$species/$script", 'post' );
 
-  $wizard->simple_form('enter', $form, $object);
+  my $node = 'enter';
+  $wizard->add_title($node, $form, $object);
+  $wizard->add_widgets($node, $form, $object);
+  $wizard->add_buttons($node, $form, $object);
 
   return $form;
 }
