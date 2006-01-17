@@ -14,6 +14,7 @@ use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 sub init_label {
   my $self = shift;
+  return undef;
   $self->label(new Sanger::Graphics::Glyph::Text({
     'text'      => "Read coverage",
     'font'      => 'Small',
@@ -24,20 +25,23 @@ sub init_label {
 
 sub _init {
   my ($self) = @_;
-
   # Data
-  #  my $slice          = $self->{'container'};
+  #  my $slice       = $self->{'container'};
+  my $type = $self->check();
   my $Config         = $self->{'config'};
   my $transcript     = $Config->{'transcript'}->{'transcript'};
-  my $coverage_level = $Config->{'transcript'}->{'coverage_level'};
+  my @coverage_levels = sort { $a <=> $b } @{$Config->{'transcript'}->{'coverage_level'}};
+  my $max_coverage   = $coverage_levels[-1];
+  my $min_coverage   = $coverage_levels[0] || $coverage_levels[1];
   my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
+  return unless @$coverage_obj && @coverage_levels;
   my $sample         = $Config->{'transcript'}->{'sample'};
-  return unless @$coverage_obj && @$coverage_level;
+  my $A = $Config->get( $type, 'type' ) eq 'bottom' ? 0 : 1;
 
   my %level = (
-	       $coverage_level->[0] => [1, "plum1"],
-	       $coverage_level->[1] => [2, "plum3"],
-	      );
+    $coverage_levels[0] => [0, "grey96"],
+    $coverage_levels[1] => [1, "grey83"],
+  );
 
   # my $type = $self->check();
   #   return unless defined $type;
@@ -58,41 +62,40 @@ sub _init {
   my @bitmap;
   my $max_row = -1;
 
-
-  foreach my $coverage (  @$coverage_obj  ) {
+  foreach my $coverage ( sort { $a->[2]->level <=> $b->[2]->level } @$coverage_obj  ) {
     my $level  = $coverage->[2]->level;
-    my $y = $level{ $level }->[0] *5 ; #$font_h_bp + 4;  #Single transcript mode: height= 30, width=8
-
-
+    my $y =  $level{$level}[0];
+    my $z =  -19+$y;
+       $y =  1 - $y if $A; 
+       $y *= 4;
+       $y = 0;
     # Draw ------------------------------------------------
-    my $S =  ( $coverage->[0]+$coverage->[1] - $font_w_bp * length( $level ) )/2;
+    my $S =  $coverage->[0];
+    my $E =  $coverage->[1];
     my $width = $font_w_bp * length( $level );
-     my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
-     my $start = $coverage->[2]->start() + $offset;
-     my $end   = $coverage->[2]->end() + $offset;
-     my $pos   = "$start-$end";
+    my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
+    my $start = $coverage->[2]->start() + $offset;
+    my $end   = $coverage->[2]->end() + $offset;
+    my $pos   = "$start-$end";
 
+    warn "$S,$E,$y,$level";
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
-       'x'         => $S - $font_w_bp / 2,
-       'y'         => $y + 2,
-       'height'    => 1,                            #$y,
-       'width'     => $width + $font_w_bp + 4,
-       'colour'    => $level{$level}->[1],
-       'absolutey' => 1,
-       'zmenu' => {
-         'caption' => 'Read coverage: '.$level,
-	 "12:bp $pos" => '',
-         "14:sample $sample" => '',
-       }
-						   });
-    my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
-    $bump_start = 0 if ($bump_start < 0);
-    my $bump_end = $bump_start + int($bglyph->width()*$pix_per_bp) +1;
-    $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
-    my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
-    $max_row = $row if $row > $max_row;
-    $bglyph->y( $voffset + $bglyph->{'y'} + ( $row * (2+$y) ) + 1 );
-    $self->push( $bglyph);
+      'x'         => $S,
+      'y'         => $y,
+      'height'    => 1,                            #$y,
+      'width'     => $E-$S+1,
+      'colour'    => $level{$level}->[1],
+      'absolutey' => 1,
+      'zmenu' => {
+        'caption' => 'Read coverage: '.$level,
+        "12:bp $pos" => '',
+        "14:sample $sample" => '',
+      },
+      'z'    => $z
+    });
+    $self->join_tag( $bglyph, "$S:$E:$level", $A,$A, $level{$level}->[1], 'fill',  $z );
+    $self->join_tag( $bglyph, "$S:$E:$level", 1-$A,$A, $level{$level}->[1], 'fill',  $z );
+    $self->push( $bglyph );
   }
 }
 
