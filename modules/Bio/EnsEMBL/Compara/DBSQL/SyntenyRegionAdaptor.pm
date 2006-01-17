@@ -86,6 +86,41 @@ sub store{
    return $sr->dbID;
 }
 
+sub fetch_by_MethodLinkSpeciesSet_DnaFrag {
+  my ($self, $mlss, $dnafrag, $start, $end) = @_;
+
+  my $sql = "select sr.synteny_region_id from synteny_region sr, dnafrag_region dfr where sr.method_link_species_set_id = ? and sr.synteny_region_id=dfr.synteny_region_id and dfr.dnafrag_id = ?";
+  
+  if (defined $start) {
+    $sql .= " and dfr.dnafrag_end >= $start";
+  }
+  if (defined $end) {
+    $sql .= " and dfr.dnafrag_start <= $end";
+  }
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($mlss->dbID, $dnafrag->dbID);
+
+  my $synteny_region_id;
+  $sth->bind_columns(\$synteny_region_id);
+  my @srs;
+  while ($sth->fetch) {
+    my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion;
+    $sr->dbID($synteny_region_id);
+    $sr->method_link_species_set_id($mlss->dbID);
+
+    my $dfra = $self->db->get_DnaFragRegionAdaptor;
+    my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
+    while (my $dfr = shift @{$dfrs}) {
+      $sr->add_child($dfr);
+    }
+
+    push @srs, $sr;
+  }
+
+  return \@srs;
+}
+
 1;
 
 
