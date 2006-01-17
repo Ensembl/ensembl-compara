@@ -144,6 +144,48 @@ sub news_edit_old {
   $self->wizard_panel('Edit an Item in the News Archive');
 }
 
+sub publish_news {
+  my $self   = shift;
+  my $object = $self->{'object'};
+                                                                                
+  ## the "publish news" wizard uses 4 nodes: select release, 
+  ## select record + database, preview record, and save data
+  my $wizard = EnsEMBL::Web::Wizard::News->new($object);
+  $wizard->add_nodes([qw(which_rel pub_select pub_preview save)]);
+  $wizard->default_node('which_rel');
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['which_rel'=>'pub_select'],
+          ['pub_select'=>'pub_preview'],
+          ['pub_preview'=>'save'],
+          ['pub_select'=>'save'],
+  ]);
+                                                                                
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Publish a story to a live database');
+}
+
+sub publish_multi_news {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  ## the "publish multi news" wizard uses 3 nodes: select release,
+  ## select record(s) + database and save data
+  my $wizard = EnsEMBL::Web::Wizard::News->new($object);
+  $wizard->add_nodes([qw(which_rel multi_select save)]);
+  $wizard->default_node('which_rel');
+                                                                                
+  ## chain the nodes together
+  $wizard->add_outgoing_edges([
+          ['which_rel'=>'multi_select'],
+          ['multi_select'=>'save'],
+  ]);
+                                                                                
+  $self->add_wizard($wizard);
+  $self->wizard_panel('Publish multiple stories to a live database');
+}
+
 #---------------------------------------------------------------------------
 
 sub editor_menu {

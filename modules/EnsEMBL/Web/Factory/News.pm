@@ -23,103 +23,70 @@ sub news_adaptor {
 sub createObjects { 
   my $self          = shift;
 
-  my $items    = [];
-  my $all_spp = {};
-  my $valid_spp = {};
-  my $current_spp = {};
-  my $all_cats = [];
-  my $all_rels = [];
-  my $valid_rels = [];
+## identify which item and/or release we're talking about
+  my $id              = $self->param( 'id' ) || $self->param('news_item_id');
+  my $current_release = $self->species_defs->ENSEMBL_VERSION;
+  my $release_id      = $self->param( 'rel' ) || $self->param('release_id') 
+                          || $current_release;
 
-  my $current_release =  $self->species_defs->ENSEMBL_VERSION;
-  my $release_id       = $self->param( 'rel' ) || $self->param('release_id') || $current_release;
-  # hack so we don't need to edit the species table every month!
-  if ($self->param('rel') && $self->param('rel') eq 'current') {
+  ## also allow a generic URL for current release
+  if ($release_id eq 'current') {
     $release_id = $current_release;
   }
 
-  my $id            = $self->param( 'id' ) || $self->param('news_item_id');
+## create some handy lookups
+  my $current_spp = $self->news_adaptor->fetch_species($current_release);
+  my $all_spp = $self->news_adaptor->fetch_species;
+  my $all_cats = $self->news_adaptor->fetch_cats;
+  my $all_rels = $self->news_adaptor->fetch_releases;
 
-  # object always contains these handy lookups!
-  $current_spp = $self->news_adaptor->fetch_species($current_release);
-  $all_spp = $self->news_adaptor->fetch_species;
-  $all_cats = $self->news_adaptor->fetch_cats;
-  $all_rels = $self->news_adaptor->fetch_releases;
+## prepare configuration for db query
+  my @order_by = ('cat_desc');
+  my %criteria = ();
+  if ($release_id eq 'all') {
+      @order_by = ('release', 'cat_desc');
+  }
+  else { 
+      $criteria{'release'} = $release_id;
+  }
+  if ($self->param('news_cat_id')) {
+    $criteria{'category'} = $self->param('news_cat_id');    
+  }
 
-  # if no species chosen, set default to current directory
+## sort out array of chosen species
   my @sp_array = ();
   if ($self->param('species')) {
     @sp_array = ($self->param('species'));
   }
-  elsif ($self->script ne 'newsdbview') { # hack - must be a better way!
-    my $sp_name = $self->species;
-    if ($sp_name eq 'Multi') {
-        @sp_array = sort { $a <=> $b } keys %$all_spp;
+  else { ## create based on name of directory
+    my $sp_dir = $self->species;
+    if ($sp_dir eq 'Multi') { ## make array of all species ids
+      @sp_array = sort {$a <=> $b} keys %$all_spp;
     }
-    else {
-        my %rev_hash = reverse %$all_spp;
-        my $sp_id = $rev_hash{$sp_name};
-        @sp_array = ($sp_id);
+    else { ## look up species id from directory name
+      my %rev_hash = reverse %$all_spp;
+      @sp_array = ($rev_hash{$sp_dir});
     }
   }
 
-  # because this object can be updated through the website, news items may
-  # need to be generated either from the database or from the form parameters
-  if ($self->param('update')) { # create news item hash from form
-
-    my $form_item = {
-        'news_item_id' => $self->param('news_item_id'),
-        'release_id'   => $self->param('release_id'),
-        'title'        => $self->param('title'),
-        'content'      => $self->param('content'),
-        'news_cat_id'  => $self->param('news_cat_id'),
-        'priority'     => $self->param('priority'),
-        'status'       => $self->param('status'),
-        'species'      => \@sp_array,
-        };
-    push @$items, $form_item;
+## get valid releases    
+  my $valid_rels = [];
+  if (scalar(@sp_array) == 1 && $sp_array[0]) { ## single species
+     $criteria{'species'} = $sp_array[0];    
+     $valid_rels = $self->news_adaptor->fetch_releases({'species'=>$sp_array[0]});
   }
-  else { # look up from database
-    my %criteria = ();
-    my @order_by = ('cat_desc');
-    if ($id && $self->param('action') ne 'saved') { # check we're not redirecting from a database save
-        %criteria = ('item_id'=>$id);    
-    }
-    else {
-        if ($release_id eq 'all') {
-            @order_by = ('release', 'cat_desc');
-        }
-        else { 
-            $criteria{'release'} = $release_id;
-        }    
-        if (scalar(@sp_array) == 1 && $sp_array[0]) {
-            $criteria{'species'} = $sp_array[0];    
-            # get valid releases for the chosen species
-            $valid_rels = $self->news_adaptor->fetch_releases({'species'=>$sp_array[0]});
-        }
-        else {
-            # in multi-species mode, all releases are valid
-            $valid_rels = $self->news_adaptor->fetch_releases;
-            if ($self->script ne 'newsdbview') {
-                push @order_by, 'species';
-            }
-        }
-        if ($self->param('news_cat_id')) {
-            $criteria{'category'} = $self->param('news_cat_id');    
-        }
-    }
-
-    ## don't show draft or dead items in public news page
-    if ($self->script eq 'newsview') { 
-        $criteria{'status'} = 'live';
-    }
-
-    my %options = ('criteria'=>\%criteria, 'order_by'=>\@order_by);
-    $items = $self->news_adaptor->fetch_items(\%options);
+  else { ## in multi-species mode, all releases are valid
+    $valid_rels = $self->news_adaptor->fetch_releases;
+    push @order_by, 'species';
   }
-  # object also contains a list of the valid species for the chosen release
-  $valid_spp = $self->news_adaptor->fetch_species($release_id);
+        
+## get valid species for the chosen release
+  my $valid_spp = $self->news_adaptor->fetch_species($release_id);
 
+## create news item objects from the database
+  my %options = ('criteria'=>\%criteria, 'order_by'=>\@order_by);
+  my $items = $self->news_adaptor->fetch_items(\%options);
+  
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'News', {
       'releases'    => $all_rels,

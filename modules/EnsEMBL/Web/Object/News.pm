@@ -23,16 +23,14 @@ sub valid_rels   { return $_[0]->Obj->{'valid_rels'};   }
 
 
 sub save_to_db {
-    my $self = shift;
-    my $itemref = $self->Obj->{'items'}[0];
-    my %item = %{$itemref};
+    my ($self, $record) = @_;
     my $result;
-
-    if ($item{'news_item_id'}) { # saving updates to an existing item
-        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->update_news_item($itemref);
+    my %item = %{$record};
+    if ($$record{'news_item_id'}) { # saving updates to an existing item
+        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->update_news_item($record);
     }
     else { # inserting a new item into database
-        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->add_news_item($itemref);
+        $result = $self->EnsEMBL::Web::Factory::News::news_adaptor->add_news_item($record);
     }
     return $result;
 }

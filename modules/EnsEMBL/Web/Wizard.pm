@@ -377,6 +377,27 @@ sub add_buttons {
   }
 
 }
+
+sub create_record {
+  my ($self, $object) = @_;
+  my %record;
+
+  my %form_fields = $self->form_fields;
+  my @params = $object->param;
+  foreach my $param (@params) {
+    next unless $form_fields{$param}; ## skip submit buttons, etc
+    my %field_info = %{$form_fields{$param}};
+    my $value;
+    if ($field_info{'type'} eq 'DropDown' || $field_info{'type'} eq 'MultiSelect') {
+      $value = [$object->param($param)];
+    }
+    else { 
+      $value = $object->param($param);
+    }
+    $record{$param} = $value;
+  }
+  return \%record;
+}
                                                                                 
 __END__
                                                                                 

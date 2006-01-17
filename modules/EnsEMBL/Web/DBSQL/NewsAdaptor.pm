@@ -472,6 +472,7 @@ sub update_news_item {
     
     my %item = %{$item_ref};
     my $id              = $item{'news_item_id'};
+warn "ID $id";
     my $release_id      = $item{'release_id'};
     my $title           = $item{'title'};
     my $content         = $item{'content'};
@@ -481,7 +482,7 @@ sub update_news_item {
     my $species         = $item{'species'};
     my $priority        = $item{'priority'};
     my $status          = $item{'status'};
-
+warn "Species $species";
     my $sql = qq(
         UPDATE
             news_item

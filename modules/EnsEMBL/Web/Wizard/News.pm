@@ -27,7 +27,6 @@ sub _init {
         $record = $item;
     } 
   }
-
   ## array of release names and values
   my @releases = @{$object->releases};
   my @rel_values;
@@ -279,7 +278,8 @@ sub save {
   my %parameter; 
 
   ## note - no need to define node if going back to beginning of wizard
-  my $result = $object->save_to_db;
+  my $record = $self->create_record($object);
+  my $result = $object->save_to_db($record);
   if ($result) { 
     $parameter{'feedback'} = 'save_ok';
   }
