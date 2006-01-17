@@ -135,6 +135,7 @@ our %all_nodes = (
      'select'      => {
                       'form' => 1,
                       'title' => 'Select a news item',
+                      'pass_fields'  => [qw(release_id)], 
       },
      'enter'      => {
                       'form' => 1,
@@ -142,12 +143,12 @@ our %all_nodes = (
                       'title' => 'Enter item details',
                       'show_fields'  => [qw(release_id)], 
                       'input_fields' => [qw(species news_cat_id status priority title content)],
-                      'pass_fields'  => [qw(news_item_id)], 
+                      'pass_fields'  => [qw(news_item_id release_id)], 
       },
      'preview'      => {
                       'form' => 1,
                       'title' => 'Please check the entry',
-                      'pass_fields'  => [qw(news_item_id)], 
+                      'pass_fields'  => [qw(news_item_id release_id species news_cat_id status priority title content)], 
                       'back' => 1,
                       'button' => 'Preview',
       },
@@ -233,6 +234,7 @@ sub select {
     );
   }
   
+  $wizard->pass_fields('select', $form, $object);
   $wizard->add_buttons('select', $form, $object);
 
   return $form;
@@ -250,7 +252,9 @@ sub enter {
 
   my $node = 'enter';
   $wizard->add_title($node, $form, $object);
+  $wizard->show_fields($node, $form, $object);
   $wizard->add_widgets($node, $form, $object);
+  $wizard->pass_fields($node, $form, $object);
   $wizard->add_buttons($node, $form, $object);
 
   return $form;
@@ -287,6 +291,16 @@ sub save {
   return \%parameter;
 }
 
+#------ News Publishing nodes -----------------------------------------------
+
+sub pub_select {
+}
+
+sub pub_preview {
+}
+
+sub multi_select {
+}
 
 1;
 

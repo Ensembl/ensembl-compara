@@ -228,7 +228,10 @@ sub pass_fields {
   if ($fields) {
     @fields = @$fields;
   }
-  else { ## default behaviour is to pass all CGI parameters
+  elsif ($self->{'_nodes'}{$node}{'pass_fields'}) {
+    @fields = @{$self->{'_nodes'}{$node}{'pass_fields'}};
+  }
+  else {
     @fields = $object->param;
   } 
 
