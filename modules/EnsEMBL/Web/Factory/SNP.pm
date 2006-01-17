@@ -18,7 +18,7 @@ sub createObjects {
 
    my $snp    = $self->param('snp');
    my $source = $self->param('source') || 'dbSNP';
-   return $self->problem( 'Fatal', 'No SNP ID', "A SNP ID is required to build this page." ) unless $snp;
+   return $self->problem( 'Fatal', 'SNP ID required', "A SNP ID is required to build this page." ) unless $snp;
 
    my $vari_adaptor = $dbs->{'variation'}->get_VariationAdaptor;
    my $snp_obj     = $vari_adaptor->fetch_by_name( $snp, $source);

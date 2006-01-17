@@ -279,7 +279,12 @@ sub _location_from_SeqRegion {
         return $self->_create_from_slice( $system->name , $chr, $self->expand($TS), '', $chr, $keep_slice );
       }
     }
-    $self->problem( "fatal", "Locate error","Cannot locate region $chr on the current assembly." );
+    if ($chr) {
+      $self->problem( "fatal", "Locate error","Cannot locate region $chr on the current assembly." );
+    }
+    else {
+    $self->problem( "fatal", "Please enter a location","A location is required to build this page." );
+  }
     return undef;
   }
 }
@@ -392,7 +397,7 @@ sub createObjects {
     } else {
       return $self->problem( 'Fatal',
         'Unknown region',
-        'Could not location the region you have specified -OR- you have not specified enough information'
+        'Could not locate the region you have specified.  You may not have specified enough information'
       );
     }
   } else {
@@ -458,7 +463,7 @@ sub createObjects {
     if( $location ) {
       $self->DataObjects( $location );
     } else {
-      return $self->problem( 'Fatal', 'Unknown region', 'Could not location the region you have specified -OR- you have not specified enough information' );
+      return $self->problem( 'Fatal', 'Unknown region', 'Could not locate the region you have specified.  You may not have specified enough information.' );
     }
   }
 ## Push location....

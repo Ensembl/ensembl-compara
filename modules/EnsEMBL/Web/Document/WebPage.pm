@@ -242,14 +242,29 @@ sub add_error_panels {
     next if !$problem->isFatal && $self->{'show_fatal_only'};
     my $desc = $problem->description;
     $desc = "<p>$desc</p>" unless $desc =~ /<p/;
+
+    # Find an example for the page
+    my @eg;
+    my $view = uc ($ENV{'ENSEMBL_SCRIPT'});
+    my $ini_examples = $self->{'species_defs'}->SEARCH_LINKS;
+
+    foreach ( map { $_ =~/^$view(\d)_TEXT/ ? [$1, $_] : () } keys %$ini_examples ) {
+      my $url = $ini_examples->{$view."$_->[0]_URL"};
+      push @eg, qq( <a href="$url">).$ini_examples->{$_->[1]}."</a>";
+    }
+
+    my $eg_html = join ", ", @eg;
+    $eg_html = "<p>Try an example: $eg_html or use the search box.</p>" if $eg_html;
+
     $self->page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
         'caption' => $problem->name,
         'content' => qq(
   $desc
+  $eg_html
   <p>
-    Please contact our HelpDesk team, by clicking on the HELP link in the
-    top right hand of this page if you think this is an error or have any questions.
+    If you think this is an error, or you have any questions, you can contact our HelpDesk team by clicking on the HELP link in the
+    top right hand corner of this page.
   </p>) 
       )
     );

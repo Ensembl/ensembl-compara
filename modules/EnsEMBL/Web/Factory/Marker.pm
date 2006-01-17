@@ -19,7 +19,7 @@ sub createObjects {
   
   my $marker    = $self->param('marker');
      $marker    =~ s/\s//g;
-  return $self->problem( 'Fatal', 'No Marker ID', "A marker ID is required to build the markview page." ) unless $marker;
+  return $self->problem( 'Fatal', 'Valid Marker ID required', "Please enter a valid marker ID in the URL. " ) unless $marker;
 
   my $marker_adaptor  = $database->get_MarkerAdaptor();
   my $markers         = $marker_adaptor->fetch_all_by_synonym($marker);

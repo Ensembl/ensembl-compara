@@ -1155,7 +1155,7 @@ sub spreadsheet_TSVtable {
 
   my @coverage_obj;
   if ( @$raw_coverage_obj ){
-    @coverage_obj = sort {$a->start <=> $b->start} @$raw_coverage_obj;
+    @coverage_obj = sort {$a->end <=> $b->end} @$raw_coverage_obj;
   }
 
   $panel->add_columns(
@@ -1215,13 +1215,12 @@ sub spreadsheet_TSVtable {
 
     # Read coverage
     my $allele_start = $allele->start;
-    my @coverage;
+    my $coverage = 0;
     foreach ( @coverage_obj ) {
       next if $allele_start <  $_->start;
-      next if $allele_start > $_->end;
-      push @coverage, $_->level;
+      last if $allele_start > $_->end;
+      $coverage = $_->level if $_->level > $coverage;
     }
-    sort @coverage;
 
     # Other
     my $chr = $sample_slice->seq_region_name;
@@ -1244,7 +1243,7 @@ sub spreadsheet_TSVtable {
 	       'Codon'       => $codon || "-",
 	       'consequence' => $type,
 	       'cdscoord'    => $cds_coord || "-",
-	       'coverage'    => $coverage[-1] || "0",
+	       'coverage'    => $coverage || "0",
 	      };
     if ($conseq_type->aa_alleles){
       $row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";

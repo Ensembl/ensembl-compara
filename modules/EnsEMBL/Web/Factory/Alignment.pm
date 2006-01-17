@@ -274,7 +274,7 @@ sub createObjects_External {
       $self->problem( 'fatal',  "Feature not found", "No exon object was found corresponding to the ID: $exonid ");
     }
   } else {
-    $self->problem('fatal', "No identifier supplied", "You have not specified a gene or transcript to align to" );
+    $self->problem('fatal', "Please supply an identifier", "This page requires a gene or transcript to align to" );
     return;
   }
   if( $exon_obj ){

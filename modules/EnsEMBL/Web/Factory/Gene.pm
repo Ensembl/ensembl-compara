@@ -55,14 +55,13 @@ sub createObjects {
     $fetch_call = 'fetch_by_transcript_stable_id';
   } elsif( $identifier = $self->param( 'exon' ) ){ 
     $fetch_call = 'fetch_by_exon_stable_id';
-warn "FETCH BY EXON";
   } elsif( $identifier = $self->param( 'gene' ) || $self->param( 'anchor1' ) ){
     $KEY = 'anchor1' unless $self->param('gene');
     $fetch_call = 'fetch_by_stable_id';
   } else {
-    $self->problem('fatal', "No Valid Identifier",
-		   "Please specify a valid identifier - ".
-		   "gene, transcript or peptide")  ;
+    $self->problem('fatal', 'Please enter a valid identifier',
+		     "This view requires a gene, transcript or peptide 
+                    identifier in the URL.")  ;
     return;
   }
 

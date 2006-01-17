@@ -6,7 +6,6 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Proxy::Object;
-
 our @ISA = qw(  EnsEMBL::Web::Factory );
 
 sub createObjects {   
@@ -32,9 +31,9 @@ sub createObjects {
     $fetch_call = $self->param( 'type1' ) eq 'peptide' ? 'fetch_by_translation_stable_id' : 'fetch_by_stable_id';
     $KEY = 'anchor1';
   } else {
-    $self->problem('fatal', "No Valid Identifier",
-		   "Please specify a valid identifier - ".
-		   "transcript or peptide or exon")  ;
+    $self->problem('fatal', 'Please enter a valid identifier',
+		     "This view requires a transcript, peptide 
+                   or exon identifier in the URL.")  ;
     return;
   }
 
