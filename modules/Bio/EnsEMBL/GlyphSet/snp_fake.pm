@@ -41,7 +41,7 @@ sub _init {
 
     my $label = $snp->allele_string;
     my @alleles = split "\/", $label;
-    my  $h = 4 + 10 * scalar @alleles;
+    my  $h = 4 + ($th+2) * scalar @alleles;
 
     my $bp_textwidth = $w * length("$label");
     if( $bp_textwidth < $E-$S+1 ) {
@@ -56,12 +56,12 @@ sub _init {
                 'absolutey'  => 1,
       });
       $self->push( $textglyph );
-    } elsif( ($w < $E-$S+1) && $label =~ /^(-|\w)\/?(-|\w?)\/?(-|\w)?$/ ) {
-      #my @position = ( $h-2*$th-2, $h +2 ) ;
+    } elsif( ($w < $E-$S+1) && $label =~ /^[-\w](\/[-\w])+$/ ) {
+
       for (my $i = 0; $i < 3; $i ++ ) {
 	my $textglyph = new Sanger::Graphics::Glyph::Text({
                 'x'          => ( $E + $S - 1 - $w)/2,
-                'y'          => 3 + 10 * $i, # $position[$i]/2
+                'y'          => 3 + ($th+2) * $i,
                 'width'      => $w,
                 'height'     => $th,
                 'font'       => $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
