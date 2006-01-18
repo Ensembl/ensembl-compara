@@ -173,4 +173,10 @@ sub print_dbs {
 }
 
 1;
-
+=END
+| ssaha07
+| 70002
+| Canis familiaris
+| CanFam 2.0
+| pre
+|-
