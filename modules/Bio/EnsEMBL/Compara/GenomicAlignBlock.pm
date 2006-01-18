@@ -1427,6 +1427,16 @@ sub restrict_between_reference_positions {
           -cigar_line => $cigar_line,
           -level_id => $this_genomic_align->level_id
       );
+    my @gags;
+    foreach my $gag (@{$this_genomic_align->genomic_align_groups}) {
+      my $new_gag = Bio::EnsEMBL::Compara::GenomicAlignGroup->new
+        (-type                => $gag->type,
+         -dbID                => $gag->dbID);
+      push @gags, $new_gag;
+    }
+    if (scalar @gags) {
+      $new_genomic_align->genomic_align_groups(\@gags);
+    }
     if ($this_genomic_align == $reference_genomic_align) {
       $new_reference_genomic_align = $new_genomic_align;
     }
