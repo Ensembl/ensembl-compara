@@ -275,7 +275,6 @@ sub pass_fields {
 sub add_widgets {
   my ($self, $node, $form, $object, $fields) = @_;
 
-warn 'Record = ', $self->{'_data'}{'record'};
   if (!$fields) {
     $fields = $self->{'_nodes'}{$node}{'input_fields'} || $self->default_order;
   } 
@@ -283,7 +282,6 @@ warn 'Record = ', $self->{'_data'}{'record'};
   foreach my $field (@$fields) {
     my %field_info = %{$form_fields{$field}};
     my $field_name = $field;
-warn uc($field_name);
     ## Is this field involved in looping through multiple records?
     if ($field_info{'loop'}) {
       my $count = $self->{'_data'}{'loops'};
@@ -332,7 +330,6 @@ warn uc($field_name);
         $parameter{'value'} = '0';
       }
     }
-warn 'Value = ', $parameter{'value'};
     $form->add_element(%parameter);
   }
 }
