@@ -1039,7 +1039,7 @@ sub check_LSF_jobs {
         if (defined($all_status->{$this_lsf_job->{job_ID}})) {
           $status = $all_status->{$this_lsf_job->{job_ID}};
         } else {
-          warning("Cant find job $this_lsf_job->{job_ID}");
+#          warning("Cant find job $this_lsf_job->{job_ID}");
           my  $bjob = qx[bjobs "$this_lsf_job->{job_ID}" 2>&1];
           if ($bjob and $bjob !~ /^Job <[^>]+> is not found/) {
             $status = $bjobs;
@@ -1095,11 +1095,9 @@ sub check_LSF_jobs {
           }
           $this_lsf_job->{ok} = 1 if (!$fail);
         } else {
-          $done = 0;
           $fail = "NO OUTPUT FILE";
         }
       } else {
-        $done = 0;
         if (defined($this_lsf_job->{funny_status})
             and $this_lsf_job->{funny_status} > 10) {
           warning("Job $this_lsf_job->{name}($this_lsf_job->{job_ID}) is in a funny status ($status)\n".
@@ -1115,10 +1113,26 @@ sub check_LSF_jobs {
       }
 
       if ($fail) {
-        $done = 0;
+        # Check free space on the filesystem
+        my $disk_full = check_disk_capacity($this_lsf_job->{result_file});
+        if ($disk_full) {
+          ## DISK (NEARLY) FULL!!!
+          $fail = "DISK FULL ($fail)";
+        }
+
         # Retry...
         $this_lsf_job->{retry}++;
-        if ($this_lsf_job->{retry}<10) {
+        if ($this_lsf_job->{retry}>=9 or $disk_full) {
+          qx"mv $this_lsf_job->{lsf_output_file} $this_lsf_job->{lsf_output_file}.$$.$this_lsf_job->{retry}"
+              if (-e $this_lsf_job->{lsf_output_file});
+          qx"mv $this_lsf_job->{result_file} $this_lsf_job->{result_file}.$$.$this_lsf_job->{retry}"
+              if (-e $this_lsf_job->{result_file});
+          warning("Persistent error in: $this_lsf_job->{name}\n -- ERRCODE: $fail. STATUS: $status");
+          $this_lsf_job->{ok} = 1; # Nothing else should be done with this job...
+          $persistent_error = 1; # will throw when no more jobs are pending
+
+        } else {
+          $done = 0; ## Unset $done only if jobs is going to be rerun
 #          unlink($this_lsf_job->{lsf_output_file}, $this_lsf_job->{result_file});
           qx"mv $this_lsf_job->{lsf_output_file} $this_lsf_job->{lsf_output_file}.$$.$this_lsf_job->{retry}"
               if (-e $this_lsf_job->{lsf_output_file});
@@ -1143,11 +1157,6 @@ sub check_LSF_jobs {
           }
           my $new_job_id = $1;
           $this_lsf_job->{job_ID} =~ s/^\d+/$new_job_id/;
-        } else {
-          qx"mv $this_lsf_job->{lsf_output_file} $this_lsf_job->{lsf_output_file}.$$.$this_lsf_job->{retry}";
-          qx"mv $this_lsf_job->{result_file} $this_lsf_job->{result_file}.$$.$this_lsf_job->{retry}";
-          warning("Error after re-submitting job  $this_lsf_job->{name}\n -- ERRCODE: $fail. STATUS: $status");
-          $persistent_error = 1;
         }
       }
     }
@@ -1202,4 +1211,22 @@ sub make_directory {
     print LOG "[already existing] ";
   }
   print LOG "$dir\n";
+}
+
+sub check_disk_capacity {
+  my ($file) = @_;
+
+  $file =~ s/\/[^\/]+$//;
+  my $df = qx"df -h $file";
+  my @df = split(/\s+/, $df);
+  my $disk_full = 0;
+  if (defined($df[4]) and $df[4] eq "Capacity") {
+    my $capacity = $df[11];
+    if ($capacity eq "100\%") {
+      ## DISK (NEARLY) FULL!!!
+      $disk_full = 1;
+    }
+  }
+
+  return $disk_full;
 }
