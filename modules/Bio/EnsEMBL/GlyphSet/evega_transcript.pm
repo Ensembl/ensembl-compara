@@ -78,6 +78,7 @@ sub zmenu {
   my ($self, $gene, $transcript) = @_;
   my $tid = $transcript->stable_id();
   my $translation = $transcript->translation;
+  my $author =  shift(@{$transcript->get_all_Attributes('vega_author')})->value;
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
@@ -87,12 +88,14 @@ sub zmenu {
   
   my $zmenu = {
     'caption'             => "Vega Gene",
-    "00:$id"    => "",
-  "01:Gene:$gid"          => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega",
-    "02:Transcr:$tid"        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=vega",          
-    '04:Export cDNA'        => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
-    "06:$type"   => '',
-    "07:View in Vega" => $ExtUrl->get_url('Vega_gene', $gid),
+    "00:$id"              => '',
+    "01:Type: ".$type     => '',
+    "03:Author: ".$author => '',
+    "03:Gene:$gid"        => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega",
+    "04:Transcr:$tid"     => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=vega",
+
+    "05:Export cDNA"      => "/@{[$self->{container}{_config_file_name_}]}/exportview?option=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
+    "07:View in Vega"     => $ExtUrl->get_url('Vega_gene', $gid),
   };
   
   if($pid) {
@@ -110,14 +113,19 @@ sub gene_zmenu {
   my ($self, $gene ) = @_;
   my $gid = $gene->stable_id();
   my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
+  #hack to get the author off the first transcript (rather than the gene)
+  my $f_trans = shift(@{$gene->get_all_Transcripts()});
+  my $author =  shift(@{$f_trans->get_all_Attributes('vega_author')})->value;
   my $type = $self->format_vega_name($gene);
   $type =~ s/HUMACE-//g;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);
   my $zmenu = {
     'caption'             => "Vega Gene",
-    "01:Gene:$gid"          => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega),
-    "06:$type"   => '',
-    "07:View in Vega" => $ExtUrl->get_url('Vega_gene', $gid),
+    "00:$id"	          => "",
+    '01:Type: ' . $type   => "",
+	'02:Author: '.$author => "",
+    "03:Gene:$gid"        => qq(/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=vega),
+    "07:View in Vega"     => $ExtUrl->get_url('Vega_gene', $gid),
   };
   return $zmenu;
 }
