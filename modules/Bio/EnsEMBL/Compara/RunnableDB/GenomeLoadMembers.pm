@@ -221,14 +221,14 @@ sub store_gene_and_all_transcripts
       next;
     }
 #    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
-#    my $next = 0;
-#    try {
-#      $transcript->translate;
-#    } catch {
-#      warn("COREDB error: transcript does not translate", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
-#      $next = 1;
-#    };
-#    next if ($next);
+    my $next = 0;
+    try {
+      $transcript->translate->seq;
+    } catch {
+      warn("COREDB error: can't get sequence from translation of transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
+      $next = 1;
+    };
+    next if ($next);
     my $translation = $transcript->translation;
     
     if(defined($self->{'pseudo_stableID_prefix'})) {
