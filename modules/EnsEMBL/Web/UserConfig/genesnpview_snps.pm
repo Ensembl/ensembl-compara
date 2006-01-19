@@ -9,7 +9,7 @@ sub init {
   $self->{'_userdatatype_ID'} = 38;
   $self->{'_transcript_names_'} = 'yes';
   $self->{'general'}->{'genesnpview_snps'} = {
-    '_artefacts' => [qw( snp_fake variation_legend)],
+    '_artefacts' => [qw( snp_fake  snp_fake_haplotype variation_legend)],
     '_options'  => [qw(pos col known unknown)],
     '_settings' => {
       'show_labels' => 'no',
@@ -29,6 +29,14 @@ sub init {
       'available'=> 'databases ENSEMBL_VARIATION', 
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 
     },
+
+    'snp_fake_haplotype' => {
+      'str' => 'r',
+      'on'=>'off',
+      'pos'=>100,
+      'available'=> 'databases ENSEMBL_VARIATION'
+    },
+
 
     'variation_legend' => {
       'on'          => "on",
