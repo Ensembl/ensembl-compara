@@ -7,6 +7,7 @@ use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Glyph::Line;
+use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
@@ -16,9 +17,9 @@ sub init_label {
   my $self = shift;
   my $Config         = $self->{'config'};
   my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
-  my $text  = @$coverage_obj ? "Coverage" : "No coverage";
+  my $text  =  @$coverage_obj ? "Coverage" : "No coverage";
   $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => "Coverage",
+    'text'      => $text,
     'font'      => 'Tiny',
     'absolutey' => 1,
   }));
@@ -34,7 +35,17 @@ sub _init {
   my $max_coverage   = $coverage_levels[-1];
   my $min_coverage   = $coverage_levels[0] || $coverage_levels[1];
   my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
-  return unless @$coverage_obj && @coverage_levels;
+
+  unless (@$coverage_obj && @coverage_levels) {
+    $self->push(new Sanger::Graphics::Glyph::Space({
+      'x'         => 1,
+      'y'         => 0,
+      'height'    => 1,
+      'width'     => 1,
+      'absolutey' => 1,
+    }) );
+    return;
+  }
   my $sample         = $Config->{'transcript'}->{'sample'};
   my $A = $Config->get( $type, 'type' ) eq 'bottom' ? 0 : 1;
 
