@@ -1034,18 +1034,13 @@ sub transcriptsnpview {
       'coverage_obj'    => $munged_coverage,
     };
 
-    push @EXTRA, [ $sample, $allele_info, $munged_coverage ];
+    unshift @EXTRA, [ $sample, $allele_info, $munged_coverage ];
     $sample_config->container_width( $fake_length );
 
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
 
     ## Now push onto config hash...
-    if( $object->seq_region_strand < 0 ) {
-
-      push @containers_and_configs,    $sample_slice, $sample_config;
-    } else { ## If forward strand we have to draw these in reverse order (as forced on -ve strand)
-      unshift @containers_and_configs, $sample_slice, $sample_config;
-    }
+    push @containers_and_configs,    $sample_slice, $sample_config;
   }
 
   # Taken out domains (prosite, pfam)
@@ -1086,12 +1081,6 @@ sub transcriptsnpview {
     $Configs->{$_}->container_width( $fake_length );
   }
 
-  #$Configs->{'context'}->{'transcriptid2'} = $object->stable_id;     ## Only skip background stripes...
-
-  ## Transcript block in normal co-ordinates....
-  #$Configs->{'transcript'}->{'transcriptid'}      = $object->stable_id;
-  #$Configs->{'transcript'}->container_width( $object->__data->{'slices'}{'transcript'}[1]->length() );
-
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
 
@@ -1111,7 +1100,6 @@ sub transcriptsnpview {
     ]
   } sort { $a->[0] <=> $b->[0] } @$snps;
 
-  @EXTRA = reverse @EXTRA if  $transcript_slice->strand < 0;
   $Configs->{'snps'}->{'snps'}        = \@snps;
   $Configs->{'snps'}->{'fakeslice'}   = 1;
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
@@ -1151,7 +1139,6 @@ sub spreadsheet_TSVtable {
   }
 
   my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
-
   unless( @$consequences && @$allele_info) {
     return 1;
   }
@@ -1236,7 +1223,8 @@ sub spreadsheet_TSVtable {
     my $cds_coord = $conseq_type->cds_start;
     $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
 
-    my @validation =  @{ $allele->variation->get_all_validation_states || [] };
+    my $tmp =  $allele->variation;
+    my @validation = $tmp ? @{ $tmp->get_all_validation_states || [] } : ();
     my $row = {
 	       'ID'          =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$chr;vc_start=$chr_start">@{[$allele->variation_name]}</a>),
 	       'Class'       => $class || "-",
@@ -1250,6 +1238,7 @@ sub spreadsheet_TSVtable {
 	       'cdscoord'    => $cds_coord || "-",
 	       'coverage'    => $coverage || "0",
 	      };
+
     if ($conseq_type->aa_alleles){
       $row->{'aachange'} = ( join "/", @{$aa_alleles} ) || "";
       $row->{'aacoord'}  = $aa_coord;
@@ -1258,7 +1247,6 @@ sub spreadsheet_TSVtable {
       $row->{'aachange'} = '-';
       $row->{'aacoord'}  = '-';
       }
-
     $panel->add_row( $row );
   }
   return 1;
