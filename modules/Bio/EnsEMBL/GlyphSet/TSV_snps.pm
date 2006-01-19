@@ -50,6 +50,13 @@ sub _init {
   my @consequences =  @$consequences_ref;
   warn "######## ERROR arrays should be same length" unless length @$alleles == length @$consequences_ref;
 
+
+  my $raw_coverage_obj  = $Config->{'transcript'}->{'coverage_obj'};
+  my @coverage_obj;
+  if ( @$raw_coverage_obj ){
+    @coverage_obj = sort {$a->[2]->start <=> $b->[2]->start} @$raw_coverage_obj;
+  }
+
   foreach my $allele_ref (  @$alleles ) {
     my $allele = $allele_ref->[2];
     my $conseq_type = shift @consequences;
@@ -82,6 +89,15 @@ sub _init {
       my $strand = $transcript->strand > 0 ? "+" : "-";
       push @tmp, ("04:Transcript codon ($strand strand) ".$codon => '');
     }
+
+    # Coverage -------------------------------------------------
+    my $coverage = 0;
+    foreach ( @coverage_obj ) {
+      next if $allele->start >  $_->[2]->end;
+      last if $allele->start < $_->[2]->start;
+      $coverage = $_->[2]->level if $_->[2]->level > $coverage;
+    }
+    push @tmp, ("07:Read coverage: $coverage" => '') if $coverage;
 
     my $label  = join "/", @$aa_change;
     if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
@@ -137,8 +153,6 @@ sub _init {
        '11:SNP properties' => $href,
        "12:bp $pos" => '',
        "13:class: ".&variation_class(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
-       # "14:ambiguity code: ".$allele->ambig_code => '',
-
       }
     });
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);

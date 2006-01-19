@@ -14,10 +14,9 @@ use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 sub init_label {
   my $self = shift;
-#  return undef;
   $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => "Read coverage",
-    'font'      => 'Small',
+    'text'      => "Coverage",
+    'font'      => 'Tiny',
     'absolutey' => 1,
   }));
 }
@@ -25,8 +24,6 @@ sub init_label {
 
 sub _init {
   my ($self) = @_;
-  # Data
-  #  my $slice       = $self->{'container'};
   my $type = $self->check();
   my $Config         = $self->{'config'};
   my $transcript     = $Config->{'transcript'}->{'transcript'};
@@ -60,8 +57,8 @@ sub _init {
     my $y =  $level{$level}[0];
     my $z = 2+$y;# -19+$y;
        $y =  1 - $y if $A; 
-       $y *= 4;
-    my $h = 8 - $y;
+       $y *= 2;
+    my $h = 3 - $y;
        $y = 0;
     # Draw ------------------------------------------------
     my $S =  $coverage->[0];
@@ -92,6 +89,6 @@ sub _init {
   }
 }
 
-#sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
+sub error_track_name { return 'read coverage'; }
 
 1;
