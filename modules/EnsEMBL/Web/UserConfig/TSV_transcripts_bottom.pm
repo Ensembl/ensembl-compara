@@ -32,7 +32,8 @@ sub init {
       'on'          => "on",
       'pos'         => '6000',
       'col'         => 'black',
-      'str'         => 'r'
+      'str'         => 'r',
+      'notext'      => 1,
     },
     'transcriptexon_bgtrack' => {
       'on'          => "on",

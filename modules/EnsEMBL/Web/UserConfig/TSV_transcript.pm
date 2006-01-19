@@ -8,7 +8,7 @@ sub init {
   my ($self) = @_;
   $self->{'_userdatatype_ID'} = 32;
   $self->{'_transcript_names_'} = 'yes';
-  $self->{'_add_labels' }  = 1;
+  $self->{'_add_labels' }  = 0;
   $self->{'general'}->{'TSV_transcript'} = {
    '_artefacts' => [qw( transcriptexon_bgtrack spacer snp_join )],
     '_options'  => [qw(pos col known unknown)],
