@@ -1147,7 +1147,7 @@ sub spreadsheet_TSVtable {
 
   my @coverage_obj;
   if ( @$raw_coverage_obj ){
-    @coverage_obj = sort {$a->end <=> $b->end} @$raw_coverage_obj;
+    @coverage_obj = sort {$a->start <=> $b->start} @$raw_coverage_obj;
   }
 
   $panel->add_columns(
@@ -1209,8 +1209,8 @@ sub spreadsheet_TSVtable {
     my $allele_start = $allele->start;
     my $coverage = 0;
     foreach ( @coverage_obj ) {
-      next if $allele_start <  $_->start;
-      last if $allele_start > $_->end;
+      next if $allele_start >  $_->end;
+      last if $allele_start < $_->start;
       $coverage = $_->level if $_->level > $coverage;
     }
 
