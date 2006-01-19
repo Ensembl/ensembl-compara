@@ -52,6 +52,7 @@ sub _init {
 
 
   my $raw_coverage_obj  = $Config->{'transcript'}->{'coverage_obj'};
+  my $coverage_level  = $Config->{'transcript'}->{'coverage_level'};
   my @coverage_obj;
   if ( @$raw_coverage_obj ){
     @coverage_obj = sort {$a->[2]->start <=> $b->[2]->start} @$raw_coverage_obj;
@@ -97,8 +98,10 @@ sub _init {
       last if $allele->start < $_->[2]->start;
       $coverage = $_->[2]->level if $_->[2]->level > $coverage;
     }
-    push @tmp, ("07:Read coverage: $coverage" => '') if $coverage;
-
+    if ($coverage) {
+      $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
+      push @tmp, ("07:Read coverage: $coverage" => '');
+    }
     my $label  = join "/", @$aa_change;
     if ( (my $splice = $conseq_type->splice_site) =~ s/_/ /g) {
       $type .= "- $splice";
@@ -139,7 +142,7 @@ sub _init {
       'x'         => $S - $font_w_bp / 2,
       'y'         => $height + 2,
       'height'    => $height,
-      'width'     => $width + $font_w_bp + 4,
+      'width'     => $width + $font_w_bp +4,
       'colour'    => $colour,
       'absolutey' => 1,
       'zmenu' => {

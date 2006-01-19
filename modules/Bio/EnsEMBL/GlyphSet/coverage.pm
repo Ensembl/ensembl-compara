@@ -14,6 +14,9 @@ use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 sub init_label {
   my $self = shift;
+  my $Config         = $self->{'config'};
+  my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
+  my $text  = @$coverage_obj ? "Coverage" : "No coverage";
   $self->label(new Sanger::Graphics::Glyph::Text({
     'text'      => "Coverage",
     'font'      => 'Tiny',
@@ -35,7 +38,7 @@ sub _init {
   my $sample         = $Config->{'transcript'}->{'sample'};
   my $A = $Config->get( $type, 'type' ) eq 'bottom' ? 0 : 1;
 
-  my %level = (
+  my %draw_coverage = (
     $coverage_levels[0] => [0, "grey70"],
     $coverage_levels[1] => [1, "grey40"],
   );
@@ -45,16 +48,9 @@ sub _init {
   my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
   my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
 
-  # Bumping 
-  my $pix_per_bp    = $Config->transform->{'scalex'};
-  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
-  my $voffset = 0;
-  my @bitmap;
-  my $max_row = -1;
-
   foreach my $coverage ( sort { $a->[2]->level <=> $b->[2]->level } @$coverage_obj  ) {
     my $level  = $coverage->[2]->level;
-    my $y =  $level{$level}[0];
+    my $y =  $draw_coverage{$level}[0];
     my $z = 2+$y;# -19+$y;
        $y =  1 - $y if $A; 
        $y *= 2;
@@ -69,22 +65,23 @@ sub _init {
     my $end   = $coverage->[2]->end() + $offset;
     my $pos   = "$start-$end";
 
+    my $display_level = $level == $max_coverage ? ">".($level-1) : $level;
     my $bglyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $S,
       'y'         => 8-$h,
       'height'    => $h,                            #$y,
       'width'     => $E-$S+1,
-      'colour'    => $level{$level}->[1],
+      'colour'    => $draw_coverage{$level}->[1],
       'absolutey' => 1,
       'zmenu' => {
-        'caption' => 'Read coverage: '.$level,
+        'caption' => 'Read coverage: '.$display_level,
         "12:bp $pos" => '',
-        "14:sample $sample" => '',
+        "14:$sample" => '',
       },
       'z'    => $z
     });
-    #$self->join_tag( $bglyph, "$S:$E:$level", $A,$A, $level{$level}->[1], 'fill',  $z );
-    #$self->join_tag( $bglyph, "$S:$E:$level", 1-$A,$A, $level{$level}->[1], 'fill',  $z );
+    #$self->join_tag( $bglyph, "$S:$E:$level", $A,$A, $draw_coverage{$level}->[1], 'fill',  $z );
+    #$self->join_tag( $bglyph, "$S:$E:$level", 1-$A,$A, $draw_coverage{$level}->[1], 'fill',  $z );
     $self->push( $bglyph );
   }
 }
