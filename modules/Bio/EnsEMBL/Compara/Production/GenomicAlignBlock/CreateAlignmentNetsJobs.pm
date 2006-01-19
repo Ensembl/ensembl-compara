@@ -193,28 +193,30 @@ sub createAlignmentNetsJobs
   my $query_dna_list  = $self->{'collection'}->get_all_dna_objects;
 
   my $count=0;
-  my $sql ="select group_id,min(dnafrag_start) as min,max(dnafrag_end) as max from genomic_align ga, genomic_align_group gag where ga.genomic_align_id=gag.genomic_align_id and ga.method_link_species_set_id = ? and ga.dnafrag_id= ? and gag.type = ? group by group_id order by min asc,max asc";
+#  my $sql ="select group_id,min(dnafrag_start) as min,max(dnafrag_end) as max from genomic_align ga, genomic_align_group gag where ga.genomic_align_id=gag.genomic_align_id and ga.method_link_species_set_id = ? and ga.dnafrag_id= ? and gag.type = ? group by group_id order by min asc,max asc";
+
+  my $sql = "select ga.dnafrag_start, ga.dnafrag_end from genomic_align ga, genomic_align_group gag where ga.genomic_align_id=gag.genomic_align_id and ga.method_link_species_set_id= ? and ga.dnafrag_id= ? and gag.type = ? order by dnafrag_start asc, dnafrag_end asc";
 
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
 
   foreach my $qy_dna_object (@{$query_dna_list}) {
     my $qy_dnafrag_id = $qy_dna_object->dnafrag->dbID;
     $sth->execute($self->{'method_link_species_set'}->dbID, $qy_dnafrag_id, $self->{'group_type'});
-    my ($group_id,$group_start,$group_end);
-    $sth->bind_columns(\$group_id, \$group_start, \$group_end);
+    my ($dnafrag_start,$dnafrag_end);
+    $sth->bind_columns(\$dnafrag_start, \$dnafrag_end);
     my ($slice_start,$slice_end);
     my @genomic_slices;
     while ($sth->fetch()) {
       unless (defined $slice_start) {
-        ($slice_start,$slice_end) = ($group_start, $group_end);
+        ($slice_start,$slice_end) = ($dnafrag_start, $dnafrag_end);
         next;
       }
-      if ($group_start > $slice_end) {
+      if ($dnafrag_start > $slice_end) {
         push @genomic_slices, [$slice_start,$slice_end];
-        ($slice_start,$slice_end) = ($group_start, $group_end);
+        ($slice_start,$slice_end) = ($dnafrag_start, $dnafrag_end);
       } else {
-        if ($group_end > $slice_end) {
-          $slice_end = $group_end;
+        if ($dnafrag_end > $slice_end) {
+          $slice_end = $dnafrag_end;
         }
       }
     }
@@ -224,7 +226,7 @@ sub createAlignmentNetsJobs
     my @grouped_genomic_slices;
     undef $slice_start;
     undef $slice_end;
-    my $max_slice_length = 1000000;
+    my $max_slice_length = 500000;
     while (my $genomic_slices = shift @genomic_slices) {
       my ($start, $end) = @{$genomic_slices};
       unless (defined $slice_start) {
