@@ -78,7 +78,7 @@ sub zmenu {
   my ($self, $gene, $transcript) = @_;
   my $tid = $transcript->stable_id();
   my $translation = $transcript->translation;
-  my $author =  shift(@{$transcript->get_all_Attributes('vega_author')})->value;
+  my $author =  shift(@{$transcript->get_all_Attributes('author')})->value;
   my $pid = $translation->stable_id() if $translation;
   my $gid = $gene->stable_id();
   my $id   = $transcript->external_name() eq '' ? $tid : $transcript->external_name();
@@ -115,7 +115,7 @@ sub gene_zmenu {
   my $id   = $gene->external_name() eq '' ? $gid : $gene->external_name();
   #hack to get the author off the first transcript (rather than the gene)
   my $f_trans = shift(@{$gene->get_all_Transcripts()});
-  my $author =  shift(@{$f_trans->get_all_Attributes('vega_author')})->value;
+  my $author =  shift(@{$f_trans->get_all_Attributes('author')})->value;
   my $type = $self->format_vega_name($gene);
   $type =~ s/HUMACE-//g;
   my $ExtUrl = EnsEMBL::Web::ExtURL->new($self->{'config'}->{'species'}, $self->species_defs);

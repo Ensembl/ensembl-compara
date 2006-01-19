@@ -54,7 +54,7 @@ sub gene_href {
 sub zmenu {
     my ($self, $gene, $transcript) = @_;
     my $tid = $transcript->stable_id();
-	my $author =  shift(@{$transcript->get_all_Attributes('vega_author')})->value;
+	my $author =  shift(@{$transcript->get_all_Attributes('author')})->value;
     my $translation = $transcript->translation;
     my $pid = $translation->stable_id() if $translation;
     my $gid = $gene->stable_id();
@@ -87,7 +87,7 @@ sub gene_zmenu {
 	my $type = $self->format_vega_name($gene);
 	#hack to get the author off the first transcript (rather than the gene)
 	my $f_trans = shift(@{$gene->get_all_Transcripts()});
-	my $author =  shift(@{$f_trans->get_all_Attributes('vega_author')})->value;
+	my $author =  shift(@{$f_trans->get_all_Attributes('author')})->value;
     my $zmenu = {
         'caption' 	    => $self->my_config('zmenu_caption'),
         "00:$id"	    => "",
