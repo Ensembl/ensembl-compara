@@ -987,6 +987,8 @@ sub transcriptsnpview {
 
   my @containers_and_configs = (); ## array of containers and configs
 
+  my @EXTRA = ();
+
   foreach my $sample (  $object->get_samples ) { #e.g. DBA/2J
     my $sample_slice = $transcript_slice->get_by_strain( $sample );
     # needed?? $object->__data->{'slices'}{ $sample }= [ 'munged', $sample_slice , $sub_slices, $fake_length ];
@@ -1021,17 +1023,18 @@ sub transcriptsnpview {
     my $munged_coverage = $object->munge_read_coverage($raw_coverage_obj);
 
     $sample_config->{'transcript'} = {
-	  'sample'          => $sample,
-          'exons'           => \@exons,  
-          'coding_start'    => $coding_start,
-          'coding_end'      => $coding_end,
-          'transcript'      => $transcript,
-          'allele_info'     => $allele_info,
-	  'consequences'    => $consequences,
-          'coverage_level'  => $coverage_level,
-          'coverage_obj'    => $munged_coverage,
-				  };
+      'sample'          => $sample,
+      'exons'           => \@exons,  
+      'coding_start'    => $coding_start,
+      'coding_end'      => $coding_end,
+      'transcript'      => $transcript,
+      'allele_info'     => $allele_info,
+      'consequences'    => $consequences,
+      'coverage_level'  => $coverage_level,
+      'coverage_obj'    => $munged_coverage,
+    };
 
+    push @EXTRA, [ $sample, $allele_info, $munged_coverage ];
     $sample_config->container_width( $fake_length );
 
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
@@ -1070,9 +1073,9 @@ sub transcriptsnpview {
     $Configs->{$_}->{'id'} = $object->stable_id;
   }
 
-    $Configs->{"snps"} = $object->user_config_hash( "genesnpview_snps" );
-    $Configs->{"snps"}->set( '_settings', 'width',  $image_width );
-
+  $Configs->{"snps"} = $object->user_config_hash( "genesnpview_snps" );
+  $Configs->{"snps"}->set( '_settings', 'width',  $image_width );
+  $Configs->{"snps"}->set( 'snp_fake_haplotype', 'on', 'on' );
   foreach(qw(transcripts_top transcripts_bottom)) {
     $Configs->{$_}->{'extent'}      = $extent;
     $Configs->{$_}->{'transid'}     = $object->stable_id;
@@ -1108,9 +1111,11 @@ sub transcriptsnpview {
     ]
   } sort { $a->[0] <=> $b->[0] } @$snps;
 
+  @EXTRA = reverse @EXTRA if  $transcript_slice->strand < 0;
   $Configs->{'snps'}->{'snps'}        = \@snps;
   $Configs->{'snps'}->{'fakeslice'}   = 1;
   $Configs->{'snps'}->container_width(   $snp_fake_length   );
+  $Configs->{'snps'}->{'extra'}       =  \@EXTRA;
   return if $do_not_render;
 
   ## -- Render image ----------------------------------------------------- ##
