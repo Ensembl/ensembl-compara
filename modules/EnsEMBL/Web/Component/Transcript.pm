@@ -1213,6 +1213,7 @@ sub spreadsheet_TSVtable {
       last if $allele_start < $_->start;
       $coverage = $_->level if $_->level > $coverage;
     }
+    $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
 
     # Other
     my $chr = $sample_slice->seq_region_name;
