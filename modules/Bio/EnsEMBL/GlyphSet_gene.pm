@@ -166,7 +166,9 @@ sub _init {
    }
   } 
   if($FLAG) { ## NOW WE NEED TO ADD THE LABELS_TRACK.... FOLLOWED BY THE LEGEND
-    if( 1 || $Config->get( '_settings', 'opt_gene_labels' ) ) {
+    my $GL_FLAG = $Config->get( '_settings', 'opt_gene_labels' );
+       $GL_FLAG = 1 unless defined($GL_FLAG);
+    if( $GL_FLAG ) {
       my $START_ROW = @bitmap + 1;
       @bitmap = ();
       foreach my $gr ( @GENES_TO_LABEL ) {
