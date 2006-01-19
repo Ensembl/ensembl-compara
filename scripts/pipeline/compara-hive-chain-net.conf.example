@@ -63,7 +63,7 @@
     'target_collection_name' => 'rat for chain',
               
     'max_gap' => 50,
-    'group_type' => 'chain'
+    'output_group_type' => 'chain'
   },
 
   { TYPE => NET_CONFIG,
