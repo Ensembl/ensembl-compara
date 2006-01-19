@@ -35,10 +35,10 @@ sub _init {
   my $track_height = $th + 4;
 
   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => 0, 'height' => $track_height, 'x' => 1, 'w' => 1, 'absolutey' => 1, }));
-  my $strain = "Coverage";
+  my $strain = "Comparison to reference strain alleles";
   my $bp_textwidth = $w2 * length($strain) * 1.2;
   my $textglyph = new Sanger::Graphics::Glyph::Text({
-    'x'          => -$w - $bp_textwidth,
+    'x'          => - $w2*1.2 *17.5,
     'y'          => 1,
     'width'      => $bp_textwidth,
     'height'     => $th2,
@@ -49,6 +49,12 @@ sub _init {
    });
   $self->push( $textglyph );
   my $offset+= $th2+4;
+
+
+  # Get reference strain name:
+  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  my $reference_strain_name = $pop_adaptor->get_reference_strain_name();
+
   foreach my $snp_ref ( @snps ) { 
     my $snp = $snp_ref->[2];
     my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
@@ -61,6 +67,7 @@ sub _init {
     $snp_ref->[3] = { $reference_base => $colours[0] };
     $snp_ref->[4] = $reference_base;
     my $strain = "Reference";
+    $strain .= " $reference_strain_name" if $reference_strain_name;
     my $bp_textwidth = $w * length($strain) * 1.2;
     my $textglyph = new Sanger::Graphics::Glyph::Text({
       'x'          => -$w - $bp_textwidth,

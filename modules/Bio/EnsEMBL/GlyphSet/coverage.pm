@@ -43,13 +43,6 @@ sub _init {
     $coverage_levels[1] => [1, "grey40"],
   );
 
-  # my $type = $self->check();
-  #   return unless defined $type;
-  #   return unless $self->strand() == -1;
-
-  # my $EXTENT        = $Config->get('_settings','context');
-  #    $EXTENT        = 1e6 if $EXTENT eq 'FULL';
-  # my $seq_region_name = $self->{'container'}->seq_region_name();
 
   # Drawing stuff
   my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
