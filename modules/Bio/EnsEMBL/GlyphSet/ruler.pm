@@ -63,7 +63,12 @@ sub _init {
 ##  |-forward strand----------length bp------------------------->
 ##  <-------------------------length bp----------reverse strand-|
   my( $right, $left, $righttext, $lefttext );
-  if( $strand > 0 ) {
+  if( $Config->get('ruler','notext') ) {
+    $right     = 'arrow';
+    $left      = 'arrow';
+    $lefttext  = '',
+    $righttext = '';
+  } elsif( $strand > 0 ) {
     $right     = 'arrow';
     $left      = 'bar';
     $lefttext  = $con_strand > 0 ? 'Forward strand' : 'Reverse strand'; 
