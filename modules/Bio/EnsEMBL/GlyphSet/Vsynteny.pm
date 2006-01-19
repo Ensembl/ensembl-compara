@@ -110,13 +110,22 @@ sub _init {
     my $COL;
     my $SIDE;
     my $BORD;
-    my $this_chr = $synteny_data->[0]->{'chr_name'};
-    my $highlights_main      = { $this_chr => [] };
+#    my $this_chr = $synteny_data->[0]->{'chr_name'};
+    my $highlights_main      = { $chr => [] };
 
     my $CANSEE_OTHER = $Config->{'other_species_installed'};
 
     foreach my $box ( @$synteny_data ) {
-        my $other_chr = $box->{'hit_chr_name'};
+      my ($main_dfr, $other_dfr);
+      foreach my $dfr (@{$box->children}) {
+        if ($dfr->dnafrag->genome_db->name eq $OTHER_T) {
+          $other_dfr = $dfr;
+        } else {
+          $main_dfr = $dfr;
+        }
+      }
+#        my $other_chr = $box->{'hit_chr_name'};
+        my $other_chr = $other_dfr->dnafrag->name;
         if(!$other_chrs{$other_chr}) { ## We have a hit on another chromosome 
             $COL = $grey;
             $BORD = $black;
@@ -140,61 +149,61 @@ sub _init {
         my $ZMENU = {
                 'caption' => "$OTHER_T chr $other_chr",
                 sprintf("01:%s Chr %s:%0.1fM-%0.1fM",$SPECIES_SHORT,
-                        $this_chr,$box->{'chr_start'}/1e6,$box->{'chr_end'}/1e6) => 
-    qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr;vc_start=$box->{'chr_start'};vc_end=$box->{'chr_end'}),                        
+                        $chr,$main_dfr->dnafrag_start/1e6,$main_dfr->dnafrag_end/1e6) => 
+    qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=$main_dfr->dnafrag_start;vc_end=$main_dfr->dnafrag_end),                        
                 sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
-                        $other_chr,$box->{'hit_chr_start'}/1e6,$box->{'hit_chr_end'}/1e6) => 
-		( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$box->{'hit_chr_start'};vc_end=$box->{'hit_chr_end'}) : '' ),
+                        $other_chr,$other_dfr->dnafrag_start/1e6,$other_dfr->dnafrag_end/1e6) => 
+		( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$other_dfr->dnafrag_start;vc_end=$other_dfr->dnafrag_end) : '' ),
 
-	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?otherspecies=$OTHER;chr=$this_chr;loc=).int(($box->{'chr_end'}+$box->{'chr_start'})/2)
+	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?otherspecies=$OTHER;chr=$chr;loc=).int(($main_dfr->dnafrag_end+$main_dfr->dnafrag_start)/2)
 
 	    };
 
-        push @{$highlights_main->{$this_chr}}, {
-            'id' => $box->{'synteny_id'},
-            'start'=> $box->{'chr_start'},
-            'end' => $box->{'chr_end'},
+        push @{$highlights_main->{$chr}}, {
+            'id' => $box->dbID,
+            'start'=> $main_dfr->dnafrag_start,
+            'end' => $main_dfr->dnafrag_end,
             'col' => $COL,
             'border' => $BORD,
             'side' => $SIDE,
-            'href' => qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr;vc_start=$box->{'chr_start'};vc_end=$box->{'chr_end'}),
+            'href' => qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=$main_dfr->dnafrag_start;vc_end=$main_dfr->dnafrag_end),
             'zmenu' => $ZMENU
         };
         if($SIDE) {
             my $marked =
-                ($box->{'chr_start'} <= $self->{'container'}->{'line'} && $self->{'container'}->{'line'} <= $box->{'chr_end'}) ? $SIDE : 0;
+                ($main_dfr->dnafrag_start <= $self->{'container'}->{'line'} && $self->{'container'}->{'line'} <= $main_dfr->dnafrag_end) ? $SIDE : 0;
 
             my %zmenu = (
                 'caption' => sprintf("Chr %s %0.1fM-%0.1fM",
                     $other_chr,
-                    $box->{'hit_chr_start'}/1e6,
-                    $box->{'hit_chr_end'}/1e6
+                    $other_dfr->dnafrag_start/1e6,
+                    $other_dfr->dnafrag_end/1e6
                  ),
-                 ($box->{'rel_ori'}==1 ?
+                 ($main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand == 1 ?
                      "02:Forward orientation" :
                      "02:Reverse orientation" ) => '',
                 sprintf("04:%s Chr %s:%0.1fM-%0.1fM",
                     $SPECIES_SHORT,
-                    $this_chr,
-                    $box->{'chr_start'}/1e6,
-                    $box->{'chr_end'}/1e6
+                    $chr,
+                    $main_dfr->dnafrag_start/1e6,
+                    $main_dfr->dnafrag_end/1e6
                 ) => 
-                        qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$this_chr;vc_start=$box->{'chr_start'};vc_end=$box->{'chr_end'}),                        
+                        qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=$main_dfr->dnafrag_start;vc_end=$main_dfr->dnafrag_end),                        
                 sprintf("03:%s Chr %s:%0.1fM-%0.1fM",
                     $OTHER_SHORT,
                     $other_chr,
-                    $box->{'hit_chr_start'}/1e6,
-                    $box->{'hit_chr_end'}/1e6
+                    $other_dfr->dnafrag_start/1e6,
+                    $other_dfr->dnafrag_end/1e6
                 ) => 
-                    ( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$box->{'hit_chr_start'};vc_end=$box->{'hit_chr_end'}) : '' )
+                    ( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$other_dfr->dnafrag_start;vc_end=$other_dfr->dnafrag_end) : '' )
             );
-            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{_config_file_name_}]};chr=$other_chr;loc=).int(($box->{'hit_chr_end'}+$box->{'hit_chr_start'})/2) : '' ;
+            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{_config_file_name_}]};chr=$other_chr;loc=).int(($other_dfr->dnafrag_end+$other_dfr->dnafrag_start)/2) : '' ;
             $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;
             push @{$highlights_secondary->{$other_chr}}, {
-                'rel_ori' => $box->{'rel_ori'},
-                'id' => $box->{'synteny_id'},
-                'start'=> $box->{'hit_chr_start'},
-                'end' => $box->{'hit_chr_end'},
+                'rel_ori' => $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand,
+                'id' => $box->dbID,
+                'start'=> $other_dfr->dnafrag_start,
+                'end' => $other_dfr->dnafrag_end,
                 'col' => $COL,
                 'border' => $BORD,
                 'side' => 0,
@@ -210,7 +219,7 @@ sub _init {
         'v_offset'      => $h_offset,
         'length'        => $length,
         'chr_length'    => $chr_length,
-        'chr'           => $this_chr,
+        'chr'           => $chr,
         'width'         => $main_width,
         'white'         => $white,
         'black'         => $black,

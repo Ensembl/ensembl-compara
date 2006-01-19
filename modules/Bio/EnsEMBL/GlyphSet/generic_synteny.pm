@@ -12,7 +12,7 @@ sub features {
   my ($self) = @_;
   my $species = $self->my_config('species');
   (my $species_2 = $species) =~ s/_/ /;
-  return $self->{'container'}->get_all_compara_Syntenies( $species_2 );
+  return $self->{'container'}->get_all_compara_Syntenies( $species_2, "SYNTENY");
 }
 
 sub colour {
