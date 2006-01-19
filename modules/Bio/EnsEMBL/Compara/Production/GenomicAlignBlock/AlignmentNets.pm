@@ -44,8 +44,6 @@ use Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception;
-#use Bio::EnsEMBL::Utils::Argument qw( rearrange );
-
 
 our @ISA = qw(Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter);
 
@@ -90,7 +88,10 @@ sub get_params {
     $self->MAX_GAP($params->{'max_gap'});
   }
   if (defined($params->{'output_group_type'})) {
-    $self->GROUP_TYPE($params->{'output_group_type'});
+    $self->OUTPUT_GROUP_TYPE($params->{'output_group_type'});
+  }
+  if (defined($params->{'input_group_type'})) {
+    $self->INPUT_GROUP_TYPE($params->{'input_group_type'});
   }
   $self->{'input_group_type'} = $params->{'input_group_type'} if(defined($params->{'input_group_type'}));
 
@@ -118,7 +119,7 @@ sub fetch_input {
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->{'comparaDBA'}->get_DnaAlignFeatureAdaptor;
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
-  $gaba->lazy_loading(1);
+
   $self->get_params($self->analysis->parameters);
   $self->get_params($self->input_id);
 
@@ -126,7 +127,7 @@ sub fetch_input {
   # get the compara data: MethodLinkSpeciesSet, reference DnaFrag, 
   # and GenomicAlignBlocks
   ################################################################
-#  print "mlss_id: ",$self->{'method_link_species_set_id'},"\n";
+
   my $mlss = $mlssa->fetch_by_dbID($self->{'method_link_species_set_id'});
 
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->{'method_link_species_set_id'}."\n")
@@ -140,14 +141,16 @@ sub fetch_input {
   ######## needed for output####################
   $self->output_MethodLinkSpeciesSet($out_mlss);
 
-  my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss,$self->query_dnafrag,$self->{'start'},$self->{'end'});
+  my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType($mlss,$self->query_dnafrag,$self->{'start'},$self->{'end'}, $self->{'input_group_type'});
 
   ###################################################################
   # get the target slices and bin the GenomicAlignBlocks by group id
   ###################################################################
   my (%features_by_group, %query_lengths, %target_lengths);
-  my $number_of_gabs = scalar @{$gabs};
+  my %group_score;
+
   while (my $gab = shift @{$gabs}) {
+
     my ($qy_ga) = $gab->reference_genomic_align;
     my ($tg_ga) = @{$gab->get_all_non_reference_genomic_aligns};
 
@@ -160,31 +163,19 @@ sub fetch_input {
       $self->target_DnaFrag_hash->{$tg_ga->dnafrag->name} = $tg_ga->dnafrag;
     }
 
-#    my $daf_cigar = $self->daf_cigar_from_compara_cigars($qy_ga->cigar_line,
-#                                                         $tg_ga->cigar_line);
-
-#    my $daf = Bio::EnsEMBL::DnaDnaAlignFeature->new
-#        (-seqname => $qy_ga->dnafrag->name,
-#         -start    => $qy_ga->dnafrag_start,
-#         -end      => $qy_ga->dnafrag_end,
-#         -strand   => $qy_ga->dnafrag_strand,
-#         -hseqname => $tg_ga->dnafrag->name,
-#         -hstart   => $tg_ga->dnafrag_start,
-#         -hend     => $tg_ga->dnafrag_end,
-#         -hstrand  => $tg_ga->dnafrag_strand,
-#         -score    => $gab->score,
-#         -cigar_string => $daf_cigar);
-
     my $group_id = $qy_ga->genomic_align_group_id_by_type($self->{'input_group_type'});
     if ($group_id != $tg_ga->genomic_align_group_id_by_type($self->{'input_group_type'})) {
       throw("GenomicAligns in a GenomicAlignBlock belong to different group");
     }
 
-#    push @{$features_by_group{$group_id}}, $daf;
-#    if ($number_of_gabs > 100000) {
-#      $gab->genomic_align_array(0);
-#    }
     push @{$features_by_group{$group_id}}, $gab;
+    if (! defined $group_score{$group_id} || $gab->score > $group_score{$group_id}) {
+      $group_score{$group_id} = $gab->score;
+    }
+  }
+
+  foreach my $group_id (keys %features_by_group) {
+    $features_by_group{$group_id} = [ sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @{$features_by_group{$group_id}} ];
   }
 
   $WORKDIR = "/tmp/worker.$$";
@@ -199,39 +190,18 @@ sub fetch_input {
   foreach my $nm (keys %{$self->target_DnaFrag_hash}) {
     $target_lengths{$nm} = $self->target_DnaFrag_hash->{$nm}->length;
   }
-  
+
   my %parameters = (-analysis             => $self->analysis, 
                     -query_lengths        => \%query_lengths,
                     -target_lengths       => \%target_lengths,
-                    -chains               => [values %features_by_group],
+                    -chains               => [ map {$features_by_group{$_}} sort {$group_score{$b} <=> $group_score{$a}} keys %group_score ],
+                    -chains_sorted => 1,
                     -chainNet             =>  $BIN_DIR . "/" . "chainNet",
                     -workdir              => $WORKDIR);
   
   my $run = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
   $self->runnable($run);
 
-}
-
-=head2 run
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::RunnableDB
-  Function  : cycles through all the runnables, calls run and pushes
-  their output into the RunnableDBs output array
-  Returntype: array ref
-  Exceptions: none
-  Example   : 
-
-=cut
-
-sub run{
-  my ($self) = @_;
-  foreach my $runnable(@{$self->runnable}){
-    $runnable->run;
-#    my $converted_output = $self->convert_output($runnable->output);
-#    $self->output($converted_output);
-    $self->output($runnable->output);
-    rmdir($runnable->workdir) if (defined $runnable->workdir);
-  }
 }
 
 sub query_dnafrag {
@@ -242,6 +212,28 @@ sub query_dnafrag {
   }
 
   return $self->{_query_dnafrag};
+}
+
+sub convert_output {
+  my ($self, $chains) = @_;
+  
+  foreach my $chain (@{$chains}) {
+    foreach my $gab (@{$chain}) {
+      $gab->{'adaptor'} = undef;
+      $gab->{'dbID'} = undef;
+      $gab->{'method_link_species_set_id'} = undef;
+      $gab->method_link_species_set($self->output_MethodLinkSpeciesSet);
+      foreach my $ga (@{$gab->get_all_GenomicAligns}) {
+        $ga->genomic_align_group_by_type("chain");
+        $ga->{'adaptor'} = undef;
+        $ga->{'dbID'} = undef;
+        $ga->{'method_link_species_set_id'} = undef;
+        $ga->method_link_species_set($self->output_MethodLinkSpeciesSet);
+      }
+    }
+  }
+
+  return $chains;
 }
 
 1;
