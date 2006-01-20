@@ -36,6 +36,16 @@ sub new {
     '_'          => [ 'black',  'novel' ],
     '_PSEUDO'    => [ 'grey50', 'pseudogene' ],
   );
+  $self->colourSet( 'protein_features', qw(
+    prints             rust
+    prositepatterns    orange
+    prositeprofiles    contigblue1
+    pfam               grey33
+    tigrfam            red
+    superfamily        blue
+    smart              chatreuse3
+    pirs               violent2
+  ));
   $self->colourSet( 'dog_protein',
     'hi'         => 'highlight1',
     'superhi'    => 'highlight2',
