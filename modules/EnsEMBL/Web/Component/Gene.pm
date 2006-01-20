@@ -314,7 +314,8 @@ sub method {
   my $db = $gene->get_db ;
   my $label = ( ($db eq 'vega' or $gene->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
   my $text = "No $label defined in database";
-  if( $gene->Obj->analysis->description ) {
+  my $o = $gene->Obj;  
+  if( $o->analysis and $o->analysis->description ) {
     $text = $gene->Obj->analysis->description;
   } else {
     my $o = $gene->Obj;
