@@ -44,7 +44,9 @@ sub new {
     tigrfam            red
     superfamily        blue
     smart              chatreuse3
-    pirs               violent2
+    pirs               gold3
+    hi                 green
+    default            violet2 
   ));
   $self->colourSet( 'dog_protein',
     'hi'         => 'highlight1',
