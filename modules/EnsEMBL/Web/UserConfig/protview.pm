@@ -9,7 +9,7 @@ sub init {
 
     $self->{'_userdatatype_ID'} = 4;
     $self->{'general'}->{'protview'} = {
-	'_artefacts' => [qw(Pprot_scalebar Psuperfamily Pprotein Ppfam Pprints Pprosite Pprofile Pcoils	Plow_complex Psignal_peptide
+	'_artefacts' => [qw(Pprot_scalebar Pprotein Pcoils Plow_complex Psignal_peptide
 	Ptransmembrane Pprot_snp Psnp_legend)],
 	'_options'   => [qw(on pos col hi known unknown)],
 	'_names'     => {
@@ -79,43 +79,6 @@ sub init {
 	    'col'     => 'darkgreen',
 	    'dep' => '6',
 	},
-	'Ppfam' => {
-	    'on'      => "on",
-	    'pos'     => '13' + 10000,
-	    'hi'      => 'green',
-	    'col'     => 'grey33',
-	    'dep' 	  => '6',
-	},
-	'Pprosite' => {
-	    'on'      => "on",
-	    'pos'     => '15' + 10000,
-	    'dep'     => '0',
-	    'hi'      => 'green',
-	    'col'     => 'orange',
-	    'dep' => '6',
-	},
-	'Pprofile' => {
-	    'on'      => "on",
-	    'pos'     => '16' + 10000,
-	    'dep'     => '0',
-	    'hi'      => 'green',
-	    'col'     => 'contigblue1',
-	    'dep' => '6',
-	},
-	'Psuperfamily' => {
-	    'on'      => "on",
-	    'pos'     => '18' + 10000,
-	    'dep'     => '6',
-	    'hi'      => 'green',
-	    'col'     => 'blue',
-	},
-	'Pprints' => {
-	    'on'      => "on",
-	    'pos'     => '17' + 10000,
-	    'dep'     => '6',
-	    'hi'      => 'green',
-	    'col'     => 'rust',
-	},
 	'Pprot_snp' => {
 	    'on'      => "on",
 	    'pos'     => '2' + 10000,
@@ -143,7 +106,7 @@ sub init {
 	    'hi'      => 'blue',
 	    'col'     => 'blue',
 	},
-    
     };
+    $self->ADD_ALL_PROTEIN_FEATURE_TRACKS();
 }
 1;
