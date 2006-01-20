@@ -3,6 +3,18 @@ The chain/net process assumes that you have already run a pairwise comparison pi
 between 2 genomes (whole or partial) usuallu using blastz aligner. Please start reading
 README-pairlaigner first
 
+Include in your PERL5LIB, the ensembl-analysis code
+
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-analysis
+
+in tcsh
+    setenv BASEDIR   /some/path/to/modules
+    setenv PERL5LIB  ${PERL5LIB}:${BASEDIR}/ensembl-analysis/modules
+
+in bash
+    BASEDIR=/some/path/to/modules
+    PERL5LIB=${PERL5LIB}:${BASEDIR}/ensembl-analysis/modules
+
 1- Choose a working directory with some disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can decice to use the same directory that was used for the pair aligner pipeline.
