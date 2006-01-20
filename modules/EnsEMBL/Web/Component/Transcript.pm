@@ -257,7 +257,7 @@ sub _sort_similarity_links{
     if( $externalDB =~ /^AFFY_/i) {
       $text = "\n".'  <div class="multicol"><a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a></div>';
     }
-    push @links, [ $type->db_display_name, $text ] ;
+    push @links, [ $type->db_display_name || $externalDB, $text ] ;
   }
   $object->__data->{'similarity_links'} = \@links ;
   return $object->__data->{'similarity_links'};
