@@ -39,18 +39,24 @@
   },
 
   { TYPE => DNA_COLLECTION,
-    'collection_name'       => 'rat for chain',
+    'collection_name'       => 'rat for chain', # Don't forget that you have probably run a blastz
+                                                # pipeline with a collection_name 'rat'. 
+                                                # The collection_name needs to be unique to avoid confusion
     'genome_db_id'          => 3,
     'genome_name_assembly'  => 'Rattus norvegicus:RGSC3.4',
-    'chunk_size'            => 270000000,
+    'chunk_size'            => 270000000,# set it to be over the longest toplevel seq_region
+                                         # you expect for this species
     'dump_loc'              => '/acari/work7a/abel/hive/abel_compara_blastz_Hs35Rn3p4c/rat_nib_for_chain'
   },
 
   { TYPE => DNA_COLLECTION,
-    'collection_name'       => 'human for chain',
+    'collection_name'       => 'human for chain',# Don't forget that you have probably run a blastz
+                                                 # pipeline with a collection_name 'human'.
+                                                 # The collection_name needs to be unique to avoid confusion
     'genome_db_id'          => 1,
     'genome_name_assembly'  => 'Homo sapiens:NCBI35',
-    'chunk_size'            => 250000000,
+    'chunk_size'            => 250000000,# set it to be over the longest toplevel seq_region
+                                         # you expect for this species
     'dump_loc'              => '/acari/work7a/abel/hive/abel_compara_blastz_Hs35Rn3p4c/human_nib_for_chain',
   },
 
