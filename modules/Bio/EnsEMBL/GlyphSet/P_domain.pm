@@ -41,7 +41,8 @@ sub _init {
   my $URL_key       = $self->my_config( 'url_key'    ) || uc($logic_name);
   my $label         = $self->my_config( 'caption'    ) || uc($logic_name);
   my $depth         = $self->my_config( 'dep'        );
-  my $colour        = $self->my_config( 'col'        );
+  my $colours       = $self->my_config( 'colours'    )||{};
+  my $colour        = $colours->{lc($logic_name)} || $colours->{'default'};
   my $font          = "Small";
   my ($fontwidth, $fontheight)  = $Config->texthelper->real_px2bp($font);
 
@@ -103,7 +104,7 @@ warn ">>> $logic_name <<<";
 
     #### add a label
     my $desc = $prsave->idesc() || $key;
-    $self->push(new Sanger::Graphics::Glyph::Text({
+    $Composite->push(new Sanger::Graphics::Glyph::Text({
       'font'   => $font,
       'text'   => $desc,
       'x'      => $row[0]->start(),
