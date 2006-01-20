@@ -48,6 +48,23 @@ sub add_track {
   ## Create configuration entry....
 }
 
+sub add_protein_feature_track {
+  my( $self, $code, $text_label, $pos, $col, %pars ) = @_;
+  $self->add_track( $code,
+    'on'         => 'on',
+    'pos'        => $pos,
+    'glyphset'   => 'P_domain',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'logic_name' => $code,
+    'caption'    => $text_label,
+    'dep'        => 20,
+    'url_key'    => uc($code),
+    'col'        => $col||'purple',
+    %pars
+  );
+}
+
 sub add_new_simple_track {
   my( $self, $code, $text_label, $colour, $pos, %pars ) = @_;
   $self->add_track( $code,
@@ -1224,5 +1241,17 @@ sub ADD_AS_GENE_TRACKS {
     return $POS;
 }
 
+sub ADD_ALL_PROTEIN_FEATURE_TRACKS {
+  my $self = shift;
+  my $POS = shift || 2000;
+  $self->add_protein_feature_track( 'Prints', 'PRINTS', $POS++ );
+  $self->add_protein_feature_track( 'PrositePatterns', 'Prosite patterns', $POS++ );
+  $self->add_protein_feature_track( 'PrositeProfiles', 'Prosite profiles', $POS++ );
+  $self->add_protein_feature_track( 'Pfam', 'Pfam', $POS++ );
+  $self->add_protein_feature_track( 'TigrFam', 'TIGRFAM', $POS++ );
+  $self->add_protein_feature_track( 'SuperFamily', 'SUPERFAMILY', $POS++ );
+  $self->add_protein_feature_track( 'Smart', 'SMART', $POS++ );
+  $self->add_protein_feature_track( 'PIRS', 'PIR SuperFamily', $POS++ );
+}
 
 1;
