@@ -38,6 +38,12 @@ you may need to change the database names, port, dbnames, and the
 paths to the 'hive_output_dir' to
 /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27cn/workers
 
+Make directories to store the nib files:
+mkdir -p /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27cn/cow_nib_for_chain
+mkdir -p /acari/work7a/abel/hive/abel_compara_human_cow_blastz_27cn/human_nib_for_chain
+
+These need to be set in the hive configuration file as the 'dump_loc' variable.
+
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
 The following script is in ensembl-compara/scripts/pipeline (should be in your PATH)
