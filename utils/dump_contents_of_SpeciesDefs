@@ -3,7 +3,7 @@
 BEGIN {
   (my $ensembl_root=$0) =~ s#/dump.*##;
   $ensembl_root = $ensembl_root eq '.' ? '..' : '.' unless $ensembl_root =~ s#/[^/]*$##;
-  my @paths = qw( conf modules ensembl/modules ensembl-external/modules ensembl-compara/modules ensembl-variation/modules);
+  my @paths = qw( conf modules ensembl/modules ensembl-external/modules ensembl-compara/modules ensembl-variation/modules ensembl-otter/modules );
   foreach( @paths ) { unshift @INC, "$ensembl_root/$_"; }
 };
 
