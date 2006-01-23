@@ -351,9 +351,13 @@ sub get_prediction_method {
 =cut
 
 sub get_author_name {
-    my $self = shift ;
-    $self->gene || return;
-    return $self->gene->gene_info->author->name;
+    my $self = shift;
+    my $attribs = $self->gene->get_all_Attributes('author');
+    if (@$attribs) {
+        return $attribs->[0]->value;
+    } else {
+        return undef;
+    }
 }
 
 #---------------------------------------------------------------------
@@ -370,21 +374,14 @@ sub get_author_name {
 =cut
 
 sub get_author_email {
-    my $self = shift ;
-    return $self->gene->gene_info->author->email;
+    my $self = shift;
+    my $attribs = $self->gene->get_all_Attributes('author_email');
+    if (@$attribs) {
+        return $attribs->[0]->value;
+    } else {
+        return undef;
+    }
 }
-
-#----------------------------------------------------------------------
-
-=head2 get_remarks
-
-  Arg[1]      : none
-  Example     : $remark_ref = $transcriptdata->get_remarks
-  Description : Gets annotation remarks of an annotated gene
-  Return type : Arrayref
-                A reference to a list of remarks
-
-=cut
 
 #----------------------------------------------------------------------
 =head2 display_xref

@@ -247,15 +247,6 @@ sub configure_registry {
           }
 ## Add information to the registry...
           Bio::EnsEMBL::Registry->set_default_track( $species, $group );
-
-          # Vega hack [pm2]:
-          # create Otter DBAdaptor for core and register it for 'vega'
-          if ($SiteDefs::ENSEMBL_SITETYPE eq 'Vega' and $group eq 'core') {
-            if ($self->dynamic_use('Bio::Otter::DBSQL::DBAdaptor')) {
-              Bio::Otter::DBSQL::DBAdaptor->new(%arg, '-group' => 'vega');
-            }
-            Bio::EnsEMBL::Registry->set_default_track( $species, 'vega' );
-          }
         }
       } else {
         warn("unknown database type $type\n");

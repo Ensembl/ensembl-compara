@@ -83,16 +83,6 @@ sub get_DBAdaptor {
     # try to retrieve the DBAdaptor from the Registry
     my $dba = $reg->get_DBAdaptor($species, $database);
 
-    # Vega hack [pm2]: 
-    # if the core database is actually a Vega database, return the vega
-    # DBAdaptor from the registry as the core adaptor
-    my $is_annot_db = $self->{'species_defs'}->get_table_size({
-                    -db =>'ENSEMBL_DB', 
-                    -table => 'gene_remark'});
-    if ($database eq 'core' and $is_annot_db) {
-        $dba = $reg->get_DBAdaptor($species, 'vega');
-    }
-    
     # Glovar
     if(!defined($dba) || $database eq 'glovar'){
         $self->_get_databases_common($species, $database);
@@ -192,11 +182,7 @@ sub _get_databases_common {
   ); 
     ## Get core DB first
   if( $databases{'core'} ) {
-    if( $is_annot_db ) { # if core is a vega DB, we connect to it with an otter adaptor
-      eval{ $default_species_db->{'core'} =  $self->_get_vega_vega_database($species); };
-    } else {
-      eval{ $default_species_db->{'core'} =  $self->_get_core_database($species); };
-    }
+    eval{ $default_species_db->{'core'} =  $self->_get_core_database($species); };
     if( $@ ){
       $self->{'error'} = qq(Unable to connect to the database: $@);
       return $self;
@@ -294,18 +280,8 @@ sub _get_databases_common {
     }
     
     # vega
-    if ($databases{'vega'} || $is_annot_db) {
-        if ($is_annot_db) {
-        ## real vega
-            eval{ $default_species_db->{'vega'} =  $self->_get_vega_vega_database($species); };
-            if( $@ ){
-                $self->{'error'} .= "\nvega database: $@";
-            } elsif (my $core_db = $default_species_db->{'core'}) {
-                $core_db->add_db_adaptor('vega', $default_species_db->{'vega'});            }
-        } else {
-        ## vega in ensembl
-            $self->_get_db_with_dnadb('vega', $species);
-        }
+    if ($databases{'vega'}) {
+        $self->_get_db_with_dnadb('vega', $species);
         delete $databases{'vega'};
     }
                                                                                 
@@ -512,24 +488,6 @@ sub _get_vega_database{
     my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_VEGA' ) ||
         die( "No vega database for this species" );
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' ); 
-}
-
-=head2 _get_vega_vega_database
-
- Arg[1]      : String  
-                Species name
- 
- Example     : $self->_get_vega_vega_database($species)
- Description : Gets vega (vega) database connection
- Return type : Bio::EnsEMBL::DBSQL::DBAdaptor
-
-=cut
-
-sub _get_vega_vega_database{
-    my $self = shift;
-    my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_DB' ) ||
-      die( "No vega database for this species" );
-    return  $self->_get_database( $db_info, 'Bio::Otter::DBSQL::DBAdaptor' ); 
 }
 
 =head2 _get_cdna_database
