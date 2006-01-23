@@ -136,6 +136,8 @@ use Bio::EnsEMBL::Pipeline::Runnable::Blat;
 use IPC::Open2;
 use Getopt::Long;
 
+our $VERSION = sprintf "%d.%d", q$Revision$ =~ /: (\d+)\.(\d+)/;
+
 my $usage = qq{
 perl run_BLAT_pipeline.pl
   Getting help:
@@ -266,6 +268,18 @@ print LOG "
 ######################################################################
 ######################################################################
   START: ", scalar(localtime()), "
+######################################################################
+  EXECUTION PARAMETERS:
+    - VERSION      $VERSION
+    - SPECIES-1    ", ($species1 or "-none-"), "
+    - SPECIES-2    ", ($species2 or "-none-"), "
+    - CHR-1        ", ($chr1 or "-none-"), "
+    - CHR-2        ", ($chr2 or "-none-"), "
+    - OVERLAP      ", ($overlap or "-none-"), "
+    - CHUNK_SIZE   ", ($chunk_size or "-none-"), "
+    - MASK_OPTION  ", ($masked or "-none-"), "
+    - QUEUE        ", ($queue or "-none-"), "
+    - BASE_DIR     ", ($base_dir or "-none-"), "
 ######################################################################
 ";
 
