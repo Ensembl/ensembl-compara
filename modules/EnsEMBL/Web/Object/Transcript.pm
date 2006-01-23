@@ -17,7 +17,6 @@ sub default_track_by_gene {
   my $db    = $self->get_db;
   my $logic = $self->logic_name;
 
-  warn "$db - $logic";
   my %mappings_db = qw(
     vega evega_transcript
     est est_transcript
@@ -552,18 +551,6 @@ sub analysis {
 }
 
 
-
-=head2 get_transcript_class
-
- Arg[1]       : none
- Example     : $version = $transcriptdata->get_transcript_class
- Description : returns the transcript class
- Return type : string
-                The transcript class
-=cut
-
-sub get_transcript_class { return $_[0]->transcript->transcript_info->class->name; }
-
 =head2 modified
 
  Description: DEPRECATED - Genes no longer have a modified attribute
@@ -585,7 +572,15 @@ sub modified {
 
 =cut
 
-sub get_author_name { return $_[0]->gene->gene_info->author->name; }
+sub get_author_name {
+    my $self = shift;
+    my $attribs = $self->gene->get_all_Attributes('author');
+    if (@$attribs) {
+        return $attribs->[0]->value;
+    } else {
+        return undef;
+    }
+}
 
 =head2 get_author_email
 
@@ -598,19 +593,15 @@ sub get_author_name { return $_[0]->gene->gene_info->author->name; }
 
 =cut
 
-sub get_author_email { return $_[0]->gene->gene_info->author->email; }
-
-=head2 get_remarks
-
-  Arg[1]      : none
-  Example     : $remark_ref = $transcriptdata->get_remarks
-  Description : Gets annotation remarks of an annotated gene
-  Return type : Arrayref
-                A reference to a list of remarks
-
-=cut
-
-sub get_remarks { return [map { $_->remark } $_[0]->transcript->transcript_info->remark]; }
+sub get_author_email {
+    my $self = shift;
+    my $attribs = $self->gene->get_all_Attributes('author_email');
+    if (@$attribs) {
+        return $attribs->[0]->value;
+    } else {
+        return undef;
+    }
+}
 
 =head2 trans_description
 
@@ -925,32 +916,11 @@ sub get_supporting_evidence { ## USED!
     'transcript' => { 'ID' => $self->stable_id, 'db' => $db, 'exon_count'=> 0, },
     'hits'      => {},
   };
-  # Hack for Vega
-  # Supporting evidence for annotated transcripts is per transcript/exon, not
-  # just per exon (as in Ensembl).  To work around this, we get an annotated
-  # transcript object, and get all the relevant supporting evidence IDs from
-  # it.  Then we get the exon supporting evidence as usual, and discard any
-  # evidence that is not in the AnnotatedTranscript evidence list.    
-  my $annot_trans;
-  my %orig_trans_evidence; 
-  my %trans_evidence;
-  if( ($self->species_defs->ENSEMBL_SITETYPE eq "Vega") && $self->database('vega') ){
-    eval { 
-      $annot_trans = $self->database('vega')->get_TranscriptAdaptor->fetch_by_stable_id($transid);
-      # fetch the annotated evidence, take its name, and regex off any 
-      # prefix: from it, then load it as keys of %trans_evidence.
-      %orig_trans_evidence = map { (my $temp = $_->name) =~ s/^(\w*:)?//; $temp, 1 } $annot_trans->transcript_info->evidence;
-      # remove numerical suffix from evidence identifier
-      foreach my $key (keys %orig_trans_evidence) {
-        my $orig_key = $key;
-        $key  =~ s/\.\d+//;
-        $trans_evidence{$key} = $orig_trans_evidence{$orig_key};
-      }
-    }; 
-    warn "VEGA:supp_ev: $@" if $@;
-  } 
 
-  #Retrieve/make Exon data objects    
+  # get transcript supporting evidence
+  my %trans_evidence = map { $_->dbID => 1 } @{ $trans->get_all_supporting_features };
+  
+  # Retrieve/make Exon data objects    
   foreach my $exonData ( @{$trans->get_all_Exons} ){
     $exon_count++;
     my $supporting_features;
@@ -963,16 +933,11 @@ sub get_supporting_evidence { ## USED!
     } else {
       foreach my $this_feature (@{$supporting_features}) {
         my $dl_seq_name = $this_feature->hseqname;
-        # Second part of Vega hack - throw away evidence not on this transcript
-        # compare both before and after chopping off version numbers
-        if( ($self->species_defs->ENSEMBL_SITETYPE eq "Vega") && $self->database('vega') ){
-          (my $dl_seq_name_chopped) = $dl_seq_name =~ /(\w+)/;
-          unless ($orig_trans_evidence{$dl_seq_name} || $orig_trans_evidence{$dl_seq_name_chopped}) {
-            unless ($trans_evidence{$dl_seq_name} || $trans_evidence{$dl_seq_name_chopped}) {
-              next;
-            }
-          }
-        }  
+
+        # skip evidence for this exon if it doesn't support this particular
+        # transcript
+        next unless ($trans_evidence{$this_feature->dbID});
+        
         my $no_version_no;
         if($dl_seq_name =~ /^[A-Z]{2}\.\d+/i) {
           $no_version_no = $dl_seq_name;
