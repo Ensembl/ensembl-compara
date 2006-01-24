@@ -28,6 +28,7 @@ sub _initialize {
     helplink     EnsEMBL::Web::Document::HTML::HelpLink
   );
 
+  $self->call_child_functions( 'common_page_elements','static_page_elements' );
   $self->_common_HTML();
 
 ## Let us set up the search box...

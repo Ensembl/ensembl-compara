@@ -54,6 +54,8 @@ sub _initialize_HTML {
     html_end   EnsEMBL::Web::Document::HTML::HTML_Block
   );
 
+  $self->call_child_functions( 'common_page_elements','static_page_elements' );
+
   $self->_common_HTML();
   $self->_script_HTML();
   $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
