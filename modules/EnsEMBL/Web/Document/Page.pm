@@ -86,11 +86,91 @@ sub new {
   return $self;
 }
 
+
+sub body_elements{
+  my $self = shift;
+  return map{$_->[0]} @{$self->{'body_order'}};
+}
+
 sub add_body_elements {
   my $self = shift;
   while( my @T = splice(@_,0,2) ) {
     push @{$self->{'body_order'}}, \@T;
   }
+}
+
+sub add_body_element{ 
+  my $self = shift; 
+  return $self->add_body_elements(@_);
+}
+
+sub add_body_element_first{
+  my( $self, $code, $function ) = @_;
+  my $elements = $self->{'body_order'};
+  unshift( @{$elements}, [$code, $function] );
+  return 1;
+}
+
+sub add_body_element_last{
+  my( $self, $code, $function ) = @_;
+  my $elements = $self->{'body_order'};
+  unshift( @{$elements}, [$code, $function] );
+  return 1;
+}
+
+sub add_body_element_before{
+  my( $self, $oldcode, $code, $function ) = @_;
+  my $elements = $self->{'body_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $oldcode ){
+      splice( @{$elements},$i,0,[$code, $function] );
+      last;
+    }
+    unshift( @{$elements}, [$code, $function] );
+  }
+  return 1;
+}
+
+sub add_body_element_after{
+  my( $self, $oldcode, $code, $function ) = @_;
+  my $elements = $self->{'body_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $oldcode ){
+      splice( @{$elements},$i+1,0,[$code, $function] );
+      last;
+    }
+    push( @{$elements}, [$code, $function] );
+  }
+  return 1;
+}
+
+sub remove_body_element{
+  my( $self, $code ) = @_;
+  my $elements = $self->{'body_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $code ){
+      splice( @{$elements},$i,1 );
+      last;
+    }
+  }
+  return 1;
+}
+
+sub replace_body_element{
+  my( $self, $code, $function ) = @_;
+  my $elements = $self->{'body_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $code ){
+      $elements->[$i] = [$code, $function];
+      last;
+    }
+  }
+  return 1;
+}
+
+sub head_elements{
+  my $self = shift;
+  return map{$_->[0]} @{$self->{'head_order'}};
 }
 
 sub add_head_elements {
@@ -99,6 +179,72 @@ sub add_head_elements {
     push @{$self->{'head_order'}}, \@T;
   }
 }
+
+sub add_head_element_first{
+  my( $self, $code, $function ) = @_;
+  my $elements = $self->{'head_order'};
+  unshift( @{$elements}, [$code, $function] );
+  return 1;
+}
+
+sub add_head_element_last{
+  my( $self, $code, $function ) = @_;
+  my $elements = $self->{'head_order'};
+  unshift( @{$elements}, [$code, $function] );
+  return 1;
+}
+
+sub add_head_element_before{
+  my( $self, $oldcode, $code, $function ) = @_;
+  my $elements = $self->{'head_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $oldcode ){
+      splice( @{$elements},$i,0,[$code, $function] );
+      last;
+    }
+    unshift( @{$elements}, [$code, $function] );
+  }
+  return 1;
+}
+
+sub add_head_element_after{
+  my( $self, $oldcode, $code, $function ) = @_;
+  my $elements = $self->{'head_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $oldcode ){
+      splice( @{$elements},$i+1,0,[$code, $function] );
+      last;
+    }
+    push( @{$elements}, [$code, $function] );
+  }
+  return 1;
+}
+
+sub remove_head_element{
+  my( $self, $code ) = @_;
+  my $elements = $self->{'head_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $code ){
+      splice( @{$elements},$i,1 );
+      last;
+    }
+  }
+  return 1;
+}
+
+sub replace_head_element{
+  my( $self, $code, $function ) = @_;
+  my $elements = $self->{'head_order'};
+  for( my $i=0; $i<@{$elements}; $i++ ){
+    if( $elements->[$i]->[0] eq $code ){
+      $elements->[$i] = [$code, $function];
+      last;
+    }
+  }
+  return 1;
+}
+
+
 
 sub species_defs { return $_[0]{'species_defs'}; }
 sub head_order :lvalue { $_[0]{'head_order'} }
