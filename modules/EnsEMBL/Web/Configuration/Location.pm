@@ -65,7 +65,7 @@ sub context_menu {
     my %shash2 = ( $obj->species_defs->multi($id, $species) );
     if (%shash2) {
       my $KEY = "opt_alignm_${id}";
-      my $label = sprintf("%d Mammals ($id)", scalar(keys(%shash2)));
+      my $label = sprintf("%d Species ($id)", scalar(keys(%shash2)));
       push @options_as, {
         'text' => "... $label", 'raw' => 1,
         'href' =>  sprintf( "/%s/alignsliceview?c=%s:%s;w=%s;align=%s", $species,  $obj->seq_region_name, $obj->centrepoint, $obj->length, $KEY )

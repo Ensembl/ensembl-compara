@@ -374,7 +374,7 @@ sub init {
 
   if (%shash2) {
       my $KEY = lc($especies).'_compara_'.lc($type);
-      my $label = sprintf("%d Mammals ($type)", scalar(keys(%shash2)) + 1);
+      my $label = sprintf("%d Species ($type)", scalar(keys(%shash2)) + 1);
 
       $self->{'general'}->{'alignsliceviewbottom'}{$KEY} = {
 	  'species'  => $especies,
