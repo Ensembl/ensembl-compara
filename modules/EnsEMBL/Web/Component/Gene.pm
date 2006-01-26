@@ -42,8 +42,9 @@ sub markup_options_form {
   );
   $form->add_element(
     'type' => 'NonNegInt', 'required' => 'yes',
-    'label' => "Display width",  'name' => 'display_width',
-    'value' => $object->param('display_width')
+    'label' => "Alignment width",  'name' => 'display_width',
+    'value' => $object->param('display_width'),
+    'notes' => 'Number of bp per line in alignments'
   );
 
   my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) ||
@@ -127,6 +128,19 @@ sub markup_options_form {
     'value'    => $object->param('codons_display')
   );
 
+  my $title_display = [
+    { 'value' =>'all' , 'name' => 'Include `title` tags' },
+
+    { 'value' =>'off' , 'name' => 'None' },
+  ];
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'title_display',
+    'label'    => 'Title display',
+    'values'   => $title_display,
+    'value'    => $object->param('title_display'),
+    'notes'    => "On mouse over displays exon IDs, length of insertions and SNP\'s allele"
+  );
 
   my $id = 'BLASTZ_NET';
   my @dvals;
@@ -161,7 +175,7 @@ sub markup_options_form {
 	  }
 	  $form->add_element('type' => 'RadioGroup',
 			     'name' => 'RGselect',
-			     'values' =>[{name=>sprintf("%d Mammals (%s)", scalar(keys %shash), $id), value => $id, checked=> $aselect eq $id ? "yes" : undef}],
+			     'values' =>[{name=>sprintf("%d Species (%s)", scalar(keys %shash), $id), value => $id, checked=> $aselect eq $id ? "yes" : undef}],
 			     'label' => '    ',
 			     );
 
@@ -355,7 +369,7 @@ sub orthologues {
       my %shash = ( $gene->species_defs->multi($id,$especies) );
       if (%shash) {
 	  my $KEY = "opt_alignm_$id";
-	  $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with %s Mammals ($id)</a> <br/>), 
+	  $as_html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with %s Species ($id)</a> <br/>), 
 			       $gene->species,
 			       $gene->seq_region_name, 
 			       $gene->seq_region_start, 
