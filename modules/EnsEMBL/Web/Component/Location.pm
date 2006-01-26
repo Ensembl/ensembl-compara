@@ -142,6 +142,7 @@ sub multi_bottom {
   my( $panel, $object ) = @_;
   my $counter = 0;
   my( $primary,@secondary ) = ($object->Locations);
+  my $primary_slice         = $primary->[1]{'_object'};
   my $array = [];
   my @other_slices = map { {'location' => $_, 'ori' => $_->seq_region_strand, 'species' => $_->real_species} } @secondary;
   my $base_URL = "/".$primary->real_species."/".$object->script."?".$object->generate_query_url;
@@ -170,10 +171,11 @@ sub multi_bottom {
     my $next_conf = $i<$slices-1 ? $array->[$i*2+3] : undef;
     my $previous_species = $prev_conf ? $prev_conf->{'species'} : undef;
     my $next_species     = $next_conf ? $next_conf->{'species'} : undef;
-       $config->{'previous_species'} = $previous_species;
-       $config->{'next_species'}     = $next_species;
-       $config->{'slice_id'}         = $i;
-       $config->{'other_slices'}     = \@other_slices;
+       $config->{'previous_species'}   = $previous_species;
+       $config->{'next_species'}       = $next_species;
+       $config->{'slice_id'}           = $i;
+       $config->{'other_slices'}       = \@other_slices;
+       $config->{'primary_slice'}      = $primary_slice;
     if( $previous_species && $next_species eq $previous_species ) {
       if( $flags{'match'} ) {
         foreach(qw( BLASTZ_RAW PHUSION_BLASTN BLASTZ_NET BLASTZ_GROUP BLASTZ_RECIP_NET) ) {
@@ -586,8 +588,8 @@ sub multi_species_list {
 	foreach( $object->species_list() ) {
 		$dup_species{$_}++;
 	}
-	if (grep {$dup_species{$_} > 1} keys %dup_species) {
-		#if we have a self-compara then get seq_regions as well as species names
+	#if we have a self-compara or if we're in vega then get further details
+	if ( (grep {$dup_species{$_} > 1} keys %dup_species) || ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') ) {
 		my @details = $object->species_and_seq_region_list;
 		my $C = 1;
 		my ($type,$srname) = split / / , $object->seq_region_type_and_name;
@@ -597,7 +599,7 @@ sub multi_species_list {
 			$species_hash{ 'sr'.$C++ } = $sr;
 		}
 	} else {
-		#other wise just get species names
+		#otherwise just get species names
 		my %species_flag = ( $species => 1 );
 		my $C = 1;
 		foreach ($object->species_list()) {
@@ -607,6 +609,27 @@ sub multi_species_list {
 		}
 	}
 	return %species_hash;
+}
+
+sub vega_nav_url {
+	my ($object,$def_url,$slice_bp,$gene_length) = @_;
+	my $vega_url;
+	my $obj = $object->[1]{'_object'}[0];
+	if ($obj->[1]{'_object'}{'type'} eq 'Gene') {
+		my $primary_gene    = $obj->[1]{'_object'}{'name'};
+		my $primary_species = $object->species;
+		$vega_url .= sprintf '/%s/%s?gene=%s', $primary_species, $object->script, $primary_gene;
+		my $input_params = $obj->[1]{'_input'};
+		foreach my $k (sort keys %$input_params) {
+			$vega_url .= ';'.$k.'='.$input_params->{$k}[0]	if ($k =~ /^[a-z]\d$/) ;
+		}
+		my $dbadap = $obj->[1]{'_databases'}{'_dbs'}{$primary_species}{'core'};
+		my $gadap = $dbadap->get_adaptor("Gene");
+		my $gene = $gadap->fetch_by_stable_id($primary_gene);
+		my $context = ($slice_bp - $gene_length) / 2;
+		$vega_url .= ';context='.$context;
+	}
+	return $vega_url ? $vega_url : $def_url;
 }
 
 sub contigviewbottom_nav { return bottom_nav( @_, 'contigviewbottom', {} ); }
@@ -678,6 +701,7 @@ sub bottom_nav {
   foreach (keys %zoomgifs) {
     $zoomgifs{$_} = sprintf "%d", sprintf("%.1g",$zoomgifs{$_}*$scaling);
   }
+
   my %nav_options = map { ($_,1) } @{ $wuc->get('_settings','navigation_options')||[]};  
   my $wid             = $object->length;
   my $length          = $object->seq_region_length;
@@ -686,7 +710,11 @@ sub bottom_nav {
   my $zoom_HTML = '';
   my $zoom_HTML_2 = '';
   my @zoomgif_keys = sort keys %zoomgifs;
-  my $lastkey = $zoomgif_keys[-1];
+
+  #get length of gene just once before using within the zoomgif loop (for vega nav)
+  my $gene_length = $object->get_gene_length if ($object->can('get_gene_length'));
+
+  my $lastkey = $zoomgif_keys[-1]; 
   for my $zoom (@zoomgif_keys) {
     my $zoombp = $zoomgifs{$zoom};
     if ( ($wid <= ($zoombp+2) || $zoom eq $lastkey )&& !$selected ){
@@ -694,12 +722,18 @@ sub bottom_nav {
       $selected = "1";
     }
     my $zoomurl = this_link_scale( $object, $zoombp, $hidden_fields_URL );
+
+	if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
+		$zoomurl = vega_nav_url($object,$zoomurl,$zoombp,$gene_length);
+	}
+
     my $unit_str = $zoombp;
     if( $zoom lt 'zoom5' ) {
       $zoom_HTML_2 .=qq(<a href="$zoomurl"><img src="/img/buttons/${zoom}.gif" alt="show $unit_str in detail" class="cv-zoom-2" /></a>);
     } else {
       $zoom_HTML .=qq(<a href="$zoomurl"><img src="/img/buttons/${zoom}.gif" alt="show $unit_str in detail" class="cv-zoom" /></a>);
     }
+
   }
   $zoom_HTML = qq(<table cellspacing="0" class="zoom">
     <tr><td>Zoom</td><td rowspan="2" style="text-align:left">$zoom_HTML</td></tr>
@@ -724,11 +758,22 @@ sub bottom_nav {
     if exists $nav_options{'window'};
 ############ Zoom in.....Zoom out
   $output.= qq(</td>\n    <td class="center middle">);
-  $output.= sprintf(qq(<a href="%s" class="cv_plusminus">+</a>),         this_link_scale( $object, int( $wid / 2), $hidden_fields_URL ) )
-    if exists $nav_options{'half'};
+  my $button_url;
+  if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
+	  $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid / 2),$gene_length);
+  }
+  else {
+	  $button_url =  this_link_scale( $object, int( $wid / 2), $hidden_fields_URL );
+  }
+  $output.= sprintf(qq(<a href="%s" class="cv_plusminus">+</a>), $button_url) if exists $nav_options{'half'};
   $output.= qq(${zoom_HTML}) if exists $nav_options{'zoom'};
-  $output.= sprintf(qq(<a href="%s" class="cv_plusminus">&#8211;</a>),   this_link_scale( $object, int( $wid * 2), $hidden_fields_URL ) )
-    if exists $nav_options{'half'};
+  if ( ($object->species_defs->ENSEMBL_SITE_NAME eq 'Vega') && $gene_length) {
+	  $button_url = vega_nav_url($object,$hidden_fields_URL,int( $wid * 2),$gene_length);
+  }
+  else {
+	  $button_url =  this_link_scale( $object, int( $wid * 2), $hidden_fields_URL );
+  }				  
+  $output.= sprintf(qq(<a href="%s" class="cv_plusminus">&#8211;</a>), $button_url ) if exists $nav_options{'half'};
 ############ Right 5mb/2mb/1mb/window
   $output.= qq(</td>\n    <td class="right middle">);
   $output.= sprintf(qq(<a href="%s" class="cv-button">Window &gt;</a>),  this_link_offset( $object, 0.8 * $wid, $hidden_fields_URL ) )
