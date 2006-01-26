@@ -424,7 +424,7 @@ sub orthologues {
       my $last_col;
       if(exists( $OBJ->{'display_id'} )) {
         (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
-        my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
+        my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
         if( $orthologue_desc ne 'DWGA' ) {
           $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span>);
           $ALIGNVIEW = 1;
