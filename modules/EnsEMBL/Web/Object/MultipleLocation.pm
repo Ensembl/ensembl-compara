@@ -101,4 +101,29 @@ sub generate_dotter_bin_file {
   return $out_file;
 }
 
+=head2 get_gene_length
+
+   Arg[1]      : none
+   Example     : my $gene_length = $object->get_gene_length;
+   Description : gets the length of the primary gene identifier used in multicontigview
+   ReturnType  : int
+
+=cut
+
+sub get_gene_length {
+	my $self = shift;
+	my $obj = $self->{'data'}{'_object'}[0];
+	my $gene_length;
+	if ($obj->[1]{'_object'}{'type'} eq 'Gene') {
+		my $primary_gene_id = $obj->[1]{'_object'}{'name'};
+		my $primary_species = $self->species;
+		my $dbadap          = $obj->[1]{'_databases'}{'_dbs'}{$primary_species}{'core'};
+		my $gadap           = $dbadap->get_adaptor("Gene");
+		my $gene            = $gadap->fetch_by_stable_id($primary_gene_id);
+		$gene_length        = $gene->length;
+	}
+	return $gene_length ? $gene_length : '';
+}
+
+
 1;
