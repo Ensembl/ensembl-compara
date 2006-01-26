@@ -12,9 +12,10 @@ sub init {
     exon_ori                all
     snp_display             off
     line_numbering          off
-    display_width 60
+    display_width 120
     conservation  all
     codons_display off
+    title_display off
     RGselect   NONE
     ms_MLAGAN-167 off
     ms_MLAGAN-170 off
