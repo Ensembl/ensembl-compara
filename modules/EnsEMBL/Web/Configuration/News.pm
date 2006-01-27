@@ -16,7 +16,6 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub newsview {
   my $self   = shift;
-warn "Parameter ".$self->{object}->param('error');
   if (my $panel = $self->new_panel ('Image',
         'code'    => "info$self->{flag}",
         'object'  => $self->{object}) 
