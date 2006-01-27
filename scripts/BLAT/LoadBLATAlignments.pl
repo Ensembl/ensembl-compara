@@ -345,9 +345,18 @@ if ($tab) {
   if (!defined $stored_max_alignment_length) {
     print META "max_alignment_length\t", ($max_alignment_length + 1), "\n";
   } elsif ($stored_max_alignment_length < $max_alignment_length + 1) {
-    print META "max_alignment_length\t", ($max_alignment_length + 1), "\n";
+    foreach my $meta_id (@{get_all_meta_ids($meta_con, "max_alignment_length")}) {
+      print META "$meta_id\tmax_alignment_length\t", ($max_alignment_length + 1), "\n";
+    }
   }
-  print META "max_align_".$method_link_species_set->dbID, "\t", $max_alignment_length + 1, "\n";
+  my $all_meta_ids = get_all_meta_ids($meta_con, "max_align_".$method_link_species_set->dbID);
+  if (!@$all_meta_ids) {
+    print META "NULL\tmax_align_".$method_link_species_set->dbID."\t", ($max_alignment_length + 1), "\n";
+  } else {
+    foreach my $meta_id (@$all_meta_ids) {
+      print META "$meta_id\tmax_align_".$method_link_species_set->dbID."\t", ($max_alignment_length + 1), "\n";
+    }
+  }
   close META;
   close GAB;
   close GA;
@@ -359,7 +368,11 @@ if ($tab) {
     $meta_con->update_key_value("max_alignment_length", $max_alignment_length + 1);
   }
   ## New max_alignment_length is method_link_species_set-specific!
-  $meta_con->store_key_value("max_align_".$method_link_species_set->dbID, $max_alignment_length + 1);
+  if (@{$meta_con->store_key_value("max_align_".$method_link_species_set->dbID)}) {
+    $meta_con->update_key_value("max_align_".$method_link_species_set->dbID, $max_alignment_length + 1);
+  } else {
+    $meta_con->store_key_value("max_align_".$method_link_species_set->dbID, $max_alignment_length + 1);
+  }
 }
 close FILE;
 print STDERR "Done\n";
@@ -422,3 +435,27 @@ sub parse_old_cigar_line {
   return ($consensus_cigar_line, $query_cigar_line, $length);
 }
 
+
+=head2 get_all_meta_ids
+
+  Arg [1]    : string $meta_key
+  Example    : 
+  Description: 
+  Returntype : listref of ints
+  Exceptions : 
+     
+=cut
+
+sub get_all_meta_ids {
+  my ($meta_container_adaptor, $meta_key) = @_;
+  my $meta_ids = [];
+
+  my $sth = $meta_container_adaptor->prepare(
+      "SELECT meta_id FROM meta WHERE meta_key = ? ORDER BY meta_id");
+  $sth->execute($meta_key);
+  while (my $arrRef = $sth->fetchrow_arrayref()) {
+    push(@$meta_ids, $arrRef->[0]);
+  }
+
+  return $meta_ids;
+}
