@@ -10,7 +10,11 @@
   },
   { TYPE => HIVE,
     'hive_output_dir'      => "/ecs4/work2/ensembl/jessica/data/hive_output/jessica_compara_blastz_HsMm_27i/workers",
-# set to "" if you don't want any STDOUT/STDERR files
+# IMPORTANT: The hive system can generate an awful lot of log outputs that are dumped in
+# the hive_output_dir. When a pipeline runs fine, these are not needed and can take a lot of
+# disk space as well as generate a large number of files. If you don't want log outputs (recommended),
+# then just don't specify any hive_output_dir (delete or comment the line or set to "" if you don't want
+# any STDOUT/STDERR files
   },
 
   { TYPE => SPECIES,
