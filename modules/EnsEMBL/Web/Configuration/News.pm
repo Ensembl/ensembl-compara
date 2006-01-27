@@ -52,6 +52,30 @@ sub context_menu {
 
     $self->{page}->menu->add_entry( $flag, 'text' => "Select news to view",
                                   'href' => "/$species/newsview" );
+    ## link back to previous release
+    my $present = $SiteDefs::VERSION;
+    my $current = $present;
+    my $past = 0;
+    if ($self->{object}->param('rel') < $present) { 
+      $current = $self->{object}->param('rel');
+      $past = 1;
+    }
+    my $previous = $current - 1;
+    $self->{page}->menu->add_entry( $flag, 
+                          'text' => "<< Release $previous",
+                          'href' => "/$species/newsview?rel=$previous" );
+    ## extra link forward if user has gone back to earlier news
+    if ($past) {
+      my $next = $current + 1;
+      $self->{page}->menu->add_entry( $flag, 
+                          'text' => ">> Release $next",
+                          'href' => "/$species/newsview?rel=$next" );
+      if ($current < ($present - 1)) {
+        $self->{page}->menu->add_entry( $flag, 
+                          'text' => "Current Release News",
+                          'href' => "/$species/newsview?rel=$present" );
+      }
+    }
 }
 
 #---------------------------------------------------------------------------
@@ -144,42 +168,41 @@ sub news_edit_old {
   $self->wizard_panel('Edit an Item in the News Archive');
 }
 
-sub publish_news {
+sub news_pub {
   my $self   = shift;
   my $object = $self->{'object'};
                                                                                 
   ## the "publish news" wizard uses 4 nodes: select release, 
   ## select record + database, preview record, and save data
   my $wizard = EnsEMBL::Web::Wizard::News->new($object);
-  $wizard->add_nodes([qw(which_rel pub_select pub_preview save)]);
+  $wizard->add_nodes([qw(which_rel pub_select pub_preview pub_save)]);
   $wizard->default_node('which_rel');
                                                                                 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
           ['which_rel'=>'pub_select'],
           ['pub_select'=>'pub_preview'],
-          ['pub_preview'=>'save'],
-          ['pub_select'=>'save'],
+          ['pub_preview'=>'pub_save'],
   ]);
                                                                                 
   $self->add_wizard($wizard);
   $self->wizard_panel('Publish a story to a live database');
 }
 
-sub publish_multi_news {
+sub news_pub_multi {
   my $self   = shift;
   my $object = $self->{'object'};
 
   ## the "publish multi news" wizard uses 3 nodes: select release,
   ## select record(s) + database and save data
   my $wizard = EnsEMBL::Web::Wizard::News->new($object);
-  $wizard->add_nodes([qw(which_rel multi_select save)]);
+  $wizard->add_nodes([qw(which_rel multi_select pub_save)]);
   $wizard->default_node('which_rel');
                                                                                 
   ## chain the nodes together
   $wizard->add_outgoing_edges([
           ['which_rel'=>'multi_select'],
-          ['multi_select'=>'save'],
+          ['multi_select'=>'pub_save'],
   ]);
                                                                                 
   $self->add_wizard($wizard);
