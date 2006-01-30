@@ -45,6 +45,8 @@ The dumping is done with ensembl-compara/scripts/pipeline/comparaDumpAllPeptides
 Don't use -noX or nosplit, use the default setting. The dumping process will dump only one version of each sequence,
 so no redundancy is expected in the fasta file.
 
+cd fasta
+
 ~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf your-compara-hive.conf --noredundancy -fasta metazoa_32.pep > metazoa_32.pep.err 2>&1 &
 
 or if you don't have the hive conf file
@@ -251,10 +253,7 @@ gzip family_32.mcl.gz
 
 You'll need a compara database set up, with genome_db, taxon, and method_link tables prefilled.
 
-This can take a while, several hours (~8 hours), and you can not do anything else before the loading is completed.
-
-IMPORTANT: Look in this script an change the way description and cigar_line are set to "NULL"
-the string, not the undefined value NULL.
+This takes around an hour, and you can not do anything else before the loading is completed.
 
 nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname abelcompara32 --reg_conf reg_conf.pl family_32.tab family_32.mcl > family_32.description 2> family_32.description.err &
 
@@ -396,7 +395,8 @@ family_32.description.SPTREMBL-consensus  > family_32.description-consensus 2> f
 
 
 update the family description in ensembl_family_32 with the data in family_32.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
+Use the same reg_cong.pl as in step 11
 
-LoadDescriptionInFamily.pl --dbname abelcompara32 family_32.description-consensus
+LoadDescriptionInFamily.pl --reg_cong reg_conf.pl --dbname abelcompara32 family_32.description-consensus
 
 
