@@ -17,7 +17,7 @@ sub _init {
   my $Config        = $self->{'config'};
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my @bitmap        = undef;
-  my @colours       = qw(chartreuse4 darkorchid4 orange4 deeppink3 dodgerblue4);
+  my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);
 
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $strand  = $self->strand();
@@ -155,7 +155,7 @@ sub _init {
       if( $allele_string ) {
         $colour = $snp_ref->[3]{ $allele_string };
         unless($colour) {
-          $colour = $snp_ref->[3]{ $allele_string } = $colours[ scalar(values %{$snp_ref->[3]} )];
+          $colour = $snp_ref->[3]{ $allele_string } = $colours[ scalar(values %{$snp_ref->[3]} )] || $colours[-1];
         }
       }
       my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
