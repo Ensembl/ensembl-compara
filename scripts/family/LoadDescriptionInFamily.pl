@@ -61,7 +61,7 @@ $line\n";
 $FH->close;
 
 $sth->finish;
-$sth = $dbc->prepare("UPDATE family set description='UNKNOWN' where description='NULL'");
+$sth = $dbc->prepare("UPDATE family set description='UNKNOWN' where description is NULL");
 $sth->execute;
 $sth->finish;
 
