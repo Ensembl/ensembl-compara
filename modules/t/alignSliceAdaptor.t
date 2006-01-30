@@ -63,7 +63,7 @@ use strict;
 
 BEGIN { $| = 1;  
     use Test;
-    plan tests => 161;
+    plan tests => 138;
 }
 
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
@@ -703,69 +703,6 @@ do {
 };
 
 do {
-  debug("contains a duplicated rat gene");
-  $slice_start = 50171500;
-  $slice_end =   50180000;
-
-  $slice = $slice_adaptor->fetch_by_region(
-        $slice_coord_system_name,
-        $slice_seq_region_name,
-        $slice_start,
-        $slice_end,
-        1
-    );
-  ok($slice);
-  
-  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
-
-  ok($align_slice);
-  
-  ok($align_slice->get_all_Slices->[0]);
-  ok($align_slice->get_all_Slices->[1]);
-  ok(length($align_slice->get_all_Slices->[0]->seq),
-      length($align_slice->get_all_Slices->[1]->seq));
-  my $seq = $align_slice->get_all_Slices->[0]->seq;
-  $seq =~ s/\-//g;
-  ok($seq, $slice->seq);
-  my $rat_genes = $align_slice->get_all_Slices->[1]->get_all_Genes(
-          -MAX_INTRON_LENGTH => 1,
-          -MAX_REPETITION_LENGTH => 0
-      );
-  ok(@$rat_genes, 1);
-  ok(@{$rat_genes->[0]->get_all_Transcripts}, 2);
-  ok(($rat_genes->[0]->get_all_Transcripts)->[0]->stable_id,
-      ($rat_genes->[0]->get_all_Transcripts)->[1]->stable_id);
-
-  $rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
-          -MAX_INTRON_LENGTH => 10000,
-          -MAX_REPETITION_LENGTH => 10000
-      );
-#   _print_genes($rat_genes, $align_slice);
-  ok(@$rat_genes, 1);
-  ok(@{$rat_genes->[0]->get_all_Transcripts}, 1);
-
-  my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss);
-  my $condensed_rat_genes = $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
-          -MAX_INTRON_LENGTH => 1,
-          -MAX_REPETITION_LENGTH => 0
-      );
-  ok(@$condensed_rat_genes, 1);
-  ok(@{$condensed_rat_genes->[0]->get_all_Transcripts}, 2);
-  ok(($condensed_rat_genes->[0]->get_all_Transcripts)->[0]->stable_id,
-      ($condensed_rat_genes->[0]->get_all_Transcripts)->[1]->stable_id);
-  
-  $condensed_rat_genes= $condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
-          -MAX_INTRON_LENGTH => 10000,
-          -MAX_REPETITION_LENGTH => 10000
-      );
-#   _print_genes($condensed_rat_genes, $condensed_align_slice);
-  ok(@$condensed_rat_genes, 1);
-  ok(@{$condensed_rat_genes->[0]->get_all_Transcripts}, 1);
-};
-
-do {
   debug("contains a rat gene with unmapped exons");
   $slice_start = 50000477;
   $slice_end =   50068518;
@@ -800,38 +737,6 @@ do {
 };
 
 do {
-  debug("split transcripts because of intron length");
-  $slice_start = 50172000;
-  $slice_end =   50190000;
-
-  $slice = $slice_adaptor->fetch_by_region(
-        $slice_coord_system_name,
-        $slice_seq_region_name,
-        $slice_start,
-        $slice_end,
-        1
-    );
-  ok($slice);
-  
-  $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
-      $slice, $human_rat_blastznet_mlss, "expanded");
-
-  ok($align_slice);
-  
-  ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
-  ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
-
-  my $rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes();
-  ok(@$rat_genes, 1, "return 1 single gene");
-  ok(@{$rat_genes->[0]->get_all_Transcripts}, 1, "gene contains 1 transcripts");
-  my @mapped_exons = grep {$_->start} @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
-  my $gap = $mapped_exons[1]->start - $mapped_exons[0]->end - 2;
-  my $gapped_rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(
-      -MAX_INTRON_LENGTH => $gap);
-  ok(@{$gapped_rat_genes->[0]->get_all_Transcripts} > @{$rat_genes->[0]->get_all_Transcripts});
-};
-
-do {
   debug("contains a rat gene with missing exons: skip missing exons");
   $slice_start = 50112000;
   $slice_end =   50290000;
@@ -856,7 +761,7 @@ do {
   my $rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes();
   my $unmapped_exons = grep {!defined($_->start)}
       @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons};
-  my $simple_rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(-RETURN_UNMAPPED_EXONS => 0);
+  my $simple_rat_genes = $align_slice->get_all_Slices('Rattus norvegicus')->[0]->get_all_Genes(undef, undef, undef, -RETURN_UNMAPPED_EXONS => 0);
   skip($unmapped_exons == 0,
       @{$simple_rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons} + $unmapped_exons,
       @{$rat_genes->[0]->get_all_Transcripts->[0]->get_all_Exons});
