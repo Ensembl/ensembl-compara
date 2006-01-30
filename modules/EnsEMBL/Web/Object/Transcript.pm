@@ -325,8 +325,13 @@ sub ambig_code {
 sub get_samples {
   my $self = shift;
   return sort($self->param('sample')) if  $self->param('sample');
+  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
 
-  my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+  my $pop_adaptor = $vari_adaptor->get_PopulationAdaptor;
   my @samples = @{$pop_adaptor->get_default_strains};
   #my @samples = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };#all strains
   return sort @samples;
