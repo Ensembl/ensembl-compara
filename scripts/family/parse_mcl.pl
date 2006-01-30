@@ -199,7 +199,6 @@ foreach my $cluster (@clusters) {
     ({
       '_stable_id' => $stable_id,
       '_method_link_species_set' => $mlss,
-      '_description' => "NULL",
       '_description_score' => 0
      });
   
@@ -223,7 +222,6 @@ foreach my $cluster (@clusters) {
     }
     
     my $attribute = new Bio::EnsEMBL::Compara::Attribute;
-    $attribute->cigar_line("NULL");
 
     $family->add_Member_Attribute([$member, $attribute]);
   }
