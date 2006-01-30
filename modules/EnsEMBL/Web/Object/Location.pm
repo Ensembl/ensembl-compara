@@ -98,8 +98,8 @@ sub addContext {
 sub get_default_pop_id {
   my $self = shift;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
-  my $meta_container  = $variation_db->get_MetaContainer;
-  my $pop = $meta_container->get_default_LDPopulation;
+  my $pop_adaptor = $variation_db->get_PopulationAdaptor;
+  my $pop = $pop_adaptor->fetch_default_LDPopulation(); 
   return unless $pop;
   return $pop->dbID;
 }
