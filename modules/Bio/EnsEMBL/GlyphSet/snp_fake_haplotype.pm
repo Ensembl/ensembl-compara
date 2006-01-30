@@ -35,7 +35,8 @@ sub _init {
   my $track_height = $th + 4;
 
   $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => 0, 'height' => $track_height, 'x' => 1, 'w' => 1, 'absolutey' => 1, }));
-  my $strain = "Comparison to reference strain alleles";
+  my $strain = "Comparison to reference strain alleles (green = same allele; purple = different allele)";
+
   my $bp_textwidth = $w2 * length($strain) * 1.2;
   my $textglyph = new Sanger::Graphics::Glyph::Text({
     'x'          => - $w2*1.2 *17.5,
@@ -52,7 +53,13 @@ sub _init {
 
 
   # Get reference strain name:
-  my $pop_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+   my $vari_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation');
+
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+  my $pop_adaptor = $vari_adaptor->get_PopulationAdaptor;
   my $reference_strain_name = $pop_adaptor->get_reference_strain_name();
 
   foreach my $snp_ref ( @snps ) { 
