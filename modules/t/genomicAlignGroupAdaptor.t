@@ -353,6 +353,7 @@ debug("Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor::store");
   $genomic_align_group = $genomic_align_group_adaptor->fetch_by_dbID($genomic_align_group_id);
   $multi->hide("compara", "genomic_align_group");
   $genomic_align_group->dbID(0);
+  $genomic_align_group_adaptor->use_autoincrement(0);
   $genomic_align_group_adaptor->store($genomic_align_group);
   ok($genomic_align_group->dbID,
       $genomic_align_group->genomic_align_array->[0]->method_link_species_set_id*10000000000+1,
