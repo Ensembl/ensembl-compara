@@ -28,7 +28,7 @@ sub init {
              refseq_mouse trna   cpg eponine marker operon rnai ex_profile qtl
              first_ef
 
-             ensemblclones assembly_tag
+             ensemblclones alternative_assembly assembly_tag
              matepairs   bacs  bac_bands  tilepath  tilepath2  bacends
              ruler     scalebar  stranded_contig  
              sequence  codonseq  codons gap gcplot    
@@ -117,6 +117,7 @@ sub init {
                  [ 'polyA_signal'        => 'PolyA signals'        ],
                  [ 'pseudo_polyA'        => 'Pseudo PolyA'        ],
                  [ 'ensemblclones'       => 'Ensembl clones' ],
+                 [ 'alternative_assembly'     => 'Ensembl assembly' ],
                  [ 'assembly_tag'        => 'Assembly tags' ],
   
 
@@ -507,9 +508,19 @@ sub init {
         'available'     => 'das_source das_ENSEMBLCLONES',
     },
     
+    'alternative_assembly' => {
+        'on'      => "off",
+        'pos'       => '6',
+        'dep'       => '6',
+        'str'       => 'b',
+        'other'     => 'Ensembl',
+        'col'       => 'chartreuse3',
+        'available' => 'features alternative_assembly',
+    },
+    
     'assembly_tag' => {
         'on'        => "off",
-        'pos'       => '6',
+        'pos'       => '7',
         'dep'       => '6',
         'str'       => 'b',
         'col'       => 'hotpink2',

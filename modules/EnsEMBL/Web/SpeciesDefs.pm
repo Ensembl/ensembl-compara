@@ -882,6 +882,24 @@ sub _parse {
               }
             };
           }
+
+          ## alternative assembly
+          if ($tree->{'ALTERNATIVE_ASSEMBLY'}) {
+            my $alt_ass = $tree->{'ALTERNATIVE_ASSEMBLY'};
+            $sql   = qq(
+                SELECT * FROM seq_region sr, coord_system cs
+                WHERE sr.coord_system_id = cs.coord_system_id
+                AND cs.name = 'chromosome'
+                AND cs.version = '$alt_ass'
+                LIMIT 1
+            );
+            eval{
+              $query = $dbh->prepare($sql);
+              $tree->{'DB_FEATURES'}->{'ALTERNATIVE_ASSEMBLY'} = 1 if $query->execute() > 0;
+              $query->finish();
+            };
+          }
+          
           $dbh->disconnect();
 
           print STDERR ( "\t  [INFO] Species $filename OK\n" );
