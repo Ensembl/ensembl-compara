@@ -36,6 +36,7 @@ package Bio::EnsEMBL::Compara::NCBITaxon;
 use strict;
 use Bio::Species;
 use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
@@ -125,7 +126,9 @@ sub _add_child_name_to_classification {
     unless ($child->genbank_hidden_flag) {
       unshift @$classification, $child->name;
     }
-    $child->_add_child_name_to_classification($classification);
+    unless ($child->rank eq 'species') {
+      $child->_add_child_name_to_classification($classification);
+    }
   }
 }
 
