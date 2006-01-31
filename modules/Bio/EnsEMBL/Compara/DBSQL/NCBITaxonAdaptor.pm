@@ -85,6 +85,7 @@ sub columns {
           't.left_index',
           't.right_index',
           't.rank',
+          't.genbank_hidden_flag',
           'n.name'
           ];
 }
@@ -122,6 +123,7 @@ sub init_instance_from_rowhash {
 
   $node->name($rowhash->{'name'});
   $node->rank($rowhash->{'rank'});
+  $node->genbank_hidden_flag($rowhash->{'genbank_hidden_flag'});
   $node->distance_to_parent(0.1);  
   # print("  create node : ", $node, " : "); $node->print_node;
   
