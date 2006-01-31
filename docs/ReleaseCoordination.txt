@@ -88,21 +88,21 @@ A potential check script to write should check that both genome_db tables are co
 6. Once the database is merge, run the heathchecks to spot potential conflicts
 see ensembl-compara/docs/healthchecks.txt
 
-Check the max_alignment_length in the meta table:
-  > SELECT MAX(dnafrag_end - dnafrag_start + 1) FROM genomic_align;
-  > SELECT * FROM meta;
-
 Check the collation of the tables as well:
   > SHOW TABLE STATUS;
 
 7. Optimize and flush all the tables
 
-8. Update the files in the ~ensembl-compara/sql directory:
+8. Create a patch to convert a compara DB from the previous release to the new one. The patch should include at least an update of the schema_version in the meta table!
+
+9. Update the files in the ~ensembl-compara/sql directory:
   $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM genome_db" ensembl_compara_XX > \
       ~ensembl-compara/sql/genome_db.txt
   $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM method_link" ensembl_compara_XX > \
       ~ensembl-compara/sql/method_link.txt
   $ mysql -h ecs4 -u ensro -P 3364 -e "SELECT * FROM taxon" ensembl_compara_XX > \
       ~ensembl-compara/sql/taxon.txt
+
+10. Apply patches to the test databases and verify that they work fine. Recompile the test database.
 
 Don't forget to commit these changes into the repository!
