@@ -36,7 +36,7 @@ sub fetch_node_by_taxon_id {
 
 sub fetch_node_by_name {
   my ($self, $name) = @_;
-  my $constraint = "WHERE n.name = $name";
+  my $constraint = "WHERE n.name = '$name'";
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
