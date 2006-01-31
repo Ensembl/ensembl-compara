@@ -253,6 +253,7 @@ sub get_available_adaptors {
       "Member" => "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor",
       "Attribute" => "Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor",
       "Taxon" => "Bio::EnsEMBL::Compara::DBSQL::TaxonAdaptor",
+      "NCBITaxon" => "Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor",
       "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
       "Sequence" => "Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor",
       "NestedSet" => "Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor",
