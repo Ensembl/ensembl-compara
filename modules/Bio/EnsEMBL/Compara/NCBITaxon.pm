@@ -58,6 +58,7 @@ sub copy {
   
   $mycopy->ncbi_taxid($self->ncbi_taxid);
   $mycopy->rank($self->rank);
+  $mycopy->genbank_hidden_flag($self->genbank_hidden_flag);
 
   return $mycopy;
 }
@@ -83,16 +84,67 @@ sub rank {
   return $self->{'_rank'};
 }
 
+sub genbank_hidden_flag {
+  my $self = shift;
+  $self->{'_genbank_hidden_flag'} = shift if(@_);
+  return $self->{'_genbank_hidden_flag'};
+}
+
 sub classification {
   my $self = shift;
+
+  unless ($self->rank eq 'species') {
+    throw("classification can only be called on node of species rank\n");
+  }
+  
+  unless (defined $self->{'_classification'}) {
+    
+    my $root = $self->root;
+    my @classification;
+    unless ($root->name eq "root") {
+      unshift @classification, $self->name;
+    }
+    unless ($root->get_child_count == 0) {
+      $root->_add_child_name_to_classification(\@classification);
+    }
+    my ($genus, $species) = split(" ", $self->binomial);
+    unshift @classification, $species;
+    $self->{'_classification'} = join(" ",@classification);
+  }
+  
+  return $self->{'_classification'};
+}
+
+sub _add_child_name_to_classification {
+  my $self = shift;
+  my $classification = shift;
+  if ($self->get_child_count > 1) {
+    throw("Can't classification on a multifurcating tree\n");
+  } elsif ($self->get_child_count == 1) {
+    my $child = $self->children->[0];
+    unless ($child->genbank_hidden_flag) {
+      unshift @$classification, $child->name;
+    }
+    $child->_add_child_name_to_classification($classification);
+  }
 }
 
 sub common_name {
   my $self = shift;
+  if ($self->has_tag('genbank common name') && $self->rank eq 'species') {
+    return $self->get_tagvalue('genbank common name');
+  } else {
+    return undef;
+  }
 }
 
 sub binomial {
   my $self = shift;
+  if ($self->has_tag('scientific name') && $self->rank eq 'species') {
+    return $self->get_tagvalue('scientific name');
+  } else {
+    return undef;
+  }
 }
 
 
