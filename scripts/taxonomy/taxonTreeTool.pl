@@ -30,22 +30,25 @@ my ($help, $url);
 
 GetOptions('help'        => \$help,
            'url=s'       => \$url,
-           'taxon_id=i'   => \$self->{'taxon_id'},
-           'taxa_list=s'   => \$self->{'taxa_list'},
-           'name=s'   => \$self->{'scientific_name'},
+           'taxon_id=i'  => \$self->{'taxon_id'},
+           'taxa_list=s'  => \$self->{'taxa_list'},
+           'name=s'      => \$self->{'scientific_name'},
            'scale=f'     => \$self->{'scale'},
            'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
+           'index'       => \$self->{'build_leftright_index'}
           );
 
 my $state;
-if($self->{'taxon_id'}) { $state=1; }
-if($self->{'scientific_name'}) { $state=2; }
+if($self->{'taxon_id'}) { $state = 1; }
+if($self->{'scientific_name'}) { $state = 2; }
 if($self->{'taxa_list'}) { 
   $self->{'taxa_list'} = [ split(",",$self->{'taxa_list'}) ];
-  $state=3;
+  $state = 3;
 }
-
+if ($self->{'build_leftright_index'}) {
+  $state = 4;
+}
 if ($help or !$state) { usage(); }
 
 $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
@@ -60,6 +63,7 @@ switch($state) {
   case 1 { fetch_by_ncbi_taxon_id($self); }
   case 2 { fetch_by_scientific_name($self); }
   case 3 { fetch_by_ncbi_taxa_list($self); }
+  case 4 { update_leftright_index($self); }
 }
 
 
@@ -116,6 +120,7 @@ sub fetch_by_scientific_name {
   my $self = shift;
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $node = $taxonDBA->fetch_node_by_name($self->{'scientific_name'});
+#  $node->no_autoload_children;
   $node->release_children;
   my $root = $node->root;
 
@@ -188,4 +193,34 @@ sub fetch_compara_ncbi_taxa {
   $self->{'root'} = $root;
   
   drawPStree($self);
+}
+
+sub update_leftright_index {
+  my $self = shift;
+
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $root = $taxonDBA->fetch_node_by_name('root');
+  $root = $root->root;
+  print STDERR "Starting indexing...\n";
+  build_store_leftright_indexing($self, $root);
+}
+
+sub build_store_leftright_indexing {
+  my $self = shift;
+  my $node = shift;
+  my $counter =shift;
+
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+
+  $counter = 1 unless ($counter);
+  
+  $node->left_index($counter++);
+  foreach my $child_node (@{$node->sorted_children}) {
+    $counter = build_store_leftright_indexing($self, $child_node, $counter);
+  }
+  $node->right_index($counter++);
+  $taxonDBA->update($node);
+  $node->release_children;
+  print STDERR "node_id = ", $node->node_id, " indexed and stored, li = ",$node->left_index," ri = ",$node->right_index,"\n";
+  return $counter;
 }
