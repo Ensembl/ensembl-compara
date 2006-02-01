@@ -1083,6 +1083,7 @@ sub transcriptsnpview {
 
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
+    $Configs->{'context'}->set( 'est_transcript','on','off');
 
   # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
   # @snps: array of arrays containing [fake_start, fake_end, B:E:Variation obj]
@@ -1119,7 +1120,7 @@ sub transcriptsnpview {
     ],
     [ $object->stable_id ]
   );
-  $image->set_extra( $object );
+  #  $image->set_extra( $object );
   $image->imagemap = 'yes';
   my $T = $image->render;
   $panel->print( $T );
@@ -1258,8 +1259,8 @@ sub spreadsheet_TSVtable {
    $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript.</p>");
 
    return tsv_menu( @_, 'TSV_sampletranscript',
-    [qw(  SNPContext ImageSize )], ['SNPHelp'] ); 
-# Took THExport out of the list
+    [qw( Features SNPContext THExport ImageSize )], ['SNPHelp'] ); 
+
  }
 
  sub tsv_menu { 
