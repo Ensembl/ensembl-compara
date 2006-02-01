@@ -56,10 +56,13 @@ sub init {
         [ 'opt_stop_gained',          => 'Stop gained' ],
       ],
       'features' => [
-        [ 'GSV_pfam'    => 'Pfam domains' ],
-        [ 'GSV_prints'  => 'Prints domains' ],
-        [ 'GSV_prosite' => 'Prosite domains' ],
-        [ 'GSV_pfscan'  => 'PFScan domains' ],
+      #  [ 'GSV_pfam'    => 'Pfam domains' ],
+      #  [ 'GSV_prints'  => 'Prints domains' ],
+      #  [ 'GSV_prosite' => 'Prosite domains' ],
+      #  [ 'GSV_pfscan'  => 'PFScan domains' ],
+      ],
+      'snphelp' => [
+        [ 'transcriptsnpview'  => 'TranscriptSNPView' ],
       ],
     },
     'coverage_top' => {
@@ -89,30 +92,30 @@ sub init {
       'type'        => 'bottom',
       'glyphset'    => 'coverage'
      },
-    'GSV_pfam' => {
-      'on'          => "on",
-      'pos'         => '300',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
-    'GSV_prints' => {
-      'on'          => "on",
-      'pos'         => '301',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
-    'GSV_prosite' => {
-      'on'          => "on",
-      'pos'         => '302',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
-    'GSV_pfscan' => {
-      'on'          => "on",
-      'pos'         => '303',
-      'str'         => 'r',
-      'col'         => 'violet3'
-    },
+#     'GSV_pfam' => {
+#       'on'          => "on",
+#       'pos'         => '300',
+#       'str'         => 'r',
+#       'col'         => 'violet3'
+#     },
+#     'GSV_prints' => {
+#       'on'          => "on",
+#       'pos'         => '301',
+#       'str'         => 'r',
+#       'col'         => 'violet3'
+#     },
+#     'GSV_prosite' => {
+#       'on'          => "on",
+#       'pos'         => '302',
+#       'str'         => 'r',
+#       'col'         => 'violet3'
+#     },
+#     'GSV_pfscan' => {
+#       'on'          => "on",
+#       'pos'         => '303',
+#       'str'         => 'r',
+#       'col'         => 'violet3'
+#    },
  };
 } 
 1;

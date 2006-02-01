@@ -109,7 +109,7 @@ sub transcriptsnpview {
 # $self->update_configs_from_parameter( 'TSV_context', 'TSV_context' );
   my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "info$self->{flag}",
-    'caption' => 'Compare SNPs from different transcripts',
+    'caption' => 'Ensembl Transcript Variation Report for '.$obj->stable_id,
     'object'  => $obj,
   );
   $panel1->add_form( $self->{page}, 'markup_up_seq', 'EnsEMBL::Web::Component::Transcript::marked_up_seq_form' );
@@ -122,6 +122,7 @@ sub transcriptsnpview {
   $self->add_panel( $panel1 );
   $self->initialize_zmenu_javascript;
   $self->set_title( 'Transcript SNP Report for '.$obj->stable_id );
+
 
 ## Panel 2 - the main image on the page showing variations plotted against the exons of the transcript
 

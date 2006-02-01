@@ -19,7 +19,12 @@ sub new {
     'image_width' => 48,
     'alt'         => 'Help'
   ); 
-  $self->add_link( 'GeneSNPView', $self->help_link('genesnpview',1), '' );
+  my @menu_entries = @{$self->{'config'}->get('_settings','snphelp')||[]};
+  if( @{$self->{'configs'}||[]} ) {
+    foreach my $script ( @menu_entries ) {
+      $self->add_link( $script->[1], $self->help_link( $script->[1], 1), '' );
+    }
+  }
   return $self;
 }
 

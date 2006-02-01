@@ -62,7 +62,10 @@ sub init {
         [ 'GSV_prosite' => 'Prosite domains' ],
         [ 'GSV_pfscan'  => 'PFScan domains' ],
       ],
-    },
+    'snphelp' => [
+        [ 'genesnpview'  => 'GeneSNPView' ],
+      ],
+     },
     'GSV_transcript' => {
       'on'          => "on",
       'pos'         => '100',

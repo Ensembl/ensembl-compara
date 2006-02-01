@@ -396,6 +396,16 @@ sub munge_read_coverage {
     @$coverage_obj;
   return  \@filtered_obj;
 }
+
+sub generate_query_hash {
+  my $self = shift;
+  return {
+	  'transcript' => $self->stable_id,
+	  'db'         => $self->get_db,
+	 };
+}
+
+
 #-- end transcript SNP view ----------------------------------------------
 
 

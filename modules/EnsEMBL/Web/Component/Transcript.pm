@@ -1122,8 +1122,8 @@ sub transcriptsnpview {
   $image->set_extra( $object );
   $image->imagemap = 'yes';
   my $T = $image->render;
-  $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript.</p>");
   $panel->print( $T );
+
   return 0;
 }
 
@@ -1254,33 +1254,26 @@ sub spreadsheet_TSVtable {
 }
 
  sub transcriptsnpview_menu    {  
-#   return tsv_menu( @_, 'TSV_sampletranscript',
+   my ($panel) = @_;
+   $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript.</p>");
 
-#    [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); 
-# #   [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); 
-
+   return tsv_menu( @_, 'TSV_sampletranscript',
+    [qw(  SNPContext ImageSize )], ['SNPHelp'] ); 
+# Took THExport out of the list
  }
 
-# sub tsv_menu { 
-#   my($panel, $object, $configname, $left, $right ) = @_;
-#   my $mc = $object->new_menu_container(
-#     'configname'  => $configname,
-#     'panel'       => $configname,
-#     'configs'     => [ $object->user_config_hash( 'TSV_context' ) ],
-#     'leftmenus'  => $left,
-#     'rightmenus' => $right
-#   );
-#   $panel->print( $mc->render_html );
-#   $panel->print( $mc->render_js );
-#   return 0;
-# }
-
-# sub generate_query_hash {
-#   my $self = shift;
-#   return {
-#     'transcript' => $self->stable_id,
-#     'db'         => $self->get_db,
-#   };
-# }
+ sub tsv_menu { 
+   my($panel, $object, $configname, $left, $right ) = @_;
+   my $mc = $object->new_menu_container(
+     'configname'  => $configname, #primary config for display
+     'panel'       => "bottom",
+     'configs'     => [ $object->user_config_hash( 'TSV_context' ) ], # other configs that are affected by menu changes
+     'leftmenus'  => $left,
+     'rightmenus' => $right
+   );
+   $panel->print( $mc->render_html );
+   $panel->print( $mc->render_js );
+   return 0;
+ }
 
 1;
