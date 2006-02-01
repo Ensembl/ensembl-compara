@@ -1,0 +1,56 @@
+
+This file describes how to "mirror" the NCBI taxonomy database by creating
+and populating MySQL tables (to be used in a compara database), that retain
+the necessary information to generate the taxonomy tree structure used by
+the Bio::EnsEMBL::Compara::NCBITaxon object (and its corresponding adaptor
+Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor).
+
+The NCBI taxonomy database dumps are apparently generated every hour.
+We'll update our "mirror" at each release (every 2 months).
+
+wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+
+gtar xvzf taxdump.tar.gz
+
+rm -f taxdump.tar.gz
+
+perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $parent_id, $rank, $genbank_hidden_flag) = ($array[0],$array[1],$array[2],$array[10]);print $taxon_id,"\t", $parent_id,"\t", $rank,"\t",$genbank_hidden_flag,"\n";}' nodes.dmp > ncbi_taxa_nodes.txt
+
+perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_class) = split(/\t\|\t/);print $taxon_id,"\t", $name,"\t",$name_class,"\n";}' names.dmp > ncbi_taxa_names.txt
+
+
+CREATE TABLE ncbi_taxa_nodes (
+  taxon_id                        int(10) unsigned NOT NULL,
+  parent_id                       int(10) unsigned NOT NULL,
+  rank                            char(32) default '' NOT NULL,
+  genbank_hidden_flag             boolean default 0 NOT NULL,
+
+  left_index                      int(10) NOT NULL,
+  right_index                     int(10) NOT NULL,
+  root_id                         int(10) default 1 NOT NULL,
+  
+  KEY (taxon_id),
+  KEY (parent_id),
+  KEY (rank)
+);
+
+CREATE TABLE ncbi_taxa_names (
+  taxon_id                    int(10) unsigned NOT NULL,
+  name                        varchar(255),
+  name_class                  varchar(50),
+
+  KEY (taxon_id),
+  KEY (name),
+  KEY (name_class)
+);
+
+mysqlimport -hia64e -uensadmin -pensembl abel_tree_test ncbi_taxa_nodes.txt
+abel_tree_test.ncbi_taxa_nodes: Records: 293338  Deleted: 0  Skipped: 0  Warnings: 880014
+
+mysqlimport -hia64e -uensadmin -pensembl abel_tree_test ncbi_taxa_names.txt
+abel_tree_test.ncbi_taxa_names: Records: 381021  Deleted: 0  Skipped: 0  Warnings: 0
+
+mysql -hia64e -uensadmin -pensembl -N -e" update ncbi_taxa_nodes set parent_id=0 where parent_id=taxon_id" abel_tree_test
+
+# Or maybe the API should allow to have parent_id=taxon_id when you are at the root?!
+
