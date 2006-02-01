@@ -152,12 +152,13 @@ You need to send out two emails:
 . Say if these are PRE species.  
 . Core bio normally process this on Thursdays. If you want it done sooner you have to give them 48h notice.
 . Edit the list of species. Blast db and ssaha servers ONLY needed for species with new assemblies.  Blast db also needed if there are changes to the data effecting the fasta files.
+. Check the location of the files is correct
 \n
 To : web-corebio\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
 Subject: blast databases
 
-Please can you set up blast databases for @SPECIES. $pre_spp.
-The files are here: $DUMPDIR,
+Please can you set up blast databases for @SPECIES. $pre_spp
+The files are here ecs3:$DUMPDIR .
 
 Thanks,
 
@@ -168,8 +169,8 @@ Ensembl-webteam.
 To: aws\@sanger.ac.uk, ensembl-webteam\@sanger.ac.uk
 Subject: ssaha server
 
-Please can you set up ssaha servers for @SPECIES. $pre_spp.
-The files are here: $DUMPDIR
+Please can you set up ssaha servers for @SPECIES. $pre_spp
+The files are here ecs3:$DUMPDIR .
 
 Thanks,
 
@@ -177,7 +178,7 @@ Ensembl-webteam
 
 );
 
-$email ||= 'fc1@sanger.ac.uk';
+$email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email, $additional_text ) if $logfile;
 exit;
 
