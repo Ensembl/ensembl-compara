@@ -36,6 +36,7 @@ sub init {
       'str'         => 'f',
       'pos'         => '10000',
       'col'         => 'black',
+      'notext'      => 1,
     },
     'stranded_contig' => {
       'on'          => "on",
