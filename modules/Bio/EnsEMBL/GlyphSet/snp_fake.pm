@@ -44,7 +44,13 @@ sub _init {
     my  $h = 4 + ($th+2) * scalar @alleles;
 
     my $bp_textwidth = $w * length("$label");
-    if( $bp_textwidth < $E-$S+1 ) {
+    if( $bp_textwidth*1.2 < $E-$S+1 ) {
+      $h = 8 + $th*2;
+      my $tmp_width = $bp_textwidth + $w*4;
+      if ( ($E - $S + 1) > $tmp_width ) {
+	$S = ( $E + $S-$tmp_width )/2;
+	$E =  $S+$tmp_width ;
+      }
       my $textglyph = new Sanger::Graphics::Glyph::Text({
                 'x'          => ( $E + $S - 1 - $bp_textwidth)/2,
                 'y'          => ($h-$th)/2,
