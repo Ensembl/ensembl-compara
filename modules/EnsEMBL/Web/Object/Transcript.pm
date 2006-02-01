@@ -277,7 +277,7 @@ sub getAllelesConsequencesOnSlice {
 
   # Rm many filters as not applicable to Allele Features
 # [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
-# [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
+
     # [ fake_s, fake_e, SNP ]   Filter our unwanted classes
     grep { $valids->{'opt_'.$self->var_class($_->[2])} }
 
@@ -287,7 +287,6 @@ sub getAllelesConsequencesOnSlice {
 	map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
 	  @$allele_features;
 
-  $self->__data->{'sample'}{$sample}->{'allele_info'}  = \@filtered_af || [];
   return [] unless @filtered_af;
 
 
@@ -298,12 +297,19 @@ sub getAllelesConsequencesOnSlice {
   return [] unless @$consequences;
 
   my @valid_conseq;
+  my @valid_alleles;
   foreach (sort {$a->start <=> $b->start} @$consequences ){  # conseq on our transcript
-    push @valid_conseq, $_ ;#if $valids->{'opt_'.lc($_->type)} ;
+    my $allele_feature = shift @filtered_af;
+    if ( $valids->{'opt_'.lc($_->type)} ) {
+      # [ fake_s, fake_e, SNP ]   Filter our unwanted consequences
+      push @valid_conseq,  $_ ;
+      push @valid_alleles, $allele_feature;
+    }
   }
   $self->__data->{'sample'}{$sample}->{'consequences'} = \@valid_conseq || [];
+  $self->__data->{'sample'}{$sample}->{'allele_info'}  = \@valid_alleles || [];
 
-  return (\@filtered_af, \@valid_conseq);
+  return (\@valid_alleles, \@valid_conseq);
 }
 
 
