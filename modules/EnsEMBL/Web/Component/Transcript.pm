@@ -1259,7 +1259,7 @@ sub spreadsheet_TSVtable {
    $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript.</p>");
 
    return tsv_menu( @_, 'TSV_sampletranscript',
-    [qw( Features SNPClasses SNPContext THExport ImageSize )], ['SNPHelp'] ); 
+    [qw( Features SNPClasses SNPTypes SNPContext THExport ImageSize )], ['SNPHelp'] ); 
 
  }
 
