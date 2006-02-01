@@ -75,7 +75,7 @@ sub check_dir {
 =cut
 
 sub mail_log {
-  my ($file, $email_address) = @_;
+  my ($file, $email_address, $additional_text) = @_;
   open IN, "< $file" or die "Can't open $file : $!";
   my $content;
   while (<IN>) {
@@ -83,13 +83,13 @@ sub mail_log {
   }
 
   my $sendmail = "/usr/sbin/sendmail -t";
-  my $subject  = "Subject: Dumping error report\n";
+  my $subject  = "Subject: Dumping report\n";
 
   open(SENDMAIL, "|$sendmail") or die "Cannot open $sendmail: $!";
   print SENDMAIL $subject;
   print SENDMAIL "To: $email_address\n";
   print SENDMAIL "Content-type: text/plain\n\n";
-  print SENDMAIL $content;
+  print SENDMAIL $content . $additional_text;
   close(SENDMAIL);
   print "[INFO] Sent report to $email_address\n";
 }
