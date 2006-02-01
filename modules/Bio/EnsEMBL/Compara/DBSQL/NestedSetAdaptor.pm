@@ -130,20 +130,19 @@ sub update {
   }
 
   my $parent_id = 0;
-  my $root_id = 0;
   if($node->parent) {
     $parent_id = $node->parent->node_id ;
-    $root_id = $node->root->node_id;
   }
+  my $root_id = $node->root->node_id;
 
-  my $table= $self->tables->[0]->[0];
+ my $table= $self->tables->[0]->[0];
   my $sql = "UPDATE $table SET ".
                "parent_id=$parent_id".
                ",root_id=$root_id".
                ",left_index=" . $node->left_index .
                ",right_index=" . $node->right_index .
-               ",distance_to_parent=" . $node->distance_to_parent.
-             "WHERE $table.node_id=". $node->node_id;
+               ",distance_to_parent=" . $node->distance_to_parent .
+             " WHERE $table.node_id=". $node->node_id;
 
   $self->dbc->do($sql);
 }
