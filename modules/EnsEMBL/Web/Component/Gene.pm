@@ -942,7 +942,7 @@ sub genesnpview {
   ],
   [ $object->stable_id ]
   );
-  $image->set_extra( $object );
+  #$image->set_extra( $object );
 
   $image->imagemap = 'yes';
   my $T = $image->render;

@@ -106,7 +106,7 @@ sub transcriptsnpview {
  my $obj    = $self->{'object'};
  my $params = { 'transcript' => $obj->stable_id, 'db' => $obj->get_db  };
 
- $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcipt) );
+ $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
  my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "info$self->{flag}",
     'caption' => 'Ensembl Transcript Variation Report for '.$obj->stable_id,

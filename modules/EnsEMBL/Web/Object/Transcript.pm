@@ -299,7 +299,7 @@ sub getAllelesConsequencesOnSlice {
 
   my @valid_conseq;
   foreach (sort {$a->start <=> $b->start} @$consequences ){  # conseq on our transcript
-    push @valid_conseq, $_ if $valids->{'opt_'.lc($_->type)} ;
+    push @valid_conseq, $_ ;#if $valids->{'opt_'.lc($_->type)} ;
   }
   $self->__data->{'sample'}{$sample}->{'consequences'} = \@valid_conseq || [];
 

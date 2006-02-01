@@ -1120,7 +1120,7 @@ sub transcriptsnpview {
     ],
     [ $object->stable_id ]
   );
-  #  $image->set_extra( $object );
+  #  $image->set_extra( $object ); #otherwise duplicates links
   $image->imagemap = 'yes';
   my $T = $image->render;
   $panel->print( $T );
@@ -1259,7 +1259,7 @@ sub spreadsheet_TSVtable {
    $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript.</p>");
 
    return tsv_menu( @_, 'TSV_sampletranscript',
-    [qw( Features SNPContext THExport ImageSize )], ['SNPHelp'] ); 
+    [qw( Features SNPClasses SNPContext THExport ImageSize )], ['SNPHelp'] ); 
 
  }
 
