@@ -71,7 +71,9 @@ require EnsEMBL::Web::DBSQL::DBConnection;
 
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
 my $dbconnection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SPECIES_DEFS);
-
+my $batch;
+my $chunk;
+my $count;
 my @too_long;
 unless ($no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
@@ -83,19 +85,32 @@ unless ($no_log) {
 
 my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION;
 foreach my $spp (@species){
-  foreach my $format (@formats){
-    $spp = ucfirst(lc($spp));
-    $ENV{'ENSEMBL_SPECIES'} = $spp;
-    warning(1, "species = $spp $format");
+  my @tmp =();
+  $spp = ucfirst(lc($spp));
+  $ENV{'ENSEMBL_SPECIES'} = $spp;
 
-    my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
-    $sp_release =~ s/\.//g;
+  $batch = 0;
+  $count =0;
+  if($spp eq "Mus_musculus"){
+    $chunk = 100;
+  }
+  else{
+    $chunk = 1000;
+  }
+
+  my @spp_dumpdirectory;  
+  my $sp_release = $SPECIES_DEFS->get_config($spp,"SPECIES_RELEASE_VERSION");
+  $sp_release =~ s/\.//g;
+  my $format_count=0;
+  my @tmp=();
+  foreach my $format (@formats){
     my $spp_dir = join "_", (lc ($spp), $sitedefs_release, $sp_release);
     my $spp_dumpdir = "$dumpdir/$spp_dir/data/flatfiles/$format";
 
     unless (-d "$spp_dumpdir"){
       system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
     }
+    warning(1, "species = $spp $format");
     my $text = readme($format, $spp);
     open(README, '>'."$spp_dumpdir/README") 
       or die "Couldn't open file $spp_dumpdir/README: $!\n";
@@ -103,42 +118,64 @@ foreach my $spp (@species){
     close README;
     info (1,"Made dump directory: $spp_dumpdir");
     next if $readme_only;
-
-    unless (lc($format) eq "embl" || lc($format) eq "genbank"){
+     unless (lc($format) eq "embl" || lc($format) eq "genbank"){
       die "[*DIE] unrecognized dump format - use embl or genbank\n";
     }
-
-
-    my $databases = $dbconnection->get_databases_species($spp, "core");
-    my $db =  $databases->{'core'} ||
+    push @tmp, $format;
+    push @spp_dumpdirectory, $spp_dumpdir;
+    $format_count++;
+  }
+  @formats = ();
+  push @formats, @tmp;
+    
+  my $databases = $dbconnection->get_databases_species($spp, "core");
+  my $db =  $databases->{'core'} ||
     die( "Could not retrieve core database for $spp" ); 
 
-    my $slice_adaptor = $db->get_SliceAdaptor();
-    $slice_adaptor->cache_toplevel_seq_mappings();
-    # loop through every non-redundant region in the DB
-    my $inc_dupes  = 1; # include duplicate regions like PARs?
-    my $inc_nonref = 1; # include non-reference regions like haplotypes?
-
-    my $slices = $slice_adaptor->fetch_all('toplevel', undef,
-                                           $inc_dupes, $inc_nonref);
-    foreach my $slice (@$slices) {
-      # generate list of 'unbreakable' blocks around genes
-      my ($exclude_blocks, $big_blocks, $too_long)= generate_blocklist($slice, $spp);
-
-      # split up slices into reasonable chunks, and avoid breaking genes
-      my $chunked_slices = chunk_seq_region( $slice, $exclude_blocks );
-
-      # dump flatfiles for the chunks
-      foreach my $chunked_slice (@$chunked_slices) {
-        dump_format($chunked_slice, $format, $spp_dumpdir);
+  my $slice_adaptor = $db->get_SliceAdaptor();
+  $slice_adaptor->cache_toplevel_seq_mappings();
+   
+  # loop through every non-redundant region in the DB
+  my $inc_dupes  = 1; # include duplicate regions like PARs?
+  my $inc_nonref = 1; # include non-reference regions like haplotypes?
+  
+  my $slices = $slice_adaptor->fetch_all('toplevel', undef,
+					 $inc_dupes, $inc_nonref);
+  foreach my $slice (@$slices) {
+    # generate list of 'unbreakable' blocks around genes
+    my ($exclude_blocks, $big_blocks, $too_long)= generate_blocklist($slice, $spp);
+    
+    # split up slices into reasonable chunks, and avoid breaking genes
+    my $chunked_slices = chunk_seq_region( $slice, $exclude_blocks );
+    
+    # dump flatfiles for the chunks
+    foreach my $chunked_slice (@$chunked_slices) {
+      my $seq = $chunked_slice->seq();
+      for (my $i=0;$i < $format_count; $i++){
+	dump_format($chunked_slice, $formats[$i], $spp_dumpdirectory[$i], $seq);
       }
-      # Were there big blocks or genes that were skipped cos too long?
-      warning (1, "$big_blocks big blocks") if $big_blocks;
-
-      push (@too_long, @$too_long);
+      $count++;
+      if($count >= $chunk){
+	for (my $i=0;$i < $format_count; $i++){
+	  ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk) 
+	    unless $nobundle;
+	}
+	$batch++;
+	$count = 0;
+      }
     }
-
-    ftp_bundle($format, $spp_dumpdir, $VERBOSITY) unless $nobundle;
+    # Were there big blocks or genes that were skipped cos too long?
+    warning (1, "$big_blocks big blocks") if $big_blocks;
+    
+    push (@too_long, @$too_long);
+    
+  }
+  if($count > 0){
+    for (my $i=0;$i < $format_count; $i++){
+      ftp_bundle($formats[$i], $spp_dumpdirectory[$i], $VERBOSITY, $batch, $chunk) 
+	unless $nobundle;
+    }
+    
   }
 }
 
@@ -152,7 +189,7 @@ my $time_taken = time - $time1;
 my $hours      = localtime($time_taken)->hour -1;
 warning (1, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
 
-$email ||= 'fc1@sanger.ac.uk';
+$email ||= 'ensembl-webteam@sanger.ac.uk';
 utils::Tool::mail_log( $logfile, $email ) if $logfile;
 
 exit;
@@ -328,7 +365,7 @@ sub chunk_seq_region {
 # uses static golden path adaptor to get virtual contig.. 
 
 sub dump_format {
-  my ( $slice, $format, $spp_dumpdir ) = @_;
+  my ( $slice, $format, $spp_dumpdir, $seq ) = @_;
 
   my $name = $slice->name();
 
@@ -341,9 +378,9 @@ sub dump_format {
 
     my $outfile;
 
-    info (1, "..$format..");
+#    info (1, "..$format..");
     my $filename =  "$spp_dumpdir/$name.$format";
-    $seq_dumper->dump($slice, $format, $filename);
+    $seq_dumper->dump($slice, $format, $filename, $seq);
   };
   if( $@ ) {
     warning (1, "ERROR: Dumping Error! Cannot dump $name\n$@");
@@ -352,16 +389,11 @@ sub dump_format {
 
 #------------------------------------------------------------------------------
 sub ftp_bundle{
-  my ($format, $spp_dumpdir, $VERBOSITY) = @_;
+  my ($format, $spp_dumpdir, $VERBOSITY, $batch, $chunk_size) = @_;
   my $count = 0;
-  my $batch = 0;
-  my $gz;
-  my $chunk = 1000;
   my $spp = $ENV{'ENSEMBL_SPECIES'};
+  my $gz;
 
-  if($spp eq "Mus_musculus"){
-    $chunk = 100;
-  }
   info(1, "Generating compressed data archives for FTP site (chunk=$chunk)..");
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
   my @f = readdir DIR;
@@ -372,6 +404,7 @@ sub ftp_bundle{
     info (1, "Made dir $spp_dumpdir/FTP");
   }
 
+  $gz = gzopen("$spp_dumpdir/FTP/$spp.".($batch*$chunk_size).".dat.gz","wb") || die $!;
  HOP: while (@f){
 
     my $filename = shift(@f);
@@ -387,26 +420,7 @@ sub ftp_bundle{
       next HOP;
     }
 
-    if($count == 0){
-      #info (1, "Making $spp_dumpdir/FTP/$spp.${batch}.dat.gz..");
-      $gz = gzopen("$spp_dumpdir/FTP/$spp.${batch}.dat.gz","wb") || die $!;
-    }
-
-    if($count > 0 && $count%$chunk == 0){
-      $batch++;
-      #info (1, "Closing $spp_dumpdir/FTP/$spp.${batch}.dat.gz...");
-      $gz->gzclose();
-      my $inc = $batch*$chunk;
-      #info (1, "Making $spp_dumpdir/FTP/$spp.${inc}.dat.gz...");
-      $gz = gzopen("$spp_dumpdir/FTP/$spp.${inc}.dat.gz","wb") || die $!;
-    }
-
-    $count++;
-
-    if ($count%($chunk/10) == 0){
-      info(1, "$count files processed...") ;
-    }
-
+ 
     open (FILE, "$spp_dumpdir/$filename") || die $!;
     while(<FILE>){
       $gz->gzwrite($_);
@@ -415,8 +429,6 @@ sub ftp_bundle{
   }
 
   $gz->gzclose();
-  $count = 0;
-  $batch = 0;
 
   # Tidy up the directories
   opendir(DIR, $spp_dumpdir) or die " can't open dir $spp_dumpdir:$!";
@@ -432,6 +444,7 @@ sub ftp_bundle{
   system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
   system ("rm -r $spp_dumpdir/FTP");
 }
+
 
 #----------------------------------------------------------------------
 sub info{
