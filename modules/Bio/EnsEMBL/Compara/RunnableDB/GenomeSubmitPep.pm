@@ -192,6 +192,10 @@ sub createSubmitPepAnalysis {
   my $self    = shift;
   my $subset  = shift;
 
+  if (!UNIVERSAL::isa($subset, "Bio::EnsEMBL::Compara::Subset")) {
+    throw("Calling createSubmitPepAnalysis without a proper subset [$subset]");
+  }
+  
   print("\ncreateSubmitPepAnalysis\n");
   
   my $logic_name = "SubmitPep_" . $self->{'reference_name'};
