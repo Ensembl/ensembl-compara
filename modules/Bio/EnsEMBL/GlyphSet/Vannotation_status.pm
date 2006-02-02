@@ -11,6 +11,7 @@ sub _init {
     my $chr = $self->{'container'}->{'chr'};
     my $slice_adapt   = $self->{'container'}->{'sa'};  
     my $chr_slice = $slice_adapt->fetch_by_region('chromosome', $chr);
+	my $bp_per_pixel = ($chr_slice->length)/450;
 
     my @features;
     push @features,
@@ -29,10 +30,14 @@ sub _init {
         my ($ms) = @{ $f->get_all_MiscSets('NoAnnotation') };
         ($ms) = @{ $f->get_all_MiscSets('CORFAnnotation') } unless $ms;
 
+		#set length of feature to the equivalent of 1 pixel if it's less than 1 pixel
+		my $f_length = $f->end - $f->start;
+		my $width = ($f_length > $bp_per_pixel) ? $f_length : $bp_per_pixel;
+
         my $glyph = new Sanger::Graphics::Glyph::Rect({
             'x'      => $f->start,
             'y'      => 0,
-            'width'  => $f->end-$f->start,
+            'width'  => $width,
             'height' => 1,
             'colour' => $colour{$ms->code},
         });
