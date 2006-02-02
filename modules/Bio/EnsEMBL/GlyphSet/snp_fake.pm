@@ -13,46 +13,38 @@ sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
-  my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
-  my $target_gene   = $Config->{'geneid'};
-  my @bitmap        = undef;
   my $colours       = $Config->get('snp_fake','colours' );
   foreach my $type ( sort { $colours->{$a}->[0] cmp $colours->{$b}->[0]} keys %$colours ) {
     push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->[1],   $colours->{$type}->[0];
   }
 
-  my $pix_per_bp    = $Config->transform->{'scalex'};
-  my $strand  = $self->strand();
-  my $length  = $container->length;
-    
-  my %exons = ();
 
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
 
   my @snps = @{$Config->{'snps'}};
-  my $tag = $Config->get( 'snp_fake', 'tag' );
-  my $tag2 = $tag + ($strand == -1 ? 1 : 0);
-  my $start = $container->start();
+  my $length    = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'}->length : $self->{'container'}->length;
+  my $tag2 = $Config->get( 'snp_fake', 'tag' ) + ($self->strand == -1 ? 1 : 0);
+
   foreach my $snp_ref ( @snps ) { 
     my $snp = $snp_ref->[2];
-    my( $S,$E ) = ($snp_ref->[0], $snp_ref->[1] );
-    $S = 1 if $S < 1;
-    $E = $length if $E > $length;
+    my( $start,$end ) = ($snp_ref->[0], $snp_ref->[1] );
+    $start = 1 if $start < 1;
+    $end = $length if $end > $length;
 
     my $label = $snp->allele_string;
     my @alleles = split "\/", $label;
     my  $h = 4 + ($th+2) * scalar @alleles;
 
     my $bp_textwidth = $w * length("$label");
-    if( $bp_textwidth*1.2 < $E-$S+1 ) {
+    if( $bp_textwidth*1.2 < $end-$start+1 ) {
       $h = 8 + $th*2;
       my $tmp_width = $bp_textwidth + $w*4;
-      if ( ($E - $S + 1) > $tmp_width ) {
-	$S = ( $E + $S-$tmp_width )/2;
-	$E =  $S+$tmp_width ;
+      if ( ($end - $start + 1) > $tmp_width ) {
+	$start = ( $end + $start-$tmp_width )/2;
+	$end =  $start+$tmp_width ;
       }
       my $textglyph = new Sanger::Graphics::Glyph::Text({
-                'x'          => ( $E + $S - 1 - $bp_textwidth)/2,
+                'x'          => ( $end + $start - 1 - $bp_textwidth)/2,
                 'y'          => ($h-$th)/2,
                 'width'      => $bp_textwidth,
                 'height'     => $th,
@@ -62,11 +54,11 @@ sub _init {
                 'absolutey'  => 1,
       });
       $self->push( $textglyph );
-    } elsif( ($w < $E-$S+1) && $label =~ /^[-\w](\/[-\w])+$/ ) {
+    } elsif( ($w < $end-$start+1) && $label =~ /^[-\w](\/[-\w])+$/ ) {
 
       for (my $i = 0; $i < 3; $i ++ ) {
 	my $textglyph = new Sanger::Graphics::Glyph::Text({
-                'x'          => ( $E + $S - 1 - $w)/2,
+                'x'          => ( $end + $start - 1 - $w)/2,
                 'y'          => 3 + ($th+2) * $i,
                 'width'      => $w,
                 'height'     => $th,
@@ -81,14 +73,14 @@ sub _init {
     my $type = $snp->get_consequence_type();
     my $colour = $colours->{$type}->[0];
     my $tglyph = new Sanger::Graphics::Glyph::Rect({
-      'x' => $S-1,
+      'x' => $start-1,
       'y' => 0,
       'bordercolour' => $colour,
       'absolutey' => 1,
       'href' => $self->href($snp),
       'zmenu' => $self->zmenu($snp),
       'height' => $h,
-      'width'  => $E-$S+1,
+      'width'  => $end-$start+1,
     });
 
     my $tag_root = $snp->dbID;
