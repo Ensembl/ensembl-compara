@@ -75,7 +75,10 @@ sub _init {
     $COL{'gneg'}    = 'white';
     $COL{'acen'}    = 'slategrey';
     $COL{'stalk'}   = 'slategrey';
-    $COL{'mark'}    = 'blue'; # marks start/end of annotated sequence
+
+##These are commented out unless you're generating the vega karyotype image
+#    $COL{'NoAnnotation'}   = 'gray75'; # marks start/end of unannotated sequence
+#    $COL{'CORFAnnotation'} = 'gray90'; # marks start/end of CORF project annotated sequence
 
     my $im_width    = $Config->image_width();
     my $top_margin  = $Config->{'_top_margin'};
@@ -131,12 +134,18 @@ sub _init {
         $self->push($gpadding);        
     }
     my @bands =  sort{$a->start <=> $b->start } @$bands;
+	#use this array to store bands created for vega annotation status; draw these last
+	my @annot_bands;
     if( @bands ) {
       foreach my $band (@bands){
         my $bandname       = $band->name();
         my $vc_band_start  = $band->start() + $v_offset;
         my $vc_band_end    = $band->end() + $v_offset;
         my $stain          = $band->stain();
+		if ($stain =~ /Annotation/) {
+		  push @annot_bands, $band;
+		  next;
+	    }
 
         my $HREF;
         if($self->{'config'}->{'_band_links'}) {
@@ -260,6 +269,44 @@ sub _init {
         }));
       }
     }
+	#lastly draw annotation status bands (if uncommented the colour definition) 
+    foreach my $band (@annot_bands){
+		my $bandname       = $band->name();
+        my $vc_band_start  = $band->start() + $v_offset;
+        my $vc_band_end    = $band->end() + $v_offset;
+        my $stain          = $band->stain();
+		my $R = $vc_band_start;
+		my $T = $bpperpx * ( int($vc_band_end/$bpperpx) - int($vc_band_start/$bpperpx) );
+        my $HREF;
+		my $gband = new Sanger::Graphics::Glyph::Rect({
+                'x'                => $R,
+                'y'                => $h_offset,
+                'width'            => $T,
+                'height'           => $wid,
+                'colour'           => $COL{$stain},
+                'absolutey'        => 1,
+                'href'             => $HREF
+            });
+		$self->push($gband);
+		$gband = new Sanger::Graphics::Glyph::Line({
+                'x'                => $R,
+                'y'                => $h_offset,
+                'width'            => $T,
+                'height'           => 0,
+                'colour'           => $black,
+                'absolutey'        => 1,
+            });
+		$self->push($gband);
+		$gband = new Sanger::Graphics::Glyph::Line({
+                'x'                => $R,
+                'y'                => $h_offset+$wid,
+                'width'            => $T,
+                'height'           => 0,
+                'colour'           => $black,
+                'absolutey'        => 1,
+            });
+		$self->push($gband);
+	}
 
     foreach( @decorations ) {
         $self->push($_);
@@ -274,7 +321,7 @@ sub _init {
         my $direction = $end ? -1 : 1;
         
         my %partials    = map { uc($_) => 1 } @{ $self->species_defs->PARTIAL_CHROMOSOMES || [] };
-	my %artificials = map { uc($_) => 1 } @{ $self->species_defs->ARTIFICIAL_CHROMOSOMES || [] };
+    	my %artificials = map { uc($_) => 1 } @{ $self->species_defs->ARTIFICIAL_CHROMOSOMES || [] };
         if ($partials{uc($chr)}) {
         # draw jagged ends for partial chromosomes
             # resolution dependent scaling
