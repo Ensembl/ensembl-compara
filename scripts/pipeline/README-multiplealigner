@@ -12,6 +12,8 @@
 
   executables
   ~~~~~~~~~~~
+  mercator
+      using /usr/local/ensembl/bin/mercator
   blastz
       using /usr/local/ensembl/bin/blastz
 
@@ -32,6 +34,10 @@ in bash
     BASEDIR=/some/path/to/modules
     PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-hive
     PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
+
+1.3 Configure the Pipeline:
+
+  Copy ${BASEDIR}/ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config/Blast.pm.example to ${BASEDIR}/ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config/Blast.pm
 
 
 2- Create a hive/compara database
@@ -57,22 +63,23 @@ mkdir -p /acari/work7a/abel/hive/abel_compara_mlagan/blastDB
 
 This directory needs to be set in 'hive_output_dir' variable in the compara-hive
 configuration file. See below. If not set, all STDOUT/STDERR goes to /dev/null. :)
-'fasta_dir' and 'tree_file' will need to be updated as well.
-An example of a tree file is given hmr.tree.example. It is in Newick/New Hampshire format.
-The species names should correspond to the genome_db_id of the species used (and defined in the 
-hive configuration file).
 
 4- Copy and modify your compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd /acari/work7a/abel/hive/abel_compara_mlagan
 
-cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-hive-pairaligner.conf.example hive.conf.pl
+cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-hive-mulitplealigner.conf.example hive.conf.pl
+cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/hmr.tree.example hmr.tree
 <editor> hive.conf.pl
+<editor> hmr.tree
 
 you may need to change the database names, port, dbnames, and the
 paths to the 'hive_output_dir' to
 /acari/work7a/abel/hive/abel_compara_mlagan/workers
+'fasta_dir' and 'tree_file' will need to be updated as well.
+The species names should correspond to the genome_db_id of the species used (and defined in the 
+hive configuration file).
 
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,6 +106,14 @@ These scripts may give you warnings if the output directories are not available 
 it's unable to connect to core databases.
 
 At this point the system is ready to run
+
+NB: Although this feature has not been extensivelly tested, it should be
+  possible to start the pipeline with all but one species if this one is not
+  ready yet. You will need to update manually the analysis_job table and set
+  the status of the relevant analysis_job (<analysis_id> = 1 for SubmitGenome
+  analysis and <input_id> should match the genome_db_id of the species you
+  want to block) to "BLOCKED". Later on, you can set the status back to "READY"
+  in order to unblock it.
 
 
 6- Run the beekeeper
