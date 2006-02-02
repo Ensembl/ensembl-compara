@@ -244,13 +244,13 @@ sub build_GeneTreeSystem
   #
   # PHYML_cdna
   #
-  my $phyml = Bio::EnsEMBL::Analysis->new(
+  my $phyml_cdna = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'PHYML_cdna',
       -program_file    => '/usr/local/ensembl/bin/phyml',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
-      -parameters      => "{cdna=>0}"
+      -parameters      => "{cdna=>1}"
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($phyml);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($phyml_cdna);
   $stats = $phyml->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(400);
@@ -288,6 +288,8 @@ sub build_GeneTreeSystem
   $dataflowRuleDBA->create_rule($clustalw_parse, $phyml, 1);
 
   $dataflowRuleDBA->create_rule($phyml, $rap, 1);
+#  $dataflowRuleDBA->create_rule($phyml, $phyml_cdna, 2);
+#  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
 
   #$ctrlRuleDBA->create_rule($load_genome, $blastrules_analysis);
 
