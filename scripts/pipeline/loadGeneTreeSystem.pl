@@ -137,16 +137,27 @@ sub build_GeneTreeSystem
   #
   my $paf_cluster = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'PAFCluster',
-      -program_file    => '/usr/local/ensembl/bin/muscle',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PAFCluster',
-      -parameters      => "{'options'=>'-maxiters 2'}"
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($paf_cluster);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($paf_cluster);
   $stats = $paf_cluster->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
   $stats->update();
 
+
+  #
+  # Clusterset_staging
+  #
+  my $clusterset_staging = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'Clusterset_staging',
+      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clusterset_staging);
+  $stats = $clusterset_staging->stats;
+  $stats->batch_size(-1);
+  $stats->hive_capacity(1);
+  $stats->update();
 
   #
   # Muscle
@@ -157,7 +168,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
       -parameters      => "{'options'=>'-maxiters 2'}"
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($muscle);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($muscle);
   $stats = $muscle->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
@@ -173,7 +184,7 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
       -parameters      => "{'options'=>'-maxiters 1 -diags1 -sv'}"
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($muscle_huge);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($muscle_huge);
   $stats = $muscle_huge->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
@@ -181,15 +192,34 @@ sub build_GeneTreeSystem
 
 
   #
-  # ClustalW
+  # ClustalW_mpi
   #
-  my $clustalw = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'ClustalW',
+  my $clustalw_mpi = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'ClustalW_mpi',
       -program_file    => '/usr/local/ensembl/bin/clustalw',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
+      -parameters      => "{'mpi'=>1}",
+      -db_file         => "/ecs4/work2/ensembl/jessica/data/ensembl_compara_32/clustalw_mpi/",
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($clustalw);
-  $stats = $clustalw->stats;
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_mpi);
+  $stats = $clustalw_mpi->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1);
+  $stats->update();
+
+
+  #
+  # ClustalW_parse
+  #
+  my $clustalw_parse = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'ClustalW_parse',
+      -program_file    => '/usr/local/ensembl/bin/clustalw',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
+      -parameters      => "{'parse'=>1, 'align'=>0}",
+      -db_file         => "/ecs4/work2/ensembl/jessica/data/ensembl_compara_32/clustalw_mpi/",
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_parse);
+  $stats = $clustalw_parse->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
   $stats->update();
@@ -200,30 +230,48 @@ sub build_GeneTreeSystem
   #
   my $phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'PHYML',
-      -program_file    => '/nfs/acari/jessica/src/phyml_v2.4.4/exe/phyml_linux',
+      -program_file    => '/usr/local/ensembl/bin/phyml_linux',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
-      -parameters      => "{cdna=>1}"
+      -parameters      => "{cdna=>0}"
     );
-  $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($phyml);
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($phyml);
   $stats = $phyml->stats;
   $stats->batch_size(1);
-  $stats->hive_capacity(-1);
+  $stats->hive_capacity(400);
   $stats->update();
 
 
   #
+  # RAP
+  #
+  my $rap = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'RAP',
+      -program_file    => '/nfs/acari/jessica/bin/rap.jar',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RAP',
+      -parameters      => "{species_tree_file=>'/ecs4/work2/ensembl/jessica/data/encode_species_tree2.nh'}"
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($rap);
+  $stats = $rap->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(100);
+  $stats->update();
+
+  #
   # build graph
   #
+  $dataflowRuleDBA->create_rule($paf_cluster, $clusterset_staging, 1);
   $dataflowRuleDBA->create_rule($paf_cluster, $muscle, 2);
-
+  
   $dataflowRuleDBA->create_rule($muscle, $phyml, 1);
   $dataflowRuleDBA->create_rule($muscle, $muscle_huge, 2);
 
   $dataflowRuleDBA->create_rule($muscle_huge, $phyml, 1);
-  $dataflowRuleDBA->create_rule($muscle_huge, $clustalw, 2);
+  $dataflowRuleDBA->create_rule($muscle_huge, $clustalw_mpi, 2);
 
-  $dataflowRuleDBA->create_rule($clustalw, $phyml, 1);
+  $dataflowRuleDBA->create_rule($clustalw_mpi, $clustalw_parse, 1);
+  $dataflowRuleDBA->create_rule($clustalw_parse, $phyml, 1);
 
+  $dataflowRuleDBA->create_rule($phyml, $rap, 1);
 
   #$ctrlRuleDBA->create_rule($load_genome, $blastrules_analysis);
 
@@ -232,11 +280,11 @@ sub build_GeneTreeSystem
   # create initial job
   #
 
-  my $input_id = encode_hash($genetree_params->{'paf_cluster'});
-  if (defined $input_id) {
+  my $input_id = $genetree_params{'cluster_params'};
+  if(defined($input_id)) {
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => $input_id;
+         -input_id       => $input_id,
          -analysis       => $paf_cluster,
         );
   }
