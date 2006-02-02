@@ -230,7 +230,23 @@ sub build_GeneTreeSystem
   #
   my $phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'PHYML',
-      -program_file    => '/usr/local/ensembl/bin/phyml_linux',
+      -program_file    => '/usr/local/ensembl/bin/phyml',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
+      -parameters      => "{cdna=>0}"
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($phyml);
+  $stats = $phyml->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(400);
+  $stats->update();
+
+
+  #
+  # PHYML_cdna
+  #
+  my $phyml = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'PHYML_cdna',
+      -program_file    => '/usr/local/ensembl/bin/phyml',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PHYML',
       -parameters      => "{cdna=>0}"
     );
@@ -246,13 +262,13 @@ sub build_GeneTreeSystem
   #
   my $rap = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'RAP',
-      -program_file    => '/nfs/acari/jessica/bin/rap.jar',
+      -program_file    => '/usr/opt/java/bin/java -jar /nfs/acari/jessica/bin/rap.jar',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RAP',
       -parameters      => "{species_tree_file=>'/ecs4/work2/ensembl/jessica/data/encode_species_tree2.nh'}"
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($rap);
   $stats = $rap->stats;
-  $stats->batch_size(1);
+  $stats->batch_size(-1);
   $stats->hive_capacity(100);
   $stats->update();
 
