@@ -180,10 +180,10 @@ sub do_markedup_pep_seq {
   my @exon_colours = qw(black blue red);
   my %bg_color = (
     'c0'      => '#ffffff',
-    'syn'     => '#99ff99',
+    'syn'     => '#76ee00',
     'insert'  => '#99ccff',
     'delete'  => '#99ccff',
-    'snp'     => '#ff9999',
+    'snp'     => '#ffd700',
   );
   my @aas = map {{'aa' => $_ }} split //, uc($pep_seq) ; # store peptide seq in hash
   my ($output, $fasta, $previous) = '';

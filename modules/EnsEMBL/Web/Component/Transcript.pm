@@ -798,15 +798,15 @@ sub do_markedup_pep_seq {
     'c0'       => 'ffffff',
     'c1'       => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND3'},
     'c99'      => 'ffcc99',
-    'synutr'   => '00cc00',
-    'sync0'    => '99ff99',
-    'sync1'    => '99ff96',
+    'synutr'   => '7ac5cd',
+    'sync0'    => '76ee00',
+    'sync1'    => '76ee00',
     'indelutr' => '9999ff',
     'indelc0'  => '99ccff',
     'indelc1'  => '99ccff',
-    'snputr'   => '00cc00',
-    'snpc0'    => 'ff9999',
-    'snpc1'    => 'ff9999',
+    'snputr'   => '7ac5cd',
+    'snpc0'    => 'ffd700',
+    'snpc1'    => 'ffd700',
   );
   foreach(@$bps) {
     if($count == $wrap) {
