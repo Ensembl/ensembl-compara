@@ -15,6 +15,9 @@ sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
+  my @snps = @{$Config->{'snps'}};
+  return unless scalar @snps;
+
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
 
   my $track_height = $th + 4;
@@ -54,7 +57,6 @@ sub _init {
 
 
   ## First lets draw the reference SNPs....
-  my @snps = @{$Config->{'snps'}};
   my $length     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'}->length : $self->{'container'}->length;
   my @colours       = qw(chartreuse4 darkorchid4);# orange4 deeppink3 dodgerblue4);s
 
@@ -109,7 +111,7 @@ sub _init {
    # Now draw SNPs for each strain
    my %T; 
    my %C;
-  foreach my $t_ref ( @{$Config->{'extra'}} ) {
+  foreach my $t_ref ( @{$Config->{'snp_fake_haplotype'}} ) {
     my( $strain, $allele_ref, $coverage_ref ) = @$t_ref;
     foreach my $a_ref ( @$allele_ref ) {
       $T{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
@@ -118,7 +120,7 @@ sub _init {
       push @{ $C{$strain} }, [ $c_ref->[2]->start, $c_ref->[2]->end, $c_ref->[2]->level ];
     }
   }
-   foreach my $t_ref ( reverse @{$Config->{'extra'}} ) {
+   foreach my $t_ref ( reverse @{$Config->{'snp_fake_haplotype'}} ) {
      $offset += $track_height;
      my( $strain ) = @$t_ref;
 

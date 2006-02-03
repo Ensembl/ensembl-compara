@@ -156,6 +156,7 @@ sub _init {
        '11:SNP properties' => $href,
        "12:bp $pos" => '',
        "13:class: ".&variation_class(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
+       "14:source: ". $allele->source => '',
       }
     });
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);

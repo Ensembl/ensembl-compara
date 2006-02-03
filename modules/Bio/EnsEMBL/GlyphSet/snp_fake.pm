@@ -21,11 +21,13 @@ sub _init {
 
   my ($w,$th) = $Config->texthelper()->px2bp($Config->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
 
-  my @snps = @{$Config->{'snps'}};
+  my $snps = $Config->{'snps'};
+  return unless ref $snps eq 'ARRAY';
+
   my $length    = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'}->length : $self->{'container'}->length;
   my $tag2 = $Config->get( 'snp_fake', 'tag' ) + ($self->strand == -1 ? 1 : 0);
 
-  foreach my $snp_ref ( @snps ) { 
+  foreach my $snp_ref ( @$snps ) { 
     my $snp = $snp_ref->[2];
     my( $start,$end ) = ($snp_ref->[0], $snp_ref->[1] );
     $start = 1 if $start < 1;
@@ -110,7 +112,8 @@ sub zmenu {
         "03:status: ".join(', ', @{$f->get_all_validation_states||[]} ) => '',
         "06:mapweight: ".$f->map_weight => '',
         "07:ambiguity code: ".$f->ambig_code => '',
-        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
+        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => '',
+        "09:source: ".$f->source() => '',
    );
 
     my %links;
