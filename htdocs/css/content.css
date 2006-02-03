@@ -84,6 +84,18 @@ div#zmenu th { background-color:#ccc; color:#000; }
 div#zmenu td { color:#666;}
 div#zmenu a { text-decoration:none; }
 
+/* Mark up for geneseqview features */
+span.mn   { background-color:#fefefe; color:black; } /* Normal bp */
+span.mn-s { background-color:#caff70; color:black; } /* SNP */
+span.mn-d { background-color:#12ff70; color:black; } /* Deletion */
+span.mn-c { background-color:#b0e2ff; color:black; } /* Conversed regions */
+span.mn-o { background-color:#ffd700; color:black; } /* Codons */
+span.me   { background-color:#fefefe; color:red; }   /* Exon * /
+span.me-s { background-color:#caff70; color:red; }
+span.me-d { background-color:#12ff70; color:red; }
+span.me-c { background-color:#b0e2ff; color:red; }
+span.me-o { background-color:#ffd700; color:red; }
+
 /* TABLES */
 
 tr { vertical-align:top; }

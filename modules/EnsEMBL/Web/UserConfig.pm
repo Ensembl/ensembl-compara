@@ -48,8 +48,8 @@ sub add_track {
   ## Create configuration entry....
 }
 
-sub add_protein_feature_track {
-  my( $self, $code, $text_label, $pos, $col, %pars ) = @_;
+sub add_protein_domain_track {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
   $self->add_track( $code,
     'on'         => 'on',
     'pos'        => $pos,
@@ -60,7 +60,22 @@ sub add_protein_feature_track {
     'caption'    => $text_label,
     'dep'        => 20,
     'url_key'    => uc($code),
-    'col'        => $col||'purple',
+    'colours'    => { $self->{'_colourmap'}->colourSet( 'protein_features' ) },
+    %pars
+  );
+}
+
+sub add_protein_feature_track {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->add_track( $code,
+    'on'         => 'on',
+    'pos'        => $pos,
+    'glyphset'   => 'P_feature',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'logic_name' => $code,
+    'caption'    => $text_label,
+    'colours'    => { $self->{'_colourmap'}->colourSet( 'protein_features' ) },
     %pars
   );
 }
@@ -1244,14 +1259,22 @@ sub ADD_AS_GENE_TRACKS {
 sub ADD_ALL_PROTEIN_FEATURE_TRACKS {
   my $self = shift;
   my $POS = shift || 2000;
-  $self->add_protein_feature_track( 'Prints', 'PRINTS', $POS++ );
-  $self->add_protein_feature_track( 'PrositePatterns', 'Prosite patterns', $POS++ );
-  $self->add_protein_feature_track( 'PrositeProfiles', 'Prosite profiles', $POS++ );
-  $self->add_protein_feature_track( 'Pfam', 'Pfam', $POS++ );
-  $self->add_protein_feature_track( 'TigrFam', 'TIGRFAM', $POS++ );
-  $self->add_protein_feature_track( 'SuperFamily', 'SUPERFAMILY', $POS++ );
-  $self->add_protein_feature_track( 'Smart', 'SMART', $POS++ );
-  $self->add_protein_feature_track( 'PIRS', 'PIR SuperFamily', $POS++ );
+  $self->add_protein_domain_track( 'Prints', 'PRINTS', $POS++ );
+  $self->add_protein_domain_track( 'PrositePatterns', 'Prosite patterns', $POS++ );
+  $self->add_protein_domain_track( 'scanprosite',     'Prosite patterns', $POS++ );
+  $self->add_protein_domain_track( 'PrositeProfiles', 'Prosite profiles', $POS++ );
+  $self->add_protein_domain_track( 'pfscan',          'Prosite profiles', $POS++ );
+
+  $self->add_protein_domain_track( 'Pfam', 'Pfam', $POS++ );
+  $self->add_protein_domain_track( 'TigrFam', 'TIGRFAM', $POS++ );
+  $self->add_protein_domain_track( 'SuperFamily', 'SUPERFAMILY', $POS++ );
+  $self->add_protein_domain_track( 'Smart', 'SMART', $POS++ );
+  $self->add_protein_domain_track( 'PIRS', 'PIR SuperFamily', $POS++ );
+
+  $self->add_protein_feature_track( 'ncoils',  'Coiled coils',      $POS++ );
+  $self->add_protein_feature_track( 'SignalP', 'Sig.Pep cleavage',  $POS++ );
+  $self->add_protein_feature_track( 'Seg',     'Low complex seq',   $POS++ );
+  $self->add_protein_feature_track( 'tmhmm',   'Transmem helices',  $POS++ );
 }
 
 1;
