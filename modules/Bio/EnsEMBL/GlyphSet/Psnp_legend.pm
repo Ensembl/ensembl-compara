@@ -27,6 +27,7 @@ sub _init {
 	
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
+
     my $im_width      = $Config->image_width();
 	my $TEXT_WIDTH 	  = $Config->texthelper->width($FONTNAME);
 	my $TEXT_HEIGHT 	  = $Config->texthelper->height($FONTNAME);
@@ -36,13 +37,14 @@ sub _init {
 	
     my $snps = $vc->{'image_snps'};
 	for my $int (@$snps) {
-		$key{$int->{'type'}} = 1;}
+		$key{$int->{'type'}} = 1;
+	}
 	if ($key{'insert'}){
 	  $self->push(new Sanger::Graphics::Glyph::Poly({
 					'points'    => [ $x, $BOX_HEIGHT,
                                      ($BOX_WIDTH/2), $y,
                                      $BOX_WIDTH, $BOX_HEIGHT  ],
-                    'colour'    => 'skyblue2',
+                    'colour'    => $Config->get('Pprot_snp','insert'),
                     'absolutex' => 1,
 					'absolutey' => 1,
 					'absolutewidth' => 1,
@@ -66,7 +68,7 @@ sub _init {
 					'points'    => [ $x, $y,
                                      $x+($BOX_WIDTH/2), $BOX_HEIGHT,
                                      $x+$BOX_WIDTH, $y   ],
-                    'colour'    => 'skyblue2',
+                    'colour'    => $Config->get('Pprot_snp', 'deletion'),
                     'absolutex' => 1,
 					'absolutey' => 1,
 					'absolutewidth' => 1,
@@ -90,7 +92,7 @@ sub _init {
 		'x'        => $x,
 		'width'    => $BOX_WIDTH,
 		'height'   => $BOX_HEIGHT,
-		'colour'   => 'seagreen2',
+		'colour'   =>  $Config->get('Pprot_snp', 'syn'),
 		'absolutex' => 1,
 		'absolutey' => 1,
 		'absolutewidth' => 1,}));
@@ -113,7 +115,7 @@ sub _init {
 		'x'        => $x,
 		'width'    => $BOX_WIDTH,
 		'height'   => $BOX_HEIGHT,
-		'colour'   => 'hotpink2',
+		'colour'   =>  $Config->get('Pprot_snp', 'snp'),
 		'absolutex' => 1,
 		'absolutey' => 1,
 		'absolutewidth' => 1,}));
