@@ -65,23 +65,11 @@ use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-my $DEFAULT_MAX_ALIGNMENT = 20000;
-
 sub new {
   my $class = shift;
 
   my $self = $class->SUPER::new(@_);
 
-  my $vals =
-    $self->db->get_MetaContainer->list_value_by_key('max_alignment_length');
-
-  if(@$vals) {
-    $self->{'max_alignment_length'} = $vals->[0];
-  } else {
-    warning("Meta table key 'max_alignment_length' not defined\n" .
-	       "using default value [$DEFAULT_MAX_ALIGNMENT]");
-    $self->{'max_alignment_length'} = $DEFAULT_MAX_ALIGNMENT;
-  }
   $self->{_use_autoincrement} = 1;
 
   return $self;
@@ -425,7 +413,8 @@ sub fetch_all_by_DnaFrag_GenomeDB {
   }
 
   if (defined $start && defined $end) {
-    my $lower_bound = $start - $self->{'max_alignment_length'};
+    my $max_alignment_length = $method_link_species_set->max_alignment_length;
+    my $lower_bound = $start - $max_alignment_length;
     $sql .= ( " AND dnafrag_start <= $end
               AND dnafrag_start >= $lower_bound
               AND dnafrag_end >= $start" );
