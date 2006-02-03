@@ -93,7 +93,9 @@ sub genbank_hidden_flag {
 
 sub classification {
   my $self = shift;
+  my $separator = shift;
 
+  $separator = " " unless (defined $separator);
   unless ($self->rank eq 'species') {
     throw("classification can only be called on node of species rank\n");
   }
@@ -110,7 +112,7 @@ sub classification {
     }
     my ($genus, $species) = split(" ", $self->binomial);
     unshift @classification, $species;
-    $self->{'_classification'} = join(" ",@classification);
+    $self->{'_classification'} = join($separator,@classification);
   }
   
   return $self->{'_classification'};
