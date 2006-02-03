@@ -229,7 +229,20 @@ sub getVariationsOnSlice {
   my $valids = $self->valids;
 
   my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
-  my @snps =
+  my @on_slice_snps = 
+# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
+# [ SNP, offset ]           Create a munged version of the SNPS
+    map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }    # Map to "fake coordinates"
+# [ SNP ]                   Filter out all the multiply hitting SNPs
+    grep { $_->map_weight < 4 }
+# [ SNP ]                   Get all features on slice
+    @{ $slice->get_all_VariationFeatures() };
+
+  my $count_snps = scalar @on_slice_snps;
+  return 0 unless $count_snps;
+
+  my @filtered_snps =
 # [fake_s, fake_e, SNP]              Remove the schwartzian index
     map  { $_->[1] }
 # [ index, [fake_s, fake_e, SNP] ]   Sort snps on schwartzian index
@@ -242,17 +255,16 @@ sub getVariationsOnSlice {
            $valids->{'opt_noinfo'} ) }
 # [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
     grep { $valids->{'opt_'.lc($_->[2]->get_consequence_type()) } }
+
+# [ fake_s, fake_e, SNP ]   Filter our unwanted sources
+    grep { $valids->{'opt_'.lc($_->[2]->source)} }
+
 # [ fake_s, fake_e, SNP ]   Filter our unwanted classes
     grep { $valids->{'opt_'.$_->[2]->var_class} }
-# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
-    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
-# [ SNP, offset ]           Create a munged version of the SNPS
-    map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }    # Map to "fake coordinates"
-# [ SNP ]                   Filter out all the multiply hitting SNPs
-    grep { $_->map_weight < 4 }
-# [ SNP ]                   Get all features on slice
-    @{ $slice->get_all_VariationFeatures() };
-  return \@snps;
+      @on_slice_snps;
+
+  $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @filtered_snps];
+  return ($count_snps, \@filtered_snps);
 }
 
 
@@ -275,13 +287,16 @@ sub getAllelesConsequencesOnSlice {
   my @filtered_af =
     sort {$a->[2]->start <=> $b->[2]->start}
 
-  # Rm many filters as not applicable to Allele Features
-# [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
+    # Rm many filters as not applicable to Allele Features
+    # [ fake_s, fake_e, AF ]   Grep features to see if the area valid
 
-    # [ fake_s, fake_e, SNP ]   Filter our unwanted classes
+    # [ fake_s, fake_e, AF ]   Filter our unwanted classes
     grep { $valids->{'opt_'.$self->var_class($_->[2])} }
 
-      # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
+    # [ fake_s, fake_e, AF ]   Filter our unwanted sources
+    grep { $valids->{'opt_'.lc($_->[2]->source) }  }
+
+    # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
       map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } 
 	# [ AF, offset ]   Map to fake coords.   Create a munged version AF
 	map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
@@ -343,6 +358,25 @@ sub get_samples {
   return sort @samples;
 }
 
+
+sub get_sources {
+  my $self = shift;
+  my $default = shift;
+
+  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+
+  if ($default) {
+    return $vari_adaptor->get_default_source();
+  }
+  else {
+    # return all sources
+  }
+
+}
 
 sub munge_gaps {
   my( $self, $slice_code, $bp, $bp2  ) = @_;

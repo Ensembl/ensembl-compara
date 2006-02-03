@@ -11,6 +11,9 @@ sub init {
     panel_transcript     on
     image_width          700
 
+    opt_sanger      on
+    opt_dbsnp       on
+
     opt_freq        on
     opt_cluster     on
     opt_doublehit   on

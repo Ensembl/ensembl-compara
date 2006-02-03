@@ -22,6 +22,10 @@ sub init {
       'bgcolor'   => 'background1',
       'bgcolour1' => 'background1',
       'bgcolour2' => 'background1',
+      'source' => [
+         [ 'opt_sanger'    => 'Sanger' ],
+         [ 'opt_dbsnp'     => 'dbSNP' ],
+       ],
       'validation' => [
         [ 'opt_freq'       => 'By frequency' ],
         [ 'opt_cluster'    => 'By cluster' ],

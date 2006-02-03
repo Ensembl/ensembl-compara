@@ -963,10 +963,6 @@ sub spreadsheet_variationTable {
 }
 
 # Transcript SNP View ###################
-sub tsv_extent {
-  my $object = shift;
-  return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
-}
 
 sub transcriptsnpview { 
   my( $panel, $object, $do_not_render ) = @_;
@@ -980,14 +976,121 @@ sub transcriptsnpview {
   ) {
     $object->__data->{'slices'}{ $slice_type->[0] } =  $object->get_transcript_slices( $slice_type ) || warn "Couldn't get slice";
   }
-
   my $transcript_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
-  my $sub_slices       = $object->__data->{'slices'}{'TSV_transcript'}[2];
-  my $fake_length      = $object->__data->{'slices'}{'TSV_transcript'}[3];
+  my $sub_slices       =  $object->__data->{'slices'}{'TSV_transcript'}[2];
+  my $fake_length      =  $object->__data->{'slices'}{'TSV_transcript'}[3];
+  my ($count_snps, $snps) = $object->getVariationsOnSlice( "TSV_transcript", $transcript_slice );
+
+  # Taken out domains (prosite, pfam)
+
+  ## -- Tweak the configurations for the five sub images ------------------ 
+  ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
+  my @ens_exons;
+  foreach my $exon (@{ $object->Obj->get_all_Exons() }) {
+    my $offset = $transcript_slice->start -1;
+    my $es     = $exon->start - $offset;
+    my $ee     = $exon->end   - $offset;
+    my $munge  = $object->munge_gaps( 'TSV_transcript', $es );
+    push @ens_exons, [ $es + $munge, $ee + $munge, $exon ];
+  }
+
+
+  # General page configs -------------------------------------
+  # Get 4 configs (one for each section) set width to width of context config
+  my $Configs;
+  my $image_width  = $object->param( 'image_width' );
+  foreach (qw(context transcript transcripts_bottom transcripts_top)) {
+    $Configs->{$_} = $object->user_config_hash( "TSV_$_" );
+    $Configs->{$_}->set( '_settings', 'width',  $image_width );
+    $Configs->{$_}->{'id'} = $object->stable_id;
+  }
+
+  foreach(qw(transcripts_top transcripts_bottom)) {
+    $Configs->{$_}->{'extent'}      = $extent;
+    $Configs->{$_}->{'transid'}     = $object->stable_id;
+    $Configs->{$_}->{'transcripts'} = [{ 'exons' => \@ens_exons }];
+    $Configs->{$_}->{'snps'}        = $snps;
+    $Configs->{$_}->{'subslices'}   = $sub_slices;
+    $Configs->{$_}->{'fakeslice'}   = 1;
+    $Configs->{$_}->container_width( $fake_length );
+  }
+
+
+  $Configs->{'snps'} = $object->user_config_hash( "genesnpview_snps" );
+  $Configs->{'snps'}->set( '_settings', 'width',  $image_width );
+  $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps];
+
+  $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
+  $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
+  $Configs->{'context'}->set( 'est_transcript','on','off');
+
+
+  # SNP stuff ------------------------------------------------------------
+  my ($containers_and_configs, $haplotype);
+  my @snp_configs = ();
+
+  if (scalar @$snps) {
+
+    # Foreach sample ... 
+    ($containers_and_configs, $haplotype) = _sample_configs($object, $transcript_slice, $sub_slices, $fake_length);
+
+    # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
+    # @snps: array of arrays  [fake_start, fake_end, B:E:Variation obj]
+    my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
+    my $snp_fake_length = -1; ## end of last drawn snp on bottom display...
+    my @fake_snps = map {
+      $snp_fake_length +=$SNP_REL+1;
+      [ $snp_fake_length - $SNP_REL+1, $snp_fake_length, $_->[2], $transcript_slice->seq_region_name,
+	$transcript_slice->strand > 0 ?
+	( $transcript_slice->start + $_->[2]->start - 1,
+	  $transcript_slice->start + $_->[2]->end   - 1 ) :
+	( $transcript_slice->end - $_->[2]->end     + 1,
+	  $transcript_slice->end - $_->[2]->start   + 1 )
+      ]
+    } sort { $a->[0] <=> $b->[0] } @$snps;
+
+    $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
+    $Configs->{'snps'}->container_width(   $snp_fake_length   );
+    $Configs->{'snps'}->{'snps'}        = \@fake_snps;
+    $Configs->{'snps'}->{'fakeslice'}   = 1;
+    $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
+
+    @snp_configs = (
+		   $transcript_slice, $Configs->{'transcripts_top'},
+		   @$containers_and_configs,
+		   $transcript_slice, $Configs->{'transcripts_bottom'},
+		  );
+  }
+  return if $do_not_render;
+
+  ## -- Render image ----------------------------------------------------- ##
+  # Send the image pairs of slices and configurations
+  my $image    = $object->new_image(
+    [
+     $object->__data->{'slices'}{'context'}[1],     $Configs->{'context'},
+     $object->__data->{'slices'}{'transcript'}[1],  $Configs->{'transcript'},
+     @snp_configs,
+     $transcript_slice, $Configs->{'snps'},
+    ],
+    [ $object->stable_id ]
+  );
+
+  $image->imagemap = 'yes';
+  my $T = $image->render;
+  $panel->print( $T );
+
+  return 0;
+}
+
+
+
+
+sub _sample_configs {
+  my ($object, $transcript_slice, $sub_slices, $fake_length) = @_;
 
   my @containers_and_configs = (); ## array of containers and configs
-
-  my @EXTRA = ();
+  my @haplotype = ();
+  my $extent = tsv_extent($object);
 
   foreach my $sample (  $object->get_samples ) { #e.g. DBA/2J
     my $sample_slice = $transcript_slice->get_by_strain( $sample );
@@ -1034,99 +1137,29 @@ sub transcriptsnpview {
       'coverage_obj'    => $munged_coverage,
     };
 
-    unshift @EXTRA, [ $sample, $allele_info, $munged_coverage ];
+    unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
     $sample_config->container_width( $fake_length );
 
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
 
     ## Now push onto config hash...
     push @containers_and_configs,    $sample_slice, $sample_config;
-  }
+  } #end foreach sample
 
-  # Taken out domains (prosite, pfam)
+  my $default_source = $object->get_source("default");
 
-  ## -- Tweak the configurations for the five sub images ------------------ 
-  ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
-  my @ens_exons;
-  foreach my $exon (@{ $object->Obj->get_all_Exons() }) {
-    my $offset = $transcript_slice->start -1;
-    my $es     = $exon->start - $offset;
-    my $ee     = $exon->end   - $offset;
-    my $munge  = $object->munge_gaps( 'TSV_transcript', $es );
-    push @ens_exons, [ $es + $munge, $ee + $munge, $exon ];
-  }
-
-  my $snps = $object->getVariationsOnSlice( "TSV_transcript", $transcript_slice );
-
-  # General page configs -------------------------------------
-  # Get 4 configs (one for each section) set width to width of context config
-  my $Configs;
-  my $image_width  = $object->param( 'image_width' );
-  foreach (qw(context transcript transcripts_bottom transcripts_top ) ) {
-    $Configs->{$_} = $object->user_config_hash( "TSV_$_" );
-    $Configs->{$_}->set( '_settings', 'width',  $image_width );
-    $Configs->{$_}->{'id'} = $object->stable_id;
-  }
-
-  $Configs->{"snps"} = $object->user_config_hash( "genesnpview_snps" );
-  $Configs->{"snps"}->set( '_settings', 'width',  $image_width );
-  $Configs->{"snps"}->set( 'snp_fake_haplotype', 'on', 'on' );
-  foreach(qw(transcripts_top transcripts_bottom)) {
-    $Configs->{$_}->{'extent'}      = $extent;
-    $Configs->{$_}->{'transid'}     = $object->stable_id;
-    $Configs->{$_}->{'transcripts'} = [{ 'exons' => \@ens_exons }];
-    $Configs->{$_}->{'snps'}        = $snps;
-    $Configs->{$_}->{'subslices'}   = $sub_slices;
-    $Configs->{$_}->{'fakeslice'}   = 1;
-    $Configs->{$_}->container_width( $fake_length );
-  }
-
-  $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
-  $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
-    $Configs->{'context'}->set( 'est_transcript','on','off');
-
-  # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
-  # @snps: array of arrays containing [fake_start, fake_end, B:E:Variation obj]
-  my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
-  my $snp_fake_length = -1; ## end of last drawn snp on bottom display...
-  my @snps;
-  @snps = map {
-    $snp_fake_length +=$SNP_REL+1;
-    [ $snp_fake_length - $SNP_REL+1, $snp_fake_length, $_->[2], $transcript_slice->seq_region_name,
-      $transcript_slice->strand > 0 ?
-      ( $transcript_slice->start + $_->[2]->start - 1,
-	$transcript_slice->start + $_->[2]->end   - 1 ) :
-      ( $transcript_slice->end - $_->[2]->end     + 1,
-	$transcript_slice->end - $_->[2]->start   + 1 )
-    ]
-  } sort { $a->[0] <=> $b->[0] } @$snps;
-
-  $Configs->{'snps'}->{'snps'}        = \@snps;
-  $Configs->{'snps'}->{'fakeslice'}   = 1;
-  $Configs->{'snps'}->container_width(   $snp_fake_length   );
-  $Configs->{'snps'}->{'extra'}       =  \@EXTRA;
-  return if $do_not_render;
-
-  ## -- Render image ----------------------------------------------------- ##
-  # Send the image pairs of slices and configurations
-  my $image    = $object->new_image(
-    [
-     $object->__data->{'slices'}{'context'}[1],     $Configs->{'context'},
-     $object->__data->{'slices'}{'transcript'}[1],  $Configs->{'transcript'},
-     $transcript_slice, $Configs->{'transcripts_top'},
-     @containers_and_configs,
-     $transcript_slice, $Configs->{'transcripts_bottom'},
-     $transcript_slice, $Configs->{'snps'},
-    ],
-    [ $object->stable_id ]
-  );
-  #  $image->set_extra( $object ); #otherwise duplicates links
-  $image->imagemap = 'yes';
-  my $T = $image->render;
-  $panel->print( $T );
-
-  return 0;
+  return (\@containers_and_configs, \@haplotype);
 }
+
+
+
+sub tsv_extent {
+  my $object = shift;
+  return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
+}
+
+
+
 
 sub spreadsheet_TSVtable {
   my( $panel, $object ) = @_;
@@ -1254,13 +1287,16 @@ sub spreadsheet_TSVtable {
   return 1;
 }
 
- sub transcriptsnpview_menu    {  
-   my ($panel) = @_;
-   $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript.</p>");
+ sub transcriptsnpview_menu    {
+   my ($panel, $object) = @_;
+   my $valids = $object->valids;
+  # warn keys %$valids;
+  # my $sources;
+  # $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript from these sources: $sources.</p>");
 
    return tsv_menu( @_, 'TSV_sampletranscript',
-    [qw( Features SNPClasses SNPTypes SNPContext THExport ImageSize )], ['SNPHelp'] ); 
-
+    [qw( Features Source SNPClasses SNPTypes SNPContext THExport ImageSize )], ['SNPHelp'] ); 
+# removed SNPValid
  }
 
  sub tsv_menu { 

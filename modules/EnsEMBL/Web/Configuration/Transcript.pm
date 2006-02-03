@@ -4,7 +4,7 @@ use strict;
 use EnsEMBL::Web::Document::Panel::SpreadSheet;
 use EnsEMBL::Web::Document::Panel::Information;
 use EnsEMBL::Web::Document::Panel::Image;
-
+use Data::Dumper;
 use EnsEMBL::Web::Configuration;
 
 @EnsEMBL::Web::Configuration::Transcript::ISA = qw( EnsEMBL::Web::Configuration );
@@ -146,9 +146,11 @@ sub transcriptsnpview {
 ## Panel 3 - finally a set of spreadsheet tables showing the information from the image..
  my $I = 0;
  my @samples = $obj->get_samples;
+ my $counts = $obj->__data->{'sample'}{"snp_counts"};
 
  foreach my $sample ( @samples ) { #e.g. DBA/2J
    last unless $sample;
+   last if (defined $counts->[1] && $counts->[1] == 0);
    if( my $panel_table = $self->new_panel( 'SpreadSheet',
       'code' => "variation#-$sample",
       'caption' => "Variations and consequences for $sample",
@@ -156,7 +158,7 @@ sub transcriptsnpview {
       'object'  => $obj,
       'params'  => $params,
       'sample' =>  $sample,
-      'null_data' => "<p>Where there is coverage, all alleles <em>observed</em> in sample $sample are the same as the reference</p>",
+      'null_data' => "<p>Where there is coverage, all alleles <em>observed</em> in sample $sample are the same as the reference.</p>",
  )) {
      $panel_table->add_components( qw(TSVvariations
         EnsEMBL::Web::Component::Transcript::spreadsheet_TSVtable));
