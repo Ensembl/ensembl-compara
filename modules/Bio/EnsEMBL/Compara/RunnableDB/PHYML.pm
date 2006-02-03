@@ -88,6 +88,12 @@ sub fetch_input {
   $self->{'gamma_distribution_parameter'}            = 1;
   $self->{'cdna'}                                    = 1;
 
+  if($self->input_job->retry_count >= 3) {
+    $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->update_status('FAILED');
+    throw("PHYML job failed >3 times: try something else and FAIL it");
+  }
+
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -235,6 +241,7 @@ sub run_phyml
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
     print("$cmd\n");
+    $self->check_job_fail_options;
     throw("error running phyml, $!\n");
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
@@ -255,9 +262,13 @@ sub check_job_fail_options
   
   printf("PHYML failed : ");
   $self->input_job->print_job;
-  
-  $self->dataflow_output_id($self->input_id, 2);
-  $self->input_job->update_status('FAILED');
+  printf("\n");
+
+  if($self->input_job->retry_count >= 3) {
+    printf("  failed >3 times: try something else and FAIL it\n");
+    $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->update_status('FAILED');
+  }
   
   if($self->{'protein_tree'}) {
     $self->{'protein_tree'}->release_tree;
