@@ -97,6 +97,13 @@ sub new {
       my @valid_views = defined ($EXT->{$source}->{enable}) ? @{$EXT->{$source}->{enable}} : (defined($EXT->{$source}->{on}) ? @{$EXT->{$source}->{on}} : []);
       next if (! grep {$_ eq $script} @valid_views);
 
+      if (my @select_views = defined ($EXT->{$source}->{select}) ? @{$EXT->{$source}->{select}} : ()) {
+	  my $c = $self->{config};   
+	  if ( ! defined($c->get("managed_$source", "on"))) {
+	      $c->set("managed_$source", "on", "on", 1);
+	  }
+      }
+
       $self->add_checkbox( "managed_$source", $EXT->{$source}->{'label'} || $source );
 
   }
