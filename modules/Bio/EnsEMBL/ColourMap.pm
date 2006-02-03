@@ -235,8 +235,8 @@ sub new {
   $self->colourSet( 'variation',
     'INTERGENIC'             => ['gray39',         'Intergenic',           'black',],
     'INTRONIC'               => ['contigblue2',    'Intronic',         'white',],
-    'UPSTREAM'               => ['lightsteelblue', 'Upstream',              'black',],
-    'DOWNSTREAM'             => ['lightsteelblue', 'Downstream',            'black',],
+    'UPSTREAM'               => ['lightsteelblue2','Upstream',              'black',],
+    'DOWNSTREAM'             => ['lightsteelblue2','Downstream',            'black',],
     'REG_REGION'             => ['aquamarine1',    'Regulatory region',     'black',],
     '5PRIME_UTR'             => ['cadetblue3',     "5' UTR",                'black',],
     '3PRIME_UTR'             => ['cadetblue3',     "3' UTR",                'black',],
@@ -248,7 +248,7 @@ sub new {
     'NON_SYNONYMOUS_CODING'  => ['gold',           'Non-synonymous coding SNP', 'black',],
     'STOP_GAINED'            => ['red',            'Stop gained',           'black',],
     'STOP_LOST'              => ['red',            'Stop lost',             'black',],
-
+    '_'                      => ['gray50',         'Other SNP',           'black',],
 		  );
 
 
