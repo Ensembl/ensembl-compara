@@ -129,5 +129,11 @@ where xxxx is the password for write access to the database
 for more details on controling/monitoring the hive system see 
 beekeeper -help
 
+Some MLAGAN jobs might fail because of memory requirements. You can find these jobs using the following commend:
+$> beekeeper.pl --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --failed_jobs
 
+Then you can reset these jobs with:
+$> beekeeper.pl --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --reset_job_id 42483
 
+And finally rerun them using the hugemem queue:
+$> beekeeper.pl --lsf_options '-R "select[mem>=4000] rusage[mem=4000]" -q hugemem' --url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan --loop
