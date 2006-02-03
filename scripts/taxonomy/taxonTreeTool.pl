@@ -98,7 +98,8 @@ sub usage {
   print "  -scale <int>           : scale factor for printing tree (def: 100)\n";
   print "  -mini                  : minimize tree\n";
   print "  -url_core              : core database url used to load the taxonomy info in the meta table\n";
-  print "                           to be used with -taxon_id\n";
+  print "                           to be used with -taxon_id or -name\n";
+  print "                           mysql://login:password\@ia64e/abel_tree_test\n";
   print "taxonTreeTool.pl v1.1\n";
 
   exit(1);
