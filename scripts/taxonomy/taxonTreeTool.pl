@@ -1,19 +1,9 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-use DBI;
-use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Analysis;
-use Bio::EnsEMBL::Pipeline::Rule;
-use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Hive::URLFactory;
-use Bio::SimpleAlign;
-use Bio::AlignIO;
-use Bio::EnsEMBL::Compara::NestedSet;
 use Switch;
+use Getopt::Long;
+use Bio::EnsEMBL::Hive::URLFactory;
 
 $| = 1;
 
@@ -25,18 +15,19 @@ my $self = bless {};
 
 $self->{'scale'} = 100;
 
+my ($help, $url, $url_core);
 
-my ($help, $url);
-
-GetOptions('help'        => \$help,
-           'url=s'       => \$url,
-           'taxon_id=i'  => \$self->{'taxon_id'},
-           'taxa_list=s'  => \$self->{'taxa_list'},
-           'name=s'      => \$self->{'scientific_name'},
-           'scale=f'     => \$self->{'scale'},
-           'mini'        => \$self->{'minimize_tree'},
-           'count'       => \$self->{'stats'},
-           'index'       => \$self->{'build_leftright_index'}
+GetOptions('help'           => \$help,
+           'url=s'          => \$url,
+           'taxon_id=i'     => \$self->{'taxon_id'},
+           'taxa_list=s'    => \$self->{'taxa_list'},
+           'taxa_compara'   => \$self->{'taxa_compara'},
+           'name=s'         => \$self->{'scientific_name'},
+           'scale=f'        => \$self->{'scale'},
+           'mini'           => \$self->{'minimize_tree'},
+           'count'          => \$self->{'stats'},
+           'index'          => \$self->{'build_leftright_index'},
+           'url_core=s'     => \$url_core
           );
 
 my $state;
@@ -49,11 +40,22 @@ if($self->{'taxa_list'}) {
 if ($self->{'build_leftright_index'}) {
   $state = 4;
 }
+if ($self->{'taxa_compara'}) {
+  $state = 5;
+}
+if($self->{'taxon_id'} && $url_core) { $state = 6; };
+if($self->{'scientific_name'} && $url_core) { $state = 6; };
+
+if ($self->{'taxon_id'} && $self->{'scientific_name'}) {
+  print "You can't use -taxon_id and -name together. Use one or the other.\n\n";
+  exit 3;
+}
+
 if ($help or !$state) { usage(); }
 
 $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
 unless(defined($self->{'comparaDBA'})) {
-  print("no url URL\n\n");
+  print("no url\n\n");
   usage();
 }
 
@@ -64,6 +66,8 @@ switch($state) {
   case 2 { fetch_by_scientific_name($self); }
   case 3 { fetch_by_ncbi_taxa_list($self); }
   case 4 { update_leftright_index($self); }
+  case 5 { fetch_compara_ncbi_taxa($self); }
+  case 6 { load_taxonomy_in_core($self); }
 }
 
 
@@ -90,8 +94,11 @@ sub usage {
   print "  -url <string>          : connect to compara at url e.g. mysql://ensro\@ia64e/abel_tree_test\n";
   print "  -taxon_id <int>        : print tree by taxon_id\n";
   print "  -taxa_list <string>    : print tree by taxa list e.g. \"9606,10090\"\n";
+  print "  -taxa_compara <string> : print tree of the taxa in compara\n";
   print "  -scale <int>           : scale factor for printing tree (def: 100)\n";
   print "  -mini                  : minimize tree\n";
+  print "  -url_core              : core database url used to load the taxonomy info in the meta table\n";
+  print "                           to be used with -taxon_id\n";
   print "taxonTreeTool.pl v1.1\n";
 
   exit(1);
@@ -103,7 +110,7 @@ sub fetch_by_ncbi_taxon_id {
   my $node = $taxonDBA->fetch_node_by_taxon_id($self->{'taxon_id'});
   $node->release_children;
   my $root = $node->root;
-
+  
   $root->print_tree($self->{'scale'});
   if ($node->rank eq 'species') {
     print "classification: ",$node->classification,"\n";
@@ -157,6 +164,7 @@ sub fetch_by_ncbi_taxa_list {
     $root->merge_node_via_shared_ancestor($node);
   }
 
+  $root->minimize_tree if($self->{'minimize_tree'});
   $root->print_tree($self->{'scale'});
   $root->flatten_tree->print_tree($self->{'scale'});
 #  $self->{'root'} = $root;
@@ -169,7 +177,7 @@ sub fetch_compara_ncbi_taxa {
   printf("fetch_compara_ncbi_taxa\n");
   
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $root = $self->{'root'};
+  my $root;
 
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   foreach my $gdb (@$gdb_list) {
@@ -184,15 +192,13 @@ sub fetch_compara_ncbi_taxa {
   #$root = $root->find_node_by_name('Mammalia');
   
   $root->minimize_tree if($self->{'minimize_tree'});
-  
   $root->print_tree($self->{'scale'});
   
   my $newick = $root->newick_format;
   print("$newick\n");
 
-  $self->{'root'} = $root;
-  
-  drawPStree($self);
+#  $self->{'root'} = $root;
+#  drawPStree($self);
 }
 
 sub update_leftright_index {
@@ -224,3 +230,43 @@ sub build_store_leftright_indexing {
   print STDERR "node_id = ", $node->node_id, " indexed and stored, li = ",$node->left_index," ri = ",$node->right_index,"\n";
   return $counter;
 }
+
+sub load_taxonomy_in_core {
+  my $self = shift;
+  $self->{'coreDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url_core, 'compara') if($url_core);
+  unless(defined($self->{'coreDBA'})) {
+    print("no core url\n\n");
+    usage();
+  }
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $node;
+  if (defined $self->{'taxon_id'}) {
+    $node = $taxonDBA->fetch_node_by_taxon_id($self->{'taxon_id'});
+  } else {
+    $node = $taxonDBA->fetch_node_by_name($self->{'scientific_name'});
+  }
+  unless ($node->rank eq 'species') {
+    print "ERROR: taxon_id=",$self->{'taxon_id'},", '",$node->name,"' is rank '",$node->rank,"'.\n";
+    print "It is not a rank 'species'. So it can't be loaded.\n\n";
+    exit 2;
+  }
+  $node->release_children;
+  my $root = $node->root;
+
+  my $mc = $self->{'coreDBA'}->get_MetaContainer;
+  $mc->delete_key('species.classification');
+  $mc->delete_key('species.common_name');
+  $mc->delete_key('species.taxonomy_id');
+  print "Loading species.taxonomy_id = ",$node->node_id,"\n";
+  $mc->store_key_value('species.taxonomy_id',$node->node_id);
+  if (defined $node->common_name) {
+    $mc->store_key_value('species.common_name',$node->common_name);
+    print "Loading species.common_name = ",$node->common_name,"\n";
+  }
+  my @classification = split(",",$node->classification(","));
+  foreach my $level (@classification) {
+    print "Loading species.classification = ",$level,"\n";
+    $mc->store_key_value('species.classification',$level);
+  }
+}
+
