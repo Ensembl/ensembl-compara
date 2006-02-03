@@ -76,9 +76,23 @@ sub _init {
     $COL{'acen'}    = 'slategrey';
     $COL{'stalk'}   = 'slategrey';
 
-##These are commented out unless you're generating the vega karyotype image
-#    $COL{'NoAnnotation'}   = 'gray75'; # marks start/end of unannotated sequence
-#    $COL{'CORFAnnotation'} = 'gray90'; # marks start/end of CORF project annotated sequence
+####################################################################
+## set true only while you're generating the vega karyotype image ##
+####################################################################
+	if (0) {
+		$COL{'gpos100'}        = 'darkslategray'; 
+		$COL{'gpos75'}         = 'cadetblue2';
+		$COL{'gpos50'}         = 'cadetblue3';
+		$COL{'gpos25'}         = 'cadetblue4';
+		$COL{'gpos'}           = 'darkslategray';
+		$COL{'gvar'}           = 'darkslategray3';
+		$COL{'gneg'}           = 'white';
+		$COL{'acen'}           = 'darkslategray4';
+		$COL{'stalk'}          = 'darkslategray4';
+		$COL{'NoAnnotation'}   = 'gray75'; # marks start/end of unannotated sequence
+		$COL{'CORFAnnotation'} = 'gray90'; # marks start/end of CORF project annotated sequence
+	}
+## end of vega karyotype static image colours ##
 
     my $im_width    = $Config->image_width();
     my $top_margin  = $Config->{'_top_margin'};
