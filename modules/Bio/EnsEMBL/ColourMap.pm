@@ -39,12 +39,20 @@ sub new {
   $self->colourSet( 'protein_features', qw(
     prints             rust
     prositepatterns    orange
+    scanprosite        orange
     prositeprofiles    contigblue1
+    pfscan    contigblue1
     pfam               grey33
     tigrfam            red
     superfamily        blue
     smart              chatreuse3
     pirs               gold3
+
+    ncoils             darkblue
+    seg                gold2
+    signalp            pink
+    tmhmm              darkgreen
+
     hi                 green
     default            violet2 
   ));
