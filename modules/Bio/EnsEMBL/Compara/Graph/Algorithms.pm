@@ -199,19 +199,16 @@ sub root_tree_on_link
   my $link = shift;
   
   my ($node1, $node2) = $link->get_nodes;
-  
-  parent_graph($node1, $link);
-  parent_graph($node2, $link);
-  
+
+  parent_graph($node1);
+  parent_graph($node2);
+
   my $dist = $link->distance_between;
-  $node1->retain;
-  $node2->retain;
-  $link->release;
+
   my $root = new Bio::EnsEMBL::Compara::NestedSet;
-    
   $root->add_child($node1, $dist / 2.0);
   $root->add_child($node2, $dist / 2.0);
-  
+
   parent_graph($root);
 
   return $root;
