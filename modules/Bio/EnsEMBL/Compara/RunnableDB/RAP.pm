@@ -217,7 +217,10 @@ sub run_rap
   #}
   #throw("can't find a RAP executable to run\n") unless(-e $rap_executable);
 
-  my $cmd = "java -jar " . $rap_executable;
+  my $cmd = "java -jar /usr/local/ensembl/bin/rap.jar";
+  if ($rap_executable) {
+    $cmd = $rap_executable;
+  }
   $cmd .= " 80";    #Max bootstrap for reduction
   $cmd .= " 50.0";  #Max relative rate ratio before duplication
   $cmd .= " 30";    #Gene Tree Max depth for best root research 
