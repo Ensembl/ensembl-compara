@@ -249,7 +249,7 @@ sub balance_tree
   
   my $starttime = time();
   
-  my $last_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
+  my $last_root = Bio::EnsEMBL::Compara::NestedSet->new;
   $last_root->merge_children($tree);
   
   my $best_root = $last_root;
@@ -258,8 +258,7 @@ sub balance_tree
   my @all_nodes = $last_root->get_all_subnodes;
   
   foreach my $node (@all_nodes) {
-    $node->retain->re_root;
-    $last_root->release;
+    $node->re_root;
     $last_root = $node;
     
     my $new_weight = calc_tree_weight($node);
@@ -270,10 +269,8 @@ sub balance_tree
   }
   printf("%1.3f secs to run balance_tree\n", (time()-$starttime));
 
-  $best_root->retain->re_root;
-  $last_root->release;
+  $best_root->re_root;
   $tree->merge_children($best_root);
-  $best_root->release;
 }
 
 sub calc_tree_weight
