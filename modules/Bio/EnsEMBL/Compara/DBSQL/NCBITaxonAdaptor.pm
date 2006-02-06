@@ -146,5 +146,29 @@ sub _load_tagvalues {
   $sth->finish;
 }
 
+sub update {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $parent_id = 0;
+  if($node->parent) {
+    $parent_id = $node->parent->node_id ;
+  }
+  my $root_id = $node->root->node_id;
+
+  my $table= $self->tables->[0]->[0];
+  my $sql = "UPDATE $table SET ".
+               "parent_id=$parent_id".
+               ",root_id=$root_id".
+               ",left_index=" . $node->left_index .
+               ",right_index=" . $node->right_index .
+             " WHERE $table.taxon_id=". $node->node_id;
+
+  $self->dbc->do($sql);
+}
+
 
 1;
