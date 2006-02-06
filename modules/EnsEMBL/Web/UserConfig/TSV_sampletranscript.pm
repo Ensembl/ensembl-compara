@@ -22,10 +22,7 @@ sub init {
       'bgcolor'   => 'background1',
       'bgcolour1' => 'background1',
       'bgcolour2' => 'background1',
-      'source' => [
-         [ 'opt_sanger'    => 'Sanger' ],
-         [ 'opt_dbsnp'     => 'dbSNP' ],
-       ],
+
       'validation' => [
         [ 'opt_freq'       => 'By frequency' ],
         [ 'opt_cluster'    => 'By cluster' ],
@@ -41,7 +38,8 @@ sub init {
         [ 'opt_microsat' => 'Micro-satellite repeats' ],
         [ 'opt_named'    => 'Named variations' ],
         [ 'opt_mnp'      => 'MNPs' ],
-        [ 'opt_het'      => 'Hetrozygous variations' ]
+        [ 'opt_het'      => 'Hetrozygous variations' ],
+        [ 'opt_'         => 'Unclassified' ],
       ],
       'types' => [
         [ 'opt_non_synonymous_coding' => 'Non-synonymous SNPs' ],

@@ -1146,8 +1146,6 @@ sub _sample_configs {
     push @containers_and_configs,    $sample_slice, $sample_config;
   } #end foreach sample
 
-  my $default_source = $object->get_source("default");
-
   return (\@containers_and_configs, \@haplotype);
 }
 

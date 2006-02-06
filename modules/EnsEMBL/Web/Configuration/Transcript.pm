@@ -106,6 +106,30 @@ sub transcriptsnpview {
  my $obj    = $self->{'object'};
  my $params = { 'transcript' => $obj->stable_id, 'db' => $obj->get_db  };
 
+ # Set default sources
+ my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
+ my $default_source = $obj->get_source("default");;
+ my $script_config = $obj->get_scriptconfig();
+ my $restore_default = 1;
+
+ $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
+ foreach my $source ( @sources ) {
+   $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
+ }
+
+ if( $restore_default ) { # if none of species' sources are on
+   foreach my $source ( @sources ) {
+     my $switch;
+     if ($default_source) {
+       $switch = $source eq $default_source ? 'on' : 'off' ;
+     }
+     else {
+       $switch = 'on';
+     }
+     $script_config->set(lc("opt_$source"), $switch, 1);
+   }
+ }
+
  $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
  my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "info$self->{flag}",

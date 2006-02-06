@@ -11,9 +11,6 @@ sub init {
     panel_transcript     on
     image_width          700
 
-    opt_sanger      on
-    opt_dbsnp       on
-
     opt_freq        on
     opt_cluster     on
     opt_doublehit   on
@@ -28,9 +25,8 @@ sub init {
     opt_named     on
     opt_mnp       on
     opt_het       on
+    opt_          on
 
-    #opt_no-stop   on
-    #opt_prem-stop on
     opt_non_synonymous_coding  on
     opt_frameshift_coding      on
     opt_synonymous_coding      on

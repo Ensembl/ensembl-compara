@@ -359,7 +359,7 @@ sub get_samples {
 }
 
 
-sub get_sources {
+sub get_source {
   my $self = shift;
   my $default = shift;
 
@@ -370,10 +370,10 @@ sub get_sources {
   }
 
   if ($default) {
-    return $vari_adaptor->get_default_source();
+    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
   }
   else {
-    # return all sources
+    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
   }
 
 }

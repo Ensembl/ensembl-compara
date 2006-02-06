@@ -920,18 +920,17 @@ sub _parse {
         }
       }
     }
-## SNPS DATABASE....
-    if( $tree->{'databases'}->{'ENSEMBL_SNP'} ){ # Then SNP is configured
-      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_SNP' ) ){
-        my $sql = qq(SELECT id FROM SubSNP WHERE  handle like ? LIMIT 1 );
+## VARIATION DATABASE SOURCES
+    if( $tree->{'databases'}->{'ENSEMBL_VARIATION'} ){ # Then SNP is configured
+      if( my $dbh = $self->db_connect( $tree, 'ENSEMBL_VARIATION' ) ){
+        my $sql = qq(SELECT name FROM source  );
         my $sth = $dbh->prepare( $sql );
-        foreach( 'TSCSNP', 'HGBASESNP' ){
-          my $subs;
-          $subs = 'TSC-CSHL' if $_ eq 'TSCSNP';
-          $subs = 'HGBASE'   if $_ eq 'HGBASESNP';
-          my $rv = $sth->execute($subs) or warn( $sth->errstr() );
-          $tree->{'DB_FEATURES'}{$_} = 1 if $rv > 0;
-        }
+	eval {
+	  $sth->execute;
+	  while( my $row = $sth->fetchrow_arrayref) {
+	    $tree->{'VARIATION_SOURCES'}{"$row->[0]"} = 1;
+	  }
+	};
         $sth->finish();
         $dbh->disconnect();
       }

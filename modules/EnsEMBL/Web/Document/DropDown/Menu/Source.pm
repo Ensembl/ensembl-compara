@@ -12,10 +12,10 @@ sub new {
     'image_width' => 63,
     'alt'         => 'Source'
   );
-  my @menu_entries = @{$self->{'config'}->get('_settings','source')||[]};
+  my @menu_entries = keys %{ $self->{'config'}->species_defs->VARIATION_SOURCES || {} };
   return undef unless @menu_entries;
   foreach ( @menu_entries ) {
-    $self->add_checkbox( @$_ );
+    $self->add_checkbox( lc("opt_$_"), $_ );
   }
   return $self;
 }
