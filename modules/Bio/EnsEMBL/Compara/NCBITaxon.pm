@@ -79,6 +79,13 @@ sub taxon_id {
   return $self->node_id;
 }
 
+sub dbID {
+  my $self = shift;
+  my $value = shift;
+  $self->node_id($value) if($value); 
+  return $self->node_id;
+}
+
 sub rank {
   my $self = shift;
   $self->{'_rank'} = shift if(@_);
