@@ -93,8 +93,8 @@ sub _init {
     });
     $self->push( $back_glyph );
 
-
-    my $textglyph = new Sanger::Graphics::Glyph::Text({
+    if ( ($end-$start+1) > $strain_bp_textwidth ) {
+      my $textglyph = new Sanger::Graphics::Glyph::Text({
         'x'          => ( $end + $start - 1 - $strain_bp_textwidth)/2,
         'y'          => $offset+1,
         'width'      => $alleles_bp_textwidth,
@@ -104,7 +104,8 @@ sub _init {
         'text'       => $reference_base,
         'absolutey'  => 1,
       });
-    $self->push( $textglyph );
+      $self->push( $textglyph );
+    }
   } #end foreach $snp_ref
 
 
@@ -180,7 +181,8 @@ sub _init {
  	});
        $self->push( $back_glyph );
 
-       my $textglyph = new Sanger::Graphics::Glyph::Text({
+       if ( ($E-$S+1)  >$strain_bp_textwidth) {
+	 my $textglyph = new Sanger::Graphics::Glyph::Text({
             'x'          => ( $E + $S - 1 - $strain_bp_textwidth)/2,
             'y'          => 2+$offset,
             'width'      => $alleles_bp_textwidth,
@@ -190,7 +192,8 @@ sub _init {
             'text'       => $allele_string,
             'absolutey'  => 1,
           }) if $allele_string;
-       $self->push( $textglyph ) if defined $textglyph;
+	 $self->push( $textglyph ) if defined $textglyph;
+       }
      }
    }
    $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
