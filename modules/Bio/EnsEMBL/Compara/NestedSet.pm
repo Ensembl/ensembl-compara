@@ -91,7 +91,6 @@ sub release_tree {
   
   my $child_count = $self->get_child_count;
   $self->disavow_parent;
-  $self->release;
   $self->cascade_unlink if($child_count);
   return undef;
 }
@@ -145,14 +144,11 @@ sub add_child {
   
   unless(defined($dist)) { $dist = $child->_distance; }
 
-  $self->retain;
-  $child->retain->disavow_parent;
+  $child->disavow_parent;
   #create_link_to_node is a safe method which checks if connection exists
   my $link = $self->create_link_to_node($child);
   $child->_set_parent_link($link);
   $self->{'_children_loaded'} = 1; 
-  $child->release;
-  $self->release;
   $link->distance_between($dist);
   return $link;
 }
@@ -181,7 +177,7 @@ sub disavow_parent {
     my $link = $self->{'_parent_link'};
     #print("DISAVOW parent : "); $parent->print_node;
     #print("        child  : "); $self->print_node;
-    $link->release;
+    $link->dealloc;
   }
   $self->_set_parent_link(undef);
   return undef;
@@ -205,9 +201,8 @@ sub release_children {
   # by calling with parent, this preserved the link to the parent
   # and thus doesn't unlink self
   foreach my $child (@{$self->children}) {
-    $child->retain->disavow_parent;
+    $child->disavow_parent;
     $child->release_children;
-    $child->release;
   }
   #$self->cascade_unlink($self->{'_parent_node'});
   return $self;
@@ -309,7 +304,6 @@ sub subroot {
 
 sub children {
   my $self = shift;
-
   $self->load_children_if_needed;
   my @kids;
   foreach my $link (@{$self->links}) {
@@ -656,10 +650,14 @@ sub flatten_tree {
   my $self = shift;
   
   my $leaves = $self->get_all_leaves;
-  foreach my $leaf (@{$leaves}) { $leaf->retain->disavow_parent; }
+  foreach my $leaf (@{$leaves}) { 
+    $leaf->disavow_parent;
+  }
 
   $self->release_children;
-  foreach my $leaf (@{$leaves}) { $self->add_child($leaf, 0.0); $leaf->release; }
+  foreach my $leaf (@{$leaves}) {
+    $self->add_child($leaf, 0.0);
+  }
   
   return $self;
 }
@@ -687,8 +685,7 @@ sub re_root {
   my $tmp_root = new Bio::EnsEMBL::Compara::NestedSet;
   $tmp_root->merge_children($root);
     
-  $self->retain;
-  my $parent = $self->parent->retain;
+  my $parent = $self->parent;
   my $dist = $self->distance_to_parent;
   $self->disavow_parent;
 
@@ -697,9 +694,6 @@ sub re_root {
   
   $root->add_child($parent, $dist / 2.0);
   $root->add_child($self, $dist / 2.0);
-  
-  $self->release;
-  $parent->release;
   
   return $root;
 }

@@ -215,7 +215,7 @@ sub unlink_neighbor {
 
   my $link = $self->link_for_neighbor($node);  
   throw($self->obj_id. " not my neighbor ". $node->obj_id) unless($link);
-  $link->release;  
+  $link->dealloc;
 
   return undef;
 }
@@ -225,7 +225,7 @@ sub unlink_all {
   my $self = shift;
 
   foreach my $link (@{$self->links}) {
-    $link->release;
+    $link->dealloc;
   }
   return undef;
 }
@@ -247,16 +247,16 @@ sub cascade_unlink {
   my $caller = shift;
   
   #printf("cascade_unlink : "); $self->print_node;
-  if($self->refcount > $self->link_count) {
-    printf("!!!! node is being retained - can't cascade_unlink\n");
-    return undef;
-  }
+#  if($self->refcount > $self->link_count) {
+#    printf("!!!! node is being retained - can't cascade_unlink\n");
+#    return undef;
+#  }
   
   my @neighbors;
   foreach my $link (@{$self->links}) {
     my $neighbor = $link->get_neighbor($self);
     next if($caller and $neighbor->equals($caller));
-    $link->release;
+    $link->dealloc;
     push @neighbors, $neighbor;
   }
  
@@ -280,8 +280,8 @@ sub minimize_node {
   
   new Bio::EnsEMBL::Compara::Graph::Link($node1, $node2, $dist);
   
-  $link1->release;
-  $link2->release;  
+  $link1->dealloc;
+  $link2->dealloc;
   
   return undef;
 }
