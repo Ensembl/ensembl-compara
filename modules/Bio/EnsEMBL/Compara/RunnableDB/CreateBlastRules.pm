@@ -145,16 +145,21 @@ sub createAllBlastRules
     printf("found submit %s\n", $submitAnalysis->logic_name);
     push @submitList, $submitAnalysis;
     $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($submitAnalysis, $self->{'cr_analysis'});
-  
+
     my $blastAnalysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($blast_name);
     if($blastAnalysis) {
       push @blastList, $blastAnalysis;
       $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blastAnalysis, $self->{'cr_analysis'});
     }
   }
-  
+
   foreach my $submitAnalysis (@submitList) {
     foreach my $blastAnalysis (@blastList) {
+      if (!$self->{'selfBlast'}) {
+        my ($submit_id) = $submitAnalysis->logic_name =~ /SubmitPep_(.*)/;
+        my ($blast_id) = $blastAnalysis->logic_name =~ /blast_(.*)/;
+        next if ($submit_id eq $blast_id);
+      }
       $self->linkSubmitBlastPair($submitAnalysis, $blastAnalysis);
     }
   }
