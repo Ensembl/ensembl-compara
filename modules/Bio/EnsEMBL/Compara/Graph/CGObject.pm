@@ -106,6 +106,7 @@ sub copy {
 
 sub retain {
   my $self = shift;
+  return $self;
   $self->{'_refcount'}=0 unless(defined($self->{'_refcount'}));
   $self->{'_refcount'}++;
   #printf("RETAIN  refcount:%d (%s)%s %s\n", 
@@ -115,6 +116,8 @@ sub retain {
 
 sub release {
   my $self = shift;
+  $self->dealloc;
+  return $self;
   throw("calling release on object which hasn't been retained") 
     unless(defined($self->{'_refcount'}));
   $self->{'_refcount'}--;
@@ -148,6 +151,7 @@ sub refcount {
 
 sub obj_id {
   my $self = shift;
+  return $self;
   unless(defined($self->{'_cgobject_id'})) {
     $self->{'_cgobject_id'} = $self;
   }
