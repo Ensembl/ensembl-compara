@@ -59,7 +59,7 @@ GetOptions('help'             => \$help,
            'align'            => \$self->{'print_align'},
            'cdna'             => \$self->{'cdna'},
            'fasta'            => \$self->{'output_fasta'},
-           'dump'             => \$self->{'dump'},           
+           'dump'             => \$self->{'dump'},
            'align_format=s'   => \$self->{'align_format'},
            'scale=f'          => \$self->{'scale'},
            'counts'           => \$self->{'counts'},
@@ -85,7 +85,7 @@ if($url) {
 unless(defined $self->{'newick_file'} || defined($self->{'comparaDBA'})) {
   print("couldn't connect to compara database or get a newick file\n\n");
   usage();
-} 
+}
 
 #
 # load tree
@@ -99,8 +99,8 @@ elsif ($self->{'gene_stable_id'} and $self->{'clusterset_id'}) {
   fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
   $self->{'clusterset_id'} = undef;
 } 
-elsif ($self->{'newick_file'}) { 
-  parse_newick($self); 
+elsif ($self->{'newick_file'}) {
+  parse_newick($self);
 }
 
 if ($self->{'keep_leaves'}) {
@@ -115,17 +115,16 @@ if($self->{'tree'}) {
     $self->{'tree'} = $self->{'tree'}->parent;
   }
 
-  $self->{'tree'}->retain;
   $self->{'tree'}->disavow_parent;
   $self->{'tree'}->get_all_leaves;
   #printf("get_all_leaves gives %d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
   #$self->{'tree'}->flatten_tree;
-    
+  
   if($self->{'new_root_id'}) {
     reroot($self);
   }
   
-  #test7($self);
+#  test7($self);
   if($self->{'balance_tree'}) {
     balance_tree($self);
   }
@@ -188,7 +187,7 @@ if($self->{'tree'}) {
 #
 if($self->{'clusterset_id'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});  
+  $self->{'clusterset'} = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
   
   printf("loaded %d clusters\n", $self->{'clusterset'}->get_child_count);
 
@@ -203,7 +202,6 @@ if($self->{'clusterset_id'}) {
     }
   }
   
-  $self->{'clusterset'}->release;
   $self->{'clusterset'} = undef;
 }
 
@@ -245,7 +243,7 @@ sub usage {
   print "  -keep_leaves <string>  : if you want to trim your tree and keep a list of leaves (by \$leaf->name) e.g. \"human,mouse,rat\"\n";
   print "geneTreeTool.pl v1.2\n";
   
-  exit(1);  
+  exit(1);
 }
 
 
@@ -266,7 +264,7 @@ sub fetch_protein_tree_with_gene {
   my $node = $aligned_member->subroot;
   
   $self->{'tree'} = $treeDBA->fetch_node_by_node_id($node->node_id);
-  $node->release_tree;  
+  $node->release_tree;
 }
 
 
@@ -333,7 +331,7 @@ sub reroot {
   $reroot_node->re_root;
   
   $parent->add_child($tree, $dist);
-        
+  
   #$treeDBA->store($tree);
   #$treeDBA->delete_node($new_root);
 }
@@ -537,7 +535,6 @@ sub analyzeClusters
   }
   print("%d clusters without duplciates (%d total)\n", $pretty_cluster_count, $clusterset->get_child_count);
     
-  $clusterset->release;
 }
 
 
@@ -577,7 +574,7 @@ sub analyzeClusters2
     printf("clustercount $cluster_count\n") if($cluster_count % 100 == 0);
     my $starttime = time();
     $treeDBA->fetch_subtree_under_node($cluster);
-    $cluster->retain->disavow_parent;
+    $cluster->disavow_parent;
 
     my $member_list = $cluster->get_all_leaves;
 
@@ -613,7 +610,7 @@ sub analyzeClusters2
         
 
         my $has_LSDup = test_rosette_for_LSD($self,$rosette);
-              
+        
         if($has_LSDup) {
           print("    LinearSpecificDuplication\n") if($self->{'debug'});
           #$rosette->print_tree;
@@ -674,7 +671,6 @@ sub analyzeClusters2
     
     #printf("    %10.3f secs\n", '', (time()-$starttime));
     
-    $cluster->release;
     
     #last if($cluster_count >= 100);
   }
@@ -705,8 +701,6 @@ sub analyzeClusters2
   
   printf("\n\n\nrosette newick dists\n");
   print_hash_bins(\%rosette_newick_hash);
-              
-  $clusterset->release;
 }
 
 sub print_hash_bins
@@ -751,7 +745,7 @@ sub test_rosette_for_LSD
 {
   my $self = shift;
   my $rosette = shift;
-     
+  
   my $member_list = $rosette->get_all_leaves;
   my %gdb_hash;
   my $rosette_has_LSD = 0;
@@ -774,7 +768,7 @@ sub test_rosette_for_gene_loss
   my $self = shift;
   my $rosette = shift;
   my $species_list = shift;
-     
+  
   my $member_list = $rosette->get_all_leaves;
   my %gdb_hash;
   my $rosette_has_geneLoss = 0;
@@ -836,7 +830,6 @@ sub test_rosette_matches_species_tree
     my $topo_set = $node->copy->flatten_tree;
     #$topo_set->print_tree;
     $gene_topo_sets->add_child($topo_set); 
-    $topo_set->release;
   }
   
   #print("BUILD TAXON topology sets\n");
@@ -846,7 +839,6 @@ sub test_rosette_matches_species_tree
     my $topo_set = $node->copy->flatten_tree;
     #$topo_set->print_tree;
     $taxon_topo_sets->add_child($topo_set);
-    $topo_set->release;
   }
   
   #printf("TEST TOPOLOGY\n");
@@ -874,9 +866,6 @@ sub test_rosette_matches_species_tree
   }
   
   #cleanup copies
-  $rosette->release;  
-  $gene_topo_sets->release;
-  $taxon_topo_sets->release;
   
   #printf("\n\n");
   return $topology_matches;
@@ -958,7 +947,6 @@ sub balance_tree
   
   #move tree back to original root node  
   $self->{'tree'}->merge_children($root);
-  $root->release;
 }
 
 
@@ -1010,6 +998,5 @@ sub chop_tree
   
   $self->{'tree'}->merge_children($root);
   $node->minimize_node;
-  $root->release;
 }
 
