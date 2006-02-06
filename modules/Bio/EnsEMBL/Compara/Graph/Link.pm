@@ -81,8 +81,8 @@ sub new {
   my $self = $class->SUPER::new;
   bless $self, "Bio::EnsEMBL::Compara::Graph::Link";
 
-  $self->{'_link_node1'} = $node1->retain;
-  $self->{'_link_node2'} = $node2->retain;
+  $self->{'_link_node1'} = $node1;
+  $self->{'_link_node2'} = $node2;
   
   $node1->_add_neighbor_link_to_hash($node2, $self);
   $node2->_add_neighbor_link_to_hash($node1, $self);
@@ -98,8 +98,8 @@ sub dealloc {
   $self->{'_link_node1'}->_unlink_node_in_hash($self->{'_link_node2'});
   $self->{'_link_node2'}->_unlink_node_in_hash($self->{'_link_node1'});
 
-  $self->{'_link_node1'}->release;
-  $self->{'_link_node2'}->release;
+  $self->{'_link_node1'} = undef;
+  $self->{'_link_node2'} = undef;
   
   #printf("DEALLOC link refcount:%d ", $self->refcount);
 }
