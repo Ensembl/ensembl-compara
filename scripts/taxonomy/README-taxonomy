@@ -19,7 +19,7 @@ perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $
 perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_class) = split(/\t\|\t/);print $taxon_id,"\t", $name,"\t",$name_class,"\n";}' names.dmp > ncbi_taxa_names.txt
 
 CREATE TABLE ncbi_taxa_nodes (
-  node_id                        int(10) unsigned NOT NULL,
+  taxon_id                        int(10) unsigned NOT NULL,
   parent_id                       int(10) unsigned NOT NULL,
 
   rank                            char(32) default '' NOT NULL,
@@ -28,20 +28,19 @@ CREATE TABLE ncbi_taxa_nodes (
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
   root_id                         int(10) default 1 NOT NULL,
-  distance_to_parent              double default 0.1 NOT NULL,
   
-  KEY (node_id),
+  KEY (taxon_id),
   KEY (parent_id),
   KEY (rank)
 );
 
 CREATE TABLE ncbi_taxa_names (
-  node_id                    int(10) unsigned NOT NULL,
+  taxon_id                    int(10) unsigned NOT NULL,
 
   name                        varchar(255),
   name_class                  varchar(50),
 
-  KEY (node_id),
+  KEY (taxon_id),
   KEY (name),
   KEY (name_class)
 );
@@ -52,11 +51,7 @@ abel_tree_test.ncbi_taxa_nodes: Records: 293338  Deleted: 0  Skipped: 0  Warning
 mysqlimport -hia64e -uensadmin -pensembl abel_tree_test ncbi_taxa_names.txt
 abel_tree_test.ncbi_taxa_names: Records: 381021  Deleted: 0  Skipped: 0  Warnings: 0
 
-mysql -hia64e -uensadmin -pensembl -N -e "update ncbi_taxa_nodes set parent_id=0 where parent_id=node_id" abel_tree_test
-
-# Or maybe the API should allow to have parent_id=taxon_id when you are at the root?!
-
-mysql -hia64e -uensadmin -pensembl -N -e "update ncbi_taxa_nodes set distance_to_parent=0.1 where parent_id>0" abel_tree_test
+mysql -hia64e -uensadmin -pensembl -N -e "update ncbi_taxa_nodes set parent_id=0 where parent_id=taxon_id" abel_tree_test
 
 # Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrivial.
 
