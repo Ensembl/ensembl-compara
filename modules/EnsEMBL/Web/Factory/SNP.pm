@@ -17,7 +17,7 @@ sub createObjects {
   $dbs->{'variation'}->dnadb($dbs->{'core'});
 
    my $snp    = $self->param('snp');
-   my $source = $self->param('source') || 'dbSNP';
+   my $source = $self->param('source');
    return $self->problem( 'Fatal', 'SNP ID required', "A SNP ID is required to build this page." ) unless $snp;
 
    my $vari_adaptor = $dbs->{'variation'}->get_VariationAdaptor;
