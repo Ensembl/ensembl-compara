@@ -413,7 +413,7 @@ sub dumpTreePeptidesToWorkdir
   
   if($self->{'mpi'}) {
     $self->{'file_root'} = $self->analysis->db_file;
-    $self->{'file_root'} .= "job_" . $self->input_job->dbID . "_hive_" . $self->worker->hive_id . "/";
+    $self->{'file_root'} .= "/job_" . $self->input_job->dbID . "_hive_" . $self->worker->hive_id . "/";
     mkdir($self->{'file_root'}, 0777);
   } else {
     $self->{'file_root'} = $self->worker_temp_directory;
