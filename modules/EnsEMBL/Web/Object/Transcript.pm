@@ -240,7 +240,7 @@ sub getVariationsOnSlice {
     @{ $slice->get_all_VariationFeatures() };
 
   my $count_snps = scalar @on_slice_snps;
-  return 0 unless $count_snps;
+  return (0, []) unless $count_snps;
 
   my @filtered_snps =
 # [fake_s, fake_e, SNP]              Remove the schwartzian index
