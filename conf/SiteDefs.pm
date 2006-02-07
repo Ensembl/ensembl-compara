@@ -128,7 +128,7 @@ $ENSEMBL_PROXY_PORT     = undef; # Port used for self-referential URLs:
                                  # Set to undef if not using proxy-forwarding
 
 $ENSEMBL_SITETYPE       = "EnsEMBL";
-$ARCHIVE_VERSION        = "Dec2005";    # Change this to the archive site for this version
+$ARCHIVE_VERSION        = "Feb2006";    # Change this to the archive site for this version
 
 $ENSEMBL_USER           = getpwuid($>); # Auto-set web serveruser
 $ENSEMBL_GROUP          = getgrgid($)); # Auto-set web server group
