@@ -194,12 +194,18 @@ sub build_GeneTreeSystem
   #
   # ClustalW_mpi
   #
+  my $db_file = $genetree_params{'clustalw_mpi_dir'};
+  unless (defined $db_file && -d $db_file) {
+    warn("db_file for ClustalW_mpi is either not defined or the directory does not exist.\n
+Make sure to set up the 'clustalw_mpi_dir' parameter in the GENE_TREE section of your configuration file\n");
+    exit(2);
+  }
   my $clustalw_mpi = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'ClustalW_mpi',
       -program_file    => '/usr/local/ensembl/bin/clustalw',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
       -parameters      => "{'mpi'=>1}",
-      -db_file         => "/ecs4/work2/ensembl/jessica/data/ensembl_compara_32/clustalw_mpi/",
+      -db_file         => $db_file,
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_mpi);
   $stats = $clustalw_mpi->stats;
@@ -216,7 +222,7 @@ sub build_GeneTreeSystem
       -program_file    => '/usr/local/ensembl/bin/clustalw',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ClustalW',
       -parameters      => "{'parse'=>1, 'align'=>0}",
-      -db_file         => "/ecs4/work2/ensembl/jessica/data/ensembl_compara_32/clustalw_mpi/",
+      -db_file         => $db_file,
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($clustalw_parse);
   $stats = $clustalw_parse->stats;
@@ -260,11 +266,12 @@ sub build_GeneTreeSystem
   #
   # RAP
   #
+  my $parameters = $genetree_params{'species_tree_file'};
   my $rap = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'RAP',
-      -program_file    => '/usr/opt/java/bin/java -jar /nfs/acari/jessica/bin/rap.jar',
+      -program_file    => '/usr/opt/java/bin/java -jar /nfs/acari/abel/bin/rap.jar',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RAP',
-      -parameters      => "{species_tree_file=>'/ecs4/work2/ensembl/jessica/data/encode_species_tree2.nh'}"
+      -parameters      => $parameters
     );
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($rap);
   $stats = $rap->stats;
@@ -288,8 +295,8 @@ sub build_GeneTreeSystem
   $dataflowRuleDBA->create_rule($clustalw_parse, $phyml, 1);
 
   $dataflowRuleDBA->create_rule($phyml, $rap, 1);
-#  $dataflowRuleDBA->create_rule($phyml, $phyml_cdna, 2);
-#  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
+  $dataflowRuleDBA->create_rule($phyml, $phyml_cdna, 2);
+  $dataflowRuleDBA->create_rule($phyml_cdna, $rap, 1);
 
   #$ctrlRuleDBA->create_rule($load_genome, $blastrules_analysis);
 
