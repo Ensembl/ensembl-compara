@@ -13,7 +13,7 @@ $| = 1;
 # the globals into a nice '$self' package
 my $self = bless {};
 
-$self->{'scale'} = 100;
+$self->{'scale'} = 10;
 
 my ($help, $url, $url_core);
 
@@ -27,7 +27,8 @@ GetOptions('help'           => \$help,
            'mini'           => \$self->{'minimize_tree'},
            'count'          => \$self->{'stats'},
            'index'          => \$self->{'build_leftright_index'},
-           'url_core=s'     => \$url_core
+           'url_core=s'     => \$url_core,
+           'memory_leak'    => \$self->{'memory_leak'}
           );
 
 my $state;
@@ -45,6 +46,7 @@ if ($self->{'taxa_compara'}) {
 }
 if($self->{'taxon_id'} && $url_core) { $state = 6; };
 if($self->{'scientific_name'} && $url_core) { $state = 6; };
+if($self->{'memory_leak'}) { $state = 7; }
 
 if ($self->{'taxon_id'} && $self->{'scientific_name'}) {
   print "You can't use -taxon_id and -name together. Use one or the other.\n\n";
@@ -68,16 +70,17 @@ switch($state) {
   case 4 { update_leftright_index($self); }
   case 5 { fetch_compara_ncbi_taxa($self); }
   case 6 { load_taxonomy_in_core($self); }
+  case 7 { test_memory_leak($self); }
 }
 
 
 #cleanup memory
-#if($self->{'root'}) {
+if($self->{'root'}) {
 #  print("ABOUT TO MANUALLY release tree\n");
-#  $self->{'root'}->release_tree;
-#  $self->{'root'} = undef;
+  $self->{'root'}->release_tree;
+  $self->{'root'} = undef;
 #  print("DONE\n");
-#}
+}
 
 exit(0);
 
@@ -109,7 +112,7 @@ sub fetch_by_ncbi_taxon_id {
   my $self = shift;
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $node = $taxonDBA->fetch_node_by_taxon_id($self->{'taxon_id'});
-  $node->release_children;
+  $node->no_autoload_children;
   my $root = $node->root;
   
   $root->print_tree($self->{'scale'});
@@ -122,14 +125,14 @@ sub fetch_by_ncbi_taxon_id {
       print "no common name\n";
     }
   }
+  $self->{'root'} = $root;
 }
 
 sub fetch_by_scientific_name {
   my $self = shift;
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $node = $taxonDBA->fetch_node_by_name($self->{'scientific_name'});
-#  $node->no_autoload_children;
-  $node->release_children;
+  $node->no_autoload_children;
   my $root = $node->root;
 
   $root->print_tree($self->{'scale'});
@@ -142,6 +145,7 @@ sub fetch_by_scientific_name {
       print "no common name\n";
     }
   }
+  $self->{'root'} = $root;
 }
 
 sub fetch_by_ncbi_taxa_list {
@@ -152,7 +156,7 @@ sub fetch_by_ncbi_taxa_list {
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $first_taxon_id = shift @taxa_list;
   my $node = $taxonDBA->fetch_node_by_taxon_id($first_taxon_id);
-  $node->release_children;
+  $node->no_autoload_children;
   my $root = $node->root;
 
   foreach my $taxon_id (@taxa_list) {
@@ -161,14 +165,14 @@ sub fetch_by_ncbi_taxa_list {
       print STDERR "$taxon_id not in the database\n";
       next;
     }
-    $node->release_children;
+    $node->no_autoload_children;
     $root->merge_node_via_shared_ancestor($node);
   }
 
   $root->minimize_tree if($self->{'minimize_tree'});
   $root->print_tree($self->{'scale'});
   $root->flatten_tree->print_tree($self->{'scale'});
-#  $self->{'root'} = $root;
+  $self->{'root'} = $root;
 }
 
 
@@ -183,22 +187,19 @@ sub fetch_compara_ncbi_taxa {
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   foreach my $gdb (@$gdb_list) {
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
-    $taxon->release_children;
+    $taxon->no_autoload_children;
 
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
 
-
-  #$root = $root->find_node_by_name('Mammalia');
-  
   $root->minimize_tree if($self->{'minimize_tree'});
   $root->print_tree($self->{'scale'});
   
   my $newick = $root->newick_format;
   print("$newick\n");
 
-#  $self->{'root'} = $root;
+  $self->{'root'} = $root;
 #  drawPStree($self);
 }
 
@@ -210,6 +211,7 @@ sub update_leftright_index {
   $root = $root->root;
   print STDERR "Starting indexing...\n";
   build_store_leftright_indexing($self, $root);
+  $self->{'root'} = $root;
 }
 
 sub build_store_leftright_indexing {
@@ -251,7 +253,7 @@ sub load_taxonomy_in_core {
     print "It is not a rank 'species'. So it can't be loaded.\n\n";
     exit 2;
   }
-  $node->release_children;
+  $node->no_autoload_children;
   my $root = $node->root;
 
   my $mc = $self->{'coreDBA'}->get_MetaContainer;
@@ -269,5 +271,16 @@ sub load_taxonomy_in_core {
     print "Loading species.classification = ",$level,"\n";
     $mc->store_key_value('species.classification',$level);
   }
+  $self->{'root'} = $root;
 }
 
+sub test_memory_leak {
+  my $self = shift;
+  
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  while(1) {
+    my $node = $taxonDBA->fetch_node_by_taxon_id(9606);
+    my $root = $node->root;
+    $root->release_tree;
+  }
+}
