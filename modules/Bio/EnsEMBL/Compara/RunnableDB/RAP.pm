@@ -284,7 +284,6 @@ sub pre_root_tree
   
   #move newly rooted tree back to original '$tree' node  
   $tree->merge_children($root);
-  $root->release;
   $tree->print_tree($self->{'tree_scale'}) if($self->debug);
   return $tree;
 }

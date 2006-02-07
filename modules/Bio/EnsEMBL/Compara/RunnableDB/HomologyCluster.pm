@@ -235,8 +235,6 @@ sub build_homology_clusters {
   }
   
   $self->dataflow_clusters($root);
-  
-  $root->release;
 }
 
 
@@ -284,10 +282,6 @@ sub grow_clusters_with_homology {
       $proteinTreeDBA->merge_nodes($treeMember1->parent, $treeMember2->parent);
     }
   }
-
-  $treeMember1->parent->release if($treeMember1);
-  $treeMember2->parent->release if($treeMember2);
-
 }
 
 
@@ -463,10 +457,6 @@ sub grow_dbclusters_with_peppair {
       $proteinTreeDBA->merge_nodes($treeMember1->parent, $treeMember2->parent);
     }
   }
-
-  $treeMember1->parent->release if($treeMember1);
-  $treeMember2->parent->release if($treeMember2);
-
 }
 
 
