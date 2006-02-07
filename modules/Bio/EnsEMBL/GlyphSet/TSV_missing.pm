@@ -16,7 +16,7 @@ sub _init {
   
   my $text;
   if ($counts->[0]==0 ) {
-    $text .= "There are no SNPs in this region";
+    $text .= "There are no SNPs within the context selected for this transcript.";
   }
   elsif ($counts->[1] ==0 ) {
     $text .= "The options set in the drop down menu have filtered out all $counts->[0] variations in this region.";
