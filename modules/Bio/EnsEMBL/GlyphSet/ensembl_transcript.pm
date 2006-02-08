@@ -128,7 +128,7 @@ sub gene_zmenu {
   my $gid = $gene->stable_id();
   my $id   = $gene->external_name() eq '' ? $gid : ( $gene->external_db.": ".$gene->external_name() );
   my $zmenu = {
-    'caption'                       => "EnsEMBL Gene",
+    'caption'                       => "Ensembl Gene",
     "01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
   };
   $zmenu->{'05:Gene SNP view'}= "/@{[$self->{container}{_config_file_name_}]}/genesnpview?gene=$gid;db=core" if $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/;
