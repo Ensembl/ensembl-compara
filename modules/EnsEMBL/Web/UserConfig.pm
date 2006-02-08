@@ -529,6 +529,11 @@ sub _is_available_artefact{
     my %species = $self->{'species_defs'}->multi($type, $self->{'species'});
     return $success if exists( $species{$species} );
     return $fail;
+  } elsif( $test[0] eq 'mlagan' ) { # See whether the traces database is specified
+    my( $type ) = $test[1];
+    my %species = $self->{'species_defs'}->multi($type);
+    return $success if (scalar(keys %species));
+    return $fail;
   } elsif( $test[0] eq 'database_features' ){ # See whether the given database is specified
     my $ft = $self->{'species_defs'}->other_species($self->{'species'},'DB_FEATURES') || {};
     return $fail unless $ft->{uc($test[1])};

@@ -772,6 +772,7 @@ sub init {
         'str'      => 'f',
         'available'=> "multi ".$METHOD->[0]."|$species",
         'method'   => $METHOD->[0],
+	'method_id' => $METHOD->[4] || 0,
         'label'    => "$abbrev $METHOD->[2]",
         'title'    => "$short  $METHOD->[3]",
       };
@@ -779,5 +780,37 @@ sub init {
       push @{ $self->{'general'}->{'contigviewbottom'}{'_settings'}{'compara'} },  [ $KEY , "$short $METHOD->[3]" ];
     }
   }
+
+  my @multimethods = (
+    [ 'MLAGAN-167'      ,'orchid1', 'mlagan-167',   '4 Species MLAGAN-167', 167 ],
+    [ 'MLAGAN-170'      ,'pink', 'mlagan-170',   '7 Species MLAGAN-170', 170 ],
+  );
+  foreach my $METHOD (@multimethods) {
+      my $SPECIES = $ENV{ENSEMBL_SPECIES};
+
+      (my $species = $SPECIES ) =~ s/_\d+//;
+      (my $abbrev = $species ) =~ s/^(\w)\w+_(\w)\w+$/\1\2/g;
+      $compara++;
+      my $KEY = lc($METHOD->[0]).'_match';
+      $self->{'general'}->{'contigviewbottom'}{$KEY} = {
+        'glyphset' => 'multiple_alignment',
+        'species'  => $species,
+        'on'       => 'off',
+        'compact'  => 1,
+        'dep'      => 6,
+        'pos'      => $compara+300,
+        'col'      => $METHOD->[1],
+        'str'      => 'f',
+        'available'=> "mlagan ".$METHOD->[0],
+        'method'   => $METHOD->[0],
+	'method_id' => $METHOD->[4],
+        'label'    => $METHOD->[2],
+        'title'    => $METHOD->[3],
+      };
+      push @{ $self->{'general'}->{'contigviewbottom'}{ '_artefacts'} }, $KEY;
+      push @{ $self->{'general'}->{'contigviewbottom'}{'_settings'}{'compara'} },  [ $KEY , $METHOD->[3] ];
+  }
+
+
 }
 1;
