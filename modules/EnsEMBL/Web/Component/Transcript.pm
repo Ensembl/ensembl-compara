@@ -923,38 +923,44 @@ sub spreadsheet_variationTable {
   my $tr_start = $object->__data->{'transformed'}{'start'};
   my $tr_end   = $object->__data->{'transformed'}{'end'};
   my $extent   = $object->__data->{'transformed'}{'extent'};
-  my $coding_start = $object->__data->{'transformed'}{'coding_start'};
+  my $cdna_coding_start = $object->Obj->cdna_coding_start;
   return unless %snps;
+
   $panel->add_columns(
-    { 'key' => 'ID', 'align' => 'center' },
-    { 'key' => 'class', 'align' => 'center' },
-    { 'key' => 'alleles', 'align' => 'center' },
-    { 'key' => 'ambiguity', 'align' => 'center' },
-    { 'key' => 'status', 'align' => 'center' },
-    { 'key' => 'chr' , 'align' => 'center' },
-    { 'key' => 'pos' , 'align' => 'center' },
-    { 'key' => 'snptype', 'title' => 'SNP type', 'align' => 'center' },
+    { 'key' => 'ID', },
+    { 'key' => 'snptype', 'title' => 'Type', },
+    { 'key' => 'chr' , 'title' => 'Chr: bp',  },
+    { 'key' => 'Alleles', 'align' => 'center' },
+    { 'key' => 'Ambiguity', 'align' => 'center' },
     { 'key' => 'aachange', 'title' => 'AA change', 'align' => 'center' },
-    { 'key' => 'aacoord',  'title' => 'AA co-ordinate', 'align' => 'center' }
+    { 'key' => 'aacoord',  'title' => 'AA co-ordinate', 'align' => 'center' },
+    { 'key' => 'class', 'align' => 'center' },
+    { 'key' => 'Source', },
+    { 'key' => 'status', 'align' => 'center' },
   );
+
+
   foreach my $gs ( @gene_snps ) {
     my $raw_id = $gs->[2]->dbID;
-    my $transcript_variation     = $snps{$raw_id};
+    my $transcript_variation  = $snps{$raw_id};
     my @validation =  @{ $gs->[2]->get_all_validation_states || [] };
+
     if( $transcript_variation && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
+
       my $ROW = {
         'ID'        =>  qq(<a href="/@{[$object->species]}/snpview?snp=@{[$gs->[2]->variation_name]};source=@{[$gs->[2]->source]};chr=$gs->[3];vc_start=$gs->[4]">@{[$gs->[2]->variation_name]}</a>),
         'class'     => $gs->[2]->var_class() eq 'in-del' ? ( $gs->[4] > $gs->[5] ? 'insertion' : 'deletion' ) : $gs->[2]->var_class(),
-        'alleles'   => $gs->[2]->allele_string(),
-        'ambiguity' => $gs->[2]->ambig_code(),
+        'Alleles'   => $gs->[2]->allele_string(),
+        'Ambiguity' => $gs->[2]->ambig_code(),
         'status'    => (join( ', ',  @validation ) || "-"),
-        'chr'       => $gs->[3],
-        'pos'       => $gs->[4]==$gs->[5] ? $gs->[4] :  "$gs->[4]-$gs->[5]",
+        'chr'       => $gs->[3].": ".
+                        ($gs->[4]==$gs->[5] ? $gs->[4] :  "$gs->[4]-$gs->[5]"),
         'snptype'   => $transcript_variation->consequence_type,
         $transcript_variation->translation_start ? (
            'aachange' => $transcript_variation->pep_allele_string,
-           'aacoord'   => $transcript_variation->translation_start.' ('.(($transcript_variation->cdna_start-$coding_start)%3+1).')'
-        ) : ( 'aachange' => '-', 'aacoord' => '-' )
+           'aacoord'   => $transcript_variation->translation_start.' ('.(($transcript_variation->cdna_start - $cdna_coding_start )%3+1).')'
+        ) : ( 'aachange' => '-', 'aacoord' => '-' ),
+	  'Source'      => $gs->[2]->source || "-",	 
       };
       $panel->add_row( $ROW );
     }
@@ -1184,9 +1190,9 @@ sub spreadsheet_TSVtable {
 
   $panel->add_columns(
     { 'key' => 'ID',  },
-    { 'key' => 'consequence', 'title' => 'Consequence', },
+    { 'key' => 'consequence', 'title' => 'Type', },
     { 'key' => 'chr' ,        'title' => "Chr: bp" },
-    { 'key' => 'Alleles',     'title' => 'SNP alleles', },
+    { 'key' => 'Alleles',     'title' => 'Alleles', },
     { 'key' => 'Ambiguity',   'title' => 'Ambiguity',  },
     { 'key' => 'Codon',       'title' => "Transcript codon" ,  },
     { 'key' => 'cdscoord',  'title' => 'CDS co-ordinate',  },
@@ -1233,8 +1239,8 @@ sub spreadsheet_TSVtable {
     # Codon - make the letter for the SNP position in the codon bold
     my $codon = $conseq_type->codon;
     if ( $codon ) {
-      my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
-      $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/; 
+      my $position = ($conseq_type->cds_start % 3 || 3) - 1;
+      $codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/; 
     }
 
     # Read coverage

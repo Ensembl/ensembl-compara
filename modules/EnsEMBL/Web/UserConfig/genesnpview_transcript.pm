@@ -77,6 +77,7 @@ sub init {
       'on'          => "on",
       'pos'         => '200',
       'str'         => 'r',
+      'colours'=>{$self->{'_colourmap'}->colourSet('variation')},
     },
     'GSV_pfam' => {
       'on'          => "on",
