@@ -476,16 +476,11 @@ sub synteny_map {
         return undef;
     }
 
-    #my $databases = $object->DBConnection->get_databases('core','compara' );
-    #my $databases2 = $object->DBConnection->get_databases_species( $other,'core' );
-
     my $ka  = $object->get_adaptor('get_KaryotypeBandAdaptor', 'core', $species);
     my $ka2 = $object->get_adaptor('get_KaryotypeBandAdaptor', 'core', $other);
-    my $sa  = $object->get_adaptor('get_syntenyAdaptor', 'compara');
+    my $raw_data = $object->Obj->get_all_compara_Syntenies($other);   
 
-    $sa->setSpecies( $object->species_defs->multidb->{'ENSEMBL_COMPARA'}{'NAME'}, $species , $other );
-    my $raw_data = $sa->get_synteny_for_chromosome( $chr );
-    
+ 
     ## checks done ## 
     my $chr_length = $object->length;
     my @localgenes = @{$object->get_synteny_local_genes};
