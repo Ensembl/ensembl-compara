@@ -1300,9 +1300,21 @@ sub spreadsheet_TSVtable {
  sub transcriptsnpview_menu    {
    my ($panel, $object) = @_;
    my $valids = $object->valids;
-  # warn keys %$valids;
-  # my $sources;
-  # $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript from these sources: $sources.</p>");
+
+   my $sources = $object->get_source || [];
+   my @onsources;
+   foreach (@$sources) {
+     push @onsources, $_ if $valids->{lc("opt_$_")};
+   }
+
+   my $text;
+   if ( $onsources[0] ) {
+     $text = " from these sources: " . join ", ", @onsources if $onsources[0];
+   }
+   else {
+     $text = ". Please select a source from the yellow 'Source' dropdown menu";
+   }
+   $panel->print("<p>These SNP calls are sequence coverage dependent. Here we display the SNP calls observed by transcript$text.</p>");
 
    return tsv_menu( @_, 'TSV_sampletranscript',
     [qw( Features Source SNPClasses SNPTypes SNPContext THExport ImageSize )], ['SNPHelp'] ); 
