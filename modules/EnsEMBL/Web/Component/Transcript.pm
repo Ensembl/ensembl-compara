@@ -973,6 +973,13 @@ sub spreadsheet_variationTable {
 sub transcriptsnpview { 
   my( $panel, $object, $do_not_render ) = @_;
 
+  # Params for context transcript expansion.
+  my  $db = $object->get_db();
+  my $transcript = $object->stable_id;
+  my $script = 'transcriptsnpview';
+  my $URL_for_expand =
+    "/".$object->species."/$script?db=$db;transcript=$transcript;bottom=%7Cbump_";
+
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
   my $extent = tsv_extent($object);
   foreach my $slice_type (
@@ -1029,7 +1036,7 @@ sub transcriptsnpview {
   $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
   $Configs->{'context'}->set( 'est_transcript','on','off');
-
+  $Configs->{'context'}->set( '_settings', 'URL',   $URL_for_expand, 1);
 
   # SNP stuff ------------------------------------------------------------
   my ($containers_and_configs, $haplotype);
@@ -1100,7 +1107,6 @@ sub _sample_configs {
 
   foreach my $sample (  $object->get_samples ) { #e.g. DBA/2J
     my $sample_slice = $transcript_slice->get_by_strain( $sample );
-    # needed?? $object->__data->{'slices'}{ $sample }= [ 'munged', $sample_slice , $sub_slices, $fake_length ];
 
     ## Initialize content...
     my $sample_config = $object->get_userconfig( "TSV_sampletranscript" );

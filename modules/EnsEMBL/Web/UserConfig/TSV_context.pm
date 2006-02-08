@@ -20,7 +20,9 @@ sub init {
       'bgcolour1' => 'background1',
       'bgcolour2' => 'background1',
       'features' => [],
-    },
+      'button_width'  => 8,
+      'show_buttons'  => 'yes',
+   },
     'scalebar' => {
       'on'          => "on",
       'nav'         => "off",
@@ -70,6 +72,6 @@ sub init {
       'available'=> 'databases ENSEMBL_VARIATION',
     },
   };
-  $self->ADD_ALL_TRANSCRIPTS(2000, "compact" =>'1');  #first is position
+  $self->ADD_ALL_TRANSCRIPTS(2000);  #first is position
 }
 1;
