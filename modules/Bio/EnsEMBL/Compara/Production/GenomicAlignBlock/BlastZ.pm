@@ -98,7 +98,9 @@ have specified a group_set_size in the target_dna_collection. In the case of bla
     print("  options : ", $self->options, "\n");
     print("  program : $program\n");
   }
-  
+
+  $self->delete_fasta_dumps_but_these([$qyChunkFile,$dbChunkFile]);
+
   my $runnable =  new Bio::EnsEMBL::Pipeline::Runnable::Blastz (
                    #-query     => $self->db_DnaFragChunk->bioseq,                   
                    #-database  => $first_qy_chunk->bioseq,
