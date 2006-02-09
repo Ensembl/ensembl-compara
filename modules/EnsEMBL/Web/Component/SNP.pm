@@ -147,9 +147,6 @@ sub status {
   }
 
   my $snp_name = $object->name;
-  #     if ($snp_name !~ /^rs/) {
-  #       $snp_name = "rs".$snp_name;
-  #     }
   my (@status_list, $hapmap_html);
   foreach my $status (@status) {
     if ($status eq 'hapmap') {

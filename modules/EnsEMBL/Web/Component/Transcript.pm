@@ -992,7 +992,9 @@ sub transcriptsnpview {
   my $transcript_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
   my $sub_slices       =  $object->__data->{'slices'}{'TSV_transcript'}[2];
   my $fake_length      =  $object->__data->{'slices'}{'TSV_transcript'}[3];
-  my ($count_snps, $snps) = $object->getVariationsOnSlice( "TSV_transcript", $transcript_slice );
+#  my ($count_snps, $snps) = $object->getVariationsOnSlice( "TSV_transcript", $transcript_slice );
+
+  my ($count_snps, $snps) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );
 
   # Taken out domains (prosite, pfam)
 

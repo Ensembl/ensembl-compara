@@ -815,20 +815,21 @@ sub genesnpview {
     [ 'transcripts', 'munged', $extent ]
   );
 
+  my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
+  my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];
+
 ## Now we have the padding size we can now go about making our
 ## fake transcripts and snps....
 
   my @transcripts            = ();
   my @containers_and_configs = (); ## array of containers and configs
 
-## -- Grab the SNPs and map them to subslice co-ordinate ---------------- ##
-## @snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object]
+# Grab the SNPs and map them to subslice co-ordinate ---------------- ##
+# $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'} 
+  my ($count_snps, $snps) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  ); 
 
-
-## Get the SNPS....
- my ($count_snps, $snps) =  $object->getVariationsOnSlice( $object->Obj, 'transcripts') unless $no_snps; ## Stores in $object->__data->{'SNPS'} ## Written
-
-  $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
+ 
+ $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
 
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan);
   foreach( @domain_logic_names ) {
@@ -843,7 +844,7 @@ sub genesnpview {
     my $CONFIG = $uca->getUserConfig( "genesnpview_transcript" );
     $CONFIG->{'geneid'}     = $object->stable_id;
     $CONFIG->{'snps'}       = $snps unless $no_snps;
-    $CONFIG->{'subslices'}  = $object->__data->{'slices'}{'transcripts'}[2];
+    $CONFIG->{'subslices'}  = $sub_slices;
     $CONFIG->{'extent'}     = $extent;
       ## Store transcript information on config....
     my $TS = $trans_obj->__data->{'transformed'};
@@ -861,10 +862,10 @@ sub genesnpview {
 
     $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
     if( $object->seq_region_strand < 0 ) {
-      push @containers_and_configs, $object->__data->{'slices'}{'transcripts'}[1], $CONFIG;
+      push @containers_and_configs, $transcript_slice, $CONFIG;
     } else {
       ## If forward strand we have to draw these in reverse order (as forced on -ve strand)
-      unshift @containers_and_configs, $object->__data->{'slices'}{'transcripts'}[1], $CONFIG;
+      unshift @containers_and_configs, $transcript_slice, $CONFIG;
     }
     push @transcripts, { 'exons' => $TS->{'exons'} };
   }
@@ -872,7 +873,7 @@ sub genesnpview {
 ## -- Map SNPs for the last SNP display --------------------------------- ##
   my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
   my $fake_length = -1; ## end of last drawn snp on bottom display...
-  my $slice_trans = $object->__data->{'slices'}{'transcripts'}[1];
+  my $slice_trans = $transcript_slice;
 
 ## map snps to fake evenly spaced co-ordinates...
   my @snps2;
@@ -913,7 +914,7 @@ sub genesnpview {
     $Configs->{$_}->{'geneid'}      = $gene_stable_id;
     $Configs->{$_}->{'transcripts'} = \@transcripts;
     $Configs->{$_}->{'snps'}        = $object->__data->{'SNPS'} unless $no_snps;
-    $Configs->{$_}->{'subslices'}   = $object->__data->{'slices'}{'transcripts'}[2];
+    $Configs->{$_}->{'subslices'}   = $sub_slices;
     $Configs->{$_}->{'fakeslice'}   = 1;
     $Configs->{$_}->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
   }
@@ -930,10 +931,10 @@ sub genesnpview {
   my $image    = $object->new_image([
     $object->__data->{'slices'}{'context'}[1],     $Configs->{'context'},
     $object->__data->{'slices'}{'gene'}[1],        $Configs->{'gene'},
-    $object->__data->{'slices'}{'transcripts'}[1], $Configs->{'transcripts_top'},
+    $transcript_slice, $Configs->{'transcripts_top'},
     @containers_and_configs,
-    $object->__data->{'slices'}{'transcripts'}[1], $Configs->{'transcripts_bottom'},
-    $no_snps ? ():($object->__data->{'slices'}{'transcripts'}[1], $Configs->{'snps'})
+    $transcript_slice, $Configs->{'transcripts_bottom'},
+    $no_snps ? ():($transcript_slice, $Configs->{'snps'})
   ],
   [ $object->stable_id ]
   );
