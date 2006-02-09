@@ -130,7 +130,11 @@ sub transcriptsnpview {
    }
  }
 
+ # Need this to make yellow dropdowns work
  $self->update_configs_from_parameter( 'bottom', qw(TSV_context TSV_sampletranscript TSV_transcript) );
+
+
+ # Info panel
  my $panel1 = new EnsEMBL::Web::Document::Panel::Information(
     'code'    => "info$self->{flag}",
     'caption' => 'Ensembl Transcript Variation Report for '.$obj->stable_id,

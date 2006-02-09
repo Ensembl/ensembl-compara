@@ -354,7 +354,6 @@ sub get_samples {
   }
   my $pop_adaptor = $vari_adaptor->get_PopulationAdaptor;
   my @samples = @{$pop_adaptor->get_default_strains};
-  #my @samples = map {$_->name} @{ $pop_adaptor->fetch_all_strains() };#all strains
   return sort @samples;
 }
 
