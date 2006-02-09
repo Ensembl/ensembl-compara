@@ -11,7 +11,7 @@ sub init {
   $self->{'_add_labels' }  = 1;
 
   $self->{'general'}->{'TSV_sampletranscript'} = {
-    '_artefacts' => [qw(coverage_top TSV_transcript TSV_snps cxoverage_bottom)],#GSV_pfam GSV_prints GSV_prosite GSV_pfscan)],
+    '_artefacts' => [qw(coverage_top TSV_transcript TSV_snps coverage_bottom)],#GSV_pfam GSV_prints GSV_prosite GSV_pfscan)],
     '_options'  => [qw(pos col known unknown)],
     '_settings' => {
       'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
