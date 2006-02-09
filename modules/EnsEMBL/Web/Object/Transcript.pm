@@ -225,48 +225,15 @@ sub valids {
 }
 
 sub getVariationsOnSlice {
-  my( $self, $key, $slice ) = @_;
-  my $valids = $self->valids;
+  my( $self, $slice, $subslices ) = @_;
+  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+        'Slice', $slice, $self->__data
+       );
 
-  my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
-  my @on_slice_snps = 
-# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
-    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
-# [ SNP, offset ]           Create a munged version of the SNPS
-    map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }    # Map to "fake coordinates"
-# [ SNP ]                   Filter out all the multiply hitting SNPs
-    grep { $_->map_weight < 4 }
-# [ SNP ]                   Get all features on slice
-    @{ $slice->get_all_VariationFeatures() };
-
-  my $count_snps = scalar @on_slice_snps;
-  return (0, []) unless $count_snps;
-
-  my @filtered_snps =
-# [fake_s, fake_e, SNP]              Remove the schwartzian index
-    map  { $_->[1] }
-# [ index, [fake_s, fake_e, SNP] ]   Sort snps on schwartzian index
-    sort { $a->[0] <=> $b->[0] }
-# [ index, [fake_s, fake_e, SNP] ]   Compute schwartzian index [ consequence type priority, fake SNP ]
-    map  { [ $_->[1] - $ct{$_->[2]->get_consequence_type()} *1e9, $_ ] }
-# [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
-    grep { ( @{$_->[2]->get_all_validation_states()} ?
-           (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states()} ) :
-           $valids->{'opt_noinfo'} ) }
-# [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
-    grep { $valids->{'opt_'.lc($_->[2]->get_consequence_type()) } }
-
-# [ fake_s, fake_e, SNP ]   Filter our unwanted sources
-    grep { $valids->{'opt_'.lc($_->[2]->source)} }
-
-# [ fake_s, fake_e, SNP ]   Filter our unwanted classes
-    grep { $valids->{'opt_'.$_->[2]->var_class} }
-      @on_slice_snps;
-
-  $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @filtered_snps];
-  return ($count_snps, \@filtered_snps);
+  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures($subslices);
+  $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
+ return ($count_snps, $filtered_snps);
 }
-
 
 sub getAllelesConsequencesOnSlice {
   my( $self, $sample, $key, $sample_slice ) = @_;
@@ -280,9 +247,9 @@ sub getAllelesConsequencesOnSlice {
   my $valids = $self->valids;
 
   # Get all features on slice
-  my $allele_features = $sample_slice->get_all_differences_Slice();
+  my $allele_features = $sample_slice->get_all_differences_Slice() || [];
   #warn scalar (@$allele_features);
-  return [] unless ref $allele_features eq 'ARRAY'; 
+  return [] unless @$allele_features;
 
   my @filtered_af =
     sort {$a->[2]->start <=> $b->[2]->start}

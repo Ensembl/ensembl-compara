@@ -3,6 +3,7 @@ package EnsEMBL::Web::Object::Slice;
 use strict;
 use warnings;
 no warnings "uninitialized";
+use Data::Dumper;
 
 use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
@@ -69,6 +70,70 @@ sub line_numbering {
     return $self->Obj->strand > 0 ? ( $self->Obj->start, $self->Obj->end ) : ( $self->Obj->end, $self->Obj->start );
   }
   return();
+}
+
+
+sub valids {
+  my $self = shift;
+  my %valids = ();    ## Now we have to create the snp filter....
+  foreach( $self->param() ) {
+    $valids{$_} = 1 if $_=~/opt_/ && $self->param( $_ ) eq 'on';
+  }
+  return \%valids;
+}
+
+sub getVariationFeatures {
+  my ( $self, $subslices, $gene ) = @_;
+  my $valids = $self->valids;
+
+  my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+  my @on_slice_snps = 
+# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
+# [ SNP, offset ]           Create a munged version of the SNPS
+    map  { [$_, $self->munge_gaps( $subslices, $_->start, $_->end)] }    # Map to "fake coordinates"
+# [ SNP ]                   Filter out all the multiply hitting SNPs
+    grep { $_->map_weight < 4 }
+# [ SNP ]                   Get all features on slice
+    @{ $self->Obj->get_all_VariationFeatures() };
+
+  my $count_snps = scalar @on_slice_snps;
+  return (0, []) unless $count_snps;
+
+  my @filtered_snps =
+# [fake_s, fake_e, SNP]              Remove the schwartzian index
+    map  { $_->[1] }
+# [ index, [fake_s, fake_e, SNP] ]   Sort snps on schwartzian index
+    sort { $a->[0] <=> $b->[0] }
+# [ index, [fake_s, fake_e, SNP] ]   Compute schwartzian index [ consequence type priority, fake SNP ]
+    map  { [ $_->[1] - $ct{$_->[2]->get_consequence_type($gene)} *1e9, $_ ] }
+# [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
+    grep { ( @{$_->[2]->get_all_validation_states()} ?
+           (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states()} ) :
+           $valids->{'opt_noinfo'} ) }
+# [ fake_s, fake_e, SNP ]   Filter our unwanted consequence classifications
+    grep { $valids->{'opt_'.lc($_->[2]->get_consequence_type()) } }
+
+# [ fake_s, fake_e, SNP ]   Filter our unwanted sources
+    grep { $valids->{'opt_'.lc($_->[2]->source)} }
+
+# [ fake_s, fake_e, SNP ]   Filter our unwanted classes
+    grep { $valids->{'opt_'.$_->[2]->var_class} }
+      @on_slice_snps;
+
+  return ($count_snps, \@filtered_snps);
+}
+
+sub munge_gaps {
+  my( $self, $subslices, $bp, $bp2  ) = @_;
+
+  foreach( @$subslices ) {
+    if( $bp >= $_->[0] && $bp <= $_->[1] ) {
+      my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2] ;
+      return $return;
+    }
+  }
+  return undef;
 }
 
 1;
