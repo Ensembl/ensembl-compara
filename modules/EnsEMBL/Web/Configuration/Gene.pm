@@ -11,8 +11,33 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub genesnpview {
   my $self   = shift;
   my $obj    = $self->{'object'};
-     $self->update_configs_from_parameter( 'bottom', 'genesnpview_transcript genesnpview_gene genesnpview_context' );
-     $self->set_title( 'Gene Variation Report for '.$obj->stable_id );
+
+ # Set default sources
+  my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
+  my $default_source = $obj->get_source("default");
+  my $script_config = $obj->get_scriptconfig();
+  my $restore_default = 1;
+
+  $self->update_configs_from_parameter( 'bottom','genesnpview_transcript', 'genesnpview_gene', 'genesnpview_context' );
+  foreach my $source ( @sources ) {
+    $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
+  }
+
+  if( $restore_default ) { # if none of species' sources are on
+    foreach my $source ( @sources ) {
+      my $switch;
+      if ($default_source) {
+        $switch = $source eq $default_source ? 'on' : 'off' ;
+      }
+      else {
+        $switch = 'on';
+      }
+      $script_config->set(lc("opt_$source"), $switch, 1);
+    }
+  }
+
+  $self->update_configs_from_parameter( 'bottom', 'genesnpview_transcript', 'genesnpview_gene', 'genesnpview_context' );
+  $self->set_title( 'Gene Variation Report for '.$obj->stable_id );
   my $params = { 'gene' => $obj->stable_id, 'db' => $obj->get_db  };
 
 ## Panel 1 - the gene information table at the top of the page...
@@ -45,7 +70,6 @@ sub genesnpview {
       menu   EnsEMBL::Web::Component::Gene::genesnpview_menu
       image  EnsEMBL::Web::Component::Gene::genesnpview
     ));
-#     legend EnsEMBL::Web::Component::Gene::genesnpview_legend
     $self->add_panel( $panel2 );
   }
 

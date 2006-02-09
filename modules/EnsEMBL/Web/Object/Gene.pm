@@ -384,11 +384,40 @@ sub get_gene_slices {
   }
 }
 
+
+# Calls for GeneSNPView
+
+# Valid user selections
+sub valids {
+  my $self = shift;
+  my %valids = ();    ## Now we have to create the snp filter....
+  foreach( $self->param() ) {
+    $valids{$_} = 1 if $_=~/opt_/ && $self->param( $_ ) eq 'on';
+  }
+  return \%valids;
+}
+
+
 sub getVariationsOnSlice {
-  my( $self, $gene, $key, $valids ) = @_;
+  my( $self, $gene, $key ) = @_;
+  my $valids = $self->valids;
   my $slice = $self->__data->{'slices'}{ $key };
+
   my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
-  my @snps =
+  my @on_slice_snps =
+# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
+    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
+# [ SNP, offset ]           Create a munged version of the SNPS
+    map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }    # Map to "fake coordinates"
+# [ SNP ]                   Filter out all the multiply hitting SNPs
+    grep { $_->map_weight < 4 }
+# [ SNP ]                   Get all features on slice
+    @{ $slice->[1]->get_all_VariationFeatures() };
+  my $count_snps = scalar @on_slice_snps;
+  return (0, []) unless $count_snps;
+
+ my @filtered_snps =
+
 # [fake_s, fake_e, SNP]              Remove the schwartzian index
     map  { $_->[1] }
 # [ index, [fake_s, fake_e, SNP] ]   Sort snps on schwartzian index
@@ -403,16 +432,35 @@ sub getVariationsOnSlice {
     grep { $valids->{'opt_'.lc($_->[2]->get_consequence_type($self->Obj)) } }
 # [ fake_s, fake_e, SNP ]   Filter our unwanted classes
     grep { $valids->{'opt_'.$_->[2]->var_class} }
-# [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
-    map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
-# [ SNP, offset ]           Create a munged version of the SNPS
-    map  { [$_,$self->munge_gaps($key,$_->start,$_->end)] }             # Map to "fake coordinates"
-# [ SNP ]                   Filter out all the multiply hitting SNPs
-    grep { $_->map_weight < 4 }
-# [ SNP ]                   Get all features on slice
-    @{ $slice->[1]->get_all_VariationFeatures() };
-  $self->__data->{'SNPS'} = \@snps;
+# [ fake_s, fake_e, SNP ]   Filter our unwanted sources
+    grep { $valids->{'opt_'.lc($_->[2]->source)} }
+   @on_slice_snps;
+
+ $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @filtered_snps];
+  $self->__data->{'SNPS'} = \@filtered_snps;
+  return ($count_snps, \@filtered_snps);
 }
+
+
+sub get_source {
+  my $self = shift;
+  my $default = shift;
+
+  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+
+  if ($default) {
+    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
+  }
+  else {
+    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
+  }
+
+}
+
 
 sub store_TransformedTranscripts {
   my( $self ) = @_;
@@ -446,7 +494,8 @@ sub store_TransformedTranscripts {
 }
 
 sub store_TransformedSNPS {
-  my( $self, $valids ) = @_;
+  my $self = shift;
+  my $valids = $self->valids;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     my $T = $trans_obj->stable_id;
     my $snps = {};

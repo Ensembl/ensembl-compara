@@ -25,23 +25,22 @@ sub init {
     opt_named     on
     opt_mnp       on
     opt_het       on
+    opt_          on
 
-    #opt_no-stop   on
-    #opt_prem-stop on
-    opt_non_synonymous_coding  on
+    opt_stop_gained            on
+    opt_stop_lost              on
     opt_frameshift_coding      on
-    opt_synonymous_coding      on
-    opt_5prime_utr             on
-    opt_3prime_utr             on
-    opt_intronic               on
-    opt_downstream             on
-    opt_upstream               on
-    opt_intergenic             on
+    opt_non_synonymous_coding  on
     opt_essential_splice_site  on
     opt_splice_site            on
     opt_regulatory_region      on
-    opt_stop_gained            on
-    opt_stop_lost              on
+    opt_synonymous_coding      on
+    opt_5prime_utr             on
+    opt_3prime_utr             on
+    opt_downstream             on
+    opt_upstream               on
+    opt_intronic               on
+    opt_intergenic             on
   ));
 }
 1;

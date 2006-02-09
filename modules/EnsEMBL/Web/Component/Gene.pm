@@ -766,7 +766,7 @@ sub factor {
 sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',
    [qw( Features SNPContext ImageSize THExport )], ['GeneSpliceHelp'] ); }
 sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript', 
-   [qw( Features SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); }
+   [qw( Features  Source SNPClasses SNPValid SNPTypes SNPContext ImageSize THExport)], ['SNPHelp'] ); }
 
 sub gene_menu { 
   my($panel, $object, $configname, $left, $right ) = @_;
@@ -789,8 +789,6 @@ sub genespliceview {
 
 sub genesnpview {
   my( $panel, $object, $no_snps, $do_not_render ) = @_;
-
-  #my $ANALYSIS = $object->get_db() eq 'core' ? lc($object->species_defs->AUTHORITY) : 'otter';
 
   my $image_width  = $object->param( 'image_width' );
   my $context      = $object->param( 'context' );
@@ -826,21 +824,17 @@ sub genesnpview {
 ## -- Grab the SNPs and map them to subslice co-ordinate ---------------- ##
 ## @snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object]
 
-## Now we have to create the snp filter....
 
-  my %valids = ();
-  foreach( $object->param() ) {
-    $valids{$_} = 1 if $_=~/opt_/ && $object->param( $_ ) eq 'on';
-  }
 ## Get the SNPS....
-  $object->getVariationsOnSlice( $object->Obj, 'transcripts', \%valids ) unless $no_snps;; ## Stores in $object->__data->{'SNPS'} ## Written
+ my ($count_snps, $snps) =  $object->getVariationsOnSlice( $object->Obj, 'transcripts') unless $no_snps; ## Stores in $object->__data->{'SNPS'} ## Written
+
   $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
 
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan);
   foreach( @domain_logic_names ) {
     $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'} 
   }
-  $object->store_TransformedSNPS( \%valids ) unless $no_snps;      ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
+  $object->store_TransformedSNPS() unless $no_snps;      ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
 
 ### This is where we do the configuration of containers....
   foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
@@ -848,7 +842,7 @@ sub genesnpview {
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
     my $CONFIG = $uca->getUserConfig( "genesnpview_transcript" );
     $CONFIG->{'geneid'}     = $object->stable_id;
-    $CONFIG->{'snps'}       = $object->__data->{'SNPS'} unless $no_snps;
+    $CONFIG->{'snps'}       = $snps unless $no_snps;
     $CONFIG->{'subslices'}  = $object->__data->{'slices'}{'transcripts'}[2];
     $CONFIG->{'extent'}     = $extent;
       ## Store transcript information on config....
@@ -892,7 +886,7 @@ sub genesnpview {
           ( $slice_trans->end - $_->[2]->end     + 1,
             $slice_trans->end - $_->[2]->start   + 1 )
       ]
-    } sort { $a->[0] <=> $b->[0] } @{$object->__data->{'SNPS'}};
+    } sort { $a->[0] <=> $b->[0] } @{ $snps };
 ## Cache data so that it can be retrieved later...
     $object->__data->{'gene_snps'} = \@snps2;
     foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
@@ -929,6 +923,7 @@ sub genesnpview {
     $Configs->{'snps'}->{'fakeslice'}   = 1;
     $Configs->{'snps'}->{'snps'}        = \@snps2;
     $Configs->{'snps'}->container_width(   $fake_length   );
+    $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps];
   }
   return if $do_not_render;
 ## -- Render image ------------------------------------------------------ ##
