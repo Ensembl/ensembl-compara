@@ -55,6 +55,7 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Utils::Exception;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use File::Basename;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Hive::Process;
@@ -229,6 +230,27 @@ sub run
   return 1;
 }
 
+sub delete_fasta_dumps_but_these {
+  my $self = shift;
+  my $fasta_files_not_to_delete = shift;
+
+  my $work_dir = $self->worker_temp_directory;
+
+  open F, "ls $work_dir|";
+  while (my $file = <F>) {
+    chomp $file;
+    next unless ($file =~ /\.fasta$/);
+    my $delete = 1;
+    foreach my $fasta_file (@{$fasta_files_not_to_delete}) {
+      if ($file eq basename($fasta_file)) {
+        $delete = 0;
+        last;
+      }
+    }
+    unlink "$work_dir/$file" if ($delete);
+  }
+  close F;
+}
 
 sub write_output {
   my( $self) = @_;
