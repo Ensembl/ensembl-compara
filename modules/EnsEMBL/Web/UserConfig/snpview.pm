@@ -21,6 +21,7 @@ sub init {
                        ld_d_prime 
                        haplotype
                        variation_legend
+	   	       TSV_missing
 
                     )],
     '_options'  => [qw(pos col known unknown)],
@@ -37,7 +38,25 @@ sub init {
                     [ 'opt_zmenus'      => 'Show popup menus'  ],
                     [ 'opt_zclick'      => '... popup on click'  ],
                    ],
-      'types' => [
+      'validation' => [
+        [ 'opt_freq'       => 'By frequency' ],
+        [ 'opt_cluster'    => 'By cluster' ],
+        [ 'opt_doublehit'  => 'By doublehit' ],
+        [ 'opt_submitter'  => 'By submitter' ],
+        [ 'opt_hapmap'     => 'Hapmap' ],
+        [ 'opt_noinfo'     => 'No information' ],
+      ],
+      'classes' => [
+        [ 'opt_in-del'   => 'In-dels' ],
+        [ 'opt_snp'      => 'SNPs' ],
+        [ 'opt_mixed'    => 'Mixed variations' ],
+        [ 'opt_microsat' => 'Micro-satellite repeats' ],
+        [ 'opt_named'    => 'Named variations' ],
+        [ 'opt_mnp'      => 'MNPs' ],
+        [ 'opt_het'      => 'Hetrozygous variations' ],
+        [ 'opt_'         => 'Unclassified' ],
+      ],
+   'types' => [
        [ 'opt_non_synonymous_coding' => 'Non-synonymous SNPs' ],
        [ 'opt_synonymous_coding'     => 'Synonymous SNPs' ],
        [ 'opt_frameshift_coding'     => 'Frameshift variations' ],
@@ -153,17 +172,15 @@ sub init {
       'available'   => 'databases ENSEMBL_VARIATION',
     },
 
-   'haplotype' => {
-      'on'          => "on",
-      'pos'         => '4600',
-      'str'         => 'r',
-      'dep'         => 6,
-      'col'         => 'darkgreen',
-      'lab'         => 'black',
-      'available'=> 'databases ENSEMBL_HAPLOTYPE',
+     'TSV_missing' => {
+      'on'  => "on",
+      'dep' => 0.1,
+      'pos' => '4500',
+      'str' => 'r',
+      'col' => 'blue',
     },
 
-    'variation_legend' => {
+   'variation_legend' => {
       'on'          => "on",
       'str'         => 'r',
       'pos'         => '4525',
@@ -177,3 +194,50 @@ sub init {
 
 
 1;
+
+
+__END__
+
+
+=head1 UserConfig::snpview
+
+=head2 SYNOPSIS
+
+=head2 DESCRIPTION
+
+=head2 METHODS
+
+ Artefacts contains what is turned on.
+
+ Settings: configures what is in the drop down yellow menus
+ 
+ bgcolour: configures the background colours of the tracks. Alternate them to get differing shades: e.g.
+     'bgcolor'   => 'background1',
+      'bgcolour1' => 'background3',
+      'bgcolour2' => 'background1',
+
+=head2 OPTIONS
+
+
+=head3 B<strand>
+
+Description: Configures this track on the forward (forward :   'str' => 'f') or reverse (reverse :   'str' => 'r',) strand 
+
+=head3 B<position>
+
+Example: 'pos'         => '4525',
+
+Description: Position of the track within the drawable container and in comparison with all other tracks configured in this userconfig.
+
+=head3 B<on/off>
+
+  Example:   'on' => 'on',
+             'on' => 'off',
+
+  Description: Whether this track is displayed by default ('on' => 'on'), or off by default ('on' => 'off').
+
+
+=head3 B<available>
+
+  Description: This track only displays if the availability criteria is met.  For example checking the database is there (e.g. 'databases ENSEMBL_VARIATION' ) or a specific table is there.
+
