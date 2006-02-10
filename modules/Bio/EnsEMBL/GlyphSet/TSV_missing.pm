@@ -27,18 +27,19 @@ sub _init {
   else {
     $text .= ($counts->[0]-$counts->[1])." of the $counts->[0] variations in this region have been filtered out by the drop down menu options.";
 }
-
-
+    my $fontname = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'};
+    my $image_width      = $self->{'config'}->image_width();
     my ($w,$h)   = $self->{'config'}->texthelper()->real_px2bp($self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'});
     my ($w2,$h2) = $self->{'config'}->texthelper()->real_px2bp('Small');
     $self->push( new Sanger::Graphics::Glyph::Text({
-        'x'         => 0.5, 
+        'x'         => ($image_width-$self->{'config'}->texthelper()->width($fontname)*length($text))/2, 
         'y'         => int( ($h2-$h)/2 ),
         'height'    => $h2,
-        'font'      => $self->{'config'}->species_defs->ENSEMBL_STYLE->{'LABEL_FONT'},
+        'font'      => $fontname,
         'colour'    => 'red',
         'text'      => $text,
         'absolutey' => 1,
+        'absolutex' => 1,
     }) );
 }
 

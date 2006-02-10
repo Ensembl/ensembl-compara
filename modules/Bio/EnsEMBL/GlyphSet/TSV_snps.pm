@@ -149,7 +149,7 @@ sub _init {
         'caption' => 'SNP '.$allele->variation_name,
         "01:".$type => '',
         @tmp,
-        "02:Ref / alt. allele: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..')."/".
+        "02:Alleles: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..')."/".
 		  (length($allele->allele_string)<16 ? $allele->allele_string : substr($allele->allele_string,0,14).'..')
 		  => '',
 	"03:Ambiguity code: ".&ambiguity_code(join "|", $allele->ref_allele_string(), $allele->allele_string) => '',
