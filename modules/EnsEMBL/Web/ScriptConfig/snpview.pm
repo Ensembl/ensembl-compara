@@ -29,6 +29,22 @@ sub init {
     opt_stop_lost              on
 
 
+    opt_freq        on
+    opt_cluster     on
+    opt_doublehit   on
+    opt_submitter   on
+    opt_hapmap      on 
+    opt_noinfo      on
+      
+    opt_in-del    on
+    opt_snp       on
+    opt_mixed     on
+    opt_microsat  on
+    opt_named     on
+    opt_mnp       on
+    opt_het       on
+    opt_          on
+
 
   ));
 }
