@@ -11,6 +11,7 @@ sub new {
     'block_order' => [],
     'site_name'   => '??????' ,
     'logos'       => [],
+    'miniad'      => '',
   );
 }
 
@@ -136,6 +137,12 @@ sub entry {
   return undef;
 }
 
+sub add_miniad {
+  my ($self, $html) = @_;
+  return unless $html;
+  $self->{'miniad'} = $html;
+}
+
 sub render {
   my $self = shift;
   $self->print( qq(\n<div id="related"><div id="related-box">) );
@@ -165,6 +172,9 @@ sub render {
     }
     $self->print('</h2>');
   }
+
+  ## include a miniad
+  $self->print($self->{'miniad'}) if $self->{'miniad'};
 
   $self->print( qq(\n</div></div>) );
 }

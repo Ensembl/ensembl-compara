@@ -372,6 +372,29 @@ sub fetch_cats {
     return $results;
 }
 
+sub fetch_random_ad {
+  my $self = shift;
+  return unless $self->db;
+                                                                                
+  my $sql = qq(
+    SELECT image, alt, url
+    FROM miniad
+    WHERE start_date < NOW() AND end_date > NOW()
+    ORDER BY rand()
+    LIMIT 1
+  );
+                                                                                
+  my $record = $self->db->selectall_arrayref($sql);
+  return unless $record;
+  my @array = @{$record->[0]};
+  my $result = {
+      'image' => $array[0],
+      'alt'   => $array[1],
+      'url'   => $array[2],
+  };
+  return $result;
+}
+
 #------------------------- Select queries for archive.ensembl.org -------------
 
 
@@ -652,7 +675,43 @@ sub add_release_species {
     return $result;
 }
 
+sub delete_pre {
+  my $self = shift;
 
+  my $sql = "UPDATE species SET pre_assembly_code = ''";
+        
+  my $sth = $self->db_write->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
+
+sub add_pre {
+  my ($self, $species, $common, $assembly) = @_;
+
+  ## is this species in the database?
+  my $sql = qq(SELECT species_id FROM species WHERE name = "$species");
+    
+  my $T = $self->db_write->selectall_arrayref($sql);
+
+  if ($T && @{$T->[0]}[0]) { ## update the record
+    $sql = qq(UPDATE species SET pre_assembly_code = "$assembly" 
+              WHERE name = "$species"); 
+  }
+  else {
+    # insert a new record
+    $sql = qq(INSERT INTO species 
+              SET 
+                name              = "$species",
+                common_name       = "$common",  
+                pre_assembly_code = "$assembly"
+    );
+  }
+  my $sth = $self->db_write->prepare($sql);
+  my $result = $sth->execute();
+
+  return $result;
+}
 
 1;
 

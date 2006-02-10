@@ -2,6 +2,7 @@ package EnsEMBL::Web::Document::Common;
 
 use strict;
 use EnsEMBL::Web::Document::Page;
+use EnsEMBL::Web::DBSQL::NewsAdaptor;
 
 our @ISA = qw(EnsEMBL::Web::Document::Page);
 
@@ -28,6 +29,19 @@ sub script_name {
   ## MultiContigView, GeneSpliceView
   $scriptname =~ s/(Gene|Multi|Transcript)(.)/$1.uc($2)/eg;
   return $scriptname;
+}
+
+sub _basic_HTML {
+  my $self = shift;
+## Main document attributes...
+  $self->set_doc_type( 'XHTML', '1.0 Trans' );
+  $self->_init();
+  $self->add_body_attr();
+#  --- Stylesheets
+  $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_TMPL_CSS );
+  $self->stylesheet->add_sheet( 'all',    $self->species_defs->ENSEMBL_PAGE_CSS );
+  $self->stylesheet->add_sheet( 'print', '/css/printer-styles.css' );
+  $self->stylesheet->add_sheet( 'screen', '/css/screen-styles.css' );
 }
 
 sub _common_HTML {
@@ -75,5 +89,24 @@ sub _script_HTML {
   #  --- And the title!
   $self->title->set( $scriptname );
 }
+
+sub mini_ad {
+  my $self = shift;
+                                                                                
+  my $db = $self->species_defs->databases->{'ENSEMBL_WEBSITE'};
+  my $wa = EnsEMBL::Web::DBSQL::NewsAdaptor->new($db);
+  my $miniad = $wa->fetch_random_ad;
+                                                                                
+  my $html = '';
+                                                                                
+  if( $miniad ) {
+    my $image  = $$miniad{'image'};
+    my $url    = $$miniad{'url'};
+    my $alt    = $$miniad{'alt'};
+    $html = qq(\n<a href="$url"><img style="padding:15px 0px 0px 15px" src="/img/mini-ads/$image" alt="$alt" title="$alt" /></a>);
+  }
+  return $html;
+}
+
 
 1;

@@ -62,6 +62,8 @@ sub common_menu_items {
       'title' => "Latest changes in Ensembl",
       'icon' => '/img/infoicon.gif',
     );
+    my $ad_html = $doc->mini_ad;
+    $doc->menu->add_miniad($ad_html);
   }
   $doc->menu->add_entry( 'docs',
     'href' => '/info/about/',
@@ -81,7 +83,6 @@ sub common_menu_items {
     'title' => 'API, Installation, CVS, Versions',
     'icon' => '/img/infoicon.gif',
   );
-
   $doc->menu->add_block( 'links', 'bulleted', 'Other links', 'priority' => 30 );
   $doc->menu->add_entry( 'links', 'href' => '/', 'text' => 'Home' );
   my $map_link = '/sitemap.html';
