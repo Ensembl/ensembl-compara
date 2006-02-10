@@ -103,7 +103,13 @@ sub mini_ad {
     my $image  = $$miniad{'image'};
     my $url    = $$miniad{'url'};
     my $alt    = $$miniad{'alt'};
-    $html = qq(\n<a href="$url"><img style="padding:15px 0px 0px 15px" src="/img/mini-ads/$image" alt="$alt" title="$alt" /></a>);
+
+    ## sanity check - does the image file exist?
+    my $ad_dir = $self->species_defs->ENSEMBL_MINIAD_DIR;
+    my $file = $ad_dir.$image;
+    if (-e $file && -f $file) {
+      $html = qq(\n<a href="$url"><img style="padding:15px 0px 0px 15px" src="/img/mini-ads/$image" alt="$alt" title="$alt" /></a>);
+    }
   }
   return $html;
 }
