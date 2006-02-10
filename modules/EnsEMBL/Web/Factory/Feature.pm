@@ -163,17 +163,18 @@ sub create_RegulatoryFactor {
     my $factor;
     eval {
       $factor = $reg_factor_adaptor->fetch_by_name($fid);
-      $t_features = $reg_feature_adaptor->fetch_all_by_factor($factor);
+      #$t_features = $reg_feature_adaptor->fetch_all_by_factor($factor) [];
+      $t_features = $reg_feature_adaptor->fetch_all_by_factor_name($fid) || [];
     };
-    if( $t_features ) {
-      foreach( @$t_features ) { 
-	$_->{'coding_gene'} = $factor->coding_gene;
-	$_->{'_id_'} = $fid; 
-	$_->{'factor_name'} = $fid; 
-      }
-      push @$features, @$t_features;
+
+    foreach( @$t_features ) { 
+      $_->{'coding_gene'} = $factor->coding_gene;
+      $_->{'_id_'} = $fid; 
+      $_->{'factor_name'} = $fid; 
     }
+    push @$features, @$t_features;
   }
+
   my $feature_set = {'RegulatoryFactor' => $features};
   return $feature_set;
 
