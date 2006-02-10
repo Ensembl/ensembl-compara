@@ -124,7 +124,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
   foreach my $db( @DATABASES || "ENSEMBL_DB"){
     my $db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
       ( warning( 1, "DB $db is not valid for $sp" ) && next );
-    warning( 1, "Dumping @TYPES from $db $sp - $DUMPDIR" );
+    warning( 1, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
 
     # Create directories and filehandles for dumps
     my ($chr_toplevel, $fhs) = create_dirs_for_dumps($sp, $SPECIES_DEFS, 
