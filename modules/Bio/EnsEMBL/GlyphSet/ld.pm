@@ -28,6 +28,7 @@ sub _init {
   my $Config   = $self->{'config'};
   my $only_pop = $Config->{'_ld_population'};
   warn "****[ERROR]: No population defined in config $0" unless $only_pop;
+  return;
 
   # Create array of arrayrefs containing $vf_id => $vf in start order
   my $data = $self->{'container'}->get_all_LD_values($only_pop);

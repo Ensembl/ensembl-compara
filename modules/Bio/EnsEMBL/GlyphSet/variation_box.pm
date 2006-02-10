@@ -7,22 +7,26 @@ use Bio::EnsEMBL::GlyphSet::variation;
 
 sub tag {
   my ($self, $f) = @_; 
-  my ($col, $labcol) =  $self->colour($f);
-  #warn( "snp - $col - $labcol" );
+  my ($col, $label_colour) =  $self->colour($f);
 
-  if($f->var_class eq 'snp' ) {
-    return( { 'style' => 'box', 'letter' => $f->ambig_code, 
-	      'colour' => $col, 'label_colour' => $labcol } );
-  }
+  my $style;
 
   if($f->start > $f->end ) {
-    return( { 'style' => 'left-snp', 'colour' => $col } );
+    $style = "left-snp";
   }
 
-  if($f->var_class eq 'in-del' ) {
-    return( { 'style' => 'delta', 'colour' => $col } );
+  elsif($f->var_class eq 'in-del' ) {
+    $style = "delta";
   }
-  return ( { 'style'  => 'box', 'colour' => $col, 'letter' => ' ' } );
+  else {
+    $style = "box";
+  }
+
+  my $letter = $style eq 'box' ? $f->ambig_code : "";
+  return ( { 'style'        => $style,
+	     'colour'       => $col, 
+	     'letter'       => $letter,
+	     'label_colour' => $label_colour} );
 }
 
 

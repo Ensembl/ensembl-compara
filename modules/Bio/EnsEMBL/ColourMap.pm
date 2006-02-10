@@ -233,7 +233,7 @@ sub new {
 
   # key => [colour, text, labelcolour]
   $self->colourSet( 'variation',
-    'INTERGENIC'             => ['gray39',         'Intergenic',           'black',],
+    'INTERGENIC'             => ['gray39',         'Intergenic',           'white',],
     'INTRONIC'               => ['contigblue2',    'Intronic',         'white',],
     'UPSTREAM'               => ['lightsteelblue2','Upstream',              'black',],
     'DOWNSTREAM'             => ['lightsteelblue2','Downstream',            'black',],
