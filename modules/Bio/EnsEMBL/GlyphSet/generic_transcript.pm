@@ -127,6 +127,8 @@ sub zmenu {
     $zmenu->{"00:$tname"}       = '';
     $zmenu->{"02:Transcr:$tid"} = "/$sp/transview?transcript=$tid;db=$db";
     $zmenu->{'05:Export cDNA'}  = "/$sp/exportview?action=select;format=fasta;type1=transcript;anchor1=$tid;option=cdna";
+    $zmenu->{'07:Transcript SNP view'}= "/$sp/transcriptsnpview?transcript=$tid;db=$db";
+
     my $translation = $transcript->translation;
     if( $translation ){
       my $pid = $translation->stable_id;
@@ -142,7 +144,6 @@ sub zmenu {
 
   if( $ENV{'ENSEMBL_SCRIPT'} =~ /snpview/ ){
     $zmenu->{'07:Gene SNP view'}= "/$sp/genesnpview?gene=$gid;db=$db";
-    $zmenu->{'07:Transcript Sample view'}= "/$sp/transcriptsnpview?transcript=$tid;db=$db";
   }
   return $zmenu;
 }
