@@ -61,10 +61,6 @@ img.float-left { float:left; padding-right:10px; }
 
 img.float-right { float:right; padding-left:10px; }
 
-.sp-thumb { float:left; padding-right:4px; clear:left; }
-dl.species-list dt { margin:0px; padding:0px; min-height:15px; }
-dl.species-list dd { margin:0px 0px 2px 0px; padding:0px; min-height:25px; }
-
 .screenshot { text-align:center; margin:auto; padding:10px; }
 
 .karyomap { text-align:center; margin:auto; }
@@ -182,11 +178,13 @@ div.formpanel div { margin-top:5px; }
   top: 0px; left: 0px; padding: 0px; margin: 0px; 
   color: [[HEADING]]; font-size: 1em; font-weight: bold;
 }
-.formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65%; margin-bottom: 0.8em }
+.formblock .formcontent { float: left; font-size: 1em; padding: 2px; width: 65%; margin-bottom: 0.8em; vertical-align:middle; }
 .formcenter, .formcenter div { display:block; text-align:center; margin-bottom: 0.8em;}
 .formcontent p { margin-top:0.3em; }
-.forminline, .forminline div { display:inline; }
+.forminline, .forminline div, { display:inline; }
 .forminline h6 { display:inline; margin-right:1em; }
+.tight { padding:0px; margin: 0px; }
+.middle { vertical-align:middle; }
 
 .radiocheck label, .radiocheck1col label { float: left; } /* width: 250px; } */
 
@@ -237,23 +235,11 @@ a.fnlink { text-decoration:none; }
 
 /* Ensembl homepage */
 
-div#page div.col-wrapper div.narrow3 ul.species-list li {
-    font-size:115%; font-style:italic; font-weight:bold; margin:0em 0em 0.5em -1.5em; }
-
-ul.species-list li a:link, ul.species-list li a:visited { text-decoration:none; }
-
-div#page div.col-wrapper div.narrow3 dl.species-list dt {
-    font-size:115%; font-style:italic; font-weight:bold; }
-
-dl.species-list dd a:link, dl.species-list dd a:visited { text-decoration:none; }
-
-
-div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul {
-    left:35px; width:150px; padding:0px; background-color:transparent; }
-
-div#page div.col-wrapper div.narrow3 ul.species-list li.dropdown ul li.popup {
-    font-size:80%; font-weight:normal; font-style:normal; 
-    background-color:[[BACKGROUND3]]; margin:0px; list-style:none; }
+.sp-thumb { float:left; padding-right:4px; clear:left; }
+dl.species-list dt { margin:0px; padding:0px; min-height:15px;
+  font-size:115%; font-style:italic; font-weight:bold; }
+dl.species-list dd { margin:0px 0px 2px 0px; padding:0px; min-height:25px; }
+dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
 
 /* Species homepages */
 
