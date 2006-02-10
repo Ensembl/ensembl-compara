@@ -41,11 +41,11 @@ sub create_AffyProbe {
 }
 
 sub create_DnaAlignFeature {
-  my $features =  {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
+  my $features =  {'AlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) }; 
   return $features;
 }
 sub create_ProteinAlignFeature {
-  my $features = {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  my $features = {'AlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
   return $features;
 }
 
@@ -134,9 +134,10 @@ sub _generic_create {
       }
     }
                                                                                    
+    warn @$features;
     return $features if $features && @$features; # Return if we have at least one feature
     # We have no features so return an error....
-    if( $flag ne 'no_error' ) {
+    if( $flag eq 'no_errors' ) {
       $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
     }
     return undef;
@@ -160,21 +161,14 @@ sub create_RegulatoryFactor {
   my $features = [];
   foreach my $fid ( split /\s+/, $id ) {
     my $t_features;
-    my $factor;
     eval {
-      $factor = $reg_factor_adaptor->fetch_by_name($fid);
-      #$t_features = $reg_feature_adaptor->fetch_all_by_factor($factor) [];
-      $t_features = $reg_feature_adaptor->fetch_all_by_factor_name($fid) || [];
+      $t_features = $reg_feature_adaptor->fetch_all_by_factor_name($fid);
     };
-
-    foreach( @$t_features ) { 
-      $_->{'coding_gene'} = $factor->coding_gene;
-      $_->{'_id_'} = $fid; 
-      $_->{'factor_name'} = $fid; 
+     if( $t_features ) {
+      foreach( @$t_features ) { $_->{'_id_'} = $fid; }
+      push @$features, @$t_features;
     }
-    push @$features, @$t_features;
   }
-
   my $feature_set = {'RegulatoryFactor' => $features};
   return $feature_set;
 
