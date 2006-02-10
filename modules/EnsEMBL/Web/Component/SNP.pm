@@ -568,7 +568,7 @@ sub snpview_image_menu {
     'configname' => 'snpview',
     'panel'      => 'snpview',
     'fields'     => $params,
-    'leftmenus'   => [qw(Features Options Export ImageSize)],
+    'leftmenus'   => [qw(Features Source SNPClasses SNPTypes Options Export ImageSize)],
     'rightmenus'  => [qw(Help)]
   );
   $panel->print( $mc->render_html );
@@ -603,8 +603,19 @@ sub snpview_image {
     $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $seq_type, $seq_region, $start, $end, 1
   );
+
+  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+        'Slice', $slice, $object->__data
+       );
+
+  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
+  my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();
+
   my $wuc = $object->user_config_hash( 'snpview' );
-     $wuc->set( '_settings', 'width', $object->param('image_width') );
+  $wuc->set( '_settings', 'width', $object->param('image_width') );
+  $wuc->{'snpview'}->{'snps'}           = $filtered_snps;
+  $wuc->{'snpview'}->{'genotyped_snps'} = $genotyped_snps;
+  $wuc->{'snp_counts'}     = [$count_snps+$genotyped_count, scalar @$filtered_snps+scalar @$genotyped_snps];
 
   ## If you want to resize this image
   my $image    = $object->new_image( $slice, $wuc, [$object->name] );
