@@ -1016,5 +1016,22 @@ sub generate_query_hash {
   };
 }
 
+sub get_source {
+  my $self = shift;
+  my $default = shift;
 
+  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
+  unless ($vari_adaptor) {
+    warn "ERROR: Can't get variation adaptor";
+    return ();
+  }
+
+  if ($default) {
+    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
+  }
+  else {
+    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
+  }
+
+}
 1;

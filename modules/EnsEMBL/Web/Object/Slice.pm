@@ -7,6 +7,7 @@ use Data::Dumper;
 
 use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
+our %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
 
 sub snp_display {
   my $self = shift; 
@@ -82,11 +83,66 @@ sub valids {
   return \%valids;
 }
 
+
+
 sub getVariationFeatures {
+  my ( $self ) = @_;
+  my @snps = @{ $self->Obj->get_all_VariationFeatures() || [] };
+  return (0, []) unless scalar @snps;
+
+  my $filtered_snps = $self->filter_snps(\@snps);
+  return (scalar @snps, $filtered_snps);
+}
+
+
+
+sub get_genotyped_VariationFeatures {
+  my ( $self ) = @_;
+  my @snps = @{ $self->Obj->get_all_genotyped_VariationFeatures() || [] };
+  return (0, []) unless scalar @snps;
+
+  my $filtered_snps = $self->filter_snps(\@snps);
+  return (scalar @snps, $filtered_snps);
+}
+
+
+sub filter_snps {
+  my ( $self, $snps ) = @_;
+
+  my $valids = $self->valids;
+  my @filtered_snps = 
+    map  { $_->[1] }               # Remove the schwartzian index
+      sort { $a->[0] <=> $b->[0] }   #   Sort snps on schwartzian index
+
+	#  Compute schwartzian index [ consequence type priority, fake SNP ]
+	map  { [ $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+
+	  # [ fake_s, fake_e, SNP ]   Grep features to see if the area valid
+	 grep { ( @{$_->get_all_validation_states()} ?
+		  (grep { $valids->{"opt_$_"} } @{$_->get_all_validation_states()} ) :
+		  $valids->{'opt_noinfo'} ) }
+
+   # Filter unwanted consequence classifications
+    grep { $valids->{'opt_'.lc($_->get_consequence_type()) } }
+
+      # Filter our unwanted sources
+      grep { $valids->{'opt_'.lc($_->source)} }
+
+	# Filter our unwanted classes
+	grep { $valids->{'opt_'.$_->var_class} }
+
+	  grep { $_->map_weight < 4 }
+	    # [ SNP ]  Get all features on slice
+	    @$snps;
+  return \@filtered_snps;
+}
+
+
+
+sub getFakeVariationFeatures {
   my ( $self, $subslices, $gene ) = @_;
   my $valids = $self->valids;
 
-  my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
   my @on_slice_snps = 
 # [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
     map  { $_->[1]?[$_->[0]->start+$_->[1],$_->[0]->end+$_->[1],$_->[0]]:() } # Filter out anything that misses
@@ -136,4 +192,118 @@ sub munge_gaps {
   return undef;
 }
 
+
 1;
+__END__
+
+=head1 Object::Slice
+
+=head2 SYNOPSIS
+
+This object is called from a Component object
+
+
+e.g.
+ my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
+
+
+
+=head2 DESCRIPTION
+
+This class consists of methods for calls on a slice object.
+
+
+=head2 METHODS
+
+
+
+=head3 B<valids>
+
+Description:    Gets all the user's selected parameters from $self->params()
+
+Arguments:      Proxy::Object (slice)
+
+Returns:        Hashref of options if they are on
+
+Needed for:     Bio::EnsEMBL::GlyphSet::variation.pm,     
+                Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
+                TranscriptSNPView
+                GeneSNPView
+
+Called from:    self
+
+
+=head3 B<getVariationFeatures>
+
+Description:    Gets all the variation features on this slice.  Calls $self->filter_snps to filter these based on the user's selected parameters
+
+Arguments:      Proxy::Object (slice)
+
+Returns:        The number of SNPs in the array before filtering
+                An arrayref of VariationFeature objects after filtering
+
+Needed for:        Bio::EnsEMBL::GlyphSet::variation.pm
+
+Called from:    SNP component
+
+
+=head3 B<get_genotyped_VariationFeatures>
+
+Description:    Gets all the genotyped variation features on this slice.  Calls $self->filter_snps to filter these based on the user's selected parameters
+
+Arguments:      Proxy::Object (slice)
+
+Returns:        The number of SNPs in the array before filtering
+                An arrayref of VariationFeature objects after filtering
+
+Needed for:        Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
+
+Called from:    SNP component
+
+
+=head3 B<filter_snps>
+
+Description:    Filters SNPs based on the users' selected parameters (which are obtained from $self->valids)
+
+Arguments:      Proxy::Object (slice)
+                Array ref of VariationFeature objects
+
+Returns:        An arrayref of VariationFeature objects
+
+Called from:    self
+
+
+=head3 B<getFakeVariationFeatures>
+
+Description:    Gets all the genotyped variation features on this slice
+                From these calls munge_gaps to calculate the positions of the 
+                VariationFeatures on a subslice.  The VariationFeatures are 
+                also filtered based on the user's selected parameters.  Filters
+                consequence types based on a gene if a gene is provided.
+
+Arguments:      Proxy::Object (slice)
+                sub slice object
+                Gene (optional)
+
+Returns:        An arrayref of [fake_VF_start, fake_VF_end, VariationFeature] objects after filtering
+
+Needed for:     TranscriptSNPView, GeneSNPView
+
+Called from:    Transcript Object, Gene Object
+
+
+
+=head3 B<munge_gaps>
+
+Description:    Calculates new positions based on subslice
+
+Arguments:      Proxy::Object (slice)
+                sub slice object
+                bp1, bp2
+
+Returns:
+
+Needed for:     TranscriptSNPView, GeneSNPView
+
+Called from:    self
+
