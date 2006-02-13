@@ -103,7 +103,7 @@ our %form_fields = (
           'values' => 'stat_values',
       },
       'priority'        => {
-          'type'=>'Int', 
+          'type'=>'PosInt',
           'label'=>'Priority [0-5]',
           'required'=>'yes',
       },
@@ -152,6 +152,19 @@ our %all_nodes = (
                       'button' => 'Preview',
       },
       'save'        => {'button'=>'Save'},
+     'pub_select'      => {
+                      'form' => 1,
+                      'title' => 'Select a news item and database',
+                      'pass_fields'  => [qw(release_id)], 
+      },
+     'pub_preview'  => {
+                      'form' => 1,
+                      'title' => 'Please check the entry',
+                      'pass_fields'  => [qw(news_item_id release_id species news_cat_id status priority title content)], 
+                      'back' => 1,
+                      'button' => 'Preview',
+      },
+      'pub_save'        => {'button'=>'Publish'},
 );
 
 our %message = (
@@ -192,11 +205,32 @@ sub select {
   my $form = EnsEMBL::Web::Form->new( 'select', "/$species/$script", 'post' );
 
   ## Do custom widget showing title, species and status for each news item
+  my $item_values = _story_select($object);
+  if ($item_values) { 
+    $form->add_element(
+      'type'     => 'DropDown',
+      'select'   => 'select',
+      'required' => 'yes',
+      'name'     => 'news_item_id',
+      'label'    => 'News item',
+      'values'   => $item_values,
+    );
+  }
+  
+  $wizard->pass_fields('select', $form, $object);
+  $wizard->add_buttons('select', $form, $object);
+
+  return $form;
+}
+
+sub _story_select {
+  my $object = shift;
+
   my @items = @{$object->items}; 
   my %all_spp = %{$object->all_spp};
   my @all_rels = @{$object->releases};
+  my @item_values;
   if (scalar(@items) > 0 ) { ## sanity check!
-    my @item_values;
     foreach my $item (@items) {
         my %item = %$item;
         my $code = $item{'news_item_id'};
@@ -223,20 +257,11 @@ sub select {
         $name .= ' ['.uc($status).']' if $status ne 'live';
         push (@item_values, {'name'=>$name,'value'=>$code});
     }
-    $form->add_element(
-      'type'     => 'DropDown',
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'news_item_id',
-      'label'    => 'News item',
-      'values'   => \@item_values,
-    );
+    return \@item_values;
   }
-  
-  $wizard->pass_fields('select', $form, $object);
-  $wizard->add_buttons('select', $form, $object);
-
-  return $form;
+  else {
+    return 0;
+  }
 }
 
 sub enter {
@@ -246,6 +271,10 @@ sub enter {
 
   my $script = $object->script;
   my $species = $object->species;
+  if (!$object->param('release_id')) {
+    my $current = $object->species_defs->ENSEMBL_VERSION;
+    $object->param('release_id', $current);
+  }
   
   my $form = EnsEMBL::Web::Form->new( 'enter', "/$species/$script", 'post' );
 
@@ -294,9 +323,69 @@ sub save {
 #------ News Publishing nodes -----------------------------------------------
 
 sub pub_select {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+ 
+  my $form = EnsEMBL::Web::Form->new( 'pub_select', "/$species/$script", 'post' );
+
+  ## Do custom widget showing title, species and status for each news item
+  my $item_values = _story_select($object);
+  if ($item_values) { 
+    $form->add_element(
+      'type'     => 'DropDown',
+      'select'   => 'select',
+      'required' => 'yes',
+      'name'     => 'news_item_id',
+      'label'    => 'News item',
+      'values'   => $item_values,
+    );
+  }
+  
+  ## do database select widget
+  $form->add_element(
+    'type'  => 'Information',
+    'value' => 'Choose a database to publish to',
+  );
+
+  $wizard->pass_fields('pub_select', $form, $object);
+  $wizard->add_buttons('pub_select', $form, $object);
+
+  return $form;
 }
 
 sub pub_preview {
+  my ($self, $object) = @_;
+
+  my $wizard = $self->{wizard};
+  my $script = $object->script;
+  my $species = $object->species;
+  
+  my $form = EnsEMBL::Web::Form->new( 'pub_preview', "/$species/$script", 'post' );
+
+  $wizard->simple_form('pub_preview', $form, $object, 'output');
+
+  return $form;
+}
+
+sub pub_save {
+  my ($self, $object) = @_;
+  my %parameter; 
+
+  ## note - no need to define node if going back to beginning of wizard
+  my $record = $self->create_record($object);
+  my $result = $object->save_to_db($record);
+  if ($result) { 
+    $parameter{'feedback'} = 'save_ok';
+  }
+  else {
+    $parameter{'error'} = 1;
+    $parameter{'feedback'} = 'save_failed';
+  }
+
+  return \%parameter;
 }
 
 sub multi_select {
