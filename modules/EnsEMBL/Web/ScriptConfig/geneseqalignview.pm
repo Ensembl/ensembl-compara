@@ -1,4 +1,4 @@
-package EnsEMBL::Web::ScriptConfig::geneseqview;
+package EnsEMBL::Web::ScriptConfig::geneseqalignview;
 
 use strict;
 
@@ -12,6 +12,13 @@ sub init {
     exon_ori                all
     snp_display             off
     line_numbering          off
+    display_width 120
+    conservation  all
+    codons_display off
+    title_display off
+    RGselect   NONE
+    ms_MLAGAN-167 off
+    ms_MLAGAN-170 off
   ));
 }
 1;

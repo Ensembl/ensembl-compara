@@ -11,21 +11,104 @@ use EnsEMBL::Web::Component::Slice;
 sub sequence {
   my( $panel, $object ) = @_;
   return EnsEMBL::Web::Component::Slice::sequence_display(
-#    $panel, $object->get_slice_object()
-    $panel, $object
+    $panel, $object->get_slice_object()
   );
-}
-
-
-sub markup_options {
-  my( $panel, $object ) =@_;
-  $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'markup_options' )->render ]}</div>" );
-  return 1;
 }
 
 sub markup_options_form {
   my( $panel, $object ) = @_;
-  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'markup_options', "/@{[$object->species]}/geneseqview", 'get' );
+
+  # make array of hashes for dropdown options
+  $form->add_element( 'type' => 'Hidden', 'name' => 'db',   'value' => $object->get_db    );
+  $form->add_element( 'type' => 'Hidden', 'name' => 'gene', 'value' => $object->stable_id );
+  $form->add_element(
+    'type' => 'NonNegInt', 'required' => 'yes',
+    'label' => "5' Flanking sequence",  'name' => 'flank5_display',
+    'value' => $object->param('flank5_display')
+  );
+  $form->add_element(
+    'type' => 'NonNegInt', 'required' => 'yes',
+    'label' => "3' Flanking sequence",  'name' => 'flank3_display',
+    'value' => $object->param('flank3_display')
+  );
+
+  my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) ||
+    'Ensembl';
+  my $exon_display = [
+    { 'value' => 'core'       , 'name' => "$sitetype exons" },
+    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega'       , 'name' => 'Vega exons' } : (),
+    $object->species_defs->databases->{'ENSEMBL_EST'}  ? { 'value' => 'est'        , 'name' => 'EST-gene exons' } : (),
+    { 'value' => 'prediction' , 'name' => 'Ab-initio exons' },
+    { 'value' => 'off'        , 'name' => 'No exon markup' }
+  ];
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'exon_display',
+    'label'    => 'Exons to display',
+    'values'   => $exon_display,
+    'value'    => $object->param('exon_display')
+  );
+  my $exon_ori = [
+    { 'value' =>'fwd' , 'name' => 'Forward only' },
+    { 'value' =>'rev' , 'name' => 'Reverse only' },
+    { 'value' =>'all' , 'name' => 'Both orientations' }
+  ];
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'exon_ori',
+    'label'    => 'Exons on strand',
+    'values'   => $exon_ori,
+    'value'    => $object->param('exon_ori')
+  );
+  if( $object->species_defs->databases->{'ENSEMBL_GLOVAR'} || $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
+    my $snp_display = [
+      { 'value' =>'snp' , 'name' => 'All Variations' },
+      { 'value' =>'off' , 'name' => 'Do not show Variations' },
+    ];
+    $form->add_element(
+      'type'     => 'DropDown', 'select'   => 'select',
+      'required' => 'yes',      'name'     => 'snp_display',
+      'label'    => 'Show variations',
+      'values'   => $snp_display,
+      'value'    => $object->param('snp_display')
+    );
+  }
+  my $line_numbering = [
+    { 'value' =>'sequence' , 'name' => 'Relative to sequence' },
+    { 'value' =>'slice'    , 'name' => 'Relative to coordinate systems' },
+    { 'value' =>'off'      , 'name' => 'None' },
+  ];
+  $form->add_element(
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'line_numbering',
+    'label'    => 'Line numbering',
+    'values'   => $line_numbering,
+    'value'    => $object->param('line_numbering')
+  );
+  $form->add_element(
+    'type'  => 'Submit', 'value' => 'Update'
+  );
+  return $form;
+}
+
+
+sub align_sequence {
+  my( $panel, $object ) = @_;
+  return EnsEMBL::Web::Component::Slice::align_sequence_display(
+    $panel, $object
+  );
+}
+
+sub align_markup_options {
+  my( $panel, $object ) =@_;
+  $panel->add_row( 'Markup options', "<div>@{[ $panel->form( 'align_markup_options' )->render ]}</div>" );
+  return 1;
+}
+
+sub align_markup_options_form {
+  my( $panel, $object ) = @_;
+  my $form = EnsEMBL::Web::Form->new( 'align_markup_options', "/@{[$object->species]}/geneseqalignview", 'post' );
 
   # make array of hashes for dropdown options
   $form->add_element( 'type' => 'Hidden', 'name' => 'db',   'value' => $object->get_db    );

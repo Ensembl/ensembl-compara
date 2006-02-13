@@ -278,6 +278,27 @@ sub geneseqview {
   }
 }
 
+sub geneseqalignview {
+  my $self   = shift;
+  $self->set_title( "Gene sequence for ".$self->{object}->stable_id );
+  if( my $panel1 = $self->new_panel( 'Information',
+    'code'    => "info#",
+    'caption' => 'Gene Sequence information',
+  ) ) {
+    $self->add_form( $panel1,
+      qw(align_markup_options EnsEMBL::Web::Component::Gene::align_markup_options_form)
+    );
+    $panel1->add_components(qw(
+      name           EnsEMBL::Web::Component::Gene::name
+      stable_id      EnsEMBL::Web::Component::Gene::stable_id
+      location       EnsEMBL::Web::Component::Gene::location
+      align_markup_options EnsEMBL::Web::Component::Gene::align_markup_options
+      sequence       EnsEMBL::Web::Component::Gene::align_sequence
+    ));
+    $self->add_panel( $panel1 );
+  }
+}
+
 sub context_menu {
   my $self = shift;
   my $obj      = $self->{object};
@@ -316,6 +337,12 @@ sub context_menu {
     'text'  => "Genomic sequence",
     'title' => 'GeneSeqView - View marked up sequence of gene '.$obj->stable_id,
     'href'  => "/$species/geneseqview?$q_string" );
+
+  $self->add_entry( $flag,
+    'code'  => 'genomic_seq_align',
+    'text'  => "Genomic sequence alignment",
+    'title' => 'GeneSeqAlignView - View marked up sequence of gene '.$obj->stable_id.' aligned to other species',
+    'href'  => "/$species/geneseqalignview?$q_string" );
 
   $self->add_entry( $flag,
     'code'  => 'gene_var_info',
