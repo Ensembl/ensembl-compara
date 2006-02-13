@@ -14,12 +14,12 @@ use Apache::PerlRun;
 # for status info
 use Apache::Status;
 use Apache::SizeLimit;
-$Apache::SizeLimit::MAX_PROCESS_SIZE = 500000;  # Kill httpd over 500Mb
+$Apache::SizeLimit::MAX_PROCESS_SIZE = 750000;  # Kill httpd over 500Mb
 
 use DBI ();
 use Storable qw(nfreeze freeze thaw ); ####
 use Data::Dumper;                      ####
-
+$Data::Dumper::Indent = 1;
 # for page handling
 use EnsEMBL::Web::Apache::SendDecPage;
 use EnsEMBL::Web::Apache::ServerError;
@@ -29,10 +29,22 @@ use EnsEMBL::Web::Root;
 
 my $T = new EnsEMBL::Web::Root;
 
-$T->dynamic_use( 'BioMart::Initializer' );
-$T->dynamic_use( 'BioMart::Registry' );
-$T->dynamic_use( 'BioMart::Dataset::TableSet' );
-$T->dynamic_use( 'BioMart::Dataset::GenomicSequence' );
+#$T->dynamic_use( 'BioMart::Initializer' );
+#$T->dynamic_use( 'BioMart::Registry' );
+#$T->dynamic_use( 'BioMart::Dataset::TableSet' );
+#$T->dynamic_use( 'BioMart::Dataset::GenomicSequence' );
+#$T->dynamic_use( 'BioMart::Dataset::GenomicAlign' );
+
+use BioMart::Initializer;
+
+# below are needed for renewing from the saved martconf.packed file
+use BioMart::Registry;
+use BioMart::Dataset::TableSet;
+use BioMart::Dataset::GenomicSequence;
+use BioMart::Dataset::GenomicAlign;
+
+local $Storable::Deparse = 1; #### MART
+$Storable::forgive_me    = 1; #### MART
 
 # for making gifs
 use GD ();
@@ -66,38 +78,39 @@ if( keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { ### NOMA
   $count == @tmpl_files 
     or warn( "[MARTCONF][WARN] Some HTML template files not removed: $!" );
 
-  my $CONFFILE = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martconf.packed";          ####
+  my $MART_CONFFILE = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martRegistry.xml";
+  my $MART_PACKFILE = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martconf.packed";
   my ($initializer,$registry);                                                    ####
-  if( -e $CONFFILE ) {                                                            ####
-    open FH, $CONFFILE || die ("Can't open $CONFFILE: $!" );                      ####
-    local $/ = undef;                                                             ####
-    $initializer = thaw(<FH>);                                                    ####
-    if(!$initializer){                                                            ####
-      warn("!!!!!!! THAWING FAILED - REMOVE $CONFFILE AND TRY AGAIN");            ####
-    }                                                                             ####
-    $initializer->reloadRegistry();                                               ####
-    warn( ( '-' x 78 ) ."\n" );                                                   ####
-    warn("[MARTCONF][INFO] Retrieving conf from $CONFFILE\n" );                   ####
-    warn("[MARTCONF][INFO] Remove this file before server startup if you need to update configuration\n" );  ####
-    warn( ( '-' x 78 ) ."\n" );                                                   ####
-  } else {                                                                        ####
-#--- Or by building it and storing it....
-    warn( "[INFO] Caching BioMart-MartView\n" );                                  ####
-    # my $martview_confdir  = $SiteDefs::ENSEMBL_SERVERROOT."/biomart-plib/conf";     ####
-    # my $martview_conffile = $martview_confdir."/defaultMartRegistry.xml";           ####
-    my $martview_conffile = "${SiteDefs::ENSEMBL_SERVERROOT}/conf/martRegistry.xml";  ####
-    $initializer = BioMart::Initializer->new($martview_conffile, 100, 10000);         ####
-    $initializer->generate_evoc_ontology_picker_tool( $martview_conffile );
-    $registry = $initializer->getRegistry;                                        ####
-    $registry->getConfigurationTrees();                                           ####
-    # cache registry                                                              ####
-    warn("[MARTCONF][INFO] Writing Configuration to $CONFFILE");                  ####
-    warn( ( '-' x 78 ) ."\n" );                                                   ####
-    # Save away the conf                                                          ####
-    open( FH, "> $CONFFILE" ) || die ("Can't open $CONFFILE for writing: $!" );   ####
-    print FH ( nfreeze($initializer) );                                           ####
-    warn( ('=' x 78) . "\n\n" );                                                  ####
-  }                                                                               ####
+  warn( ( '*' x 78 ) ."\n" );
+  if( -e $MART_PACKFILE ) {
+    open FH, $MART_PACKFILE || die ("Can't open $MART_PACKFILE: $!" );
+    local $/ = undef;
+    $initializer = thaw(<FH>);
+    warn( ( '*' x 78 ) ."\n" );
+    warn("THAWING FAILED - REMOVE conf/martconf.packed AND TRY AGAIN") if (!$initializer);
+    $initializer->reloadRegistry();
+    warn( ( '-' x 78 ) ."\n" );
+    warn("[MARTCONF][INFO] Retrieving CACHED configuration from $MART_PACKFILE\n" );
+    warn("[MARTCONF][INFO] Remove martconf.packed file before server startup if you need to update registry or dataset configuration\n" );
+    warn( ( '-' x 78 ) ."\n" );
+  } else {
+    warn( "[MARTCONF][INFO] Retrieving configuration:\n" );
+    warn( ( '-' x 78 ) ."\n" );
+    $initializer = BioMart::Initializer->new('registryFile'=>$MART_CONFFILE);
+    $registry = $initializer->getRegistry;
+    $registry->getConfigurationTrees();
+  #  open T, ">TEMP"; print T Data::Dumper::Dumper( $initializer ); close T;
+    # cache registry
+    warn( ( '-' x 78 ) ."\n" );
+    warn("[MARTCONF][INFO] Writing Configuration to $MART_PACKFILE");
+    warn( ( '-' x 78 ) ."\n" );
+    # Save away the conf
+    open( FH, "> $MART_PACKFILE" ) ||
+        die ("Can't open $MART_PACKFILE for writing: $!" );
+    print FH ( nfreeze($initializer) );
+    close FH;
+    warn( ('=' x 78) . "\n\n" );
+  }
 }### NOMART
   # Remove cached image files
   my @cached_images = map { glob($conf->ENSEMBL_TMP_DIR_CACHE."/$_.*") }
