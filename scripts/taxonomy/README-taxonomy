@@ -18,6 +18,8 @@ perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $
 
 perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_class) = split(/\t\|\t/);print $taxon_id,"\t", $name,"\t",$name_class,"\n";}' names.dmp > ncbi_taxa_names.txt
 
+mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "create database ncbi_taxonomy"
+
 CREATE TABLE ncbi_taxa_nodes (
   taxon_id                        int(10) unsigned NOT NULL,
   parent_id                       int(10) unsigned NOT NULL,
@@ -45,14 +47,17 @@ CREATE TABLE ncbi_taxa_names (
   KEY (name_class)
 );
 
-mysqlimport -hia64e -uensadmin -pensembl abel_tree_test ncbi_taxa_nodes.txt
-abel_tree_test.ncbi_taxa_nodes: Records: 293338  Deleted: 0  Skipped: 0  Warnings: 880014
+mysqlimport -hecs2 -P3365 -uensadmin -pensembl ncbi_taxonomy ncbi_taxa_nodes.txt
+ncbi_taxonomy.ncbi_taxa_nodes: Records: 296515  Deleted: 0  Skipped: 0  Warnings: 889545
 
-mysqlimport -hia64e -uensadmin -pensembl abel_tree_test ncbi_taxa_names.txt
-abel_tree_test.ncbi_taxa_names: Records: 381021  Deleted: 0  Skipped: 0  Warnings: 0
+mysqlimport -hecs2 -P3365 -uensadmin -pensembl ncbi_taxonomy ncbi_taxa_names.txt
+ncbi_taxonomy.ncbi_taxa_names: Records: 385145  Deleted: 0  Skipped: 0  Warnings: 0
 
-mysql -hia64e -uensadmin -pensembl -N -e "update ncbi_taxa_nodes set parent_id=0 where parent_id=taxon_id" abel_tree_test
+mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "update ncbi_taxa_nodes set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
-# Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrivial.
+mysql -hecs2 -P3365 -uensadmin -pensembl -N -e "insert into ncbi_taxa_names (taxon_id, name, name_class) select distinct taxon_id, CURRENT_TIMESTAMP, 'import date' from ncbi_taxa_nodes where parent_id=0" ncbi_taxonomy
 
-ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ia64e/abel_tree_test -index > index.err 2>&1 &
+# Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrivial if needed.
+
+ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ecs2:3365/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
+
