@@ -1168,15 +1168,25 @@ sub create_martRegistry {
 <MartRegistry>';
 
   foreach my $mart ( keys %{$multi->{'marts'}} ) {
-    my( $visible, @name ) = @{$multi->{'marts'}->{$mart}};
+    my( $default, $visible, @name ) = @{$multi->{'marts'}->{$mart}};
     if( $multi->{'databases'}->{$mart} ) {
       my $T = $multi->{'databases'}->{$mart};
       $reg .= sprintf( '
-  <DatabaseLocation databaseType="%s" host="%s" schema="%s"
-                    instanceName="%s" name="%s" port="%s" user="%s"
-                    password="%s" visible="%d" />',
-        $T->{DRIVER}, $T->{HOST}, $T->{NAME}, $T->{NAME}, "@name",
-        $T->{PORT}, $T->{USER}, $T->{PASS}, $visible
+<MartDBLocation
+  databaseType = "%s"
+      database = "%s"
+          name = "%s"
+        schema = "%s"
+          host = "%s"
+          port = "%s"
+          user = "%s"
+      password = "%s"
+   displayName = "%s"
+       visible = "%d"
+       default = "%d"
+/>',
+        $T->{DRIVER}, $T->{NAME},   $mart,  $T->{NAME}, $T->{HOST}, $T->{PORT},
+        $T->{USER},   $T->{PASS},   "@name", $visible, $default
       );
     }
   }
