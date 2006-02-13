@@ -25,7 +25,6 @@ GetOptions('help'           => \$help,
            'name=s'         => \$self->{'scientific_name'},
            'scale=f'        => \$self->{'scale'},
            'mini'           => \$self->{'minimize_tree'},
-           'count'          => \$self->{'stats'},
            'index'          => \$self->{'build_leftright_index'},
            'url_core=s'     => \$url_core,
            'memory_leak'    => \$self->{'memory_leak'}
@@ -94,15 +93,18 @@ exit(0);
 sub usage {
   print "testTaxonTree.pl [options]\n";
   print "  -help                  : print this help\n";
-  print "  -url <string>          : connect to compara at url e.g. mysql://ensro\@ia64e/abel_tree_test\n";
+  print "  -url <string>          : connect to compara at url e.g. mysql://ensro\@ecs2:3365/ncbi_taxonomy\n";
   print "  -taxon_id <int>        : print tree by taxon_id\n";
   print "  -taxa_list <string>    : print tree by taxa list e.g. \"9606,10090\"\n";
-  print "  -taxa_compara <string> : print tree of the taxa in compara\n";
-  print "  -scale <int>           : scale factor for printing tree (def: 100)\n";
+  print "  -taxa_compara          : print tree of the taxa in compara\n";
+  print "  -name <string>         : print tree by scientific name e.g. \"Homo sapiens\"\n";
+  print "  -scale <int>           : scale factor for printing tree (def: 10)\n";
   print "  -mini                  : minimize tree\n";
   print "  -url_core              : core database url used to load the taxonomy info in the meta table\n";
   print "                           to be used with -taxon_id or -name\n";
-  print "                           mysql://login:password\@ia64e/abel_tree_test\n";
+  print "                           mysql://login:password\@ecs2:3364/a_core_db\n";
+  print " -index                  : build left and right node index to speed up subtree queries.\n";
+  print "                           to be used only by the person who sets up a taxonomy database.\n";
   print "taxonTreeTool.pl v1.1\n";
 
   exit(1);
