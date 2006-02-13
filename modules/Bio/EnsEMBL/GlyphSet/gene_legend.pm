@@ -39,7 +39,7 @@ sub _init {
     return unless ($self->strand() == -1);
 
     my $BOX_WIDTH     = 20;
-    my $NO_OF_COLUMNS = 3;
+    my $NO_OF_COLUMNS = 2;
 
     my $vc            = $self->{'container'};
     my $Config        = $self->{'config'};
