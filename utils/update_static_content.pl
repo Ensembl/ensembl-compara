@@ -550,9 +550,10 @@ sub do_downloads {
 sub blast_db {
   my ($serverroot, $spp) = @_;
   utils::Tool::info(1, "Updating BLAST_DATASOURCES");
+  my $location =  $site_type eq 'live' ? "/sanger-plugins/sanger/" : "/public-plugins/ensembl/";
+  my $spp_type = $spp eq 'Multi' ? 'MULTI' : $spp;
+  my $ini_file = sprintf ("$SERVERROOT/%s./conf/ini-files/%s.ini", $location, $spp_type);
 
-  my $ini_file = $SERVERROOT."/public-plugins/ensembl/conf/ini-files/$spp".".ini";   
-  $ini_file = $SERVERROOT."/public-plugins/ensembl/conf/ini-files/MULTI.ini" if $spp eq 'Multi';
   open (INI, "<",$ini_file) or die "Couldn't open ini file $ini_file: $!";
   my $contents = [<INI>];
   close INI;
@@ -568,16 +569,16 @@ sub blast_db {
 
   foreach my $line (@$contents) {
     if ($line =~ /
-		  (.*\w+)        # source
+		  ([^\#].*\w+)        # source
 		  (\s+=        # whitespace =
 		  \s+)
-		  $spp\.       # species
+		  $spp\.\d*\.*  # species. (optional number .)
 		  (\w+\.?\d?)\. # golden_path
 		  \w{3}\.       # month
 		  (.*)/x ) {   # type of file
      my $source = $1;
      my $new_file =  $1.$2.$spp. ".$golden_path.$month.$4";
-     die "False positive in pattern match: $line" unless $source =~ /^CDNA|^PEP|^RNA|^LATE/;
+     die "False positive in pattern match (source:$source): $line" unless $source =~ /^CDNA|^PEP|^RNA|^LATE/;
      print $fh_out "$new_file\n";
     }
     else {
@@ -733,7 +734,8 @@ B<  species_table:>;
 
 B<  blast_db:>; 
     Updates public-plugins/ensembl/conf/ini-files so the blast
-    database names match the month of release
+    database names match the month of release (default main site or use '--site_type main").  
+    If flag "--site_type live" is used, it updates sanger-plugins/sanger/conf/ini-file files
 
 B< copy_species_table:>
    simply copies: $SERVERROOT/public-plugins/ensembl/htdocs/ssi/species_table.html to $SERVERROOT/sanger-plugins/archive/htdocs/ssi/species_table.html

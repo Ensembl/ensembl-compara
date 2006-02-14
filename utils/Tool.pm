@@ -235,7 +235,8 @@ sub release_month {
   my @months = qw (jan feb mar apr may jun jul aug sep oct nov dec);
   my $day      = localtime->mday;
   my $curr_mth = localtime->mon;
-  return  $day <10 ? $months[$curr_mth] : $months[$curr_mth +1];
+  return $months[$curr_mth];
+  #return  $day <10 ? $months[$curr_mth] : $months[$curr_mth +1];
 }
 #--------------------------------------------------------------------
 =head2 site_logo
