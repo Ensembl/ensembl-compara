@@ -63,7 +63,7 @@ sub _archive {
   }
 
   # Give peptide sequence or link to current protview
-  my $trans_id = $archiveStableID->get_translation_archive_id();
+  my $trans_id = $archiveStableID->get_all_translation_archive_ids();
   my %tmp = map { $_->stable_id, $_ } @$trans_id; #rm duplicates
   my @trans = values %tmp;
 
