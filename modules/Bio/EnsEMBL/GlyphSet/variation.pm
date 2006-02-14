@@ -12,13 +12,25 @@ sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
-  my $snps = $self->{'config'}->{'snpview'}->{'snps'} || [];
-  if(@$snps) {
-    $self->{'config'}->{'variation_legend_features'}->{'variations'} 
-        = { 'priority' => 1000, 'legend' => [] };
+  if( exists( $self->{'config'}->{'snpview'}->{'snps'} ) ) {
+    my $snps = $self->{'config'}->{'snpview'}->{'snps'} || [];
+    if(@$snps) {
+      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
+    }
+    return $snps;
+  } else {
+    my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+    my $vf_ref = $self->{'container'}->get_all_VariationFeatures();
+    my @vari_features =
+      map  { $_->[1] }
+      sort { $a->[0] <=> $b->[0] }
+      map  { [ $ct{$_->get_consequence_type} * 1e9 + $_->start, $_ ] }
+      grep { $_->map_weight < 4 } @$vf_ref;
+    if(@vari_features) {
+      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
+    }
+    return \@vari_features;
   }
-
-  return $snps;
 }
 
 sub href {
@@ -59,14 +71,11 @@ sub image_label {
 
 sub tag {
   my ($self, $f) = @_;
-  &eprof_start( 'tag' );
-  my $so_that_I_can_eprof_tag;
   if($f->start > $f->end ) {    
     my $consequence_type = $f->get_consequence_type;
-    $so_that_I_can_eprof_tag = ( { 'style' => 'insertion', 
-	       'colour' => $self->{'colours'}{"$consequence_type"}[0] } );
+warn ">INSERTION<";
+    return ( { 'style' => 'insertion', 'colour' => $self->{'colours'}{"$consequence_type"}[0] } );
   }
-
 }
 
 sub colour {
@@ -86,7 +95,6 @@ sub colour {
 
 sub zmenu {
   my ($self, $f ) = @_;
-  &eprof_start('zmenu');
   my( $start, $end );
   my $allele = $f->allele_string;
 
@@ -129,7 +137,6 @@ sub zmenu {
   my $consequence_type = $f->get_consequence_type;
   my $label = $self->{'colours'}{$consequence_type}[1]; 
   $zmenu{"57:Type: $label"} = "" unless $consequence_type eq '';  
-  eprof_end( 'zmenu' );
   return \%zmenu;
 }
 1;
