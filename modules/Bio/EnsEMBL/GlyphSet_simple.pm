@@ -161,6 +161,7 @@ sub _init {
     $img_end   = $tag_end   if $tag_end   > $img_end; 
     my @tags = $self->tag($f);
     foreach my $tag (@tags) {
+      next unless ref($tag) eq 'HASH';
       $tag_start = $start;
       $tag_end = $end;
       if($tag->{'style'} eq 'snp' ) {
@@ -245,6 +246,7 @@ sub _init {
     my $rowheight = int($h * 1.5);
 
     foreach my $tag ( @tags ) {
+      next unless ref($tag) eq 'HASH';
       if($tag->{'style'} eq 'left-end' && $start == $f->start) {
         my $line = new Sanger::Graphics::Glyph::Rect({
                     'x'          => $start-1,
