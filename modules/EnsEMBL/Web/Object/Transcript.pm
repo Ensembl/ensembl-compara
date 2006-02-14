@@ -956,8 +956,11 @@ sub get_supporting_evidence { ## USED!
         my $dl_seq_name = $this_feature->hseqname;
 
         # skip evidence for this exon if it doesn't support this particular
-        # transcript
-        next unless ($trans_evidence{$this_feature->dbID});
+        # transcript (vega only)
+
+		if ($self->species_defs->ENSEMBL_SITE_NAME eq 'Vega') {
+		  next unless ($trans_evidence{$this_feature->dbID});
+		}
         
         my $no_version_no;
         if($dl_seq_name =~ /^[A-Z]{2}\.\d+/i) {
