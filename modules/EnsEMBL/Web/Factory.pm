@@ -78,7 +78,7 @@ sub _archive {
     $output .= qq(<p>The peptides related to ).lc($archiveStableID->type).
       qq( <strong>$name</strong> are:</p> <table border="0">);
   } else {
-    $output .= qq(<p>The peptide related to).lc($archiveStableID->type).
+    $output .= qq(<p>The peptide related to ).lc($archiveStableID->type).
       qq( <strong>$name</strong> is:</p><table border="0">);
   }
   for (@trans) {
