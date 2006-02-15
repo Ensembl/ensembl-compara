@@ -218,6 +218,11 @@ sub block_render_bulleted {
   $self->print( qq(\n  </ul>));
 }
 
+sub render_type_raw {
+  my( $self, $block ) = @_;
+  $self->print( $block->{'options'}{'html'} );
+}
+
 sub render_type_form {
   my( $self, $block ) = @_;
   my $entries = $block->{'entries'};
