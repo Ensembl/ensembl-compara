@@ -72,6 +72,10 @@ sub init {
        [ 'opt_downstream'            => 'Downstream variations' ],
        [ 'opt_intergenic'            => 'Intergenic variations' ], 
       ],
+    'snphelp' => [
+        [ 'snpview'  => 'SNPView' ],
+      ],
+
      'opt_empty_tracks' => 1,
       'opt_zmenus'     => 1,
       'opt_zclick'     => 1,

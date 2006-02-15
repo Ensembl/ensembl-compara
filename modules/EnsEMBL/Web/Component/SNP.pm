@@ -569,7 +569,7 @@ sub snpview_image_menu {
     'panel'      => 'snpview',
     'fields'     => $params,
     'leftmenus'   => [qw(Features Source SNPClasses SNPTypes Options Export ImageSize)],
-    'rightmenus'  => [qw(Help)]
+    'rightmenus'  => [qw(SNPHelp)]
   );
   $panel->print( $mc->render_html );
   $panel->print( $mc->render_js );
