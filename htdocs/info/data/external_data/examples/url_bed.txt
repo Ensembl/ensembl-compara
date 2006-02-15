@@ -1,5 +1,5 @@
 browser position chr19:6900001-7400000
-track name=BAC_end_pairs_bed description="BAC end pairs (BED)" useScore=1 color=ffcc66 url=http://www.ensembl.org/human/fastaview?faid=DNA_bacend_1533&id=$$
+track name=BAC_end_pairs_bed description="BAC end pairs (BED)" useScore=1 color=ffcc66 url=http://www.ensembl.org/human/fastaview?faid=DNA_bacend_1533&id=$$ height=0.1
 19	6503520	6641948	CTD-3084A17:AQ144413-AQ186293	1000	-	6503520	6641948	0	2	462,512	0,137917
 19	6527567	6695619	RP11-357B22:AZ518790-AQ552859	1000	-	6527567	6695619	0	2	470,525	0,167528
 19	6527640	6704480	RP11-134L9:AQ388324-AQ388334	1000	-	6527640	6704480	0	2	307,557	0,176284
