@@ -10,7 +10,8 @@ sub my_label {
 
 sub colour {
   my( $self, $id ) = @_;
-  my $colours =  $self->{'colours'}->{ $self->object_type($id) } ||
+  my $colours =  $self->{'colours'}->{ $self->object_type($id) } || 
+                 $self->{'colours'}->{ 'default' } ||
                  $self->my_config('col') || 'black';
 }
 
@@ -32,7 +33,6 @@ sub features {
   foreach my $nm( @logic_names ){
     push( @feats, @{$self->{'container'}->$method($nm,$threshold,$database)} );
   }
-  warn "@logic_names, ".@feats;
   return [@feats];
 }
 

@@ -59,6 +59,14 @@ sub _init {
   } else {
       @segments = @{$Container->project('seqlevel')||[]};
   }
+  my @coord_systems = @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []};
+  my $Config = $self->{'config'};
+
+  my $module = ref($self);
+     $module = $1 if $module=~/::([^:]+)$/;
+  my $threshold_navigation = ($Config->get($module, 'threshold_navigation')|| 2e6)*1001;
+  my $navigation     = $Config->get($module, 'navigation') || 'on';
+  my $show_navigation = ($length < $threshold_navigation) && ($navigation eq 'on');
 
   foreach my $segment (@segments) {
       my $start      = $segment->from_start;
@@ -68,8 +76,9 @@ sub _init {
       my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name };
 
       $feature->{'locations'}{ $ctg_slice->coord_system->name } = [ $ctg_slice->seq_region_name, $ctg_slice->start, $ctg_slice->end, $ctg_slice->strand  ];
+if( $show_navigation ) {
       if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {
-	  foreach( @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []} ) {
+	  foreach( @coord_systems ) {
 	      my $path;
 	      eval { $path = $ctg_slice->project($_->name); };
 	      next unless(@$path == 1);
@@ -82,6 +91,7 @@ sub _init {
 	      $feature->{'locations'}{$_->name} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
 	  }
       }
+}
     $feature->{'ori'} = $ORI;
     push @features, $feature;
   }

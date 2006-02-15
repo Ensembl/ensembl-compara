@@ -104,6 +104,7 @@ for my $hit (sort { $Container->{'hits'}{$b}{'top_score'} <=> $Container->{'hits
                     $Container->{'hits'}{$b}{'total_score'} <=> $Container->{'hits'}{$a}{'total_score'} ||
 		    $Container->{'hits'}{$a}{'datalib'} cmp $Container->{'hits'}{$b}{'datalib'} }
 		    keys %{$Container->{'hits'}}){
+warn "HIT...";
 
    if (!$Config->get('supporting_evidence','hide_hits')){
 	$display_limit++;

@@ -23,30 +23,30 @@ sub init_label {
 }
 
 sub chr_sort {
-    my $self = shift;
-    my $large_value = 1e10;
-    return 
-        map { $_ == ($large_value+1) ? 'Y' : ( $_ == $large_value ? 'X' : $_ ) } 
-            sort { $a <=> $b }
-                map { $_ eq 'Y' ? ($large_value+1) : ( $_ eq 'X' ? $large_value : $_ ) } 
-                    @_;
+  my $self = shift;
+  my $large_value = 1e10;
+  return 
+    map { $_ == ($large_value+1) ? 'Y' : ( $_ == $large_value ? 'X' : $_ ) } 
+    sort { $a <=> $b }
+    map { $_ eq 'Y' ? ($large_value+1) : ( $_ eq 'X' ? $large_value : $_ ) } 
+    @_;
 }
 
 sub _init {
-    my ($self) = @_;
+  my ($self) = @_;
 
-    my $Config = $self->{'config'};
+  my $Config = $self->{'config'};
 
-    return unless $Config->container_width()>0; # The container has zero width !!EXIT!!
+  return unless $Config->container_width()>0; # The container has zero width !!EXIT!!
     
 ## FIRSTLY LETS SORT OUT THE COLOURS!!
-    my $cmap   = $Config->colourmap();
-    my $white  = 'white';
-    my $black  = 'black';
-    my $grey   = 'grey60';
-    my $red    = 'red';
-    my $blue   = 'blue';
-    my $brown  = 'rust';
+  my $cmap   = $Config->colourmap();
+  my $white  = 'white';
+  my $black  = 'black';
+  my $grey   = 'grey60';
+  my $red    = 'red';
+  my $blue   = 'blue';
+  my $brown  = 'rust';
 
     my @BORDERS = map { $cmap->add_hex($_) } qw(00cc00 ff66FF 3333ff 009999 ff9900 993399 cccc00);
     my @COLOURS = map { $cmap->add_hex($_) } qw(99ff99 ffccff 9999ff 99ffff ffcc99 cc99ff ffff99);
@@ -61,6 +61,7 @@ sub _init {
     my $sa         = $self->{'container'}->{'sa_main'};
     my $sa2        = $self->{'container'}->{'sa_secondary'};
     my $synteny_data= $self->{'container'}->{'synteny'};
+
     my $OTHER       = $self->{'container'}->{'other_species'};
     my $OTHER_T     = $OTHER; $OTHER_T =~s/_/ /g;
     my $SPECIES_T   = $self->{container}{_config_file_name_}; $SPECIES_T =~s/_/ /g;
@@ -150,10 +151,10 @@ sub _init {
                 'caption' => "$OTHER_T chr $other_chr",
                 sprintf("01:%s Chr %s:%0.1fM-%0.1fM",$SPECIES_SHORT,
                         $chr,$main_dfr->dnafrag_start/1e6,$main_dfr->dnafrag_end/1e6) => 
-    qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=$main_dfr->dnafrag_start;vc_end=$main_dfr->dnafrag_end),                        
+    qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=@{[$main_dfr->dnafrag_start]};vc_end=@{[$main_dfr->dnafrag_end]}),
                 sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
                         $other_chr,$other_dfr->dnafrag_start/1e6,$other_dfr->dnafrag_end/1e6) => 
-		( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$other_dfr->dnafrag_start;vc_end=$other_dfr->dnafrag_end) : '' ),
+		( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=@{[$other_dfr->dnafrag_start]};vc_end=@{[$other_dfr->dnafrag_end]}) : '' ),
 
 	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?otherspecies=$OTHER;chr=$chr;loc=).int(($main_dfr->dnafrag_end+$main_dfr->dnafrag_start)/2)
 
@@ -166,7 +167,7 @@ sub _init {
             'col' => $COL,
             'border' => $BORD,
             'side' => $SIDE,
-            'href' => qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=$main_dfr->dnafrag_start;vc_end=$main_dfr->dnafrag_end),
+            'href' => qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=@{[$main_dfr->dnafrag_start]};vc_end=@{[$main_dfr->dnafrag_end]}),
             'zmenu' => $ZMENU
         };
         if($SIDE) {
@@ -188,14 +189,14 @@ sub _init {
                     $main_dfr->dnafrag_start/1e6,
                     $main_dfr->dnafrag_end/1e6
                 ) => 
-                        qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=$main_dfr->dnafrag_start;vc_end=$main_dfr->dnafrag_end),                        
+                        qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=@{[ $main_dfr->dnafrag_start]};vc_end=@{[ $main_dfr->dnafrag_end]} ),                        
                 sprintf("03:%s Chr %s:%0.1fM-%0.1fM",
                     $OTHER_SHORT,
                     $other_chr,
                     $other_dfr->dnafrag_start/1e6,
                     $other_dfr->dnafrag_end/1e6
                 ) => 
-                    ( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=$other_dfr->dnafrag_start;vc_end=$other_dfr->dnafrag_end) : '' )
+                    ( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=@{[ $other_dfr->dnafrag_start] };vc_end=@{[ $other_dfr->dnafrag_end]} ) : '' )
             );
             my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{_config_file_name_}]};chr=$other_chr;loc=).int(($other_dfr->dnafrag_end+$other_dfr->dnafrag_start)/2) : '' ;
             $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;

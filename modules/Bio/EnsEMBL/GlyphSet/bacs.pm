@@ -19,7 +19,7 @@ sub zmenu {
         'caption'   => "BAC: @{[$f->get_scalar_attribute('name')]}",
         "01:Status: @{[$f->get_scalar_attribute('status')]}" => ''
     };
-    foreach( $f->get_scalar_attribute('embl_accs') ) {
+    foreach( @{$f->get_all_attribute_values('embl_accs')},@{$f->get_all_attribute_values('embl_acc')}) {
         $zmenu->{"02:bacend: $_"} = $self->ID_URL( 'EMBL', $_);
     }
     return $zmenu;

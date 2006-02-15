@@ -3,6 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet_simple;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+use Bio::EnsEMBL::Feature;
 
 sub my_label { return $_[0]->my_config('label'); }
 
@@ -12,7 +13,33 @@ sub features {
   my ($self) = @_;
   my $species = $self->my_config('species');
   (my $species_2 = $species) =~ s/_/ /;
-  return $self->{'container'}->get_all_compara_Syntenies( $species_2, "SYNTENY");
+  my $T = $self->{'container'}->get_all_compara_Syntenies( $species_2, "SYNTENY");
+  my $offset = $self->{'container'}->start - 1;
+  my @RET;
+  foreach my $argh (@$T) {
+    my ($main_dfr, $other_dfr);
+    foreach my $dfr (@{$argh->children}) {
+      if($dfr->dnafrag->genome_db->name eq $species_2) {
+        $other_dfr = $dfr;
+      } else {
+        $main_dfr = $dfr;
+      }
+    }
+    my $f = Bio::EnsEMBL::Feature->new(
+      -start   => $main_dfr->dnafrag_start - $offset,
+      -end     => $main_dfr->dnafrag_end   - $offset,
+      -strand  => $main_dfr->dnafrag_strand,
+      -seqname => $_,
+    );
+    $f->{'hit_chr_name'}  = $other_dfr->dnafrag->name;
+    $f->{'hit_chr_start'} = $other_dfr->dnafrag_start;
+    $f->{'hit_chr_end'}   = $other_dfr->dnafrag_end;
+    $f->{'chr_start'}     = $main_dfr->dnafrag_start;
+    $f->{'chr_end'}       = $main_dfr->dnafrag_end;
+    $f->{'rel_ori'}       = $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand;
+    push @RET, $f;
+  }
+  return \@RET;
 }
 
 sub colour {

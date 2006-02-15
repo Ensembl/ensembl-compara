@@ -152,7 +152,10 @@ sub gene_text_label {
 
 sub features {
   my ($self) = @_;
-  return $self->{'container'}->get_all_Genes('ncRNA');
+  my @T =  @{$self->{'container'}->get_all_Genes('ncRNA')||[]};
+  push @T, @{$self->{'container'}->get_all_Genes('miRNA')||[]};
+  push @T, @{$self->{'container'}->get_all_Genes('tRNA')||[]};
+  return \@T;
 }
 
 sub legend {
