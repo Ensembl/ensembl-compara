@@ -129,12 +129,12 @@ sub add_new_track_transcript {
     'join_x'      => -10,
     'join_col'    => 'blue',
     'track_label' => $text_label,
-	'label'       => $text_label,
+    'label'       => $text_label,
     'caption'     => $text_label,
     'available'   => $available,
-	'zmenu_caption' => $text_label,
+    'zmenu_caption' => $text_label,
     'author'      => $pars{'author'},
-	'glyphset'    => $pars{'glyph'},
+    'glyphset'    => $pars{'glyph'},
     %pars
   );
 }
@@ -264,11 +264,8 @@ sub add_new_track_rna {
     'compact'     => 0,
     'glyphset'    => 'generic_match',
     'SUBTYPE'     => $code,
-    'URL_KEY'     => { 'miRNA_Registry' => 'MIRBASE', 'RFAM' => 'RFAM' },
-    'ZMENU'       => {
-      'miRNA_Registry' => [ '###ID###', "miRbase: ###ID###" => '###HREF###' ],
-      'RFAM'           => [ '###ID###', "RFRAM: ###ID###" => '###HREF###' ]
-    },
+    'URL_KEY'     => uc( $code ),
+    'ZMENU'       => [ '###ID###', "$text_label: ###ID###" => '###HREF###' ],
     'pos'         => $pos,
     'available'   => "features $code",
     'caption'     => $text_label,
@@ -536,7 +533,12 @@ sub _is_available_artefact{
     return $fail;
   } elsif( $test[0] eq 'database_features' ){ # See whether the given database is specified
     my $ft = $self->{'species_defs'}->other_species($self->{'species'},'DB_FEATURES') || {};
-    return $fail unless $ft->{uc($test[1])};
+    my @T = split /\|/, $test[1];
+    my $flag = 1;
+    foreach( @T ) {
+      $flag = 0 if $ft->{uc($_)};
+    }
+    return $fail if $flag;
     return $success;
   } elsif( $test[0] eq 'databases' ){ # See whether the given database is specified
     my $db = $self->{'species_defs'}->other_species($self->{'species'},'databases')  || {};
@@ -545,7 +547,12 @@ sub _is_available_artefact{
     return $success;
   } elsif( $test[0] eq 'features' ){ # See whether the given db feature is specified
     my $ft = $self->{'species_defs'}->other_species($self->{'species'},'DB_FEATURES') || {};
-    return $fail unless $ft->{uc($test[1])}   ;
+    my @T = split /\|/, $test[1];
+    my $flag = 1;
+    foreach( @T ) {
+      $flag = 0 if $ft->{uc($_)};
+    }
+    return $fail if $flag;
     return $success;
   } elsif( $test[0] eq 'any_feature' ){ # See whether any of the given db features is specified
     my $ft = $self->{'species_defs'}->other_species($self->{'species'},'DB_FEATURES') || {};
@@ -782,9 +789,19 @@ sub ADD_ALL_DNA_FEATURES {
   $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
   $self->add_new_track_mrna( 'cbriggsae_mrna', 'C.briggsae mRNAs', $POS++, @_ );
+
+  $self->add_new_track_rna( 'BlastmiRNA', 'MiRNA', $POS++, @_ );
+  $self->add_new_track_rna( 'RfamBlast',  'rFam', $POS++, @_ );
+  $self->add_new_track_rna( 'mirbase',  'MiRBase', $POS++, @_ );
+  $self->add_new_track_rna( 'miRNA_Registry',  'miRbase RNAs', $POS++, @_ );
+  $self->add_new_track_rna( 'RFAM',            'RFAM RNAs',    $POS++, @_ );
+
   $self->add_new_track_cdna( 'jgi_v1',            'JGI 1.0 model', $POS++, @_ );
 
   $POS = shift || 2400;
+## 
+  $self->add_new_track_cdna( 'Harvard_manual', 'Manual annot.', $POS++, @_ );
+
   $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
   $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
   $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
@@ -878,7 +895,9 @@ sub ADD_ALL_EST_FEATURES {
     [ 'mouse_est',             'Mouse EST' ],
     [ 'rat_est',               'Rat EST' ],
     [ 'xtrop_EST',             'X.trop EST' ],
-    [ 'zfish_EST',             'Zfish EST' ]
+    [ 'zfish_EST',             'Zfish EST' ],
+    [ 'anopheles_cdna_est',    'RNA (BEST)' ],
+    [ 'anopheles_cdna_est_all','RNA (ALL)' ],
   );
   foreach ( @EST_DB_ESTS ) {
     $self->add_new_track_est( "est_$_->[0]",  $_->[1], $POS++,
@@ -905,12 +924,6 @@ sub ADD_ALL_EST_FEATURES {
   return $POS;
 }
 
-sub ADD_ALL_RNA_FEATURES {
-  my $self = shift;
-  my $POS  = shift || 2180;
-  $self->add_new_track_rna( 'miRNA_Registry',  'miRbase RNAs', $POS++, @_ );
-  $self->add_new_track_rna( 'RFAM',            'RFAM RNAs',    $POS++, @_ );
-}
 
 sub ADD_ALL_PROTEIN_FEATURES {
   my $self = shift;
@@ -935,7 +948,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'human_refseq',        'Human RefSeqs', $POS++, @_ );
   $self->add_new_track_protein( 'dog_protein',         'Dog proteins', $POS++, @_ );
   $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
-  $self->add_new_track_protein( 'Cow_Proteins',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'cow_proteins',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fugu_protein',         'Fugu proteins', $POS++, @_ );
   $self->add_new_track_protein( 'fish_protein',         'Fish proteins', $POS++, @_ );
@@ -946,6 +959,7 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'rodent_protein',      'Rodent proteins',$POS++, @_ );
   $self->add_new_track_protein( 'mammal_protein',      'Mammal proteins', $POS++, @_ );
   $self->add_new_track_protein( 'other_protein',       'Other proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'other_proteins',      'Other proteins', $POS++, @_ );
   $self->add_new_track_protein( 'GenomeUniprotBlast',          'Genome UniP.Bl.',   $POS++, @_ );
   $self->add_new_track_protein( 'GenscanPeptidesUniprotBlast', 'Gen.Pep. UniP.BL.', $POS++, @_ );
   $self->add_new_track_protein( 'BeeProteinBlast',             'Bee Protein blast', $POS++, @_ );
@@ -963,8 +977,10 @@ sub ADD_ALL_PROTEIN_FEATURES {
   $self->add_new_track_protein( 'Similarity_Metazoa',   "Similarity Metazoa", $POS++, @_ );
   $self->add_new_track_protein( 'Similarity_Eukaryota', "Similarity Eukaryota", $POS++, @_ );
 
-  $self->add_new_track_protein( 'DrosophilaBlast', "BLAST Drosophila", $POS++, @_ );
-  $self->add_new_track_protein( 'UniprotBlast',    "BLAST Uniprot", $POS++, @_ );
+  $self->add_new_track_protein( 'DrosophilaBlast', "BLAST Drosophila", $POS++, 'URL_KEY' => 'DROSOPHILABLAST', @_ );
+  $self->add_new_track_protein( 'UniprotBlast',    "BLAST UniProtKB", $POS++, @_ );
+  $self->add_new_track_protein( 'anopheles_protein', "Anopheles protein", $POS++, @_ );
+  $self->add_new_track_protein( 'drosophila_protein', "Dros. protein", $POS++, 'URL_KEY' => 'DROSOPHILABLAST',@_ );
 
   $self->add_new_track_protein( 'DipteraBlast',    "BLAST Diptera", $POS++, @_ );
   $self->add_new_track_protein( 'ArthropodaBlast', "BLAST Arthropoda", $POS++, @_ );
@@ -1010,8 +1026,8 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'genebuilderbeeflymosandswall',
                                                 'Bee genes',       'bee_gene',       $POS++, @_ );
   $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, @_ );
-  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA',            @_ );
-  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features ensembl_ncRNA',            @_ );
+  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA',      @_ );
+  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA',        @_ );
   $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene',       $POS++, 'available' => 'databases ENSEMBL_EST', @_ );
   $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
   $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
@@ -1156,6 +1172,8 @@ sub ADD_GENE_TRACKS {
                              'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
 
   $self->add_new_track_gene( 'ncrna', 'ncRNA Genes', 'rna_gene', $POS++,
+                             'logic_name' => 'miRNA tRNA ncRNA',
+                             'available' => 'features ncrna|miRNA',
                              'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
   $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++,
                              'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
