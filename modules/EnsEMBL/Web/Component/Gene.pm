@@ -412,10 +412,16 @@ sub method {
   my $label = ( ($db eq 'vega' or $gene->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
   my $text = "No $label defined in database";
   my $o = $gene->Obj;  
-  if( $o->analysis and $o->analysis->description ) {
-    $text = $gene->Obj->analysis->description;
+  warn join ", ", keys  %Bio::EnsEMBL::Translation::;
+  eval {
+  if( $o &&
+      $o->can( 'analysis' ) &&
+      $o->analysis &&
+      $o->analysis->description ) {
+    $text = $o->analysis->description;
+  } elsif( $gene->can('gene') && $gene->gene->can('analysis') && $gene->gene->analysis && $gene->gene->analysis->description ) {
+    $text = $gene->gene->analysis->description;
   } else {
-    my $o = $gene->Obj;
     my $logic_name = $o->can('analysis') && $o->analysis ? $o->analysis->logic_name : '';
     if( $logic_name ){
       my $confkey = "ENSEMBL_PREDICTION_TEXT_".uc($logic_name);
@@ -426,8 +432,8 @@ sub method {
       $text   = "<strong>FROM DEFAULT CONFIG:</strong> ".$gene->species_defs->$confkey;
     }
   }
-  $panel->add_row( $label, sprintf(qq(<p>%s</p>), $text )
-  );
+  $panel->add_row( $label, sprintf(qq(<p>%s</p>), $text ));
+  };
   return 1;
 }
 
@@ -582,10 +588,15 @@ sub diseases {
         <dt>%s</dt>
         <dd><ul>), CGI::escapeHTML($description) );
     for my $omim (sort @{$omim_list->{$description}}){
+      my $omim_link = $omim;
+      my $omim_URL = $gene->get_ExtURL('OMIM', $_);
+      if( $omim_URL ) {
+        $omim_link = qq(<a href="$omim_URL" rel="external">$omim_link</a>);
+      }
       $html.= sprintf( qq(
-          <li>[Omim ID: %d] - 
+          <li>[Omim ID: %s] -
             <a href="/@{[$gene->species]}/featureview?type=Disease;id=%d">View disease information</a>
-          </li>), $omim, $omim );
+          </li>), $omim_link, $omim );
     }
     $html.= qq(
         </ul></dd>);
@@ -815,6 +826,7 @@ sub gene_structure {
 
   my $wuc = $object->get_userconfig( 'geneview' );
      $wuc->{'geneid'} = $object->Obj->stable_id;
+     $wuc->{'_draw_single_Gene'} = $object->Obj;
      $wuc->set( '_settings',          'width',       900);
      $wuc->set( '_settings',          'show_labels', 'yes');
      $wuc->set( 'ruler',              'str',         $object->Obj->strand > 0 ? 'f' : 'r' );
